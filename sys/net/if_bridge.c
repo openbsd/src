@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.266 2015/10/05 15:52:46 uebayasi Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.267 2015/10/05 19:05:09 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -1029,6 +1029,7 @@ bridge_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *sa,
 
 			if (IF_QFULL(&dst_if->if_snd)) {
 				IF_DROP(&dst_if->if_snd);
+				sc->sc_if.if_oerrors++;
 				continue;
 			}
 			if (TAILQ_NEXT(p, next) == NULL) {
@@ -1467,6 +1468,7 @@ bridge_broadcast(struct bridge_softc *sc, struct ifnet *ifp,
 #endif /* NMPW */
 		if (IF_QFULL(&dst_if->if_snd)) {
 			IF_DROP(&dst_if->if_snd);
+			sc->sc_if.if_oerrors++;
 			continue;
 		}
 
@@ -1552,6 +1554,7 @@ bridge_span(struct bridge_softc *sc, struct mbuf *m)
 
 		if (IF_QFULL(&ifp->if_snd)) {
 			IF_DROP(&ifp->if_snd);
+			sc->sc_if.if_oerrors++;
 			continue;
 		}
 

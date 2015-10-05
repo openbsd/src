@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.274 2015/10/05 15:52:46 uebayasi Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.275 2015/10/05 19:05:09 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -2390,6 +2390,7 @@ carp_start(struct ifnet *ifp)
 		if ((ifp->if_carpdev->if_flags & (IFF_UP|IFF_RUNNING)) !=
 		    (IFF_UP|IFF_RUNNING)) {
 			IF_DROP(&ifp->if_carpdev->if_snd);
+			ifp->if_oerrors++;
 			m_freem(m);
 			continue;
 		}
