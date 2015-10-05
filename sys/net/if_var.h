@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_var.h,v 1.46 2015/09/30 11:33:51 dlg Exp $	*/
+/*	$OpenBSD: if_var.h,v 1.47 2015/10/05 15:19:29 uebayasi Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -194,6 +194,7 @@ struct ifnet {				/* and the entries */
 #define	if_imcasts	if_data.ifi_imcasts
 #define	if_omcasts	if_data.ifi_omcasts
 #define	if_iqdrops	if_data.ifi_iqdrops
+#define	if_oqdrops	if_data.ifi_oqdrops
 #define	if_noproto	if_data.ifi_noproto
 #define	if_lastchange	if_data.ifi_lastchange
 #define	if_capabilities	if_data.ifi_capabilities
