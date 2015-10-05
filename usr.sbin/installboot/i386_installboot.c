@@ -1,4 +1,4 @@
-/*	$OpenBSD: i386_installboot.c,v 1.9 2015/10/03 16:56:52 krw Exp $	*/
+/*	$OpenBSD: i386_installboot.c,v 1.10 2015/10/05 16:07:57 krw Exp $	*/
 /*	$NetBSD: installboot.c,v 1.5 1995/11/17 23:23:50 gwr Exp $ */
 
 /*
@@ -179,7 +179,7 @@ write_bootblocks(int devfd, char *dev, struct disklabel *dl)
 	if (dl->d_type != DTYPE_FLOPPY) {
 		start = findopenbsd(devfd, dl);
 		if (start == (u_int)-1)
- 			errx(1, "no OpenBSD partition");
+			errx(1, "no OpenBSD partition");
 	}
 
 	if (verbose)
