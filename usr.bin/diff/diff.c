@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.60 2015/10/05 15:16:23 deraadt Exp $	*/
+/*	$OpenBSD: diff.c,v 1.61 2015/10/05 15:42:54 semarie Exp $	*/
 
 /*
  * Copyright (c) 2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -218,8 +218,13 @@ main(int argc, char **argv)
 	argv += optind;
 
 	if (lflag == 0) {
-		if (tame("stdio wpath rpath cpath tmppath", NULL) == -1)
-			err(1, "tame");
+		if (getenv("TMPDIR")) {
+			if (tame("stdio rpath wpath cpath", NULL) == -1)
+				err(1, "tame");
+		} else {
+			if (tame("stdio rpath tmppath", NULL) == -1)
+				err(1, "tame");
+		}
 	}
 	/*
 	 * Do sanity checks, fill in stb1 and stb2 and call the appropriate
