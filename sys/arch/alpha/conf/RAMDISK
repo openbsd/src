@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.79 2015/09/19 10:41:05 miod Exp $
+#	$OpenBSD: RAMDISK,v 1.80 2015/10/05 16:29:55 deraadt Exp $
 
 machine		alpha
 maxusers	4
@@ -96,7 +96,6 @@ wd*		at pciide? flags 0x0000
 
 scsibus*	at scsi?
 sd*		at scsibus?			# SCSI disk drives
-cd*		at scsibus?			# SCSI CD-ROM drives
 
 wsdisplay*	at vga?
 wsdisplay*	at tga?
