@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.67 2015/10/02 09:51:54 ratchov Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.68 2015/10/05 07:18:03 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -208,9 +208,12 @@ aucat_mkcookie(unsigned char *cookie)
 #define COOKIE_SUFFIX	"/.aucat_cookie"
 #define TEMPL_SUFFIX	".XXXXXXXX"
 	struct stat sb;
-	char *home, path[PATH_MAX], tmp[PATH_MAX];
-	ssize_t len;
-	int fd;
+	char *home, *path = NULL, *tmp = NULL;
+	size_t home_len, path_len;
+	int fd, len;
+
+	/* please gcc */
+	path_len = 0xdeadbeef;
 
 	/*
 	 * try to load the cookie
@@ -218,7 +221,13 @@ aucat_mkcookie(unsigned char *cookie)
 	home = issetugid() ? NULL : getenv("HOME");
 	if (home == NULL)
 		goto bad_gen;
-	snprintf(path, PATH_MAX, "%s" COOKIE_SUFFIX, home);
+	home_len = strlen(home);
+	path = malloc(home_len + sizeof(COOKIE_SUFFIX));
+	if (path == NULL)
+		goto bad_gen;
+	memcpy(path, home, home_len);
+	memcpy(path + home_len, COOKIE_SUFFIX, sizeof(COOKIE_SUFFIX));
+	path_len = home_len + sizeof(COOKIE_SUFFIX) - 1;
 	fd = open(path, O_RDONLY);
 	if (fd < 0) {
 		if (errno != ENOENT)
@@ -243,7 +252,7 @@ aucat_mkcookie(unsigned char *cookie)
 		goto bad_close;
 	}
 	close(fd);
-	return 1;
+	goto done;
 bad_close:
 	close(fd);
 bad_gen:
@@ -256,28 +265,33 @@ bad_gen:
 	 * try to save the cookie
 	 */
 	if (home == NULL)
-		return 1;
-	if (strlcpy(tmp, path, PATH_MAX) >= PATH_MAX ||
-	    strlcat(tmp, TEMPL_SUFFIX, PATH_MAX) >= PATH_MAX) {
-		DPRINTF("%s: too long\n", path);
-		return 1;
-	}
+		goto done;
+	tmp = malloc(path_len + sizeof(TEMPL_SUFFIX));
+	if (tmp == NULL)
+		goto done;
+	memcpy(tmp, path, path_len);
+	memcpy(tmp + path_len, TEMPL_SUFFIX, sizeof(TEMPL_SUFFIX));
 	fd = mkstemp(tmp);
 	if (fd < 0) {
 		DPERROR(tmp);
-		return 1;
+		goto done;
 	}
 	if (write(fd, cookie, AMSG_COOKIELEN) < 0) {
 		DPERROR(tmp);
 		unlink(tmp);
 		close(fd);
-		return 1;
+		goto done;
 	}
 	close(fd);
 	if (rename(tmp, path) < 0) {
 		DPERROR(tmp);
 		unlink(tmp);
 	}
+done:
+	if (tmp)
+		free(tmp);
+	if (path)
+		free(path);
 	return 1;
 }
 
