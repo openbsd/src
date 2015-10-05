@@ -1,4 +1,4 @@
-/*	$OpenBSD: indent.c,v 1.27 2015/08/20 22:32:41 deraadt Exp $	*/
+/*	$OpenBSD: indent.c,v 1.28 2015/10/05 23:42:40 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -78,6 +78,8 @@ main(int argc, char **argv)
 
     int         last_else = 0;	/* true iff last keyword was an else */
 
+    if (tame("stdio rpath wpath cpath", NULL) == -1)
+	err(1, "tame");
 
     /*-----------------------------------------------*\
     |		      INITIALIZATION		      |
