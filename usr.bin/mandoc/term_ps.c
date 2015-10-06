@@ -1,4 +1,4 @@
-/*	$OpenBSD: term_ps.c,v 1.39 2015/04/04 17:46:58 schwarze Exp $ */
+/*	$OpenBSD: term_ps.c,v 1.40 2015/10/06 18:30:44 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -511,7 +511,7 @@ pdf_alloc(const struct mchars *mchars, const struct manoutput *outopts)
 	if (NULL != (p = pspdf_alloc(mchars, outopts)))
 		p->type = TERMTYPE_PDF;
 
-	return(p);
+	return p;
 }
 
 void *
@@ -522,7 +522,7 @@ ps_alloc(const struct mchars *mchars, const struct manoutput *outopts)
 	if (NULL != (p = pspdf_alloc(mchars, outopts)))
 		p->type = TERMTYPE_PS;
 
-	return(p);
+	return p;
 }
 
 static struct termp *
@@ -611,7 +611,7 @@ pspdf_alloc(const struct mchars *mchars, const struct manoutput *outopts)
 	p->ps->lineheight = lineheight;
 
 	p->defrmargin = pagex - (marginx * 2);
-	return(p);
+	return p;
 }
 
 static void
@@ -1265,7 +1265,7 @@ ps_width(const struct termp *p, int c)
 	else
 		c -= 32;
 
-	return((size_t)fonts[(int)TERMFONT_NONE].gly[c].wx);
+	return (size_t)fonts[(int)TERMFONT_NONE].gly[c].wx;
 }
 
 static int
@@ -1320,7 +1320,7 @@ ps_hspan(const struct termp *p, const struct roffsu *su)
 		break;
 	}
 
-	return(r * 24.0);
+	return r * 24.0;
 }
 
 static void

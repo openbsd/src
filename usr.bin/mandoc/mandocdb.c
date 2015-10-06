@@ -1,4 +1,4 @@
-/*	$OpenBSD: mandocdb.c,v 1.149 2015/09/16 09:49:48 schwarze Exp $ */
+/*	$OpenBSD: mandocdb.c,v 1.150 2015/10/06 18:30:43 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -537,7 +537,7 @@ out:
 	mpages_free();
 	ohash_delete(&mpages);
 	ohash_delete(&mlinks);
-	return(exitcode);
+	return exitcode;
 usage:
 	fprintf(stderr, "usage: %s [-aDnpQ] [-C file] [-Tutf8]\n"
 			"       %s [-aDnpQ] [-Tutf8] dir ...\n"
@@ -547,7 +547,7 @@ usage:
 		       progname, progname, progname,
 		       progname, progname);
 
-	return((int)MANDOCLEVEL_BADARG);
+	return (int)MANDOCLEVEL_BADARG;
 }
 
 /*
@@ -584,7 +584,7 @@ treescan(void)
 	if (NULL == f) {
 		exitcode = (int)MANDOCLEVEL_SYSERR;
 		say("", "&fts_open");
-		return(0);
+		return 0;
 	}
 
 	dsec = arch = NULL;
@@ -749,7 +749,7 @@ treescan(void)
 	}
 
 	fts_close(f);
-	return(1);
+	return 1;
 }
 
 /*
@@ -1586,7 +1586,7 @@ parse_mdoc_Fd(struct mpage *mpage, const struct roff_meta *meta,
 	if (SEC_SYNOPSIS != n->sec ||
 	    NULL == (n = n->child) ||
 	    n->type != ROFFT_TEXT)
-		return(0);
+		return 0;
 
 	/*
 	 * Only consider those `Fd' macro fields that begin with an
@@ -1594,10 +1594,10 @@ parse_mdoc_Fd(struct mpage *mpage, const struct roff_meta *meta,
 	 */
 
 	if (strcmp("#include", n->string))
-		return(0);
+		return 0;
 
 	if ((n = n->next) == NULL || n->type != ROFFT_TEXT)
-		return(0);
+		return 0;
 
 	/*
 	 * Strip away the enclosing angle brackets and make sure we're
@@ -1609,7 +1609,7 @@ parse_mdoc_Fd(struct mpage *mpage, const struct roff_meta *meta,
 		start++;
 
 	if (0 == (sz = strlen(start)))
-		return(0);
+		return 0;
 
 	end = &start[(int)sz - 1];
 	if ('>' == *end || '"' == *end)
@@ -1617,7 +1617,7 @@ parse_mdoc_Fd(struct mpage *mpage, const struct roff_meta *meta,
 
 	if (end > start)
 		putkeys(mpage, start, end - start + 1, TYPE_In);
-	return(0);
+	return 0;
 }
 
 static void
@@ -1647,7 +1647,7 @@ parse_mdoc_Fn(struct mpage *mpage, const struct roff_meta *meta,
 {
 
 	if (n->child == NULL)
-		return(0);
+		return 0;
 
 	parse_mdoc_fname(mpage, n->child);
 
@@ -1655,7 +1655,7 @@ parse_mdoc_Fn(struct mpage *mpage, const struct roff_meta *meta,
 		if (n->type == ROFFT_TEXT)
 			putkey(mpage, n->string, TYPE_Fa);
 
-	return(0);
+	return 0;
 }
 
 static int
@@ -1664,12 +1664,12 @@ parse_mdoc_Fo(struct mpage *mpage, const struct roff_meta *meta,
 {
 
 	if (n->type != ROFFT_HEAD)
-		return(1);
+		return 1;
 
 	if (n->child != NULL)
 		parse_mdoc_fname(mpage, n->child);
 
-	return(0);
+	return 0;
 }
 
 static int
@@ -1679,17 +1679,17 @@ parse_mdoc_Xr(struct mpage *mpage, const struct roff_meta *meta,
 	char	*cp;
 
 	if (NULL == (n = n->child))
-		return(0);
+		return 0;
 
 	if (NULL == n->next) {
 		putkey(mpage, n->string, TYPE_Xr);
-		return(0);
+		return 0;
 	}
 
 	mandoc_asprintf(&cp, "%s(%s)", n->string, n->next->string);
 	putkey(mpage, cp, TYPE_Xr);
 	free(cp);
-	return(0);
+	return 0;
 }
 
 static int
@@ -1699,7 +1699,7 @@ parse_mdoc_Nd(struct mpage *mpage, const struct roff_meta *meta,
 
 	if (n->type == ROFFT_BODY)
 		deroff(&mpage->desc, n);
-	return(0);
+	return 0;
 }
 
 static int
@@ -1721,7 +1721,7 @@ parse_mdoc_Nm(struct mpage *mpage, const struct roff_meta *meta,
 		putkey(mpage, n->child->string, ROFFT_HEAD);
 		mpage->name_head_done = 1;
 	}
-	return(0);
+	return 0;
 }
 
 static int
@@ -1729,7 +1729,7 @@ parse_mdoc_Sh(struct mpage *mpage, const struct roff_meta *meta,
 	const struct roff_node *n)
 {
 
-	return(n->sec == SEC_CUSTOM && n->type == ROFFT_HEAD);
+	return n->sec == SEC_CUSTOM && n->type == ROFFT_HEAD;
 }
 
 static int
@@ -1737,7 +1737,7 @@ parse_mdoc_head(struct mpage *mpage, const struct roff_meta *meta,
 	const struct roff_node *n)
 {
 
-	return(n->type == ROFFT_HEAD);
+	return n->type == ROFFT_HEAD;
 }
 
 static int
@@ -1745,7 +1745,7 @@ parse_mdoc_body(struct mpage *mpage, const struct roff_meta *meta,
 	const struct roff_node *n)
 {
 
-	return(n->type == ROFFT_BODY);
+	return n->type == ROFFT_BODY;
 }
 
 /*
@@ -1850,10 +1850,10 @@ utf8(unsigned int cp, char out[7])
 		out[4] = (cp >> 6  & 63) | 128;
 		out[5] = (cp       & 63) | 128;
 	} else
-		return(0);
+		return 0;
 
 	out[rc] = '\0';
-	return(rc);
+	return rc;
 }
 
 /*
@@ -1977,9 +1977,9 @@ render_string(char **public, size_t *psz)
 		--*psz;
 	if (dst != NULL) {
 		(*public)[*psz] = '\0';
-		return(1);
+		return 1;
 	} else
-		return(0);
+		return 0;
 }
 
 static void
@@ -2246,7 +2246,7 @@ dbopen(int real)
 	int		 rc, ofl;
 
 	if (nodb)
-		return(1);
+		return 1;
 
 	*tempfilename = '\0';
 	ofl = SQLITE_OPEN_READWRITE;
@@ -2257,7 +2257,7 @@ dbopen(int real)
 			exitcode = (int)MANDOCLEVEL_SYSERR;
 			if (SQLITE_CANTOPEN != rc)
 				say(MANDOC_DB, "%s", sqlite3_errstr(rc));
-			return(0);
+			return 0;
 		}
 		goto prepare_statements;
 	}
@@ -2271,7 +2271,7 @@ dbopen(int real)
 	if (MPARSE_QUICK & mparse_options) {
 		exitcode = (int)MANDOCLEVEL_SYSERR;
 		say(MANDOC_DB "~", "%s", sqlite3_errstr(rc));
-		return(0);
+		return 0;
 	}
 
 	(void)strlcpy(tempfilename, "/tmp/mandocdb.XXXXXX",
@@ -2279,7 +2279,7 @@ dbopen(int real)
 	if (NULL == mkdtemp(tempfilename)) {
 		exitcode = (int)MANDOCLEVEL_SYSERR;
 		say("", "&%s", tempfilename);
-		return(0);
+		return 0;
 	}
 	(void)strlcat(tempfilename, "/" MANDOC_DB,
 	    sizeof(tempfilename));
@@ -2287,7 +2287,7 @@ dbopen(int real)
 	if (SQLITE_OK != rc) {
 		exitcode = (int)MANDOCLEVEL_SYSERR;
 		say("", "%s: %s", tempfilename, sqlite3_errstr(rc));
-		return(0);
+		return 0;
 	}
 
 create_tables:
@@ -2326,7 +2326,7 @@ create_tables:
 		exitcode = (int)MANDOCLEVEL_SYSERR;
 		say(MANDOC_DB, "%s", sqlite3_errmsg(db));
 		sqlite3_close(db);
-		return(0);
+		return 0;
 	}
 
 prepare_statements:
@@ -2336,7 +2336,7 @@ prepare_statements:
 		say(MANDOC_DB, "PRAGMA foreign_keys: %s",
 		    sqlite3_errmsg(db));
 		sqlite3_close(db);
-		return(0);
+		return 0;
 	}
 
 	sql = "DELETE FROM mpages WHERE pageid IN "
@@ -2369,24 +2369,24 @@ prepare_statements:
 		say(MANDOC_DB, "PRAGMA synchronous: %s",
 		    sqlite3_errmsg(db));
 		sqlite3_close(db);
-		return(0);
+		return 0;
 	}
 
-	return(1);
+	return 1;
 }
 
 static void *
 hash_calloc(size_t n, size_t sz, void *arg)
 {
 
-	return(mandoc_calloc(n, sz));
+	return mandoc_calloc(n, sz);
 }
 
 static void *
 hash_alloc(size_t sz, void *arg)
 {
 
-	return(mandoc_malloc(sz));
+	return mandoc_malloc(sz);
 }
 
 static void
@@ -2435,12 +2435,12 @@ set_basedir(const char *targetdir, int report_baddir)
 		if (2 == getcwd_status) {
 			exitcode = (int)MANDOCLEVEL_SYSERR;
 			say("", "getcwd: %s", startdir);
-			return(0);
+			return 0;
 		}
 		if (-1 == chdir(startdir)) {
 			exitcode = (int)MANDOCLEVEL_SYSERR;
 			say("", "&chdir %s", startdir);
-			return(0);
+			return 0;
 		}
 	}
 
@@ -2454,13 +2454,13 @@ set_basedir(const char *targetdir, int report_baddir)
 			exitcode = (int)MANDOCLEVEL_BADARG;
 			say("", "&%s: realpath", targetdir);
 		}
-		return(0);
+		return 0;
 	} else if (-1 == chdir(basedir)) {
 		if (report_baddir || errno != ENOENT) {
 			exitcode = (int)MANDOCLEVEL_BADARG;
 			say("", "&chdir");
 		}
-		return(0);
+		return 0;
 	}
 	chdir_status = 1;
 	cp = strchr(basedir, '\0');
@@ -2468,12 +2468,12 @@ set_basedir(const char *targetdir, int report_baddir)
 		if (cp - basedir >= PATH_MAX - 1) {
 			exitcode = (int)MANDOCLEVEL_SYSERR;
 			say("", "Filename too long");
-			return(0);
+			return 0;
 		}
 		*cp++ = '/';
 		*cp = '\0';
 	}
-	return(1);
+	return 1;
 }
 
 static void

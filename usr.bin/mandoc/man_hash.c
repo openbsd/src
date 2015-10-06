@@ -1,6 +1,7 @@
-/*	$OpenBSD: man_hash.c,v 1.23 2015/04/19 13:59:37 schwarze Exp $ */
+/*	$OpenBSD: man_hash.c,v 1.24 2015/10/06 18:30:43 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2015 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -79,20 +80,20 @@ man_hash_find(const char *tmp)
 	int		 tok;
 
 	if ('\0' == (x = tmp[0]))
-		return(TOKEN_NONE);
+		return TOKEN_NONE;
 	if ( ! (isalpha((unsigned char)x)))
-		return(TOKEN_NONE);
+		return TOKEN_NONE;
 
 	HASH_ROW(x);
 
 	for (i = 0; i < HASH_DEPTH; i++) {
 		if (UCHAR_MAX == (y = table[x + i]))
-			return(TOKEN_NONE);
+			return TOKEN_NONE;
 
 		tok = y;
 		if (0 == strcmp(tmp, man_macronames[tok]))
-			return(tok);
+			return tok;
 	}
 
-	return(TOKEN_NONE);
+	return TOKEN_NONE;
 }

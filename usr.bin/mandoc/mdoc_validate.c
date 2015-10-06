@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_validate.c,v 1.209 2015/09/26 00:53:15 schwarze Exp $ */
+/*	$OpenBSD: mdoc_validate.c,v 1.210 2015/10/06 18:30:44 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -1819,8 +1819,8 @@ child_an(const struct roff_node *n)
 
 	for (n = n->child; n != NULL; n = n->next)
 		if ((n->tok == MDOC_An && n->nchild) || child_an(n))
-			return(1);
-	return(0);
+			return 1;
+	return 0;
 }
 
 static void
@@ -2292,9 +2292,9 @@ a2sec(const char *p)
 
 	for (i = 0; i < (int)SEC__MAX; i++)
 		if (secnames[i] && 0 == strcmp(p, secnames[i]))
-			return((enum roff_sec)i);
+			return (enum roff_sec)i;
 
-	return(SEC_CUSTOM);
+	return SEC_CUSTOM;
 }
 
 static size_t
@@ -2303,89 +2303,89 @@ macro2len(int macro)
 
 	switch (macro) {
 	case MDOC_Ad:
-		return(12);
+		return 12;
 	case MDOC_Ao:
-		return(12);
+		return 12;
 	case MDOC_An:
-		return(12);
+		return 12;
 	case MDOC_Aq:
-		return(12);
+		return 12;
 	case MDOC_Ar:
-		return(12);
+		return 12;
 	case MDOC_Bo:
-		return(12);
+		return 12;
 	case MDOC_Bq:
-		return(12);
+		return 12;
 	case MDOC_Cd:
-		return(12);
+		return 12;
 	case MDOC_Cm:
-		return(10);
+		return 10;
 	case MDOC_Do:
-		return(10);
+		return 10;
 	case MDOC_Dq:
-		return(12);
+		return 12;
 	case MDOC_Dv:
-		return(12);
+		return 12;
 	case MDOC_Eo:
-		return(12);
+		return 12;
 	case MDOC_Em:
-		return(10);
+		return 10;
 	case MDOC_Er:
-		return(17);
+		return 17;
 	case MDOC_Ev:
-		return(15);
+		return 15;
 	case MDOC_Fa:
-		return(12);
+		return 12;
 	case MDOC_Fl:
-		return(10);
+		return 10;
 	case MDOC_Fo:
-		return(16);
+		return 16;
 	case MDOC_Fn:
-		return(16);
+		return 16;
 	case MDOC_Ic:
-		return(10);
+		return 10;
 	case MDOC_Li:
-		return(16);
+		return 16;
 	case MDOC_Ms:
-		return(6);
+		return 6;
 	case MDOC_Nm:
-		return(10);
+		return 10;
 	case MDOC_No:
-		return(12);
+		return 12;
 	case MDOC_Oo:
-		return(10);
+		return 10;
 	case MDOC_Op:
-		return(14);
+		return 14;
 	case MDOC_Pa:
-		return(32);
+		return 32;
 	case MDOC_Pf:
-		return(12);
+		return 12;
 	case MDOC_Po:
-		return(12);
+		return 12;
 	case MDOC_Pq:
-		return(12);
+		return 12;
 	case MDOC_Ql:
-		return(16);
+		return 16;
 	case MDOC_Qo:
-		return(12);
+		return 12;
 	case MDOC_So:
-		return(12);
+		return 12;
 	case MDOC_Sq:
-		return(12);
+		return 12;
 	case MDOC_Sy:
-		return(6);
+		return 6;
 	case MDOC_Sx:
-		return(16);
+		return 16;
 	case MDOC_Tn:
-		return(10);
+		return 10;
 	case MDOC_Va:
-		return(12);
+		return 12;
 	case MDOC_Vt:
-		return(12);
+		return 12;
 	case MDOC_Xr:
-		return(10);
+		return 10;
 	default:
 		break;
 	};
-	return(0);
+	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: term_ascii.c,v 1.34 2015/09/26 00:53:15 schwarze Exp $ */
+/*	$OpenBSD: term_ascii.c,v 1.35 2015/10/06 18:30:44 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -103,28 +103,28 @@ ascii_init(enum termenc enc, const struct mchars *mchars,
 	if (outopts->synopsisonly)
 		p->synopsisonly = 1;
 
-	return(p);
+	return p;
 }
 
 void *
 ascii_alloc(const struct mchars *mchars, const struct manoutput *outopts)
 {
 
-	return(ascii_init(TERMENC_ASCII, mchars, outopts));
+	return ascii_init(TERMENC_ASCII, mchars, outopts);
 }
 
 void *
 utf8_alloc(const struct mchars *mchars, const struct manoutput *outopts)
 {
 
-	return(ascii_init(TERMENC_UTF8, mchars, outopts));
+	return ascii_init(TERMENC_UTF8, mchars, outopts);
 }
 
 void *
 locale_alloc(const struct mchars *mchars, const struct manoutput *outopts)
 {
 
-	return(ascii_init(TERMENC_LOCALE, mchars, outopts));
+	return ascii_init(TERMENC_LOCALE, mchars, outopts);
 }
 
 static void
@@ -164,7 +164,7 @@ static size_t
 ascii_width(const struct termp *p, int c)
 {
 
-	return(1);
+	return 1;
 }
 
 void
@@ -249,7 +249,7 @@ ascii_hspan(const struct termp *p, const struct roffsu *su)
 	default:
 		abort();
 	}
-	return(r > 0.0 ? r + 0.01 : r - 0.01);
+	return r > 0.0 ? r + 0.01 : r - 0.01;
 }
 
 const char *
@@ -324,8 +324,8 @@ ascii_uc2str(int uc)
 
 	assert(uc >= 0);
 	if ((size_t)uc < sizeof(tab)/sizeof(tab[0]))
-		return(tab[uc]);
-	return(mchars_uc2str(uc));
+		return tab[uc];
+	return mchars_uc2str(uc);
 }
 
 static size_t
@@ -338,7 +338,7 @@ locale_width(const struct termp *p, int c)
 	rc = wcwidth(c);
 	if (rc < 0)
 		rc = 0;
-	return(rc);
+	return rc;
 }
 
 static void

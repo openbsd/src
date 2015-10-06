@@ -1,4 +1,4 @@
-/*	$OpenBSD: man_html.c,v 1.71 2015/09/26 00:53:15 schwarze Exp $ */
+/*	$OpenBSD: man_html.c,v 1.72 2015/10/06 18:30:43 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -276,11 +276,11 @@ a2width(const struct roff_node *n, struct roffsu *su)
 {
 
 	if (n->type != ROFFT_TEXT)
-		return(0);
+		return 0;
 	if (a2roffsu(n->string, su, SCALE_EN))
-		return(1);
+		return 1;
 
-	return(0);
+	return 0;
 }
 
 static void
@@ -369,7 +369,7 @@ man_br_pre(MAN_ARGS)
 	/* So the div isn't empty: */
 	print_text(h, "\\~");
 
-	return(0);
+	return 0;
 }
 
 static int
@@ -381,12 +381,12 @@ man_SH_pre(MAN_ARGS)
 		mh->fl &= ~MANH_LITERAL;
 		PAIR_CLASS_INIT(&tag, "section");
 		print_otag(h, TAG_DIV, 1, &tag);
-		return(1);
+		return 1;
 	} else if (n->type == ROFFT_BODY)
-		return(1);
+		return 1;
 
 	print_otag(h, TAG_H1, 0, NULL);
-	return(1);
+	return 1;
 }
 
 static int
@@ -442,7 +442,7 @@ man_alt_pre(MAN_ARGS)
 	if (savelit)
 		mh->fl |= MANH_LITERAL;
 
-	return(0);
+	return 0;
 }
 
 static int
@@ -452,7 +452,7 @@ man_SM_pre(MAN_ARGS)
 	print_otag(h, TAG_SMALL, 0, NULL);
 	if (MAN_SB == n->tok)
 		print_otag(h, TAG_B, 0, NULL);
-	return(1);
+	return 1;
 }
 
 static int
@@ -464,12 +464,12 @@ man_SS_pre(MAN_ARGS)
 		mh->fl &= ~MANH_LITERAL;
 		PAIR_CLASS_INIT(&tag, "subsection");
 		print_otag(h, TAG_DIV, 1, &tag);
-		return(1);
+		return 1;
 	} else if (n->type == ROFFT_BODY)
-		return(1);
+		return 1;
 
 	print_otag(h, TAG_H2, 0, NULL);
-	return(1);
+	return 1;
 }
 
 static int
@@ -477,11 +477,11 @@ man_PP_pre(MAN_ARGS)
 {
 
 	if (n->type == ROFFT_HEAD)
-		return(0);
+		return 0;
 	else if (n->type == ROFFT_BLOCK)
 		print_bvspace(h, n);
 
-	return(1);
+	return 1;
 }
 
 static int
@@ -491,10 +491,10 @@ man_IP_pre(MAN_ARGS)
 
 	if (n->type == ROFFT_BODY) {
 		print_otag(h, TAG_DD, 0, NULL);
-		return(1);
+		return 1;
 	} else if (n->type != ROFFT_HEAD) {
 		print_otag(h, TAG_DL, 0, NULL);
-		return(1);
+		return 1;
 	}
 
 	/* FIXME: width specification. */
@@ -518,7 +518,7 @@ man_IP_pre(MAN_ARGS)
 		}
 	}
 
-	return(0);
+	return 0;
 }
 
 static int
@@ -529,9 +529,9 @@ man_HP_pre(MAN_ARGS)
 	const struct roff_node *np;
 
 	if (n->type == ROFFT_HEAD)
-		return(0);
+		return 0;
 	else if (n->type != ROFFT_BLOCK)
-		return(1);
+		return 1;
 
 	np = n->head->child;
 
@@ -547,7 +547,7 @@ man_HP_pre(MAN_ARGS)
 	PAIR_STYLE_INIT(&tag[0], h);
 	PAIR_CLASS_INIT(&tag[1], "spacer");
 	print_otag(h, TAG_DIV, 2, tag);
-	return(1);
+	return 1;
 }
 
 static int
@@ -576,7 +576,7 @@ man_OP_pre(MAN_ARGS)
 	print_stagq(h, tt);
 	h->flags |= HTML_NOSPACE;
 	print_text(h, "]");
-	return(0);
+	return 0;
 }
 
 static int
@@ -584,7 +584,7 @@ man_B_pre(MAN_ARGS)
 {
 
 	print_otag(h, TAG_B, 0, NULL);
-	return(1);
+	return 1;
 }
 
 static int
@@ -592,7 +592,7 @@ man_I_pre(MAN_ARGS)
 {
 
 	print_otag(h, TAG_I, 0, NULL);
-	return(1);
+	return 1;
 }
 
 static int
@@ -605,7 +605,7 @@ man_literal_pre(MAN_ARGS)
 	} else
 		mh->fl |= MANH_LITERAL;
 
-	return(0);
+	return 0;
 }
 
 static int
@@ -613,14 +613,14 @@ man_in_pre(MAN_ARGS)
 {
 
 	print_otag(h, TAG_BR, 0, NULL);
-	return(0);
+	return 0;
 }
 
 static int
 man_ign_pre(MAN_ARGS)
 {
 
-	return(0);
+	return 0;
 }
 
 static int
@@ -630,9 +630,9 @@ man_RS_pre(MAN_ARGS)
 	struct roffsu	 su;
 
 	if (n->type == ROFFT_HEAD)
-		return(0);
+		return 0;
 	else if (n->type == ROFFT_BODY)
-		return(1);
+		return 1;
 
 	SCALE_HS_INIT(&su, INDENT);
 	if (n->head->child)
@@ -642,7 +642,7 @@ man_RS_pre(MAN_ARGS)
 	bufcat_su(h, "margin-left", &su);
 	PAIR_STYLE_INIT(&tag, h);
 	print_otag(h, TAG_DIV, 1, &tag);
-	return(1);
+	return 1;
 }
 
 static int
@@ -665,5 +665,5 @@ man_UR_pre(MAN_ARGS)
 
 	print_man_nodelist(man, n->child, mh, h);
 
-	return(0);
+	return 0;
 }

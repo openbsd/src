@@ -1,4 +1,4 @@
-/*	$OpenBSD: att.c,v 1.10 2015/04/02 21:03:18 schwarze Exp $ */
+/*	$OpenBSD: att.c,v 1.11 2015/10/06 18:30:43 schwarze Exp $ */
 /*
  * Copyright (c) 2009 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -44,5 +44,5 @@ mdoc_a2att(const char *p)
 	LINE("V.3",	"AT&T System\\~V Release\\~3 UNIX");
 	LINE("V.4",	"AT&T System\\~V Release\\~4 UNIX");
 
-	return(NULL);
+	return NULL;
 }

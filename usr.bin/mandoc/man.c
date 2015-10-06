@@ -1,4 +1,4 @@
-/*	$OpenBSD: man.c,v 1.112 2015/09/04 21:24:26 schwarze Exp $ */
+/*	$OpenBSD: man.c,v 1.113 2015/10/06 18:30:43 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -60,9 +60,9 @@ man_parseln(struct roff_man *man, int ln, char *buf, int offs)
 	if (man->last->type != ROFFT_EQN || ln > man->last->line)
 		man->flags |= MAN_NEWLINE;
 
-	return (roff_getcontrol(man->roff, buf, &offs) ?
+	return roff_getcontrol(man->roff, buf, &offs) ?
 	    man_pmacro(man, ln, buf, offs) :
-	    man_ptext(man, ln, buf, offs));
+	    man_ptext(man, ln, buf, offs);
 }
 
 static void
@@ -95,7 +95,7 @@ man_ptext(struct roff_man *man, int line, char *buf, int offs)
 	if (man->flags & MAN_LITERAL) {
 		roff_word_alloc(man, line, offs, buf + offs);
 		man_descope(man, line, offs);
-		return(1);
+		return 1;
 	}
 
 	for (i = offs; buf[i] == ' '; i++)
@@ -113,7 +113,7 @@ man_ptext(struct roff_man *man, int line, char *buf, int offs)
 			roff_elem_alloc(man, line, offs, MAN_sp);
 			man->next = ROFF_NEXT_SIBLING;
 		}
-		return(1);
+		return 1;
 	}
 
 	/*
@@ -150,7 +150,7 @@ man_ptext(struct roff_man *man, int line, char *buf, int offs)
 		man->last->flags |= MAN_EOS;
 
 	man_descope(man, line, offs);
-	return(1);
+	return 1;
 }
 
 static int
@@ -181,7 +181,7 @@ man_pmacro(struct roff_man *man, int ln, char *buf, int offs)
 	if (tok == TOKEN_NONE) {
 		mandoc_msg(MANDOCERR_MACRO, man->parse,
 		    ln, ppos, buf + ppos - 1);
-		return(1);
+		return 1;
 	}
 
 	/* Skip a leading escape sequence or tab. */
@@ -232,7 +232,7 @@ man_pmacro(struct roff_man *man, int ln, char *buf, int offs)
 		n = man->last;
 		if (n->type == ROFFT_BODY &&
 		    strcmp(n->prev->child->string, "NAME"))
-			return(2);
+			return 2;
 	}
 
 	/*
@@ -243,14 +243,14 @@ man_pmacro(struct roff_man *man, int ln, char *buf, int offs)
 
 	if ( ! bline || man->flags & MAN_ELINE ||
 	    man_macros[tok].flags & MAN_NSCOPED)
-		return(1);
+		return 1;
 
 	assert(man->flags & MAN_BLINE);
 	man->flags &= ~MAN_BLINE;
 
 	man_unscope(man, man->last->parent);
 	roff_body_alloc(man, ln, ppos, man->last->tok);
-	return(1);
+	return 1;
 }
 
 void
@@ -328,5 +328,5 @@ man_mparse(const struct roff_man *man)
 {
 
 	assert(man && man->parse);
-	return(man->parse);
+	return man->parse;
 }

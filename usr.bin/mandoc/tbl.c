@@ -1,4 +1,4 @@
-/*	$OpenBSD: tbl.c,v 1.20 2015/01/30 17:31:20 schwarze Exp $ */
+/*	$OpenBSD: tbl.c,v 1.21 2015/10/06 18:30:44 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -64,7 +64,7 @@ tbl_read(struct tbl_node *tbl, int ln, const char *p, int pos)
 		if (*cp == ';') {
 			tbl_option(tbl, ln, p, &pos);
 			if (p[pos] == '\0')
-				return(ROFF_IGN);
+				return ROFF_IGN;
 		}
 	}
 
@@ -73,15 +73,15 @@ tbl_read(struct tbl_node *tbl, int ln, const char *p, int pos)
 	switch (tbl->part) {
 	case TBL_PART_LAYOUT:
 		tbl_layout(tbl, ln, p, pos);
-		return(ROFF_IGN);
+		return ROFF_IGN;
 	case TBL_PART_CDATA:
-		return(tbl_cdata(tbl, ln, p, pos) ? ROFF_TBL : ROFF_IGN);
+		return tbl_cdata(tbl, ln, p, pos) ? ROFF_TBL : ROFF_IGN;
 	default:
 		break;
 	}
 
 	tbl_data(tbl, ln, p, pos);
-	return(ROFF_TBL);
+	return ROFF_TBL;
 }
 
 struct tbl_node *
@@ -96,7 +96,7 @@ tbl_alloc(int pos, int line, struct mparse *parse)
 	tbl->part = TBL_PART_OPTS;
 	tbl->opts.tab = '\t';
 	tbl->opts.decimal = '.';
-	return(tbl);
+	return tbl;
 }
 
 void
@@ -153,7 +153,7 @@ tbl_span(struct tbl_node *tbl)
 				 : tbl->first_span;
 	if (span)
 		tbl->current_span = span;
-	return(span);
+	return span;
 }
 
 int
@@ -175,7 +175,7 @@ tbl_end(struct tbl_node **tblp)
 	if (sp == NULL) {
 		mandoc_msg(MANDOCERR_TBLDATA_NONE, tbl->parse,
 		    tbl->line, tbl->pos, NULL);
-		return(0);
+		return 0;
 	}
-	return(1);
+	return 1;
 }

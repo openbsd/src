@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.9 2015/04/02 21:03:18 schwarze Exp $ */
+/*	$OpenBSD: st.c,v 1.10 2015/10/06 18:30:44 schwarze Exp $ */
 /*
  * Copyright (c) 2009 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -31,5 +31,5 @@ mdoc_a2st(const char *p)
 
 #include "st.in"
 
-	return(NULL);
+	return NULL;
 }

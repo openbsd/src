@@ -1,4 +1,4 @@
-/*	$OpenBSD: html.c,v 1.57 2015/09/26 00:53:15 schwarze Exp $ */
+/*	$OpenBSD: html.c,v 1.58 2015/10/06 18:30:43 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -143,7 +143,7 @@ html_alloc(const struct mchars *mchars, const struct manoutput *outopts)
 	if (outopts->fragment)
 		h->oflags |= HTML_FRAGMENT;
 
-	return(h);
+	return h;
 }
 
 void
@@ -279,7 +279,7 @@ html_strlen(const char *cp)
 		cp++;
 		switch (mandoc_escape(&cp, NULL, NULL)) {
 		case ESCAPE_ERROR:
-			return(sz);
+			return sz;
 		case ESCAPE_UNICODE:
 			/* FALLTHROUGH */
 		case ESCAPE_NUMBERED:
@@ -299,7 +299,7 @@ html_strlen(const char *cp)
 			break;
 		}
 	}
-	return(sz);
+	return sz;
 }
 
 static int
@@ -328,9 +328,9 @@ print_escape(char c)
 	case ASCII_BREAK:
 		break;
 	default:
-		return(0);
+		return 0;
 	}
-	return(1);
+	return 1;
 }
 
 static int
@@ -430,7 +430,7 @@ print_encode(struct html *h, const char *p, int norecurse)
 			putchar(c);
 	}
 
-	return(nospace);
+	return nospace;
 }
 
 static void
@@ -492,7 +492,7 @@ print_otag(struct html *h, enum htmltag tag,
 	if ((HTML_AUTOCLOSE | HTML_CLRLINE) & htmltags[tag].flags)
 		putchar('\n');
 
-	return(t);
+	return t;
 }
 
 static void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: preconv.c,v 1.6 2015/03/09 21:30:27 schwarze Exp $ */
+/*	$OpenBSD: preconv.c,v 1.7 2015/10/06 18:30:44 schwarze Exp $ */
 /*
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -90,17 +90,17 @@ preconv_encode(struct buf *ib, size_t *ii, struct buf *ob, size_t *oi,
 	*oi += snprintf(ob->buf + *oi, 11, "\\[u%.4X]", accum);
 	*ii = (char *)cu - ib->buf;
 	*filenc &= ~MPARSE_LATIN1;
-	return(1);
+	return 1;
 
 latin:
 	if ( ! (*filenc & MPARSE_LATIN1))
-		return(0);
+		return 0;
 
 	*oi += snprintf(ob->buf + *oi, 11,
 	    "\\[u%.4X]", (unsigned char)ib->buf[(*ii)++]);
 
 	*filenc &= ~MPARSE_UTF8;
-	return(1);
+	return 1;
 }
 
 int
@@ -121,7 +121,7 @@ preconv_cue(const struct buf *b, size_t offset)
 
 	if ((sz = (size_t)(eoln - ln)) < 10 ||
 	    memcmp(ln, ".\\\" -*-", 7) || memcmp(eoln - 3, "-*-", 3))
-		return(MPARSE_UTF8 | MPARSE_LATIN1);
+		return MPARSE_UTF8 | MPARSE_LATIN1;
 
 	/* Move after the header and adjust for the trailer. */
 
@@ -160,15 +160,15 @@ preconv_cue(const struct buf *b, size_t offset)
 			sz--;
 		}
 		if (0 == sz)
-			return(0);
+			return 0;
 
 		/* Check us against known encodings. */
 
 		if (phsz > 4 && !strncasecmp(ln, "utf-8", 5))
-			return(MPARSE_UTF8);
+			return MPARSE_UTF8;
 		if (phsz > 10 && !strncasecmp(ln, "iso-latin-1", 11))
-			return(MPARSE_LATIN1);
-		return(0);
+			return MPARSE_LATIN1;
+		return 0;
 	}
-	return(MPARSE_UTF8 | MPARSE_LATIN1);
+	return MPARSE_UTF8 | MPARSE_LATIN1;
 }

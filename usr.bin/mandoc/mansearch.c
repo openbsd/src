@@ -1,4 +1,4 @@
-/*	$OpenBSD: mansearch.c,v 1.44 2015/04/01 12:48:00 schwarze Exp $ */
+/*	$OpenBSD: mansearch.c,v 1.45 2015/10/06 18:30:44 schwarze Exp $ */
 /*
  * Copyright (c) 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -113,7 +113,7 @@ mansearch_setup(int start)
 	if (start) {
 		if (NULL != pagecache) {
 			fprintf(stderr, "pagecache already enabled\n");
-			return((int)MANDOCLEVEL_BADARG);
+			return (int)MANDOCLEVEL_BADARG;
 		}
 
 		pagecache = mmap(NULL, PC_PAGESIZE * PC_NUMPAGES,
@@ -123,30 +123,30 @@ mansearch_setup(int start)
 		if (MAP_FAILED == pagecache) {
 			perror("mmap");
 			pagecache = NULL;
-			return((int)MANDOCLEVEL_SYSERR);
+			return (int)MANDOCLEVEL_SYSERR;
 		}
 
 		c = sqlite3_config(SQLITE_CONFIG_PAGECACHE,
 		    pagecache, PC_PAGESIZE, PC_NUMPAGES);
 
 		if (SQLITE_OK == c)
-			return((int)MANDOCLEVEL_OK);
+			return (int)MANDOCLEVEL_OK;
 
 		fprintf(stderr, "pagecache: %s\n", sqlite3_errstr(c));
 
 	} else if (NULL == pagecache) {
 		fprintf(stderr, "pagecache missing\n");
-		return((int)MANDOCLEVEL_BADARG);
+		return (int)MANDOCLEVEL_BADARG;
 	}
 
 	if (-1 == munmap(pagecache, PC_PAGESIZE * PC_NUMPAGES)) {
 		perror("munmap");
 		pagecache = NULL;
-		return((int)MANDOCLEVEL_SYSERR);
+		return (int)MANDOCLEVEL_SYSERR;
 	}
 
 	pagecache = NULL;
-	return((int)MANDOCLEVEL_OK);
+	return (int)MANDOCLEVEL_OK;
 }
 
 int
@@ -172,7 +172,7 @@ mansearch(const struct mansearch *search,
 
 	if (argc == 0 || (e = exprcomp(search, argc, argv)) == NULL) {
 		*sz = 0;
-		return(0);
+		return 0;
 	}
 
 	info.calloc = hash_calloc;
@@ -370,7 +370,7 @@ mansearch(const struct mansearch *search,
 	exprfree(e);
 	free(sql);
 	*sz = cur;
-	return(1);
+	return 1;
 }
 
 void
@@ -394,9 +394,9 @@ manpage_compare(const void *vp1, const void *vp2)
 
 	mp1 = vp1;
 	mp2 = vp2;
-	return(	(diff = mp2->bits - mp1->bits) ? diff :
-		(diff = mp1->sec - mp2->sec) ? diff :
-		strcasecmp(mp1->names, mp2->names));
+	return (diff = mp2->bits - mp1->bits) ? diff :
+	    (diff = mp1->sec - mp2->sec) ? diff :
+	    strcasecmp(mp1->names, mp2->names);
 }
 
 static void
@@ -557,7 +557,7 @@ buildoutput(sqlite3 *db, sqlite3_stmt *s, uint64_t pageid, uint64_t outbit)
 	if (SQLITE_DONE != c)
 		fprintf(stderr, "%s\n", sqlite3_errmsg(db));
 	sqlite3_reset(s);
-	return(output);
+	return output;
 }
 
 /*
@@ -652,7 +652,7 @@ sql_statement(const struct expr *e)
 		needop = 1;
 	}
 
-	return(sql);
+	return sql;
 }
 
 /*
@@ -735,12 +735,12 @@ exprcomp(const struct mansearch *search, int argc, char *argv[])
 		toopen = logic = igncase = 0;
 	}
 	if ( ! (toopen || logic || igncase || toclose))
-		return(first);
+		return first;
 
 fail:
 	if (NULL != first)
 		exprfree(first);
-	return(NULL);
+	return NULL;
 }
 
 static struct expr *
@@ -753,7 +753,7 @@ exprterm(const struct mansearch *search, char *buf, int cs)
 	int		 i, irc;
 
 	if ('\0' == *buf)
-		return(NULL);
+		return NULL;
 
 	e = mandoc_calloc(1, sizeof(struct expr));
 
@@ -761,7 +761,7 @@ exprterm(const struct mansearch *search, char *buf, int cs)
 		e->bits = TYPE_Nm;
 		e->substr = buf;
 		e->equal = 1;
-		return(e);
+		return e;
 	}
 
 	/*
@@ -799,12 +799,12 @@ exprterm(const struct mansearch *search, char *buf, int cs)
 			regerror(irc, &e->regexp, errbuf, sizeof(errbuf));
 			fprintf(stderr, "regcomp: %s\n", errbuf);
 			free(e);
-			return(NULL);
+			return NULL;
 		}
 	}
 
 	if (e->bits)
-		return(e);
+		return e;
 
 	/*
 	 * Parse out all possible fields.
@@ -826,13 +826,13 @@ exprterm(const struct mansearch *search, char *buf, int cs)
 		if (i == mansearch_keymax) {
 			if (strcasecmp(key, "any")) {
 				free(e);
-				return(NULL);
+				return NULL;
 			}
 			e->bits |= ~0ULL;
 		}
 	}
 
-	return(e);
+	return e;
 }
 
 static void
@@ -851,14 +851,14 @@ static void *
 hash_calloc(size_t nmemb, size_t sz, void *arg)
 {
 
-	return(mandoc_calloc(nmemb, sz));
+	return mandoc_calloc(nmemb, sz);
 }
 
 static void *
 hash_alloc(size_t sz, void *arg)
 {
 
-	return(mandoc_malloc(sz));
+	return mandoc_malloc(sz);
 }
 
 static void

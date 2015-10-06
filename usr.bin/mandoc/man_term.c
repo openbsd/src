@@ -1,4 +1,4 @@
-/*	$OpenBSD: man_term.c,v 1.137 2015/09/21 13:24:32 schwarze Exp $ */
+/*	$OpenBSD: man_term.c,v 1.138 2015/10/06 18:30:43 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -210,7 +210,7 @@ static int
 pre_ign(DECL_ARGS)
 {
 
-	return(0);
+	return 0;
 }
 
 static int
@@ -218,7 +218,7 @@ pre_ll(DECL_ARGS)
 {
 
 	term_setwidth(p, n->nchild ? n->child->string : NULL);
-	return(0);
+	return 0;
 }
 
 static int
@@ -226,7 +226,7 @@ pre_I(DECL_ARGS)
 {
 
 	term_fontrepl(p, TERMFONT_UNDER);
-	return(1);
+	return 1;
 }
 
 static int
@@ -253,7 +253,7 @@ pre_literal(DECL_ARGS)
 		p->flags |= TERMP_NOSPACE;
 	}
 
-	return(0);
+	return 0;
 }
 
 static int
@@ -264,12 +264,12 @@ pre_PD(DECL_ARGS)
 	n = n->child;
 	if (n == NULL) {
 		mt->pardist = 1;
-		return(0);
+		return 0;
 	}
 	assert(n->type == ROFFT_TEXT);
 	if (a2roffsu(n->string, &su, SCALE_VS))
 		mt->pardist = term_vspan(p, &su);
-	return(0);
+	return 0;
 }
 
 static int
@@ -323,7 +323,7 @@ pre_alternate(DECL_ARGS)
 			p->flags |= TERMP_NOSPACE;
 	}
 
-	return(0);
+	return 0;
 }
 
 static int
@@ -331,7 +331,7 @@ pre_B(DECL_ARGS)
 {
 
 	term_fontrepl(p, TERMFONT_BOLD);
-	return(1);
+	return 1;
 }
 
 static int
@@ -353,7 +353,7 @@ pre_OP(DECL_ARGS)
 	term_fontrepl(p, TERMFONT_NONE);
 	p->flags |= TERMP_NOSPACE;
 	term_word(p, "]");
-	return(0);
+	return 0;
 }
 
 static int
@@ -363,7 +363,7 @@ pre_ft(DECL_ARGS)
 
 	if (NULL == n->child) {
 		term_fontlast(p);
-		return(0);
+		return 0;
 	}
 
 	cp = n->child->string;
@@ -393,7 +393,7 @@ pre_ft(DECL_ARGS)
 	default:
 		break;
 	}
-	return(0);
+	return 0;
 }
 
 static int
@@ -408,7 +408,7 @@ pre_in(DECL_ARGS)
 
 	if (NULL == n->child) {
 		p->offset = mt->offset;
-		return(0);
+		return 0;
 	}
 
 	cp = n->child->string;
@@ -422,7 +422,7 @@ pre_in(DECL_ARGS)
 		cp--;
 
 	if ( ! a2roffsu(++cp, &su, SCALE_EN))
-		return(0);
+		return 0;
 
 	v = (term_hspan(p, &su) + 11) / 24;
 
@@ -435,7 +435,7 @@ pre_in(DECL_ARGS)
 	if (p->offset > SHRT_MAX)
 		p->offset = term_len(p, p->defindent);
 
-	return(0);
+	return 0;
 }
 
 static int
@@ -456,7 +456,7 @@ pre_sp(DECL_ARGS)
 			/* FALLTHROUGH */
 		case MAN_P:
 			/* FALLTHROUGH */
-			return(0);
+			return 0;
 		default:
 			break;
 		}
@@ -491,7 +491,7 @@ pre_sp(DECL_ARGS)
 		p->flags &= ~(TERMP_NOBREAK | TERMP_BRIND);
 	}
 
-	return(0);
+	return 0;
 }
 
 static int
@@ -504,11 +504,11 @@ pre_HP(DECL_ARGS)
 	switch (n->type) {
 	case ROFFT_BLOCK:
 		print_bvspace(p, n, mt->pardist);
-		return(1);
+		return 1;
 	case ROFFT_BODY:
 		break;
 	default:
-		return(0);
+		return 0;
 	}
 
 	if ( ! (MANT_LITERAL & mt->fl)) {
@@ -531,7 +531,7 @@ pre_HP(DECL_ARGS)
 
 	p->offset = mt->offset;
 	p->rmargin = mt->offset + len;
-	return(1);
+	return 1;
 }
 
 static void
@@ -576,7 +576,7 @@ pre_PP(DECL_ARGS)
 		break;
 	}
 
-	return(n->type != ROFFT_HEAD);
+	return n->type != ROFFT_HEAD;
 }
 
 static int
@@ -598,7 +598,7 @@ pre_IP(DECL_ARGS)
 		print_bvspace(p, n, mt->pardist);
 		/* FALLTHROUGH */
 	default:
-		return(1);
+		return 1;
 	}
 
 	/* Calculate the offset from the optional second argument. */
@@ -628,7 +628,7 @@ pre_IP(DECL_ARGS)
 		if (savelit)
 			mt->fl |= MANT_LITERAL;
 
-		return(0);
+		return 0;
 	case ROFFT_BODY:
 		p->offset = mt->offset + len;
 		p->rmargin = p->maxrmargin;
@@ -637,7 +637,7 @@ pre_IP(DECL_ARGS)
 		break;
 	}
 
-	return(1);
+	return 1;
 }
 
 static void
@@ -679,7 +679,7 @@ pre_TP(DECL_ARGS)
 		print_bvspace(p, n, mt->pardist);
 		/* FALLTHROUGH */
 	default:
-		return(1);
+		return 1;
 	}
 
 	/* Calculate offset. */
@@ -716,7 +716,7 @@ pre_TP(DECL_ARGS)
 
 		if (savelit)
 			mt->fl |= MANT_LITERAL;
-		return(0);
+		return 0;
 	case ROFFT_BODY:
 		p->offset = mt->offset + len;
 		p->rmargin = p->maxrmargin;
@@ -727,7 +727,7 @@ pre_TP(DECL_ARGS)
 		break;
 	}
 
-	return(1);
+	return 1;
 }
 
 static void
@@ -790,7 +790,7 @@ pre_SS(DECL_ARGS)
 		break;
 	}
 
-	return(1);
+	return 1;
 }
 
 static void
@@ -851,7 +851,7 @@ pre_SH(DECL_ARGS)
 		break;
 	}
 
-	return(1);
+	return 1;
 }
 
 static void
@@ -878,9 +878,9 @@ pre_RS(DECL_ARGS)
 	switch (n->type) {
 	case ROFFT_BLOCK:
 		term_newln(p);
-		return(1);
+		return 1;
 	case ROFFT_HEAD:
-		return(0);
+		return 0;
 	default:
 		break;
 	}
@@ -904,7 +904,7 @@ pre_RS(DECL_ARGS)
 		mt->lmargincur = mt->lmarginsz;
 
 	mt->lmargin[mt->lmargincur] = term_len(p, p->defindent);
-	return(1);
+	return 1;
 }
 
 static void
@@ -932,7 +932,7 @@ static int
 pre_UR(DECL_ARGS)
 {
 
-	return (n->type != ROFFT_HEAD);
+	return n->type != ROFFT_HEAD;
 }
 
 static void

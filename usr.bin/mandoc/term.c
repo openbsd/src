@@ -1,4 +1,4 @@
-/*	$OpenBSD: term.c,v 1.111 2015/09/26 00:53:15 schwarze Exp $ */
+/*	$OpenBSD: term.c,v 1.112 2015/10/06 18:30:44 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -642,7 +642,7 @@ size_t
 term_len(const struct termp *p, size_t sz)
 {
 
-	return((*p->width)(p, ' ') * sz);
+	return (*p->width)(p, ' ') * sz;
 }
 
 static size_t
@@ -651,9 +651,9 @@ cond_width(const struct termp *p, int c, int *skip)
 
 	if (*skip) {
 		(*skip) = 0;
-		return(0);
+		return 0;
 	} else
-		return((*p->width)(p, c));
+		return (*p->width)(p, c);
 }
 
 size_t
@@ -777,7 +777,7 @@ term_strlen(const struct termp *p, const char *cp)
 		}
 	}
 
-	return(sz);
+	return sz;
 }
 
 int
@@ -820,7 +820,7 @@ term_vspan(const struct termp *p, const struct roffsu *su)
 		abort();
 	}
 	ri = r > 0.0 ? r + 0.4995 : r - 0.4995;
-	return(ri < 66 ? ri : 1);
+	return ri < 66 ? ri : 1;
 }
 
 /*
@@ -830,5 +830,5 @@ int
 term_hspan(const struct termp *p, const struct roffsu *su)
 {
 
-	return((*p->hspan)(p, su));
+	return (*p->hspan)(p, su);
 }

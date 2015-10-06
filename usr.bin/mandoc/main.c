@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.149 2015/07/28 18:38:05 schwarze Exp $ */
+/*	$OpenBSD: main.c,v 1.150 2015/10/06 18:30:43 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2012, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -139,7 +139,7 @@ main(int argc, char *argv[])
 
 	if (0 == strncmp(progname, "mandocdb", 8) ||
 	    0 == strncmp(progname, "makewhatis", 10))
-		return(mandocdb(argc, argv));
+		return mandocdb(argc, argv);
 
 	/* Search options. */
 
@@ -200,13 +200,13 @@ main(int argc, char *argv[])
 				fprintf(stderr,
 				    "%s: -I %s: Bad argument\n",
 				    progname, optarg);
-				return((int)MANDOCLEVEL_BADARG);
+				return (int)MANDOCLEVEL_BADARG;
 			}
 			if (defos) {
 				fprintf(stderr,
 				    "%s: -I %s: Duplicate argument\n",
 				    progname, optarg);
-				return((int)MANDOCLEVEL_BADARG);
+				return (int)MANDOCLEVEL_BADARG;
 			}
 			defos = mandoc_strdup(optarg + 3);
 			break;
@@ -215,7 +215,7 @@ main(int argc, char *argv[])
 			break;
 		case 'K':
 			if ( ! koptions(&options, optarg))
-				return((int)MANDOCLEVEL_BADARG);
+				return (int)MANDOCLEVEL_BADARG;
 			break;
 		case 'k':
 			search.argmode = ARG_EXPR;
@@ -244,11 +244,11 @@ main(int argc, char *argv[])
 			break;
 		case 'T':
 			if ( ! toptions(&curp, optarg))
-				return((int)MANDOCLEVEL_BADARG);
+				return (int)MANDOCLEVEL_BADARG;
 			break;
 		case 'W':
 			if ( ! woptions(&curp, optarg))
-				return((int)MANDOCLEVEL_BADARG);
+				return (int)MANDOCLEVEL_BADARG;
 			break;
 		case 'w':
 			outmode = OUTMODE_FLN;
@@ -397,7 +397,7 @@ main(int argc, char *argv[])
 	/* mandoc(1) */
 
 	if (search.argmode == ARG_FILE && ! moptions(&options, auxpaths))
-		return((int)MANDOCLEVEL_BADARG);
+		return (int)MANDOCLEVEL_BADARG;
 
 	if (use_pager && ! isatty(STDOUT_FILENO))
 		use_pager = 0;
@@ -481,7 +481,7 @@ out:
 		tag_unlink();
 	}
 
-	return((int)rc);
+	return (int)rc;
 }
 
 static void
@@ -559,7 +559,7 @@ fs_lookup(const struct manpaths *paths, size_t ipath,
 		file = mandoc_strdup(*globinfo.gl_pathv);
 	globfree(&globinfo);
 	if (globres != 0)
-		return(0);
+		return 0;
 
 found:
 	fprintf(stderr, "%s: outdated mandoc.db lacks %s(%s) entry, run "
@@ -573,7 +573,7 @@ found:
 	page->bits = NAME_FILE & NAME_MASK;
 	page->sec = (*sec >= '1' && *sec <= '9') ? *sec - '1' + 1 : 10;
 	page->form = form;
-	return(1);
+	return 1;
 }
 
 static void
@@ -798,9 +798,9 @@ koptions(int *options, char *arg)
 	} else {
 		fprintf(stderr, "%s: -K %s: Bad argument\n",
 		    progname, arg);
-		return(0);
+		return 0;
 	}
-	return(1);
+	return 1;
 }
 
 static int
@@ -818,10 +818,10 @@ moptions(int *options, char *arg)
 	else {
 		fprintf(stderr, "%s: -m %s: Bad argument\n",
 		    progname, arg);
-		return(0);
+		return 0;
 	}
 
-	return(1);
+	return 1;
 }
 
 static int
@@ -852,10 +852,10 @@ toptions(struct curparse *curp, char *arg)
 	else {
 		fprintf(stderr, "%s: -T %s: Bad argument\n",
 		    progname, arg);
-		return(0);
+		return 0;
 	}
 
-	return(1);
+	return 1;
 }
 
 static int
@@ -895,11 +895,11 @@ woptions(struct curparse *curp, char *arg)
 		default:
 			fprintf(stderr, "%s: -W %s: Bad argument\n",
 			    progname, o);
-			return(0);
+			return 0;
 		}
 	}
 
-	return(1);
+	return 1;
 }
 
 static void
@@ -980,7 +980,7 @@ spawn_pager(struct tag_files *tag_files)
 	case 0:
 		break;
 	default:
-		return(pager_pid);
+		return pager_pid;
 	}
 
 	/* The child process becomes the pager. */

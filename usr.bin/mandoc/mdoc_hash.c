@@ -1,6 +1,7 @@
-/*	$OpenBSD: mdoc_hash.c,v 1.20 2015/04/19 13:59:37 schwarze Exp $ */
+/*	$OpenBSD: mdoc_hash.c,v 1.21 2015/10/06 18:30:44 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2015 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -65,26 +66,26 @@ mdoc_hash_find(const char *p)
 	int		  major, i, j;
 
 	if (0 == p[0])
-		return(TOKEN_NONE);
+		return TOKEN_NONE;
 	if ( ! isalpha((unsigned char)p[0]) && '%' != p[0])
-		return(TOKEN_NONE);
+		return TOKEN_NONE;
 
 	if (isalpha((unsigned char)p[1]))
 		major = 12 * (tolower((unsigned char)p[1]) - 97);
 	else if ('1' == p[1])
 		major = 12 * 26;
 	else
-		return(TOKEN_NONE);
+		return TOKEN_NONE;
 
 	if (p[2] && p[3])
-		return(TOKEN_NONE);
+		return TOKEN_NONE;
 
 	for (j = 0; j < 12; j++) {
 		if (UCHAR_MAX == (i = table[major + j]))
 			break;
 		if (0 == strcmp(p, mdoc_macronames[i]))
-			return(i);
+			return i;
 	}
 
-	return(TOKEN_NONE);
+	return TOKEN_NONE;
 }

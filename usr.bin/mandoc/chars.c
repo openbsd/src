@@ -1,4 +1,4 @@
-/*	$OpenBSD: chars.c,v 1.36 2015/02/17 20:33:44 schwarze Exp $ */
+/*	$OpenBSD: chars.c,v 1.37 2015/10/06 18:30:43 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -93,7 +93,7 @@ mchars_alloc(void)
 	}
 
 	tab->htab = htab;
-	return(tab);
+	return tab;
 }
 
 int
@@ -102,7 +102,7 @@ mchars_spec2cp(const struct mchars *arg, const char *p, size_t sz)
 	const struct ln	*ln;
 
 	ln = find(arg, p, sz);
-	return(ln != NULL ? ln->unicode : sz == 1 ? (unsigned char)*p : -1);
+	return ln != NULL ? ln->unicode : sz == 1 ? (unsigned char)*p : -1;
 }
 
 int
@@ -111,7 +111,7 @@ mchars_num2char(const char *p, size_t sz)
 	int	  i;
 
 	i = mandoc_strntoi(p, sz, 10);
-	return(i >= 0 && i < 256 ? i : -1);
+	return i >= 0 && i < 256 ? i : -1;
 }
 
 int
@@ -121,7 +121,7 @@ mchars_num2uc(const char *p, size_t sz)
 
 	i = mandoc_strntoi(p, sz, 16);
 	assert(i >= 0 && i <= 0x10FFFF);
-	return(i);
+	return i;
 }
 
 const char *
@@ -133,11 +133,11 @@ mchars_spec2str(const struct mchars *arg,
 	ln = find(arg, p, sz);
 	if (ln == NULL) {
 		*rsz = 1;
-		return(sz == 1 ? p : NULL);
+		return sz == 1 ? p : NULL;
 	}
 
 	*rsz = strlen(ln->ascii);
-	return(ln->ascii);
+	return ln->ascii;
 }
 
 const char *
@@ -147,8 +147,8 @@ mchars_uc2str(int uc)
 
 	for (i = 0; i < LINES_MAX; i++)
 		if (uc == lines[i].unicode)
-			return(lines[i].ascii);
-	return("<?>");
+			return lines[i].ascii;
+	return "<?>";
 }
 
 static const struct ln *
@@ -160,14 +160,14 @@ find(const struct mchars *tab, const char *p, size_t sz)
 	assert(p);
 
 	if (0 == sz || p[0] < PRINT_LO || p[0] > PRINT_HI)
-		return(NULL);
+		return NULL;
 
 	hash = (int)p[0] - PRINT_LO;
 
 	for (pp = tab->htab[hash]; pp; pp = pp->next)
 		if (0 == strncmp(pp->code, p, sz) &&
 		    '\0' == pp->code[(int)sz])
-			return(pp);
+			return pp;
 
-	return(NULL);
+	return NULL;
 }

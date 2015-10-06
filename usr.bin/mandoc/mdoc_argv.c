@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_argv.c,v 1.60 2015/04/19 13:59:37 schwarze Exp $ */
+/*	$OpenBSD: mdoc_argv.c,v 1.61 2015/10/06 18:30:44 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2012, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -422,7 +422,7 @@ mdoc_args(struct roff_man *mdoc, int line, int *pos,
 		v = &v_local;
 	fl = tok == TOKEN_NONE ? ARGSFL_NONE : mdocargs[tok].flags;
 	if (tok != MDOC_It)
-		return(args(mdoc, line, pos, buf, fl, v));
+		return args(mdoc, line, pos, buf, fl, v);
 
 	/*
 	 * We know that we're in an `It', so it's reasonable to expect
@@ -438,7 +438,7 @@ mdoc_args(struct roff_man *mdoc, int line, int *pos,
 				break;
 			}
 
-	return(args(mdoc, line, pos, buf, fl, v));
+	return args(mdoc, line, pos, buf, fl, v);
 }
 
 static enum margserr
@@ -451,7 +451,7 @@ args(struct roff_man *mdoc, int line, int *pos,
 
 	if ('\0' == buf[*pos]) {
 		if (MDOC_PPHRASE & mdoc->flags)
-			return(ARGS_EOLN);
+			return ARGS_EOLN;
 		/*
 		 * If we're not in a partial phrase and the flag for
 		 * being a phrase literal is still set, the punctuation
@@ -462,14 +462,14 @@ args(struct roff_man *mdoc, int line, int *pos,
 			    mdoc->parse, line, *pos, NULL);
 
 		mdoc->flags &= ~MDOC_PHRASELIT;
-		return(ARGS_EOLN);
+		return ARGS_EOLN;
 	}
 
 	*v = &buf[*pos];
 
 	if (ARGSFL_DELIM == fl)
 		if (args_checkpunct(buf, *pos))
-			return(ARGS_PUNCT);
+			return ARGS_PUNCT;
 
 	/*
 	 * First handle TABSEP items, restricted to `Bl -column'.  This
@@ -536,7 +536,7 @@ args(struct roff_man *mdoc, int line, int *pos,
 		for (pp = &buf[*pos]; ' ' == *pp; pp++, (*pos)++)
 			/* Skip ahead. */ ;
 
-		return(rc);
+		return rc;
 	}
 
 	/*
@@ -573,17 +573,17 @@ args(struct roff_man *mdoc, int line, int *pos,
 
 		if ('\0' == buf[*pos]) {
 			if (MDOC_PPHRASE & mdoc->flags)
-				return(ARGS_QWORD);
+				return ARGS_QWORD;
 			mandoc_msg(MANDOCERR_ARG_QUOTE,
 			    mdoc->parse, line, *pos, NULL);
-			return(ARGS_QWORD);
+			return ARGS_QWORD;
 		}
 
 		mdoc->flags &= ~MDOC_PHRASELIT;
 		buf[(*pos)++] = '\0';
 
 		if ('\0' == buf[*pos])
-			return(ARGS_QWORD);
+			return ARGS_QWORD;
 
 		while (' ' == buf[*pos])
 			(*pos)++;
@@ -592,13 +592,13 @@ args(struct roff_man *mdoc, int line, int *pos,
 			mandoc_msg(MANDOCERR_SPACE_EOL, mdoc->parse,
 			    line, *pos, NULL);
 
-		return(ARGS_QWORD);
+		return ARGS_QWORD;
 	}
 
 	p = &buf[*pos];
 	*v = mandoc_getarg(mdoc->parse, &p, line, pos);
 
-	return(ARGS_WORD);
+	return ARGS_WORD;
 }
 
 /*
@@ -620,11 +620,11 @@ args_checkpunct(const char *buf, int i)
 		dbuf[j] = buf[i];
 
 	if (DELIMSZ == j)
-		return(0);
+		return 0;
 
 	dbuf[j] = '\0';
 	if (DELIM_CLOSE != mdoc_isdelim(dbuf))
-		return(0);
+		return 0;
 
 	while (' ' == buf[i])
 		i++;
@@ -637,18 +637,18 @@ args_checkpunct(const char *buf, int i)
 			dbuf[j++] = buf[i++];
 
 		if (DELIMSZ == j)
-			return(0);
+			return 0;
 
 		dbuf[j] = '\0';
 		d = mdoc_isdelim(dbuf);
 		if (DELIM_NONE == d || DELIM_OPEN == d)
-			return(0);
+			return 0;
 
 		while (' ' == buf[i])
 			i++;
 	}
 
-	return('\0' == buf[i]);
+	return '\0' == buf[i];
 }
 
 static void
