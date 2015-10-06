@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.55 2015/02/09 22:35:08 deraadt Exp $	*/
+/*	$OpenBSD: misc.c,v 1.56 2015/10/06 14:58:37 tedu Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -17,16 +17,8 @@
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* vix 26jan87 [RCS has the rest of the log]
- * vix 30dec86 [written]
- */
-
 #include "cron.h"
 #include <limits.h>
-
-#if defined(SYSLOG) && defined(LOG_FILE)
-# undef LOG_FILE
-#endif
 
 #if defined(LOG_DAEMON) && !defined(LOG_CRON)
 # define LOG_CRON LOG_DAEMON
@@ -38,9 +30,7 @@
 
 static int LogFD = -1;
 
-#if defined(SYSLOG)
 static int syslog_open = FALSE;
-#endif
 
 int
 strcmp_until(const char *left, const char *right, char until)
@@ -376,58 +366,9 @@ allowed(const char *username, const char *allow_file, const char *deny_file)
 void
 log_it(const char *username, pid_t xpid, const char *event, const char *detail)
 {
-#if defined(LOG_FILE) || DEBUGGING
-	pid_t pid = xpid;
-#endif
-#if defined(LOG_FILE)
-	char *msg;
-	size_t msglen;
-	time_t now = time(NULL);
-	struct tm *t = localtime(&now);
-#endif /*LOG_FILE*/
-#if defined(SYSLOG)
 	char **info, *info_events[] = { "CMD", "ATJOB", "BEGIN EDIT", "DELETE",
 	    "END EDIT", "LIST", "MAIL", "RELOAD", "REPLACE", "STARTUP", NULL };
-#endif /*SYSLOG*/
 
-#if defined(LOG_FILE)
-	/* we assume that MAX_TEMPSTR will hold the date, time, &punctuation.
-	 */
-	msglen = strlen(username) + strlen(event) + strlen(detail) +
-	    MAX_TEMPSTR;
-	if ((msg = malloc(msglen)) == NULL)
-		return;
-
-	if (LogFD < 0) {
-		LogFD = open(LOG_FILE, O_WRONLY|O_APPEND|O_CREAT|O_CLOEXEC,
-		    0600);
-		if (LogFD < 0) {
-			fprintf(stderr, "%s: can't open log file\n",
-				ProgramName);
-			perror(LOG_FILE);
-		}
-	}
-
-	/* we have to snprintf() it because fprintf() doesn't always write
-	 * everything out in one chunk and this has to be atomically appended
-	 * to the log file.
-	 */
-	snprintf(msg, msglen, "%s (%02d/%02d-%02d:%02d:%02d-%ld) %s (%s)\n",
-		username,
-		t->tm_mon+1, t->tm_mday, t->tm_hour, t->tm_min, t->tm_sec,
-		(long)pid, event, detail);
-
-	if (LogFD < 0 || write(LogFD, msg, strlen(msg)) < 0) {
-		if (LogFD >= 0)
-			perror(LOG_FILE);
-		fprintf(stderr, "%s: can't write to log file\n", ProgramName);
-		write(STDERR_FILENO, msg, strlen(msg));
-	}
-
-	free(msg);
-#endif /*LOG_FILE*/
-
-#if defined(SYSLOG)
 	if (!syslog_open) {
 		openlog(ProgramName, LOG_PID, FACILITY);
 		syslog_open = TRUE;		/* assume openlog success */
@@ -439,7 +380,6 @@ log_it(const char *username, pid_t xpid, const char *event, const char *detail)
 	syslog(*info ? LOG_INFO : LOG_WARNING, "(%s) %s (%s)", username, event,
 	    detail);
 
-#endif /*SYSLOG*/
 
 }
 
@@ -450,10 +390,8 @@ log_close(void)
 		close(LogFD);
 		LogFD = -1;
 	}
-#if defined(SYSLOG)
 	closelog();
 	syslog_open = FALSE;
-#endif /*SYSLOG*/
 }
 
 /* char *first_word(char *s, char *t)
@@ -588,33 +526,6 @@ int swap_gids_back() { return (setegid(save_egid)); }
  *	clobbers the static storage space used by localtime() and gmtime().
  *	If the local pointer is non-NULL it *must* point to a local copy.
  */
-#ifndef HAVE_TM_GMTOFF
-long get_gmtoff(time_t *clock, struct tm *local)
-{
-	struct tm gmt;
-	long offset;
-
-	gmt = *gmtime(clock);
-	if (local == NULL)
-		local = localtime(clock);
-
-	offset = (local->tm_sec - gmt.tm_sec) +
-	    ((local->tm_min - gmt.tm_min) * 60) +
-	    ((local->tm_hour - gmt.tm_hour) * 3600);
-
-	/* Timezone may cause year rollover to happen on a different day. */
-	if (local->tm_year < gmt.tm_year)
-		offset -= 24 * 3600;
-	else if (local->tm_year > gmt.tm_year)
-		offset += 24 * 3600;
-	else if (local->tm_yday < gmt.tm_yday)
-		offset -= 24 * 3600;
-	else if (local->tm_yday > gmt.tm_yday)
-		offset += 24 * 3600;
-
-	return (offset);
-}
-#endif /* HAVE_TM_GMTOFF */
 
 /* void open_socket(void)
  *	opens a UNIX domain socket that crontab uses to poke cron.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: macros.h,v 1.11 2015/01/23 02:37:25 tedu Exp $	*/
+/*	$OpenBSD: macros.h,v 1.12 2015/10/06 14:58:37 tedu Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -47,9 +47,7 @@
 #define	RELOAD_CRON	0x2
 #define	RELOAD_AT	0x4
 
-#ifdef HAVE_TM_GMTOFF
 #define	get_gmtoff(c, t)        ((t)->tm_gmtoff)
-#endif
 
 #define	SECONDS_PER_MINUTE	60
 

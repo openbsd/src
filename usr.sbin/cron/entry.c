@@ -1,4 +1,4 @@
-/*	$OpenBSD: entry.c,v 1.41 2015/10/03 12:46:54 tedu Exp $	*/
+/*	$OpenBSD: entry.c,v 1.42 2015/10/06 14:58:37 tedu Exp $	*/
 
 /*
  * Copyright 1988,1990,1993,1994 by Paul Vixie
@@ -16,12 +16,6 @@
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
- */
-
-/* vix 26jan87 [RCS'd; rest of log is in RCS file]
- * vix 01jan87 [added line-level error recovery]
- * vix 31dec86 [added /step to the from-to range, per bob@acornrc]
- * vix 30dec86 [written]
  */
 
 #include "cron.h"

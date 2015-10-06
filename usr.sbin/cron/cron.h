@@ -1,4 +1,4 @@
-/*	$OpenBSD: cron.h,v 1.10 2015/02/09 22:35:08 deraadt Exp $	*/
+/*	$OpenBSD: cron.h,v 1.11 2015/10/06 14:58:37 tedu Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -15,13 +15,6 @@
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
- */
-
-/* cron.h - header for vixie's cron
- *
- * vix 14nov88 [rest of log is in RCS]
- * vix 14jan87 [0 or 7 can be sunday; thanks, mwm@berkeley]
- * vix 30dec86 [written]
  */
 
 #define CRON_VERSION "V5.0"

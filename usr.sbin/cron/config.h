@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.h,v 1.21 2015/02/09 23:00:14 deraadt Exp $	*/
+/*	$OpenBSD: config.h,v 1.22 2015/10/06 14:58:37 tedu Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -15,9 +15,6 @@
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
- */
-
-/* config.h - configurables for ISC Cron
  */
 
 /*
@@ -50,50 +47,11 @@
 /* #define MAILFMT "%s -mlrxto %s"			-*/
 /* #define MAILARG "/usr/mmdf/bin/submit",mailto	-*/
 
-/* #define MAIL_DATE				-*/
-			/* should we include an ersatz Date: header in
-			 * generated mail?  if you are using sendmail
-			 * as the mailer, it is better to let sendmail
-			 * generate the Date: header.
-			 */
-
-			/* if you want to use syslog(3) instead of appending
-			 * to CRONDIR/LOG_FILE (/var/cron/log, e.g.), define
-			 * SYSLOG here.  Note that quite a bit of logging
-			 * info is written, and that you probably don't want
-			 * to use this on 4.2bsd since everything goes in
-			 * /usr/spool/mqueue/syslog.  On 4.[34]bsd you can
-			 * tell /etc/syslog.conf to send cron's logging to
-			 * a separate file.
-			 *
-			 * Note that if this and LOG_FILE in "pathnames.h"
-			 * are both defined, then logging will go to both
-			 * places.
-			 */
-#define SYSLOG				/*-*/
-
-			/* if you have a tm_gmtoff member in struct tm.
-			 * If not, we will have to compute the value ourselves.
-			 */
-#define HAVE_TM_GMTOFF			/*-*/
-
 			/* if your OS has the paths.h header */
 #define HAVE_PATHS_H			/*-*/
 
-			/* if your OS supports a BSD-style login.conf file */
-#define LOGIN_CAP			/*-*/
-
-			/* if your OS supports BSD authentication */
-#define BSD_AUTH			/*-*/
-
 			/* if your OS has a getloadavg() function */
 #define HAVE_GETLOADAVG			/*-*/
-
-			/* if your OS has a setlogin() function */
-#define HAVE_SETLOGIN			/*-*/
-
-			/* if your OS has a pw_expire field in struct passwd */
-#define HAVE_PW_EXPIRE			/*-*/
 
 			/* maximum load at which batch jobs will still run */
 #define BATCH_MAXLOAD	1.5		/*-*/

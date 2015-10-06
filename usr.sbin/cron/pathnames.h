@@ -1,4 +1,4 @@
-/*	$OpenBSD: pathnames.h,v 1.14 2015/02/09 22:35:08 deraadt Exp $	*/
+/*	$OpenBSD: pathnames.h,v 1.15 2015/10/06 14:58:37 tedu Exp $	*/
 
 /* Copyright 1993,1994 by Paul Vixie
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -68,14 +68,6 @@
 			 */
 #define	AT_ALLOW	"at.allow"
 #define	AT_DENY		"at.deny"
-
-			/* undefining this turns off logging to a file.  If
-			 * neither LOG_FILE or SYSLOG is defined, we don't log.
-			 * If both are defined, we log both ways.  Note that if
-			 * LOG_CRON is defined by <syslog.h>, LOG_FILE will not
-			 * be used.
-			 */
-#define LOG_FILE	"log"
 
 			/* where should the daemon stick its PID?
 			 * PIDDIR must end in '/'.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: globals.h,v 1.10 2015/01/23 15:56:04 millert Exp $	*/
+/*	$OpenBSD: globals.h,v 1.11 2015/10/06 14:58:37 tedu Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -23,21 +23,6 @@
 #else
 # define XTRN extern
 # define INIT(x)
-#endif
-
-#if 0
-XTRN const char *copyright[]
-#ifdef MAIN_PROGRAM
-	= {
-		"@(#) ISC Cron V4.1",
-		"@(#) Copyright 1988,1989,1990,1993,1994 by Paul Vixie",
-		"@(#) Copyright 1997,2000 by Internet Software Consortium, Inc.",
-		"@(#) Copyright 2004 by Internet Systems Consortium, Inc.",
-		"@(#) All rights reserved",
-		NULL
-	}
-#endif
-	;
 #endif
 
 XTRN const char *MonthNames[]

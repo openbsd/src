@@ -1,4 +1,4 @@
-/*	$OpenBSD: crontab.c,v 1.71 2015/02/09 22:35:08 deraadt Exp $	*/
+/*	$OpenBSD: crontab.c,v 1.72 2015/10/06 14:58:37 tedu Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -15,11 +15,6 @@
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
- */
-
-/* crontab - install and manage per-user crontab files
- * vix 02may87 [RCS has the rest of the log]
- * vix 26jan87 [original]
  */
 
 #include <err.h>

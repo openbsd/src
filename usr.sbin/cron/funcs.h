@@ -1,4 +1,4 @@
-/*	$OpenBSD: funcs.h,v 1.18 2015/10/03 19:47:21 tedu Exp $	*/
+/*	$OpenBSD: funcs.h,v 1.19 2015/10/06 14:58:37 tedu Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -76,6 +76,3 @@ entry		*load_entry(FILE *,
 
 FILE		*cron_popen(char *, char *, struct passwd *, pid_t *);
 
-#ifndef HAVE_TM_GMTOFF
-long		get_gmtoff(time_t *, struct tm *);
-#endif

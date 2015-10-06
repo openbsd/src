@@ -1,4 +1,4 @@
-/*	$OpenBSD: externs.h,v 1.16 2015/02/09 22:35:08 deraadt Exp $	*/
+/*	$OpenBSD: externs.h,v 1.17 2015/10/06 14:58:37 tedu Exp $	*/
 
 /* Copyright 1993,1994 by Paul Vixie
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -46,17 +46,11 @@
 #include <unistd.h>
 #include <utime.h>
 
-#if defined(SYSLOG)
 # include <syslog.h>
-#endif
 
-#if defined(LOGIN_CAP)
 # include <login_cap.h>
-#endif /*LOGIN_CAP*/
 
-#if defined(BSD_AUTH)
 # include <bsd_auth.h>
-#endif /*BSD_AUTH*/
 
 #ifndef TZNAME_ALREADY_DEFINED
 extern char *tzname[2];
