@@ -1,4 +1,4 @@
-/* $OpenBSD: file.c,v 1.50 2015/10/05 06:23:34 deraadt Exp $ */
+/* $OpenBSD: file.c,v 1.51 2015/10/06 15:39:44 deraadt Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -351,7 +351,7 @@ child(int fd, pid_t parent, int argc, char **argv)
 	int			 i, idx;
 	size_t			 len, width = 0;
 
-	if (tame("stdio cmsg getpw proc", NULL) == -1)
+	if (tame("stdio getpw proc recvfd", NULL) == -1)
 		err(1, "tame");
 
 	if (geteuid() == 0) {
@@ -366,7 +366,7 @@ child(int fd, pid_t parent, int argc, char **argv)
 			err(1, "setresuid");
 	}
 
-	if (tame("stdio cmsg", NULL) == -1)
+	if (tame("stdio recvfd", NULL) == -1)
 		err(1, "tame");
 
 	m = magic_load(magicfp, magicpath, cflag || Wflag);
