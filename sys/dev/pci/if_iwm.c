@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.52 2015/10/05 13:05:08 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.53 2015/10/06 09:12:00 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -5729,11 +5729,6 @@ iwm_ioctl(struct ifnet *ifp, u_long cmd, iwm_caddr_t data)
 			error = 0;
 		break;
 
-	case SIOCSIFLLADDR:
-		IEEE80211_ADDR_COPY(sc->sc_ic.ic_myaddr,
-		    ((struct arpcom *)ifp)->ac_enaddr);
-		break;
-
 	default:
 		error = ieee80211_ioctl(ifp, cmd, data);
 	}
@@ -6323,8 +6318,12 @@ iwm_preinit(struct iwm_softc *sc)
 		return error;
 	}
 
-	if (attached)
+	if (attached) {
+		/* Update MAC in case the upper layers changed it. */
+		IEEE80211_ADDR_COPY(sc->sc_ic.ic_myaddr,
+		    ((struct arpcom *)ifp)->ac_enaddr);
 		return 0;
+	}
 
 	if ((error = iwm_start_hw(sc)) != 0) {
 		printf("%s: could not initialize hardware\n", DEVNAME(sc));
