@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_tame.c,v 1.62 2015/10/06 15:21:26 deraadt Exp $	*/
+/*	$OpenBSD: kern_tame.c,v 1.63 2015/10/06 17:05:30 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -136,6 +136,8 @@ const u_int tame_syscalls[SYS_MAXSYSCALL] = {
 	[SYS_fork] = TAME_PROC,
 	[SYS_vfork] = TAME_PROC,
 	[SYS_kill] = TAME_PROC,
+	[SYS_setpgid] = TAME_PROC,
+	[SYS_sigsuspend] = TAME_PROC,
 
 	[SYS_setgroups] = TAME_PROC,
 	[SYS_setresgid] = TAME_PROC,
@@ -1024,6 +1026,10 @@ tame_ioctl_check(struct proc *p, long com, void *v)
 
 	if ((p->p_p->ps_tame & TAME_TTY)) {
 		switch (com) {
+		case TIOCSPGRP:
+			if ((p->p_p->ps_tame & TAME_PROC) == 0)
+				break;
+			/* FALTHROUGH */
 		case TIOCGETA:
 		case TIOCGPGRP:
 		case TIOCGWINSZ:	/* various programs */
