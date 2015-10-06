@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: rcctl.sh,v 1.81 2015/10/04 13:38:11 ajacoutot Exp $
+# $OpenBSD: rcctl.sh,v 1.82 2015/10/06 18:46:05 schwarze Exp $
 #
 # Copyright (c) 2014, 2015 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -28,8 +28,11 @@ _rc_parse_conf
 
 usage()
 {
-	_rc_err "usage: ${0##*/} [-df] action|get|getdef|ls|order|set
-             [service | daemon [variable [arguments]] | daemons | lsarg]"
+	_rc_err \
+	"usage:	rcctl get|getdef|set service | daemon [variable [arguments]]
+	rcctl [-df] action daemon ...
+	rcctl order [daemon ...]
+	rcctl ls lsarg"
 }
 
 needs_root()

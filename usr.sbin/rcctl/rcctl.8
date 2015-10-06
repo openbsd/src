@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rcctl.8,v 1.23 2015/10/06 18:35:55 schwarze Exp $
+.\"	$OpenBSD: rcctl.8,v 1.24 2015/10/06 18:46:05 schwarze Exp $
 .\"
 .\" Copyright (c) 2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 .\"
@@ -22,11 +22,17 @@
 .Nd configure and control daemons and services
 .Sh SYNOPSIS
 .Nm rcctl
+.Cm get Ns | Ns Cm getdef Ns | Ns Cm set
+.Ar service | daemon Op Ar variable Op Ar arguments
+.Nm rcctl
 .Op Fl df
-.Sm off
-.Ar action | Cm get | getdef | ls | order | set
-.Sm on
-.Op Ar service | daemon Oo Ar variable Oo Ar arguments Oc Oc | Ar daemons | lsarg
+.Ar action daemon ...
+.Nm rcctl
+.Cm order
+.Op Ar daemon ...
+.Nm rcctl
+.Cm ls
+.Ar lsarg
 .Sh DESCRIPTION
 The
 .Nm
