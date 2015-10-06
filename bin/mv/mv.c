@@ -1,4 +1,4 @@
-/*	$OpenBSD: mv.c,v 1.40 2015/08/24 00:10:59 guenther Exp $	*/
+/*	$OpenBSD: mv.c,v 1.41 2015/10/06 16:51:15 tedu Exp $	*/
 /*	$NetBSD: mv.c,v 1.9 1995/03/21 09:06:52 cgd Exp $	*/
 
 /*
@@ -366,7 +366,7 @@ copy(char *from, char *to)
 		return (1);
 	}
 	if (!(pid = vfork())) {
-		execl(_PATH_RM, "cp", "-rf", "--", from, (char *)NULL);
+		execl(_PATH_RM, "rm", "-rf", "--", from, (char *)NULL);
 		warn("%s", _PATH_RM);
 		_exit(1);
 	}
