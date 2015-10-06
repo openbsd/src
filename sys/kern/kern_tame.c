@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_tame.c,v 1.63 2015/10/06 17:05:30 deraadt Exp $	*/
+/*	$OpenBSD: kern_tame.c,v 1.64 2015/10/06 18:15:02 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -138,6 +138,7 @@ const u_int tame_syscalls[SYS_MAXSYSCALL] = {
 	[SYS_kill] = TAME_PROC,
 	[SYS_setpgid] = TAME_PROC,
 	[SYS_sigsuspend] = TAME_PROC,
+	[SYS_setrlimit] = TAME_PROC,
 
 	[SYS_setgroups] = TAME_PROC,
 	[SYS_setresgid] = TAME_PROC,
