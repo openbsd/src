@@ -1,4 +1,4 @@
-/* $OpenBSD: a_time_tm.c,v 1.3 2015/10/05 06:13:58 jsing Exp $ */
+/* $OpenBSD: a_time_tm.c,v 1.4 2015/10/06 12:54:24 bcook Exp $ */
 /*
  * Copyright (c) 2015 Bob Beck <beck@openbsd.org>
  *
@@ -15,11 +15,11 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <ctype.h>
+#include <limits.h>
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
-#include <ctype.h>
-#include <sys/limits.h>
 
 #include <openssl/asn1t.h>
 #include <openssl/err.h>
