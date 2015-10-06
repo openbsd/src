@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.241 2015/10/06 06:04:46 gilles Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.242 2015/10/06 08:51:35 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1048,19 +1048,22 @@ offline_scan(int fd, short ev, void *arg)
 static int
 offline_enqueue(char *name)
 {
-	char		 t[PATH_MAX], *path;
+	char		*path;
 	struct stat	 sb;
 	pid_t		 pid;
 	struct child	*child;
 	struct passwd	*pw;
+	int		 pathlen;
 
-	if (!bsnprintf(t, sizeof t, "%s/%s", PATH_SPOOL PATH_OFFLINE, name)) {
-		log_warnx("warn: smtpd: path name too long");
+	pathlen = asprintf(&path, "%s/%s", PATH_SPOOL PATH_OFFLINE, name);
+	if (pathlen == -1) {
+		log_warnx("warn: smtpd: asprintf");
 		return (-1);
 	}
 
-	if ((path = strdup(t)) == NULL) {
-		log_warn("warn: smtpd: strdup");
+	if (pathlen >= PATH_MAX) {
+		log_warnx("warn: smtpd: pathname exceeds PATH_MAX");
+		free(path);
 		return (-1);
 	}
 
