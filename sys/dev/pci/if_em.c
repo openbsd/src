@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.306 2015/09/30 11:25:08 kettenis Exp $ */
+/* $OpenBSD: if_em.c,v 1.307 2015/10/06 15:21:16 kettenis Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -1210,12 +1210,6 @@ em_encap(struct em_softc *sc, struct mbuf *m_head)
 		}
 	}
 
-	sc->next_avail_tx_desc = i;
-	if (sc->pcix_82544)
-		atomic_sub_int(&sc->num_tx_desc_avail, txd_used);
-	else
-		atomic_sub_int(&sc->num_tx_desc_avail, map->dm_nsegs);
-
 #if NVLAN > 0
 	/* Find out if we are in VLAN mode */
 	if (m_head->m_flags & M_VLANTAG) {
@@ -1248,6 +1242,14 @@ em_encap(struct em_softc *sc, struct mbuf *m_head)
 	 */
 	tx_buffer = &sc->tx_buffer_area[first];
 	tx_buffer->next_eop = last;
+
+	membar_producer();
+
+	sc->next_avail_tx_desc = i;
+	if (sc->pcix_82544)
+		atomic_sub_int(&sc->num_tx_desc_avail, txd_used);
+	else
+		atomic_sub_int(&sc->num_tx_desc_avail, map->dm_nsegs);
 
 	/* 
 	 * Advance the Transmit Descriptor Tail (Tdt),
@@ -2378,6 +2380,8 @@ em_transmit_checksum_setup(struct em_softc *sc, struct mbuf *mp,
 	tx_buffer->m_head = NULL;
 	tx_buffer->next_eop = -1;
 
+	membar_producer();
+
 	if (++curr_txd == sc->num_tx_desc)
 		curr_txd = 0;
 
@@ -2402,6 +2406,8 @@ em_txeof(struct em_softc *sc)
 
 	if (sc->num_tx_desc_avail == sc->num_tx_desc)
 		return;
+
+	membar_consumer();
 
 	first = sc->next_tx_to_clean;
 	tx_desc = &sc->tx_desc_base[first];
