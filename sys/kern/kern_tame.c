@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_tame.c,v 1.57 2015/10/04 17:55:21 deraadt Exp $	*/
+/*	$OpenBSD: kern_tame.c,v 1.58 2015/10/06 05:42:12 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -140,7 +140,8 @@ const u_int tame_syscalls[SYS_MAXSYSCALL] = {
 	[SYS_setresgid] = TAME_PROC,
 	[SYS_setresuid] = TAME_PROC,
 
-	[SYS_ioctl] = TAME_IOCTL,		/* very limited subset */
+	/* FIONREAD/FIONBIO, plus further checks in tame_ioctl_check() */
+	[SYS_ioctl] = TAME_RW | TAME_IOCTL,
 
 	[SYS_getentropy] = TAME_MALLOC,
 	[SYS_madvise] = TAME_MALLOC,
@@ -974,78 +975,65 @@ tame_ioctl_check(struct proc *p, long com, void *v)
 	if ((p->p_p->ps_flags & PS_TAMED) == 0)
 		return (0);
 
+	/*
+	 * The ioctl's which are always allowed.
+	 */
+	switch (com) {
+	case FIONREAD:
+	case FIONBIO:
+		return (0);
+	}
+
 	if (fp == NULL)
 		return (EBADF);
 	vp = (struct vnode *)fp->f_data;
-
-	switch (com) {
-
-	/*
-	 * This is a set of "get" info ioctls at the top layer.  Hopefully
-	 * a safe list, since they are used a lot.
-	 */
-	case FIOCLEX:
-	case FIONCLEX:
-	case FIONREAD:
-	case FIONBIO:
-	case FIOGETOWN:
-		return (0);
-	case FIOASYNC:
-	case FIOSETOWN:
-		return (EPERM);
-
-	/* tty subsystem */
-	case TIOCGETA:
-	case TIOCGPGRP:
-	case TIOCGWINSZ:	/* various programs */
-	case TIOCSTI:		/* ksh? csh? */
-		if (fp->f_type == DTYPE_VNODE && (vp->v_flag & VISTTY))
-			return (0);
-		break;
-
-	default:
-		break;
-	}
-
-	if ((p->p_p->ps_tame & TAME_IOCTL) == 0)
-		return (EPERM);
 
 	/*
 	 * Further sets of ioctl become available, but are checked a
 	 * bit more carefully against the vnode.
 	 */
-
-	switch (com) {
-	case BIOCGSTATS:	/* bpf: tcpdump privsep on ^C */
-		if (fp->f_type == DTYPE_VNODE &&
-		    fp->f_ops->fo_ioctl == vn_ioctl)
+	if ((p->p_p->ps_tame & TAME_IOCTL)) {
+		switch (com) {
+		case FIOCLEX:
+		case FIONCLEX:
+		case FIOASYNC:
+		case FIOSETOWN:
+		case FIOGETOWN:
 			return (0);
-		break;
-
-	case TIOCSETAF:		/* tcsetattr TCSAFLUSH, script */
-		if (fp->f_type == DTYPE_VNODE && (vp->v_flag & VISTTY))
-			return (0);
-		break;
-
-
-	case MTIOCGET:
-	case MTIOCTOP:
-		/* for pax(1) and such, checking tapes... */
-		if (fp->f_type == DTYPE_VNODE &&
-		    (vp->v_type == VCHR || vp->v_type == VBLK))
-			return (0);
-		break;
-
-	case SIOCGIFGROUP:
-		if ((p->p_p->ps_tame & TAME_INET) &&
-		    fp->f_type == DTYPE_SOCKET)
-			return (0);
-		break;
-
-	default:
-		printf("tame: ioctl %lx\n", com);
-		break;
+		case TIOCGETA:
+		case TIOCGPGRP:
+		case TIOCGWINSZ:	/* various programs */
+		case TIOCSTI:		/* ksh? csh? */
+		case TIOCSBRK:		/* cu */
+		case TIOCCDTR:		/* cu */
+			if (fp->f_type == DTYPE_VNODE && (vp->v_flag & VISTTY))
+				return (0);
+			break;
+		case BIOCGSTATS:	/* bpf: tcpdump privsep on ^C */
+			if (fp->f_type == DTYPE_VNODE &&
+			    fp->f_ops->fo_ioctl == vn_ioctl)
+				return (0);
+			break;
+		case TIOCSETAF:		/* tcsetattr TCSAFLUSH, script */
+			if (fp->f_type == DTYPE_VNODE && (vp->v_flag & VISTTY))
+				return (0);
+			break;
+		case MTIOCGET:
+		case MTIOCTOP:
+			/* for pax(1) and such, checking tapes... */
+			if (fp->f_type == DTYPE_VNODE &&
+			    (vp->v_type == VCHR || vp->v_type == VBLK))
+				return (0);
+			break;
+		case SIOCGIFGROUP:
+			if ((p->p_p->ps_tame & TAME_INET) &&
+			    fp->f_type == DTYPE_SOCKET)
+				return (0);
+			break;
+		}
 	}
+
+	printf("tame: ioctl %lx\n", com);
 	return (EPERM);
 }
 
