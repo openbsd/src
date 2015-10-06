@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpctl.c,v 1.125 2015/01/20 17:37:54 deraadt Exp $	*/
+/*	$OpenBSD: smtpctl.c,v 1.126 2015/10/06 05:48:34 gilles Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -302,7 +302,7 @@ srv_iter_envelopes(uint32_t msgid, struct envelope *evp)
 static int
 srv_iter_evpids(uint32_t msgid, uint64_t *evpid, int *offset)
 {
-	static uint64_t	*evpids = NULL;
+	static uint64_t	*evpids = NULL, *tmp;
 	static int	 n, alloc = 0;
 	struct envelope	 evp;
 
@@ -318,10 +318,11 @@ srv_iter_evpids(uint32_t msgid, uint64_t *evpid, int *offset)
 		while (srv_iter_envelopes(msgid, &evp)) {
 			if (n == alloc) {
 				alloc += 256;
-				evpids = reallocarray(evpids, alloc,
+				tmp = reallocarray(evpids, alloc,
 				    sizeof(*evpids));
-				if (evpids == NULL)
+				if (tmp == NULL)
 					err(1, "reallocarray");
+				evpids = tmp;
 			}
 			evpids[n++] = evp.id;
 		}

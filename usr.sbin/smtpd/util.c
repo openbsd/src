@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.116 2015/10/05 22:08:14 stsp Exp $	*/
+/*	$OpenBSD: util.c,v 1.117 2015/10/06 05:48:34 gilles Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Markus Friedl.  All rights reserved.
@@ -554,6 +554,7 @@ addargs(arglist *args, char *fmt, ...)
 	char *cp;
 	uint nalloc;
 	int r;
+	char	**tmp;
 
 	va_start(ap, fmt);
 	r = vasprintf(&cp, fmt, ap);
@@ -568,9 +569,10 @@ addargs(arglist *args, char *fmt, ...)
 	} else if (args->num+2 >= nalloc)
 		nalloc *= 2;
 
-	args->list = reallocarray(args->list, nalloc, sizeof(char *));
-	if (args->list == NULL)
+	tmp = reallocarray(args->list, nalloc, sizeof(char *));
+	if (tmp == NULL)
 		fatal("addargs: reallocarray");
+	args->list = tmp;
 	args->nalloc = nalloc;
 	args->list[args->num++] = cp;
 	args->list[args->num] = NULL;
