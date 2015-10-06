@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_tame.c,v 1.59 2015/10/06 14:02:49 deraadt Exp $	*/
+/*	$OpenBSD: kern_tame.c,v 1.60 2015/10/06 14:38:23 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -650,8 +650,9 @@ tame_namei(struct proc *p, char *origpath)
 
 	if (p->p_p->ps_tame & TAME_RPATH)
 		return (0);
-
 	if (p->p_p->ps_tame & TAME_WPATH)
+		return (0);
+	if (p->p_p->ps_tame & TAME_CPATH)
 		return (0);
 
 	return (tame_fail(p, EPERM, TAME_RPATH));
