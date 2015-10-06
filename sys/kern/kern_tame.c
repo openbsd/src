@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_tame.c,v 1.64 2015/10/06 18:15:02 deraadt Exp $	*/
+/*	$OpenBSD: kern_tame.c,v 1.65 2015/10/06 18:35:09 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -91,6 +91,7 @@ const u_int tame_syscalls[SYS_MAXSYSCALL] = {
 	[SYS_sigprocmask] = TAME_SELF,
 	[SYS_sigaction] = TAME_SELF,
 	[SYS_sigreturn] = TAME_SELF,
+	[SYS_sigpending] = TAME_SELF,
 	[SYS_getitimer] = TAME_SELF,
 	[SYS_setitimer] = TAME_SELF,
 
