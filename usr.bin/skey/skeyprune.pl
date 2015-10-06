@@ -18,10 +18,10 @@
 # Agency (DARPA) and Air Force Research Laboratory, Air Force
 # Materiel Command, USAF, under agreement number F39502-99-1-0512.
 #
-# Prune commented out, bogus, and crufty entries from /etc/skeykeys
+# Prune commented out, bogus, and crufty entries from /etc/skey
 # usage: skeyprune [days]
 #
-# $OpenBSD: skeyprune.pl,v 1.6 2008/11/12 16:13:46 sobrado Exp $
+# $OpenBSD: skeyprune.pl,v 1.7 2015/10/06 15:06:29 tim Exp $
 #
 
 use POSIX qw(S_ISREG);
