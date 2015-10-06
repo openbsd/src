@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket2.c,v 1.62 2015/07/08 07:21:50 mpi Exp $	*/
+/*	$OpenBSD: uipc_socket2.c,v 1.63 2015/10/06 14:38:32 claudio Exp $	*/
 /*	$NetBSD: uipc_socket2.c,v 1.11 1996/02/04 02:17:55 christos Exp $	*/
 
 /*
@@ -938,6 +938,7 @@ sbcreatecontrol(caddr_t p, int size, int type, int level)
 		}
 	}
 	cp = mtod(m, struct cmsghdr *);
+	memset(cp, 0, CMSG_SPACE(size));
 	memcpy(CMSG_DATA(cp), p, size);
 	m->m_len = CMSG_SPACE(size);
 	cp->cmsg_len = CMSG_LEN(size);
