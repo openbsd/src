@@ -1,4 +1,4 @@
-/* 	$OpenBSD: test_fuzz.c,v 1.4 2015/03/04 23:22:35 djm Exp $ */
+/* 	$OpenBSD: test_fuzz.c,v 1.5 2015/10/06 01:20:59 djm Exp $ */
 /*
  * Fuzz tests for key parsing
  *
@@ -104,8 +104,7 @@ sshkey_fuzz_tests(void)
 	fuzz = fuzz_begin(FUZZ_1_BIT_FLIP | FUZZ_1_BYTE_FLIP |
 	    FUZZ_TRUNCATE_START | FUZZ_TRUNCATE_END,
 	    sshbuf_mutable_ptr(buf), sshbuf_len(buf));
-	ASSERT_INT_EQ(sshkey_parse_private_fileblob(buf, "", "key",
-	    &k1, NULL), 0);
+	ASSERT_INT_EQ(sshkey_parse_private_fileblob(buf, "", &k1, NULL), 0);
 	sshkey_free(k1);
 	sshbuf_free(buf);
 	ASSERT_PTR_NE(fuzzed = sshbuf_new(), NULL);
@@ -113,8 +112,7 @@ sshkey_fuzz_tests(void)
 	for(; !fuzz_done(fuzz); fuzz_next(fuzz)) {
 		r = sshbuf_put(fuzzed, fuzz_ptr(fuzz), fuzz_len(fuzz));
 		ASSERT_INT_EQ(r, 0);
-		if (sshkey_parse_private_fileblob(fuzzed, "", "key",
-		    &k1, NULL) == 0)
+		if (sshkey_parse_private_fileblob(fuzzed, "", &k1, NULL) == 0)
 			sshkey_free(k1);
 		sshbuf_reset(fuzzed);
 	}
@@ -148,8 +146,7 @@ sshkey_fuzz_tests(void)
 	buf = load_file("rsa_1");
 	fuzz = fuzz_begin(FUZZ_BASE64, sshbuf_mutable_ptr(buf),
 	    sshbuf_len(buf));
-	ASSERT_INT_EQ(sshkey_parse_private_fileblob(buf, "", "key",
-	    &k1, NULL), 0);
+	ASSERT_INT_EQ(sshkey_parse_private_fileblob(buf, "", &k1, NULL), 0);
 	sshkey_free(k1);
 	sshbuf_free(buf);
 	ASSERT_PTR_NE(fuzzed = sshbuf_new(), NULL);
@@ -157,8 +154,7 @@ sshkey_fuzz_tests(void)
 	for(; !fuzz_done(fuzz); fuzz_next(fuzz)) {
 		r = sshbuf_put(fuzzed, fuzz_ptr(fuzz), fuzz_len(fuzz));
 		ASSERT_INT_EQ(r, 0);
-		if (sshkey_parse_private_fileblob(fuzzed, "", "key",
-		    &k1, NULL) == 0)
+		if (sshkey_parse_private_fileblob(fuzzed, "", &k1, NULL) == 0)
 			sshkey_free(k1);
 		sshbuf_reset(fuzzed);
 	}
@@ -170,8 +166,7 @@ sshkey_fuzz_tests(void)
 	buf = load_file("rsa_n");
 	fuzz = fuzz_begin(FUZZ_BASE64, sshbuf_mutable_ptr(buf),
 	    sshbuf_len(buf));
-	ASSERT_INT_EQ(sshkey_parse_private_fileblob(buf, "", "key",
-	    &k1, NULL), 0);
+	ASSERT_INT_EQ(sshkey_parse_private_fileblob(buf, "", &k1, NULL), 0);
 	sshkey_free(k1);
 	sshbuf_free(buf);
 	ASSERT_PTR_NE(fuzzed = sshbuf_new(), NULL);
@@ -179,8 +174,7 @@ sshkey_fuzz_tests(void)
 	for(; !fuzz_done(fuzz); fuzz_next(fuzz)) {
 		r = sshbuf_put(fuzzed, fuzz_ptr(fuzz), fuzz_len(fuzz));
 		ASSERT_INT_EQ(r, 0);
-		if (sshkey_parse_private_fileblob(fuzzed, "", "key",
-		    &k1, NULL) == 0)
+		if (sshkey_parse_private_fileblob(fuzzed, "", &k1, NULL) == 0)
 			sshkey_free(k1);
 		sshbuf_reset(fuzzed);
 	}
@@ -192,8 +186,7 @@ sshkey_fuzz_tests(void)
 	buf = load_file("dsa_1");
 	fuzz = fuzz_begin(FUZZ_BASE64, sshbuf_mutable_ptr(buf),
 	    sshbuf_len(buf));
-	ASSERT_INT_EQ(sshkey_parse_private_fileblob(buf, "", "key",
-	    &k1, NULL), 0);
+	ASSERT_INT_EQ(sshkey_parse_private_fileblob(buf, "", &k1, NULL), 0);
 	sshkey_free(k1);
 	sshbuf_free(buf);
 	ASSERT_PTR_NE(fuzzed = sshbuf_new(), NULL);
@@ -201,8 +194,7 @@ sshkey_fuzz_tests(void)
 	for(; !fuzz_done(fuzz); fuzz_next(fuzz)) {
 		r = sshbuf_put(fuzzed, fuzz_ptr(fuzz), fuzz_len(fuzz));
 		ASSERT_INT_EQ(r, 0);
-		if (sshkey_parse_private_fileblob(fuzzed, "", "key",
-		    &k1, NULL) == 0)
+		if (sshkey_parse_private_fileblob(fuzzed, "", &k1, NULL) == 0)
 			sshkey_free(k1);
 		sshbuf_reset(fuzzed);
 	}
@@ -214,8 +206,7 @@ sshkey_fuzz_tests(void)
 	buf = load_file("dsa_n");
 	fuzz = fuzz_begin(FUZZ_BASE64, sshbuf_mutable_ptr(buf),
 	    sshbuf_len(buf));
-	ASSERT_INT_EQ(sshkey_parse_private_fileblob(buf, "", "key",
-	    &k1, NULL), 0);
+	ASSERT_INT_EQ(sshkey_parse_private_fileblob(buf, "", &k1, NULL), 0);
 	sshkey_free(k1);
 	sshbuf_free(buf);
 	ASSERT_PTR_NE(fuzzed = sshbuf_new(), NULL);
@@ -223,8 +214,7 @@ sshkey_fuzz_tests(void)
 	for(; !fuzz_done(fuzz); fuzz_next(fuzz)) {
 		r = sshbuf_put(fuzzed, fuzz_ptr(fuzz), fuzz_len(fuzz));
 		ASSERT_INT_EQ(r, 0);
-		if (sshkey_parse_private_fileblob(fuzzed, "", "key",
-		    &k1, NULL) == 0)
+		if (sshkey_parse_private_fileblob(fuzzed, "", &k1, NULL) == 0)
 			sshkey_free(k1);
 		sshbuf_reset(fuzzed);
 	}
@@ -236,8 +226,7 @@ sshkey_fuzz_tests(void)
 	buf = load_file("ecdsa_1");
 	fuzz = fuzz_begin(FUZZ_BASE64, sshbuf_mutable_ptr(buf),
 	    sshbuf_len(buf));
-	ASSERT_INT_EQ(sshkey_parse_private_fileblob(buf, "", "key",
-	    &k1, NULL), 0);
+	ASSERT_INT_EQ(sshkey_parse_private_fileblob(buf, "", &k1, NULL), 0);
 	sshkey_free(k1);
 	sshbuf_free(buf);
 	ASSERT_PTR_NE(fuzzed = sshbuf_new(), NULL);
@@ -245,8 +234,7 @@ sshkey_fuzz_tests(void)
 	for(; !fuzz_done(fuzz); fuzz_next(fuzz)) {
 		r = sshbuf_put(fuzzed, fuzz_ptr(fuzz), fuzz_len(fuzz));
 		ASSERT_INT_EQ(r, 0);
-		if (sshkey_parse_private_fileblob(fuzzed, "", "key",
-		    &k1, NULL) == 0)
+		if (sshkey_parse_private_fileblob(fuzzed, "", &k1, NULL) == 0)
 			sshkey_free(k1);
 		sshbuf_reset(fuzzed);
 	}
@@ -258,8 +246,7 @@ sshkey_fuzz_tests(void)
 	buf = load_file("ecdsa_n");
 	fuzz = fuzz_begin(FUZZ_BASE64, sshbuf_mutable_ptr(buf),
 	    sshbuf_len(buf));
-	ASSERT_INT_EQ(sshkey_parse_private_fileblob(buf, "", "key",
-	    &k1, NULL), 0);
+	ASSERT_INT_EQ(sshkey_parse_private_fileblob(buf, "", &k1, NULL), 0);
 	sshkey_free(k1);
 	sshbuf_free(buf);
 	ASSERT_PTR_NE(fuzzed = sshbuf_new(), NULL);
@@ -267,8 +254,7 @@ sshkey_fuzz_tests(void)
 	for(; !fuzz_done(fuzz); fuzz_next(fuzz)) {
 		r = sshbuf_put(fuzzed, fuzz_ptr(fuzz), fuzz_len(fuzz));
 		ASSERT_INT_EQ(r, 0);
-		if (sshkey_parse_private_fileblob(fuzzed, "", "key",
-		    &k1, NULL) == 0)
+		if (sshkey_parse_private_fileblob(fuzzed, "", &k1, NULL) == 0)
 			sshkey_free(k1);
 		sshbuf_reset(fuzzed);
 	}
@@ -280,8 +266,7 @@ sshkey_fuzz_tests(void)
 	buf = load_file("ed25519_1");
 	fuzz = fuzz_begin(FUZZ_BASE64, sshbuf_mutable_ptr(buf),
 	    sshbuf_len(buf));
-	ASSERT_INT_EQ(sshkey_parse_private_fileblob(buf, "", "key",
-	    &k1, NULL), 0);
+	ASSERT_INT_EQ(sshkey_parse_private_fileblob(buf, "", &k1, NULL), 0);
 	sshkey_free(k1);
 	sshbuf_free(buf);
 	ASSERT_PTR_NE(fuzzed = sshbuf_new(), NULL);
@@ -289,8 +274,7 @@ sshkey_fuzz_tests(void)
 	for(; !fuzz_done(fuzz); fuzz_next(fuzz)) {
 		r = sshbuf_put(fuzzed, fuzz_ptr(fuzz), fuzz_len(fuzz));
 		ASSERT_INT_EQ(r, 0);
-		if (sshkey_parse_private_fileblob(fuzzed, "", "key",
-		    &k1, NULL) == 0)
+		if (sshkey_parse_private_fileblob(fuzzed, "", &k1, NULL) == 0)
 			sshkey_free(k1);
 		sshbuf_reset(fuzzed);
 	}
@@ -300,8 +284,7 @@ sshkey_fuzz_tests(void)
 
 	TEST_START("fuzz RSA public");
 	buf = load_file("rsa_1");
-	ASSERT_INT_EQ(sshkey_parse_private_fileblob(buf, "", "key",
-	    &k1, NULL), 0);
+	ASSERT_INT_EQ(sshkey_parse_private_fileblob(buf, "", &k1, NULL), 0);
 	sshbuf_free(buf);
 	public_fuzz(k1);
 	sshkey_free(k1);
@@ -315,8 +298,7 @@ sshkey_fuzz_tests(void)
 
 	TEST_START("fuzz DSA public");
 	buf = load_file("dsa_1");
-	ASSERT_INT_EQ(sshkey_parse_private_fileblob(buf, "", "key",
-	    &k1, NULL), 0);
+	ASSERT_INT_EQ(sshkey_parse_private_fileblob(buf, "", &k1, NULL), 0);
 	sshbuf_free(buf);
 	public_fuzz(k1);
 	sshkey_free(k1);
@@ -330,8 +312,7 @@ sshkey_fuzz_tests(void)
 
 	TEST_START("fuzz ECDSA public");
 	buf = load_file("ecdsa_1");
-	ASSERT_INT_EQ(sshkey_parse_private_fileblob(buf, "", "key",
-	    &k1, NULL), 0);
+	ASSERT_INT_EQ(sshkey_parse_private_fileblob(buf, "", &k1, NULL), 0);
 	sshbuf_free(buf);
 	public_fuzz(k1);
 	sshkey_free(k1);
@@ -345,8 +326,7 @@ sshkey_fuzz_tests(void)
 
 	TEST_START("fuzz Ed25519 public");
 	buf = load_file("ed25519_1");
-	ASSERT_INT_EQ(sshkey_parse_private_fileblob(buf, "", "key",
-	    &k1, NULL), 0);
+	ASSERT_INT_EQ(sshkey_parse_private_fileblob(buf, "", &k1, NULL), 0);
 	sshbuf_free(buf);
 	public_fuzz(k1);
 	sshkey_free(k1);
@@ -360,8 +340,7 @@ sshkey_fuzz_tests(void)
 
 	TEST_START("fuzz RSA sig");
 	buf = load_file("rsa_1");
-	ASSERT_INT_EQ(sshkey_parse_private_fileblob(buf, "", "key",
-	    &k1, NULL), 0);
+	ASSERT_INT_EQ(sshkey_parse_private_fileblob(buf, "", &k1, NULL), 0);
 	sshbuf_free(buf);
 	sig_fuzz(k1);
 	sshkey_free(k1);
@@ -369,8 +348,7 @@ sshkey_fuzz_tests(void)
 
 	TEST_START("fuzz DSA sig");
 	buf = load_file("dsa_1");
-	ASSERT_INT_EQ(sshkey_parse_private_fileblob(buf, "", "key",
-	    &k1, NULL), 0);
+	ASSERT_INT_EQ(sshkey_parse_private_fileblob(buf, "", &k1, NULL), 0);
 	sshbuf_free(buf);
 	sig_fuzz(k1);
 	sshkey_free(k1);
@@ -378,8 +356,7 @@ sshkey_fuzz_tests(void)
 
 	TEST_START("fuzz ECDSA sig");
 	buf = load_file("ecdsa_1");
-	ASSERT_INT_EQ(sshkey_parse_private_fileblob(buf, "", "key",
-	    &k1, NULL), 0);
+	ASSERT_INT_EQ(sshkey_parse_private_fileblob(buf, "", &k1, NULL), 0);
 	sshbuf_free(buf);
 	sig_fuzz(k1);
 	sshkey_free(k1);
@@ -387,8 +364,7 @@ sshkey_fuzz_tests(void)
 
 	TEST_START("fuzz Ed25519 sig");
 	buf = load_file("ed25519_1");
-	ASSERT_INT_EQ(sshkey_parse_private_fileblob(buf, "", "key",
-	    &k1, NULL), 0);
+	ASSERT_INT_EQ(sshkey_parse_private_fileblob(buf, "", &k1, NULL), 0);
 	sshbuf_free(buf);
 	sig_fuzz(k1);
 	sshkey_free(k1);
