@@ -1,4 +1,4 @@
-/*	$OpenBSD: event.h,v 1.20 2014/05/15 04:43:25 guenther Exp $	*/
+/*	$OpenBSD: event.h,v 1.21 2015/10/06 03:29:35 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -144,7 +144,7 @@ struct knote {
 	struct			kevent kn_kevent;
 	int			kn_status;
 	int			kn_sfflags;	/* saved filter flags */
-	int			kn_sdata;	/* saved data field */
+	quad_t			kn_sdata;	/* saved data field */
 	union {
 		struct		file *p_fp;	/* file data pointer */
 		struct		process *p_process;	/* process pointer */
