@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: fgen.l,v 1.10 2013/12/30 21:52:21 deraadt Exp $	*/
+/*	$OpenBSD: fgen.l,v 1.11 2015/10/06 05:51:01 deraadt Exp $	*/
 /*	$NetBSD: fgen.l,v 1.12 2001/06/13 10:46:05 wiz Exp $	*/
 /* FLEX input for FORTH input file scanner */
 /*  
@@ -959,6 +959,9 @@ main(argc, argv)
 	YY_BUFFER_STATE inbuf;
 	char *hdrtype = "version1";
 	int i;
+
+	if (tame("stdio rpath wpath cpath", NULL) == -1)
+		err(1, "tame");
 
 	outf = 1; /* stdout */
 	myname = argv[0];
