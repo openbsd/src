@@ -1,4 +1,4 @@
-/*	$OpenBSD: printf.c,v 1.22 2014/05/25 07:36:36 jmc Exp $	*/
+/*	$OpenBSD: printf.c,v 1.23 2015/10/06 23:01:43 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -32,6 +32,7 @@
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <string.h>
 #include <limits.h>
 #include <locale.h>
@@ -80,6 +81,9 @@ main(int argc, char *argv[])
 	char *format;
 
 	setlocale (LC_ALL, "");
+
+	if (tame("stdio", NULL) == -1)
+		err(1, "tame");
 
 	/* Need to accept/ignore "--" option. */
 	if (argc > 1 && strcmp(argv[1], "--") == 0) {
