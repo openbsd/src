@@ -1,4 +1,4 @@
-/*	$OpenBSD: path.c,v 1.14 2015/09/15 18:15:05 tedu Exp $	*/
+/*	$OpenBSD: path.c,v 1.15 2015/10/06 21:35:16 nicm Exp $	*/
 
 #include "sh.h"
 #include <sys/stat.h>
@@ -259,27 +259,3 @@ do_phys_path(XString *xsp, char *xp, const char *path)
 	}
 	return xp;
 }
-
-#ifdef	TEST
-
-int
-main(void)
-{
-	int	rv;
-	char	*cp, cdpath[256], pwd[256], file[256], result[256];
-
-	printf("enter CDPATH: "); gets(cdpath);
-	printf("enter PWD: "); gets(pwd);
-	while (1) {
-		if (printf("Enter file: "), gets(file) == 0)
-			return 0;
-		cp = cdpath;
-		do {
-			rv = make_path(pwd, file, &cp, result, sizeof(result));
-			printf("make_path returns (%d), \"%s\" ", rv, result);
-			simplify_path(result);
-			printf("(simpifies to \"%s\")\n", result);
-		} while (cp);
-	}
-}
-#endif	/* TEST */
