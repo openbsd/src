@@ -1,4 +1,4 @@
-/*	$OpenBSD: tftpd.c,v 1.29 2015/08/20 11:28:15 dlg Exp $	*/
+/*	$OpenBSD: tftpd.c,v 1.30 2015/10/06 06:03:11 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2012 David Gwynne <dlg@uq.edu.au>
@@ -57,7 +57,7 @@
  * Information Technology.
  */
 
-#include <sys/ioctl.h>
+#include <sys/types.h>
 #include <sys/queue.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
