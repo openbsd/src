@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdump.c,v 1.111 2015/10/03 23:52:30 guenther Exp $	*/
+/*	$OpenBSD: kdump.c,v 1.112 2015/10/06 03:27:25 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -249,6 +249,10 @@ main(int argc, char *argv[])
 		err(1, NULL);
 	if (!freopen(tracefile, "r", stdin))
 		err(1, "%s", tracefile);
+
+	if (tame("stdio getpw", NULL) == -1)
+		err(1, "tame");
+
 	if (fread_tail(&ktr_header, sizeof(struct ktr_header), 1) == 0 ||
 	    ktr_header.ktr_type != htobe32(KTR_START))
 		errx(1, "%s: not a dump", tracefile);
