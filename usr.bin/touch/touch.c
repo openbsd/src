@@ -1,4 +1,4 @@
-/*	$OpenBSD: touch.c,v 1.23 2015/03/17 19:31:30 millert Exp $	*/
+/*	$OpenBSD: touch.c,v 1.24 2015/10/06 13:48:34 deraadt Exp $	*/
 /*	$NetBSD: touch.c,v 1.11 1995/08/31 22:10:06 jtc Exp $	*/
 
 /*
@@ -59,6 +59,9 @@ main(int argc, char *argv[])
 	char		*p;
 
 	(void)setlocale(LC_ALL, "");
+
+	if (tame("stdio rpath wpath cpath fattr", NULL) == -1)
+		err(1, "tame");
 
 	aflag = cflag = mflag = timeset = 0;
 	while ((ch = getopt(argc, argv, "acd:fmr:t:")) != -1)
