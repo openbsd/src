@@ -1,4 +1,4 @@
-/*	$OpenBSD: enqueue.c,v 1.95 2015/09/07 15:36:53 gilles Exp $	*/
+/*	$OpenBSD: enqueue.c,v 1.96 2015/10/06 06:04:46 gilles Exp $	*/
 
 /*
  * Copyright (c) 2005 Henning Brauer <henning@bulabula.org>
@@ -818,7 +818,7 @@ enqueue_offline(int argc, char *argv[], FILE *ifile)
 		PATH_OFFLINE, (long long int) time(NULL)))
 		err(EX_UNAVAILABLE, "snprintf");
 
-	omode = umask(7077);
+	omode = umask(07077);
 	if ((fd = mkstemp(path)) == -1 || (fp = fdopen(fd, "w+")) == NULL) {
 		warn("cannot create temporary file %s", path);
 		if (fd != -1)

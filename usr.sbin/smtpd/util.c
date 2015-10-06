@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.117 2015/10/06 05:48:34 gilles Exp $	*/
+/*	$OpenBSD: util.c,v 1.118 2015/10/06 06:04:46 gilles Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Markus Friedl.  All rights reserved.
@@ -385,7 +385,7 @@ mktmpfile(void)
 		fatal("exiting");
 	}
 
-	omode = umask(7077);
+	omode = umask(07077);
 	if ((fd = mkstemp(path)) == -1) {
 		log_warn("cannot create temporary file %s", path);
 		fatal("exiting");
