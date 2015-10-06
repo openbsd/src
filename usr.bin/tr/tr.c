@@ -1,4 +1,4 @@
-/*	$OpenBSD: tr.c,v 1.17 2014/06/03 20:57:23 millert Exp $	*/
+/*	$OpenBSD: tr.c,v 1.18 2015/10/06 13:49:33 deraadt Exp $	*/
 /*	$NetBSD: tr.c,v 1.5 1995/08/31 22:13:48 jtc Exp $	*/
 
 /*
@@ -86,6 +86,9 @@ main(int argc, char *argv[])
 {
 	int ch, cnt, lastch, *p;
 	int cflag, dflag, sflag, isstring2;
+
+	if (tame("stdio", NULL) == -1)
+		err(1, "tame");
 
 	cflag = dflag = sflag = 0;
 	while ((ch = getopt(argc, argv, "Ccds")) != -1)
