@@ -9,7 +9,7 @@
  *
  * S/Key misc routines.
  *
- * $OpenBSD: skeysubr.c,v 1.33 2014/03/25 04:28:28 lteo Exp $
+ * $OpenBSD: skeysubr.c,v 1.34 2015/10/06 15:07:45 tim Exp $
  */
 
 #include <stdio.h>
@@ -30,10 +30,9 @@
 #define SKEY_HASH_DEFAULT	0	/* md5 */
 #endif
 
-static int keycrunch_md5(char *, char *, char *);
-static int keycrunch_sha1(char *, char *, char *);
-static int keycrunch_rmd160(char *, char *, char *);
-static void lowcase(char *);
+static void keycrunch_md5(char *, char *, size_t);
+static void keycrunch_sha1(char *, char *, size_t);
+static void keycrunch_rmd160(char *, char *, size_t);
 static void skey_echo(int);
 static void trapped(int);
 
@@ -46,7 +45,7 @@ static int skey_hash_type = SKEY_HASH_DEFAULT;
  */
 struct skey_algorithm_table {
 	const char *name;
-	int (*keycrunch)(char *, char *, char *);
+	void (*keycrunch)(char *, char *, size_t);
 };
 static struct skey_algorithm_table skey_algorithm_table[] = {
 	{ "md5", keycrunch_md5 },
@@ -66,33 +65,31 @@ static struct skey_algorithm_table skey_algorithm_table[] = {
 int
 keycrunch(char *result, char *seed, char *passwd)
 {
-	return(skey_algorithm_table[skey_hash_type].keycrunch(result, seed, passwd));
+	char *buf, *p;
+	size_t buflen;
+
+	buflen = strlen(seed) + strlen(passwd);
+	if ((buf = malloc(buflen + 1)) == NULL)
+		return(-1);
+
+	(void)strlcpy(buf, seed, buflen + 1);
+	for (p = buf; *p; p++)
+		*p = (char)tolower((unsigned char)*p);
+
+	(void)strlcat(buf, passwd, buflen + 1);
+	sevenbit(buf);
+
+	skey_algorithm_table[skey_hash_type].keycrunch(result, buf, buflen);
+
+	(void)free(buf);
+	return(0);
 }
 
-static int
-keycrunch_md5(char *result, char *seed, char *passwd)
+static void
+keycrunch_md5(char *result, char *buf, size_t buflen)
 {
-	char *buf;
 	MD5_CTX md;
 	u_int32_t results[4];
-	unsigned int buflen;
-
-	/*
-	 * If seed and passwd are defined we are in keycrunch() mode,
-	 * else we are in f() mode.
-	 */
-	if (seed && passwd) {
-		buflen = strlen(seed) + strlen(passwd);
-		if ((buf = malloc(buflen + 1)) == NULL)
-			return(-1);
-		(void)strlcpy(buf, seed, buflen + 1);
-		lowcase(buf);
-		(void)strlcat(buf, passwd, buflen + 1);
-		sevenbit(buf);
-	} else {
-		buf = result;
-		buflen = SKEY_BINKEY_SIZE;
-	}
 
 	/* Crunch the key through MD5 */
 	MD5Init(&md);
@@ -104,37 +101,13 @@ keycrunch_md5(char *result, char *seed, char *passwd)
 	results[1] ^= results[3];
 
 	(void)memcpy((void *)result, (void *)results, SKEY_BINKEY_SIZE);
-
-	if (buf != result)
-		(void)free(buf);
-
-	return(0);
 }
 
-static int
-keycrunch_sha1(char *result, char *seed, char *passwd)
+static void
+keycrunch_sha1(char *result, char *buf, size_t buflen)
 {
-	char *buf;
 	SHA1_CTX sha;
-	unsigned int buflen;
 	int i, j;
-
-	/*
-	 * If seed and passwd are defined we are in keycrunch() mode,
-	 * else we are in f() mode.
-	 */
-	if (seed && passwd) {
-		buflen = strlen(seed) + strlen(passwd);
-		if ((buf = malloc(buflen + 1)) == NULL)
-			return(-1);
-		(void)strlcpy(buf, seed, buflen + 1);
-		lowcase(buf);
-		(void)strlcat(buf, passwd, buflen + 1);
-		sevenbit(buf);
-	} else {
-		buf = result;
-		buflen = SKEY_BINKEY_SIZE;
-	}
 
 	/* Crunch the key through SHA1 */
 	SHA1Init(&sha);
@@ -157,37 +130,13 @@ keycrunch_sha1(char *result, char *seed, char *passwd)
 		result[j+2] = (u_char)((sha.state[i] >> 16) & 0xff);
 		result[j+3] = (u_char)((sha.state[i] >> 24) & 0xff);
 	}
-
-	if (buf != result)
-		(void)free(buf);
-
-	return(0);
 }
 
-static int
-keycrunch_rmd160(char *result, char *seed, char *passwd)
+static void
+keycrunch_rmd160(char *result, char *buf, size_t buflen)
 {
-	char *buf;
 	RMD160_CTX rmd;
 	u_int32_t results[5];
-	unsigned int buflen;
-
-	/*
-	 * If seed and passwd are defined we are in keycrunch() mode,
-	 * else we are in f() mode.
-	 */
-	if (seed && passwd) {
-		buflen = strlen(seed) + strlen(passwd);
-		if ((buf = malloc(buflen + 1)) == NULL)
-			return(-1);
-		(void)strlcpy(buf, seed, buflen + 1);
-		lowcase(buf);
-		(void)strlcat(buf, passwd, buflen + 1);
-		sevenbit(buf);
-	} else {
-		buf = result;
-		buflen = SKEY_BINKEY_SIZE;
-	}
 
 	/* Crunch the key through RMD-160 */
 	RMD160Init(&rmd);
@@ -200,11 +149,6 @@ keycrunch_rmd160(char *result, char *seed, char *passwd)
 	results[0] ^= results[4];
 
 	(void)memcpy((void *)result, (void *)results, SKEY_BINKEY_SIZE);
-
-	if (buf != result)
-		(void)free(buf);
-
-	return(0);
 }
 
 /*
@@ -214,7 +158,7 @@ keycrunch_rmd160(char *result, char *seed, char *passwd)
 void
 f(char *x)
 {
-	(void)skey_algorithm_table[skey_hash_type].keycrunch(x, NULL, NULL);
+	skey_algorithm_table[skey_hash_type].keycrunch(x, x, SKEY_BINKEY_SIZE);
 }
 
 /* Strip trailing cr/lf from a line of text */
@@ -426,17 +370,5 @@ skey_echo(int action)
 		term.c_lflag |= ECHO;
 		(void) tcsetattr(fileno(stdin), TCSAFLUSH|TCSASOFT, &term);
 		echo = 0;
-	}
-}
-
-/* Convert string to lower case */
-static void
-lowcase(char *s)
-{
-	char *p;
-
-	for (p = s; *p; p++) {
-		if (isupper((unsigned char)*p))
-			*p = (char)tolower((unsigned char)*p);
 	}
 }
