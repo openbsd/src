@@ -1,8 +1,8 @@
-.\"	$OpenBSD: skeyinit.1,v 1.39 2015/01/16 16:16:36 schwarze Exp $
+.\"	$OpenBSD: skeyinit.1,v 1.40 2015/10/06 15:09:08 tim Exp $
 .\"	$NetBSD: skeyinit.1,v 1.4 1995/07/07 22:24:09 jtc Exp $
 .\"	@(#)skeyinit.1	1.1 	10/28/93
 .\"
-.Dd $Mdocdate: January 16 2015 $
+.Dd $Mdocdate: October 6 2015 $
 .Dt SKEYINIT 1
 .Os
 .Sh NAME
@@ -11,7 +11,7 @@
 .Sh SYNOPSIS
 .Nm skeyinit
 .Bk -words
-.Op Fl CDErsx
+.Op Fl DErsx
 .Op Fl a Ar auth-type
 .Op Fl n Ar count
 .Op Fl md5 | rmd160 | sha1
@@ -72,14 +72,6 @@ This option allows the authentication type to be specified, such as
 .Dq passwd
 or
 .Dq skey .
-.It Fl C
-Converts from the old-style
-.Pa /etc/skeykeys
-database to a new-style database where user records are stored in the
-.Pa /etc/skey
-directory.
-If an entry already exists in the new-style database it will not
-be overwritten.
 .It Fl D
 Disables access to the S/Key database.
 Only the superuser may use the
