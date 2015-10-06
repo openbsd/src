@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.37 2014/09/29 20:56:47 jmc Exp $
+#	$OpenBSD: Makefile,v 1.38 2015/10/06 00:30:32 deraadt Exp $
 
 .PATH:		${.CURDIR}/..
 
@@ -11,6 +11,7 @@ BINDIR=	/usr/sbin
 MAN=	smtpctl.8
 MLINKS=	smtpctl.8 mailq.8
 
+CFLAGS+=   -fstack-protector-all
 CFLAGS+=	-I${.CURDIR}/..
 CFLAGS+=	-Wall -Wstrict-prototypes -Wmissing-prototypes
 CFLAGS+=	-Wmissing-declarations
