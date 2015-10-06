@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.227 2015/08/31 16:13:11 deraadt Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.228 2015/10/06 14:39:07 deraadt Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -2723,7 +2723,7 @@ sys_rmdir(struct proc *p, void *v, register_t *retval)
 		syscallarg(const char *) path;
 	} */ *uap = v;
 
-	p->p_tamenote = TMN_CPATH | TMN_RPATH;
+	p->p_tamenote = TMN_CPATH;
 	return (dounlinkat(p, AT_FDCWD, SCARG(uap, path), AT_REMOVEDIR));
 }
 
