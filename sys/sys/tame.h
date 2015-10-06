@@ -1,4 +1,4 @@
-/*	$OpenBSD: tame.h,v 1.8 2015/09/30 11:36:07 semarie Exp $	*/
+/*	$OpenBSD: tame.h,v 1.9 2015/10/06 14:55:41 claudio Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -54,8 +54,9 @@ int	tame_fail(struct proc *, int, int);
 int	tame_namei(struct proc *, char *);
 void	tame_aftersyscall(struct proc *, int, int);
 
-int	tame_cmsg_send(struct proc *p, void *v, int controllen);
-int	tame_cmsg_recv(struct proc *p, void *v, int controllen);
+struct mbuf;
+int	tame_cmsg_send(struct proc *p, struct mbuf *control);
+int	tame_cmsg_recv(struct proc *p, struct mbuf *control);
 int	tame_sysctl_check(struct proc *p, int namelen, int *name, void *new);
 int	tame_adjtime_check(struct proc *p, const void *v);
 int	tame_recvfrom_check(struct proc *p, void *from);

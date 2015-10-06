@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_tame.c,v 1.60 2015/10/06 14:38:23 deraadt Exp $	*/
+/*	$OpenBSD: kern_tame.c,v 1.61 2015/10/06 14:55:41 claudio Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -679,9 +679,8 @@ tame_aftersyscall(struct proc *p, int code, int error)
  * leaving such sockets lying around...
  */
 int
-tame_cmsg_recv(struct proc *p, void *v, int controllen)
+tame_cmsg_recv(struct proc *p, struct mbuf *control)
 {
-	struct mbuf *control = v;
 	struct msghdr tmp;
 	struct cmsghdr *cmsg;
 	int *fdp, fd;
@@ -694,7 +693,7 @@ tame_cmsg_recv(struct proc *p, void *v, int controllen)
 	/* Scan the cmsg */
 	memset(&tmp, 0, sizeof(tmp));
 	tmp.msg_control = mtod(control, struct cmsghdr *);
-	tmp.msg_controllen = controllen;
+	tmp.msg_controllen = control->m_len;
 	cmsg = CMSG_FIRSTHDR(&tmp);
 
 	while (cmsg != NULL) {
@@ -743,12 +742,13 @@ tame_cmsg_recv(struct proc *p, void *v, int controllen)
 
 /*
  * When tamed, default prevents sending of a cmsg.
+ *
+ * Unlike tame_cmsg_recv tame_cmsg_send is called with individual
+ * cmsgs one per mbuf. So no need to loop or scan.
  */
 int
-tame_cmsg_send(struct proc *p, void *v, int controllen)
+tame_cmsg_send(struct proc *p, struct mbuf *control)
 {
-	struct mbuf *control = v;
-	struct msghdr tmp;
 	struct cmsghdr *cmsg;
 	int *fdp, fd;
 	struct file *fp;
@@ -761,20 +761,11 @@ tame_cmsg_send(struct proc *p, void *v, int controllen)
 		return tame_fail(p, EPERM, TAME_CMSG);
 
 	/* Scan the cmsg */
-	memset(&tmp, 0, sizeof(tmp));
-	tmp.msg_control = mtod(control, struct cmsghdr *);
-	tmp.msg_controllen = controllen;
-	cmsg = CMSG_FIRSTHDR(&tmp);
-
-	while (cmsg != NULL) {
-		if (cmsg->cmsg_level == SOL_SOCKET &&
-		    cmsg->cmsg_type == SCM_RIGHTS)
-			break;
-		cmsg = CMSG_NXTHDR(&tmp, cmsg);
-	}
+	cmsg = mtod(control, struct cmsghdr *);
 
 	/* Contains no SCM_RIGHTS, so OK */
-	if (cmsg == NULL)
+	if (!(cmsg->cmsg_level == SOL_SOCKET &&
+	    cmsg->cmsg_type == SCM_RIGHTS))
 		return (0);
 
 	/* In OpenBSD, a CMSG only contains one SCM_RIGHTS.  Check it. */

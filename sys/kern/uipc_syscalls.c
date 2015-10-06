@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.110 2015/09/29 16:55:58 deraadt Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.111 2015/10/06 14:55:41 claudio Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -586,8 +586,9 @@ sendit(struct proc *p, int s, struct msghdr *mp, int flags, register_t *retsize)
 			    mp->msg_controllen);
 #endif
 
-		if (tame_cmsg_send(p, control, mp->msg_controllen)) {
+		if (tame_cmsg_send(p, control)) {
 			m_free(control);
+			error = EPERM;
 			goto bad;
 		}
 	} else
@@ -820,8 +821,10 @@ recvit(struct proc *p, int s, struct msghdr *mp, caddr_t namelenp,
 					mp->msg_flags |= MSG_CTRUNC;
 					i = len;
 				}
-//				if (tame_cmsg_recv(p, control, mp->msg_controllen))
-//					goto out;
+				if (tame_cmsg_recv(p, m)) {
+					error = EPERM;
+					goto out;
+				}
 				error = copyout(mtod(m, caddr_t), cp, i);
 				if (m->m_next)
 					i = ALIGN(i);
