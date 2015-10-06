@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.9 2015/10/06 15:24:54 semarie Exp $ */
+/*	$OpenBSD: main.c,v 1.10 2015/10/06 15:45:31 semarie Exp $ */
 /*
  * Copyright (c) 2015 Sebastien Marie <semarie@openbsd.org>
  *
@@ -279,12 +279,12 @@ main(int argc, char *argv[])
 	start_test(&ret, "tmppath", NULL, test_allowed_syscalls);
 	start_test(&ret, "inet",    NULL, test_allowed_syscalls);
 	start_test(&ret, "unix",    NULL, test_allowed_syscalls);
-	start_test(&ret, "cmsg",    NULL, test_allowed_syscalls);
 	start_test(&ret, "dns",     NULL, test_allowed_syscalls);
 	start_test(&ret, "getpw",   NULL, test_allowed_syscalls);
 
 	/* tests req without TAME_SELF for "permitted syscalls" */
 	// XXX it is a documentation bug
+	start_test(&ret, "cmsg",  NULL, test_allowed_syscalls);
 	start_test(&ret, "ioctl", NULL, test_allowed_syscalls);
 	start_test(&ret, "proc",  NULL, test_allowed_syscalls);
 	start_test(&ret, "cpath", NULL, test_allowed_syscalls);
@@ -325,7 +325,7 @@ main(int argc, char *argv[])
 	/* add request */
 	start_test(&ret, "stdio", NULL, test_tame);
 	/* change request */
-	start_test(&ret, "cmsg", NULL, test_tame);
+	start_test(&ret, "unix", NULL, test_tame);
 
 	/* test stat(2) */
 	start_test1(&ret, "stdio rpath", "/usr/share/man", test_stat);

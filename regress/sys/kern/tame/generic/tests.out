@@ -1,4 +1,4 @@
-#	$OpenBSD: tests.out,v 1.8 2015/10/06 15:24:54 semarie Exp $
+#	$OpenBSD: tests.out,v 1.9 2015/10/06 15:45:31 semarie Exp $
 test(test_nop): tame=("",NULL) status=0 exit=0
 test(test_inet): tame=("",NULL) status=9 signal=9 tamed_syscall=97
 test(test_inet): tame=("abort",NULL) status=134 signal=6 coredump=present tamed_syscall=97
@@ -13,9 +13,9 @@ test(test_allowed_syscalls): tame=("wpath",NULL) status=0 exit=0
 test(test_allowed_syscalls): tame=("tmppath",NULL) status=0 exit=0
 test(test_allowed_syscalls): tame=("inet",NULL) status=0 exit=0
 test(test_allowed_syscalls): tame=("unix",NULL) status=0 exit=0
-test(test_allowed_syscalls): tame=("cmsg",NULL) status=0 exit=0
 test(test_allowed_syscalls): tame=("dns",NULL) status=0 exit=0
 test(test_allowed_syscalls): tame=("getpw",NULL) status=0 exit=0
+test(test_allowed_syscalls): tame=("cmsg",NULL) status=9 signal=9 tamed_syscall=89
 test(test_allowed_syscalls): tame=("ioctl",NULL) status=9 signal=9 tamed_syscall=89
 test(test_allowed_syscalls): tame=("proc",NULL) status=9 signal=9 tamed_syscall=89
 test(test_allowed_syscalls): tame=("cpath",NULL) status=9 signal=9 tamed_syscall=89
@@ -90,7 +90,7 @@ test(test_tame): tame=("stdio rpath wpath",NULL) status=0 exit=0
 test(test_tame): tame=("stdio rpath wpath",{"/sbin",NULL}) status=256 exit=1 (errno: "Operation not permitted")
 test(test_tame): tame=("stdio rpath wpath",{"/",NULL}) status=256 exit=1 (errno: "Operation not permitted")
 test(test_tame): tame=("stdio",NULL) status=256 exit=1 (errno: "Operation not permitted")
-test(test_tame): tame=("cmsg",NULL) status=256 exit=1 (errno: "Operation not permitted")
+test(test_tame): tame=("unix",NULL) status=256 exit=1 (errno: "Operation not permitted")
 test(test_stat): tame=("stdio rpath",{"/usr/share/man",NULL})
  stat("/usr/share/man/man8/afterboot.8"): realpath=failed(2) uid=0 gid=7 mode=100444
  stat("/usr/share/man/man8/"): realpath=failed(2) uid=0 gid=0 mode=40755
