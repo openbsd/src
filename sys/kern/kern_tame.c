@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_tame.c,v 1.61 2015/10/06 14:55:41 claudio Exp $	*/
+/*	$OpenBSD: kern_tame.c,v 1.62 2015/10/06 15:21:26 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -142,7 +142,7 @@ const u_int tame_syscalls[SYS_MAXSYSCALL] = {
 	[SYS_setresuid] = TAME_PROC,
 
 	/* FIONREAD/FIONBIO, plus further checks in tame_ioctl_check() */
-	[SYS_ioctl] = TAME_RW | TAME_IOCTL,
+	[SYS_ioctl] = TAME_RW | TAME_IOCTL | TAME_TTY,
 
 	[SYS_getentropy] = TAME_MALLOC,
 	[SYS_madvise] = TAME_MALLOC,
@@ -226,10 +226,13 @@ static const struct {
 	{ "tmppath",		TAME_SELF | TAME_RW | TAME_TMPPATH },
 	{ "inet",		TAME_SELF | TAME_RW | TAME_INET },
 	{ "unix",		TAME_SELF | TAME_RW | TAME_UNIX },
-	{ "cmsg",		TAME_SELF | TAME_RW | TAME_UNIX | TAME_CMSG },
 	{ "dns",		TAME_SELF | TAME_MALLOC | TAME_DNSPATH },
-	{ "ioctl",		TAME_IOCTL },
 	{ "getpw",		TAME_SELF | TAME_MALLOC | TAME_RW | TAME_GETPW },
+/*X*/	{ "cmsg",		TAME_UNIX | TAME_INET | TAME_SENDFD | TAME_RECVFD },
+	{ "sendfd",		TAME_RW | TAME_SENDFD },
+	{ "recvfd",		TAME_RW | TAME_RECVFD },
+	{ "ioctl",		TAME_IOCTL },
+	{ "tty",		TAME_TTY },
 	{ "proc",		TAME_PROC },
 	{ "cpath",		TAME_CPATH },
 	{ "abort",		TAME_ABORT },
@@ -671,7 +674,7 @@ tame_aftersyscall(struct proc *p, int code, int error)
  * By default, only the advisory cmsg's can be received from the kernel,
  * such as TIMESTAMP ntpd.
  *
- * If TAME_CMSG is set SCM_RIGHTS is also allowed through for a carefully
+ * If TAME_RECVFD is set SCM_RIGHTS is also allowed in for a carefully
  * selected set of descriptors (specifically to exclude directories).
  *
  * This results in a kill upon recv, if some other process on the system
@@ -707,8 +710,8 @@ tame_cmsg_recv(struct proc *p, struct mbuf *control)
 	if (cmsg == NULL)
 		return (0);
 
-	if ((p->p_p->ps_tame & TAME_CMSG) == 0)
-		return tame_fail(p, EPERM, TAME_CMSG);
+	if ((p->p_p->ps_tame & TAME_RECVFD) == 0)
+		return tame_fail(p, EPERM, TAME_RECVFD);
 
 	/* In OpenBSD, a CMSG only contains one SCM_RIGHTS.  Check it. */
 	fdp = (int *)CMSG_DATA(cmsg);
@@ -720,7 +723,7 @@ tame_cmsg_recv(struct proc *p, struct mbuf *control)
 		fd = *fdp++;
 		fp = fd_getfile(p->p_fd, fd);
 		if (fp == NULL)
-			return tame_fail(p, EBADF, TAME_CMSG);
+			return tame_fail(p, EBADF, TAME_RECVFD);
 
 		/* Only allow passing of sockets, pipes, and pure files */
 		switch (fp->f_type) {
@@ -735,7 +738,7 @@ tame_cmsg_recv(struct proc *p, struct mbuf *control)
 		default:
 			break;
 		}
-		return tame_fail(p, EPERM, TAME_CMSG);
+		return tame_fail(p, EPERM, TAME_RECVFD);
 	}
 	return (0);
 }
@@ -757,8 +760,8 @@ tame_cmsg_send(struct proc *p, struct mbuf *control)
 	if ((p->p_p->ps_flags & PS_TAMED) == 0)
 		return (0);
 
-	if ((p->p_p->ps_tame & TAME_CMSG) == 0)
-		return tame_fail(p, EPERM, TAME_CMSG);
+	if ((p->p_p->ps_tame & TAME_SENDFD) == 0)
+		return tame_fail(p, EPERM, TAME_SENDFD);
 
 	/* Scan the cmsg */
 	cmsg = mtod(control, struct cmsghdr *);
@@ -778,7 +781,7 @@ tame_cmsg_send(struct proc *p, struct mbuf *control)
 		fd = *fdp++;
 		fp = fd_getfile(p->p_fd, fd);
 		if (fp == NULL)
-			return tame_fail(p, EBADF, TAME_CMSG);
+			return tame_fail(p, EBADF, TAME_SENDFD);
 
 		/* Only allow passing of sockets, pipes, and pure files */
 		switch (fp->f_type) {
@@ -794,7 +797,7 @@ tame_cmsg_send(struct proc *p, struct mbuf *control)
 			break;
 		}
 		/* Not allowed to send a bad fd type */
-		return tame_fail(p, EPERM, TAME_CMSG);
+		return tame_fail(p, EPERM, TAME_SENDFD);
 	}
 	return (0);
 }
@@ -996,19 +999,12 @@ tame_ioctl_check(struct proc *p, long com, void *v)
 		case TIOCGETA:
 		case TIOCGPGRP:
 		case TIOCGWINSZ:	/* various programs */
-		case TIOCSTI:		/* ksh? csh? */
-		case TIOCSBRK:		/* cu */
-		case TIOCCDTR:		/* cu */
 			if (fp->f_type == DTYPE_VNODE && (vp->v_flag & VISTTY))
 				return (0);
 			break;
 		case BIOCGSTATS:	/* bpf: tcpdump privsep on ^C */
 			if (fp->f_type == DTYPE_VNODE &&
 			    fp->f_ops->fo_ioctl == vn_ioctl)
-				return (0);
-			break;
-		case TIOCSETAF:		/* tcsetattr TCSAFLUSH, script */
-			if (fp->f_type == DTYPE_VNODE && (vp->v_flag & VISTTY))
 				return (0);
 			break;
 		case MTIOCGET:
@@ -1026,8 +1022,26 @@ tame_ioctl_check(struct proc *p, long com, void *v)
 		}
 	}
 
-	printf("tame: ioctl %lx\n", com);
-	return (EPERM);
+	if ((p->p_p->ps_tame & TAME_TTY)) {
+		switch (com) {
+		case TIOCGETA:
+		case TIOCGPGRP:
+		case TIOCGWINSZ:	/* various programs */
+#if notyet
+		case TIOCSTI:		/* ksh? csh? */
+#endif
+		case TIOCSBRK:		/* cu */
+		case TIOCCDTR:		/* cu */
+		case TIOCSETA:		/* cu, ... */
+		case TIOCSETAW:		/* cu, ... */
+		case TIOCSETAF:		/* tcsetattr TCSAFLUSH, script */
+			if (fp->f_type == DTYPE_VNODE && (vp->v_flag & VISTTY))
+				return (0);
+			break;
+		}
+	}
+
+	return tame_fail(p, EPERM, TAME_IOCTL);
 }
 
 int
