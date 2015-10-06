@@ -1,4 +1,4 @@
-/*	$OpenBSD: table_ldap.c,v 1.13 2015/01/20 17:37:54 deraadt Exp $	*/
+/*	$OpenBSD: table_ldap.c,v 1.14 2015/10/06 14:02:25 stsp Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -189,10 +189,10 @@ ldap_connect(const char *addr)
 	if ((buf = strdup(addr)) == NULL)
 		return (NULL);
 
-	/* XXX buf leak */
-
+	/* aldap_parse_url frees buf on success */
 	if (aldap_parse_url(buf, &lu) != 1) {
 		log_warnx("warn: table-ldap: ldap_parse_url fail");
+		free(buf);
 		return (NULL);
 	}
 
