@@ -1,4 +1,4 @@
-/*	$OpenBSD: nl.c,v 1.4 2015/01/21 22:28:09 deraadt Exp $ */
+/*	$OpenBSD: nl.c,v 1.5 2015/10/07 07:00:01 deraadt Exp $ */
 /*	$NetBSD: nl.c,v 1.11 2011/08/16 12:00:46 christos Exp $	*/
 
 /*-
@@ -117,6 +117,9 @@ main(int argc, char *argv[])
 	const char *errstr;
 
 	(void)setlocale(LC_ALL, "");
+
+	if (tame("stdio rpath", NULL) == -1)
+		err(1, "tame");
 
 	while ((c = getopt(argc, argv, "pb:d:f:h:i:l:n:s:v:w:")) != -1) {
 		switch (c) {
