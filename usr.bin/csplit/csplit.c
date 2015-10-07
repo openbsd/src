@@ -1,4 +1,4 @@
-/*	$OpenBSD: csplit.c,v 1.5 2014/05/20 01:25:23 guenther Exp $	*/
+/*	$OpenBSD: csplit.c,v 1.6 2015/10/07 03:50:10 deraadt Exp $	*/
 /*	$FreeBSD: src/usr.bin/csplit/csplit.c,v 1.9 2004/03/22 11:15:03 tjr Exp $	*/
 
 /*-
@@ -103,6 +103,9 @@ main(int argc, char *argv[])
 
 	setlocale(LC_ALL, "");
 
+	if (tame("stdio rpath wpath cpath", NULL) == -1)
+		err(1, "tame");
+
 	kflag = sflag = 0;
 	prefix = "xx";
 	sufflen = 2;
@@ -140,6 +143,8 @@ main(int argc, char *argv[])
 	if (strcmp(infn, "-") == 0) {
 		infile = stdin;
 		infn = "stdin";
+		if (tame("stdio wpath cpath", NULL) == -1)
+			err(1, "tame");
 	} else if ((infile = fopen(infn, "r")) == NULL)
 		err(1, "%s", infn);
 
