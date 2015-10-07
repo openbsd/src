@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtable.c,v 1.8 2015/09/28 08:47:53 mpi Exp $ */
+/*	$OpenBSD: rtable.c,v 1.9 2015/10/07 08:43:36 mpi Exp $ */
 
 /*
  * Copyright (c) 2014-2015 Martin Pieuchot
@@ -108,6 +108,9 @@ rtable_insert(unsigned int rtableid, struct sockaddr *dst,
 	rn = rn_addroute(dst, mask, rnh, rn, prio);
 	if (rn == NULL)
 		return (ESRCH);
+
+	rt = ((struct rtentry *)rn);
+	rtref(rt);
 
 	return (0);
 }
@@ -418,6 +421,7 @@ rtable_insert(unsigned int rtableid, struct sockaddr *dst,
 		rt->rt_mask = msk;
 	}
 
+	rtref(rt);
 	LIST_INSERT_HEAD(&an->an_rtlist, rt, rt_next);
 
 #ifndef SMALL_KERNEL

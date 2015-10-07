@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.246 2015/10/01 22:21:48 mpi Exp $	*/
+/*	$OpenBSD: route.c,v 1.247 2015/10/07 08:43:36 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -1090,7 +1090,7 @@ rtrequest1(int req, struct rt_addrinfo *info, u_int8_t prio,
 				error = rtable_insert(tableid, ndst,
 				    info->rti_info[RTAX_NETMASK],
 				    rt->rt_priority, rt);
-				}
+			}
 			rtfree(crt);
 		}
 		if (error != 0) {
@@ -1108,10 +1108,7 @@ rtrequest1(int req, struct rt_addrinfo *info, u_int8_t prio,
 
 		if (ifa->ifa_rtrequest)
 			ifa->ifa_rtrequest(req, rt);
-		if (ret_nrt) {
-			*ret_nrt = rt;
-			rt->rt_refcnt++;
-		}
+
 		if ((rt->rt_flags & RTF_CLONING) != 0) {
 			/* clean up any cloned children */
 			rtflushclone(tableid, rt);
@@ -1119,6 +1116,11 @@ rtrequest1(int req, struct rt_addrinfo *info, u_int8_t prio,
 
 		if_group_routechange(info->rti_info[RTAX_DST],
 			info->rti_info[RTAX_NETMASK]);
+
+		if (ret_nrt != NULL)
+			*ret_nrt = rt;
+		else
+			rtfree(rt);
 		break;
 	}
 
