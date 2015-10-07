@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_table.c,v 1.114 2015/09/04 08:43:39 mpi Exp $	*/
+/*	$OpenBSD: pf_table.c,v 1.115 2015/10/07 11:57:44 mpi Exp $	*/
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -2034,9 +2034,9 @@ pfr_create_ktable(struct pfr_table *tbl, time_t tzero, int attachruleset,
 	}
 
 	if (!rn_inithead((void **)&kt->pfrkt_ip4,
-	    offsetof(struct sockaddr_in, sin_addr) * 8) ||
+	    offsetof(struct sockaddr_in, sin_addr)) ||
 	    !rn_inithead((void **)&kt->pfrkt_ip6,
-	    offsetof(struct sockaddr_in6, sin6_addr) * 8)) {
+	    offsetof(struct sockaddr_in6, sin6_addr))) {
 		pfr_destroy_ktable(kt, 0);
 		return (NULL);
 	}

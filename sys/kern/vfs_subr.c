@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.233 2015/09/04 08:43:39 mpi Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.234 2015/10/07 11:57:44 mpi Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -1378,7 +1378,7 @@ vfs_hang_addrlist(struct mount *mp, struct netexport *nep,
 	case AF_INET:
 		if ((rnh = nep->ne_rtable_inet) == NULL) {
 			if (!rn_inithead((void **)&nep->ne_rtable_inet,
-			    offsetof(struct sockaddr_in, sin_addr) * 8)) {
+			    offsetof(struct sockaddr_in, sin_addr))) {
 				error = ENOBUFS;
 				goto out;
 			}
