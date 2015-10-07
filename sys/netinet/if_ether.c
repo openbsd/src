@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.170 2015/09/28 08:26:58 mpi Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.171 2015/10/07 08:58:01 mpi Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -114,14 +114,6 @@ struct in_addr revarp_myip, revarp_srvip;
 int revarp_finished;
 struct ifnet *revarp_ifp;
 #endif /* NFSCLIENT */
-
-#ifdef DDB
-
-void	db_print_sa(struct sockaddr *);
-void	db_print_ifa(struct ifaddr *);
-void	db_print_llinfo(caddr_t);
-int	db_show_rtentry(struct rtentry *, void *, unsigned int);
-#endif
 
 /*
  * Timeout routine.  Age arp_tab entries periodically.
@@ -1028,101 +1020,3 @@ revarpwhoami(struct in_addr *in, struct ifnet *ifp)
 	return (revarpwhoarewe(ifp, &server, in));
 }
 #endif /* NFSCLIENT */
-
-#ifdef DDB
-
-#include <machine/db_machdep.h>
-#include <ddb/db_output.h>
-
-void
-db_print_sa(struct sockaddr *sa)
-{
-	int len;
-	u_char *p;
-
-	if (sa == NULL) {
-		db_printf("[NULL]");
-		return;
-	}
-
-	p = (u_char *)sa;
-	len = sa->sa_len;
-	db_printf("[");
-	while (len > 0) {
-		db_printf("%d", *p);
-		p++;
-		len--;
-		if (len)
-			db_printf(",");
-	}
-	db_printf("]\n");
-}
-
-void
-db_print_ifa(struct ifaddr *ifa)
-{
-	if (ifa == NULL)
-		return;
-	db_printf("  ifa_addr=");
-	db_print_sa(ifa->ifa_addr);
-	db_printf("  ifa_dsta=");
-	db_print_sa(ifa->ifa_dstaddr);
-	db_printf("  ifa_mask=");
-	db_print_sa(ifa->ifa_netmask);
-	db_printf("  flags=0x%x, refcnt=%d, metric=%d\n",
-	    ifa->ifa_flags, ifa->ifa_refcnt, ifa->ifa_metric);
-}
-
-void
-db_print_llinfo(caddr_t li)
-{
-	struct llinfo_arp *la;
-
-	if (li == 0)
-		return;
-	la = (struct llinfo_arp *)li;
-	db_printf("  la_rt=%p la_asked=0x%lx\n", la->la_rt, la->la_asked);
-}
-
-/*
- * Function to pass to rtalble_walk().
- * Return non-zero error to abort walk.
- */
-int
-db_show_rtentry(struct rtentry *rt, void *w, unsigned int id)
-{
-	db_printf("rtentry=%p", rt);
-
-	db_printf(" flags=0x%x refcnt=%d use=%llu expire=%lld rtableid=%u\n",
-	    rt->rt_flags, rt->rt_refcnt, rt->rt_use, rt->rt_expire, id);
-
-	db_printf(" key="); db_print_sa(rt_key(rt));
-	db_printf(" mask="); db_print_sa(rt_mask(rt));
-	db_printf(" gw="); db_print_sa(rt->rt_gateway);
-
-	db_printf(" ifp=%p ", rt->rt_ifp);
-	if (rt->rt_ifp)
-		db_printf("(%s)", rt->rt_ifp->if_xname);
-	else
-		db_printf("(NULL)");
-
-	db_printf(" ifa=%p\n", rt->rt_ifa);
-	db_print_ifa(rt->rt_ifa);
-
-	db_printf(" gwroute=%p llinfo=%p\n", rt->rt_gwroute, rt->rt_llinfo);
-	db_print_llinfo(rt->rt_llinfo);
-	return (0);
-}
-
-/*
- * Function to print all the route trees.
- * Use this from ddb:  "call db_show_arptab"
- */
-int
-db_show_arptab(void)
-{
-	db_printf("Route tree for AF_INET\n");
-	rtable_walk(0, AF_INET, db_show_rtentry, NULL);
-	return (0);
-}
-#endif
