@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkdir.c,v 1.25 2013/04/02 20:26:17 naddy Exp $	*/
+/*	$OpenBSD: mkdir.c,v 1.26 2015/10/07 14:17:18 deraadt Exp $	*/
 /*	$NetBSD: mkdir.c,v 1.14 1995/06/25 21:59:21 mycroft Exp $	*/
 
 /*
@@ -81,6 +81,11 @@ main(int argc, char *argv[])
 		}
 	argc -= optind;
 	argv += optind;
+
+	if (mode & (S_ISUID | S_ISGID | S_ISTXT) == 0) {
+		if (tame("stdio cpath rpath fattr", NULL) == -1)
+			err(1, "tame");
+	}
 
 	if (*argv == NULL)
 		usage();
