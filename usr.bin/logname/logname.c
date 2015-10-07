@@ -1,4 +1,4 @@
-/*	$OpenBSD: logname.c,v 1.7 2009/10/27 23:59:40 deraadt Exp $	*/
+/*	$OpenBSD: logname.c,v 1.8 2015/10/07 14:06:26 deraadt Exp $	*/
 /*	$NetBSD: logname.c,v 1.6 1994/12/22 06:39:32 jtc Exp $	*/
 
 /*-
@@ -45,6 +45,9 @@ main(int argc, char *argv[])
 	char *p;
 
 	setlocale(LC_ALL, "");
+
+	if (tame("stdio", NULL) == -1)
+		err(1, "tame");
 
 	while ((ch = getopt(argc, argv, "")) != -1)
 		switch (ch) {
