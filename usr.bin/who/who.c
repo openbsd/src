@@ -1,4 +1,4 @@
-/*	$OpenBSD: who.c,v 1.21 2015/10/07 16:11:40 semarie Exp $	*/
+/*	$OpenBSD: who.c,v 1.22 2015/10/07 17:27:35 semarie Exp $	*/
 /*	$NetBSD: who.c,v 1.4 1994/12/07 04:28:49 jtc Exp $	*/
 
 /*
@@ -74,7 +74,7 @@ main(int argc, char *argv[])
 
 	setlocale(LC_ALL, "");
 
-	if (tame("stdio getpw rpath ioctl", NULL) == -1)
+	if (tame("stdio getpw rpath tty", NULL) == -1)
 		err(1, "tame");
 
 	mytty = ttyname(0);
