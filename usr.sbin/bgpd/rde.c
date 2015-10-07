@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.339 2015/09/21 09:47:15 phessler Exp $ */
+/*	$OpenBSD: rde.c,v 1.340 2015/10/07 20:26:16 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -30,6 +30,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <err.h>
 
 #include "bgpd.h"
 #include "mrt.h"
@@ -185,6 +186,9 @@ rde_main(int debug, int verbose)
 	    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||
 	    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
 		fatal("can't drop privileges");
+
+	if (tame("stdio unix route recvfd", NULL) == -1)
+		fatal("tame");
 
 	signal(SIGTERM, rde_sighdlr);
 	signal(SIGINT, rde_sighdlr);
