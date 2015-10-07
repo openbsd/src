@@ -1,4 +1,4 @@
-/*	$OpenBSD: paste.c,v 1.19 2014/11/25 10:20:24 tobias Exp $	*/
+/*	$OpenBSD: paste.c,v 1.20 2015/10/07 14:12:42 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -56,6 +56,9 @@ main(int argc, char *argv[])
 	extern char *optarg;
 	extern int optind;
 	int ch, seq;
+
+	if (tame("stdio rpath", NULL) == -1)
+		err(1, "tame");
 
 	seq = 0;
 	while ((ch = getopt(argc, argv, "d:s")) != -1) {
