@@ -1,4 +1,4 @@
-/*	$OpenBSD: bounce.c,v 1.66 2015/01/20 17:37:54 deraadt Exp $	*/
+/*	$OpenBSD: bounce.c,v 1.67 2015/10/07 19:25:42 millert Exp $	*/
 
 /*
  * Copyright (c) 2009 Gilles Chehade <gilles@poolp.org>
@@ -384,8 +384,9 @@ static int
 bounce_next(struct bounce_session *s)
 {
 	struct bounce_envelope	*evp;
-	char			*line;
-	size_t			 len, n;
+	char			*line = NULL;
+	size_t			 n, sz = 0;
+	ssize_t			 len;
 
 	switch (s->state) {
 	case BOUNCE_EHLO:
@@ -480,12 +481,12 @@ bounce_next(struct bounce_session *s)
 		n = iobuf_queued(&s->iobuf);
 
 		while (iobuf_queued(&s->iobuf) < BOUNCE_HIWAT) {
-			line = fgetln(s->msgfp, &len);
-			if (line == NULL)
+			if ((len = getline(&line, &sz, s->msgfp)) == -1)
 				break;
 			if (len == 1 && line[0] == '\n' && /* end of headers */
 			    s->msg->bounce.type == B_DSN &&
 			    s->msg->bounce.dsn_ret ==  DSN_RETHDRS) {
+				free(line);
 				fclose(s->msgfp);
 				s->msgfp = NULL;
 				bounce_send(s, ".");
@@ -497,6 +498,7 @@ bounce_next(struct bounce_session *s)
 			    "bounce_next: DATA_MESSAGE", "%s%s\n",
 			    (len == 2 && line[0] == '.') ? "." : "", line);
 		}
+		free(line);
 
 		if (ferror(s->msgfp)) {
 			fclose(s->msgfp);
