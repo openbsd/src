@@ -1,4 +1,4 @@
-/*	$OpenBSD: ctags.c,v 1.16 2015/08/22 04:23:07 semarie Exp $	*/
+/*	$OpenBSD: ctags.c,v 1.17 2015/10/07 06:33:31 deraadt Exp $	*/
 /*	$NetBSD: ctags.c,v 1.4 1995/09/02 05:57:23 jtc Exp $	*/
 
 /*
@@ -76,6 +76,9 @@ main(int argc, char *argv[])
 	int	exit_val;			/* exit value */
 	int	step;				/* step through args */
 	int	ch;				/* getopts char */
+
+	if (tame("stdio rpath wpath cpath", NULL) == -1)
+		err(1, "tame");
 
 	aflag = uflag = NO;
 	while ((ch = getopt(argc, argv, "BFadf:tuwvx")) != -1)
