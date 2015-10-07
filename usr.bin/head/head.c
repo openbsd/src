@@ -1,4 +1,4 @@
-/*	$OpenBSD: head.c,v 1.18 2014/10/08 08:31:53 schwarze Exp $	*/
+/*	$OpenBSD: head.c,v 1.19 2015/10/07 06:55:10 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1987 Regents of the University of California.
@@ -55,6 +55,9 @@ main(int argc, char *argv[])
 	char	*p = NULL;
 	int	status = 0;
 
+	if (tame("stdio rpath", NULL) == -1)
+		err(1, "tame");
+
 	/* handle obsolete -number syntax */
 	if (argc > 1 && argv[1][0] == '-' &&
 	    isdigit((unsigned char)argv[1][1])) {
@@ -87,6 +90,8 @@ main(int argc, char *argv[])
 			if (!firsttime)
 				exit(status);
 			fp = stdin;
+			if (tame("stdio", NULL) == -1)
+				err(1, "tame");
 		} else {
 			if ((fp = fopen(*argv, "r")) == NULL) {
 				warn("%s", *argv++);
