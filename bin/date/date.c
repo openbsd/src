@@ -1,4 +1,4 @@
-/*	$OpenBSD: date.c,v 1.47 2015/04/17 16:47:47 deraadt Exp $	*/
+/*	$OpenBSD: date.c,v 1.48 2015/10/07 05:59:36 deraadt Exp $	*/
 /*	$NetBSD: date.c,v 1.11 1995/09/07 06:21:05 jtc Exp $	*/
 
 /*
@@ -126,6 +126,9 @@ main(int argc, char *argv[])
 		argv++;
 		argc--;
 	}
+
+	if (tame("stdio rpath wpath", NULL) == -1)
+		err(1, "tame");
 
 	if (*argv && **argv == '+') {
 		format = *argv + 1;
