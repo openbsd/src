@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgAdd.pm,v 1.87 2015/06/30 19:20:08 espie Exp $
+# $OpenBSD: PkgAdd.pm,v 1.88 2015/10/07 17:52:38 jmc Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -107,7 +107,7 @@ sub handle_options
 	my $state = shift;
 	$state->SUPER::handle_options('ruUzl:A:P:',
 	    '[-acinqrsUuvxz] [-A arch] [-B pkg-destdir] [-D name[=value]]',
-	    '[-L localbase] [-l file] [-P type] pkg-name [...]');
+	    '[-L localbase] [-l file] [-P type] pkg-name ...');
 
 	$state->{arch} = $state->opt('A');
 

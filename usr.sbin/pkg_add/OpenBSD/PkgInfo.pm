@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgInfo.pm,v 1.35 2015/04/06 12:19:35 espie Exp $
+# $OpenBSD: PkgInfo.pm,v 1.36 2015/10/07 17:52:38 jmc Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -559,7 +559,7 @@ sub parse_and_run
 	$state->{no_exports} = 1;
 	$state->handle_options('cCdfF:hIKLmPQ:qr:RsSUe:E:Ml:aAt',
 	    '[-AaCcdfIKLMmPqRSstUv] [-D nolock][-E filename] [-e pkg-name] ',
-	    '[-l str] [-Q query] [-r pkgspec] [pkg-name] [...]');
+	    '[-l str] [-Q query] [-r pkgspec] [pkg-name ...]');
 
 	if ($state->opt('r')) {
 
