@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_tame.c,v 1.66 2015/10/07 03:47:43 deraadt Exp $	*/
+/*	$OpenBSD: kern_tame.c,v 1.67 2015/10/07 19:52:54 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -238,6 +238,7 @@ static const struct {
 	{ "sendfd",		TAME_RW | TAME_SENDFD },
 	{ "recvfd",		TAME_RW | TAME_RECVFD },
 	{ "ioctl",		TAME_IOCTL },
+	{ "route",		TAME_ROUTE },
 	{ "tty",		TAME_TTY },
 	{ "proc",		TAME_PROC },
 	{ "exec",		TAME_EXEC },
@@ -810,7 +811,7 @@ tame_cmsg_send(struct proc *p, struct mbuf *control)
 }
 
 int
-tame_sysctl_check(struct proc *p, int namelen, int *name, void *new)
+tame_sysctl_check(struct proc *p, int miblen, int *mib, void *new)
 {
 	if ((p->p_p->ps_flags & PS_TAMED) == 0)
 		return (0);
@@ -818,64 +819,74 @@ tame_sysctl_check(struct proc *p, int namelen, int *name, void *new)
 	if (new)
 		return (EFAULT);
 
-	/* setproctitle() */
-	if (namelen == 2 &&
-	    name[0] == CTL_VM &&
-	    name[1] == VM_PSSTRINGS)
-		return (0);
+	/* routing table observation */
+	if ((p->p_p->ps_tame & TAME_ROUTE)) {
+		if (miblen == 7 &&
+		    mib[0] == CTL_NET && mib[1] == PF_ROUTE &&
+		    mib[2] == 0 &&
+		    (mib[3] == 0 || mib[3] == AF_INET6 || mib[3] == AF_INET) &&
+		    mib[4] == NET_RT_DUMP)
+			return (0);
 
-	/* getifaddrs() */
-	if ((p->p_p->ps_tame & TAME_INET) &&
-	    namelen == 6 &&
-	    name[0] == CTL_NET && name[1] == PF_ROUTE &&
-	    name[2] == 0 && name[3] == 0 &&
-	    name[4] == NET_RT_IFLIST && name[5] == 0)
-		return (0);
+		if (miblen == 6 &&
+		    mib[0] == CTL_NET && mib[1] == PF_ROUTE &&
+		    mib[2] == 0 &&
+		    (mib[3] == 0 || mib[3] == AF_INET6 || mib[3] == AF_INET) &&
+		    mib[4] == NET_RT_TABLE)
+			return (0);
 
-	/* used by arp(8).  Exposes MAC addresses known on local nets */
-	/* XXX Put into a special catagory. */
-	if ((p->p_p->ps_tame & TAME_INET) &&
-	    namelen == 7 &&
-	    name[0] == CTL_NET && name[1] == PF_ROUTE &&
-	    name[2] == 0 && name[3] == AF_INET &&
-	    name[4] == NET_RT_FLAGS && name[5] == RTF_LLINFO)
-		return (0);
+		if (miblen == 7 &&			/* exposes MACs */
+		    mib[0] == CTL_NET && mib[1] == PF_ROUTE &&
+		    mib[2] == 0 && mib[3] == AF_INET &&
+		    mib[4] == NET_RT_FLAGS && mib[5] == RTF_LLINFO)
+			return (0);
+	}
+
+	if ((p->p_p->ps_tame & (TAME_ROUTE | TAME_INET))) {
+		if (miblen == 6 &&		/* getifaddrs() */
+		    mib[0] == CTL_NET && mib[1] == PF_ROUTE &&
+		    mib[2] == 0 &&
+		    (mib[3] == 0 || mib[3] == AF_INET6 || mib[3] == AF_INET) &&
+		    mib[4] == NET_RT_IFLIST)
+			return (0);
+	}
 
 	/* used by ntpd(8) to read sensors. */
-	/* XXX Put into a special catagory. */
-	if (namelen >= 3 &&
-	    name[0] == CTL_HW && name[1] == HW_SENSORS)
+	if (miblen >= 3 &&
+	    mib[0] == CTL_HW && mib[1] == HW_SENSORS)
 		return (0);
 
-	/* getdomainname(), gethostname(), getpagesize(), uname() */
-	if (namelen == 2 &&
-	    name[0] == CTL_KERN && name[1] == KERN_DOMAINNAME)
+	if (miblen == 2 &&			/* getdomainname() */
+	    mib[0] == CTL_KERN && mib[1] == KERN_DOMAINNAME)
 		return (0);
-	if (namelen == 2 &&
-	    name[0] == CTL_KERN && name[1] == KERN_HOSTNAME)
+	if (miblen == 2 &&			/* gethostname() */
+	    mib[0] == CTL_KERN && mib[1] == KERN_HOSTNAME)
 		return (0);
-	if (namelen == 2 &&
-	    name[0] == CTL_KERN && name[1] == KERN_OSTYPE)
+	if (miblen == 2 &&			/* uname() */
+	    mib[0] == CTL_KERN && mib[1] == KERN_OSTYPE)
 		return (0);
-	if (namelen == 2 &&
-	    name[0] == CTL_KERN && name[1] == KERN_OSRELEASE)
+	if (miblen == 2 &&			/* uname() */
+	    mib[0] == CTL_KERN && mib[1] == KERN_OSRELEASE)
 		return (0);
-	if (namelen == 2 &&
-	    name[0] == CTL_KERN && name[1] == KERN_OSVERSION)
+	if (miblen == 2 &&			/* uname() */
+	    mib[0] == CTL_KERN && mib[1] == KERN_OSVERSION)
 		return (0);
-	if (namelen == 2 &&
-	    name[0] == CTL_KERN && name[1] == KERN_VERSION)
+	if (miblen == 2 &&			/* uname() */
+	    mib[0] == CTL_KERN && mib[1] == KERN_VERSION)
 		return (0);
-	if (namelen == 2 &&
-	    name[0] == CTL_HW && name[1] == HW_MACHINE)
+	if (miblen == 2 &&			/* uname() */
+	    mib[0] == CTL_HW && mib[1] == HW_MACHINE)
 		return (0);
-	if (namelen == 2 &&
-	    name[0] == CTL_HW && name[1] == HW_PAGESIZE)
+	if (miblen == 2 &&			/* getpagesize() */
+	    mib[0] == CTL_HW && mib[1] == HW_PAGESIZE)
+		return (0);
+	if (miblen == 2 &&			/* setproctitle() */
+	    mib[0] == CTL_VM && mib[1] == VM_PSSTRINGS)
 		return (0);
 
 	printf("%s(%d): sysctl %d: %d %d %d %d %d %d\n",
-	    p->p_comm, p->p_pid, namelen, name[0], name[1],
-	    name[2], name[3], name[4], name[5]);
+	    p->p_comm, p->p_pid, miblen, mib[0], mib[1],
+	    mib[2], mib[3], mib[4], mib[5]);
 	return (EFAULT);
 }
 
