@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtable.c,v 1.9 2015/10/07 08:43:36 mpi Exp $ */
+/*	$OpenBSD: rtable.c,v 1.10 2015/10/07 10:50:35 mpi Exp $ */
 
 /*
  * Copyright (c) 2014-2015 Martin Pieuchot
@@ -22,31 +22,172 @@
 #include <sys/malloc.h>
 #include <sys/pool.h>
 #include <sys/queue.h>
+#include <sys/domain.h>
 
 #include <net/rtable.h>
 #include <net/route.h>
 
-#ifndef ART
+uint8_t		   af2idx[AF_MAX+1];	/* To only allocate supported AF */
+uint8_t		   af2idx_max = 1;	/* Must have NULL at index 0 */
+
+void		***rtables;		/* Array of routing tables */
+unsigned int	   rtables_id_max = 0;
+unsigned int	  *rtables2dom;		/* rtable to domain lookup table */
+
+void		   rtable_init_backend(unsigned int);
+int		   rtable_attach(unsigned int, sa_family_t, int);
+void		   rtable_set(unsigned int, sa_family_t, void *);
 
 void
-rtable_init(unsigned int keylen)
+rtable_init(void)
+{
+	struct domain	*dp;
+	unsigned int	 keylen = 0;
+	int		 i;
+
+	memset(af2idx, 0, sizeof(af2idx));
+
+	/*
+	 * Compute the maximum supported key length in case the routing
+	 * table backend needs it.
+	 */
+	for (i = 0; (dp = domains[i]) != NULL; i++) {
+		if (dp->dom_rtoffset)
+			af2idx[dp->dom_family] = af2idx_max++;
+		if (dp->dom_rtkeylen > keylen)
+			keylen = dp->dom_rtkeylen;
+	}
+
+	rtable_init_backend(keylen);
+}
+
+int
+rtable_add(unsigned int id)
+{
+	struct domain	*dp;
+	void		*p, *q;
+	int		 i, rv = 0;
+
+	if (id > RT_TABLEID_MAX)
+		return (EINVAL);
+
+	if (id == 0 || id > rtables_id_max) {
+		if ((p = mallocarray(id + 1, sizeof(void *), M_RTABLE,
+		    M_NOWAIT|M_ZERO)) == NULL)
+			return (ENOMEM);
+
+		if ((q = mallocarray(id + 1, sizeof(unsigned int), M_RTABLE,
+		    M_NOWAIT|M_ZERO)) == NULL) {
+			free(p, M_RTABLE, (id + 1) * sizeof(void *));
+			return (ENOMEM);
+		}
+		if (rtables) {
+			memcpy(p, rtables, (rtables_id_max+1) * sizeof(void *));
+			free(rtables, M_RTABLE,
+			    (rtables_id_max+1) * sizeof(void *));
+
+			memcpy(q, rtables2dom,
+			    (rtables_id_max+1) * sizeof(unsigned int));
+			free(rtables2dom, M_RTABLE,
+			    (rtables_id_max+1) * sizeof(unsigned int));
+		}
+		rtables = p;
+		rtables2dom = q;
+		rtables_id_max = id;
+	}
+
+	if (rtables[id] != NULL)	/* already exists */
+		return (EEXIST);
+
+	rtables2dom[id] = 0;	/* use main table/domain by default */
+	rtables[id] = mallocarray(af2idx_max + 1, sizeof(void *), M_RTABLE,
+	    M_NOWAIT|M_ZERO);
+	if (rtables[id] == NULL)
+		return (ENOMEM);
+
+	/* Per domain initialization. */
+	for (i = 0; (dp = domains[i]) != NULL; i++) {
+		if (dp->dom_rtoffset == 0)
+			continue;
+		rv |= rtable_attach(id, dp->dom_family, dp->dom_rtoffset);
+	}
+
+	return (rv);
+}
+void *
+rtable_get(unsigned int rtableid, sa_family_t af)
+{
+	if (rtableid > rtables_id_max)
+		return (NULL);
+	return (rtables[rtableid] ? rtables[rtableid][af2idx[af]] : NULL);
+}
+
+void
+rtable_set(unsigned int rtableid, sa_family_t af, void *p)
+{
+	if (rtableid > rtables_id_max)
+		return;
+
+	if (rtables[rtableid])
+		rtables[rtableid][af2idx[af]] = p;
+}
+
+int
+rtable_exists(unsigned int rtableid)
+{
+	if (rtableid > rtables_id_max)
+		return (0);
+
+	if (rtables[rtableid] == NULL)
+		return (0);
+
+	return (1);
+}
+
+unsigned int
+rtable_l2(unsigned int rtableid)
+{
+	if (rtableid > rtables_id_max)
+		return (0);
+
+	return (rtables2dom[rtableid]);
+}
+
+void
+rtable_l2set(unsigned int rtableid, unsigned int parent)
+{
+	if (!rtable_exists(rtableid) || !rtable_exists(parent))
+		return;
+
+	rtables2dom[rtableid] = parent;
+}
+
+#ifndef ART
+void
+rtable_init_backend(unsigned int keylen)
 {
 	rn_init(keylen); /* initialize all zeroes, all ones, mask table */
 }
 
 int
-rtable_attach(void **head, int off)
+rtable_attach(unsigned int rtableid, sa_family_t af, int off)
 {
-	int rv;
+	struct radix_node_head *rnh;
+	int rv = 1;
 
-	rv = rn_inithead(head, off);
+	rnh = rtable_get(rtableid, af);
+	if (rnh != NULL)
+		return (EEXIST);
 
+	if (rn_inithead((void **)&rnh, off)) {
 #ifndef SMALL_KERNEL
-	if (rv == 1) {
-		struct radix_node_head *rnh = (struct radix_node_head *)*head;
 		rnh->rnh_multipath = 1;
-	}
 #endif /* SMALL_KERNEL */
+		rnh->rnh_rtableid = rtableid;
+		rv = 0;
+	}
+
+	rtable_set(rtableid, af, rnh);
 
 	return (rv);
 }
@@ -137,24 +278,11 @@ rtable_delete(unsigned int rtableid, struct sockaddr *dst,
 }
 
 int
-rtable_setid(void **p, unsigned int rtableid, sa_family_t af)
-{
-	struct radix_node_head **rnh = (struct radix_node_head **)p;
-
-	if (rnh == NULL || rnh[af] == NULL)
-		return (EINVAL);
-
-	rnh[af]->rnh_rtableid = rtableid;
-
-	return (0);
-}
-
-int
 rtable_walk(unsigned int rtableid, sa_family_t af,
     int (*func)(struct rtentry *, void *, unsigned int), void *arg)
 {
 	struct radix_node_head	*rnh;
-	int (*f)(struct radix_node *, void *, u_int) = (void *)func;
+	int (*f)(struct radix_node *, void *, unsigned int) = (void *)func;
 
 	rnh = rtable_get(rtableid, af);
 	if (rnh == NULL)
@@ -259,15 +387,27 @@ static inline int	 satoplen(struct art_root *, struct sockaddr *);
 static inline uint8_t	*satoaddr(struct art_root *, struct sockaddr *);
 
 void
-rtable_init(unsigned int keylen)
+rtable_init_backend(unsigned int keylen)
 {
 	pool_init(&an_pool, sizeof(struct art_node), 0, 0, 0, "art node", NULL);
 }
 
 int
-rtable_attach(void **head, int off)
+rtable_attach(unsigned int rtableid, sa_family_t af, int off)
 {
-	return (art_attach(head, off));
+	struct art_root			*ar;
+
+	ar = rtable_get(rtableid, af);
+	if (ar != NULL)
+		return (EEXIST);
+
+	ar = art_attach(rtableid, off);
+	if (ar == NULL)
+		return (ENOMEM);
+
+	rtable_set(rtableid, af, ar);
+
+	return (0);
 }
 
 struct rtentry *
@@ -484,19 +624,6 @@ rtable_delete(unsigned int rtableid, struct sockaddr *dst,
 		return (ESRCH);
 
 	pool_put(&an_pool, an);
-
-	return (0);
-}
-
-int
-rtable_setid(void **p, unsigned int rtableid, sa_family_t af)
-{
-	struct art_root			**ar = (struct art_root **)p;
-
-	if (ar == NULL || ar[af] == NULL)
-		return (EINVAL);
-
-	ar[af]->ar_rtableid = rtableid;
 
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtable.h,v 1.4 2015/09/28 08:36:24 mpi Exp $ */
+/*	$OpenBSD: rtable.h,v 1.5 2015/10/07 10:50:35 mpi Exp $ */
 
 /*
  * Copyright (c) 2014-2015 Martin Pieuchot
@@ -49,8 +49,7 @@
 
 #endif /* ART */
 
-void		 rtable_init(unsigned int);
-int		 rtable_attach(void **, int);
+void		 rtable_init(void);
 struct rtentry	*rtable_lookup(unsigned int, struct sockaddr *,
 		     struct sockaddr *);
 struct rtentry	*rtable_match(unsigned int, struct sockaddr *);
@@ -59,8 +58,11 @@ int		 rtable_insert(unsigned int, struct sockaddr *,
 int		 rtable_delete(unsigned int, struct sockaddr *,
 		     struct sockaddr *, uint8_t, struct rtentry *);
 
-int		 rtable_setid(void **, unsigned int, sa_family_t);
+int		 rtable_exists(unsigned int);
+int		 rtable_add(unsigned int);
 void		*rtable_get(unsigned int, sa_family_t);
+unsigned int	 rtable_l2(unsigned int);
+void		 rtable_l2set(unsigned int, unsigned int);
 int		 rtable_walk(unsigned int, sa_family_t,
 		     int (*)(struct rtentry *, void *, unsigned int), void *);
 

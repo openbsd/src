@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.c,v 1.82 2015/10/05 06:51:50 yasuoka Exp $	*/
+/*	$OpenBSD: pipex.c,v 1.83 2015/10/07 10:50:35 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -161,13 +161,13 @@ pipex_iface_init(struct pipex_iface_context *pipex_iface, struct ifnet *ifp)
 	if (!pipex_rd_head4_initialized) {
 		pipex_rd_head4_initialized++;
 		if (!rn_inithead0(&pipex_rd_head4,
-		    offsetof(struct sockaddr_in, sin_addr) * NBBY))
+		    offsetof(struct sockaddr_in, sin_addr)))
 			panic("rn_inithead0() failed on pipex_init()");
 	}
 	if (!pipex_rd_head6_initialized) {
 		pipex_rd_head6_initialized++;
 		if (!rn_inithead0(&pipex_rd_head6,
-		    offsetof(struct sockaddr_in6, sin6_addr) *NBBY))
+		    offsetof(struct sockaddr_in6, sin6_addr)))
 			panic("rn_inithead0() failed on pipex_init()");
 	}
 	splx(s);

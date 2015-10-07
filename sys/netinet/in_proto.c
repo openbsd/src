@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_proto.c,v 1.67 2015/09/28 08:32:05 mpi Exp $	*/
+/*	$OpenBSD: in_proto.c,v 1.68 2015/10/07 10:50:35 mpi Exp $	*/
 /*	$NetBSD: in_proto.c,v 1.14 1996/02/18 18:58:32 christos Exp $	*/
 
 /*
@@ -310,5 +310,5 @@ struct protosw inetsw[] = {
 struct domain inetdomain =
     { AF_INET, "internet", 0, 0, 0,
       inetsw, &inetsw[nitems(inetsw)],
-      rtable_attach,
-      32 };
+      sizeof(struct sockaddr_in),
+      offsetof(struct sockaddr_in, sin_addr) };

@@ -1,4 +1,4 @@
-/*	$OpenBSD: art.c,v 1.3 2015/08/20 12:51:10 mpi Exp $ */
+/*	$OpenBSD: art.c,v 1.4 2015/10/07 10:50:35 mpi Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -78,21 +78,19 @@ int			 art_table_walk(struct art_table *,
 /*
  * Per routing table initialization API function.
  */
-int
-art_attach(void **head, int off)
+struct art_root *
+art_attach(unsigned int rtableid, int off)
 {
 	struct art_root		*ar;
 	int			 i;
 
-	if (*head)
-		return (1);
 	ar = malloc(sizeof(*ar), M_RTABLE, M_NOWAIT|M_ZERO);
 	if (ar == NULL)
-		return (0);
+		return (NULL);
 
 	/* XXX using the offset is a hack. */
 	switch (off) {
-	case 32: /* AF_INET && AF_MPLS */
+	case 4: /* AF_INET && AF_MPLS */
 		ar->ar_alen = 32;
 		ar->ar_nlvl = 3;
 		ar->ar_bits[0] = 16;
@@ -100,7 +98,7 @@ art_attach(void **head, int off)
 		ar->ar_bits[2] = 8;
 		break;
 #ifdef INET6
-	case 64: /* AF_INET6 */
+	case 8: /* AF_INET6 */
 		ar->ar_alen = 128;
 		ar->ar_nlvl = 16;
 		for (i = 0; i < ar->ar_nlvl; i++)
@@ -110,19 +108,19 @@ art_attach(void **head, int off)
 	default:
 		printf("%s: unknown offset %d\n", __func__, off);
 		free(ar, M_RTABLE, sizeof(*ar));
-		return (0);
+		return (NULL);
 	}
 
-	ar->ar_off = off / 8;
+	ar->ar_off = off;
 
 	ar->ar_root = art_table_get(ar, NULL, -1);
 	if (ar->ar_root == NULL) {
 		free(ar, M_RTABLE, sizeof(*ar));
-		return (0);
+		return (NULL);
 	}
+	ar->ar_rtableid = rtableid;
 
-	*head = ar;
-	return (1);
+	return (ar);
 }
 
 /*

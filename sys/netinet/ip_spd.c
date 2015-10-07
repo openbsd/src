@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_spd.c,v 1.87 2015/09/10 17:52:05 claudio Exp $ */
+/* $OpenBSD: ip_spd.c,v 1.88 2015/10/07 10:50:35 mpi Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -83,7 +83,6 @@ spd_table_get(unsigned int rtableid)
 struct radix_node_head *
 spd_table_add(unsigned int rtableid)
 {
-	extern struct domain pfkeydomain;
 	struct radix_node_head *rnh = NULL;
 	unsigned int rdomain;
 	void *p;
@@ -103,7 +102,8 @@ spd_table_add(unsigned int rtableid)
 	}
 
 	if (spd_tables[rdomain] == NULL) {
-		if (rn_inithead((void **)&rnh, pfkeydomain.dom_rtoffset) == 0)
+		if (rn_inithead((void **)&rnh,
+		    offsetof(struct sockaddr_encap, sen_type)) == 0)
 			rnh = NULL;
 		spd_tables[rdomain] = rnh;
 	}
