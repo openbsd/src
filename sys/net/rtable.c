@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtable.c,v 1.10 2015/10/07 10:50:35 mpi Exp $ */
+/*	$OpenBSD: rtable.c,v 1.11 2015/10/07 11:39:49 mpi Exp $ */
 
 /*
  * Copyright (c) 2014-2015 Martin Pieuchot
@@ -36,6 +36,7 @@ unsigned int	  *rtables2dom;		/* rtable to domain lookup table */
 
 void		   rtable_init_backend(unsigned int);
 int		   rtable_attach(unsigned int, sa_family_t, int);
+void		  *rtable_get(unsigned int, sa_family_t);
 void		   rtable_set(unsigned int, sa_family_t, void *);
 
 void
