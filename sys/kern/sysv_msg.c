@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_msg.c,v 1.30 2014/12/19 05:59:21 tedu Exp $	*/
+/*	$OpenBSD: sysv_msg.c,v 1.31 2015/10/07 14:49:04 deraadt Exp $	*/
 /*	$NetBSD: sysv_msg.c,v 1.19 1996/02/09 19:00:18 christos Exp $	*/
 /*
  * Copyright (c) 2009 Bret S. Lambert <blambert@openbsd.org>
@@ -393,7 +393,7 @@ que_create(key_t key, struct ucred *cred, int mode)
 
 	/* if malloc slept, a queue with the same key may have been created */
 	if (que_key_lookup(key)) {
-		free(que, M_TEMP, 0);
+		free(que, M_TEMP, sizeof *que);
 		return (NULL);
 	}
 
@@ -488,7 +488,7 @@ que_free(struct que *que)
 		TAILQ_REMOVE(&que->que_msgs, msg, msg_next);
 		msg_free(msg);
 	}
-	free(que, M_TEMP, 0);
+	free(que, M_TEMP, sizeof *que);
 	num_ques--;
 }
 
