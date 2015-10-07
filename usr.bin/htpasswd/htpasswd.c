@@ -1,4 +1,4 @@
-/*	$OpenBSD: htpasswd.c,v 1.11 2015/02/08 23:40:34 deraadt Exp $ */
+/*	$OpenBSD: htpasswd.c,v 1.12 2015/10/07 06:44:01 deraadt Exp $ */
 /*
  * Copyright (c) 2014 Florian Obser <florian@openbsd.org>
  *
@@ -47,23 +47,18 @@ int nagcount;
 int
 main(int argc, char** argv)
 {
-	FILE *in, *out;
-	size_t linesize;
+	char salt[_PASSWORD_LEN], tmpl[sizeof("/tmp/htpasswd-XXXXXXXXXX")];
+	char hash[_PASSWORD_LEN], pass[1024], pass2[1024];
+	char *line = NULL, *login = NULL, *tok;
+	int c, fd, loginlen, batch = 0;
+	FILE *in = NULL, *out = NULL;
+	const char *file = NULL;
+	size_t linesize = 0;
 	ssize_t linelen;
 	mode_t old_umask;
-	int c, fd, loginlen, batch;
-	char hash[_PASSWORD_LEN], *line, *login, pass[1024], pass2[1024];
-	char salt[_PASSWORD_LEN], tmpl[sizeof("/tmp/htpasswd-XXXXXXXXXX")];
-	char *tok;
-	const char *file;
 
-	file = NULL;
-	login = NULL;
-	in = NULL;
-	out = NULL;
-	line = NULL;
-	linesize = 0;
-	batch = 0;
+	if (tame("stdio rpath wpath cpath tmppath tty", NULL) == -1)
+		err(1, "tame");
 
 	while ((c = getopt(argc, argv, "I")) != -1) {
 		switch (c) {
