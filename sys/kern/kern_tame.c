@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_tame.c,v 1.65 2015/10/06 18:35:09 deraadt Exp $	*/
+/*	$OpenBSD: kern_tame.c,v 1.66 2015/10/07 03:47:43 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -141,6 +141,8 @@ const u_int tame_syscalls[SYS_MAXSYSCALL] = {
 	[SYS_sigsuspend] = TAME_PROC,
 	[SYS_setrlimit] = TAME_PROC,
 
+	[SYS_execve] = TAME_EXEC,
+
 	[SYS_setgroups] = TAME_PROC,
 	[SYS_setresgid] = TAME_PROC,
 	[SYS_setresuid] = TAME_PROC,
@@ -238,6 +240,7 @@ static const struct {
 	{ "ioctl",		TAME_IOCTL },
 	{ "tty",		TAME_TTY },
 	{ "proc",		TAME_PROC },
+	{ "exec",		TAME_EXEC },
 	{ "cpath",		TAME_CPATH },
 	{ "abort",		TAME_ABORT },
 	{ "fattr",		TAME_FATTR },
@@ -1113,6 +1116,20 @@ tame_dns_check(struct proc *p, in_port_t port)
 	if ((p->p_p->ps_tame & TAME_DNS_ACTIVE) && port == htons(53))
 		return (0);	/* Allow a DNS connect outbound */
 	return (EPERM);
+}
+
+void
+tame_dropwpaths(struct process *pr)
+{
+	if (pr->ps_tamepaths && --pr->ps_tamepaths->wl_ref == 0) {
+		struct whitepaths *wl = pr->ps_tamepaths;
+		int i;
+
+		for (i = 0; i < wl->wl_count; i++)
+			free(wl->wl_paths[i].name, M_TEMP, wl->wl_paths[i].len);
+		free(wl, M_TEMP, wl->wl_size);
+	}
+	pr->ps_tamepaths = NULL;
 }
 
 int

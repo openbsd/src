@@ -1,4 +1,4 @@
-/*	$OpenBSD: tame.h,v 1.10 2015/10/06 15:21:26 deraadt Exp $	*/
+/*	$OpenBSD: tame.h,v 1.11 2015/10/07 03:47:43 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -43,6 +43,7 @@
 #define TAME_TTY	0x00010000	/* tty setting */
 #define TAME_SENDFD	0x00020000	/* AF_UNIX CMSG fd sending */
 #define TAME_RECVFD	0x00040000	/* AF_UNIX CMSG fd receiving */
+#define TAME_EXEC	0x00080000	/* execve, child is free of tame */
 
 #define TAME_ABORT	0x08000000	/* SIGABRT instead of SIGKILL */
 
@@ -82,6 +83,7 @@ struct whitepaths {
 		size_t		len;
 	} wl_paths[0];
 };
+void	tame_dropwpaths(struct process *);
 
 #endif /* _KERNEL */
 
