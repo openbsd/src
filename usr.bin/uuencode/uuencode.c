@@ -1,4 +1,4 @@
-/*	$OpenBSD: uuencode.c,v 1.11 2015/01/16 06:40:13 deraadt Exp $	*/
+/*	$OpenBSD: uuencode.c,v 1.12 2015/10/07 06:00:33 deraadt Exp $	*/
 /*	$FreeBSD: uuencode.c,v 1.18 2004/01/22 07:23:35 grehan Exp $	*/
 
 /*-
@@ -97,6 +97,14 @@ main(int argc, char *argv[])
 	}
 	argv += optind;
 	argc -= optind;
+
+	if (argc == 2 || outfile) {
+		if (tame("stdio rpath wpath cpath", NULL) == -1)
+			err(1, "tame");
+	} else {
+		if (tame("stdio", NULL) == -1)
+			err(1, "tame");
+	}
 
 	switch(argc) {
 	case 2:			/* optional first argument is input file */
