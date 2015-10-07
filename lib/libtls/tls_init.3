@@ -1,4 +1,4 @@
-.\" $OpenBSD: tls_init.3,v 1.49 2015/09/14 21:23:00 jmc Exp $
+.\" $OpenBSD: tls_init.3,v 1.50 2015/10/07 23:33:38 beck Exp $
 .\"
 .\" Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 14 2015 $
+.Dd $Mdocdate: October 7 2015 $
 .Dt TLS_INIT 3
 .Os
 .Sh NAME
@@ -49,6 +49,8 @@
 .Nm tls_peer_cert_issuer ,
 .Nm tls_peer_cert_subject ,
 .Nm tls_peer_cert_hash ,
+.Nm tls_peer_cert_notbefore ,
+.Nm tls_peer_cert_notafter ,
 .Nm tls_conn_version ,
 .Nm tls_conn_cipher ,
 .Nm tls_load_file ,
@@ -132,6 +134,10 @@
 .Fn tls_peer_cert_subject "struct tls *ctx"
 .Ft "const char *"
 .Fn tls_peer_cert_hash "struct tls *ctx"
+.Ft "time_t"
+.Fn tls_peer_cert_notbefore "struct tls *ctx"
+.Ft "time_t"
+.Fn tls_peer_cert_notafter "struct tls *ctx"
 .Ft "const char *"
 .Fn tls_conn_version "struct tls *ctx"
 .Ft "const char *"
@@ -431,6 +437,22 @@ h=$(openssl x509 -outform der -in mycert.crt | sha256)
 printf "SHA256:${h}\\n"
 .Ed
 .It
+.Fn tls_peer_cert_notbefore
+returns the time corresponding to the start of the validity period of
+the peer certificate from 
+.Ar ctx .
+.Fn tls_peer_cert_notbefore
+will only succeed after the handshake is complete.
+.Em (Server and client)
+.It
+.Fn tls_peer_cert_notafter
+returns the time corresponding to the end of the validity period of
+the peer certificate from 
+.Ar ctx .
+.Fn tls_peer_cert_notafter
+will only succeed after the handshake is complete.
+.Em (Server and client)
+.It
 .Fn tls_conn_version
 returns a string
 corresponding to a TLS version negotiated with the peer
@@ -554,10 +576,14 @@ The
 and
 .Fn tls_peer_cert_contains_name
 functions return 1 if the check succeeds, and 0 if it does not.
+Functions that return a
+.Vt time_t
+will return a time in epoch-seconds on success, and -1 on error. 
+Functions that return a
+.Vt ssize_t
+will return a size on success, and -1 on error. 
 All other functions that return
 .Vt int
-or
-.Vt ssize_t
 will return 0 on success and -1 on error.
 Functions that return a pointer will return NULL on error, which indicates an
 out of memory condition.

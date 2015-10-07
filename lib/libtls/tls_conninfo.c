@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_conninfo.c,v 1.4 2015/10/07 23:25:45 beck Exp $ */
+/* $OpenBSD: tls_conninfo.c,v 1.5 2015/10/07 23:33:38 beck Exp $ */
 /*
  * Copyright (c) 2015 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2015 Bob Beck <beck@openbsd.org>
@@ -119,6 +119,37 @@ tls_get_peer_cert_subject(struct tls *ctx, char **subject)
 	return (0);
 }
 
+static int
+tls_get_peer_cert_times(struct tls *ctx, time_t *notbefore, time_t *notafter)
+{
+	struct tm before_tm, after_tm;
+	ASN1_TIME *before, *after;
+	int rv = -1;
+
+	memset(&before_tm, 0, sizeof(before_tm));
+	memset(&after_tm, 0, sizeof(after_tm));
+
+	if (ctx->ssl_peer_cert != NULL) {
+		if ((before = X509_get_notBefore(ctx->ssl_peer_cert)) == NULL)
+			goto err;
+		if ((after = X509_get_notAfter(ctx->ssl_peer_cert)) == NULL)
+			goto err;
+		if (asn1_time_parse(before->data, before->length, &before_tm, 0)
+		    == -1)
+			goto err;
+		if (asn1_time_parse(after->data, after->length, &after_tm, 0)
+		    == -1)
+			goto err;
+		if ((*notbefore = timegm(&before_tm)) == -1)
+			goto err;
+		if ((*notafter = timegm(&after_tm)) == -1)
+			goto err;
+	}
+	rv = 0;
+ err:
+	return (rv);
+}
+
 int
 tls_get_conninfo(struct tls *ctx) {
 	const char * tmp;
@@ -129,6 +160,9 @@ tls_get_conninfo(struct tls *ctx) {
 		    == -1)
 			goto err;
 		if (tls_get_peer_cert_issuer(ctx, &ctx->conninfo->issuer) == -1)
+			goto err;
+		if (tls_get_peer_cert_times(ctx, &ctx->conninfo->notbefore,
+		    &ctx->conninfo->notafter) == -1)
 			goto err;
 	}
 	if ((tmp = SSL_get_version(ctx->ssl_conn)) == NULL)

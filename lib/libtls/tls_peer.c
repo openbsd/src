@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_peer.c,v 1.4 2015/09/12 21:00:38 beck Exp $ */
+/* $OpenBSD: tls_peer.c,v 1.5 2015/10/07 23:33:38 beck Exp $ */
 /*
  * Copyright (c) 2015 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2015 Bob Beck <beck@openbsd.org>
@@ -59,5 +59,25 @@ tls_peer_cert_contains_name(struct tls *ctx, const char *name)
 		return (0);
 
 	return (tls_check_name(ctx, ctx->ssl_peer_cert, name) == 0);
+}
+
+time_t
+tls_peer_cert_notbefore(struct tls *ctx)
+{
+	if (ctx->ssl_peer_cert == NULL)
+		return (-1);
+	if (ctx->conninfo == NULL)
+		return (-1);
+	return (ctx->conninfo->notbefore);
+}
+
+time_t
+tls_peer_cert_notafter(struct tls *ctx)
+{
+	if (ctx->ssl_peer_cert == NULL)
+		return (-1);
+	if (ctx->conninfo == NULL)
+		return (-1);
+	return (ctx->conninfo->notafter);
 }
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_internal.h,v 1.25 2015/09/29 13:10:53 jsing Exp $ */
+/* $OpenBSD: tls_internal.h,v 1.26 2015/10/07 23:33:38 beck Exp $ */
 /*
  * Copyright (c) 2014 Jeremie Courreges-Anglas <jca@openbsd.org>
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
@@ -65,6 +65,8 @@ struct tls_conninfo {
 	char *fingerprint;
 	char *version;
 	char *cipher;
+	time_t notbefore;
+	time_t notafter;
 };
 
 #define TLS_CLIENT		(1 << 0)
@@ -112,5 +114,7 @@ int tls_ssl_error(struct tls *ctx, SSL *ssl_conn, int ssl_ret,
     const char *prefix);
 int tls_get_conninfo(struct tls *ctx);
 void tls_free_conninfo(struct tls_conninfo *conninfo);
+
+int asn1_time_parse(const char *, size_t, struct tm *, int);
 
 #endif /* HEADER_TLS_INTERNAL_H */
