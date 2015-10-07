@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem.c,v 1.102 2015/09/30 06:29:09 kettenis Exp $	*/
+/*	$OpenBSD: i915_gem.c,v 1.103 2015/10/07 09:53:00 kettenis Exp $	*/
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -1659,7 +1659,7 @@ unlock:
 	uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap, NULL, NULL);
 	mutex_unlock(&dev->struct_mutex);
 	pmap_update(ufi->orig_map->pmap);
-out:
+
 	switch (ret) {
 	case -EIO:
 		/*
@@ -1700,6 +1700,7 @@ out:
 		break;
 	}
 
+out:
 	intel_runtime_pm_put(dev_priv);
 	return ret;
 }
