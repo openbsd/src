@@ -1,4 +1,4 @@
-/* $OpenBSD: join.c,v 1.25 2015/07/21 04:42:59 jasper Exp $	*/
+/* $OpenBSD: join.c,v 1.26 2015/10/07 04:00:45 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -104,6 +104,9 @@ main(int argc, char *argv[])
 	int aflag, ch, cval, vflag;
 	char *end;
 
+	if (tame("stdio rpath", NULL) == -1)
+		err(1, "tame");
+
 	F1 = &input1;
 	F2 = &input2;
 
@@ -207,6 +210,9 @@ main(int argc, char *argv[])
 		err(1, "%s", *argv);
 	if (F1->fp == stdin && F2->fp == stdin)
 		errx(1, "only one input file may be stdin");
+
+	if (tame("stdio", NULL) == -1)
+		err(1, "tame");
 
 	F1->setusedc = 0;
 	F2->setusedc = 0;
