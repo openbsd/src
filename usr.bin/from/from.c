@@ -1,4 +1,4 @@
-/*	$OpenBSD: from.c,v 1.20 2015/06/03 18:08:54 millert Exp $	*/
+/*	$OpenBSD: from.c,v 1.21 2015/10/07 06:51:50 deraadt Exp $	*/
 /*	$NetBSD: from.c,v 1.6 1995/09/01 01:39:10 jtc Exp $	*/
 
 /*
@@ -74,12 +74,16 @@ main(int argc, char *argv[])
 	}
 	argv += optind;
 
+	if (tame("stdio rpath getpw", NULL) == -1)
+		err(1, "tame");
 	file = mail_spool(file, *argv);
 	if ((fp = fopen(file, "r")) == NULL) {
 		if (!fflag && errno == ENOENT)
 			exit(EXIT_SUCCESS);
 		err(1, "%s", file);
 	}
+	if (tame("stdio", NULL) == -1)
+		err(1, "tame");
 	for (newline = 1; (linelen = getline(&line, &linesize, fp)) != -1;) {
 		if (*line == '\n') {
 			newline = 1;
