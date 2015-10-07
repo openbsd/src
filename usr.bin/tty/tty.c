@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.7 2013/11/27 13:32:02 okan Exp $	*/
+/*	$OpenBSD: tty.c,v 1.8 2015/10/07 18:00:06 deraadt Exp $	*/
 /*	$NetBSD: tty.c,v 1.4 1994/12/07 00:46:57 jtc Exp $	*/
 
 /*
@@ -33,6 +33,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <err.h>
 
 static void usage(void);
 
@@ -41,6 +42,9 @@ main(int argc, char *argv[])
 {
 	int ch, sflag;
 	char *t;
+
+	if (tame("stdio rpath tty", NULL) == -1)
+		err(1, "tame");
 
 	sflag = 0;
 	while ((ch = getopt(argc, argv, "s")) != -1) {
@@ -60,7 +64,6 @@ main(int argc, char *argv[])
 		puts(t ? t : "not a tty");
 	exit(t ? 0 : 1);
 }
-
 
 static void
 usage(void)
