@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_lib.c,v 1.31 2015/09/10 17:57:50 jsing Exp $ */
+/* $OpenBSD: d1_lib.c,v 1.32 2015/10/07 13:20:48 bcook Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -59,6 +59,7 @@
 
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/time.h>
 
 #include <netinet/in.h>
 
