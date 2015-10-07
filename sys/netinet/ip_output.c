@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.299 2015/09/23 08:49:46 mpi Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.300 2015/10/07 14:52:45 deraadt Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -1492,7 +1492,9 @@ ip_setmoptions(int optname, struct ip_moptions **imop, struct mbuf *m,
 					bcopy(omships, nmships,
 					    sizeof(*omships) *
 					    imo->imo_max_memberships);
-					free(omships, M_IPMOPTS, 0);
+					free(omships, M_IPMOPTS,
+					    sizeof(*omships) *
+					    imo->imo_max_memberships);
 					imo->imo_membership = nmships;
 					imo->imo_max_memberships = newmax;
 				}
