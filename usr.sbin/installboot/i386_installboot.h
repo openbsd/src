@@ -1,4 +1,4 @@
-/*	$OpenBSD: i386_installboot.h,v 1.2 2014/06/25 18:23:02 tobias Exp $	*/
+/*	$OpenBSD: i386_installboot.h,v 1.3 2015/10/07 03:06:46 krw Exp $	*/
 /*
  * Copyright (c) 2011 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2010 Otto Moerbeek <otto@openbsd.org>
@@ -55,3 +55,4 @@ int	nlist_elf32(const char *, struct nlist *);
 void	pbr_set_symbols(char *, char *, struct sym_data *);
 void	sym_set_value(struct sym_data *, char *, u_int32_t);
 void	write_bootblocks(int, char *, struct disklabel *);
+void	write_efisystem(struct disklabel *, char);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: i386_installboot.c,v 1.10 2015/10/05 16:07:57 krw Exp $	*/
+/*	$OpenBSD: i386_installboot.c,v 1.11 2015/10/07 03:06:46 krw Exp $	*/
 /*	$NetBSD: installboot.c,v 1.5 1995/11/17 23:23:50 gwr Exp $ */
 
 /*
@@ -57,6 +57,7 @@
 
 #include <elf_abi.h>
 #include <err.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <nlist.h>
 #include <stdlib.h>
@@ -86,6 +87,7 @@ struct sym_data pbr_symbols[] = {
 
 static void	devread(int, void *, daddr_t, size_t, char *);
 static u_int	findopenbsd(int, struct disklabel *);
+static int	findgptefisys(int, struct disklabel *);
 static int	getbootparams(char *, int, struct disklabel *);
 static char	*loadproto(char *, long *);
 
@@ -124,6 +126,7 @@ void
 md_installboot(int devfd, char *dev)
 {
 	struct disklabel dl;
+	int part;
 
 	/* Get and check disklabel. */
 	if (ioctl(devfd, DIOCGDINFO, &dl) != 0)
@@ -134,6 +137,12 @@ md_installboot(int devfd, char *dev)
 	/* Warn on unknown disklabel types. */
 	if (dl.d_type == 0)
 		warnx("disklabel type unknown");
+
+	part = findgptefisys(devfd, &dl);
+	if (part != -1) {
+		write_efisystem(&dl, (char)part);
+		return;
+	}
 
 	bootldr = fileprefix(root, bootldr);
 	if (verbose)
@@ -205,6 +214,157 @@ write_bootblocks(int devfd, char *dev, struct disklabel *dl)
 	}
 }
 
+void
+write_efisystem(struct disklabel *dl, char part)
+{
+	static char *fsckfmt = "/sbin/fsck_msdos -f %s >/dev/null";
+	static char *newfsfmt ="/sbin/newfs_msdos -t msdos %s >/dev/null";
+	struct msdosfs_args args;
+	char cmd[60];
+	char dst[50];	/* /tmp/installboot.XXXXXXXXXX/efi/BOOT/BOOTIA32.EFI */
+	char *src;
+	size_t mntlen, pathlen, srclen;
+	int rslt;
+
+	src = NULL;
+
+	/* Create directory for temporary mount point. */
+	strlcpy(dst, "/tmp/installboot.XXXXXXXXXX", sizeof(dst));
+	if (mkdtemp(dst) == NULL)
+		err(1, "mkdtemp('%s') failed", dst);
+	mntlen = strlen(dst);
+
+	/* Mount <duid>.<part> as msdos filesystem. */
+	memset(&args, 0, sizeof(args));
+	rslt = asprintf(&args.fspec,
+	    "%02hhx%02hhx%02hhx%02hhx%02hhx%02hhx%02hhx%02hhx.%c",
+            dl->d_uid[0], dl->d_uid[1], dl->d_uid[2], dl->d_uid[3],
+            dl->d_uid[4], dl->d_uid[5], dl->d_uid[6], dl->d_uid[7],
+	    part);
+	if (rslt == -1) {
+		warn("bad special device");
+		goto rmdir;
+	}
+
+	args.export_info.ex_root = -2;	/* unchecked anyway on DOS fs */
+	args.export_info.ex_flags = 0;
+
+	if (mount(MOUNT_MSDOS, dst, 0, &args) == -1) {
+		/* Try fsck'ing it. */
+		rslt = snprintf(cmd, sizeof(cmd), fsckfmt, args.fspec);
+		if (rslt >= sizeof(cmd)) {
+			warnx("can't build for fsck command");
+			rslt = -1;
+			goto rmdir;
+		}
+		rslt = system(cmd);
+		if (rslt == -1) {
+			warn("system('%s') failed", cmd);
+			goto rmdir;
+		}
+		if (mount(MOUNT_MSDOS, dst, 0, &args) == -1) {
+			/* Try newfs'ing it. */
+			rslt = snprintf(cmd, sizeof(cmd), newfsfmt,
+			    args.fspec);
+			if (rslt >= sizeof(cmd)) {
+				warnx("can't build newfs command");
+				rslt = -1;
+				goto rmdir;
+			}
+			rslt = system(cmd);
+			if (rslt == -1) {
+				warn("system('%s') failed", cmd);
+				goto rmdir;
+			}
+			rslt = mount(MOUNT_MSDOS, dst, 0, &args);
+			if (rslt == -1) {
+				warn("unable to mount EFI System partition");
+				goto rmdir;
+			}
+		}
+	}
+
+	/* Create "/efi/boot" directory in <duid>.<part>. */
+	if (strlcat(dst, "/efi", sizeof(dst)) >= sizeof(dst)) {
+		rslt = -1;
+		warn("unable to build /efi directory");
+		goto umount;
+	}
+	rslt = mkdir(dst, 0);
+	if (rslt == -1 && errno != EEXIST) {
+		warn("mkdir('%s') failed", dst);
+		goto umount;
+	}
+	if (strlcat(dst, "/BOOT", sizeof(dst)) >= sizeof(dst)) {
+		rslt = -1;
+		warn("unable to build /BOOT directory");
+		goto umount;
+	}
+	rslt = mkdir(dst, 0);
+	if (rslt == -1 && errno != EEXIST) {
+		warn("mkdir('%s') failed", dst);
+		goto umount;
+	}
+
+	/*
+	 * Copy BOOTIA32.EFI and BOOTX64.EFI to /efi/boot.
+	 *
+	 * N.B.: BOOTIA32.EFI is longer than BOOTX64.EFI, so src can be reused!
+	 */
+	pathlen = strlen(dst);
+	if (strlcat(dst, "/BOOTIA32.EFI", sizeof(dst)) >= sizeof(dst)) {
+		rslt = -1;
+		warn("unable to build /BOOTIA32.EFI path");
+		goto umount;
+	}
+	src = fileprefix(root, "/usr/mdec/BOOTIA32.EFI");
+	srclen = strlen(src);
+	if (verbose)
+		fprintf(stderr, "%s %s to %s\n",
+		    (nowrite ? "would copy" : "copying"), src, dst);
+	if (!nowrite)
+		filecopy(src, dst);
+	src[srclen - strlen("/BOOTIA32.EFI")] = '\0';
+
+	dst[pathlen] = '\0';
+	if (strlcat(dst, "/BOOTX64.EFI", sizeof(dst)) >= sizeof(dst)) {
+		rslt = -1;
+		warn("unable to build /BOOTX64.EFI dst path");
+		goto umount;
+	}
+	if (strlcat(src, "/BOOTX64.EFI", srclen+1) >= srclen+1) {
+		rslt = -1;
+		warn("unable to build /BOOTX64.EFI src path");
+		goto umount;
+	}
+	if (verbose)
+		fprintf(stderr, "%s %s to %s\n",
+		    (nowrite ? "would copy" : "copying"), src, dst);
+	if (!nowrite)
+		filecopy(src, dst);
+
+	free(src);
+	src = NULL;
+	rslt = 0;
+
+umount:
+	dst[mntlen] = '\0';
+	if (unmount(dst, MNT_FORCE) == -1)
+		err(1, "unmount('%s') failed", dst);
+
+rmdir:
+	free(args.fspec);
+	dst[mntlen] = '\0';
+	if (rmdir(dst) == -1)
+		err(1, "rmdir('%s') failed", dst);
+
+	if (src)
+		free(src);
+
+	if (rslt == -1)
+		exit(1);
+}
+
 u_int
 findopenbsd(int devfd, struct disklabel *dl)
 {
@@ -274,6 +434,90 @@ again:
 	}
 
 	return ((u_int)-1);
+}
+
+static int
+findgptefisys(int devfd, struct disklabel *dl)
+{
+	struct gpt_partition	 gp[NGPTPARTITIONS];
+	struct gpt_header	 gh;
+	struct uuid		 efisys_uuid;
+	const char		 efisys_uuid_code[] = GPT_UUID_EFI_SYSTEM;
+	off_t			 off;
+	ssize_t			 len;
+	u_int64_t		 start;
+	int			 i;
+	uint32_t		 orig_csum, new_csum;
+	uint32_t		 ghsize, ghpartsize, ghpartnum, ghpartspersec;
+	u_int8_t		*secbuf;
+
+	/* Prepare EFI System UUID */
+	uuid_dec_be(efisys_uuid_code, &efisys_uuid);
+
+	if ((secbuf = malloc(dl->d_secsize)) == NULL)
+		err(1, NULL);
+	off = dl->d_secsize;	/* Read header from sector 1. */
+	len = pread(devfd, secbuf, dl->d_secsize, off);
+	if (len != dl->d_secsize)
+		err(4, "can't read gpt header");
+
+	memcpy(&gh, secbuf, sizeof(gh));
+	free(secbuf);
+
+	/* Check signature */
+	if (letoh64(gh.gh_sig) != GPTSIGNATURE)
+		return (-1);
+
+	if (letoh32(gh.gh_rev) != GPTREVISION)
+		return (-1);
+
+	ghsize = letoh32(gh.gh_size);
+	if (ghsize < GPTMINHDRSIZE || ghsize > sizeof(struct gpt_header))
+		return (-1);
+
+	/* Check checksum */
+	orig_csum = gh.gh_csum;
+	gh.gh_csum = 0;
+	new_csum = crc32((unsigned char *)&gh, ghsize);
+	gh.gh_csum = orig_csum;
+	if (letoh32(orig_csum) != new_csum)
+		return (-1);
+
+	off = letoh64(gh.gh_part_lba) * dl->d_secsize;
+	ghpartsize = letoh32(gh.gh_part_size);
+	ghpartspersec = dl->d_secsize / ghpartsize;
+	ghpartnum = letoh32(gh.gh_part_num);
+	if ((secbuf = malloc(dl->d_secsize)) == NULL)
+		err(1, NULL);
+	for (i = 0; i < (ghpartnum + ghpartspersec - 1) / ghpartspersec; i++) {
+		len = pread(devfd, secbuf, dl->d_secsize, off);
+		if (len != dl->d_secsize)
+			return (-1);
+		memcpy(gp + i * ghpartspersec, secbuf,
+		    ghpartspersec * sizeof(struct gpt_partition));
+		off += dl->d_secsize;
+	}
+	free(secbuf);
+	new_csum = crc32((unsigned char *)&gp, ghpartnum * ghpartsize);
+	if (new_csum != letoh32(gh.gh_part_csum))
+		return (-1);
+
+	start = 0;
+	for (i = 0; i < ghpartnum && start == 0; i++) {
+		if (memcmp(&gp[i].gp_type, &efisys_uuid,
+		    sizeof(struct uuid)) == 0)
+			start = letoh64(gp[i].gp_lba_start);
+	}
+
+	if (start) {
+		for (i = 0; i < MAXPARTITIONS; i++) {
+			if (DL_GETPSIZE(&dl->d_partitions[i]) > 0 &&
+			    DL_GETPOFFSET(&dl->d_partitions[i]) == start)
+				return ('a' + i);
+		}
+	}
+
+	return (-1);
 }
 
 /*

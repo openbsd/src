@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.5 2015/01/16 00:05:12 deraadt Exp $	*/
+/*	$OpenBSD: util.c,v 1.6 2015/10/07 03:06:46 krw Exp $	*/
 
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
@@ -18,6 +18,7 @@
 
 #include <sys/stat.h>
 #include <err.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -53,7 +54,8 @@ filecopy(const char *srcfile, const char *dstfile)
 	if (dfd == -1)
 		err(1, "open %s", dstfile);
 	if (fchown(dfd, 0, 0) == -1)
-		err(1, "chown");
+		if (errno != EINVAL)
+			err(1, "chown");
 	if (fchmod(dfd, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH) == -1)
 		err(1, "chmod");
 
@@ -89,4 +91,35 @@ fileprefix(const char *base, const char *path)
 	free(s);
 
 	return r;
+}
+
+/*
+ * Adapted from Hacker's Delight crc32b().
+ *
+ * To quote http://www.hackersdelight.org/permissions.htm :
+ *
+ * "You are free to use, copy, and distribute any of the code on
+ *  this web site, whether modified by you or not. You need not give
+ *  attribution. This includes the algorithms (some of which appear
+ *  in Hacker's Delight), the Hacker's Assistant, and any code submitted
+ *  by readers. Submitters implicitly agree to this."
+ */
+u_int32_t
+crc32(const u_char *buf, const u_int32_t size)
+{
+	int j;
+	u_int32_t i, byte, crc, mask;
+
+	crc = 0xFFFFFFFF;
+
+	for (i = 0; i < size; i++) {
+		byte = buf[i];			/* Get next byte. */
+		crc = crc ^ byte;
+		for (j = 7; j >= 0; j--) {	/* Do eight times. */
+			mask = -(crc & 1);
+			crc = (crc >> 1) ^ (0xEDB88320 & mask);
+		}
+	}
+
+	return ~crc;
 }
