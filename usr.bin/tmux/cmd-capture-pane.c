@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-capture-pane.c,v 1.32 2015/05/08 16:18:04 nicm Exp $ */
+/* $OpenBSD: cmd-capture-pane.c,v 1.33 2015/10/07 09:52:58 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Jonathan Alvarado <radobobo@users.sourceforge.net>
@@ -196,6 +196,7 @@ cmd_capture_pane_exec(struct cmd *self, struct cmd_q *cmdq)
 		if (c == NULL ||
 		    (c->session != NULL && !(c->flags & CLIENT_CONTROL))) {
 			cmdq_error(cmdq, "can't write to stdout");
+			free(buf);
 			return (CMD_RETURN_ERROR);
 		}
 		evbuffer_add(c->stdout_data, buf, len);
@@ -210,11 +211,12 @@ cmd_capture_pane_exec(struct cmd *self, struct cmd_q *cmdq)
 
 		if (paste_set(buf, len, bufname, &cause) != 0) {
 			cmdq_error(cmdq, "%s", cause);
-			free(buf);
 			free(cause);
+			free(buf);
 			return (CMD_RETURN_ERROR);
 		}
 	}
 
+	free(buf);
 	return (CMD_RETURN_NORMAL);
 }
