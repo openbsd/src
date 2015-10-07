@@ -1,4 +1,4 @@
-/*	$OpenBSD: look.c,v 1.16 2015/02/06 23:21:59 millert Exp $	*/
+/*	$OpenBSD: look.c,v 1.17 2015/10/07 14:13:23 deraadt Exp $	*/
 /*	$NetBSD: look.c,v 1.7 1995/08/31 22:41:02 jtc Exp $	*/
 
 /*-
@@ -87,6 +87,9 @@ main(int argc, char *argv[])
 	struct stat sb;
 	int ch, fd, termchar;
 	char *back, *file, *front, *string, *p;
+
+	if (tame("stdio rpath", NULL) == -1)
+		err(1, "tame");
 
 	file = _PATH_WORDS;
 	termchar = '\0';
