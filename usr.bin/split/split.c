@@ -1,4 +1,4 @@
-/*	$OpenBSD: split.c,v 1.18 2015/01/16 06:40:12 deraadt Exp $	*/
+/*	$OpenBSD: split.c,v 1.19 2015/10/07 14:37:11 deraadt Exp $	*/
 /*	$NetBSD: split.c,v 1.5 1995/08/31 22:22:05 jtc Exp $	*/
 
 /*
@@ -67,6 +67,9 @@ main(int argc, char *argv[])
 	int ch, scale;
 	char *ep, *p;
 	const char *errstr;
+
+	if (tame("stdio rpath wpath cpath", NULL) == -1)
+		err(1, "tame");
 
 	while ((ch = getopt(argc, argv, "0123456789a:b:l:p:-")) != -1)
 		switch (ch) {
