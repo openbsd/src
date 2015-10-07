@@ -1,4 +1,4 @@
-/*	$OpenBSD: arp.c,v 1.66 2015/10/05 14:58:37 semarie Exp $ */
+/*	$OpenBSD: arp.c,v 1.67 2015/10/07 20:25:40 deraadt Exp $ */
 /*	$NetBSD: arp.c,v 1.12 1995/04/24 13:25:18 cgd Exp $ */
 
 /*
@@ -160,12 +160,8 @@ main(int argc, char *argv[])
 		func = F_GET;
 	rtn = 0;
 
-	getsocket();
-
 	switch (func) {
 	case F_GET:
-		if (tame("stdio dns inet", NULL) == -1)
-			err(1, "tame");
 		if (aflag && argc == 0)
 			dump();
 		else if (!aflag && argc == 1)
@@ -181,8 +177,6 @@ main(int argc, char *argv[])
 		rtn = set(argc, argv) ? 1 : 0;
 		break;
 	case F_DELETE:
-		if (tame("stdio dns inet", NULL) == -1)
-			err(1, "tame");
 		if (aflag && argc == 0)
 			search(0, nuke_entry);
 		else if (!aflag && argc == 1)
@@ -256,6 +250,9 @@ getsocket(void)
 		err(1, "socket");
 	if (setsockopt(s, PF_ROUTE, ROUTE_TABLEFILTER, &rdomain, len) < 0)
 		err(1, "ROUTE_TABLEFILTER");
+
+	if (tame("stdio dns", NULL) == -1)
+		err(1, "tame");
 }
 
 struct sockaddr_in	so_mask = { 8, 0, 0, { 0xffffffff } };
@@ -284,6 +281,7 @@ set(int argc, char *argv[])
 	sin = &sin_m;
 	rtm = &(m_rtmsg.m_rtm);
 
+	getsocket();
 	argc -= 2;
 	argv += 2;
 	sdl_m = blank_sdl;		/* struct copy */
@@ -413,6 +411,7 @@ delete(const char *host, const char *info)
 
 	if (info && strncmp(info, "pro", 3) )
 		export_only = 1;
+	getsocket();
 	sin_m = blank_sin;		/* struct copy */
 	if (getinetaddr(host, &sin->sin_addr) == -1)
 		return (1);
@@ -469,6 +468,9 @@ search(in_addr_t addr, void (*action)(struct sockaddr_dl *sdl,
 	struct rt_msghdr *rtm;
 	struct sockaddr_inarp *sin;
 	struct sockaddr_dl *sdl;
+
+	if (tame("stdio dns route", NULL) == -1)
+		err(1, "tame");
 
 	mib[0] = CTL_NET;
 	mib[1] = PF_ROUTE;
