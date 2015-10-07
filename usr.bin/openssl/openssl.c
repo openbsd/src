@@ -1,4 +1,4 @@
-/* $OpenBSD: openssl.c,v 1.13 2015/09/21 13:13:06 bcook Exp $ */
+/* $OpenBSD: openssl.c,v 1.14 2015/10/07 05:21:41 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -114,6 +114,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 #include "apps.h"
 
@@ -434,6 +435,11 @@ main(int argc, char **argv)
 
 	arg.data = NULL;
 	arg.count = 0;
+
+	if (tame("stdio inet rpath cpath wpath proc", NULL) == -1) {
+		fprintf(stderr, "openssl: tame: %s\n", strerror(errno));
+		exit(1);
+	}
 
 	bio_err = BIO_new_fp(stderr, BIO_NOCLOSE);
 	if (bio_err == NULL) {
