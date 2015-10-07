@@ -1,4 +1,4 @@
-# $OpenBSD: list.local,v 1.25 2014/12/03 20:11:19 florian Exp $
+# $OpenBSD: list.local,v 1.26 2015/10/07 18:02:06 krw Exp $
 
 # add local links; use bin/sh since instbin has already been unlinked
 LINK	instbin					sbin/ping6
@@ -9,6 +9,8 @@ LINK	instbin					sbin/bioctl
 LINK	instbin					sbin/mount_ext2fs
 LINK	instbin					sbin/mount_msdos
 LINK	instbin					sbin/mount_udf
+LINK	instbin					sbin/newfs_msdos
+LINK	instbin					sbin/fsck_msdos
 
 COPY	${DESTDIR}/etc/firmware/kue		etc/firmware/kue
 

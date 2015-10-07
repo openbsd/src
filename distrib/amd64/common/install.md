@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.41 2015/06/02 19:54:06 rpe Exp $
+#	$OpenBSD: install.md,v 1.42 2015/10/07 18:02:06 krw Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -36,6 +36,10 @@ MDXAPERTURE=2
 MDXDM=y
 NCPU=$(sysctl -n hw.ncpufound)
 
+if dmesg | grep -q 'efifb0 at mainbus0'; then
+	MDEFI=y
+fi
+
 ((NCPU > 1)) && { DEFAULTSETS="bsd bsd.rd bsd.mp"; SANESETS="bsd bsd.mp"; }
 
 md_installboot() {
@@ -51,16 +55,20 @@ md_prep_fdisk() {
 
 	while :; do
 		_d=whole
+
+		[[ $MDEFI == y && $_disk == $ROOTDISK ]] &&
+			_q=", whole disk (G)PT,"
+
 		if fdisk $_disk | grep -q 'Signature: 0xAA55'; then
 			fdisk $_disk
 			if fdisk $_disk | grep -q '^..: A6 '; then
-				_q=", use the (O)penBSD area,"
+				_q="$_q, use the (O)penBSD area,"
 				_d=OpenBSD
 			fi
 		else
 			echo "MBR has invalid signature; not showing it."
 		fi
-		ask "Use (W)hole disk$_q or (E)dit the MBR?" "$_d"
+		ask "Use (W)hole disk MBR$_q or (E)dit the MBR?" "$_d"
 		case $resp in
 		w*|W*)
 			echo -n "Setting OpenBSD MBR partition to whole $_disk..."
@@ -70,6 +78,13 @@ update
 write
 quit
 __EOT
+			echo "done."
+			return ;;
+		g*|G*)
+			[[ $MDEFI == y && $_disk == $ROOTDISK ]] || continue
+
+			echo -n "Setting OpenBSD GPT partition to whole $_disk..."
+			fdisk -i -g -b 960 -y $_disk >/dev/null
 			echo "done."
 			return ;;
 		e*|E*)
