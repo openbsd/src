@@ -1,4 +1,4 @@
-/*	$OpenBSD: mktemp.c,v 1.20 2013/08/06 21:56:51 landry Exp $	*/
+/*	$OpenBSD: mktemp.c,v 1.21 2015/10/07 06:43:15 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 2001-2003, 2013
@@ -37,6 +37,9 @@ main(int argc, char *argv[])
 	int ch, fd, uflag = 0, tflag = 0, makedir = 0;
 	char *cp, *template, *tempfile, *prefix = _PATH_TMP;
 	size_t len;
+
+	if (tame("stdio rpath wpath cpath", NULL) == -1)
+		err(1, "tame");
 
 	while ((ch = getopt(argc, argv, "dp:qtu")) != -1)
 		switch(ch) {
