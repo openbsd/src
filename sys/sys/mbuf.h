@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.196 2015/08/14 05:25:29 dlg Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.197 2015/10/08 11:36:15 dlg Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -125,7 +125,7 @@ struct	pkthdr {
 	SLIST_HEAD(packet_tags, m_tag) tags;	/* list of packet tags */
 	int			 len;		/* total packet length */
 	u_int16_t		 tagsset;	/* mtags attached */
-	u_int16_t		 pad;
+	u_int16_t		 flowid;	/* pseudo unique flow id */
 	u_int16_t		 csum_flags;	/* checksum flags */
 	u_int16_t		 ether_vtag;	/* Ethernet 802.1p+Q vlan tag */
 	u_int			 ph_rtableid;	/* routing table id */
@@ -236,6 +236,10 @@ struct mbuf {
 #define	MT_FTABLE	5	/* fragment reassembly header */
 #define	MT_CONTROL	6	/* extra-data protocol message */
 #define	MT_OOBDATA	7	/* expedited data  */
+
+/* flowid field */
+#define M_FLOWID_VALID	0x8000	/* is the flowid set */
+#define M_FLOWID_MASK	0x7fff	/* flow id to map to path */
 
 /* flags to m_get/MGET */
 #define	M_DONTWAIT	M_NOWAIT

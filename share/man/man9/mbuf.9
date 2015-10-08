@@ -1,4 +1,4 @@
-.\"     $OpenBSD: mbuf.9,v 1.89 2015/09/21 11:30:50 mpi Exp $
+.\"     $OpenBSD: mbuf.9,v 1.90 2015/10/08 11:36:15 dlg Exp $
 .\"
 .\" Copyright (c) 2001 Jean-Jacques Bernard-Gundol <jjbg@openbsd.org>
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 21 2015 $
+.Dd $Mdocdate: October 8 2015 $
 .Dt MBUF 9
 .Os
 .Sh NAME
@@ -122,7 +122,7 @@ struct pkthdr {
 	SLIST_HEAD(packet_tags, m_tag) tags;
 	int			 len;
 	u_int16_t		 tagsset;
-	u_int16_t		 pad;
+	u_int16_t		 flowid;
 	u_int16_t		 csum_flags;
 	u_int16_t		 ether_vtag;
 	u_int			 ph_rtableid;
@@ -333,6 +333,21 @@ UDP checksum bad.
 ICMP/ICMPv6 checksum verified.
 .It Dv M_ICMP_CSUM_IN_BAD
 ICMP/ICMPv6 checksum bad.
+.El
+.Pp
+The
+.Fa m_pkthdr.flowid
+variable can contain a low resolution (15 bit) classification of a
+flow or connection that the current mbuf is part of.
+If the flowid is valid, it may be used as an alternative to hashing
+the packets content to pick between different paths for the traffic.
+The following masks can be ORed with the flowid:
+.Pp
+.Bl -tag -compact -offset indent -width XXXXXXXXXXXXXXXXXX
+.It Dv M_FLOWID_VALID
+The flow id has been set.
+.It Dv M_FLOWID_MASK
+The flow id.
 .El
 .Pp
 When only M_EXT flag is set, an external storage buffer is being used to
