@@ -1,4 +1,4 @@
-/*	$OpenBSD: memprobe.c,v 1.15 2015/09/18 13:30:56 miod Exp $	*/
+/*	$OpenBSD: memprobe.c,v 1.16 2015/10/08 14:46:05 tedu Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Michael Shalayeff
@@ -96,65 +96,6 @@ bios_E820(bios_memmap_t *mp)
 #endif
 	return mp;
 }
-
-#if 0
-/*
- * BIOS int 15, AX=E801
- *
- * Only used if int 15, AX=E820 does not work.
- * This should work for more than 64MB on most
- * modern machines.  However, there is always
- * an exception, the older IBM machine do not
- * like this call.
- */
-static __inline bios_memmap_t *
-bios_E801(bios_memmap_t *mp)
-{
-	int rc, m1, m2, m3, m4;
-	u_int8_t *info;
-
-	/* Test for possibility of 0xE801 */
-	info =  getSYSCONFaddr();
-	if (!info)
-		return NULL;
-	/* XXX - Should test model/submodel/rev here */
-	printf("model(%d,%d,%d)", info[2], info[3], info[4]);
-
-	/* Check for 94 or later bios */
-	info = (void *)0xFFFFB;
-	if (info[0] == '9' && info[1] <= '3')
-		return NULL;
-
-	/* We might have this call */
-	__asm volatile(DOINT(0x15) "; mov %%ax, %%si; setc %b0"
-	    : "=a" (rc), "=S" (m1), "=b" (m2), "=c" (m3), "=d" (m4)
-	    : "0" (0xE801));
-
-	/* Test for failure */
-	if (rc & 0xff)
-		return NULL;
-
-	/* Fixup for screwed up machines */
-	if (m1 == 0) {
-		m1 = m3;
-		m2 = m4;
-	}
-#ifdef DEBUG
-	printf("0x15[E801] ");
-#endif
-	/* Fill out BIOS map */
-	mp->addr = (1024 * 1024);	/* 1MB */
-	mp->size = (m1 & 0xffff) * 1024;
-	mp->type = BIOS_MAP_FREE;
-
-	mp++;
-	mp->addr = (1024 * 1024) * 16;	/* 16MB */
-	mp->size = (m2 & 0xffff) * 64L * 1024;
-	mp->type = BIOS_MAP_FREE;
-
-	return ++mp;
-}
-#endif
 
 /*
  * BIOS int 15, AX=8800
@@ -309,11 +250,7 @@ memprobe(void)
 
 	if ((pm = bios_E820(bios_memmap)) == NULL) {
 		im = bios_int12(bios_memmap);
-#if 0
-		pm = bios_E801(im);
-		if (pm == NULL)
-#endif
-			pm = bios_8800(im);
+		pm = bios_8800(im);
 		if (pm == NULL)
 			pm = badprobe(im);
 		if (pm == NULL) {
