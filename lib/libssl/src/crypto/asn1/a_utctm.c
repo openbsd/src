@@ -1,4 +1,4 @@
-/* $OpenBSD: a_utctm.c,v 1.30 2015/10/08 02:26:31 beck Exp $ */
+/* $OpenBSD: a_utctm.c,v 1.31 2015/10/08 02:29:11 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -151,23 +151,37 @@ ASN1_UTCTIME_adj(ASN1_UTCTIME *s, time_t t, int offset_day, long offset_sec)
 int
 ASN1_UTCTIME_cmp_time_t(const ASN1_UTCTIME *s, time_t t)
 {
-	struct tm tm1;
-	time_t time1;
+	struct tm *tm;
+	struct tm data;
+	int offset;
+	int year;
 
-	/*
-	 * This funciton has never handled failure conditions properly
-	 * and should be deprecated. BoringSSL makes it return -2 on
-	 * failures, the OpenSSL version follows NULL pointers instead.
-	 */
-	if (asn1_time_parse(s->data, s->length, &tm1, V_ASN1_UTCTIME) == -1)
-		return (-2); /* XXX */
+#define g2(p) (((p)[0]-'0')*10+(p)[1]-'0')
 
-	if ((time1 = timegm(&tm1)) == -1)
-		return (-2); /* XXX */
+	if (s->data[12] == 'Z')
+		offset = 0;
+	else {
+		offset = g2(s->data + 13)*60 + g2(s->data + 15);
+		if (s->data[12] == '-')
+			offset = -offset;
+	}
 
-	if (time1 < t)
-		return (-1);
-	if (time1 > t)
-		return (1);
-	return (0);
+	t -= offset * 60; /* FIXME: may overflow in extreme cases */
+
+	tm = gmtime_r(&t, &data);
+
+#define return_cmp(a,b) if ((a)<(b)) return -1; else if ((a)>(b)) return 1
+	year = g2(s->data);
+	if (year < 50)
+		year += 100;
+	return_cmp(year, tm->tm_year);
+	return_cmp(g2(s->data + 2) - 1, tm->tm_mon);
+	return_cmp(g2(s->data + 4), tm->tm_mday);
+	return_cmp(g2(s->data + 6), tm->tm_hour);
+	return_cmp(g2(s->data + 8), tm->tm_min);
+	return_cmp(g2(s->data + 10), tm->tm_sec);
+#undef g2
+#undef return_cmp
+
+	return 0;
 }

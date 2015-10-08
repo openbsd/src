@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1.h,v 1.31 2015/10/08 02:26:31 beck Exp $ */
+/* $OpenBSD: asn1.h,v 1.32 2015/10/08 02:29:11 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -812,9 +812,8 @@ ASN1_UTCTIME *ASN1_UTCTIME_set(ASN1_UTCTIME *s, time_t t);
 ASN1_UTCTIME *ASN1_UTCTIME_adj(ASN1_UTCTIME *s, time_t t,
     int offset_day, long offset_sec);
 int ASN1_UTCTIME_set_string(ASN1_UTCTIME *s, const char *str);
-#ifndef LIBRESSL_INTERNAL
 int ASN1_UTCTIME_cmp_time_t(const ASN1_UTCTIME *s, time_t t);
-#endif
+
 int ASN1_GENERALIZEDTIME_check(ASN1_GENERALIZEDTIME *a);
 ASN1_GENERALIZEDTIME *ASN1_GENERALIZEDTIME_set(ASN1_GENERALIZEDTIME *s,
     time_t t);
