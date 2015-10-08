@@ -1,4 +1,4 @@
-.\" $OpenBSD: tls_init.3,v 1.50 2015/10/07 23:33:38 beck Exp $
+.\" $OpenBSD: tls_init.3,v 1.51 2015/10/08 07:22:02 jmc Exp $
 .\"
 .\" Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 7 2015 $
+.Dd $Mdocdate: October 8 2015 $
 .Dt TLS_INIT 3
 .Os
 .Sh NAME
@@ -439,7 +439,7 @@ printf "SHA256:${h}\\n"
 .It
 .Fn tls_peer_cert_notbefore
 returns the time corresponding to the start of the validity period of
-the peer certificate from 
+the peer certificate from
 .Ar ctx .
 .Fn tls_peer_cert_notbefore
 will only succeed after the handshake is complete.
@@ -447,7 +447,7 @@ will only succeed after the handshake is complete.
 .It
 .Fn tls_peer_cert_notafter
 returns the time corresponding to the end of the validity period of
-the peer certificate from 
+the peer certificate from
 .Ar ctx .
 .Fn tls_peer_cert_notafter
 will only succeed after the handshake is complete.
@@ -578,10 +578,10 @@ and
 functions return 1 if the check succeeds, and 0 if it does not.
 Functions that return a
 .Vt time_t
-will return a time in epoch-seconds on success, and -1 on error. 
+will return a time in epoch-seconds on success, and -1 on error.
 Functions that return a
 .Vt ssize_t
-will return a size on success, and -1 on error. 
+will return a size on success, and -1 on error.
 All other functions that return
 .Vt int
 will return 0 on success and -1 on error.
