@@ -1,4 +1,4 @@
-/*	$OpenBSD: getaddrinfo.c,v 1.7 2015/10/07 13:57:12 deraadt Exp $	*/
+/*	$OpenBSD: getaddrinfo.c,v 1.8 2015/10/08 13:55:56 deraadt Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -32,7 +32,7 @@ getaddrinfo(const char *hostname, const char *servname,
 	struct asr_result ar;
 	int		 saved_errno = errno;
 
-	if ((hints->ai_flags & AI_NUMERICHOST) == 0)
+	if (hints && (hints->ai_flags & AI_NUMERICHOST) == 0)
 		res_init();
 
 	as = getaddrinfo_async(hostname, servname, hints, NULL);
