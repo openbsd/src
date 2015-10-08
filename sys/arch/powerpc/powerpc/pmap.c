@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.162 2015/09/11 22:02:18 kettenis Exp $ */
+/*	$OpenBSD: pmap.c,v 1.163 2015/10/08 10:20:14 kettenis Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -582,6 +582,8 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	}
 
 	pg = PHYS_TO_VM_PAGE(pa);
+	if (pg->pg_flags & PG_PMAP_UC)
+		nocache = TRUE;
 	if (wt)
 		cache = PMAP_CACHE_WT;
 	else if (pg != NULL && !(pg->pg_flags & PG_DEV) && !nocache)
