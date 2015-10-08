@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_client.c,v 1.30 2015/09/29 13:10:53 jsing Exp $ */
+/* $OpenBSD: tls_client.c,v 1.31 2015/10/08 20:13:45 guenther Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -44,42 +44,6 @@ tls_client(void)
 	return (ctx);
 }
 
-static int
-tls_connect_host(struct tls *ctx, const char *host, const char *port,
-    int af, int flag)
-{
-	struct addrinfo hints, *res, *res0;
-	int s = -1;
-
-	memset(&hints, 0, sizeof(hints));
-	hints.ai_family = af;
-	hints.ai_socktype = SOCK_STREAM;
-	hints.ai_flags = flag;
-
-	if ((s = getaddrinfo(host, port, &hints, &res0)) != 0) {
-		tls_set_error(ctx, "%s", gai_strerror(s));
-		return (-1);
-	}
-	for (res = res0; res; res = res->ai_next) {
-		s = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
-		if (s == -1) {
-			tls_set_error(ctx, "socket");
-			continue;
-		}
-		if (connect(s, res->ai_addr, res->ai_addrlen) == -1) {
-			tls_set_error(ctx, "connect");
-			close(s);
-			s = -1;
-			continue;
-		}
-
-		break;  /* Connected. */
-	}
-	freeaddrinfo(res0);
-
-	return (s);
-}
-
 int
 tls_connect(struct tls *ctx, const char *host, const char *port)
 {
@@ -90,6 +54,7 @@ int
 tls_connect_servername(struct tls *ctx, const char *host, const char *port,
     const char *servername)
 {
+	struct addrinfo hints, *res, *res0;
 	const char *h = NULL, *p = NULL;
 	char *hs = NULL, *ps = NULL;
 	int rv = -1, s = -1, ret;
@@ -132,10 +97,43 @@ tls_connect_servername(struct tls *ctx, const char *host, const char *port,
 	 * sure that connection attempts to numeric addresses and especially
 	 * 127.0.0.1 or ::1 loopback addresses are always possible.
 	 */
-	if ((s = tls_connect_host(ctx, h, p, AF_INET, AI_NUMERICHOST)) == -1 &&
-	    (s = tls_connect_host(ctx, h, p, AF_INET6, AI_NUMERICHOST)) == -1 &&
-	    (s = tls_connect_host(ctx, h, p, AF_UNSPEC, AI_ADDRCONFIG)) == -1)
-		goto err;
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_socktype = SOCK_STREAM;
+
+	/* try as an IPv4 literal */
+	hints.ai_family = AF_INET;
+	hints.ai_flags = AI_NUMERICHOST;
+	if (getaddrinfo(h, p, &hints, &res0) != 0) {
+		/* try again as an IPv6 literal */
+		hints.ai_family = AF_INET6;
+		if (getaddrinfo(h, p, &hints, &res0) != 0) {
+			/* last try, with name resolution and save the error */
+			hints.ai_family = AF_UNSPEC;
+			hints.ai_flags = AI_ADDRCONFIG;
+			if ((s = getaddrinfo(h, p, &hints, &res0)) != 0) {
+				tls_set_error(ctx, "%s", gai_strerror(s));
+				goto err;
+			}
+		}
+	}
+
+	/* It was resolved somehow; now try connecting to what we got */
+	for (res = res0; res; res = res->ai_next) {
+		s = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
+		if (s == -1) {
+			tls_set_error(ctx, "socket");
+			continue;
+		}
+		if (connect(s, res->ai_addr, res->ai_addrlen) == -1) {
+			tls_set_error(ctx, "connect");
+			close(s);
+			s = -1;
+			continue;
+		}
+
+		break;  /* Connected. */
+	}
+	freeaddrinfo(res0);
 
 	if (servername == NULL)
 		servername = h;
