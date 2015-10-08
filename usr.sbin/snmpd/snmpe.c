@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpe.c,v 1.40 2015/01/16 00:05:13 deraadt Exp $	*/
+/*	$OpenBSD: snmpe.c,v 1.41 2015/10/08 08:17:30 sthen Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -374,6 +374,7 @@ snmpe_parsevarbinds(struct snmp_message *msg)
 				break;
 			case 1:
 				msg->sm_c = NULL;
+				msg->sm_end = NULL;
 
 				switch (msg->sm_context) {
 
@@ -409,7 +410,8 @@ snmpe_parsevarbinds(struct snmp_message *msg)
 
 				case SNMP_C_GETBULKREQ:
 					ret = mps_getbulkreq(msg, &msg->sm_c,
-					    &o, msg->sm_maxrepetitions);
+					    &msg->sm_end, &o,
+					    msg->sm_maxrepetitions);
 					if (ret == 0 || ret == 1)
 						break;
 					msg->sm_error = SNMP_ERROR_NOSUCHNAME;
@@ -420,11 +422,13 @@ snmpe_parsevarbinds(struct snmp_message *msg)
 				}
 				if (msg->sm_c == NULL)
 					break;
+				if (msg->sm_end == NULL)
+					msg->sm_end = msg->sm_c;
 				if (msg->sm_last == NULL)
 					msg->sm_varbindresp = msg->sm_c;
 				else
 					ber_link_elements(msg->sm_last, msg->sm_c);
-				msg->sm_last = msg->sm_c;
+				msg->sm_last = msg->sm_end;
 				break;
 			}
 		}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mps.c,v 1.21 2015/07/18 16:54:43 blambert Exp $	*/
+/*	$OpenBSD: mps.c,v 1.22 2015/10/08 08:17:30 sthen Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -300,7 +300,7 @@ fail:
 
 int
 mps_getbulkreq(struct snmp_message *msg, struct ber_element **root,
-    struct ber_oid *o, int max)
+    struct ber_element **end, struct ber_oid *o, int max)
 {
 	struct ber_element *c, *d, *e;
 	size_t len;
@@ -308,14 +308,17 @@ mps_getbulkreq(struct snmp_message *msg, struct ber_element **root,
 
 	j = max;
 	c = *root;
+	*end = NULL;
 
 	for (d = NULL, len = 0; j > 0; j--) {
 		e = ber_add_sequence(NULL);
 		if (c == NULL)
 			c = e;
 		ret = mps_getnextreq(msg, e, o);
-		if (ret == 1)
+		if (ret == 1) {
+			*root = c;
 			return (1);
+		}
 		if (ret == -1) {
 			ber_free_elements(e);
 			if (d == NULL)
@@ -330,6 +333,7 @@ mps_getbulkreq(struct snmp_message *msg, struct ber_element **root,
 		if (d != NULL)
 			ber_link_elements(d, e);
 		d = e;
+		*end = d;
 	}
 
 	*root = c;
