@@ -1,4 +1,4 @@
-/*	$OpenBSD: mib.c,v 1.77 2015/10/05 15:29:14 uebayasi Exp $	*/
+/*	$OpenBSD: mib.c,v 1.78 2015/10/08 07:26:34 sthen Exp $	*/
 
 /*
  * Copyright (c) 2012 Joel Knight <joel@openbsd.org>
@@ -2984,7 +2984,7 @@ mib_ipforwarding(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 	if (sysctl(mib, sizeofa(mib), &v, &len, NULL, 0) == -1)
 		return (-1);
 
-	*elm = ber_add_integer(*elm, v);
+	*elm = ber_add_integer(*elm, (v == 0) ? 2 : 1);
 
 	return (0);
 }
