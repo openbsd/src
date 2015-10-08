@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cnmac.c,v 1.23 2015/06/11 12:30:42 jmatthew Exp $	*/
+/*	$OpenBSD: if_cnmac.c,v 1.24 2015/10/08 14:24:32 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -144,7 +144,6 @@ int	octeon_eth_mediachange(struct ifnet *);
 void	octeon_eth_send_queue_flush_prefetch(struct octeon_eth_softc *);
 void	octeon_eth_send_queue_flush_fetch(struct octeon_eth_softc *);
 void	octeon_eth_send_queue_flush(struct octeon_eth_softc *);
-void	octeon_eth_send_queue_flush_sync(struct octeon_eth_softc *);
 int	octeon_eth_send_queue_is_full(struct octeon_eth_softc *);
 void	octeon_eth_send_queue_add(struct octeon_eth_softc *,
 	    struct mbuf *, uint64_t *);
@@ -589,7 +588,6 @@ octeon_eth_send_queue_flush(struct octeon_eth_softc *sc)
 	const int64_t sent_count = sc->sc_hard_done_cnt;
 	int i;
 
-	OCTEON_ETH_KASSERT(sc->sc_flush == 0);
 	OCTEON_ETH_KASSERT(sent_count <= 0);
 
 	for (i = 0; i < 0 - sent_count; i++) {
@@ -603,25 +601,7 @@ octeon_eth_send_queue_flush(struct octeon_eth_softc *sc)
 		m_freem(m);
 	}
 
-	cn30xxfau_op_inc_fetch_8(&sc->sc_fau_done, i);
-	sc->sc_flush = i;
-}
-
-void
-octeon_eth_send_queue_flush_sync(struct octeon_eth_softc *sc)
-{
-	if (sc->sc_flush == 0)
-		return;
-
-	OCTEON_ETH_KASSERT(sc->sc_flush > 0);
-
-	/* XXX */
-	cn30xxfau_op_inc_read_8(&sc->sc_fau_done);
-	sc->sc_soft_req_cnt -= sc->sc_flush;
-	OCTEON_ETH_KASSERT(sc->sc_soft_req_cnt >= 0);
-	/* XXX */
-
-	sc->sc_flush = 0;
+	cn30xxfau_op_add_8(&sc->sc_fau_done, i);
 }
 
 int
@@ -630,11 +610,10 @@ octeon_eth_send_queue_is_full(struct octeon_eth_softc *sc)
 #ifdef OCTEON_ETH_SEND_QUEUE_CHECK
 	int64_t nofree_cnt;
 
-	nofree_cnt = sc->sc_soft_req_cnt + sc->sc_hard_done_cnt; 
+	nofree_cnt = ml_len(&sc->sc_sendq) + sc->sc_hard_done_cnt; 
 
 	if (__predict_false(nofree_cnt == GATHER_QUEUE_SIZE - 1)) {
 		octeon_eth_send_queue_flush(sc);
-		octeon_eth_send_queue_flush_sync(sc);
 		return 1;
 	}
 
@@ -1073,7 +1052,7 @@ octeon_eth_start(struct ifnet *ifp)
 		OCTEON_ETH_TAP(ifp, m, BPF_DIRECTION_OUT);
 
 		/* XXX */
-		if (sc->sc_soft_req_cnt > sc->sc_soft_req_thresh)
+		if (ml_len(&sc->sc_sendq) > sc->sc_soft_req_thresh)
 			octeon_eth_send_queue_flush(sc);
 		if (octeon_eth_send(sc, m)) {
 			ifp->if_oerrors++;
@@ -1081,11 +1060,7 @@ octeon_eth_start(struct ifnet *ifp)
 			log(LOG_WARNING,
 		  	  "%s: failed to transmit packet\n",
 		    	  sc->sc_dev.dv_xname);
-		} else {
-			sc->sc_soft_req_cnt++;
 		}
-		if (sc->sc_flush)
-			octeon_eth_send_queue_flush_sync(sc);
 		/* XXX */
 
 		/*
@@ -1392,7 +1367,7 @@ octeon_eth_recv(struct octeon_eth_softc *sc, uint64_t *work)
  	 * performance tuning
 	 * presend iobdma request
 	 */
-	if (sc->sc_soft_req_cnt > sc->sc_soft_req_thresh) {
+	if (ml_len(&sc->sc_sendq) > sc->sc_soft_req_thresh) {
 		octeon_eth_send_queue_flush_prefetch(sc);
 	}
 	/* XXX */
@@ -1426,14 +1401,10 @@ octeon_eth_recv(struct octeon_eth_softc *sc, uint64_t *work)
 	cn30xxipd_offload(word2, m->m_data, &m->m_pkthdr.csum_flags);
 
 	/* XXX */
-	if (sc->sc_soft_req_cnt > sc->sc_soft_req_thresh) {
+	if (ml_len(&sc->sc_sendq) > sc->sc_soft_req_thresh) {
 		octeon_eth_send_queue_flush_fetch(sc);
 		octeon_eth_send_queue_flush(sc);
 	}
-
-	/* XXX */
-	if (sc->sc_flush)
-		octeon_eth_send_queue_flush_sync(sc);
 
 	ml_enqueue(&ml, m);
 	if_input(ifp, &ml);
@@ -1442,7 +1413,7 @@ octeon_eth_recv(struct octeon_eth_softc *sc, uint64_t *work)
 
 drop:
 	/* XXX */
-	if (sc->sc_soft_req_cnt > sc->sc_soft_req_thresh) {
+	if (ml_len(&sc->sc_sendq) > sc->sc_soft_req_thresh) {
 		octeon_eth_send_queue_flush_fetch(sc);
 	}
 	/* XXX */
@@ -1489,11 +1460,10 @@ octeon_eth_tick_free(void *arg)
 
 	s = splnet();
 	/* XXX */
-	if (sc->sc_soft_req_cnt > 0) {
+	if (ml_len(&sc->sc_sendq) > 0) {
 		octeon_eth_send_queue_flush_prefetch(sc);
 		octeon_eth_send_queue_flush_fetch(sc);
 		octeon_eth_send_queue_flush(sc);
-		octeon_eth_send_queue_flush_sync(sc);
 	}
 	/* XXX */
 
