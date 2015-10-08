@@ -1,4 +1,4 @@
-.\"     $OpenBSD: mbuf.9,v 1.90 2015/10/08 11:36:15 dlg Exp $
+.\"     $OpenBSD: mbuf.9,v 1.91 2015/10/08 14:09:34 jmc Exp $
 .\"
 .\" Copyright (c) 2001 Jean-Jacques Bernard-Gundol <jjbg@openbsd.org>
 .\" All rights reserved.
@@ -337,7 +337,7 @@ ICMP/ICMPv6 checksum bad.
 .Pp
 The
 .Fa m_pkthdr.flowid
-variable can contain a low resolution (15 bit) classification of a
+variable can contain a low resolution (15-bit) classification of a
 flow or connection that the current mbuf is part of.
 If the flowid is valid, it may be used as an alternative to hashing
 the packets content to pick between different paths for the traffic.
@@ -345,9 +345,9 @@ The following masks can be ORed with the flowid:
 .Pp
 .Bl -tag -compact -offset indent -width XXXXXXXXXXXXXXXXXX
 .It Dv M_FLOWID_VALID
-The flow id has been set.
+The flow ID has been set.
 .It Dv M_FLOWID_MASK
-The flow id.
+The flow ID.
 .El
 .Pp
 When only M_EXT flag is set, an external storage buffer is being used to
