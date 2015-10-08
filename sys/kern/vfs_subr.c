@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.234 2015/10/07 11:57:44 mpi Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.235 2015/10/08 08:41:58 mpi Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -1389,8 +1389,7 @@ vfs_hang_addrlist(struct mount *mp, struct netexport *nep,
 		error = EINVAL;
 		goto out;
 	}
-	rn = (*rnh->rnh_addaddr)((caddr_t)saddr, (caddr_t)smask, rnh,
-		np->netc_rnodes, 0);
+	rn = rn_addroute(saddr, smask, rnh, np->netc_rnodes, 0);
 	if (rn == 0 || np != (struct netcred *)rn) { /* already exists */
 		error = EPERM;
 		goto out;
@@ -1409,7 +1408,7 @@ vfs_free_netcred(struct radix_node *rn, void *w, u_int id)
 {
 	struct radix_node_head *rnh = (struct radix_node_head *)w;
 
-	(*rnh->rnh_deladdr)(rn->rn_key, rn->rn_mask, rnh, NULL);
+	rn_delete(rn->rn_key, rn->rn_mask, rnh, NULL);
 	free(rn, M_NETADDR, 0);
 	return (0);
 }
@@ -1423,7 +1422,7 @@ vfs_free_addrlist(struct netexport *nep)
 	struct radix_node_head *rnh;
 
 	if ((rnh = nep->ne_rtable_inet) != NULL) {
-		(*rnh->rnh_walktree)(rnh, vfs_free_netcred, rnh);
+		rn_walktree(rnh, vfs_free_netcred, rnh);
 		free(rnh, M_RTABLE, 0);
 		nep->ne_rtable_inet = NULL;
 	}
@@ -1468,11 +1467,8 @@ vfs_export_lookup(struct mount *mp, struct netexport *nep, struct mbuf *nam)
 				rnh = NULL;
 				break;
 			}
-			if (rnh != NULL) {
-				np = (struct netcred *)
-					(*rnh->rnh_matchaddr)((caddr_t)saddr,
-					    rnh);
-			}
+			if (rnh != NULL)
+				np = (struct netcred *)rn_match(saddr, rnh);
 		}
 		/*
 		 * If no address match, use the default if it exists.

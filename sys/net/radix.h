@@ -1,4 +1,4 @@
-/*	$OpenBSD: radix.h,v 1.26 2015/09/04 08:43:39 mpi Exp $	*/
+/*	$OpenBSD: radix.h,v 1.27 2015/10/08 08:41:58 mpi Exp $	*/
 /*	$NetBSD: radix.h,v 1.8 1996/02/13 22:00:37 christos Exp $	*/
 
 /*
@@ -92,22 +92,6 @@ struct radix_node_head {
 	struct	radix_node *rnh_treetop;
 	int	rnh_addrsize;		/* permit, but not require fixed keys */
 	int	rnh_pktsize;		/* permit, but not require fixed keys */
-					/* add based on sockaddr */
-	struct	radix_node *(*rnh_addaddr)(void *v, void *mask,
-		     struct radix_node_head *head, struct radix_node nodes[],
-		     u_int8_t prio);
-					/* remove based on sockaddr */
-	struct	radix_node *(*rnh_deladdr)(void *v, void *mask,
-		    struct radix_node_head *head, struct radix_node *rn);
-					/* locate based on sockaddr */
-	struct	radix_node *(*rnh_matchaddr)(void *v,
-		    struct radix_node_head *head);
-					/* locate based on sockaddr */
-	struct	radix_node *(*rnh_lookup)(void *v, void *mask,
-		    struct radix_node_head *head);
-					/* traverse tree */
-	int	(*rnh_walktree)(struct radix_node_head *,
-		     int (*)(struct radix_node *, void *, u_int), void *);
 	struct	radix_node rnh_nodes[3];/* empty tree for common case */
 	int	rnh_multipath;		/* multipath? */
 	u_int	rnh_rtableid;

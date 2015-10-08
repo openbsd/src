@@ -1,4 +1,4 @@
-/*	$OpenBSD: radix_mpath.c,v 1.33 2015/09/28 08:36:24 mpi Exp $	*/
+/*	$OpenBSD: radix_mpath.c,v 1.34 2015/10/08 08:41:58 mpi Exp $	*/
 /*	$KAME: radix_mpath.c,v 1.13 2002/10/28 21:05:59 itojun Exp $	*/
 
 /*
@@ -208,13 +208,13 @@ rt_mpath_conflict(struct radix_node_head *rnh, struct sockaddr *dst,
 	char *p, *q, *eq;
 	int same, l, skip;
 
-	rn1 = rnh->rnh_lookup(dst, netmask, rnh);
+	rn1 = rn_lookup(dst, netmask, rnh);
 	if (!rn1)
 		return 0;
 
 	/*
 	 * unlike other functions we have in this file, we have to check
-	 * all key/mask/gateway as rnh_lookup can match less specific entry.
+	 * all key/mask/gateway as rn_lookup can match less specific entry.
 	 */
 	rt1 = (struct rtentry *)rn1;
 
