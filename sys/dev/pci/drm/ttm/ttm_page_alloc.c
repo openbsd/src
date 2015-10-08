@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttm_page_alloc.c,v 1.10 2015/09/27 11:09:26 jsg Exp $	*/
+/*	$OpenBSD: ttm_page_alloc.c,v 1.11 2015/10/08 10:25:24 kettenis Exp $	*/
 /*
  * Copyright (c) Red Hat Inc.
 
@@ -244,18 +244,21 @@ static struct kobj_type ttm_pool_kobj_type = {
 #endif
 };
 
+#ifndef PG_PMAP_WC
+#define PG_PMAP_WC PG_PMAP_UC
+#endif
+
 static struct ttm_pool_manager *_manager;
 
 static int set_pages_array_wb(struct vm_page **pages, int addrinarray)
 {
 #ifdef TTM_HAS_AGP
-#if defined(__amd64__) || defined(__i386__)
+#if defined(__amd64__) || defined(__i386__) || defined(__powerpc__)
 	int i;
 
 	for (i = 0; i < addrinarray; i++)
 		atomic_clearbits_int(&pages[i]->pg_flags, PG_PMAP_WC);
 #else
-	printf("%s stub\n", __func__);
 	return -ENOSYS;
 #endif
 #endif
@@ -265,13 +268,12 @@ static int set_pages_array_wb(struct vm_page **pages, int addrinarray)
 static int set_pages_array_wc(struct vm_page **pages, int addrinarray)
 {
 #ifdef TTM_HAS_AGP
-#if defined(__amd64__) || defined(__i386__)
+#if defined(__amd64__) || defined(__i386__) || defined(__powerpc__)
 	int i;
 
 	for (i = 0; i < addrinarray; i++)
 		atomic_setbits_int(&pages[i]->pg_flags, PG_PMAP_WC);
 #else
-	printf("%s stub\n", __func__);
 	return -ENOSYS;
 #endif
 #endif
