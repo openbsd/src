@@ -1,4 +1,4 @@
-/*	$OpenBSD: rm.c,v 1.30 2015/01/16 06:39:32 deraadt Exp $	*/
+/*	$OpenBSD: rm.c,v 1.31 2015/10/08 13:17:06 deraadt Exp $	*/
 /*	$NetBSD: rm.c,v 1.19 1995/09/07 06:48:50 jtc Exp $	*/
 
 /*-
@@ -101,6 +101,14 @@ main(int argc, char *argv[])
 		}
 	argc -= optind;
 	argv += optind;
+
+	if (Pflag) {
+		if (tame("stdio rpath wpath cpath", NULL) == -1)
+			err(1, "tame");
+	} else {
+		if (tame("stdio rpath cpath", NULL) == -1)
+			err(1, "tame");
+	}
 
 	if (argc < 1 && fflag == 0)
 		usage();
