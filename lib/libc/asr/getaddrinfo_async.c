@@ -1,4 +1,4 @@
-/*	$OpenBSD: getaddrinfo_async.c,v 1.47 2015/10/08 13:55:56 deraadt Exp $	*/
+/*	$OpenBSD: getaddrinfo_async.c,v 1.48 2015/10/08 14:08:44 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -88,7 +88,7 @@ getaddrinfo_async(const char *hostname, const char *servname,
 	struct asr_query	*as;
 	char			 alias[MAXDNAME];
 
-	if (hints && (hints->ai_flags & AI_NUMERICHOST) == 0)
+	if (hints == NULL || (hints->ai_flags & AI_NUMERICHOST) == 0)
 		ac = _asr_use_resolver(asr);
 	else
 		ac = _asr_no_resolver();
