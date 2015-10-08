@@ -1,4 +1,4 @@
-/*	$OpenBSD: history.c,v 1.45 2015/10/08 15:54:59 tedu Exp $	*/
+/*	$OpenBSD: history.c,v 1.46 2015/10/08 16:41:26 tedu Exp $	*/
 
 /*
  * command history
@@ -619,6 +619,7 @@ hist_init(Source *s)
 	unsigned char	*base;
 	int	lines;
 	int	fd;
+	struct stat sb;
 
 	if (Flag(FTALKING) == 0)
 		return;
@@ -636,6 +637,10 @@ hist_init(Source *s)
 	/* we have a file and are interactive */
 	if ((fd = open(hname, O_RDWR|O_CREAT|O_APPEND, 0600)) < 0)
 		return;
+	if (fstat(fd, &sb) == -1 || sb.st_uid != getuid()) {
+		close(fd);
+		return;
+	}
 
 	histfd = savefd(fd);
 	if (histfd != fd)
@@ -732,7 +737,6 @@ hist_shrink(unsigned char *oldbase, int oldbytes)
 {
 	int fd;
 	char	nfile[1024];
-	struct	stat statb;
 	unsigned char *nbase = oldbase;
 	int nbytes = oldbytes;
 
@@ -759,11 +763,6 @@ hist_shrink(unsigned char *oldbase, int oldbytes)
 		unlink(nfile);
 		return 1;
 	}
-	/*
-	 *	worry about who owns this file
-	 */
-	if (fstat(histfd, &statb) >= 0)
-		fchown(fd, statb.st_uid, statb.st_gid);
 	close(fd);
 
 	/*
