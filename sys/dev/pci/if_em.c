@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.307 2015/10/06 15:21:16 kettenis Exp $ */
+/* $OpenBSD: if_em.c,v 1.308 2015/10/08 09:21:26 kettenis Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -926,6 +926,8 @@ em_intr(void *arg)
 		sc->hw.get_link_status = 1;
 		em_check_for_link(&sc->hw);
 		em_update_link_status(sc);
+		if (!IFQ_IS_EMPTY(&ifp->if_snd))
+			em_start(ifp);
 		KERNEL_UNLOCK();
 	}
 
