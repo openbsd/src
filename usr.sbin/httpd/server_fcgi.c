@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_fcgi.c,v 1.64 2015/08/20 13:00:23 reyk Exp $	*/
+/*	$OpenBSD: server_fcgi.c,v 1.65 2015/10/08 09:32:13 jsg Exp $	*/
 
 /*
  * Copyright (c) 2014 Florian Obser <florian@openbsd.org>
@@ -130,7 +130,7 @@ server_fcgi(struct httpd *env, struct client *clt)
 		len = strlcpy(sun.sun_path,
 		    srv_conf->socket, sizeof(sun.sun_path));
 		if (len >= sizeof(sun.sun_path)) {
-			errstr = "socket path to long";
+			errstr = "socket path too long";
 			goto fail;
 		}
 		sun.sun_len = len;
