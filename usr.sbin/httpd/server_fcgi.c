@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_fcgi.c,v 1.65 2015/10/08 09:32:13 jsg Exp $	*/
+/*	$OpenBSD: server_fcgi.c,v 1.66 2015/10/08 09:40:32 jsg Exp $	*/
 
 /*
  * Copyright (c) 2014 Florian Obser <florian@openbsd.org>
@@ -399,6 +399,8 @@ server_fcgi(struct httpd *env, struct client *clt)
 	free(script);
 	if (errstr == NULL)
 		errstr = strerror(errno);
+	if (fd != -1 && clt->clt_fd != fd)
+		close(fd);
 	server_abort_http(clt, 500, errstr);
 	return (-1);
 }
