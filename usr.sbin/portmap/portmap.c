@@ -1,4 +1,4 @@
-/*	$OpenBSD: portmap.c,v 1.45 2015/09/13 15:44:47 guenther Exp $	*/
+/*	$OpenBSD: portmap.c,v 1.46 2015/10/08 14:02:09 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 Theo de Raadt (OpenBSD). All rights reserved.
@@ -245,6 +245,9 @@ main(int argc, char *argv[])
 		}
 	}
 	endpwent();
+
+	if (tame("stdio rpath inet proc", NULL) == -1)
+		err(1, "tame");
 
 	if (svc_register(xprt, PMAPPROG, PMAPVERS, reg_service, FALSE) == 0) {
 		syslog(LOG_ERR, "svc_register failed.");
@@ -604,6 +607,10 @@ callit(struct svc_req *rqstp, SVCXPRT *xprt)
 			    a.rmt_prog);
 		return;
 	}
+
+	if (tame("stdio rpath inet", NULL) == -1)
+		err(1, "tame");
+
 	port = pml->pml_map.pm_port;
 	get_myaddress(&me);
 	me.sin_port = htons(port);
