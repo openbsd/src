@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.6 2015/10/07 03:06:46 krw Exp $	*/
+/*	$OpenBSD: util.c,v 1.7 2015/10/08 14:50:38 krw Exp $	*/
 
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
@@ -32,40 +32,56 @@
 
 #define BUFSIZE 512
 
-void
+int
 filecopy(const char *srcfile, const char *dstfile)
 {
 	struct stat sb;
 	ssize_t sz, n;
-	int sfd, dfd;
+	int sfd, dfd, rslt = -1;
 	char *buf;
 
-	if ((buf = malloc(BUFSIZE)) == NULL)
-		err(1, "malloc");
+	if ((buf = malloc(BUFSIZE)) == NULL) {
+		warn("malloc");
+		return (-1);
+	}
 
 	sfd = open(srcfile, O_RDONLY);
-	if (sfd == -1)
-		err(1, "open %s", srcfile);
-	if (fstat(sfd, &sb) == -1)
-		err(1, "fstat");
+	if (sfd == -1) {
+		warn("open %s", srcfile);
+		return (-1);
+	}
+	if (fstat(sfd, &sb) == -1) {
+		warn("fstat");
+		return (-1);
+	}
 	sz = sb.st_size;
 
 	dfd = open(dstfile, O_WRONLY|O_CREAT);
-	if (dfd == -1)
-		err(1, "open %s", dstfile);
+	if (dfd == -1) {
+		warn("open %s", dstfile);
+		return (-1);
+	}
 	if (fchown(dfd, 0, 0) == -1)
-		if (errno != EINVAL)
-			err(1, "chown");
-	if (fchmod(dfd, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH) == -1)
-		err(1, "chmod");
+		if (errno != EINVAL) {
+			warn("chown");
+			return (-1);
+		}
+	if (fchmod(dfd, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH) == -1) {
+		warn("chmod");
+		return (-1);
+	}
 
 	while (sz > 0) {
 		n = MINIMUM(sz, BUFSIZE);
-		if ((n = read(sfd, buf, n)) == -1)
-			err(1, "read");
+		if ((n = read(sfd, buf, n)) == -1) {
+			warn("read");
+			return (-1);
+		}
 		sz -= n;
-		if (write(dfd, buf, n) != n)
-			err(1, "write");
+		if (write(dfd, buf, n) != n) {
+			warn("write");
+			return (-1);
+		}
 	}
 
 	ftruncate(dfd, sb.st_size);
@@ -73,6 +89,8 @@ filecopy(const char *srcfile, const char *dstfile)
 	close(dfd);
 	close(sfd);
 	free(buf);
+
+	return (0);
 }
 
 char *
@@ -81,16 +99,24 @@ fileprefix(const char *base, const char *path)
 	char *r, *s;
 	int n;
 
-	if ((s = malloc(PATH_MAX)) == NULL)
-		err(1, "malloc");
+	if ((s = malloc(PATH_MAX)) == NULL) {
+		warn("malloc");
+		return (NULL);
+	}
 	n = snprintf(s, PATH_MAX, "%s/%s", base, path);
-	if (n < 1 || n >= PATH_MAX)
-		err(1, "snprintf");
-	if ((r = realpath(s, NULL)) == NULL)
-		err(1, "realpath");
+	if (n < 1 || n >= PATH_MAX) {
+		free(s);
+		warn("snprintf");
+		return (NULL);
+	}
+	if ((r = realpath(s, NULL)) == NULL) {
+		free(s);
+		warn("realpath");
+		return (NULL);
+	}
 	free(s);
 
-	return r;
+	return (r);
 }
 
 /*

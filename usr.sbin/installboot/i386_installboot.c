@@ -1,4 +1,4 @@
-/*	$OpenBSD: i386_installboot.c,v 1.11 2015/10/07 03:06:46 krw Exp $	*/
+/*	$OpenBSD: i386_installboot.c,v 1.12 2015/10/08 14:50:38 krw Exp $	*/
 /*	$NetBSD: installboot.c,v 1.5 1995/11/17 23:23:50 gwr Exp $ */
 
 /*
@@ -145,11 +145,14 @@ md_installboot(int devfd, char *dev)
 	}
 
 	bootldr = fileprefix(root, bootldr);
+	if (bootldr == NULL)
+		exit(1);
 	if (verbose)
 		fprintf(stderr, "%s %s to %s\n",
 		    (nowrite ? "would copy" : "copying"), stage2, bootldr);
 	if (!nowrite)
-		filecopy(stage2, bootldr);
+		if (filecopy(stage2, bootldr) == -1)
+			exit(1);
 
 	/* Get bootstrap parameters to patch into proto. */
 	if (getbootparams(bootldr, devfd, &dl) != 0)
@@ -318,12 +321,19 @@ write_efisystem(struct disklabel *dl, char part)
 		goto umount;
 	}
 	src = fileprefix(root, "/usr/mdec/BOOTIA32.EFI");
+	if (src == NULL) {
+		rslt = -1;
+		goto umount;
+	}
 	srclen = strlen(src);
 	if (verbose)
 		fprintf(stderr, "%s %s to %s\n",
 		    (nowrite ? "would copy" : "copying"), src, dst);
-	if (!nowrite)
-		filecopy(src, dst);
+	if (!nowrite) {
+		rslt = filecopy(src, dst);
+		if (rslt == -1)
+			goto umount;
+	}
 	src[srclen - strlen("/BOOTIA32.EFI")] = '\0';
 
 	dst[pathlen] = '\0';
@@ -340,11 +350,12 @@ write_efisystem(struct disklabel *dl, char part)
 	if (verbose)
 		fprintf(stderr, "%s %s to %s\n",
 		    (nowrite ? "would copy" : "copying"), src, dst);
-	if (!nowrite)
-		filecopy(src, dst);
+	if (!nowrite) {
+		rslt = filecopy(src, dst);
+		if (rslt == -1)
+			goto umount;
+	}
 
-	free(src);
-	src = NULL;
 	rslt = 0;
 
 umount:

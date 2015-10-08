@@ -1,4 +1,4 @@
-/*	$OpenBSD: landisk_installboot.c,v 1.2 2015/10/05 04:30:35 miod Exp $	*/
+/*	$OpenBSD: landisk_installboot.c,v 1.3 2015/10/08 14:50:38 krw Exp $	*/
 
 /*
  * Copyright (c) 2013 Joel Sing <jsing@openbsd.org>
@@ -42,8 +42,11 @@ md_installboot(int devfd, char *dev)
 	sync();
 
 	bootldr = fileprefix(root, bootldr);
+	if (bootldr == NULL)
+		exit(1);
 	if (!nowrite)
-		filecopy(stage2, bootldr);
+		if (filecopy(stage2, bootldr) == -1)
+			exit(1);
 
 	/* Write bootblock into the superblock. */
 	bootstrap(devfd, dev, stage1);

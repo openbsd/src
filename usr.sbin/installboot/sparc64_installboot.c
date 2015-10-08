@@ -1,4 +1,4 @@
-/*	$OpenBSD: sparc64_installboot.c,v 1.3 2015/01/16 00:05:12 deraadt Exp $	*/
+/*	$OpenBSD: sparc64_installboot.c,v 1.4 2015/10/08 14:50:38 krw Exp $	*/
 
 /*
  * Copyright (c) 2012, 2013 Joel Sing <jsing@openbsd.org>
@@ -96,8 +96,11 @@ md_installboot(int devfd, char *dev)
 	sync();
 
 	bootldr = fileprefix(root, bootldr);
+	if (bootldr == NULL)
+		exit(1);
 	if (!nowrite)
-		filecopy(stage2, bootldr);
+		if (filecopy(stage2, bootldr) == -1)
+			exit(1);
 
 	/* Write bootblock into the superblock. */
 	if (lseek(devfd, DEV_BSIZE, SEEK_SET) != DEV_BSIZE)
