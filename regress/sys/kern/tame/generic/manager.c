@@ -1,4 +1,4 @@
-/*	$OpenBSD: manager.c,v 1.4 2015/09/24 06:52:22 semarie Exp $ */
+/*	$OpenBSD: manager.c,v 1.5 2015/10/08 10:09:09 semarie Exp $ */
 /*
  * Copyright (c) 2015 Sebastien Marie <semarie@openbsd.org>
  *
@@ -175,15 +175,19 @@ _start_test(int *ret, const char *test_name, const char *request,
 	int i;
 
 	/* early print testname */
-	printf("test(%s): tame=(\"%s\",", test_name, request);
-	if (paths) {
-		printf("{");
-		for (i = 0; paths[i] != NULL; i++)
-			printf("\"%s\",", paths[i]);
-		printf("NULL})");
+	printf("test(%s): tame=", test_name);
+	if (request) {
+		printf("(\"%s\",", request);
+		if (paths) {
+			printf("{");
+			for (i = 0; paths[i] != NULL; i++)
+				printf("\"%s\",", paths[i]);
+			printf("NULL})");
+		} else
+			printf("NULL)");
 	} else
-		printf("NULL)");
-
+		printf("not-called");
+	
 	/* unlink previous coredump (if exists) */
 	if (clear_coredump(ret, test_name) == -1)
 		return;
@@ -223,7 +227,7 @@ _start_test(int *ret, const char *test_name, const char *request,
 		setsid();
 
 		/* set tame policy */
-		if (tame(request, paths) != 0)
+		if (request && tame(request, paths) != 0)
 			err(errno, "tame");
 
 		/* reset errno and launch test */
