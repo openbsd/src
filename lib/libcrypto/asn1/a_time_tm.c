@@ -1,4 +1,4 @@
-/* $OpenBSD: a_time_tm.c,v 1.4 2015/10/06 12:54:24 bcook Exp $ */
+/* $OpenBSD: a_time_tm.c,v 1.5 2015/10/08 02:26:31 beck Exp $ */
 /*
  * Copyright (c) 2015 Bob Beck <beck@openbsd.org>
  *
@@ -68,8 +68,7 @@ utctime_string_from_tm(struct tm *tm)
  * 0 if we expect to parse a time as specified in RFC 5280 from an
  * X509 certificate.
  * V_ASN1_UTCTIME if we wish to parse a legacy ASN1 UTC time.
- * V_ASN1_GENERALIZEDTIME if we wish to parse a legacy ASN1
- * Generalizd time.
+ * V_ASN1_GENERALIZEDTIME if we wish to parse a legacy ASN1 Generalized time.
  *
  * Returns:
  * -1 if the string was invalid.
