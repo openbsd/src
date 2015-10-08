@@ -1,4 +1,4 @@
-/*	$OpenBSD: cp.c,v 1.40 2015/10/08 00:07:20 deraadt Exp $	*/
+/*	$OpenBSD: cp.c,v 1.41 2015/10/08 04:39:24 deraadt Exp $	*/
 /*	$NetBSD: cp.c,v 1.14 1995/09/07 06:14:51 jtc Exp $	*/
 
 /*
@@ -128,6 +128,14 @@ main(int argc, char *argv[])
 		}
 	argc -= optind;
 	argv += optind;
+
+	/*
+	 * Unfortunately, -R will use mkfifo & mknod;
+	 * -p will use fchown, fchmod, lchown, fchflags..
+	 */
+	if (Rflag == 0 && pflag == 0)
+		if (tame("stdio rpath wpath cpath fattr", NULL) == -1)
+			err(1, "tame");
 
 	if (argc < 2)
 		usage();
