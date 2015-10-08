@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_tame.c,v 1.67 2015/10/07 19:52:54 deraadt Exp $	*/
+/*	$OpenBSD: kern_tame.c,v 1.68 2015/10/08 13:21:06 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -1035,6 +1035,17 @@ tame_ioctl_check(struct proc *p, long com, void *v)
 		case SIOCGIFGROUP:
 			if ((p->p_p->ps_tame & TAME_INET) &&
 			    fp->f_type == DTYPE_SOCKET)
+				return (0);
+			break;
+		}
+	}
+
+	if ((p->p_p->ps_tame & TAME_ROUTE)) {
+		switch (com) {
+		case SIOCGIFADDR:
+		case SIOCGIFFLAGS:
+		case SIOCGIFRDOMAIN:
+			if (fp->f_type == DTYPE_SOCKET)
 				return (0);
 			break;
 		}
