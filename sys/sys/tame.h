@@ -1,4 +1,4 @@
-/*	$OpenBSD: tame.h,v 1.12 2015/10/07 19:52:54 deraadt Exp $	*/
+/*	$OpenBSD: tame.h,v 1.13 2015/10/08 17:29:43 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -45,6 +45,7 @@
 #define TAME_RECVFD	0x00040000	/* AF_UNIX CMSG fd receiving */
 #define TAME_EXEC	0x00080000	/* execve, child is free of tame */
 #define TAME_ROUTE	0x00100000	/* routing lookups */
+#define TAME_MCAST	0x00200000	/* multicast joins */
 
 #define TAME_ABORT	0x08000000	/* SIGABRT instead of SIGKILL */
 

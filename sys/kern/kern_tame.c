@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_tame.c,v 1.69 2015/10/08 13:25:04 deraadt Exp $	*/
+/*	$OpenBSD: kern_tame.c,v 1.70 2015/10/08 17:29:43 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -239,6 +239,7 @@ static const struct {
 	{ "recvfd",		TAME_RW | TAME_RECVFD },
 	{ "ioctl",		TAME_IOCTL },
 	{ "route",		TAME_ROUTE },
+	{ "mcast",		TAME_MCAST },
 	{ "tty",		TAME_TTY },
 	{ "proc",		TAME_PROC },
 	{ "exec",		TAME_EXEC },
@@ -1115,7 +1116,13 @@ tame_setsockopt_check(struct proc *p, int level, int optname)
 		case IP_PORTRANGE:
 		case IP_RECVDSTADDR:
 			return (0);
-		}
+		case IP_MULTICAST_IF:
+		case IP_ADD_MEMBERSHIP:
+		case IP_DROP_MEMBERSHIP:
+			if ((p->p_p->ps_tame & TAME_MCAST) == 0)
+				return (0);
+			break;
+		}		
 		break;
 	case IPPROTO_ICMP:
 		break;
@@ -1125,7 +1132,16 @@ tame_setsockopt_check(struct proc *p, int level, int optname)
 		case IPV6_RECVHOPLIMIT:
 		case IPV6_PORTRANGE:
 		case IPV6_RECVPKTINFO:
+#ifdef notyet
+		case IPV6_V6ONLY:
+#endif
 			return (0);
+		case IPV6_MULTICAST_IF:
+		case IPV6_JOIN_GROUP:
+		case IPV6_LEAVE_GROUP:
+			if ((p->p_p->ps_tame & TAME_MCAST) == 0)
+				return (0);
+			break;
 		}
 		break;
 	case IPPROTO_ICMPV6:
