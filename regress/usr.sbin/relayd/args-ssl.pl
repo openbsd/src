@@ -6,7 +6,7 @@ use warnings;
 our %args = (
     client => {
 	ssl => 1,
-	loggrep => 'Issuer.*/OU=relay/',
+	loggrep => 'Issuer.*/OU=relayd/',
     },
     relayd => {
 	forwardssl => 1,
