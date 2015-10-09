@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_i810.c,v 1.90 2015/09/09 19:47:11 deraadt Exp $	*/
+/*	$OpenBSD: agp_i810.c,v 1.91 2015/10/09 13:22:54 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -709,7 +709,7 @@ int
 agp_i810_bind_memory(void *sc, struct agp_memory *mem, bus_size_t offset)
 {
 	struct agp_i810_softc	*isc = sc;
-	u_int32_t 		 regval, i;
+	u_int32_t 		 i;
 
 	if (mem->am_is_bound != 0)
 		return (EINVAL);
@@ -720,20 +720,6 @@ agp_i810_bind_memory(void *sc, struct agp_memory *mem, bus_size_t offset)
 		printf("agp: trying to bind into stolen memory\n");
 #endif
 		return (EINVAL);
-	}
-
-	/*
-	 * XXX evil hack: the PGTBL_CTL appearently gets overwritten by the
-	 * X server for mysterious reasons which leads to crashes if we write
-	 * to the GTT through the MMIO window.
-	 * Until the issue is solved, simply restore it.
-	 */
-	regval = READ4(AGP_I810_PGTBL_CTL);
-	if (regval != (isc->gatt->ag_physical | 1)) {
-		printf("agp_i810_bind_memory: PGTBL_CTL is 0x%x - fixing\n",
-		    regval);
-		WRITE4(AGP_I810_PGTBL_CTL, isc->gatt->ag_physical |
-		    INTEL_ENABLED);
 	}
 
 	if (mem->am_type == 2) {
