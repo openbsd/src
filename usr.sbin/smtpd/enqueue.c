@@ -1,4 +1,4 @@
-/*	$OpenBSD: enqueue.c,v 1.97 2015/10/09 14:37:38 gilles Exp $	*/
+/*	$OpenBSD: enqueue.c,v 1.98 2015/10/09 15:09:09 gilles Exp $	*/
 
 /*
  * Copyright (c) 2005 Henning Brauer <henning@bulabula.org>
@@ -811,6 +811,7 @@ enqueue_offline(int argc, char *argv[], FILE *ifile, FILE *ofile)
 	for (i = 1; i < argc; i++) {
 		if (strchr(argv[i], '|') != NULL) {
 			warnx("%s contains illegal character", argv[i]);
+			ftruncate(fileno(ofile), 0);
 			exit(EX_SOFTWARE);
 		}
 		fprintf(ofile, "%s%s", i == 1 ? "" : "|", argv[i]);
@@ -821,11 +822,13 @@ enqueue_offline(int argc, char *argv[], FILE *ifile, FILE *ofile)
 	while ((ch = fgetc(ifile)) != EOF)
 		if (fputc(ch, ofile) == EOF) {
 			warn("write error");
+			ftruncate(fileno(ofile), 0);
 			exit(EX_UNAVAILABLE);
 		}
 
 	if (ferror(ifile)) {
 		warn("read error");
+		ftruncate(fileno(ofile), 0);
 		exit(EX_UNAVAILABLE);
 	}
 
