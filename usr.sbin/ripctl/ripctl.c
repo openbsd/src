@@ -1,4 +1,4 @@
-/*	$OpenBSD: ripctl.c,v 1.14 2015/09/27 17:32:36 stsp Exp $
+/*	$OpenBSD: ripctl.c,v 1.15 2015/10/09 07:54:28 deraadt Exp $
  *
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -87,6 +87,9 @@ main(int argc, char *argv[])
 	strlcpy(sun.sun_path, RIPD_SOCKET, sizeof(sun.sun_path));
 	if (connect(ctl_sock, (struct sockaddr *)&sun, sizeof(sun)) == -1)
 		err(1, "connect: %s", RIPD_SOCKET);
+
+	if (pledge("stdio", NULL) == -1)
+		err(1, "pledge");
 
 	if ((ibuf = malloc(sizeof(struct imsgbuf))) == NULL)
 		err(1, NULL);
