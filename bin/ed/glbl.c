@@ -1,4 +1,4 @@
-/*	$OpenBSD: glbl.c,v 1.16 2015/10/09 19:47:02 millert Exp $	*/
+/*	$OpenBSD: glbl.c,v 1.17 2015/10/09 20:27:28 tobias Exp $	*/
 /*	$NetBSD: glbl.c,v 1.2 1995/03/21 09:04:41 cgd Exp $	*/
 
 /* glob.c: This file contains the global command routines for the ed line
@@ -34,6 +34,8 @@
 
 #include "ed.h"
 
+static int set_active_node(line_t *);
+static line_t *next_active_node(void);
 
 /* build_active_list:  add line matching a pattern to the global-active list */
 int
@@ -142,7 +144,7 @@ static int active_ptr;		/* active_list index (non-decreasing) */
 static int active_ndx;		/* active_list index (modulo active_last) */
 
 /* set_active_node: add a line node to the global-active list */
-int
+static int
 set_active_node(line_t *lp)
 {
 	if (active_last + 1 > active_size) {
@@ -183,7 +185,7 @@ unset_active_nodes(line_t *np, line_t *mp)
 
 
 /* next_active_node: return the next global-active line node */
-line_t *
+static line_t *
 next_active_node(void)
 {
 	while (active_ptr < active_last && active_list[active_ptr] == NULL)

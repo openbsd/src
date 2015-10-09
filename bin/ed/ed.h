@@ -1,4 +1,4 @@
-/*	$OpenBSD: ed.h,v 1.19 2015/10/09 19:47:02 millert Exp $	*/
+/*	$OpenBSD: ed.h,v 1.20 2015/10/09 20:27:28 tobias Exp $	*/
 /*	$NetBSD: ed.h,v 1.23 1995/03/21 09:04:40 cgd Exp $	*/
 
 /* ed.h: type and constant definitions for the ed editor. */
@@ -150,66 +150,40 @@ if ((i) > (n)) { \
 
 /* Local Function Declarations */
 void add_line_node(line_t *);
-int append_lines(int);
-int apply_subst_template(char *, regmatch_t *, int, int);
 int build_active_list(int);
-int check_addr_range(int, int);
 void clear_active_list(void);
 void clear_undo_stack(void);
 int close_sbuf(void);
-int copy_lines(int);
 int delete_lines(int, int);
 int display_lines(int, int, int);
-line_t *dup_line_node(line_t *);
 int exec_command(void);
 int exec_global(int, int);
 int extract_addr_range(void);
-char *extract_pattern(int);
 int extract_subst_tail(int *, int *);
-char *extract_subst_template(void);
 line_t *get_addressed_line_node(int);
 regex_t *get_compiled_pattern(void);
 char *get_extended_line(int *, int);
-char *get_filename(void);
 int get_line_node_addr(line_t *);
-int get_matching_node_addr(regex_t *, int);
-int get_marked_node_addr(int);
 char *get_sbuf_line(line_t *);
-int get_shell_command(void);
-int get_stream_line(FILE *);
 int get_tty_line(void);
 void handle_hup(int);
 void handle_int(int);
-void handle_winch(int);
 int has_trailing_escape(char *, char *);
 void init_buffers(void);
-int join_lines(int, int);
-int mark_line_node(line_t *, int);
-int move_lines(int);
-line_t *next_active_node(void);
-int next_addr(void);
 int open_sbuf(void);
-char *parse_char_class(char *);
 int pop_undo_stack(void);
 undo_t *push_undo_stack(int, int, int);
 char *put_sbuf_line(char *);
-int put_stream_line(FILE *, char *, int);
 int put_tty_line(char *, int, int, int);
 void quit(int);
 int read_file(char *, int);
-int read_stream(FILE *, int);
 int search_and_replace(regex_t *, int, int);
-int set_active_node(line_t *);
 void seterrmsg(char *);
-void signal_hup(int);
-void signal_int(int);
 char *strip_escapes(char *);
-int substitute_matching_text(regex_t *, line_t *, int, int);
 char *translit_text(char *, int, int, int);
 void unmark_line_node(line_t *);
 void unset_active_nodes(line_t *, line_t *);
 int write_file(char *, char *, int, int);
-int write_stream(FILE *, int, int);
 
 /* global buffers */
 extern char *ibuf;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.51 2015/10/09 19:47:02 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.52 2015/10/09 20:27:28 tobias Exp $	*/
 /*	$NetBSD: main.c,v 1.3 1995/03/21 09:04:44 cgd Exp $	*/
 
 /* main.c: This file contains the main control and user-interface routines
@@ -52,6 +52,22 @@
 
 #include "ed.h"
 
+void signal_hup(int);
+void signal_int(int);
+void handle_winch(int);
+
+static int next_addr(void);
+static int check_addr_range(int, int);
+static int get_matching_node_addr(regex_t *, int);
+static char *get_filename(void);
+static int get_shell_command(void);
+static int append_lines(int);
+static int join_lines(int, int);
+static int move_lines(int);
+static int copy_lines(int);
+static int mark_line_node(line_t *, int);
+static int get_marked_node_addr(int);
+static line_t *dup_line_node(line_t *);
 
 sigjmp_buf env;
 
@@ -298,7 +314,7 @@ extract_addr_range(void)
 	
 
 /*  next_addr: return the next line address in the command buffer */
-int
+static int
 next_addr(void)
 {
 	char *hd;
@@ -896,7 +912,7 @@ exec_command(void)
 
 
 /* check_addr_range: return status of address range check */
-int
+static int
 check_addr_range(int n, int m)
 {
 	if (addr_cnt == 0) {
@@ -915,7 +931,7 @@ check_addr_range(int n, int m)
 /* get_matching_node_addr: return the address of the next line matching a
    pattern in a given direction.  wrap around begin/end of editor buffer if
    necessary */
-int
+static int
 get_matching_node_addr(regex_t *pat, int dir)
 {
 	char *s;
@@ -940,7 +956,7 @@ get_matching_node_addr(regex_t *pat, int dir)
 
 
 /* get_filename: return pointer to copy of filename in the command buffer */
-char *
+static char *
 get_filename(void)
 {
 	static char *file = NULL;
@@ -981,7 +997,7 @@ get_filename(void)
 
 /* get_shell_command: read a shell command from stdin; return substitution
    status */
-int
+static int
 get_shell_command(void)
 {
 	static char *buf = NULL;
@@ -1044,7 +1060,7 @@ get_shell_command(void)
 
 /* append_lines: insert text from stdin to after line n; stop when either a
    single period is read or EOF; return status */
-int
+static int
 append_lines(int n)
 {
 	int l;
@@ -1093,7 +1109,7 @@ append_lines(int n)
 
 
 /* join_lines: replace a range of lines with the joined text of those lines */
-int
+static int
 join_lines(int from, int to)
 {
 	static char *buf = NULL;
@@ -1130,7 +1146,7 @@ join_lines(int from, int to)
 
 
 /* move_lines: move a range of lines */
-int
+static int
 move_lines(int addr)
 {
 	line_t *b1, *a1, *b2, *a2;
@@ -1174,7 +1190,7 @@ move_lines(int addr)
 
 
 /* copy_lines: copy a range of lines; return status */
-int
+static int
 copy_lines(int addr)
 {
 	line_t *lp, *np = get_addressed_line_node(first_addr);
@@ -1264,7 +1280,7 @@ static line_t *mark[MAXMARK];		/* line markers */
 static int markno;			/* line marker count */
 
 /* mark_line_node: set a line node mark */
-int
+static int
 mark_line_node(line_t *lp, int n)
 {
 	if (!islower(n)) {
@@ -1278,7 +1294,7 @@ mark_line_node(line_t *lp, int n)
 
 
 /* get_marked_node_addr: return address of a marked line */
-int
+static int
 get_marked_node_addr(int n)
 {
 	if (!islower(n)) {
@@ -1304,7 +1320,7 @@ unmark_line_node(line_t *lp)
 
 
 /* dup_line_node: return a pointer to a copy of a line node */
-line_t *
+static line_t *
 dup_line_node(line_t *lp)
 {
 	line_t *np;

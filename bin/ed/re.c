@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.14 2015/10/04 15:23:24 millert Exp $	*/
+/*	$OpenBSD: re.c,v 1.15 2015/10/09 20:27:28 tobias Exp $	*/
 /*	$NetBSD: re.c,v 1.14 1995/03/21 09:04:48 cgd Exp $	*/
 
 /* re.c: This file contains the regular expression interface routines for
@@ -31,6 +31,8 @@
 
 #include "ed.h"
 
+static char *extract_pattern(int);
+static char *parse_char_class(char *);
 
 extern int patlock;
 
@@ -76,7 +78,7 @@ get_compiled_pattern(void)
 
 /* extract_pattern: copy a pattern string from the command buffer; return
    pointer to the copy */
-char *
+static char *
 extract_pattern(int delimiter)
 {
 	static char *lhbuf = NULL;	/* buffer */
@@ -112,7 +114,7 @@ extract_pattern(int delimiter)
 
 
 /* parse_char_class: expand a POSIX character class */
-char *
+static char *
 parse_char_class(char *s)
 {
 	int c, d;

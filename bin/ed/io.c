@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.17 2015/10/09 19:47:02 millert Exp $	*/
+/*	$OpenBSD: io.c,v 1.18 2015/10/09 20:27:28 tobias Exp $	*/
 /*	$NetBSD: io.c,v 1.2 1995/03/21 09:04:43 cgd Exp $	*/
 
 /* io.c: This file contains the i/o routines for the ed line editor */
@@ -30,6 +30,10 @@
 
 #include "ed.h"
 
+static int read_stream(FILE *, int);
+static int get_stream_line(FILE *);
+static int write_stream(FILE *, int, int);
+static int put_stream_line(FILE *, char *, int);
 
 extern int scripted;
 
@@ -63,7 +67,7 @@ static int sbufsz;		/* file i/o buffer size */
 int newline_added;		/* if set, newline appended to input file */
 
 /* read_stream: read a stream into the editor buffer; return status */
-int
+static int
 read_stream(FILE *fp, int n)
 {
 	line_t *lp = get_addressed_line_node(n);
@@ -107,7 +111,7 @@ read_stream(FILE *fp, int n)
 }
 
 /* get_stream_line: read a line of text from a stream; return line length */
-int
+static int
 get_stream_line(FILE *fp)
 {
 	int c;
@@ -160,7 +164,7 @@ write_file(char *fn, char *mode, int n, int m)
 
 
 /* write_stream: write a range of lines to a stream; return status */
-int
+static int
 write_stream(FILE *fp, int n, int m)
 {
 	line_t *lp = get_addressed_line_node(n);
@@ -183,7 +187,7 @@ write_stream(FILE *fp, int n, int m)
 
 
 /* put_stream_line: write a line of text to a stream; return status */
-int
+static int
 put_stream_line(FILE *fp, char *s, int len)
 {
 	while (len--) {
