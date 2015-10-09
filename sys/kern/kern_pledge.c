@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.4 2015/10/09 05:30:03 deraadt Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.5 2015/10/09 17:18:20 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -217,7 +217,8 @@ const u_int pledge_syscalls[SYS_MAXSYSCALL] = {
 	[SYS_setsockopt] = PLEDGE_INET | PLEDGE_UNIX,
 	[SYS_getsockopt] = PLEDGE_INET | PLEDGE_UNIX,
 
-	[SYS_flock] = PLEDGE_GETPW,
+	/* XXX getpw for the ypbind.lock; all other flock users have cpath */
+	[SYS_flock] = PLEDGE_GETPW | PLEDGE_CPATH,
 };
 
 static const struct {
