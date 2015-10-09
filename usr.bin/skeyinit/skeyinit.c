@@ -1,4 +1,4 @@
-/*	$OpenBSD: skeyinit.c,v 1.60 2015/10/06 15:09:08 tim Exp $	*/
+/*	$OpenBSD: skeyinit.c,v 1.61 2015/10/09 21:59:34 tim Exp $	*/
 
 /* OpenBSD S/Key (skeyinit.c)
  *
@@ -177,12 +177,6 @@ main(int argc, char **argv)
 		}
 		break;
 	}
-
-	if (defaultsetup)
-		fputs("Reminder - Only use this method if you are directly "
-		    "connected\n           or have an encrypted channel.  If "
-		    "you are using telnet,\n           hit return now and use "
-		    "skeyinit -s.\n", stderr);
 
 	if (getuid() != 0) {
 		if ((pp = pw_dup(pp)) == NULL)

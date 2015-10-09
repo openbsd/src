@@ -1,4 +1,4 @@
-/*	$OpenBSD: skey.c,v 1.30 2015/10/09 20:24:37 tim Exp $	*/
+/*	$OpenBSD: skey.c,v 1.31 2015/10/09 21:59:34 tim Exp $	*/
 /*
  * OpenBSD S/Key (skey.c)
  *
@@ -114,13 +114,9 @@ main(int argc, char *argv[])
 	}
 
 	/* Get user's secret passphrase */
-	if (!pass) {
-		fputs("Reminder - Do not use this program while"
-		    " logged in via telnet.\n", stderr);
-		if (readpassphrase("Enter secret passphrase: ", passwd,
-		    sizeof(passwd), 0) == NULL || passwd[0] == '\0')
-			exit(1);
-	}
+	if (!pass && (readpassphrase("Enter secret passphrase: ", passwd,
+	    sizeof(passwd), 0) == NULL || passwd[0] == '\0'))
+		exit(1);
 
 	/* Crunch seed and passphrase into starting key */
 	if (keycrunch(key, seed, passwd) != 0)
