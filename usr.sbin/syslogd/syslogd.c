@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.193 2015/10/09 16:44:55 bluhm Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.194 2015/10/09 16:58:25 bluhm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -50,7 +50,7 @@
  * extensive changes by Ralph Campbell
  * more extensive changes by Eric Allman (again)
  * memory buffer logging by Damien Miller
- * IPv6, libevent, sending over TCP and TLS by Alexander Bluhm
+ * IPv6, libevent, syslog over TCP and TLS by Alexander Bluhm
  */
 
 #define MAXLINE		8192		/* maximum line length */
@@ -219,9 +219,13 @@ char	*bind_host = NULL;	/* bind UDP receive socket */
 char	*bind_port = NULL;
 char	*listen_host = NULL;	/* listen on TCP receive socket */
 char	*listen_port = NULL;
+char	*tls_hostport = NULL;	/* listen on TLS receive socket */
+char	*tls_host = NULL;
+char	*tls_port = NULL;
 char	*path_ctlsock = NULL;	/* Path to control socket */
 
-struct	tls_config *tlsconfig = NULL;
+struct	tls *server_ctx;
+struct	tls_config *client_config, *server_config;
 const char *CAfile = "/etc/ssl/cert.pem"; /* file containing CA certificates */
 int	NoVerify = 0;		/* do not verify TLS server x509 certificate */
 int	tcpbuf_dropped = 0;	/* count messages dropped from TCP or TLS */
@@ -273,12 +277,14 @@ size_t	ctl_reply_offset = 0;	/* Number of bytes of reply written so far */
 char	*linebuf;
 int	 linesize;
 
-int		 fd_ctlsock, fd_ctlconn, fd_klog, fd_sendsys,
-		 fd_udp, fd_udp6, fd_bind, fd_listen, fd_unix[MAXUNIX];
+int		 fd_ctlsock, fd_ctlconn, fd_klog, fd_sendsys, fd_udp, fd_udp6,
+		 fd_bind, fd_listen, fd_tls, fd_unix[MAXUNIX];
 struct event	 *ev_ctlaccept, *ev_ctlread, *ev_ctlwrite;
 
 struct peer {
+	struct buffertls	 p_buftls;
 	struct bufferevent	*p_bufev;
+	struct tls		*p_ctx;
 	char			*p_peername;
 	char			*p_hostname;
 	int			 p_fd;
@@ -341,15 +347,15 @@ int
 main(int argc, char *argv[])
 {
 	struct timeval	 to;
-	struct event	*ev_klog, *ev_sendsys,
-			*ev_udp, *ev_udp6, *ev_bind, *ev_listen, *ev_unix,
+	struct event	*ev_klog, *ev_sendsys, *ev_udp, *ev_udp6,
+			*ev_bind, *ev_listen, *ev_tls, *ev_unix,
 			*ev_hup, *ev_int, *ev_quit, *ev_term, *ev_mark;
 	const char	*errstr;
 	char		*p;
 	int		 ch, i;
 	int		 lockpipe[2] = { -1, -1}, pair[2], nullfd, fd;
 
-	while ((ch = getopt(argc, argv, "46a:C:dFf:hm:np:s:T:U:uV")) != -1)
+	while ((ch = getopt(argc, argv, "46a:C:dFf:hm:np:S:s:T:U:uV")) != -1)
 		switch (ch) {
 		case '4':		/* disable IPv6 */
 			Family = PF_INET;
@@ -388,6 +394,13 @@ main(int argc, char *argv[])
 			break;
 		case 'p':		/* path */
 			path_unix[0] = optarg;
+			break;
+		case 'S':		/* allow tls and listen on address */
+			tls_hostport = optarg;
+			if ((p = strdup(optarg)) == NULL)
+				err(1, "strdup tls address");
+			if (loghost_parse(p, NULL, &tls_host, &tls_port) == -1)
+				errx(1, "bad tls address: %s", optarg);
 			break;
 		case 's':
 			path_ctlsock = optarg;
@@ -470,6 +483,13 @@ main(int argc, char *argv[])
 		if (!Debug)
 			die(0);
 	}
+	fd_tls = -1;
+	if (tls_host && socket_bind("tls", tls_host, tls_port, 0,
+	    &fd_tls, &fd_tls) == -1) {
+		logerrorx("socket listen tls");
+		if (!Debug)
+			die(0);
+	}
 
 #ifndef SUN_LEN
 #define SUN_LEN(unp) (strlen((unp)->sun_path) + 2)
@@ -518,39 +538,133 @@ main(int argc, char *argv[])
 
 	if (tls_init() == -1) {
 		logerrorx("tls_init");
-	} else if ((tlsconfig = tls_config_new()) == NULL) {
-		logerror("tls_config_new");
-	} else if (NoVerify) {
-		tls_config_insecure_noverifycert(tlsconfig);
-		tls_config_insecure_noverifyname(tlsconfig);
 	} else {
+		if ((client_config = tls_config_new()) == NULL)
+			logerror("tls_config_new client");
+		if (tls_hostport) {
+			if ((server_config = tls_config_new()) == NULL)
+				logerror("tls_config_new server");
+			if ((server_ctx = tls_server()) == NULL) {
+				logerror("tls_server");
+				close(fd_tls);
+				fd_tls = -1;
+			}
+		}
+	}
+	if (client_config) {
+		if (NoVerify) {
+			tls_config_insecure_noverifycert(client_config);
+			tls_config_insecure_noverifyname(client_config);
+		} else {
+			struct stat sb;
+
+			fd = -1;
+			p = NULL;
+			if ((fd = open(CAfile, O_RDONLY)) == -1) {
+				logerror("open CAfile");
+			} else if (fstat(fd, &sb) == -1) {
+				logerror("fstat CAfile");
+			} else if (sb.st_size > 50*1024*1024) {
+				logerrorx("CAfile larger than 50MB");
+			} else if ((p = calloc(sb.st_size, 1)) == NULL) {
+				logerror("calloc CAfile");
+			} else if (read(fd, p, sb.st_size) != sb.st_size) {
+				logerror("read CAfile");
+			} else if (tls_config_set_ca_mem(client_config, p,
+			    sb.st_size) == -1) {
+				logerrorx("tls_config_set_ca_mem");
+			} else {
+				dprintf("CAfile %s, size %lld\n",
+				    CAfile, sb.st_size);
+			}
+			free(p);
+			close(fd);
+		}
+		tls_config_set_protocols(client_config, TLS_PROTOCOLS_ALL);
+		if (tls_config_set_ciphers(client_config, "compat") != 0)
+			logerror("tls set client ciphers");
+	}
+	if (server_config && server_ctx) {
 		struct stat sb;
+		char *path;
 
 		fd = -1;
 		p = NULL;
-		if ((fd = open(CAfile, O_RDONLY)) == -1) {
-			logerror("open CAfile");
+		path = NULL;
+		if (asprintf(&path, "/etc/ssl/private/%s.key", tls_hostport)
+		    == -1 || (fd = open(path, O_RDONLY)) == -1) {
+			free(path);
+			path = NULL;
+			if (asprintf(&path, "/etc/ssl/private/%s.key", tls_host)
+			    == -1 || (fd = open(path, O_RDONLY)) == -1) {
+				free(path);
+				path = NULL;
+			}
+		}
+		if (fd == -1) {
+			logerror("open keyfile");
 		} else if (fstat(fd, &sb) == -1) {
-			logerror("fstat CAfile");
-		} else if (sb.st_size > 50*1024*1024) {
-			logerrorx("CAfile larger than 50MB");
+			logerror("fstat keyfile");
+		} else if (sb.st_size > 50*1024) {
+			logerrorx("keyfile larger than 50KB");
 		} else if ((p = calloc(sb.st_size, 1)) == NULL) {
-			logerror("calloc CAfile");
+			logerror("calloc keyfile");
 		} else if (read(fd, p, sb.st_size) != sb.st_size) {
-			logerror("read CAfile");
-		} else if (tls_config_set_ca_mem(tlsconfig, p, sb.st_size)
-		    == -1) {
-			logerrorx("tls_config_set_ca_mem");
+			logerror("read keyfile");
+		} else if (tls_config_set_key_mem(server_config, p,
+		    sb.st_size) == -1) {
+			logerrorx("tls_config_set_key_mem");
 		} else {
-			dprintf("CAfile %s, size %lld\n", CAfile, sb.st_size);
+			dprintf("Keyfile %s, size %lld\n", path, sb.st_size);
 		}
 		free(p);
 		close(fd);
-	}
-	if (tlsconfig) {
-		tls_config_set_protocols(tlsconfig, TLS_PROTOCOLS_ALL);
-		if (tls_config_set_ciphers(tlsconfig, "compat") != 0)
-			logerror("tls set ciphers");
+		free(path);
+
+		fd = -1;
+		p = NULL;
+		path = NULL;
+		if (asprintf(&path, "/etc/ssl/%s.crt", tls_hostport)
+		    == -1 || (fd = open(path, O_RDONLY)) == -1) {
+			free(path);
+			path = NULL;
+			if (asprintf(&path, "/etc/ssl/%s.crt", tls_host)
+			    == -1 || (fd = open(path, O_RDONLY)) == -1) {
+				free(path);
+				path = NULL;
+			}
+		}
+		if (fd == -1) {
+			logerror("open certfile");
+		} else if (fstat(fd, &sb) == -1) {
+			logerror("fstat certfile");
+		} else if (sb.st_size > 50*1024) {
+			logerrorx("certfile larger than 50KB");
+		} else if ((p = calloc(sb.st_size, 1)) == NULL) {
+			logerror("calloc certfile");
+		} else if (read(fd, p, sb.st_size) != sb.st_size) {
+			logerror("read certfile");
+		} else if (tls_config_set_cert_mem(server_config, p,
+		    sb.st_size) == -1) {
+			logerrorx("tls_config_set_cert_mem");
+		} else {
+			dprintf("Certfile %s, size %lld\n",
+			    path, sb.st_size);
+		}
+		free(p);
+		close(fd);
+		free(path);
+
+		tls_config_set_protocols(server_config, TLS_PROTOCOLS_ALL);
+		if (tls_config_set_ciphers(server_config, "compat") != 0)
+			logerror("tls set server ciphers");
+		if (tls_configure(server_ctx, server_config) != 0) {
+			logerrorx("tls_configure server");
+			tls_free(server_ctx);
+			server_ctx = NULL;
+			close(fd_tls);
+			fd_tls = -1;
+		}
 	}
 
 	dprintf("off & running....\n");
@@ -608,6 +722,7 @@ main(int argc, char *argv[])
 	    (ev_udp6 = malloc(sizeof(struct event))) == NULL ||
 	    (ev_bind = malloc(sizeof(struct event))) == NULL ||
 	    (ev_listen = malloc(sizeof(struct event))) == NULL ||
+	    (ev_tls = malloc(sizeof(struct event))) == NULL ||
 	    (ev_unix = reallocarray(NULL,nunix,sizeof(struct event))) == NULL ||
 	    (ev_hup = malloc(sizeof(struct event))) == NULL ||
 	    (ev_int = malloc(sizeof(struct event))) == NULL ||
@@ -630,6 +745,7 @@ main(int argc, char *argv[])
 	event_set(ev_bind, fd_bind, EV_READ|EV_PERSIST, udp_readcb, ev_bind);
 	event_set(ev_listen, fd_listen, EV_READ|EV_PERSIST, tcp_acceptcb,
 	    ev_listen);
+	event_set(ev_tls, fd_tls, EV_READ|EV_PERSIST, tcp_acceptcb, ev_tls);
 	for (i = 0; i < nunix; i++)
 		event_set(&ev_unix[i], fd_unix[i], EV_READ|EV_PERSIST,
 		    unix_readcb, &ev_unix[i]);
@@ -684,6 +800,8 @@ main(int argc, char *argv[])
 		event_add(ev_bind, NULL);
 	if (fd_listen != -1)
 		event_add(ev_listen, NULL);
+	if (fd_tls != -1)
+		event_add(ev_tls, NULL);
 	for (i = 0; i < nunix; i++)
 		if (fd_unix[i] != -1)
 			event_add(&ev_unix[i], NULL);
@@ -725,7 +843,7 @@ socket_bind(const char *proto, const char *host, const char *port,
 	if (proto == NULL)
 		proto = "udp";
 	if (port == NULL)
-		port = "syslog";
+		port = strcmp(proto, "tls") == 0 ? "syslog-tls" : "syslog";
 
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = Family;
@@ -915,7 +1033,7 @@ reserve_accept4(int lfd, int event, struct event *ev,
 }
 
 void
-tcp_acceptcb(int fd, short event, void *arg)
+tcp_acceptcb(int lfd, short event, void *arg)
 {
 	struct event		*ev = arg;
 	struct peer		*p;
@@ -923,9 +1041,10 @@ tcp_acceptcb(int fd, short event, void *arg)
 	socklen_t		 sslen;
 	char			 hostname[NI_MAXHOST], servname[NI_MAXSERV];
 	char			*peername, ebuf[ERRBUFSIZE];
+	int			 fd;
 
 	sslen = sizeof(ss);
-	if ((fd = reserve_accept4(fd, event, ev, tcp_acceptcb,
+	if ((fd = reserve_accept4(lfd, event, ev, tcp_acceptcb,
 	    (struct sockaddr *)&ss, &sslen, SOCK_NONBLOCK)) == -1) {
 		if (errno != ENFILE && errno != EMFILE &&
 		    errno != EINTR && errno != EWOULDBLOCK &&
@@ -959,6 +1078,21 @@ tcp_acceptcb(int fd, short event, void *arg)
 		close(fd);
 		return;
 	}
+	p->p_ctx = NULL;
+	if (lfd == fd_tls) {
+		if (tls_accept_socket(server_ctx, &p->p_ctx, fd) < 0) {
+			snprintf(ebuf, sizeof(ebuf), "tls_accept_socket \"%s\"",
+			    peername);
+			logerrorctx(ebuf, server_ctx);
+			bufferevent_free(p->p_bufev);
+			free(p);
+			close(fd);
+			return;
+		}
+		buffertls_set(&p->p_buftls, p->p_bufev, p->p_ctx, fd);
+		buffertls_accept(&p->p_buftls, fd);
+		dprintf("tcp accept callback: tls context success\n");
+	}
 	if (!NoDNS && peername != hostname_unknown &&
 	    priv_getnameinfo((struct sockaddr *)&ss, ss.ss_len, hostname,
 	    sizeof(hostname)) != 0) {
@@ -972,8 +1106,8 @@ tcp_acceptcb(int fd, short event, void *arg)
 	p->p_peername = peername;
 	bufferevent_enable(p->p_bufev, EV_READ);
 
-	snprintf(ebuf, sizeof(ebuf), "syslogd: tcp logger \"%s\" accepted",
-	    peername);
+	snprintf(ebuf, sizeof(ebuf), "syslogd: %s logger \"%s\" accepted",
+	    p->p_ctx ? "tls" : "tcp", peername);
 	logmsg(LOG_SYSLOG|LOG_INFO, ebuf, LocalHostName, ADDDATE);
 }
 
@@ -1062,7 +1196,8 @@ tcp_readcb(struct bufferevent *bufev, void *arg)
 	int			 len;
 
 	while (EVBUFFER_LENGTH(bufev->input) > 0) {
-		dprintf("tcp logger \"%s\"", p->p_peername);
+		dprintf("%s logger \"%s\"", p->p_ctx ? "tls" : "tcp",
+		    p->p_peername);
 		msg = NULL;
 		len = octet_counting(bufev->input, &msg, 1);
 		if (len < 0)
@@ -1100,12 +1235,15 @@ tcp_closecb(struct bufferevent *bufev, short event, void *arg)
 	char			 ebuf[ERRBUFSIZE];
 
 	if (event & EVBUFFER_EOF) {
-		snprintf(ebuf, sizeof(ebuf), "syslogd: tcp logger \"%s\" "
-		    "connection close", p->p_peername);
+		snprintf(ebuf, sizeof(ebuf), "syslogd: %s logger \"%s\" "
+		    "connection close", p->p_ctx ? "tls" : "tcp",
+		    p->p_peername);
 		logmsg(LOG_SYSLOG|LOG_INFO, ebuf, LocalHostName, ADDDATE);
 	} else {
-		snprintf(ebuf, sizeof(ebuf), "syslogd: tcp logger \"%s\" "
-		    "connection error: %s", p->p_peername, strerror(errno));
+		snprintf(ebuf, sizeof(ebuf), "syslogd: %s logger \"%s\" "
+		    "connection error: %s", p->p_ctx ? "tls" : "tcp",
+		    p->p_peername,
+		    p->p_ctx ? tls_error(p->p_ctx) : strerror(errno));
 		logmsg(LOG_SYSLOG|LOG_NOTICE, ebuf, LocalHostName, ADDDATE);
 	}
 
@@ -1266,8 +1404,8 @@ tcp_connectcb(int fd, short event, void *arg)
 			logerror(ebuf);
 			goto error;
 		}
-		if (tlsconfig &&
-		    tls_configure(f->f_un.f_forw.f_ctx, tlsconfig) == -1) {
+		if (client_config &&
+		    tls_configure(f->f_un.f_forw.f_ctx, client_config) == -1) {
 			snprintf(ebuf, sizeof(ebuf), "tls_configure \"%s\"",
 			    f->f_un.f_forw.f_loghost);
 			logerrorctx(ebuf, f->f_un.f_forw.f_ctx);
@@ -1341,8 +1479,8 @@ usage(void)
 
 	(void)fprintf(stderr,
 	    "usage: syslogd [-46dFhnuV] [-a path] [-C CAfile] [-f config_file]\n"
-	    "               [-m mark_interval] [-p log_socket] [-s reporting_socket]\n"
-	    "               [-T listen_address] [-U bind_address]\n");
+	    "               [-m mark_interval] [-p log_socket] [-S listen_address]\n"
+	    "               [-s reporting_socket] [-T listen_address] [-U bind_address]\n");
 	exit(1);
 }
 

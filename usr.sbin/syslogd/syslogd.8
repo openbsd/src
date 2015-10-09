@@ -1,4 +1,4 @@
-.\"	$OpenBSD: syslogd.8,v 1.38 2015/07/07 21:43:35 bluhm Exp $
+.\"	$OpenBSD: syslogd.8,v 1.39 2015/10/09 16:58:25 bluhm Exp $
 .\"
 .\" Copyright (c) 1983, 1986, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -30,7 +30,7 @@
 .\"     from: @(#)syslogd.8	8.1 (Berkeley) 6/6/93
 .\"	$NetBSD: syslogd.8,v 1.3 1996/01/02 17:41:48 perry Exp $
 .\"
-.Dd $Mdocdate: July 7 2015 $
+.Dd $Mdocdate: October 9 2015 $
 .Dt SYSLOGD 8
 .Os
 .Sh NAME
@@ -45,6 +45,7 @@
 .Op Fl f Ar config_file
 .Op Fl m Ar mark_interval
 .Op Fl p Ar log_socket
+.Op Fl S Ar listen_address
 .Op Fl s Ar reporting_socket
 .Op Fl T Ar listen_address
 .Op Fl U Ar bind_address
@@ -108,6 +109,25 @@ the symbolic local host name.
 Specify the pathname of an alternate log socket to be used instead;
 the default is
 .Pa /dev/log .
+.It Fl S Ar listen_address
+Create a TLS listen socket for receiving encrypted messages and
+bind it to the specified address.
+A port number may be specified using the
+.Ar host:port
+syntax.
+The syslog server will attempt to look up a private key in
+.Pa /etc/ssl/private/host:port.key
+and a public certificate in
+.Pa /etc/ssl/host:port.crt ,
+where
+.Ar host
+is the specified host name or IP address and
+.Ar port
+is the specified port if given on the command line.
+If these files are not present, syslogd will continue to look in
+.Pa /etc/ssl/private/host.key
+and
+.Pa /etc/ssl/host.crt .
 .It Fl s Ar reporting_socket
 Specify path to an
 .Dv AF_LOCAL

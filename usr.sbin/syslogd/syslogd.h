@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.h,v 1.19 2015/07/07 17:53:04 bluhm Exp $ */
+/*	$OpenBSD: syslogd.h,v 1.20 2015/10/09 16:58:25 bluhm Exp $ */
 
 /*
  * Copyright (c) 2003 Anil Madhavapeddy <anil@recoil.org>
@@ -44,7 +44,7 @@ extern int nunix;
 extern char *path_unix[MAXUNIX];
 extern char *path_ctlsock;
 extern int fd_ctlsock, fd_ctlconn, fd_klog, fd_sendsys;
-extern int fd_udp, fd_udp6, fd_bind, fd_listen, fd_unix[MAXUNIX];
+extern int fd_udp, fd_udp6, fd_bind, fd_listen, fd_tls, fd_unix[MAXUNIX];
 
 #define dprintf(_f...)	do { if (Debug) printf(_f); } while (0)
 extern int Debug;

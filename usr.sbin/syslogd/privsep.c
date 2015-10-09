@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.54 2015/07/07 17:53:04 bluhm Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.55 2015/10/09 16:58:25 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2003 Anil Madhavapeddy <anil@recoil.org>
@@ -184,6 +184,8 @@ priv_init(char *conf, int numeric, int lockfd, int nullfd, char *argv[])
 		close(fd_bind);
 	if (fd_listen != -1)
 		close(fd_listen);
+	if (fd_tls != -1)
+		close(fd_tls);
 	for (i = 0; i < nunix; i++)
 		if (fd_unix[i] != -1)
 			close(fd_unix[i]);

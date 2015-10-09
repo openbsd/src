@@ -1,4 +1,4 @@
-/*	$OpenBSD: evbuffer_tls.c,v 1.8 2015/09/20 21:49:54 bluhm Exp $ */
+/*	$OpenBSD: evbuffer_tls.c,v 1.9 2015/10/09 16:58:25 bluhm Exp $ */
 
 /*
  * Copyright (c) 2002-2004 Niels Provos <provos@citi.umich.edu>
@@ -257,6 +257,19 @@ buffertls_set(struct buffertls *buftls, struct bufferevent *bufev,
 	event_set(&bufev->ev_write, fd, EV_WRITE, buffertls_writecb, buftls);
 	buftls->bt_bufev = bufev;
 	buftls->bt_ctx = ctx;
+}
+
+void
+buffertls_accept(struct buffertls *buftls, int fd)
+{
+	struct bufferevent *bufev = buftls->bt_bufev;
+
+	event_del(&bufev->ev_read);
+	event_del(&bufev->ev_write);
+	event_set(&bufev->ev_read, fd, EV_READ, buffertls_handshakecb, buftls);
+	event_set(&bufev->ev_write, fd, EV_WRITE, buffertls_handshakecb,
+	    buftls);
+	bufferevent_add(&bufev->ev_read, bufev->timeout_read);
 }
 
 void
