@@ -1,4 +1,4 @@
-/*	$OpenBSD: lex.h,v 1.14 2015/10/05 23:32:15 nicm Exp $	*/
+/*	$OpenBSD: lex.h,v 1.15 2015/10/09 19:49:08 millert Exp $	*/
 
 /*
  * Source input, lexer and parser
@@ -47,24 +47,6 @@ struct source {
 #define SF_ALIAS	BIT(1)	/* faking space at end of alias */
 #define SF_ALIASEND	BIT(2)	/* faking space at end of alias */
 #define SF_TTY		BIT(3)	/* type == SSTDIN & it is a tty */
-
-/*
- * states while lexing word
- */
-#define	SBASE	0		/* outside any lexical constructs */
-#define	SWORD	1		/* implicit quoting for substitute() */
-#define	SLETPAREN 2		/* inside (( )), implicit quoting */
-#define	SSQUOTE	3		/* inside '' */
-#define	SDQUOTE	4		/* inside "" */
-#define	SBRACE	5		/* inside ${} */
-#define	SCSPAREN 6		/* inside $() */
-#define	SBQUOTE	7		/* inside `` */
-#define	SASPAREN 8		/* inside $(( )) */
-#define SHEREDELIM 9		/* parsing <<,<<- delimiter */
-#define SHEREDQUOTE 10		/* parsing " in <<,<<- delimiter */
-#define SPATTERN 11		/* parsing *(...|...) pattern (*+?@!) */
-#define STBRACE 12		/* parsing ${..[#%]..} */
-#define	SBRACEQ	13		/* inside "${}" */
 
 typedef union {
 	int	i;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lex.c,v 1.57 2015/10/05 23:32:15 nicm Exp $	*/
+/*	$OpenBSD: lex.c,v 1.58 2015/10/09 19:49:08 millert Exp $	*/
 
 /*
  * lexical analysis and source input
@@ -8,6 +8,24 @@
 #include <libgen.h>
 #include <ctype.h>
 
+
+/*
+ * states while lexing word
+ */
+#define	SBASE	0		/* outside any lexical constructs */
+#define	SWORD	1		/* implicit quoting for substitute() */
+#define	SLETPAREN 2		/* inside (( )), implicit quoting */
+#define	SSQUOTE	3		/* inside '' */
+#define	SDQUOTE	4		/* inside "" */
+#define	SBRACE	5		/* inside ${} */
+#define	SCSPAREN 6		/* inside $() */
+#define	SBQUOTE	7		/* inside `` */
+#define	SASPAREN 8		/* inside $(( )) */
+#define SHEREDELIM 9		/* parsing <<,<<- delimiter */
+#define SHEREDQUOTE 10		/* parsing " in <<,<<- delimiter */
+#define SPATTERN 11		/* parsing *(...|...) pattern (*+?@!) */
+#define STBRACE 12		/* parsing ${..[#%]..} */
+#define	SBRACEQ	13		/* inside "${}" */
 
 /* Structure to keep track of the lexing state and the various pieces of info
  * needed for each particular state.
