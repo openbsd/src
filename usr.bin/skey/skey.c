@@ -1,4 +1,4 @@
-/*	$OpenBSD: skey.c,v 1.28 2015/04/18 18:28:38 deraadt Exp $	*/
+/*	$OpenBSD: skey.c,v 1.29 2015/10/09 20:14:35 tim Exp $	*/
 /*
  * OpenBSD S/Key (skey.c)
  *
@@ -22,12 +22,13 @@
  *
  */
 
+#include <err.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <err.h>
 #include <unistd.h>
-#include <limits.h>
+#include <readpassphrase.h>
 #include <skey.h>
 
 void    usage(char *);
@@ -118,9 +119,8 @@ main(int argc, char *argv[])
 	if (!pass) {
 		fputs("Reminder - Do not use this program while"
 		    " logged in via telnet.\n", stderr);
-		(void)fputs("Enter secret passphrase: ", stderr);
-		readpass(passwd, sizeof(passwd));
-		if (passwd[0] == '\0')
+		if (readpassphrase("Enter secret passphrase: ", passwd,
+		    sizeof(passwd), 0) == NULL || passwd[0] == '\0')
 			exit(1);
 	}
 
