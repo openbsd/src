@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_tame.c,v 1.70 2015/10/08 17:29:43 deraadt Exp $	*/
+/*	$OpenBSD: kern_tame.c,v 1.71 2015/10/09 01:10:27 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -44,215 +44,215 @@
 #include <sys/syscall.h>
 #include <sys/syscallargs.h>
 #include <sys/systm.h>
-#include <sys/tame.h>
+#include <sys/pledge.h>
 
 int canonpath(const char *input, char *buf, size_t bufsize);
 
-const u_int tame_syscalls[SYS_MAXSYSCALL] = {
+const u_int pledge_syscalls[SYS_MAXSYSCALL] = {
 	[SYS_exit] = 0xffffffff,
 	[SYS_kbind] = 0xffffffff,
 
-	[SYS_getuid] = TAME_SELF,
-	[SYS_geteuid] = TAME_SELF,
-	[SYS_getresuid] = TAME_SELF,
-	[SYS_getgid] = TAME_SELF,
-	[SYS_getegid] = TAME_SELF,
-	[SYS_getresgid] = TAME_SELF,
-	[SYS_getgroups] = TAME_SELF,
-	[SYS_getlogin] = TAME_SELF,
-	[SYS_getpgrp] = TAME_SELF,
-	[SYS_getpgid] = TAME_SELF,
-	[SYS_getppid] = TAME_SELF,
-	[SYS_getsid] = TAME_SELF,
-	[SYS_getthrid] = TAME_SELF,
-	[SYS_getrlimit] = TAME_SELF,
-	[SYS_gettimeofday] = TAME_SELF,
-	[SYS_getdtablecount] = TAME_SELF,
-	[SYS_getrusage] = TAME_SELF,
-	[SYS_issetugid] = TAME_SELF,
-	[SYS_clock_getres] = TAME_SELF,
-	[SYS_clock_gettime] = TAME_SELF,
-	[SYS_getpid] = TAME_SELF,
-	[SYS_umask] = TAME_SELF,
-	[SYS_sysctl] = TAME_SELF,	/* read-only; narrow subset */
-	[SYS_adjtime] = TAME_SELF,	/* read-only */
+	[SYS_getuid] = PLEDGE_SELF,
+	[SYS_geteuid] = PLEDGE_SELF,
+	[SYS_getresuid] = PLEDGE_SELF,
+	[SYS_getgid] = PLEDGE_SELF,
+	[SYS_getegid] = PLEDGE_SELF,
+	[SYS_getresgid] = PLEDGE_SELF,
+	[SYS_getgroups] = PLEDGE_SELF,
+	[SYS_getlogin] = PLEDGE_SELF,
+	[SYS_getpgrp] = PLEDGE_SELF,
+	[SYS_getpgid] = PLEDGE_SELF,
+	[SYS_getppid] = PLEDGE_SELF,
+	[SYS_getsid] = PLEDGE_SELF,
+	[SYS_getthrid] = PLEDGE_SELF,
+	[SYS_getrlimit] = PLEDGE_SELF,
+	[SYS_gettimeofday] = PLEDGE_SELF,
+	[SYS_getdtablecount] = PLEDGE_SELF,
+	[SYS_getrusage] = PLEDGE_SELF,
+	[SYS_issetugid] = PLEDGE_SELF,
+	[SYS_clock_getres] = PLEDGE_SELF,
+	[SYS_clock_gettime] = PLEDGE_SELF,
+	[SYS_getpid] = PLEDGE_SELF,
+	[SYS_umask] = PLEDGE_SELF,
+	[SYS_sysctl] = PLEDGE_SELF,	/* read-only; narrow subset */
+	[SYS_adjtime] = PLEDGE_SELF,	/* read-only */
 
-	[SYS_fchdir] = TAME_SELF,	/* careful of directory fd inside jails */
+	[SYS_fchdir] = PLEDGE_SELF,	/* careful of directory fd inside jails */
 
 	/* needed by threaded programs */
-	[SYS_sched_yield] = TAME_SELF,
-	[SYS___thrsleep] = TAME_SELF,
-	[SYS___thrwakeup] = TAME_SELF,
-	[SYS___threxit] = TAME_SELF,
-	[SYS___thrsigdivert] = TAME_SELF,
+	[SYS_sched_yield] = PLEDGE_SELF,
+	[SYS___thrsleep] = PLEDGE_SELF,
+	[SYS___thrwakeup] = PLEDGE_SELF,
+	[SYS___threxit] = PLEDGE_SELF,
+	[SYS___thrsigdivert] = PLEDGE_SELF,
 
-	[SYS_sendsyslog] = TAME_SELF,
-	[SYS_nanosleep] = TAME_SELF,
-	[SYS_sigprocmask] = TAME_SELF,
-	[SYS_sigaction] = TAME_SELF,
-	[SYS_sigreturn] = TAME_SELF,
-	[SYS_sigpending] = TAME_SELF,
-	[SYS_getitimer] = TAME_SELF,
-	[SYS_setitimer] = TAME_SELF,
+	[SYS_sendsyslog] = PLEDGE_SELF,
+	[SYS_nanosleep] = PLEDGE_SELF,
+	[SYS_sigprocmask] = PLEDGE_SELF,
+	[SYS_sigaction] = PLEDGE_SELF,
+	[SYS_sigreturn] = PLEDGE_SELF,
+	[SYS_sigpending] = PLEDGE_SELF,
+	[SYS_getitimer] = PLEDGE_SELF,
+	[SYS_setitimer] = PLEDGE_SELF,
 
-	[SYS_tame] = TAME_SELF,
+	[SYS_pledge] = PLEDGE_SELF,
 
-	[SYS_wait4] = TAME_SELF,
+	[SYS_wait4] = PLEDGE_SELF,
 
-	[SYS_poll] = TAME_RW,
-	[SYS_kevent] = TAME_RW,
-	[SYS_kqueue] = TAME_RW,
-	[SYS_select] = TAME_RW,
+	[SYS_poll] = PLEDGE_RW,
+	[SYS_kevent] = PLEDGE_RW,
+	[SYS_kqueue] = PLEDGE_RW,
+	[SYS_select] = PLEDGE_RW,
 
-	[SYS_close] = TAME_RW,
-	[SYS_dup] = TAME_RW,
-	[SYS_dup2] = TAME_RW,
-	[SYS_dup3] = TAME_RW,
-	[SYS_closefrom] = TAME_RW,
-	[SYS_shutdown] = TAME_RW,
-	[SYS_read] = TAME_RW,
-	[SYS_readv] = TAME_RW,
-	[SYS_pread] = TAME_RW,
-	[SYS_preadv] = TAME_RW,
-	[SYS_write] = TAME_RW,
-	[SYS_writev] = TAME_RW,
-	[SYS_pwrite] = TAME_RW,
-	[SYS_pwritev] = TAME_RW,
-	[SYS_ftruncate] = TAME_RW,
-	[SYS_lseek] = TAME_RW,
-	[SYS_fstat] = TAME_RW,
+	[SYS_close] = PLEDGE_RW,
+	[SYS_dup] = PLEDGE_RW,
+	[SYS_dup2] = PLEDGE_RW,
+	[SYS_dup3] = PLEDGE_RW,
+	[SYS_closefrom] = PLEDGE_RW,
+	[SYS_shutdown] = PLEDGE_RW,
+	[SYS_read] = PLEDGE_RW,
+	[SYS_readv] = PLEDGE_RW,
+	[SYS_pread] = PLEDGE_RW,
+	[SYS_preadv] = PLEDGE_RW,
+	[SYS_write] = PLEDGE_RW,
+	[SYS_writev] = PLEDGE_RW,
+	[SYS_pwrite] = PLEDGE_RW,
+	[SYS_pwritev] = PLEDGE_RW,
+	[SYS_ftruncate] = PLEDGE_RW,
+	[SYS_lseek] = PLEDGE_RW,
+	[SYS_fstat] = PLEDGE_RW,
 
-	[SYS_fcntl] = TAME_RW,
-	[SYS_fsync] = TAME_RW,
-	[SYS_pipe] = TAME_RW,
-	[SYS_pipe2] = TAME_RW,
-	[SYS_socketpair] = TAME_RW,
-	[SYS_getdents] = TAME_RW,
+	[SYS_fcntl] = PLEDGE_RW,
+	[SYS_fsync] = PLEDGE_RW,
+	[SYS_pipe] = PLEDGE_RW,
+	[SYS_pipe2] = PLEDGE_RW,
+	[SYS_socketpair] = PLEDGE_RW,
+	[SYS_getdents] = PLEDGE_RW,
 
-	[SYS_sendto] = TAME_RW | TAME_DNS_ACTIVE | TAME_YP_ACTIVE,
-	[SYS_sendmsg] = TAME_RW,
-	[SYS_recvmsg] = TAME_RW,
-	[SYS_recvfrom] = TAME_RW | TAME_DNS_ACTIVE | TAME_YP_ACTIVE,
+	[SYS_sendto] = PLEDGE_RW | PLEDGE_DNS_ACTIVE | PLEDGE_YP_ACTIVE,
+	[SYS_sendmsg] = PLEDGE_RW,
+	[SYS_recvmsg] = PLEDGE_RW,
+	[SYS_recvfrom] = PLEDGE_RW | PLEDGE_DNS_ACTIVE | PLEDGE_YP_ACTIVE,
 
-	[SYS_fork] = TAME_PROC,
-	[SYS_vfork] = TAME_PROC,
-	[SYS_kill] = TAME_PROC,
-	[SYS_setpgid] = TAME_PROC,
-	[SYS_sigsuspend] = TAME_PROC,
-	[SYS_setrlimit] = TAME_PROC,
+	[SYS_fork] = PLEDGE_PROC,
+	[SYS_vfork] = PLEDGE_PROC,
+	[SYS_kill] = PLEDGE_PROC,
+	[SYS_setpgid] = PLEDGE_PROC,
+	[SYS_sigsuspend] = PLEDGE_PROC,
+	[SYS_setrlimit] = PLEDGE_PROC,
 
-	[SYS_execve] = TAME_EXEC,
+	[SYS_execve] = PLEDGE_EXEC,
 
-	[SYS_setgroups] = TAME_PROC,
-	[SYS_setresgid] = TAME_PROC,
-	[SYS_setresuid] = TAME_PROC,
+	[SYS_setgroups] = PLEDGE_PROC,
+	[SYS_setresgid] = PLEDGE_PROC,
+	[SYS_setresuid] = PLEDGE_PROC,
 
-	/* FIONREAD/FIONBIO, plus further checks in tame_ioctl_check() */
-	[SYS_ioctl] = TAME_RW | TAME_IOCTL | TAME_TTY,
+	/* FIONREAD/FIONBIO, plus further checks in pledge_ioctl_check() */
+	[SYS_ioctl] = PLEDGE_RW | PLEDGE_IOCTL | PLEDGE_TTY,
 
-	[SYS_getentropy] = TAME_MALLOC,
-	[SYS_madvise] = TAME_MALLOC,
-	[SYS_minherit] = TAME_MALLOC,
-	[SYS_mmap] = TAME_MALLOC,
-	[SYS_mprotect] = TAME_MALLOC,
-	[SYS_mquery] = TAME_MALLOC,
-	[SYS_munmap] = TAME_MALLOC,
+	[SYS_getentropy] = PLEDGE_MALLOC,
+	[SYS_madvise] = PLEDGE_MALLOC,
+	[SYS_minherit] = PLEDGE_MALLOC,
+	[SYS_mmap] = PLEDGE_MALLOC,
+	[SYS_mprotect] = PLEDGE_MALLOC,
+	[SYS_mquery] = PLEDGE_MALLOC,
+	[SYS_munmap] = PLEDGE_MALLOC,
 
-	[SYS_open] = TAME_SELF,			/* further checks in namei */
-	[SYS_stat] = TAME_SELF,			/* further checks in namei */
-	[SYS_access] = TAME_SELF,		/* further checks in namei */
-	[SYS_readlink] = TAME_SELF,		/* further checks in namei */
+	[SYS_open] = PLEDGE_SELF,			/* further checks in namei */
+	[SYS_stat] = PLEDGE_SELF,			/* further checks in namei */
+	[SYS_access] = PLEDGE_SELF,		/* further checks in namei */
+	[SYS_readlink] = PLEDGE_SELF,		/* further checks in namei */
 
-	[SYS_chdir] = TAME_RPATH,
-	[SYS_openat] = TAME_RPATH | TAME_WPATH,
-	[SYS_fstatat] = TAME_RPATH | TAME_WPATH,
-	[SYS_faccessat] = TAME_RPATH | TAME_WPATH,
-	[SYS_readlinkat] = TAME_RPATH | TAME_WPATH,
-	[SYS_lstat] = TAME_RPATH | TAME_WPATH | TAME_TMPPATH,
-	[SYS_rename] = TAME_CPATH,
-	[SYS_rmdir] = TAME_CPATH,
-	[SYS_renameat] = TAME_CPATH,
-	[SYS_link] = TAME_CPATH,
-	[SYS_linkat] = TAME_CPATH,
-	[SYS_symlink] = TAME_CPATH,
-	[SYS_unlink] = TAME_CPATH | TAME_TMPPATH,
-	[SYS_unlinkat] = TAME_CPATH,
-	[SYS_mkdir] = TAME_CPATH,
-	[SYS_mkdirat] = TAME_CPATH,
+	[SYS_chdir] = PLEDGE_RPATH,
+	[SYS_openat] = PLEDGE_RPATH | PLEDGE_WPATH,
+	[SYS_fstatat] = PLEDGE_RPATH | PLEDGE_WPATH,
+	[SYS_faccessat] = PLEDGE_RPATH | PLEDGE_WPATH,
+	[SYS_readlinkat] = PLEDGE_RPATH | PLEDGE_WPATH,
+	[SYS_lstat] = PLEDGE_RPATH | PLEDGE_WPATH | PLEDGE_TMPPATH,
+	[SYS_rename] = PLEDGE_CPATH,
+	[SYS_rmdir] = PLEDGE_CPATH,
+	[SYS_renameat] = PLEDGE_CPATH,
+	[SYS_link] = PLEDGE_CPATH,
+	[SYS_linkat] = PLEDGE_CPATH,
+	[SYS_symlink] = PLEDGE_CPATH,
+	[SYS_unlink] = PLEDGE_CPATH | PLEDGE_TMPPATH,
+	[SYS_unlinkat] = PLEDGE_CPATH,
+	[SYS_mkdir] = PLEDGE_CPATH,
+	[SYS_mkdirat] = PLEDGE_CPATH,
 
 	/*
 	 * Classify as RPATH|WPATH, because of path information leakage.
 	 * WPATH due to unknown use of mk*temp(3) on non-/tmp paths..
 	 */
-	[SYS___getcwd] = TAME_RPATH | TAME_WPATH,
+	[SYS___getcwd] = PLEDGE_RPATH | PLEDGE_WPATH,
 
 	/* Classify as RPATH, because these leak path information */
-	[SYS_getfsstat] = TAME_RPATH,
-	[SYS_statfs] = TAME_RPATH,
-	[SYS_fstatfs] = TAME_RPATH,
+	[SYS_getfsstat] = PLEDGE_RPATH,
+	[SYS_statfs] = PLEDGE_RPATH,
+	[SYS_fstatfs] = PLEDGE_RPATH,
 
-	[SYS_utimes] = TAME_FATTR,
-	[SYS_futimes] = TAME_FATTR,
-	[SYS_utimensat] = TAME_FATTR,
-	[SYS_futimens] = TAME_FATTR,
-	[SYS_chmod] = TAME_FATTR,
-	[SYS_fchmod] = TAME_FATTR,
-	[SYS_fchmodat] = TAME_FATTR,
-	[SYS_chflags] = TAME_FATTR,
-	[SYS_chflagsat] = TAME_FATTR,
-	[SYS_chown] = TAME_FATTR,
-	[SYS_fchownat] = TAME_FATTR,
-	[SYS_lchown] = TAME_FATTR,
-	[SYS_fchown] = TAME_FATTR,
+	[SYS_utimes] = PLEDGE_FATTR,
+	[SYS_futimes] = PLEDGE_FATTR,
+	[SYS_utimensat] = PLEDGE_FATTR,
+	[SYS_futimens] = PLEDGE_FATTR,
+	[SYS_chmod] = PLEDGE_FATTR,
+	[SYS_fchmod] = PLEDGE_FATTR,
+	[SYS_fchmodat] = PLEDGE_FATTR,
+	[SYS_chflags] = PLEDGE_FATTR,
+	[SYS_chflagsat] = PLEDGE_FATTR,
+	[SYS_chown] = PLEDGE_FATTR,
+	[SYS_fchownat] = PLEDGE_FATTR,
+	[SYS_lchown] = PLEDGE_FATTR,
+	[SYS_fchown] = PLEDGE_FATTR,
 
-	[SYS_socket] = TAME_INET | TAME_UNIX | TAME_DNS_ACTIVE | TAME_YP_ACTIVE,
-	[SYS_connect] = TAME_INET | TAME_UNIX | TAME_DNS_ACTIVE | TAME_YP_ACTIVE,
+	[SYS_socket] = PLEDGE_INET | PLEDGE_UNIX | PLEDGE_DNS_ACTIVE | PLEDGE_YP_ACTIVE,
+	[SYS_connect] = PLEDGE_INET | PLEDGE_UNIX | PLEDGE_DNS_ACTIVE | PLEDGE_YP_ACTIVE,
 
-	[SYS_listen] = TAME_INET | TAME_UNIX,
-	[SYS_bind] = TAME_INET | TAME_UNIX,
-	[SYS_accept4] = TAME_INET | TAME_UNIX,
-	[SYS_accept] = TAME_INET | TAME_UNIX,
-	[SYS_getpeername] = TAME_INET | TAME_UNIX,
-	[SYS_getsockname] = TAME_INET | TAME_UNIX,
-	[SYS_setsockopt] = TAME_INET | TAME_UNIX,
-	[SYS_getsockopt] = TAME_INET | TAME_UNIX,
+	[SYS_listen] = PLEDGE_INET | PLEDGE_UNIX,
+	[SYS_bind] = PLEDGE_INET | PLEDGE_UNIX,
+	[SYS_accept4] = PLEDGE_INET | PLEDGE_UNIX,
+	[SYS_accept] = PLEDGE_INET | PLEDGE_UNIX,
+	[SYS_getpeername] = PLEDGE_INET | PLEDGE_UNIX,
+	[SYS_getsockname] = PLEDGE_INET | PLEDGE_UNIX,
+	[SYS_setsockopt] = PLEDGE_INET | PLEDGE_UNIX,
+	[SYS_getsockopt] = PLEDGE_INET | PLEDGE_UNIX,
 
-	[SYS_flock] = TAME_GETPW,
+	[SYS_flock] = PLEDGE_GETPW,
 };
 
 static const struct {
 	char *name;
 	int flags;
-} tamereq[] = {
-	{ "malloc",		TAME_SELF | TAME_MALLOC },
-	{ "rw",			TAME_SELF | TAME_RW },
-	{ "stdio",		TAME_SELF | TAME_MALLOC | TAME_RW },
-	{ "rpath",		TAME_SELF | TAME_RW | TAME_RPATH },
-	{ "wpath",		TAME_SELF | TAME_RW | TAME_WPATH },
-	{ "tmppath",		TAME_SELF | TAME_RW | TAME_TMPPATH },
-	{ "inet",		TAME_SELF | TAME_RW | TAME_INET },
-	{ "unix",		TAME_SELF | TAME_RW | TAME_UNIX },
-	{ "dns",		TAME_SELF | TAME_MALLOC | TAME_DNSPATH },
-	{ "getpw",		TAME_SELF | TAME_MALLOC | TAME_RW | TAME_GETPW },
-/*X*/	{ "cmsg",		TAME_UNIX | TAME_INET | TAME_SENDFD | TAME_RECVFD },
-	{ "sendfd",		TAME_RW | TAME_SENDFD },
-	{ "recvfd",		TAME_RW | TAME_RECVFD },
-	{ "ioctl",		TAME_IOCTL },
-	{ "route",		TAME_ROUTE },
-	{ "mcast",		TAME_MCAST },
-	{ "tty",		TAME_TTY },
-	{ "proc",		TAME_PROC },
-	{ "exec",		TAME_EXEC },
-	{ "cpath",		TAME_CPATH },
-	{ "abort",		TAME_ABORT },
-	{ "fattr",		TAME_FATTR },
-	{ "prot_exec",		TAME_PROTEXEC },
+} pledgereq[] = {
+	{ "malloc",		PLEDGE_SELF | PLEDGE_MALLOC },
+	{ "rw",			PLEDGE_SELF | PLEDGE_RW },
+	{ "stdio",		PLEDGE_SELF | PLEDGE_MALLOC | PLEDGE_RW },
+	{ "rpath",		PLEDGE_SELF | PLEDGE_RW | PLEDGE_RPATH },
+	{ "wpath",		PLEDGE_SELF | PLEDGE_RW | PLEDGE_WPATH },
+	{ "tmppath",		PLEDGE_SELF | PLEDGE_RW | PLEDGE_TMPPATH },
+	{ "inet",		PLEDGE_SELF | PLEDGE_RW | PLEDGE_INET },
+	{ "unix",		PLEDGE_SELF | PLEDGE_RW | PLEDGE_UNIX },
+	{ "dns",		PLEDGE_SELF | PLEDGE_MALLOC | PLEDGE_DNSPATH },
+	{ "getpw",		PLEDGE_SELF | PLEDGE_MALLOC | PLEDGE_RW | PLEDGE_GETPW },
+/*X*/	{ "cmsg",		PLEDGE_UNIX | PLEDGE_INET | PLEDGE_SENDFD | PLEDGE_RECVFD },
+	{ "sendfd",		PLEDGE_RW | PLEDGE_SENDFD },
+	{ "recvfd",		PLEDGE_RW | PLEDGE_RECVFD },
+	{ "ioctl",		PLEDGE_IOCTL },
+	{ "route",		PLEDGE_ROUTE },
+	{ "mcast",		PLEDGE_MCAST },
+	{ "tty",		PLEDGE_TTY },
+	{ "proc",		PLEDGE_PROC },
+	{ "exec",		PLEDGE_EXEC },
+	{ "cpath",		PLEDGE_CPATH },
+	{ "abort",		PLEDGE_ABORT },
+	{ "fattr",		PLEDGE_FATTR },
+	{ "prot_exec",		PLEDGE_PROTEXEC },
 };
 
 int
-sys_tame(struct proc *p, void *v, register_t *retval)
+sys_pledge(struct proc *p, void *v, register_t *retval)
 {
-	struct sys_tame_args /* {
+	struct sys_pledge_args /* {
 		syscallarg(const char *)request;
 		syscallarg(const char **)paths;
 	} */	*uap = v;
@@ -273,7 +273,7 @@ sys_tame(struct proc *p, void *v, register_t *retval)
 		}
 #ifdef KTRACE
 		if (KTRPOINT(p, KTR_STRUCT))
-			ktrstruct(p, "tamereq", rbuf, rbuflen-1);
+			ktrstruct(p, "pledgereq", rbuf, rbuflen-1);
 #endif
 
 		for (rp = rbuf; rp && *rp && error == 0; rp = pn) {
@@ -283,9 +283,9 @@ sys_tame(struct proc *p, void *v, register_t *retval)
 					*pn++ = '\0';
 			}
 
-			for (f = i = 0; i < nitems(tamereq); i++) {
-				if (strcmp(rp, tamereq[i].name) == 0) {
-					f = tamereq[i].flags;
+			for (f = i = 0; i < nitems(pledgereq); i++) {
+				if (strcmp(rp, pledgereq[i].name) == 0) {
+					f = pledgereq[i].flags;
 					break;
 				}
 			}
@@ -298,18 +298,18 @@ sys_tame(struct proc *p, void *v, register_t *retval)
 		free(rbuf, M_TEMP, MAXPATHLEN);
 	}
 
-	if (flags & ~TAME_USERSET)
+	if (flags & ~PLEDGE_USERSET)
 		return (EINVAL);
 
-	if ((p->p_p->ps_flags & PS_TAMED)) {
-		/* Already tamed, only allow reductions */
-		if (((flags | p->p_p->ps_tame) & TAME_USERSET) !=
-		    (p->p_p->ps_tame & TAME_USERSET)) {
+	if ((p->p_p->ps_flags & PS_PLEDGE)) {
+		/* Already pledged, only allow reductions */
+		if (((flags | p->p_p->ps_pledge) & PLEDGE_USERSET) !=
+		    (p->p_p->ps_pledge & PLEDGE_USERSET)) {
 			return (EPERM);
 		}
 
-		flags &= p->p_p->ps_tame;
-		flags &= TAME_USERSET;		/* Relearn _ACTIVE */
+		flags &= p->p_p->ps_pledge;
+		flags &= PLEDGE_USERSET;		/* Relearn _ACTIVE */
 	}
 
 	if (SCARG(uap, paths)) {
@@ -319,17 +319,17 @@ sys_tame(struct proc *p, void *v, register_t *retval)
 		size_t cwdpathlen = MAXPATHLEN * 4, cwdlen, len, maxargs = 0;
 		int i, error;
 
-		if (p->p_p->ps_tamepaths)
+		if (p->p_p->ps_pledgepaths)
 			return (EPERM);
 
 		/* Count paths */
-		for (i = 0; i < TAME_MAXPATHS; i++) {
+		for (i = 0; i < PLEDGE_MAXPATHS; i++) {
 			if ((error = copyin(u + i, &sp, sizeof(sp))) != 0)
 				return (error);
 			if (sp == NULL)
 				break;
 		}
-		if (i == TAME_MAXPATHS)
+		if (i == PLEDGE_MAXPATHS)
 			return (E2BIG);
 
 		wl = malloc(sizeof *wl + sizeof(struct whitepath) * (i+1),
@@ -353,7 +353,7 @@ sys_tame(struct proc *p, void *v, register_t *retval)
 				break;
 #ifdef KTRACE
 			if (KTRPOINT(p, KTR_STRUCT))
-				ktrstruct(p, "tamepath", path, len-1);
+				ktrstruct(p, "pledgepath", path, len-1);
 #endif
 
 			/* If path is relative, prepend cwd */
@@ -383,7 +383,7 @@ sys_tame(struct proc *p, void *v, register_t *retval)
 				}
 				builtpath = malloc(builtlen, M_TEMP, M_WAITOK);
 				snprintf(builtpath, builtlen, "%s/%s", cwd, path);
-				// printf("tame: builtpath = %s\n", builtpath);
+				// printf("pledge: builtpath = %s\n", builtpath);
 				fullpath = builtpath;
 			} else
 				fullpath = path;
@@ -399,7 +399,7 @@ sys_tame(struct proc *p, void *v, register_t *retval)
 
 			len = strlen(canopath) + 1;
 
-			//printf("tame: canopath = %s %lld strlen %lld\n", canopath,
+			//printf("pledge: canopath = %s %lld strlen %lld\n", canopath,
 			//    (long long)len, (long long)strlen(canopath));
 
 			if (maxargs += len > ARG_MAX) {
@@ -421,40 +421,40 @@ sys_tame(struct proc *p, void *v, register_t *retval)
 			free(wl, M_TEMP, wl->wl_size);
 			return (error);
 		}
-		p->p_p->ps_tamepaths = wl;
+		p->p_p->ps_pledgepaths = wl;
 #if 0
-		printf("tame: %s(%d): paths loaded:\n", p->p_comm, p->p_pid);
+		printf("pledge: %s(%d): paths loaded:\n", p->p_comm, p->p_pid);
 		for (i = 0; i < wl->wl_count; i++)
 			if (wl->wl_paths[i].name)
-				printf("tame: %d=%s %lld\n", i, wl->wl_paths[i].name,
+				printf("pledge: %d=%s %lld\n", i, wl->wl_paths[i].name,
 				    (long long)wl->wl_paths[i].len);
 #endif
 	}
 
-	p->p_p->ps_tame = flags;
-	p->p_p->ps_flags |= PS_TAMED;
+	p->p_p->ps_pledge = flags;
+	p->p_p->ps_flags |= PS_PLEDGE;
 	return (0);
 }
 
 int
-tame_check(struct proc *p, int code)
+pledge_check(struct proc *p, int code)
 {
-	p->p_tamenote = p->p_tameafter = 0;	/* XX optimise? */
-	p->p_tame_syscall = code;
+	p->p_pledgenote = p->p_pledgeafter = 0;	/* XX optimise? */
+	p->p_pledge_syscall = code;
 
 	if (code < 0 || code > SYS_MAXSYSCALL - 1)
 		return (0);
 
-	if (p->p_p->ps_tame == 0)
+	if (p->p_p->ps_pledge == 0)
 		return (code == SYS_exit || code == SYS_kbind);
-	return (p->p_p->ps_tame & tame_syscalls[code]);
+	return (p->p_p->ps_pledge & pledge_syscalls[code]);
 }
 
 int
-tame_fail(struct proc *p, int error, int code)
+pledge_fail(struct proc *p, int error, int code)
 {
-	printf("%s(%d): syscall %d\n", p->p_comm, p->p_pid, p->p_tame_syscall);
-	if (p->p_p->ps_tame & TAME_ABORT) {	/* Core dump requested */
+	printf("%s(%d): syscall %d\n", p->p_comm, p->p_pid, p->p_pledge_syscall);
+	if (p->p_p->ps_pledge & PLEDGE_ABORT) {	/* Core dump requested */
 		struct sigaction sa;
 
 		memset(&sa, 0, sizeof sa);
@@ -464,7 +464,7 @@ tame_fail(struct proc *p, int error, int code)
 	} else
 		psignal(p, SIGKILL);
 
-	p->p_p->ps_tame = 0;		/* Disable all TAME_ flags */
+	p->p_p->ps_pledge = 0;		/* Disable all PLEDGE_ flags */
 	return (error);
 }
 
@@ -473,27 +473,27 @@ tame_fail(struct proc *p, int error, int code)
  * without the right flags set
  */
 int
-tame_namei(struct proc *p, char *origpath)
+pledge_namei(struct proc *p, char *origpath)
 {
 	char path[PATH_MAX];
 
-	if (p->p_tamenote == TMN_COREDUMP)
+	if (p->p_pledgenote == TMN_COREDUMP)
 		return (0);			/* Allow a coredump */
 
 	if (canonpath(origpath, path, sizeof(path)) != 0)
-		return (tame_fail(p, EPERM, TAME_RPATH));
+		return (pledge_fail(p, EPERM, PLEDGE_RPATH));
 
-	if ((p->p_tamenote & TMN_FATTR) &&
-	    (p->p_p->ps_tame & TAME_FATTR) == 0) {
+	if ((p->p_pledgenote & TMN_FATTR) &&
+	    (p->p_p->ps_pledge & PLEDGE_FATTR) == 0) {
 		printf("%s(%d): inode syscall%d, not allowed\n",
-		    p->p_comm, p->p_pid, p->p_tame_syscall);
-		return (tame_fail(p, EPERM, TAME_FATTR));
+		    p->p_comm, p->p_pid, p->p_pledge_syscall);
+		return (pledge_fail(p, EPERM, PLEDGE_FATTR));
 	}
 
 	/* Detect what looks like a mkstemp(3) family operation */
-	if ((p->p_p->ps_tame & TAME_TMPPATH) &&
-	    (p->p_tame_syscall == SYS_open) &&
-	    (p->p_tamenote & TMN_CPATH) &&
+	if ((p->p_p->ps_pledge & PLEDGE_TMPPATH) &&
+	    (p->p_pledge_syscall == SYS_open) &&
+	    (p->p_pledgenote & TMN_CPATH) &&
 	    strncmp(path, "/tmp/", sizeof("/tmp/") - 1) == 0) {
 		return (0);
 	}
@@ -501,33 +501,33 @@ tame_namei(struct proc *p, char *origpath)
 	/* Allow unlinking of a mkstemp(3) file...
 	 * Good opportunity for strict checks here.
 	 */
-	if ((p->p_p->ps_tame & TAME_TMPPATH) &&
-	    (p->p_tame_syscall == SYS_unlink) &&
+	if ((p->p_p->ps_pledge & PLEDGE_TMPPATH) &&
+	    (p->p_pledge_syscall == SYS_unlink) &&
 	    strncmp(path, "/tmp/", sizeof("/tmp/") - 1) == 0) {
 		return (0);
 	}
 
 	/* open, mkdir, or other path creation operation */
-	if ((p->p_tamenote & TMN_CPATH) &&
-	    ((p->p_p->ps_tame & TAME_CPATH) == 0))
-		return (tame_fail(p, EPERM, TAME_CPATH));
+	if ((p->p_pledgenote & TMN_CPATH) &&
+	    ((p->p_p->ps_pledge & PLEDGE_CPATH) == 0))
+		return (pledge_fail(p, EPERM, PLEDGE_CPATH));
 
-	if ((p->p_tamenote & TMN_WPATH) &&
-	    (p->p_p->ps_tame & TAME_WPATH) == 0)
-		return (tame_fail(p, EPERM, TAME_WPATH));
+	if ((p->p_pledgenote & TMN_WPATH) &&
+	    (p->p_p->ps_pledge & PLEDGE_WPATH) == 0)
+		return (pledge_fail(p, EPERM, PLEDGE_WPATH));
 
 	/* Read-only paths used occasionally by libc */
-	switch (p->p_tame_syscall) {
+	switch (p->p_pledge_syscall) {
 	case SYS_access:
 		/* tzset() needs this. */
-		if ((p->p_tamenote == TMN_RPATH) &&
+		if ((p->p_pledgenote == TMN_RPATH) &&
 		    strcmp(path, "/etc/localtime") == 0)
 			return (0);
 		break;
 	case SYS_open:
 		/* getpw* and friends need a few files */
-		if ((p->p_tamenote == TMN_RPATH) &&
-		    (p->p_p->ps_tame & TAME_GETPW)) {
+		if ((p->p_pledgenote == TMN_RPATH) &&
+		    (p->p_p->ps_pledge & PLEDGE_GETPW)) {
 			if (strcmp(path, "/etc/spwd.db") == 0)
 				return (EPERM);
 			if (strcmp(path, "/etc/pwd.db") == 0)
@@ -537,10 +537,10 @@ tame_namei(struct proc *p, char *origpath)
 		}
 
 		/* DNS needs /etc/{resolv.conf,hosts,services}. */
-		if ((p->p_tamenote == TMN_RPATH) &&
-		    (p->p_p->ps_tame & TAME_DNSPATH)) {
+		if ((p->p_pledgenote == TMN_RPATH) &&
+		    (p->p_p->ps_pledge & PLEDGE_DNSPATH)) {
 			if (strcmp(path, "/etc/resolv.conf") == 0) {
-				p->p_tameafter |= TMA_DNSRESOLV;
+				p->p_pledgeafter |= TMA_DNSRESOLV;
 				return (0);
 			}
 			if (strcmp(path, "/etc/hosts") == 0)
@@ -548,10 +548,10 @@ tame_namei(struct proc *p, char *origpath)
 			if (strcmp(path, "/etc/services") == 0)
 				return (0);
 		}
-		if ((p->p_tamenote == TMN_RPATH) &&
-		    (p->p_p->ps_tame & TAME_GETPW)) {
+		if ((p->p_pledgenote == TMN_RPATH) &&
+		    (p->p_p->ps_pledge & PLEDGE_GETPW)) {
 			if (strcmp(path, "/var/run/ypbind.lock") == 0) {
-				p->p_tameafter |= TMA_YPLOCK;
+				p->p_pledgeafter |= TMA_YPLOCK;
 				return (0);
 			}
 			if (strncmp(path, "/var/yp/binding/",
@@ -559,16 +559,16 @@ tame_namei(struct proc *p, char *origpath)
 				return (0);
 		}
 		/* tzset() needs these. */
-		if ((p->p_tamenote == TMN_RPATH) &&
+		if ((p->p_pledgenote == TMN_RPATH) &&
 		    strncmp(path, "/usr/share/zoneinfo/",
 		    sizeof("/usr/share/zoneinfo/") - 1) == 0)
 			return (0);
-		if ((p->p_tamenote == TMN_RPATH) &&
+		if ((p->p_pledgenote == TMN_RPATH) &&
 		    strcmp(path, "/etc/localtime") == 0)
 			return (0);
 
 		/* /usr/share/nls/../libc.cat has to succeed for strerror(3). */
-		if ((p->p_tamenote == TMN_RPATH) &&
+		if ((p->p_pledgenote == TMN_RPATH) &&
 		    strncmp(path, "/usr/share/nls/",
 		    sizeof("/usr/share/nls/") - 1) == 0 &&
 		    strcmp(path + strlen(path) - 9, "/libc.cat") == 0)
@@ -576,16 +576,16 @@ tame_namei(struct proc *p, char *origpath)
 		break;
 	case SYS_readlink:
 		/* Allow /etc/malloc.conf for malloc(3). */
-		if ((p->p_tamenote == TMN_RPATH) &&
+		if ((p->p_pledgenote == TMN_RPATH) &&
 		    strcmp(path, "/etc/malloc.conf") == 0)
 			return (0);
 		break;
 	case SYS_stat:
 		/* DNS needs /etc/resolv.conf. */
-		if ((p->p_tamenote == TMN_RPATH) &&
-		    (p->p_p->ps_tame & TAME_DNSPATH)) {
+		if ((p->p_pledgenote == TMN_RPATH) &&
+		    (p->p_p->ps_pledge & PLEDGE_DNSPATH)) {
 			if (strcmp(path, "/etc/resolv.conf") == 0) {
-				p->p_tameafter |= TMA_DNSRESOLV;
+				p->p_pledgeafter |= TMA_DNSRESOLV;
 				return (0);
 			}
 		}
@@ -596,8 +596,8 @@ tame_namei(struct proc *p, char *origpath)
 	 * If a whitelist is set, compare canonical paths.  Anything
 	 * not on the whitelist gets ENOENT.
 	 */
-	if (p->p_p->ps_tamepaths) {
-		struct whitepaths *wl = p->p_p->ps_tamepaths;
+	if (p->p_p->ps_pledgepaths) {
+		struct whitepaths *wl = p->p_p->ps_pledgepaths;
 		char *fullpath, *builtpath = NULL, *canopath = NULL;
 		size_t builtlen = 0;
 		int i, error;
@@ -639,7 +639,7 @@ tame_namei(struct proc *p, char *origpath)
 		free(builtpath, M_TEMP, builtlen);
 		if (error != 0) {
 			free(canopath, M_TEMP, MAXPATHLEN);
-			return (tame_fail(p, EPERM, TAME_RPATH));
+			return (pledge_fail(p, EPERM, PLEDGE_RPATH));
 		}
 
 		//printf("namei: canopath = %s strlen %lld\n", canopath,
@@ -660,30 +660,30 @@ tame_namei(struct proc *p, char *origpath)
 		return (error);			/* Don't hint why it failed */
 	}
 
-	if (p->p_p->ps_tame & TAME_RPATH)
+	if (p->p_p->ps_pledge & PLEDGE_RPATH)
 		return (0);
-	if (p->p_p->ps_tame & TAME_WPATH)
+	if (p->p_p->ps_pledge & PLEDGE_WPATH)
 		return (0);
-	if (p->p_p->ps_tame & TAME_CPATH)
+	if (p->p_p->ps_pledge & PLEDGE_CPATH)
 		return (0);
 
-	return (tame_fail(p, EPERM, TAME_RPATH));
+	return (pledge_fail(p, EPERM, PLEDGE_RPATH));
 }
 
 void
-tame_aftersyscall(struct proc *p, int code, int error)
+pledge_aftersyscall(struct proc *p, int code, int error)
 {
-	if ((p->p_tameafter & TMA_YPLOCK) && error == 0)
-		atomic_setbits_int(&p->p_p->ps_tame, TAME_YP_ACTIVE | TAME_INET);
-	if ((p->p_tameafter & TMA_DNSRESOLV) && error == 0)
-		atomic_setbits_int(&p->p_p->ps_tame, TAME_DNS_ACTIVE);
+	if ((p->p_pledgeafter & TMA_YPLOCK) && error == 0)
+		atomic_setbits_int(&p->p_p->ps_pledge, PLEDGE_YP_ACTIVE | PLEDGE_INET);
+	if ((p->p_pledgeafter & TMA_DNSRESOLV) && error == 0)
+		atomic_setbits_int(&p->p_p->ps_pledge, PLEDGE_DNS_ACTIVE);
 }
 
 /*
  * By default, only the advisory cmsg's can be received from the kernel,
  * such as TIMESTAMP ntpd.
  *
- * If TAME_RECVFD is set SCM_RIGHTS is also allowed in for a carefully
+ * If PLEDGE_RECVFD is set SCM_RIGHTS is also allowed in for a carefully
  * selected set of descriptors (specifically to exclude directories).
  *
  * This results in a kill upon recv, if some other process on the system
@@ -691,7 +691,7 @@ tame_aftersyscall(struct proc *p, int code, int error)
  * leaving such sockets lying around...
  */
 int
-tame_cmsg_recv(struct proc *p, struct mbuf *control)
+pledge_cmsg_recv(struct proc *p, struct mbuf *control)
 {
 	struct msghdr tmp;
 	struct cmsghdr *cmsg;
@@ -699,7 +699,7 @@ tame_cmsg_recv(struct proc *p, struct mbuf *control)
 	struct file *fp;
 	int nfds, i;
 
-	if ((p->p_p->ps_flags & PS_TAMED) == 0)
+	if ((p->p_p->ps_flags & PS_PLEDGE) == 0)
 		return (0);
 
 	/* Scan the cmsg */
@@ -719,8 +719,8 @@ tame_cmsg_recv(struct proc *p, struct mbuf *control)
 	if (cmsg == NULL)
 		return (0);
 
-	if ((p->p_p->ps_tame & TAME_RECVFD) == 0)
-		return tame_fail(p, EPERM, TAME_RECVFD);
+	if ((p->p_p->ps_pledge & PLEDGE_RECVFD) == 0)
+		return pledge_fail(p, EPERM, PLEDGE_RECVFD);
 
 	/* In OpenBSD, a CMSG only contains one SCM_RIGHTS.  Check it. */
 	fdp = (int *)CMSG_DATA(cmsg);
@@ -732,7 +732,7 @@ tame_cmsg_recv(struct proc *p, struct mbuf *control)
 		fd = *fdp++;
 		fp = fd_getfile(p->p_fd, fd);
 		if (fp == NULL)
-			return tame_fail(p, EBADF, TAME_RECVFD);
+			return pledge_fail(p, EBADF, PLEDGE_RECVFD);
 
 		/* Only allow passing of sockets, pipes, and pure files */
 		switch (fp->f_type) {
@@ -747,30 +747,30 @@ tame_cmsg_recv(struct proc *p, struct mbuf *control)
 		default:
 			break;
 		}
-		return tame_fail(p, EPERM, TAME_RECVFD);
+		return pledge_fail(p, EPERM, PLEDGE_RECVFD);
 	}
 	return (0);
 }
 
 /*
- * When tamed, default prevents sending of a cmsg.
+ * When pledged, default prevents sending of a cmsg.
  *
- * Unlike tame_cmsg_recv tame_cmsg_send is called with individual
+ * Unlike pledge_cmsg_recv pledge_cmsg_send is called with individual
  * cmsgs one per mbuf. So no need to loop or scan.
  */
 int
-tame_cmsg_send(struct proc *p, struct mbuf *control)
+pledge_cmsg_send(struct proc *p, struct mbuf *control)
 {
 	struct cmsghdr *cmsg;
 	int *fdp, fd;
 	struct file *fp;
 	int nfds, i;
 
-	if ((p->p_p->ps_flags & PS_TAMED) == 0)
+	if ((p->p_p->ps_flags & PS_PLEDGE) == 0)
 		return (0);
 
-	if ((p->p_p->ps_tame & TAME_SENDFD) == 0)
-		return tame_fail(p, EPERM, TAME_SENDFD);
+	if ((p->p_p->ps_pledge & PLEDGE_SENDFD) == 0)
+		return pledge_fail(p, EPERM, PLEDGE_SENDFD);
 
 	/* Scan the cmsg */
 	cmsg = mtod(control, struct cmsghdr *);
@@ -790,7 +790,7 @@ tame_cmsg_send(struct proc *p, struct mbuf *control)
 		fd = *fdp++;
 		fp = fd_getfile(p->p_fd, fd);
 		if (fp == NULL)
-			return tame_fail(p, EBADF, TAME_SENDFD);
+			return pledge_fail(p, EBADF, PLEDGE_SENDFD);
 
 		/* Only allow passing of sockets, pipes, and pure files */
 		switch (fp->f_type) {
@@ -806,22 +806,22 @@ tame_cmsg_send(struct proc *p, struct mbuf *control)
 			break;
 		}
 		/* Not allowed to send a bad fd type */
-		return tame_fail(p, EPERM, TAME_SENDFD);
+		return pledge_fail(p, EPERM, PLEDGE_SENDFD);
 	}
 	return (0);
 }
 
 int
-tame_sysctl_check(struct proc *p, int miblen, int *mib, void *new)
+pledge_sysctl_check(struct proc *p, int miblen, int *mib, void *new)
 {
-	if ((p->p_p->ps_flags & PS_TAMED) == 0)
+	if ((p->p_p->ps_flags & PS_PLEDGE) == 0)
 		return (0);
 
 	if (new)
 		return (EFAULT);
 
 	/* routing table observation */
-	if ((p->p_p->ps_tame & TAME_ROUTE)) {
+	if ((p->p_p->ps_pledge & PLEDGE_ROUTE)) {
 		if (miblen == 7 &&
 		    mib[0] == CTL_NET && mib[1] == PF_ROUTE &&
 		    mib[2] == 0 &&
@@ -843,7 +843,7 @@ tame_sysctl_check(struct proc *p, int miblen, int *mib, void *new)
 			return (0);
 	}
 
-	if ((p->p_p->ps_tame & (TAME_ROUTE | TAME_INET))) {
+	if ((p->p_p->ps_pledge & (PLEDGE_ROUTE | PLEDGE_INET))) {
 		if (miblen == 6 &&		/* getifaddrs() */
 		    mib[0] == CTL_NET && mib[1] == PF_ROUTE &&
 		    mib[2] == 0 &&
@@ -892,11 +892,11 @@ tame_sysctl_check(struct proc *p, int miblen, int *mib, void *new)
 }
 
 int
-tame_adjtime_check(struct proc *p, const void *v)
+pledge_adjtime_check(struct proc *p, const void *v)
 {
 	const struct timeval *delta = v;
 
-	if ((p->p_p->ps_flags & PS_TAMED) == 0)
+	if ((p->p_p->ps_flags & PS_PLEDGE) == 0)
 		return (0);
 
 	if (delta)
@@ -905,32 +905,32 @@ tame_adjtime_check(struct proc *p, const void *v)
 }
 
 int
-tame_connect_check(struct proc *p)
+pledge_connect_check(struct proc *p)
 {
-	if ((p->p_p->ps_flags & PS_TAMED) == 0)
+	if ((p->p_p->ps_flags & PS_PLEDGE) == 0)
 		return (0);
 
-	if ((p->p_p->ps_tame & TAME_DNS_ACTIVE))
+	if ((p->p_p->ps_pledge & PLEDGE_DNS_ACTIVE))
 		return (0);	/* A port check happens inside sys_connect() */
 
-	if ((p->p_p->ps_tame & (TAME_INET | TAME_UNIX)))
+	if ((p->p_p->ps_pledge & (PLEDGE_INET | PLEDGE_UNIX)))
 		return (0);
 	return (EPERM);
 }
 
 int
-tame_recvfrom_check(struct proc *p, void *v)
+pledge_recvfrom_check(struct proc *p, void *v)
 {
 	struct sockaddr *from = v;
 
-	if ((p->p_p->ps_flags & PS_TAMED) == 0)
+	if ((p->p_p->ps_flags & PS_PLEDGE) == 0)
 		return (0);
 
-	if ((p->p_p->ps_tame & TAME_DNS_ACTIVE) && from == NULL)
+	if ((p->p_p->ps_pledge & PLEDGE_DNS_ACTIVE) && from == NULL)
 		return (0);
-	if (p->p_p->ps_tame & TAME_INET)
+	if (p->p_p->ps_pledge & PLEDGE_INET)
 		return (0);
-	if (p->p_p->ps_tame & TAME_UNIX)
+	if (p->p_p->ps_pledge & PLEDGE_UNIX)
 		return (0);
 	if (from == NULL)
 		return (0);		/* behaves just like write */
@@ -938,19 +938,19 @@ tame_recvfrom_check(struct proc *p, void *v)
 }
 
 int
-tame_sendto_check(struct proc *p, const void *v)
+pledge_sendto_check(struct proc *p, const void *v)
 {
 	const struct sockaddr *to = v;
 
-	if ((p->p_p->ps_flags & PS_TAMED) == 0)
+	if ((p->p_p->ps_flags & PS_PLEDGE) == 0)
 		return (0);
 
-	if ((p->p_p->ps_tame & TAME_DNS_ACTIVE) && to == NULL)
+	if ((p->p_p->ps_pledge & PLEDGE_DNS_ACTIVE) && to == NULL)
 		return (0);
 
-	if ((p->p_p->ps_tame & TAME_INET))
+	if ((p->p_p->ps_pledge & PLEDGE_INET))
 		return (0);
-	if ((p->p_p->ps_tame & TAME_UNIX))
+	if ((p->p_p->ps_pledge & PLEDGE_UNIX))
 		return (0);
 	if (to == NULL)
 		return (0);		/* behaves just like write */
@@ -958,36 +958,36 @@ tame_sendto_check(struct proc *p, const void *v)
 }
 
 int
-tame_socket_check(struct proc *p, int domain)
+pledge_socket_check(struct proc *p, int domain)
 {
-	if ((p->p_p->ps_flags & PS_TAMED) == 0)
+	if ((p->p_p->ps_flags & PS_PLEDGE) == 0)
 		return (0);
-	if ((p->p_p->ps_tame & (TAME_INET | TAME_UNIX)))
+	if ((p->p_p->ps_pledge & (PLEDGE_INET | PLEDGE_UNIX)))
 		return (0);
-	if ((p->p_p->ps_tame & TAME_DNS_ACTIVE) &&
+	if ((p->p_p->ps_pledge & PLEDGE_DNS_ACTIVE) &&
 	    (domain == AF_INET || domain == AF_INET6))
 		return (0);
 	return (EPERM);
 }
 
 int
-tame_bind_check(struct proc *p, const void *v)
+pledge_bind_check(struct proc *p, const void *v)
 {
 
-	if ((p->p_p->ps_flags & PS_TAMED) == 0)
+	if ((p->p_p->ps_flags & PS_PLEDGE) == 0)
 		return (0);
-	if ((p->p_p->ps_tame & TAME_INET))
+	if ((p->p_p->ps_pledge & PLEDGE_INET))
 		return (0);
 	return (EPERM);
 }
 
 int
-tame_ioctl_check(struct proc *p, long com, void *v)
+pledge_ioctl_check(struct proc *p, long com, void *v)
 {
 	struct file *fp = v;
 	struct vnode *vp = NULL;
 
-	if ((p->p_p->ps_flags & PS_TAMED) == 0)
+	if ((p->p_p->ps_flags & PS_PLEDGE) == 0)
 		return (0);
 
 	/*
@@ -1007,7 +1007,7 @@ tame_ioctl_check(struct proc *p, long com, void *v)
 	 * Further sets of ioctl become available, but are checked a
 	 * bit more carefully against the vnode.
 	 */
-	if ((p->p_p->ps_tame & TAME_IOCTL)) {
+	if ((p->p_p->ps_pledge & PLEDGE_IOCTL)) {
 		switch (com) {
 		case FIOCLEX:
 		case FIONCLEX:
@@ -1034,14 +1034,14 @@ tame_ioctl_check(struct proc *p, long com, void *v)
 				return (0);
 			break;
 		case SIOCGIFGROUP:
-			if ((p->p_p->ps_tame & TAME_INET) &&
+			if ((p->p_p->ps_pledge & PLEDGE_INET) &&
 			    fp->f_type == DTYPE_SOCKET)
 				return (0);
 			break;
 		}
 	}
 
-	if ((p->p_p->ps_tame & TAME_ROUTE)) {
+	if ((p->p_p->ps_pledge & PLEDGE_ROUTE)) {
 		switch (com) {
 		case SIOCGIFADDR:
 		case SIOCGIFFLAGS:
@@ -1052,10 +1052,10 @@ tame_ioctl_check(struct proc *p, long com, void *v)
 		}
 	}
 
-	if ((p->p_p->ps_tame & TAME_TTY)) {
+	if ((p->p_p->ps_pledge & PLEDGE_TTY)) {
 		switch (com) {
 		case TIOCSPGRP:
-			if ((p->p_p->ps_tame & TAME_PROC) == 0)
+			if ((p->p_p->ps_pledge & PLEDGE_PROC) == 0)
 				break;
 			/* FALTHROUGH */
 		case TIOCGETA:
@@ -1075,16 +1075,16 @@ tame_ioctl_check(struct proc *p, long com, void *v)
 		}
 	}
 
-	return tame_fail(p, EPERM, TAME_IOCTL);
+	return pledge_fail(p, EPERM, PLEDGE_IOCTL);
 }
 
 int
-tame_setsockopt_check(struct proc *p, int level, int optname)
+pledge_setsockopt_check(struct proc *p, int level, int optname)
 {
-	if ((p->p_p->ps_flags & PS_TAMED) == 0)
+	if ((p->p_p->ps_flags & PS_PLEDGE) == 0)
 		return (0);
 
-	/* common case for TAME_UNIX and TAME_INET */
+	/* common case for PLEDGE_UNIX and PLEDGE_INET */
 	switch (level) {
 	case SOL_SOCKET:
 		switch (optname) {
@@ -1094,7 +1094,7 @@ tame_setsockopt_check(struct proc *p, int level, int optname)
 		return (0);
 	}
 
-	if ((p->p_p->ps_tame & TAME_INET) == 0)
+	if ((p->p_p->ps_pledge & PLEDGE_INET) == 0)
 		return (EPERM);
 
 	switch (level) {
@@ -1119,7 +1119,7 @@ tame_setsockopt_check(struct proc *p, int level, int optname)
 		case IP_MULTICAST_IF:
 		case IP_ADD_MEMBERSHIP:
 		case IP_DROP_MEMBERSHIP:
-			if ((p->p_p->ps_tame & TAME_MCAST) == 0)
+			if ((p->p_p->ps_pledge & PLEDGE_MCAST) == 0)
 				return (0);
 			break;
 		}		
@@ -1139,7 +1139,7 @@ tame_setsockopt_check(struct proc *p, int level, int optname)
 		case IPV6_MULTICAST_IF:
 		case IPV6_JOIN_GROUP:
 		case IPV6_LEAVE_GROUP:
-			if ((p->p_p->ps_tame & TAME_MCAST) == 0)
+			if ((p->p_p->ps_pledge & PLEDGE_MCAST) == 0)
 				return (0);
 			break;
 		}
@@ -1151,30 +1151,30 @@ tame_setsockopt_check(struct proc *p, int level, int optname)
 }
 
 int
-tame_dns_check(struct proc *p, in_port_t port)
+pledge_dns_check(struct proc *p, in_port_t port)
 {
-	if ((p->p_p->ps_flags & PS_TAMED) == 0)
+	if ((p->p_p->ps_flags & PS_PLEDGE) == 0)
 		return (0);
 
-	if ((p->p_p->ps_tame & TAME_INET))
+	if ((p->p_p->ps_pledge & PLEDGE_INET))
 		return (0);
-	if ((p->p_p->ps_tame & TAME_DNS_ACTIVE) && port == htons(53))
+	if ((p->p_p->ps_pledge & PLEDGE_DNS_ACTIVE) && port == htons(53))
 		return (0);	/* Allow a DNS connect outbound */
 	return (EPERM);
 }
 
 void
-tame_dropwpaths(struct process *pr)
+pledge_dropwpaths(struct process *pr)
 {
-	if (pr->ps_tamepaths && --pr->ps_tamepaths->wl_ref == 0) {
-		struct whitepaths *wl = pr->ps_tamepaths;
+	if (pr->ps_pledgepaths && --pr->ps_pledgepaths->wl_ref == 0) {
+		struct whitepaths *wl = pr->ps_pledgepaths;
 		int i;
 
 		for (i = 0; i < wl->wl_count; i++)
 			free(wl->wl_paths[i].name, M_TEMP, wl->wl_paths[i].len);
 		free(wl, M_TEMP, wl->wl_size);
 	}
-	pr->ps_tamepaths = NULL;
+	pr->ps_pledgepaths = NULL;
 }
 
 int

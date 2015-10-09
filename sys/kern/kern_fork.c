@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.183 2015/09/11 08:22:31 guenther Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.184 2015/10/09 01:10:27 deraadt Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -58,7 +58,7 @@
 #include <sys/mman.h>
 #include <sys/ptrace.h>
 #include <sys/atomic.h>
-#include <sys/tame.h>
+#include <sys/pledge.h>
 #include <sys/unistd.h>
 
 #include <sys/syscallargs.h>
@@ -204,7 +204,7 @@ process_new(struct proc *p, struct process *parent, int flags)
 	if (pr->ps_textvp)
 		vref(pr->ps_textvp);
 
-	pr->ps_flags = parent->ps_flags & (PS_SUGID | PS_SUGIDEXEC | PS_TAMED);
+	pr->ps_flags = parent->ps_flags & (PS_SUGID | PS_SUGIDEXEC | PS_PLEDGE);
 	if (parent->ps_session->s_ttyvp != NULL)
 		pr->ps_flags |= parent->ps_flags & PS_CONTROLT;
 
@@ -225,8 +225,8 @@ process_new(struct proc *p, struct process *parent, int flags)
 	else
 		pr->ps_vmspace = uvmspace_fork(parent);
 
-	if (pr->ps_tamepaths)
-		pr->ps_tamepaths->wl_ref++;
+	if (pr->ps_pledgepaths)
+		pr->ps_pledgepaths->wl_ref++;
 
 	if (parent->ps_flags & PS_PROFIL)
 		startprofclock(pr);

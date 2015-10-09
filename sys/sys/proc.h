@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.205 2015/09/11 08:22:31 guenther Exp $	*/
+/*	$OpenBSD: proc.h,v 1.206 2015/10/09 01:10:27 deraadt Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -212,8 +212,8 @@ struct process {
 
 	u_short	ps_acflag;		/* Accounting flags. */
 
-	u_int	ps_tame;
-	struct whitepaths *ps_tamepaths;
+	u_int	ps_pledge;
+	struct whitepaths *ps_pledgepaths;
 
 	int64_t ps_kbind_cookie;
 	u_long  ps_kbind_addr;
@@ -255,14 +255,14 @@ struct process {
 #define	PS_EMBRYO	0x00020000	/* New process, not yet fledged */
 #define	PS_ZOMBIE	0x00040000	/* Dead and ready to be waited for */
 #define	PS_NOBROADCASTKILL 0x00080000	/* Process excluded from kill -1. */
-#define PS_TAMED	0x00100000	/* Has called tame(2) */
+#define PS_PLEDGE	0x00100000	/* Has called pledge(2) */
 
 #define	PS_BITS \
     ("\20" "\01CONTROLT" "\02EXEC" "\03INEXEC" "\04EXITING" "\05SUGID" \
      "\06SUGIDEXEC" "\07PPWAIT" "\010ISPWAIT" "\011PROFIL" "\012TRACED" \
      "\013WAITED" "\014COREDUMP" "\015SINGLEEXIT" "\016SINGLEUNWIND" \
      "\017NOZOMBIE" "\020STOPPED" "\021SYSTEM" "\022EMBRYO" "\023ZOMBIE" \
-     "\024NOBROADCASTKILL" "\025TAMED")
+     "\024NOBROADCASTKILL" "\025PLEDGE")
 
 
 struct proc {
@@ -326,14 +326,14 @@ struct proc {
 	u_char	p_usrpri;	/* User-priority based on p_cpu and ps_nice. */
 	char	p_comm[MAXCOMLEN+1];
 
-	int	p_tame_syscall;	/* Cache of current syscall */
-	int	p_tamenote;	/* Observance during syscall */
+	int	p_pledge_syscall;	/* Cache of current syscall */
+	int	p_pledgenote;	/* Observance during syscall */
 #define TMN_RPATH	0x00000001
 #define TMN_WPATH	0x00000002
 #define TMN_CPATH	0x00000004
 #define TMN_FATTR	0x00000008
 #define TMN_COREDUMP	0x00000010
-	int	p_tameafter;
+	int	p_pledgeafter;
 #define TMA_YPLOCK	0x00000001
 #define TMA_DNSRESOLV	0x00000002
 

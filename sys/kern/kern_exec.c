@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.167 2015/10/07 03:47:43 deraadt Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.168 2015/10/09 01:10:27 deraadt Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -53,7 +53,7 @@
 #include <sys/signalvar.h>
 #include <sys/stat.h>
 #include <sys/conf.h>
-#include <sys/tame.h>
+#include <sys/pledge.h>
 #ifdef SYSVSHM
 #include <sys/shm.h>
 #endif
@@ -551,8 +551,8 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 	else
 		atomic_clearbits_int(&pr->ps_flags, PS_SUGIDEXEC);
 
-	atomic_clearbits_int(&pr->ps_flags, PS_TAMED);
-	tame_dropwpaths(pr);
+	atomic_clearbits_int(&pr->ps_flags, PS_PLEDGE);
+	pledge_dropwpaths(pr);
 
 	/*
 	 * deal with set[ug]id.

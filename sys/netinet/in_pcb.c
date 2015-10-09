@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.180 2015/09/22 09:34:38 vgross Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.181 2015/10/09 01:10:27 deraadt Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -77,7 +77,7 @@
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <sys/proc.h>
-#include <sys/tame.h>
+#include <sys/pledge.h>
 #include <sys/domain.h>
 #include <sys/pool.h>
 
@@ -455,8 +455,8 @@ in_pcbconnect(struct inpcb *inp, struct mbuf *nam)
 	if (sin->sin_port == 0)
 		return (EADDRNOTAVAIL);
 
-	if (tame_dns_check(p, sin->sin_port))
-		return (tame_fail(p, EPERM, TAME_DNSPATH));
+	if (pledge_dns_check(p, sin->sin_port))
+		return (pledge_fail(p, EPERM, PLEDGE_DNSPATH));
 
 	error = in_selectsrc(&ina, sin, inp->inp_moptions, &inp->inp_route,
 	    &inp->inp_laddr, inp->inp_rtableid);

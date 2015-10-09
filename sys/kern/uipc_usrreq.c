@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.86 2015/08/29 21:10:20 deraadt Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.87 2015/10/09 01:10:27 deraadt Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -433,7 +433,7 @@ unp_bind(struct unpcb *unp, struct mbuf *nam, struct proc *p)
 	/* Fixup sun_len to keep it in sync with m_len. */
 	soun->sun_len = nam2->m_len;
 
-	p->p_tamenote = TMN_CPATH;
+	p->p_pledgenote = TMN_CPATH;
 	NDINIT(&nd, CREATE, NOFOLLOW | LOCKPARENT, UIO_SYSSPACE,
 	    soun->sun_path, p);
 /* SHOULD BE ABLE TO ADOPT EXISTING AND wakeup() ALA FIFO's */
@@ -492,7 +492,7 @@ unp_connect(struct socket *so, struct mbuf *nam, struct proc *p)
 	else if (memchr(soun->sun_path, '\0', sizeof(soun->sun_path)) == NULL)
 		return (EINVAL);
 
-	p->p_tamenote = TMN_RPATH;
+	p->p_pledgenote = TMN_RPATH;
 	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_SYSSPACE, soun->sun_path, p);
 	if ((error = namei(&nd)) != 0)
 		return (error);

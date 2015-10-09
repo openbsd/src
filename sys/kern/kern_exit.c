@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.153 2015/10/07 03:47:43 deraadt Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.154 2015/10/09 01:10:27 deraadt Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -60,7 +60,7 @@
 #include <sys/ktrace.h>
 #include <sys/pool.h>
 #include <sys/mutex.h>
-#include <sys/tame.h>
+#include <sys/pledge.h>
 #ifdef SYSVSEM
 #include <sys/sem.h>
 #endif
@@ -650,7 +650,7 @@ process_zap(struct process *pr)
 	 */
 	(void)chgproccnt(pr->ps_ucred->cr_ruid, -1);
 
-	tame_dropwpaths(pr);
+	pledge_dropwpaths(pr);
 
 	/*
 	 * Release reference to text vnode

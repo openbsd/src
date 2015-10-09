@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.183 2015/07/27 18:22:37 deraadt Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.184 2015/10/09 01:10:27 deraadt Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -1517,7 +1517,7 @@ coredump(struct proc *p)
 		cred->cr_gid = 0;
 	}
 
-	p->p_tamenote = TMN_COREDUMP;
+	p->p_pledgenote = TMN_COREDUMP;
 	NDINIT(&nd, LOOKUP, NOFOLLOW, UIO_SYSSPACE, name, p);
 
 	error = vn_open(&nd, O_CREAT | FWRITE | O_NOFOLLOW, S_IRUSR | S_IWUSR);
