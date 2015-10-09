@@ -1,4 +1,4 @@
-/*	$OpenBSD: glbl.c,v 1.15 2015/10/04 15:23:24 millert Exp $	*/
+/*	$OpenBSD: glbl.c,v 1.16 2015/10/09 19:47:02 millert Exp $	*/
 /*	$NetBSD: glbl.c,v 1.2 1995/03/21 09:04:41 cgd Exp $	*/
 
 /* glob.c: This file contains the global command routines for the ed line
@@ -135,11 +135,11 @@ exec_global(int interact, int gflag)
 }
 
 
-line_t **active_list;		/* list of lines active in a global command */
-int active_last;		/* index of last active line in active_list */
-int active_size;		/* size of active_list */
-int active_ptr;			/* active_list index (non-decreasing) */
-int active_ndx;			/* active_list index (modulo active_last) */
+static line_t **active_list;	/* list of lines active in a global command */
+static int active_last;		/* index of last active line in active_list */
+static int active_size;		/* size of active_list */
+static int active_ptr;		/* active_list index (non-decreasing) */
+static int active_ndx;		/* active_list index (modulo active_last) */
 
 /* set_active_node: add a line node to the global-active list */
 int

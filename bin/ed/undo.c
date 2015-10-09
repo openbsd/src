@@ -1,4 +1,4 @@
-/*	$OpenBSD: undo.c,v 1.12 2014/05/18 16:36:42 espie Exp $	*/
+/*	$OpenBSD: undo.c,v 1.13 2015/10/09 19:47:02 millert Exp $	*/
 /*	$NetBSD: undo.c,v 1.2 1995/03/21 09:04:52 cgd Exp $	*/
 
 /* undo.c: This file contains the undo routines for the ed line editor */
@@ -32,9 +32,9 @@
 
 
 #define USIZE 100				/* undo stack size */
-undo_t *ustack = NULL;				/* undo stack */
-int usize = 0;					/* stack size variable */
-int u_p = 0;					/* undo stack pointer */
+static undo_t *ustack = NULL;			/* undo stack */
+static int usize = 0;				/* stack size variable */
+static int u_p = 0;				/* undo stack pointer */
 
 /* push_undo_stack: return pointer to initialized undo node */
 undo_t *

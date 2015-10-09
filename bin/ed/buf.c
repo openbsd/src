@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.c,v 1.21 2015/07/28 17:46:52 deraadt Exp $	*/
+/*	$OpenBSD: buf.c,v 1.22 2015/10/09 19:47:02 millert Exp $	*/
 /*	$NetBSD: buf.c,v 1.15 1995/04/23 10:07:28 cgd Exp $	*/
 
 /* buf.c: This file contains the scratch-file buffer routines for the
@@ -34,10 +34,10 @@
 #include "ed.h"
 
 
-FILE *sfp;				/* scratch file pointer */
-off_t sfseek;				/* scratch file position */
-int seek_write;				/* seek before writing */
-line_t buffer_head;			/* incore buffer */
+static FILE *sfp;			/* scratch file pointer */
+static off_t sfseek;			/* scratch file position */
+static int seek_write;			/* seek before writing */
+static line_t buffer_head;		/* incore buffer */
 
 /* get_sbuf_line: get a line of text from the scratch file; return pointer
    to the text */
@@ -190,7 +190,7 @@ get_addressed_line_node(int n)
 extern int newline_added;
 
 #define SCRATCH_TEMPLATE      "/tmp/ed.XXXXXXXXXX"
-char	sfn[sizeof(SCRATCH_TEMPLATE)+1] = "";	/* scratch file name */
+static char sfn[sizeof(SCRATCH_TEMPLATE)+1] = "";	/* scratch file name */
 
 /* open_sbuf: open scratch file */
 int
@@ -242,7 +242,7 @@ quit(int n)
 }
 
 
-unsigned char ctab[256];		/* character translation table */
+static unsigned char ctab[256];		/* character translation table */
 
 /* init_buffers: open scratch buffer; initialize line queue */
 void
@@ -256,7 +256,7 @@ init_buffers(void)
 	   !cat
 	   hello, world
 	   EOF */
-	setbuffer(stdin, stdinbuf, 1);
+	setvbuf(stdin, NULL, _IONBF, 0);
 	if (open_sbuf() < 0)
 		quit(2);
 	REQUE(&buffer_head, &buffer_head);

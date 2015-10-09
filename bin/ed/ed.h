@@ -1,4 +1,4 @@
-/*	$OpenBSD: ed.h,v 1.18 2015/10/04 15:23:24 millert Exp $	*/
+/*	$OpenBSD: ed.h,v 1.19 2015/10/09 19:47:02 millert Exp $	*/
 /*	$NetBSD: ed.h,v 1.23 1995/03/21 09:04:40 cgd Exp $	*/
 
 /* ed.h: type and constant definitions for the ed editor. */
@@ -212,7 +212,6 @@ int write_file(char *, char *, int, int);
 int write_stream(FILE *, int, int);
 
 /* global buffers */
-extern char stdinbuf[];
 extern char *ibuf;
 extern char *ibufp;
 extern int ibufsz;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.50 2015/10/09 01:37:06 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.51 2015/10/09 19:47:02 millert Exp $	*/
 /*	$NetBSD: main.c,v 1.3 1995/03/21 09:04:44 cgd Exp $	*/
 
 /* main.c: This file contains the main control and user-interface routines
@@ -56,10 +56,12 @@
 sigjmp_buf env;
 
 /* static buffers */
-char stdinbuf[1];		/* stdin buffer */
-char *shcmd;			/* shell command buffer */
-int shcmdsz;			/* shell command buffer size */
-int shcmdi;			/* shell command buffer index */
+static char *shcmd;		/* shell command buffer */
+static int shcmdsz;		/* shell command buffer size */
+static int shcmdi;		/* shell command buffer index */
+static char old_filename[PATH_MAX];	/* default filename */
+
+/* global buffers */
 char *ibuf;			/* ed command-line buffer */
 int ibufsz;			/* ed command-line buffer size */
 char *ibufp;			/* pointer to ed command-line buffer */
@@ -79,16 +81,15 @@ volatile sig_atomic_t sigint = 0; /* if set, sigint received while mutex set */
 /* if set, signal handlers are enabled */
 volatile sig_atomic_t sigactive = 0;
 
-char old_filename[PATH_MAX] = "";	/* default filename */
 int current_addr;		/* current address in editor buffer */
 int addr_last;			/* last address in editor buffer */
 int lineno;			/* script line number */
-char *prompt;			/* command-line prompt */
-char *dps = "*";		/* default command-line prompt */
+static char *prompt;		/* command-line prompt */
+static char *dps = "*";		/* default command-line prompt */
 
-const char usage[] = "usage: %s [-] [-s] [-p string] [file]\n";
+static const char usage[] = "usage: %s [-] [-s] [-p string] [file]\n";
 
-char *home;		/* home directory */
+static char *home;		/* home directory */
 
 void
 seterrmsg(char *s)
@@ -1259,8 +1260,8 @@ display_lines(int from, int to, int gflag)
 
 #define MAXMARK 26			/* max number of marks */
 
-line_t	*mark[MAXMARK];			/* line markers */
-int markno;				/* line marker count */
+static line_t *mark[MAXMARK];		/* line markers */
+static int markno;			/* line marker count */
 
 /* mark_line_node: set a line node mark */
 int
