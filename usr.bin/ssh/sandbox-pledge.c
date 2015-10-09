@@ -1,4 +1,4 @@
-/* $OpenBSD: sandbox-tame.c,v 1.2 2015/10/02 15:52:55 deraadt Exp $ */
+/* $OpenBSD: sandbox-pledge.c,v 1.1 2015/10/09 01:37:08 deraadt Exp $ */
 /*
  * Copyright (c) 2015 Theo de Raadt <deraadt@openbsd.org>
  *
@@ -42,7 +42,7 @@ ssh_sandbox_init(void)
 {
 	struct ssh_sandbox *box;
 
-	debug3("%s: preparing tame sandbox", __func__);
+	debug3("%s: preparing pledge sandbox", __func__);
 	box = xcalloc(1, sizeof(*box));
 	box->child_pid = 0;
 
@@ -52,8 +52,8 @@ ssh_sandbox_init(void)
 void
 ssh_sandbox_child(struct ssh_sandbox *box)
 {
-	if (tame("stdio", NULL) == -1)
-		fatal("%s: tame()", __func__);
+	if (pledge("stdio", NULL) == -1)
+		fatal("%s: pledge()", __func__);
 }
 
 void

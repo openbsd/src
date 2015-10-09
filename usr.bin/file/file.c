@@ -1,4 +1,4 @@
-/* $OpenBSD: file.c,v 1.51 2015/10/06 15:39:44 deraadt Exp $ */
+/* $OpenBSD: file.c,v 1.52 2015/10/09 01:37:07 deraadt Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -223,7 +223,7 @@ main(int argc, char **argv)
 			msg.error = errno;
 		} else {
 			/*
-			 * tame(2) doesn't let us pass directory file
+			 * pledge(2) doesn't let us pass directory file
 			 * descriptors around - but in fact we don't need them,
 			 * so just don't open directories or symlinks (which
 			 * could be to directories).
@@ -351,8 +351,8 @@ child(int fd, pid_t parent, int argc, char **argv)
 	int			 i, idx;
 	size_t			 len, width = 0;
 
-	if (tame("stdio getpw proc recvfd", NULL) == -1)
-		err(1, "tame");
+	if (pledge("stdio getpw proc recvfd", NULL) == -1)
+		err(1, "pledge");
 
 	if (geteuid() == 0) {
 		pw = getpwnam(FILE_USER);
@@ -366,8 +366,8 @@ child(int fd, pid_t parent, int argc, char **argv)
 			err(1, "setresuid");
 	}
 
-	if (tame("stdio recvfd", NULL) == -1)
-		err(1, "tame");
+	if (pledge("stdio recvfd", NULL) == -1)
+		err(1, "pledge");
 
 	m = magic_load(magicfp, magicpath, cflag || Wflag);
 	if (cflag) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkdir.c,v 1.26 2015/10/07 14:17:18 deraadt Exp $	*/
+/*	$OpenBSD: mkdir.c,v 1.27 2015/10/09 01:37:06 deraadt Exp $	*/
 /*	$NetBSD: mkdir.c,v 1.14 1995/06/25 21:59:21 mycroft Exp $	*/
 
 /*
@@ -83,8 +83,8 @@ main(int argc, char *argv[])
 	argv += optind;
 
 	if (mode & (S_ISUID | S_ISGID | S_ISTXT) == 0) {
-		if (tame("stdio cpath rpath fattr", NULL) == -1)
-			err(1, "tame");
+		if (pledge("stdio cpath rpath fattr", NULL) == -1)
+			err(1, "pledge");
 	}
 
 	if (*argv == NULL)

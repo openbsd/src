@@ -1,4 +1,4 @@
-/*	$OpenBSD: id.c,v 1.25 2015/10/05 06:43:31 deraadt Exp $	*/
+/*	$OpenBSD: id.c,v 1.26 2015/10/09 01:37:07 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -58,8 +58,8 @@ main(int argc, char *argv[])
 	gid_t gid;
 	const char *opts;
 
-	if (tame("stdio getpw", NULL) == -1)
-		err(1, "tame");
+	if (pledge("stdio getpw", NULL) == -1)
+		err(1, "pledge");
 
 	cflag = Gflag = gflag = nflag = pflag = rflag = uflag = 0;
 

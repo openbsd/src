@@ -1,4 +1,4 @@
-/*	$OpenBSD: nm.c,v 1.48 2015/10/05 07:16:03 deraadt Exp $	*/
+/*	$OpenBSD: nm.c,v 1.49 2015/10/09 01:37:08 deraadt Exp $	*/
 /*	$NetBSD: nm.c,v 1.7 1996/01/14 23:04:03 pk Exp $	*/
 
 /*
@@ -212,8 +212,8 @@ main(int argc, char *argv[])
 	if (demangle)
 		pipe2cppfilt();
 
-	if (tame("stdio rpath", NULL) == -1)
-		err(1, "tame");
+	if (pledge("stdio rpath", NULL) == -1)
+		err(1, "pledge");
 
 	argv += optind;
 	argc -= optind;

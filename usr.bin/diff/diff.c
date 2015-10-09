@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.62 2015/10/05 20:15:00 millert Exp $	*/
+/*	$OpenBSD: diff.c,v 1.63 2015/10/09 01:37:07 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -212,11 +212,11 @@ main(int argc, char **argv)
 	argv += optind;
 
 	if (getenv("TMPDIR")) {
-		if (tame("stdio rpath wpath cpath", NULL) == -1)
-			err(1, "tame");
+		if (pledge("stdio rpath wpath cpath", NULL) == -1)
+			err(1, "pledge");
 	} else {
-		if (tame("stdio rpath tmppath", NULL) == -1)
-			err(1, "tame");
+		if (pledge("stdio rpath tmppath", NULL) == -1)
+			err(1, "pledge");
 	}
 
 	/*

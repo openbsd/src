@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.119 2015/10/04 04:56:50 deraadt Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.120 2015/10/09 01:37:06 deraadt Exp $	*/
 /*	$KAME: ping6.c,v 1.163 2002/10/25 02:19:06 itojun Exp $	*/
 
 /*
@@ -747,11 +747,11 @@ main(int argc, char *argv[])
 		warn("setsockopt(IPV6_RECVHOPLIMIT)"); /* XXX err? */
 
 	if (options & F_HOSTNAME) {
-		if (tame("stdio inet dns", NULL) == -1)
-			err(1, "tame");
+		if (pledge("stdio inet dns", NULL) == -1)
+			err(1, "pledge");
 	} else {
-		if (tame("stdio inet", NULL) == -1)
-			err(1, "tame");
+		if (pledge("stdio inet", NULL) == -1)
+			err(1, "pledge");
 	}
 
 	arc4random_buf(&tv64_offset, sizeof(tv64_offset));

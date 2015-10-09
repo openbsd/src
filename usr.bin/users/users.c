@@ -1,4 +1,4 @@
-/*	$OpenBSD: users.c,v 1.12 2015/10/07 14:35:19 deraadt Exp $	*/
+/*	$OpenBSD: users.c,v 1.13 2015/10/09 01:37:09 deraadt Exp $	*/
 /*	$NetBSD: users.c,v 1.5 1994/12/20 15:58:19 jtc Exp $	*/
 
 /*
@@ -53,8 +53,8 @@ main(int argc, char *argv[])
 	struct utmp utmp;
 	int ch;
 
-	if (tame("stdio rpath", NULL) == -1)
-		err(1, "tame");
+	if (pledge("stdio rpath", NULL) == -1)
+		err(1, "pledge");
 
 	while ((ch = getopt(argc, argv, "")) != -1)
 		switch(ch) {

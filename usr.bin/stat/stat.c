@@ -1,4 +1,4 @@
-/*	$OpenBSD: stat.c,v 1.19 2015/10/06 00:24:20 deraadt Exp $ */
+/*	$OpenBSD: stat.c,v 1.20 2015/10/09 01:37:08 deraadt Exp $ */
 /*	$NetBSD: stat.c,v 1.19 2004/06/20 22:20:16 jmc Exp $ */
 
 /*
@@ -158,8 +158,8 @@ main(int argc, char *argv[])
 	int lsF, fmtchar, usestat, fn, nonl, quiet;
 	char *statfmt, *options, *synopsis;
 
-	if (tame("stdio getpw rpath", NULL) == -1)
-		err(1, "tame");
+	if (pledge("stdio getpw rpath", NULL) == -1)
+		err(1, "pledge");
 
 	lsF = 0;
 	fmtchar = '\0';

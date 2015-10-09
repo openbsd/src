@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.88 2015/10/04 16:50:29 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.89 2015/10/09 01:37:07 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -167,8 +167,8 @@ main(int argc, char *argv[])
 	char outfile[PATH_MAX], _infile[PATH_MAX], suffix[16];
 	int bits, ch, error, rc, cflag, oflag;
 
-	if (tame("stdio rpath wpath cpath fattr", NULL) == -1)
-		err(1, "tame");
+	if (pledge("stdio rpath wpath cpath fattr", NULL) == -1)
+		err(1, "pledge");
 
 	bits = cflag = oflag = 0;
 	storename = -1;

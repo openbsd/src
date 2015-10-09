@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.c,v 1.95 2015/10/03 02:47:15 deraadt Exp $ */
+/*	$OpenBSD: ntpd.c,v 1.96 2015/10/09 01:37:09 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -565,8 +565,8 @@ ctl_main(int argc, char *argv[])
 	if (connect(fd, (struct sockaddr *)&sa, sizeof(sa)) == -1)
 		err(1, "connect: %s", sockname);
 
-	if (tame("stdio", NULL) == -1)
-		err(1, "tame");
+	if (pledge("stdio", NULL) == -1)
+		err(1, "pledge");
 
 	if ((ibuf_ctl = malloc(sizeof(struct imsgbuf))) == NULL)
 		err(1, NULL);

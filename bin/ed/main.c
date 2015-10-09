@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.49 2015/10/07 05:37:42 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.50 2015/10/09 01:37:06 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.3 1995/03/21 09:04:44 cgd Exp $	*/
 
 /* main.c: This file contains the main control and user-interface routines
@@ -103,8 +103,8 @@ main(volatile int argc, char ** volatile argv)
 	int c, n;
 	int status = 0;
 
-	if (tame("stdio rpath wpath cpath proc exec tty", NULL) == -1)
-		err(1, "tame");
+	if (pledge("stdio rpath wpath cpath proc exec tty", NULL) == -1)
+		err(1, "pledge");
 
 	home = getenv("HOME");
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tee.c,v 1.9 2015/10/07 14:34:34 deraadt Exp $	*/
+/*	$OpenBSD: tee.c,v 1.10 2015/10/09 01:37:09 deraadt Exp $	*/
 /*	$NetBSD: tee.c,v 1.5 1994/12/09 01:43:39 jtc Exp $	*/
 
 /*
@@ -74,8 +74,8 @@ main(int argc, char *argv[])
 
 	setlocale(LC_ALL, "");
 
-	if (tame("stdio wpath cpath", NULL) == -1)
-		err(1, "tame");
+	if (pledge("stdio wpath cpath", NULL) == -1)
+		err(1, "pledge");
 
 	append = 0;
 	while ((ch = getopt(argc, argv, "ai")) != -1) {
@@ -108,8 +108,8 @@ main(int argc, char *argv[])
 		argv++;
 	}
 
-	if (tame("stdio", NULL) == -1)
-		err(1, "tame");
+	if (pledge("stdio", NULL) == -1)
+		err(1, "pledge");
 
 	while ((rval = read(STDIN_FILENO, buf, sizeof(buf))) > 0) {
 		for (p = head; p; p = p->next) {

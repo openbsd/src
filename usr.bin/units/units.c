@@ -1,4 +1,4 @@
-/*	$OpenBSD: units.c,v 1.21 2015/10/06 13:29:56 deraadt Exp $	*/
+/*	$OpenBSD: units.c,v 1.22 2015/10/09 01:37:09 deraadt Exp $	*/
 /*	$NetBSD: units.c,v 1.6 1996/04/06 06:01:03 thorpej Exp $	*/
 
 /*
@@ -632,8 +632,8 @@ main(int argc, char **argv)
 	extern char *optarg;
 	extern int optind;
 
-	if (tame("stdio rpath", NULL) == -1)
-		err(1, "tame");
+	if (pledge("stdio rpath", NULL) == -1)
+		err(1, "pledge");
 
 	while ((optchar = getopt(argc, argv, "vqf:")) != -1) {
 		switch (optchar) {
@@ -664,8 +664,8 @@ main(int argc, char **argv)
 
 	readunits(userfile);
 
-	if (tame("stdio", NULL) == -1)
-		err(1, "tame");
+	if (pledge("stdio", NULL) == -1)
+		err(1, "pledge");
 
 	if (argc == 3) {
 		strlcpy(havestr, argv[0], sizeof(havestr));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: md5.c,v 1.81 2015/10/04 04:56:50 deraadt Exp $	*/
+/*	$OpenBSD: md5.c,v 1.82 2015/10/09 01:37:06 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001,2003,2005-2007,2010,2013,2014
@@ -200,8 +200,8 @@ main(int argc, char **argv)
 	int fl, error, base64, i;
 	int bflag, cflag, pflag, rflag, tflag, xflag;
 
-	if (tame("stdio cpath rpath wpath", NULL) == -1)
-		err(1, "tame");
+	if (pledge("stdio cpath rpath wpath", NULL) == -1)
+		err(1, "pledge");
 
 	TAILQ_INIT(&hl);
 	input_string = NULL;
@@ -314,8 +314,8 @@ main(int argc, char **argv)
 	if (ofile == NULL)
 		ofile = stdout;
 
-	if (tame("stdio rpath", NULL) == -1)
-		err(1, "tame");
+	if (pledge("stdio rpath", NULL) == -1)
+		err(1, "pledge");
 
 	/* Most arguments are mutually exclusive */
 	fl = pflag + (tflag ? 1 : 0) + xflag + cflag + (input_string != NULL);

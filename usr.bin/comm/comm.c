@@ -1,4 +1,4 @@
-/*	$OpenBSD: comm.c,v 1.9 2015/10/05 13:30:30 deraadt Exp $	*/
+/*	$OpenBSD: comm.c,v 1.10 2015/10/09 01:37:07 deraadt Exp $	*/
 /*	$NetBSD: comm.c,v 1.10 1995/09/05 19:57:43 jtc Exp $	*/
 
 /*
@@ -61,8 +61,8 @@ main(int argc, char *argv[])
 
 	setlocale(LC_ALL, "");
 
-	if (tame("stdio rpath", NULL) == -1)
-		err(1, "tame");
+	if (pledge("stdio rpath", NULL) == -1)
+		err(1, "pledge");
 
 	flag1 = flag2 = flag3 = 1;
 	compare = strcoll;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: col.c,v 1.18 2015/10/05 06:04:18 deraadt Exp $	*/
+/*	$OpenBSD: col.c,v 1.19 2015/10/09 01:37:06 deraadt Exp $	*/
 /*	$NetBSD: col.c,v 1.7 1995/09/02 05:48:50 jtc Exp $	*/
 
 /*-
@@ -113,8 +113,8 @@ main(int argc, char *argv[])
 	int adjust, opt, warned;
 	const char *errstr;
 
-	if (tame("stdio", NULL) == -1)
-		err(1, "tame");
+	if (pledge("stdio", NULL) == -1)
+		err(1, "pledge");
 
 	max_bufd_lines = 256;
 	compress_spaces = 1;		/* compress spaces into tabs */

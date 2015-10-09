@@ -1,4 +1,4 @@
-/*	$OpenBSD: pwd.c,v 1.13 2015/10/05 05:24:12 deraadt Exp $	*/
+/*	$OpenBSD: pwd.c,v 1.14 2015/10/09 01:37:06 deraadt Exp $	*/
 /*	$NetBSD: pwd.c,v 1.22 2011/08/29 14:51:19 joerg Exp $	*/
 
 /*
@@ -47,8 +47,8 @@ main(int argc, char *argv[])
 	int ch, lFlag = 0;
 	const char *p;
 
-	if (tame("stdio rpath", NULL) == -1)
-		err(1, "tame");
+	if (pledge("stdio rpath", NULL) == -1)
+		err(1, "pledge");
 
 	while ((ch = getopt(argc, argv, "LP")) != -1) {
 		switch (ch) {

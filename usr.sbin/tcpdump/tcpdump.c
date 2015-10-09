@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcpdump.c,v 1.73 2015/10/03 00:51:08 deraadt Exp $	*/
+/*	$OpenBSD: tcpdump.c,v 1.74 2015/10/09 01:37:09 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -490,8 +490,8 @@ main(int argc, char **argv)
 	if (tflag > 0)
 		thiszone = gmt2local(0);
 
-	if (tame("stdio", NULL) == -1)
-		err(1, "tame");
+	if (pledge("stdio", NULL) == -1)
+		err(1, "pledge");
 
 	if (pcap_loop(pd, cnt, printer, pcap_userdata) < 0) {
 		(void)fprintf(stderr, "%s: pcap_loop: %s\n",

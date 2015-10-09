@@ -1,4 +1,4 @@
-/*	$OpenBSD: dmesg.c,v 1.26 2015/10/04 18:49:30 deraadt Exp $	*/
+/*	$OpenBSD: dmesg.c,v 1.27 2015/10/09 01:37:06 deraadt Exp $	*/
 /*	$NetBSD: dmesg.c,v 1.8 1995/03/18 14:54:49 cgd Exp $	*/
 
 /*-
@@ -108,8 +108,8 @@ main(int argc, char *argv[])
 		if (sysctl(mib, 2, bufdata, &len, NULL, 0))
 			err(1, "sysctl: KERN_MSGBUF");
 
-		if (tame("stdio", NULL) == -1)
-			err(1, "tame");
+		if (pledge("stdio", NULL) == -1)
+			err(1, "pledge");
 
 		memcpy(&cur, bufdata, sizeof(cur));
 		bufdata = ((struct msgbuf *)bufdata)->msg_bufc;
@@ -123,8 +123,8 @@ main(int argc, char *argv[])
 		    "dmesg")) == NULL)
 			return (1);
 
-		if (tame("stdio", NULL) == -1)
-			err(1, "tame");
+		if (pledge("stdio", NULL) == -1)
+			err(1, "pledge");
 
 		if (kvm_nlist(kd, nl) == -1)
 			errx(1, "kvm_nlist: %s", kvm_geterr(kd));

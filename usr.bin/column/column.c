@@ -1,4 +1,4 @@
-/*	$OpenBSD: column.c,v 1.20 2015/10/05 13:30:30 deraadt Exp $	*/
+/*	$OpenBSD: column.c,v 1.21 2015/10/09 01:37:07 deraadt Exp $	*/
 /*	$NetBSD: column.c,v 1.4 1995/09/02 05:53:03 jtc Exp $	*/
 
 /*
@@ -76,8 +76,8 @@ main(int argc, char *argv[])
 	} else
 		termwidth = win.ws_col;
 
-	if (tame("stdio rpath", NULL) == -1)
-		err(1, "tame");
+	if (pledge("stdio rpath", NULL) == -1)
+		err(1, "pledge");
 
 	tflag = xflag = 0;
 	while ((ch = getopt(argc, argv, "c:s:tx")) != -1)
@@ -116,8 +116,8 @@ main(int argc, char *argv[])
 			}
 		}
 	}
-	if (tame("stdio", NULL) == -1)
-		err(1, "tame");
+	if (pledge("stdio", NULL) == -1)
+		err(1, "pledge");
 
 	if (!entries)
 		exit(eval);

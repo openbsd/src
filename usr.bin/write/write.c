@@ -1,4 +1,4 @@
-/*	$OpenBSD: write.c,v 1.30 2015/10/06 03:25:02 deraadt Exp $	*/
+/*	$OpenBSD: write.c,v 1.31 2015/10/09 01:37:09 deraadt Exp $	*/
 /*	$NetBSD: write.c,v 1.5 1995/08/31 21:48:32 jtc Exp $	*/
 
 /*
@@ -250,8 +250,8 @@ do_write(char *tty, char *mytty, uid_t myuid)
 	 * Unfortunately this is rather late - well after utmp
 	 * parsing, then pinned by the tty open and setresgid
 	 */
-	if (tame("stdio", NULL) == -1)
-		err(1, "tame");
+	if (pledge("stdio", NULL) == -1)
+		err(1, "pledge");
 
 	(void)signal(SIGINT, done);
 	(void)signal(SIGHUP, done);

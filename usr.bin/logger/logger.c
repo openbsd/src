@@ -1,4 +1,4 @@
-/*	$OpenBSD: logger.c,v 1.15 2015/10/05 23:59:11 deraadt Exp $	*/
+/*	$OpenBSD: logger.c,v 1.16 2015/10/09 01:37:08 deraadt Exp $	*/
 /*	$NetBSD: logger.c,v 1.4 1994/12/22 06:27:00 jtc Exp $	*/
 
 /*
@@ -93,8 +93,8 @@ main(int argc, char *argv[])
 	openlog(tag ? tag : getlogin(), logflags, 0);
 	(void) fclose(stdout);
 
-	if (tame("stdio", NULL) == -1)
-		err(1, "tame");
+	if (pledge("stdio", NULL) == -1)
+		err(1, "pledge");
 
 	/* log input line if appropriate */
 	if (argc > 0) {

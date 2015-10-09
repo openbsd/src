@@ -1,4 +1,4 @@
-/*	$OpenBSD: lam.c,v 1.18 2015/10/07 04:03:57 deraadt Exp $	*/
+/*	$OpenBSD: lam.c,v 1.19 2015/10/09 01:37:08 deraadt Exp $	*/
 /*	$NetBSD: lam.c,v 1.2 1994/11/14 20:27:42 jtc Exp $	*/
 
 /*-
@@ -71,8 +71,8 @@ main(int argc, char *argv[])
 {
 	int i;
 
-	if (tame("stdio rpath", NULL) == -1)
-		err(1, "tame");
+	if (pledge("stdio rpath", NULL) == -1)
+		err(1, "pledge");
 
 	/* Process arguments, set numfiles to file argument count. */
 	getargs(argc, argv);

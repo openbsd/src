@@ -1,4 +1,4 @@
-/*	$OpenBSD: arp.c,v 1.67 2015/10/07 20:25:40 deraadt Exp $ */
+/*	$OpenBSD: arp.c,v 1.68 2015/10/09 01:37:09 deraadt Exp $ */
 /*	$NetBSD: arp.c,v 1.12 1995/04/24 13:25:18 cgd Exp $ */
 
 /*
@@ -251,8 +251,8 @@ getsocket(void)
 	if (setsockopt(s, PF_ROUTE, ROUTE_TABLEFILTER, &rdomain, len) < 0)
 		err(1, "ROUTE_TABLEFILTER");
 
-	if (tame("stdio dns", NULL) == -1)
-		err(1, "tame");
+	if (pledge("stdio dns", NULL) == -1)
+		err(1, "pledge");
 }
 
 struct sockaddr_in	so_mask = { 8, 0, 0, { 0xffffffff } };
@@ -469,8 +469,8 @@ search(in_addr_t addr, void (*action)(struct sockaddr_dl *sdl,
 	struct sockaddr_inarp *sin;
 	struct sockaddr_dl *sdl;
 
-	if (tame("stdio dns route", NULL) == -1)
-		err(1, "tame");
+	if (pledge("stdio dns route", NULL) == -1)
+		err(1, "pledge");
 
 	mib[0] = CTL_NET;
 	mib[1] = PF_ROUTE;

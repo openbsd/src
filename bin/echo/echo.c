@@ -1,4 +1,4 @@
-/*	$OpenBSD: echo.c,v 1.9 2015/10/03 14:51:39 deraadt Exp $	*/
+/*	$OpenBSD: echo.c,v 1.10 2015/10/09 01:37:06 deraadt Exp $	*/
 /*	$NetBSD: echo.c,v 1.6 1995/03/21 09:04:27 cgd Exp $	*/
 
 /*
@@ -41,8 +41,8 @@ main(int argc, char *argv[])
 {
 	int nflag;
 
-	if (tame("stdio", NULL) == -1)
-		err(1, "tame");
+	if (pledge("stdio", NULL) == -1)
+		err(1, "pledge");
 
 	/* This utility may NOT do getopt(3) option parsing. */
 	if (*++argv && !strcmp(*argv, "-n")) {

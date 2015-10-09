@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.126 2015/10/03 00:44:37 deraadt Exp $	*/
+/*	$OpenBSD: ping.c,v 1.127 2015/10/09 01:37:06 deraadt Exp $	*/
 /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
@@ -502,11 +502,11 @@ main(int argc, char *argv[])
 		(void)printf("PING %s: %d data bytes\n", hostname, datalen);
 
 	if (options & F_NUMERIC) {
-		if (tame("stdio inet", NULL) == -1)
-			err(1, "tame");
+		if (pledge("stdio inet", NULL) == -1)
+			err(1, "pledge");
 	} else {
-		if (tame("stdio inet dns", NULL) == -1)
-			err(1, "tame");
+		if (pledge("stdio inet dns", NULL) == -1)
+			err(1, "pledge");
 	}
 
 	(void)signal(SIGINT, finish);

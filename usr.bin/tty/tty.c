@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.8 2015/10/07 18:00:06 deraadt Exp $	*/
+/*	$OpenBSD: tty.c,v 1.9 2015/10/09 01:37:09 deraadt Exp $	*/
 /*	$NetBSD: tty.c,v 1.4 1994/12/07 00:46:57 jtc Exp $	*/
 
 /*
@@ -43,8 +43,8 @@ main(int argc, char *argv[])
 	int ch, sflag;
 	char *t;
 
-	if (tame("stdio rpath tty", NULL) == -1)
-		err(1, "tame");
+	if (pledge("stdio rpath tty", NULL) == -1)
+		err(1, "pledge");
 
 	sflag = 0;
 	while ((ch = getopt(argc, argv, "s")) != -1) {

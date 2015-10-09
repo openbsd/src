@@ -1,4 +1,4 @@
-/*	$OpenBSD: vis.c,v 1.18 2015/10/05 06:59:18 deraadt Exp $	*/
+/*	$OpenBSD: vis.c,v 1.19 2015/10/09 01:37:09 deraadt Exp $	*/
 /*	$NetBSD: vis.c,v 1.4 1994/12/20 16:13:03 jtc Exp $	*/
 
 /*-
@@ -55,8 +55,8 @@ main(int argc, char *argv[])
 	FILE *fp;
 	int ch;
 
-	if (tame("stdio rpath", NULL) == -1)
-		err(1, "tame");
+	if (pledge("stdio rpath", NULL) == -1)
+		err(1, "pledge");
 
 	while ((ch = getopt(argc, argv, "anwctsobfF:ld")) != -1)
 		switch(ch) {
@@ -118,8 +118,8 @@ main(int argc, char *argv[])
 			argv++;
 		}
 	else {
-		if (tame("stdio", NULL) == -1)
-			err(1, "tame");
+		if (pledge("stdio", NULL) == -1)
+			err(1, "pledge");
 		process(stdin);
 	}
 	exit(0);

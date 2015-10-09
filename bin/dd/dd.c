@@ -1,4 +1,4 @@
-/*	$OpenBSD: dd.c,v 1.22 2015/10/04 15:01:47 deraadt Exp $	*/
+/*	$OpenBSD: dd.c,v 1.23 2015/10/09 01:37:06 deraadt Exp $	*/
 /*	$NetBSD: dd.c,v 1.6 1996/02/20 19:29:06 jtc Exp $	*/
 
 /*-
@@ -149,8 +149,8 @@ setup(void)
 	if (out.offset)
 		pos_out();
 
-	if (tame("stdio", NULL) == -1)
-		err(1, "tame");
+	if (pledge("stdio", NULL) == -1)
+		err(1, "pledge");
 
 	/*
 	 * Truncate the output file; ignore errors because it fails on some

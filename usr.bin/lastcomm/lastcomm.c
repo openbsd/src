@@ -1,4 +1,4 @@
-/*	$OpenBSD: lastcomm.c,v 1.22 2015/10/07 14:05:07 deraadt Exp $	*/
+/*	$OpenBSD: lastcomm.c,v 1.23 2015/10/09 01:37:08 deraadt Exp $	*/
 /*	$NetBSD: lastcomm.c,v 1.9 1995/10/22 01:43:42 ghudson Exp $	*/
 
 /*
@@ -69,8 +69,8 @@ main(int argc, char *argv[])
 	int ch;
 	char *acctfile;
 
-	if (tame("stdio rpath getpw", NULL) == -1)
-		err(1, "tame");
+	if (pledge("stdio rpath getpw", NULL) == -1)
+		err(1, "pledge");
 
 	acctfile = _PATH_ACCT;
 	while ((ch = getopt(argc, argv, "f:")) != -1)

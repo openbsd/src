@@ -1,4 +1,4 @@
-/*	$OpenBSD: sleep.c,v 1.22 2015/10/03 03:10:38 deraadt Exp $	*/
+/*	$OpenBSD: sleep.c,v 1.23 2015/10/09 01:37:06 deraadt Exp $	*/
 /*	$NetBSD: sleep.c,v 1.8 1995/03/21 09:11:11 cgd Exp $	*/
 
 /*
@@ -54,8 +54,8 @@ main(int argc, char *argv[])
 	struct timespec rqtp;
 	int i;
 
-	if (tame("stdio", NULL) == -1)
-		err(1, "tame");
+	if (pledge("stdio", NULL) == -1)
+		err(1, "pledge");
 
 	signal(SIGALRM, alarmh);
 

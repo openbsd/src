@@ -1,4 +1,4 @@
-/*	$OpenBSD: printf.c,v 1.23 2015/10/06 23:01:43 deraadt Exp $	*/
+/*	$OpenBSD: printf.c,v 1.24 2015/10/09 01:37:08 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -82,8 +82,8 @@ main(int argc, char *argv[])
 
 	setlocale (LC_ALL, "");
 
-	if (tame("stdio", NULL) == -1)
-		err(1, "tame");
+	if (pledge("stdio", NULL) == -1)
+		err(1, "pledge");
 
 	/* Need to accept/ignore "--" option. */
 	if (argc > 1 && strcmp(argv[1], "--") == 0) {

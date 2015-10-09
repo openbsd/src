@@ -1,4 +1,4 @@
-/*	$OpenBSD: ctags.c,v 1.17 2015/10/07 06:33:31 deraadt Exp $	*/
+/*	$OpenBSD: ctags.c,v 1.18 2015/10/09 01:37:07 deraadt Exp $	*/
 /*	$NetBSD: ctags.c,v 1.4 1995/09/02 05:57:23 jtc Exp $	*/
 
 /*
@@ -77,8 +77,8 @@ main(int argc, char *argv[])
 	int	step;				/* step through args */
 	int	ch;				/* getopts char */
 
-	if (tame("stdio rpath wpath cpath", NULL) == -1)
-		err(1, "tame");
+	if (pledge("stdio rpath wpath cpath", NULL) == -1)
+		err(1, "pledge");
 
 	aflag = uflag = NO;
 	while ((ch = getopt(argc, argv, "BFadf:tuwvx")) != -1)

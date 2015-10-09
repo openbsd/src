@@ -1,4 +1,4 @@
-/*	$OpenBSD: fmt.c,v 1.32 2015/10/05 06:21:15 deraadt Exp $	*/
+/*	$OpenBSD: fmt.c,v 1.33 2015/10/09 01:37:07 deraadt Exp $	*/
 
 /* Sensible version of fmt
  *
@@ -255,8 +255,8 @@ main(int argc, char *argv[])
 
 	(void)setlocale(LC_CTYPE, "");
 
-	if (tame("stdio rpath", NULL) == -1)
-		err(1, "tame");
+	if (pledge("stdio rpath", NULL) == -1)
+		err(1, "pledge");
 
 	/* 1. Grok parameters. */
 	while ((ch = getopt(argc, argv, "0123456789cd:hl:mnpst:w:")) != -1) {
@@ -340,8 +340,8 @@ main(int argc, char *argv[])
 		while (argc-- > 0)
 			process_named_file(*argv++);
 	} else {
-		if (tame("stdio", NULL) == -1)
-			err(1, "tame");
+		if (pledge("stdio", NULL) == -1)
+			err(1, "pledge");
 		process_stream(stdin, "standard input");
 	}
 

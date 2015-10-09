@@ -1,4 +1,4 @@
-/*	$OpenBSD: finger.c,v 1.21 2015/10/03 02:09:33 deraadt Exp $	*/
+/*	$OpenBSD: finger.c,v 1.22 2015/10/09 01:37:07 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -126,8 +126,8 @@ main(int argc, char *argv[])
 			mflag++;
 	}
 
-	if (tame("stdio getpw rpath inet", NULL) == -1)
-		err(1, "tame");
+	if (pledge("stdio getpw rpath inet", NULL) == -1)
+		err(1, "pledge");
 
 	(void)time(&now);
 	setpassent(1);
@@ -137,8 +137,8 @@ main(int argc, char *argv[])
 		 * not selected.  Force the -s BEFORE we get names so proper
 		 * screening will be done.
 		 */
-		if (tame("stdio getpw rpath", NULL) == -1)
-			err(1, "tame");
+		if (pledge("stdio getpw rpath", NULL) == -1)
+			err(1, "pledge");
 		if (!lflag)
 			sflag = 1;	/* if -l not explicit, force -s */
 		loginlist();
@@ -220,8 +220,8 @@ userlist(int argc, char **argv)
 		goto net;
 
 	if (nettail == &nethead)
-		if (tame("stdio getpw rpath", NULL) == -1)
-			err(1, "tame");
+		if (pledge("stdio getpw rpath", NULL) == -1)
+			err(1, "pledge");
 
 	/*
 	 * traverse the list of possible login names and check the login name

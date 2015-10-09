@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpidump.c,v 1.14 2015/10/04 08:31:01 jmc Exp $	*/
+/*	$OpenBSD: acpidump.c,v 1.15 2015/10/09 01:37:09 deraadt Exp $	*/
 /*
  * Copyright (c) 2000 Mitsuru IWASAKI <iwasaki@FreeBSD.org>
  * All rights reserved.
@@ -533,8 +533,8 @@ asl_dump_from_devmem(void)
 
 	acpi_user_init();
 
-	if (tame("stdio wpath cpath", NULL) == -1)
-		err(1, "tame");
+	if (pledge("stdio wpath cpath", NULL) == -1)
+		err(1, "pledge");
 
 	rp = acpi_find_rsd_ptr();
 	if (!rp)

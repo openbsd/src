@@ -1,4 +1,4 @@
-/*	$OpenBSD: wc.c,v 1.18 2015/10/03 14:39:25 deraadt Exp $	*/
+/*	$OpenBSD: wc.c,v 1.19 2015/10/09 01:37:09 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1987, 1991, 1993
@@ -57,8 +57,8 @@ main(int argc, char *argv[])
 
 	setlocale(LC_ALL, "");
 
-	if (tame("stdio rpath", NULL) == -1)
-		err(1, "tame");
+	if (pledge("stdio rpath", NULL) == -1)
+		err(1, "pledge");
 
 	while ((ch = getopt(argc, argv, "lwchm")) != -1)
 		switch(ch) {

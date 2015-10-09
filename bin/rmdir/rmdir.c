@@ -1,4 +1,4 @@
-/*	$OpenBSD: rmdir.c,v 1.10 2015/10/07 15:47:56 deraadt Exp $	*/
+/*	$OpenBSD: rmdir.c,v 1.11 2015/10/09 01:37:06 deraadt Exp $	*/
 /*	$NetBSD: rmdir.c,v 1.13 1995/03/21 09:08:31 cgd Exp $	*/
 
 /*-
@@ -51,8 +51,8 @@ main(int argc, char *argv[])
 
 	setlocale(LC_ALL, "");
 
-	if (tame("stdio cpath", NULL) == -1)
-		err(1, "tame");
+	if (pledge("stdio cpath", NULL) == -1)
+		err(1, "pledge");
 
 	pflag = 0;
 	while ((ch = getopt(argc, argv, "p")) != -1)
