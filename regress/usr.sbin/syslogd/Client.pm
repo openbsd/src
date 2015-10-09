@@ -1,4 +1,4 @@
-#	$OpenBSD: Client.pm,v 1.4 2015/09/09 08:48:46 bluhm Exp $
+#	$OpenBSD: Client.pm,v 1.5 2015/10/09 17:07:06 bluhm Exp $
 
 # Copyright (c) 2010-2014 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -20,7 +20,11 @@ use warnings;
 package Client;
 use parent 'Proc';
 use Carp;
+use Socket;
+use Socket6;
+use IO::Socket;
 use IO::Socket::INET6;
+use IO::Socket::SSL;
 use Sys::Syslog qw(:standard :extended :macros);
 
 sub new {
@@ -48,16 +52,33 @@ sub child {
 			$cs->setsockopt(SOL_SOCKET, SO_SNDBUF, 10000)
 			    or die ref($self), " setsockopt failed: $!";
 		} else {
-			$cs = IO::Socket::INET6->new(
-			    Proto               => $self->{connectproto},
+			$SSL_ERROR = "";
+			my $iosocket = $self->{connectproto} eq "tls" ?
+			    "IO::Socket::SSL" : "IO::Socket::INET6";
+			my $proto = $self->{connectproto};
+			$proto = "tcp" if $proto eq "tls";
+			$cs = $iosocket->new(
+			    Proto               => $proto,
 			    Domain              => $self->{connectdomain},
 			    PeerAddr            => $self->{connectaddr},
 			    PeerPort            => $self->{connectport},
-			) or die ref($self), " socket connect failed: $!";
+			    SSL_verify_mode     => SSL_VERIFY_NONE,
+			    $self->{sslversion} ?
+				(SSL_version => $self->{sslversion}) : (),
+			    $self->{sslciphers} ?
+				(SSL_cipher_list => $self->{sslciphers}) : (),
+			) or die ref($self), " $iosocket socket connect ".
+			    "failed: $!,$SSL_ERROR";
 			print STDERR "connect sock: ",$cs->sockhost()," ",
 			    $cs->sockport(),"\n";
 			print STDERR "connect peer: ",$cs->peerhost()," ",
 			    $cs->peerport(),"\n";
+			if ($self->{connectproto} eq "tls") {
+				print STDERR "ssl version: ",
+				    $cs->get_sslversion(),"\n";
+				print STDERR "ssl cipher: ",
+				    $cs->get_cipher(),"\n";
+			}
 		}
 
 		*STDIN = *STDOUT = $self->{cs} = $cs;

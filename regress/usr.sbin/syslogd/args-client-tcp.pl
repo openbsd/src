@@ -20,6 +20,10 @@ our %args = (
 	    qr/^_syslogd .* internet/ => 3,
 	    qr/ internet6? stream tcp \w+ (127.0.0.1|\[::1\]):514$/ => 1,
 	},
+	loggrep => {
+	    qr/syslogd: tcp logger .* accepted/ => 1,
+	    qr/syslogd: tcp logger .* connection close/ => 1,
+	},
     },
     file => {
 	loggrep => qr/ localhost syslogd-regress\[\d+\]: /. get_testgrep(),
