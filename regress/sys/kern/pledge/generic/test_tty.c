@@ -1,3 +1,4 @@
+/*	$OpenBSD: test_tty.c,v 1.2 2015/10/09 11:42:54 semarie Exp $ */
 /*
  * Copyright (c) 2015 Sebastien Marie <semarie@openbsd.org>
  *
