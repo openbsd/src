@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_client.c,v 1.31 2015/10/08 20:13:45 guenther Exp $ */
+/* $OpenBSD: tls_client.c,v 1.32 2015/10/09 04:13:34 deraadt Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -118,6 +118,7 @@ tls_connect_servername(struct tls *ctx, const char *host, const char *port,
 	}
 
 	/* It was resolved somehow; now try connecting to what we got */
+	s = -1;
 	for (res = res0; res; res = res->ai_next) {
 		s = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
 		if (s == -1) {
@@ -134,6 +135,9 @@ tls_connect_servername(struct tls *ctx, const char *host, const char *port,
 		break;  /* Connected. */
 	}
 	freeaddrinfo(res0);
+
+	if (s == -1)
+		goto err;
 
 	if (servername == NULL)
 		servername = h;
