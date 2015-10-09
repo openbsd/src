@@ -31,6 +31,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <string.h>
 #include <errno.h>
 
@@ -1036,6 +1037,11 @@ main(int argc, char *argv[])
 	progname = strrchr(argv[0], '/');
 	progname = progname == NULL ? argv[0] : progname + 1;
 	complain_init(progname);
+
+	if (pledge("stdio rpath wpath cpath", NULL) == -1) {
+		fprintf(stderr, "%s: pledge: %s", progname, strerror(errno));
+		exit(1);
+	}
 
 	init();
 
