@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_generic.c,v 1.105 2015/10/09 05:30:03 deraadt Exp $	*/
+/*	$OpenBSD: sys_generic.c,v 1.106 2015/10/09 05:55:58 deraadt Exp $	*/
 /*	$NetBSD: sys_generic.c,v 1.24 1996/03/29 00:25:32 cgd Exp $	*/
 
 /*
@@ -404,7 +404,7 @@ sys_ioctl(struct proc *p, void *v, register_t *retval)
 	fdp = p->p_fd;
 	fp = fd_getfile_mode(fdp, SCARG(uap, fd), FREAD|FWRITE);
 
-	error = pledge_ioctl_check(p, com, fp))
+	error = pledge_ioctl_check(p, com, fp);
 	if (error)
 		return (pledge_fail(p, EPERM, PLEDGE_IOCTL));
 
