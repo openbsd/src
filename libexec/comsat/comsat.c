@@ -1,4 +1,4 @@
-/*	$OpenBSD: comsat.c,v 1.41 2015/10/09 17:07:21 deraadt Exp $	*/
+/*	$OpenBSD: comsat.c,v 1.42 2015/10/09 17:09:06 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -52,6 +52,7 @@
 #include <unistd.h>
 #include <utmp.h>
 #include <vis.h>
+#include <err.h>
 
 int	debug = 0;
 #define	dsyslog	if (debug) syslog
@@ -81,6 +82,9 @@ main(int argc, char *argv[])
 	socklen_t fromlen;
 	char msgbuf[100];
 	sigset_t sigset;
+
+	if (pledge("stdio rpath wpath tty proc", NULL) == -1)
+		err(1, "pledge");
 
 	/* verify proper invocation */
 	fromlen = sizeof(from);
