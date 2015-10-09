@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall_mi.h,v 1.10 2015/09/12 16:22:46 deraadt Exp $	*/
+/*	$OpenBSD: syscall_mi.h,v 1.11 2015/10/09 01:17:18 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  *	@(#)kern_xxx.c	8.2 (Berkeley) 11/14/93
  */
 
-#include <sys/tame.h>
+#include <sys/pledge.h>
 
 #ifdef KTRACE
 #include <sys/ktrace.h>
@@ -51,7 +51,7 @@ mi_syscall(struct proc *p, register_t code, const struct sysent *callp,
     register_t *argp, register_t retval[2])
 {
 	int lock = !(callp->sy_flags & SY_NOLOCK);
-	int error, tamed, tval;
+	int error, pledged, tval;
 
 	/* refresh the thread's cache of the process's creds */
 	refreshcreds(p);
@@ -71,16 +71,16 @@ mi_syscall(struct proc *p, register_t code, const struct sysent *callp,
 
 	if (lock)
 		KERNEL_LOCK();
-	tamed = (p->p_p->ps_flags & PS_TAMED);
-	if (tamed && !(tval = tame_check(p, code))) {
+	pledged = (p->p_p->ps_flags & PS_PLEDGE);
+	if (pledged && !(tval = pledge_check(p, code))) {
 		if (!lock)
 			KERNEL_LOCK();
-		error = tame_fail(p, EPERM, tval);
+		error = pledge_fail(p, EPERM, tval);
 		KERNEL_UNLOCK();
 		return (error);
 	}
 #if NSYSTRACE > 0
-	if (!tamed && ISSET(p->p_flag, P_SYSTRACE)) {
+	if (!pledged && ISSET(p->p_flag, P_SYSTRACE)) {
 		if (!lock)
 			KERNEL_LOCK();
 		error = systrace_redirect(code, p, argp, retval);
@@ -89,8 +89,8 @@ mi_syscall(struct proc *p, register_t code, const struct sysent *callp,
 	}
 #endif
 	error = (*callp->sy_call)(p, argp, retval);
-	if (tamed && p->p_tameafter)
-		tame_aftersyscall(p, code, error);
+	if (pledged && p->p_pledgeafter)
+		pledge_aftersyscall(p, code, error);
 	if (lock)
 		KERNEL_UNLOCK();
 

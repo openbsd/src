@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_generic.c,v 1.103 2015/09/11 15:29:47 deraadt Exp $	*/
+/*	$OpenBSD: sys_generic.c,v 1.104 2015/10/09 01:17:21 deraadt Exp $	*/
 /*	$NetBSD: sys_generic.c,v 1.24 1996/03/29 00:25:32 cgd Exp $	*/
 
 /*
@@ -56,7 +56,7 @@
 #include <sys/ktrace.h>
 #endif
 #include <sys/sched.h>
-#include <sys/tame.h>
+#include <sys/pledge.h>
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
@@ -404,8 +404,8 @@ sys_ioctl(struct proc *p, void *v, register_t *retval)
 	fdp = p->p_fd;
 	fp = fd_getfile_mode(fdp, SCARG(uap, fd), FREAD|FWRITE);
 
-	if (tame_ioctl_check(p, com, fp))
-		return (tame_fail(p, EPERM, TAME_IOCTL));
+	if (pledge_ioctl_check(p, com, fp))
+		return (pledge_fail(p, EPERM, PLEDGE_IOCTL));
 
 	if (fp == NULL)
 		return (EBADF);
