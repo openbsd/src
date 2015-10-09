@@ -1,4 +1,4 @@
-.\" $OpenBSD: tame.2,v 1.31 2015/10/04 20:47:16 djm Exp $
+.\" $OpenBSD: pledge.2,v 1.1 2015/10/09 01:24:57 deraadt Exp $
 .\"
 .\" Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
 .\"
@@ -14,16 +14,16 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 4 2015 $
-.Dt TAME 2
+.Dd $Mdocdate: October 9 2015 $
+.Dt PLEDGE 2
 .Os
 .Sh NAME
-.Nm tame
+.Nm pledge
 .Nd restrict system operations
 .Sh SYNOPSIS
 .In unistd.h
 .Ft int
-.Fn tame "const char *request" "const char *paths[]"
+.Fn pledge "const char *request" "const char *paths[]"
 .Sh DESCRIPTION
 The current process is forced into a restricted-service operating mode.
 A few subsets are available, roughly described as computation, memory
@@ -36,11 +36,11 @@ or
 .Ar paths .
 .Pp
 Use of
-.Fn tame
+.Fn pledge
 in an application will require at least some study and understanding
 of the interfaces called.
 Subsequent calls to
-.Fn tame
+.Fn pledge
 can reduce the abilities further, but abilities can never be regained.
 .Pp
 A process which attempts a restricted operation is killed with
@@ -149,7 +149,7 @@ support:
 .Xr uname 3 ,
 system sensor readings.
 .Pp
-.It Xr tame 2
+.It Xr pledge 2
 Can only reduce permissions; can only set a list of
 .Pa paths
 once.
@@ -419,7 +419,7 @@ All other paths will return
 .Sh RETURN VALUES
 .Rv -std
 .Sh ERRORS
-.Fn tame
+.Fn pledge
 will fail if:
 .Bl -tag -width Er
 .It Bq Er EFAULT
@@ -445,12 +445,12 @@ The limit in the system as released is 262144 bytes
 .El
 .Sh HISTORY
 The
-.Fn tame
+.Fn pledge
 system call appeared in
 .Ox 5.8 .
 .Sh CAVEATS
 It is not possible to
 .Xr systrace 4
 a
-.Fn tame
+.Fn pledge
 program.
