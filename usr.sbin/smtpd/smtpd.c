@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.242 2015/10/06 08:51:35 gilles Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.243 2015/10/09 17:44:25 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -33,6 +33,7 @@
 #include <errno.h>
 #include <event.h>
 #include <fcntl.h>
+#include <fts.h>
 #include <imsg.h>
 #include <inttypes.h>
 #include <login_cap.h>
@@ -1012,28 +1013,49 @@ forkmda(struct mproc *p, uint64_t id, struct deliver *deliver)
 static void
 offline_scan(int fd, short ev, void *arg)
 {
-	DIR		*dir = arg;
-	struct dirent	*d;
+	char		*path_argv[2];
+	FTS		*fts = arg;
+	FTSENT		*e;
 	int		 n = 0;
 
-	if (dir == NULL) {
+	path_argv[0] = PATH_SPOOL PATH_OFFLINE;
+	path_argv[1] = NULL;
+
+	if (fts == NULL) {
 		log_debug("debug: smtpd: scanning offline queue...");
-		if ((dir = opendir(PATH_SPOOL PATH_OFFLINE)) == NULL)
-			errx(1, "smtpd: opendir");
+		fts = fts_open(path_argv, FTS_PHYSICAL | FTS_NOCHDIR, NULL);
+		if (fts == NULL) {
+			log_warn("fts_open: %s", path_argv[0]);
+			return;
+		}
 	}
 
-	while ((d = readdir(dir)) != NULL) {
-		if (d->d_type != DT_REG)
+	while ((e = fts_read(fts)) != NULL) {
+		if (e->fts_info != FTS_F)
 			continue;
 
-		if (offline_add(d->d_name)) {
+		/* offline files must be at depth 1 */
+		if (e->fts_level != 1)
+			continue;
+
+		/* offline file group must match parent directory group */
+		if (e->fts_statp->st_gid != e->fts_parent->fts_statp->st_gid)
+			continue;
+
+		if (e->fts_statp->st_size == 0) {
+			if (unlink(e->fts_accpath) == -1)
+				log_warnx("warn: smtpd: could not unlink %s", e->fts_accpath);
+			continue;
+		}
+		
+		if (offline_add(e->fts_name)) {
 			log_warnx("warn: smtpd: "
-			    "could not add offline message %s", d->d_name);
+			    "could not add offline message %s", e->fts_name);
 			continue;
 		}
 
 		if ((n++) == OFFLINE_READMAX) {
-			evtimer_set(&offline_ev, offline_scan, dir);
+			evtimer_set(&offline_ev, offline_scan, fts);
 			offline_timeout.tv_sec = 0;
 			offline_timeout.tv_usec = 100000;
 			evtimer_add(&offline_ev, &offline_timeout);
@@ -1042,7 +1064,7 @@ offline_scan(int fd, short ev, void *arg)
 	}
 
 	log_debug("debug: smtpd: offline scanning done");
-	closedir(dir);
+	fts_close(fts);
 }
 
 static int
