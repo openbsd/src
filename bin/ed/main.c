@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.52 2015/10/09 20:27:28 tobias Exp $	*/
+/*	$OpenBSD: main.c,v 1.53 2015/10/09 21:24:05 tobias Exp $	*/
 /*	$NetBSD: main.c,v 1.3 1995/03/21 09:04:44 cgd Exp $	*/
 
 /* main.c: This file contains the main control and user-interface routines
@@ -72,6 +72,7 @@ static line_t *dup_line_node(line_t *);
 sigjmp_buf env;
 
 /* static buffers */
+static char errmsg[PATH_MAX + 40];	/* error message buffer */
 static char *shcmd;		/* shell command buffer */
 static int shcmdsz;		/* shell command buffer size */
 static int shcmdi;		/* shell command buffer index */

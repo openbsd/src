@@ -1,4 +1,4 @@
-/*	$OpenBSD: ed.h,v 1.20 2015/10/09 20:27:28 tobias Exp $	*/
+/*	$OpenBSD: ed.h,v 1.21 2015/10/09 21:24:05 tobias Exp $	*/
 /*	$NetBSD: ed.h,v 1.23 1995/03/21 09:04:40 cgd Exp $	*/
 
 /* ed.h: type and constant definitions for the ed editor. */
@@ -202,7 +202,6 @@ extern volatile sig_atomic_t sigint;
 /* global vars */
 extern int addr_last;
 extern int current_addr;
-extern char errmsg[PATH_MAX + 40];
 extern int first_addr;
 extern int lineno;
 extern int second_addr;
