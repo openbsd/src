@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.5 2015/10/09 17:18:20 deraadt Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.6 2015/10/09 23:55:03 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -136,7 +136,7 @@ const u_int pledge_syscalls[SYS_MAXSYSCALL] = {
 
 	[SYS_fork] = PLEDGE_PROC,
 	[SYS_vfork] = PLEDGE_PROC,
-	[SYS_kill] = PLEDGE_PROC,
+	[SYS_kill] = PLEDGE_SELF | PLEDGE_PROC,	
 	[SYS_setpgid] = PLEDGE_PROC,
 	[SYS_sigsuspend] = PLEDGE_PROC,
 	[SYS_setrlimit] = PLEDGE_PROC,
