@@ -1,4 +1,4 @@
-/*	$OpenBSD: skey.c,v 1.29 2015/10/09 20:14:35 tim Exp $	*/
+/*	$OpenBSD: skey.c,v 1.30 2015/10/09 20:24:37 tim Exp $	*/
 /*
  * OpenBSD S/Key (skey.c)
  *
@@ -31,25 +31,23 @@
 #include <readpassphrase.h>
 #include <skey.h>
 
-void    usage(char *);
+void usage();
+
+extern char *__progname;
 
 int
 main(int argc, char *argv[])
 {
 	int     n, i, cnt = 1, pass = 0, hexmode = 0;
 	char    passwd[SKEY_MAX_PW_LEN+1], key[SKEY_BINKEY_SIZE];
-	char	buf[33], *seed, *slash;
+	char	buf[33], *seed, *slash, *algo;
 	const char *errstr;
 
 	/* If we were called as otp-METHOD, set algorithm based on that */
-	if ((slash = strrchr(argv[0], '/')))
-		slash++;
-	else
-		slash = argv[0];
-	if (strncmp(slash, "otp-", 4) == 0) {
-		slash += 4;
-		if (skey_set_algorithm(slash) == NULL)
-			errx(1, "Unknown hash algorithm %s", slash);
+	if (strncmp(__progname, "otp-", 4) == 0) {
+		algo = __progname + 4;
+		if (skey_set_algorithm(algo) == NULL)
+			errx(1, "Unknown hash algorithm %s", algo);
 	}
 
 	for (i = 1; i < argc && argv[i][0] == '-' && strcmp(argv[i], "--");) {
@@ -58,14 +56,14 @@ main(int argc, char *argv[])
 			switch (argv[i][1]) {
 			case 'n':
 				if (++i == argc)
-					usage(argv[0]);
+					usage();
 				cnt = strtonum(argv[i], 1, SKEY_MAX_SEQ -1, &errstr);
 				if (errstr)
-					usage(argv[0]);
+					usage();
 				break;
 			case 'p':
 				if (++i == argc)
-					usage(argv[0]);
+					usage();
 				if (strlcpy(passwd, argv[i], sizeof(passwd)) >=
 				    sizeof(passwd))
 					errx(1, "Password too long");
@@ -75,42 +73,42 @@ main(int argc, char *argv[])
 				hexmode = 1;
 				break;
 			default:
-				usage(argv[0]);
+				usage();
 			}
 		} else {
 			/* Multi character switches are hash types */
 			if (skey_set_algorithm(&argv[i][1]) == NULL) {
 				warnx("Unknown hash algorithm %s", &argv[i][1]);
-				usage(argv[0]);
+				usage();
 			}
 		}
 		i++;
 	}
 
 	if (argc > i + 2)
-		usage(argv[0]);
+		usage();
 
 	/* Could be in the form <number>/<seed> */
 	if (argc <= i + 1) {
 		/* look for / in it */
 		if (argc <= i)
-			usage(argv[0]);
+			usage();
 		slash = strchr(argv[i], '/');
 		if (slash == NULL)
-			usage(argv[0]);
+			usage();
 		*slash++ = '\0';
 		seed = slash;
 
 		n = strtonum(argv[i], 0, SKEY_MAX_SEQ, &errstr);
 		if (errstr) {
 			warnx("%s: %s", argv[i], errstr);
-			usage(argv[0]);
+			usage();
 		}
 	} else {
 		n = strtonum(argv[i], 0, SKEY_MAX_SEQ, &errstr);
 		if (errstr) {
 			warnx("%s: %s", argv[i], errstr);
-			usage(argv[0]);
+			usage();
 		}
 		seed = argv[++i];
 	}
@@ -147,10 +145,10 @@ main(int argc, char *argv[])
 }
 
 void
-usage(char *s)
+usage(void)
 {
 	fprintf(stderr,
 	    "usage: %s [-x] [-md5 | -rmd160 | -sha1] [-n count]\n\t"
-	    "[-p passphrase] <sequence#>[/] key\n", s);
+	    "[-p passphrase] <sequence#>[/] key\n", __progname);
 	exit(1);
 }
