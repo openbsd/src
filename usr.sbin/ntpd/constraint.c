@@ -1,4 +1,4 @@
-/*	$OpenBSD: constraint.c,v 1.17 2015/09/10 13:49:48 beck Exp $	*/
+/*	$OpenBSD: constraint.c,v 1.18 2015/10/09 03:50:40 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -38,6 +38,7 @@
 #include <unistd.h>
 #include <time.h>
 #include <tls.h>
+#include <err.h>
 
 #include "log.h"
 #include "ntpd.h"
@@ -196,6 +197,9 @@ constraint_query(struct constraint *cstr)
 		return (-1);
 	case 0:
 		setproctitle("constraint from %s", hname);
+
+		if (pledge("stdio inet", NULL) == -1)
+			err(1, "pledge");
 
 		/* Child process */
 		if (dup2(pipes[1], CONSTRAINT_PASSFD) == -1)
