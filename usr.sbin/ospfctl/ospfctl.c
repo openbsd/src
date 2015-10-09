@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfctl.c,v 1.60 2015/09/27 17:31:50 stsp Exp $ */
+/*	$OpenBSD: ospfctl.c,v 1.61 2015/10/09 23:33:54 deraadt Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -123,6 +123,9 @@ main(int argc, char *argv[])
 	strlcpy(sun.sun_path, sockname, sizeof(sun.sun_path));
 	if (connect(ctl_sock, (struct sockaddr *)&sun, sizeof(sun)) == -1)
 		err(1, "connect: %s", sockname);
+
+	if (pledge("stdio", NULL) == -1)
+		err(1, "pledge");
 
 	if ((ibuf = malloc(sizeof(struct imsgbuf))) == NULL)
 		err(1, NULL);
