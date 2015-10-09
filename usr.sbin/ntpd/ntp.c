@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.135 2015/08/14 02:00:18 millert Exp $ */
+/*	$OpenBSD: ntp.c,v 1.136 2015/10/09 03:54:53 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -30,6 +30,7 @@
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
+#include <err.h>
 #include <tls.h>
 
 #include "ntpd.h"
@@ -164,6 +165,20 @@ ntp_main(int pipe_prnt[2], int fd_ctl, struct ntpd_conf *nconf,
 		fatal("can't drop privileges");
 
 	endservent();
+
+	/*
+	 * XXX
+	 * Unfortunately, the "contraint" processes are forked
+	 * below the "ntp engine".  Hence the ntp engine needs
+	 * to be able to fork -> "proc", and the "constraint"
+	 * process will want to open sockets -> "inet".
+	 *
+	 * For many reasons, including fork/exec cost, it would
+	 * be better if constraints were forked from the master
+	 * process, which would then tell the ntp engine.
+	 */
+	if (pledge("stdio inet proc", NULL) == -1)
+		err(1, "pledge");
 
 	signal(SIGTERM, ntp_sighdlr);
 	signal(SIGINT, ntp_sighdlr);
