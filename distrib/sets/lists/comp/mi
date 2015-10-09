@@ -1332,6 +1332,7 @@
 ./usr/include/sys/param.h
 ./usr/include/sys/pciio.h
 ./usr/include/sys/pipe.h
+./usr/include/sys/pledge.h
 ./usr/include/sys/poll.h
 ./usr/include/sys/pool.h
 ./usr/include/sys/proc.h
@@ -1372,7 +1373,6 @@
 ./usr/include/sys/syslimits.h
 ./usr/include/sys/syslog.h
 ./usr/include/sys/systm.h
-./usr/include/sys/tame.h
 ./usr/include/sys/task.h
 ./usr/include/sys/termios.h
 ./usr/include/sys/time.h
@@ -1764,6 +1764,7 @@
 ./usr/share/man/man2/pathconf.2
 ./usr/share/man/man2/pipe.2
 ./usr/share/man/man2/pipe2.2
+./usr/share/man/man2/pledge.2
 ./usr/share/man/man2/poll.2
 ./usr/share/man/man2/posix_madvise.2
 ./usr/share/man/man2/ppoll.2
@@ -1837,7 +1838,6 @@
 ./usr/share/man/man2/sync.2
 ./usr/share/man/man2/sysarch.2
 ./usr/share/man/man2/syscall.2
-./usr/share/man/man2/tame.2
 ./usr/share/man/man2/truncate.2
 ./usr/share/man/man2/umask.2
 ./usr/share/man/man2/unlink.2
