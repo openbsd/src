@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.1 2015/10/09 01:17:21 deraadt Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.2 2015/10/09 02:36:46 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -1119,7 +1119,7 @@ pledge_setsockopt_check(struct proc *p, int level, int optname)
 		case IP_MULTICAST_IF:
 		case IP_ADD_MEMBERSHIP:
 		case IP_DROP_MEMBERSHIP:
-			if ((p->p_p->ps_pledge & PLEDGE_MCAST) == 0)
+			if (p->p_p->ps_pledge & PLEDGE_MCAST)
 				return (0);
 			break;
 		}		
@@ -1139,7 +1139,7 @@ pledge_setsockopt_check(struct proc *p, int level, int optname)
 		case IPV6_MULTICAST_IF:
 		case IPV6_JOIN_GROUP:
 		case IPV6_LEAVE_GROUP:
-			if ((p->p_p->ps_pledge & PLEDGE_MCAST) == 0)
+			if (p->p_p->ps_pledge & PLEDGE_MCAST))
 				return (0);
 			break;
 		}
