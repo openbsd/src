@@ -1,4 +1,4 @@
-/*	$OpenBSD: c_ksh.c,v 1.42 2015/09/22 21:50:40 millert Exp $	*/
+/*	$OpenBSD: c_ksh.c,v 1.43 2015/10/09 19:36:27 tedu Exp $	*/
 
 /*
  * built-in Korn commands: c_*
@@ -117,8 +117,7 @@ c_cd(char **wp)
 			bi_errorf("%s: bad directory", dir);
 		else
 			bi_errorf("%s - %s", try, strerror(errno));
-		if (fdir)
-			afree(fdir, ATEMP);
+		afree(fdir, ATEMP);
 		return 1;
 	}
 
@@ -152,8 +151,7 @@ c_cd(char **wp)
 	if (printpath || cdnode)
 		shprintf("%s\n", pwd);
 
-	if (fdir)
-		afree(fdir, ATEMP);
+	afree(fdir, ATEMP);
 
 	return 0;
 }
@@ -195,8 +193,7 @@ c_pwd(char **wp)
 		}
 	}
 	shprintf("%s\n", p);
-	if (freep)
-		afree(freep, ATEMP);
+	afree(freep, ATEMP);
 	return 0;
 }
 

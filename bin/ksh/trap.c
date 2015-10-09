@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.25 2015/09/18 07:28:24 nicm Exp $	*/
+/*	$OpenBSD: trap.c,v 1.26 2015/10/09 19:36:27 tedu Exp $	*/
 
 /*
  * signal handling
@@ -282,8 +282,7 @@ settrap(Trap *p, char *s)
 {
 	sig_t f;
 
-	if (p->trap)
-		afree(p->trap, APERM);
+	afree(p->trap, APERM);
 	p->trap = str_save(s, APERM); /* handles s == 0 */
 	p->flags |= TF_CHANGED;
 	f = !s ? SIG_DFL : s[0] ? trapsig : SIG_IGN;
