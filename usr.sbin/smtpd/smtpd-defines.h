@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd-defines.h,v 1.4 2015/01/20 17:37:54 deraadt Exp $	*/
+/*	$OpenBSD: smtpd-defines.h,v 1.5 2015/10/09 14:37:38 gilles Exp $	*/
 
 /*
  * Copyright (c) 2013 Gilles Chehade <gilles@poolp.org>
@@ -25,7 +25,17 @@
 
 #define SMTPD_USER		"_smtpd"
 #define PATH_CHROOT		"/var/empty"
-#define SMTPD_QUEUE_USER	 "_smtpq"
+#define SMTPD_QUEUE_USER	"_smtpq"
+#define SMTPD_QUEUE_GROUP	"_smtpq"
 #define PATH_SPOOL		"/var/spool/smtpd"
 
 #define TAG_CHAR		'+'
+
+
+/* sendmail compat */
+
+#define	EX_OK			0
+#define	EX_NOHOST		68
+#define	EX_UNAVAILABLE		69
+#define	EX_SOFTWARE		70
+#define	EX_TEMPFAIL		75

@@ -1,11 +1,12 @@
-#	$OpenBSD: Makefile,v 1.38 2015/10/06 00:30:32 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.39 2015/10/09 14:37:38 gilles Exp $
 
 .PATH:		${.CURDIR}/..
 
 PROG=	smtpctl
 BINOWN=	root
+BINGRP=	_smtpq
 
-BINMODE?=555
+BINMODE?=2555
 
 BINDIR=	/usr/sbin
 MAN=	smtpctl.8

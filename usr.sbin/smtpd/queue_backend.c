@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_backend.c,v 1.55 2015/01/20 17:37:54 deraadt Exp $	*/
+/*	$OpenBSD: queue_backend.c,v 1.56 2015/10/09 14:37:38 gilles Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@poolp.org>
@@ -27,6 +27,7 @@
 #include <errno.h>
 #include <event.h>
 #include <fcntl.h>
+#include <grp.h>
 #include <imsg.h>
 #include <limits.h>
 #include <inttypes.h>
@@ -113,12 +114,17 @@ int
 queue_init(const char *name, int server)
 {
 	struct passwd	*pwq;
+	struct group	*gr;
 	int		 r;
 
 	pwq = getpwnam(SMTPD_QUEUE_USER);
 	if (pwq == NULL)
 		errx(1, "unknown user %s", SMTPD_QUEUE_USER);
 
+	gr = getgrnam(SMTPD_QUEUE_GROUP);
+	if (gr == NULL)
+		errx(1, "unknown group %s", SMTPD_QUEUE_GROUP);
+	
 	tree_init(&evpcache_tree);
 	TAILQ_INIT(&evpcache_list);
 
@@ -134,7 +140,7 @@ queue_init(const char *name, int server)
 	if (server) {
 		if (ckdir(PATH_SPOOL, 0711, 0, 0, 1) == 0)
 			errx(1, "error in spool directory setup");
-		if (ckdir(PATH_SPOOL PATH_OFFLINE, 01777, 0, 0, 1) == 0)
+		if (ckdir(PATH_SPOOL PATH_OFFLINE, 0770, 0, gr->gr_gid, 1) == 0)
 			errx(1, "error in offline directory setup");
 		if (ckdir(PATH_SPOOL PATH_PURGE, 0700, pwq->pw_uid, 0, 1) == 0)
 			errx(1, "error in purge directory setup");
