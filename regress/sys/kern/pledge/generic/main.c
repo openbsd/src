@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.10 2015/10/06 15:45:31 semarie Exp $ */
+/*	$OpenBSD: main.c,v 1.1 2015/10/09 06:44:13 semarie Exp $ */
 /*
  * Copyright (c) 2015 Sebastien Marie <semarie@openbsd.org>
  *
@@ -128,11 +128,11 @@ test_wpaths()
 }
 
 static void
-test_tame()
+test_pledge()
 {
 	const char *wpaths[] = { "/sbin", NULL };
 
-	if (tame("stdio rpath", wpaths) != 0)
+	if (pledge("stdio rpath", wpaths) != 0)
 		_exit(errno);
 }
 
@@ -270,7 +270,7 @@ main(int argc, char *argv[])
 	/* kill under proc is allowed */
 	start_test(&ret, "proc", NULL, test_kill);
 
-	/* tests TAME_SELF for permitted syscalls */
+	/* tests PLEDGE_SELF for permitted syscalls */
 	start_test(&ret, "malloc",  NULL, test_allowed_syscalls);
 	start_test(&ret, "rw",      NULL, test_allowed_syscalls);
 	start_test(&ret, "stdio",   NULL, test_allowed_syscalls);
@@ -282,7 +282,7 @@ main(int argc, char *argv[])
 	start_test(&ret, "dns",     NULL, test_allowed_syscalls);
 	start_test(&ret, "getpw",   NULL, test_allowed_syscalls);
 
-	/* tests req without TAME_SELF for "permitted syscalls" */
+	/* tests req without PLEDGE_SELF for "permitted syscalls" */
 	// XXX it is a documentation bug
 	start_test(&ret, "cmsg",  NULL, test_allowed_syscalls);
 	start_test(&ret, "ioctl", NULL, test_allowed_syscalls);
@@ -311,21 +311,21 @@ main(int argc, char *argv[])
 	start_test1(&ret, "stdio rpath", ".", test_wpaths);
 
 	/*
-	 * test tame(2) arguments
+	 * test pledge(2) arguments
 	 */
 	/* same request */
-	start_test(&ret, "stdio rpath", NULL, test_tame);
+	start_test(&ret, "stdio rpath", NULL, test_pledge);
 	/* same request (stdio = malloc rw) */
-	start_test(&ret, "malloc rw rpath", NULL, test_tame);
+	start_test(&ret, "malloc rw rpath", NULL, test_pledge);
 	/* reduce request */
-	start_test(&ret, "stdio rpath wpath", NULL, test_tame);
+	start_test(&ret, "stdio rpath wpath", NULL, test_pledge);
 	/* reduce request (with same/other wpaths) */
-	start_test1(&ret, "stdio rpath wpath", "/sbin", test_tame);
-	start_test1(&ret, "stdio rpath wpath", "/", test_tame);
+	start_test1(&ret, "stdio rpath wpath", "/sbin", test_pledge);
+	start_test1(&ret, "stdio rpath wpath", "/", test_pledge);
 	/* add request */
-	start_test(&ret, "stdio", NULL, test_tame);
+	start_test(&ret, "stdio", NULL, test_pledge);
 	/* change request */
-	start_test(&ret, "unix", NULL, test_tame);
+	start_test(&ret, "unix", NULL, test_pledge);
 
 	/* test stat(2) */
 	start_test1(&ret, "stdio rpath", "/usr/share/man", test_stat);

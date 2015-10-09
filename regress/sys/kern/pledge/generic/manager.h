@@ -1,4 +1,4 @@
-/*	$OpenBSD: manager.h,v 1.1 2015/09/24 06:25:54 semarie Exp $ */
+/*	$OpenBSD: manager.h,v 1.1 2015/10/09 06:44:13 semarie Exp $ */
 /*
  * Copyright (c) 2015 Sebastien Marie <semarie@openbsd.org>
  *

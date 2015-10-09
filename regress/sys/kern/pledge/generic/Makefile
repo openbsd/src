@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.3 2015/09/24 06:25:54 semarie Exp $
+#	$OpenBSD: Makefile,v 1.1 2015/10/09 06:44:13 semarie Exp $
 PROG=	generic
 SRCS+=	main.c manager.c
 NOMAN=	yes
@@ -15,7 +15,7 @@ test_systrace: ${PROG}
 	systrace -A ./${PROG} | diff -I OpenBSD -u ${.CURDIR}/tests.out -
 
 regenerate: ${PROG}
-	echo '#	$$OpenBSD: Makefile,v 1.3 2015/09/24 06:25:54 semarie Exp $$' > ${.CURDIR}/tests.out
+	echo '#	$$OpenBSD: Makefile,v 1.1 2015/10/09 06:44:13 semarie Exp $$' > ${.CURDIR}/tests.out
 	./${PROG} | tee -a ${.CURDIR}/tests.out
 
 .include <bsd.regress.mk>

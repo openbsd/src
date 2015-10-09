@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 2015/09/10 11:18:34 semarie Exp $
+#	$OpenBSD: Makefile,v 1.1 2015/10/09 06:44:13 semarie Exp $
 
 SUBDIR +=	sigabrt
 SUBDIR +=	sigkill

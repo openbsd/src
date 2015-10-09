@@ -1,4 +1,4 @@
-/*	$OpenBSD: manager.c,v 1.5 2015/10/08 10:09:09 semarie Exp $ */
+/*	$OpenBSD: manager.c,v 1.1 2015/10/09 06:44:13 semarie Exp $ */
 /*
  * Copyright (c) 2015 Sebastien Marie <semarie@openbsd.org>
  *
@@ -175,7 +175,7 @@ _start_test(int *ret, const char *test_name, const char *request,
 	int i;
 
 	/* early print testname */
-	printf("test(%s): tame=", test_name);
+	printf("test(%s): pledge=", test_name);
 	if (request) {
 		printf("(\"%s\",", request);
 		if (paths) {
@@ -226,9 +226,9 @@ _start_test(int *ret, const char *test_name, const char *request,
 		/* create a new session (for kill) */
 		setsid();
 
-		/* set tame policy */
-		if (request && tame(request, paths) != 0)
-			err(errno, "tame");
+		/* set pledge policy */
+		if (request && pledge(request, paths) != 0)
+			err(errno, "pledge");
 
 		/* reset errno and launch test */
 		errno = 0;
@@ -307,7 +307,7 @@ _start_test(int *ret, const char *test_name, const char *request,
 
 		}
 
-		/* grab tamed syscall from dmesg */
+		/* grab pledged syscall from dmesg */
 		if ((signal == SIGKILL) || (signal = SIGABRT)) {
 			int syscall = grab_syscall(pid);
 			switch (syscall) {
@@ -318,11 +318,11 @@ _start_test(int *ret, const char *test_name, const char *request,
 				return;
 
 			case 0:		/* not found */
-				printf(" tamed_syscall=not_found");
+				printf(" pledged_syscall=not_found");
 				break;
 
 			default:
-				printf(" tamed_syscall=%d", syscall);
+				printf(" pledged_syscall=%d", syscall);
 			}
 		}
 	}

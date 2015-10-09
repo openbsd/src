@@ -1,0 +1,104 @@
+#	$OpenBSD: tests.out,v 1.1 2015/10/09 06:44:13 semarie Exp $
+test(test_nop): pledge=("",NULL) status=0 exit=0
+test(test_inet): pledge=("",NULL) status=9 signal=9 pledged_syscall=97
+test(test_inet): pledge=("abort",NULL) status=134 signal=6 coredump=present pledged_syscall=97
+test(test_inet): pledge=("inet",NULL) status=0 exit=0
+test(test_kill): pledge=("inet",NULL) status=9 signal=9 pledged_syscall=37
+test(test_kill): pledge=("proc",NULL) status=2 signal=2 pledged_syscall=not_found
+test(test_allowed_syscalls): pledge=("malloc",NULL) status=0 exit=0
+test(test_allowed_syscalls): pledge=("rw",NULL) status=0 exit=0
+test(test_allowed_syscalls): pledge=("stdio",NULL) status=0 exit=0
+test(test_allowed_syscalls): pledge=("rpath",NULL) status=0 exit=0
+test(test_allowed_syscalls): pledge=("wpath",NULL) status=0 exit=0
+test(test_allowed_syscalls): pledge=("tmppath",NULL) status=0 exit=0
+test(test_allowed_syscalls): pledge=("inet",NULL) status=0 exit=0
+test(test_allowed_syscalls): pledge=("unix",NULL) status=0 exit=0
+test(test_allowed_syscalls): pledge=("dns",NULL) status=0 exit=0
+test(test_allowed_syscalls): pledge=("getpw",NULL) status=0 exit=0
+test(test_allowed_syscalls): pledge=("cmsg",NULL) status=9 signal=9 pledged_syscall=89
+test(test_allowed_syscalls): pledge=("ioctl",NULL) status=9 signal=9 pledged_syscall=89
+test(test_allowed_syscalls): pledge=("proc",NULL) status=9 signal=9 pledged_syscall=89
+test(test_allowed_syscalls): pledge=("cpath",NULL) status=9 signal=9 pledged_syscall=89
+test(test_allowed_syscalls): pledge=("abort",NULL) status=134 signal=6 coredump=present pledged_syscall=89
+test(test_allowed_syscalls): pledge=("fattr",NULL) status=9 signal=9 pledged_syscall=89
+test(test_rpath): pledge=("rpath",NULL) status=0 exit=0
+test(test_wpath): pledge=("wpath",NULL) status=0 exit=0
+test(test_cpath): pledge=("cpath",NULL) status=0 exit=0
+test(test_wpaths): pledge=("stdio rpath",NULL)
+ open_close("/etc/passwd") fd=3 errno=0
+ open_close("generic") fd=3 errno=0
+ open_close("../../../../../../../../../../../../../../../etc/passwd") fd=3 errno=0
+ open_close("/nonexistent") fd=-1 errno=2
+ status=0 exit=0
+test(test_wpaths): pledge=("stdio rpath",{NULL})
+ open_close("/etc/passwd") fd=-1 errno=2
+ open_close("generic") fd=-1 errno=2
+ open_close("../../../../../../../../../../../../../../../etc/passwd") fd=-1 errno=2
+ open_close("/nonexistent") fd=-1 errno=2
+ status=0 exit=0
+test(test_wpaths): pledge=("stdio rpath",{"/",NULL})
+ open_close("/etc/passwd") fd=3 errno=0
+ open_close("generic") fd=3 errno=0
+ open_close("../../../../../../../../../../../../../../../etc/passwd") fd=3 errno=0
+ open_close("/nonexistent") fd=-1 errno=2
+ status=0 exit=0
+test(test_wpaths): pledge=("stdio rpath",{"/etc",NULL})
+ open_close("/etc/passwd") fd=3 errno=0
+ open_close("generic") fd=-1 errno=2
+ open_close("../../../../../../../../../../../../../../../etc/passwd") fd=3 errno=0
+ open_close("/nonexistent") fd=-1 errno=2
+ status=0 exit=0
+test(test_wpaths): pledge=("stdio rpath",{"/etc/",NULL})
+ open_close("/etc/passwd") fd=3 errno=0
+ open_close("generic") fd=-1 errno=2
+ open_close("../../../../../../../../../../../../../../../etc/passwd") fd=3 errno=0
+ open_close("/nonexistent") fd=-1 errno=2
+ status=0 exit=0
+test(test_wpaths): pledge=("stdio rpath",{"/etc/passwd",NULL})
+ open_close("/etc/passwd") fd=3 errno=0
+ open_close("generic") fd=-1 errno=2
+ open_close("../../../../../../../../../../../../../../../etc/passwd") fd=3 errno=0
+ open_close("/nonexistent") fd=-1 errno=2
+ status=0 exit=0
+test(test_wpaths): pledge=("stdio rpath",{"/bin",NULL})
+ open_close("/etc/passwd") fd=-1 errno=2
+ open_close("generic") fd=-1 errno=2
+ open_close("../../../../../../../../../../../../../../../etc/passwd") fd=-1 errno=2
+ open_close("/nonexistent") fd=-1 errno=2
+ status=0 exit=0
+test(test_wpaths): pledge=("stdio rpath",{"generic",NULL})
+ open_close("/etc/passwd") fd=-1 errno=2
+ open_close("generic") fd=3 errno=0
+ open_close("../../../../../../../../../../../../../../../etc/passwd") fd=-1 errno=2
+ open_close("/nonexistent") fd=-1 errno=2
+ status=0 exit=0
+test(test_wpaths): pledge=("stdio rpath",{"",NULL})
+ open_close("/etc/passwd") fd=-1 errno=2
+ open_close("generic") fd=3 errno=0
+ open_close("../../../../../../../../../../../../../../../etc/passwd") fd=-1 errno=2
+ open_close("/nonexistent") fd=-1 errno=2
+ status=0 exit=0
+test(test_wpaths): pledge=("stdio rpath",{".",NULL})
+ open_close("/etc/passwd") fd=-1 errno=2
+ open_close("generic") fd=3 errno=0
+ open_close("../../../../../../../../../../../../../../../etc/passwd") fd=-1 errno=2
+ open_close("/nonexistent") fd=-1 errno=2
+ status=0 exit=0
+test(test_pledge): pledge=("stdio rpath",NULL) status=0 exit=0
+test(test_pledge): pledge=("malloc rw rpath",NULL) status=0 exit=0
+test(test_pledge): pledge=("stdio rpath wpath",NULL) status=0 exit=0
+test(test_pledge): pledge=("stdio rpath wpath",{"/sbin",NULL}) status=256 exit=1 (errno: "Operation not permitted")
+test(test_pledge): pledge=("stdio rpath wpath",{"/",NULL}) status=256 exit=1 (errno: "Operation not permitted")
+test(test_pledge): pledge=("stdio",NULL) status=256 exit=1 (errno: "Operation not permitted")
+test(test_pledge): pledge=("unix",NULL) status=256 exit=1 (errno: "Operation not permitted")
+test(test_stat): pledge=("stdio rpath",{"/usr/share/man",NULL})
+ stat("/usr/share/man/man8/afterboot.8"): realpath=failed(2) uid=0 gid=7 mode=100444
+ stat("/usr/share/man/man8/"): realpath=failed(2) uid=0 gid=0 mode=40755
+ stat("/usr/share/man"): realpath=failed(2) uid=0 gid=0 mode=40755
+ stat("/usr/share"): realpath=failed(2) errno=2
+ stat("/usr"): realpath="/usr" errno=2
+ stat("/"): realpath="/" errno=2
+ stat("/usr/bin/gzip"): realpath=failed(2) errno=2
+ status=0 exit=0
+test(test_mmap): pledge=("rpath malloc prot_exec",{"/dev/zero",NULL}) status=0 exit=0
+test(test_mmap): pledge=("rpath malloc",{"/dev/zero",NULL}) status=9 signal=9 pledged_syscall=197

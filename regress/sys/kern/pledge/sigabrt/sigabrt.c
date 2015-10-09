@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigabrt.c,v 1.3 2015/09/10 11:16:08 semarie Exp $ */
+/*	$OpenBSD: sigabrt.c,v 1.1 2015/10/09 06:44:13 semarie Exp $ */
 /*
  * Copyright (c) 2015 Sebastien Marie <semarie@openbsd.org>
  *
@@ -15,6 +15,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <signal.h>
@@ -36,9 +37,10 @@ main(int argc, char *argv[])
 	printf("permitted STDIO\n");
 	fflush(stdout);
 
-	tame("abort", NULL);
+	if (pledge("abort", NULL) == -1)
+		err(EXIT_FAILURE, "pledge");
 
-	/* this will triggered tame_fail() */
+	/* this will triggered pledge_fail() */
 	printf("forbidden STDIO 1\n");
 
 	/* shouldn't continue */

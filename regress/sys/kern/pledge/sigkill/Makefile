@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1 2015/07/27 18:03:36 semarie Exp $
+#	$OpenBSD: Makefile,v 1.1 2015/10/09 06:44:13 semarie Exp $
 PROG=	sigkill
 NOMAN=	yes
 
