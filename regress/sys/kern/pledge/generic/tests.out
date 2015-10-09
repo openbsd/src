@@ -1,4 +1,4 @@
-#	$OpenBSD: tests.out,v 1.1 2015/10/09 06:44:13 semarie Exp $
+#	$OpenBSD: tests.out,v 1.2 2015/10/09 11:38:05 semarie Exp $
 test(test_nop): pledge=("",NULL) status=0 exit=0
 test(test_inet): pledge=("",NULL) status=9 signal=9 pledged_syscall=97
 test(test_inet): pledge=("abort",NULL) status=134 signal=6 coredump=present pledged_syscall=97
@@ -102,3 +102,4 @@ test(test_stat): pledge=("stdio rpath",{"/usr/share/man",NULL})
  status=0 exit=0
 test(test_mmap): pledge=("rpath malloc prot_exec",{"/dev/zero",NULL}) status=0 exit=0
 test(test_mmap): pledge=("rpath malloc",{"/dev/zero",NULL}) status=9 signal=9 pledged_syscall=197
+test(test_request_tty): pledge=skip status=0 exit=0

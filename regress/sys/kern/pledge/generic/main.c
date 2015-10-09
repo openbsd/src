@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.1 2015/10/09 06:44:13 semarie Exp $ */
+/*	$OpenBSD: main.c,v 1.2 2015/10/09 11:38:05 semarie Exp $ */
 /*
  * Copyright (c) 2015 Sebastien Marie <semarie@openbsd.org>
  *
@@ -36,6 +36,8 @@
 #include <unistd.h>
 
 #include "manager.h"
+
+void test_request_tty(void);
 
 static void
 test_nop()
@@ -333,6 +335,9 @@ main(int argc, char *argv[])
 	/* mmap */
 	start_test1(&ret, "rpath malloc prot_exec", "/dev/zero", test_mmap);
 	start_test1(&ret, "rpath malloc", "/dev/zero", test_mmap);
+
+	/* tty */
+	start_test(&ret, NULL, NULL, test_request_tty);
 
 	return (ret);
 }

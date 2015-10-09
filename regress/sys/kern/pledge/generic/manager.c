@@ -1,4 +1,4 @@
-/*	$OpenBSD: manager.c,v 1.1 2015/10/09 06:44:13 semarie Exp $ */
+/*	$OpenBSD: manager.c,v 1.2 2015/10/09 11:38:05 semarie Exp $ */
 /*
  * Copyright (c) 2015 Sebastien Marie <semarie@openbsd.org>
  *
@@ -186,7 +186,7 @@ _start_test(int *ret, const char *test_name, const char *request,
 		} else
 			printf("NULL)");
 	} else
-		printf("not-called");
+		printf("skip");
 	
 	/* unlink previous coredump (if exists) */
 	if (clear_coredump(ret, test_name) == -1)
