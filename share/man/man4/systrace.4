@@ -1,4 +1,4 @@
-.\"	$OpenBSD: systrace.4,v 1.23 2015/09/26 17:16:10 jmc Exp $
+.\"	$OpenBSD: systrace.4,v 1.24 2015/10/09 07:39:56 deraadt Exp $
 .\"
 .\" Copyright (c) 2002, 2003 CubeSoft Communications, Inc.
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" IN ANY WAY OUT OF THE USE OF THIS SOFTWARE EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 26 2015 $
+.Dd $Mdocdate: October 9 2015 $
 .Dt SYSTRACE 4
 .Os
 .Sh NAME
@@ -488,5 +488,5 @@ fundamental process operations, the traced process will block forever.
 It is not possible to
 .Nm
 a
-.Xr tame 2
+.Xr pledge 2
 program.
