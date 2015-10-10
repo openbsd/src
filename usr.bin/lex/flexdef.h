@@ -1,4 +1,4 @@
-/*	$OpenBSD: flexdef.h,v 1.7 2004/02/03 21:20:17 espie Exp $	*/
+/*	$OpenBSD: flexdef.h,v 1.8 2015/10/10 05:47:54 deraadt Exp $	*/
 
 /* flexdef - definitions file for flex */
 
@@ -33,7 +33,7 @@
  * PURPOSE.
  */
 
-/* @(#) $Header: /home/cvs/src/usr.bin/lex/flexdef.h,v 1.7 2004/02/03 21:20:17 espie Exp $ (LBL) */
+/* @(#) $Header: /home/cvs/src/usr.bin/lex/flexdef.h,v 1.8 2015/10/10 05:47:54 deraadt Exp $ (LBL) */
 
 #include <stdio.h>
 #include <ctype.h>
@@ -66,6 +66,7 @@
 
 #ifdef STDC_HEADERS
 #include <stdlib.h>
+#include <unistd.h>
 #else
 #ifdef HAVE_MALLOC_H
 #include <malloc.h>
