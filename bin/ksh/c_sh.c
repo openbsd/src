@@ -1,4 +1,4 @@
-/*	$OpenBSD: c_sh.c,v 1.49 2015/09/18 07:28:24 nicm Exp $	*/
+/*	$OpenBSD: c_sh.c,v 1.50 2015/10/10 00:10:07 deraadt Exp $	*/
 
 /*
  * built-in Bourne commands
@@ -817,6 +817,7 @@ c_exec(char **wp)
 	return 0;
 }
 
+#ifdef MKNOD
 static int
 c_mknod(char **wp)
 {
@@ -870,6 +871,7 @@ usage:
 	bi_errorf("usage: mknod [-m mode] name p");
 	return 1;
 }
+#endif /* MKNOD */
 
 static int
 c_suspend(char **wp)
@@ -929,7 +931,9 @@ const struct builtin shbuiltins [] = {
 	{"ulimit", c_ulimit},
 	{"+umask", c_umask},
 	{"*=unset", c_unset},
+#ifdef MKNOD
 	{"mknod", c_mknod},
+#endif
 	{"suspend", c_suspend},
 	{NULL, NULL}
 };
