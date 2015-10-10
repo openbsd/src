@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.3 2015/10/05 01:59:33 renato Exp $ */
+/*	$OpenBSD: rde.c,v 1.4 2015/10/10 05:12:33 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -106,6 +106,9 @@ rde(struct eigrpd_conf *xconf, int pipe_parent2rde[2], int pipe_eigrpe2rde[2],
 	    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||
 	    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
 		fatal("can't drop privileges");
+
+	if (pledge("stdio", NULL) == -1)
+		fatal("pledge");
 
 	event_init();
 

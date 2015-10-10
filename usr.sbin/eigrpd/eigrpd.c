@@ -1,4 +1,4 @@
-/*	$OpenBSD: eigrpd.c,v 1.1 2015/10/02 04:26:47 renato Exp $ */
+/*	$OpenBSD: eigrpd.c,v 1.2 2015/10/10 05:12:33 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -274,6 +274,9 @@ main(int argc, char *argv[])
 	if (kr_init(!(eigrpd_conf->flags & EIGRPD_FLAG_NO_FIB_UPDATE),
 	    eigrpd_conf->rdomain) == -1)
 		fatalx("kr_init failed");
+
+	if (pledge("stdio proc", NULL) == -1)
+		fatal("pledge");
 
 	event_dispatch();
 
