@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.206 2015/10/09 01:10:27 deraadt Exp $	*/
+/*	$OpenBSD: proc.h,v 1.207 2015/10/10 14:46:15 deraadt Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -331,8 +331,9 @@ struct proc {
 #define TMN_RPATH	0x00000001
 #define TMN_WPATH	0x00000002
 #define TMN_CPATH	0x00000004
-#define TMN_FATTR	0x00000008
-#define TMN_COREDUMP	0x00000010
+#define TMN_XPATH	0x00000008
+#define TMN_FATTR	0x00000010
+#define TMN_COREDUMP	0x00000020
 	int	p_pledgeafter;
 #define TMA_YPLOCK	0x00000001
 #define TMA_DNSRESOLV	0x00000002

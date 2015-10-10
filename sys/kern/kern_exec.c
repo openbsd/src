@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.168 2015/10/09 01:10:27 deraadt Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.169 2015/10/10 14:46:15 deraadt Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -280,6 +280,7 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 	 * Mark this process as "leave me alone, I'm execing".
 	 */
 	atomic_setbits_int(&pr->ps_flags, PS_INEXEC);
+	p->p_pledgenote = TMN_XPATH;
 
 #if NSYSTRACE > 0
 	if (ISSET(p->p_flag, P_SYSTRACE)) {

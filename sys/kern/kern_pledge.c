@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.6 2015/10/09 23:55:03 deraadt Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.7 2015/10/10 14:46:15 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -512,6 +512,11 @@ pledge_namei(struct proc *p, char *origpath)
 	if ((p->p_pledgenote & TMN_CPATH) &&
 	    ((p->p_p->ps_pledge & PLEDGE_CPATH) == 0))
 		return (pledge_fail(p, EPERM, PLEDGE_CPATH));
+
+	/* Doing a permitted execve() */
+	if ((p->p_pledgenote & TMN_XPATH) &&
+	    (p->p_p->ps_pledge & PLEDGE_EXEC))
+		return (0);
 
 	if ((p->p_pledgenote & TMN_WPATH) &&
 	    (p->p_p->ps_pledge & PLEDGE_WPATH) == 0)
