@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.150 2015/10/06 18:30:43 schwarze Exp $ */
+/*	$OpenBSD: main.c,v 1.151 2015/10/10 13:20:25 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2012, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -279,6 +279,11 @@ main(int argc, char *argv[])
 		}
 	}
 
+	if (outmode == OUTMODE_FLN ||
+	    outmode == OUTMODE_LST ||
+	    !isatty(STDOUT_FILENO))
+		use_pager = 0;
+
 	/* Parse arguments. */
 
 	if (argc > 0) {
@@ -398,9 +403,6 @@ main(int argc, char *argv[])
 
 	if (search.argmode == ARG_FILE && ! moptions(&options, auxpaths))
 		return (int)MANDOCLEVEL_BADARG;
-
-	if (use_pager && ! isatty(STDOUT_FILENO))
-		use_pager = 0;
 
 	curp.mchars = mchars_alloc();
 	curp.mp = mparse_alloc(options, curp.wlevel, mmsg,
