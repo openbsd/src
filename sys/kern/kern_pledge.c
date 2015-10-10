@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.9 2015/10/10 16:35:08 deraadt Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.10 2015/10/10 19:15:53 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -89,6 +89,7 @@ const u_int pledge_syscalls[SYS_MAXSYSCALL] = {
 	[SYS_sendsyslog] = PLEDGE_SELF,
 	[SYS_nanosleep] = PLEDGE_SELF,
 	[SYS_sigprocmask] = PLEDGE_SELF,
+	[SYS_sigsuspend] = PLEDGE_SELF,
 	[SYS_sigaction] = PLEDGE_SELF,
 	[SYS_sigreturn] = PLEDGE_SELF,
 	[SYS_sigpending] = PLEDGE_SELF,
@@ -138,7 +139,6 @@ const u_int pledge_syscalls[SYS_MAXSYSCALL] = {
 	[SYS_vfork] = PLEDGE_PROC,
 	[SYS_kill] = PLEDGE_SELF | PLEDGE_PROC,	
 	[SYS_setpgid] = PLEDGE_PROC,
-	[SYS_sigsuspend] = PLEDGE_PROC,
 	[SYS_setrlimit] = PLEDGE_PROC,
 
 	[SYS_execve] = PLEDGE_EXEC,
