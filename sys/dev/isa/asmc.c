@@ -1,4 +1,4 @@
-/*	$OpenBSD: asmc.c,v 1.8 2015/10/04 20:00:50 jung Exp $	*/
+/*	$OpenBSD: asmc.c,v 1.9 2015/10/10 11:57:20 jung Exp $	*/
 /*
  * Copyright (c) 2015 Joerg Jung <jung@openbsd.org>
  *
@@ -467,7 +467,7 @@ asmc_lights(struct asmc_softc *sc, uint8_t *n)
 		s = 0;
 		snprintf(key, sizeof(key), "ALV%d", i);
 		if (asmc_try(sc, ASMC_READ, key, buf, 6) &&
-		    (s = asmc_status(sc) != ASMC_NOTFOUND)) {
+		    (s = asmc_status(sc)) != ASMC_NOTFOUND) {
 			printf(", read %s failed (0x%x)", key, s);
 			return 1;
 		}
