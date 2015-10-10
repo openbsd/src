@@ -1,4 +1,4 @@
-/*	$OpenBSD: pflogd.c,v 1.51 2015/02/07 02:09:13 deraadt Exp $	*/
+/*	$OpenBSD: pflogd.c,v 1.52 2015/10/10 22:36:06 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001 Theo de Raadt
@@ -561,8 +561,9 @@ void
 log_pcap_stats(void)
 {
 	struct pcap_stat pstat;
-	if (pcap_stats(hpcap, &pstat) < 0)
-		logmsg(LOG_WARNING, "Reading stats: %s", pcap_geterr(hpcap));
+
+	if (priv_pcap_stats(&pstat) < 0)
+		logmsg(LOG_WARNING, "Reading stats: error");
 	else
 		logmsg(LOG_NOTICE,
 			"%u packets received, %u/%u dropped (kernel/pflogd)",
@@ -654,6 +655,12 @@ main(int argc, char **argv)
 		logmsg(LOG_ERR, "unable to privsep");
 		exit(1);
 	}
+
+	/*
+	 * XXX needs wpath cpath rpath, for try_reset_dump() ?
+	 */
+	if (pledge("stdio rpath wpath cpath unix recvfd", NULL) == -1)
+		err(1, "pledge");
 
 	setproctitle("[initializing]");
 	/* Process is now unprivileged and inside a chroot */
