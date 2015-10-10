@@ -1,4 +1,4 @@
-/*	$OpenBSD: apply.c,v 1.26 2013/11/25 18:03:17 deraadt Exp $	*/
+/*	$OpenBSD: apply.c,v 1.27 2015/10/10 17:48:34 deraadt Exp $	*/
 /*	$NetBSD: apply.c,v 1.3 1995/03/25 03:38:23 glass Exp $	*/
 
 /*-
@@ -53,6 +53,9 @@ main(int argc, char *argv[])
 	int ch, clen, debug, i, l, magic, n, nargs, rval;
 	char *c, *c2, *cmd, *p, *q;
 	size_t len;
+
+	if (pledge("stdio proc exec", NULL) == -1)
+		err(1, "pledge");
 
 	debug = 0;
 	magic = '%';		/* Default magic char is `%'. */
