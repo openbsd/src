@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.56 2014/06/30 04:25:11 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.57 2015/10/10 07:52:30 stsp Exp $
 #
 #  Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994
 # 	The Regents of the University of California.  All rights reserved.
@@ -30,7 +30,7 @@ CFLAGS+=-I${.CURDIR}/../../lib/libpcap
 
 CFLAGS+=-DCSLIP -DPPP -DHAVE_FDDI -DETHER_SERVICE -DRETSIGTYPE=void -DHAVE_NET_SLIP_H -DHAVE_ETHER_NTOHOST -DINET6
 
-LDADD+=	-lpcap -ll -lcrypto
+LDADD+=	-lpcap -ll -lcrypto -lm
 DPADD+=	${LIBL} ${LIBPCAP} ${LIBCRYPTO}
 
 SRCS=	tcpdump.c addrtoname.c privsep.c privsep_fdpass.c privsep_pcap.c \

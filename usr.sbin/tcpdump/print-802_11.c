@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-802_11.c,v 1.24 2015/07/19 02:49:54 stsp Exp $	*/
+/*	$OpenBSD: print-802_11.c,v 1.25 2015/10/10 07:52:30 stsp Exp $	*/
 
 /*
  * Copyright (c) 2005 Reyk Floeter <reyk@openbsd.org>
@@ -33,6 +33,7 @@
 #include <pcap.h>
 #include <stdio.h>
 #include <string.h>
+#include <math.h>
 
 #include "addrtoname.h"
 #include "interface.h"
@@ -279,8 +280,11 @@ ieee80211_print_country(u_int8_t *data, u_int len)
 void
 ieee80211_print_htcaps(u_int8_t *data, u_int len)
 {
-	u_int16_t htcaps;
+	uint16_t htcaps, rxrate;
 	int smps, rxstbc;
+	uint8_t ampdu, txmcs;
+	int i;
+	uint8_t *rxmcs;
 
 	if (len < 2) {
 		ieee80211_print_element(data, len);
@@ -347,6 +351,83 @@ ieee80211_print_htcaps(u_int8_t *data, u_int len)
 	/* L-SIG TXOP protection */
 	if (htcaps & IEEE80211_HTCAP_LSIGTXOPPROT)
 		printf(",L-SIG TXOP prot");
+
+	if (len < 3) {
+		printf(">");
+		return;
+	}
+
+	/* A-MPDU parameters. */
+	ampdu = data[2];
+
+	/* A-MPDU length exponent */
+	if ((ampdu & IEEE80211_AMPDU_PARAM_LE) >= 0 &&
+	    (ampdu & IEEE80211_AMPDU_PARAM_LE) <= 3)
+		printf(",A-MPDU max %d",
+		    (int)(exp2f(13 + (ampdu & IEEE80211_AMPDU_PARAM_LE)) - 1));
+
+	/* A-MPDU start spacing */
+	if (ampdu & IEEE80211_AMPDU_PARAM_SS) {
+		float ss;
+
+		switch ((ampdu & IEEE80211_AMPDU_PARAM_SS) >> 2) {
+		case 1:
+			ss = 0.25;
+			break;
+		case 2:
+			ss = 0.5;
+			break;
+		case 3:
+			ss = 1;
+			break;
+		case 4:
+			ss = 2;
+			break;
+		case 5:
+			ss = 4;
+			break;
+		case 6:
+			ss = 8;
+			break;
+		case 7:
+			ss = 16;
+			break;
+		default:
+			ss = 0;
+			break;
+		}
+		if (ss != 0)
+			printf(",A-MPDU spacing %.2fus", ss);
+	}
+
+	if (len < 21) {
+		printf(">");
+		return;
+	}
+
+	/* Supported MCS set. */
+	printf(",RxMCS 0x");
+	rxmcs = &data[3];
+	for (i = 0; i < 10; i++)
+		printf("%02x", rxmcs[i]);
+
+	/* Max MCS Rx rate (a value of 0 means "not specified"). */
+	rxrate = ((data[13] | (data[14]) << 8) & IEEE80211_MCS_RX_RATE_HIGH);
+	if (rxrate)
+		printf(",RxMaxrate %huMb/s", rxrate);
+
+	/* Tx MCS Set */
+	txmcs = data[15];
+	if (txmcs & IEEE80211_TX_MCS_SET_DEFINED) {
+		if (txmcs & IEEE80211_TX_RX_MCS_NOT_EQUAL) {
+			/* Number of spatial Tx streams. */
+			printf(",%d Tx streams",
+			     1 + ((txmcs & IEEE80211_TX_SPATIAL_STREAMS) >> 2));
+			/* Transmit unequal modulation supported. */
+			if (txmcs & IEEE80211_TX_UNEQUAL_MODULATION)
+				printf(",UEQM");
+		}
+	}
 
 	printf(">");
 }
