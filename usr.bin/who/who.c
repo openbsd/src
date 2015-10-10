@@ -1,4 +1,4 @@
-/*	$OpenBSD: who.c,v 1.23 2015/10/09 01:37:09 deraadt Exp $	*/
+/*	$OpenBSD: who.c,v 1.24 2015/10/10 22:06:41 deraadt Exp $	*/
 /*	$NetBSD: who.c,v 1.4 1994/12/07 04:28:49 jtc Exp $	*/
 
 /*
@@ -74,7 +74,7 @@ main(int argc, char *argv[])
 
 	setlocale(LC_ALL, "");
 
-	if (pledge("stdio getpw rpath tty", NULL) == -1)
+	if (pledge("stdio rpath getpw tty", NULL) == -1)
 		err(1, "pledge");
 
 	mytty = ttyname(0);
@@ -290,7 +290,7 @@ file(char *name)
 		/* NOTREACHED */
 	}
 	if (show_term || show_idle) {
-		if (pledge("stdio getpw rpath", NULL) == -1)
+		if (pledge("stdio rpath getpw", NULL) == -1)
 			err(1, "pledge");
 	} else {
 		if (pledge("stdio getpw", NULL) == -1)
