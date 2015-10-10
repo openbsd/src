@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.8 2015/10/10 14:48:03 deraadt Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.9 2015/10/10 16:35:08 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -1074,11 +1074,14 @@ pledge_ioctl_check(struct proc *p, long com, void *v)
 			if (fp->f_type == DTYPE_VNODE && (vp->v_flag & VISTTY))
 				return (0);
 			return (ENOTTY);
-		case TIOCGPGRP:
-		case TIOCGWINSZ:	/* various programs */
 #if notyet
 		case TIOCSTI:		/* ksh? csh? */
+			if (fp->f_type == DTYPE_VNODE && (vp->v_flag & VISTTY))
+				return (0);
+			break;
 #endif
+		case TIOCGPGRP:
+		case TIOCGWINSZ:	/* various programs */
 		case TIOCSBRK:		/* cu */
 		case TIOCCDTR:		/* cu */
 		case TIOCSETA:		/* cu, ... */

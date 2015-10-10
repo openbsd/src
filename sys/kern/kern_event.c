@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.63 2015/10/09 11:47:30 deraadt Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.64 2015/10/10 16:35:08 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
