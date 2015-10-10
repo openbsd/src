@@ -1,4 +1,4 @@
-/*	$OpenBSD: getent.c,v 1.9 2015/01/16 06:40:08 deraadt Exp $	*/
+/*	$OpenBSD: getent.c,v 1.10 2015/10/10 05:26:57 doug Exp $	*/
 /*	$NetBSD: getent.c,v 1.7 2005/08/24 14:31:02 ginsbach Exp $	*/
 
 /*-
@@ -34,6 +34,7 @@
 #include <sys/socket.h>
 
 #include <ctype.h>
+#include <err.h>
 #include <errno.h>
 #include <grp.h>
 #include <limits.h>
@@ -75,17 +76,18 @@ enum {
 static struct getentdb {
 	const char	*name;
 	int		(*fn)(int, char *[]);
+	const char	*pledge;
 } databases[] = {
-	{	"ethers",	ethers,		},
-	{	"group",	group,		},
-	{	"hosts",	hosts,		},
-	{	"passwd",	passwd,		},
-	{	"protocols",	protocols,	},
-	{	"rpc",		rpc,		},
-	{	"services",	services,	},
-	{	"shells",	shells,		},
+	{	"ethers",	ethers,		"stdio rpath"	},
+	{	"group",	group,		"stdio rpath"	},
+	{	"hosts",	hosts,		"stdio dns"	},
+	{	"passwd",	passwd,		"stdio rpath"	},
+	{	"protocols",	protocols,	"stdio rpath"	},
+	{	"rpc",		rpc,		"stdio rpath"	},
+	{	"services",	services,	"stdio rpath"	},
+	{	"shells",	shells,		"stdio rpath"	},
 
-	{	NULL,		NULL,		},
+	{	NULL,		NULL,				},
 };
 
 int
@@ -93,10 +95,16 @@ main(int argc, char *argv[])
 {
 	struct getentdb	*curdb;
 
+	if (pledge("stdio dns rpath", NULL) == -1)
+		err(1, "pledge");
+
 	if (argc < 2)
 		usage();
 	for (curdb = databases; curdb->name != NULL; curdb++) {
 		if (strcmp(curdb->name, argv[1]) == 0) {
+			if (pledge(curdb->pledge, NULL) == -1)
+				err(1, "pledge");
+
 			exit(curdb->fn(argc, argv));
 			break;
 		}
