@@ -1,4 +1,4 @@
-/*	$OpenBSD: env.c,v 1.15 2014/03/08 00:09:20 schwarze Exp $	*/
+/*	$OpenBSD: env.c,v 1.16 2015/10/10 21:19:14 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -48,6 +48,9 @@ main(int argc, char *argv[])
 	int ch;
 
 	setlocale(LC_ALL, "");
+
+	if (pledge("stdio exec", NULL) == -1)
+		err(1, "pledge");
 
 	while ((ch = getopt(argc, argv, "i-")) != -1)
 		switch(ch) {
