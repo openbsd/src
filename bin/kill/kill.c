@@ -1,4 +1,4 @@
-/*	$OpenBSD: kill.c,v 1.12 2014/03/23 12:44:00 millert Exp $	*/
+/*	$OpenBSD: kill.c,v 1.13 2015/10/10 21:15:25 doug Exp $	*/
 /*	$NetBSD: kill.c,v 1.11 1995/09/07 06:30:27 jtc Exp $	*/
 
 /*
@@ -37,6 +37,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 extern	char *__progname;
 
@@ -50,6 +51,9 @@ main(int argc, char *argv[])
 {
 	int errors, numsig, pid;
 	char *ep;
+
+	if (pledge("stdio proc", NULL) == -1)
+		err(1, "pledge");
 
 	if (argc < 2)
 		usage();
