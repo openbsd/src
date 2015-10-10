@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.118 2015/10/06 06:04:46 gilles Exp $	*/
+/*	$OpenBSD: util.c,v 1.119 2015/10/10 11:42:49 jung Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Markus Friedl.  All rights reserved.
@@ -718,27 +718,20 @@ getmailname(char *hostname, size_t len)
 {
 	struct addrinfo	hints, *res = NULL;
 	FILE	*fp;
-	char	*buf, *lbuf = NULL;
-	size_t	 buflen;
+	char	*buf = NULL;
+	size_t	 bufsz = 0;
+	ssize_t	 buflen;
 	int	 error, ret = 0;
 
 	/* First, check if we have MAILNAME_FILE */
 	if ((fp = fopen(MAILNAME_FILE, "r")) == NULL)
 		goto nomailname;
 
-	if ((buf = fgetln(fp, &buflen)) == NULL)
+	if ((buflen = getline(&buf, &bufsz, fp)) == -1)
 		goto end;
 
-	if (buf[buflen-1] == '\n')
+	if (buf[buflen - 1] == '\n')
 		buf[buflen - 1] = '\0';
-	else {
-		if ((lbuf = calloc(buflen + 1, 1)) == NULL) {
-			log_warn("calloc");
-			fatal("exiting");
-		}
-		memcpy(lbuf, buf, buflen);
-		buf = lbuf;
-	}
 
 	if (strlcpy(hostname, buf, len) >= len)
 		fprintf(stderr, MAILNAME_FILE " entry too long");
@@ -775,7 +768,7 @@ nomailname:
 	ret = 1;
 
 end:
-	free(lbuf);
+	free(buf);
 	if (res)
 		freeaddrinfo(res);
 	if (fp)

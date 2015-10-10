@@ -1,4 +1,4 @@
-/* $OpenBSD: delivery_lmtp.c,v 1.7 2015/01/20 17:37:54 deraadt Exp $ */
+/* $OpenBSD: delivery_lmtp.c,v 1.8 2015/10/10 11:42:49 jung Exp $ */
 
 /*
  * Copyright (c) 2013 Ashish SHUKLA <ashish.is@lostca.se>
@@ -138,12 +138,12 @@ static void
 delivery_lmtp_open(struct deliver *deliver)
 {
 	 char *buffer;
-	 char *lbuf;
 	 char lhloname[255];
 	 int s;
 	 FILE	*fp;
 	 enum lmtp_state state = LMTP_BANNER;
-	 size_t	len;
+	 size_t sz;
+	 ssize_t len;
 
 	 fp = NULL;
 
@@ -197,21 +197,15 @@ delivery_lmtp_open(struct deliver *deliver)
 		 case LMTP_DATA:
 			 if (buffer[0] != '3')
 				 errx(1, "DATA rejected: %s\n", buffer);
-			 lbuf = NULL;
-			 while ((buffer = fgetln(stdin, &len))) {
-				 if (buffer[len- 1] == '\n')
+			 buffer = NULL;
+			 sz = 0;
+			 while ((len = getline(&buffer, &sz, stdin)) != -1) {
+				 if (buffer[len - 1] == '\n')
 					 buffer[len - 1] = '\0';
-				 else {
-					 if ((lbuf = malloc(len + 1)) == NULL)
-						 err(1, NULL);
-					 memcpy(lbuf, buffer, len);
-					 lbuf[len] = '\0';
-					 buffer = lbuf;
-				 }
 				 fprintf(fp, "%s%s\r\n",
 				     *buffer == '.' ? "." : "", buffer);
 			 }
-			 free(lbuf);
+			 free(buffer);
 			 fprintf(fp, ".\r\n");
 			 state = LMTP_QUIT;
 			 break;
