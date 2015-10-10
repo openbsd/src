@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211.h,v 1.52 2015/07/14 21:13:12 stsp Exp $	*/
+/*	$OpenBSD: ieee80211.h,v 1.53 2015/10/10 07:51:47 stsp Exp $	*/
 /*	$NetBSD: ieee80211.h,v 1.6 2004/04/30 23:51:53 dyoung Exp $	*/
 
 /*-
@@ -570,6 +570,29 @@ enum {
 #define IEEE80211_HTCAP_PSMP		0x00002000
 #define IEEE80211_HTCAP_40INTOLERANT	0x00004000
 #define IEEE80211_HTCAP_LSIGTXOPPROT	0x00008000
+
+/*
+ * HT A-MPDU parameters (see 802.11-2012 8.4.2.58.3).
+ */
+#define IEEE80211_AMPDU_PARAM_LE	0x03
+#define IEEE80211_AMPDU_PARAM_SS	0x1c
+
+/*
+ * HT Supported MCS Set (see 802.11-2012 8.4.2.58.4).
+ * This field is 16 bytes in size. Bitmasks given below
+ * operate on 8 or 16 bit integer subsets of this field.
+ */
+/* Bits 0-76: Supported Rx MCS bitmask */
+/* Bits 77-79: Reserved */
+/* Bits 80-89: Highest Rx rate in units of 1MB/s */
+#define IEEE80211_MCS_RX_RATE_HIGH	0x03ff
+/* Bits 90-95: Reserved */
+/* Bits 96-100: Tx MCS set */
+#define IEEE80211_TX_MCS_SET_DEFINED		0x01
+#define IEEE80211_TX_RX_MCS_NOT_EQUAL		0x02
+#define IEEE80211_TX_SPATIAL_STREAMS		0x18
+#define IEEE80211_TX_UNEQUAL_MODULATION		0x20
+/* Bits 101-127: Reserved */
 
 /*
  * HT Extended Capabilities (see 802.11-2012 8.4.2.58.5).
