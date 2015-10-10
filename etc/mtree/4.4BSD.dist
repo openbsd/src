@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.273 2015/08/24 10:41:11 ajacoutot Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.274 2015/10/10 09:45:15 ajacoutot Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 
@@ -779,7 +779,7 @@ var
             ..
             incoming		type=dir uname=_smtpq gname=wheel mode=0700
             ..
-            offline		type=dir uname=root gname=wheel mode=1777
+            offline		type=dir uname=root gname=_smtpq mode=0770
             ..
             purge		type=dir uname=_smtpq gname=wheel mode=0700
             ..
