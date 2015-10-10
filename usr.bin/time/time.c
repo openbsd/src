@@ -1,4 +1,4 @@
-/*	$OpenBSD: time.c,v 1.20 2015/01/16 06:40:13 deraadt Exp $	*/
+/*	$OpenBSD: time.c,v 1.21 2015/10/10 14:49:23 deraadt Exp $	*/
 /*	$NetBSD: time.c,v 1.7 1995/06/27 00:34:00 jtc Exp $	*/
 
 /*
@@ -56,6 +56,8 @@ main(int argc, char *argv[])
 	struct rusage ru;
 	int exitonsig = 0;
 
+	if (pledge("stdio proc exec", NULL) == -1)
+		err(1, "pledge");
 
 	while ((ch = getopt(argc, argv, "lp")) != -1) {
 		switch(ch) {
