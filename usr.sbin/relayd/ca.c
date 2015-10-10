@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.13 2015/05/02 13:15:24 claudio Exp $	*/
+/*	$OpenBSD: ca.c,v 1.14 2015/10/10 00:16:23 benno Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -73,6 +73,9 @@ ca(struct privsep *ps, struct privsep_proc *p)
 void
 ca_init(struct privsep *ps, struct privsep_proc *p, void *arg)
 {
+	if (pledge("stdio", NULL) == -1)
+		fatal("pledge");
+
 	if (config_init(ps->ps_env) == -1)
 		fatal("failed to initialize configuration");
 
