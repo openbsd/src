@@ -1,4 +1,4 @@
-/*      $OpenBSD: cmp.c,v 1.12 2009/10/27 23:59:36 deraadt Exp $      */
+/*      $OpenBSD: cmp.c,v 1.13 2015/10/10 05:35:22 doug Exp $      */
 /*      $NetBSD: cmp.c,v 1.7 1995/09/08 03:22:56 tls Exp $      */
 
 /*
@@ -57,6 +57,9 @@ main(int argc, char *argv[])
 
 	setlocale(LC_ALL, "");
 
+	if (pledge("stdio rpath", NULL) == -1)
+		err(1, "pledge");
+
 	while ((ch = getopt(argc, argv, "ls")) != -1)
 		switch (ch) {
 		case 'l':		/* print all differences */
@@ -108,6 +111,9 @@ main(int argc, char *argv[])
 		else
 			err(ERR_EXIT, "%s", file2);
 	}
+
+	if (pledge("stdio", NULL) == -1)
+		err(1, "pledge");
 
 	skip1 = argc > 2 ? strtoq(argv[2], NULL, 0) : 0;
 	skip2 = argc == 4 ? strtoq(argv[3], NULL, 0) : 0;
