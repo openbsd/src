@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.53 2015/10/06 09:12:00 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.54 2015/10/10 19:04:57 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -1062,6 +1062,7 @@ iwm_free_rx_ring(struct iwm_softc *sc, struct iwm_rx_ring *ring)
 			    data->map->dm_mapsize, BUS_DMASYNC_POSTREAD);
 			bus_dmamap_unload(sc->sc_dmat, data->map);
 			m_freem(data->m);
+			data->m = NULL;
 		}
 		if (data->map != NULL)
 			bus_dmamap_destroy(sc->sc_dmat, data->map);
@@ -1169,6 +1170,7 @@ iwm_free_tx_ring(struct iwm_softc *sc, struct iwm_tx_ring *ring)
 			    data->map->dm_mapsize, BUS_DMASYNC_POSTWRITE);
 			bus_dmamap_unload(sc->sc_dmat, data->map);
 			m_freem(data->m);
+			data->m = NULL;
 		}
 		if (data->map != NULL)
 			bus_dmamap_destroy(sc->sc_dmat, data->map);
