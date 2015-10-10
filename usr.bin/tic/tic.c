@@ -1,4 +1,4 @@
-/*	$OpenBSD: tic.c,v 1.31 2013/11/28 18:24:55 deraadt Exp $	*/
+/*	$OpenBSD: tic.c,v 1.32 2015/10/10 14:27:43 deraadt Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998-2007,2008 Free Software Foundation, Inc.              *
@@ -46,7 +46,7 @@
 #include <dump_entry.h>
 #include <transform.h>
 
-MODULE_ID("$Id: tic.c,v 1.31 2013/11/28 18:24:55 deraadt Exp $")
+MODULE_ID("$Id: tic.c,v 1.32 2015/10/10 14:27:43 deraadt Exp $")
 
 const char *_nc_progname = "tic";
 
@@ -498,6 +498,9 @@ main(int argc, char *argv[])
     char *outdir = (char *) NULL;
     bool check_only = FALSE;
     bool suppress_untranslatable = FALSE;
+
+    if (pledge("stdio rpath wpath cpath", NULL) == -1)
+	perror("pledge");
 
     log_fp = stderr;
 
