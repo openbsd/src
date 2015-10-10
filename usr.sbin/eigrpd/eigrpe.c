@@ -1,4 +1,4 @@
-/*	$OpenBSD: eigrpe.c,v 1.3 2015/10/05 01:59:33 renato Exp $ */
+/*	$OpenBSD: eigrpe.c,v 1.4 2015/10/10 05:09:19 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -567,10 +567,6 @@ eigrpe_dispatch_rde(int fd, short event, void *bula)
 void
 eigrpe_instance_init(struct eigrp *eigrp)
 {
-	struct eigrp_iface	*ei;
-
-	TAILQ_FOREACH(ei, &eigrp->ei_list, e_entry)
-		if_init(econf, ei->iface);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.5 2015/10/10 05:07:10 renato Exp $ */
+/*	$OpenBSD: interface.c,v 1.6 2015/10/10 05:09:19 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -115,18 +115,6 @@ if_init(struct eigrpd_conf *xconf, struct iface *iface)
 {
 	struct ifreq		 ifr;
 	unsigned int		 rdomain;
-	struct eigrp_iface	*ei;
-	union eigrpd_addr	 addr;
-
-	memset(&addr, 0, sizeof(addr));
-	TAILQ_FOREACH(ei, &iface->ei_list, i_entry) {
-		/* init the dummy self neighbor */
-		ei->self = nbr_new(ei, &addr, 0, 1);
-		nbr_init(ei->self);
-
-		/* set event handlers for interface */
-		evtimer_set(&ei->hello_timer, eigrp_if_hello_timer, ei);
-	}
 
 	/* set rdomain */
 	strlcpy(ifr.ifr_name, iface->name, sizeof(ifr.ifr_name));
@@ -343,11 +331,20 @@ eigrp_if_start(struct eigrp_iface *ei)
 {
 	struct eigrp		*eigrp = ei->eigrp;
 	struct if_addr		*if_addr;
+	union eigrpd_addr	 addr;
 	struct in_addr		 addr4;
 	struct in6_addr		 addr6;
 
 	log_debug("%s: %s as %u family %s", __func__, ei->iface->name,
 	    eigrp->as, af_name(eigrp->af));
+
+	/* init the dummy self neighbor */
+	memset(&addr, 0, sizeof(addr));
+	ei->self = nbr_new(ei, &addr, 0, 1);
+	nbr_init(ei->self);
+
+	/* set event handlers for interface */
+	evtimer_set(&ei->hello_timer, eigrp_if_hello_timer, ei);
 
 	TAILQ_FOREACH(if_addr, &ei->iface->addr_list, entry) {
 		if (if_addr->af != eigrp->af)
