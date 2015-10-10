@@ -1,4 +1,4 @@
-/* $OpenBSD: tftp-proxy.c,v 1.11 2015/01/16 06:40:22 deraadt Exp $
+/* $OpenBSD: tftp-proxy.c,v 1.12 2015/10/10 23:06:32 guenther Exp $
  *
  * Copyright (c) 2005 DLS Internet Services
  * Copyright (c) 2004, 2005 Camiel Dobbelaar, <cd@sentia.nl>
@@ -246,7 +246,8 @@ main(int argc, char *argv[])
 	if (!debug && daemon(1, 0) == -1)
 		err(1, "daemon");
 
-	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, pair) == -1)
+	if (socketpair(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK, PF_UNSPEC, pair)
+	    == -1)
 		lerr(1, "socketpair");
 
 	pw = getpwnam(NOPRIV_USER);
@@ -319,9 +320,6 @@ main(int argc, char *argv[])
 
 	proxy_listener_events();
 
-	if (ioctl(pair[1], FIONBIO, &on) == -1)
-		lerr(1, "ioctl(FIONBIO)");
-
 	event_set(&child->pop_ev, pair[1], EV_READ | EV_PERSIST,
 	    unprivproc_pop, NULL);
 	event_set(&child->push_ev, pair[1], EV_WRITE,
@@ -369,9 +367,6 @@ proxy_privproc(int s, struct passwd *pw)
 		tzset();
 		logger = &syslogger;
 	}
-
-	if (ioctl(s, FIONBIO, &on) == -1)
-		lerr(1, "ioctl(FIONBIO)");
 
 	if (chroot(CHROOT_DIR) == -1)
 		lerr(1, "chroot to %s", CHROOT_DIR);
@@ -434,12 +429,10 @@ privproc_pop(int fd, short events, void *arg)
 		if (rep == NULL)
 			lerr(1, "reply calloc");
 
-		rep->fd = socket(req.src.ss_family, SOCK_DGRAM, IPPROTO_UDP);
+		rep->fd = socket(req.src.ss_family, SOCK_DGRAM | SOCK_NONBLOCK,
+		    IPPROTO_UDP);
 		if (rep->fd == -1)
 			lerr(1, "privproc socket");
-
-		if (ioctl(rep->fd, FIONBIO, &on) == -1)
-			err(1, "privproc ioctl(FIONBIO)");
 
 		if (setsockopt(rep->fd, SOL_SOCKET, SO_BINDANY,
 		    &on, sizeof(on)) == -1)
@@ -557,7 +550,8 @@ proxy_listen(const char *addr, const char *port, int family)
 		errx(1, "%s:%s: %s", addr, port, gai_strerror(error));
 
 	for (res = res0; res != NULL; res = res->ai_next) {
-		s = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
+		s = socket(res->ai_family, res->ai_socktype | SOCK_NONBLOCK,
+		    res->ai_protocol);
 		if (s == -1) {
 			cause = "socket";
 			continue;
@@ -574,9 +568,6 @@ proxy_listen(const char *addr, const char *port, int family)
 		l = calloc(1, sizeof(*l));
 		if (l == NULL)
 			err(1, "listener alloc");
-
-		if (ioctl(s, FIONBIO, &on) == -1)
-			err(1, "ioctl(FIONBIO)");
 
 		switch (res->ai_family) {
 		case AF_INET:
