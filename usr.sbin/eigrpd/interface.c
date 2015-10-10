@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.4 2015/10/10 05:03:39 renato Exp $ */
+/*	$OpenBSD: interface.c,v 1.5 2015/10/10 05:07:10 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -325,17 +325,12 @@ eigrp_if_new(struct eigrpd_conf *xconf, struct eigrp *eigrp, struct kif *kif)
 void
 eigrp_if_del(struct eigrp_iface *ei)
 {
-	struct nbr	*nbr;
-
 	RB_REMOVE(iface_id_head, &ifaces_by_id, ei);
 	TAILQ_REMOVE(&ei->eigrp->ei_list, ei, e_entry);
 	TAILQ_REMOVE(&ei->iface->ei_list, ei, i_entry);
 
 	if (ei->state == IF_STA_ACTIVE)
 		eigrp_if_reset(ei);
-
-	while ((nbr = TAILQ_FIRST(&ei->nbr_list)) != NULL)
-		nbr_del(nbr);
 
 	if (TAILQ_EMPTY(&ei->iface->ei_list))
 		if_del(ei->iface);
@@ -388,6 +383,7 @@ eigrp_if_reset(struct eigrp_iface *ei)
 	struct eigrp		*eigrp = ei->eigrp;
 	struct in_addr		 addr4;
 	struct in6_addr		 addr6;
+	struct nbr		*nbr;
 
 	log_debug("%s: %s as %u family %s", __func__, ei->iface->name,
 	    eigrp->as, af_name(eigrp->af));
@@ -412,6 +408,9 @@ eigrp_if_reset(struct eigrp_iface *ei)
 	}
 
 	eigrp_if_stop_hello_timer(ei);
+
+	while ((nbr = TAILQ_FIRST(&ei->nbr_list)) != NULL)
+		nbr_del(nbr);
 }
 
 struct eigrp_iface *
