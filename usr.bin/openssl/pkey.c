@@ -1,4 +1,4 @@
-/* $OpenBSD: pkey.c,v 1.5 2015/09/11 14:30:23 bcook Exp $ */
+/* $OpenBSD: pkey.c,v 1.6 2015/10/10 22:28:51 doug Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006
  */
@@ -78,6 +78,11 @@ pkey_main(int argc, char **argv)
 	char *passin = NULL, *passout = NULL;
 	int badarg = 0;
 	int ret = 1;
+
+	if (single_execution) {
+		if (pledge("stdio rpath wpath cpath", NULL) == -1)
+			perror("pledge");
+	}
 
 	informat = FORMAT_PEM;
 	outformat = FORMAT_PEM;

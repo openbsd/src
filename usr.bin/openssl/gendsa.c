@@ -1,4 +1,4 @@
-/* $OpenBSD: gendsa.c,v 1.4 2015/09/11 14:30:23 bcook Exp $ */
+/* $OpenBSD: gendsa.c,v 1.5 2015/10/10 22:28:51 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -84,6 +84,11 @@ gendsa_main(int argc, char **argv)
 	char *passargout = NULL, *passout = NULL;
 	BIO *out = NULL, *in = NULL;
 	const EVP_CIPHER *enc = NULL;
+
+	if (single_execution) {
+		if (pledge("stdio rpath wpath cpath", NULL) == -1)
+			perror("pledge");
+	}
 
 	argv++;
 	argc--;

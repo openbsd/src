@@ -1,4 +1,4 @@
-/* $OpenBSD: openssl.c,v 1.16 2015/10/10 20:18:30 deraadt Exp $ */
+/* $OpenBSD: openssl.c,v 1.17 2015/10/10 22:28:51 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -136,6 +136,8 @@
 #define FUNC_TYPE_PKEY          4
 #define FUNC_TYPE_MD_ALG        5
 #define FUNC_TYPE_CIPHER_ALG    6
+
+int single_execution = 0;
 
 typedef struct {
         int type;
@@ -499,6 +501,8 @@ main(int argc, char **argv)
 	fp = lh_FUNCTION_retrieve(prog, &f);
 	if (fp != NULL) {
 		argv[0] = pname;
+
+		single_execution = 1;
 		ret = fp->func(argc, argv);
 		goto end;
 	}
@@ -509,6 +513,8 @@ main(int argc, char **argv)
 	if (argc != 1) {
 		argc--;
 		argv++;
+
+		single_execution = 1;
 		ret = do_cmd(prog, argc, argv);
 		if (ret < 0)
 			ret = 0;

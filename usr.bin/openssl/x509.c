@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.c,v 1.9 2015/10/01 06:31:21 jsing Exp $ */
+/* $OpenBSD: x509.c,v 1.10 2015/10/10 22:28:51 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -197,6 +197,11 @@ x509_main(int argc, char **argv)
 	int checkend = 0, checkoffset = 0;
 	unsigned long nmflag = 0, certflag = 0;
 	const char *errstr = NULL;
+
+	if (single_execution) {
+		if (pledge("stdio rpath wpath cpath", NULL) == -1)
+			perror("pledge");
+	}
 
 	reqfile = 0;
 

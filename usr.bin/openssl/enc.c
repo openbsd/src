@@ -1,4 +1,4 @@
-/* $OpenBSD: enc.c,v 1.7 2015/09/11 14:30:23 bcook Exp $ */
+/* $OpenBSD: enc.c,v 1.8 2015/10/10 22:28:51 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -337,6 +337,11 @@ enc_main(int argc, char **argv)
 #define PROG_NAME_SIZE  39
 	char pname[PROG_NAME_SIZE + 1];
 	int i;
+
+	if (single_execution) {
+		if (pledge("stdio rpath wpath cpath", NULL) == -1)
+			perror("pledge");
+	}
 
 	memset(&enc_config, 0, sizeof(enc_config));
 	enc_config.enc = 1;

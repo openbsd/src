@@ -1,4 +1,4 @@
-/* $OpenBSD: ec.c,v 1.5 2015/09/11 14:30:23 bcook Exp $ */
+/* $OpenBSD: ec.c,v 1.6 2015/10/10 22:28:51 doug Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -276,6 +276,11 @@ ec_main(int argc, char **argv)
 	int i;
 	BIO *in = NULL, *out = NULL;
 	char *passin = NULL, *passout = NULL;
+
+	if (single_execution) {
+		if (pledge("stdio rpath wpath cpath", NULL) == -1)
+			perror("pledge");
+	}
 
 	memset(&ec_config, 0, sizeof(ec_config));
 

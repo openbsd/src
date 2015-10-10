@@ -1,4 +1,4 @@
-/* $OpenBSD: req.c,v 1.9 2015/09/14 01:45:03 doug Exp $ */
+/* $OpenBSD: req.c,v 1.10 2015/10/10 22:28:51 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -175,6 +175,11 @@ req_main(int argc, char **argv)
 	int multirdn = 0;
 	const EVP_MD *md_alg = NULL, *digest = NULL;
 	unsigned long chtype = MBSTRING_ASC;
+
+	if (single_execution) {
+		if (pledge("stdio rpath wpath cpath", NULL) == -1)
+			perror("pledge");
+	}
 
 	req_conf = NULL;
 	cipher = EVP_aes_256_cbc();

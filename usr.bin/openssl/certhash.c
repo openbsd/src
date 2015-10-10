@@ -649,6 +649,11 @@ certhash_main(int argc, char **argv)
 	int argsused;
 	int i, cwdfd, ret = 0;
 
+	if (single_execution) {
+		if (pledge("stdio rpath wpath cpath", NULL) == -1)
+			perror("pledge");
+	}
+
 	memset(&certhash_config, 0, sizeof(certhash_config));
 
 	if (options_parse(argc, argv, certhash_options, NULL, &argsused) != 0) {

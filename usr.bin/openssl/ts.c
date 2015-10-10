@@ -1,4 +1,4 @@
-/* $OpenBSD: ts.c,v 1.10 2015/09/21 13:13:06 bcook Exp $ */
+/* $OpenBSD: ts.c,v 1.11 2015/10/10 22:28:51 doug Exp $ */
 /* Written by Zoltan Glozik (zglozik@stones.com) for the OpenSSL
  * project 2002.
  */
@@ -148,6 +148,11 @@ ts_main(int argc, char **argv)
 	int token_in = 0;
 	/* Output is ContentInfo instead of TimeStampResp. */
 	int token_out = 0;
+
+	if (single_execution) {
+		if (pledge("stdio rpath wpath cpath", NULL) == -1)
+			perror("pledge");
+	}
 
 	for (argc--, argv++; argc > 0; argc--, argv++) {
 		if (strcmp(*argv, "-config") == 0) {

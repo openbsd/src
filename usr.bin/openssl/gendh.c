@@ -1,4 +1,4 @@
-/* $OpenBSD: gendh.c,v 1.5 2015/09/11 14:30:23 bcook Exp $ */
+/* $OpenBSD: gendh.c,v 1.6 2015/10/10 22:28:51 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -133,6 +133,11 @@ gendh_main(int argc, char **argv)
 	int ret = 1, numbits = DEFBITS;
 	BIO *out = NULL;
 	char *strbits = NULL;
+
+	if (single_execution) {
+		if (pledge("stdio rpath wpath cpath", NULL) == -1)
+			perror("pledge");
+	}
 
 	BN_GENCB_set(&cb, dh_cb, bio_err);
 

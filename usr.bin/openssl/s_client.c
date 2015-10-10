@@ -1,4 +1,4 @@
-/* $OpenBSD: s_client.c,v 1.20 2015/10/06 03:29:49 deraadt Exp $ */
+/* $OpenBSD: s_client.c,v 1.21 2015/10/10 22:28:51 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -363,6 +363,11 @@ s_client_main(int argc, char **argv)
 	int peerlen = sizeof(peer);
 	int enable_timeouts = 0;
 	long socket_mtu = 0;
+
+	if (single_execution) {
+		if (pledge("stdio inet rpath wpath cpath", NULL) == -1)
+			perror("pledge");
+	}
 
 	meth = SSLv23_client_method();
 

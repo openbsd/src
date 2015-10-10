@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa.c,v 1.5 2015/09/11 14:30:23 bcook Exp $ */
+/* $OpenBSD: rsa.c,v 1.6 2015/10/10 22:28:51 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -267,6 +267,11 @@ rsa_main(int argc, char **argv)
 	int i;
 	BIO *out = NULL;
 	char *passin = NULL, *passout = NULL;
+
+	if (single_execution) {
+		if (pledge("stdio rpath wpath cpath", NULL) == -1)
+			perror("pledge");
+	}
 
 	memset(&rsa_config, 0, sizeof(rsa_config));
 	rsa_config.pvk_encr = 2;

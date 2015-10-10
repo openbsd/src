@@ -1,4 +1,4 @@
-/* $OpenBSD: crl.c,v 1.7 2015/08/22 16:36:05 jsing Exp $ */
+/* $OpenBSD: crl.c,v 1.8 2015/10/10 22:28:51 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -229,6 +229,11 @@ crl_main(int argc, char **argv)
 	EVP_PKEY *pkey;
 	const EVP_MD *digest;
 	char *digest_name = NULL;
+
+	if (single_execution) {
+		if (pledge("stdio rpath wpath cpath", NULL) == -1)
+			perror("pledge");
+	}
 
 	if (bio_out == NULL) {
 		if ((bio_out = BIO_new(BIO_s_file())) != NULL) {
