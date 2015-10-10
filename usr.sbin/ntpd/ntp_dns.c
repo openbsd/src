@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp_dns.c,v 1.12 2015/10/09 01:37:09 deraadt Exp $ */
+/*	$OpenBSD: ntp_dns.c,v 1.13 2015/10/10 20:10:14 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003-2008 Henning Brauer <henning@openbsd.org>
@@ -90,7 +90,7 @@ ntp_dns(int pipe_ntp[2], struct ntpd_conf *nconf, struct passwd *pw)
 		fatal(NULL);
 	imsg_init(ibuf_dns, pipe_ntp[1]);
 
-	if (pledge("dns rw", NULL) == -1)
+	if (pledge("stdio dns", NULL) == -1)
 		err(1, "pledge");
 
 	while (quit_dns == 0) {
