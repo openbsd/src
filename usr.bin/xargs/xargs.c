@@ -1,4 +1,4 @@
-/*	$OpenBSD: xargs.c,v 1.29 2015/04/18 18:28:38 deraadt Exp $	*/
+/*	$OpenBSD: xargs.c,v 1.30 2015/10/10 15:52:30 deraadt Exp $	*/
 /*	$FreeBSD: xargs.c,v 1.51 2003/05/03 19:09:11 obrien Exp $	*/
 
 /*-
@@ -104,6 +104,10 @@ main(int argc, char *argv[])
 	nargs = 5000;
 	if ((arg_max = sysconf(_SC_ARG_MAX)) == -1)
 		errx(1, "sysconf(_SC_ARG_MAX) failed");
+
+	if (pledge("stdio rpath proc exec", NULL) == -1)
+		err(1, "pledge");
+
 	nline = arg_max - 4 * 1024;
 	while (*ep != NULL) {
 		/* 1 byte for each '\0' */
