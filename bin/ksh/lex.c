@@ -1,4 +1,4 @@
-/*	$OpenBSD: lex.c,v 1.58 2015/10/09 19:49:08 millert Exp $	*/
+/*	$OpenBSD: lex.c,v 1.59 2015/10/10 22:09:23 nicm Exp $	*/
 
 /*
  * lexical analysis and source input
@@ -12,6 +12,7 @@
 /*
  * states while lexing word
  */
+#define	SINVALID	-1	/* invalid state */
 #define	SBASE	0		/* outside any lexical constructs */
 #define	SWORD	1		/* implicit quoting for substitute() */
 #define	SLETPAREN 2		/* inside (( )), implicit quoting */
@@ -140,7 +141,7 @@ yylex(int cf)
 
 
   Again:
-	states[0].ls_state = -1;
+	states[0].ls_state = SINVALID;
 	states[0].ls_info.base = NULL;
 	statep = &states[1];
 	state_info.base = states;
