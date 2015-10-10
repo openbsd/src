@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.50 2015/08/14 06:38:16 jasper Exp $
+#	$OpenBSD: Makefile,v 1.51 2015/10/10 12:20:10 jasper Exp $
 
 REGRESS_TARGETS=cmp-vers1-1 \
 		cmp-vers1-2 \
@@ -74,6 +74,8 @@ REGRESS_TARGETS=cmp-vers1-1 \
 		max-version-2 \
 		find-config-1 \
 		find-config-2 \
+		find-config-3 \
+		find-config-4 \
 		variable-get-1 \
 		variable-set \
 		variables-1 \
@@ -518,6 +520,14 @@ find-config-2:
 	@${PKG_CONFIG} --errors-to-stdout --print-errors --modversion \
 		${.CURDIR}/pcdir/public-dep.pc > ${GOT}
 	@diff -u ${WANT} ${GOT}
+
+find-config-3:
+	# Simple existential test
+	${VPCONFIG} --exists vers1
+
+find-config-4:
+	# Multiple existential tests combined
+	${VPCONFIG} --exists vers1,vers2
 
 variable-get-1:
 	# Test --variable
