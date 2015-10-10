@@ -1,4 +1,4 @@
-/*	$OpenBSD: eigrpctl.c,v 1.1 2015/10/02 04:31:52 renato Exp $ */
+/*	$OpenBSD: eigrpctl.c,v 1.2 2015/10/10 05:06:00 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -96,6 +96,9 @@ main(int argc, char *argv[])
 	strlcpy(sun.sun_path, EIGRPD_SOCKET, sizeof(sun.sun_path));
 	if (connect(ctl_sock, (struct sockaddr *)&sun, sizeof(sun)) == -1)
 		err(1, "connect: %s", EIGRPD_SOCKET);
+
+	if (pledge("stdio route", NULL) == -1)
+		err(1, "tame");
 
 	if ((ibuf = malloc(sizeof(struct imsgbuf))) == NULL)
 		err(1, NULL);
