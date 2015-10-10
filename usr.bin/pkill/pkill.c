@@ -1,4 +1,4 @@
-/*	$OpenBSD: pkill.c,v 1.36 2015/01/16 06:40:10 deraadt Exp $	*/
+/*	$OpenBSD: pkill.c,v 1.37 2015/10/10 14:25:42 deraadt Exp $	*/
 /*	$NetBSD: pkill.c,v 1.5 2002/10/27 11:49:34 kleink Exp $	*/
 
 /*-
@@ -83,6 +83,7 @@ int	pgrep;
 int	signum = SIGTERM;
 int	newest;
 int	oldest;
+char	*pledge_choice = "stdio proc";
 int 	quiet;
 int	inverse;
 int	longfmt;
@@ -154,6 +155,7 @@ main(int argc, char **argv)
 
 	if (strcmp(__progname, "pgrep") == 0) {
 		action = grepact;
+		pledge_choice = "stdio";
 		pgrep = 1;
 	} else {
 		action = killact;
@@ -272,6 +274,9 @@ main(int argc, char **argv)
 	plist = kvm_getprocs(kd, KERN_PROC_ALL, 0, sizeof(*plist), &nproc);
 	if (plist == NULL)
 		errx(STATUS_ERROR, "kvm_getprocs() failed");
+
+	if (pledge(pledge_choice, NULL) == -1)
+		err(1, "pledge");
 
 	/*
 	 * Allocate memory which will be used to keep track of the
