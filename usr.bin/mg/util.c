@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.36 2015/09/29 03:19:24 guenther Exp $	*/
+/*	$OpenBSD: util.c,v 1.37 2015/10/10 09:13:14 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -116,6 +116,9 @@ twiddle(int f, int n)
 {
 	struct line	*dotp;
 	int	 doto, cr;
+
+	if (n == 0)
+		return (TRUE);
 
 	dotp = curwp->w_dotp;
 	doto = curwp->w_doto;

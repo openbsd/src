@@ -1,4 +1,4 @@
-/*	$OpenBSD: paragraph.c,v 1.40 2015/09/26 15:03:15 lum Exp $	*/
+/*	$OpenBSD: paragraph.c,v 1.41 2015/10/10 09:13:14 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -142,6 +142,9 @@ fillpara(int f, int n)
 	struct line	*eopline;	/* pointer to line just past EOP	*/
 	char	 wbuf[MAXWORD];	/* buffer for current word		*/
 
+	if (n == 0)
+		return (TRUE);
+
 	undo_boundary_enable(FFRAND, 0);
 
 	/* record the pointer to the line just past the EOP */
@@ -267,6 +270,9 @@ killpara(int f, int n)
 {
 	int	lineno, status;
 
+	if (n == 0)
+		return (TRUE);
+
 	if (findpara() == FALSE)
 		return (TRUE);
 
@@ -298,6 +304,9 @@ markpara(int f, int n)
 {
 	int i = 0;
 
+	if (n == 0)
+		return (TRUE);
+
 	clearmark(FFARG, 0);
 
 	if (findpara() == FALSE)
@@ -325,6 +334,9 @@ transposepara(int f, int n)
 {
 	int	i = 0, status;
 	char	flg;
+
+	if (n == 0)
+		return (TRUE);
 
 	/* find a paragraph, set mark, then goto the end */
 	gotobop(FFRAND, 1);
