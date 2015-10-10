@@ -1,4 +1,4 @@
-/*	$OpenBSD: md5.c,v 1.82 2015/10/09 01:37:06 deraadt Exp $	*/
+/*	$OpenBSD: md5.c,v 1.83 2015/10/10 20:18:30 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001,2003,2005-2007,2010,2013,2014
@@ -200,7 +200,7 @@ main(int argc, char **argv)
 	int fl, error, base64, i;
 	int bflag, cflag, pflag, rflag, tflag, xflag;
 
-	if (pledge("stdio cpath rpath wpath", NULL) == -1)
+	if (pledge("stdio rpath wpath cpath", NULL) == -1)
 		err(1, "pledge");
 
 	TAILQ_INIT(&hl);

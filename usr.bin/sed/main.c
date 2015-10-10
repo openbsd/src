@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.26 2015/10/09 01:37:08 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.27 2015/10/10 20:18:30 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -160,10 +160,10 @@ main(int argc, char *argv[])
 		termwidth = 60;
 
 	if (inplace != NULL) {
-		if (pledge("stdio wpath rpath cpath fattr", NULL) == -1)
+		if (pledge("stdio rpath wpath cpath fattr", NULL) == -1)
 			err(1, "pledge");
 	} else {
-		if (pledge("stdio wpath rpath cpath", NULL) == -1)
+		if (pledge("stdio rpath wpath cpath", NULL) == -1)
 			err(1, "pledge");
 	}
 
