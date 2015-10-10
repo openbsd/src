@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.185 2015/10/09 23:55:03 deraadt Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.186 2015/10/10 19:12:39 deraadt Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -572,7 +572,8 @@ sys_kill(struct proc *cp, void *v, register_t *retval)
 
 	if (cp->p_p->ps_flags & PS_PLEDGE) {
 		/* PLEDGE_PROC is required to signal another pid */
-		if ((cp->p_p->ps_pledge & PLEDGE_PROC) || pid == cp->p_pid)
+		if ((cp->p_p->ps_pledge & PLEDGE_PROC) ||
+		    pid == cp->p_pid || pid == 0)
 			;
 		else
 			return pledge_fail(cp, EPERM, PLEDGE_SELF);
