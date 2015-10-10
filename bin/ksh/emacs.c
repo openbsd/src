@@ -1,4 +1,4 @@
-/*	$OpenBSD: emacs.c,v 1.55 2015/10/10 07:38:18 nicm Exp $	*/
+/*	$OpenBSD: emacs.c,v 1.56 2015/10/10 15:31:00 millert Exp $	*/
 
 /*
  *  Emacs-like command line editing and history
@@ -135,7 +135,6 @@ static int	x_comment(int);
 static int	x_fold_case(int);
 static char	*x_lastcp(void);
 static void	do_complete(int, Comp_type);
-static int	x_emacs_putbuf(const char *, size_t);
 
 /* proto's for keybindings */
 static int	x_abort(int);
@@ -455,19 +454,6 @@ x_ins(char *s)
 
 	x_adj_ok = 1;
 	return 0;
-}
-
-/*
- * this is used for x_escape() in do_complete()
- */
-static int
-x_emacs_putbuf(const char *s, size_t len)
-{
-	int rval;
-
-	if ((rval = x_do_ins(s, len)) != 0)
-		return (rval);
-	return (rval);
 }
 
 static int
@@ -1753,7 +1739,7 @@ x_expand(int c)
 	x_goto(xbuf + start);
 	x_delete(end - start, false);
 	for (i = 0; i < nwords;) {
-		if (x_escape(words[i], strlen(words[i]), x_emacs_putbuf) < 0 ||
+		if (x_escape(words[i], strlen(words[i]), x_do_ins) < 0 ||
 		    (++i < nwords && x_ins(" ") < 0)) {
 			x_e_putc(BEL);
 			return KSTD;
@@ -1796,7 +1782,7 @@ do_complete(int flags,	/* XCF_{COMMAND,FILE,COMMAND_FILE} */
 	if (nwords == 1 || nlen > olen) {
 		x_goto(xbuf + start);
 		x_delete(olen, false);
-		x_escape(words[0], nlen, x_emacs_putbuf);
+		x_escape(words[0], nlen, x_do_ins);
 		x_adjust();
 		completed = 1;
 	}
