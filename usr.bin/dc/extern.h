@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.4 2014/12/01 13:13:00 deraadt Exp $	*/
+/*	$OpenBSD: extern.h,v 1.5 2015/10/10 19:28:54 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -60,3 +60,5 @@ void		stack_print(FILE *, const struct stack *, const char *,
 void		frame_assign(struct stack *, size_t, const struct value *);
 struct value *	frame_retrieve(const struct stack *, size_t);
 /* void		frame_free(struct stack *); */
+
+int		dc_main(int, char **);

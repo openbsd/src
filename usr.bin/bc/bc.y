@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: bc.y,v 1.47 2014/11/26 18:34:51 millert Exp $	*/
+/*	$OpenBSD: bc.y,v 1.48 2015/10/10 19:28:54 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -1094,6 +1094,9 @@ main(int argc, char *argv[])
 	int	p[2];
 	char	*q;
 
+	if (pledge("stdio rpath proc tty", NULL) == -1)
+		err(1, "pledge");
+
 	init();
 	setvbuf(stdout, NULL, _IOLBF, 0);
 
@@ -1144,12 +1147,18 @@ main(int argc, char *argv[])
 			close(p[0]);
 			close(p[1]);
 		} else {
+			char *dc_argv[] = { "dc", "-x", NULL };
+			extern int dc_main(int, char **);
+
+			if (pledge("stdio", NULL) == -1)
+				err(1, "pledge");
+
 			close(STDIN_FILENO);
 			dup(p[0]);
 			close(p[0]);
 			close(p[1]);
-			execl(_PATH_DC, "dc", "-x", (char *)NULL);
-			err(1, "cannot find dc");
+			
+			exit (dc_main(2, dc_argv));
 		}
 	}
 	if (interactive) {
@@ -1165,6 +1174,10 @@ main(int argc, char *argv[])
 		el_set(el, EL_BIND, "^D", "bc_eof", NULL);
 		el_source(el, NULL);
 	}
+
+	if (pledge("stdio rpath tty", NULL) == -1)
+		err(1, "pledge");
+
 	yywrap();
 	return yyparse();
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.15 2015/10/09 01:37:07 deraadt Exp $	*/
+/*	$OpenBSD: dc.c,v 1.16 2015/10/10 19:28:54 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -38,7 +38,7 @@ usage(void)
 }
 
 int
-main(int argc, char *argv[])
+dc_main(int argc, char *argv[])
 {
 	int		ch;
 	bool		extended_regs = false;
@@ -46,9 +46,6 @@ main(int argc, char *argv[])
 	struct source	src;
 	char		*buf, *p;
 	struct stat	st;
-
-	if (pledge("stdio rpath", NULL) == -1)
-		err(1, "pledge");
 
 	if ((buf = strdup("")) == NULL)
 		err(1, NULL);
