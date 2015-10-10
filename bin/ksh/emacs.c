@@ -1,4 +1,4 @@
-/*	$OpenBSD: emacs.c,v 1.54 2015/10/09 19:36:27 tedu Exp $	*/
+/*	$OpenBSD: emacs.c,v 1.55 2015/10/10 07:38:18 nicm Exp $	*/
 
 /*
  *  Emacs-like command line editing and history
@@ -26,9 +26,6 @@ static	Area	aedit;
 
 #define	CTRL(x)		((x) == '?' ? 0x7F : (x) & 0x1F)	/* ASCII */
 #define	UNCTRL(x)	((x) == 0x7F ? '?' : (x) | 0x40)	/* ASCII */
-#define	META(x)		((x) & 0x7f)
-#define	ISMETA(x)	(Flag(FEMACSUSEMETA) && ((x) & 0x80))
-
 
 /* values returned by keyboard functions */
 #define	KSTD	0
