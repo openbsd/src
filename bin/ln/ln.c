@@ -1,4 +1,4 @@
-/*	$OpenBSD: ln.c,v 1.22 2015/01/16 06:39:32 deraadt Exp $	*/
+/*	$OpenBSD: ln.c,v 1.23 2015/10/10 22:36:46 doug Exp $	*/
 /*	$NetBSD: ln.c,v 1.10 1995/03/21 09:06:10 cgd Exp $	*/
 
 /*
@@ -57,6 +57,9 @@ main(int argc, char *argv[])
 	struct stat sb;
 	int ch, exitval;
 	char *sourcedir;
+
+	if (pledge("stdio rpath cpath", NULL) == -1)
+		err(1, "pledge");
 
 	while ((ch = getopt(argc, argv, "fhLnPs")) != -1)
 		switch (ch) {
