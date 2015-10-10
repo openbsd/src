@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.3 2015/10/05 01:59:33 renato Exp $ */
+/*	$OpenBSD: interface.c,v 1.4 2015/10/10 05:03:39 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -246,25 +246,37 @@ if_update(struct iface *iface, int af)
 {
 	struct eigrp_iface	*ei;
 	int			 link_ok;
+	int			 addr_ok = 1;
+	struct if_addr		*if_addr;
 
 	link_ok = (iface->flags & IFF_UP) &&
 	    LINK_STATE_IS_UP(iface->linkstate);
+
+	/*
+	 * NOTE: For EIGRPv4, each interface should have a valid IP address
+	 * otherwise they can not be enabled in the routing domain. For IPv6
+	 * this limitation does not exist because the link-local addresses
+	 * are used to form the adjacencies.
+	 */
+	if (af == AF_INET) {
+		TAILQ_FOREACH(if_addr, &iface->addr_list, entry)
+			if (if_addr->af == AF_INET)
+				break;
+		if (if_addr == NULL)
+			addr_ok = 0;
+	}
 
 	TAILQ_FOREACH(ei, &iface->ei_list, i_entry) {
 		if (af != AF_UNSPEC && ei->eigrp->af != af)
 			continue;
 
 		if (ei->state == IF_STA_DOWN) {
-			if (!link_ok)
-				continue;
-			if (af == AF_INET && TAILQ_EMPTY(&iface->addr_list))
+			if (!link_ok || !addr_ok)
 				continue;
 			ei->state = IF_STA_ACTIVE;
 			eigrp_if_start(ei);
-		} else {
-			if (link_ok)
-				continue;
-			if (!(af == AF_INET && TAILQ_EMPTY(&iface->addr_list)))
+		} else if (ei->state == IF_STA_ACTIVE) {
+			if (link_ok && addr_ok)
 				continue;
 			ei->state = IF_STA_DOWN;
 			eigrp_if_reset(ei);
