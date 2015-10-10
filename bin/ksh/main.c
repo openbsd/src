@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.61 2015/10/10 00:10:07 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.62 2015/10/10 20:35:00 deraadt Exp $	*/
 
 /*
  * startup, main loop, environments and error handling
@@ -103,7 +103,7 @@ main(int argc, char *argv[])
 	kshname = argv[0];
 
 #ifndef MKNOD
-	if (pledge("stdio rpath wpath cpath getpw fattr proc exec tty", NULL) == -1)
+	if (pledge("stdio rpath wpath cpath fattr getpw proc exec tty", NULL) == -1)
 		perror("pledge");
 #endif
 

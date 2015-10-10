@@ -1,4 +1,4 @@
-/*	$OpenBSD: sendbug.c,v 1.70 2015/10/10 19:10:20 deraadt Exp $	*/
+/*	$OpenBSD: sendbug.c,v 1.71 2015/10/10 20:35:01 deraadt Exp $	*/
 
 /*
  * Written by Ray Lai <ray@cyth.net>.
@@ -86,7 +86,7 @@ main(int argc, char *argv[])
 	time_t mtime;
 	FILE *fp;
 
-	if (pledge("stdio getpw rpath wpath cpath tmppath proc exec", NULL) == -1)
+	if (pledge("stdio rpath wpath cpath tmppath getpw proc exec", NULL) == -1)
 		err(1, "pledge");
 
 	while ((ch = getopt(argc, argv, "DEPV")) != -1)

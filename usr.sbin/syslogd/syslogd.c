@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.194 2015/10/09 16:58:25 bluhm Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.195 2015/10/10 20:35:01 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -707,7 +707,7 @@ main(int argc, char *argv[])
 	if (priv_init(ConfFile, NoDNS, lockpipe[1], nullfd, argv) < 0)
 		errx(1, "unable to privsep");
 
-	if (pledge("stdio rpath unix inet recvfd proc", NULL) == -1)
+	if (pledge("stdio rpath unix inet proc recvfd", NULL) == -1)
 		err(1, "pledge");
 
 	/* Process is now unprivileged and inside a chroot */

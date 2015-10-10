@@ -1,4 +1,4 @@
-/*	$OpenBSD: finger.c,v 1.22 2015/10/09 01:37:07 deraadt Exp $	*/
+/*	$OpenBSD: finger.c,v 1.23 2015/10/10 20:35:00 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -126,7 +126,7 @@ main(int argc, char *argv[])
 			mflag++;
 	}
 
-	if (pledge("stdio getpw rpath inet", NULL) == -1)
+	if (pledge("stdio rpath getpw inet", NULL) == -1)
 		err(1, "pledge");
 
 	(void)time(&now);
@@ -137,7 +137,7 @@ main(int argc, char *argv[])
 		 * not selected.  Force the -s BEFORE we get names so proper
 		 * screening will be done.
 		 */
-		if (pledge("stdio getpw rpath", NULL) == -1)
+		if (pledge("stdio rpath getpw", NULL) == -1)
 			err(1, "pledge");
 		if (!lflag)
 			sflag = 1;	/* if -l not explicit, force -s */
@@ -220,7 +220,7 @@ userlist(int argc, char **argv)
 		goto net;
 
 	if (nettail == &nethead)
-		if (pledge("stdio getpw rpath", NULL) == -1)
+		if (pledge("stdio rpath getpw", NULL) == -1)
 			err(1, "pledge");
 
 	/*

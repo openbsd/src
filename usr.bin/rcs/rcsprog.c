@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.c,v 1.157 2015/10/10 18:58:53 deraadt Exp $	*/
+/*	$OpenBSD: rcsprog.c,v 1.158 2015/10/10 20:35:01 deraadt Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -128,7 +128,7 @@ main(int argc, char **argv)
 	char **cmd_argv;
 	int ret, cmd_argc;
 
-	if (pledge("stdio getpw rpath wpath cpath fattr", NULL) == -1)
+	if (pledge("stdio rpath wpath cpath fattr getpw", NULL) == -1)
 		err(1, "pledge");
 
 	ret = -1;

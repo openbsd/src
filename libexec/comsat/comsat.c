@@ -1,4 +1,4 @@
-/*	$OpenBSD: comsat.c,v 1.42 2015/10/09 17:09:06 deraadt Exp $	*/
+/*	$OpenBSD: comsat.c,v 1.43 2015/10/10 20:35:00 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -83,7 +83,7 @@ main(int argc, char *argv[])
 	char msgbuf[100];
 	sigset_t sigset;
 
-	if (pledge("stdio rpath wpath tty proc", NULL) == -1)
+	if (pledge("stdio rpath wpath proc tty", NULL) == -1)
 		err(1, "pledge");
 
 	/* verify proper invocation */
