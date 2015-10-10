@@ -1,4 +1,4 @@
-/*	$OpenBSD: ul.c,v 1.18 2015/02/08 23:40:34 deraadt Exp $	*/
+/*	$OpenBSD: ul.c,v 1.19 2015/10/10 16:15:03 deraadt Exp $	*/
 /*	$NetBSD: ul.c,v 1.3 1994/12/07 00:28:24 jtc Exp $	*/
 
 /*
@@ -97,6 +97,9 @@ main(int argc, char *argv[])
 	char *termtype;
 	FILE *f;
 	char termcap[1024];
+
+	if (pledge("stdio rpath tty", NULL) == -1)
+		err(1, "pledge");
 
 	termtype = getenv("TERM");
 	if (termtype == NULL || (argv[0][0] == 'c' && !isatty(1)))
