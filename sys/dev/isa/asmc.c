@@ -1,4 +1,4 @@
-/*	$OpenBSD: asmc.c,v 1.9 2015/10/10 11:57:20 jung Exp $	*/
+/*	$OpenBSD: asmc.c,v 1.10 2015/10/10 12:05:47 jung Exp $	*/
 /*
  * Copyright (c) 2015 Joerg Jung <jung@openbsd.org>
  *
@@ -189,6 +189,15 @@ static const char *asmc_temp_desc[][2] = {
 	{ "Tp2P", "Power supply 3" }, { "Tp3P", "Power supply 4" },
 	{ "Tp4P", "Power supply 5" }, { "Tp5P", "Power supply 6" },
 	{ NULL, NULL }
+};
+
+static const char *asmc_fan_loc[] = {
+	"left lower front", "center lower front", "right lower front",
+	"left mid front",   "center mid front",   "right mid front",
+	"left upper front", "center upper front", "right upper front",
+	"left lower rear",  "center lower rear",  "right lower rear",
+	"left mid rear",    "center mid rear",    "right mid rear",
+	"left upper rear",  "center upper rear",  "right upper rear"
 };
 
 static const char *asmc_light_desc[ASMC_MAXLIGHT] = {
@@ -448,6 +457,13 @@ asmc_fans(struct asmc_softc *sc, uint8_t *n)
 			*end-- = '\0';
 		strlcpy(sc->sc_sensor_fan[i].desc, buf + 4,
 		    sizeof(sc->sc_sensor_fan[i].desc));
+		if (buf[2] < nitems(asmc_fan_loc)) {
+			strlcat(sc->sc_sensor_fan[i].desc, " ",
+			    sizeof(sc->sc_sensor_fan[i].desc));
+			strlcat(sc->sc_sensor_fan[i].desc,
+			    asmc_fan_loc[buf[2]],
+			    sizeof(sc->sc_sensor_fan[i].desc));
+		}
 		sc->sc_sensor_fan[i].flags &= ~SENSOR_FINVALID;
 		sensor_attach(&sc->sc_sensor_dev, &sc->sc_sensor_fan[i]);
 	}
