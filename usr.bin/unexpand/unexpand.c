@@ -1,4 +1,4 @@
-/*	$OpenBSD: unexpand.c,v 1.10 2009/10/27 23:59:46 deraadt Exp $	*/
+/*	$OpenBSD: unexpand.c,v 1.11 2015/10/10 14:23:46 deraadt Exp $	*/
 /*	$NetBSD: unexpand.c,v 1.5 1994/12/24 17:08:05 cgd Exp $	*/
 
 /*-
@@ -36,6 +36,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 char	genbuf[BUFSIZ];
 char	linebuf[BUFSIZ];
@@ -47,6 +48,9 @@ int
 main(int argc, char *argv[])
 {
 	char *cp;
+
+	if (pledge("stdio rpath", NULL) == -1)
+		perror("pledge");
 
 	argc--, argv++;
 	if (argc > 0 && argv[0][0] == '-') {
