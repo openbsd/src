@@ -1,4 +1,4 @@
-/*	$OpenBSD: table.h,v 1.10 2015/10/05 23:26:58 nicm Exp $	*/
+/*	$OpenBSD: table.h,v 1.11 2015/10/10 07:35:16 nicm Exp $	*/
 
 /* $From: table.h,v 1.3 1994/05/31 13:34:34 michael Exp $ */
 
@@ -180,3 +180,12 @@ extern char *tmpdir;		/* TMPDIR value */
 extern const char *prompt;
 extern int cur_prompt;		/* PS1 or PS2 */
 extern int current_lineno;	/* LINENO value */
+
+unsigned int	hash(const char *);
+void		ktinit(struct table *, Area *, int);
+struct tbl *	ktsearch(struct table *, const char *, unsigned int);
+struct tbl *	ktenter(struct table *, const char *, unsigned int);
+void		ktdelete(struct tbl *);
+void		ktwalk(struct tstate *, struct table *);
+struct tbl *	ktnext(struct tstate *);
+struct tbl **	ktsort(struct table *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: proto.h,v 1.37 2015/10/06 21:19:06 nicm Exp $	*/
+/*	$OpenBSD: proto.h,v 1.38 2015/10/10 07:35:16 nicm Exp $	*/
 
 /*
  * prototypes for PD-KSH
@@ -146,13 +146,6 @@ int	j_njobs(void);
 void	j_notify(void);
 pid_t	j_async(void);
 int	j_stopped_running(void);
-/* lex.c */
-int	yylex(int);
-void	yyerror(const char *, ...)
-	    __attribute__((__noreturn__, __format__ (printf, 1, 2)));
-Source * pushs(int, Area *);
-void	set_prompt(int, Source *);
-void	pprompt(const char *, int);
 /* mail.c */
 void	mcheck(void);
 void	mcset(long);
@@ -205,15 +198,6 @@ void	set_current_wd(char *);
 /* syn.c */
 void	initkeywords(void);
 struct op * compile(Source *);
-/* table.c */
-unsigned int	hash(const char *);
-void		ktinit(struct table *, Area *, int);
-struct tbl *	ktsearch(struct table *, const char *, unsigned int);
-struct tbl *	ktenter(struct table *, const char *, unsigned int);
-void		ktdelete(struct tbl *);
-void		ktwalk(struct tstate *, struct table *);
-struct tbl *	ktnext(struct tstate *);
-struct tbl **	ktsort(struct table *);
 /* trace.c */
 /* trap.c */
 void	inittraps(void);
