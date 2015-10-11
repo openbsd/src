@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.127 2015/10/09 01:37:06 deraadt Exp $	*/
+/*	$OpenBSD: ping.c,v 1.128 2015/10/11 00:20:29 guenther Exp $	*/
 /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
@@ -623,7 +623,6 @@ void
 pinger(void)
 {
 	struct icmp *icp;
-	char buf[8192];
 	int cc, i;
 	u_char *packet = outpack;
 
@@ -688,9 +687,8 @@ pinger(void)
 	if (i < 0 || i != cc)  {
 		if (i < 0)
 			perror("ping: sendto");
-		snprintf(buf, sizeof buf, "ping: wrote %s %d chars, ret=%d\n",
+		dprintf(STDOUT_FILENO, "ping: wrote %s %d chars, ret=%d\n",
 		    hostname, cc, i);
-		write(STDOUT_FILENO, buf, strlen(buf));
 	}
 	if (!(options & F_QUIET) && options & F_FLOOD)
 		(void)write(STDOUT_FILENO, &DOT, 1);

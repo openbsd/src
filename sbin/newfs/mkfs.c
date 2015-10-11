@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkfs.c,v 1.92 2015/08/20 22:02:21 deraadt Exp $	*/
+/*	$OpenBSD: mkfs.c,v 1.93 2015/10/11 00:20:29 guenther Exp $	*/
 /*	$NetBSD: mkfs.c,v 1.25 1995/06/18 21:35:38 cgd Exp $	*/
 
 /*
@@ -154,11 +154,9 @@ void
 siginfo(int sig)
 {
 	int save_errno = errno;
-	char buf[128];
 
-	snprintf(buf, sizeof(buf), "%s: initializing cg %ld/%d\n",
+	dprintf(STDERR_FILENO, "%s: initializing cg %ld/%d\n",
 	    cur_fsys, (long)cur_cylno, sblock.fs_ncg);
-	write(STDERR_FILENO, buf, strlen(buf));
 	errno = save_errno;
 }
 #endif
