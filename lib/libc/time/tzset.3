@@ -1,5 +1,5 @@
-.\"	$OpenBSD: tzset.3,v 1.20 2013/06/05 03:39:23 tedu Exp $
-.Dd $Mdocdate: June 5 2013 $
+.\"	$OpenBSD: tzset.3,v 1.21 2015/10/11 21:30:02 schwarze Exp $
+.Dd $Mdocdate: October 11 2015 $
 .Dt TZSET 3
 .Os
 .Sh NAME
@@ -58,12 +58,17 @@ The file must be in the format specified in
 When
 .Ev TZ
 is used directly as a specification of the time conversion information,
-it must have the following syntax (spaces inserted for clarity):
+it must have the following syntax (without whitespace between
+.Ar std
+and
+.Ar offset ) :
 .Bd -ragged -offset indent
 .Ar std
+.Sm off
 .Ar offset
 .Op Ar dst Op Ar offset
 .Op , Ar rule
+.Sm on
 .Ed
 .Pp
 Where:
@@ -96,12 +101,9 @@ are allowed.
 Indicates the value one must add to the local time to arrive at
 Coordinated Universal Time.
 .Ar offset
-has the form
-.Pq spaces inserted for clarity :
-.Bd -ragged -offset indent
-.Ar hh
-.Op : Ar mm Op : Ar ss
-.Ed
+has the form:
+.Pp
+.D1 Ar hh Ns Op : Ns Ar mm Ns Op : Ns Ar ss
 .Pp
 The minutes
 .Pq Ar mm
@@ -133,15 +135,9 @@ west (which may be indicated by an optional preceding
 .It Ar rule
 Indicates when to change to and back from summer time.
 .Ar rule
-has the form (spaces added for clarity):
-.Bd -ragged -offset indent
-.Ar date
-/
-.Ar time ,
-.Ar date
-/
-.Ar time
-.Ed
+has the form:
+.Pp
+.D1 Ar date Ns / Ns Ar time , Ns Ar date Ns / Ns Ar time
 .Pp
 where the first
 .Ar date
@@ -156,51 +152,29 @@ time is made.
 .Pp
 The format of
 .Ar date
-is one of the following (spaces added for clarity):
-.Bl -tag -width "M m . n . d"
-.It J Ar n
+is one of the following:
+.Bl -tag -width Ds
+.It Cm J Ns Ar n
 The Julian day
 .Ar n
-.Po
-1 \&<\&=
-.Ar n
-\&<\&= 365
-.Pc .
+.Pq 1 <= Ar n No <= 365 .
 Leap days are not counted; that is, in all years -- including leap
 years -- February 28 is day 59 and March 1 is day 60.
 It is impossible to explicitly refer to the occasional February 29.
 .It Ar n
 The zero-based Julian day
-.Po
-0 \&<\&=
-.Ar n
-\&<\&= 365
-.Pc .
+.Pq 0 <= Ar n No <= 365 .
 Leap days are counted, and it is possible to refer to February 29.
-.It Xo M Ar m No . Ar n
-.No . Ar d
-.Xc
+.It Cm M Ns Ar m . Ns Ar n . Ns Ar d
 Day
 .Ar d
-.Po
-1 \&<\&=
-.Ar d
-\&<\&= 6
-.Pc
+.Pq 1 <= Ar d No <= 6
 of week
 .Ar n
-.Po
-1 \&<\&=
-.Ar n
-\&<\&= 5
-.Pc
+.Pq 1 <= Ar n No <= 5
 of month
 .Ar m
-.Po
-1 \&<\&=
-.Ar m
-\&<\&= 12
-.Pc ,
+.Pq 1 <= Ar m No <= 12 ,
 where week 5 means
 .Do
 the last
