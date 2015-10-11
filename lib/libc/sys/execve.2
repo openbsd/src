@@ -1,4 +1,4 @@
-.\"	$OpenBSD: execve.2,v 1.46 2015/09/10 17:55:21 schwarze Exp $
+.\"	$OpenBSD: execve.2,v 1.47 2015/10/11 09:51:26 guenther Exp $
 .\"	$NetBSD: execve.2,v 1.9 1995/02/27 12:32:25 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)execve.2	8.3 (Berkeley) 1/24/94
 .\"
-.Dd $Mdocdate: September 10 2015 $
+.Dd $Mdocdate: October 11 2015 $
 .Dt EXECVE 2
 .Os
 .Sh NAME
@@ -121,10 +121,13 @@ some system file like
 The intent is to ensure these descriptors are not unallocated, since
 many libraries make assumptions about the use of these 3 file descriptors.
 .Pp
-Signals set to be ignored in the calling process are set to be ignored in
+Signals set to be ignored in the calling process,
+with the exception of
+.Dv SIGCHLD ,
+are set to be ignored in
 the
 new process.
-Signals which are set to be caught in the calling process image
+Other signals
 are set to default action in the new process image.
 Blocked signals remain blocked regardless of changes to the signal action.
 The signal stack is reset to be undefined (see
@@ -323,3 +326,12 @@ to a non-superuser, but is executed when the real
 is
 .Dq root ,
 then the process has some of the powers of a superuser as well.
+.Pp
+.St -p1003.1-2008
+permits
+.Nm
+to leave
+.Dv SIGCHLD
+as ignored in the new process; portable programs cannot rely on
+.Nm
+resetting it to the default disposition.
