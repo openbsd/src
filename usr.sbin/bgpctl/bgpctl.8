@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpctl.8,v 1.64 2014/08/14 19:08:21 schwarze Exp $
+.\" $OpenBSD: bgpctl.8,v 1.65 2015/10/11 19:21:44 phessler Exp $
 .\"
 .\" Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 14 2014 $
+.Dd $Mdocdate: October 11 2015 $
 .Dt BGPCTL 8
 .Os
 .Sh NAME
@@ -331,6 +331,9 @@ Additionally, the following
 are defined:
 .Pp
 .Bl -tag -width "detail" -compact
+.It Cm best
+Alias for
+.Ic selected .
 .It Cm selected
 Show only selected routes.
 .It Cm detail
