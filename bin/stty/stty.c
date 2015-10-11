@@ -1,4 +1,4 @@
-/*	$OpenBSD: stty.c,v 1.16 2015/02/15 11:42:30 tedu Exp $	*/
+/*	$OpenBSD: stty.c,v 1.17 2015/10/11 15:27:19 deraadt Exp $	*/
 /*	$NetBSD: stty.c,v 1.11 1995/03/21 09:11:30 cgd Exp $	*/
 
 /*-
@@ -80,10 +80,14 @@ main(int argc, char *argv[])
 args:	argc -= optind;
 	argv += optind;
 
-	if (tcgetattr(i.fd, &i.t) < 0)
-		errx(1, "not a terminal");
 	if (ioctl(i.fd, TIOCGETD, &i.ldisc) < 0	)
 		err(1, "TIOCGETD");
+
+	if (pledge("stdio tty", NULL) == -1)
+		err(1, "pledge");
+
+	if (tcgetattr(i.fd, &i.t) < 0)
+		errx(1, "not a terminal");
 	if (ioctl(i.fd, TIOCGWINSZ, &i.win) < 0)
 		warn("TIOCGWINSZ");
 
@@ -94,9 +98,13 @@ args:	argc -= optind;
 		/* FALLTHROUGH */
 	case BSD:
 	case POSIX:
+		if (pledge("stdio", NULL) == -1)
+			err(1, "pledge");
 		print(&i.t, &i.win, i.ldisc, fmt);
 		break;
 	case GFLAG:
+		if (pledge("stdio", NULL) == -1)
+			err(1, "pledge");
 		gprint(&i.t, &i.win, i.ldisc);
 		break;
 	}
