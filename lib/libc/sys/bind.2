@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bind.2,v 1.20 2015/01/19 15:54:11 millert Exp $
+.\"	$OpenBSD: bind.2,v 1.21 2015/10/11 07:25:11 guenther Exp $
 .\"	$NetBSD: bind.2,v 1.8 1995/10/12 15:40:46 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)bind.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: January 19 2015 $
+.Dd $Mdocdate: October 11 2015 $
 .Dt BIND 2
 .Os
 .Sh NAME
@@ -53,7 +53,11 @@ be assigned to the socket.
 .Fa namelen
 indicates the amount of space pointed to by
 .Fa name ,
-in bytes.
+in bytes; the
+.Fa sa_len
+member of
+.Fa name
+is ignored.
 .Sh NOTES
 Binding a name in the
 .Ux Ns -domain
