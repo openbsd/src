@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rm.1,v 1.37 2014/05/25 19:07:36 jmc Exp $
+.\"	$OpenBSD: rm.1,v 1.38 2015/10/11 03:08:46 daniel Exp $
 .\"	$NetBSD: rm.1,v 1.8 1995/07/25 19:37:30 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993, 1994
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)rm.1	8.5 (Berkeley) 12/5/94
 .\"
-.Dd $Mdocdate: May 25 2014 $
+.Dd $Mdocdate: October 11 2015 $
 .Dt RM 1
 .Os
 .Sh NAME
@@ -102,6 +102,7 @@ The
 utility removes symbolic links, not the files referenced by the links.
 .Pp
 It is an error to attempt to remove the files
+.Dq / ,
 .Dq \&.
 or
 .Dq .. .
