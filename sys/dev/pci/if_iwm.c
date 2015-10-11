@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.54 2015/10/10 19:04:57 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.55 2015/10/11 10:22:28 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -3374,7 +3374,7 @@ iwm_send_cmd(struct iwm_softc *sc, struct iwm_host_cmd *hcmd)
 	/* if the command wants an answer, busy sc_cmd_resp */
 	if (wantresp) {
 		KASSERT(!async);
-		while (sc->sc_wantresp != -1)
+		while (sc->sc_wantresp != IWM_CMD_RESP_IDLE)
 			tsleep(&sc->sc_wantresp, 0, "iwmcmdsl", 0);
 		sc->sc_wantresp = ring->qid << 16 | ring->cur;
 		DPRINTFN(12, ("wantresp is %x\n", sc->sc_wantresp));
@@ -3573,10 +3573,10 @@ iwm_mvm_send_cmd_pdu_status(struct iwm_softc *sc, uint8_t id,
 void
 iwm_free_resp(struct iwm_softc *sc, struct iwm_host_cmd *hcmd)
 {
-	KASSERT(sc->sc_wantresp != -1);
+	KASSERT(sc->sc_wantresp != IWM_CMD_RESP_IDLE);
 	KASSERT((hcmd->flags & (IWM_CMD_WANT_SKB|IWM_CMD_SYNC))
 	    == (IWM_CMD_WANT_SKB|IWM_CMD_SYNC));
-	sc->sc_wantresp = -1;
+	sc->sc_wantresp = IWM_CMD_RESP_IDLE;
 	wakeup(&sc->sc_wantresp);
 }
 
@@ -6452,7 +6452,7 @@ iwm_attach(struct device *parent, struct device *self, void *aux)
 	}
 	printf(", %s\n", intrstr);
 
-	sc->sc_wantresp = -1;
+	sc->sc_wantresp = IWM_CMD_RESP_IDLE;
 
 	switch (PCI_PRODUCT(pa->pa_id)) {
 	case PCI_PRODUCT_INTEL_WL_3160_1:

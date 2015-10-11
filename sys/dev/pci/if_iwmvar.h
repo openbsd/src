@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwmvar.h,v 1.10 2015/10/05 13:05:08 stsp Exp $	*/
+/*	$OpenBSD: if_iwmvar.h,v 1.11 2015/10/11 10:22:28 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -300,6 +300,9 @@ struct iwm_ucode_status {
 	int uc_ok;
 	int uc_intr;
 };
+
+/* sc_wantresp */
+#define IWM_CMD_RESP_IDLE	-1
 
 #define IWM_CMD_RESP_MAX PAGE_SIZE
 
