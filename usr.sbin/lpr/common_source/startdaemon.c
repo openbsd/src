@@ -1,4 +1,4 @@
-/*	$OpenBSD: startdaemon.c,v 1.15 2015/01/16 06:40:17 deraadt Exp $	*/
+/*	$OpenBSD: startdaemon.c,v 1.16 2015/10/11 20:23:49 guenther Exp $	*/
 /*	$NetBSD: startdaemon.c,v 1.10 1998/07/18 05:04:39 lukem Exp $	*/
 
 /*
@@ -66,7 +66,7 @@ startdaemon(char *printer)
 	strlcpy(un.sun_path, _PATH_SOCKETNAME, sizeof(un.sun_path));
 	siginterrupt(SIGINT, 1);
 	PRIV_START;
-	if (connect(s, (struct sockaddr *)&un, SUN_LEN(&un)) < 0) {
+	if (connect(s, (struct sockaddr *)&un, sizeof(un)) < 0) {
 		int saved_errno = errno;
 		if (errno == EINTR && gotintr) {
 			PRIV_END;

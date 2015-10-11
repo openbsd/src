@@ -1,4 +1,4 @@
-/*	$OpenBSD: apmd.c,v 1.76 2015/08/28 16:13:58 tedu Exp $	*/
+/*	$OpenBSD: apmd.c,v 1.77 2015/10/11 20:23:49 guenther Exp $	*/
 
 /*
  *  Copyright (c) 1995, 1996 John T. Kohl
@@ -212,14 +212,13 @@ bind_socket(const char *sockname)
 		error("cannot create local socket", NULL);
 
 	s_un.sun_family = AF_UNIX;
-	strncpy(s_un.sun_path, sockname, sizeof(s_un.sun_path));
-	s_un.sun_len = SUN_LEN(&s_un);
+	strlcpy(s_un.sun_path, sockname, sizeof(s_un.sun_path));
 
 	/* remove it if present, we're moving in */
 	(void) remove(sockname);
 
 	old_umask = umask(077);
-	if (bind(sock, (struct sockaddr *)&s_un, s_un.sun_len) == -1)
+	if (bind(sock, (struct sockaddr *)&s_un, sizeof(s_un)) == -1)
 		error("cannot connect to APM socket", NULL);
 	umask(old_umask);
 	if (chmod(sockname, 0660) == -1 || chown(sockname, 0, 0) == -1)

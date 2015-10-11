@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.29 2015/01/16 06:40:15 deraadt Exp $	*/
+/*	$OpenBSD: apm.c,v 1.30 2015/10/11 20:23:49 guenther Exp $	*/
 
 /*
  *  Copyright (c) 1996 John T. Kohl
@@ -130,9 +130,8 @@ open_socket(const char *sockname)
 		err(1, "cannot create local socket");
 
 	s_un.sun_family = AF_UNIX;
-	strncpy(s_un.sun_path, sockname, sizeof(s_un.sun_path));
-	s_un.sun_len = SUN_LEN(&s_un);
-	if (connect(sock, (struct sockaddr *)&s_un, s_un.sun_len) == -1) {
+	strlcpy(s_un.sun_path, sockname, sizeof(s_un.sun_path));
+	if (connect(sock, (struct sockaddr *)&s_un, sizeof(s_un)) == -1) {
 		errr = errno;
 		close(sock);
 		errno = errr;

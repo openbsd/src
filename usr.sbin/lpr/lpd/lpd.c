@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpd.c,v 1.59 2015/09/29 02:37:29 millert Exp $ */
+/*	$OpenBSD: lpd.c,v 1.60 2015/10/11 20:23:49 guenther Exp $ */
 /*	$NetBSD: lpd.c,v 1.33 2002/01/21 14:42:29 wiz Exp $	*/
 
 /*
@@ -280,7 +280,7 @@ main(int argc, char **argv)
 	un.sun_family = AF_LOCAL;
 	strlcpy(un.sun_path, _PATH_SOCKETNAME, sizeof(un.sun_path));
 	PRIV_START;
-	if (bind(funix, (struct sockaddr *)&un, SUN_LEN(&un)) < 0) {
+	if (bind(funix, (struct sockaddr *)&un, sizeof(un)) < 0) {
 		syslog(LOG_ERR, "ubind: %m");
 		exit(1);
 	}

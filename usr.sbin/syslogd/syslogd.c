@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.195 2015/10/10 20:35:01 deraadt Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.196 2015/10/11 20:23:49 guenther Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -491,9 +491,6 @@ main(int argc, char *argv[])
 			die(0);
 	}
 
-#ifndef SUN_LEN
-#define SUN_LEN(unp) (strlen((unp)->sun_path) + 2)
-#endif
 	for (i = 0; i < nunix; i++) {
 		fd_unix[i] = unix_socket(path_unix[i], SOCK_DGRAM, 0666);
 		if (fd_unix[i] == -1) {
@@ -2813,7 +2810,7 @@ unix_socket(char *path, int type, mode_t mode)
 	old_umask = umask(0177);
 
 	unlink(path);
-	if (bind(fd, (struct sockaddr *)&s_un, SUN_LEN(&s_un)) == -1) {
+	if (bind(fd, (struct sockaddr *)&s_un, sizeof(s_un)) == -1) {
 		snprintf(ebuf, sizeof(ebuf), "cannot bind %s", path);
 		logerror(ebuf);
 		umask(old_umask);
