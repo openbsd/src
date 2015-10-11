@@ -1,4 +1,4 @@
-/*	$OpenBSD: csplit.c,v 1.7 2015/10/09 01:37:07 deraadt Exp $	*/
+/*	$OpenBSD: csplit.c,v 1.8 2015/10/11 17:43:03 semarie Exp $	*/
 /*	$FreeBSD: src/usr.bin/csplit/csplit.c,v 1.9 2004/03/22 11:15:03 tjr Exp $	*/
 
 /*-
@@ -143,8 +143,6 @@ main(int argc, char *argv[])
 	if (strcmp(infn, "-") == 0) {
 		infile = stdin;
 		infn = "stdin";
-		if (pledge("stdio wpath cpath", NULL) == -1)
-			err(1, "pledge");
 	} else if ((infile = fopen(infn, "r")) == NULL)
 		err(1, "%s", infn);
 
