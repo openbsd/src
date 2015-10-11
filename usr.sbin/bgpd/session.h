@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.h,v 1.119 2015/07/20 16:10:38 claudio Exp $ */
+/*	$OpenBSD: session.h,v 1.120 2015/10/11 19:25:06 phessler Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -86,7 +86,9 @@ enum suberr_open {
 	ERR_OPEN_OPT,
 	ERR_OPEN_AUTH,
 	ERR_OPEN_HOLDTIME,
-	ERR_OPEN_CAPA
+	ERR_OPEN_CAPA,
+	ERR_OPEN_GROUP_CONFLICT,	/* draft-ietf-idr-bgp-multisession-07 */
+	ERR_OPEN_GROUP_REQUIRED		/* draft-ietf-idr-bgp-multisession-07 */
 };
 
 enum suberr_fsm {
