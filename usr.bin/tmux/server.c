@@ -1,4 +1,4 @@
-/* $OpenBSD: server.c,v 1.139 2015/09/01 10:01:56 nicm Exp $ */
+/* $OpenBSD: server.c,v 1.140 2015/10/11 00:26:23 guenther Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -145,7 +145,7 @@ server_create_socket(void)
 		return (-1);
 
 	mask = umask(S_IXUSR|S_IXGRP|S_IRWXO);
-	if (bind(fd, (struct sockaddr *) &sa, SUN_LEN(&sa)) == -1)
+	if (bind(fd, (struct sockaddr *) &sa, sizeof(sa)) == -1)
 		return (-1);
 	umask(mask);
 

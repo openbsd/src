@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.138 2015/09/13 11:12:09 beck Exp $ */
+/* $OpenBSD: netcat.c,v 1.139 2015/10/11 00:26:23 guenther Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  * Copyright (c) 2015 Bob Beck.  All rights reserved.
@@ -56,11 +56,6 @@
 #include <unistd.h>
 #include <tls.h>
 #include "atomicio.h"
-
-#ifndef SUN_LEN
-#define SUN_LEN(su) \
-	(sizeof(*(su)) - sizeof((su)->sun_path) + strlen((su)->sun_path))
-#endif
 
 #define PORT_MAX	65535
 #define PORT_MAX_LEN	6
@@ -646,7 +641,7 @@ unix_bind(char *path, int flags)
 		return (-1);
 	}
 
-	if (bind(s, (struct sockaddr *)&sun, SUN_LEN(&sun)) < 0) {
+	if (bind(s, (struct sockaddr *)&sun, sizeof(sun)) < 0) {
 		close(s);
 		return (-1);
 	}
@@ -741,7 +736,7 @@ unix_connect(char *path)
 		errno = ENAMETOOLONG;
 		return (-1);
 	}
-	if (connect(s, (struct sockaddr *)&sun, SUN_LEN(&sun)) < 0) {
+	if (connect(s, (struct sockaddr *)&sun, sizeof(sun)) < 0) {
 		close(s);
 		return (-1);
 	}
