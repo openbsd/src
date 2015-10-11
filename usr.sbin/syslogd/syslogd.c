@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.196 2015/10/11 20:23:49 guenther Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.197 2015/10/11 23:51:26 bluhm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -1123,7 +1123,7 @@ octet_counting(struct evbuffer *evbuf, char **msg, int drain)
 	 * It can be assumed that octet-counting framing is used if a syslog
 	 * frame starts with a digit.
 	 */
-	if (buf >= end || !isdigit(*buf))
+	if (buf >= end || !isdigit((unsigned char)*buf))
 		return (-1);
 	/*
 	 * SYSLOG-FRAME = MSG-LEN SP SYSLOG-MSG
@@ -1131,7 +1131,7 @@ octet_counting(struct evbuffer *evbuf, char **msg, int drain)
 	 * We support up to 5 digits in MSG-LEN, so the maximum is 99999.
 	 */
 	for (p = buf; p < end && p < buf + 5; p++) {
-		if (!isdigit(*p))
+		if (!isdigit((unsigned char)*p))
 			break;
 	}
 	if (buf >= p || p >= end || *p != ' ')
