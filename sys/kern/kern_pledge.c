@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.14 2015/10/11 16:01:06 deraadt Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.15 2015/10/11 16:19:48 semarie Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -599,6 +599,11 @@ pledge_namei(struct proc *p, char *origpath)
 		}
 		break;
 	}
+
+	/* ensure PLEDGE_RPATH request for doing read */	
+	if ((p->p_pledgenote & TMN_RPATH) &&
+	    (p->p_p->ps_pledge & PLEDGE_RPATH) == 0)
+		return (pledge_fail(p, EPERM, PLEDGE_RPATH));
 
 	/*
 	 * If a whitelist is set, compare canonical paths.  Anything
