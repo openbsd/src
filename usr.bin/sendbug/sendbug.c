@@ -1,4 +1,4 @@
-/*	$OpenBSD: sendbug.c,v 1.71 2015/10/10 20:35:01 deraadt Exp $	*/
+/*	$OpenBSD: sendbug.c,v 1.72 2015/10/11 21:23:15 deraadt Exp $	*/
 
 /*
  * Written by Ray Lai <ray@cyth.net>.
@@ -45,7 +45,6 @@ void	usbdevs(FILE *);
 
 const char *categories = "system user library documentation kernel "
     "alpha amd64 arm hppa i386 m88k mips64 powerpc sh sparc sparc64 vax";
-char *version = "5.5";
 const char *comment[] = {
 	"<synopsis of the problem (one line)>",
 	"<PR category (one line)>",
@@ -65,7 +64,7 @@ usage(void)
 {
 	extern char *__progname;
 
-	fprintf(stderr, "usage: %s [-DEPV]\n", __progname);
+	fprintf(stderr, "usage: %s [-DEP]\n", __progname);
 	exit(1);
 }
 
@@ -89,7 +88,7 @@ main(int argc, char *argv[])
 	if (pledge("stdio rpath wpath cpath tmppath getpw proc exec", NULL) == -1)
 		err(1, "pledge");
 
-	while ((ch = getopt(argc, argv, "DEPV")) != -1)
+	while ((ch = getopt(argc, argv, "DEP")) != -1)
 		switch (ch) {
 		case 'D':
 			Dflag = 1;
@@ -100,9 +99,6 @@ main(int argc, char *argv[])
 		case 'P':
 			Pflag = 1;
 			break;
-		case 'V':
-			printf("%s\n", version);
-			exit(0);
 		default:
 			usage();
 		}

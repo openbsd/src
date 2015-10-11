@@ -1,9 +1,9 @@
-.\" $OpenBSD: sendbug.1,v 1.25 2015/09/09 21:23:31 schwarze Exp $
+.\" $OpenBSD: sendbug.1,v 1.26 2015/10/11 21:23:15 deraadt Exp $
 .\"
 .\" Written by Raymond Lai <ray@cyth.net>.
 .\" Public domain.
 .\"
-.Dd $Mdocdate: September 9 2015 $
+.Dd $Mdocdate: October 11 2015 $
 .Dt SENDBUG 1
 .Os
 .Sh NAME
@@ -11,7 +11,7 @@
 .Nd report a bug in OpenBSD
 .Sh SYNOPSIS
 .Nm
-.Op Fl DEPV
+.Op Fl DEP
 .Sh DESCRIPTION
 .Nm
 is used to submit problem reports (PRs) to the
@@ -80,8 +80,6 @@ to read a PR from the standard input, decode the files,
 and write them into the current directory.
 .It Fl P
 Generate and print the template with system information filled out.
-.It Fl V
-Print the version number.
 .El
 .Sh ENVIRONMENT
 .Bl -tag -width Ds
