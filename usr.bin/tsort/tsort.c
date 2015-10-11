@@ -1,4 +1,4 @@
-/* $OpenBSD: tsort.c,v 1.30 2015/10/10 15:47:22 deraadt Exp $ */
+/* $OpenBSD: tsort.c,v 1.31 2015/10/11 17:39:50 espie Exp $ */
 /* ex:ts=8 sw=4:
  *
  * Copyright (c) 1999-2004 Marc Espie <espie@openbsd.org>
@@ -824,25 +824,19 @@ parse_args(int argc, char *argv[], struct ohash *pairs)
 	int c;
 	unsigned int	order;
 	int reverse_flag;
+	char **files;
+	int i, j;
 
-	order = 0;
+	i = 0;
 
 	reverse_flag = quiet_flag = long_flag =
 		warn_flag = hints_flag = verbose_flag = 0;
-	nodes_init(pairs);
+	/* argc is good enough, as we start at argv[1] */
+	files = ereallocarray(NULL, argc, sizeof (char *));
 	while ((c = getopt(argc, argv, "h:flqrvw")) != -1) {
 		switch(c) {
-		case 'h': {
-			FILE *f;
-
-			f = fopen(optarg, "r");
-			if (f == NULL)
-				err(EX_NOINPUT, "Can't open hint file %s",
-				    optarg);
-			order = read_hints(f, pairs, quiet_flag,
-			    optarg, order);
-			fclose(f);
-		}
+		case 'h':
+			files[i++] = optarg;
 			hints_flag = 1;
 			break;
 			/*FALLTHRU*/
@@ -873,7 +867,32 @@ parse_args(int argc, char *argv[], struct ohash *pairs)
 	argv += optind;
 
 	switch(argc) {
-	case 1: {
+	case 1:
+		files[i++] = argv[0];
+		break;
+	case 0:
+		break;
+	default:
+		usage();
+	}
+
+	files[i] = NULL;
+
+	nodes_init(pairs);
+	order = 0;
+		
+	for (j = 0; j != i-argc; j++) {
+		FILE *f;
+
+		f = fopen(files[j], "r");
+		if (f == NULL)
+			err(EX_NOINPUT, "Can't open hint file %s", files[i]);
+		order = read_hints(f, pairs, quiet_flag, files[i], order);
+		fclose(f);
+    	}
+	free(files);
+
+	if (argc == 1) {
 		FILE *f;
 
 		f = fopen(argv[0], "r");
@@ -882,14 +901,9 @@ parse_args(int argc, char *argv[], struct ohash *pairs)
 		order = read_pairs(f, pairs, reverse_flag, argv[0], order,
 		    hints_flag == 2);
 		fclose(f);
-		break;
-	}
-	case 0:
+	} else {
 		order = read_pairs(stdin, pairs, reverse_flag, "stdin",
 		    order, hints_flag == 2);
-		break;
-	default:
-		usage();
 	}
 }
 
