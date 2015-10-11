@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.16 2015/02/17 05:12:51 miod Exp $ */
+/*	$OpenBSD: parse.y,v 1.17 2015/10/11 07:16:01 guenther Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -29,6 +29,7 @@
 
 #include <ctype.h>
 #include <errno.h>
+#include <inttypes.h>
 #include <limits.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -591,7 +592,8 @@ mppekeylen	: NUMBER {
 			else if ($1 == 56)  $$ = NPPPD_MPPE_56BIT;
 			else if ($1 == 128) $$ = NPPPD_MPPE_128BIT;
 			else {
-				yyerror("%d: unknown mppe key length", $$);
+				yyerror("%"PRId64": unknown mppe key length",
+				    $$);
 				YYERROR;
 			}
 		}
