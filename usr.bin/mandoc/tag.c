@@ -1,4 +1,4 @@
-/*      $OpenBSD: tag.c,v 1.8 2015/10/06 18:30:44 schwarze Exp $    */
+/*      $OpenBSD: tag.c,v 1.9 2015/10/11 21:59:48 schwarze Exp $    */
 /*
  * Copyright (c) 2015 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -119,7 +119,7 @@ tag_put(const char *s, int prio, size_t line)
 	size_t			 len;
 	unsigned int		 slot;
 
-	if (tag_files.tfd <= 0)
+	if (tag_files.tfd <= 0 || strchr(s, ' ') != NULL)
 		return;
 	slot = ohash_qlookup(&tag_data, s);
 	entry = ohash_find(&tag_data, slot);
