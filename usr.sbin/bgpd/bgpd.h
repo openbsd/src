@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.290 2015/09/21 09:47:15 phessler Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.291 2015/10/11 19:30:12 phessler Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -718,6 +718,7 @@ struct filter_peers {
 #define	COMMUNITY_NEIGHBOR_AS		-3
 #define	COMMUNITY_UNSET			-4
 #define	COMMUNITY_WELLKNOWN		0xffff
+#define	COMMUNITY_BLACKHOLE		0x029A	/* draft-ymbk-grow-blackholing-01 */
 #define	COMMUNITY_NO_EXPORT		0xff01
 #define	COMMUNITY_NO_ADVERTISE		0xff02
 #define	COMMUNITY_NO_EXPSUBCONFED	0xff03
