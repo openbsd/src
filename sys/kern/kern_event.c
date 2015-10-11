@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.64 2015/10/10 16:35:08 deraadt Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.65 2015/10/11 01:53:39 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -323,22 +323,28 @@ filt_proc(struct knote *kn, long hint)
 	return (kn->kn_fflags != 0);
 }
 
+static void
+filt_timer_timeout_add(struct knote *kn)
+{
+	struct timeval tv;
+	int tticks;
+
+	tv.tv_sec = kn->kn_sdata / 1000;
+	tv.tv_usec = (kn->kn_sdata % 1000) * 1000;
+	tticks = tvtohz(&tv);
+	timeout_add(kn->kn_hook, tticks ? tticks : 1);
+}
+
 void
 filt_timerexpire(void *knx)
 {
 	struct knote *kn = knx;
-	struct timeval tv;
-	int tticks;
 
 	kn->kn_data++;
 	KNOTE_ACTIVATE(kn);
 
-	if ((kn->kn_flags & EV_ONESHOT) == 0) {
-		tv.tv_sec = kn->kn_sdata / 1000;
-		tv.tv_usec = (kn->kn_sdata % 1000) * 1000;
-		tticks = tvtohz(&tv);
-		timeout_add((struct timeout *)kn->kn_hook, tticks);
-	}
+	if ((kn->kn_flags & EV_ONESHOT) == 0)
+		filt_timer_timeout_add(kn);
 }
 
 
@@ -349,22 +355,16 @@ int
 filt_timerattach(struct knote *kn)
 {
 	struct timeout *to;
-	struct timeval tv;
-	int tticks;
 
 	if (kq_ntimeouts > kq_timeoutmax)
 		return (ENOMEM);
 	kq_ntimeouts++;
 
-	tv.tv_sec = kn->kn_sdata / 1000;
-	tv.tv_usec = (kn->kn_sdata % 1000) * 1000;
-	tticks = tvtohz(&tv);
-
 	kn->kn_flags |= EV_CLEAR;	/* automatically set */
 	to = malloc(sizeof(*to), M_KEVENT, M_WAITOK);
 	timeout_set(to, filt_timerexpire, kn);
-	timeout_add(to, tticks);
 	kn->kn_hook = to;
+	filt_timer_timeout_add(kn);
 
 	return (0);
 }
