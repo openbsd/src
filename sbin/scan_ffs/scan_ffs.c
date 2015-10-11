@@ -1,4 +1,4 @@
-/*	$OpenBSD: scan_ffs.c,v 1.19 2015/01/20 18:22:21 deraadt Exp $	*/
+/*	$OpenBSD: scan_ffs.c,v 1.20 2015/10/11 04:33:17 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist, Tobias Weingartner
@@ -172,6 +172,9 @@ main(int argc, char *argv[])
 	fd = opendev(argv[0], O_RDONLY, OPENDEV_PART, NULL);
 	if (fd < 0)
 		err(1, "%s", argv[0]);
+
+	if (pledge("stdio", NULL) == -1)
+		err(1, "pledge");
 
 	return (ufsscan(fd, beg, end, flags));
 }
