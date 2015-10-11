@@ -1,4 +1,4 @@
-.\"	$OpenBSD: acpicpu.4,v 1.6 2013/07/16 16:05:48 schwarze Exp $
+.\"	$OpenBSD: acpicpu.4,v 1.7 2015/10/11 00:12:38 guenther Exp $
 .\"
 .\" Copyright (c) 2006 Michael Knudsen <mk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 16 2013 $
+.Dd $Mdocdate: October 11 2015 $
 .Dt ACPICPU 4
 .Os
 .Sh NAME
@@ -27,7 +27,8 @@ The
 .Nm
 driver provides support for extracting processor power and performance
 levels from ACPI tables.
-This information can be used to throttle processor speed to reduce
+This information is used to enter deeper CPU sleeping states when idle,
+and can be used to throttle processor speed to reduce
 power usage and extend battery life through the
 .Va hw.setperf
 .Xr sysctl 3
@@ -50,3 +51,5 @@ The
 .Nm
 driver was written by
 .An Marco Peereboom Aq Mt marco@openbsd.org .
+C-state support was added by
+.An Philip Guenther Aq Mt guenther@openbsd.org .
