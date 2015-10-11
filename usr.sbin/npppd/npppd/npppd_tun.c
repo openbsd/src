@@ -1,4 +1,4 @@
-/*	$OpenBSD: npppd_tun.c,v 1.5 2015/01/19 01:48:59 deraadt Exp $ */
+/*	$OpenBSD: npppd_tun.c,v 1.6 2015/10/11 07:32:06 guenther Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -79,7 +79,7 @@ npppd_tundev_init(npppd *_this, int minor)
 int
 npppd_tundev_start(npppd *_this)
 {
-	int x, sock;
+	int sock;
 	char buf[PATH_MAX];
 	struct ifaliasreq ifra;
 	struct sockaddr_in *sin0;
@@ -87,7 +87,7 @@ npppd_tundev_start(npppd *_this)
 	NPPPD_TUN_ASSERT(_this != NULL);
 
 	snprintf(buf, sizeof(buf), "/dev/tun%d", _this->tun_minor);
-	if ((_this->tun_file = open(buf, O_RDWR, 0600)) < 0) {
+	if ((_this->tun_file = open(buf, O_RDWR | O_NONBLOCK)) < 0) {
 		log_printf(LOG_ERR, "open(%s) failed in %s(): %m",
 		    buf, __func__);
 		goto fail;
@@ -123,12 +123,6 @@ npppd_tundev_start(npppd *_this)
 	}
 	close(sock);
 
-	x = 1;
-	if (ioctl(_this->tun_file, FIONBIO, &x) != 0) {
-		log_printf(LOG_ERR, "ioctl(FIONBIO) failed in %s(): %m",
-		    __func__);
-		goto fail;
-	}
 	event_set(&_this->ev_tun, _this->tun_file, EV_READ | EV_PERSIST,
 	    npppd_tundev_io_event_handler, _this);
 	event_add(&_this->ev_tun, NULL);

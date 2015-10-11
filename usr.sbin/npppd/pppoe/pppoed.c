@@ -1,4 +1,4 @@
-/*	$OpenBSD: pppoed.c,v 1.17 2015/01/19 01:48:59 deraadt Exp $	*/
+/*	$OpenBSD: pppoed.c,v 1.18 2015/10/11 07:32:06 guenther Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -28,7 +28,7 @@
 /**@file
  * This file provides the PPPoE(RFC2516) server(access concentrator)
  * implementaion.
- * $Id: pppoed.c,v 1.17 2015/01/19 01:48:59 deraadt Exp $
+ * $Id: pppoed.c,v 1.18 2015/10/11 07:32:06 guenther Exp $
  */
 #include <sys/param.h>	/* ALIGN */
 #include <sys/types.h>
@@ -279,7 +279,7 @@ pppoed_listener_start(pppoed_listener *_this, int restart)
 	/* FIXME: /dev/bpf of NetBSD3.0 can simultaneity open */
 	for (i = 0; i < 256; i++) {
 		snprintf(buf, sizeof(buf), "/dev/bpf%d", i);
-		if ((_this->bpf = priv_open(buf, O_RDWR, 0600)) >= 0) {
+		if ((_this->bpf = priv_open(buf, O_RDWR)) >= 0) {
 			break;
 		} else if (errno == ENXIO || errno == ENOENT)
 			break;	/* no more entries */

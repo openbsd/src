@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.17 2015/07/20 18:55:35 yasuoka Exp $ */
+/*	$OpenBSD: privsep.c,v 1.18 2015/10/11 07:32:06 guenther Exp $ */
 
 /*
  * Copyright (c) 2010 Yasuoka Masahiko <yasuoka@openbsd.org>
@@ -60,7 +60,6 @@ enum imsg_code {
 struct PRIVSEP_OPEN_ARG {
 	char			 path[PATH_MAX];
 	int			 flags;
-	mode_t			 mode;
 };
 
 struct PRIVSEP_SOCKET_ARG {
@@ -263,13 +262,12 @@ priv_socket(int domain, int type, int protocol)
 }
 
 int
-priv_open(const char *path, int flags, mode_t mode)
+priv_open(const char *path, int flags)
 {
 	struct PRIVSEP_OPEN_ARG a;
 
 	strlcpy(a.path, path, sizeof(a.path));
 	a.flags = flags;
-	a.mode = mode;
 	(void)imsg_compose(&privsep_ibuf, PRIVSEP_OPEN, 0, 0, -1,
 	    &a, sizeof(a));
 	imsg_flush(&privsep_ibuf);
@@ -283,7 +281,7 @@ priv_fopen(const char *path)
 	int f;
 	FILE *fp;
 
-	if ((f = priv_open(path, O_RDONLY, 0600)) < 0)
+	if ((f = priv_open(path, O_RDONLY)) < 0)
 		return (NULL);
 
 	if ((fp = fdopen(f, "r")) == NULL) {
@@ -596,7 +594,7 @@ privsep_priv_dispatch_imsg(struct imsgbuf *ibuf)
 			else if (privsep_npppd_check_open(a))
 				r.rerrno = EACCES;
 			else {
-				if ((f = open(a->path, a->flags, a->mode))
+				if ((f = open(a->path, a->flags & ~O_CREAT))
 				    == -1)
 					r.rerrno = errno;
 				else
@@ -994,6 +992,9 @@ privsep_npppd_check_open(struct PRIVSEP_OPEN_ARG *arg)
 		{ "/dev/pppx",		1,	0 }
 	};
 
+	/* O_NONBLOCK is the only 'extra' flag permitted */
+	if (arg->flags & ~(O_ACCMODE | O_NONBLOCK))
+		return (1);
 	for (i = 0; i < (int)nitems(allow_paths); i++) {
 		if (allow_paths[i].path_is_prefix) {
 			if (!startswith(arg->path, allow_paths[i].path))

@@ -1,4 +1,4 @@
-/*	$OpenBSD: npppd_iface.c,v 1.11 2015/07/20 18:58:30 yasuoka Exp $ */
+/*	$OpenBSD: npppd_iface.c,v 1.12 2015/10/11 07:32:06 guenther Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: npppd_iface.c,v 1.11 2015/07/20 18:58:30 yasuoka Exp $ */
+/* $Id: npppd_iface.c,v 1.12 2015/10/11 07:32:06 guenther Exp $ */
 /**@file
  * The interface of npppd and kernel.
  * This is an implementation to use tun(4) or pppx(4).
@@ -283,15 +283,8 @@ npppd_iface_start(npppd_iface *_this)
 
 	/* open device file */
 	snprintf(buf, sizeof(buf), "/dev/%s", _this->ifname);
-	if ((_this->devf = priv_open(buf, O_RDWR, 0600)) < 0) {
+	if ((_this->devf = priv_open(buf, O_RDWR | O_NONBLOCK)) < 0) {
 		npppd_iface_log(_this, LOG_ERR, "open(%s) failed: %m", buf);
-		goto fail;
-	}
-
-	x = 1;
-	if (ioctl(_this->devf, FIONBIO, &x) != 0) {
-		npppd_iface_log(_this, LOG_ERR,
-		    "ioctl(FIONBIO) failed in %s(): %m", __func__);
 		goto fail;
 	}
 

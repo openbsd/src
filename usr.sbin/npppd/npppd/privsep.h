@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.h,v 1.6 2014/07/12 14:04:18 yasuoka Exp $ */
+/*	$OpenBSD: privsep.h,v 1.7 2015/10/11 07:32:06 guenther Exp $ */
 
 /*
  * Copyright (c) 2010 Yasuoka Masahiko <yasuoka@openbsd.org>
@@ -36,7 +36,7 @@ FILE  *priv_fopen (const char *);
 int   priv_bind (int, const struct sockaddr *, socklen_t);
 int   priv_unlink (const char *);
 int   priv_socket (int, int, int);
-int   priv_open (const char *, int, mode_t);
+int   priv_open (const char *, int);
 int   priv_send (int, const void *, int, int);
 int   priv_sendto (int, const void *, int, int, const struct sockaddr *, socklen_t);
 int   priv_get_user_info(const char *, const char *, npppd_auth_user **);
