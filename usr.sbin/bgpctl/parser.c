@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.72 2015/10/11 19:21:44 phessler Exp $ */
+/*	$OpenBSD: parser.c,v 1.73 2015/10/11 19:53:57 sthen Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -914,6 +914,10 @@ parse_community(const char *word, struct parse_result *r)
 		as = COMMUNITY_WELLKNOWN;
 		type = COMMUNITY_NO_PEER;
 		goto done;
+	} else if (strcasecmp(word, "BLACKHOLE") == 0) {
+		as = COMMUNITY_WELLKNOWN;
+		type = COMMUNITY_BLACKHOLE;
+		goto done;
 	}
 
 	if ((p = strchr(word, ':')) == NULL) {
@@ -935,6 +939,7 @@ done:
 		case COMMUNITY_NO_EXPORT:
 		case COMMUNITY_NO_ADVERTISE:
 		case COMMUNITY_NO_EXPSUBCONFED:
+		case COMMUNITY_BLACKHOLE:
 			/* valid */
 			break;
 		default:

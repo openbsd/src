@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.182 2015/09/16 20:25:41 stsp Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.183 2015/10/11 19:53:57 sthen Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -1465,6 +1465,9 @@ show_community(u_char *data, u_int16_t len)
 				break;
 			case COMMUNITY_NO_PEER:
 				printf("NO_PEER");
+				break;
+			case COMMUNITY_BLACKHOLE:
+				printf("BLACKHOLE");
 				break;
 			default:
 				printf("WELLKNOWN:%hu", v);
