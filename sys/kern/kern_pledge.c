@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.10 2015/10/10 19:15:53 deraadt Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.11 2015/10/11 01:56:56 guenther Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -51,6 +51,7 @@ int canonpath(const char *input, char *buf, size_t bufsize);
 const u_int pledge_syscalls[SYS_MAXSYSCALL] = {
 	[SYS_exit] = 0xffffffff,
 	[SYS_kbind] = 0xffffffff,
+	[SYS___get_tcb] = 0xffffffff,
 
 	[SYS_getuid] = PLEDGE_SELF,
 	[SYS_geteuid] = PLEDGE_SELF,
