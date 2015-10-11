@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.13 2015/10/11 15:40:48 deraadt Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.14 2015/10/11 16:01:06 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -89,6 +89,7 @@ const u_int pledge_syscalls[SYS_MAXSYSCALL] = {
 
 	[SYS_sendsyslog] = PLEDGE_SELF,
 	[SYS_nanosleep] = PLEDGE_SELF,
+	[SYS_sigaltstack] = PLEDGE_SELF,
 	[SYS_sigprocmask] = PLEDGE_SELF,
 	[SYS_sigsuspend] = PLEDGE_SELF,
 	[SYS_sigaction] = PLEDGE_SELF,
