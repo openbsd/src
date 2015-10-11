@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.51 2015/10/10 12:20:10 jasper Exp $
+#	$OpenBSD: Makefile,v 1.52 2015/10/11 11:47:21 jasper Exp $
 
 REGRESS_TARGETS=cmp-vers1-1 \
 		cmp-vers1-2 \
@@ -76,6 +76,7 @@ REGRESS_TARGETS=cmp-vers1-1 \
 		find-config-2 \
 		find-config-3 \
 		find-config-4 \
+		find-config-5 \
 		variable-get-1 \
 		variable-set \
 		variables-1 \
@@ -523,11 +524,15 @@ find-config-2:
 
 find-config-3:
 	# Simple existential test
-	${VPCONFIG} --exists vers1
+	@${VPCONFIG} --exists vers1
 
 find-config-4:
-	# Multiple existential tests combined
-	${VPCONFIG} --exists vers1,vers2
+	# Multiple existential tests combined (with comma)
+	@${VPCONFIG} --exists vers1,vers2
+
+find-config-5:
+	# Multiple existential tests combined (with space)
+	@${VPCONFIG} --exists vers1 vers2
 
 variable-get-1:
 	# Test --variable
