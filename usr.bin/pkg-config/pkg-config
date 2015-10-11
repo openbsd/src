@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# $OpenBSD: pkg-config,v 1.85 2014/11/17 22:16:23 jca Exp $
+# $OpenBSD: pkg-config,v 1.86 2015/10/11 11:48:46 jasper Exp $
 # $CSK: pkgconfig.pl,v 1.39 2006/11/27 16:26:20 ckuethe Exp $
 
 # Copyright (c) 2006 Chris Kuethe <ckuethe@openbsd.org>
@@ -161,8 +161,24 @@ if (!@ARGV){
 	exit 1;
 }
 
+# Return the next module from @ARGV, if it turns out to be a comma separated
+# module list, take the first one and put the rest back to the front.
+sub get_next_module {
+	my $module = shift @ARGV;
+	my $m;
+	if ($module =~ m/,/) {
+	    	my @ms = split(/,/, $module);
+		$m = shift @ms;
+	    	unshift(@ARGV, @ms) if (scalar(@ms) > 0);
+	} else {
+	    return $module;
+	}
+
+	return $m;
+}
+
 while (@ARGV){
-	my $p = shift @ARGV;
+	my $p = get_next_module();
 	my $op = undef;
 	my $v = undef;
 	if (@ARGV >= 2  && $ARGV[0] =~ /^[<=>!]+$/ &&
