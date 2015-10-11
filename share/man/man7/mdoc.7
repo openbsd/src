@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mdoc.7,v 1.136 2015/09/23 09:23:49 sobrado Exp $
+.\"	$OpenBSD: mdoc.7,v 1.137 2015/10/11 18:56:08 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2010, 2011, 2013 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 23 2015 $
+.Dd $Mdocdate: October 11 2015 $
 .Dt MDOC 7
 .Os
 .Sh NAME
@@ -2175,19 +2175,23 @@ See also
 Close parenthesised context opened by
 .Sx \&Po .
 .Ss \&Pf
-Removes the space between its argument
-.Pq Dq prefix
-and the following macro.
+Removes the space between its argument and the following macro.
 Its syntax is as follows:
 .Pp
 .D1 .Pf Ar prefix macro arguments ...
 .Pp
 This is equivalent to:
 .Pp
-.D1 .No Ar prefix No \&Ns Ar macro arguments ...
+.D1 .No \e& Ns Ar prefix No \&Ns Ar macro arguments ...
+.Pp
+The
+.Ar prefix
+argument is not parsed for macro names or delimiters,
+but used verbatim as if it were escaped.
 .Pp
 Examples:
 .Dl ".Pf $ Ar variable_name"
+.Dl ".Pf . Ar macro_name"
 .Dl ".Pf 0x Ar hex_digits"
 .Pp
 See also
