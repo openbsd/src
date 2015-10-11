@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.12 2015/10/11 15:25:39 deraadt Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.13 2015/10/11 15:40:48 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -1031,7 +1031,6 @@ pledge_ioctl_check(struct proc *p, long com, void *v)
 			return (ENOTTY);
 		case TIOCGPGRP:
 		case TIOCGWINSZ:	/* various programs */
-		case TIOCSWINSZ:
 			if (fp->f_type == DTYPE_VNODE && (vp->v_flag & VISTTY))
 				return (0);
 			break;
@@ -1055,17 +1054,6 @@ pledge_ioctl_check(struct proc *p, long com, void *v)
 		}
 	}
 
-	if ((p->p_p->ps_pledge & PLEDGE_ROUTE)) {
-		switch (com) {
-		case SIOCGIFADDR:
-		case SIOCGIFFLAGS:
-		case SIOCGIFRDOMAIN:
-			if (fp->f_type == DTYPE_SOCKET)
-				return (0);
-			break;
-		}
-	}
-
 	if ((p->p_p->ps_pledge & PLEDGE_TTY)) {
 		switch (com) {
 		case TIOCSPGRP:
@@ -1084,12 +1072,24 @@ pledge_ioctl_check(struct proc *p, long com, void *v)
 #endif
 		case TIOCGPGRP:
 		case TIOCGWINSZ:	/* various programs */
+		case TIOCSWINSZ:
 		case TIOCSBRK:		/* cu */
 		case TIOCCDTR:		/* cu */
 		case TIOCSETA:		/* cu, ... */
 		case TIOCSETAW:		/* cu, ... */
 		case TIOCSETAF:		/* tcsetattr TCSAFLUSH, script */
 			if (fp->f_type == DTYPE_VNODE && (vp->v_flag & VISTTY))
+				return (0);
+			break;
+		}
+	}
+
+	if ((p->p_p->ps_pledge & PLEDGE_ROUTE)) {
+		switch (com) {
+		case SIOCGIFADDR:
+		case SIOCGIFFLAGS:
+		case SIOCGIFRDOMAIN:
+			if (fp->f_type == DTYPE_SOCKET)
 				return (0);
 			break;
 		}
