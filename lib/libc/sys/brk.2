@@ -1,4 +1,4 @@
-.\"	$OpenBSD: brk.2,v 1.21 2015/09/10 17:55:21 schwarze Exp $
+.\"	$OpenBSD: brk.2,v 1.22 2015/10/11 07:53:49 guenther Exp $
 .\"	$NetBSD: brk.2,v 1.7 1995/02/27 12:31:57 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)brk.2	8.2 (Berkeley) 12/11/93
 .\"
-.Dd $Mdocdate: September 10 2015 $
+.Dd $Mdocdate: October 11 2015 $
 .Dt BRK 2
 .Os
 .Sh NAME
@@ -94,7 +94,7 @@ the maximum permissible size of the
 segment;
 it will not be possible to set the break
 beyond the
-.Em rlim_max
+.Fa rlim_max
 value returned from a call to
 .Xr getrlimit 2 ,
 e.g.,
