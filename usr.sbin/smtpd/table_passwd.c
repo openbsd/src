@@ -1,4 +1,4 @@
-/*	$OpenBSD: table_passwd.c,v 1.10 2015/01/20 17:37:54 deraadt Exp $	*/
+/*	$OpenBSD: table_passwd.c,v 1.11 2015/10/11 12:50:00 sunil Exp $	*/
 
 /*
  * Copyright (c) 2013 Gilles Chehade <gilles@poolp.org>
@@ -88,9 +88,10 @@ static int
 table_passwd_update(void)
 {
 	FILE	       *fp;
-	char	       *buf, *lbuf = NULL;
+	char	       *buf = NULL, *p;
 	char		tmp[LINE_MAX];
-	size_t		len;
+	size_t		sz = 0;
+	ssize_t		len;
 	char	       *line;
 	struct passwd	pw;
 	struct dict    *npasswd;
@@ -106,17 +107,9 @@ table_passwd_update(void)
 
 	dict_init(npasswd);
 
-	while ((buf = fgetln(fp, &len))) {
+	while ((len = getline(&buf, &sz, fp)) != -1) {
 		if (buf[len - 1] == '\n')
 			buf[len - 1] = '\0';
-		else {
-			/* EOF without EOL, copy and add the NUL */
-			if ((lbuf = malloc(len + 1)) == NULL)
-				err(1, NULL);
-			memcpy(lbuf, buf, len);
-			lbuf[len] = '\0';
-			buf = lbuf;
-		}
 
 		if (strlcpy(tmp, buf, sizeof tmp) >= sizeof tmp) {
 			log_warnx("warn: table-passwd: line too long");
@@ -130,13 +123,12 @@ table_passwd_update(void)
 			err(1, NULL);
 		dict_set(npasswd, pw.pw_name, line);
 	}
-	free(lbuf);
 	fclose(fp);
 
 	/* swap passwd table and release old one*/
 	if (passwd)
-		while (dict_poproot(passwd, (void**)&buf))
-			free(buf);
+		while (dict_poproot(passwd, (void**)&p))
+			free(p);
 	passwd = npasswd;
 
 	return (1);
@@ -144,12 +136,12 @@ table_passwd_update(void)
 err:
 	if (fp)
 		fclose(fp);
-	free(lbuf);
+	free(buf);
 
 	/* release passwd table */
 	if (npasswd) {
-		while (dict_poproot(npasswd, (void**)&buf))
-			free(buf);
+		while (dict_poproot(npasswd, (void**)&p))
+			free(p);
 		free(npasswd);
 	}
 	return (0);

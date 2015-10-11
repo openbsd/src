@@ -1,4 +1,4 @@
-/*	$OpenBSD: table_ldap.c,v 1.14 2015/10/06 14:02:25 stsp Exp $	*/
+/*	$OpenBSD: table_ldap.c,v 1.15 2015/10/11 12:50:00 sunil Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -297,28 +297,18 @@ ldap_parse_attributes(struct query *query, const char *key, const char *line,
 static int
 ldap_config(void)
 {
-	size_t		 flen;
+	size_t		 sz = 0;
+	ssize_t		 flen;
 	FILE		*fp;
-	char		*key, *value, *buf, *lbuf;
+	char		*key, *value, *buf = NULL;
 
 	fp = fopen(config, "r");
 	if (fp == NULL)
 		return (0);
 
-	lbuf = NULL;
-	while ((buf = fgetln(fp, &flen))) {
+	while ((flen = getline(&buf, &sz, fp)) != -1) {
 		if (buf[flen - 1] == '\n')
 			buf[flen - 1] = '\0';
-		else {
-			lbuf = malloc(flen + 1);
-			if (lbuf == NULL) {
-				log_warn("warn: table-ldap: malloc");
-				return (0);
-			}
-			memcpy(lbuf, buf, flen);
-			lbuf[flen] = '\0';
-			buf = lbuf;
-		}
 
 		key = buf;
 		while (isspace((unsigned char)*key))
@@ -390,7 +380,7 @@ ldap_config(void)
 			log_warnx("warn: table-ldap: bogus entry \"%s\"", key);
 	}
 
-	free(lbuf);
+	free(buf);
 	fclose(fp);
 	return (1);
 }

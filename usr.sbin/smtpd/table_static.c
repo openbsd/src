@@ -1,4 +1,4 @@
-/*	$OpenBSD: table_static.c,v 1.10 2015/01/20 17:37:54 deraadt Exp $	*/
+/*	$OpenBSD: table_static.c,v 1.11 2015/10/11 12:50:00 sunil Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -82,8 +82,9 @@ static int
 table_static_parse(struct table *t, const char *config, enum table_type type)
 {
 	FILE	*fp;
-	char	*buf, *lbuf;
-	size_t	 flen;
+	char	*buf = NULL;
+	size_t	 sz = 0;
+	ssize_t	 flen;
 	char	*keyp;
 	char	*valp;
 	size_t	 ret = 0;
@@ -92,16 +93,9 @@ table_static_parse(struct table *t, const char *config, enum table_type type)
 	if (fp == NULL)
 		return 0;
 
-	lbuf = NULL;
-	while ((buf = fgetln(fp, &flen))) {
+	while ((flen = getline(&buf, &sz, fp)) != -1) {
 		if (buf[flen - 1] == '\n')
 			buf[flen - 1] = '\0';
-		else {
-			lbuf = xmalloc(flen + 1, "table_config_parse");
-			memcpy(lbuf, buf, flen);
-			lbuf[flen] = '\0';
-			buf = lbuf;
-		}
 
 		keyp = buf;
 		while (isspace((unsigned char)*keyp))
@@ -142,7 +136,7 @@ table_static_parse(struct table *t, const char *config, enum table_type type)
 
 	ret = 1;
 end:
-	free(lbuf);
+	free(buf);
 	fclose(fp);
 	return ret;
 }
