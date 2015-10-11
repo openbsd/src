@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncheck_ffs.c,v 1.50 2015/02/07 02:09:13 deraadt Exp $	*/
+/*	$OpenBSD: ncheck_ffs.c,v 1.51 2015/10/11 19:00:40 doug Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 SigmaSoft, Th. Lockert <tholo@sigmasoft.com>
@@ -590,6 +590,10 @@ gotdev:
 		err(1, "ioctl (DIOCGDINFO)");
 	if (ioctl(diskfd, DIOCGPDINFO, (char *)&lab) < 0)
 		err(1, "ioctl (DIOCGPDINFO)");
+
+	if (pledge("stdio", NULL) == -1)
+		err(1, "pledge");
+
 	sblock = (struct fs *)sblock_buf;
 	for (i = 0; sblock_try[i] != -1; i++) {
 		n = pread(diskfd, sblock, SBLOCKSIZE, (off_t)sblock_try[i]);
