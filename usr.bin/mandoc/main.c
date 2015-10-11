@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.151 2015/10/10 13:20:25 schwarze Exp $ */
+/*	$OpenBSD: main.c,v 1.152 2015/10/11 21:06:59 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2012, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -23,7 +23,7 @@
 
 #include <assert.h>
 #include <ctype.h>
-#include <errno.h>
+#include <err.h>
 #include <fcntl.h>
 #include <glob.h>
 #include <signal.h>
@@ -100,10 +100,11 @@ static	int		  toptions(struct curparse *, char *);
 static	void		  usage(enum argmode) __attribute__((noreturn));
 static	int		  woptions(struct curparse *, char *);
 
+extern	char		 *__progname;
+
 static	const int sec_prios[] = {1, 4, 5, 8, 6, 3, 7, 2, 9};
 static	char		  help_arg[] = "help";
 static	char		 *help_argv[] = {help_arg, NULL};
-static	const char	 *progname;
 static	enum mandoclevel  rc;
 
 
@@ -130,15 +131,8 @@ main(int argc, char *argv[])
 	int		 use_pager;
 	int		 c;
 
-	if (argc < 1)
-		progname = "mandoc";
-	else if ((progname = strrchr(argv[0], '/')) == NULL)
-		progname = argv[0];
-	else
-		++progname;
-
-	if (0 == strncmp(progname, "mandocdb", 8) ||
-	    0 == strncmp(progname, "makewhatis", 10))
+	if (0 == strncmp(__progname, "mandocdb", 8) ||
+	    0 == strncmp(__progname, "makewhatis", 10))
 		return mandocdb(argc, argv);
 
 	/* Search options. */
@@ -150,13 +144,13 @@ main(int argc, char *argv[])
 	memset(&search, 0, sizeof(struct mansearch));
 	search.outkey = "Nd";
 
-	if (strcmp(progname, "man") == 0)
+	if (strcmp(__progname, "man") == 0)
 		search.argmode = ARG_NAME;
-	else if (strncmp(progname, "apropos", 7) == 0)
+	else if (strncmp(__progname, "apropos", 7) == 0)
 		search.argmode = ARG_EXPR;
-	else if (strncmp(progname, "whatis", 6) == 0)
+	else if (strncmp(__progname, "whatis", 6) == 0)
 		search.argmode = ARG_WORD;
-	else if (strncmp(progname, "help", 4) == 0)
+	else if (strncmp(__progname, "help", 4) == 0)
 		search.argmode = ARG_NAME;
 	else
 		search.argmode = ARG_FILE;
@@ -197,15 +191,11 @@ main(int argc, char *argv[])
 			break;
 		case 'I':
 			if (strncmp(optarg, "os=", 3)) {
-				fprintf(stderr,
-				    "%s: -I %s: Bad argument\n",
-				    progname, optarg);
+				warnx("-I %s: Bad argument", optarg);
 				return (int)MANDOCLEVEL_BADARG;
 			}
 			if (defos) {
-				fprintf(stderr,
-				    "%s: -I %s: Duplicate argument\n",
-				    progname, optarg);
+				warnx("-I %s: Duplicate argument", optarg);
 				return (int)MANDOCLEVEL_BADARG;
 			}
 			defos = mandoc_strdup(optarg + 3);
@@ -298,7 +288,7 @@ main(int argc, char *argv[])
 	 */
 
 	if (search.argmode == ARG_NAME) {
-		if (*progname == 'h') {
+		if (*__progname == 'h') {
 			if (argc == 0) {
 				argv = help_argv;
 				argc = 1;
@@ -343,9 +333,7 @@ main(int argc, char *argv[])
 				fs_search(&search, &conf.manpath,
 				    argc, argv, &res, &sz);
 			else
-				fprintf(stderr,
-				    "%s: nothing appropriate\n",
-				    progname);
+				warnx("nothing appropriate");
 		}
 
 		if (sz == 0) {
@@ -554,8 +542,7 @@ fs_lookup(const struct manpaths *paths, size_t ipath,
 	    paths->paths[ipath], sec, name);
 	globres = glob(file, 0, NULL, &globinfo);
 	if (globres != 0 && globres != GLOB_NOMATCH)
-		fprintf(stderr, "%s: %s: glob: %s\n",
-		    progname, file, strerror(errno));
+		warn("%s: glob", file);
 	free(file);
 	if (globres == 0)
 		file = mandoc_strdup(*globinfo.gl_pathv);
@@ -564,8 +551,8 @@ fs_lookup(const struct manpaths *paths, size_t ipath,
 		return 0;
 
 found:
-	fprintf(stderr, "%s: outdated mandoc.db lacks %s(%s) entry, run "
-	    "makewhatis %s\n", progname, name, sec, paths->paths[ipath]);
+	warnx("outdated mandoc.db lacks %s(%s) entry, run makewhatis %s",
+	    name, sec, paths->paths[ipath]);
 	*res = mandoc_reallocarray(*res, ++*ressz, sizeof(struct manpage));
 	page = *res + (*ressz - 1);
 	page->file = file;
@@ -606,9 +593,7 @@ fs_search(const struct mansearch *cfg, const struct manpaths *paths,
 					return;
 		}
 		if (*ressz == lastsz)
-			fprintf(stderr,
-			    "%s: No entry for %s in the manual.\n",
-			    progname, *argv);
+			warnx("No entry for %s in the manual.", *argv);
 		lastsz = *ressz;
 		argv++;
 		argc--;
@@ -779,8 +764,7 @@ done:
 	return;
 
 fail:
-	fprintf(stderr, "%s: %s: SYSERR: %s: %s",
-	    progname, file, syscall, strerror(errno));
+	warn("%s: SYSERR: %s", file, syscall);
 	if (rc < MANDOCLEVEL_SYSERR)
 		rc = MANDOCLEVEL_SYSERR;
 }
@@ -798,8 +782,7 @@ koptions(int *options, char *arg)
 	} else if ( ! strcmp(arg, "us-ascii")) {
 		*options &= ~(MPARSE_UTF8 | MPARSE_LATIN1);
 	} else {
-		fprintf(stderr, "%s: -K %s: Bad argument\n",
-		    progname, arg);
+		warnx("-K %s: Bad argument", arg);
 		return 0;
 	}
 	return 1;
@@ -818,8 +801,7 @@ moptions(int *options, char *arg)
 	else if (0 == strcmp(arg, "an"))
 		*options |= MPARSE_MAN;
 	else {
-		fprintf(stderr, "%s: -m %s: Bad argument\n",
-		    progname, arg);
+		warnx("-m %s: Bad argument", arg);
 		return 0;
 	}
 
@@ -852,8 +834,7 @@ toptions(struct curparse *curp, char *arg)
 	else if (0 == strcmp(arg, "pdf"))
 		curp->outtype = OUTT_PDF;
 	else {
-		fprintf(stderr, "%s: -T %s: Bad argument\n",
-		    progname, arg);
+		warnx("-T %s: Bad argument", arg);
 		return 0;
 	}
 
@@ -895,8 +876,7 @@ woptions(struct curparse *curp, char *arg)
 			curp->wlevel = MANDOCLEVEL_BADARG;
 			break;
 		default:
-			fprintf(stderr, "%s: -W %s: Bad argument\n",
-			    progname, o);
+			warnx("-W %s: Bad argument", o);
 			return 0;
 		}
 	}
@@ -910,7 +890,7 @@ mmsg(enum mandocerr t, enum mandoclevel lvl,
 {
 	const char	*mparse_msg;
 
-	fprintf(stderr, "%s: %s:", progname, file);
+	fprintf(stderr, "%s: %s:", __progname, file);
 
 	if (line)
 		fprintf(stderr, "%d:%d:", line, col + 1);
@@ -976,9 +956,7 @@ spawn_pager(struct tag_files *tag_files)
 
 	switch (pager_pid = fork()) {
 	case -1:
-		fprintf(stderr, "%s: fork: %s\n",
-		    progname, strerror(errno));
-		exit((int)MANDOCLEVEL_SYSERR);
+		err((int)MANDOCLEVEL_SYSERR, "fork");
 	case 0:
 		break;
 	default:
@@ -987,14 +965,10 @@ spawn_pager(struct tag_files *tag_files)
 
 	/* The child process becomes the pager. */
 
-	if (dup2(tag_files->ofd, STDOUT_FILENO) == -1) {
-		fprintf(stderr, "pager: stdout: %s\n", strerror(errno));
-		exit((int)MANDOCLEVEL_SYSERR);
-	}
+	if (dup2(tag_files->ofd, STDOUT_FILENO) == -1)
+		err((int)MANDOCLEVEL_SYSERR, "pager stdout");
 	close(tag_files->ofd);
 	close(tag_files->tfd);
 	execvp(argv[0], argv);
-	fprintf(stderr, "%s: exec %s: %s\n",
-	    progname, argv[0], strerror(errno));
-	exit((int)MANDOCLEVEL_SYSERR);
+	err((int)MANDOCLEVEL_SYSERR, "exec %s", argv[0]);
 }

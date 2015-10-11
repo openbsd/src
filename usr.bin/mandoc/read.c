@@ -1,4 +1,4 @@
-/*	$OpenBSD: read.c,v 1.117 2015/10/06 18:30:44 schwarze Exp $ */
+/*	$OpenBSD: read.c,v 1.118 2015/10/11 21:06:59 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -22,6 +22,7 @@
 
 #include <assert.h>
 #include <ctype.h>
+#include <err.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <stdarg.h>
@@ -606,10 +607,8 @@ read_whole_file(struct mparse *curp, const char *file, int fd,
 	size_t		 off;
 	ssize_t		 ssz;
 
-	if (-1 == fstat(fd, &st)) {
-		perror(file);
-		exit((int)MANDOCLEVEL_SYSERR);
-	}
+	if (fstat(fd, &st) == -1)
+		err((int)MANDOCLEVEL_SYSERR, "%s", file);
 
 	/*
 	 * If we're a regular file, try just reading in the whole entry
@@ -631,10 +630,8 @@ read_whole_file(struct mparse *curp, const char *file, int fd,
 	}
 
 	if (curp->gzip) {
-		if ((gz = gzdopen(fd, "rb")) == NULL) {
-			perror(file);
-			exit((int)MANDOCLEVEL_SYSERR);
-		}
+		if ((gz = gzdopen(fd, "rb")) == NULL)
+			err((int)MANDOCLEVEL_SYSERR, "%s", file);
 	} else
 		gz = NULL;
 
@@ -663,10 +660,8 @@ read_whole_file(struct mparse *curp, const char *file, int fd,
 			fb->sz = off;
 			return 1;
 		}
-		if (ssz == -1) {
-			perror(file);
-			exit((int)MANDOCLEVEL_SYSERR);
-		}
+		if (ssz == -1)
+			err((int)MANDOCLEVEL_SYSERR, "%s", file);
 		off += (size_t)ssz;
 	}
 

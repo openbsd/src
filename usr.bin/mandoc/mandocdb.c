@@ -1,4 +1,4 @@
-/*	$OpenBSD: mandocdb.c,v 1.150 2015/10/06 18:30:43 schwarze Exp $ */
+/*	$OpenBSD: mandocdb.c,v 1.151 2015/10/11 21:06:59 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -21,6 +21,7 @@
 
 #include <assert.h>
 #include <ctype.h>
+#include <err.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <fts.h>
@@ -179,8 +180,9 @@ static	int	 set_basedir(const char *, int);
 static	int	 treescan(void);
 static	size_t	 utf8(unsigned int, char [7]);
 
+extern	char		*__progname;
+
 static	char		 tempfilename[32];
-static	char		*progname;
 static	int		 nodb; /* no database changes */
 static	int		 mparse_options; /* abort the parse early */
 static	int		 use_all; /* use all found files */
@@ -347,12 +349,6 @@ mandocdb(int argc, char *argv[])
 	mpages_info.key_offset = offsetof(struct mpage, inodev);
 	mlinks_info.key_offset = offsetof(struct mlink, file);
 
-	progname = strrchr(argv[0], '/');
-	if (progname == NULL)
-		progname = argv[0];
-	else
-		++progname;
-
 	/*
 	 * We accept a few different invocations.
 	 * The CHECKOP macro makes sure that invocation styles don't
@@ -360,8 +356,7 @@ mandocdb(int argc, char *argv[])
 	 */
 #define	CHECKOP(_op, _ch) do \
 	if (OP_DEFAULT != (_op)) { \
-		fprintf(stderr, "%s: -%c: Conflicting option\n", \
-		    progname, (_ch)); \
+		warnx("-%c: Conflicting option", (_ch)); \
 		goto usage; \
 	} while (/*CONSTCOND*/0)
 
@@ -397,9 +392,8 @@ mandocdb(int argc, char *argv[])
 			break;
 		case 'T':
 			if (strcmp(optarg, "utf8")) {
-				fprintf(stderr, "%s: -T%s: "
-				    "Unsupported output format\n",
-				    progname, optarg);
+				warnx("-T%s: Unsupported output format",
+				    optarg);
 				goto usage;
 			}
 			write_utf8 = 1;
@@ -426,8 +420,7 @@ mandocdb(int argc, char *argv[])
 	argv += optind;
 
 	if (OP_CONFFILE == op && argc > 0) {
-		fprintf(stderr, "%s: -C: Too many arguments\n",
-		    progname);
+		warnx("-C: Too many arguments");
 		goto usage;
 	}
 
@@ -544,8 +537,8 @@ usage:
 			"       %s [-DnpQ] [-Tutf8] -d dir [file ...]\n"
 			"       %s [-Dnp] -u dir [file ...]\n"
 			"       %s [-Q] -t file ...\n",
-		       progname, progname, progname,
-		       progname, progname);
+		       __progname, __progname, __progname,
+		       __progname, __progname);
 
 	return (int)MANDOCLEVEL_BADARG;
 }

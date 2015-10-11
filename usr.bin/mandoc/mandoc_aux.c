@@ -1,4 +1,4 @@
-/*	$OpenBSD: mandoc_aux.c,v 1.5 2015/10/06 18:30:43 schwarze Exp $ */
+/*	$OpenBSD: mandoc_aux.c,v 1.6 2015/10/11 21:06:59 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -17,6 +17,7 @@
  */
 #include <sys/types.h>
 
+#include <err.h>
 #include <stdarg.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -35,10 +36,8 @@ mandoc_asprintf(char **dest, const char *fmt, ...)
 	ret = vasprintf(dest, fmt, ap);
 	va_end(ap);
 
-	if (-1 == ret) {
-		perror(NULL);
-		exit((int)MANDOCLEVEL_SYSERR);
-	}
+	if (ret == -1)
+		err((int)MANDOCLEVEL_SYSERR, NULL);
 	return ret;
 }
 
@@ -48,10 +47,8 @@ mandoc_calloc(size_t num, size_t size)
 	void	*ptr;
 
 	ptr = calloc(num, size);
-	if (NULL == ptr) {
-		perror(NULL);
-		exit((int)MANDOCLEVEL_SYSERR);
-	}
+	if (ptr == NULL)
+		err((int)MANDOCLEVEL_SYSERR, NULL);
 	return ptr;
 }
 
@@ -61,10 +58,8 @@ mandoc_malloc(size_t size)
 	void	*ptr;
 
 	ptr = malloc(size);
-	if (NULL == ptr) {
-		perror(NULL);
-		exit((int)MANDOCLEVEL_SYSERR);
-	}
+	if (ptr == NULL)
+		err((int)MANDOCLEVEL_SYSERR, NULL);
 	return ptr;
 }
 
@@ -73,10 +68,8 @@ mandoc_realloc(void *ptr, size_t size)
 {
 
 	ptr = realloc(ptr, size);
-	if (NULL == ptr) {
-		perror(NULL);
-		exit((int)MANDOCLEVEL_SYSERR);
-	}
+	if (ptr == NULL)
+		err((int)MANDOCLEVEL_SYSERR, NULL);
 	return ptr;
 }
 
@@ -85,10 +78,8 @@ mandoc_reallocarray(void *ptr, size_t num, size_t size)
 {
 
 	ptr = reallocarray(ptr, num, size);
-	if (NULL == ptr) {
-		perror(NULL);
-		exit((int)MANDOCLEVEL_SYSERR);
-	}
+	if (ptr == NULL)
+		err((int)MANDOCLEVEL_SYSERR, NULL);
 	return ptr;
 }
 
@@ -98,10 +89,8 @@ mandoc_strdup(const char *ptr)
 	char	*p;
 
 	p = strdup(ptr);
-	if (NULL == p) {
-		perror(NULL);
-		exit((int)MANDOCLEVEL_SYSERR);
-	}
+	if (ptr == NULL)
+		err((int)MANDOCLEVEL_SYSERR, NULL);
 	return p;
 }
 

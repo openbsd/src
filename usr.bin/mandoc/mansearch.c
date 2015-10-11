@@ -1,4 +1,4 @@
-/*	$OpenBSD: mansearch.c,v 1.45 2015/10/06 18:30:44 schwarze Exp $ */
+/*	$OpenBSD: mansearch.c,v 1.46 2015/10/11 21:06:59 schwarze Exp $ */
 /*
  * Copyright (c) 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -20,6 +20,7 @@
 #include <sys/types.h>
 
 #include <assert.h>
+#include <err.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <getopt.h>
@@ -47,17 +48,17 @@ extern const char *const mansearch_keynames[];
 #define	SQL_BIND_TEXT(_db, _s, _i, _v) \
 	do { if (SQLITE_OK != sqlite3_bind_text \
 		((_s), (_i)++, (_v), -1, SQLITE_STATIC)) \
-		fprintf(stderr, "%s\n", sqlite3_errmsg((_db))); \
+		warnx("%s", sqlite3_errmsg((_db))); \
 	} while (0)
 #define	SQL_BIND_INT64(_db, _s, _i, _v) \
 	do { if (SQLITE_OK != sqlite3_bind_int64 \
 		((_s), (_i)++, (_v))) \
-		fprintf(stderr, "%s\n", sqlite3_errmsg((_db))); \
+		warnx("%s", sqlite3_errmsg((_db))); \
 	} while (0)
 #define	SQL_BIND_BLOB(_db, _s, _i, _v) \
 	do { if (SQLITE_OK != sqlite3_bind_blob \
 		((_s), (_i)++, (&_v), sizeof(_v), SQLITE_STATIC)) \
-		fprintf(stderr, "%s\n", sqlite3_errmsg((_db))); \
+		warnx("%s", sqlite3_errmsg((_db))); \
 	} while (0)
 
 struct	expr {
@@ -112,7 +113,7 @@ mansearch_setup(int start)
 
 	if (start) {
 		if (NULL != pagecache) {
-			fprintf(stderr, "pagecache already enabled\n");
+			warnx("pagecache already enabled");
 			return (int)MANDOCLEVEL_BADARG;
 		}
 
@@ -132,10 +133,10 @@ mansearch_setup(int start)
 		if (SQLITE_OK == c)
 			return (int)MANDOCLEVEL_OK;
 
-		fprintf(stderr, "pagecache: %s\n", sqlite3_errstr(c));
+		warnx("pagecache: %s", sqlite3_errstr(c));
 
 	} else if (NULL == pagecache) {
-		fprintf(stderr, "pagecache missing\n");
+		warnx("pagecache missing");
 		return (int)MANDOCLEVEL_BADARG;
 	}
 
@@ -225,8 +226,7 @@ mansearch(const struct mansearch *search,
 	for (i = 0; i < paths->sz; i++) {
 		if (chdir_status && paths->paths[i][0] != '/') {
 			if ( ! getcwd_status) {
-				fprintf(stderr, "%s: getcwd: %s\n",
-				    paths->paths[i], buf);
+				warnx("%s: getcwd: %s", paths->paths[i], buf);
 				continue;
 			} else if (chdir(buf) == -1) {
 				perror(buf);
@@ -243,8 +243,7 @@ mansearch(const struct mansearch *search,
 		    SQLITE_OPEN_READONLY, NULL);
 
 		if (SQLITE_OK != c) {
-			fprintf(stderr, "%s/%s: %s\n",
-			    paths->paths[i], MANDOC_DB, strerror(errno));
+			warn("%s/%s", paths->paths[i], MANDOC_DB);
 			sqlite3_close(db);
 			continue;
 		}
@@ -266,7 +265,7 @@ mansearch(const struct mansearch *search,
 		j = 1;
 		c = sqlite3_prepare_v2(db, sql, -1, &s, NULL);
 		if (SQLITE_OK != c)
-			fprintf(stderr, "%s\n", sqlite3_errmsg(db));
+			warnx("%s", sqlite3_errmsg(db));
 
 		for (ep = e; NULL != ep; ep = ep->next) {
 			if (NULL == ep->substr) {
@@ -308,7 +307,7 @@ mansearch(const struct mansearch *search,
 		}
 
 		if (SQLITE_DONE != c)
-			fprintf(stderr, "%s\n", sqlite3_errmsg(db));
+			warnx("%s", sqlite3_errmsg(db));
 
 		sqlite3_finalize(s);
 
@@ -317,14 +316,14 @@ mansearch(const struct mansearch *search,
 		    "WHERE pageid=? ORDER BY sec, arch, name",
 		    -1, &s, NULL);
 		if (SQLITE_OK != c)
-			fprintf(stderr, "%s\n", sqlite3_errmsg(db));
+			warnx("%s", sqlite3_errmsg(db));
 
 		c = sqlite3_prepare_v2(db,
 		    "SELECT bits, key, pageid FROM keys "
 		    "WHERE pageid=? AND bits & ?",
 		    -1, &s2, NULL);
 		if (SQLITE_OK != c)
-			fprintf(stderr, "%s\n", sqlite3_errmsg(db));
+			warnx("%s", sqlite3_errmsg(db));
 
 		for (mp = ohash_first(&htab, &idx);
 				NULL != mp;
@@ -505,7 +504,7 @@ buildnames(const struct mansearch *search, struct manpage *mpage,
 		globfree(&globinfo);
 	}
 	if (c != SQLITE_DONE)
-		fprintf(stderr, "%s\n", sqlite3_errmsg(db));
+		warnx("%s", sqlite3_errmsg(db));
 	sqlite3_reset(s);
 
 	/* If none of the files is usable, use the first name. */
@@ -555,7 +554,7 @@ buildoutput(sqlite3 *db, sqlite3_stmt *s, uint64_t pageid, uint64_t outbit)
 		output = newoutput;
 	}
 	if (SQLITE_DONE != c)
-		fprintf(stderr, "%s\n", sqlite3_errmsg(db));
+		warnx("%s", sqlite3_errmsg(db));
 	sqlite3_reset(s);
 	return output;
 }
@@ -797,7 +796,7 @@ exprterm(const struct mansearch *search, char *buf, int cs)
 			free(val);
 		if (irc) {
 			regerror(irc, &e->regexp, errbuf, sizeof(errbuf));
-			fprintf(stderr, "regcomp: %s\n", errbuf);
+			warnx("regcomp: %s", errbuf);
 			free(e);
 			return NULL;
 		}
