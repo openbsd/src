@@ -1,4 +1,4 @@
-/*	$OpenBSD: ukc.c,v 1.19 2015/04/23 05:58:14 deraadt Exp $ */
+/*	$OpenBSD: ukc.c,v 1.20 2015/10/12 04:43:30 deraadt Exp $ */
 
 /*
  * Copyright (c) 1999-2001 Mats O Jansson.  All rights reserved.
@@ -26,7 +26,6 @@
 
 #include <sys/types.h>
 #include <sys/device.h>
-#include <sys/ioctl.h>
 
 #include <err.h>
 #include <fcntl.h>
