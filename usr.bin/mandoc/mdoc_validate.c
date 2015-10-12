@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_validate.c,v 1.211 2015/10/12 00:07:27 schwarze Exp $ */
+/*	$OpenBSD: mdoc_validate.c,v 1.212 2015/10/12 21:25:36 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -1828,7 +1828,6 @@ post_sh_head(POST_ARGS)
 	 */
 
 	secname = NULL;
-	sec = SEC_CUSTOM;
 	deroff(&secname, mdoc->last);
 	sec = NULL == secname ? SEC_CUSTOM : a2sec(secname);
 
