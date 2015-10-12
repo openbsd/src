@@ -1,4 +1,4 @@
-/*	$OpenBSD: mailwrapper.c,v 1.19 2014/10/08 04:27:32 deraadt Exp $	*/
+/*	$OpenBSD: mailwrapper.c,v 1.20 2015/10/12 22:01:08 deraadt Exp $	*/
 /*	$NetBSD: mailwrapper.c,v 1.2 1999/02/20 22:10:07 thorpej Exp $	*/
 
 /*
@@ -89,6 +89,9 @@ main(int argc, char *argv[], char *envp[])
 	size_t len, lineno = 0;
 	struct arglist al;
 
+	if (pledge("stdio rpath exec", NULL) == -1)
+		err(1, "pledge");
+
 	/* change __progname to mailwrapper so we get sensible error messages */
 	progname = __progname;
 	__progname = "mailwrapper";
@@ -97,7 +100,12 @@ main(int argc, char *argv[], char *envp[])
 	for (len = 0; len < argc; len++)
 		addarg(&al, argv[len], 0);
 
-	if ((config = fopen(_PATH_MAILERCONF, "r")) == NULL) {
+	config = fopen(_PATH_MAILERCONF, "r");
+
+	if (pledge("stdio exec", NULL) == -1)
+		err(1, "pledge");
+
+	if (config == NULL) {
 		addarg(&al, NULL, 0);
 		openlog(__progname, LOG_PID, LOG_MAIL);
 		syslog(LOG_INFO, "cannot open %s, using %s as default MTA",
