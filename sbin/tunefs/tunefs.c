@@ -1,4 +1,4 @@
-/*	$OpenBSD: tunefs.c,v 1.37 2015/02/07 02:09:14 deraadt Exp $	*/
+/*	$OpenBSD: tunefs.c,v 1.38 2015/10/12 02:01:15 deraadt Exp $	*/
 /*	$NetBSD: tunefs.c,v 1.33 2005/01/19 20:46:16 xtraeme Exp $	*/
 
 /*
@@ -155,6 +155,10 @@ main(int argc, char *argv[])
 		fi = openpartition(special, openflags, &special);
 	if (fi == -1)
 		err(1, "%s", special);
+
+	if (pledge("stdio", NULL) == -1)
+		err(1, "pledge");
+
 	getsb(&sblock, special);
 
 #define CHANGEVAL(old, new, type, suffix) do				\
