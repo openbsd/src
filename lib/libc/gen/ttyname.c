@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttyname.c,v 1.15 2015/09/12 14:56:50 guenther Exp $ */
+/*	$OpenBSD: ttyname.c,v 1.16 2015/10/12 19:53:58 naddy Exp $ */
 /*
  * Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,6 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <dirent.h>
-#include <termios.h>
 #include <db.h>
 #include <string.h>
 #include <unistd.h>
@@ -68,7 +67,6 @@ int
 ttyname_r(int fd, char *buf, size_t len)
 {
 	struct stat sb;
-	struct termios ttyb;
 	DB *db;
 	DBT data, key;
 	struct {
@@ -77,7 +75,7 @@ ttyname_r(int fd, char *buf, size_t len)
 	} bkey;
 
 	/* Must be a terminal. */
-	if (tcgetattr(fd, &ttyb) < 0)
+	if (!isatty(fd))
 		return (errno);
 	/* Must be a character device. */
 	if (fstat(fd, &sb))
