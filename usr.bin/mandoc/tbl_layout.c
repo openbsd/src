@@ -1,4 +1,4 @@
-/*	$OpenBSD: tbl_layout.c,v 1.27 2015/10/06 18:30:44 schwarze Exp $ */
+/*	$OpenBSD: tbl_layout.c,v 1.28 2015/10/12 00:07:27 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2012, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -113,7 +113,6 @@ mod:
 		    ln, *pos, "m");
 		goto mod;
 	case 'p':
-		/* FALLTHROUGH */
 	case 'v':
 		if (p[*pos] == '-' || p[*pos] == '+')
 			(*pos)++;
@@ -166,17 +165,14 @@ mod:
 
 	switch (p[(*pos)++]) {
 	case '3':
-		/* FALLTHROUGH */
 	case 'B':
 		cp->flags |= TBL_CELL_BOLD;
 		goto mod;
 	case '2':
-		/* FALLTHROUGH */
 	case 'I':
 		cp->flags |= TBL_CELL_ITALIC;
 		goto mod;
 	case '1':
-		/* FALLTHROUGH */
 	case 'R':
 		goto mod;
 	default:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_term.c,v 1.227 2015/10/06 18:30:44 schwarze Exp $ */
+/*	$OpenBSD: mdoc_term.c,v 1.228 2015/10/12 00:07:27 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -623,11 +623,8 @@ termp_it_pre(DECL_ARGS)
 
 	switch (type) {
 	case LIST_bullet:
-		/* FALLTHROUGH */
 	case LIST_dash:
-		/* FALLTHROUGH */
 	case LIST_hyphen:
-		/* FALLTHROUGH */
 	case LIST_enum:
 		width = term_len(p, 2);
 		break;
@@ -635,7 +632,6 @@ termp_it_pre(DECL_ARGS)
 		width = term_len(p, 8);
 		break;
 	case LIST_column:
-		/* FALLTHROUGH */
 	case LIST_tag:
 		width = term_len(p, 10);
 		break;
@@ -760,16 +756,13 @@ termp_it_pre(DECL_ARGS)
 
 	switch (type) {
 	case LIST_enum:
+	case LIST_bullet:
+	case LIST_dash:
+	case LIST_hyphen:
 		/*
 		 * Weird special case.
 		 * Some very narrow lists actually hang.
 		 */
-		/* FALLTHROUGH */
-	case LIST_bullet:
-		/* FALLTHROUGH */
-	case LIST_dash:
-		/* FALLTHROUGH */
-	case LIST_hyphen:
 		if (width <= (int)term_len(p, 2))
 			p->flags |= TERMP_HANG;
 		if (n->type != ROFFT_HEAD)
@@ -852,13 +845,9 @@ termp_it_pre(DECL_ARGS)
 			break;
 		/* FALLTHROUGH */
 	case LIST_bullet:
-		/* FALLTHROUGH */
 	case LIST_dash:
-		/* FALLTHROUGH */
 	case LIST_enum:
-		/* FALLTHROUGH */
 	case LIST_hyphen:
-		/* FALLTHROUGH */
 	case LIST_tag:
 		if (n->type == ROFFT_HEAD)
 			p->rmargin = p->offset + width;
@@ -894,7 +883,6 @@ termp_it_pre(DECL_ARGS)
 			term_fontpop(p);
 			break;
 		case LIST_dash:
-			/* FALLTHROUGH */
 		case LIST_hyphen:
 			term_fontpush(p, TERMFONT_BOLD);
 			term_word(p, "\\(hy");
@@ -916,13 +904,9 @@ termp_it_pre(DECL_ARGS)
 
 	switch (type) {
 	case LIST_bullet:
-		/* FALLTHROUGH */
 	case LIST_item:
-		/* FALLTHROUGH */
 	case LIST_dash:
-		/* FALLTHROUGH */
 	case LIST_hyphen:
-		/* FALLTHROUGH */
 	case LIST_enum:
 		if (n->type == ROFFT_HEAD)
 			return 0;
@@ -950,9 +934,7 @@ termp_it_post(DECL_ARGS)
 
 	switch (type) {
 	case LIST_item:
-		/* FALLTHROUGH */
 	case LIST_diag:
-		/* FALLTHROUGH */
 	case LIST_inset:
 		if (n->type == ROFFT_BODY)
 			term_newln(p);
@@ -1291,13 +1273,9 @@ synopsis_pre(struct termp *p, const struct roff_node *n)
 	 */
 	switch (n->prev->tok) {
 	case MDOC_Fd:
-		/* FALLTHROUGH */
 	case MDOC_Fn:
-		/* FALLTHROUGH */
 	case MDOC_Fo:
-		/* FALLTHROUGH */
 	case MDOC_In:
-		/* FALLTHROUGH */
 	case MDOC_Vt:
 		term_vspace(p);
 		break;
@@ -1615,19 +1593,12 @@ termp_bd_pre(DECL_ARGS)
 		 */
 		switch (nn->tok) {
 		case MDOC_Sm:
-			/* FALLTHROUGH */
 		case MDOC_br:
-			/* FALLTHROUGH */
 		case MDOC_sp:
-			/* FALLTHROUGH */
 		case MDOC_Bl:
-			/* FALLTHROUGH */
 		case MDOC_D1:
-			/* FALLTHROUGH */
 		case MDOC_Dl:
-			/* FALLTHROUGH */
 		case MDOC_Lp:
-			/* FALLTHROUGH */
 		case MDOC_Pp:
 			continue;
 		default:
@@ -1864,27 +1835,21 @@ termp_quote_pre(DECL_ARGS)
 
 	switch (n->tok) {
 	case MDOC_Ao:
-		/* FALLTHROUGH */
 	case MDOC_Aq:
 		term_word(p, n->nchild == 1 &&
 		    n->child->tok == MDOC_Mt ? "<" : "\\(la");
 		break;
 	case MDOC_Bro:
-		/* FALLTHROUGH */
 	case MDOC_Brq:
 		term_word(p, "{");
 		break;
 	case MDOC_Oo:
-		/* FALLTHROUGH */
 	case MDOC_Op:
-		/* FALLTHROUGH */
 	case MDOC_Bo:
-		/* FALLTHROUGH */
 	case MDOC_Bq:
 		term_word(p, "[");
 		break;
 	case MDOC_Do:
-		/* FALLTHROUGH */
 	case MDOC_Dq:
 		term_word(p, "\\(Lq");
 		break;
@@ -1895,21 +1860,16 @@ termp_quote_pre(DECL_ARGS)
 		term_word(p, n->norm->Es->child->string);
 		break;
 	case MDOC_Po:
-		/* FALLTHROUGH */
 	case MDOC_Pq:
 		term_word(p, "(");
 		break;
 	case MDOC__T:
-		/* FALLTHROUGH */
 	case MDOC_Qo:
-		/* FALLTHROUGH */
 	case MDOC_Qq:
 		term_word(p, "\"");
 		break;
 	case MDOC_Ql:
-		/* FALLTHROUGH */
 	case MDOC_So:
-		/* FALLTHROUGH */
 	case MDOC_Sq:
 		term_word(p, "\\(oq");
 		break;
@@ -1932,27 +1892,21 @@ termp_quote_post(DECL_ARGS)
 
 	switch (n->tok) {
 	case MDOC_Ao:
-		/* FALLTHROUGH */
 	case MDOC_Aq:
 		term_word(p, n->nchild == 1 &&
 		    n->child->tok == MDOC_Mt ? ">" : "\\(ra");
 		break;
 	case MDOC_Bro:
-		/* FALLTHROUGH */
 	case MDOC_Brq:
 		term_word(p, "}");
 		break;
 	case MDOC_Oo:
-		/* FALLTHROUGH */
 	case MDOC_Op:
-		/* FALLTHROUGH */
 	case MDOC_Bo:
-		/* FALLTHROUGH */
 	case MDOC_Bq:
 		term_word(p, "]");
 		break;
 	case MDOC_Do:
-		/* FALLTHROUGH */
 	case MDOC_Dq:
 		term_word(p, "\\(Rq");
 		break;
@@ -1965,21 +1919,16 @@ termp_quote_post(DECL_ARGS)
 			term_word(p, n->norm->Es->child->next->string);
 		break;
 	case MDOC_Po:
-		/* FALLTHROUGH */
 	case MDOC_Pq:
 		term_word(p, ")");
 		break;
 	case MDOC__T:
-		/* FALLTHROUGH */
 	case MDOC_Qo:
-		/* FALLTHROUGH */
 	case MDOC_Qq:
 		term_word(p, "\"");
 		break;
 	case MDOC_Ql:
-		/* FALLTHROUGH */
 	case MDOC_So:
-		/* FALLTHROUGH */
 	case MDOC_Sq:
 		term_word(p, "\\(cq");
 		break;

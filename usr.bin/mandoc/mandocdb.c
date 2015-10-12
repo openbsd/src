@@ -1,4 +1,4 @@
-/*	$OpenBSD: mandocdb.c,v 1.151 2015/10/11 21:06:59 schwarze Exp $ */
+/*	$OpenBSD: mandocdb.c,v 1.152 2015/10/12 00:07:27 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -679,7 +679,6 @@ treescan(void)
 			continue;
 
 		case FTS_D:
-			/* FALLTHROUGH */
 		case FTS_DP:
 			break;
 
@@ -1545,13 +1544,9 @@ parse_mdoc(struct mpage *mpage, const struct roff_meta *meta,
 	for (n = n->child; NULL != n; n = n->next) {
 		switch (n->type) {
 		case ROFFT_ELEM:
-			/* FALLTHROUGH */
 		case ROFFT_BLOCK:
-			/* FALLTHROUGH */
 		case ROFFT_HEAD:
-			/* FALLTHROUGH */
 		case ROFFT_BODY:
-			/* FALLTHROUGH */
 		case ROFFT_TAIL:
 			if (NULL != mdocs[n->tok].fp)
 			       if (0 == (*mdocs[n->tok].fp)(mpage, meta, n))
@@ -1904,7 +1899,6 @@ render_string(char **public, size_t *psz)
 		case '\\':
 			break;
 		case '\t':
-			/* FALLTHROUGH */
 		case ASCII_NBRSP:
 			dst[dsz++] = ' ';
 			scp++;

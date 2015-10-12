@@ -1,4 +1,4 @@
-/*	$OpenBSD: mandoc.c,v 1.62 2015/10/06 18:30:43 schwarze Exp $ */
+/*	$OpenBSD: mandoc.c,v 1.63 2015/10/12 00:07:27 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -91,11 +91,8 @@ mandoc_escape(const char **end, const char **start, int *sz)
 	 * Escapes taking no arguments at all.
 	 */
 	case 'd':
-		/* FALLTHROUGH */
 	case 'u':
-		/* FALLTHROUGH */
 	case ',':
-		/* FALLTHROUGH */
 	case '/':
 		return ESCAPE_IGNORE;
 
@@ -113,19 +110,12 @@ mandoc_escape(const char **end, const char **start, int *sz)
 	 * 'X' is the trigger.  These have opaque sub-strings.
 	 */
 	case 'F':
-		/* FALLTHROUGH */
 	case 'g':
-		/* FALLTHROUGH */
 	case 'k':
-		/* FALLTHROUGH */
 	case 'M':
-		/* FALLTHROUGH */
 	case 'm':
-		/* FALLTHROUGH */
 	case 'n':
-		/* FALLTHROUGH */
 	case 'V':
-		/* FALLTHROUGH */
 	case 'Y':
 		gly = ESCAPE_IGNORE;
 		/* FALLTHROUGH */
@@ -153,15 +143,10 @@ mandoc_escape(const char **end, const char **start, int *sz)
 	 * The \B and \w escapes are handled in roff.c, roff_res().
 	 */
 	case 'A':
-		/* FALLTHROUGH */
 	case 'b':
-		/* FALLTHROUGH */
 	case 'D':
-		/* FALLTHROUGH */
 	case 'R':
-		/* FALLTHROUGH */
 	case 'X':
-		/* FALLTHROUGH */
 	case 'Z':
 		gly = ESCAPE_IGNORE;
 		/* FALLTHROUGH */
@@ -179,17 +164,11 @@ mandoc_escape(const char **end, const char **start, int *sz)
 	 * and 'N' resolves to a numerical expression.
 	 */
 	case 'h':
-		/* FALLTHROUGH */
 	case 'H':
-		/* FALLTHROUGH */
 	case 'L':
-		/* FALLTHROUGH */
 	case 'l':
-		/* FALLTHROUGH */
 	case 'S':
-		/* FALLTHROUGH */
 	case 'v':
-		/* FALLTHROUGH */
 	case 'x':
 		if (strchr(" %&()*+-./0123456789:<=>", **start)) {
 			if ('\0' != **start)
@@ -245,9 +224,7 @@ mandoc_escape(const char **end, const char **start, int *sz)
 			term = '\'';
 			break;
 		case '3':
-			/* FALLTHROUGH */
 		case '2':
-			/* FALLTHROUGH */
 		case '1':
 			*sz = (*end)[-1] == 's' &&
 			    isdigit((unsigned char)(*end)[1]) ? 2 : 1;
@@ -323,12 +300,10 @@ mandoc_escape(const char **end, const char **start, int *sz)
 
 		switch (**start) {
 		case '3':
-			/* FALLTHROUGH */
 		case 'B':
 			gly = ESCAPE_FONTBOLD;
 			break;
 		case '2':
-			/* FALLTHROUGH */
 		case 'I':
 			gly = ESCAPE_FONTITALIC;
 			break;
@@ -336,7 +311,6 @@ mandoc_escape(const char **end, const char **start, int *sz)
 			gly = ESCAPE_FONTPREV;
 			break;
 		case '1':
-			/* FALLTHROUGH */
 		case 'R':
 			gly = ESCAPE_FONTROMAN;
 			break;
@@ -558,19 +532,14 @@ mandoc_eos(const char *p, size_t sz)
 	for (q = p + (int)sz - 1; q >= p; q--) {
 		switch (*q) {
 		case '\"':
-			/* FALLTHROUGH */
 		case '\'':
-			/* FALLTHROUGH */
 		case ']':
-			/* FALLTHROUGH */
 		case ')':
 			if (0 == found)
 				enclosed = 1;
 			break;
 		case '.':
-			/* FALLTHROUGH */
 		case '!':
-			/* FALLTHROUGH */
 		case '?':
 			found = 1;
 			break;

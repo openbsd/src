@@ -1,4 +1,4 @@
-/*	$OpenBSD: tree.c,v 1.35 2015/09/26 12:54:18 schwarze Exp $ */
+/*	$OpenBSD: tree.c,v 1.36 2015/10/12 00:07:27 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -222,11 +222,8 @@ print_man(const struct roff_node *n, int indent)
 		p = n->string;
 		break;
 	case ROFFT_ELEM:
-		/* FALLTHROUGH */
 	case ROFFT_BLOCK:
-		/* FALLTHROUGH */
 	case ROFFT_HEAD:
-		/* FALLTHROUGH */
 	case ROFFT_BODY:
 		p = man_macronames[n->tok];
 		break;
@@ -355,12 +352,10 @@ print_span(const struct tbl_span *sp, int indent)
 	for (dp = sp->first; dp; dp = dp->next) {
 		switch (dp->pos) {
 		case TBL_DATA_HORIZ:
-			/* FALLTHROUGH */
 		case TBL_DATA_NHORIZ:
 			putchar('-');
 			continue;
 		case TBL_DATA_DHORIZ:
-			/* FALLTHROUGH */
 		case TBL_DATA_NDHORIZ:
 			putchar('=');
 			continue;

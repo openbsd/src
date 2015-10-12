@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_html.c,v 1.112 2015/10/06 18:30:44 schwarze Exp $ */
+/*	$OpenBSD: mdoc_html.c,v 1.113 2015/10/12 00:07:27 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -297,13 +297,9 @@ synopsis_pre(struct html *h, const struct roff_node *n)
 
 	switch (n->prev->tok) {
 	case MDOC_Fd:
-		/* FALLTHROUGH */
 	case MDOC_Fn:
-		/* FALLTHROUGH */
 	case MDOC_Fo:
-		/* FALLTHROUGH */
 	case MDOC_In:
-		/* FALLTHROUGH */
 	case MDOC_Vt:
 		print_paragraph(h);
 		break;
@@ -824,23 +820,15 @@ mdoc_it_pre(MDOC_ARGS)
 	if (n->type == ROFFT_HEAD) {
 		switch (type) {
 		case LIST_bullet:
-			/* FALLTHROUGH */
 		case LIST_dash:
-			/* FALLTHROUGH */
 		case LIST_item:
-			/* FALLTHROUGH */
 		case LIST_hyphen:
-			/* FALLTHROUGH */
 		case LIST_enum:
 			return 0;
 		case LIST_diag:
-			/* FALLTHROUGH */
 		case LIST_hang:
-			/* FALLTHROUGH */
 		case LIST_inset:
-			/* FALLTHROUGH */
 		case LIST_ohang:
-			/* FALLTHROUGH */
 		case LIST_tag:
 			SCALE_VS_INIT(&su, ! bl->norm->Bl.comp);
 			bufcat_su(h, "margin-top", &su);
@@ -859,13 +847,9 @@ mdoc_it_pre(MDOC_ARGS)
 	} else if (n->type == ROFFT_BODY) {
 		switch (type) {
 		case LIST_bullet:
-			/* FALLTHROUGH */
 		case LIST_hyphen:
-			/* FALLTHROUGH */
 		case LIST_dash:
-			/* FALLTHROUGH */
 		case LIST_enum:
-			/* FALLTHROUGH */
 		case LIST_item:
 			SCALE_VS_INIT(&su, ! bl->norm->Bl.comp);
 			bufcat_su(h, "margin-top", &su);
@@ -873,13 +857,9 @@ mdoc_it_pre(MDOC_ARGS)
 			print_otag(h, TAG_LI, 2, tag);
 			break;
 		case LIST_diag:
-			/* FALLTHROUGH */
 		case LIST_hang:
-			/* FALLTHROUGH */
 		case LIST_inset:
-			/* FALLTHROUGH */
 		case LIST_ohang:
-			/* FALLTHROUGH */
 		case LIST_tag:
 			if (NULL == bl->norm->Bl.width) {
 				print_otag(h, TAG_DD, 1, tag);
@@ -971,11 +951,8 @@ mdoc_bl_pre(MDOC_ARGS)
 
 	switch (n->norm->Bl.type) {
 	case LIST_bullet:
-		/* FALLTHROUGH */
 	case LIST_dash:
-		/* FALLTHROUGH */
 	case LIST_hyphen:
-		/* FALLTHROUGH */
 	case LIST_item:
 		print_otag(h, TAG_UL, 2, tag);
 		break;
@@ -983,13 +960,9 @@ mdoc_bl_pre(MDOC_ARGS)
 		print_otag(h, TAG_OL, 2, tag);
 		break;
 	case LIST_diag:
-		/* FALLTHROUGH */
 	case LIST_hang:
-		/* FALLTHROUGH */
 	case LIST_inset:
-		/* FALLTHROUGH */
 	case LIST_ohang:
-		/* FALLTHROUGH */
 	case LIST_tag:
 		print_otag(h, TAG_DL, 2, tag);
 		break;
@@ -1171,19 +1144,12 @@ mdoc_bd_pre(MDOC_ARGS)
 		 */
 		switch (nn->tok) {
 		case MDOC_Sm:
-			/* FALLTHROUGH */
 		case MDOC_br:
-			/* FALLTHROUGH */
 		case MDOC_sp:
-			/* FALLTHROUGH */
 		case MDOC_Bl:
-			/* FALLTHROUGH */
 		case MDOC_D1:
-			/* FALLTHROUGH */
 		case MDOC_Dl:
-			/* FALLTHROUGH */
 		case MDOC_Lp:
-			/* FALLTHROUGH */
 		case MDOC_Pp:
 			continue;
 		default:
@@ -2063,23 +2029,19 @@ mdoc_quote_pre(MDOC_ARGS)
 
 	switch (n->tok) {
 	case MDOC_Ao:
-		/* FALLTHROUGH */
 	case MDOC_Aq:
 		print_text(h, n->nchild == 1 &&
 		    n->child->tok == MDOC_Mt ?  "<" : "\\(la");
 		break;
 	case MDOC_Bro:
-		/* FALLTHROUGH */
 	case MDOC_Brq:
 		print_text(h, "\\(lC");
 		break;
 	case MDOC_Bo:
-		/* FALLTHROUGH */
 	case MDOC_Bq:
 		print_text(h, "\\(lB");
 		break;
 	case MDOC_Oo:
-		/* FALLTHROUGH */
 	case MDOC_Op:
 		print_text(h, "\\(lB");
 		h->flags |= HTML_NOSPACE;
@@ -2093,16 +2055,12 @@ mdoc_quote_pre(MDOC_ARGS)
 		print_text(h, n->norm->Es->child->string);
 		break;
 	case MDOC_Do:
-		/* FALLTHROUGH */
 	case MDOC_Dq:
-		/* FALLTHROUGH */
 	case MDOC_Qo:
-		/* FALLTHROUGH */
 	case MDOC_Qq:
 		print_text(h, "\\(lq");
 		break;
 	case MDOC_Po:
-		/* FALLTHROUGH */
 	case MDOC_Pq:
 		print_text(h, "(");
 		break;
@@ -2113,7 +2071,6 @@ mdoc_quote_pre(MDOC_ARGS)
 		print_otag(h, TAG_CODE, 1, &tag);
 		break;
 	case MDOC_So:
-		/* FALLTHROUGH */
 	case MDOC_Sq:
 		print_text(h, "\\(oq");
 		break;
@@ -2136,22 +2093,17 @@ mdoc_quote_post(MDOC_ARGS)
 
 	switch (n->tok) {
 	case MDOC_Ao:
-		/* FALLTHROUGH */
 	case MDOC_Aq:
 		print_text(h, n->nchild == 1 &&
 		    n->child->tok == MDOC_Mt ?  ">" : "\\(ra");
 		break;
 	case MDOC_Bro:
-		/* FALLTHROUGH */
 	case MDOC_Brq:
 		print_text(h, "\\(rC");
 		break;
 	case MDOC_Oo:
-		/* FALLTHROUGH */
 	case MDOC_Op:
-		/* FALLTHROUGH */
 	case MDOC_Bo:
-		/* FALLTHROUGH */
 	case MDOC_Bq:
 		print_text(h, "\\(rB");
 		break;
@@ -2164,23 +2116,17 @@ mdoc_quote_post(MDOC_ARGS)
 			print_text(h, n->norm->Es->child->next->string);
 		break;
 	case MDOC_Qo:
-		/* FALLTHROUGH */
 	case MDOC_Qq:
-		/* FALLTHROUGH */
 	case MDOC_Do:
-		/* FALLTHROUGH */
 	case MDOC_Dq:
 		print_text(h, "\\(rq");
 		break;
 	case MDOC_Po:
-		/* FALLTHROUGH */
 	case MDOC_Pq:
 		print_text(h, ")");
 		break;
 	case MDOC_Ql:
-		/* FALLTHROUGH */
 	case MDOC_So:
-		/* FALLTHROUGH */
 	case MDOC_Sq:
 		print_text(h, "\\(cq");
 		break;

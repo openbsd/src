@@ -1,4 +1,4 @@
-/*	$OpenBSD: html.c,v 1.58 2015/10/06 18:30:43 schwarze Exp $ */
+/*	$OpenBSD: html.c,v 1.59 2015/10/12 00:07:27 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -216,7 +216,6 @@ print_metaf(struct html *h, enum mandoc_esc deco)
 		font = HTMLFONT_BI;
 		break;
 	case ESCAPE_FONT:
-		/* FALLTHROUGH */
 	case ESCAPE_FONTROMAN:
 		font = HTMLFONT_NONE;
 		break;
@@ -281,11 +280,8 @@ html_strlen(const char *cp)
 		case ESCAPE_ERROR:
 			return sz;
 		case ESCAPE_UNICODE:
-			/* FALLTHROUGH */
 		case ESCAPE_NUMBERED:
-			/* FALLTHROUGH */
 		case ESCAPE_SPECIAL:
-			/* FALLTHROUGH */
 		case ESCAPE_OVERSTRIKE:
 			if (skip)
 				skip = 0;
@@ -324,7 +320,7 @@ print_escape(char c)
 		break;
 	case ASCII_HYPH:
 		putchar('-');
-		/* FALLTHROUGH */
+		break;
 	case ASCII_BREAK:
 		break;
 	default:
@@ -369,15 +365,10 @@ print_encode(struct html *h, const char *p, int norecurse)
 
 		switch (esc) {
 		case ESCAPE_FONT:
-			/* FALLTHROUGH */
 		case ESCAPE_FONTPREV:
-			/* FALLTHROUGH */
 		case ESCAPE_FONTBOLD:
-			/* FALLTHROUGH */
 		case ESCAPE_FONTITALIC:
-			/* FALLTHROUGH */
 		case ESCAPE_FONTBI:
-			/* FALLTHROUGH */
 		case ESCAPE_FONTROMAN:
 			if (0 == norecurse)
 				print_metaf(h, esc);

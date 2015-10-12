@@ -1,4 +1,4 @@
-/*	$OpenBSD: term_ps.c,v 1.41 2015/10/11 21:07:00 schwarze Exp $ */
+/*	$OpenBSD: term_ps.c,v 1.42 2015/10/12 00:07:27 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -981,9 +981,7 @@ ps_pletter(struct termp *p, int c)
 
 	switch (c) {
 	case '(':
-		/* FALLTHROUGH */
 	case ')':
-		/* FALLTHROUGH */
 	case '\\':
 		ps_putchar(p, '\\');
 		break;

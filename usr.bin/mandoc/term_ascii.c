@@ -1,4 +1,4 @@
-/*	$OpenBSD: term_ascii.c,v 1.35 2015/10/06 18:30:44 schwarze Exp $ */
+/*	$OpenBSD: term_ascii.c,v 1.36 2015/10/12 00:07:27 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -234,7 +234,6 @@ ascii_hspan(const struct termp *p, const struct roffsu *su)
 		r = su->scale * 0.24;
 		break;
 	case SCALE_VS:
-		/* FALLTHROUGH */
 	case SCALE_PC:
 		r = su->scale * 40.0;
 		break;
@@ -242,7 +241,6 @@ ascii_hspan(const struct termp *p, const struct roffsu *su)
 		r = su->scale * 10.0 / 3.0;
 		break;
 	case SCALE_EN:
-		/* FALLTHROUGH */
 	case SCALE_EM:
 		r = su->scale * 24.0;
 		break;

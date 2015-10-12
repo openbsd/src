@@ -1,4 +1,4 @@
-/*	$OpenBSD: tbl_html.c,v 1.12 2015/10/06 18:30:44 schwarze Exp $ */
+/*	$OpenBSD: tbl_html.c,v 1.13 2015/10/12 00:07:27 schwarze Exp $ */
 /*
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -106,7 +106,6 @@ print_tbl(struct html *h, const struct tbl_span *sp)
 
 	switch (sp->pos) {
 	case TBL_SPAN_HORIZ:
-		/* FALLTHROUGH */
 	case TBL_SPAN_DHORIZ:
 		PAIR_INIT(&tag, ATTR_COLSPAN, "0");
 		print_otag(h, TAG_TD, 1, &tag);

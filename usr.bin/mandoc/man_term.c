@@ -1,4 +1,4 @@
-/*	$OpenBSD: man_term.c,v 1.138 2015/10/06 18:30:43 schwarze Exp $ */
+/*	$OpenBSD: man_term.c,v 1.139 2015/10/12 00:07:27 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -369,14 +369,11 @@ pre_ft(DECL_ARGS)
 	cp = n->child->string;
 	switch (*cp) {
 	case '4':
-		/* FALLTHROUGH */
 	case '3':
-		/* FALLTHROUGH */
 	case 'B':
 		term_fontrepl(p, TERMFONT_BOLD);
 		break;
 	case '2':
-		/* FALLTHROUGH */
 	case 'I':
 		term_fontrepl(p, TERMFONT_UNDER);
 		break;
@@ -384,9 +381,7 @@ pre_ft(DECL_ARGS)
 		term_fontlast(p);
 		break;
 	case '1':
-		/* FALLTHROUGH */
 	case 'C':
-		/* FALLTHROUGH */
 	case 'R':
 		term_fontrepl(p, TERMFONT_NONE);
 		break;
@@ -447,15 +442,10 @@ pre_sp(DECL_ARGS)
 	if ((NULL == n->prev && n->parent)) {
 		switch (n->parent->tok) {
 		case MAN_SH:
-			/* FALLTHROUGH */
 		case MAN_SS:
-			/* FALLTHROUGH */
 		case MAN_PP:
-			/* FALLTHROUGH */
 		case MAN_LP:
-			/* FALLTHROUGH */
 		case MAN_P:
-			/* FALLTHROUGH */
 			return 0;
 		default:
 			break;

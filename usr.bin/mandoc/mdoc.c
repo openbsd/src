@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc.c,v 1.142 2015/10/06 18:30:44 schwarze Exp $ */
+/*	$OpenBSD: mdoc.c,v 1.143 2015/10/12 00:07:27 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -180,13 +180,9 @@ mdoc_block_alloc(struct roff_man *mdoc, int line, int pos,
 
 	switch (tok) {
 	case MDOC_Bd:
-		/* FALLTHROUGH */
 	case MDOC_Bf:
-		/* FALLTHROUGH */
 	case MDOC_Bl:
-		/* FALLTHROUGH */
 	case MDOC_En:
-		/* FALLTHROUGH */
 	case MDOC_Rs:
 		p->norm = mandoc_calloc(1, sizeof(union mdoc_data));
 		break;
@@ -470,25 +466,17 @@ mdoc_isdelim(const char *p)
 	if ('\0' == p[1])
 		switch (p[0]) {
 		case '(':
-			/* FALLTHROUGH */
 		case '[':
 			return DELIM_OPEN;
 		case '|':
 			return DELIM_MIDDLE;
 		case '.':
-			/* FALLTHROUGH */
 		case ',':
-			/* FALLTHROUGH */
 		case ';':
-			/* FALLTHROUGH */
 		case ':':
-			/* FALLTHROUGH */
 		case '?':
-			/* FALLTHROUGH */
 		case '!':
-			/* FALLTHROUGH */
 		case ')':
-			/* FALLTHROUGH */
 		case ']':
 			return DELIM_CLOSE;
 		default:

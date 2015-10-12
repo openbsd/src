@@ -1,4 +1,4 @@
-/*	$OpenBSD: roff.c,v 1.149 2015/10/06 18:30:44 schwarze Exp $ */
+/*	$OpenBSD: roff.c,v 1.150 2015/10/12 00:07:27 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -1035,7 +1035,6 @@ roff_node_append(struct roff_man *man, struct roff_node *n)
 			break;
 		/* FALLTHROUGH */
 	case ROFFT_TAIL:
-		/* FALLTHROUGH */
 	case ROFFT_HEAD:
 		n->norm = n->parent->norm;
 		break;
@@ -1333,7 +1332,6 @@ roff_res(struct roff *r, struct buf *buf, int ln, int pos)
 			res = NULL;
 			break;
 		case 'B':
-			/* FALLTHROUGH */
 		case 'w':
 			term = cp[1];
 			/* FALLTHROUGH */
@@ -1408,11 +1406,8 @@ roff_res(struct roff *r, struct buf *buf, int ln, int pos)
 			}
 			switch (mandoc_escape(&cp, NULL, NULL)) {
 			case ESCAPE_SPECIAL:
-				/* FALLTHROUGH */
 			case ESCAPE_UNICODE:
-				/* FALLTHROUGH */
 			case ESCAPE_NUMBERED:
-				/* FALLTHROUGH */
 			case ESCAPE_OVERSTRIKE:
 				naml++;
 				break;
@@ -1719,14 +1714,10 @@ roff_cblock(ROFF_ARGS)
 	switch (r->last->tok) {
 	case ROFF_am:
 		/* ROFF_am1 is remapped to ROFF_am in roff_block(). */
-		/* FALLTHROUGH */
 	case ROFF_ami:
-		/* FALLTHROUGH */
 	case ROFF_de:
 		/* ROFF_de1 is remapped to ROFF_de in roff_block(). */
-		/* FALLTHROUGH */
 	case ROFF_dei:
-		/* FALLTHROUGH */
 	case ROFF_ig:
 		break;
 	default:
@@ -1768,9 +1759,7 @@ roff_ccond(struct roff *r, int ln, int ppos)
 
 	switch (r->last->tok) {
 	case ROFF_el:
-		/* FALLTHROUGH */
 	case ROFF_ie:
-		/* FALLTHROUGH */
 	case ROFF_if:
 		break;
 	default:
@@ -2057,12 +2046,10 @@ roff_getnum(const char *v, int *pos, int *res, int flags)
 		scaled = *res * 240 / 2.54;
 		break;
 	case 'v':
-		/* FALLTHROUGH */
 	case 'P':
 		scaled = *res * 40;
 		break;
 	case 'm':
-		/* FALLTHROUGH */
 	case 'n':
 		scaled = *res * 24;
 		break;
@@ -2151,18 +2138,13 @@ roff_evalcond(struct roff *r, int ln, char *v, int *pos)
 	case '\0':
 		return 0;
 	case 'n':
-		/* FALLTHROUGH */
 	case 'o':
 		(*pos)++;
 		return wanttrue;
 	case 'c':
-		/* FALLTHROUGH */
 	case 'd':
-		/* FALLTHROUGH */
 	case 'e':
-		/* FALLTHROUGH */
 	case 't':
-		/* FALLTHROUGH */
 	case 'v':
 		(*pos)++;
 		return !wanttrue;
@@ -2338,17 +2320,11 @@ roff_getop(const char *v, int *pos, char *res)
 
 	switch (*res) {
 	case '+':
-		/* FALLTHROUGH */
 	case '-':
-		/* FALLTHROUGH */
 	case '*':
-		/* FALLTHROUGH */
 	case '/':
-		/* FALLTHROUGH */
 	case '%':
-		/* FALLTHROUGH */
 	case '&':
-		/* FALLTHROUGH */
 	case ':':
 		break;
 	case '<':

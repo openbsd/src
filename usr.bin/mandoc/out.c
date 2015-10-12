@@ -1,4 +1,4 @@
-/*	$OpenBSD: out.c,v 1.33 2015/10/06 18:30:44 schwarze Exp $ */
+/*	$OpenBSD: out.c,v 1.34 2015/10/12 00:07:27 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -238,18 +238,14 @@ tblcalc_data(struct rofftbl *tbl, struct roffcol *col,
 
 	switch (dp->layout->pos) {
 	case TBL_CELL_HORIZ:
-		/* FALLTHROUGH */
 	case TBL_CELL_DHORIZ:
 		sz = (*tbl->len)(1, tbl->arg);
 		if (col->width < sz)
 			col->width = sz;
 		break;
 	case TBL_CELL_LONG:
-		/* FALLTHROUGH */
 	case TBL_CELL_CENTRE:
-		/* FALLTHROUGH */
 	case TBL_CELL_LEFT:
-		/* FALLTHROUGH */
 	case TBL_CELL_RIGHT:
 		tblcalc_literal(tbl, col, dp);
 		break;
