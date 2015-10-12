@@ -1,4 +1,4 @@
-/*	$OpenBSD: mandocdb.c,v 1.153 2015/10/12 00:32:37 schwarze Exp $ */
+/*	$OpenBSD: mandocdb.c,v 1.154 2015/10/12 21:16:32 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -1237,7 +1237,6 @@ names_check(void)
 {
 	sqlite3_stmt	*stmt;
 	const char	*name, *sec, *arch, *key;
-	int		 irc;
 
 	sqlite3_prepare_v2(db,
 	  "SELECT name, sec, arch, key FROM ("
@@ -1253,10 +1252,10 @@ names_check(void)
 	  ") USING (pageid);",
 	  -1, &stmt, NULL);
 
-	if (SQLITE_OK != sqlite3_bind_int64(stmt, 1, NAME_TITLE))
+	if (sqlite3_bind_int64(stmt, 1, NAME_TITLE) != SQLITE_OK)
 		say("", "%s", sqlite3_errmsg(db));
 
-	while (SQLITE_ROW == (irc = sqlite3_step(stmt))) {
+	while (sqlite3_step(stmt) == SQLITE_ROW) {
 		name = (const char *)sqlite3_column_text(stmt, 0);
 		sec  = (const char *)sqlite3_column_text(stmt, 1);
 		arch = (const char *)sqlite3_column_text(stmt, 2);
