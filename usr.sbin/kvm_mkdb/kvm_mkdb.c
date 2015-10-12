@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_mkdb.c,v 1.20 2015/01/16 06:40:17 deraadt Exp $	*/
+/*	$OpenBSD: kvm_mkdb.c,v 1.21 2015/10/12 16:01:53 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -74,6 +74,9 @@ main(int argc, char *argv[])
 		if (setrlimit(RLIMIT_DATA, &rl) < 0)
 			warn("can't set rlimit data size");
 	}
+
+	if (pledge("stdio rpath wpath cpath getpw", NULL) == -1)
+		err(1, "pledge");
 
 	strlcpy(dbdir, _PATH_VARDB, sizeof(dbdir));
 	while ((ch = getopt(argc, argv, "vo:")) != -1)
