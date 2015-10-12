@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.212 2015/10/12 18:13:59 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.213 2015/10/12 18:25:16 ajacoutot Exp $
 #
 # Copyright (c) 2008-2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
@@ -43,8 +43,8 @@ sm_error() {
 }
 
 sm_trap() {
-	sm_error
 	rm -f /var/sysmerge/{etc,pkg,xetc}sum
+	sm_error
 }
 
 trap "sm_trap; exit 1" 1 2 3 13 15
