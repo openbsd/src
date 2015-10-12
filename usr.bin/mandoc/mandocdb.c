@@ -1,4 +1,4 @@
-/*	$OpenBSD: mandocdb.c,v 1.154 2015/10/12 21:16:32 schwarze Exp $ */
+/*	$OpenBSD: mandocdb.c,v 1.155 2015/10/12 22:30:27 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -338,6 +338,11 @@ mandocdb(int argc, char *argv[])
 	size_t		  j, sz;
 	int		  ch, i;
 
+	if (pledge("stdio rpath wpath cpath fattr proc exec", NULL) == -1) {
+		perror("pledge");
+		return (int)MANDOCLEVEL_SYSERR;
+	}
+
 	memset(&conf, 0, sizeof(conf));
 	memset(stmts, 0, STMT__MAX * sizeof(sqlite3_stmt *));
 
@@ -419,6 +424,11 @@ mandocdb(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 
+	if (nodb && pledge("stdio rpath", NULL) == -1) {
+		perror("pledge");
+		return (int)MANDOCLEVEL_SYSERR;
+	}
+
 	if (OP_CONFFILE == op && argc > 0) {
 		warnx("-C: Too many arguments");
 		goto usage;
@@ -445,6 +455,12 @@ mandocdb(int argc, char *argv[])
 			 * The existing database is usable.  Process
 			 * all files specified on the command-line.
 			 */
+			if (!nodb && pledge("stdio rpath wpath cpath fattr",
+			    NULL) == -1) {
+				perror("pledge");
+				exitcode = (int)MANDOCLEVEL_SYSERR;
+				goto out;
+			}
 			use_all = 1;
 			for (i = 0; i < argc; i++)
 				filescan(argv[i]);
