@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.55 2015/10/11 10:22:28 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.56 2015/10/12 10:01:27 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -5572,7 +5572,7 @@ iwm_start(struct ifnet *ifp)
 	struct ieee80211_node *ni;
 	struct ether_header *eh;
 	struct mbuf *m;
-	int ac;
+	int ac = EDCA_AC_BE; /* XXX */
 
 	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
 		return;
@@ -5588,7 +5588,6 @@ iwm_start(struct ifnet *ifp)
 		IF_DEQUEUE(&ic->ic_mgtq, m);
 		if (m) {
 			ni = m->m_pkthdr.ph_cookie;
-			ac = 0;
 			goto sendit;
 		}
 		if (ic->ic_state != IEEE80211_S_RUN) {
