@@ -1,4 +1,4 @@
-/*	$OpenBSD: mandoc_aux.c,v 1.6 2015/10/11 21:06:59 schwarze Exp $ */
+/*	$OpenBSD: mandoc_aux.c,v 1.7 2015/10/12 21:09:08 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -89,7 +89,7 @@ mandoc_strdup(const char *ptr)
 	char	*p;
 
 	p = strdup(ptr);
-	if (ptr == NULL)
+	if (p == NULL)
 		err((int)MANDOCLEVEL_SYSERR, NULL);
 	return p;
 }
