@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vxlan.c,v 1.29 2015/10/03 07:22:05 yasuoka Exp $	*/
+/*	$OpenBSD: if_vxlan.c,v 1.30 2015/10/12 10:51:49 dlg Exp $	*/
 
 /*
  * Copyright (c) 2013 Reyk Floeter <reyk@openbsd.org>
@@ -331,7 +331,6 @@ vxlanioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	struct ifaddr		*ifa = (struct ifaddr *)data;
 	struct ifreq		*ifr = (struct ifreq *)data;
 	struct if_laddrreq	*lifr = (struct if_laddrreq *)data;
-	struct proc		*p = curproc;
 	int			 error = 0, s;
 
 	switch (cmd) {
@@ -359,8 +358,6 @@ vxlanioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 
 	case SIOCSLIFPHYADDR:
-		if ((error = suser(p, 0)) != 0)
-			break;
 		s = splnet();
 		error = vxlan_config(ifp,
 		    (struct sockaddr *)&lifr->addr,
@@ -369,8 +366,6 @@ vxlanioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 
 	case SIOCDIFPHYADDR:
-		if ((error = suser(p, 0)) != 0)
-			break;
 		s = splnet();
 		vxlan_multicast_cleanup(ifp);
 		bzero(&sc->sc_src, sizeof(sc->sc_src));
@@ -391,8 +386,6 @@ vxlanioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 
 	case SIOCSLIFPHYRTABLE:
-		if ((error = suser(p, 0)) != 0)
-			break;
 		if (ifr->ifr_rdomainid < 0 ||
 		    ifr->ifr_rdomainid > RT_TABLEID_MAX ||
 		    !rtable_exists(ifr->ifr_rdomainid)) {
@@ -410,8 +403,6 @@ vxlanioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 
 	case SIOCSLIFPHYTTL:
-		if ((error = suser(p, 0)) != 0)
-			break;
 		if (ifr->ifr_ttl < 0 || ifr->ifr_ttl > 0xff) {
 			error = EINVAL;
 			break;
@@ -429,8 +420,6 @@ vxlanioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 
 	case SIOCSVNETID:
-		if ((error = suser(p, 0)) != 0)
-			break;
 		if (ifr->ifr_vnetid < 0 || ifr->ifr_vnetid > 0x00ffffff) {
 			error = EINVAL;
 			break;
