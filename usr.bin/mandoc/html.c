@@ -1,4 +1,4 @@
-/*	$OpenBSD: html.c,v 1.59 2015/10/12 00:07:27 schwarze Exp $ */
+/*	$OpenBSD: html.c,v 1.60 2015/10/12 00:14:41 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -316,7 +316,7 @@ print_escape(char c)
 		printf("&quot;");
 		break;
 	case ASCII_NBRSP:
-		putchar('-');
+		printf("&nbsp;");
 		break;
 	case ASCII_HYPH:
 		putchar('-');
