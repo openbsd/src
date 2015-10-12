@@ -22,9 +22,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: style.9,v 1.63 2015/10/05 21:59:29 tedu Exp $
+.\"	$OpenBSD: style.9,v 1.64 2015/10/12 17:20:53 schwarze Exp $
 .\"
-.Dd $Mdocdate: October 5 2015 $
+.Dd $Mdocdate: October 12 2015 $
 .Dt STYLE 9
 .Os
 .Sh NAME
@@ -531,7 +531,7 @@ if ((four = malloc(sizeof(struct foo))) == NULL)
 	err(1, NULL);
 if ((six = (int *)overflow()) == NULL)
 	errx(1, "Number overflowed.");
-return (eight);
+return eight;
 .Ed
 .Pp
 Old-style function declarations look like this:
