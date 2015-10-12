@@ -1,4 +1,4 @@
-/*	$OpenBSD: mksuncd.c,v 1.2 2010/02/25 17:15:42 deraadt Exp $	*/
+/*	$OpenBSD: mksuncd.c,v 1.3 2015/10/12 07:45:48 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -224,6 +224,9 @@ main(int argc, char **argv)
 	of = open(argv[3], O_RDONLY);
 	if (of == -1)
 		err(1, "open");
+
+	if (pledge("stdio", NULL) == -1)
+		err(1, "pledge");
 
 	if (get_label(bf, &sl))
 		return (1);
