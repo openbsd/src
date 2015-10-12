@@ -1,7 +1,7 @@
 /*
  * Holiday
  *
- * $OpenBSD: calendar.holiday,v 1.31 2015/05/17 06:37:36 czarkoff Exp $
+ * $OpenBSD: calendar.holiday,v 1.32 2015/10/12 06:33:21 jmc Exp $
  */
 
 #ifndef _calendar_holiday_
@@ -376,7 +376,7 @@
 10/11	Day of the Revolution in Panama
 10/11	Druger Day in South Africa
 10/12	Day of the Race in Argentina
-10/12	Discovery Day in Gahamas
+10/12	Discovery Day in Bahamas
 10/12	National Day in Equatorial Guinea, Spain
 10/12	Our Lady Aparecida Day in Brazil
 10/12	Pan American Day in Belize
