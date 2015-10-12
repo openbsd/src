@@ -1,4 +1,4 @@
-/*	$OpenBSD: installboot.h,v 1.5 2015/10/08 14:50:38 krw Exp $	*/
+/*	$OpenBSD: installboot.h,v 1.6 2015/10/12 20:52:20 krw Exp $	*/
 /*
  * Copyright (c) 2012, 2013 Joel Sing <jsing@openbsd.org>
  *
@@ -18,6 +18,8 @@
 extern int nowrite;
 extern int stages;
 extern int verbose;
+extern int dstblkunit;
+extern int dstblkmajor;
 
 extern char *root;
 extern char *stage1;

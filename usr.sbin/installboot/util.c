@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.7 2015/10/08 14:50:38 krw Exp $	*/
+/*	$OpenBSD: util.c,v 1.8 2015/10/12 20:52:20 krw Exp $	*/
 
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
@@ -16,6 +16,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <sys/types.h>
+#include <sys/disklabel.h>
 #include <sys/stat.h>
 #include <err.h>
 #include <errno.h>
@@ -36,7 +38,7 @@ int
 filecopy(const char *srcfile, const char *dstfile)
 {
 	struct stat sb;
-	ssize_t sz, n;
+	ssize_t srcsz, sz, n;
 	int sfd, dfd, rslt = -1;
 	char *buf;
 
@@ -54,11 +56,20 @@ filecopy(const char *srcfile, const char *dstfile)
 		warn("fstat");
 		return (-1);
 	}
-	sz = sb.st_size;
+	srcsz = sz = sb.st_size;
 
 	dfd = open(dstfile, O_WRONLY|O_CREAT);
 	if (dfd == -1) {
 		warn("open %s", dstfile);
+		return (-1);
+	}
+	if (fstat(dfd, &sb) == -1) {
+		warn("fstat");
+		return (-1);
+	}
+	if (major(sb.st_dev) != dstblkmajor || DISKUNIT(sb.st_dev) !=
+	    dstblkunit) {
+		warnx("cross-device install");
 		return (-1);
 	}
 	if (fchown(dfd, 0, 0) == -1)
@@ -84,7 +95,7 @@ filecopy(const char *srcfile, const char *dstfile)
 		}
 	}
 
-	ftruncate(dfd, sb.st_size);
+	ftruncate(dfd, srcsz);
 
 	close(dfd);
 	close(sfd);
