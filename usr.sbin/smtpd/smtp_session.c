@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.234 2015/10/02 00:44:30 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.235 2015/10/12 20:16:31 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -467,6 +467,15 @@ header_missing_callback(const char *header, void *arg)
 		}
 		s->datalen += len;
 	}
+
+	if (strcasecmp(header, "date") == 0) {
+		len = fprintf(s->ofile, "Date: %s\n", time_to_text(time(NULL)));
+		if (len == -1) {
+			s->msgflags |= MF_ERROR_IO;
+			return;
+		}
+		s->datalen += len;
+	}
 }
 
 static void
@@ -535,6 +544,8 @@ smtp_session(struct listener *listener, int sock,
 	    dataline_callback, s);
 
 	if (hostname || listener->local) {
+		rfc2822_missing_header_callback(&s->rfc2822_parser, "date",
+		    header_missing_callback, s);
 		rfc2822_missing_header_callback(&s->rfc2822_parser, "message-id",
 		    header_missing_callback, s);
 	}
