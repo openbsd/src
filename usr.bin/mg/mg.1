@@ -1,7 +1,7 @@
-.\"	$OpenBSD: mg.1,v 1.93 2015/09/26 15:03:15 lum Exp $
+.\"	$OpenBSD: mg.1,v 1.94 2015/10/12 07:55:52 lum Exp $
 .\" This file is in the public domain.
 .\"
-.Dd $Mdocdate: September 26 2015 $
+.Dd $Mdocdate: October 12 2015 $
 .Dt MG 1
 .Os
 .Sh NAME
@@ -675,7 +675,9 @@ Toggle generation of backup files.
 .It make-directory
 Prompt the user for a path or directory name which is then created.
 .It mark-paragraph
-Mark n paragraphs.
+Mark
+.Va n
+paragraphs.
 .It mark-whole-buffer
 Marks whole buffer as a region by putting dot at the beginning and mark
 at the end of buffer.
@@ -877,7 +879,9 @@ Treat newline characters the same as any other.
 .It transpose-paragraphs
 Transpose adjacent paragraphs.
 If multiple iterations are requested, the current paragraph will
-be moved n paragraphs forward.
+be moved
+.Va n
+paragraphs forward.
 .It undo
 Undo the most recent action.
 If invoked again without an intervening command,
