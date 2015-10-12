@@ -1,4 +1,4 @@
-/*	$OpenBSD: enqueue.c,v 1.98 2015/10/09 15:09:09 gilles Exp $	*/
+/*	$OpenBSD: enqueue.c,v 1.99 2015/10/12 21:32:27 millert Exp $	*/
 
 /*
  * Copyright (c) 2005 Henning Brauer <henning@bulabula.org>
@@ -814,17 +814,17 @@ enqueue_offline(int argc, char *argv[], FILE *ifile, FILE *ofile)
 			ftruncate(fileno(ofile), 0);
 			exit(EX_SOFTWARE);
 		}
-		fprintf(ofile, "%s%s", i == 1 ? "" : "|", argv[i]);
+		if (fprintf(ofile, "%s%s", i == 1 ? "" : "|", argv[i]) < 0)
+			goto write_error;
 	}
 
-	fprintf(ofile, "\n");
+	if (fputc('\n', ofile) == EOF)
+		goto write_error;
 
-	while ((ch = fgetc(ifile)) != EOF)
-		if (fputc(ch, ofile) == EOF) {
-			warn("write error");
-			ftruncate(fileno(ofile), 0);
-			exit(EX_UNAVAILABLE);
-		}
+	while ((ch = fgetc(ifile)) != EOF) {
+		if (fputc(ch, ofile) == EOF)
+			goto write_error;
+	}
 
 	if (ferror(ifile)) {
 		warn("read error");
@@ -832,9 +832,14 @@ enqueue_offline(int argc, char *argv[], FILE *ifile, FILE *ofile)
 		exit(EX_UNAVAILABLE);
 	}
 
-	fclose(ofile);
+	if (fclose(ofile) == EOF)
+		goto write_error;
 
 	return (EX_TEMPFAIL);
+write_error:
+	warn("write error");
+	ftruncate(fileno(ofile), 0);
+	exit(EX_UNAVAILABLE);
 }
 
 static int
