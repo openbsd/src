@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.h,v 1.121 2015/05/20 13:32:39 reyk Exp $ */
+/*	$OpenBSD: ntpd.h,v 1.122 2015/10/12 06:50:08 reyk Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -112,6 +112,12 @@ struct ntp_addr_wrap {
 	char			*path;
 	struct ntp_addr		*a;
 	u_int8_t		 pool;
+};
+
+struct ntp_addr_msg {
+	struct ntp_addr		 a;
+	size_t			 namelen;
+	size_t			 pathlen;
 };
 
 struct ntp_status {
@@ -279,8 +285,10 @@ enum imsg_type {
 	IMSG_ADJFREQ,
 	IMSG_SETTIME,
 	IMSG_HOST_DNS,
-	IMSG_CONSTRAINT,
 	IMSG_CONSTRAINT_DNS,
+	IMSG_CONSTRAINT_QUERY,
+	IMSG_CONSTRAINT_RESULT,
+	IMSG_CONSTRAINT_CLOSE,
 	IMSG_CTL_SHOW_STATUS,
 	IMSG_CTL_SHOW_PEERS,
 	IMSG_CTL_SHOW_PEERS_END,
@@ -343,12 +351,17 @@ void	set_next(struct ntp_peer *, time_t);
 /* constraint.c */
 void	 constraint_add(struct constraint *);
 void	 constraint_remove(struct constraint *);
+void	 constraint_purge(void);
 int	 constraint_init(struct constraint *);
 int	 constraint_query(struct constraint *);
-int	 constraint_dispatch_msg(struct pollfd *);
-void	 constraint_check_child(void);
 int	 constraint_check(double);
-void	 constraint_dns(u_int32_t, u_int8_t *, size_t);
+void	 constraint_msg_dns(u_int32_t, u_int8_t *, size_t);
+void	 constraint_msg_result(u_int32_t, u_int8_t *, size_t);
+void	 constraint_msg_close(u_int32_t, u_int8_t *, size_t);
+void	 priv_constraint_msg(u_int32_t, u_int8_t *, size_t);
+int	 priv_constraint_dispatch(struct pollfd *);
+void	 priv_constraint_check_child(pid_t, int);
+char	*get_string(u_int8_t *, size_t);
 
 /* util.c */
 double			 gettime_corrected(void);

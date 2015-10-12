@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.c,v 1.96 2015/10/09 01:37:09 deraadt Exp $ */
+/*	$OpenBSD: ntpd.c,v 1.97 2015/10/12 06:50:08 reyk Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -60,6 +60,8 @@ volatile sig_atomic_t	 sigchld = 0;
 struct imsgbuf		*ibuf;
 int			 timeout = INFTIM;
 
+extern u_int		 constraint_cnt;
+
 const char		*showopt;
 
 static const char *ctl_showopt_list[] = {
@@ -99,18 +101,22 @@ usage(void)
 
 #define POLL_MAX		8
 #define PFD_PIPE		0
+#define PFD_MAX			1
 
 int
 main(int argc, char *argv[])
 {
 	struct ntpd_conf	 lconf;
-	struct pollfd		 pfd[POLL_MAX];
+	struct pollfd		*pfd = NULL;
 	pid_t			 chld_pid = 0, pid;
 	const char		*conffile;
-	int			 fd_ctl, ch, nfds;
+	int			 fd_ctl, ch, nfds, i, j;
 	int			 pipe_chld[2];
 	struct passwd		*pw;
 	extern char		*__progname;
+	u_int			 pfd_elms = 0, new_cnt;
+	struct constraint	*cstr;
+	void			*newp;
 
 	if (strcmp(__progname, "ntpctl") == 0) {
 		ctl_main(argc, argv);
@@ -201,18 +207,42 @@ main(int argc, char *argv[])
 	signal(SIGHUP, sighdlr);
 
 	close(pipe_chld[1]);
+	constraint_purge();
 
 	if ((ibuf = malloc(sizeof(struct imsgbuf))) == NULL)
 		fatal(NULL);
 	imsg_init(ibuf, pipe_chld[0]);
 
+	constraint_cnt = 0;
+
 	while (quit == 0) {
+		new_cnt = PFD_MAX + constraint_cnt;
+		if (new_cnt > pfd_elms) {
+			if ((newp = reallocarray(pfd, new_cnt,
+			    sizeof(*pfd))) == NULL) {
+				/* panic for now */
+				log_warn("could not resize pfd from %u -> "
+				    "%u entries", pfd_elms, new_cnt);
+				fatalx("exiting");
+			}
+			pfd = newp;
+			pfd_elms = new_cnt;
+		}
+
+		memset(pfd, 0, sizeof(*pfd) * pfd_elms);
 		pfd[PFD_PIPE].fd = ibuf->fd;
 		pfd[PFD_PIPE].events = POLLIN;
 		if (ibuf->w.queued)
 			pfd[PFD_PIPE].events |= POLLOUT;
 
-		if ((nfds = poll(pfd, 1, timeout)) == -1)
+		i = PFD_MAX;
+		TAILQ_FOREACH(cstr, &conf->constraints, entry) {
+			pfd[i].fd = cstr->fd;
+			pfd[i].events = POLLIN;
+			i++;
+		}
+
+		if ((nfds = poll(pfd, i, timeout)) == -1)
 			if (errno != EINTR) {
 				log_warn("poll error");
 				quit = 1;
@@ -239,6 +269,10 @@ main(int argc, char *argv[])
 			nfds--;
 			if (dispatch_imsg(&lconf) == -1)
 				quit = 1;
+		}
+
+		for (j = PFD_MAX; nfds > 0 && j < i; j++) {
+			nfds -= priv_constraint_dispatch(&pfd[j]);
 		}
 
 		if (sigchld) {
@@ -269,24 +303,33 @@ main(int argc, char *argv[])
 }
 
 int
-check_child(pid_t pid, const char *pname)
+check_child(pid_t chld_pid, const char *pname)
 {
 	int	 status, sig;
 	char	*signame;
+	pid_t	 pid;
 
-	if (waitpid(pid, &status, WNOHANG) > 0) {
-		if (WIFEXITED(status)) {
-			log_warnx("Lost child: %s exited", pname);
-			return (1);
+	do {
+		pid = waitpid(WAIT_ANY, &status, WNOHANG);
+		if (pid <= 0) {
+			continue;
+		} else if (pid == chld_pid) {
+			if (WIFEXITED(status)) {
+				log_warnx("Lost child: %s exited", pname);
+				return (1);
+			}
+			if (WIFSIGNALED(status)) {
+				sig = WTERMSIG(status);
+				signame = strsignal(sig) ?
+				    strsignal(sig) : "unknown";
+				log_warnx("Lost child: %s terminated; "
+				    "signal %d (%s)", pname, sig, signame);
+				return (1);
+			}
+		} else {
+			priv_constraint_check_child(pid, status);
 		}
-		if (WIFSIGNALED(status)) {
-			sig = WTERMSIG(status);
-			signame = strsignal(sig) ? strsignal(sig) : "unknown";
-			log_warnx("Lost child: %s terminated; signal %d (%s)",
-			    pname, sig, signame);
-			return (1);
-		}
-	}
+	} while (pid > 0 || (pid == -1 && errno == EINTR));
 
 	return (0);
 }
@@ -342,6 +385,10 @@ dispatch_imsg(struct ntpd_conf *lconf)
 					fatal("daemon");
 			lconf->settime = 0;
 			timeout = INFTIM;
+			break;
+		case IMSG_CONSTRAINT_QUERY:
+			priv_constraint_msg(imsg.hdr.peerid,
+			    imsg.data, imsg.hdr.len - IMSG_HEADER_SIZE);
 			break;
 		default:
 			break;

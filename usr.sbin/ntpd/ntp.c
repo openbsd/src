@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.136 2015/10/09 03:54:53 deraadt Exp $ */
+/*	$OpenBSD: ntp.c,v 1.137 2015/10/12 06:50:08 reyk Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -31,7 +31,6 @@
 #include <time.h>
 #include <unistd.h>
 #include <err.h>
-#include <tls.h>
 
 #include "ntpd.h"
 
@@ -42,14 +41,13 @@
 
 volatile sig_atomic_t	 ntp_quit = 0;
 volatile sig_atomic_t	 ntp_report = 0;
-volatile sig_atomic_t	 ntp_sigchld = 0;
 struct imsgbuf		*ibuf_main;
 struct imsgbuf		*ibuf_dns;
 struct ntpd_conf	*conf;
 struct ctl_conns	 ctl_conns;
 u_int			 peer_cnt;
 u_int			 sensors_cnt;
-u_int			 constraint_cnt;
+extern u_int		 constraint_cnt;
 time_t			 lastreport;
 
 void	ntp_sighdlr(int);
@@ -69,9 +67,6 @@ ntp_sighdlr(int sig)
 		break;
 	case SIGINFO:
 		ntp_report = 1;
-		break;
-	case SIGCHLD:
-		ntp_sigchld = 1;
 		break;
 	}
 }
@@ -109,13 +104,6 @@ ntp_main(int pipe_prnt[2], int fd_ctl, struct ntpd_conf *nconf,
 	default:
 		return (pid);
 	}
-
-	tls_init();
-
-	/* Verification will be turned off if CA is not found */
-	if ((conf->ca = tls_load_file(CONSTRAINT_CA,
-	    &conf->ca_len, NULL)) == NULL)
-		log_warnx("constraint certificate verification turned off");
 
 	/* in this case the parent didn't init logging and didn't daemonize */
 	if (nconf->settime && !nconf->debug) {
@@ -166,18 +154,8 @@ ntp_main(int pipe_prnt[2], int fd_ctl, struct ntpd_conf *nconf,
 
 	endservent();
 
-	/*
-	 * XXX
-	 * Unfortunately, the "contraint" processes are forked
-	 * below the "ntp engine".  Hence the ntp engine needs
-	 * to be able to fork -> "proc", and the "constraint"
-	 * process will want to open sockets -> "inet".
-	 *
-	 * For many reasons, including fork/exec cost, it would
-	 * be better if constraints were forked from the master
-	 * process, which would then tell the ntp engine.
-	 */
-	if (pledge("stdio inet proc", NULL) == -1)
+	/* The ntp process will want to open NTP client sockets -> "inet" */
+	if (pledge("stdio inet", NULL) == -1)
 		err(1, "pledge");
 
 	signal(SIGTERM, ntp_sighdlr);
@@ -185,7 +163,7 @@ ntp_main(int pipe_prnt[2], int fd_ctl, struct ntpd_conf *nconf,
 	signal(SIGINFO, ntp_sighdlr);
 	signal(SIGPIPE, SIG_IGN);
 	signal(SIGHUP, SIG_IGN);
-	signal(SIGCHLD, ntp_sighdlr);
+	signal(SIGCHLD, SIG_DFL);
 
 	if ((ibuf_main = malloc(sizeof(struct imsgbuf))) == NULL)
 		fatal(NULL);
@@ -248,7 +226,7 @@ ntp_main(int pipe_prnt[2], int fd_ctl, struct ntpd_conf *nconf,
 		}
 
 		new_cnt = PFD_MAX +
-		    peer_cnt + listener_cnt + ctl_cnt + constraint_cnt;
+		    peer_cnt + listener_cnt + ctl_cnt;
 		if (new_cnt > pfd_elms) {
 			if ((newp = reallocarray(pfd, new_cnt,
 			    sizeof(*pfd))) == NULL) {
@@ -369,9 +347,6 @@ ntp_main(int pipe_prnt[2], int fd_ctl, struct ntpd_conf *nconf,
 		TAILQ_FOREACH(cstr, &conf->constraints, entry) {
 			if (constraint_query(cstr) == -1)
 				continue;
-			pfd[i].fd = cstr->fd;
-			pfd[i].events = POLLIN;
-			i++;
 		}
 
 		now = getmonotime();
@@ -439,10 +414,6 @@ ntp_main(int pipe_prnt[2], int fd_ctl, struct ntpd_conf *nconf,
 			nfds -= control_dispatch_msg(&pfd[j], &ctl_cnt);
 		}
 
-		for (; nfds > 0 && j < i; j++) {
-			nfds -= constraint_dispatch_msg(&pfd[j]);
-		}
-
 		for (s = TAILQ_FIRST(&conf->ntp_sensors); s != NULL;
 		    s = next_s) {
 			next_s = TAILQ_NEXT(s, entry);
@@ -451,11 +422,6 @@ ntp_main(int pipe_prnt[2], int fd_ctl, struct ntpd_conf *nconf,
 		}
 		report_peers(ntp_report);
 		ntp_report = 0;
-
-		if (ntp_sigchld) {
-			constraint_check_child();
-			ntp_sigchld = 0;
-		}
 	}
 
 	msgbuf_write(&ibuf_main->w);
@@ -500,6 +466,14 @@ ntp_dispatch_imsg(void)
 				log_info("clock is now unsynced");
 				conf->status.synced = 0;
 			}
+			break;
+		case IMSG_CONSTRAINT_RESULT:
+			constraint_msg_result(imsg.hdr.peerid,
+			    imsg.data, imsg.hdr.len - IMSG_HEADER_SIZE);
+			break;
+		case IMSG_CONSTRAINT_CLOSE:
+			constraint_msg_close(imsg.hdr.peerid,
+			    imsg.data, imsg.hdr.len - IMSG_HEADER_SIZE);
 			break;
 		default:
 			break;
@@ -590,7 +564,7 @@ ntp_dispatch_imsg_dns(void)
 				client_addr_init(peer);
 			break;
 		case IMSG_CONSTRAINT_DNS:
-			constraint_dns(imsg.hdr.peerid,
+			constraint_msg_dns(imsg.hdr.peerid,
 			    imsg.data, imsg.hdr.len - IMSG_HEADER_SIZE);
 			break;
 		default:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: constraint.c,v 1.18 2015/10/09 03:50:40 deraadt Exp $	*/
+/*	$OpenBSD: constraint.c,v 1.19 2015/10/12 06:50:08 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -21,6 +21,7 @@
 #include <sys/time.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <sys/resource.h>
 #include <sys/uio.h>
 
 #include <netinet/in.h>
@@ -28,7 +29,6 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <errno.h>
 #include <fcntl.h>
 #include <imsg.h>
 #include <netdb.h>
@@ -37,8 +37,9 @@
 #include <string.h>
 #include <unistd.h>
 #include <time.h>
+#include <ctype.h>
 #include <tls.h>
-#include <err.h>
+#include <pwd.h>
 
 #include "log.h"
 #include "ntpd.h"
@@ -50,10 +51,14 @@ struct constraint *
 	 constraint_byfd(int);
 struct constraint *
 	 constraint_bypid(pid_t);
-int	 constraint_close(int);
+int	 constraint_close(u_int32_t);
 void	 constraint_update(void);
 void	 constraint_reset(void);
 int	 constraint_cmp(const void *, const void *);
+
+void	 priv_constraint_close(int, int);
+void	 priv_constraint_child(struct constraint *, struct ntp_addr_msg *,
+	    u_int8_t *, int[2]);
 
 struct httpsdate *
 	 httpsdate_init(const char *, const char *, const char *,
@@ -66,8 +71,10 @@ void	*httpsdate_query(const char *, const char *, const char *,
 
 char	*tls_readline(struct tls *, size_t *, size_t *, struct timeval *);
 
-extern u_int constraint_cnt;
+u_int constraint_cnt;
 extern u_int peer_cnt;
+extern struct imsgbuf *ibuf;		/* priv */
+extern struct imsgbuf *ibuf_main;	/* chld */
 
 struct httpsdate {
 	char			*tls_host;
@@ -134,12 +141,10 @@ constraint_addr_init(struct constraint *cstr)
 int
 constraint_query(struct constraint *cstr)
 {
-	int		 pipes[2];
-	struct timeval	 rectv, xmttv;
-	void		*ctx;
-	static char	 hname[NI_MAXHOST];
-	time_t		 now;
-	struct iovec	 iov[2];
+	time_t			 now;
+	struct ntp_addr_msg	 am;
+	struct iovec		 iov[3];
+	int			 iov_cnt = 0;
 
 	now = getmonotime();
 
@@ -168,7 +173,7 @@ constraint_query(struct constraint *cstr)
 
 		/* Reset and retry */
 		cstr->senderrors = 0;
-		constraint_close(cstr->fd);
+		constraint_close(cstr->id);
 		break;
 	case STATE_REPLY_RECEIVED:
 	default:
@@ -177,61 +182,82 @@ constraint_query(struct constraint *cstr)
 	}
 
 	cstr->last = now;
-	if (getnameinfo((struct sockaddr *)&cstr->addr->ss,
-	    SA_LEN((struct sockaddr *)&cstr->addr->ss),
-	    hname, sizeof(hname), NULL, 0,
-	    NI_NUMERICHOST) != 0)
-		fatalx("%s getnameinfo %s", __func__, cstr->addr_head.name);
+	cstr->state = STATE_QUERY_SENT;
 
-	log_debug("constraint request to %s", hname);
+	memset(&am, 0, sizeof(am));
+	memcpy(&am.a, cstr->addr, sizeof(am.a));
+
+	iov[iov_cnt].iov_base = &am;
+	iov[iov_cnt++].iov_len = sizeof(am);
+	if (cstr->addr_head.name) {
+		am.namelen = strlen(cstr->addr_head.name) + 1;
+		iov[iov_cnt].iov_base = cstr->addr_head.name;
+		iov[iov_cnt++].iov_len = am.namelen;
+	}
+	if (cstr->addr_head.path) {
+		am.pathlen = strlen(cstr->addr_head.path) + 1;
+		iov[iov_cnt].iov_base = cstr->addr_head.path;
+		iov[iov_cnt++].iov_len = am.pathlen;
+	}
+
+	imsg_composev(ibuf_main, IMSG_CONSTRAINT_QUERY,
+	    cstr->id, 0, -1, iov, iov_cnt);
+
+	return (0);
+}
+
+void
+priv_constraint_msg(u_int32_t id, u_int8_t *data, size_t len)
+{
+	struct ntp_addr_msg	 am;
+	struct ntp_addr		*h;
+	struct constraint	*cstr;
+	int			 pipes[2];
+
+	if ((cstr = constraint_byid(id)) != NULL) {
+		log_warnx("IMSG_CONSTRAINT_QUERY repeated for id %d", id);
+		return;
+	}
+
+	if (len < sizeof(am)) {
+		log_warnx("invalid IMSG_CONSTRAINT_QUERY received");
+		return;
+	}
+	memcpy(&am, data, sizeof(am));
+	if (len != (sizeof(am) + am.namelen + am.pathlen)) {
+		log_warnx("invalid IMSG_CONSTRAINT_QUERY received");
+		return;
+	}
+	/* Additional imsg data is obtained in the unpriv child */
+
+	if ((h = calloc(1, sizeof(*h))) == NULL)
+		fatal("calloc ntp_addr");
+	memcpy(h, &am.a, sizeof(*h));
+	h->next = NULL;
+
+	cstr = new_constraint();
+	cstr->id = id;
+	cstr->addr = h;
+	cstr->addr_head.a = h;
+	constraint_add(cstr);
+	constraint_cnt++;
 
 	if (socketpair(AF_UNIX, SOCK_DGRAM, AF_UNSPEC, pipes) == -1)
 		fatal("%s pipes", __func__);
 
-	/* Fork child handlers */
+	/*
+	 * Fork child handlers and make sure to do any sensitive work in the
+	 * the (unprivileged) child.  The parent should not do any parsing,
+	 * certificate loading etc.
+	 */
 	switch (cstr->pid = fork()) {
 	case -1:
 		cstr->senderrors++;
 		close(pipes[0]);
 		close(pipes[1]);
-		return (-1);
+		return;
 	case 0:
-		setproctitle("constraint from %s", hname);
-
-		if (pledge("stdio inet", NULL) == -1)
-			err(1, "pledge");
-
-		/* Child process */
-		if (dup2(pipes[1], CONSTRAINT_PASSFD) == -1)
-			fatal("%s dup2 CONSTRAINT_PASSFD", __func__);
-		if (pipes[0] != CONSTRAINT_PASSFD)
-			close(pipes[0]);
-		if (pipes[1] != CONSTRAINT_PASSFD)
-			close(pipes[1]);
-		(void)closefrom(CONSTRAINT_PASSFD + 1);
-
-		if (fcntl(CONSTRAINT_PASSFD, F_SETFD, FD_CLOEXEC) == -1)
-			fatal("%s fcntl F_SETFD", __func__);
-
-		cstr->fd = CONSTRAINT_PASSFD;
-		imsg_init(&cstr->ibuf, cstr->fd);
-
-		if ((ctx = httpsdate_query(hname,
-		    CONSTRAINT_PORT, cstr->addr_head.name, cstr->addr_head.path,
-		    conf->ca, conf->ca_len, &rectv, &xmttv)) == NULL) {
-			/* Abort with failure but without warning */
-			exit(1);
-		}
-
-		iov[0].iov_base = &rectv;
-		iov[0].iov_len = sizeof(rectv);
-		iov[1].iov_base = &xmttv;
-		iov[1].iov_len = sizeof(xmttv);
-		imsg_composev(&cstr->ibuf, IMSG_CONSTRAINT, 0, 0, -1, iov, 2);
-		imsg_flush(&cstr->ibuf);
-
-		/* Tear down the TLS connection after sending the result */
-		httpsdate_free(ctx);
+		priv_constraint_child(cstr, &am, data + sizeof(am), pipes);
 
 		_exit(0);
 		/* NOTREACHED */
@@ -239,56 +265,140 @@ constraint_query(struct constraint *cstr)
 		/* Parent */
 		close(pipes[1]);
 		cstr->fd = pipes[0];
-		cstr->state = STATE_QUERY_SENT;
 
 		imsg_init(&cstr->ibuf, cstr->fd);
 		break;
 	}
-
-
-	return (0);
 }
 
 void
-constraint_check_child(void)
+priv_constraint_child(struct constraint *cstr, struct ntp_addr_msg *am,
+    u_int8_t *data, int pipes[2])
+{
+	static char		 hname[NI_MAXHOST];
+	struct timeval		 rectv, xmttv;
+	struct sigaction	 sa;
+	struct passwd		*pw;
+	void			*ctx;
+	struct iovec		 iov[2];
+	int			 i;
+
+	if (setpriority(PRIO_PROCESS, 0, 0) == -1)
+		log_warn("could not set priority");
+
+	/* Init TLS and load cert before chroot() */
+	if (tls_init() == -1)
+		fatalx("tls_init");
+	if ((conf->ca = tls_load_file(CONSTRAINT_CA,
+	    &conf->ca_len, NULL)) == NULL)
+		log_warnx("constraint certificate verification turned off");
+
+	/* Drop privileges */
+	if ((pw = getpwnam(NTPD_USER)) == NULL)
+		fatalx("unknown user %s", NTPD_USER);
+
+	if (chroot(pw->pw_dir) == -1)
+		fatal("chroot");
+	if (chdir("/") == -1)
+		fatal("chdir(\"/\")");
+
+	if (setgroups(1, &pw->pw_gid) ||
+	    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||
+	    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
+		fatal("can't drop privileges");
+
+	/* Reset all signal handlers */
+	memset(&sa, 0, sizeof(sa));
+	sigemptyset(&sa.sa_mask);
+	sa.sa_flags = SA_RESTART;
+	sa.sa_handler = SIG_DFL;
+	for (i = 1; i < _NSIG; i++)
+		sigaction(i, &sa, NULL);
+
+	if (pledge("stdio inet", NULL) == -1)
+		fatal("pledge");
+
+	/* Get name and set process title */
+	if (getnameinfo((struct sockaddr *)&cstr->addr->ss,
+	    SA_LEN((struct sockaddr *)&cstr->addr->ss),
+	    hname, sizeof(hname), NULL, 0,
+	    NI_NUMERICHOST) != 0)
+		fatalx("%s getnameinfo", __func__);
+
+	log_debug("constraint request to %s", hname);
+	setproctitle("constraint from %s", hname);
+
+	/* Set file descriptors */
+	if (dup2(pipes[1], CONSTRAINT_PASSFD) == -1)
+		fatal("%s dup2 CONSTRAINT_PASSFD", __func__);
+	if (pipes[0] != CONSTRAINT_PASSFD)
+		close(pipes[0]);
+	if (pipes[1] != CONSTRAINT_PASSFD)
+		close(pipes[1]);
+	(void)closefrom(CONSTRAINT_PASSFD + 1);
+
+	if (fcntl(CONSTRAINT_PASSFD, F_SETFD, FD_CLOEXEC) == -1)
+		fatal("%s fcntl F_SETFD", __func__);
+
+	cstr->fd = CONSTRAINT_PASSFD;
+	imsg_init(&cstr->ibuf, cstr->fd);
+
+	/* Get remaining data from imsg in the unpriv child */
+	if (am->namelen) {
+		if ((cstr->addr_head.name =
+		    get_string(data, am->namelen)) == NULL)
+			fatalx("invalid IMSG_CONSTRAINT_QUERY name");
+		data += am->namelen;
+	}
+	if (am->pathlen) {
+		if ((cstr->addr_head.path =
+		    get_string(data, am->pathlen)) == NULL)
+			fatalx("invalid IMSG_CONSTRAINT_QUERY path");
+	}
+
+	/* Run! */
+	if ((ctx = httpsdate_query(hname,
+	    CONSTRAINT_PORT, cstr->addr_head.name, cstr->addr_head.path,
+	    conf->ca, conf->ca_len, &rectv, &xmttv)) == NULL) {
+		/* Abort with failure but without warning */
+		exit(1);
+	}
+
+	iov[0].iov_base = &rectv;
+	iov[0].iov_len = sizeof(rectv);
+	iov[1].iov_base = &xmttv;
+	iov[1].iov_len = sizeof(xmttv);
+	imsg_composev(&cstr->ibuf,
+	    IMSG_CONSTRAINT_RESULT, 0, 0, -1, iov, 2);
+	imsg_flush(&cstr->ibuf);
+
+	/* Tear down the TLS connection after sending the result */
+	httpsdate_free(ctx);
+}
+
+void
+priv_constraint_check_child(pid_t pid, int status)
 {
 	struct constraint	*cstr;
-	int			 status;
 	int			 fail, sig;
-	pid_t			 pid;
 
-	do {
-		pid = waitpid(WAIT_ANY, &status, WNOHANG);
-		if (pid <= 0)
-			continue;
+	fail = sig = 0;
+	if (WIFSIGNALED(status)) {
+		sig = WTERMSIG(status);
+	} else if (WIFEXITED(status)) {
+		if (WEXITSTATUS(status) != 0)
+			fail = 1;
+	} else
+		fatalx("unexpected cause of SIGCHLD");
 
-		fail = sig = 0;
-		if (WIFSIGNALED(status)) {
-			sig = WTERMSIG(status);
-		} else if (WIFEXITED(status)) {
-			if (WEXITSTATUS(status) != 0)
-				fail = 1;
-		} else
-			fatalx("unexpected cause of SIGCHLD");
+	if ((cstr = constraint_bypid(pid)) != NULL) {
+		if (sig)
+			fatalx("constraint %s, signal %d",
+			    log_sockaddr((struct sockaddr *)
+			    &cstr->addr->ss), sig);
 
-		if ((cstr = constraint_bypid(pid)) != NULL) {
-			if (sig)
-				fatalx("constraint %s, signal %d",
-				    log_sockaddr((struct sockaddr *)
-				    &cstr->addr->ss), sig);
-			if (fail) {
-				log_debug("no constraint reply from %s"
-				    " received in time, next query %ds",
-				    log_sockaddr((struct sockaddr *)
-				    &cstr->addr->ss), CONSTRAINT_SCAN_INTERVAL);
-			}
-
-			if (fail || cstr->state < STATE_QUERY_SENT) {
-				cstr->senderrors++;
-				constraint_close(cstr->fd);
-			}
-		}
-	} while (pid > 0 || (pid == -1 && errno == EINTR));
+		priv_constraint_close(cstr->fd, fail);
+	}
 }
 
 struct constraint *
@@ -331,18 +441,15 @@ constraint_bypid(pid_t pid)
 }
 
 int
-constraint_close(int fd)
+constraint_close(u_int32_t id)
 {
 	struct constraint	*cstr;
 
-	if ((cstr = constraint_byfd(fd)) == NULL) {
-		log_warn("%s: fd %d: not found", __func__, fd);
+	if ((cstr = constraint_byid(id)) == NULL) {
+		log_warn("%s: id %d: not found", __func__, id);
 		return (0);
 	}
 
-	msgbuf_clear(&cstr->ibuf.w);
-	close(cstr->fd);
-	cstr->fd = -1;
 	cstr->last = getmonotime();
 
 	if (cstr->addr == NULL || (cstr->addr = cstr->addr->next) == NULL) {
@@ -361,6 +468,25 @@ constraint_close(int fd)
 }
 
 void
+priv_constraint_close(int fd, int fail)
+{
+	struct constraint	*cstr;
+	u_int32_t		 id;
+
+	if ((cstr = constraint_byfd(fd)) == NULL) {
+		log_warn("%s: fd %d: not found", __func__, fd);
+		return;
+	}
+
+	id = cstr->id;
+	constraint_remove(cstr);
+	constraint_cnt--;
+
+	imsg_compose(ibuf, IMSG_CONSTRAINT_CLOSE, id, 0, -1,
+	    &fail, sizeof(fail));
+}
+
+void
 constraint_add(struct constraint *cstr)
 {
 	TAILQ_INSERT_TAIL(&conf->constraints, cstr, entry);
@@ -370,19 +496,31 @@ void
 constraint_remove(struct constraint *cstr)
 {
 	TAILQ_REMOVE(&conf->constraints, cstr, entry);
+
+	msgbuf_clear(&cstr->ibuf.w);
+	if (cstr->fd != -1)
+		close(cstr->fd);
 	free(cstr->addr_head.name);
 	free(cstr->addr_head.path);
 	free(cstr);
 }
 
+void
+constraint_purge(void)
+{
+	struct constraint	*cstr, *ncstr;
+
+	TAILQ_FOREACH_SAFE(cstr, &conf->constraints, entry, ncstr)
+		constraint_remove(cstr);
+}
+
 int
-constraint_dispatch_msg(struct pollfd *pfd)
+priv_constraint_dispatch(struct pollfd *pfd)
 {
 	struct imsg		 imsg;
 	struct constraint	*cstr;
 	ssize_t			 n;
 	struct timeval		 tv[2];
-	double			 offset;
 
 	if ((cstr = constraint_byfd(pfd->fd)) == NULL)
 		return (0);
@@ -391,37 +529,26 @@ constraint_dispatch_msg(struct pollfd *pfd)
 		return (0);
 
 	if ((n = imsg_read(&cstr->ibuf)) == -1 || n == 0) {
-		constraint_close(pfd->fd);
+		priv_constraint_close(pfd->fd, 1);
 		return (1);
 	}
 
 	for (;;) {
 		if ((n = imsg_get(&cstr->ibuf, &imsg)) == -1) {
-			constraint_close(pfd->fd);
+			priv_constraint_close(pfd->fd, 1);
 			return (1);
 		}
 		if (n == 0)
 			break;
 
 		switch (imsg.hdr.type) {
-		case IMSG_CONSTRAINT:
+		case IMSG_CONSTRAINT_RESULT:
 			 if (imsg.hdr.len != IMSG_HEADER_SIZE + sizeof(tv))
 				fatalx("invalid IMSG_CONSTRAINT received");
 
-			memcpy(tv, imsg.data, sizeof(tv));
-
-			offset = gettime_from_timeval(&tv[0]) -
-			    gettime_from_timeval(&tv[1]);
-
-			log_info("constraint reply from %s: offset %f",
-			    log_sockaddr((struct sockaddr *)&cstr->addr->ss),
-			    offset);
-
-			cstr->state = STATE_REPLY_RECEIVED;
-			cstr->last = getmonotime();
-			cstr->constraint = tv[0].tv_sec;
-
-			constraint_update();
+			/* forward imsg to ntp child, don't parse it here */
+			imsg_compose(ibuf, imsg.hdr.type,
+			    cstr->id, 0, -1, imsg.data, sizeof(tv));
 			break;
 		default:
 			break;
@@ -433,7 +560,71 @@ constraint_dispatch_msg(struct pollfd *pfd)
 }
 
 void
-constraint_dns(u_int32_t id, u_int8_t *data, size_t len)
+constraint_msg_result(u_int32_t id, u_int8_t *data, size_t len)
+{
+	struct constraint	*cstr;
+	struct timeval		 tv[2];
+	double			 offset;
+
+	if ((cstr = constraint_byid(id)) == NULL) {
+		log_warnx("IMSG_CONSTRAINT_CLOSE with invalid constraint id");
+		return;
+	}
+
+	if (len != sizeof(tv)) {
+		log_warnx("invalid IMSG_CONSTRAINT received");
+		return;
+	}
+
+	memcpy(tv, data, len);
+
+	offset = gettime_from_timeval(&tv[0]) -
+	    gettime_from_timeval(&tv[1]);
+
+	log_info("constraint reply from %s: offset %f",
+	    log_sockaddr((struct sockaddr *)&cstr->addr->ss),
+	    offset);
+
+	cstr->state = STATE_REPLY_RECEIVED;
+	cstr->last = getmonotime();
+	cstr->constraint = tv[0].tv_sec;
+
+	constraint_update();
+}
+
+void
+constraint_msg_close(u_int32_t id, u_int8_t *data, size_t len)
+{
+	struct constraint	*cstr;
+	int			 fail;
+
+	if ((cstr = constraint_byid(id)) == NULL) {
+		log_warnx("IMSG_CONSTRAINT_CLOSE with invalid constraint id");
+		return;
+	}
+
+	if (len != sizeof(int)) {
+		log_warnx("invalid IMSG_CONSTRAINT_CLOSE received");
+		return;
+	}
+
+	memcpy(&fail, data, len);
+
+	if (fail) {
+		log_debug("no constraint reply from %s"
+		    " received in time, next query %ds",
+		    log_sockaddr((struct sockaddr *)
+		    &cstr->addr->ss), CONSTRAINT_SCAN_INTERVAL);
+	}
+
+	if (fail || cstr->state < STATE_QUERY_SENT) {
+		cstr->senderrors++;
+		constraint_close(cstr->id);
+	}
+}
+
+void
+constraint_msg_dns(u_int32_t id, u_int8_t *data, size_t len)
 {
 	struct constraint	*cstr, *ncstr = NULL;
 	u_int8_t		*p;
@@ -542,7 +733,7 @@ constraint_reset(void)
 	TAILQ_FOREACH(cstr, &conf->constraints, entry) {
 		if (cstr->state == STATE_QUERY_SENT)
 			continue;
-		constraint_close(cstr->fd);
+		constraint_close(cstr->id);
 	}
 	conf->constraint_errors = 0;
 }
@@ -582,9 +773,6 @@ httpsdate_init(const char *hname, const char *port, const char *name,
     const char *path, const u_int8_t *ca, size_t ca_len)
 {
 	struct httpsdate	*httpsdate = NULL;
-
-	if (tls_init() == -1)
-		return (NULL);
 
 	if ((httpsdate = calloc(1, sizeof(*httpsdate))) == NULL)
 		goto fail;
@@ -784,4 +972,21 @@ tls_readline(struct tls *tls, size_t *lenp, size_t *maxlength,
 	if (gettimeofday(when, NULL) == -1)
 		fatal("gettimeofday");
 	return (buf);
+}
+
+char *
+get_string(u_int8_t *ptr, size_t len)
+{
+	size_t	 i;
+	char	*str;
+
+	for (i = 0; i < len; i++)
+		if (!(isprint(ptr[i]) || isspace(ptr[i])))
+			break;
+
+	if ((str = calloc(1, i + 1)) == NULL)
+		return (NULL);
+	memcpy(str, ptr, i);
+
+	return (str);
 }
