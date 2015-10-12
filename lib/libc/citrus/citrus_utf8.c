@@ -1,4 +1,4 @@
-/*	$OpenBSD: citrus_utf8.c,v 1.12 2015/10/10 13:54:22 schwarze Exp $ */
+/*	$OpenBSD: citrus_utf8.c,v 1.13 2015/10/12 17:50:51 schwarze Exp $ */
 
 /*-
  * Copyright (c) 2002-2004 Tim J. Robbins
@@ -292,10 +292,9 @@ _citrus_utf8_ctype_wcrtomb(char * __restrict s,
 		return (1);
 	}
 
-	if ((wc & ~0x7f) == 0) {
-		/* Fast path for plain ASCII characters. */
-		*s = (char)wc;
-		return (1);
+	if (wc < 0 || wc > 0x10ffff) {
+		errno = EILSEQ;
+		return ((size_t)-1);
 	}
 
 	/*
@@ -304,21 +303,19 @@ _citrus_utf8_ctype_wcrtomb(char * __restrict s,
 	 * first few bits of the first octet, which contains the information
 	 * about the sequence length.
 	 */
-	if ((wc & ~0x7f) == 0) {
-		lead = 0;
-		len = 1;
-	} else if ((wc & ~0x7ff) == 0) {
+	if (wc <= 0x7f) {
+		/* Fast path for plain ASCII characters. */
+		*s = (char)wc;
+		return (1);
+	} else if (wc <= 0x7ff) {
 		lead = 0xc0;
 		len = 2;
-	} else if ((wc & ~0xffff) == 0) {
+	} else if (wc <= 0xffff) {
 		lead = 0xe0;
 		len = 3;
-	} else if ((wc & ~0xfffff) == 0 || (wc & ~0x10ffff) == 0) {
+	} else {
 		lead = 0xf0;
 		len = 4;
-	} else {
-		errno = EILSEQ;
-		return ((size_t)-1);
 	}
 
 	/*
