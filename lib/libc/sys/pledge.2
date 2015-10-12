@@ -1,4 +1,4 @@
-.\" $OpenBSD: pledge.2,v 1.4 2015/10/12 21:40:38 deraadt Exp $
+.\" $OpenBSD: pledge.2,v 1.5 2015/10/12 23:32:55 deraadt Exp $
 .\"
 .\" Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
 .\"
@@ -433,11 +433,10 @@ Allows a process to call
 .Xr execve 2 .
 Coupled with the
 .Va "proc"
-request, this allows a process to fork and execute another program;
-that new environment will become un-pledged.
-Hopefully this new program uses
-.Xr pledge 2
-soon to reinstantiate the rules it promises to follow.
+request, this allows a process to fork and execute another program.
+The new program starts running without pledge active and hopefully
+makes a new
+.Xr pledge 2 .
 .It Va "prot_exec"
 Allows the use of
 .Dv PROT_EXEC
