@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.9 2015/10/09 01:37:09 deraadt Exp $	*/
+/*	$OpenBSD: tty.c,v 1.10 2015/10/12 19:56:47 naddy Exp $	*/
 /*	$NetBSD: tty.c,v 1.4 1994/12/07 00:46:57 jtc Exp $	*/
 
 /*
@@ -43,7 +43,7 @@ main(int argc, char *argv[])
 	int ch, sflag;
 	char *t;
 
-	if (pledge("stdio rpath tty", NULL) == -1)
+	if (pledge("stdio rpath", NULL) == -1)
 		err(1, "pledge");
 
 	sflag = 0;
