@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.387 2015/10/12 10:49:40 dlg Exp $	*/
+/*	$OpenBSD: if.c,v 1.388 2015/10/12 11:32:39 mpi Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -137,13 +137,14 @@ int	if_getgroupmembers(caddr_t);
 int	if_getgroupattribs(caddr_t);
 int	if_setgroupattribs(caddr_t);
 
+void	if_linkstate(void *);
+
 int	if_clone_list(struct if_clonereq *);
 struct if_clone	*if_clone_lookup(const char *, int *);
 
 int	if_group_egress_build(void);
 
 void	if_watchdog_task(void *);
-void	if_link_state_change_task(void *);
 
 void	if_input_process(void *);
 
@@ -408,7 +409,7 @@ if_attachsetup(struct ifnet *ifp)
 	timeout_set(ifp->if_slowtimo, if_slowtimo, ifp);
 	if_slowtimo(ifp);
 
-	task_set(ifp->if_linkstatetask, if_link_state_change_task, ifp);
+	task_set(ifp->if_linkstatetask, if_linkstate, ifp);
 
 	if_idxmap_insert(ifp);
 	KASSERT(if_get(0) == NULL);
@@ -1383,7 +1384,6 @@ if_downall(void)
 /*
  * Mark an interface down and notify protocols of
  * the transition.
- * NOTE: must be called at splsoftnet or equivalent.
  */
 void
 if_down(struct ifnet *ifp)
@@ -1398,24 +1398,13 @@ if_down(struct ifnet *ifp)
 		pfctlinput(PRC_IFDOWN, ifa->ifa_addr);
 	}
 	IFQ_PURGE(&ifp->if_snd);
-#if NCARP > 0
-	if (ifp->if_carp)
-		carp_carpdev_state(ifp);
-#endif
-#if NBRIDGE > 0
-	if (ifp->if_bridgeport)
-		bstp_ifstate(ifp);
-#endif
-	rt_ifmsg(ifp);
-#ifndef SMALL_KERNEL
-	rt_if_track(ifp);
-#endif
+
+	if_linkstate(ifp);
 }
 
 /*
  * Mark an interface up and notify protocols of
  * the transition.
- * NOTE: must be called at splsoftnet or equivalent.
  */
 void
 if_up(struct ifnet *ifp)
@@ -1424,42 +1413,24 @@ if_up(struct ifnet *ifp)
 
 	ifp->if_flags |= IFF_UP;
 	microtime(&ifp->if_lastchange);
-#if NCARP > 0
-	if (ifp->if_carp)
-		carp_carpdev_state(ifp);
-#endif
-#if NBRIDGE > 0
-	if (ifp->if_bridgeport)
-		bstp_ifstate(ifp);
-#endif
-	rt_ifmsg(ifp);
+
 #ifdef INET6
 	/* Userland expects the kernel to set ::1 on lo0. */
 	if (ifp == lo0ifp)
 		in6_ifattach(ifp);
 #endif
-#ifndef SMALL_KERNEL
-	rt_if_track(ifp);
-#endif
+
+	if_linkstate(ifp);
 }
 
 /*
- * Schedule a link state change task.
+ * Notify userland, the routing table and hooks owner of
+ * a link-state transition.
  */
 void
-if_link_state_change(struct ifnet *ifp)
+if_linkstate(void *xifp)
 {
-	/* put the routing table update task on systq */
-	task_add(systq, ifp->if_linkstatetask);
-}
-
-/*
- * Process a link state change.
- */
-void
-if_link_state_change_task(void *arg)
-{
-	struct ifnet *ifp = arg;
+	struct ifnet *ifp = xifp;
 	int s;
 
 	s = splsoftnet();
@@ -1469,6 +1440,15 @@ if_link_state_change_task(void *arg)
 #endif
 	dohooks(ifp->if_linkstatehooks, 0);
 	splx(s);
+}
+
+/*
+ * Schedule a link state change task.
+ */
+void
+if_link_state_change(struct ifnet *ifp)
+{
+	task_add(systq, ifp->if_linkstatetask);
 }
 
 /*
