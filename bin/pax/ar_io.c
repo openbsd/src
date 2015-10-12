@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar_io.c,v 1.51 2015/10/12 05:05:24 deraadt Exp $	*/
+/*	$OpenBSD: ar_io.c,v 1.52 2015/10/12 09:28:54 semarie Exp $	*/
 /*	$NetBSD: ar_io.c,v 1.5 1996/03/26 23:54:13 mrg Exp $	*/
 
 /*-
@@ -1261,9 +1261,11 @@ ar_start_gzip(int fd, const char *path, int wr)
 		close(fds[0]);
 		close(fds[1]);
 
+#if 0
 		if (pledge("stdio rpath wpath cpath fattr getpw ioctl proc",
 		    NULL) == -1)
 			err(1, "pledge");
+#endif
 	} else {
 		if (wr) {
 			dup2(fds[0], STDIN_FILENO);
