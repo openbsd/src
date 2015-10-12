@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpctl.c,v 1.128 2015/10/09 14:37:38 gilles Exp $	*/
+/*	$OpenBSD: smtpctl.c,v 1.129 2015/10/12 07:58:19 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -139,7 +139,6 @@ FILE *
 offline_file(void)
 {
 	char	path[PATH_MAX];
-	mode_t	omode;
 	int	fd;
 	FILE   *fp;
 
@@ -147,13 +146,11 @@ offline_file(void)
 		PATH_OFFLINE, (long long int) time(NULL)))
 		err(EX_UNAVAILABLE, "snprintf");
 
-	omode = umask(07077);
 	if ((fd = mkstemp(path)) == -1 || (fp = fdopen(fd, "w+")) == NULL) {
 		if (fd != -1)
 			unlink(path);
 		err(EX_UNAVAILABLE, "cannot create temporary file %s", path);
 	}
-	umask(omode);
 
 	if (fchmod(fd, 0600) == -1) {
 		unlink(path);

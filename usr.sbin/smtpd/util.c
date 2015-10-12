@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.119 2015/10/10 11:42:49 jung Exp $	*/
+/*	$OpenBSD: util.c,v 1.120 2015/10/12 07:58:19 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Markus Friedl.  All rights reserved.
@@ -377,7 +377,6 @@ mktmpfile(void)
 {
 	char		path[PATH_MAX];
 	int		fd;
-	mode_t		omode;
 
 	if (! bsnprintf(path, sizeof(path), "%s/smtpd.XXXXXXXXXX",
 		PATH_TEMPORARY)) {
@@ -385,12 +384,10 @@ mktmpfile(void)
 		fatal("exiting");
 	}
 
-	omode = umask(07077);
 	if ((fd = mkstemp(path)) == -1) {
 		log_warn("cannot create temporary file %s", path);
 		fatal("exiting");
 	}
-	umask(omode);
 	unlink(path);
 	return (fd);
 }

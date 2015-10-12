@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.243 2015/10/09 17:44:25 gilles Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.244 2015/10/12 07:58:19 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -907,7 +907,6 @@ forkmda(struct mproc *p, uint64_t id, struct deliver *deliver)
 	struct child	*child;
 	pid_t		 pid;
 	int		 allout, pipefd[2];
-	mode_t		 omode;
 
 	log_debug("debug: smtpd: forking mda for session %016"PRIx64
 	    ": \"%s\" as %s", id, deliver->to, deliver->user);
@@ -943,9 +942,7 @@ forkmda(struct mproc *p, uint64_t id, struct deliver *deliver)
 
 	/* prepare file which captures stdout and stderr */
 	(void)strlcpy(sfn, "/tmp/smtpd.out.XXXXXXXXXXX", sizeof(sfn));
-	omode = umask(07077);
 	allout = mkstemp(sfn);
-	umask(omode);
 	if (allout < 0) {
 		(void)snprintf(ebuf, sizeof ebuf, "mkstemp: %s", strerror(errno));
 		m_create(p_pony, IMSG_MDA_DONE, 0, 0, -1);

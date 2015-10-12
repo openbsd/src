@@ -1,4 +1,4 @@
-/*	$OpenBSD: makemap.c,v 1.53 2015/10/06 06:04:46 gilles Exp $	*/
+/*	$OpenBSD: makemap.c,v 1.54 2015/10/12 07:58:19 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -97,7 +97,6 @@ main(int argc, char *argv[])
 	int		 ch;
 	DBTYPE		 dbtype = DB_HASH;
 	char		*p;
-	mode_t		 omode;
 
 	log_init(1);
 
@@ -185,10 +184,8 @@ main(int argc, char *argv[])
 
 	if (! bsnprintf(dbname, sizeof(dbname), "%s.XXXXXXXXXXX", oflag))
 		errx(1, "path too long");
-	omode = umask(07077);
 	if (mkstemp(dbname) == -1)
 		err(1, "mkstemp");
-	umask(omode);
 
 	db = dbopen(dbname, O_EXLOCK|O_RDWR|O_SYNC, 0644, dbtype, NULL);
 	if (db == NULL) {
