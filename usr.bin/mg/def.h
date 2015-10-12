@@ -1,4 +1,4 @@
-/*	$OpenBSD: def.h,v 1.150 2015/09/29 02:07:49 guenther Exp $	*/
+/*	$OpenBSD: def.h,v 1.151 2015/10/12 19:08:39 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -288,7 +288,8 @@ struct buffer {
 #define BFOVERWRITE 0x08		/* overwrite mode		 */
 #define BFREADONLY  0x10		/* read only mode		 */
 #define BFDIRTY     0x20		/* Buffer was modified elsewhere */
-#define BFIGNDIRTY  0x40		/* Ignore modifications */
+#define BFIGNDIRTY  0x40		/* Ignore modifications 	 */
+#define BFDIREDDEL  0x80		/* Dired has a deleted 'D' file	 */
 /*
  * This structure holds information about recent actions for the Undo command.
  */
