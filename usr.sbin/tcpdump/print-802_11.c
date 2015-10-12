@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-802_11.c,v 1.25 2015/10/10 07:52:30 stsp Exp $	*/
+/*	$OpenBSD: print-802_11.c,v 1.26 2015/10/12 13:01:50 stsp Exp $	*/
 
 /*
  * Copyright (c) 2005 Reyk Floeter <reyk@openbsd.org>
@@ -519,7 +519,7 @@ ieee80211_print_htop(u_int8_t *data, u_int len)
 	htopinfo[4] = data[5];
 
 	/* space-time block coding (STBC) beacon */
-	if ((htopinfo[4] << 8) & IEEE80211_HTOP2_DUALCTSPROT)
+	if ((htopinfo[4] << 8) & IEEE80211_HTOP2_STBCBEACON)
 		printf(",STBC beacon");
 
 	/* L-SIG (non-HT signal field) TX opportunity (TXOP) protection */
