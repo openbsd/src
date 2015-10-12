@@ -1,4 +1,4 @@
-.\"	$OpenBSD: umask.2,v 1.11 2015/09/10 17:55:21 schwarze Exp $
+.\"	$OpenBSD: umask.2,v 1.12 2015/10/12 17:51:55 millert Exp $
 .\"	$NetBSD: umask.2,v 1.6 1995/02/27 12:39:06 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)umask.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: September 10 2015 $
+.Dd $Mdocdate: October 12 2015 $
 .Dt UMASK 2
 .Os
 .Sh NAME
@@ -47,15 +47,22 @@ The
 routine sets the process's file mode creation mask to
 .Fa numask
 and returns the previous value of the mask.
-The 9 low-order access permission bits of
+Only the read, write, and execute file permission bits of
 .Fa numask
-are used by system calls, including
-.Xr open 2 ,
+are honored, all others are ignored.
+.Pp
+The file mode creation mask is used by the
+.Xr bind 2 ,
 .Xr mkdir 2 ,
-.Xr mkfifo 2
+.Xr mkdirat 2 ,
+.Xr mkfifo 2 ,
+.Xr mkfifoat 2 ,
+.Xr mknod 2 ,
+.Xr mknodat 2 ,
+.Xr open 2
 and
-.Xr mknod 2
-to turn off corresponding bits requested in the file mode
+.Xr openat 2
+system calls to turn off corresponding bits requested in the file mode
 (see
 .Xr chmod 2 ) .
 This clearing allows each user to restrict the default access to his files.
