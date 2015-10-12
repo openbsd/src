@@ -1,4 +1,4 @@
-.\" $OpenBSD: pledge.2,v 1.1 2015/10/09 01:24:57 deraadt Exp $
+.\" $OpenBSD: pledge.2,v 1.2 2015/10/12 01:17:08 schwarze Exp $
 .\"
 .\" Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 9 2015 $
+.Dd $Mdocdate: October 12 2015 $
 .Dt PLEDGE 2
 .Os
 .Sh NAME
@@ -424,15 +424,22 @@ will fail if:
 .Bl -tag -width Er
 .It Bq Er EFAULT
 .Fa paths
+or one of its elements, or
+.Fa request
 points outside the process's allocated address space.
+.It Bq Er EINVAL
+.Ar request
+is malformed or contains invalid keywords.
 .It Bq Er ENAMETOOLONG
 An element of
 .Fa paths
-is too large, or prepending
+is too large, prepending
 .Fa cwd
 to it would exceed
 .Dv PATH_MAX
-bytes.
+bytes, or
+.Fa request
+is too long.
 .It Bq Er EPERM
 This process is attempting to increase permissions.
 .It Bq Er E2BIG
