@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.120 2015/10/09 01:37:06 deraadt Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.121 2015/10/12 18:32:18 deraadt Exp $	*/
 /*	$KAME: ping6.c,v 1.163 2002/10/25 02:19:06 itojun Exp $	*/
 
 /*
@@ -149,12 +149,11 @@ struct payload {
 #define F_INTERFACE	0x2000
 #define F_SRCADDR	0x4000
 #define F_HOSTNAME	0x10000
-#define F_FQDNOLD	0x20000
 #define F_NIGROUP	0x40000
 #define F_SUPTYPES	0x80000
 #define F_AUD_RECV	0x200000
 #define F_AUD_MISS	0x400000
-#define F_NOUSERDATA	(F_NODEADDR | F_FQDN | F_FQDNOLD | F_SUPTYPES)
+#define F_NOUSERDATA	(F_NODEADDR | F_FQDN | F_SUPTYPES)
 u_int options;
 
 #define DUMMY_PORT	10101
@@ -271,7 +270,7 @@ main(int argc, char *argv[])
 	preload = 0;
 	datap = &outpack[ICMP6ECHOLEN + ICMP6ECHOTMLEN];
 	while ((ch = getopt(argc, argv,
-	    "a:b:c:dEefHg:h:I:i:l:mnNp:qS:s:tvV:wW")) != -1) {
+	    "a:b:c:dEefHg:h:I:i:l:mnNp:qS:s:tvV:w")) != -1) {
 		switch (ch) {
 		case 'a':
 		{
@@ -451,10 +450,6 @@ main(int argc, char *argv[])
 			options &= ~F_NOUSERDATA;
 			options |= F_FQDN;
 			break;
-		case 'W':
-			options &= ~F_NOUSERDATA;
-			options |= F_FQDNOLD;
-			break;
 		default:
 			usage();
 			/*NOTREACHED*/
@@ -608,8 +603,8 @@ main(int argc, char *argv[])
 	struct icmp6_filter filt;
 	if (!(options & F_VERBOSE)) {
 		ICMP6_FILTER_SETBLOCKALL(&filt);
-		if ((options & F_FQDN) || (options & F_FQDNOLD) ||
-		    (options & F_NODEADDR) || (options & F_SUPTYPES))
+		if ((options & F_FQDN) || (options & F_NODEADDR) ||
+		    (options & F_SUPTYPES))
 			ICMP6_FILTER_SETPASS(ICMP6_NI_REPLY, &filt);
 		else
 			ICMP6_FILTER_SETPASS(ICMP6_ECHO_REPLY, &filt);
@@ -935,8 +930,6 @@ pingerlen(void)
 
 	if (options & F_FQDN)
 		l = ICMP6_NIQLEN + sizeof(dst.sin6_addr);
-	else if (options & F_FQDNOLD)
-		l = ICMP6_NIQLEN;
 	else if (options & F_NODEADDR)
 		l = ICMP6_NIQLEN + sizeof(dst.sin6_addr);
 	else if (options & F_SUPTYPES)
@@ -978,19 +971,6 @@ pinger(void)
 		memcpy(&outpack[ICMP6_NIQLEN], &dst.sin6_addr,
 		    sizeof(dst.sin6_addr));
 		cc = ICMP6_NIQLEN + sizeof(dst.sin6_addr);
-		datalen = 0;
-	} else if (options & F_FQDNOLD) {
-		/* packet format in 03 draft - no Subject data on queries */
-		icp->icmp6_type = ICMP6_NI_QUERY;
-		icp->icmp6_code = 0;	/* code field is always 0 */
-		nip->ni_qtype = htons(NI_QTYPE_FQDN);
-		nip->ni_flags = htons(0);
-
-		memcpy(nip->icmp6_ni_nonce, nonce,
-		    sizeof(nip->icmp6_ni_nonce));
-		*(u_int16_t *)nip->icmp6_ni_nonce = ntohs(seq);
-
-		cc = ICMP6_NIQLEN;
 		datalen = 0;
 	} else if (options & F_NODEADDR) {
 		icp->icmp6_type = ICMP6_NI_QUERY;
@@ -2374,7 +2354,7 @@ usage(void)
 	(void)fprintf(stderr,
 	    "usage: ping6 [-dEefH"
 	    "m"
-	    "NnqtvWw"
+	    "Nnqtvw"
 	    "] [-a addrtype] [-b bufsiz] [-c count] [-g gateway]\n\t"
 	    "[-h hoplimit] [-I interface] [-i wait] [-l preload] [-p pattern]"
 	    "\n\t[-S sourceaddr] [-s packetsize] [-V rtable] host\n");
