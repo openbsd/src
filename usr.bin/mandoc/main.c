@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.153 2015/10/12 00:07:27 schwarze Exp $ */
+/*	$OpenBSD: main.c,v 1.154 2015/10/12 22:41:18 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2012, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -134,6 +134,9 @@ main(int argc, char *argv[])
 	if (0 == strncmp(__progname, "mandocdb", 8) ||
 	    0 == strncmp(__progname, "makewhatis", 10))
 		return mandocdb(argc, argv);
+
+	if (pledge("stdio rpath tmppath proc exec", NULL) == -1)
+		err(1, "pledge");
 
 	/* Search options. */
 
@@ -273,6 +276,9 @@ main(int argc, char *argv[])
 	    outmode == OUTMODE_LST ||
 	    !isatty(STDOUT_FILENO))
 		use_pager = 0;
+
+	if (!use_pager && pledge("stdio rpath", NULL) == -1)
+		err(1, "pledge");
 
 	/* Parse arguments. */
 
@@ -955,6 +961,8 @@ spawn_pager(struct tag_files *tag_files)
 	case 0:
 		break;
 	default:
+		if (pledge("stdio rpath tmppath", NULL) == -1)
+			err(1, "pledge");
 		return pager_pid;
 	}
 
