@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_fs.c,v 1.8 2015/01/20 17:37:54 deraadt Exp $	*/
+/*	$OpenBSD: queue_fs.c,v 1.9 2015/10/12 22:29:49 gilles Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@poolp.org>
@@ -164,9 +164,6 @@ queue_fs_message_commit(uint32_t msgid, const char *path)
 		log_warn("warn: queue-fs: rename");
 		return 0;
 	}
-
-	/* best effort */
-	sync();
 
 	return 1;
 }
