@@ -1,0 +1,67 @@
+BL-DASH(1)                  General Commands Manual                 BL-DASH(1)
+
+NNAAMMEE
+     BBll--ddaasshh – dash and hyphen lists
+
+DDEESSCCRRIIPPTTIIOONN
+     -- x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+   x x x x
+
+     -- x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+    x x x x
+
+     -- x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+     x x x x
+
+     -- x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+      x x x x
+
+     -- x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+       x x x x
+
+     --  x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+        x x x x x
+
+     --   x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+         x x x x x
+
+     --    x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+          x x x x x x
+
+     --     x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+           x x x x x x
+
+     --      x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+            x x x x x x x
+
+     --       x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+             x x x x x x x
+
+     --        x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+              x x x x x x x x
+     --   x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+         x x x x x
+     --   x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+         x x x x x
+     --   x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+         x x x x x
+     --   x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+         x x x x x
+     --   x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+         x x x x x
+     --   x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+         x x x x x
+     --   x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+         x x x x x
+     --   x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+         x x x x x
+     --   x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+         x x x x x
+     --   x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+         x x x x x
+     --   x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+         x x x x x
+     --   x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+         x x x x x
+
+OpenBSD                        December 25, 2014                       OpenBSD

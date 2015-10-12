@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_term.c,v 1.228 2015/10/12 00:07:27 schwarze Exp $ */
+/*	$OpenBSD: mdoc_term.c,v 1.229 2015/10/12 15:27:53 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -885,7 +885,7 @@ termp_it_pre(DECL_ARGS)
 		case LIST_dash:
 		case LIST_hyphen:
 			term_fontpush(p, TERMFONT_BOLD);
-			term_word(p, "\\(hy");
+			term_word(p, "-");
 			term_fontpop(p);
 			break;
 		case LIST_enum:

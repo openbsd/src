@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.28 2015/02/06 02:04:35 schwarze Exp $
+# $OpenBSD: Makefile,v 1.29 2015/10/12 15:27:53 schwarze Exp $
 
 REGRESS_TARGETS  = item inset diag ohang bullet dash enum hang tag
 REGRESS_TARGETS += column extend nested offset secstart
@@ -6,6 +6,8 @@ REGRESS_TARGETS += column extend nested offset secstart
 REGRESS_TARGETS += notype multitype badargs
 REGRESS_TARGETS += empty noIt emptyhead emptytag emptyitem multitag
 REGRESS_TARGETS += bareIt bareTa unclosed break breakingIt broken
+
+UTF8_TARGETS	 = dash
 
 LINT_TARGETS	 = column notype badargs
 LINT_TARGETS	+= empty noIt emptyhead emptytag emptyitem
