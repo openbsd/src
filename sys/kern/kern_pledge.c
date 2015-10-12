@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.15 2015/10/11 16:19:48 semarie Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.16 2015/10/12 21:43:20 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -237,7 +237,6 @@ static const struct {
 	{ "unix",		PLEDGE_SELF | PLEDGE_RW | PLEDGE_UNIX },
 	{ "dns",		PLEDGE_SELF | PLEDGE_MALLOC | PLEDGE_DNSPATH },
 	{ "getpw",		PLEDGE_SELF | PLEDGE_MALLOC | PLEDGE_RW | PLEDGE_GETPW },
-/*X*/	{ "cmsg",		PLEDGE_UNIX | PLEDGE_INET | PLEDGE_SENDFD | PLEDGE_RECVFD },
 	{ "sendfd",		PLEDGE_RW | PLEDGE_SENDFD },
 	{ "recvfd",		PLEDGE_RW | PLEDGE_RECVFD },
 	{ "ioctl",		PLEDGE_IOCTL },
