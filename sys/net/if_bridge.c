@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.267 2015/10/05 19:05:09 uebayasi Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.268 2015/10/12 10:03:25 reyk Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -146,6 +146,7 @@ u_int8_t bridge_filterrule(struct brl_head *, struct ether_header *,
 struct mbuf *bridge_ip(struct bridge_softc *, int, struct ifnet *,
     struct ether_header *, struct mbuf *m);
 int	bridge_ifenqueue(struct bridge_softc *, struct ifnet *, struct mbuf *);
+void	bridge_ifinput(struct ifnet *, struct mbuf *);
 void	bridge_fragment(struct bridge_softc *, struct ifnet *,
     struct ether_header *, struct mbuf *);
 void	bridge_send_icmp_err(struct bridge_softc *, struct ifnet *,
@@ -1283,7 +1284,6 @@ bridge_process(struct ifnet *ifp, struct mbuf *m)
 	struct bridge_iflist *srcifl;
 	struct ether_header *eh;
 	struct arpcom *ac;
-	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
 	struct mbuf *mc;
 
 	ifl = (struct bridge_iflist *)ifp->if_bridgeport;
@@ -1334,18 +1334,14 @@ bridge_process(struct ifnet *ifp, struct mbuf *m)
 		if (mc == NULL)
 	    		goto reenqueue;
 
-		mc->m_flags |= M_PROTO1;
-		ml_enqueue(&ml, mc);
-		if_input(ifp, &ml);
+		bridge_ifinput(ifp, mc);
 #if NGIF > 0
 		if (ifp->if_type == IFT_GIF) {
 			TAILQ_FOREACH(ifl, &sc->sc_iflist, next) {
 				if (ifl->ifp->if_type != IFT_ETHER)
 					continue;
 
-				m->m_flags |= M_PROTO1;
-				ml_enqueue(&ml, m);
-				if_input(ifl->ifp, &ml);
+				bridge_ifinput(ifl->ifp, m);
 				return;
 			}
 		}
@@ -1389,9 +1385,7 @@ bridge_process(struct ifnet *ifp, struct mbuf *m)
 			sc->sc_if.if_ipackets++;
 			sc->sc_if.if_ibytes += m->m_pkthdr.len;
 
-			m->m_flags |= M_PROTO1;
-			ml_enqueue(&ml, m);
-			if_input(ifl->ifp, &ml);
+			bridge_ifinput(ifl->ifp, m);
 			return;
 		}
 		if (bcmp(ac->ac_enaddr, eh->ether_shost, ETHER_ADDR_LEN) == 0
@@ -1409,9 +1403,7 @@ bridge_process(struct ifnet *ifp, struct mbuf *m)
 	return;
 
 reenqueue:
-	m->m_flags |= M_PROTO1;
-	ml_enqueue(&ml, m);
-	if_input(ifp, &ml);
+	bridge_ifinput(ifp, m);
 }
 
 /*
@@ -1509,7 +1501,6 @@ void
 bridge_localbroadcast(struct bridge_softc *sc, struct ifnet *ifp,
     struct ether_header *eh, struct mbuf *m)
 {
-	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
 	struct mbuf *m1;
 	u_int16_t etype;
 
@@ -1533,9 +1524,8 @@ bridge_localbroadcast(struct bridge_softc *sc, struct ifnet *ifp,
 		sc->sc_if.if_oerrors++;
 		return;
 	}
-	m1->m_flags |= M_PROTO1;
-	ml_enqueue(&ml, m1);
-	if_input(ifp, &ml);
+
+	bridge_ifinput(ifp, m1);
 }
 
 void
@@ -2558,6 +2548,17 @@ bridge_ifenqueue(struct bridge_softc *sc, struct ifnet *ifp, struct mbuf *m)
 	sc->sc_if.if_obytes += len;
 
 	return (0);
+}
+
+void
+bridge_ifinput(struct ifnet *ifp, struct mbuf *m)
+{
+	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
+
+	m->m_flags |= M_PROTO1;
+
+	ml_enqueue(&ml, m);
+	if_input(ifp, &ml);
 }
 
 void
