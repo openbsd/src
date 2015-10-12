@@ -1,4 +1,4 @@
-.\" $OpenBSD: pledge.2,v 1.3 2015/10/12 15:59:26 schwarze Exp $
+.\" $OpenBSD: pledge.2,v 1.4 2015/10/12 21:40:38 deraadt Exp $
 .\"
 .\" Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
 .\"
@@ -111,6 +111,14 @@ May check for existence of
 Read-only, for
 .Xr ntpd 8 .
 .Pp
+.It Xr ioctl 2
+Only the
+.Dv FIONREAD
+and
+.Dv FIONBIO
+operations are allowed by default.
+Use of the "tty" and "ioctl" requests will enable more ioctl requests.
+.Pp
 .It Xr chmod 2
 .It Xr fchmod 2
 .It Xr fchmodat 2
@@ -218,7 +226,8 @@ This subset is simply the combination of
 and
 .Va "rw" .
 As a result, all the expected functionalities of libc
-stdio work.
+stdio work.  Use of "stdio" is recommended instead of "malloc rw", to
+better express the intent of the program.
 .It Va "rpath"
 A number of system calls are allowed if they only cause
 read-only effects on the filesystem:
@@ -369,12 +378,12 @@ of
 enables
 .Va "inet"
 operations.
-.It Va "cmsg"
-Allows passing of file descriptors using the
-.Xr sendmsg 2
-and
-.Xr recvmsg 2
-functions.
+.It Va "sendfd"
+Allows sending of file descriptors using
+.Xr sendmsg 2 .
+.It Va "recvfd"
+Allows receiving of file descriptors using
+.Xr recvmsg 2 .
 .It Va "ioctl"
 Allows a subset of
 .Xr ioctl 2
@@ -382,13 +391,34 @@ operations:
 .Pp
 .Dv FIOCLEX ,
 .Dv FIONCLEX ,
-.Dv FIONREAD ,
-.Dv FIONBIO ,
+.Dv FIOASYNC ,
 .Dv FIOGETOWN ,
+and
+.Dv FIOSETOWN .
+On a tty device
+.Dv TIOCGETA will succeed otherwise fail with
+.Er EPERM .
+On a tty device,
+.Dv TIOCGPGRP
+and
+.Dv TIOCGWINSZ
+are allowed.
+A few other operations are allowed, but not listed here.
+.It Va "tty"
+This opens up a variety of
+.Xr ioctl 2
+requests used by tty devices:
+.Dv TIOCSPGRP ,
 .Dv TIOCGETA ,
 .Dv TIOCGPGRP ,
 .Dv TIOCGWINSZ ,
-.Dv TIOCSTI .
+.Dv TIOCSWINSZ ,
+.Dv TIOCSBRK ,
+.Dv TIOCCDTR ,
+.Dv TIOCSETA ,
+.Dv TIOCSETAW
+and
+.Dv TIOCSETAF .
 .It Va "proc"
 Allows the following process relationship operations:
 .Pp
@@ -398,6 +428,16 @@ Allows the following process relationship operations:
 .Xr setgroups 2 ,
 .Xr setresgid 2 ,
 .Xr setresuid 2 .
+.It Va "exec"
+Allows a process to call
+.Xr execve 2 .
+Coupled with the
+.Va "proc"
+request, this allows a process to fork and execute another program;
+that new environment will become un-pledged.
+Hopefully this new program uses
+.Xr pledge 2
+soon to reinstantiate the rules it promises to follow.
 .It Va "prot_exec"
 Allows the use of
 .Dv PROT_EXEC
