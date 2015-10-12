@@ -1,4 +1,4 @@
-/*	$OpenBSD: skey.c,v 1.31 2015/10/09 21:59:34 tim Exp $	*/
+/*	$OpenBSD: skey.c,v 1.32 2015/10/12 14:33:13 tim Exp $	*/
 /*
  * OpenBSD S/Key (skey.c)
  *
@@ -42,6 +42,9 @@ main(int argc, char *argv[])
 	char    passwd[SKEY_MAX_PW_LEN+1], key[SKEY_BINKEY_SIZE];
 	char	buf[33], *seed, *slash, *algo;
 	const char *errstr;
+
+	if (pledge("stdio wpath tty", NULL) == -1)
+		err(1, "pledge");
 
 	/* If we were called as otp-METHOD, set algorithm based on that */
 	if (strncmp(__progname, "otp-", 4) == 0) {
