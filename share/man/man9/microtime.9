@@ -1,4 +1,4 @@
-.\"	$OpenBSD: microtime.9,v 1.14 2013/06/04 19:27:10 schwarze Exp $
+.\"	$OpenBSD: microtime.9,v 1.15 2015/10/12 00:49:34 schwarze Exp $
 .\"     $NetBSD: microtime.9,v 1.2 1999/03/16 00:40:47 garbled Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 4 2013 $
+.Dd $Mdocdate: October 12 2015 $
 .Dt MICROTIME 9
 .Os
 .Sh NAME
@@ -46,43 +46,43 @@
 .Sh SYNOPSIS
 .In sys/time.h
 .Ft void
-.Fo "microtime"
+.Fo microtime
 .Fa "struct timeval *tv"
 .Fc
 .Ft void
-.Fo "getmicrotime"
+.Fo getmicrotime
 .Fa "struct timeval *tv"
 .Fc
 .Ft void
-.Fo "microuptime"
+.Fo microuptime
 .Fa "struct timeval *tv"
 .Fc
 .Ft void
-.Fo "getmicrouptime"
+.Fo getmicrouptime
 .Fa "struct timeval *tv"
 .Fc
 .Ft void
-.Fo "nanotime"
+.Fo nanotime
 .Fa "struct timespec *tv"
 .Fc
 .Ft void
-.Fo "getnanotime"
+.Fo getnanotime
 .Fa "struct timespec *tv"
 .Fc
 .Ft void
-.Fo "nanouptime"
+.Fo nanouptime
 .Fa "struct timespec *tv"
 .Fc
 .Ft void
-.Fo "getnanouptime"
+.Fo getnanouptime
 .Fa "struct timespec *tv"
 .Fc
 .Ft void
-.Fo "bintime"
+.Fo bintime
 .Fa "struct bintime *tv"
 .Fc
 .Ft void
-.Fo "binuptime"
+.Fo binuptime
 .Fa "struct bintime *tv"
 .Fc
 .Sh DESCRIPTION
