@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.388 2015/10/12 11:32:39 mpi Exp $	*/
+/*	$OpenBSD: if.c,v 1.389 2015/10/12 13:17:58 dlg Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -574,7 +574,7 @@ if_enqueue(struct ifnet *ifp, struct mbuf *m)
 	 * Queue message on interface, and start output if interface
 	 * not yet active.
 	 */
-	IFQ_ENQUEUE(&ifp->if_snd, m, NULL, error);
+	IFQ_ENQUEUE(&ifp->if_snd, m, error);
 	if (error) {
 		splx(s);
 		return (error);

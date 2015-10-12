@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_var.h,v 1.47 2015/10/05 15:19:29 uebayasi Exp $	*/
+/*	$OpenBSD: if_var.h,v 1.48 2015/10/12 13:17:58 dlg Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -324,8 +324,7 @@ do {									\
 #define	IF_LEN(ifq)		((ifq)->ifq_len)
 #define	IF_IS_EMPTY(ifq)	((ifq)->ifq_len == 0)
 
-/* XXX pattr unused */
-#define	IFQ_ENQUEUE(ifq, m, pattr, err)					\
+#define	IFQ_ENQUEUE(ifq, m, err)					\
 do {									\
 	if (HFSC_ENABLED(ifq))						\
 		(err) = hfsc_enqueue(((struct ifqueue *)(ifq)), m);	\

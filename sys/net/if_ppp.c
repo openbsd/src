@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ppp.c,v 1.89 2015/10/05 19:05:09 uebayasi Exp $	*/
+/*	$OpenBSD: if_ppp.c,v 1.90 2015/10/12 13:17:58 dlg Exp $	*/
 /*	$NetBSD: if_ppp.c,v 1.39 1997/05/17 21:11:59 christos Exp $	*/
 
 /*
@@ -804,7 +804,7 @@ pppoutput(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 		error = 0;
 	    }
 	} else
-	    IFQ_ENQUEUE(&sc->sc_if.if_snd, m0, NULL, error);
+	    IFQ_ENQUEUE(&sc->sc_if.if_snd, m0, error);
 	if (error) {
 	    splx(s);
 	    sc->sc_if.if_oerrors++;
@@ -867,7 +867,7 @@ ppp_requeue(struct ppp_softc *sc)
 		    error = 0;
 		}
 	    } else
-		IFQ_ENQUEUE(&sc->sc_if.if_snd, m, NULL, error);
+		IFQ_ENQUEUE(&sc->sc_if.if_snd, m, error);
 	    if (error) {
 		sc->sc_if.if_oerrors++;
 		sc->sc_stats.ppp_oerrors++;
