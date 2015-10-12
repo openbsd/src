@@ -1,4 +1,4 @@
-/* $OpenBSD: e_des3.c,v 1.18 2014/10/18 17:20:40 jsing Exp $ */
+/* $OpenBSD: e_des3.c,v 1.19 2015/10/12 06:05:52 guenther Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -230,14 +230,8 @@ des_ede_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 {
 	DES_cblock *deskey = (DES_cblock *)key;
 
-#ifdef EVP_CHECK_DES_KEY
-	if (DES_set_key_checked(&deskey[0], &data(ctx)->ks1)
-		!! DES_set_key_checked(&deskey[1], &data(ctx)->ks2))
-		return 0;
-#else
 	DES_set_key_unchecked(&deskey[0], &data(ctx)->ks1);
 	DES_set_key_unchecked(&deskey[1], &data(ctx)->ks2);
-#endif
 	memcpy(&data(ctx)->ks3, &data(ctx)->ks1,
 	    sizeof(data(ctx)->ks1));
 	return 1;
@@ -250,16 +244,9 @@ des_ede3_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 	DES_cblock *deskey = (DES_cblock *)key;
 
 
-#ifdef EVP_CHECK_DES_KEY
-	if (DES_set_key_checked(&deskey[0], &data(ctx)->ks1) ||
-	    DES_set_key_checked(&deskey[1], &data(ctx)->ks2) ||
-	    DES_set_key_checked(&deskey[2], &data(ctx)->ks3))
-		return 0;
-#else
 	DES_set_key_unchecked(&deskey[0], &data(ctx)->ks1);
 	DES_set_key_unchecked(&deskey[1], &data(ctx)->ks2);
 	DES_set_key_unchecked(&deskey[2], &data(ctx)->ks3);
-#endif
 	return 1;
 }
 

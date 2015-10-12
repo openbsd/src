@@ -1,4 +1,4 @@
-/* $OpenBSD: e_des.c,v 1.13 2014/10/18 17:20:40 jsing Exp $ */
+/* $OpenBSD: e_des.c,v 1.14 2015/10/12 06:05:52 guenther Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -205,12 +205,7 @@ des_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 {
 	DES_cblock *deskey = (DES_cblock *)key;
 
-#ifdef EVP_CHECK_DES_KEY
-	if (DES_set_key_checked(deskey, ctx->cipher_data) != 0)
-		return 0;
-#else
 	DES_set_key_unchecked(deskey, ctx->cipher_data);
-#endif
 	return 1;
 }
 
