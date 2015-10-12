@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.426 2015/09/23 01:38:36 schwarze Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.427 2015/10/12 10:27:22 sthen Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 23 2015 $
+.Dd $Mdocdate: October 12 2015 $
 .Dt BSD.PORT.MK 5
 .Os
 .Sh NAME
@@ -3336,7 +3336,7 @@ Location of checksums, see
 .Ev CHECKSUM_PACKAGES .
 .It Pa ${PACKAGE_REPOSITORY}/${MACHINE_ARCH}/cdrom
 Location of packages suitable for the CD.
-.It Pa ${PACkAGE_REPOSITORY}/${MACHINE_ARCH}/ftp
+.It Pa ${PACKAGE_REPOSITORY}/${MACHINE_ARCH}/ftp
 Location of packages suitable for FTP.
 .It Pa ${PORTSDIR}/bulk/${MACHINE_ARCH}
 Default setup of ${BULK_COOKIES_DIR}.
