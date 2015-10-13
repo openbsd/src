@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.21 2015/10/13 18:42:06 deraadt Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.22 2015/10/13 20:00:49 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -36,7 +36,10 @@
 #include <net/bpf.h>
 #include <net/route.h>
 #include <net/if.h>
+#include <net/if_var.h>
 #include <netinet/in.h>
+#include <netinet6/in6_var.h>
+#include <netinet6/nd6.h>
 #include <netinet/tcp.h>
 
 #include <sys/signal.h>
