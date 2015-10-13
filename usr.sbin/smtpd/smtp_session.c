@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.235 2015/10/12 20:16:31 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.236 2015/10/13 11:32:47 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -179,6 +179,7 @@ static void smtp_rfc4954_auth_login(struct smtp_session *, char *);
 static void smtp_message_write(struct smtp_session *, const char *);
 static void smtp_message_end(struct smtp_session *);
 static void smtp_message_reset(struct smtp_session *, int);
+static int smtp_message_printf(struct smtp_session *, const char *, ...);
 static void smtp_free(struct smtp_session *, const char *);
 static const char *smtp_strstate(int);
 static int smtp_verify_certificate(struct smtp_session *);
@@ -231,39 +232,21 @@ header_default_callback(const struct rfc2822_header *hdr, void *arg)
 {
 	struct smtp_session    *s = arg;
 	struct rfc2822_line    *l;
-	size_t			len;
 
-	len = strlen(hdr->name) + 1;
-	if (fprintf(s->ofile, "%s:", hdr->name) != (int)len) {
-		s->msgflags |= MF_ERROR_IO;
+	if (smtp_message_printf(s, "%s:", hdr->name) == -1)
 		return;
-	}
-	s->datalen += len;
 
-	TAILQ_FOREACH(l, &hdr->lines, next) {
-		len = strlen(l->buffer) + 1;
-		if (fprintf(s->ofile, "%s\n", l->buffer) != (int)len) {
-			s->msgflags |= MF_ERROR_IO;
+	TAILQ_FOREACH(l, &hdr->lines, next)
+		if (smtp_message_printf(s, "%s\n", l->buffer) == -1)
 			return;
-		}
-		s->datalen += len;
-	}
 }
 
 static void
 dataline_callback(const char *line, void *arg)
 {
 	struct smtp_session	*s = arg;
-	size_t			len;
 
-	len = strlen(line) + 1;
-
-	if (fprintf(s->ofile, "%s\n", line) != (int)len) {
-		s->msgflags |= MF_ERROR_IO;
-		return;
-	}
-
-	s->datalen += len;
+	smtp_message_printf(s, "%s\n", line);
 }
 
 static void
@@ -360,13 +343,10 @@ header_masquerade_callback(const struct rfc2822_header *hdr, void *arg)
 	struct rfc2822_line    *l;
 	size_t			i, j;
 	int			escape, quote, comment, skip;
-	size_t			len;
 	char			buffer[APPEND_DOMAIN_BUFFER_SIZE];
 
-	len = strlen(hdr->name) + 1;
-	if (fprintf(s->ofile, "%s:", hdr->name) != (int)len)
-		goto ioerror;
-	s->datalen += len;
+	if (smtp_message_printf(s, "%s:", hdr->name) == -1)
+		return;
 
 	i = j = 0;
 	escape = quote = comment = skip = 0;
@@ -389,27 +369,24 @@ header_masquerade_callback(const struct rfc2822_header *hdr, void *arg)
 			if (l->buffer[i] == ',' && !escape && !quote && !comment) {
 				if (!skip && j + strlen(s->listener->hostname) + 1 < sizeof buffer)
 					header_append_domain_buffer(buffer, s->listener->hostname, sizeof buffer);
-				len = strlen(buffer) + 1;
-				if (fprintf(s->ofile, "%s,", buffer) != (int)len)
-					goto ioerror;
-				s->datalen += len;
+				if (smtp_message_printf(s, "%s,", buffer) == -1)
+					return;
 				j = 0;
 				skip = 0;
 				memset(buffer, 0, sizeof buffer);
 			}
 			else {
 				if (skip) {
-					if (fprintf(s->ofile, "%c", l->buffer[i]) != (int)1)
-						goto ioerror;
-					s->datalen += 1;
+					if (smtp_message_printf(s, "%c",
+					    l->buffer[i]) == -1)
+						return;
 				}
 				else {
 					buffer[j++] = l->buffer[i];
 					if (j == sizeof (buffer) - 1) {
-						len = strlen(buffer);
-						if (fprintf(s->ofile, "%s", buffer) != (int)len)
-							goto ioerror;
-						s->datalen += len;
+						if (smtp_message_printf(s, "%s",
+						    buffer) != -1)
+							return;
 						skip = 1;
 						j = 0;
 						memset(buffer, 0, sizeof buffer);
@@ -418,17 +395,14 @@ header_masquerade_callback(const struct rfc2822_header *hdr, void *arg)
 			}
 		}
 		if (skip) {
-			if (fprintf(s->ofile, "\n") != (int)1)
-				goto ioerror;
-			s->datalen += 1;
+			if (smtp_message_printf(s, "\n") == -1)
+				return;
 		}
 		else {
 			buffer[j++] = '\n';
 			if (j == sizeof (buffer) - 1) {
-				len = strlen(buffer);
-				if (fprintf(s->ofile, "%s", buffer) != (int)len)
-					goto ioerror;
-				s->datalen += len;
+				if (smtp_message_printf(s, "%s", buffer) == -1)
+					return;
 				skip = 1;
 				j = 0;
 				memset(buffer, 0, sizeof buffer);
@@ -440,42 +414,21 @@ header_masquerade_callback(const struct rfc2822_header *hdr, void *arg)
 	if (buffer[0]) {
 		if (j + strlen(s->listener->hostname) + 1 < sizeof buffer)
 			header_append_domain_buffer(buffer, s->listener->hostname, sizeof buffer);
-		len = strlen(buffer);
-		if (fprintf(s->ofile, "%s", buffer) != (int)len)
-			goto ioerror;
-		s->datalen += len;
+		smtp_message_printf(s, "%s", buffer);
 	}
-	return;
-
-ioerror:
-	s->msgflags |= MF_ERROR_IO;
-	return;
 }
 
 static void
 header_missing_callback(const char *header, void *arg)
 {
 	struct smtp_session	*s = arg;
-	int			 len;
 
-	if (strcasecmp(header, "message-id") == 0) {
-		len = fprintf(s->ofile, "Message-Id: <%016"PRIx64"@%s>\n",
+	if (strcasecmp(header, "message-id") == 0)
+		smtp_message_printf(s, "Message-Id: <%016"PRIx64"@%s>\n",
 		    generate_uid(), s->listener->hostname);
-		if (len == -1) {
-			s->msgflags |= MF_ERROR_IO;
-			return;
-		}
-		s->datalen += len;
-	}
 
-	if (strcasecmp(header, "date") == 0) {
-		len = fprintf(s->ofile, "Date: %s\n", time_to_text(time(NULL)));
-		if (len == -1) {
-			s->msgflags |= MF_ERROR_IO;
-			return;
-		}
-		s->datalen += len;
-	}
+	if (strcasecmp(header, "date") == 0)
+		smtp_message_printf(s, "Date: %s\n", time_to_text(time(NULL)));
 }
 
 static void
@@ -677,14 +630,14 @@ smtp_session_imsg(struct mproc *p, struct imsg *imsg)
 			return;
 		}
 
-		fprintf(s->ofile, "Received: ");
+		smtp_message_printf(s, "Received: ");
 		if (! (s->listener->flags & F_MASK_SOURCE)) {
-			fprintf(s->ofile, "from %s (%s [%s])",
+			smtp_message_printf(s, "from %s (%s [%s])",
 			    s->evp.helo,
 			    s->hostname,
 			    ss_to_text(&s->ss));
 		}
-		fprintf(s->ofile, "\n\tby %s (%s) with %sSMTP%s%s id %08x",
+		smtp_message_printf(s, "\n\tby %s (%s) with %sSMTP%s%s id %08x",
 		    s->smtpname,
 		    SMTPD_NAME,
 		    s->flags & SF_EHLO ? "E" : "",
@@ -694,7 +647,7 @@ smtp_session_imsg(struct mproc *p, struct imsg *imsg)
 
 		if (s->flags & SF_SECURE) {
 			x = SSL_get_peer_certificate(s->io.ssl);
-			fprintf(s->ofile,
+			smtp_message_printf(s,
 			    "\n\tTLS version=%s cipher=%s bits=%d verify=%s",
 			    SSL_get_cipher_version(s->io.ssl),
 			    SSL_get_cipher_name(s->io.ssl),
@@ -705,12 +658,20 @@ smtp_session_imsg(struct mproc *p, struct imsg *imsg)
 		}
 
 		if (s->rcptcount == 1) {
-			fprintf(s->ofile, "\n\tfor <%s@%s>",
+			smtp_message_printf(s, "\n\tfor <%s@%s>",
 			    s->evp.rcpt.user,
 			    s->evp.rcpt.domain);
 		}
 
-		fprintf(s->ofile, ";\n\t%s\n", time_to_text(time(NULL)));
+		smtp_message_printf(s, ";\n\t%s\n", time_to_text(time(NULL)));
+
+		if (s->msgflags & MF_ERROR) {
+			smtp_reply(s, "421 %s: Temporary Error",
+			    esc_code(ESC_STATUS_TEMPFAIL, ESC_OTHER_MAIL_SYSTEM_STATUS));
+			smtp_enter_state(s, STATE_QUIT);
+			io_reload(&s->io);
+			return;
+		}
 
 		smtp_enter_state(s, STATE_BODY);
 		smtp_reply(s, "354 Enter mail, end with \".\""
@@ -1917,6 +1878,29 @@ smtp_message_reset(struct smtp_session *s, int prepare)
 		if (s->flags & SF_AUTHENTICATED)
 			s->evp.flags |= EF_AUTHENTICATED;
 	}
+}
+
+static int
+smtp_message_printf(struct smtp_session *s, const char *fmt, ...)
+{
+	va_list	ap;
+	int	len;
+
+	if (s->msgflags & MF_ERROR)
+		return -1;
+
+	va_start(ap, fmt);
+	len = vfprintf(s->ofile, fmt, ap);
+	va_end(ap);
+
+	if (len < 0) {
+		log_warn("smtp-in: session %016"PRIx64": vfprintf", s->id);
+		s->msgflags |= MF_ERROR_IO;
+	}
+	else
+		s->datalen += len;
+
+	return len;
 }
 
 static void
