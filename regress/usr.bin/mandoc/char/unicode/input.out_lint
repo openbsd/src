@@ -24,9 +24,11 @@ mandoc: input.in:34:19: ERROR: skipping bad character: 0xbf
 mandoc: input.in:41:25: ERROR: skipping bad character: 0xed
 mandoc: input.in:41:26: ERROR: skipping bad character: 0xa0
 mandoc: input.in:41:27: ERROR: skipping bad character: 0x80
+mandoc: input.in:41:17: WARNING: invalid escape sequence: \[uD800]
 mandoc: input.in:42:25: ERROR: skipping bad character: 0xed
 mandoc: input.in:42:26: ERROR: skipping bad character: 0xbf
 mandoc: input.in:42:27: ERROR: skipping bad character: 0xbf
+mandoc: input.in:42:17: WARNING: invalid escape sequence: \[uDFFF]
 mandoc: input.in:50:19: ERROR: skipping bad character: 0xf0
 mandoc: input.in:50:20: ERROR: skipping bad character: 0x80
 mandoc: input.in:50:21: ERROR: skipping bad character: 0x80

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mandoc.c,v 1.63 2015/10/12 00:07:27 schwarze Exp $ */
+/*	$OpenBSD: mandoc.c,v 1.64 2015/10/13 23:30:42 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -330,6 +330,9 @@ mandoc_escape(const char **end, const char **start, int *sz)
 		if (*sz == 7 && ((*start)[1] != '1' || (*start)[2] != '0'))
 			break;
 		if (*sz == 6 && (*start)[1] == '0')
+			break;
+		if (*sz == 5 && (*start)[1] == 'D' &&
+		    strchr("89ABCDEF", (*start)[2]) != NULL)
 			break;
 		if ((int)strspn(*start + 1, "0123456789ABCDEFabcdef")
 		    + 1 == *sz)

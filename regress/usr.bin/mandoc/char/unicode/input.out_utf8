@@ -37,8 +37,8 @@ DDEESSCCRRIIPPTTIIOONN
        U+CFFF   0xecbfbf   ì¿¿ì¿¿   end of last normal middle byte
        U+D000   0xed8080   í€€í€€   begin of strange middle byte
        U+D7FF   0xed9fbf   íŸ¿íŸ¿       highest public three-byte
-       U+D800   0xeda080   í €???    lowest surrogate
-       U+DFFF   0xedbfbf   í¿¿???    highest surrogate
+       U+D800   0xeda080   ???    lowest surrogate
+       U+DFFF   0xedbfbf   ???    highest surrogate
        U+E000   0xee8080   î€€î€€       lowest private use
        U+FFFF   0xefbfbf   ï¿¿ï¿¿       highest three-byte
 
