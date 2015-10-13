@@ -1,4 +1,4 @@
-/*	$OpenBSD: yes.c,v 1.8 2009/10/27 23:59:50 deraadt Exp $	*/
+/*	$OpenBSD: yes.c,v 1.9 2015/10/13 07:03:26 doug Exp $	*/
 /*	$NetBSD: yes.c,v 1.3 1994/11/14 04:56:15 jtc Exp $	*/
 
 /*
@@ -30,11 +30,16 @@
  * SUCH DAMAGE.
  */
 
+#include <err.h>
 #include <stdio.h>
+#include <unistd.h>
 
 int
 main(int argc, char *argv[])
 {
+	if (pledge("stdio", NULL) == -1)
+		err(1, "pledge");
+
 	if (argc > 1)
 		for (;;)
 			puts(argv[1]);
