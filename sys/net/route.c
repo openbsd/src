@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.249 2015/10/07 10:50:35 mpi Exp $	*/
+/*	$OpenBSD: route.c,v 1.250 2015/10/13 09:59:37 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -856,6 +856,7 @@ rtrequest1(int req, struct rt_addrinfo *info, u_int8_t prio,
 #ifndef SMALL_KERNEL
 		/* Check the link state if the table supports it. */
 		if (rtable_mpath_capable(tableid, ndst->sa_family) &&
+		    !ISSET(rt->rt_flags, RTF_LOCAL) &&
 		    (!LINK_STATE_IS_UP(ifa->ifa_ifp->if_link_state) ||
 		    !ISSET(ifa->ifa_ifp->if_flags, IFF_UP))) {
 			rt->rt_flags &= ~RTF_UP;
