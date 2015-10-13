@@ -1,4 +1,4 @@
-/*	$OpenBSD: citrus_utf8.c,v 1.13 2015/10/12 17:50:51 schwarze Exp $ */
+/*	$OpenBSD: citrus_utf8.c,v 1.14 2015/10/13 02:17:46 bentley Exp $ */
 
 /*-
  * Copyright (c) 2002-2004 Tim J. Robbins
@@ -292,7 +292,7 @@ _citrus_utf8_ctype_wcrtomb(char * __restrict s,
 		return (1);
 	}
 
-	if (wc < 0 || wc > 0x10ffff) {
+	if (wc < 0 || (wc > 0xd7ff && wc < 0xe000) || wc > 0x10ffff) {
 		errno = EILSEQ;
 		return ((size_t)-1);
 	}
