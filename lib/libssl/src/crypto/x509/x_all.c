@@ -1,4 +1,4 @@
-/* $OpenBSD: x_all.c,v 1.20 2015/09/13 15:59:30 jsing Exp $ */
+/* $OpenBSD: x_all.c,v 1.21 2015/10/13 14:03:26 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -248,25 +248,25 @@ d2i_RSA_PUBKEY_fp(FILE *fp, RSA **rsa)
 DSA *
 d2i_DSAPrivateKey_bio(BIO *bp, DSA **dsa)
 {
-	return ASN1_d2i_bio_of(DSA, DSA_new, d2i_DSAPrivateKey, bp, dsa);
+	return ASN1_item_d2i_bio(ASN1_ITEM_rptr(DSAPrivateKey), bp, dsa);
 }
 
 int
 i2d_DSAPrivateKey_bio(BIO *bp, DSA *dsa)
 {
-	return ASN1_i2d_bio_of_const(DSA, i2d_DSAPrivateKey, bp, dsa);
+	return ASN1_item_i2d_bio(ASN1_ITEM_rptr(DSAPrivateKey), bp, dsa);
 }
 
 DSA *
 d2i_DSAPrivateKey_fp(FILE *fp, DSA **dsa)
 {
-	return ASN1_d2i_fp_of(DSA, DSA_new, d2i_DSAPrivateKey, fp, dsa);
+	return ASN1_item_d2i_fp(ASN1_ITEM_rptr(DSAPrivateKey), fp, dsa);
 }
 
 int
 i2d_DSAPrivateKey_fp(FILE *fp, DSA *dsa)
 {
-	return ASN1_i2d_fp_of_const(DSA, i2d_DSAPrivateKey, fp, dsa);
+	return ASN1_item_i2d_fp(ASN1_ITEM_rptr(DSAPrivateKey), fp, dsa);
 }
 
 DSA *
@@ -346,53 +346,53 @@ i2d_EC_PUBKEY_fp(FILE *fp, EC_KEY *eckey)
 X509_SIG *
 d2i_PKCS8_bio(BIO *bp, X509_SIG **p8)
 {
-	return ASN1_d2i_bio_of(X509_SIG, X509_SIG_new, d2i_X509_SIG, bp, p8);
+	return ASN1_item_d2i_bio(ASN1_ITEM_rptr(X509_SIG), bp, p8);
 }
 
 int
 i2d_PKCS8_bio(BIO *bp, X509_SIG *p8)
 {
-	return ASN1_i2d_bio_of(X509_SIG, i2d_X509_SIG, bp, p8);
+	return ASN1_item_i2d_bio(ASN1_ITEM_rptr(X509_SIG), bp, p8);
 }
 
 X509_SIG *
 d2i_PKCS8_fp(FILE *fp, X509_SIG **p8)
 {
-	return ASN1_d2i_fp_of(X509_SIG, X509_SIG_new, d2i_X509_SIG, fp, p8);
+	return ASN1_item_d2i_fp(ASN1_ITEM_rptr(X509_SIG), fp, p8);
 }
 
 int
 i2d_PKCS8_fp(FILE *fp, X509_SIG *p8)
 {
-	return ASN1_i2d_fp_of(X509_SIG, i2d_X509_SIG, fp, p8);
+	return ASN1_item_i2d_fp(ASN1_ITEM_rptr(X509_SIG), fp, p8);
 }
 
 PKCS8_PRIV_KEY_INFO *
 d2i_PKCS8_PRIV_KEY_INFO_bio(BIO *bp, PKCS8_PRIV_KEY_INFO **p8inf)
 {
-	return ASN1_d2i_bio_of(PKCS8_PRIV_KEY_INFO, PKCS8_PRIV_KEY_INFO_new,
-	    d2i_PKCS8_PRIV_KEY_INFO, bp, p8inf);
+	return ASN1_item_d2i_bio(ASN1_ITEM_rptr(PKCS8_PRIV_KEY_INFO), bp,
+	    p8inf);
 }
 
 int
 i2d_PKCS8_PRIV_KEY_INFO_bio(BIO *bp, PKCS8_PRIV_KEY_INFO *p8inf)
 {
-	return ASN1_i2d_bio_of(PKCS8_PRIV_KEY_INFO, i2d_PKCS8_PRIV_KEY_INFO,
-	    bp, p8inf);
+	return ASN1_item_i2d_bio(ASN1_ITEM_rptr(PKCS8_PRIV_KEY_INFO), bp,
+	    p8inf);
 }
 
 PKCS8_PRIV_KEY_INFO *
 d2i_PKCS8_PRIV_KEY_INFO_fp(FILE *fp, PKCS8_PRIV_KEY_INFO **p8inf)
 {
-	return ASN1_d2i_fp_of(PKCS8_PRIV_KEY_INFO, PKCS8_PRIV_KEY_INFO_new,
-	    d2i_PKCS8_PRIV_KEY_INFO, fp, p8inf);
+	return ASN1_item_d2i_fp(ASN1_ITEM_rptr(PKCS8_PRIV_KEY_INFO), fp,
+	    p8inf);
 }
 
 int
 i2d_PKCS8_PRIV_KEY_INFO_fp(FILE *fp, PKCS8_PRIV_KEY_INFO *p8inf)
 {
-	return ASN1_i2d_fp_of(PKCS8_PRIV_KEY_INFO, i2d_PKCS8_PRIV_KEY_INFO,
-	    fp, p8inf);
+	return ASN1_item_i2d_fp(ASN1_ITEM_rptr(PKCS8_PRIV_KEY_INFO), fp,
+	    p8inf);
 }
 
 EVP_PKEY *
@@ -484,14 +484,14 @@ X509_verify(X509 *a, EVP_PKEY *r)
 int
 X509_REQ_verify(X509_REQ *a, EVP_PKEY *r)
 {
-	return( ASN1_item_verify(ASN1_ITEM_rptr(X509_REQ_INFO),
+	return (ASN1_item_verify(ASN1_ITEM_rptr(X509_REQ_INFO),
 	    a->sig_alg, a->signature, a->req_info, r));
 }
 
 int
 NETSCAPE_SPKI_verify(NETSCAPE_SPKI *a, EVP_PKEY *r)
 {
-	return(ASN1_item_verify(ASN1_ITEM_rptr(NETSCAPE_SPKAC),
+	return (ASN1_item_verify(ASN1_ITEM_rptr(NETSCAPE_SPKAC),
 	    a->sig_algor, a->signature, a->spkac, r));
 }
 
