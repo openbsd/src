@@ -1,4 +1,4 @@
-/*	$OpenBSD: ugen.c,v 1.89 2015/09/15 13:37:44 dcoppa Exp $ */
+/*	$OpenBSD: ugen.c,v 1.90 2015/10/13 20:57:46 mpi Exp $ */
 /*	$NetBSD: ugen.c,v 1.63 2002/11/26 18:49:48 christos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ugen.c,v 1.26 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -925,10 +925,8 @@ ugen_set_interface(struct ugen_softc *sc, int ifaceidx, int altno)
 		sce->iface = 0;
 	}
 
-	/* change setting */
+	/* Try to change setting, if this fails put back the descriptors. */
 	err = usbd_set_interface(iface, altno);
-	if (err)
-		return (err);
 
 	id = usbd_get_interface_descriptor(iface);
 	for (endptno = 0; endptno < id->bNumEndpoints; endptno++) {
