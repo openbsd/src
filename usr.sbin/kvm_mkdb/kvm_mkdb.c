@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_mkdb.c,v 1.21 2015/10/12 16:01:53 deraadt Exp $	*/
+/*	$OpenBSD: kvm_mkdb.c,v 1.22 2015/10/13 15:43:19 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -75,7 +75,8 @@ main(int argc, char *argv[])
 			warn("can't set rlimit data size");
 	}
 
-	if (pledge("stdio rpath wpath cpath getpw", NULL) == -1)
+	/* getpwnam() and fchown() later */
+	if (pledge("stdio rpath wpath cpath getpw fattr proc", NULL) == -1)
 		err(1, "pledge");
 
 	strlcpy(dbdir, _PATH_VARDB, sizeof(dbdir));
@@ -163,6 +164,19 @@ kvm_mkdb(int fd, const char *dbdir, char *nlistpath, char *nlistname,
 		warn("can't dbopen %s", dbtemp);
 		return(1);
 	}
+
+	if ((gr = getgrnam("kmem")) == NULL) {
+		warn("can't find kmem group");
+	} else if (fchown(db->fd(db), -1, gr->gr_gid)) {
+		warn("can't chown %s", dbtemp);
+		(void)unlink(dbtemp);
+		return(1);
+	}
+
+	/* rename() later */
+	if (pledge("stdio cpath", NULL) == -1)
+		err(1, "pledge");
+
 	if (create_knlist(nlistpath, fd, db) != 0) {
 		warn("cannot determine executable type of %s", nlistpath);
 		(void)unlink(dbtemp);
@@ -174,13 +188,6 @@ kvm_mkdb(int fd, const char *dbdir, char *nlistpath, char *nlistname,
 		return(1);
 	}
 
-	if ((gr = getgrnam("kmem")) == NULL) {
-		warn("can't find kmem group");
-	} else if (chown(dbtemp, -1, gr->gr_gid)) {
-		warn("can't chown %s", dbtemp);
-		(void)unlink(dbtemp);
-		return(1);
-	}
 	if (rename(dbtemp, dbname)) {
 		warn("rename %s to %s", dbtemp, dbname);
 		(void)unlink(dbtemp);
