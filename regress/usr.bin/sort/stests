@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: stests,v 1.15 2015/04/03 20:28:32 millert Exp $
+#	$OpenBSD: stests,v 1.16 2015/10/13 22:14:51 tim Exp $
 #	from: @(#)stests	8.1 (Berkeley) 6/6/93
 
 #Latest version.  My sort passes all tests because I wrote it.
@@ -405,7 +405,7 @@ rm -f out
 
 xsort A -r $y
 
-sort -r in | awk '$0 "x" != x { print ; x = $0 "x" }' >out
+$SORTPROG -r in | awk '$0 "x" != x { print ; x = $0 "x" }' >out
 
 xsort B -u -r $y
 
@@ -457,7 +457,7 @@ $o xsort A +0 -1
 
 xsort B -k 1,1
 
-sort -u -k 1,1 in >xx
+$SORTPROG -u -k 1,1 in >xx
 linecount C xx 2
 
 #---------------------------------------------------------------
@@ -549,7 +549,7 @@ main() { printf("%cb\n%ca\n",0,0); }
 !
 cc xx.c
 a.out >in
-sort in >xx
+$SORTPROG in >xx
 cmp in xx >/dev/null && echo ${TEST}A failed
 test "`wc -c <in`" = "`wc -c <xx`" || echo ${TEST}B failed
 rm xx.c a.out
@@ -574,12 +574,12 @@ xsort "" -r -k1,1 -k2n
 #---------------------------------------------------------------
 TEST=23; echo $TEST	# empty file
 
-sort -o xx </dev/null
+$SORTPROG -o xx </dev/null
 cmp xx /dev/null 2>/dev/null || echo ${TEST}A failed
 
-sort -c </dev/null || echo ${TEST}B failed
+$SORTPROG -c </dev/null || echo ${TEST}B failed
 
-sort -cu </dev/null || echo ${TEST}C failed
+$SORTPROG -cu </dev/null || echo ${TEST}C failed
 
 #---------------------------------------------------------------
 TEST=24; echo $TEST	# many fields
@@ -637,21 +637,21 @@ cat <<! >in
 23:18:11:13:11:17:11:19   ba
 24:17:05:07:05:11:05:20    ba
 !
-sort -k2b -k2 in >xx && 
+$SORTPROG -k2b -k2 in >xx && 
 	$SORTPROG -c -t: -k2n xx 2>/dev/null || echo ${TEST}A failed
-sort -k2,2.1b -k2 in >xx && 
+$SORTPROG -k2,2.1b -k2 in >xx && 
 	$SORTPROG -c -t: -k3n xx 2>/dev/null || echo ${TEST}B failed
-sort -k2.3 -k2 in >xx && 
+$SORTPROG -k2.3 -k2 in >xx && 
 	$SORTPROG -c -t: -k4n xx 2>/dev/null || echo ${TEST}C failed
-sort -k2b,2.3 -k2 in >xx && 
+$SORTPROG -k2b,2.3 -k2 in >xx && 
 	$SORTPROG -c -t: -k5n xx 2>/dev/null || echo ${TEST}D failed
-sort -k2.3,2.1b -k2 in >xx && 
+$SORTPROG -k2.3,2.1b -k2 in >xx && 
 	$SORTPROG -c -t: -k6n xx 2>/dev/null || echo ${TEST}E failed
-sort -k2,2.1b -k2r in >xx && 
+$SORTPROG -k2,2.1b -k2r in >xx && 
 	$SORTPROG -c -t: -k7n xx 2>/dev/null || echo ${TEST}F failed
-sort -b -k2,2 -k2 in >xx && 
+$SORTPROG -b -k2,2 -k2 in >xx && 
 	$SORTPROG -c -t: -k8n xx 2>/dev/null || echo ${TEST}G failed
-sort -b -k2,2b -k2 in >xx &&			# perhaps same as G
+$SORTPROG -b -k2,2b -k2 in >xx &&		# perhaps same as G
 	$SORTPROG -c -t: -k8n xx 2>/dev/null || echo ${TEST}H failed\
  "(standard is not clear on this)"
 
@@ -696,10 +696,10 @@ x
 !
 rm -f out -c
 
-sort -- -k </dev/null >xx || echo ${TEST}A argument failed
+$SORTPROG -- -k </dev/null >xx || echo ${TEST}A argument failed
 cmp xx -k || echo ${TEST}A comparison failed
 
-sort - -c </dev/null 2>/dev/null && echo ${TEST}B failed
+$SORTPROG - -c </dev/null 2>/dev/null && echo ${TEST}B failed
 rm -- -k
 
 #---------------------------------------------------------------
@@ -916,7 +916,7 @@ TEST=39; echo $TEST	# sort already sorted dictionary
 
 dict=/usr/share/dict/words
 
-sort -f $dict > out
+$SORTPROG -f $dict > out
 
 cmp -s out $dict || echo $TEST failed - $SORTPROG -f $dict
 
