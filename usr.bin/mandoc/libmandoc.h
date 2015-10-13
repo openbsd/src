@@ -1,4 +1,4 @@
-/*	$OpenBSD: libmandoc.h,v 1.46 2015/04/19 14:25:05 schwarze Exp $ */
+/*	$OpenBSD: libmandoc.h,v 1.47 2015/10/13 22:57:49 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -35,7 +35,6 @@ struct	buf {
 __BEGIN_DECLS
 
 struct	mparse;
-struct	mchars;
 struct	tbl_span;
 struct	eqn;
 struct	roff;
@@ -65,7 +64,7 @@ int		 preconv_encode(struct buf *, size_t *,
 			struct buf *, size_t *, int *);
 
 void		 roff_free(struct roff *);
-struct roff	*roff_alloc(struct mparse *, const struct mchars *, int);
+struct roff	*roff_alloc(struct mparse *, int);
 void		 roff_reset(struct roff *);
 void		 roff_man_free(struct roff_man *);
 struct roff_man	*roff_man_alloc(struct roff *, struct mparse *,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.h,v 1.17 2015/04/18 16:04:40 schwarze Exp $ */
+/*	$OpenBSD: main.h,v 1.18 2015/10/13 22:57:49 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -20,7 +20,6 @@
 
 __BEGIN_DECLS
 
-struct	mchars;
 struct	roff_man;
 struct	manoutput;
 
@@ -31,8 +30,7 @@ struct	manoutput;
  * terminal output routines with different character settings.
  */
 
-void		 *html_alloc(const struct mchars *,
-			const struct manoutput *);
+void		 *html_alloc(const struct manoutput *);
 void		  html_mdoc(void *, const struct roff_man *);
 void		  html_man(void *, const struct roff_man *);
 void		  html_free(void *);
@@ -43,19 +41,14 @@ void		  tree_man(void *, const struct roff_man *);
 void		  man_mdoc(void *, const struct roff_man *);
 void		  man_man(void *, const struct roff_man *);
 
-void		 *locale_alloc(const struct mchars *,
-			const struct manoutput *);
-void		 *utf8_alloc(const struct mchars *,
-			const struct manoutput *);
-void		 *ascii_alloc(const struct mchars *,
-			const struct manoutput *);
+void		 *locale_alloc(const struct manoutput *);
+void		 *utf8_alloc(const struct manoutput *);
+void		 *ascii_alloc(const struct manoutput *);
 void		  ascii_free(void *);
 void		  ascii_sepline(void *);
 
-void		 *pdf_alloc(const struct mchars *,
-			const struct manoutput *);
-void		 *ps_alloc(const struct mchars *,
-			const struct manoutput *);
+void		 *pdf_alloc(const struct manoutput *);
+void		 *ps_alloc(const struct manoutput *);
 void		  pspdf_free(void *);
 
 void		  terminal_mdoc(void *, const struct roff_man *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: roff.c,v 1.150 2015/10/12 00:07:27 schwarze Exp $ */
+/*	$OpenBSD: roff.c,v 1.151 2015/10/13 22:57:49 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -314,7 +314,6 @@ struct	roffreg {
 
 struct	roff {
 	struct mparse	*parse; /* parse point */
-	const struct mchars *mchars; /* character table */
 	struct roffnode	*last; /* leaf of stack */
 	int		*rstack; /* stack of inverted `ie' values */
 	struct roffreg	*regtab; /* number registers */
@@ -899,13 +898,12 @@ roff_free(struct roff *r)
 }
 
 struct roff *
-roff_alloc(struct mparse *parse, const struct mchars *mchars, int options)
+roff_alloc(struct mparse *parse, int options)
 {
 	struct roff	*r;
 
 	r = mandoc_calloc(1, sizeof(struct roff));
 	r->parse = parse;
-	r->mchars = mchars;
 	r->options = options;
 	r->format = options & (MPARSE_MDOC | MPARSE_MAN);
 	r->rstackpos = -1;
@@ -1342,7 +1340,7 @@ roff_res(struct roff *r, struct buf *buf, int ln, int pos)
 			esc = mandoc_escape(&cp, &stnam, &inaml);
 			if (esc == ESCAPE_ERROR ||
 			    (esc == ESCAPE_SPECIAL &&
-			     mchars_spec2cp(r->mchars, stnam, inaml) < 0))
+			     mchars_spec2cp(stnam, inaml) < 0))
 				mandoc_vmsg(MANDOCERR_ESC_BAD,
 				    r->parse, ln, (int)(stesc - buf->buf),
 				    "%.*s", (int)(cp - stesc), stesc);

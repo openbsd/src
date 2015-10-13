@@ -1,4 +1,4 @@
-/*	$OpenBSD: term_ascii.c,v 1.36 2015/10/12 00:07:27 schwarze Exp $ */
+/*	$OpenBSD: term_ascii.c,v 1.37 2015/10/13 22:57:49 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -32,8 +32,7 @@
 #include "manconf.h"
 #include "main.h"
 
-static	struct termp	 *ascii_init(enum termenc, const struct mchars *,
-				const struct manoutput *);
+static	struct termp	 *ascii_init(enum termenc, const struct manoutput *);
 static	int		  ascii_hspan(const struct termp *,
 				const struct roffsu *);
 static	size_t		  ascii_width(const struct termp *, int);
@@ -51,15 +50,13 @@ static	size_t		  locale_width(const struct termp *, int);
 
 
 static struct termp *
-ascii_init(enum termenc enc, const struct mchars *mchars,
-	const struct manoutput *outopts)
+ascii_init(enum termenc enc, const struct manoutput *outopts)
 {
 	char		*v;
 	struct termp	*p;
 
 	p = mandoc_calloc(1, sizeof(struct termp));
 
-	p->symtab = mchars;
 	p->line = 1;
 	p->tabwidth = 5;
 	p->defrmargin = p->lastrmargin = 78;
@@ -107,24 +104,24 @@ ascii_init(enum termenc enc, const struct mchars *mchars,
 }
 
 void *
-ascii_alloc(const struct mchars *mchars, const struct manoutput *outopts)
+ascii_alloc(const struct manoutput *outopts)
 {
 
-	return ascii_init(TERMENC_ASCII, mchars, outopts);
+	return ascii_init(TERMENC_ASCII, outopts);
 }
 
 void *
-utf8_alloc(const struct mchars *mchars, const struct manoutput *outopts)
+utf8_alloc(const struct manoutput *outopts)
 {
 
-	return ascii_init(TERMENC_UTF8, mchars, outopts);
+	return ascii_init(TERMENC_UTF8, outopts);
 }
 
 void *
-locale_alloc(const struct mchars *mchars, const struct manoutput *outopts)
+locale_alloc(const struct manoutput *outopts)
 {
 
-	return ascii_init(TERMENC_LOCALE, mchars, outopts);
+	return ascii_init(TERMENC_LOCALE, outopts);
 }
 
 static void

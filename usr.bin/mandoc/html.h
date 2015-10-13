@@ -1,4 +1,4 @@
-/*	$OpenBSD: html.h,v 1.32 2014/12/02 10:07:17 schwarze Exp $ */
+/*	$OpenBSD: html.h,v 1.33 2015/10/13 22:57:49 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -130,7 +130,6 @@ struct	html {
 	struct tagq	  tags; /* stack of open tags */
 	struct rofftbl	  tbl; /* current table */
 	struct tag	 *tblt; /* current open table scope */
-	const struct mchars *symtab; /* character table */
 	char		 *base_man; /* base for manpage href */
 	char		 *base_includes; /* base for include href */
 	char		 *style; /* style-sheet URI */

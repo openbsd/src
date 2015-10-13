@@ -1,4 +1,4 @@
-/*	$OpenBSD: mandoc.h,v 1.147 2015/09/14 15:35:47 schwarze Exp $ */
+/*	$OpenBSD: mandoc.h,v 1.148 2015/10/13 22:57:49 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -410,21 +410,17 @@ typedef	void	(*mandocmsg)(enum mandocerr, enum mandoclevel,
 __BEGIN_DECLS
 
 struct	mparse;
-struct	mchars;
 struct	roff_man;
 
 enum mandoc_esc	  mandoc_escape(const char **, const char **, int *);
-struct mchars	 *mchars_alloc(void);
-void		  mchars_free(struct mchars *);
+void		  mchars_alloc(void);
+void		  mchars_free(void);
 int		  mchars_num2char(const char *, size_t);
 const char	 *mchars_uc2str(int);
 int		  mchars_num2uc(const char *, size_t);
-int		  mchars_spec2cp(const struct mchars *,
-			const char *, size_t);
-const char	 *mchars_spec2str(const struct mchars *,
-			const char *, size_t, size_t *);
-struct mparse	 *mparse_alloc(int, enum mandoclevel, mandocmsg,
-			const struct mchars *, const char *);
+int		  mchars_spec2cp(const char *, size_t);
+const char	 *mchars_spec2str(const char *, size_t, size_t *);
+struct mparse	 *mparse_alloc(int, enum mandoclevel, mandocmsg, const char *);
 void		  mparse_free(struct mparse *);
 void		  mparse_keep(struct mparse *);
 enum mandoclevel  mparse_open(struct mparse *, int *, const char *);

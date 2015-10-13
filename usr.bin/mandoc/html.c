@@ -1,4 +1,4 @@
-/*	$OpenBSD: html.c,v 1.60 2015/10/12 00:14:41 schwarze Exp $ */
+/*	$OpenBSD: html.c,v 1.61 2015/10/13 22:57:49 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -128,15 +128,13 @@ static	void	 print_attr(struct html *, const char *, const char *);
 
 
 void *
-html_alloc(const struct mchars *mchars, const struct manoutput *outopts)
+html_alloc(const struct manoutput *outopts)
 {
 	struct html	*h;
 
 	h = mandoc_calloc(1, sizeof(struct html));
 
 	h->tags.head = NULL;
-	h->symtab = mchars;
-
 	h->style = outopts->style;
 	h->base_man = outopts->man;
 	h->base_includes = outopts->includes;
@@ -396,7 +394,7 @@ print_encode(struct html *h, const char *p, int norecurse)
 				continue;
 			break;
 		case ESCAPE_SPECIAL:
-			c = mchars_spec2cp(h->symtab, seq, len);
+			c = mchars_spec2cp(seq, len);
 			if (c <= 0)
 				continue;
 			break;
