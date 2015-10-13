@@ -1,4 +1,4 @@
-/*	$OpenBSD: rm.c,v 1.33 2015/10/11 03:08:46 daniel Exp $	*/
+/*	$OpenBSD: rm.c,v 1.34 2015/10/13 04:30:53 daniel Exp $	*/
 /*	$NetBSD: rm.c,v 1.19 1995/09/07 06:48:50 jtc Exp $	*/
 
 /*-
@@ -54,7 +54,7 @@ extern char *__progname;
 int dflag, eval, fflag, iflag, Pflag, stdin_ok;
 
 int	check(char *, char *, struct stat *);
-void	checkdotorslash(char **);
+void	checkdot(char **);
 void	rm_file(char **);
 int	rm_overwrite(char *, struct stat *);
 int	pass(int, off_t, char *, size_t);
@@ -113,7 +113,7 @@ main(int argc, char *argv[])
 	if (argc < 1 && fflag == 0)
 		usage();
 
-	checkdotorslash(argv);
+	checkdot(argv);
 
 	if (*argv) {
 		stdin_ok = isatty(STDIN_FILENO);
@@ -391,12 +391,12 @@ check(char *path, char *name, struct stat *sp)
  */
 #define ISDOT(a)	((a)[0] == '.' && (!(a)[1] || ((a)[1] == '.' && !(a)[2])))
 void
-checkdotorslash(char **argv)
+checkdot(char **argv)
 {
 	char *p, **save, **t;
-	int dotcomplained, slashcomplained;
+	int complained;
 
-	dotcomplained = slashcomplained = 0;
+	complained = 0;
 	for (t = argv; *t;) {
 		/* strip trailing slashes */
 		p = strrchr (*t, '\0');
@@ -410,24 +410,14 @@ checkdotorslash(char **argv)
 			p = *t;
 
 		if (ISDOT(p)) {
-			if (!dotcomplained) {
-				dotcomplained = 1;
+			if (!complained++)
 				warnx("\".\" and \"..\" may not be removed");
-			}
-		} else if (*p == '\0') {
-			if (!slashcomplained) {
-				slashcomplained = 1;
-				warnx("\"/\" may not be removed");
-			}
-		} else {
+			eval = 1;
+			for (save = t; (t[0] = t[1]) != NULL; ++t)
+				continue;
+			t = save;
+		} else
 			++t;
-			continue;
-		}
-
-		eval = 1;
-		for (save = t; (t[0] = t[1]) != NULL; ++t)
-			continue;
-		t = save;
 	}
 }
 
