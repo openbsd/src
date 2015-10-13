@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-802_11.c,v 1.26 2015/10/12 13:01:50 stsp Exp $	*/
+/*	$OpenBSD: print-802_11.c,v 1.27 2015/10/13 14:36:15 stsp Exp $	*/
 
 /*
  * Copyright (c) 2005 Reyk Floeter <reyk@openbsd.org>
@@ -33,7 +33,6 @@
 #include <pcap.h>
 #include <stdio.h>
 #include <string.h>
-#include <math.h>
 
 #include "addrtoname.h"
 #include "interface.h"
@@ -364,7 +363,7 @@ ieee80211_print_htcaps(u_int8_t *data, u_int len)
 	if ((ampdu & IEEE80211_AMPDU_PARAM_LE) >= 0 &&
 	    (ampdu & IEEE80211_AMPDU_PARAM_LE) <= 3)
 		printf(",A-MPDU max %d",
-		    (int)(exp2f(13 + (ampdu & IEEE80211_AMPDU_PARAM_LE)) - 1));
+		    (1 << (13 + (ampdu & IEEE80211_AMPDU_PARAM_LE))) - 1);
 
 	/* A-MPDU start spacing */
 	if (ampdu & IEEE80211_AMPDU_PARAM_SS) {
