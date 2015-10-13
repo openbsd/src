@@ -1,4 +1,4 @@
-.\"	$OpenBSD: printf.3,v 1.73 2015/06/03 16:26:04 millert Exp $
+.\"	$OpenBSD: printf.3,v 1.74 2015/10/13 12:25:04 millert Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)printf.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: June 3 2015 $
+.Dd $Mdocdate: October 13 2015 $
 .Dt PRINTF 3
 .Os
 .Sh NAME
@@ -642,7 +642,7 @@ a field; if the result of a conversion is wider than the field width, the
 field is expanded to contain the conversion result.
 .Sh RETURN VALUES
 For all these functions if an output or encoding error occurs, a value
-of \-1 is returned.
+less than 0 is returned.
 .Pp
 The
 .Fn printf ,
