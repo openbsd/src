@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.256 2015/09/25 09:51:20 mpi Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.257 2015/10/13 10:29:16 mpi Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -671,13 +671,9 @@ in_ouraddr(struct mbuf *m, struct ifnet *ifp, struct in_addr ina)
 	sin.sin_family = AF_INET;
 	sin.sin_addr = ina;
 	rt = rtalloc(sintosa(&sin), 0, m->m_pkthdr.ph_rtableid);
-	if (rt != NULL) {
-		/* only use non-stale local address, check before route free */
-		if ((rt->rt_flags & (RTF_LOCAL|RTF_BROADCAST)) &&
-		    rt->rt_ifa != NULL && rt->rt_ifa->ifa_ifp != NULL)
-			ia = ifatoia(rt->rt_ifa);
-		rtfree(rt);
-	}
+	if (rtisvalid(rt) && ISSET(rt->rt_flags, RTF_LOCAL|RTF_BROADCAST))
+		ia = ifatoia(rt->rt_ifa);
+	rtfree(rt);
 
 	if (ia == NULL) {
 		struct ifaddr *ifa;

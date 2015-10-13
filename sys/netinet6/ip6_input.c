@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.146 2015/09/11 09:54:46 claudio Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.147 2015/10/13 10:29:16 mpi Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -445,7 +445,7 @@ ip6_input(struct mbuf *m)
 	 * Accept the packet if the route to the destination is marked
 	 * as local.
 	 */
-	if (ip6_forward_rt.ro_rt &&
+	if (rtisvalid(ip6_forward_rt.ro_rt) &&
 	    ISSET(ip6_forward_rt.ro_rt->rt_flags, RTF_LOCAL)) {
 		struct in6_ifaddr *ia6 =
 			ifatoia6(ip6_forward_rt.ro_rt->rt_ifa);
