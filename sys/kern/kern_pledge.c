@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.18 2015/10/13 00:03:42 doug Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.19 2015/10/13 16:09:24 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -1142,6 +1142,7 @@ pledge_setsockopt_check(struct proc *p, int level, int optname)
 		case IP_MINTTL:
 		case IP_PORTRANGE:
 		case IP_RECVDSTADDR:
+		case IP_RECVDSTPORT:
 			return (0);
 		case IP_MULTICAST_IF:
 		case IP_ADD_MEMBERSHIP:
@@ -1159,6 +1160,7 @@ pledge_setsockopt_check(struct proc *p, int level, int optname)
 		case IPV6_RECVHOPLIMIT:
 		case IPV6_PORTRANGE:
 		case IPV6_RECVPKTINFO:
+		case IPV6_RECVDSTPORT:
 #ifdef notyet
 		case IPV6_V6ONLY:
 #endif
