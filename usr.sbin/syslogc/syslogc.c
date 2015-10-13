@@ -1,4 +1,4 @@
-/* $OpenBSD: syslogc.c,v 1.17 2014/11/26 18:34:52 millert Exp $ */
+/* $OpenBSD: syslogc.c,v 1.18 2015/10/13 16:30:55 deraadt Exp $ */
 
 /*
  * Copyright (c) 2004 Damien Miller
@@ -146,6 +146,9 @@ main(int argc, char **argv)
 		err(1, "connect: %s", ctl.sun_path);
 	if ((ctlf = fdopen(ctlsock, "r+")) == NULL)
 		err(1, "fdopen");
+
+	if (pledge("stdio", NULL) == -1)
+		err(1, "stdio");
 
 	cc.version = htonl(CTL_VERSION);
 	cc.cmd = htonl(cc.cmd);
