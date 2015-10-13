@@ -1,4 +1,4 @@
-/*	$OpenBSD: sort.c,v 1.80 2015/10/13 16:21:42 tim Exp $	*/
+/*	$OpenBSD: sort.c,v 1.81 2015/10/13 16:55:03 tim Exp $	*/
 
 /*-
  * Copyright (C) 2009 Gabor Kovesdan <gabor@FreeBSD.org>
@@ -1133,7 +1133,7 @@ main(int argc, char *argv[])
 				sort_asprintf(&outfile, "%s.XXXXXXXXXX",
 				    real_outfile);
 				if ((fd = mkstemp(outfile)) == -1 ||
-				    fchmod(fd, sb.st_mode & ALLPERMS) == -1)
+				    fchmod(fd, sb.st_mode & ACCESSPERMS) == -1)
 					err(2, "%s", outfile);
 				close(fd);
 				tmp_file_atexit(outfile);
