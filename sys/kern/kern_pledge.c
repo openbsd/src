@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.17 2015/10/12 23:16:23 deraadt Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.18 2015/10/13 00:03:42 doug Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -203,6 +203,7 @@ const u_int pledge_syscalls[SYS_MAXSYSCALL] = {
 	[SYS_fchmodat] = PLEDGE_FATTR,
 	[SYS_chflags] = PLEDGE_FATTR,
 	[SYS_chflagsat] = PLEDGE_FATTR,
+	[SYS_fchflags] = PLEDGE_FATTR,
 	[SYS_chown] = PLEDGE_FATTR,
 	[SYS_fchownat] = PLEDGE_FATTR,
 	[SYS_lchown] = PLEDGE_FATTR,
