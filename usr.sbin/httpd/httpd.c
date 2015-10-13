@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.c,v 1.39 2015/08/20 13:00:23 reyk Exp $	*/
+/*	$OpenBSD: httpd.c,v 1.40 2015/10/13 07:57:13 reyk Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -565,7 +565,7 @@ canonicalize_host(const char *host, char *name, size_t len)
 	for (i = j = 0; i < plen; i++) {
 		if (j >= (len - 1))
 			goto fail;
-		c = tolower(host[i]);
+		c = tolower((unsigned char)host[i]);
 		if ((c == '.') && (j == 0 || name[j - 1] == '.'))
 			continue;
 		name[j++] = c;
@@ -602,7 +602,8 @@ url_decode(char *url)
 		switch (*p) {
 		case '%':
 			/* Encoding character is followed by two hex chars */
-			if (!(isxdigit(p[1]) && isxdigit(p[2])))
+			if (!(isxdigit((unsigned char)p[1]) &&
+			    isxdigit((unsigned char)p[2])))
 				return (NULL);
 
 			hex[0] = p[1];
