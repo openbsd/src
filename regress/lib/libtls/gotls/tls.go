@@ -18,6 +18,11 @@ import (
 	"unsafe"
 )
 
+var (
+	errWantPollIn  = errors.New("want poll in")
+	errWantPollOut = errors.New("want poll out")
+)
+
 // TLSConfig provides configuration options for a TLS context.
 type TLSConfig struct {
 	caFile *C.char
@@ -127,29 +132,59 @@ func (t *TLS) Connect(host, port string) error {
 	return nil
 }
 
+// Handshake attempts to complete the TLS handshake.
+func (t *TLS) Handshake() error {
+	ret := C.tls_handshake(t.ctx)
+	switch {
+	case ret == C.TLS_WANT_POLLIN:
+		return errWantPollIn
+	case ret == C.TLS_WANT_POLLOUT:
+		return errWantPollOut
+	case ret != 0:
+		return fmt.Errorf("handshake failed: %v", t.Error())
+	}
+	return nil
+}
+
 // Read reads data the TLS connection into the given buffer.
 func (t *TLS) Read(buf []byte) (int, error) {
-	var inlen C.size_t
-	if C.tls_read(t.ctx, unsafe.Pointer(&buf[0]), C.size_t(len(buf)), (*C.size_t)(unsafe.Pointer(&inlen))) != 0 {
+	ret := C.tls_read(t.ctx, unsafe.Pointer(&buf[0]), C.size_t(len(buf)))
+	switch {
+	case ret == C.TLS_WANT_POLLIN:
+		return -1, errWantPollIn
+	case ret == C.TLS_WANT_POLLOUT:
+		return -1, errWantPollOut
+	case ret < 0:
 		return -1, fmt.Errorf("read failed: %v", t.Error())
 	}
-	return int(inlen), nil
+	return int(ret), nil
 }
 
 // Write writes the given data to the TLS connection.
 func (t *TLS) Write(buf []byte) (int, error) {
-	var outlen C.size_t
 	p := C.CString(string(buf))
 	defer C.free(unsafe.Pointer(p))
-	if C.tls_write(t.ctx, unsafe.Pointer(p), C.size_t(len(buf)), (*C.size_t)(unsafe.Pointer(&outlen))) != 0 {
+	ret := C.tls_write(t.ctx, unsafe.Pointer(p), C.size_t(len(buf)))
+	switch {
+	case ret == C.TLS_WANT_POLLIN:
+		return -1, errWantPollIn
+	case ret == C.TLS_WANT_POLLOUT:
+		return -1, errWantPollOut
+	case ret < 0:
 		return -1, fmt.Errorf("write failed: %v", t.Error())
 	}
-	return int(outlen), nil
+	return int(ret), nil
 }
 
 // Close closes the TLS connection.
 func (t *TLS) Close() error {
-	if C.tls_close(t.ctx) != 0 {
+	ret := C.tls_close(t.ctx)
+	switch {
+	case ret == C.TLS_WANT_POLLIN:
+		return errWantPollIn
+	case ret == C.TLS_WANT_POLLOUT:
+		return errWantPollOut
+	case ret != 0:
 		return fmt.Errorf("close failed: %v", t.Error())
 	}
 	return nil
