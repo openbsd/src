@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.142 2015/09/10 13:43:35 jsing Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.143 2015/10/13 08:53:43 guenther Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -1374,7 +1374,8 @@ urldecode(const char *str)
 		/* Cannot use strtol here because next char
 		 * after %xx may be a digit.
 		 */
-		if (c == '%' && isxdigit(str[i+1]) && isxdigit(str[i+2])) {
+		if (c == '%' && isxdigit((unsigned char)str[i+1]) &&
+		    isxdigit((unsigned char)str[i+2])) {
 			*ret = hextochar(&str[i+1]);
 			i+=2;
 			continue;
@@ -1409,7 +1410,7 @@ recode_credentials(const char *userinfo)
 char
 hextochar(const char *str)
 {
-	char c, ret;
+	unsigned char c, ret;
 
 	c = str[0];
 	ret = c;
