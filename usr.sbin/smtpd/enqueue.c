@@ -1,4 +1,4 @@
-/*	$OpenBSD: enqueue.c,v 1.99 2015/10/12 21:32:27 millert Exp $	*/
+/*	$OpenBSD: enqueue.c,v 1.100 2015/10/13 08:06:22 gilles Exp $	*/
 
 /*
  * Copyright (c) 2005 Henning Brauer <henning@bulabula.org>
@@ -286,12 +286,18 @@ enqueue(int argc, char *argv[], FILE *ofp)
 	/* check if working in offline mode */
 	/* If the server is not running, enqueue the message offline */
 
-	if (!srv_connected())
+	if (!srv_connected()) {
+		if (pledge("stdio", NULL) == -1)
+			err(1, "pledge");
 		return (enqueue_offline(save_argc, save_argv, fp, ofp));
+	}
 
 	if ((msg.fd = open_connection()) == -1)
 		errx(EX_UNAVAILABLE, "server too busy");
 
+	if (pledge("stdio", NULL) == -1)
+		err(1, "pledge");
+	
 	fout = fdopen(msg.fd, "a+");
 	if (fout == NULL)
 		err(EX_UNAVAILABLE, "fdopen");
