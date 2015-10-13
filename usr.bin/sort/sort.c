@@ -1,4 +1,4 @@
-/*	$OpenBSD: sort.c,v 1.79 2015/04/05 13:56:04 millert Exp $	*/
+/*	$OpenBSD: sort.c,v 1.80 2015/10/13 16:21:42 tim Exp $	*/
 
 /*-
  * Copyright (C) 2009 Gabor Kovesdan <gabor@FreeBSD.org>
@@ -1055,6 +1055,11 @@ main(int argc, char *argv[])
 	}
 #endif
 
+	if (argv_from_file0) {
+		argc = argc_from_file0;
+		argv = argv_from_file0;
+	}
+
 	if (sort_opts_vals.cflag && argc > 1)
 		errx(2, "only one input file is allowed with the -%c flag",
 		    sort_opts_vals.csilentflag ? 'C' : 'c');
@@ -1089,11 +1094,6 @@ main(int argc, char *argv[])
 		}
 
 		ks->sm.func = get_sort_func(&(ks->sm));
-	}
-
-	if (argv_from_file0) {
-		argc = argc_from_file0;
-		argv = argv_from_file0;
 	}
 
 	if (debug_sort) {
