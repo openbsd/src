@@ -1,4 +1,4 @@
-/*	$OpenBSD: aux.c,v 1.27 2015/01/16 06:40:09 deraadt Exp $	*/
+/*	$OpenBSD: aux.c,v 1.28 2015/10/13 08:49:51 guenther Exp $	*/
 /*	$NetBSD: aux.c,v 1.5 1997/05/13 06:15:52 mikel Exp $	*/
 
 /*
@@ -31,6 +31,7 @@
  */
 
 #include "rcv.h"
+#include <fcntl.h>
 #include "extern.h"
 
 /*
@@ -328,19 +329,12 @@ unstack(void)
 void
 alter(char *name)
 {
-	struct stat sb;
-	struct timeval tv[2];
+	struct timespec ts[2];
 
-	if (stat(name, &sb))
-		return;
-	(void) gettimeofday(&tv[0], (struct timezone *)0);
-	tv[0].tv_sec++;
-#ifdef TIMESPEC_TO_TIMEVAL
-	TIMESPEC_TO_TIMEVAL(&tv[1], &sb.st_mtimespec);
-#else
-	tv[1].tv_sec = sb.st_mtime;
-#endif
-	(void)utimes(name, tv);
+	clock_gettime(CLOCK_REALTIME, &ts[0]);
+	ts[0].tv_sec++;
+	ts[1].tv_nsec = UTIME_OMIT;
+	(void)utimensat(AT_FDCWD, name, ts, 0);
 }
 
 /*

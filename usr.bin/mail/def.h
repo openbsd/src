@@ -1,4 +1,4 @@
-/*	$OpenBSD: def.h,v 1.15 2015/01/20 16:59:07 millert Exp $	*/
+/*	$OpenBSD: def.h,v 1.16 2015/10/13 08:49:51 guenther Exp $	*/
 /*	$NetBSD: def.h,v 1.9 1996/12/28 07:11:00 tls Exp $	*/
 
 /*
@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)def.h	8.4 (Berkeley) 4/20/95
- *	$OpenBSD: def.h,v 1.15 2015/01/20 16:59:07 millert Exp $
+ *	$OpenBSD: def.h,v 1.16 2015/10/13 08:49:51 guenther Exp $
  */
 
 /*
@@ -43,7 +43,6 @@
 #define MAIL_DEF_H
 
 #include <sys/stat.h>
-#include <sys/time.h>
 
 #include <ctype.h>
 #include <err.h>
