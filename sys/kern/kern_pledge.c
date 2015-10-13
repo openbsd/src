@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.20 2015/10/13 18:38:34 deraadt Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.21 2015/10/13 18:42:06 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -1097,6 +1097,7 @@ pledge_ioctl_check(struct proc *p, long com, void *v)
 		case SIOCGIFADDR:
 		case SIOCGIFFLAGS:
 		case SIOCGIFRDOMAIN:
+		case SIOCGNBRINFO_IN6:
 			if (fp->f_type == DTYPE_SOCKET)
 				return (0);
 			break;
