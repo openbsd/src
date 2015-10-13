@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.213 2015/10/12 18:25:16 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.214 2015/10/13 18:52:56 ajacoutot Exp $
 #
 # Copyright (c) 2008-2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
@@ -47,7 +47,7 @@ sm_trap() {
 	sm_error
 }
 
-trap "sm_trap; exit 1" 1 2 3 13 15
+trap "sm_trap" 1 2 3 13 15
 
 sm_info() {
 	(($#)) && echo "---- Info: $@" || true
