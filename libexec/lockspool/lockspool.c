@@ -1,4 +1,4 @@
-/*	$OpenBSD: lockspool.c,v 1.16 2009/10/27 23:59:31 deraadt Exp $	*/
+/*	$OpenBSD: lockspool.c,v 1.17 2015/10/13 15:14:26 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1998 Theo de Raadt <deraadt@theos.com>
@@ -34,6 +34,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <poll.h>
+#include <err.h>
+
 #include "mail.local.h"
 
 void unhold(int);
@@ -49,6 +51,9 @@ main(int argc, char *argv[])
 	ssize_t nread;
 	char *from, c;
 	int holdfd;
+
+	if (pledge("stdio rpath wpath cpath fattr", NULL) == -1)
+		err(1, "pledge");
 
 	openlog(__progname, LOG_PERROR, LOG_MAIL);
 
