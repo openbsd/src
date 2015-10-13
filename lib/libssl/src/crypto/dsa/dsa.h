@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa.h,v 1.18 2014/07/12 16:03:37 miod Exp $ */
+/* $OpenBSD: dsa.h,v 1.19 2015/10/13 12:31:06 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -221,9 +221,17 @@ int DSA_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,
 int DSA_set_ex_data(DSA *d, int idx, void *arg);
 void *DSA_get_ex_data(DSA *d, int idx);
 
-DSA *	d2i_DSAPublicKey(DSA **a, const unsigned char **pp, long length);
-DSA *	d2i_DSAPrivateKey(DSA **a, const unsigned char **pp, long length);
-DSA * 	d2i_DSAparams(DSA **a, const unsigned char **pp, long length);
+DSA *d2i_DSAPublicKey(DSA **a, const unsigned char **pp, long length);
+int i2d_DSAPublicKey(const DSA *a, unsigned char **pp);
+extern const ASN1_ITEM DSAPublicKey_it;
+
+DSA *d2i_DSAPrivateKey(DSA **a, const unsigned char **pp, long length);
+int i2d_DSAPrivateKey(const DSA *a, unsigned char **pp);
+extern const ASN1_ITEM DSAPrivateKey_it;
+
+DSA *d2i_DSAparams(DSA **a, const unsigned char **pp, long length);
+int i2d_DSAparams(const DSA *a,unsigned char **pp);
+extern const ASN1_ITEM DSAparams_it;
 
 /* Deprecated version */
 #ifndef OPENSSL_NO_DEPRECATED
@@ -239,9 +247,6 @@ int	DSA_generate_parameters_ex(DSA *dsa, int bits,
 		int *counter_ret, unsigned long *h_ret, BN_GENCB *cb);
 
 int	DSA_generate_key(DSA *a);
-int	i2d_DSAPublicKey(const DSA *a, unsigned char **pp);
-int 	i2d_DSAPrivateKey(const DSA *a, unsigned char **pp);
-int	i2d_DSAparams(const DSA *a,unsigned char **pp);
 
 #ifndef OPENSSL_NO_BIO
 int	DSAparams_print(BIO *bp, const DSA *x);
