@@ -1,4 +1,4 @@
-/*	$OpenBSD: diffreg.c,v 1.88 2015/10/05 20:15:00 millert Exp $	*/
+/*	$OpenBSD: diffreg.c,v 1.89 2015/10/13 16:37:17 tobias Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -1084,7 +1084,7 @@ proceed:
 		 * back and restart where we left off.
 		 */
 		diff_output(".\n");
-		diff_output("%ds/^\\.\\././\n", a);
+		diff_output("%ds/.//\n", a);
 		a += i;
 		c += i;
 		goto restart;
