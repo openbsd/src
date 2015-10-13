@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.171 2015/10/07 08:58:01 mpi Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.172 2015/10/13 10:21:27 mpi Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -91,7 +91,7 @@ int	arpt_prune = (5*60*1);	/* walk list every 5 minutes */
 int	arpt_keep = (20*60);	/* once resolved, good for 20 more minutes */
 int	arpt_down = 20;		/* once declared down, don't send for 20 secs */
 
-void arptfree(struct llinfo_arp *);
+void arptfree(struct rtentry *);
 void arptimer(void *);
 struct rtentry *arplookup(u_int32_t, int, int, u_int);
 void in_arpinput(struct mbuf *);
@@ -133,7 +133,7 @@ arptimer(void *arg)
 
 		nla = LIST_NEXT(la, la_list);
 		if (rt->rt_expire && rt->rt_expire <= time_second)
-			arptfree(la); /* timer has expired; clear */
+			arptfree(rt); /* timer has expired; clear */
 	}
 	splx(s);
 }
@@ -772,26 +772,17 @@ out:
  * Free an arp entry.
  */
 void
-arptfree(struct llinfo_arp *la)
+arptfree(struct rtentry *rt)
 {
-	struct rtentry *rt = la->la_rt;
-	struct sockaddr_dl *sdl;
-	u_int tid = 0;
+	struct llinfo_arp *la = (struct llinfo_arp *)rt->rt_llinfo;
+	struct sockaddr_dl *sdl = SDL(rt->rt_gateway);
 
-	if (rt == NULL)
-		panic("arptfree");
-	if (rt->rt_refcnt > 0 && (sdl = SDL(rt->rt_gateway)) &&
-	    sdl->sdl_family == AF_LINK) {
+	if ((sdl != NULL) && (sdl->sdl_family == AF_LINK)) {
 		sdl->sdl_alen = 0;
 		la->la_asked = 0;
-		rt->rt_flags &= ~RTF_REJECT;
-		return;
 	}
 
-	if (rt->rt_ifp)
-		tid = rt->rt_ifp->if_rdomain;
-
-	rtdeletemsg(rt, tid);
+	rtdeletemsg(rt, rt->rt_ifp->if_rdomain);
 }
 
 /*
