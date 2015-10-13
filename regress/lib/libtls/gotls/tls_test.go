@@ -118,6 +118,73 @@ func TestTLSBasic(t *testing.T) {
 	}
 }
 
+func TestTLSSingleByteReadWrite(t *testing.T) {
+	ts, u, caFile, err := newTestServer()
+	if err != nil {
+		t.Fatalf("Failed to start test server: %v", err)
+	}
+	defer os.Remove(caFile)
+	defer ts.Close()
+
+	if err := Init(); err != nil {
+		t.Fatal(err)
+	}
+
+	cfg, err := NewConfig()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer cfg.Free()
+	cfg.SetCAFile(caFile)
+
+	tls, err := NewClient(cfg)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer tls.Free()
+
+	t.Logf("Connecting to %s", u.Host)
+
+	if err := tls.Connect(u.Host, ""); err != nil {
+		t.Fatal(err)
+	}
+	defer func() {
+		if err := tls.Close(); err != nil {
+			t.Fatalf("Close failed: %v", err)
+		}
+	}()
+
+	for _, b := range []byte("GET / HTTP/1.0\n\n") {
+		n, err := tls.Write([]byte{b})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if n != 1 {
+			t.Fatalf("Wrote byte %v, got length %d, want 1", b, n)
+		}
+	}
+
+	var body []byte
+	for {
+		buf := make([]byte, 1)
+		n, err := tls.Read(buf)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if n == 0 {
+			break
+		}
+		if n != 1 {
+			t.Fatalf("Read single byte, got length %d, want 1", n)
+		}
+		body = append(body, buf...)
+	}
+
+	if !strings.Contains(string(body), httpContent) {
+		t.Errorf("Response does not contain %q", httpContent)
+	}
+}
+
 func TestTLSInfo(t *testing.T) {
 	ts, u, caFile, err := newTestServer()
 	if err != nil {
