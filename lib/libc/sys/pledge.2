@@ -1,4 +1,4 @@
-.\" $OpenBSD: pledge.2,v 1.5 2015/10/12 23:32:55 deraadt Exp $
+.\" $OpenBSD: pledge.2,v 1.6 2015/10/13 07:23:49 jmc Exp $
 .\"
 .\" Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 12 2015 $
+.Dd $Mdocdate: October 13 2015 $
 .Dt PLEDGE 2
 .Os
 .Sh NAME
@@ -226,8 +226,9 @@ This subset is simply the combination of
 and
 .Va "rw" .
 As a result, all the expected functionalities of libc
-stdio work.  Use of "stdio" is recommended instead of "malloc rw", to
-better express the intent of the program.
+stdio work.
+Use of "stdio" is recommended instead of "malloc rw",
+to better express the intent of the program.
 .It Va "rpath"
 A number of system calls are allowed if they only cause
 read-only effects on the filesystem:
@@ -436,7 +437,7 @@ Coupled with the
 request, this allows a process to fork and execute another program.
 The new program starts running without pledge active and hopefully
 makes a new
-.Xr pledge 2 .
+.Fn pledge .
 .It Va "prot_exec"
 Allows the use of
 .Dv PROT_EXEC
