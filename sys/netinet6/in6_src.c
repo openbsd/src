@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_src.c,v 1.62 2015/09/18 14:26:22 mpi Exp $	*/
+/*	$OpenBSD: in6_src.c,v 1.63 2015/10/13 10:16:17 mpi Exp $	*/
 /*	$KAME: in6_src.c,v 1.36 2001/02/06 04:08:17 itojun Exp $	*/
 
 /*
@@ -252,13 +252,12 @@ in6_selectsrc(struct in6_addr **in6src, struct sockaddr_in6 *dstsock,
 	 * our src addr is taken from the i/f, else punt.
 	 */
 	if (ro) {
-		if (ro->ro_rt && ((ro->ro_rt->rt_flags & RTF_UP) == 0 ||
-		    !IN6_ARE_ADDR_EQUAL(&ro->ro_dst.sin6_addr, dst))) {
+		if (!rtisvalid(ro->ro_rt) ||
+		    !IN6_ARE_ADDR_EQUAL(&ro->ro_dst.sin6_addr, dst)) {
 			rtfree(ro->ro_rt);
 			ro->ro_rt = NULL;
 		}
-		if (ro->ro_rt == (struct rtentry *)0 ||
-		    ro->ro_rt->rt_ifp == (struct ifnet *)0) {
+		if (ro->ro_rt == NULL) {
 			struct sockaddr_in6 *sa6;
 
 			/* No route yet, so try to acquire one */
@@ -368,10 +367,9 @@ in6_selectroute(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
 	 * cached destination, in case of sharing the cache with IPv4.
 	 */
 	if (ro) {
-		if (ro->ro_rt &&
-		    (!(ro->ro_rt->rt_flags & RTF_UP) ||
+		if (!rtisvalid(ro->ro_rt) ||
 		     sin6tosa(&ro->ro_dst)->sa_family != AF_INET6 ||
-		     !IN6_ARE_ADDR_EQUAL(&ro->ro_dst.sin6_addr, dst))) {
+		     !IN6_ARE_ADDR_EQUAL(&ro->ro_dst.sin6_addr, dst)) {
 			rtfree(ro->ro_rt);
 			ro->ro_rt = NULL;
 		}

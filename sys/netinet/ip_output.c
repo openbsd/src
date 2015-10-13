@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.300 2015/10/07 14:52:45 deraadt Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.301 2015/10/13 10:16:17 mpi Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -170,9 +170,9 @@ reroute:
 	 * If there is a cached route, check that it is to the same
 	 * destination and is still up.  If not, free it and try again.
 	 */
-	if (ro->ro_rt && ((ro->ro_rt->rt_flags & RTF_UP) == 0 ||
+	if (!rtisvalid(ro->ro_rt) ||
 	    dst->sin_addr.s_addr != ip->ip_dst.s_addr ||
-	    ro->ro_tableid != m->m_pkthdr.ph_rtableid)) {
+	    ro->ro_tableid != m->m_pkthdr.ph_rtableid) {
 		rtfree(ro->ro_rt);
 		ro->ro_rt = NULL;
 	}
