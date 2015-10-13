@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.105 2015/10/02 00:26:45 gilles Exp $	*/
+/*	$OpenBSD: control.c,v 1.106 2015/10/13 10:59:04 gilles Exp $	*/
 
 /*
  * Copyright (c) 2012 Gilles Chehade <gilles@poolp.org>
@@ -295,6 +295,9 @@ control(void)
 	config_done();
 
 	control_listen();
+
+	if (pledge("stdio unix recvfd sendfd", NULL) == -1)
+		err(1, "pledge");
 
 	if (event_dispatch() < 0)
 		fatal("event_dispatch");
