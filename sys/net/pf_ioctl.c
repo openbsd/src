@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.290 2015/09/04 21:40:25 kettenis Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.291 2015/10/13 19:32:31 sashan Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2175,8 +2175,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			bzero(&pstore->entry, sizeof(pstore->entry));
 			pstore->rule.ptr = NULL;
 			pstore->kif = NULL;
-			if (n->rule.ptr != NULL)
-				pstore->rule.nr = n->rule.ptr->nr;
+			pstore->rule.nr = n->rule.ptr->nr;
 			pstore->creation = secs - pstore->creation;
 			if (pstore->expire > secs)
 				pstore->expire -= secs;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_lb.c,v 1.49 2015/08/03 13:33:12 jsg Exp $ */
+/*	$OpenBSD: pf_lb.c,v 1.50 2015/10/13 19:32:31 sashan Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -621,8 +621,7 @@ pf_map_addr(sa_family_t af, struct pf_rule *r, struct pf_addr *saddr,
 			pf_remove_src_node(sns[type]);
 			sns[type] = NULL;
 		}
-		if (pf_insert_src_node(&sns[type], r, type, af, saddr, naddr,
-		    0))
+		if (pf_insert_src_node(&sns[type], r, type, af, saddr, naddr))
 			return (1);
 	}
 

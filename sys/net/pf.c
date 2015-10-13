@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.946 2015/10/08 11:36:51 dlg Exp $ */
+/*	$OpenBSD: pf.c,v 1.947 2015/10/13 19:32:31 sashan Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -501,7 +501,7 @@ pf_src_connlimit(struct pf_state **state)
 int
 pf_insert_src_node(struct pf_src_node **sn, struct pf_rule *rule,
     enum pf_sn_types type, sa_family_t af, struct pf_addr *src,
-    struct pf_addr *raddr, int global)
+    struct pf_addr *raddr)
 {
 	struct pf_src_node	k;
 
@@ -509,10 +509,7 @@ pf_insert_src_node(struct pf_src_node **sn, struct pf_rule *rule,
 		k.af = af;
 		k.type = type;
 		PF_ACPY(&k.addr, src, af);
-		if (global)
-			k.rule.ptr = NULL;
-		else
-			k.rule.ptr = rule;
+		k.rule.ptr = rule;
 		pf_status.scounters[SCNT_SRC_NODE_SEARCH]++;
 		*sn = RB_FIND(pf_src_tree, &tree_src_tracking, &k);
 	}
@@ -531,10 +528,7 @@ pf_insert_src_node(struct pf_src_node **sn, struct pf_rule *rule,
 
 		(*sn)->type = type;
 		(*sn)->af = af;
-		if (global)
-			(*sn)->rule.ptr = NULL;
-		else
-			(*sn)->rule.ptr = rule;
+		(*sn)->rule.ptr = rule;
 		PF_ACPY(&(*sn)->addr, src, af);
 		if (raddr)
 			PF_ACPY(&(*sn)->raddr, raddr, af);
@@ -550,8 +544,7 @@ pf_insert_src_node(struct pf_src_node **sn, struct pf_rule *rule,
 			return (-1);
 		}
 		(*sn)->creation = time_uptime;
-		if ((*sn)->rule.ptr != NULL)
-			(*sn)->rule.ptr->src_nodes++;
+		(*sn)->rule.ptr->src_nodes++;
 		pf_status.scounters[SCNT_SRC_NODE_INSERT]++;
 		pf_status.src_nodes++;
 	} else {
@@ -570,16 +563,14 @@ pf_remove_src_node(struct pf_src_node *sn)
 	if (sn->states > 0 || sn->expire > time_uptime)
 		return;
 
-	if (sn->rule.ptr != NULL) {
-		sn->rule.ptr->src_nodes--;
-		if (sn->rule.ptr->states_cur == 0 &&
-		    sn->rule.ptr->src_nodes == 0)
-			pf_rm_rule(NULL, sn->rule.ptr);
-		RB_REMOVE(pf_src_tree, &tree_src_tracking, sn);
-		pf_status.scounters[SCNT_SRC_NODE_REMOVALS]++;
-		pf_status.src_nodes--;
-		pool_put(&pf_src_tree_pl, sn);
-	}
+	sn->rule.ptr->src_nodes--;
+	if (sn->rule.ptr->states_cur == 0 &&
+	    sn->rule.ptr->src_nodes == 0)
+		pf_rm_rule(NULL, sn->rule.ptr);
+	RB_REMOVE(pf_src_tree, &tree_src_tracking, sn);
+	pf_status.scounters[SCNT_SRC_NODE_REMOVALS]++;
+	pf_status.src_nodes--;
+	pool_put(&pf_src_tree_pl, sn);
 }
 
 struct pf_src_node *
@@ -3381,7 +3372,7 @@ pf_test_rule(struct pf_pdesc *pd, struct pf_rule **rm, struct pf_state **sm,
 
 		if (r->rule_flag & PFRULE_SRCTRACK &&
 		    pf_insert_src_node(&sns[PF_SN_NONE], r, PF_SN_NONE, pd->af,
-		    pd->src, NULL, 0) != 0) {
+		    pd->src, NULL) != 0) {
 			REASON_SET(&reason, PFRES_SRCLIMIT);
 			goto cleanup;
 		}
