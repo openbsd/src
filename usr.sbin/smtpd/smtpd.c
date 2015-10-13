@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.244 2015/10/12 07:58:19 deraadt Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.245 2015/10/13 07:18:53 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1131,11 +1131,6 @@ offline_enqueue(char *name)
 		if (pw == NULL) {
 			log_warnx("warn: smtpd: getpwuid for uid %d failed",
 			    sb.st_uid);
-			_exit(1);
-		}
-
-		if (fchflags(fd, 0) == -1) {
-			log_warn("warn: smtpd: chflags: %s", path);
 			_exit(1);
 		}
 
