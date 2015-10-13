@@ -15,6 +15,7 @@ import "C"
 import (
 	"errors"
 	"fmt"
+	"time"
 	"unsafe"
 )
 
@@ -113,6 +114,84 @@ func (t *TLS) Error() string {
 		return C.GoString(msg)
 	}
 	return ""
+}
+
+// PeerCertProvided returns whether the peer provided a certificate.
+func (t *TLS) PeerCertProvided() bool {
+	return C.tls_peer_cert_provided(t.ctx) == 1
+}
+
+// PeerCertContainsName checks whether the peer certificate contains
+// the specified name.
+func (t *TLS) PeerCertContainsName(name string) bool {
+	n := C.CString(name)
+	defer C.free(unsafe.Pointer(n))
+	return C.tls_peer_cert_contains_name(t.ctx, n) == 1
+}
+
+// PeerCertIssuer returns the issuer of the peer certificate.
+func (t *TLS) PeerCertIssuer() (string, error) {
+	issuer := C.tls_peer_cert_issuer(t.ctx)
+	if issuer == nil {
+		return "", errors.New("no issuer returned")
+	}
+	return C.GoString(issuer), nil
+}
+
+// PeerCertSubject returns the subject of the peer certificate.
+func (t *TLS) PeerCertSubject() (string, error) {
+	subject := C.tls_peer_cert_subject(t.ctx)
+	if subject == nil {
+		return "", errors.New("no subject returned")
+	}
+	return C.GoString(subject), nil
+}
+
+// PeerCertHash returns a hash of the peer certificate.
+func (t *TLS) PeerCertHash() (string, error) {
+	hash := C.tls_peer_cert_hash(t.ctx)
+	if hash == nil {
+		return "", errors.New("no hash returned")
+	}
+	return C.GoString(hash), nil
+}
+
+// PeerCertNotBefore returns the notBefore time from the peer
+// certificate.
+func (t *TLS) PeerCertNotBefore() (time.Time, error) {
+	notBefore := C.tls_peer_cert_notbefore(t.ctx)
+	if notBefore == -1 {
+		return time.Time{}, errors.New("no notBefore time returned")
+	}
+	return time.Unix(int64(notBefore), 0), nil
+}
+
+// PeerCertNotAfter returns the notAfter time from the peer
+// certificate.
+func (t *TLS) PeerCertNotAfter() (time.Time, error) {
+	notAfter := C.tls_peer_cert_notafter(t.ctx)
+	if notAfter == -1 {
+		return time.Time{}, errors.New("no notAfter time")
+	}
+	return time.Unix(int64(notAfter), 0), nil
+}
+
+// ConnVersion returns the protocol version of the connection.
+func (t *TLS) ConnVersion() (string, error) {
+	ver := C.tls_conn_version(t.ctx)
+	if ver == nil {
+		return "", errors.New("no connection version")
+	}
+	return C.GoString(ver), nil
+}
+
+// ConnCipher returns the cipher suite used for the connection.
+func (t *TLS) ConnCipher() (string, error) {
+	cipher := C.tls_conn_cipher(t.ctx)
+	if cipher == nil {
+		return "", errors.New("no connection cipher")
+	}
+	return C.GoString(cipher), nil
 }
 
 // Connect attempts to establish an TLS connection to the specified host on
