@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1.h,v 1.33 2015/10/08 02:42:58 beck Exp $ */
+/* $OpenBSD: asn1.h,v 1.34 2015/10/13 16:31:08 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -914,6 +914,10 @@ void ASN1_put_object(unsigned char **pp, int constructed, int length, int tag,
 int ASN1_put_eoc(unsigned char **pp);
 int ASN1_object_size(int constructed, int length, int tag);
 
+void *ASN1_item_dup(const ASN1_ITEM *it, void *x);
+
+#ifndef LIBRESSL_INTERNAL
+
 /* Used to implement other functions */
 void *ASN1_dup(i2d_of_void *i2d, d2i_of_void *d2i, void *x);
 
@@ -926,10 +930,6 @@ void *ASN1_dup(i2d_of_void *i2d, d2i_of_void *d2i, void *x);
     ((type*)ASN1_dup(CHECKED_I2D_OF(const type, i2d), \
 		     CHECKED_D2I_OF(type, d2i), \
 		     CHECKED_PTR_OF(const type, x)))
-
-void *ASN1_item_dup(const ASN1_ITEM *it, void *x);
-
-#ifndef LIBRESSL_INTERNAL
 
 /* ASN1 alloc/free macros for when a type is only used internally */
 
