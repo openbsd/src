@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.h,v 1.55 2015/08/24 21:09:43 jca Exp $	*/
+/*	$OpenBSD: exec_elf.h,v 1.56 2015/10/13 04:29:50 guenther Exp $	*/
 /*
  * Copyright (c) 1995, 1996 Erik Theisen.  All rights reserved.
  *
@@ -480,6 +480,15 @@ typedef struct {
 #define DT_TEXTREL	22		/* Allow rel. mod. to unwritable seg */
 #define DT_JMPREL	23		/* add. of PLT's relocation entries */
 #define DT_BIND_NOW	24		/* Bind now regardless of env setting */
+#define DT_INIT_ARRAY	25		/* address of array of init func */
+#define DT_FINI_ARRAY	26		/* address of array of term func */
+#define DT_INIT_ARRAYSZ	27		/* size of array of init func */
+#define DT_FINI_ARRAYSZ	28		/* size of array of term func */
+#define DT_RUNPATH	29		/* strtab offset of lib search path */
+#define DT_FLAGS	30		/* Set of DF_* flags */
+#define DT_ENCODING	31		/* further DT_* follow encoding rules */
+#define DT_PREINIT_ARRAY	32	/* address of array of preinit func */
+#define DT_PREINIT_ARRAYSZ	33	/* size of array of preinit func */
 #define DT_LOOS		0x6000000d	/* reserved range for OS */
 #define DT_HIOS		0x6ffff000	/*  specific dynamic array tags */
 #define DT_LOPROC	0x70000000	/* reserved range for processor */
@@ -489,6 +498,13 @@ typedef struct {
 #define DT_RELACOUNT	0x6ffffff9	/* if present, number of RELATIVE */
 #define DT_RELCOUNT	0x6ffffffa	/* relocs, which must come first */
 #define DT_FLAGS_1      0x6ffffffb
+
+/* Dynamic Flags - DT_FLAGS .dynamic entry */
+#define DF_ORIGIN       0x00000001
+#define DF_SYMBOLIC     0x00000002
+#define DF_TEXTREL      0x00000004
+#define DF_BIND_NOW     0x00000008
+#define DF_STATIC_TLS   0x00000010
 
 /* Dynamic Flags - DT_FLAGS_1 .dynamic entry */
 #define DF_1_NOW	0x00000001
