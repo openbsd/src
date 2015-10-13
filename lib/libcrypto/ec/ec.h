@@ -1,4 +1,4 @@
-/* $OpenBSD: ec.h,v 1.10 2015/06/20 13:26:08 jsing Exp $ */
+/* $OpenBSD: ec.h,v 1.11 2015/10/13 15:25:18 jsing Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -945,8 +945,7 @@ int	ECParameters_print_fp(FILE *fp, const EC_KEY *key);
  */
 int	EC_KEY_print_fp(FILE *fp, const EC_KEY *key, int off);
 
-
-#define ECParameters_dup(x) ASN1_dup_of(EC_KEY,i2d_ECParameters,d2i_ECParameters,x)
+EC_KEY *ECParameters_dup(EC_KEY *key);
 
 #ifndef __cplusplus
 #if defined(__SUNPRO_C)

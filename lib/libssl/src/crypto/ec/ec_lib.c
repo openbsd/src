@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_lib.c,v 1.19 2015/09/10 15:56:25 jsing Exp $ */
+/* $OpenBSD: ec_lib.c,v 1.20 2015/10/13 15:25:18 jsing Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -1101,4 +1101,20 @@ EC_GROUP_have_precompute_mult(const EC_GROUP * group)
 	else
 		return 0;	/* cannot tell whether precomputation has
 				 * been performed */
+}
+
+EC_KEY *
+ECParameters_dup(EC_KEY *key)
+{
+	unsigned char *p = NULL;
+	EC_KEY *k = NULL;
+	int len;
+
+	if (key == NULL)
+		return (NULL);
+
+	if ((len = i2d_ECParameters(key, &p)) > 0)
+		k = d2i_ECParameters(NULL, (const unsigned char **)&p, len);
+
+	return (k);	
 }

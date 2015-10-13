@@ -158,7 +158,7 @@ ec - Elliptic Curve functions
  int	EC_KEY_print(BIO *bp, const EC_KEY *key, int off);
  int	ECParameters_print_fp(FILE *fp, const EC_KEY *key);
  int	EC_KEY_print_fp(FILE *fp, const EC_KEY *key, int off);
- #define ECParameters_dup(x) ASN1_dup_of(EC_KEY,i2d_ECParameters,d2i_ECParameters,x)
+ EC_KEY *ECParameters_dup(EC_KEY *key);
  #define EVP_PKEY_CTX_set_ec_paramgen_curve_nid(ctx, nid) \
 	EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_EC, EVP_PKEY_OP_PARAMGEN, \
 				EVP_PKEY_CTRL_EC_PARAMGEN_CURVE_NID, nid, NULL)
