@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_http.c,v 1.100 2015/10/13 07:57:13 reyk Exp $	*/
+/*	$OpenBSD: server_http.c,v 1.101 2015/10/13 08:33:06 sunil Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -195,6 +195,7 @@ server_http_authenticate(struct server_config *srv_conf, struct client *clt)
 		}
 	}
 done:
+	free(line);
 	if (fp != NULL)
 		fclose(fp);
 
