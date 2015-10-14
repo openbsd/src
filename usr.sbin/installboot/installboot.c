@@ -1,4 +1,4 @@
-/*	$OpenBSD: installboot.c,v 1.8 2015/10/12 20:52:20 krw Exp $	*/
+/*	$OpenBSD: installboot.c,v 1.9 2015/10/14 00:19:04 krw Exp $	*/
 
 /*
  * Copyright (c) 2012, 2013 Joel Sing <jsing@openbsd.org>
@@ -16,9 +16,6 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/types.h>
-#include <sys/disklabel.h>
-#include <sys/stat.h>
 #include <err.h>
 #include <fcntl.h>
 #include <stdio.h>
@@ -32,8 +29,6 @@
 int	nowrite;
 int	stages;
 int	verbose;
-int	dstblkunit;
-int	dstblkmajor;
 
 char	*root = "/";
 char	*stage1;
@@ -53,8 +48,7 @@ usage(void)
 int
 main(int argc, char **argv)
 {
-	struct stat sb;
-	char *dev, *realdev, *blkdev;
+	char *dev, *realdev;
 	int devfd, opt;
 
 	md_init();
@@ -106,15 +100,6 @@ main(int argc, char **argv)
 	if ((devfd = opendev(dev, (nowrite ? O_RDONLY : O_RDWR), OPENDEV_PART,
 	    &realdev)) < 0)
 		err(1, "open: %s", realdev);
-
-	if (realdev == NULL || strncmp(realdev, "/dev/r", 6))
-		errx(1, "realdev");
-	if (asprintf(&blkdev, "/dev/%s", realdev+6) == -1)
-		err(1, "asprintf");
-	if (stat(blkdev, &sb) == -1)
-		err(1, "fstat");
-	dstblkunit = DISKUNIT(sb.st_rdev);
-	dstblkmajor = major(sb.st_rdev);
 
         if (verbose) {
 		fprintf(stderr, "%s bootstrap on %s\n",
