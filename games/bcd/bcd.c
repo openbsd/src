@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcd.c,v 1.20 2014/11/07 22:17:49 schwarze Exp $	*/
+/*	$OpenBSD: bcd.c,v 1.21 2015/10/14 08:12:12 doug Exp $	*/
 /*	$NetBSD: bcd.c,v 1.6 1995/04/24 12:22:23 cgd Exp $	*/
 
 /*
@@ -123,6 +123,9 @@ main(int argc, char *argv[])
 	char cardline[1024];
 	int dflag = 0;
 	int ch;
+
+	if (pledge("stdio", NULL) == -1)
+		err(1, "pledge");
 
 	while ((ch = getopt(argc, argv, "dl")) != -1) {
 		switch (ch) {

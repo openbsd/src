@@ -1,4 +1,4 @@
-/*	$OpenBSD: factor.c,v 1.20 2015/09/07 00:49:20 tedu Exp $	*/
+/*	$OpenBSD: factor.c,v 1.21 2015/10/14 08:12:12 doug Exp $	*/
 /*	$NetBSD: factor.c,v 1.5 1995/03/23 08:28:07 cgd Exp $	*/
 
 /*
@@ -86,6 +86,9 @@ main(int argc, char *argv[])
 	u_int64_t val;
 	int ch;
 	char *p, buf[100];		/* > max number of digits. */
+
+	if (pledge("stdio", NULL) == -1)
+		err(1, "pledge");
 
 	while ((ch = getopt(argc, argv, "")) != -1) {
 		switch (ch) {

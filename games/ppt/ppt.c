@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppt.c,v 1.12 2014/11/07 22:17:49 schwarze Exp $	*/
+/*	$OpenBSD: ppt.c,v 1.13 2015/10/14 08:12:12 doug Exp $	*/
 /*	$NetBSD: ppt.c,v 1.4 1995/03/23 08:35:40 cgd Exp $	*/
 
 /*
@@ -59,6 +59,9 @@ main(int argc, char **argv)
 {
 	char *p, buf[132];
 	int c, start, seenl, dflag, bflag;
+
+	if (pledge("stdio", NULL) == -1)
+		err(1, "pledge");
 
 	dflag = bflag = 0;
 	while ((c = getopt(argc, argv, "bdh")) != -1)

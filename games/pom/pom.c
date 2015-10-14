@@ -1,4 +1,4 @@
-/*	$OpenBSD: pom.c,v 1.16 2015/03/17 19:31:30 millert Exp $	*/
+/*	$OpenBSD: pom.c,v 1.17 2015/10/14 08:12:12 doug Exp $	*/
 /*    $NetBSD: pom.c,v 1.6 1996/02/06 22:47:29 jtc Exp $      */
 
 /*
@@ -84,6 +84,9 @@ main(int argc, char *argv[])
 	double days, today, tomorrow;
 	int cnt;
 	char buf[1024];
+
+	if (pledge("stdio", NULL) == -1)
+		err(1, "pledge");
 
 	if (argc > 1) {
 		tmpt = parsetime(argv[1]);
