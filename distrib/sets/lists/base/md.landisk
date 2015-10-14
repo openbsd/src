@@ -2146,8 +2146,6 @@
 ./usr/local/libdata/perl5/site_perl/sh-openbsd
 ./usr/mdec/boot
 ./usr/mdec/mbr
-./usr/mdec/sdboot
-./usr/mdec/wdboot
 ./usr/mdec/xxboot
 ./usr/sbin/hotplugd
 ./usr/sbin/pcidump
