@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.c,v 1.40 2015/10/13 07:57:13 reyk Exp $	*/
+/*	$OpenBSD: httpd.c,v 1.41 2015/10/14 08:02:38 reyk Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -831,7 +831,8 @@ get_string(uint8_t *ptr, size_t len)
 	char	*str;
 
 	for (i = 0; i < len; i++)
-		if (!(isprint(ptr[i]) || isspace(ptr[i])))
+		if (!(isprint((unsigned char)ptr[i]) ||
+		    isspace((unsigned char)ptr[i])))
 			break;
 
 	if ((str = calloc(1, i + 1)) == NULL)
