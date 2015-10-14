@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar_io.c,v 1.53 2015/10/12 14:01:06 semarie Exp $	*/
+/*	$OpenBSD: ar_io.c,v 1.54 2015/10/14 20:57:28 deraadt Exp $	*/
 /*	$NetBSD: ar_io.c,v 1.5 1996/03/26 23:54:13 mrg Exp $	*/
 
 /*-
@@ -1278,6 +1278,10 @@ ar_start_gzip(int fd, const char *path, int wr)
 		}
 		close(fds[0]);
 		close(fds[1]);
+
+		/* System compressors are more likely to use pledge(2) */
+		putenv("PATH=/usr/bin:/usr/local/bin");
+
 		if (execlp(path, path, gzip_flags, (char *)NULL) < 0)
 			err(1, "could not exec %s", path);
 		/* NOTREACHED */
