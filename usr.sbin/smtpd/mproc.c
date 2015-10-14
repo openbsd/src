@@ -1,4 +1,4 @@
-/*	$OpenBSD: mproc.c,v 1.14 2015/10/14 21:18:19 gilles Exp $	*/
+/*	$OpenBSD: mproc.c,v 1.15 2015/10/14 21:27:29 gilles Exp $	*/
 
 /*
  * Copyright (c) 2012 Eric Faurot <eric@faurot.net>
@@ -160,6 +160,8 @@ mproc_dispatch(int fd, short event, void *arg)
 		if (n == -1) {
 			log_warn("warn: %s -> %s: imsg_read",
 			    proc_name(smtpd_process),  p->name);
+			if (errno == EAGAIN)
+				return;
 			fatal("exiting");
 		}
 		if (n == 0) {
