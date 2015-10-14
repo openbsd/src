@@ -1,4 +1,4 @@
-/*	$OpenBSD: installboot.h,v 1.7 2015/10/14 00:19:04 krw Exp $	*/
+/*	$OpenBSD: installboot.h,v 1.8 2015/10/14 14:13:12 jsg Exp $	*/
 /*
  * Copyright (c) 2012, 2013 Joel Sing <jsing@openbsd.org>
  *
@@ -29,6 +29,7 @@ void	bootstrap(int, char *, char *);
 
 int	filecopy(const char *, const char *);
 char	*fileprefix(const char *, const char *);
+u_int32_t crc32(const u_char *, const u_int32_t);
 
 void	md_init(void);
 void	md_loadboot(void);
