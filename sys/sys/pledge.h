@@ -1,4 +1,4 @@
-/*	$OpenBSD: pledge.h,v 1.1 2015/10/09 01:10:27 deraadt Exp $	*/
+/*	$OpenBSD: pledge.h,v 1.2 2015/10/14 14:24:03 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -64,6 +64,7 @@ struct mbuf;
 int	pledge_cmsg_send(struct proc *p, struct mbuf *control);
 int	pledge_cmsg_recv(struct proc *p, struct mbuf *control);
 int	pledge_sysctl_check(struct proc *p, int namelen, int *name, void *new);
+int	pledge_chown_check(struct proc *p, uid_t, gid_t);
 int	pledge_adjtime_check(struct proc *p, const void *v);
 int	pledge_recvfrom_check(struct proc *p, void *from);
 int	pledge_sendto_check(struct proc *p, const void *to);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.24 2015/10/14 04:05:43 deraadt Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.25 2015/10/14 14:24:03 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -910,6 +910,18 @@ pledge_sysctl_check(struct proc *p, int miblen, int *mib, void *new)
 	    p->p_comm, p->p_pid, miblen, mib[0], mib[1],
 	    mib[2], mib[3], mib[4], mib[5]);
 	return (EFAULT);
+}
+
+int
+pledge_chown_check(struct proc *p, uid_t uid, gid_t gid)
+{
+	if ((p->p_p->ps_flags & PS_PLEDGE) == 0)
+		return (0);
+	if (uid != -1 && uid != p->p_ucred->cr_uid)
+		return (EPERM);
+	if (gid != -1 && !groupmember(gid, p->p_ucred))
+		return (EPERM);
+	return (0);
 }
 
 int
