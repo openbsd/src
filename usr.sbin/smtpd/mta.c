@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.191 2015/01/20 17:37:54 deraadt Exp $	*/
+/*	$OpenBSD: mta.c,v 1.192 2015/10/14 22:01:43 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -209,7 +209,7 @@ mta_imsg(struct mproc *p, struct imsg *imsg)
 
 			relay = mta_relay(&evp);
 			/* ignore if we don't know the limits yet */
-			if (relay->limits && 
+			if (relay->limits &&
 			    relay->ntask >= (size_t)relay->limits->task_hiwat) {
 				if (!(relay->state & RELAY_ONHOLD)) {
 					log_info("smtp-out: hiwat reached on %s: holding envelopes",
@@ -1282,7 +1282,7 @@ mta_drain(struct mta_relay *r)
 	char			 buf[64];
 
 	log_debug("debug: mta: draining %s "
-	    "refcount=%d, ntask=%zu, nconnector=%zu, nconn=%zu", 
+	    "refcount=%d, ntask=%zu, nconnector=%zu, nconn=%zu",
 	    mta_relay_to_text(r),
 	    r->refcount, r->ntask, tree_count(&r->connectors), r->nconn);
 
@@ -1469,7 +1469,7 @@ mta_find_route(struct mta_connector *c, time_t now, int *limits,
 
 			/*
 			 * Start looking at MXs on this preference level.
-			 */ 
+			 */
 #endif
 			level = mx->preference;
 		}

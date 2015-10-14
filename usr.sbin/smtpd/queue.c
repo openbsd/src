@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.c,v 1.167 2015/10/13 11:03:30 gilles Exp $	*/
+/*	$OpenBSD: queue.c,v 1.168 2015/10/14 22:01:43 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -154,7 +154,7 @@ queue_imsg(struct mproc *p, struct imsg *imsg)
 			m_get_id(&m, &reqid);
 			m_get_envelope(&m, &evp);
 			m_end(&m);
-		    
+
 			if (evp.id == 0)
 				log_warnx("warn: imsg_queue_submit_envelope: evpid=0");
 			if (evpid_to_msgid(evp.id) == 0)

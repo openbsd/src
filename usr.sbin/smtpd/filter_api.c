@@ -1,4 +1,4 @@
-/*	$OpenBSD: filter_api.c,v 1.16 2015/01/20 17:37:54 deraadt Exp $	*/
+/*	$OpenBSD: filter_api.c,v 1.17 2015/10/14 22:01:43 gilles Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -447,7 +447,7 @@ filter_trigger_eom(struct filter_session *s)
 	    filter_name, s->id, s->pipe.iev.sock, s->pipe.oev.sock,
 	    s->datalen, s->pipe.idatalen, s->pipe.odatalen);
 
-	/* This is called when 
+	/* This is called when
 	 * - EOM query is first received
 	 * - input data is closed
 	 * - output has been written

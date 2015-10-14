@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta_session.c,v 1.73 2015/10/09 16:47:14 sunil Exp $	*/
+/*	$OpenBSD: mta_session.c,v 1.74 2015/10/14 22:01:43 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -1484,7 +1484,7 @@ mta_error(struct mta_session *s, const char *fmt, ...)
 	 * If not connected yet, and the error is not local, just ignore it
 	 * and try to reconnect.
 	 */
-	if (s->state == MTA_INIT && 
+	if (s->state == MTA_INIT &&
 	    (errno == ETIMEDOUT || errno == ECONNREFUSED)) {
 		log_debug("debug: mta: not reporting route error yet");
 		free(error);
