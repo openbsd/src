@@ -1,4 +1,4 @@
-/*	$OpenBSD: art.c,v 1.4 2015/10/07 10:50:35 mpi Exp $ */
+/*	$OpenBSD: art.c,v 1.5 2015/10/14 10:09:30 mpi Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -79,7 +79,7 @@ int			 art_table_walk(struct art_table *,
  * Per routing table initialization API function.
  */
 struct art_root *
-art_attach(unsigned int rtableid, int off)
+art_alloc(unsigned int rtableid, int off)
 {
 	struct art_root		*ar;
 	int			 i;

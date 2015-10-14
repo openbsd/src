@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.250 2015/10/13 09:59:37 mpi Exp $	*/
+/*	$OpenBSD: route.c,v 1.251 2015/10/14 10:09:30 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -139,7 +139,6 @@
 /* Give some jitter to hash, to avoid synchronization between routers. */
 static uint32_t		rt_hashjitter;
 
-extern void	     ***rtables;
 extern unsigned int	rtables_id_max;
 
 struct rtstat		rtstat;
@@ -1656,9 +1655,6 @@ rt_if_track(struct ifnet *ifp)
 {
 	int i;
 	u_int tid;
-
-	if (rtables == NULL)
-		return;
 
 	for (tid = 0; tid <= rtables_id_max; tid++) {
 		/* skip rtables that are not in the rdomain of the ifp */
