@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.26 2015/10/14 22:34:47 millert Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.27 2015/10/14 23:15:37 sthen Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -1082,7 +1082,7 @@ pledge_ioctl_check(struct proc *p, long com, void *v)
 		case TIOCSPGRP:
 			if ((p->p_p->ps_pledge & PLEDGE_PROC) == 0)
 				break;
-			/* FALTHROUGH */
+			/* FALLTHROUGH */
 		case TIOCGETA:
 			if (fp->f_type == DTYPE_VNODE && (vp->v_flag & VISTTY))
 				return (0);
