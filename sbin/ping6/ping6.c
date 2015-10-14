@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.122 2015/10/13 16:26:54 florian Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.123 2015/10/14 17:26:01 florian Exp $	*/
 /*	$KAME: ping6.c,v 1.163 2002/10/25 02:19:06 itojun Exp $	*/
 
 /*
@@ -146,7 +146,6 @@ struct payload {
 #define	F_VERBOSE	0x0100
 #define F_NODEADDR	0x0800
 #define F_FQDN		0x1000
-#define F_INTERFACE	0x2000
 #define F_SRCADDR	0x4000
 #define F_HOSTNAME	0x10000
 #define F_NIGROUP	0x40000
@@ -247,11 +246,10 @@ main(int argc, char *argv[])
 	int ch, i, maxsize, packlen, preload, optval, error;
 	socklen_t maxsizelen;
 	u_char *datap, *packet;
-	char *e, *target, *ifname = NULL, *gateway = NULL;
+	char *e, *target, *gateway = NULL;
 	const char *errstr;
 	int ip6optlen = 0;
 	struct cmsghdr *scmsgp = NULL;
-	int usepktinfo = 0;
 	struct in6_pktinfo *pktinfo = NULL;
 	double intval;
 	int mflag = 0;
@@ -344,9 +342,23 @@ main(int argc, char *argv[])
 				errx(1, "hoplimit is %s: %s", errstr, optarg);
 			break;
 		case 'I':
-			ifname = optarg;
-			options |= F_INTERFACE;
-			usepktinfo++;
+			memset(&hints, 0, sizeof(struct addrinfo));
+			hints.ai_flags = AI_NUMERICHOST; /* allow hostname? */
+			hints.ai_family = AF_INET6;
+			hints.ai_socktype = SOCK_RAW;
+			hints.ai_protocol = IPPROTO_ICMPV6;
+
+			error = getaddrinfo(optarg, NULL, &hints, &res0);
+			if (error)
+				errx(1, "invalid source address: %s",
+				     gai_strerror(error));
+
+			if (res0->ai_family != AF_INET6 || res0->ai_addrlen !=
+			    sizeof(src))
+				errx(1, "invalid source address");
+			memcpy(&src, res0->ai_addr, sizeof(src));
+			freeaddrinfo(res0);
+			options |= F_SRCADDR;
 			break;
 		case 'i':		/* wait between sending packets */
 			intval = strtod(optarg, &e);
@@ -393,25 +405,6 @@ main(int argc, char *argv[])
 				break;
 		case 'q':
 			options |= F_QUIET;
-			break;
-		case 'S':
-			memset(&hints, 0, sizeof(struct addrinfo));
-			hints.ai_flags = AI_NUMERICHOST; /* allow hostname? */
-			hints.ai_family = AF_INET6;
-			hints.ai_socktype = SOCK_RAW;
-			hints.ai_protocol = IPPROTO_ICMPV6;
-
-			error = getaddrinfo(optarg, NULL, &hints, &res0);
-			if (error)
-				errx(1, "invalid source address: %s",
-				     gai_strerror(error));
-
-			if (res0->ai_family != AF_INET6 || res0->ai_addrlen !=
-			    sizeof(src))
-				errx(1, "invalid source address");
-			memcpy(&src, res0->ai_addr, sizeof(src));
-			freeaddrinfo(res0);
-			options |= F_SRCADDR;
 			break;
 		case 's':		/* size of packet to send */
 			datalen = strtonum(optarg, 1, MAXDATALEN, &errstr);
@@ -633,10 +626,6 @@ main(int argc, char *argv[])
 			err(1, "setsockopt(IPV6_RECVRTHDR)");
 	}
 
-	/* Specify the outgoing interface and/or the source address */
-	if (usepktinfo)
-		ip6optlen += CMSG_SPACE(sizeof(struct in6_pktinfo));
-
 	if (hoplimit != -1)
 		ip6optlen += CMSG_SPACE(sizeof(int));
 
@@ -649,21 +638,7 @@ main(int argc, char *argv[])
 		smsghdr.msg_controllen = ip6optlen;
 		scmsgp = (struct cmsghdr *)scmsg;
 	}
-	if (usepktinfo) {
-		pktinfo = (struct in6_pktinfo *)(CMSG_DATA(scmsgp));
-		memset(pktinfo, 0, sizeof(*pktinfo));
-		scmsgp->cmsg_len = CMSG_LEN(sizeof(struct in6_pktinfo));
-		scmsgp->cmsg_level = IPPROTO_IPV6;
-		scmsgp->cmsg_type = IPV6_PKTINFO;
-		scmsgp = CMSG_NXTHDR(&smsghdr, scmsgp);
-	}
 
-	/* set the outgoing interface */
-	if (ifname) {
-		/* pktinfo must have already been allocated */
-		if ((pktinfo->ipi6_ifindex = if_nametoindex(ifname)) == 0)
-			errx(1, "%s: invalid interface name", ifname);
-	}
 	if (hoplimit != -1) {
 		scmsgp->cmsg_len = CMSG_LEN(sizeof(int));
 		scmsgp->cmsg_level = IPPROTO_IPV6;
@@ -2341,7 +2316,7 @@ usage(void)
 	    "m"
 	    "Nnqtvw"
 	    "] [-a addrtype] [-c count] [-g gateway]\n\t"
-	    "[-h hoplimit] [-I interface] [-i wait] [-l preload] [-p pattern]"
-	    "\n\t[-S sourceaddr] [-s packetsize] [-V rtable] host\n");
+	    "[-h hoplimit] [-I sourceaddr] [-i wait] [-l preload] [-p pattern]"
+	    "\n\t[-s packetsize] [-V rtable] host\n");
 	exit(1);
 }

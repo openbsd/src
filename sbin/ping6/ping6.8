@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ping6.8,v 1.51 2015/10/13 16:26:54 florian Exp $
+.\"	$OpenBSD: ping6.8,v 1.52 2015/10/14 17:26:01 florian Exp $
 .\"	$KAME: ping6.8,v 1.57 2002/05/26 13:18:25 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -28,7 +28,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: October 13 2015 $
+.Dd $Mdocdate: October 14 2015 $
 .Dt PING6 8
 .Os
 .Sh NAME
@@ -41,11 +41,10 @@
 .Op Fl c Ar count
 .Op Fl g Ar gateway
 .Op Fl h Ar hoplimit
-.Op Fl I Ar interface
+.Op Fl I Ar sourceaddr
 .Op Fl i Ar wait
 .Op Fl l Ar preload
 .Op Fl p Ar pattern
-.Op Fl S Ar sourceaddr
 .Op Fl s Ar packetsize
 .Op Fl V Ar rtable
 .Ar host
@@ -148,10 +147,10 @@ The
 command does not try reverse-lookup unless the option is specified.
 .It Fl h Ar hoplimit
 Set the IPv6 hoplimit.
-.It Fl I Ar interface
-Source packets with the given interface address.
-This flag applies if the ping destination is a multicast address,
-or link-local/site-local unicast address.
+.It Fl I Ar sourceaddr
+Specifies the source address of request packets.
+The source address must be one of the unicast addresses of the sending node,
+and must be numeric.
 .It Fl i Ar wait
 Wait
 .Ar wait
@@ -226,10 +225,6 @@ when finished.
 .\".Ar host
 .\".Pq or the first hop
 .\"is a neighbor.
-.It Fl S Ar sourceaddr
-Specifies the source address of request packets.
-The source address must be one of the unicast addresses of the sending node,
-and must be numeric.
 .It Fl s Ar packetsize
 Specifies the number of data bytes to be sent.
 The default is 56, which translates into 64
