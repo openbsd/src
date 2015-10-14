@@ -1,4 +1,4 @@
-/*	$OpenBSD: envelope.c,v 1.31 2015/10/09 09:56:28 gilles Exp $	*/
+/*	$OpenBSD: envelope.c,v 1.32 2015/10/14 20:57:17 gilles Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -893,7 +893,8 @@ ascii_dump_field(const char *field, const struct envelope *ep,
 	}
 
 	if (strcasecmp(field, "esc-code") == 0) {
-		if (ep->esc_code)
+		/* this is not a pasto, we dump esc_code if esc_class is !0 */
+		if (ep->esc_class)
 			return ascii_dump_uint8(ep->esc_code, buf, len);
 		return 1;
 	}
