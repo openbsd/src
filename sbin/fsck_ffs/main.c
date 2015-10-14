@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.44 2015/02/07 02:09:13 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.45 2015/10/14 14:33:45 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.22 1996/10/11 20:15:48 thorpej Exp $	*/
 
 /*
@@ -53,6 +53,13 @@ int	main(int, char *[]);
 
 extern char *__progname;
 
+void
+usage(void)
+{
+	fprintf(stderr, "usage: %s [-fnpy] [-b block#] [-c level] "
+	    "[-m mode] filesystem\n", __progname);
+	exit(1);
+}
 int
 main(int argc, char *argv[])
 {
@@ -109,21 +116,22 @@ main(int argc, char *argv[])
 			break;
 
 		default:
-			errexit("usage: %s [-fnpy] [-b block#] [-c level] "
-			    "[-m mode] filesystem ...\n", __progname);
+			usage();
 		}
 	}
 	argc -= optind;
 	argv += optind;
+
+	if (argc != 1)
+		usage();
+
 	if (signal(SIGINT, SIG_IGN) != SIG_IGN)
 		(void)signal(SIGINT, catch);
 	if (preen)
 		(void)signal(SIGQUIT, catchquit);
 	(void)signal(SIGINFO, catchinfo);
 
-	if (argc)
-		while (argc-- > 0)
-			(void)checkfilesys(blockcheck(*argv++), 0, 0L, 0);
+	(void)checkfilesys(blockcheck(*argv), 0, 0L, 0);
 
 	if (returntosingle)
 		ret = 2;

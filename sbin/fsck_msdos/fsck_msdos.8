@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fsck_msdos.8,v 1.15 2015/07/27 18:46:19 jmc Exp $
+.\"	$OpenBSD: fsck_msdos.8,v 1.16 2015/10/14 14:33:45 deraadt Exp $
 .\"	$NetBSD: fsck_msdos.8,v 1.4 1996/10/17 20:41:24 cgd Exp $
 .\"
 .\" Copyright (C) 1995 Wolfgang Solfrank
@@ -25,7 +25,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd $Mdocdate: July 27 2015 $
+.Dd $Mdocdate: October 14 2015 $
 .Dt FSCK_MSDOS 8
 .Os
 .Sh NAME
@@ -34,7 +34,7 @@
 .Sh SYNOPSIS
 .Nm fsck_msdos
 .Op Fl fnpy
-.Ar filesystem ...
+.Ar filesystem
 .Sh DESCRIPTION
 The
 .Nm
@@ -43,7 +43,7 @@ utility verifies and repairs
 file systems (more commonly known as
 .Tn DOS
 file systems).
-It checks the specified file systems and tries to repair all
+It checks the specified filesystem and tries to repair all
 detected inconsistencies, requesting confirmation before
 making any changes.
 .Pp
@@ -51,7 +51,7 @@ If the
 .Fl p
 flag is given,
 .Nm
-preens the specified file systems.
+preens the specified filesystem.
 It is normally started this way by
 .Xr fsck 8
 run from
@@ -81,11 +81,11 @@ response to all questions asked by
 except for
 .Dq CONTINUE? ,
 which is assumed to be affirmative.
-File systems will not be opened for writing.
+The filesystem will not be opened for writing.
 This is the default for file systems to be checked that are
 concurrently mounted writable.
 .It Fl p
-Preen the specified file systems.
+Preen the specified filesystem.
 .It Fl y
 Causes
 .Nm

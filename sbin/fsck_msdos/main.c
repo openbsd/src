@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.20 2015/09/27 16:56:06 guenther Exp $	*/
+/*	$OpenBSD: main.c,v 1.21 2015/10/14 14:33:45 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.8 1996/10/17 20:29:53 cgd Exp $	*/
 
 /*
@@ -48,13 +48,12 @@ int main(int, char **);
 static void
 usage(void)
 {
-	errexit("usage: fsck_msdos [-fnpy] filesystem ...\n");
+	errexit("usage: fsck_msdos [-fnpy] filesystem\n");
 }
 
 int
 main(int argc, char *argv[])
 {
-	int ret = 0, erg;
 	int ch;
 
 	while ((ch = getopt(argc, argv, "pynf")) != -1) {
@@ -86,16 +85,11 @@ main(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 
-	if (!argc)
+	if (argc != 1)
 		usage();
 
-	while (argc-- > 0) {
-		setcdevname(*argv, NULL, preen);
-		erg = checkfilesys(blockcheck(*argv++));
-		if (erg > ret)
-			ret = erg;
-	}
-	exit(ret);
+	setcdevname(*argv, NULL, preen);
+	exit (checkfilesys(blockcheck(*argv)));
 }
 
 int

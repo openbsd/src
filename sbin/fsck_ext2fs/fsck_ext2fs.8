@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fsck_ext2fs.8,v 1.17 2015/07/27 18:46:19 jmc Exp $
+.\"	$OpenBSD: fsck_ext2fs.8,v 1.18 2015/10/14 14:33:45 deraadt Exp $
 .\"	$NetBSD: fsck_ext2fs.8,v 1.1 1997/06/11 11:21:48 bouyer Exp $
 .\"
 .\" Copyright (c) 1997 Manuel Bouyer.
@@ -31,7 +31,7 @@
 .\"
 .\"	@(#)fsck.8	8.3 (Berkeley) 11/29/94
 .\"
-.Dd $Mdocdate: July 27 2015 $
+.Dd $Mdocdate: October 14 2015 $
 .Dt FSCK_EXT2FS 8
 .Os
 .Sh NAME
@@ -42,11 +42,11 @@
 .Op Fl dfnpy
 .Op Fl b Ar block#
 .Op Fl m Ar mode
-.Ar filesystem ...
+.Ar filesystem
 .Sh DESCRIPTION
 .Nm
-performs interactive file system consistency checks and repairs for each of
-the file systems specified.
+performs interactive file system consistency checks and repairs
+the filesystem specified.
 It is normally invoked from
 .Xr fsck 8 .
 .Pp
@@ -93,7 +93,7 @@ Without the
 .Fl p
 option,
 .Nm
-audits and interactively repairs inconsistent conditions for file systems.
+audits and interactively repairs inconsistent conditions for the filesystem.
 If the file system is inconsistent, the operator is prompted for concurrence
 before each correction is attempted.
 It should be noted that some of the corrective actions which are not
@@ -123,7 +123,7 @@ Block 8193 is usually an alternate super block.
 .It Fl d
 Print debugging output.
 .It Fl f
-Force checking of file systems.
+Force checking of the filesystem.
 Normally, if a file system is cleanly unmounted, the kernel will set a
 .Dq clean flag
 in the file system superblock and
@@ -150,7 +150,7 @@ response to all questions asked by
 except for
 .Dq CONTINUE? ,
 which is assumed to be affirmative.
-File systems will not be opened for writing.
+The filesystem will not be opened for writing.
 This is the default for file systems to be checked that are
 concurrently mounted writable.
 .It Fl p

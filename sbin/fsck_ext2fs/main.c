@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.22 2015/02/07 02:09:13 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.23 2015/10/14 14:33:45 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.1 1997/06/11 11:21:50 bouyer Exp $	*/
 
 /*
@@ -111,7 +111,7 @@ main(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 
-	if (!argc)
+	if (argc != 1)
 		usage();
 
 	if (signal(SIGINT, SIG_IGN) != SIG_IGN)
@@ -119,8 +119,7 @@ main(int argc, char *argv[])
 	if (preen)
 		(void)signal(SIGQUIT, catchquit);
 
-	while (argc-- > 0)
-		(void)checkfilesys(blockcheck(*argv++), 0, 0L, 0);
+	(void)checkfilesys(blockcheck(*argv), 0, 0L, 0);
 
 	if (returntosingle)
 		ret = 2;
@@ -303,7 +302,7 @@ usage(void)
 	extern char *__progname;
 
 	(void) fprintf(stderr,
-	    "usage: %s [-dfnpy] [-b block#] [-m mode] filesystem ...\n",
+	    "usage: %s [-dfnpy] [-b block#] [-m mode] filesystem\n",
 	    __progname);
 	exit(1);
 }

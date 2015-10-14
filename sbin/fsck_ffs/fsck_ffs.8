@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fsck_ffs.8,v 1.24 2015/07/27 18:46:19 jmc Exp $
+.\"	$OpenBSD: fsck_ffs.8,v 1.25 2015/10/14 14:33:45 deraadt Exp $
 .\"	$NetBSD: fsck_ffs.8,v 1.12 1996/09/23 16:18:34 christos Exp $
 .\"
 .\" Copyright (c) 1980, 1989, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)fsck.8	8.3 (Berkeley) 11/29/94
 .\"
-.Dd $Mdocdate: July 27 2015 $
+.Dd $Mdocdate: October 14 2015 $
 .Dt FSCK_FFS 8
 .Os
 .Sh NAME
@@ -42,10 +42,10 @@
 .Op Fl b Ar block#
 .Op Fl c Ar level
 .Op Fl m Ar mode
-.Ar filesystem ...
+.Ar filesystem
 .Sh DESCRIPTION
 .Nm
-performs interactive file system consistency checks and repairs for each
+performs interactive file system consistency checks and repairs the
 file system specified.
 It is normally invoked from
 .Xr fsck 8 .
@@ -104,7 +104,7 @@ Without the
 .Fl p
 option,
 .Nm
-audits and interactively repairs inconsistent conditions for file systems.
+audits and interactively repairs inconsistent conditions for the filesystem.
 If the file system is inconsistent, the operator is prompted for concurrence
 before each correction is attempted.
 It should be noted that some of the corrective actions which are not
@@ -165,7 +165,7 @@ If
 is equal to one, delete any existing segment maps.
 .El
 .It Fl f
-Force checking of file systems.
+Force checking of the filesystem.
 Normally, if a file system is cleanly unmounted, the kernel will set a
 .Dq clean flag
 in the file system superblock and
@@ -192,14 +192,14 @@ response to all questions asked by
 except for
 .Dq CONTINUE? ,
 which is assumed to be affirmative.
-File systems will not be opened for writing.
+The filesystem will not be opened for writing.
 This is the default for file systems to be checked that are
 concurrently mounted writable.
 .It Fl p
 Enter preen mode:
 .Nm
-will check the file systems on the
-special (raw) devices listed on the command line
+will check the filesystem on the
+special (raw) device listed on the command line
 and will make minor repairs without
 human intervention.
 Any major problems will cause
