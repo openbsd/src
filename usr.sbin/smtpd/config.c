@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.32 2015/01/16 06:40:20 deraadt Exp $	*/
+/*	$OpenBSD: config.c,v 1.33 2015/10/14 20:45:30 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -113,7 +113,7 @@ init_pipes(void)
 	for (i = 0; i < PROC_COUNT; i++)
 		for (j = i + 1; j < PROC_COUNT; j++) {
 			if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC,
-			    sockpair) == -1)
+				sockpair) == -1)
 				fatal("socketpair");
 			pipes[i][j] = sockpair[0];
 			pipes[j][i] = sockpair[1];
