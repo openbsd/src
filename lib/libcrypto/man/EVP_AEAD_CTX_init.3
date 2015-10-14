@@ -1,4 +1,4 @@
-.\" $OpenBSD: EVP_AEAD_CTX_init.3,v 1.1 2015/10/14 07:41:28 reyk Exp $
+.\" $OpenBSD: EVP_AEAD_CTX_init.3,v 1.2 2015/10/14 09:11:25 schwarze Exp $
 .\"
 .\" Copyright (c) 2014, Google Inc.
 .\" Parts of the text were written by Adam Langley and David Benjamin.
@@ -115,7 +115,8 @@ initializes the context
 for the given AEAD algorithm
 .Fa aead .
 The
-.Fa impl argument must be
+.Fa impl
+argument must be
 .Dv NULL
 for the default implementation;
 other values are currently not supported.
@@ -270,6 +271,7 @@ EVP_AEAD_CTX_cleanup(&ctx);
 .Sh SEE ALSO
 .Xr evp 3
 .Sh HISTORY
-AEAD is based on the implementation by Adam Langley for
-Chromium/BoringSSL and first appeared in
+AEAD is based on the implementation by
+.An Adam Langley
+for Chromium/BoringSSL and first appeared in
 .Ox 5.6 .
