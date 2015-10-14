@@ -1,4 +1,4 @@
-/*	$OpenBSD: lstForEachFrom.c,v 1.19 2010/07/19 19:46:44 espie Exp $	*/
+/*	$OpenBSD: lstForEachFrom.c,v 1.20 2015/10/14 13:52:11 espie Exp $	*/
 /*	$NetBSD: lstForEachFrom.c,v 1.5 1996/11/06 17:59:42 christos Exp $	*/
 
 /*
@@ -69,14 +69,4 @@ Lst_Every(Lst l, SimpleProc proc)
 
 	for (tln = l->firstPtr; tln != NULL; tln = tln->nextPtr)
 		(*proc)(tln->datum);
-}
-
-void
-Lst_ForEachNodeWhile(Lst l, ForEachNodeWhileProc proc, void *d)
-{
-	    LstNode it;
-
-	    for (it = l->firstPtr; it != NULL; it = it->nextPtr)
-		    if ((*proc)(it, d) == 0)
-				return;
 }
