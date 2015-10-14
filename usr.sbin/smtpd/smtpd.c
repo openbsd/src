@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.245 2015/10/13 07:18:53 gilles Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.246 2015/10/14 09:14:11 sunil Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -607,26 +607,16 @@ main(int argc, char *argv[])
 				err(1, "strdup");
 		}
 		else {
-			char   *buf;
-			char   *lbuf;
-			size_t	len;
+			char   *buf = NULL;
+			size_t	sz = 0;
+			ssize_t	len;
 
 			if (strcasecmp(env->sc_queue_key, "stdin") == 0) {
-				lbuf = NULL;
-				buf = fgetln(stdin, &len);
-				if (buf[len - 1] == '\n') {
-					lbuf = calloc(len, 1);
-					if (lbuf == NULL)
-						err(1, "calloc");
-					memcpy(lbuf, buf, len-1);
-				}
-				else {
-					lbuf = calloc(len+1, 1);
-					if (lbuf == NULL)
-						err(1, "calloc");
-					memcpy(lbuf, buf, len);
-				}
-				env->sc_queue_key = lbuf;
+				if ((len = getline(&buf, &sz, stdin)) == -1)
+					err(1, "getline");
+				if (buf[len - 1] == '\n')
+					buf[len - 1] = '\0';
+				env->sc_queue_key = buf;
 			}
 		}
 	}
@@ -770,8 +760,10 @@ fork_peers(void)
 void
 post_fork(int proc)
 {
-	if (proc != PROC_QUEUE && env->sc_queue_key)
+	if (proc != PROC_QUEUE && env->sc_queue_key) {
 		explicit_bzero(env->sc_queue_key, strlen(env->sc_queue_key));
+		free(env->sc_queue_key);
+	}
 
 	if (proc != PROC_CONTROL) {
 		close(control_socket);
@@ -1095,10 +1087,11 @@ offline_enqueue(char *name)
 	}
 
 	if (pid == 0) {
-		char	*envp[2], *p, *tmp;
+		char	*envp[2], *p = NULL, *tmp;
 		int	 fd;
 		FILE	*fp;
-		size_t	 len;
+		size_t	 sz = 0;
+		ssize_t	 len;
 		arglist	 args;
 
 		if (closefrom(STDERR_FILENO + 1) == -1)
@@ -1150,7 +1143,7 @@ offline_enqueue(char *name)
 		    dup2(fileno(fp), STDIN_FILENO) == -1)
 			_exit(1);
 
-		if ((p = fgetln(fp, &len)) == NULL)
+		if ((len = getline(&p, &sz, fp)) == -1)
 			_exit(1);
 
 		if (p[len - 1] != '\n')
@@ -1163,6 +1156,7 @@ offline_enqueue(char *name)
 		while ((tmp = strsep(&p, "|")) != NULL)
 			addargs(&args, "%s", tmp);
 
+		free(p);
 		if (lseek(fileno(fp), len, SEEK_SET) == -1)
 			_exit(1);
 
