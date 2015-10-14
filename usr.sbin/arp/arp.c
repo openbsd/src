@@ -1,4 +1,4 @@
-/*	$OpenBSD: arp.c,v 1.68 2015/10/09 01:37:09 deraadt Exp $ */
+/*	$OpenBSD: arp.c,v 1.69 2015/10/14 04:03:01 deraadt Exp $ */
 /*	$NetBSD: arp.c,v 1.12 1995/04/24 13:25:18 cgd Exp $ */
 
 /*
@@ -468,9 +468,6 @@ search(in_addr_t addr, void (*action)(struct sockaddr_dl *sdl,
 	struct rt_msghdr *rtm;
 	struct sockaddr_inarp *sin;
 	struct sockaddr_dl *sdl;
-
-	if (pledge("stdio dns route", NULL) == -1)
-		err(1, "pledge");
 
 	mib[0] = CTL_NET;
 	mib[1] = PF_ROUTE;
