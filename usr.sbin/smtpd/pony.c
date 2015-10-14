@@ -1,4 +1,4 @@
-/*	$OpenBSD: pony.c,v 1.7 2015/01/20 17:37:54 deraadt Exp $	*/
+/*	$OpenBSD: pony.c,v 1.8 2015/10/14 19:39:16 gilles Exp $	*/
 
 /*
  * Copyright (c) 2014 Gilles Chehade <gilles@poolp.org>
@@ -214,6 +214,9 @@ pony(void)
 	config_done();
 
 	ca_engine_init();
+
+	if (pledge("stdio inet unix recvfd sendfd", NULL) == -1)
+		err(1, "pledge");
 
 	if (event_dispatch() < 0)
 		fatal("event_dispatch");
