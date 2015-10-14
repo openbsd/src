@@ -1,4 +1,4 @@
-/*	$OpenBSD: forward.c,v 1.36 2015/01/20 17:37:54 deraadt Exp $	*/
+/*	$OpenBSD: forward.c,v 1.37 2015/10/14 21:04:37 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -84,7 +84,7 @@ forwards_get(int fd, struct expand *expand)
 		}
 		free(line);
 	}
-	       
+
 	ret = expand->nb_nodes > save ? 1 : 0;
 
 end:
