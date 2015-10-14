@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: checknewfs,v 1.4 2011/04/18 16:52:11 thib Exp $
+#	$OpenBSD: checknewfs,v 1.5 2015/10/14 13:22:56 semarie Exp $
 # Written by Otto Moerbeek, 2007,  Public domain
 
 
@@ -12,7 +12,7 @@ trap 'cleanup' INT
 
 dotest() {
 	image=$(mktemp -t imageXXXXXXXXXX);
-	dd if=/dev/prandom of=$image bs=512 count=$1 2>/dev/null &&
+	dd if=/dev/random of=$image bs=512 count=$1 2>/dev/null &&
 	vnconfig vnd0 $image &&
 	disklabel -w vnd0 $2 &&
 	newfs $3 /dev/rvnd0a
