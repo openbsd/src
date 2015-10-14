@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.24 2015/09/17 14:43:23 bcook Exp $
+# $OpenBSD: Makefile,v 1.25 2015/10/14 07:41:28 reyk Exp $
 
 .include <bsd.own.mk>		# for NOMAN
 
@@ -52,6 +52,7 @@ MAN=	\
 	BN_swap.3 \
 	BN_zero.3 \
 	BUF_MEM_new.3 \
+	EVP_AEAD_CTX_init.3 \
 
 GENMAN= \
 	CONF_modules_free.3 \
