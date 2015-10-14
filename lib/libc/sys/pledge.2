@@ -1,4 +1,4 @@
-.\" $OpenBSD: pledge.2,v 1.6 2015/10/13 07:23:49 jmc Exp $
+.\" $OpenBSD: pledge.2,v 1.7 2015/10/14 22:39:04 millert Exp $
 .\"
 .\" Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 13 2015 $
+.Dd $Mdocdate: October 14 2015 $
 .Dt PLEDGE 2
 .Os
 .Sh NAME
@@ -334,6 +334,16 @@ relating to a file:
 .Xr lchown 2 ,
 .Xr fchown 2 ,
 .Xr utimes 2 .
+.It Va "flock"
+File locking via
+.Xr fcntl 2 ,
+.Xr flock 2 ,
+.Xr lockf 3 ,
+and
+.Xr open 2
+is allowed.
+No distinction is made between shared and exclusive locks.
+This request is required for unlock as well as lock.
 .It Va "unix"
 The following system calls are allowed to operate in the
 .Dv AF_UNIX
