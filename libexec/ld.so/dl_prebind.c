@@ -1,4 +1,4 @@
-/* $OpenBSD: dl_prebind.c,v 1.17 2015/01/16 16:18:07 deraadt Exp $ */
+/* $OpenBSD: dl_prebind.c,v 1.18 2015/10/14 17:29:44 tobias Exp $ */
 /*
  * Copyright (c) 2006 Dale Rahn <drahn@dalerahn.com>
  *
@@ -131,6 +131,12 @@ prebind_load_fd(int fd, const char *name)
 
 	prebind_data = _dl_mmap(0, footer.prebind_size, PROT_READ,
 	    MAP_FILE, fd, footer.prebind_base);
+	if (_dl_mmap_error(prebind_data)) {
+		_dl_prebind_match_failed = 1;
+		DL_DEB(("prebind match failed %s\n", name));
+		return (NULL);
+	}
+
 	DL_DEB(("prebind_load_fd for lib %s\n", name));
 
 	nameidx = (void *)(_dl_prog_prebind_map + prog_footer->nameidx_idx);
