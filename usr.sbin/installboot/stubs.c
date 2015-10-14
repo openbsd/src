@@ -1,4 +1,4 @@
-/*	$OpenBSD: stubs.c,v 1.2 2014/01/18 01:49:30 jsing Exp $	*/
+/*	$OpenBSD: stubs.c,v 1.3 2015/10/14 17:54:46 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
@@ -16,6 +16,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <stdlib.h>
 #include <err.h>
 
 #include "installboot.h"
