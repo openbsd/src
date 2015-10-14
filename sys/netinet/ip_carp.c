@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.275 2015/10/05 19:05:09 uebayasi Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.276 2015/10/14 13:59:31 jsg Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -1483,7 +1483,7 @@ carp_vhe_match(struct carp_softc *sc, uint8_t *ena)
 {
 	struct carp_vhost_entry *vhe;
 	struct srpl_iter i;
-	int match;
+	int match = 0;
 
 	if (sc->sc_balancing == CARP_BAL_ARP) {
 		SRPL_FOREACH(vhe, &sc->carp_vhosts, &i, vhost_entries) {
