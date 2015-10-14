@@ -1,4 +1,4 @@
-/*	$OpenBSD: setsignal.c,v 1.5 2015/04/05 17:02:57 guenther Exp $	*/
+/*	$OpenBSD: setsignal.c,v 1.6 2015/10/14 04:55:17 guenther Exp $	*/
 
 /*
  * Copyright (c) 1997
@@ -23,52 +23,23 @@
 
 #include <sys/types.h>
 
-#ifdef HAVE_MEMORY_H
-#include <memory.h>
-#endif
 #include <signal.h>
-#ifdef HAVE_SIGACTION
 #include <string.h>
-#endif
-
-#ifdef HAVE_OS_PROTO_H
-#include "os-proto.h"
-#endif
 
 #include "setsignal.h"
 
-/*
- * An os independent signal() with BSD semantics, e.g. the signal
- * catcher is restored following service of the signal.
- *
- * When sigset() is available, signal() has SYSV semantics and sigset()
- * has BSD semantics and call interface. Unfortunately, Linux does not
- * have sigset() so we use the more complicated sigaction() interface
- * there.
- *
- * Did I mention that signals suck?
- */
-RETSIGTYPE
-(*setsignal (int sig, RETSIGTYPE (*func)(int)))(int)
+void
+setsignal(int sig, void (*func)(int))
 {
-#ifdef HAVE_SIGACTION
-	struct sigaction old, new;
+	struct sigaction sa;
 
-	memset(&new, 0, sizeof(new));
-	new.sa_handler = func;
-#ifdef SA_RESTART
-	new.sa_flags |= SA_RESTART;
-#endif
-	if (sigaction(sig, &new, &old) < 0)
-		return (SIG_ERR);
-	return (old.sa_handler);
-
-#else
-#ifdef HAVE_SIGSET
-	return (sigset(sig, func));
-#else
-	return (signal(sig, func));
-#endif
-#endif
+	if (sigaction(sig, NULL, &sa) == 0 && sa.sa_handler != SIG_IGN) {
+		sa.sa_handler = func;
+		sa.sa_flags = SA_RESTART;
+		if (sig == SIGCHLD)
+			sa.sa_flags |= SA_NOCLDSTOP;
+		sigemptyset(&sa.sa_mask);
+		sigaction(sig, &sa, NULL);
+	}
 }
 

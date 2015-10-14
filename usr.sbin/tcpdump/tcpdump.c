@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcpdump.c,v 1.74 2015/10/09 01:37:09 deraadt Exp $	*/
+/*	$OpenBSD: tcpdump.c,v 1.75 2015/10/14 04:55:17 guenther Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -92,8 +92,8 @@ extern void bpf_dump(struct bpf_program *, int);
 extern int esp_init(char *);
 
 /* Forwards */
-RETSIGTYPE cleanup(int);
-RETSIGTYPE gotchld(int);
+void	cleanup(int);
+void	gotchld(int);
 extern __dead void usage(void);
 
 /* Length of saved portion of packet. */
@@ -503,8 +503,7 @@ main(int argc, char **argv)
 }
 
 /* make a clean exit on interrupts */
-/* ARGSUSED */
-RETSIGTYPE
+void
 cleanup(int signo)
 {
 	struct pcap_stat stat;
@@ -533,8 +532,7 @@ cleanup(int signo)
 	_exit(0);
 }
 
-/* ARGSUSED */
-RETSIGTYPE
+void
 gotchld(int signo)
 {
 	pid_t pid;
@@ -681,14 +679,10 @@ default_print(register const u_char *bp, register u_int length)
 void
 set_slave_signals(void)
 {
-	RETSIGTYPE (*oldhandler)(int);
-
 	setsignal(SIGTERM, cleanup);
 	setsignal(SIGINT, cleanup);
 	setsignal(SIGCHLD, gotchld);
-	/* Cooperate with nohup(1) XXX is this still necessary/working? */
-	if ((oldhandler = setsignal(SIGHUP, cleanup)) != SIG_DFL)
-		(void)setsignal(SIGHUP, oldhandler);
+	setsignal(SIGHUP, cleanup);
 }
 
 __dead void
