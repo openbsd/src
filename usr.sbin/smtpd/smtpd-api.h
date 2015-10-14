@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd-api.h,v 1.21 2015/01/20 17:37:54 deraadt Exp $	*/
+/*	$OpenBSD: smtpd-api.h,v 1.22 2015/10/14 21:02:11 gilles Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -254,7 +254,7 @@ enum enhanced_status_code {
 	ESC_DELIVERY_TIME_EXPIRED   	      	    	= 47,
 
 	/* 5.x */
-	ESC_OTHER_PROTOCOL_STATUS   	      	    	= 50,
+	ESC_INVALID_RECIPIENT   	      	    	= 50,
 	ESC_INVALID_COMMAND	   	      	    	= 51,
 	ESC_SYNTAX_ERROR	   	      	    	= 52,
 	ESC_TOO_MANY_RECIPIENTS	   	      	    	= 53,
