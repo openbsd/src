@@ -1,4 +1,4 @@
-/*	$OpenBSD: setup.c,v 1.57 2015/01/20 18:22:21 deraadt Exp $	*/
+/*	$OpenBSD: setup.c,v 1.58 2015/10/14 16:58:55 deraadt Exp $	*/
 /*	$NetBSD: setup.c,v 1.27 1996/09/27 22:45:19 christos Exp $	*/
 
 /*
@@ -44,11 +44,12 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <string.h>
 #include <util.h>
-#include <unistd.h>
 #include <limits.h>
 #include <ctype.h>
+#include <err.h>
 
 #include "fsck.h"
 #include "extern.h"
@@ -60,7 +61,7 @@
 #define POWEROF2(num)	(((num) & ((num) - 1)) == 0)
 
 void badsb(int, char *);
-int calcsb(char *, int, struct fs *);
+int calcsb(char *, int, struct fs *, struct disklabel *);
 static struct disklabel *getdisklabel(char *, int);
 static int readsb(int);
 static int cmpsb(struct fs *, struct fs *);
@@ -138,11 +139,17 @@ setup(char *dev)
 		secsize = lp->d_secsize;
 	else
 		secsize = DEV_BSIZE;
+
+	if (!hotroot()) {
+		if (pledge("stdio", NULL) == -1)
+			err(1, "pledge");
+	}
+
 	/*
 	 * Read in the superblock, looking for alternates if necessary
 	 */
 	if (readsb(1) == 0) {
-		if (bflag || preen || calcsb(realdev, fsreadfd, &proto) == 0)
+		if (bflag || preen || calcsb(realdev, fsreadfd, &proto, lp) == 0)
 			return(0);
 		if (reply("LOOK FOR ALTERNATE SUPERBLOCKS") == 0)
 			return (0);
@@ -425,7 +432,6 @@ badsblabel:
 	return (0);
 }
 
-
 /*
  * Read in the super block and its summary info.
  */
@@ -575,9 +581,8 @@ badsb(int listerr, char *s)
  * their needed information is available!
  */
 int
-calcsb(char *dev, int devfd, struct fs *fs)
+calcsb(char *dev, int devfd, struct fs *fs, struct disklabel *lp)
 {
-	struct disklabel *lp;
 	struct partition *pp;
 	char *cp;
 	int i;
@@ -589,7 +594,8 @@ calcsb(char *dev, int devfd, struct fs *fs)
 		return (0);
 	}
 	cp--;
-	lp = getdisklabel(dev, devfd);
+	if (lp == NULL)
+		pfatal("%s: CANNOT READ DISKLABEL\n", dev);
 	if (isdigit((unsigned char)*cp))
 		pp = &lp->d_partitions[0];
 	else

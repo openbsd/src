@@ -1,4 +1,4 @@
-/*	$OpenBSD: check.c,v 1.17 2015/01/16 06:39:58 deraadt Exp $	*/
+/*	$OpenBSD: check.c,v 1.18 2015/10/14 16:58:55 deraadt Exp $	*/
 /*	$NetBSD: check.c,v 1.8 1997/10/17 11:19:29 ws Exp $	*/
 
 /*
@@ -38,6 +38,7 @@
 #include <limits.h>
 #include <fcntl.h>
 #include <util.h>
+#include <err.h>
 
 #include "ext.h"
 
@@ -76,6 +77,9 @@ checkfilesys(const char *fname)
 
 	if (ioctl(dosfs, DIOCGDINFO, (char *)&lab) < 0)
 		pfatal("can't read disk label for %s\n", fname);
+
+	if (pledge("stdio", NULL) == -1)
+		err(1, "pledge");
 
 	if (readboot(dosfs, &boot) != FSOK) {
 		(void)close(dosfs);

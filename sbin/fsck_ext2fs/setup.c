@@ -1,4 +1,4 @@
-/*	$OpenBSD: setup.c,v 1.27 2015/09/10 15:21:40 deraadt Exp $	*/
+/*	$OpenBSD: setup.c,v 1.28 2015/10/14 16:58:55 deraadt Exp $	*/
 /*	$NetBSD: setup.c,v 1.1 1997/06/11 11:22:01 bouyer Exp $	*/
 
 /*
@@ -10,13 +10,13 @@
  * modification, are permitted provided that the following conditions
  * are met:
  * 1. Redistributions of source code must retain the above copyright
- *	notice, this list of conditions and the following disclaimer.
+ *    notice, this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright
- *	notice, this list of conditions and the following disclaimer in the
- *	documentation and/or other materials provided with the distribution.
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
  * 3. Neither the name of the University nor the names of its contributors
- *	may be used to endorse or promote products derived from this software
- *	without specific prior written permission.
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
@@ -45,8 +45,10 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <string.h>
 #include <ctype.h>
+#include <err.h>
 
 #include "fsck.h"
 #include "extern.h"
@@ -55,7 +57,7 @@
 #define POWEROF2(num)	(((num) & ((num) - 1)) == 0)
 
 void badsb(int, char *);
-int calcsb(char *, int, struct m_ext2fs *);
+int calcsb(char *, int, struct m_ext2fs *, struct disklabel *);
 static struct disklabel *getdisklabel(char *, int);
 static int readsb(int);
 
@@ -105,15 +107,21 @@ setup(char *dev)
 	asblk.b_un.b_buf = malloc(SBSIZE);
 	if (sblk.b_un.b_buf == NULL || asblk.b_un.b_buf == NULL)
 		errexit("cannot allocate space for superblock\n");
-	if ((lp = getdisklabel((char *)NULL, fsreadfd)) != NULL)
+	if ((lp = getdisklabel(NULL, fsreadfd)) != NULL)
 		secsize = lp->d_secsize;
 	else
 		secsize = DEV_BSIZE;
+
+	if (!hotroot()) {
+		if (pledge("stdio", NULL) == -1)
+			err(1, "pledge");
+	}
+
 	/*
 	 * Read in the superblock, looking for alternates if necessary
 	 */
 	if (readsb(1) == 0) {
-		if (bflag || preen || calcsb(dev, fsreadfd, &proto) == 0)
+		if (bflag || preen || calcsb(dev, fsreadfd, &proto, lp) == 0)
 			return(0);
 		if (reply("LOOK FOR ALTERNATE SUPERBLOCKS") == 0)
 			return (0);
@@ -125,12 +133,12 @@ setup(char *dev)
 		}
 		if (cg >= proto.e2fs_ncg) {
 			printf("%s %s\n%s %s\n%s %s\n",
-				"SEARCH FOR ALTERNATE SUPER-BLOCK",
-				"FAILED. YOU MUST USE THE",
-				"-b OPTION TO FSCK_FFS TO SPECIFY THE",
-				"LOCATION OF AN ALTERNATE",
-				"SUPER-BLOCK TO SUPPLY NEEDED",
-				"INFORMATION; SEE fsck_ext2fs(8).");
+			    "SEARCH FOR ALTERNATE SUPER-BLOCK",
+			    "FAILED. YOU MUST USE THE",
+			    "-b OPTION TO FSCK_FFS TO SPECIFY THE",
+			    "LOCATION OF AN ALTERNATE",
+			    "SUPER-BLOCK TO SUPPLY NEEDED",
+			    "INFORMATION; SEE fsck_ext2fs(8).");
 			return(0);
 		}
 		doskipclean = 0;
@@ -141,7 +149,7 @@ setup(char *dev)
 	if (sblock.e2fs.e2fs_state == E2FS_ISCLEAN) {
 		if (doskipclean) {
 			pwarn("%sile system is clean; not checking\n",
-				preen ? "f" : "** F");
+			    preen ? "f" : "** F");
 			return (-1);
 		}
 		if (!preen)
@@ -421,11 +429,9 @@ badsb(int listerr, char *s)
  * can be used. Do NOT attempt to use other macros without verifying that
  * their needed information is available!
  */
-
 int
-calcsb(char *dev, int devfd, struct m_ext2fs *fs)
+calcsb(char *dev, int devfd, struct m_ext2fs *fs, struct disklabel *lp)
 {
-	struct disklabel *lp;
 	struct partition *pp;
 	char *cp;
 
@@ -436,7 +442,8 @@ calcsb(char *dev, int devfd, struct m_ext2fs *fs)
 		return (0);
 	}
 	cp--;
-	lp = getdisklabel(dev, devfd);
+	if (lp == NULL)
+		pfatal("%s: CANNOT READ DISKLABEL\n", dev);
 	if (isdigit((unsigned char)*cp))
 		pp = &lp->d_partitions[0];
 	else
@@ -477,7 +484,7 @@ getdisklabel(char *s, int fd)
 
 	if (ioctl(fd, DIOCGDINFO, (char *)&lab) < 0) {
 		if (s == NULL)
-			return ((struct disklabel *)NULL);
+			return (NULL);
 		pwarn("ioctl (GCINFO): %s\n", strerror(errno));
 		errexit("%s: can't read disk label\n", s);
 	}
