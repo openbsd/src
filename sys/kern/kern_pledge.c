@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.22 2015/10/13 20:00:49 deraadt Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.23 2015/10/14 03:27:02 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -786,9 +786,6 @@ pledge_cmsg_send(struct proc *p, struct mbuf *control)
 	if ((p->p_p->ps_flags & PS_PLEDGE) == 0)
 		return (0);
 
-	if ((p->p_p->ps_pledge & PLEDGE_SENDFD) == 0)
-		return pledge_fail(p, EPERM, PLEDGE_SENDFD);
-
 	/* Scan the cmsg */
 	cmsg = mtod(control, struct cmsghdr *);
 
@@ -796,6 +793,9 @@ pledge_cmsg_send(struct proc *p, struct mbuf *control)
 	if (!(cmsg->cmsg_level == SOL_SOCKET &&
 	    cmsg->cmsg_type == SCM_RIGHTS))
 		return (0);
+
+	if ((p->p_p->ps_pledge & PLEDGE_SENDFD) == 0)
+		return pledge_fail(p, EPERM, PLEDGE_SENDFD);
 
 	/* In OpenBSD, a CMSG only contains one SCM_RIGHTS.  Check it. */
 	fdp = (int *)CMSG_DATA(cmsg);
