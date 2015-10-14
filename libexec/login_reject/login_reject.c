@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_reject.c,v 1.10 2014/11/03 16:50:20 tedu Exp $	*/
+/*	$OpenBSD: login_reject.c,v 1.11 2015/10/14 17:06:58 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1995 Berkeley Software Design, Inc. All rights reserved.
@@ -64,6 +64,9 @@ main(int argc, char *argv[])
 	(void)setrlimit(RLIMIT_CORE, &rl);
 
 	(void)setpriority(PRIO_PROCESS, 0, 0);
+
+	if (pledge("stdio rpath", NULL) == -1)
+		err(1, "pledge");
 
 	openlog("login", LOG_ODELAY, LOG_AUTH);
 
