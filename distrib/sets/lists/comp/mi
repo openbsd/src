@@ -2396,6 +2396,7 @@
 ./usr/share/man/man3/ERR_remove_state.3
 ./usr/share/man/man3/ERR_remove_thread_state.3
 ./usr/share/man/man3/ERR_set_mark.3
+./usr/share/man/man3/EVP_AEAD_CTX_init.3
 ./usr/share/man/man3/EVP_BytesToKey.3
 ./usr/share/man/man3/EVP_CIPHER_CTX_block_size.3
 ./usr/share/man/man3/EVP_CIPHER_CTX_cipher.3
