@@ -1,4 +1,4 @@
-/* $OpenBSD: rebound.c,v 1.6 2015/10/15 21:20:09 tedu Exp $ */
+/* $OpenBSD: rebound.c,v 1.7 2015/10/15 21:25:05 tedu Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -99,6 +99,22 @@ logmsg(int prio, const char *msg, ...)
 	va_end(ap);
 }
 
+void __dead
+logerr(int prio, const char *msg, ...)
+{
+	va_list ap;
+
+	va_start(ap, msg);
+	if (debug) {
+		vfprintf(stderr, msg, ap);
+		fprintf(stderr, "\n");
+	} else {
+		vsyslog(prio, msg, ap);
+	}
+	va_end(ap);
+	exit(1);
+}
+
 struct dnscache *
 cachelookup(struct dnspacket *dnsreq, size_t reqlen)
 {
@@ -168,7 +184,7 @@ newrequest(int ud, struct sockaddr *remoteaddr)
 	if (req->s == -1)
 		goto fail;
 	if (connect(req->s, remoteaddr, remoteaddr->sa_len) == -1) {
-		logmsg(0, "failed to connect");
+		logmsg(LOG_DAEMON | LOG_NOTICE, "failed to connect");
 		goto fail;
 	}
 	if (send(req->s, buf, r, 0) != r)
@@ -316,37 +332,27 @@ launch(const char *confname, int ud, int ld, int kq)
 			return child;
 	}
 
-	if (!(pwd = getpwnam("_rebound"))) {
-		logmsg(LOG_DAEMON | LOG_ERR, "getpwnam failed");
-		exit(1);
-	}
+	if (!(pwd = getpwnam("_rebound")))
+		logerr(LOG_DAEMON | LOG_ERR, "getpwnam failed");
 
-	if (chroot("/var/empty") || chdir("/")) {
-		logmsg(LOG_DAEMON | LOG_ERR, "chroot failed (%d)", errno);
-		exit(1);
-	}
+	if (chroot("/var/empty") || chdir("/"))
+		logerr(LOG_DAEMON | LOG_ERR, "chroot failed (%d)", errno);
 
 	setproctitle("worker");
 	if (setgroups(1, &pwd->pw_gid) ||
 	    setresgid(pwd->pw_gid, pwd->pw_gid, pwd->pw_gid) ||
-	    setresuid(pwd->pw_uid, pwd->pw_uid, pwd->pw_uid)) {
-		logmsg(LOG_DAEMON | LOG_ERR, "failed to privdrop");
-		exit(1);
-	}
+	    setresuid(pwd->pw_uid, pwd->pw_uid, pwd->pw_uid))
+		logerr(LOG_DAEMON | LOG_ERR, "failed to privdrop");
 
 	close(kq);
 
-	if (pledge("stdio inet", NULL) == -1) {
-		logmsg(LOG_DAEMON | LOG_ERR, "pledge failed");
-		exit(1);
-	}
+	if (pledge("stdio inet", NULL) == -1)
+		logerr(LOG_DAEMON | LOG_ERR, "pledge failed");
 
 	af = readconfig(conf, &remoteaddr);
 	fclose(conf);
-	if (af == -1) {
-		logmsg(LOG_DAEMON | LOG_ERR, "failed to read config %s", confname);
-		exit(1);
-	}
+	if (af == -1)
+		logerr(LOG_DAEMON | LOG_ERR, "failed to read config %s", confname);
 
 	kq = kqueue();
 
@@ -357,10 +363,9 @@ launch(const char *confname, int ud, int ld, int kq)
 	signal(SIGHUP, SIG_IGN);
 	while (1) {
 		r = kevent(kq, NULL, 0, kev, 4, timeout);
-		if (r == -1) {
-			logmsg(LOG_DAEMON | LOG_ERR, "kevent failed (%d)", errno);
-			exit(1);
-		}
+		if (r == -1)
+			logerr(LOG_DAEMON | LOG_ERR, "kevent failed (%d)", errno);
+
 		clock_gettime(CLOCK_MONOTONIC, &now);
 
 		for (i = 0; i < r; i++) {
@@ -508,10 +513,9 @@ main(int argc, char **argv)
 		hupped = 0;
 		childdead = 0;
 		child = launch(conffile, ud, ld, kq);
-		if (child == -1) {
-			logmsg(LOG_DAEMON | LOG_ERR, "failed to launch");
-			return 1;
-		}
+		if (child == -1)
+			logerr(LOG_DAEMON | LOG_ERR, "failed to launch");
+
 		/* monitor child */
 		EV_SET(&kev, child, EVFILT_PROC, EV_ADD, NOTE_EXIT, 0, NULL);
 		kevent(kq, &kev, 1, NULL, 0, NULL);
@@ -520,9 +524,8 @@ main(int argc, char **argv)
 		while (1) {
 			r = kevent(kq, NULL, 0, &kev, 1, timeout);
 			if (r == 0) {
-				logmsg(LOG_DAEMON | LOG_ERR,
+				logerr(LOG_DAEMON | LOG_ERR,
 				    "child died without HUP");
-				return 1;
 			} else if (kev.filter == EVFILT_SIGNAL) {
 				/* signaled. kill child. */
 				logmsg(LOG_DAEMON | LOG_INFO,
@@ -542,7 +545,7 @@ main(int argc, char **argv)
 				ts.tv_sec = 1;
 				timeout = &ts;
 			} else {
-				logmsg(LOG_DAEMON | LOG_ERR,
+				logerr(LOG_DAEMON | LOG_ERR,
 				    "don't know what happened");
 			}
 		}
