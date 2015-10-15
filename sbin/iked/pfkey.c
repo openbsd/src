@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.45 2015/08/26 02:09:29 jsg Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.46 2015/10/15 18:40:38 mmcc Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -411,10 +411,8 @@ pfkey_flow(int sd, uint8_t satype, uint8_t action, struct iked_flow *flow)
 
 	ret = pfkey_write(sd, &smsg, iov, iov_cnt, NULL, NULL);
 
-	if (sa_srcid)
-		free(sa_srcid);
-	if (sa_dstid)
-		free(sa_dstid);
+	free(sa_srcid);
+	free(sa_dstid);
 
 	return (ret);
 }
@@ -831,7 +829,7 @@ pfkey_sa_last_used(int sd, struct iked_childsa *sa, uint64_t *last_used)
 	log_debug("%s: last_used %llu", __func__, *last_used);
 
 done:
-	bzero(data, n);
+	explicit_bzero(data, n);
 	free(data);
 	return (ret);
 }
@@ -939,7 +937,7 @@ pfkey_sa_getspi(int sd, uint8_t satype, struct iked_childsa *sa,
 	log_debug("%s: spi 0x%08x", __func__, *spip);
 
 done:
-	bzero(data, n);
+	explicit_bzero(data, n);
 	free(data);
 	return (ret);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.c,v 1.25 2015/08/21 11:59:27 reyk Exp $	*/
+/*	$OpenBSD: iked.c,v 1.26 2015/10/15 18:40:38 mmcc Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -383,8 +383,7 @@ parent_dispatch_ca(int fd, struct privsep_proc *p, struct imsg *imsg)
 		if (IMSG_DATA_SIZE(imsg) > 0)
 			str = get_string(imsg->data, IMSG_DATA_SIZE(imsg));
 		parent_reload(env, 0, str);
-		if (str != NULL)
-			free(str);
+		free(str);
 		break;
 	case IMSG_OCSP_FD:
 		ocsp_connect(env);

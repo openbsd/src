@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.125 2015/10/02 16:13:43 reyk Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.126 2015/10/15 18:40:38 mmcc Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -4148,8 +4148,7 @@ ikev2_sa_tag(struct iked_sa *sa, struct iked_id *id)
 	int	 ret = -1;
 	size_t	 len;
 
-	if (sa->sa_tag != NULL)
-		free(sa->sa_tag);
+	free(sa->sa_tag);
 	sa->sa_tag = NULL;
 	format = sa->sa_policy->pol_tag;
 
