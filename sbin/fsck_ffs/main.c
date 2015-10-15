@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.45 2015/10/14 14:33:45 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.46 2015/10/15 03:10:05 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.22 1996/10/11 20:15:48 thorpej Exp $	*/
 
 /*
@@ -129,7 +129,7 @@ main(int argc, char *argv[])
 		(void)signal(SIGINT, catch);
 	if (preen)
 		(void)signal(SIGQUIT, catchquit);
-	(void)signal(SIGINFO, catchinfo);
+	catchinfo(0);
 
 	(void)checkfilesys(blockcheck(*argv), 0, 0L, 0);
 

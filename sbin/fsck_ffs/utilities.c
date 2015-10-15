@@ -1,4 +1,4 @@
-/*	$OpenBSD: utilities.c,v 1.50 2015/09/05 20:07:11 guenther Exp $	*/
+/*	$OpenBSD: utilities.c,v 1.51 2015/10/15 03:10:05 deraadt Exp $	*/
 /*	$NetBSD: utilities.c,v 1.18 1996/09/27 22:45:20 christos Exp $	*/
 
 /*
@@ -593,25 +593,25 @@ char *info_filesys = "?";
 void
 catchinfo(int signo)
 {
-	int save_errno = errno, fd;
+	static int info_fd;
+	int save_errno = errno;
 	struct iovec iov[4];
 	char buf[1024];
 
-	if (info_fn != NULL && info_fn(buf, sizeof buf)) {
-		fd = open(_PATH_TTY, O_WRONLY);
-		if (fd >= 0) {
-			iov[0].iov_base = info_filesys;
-			iov[0].iov_len = strlen(info_filesys);
-			iov[1].iov_base = ": ";
-			iov[1].iov_len = sizeof ": " - 1;
-			iov[2].iov_base = buf;
-			iov[2].iov_len = strlen(buf);
-			iov[3].iov_base = "\n";
-			iov[3].iov_len = sizeof "\n" - 1;
+	if (signo == 0) {
+		info_fd = open(_PATH_TTY, O_WRONLY);
+		signal(SIGINFO, catchinfo);
+	} else if (info_fd > 0 && info_fn != NULL && info_fn(buf, sizeof buf)) {
+		iov[0].iov_base = info_filesys;
+		iov[0].iov_len = strlen(info_filesys);
+		iov[1].iov_base = ": ";
+		iov[1].iov_len = sizeof ": " - 1;
+		iov[2].iov_base = buf;
+		iov[2].iov_len = strlen(buf);
+		iov[3].iov_base = "\n";
+		iov[3].iov_len = sizeof "\n" - 1;
 
-			writev(fd, iov, 4);
-			close(fd);
-		}
+		writev(info_fd, iov, 4);
 	}
 	errno = save_errno;
 }
