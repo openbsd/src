@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.296 2015/09/08 13:54:09 millert Exp $	*/
+/*	$OpenBSD: editor.c,v 1.297 2015/10/15 19:31:15 miod Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -46,10 +46,6 @@
 /* flags for getuint64() */
 #define	DO_CONVERSIONS	0x00000001
 #define	DO_ROUNDING	0x00000002
-
-#ifndef NUMBOOT
-#define NUMBOOT 0
-#endif
 
 /* structure to describe a portion of a disk */
 struct diskchunk {
@@ -1751,15 +1747,6 @@ find_bounds(struct disklabel *lp)
 			    " portion of the disk.\nYou can use the 'b'"
 			    " command to change this.\n\n", starting_sector,
 			    ending_sector);
-	} else {
-#if NUMBOOT > 0 
-		/* Boot blocks take up the first cylinder */
-		starting_sector = lp->d_secpercyl;
-		if (verbose)
-			printf("Reserving the first data cylinder for boot"
-			    " blocks.\nYou can use the 'b' command to change"
-			    " this.\n\n");
-#endif
 	}
 }
 

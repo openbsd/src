@@ -1,4 +1,4 @@
-.\"	$OpenBSD: disklabel.8,v 1.115 2015/05/19 18:50:39 sobrado Exp $
+.\"	$OpenBSD: disklabel.8,v 1.116 2015/10/15 19:31:15 miod Exp $
 .\"	$NetBSD: disklabel.8,v 1.9 1995/03/18 14:54:38 cgd Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1991, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)disklabel.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: May 19 2015 $
+.Dd $Mdocdate: October 15 2015 $
 .Dt DISKLABEL 8
 .Os
 .Sh NAME
@@ -67,26 +67,6 @@
 .Op Fl nv
 .Op Fl F Ns | Ns Fl f Ar file
 .Ar disk Ar protofile
-.Pp
-.Nm disklabel
-.Fl B\ \&
-.Op Fl nv
-.Op Fl b Ar boot1
-.Ar disk
-.Op Ar disktype
-.Nm disklabel
-.Fl Bw
-.Op Fl nv
-.Op Fl b Ar boot1
-.Ar disk Ar disktype
-.Op Ar packid
-.Nm disklabel
-.Fl BR
-.Op Fl nv
-.Op Fl b Ar boot1
-.Op Fl F Ns | Ns Fl f Ar file
-.Ar disk Ar protofile
-.Op Ar disktype
 .Sh DESCRIPTION
 The
 .Nm
@@ -127,15 +107,6 @@ portion of the disk in the recommended manner.
 See
 .Sx AUTOMATIC DISK ALLOCATION ,
 below.
-.It Fl B
-Install bootstrap code.
-Some architectures instead require bootstrap code installation to be
-done using an
-.Xr installboot 8
-type program, as described in
-.Xr boot 8 .
-.It Fl b Ar boot1
-Specify the primary boot program.
 .It Fl c
 Clear the system's in-core copy of the label and update it based on
 the on-disk label.
@@ -490,38 +461,6 @@ The final three forms of
 .Nm
 are used to install bootstrap code on machines where the bootstrap is
 part of the label.
-.Pp
-When installing bootstrap code with the
-.Fl B
-flag, if the boot program name is not explicitly given with
-.Fl b Ar boot1 ,
-a standard boot program
-will be used.
-The standard boot programs are located in
-.Pa /usr/mdec .
-The name of the program is taken from the
-.Dq b0
-parameter of the
-.Xr disktab 5
-entry for the disk if
-.Ar disktype
-was given and its disktab entry exists and includes a b0 field.
-Otherwise, the boot program name is derived from the name of the
-disk.
-These names are of the form
-.Pa basename Ns boot .
-For example,
-.Pa /usr/mdec/sdboot
-if the disk device is
-.Em sd0 .
-.Pp
-The first of the three boot-installation forms is used to install
-bootstrap code without changing the existing label.
-It is essentially a read command with respect to the disk label itself
-and all options are related to the specification of the boot program
-as described previously.
-The final two forms are analogous to the basic write and restore versions
-except that they will install bootstrap code in addition to a new label.
 .Pp
 Note that when a disk has no real
 .Bx
