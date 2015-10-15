@@ -1,4 +1,4 @@
-/* $OpenBSD: rebound.c,v 1.3 2015/10/15 20:13:57 tedu Exp $ */
+/* $OpenBSD: rebound.c,v 1.4 2015/10/15 20:47:11 deraadt Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -212,7 +212,8 @@ sendreply(int ud, struct request *req)
 }
 
 void
-freerequest(struct request *req) {
+freerequest(struct request *req)
+{
 	TAILQ_REMOVE(&reqfifo, req, fifo);
 	close(req->client);
 	close(req->s);
@@ -220,7 +221,8 @@ freerequest(struct request *req) {
 }
 
 void
-freecacheent(struct dnscache *ent) {
+freecacheent(struct dnscache *ent)
+{
 	TAILQ_REMOVE(&cache, ent, cache);
 	free(ent->req);
 	free(ent->resp);
