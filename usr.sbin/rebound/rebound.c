@@ -1,4 +1,4 @@
-/* $OpenBSD: rebound.c,v 1.12 2015/10/15 22:12:26 tedu Exp $ */
+/* $OpenBSD: rebound.c,v 1.13 2015/10/15 22:17:43 tedu Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -264,7 +264,7 @@ newtcprequest(int ld, struct sockaddr *remoteaddr)
 {
 	struct request *req;
 
-	if (!(req = malloc(sizeof(*req))))
+	if (!(req = calloc(1, sizeof(*req))))
 		return NULL;
 
 	req->s = -1;
