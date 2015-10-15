@@ -1,4 +1,4 @@
-/*	$OpenBSD: x99token.c,v 1.10 2015/01/16 06:40:14 deraadt Exp $	*/
+/*	$OpenBSD: x99token.c,v 1.11 2015/10/15 17:23:09 bluhm Exp $	*/
 
 /*
  * X9.9 calculator
@@ -45,6 +45,9 @@ main(int argc, char **argv)
 	int cnt = 1;
 	unsigned int pin;
 	struct passwd *pwd;
+
+	if (pledge("stdio rpath wpath cpath fattr getpw tty", NULL) == -1)
+		err(1, "pledge");
 
 	while ((i = getopt(argc, argv, "dk:in:")) != -1) {
 		switch (i) {
