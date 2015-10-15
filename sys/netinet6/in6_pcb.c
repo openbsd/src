@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_pcb.c,v 1.76 2015/10/09 01:10:27 deraadt Exp $	*/
+/*	$OpenBSD: in6_pcb.c,v 1.77 2015/10/15 10:27:18 vgross Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -450,8 +450,9 @@ in6_pcbconnect(struct inpcb *inp, struct mbuf *nam)
 	KASSERT(IN6_IS_ADDR_UNSPECIFIED(&inp->inp_laddr6) || inp->inp_lport);
 
 	if (IN6_IS_ADDR_UNSPECIFIED(&inp->inp_laddr6)) {
-		if (inp->inp_lport == 0)
-			(void)in6_pcbbind(inp, NULL, curproc);
+		if (inp->inp_lport == 0 &&
+		    in6_pcbbind(inp, NULL, curproc) == EADDRNOTAVAIL)
+			return (EADDRNOTAVAIL);
 		inp->inp_laddr6 = *in6a;
 	}
 	inp->inp_faddr6 = sin6->sin6_addr;
