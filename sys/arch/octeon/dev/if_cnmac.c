@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cnmac.c,v 1.24 2015/10/08 14:24:32 visa Exp $	*/
+/*	$OpenBSD: if_cnmac.c,v 1.25 2015/10/15 14:06:04 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -350,8 +350,9 @@ octeon_eth_attach(struct device *parent, struct device *self, void *aux)
 #endif
 
 	if (octeon_eth_pow_recv_ih == NULL)
-		octeon_eth_pow_recv_ih = cn30xxpow_intr_establish(OCTEON_POW_GROUP_PIP,
-		    IPL_NET, octeon_eth_recv_intr, NULL, NULL, sc->sc_dev.dv_xname);
+		octeon_eth_pow_recv_ih = cn30xxpow_intr_establish(
+		    OCTEON_POW_GROUP_PIP, IPL_NET | IPL_MPSAFE,
+		    octeon_eth_recv_intr, NULL, NULL, sc->sc_dev.dv_xname);
 }
 
 /* ---- submodules */
@@ -1157,6 +1158,8 @@ octeon_eth_stop(struct ifnet *ifp, int disable)
 	CLR(ifp->if_flags, IFF_RUNNING | IFF_OACTIVE);
 	ifp->if_timer = 0;
 
+	intr_barrier(octeon_eth_pow_recv_ih);
+
 	return 0;
 }
 
@@ -1356,21 +1359,10 @@ octeon_eth_recv_check(struct octeon_eth_softc *sc, uint64_t word2)
 int
 octeon_eth_recv(struct octeon_eth_softc *sc, uint64_t *work)
 {
-	int result = 0;
 	struct ifnet *ifp;
 	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
 	struct mbuf *m;
 	uint64_t word2;
-
-	/* XXX */
-	/*
- 	 * performance tuning
-	 * presend iobdma request
-	 */
-	if (ml_len(&sc->sc_sendq) > sc->sc_soft_req_thresh) {
-		octeon_eth_send_queue_flush_prefetch(sc);
-	}
-	/* XXX */
 
 	OCTEON_ETH_KASSERT(sc != NULL);
 	OCTEON_ETH_KASSERT(work != NULL);
@@ -1380,17 +1372,16 @@ octeon_eth_recv(struct octeon_eth_softc *sc, uint64_t *work)
 
 	OCTEON_ETH_KASSERT(ifp != NULL);
 
+	if (!(ifp->if_flags & IFF_RUNNING))
+		goto drop;
+
 	if (__predict_false(octeon_eth_recv_check(sc, word2) != 0)) {
 		ifp->if_ierrors++;
-		result = 1;
-		octeon_eth_buf_free_work(sc, work, word2);
 		goto drop;
 	}
 
 	if (__predict_false(octeon_eth_recv_mbuf(sc, work, &m) != 0)) {
 		ifp->if_ierrors++;
-		result = 1;
-		octeon_eth_buf_free_work(sc, work, word2);
 		goto drop;
 	}
 
@@ -1400,25 +1391,14 @@ octeon_eth_recv(struct octeon_eth_softc *sc, uint64_t *work)
 
 	cn30xxipd_offload(word2, m->m_data, &m->m_pkthdr.csum_flags);
 
-	/* XXX */
-	if (ml_len(&sc->sc_sendq) > sc->sc_soft_req_thresh) {
-		octeon_eth_send_queue_flush_fetch(sc);
-		octeon_eth_send_queue_flush(sc);
-	}
-
 	ml_enqueue(&ml, m);
 	if_input(ifp, &ml);
 
 	return 0;
 
 drop:
-	/* XXX */
-	if (ml_len(&sc->sc_sendq) > sc->sc_soft_req_thresh) {
-		octeon_eth_send_queue_flush_fetch(sc);
-	}
-	/* XXX */
-
-	return result;
+	octeon_eth_buf_free_work(sc, work, word2);
+	return 1;
 }
 
 void
