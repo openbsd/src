@@ -1,4 +1,4 @@
-/*	$OpenBSD: vax_installboot.c,v 1.1 2014/01/19 02:58:50 jsing Exp $	*/
+/*	$OpenBSD: vax_installboot.c,v 1.2 2015/10/15 19:27:30 miod Exp $	*/
 
 /*
  * Copyright (c) 2013 Joel Sing <jsing@openbsd.org>
@@ -16,14 +16,20 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <stdlib.h>
+
 #include "installboot.h"
+
+char	*bootldr;
 
 void
 md_init(void)
 {
 	stages = 2;
 	stage1 = "/usr/mdec/xxboot";
-	stage2 = "/boot";
+	stage2 = "/usr/mdec/boot";
+
+	bootldr = "/boot";
 }
 
 void
@@ -34,5 +40,16 @@ md_loadboot(void)
 void
 md_installboot(int devfd, char *dev)
 {
-	bootstrap(devfd, dev, stage1);
+	/* XXX - is this necessary? */
+	sync();
+
+	bootldr = fileprefix(root, bootldr);
+	if (bootldr == NULL)
+		exit(1);
+	if (!nowrite)
+		if (filecopy(stage2, bootldr) == -1)
+			exit(1);
+
+	/* Write bootblock into the superblock. */
+	bootstrap(devfd, dev, stage1, 16);
 }

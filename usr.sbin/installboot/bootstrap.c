@@ -1,4 +1,4 @@
-/*	$OpenBSD: bootstrap.c,v 1.6 2015/01/16 00:05:12 deraadt Exp $	*/
+/*	$OpenBSD: bootstrap.c,v 1.7 2015/10/15 19:27:30 miod Exp $	*/
 
 /*
  * Copyright (c) 2013 Joel Sing <jsing@openbsd.org>
@@ -32,7 +32,7 @@
 #include "installboot.h"
 
 void
-bootstrap(int devfd, char *dev, char *bootfile)
+bootstrap(int devfd, char *dev, char *bootfile, unsigned int overlap_allowance)
 {
 	struct disklabel dl;
 	struct disklabel *lp;
@@ -92,7 +92,7 @@ bootstrap(int devfd, char *dev, char *bootfile)
 			continue;
 		if (DL_GETPSIZE(pp) == 0)
 			continue;
-		if ((u_int64_t)bootsec <= DL_GETPOFFSET(pp))
+		if ((u_int64_t)bootsec <= DL_GETPOFFSET(pp) + overlap_allowance)
 			continue;
 		switch (pp->p_fstype) {
 		case FS_BOOT:

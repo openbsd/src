@@ -1,4 +1,4 @@
-/*	$OpenBSD: hppa_installboot.c,v 1.1 2014/01/19 02:58:50 jsing Exp $	*/
+/*	$OpenBSD: hppa_installboot.c,v 1.2 2015/10/15 19:27:30 miod Exp $	*/
 
 /*
  * Copyright (c) 2013 Joel Sing <jsing@openbsd.org>
@@ -33,5 +33,5 @@ md_loadboot(void)
 void
 md_installboot(int devfd, char *dev)
 {
-	bootstrap(devfd, dev, stage1);
+	bootstrap(devfd, dev, stage1, 0);
 }
