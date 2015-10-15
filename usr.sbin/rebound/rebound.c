@@ -1,4 +1,4 @@
-/* $OpenBSD: rebound.c,v 1.10 2015/10/15 21:56:52 tedu Exp $ */
+/* $OpenBSD: rebound.c,v 1.11 2015/10/15 21:59:54 tedu Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -218,12 +218,12 @@ sendreply(int ud, struct request *req)
 	if (req->cacheent) {
 		req->cacheent->ts = now;
 		req->cacheent->ts.tv_sec += 10;
-		TAILQ_INSERT_TAIL(&cache, req->cacheent, cache);
 		req->cacheent->resp = malloc(r);
 		if (!req->cacheent->resp)
 			return;
 		memcpy(req->cacheent->resp, buf, r);
 		req->cacheent->resplen = r;
+		TAILQ_INSERT_TAIL(&cache, req->cacheent, cache);
 	}
 }
 
