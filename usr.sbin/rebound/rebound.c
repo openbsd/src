@@ -1,4 +1,4 @@
-/* $OpenBSD: rebound.c,v 1.1 2015/10/15 19:43:30 tedu Exp $ */
+/* $OpenBSD: rebound.c,v 1.2 2015/10/15 19:49:22 tedu Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -325,6 +325,11 @@ launch(const char *confname, int ud, int ld, int kq)
 	setresuid(pwd->pw_uid, pwd->pw_uid, pwd->pw_uid);
 
 	close(kq);
+
+	if (pledge("stdio inet", NULL) == -1) {
+		logmsg(LOG_DAEMON | LOG_ERR, "pledge failed");
+		exit(1);
+	}
 
 	af = readconfig(conf, &remoteaddr);
 	fclose(conf);
