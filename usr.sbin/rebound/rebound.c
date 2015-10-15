@@ -1,4 +1,4 @@
-/* $OpenBSD: rebound.c,v 1.11 2015/10/15 21:59:54 tedu Exp $ */
+/* $OpenBSD: rebound.c,v 1.12 2015/10/15 22:12:26 tedu Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -58,6 +58,12 @@ struct dnsrr {
 	uint16_t rdatalen;
 	/* ... */
 };
+
+/*
+ * requests will point to cache entries until a response is received.
+ * until then, the request owns the entry and must free it.
+ * after it's on the list, the request must not free it.
+ */
 
 struct dnscache {
 	TAILQ_ENTRY(dnscache) cache;
@@ -194,6 +200,7 @@ newrequest(int ud, struct sockaddr *remoteaddr)
 
 	return req;
 fail:
+	free(hit);
 	close(req->s);
 	free(req);
 	return NULL;
@@ -204,6 +211,7 @@ sendreply(int ud, struct request *req)
 {
 	uint8_t buf[65536];
 	struct dnspacket *resp;
+	struct dnscache *ent;
 	size_t r;
 
 	resp = (struct dnspacket *)buf;
@@ -215,24 +223,30 @@ sendreply(int ud, struct request *req)
 		return;
 	resp->id = req->clientid;
 	sendto(ud, buf, r, 0, &req->from, req->fromlen);
-	if (req->cacheent) {
-		req->cacheent->ts = now;
-		req->cacheent->ts.tv_sec += 10;
-		req->cacheent->resp = malloc(r);
-		if (!req->cacheent->resp)
+	if ((ent = req->cacheent)) {
+		ent->ts = now;
+		ent->ts.tv_sec += 10;
+		ent->resp = malloc(r);
+		if (!ent->resp)
 			return;
-		memcpy(req->cacheent->resp, buf, r);
-		req->cacheent->resplen = r;
-		TAILQ_INSERT_TAIL(&cache, req->cacheent, cache);
+		memcpy(ent->resp, buf, r);
+		ent->resplen = r;
+		TAILQ_INSERT_TAIL(&cache, ent, cache);
 	}
 }
 
 void
 freerequest(struct request *req)
 {
+	struct dnscache *ent;
+
 	TAILQ_REMOVE(&reqfifo, req, fifo);
 	close(req->client);
 	close(req->s);
+	if ((ent = req->cacheent) && !ent->resp) {
+		free(ent->req);
+		free(ent);
+	}
 	free(req);
 }
 
