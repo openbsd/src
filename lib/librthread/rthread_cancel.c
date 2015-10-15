@@ -1,4 +1,4 @@
-/* $OpenBSD: rthread_cancel.c,v 1.9 2014/08/31 20:23:10 guenther Exp $ */
+/* $OpenBSD: rthread_cancel.c,v 1.10 2015/10/15 16:38:04 deraadt Exp $ */
 /* $snafu: libc_tag.c,v 1.4 2004/11/30 07:00:06 marc Exp $ */
 
 /* PUBLIC DOMAIN: No Rights Reserved. Marco S Hyman <marc@snafu.org> */
@@ -200,6 +200,7 @@ fcntl(int fd, int cmd, ...)
 	case F_GETFD:
 	case F_GETFL:
 	case F_GETOWN:
+	case F_ISATTY:
 		rv = _thread_sys_fcntl(fd, cmd);
 		break;
 	case F_GETLK:
