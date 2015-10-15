@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.13 2013/10/27 18:31:24 guenther Exp $	*/
+/*	$OpenBSD: misc.c,v 1.14 2015/10/15 05:57:09 mmcc Exp $	*/
 
 /* misc - miscellaneous flex routines */
 
@@ -33,7 +33,7 @@
  * PURPOSE.
  */
 
-/* $Header: /home/cvs/src/usr.bin/lex/misc.c,v 1.13 2013/10/27 18:31:24 guenther Exp $ */
+/* $Header: /home/cvs/src/usr.bin/lex/misc.c,v 1.14 2015/10/15 05:57:09 mmcc Exp $ */
 
 #include "flexdef.h"
 
@@ -109,7 +109,7 @@ char *str;
 	{
 	while ( *str )
 		{
-		if ( ! isascii( (Char) *str ) || ! islower( *str ) )
+		if ( ! isascii( (Char) *str ) || ! islower( (Char) *str ) )
 			return 0;
 		++str;
 		}
@@ -125,7 +125,7 @@ char *str;
 	{
 	while ( *str )
 		{
-		if ( ! isascii( (Char) *str ) || ! isupper( *str ) )
+		if ( ! isascii( (Char) *str ) || ! isupper( (Char) *str ) )
 			return 0;
 		++str;
 		}
@@ -590,7 +590,7 @@ Char array[];
 			int sptr = 2;
 
 			while ( isascii( array[sptr] ) &&
-				isxdigit( (char) array[sptr] ) )
+				isxdigit( array[sptr] ) )
 				/* Don't increment inside loop control
 				 * because if isdigit() is a macro it might
 				 * expand into multiple increments ...
