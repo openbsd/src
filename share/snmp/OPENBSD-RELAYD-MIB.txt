@@ -1,4 +1,4 @@
--- $OpenBSD: OPENBSD-RELAYD-MIB.txt,v 1.1 2014/11/19 10:24:39 blambert Exp $
+-- $OpenBSD: OPENBSD-RELAYD-MIB.txt,v 1.2 2015/10/15 19:15:02 sthen Exp $
 --
 -- Copyright (c) 2014 Bret Stephen Lambert <blambert@openbsd.org>
 --
@@ -31,16 +31,18 @@ IMPORTS
 	MODULE-COMPLIANCE, OBJECT-GROUP
 		FROM SNMPv2-CONF;
 
-relaydMIBOjbects MODULE-IDENTITY
-	LAST-UPDATED	"201403120000Z"
+relaydMIBObjects MODULE-IDENTITY
+	LAST-UPDATED	"201510140000Z"
 	ORGANIZATION	"OpenBSD"
 	CONTACT-INFO	""
 	DESCRIPTION 	"The MIB module for gathering relayd status information"
+	REVISION	"201510140000Z"
+	DESCRIPTION	"Correct typo in MODULE ID descriptor and OID value"
 	REVISION	"201403120000Z"
 	DESCRIPTION	"MIB describing relayd(8) information"
 	::= { openBSD 3 }
 
-relaydInfo		OBJECT IDENTIFIER ::= { relaydMIBOjbects 2 }
+relaydInfo		OBJECT IDENTIFIER ::= { relaydMIBObjects 2 }
 
 --
 -- "show redirects"
