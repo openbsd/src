@@ -1,4 +1,4 @@
-/*	$OpenBSD: mandoc.c,v 1.64 2015/10/13 23:30:42 schwarze Exp $ */
+/*	$OpenBSD: mandoc.c,v 1.65 2015/10/15 23:35:38 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -29,8 +29,6 @@
 #include "mandoc.h"
 #include "mandoc_aux.h"
 #include "libmandoc.h"
-
-#define DATESIZE 32
 
 static	int	 a2time(time_t *, const char *, const char *);
 static	char	*time2a(time_t);
