@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ctags.1,v 1.30 2015/08/22 06:46:00 jmc Exp $
+.\"	$OpenBSD: ctags.1,v 1.31 2015/10/15 23:46:20 schwarze Exp $
 .\"	$NetBSD: ctags.1,v 1.4 1995/03/26 20:14:04 glass Exp $
 .\"
 .\" Copyright (c) 1987, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)ctags.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: August 22 2015 $
+.Dd $Mdocdate: October 15 2015 $
 .Dt CTAGS 1
 .Os
 .Sh NAME
@@ -124,7 +124,7 @@ source files and are searched for C style routine and macro definitions.
 Files whose names end in
 .Dq \&.y
 are assumed to be
-.Tn YACC
+.Xr yacc 1
 source files.
 Files whose names end in
 .Dq \&.l
@@ -200,13 +200,7 @@ The
 command appeared in
 .Bx 2 .
 .Sh BUGS
-Recognition of
-.Nm functions ,
-.Nm subroutines ,
-and
-.Nm procedures
-for
-.Tn FORTRAN
+Recognition of functions, subroutines, and procedures for FORTRAN
 and Pascal is done in a very simple-minded way.
 No attempt
 is made to deal with block structure; if you have two Pascal procedures
@@ -215,8 +209,7 @@ in different blocks with the same name you lose.
 doesn't
 understand about Pascal types.
 .Pp
-The method of deciding whether to look for C, Pascal or
-.Tn FORTRAN
+The method of deciding whether to look for C, Pascal or FORTRAN
 functions is a hack.
 .Pp
 .Nm
