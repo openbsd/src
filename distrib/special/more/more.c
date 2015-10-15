@@ -1,4 +1,4 @@
-/*	$OpenBSD: more.c,v 1.35 2015/01/16 06:39:33 deraadt Exp $	*/
+/*	$OpenBSD: more.c,v 1.36 2015/10/15 16:10:57 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -165,7 +165,6 @@ extern char	*__progname;	/* program name (crt0) */
 
 int   colon(char *, int, int);
 int   command(char *, FILE *);
-int   do_shell(char *);
 int   expand(char *, size_t, char *);
 int   get_line(FILE *, int *);
 int   magic(FILE *, char *);
@@ -1044,13 +1043,6 @@ command(char *filename, FILE *f)
 					break;
 			}
 			ret(dlines-1);
-		case '!':
-			if (do_shell(filename) < 0) {
-				kill_line();
-				prompt(filename);
-				continue;
-			}
-			break;
 		case '?':
 		case 'h':
 			if (noscroll)
@@ -1058,29 +1050,6 @@ command(char *filename, FILE *f)
 			fputs(more_help, stdout);
 			prompt(filename);
 			break;
-		case 'v':	/* This case should go right before default */
-			if (!no_intty) {
-				char *editor;
-
-				editor = getenv("VISUAL");
-				if (editor == NULL || *editor == '\0')
-					editor = getenv("EDITOR");
-				if (editor == NULL || *editor == '\0')
-					editor = _PATH_VI;
-				if ((p = strrchr(editor, '/')) != NULL)
-					p++;
-				else
-					p = editor;
-				kill_line();
-				snprintf(cmdbuf, sizeof(cmdbuf), "+%lld",
-				    (long long)Currline);
-				if (!altscr)
-					printf("%s %s %s", p, cmdbuf,
-					    fnames[fnum]);
-				execute(filename, editor, p, cmdbuf,
-				    fnames[fnum]);
-				break;
-			}
 		default:
 			if (dum_opt) {
 				kill_line();
@@ -1157,12 +1126,6 @@ colon(char *filename, int cmd, int nlines)
 			nlines++;
 		skipf (-nlines);
 		return (0);
-	case '!':
-		if (do_shell(filename) < 0) {
-			kill_line();
-			prompt(filename);
-		}
-		return (-1);
 	case 'q':
 	case 'Q':
 		end_it();
@@ -1198,31 +1161,6 @@ number(char *cmd)
 	return (i);
 }
 
-int
-do_shell(char *filename)
-{
-	char cmdbuf[200];
-
-	kill_line();
-	putchar('!');
-	fflush(stdout);
-	promptlen = 1;
-	if (lastp)
-		fputs(shell_line, stdout);
-	else {
-		if (ttyin(cmdbuf, sizeof(cmdbuf) - 2, '!') < 0)
-			return (-1);
-		if (expand(shell_line, sizeof(shell_line), cmdbuf)) {
-			kill_line();
-			promptlen = printf("!%s", shell_line);
-		}
-	}
-	fflush(stdout);
-	write(STDERR_FILENO, "\n", 1);
-	promptlen = 0;
-	shellp = 1;
-	execute(filename, shell, shell, "-c", shell_line);
-}
 
 /*
  * Search for nth occurrence of regular expression contained in buf in the file
@@ -1312,57 +1250,6 @@ search(char *buf, FILE *file, int n)
 		return (-1);
 	}
 	return (0);
-}
-
-void
-execute(char *filename, char *cmd, char *av0, char *av1, char *av2)
-{
-	int id;
-	int n;
-	char *argp[4];
-
-	argp[0] = av0;
-	argp[1] = av1;
-	argp[2] = av2;
-	argp[3] = NULL;
-
-	fflush(stdout);
-	reset_tty();
-	for (n = 10; (id = fork()) < 0 && n > 0; n--)
-		sleep(5);
-	if (id == 0) {
-		execvp(cmd, argp);
-		write(STDERR_FILENO, "exec failed\n", 12);
-		exit(1);
-	}
-	if (id > 0) {
-		sa.sa_flags = SA_RESTART;
-		sa.sa_handler = SIG_IGN;
-		(void)sigaction(SIGINT, &sa, NULL);
-		(void)sigaction(SIGQUIT, &sa, NULL);
-		if (catch_susp) {
-			sa.sa_handler = SIG_DFL;
-			(void)sigaction(SIGTSTP, &sa, NULL);
-			(void)sigaction(SIGTTIN, &sa, NULL);
-			(void)sigaction(SIGTTOU, &sa, NULL);
-		}
-		while (wait(NULL) > 0)
-			continue;
-		sa.sa_flags = 0;
-		sa.sa_handler = onsignal;
-		(void)sigaction(SIGINT, &sa, NULL);
-		(void)sigaction(SIGQUIT, &sa, NULL);
-		if (catch_susp) {
-			(void)sigaction(SIGTSTP, &sa, NULL);
-			(void)sigaction(SIGTTIN, &sa, NULL);
-			(void)sigaction(SIGTTOU, &sa, NULL);
-		}
-	} else
-		write(STDERR_FILENO, "can't fork\n", 11);
-	set_tty();
-	if (!altscr)
-		fputs("------------------------\n", stdout);
-	prompt(filename);
 }
 
 /*
