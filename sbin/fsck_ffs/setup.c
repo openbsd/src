@@ -1,4 +1,4 @@
-/*	$OpenBSD: setup.c,v 1.58 2015/10/14 16:58:55 deraadt Exp $	*/
+/*	$OpenBSD: setup.c,v 1.59 2015/10/15 15:11:10 semarie Exp $	*/
 /*	$NetBSD: setup.c,v 1.27 1996/09/27 22:45:19 christos Exp $	*/
 
 /*
@@ -141,8 +141,13 @@ setup(char *dev)
 		secsize = DEV_BSIZE;
 
 	if (!hotroot()) {
+#ifndef SMALL
+		if (pledge("stdio getpw", NULL) == -1)
+			err(1, "pledge");
+#else
 		if (pledge("stdio", NULL) == -1)
 			err(1, "pledge");
+#endif
 	}
 
 	/*
