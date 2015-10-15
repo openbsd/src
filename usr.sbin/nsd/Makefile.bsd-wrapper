@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.11 2014/11/30 05:54:38 brad Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.12 2015/10/15 21:22:11 sthen Exp $
 
 .include <bsd.own.mk>
 
@@ -20,6 +20,7 @@ CONFIGURE_OPTS=	--prefix=/usr \
 		--with-dbfile=${CHROOTDIR}/db/nsd.db \
 		--with-xfrdir=${CHROOTDIR}/run/xfr \
 		--with-xfrdfile=${CHROOTDIR}/run/xfrd.state \
+		--with-libevent=/usr \
 		--enable-ratelimit \
 		--enable-root-server
 
