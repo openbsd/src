@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.7 2007/06/17 00:28:21 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.8 2015/10/15 19:28:32 miod Exp $
 
 IMAGESIZE=		3072
 GZIPCMD?=		gzip
@@ -10,6 +10,5 @@ MAKEFLOPPY=		1
 #NEWFSOPTS_RD= -t ffs -m 0 -o space -f 1024 -i 16384 -s 8192
 HOSTCCFLAGS=		-DDEBUG -O0
 #HOSTCCFLAGS=		-DBROKEN_NMAGIC -DDEBUG
-BOOTXX=			${DESTDIR}/usr/mdec/sdboot
-INSTALLBOOT=		@true --		# totally incredible
 NEWFSOPTS_RD=		${NEWFSOPTS} -i 4096 -s ${IMAGESIZE}
+BOOTXX=			${DESTDIR}/usr/mdec/xxboot

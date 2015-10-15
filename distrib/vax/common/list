@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.40 2015/04/13 21:27:07 deraadt Exp $
+#	$OpenBSD: list,v 1.41 2015/10/15 19:28:32 miod Exp $
 
 SRCDIRS distrib/special
 SRCDIRS sys/arch/vax/stand
@@ -60,9 +60,6 @@ LINK	instbin					usr/sbin/pwd_mkdb
 COPY	${DESTDIR}/dev/MAKEDEV			dev/MAKEDEV
 SPECIAL	cd dev; sh MAKEDEV ramdisk
 
-# we need the contents of /usr/mdec (XXX)
-# COPY	${DESTDIR}/usr/mdec/*			usr/mdec
-
 # various files that we need in /etc for the install
 COPY	${DESTDIR}/etc/group			etc/group
 COPY	${CURDIR}/../../miniroot/master.passwd	etc/master.passwd
@@ -73,6 +70,5 @@ COPY	${CURDIR}/../../miniroot/services	etc/services
 TERMCAP	vt100,vt220,dumb			usr/share/misc/termcap
 
 COPY	${DESTDIR}/bsd				.
-COPY	${DESTDIR}/boot				.
 
 TZ

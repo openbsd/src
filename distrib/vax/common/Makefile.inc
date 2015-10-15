@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.10 2013/11/09 22:35:40 miod Exp $
+#	$OpenBSD: Makefile.inc,v 1.11 2015/10/15 19:28:32 miod Exp $
 
 # TOP is assumed to be defined by Makefile including this one.
 
@@ -35,22 +35,16 @@ all: ${CBIN} bootroot
 	umount -f ${MOUNT_POINT}
 	vnconfig -u ${VND}
 
-bootroot: xxboot boot
+bootroot:
 	dd if=/dev/zero of=${BOOTSYS} bs=512 count=8192
 	vnconfig -v -c ${VND} ${BOOTSYS}
 	disklabel -w ${VND} bootroot
 	newfs -O 0 -m 0 -o space -i 8192 ${VND_RDEV}
-	dd if=xxboot of=${VND_RDEV} count=16
 	mount ${VND_DEV} ${MOUNT_POINT}
-	cp boot ${MOUNT_POINT}
+	installboot -vr ${MOUNT_POINT} ${VND} \
+	    ${DESTDIR}/usr/mdec/xxboot ${DESTDIR}/usr/mdec/boot
 	umount -f ${MOUNT_POINT}
 	vnconfig -u ${VND}
-
-xxboot boot:
-	cd /usr/src/sys/arch/vax/boot;${MAKE}
-	cp /usr/src/sys/arch/vax/boot/xxboot/xxboot .
-	cp /usr/src/sys/arch/vax/boot/boot/boot .
-
 
 unconfig:
 	-umount -f ${MOUNT_POINT}

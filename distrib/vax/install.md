@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.45 2015/06/02 19:54:07 rpe Exp $
+#	$OpenBSD: install.md,v 1.46 2015/10/15 19:28:31 miod Exp $
 #	$NetBSD: install.md,v 1.3.2.5 1996/08/26 15:45:28 gwr Exp $
 #
 #
@@ -39,9 +39,11 @@ MDCDDEVS='/^cd[0-9] /s/ .*//p;/^ra[0-9] .* RRD40$/s/ .*//p'
 MDMTDEVS='/^[ms]t[0-9][0-9]* /s/ .*//p'
 
 md_installboot() {
-	# Use cat to avoid holes created by cp(1)
-	cat /mnt/usr/mdec/boot > /mnt/boot
-	/sbin/disklabel -B $1
+	if ! installboot -r /mnt ${1}; then
+		echo "\nFailed to install bootblocks."
+		echo "You will not be able to boot OpenBSD from ${1}."
+		exit
+	fi
 }
 
 md_prep_disklabel() {

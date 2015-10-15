@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.15 2014/09/21 13:44:45 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.16 2015/10/15 19:28:32 miod Exp $
 
 TOP=	${.CURDIR}/..
 
@@ -23,20 +23,19 @@ DISKTYPE=	isoroot
 PID!=		echo $$$$
 ISOIMAGE!=	echo image.${PID}
 ISOSIZE=	798600	# 33*11*2200
-BOOT=		${DESTDIR}/usr/mdec/boot
-BOOTXX=		${DESTDIR}/usr/mdec/xxboot
 NEWFSOPTS=	-t ffs -m 0 -o space -f 1024 -b 8192 -i 8192 -s ${ISOSIZE}
 
 all: ${CDROM}
 
-${CDROM}: ${BASE} ${XBASE} ${BOOT} ${BOOTXX}
+${CDROM}: ${BASE} ${XBASE}
 	-rm -f ${.OBJDIR}/image.*
 	dd if=/dev/zero of=${ISOIMAGE} count=${ISOSIZE}
 	vnconfig -v -c ${VND} ${ISOIMAGE}
 	disklabel -w ${VND} ${DISKTYPE}
 	newfs ${NEWFSOPTS} ${VND_RDEV}
 	mount ${VND_DEV} ${MOUNT_POINT}
-	cp ${BOOT} ${MOUNT_POINT}/
+	installboot -vr ${MOUNT_POINT} ${VND} \
+	    ${DESTDIR}/usr/mdec/xxboot ${DESTDIR}/usr/mdec/boot
 	cp ${RELDIR}/bsd.rd ${MOUNT_POINT}/bsd
 	mkdir -p ${MOUNT_POINT}/${OSREV}/${MACHINE}
 
@@ -47,7 +46,6 @@ ${CDROM}: ${BASE} ${XBASE} ${BOOT} ${BOOTXX}
 	    ${MOUNT_POINT}/${OSREV}/${MACHINE}/SHA256
 	# XXX no SHA256.sig
 
-	disklabel -B -b ${BOOTXX} ${VND}
 	@echo ""
 	@df -i ${MOUNT_POINT}
 	@echo ""
