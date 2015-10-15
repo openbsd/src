@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_macro.c,v 1.159 2015/10/12 00:07:27 schwarze Exp $ */
+/*	$OpenBSD: mdoc_macro.c,v 1.160 2015/10/15 22:27:09 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -1106,6 +1106,11 @@ blk_full(MACRO_PROT_ARGS)
 				mdoc->flags |= MDOC_PPHRASE;
 			parse_rest(mdoc, TOKEN_NONE, line, &la, buf);
 			mdoc->flags &= ~MDOC_PPHRASE;
+
+			/* There may have been `Ta' macros. */
+
+			while (body->next != NULL)
+				body = body->next;
 			continue;
 		}
 
