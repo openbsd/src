@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.29 2015/10/15 17:50:05 deraadt Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.30 2015/10/15 17:55:41 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -1101,6 +1101,7 @@ pledge_ioctl_check(struct proc *p, long com, void *v)
 		case TIOCSETA:		/* cu, ... */
 		case TIOCSETAW:		/* cu, ... */
 		case TIOCSETAF:		/* tcsetattr TCSAFLUSH, script */
+		case TIOCFLUSH:		/* getty */
 			if (fp->f_type == DTYPE_VNODE && (vp->v_flag & VISTTY))
 				return (0);
 			break;
