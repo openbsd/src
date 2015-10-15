@@ -1,7 +1,6 @@
-/*	$OpenBSD: tty.c,v 1.12 2015/09/25 11:58:14 nicm Exp $	*/
+/*	$OpenBSD: tty.c,v 1.13 2015/10/15 20:01:53 mmcc Exp $	*/
 
 #include "sh.h"
-#include <sys/stat.h>
 #include "tty.h"
 
 int		tty_fd = -1;	/* dup'd tty file descriptor */
