@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vxlan.c,v 1.30 2015/10/12 10:51:49 dlg Exp $	*/
+/*	$OpenBSD: if_vxlan.c,v 1.31 2015/10/15 13:59:21 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2013 Reyk Floeter <reyk@openbsd.org>
@@ -498,8 +498,7 @@ vxlan_lookup(struct mbuf *m, struct udphdr *uh, int iphlen,
 				scsin4 = satosin(
 				    (struct sockaddr *)&sc->sc_dst);
 				if (srcsin4->sin_addr.s_addr ==
-				    scsin4->sin_addr.s_addr &&
-				    srcsin4->sin_port == scsin4->sin_port)
+				    scsin4->sin_addr.s_addr)
 					goto found;
 				break;
 			case AF_INET6:
@@ -507,8 +506,7 @@ vxlan_lookup(struct mbuf *m, struct udphdr *uh, int iphlen,
 				scsin6 = satosin6(
 				    (struct sockaddr *)&sc->sc_dst);
 				if (IN6_ARE_ADDR_EQUAL(
-				    &srcsin6->sin6_addr, &scsin6->sin6_addr) &&
-				    srcsin6->sin6_port == scsin6->sin6_port)
+				    &srcsin6->sin6_addr, &scsin6->sin6_addr))
 					goto found;
 				break;
 			}
