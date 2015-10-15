@@ -1,4 +1,4 @@
-/* $OpenBSD: rebound.c,v 1.8 2015/10/15 21:35:27 tedu Exp $ */
+/* $OpenBSD: rebound.c,v 1.9 2015/10/15 21:39:15 tedu Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -31,7 +31,6 @@
 #include <string.h>
 #include <err.h>
 #include <unistd.h>
-#include <assert.h>
 #include <pwd.h>
 #include <errno.h>
 #include <getopt.h>
@@ -397,7 +396,9 @@ launch(const char *confname, int ud, int ld, int kq)
 						break;
 					req = TAILQ_NEXT(req, fifo);
 				}
-				assert(req);
+				if (!req)
+					logerr(LOG_DAEMON | LOG_ERR,
+					    "lost request");
 				if (req->client == -1)
 					sendreply(ud, req);
 				freerequest(req);
