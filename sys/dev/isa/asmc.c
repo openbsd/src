@@ -1,4 +1,4 @@
-/*	$OpenBSD: asmc.c,v 1.10 2015/10/10 12:05:47 jung Exp $	*/
+/*	$OpenBSD: asmc.c,v 1.11 2015/10/15 01:14:33 jsg Exp $	*/
 /*
  * Copyright (c) 2015 Joerg Jung <jung@openbsd.org>
  *
@@ -514,6 +514,7 @@ asmc_motions(struct asmc_softc *sc, uint8_t *n)
 	int i;
 
 	*n = 0;
+	s = 0;
 	if (asmc_try(sc, ASMC_READ, "MOCN", buf, 2) &&
 	    (s = asmc_status(sc)) != ASMC_NOTFOUND) {
 		printf(", read MOCN failed (0x%x)", s);
