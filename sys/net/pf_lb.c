@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_lb.c,v 1.50 2015/10/13 19:32:31 sashan Exp $ */
+/*	$OpenBSD: pf_lb.c,v 1.51 2015/10/15 19:48:44 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -648,7 +648,7 @@ pf_get_transaddr(struct pf_rule *r, struct pf_pdesc *pd,
     struct pf_src_node **sns, struct pf_rule **nr)
 {
 	struct pf_addr	naddr;
-	u_int16_t	nport = 0;
+	u_int16_t	nport;
 
 #ifdef INET6
 	if (pd->af != pd->naf)
@@ -658,6 +658,7 @@ pf_get_transaddr(struct pf_rule *r, struct pf_pdesc *pd,
 	if (r->nat.addr.type != PF_ADDR_NONE) {
 		/* XXX is this right? what if rtable is changed at the same
 		 * XXX time? where do I need to figure out the sport? */
+		nport = 0;
 		if (pf_get_sport(pd, r, &naddr, &nport,
 		    r->nat.proxy_port[0], r->nat.proxy_port[1], sns)) {
 			DPFPRINTF(LOG_NOTICE,
@@ -678,6 +679,7 @@ pf_get_transaddr(struct pf_rule *r, struct pf_pdesc *pd,
 			PF_POOLMASK(&naddr, &naddr,  &r->rdr.addr.v.a.mask,
 			    &pd->ndaddr, pd->af);
 
+		nport = 0;
 		if (r->rdr.proxy_port[1]) {
 			u_int32_t	tmp_nport;
 
@@ -708,7 +710,7 @@ pf_get_transaddr_af(struct pf_rule *r, struct pf_pdesc *pd,
     struct pf_src_node **sns)
 {
 	struct pf_addr	ndaddr, nsaddr, naddr;
-	u_int16_t	nport = 0;
+	u_int16_t	nport;
 	int		prefixlen = 96;
 
 	if (pf_status.debug >= LOG_NOTICE) {
@@ -725,6 +727,7 @@ pf_get_transaddr_af(struct pf_rule *r, struct pf_pdesc *pd,
 		panic("pf_get_transaddr_af: no nat pool for source address");
 
 	/* get source address and port */
+	nport = 0;
 	if (pf_get_sport(pd, r, &nsaddr, &nport,
 	    r->nat.proxy_port[0], r->nat.proxy_port[1], sns)) {
 		DPFPRINTF(LOG_NOTICE,
