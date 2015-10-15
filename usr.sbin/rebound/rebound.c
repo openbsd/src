@@ -1,4 +1,4 @@
-/* $OpenBSD: rebound.c,v 1.9 2015/10/15 21:39:15 tedu Exp $ */
+/* $OpenBSD: rebound.c,v 1.10 2015/10/15 21:56:52 tedu Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -123,7 +123,8 @@ cachelookup(struct dnspacket *dnsreq, size_t reqlen)
 	origid = dnsreq->id;
 	dnsreq->id = 0;
 	TAILQ_FOREACH(hit, &cache, cache) {
-		if (memcmp(hit->req, dnsreq, reqlen) == 0)
+		if (hit->reqlen == reqlen &&
+		    memcmp(hit->req, dnsreq, reqlen) == 0)
 			break;
 	}
 	dnsreq->id = origid;
