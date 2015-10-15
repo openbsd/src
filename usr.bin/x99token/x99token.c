@@ -1,4 +1,4 @@
-/*	$OpenBSD: x99token.c,v 1.11 2015/10/15 17:23:09 bluhm Exp $	*/
+/*	$OpenBSD: x99token.c,v 1.12 2015/10/15 19:30:03 bluhm Exp $	*/
 
 /*
  * X9.9 calculator
@@ -46,7 +46,7 @@ main(int argc, char **argv)
 	unsigned int pin;
 	struct passwd *pwd;
 
-	if (pledge("stdio rpath wpath cpath fattr getpw tty", NULL) == -1)
+	if (pledge("stdio rpath wpath cpath getpw tty", NULL) == -1)
 		err(1, "pledge");
 
 	while ((i = getopt(argc, argv, "dk:in:")) != -1) {
@@ -139,9 +139,10 @@ main(int argc, char **argv)
 		key[0] ^= (pin >> ((i * 7) % 26)) & 0x7f;
 
 	if (init) {
+		umask(S_IRWXG | S_IRWXO);
+		unlink(keyfile);
 		if ((fp = fopen(keyfile, "w")) == NULL)
 			err(1, "could not open %s for writing", keyfile);
-		fchmod(fileno(fp), 0600);
 		for (i = 0; i < 8; ++i) {
 			fprintf(fp, "%c", digits[(key[i]>>4)&0xf]);
 			fprintf(fp, "%c", digits[(key[i]>>0)&0xf]);
