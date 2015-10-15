@@ -1,4 +1,4 @@
-/*	$OpenBSD: installboot.h,v 1.8 2015/10/14 14:13:12 jsg Exp $	*/
+/*	$OpenBSD: installboot.h,v 1.9 2015/10/15 04:41:09 deraadt Exp $	*/
 /*
  * Copyright (c) 2012, 2013 Joel Sing <jsing@openbsd.org>
  *
@@ -14,6 +14,8 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
+#include <stdlib.h>
 
 extern int nowrite;
 extern int stages;
