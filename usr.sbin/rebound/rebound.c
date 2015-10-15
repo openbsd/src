@@ -1,4 +1,4 @@
-/* $OpenBSD: rebound.c,v 1.4 2015/10/15 20:47:11 deraadt Exp $ */
+/* $OpenBSD: rebound.c,v 1.5 2015/10/15 20:58:14 tedu Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -433,9 +433,9 @@ main(int argc, char **argv)
 	struct sockaddr_in bindaddr;
 	int r, kq, ld, ud, ch;
 	int one;
+	int childdead, hupped;
 	pid_t child;
 	struct kevent kev;
-	int hupped = 0;
 	struct timespec ts, *timeout = NULL;
 	const char *conffile = "/etc/rebound.conf";
 
@@ -497,6 +497,8 @@ main(int argc, char **argv)
 	kevent(kq, &kev, 1, NULL, 0, NULL);
 	signal(SIGHUP, SIG_IGN);
 	while (1) {
+		hupped = 0;
+		childdead = 0;
 		child = launch(conffile, ud, ld, kq);
 		if (child == -1) {
 			logmsg(LOG_DAEMON | LOG_ERR, "failed to launch");
@@ -510,19 +512,31 @@ main(int argc, char **argv)
 		while (1) {
 			r = kevent(kq, NULL, 0, &kev, 1, timeout);
 			if (r == 0) {
-				logmsg(LOG_DAEMON | LOG_ERR, "child died without HUP");
+				logmsg(LOG_DAEMON | LOG_ERR,
+				    "child died without HUP");
 				return 1;
-			}
-			if (kev.filter == EVFILT_SIGNAL) {
+			} else if (kev.filter == EVFILT_SIGNAL) {
 				/* signaled. kill child. */
+				logmsg(LOG_DAEMON | LOG_INFO,
+				    "received HUP, restarting");
 				hupped = 1;
+				if (childdead)
+					break;
 				kill(child, SIGHUP);
-				break;
+			} else if (kev.filter == EVFILT_PROC) {
+				/* child died. wait for our own HUP. */
+				logmsg(LOG_DAEMON | LOG_INFO,
+				    "observed child exit");
+				childdead = 1;
+				if (hupped)
+					break;
+				memset(&ts, 0, sizeof(ts));
+				ts.tv_sec = 1;
+				timeout = &ts;
+			} else {
+				logmsg(LOG_DAEMON | LOG_ERR,
+				    "don't know what happened");
 			}
-			/* child died. wait one second for our own HUP. */
-			memset(&ts, 0, sizeof(ts));
-			ts.tv_sec = 1;
-			timeout = &ts;
 		}
 		wait(NULL);
 	}
