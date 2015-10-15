@@ -1,4 +1,4 @@
-.\" $OpenBSD: smtpctl.8,v 1.51 2015/08/16 22:26:11 jmc Exp $
+.\" $OpenBSD: smtpctl.8,v 1.52 2015/10/15 08:18:23 sunil Exp $
 .\"
 .\" Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
 .\" Copyright (c) 2012 Gilles Chehade <gilles@poolp.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 16 2015 $
+.Dd $Mdocdate: October 15 2015 $
 .Dt SMTPCTL 8
 .Os
 .Sh NAME
@@ -104,6 +104,8 @@ Generated bounces.
 .It Cm pause envelope Ar envelope-id | message-id
 Temporarily suspend scheduling for the envelope with the given ID,
 or all envelopes with the given message ID.
+.It Cm pause envelope all
+Temporarily suspend scheduling all the envelopes.
 .It Cm pause mda
 Temporarily stop deliveries to local users.
 .It Cm pause mta
@@ -124,9 +126,13 @@ imsg, to profile cost of event handlers
 .El
 .It Cm remove Ar envelope-id | message-id
 Remove a single envelope, or all envelopes with the same message ID.
+.It Cm remove all
+Remove all envelopes.
 .It Cm resume envelope Ar envelope-id | message-id
 Resume scheduling for the envelope with the given ID,
 or all envelopes with the given message ID.
+.It Cm resume envelope all
+Resume scheduling all the envelopes.
 .It Cm resume mda
 Resume deliveries to local users.
 .It Cm resume mta
