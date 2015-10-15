@@ -1,4 +1,4 @@
-/* $OpenBSD: hash.c,v 1.23 2013/03/21 04:30:14 deraadt Exp $	 */
+/* $OpenBSD: hash.c,v 1.24 2015/10/15 06:35:54 mmcc Exp $	 */
 /* $EOM: hash.c,v 1.10 1999/04/17 23:20:34 niklas Exp $	 */
 
 /*
@@ -148,7 +148,7 @@ hmac_init(struct hash *hash, unsigned char *okey, unsigned int len)
 	hash->Init(hash->ctx2);
 	hash->Update(hash->ctx2, key, blocklen);
 
-	bzero(key, blocklen);
+	explicit_bzero(key, blocklen);
 }
 
 /*
