@@ -1,4 +1,4 @@
-.\" $OpenBSD: rebound.8,v 1.1 2015/10/15 19:43:30 tedu Exp $
+.\" $OpenBSD: rebound.8,v 1.2 2015/10/15 19:51:45 tedu Exp $
 .\"
 .\"Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
 .\"
@@ -26,6 +26,10 @@
 The
 .Nm
 daemon proxies DNS requests.
+It listens on localhost and forwards queries to another server.
+.Pp
+At present, the config file consists of a single line containing the next
+hop DNS server.
 .Sh SEE ALSO
 .Xr resolv.conf 5 ,
 .Xr unbound 8
