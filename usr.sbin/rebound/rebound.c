@@ -1,4 +1,4 @@
-/* $OpenBSD: rebound.c,v 1.13 2015/10/15 22:17:43 tedu Exp $ */
+/* $OpenBSD: rebound.c,v 1.14 2015/10/15 22:21:28 tedu Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -201,7 +201,8 @@ newrequest(int ud, struct sockaddr *remoteaddr)
 	return req;
 fail:
 	free(hit);
-	close(req->s);
+	if (req->s != -1)
+		close(req->s);
 	free(req);
 	return NULL;
 }
@@ -241,8 +242,10 @@ freerequest(struct request *req)
 	struct dnscache *ent;
 
 	TAILQ_REMOVE(&reqfifo, req, fifo);
-	close(req->client);
-	close(req->s);
+	if (req->client != -1)
+		close(req->client);
+	if (req->s != -1)
+		close(req->s);
 	if ((ent = req->cacheent) && !ent->resp) {
 		free(ent->req);
 		free(ent);
@@ -288,9 +291,12 @@ newtcprequest(int ld, struct sockaddr *remoteaddr)
 	req->ts.tv_sec += 30;
 
 	return req;
+
 fail:
-	close(req->s);
-	close(req->client);
+	if (req->s != -1)
+		close(req->s);
+	if (req->client != -1)
+		close(req->client);
 	free(req);
 	return NULL;
 }
