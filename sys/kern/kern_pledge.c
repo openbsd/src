@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.39 2015/10/16 17:03:31 deraadt Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.40 2015/10/16 23:00:01 jca Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -851,7 +851,7 @@ pledge_sysctl_check(struct proc *p, int miblen, int *mib, void *new)
 
 	/* routing table observation */
 	if ((p->p_p->ps_pledge & PLEDGE_ROUTE)) {
-		if (miblen == 7 &&
+		if ((miblen == 6 || miblen == 7) &&
 		    mib[0] == CTL_NET && mib[1] == PF_ROUTE &&
 		    mib[2] == 0 &&
 		    (mib[3] == 0 || mib[3] == AF_INET6 || mib[3] == AF_INET) &&
