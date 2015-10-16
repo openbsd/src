@@ -3,6 +3,7 @@
 #include <sys/mman.h>
 #include <sys/stat.h>
 
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -132,7 +133,7 @@ ELFNAME(find_rd_root_image)(char *file, int fd, Elf_Phdr *ph, int segment,
  * is ELF and valid for the target platform.
  *
  * WARNING:  This is NOT a ELF ABI function and
- * as such it's use should be restricted.
+ * as such its use should be restricted.
  */
 int
 ELFNAME(__elf_is_okay__)(Elf_Ehdr *ehdr)
@@ -149,7 +150,7 @@ ELFNAME(__elf_is_okay__)(Elf_Ehdr *ehdr)
 	    ehdr->e_ident[EI_VERSION] == ELF_TARG_VER) {
 
 #if 0		/* allow cross, no arch check */
-		/* Now check the machine dependant header */
+		/* Now check the machine dependent header */
 		if (ehdr->e_machine == ELF_TARG_MACH &&
 		    ehdr->e_version == ELF_TARG_VER)
 #endif
@@ -179,6 +180,7 @@ ELFNAME(nlist)(int fd, struct nlist *list)
 	size_t shdr_size;
 	struct stat st;
 	int usemalloc = 0;
+	size_t left, len;
 
 	/* Make sure obj is OK */
 	if (pread(fd, &ehdr, sizeof(Elf_Ehdr), (off_t)0) != sizeof(Elf_Ehdr) ||
@@ -189,7 +191,8 @@ ELFNAME(nlist)(int fd, struct nlist *list)
 	shdr_size = ehdr.e_shentsize * ehdr.e_shnum;
 
 	/* Make sure it's not too big to mmap */
-	if (shdr_size > SIZE_T_MAX) {
+	if (SIZE_MAX - ehdr.e_shoff < shdr_size ||
+	    ehdr.e_shoff + shdr_size > st.st_size) {
 		errno = EFBIG;
 		return (-1);
 	}
@@ -202,20 +205,23 @@ ELFNAME(nlist)(int fd, struct nlist *list)
 		if ((shdr = malloc(shdr_size)) == NULL)
 			return (-1);
 
-		if (pread(fd, shdr, shdr_size, (off_t)ehdr.e_shoff) != shdr_size) {
+		if (pread(fd, shdr, shdr_size, (off_t)ehdr.e_shoff) !=
+		    shdr_size) {
 			free(shdr);
 			return (-1);
 		}
 	}
 
 	/*
-	 * Find the symbol table entry and it's corresponding
+	 * Find the symbol table entry and its corresponding
 	 * string table entry.	Version 1.1 of the ABI states
 	 * that there is only one symbol table but that this
 	 * could change in the future.
 	 */
 	for (i = 0; i < ehdr.e_shnum; i++) {
 		if (shdr[i].sh_type == SHT_SYMTAB) {
+			if (shdr[i].sh_link >= ehdr.e_shnum)
+				continue;
 			symoff = shdr[i].sh_offset;
 			symsize = shdr[i].sh_size;
 			symstroff = shdr[shdr[i].sh_link].sh_offset;
@@ -230,31 +236,6 @@ ELFNAME(nlist)(int fd, struct nlist *list)
 	else
 		munmap((caddr_t)shdr, shdr_size);
 
-	/* Check for files too large to mmap. */
-	/* XXX is this really possible? */
-	if (symstrsize > SIZE_T_MAX) {
-		errno = EFBIG;
-		return (-1);
-	}
-	/*
-	 * Map string table into our address space.  This gives us
-	 * an easy way to randomly access all the strings, without
-	 * making the memory allocation permanent as with malloc/free
-	 * (i.e., munmap will return it to the system).
-	 */
-	if (usemalloc) {
-		if ((strtab = malloc(symstrsize)) == NULL)
-			return (-1);
-		if (pread(fd, strtab, symstrsize, (off_t)symstroff) != symstrsize) {
-			free(strtab);
-			return (-1);
-		}
-	} else {
-		strtab = mmap(NULL, (size_t)symstrsize, PROT_READ,
-		    MAP_SHARED|MAP_FILE, fd, (off_t) symstroff);
-		if (strtab == MAP_FAILED)
-			return (-1);
-	}
 	/*
 	 * clean out any left-over information for all valid entries.
 	 * Type and value defined to be 0 if not found; historical
@@ -277,19 +258,49 @@ ELFNAME(nlist)(int fd, struct nlist *list)
 	/* Don't process any further if object is stripped. */
 	/* ELFism - dunno if stripped by looking at header */
 	if (symoff == 0)
-		goto elf_done;
+		return nent;
 
-	while (symsize > 0) {
+	/* Check for files too large to mmap. */
+	if (SIZE_MAX - symstrsize < symstroff ||
+	    symstrsize + symstroff > st.st_size) {
+		errno = EFBIG;
+		return (-1);
+	}
+
+	/*
+	 * Map string table into our address space.  This gives us
+	 * an easy way to randomly access all the strings, without
+	 * making the memory allocation permanent as with malloc/free
+	 * (i.e., munmap will return it to the system).
+	 */
+	if (usemalloc) {
+		if ((strtab = malloc(symstrsize)) == NULL)
+			return (-1);
+		if (pread(fd, strtab, symstrsize, (off_t)symstroff) !=
+		    symstrsize) {
+			free(strtab);
+			return (-1);
+		}
+	} else {
+		strtab = mmap(NULL, (size_t)symstrsize, PROT_READ,
+		    MAP_SHARED|MAP_FILE, fd, (off_t) symstroff);
+		if (strtab == MAP_FAILED)
+			return (-1);
+	}
+
+	while (symsize >= sizeof(Elf_Sym)) {
 		cc = MIN(symsize, sizeof(sbuf));
 		if (pread(fd, sbuf, cc, (off_t)symoff) != cc)
 			break;
 		symsize -= cc;
 		symoff += cc;
 		for (s = sbuf; cc > 0; ++s, cc -= sizeof(*s)) {
-			int soff = s->st_name;
+			Elf_Word soff = s->st_name;
 
-			if (soff == 0)
+			if (soff == 0 || soff >= symstrsize)
 				continue;
+			left = symstrsize - soff;
+
 			for (p = list; !ISLAST(p); p++) {
 				char *sym;
 
@@ -299,13 +310,16 @@ ELFNAME(nlist)(int fd, struct nlist *list)
 				 * and the first char is an '_', skip over
 				 * the '_' and try again.
 				 * XXX - What do we do when the user really
-				 *       wants '_foo' and the are symbols
+				 *       wants '_foo' and there are symbols
 				 *       for both 'foo' and '_foo' in the
 				 *	 table and 'foo' is first?
 				 */
 				sym = p->n_name;
-				if (strcmp(&strtab[soff], sym) != 0 &&
-				    (sym[0] != '_' ||
+				len = strlen(sym);
+
+				if ((len >= left ||
+				    strcmp(&strtab[soff], sym) != 0) &&
+				    (sym[0] != '_' || len - 1 >= left ||
 				     strcmp(&strtab[soff], sym + 1) != 0))
 					continue;
 

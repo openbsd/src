@@ -1,4 +1,4 @@
-/*	$OpenBSD: i386_nlist.c,v 1.2 2015/01/16 00:05:12 deraadt Exp $	*/
+/*	$OpenBSD: i386_nlist.c,v 1.3 2015/10/16 13:54:45 tobias Exp $	*/
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,8 +35,10 @@
 #include <sys/stat.h>
 
 #include <elf_abi.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <nlist.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -79,7 +81,7 @@ __elf_is_okay__(Elf_Ehdr *ehdr)
 	    ehdr->e_ident[EI_DATA] == ELF_TARG_DATA &&
 	    ehdr->e_ident[EI_VERSION] == ELF_TARG_VER) {
 
-		/* Now check the machine dependant header */
+		/* Now check the machine dependent header */
 		if (ehdr->e_machine == EM_386 &&
 		    ehdr->e_version == ELF_TARG_VER)
 			retval = 1;
@@ -103,6 +105,7 @@ __elf_fdnlist(int fd, struct nlist *list)
 	Elf_Word shdr_size;
 	struct stat st;
 	int usemalloc = 0;
+	size_t left, len;
 
 	/* Make sure obj is OK */
 	if (pread(fd, &ehdr, sizeof(Elf_Ehdr), (off_t)0) != sizeof(Elf_Ehdr) ||
@@ -111,6 +114,13 @@ __elf_fdnlist(int fd, struct nlist *list)
 
 	/* calculate section header table size */
 	shdr_size = ehdr.e_shentsize * ehdr.e_shnum;
+
+	/* Make sure it's not too big to mmap */
+	if (SIZE_MAX - ehdr.e_shoff < shdr_size ||
+	    ehdr.e_shoff + shdr_size > st.st_size) {
+		errno = EFBIG;
+		return (-1);
+	}
 
 	/* mmap section header table */
 	shdr = (Elf_Shdr *)mmap(NULL, (size_t)shdr_size, PROT_READ,
@@ -135,6 +145,8 @@ __elf_fdnlist(int fd, struct nlist *list)
 	 */
 	for (i = 0; i < ehdr.e_shnum; i++) {
 		if (shdr[i].sh_type == SHT_SYMTAB) {
+			if (shdr[i].sh_link >= ehdr.e_shnum)
+				continue;
 			symoff = shdr[i].sh_offset;
 			symsize = shdr[i].sh_size;
 			symstroff = shdr[shdr[i].sh_link].sh_offset;
@@ -149,26 +161,6 @@ __elf_fdnlist(int fd, struct nlist *list)
 	else
 		munmap((caddr_t)shdr, shdr_size);
 
-	/*
-	 * Map string table into our address space.  This gives us
-	 * an easy way to randomly access all the strings, without
-	 * making the memory allocation permanent as with malloc/free
-	 * (i.e., munmap will return it to the system).
-	 */
-	if (usemalloc) {
-		if ((strtab = malloc(symstrsize)) == NULL)
-			return (-1);
-		if (pread(fd, strtab, symstrsize, (off_t)symstroff) !=
-		    symstrsize) {
-			free(strtab);
-			return (-1);
-		}
-	} else {
-		strtab = mmap(NULL, (size_t)symstrsize, PROT_READ,
-		    MAP_SHARED|MAP_FILE, fd, (off_t) symstroff);
-		if (strtab == MAP_FAILED)
-			return (-1);
-	}
 	/*
 	 * clean out any left-over information for all valid entries.
 	 * Type and value defined to be 0 if not found; historical
@@ -191,19 +183,49 @@ __elf_fdnlist(int fd, struct nlist *list)
 	/* Don't process any further if object is stripped. */
 	/* ELFism - dunno if stripped by looking at header */
 	if (symoff == 0)
-		goto elf_done;
+		return nent;
 
-	while (symsize > 0) {
+	/* Check for files too large to mmap. */
+	if (SIZE_MAX - symstrsize < symstroff ||
+	    symstrsize + symstroff > st.st_size) {
+		errno = EFBIG;
+		return (-1);
+	}
+
+	/*
+	 * Map string table into our address space.  This gives us
+	 * an easy way to randomly access all the strings, without
+	 * making the memory allocation permanent as with malloc/free
+	 * (i.e., munmap will return it to the system).
+	 */
+	if (usemalloc) {
+		if ((strtab = malloc(symstrsize)) == NULL)
+			return (-1);
+		if (pread(fd, strtab, symstrsize, (off_t)symstroff) !=
+		    symstrsize) {
+			free(strtab);
+			return (-1);
+		}
+	} else {
+		strtab = mmap(NULL, (size_t)symstrsize, PROT_READ,
+		    MAP_SHARED|MAP_FILE, fd, (off_t) symstroff);
+		if (strtab == MAP_FAILED)
+			return (-1);
+	}
+
+	while (symsize >= sizeof(Elf_Sym)) {
 		cc = MINIMUM(symsize, sizeof(sbuf));
 		if (pread(fd, sbuf, cc, (off_t)symoff) != cc)
 			break;
 		symsize -= cc;
 		symoff += cc;
 		for (s = sbuf; cc > 0; ++s, cc -= sizeof(*s)) {
-			int soff = s->st_name;
+			Elf_Word soff = s->st_name;
 
-			if (soff == 0)
+			if (soff == 0 || soff >= symstrsize)
 				continue;
+			left = symstrsize - soff;
+
 			for (p = list; !ISLAST(p); p++) {
 				char *sym;
 
@@ -213,13 +235,16 @@ __elf_fdnlist(int fd, struct nlist *list)
 				 * and the first char is an '_', skip over
 				 * the '_' and try again.
 				 * XXX - What do we do when the user really
-				 *       wants '_foo' and the are symbols
+				 *       wants '_foo' and there are symbols
 				 *       for both 'foo' and '_foo' in the
 				 *	 table and 'foo' is first?
 				 */
 				sym = p->n_name;
-				if (strcmp(&strtab[soff], sym) != 0 &&
-				    (sym[0] != '_' ||
+				len = strlen(sym);
+
+				if ((len >= left ||
+				    strcmp(&strtab[soff], sym) != 0) &&
+				    (sym[0] != '_' || len - 1 >= left ||
 				     strcmp(&strtab[soff], sym + 1) != 0))
 					continue;
 
@@ -254,8 +279,7 @@ __elf_fdnlist(int fd, struct nlist *list)
 					p->n_type = N_FN;
 					break;
 				}
-				if (ELF_ST_BIND(s->st_info) ==
-				    STB_LOCAL)
+				if (ELF_ST_BIND(s->st_info) == STB_LOCAL)
 					p->n_type = N_EXT;
 				p->n_desc = 0;
 				p->n_other = 0;

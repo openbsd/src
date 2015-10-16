@@ -1,4 +1,4 @@
-/*	$OpenBSD: nlist.c,v 1.63 2015/10/16 07:40:12 tobias Exp $ */
+/*	$OpenBSD: nlist.c,v 1.64 2015/10/16 13:54:45 tobias Exp $ */
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -71,7 +71,7 @@ __elf_is_okay__(Elf_Ehdr *ehdr)
 	    ehdr->e_ident[EI_DATA] == ELF_TARG_DATA &&
 	    ehdr->e_ident[EI_VERSION] == ELF_TARG_VER) {
 
-		/* Now check the machine dependant header */
+		/* Now check the machine dependent header */
 		if (ehdr->e_machine == ELF_TARG_MACH &&
 		    ehdr->e_version == ELF_TARG_VER)
 			retval = 1;
@@ -120,7 +120,8 @@ __fdnlist(int fd, struct nlist *list)
 		if ((shdr = malloc(shdr_size)) == NULL)
 			return (-1);
 
-		if (pread(fd, shdr, shdr_size, (off_t)ehdr.e_shoff) != shdr_size) {
+		if (pread(fd, shdr, shdr_size, (off_t)ehdr.e_shoff) !=
+		    shdr_size) {
 			free(shdr);
 			return (-1);
 		}
@@ -190,7 +191,8 @@ __fdnlist(int fd, struct nlist *list)
 	if (usemalloc) {
 		if ((strtab = malloc(symstrsize)) == NULL)
 			return (-1);
-		if (pread(fd, strtab, symstrsize, (off_t)symstroff) != symstrsize) {
+		if (pread(fd, strtab, symstrsize, (off_t)symstroff) !=
+		    symstrsize) {
 			free(strtab);
 			return (-1);
 		}
@@ -267,8 +269,7 @@ __fdnlist(int fd, struct nlist *list)
 					p->n_type = N_FN;
 					break;
 				}
-				if (ELF_ST_BIND(s->st_info) ==
-				    STB_LOCAL)
+				if (ELF_ST_BIND(s->st_info) == STB_LOCAL)
 					p->n_type = N_EXT;
 				p->n_desc = 0;
 				p->n_other = 0;
