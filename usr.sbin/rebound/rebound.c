@@ -1,4 +1,4 @@
-/* $OpenBSD: rebound.c,v 1.14 2015/10/15 22:21:28 tedu Exp $ */
+/* $OpenBSD: rebound.c,v 1.15 2015/10/16 01:37:14 tedu Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -452,7 +452,8 @@ launch(const char *confname, int ud, int ld, int kq)
 		}
 
 	}
-	exit(0);
+	/* not reached */
+	exit(1);
 }
 
 static void __dead
