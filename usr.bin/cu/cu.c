@@ -1,4 +1,4 @@
-/* $OpenBSD: cu.c,v 1.23 2015/10/05 23:15:31 nicm Exp $ */
+/* $OpenBSD: cu.c,v 1.24 2015/10/16 07:01:53 deraadt Exp $ */
 
 /*
  * Copyright (c) 2012 Nicholas Marriott <nicm@openbsd.org>
@@ -78,6 +78,10 @@ main(int argc, char **argv)
 	const char	*errstr;
 	char		*tmp, *s, *host;
 	int		 opt, i, flags;
+
+	if (pledge("stdio rpath wpath cpath getpw proc exec tty",
+	    NULL) == -1)
+		err(1, "pledge");
 
 	if (isatty(STDIN_FILENO) && tcgetattr(STDIN_FILENO, &saved_tio) != 0)
 		err(1, "tcgetattr");
