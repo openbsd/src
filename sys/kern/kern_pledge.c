@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.38 2015/10/16 15:39:14 nicm Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.39 2015/10/16 17:03:31 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -51,6 +51,8 @@
 #include <sys/syscallargs.h>
 #include <sys/systm.h>
 #include <sys/pledge.h>
+
+#include "pty.h"
 
 int canonpath(const char *input, char *buf, size_t bufsize);
 
@@ -1074,6 +1076,7 @@ pledge_ioctl_check(struct proc *p, long com, void *v)
 
 	if ((p->p_p->ps_pledge & PLEDGE_TTY)) {
 		switch (com) {
+#if NPTY > 0
 		case PTMGET:
 			if ((p->p_p->ps_pledge & PLEDGE_RPATH) == 0)
 		                break;
@@ -1084,6 +1087,7 @@ pledge_ioctl_check(struct proc *p, long com, void *v)
 			if (cdevsw[major(vp->v_rdev)].d_open != ptmopen)
 				break;
 			return (0);
+#endif /* NPTY > 0 */
 #if notyet
 		case TIOCSTI:		/* ksh? csh? */
 			if (fp->f_type == DTYPE_VNODE && (vp->v_flag & VISTTY))
