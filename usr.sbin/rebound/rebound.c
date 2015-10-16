@@ -1,4 +1,4 @@
-/* $OpenBSD: rebound.c,v 1.18 2015/10/16 01:58:28 tedu Exp $ */
+/* $OpenBSD: rebound.c,v 1.19 2015/10/16 02:09:31 tedu Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -381,6 +381,7 @@ launch(const char *confname, int ud, int ld, int kq)
 	EV_SET(&kev[2], SIGHUP, EVFILT_SIGNAL, EV_ADD, 0, 0, NULL);
 	kevent(kq, kev, 3, NULL, 0, NULL);
 	signal(SIGHUP, SIG_IGN);
+	logmsg(LOG_INFO, "worker process going to work");
 	while (1) {
 		r = kevent(kq, NULL, 0, kev, 4, timeout);
 		if (r == -1)
@@ -390,6 +391,7 @@ launch(const char *confname, int ud, int ld, int kq)
 
 		for (i = 0; i < r; i++) {
 			if (kev[i].filter == EVFILT_SIGNAL) {
+				logmsg(LOG_INFO, "hupped, exiting");
 				exit(0);
 			} else if (kev[i].ident == ud) {
 				req = newrequest(ud,
@@ -495,6 +497,8 @@ main(int argc, char **argv)
 	if (argc)
 		usage();
 
+	openlog("rebound", LOG_PID | LOG_NDELAY, LOG_DAEMON);
+
 	if (!debug)
 		daemon(0, 0);
 
@@ -547,6 +551,9 @@ main(int argc, char **argv)
 		/* wait for something to happen: HUP or child exiting */
 		while (1) {
 			r = kevent(kq, NULL, 0, &kev, 1, timeout);
+			if (r == -1)
+				logerr("kevent failed (%d)", errno);
+
 			if (r == 0) {
 				logerr("child died without HUP");
 			} else if (kev.filter == EVFILT_SIGNAL) {
