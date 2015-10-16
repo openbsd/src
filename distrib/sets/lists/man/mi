@@ -2585,6 +2585,7 @@
 ./usr/share/man/man8/rdate.8
 ./usr/share/man/man8/rdump.8
 ./usr/share/man/man8/reboot.8
+./usr/share/man/man8/rebound.8
 ./usr/share/man/man8/relayctl.8
 ./usr/share/man/man8/relayd.8
 ./usr/share/man/man8/release.8

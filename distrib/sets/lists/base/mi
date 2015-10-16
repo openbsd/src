@@ -2368,6 +2368,7 @@
 ./usr/sbin/rbootd
 ./usr/sbin/rcctl
 ./usr/sbin/rdate
+./usr/sbin/rebound
 ./usr/sbin/relayctl
 ./usr/sbin/relayd
 ./usr/sbin/repquota
