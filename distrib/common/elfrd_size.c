@@ -6,6 +6,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 #include <nlist.h>
 
@@ -192,7 +193,7 @@ ELFNAME(nlist)(int fd, struct nlist *list)
 
 	/* Make sure it's not too big to mmap */
 	if (SIZE_MAX - ehdr.e_shoff < shdr_size ||
-	    ehdr.e_shoff + shdr_size > st.st_size) {
+	    S_ISREG(st.st_mode) && ehdr.e_shoff + shdr_size > st.st_size) {
 		errno = EFBIG;
 		return (-1);
 	}
@@ -262,7 +263,7 @@ ELFNAME(nlist)(int fd, struct nlist *list)
 
 	/* Check for files too large to mmap. */
 	if (SIZE_MAX - symstrsize < symstroff ||
-	    symstrsize + symstroff > st.st_size) {
+	    S_ISREG(st.st_mode) && symstrsize + symstroff > st.st_size) {
 		errno = EFBIG;
 		return (-1);
 	}

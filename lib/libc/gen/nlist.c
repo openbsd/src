@@ -1,4 +1,4 @@
-/*	$OpenBSD: nlist.c,v 1.64 2015/10/16 13:54:45 tobias Exp $ */
+/*	$OpenBSD: nlist.c,v 1.65 2015/10/16 16:54:38 tobias Exp $ */
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -107,7 +107,7 @@ __fdnlist(int fd, struct nlist *list)
 
 	/* Make sure it's not too big to mmap */
 	if (SIZE_MAX - ehdr.e_shoff < shdr_size ||
-	    ehdr.e_shoff + shdr_size > st.st_size) {
+	    (S_ISREG(st.st_mode) && ehdr.e_shoff + shdr_size > st.st_size)) {
 		errno = EFBIG;
 		return (-1);
 	}
@@ -177,7 +177,7 @@ __fdnlist(int fd, struct nlist *list)
 
 	/* Check for files too large to mmap. */
 	if (SIZE_MAX - symstrsize < symstroff ||
-	    symstrsize + symstroff > st.st_size) {
+	    (S_ISREG(st.st_mode) && symstrsize + symstroff > st.st_size)) {
 		errno = EFBIG;
 		return (-1);
 	}
