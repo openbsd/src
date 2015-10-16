@@ -1,4 +1,4 @@
-/* $OpenBSD: rebound.c,v 1.15 2015/10/16 01:37:14 tedu Exp $ */
+/* $OpenBSD: rebound.c,v 1.16 2015/10/16 01:50:39 tedu Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -38,8 +38,8 @@
 
 uint16_t randomid(void);
 
-struct timespec now;
-int debug;
+static struct timespec now;
+static int debug;
 
 struct dnspacket {
 	uint16_t id;
@@ -73,7 +73,7 @@ struct dnscache {
 	size_t resplen;
 	struct timespec ts;
 };
-TAILQ_HEAD(, dnscache) cache;
+static TAILQ_HEAD(, dnscache) cache;
 
 struct request {
 	int s;
@@ -86,10 +86,10 @@ struct request {
 	uint16_t reqid;
 	struct dnscache *cacheent;
 };
-TAILQ_HEAD(, request) reqfifo;
+static TAILQ_HEAD(, request) reqfifo;
 
 
-void
+static void
 logmsg(int prio, const char *msg, ...)
 {
 	va_list ap;
@@ -104,7 +104,7 @@ logmsg(int prio, const char *msg, ...)
 	va_end(ap);
 }
 
-void __dead
+static void __dead
 logerr(int prio, const char *msg, ...)
 {
 	va_list ap;
@@ -120,7 +120,7 @@ logerr(int prio, const char *msg, ...)
 	exit(1);
 }
 
-struct dnscache *
+static struct dnscache *
 cachelookup(struct dnspacket *dnsreq, size_t reqlen)
 {
 	struct dnscache *hit;
@@ -137,7 +137,7 @@ cachelookup(struct dnspacket *dnsreq, size_t reqlen)
 	return hit;
 }
 
-struct request *
+static struct request *
 newrequest(int ud, struct sockaddr *remoteaddr)
 {
 	struct sockaddr from;
@@ -207,7 +207,7 @@ fail:
 	return NULL;
 }
 
-void
+static void
 sendreply(int ud, struct request *req)
 {
 	uint8_t buf[65536];
@@ -236,7 +236,7 @@ sendreply(int ud, struct request *req)
 	}
 }
 
-void
+static void
 freerequest(struct request *req)
 {
 	struct dnscache *ent;
@@ -253,7 +253,7 @@ freerequest(struct request *req)
 	free(req);
 }
 
-void
+static void
 freecacheent(struct dnscache *ent)
 {
 	TAILQ_REMOVE(&cache, ent, cache);
@@ -262,7 +262,7 @@ freecacheent(struct dnscache *ent)
 	free(ent);
 }
 
-struct request *
+static struct request *
 newtcprequest(int ld, struct sockaddr *remoteaddr)
 {
 	struct request *req;
@@ -301,7 +301,7 @@ fail:
 	return NULL;
 }
 
-int
+static int
 readconfig(FILE *conf, struct sockaddr_storage *remoteaddr)
 {
 	char buf[1024];
@@ -328,7 +328,7 @@ readconfig(FILE *conf, struct sockaddr_storage *remoteaddr)
 	}
 }
 
-int
+static int
 launch(const char *confname, int ud, int ld, int kq)
 {
 	struct sockaddr_storage remoteaddr;
