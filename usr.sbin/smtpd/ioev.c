@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioev.c,v 1.21 2015/10/14 22:01:43 gilles Exp $	*/
+/*	$OpenBSD: ioev.c,v 1.22 2015/10/16 21:13:33 sthen Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -89,7 +89,7 @@ io_strio(struct io *io)
 #ifdef IO_SSL
 	if (io->ssl) {
 		(void)snprintf(ssl, sizeof ssl, " ssl=%s:%s:%d",
-		    SSL_get_cipher_version(io->ssl),
+		    SSL_get_version(io->ssl),
 		    SSL_get_cipher_name(io->ssl),
 		    SSL_get_cipher_bits(io->ssl, NULL));
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.236 2015/10/13 11:32:47 eric Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.237 2015/10/16 21:13:33 sthen Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -649,7 +649,7 @@ smtp_session_imsg(struct mproc *p, struct imsg *imsg)
 			x = SSL_get_peer_certificate(s->io.ssl);
 			smtp_message_printf(s,
 			    "\n\tTLS version=%s cipher=%s bits=%d verify=%s",
-			    SSL_get_cipher_version(s->io.ssl),
+			    SSL_get_version(s->io.ssl),
 			    SSL_get_cipher_name(s->io.ssl),
 			    SSL_get_cipher_bits(s->io.ssl, NULL),
 			    (s->flags & SF_VERIFIED) ? "YES" : (x ? "FAIL" : "NO"));
