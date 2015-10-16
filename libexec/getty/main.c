@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.37 2015/07/16 04:31:25 tedu Exp $	*/
+/*	$OpenBSD: main.c,v 1.38 2015/10/16 22:25:50 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -158,7 +158,7 @@ main(int argc, char *argv[])
 	char *tname;
 	int repcnt = 0, failopenlogged = 0;
 	struct rlimit limit;
-	int rval;
+	int rval, off = 0;
 
 	signal(SIGINT, SIG_IGN);
 /*
@@ -220,6 +220,12 @@ main(int argc, char *argv[])
 			login_tty(i);
 		}
 	}
+	ioctl(0, FIOASYNC, &off);	/* turn off async mode */
+
+	if (pledge("stdio rpath fattr proc exec tty", NULL) == -1) {
+		syslog(LOG_ERR, "pledge: %m");
+		exit(1);
+	}
 
 	/* Start with default tty settings */
 	if (tcgetattr(0, &tmode) < 0) {
@@ -234,16 +240,12 @@ main(int argc, char *argv[])
 	if (argc > 1)
 		tname = argv[1];
 	for (;;) {
-		int off;
-
 		gettable(tname, tabent);
 		if (OPset || EPset || APset)
 			APset++, OPset++, EPset++;
 		setdefaults();
-		off = 0;
 		(void)tcflush(0, TCIOFLUSH);	/* clear out the crap */
 		ioctl(0, FIONBIO, &off);	/* turn off non-blocking mode */
-		ioctl(0, FIOASYNC, &off);	/* ditto for async mode */
 
 		if (IS)
 			cfsetispeed(&tmode, IS);
