@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.32 2015/10/16 06:42:02 deraadt Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.33 2015/10/16 13:37:43 millert Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -224,7 +224,7 @@ const u_int pledge_syscalls[SYS_MAXSYSCALL] = {
 	[SYS_setsockopt] = PLEDGE_INET | PLEDGE_UNIX,
 	[SYS_getsockopt] = PLEDGE_INET | PLEDGE_UNIX,
 
-	[SYS_flock] = PLEDGE_RW | PLEDGE_CPATH,
+	[SYS_flock] = PLEDGE_FLOCK | PLEDGE_YP_ACTIVE,
 };
 
 static const struct {
@@ -253,7 +253,7 @@ static const struct {
 	{ "abort",		PLEDGE_ABORT },
 	{ "fattr",		PLEDGE_FATTR },
 	{ "prot_exec",		PLEDGE_PROTEXEC },
-	{ "flock",		PLEDGE_RW | PLEDGE_CPATH },
+	{ "flock",		PLEDGE_FLOCK },
 };
 
 int
@@ -1207,6 +1207,16 @@ pledge_dns_check(struct proc *p, in_port_t port)
 	if ((p->p_p->ps_pledge & PLEDGE_DNS_ACTIVE) && port == htons(53))
 		return (0);	/* Allow a DNS connect outbound */
 	return (EPERM);
+}
+
+int
+pledge_flock_check(struct proc *p)
+{
+	if ((p->p_p->ps_flags & PS_PLEDGE) == 0)
+		return (0);
+	if ((p->p_p->ps_pledge & PLEDGE_FLOCK))
+		return (0);
+	return (pledge_fail(p, EPERM, PLEDGE_FLOCK));
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.c,v 1.168 2015/10/14 22:01:43 gilles Exp $	*/
+/*	$OpenBSD: queue.c,v 1.169 2015/10/16 13:37:44 millert Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -643,7 +643,7 @@ queue(void)
 	tv.tv_usec = 10;
 	evtimer_add(&ev_qload, &tv);
 
-	if (pledge("stdio rpath wpath cpath recvfd sendfd", NULL) == -1)
+	if (pledge("stdio rpath wpath cpath flock recvfd sendfd", NULL) == -1)
 		err(1, "pledge");
 
 	if (event_dispatch() <  0)

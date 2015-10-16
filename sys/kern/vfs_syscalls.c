@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.230 2015/10/14 14:24:03 deraadt Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.231 2015/10/16 13:37:43 millert Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -859,6 +859,12 @@ doopenat(struct proc *p, int fd, const char *path, int oflags, mode_t mode,
 	}
 	if (oflags & O_CREAT)
 		p->p_pledgenote |= TMN_CPATH;
+
+	if (oflags & (O_EXLOCK | O_SHLOCK)) {
+		error = pledge_flock_check(p);
+		if (error != 0)
+			return (error);
+	}
 
 	fdplock(fdp);
 

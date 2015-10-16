@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.49 2015/10/12 15:56:58 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.50 2015/10/16 13:37:44 millert Exp $	*/
 /*	$NetBSD: main.c,v 1.22 1997/02/02 21:12:33 thorpej Exp $	*/
 
 /*
@@ -107,7 +107,7 @@ main(int argc, char *argv[])
 	int ch, eflag, uflag, fflag;
 	char dirbuffer[PATH_MAX];
 
-	if (pledge("stdio rpath wpath cpath", NULL) == -1)
+	if (pledge("stdio rpath wpath cpath flock", NULL) == -1)
 		err(1, "pledge");
 
 	pflag = eflag = uflag = fflag = 0;

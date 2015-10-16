@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_skey.c,v 1.24 2015/01/16 06:39:50 deraadt Exp $	*/
+/*	$OpenBSD: login_skey.c,v 1.25 2015/10/16 13:37:43 millert Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001, 2004 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -34,6 +34,7 @@
 #include <syslog.h>
 #include <unistd.h>
 #include <limits.h>
+#include <err.h>
 
 #include <login_cap.h>
 #include <bsd_auth.h>
@@ -64,6 +65,11 @@ main(int argc, char *argv[])
 	(void)signal(SIGALRM, quit);
 	(void)signal(SIGTSTP, suspend);
 	(void)setpriority(PRIO_PROCESS, 0, 0);
+
+	if (pledge("stdio rpath wpath flock sendfd proc tty", NULL) == -1) {
+		syslog(LOG_AUTH|LOG_ERR, "pledge: %m");
+		exit(1);
+	}
 
 	openlog(NULL, LOG_ODELAY, LOG_AUTH);
 

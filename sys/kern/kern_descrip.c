@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.120 2015/05/17 01:22:01 deraadt Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.121 2015/10/16 13:37:43 millert Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -60,6 +60,7 @@
 #include <sys/event.h>
 #include <sys/pool.h>
 #include <sys/ktrace.h>
+#include <sys/pledge.h>
 
 #include <sys/pipe.h>
 
@@ -461,6 +462,10 @@ restart:
 		/* FALLTHROUGH */
 
 	case F_SETLK:
+		error = pledge_flock_check(p);
+		if (error != 0)
+			break;
+
 		if (fp->f_type != DTYPE_VNODE) {
 			error = EBADF;
 			break;
@@ -524,6 +529,10 @@ restart:
 
 
 	case F_GETLK:
+		error = pledge_flock_check(p);
+		if (error != 0)
+			break;
+
 		if (fp->f_type != DTYPE_VNODE) {
 			error = EBADF;
 			break;

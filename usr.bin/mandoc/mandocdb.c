@@ -1,4 +1,4 @@
-/*	$OpenBSD: mandocdb.c,v 1.157 2015/10/13 22:57:49 schwarze Exp $ */
+/*	$OpenBSD: mandocdb.c,v 1.158 2015/10/16 13:37:44 millert Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -333,7 +333,7 @@ mandocdb(int argc, char *argv[])
 	size_t		  j, sz;
 	int		  ch, i;
 
-	if (pledge("stdio rpath wpath cpath fattr proc exec", NULL) == -1) {
+	if (pledge("stdio rpath wpath cpath fattr flock proc exec", NULL) == -1) {
 		perror("pledge");
 		return (int)MANDOCLEVEL_SYSERR;
 	}
@@ -441,7 +441,7 @@ mandocdb(int argc, char *argv[])
 			 * The existing database is usable.  Process
 			 * all files specified on the command-line.
 			 */
-			if (!nodb && pledge("stdio rpath wpath cpath fattr",
+			if (!nodb && pledge("stdio rpath wpath cpath fattr flock",
 			    NULL) == -1) {
 				perror("pledge");
 				exitcode = (int)MANDOCLEVEL_SYSERR;

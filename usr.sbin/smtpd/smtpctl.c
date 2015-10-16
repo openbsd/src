@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpctl.c,v 1.131 2015/10/15 08:18:23 sunil Exp $	*/
+/*	$OpenBSD: smtpctl.c,v 1.132 2015/10/16 13:37:44 millert Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -932,7 +932,7 @@ main(int argc, char **argv)
 			err(1, "setresgid");
 
 		/* we'll reduce further down the road */
-		if (pledge("stdio rpath tmppath getpw recvfd", NULL) == -1)
+		if (pledge("stdio rpath tmppath flock getpw recvfd", NULL) == -1)
 			err(1, "pledge");
 		
 		sendmail = 1;

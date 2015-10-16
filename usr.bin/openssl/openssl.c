@@ -1,4 +1,4 @@
-/* $OpenBSD: openssl.c,v 1.17 2015/10/10 22:28:51 doug Exp $ */
+/* $OpenBSD: openssl.c,v 1.18 2015/10/16 13:37:44 millert Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -438,7 +438,7 @@ main(int argc, char **argv)
 	arg.data = NULL;
 	arg.count = 0;
 
-	if (pledge("stdio inet rpath wpath cpath proc", NULL) == -1) {
+	if (pledge("stdio inet rpath wpath cpath proc flock", NULL) == -1) {
 		fprintf(stderr, "openssl: pledge: %s\n", strerror(errno));
 		exit(1);
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: htpasswd.c,v 1.13 2015/10/09 01:37:07 deraadt Exp $ */
+/*	$OpenBSD: htpasswd.c,v 1.14 2015/10/16 13:37:44 millert Exp $ */
 /*
  * Copyright (c) 2014 Florian Obser <florian@openbsd.org>
  *
@@ -57,7 +57,7 @@ main(int argc, char** argv)
 	ssize_t linelen;
 	mode_t old_umask;
 
-	if (pledge("stdio rpath wpath cpath tmppath tty", NULL) == -1)
+	if (pledge("stdio rpath wpath cpath flock tmppath tty", NULL) == -1)
 		err(1, "pledge");
 
 	while ((c = getopt(argc, argv, "I")) != -1) {
