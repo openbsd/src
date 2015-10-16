@@ -1,4 +1,4 @@
-/*	$OpenBSD: zic.c,v 1.20 2015/04/23 05:26:33 deraadt Exp $	*/
+/*	$OpenBSD: zic.c,v 1.21 2015/10/16 22:53:32 deraadt Exp $	*/
 /*
 ** This file is in the public domain, so clarified as of
 ** 2006-07-17 by Arthur David Olson.
@@ -507,6 +507,9 @@ int
 main(int argc, char **argv)
 {
 	int	i, j, c;
+
+	if (pledge("stdio rpath wpath cpath proc exec", NULL) == -1)
+		err(1, "pledge");
 
 	umask(umask(S_IWGRP | S_IWOTH) | (S_IWGRP | S_IWOTH));
 	while ((c = getopt(argc, argv, "d:l:p:L:vy:")) != -1)
