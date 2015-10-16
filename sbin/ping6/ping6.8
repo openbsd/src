@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ping6.8,v 1.54 2015/10/16 20:11:59 florian Exp $
+.\"	$OpenBSD: ping6.8,v 1.55 2015/10/16 22:47:12 florian Exp $
 .\"	$KAME: ping6.8,v 1.57 2002/05/26 13:18:25 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -37,7 +37,6 @@
 .Sh SYNOPSIS
 .Nm ping6
 .Op Fl dEefHmNnqv
-.Op Fl a Ar querytype
 .Op Fl c Ar count
 .Op Fl g Ar gateway
 .Op Fl h Ar hoplimit
@@ -66,38 +65,6 @@ ICMPv6
 header formatted as documented in RFC 4443.
 The options are as follows:
 .Bl -tag -width Ds
-.It Fl a Ar querytype
-Generate an ICMPv6 Node Information query,
-rather than an echo-request.
-.Ar querytype
-must be a string constructed of the following characters:
-.Pp
-.Bl -tag -width Ds -compact
-.It Ic A
-Requests responder's anycast addresses.
-Without this character, the responder will return unicast addresses only.
-With this character, the responder will return anycast addresses only.
-Note that the specification does not specify how to get the responder's
-anycast addresses.
-This is an experimental option.
-.It Ic a
-Requests unicast addresses from all of the responder's interfaces.
-If the character is omitted,
-only those addresses which belong to the interface which has the
-responder's address are requests.
-.It Ic c
-Requests responder's IPv4-compatible and IPv4-mapped addresses.
-.It Ic d
-Generate an ICMPv6 Node Information DNS Name query.
-.It Ic g
-Requests responder's global-scope addresses.
-.It Ic l
-Requests responder's link-local addresses.
-.It Ic n
-Generate an ICMPv6 Node Information query.
-.It Ic s
-Requests responder's site-local addresses.
-.El
 .It Fl c Ar count
 Stop after sending
 .Pq and receiving
@@ -182,19 +149,6 @@ when the option is specified once, the behavior will be disabled for
 unicast packets.
 When the option is specified more than once, it will be disabled for both
 unicast and multicast packets.
-.It Fl N
-Probe the node information multicast group
-.Pq Li ff02::2:xxxx:xxxx .
-.Ar host
-must be the hostname of the target
-(i.e. it must not be a numeric IPv6 address).
-The node information multicast group is computed based on the given
-.Ar host ,
-and is used as the final destination.
-Since the node information multicast group is a link-local multicast group,
-the outgoing interface needs to be specified using the
-.Fl I
-option.
 .It Fl n
 Numeric output only.
 No attempt will be made to look up symbolic names from addresses in the reply.
@@ -367,12 +321,6 @@ reach every node on the network link:
 .Bd -literal -offset indent
 $ ping6 -w ff02::1%wi0
 .Ed
-.Pp
-The following will probe addresses assigned to the destination node,
-dst.foo.com:
-.Bd -literal -offset indent
-$ ping6 -a agl dst.foo.com
-.Ed
 .Sh SEE ALSO
 .Xr netstat 1 ,
 .Xr icmp6 4 ,
@@ -390,14 +338,6 @@ $ ping6 -a agl dst.foo.com
 .%D March 2006
 .%R RFC 4443
 .%T "Internet Control Message Protocol (ICMPv6) for the Internet Protocol Version 6 (IPv6) Specification"
-.Re
-.Pp
-.Rs
-.%A M. Crawford
-.%A B. Haberman
-.%D August 2006
-.%R RFC 4620
-.%T IPv6 Node Information Queries
 .Re
 .Sh HISTORY
 The
