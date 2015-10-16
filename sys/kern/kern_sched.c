@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sched.c,v 1.38 2015/09/20 22:05:14 kettenis Exp $	*/
+/*	$OpenBSD: kern_sched.c,v 1.39 2015/10/16 19:07:24 mpi Exp $	*/
 /*
  * Copyright (c) 2007, 2008 Artur Grabowski <art@openbsd.org>
  *
@@ -52,6 +52,10 @@ uint64_t sched_stolen;		/* Times we stole proc from other cpus */
 uint64_t sched_choose;		/* Times we chose a cpu */
 uint64_t sched_wasidle;		/* Times we came out of idle */
 
+#ifdef MULTIPROCESSOR
+struct taskq *sbartq;
+#endif
+
 /*
  * A few notes about cpu_switchto that is implemented in MD code.
  *
@@ -94,6 +98,13 @@ sched_init_cpu(struct cpu_info *ci)
 	 */
 	cpuset_init_cpu(ci);
 	cpuset_add(&sched_all_cpus, ci);
+
+#ifdef MULTIPROCESSOR
+	sbartq = taskq_create("sbar", 1, IPL_NONE,
+	    TASKQ_MPSAFE | TASKQ_CANTSLEEP);
+	if (sbartq == NULL)
+		panic("unable to create sbar taskq");
+#endif
 }
 
 void
@@ -668,7 +679,7 @@ sched_barrier(struct cpu_info *ci)
 	task_set(&task, sched_barrier_task, ci);
 	spc = &ci->ci_schedstate;
 	spc->spc_barrier = 0;
-	task_add(systq, &task);
+	task_add(sbartq, &task);
 	while (!spc->spc_barrier) {
 		sleep_setup(&sls, &spc->spc_barrier, PWAIT, "sbar");
 		sleep_finish(&sls, !spc->spc_barrier);
