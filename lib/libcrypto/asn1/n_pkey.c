@@ -1,4 +1,4 @@
-/* $OpenBSD: n_pkey.c,v 1.27 2015/09/10 15:56:24 jsing Exp $ */
+/* $OpenBSD: n_pkey.c,v 1.28 2015/10/16 15:09:28 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -114,7 +114,6 @@ const ASN1_ITEM NETSCAPE_ENCRYPTED_PKEY_it = {
 };
 
 DECLARE_ASN1_FUNCTIONS_const(NETSCAPE_ENCRYPTED_PKEY)
-DECLARE_ASN1_ENCODE_FUNCTIONS_const(NETSCAPE_ENCRYPTED_PKEY, NETSCAPE_ENCRYPTED_PKEY)
 
 NETSCAPE_ENCRYPTED_PKEY *
 d2i_NETSCAPE_ENCRYPTED_PKEY(NETSCAPE_ENCRYPTED_PKEY **a, const unsigned char **in, long len)
@@ -169,7 +168,6 @@ const ASN1_ITEM NETSCAPE_PKEY_it = {
 };
 
 DECLARE_ASN1_FUNCTIONS_const(NETSCAPE_PKEY)
-DECLARE_ASN1_ENCODE_FUNCTIONS_const(NETSCAPE_PKEY, NETSCAPE_PKEY)
 
 NETSCAPE_PKEY *
 d2i_NETSCAPE_PKEY(NETSCAPE_PKEY **a, const unsigned char **in, long len)

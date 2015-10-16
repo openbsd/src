@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_asn1.c,v 1.18 2015/09/29 13:54:40 jsing Exp $ */
+/* $OpenBSD: ec_asn1.c,v 1.19 2015/10/16 15:09:28 jsing Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -551,8 +551,8 @@ const ASN1_ITEM ECPKPARAMETERS_it = {
 	.size = sizeof(ECPKPARAMETERS),
 	.sname = "ECPKPARAMETERS",
 };
+
 DECLARE_ASN1_FUNCTIONS_const(ECPKPARAMETERS)
-DECLARE_ASN1_ENCODE_FUNCTIONS_const(ECPKPARAMETERS, ECPKPARAMETERS)
 
 ECPKPARAMETERS *
 d2i_ECPKPARAMETERS(ECPKPARAMETERS **a, const unsigned char **in, long len)
@@ -619,8 +619,8 @@ const ASN1_ITEM EC_PRIVATEKEY_it = {
 	.size = sizeof(EC_PRIVATEKEY),
 	.sname = "EC_PRIVATEKEY",
 };
+
 DECLARE_ASN1_FUNCTIONS_const(EC_PRIVATEKEY)
-DECLARE_ASN1_ENCODE_FUNCTIONS_const(EC_PRIVATEKEY, EC_PRIVATEKEY)
 
 EC_PRIVATEKEY *
 d2i_EC_PRIVATEKEY(EC_PRIVATEKEY **a, const unsigned char **in, long len)
