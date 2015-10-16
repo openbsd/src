@@ -1,4 +1,4 @@
-/*	$OpenBSD: route6d.c,v 1.67 2015/09/11 20:14:58 mpi Exp $	*/
+/*	$OpenBSD: route6d.c,v 1.68 2015/10/16 20:43:27 jca Exp $	*/
 /*	$KAME: route6d.c,v 1.111 2006/10/25 06:38:13 jinmei Exp $	*/
 
 /*
@@ -922,8 +922,7 @@ sendpacket(struct sockaddr_in6 *sin6, int len)
 	struct iovec iov[2];
 	union {
 		struct cmsghdr hdr;
-		u_char buf[CMSG_SPACE(sizeof(struct in6_pktinfo)) +
-		    CMSG_SPACE(sizeof(int))];
+		u_char buf[CMSG_SPACE(sizeof(struct in6_pktinfo))];
 	} cmsgbuf;
 	struct in6_pktinfo *pi;
 	int idx;
@@ -994,7 +993,8 @@ riprecv(void)
 	struct iovec iov[2];
 	union {
 		struct cmsghdr hdr;
-		u_char buf[CMSG_SPACE(sizeof(struct in6_pktinfo))];
+		u_char buf[CMSG_SPACE(sizeof(struct in6_pktinfo)) +
+		    CMSG_SPACE(sizeof(int))];
 	} cmsgbuf;
 	struct in6_pktinfo *pi = NULL;
 	int *hlimp = NULL;
