@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.h,v 1.12 2015/01/19 15:30:52 krw Exp $ */
+/*	$OpenBSD: config.h,v 1.13 2015/10/16 07:37:46 tobias Exp $ */
 /* *	$NetBSD: config.h,v 1.3 1995/03/23 08:29:15 cgd Exp $*/
 
 /*
@@ -107,7 +107,7 @@
 #define	MAILCKFREQ	100	
 
 
-#define SHELL		/* do not delete the '!' command */
+/* #define SHELL */		/* do not delete the '!' command */
 
 #define	SUSPEND		/* let ^Z suspend the game */
 #endif /* UNIX */

@@ -9,7 +9,7 @@ b j n		f<dir>: fast movement in direction <dir>
 Meta commands:
 Q	quit	leave the game
 S	save	save the game (to be continued later)
-!	sh	escape to some SHELL
+!	sh	escape to some SHELL; disabled by default
 ^Z	suspend	suspend the game (independent of your current suspend char)
 O	set	set options
 ?	help	print information
