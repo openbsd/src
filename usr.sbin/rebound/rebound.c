@@ -1,4 +1,4 @@
-/* $OpenBSD: rebound.c,v 1.22 2015/10/16 18:38:53 tedu Exp $ */
+/* $OpenBSD: rebound.c,v 1.23 2015/10/16 18:47:52 tedu Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -139,6 +139,32 @@ cachelookup(struct dnspacket *dnsreq, size_t reqlen)
 	return hit;
 }
 
+static void
+freerequest(struct request *req)
+{
+	struct dnscache *ent;
+
+	TAILQ_REMOVE(&reqfifo, req, fifo);
+	if (req->client != -1)
+		close(req->client);
+	if (req->s != -1)
+		close(req->s);
+	if ((ent = req->cacheent) && !ent->resp) {
+		free(ent->req);
+		free(ent);
+	}
+	free(req);
+}
+
+static void
+freecacheent(struct dnscache *ent)
+{
+	TAILQ_REMOVE(&cache, ent, cache);
+	free(ent->req);
+	free(ent->resp);
+	free(ent);
+}
+
 static struct request *
 newrequest(int ud, struct sockaddr *remoteaddr)
 {
@@ -166,6 +192,7 @@ newrequest(int ud, struct sockaddr *remoteaddr)
 	if (!(req = calloc(1, sizeof(*req))))
 		return NULL;
 
+	TAILQ_INSERT_TAIL(&reqfifo, req, fifo);
 	req->ts = now;
 	req->ts.tv_sec += 30;
 
@@ -203,11 +230,9 @@ newrequest(int ud, struct sockaddr *remoteaddr)
 		goto fail;
 
 	return req;
+
 fail:
-	free(hit);
-	if (req->s != -1)
-		close(req->s);
-	free(req);
+	freerequest(req);
 	return NULL;
 }
 
@@ -238,32 +263,6 @@ sendreply(int ud, struct request *req)
 		ent->resplen = r;
 		TAILQ_INSERT_TAIL(&cache, ent, cache);
 	}
-}
-
-static void
-freerequest(struct request *req)
-{
-	struct dnscache *ent;
-
-	TAILQ_REMOVE(&reqfifo, req, fifo);
-	if (req->client != -1)
-		close(req->client);
-	if (req->s != -1)
-		close(req->s);
-	if ((ent = req->cacheent) && !ent->resp) {
-		free(ent->req);
-		free(ent);
-	}
-	free(req);
-}
-
-static void
-freecacheent(struct dnscache *ent)
-{
-	TAILQ_REMOVE(&cache, ent, cache);
-	free(ent->req);
-	free(ent->resp);
-	free(ent);
 }
 
 static struct request *
@@ -299,6 +298,7 @@ newtcprequest(int ld, struct sockaddr *remoteaddr)
 	if (!(req = calloc(1, sizeof(*req))))
 		return NULL;
 
+	TAILQ_INSERT_TAIL(&reqfifo, req, fifo);
 	req->ts = now;
 	req->ts.tv_sec += 30;
 
@@ -318,19 +318,13 @@ newtcprequest(int ld, struct sockaddr *remoteaddr)
 		if (errno != EINPROGRESS)
 			goto fail;
 	} else {
-		TAILQ_INSERT_TAIL(&reqfifo, req, fifo);
 		return tcpphasetwo(req);
 	}
 
-	TAILQ_INSERT_TAIL(&reqfifo, req, fifo);
 	return req;
 
 fail:
-	if (req->s != -1)
-		close(req->s);
-	if (req->client != -1)
-		close(req->client);
-	free(req);
+	freerequest(req);
 	return NULL;
 }
 
@@ -433,7 +427,6 @@ launch(const char *confname, int ud, int ld, int kq)
 					EV_SET(&chlist[0], req->s, EVFILT_READ,
 					    EV_ADD, 0, 0, NULL);
 					kevent(kq, chlist, 1, NULL, 0, NULL);
-					TAILQ_INSERT_TAIL(&reqfifo, req, fifo);
 				}
 			} else if (kev[i].ident == ld) {
 				req = newtcprequest(ld,
