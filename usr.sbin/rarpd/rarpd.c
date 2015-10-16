@@ -1,4 +1,4 @@
-/*	$OpenBSD: rarpd.c,v 1.61 2015/08/20 22:39:29 deraadt Exp $ */
+/*	$OpenBSD: rarpd.c,v 1.62 2015/10/16 23:09:53 deraadt Exp $ */
 /*	$NetBSD: rarpd.c,v 1.25 1998/04/23 02:48:33 mrg Exp $	*/
 
 /*
@@ -149,38 +149,9 @@ main(int argc, char *argv[])
 		}
 
 	if ((!fflag) && (!dflag)) {
-		pid = fork();
-		if (pid > 0)
-			/* Parent exits, leaving child in background. */
-			exit(0);
-		else
-			if (pid == -1) {
-				error(FATAL, "cannot fork");
-				/* NOTREACHED */
-			}
-
-		/* write pid file */
+		if (daemon(0, 0) == -1)
+			error(FATAL, "failed to daemonize: %s", strerror(errno));
 		pidfile(NULL);
-
-		/* Fade into the background */
-		f = open(_PATH_TTY, O_RDWR);
-		if (f >= 0) {
-			if (ioctl(f, TIOCNOTTY, 0) < 0) {
-				error(FATAL, "TIOCNOTTY: %s", strerror(errno));
-				/* NOTREACHED */
-			}
-			(void) close(f);
-		}
-		(void) chdir("/");
-		(void) setpgid(0, 0);
-		devnull = open(_PATH_DEVNULL, O_RDWR);
-		if (devnull >= 0) {
-			(void) dup2(devnull, STDIN_FILENO);
-			(void) dup2(devnull, STDOUT_FILENO);
-			(void) dup2(devnull, STDERR_FILENO);
-			if (devnull > 2)
-				(void) close(devnull);
-		}
 	}
 	rarp_loop();
 	exit(0);
