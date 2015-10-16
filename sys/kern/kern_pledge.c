@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.31 2015/10/16 06:40:53 doug Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.32 2015/10/16 06:42:02 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -1044,9 +1044,6 @@ pledge_ioctl_check(struct proc *p, long com, void *v)
 	 */
 	if ((p->p_p->ps_pledge & PLEDGE_IOCTL)) {
 		switch (com) {
-		case FIOSETOWN:
-		case FIOGETOWN:
-			return (0);
 		case TIOCGETA:
 			if (fp->f_type == DTYPE_VNODE && (vp->v_flag & VISTTY))
 				return (0);
