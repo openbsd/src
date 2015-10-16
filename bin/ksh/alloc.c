@@ -1,4 +1,4 @@
-/*	$OpenBSD: alloc.c,v 1.9 2015/10/16 03:17:56 mmcc Exp $	*/
+/*	$OpenBSD: alloc.c,v 1.10 2015/10/16 23:13:35 mmcc Exp $	*/
 /*
  * Copyright (c) 2002 Marc Espie.
  *
@@ -63,6 +63,10 @@ alloc(size_t size, Area *ap)
 {
 	struct link *l;
 
+	/* ensure that we don't overflow by allocating space for link */
+	if (size > SIZE_MAX - sizeof(struct link))
+		internal_errorf(1, "unable to allocate memory");
+
 	l = malloc(sizeof(struct link) + size);
 	if (l == NULL)
 		internal_errorf(1, "unable to allocate memory");
@@ -91,10 +95,6 @@ allocarray(size_t nmemb, size_t size, Area *ap)
 	    nmemb > 0 && SIZE_MAX / nmemb < size) {
 		internal_errorf(1, "unable to allocate memory");
 	}
-
-	/* additional check because alloc() allocates space for link */
-	if (nmemb * size > SIZE_MAX - sizeof(struct link))
-		internal_errorf(1, "unable to allocate memory");
 
 	return alloc(nmemb * size, ap);
 }
