@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.58 2015/10/16 10:29:55 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.59 2015/10/16 12:17:38 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -4621,7 +4621,6 @@ iwm_mvm_scan_request(struct iwm_softc *sc, int flags,
 		 * to allocate the time events. Warn on it, but maybe we
 		 * should try to send the command again with different params.
 		 */
-		sc->sc_scanband = 0;
 		ret = EIO;
 	}
 	return ret;
@@ -5325,7 +5324,9 @@ iwm_newstate_task(void *psc)
 		if ((error = iwm_mvm_scan_request(sc, IEEE80211_CHAN_2GHZ,
 		    ic->ic_des_esslen != 0,
 		    ic->ic_des_essid, ic->ic_des_esslen)) != 0) {
-			printf("%s: could not initiate scan\n", DEVNAME(sc));
+			printf("%s: could not initiate 2 GHz scan\n",
+			    DEVNAME(sc));
+			sc->sc_scanband = 0;
 			return;
 		}
 		ic->ic_state = nstate;
@@ -5410,7 +5411,8 @@ iwm_endscan_cb(void *arg)
 		if ((error = iwm_mvm_scan_request(sc,
 		    IEEE80211_CHAN_5GHZ, ic->ic_des_esslen != 0,
 		    ic->ic_des_essid, ic->ic_des_esslen)) != 0) {
-			printf("%s: could not initiate scan\n", DEVNAME(sc));
+			printf("%s: could not initiate 5 GHz scan\n",
+			    DEVNAME(sc));
 			done = 1;
 		}
 	} else {
@@ -5418,11 +5420,7 @@ iwm_endscan_cb(void *arg)
 	}
 
 	if (done) {
-		if (!sc->sc_scanband) {
-			ic->ic_scan_lock = IEEE80211_SCAN_UNLOCKED;
-		} else {
-			ieee80211_end_scan(&ic->ic_if);
-		}
+		ieee80211_end_scan(&ic->ic_if);
 		sc->sc_scanband = 0;
 	}
 }
