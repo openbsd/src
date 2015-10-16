@@ -1,4 +1,4 @@
-/* $OpenBSD: rebound.c,v 1.24 2015/10/16 20:12:06 tedu Exp $ */
+/* $OpenBSD: rebound.c,v 1.25 2015/10/16 20:25:09 tedu Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -356,7 +356,7 @@ readconfig(FILE *conf, struct sockaddr_storage *remoteaddr)
 }
 
 static int
-launch(const char *confname, int ud, int ld, int kq, int *pfd)
+launch(const char *confname, int ud, int ld, int kq)
 {
 	struct sockaddr_storage remoteaddr;
 	struct kevent chlist[2], kev[4];
@@ -366,7 +366,7 @@ launch(const char *confname, int ud, int ld, int kq, int *pfd)
 	struct passwd *pwd;
 	FILE *conf;
 	int i, r, af;
-	pid_t child;
+	pid_t parent, child;
 
 	conf = fopen(confname, "r");
 	if (!conf) {
@@ -374,11 +374,14 @@ launch(const char *confname, int ud, int ld, int kq, int *pfd)
 		return -1;
 	}
 
+	parent = getpid();
 	if (!debug) {
 		if ((child = fork()))
 			return child;
-		close(pfd[1]);
 	}
+
+	close(kq);
+	kq = kqueue();
 
 	if (!(pwd = getpwnam("_rebound")))
 		logerr("getpwnam failed");
@@ -387,12 +390,12 @@ launch(const char *confname, int ud, int ld, int kq, int *pfd)
 		logerr("chroot failed (%d)", errno);
 
 	setproctitle("worker");
+	EV_SET(&kev[0], parent, EVFILT_PROC, EV_ADD, NOTE_EXIT, 0, NULL);
+	kevent(kq, kev, 1, NULL, 0, NULL);
 	if (setgroups(1, &pwd->pw_gid) ||
 	    setresgid(pwd->pw_gid, pwd->pw_gid, pwd->pw_gid) ||
 	    setresuid(pwd->pw_uid, pwd->pw_uid, pwd->pw_uid))
 		logerr("failed to privdrop");
-
-	close(kq);
 
 	if (pledge("stdio inet", NULL) == -1)
 		logerr("pledge failed");
@@ -402,13 +405,10 @@ launch(const char *confname, int ud, int ld, int kq, int *pfd)
 	if (af == -1)
 		logerr("failed to read config %s", confname);
 
-	kq = kqueue();
-
 	EV_SET(&kev[0], ud, EVFILT_READ, EV_ADD, 0, 0, NULL);
 	EV_SET(&kev[1], ld, EVFILT_READ, EV_ADD, 0, 0, NULL);
 	EV_SET(&kev[2], SIGHUP, EVFILT_SIGNAL, EV_ADD, 0, 0, NULL);
-	EV_SET(&kev[3], pfd[0], EVFILT_READ, EV_ADD, 0, 0, NULL);
-	kevent(kq, kev, 4, NULL, 0, NULL);
+	kevent(kq, kev, 3, NULL, 0, NULL);
 	signal(SIGHUP, SIG_IGN);
 	logmsg(LOG_INFO, "worker process going to work");
 	while (1) {
@@ -422,11 +422,9 @@ launch(const char *confname, int ud, int ld, int kq, int *pfd)
 			if (kev[i].filter == EVFILT_SIGNAL) {
 				logmsg(LOG_INFO, "hupped, exiting");
 				exit(0);
-			} else if (kev[i].ident == pfd[0]) {
-				if (kev[i].flags & EV_EOF) {
-					logmsg(LOG_INFO, "parent died");
-					exit(0);
-				}
+			} else if (kev[i].filter == EVFILT_PROC) {
+				logmsg(LOG_INFO, "parent died");
+				exit(0);
 			} else if (kev[i].ident == ud) {
 				req = newrequest(ud,
 				    (struct sockaddr *)&remoteaddr);
@@ -522,7 +520,6 @@ main(int argc, char **argv)
 	struct sockaddr_in bindaddr;
 	int r, kq, ld, ud, ch;
 	int one;
-	int pfd[2];
 	int childdead, hupped;
 	pid_t child;
 	struct kevent kev;
@@ -578,10 +575,8 @@ main(int argc, char **argv)
 	if (listen(ld, 10) == -1)
 		err(1, "listen");
 
-	pipe(pfd);
-
 	if (debug) {
-		launch(conffile, ud, ld, -1, pfd);
+		launch(conffile, ud, ld, -1);
 		return 1;
 	}
 
@@ -593,7 +588,7 @@ main(int argc, char **argv)
 	while (1) {
 		hupped = 0;
 		childdead = 0;
-		child = launch(conffile, ud, ld, kq, pfd);
+		child = launch(conffile, ud, ld, kq);
 		if (child == -1)
 			logerr("failed to launch");
 
