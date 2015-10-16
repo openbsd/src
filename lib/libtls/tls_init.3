@@ -1,4 +1,4 @@
-.\" $OpenBSD: tls_init.3,v 1.52 2015/10/16 13:48:44 jsing Exp $
+.\" $OpenBSD: tls_init.3,v 1.53 2015/10/16 13:49:53 jsing Exp $
 .\"
 .\" Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
 .\"
@@ -388,6 +388,11 @@ enables client certificate verification, requiring the client to send
 a certificate.
 .Em (Server)
 .It
+.Fn tls_config_verify_client_optional
+enables client certificate verification, without requiring the client
+to send a certificate.
+.Em (Server)
+.It
 .Fn tls_peer_cert_provided
 checks if the peer of
 .Ar ctx
@@ -469,11 +474,6 @@ connected to
 .Fn tls_conn_cipher
 will only succeed after the handshake is complete.
 .Em (Server and client)
-.It
-.Fn tls_config_verify_client_optional
-enables client certificate verification, without requiring the client
-to send a certificate.
-.Em (Server)
 .It
 .Fn tls_load_file
 loads a certificate or key from disk into memory to be loaded with
