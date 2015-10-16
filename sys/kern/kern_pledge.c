@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.35 2015/10/16 14:00:37 deraadt Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.36 2015/10/16 14:04:11 semarie Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -999,17 +999,6 @@ pledge_socket_check(struct proc *p, int domain)
 		return (0);
 	if ((p->p_p->ps_pledge & PLEDGE_DNS_ACTIVE) &&
 	    (domain == AF_INET || domain == AF_INET6))
-		return (0);
-	return (EPERM);
-}
-
-int
-pledge_bind_check(struct proc *p, const void *v)
-{
-
-	if ((p->p_p->ps_flags & PS_PLEDGE) == 0)
-		return (0);
-	if ((p->p_p->ps_pledge & PLEDGE_INET))
 		return (0);
 	return (EPERM);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pledge.h,v 1.3 2015/10/16 13:37:44 millert Exp $	*/
+/*	$OpenBSD: pledge.h,v 1.4 2015/10/16 14:04:11 semarie Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -69,7 +69,6 @@ int	pledge_chown_check(struct proc *p, uid_t, gid_t);
 int	pledge_adjtime_check(struct proc *p, const void *v);
 int	pledge_recvfrom_check(struct proc *p, void *from);
 int	pledge_sendto_check(struct proc *p, const void *to);
-int	pledge_bind_check(struct proc *p, const void *v);
 int	pledge_connect_check(struct proc *p);
 int	pledge_socket_check(struct proc *p, int domain);
 int	pledge_setsockopt_check(struct proc *p, int level, int optname);

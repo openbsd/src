@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.112 2015/10/09 01:10:27 deraadt Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.113 2015/10/16 14:04:11 semarie Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -123,9 +123,6 @@ sys_bind(struct proc *p, void *v, register_t *retval)
 	struct file *fp;
 	struct mbuf *nam;
 	int error;
-
-	if (pledge_bind_check(p, SCARG(uap, name)))
-		return (pledge_fail(p, EPERM, PLEDGE_UNIX));
 
 	if ((error = getsock(p, SCARG(uap, s), &fp)) != 0)
 		return (error);
