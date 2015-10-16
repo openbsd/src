@@ -1,4 +1,4 @@
-/*	$OpenBSD: emacs.c,v 1.56 2015/10/10 15:31:00 millert Exp $	*/
+/*	$OpenBSD: emacs.c,v 1.57 2015/10/16 17:14:04 mmcc Exp $	*/
 
 /*
  *  Emacs-like command line editing and history
@@ -1257,7 +1257,7 @@ kb_decode(const char *s)
 
 	l[0] = '\0';
 	for (i = 0; i < strlen(s); i++) {
-		if (iscntrl(s[i])) {
+		if (iscntrl((unsigned char)s[i])) {
 			l[at++] = '^';
 			l[at++] = UNCTRL(s[i]);
 		} else
