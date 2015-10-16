@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.56 2015/10/15 20:26:47 bluhm Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.57 2015/10/16 16:10:10 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2003 Anil Madhavapeddy <anil@recoil.org>
@@ -143,6 +143,10 @@ priv_init(char *conf, int numeric, int lockfd, int nullfd, char *argv[])
 		priv_fd = socks[1];
 		return 0;
 	}
+
+	if (pledge("stdio rpath wpath cpath inet dns getpw sendfd proc exec",
+	    NULL) == -1)
+		err(1, "pledge priv");
 
 	if (!Debug) {
 		close(lockfd);
