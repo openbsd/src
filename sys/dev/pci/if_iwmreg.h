@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwmreg.h,v 1.4 2015/06/15 08:06:11 stsp Exp $	*/
+/*	$OpenBSD: if_iwmreg.h,v 1.5 2015/10/16 10:04:56 stsp Exp $	*/
 
 /******************************************************************************
  *
@@ -5141,6 +5141,7 @@ enum iwm_power_scheme {
 };
 
 #define IWM_DEF_CMD_PAYLOAD_SIZE 320
+#define IWM_MAX_CMD_PAYLOAD_SIZE (4096 - sizeof(struct iwm_cmd_header))
 #define IWM_CMD_FAILED_MSK 0x40
 
 struct iwm_device_cmd {

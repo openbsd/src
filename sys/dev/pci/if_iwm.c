@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.56 2015/10/12 10:01:27 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.57 2015/10/16 10:04:56 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -1108,14 +1108,21 @@ iwm_alloc_tx_ring(struct iwm_softc *sc, struct iwm_tx_ring *ring, int qid)
 	paddr = ring->cmd_dma.paddr;
 	for (i = 0; i < IWM_TX_RING_COUNT; i++) {
 		struct iwm_tx_data *data = &ring->data[i];
+		size_t mapsize;
 
 		data->cmd_paddr = paddr;
 		data->scratch_paddr = paddr + sizeof(struct iwm_cmd_header)
 		    + offsetof(struct iwm_tx_cmd, scratch);
 		paddr += sizeof(struct iwm_device_cmd);
 
-		error = bus_dmamap_create(sc->sc_dmat, MCLBYTES,
-		    IWM_NUM_OF_TBS - 2, MCLBYTES, 0, BUS_DMA_NOWAIT,
+		/* FW commands may require more mapped space than packets. */
+		if (qid == IWM_MVM_CMD_QUEUE)
+			mapsize = (sizeof(struct iwm_cmd_header) +
+			    IWM_MAX_CMD_PAYLOAD_SIZE);
+		else
+			mapsize = MCLBYTES;
+		error = bus_dmamap_create(sc->sc_dmat, mapsize,
+		    IWM_NUM_OF_TBS - 2, mapsize, 0, BUS_DMA_NOWAIT,
 		    &data->map);
 		if (error != 0) {
 			printf("%s: could not create TX buf DMA map\n", DEVNAME(sc));
@@ -3393,30 +3400,31 @@ iwm_send_cmd(struct iwm_softc *sc, struct iwm_host_cmd *hcmd)
 	data = &ring->data[ring->cur];
 
 	if (paylen > sizeof(cmd->data)) {
-		/* Command is too large */
-		if (sizeof(cmd->hdr) + paylen > IWM_RBUF_SIZE) {
+		/* Command is too large to fit in pre-allocated space. */
+		size_t totlen = sizeof(cmd->hdr) + paylen;
+		if (paylen > IWM_MAX_CMD_PAYLOAD_SIZE) {
+			printf("%s: firmware command too long (%zd bytes)\n",
+			    DEVNAME(sc), totlen);
 			error = EINVAL;
 			goto out;
 		}
-		m = m_gethdr(M_DONTWAIT, MT_DATA);
+		m = MCLGETI(NULL, M_DONTWAIT, NLL, totlen);
 		if (m == NULL) {
-			error = ENOMEM;
-			goto out;
-		}
-		MCLGETI(m, M_DONTWAIT, NULL, IWM_RBUF_SIZE);
-		if (!(m->m_flags & M_EXT)) {
-			m_freem(m);
+			printf("%s: could not get fw cmd mbuf (%zd bytes)\n",
+			    DEVNAME(sc), totlen);
 			error = ENOMEM;
 			goto out;
 		}
 		cmd = mtod(m, struct iwm_device_cmd *);
 		error = bus_dmamap_load(sc->sc_dmat, data->map, cmd,
-		    hcmd->len[0], NULL, BUS_DMA_NOWAIT | BUS_DMA_WRITE);
+		    totlen, NULL, BUS_DMA_NOWAIT | BUS_DMA_WRITE);
 		if (error != 0) {
+			printf("%s: could not load fw cmd mbuf (%zd bytes)\n",
+			    DEVNAME(sc), totlen);
 			m_freem(m);
 			goto out;
 		}
-		data->m = m;
+		data->m = m; /* mbuf will be freed in iwm_cmd_done() */
 		paddr = data->map->dm_segs[0].ds_addr;
 	} else {
 		cmd = &ring->cmd[ring->cur];
@@ -3447,13 +3455,13 @@ iwm_send_cmd(struct iwm_softc *sc, struct iwm_host_cmd *hcmd)
 	    code, hcmd->len[0] + hcmd->len[1] + sizeof(cmd->hdr),
 	    async ? " (async)" : ""));
 
-	if (hcmd->len[0] > sizeof(cmd->data)) {
-		bus_dmamap_sync(sc->sc_dmat, data->map, 0, hcmd->len[0],
-		    BUS_DMASYNC_PREWRITE);
+	if (paylen > sizeof(cmd->data)) {
+		bus_dmamap_sync(sc->sc_dmat, data->map, 0,
+		    sizeof(cmd->hdr) + paylen, BUS_DMASYNC_PREWRITE);
 	} else {
 		bus_dmamap_sync(sc->sc_dmat, ring->cmd_dma.map,
 		    (char *)(void *)cmd - (char *)(void *)ring->cmd_dma.vaddr,
-		    hcmd->len[0] + 4, BUS_DMASYNC_PREWRITE);
+		    sizeof(cmd->hdr) + hcmd->len[0], BUS_DMASYNC_PREWRITE);
 	}
 	bus_dmamap_sync(sc->sc_dmat, ring->desc_dma.map,
 	    (char *)(void *)desc - (char *)(void *)ring->desc_dma.vaddr,
