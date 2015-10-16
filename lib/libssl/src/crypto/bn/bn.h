@@ -1,4 +1,4 @@
-/* $OpenBSD: bn.h,v 1.26 2015/02/07 13:19:15 doug Exp $ */
+/* $OpenBSD: bn.h,v 1.27 2015/10/16 12:41:29 beck Exp $ */
 /* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -132,6 +132,7 @@
 
 #include <openssl/ossl_typ.h>
 #include <openssl/crypto.h>
+#include <openssl/bio.h>
 
 #ifdef  __cplusplus
 extern "C" {
@@ -433,11 +434,7 @@ int	BN_mod_exp_simple(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 
 int	BN_mask_bits(BIGNUM *a, int n);
 int	BN_print_fp(FILE *fp, const BIGNUM *a);
-#ifdef HEADER_BIO_H
 int	BN_print(BIO *fp, const BIGNUM *a);
-#else
-int	BN_print(void *fp, const BIGNUM *a);
-#endif
 int	BN_reciprocal(BIGNUM *r, const BIGNUM *m, int len, BN_CTX *ctx);
 int	BN_rshift(BIGNUM *r, const BIGNUM *a, int n);
 int	BN_rshift1(BIGNUM *r, const BIGNUM *a);
