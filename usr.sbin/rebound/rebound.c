@@ -1,4 +1,4 @@
-/* $OpenBSD: rebound.c,v 1.16 2015/10/16 01:50:39 tedu Exp $ */
+/* $OpenBSD: rebound.c,v 1.17 2015/10/16 01:55:19 tedu Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -409,7 +409,7 @@ launch(const char *confname, int ud, int ld, int kq)
 					kevent(kq, chlist, 1, NULL, 0, NULL);
 					TAILQ_INSERT_TAIL(&reqfifo, req, fifo);
 				}
-			} else {
+			} else if (kev[i].filter == EVFILT_READ) {
 				/* use a tree here? */
 				req = TAILQ_FIRST(&reqfifo);
 				while (req) {
@@ -423,6 +423,9 @@ launch(const char *confname, int ud, int ld, int kq)
 				if (req->client == -1)
 					sendreply(ud, req);
 				freerequest(req);
+			} else {
+				logerr(LOG_DAEMON | LOG_ERR,
+				    "don't know what happened");
 			}
 		}
 
