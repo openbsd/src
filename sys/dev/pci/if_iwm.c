@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.57 2015/10/16 10:04:56 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.58 2015/10/16 10:29:55 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -3408,7 +3408,7 @@ iwm_send_cmd(struct iwm_softc *sc, struct iwm_host_cmd *hcmd)
 			error = EINVAL;
 			goto out;
 		}
-		m = MCLGETI(NULL, M_DONTWAIT, NLL, totlen);
+		m = MCLGETI(NULL, M_DONTWAIT, NULL, totlen);
 		if (m == NULL) {
 			printf("%s: could not get fw cmd mbuf (%zd bytes)\n",
 			    DEVNAME(sc), totlen);
