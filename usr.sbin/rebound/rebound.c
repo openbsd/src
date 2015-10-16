@@ -1,4 +1,4 @@
-/* $OpenBSD: rebound.c,v 1.17 2015/10/16 01:55:19 tedu Exp $ */
+/* $OpenBSD: rebound.c,v 1.18 2015/10/16 01:58:28 tedu Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -99,13 +99,13 @@ logmsg(int prio, const char *msg, ...)
 		vfprintf(stderr, msg, ap);
 		fprintf(stderr, "\n");
 	} else {
-		vsyslog(prio, msg, ap);
+		vsyslog(LOG_DAEMON | prio, msg, ap);
 	}
 	va_end(ap);
 }
 
 static void __dead
-logerr(int prio, const char *msg, ...)
+logerr(const char *msg, ...)
 {
 	va_list ap;
 
@@ -114,7 +114,7 @@ logerr(int prio, const char *msg, ...)
 		vfprintf(stderr, msg, ap);
 		fprintf(stderr, "\n");
 	} else {
-		vsyslog(prio, msg, ap);
+		vsyslog(LOG_DAEMON | LOG_ERR, msg, ap);
 	}
 	va_end(ap);
 	exit(1);
@@ -190,7 +190,7 @@ newrequest(int ud, struct sockaddr *remoteaddr)
 	if (req->s == -1)
 		goto fail;
 	if (connect(req->s, remoteaddr, remoteaddr->sa_len) == -1) {
-		logmsg(LOG_DAEMON | LOG_NOTICE, "failed to connect");
+		logmsg(LOG_NOTICE, "failed to connect");
 		goto fail;
 	}
 	if (send(req->s, buf, r, 0) != r)
@@ -343,7 +343,7 @@ launch(const char *confname, int ud, int ld, int kq)
 
 	conf = fopen(confname, "r");
 	if (!conf) {
-		logmsg(LOG_DAEMON | LOG_ERR, "failed to open config %s", confname);
+		logmsg(LOG_ERR, "failed to open config %s", confname);
 		return -1;
 	}
 
@@ -353,26 +353,26 @@ launch(const char *confname, int ud, int ld, int kq)
 	}
 
 	if (!(pwd = getpwnam("_rebound")))
-		logerr(LOG_DAEMON | LOG_ERR, "getpwnam failed");
+		logerr("getpwnam failed");
 
 	if (chroot("/var/empty") || chdir("/"))
-		logerr(LOG_DAEMON | LOG_ERR, "chroot failed (%d)", errno);
+		logerr("chroot failed (%d)", errno);
 
 	setproctitle("worker");
 	if (setgroups(1, &pwd->pw_gid) ||
 	    setresgid(pwd->pw_gid, pwd->pw_gid, pwd->pw_gid) ||
 	    setresuid(pwd->pw_uid, pwd->pw_uid, pwd->pw_uid))
-		logerr(LOG_DAEMON | LOG_ERR, "failed to privdrop");
+		logerr("failed to privdrop");
 
 	close(kq);
 
 	if (pledge("stdio inet", NULL) == -1)
-		logerr(LOG_DAEMON | LOG_ERR, "pledge failed");
+		logerr("pledge failed");
 
 	af = readconfig(conf, &remoteaddr);
 	fclose(conf);
 	if (af == -1)
-		logerr(LOG_DAEMON | LOG_ERR, "failed to read config %s", confname);
+		logerr("failed to read config %s", confname);
 
 	kq = kqueue();
 
@@ -384,7 +384,7 @@ launch(const char *confname, int ud, int ld, int kq)
 	while (1) {
 		r = kevent(kq, NULL, 0, kev, 4, timeout);
 		if (r == -1)
-			logerr(LOG_DAEMON | LOG_ERR, "kevent failed (%d)", errno);
+			logerr("kevent failed (%d)", errno);
 
 		clock_gettime(CLOCK_MONOTONIC, &now);
 
@@ -418,14 +418,12 @@ launch(const char *confname, int ud, int ld, int kq)
 					req = TAILQ_NEXT(req, fifo);
 				}
 				if (!req)
-					logerr(LOG_DAEMON | LOG_ERR,
-					    "lost request");
+					logerr("lost request");
 				if (req->client == -1)
 					sendreply(ud, req);
 				freerequest(req);
 			} else {
-				logerr(LOG_DAEMON | LOG_ERR,
-				    "don't know what happened");
+				logerr("don't know what happened");
 			}
 		}
 
@@ -540,7 +538,7 @@ main(int argc, char **argv)
 		childdead = 0;
 		child = launch(conffile, ud, ld, kq);
 		if (child == -1)
-			logerr(LOG_DAEMON | LOG_ERR, "failed to launch");
+			logerr("failed to launch");
 
 		/* monitor child */
 		EV_SET(&kev, child, EVFILT_PROC, EV_ADD, NOTE_EXIT, 0, NULL);
@@ -550,11 +548,10 @@ main(int argc, char **argv)
 		while (1) {
 			r = kevent(kq, NULL, 0, &kev, 1, timeout);
 			if (r == 0) {
-				logerr(LOG_DAEMON | LOG_ERR,
-				    "child died without HUP");
+				logerr("child died without HUP");
 			} else if (kev.filter == EVFILT_SIGNAL) {
 				/* signaled. kill child. */
-				logmsg(LOG_DAEMON | LOG_INFO,
+				logmsg(LOG_INFO,
 				    "received HUP, restarting");
 				hupped = 1;
 				if (childdead)
@@ -562,7 +559,7 @@ main(int argc, char **argv)
 				kill(child, SIGHUP);
 			} else if (kev.filter == EVFILT_PROC) {
 				/* child died. wait for our own HUP. */
-				logmsg(LOG_DAEMON | LOG_INFO,
+				logmsg(LOG_INFO,
 				    "observed child exit");
 				childdead = 1;
 				if (hupped)
@@ -571,8 +568,7 @@ main(int argc, char **argv)
 				ts.tv_sec = 1;
 				timeout = &ts;
 			} else {
-				logerr(LOG_DAEMON | LOG_ERR,
-				    "don't know what happened");
+				logerr("don't know what happened");
 			}
 		}
 		wait(NULL);
