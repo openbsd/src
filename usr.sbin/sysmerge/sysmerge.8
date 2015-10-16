@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysmerge.8,v 1.73 2015/09/18 17:03:44 ajacoutot Exp $
+.\"	$OpenBSD: sysmerge.8,v 1.74 2015/10/16 19:55:39 ajacoutot Exp $
 .\"
 .\" Copyright (c) 2008 Antoine Jacoutot <ajacoutot@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 18 2015 $
+.Dd $Mdocdate: October 16 2015 $
 .Dt SYSMERGE 8
 .Os
 .Sh NAME
@@ -33,9 +33,7 @@ script designed to help the administrator update configuration files
 after upgrading to a new release or snapshot.
 .Pp
 .Nm
-works by comparing the reference root directory
-.Pa ${TMPDIR}/sysmerge.XXXXXXXXXX
-against currently installed files.
+works by comparing a reference root directory against currently installed files.
 .Pp
 .Nm
 will work through the fileset,
@@ -137,15 +135,9 @@ the default is
 .Xr vi 1 .
 .It Ev PAGER
 Specifies the pagination program to use.
-.It Ev TMPDIR
-Path in which to store temporary files.
-If unset, this defaults to
-.Pa /tmp .
 .El
 .Sh FILES
-.Bl -tag -width "${TMPDIR}/sysmerge.XXXXXXXXXX" -compact
-.It Pa ${TMPDIR}/sysmerge.XXXXXXXXXX
-Directory in which the reference root directory is created.
+.Bl -tag -width "/var/sysmerge/xetc.tgz" -compact
 .It Pa /etc/sysmerge.ignore
 Files and directories to ignore from comparison.
 .It Pa /var/sysmerge/backups
