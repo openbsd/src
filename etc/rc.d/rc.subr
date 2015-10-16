@@ -1,4 +1,4 @@
-#	$OpenBSD: rc.subr,v 1.99 2015/07/15 13:48:16 ajacoutot Exp $
+#	$OpenBSD: rc.subr,v 1.100 2015/10/16 20:12:00 ajacoutot Exp $
 #
 # Copyright (c) 2010, 2011, 2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -121,7 +121,7 @@ _rc_quirks() {
 
 _rc_parse_conf() {
 	typeset -l _key
-	local _l _val
+	local _l _rcfile _val
 	set -A _allowed_keys -- \
 		spamd_black pf ipsec check_quotas accounting \
 		multicast_host multicast_router amd_master \
