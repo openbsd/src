@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_asn1.c,v 1.20 2015/10/16 15:12:30 jsing Exp $ */
+/* $OpenBSD: ec_asn1.c,v 1.21 2015/10/16 15:15:39 jsing Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -559,7 +559,6 @@ ECPKPARAMETERS *ECPKPARAMETERS_new(void);
 void ECPKPARAMETERS_free(ECPKPARAMETERS *a);
 ECPKPARAMETERS *d2i_ECPKPARAMETERS(ECPKPARAMETERS **a, const unsigned char **in, long len);
 int i2d_ECPKPARAMETERS(const ECPKPARAMETERS *a, unsigned char **out);
-extern const ASN1_ITEM ECPKPARAMETERS_it;
 
 ECPKPARAMETERS *
 d2i_ECPKPARAMETERS(ECPKPARAMETERS **a, const unsigned char **in, long len)
@@ -631,7 +630,6 @@ EC_PRIVATEKEY *EC_PRIVATEKEY_new(void);
 void EC_PRIVATEKEY_free(EC_PRIVATEKEY *a);
 EC_PRIVATEKEY *d2i_EC_PRIVATEKEY(EC_PRIVATEKEY **a, const unsigned char **in, long len);
 int i2d_EC_PRIVATEKEY(const EC_PRIVATEKEY *a, unsigned char **out);
-extern const ASN1_ITEM EC_PRIVATEKEY_it;
 
 EC_PRIVATEKEY *
 d2i_EC_PRIVATEKEY(EC_PRIVATEKEY **a, const unsigned char **in, long len)

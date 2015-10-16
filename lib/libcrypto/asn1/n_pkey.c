@@ -1,4 +1,4 @@
-/* $OpenBSD: n_pkey.c,v 1.29 2015/10/16 15:12:30 jsing Exp $ */
+/* $OpenBSD: n_pkey.c,v 1.30 2015/10/16 15:15:39 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -117,7 +117,6 @@ NETSCAPE_ENCRYPTED_PKEY *NETSCAPE_ENCRYPTED_PKEY_new(void);
 void NETSCAPE_ENCRYPTED_PKEY_free(NETSCAPE_ENCRYPTED_PKEY *a);
 NETSCAPE_ENCRYPTED_PKEY *d2i_NETSCAPE_ENCRYPTED_PKEY(NETSCAPE_ENCRYPTED_PKEY **a, const unsigned char **in, long len);
 int i2d_NETSCAPE_ENCRYPTED_PKEY(const NETSCAPE_ENCRYPTED_PKEY *a, unsigned char **out);
-extern const ASN1_ITEM NETSCAPE_ENCRYPTED_PKEY_it;
 
 NETSCAPE_ENCRYPTED_PKEY *
 d2i_NETSCAPE_ENCRYPTED_PKEY(NETSCAPE_ENCRYPTED_PKEY **a, const unsigned char **in, long len)
@@ -175,7 +174,6 @@ NETSCAPE_PKEY *NETSCAPE_PKEY_new(void);
 void NETSCAPE_PKEY_free(NETSCAPE_PKEY *a);
 NETSCAPE_PKEY *d2i_NETSCAPE_PKEY(NETSCAPE_PKEY **a, const unsigned char **in, long len);
 int i2d_NETSCAPE_PKEY(const NETSCAPE_PKEY *a, unsigned char **out);
-extern const ASN1_ITEM NETSCAPE_PKEY_it;
 
 NETSCAPE_PKEY *
 d2i_NETSCAPE_PKEY(NETSCAPE_PKEY **a, const unsigned char **in, long len)

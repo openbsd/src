@@ -1,4 +1,4 @@
-/* $OpenBSD: ecs_asn1.c,v 1.7 2015/10/16 15:12:30 jsing Exp $ */
+/* $OpenBSD: ecs_asn1.c,v 1.8 2015/10/16 15:15:39 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 2000-2002 The OpenSSL Project.  All rights reserved.
  *
@@ -88,7 +88,6 @@ ECDSA_SIG *ECDSA_SIG_new(void);
 void ECDSA_SIG_free(ECDSA_SIG *a);
 ECDSA_SIG *d2i_ECDSA_SIG(ECDSA_SIG **a, const unsigned char **in, long len);
 int i2d_ECDSA_SIG(const ECDSA_SIG *a, unsigned char **out);
-extern const ASN1_ITEM ECDSA_SIG_it;
 
 ECDSA_SIG *
 d2i_ECDSA_SIG(ECDSA_SIG **a, const unsigned char **in, long len)
