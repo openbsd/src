@@ -1,4 +1,4 @@
-/* $OpenBSD: rebound.c,v 1.20 2015/10/16 15:35:05 tedu Exp $ */
+/* $OpenBSD: rebound.c,v 1.21 2015/10/16 18:29:05 tedu Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -24,6 +24,7 @@
 #include <sys/signal.h>
 #include <sys/wait.h>
 
+#include <fcntl.h>
 #include <signal.h>
 #include <syslog.h>
 #include <stdlib.h>
@@ -78,6 +79,7 @@ static TAILQ_HEAD(, dnscache) cache;
 struct request {
 	int s;
 	int client;
+	int phase;
 	struct sockaddr from;
 	socklen_t fromlen;
 	struct timespec ts;
@@ -164,6 +166,9 @@ newrequest(int ud, struct sockaddr *remoteaddr)
 	if (!(req = calloc(1, sizeof(*req))))
 		return NULL;
 
+	req->ts = now;
+	req->ts.tv_sec += 30;
+
 	req->client = -1;
 	memcpy(&req->from, &from, fromlen);
 	req->fromlen = fromlen;
@@ -196,8 +201,6 @@ newrequest(int ud, struct sockaddr *remoteaddr)
 	}
 	if (send(req->s, buf, r, 0) != r)
 		goto fail;
-	req->ts = now;
-	req->ts.tv_sec += 30;
 
 	return req;
 fail:
@@ -264,12 +267,33 @@ freecacheent(struct dnscache *ent)
 }
 
 static struct request *
+tcpphasetwo(struct request *req)
+{
+	req->phase = 2;
+	if (setsockopt(req->client, SOL_SOCKET, SO_SPLICE, &req->s,
+	    sizeof(req->s)) == -1)
+		goto fail;
+	if (setsockopt(req->s, SOL_SOCKET, SO_SPLICE, &req->client,
+	    sizeof(req->client)) == -1)
+		goto fail;
+
+	return req;
+
+fail:
+	freerequest(req);
+	return NULL;
+}
+
+static struct request *
 newtcprequest(int ld, struct sockaddr *remoteaddr)
 {
 	struct request *req;
 
 	if (!(req = calloc(1, sizeof(*req))))
 		return NULL;
+
+	req->ts = now;
+	req->ts.tv_sec += 30;
 
 	req->s = -1;
 	req->fromlen = sizeof(req->from);
@@ -280,17 +304,18 @@ newtcprequest(int ld, struct sockaddr *remoteaddr)
 	req->s = socket(remoteaddr->sa_family, SOCK_STREAM, 0);
 	if (req->s == -1)
 		goto fail;
-	if (connect(req->s, remoteaddr, remoteaddr->sa_len) == -1)
+	if (fcntl(req->s, F_SETFL, O_NONBLOCK) == -1)
 		goto fail;
-	if (setsockopt(req->client, SOL_SOCKET, SO_SPLICE, &req->s,
-	    sizeof(req->s)) == -1)
-		goto fail;
-	if (setsockopt(req->s, SOL_SOCKET, SO_SPLICE, &req->client,
-	    sizeof(req->client)) == -1)
-		goto fail;
-	req->ts = now;
-	req->ts.tv_sec += 30;
+	req->phase = 1;
+	if (connect(req->s, remoteaddr, remoteaddr->sa_len) == -1) {
+		if (errno != EINPROGRESS)
+			goto fail;
+	} else {
+		TAILQ_INSERT_TAIL(&reqfifo, req, fifo);
+		return tcpphasetwo(req);
+	}
 
+	TAILQ_INSERT_TAIL(&reqfifo, req, fifo);
 	return req;
 
 fail:
@@ -333,7 +358,7 @@ static int
 launch(const char *confname, int ud, int ld, int kq)
 {
 	struct sockaddr_storage remoteaddr;
-	struct kevent chlist[1], kev[4];
+	struct kevent chlist[2], kev[4];
 	struct timespec ts, *timeout = NULL;
 	struct request *req;
 	struct dnscache *ent;
@@ -407,10 +432,27 @@ launch(const char *confname, int ud, int ld, int kq)
 				req = newtcprequest(ld,
 				    (struct sockaddr *)&remoteaddr);
 				if (req) {
-					EV_SET(&chlist[0], req->s, EVFILT_READ,
-					    EV_ADD, 0, 0, NULL);
+					EV_SET(&chlist[0], req->s,
+					    req->phase == 1 ? EVFILT_WRITE :
+					    EVFILT_READ, EV_ADD, 0, 0, NULL);
 					kevent(kq, chlist, 1, NULL, 0, NULL);
-					TAILQ_INSERT_TAIL(&reqfifo, req, fifo);
+				}
+			} else if (kev[i].filter == EVFILT_WRITE) {
+				req = TAILQ_FIRST(&reqfifo);
+				while (req) {
+					if (req->s == kev[i].ident)
+						break;
+					req = TAILQ_NEXT(req, fifo);
+				}
+				if (!req)
+					logerr("lost request");
+				req = tcpphasetwo(req);
+				if (req) {
+					EV_SET(&chlist[0], req->s, EVFILT_WRITE,
+					    EV_DELETE, 0, 0, NULL);
+					EV_SET(&chlist[1], req->s, EVFILT_READ,
+					    EV_ADD, 0, 0, NULL);
+					kevent(kq, chlist, 2, NULL, 0, NULL);
 				}
 			} else if (kev[i].filter == EVFILT_READ) {
 				/* use a tree here? */
