@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.156 2015/10/16 13:37:44 millert Exp $ */
+/*	$OpenBSD: main.c,v 1.157 2015/10/16 21:35:16 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2012, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -393,6 +393,10 @@ main(int argc, char *argv[])
 	}
 
 	/* mandoc(1) */
+
+	if (pledge(use_pager ? "stdio rpath tmppath proc exec" :
+	    "stdio rpath", NULL) == -1)
+		err(1, "pledge");
 
 	if (search.argmode == ARG_FILE && ! moptions(&options, auxpaths))
 		return (int)MANDOCLEVEL_BADARG;
