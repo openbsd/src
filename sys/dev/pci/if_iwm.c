@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.59 2015/10/16 12:17:38 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.60 2015/10/16 12:17:58 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -407,8 +407,8 @@ void	iwm_start(struct ifnet *);
 void	iwm_stop(struct ifnet *, int);
 void	iwm_watchdog(struct ifnet *);
 int	iwm_ioctl(struct ifnet *, u_long, iwm_caddr_t);
-const char *iwm_desc_lookup(uint32_t);
 #ifdef IWM_DEBUG
+const char *iwm_desc_lookup(uint32_t);
 void	iwm_nic_error(struct iwm_softc *);
 #endif
 void	iwm_notif_intr(struct iwm_softc *);
@@ -5759,6 +5759,7 @@ iwm_ioctl(struct ifnet *ifp, u_long cmd, iwm_caddr_t data)
  * The interrupt side of things
  */
 
+#ifdef IWM_DEBUG
 /*
  * Note: This structure is read from the device with IO accesses,
  * and the reading already does the endian conversion. As it is
@@ -5850,7 +5851,6 @@ iwm_desc_lookup(uint32_t num)
 	return advanced_lookup[i].name;
 }
 
-#ifdef IWM_DEBUG
 /*
  * Support for dumping the error log seemed like a good idea ...
  * but it's mostly hex junk and the only sensible thing is the
