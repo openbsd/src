@@ -1,4 +1,4 @@
-/*	$OpenBSD: pwd_mkdb.c,v 1.50 2015/08/27 19:11:37 gsoares Exp $	*/
+/*	$OpenBSD: pwd_mkdb.c,v 1.51 2015/10/16 22:54:35 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -232,6 +232,9 @@ main(int argc, char **argv)
 	else if (fchmod(edp->fd(edp), PERM_SECURE|S_IRGRP) != 0)
 		warn("%s: unable to make group readable", _PATH_SMP_DB);
 	clean |= FILE_SECURE;
+
+	if (pledge("stdio rpath wpath cpath getpw fattr flock", NULL) == -1)
+		err(1, "pledge");
 
 	/* Open the temporary insecure password database. */
 	if (!secureonly) {
