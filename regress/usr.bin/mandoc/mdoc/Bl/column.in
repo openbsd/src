@@ -1,4 +1,4 @@
-.Dd December 13, 2014
+.Dd October 14, 2015
 .Dt BL-COLUMN 1
 .Os OpenBSD
 .Sh NAME
@@ -73,6 +73,17 @@
 .It "a" Ta "b" Ta "c"
 .It "a" Ta "b" Ta "c" Ta "d"
 .It "a" Ta "b" Ta "c" Ta "d" Ta "e"
+.El
+.\" Mixed tab and Ta
+.Bl -column a b c d
+.It a	b	c	d
+.It a	b	c Ta d
+.It a	b Ta c	d
+.It a	b Ta c Ta d
+.It a Ta b	c	d
+.It a Ta b	c Ta d
+.It a Ta b Ta c	d
+.It a Ta b Ta c Ta d
 .El
 .\" Interrupted column list
 .Bl -column "aa" -width 6n -compact "bb" "cc"
