@@ -1,4 +1,4 @@
-.\"	$OpenBSD: disklabel.8,v 1.116 2015/10/15 19:31:15 miod Exp $
+.\"	$OpenBSD: disklabel.8,v 1.117 2015/10/16 04:20:54 miod Exp $
 .\"	$NetBSD: disklabel.8,v 1.9 1995/03/18 14:54:38 cgd Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1991, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)disklabel.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: October 15 2015 $
+.Dd $Mdocdate: October 16 2015 $
 .Dt DISKLABEL 8
 .Os
 .Sh NAME
@@ -597,27 +597,6 @@ Restore the on-disk and in-core label for sd0 from information in
 Existing bootstrap code is unaffected.
 .Pp
 .Dl # disklabel -R sd0 mylabel
-.Pp
-Install a new bootstrap on sd0.
-The boot code comes from
-.Pa /usr/mdec/sdboot
-and possibly
-.Pa /usr/mdec/bootsd .
-On-disk and in-core labels are unchanged, but on some systems other
-information may be destroyed.
-Use with care.
-.Pp
-.Dl # disklabel -B sd0
-.Pp
-Install a new label and bootstrap.
-The label is derived from disktab information for
-.Dq sd2212
-and installed both in-core and
-on-disk.
-The bootstrap code comes from the file
-.Pa /usr/mdec/newboot .
-.Pp
-.Dl # disklabel -w -B /dev/rsd0c -b newboot sd2212
 .Sh DIAGNOSTICS
 The kernel device drivers will not allow the size of a disk partition
 to be decreased or the offset of a partition to be changed while
