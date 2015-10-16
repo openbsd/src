@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.123 2015/10/14 17:26:01 florian Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.124 2015/10/16 18:17:12 florian Exp $	*/
 /*	$KAME: ping6.c,v 1.163 2002/10/25 02:19:06 itojun Exp $	*/
 
 /*
@@ -267,36 +267,47 @@ main(int argc, char *argv[])
 	preload = 0;
 	datap = &outpack[ICMP6ECHOLEN + ICMP6ECHOTMLEN];
 	while ((ch = getopt(argc, argv,
-	    "a:c:dEefHg:h:I:i:l:mnNp:qS:s:tvV:w")) != -1) {
+	    "a:c:dEefHg:h:I:i:l:mnNp:qS:s:vV:")) != -1) {
 		switch (ch) {
 		case 'a':
 		{
 			char *cp;
 
 			options &= ~F_NOUSERDATA;
-			options |= F_NODEADDR;
 			for (cp = optarg; *cp != '\0'; cp++) {
 				switch (*cp) {
 				case 'a':
+					options |= F_NODEADDR;
 					naflags |= NI_NODEADDR_FLAG_ALL;
 					break;
 				case 'c':
 				case 'C':
+					options |= F_NODEADDR;
 					naflags |= NI_NODEADDR_FLAG_COMPAT;
+					break;
+				case 'd':
+					options |= F_FQDN;
 					break;
 				case 'l':
 				case 'L':
+					options |= F_NODEADDR;
 					naflags |= NI_NODEADDR_FLAG_LINKLOCAL;
+					break;
+				case 'n':
+					options |= F_SUPTYPES;
 					break;
 				case 's':
 				case 'S':
+					options |= F_NODEADDR;
 					naflags |= NI_NODEADDR_FLAG_SITELOCAL;
 					break;
 				case 'g':
 				case 'G':
+					options |= F_NODEADDR;
 					naflags |= NI_NODEADDR_FLAG_GLOBAL;
 					break;
 				case 'A': /* experimental. not in the spec */
+					options |= F_NODEADDR;
 					naflags |= NI_NODEADDR_FLAG_ANYCAST;
 					break;
 				default:
@@ -412,10 +423,6 @@ main(int argc, char *argv[])
 				errx(1, "datalen value is %s: %s", errstr,
 				    optarg);
 			break;
-		case 't':
-			options &= ~F_NOUSERDATA;
-			options |= F_SUPTYPES;
-			break;
 		case 'v':
 			options |= F_VERBOSE;
 			break;
@@ -428,10 +435,6 @@ main(int argc, char *argv[])
 			if (setsockopt(s, SOL_SOCKET, SO_RTABLE, &rtableid,
 			    sizeof(rtableid)) == -1)
 				err(1, "setsockopt SO_RTABLE");
-			break;
-		case 'w':
-			options &= ~F_NOUSERDATA;
-			options |= F_FQDN;
 			break;
 		default:
 			usage();
@@ -2314,7 +2317,7 @@ usage(void)
 	(void)fprintf(stderr,
 	    "usage: ping6 [-dEefH"
 	    "m"
-	    "Nnqtvw"
+	    "Nnqv"
 	    "] [-a addrtype] [-c count] [-g gateway]\n\t"
 	    "[-h hoplimit] [-I sourceaddr] [-i wait] [-l preload] [-p pattern]"
 	    "\n\t[-s packetsize] [-V rtable] host\n");

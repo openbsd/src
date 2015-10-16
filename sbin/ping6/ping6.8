@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ping6.8,v 1.52 2015/10/14 17:26:01 florian Exp $
+.\"	$OpenBSD: ping6.8,v 1.53 2015/10/16 18:17:12 florian Exp $
 .\"	$KAME: ping6.8,v 1.57 2002/05/26 13:18:25 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -28,7 +28,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: October 14 2015 $
+.Dd $Mdocdate: October 16 2015 $
 .Dt PING6 8
 .Os
 .Sh NAME
@@ -36,8 +36,8 @@
 .Nd send ICMPv6 ECHO_REQUEST packets to network hosts
 .Sh SYNOPSIS
 .Nm ping6
-.Op Fl dEefHmNnqtvw
-.Op Fl a Ar addrtype
+.Op Fl dEefHmNnqv
+.Op Fl a Ar querytype
 .Op Fl c Ar count
 .Op Fl g Ar gateway
 .Op Fl h Ar hoplimit
@@ -66,10 +66,10 @@ ICMPv6
 header formatted as documented in RFC 4443.
 The options are as follows:
 .Bl -tag -width Ds
-.It Fl a Ar addrtype
-Generate an ICMPv6 Node Information Node Addresses query,
+.It Fl a Ar querytype
+Generate an ICMPv6 Node Information query,
 rather than an echo-request.
-.Ar addrtype
+.Ar querytype
 must be a string constructed of the following characters:
 .Pp
 .Bl -tag -width Ds -compact
@@ -87,10 +87,14 @@ only those addresses which belong to the interface which has the
 responder's address are requests.
 .It Ic c
 Requests responder's IPv4-compatible and IPv4-mapped addresses.
+.It Ic d
+Generate an ICMPv6 Node Information DNS Name query.
 .It Ic g
 Requests responder's global-scope addresses.
 .It Ic l
 Requests responder's link-local addresses.
+.It Ic n
+Generate an ICMPv6 Node Information query.
 .It Ic s
 Requests responder's site-local addresses.
 .El
@@ -240,26 +244,12 @@ to extend the socket buffer size.
 This option is ignored if any of the flags
 .Op Fl tWw
 are specified.
-.It Fl t
-Generate an ICMPv6 Node Information query,
-rather than echo-request.
-.Fl s
-has no effect if
-this option
-is specified.
 .It Fl V Ar rtable
 Set the routing table to be used for outgoing packets.
 .It Fl v
 Verbose output.
 All ICMP packets
 that are received are listed.
-.It Fl w
-Generate an ICMPv6 Node Information DNS Name query,
-rather than echo-request.
-.Fl s
-has no effect if
-this option
-is specified.
 .It Ar host
 The IPv6 address of the final destination node.
 .El
