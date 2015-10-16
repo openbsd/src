@@ -1,4 +1,4 @@
-/*	$OpenBSD: patch.c,v 1.59 2015/10/09 01:37:08 deraadt Exp $	*/
+/*	$OpenBSD: patch.c,v 1.60 2015/10/16 07:33:47 tobias Exp $	*/
 
 /*
  * patch - a program to apply diffs to original files
@@ -43,6 +43,7 @@
 #include "inp.h"
 #include "backupfile.h"
 #include "pathnames.h"
+#include "ed.h"
 
 mode_t		filemode = 0644;
 
@@ -147,7 +148,7 @@ main(int argc, char *argv[])
 	const	char *tmpdir;
 	char	*v;
 
-	if (pledge("stdio rpath wpath cpath tmppath fattr proc exec", NULL) == -1)
+	if (pledge("stdio rpath wpath cpath tmppath fattr", NULL) == -1)
 		perror("pledge");
 
 	setvbuf(stdout, NULL, _IOLBF, 0);
@@ -218,11 +219,6 @@ main(int argc, char *argv[])
 		if (outname == NULL)
 			outname = xstrdup(filearg[0]);
 
-		/* for ed script just up and do it and exit */
-		if (diff_type == ED_DIFF) {
-			do_ed_script();
-			continue;
-		}
 		/* initialize the patched file */
 		if (!skip_rest_of_patch)
 			init_output(TMPOUTNAME);
@@ -233,6 +229,12 @@ main(int argc, char *argv[])
 		/* find out where all the lines are */
 		if (!skip_rest_of_patch)
 			scan_input(filearg[0]);
+
+		/* for ed script just up and do it and exit */
+		if (diff_type == ED_DIFF) {
+			do_ed_script();
+			continue;
+		}
 
 		/* from here on, open no standard i/o files, because malloc */
 		/* might misfire and we can't catch it easily */

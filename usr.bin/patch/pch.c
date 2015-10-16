@@ -1,4 +1,4 @@
-/*	$OpenBSD: pch.c,v 1.53 2015/07/31 00:24:14 millert Exp $	*/
+/*	$OpenBSD: pch.c,v 1.54 2015/10/16 07:33:47 tobias Exp $	*/
 
 /*
  * patch - a program to apply diffs to original files
@@ -45,6 +45,9 @@
 
 /* Patch (diff listing) abstract type. */
 
+FILE	*pfp = NULL;		/* patch file pointer */
+LINENUM	 p_input_line = 0;	/* current line # from patch file */
+
 static off_t	p_filesize;	/* size of the patch file */
 static LINENUM	p_first;	/* 1st line number */
 static LINENUM	p_newfirst;	/* 1st line number of replacement */
@@ -53,7 +56,6 @@ static LINENUM	p_repl_lines;	/* # lines in replacement text */
 static LINENUM	p_end = -1;	/* last line in hunk */
 static LINENUM	p_max;		/* max allowed value of p_end */
 static LINENUM	p_context = 3;	/* # of context lines */
-static LINENUM	p_input_line = 0;	/* current line # from patch file */
 static char	**p_line = NULL;/* the text of the hunk */
 static short	*p_len = NULL;	/* length of each line */
 static char	*p_char = NULL;	/* +, -, and ! */
@@ -66,18 +68,14 @@ static LINENUM	p_sline;	/* and the line number for it */
 static LINENUM	p_hunk_beg;	/* line number of current hunk */
 static LINENUM	p_efake = -1;	/* end of faked up lines--don't free */
 static LINENUM	p_bfake = -1;	/* beg of faked up lines */
-static FILE	*pfp = NULL;	/* patch file pointer */
 static char	*bestguess = NULL;	/* guess at correct filename */
 
 static void	grow_hunkmax(void);
 static int	intuit_diff_type(void);
-static void	next_intuit_at(off_t, LINENUM);
 static void	skip_to(off_t, LINENUM);
-static char	*pgets(char *, int, FILE *);
 static char	*best_name(const struct file_name *, bool);
 static char	*posix_name(const struct file_name *, bool);
 static size_t	num_components(const char *);
-static LINENUM	strtolinenum(char *, char **);
 
 /*
  * Prepare to look for the next patch in the patch file.
@@ -411,7 +409,7 @@ scan_exit:
 /*
  * Remember where this patch ends so we know where to start up again.
  */
-static void
+void
 next_intuit_at(off_t file_pos, LINENUM file_line)
 {
 	p_base = file_pos;
@@ -1151,7 +1149,7 @@ hunk_done:
 /*
  * Input a line from the patch file, worrying about indentation.
  */
-static char *
+char *
 pgets(char *bf, int sz, FILE *fp)
 {
 	char	*s, *ret = fgets(bf, sz, fp);
@@ -1370,82 +1368,6 @@ pch_hunk_beg(void)
 }
 
 /*
- * Apply an ed script by feeding ed itself.
- */
-void
-do_ed_script(void)
-{
-	char	*t;
-	off_t	beginning_of_this_line;
-	FILE	*pipefp = NULL;
-
-	if (!skip_rest_of_patch) {
-		if (copy_file(filearg[0], TMPOUTNAME) < 0) {
-			unlink(TMPOUTNAME);
-			fatal("can't create temp file %s", TMPOUTNAME);
-		}
-		snprintf(buf, sizeof buf, "%s%s%s", _PATH_ED,
-		    verbose ? " " : " -s ", TMPOUTNAME);
-		pipefp = popen(buf, "w");
-	}
-	for (;;) {
-		beginning_of_this_line = ftello(pfp);
-		if (pgets(buf, sizeof buf, pfp) == NULL) {
-			next_intuit_at(beginning_of_this_line, p_input_line);
-			break;
-		}
-		p_input_line++;
-		for (t = buf; isdigit((unsigned char)*t) || *t == ','; t++)
-			;
-		/* POSIX defines allowed commands as {a,c,d,i,s} */
-		if (isdigit((unsigned char)*buf) &&
-		    *t != '\0' && strchr("acdis", *t) != NULL) {
-			if (pipefp != NULL)
-				fputs(buf, pipefp);
-			if (*t == 's') {
-				for (;;) {
-					bool continued = false;
-					t = buf + strlen(buf) - 1;
-					while (--t >= buf && *t == '\\')
-						continued = !continued;
-					if (!continued ||
-					    pgets(buf, sizeof buf, pfp) == NULL)
-						break;
-					if (pipefp != NULL)
-						fputs(buf, pipefp);
-				}
-			} else if (*t != 'd') {
-				while (pgets(buf, sizeof buf, pfp) != NULL) {
-					p_input_line++;
-					if (pipefp != NULL)
-						fputs(buf, pipefp);
-					if (strEQ(buf, ".\n"))
-						break;
-				}
-			}
-		} else {
-			next_intuit_at(beginning_of_this_line, p_input_line);
-			break;
-		}
-	}
-	if (pipefp == NULL)
-		return;
-	fprintf(pipefp, "w\n");
-	fprintf(pipefp, "q\n");
-	fflush(pipefp);
-	pclose(pipefp);
-	ignore_signals();
-	if (!check_only) {
-		if (move_file(TMPOUTNAME, outname) < 0) {
-			toutkeep = true;
-			chmod(TMPOUTNAME, filemode);
-		} else
-			chmod(outname, filemode);
-	}
-	set_signals(1);
-}
-
-/*
  * Choose the name of the file to be patched based on POSIX rules.
  * NOTE: the POSIX rules are amazingly stupid and we only follow them
  *       if the user specified --posix or set POSIXLY_CORRECT.
@@ -1556,7 +1478,7 @@ num_components(const char *path)
  * character that is not a digit in ENDPTR.  If conversion is not
  * possible, call fatal.
  */
-static LINENUM
+LINENUM
 strtolinenum(char *nptr, char **endptr)
 {
 	LINENUM rv;
