@@ -1,4 +1,4 @@
-/*	$OpenBSD: alloc.c,v 1.8 2008/07/21 17:30:08 millert Exp $	*/
+/*	$OpenBSD: alloc.c,v 1.9 2015/10/16 03:17:56 mmcc Exp $	*/
 /*
  * Copyright (c) 2002 Marc Espie.
  *
@@ -28,6 +28,7 @@
  * area-based allocation built on malloc/free
  */
 
+#include <stdint.h>
 #include "sh.h"
 
 struct link {
@@ -72,6 +73,30 @@ alloc(size_t size, Area *ap)
 	ap->freelist = l;
 
 	return L2P(l);
+}
+
+/*
+ * Copied from calloc().
+ *
+ * This is sqrt(SIZE_MAX+1), as s1*s2 <= SIZE_MAX
+ * if both s1 < MUL_NO_OVERFLOW and s2 < MUL_NO_OVERFLOW
+ */
+#define MUL_NO_OVERFLOW	(1UL << (sizeof(size_t) * 4))
+
+void *
+allocarray(size_t nmemb, size_t size, Area *ap)
+{
+	/* condition logic cloned from calloc() */
+	if ((nmemb >= MUL_NO_OVERFLOW || size >= MUL_NO_OVERFLOW) &&
+	    nmemb > 0 && SIZE_MAX / nmemb < size) {
+		internal_errorf(1, "unable to allocate memory");
+	}
+
+	/* additional check because alloc() allocates space for link */
+	if (nmemb * size > SIZE_MAX - sizeof(struct link))
+		internal_errorf(1, "unable to allocate memory");
+
+	return alloc(nmemb * size, ap);
 }
 
 void *
