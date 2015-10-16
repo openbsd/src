@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.30 2015/10/15 17:55:41 deraadt Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.31 2015/10/16 06:40:53 doug Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -1095,8 +1095,10 @@ pledge_ioctl_check(struct proc *p, long com, void *v)
 		case TIOCGPGRP:
 		case TIOCGWINSZ:	/* various programs */
 		case TIOCSWINSZ:
+		case TIOCCBRK:		/* cu */
 		case TIOCSBRK:		/* cu */
 		case TIOCCDTR:		/* cu */
+		case TIOCSDTR:		/* cu */
 		case TIOCEXCL:		/* cu */
 		case TIOCSETA:		/* cu, ... */
 		case TIOCSETAW:		/* cu, ... */
