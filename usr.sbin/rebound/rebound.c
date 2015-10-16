@@ -1,4 +1,4 @@
-/* $OpenBSD: rebound.c,v 1.21 2015/10/16 18:29:05 tedu Exp $ */
+/* $OpenBSD: rebound.c,v 1.22 2015/10/16 18:38:53 tedu Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -269,7 +269,14 @@ freecacheent(struct dnscache *ent)
 static struct request *
 tcpphasetwo(struct request *req)
 {
+	int error;
+	socklen_t len = sizeof(error);
+
 	req->phase = 2;
+	
+	if (getsockopt(req->s, SOL_SOCKET, SO_ERROR, &error, &len) == -1 ||
+	    error != 0)
+		goto fail;
 	if (setsockopt(req->client, SOL_SOCKET, SO_SPLICE, &req->s,
 	    sizeof(req->s)) == -1)
 		goto fail;
