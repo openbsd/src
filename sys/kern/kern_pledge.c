@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.37 2015/10/16 14:20:48 deraadt Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.38 2015/10/16 15:39:14 nicm Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -32,6 +32,7 @@
 
 #include <sys/ioctl.h>
 #include <sys/termios.h>
+#include <sys/tty.h>
 #include <sys/mtio.h>
 #include <net/bpf.h>
 #include <net/route.h>
@@ -42,6 +43,8 @@
 #include <netinet6/nd6.h>
 #include <netinet/tcp.h>
 
+#include <sys/conf.h>
+#include <sys/specdev.h>
 #include <sys/signal.h>
 #include <sys/signalvar.h>
 #include <sys/syscall.h>
@@ -1071,6 +1074,16 @@ pledge_ioctl_check(struct proc *p, long com, void *v)
 
 	if ((p->p_p->ps_pledge & PLEDGE_TTY)) {
 		switch (com) {
+		case PTMGET:
+			if ((p->p_p->ps_pledge & PLEDGE_RPATH) == 0)
+		                break;
+			if ((p->p_p->ps_pledge & PLEDGE_WPATH) == 0)
+		                break;
+			if (fp->f_type != DTYPE_VNODE || vp->v_type != VCHR)
+				break;
+			if (cdevsw[major(vp->v_rdev)].d_open != ptmopen)
+				break;
+			return (0);
 #if notyet
 		case TIOCSTI:		/* ksh? csh? */
 			if (fp->f_type == DTYPE_VNODE && (vp->v_flag & VISTTY))
