@@ -1,4 +1,4 @@
-/*	$OpenBSD: identd.c,v 1.31 2015/08/20 11:06:35 dlg Exp $ */
+/*	$OpenBSD: identd.c,v 1.32 2015/10/16 05:55:23 doug Exp $ */
 
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
@@ -314,6 +314,9 @@ main(int argc, char *argv[])
 		lerr(1, "signal(SIGPIPE)");
 
 	if (parent) {
+		if (pledge("stdio proc getpw rpath", NULL) == -1)
+			err(1, "pledge");
+
 		SIMPLEQ_INIT(&sc.parent.replies);
 
 		event_set(&proc_rd, sibling, EV_READ | EV_PERSIST,
@@ -342,6 +345,16 @@ main(int argc, char *argv[])
 	    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||
 	    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
 		lerr(1, "unable to revoke privs");
+
+	if (parent) {
+		if (noident) {
+			if (pledge("stdio getpw rpath", NULL) == -1)
+				err(1, "pledge");
+		} else {
+			if (pledge("stdio getpw", NULL) == -1)
+				err(1, "pledge");
+		}
+	}
 
 	event_add(&proc_rd, NULL);
 	event_dispatch();
