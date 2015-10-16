@@ -1,4 +1,4 @@
-/*	$OpenBSD: popen.c,v 1.37 2015/01/16 06:40:09 deraadt Exp $	*/
+/*	$OpenBSD: popen.c,v 1.38 2015/10/16 17:56:07 mmcc Exp $	*/
 /*	$NetBSD: popen.c,v 1.6 1997/05/13 06:48:42 mikel Exp $	*/
 
 /*
@@ -162,8 +162,8 @@ register_file(FILE *fp, int pipe, pid_t pid)
 {
 	struct fp *fpp;
 
-	if ((fpp = (struct fp *)malloc(sizeof(*fpp))) == NULL)
-		errx(1, "Out of memory");
+	if ((fpp = malloc(sizeof(*fpp))) == NULL)
+		err(1, "malloc");
 	fpp->fp = fp;
 	fpp->pipe = pipe;
 	fpp->pid = pid;
@@ -313,9 +313,9 @@ findchild(pid_t pid, int dont_alloc)
 			*cpp = child_freelist;
 			child_freelist = (*cpp)->link;
 		} else {
-			*cpp = (struct child *)malloc(sizeof(struct child));
+			*cpp = malloc(sizeof(struct child));
 			if (*cpp == NULL)
-				errx(1, "Out of memory");
+				err(1, "malloc");
 		}
 		(*cpp)->pid = pid;
 		(*cpp)->done = (*cpp)->free = 0;

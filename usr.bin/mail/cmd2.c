@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd2.c,v 1.21 2014/03/16 18:38:30 guenther Exp $	*/
+/*	$OpenBSD: cmd2.c,v 1.22 2015/10/16 17:56:07 mmcc Exp $	*/
 /*	$NetBSD: cmd2.c,v 1.7 1997/05/17 19:55:10 pk Exp $	*/
 
 /*
@@ -392,12 +392,12 @@ ignore1(char **list, struct ignoretab *tab, char *which)
 		if (member(field, tab))
 			continue;
 		h = hash(field);
-		igp = (struct ignore *)calloc(1, sizeof(struct ignore));
+		igp = calloc(1, sizeof(struct ignore));
 		if (igp == NULL)
-			errx(1, "Out of memory");
+			err(1, "calloc");
 		igp->i_field = strdup(field);
 		if (igp->i_field == NULL)
-			errx(1, "Out of memory");
+			err(1, "strdup");
 		igp->i_link = tab->i_head[h];
 		tab->i_head[h] = igp;
 		tab->i_count++;

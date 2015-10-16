@@ -1,4 +1,4 @@
-/*	$OpenBSD: list.c,v 1.19 2014/01/17 18:42:30 okan Exp $	*/
+/*	$OpenBSD: list.c,v 1.20 2015/10/16 17:56:07 mmcc Exp $	*/
 /*	$NetBSD: list.c,v 1.7 1997/07/09 05:23:36 mikel Exp $	*/
 
 /*
@@ -377,8 +377,8 @@ getrawlist(char *line, char **argv, int argc)
 	char *linebuf, *linebuf2;
 	size_t newsize, linebufsize = BUFSIZ;
 
-	if ((linebuf = (char *)malloc(linebufsize)) == NULL)
-		errx(1, "Out of memory");
+	if ((linebuf = malloc(linebufsize)) == NULL)
+		err(1, "malloc");
 
 	argn = 0;
 	cp = line;
@@ -399,7 +399,7 @@ getrawlist(char *line, char **argv, int argc)
 				newsize = linebufsize + BUFSIZ;
 				linebuf2 = realloc(linebuf, newsize);
 				if (linebuf2 == NULL)
-					errx(1, "Out of memory");
+					err(1, "realloc");
 				linebuf = linebuf2;
 				linebufsize = newsize;
 				cp2 = linebuf + linebufsize - BUFSIZ - 1;

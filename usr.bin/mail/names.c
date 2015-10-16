@@ -1,4 +1,4 @@
-/*	$OpenBSD: names.c,v 1.22 2015/01/20 16:59:07 millert Exp $	*/
+/*	$OpenBSD: names.c,v 1.23 2015/10/16 17:56:07 mmcc Exp $	*/
 /*	$NetBSD: names.c,v 1.5 1996/06/08 19:48:32 christos Exp $	*/
 
 /*
@@ -88,8 +88,8 @@ extract(char *line, int ntype)
 
 	if (line == NULL || *line == '\0')
 		return(NULL);
-	if ((nbuf = (char *)malloc(strlen(line) + 1)) == NULL)
-		errx(1, "Out of memory");
+	if ((nbuf = malloc(strlen(line) + 1)) == NULL)
+		err(1, "malloc");
 	top = NULL;
 	np = NULL;
 	cp = line;

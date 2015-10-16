@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd3.c,v 1.26 2015/01/20 16:59:07 millert Exp $	*/
+/*	$OpenBSD: cmd3.c,v 1.27 2015/10/16 17:56:07 mmcc Exp $	*/
 /*	$NetBSD: cmd3.c,v 1.8 1997/07/09 05:29:49 mikel Exp $	*/
 
 /*
@@ -478,8 +478,8 @@ group(void *v)
 	gname = *argv;
 	h = hash(gname);
 	if ((gh = findgroup(gname)) == NULL) {
-		if ((gh = (struct grouphead *)calloc(1, sizeof(*gh))) == NULL)
-			errx(1, "Out of memory");
+		if ((gh = calloc(1, sizeof(*gh))) == NULL)
+			err(1, "calloc");
 		gh->g_name = vcopy(gname);
 		gh->g_list = NULL;
 		gh->g_link = groups[h];
@@ -493,8 +493,8 @@ group(void *v)
 	 */
 
 	for (ap = argv+1; *ap != NULL; ap++) {
-		if ((gp = (struct group *)calloc(1, sizeof(*gp))) == NULL)
-			errx(1, "Out of memory");
+		if ((gp = calloc(1, sizeof(*gp))) == NULL)
+			err(1, "calloc");
 		gp->ge_name = vcopy(*ap);
 		gp->ge_link = gh->g_list;
 		gh->g_list = gp;
@@ -725,11 +725,11 @@ alternates(void *v)
 	}
 	if (altnames != 0)
 		(void)free(altnames);
-	if ((altnames = (char **)calloc(c, sizeof(char *))) == NULL)
-		errx(1, "Out of memory");
+	if ((altnames = calloc(c, sizeof(char *))) == NULL)
+		err(1, "calloc");
 	for (ap = namelist, ap2 = altnames; *ap; ap++, ap2++) {
 		if ((*ap2 = strdup(*ap)) == NULL)
-			errx(1, "Out of memory");
+			err(1, "strdup");
 	}
 	*ap2 = 0;
 	return(0);

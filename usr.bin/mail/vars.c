@@ -1,4 +1,4 @@
-/*	$OpenBSD: vars.c,v 1.12 2009/10/27 23:59:40 deraadt Exp $	*/
+/*	$OpenBSD: vars.c,v 1.13 2015/10/16 17:56:07 mmcc Exp $	*/
 /*	$NetBSD: vars.c,v 1.4 1996/06/08 19:48:45 christos Exp $	*/
 
 /*
@@ -51,8 +51,8 @@ assign(char *name, char *value)
 	h = hash(name);
 	vp = lookup(name);
 	if (vp == NULL) {
-		if ((vp = (struct var *)calloc(1, sizeof(*vp))) == NULL)
-			errx(1, "Out of memory");
+		if ((vp = calloc(1, sizeof(*vp))) == NULL)
+			err(1, "calloc");
 		vp->v_name = vcopy(name);
 		vp->v_link = variables[h];
 		variables[h] = vp;
@@ -87,7 +87,7 @@ vcopy(char *str)
 	if (*str == '\0')
 		return("");
 	if ((new = strdup(str)) == NULL)
-		errx(1, "Out of memory");
+		err(1, "strdup");
 	return(new);
 }
 
