@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.77 2015/04/26 20:12:03 benno Exp $ */
+/*	$OpenBSD: control.c,v 1.78 2015/10/17 13:07:07 reyk Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -34,6 +34,7 @@ struct ctl_conn	*control_connbyfd(int);
 struct ctl_conn	*control_connbypid(pid_t);
 int		 control_close(int);
 void		 control_result(struct ctl_conn *, u_int);
+ssize_t		 imsg_read_nofd(struct imsgbuf *);
 
 int
 control_init(int restricted, char *path)
@@ -218,7 +219,7 @@ control_dispatch_msg(struct pollfd *pfd, u_int *ctl_cnt)
 	if (!(pfd->revents & POLLIN))
 		return (0);
 
-	if ((n = imsg_read(&c->ibuf)) == -1 || n == 0) {
+	if ((n = imsg_read_nofd(&c->ibuf)) == -1 || n == 0) {
 		*ctl_cnt -= control_close(pfd->fd);
 		return (1);
 	}
@@ -505,4 +506,27 @@ control_result(struct ctl_conn *c, u_int code)
 {
 	imsg_compose(&c->ibuf, IMSG_CTL_RESULT, 0, c->ibuf.pid, -1,
 	    &code, sizeof(code));
+}
+
+/* This should go into libutil, from smtpd/mproc.c */
+ssize_t
+imsg_read_nofd(struct imsgbuf *ibuf)
+{
+	ssize_t	 n;
+	char	*buf;
+	size_t	 len;
+
+	buf = ibuf->r.buf + ibuf->r.wpos;
+	len = sizeof(ibuf->r.buf) - ibuf->r.wpos;
+
+ again:
+	if ((n = recv(ibuf->fd, buf, len, 0)) == -1) {
+		if (errno != EINTR && errno != EAGAIN)
+			goto fail;
+		goto again;
+	}
+
+        ibuf->r.wpos += n;
+ fail:
+        return (n);
 }
