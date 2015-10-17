@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.42 2015/10/17 04:31:10 deraadt Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.43 2015/10/17 22:54:23 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -149,7 +149,7 @@ const u_int pledge_syscalls[SYS_MAXSYSCALL] = {
 	[SYS_vfork] = PLEDGE_PROC,
 	[SYS_setpgid] = PLEDGE_PROC,
 	[SYS_setsid] = PLEDGE_PROC,
-	[SYS_kill] = PLEDGE_SELF | PLEDGE_PROC,	
+	[SYS_kill] = PLEDGE_SELF | PLEDGE_PROC,
 
 	[SYS_setrlimit] = PLEDGE_PROC | PLEDGE_ID,
 	[SYS_getpriority] = PLEDGE_PROC | PLEDGE_ID,
@@ -625,7 +625,7 @@ pledge_namei(struct proc *p, char *origpath)
 		break;
 	}
 
-	/* ensure PLEDGE_RPATH request for doing read */	
+	/* ensure PLEDGE_RPATH request for doing read */
 	if ((p->p_pledgenote & TMN_RPATH) &&
 	    (p->p_p->ps_pledge & PLEDGE_RPATH) == 0)
 		return (pledge_fail(p, EPERM, PLEDGE_RPATH));
@@ -1192,7 +1192,7 @@ pledge_setsockopt_check(struct proc *p, int level, int optname)
 			if (p->p_p->ps_pledge & PLEDGE_MCAST)
 				return (0);
 			break;
-		}		
+		}
 		break;
 	case IPPROTO_ICMP:
 		break;
