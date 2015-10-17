@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211.c,v 1.46 2015/09/27 16:51:31 stsp Exp $	*/
+/*	$OpenBSD: ieee80211.c,v 1.47 2015/10/17 21:30:29 stsp Exp $	*/
 /*	$NetBSD: ieee80211.c,v 1.19 2004/06/06 05:45:29 dyoung Exp $	*/
 
 /*-
@@ -689,7 +689,7 @@ ieee80211_setmode(struct ieee80211com *ic, enum ieee80211_phymode mode)
 	 * channel list before committing to the new mode.
 	 */
 	if (mode >= nitems(chanflags))
-		panic("Unexpected mode %u", mode);
+		panic("unexpected mode %u", mode);
 	modeflags = chanflags[mode];
 	for (i = 0; i <= IEEE80211_CHAN_MAX; i++) {
 		c = &ic->ic_channels[i];
@@ -949,7 +949,7 @@ ieee80211_rate2plcp(u_int8_t rate, enum ieee80211_phymode mode)
 		case 108:	return 0x0c;
 		}
         } else
-		panic("Unexpected mode %u", mode);
+		panic("unexpected mode %u", mode);
 
 	DPRINTF(("unsupported rate %u\n", rate));
 
