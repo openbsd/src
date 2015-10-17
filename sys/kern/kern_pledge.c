@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.44 2015/10/17 22:58:30 deraadt Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.45 2015/10/17 23:01:37 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -1055,14 +1055,11 @@ pledge_ioctl_check(struct proc *p, long com, void *v)
 	if ((p->p_p->ps_pledge & PLEDGE_IOCTL)) {
 		switch (com) {
 		case TIOCGETA:
+		case TIOCGPGRP:
+		case TIOCGWINSZ:	/* ENOTTY for return for non-tty */
 			if (fp->f_type == DTYPE_VNODE && (vp->v_flag & VISTTY))
 				return (0);
 			return (ENOTTY);
-		case TIOCGPGRP:
-		case TIOCGWINSZ:	/* various programs */
-			if (fp->f_type == DTYPE_VNODE && (vp->v_flag & VISTTY))
-				return (0);
-			break;
 		case BIOCGSTATS:	/* bpf: tcpdump privsep on ^C */
 			if (fp->f_type == DTYPE_VNODE &&
 			    fp->f_ops->fo_ioctl == vn_ioctl)
@@ -1114,7 +1111,7 @@ pledge_ioctl_check(struct proc *p, long com, void *v)
 			/* FALLTHROUGH */
 		case TIOCGPGRP:
 		case TIOCGETA:
-		case TIOCGWINSZ:	/* various programs */
+		case TIOCGWINSZ:	/* ENOTTY for return for non-tty */
 			if (fp->f_type == DTYPE_VNODE && (vp->v_flag & VISTTY))
 				return (0);
 			return (ENOTTY);
