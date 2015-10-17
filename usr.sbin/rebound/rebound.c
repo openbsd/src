@@ -1,4 +1,4 @@
-/* $OpenBSD: rebound.c,v 1.25 2015/10/16 20:25:09 tedu Exp $ */
+/* $OpenBSD: rebound.c,v 1.26 2015/10/17 00:38:57 tedu Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -24,7 +24,6 @@
 #include <sys/signal.h>
 #include <sys/wait.h>
 
-#include <fcntl.h>
 #include <signal.h>
 #include <syslog.h>
 #include <stdlib.h>
@@ -308,10 +307,8 @@ newtcprequest(int ld, struct sockaddr *remoteaddr)
 	if (req->client == -1)
 		goto fail;
 
-	req->s = socket(remoteaddr->sa_family, SOCK_STREAM, 0);
+	req->s = socket(remoteaddr->sa_family, SOCK_STREAM | SOCK_NONBLOCK, 0);
 	if (req->s == -1)
-		goto fail;
-	if (fcntl(req->s, F_SETFL, O_NONBLOCK) == -1)
 		goto fail;
 	req->phase = 1;
 	if (connect(req->s, remoteaddr, remoteaddr->sa_len) == -1) {
