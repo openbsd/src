@@ -1,4 +1,4 @@
-/* $OpenBSD: enc.c,v 1.8 2015/10/10 22:28:51 doug Exp $ */
+/* $OpenBSD: enc.c,v 1.9 2015/10/17 07:51:10 semarie Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -339,7 +339,7 @@ enc_main(int argc, char **argv)
 	int i;
 
 	if (single_execution) {
-		if (pledge("stdio rpath wpath cpath", NULL) == -1)
+		if (pledge("stdio rpath wpath cpath tty", NULL) == -1)
 			perror("pledge");
 	}
 
