@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.c,v 1.58 2015/10/17 18:26:24 mmcc Exp $	*/
+/*	$OpenBSD: exec.c,v 1.59 2015/10/17 18:43:22 mmcc Exp $	*/
 
 /*
  * execute command tree
@@ -689,11 +689,11 @@ scriptexec(struct op *tp, char **ap)
 {
 	char *shell;
 
-	shell = str_val(global(EXECSHELL_STR));
+	shell = str_val(global("EXECSHELL"));
 	if (shell && *shell)
 		shell = search(shell, path, X_OK, NULL);
 	if (!shell || !*shell)
-		shell = EXECSHELL;
+		shell = _PATH_BSHELL;
 
 	*tp->args-- = tp->str;
 	*tp->args = shell;
