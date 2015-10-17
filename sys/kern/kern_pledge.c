@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.46 2015/10/17 23:04:06 deraadt Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.47 2015/10/17 23:12:46 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -1094,12 +1094,11 @@ pledge_ioctl_check(struct proc *p, long com, void *v)
 				break;
 			return (0);
 #endif /* NPTY > 0 */
-#if notyet
 		case TIOCSTI:		/* ksh? csh? */
-			if (fp->f_type == DTYPE_VNODE && (vp->v_flag & VISTTY))
+			if ((p->p_p->ps_pledge & PLEDGE_PROC) == 0 &&
+			    fp->f_type == DTYPE_VNODE && (vp->v_flag & VISTTY))
 				return (0);
 			break;
-#endif
 		case TIOCSCTTY:		/* tmux etc */
 			if ((p->p_p->ps_pledge & PLEDGE_ID) == 0 &&
 			    fp->f_type == DTYPE_VNODE && (vp->v_flag & VISTTY))
