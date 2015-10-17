@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.127 2015/10/17 13:08:14 florian Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.128 2015/10/17 15:43:31 florian Exp $	*/
 /*	$KAME: ping6.c,v 1.163 2002/10/25 02:19:06 itojun Exp $	*/
 
 /*
@@ -1653,11 +1653,8 @@ void
 usage(void)
 {
 	(void)fprintf(stderr,
-	    "usage: ping6 [-dEefH"
-	    "m"
-	    "nqv"
-	    "] [-c count] [-g gateway]\n\t"
-	    "[-h hoplimit] [-I sourceaddr] [-i wait] [-l preload] [-p pattern]"
-	    "\n\t[-s packetsize] [-V rtable] [-w maxwait] host\n");
+	    "usage: ping6 [-dEefHmnqv] [-c count] [-g gateway] [-h hoplimit] "
+	    "[-I sourceaddr]\n\t[-i wait] [-l preload] [-p pattern] "
+	    "[-s packetsize] [-V rtable]\n\t[-w maxwait] host\n");
 	exit(1);
 }
