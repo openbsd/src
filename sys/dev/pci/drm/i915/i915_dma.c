@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_dma.c,v 1.23 2015/09/23 23:12:11 kettenis Exp $	*/
+/*	$OpenBSD: i915_dma.c,v 1.24 2015/10/17 21:41:12 kettenis Exp $	*/
 /* i915_dma.c -- DMA support for the I915 -*- linux-c -*-
  */
 /*
@@ -1128,6 +1128,17 @@ static int i915_get_bridge_dev(struct drm_device *dev)
 	}
 	return 0;
 }
+#else
+int i915_get_bridge_dev(struct drm_device *dev)
+{
+	struct drm_i915_private *dev_priv = dev->dev_private;
+
+	dev_priv->bridge_dev = malloc(sizeof(*dev_priv->bridge_dev),
+				      M_DEVBUF, M_WAITOK);
+	dev_priv->bridge_dev->pc = dev->pdev->pc;
+	dev_priv->bridge_dev->tag = pci_make_tag(dev->pdev->pc, 0, 0, 0);
+	return 0;
+}
 #endif
 
 #define MCHBAR_I915 0x44
@@ -1145,35 +1156,27 @@ intel_alloc_mchbar_resource(struct drm_device *dev)
 	int reg = INTEL_INFO(dev)->gen >= 4 ? MCHBAR_I965 : MCHBAR_I915;
 	u32 temp_lo, temp_hi = 0;
 	u64 mchbar_addr;
-	u_long addr;
 
 	if (INTEL_INFO(dev)->gen >= 4)
-		temp_hi = pci_conf_read(dev_priv->pc, dev_priv->tag, reg + 4);
-	temp_lo = pci_conf_read(dev_priv->pc, dev_priv->tag, reg);
+		pci_read_config_dword(dev_priv->bridge_dev, reg + 4, &temp_hi);
+	pci_read_config_dword(dev_priv->bridge_dev, reg, &temp_lo);
 	mchbar_addr = ((u64)temp_hi << 32) | temp_lo;
 
-	if (mchbar_addr == 0) {
-		addr = (u_long)mchbar_addr;
-		if (dev_priv->memex == NULL || extent_alloc(dev_priv->memex,
-	            MCHBAR_SIZE, MCHBAR_SIZE, 0, 0, 0, &addr)) {
-			return -ENOMEM;
-		} else {
-			mchbar_addr = addr;
-			/* We've allocated it, now fill in the BAR again */
-			if (INTEL_INFO(dev)->gen >= 4)
-				pci_conf_write(dev_priv->pc, dev_priv->tag,
-				    reg + 4, upper_32_bits(mchbar_addr));
-			pci_conf_write(dev_priv->pc, dev_priv->tag,
-			    reg, lower_32_bits(mchbar_addr));
-		}
+	if (mchbar_addr)
+		return 0;
+
+	/* Get some space for it */
+	if (dev_priv->memex == NULL || extent_alloc(dev_priv->memex,
+	    MCHBAR_SIZE, MCHBAR_SIZE, 0, 0, 0, &dev_priv->mch_res.start)) {
+		return -ENOMEM;
 	}
 
 	if (INTEL_INFO(dev)->gen >= 4)
-		pci_conf_write(dev_priv->pc, dev_priv->tag, reg + 4,
-		    upper_32_bits(mchbar_addr));
+		pci_write_config_dword(dev_priv->bridge_dev, reg + 4,
+				       upper_32_bits(dev_priv->mch_res.start));
 
-	pci_conf_write(dev_priv->pc, dev_priv->tag, reg,
-	    lower_32_bits(mchbar_addr));
+	pci_write_config_dword(dev_priv->bridge_dev, reg,
+			       lower_32_bits(dev_priv->mch_res.start));
 	return 0;
 }
 
@@ -1183,16 +1186,16 @@ intel_setup_mchbar(struct drm_device *dev)
 {
 	drm_i915_private_t *dev_priv = dev->dev_private;
 	int mchbar_reg = INTEL_INFO(dev)->gen >= 4 ? MCHBAR_I965 : MCHBAR_I915;
-	pcireg_t temp;
+	u32 temp;
 	bool enabled;
 
 	dev_priv->mchbar_need_disable = false;
 
 	if (IS_I915G(dev) || IS_I915GM(dev)) {
-		temp = pci_conf_read(dev_priv->pc, dev_priv->tag, DEVEN_REG);
+		pci_read_config_dword(dev_priv->bridge_dev, DEVEN_REG, &temp);
 		enabled = !!(temp & DEVEN_MCHBAR_EN);
 	} else {
-		temp = pci_conf_read(dev_priv->pc, dev_priv->tag, mchbar_reg);
+		pci_read_config_dword(dev_priv->bridge_dev, mchbar_reg, &temp);
 		enabled = temp & 1;
 	}
 
@@ -1207,11 +1210,11 @@ intel_setup_mchbar(struct drm_device *dev)
 
 	/* Space is allocated or reserved, so enable it. */
 	if (IS_I915G(dev) || IS_I915GM(dev)) {
-		pci_conf_write(dev_priv->pc, dev_priv->tag, DEVEN_REG,
-		    temp | DEVEN_MCHBAR_EN);
+		pci_write_config_dword(dev_priv->bridge_dev, DEVEN_REG,
+				       temp | DEVEN_MCHBAR_EN);
 	} else {
-		temp = pci_conf_read(dev_priv->pc, dev_priv->tag, mchbar_reg);
-		pci_conf_write(dev_priv->pc, dev_priv->tag, mchbar_reg, temp | 1);
+		pci_read_config_dword(dev_priv->bridge_dev, mchbar_reg, &temp);
+		pci_write_config_dword(dev_priv->bridge_dev, mchbar_reg, temp | 1);
 	}
 }
 
@@ -1220,28 +1223,23 @@ intel_teardown_mchbar(struct drm_device *dev)
 {
 	drm_i915_private_t *dev_priv = dev->dev_private;
 	int mchbar_reg = INTEL_INFO(dev)->gen >= 4 ? MCHBAR_I965 : MCHBAR_I915;
-	pcireg_t temp;
-	u_int64_t mchbar_addr;
-	pcireg_t low, high = 0;
+	u32 temp;
 
 	if (dev_priv->mchbar_need_disable) {
 		if (IS_I915G(dev) || IS_I915GM(dev)) {
-			temp = pci_conf_read(dev_priv->pc, dev_priv->tag, DEVEN_REG);
+			pci_read_config_dword(dev_priv->bridge_dev, DEVEN_REG, &temp);
 			temp &= ~DEVEN_MCHBAR_EN;
-			pci_conf_write(dev_priv->pc, dev_priv->tag, DEVEN_REG, temp);
+			pci_write_config_dword(dev_priv->bridge_dev, DEVEN_REG, temp);
 		} else {
-			temp = pci_conf_read(dev_priv->pc, dev_priv->tag, mchbar_reg);
+			pci_read_config_dword(dev_priv->bridge_dev, mchbar_reg, &temp);
 			temp &= ~1;
-			pci_conf_write(dev_priv->pc, dev_priv->tag, mchbar_reg, temp);
+			pci_write_config_dword(dev_priv->bridge_dev, mchbar_reg, temp);
 		}
 	}
 
-	if (INTEL_INFO(dev)->gen >= 4)
-		high = pci_conf_read(dev_priv->pc, dev_priv->tag, mchbar_reg + 4);
-	low = pci_conf_read(dev_priv->pc, dev_priv->tag, mchbar_reg);
-	mchbar_addr = ((u_int64_t)high << 32) | low;
-	if (dev_priv->memex)
-		extent_free(dev_priv->memex, mchbar_addr, MCHBAR_SIZE, 0);
+	if (dev_priv->mch_res.start)
+		extent_free(dev_priv->memex, dev_priv->mch_res.start,
+			    MCHBAR_SIZE, 0);
 }
 
 #ifdef __linux__

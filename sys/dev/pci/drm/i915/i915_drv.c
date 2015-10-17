@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.c,v 1.93 2015/09/28 17:29:56 kettenis Exp $ */
+/* $OpenBSD: i915_drv.c,v 1.94 2015/10/17 21:41:12 kettenis Exp $ */
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -197,6 +197,7 @@ void	i965_alloc_ifp(struct inteldrm_softc *, struct pci_attach_args *);
 void	intel_gtt_chipset_setup(struct drm_device *);
 
 /* i915_dma.c */
+int	i915_get_bridge_dev(struct drm_device *);
 void	intel_setup_mchbar(struct drm_device *);
 void	intel_teardown_mchbar(struct drm_device *);
 int	i915_load_modeset_init(struct drm_device *);
@@ -1203,6 +1204,7 @@ inteldrm_attach(struct device *parent, struct device *self, void *aux)
 	dev_priv->tag = pa->pa_tag;
 	dev_priv->dmat = pa->pa_dmat;
 	dev_priv->bst = pa->pa_memt;
+	dev_priv->memex = pa->pa_memex;
 
 	printf("\n");
 
@@ -1240,12 +1242,12 @@ inteldrm_attach(struct device *parent, struct device *self, void *aux)
 	if (IS_HSW_EARLY_SDV(dev))
 		DRM_INFO("This is an early pre-production Haswell machine. "
 			 "It may not be fully functional.\n");
+#endif
 
 	if (i915_get_bridge_dev(dev)) {
 		ret = -EIO;
 		goto free_priv;
 	}
-#endif
 
 	mmio_bar = IS_GEN2(dev) ? 1 : 0;
 	/* Before gen4, the registers and the GTT are behind different BARs.
