@@ -1,4 +1,4 @@
-/* $OpenBSD: file.c,v 1.52 2015/10/09 01:37:07 deraadt Exp $ */
+/* $OpenBSD: file.c,v 1.53 2015/10/17 04:41:37 deraadt Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -351,7 +351,7 @@ child(int fd, pid_t parent, int argc, char **argv)
 	int			 i, idx;
 	size_t			 len, width = 0;
 
-	if (pledge("stdio getpw proc recvfd", NULL) == -1)
+	if (pledge("stdio getpw recvfd id", NULL) == -1)
 		err(1, "pledge");
 
 	if (geteuid() == 0) {
