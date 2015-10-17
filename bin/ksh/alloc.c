@@ -1,4 +1,4 @@
-/*	$OpenBSD: alloc.c,v 1.10 2015/10/16 23:13:35 mmcc Exp $	*/
+/*	$OpenBSD: alloc.c,v 1.11 2015/10/17 13:27:55 mmcc Exp $	*/
 /*
  * Copyright (c) 2002 Marc Espie.
  *
@@ -106,6 +106,10 @@ aresize(void *ptr, size_t size, Area *ap)
 
 	if (ptr == NULL)
 		return alloc(size, ap);
+
+	/* ensure that we don't overflow by allocating space for link */
+	if (size > SIZE_MAX - sizeof(struct link))
+		internal_errorf(1, "unable to allocate memory");
 
 	l = P2L(ptr);
 	lprev = l->prev;
