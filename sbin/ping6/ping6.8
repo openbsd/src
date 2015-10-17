@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ping6.8,v 1.56 2015/10/17 12:38:29 florian Exp $
+.\"	$OpenBSD: ping6.8,v 1.57 2015/10/17 13:08:14 florian Exp $
 .\"	$KAME: ping6.8,v 1.57 2002/05/26 13:18:25 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -46,6 +46,7 @@
 .Op Fl p Ar pattern
 .Op Fl s Ar packetsize
 .Op Fl V Ar rtable
+.Op Fl w Ar maxwait
 .Ar host
 .Sh DESCRIPTION
 .Nm
@@ -201,8 +202,10 @@ Set the routing table to be used for outgoing packets.
 Verbose output.
 All ICMP packets
 that are received are listed.
-.It Ar host
-The IPv6 address of the final destination node.
+.It Fl w Ar maxwait
+Specifies the maximum number of seconds to wait for responses
+after the last request has been sent.
+The default is 10.
 .El
 .Pp
 When using

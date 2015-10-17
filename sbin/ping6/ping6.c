@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.126 2015/10/17 13:07:02 florian Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.127 2015/10/17 13:08:14 florian Exp $	*/
 /*	$KAME: ping6.c,v 1.163 2002/10/25 02:19:06 itojun Exp $	*/
 
 /*
@@ -128,6 +128,7 @@ struct payload {
 #define	EXTRA		256	/* for AH and various other headers. weird. */
 #define	DEFDATALEN	ICMP6ECHOTMLEN
 #define MAXDATALEN	MAXPACKETLEN - IP6LEN - ICMP6ECHOLEN
+#define	MAXWAIT_DEFAULT	10	/* secs to wait for response */
 
 #define	A(bit)		rcvd_tbl[(bit)>>3]	/* identify byte in array */
 #define	B(bit)		(1 << ((bit) & 0x07))	/* identify bit in byte */
@@ -180,6 +181,7 @@ struct timeval interval = {1, 0}; /* interval between packets */
 
 /* timing */
 int timing;			/* flag to do timing */
+unsigned int maxwait = MAXWAIT_DEFAULT;	/* max seconds to wait for response */
 double tmin = 999999999.0;	/* minimum round trip time */
 double tmax = 0.0;		/* maximum round trip time */
 double tsum = 0.0;		/* sum of all times, for doing average */
@@ -250,7 +252,7 @@ main(int argc, char *argv[])
 	preload = 0;
 	datap = &outpack[ICMP6ECHOLEN + ICMP6ECHOTMLEN];
 	while ((ch = getopt(argc, argv,
-	    "c:dEefg:Hh:I:i:l:mNnp:qS:s:vV:")) != -1) {
+	    "c:dEefg:Hh:I:i:l:mNnp:qS:s:V:vw:")) != -1) {
 		switch (ch) {
 		case 'c':
 			npackets = strtonum(optarg, 0, INT_MAX, &errstr);
@@ -366,6 +368,12 @@ main(int argc, char *argv[])
 			break;
 		case 'v':
 			options |= F_VERBOSE;
+			break;
+		case 'w':
+			maxwait = strtonum(optarg, 1, INT_MAX, &errstr);
+			if (errstr)
+				errx(1, "maxwait value is %s: %s",
+				    errstr, optarg);
 			break;
 		default:
 			usage();
@@ -773,15 +781,14 @@ retransmit(void)
 	/*
 	 * If we're not transmitting any more packets, change the timer
 	 * to wait two round-trip times if we've received any packets or
-	 * ten seconds if we haven't.
+	 * maxwait seconds if we haven't.
 	 */
-#define	MAXWAIT		10
 	if (nreceived) {
 		itimer.it_value.tv_sec =  2 * tmax / 1000;
 		if (itimer.it_value.tv_sec == 0)
 			itimer.it_value.tv_sec = 1;
 	} else
-		itimer.it_value.tv_sec = MAXWAIT;
+		itimer.it_value.tv_sec = maxwait;
 	itimer.it_interval.tv_sec = 0;
 	itimer.it_interval.tv_usec = 0;
 	itimer.it_value.tv_usec = 0;
@@ -1651,6 +1658,6 @@ usage(void)
 	    "nqv"
 	    "] [-c count] [-g gateway]\n\t"
 	    "[-h hoplimit] [-I sourceaddr] [-i wait] [-l preload] [-p pattern]"
-	    "\n\t[-s packetsize] [-V rtable] host\n");
+	    "\n\t[-s packetsize] [-V rtable] [-w maxwait] host\n");
 	exit(1);
 }
