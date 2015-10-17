@@ -1,4 +1,4 @@
-/*	$OpenBSD: sort.c,v 1.82 2015/10/14 16:42:51 tobias Exp $	*/
+/*	$OpenBSD: sort.c,v 1.83 2015/10/17 14:33:01 tim Exp $	*/
 
 /*-
  * Copyright (C) 2009 Gabor Kovesdan <gabor@FreeBSD.org>
@@ -868,6 +868,11 @@ main(int argc, char *argv[])
 	bool mef_flags[NUMBER_OF_MUTUALLY_EXCLUSIVE_FLAGS] =
 	    { false, false, false, false, false, false };
 
+	set_hw_params();
+
+	if (pledge("stdio rpath wpath cpath fattr proc exec", NULL) == -1)
+		err(2, "pledge");
+
 	outfile = "-";
 	real_outfile = NULL;
 	sflag = NULL;
@@ -878,7 +883,6 @@ main(int argc, char *argv[])
 
 	atexit(clear_tmp_files);
 
-	set_hw_params();
 	set_locale();
 	set_tmpdir();
 	set_sort_opts();
@@ -1048,6 +1052,11 @@ main(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 
+	if (compress_program == NULL) {
+		if (pledge("stdio rpath wpath cpath fattr", NULL) == -1)
+			err(2, "pledge");
+	}
+
 #ifndef GNUSORT_COMPATIBILITY
 	if (argc > 2 && strcmp(argv[argc - 2], "-o") == 0) {
 		outfile = argv[argc - 1];
@@ -1060,9 +1069,65 @@ main(int argc, char *argv[])
 		argv = argv_from_file0;
 	}
 
-	if (sort_opts_vals.cflag && argc > 1)
-		errx(2, "only one input file is allowed with the -%c flag",
-		    sort_opts_vals.csilentflag ? 'C' : 'c');
+	if (sort_opts_vals.cflag) {
+		if (argc > 1)
+			errx(2, "only one input file is allowed with the -%c flag",
+			    sort_opts_vals.csilentflag ? 'C' : 'c');
+
+		if (argc == 0 || strcmp(argv[0], "-") == 0) {
+			if (compress_program) {
+				if (pledge("stdio proc exec", NULL) == -1)
+					err(2, "pledge");
+			} else {
+				if (pledge("stdio", NULL) == -1)
+					err(2, "pledge");
+			}
+		} else {
+			if (compress_program) {
+				if (pledge("stdio rpath proc exec", NULL) == -1)
+					err(2, "pledge");
+			} else {
+				if (pledge("stdio rpath", NULL) == -1)
+					err(2, "pledge");
+			}
+		}
+	} else {
+		/* Case when the outfile equals one of the input files: */
+		if (strcmp(outfile, "-") != 0) {
+			struct stat sb;
+			int fd, i;
+
+			for (i = 0; i < argc; ++i) {
+				if (strcmp(argv[i], outfile) == 0) {
+					if (stat(outfile, &sb) == -1)
+						err(2, "%s", outfile);
+					if (access(outfile, W_OK) == -1)
+						err(2, "%s", outfile);
+					real_outfile = outfile;
+					sort_asprintf(&outfile, "%s.XXXXXXXXXX",
+					    real_outfile);
+					if ((fd = mkstemp(outfile)) == -1)
+						err(2, "mkstemp: %s", outfile);
+					if (fchown(fd, sb.st_uid, sb.st_gid) == -1)
+						warn("unable to set ownership of %s",
+						    outfile);
+					if (fchmod(fd, sb.st_mode & ACCESSPERMS) == -1)
+						err(2, "fchmod: %s", outfile);
+					close(fd);
+					tmp_file_atexit(outfile);
+					break;
+				}
+			}
+		}
+
+		if (compress_program) {
+			if (pledge("stdio rpath wpath cpath proc exec", NULL) == -1)
+				err(2, "pledge");
+		} else {
+			if (pledge("stdio rpath wpath cpath", NULL) == -1)
+				err(2, "pledge");
+		}
+	}
 
 	if (sflag != NULL)
 		available_free_memory = parse_memory_buffer_value(sflag);
@@ -1117,34 +1182,6 @@ main(int argc, char *argv[])
 		return check(argc ? *argv : "-");
 
 	set_random_seed();
-
-	/* Case when the outfile equals one of the input files: */
-	if (strcmp(outfile, "-") != 0) {
-		struct stat sb;
-		int fd, i;
-
-		for (i = 0; i < argc; ++i) {
-			if (strcmp(argv[i], outfile) == 0) {
-				if (stat(outfile, &sb) == -1)
-					err(2, "%s", outfile);
-				if (access(outfile, W_OK) == -1)
-					err(2, "%s", outfile);
-				real_outfile = outfile;
-				sort_asprintf(&outfile, "%s.XXXXXXXXXX",
-				    real_outfile);
-				if ((fd = mkstemp(outfile)) == -1)
-					err(2, "mkstemp: %s", outfile);
-				if (fchown(fd, sb.st_uid, sb.st_gid) == -1)
-					warn("unable to set ownership of %s",
-					    outfile);
-				if (fchmod(fd, sb.st_mode & ACCESSPERMS) == -1)
-					err(2, "fchmod: %s", outfile);
-				close(fd);
-				tmp_file_atexit(outfile);
-				break;
-			}
-		}
-	}
 
 	if (!sort_opts_vals.mflag) {
 		struct file_list fl;
