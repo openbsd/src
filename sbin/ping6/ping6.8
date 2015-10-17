@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ping6.8,v 1.55 2015/10/16 22:47:12 florian Exp $
+.\"	$OpenBSD: ping6.8,v 1.56 2015/10/17 12:38:29 florian Exp $
 .\"	$KAME: ping6.8,v 1.57 2002/05/26 13:18:25 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -28,7 +28,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: October 16 2015 $
+.Dd $Mdocdate: October 17 2015 $
 .Dt PING6 8
 .Os
 .Sh NAME
@@ -36,7 +36,7 @@
 .Nd send ICMPv6 ECHO_REQUEST packets to network hosts
 .Sh SYNOPSIS
 .Nm ping6
-.Op Fl dEefHmNnqv
+.Op Fl dEefHmnqv
 .Op Fl c Ar count
 .Op Fl g Ar gateway
 .Op Fl h Ar hoplimit
@@ -307,19 +307,17 @@ Normally,
 .Nm
 works just like
 .Xr ping 8
-would work; the following will send ICMPv6 echo request to dst.foo.com:
+would work; the following will send ICMPv6 echo requests to dst.foo.com:
 .Bd -literal -offset indent
 $ ping6 -n dst.foo.com
 .Ed
 .Pp
-The following will probe hostnames for all nodes on the network link
-attached to the wi0 interface.
-The address
-.Dq ff02::1
-is named the link-local all-node multicast address, and the packet would
-reach every node on the network link:
+The following will send ICMPv6 echo requests to the link-local all-node
+multicast address.
+The packet reaches all nodes on the network link attached to the wi0
+interface.
 .Bd -literal -offset indent
-$ ping6 -w ff02::1%wi0
+$ ping6 ff02::1%wi0
 .Ed
 .Sh SEE ALSO
 .Xr netstat 1 ,
