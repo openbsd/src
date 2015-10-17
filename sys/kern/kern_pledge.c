@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.47 2015/10/17 23:12:46 deraadt Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.48 2015/10/17 23:50:04 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -89,6 +89,7 @@ const u_int pledge_syscalls[SYS_MAXSYSCALL] = {
 	[SYS_fchdir] = PLEDGE_SELF,	/* careful of directory fd inside jails */
 
 	/* needed by threaded programs */
+	[SYS___tfork] = PLEDGE_PROC,
 	[SYS_sched_yield] = PLEDGE_SELF,
 	[SYS___thrsleep] = PLEDGE_SELF,
 	[SYS___thrwakeup] = PLEDGE_SELF,
