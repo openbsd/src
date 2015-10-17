@@ -1,4 +1,4 @@
-/*	$OpenBSD: unistd.h,v 1.4 2015/09/13 08:31:47 guenther Exp $	*/
+/*	$OpenBSD: unistd.h,v 1.5 2015/10/17 20:22:08 deraadt Exp $	*/
 /*
  * Copyright (c) 2015 Philip Guenther <guenther@openbsd.org>
  *
@@ -105,6 +105,7 @@ PROTO_NORMAL(pathconf);
 /*PROTO_CANCEL(pause);*/
 PROTO_NORMAL(pipe);
 PROTO_NORMAL(pipe2);
+PROTO_NORMAL(pledge);
 /*PROTO_CANCEL(pread);*/
 PROTO_NORMAL(profil);
 /*PROTO_CANCEL(pwrite);*/
