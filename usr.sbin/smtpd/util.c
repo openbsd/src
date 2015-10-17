@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.121 2015/10/17 12:59:52 gilles Exp $	*/
+/*	$OpenBSD: util.c,v 1.122 2015/10/17 22:24:36 gilles Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Markus Friedl.  All rights reserved.
@@ -226,7 +226,6 @@ mkdirs(char *path, mode_t mode)
 	return 1;
 }
 
-
 int
 ckdir(const char *path, mode_t mode, uid_t owner, gid_t group, int create)
 {
@@ -437,6 +436,34 @@ hostname_match(const char *hostname, const char *pattern)
 	}
 
 	return (*hostname == '\0' && *pattern == '\0');
+}
+
+int
+mailaddr_match(const struct mailaddr *maddr1, const struct mailaddr *maddr2)
+{
+	struct mailaddr m1 = *maddr1;
+	struct mailaddr m2 = *maddr2;
+	char	       *p;
+
+	/* catchall */
+	if (m2.user[0] == '\0' && m2.domain[0] == '\0')
+		return 1;
+
+	if (! hostname_match(m1.domain, m2.domain))
+		return 0;
+
+	if (m2.user[0]) {
+		/* if address from table has a tag, we must respect it */
+		if (strchr(m2.user, '+') == NULL) {
+			/* otherwise, strip tag from session address if any */
+			p = strchr(m1.user, '+');
+			if (p)
+				*p = '\0';
+		}
+		if (strcasecmp(m1.user, m2.user))
+			return 0;
+	}
+	return 1;
 }
 
 int
