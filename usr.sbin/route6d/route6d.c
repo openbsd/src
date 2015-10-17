@@ -1,4 +1,4 @@
-/*	$OpenBSD: route6d.c,v 1.68 2015/10/16 20:43:27 jca Exp $	*/
+/*	$OpenBSD: route6d.c,v 1.69 2015/10/17 01:01:09 jca Exp $	*/
 /*	$KAME: route6d.c,v 1.111 2006/10/25 06:38:13 jinmei Exp $	*/
 
 /*
@@ -346,7 +346,12 @@ main(int argc, char *argv[])
 	ripbuf->rip6_res1[1] = 0;
 
 	init();
+
+	if (pledge("stdio rpath wpath cpath inet route mcast", NULL) == -1)
+		err(1, "pledge");
+
 	ifconfig();
+
 	for (ifcp = ifc; ifcp; ifcp = ifcp->ifc_next) {
 		if (ifcp->ifc_index < 0) {
 			fprintf(stderr,
