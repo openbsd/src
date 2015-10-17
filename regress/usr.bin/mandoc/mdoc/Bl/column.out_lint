@@ -1,4 +1,4 @@
 mandoc: column.in:71:2: WARNING: wrong number of cells: 2 columns, 1 cells
 mandoc: column.in:74:2: WARNING: wrong number of cells: 2 columns, 4 cells
 mandoc: column.in:75:2: WARNING: wrong number of cells: 2 columns, 5 cells
-mandoc: column.in:89:18: WARNING: skipping -width argument: Bl -column
+mandoc: column.in:103:18: WARNING: skipping -width argument: Bl -column

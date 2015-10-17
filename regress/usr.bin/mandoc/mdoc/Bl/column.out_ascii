@@ -59,6 +59,16 @@ DDEESSCCRRIIPPTTIIOONN
      a    b    c    d
      a    b    c    d
      a    b    c    d
+
+     aa    OpenBSD OpenBSD OpenBSD    tab-tab
+     aa    OpenBSD OpenBSD Ox         tab-ta
+     aa    Ox OpenBSD OpenBSD         ta-tab
+     aa    Ox OpenBSD Ox              ta-ta
+     aa    Ox OpenBSD OpenBSD         ta-bl/ta
+     aa     OpenBSD OpenBSD Ox        ta/bl-ta
+     aa     OpenBSD OpenBSD OpenBSD   ta/bl-bl/ta
+     aa    bb                         ta at eol
+     aa    bb                          tab at eol
      aa    bb    cc    dd
 
 OpenBSD                        October 14, 2015                        OpenBSD

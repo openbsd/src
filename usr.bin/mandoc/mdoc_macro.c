@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_macro.c,v 1.160 2015/10/15 22:27:09 schwarze Exp $ */
+/*	$OpenBSD: mdoc_macro.c,v 1.161 2015/10/17 00:19:58 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -237,6 +237,10 @@ lookup(struct roff_man *mdoc, int from, int line, int ppos, const char *p)
 {
 	int	 res;
 
+	if (mdoc->flags & MDOC_PHRASEQF) {
+		mdoc->flags &= ~MDOC_PHRASEQF;
+		return TOKEN_NONE;
+	}
 	if (from == TOKEN_NONE || mdoc_macros[from].flags & MDOC_PARSED) {
 		res = mdoc_hash_find(p);
 		if (res != TOKEN_NONE) {
@@ -1028,26 +1032,39 @@ blk_full(MACRO_PROT_ARGS)
 	if (tok == MDOC_Bk)
 		mdoc->flags |= MDOC_KEEP;
 
-	ac = ARGS_PEND;
+	ac = ARGS_EOLN;
 	for (;;) {
+
+		/*
+		 * If we are right after a tab character,
+		 * do not parse the first word for macros.
+		 */
+
+		if (mdoc->flags & MDOC_PHRASEQN) {
+			mdoc->flags &= ~MDOC_PHRASEQN;
+			mdoc->flags |= MDOC_PHRASEQF;
+		}
+
 		la = *pos;
 		lac = ac;
 		ac = mdoc_args(mdoc, line, pos, buf, tok, &p);
 		if (ac == ARGS_EOLN) {
-			if (lac != ARGS_PPHRASE && lac != ARGS_PHRASE)
+			if (lac != ARGS_PHRASE ||
+			    ! (mdoc->flags & MDOC_PHRASEQF))
 				break;
+
 			/*
-			 * This is necessary: if the last token on a
-			 * line is a `Ta' or tab, then we'll get
-			 * ARGS_EOLN, so we must be smart enough to
-			 * reopen our scope if the last parse was a
-			 * phrase or partial phrase.
+			 * This line ends in a tab; start the next
+			 * column now, with a leading blank.
 			 */
+
 			if (body != NULL)
 				rew_last(mdoc, body);
 			body = roff_body_alloc(mdoc, line, ppos, tok);
+			roff_word_alloc(mdoc, line, ppos, "\\&");
 			break;
 		}
+
 		if (tok == MDOC_Bd || tok == MDOC_Bk) {
 			mandoc_vmsg(MANDOCERR_ARG_EXCESS,
 			    mdoc->parse, line, la, "%s ... %s",
@@ -1068,9 +1085,7 @@ blk_full(MACRO_PROT_ARGS)
 		 */
 
 		if (head == NULL &&
-		    ac != ARGS_PEND &&
 		    ac != ARGS_PHRASE &&
-		    ac != ARGS_PPHRASE &&
 		    ac != ARGS_QWORD &&
 		    mdoc_isdelim(p) == DELIM_OPEN) {
 			dword(mdoc, line, la, p, DELIM_OPEN, 0);
@@ -1082,9 +1097,7 @@ blk_full(MACRO_PROT_ARGS)
 		if (head == NULL)
 			head = roff_head_alloc(mdoc, line, ppos, tok);
 
-		if (ac == ARGS_PHRASE ||
-		    ac == ARGS_PEND ||
-		    ac == ARGS_PPHRASE) {
+		if (ac == ARGS_PHRASE) {
 
 			/*
 			 * If we haven't opened a body yet, rewind the
@@ -1094,18 +1107,11 @@ blk_full(MACRO_PROT_ARGS)
 			rew_last(mdoc, body == NULL ? head : body);
 			body = roff_body_alloc(mdoc, line, ppos, tok);
 
-			/*
-			 * Process phrases: set whether we're in a
-			 * partial-phrase (this effects line handling)
-			 * then call down into the phrase parser.
-			 */
+			/* Process to the tab or to the end of the line. */
 
-			if (ac == ARGS_PPHRASE)
-				mdoc->flags |= MDOC_PPHRASE;
-			if (ac == ARGS_PEND && lac == ARGS_PPHRASE)
-				mdoc->flags |= MDOC_PPHRASE;
+			mdoc->flags |= MDOC_PHRASE;
 			parse_rest(mdoc, TOKEN_NONE, line, &la, buf);
-			mdoc->flags &= ~MDOC_PPHRASE;
+			mdoc->flags &= ~MDOC_PHRASE;
 
 			/* There may have been `Ta' macros. */
 

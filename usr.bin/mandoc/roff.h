@@ -1,4 +1,4 @@
-/*	$OpenBSD: roff.h,v 1.16 2015/04/23 16:17:04 schwarze Exp $	*/
+/*	$OpenBSD: roff.h,v 1.17 2015/10/17 00:19:58 schwarze Exp $	*/
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -141,8 +141,8 @@ struct	roff_man {
 #define	MDOC_LITERAL	 (1 << 1)  /* In a literal scope. */
 #define	MDOC_PBODY	 (1 << 2)  /* In the document body. */
 #define	MDOC_NEWLINE	 (1 << 3)  /* First macro/text in a line. */
-#define	MDOC_PHRASELIT	 (1 << 4)  /* Literal within a partial phrase. */
-#define	MDOC_PPHRASE	 (1 << 5)  /* Within a partial phrase. */
+#define	MDOC_PHRASE	 (1 << 4)  /* In a Bl -column phrase. */
+#define	MDOC_PHRASELIT	 (1 << 5)  /* Literal within a phrase. */
 #define	MDOC_FREECOL	 (1 << 6)  /* `It' invocation should close. */
 #define	MDOC_SYNOPSIS	 (1 << 7)  /* SYNOPSIS-style formatting. */
 #define	MDOC_KEEP	 (1 << 8)  /* In a word keep. */
@@ -150,6 +150,9 @@ struct	roff_man {
 #define	MDOC_NODELIMC	 (1 << 10) /* Disable closing delimiter handling. */
 #define	MAN_ELINE	 (1 << 11) /* Next-line element scope. */
 #define	MAN_BLINE	 (1 << 12) /* Next-line block scope. */
+#define	MDOC_PHRASEQF	 (1 << 13) /* Quote first word encountered. */
+#define	MDOC_PHRASEQL	 (1 << 14) /* Quote last word of this phrase. */
+#define	MDOC_PHRASEQN	 (1 << 15) /* Quote first word of the next phrase. */
 #define	MAN_LITERAL	  MDOC_LITERAL
 #define	MAN_NEWLINE	  MDOC_NEWLINE
 	enum roff_macroset macroset; /* Kind of high-level macros used. */

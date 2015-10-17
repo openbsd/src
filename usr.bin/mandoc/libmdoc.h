@@ -1,4 +1,4 @@
-/*	$OpenBSD: libmdoc.h,v 1.76 2015/04/23 15:35:39 schwarze Exp $ */
+/*	$OpenBSD: libmdoc.h,v 1.77 2015/10/17 00:19:58 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -40,9 +40,7 @@ enum	margserr {
 	ARGS_WORD, /* normal word */
 	ARGS_PUNCT, /* series of punctuation */
 	ARGS_QWORD, /* quoted word */
-	ARGS_PHRASE, /* Ta'd phrase (-column) */
-	ARGS_PPHRASE, /* tabbed phrase (-column) */
-	ARGS_PEND /* last phrase (-column) */
+	ARGS_PHRASE /* Bl -column phrase */
 };
 
 /*
