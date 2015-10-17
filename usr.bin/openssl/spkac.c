@@ -1,4 +1,4 @@
-/* $OpenBSD: spkac.c,v 1.7 2015/10/17 07:51:10 semarie Exp $ */
+/* $OpenBSD: spkac.c,v 1.8 2015/10/17 15:00:11 doug Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999. Based on an original idea by Massimiliano Pala
  * (madwolf@openca.org).
@@ -182,8 +182,10 @@ spkac_main(int argc, char **argv)
 	EVP_PKEY *pkey = NULL;
 
 	if (single_execution) {
-		if (pledge("stdio rpath wpath cpath tty", NULL) == -1)
+		if (pledge("stdio rpath wpath cpath tty", NULL) == -1) {
 			perror("pledge");
+			exit(1);
+		}
 	}
 
 	memset(&spkac_config, 0, sizeof(spkac_config));

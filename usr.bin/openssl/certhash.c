@@ -650,8 +650,10 @@ certhash_main(int argc, char **argv)
 	int i, cwdfd, ret = 0;
 
 	if (single_execution) {
-		if (pledge("stdio rpath wpath cpath", NULL) == -1)
+		if (pledge("stdio rpath wpath cpath", NULL) == -1) {
 			perror("pledge");
+			exit(1);
+		}
 	}
 
 	memset(&certhash_config, 0, sizeof(certhash_config));

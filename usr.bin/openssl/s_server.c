@@ -1,4 +1,4 @@
-/* $OpenBSD: s_server.c,v 1.21 2015/10/17 07:51:10 semarie Exp $ */
+/* $OpenBSD: s_server.c,v 1.22 2015/10/17 15:00:11 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -605,8 +605,10 @@ s_server_main(int argc, char *argv[])
 	tlsextalpnctx alpn_ctx = { NULL, 0 };
 
 	if (single_execution) {
-		if (pledge("stdio inet rpath tty", NULL) == -1)
+		if (pledge("stdio inet rpath tty", NULL) == -1) {
 			perror("pledge");
+			exit(1);
+		}
 	}
 
 	meth = SSLv23_server_method();

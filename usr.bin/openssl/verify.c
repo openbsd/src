@@ -1,4 +1,4 @@
-/* $OpenBSD: verify.c,v 1.5 2015/10/10 22:28:51 doug Exp $ */
+/* $OpenBSD: verify.c,v 1.6 2015/10/17 15:00:11 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -86,8 +86,10 @@ verify_main(int argc, char **argv)
 	X509_VERIFY_PARAM *vpm = NULL;
 
 	if (single_execution) {
-		if (pledge("stdio rpath", NULL) == -1)
+		if (pledge("stdio rpath", NULL) == -1) {
 			perror("pledge");
+			exit(1);
+		}
 	}
 
 	cert_ctx = X509_STORE_new();

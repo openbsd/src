@@ -1,4 +1,4 @@
-/* $OpenBSD: ts.c,v 1.12 2015/10/17 07:51:10 semarie Exp $ */
+/* $OpenBSD: ts.c,v 1.13 2015/10/17 15:00:11 doug Exp $ */
 /* Written by Zoltan Glozik (zglozik@stones.com) for the OpenSSL
  * project 2002.
  */
@@ -150,8 +150,10 @@ ts_main(int argc, char **argv)
 	int token_out = 0;
 
 	if (single_execution) {
-		if (pledge("stdio rpath wpath cpath tty", NULL) == -1)
+		if (pledge("stdio rpath wpath cpath tty", NULL) == -1) {
 			perror("pledge");
+			exit(1);
+		}
 	}
 
 	for (argc--, argv++; argc > 0; argc--, argv++) {
