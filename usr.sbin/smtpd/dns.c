@@ -1,4 +1,4 @@
-/*	$OpenBSD: dns.c,v 1.81 2015/01/20 17:37:54 deraadt Exp $	*/
+/*	$OpenBSD: dns.c,v 1.82 2015/10/17 13:30:47 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -263,9 +263,6 @@ dns_imsg(struct mproc *p, struct imsg *imsg)
 		m_get_string(&m, &mx);
 		m_end(&m);
 		(void)strlcpy(s->name, mx, sizeof(s->name));
-
-		sa = (struct sockaddr *)&ss;
-		sl = sizeof(ss);
 
 		as = res_query_async(domain, C_IN, T_MX, NULL);
 		if (as == NULL) {
