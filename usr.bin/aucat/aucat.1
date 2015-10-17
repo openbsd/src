@@ -1,4 +1,4 @@
-.\"	$OpenBSD: aucat.1,v 1.109 2015/09/14 18:06:28 schwarze Exp $
+.\"	$OpenBSD: aucat.1,v 1.110 2015/10/17 21:11:42 jmc Exp $
 .\"
 .\" Copyright (c) 2006 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 14 2015 $
+.Dd $Mdocdate: October 17 2015 $
 .Dt AUCAT 1
 .Os
 .Sh NAME
@@ -22,7 +22,6 @@
 .Nd audio files manipulation tool
 .Sh SYNOPSIS
 .Nm aucat
-.Bk -words
 .Op Fl dn
 .Op Fl b Ar size
 .Op Fl c Ar min : Ns Ar max
@@ -35,7 +34,6 @@
 .Op Fl q Ar port
 .Op Fl r Ar rate
 .Op Fl v Ar volume
-.Ek
 .Sh DESCRIPTION
 The
 .Nm
@@ -78,9 +76,7 @@ The options are as follows:
 .It Fl b Ar size
 The buffer size of the audio device in frames.
 Default is 7680.
-.It Xo
-.Fl c Ar min : Ns Ar max
-.Xc
+.It Fl c Ar min : Ns Ar max
 The range of audio file channel numbers.
 The default is
 .Cm 0:1 ,
@@ -124,16 +120,17 @@ Default is
 .It Fl h Ar fmt
 Audio file type.
 The following file types are supported:
-.Bl -tag -width auto
-.It Ar raw
+.Pp
+.Bl -tag -width auto -compact
+.It Cm raw
 Headerless file.
-.It Ar wav
+.It Cm wav
 Microsoft WAV file format.
-.It Ar aiff
+.It Cm aiff
 Apple's audio interchange file format.
-.It Ar au
+.It Cm au
 Sun/NeXT audio file format.
-.It Ar auto
+.It Cm auto
 Try to guess, depending on the file name.
 This is the default.
 .El
