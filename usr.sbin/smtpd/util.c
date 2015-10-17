@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.120 2015/10/12 07:58:19 deraadt Exp $	*/
+/*	$OpenBSD: util.c,v 1.121 2015/10/17 12:59:52 gilles Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Markus Friedl.  All rights reserved.
@@ -139,11 +139,11 @@ strip(char *s)
 {
 	size_t	 l;
 
-	while (*s == ' ' || *s == '\t')
+	while (isspace((unsigned char)*s))
 		s++;
 
 	for (l = strlen(s); l; l--) {
-		if (s[l-1] != ' ' && s[l-1] != '\t')
+		if (!isspace((unsigned char)s[l-1]))
 			break;
 		s[l-1] = '\0';
 	}
@@ -196,7 +196,7 @@ mkdirs(char *path, mode_t mode)
 	if (*path != '/')
 		return 0;
 
-	/* make sure we don't exceed SMTPD_MAXPATHLEN */
+	/* make sure we don't exceed PATH_MAX */
 	if (strlen(path) >= sizeof buf)
 		return 0;
 
