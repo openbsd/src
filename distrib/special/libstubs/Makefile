@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.16 2015/09/11 06:13:36 guenther Exp $
+#	$OpenBSD: Makefile,v 1.17 2015/10/17 21:48:42 guenther Exp $
 
 .include <bsd.own.mk>
 LIB=    stubs
@@ -29,7 +29,7 @@ SRCS+=	asr.c			\
 NOPIC=	Yes
 NOPROFILE=Yes
 
-CFLAGS+=-D__DBINTERFACE_PRIVATE -DSHA2_SMALL -UYP -DNO_LOG_BAD_DNS_RESPONSES \
+CFLAGS+=-DSHA2_SMALL -UYP -DNO_LOG_BAD_DNS_RESPONSES \
 	-DFLOATING_POINT -DASRNODEBUG \
 	-I${LIBCSRCDIR}/include -I${LIBCSRCDIR}/hidden \
 	-I${LIBCSRCDIR}/asr -I${LIBCSRCDIR}/locale -I${LIBCSRCDIR}/gdtoa \

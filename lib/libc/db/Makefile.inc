@@ -1,7 +1,5 @@
-#	$OpenBSD: Makefile.inc,v 1.5 2015/09/09 16:40:15 guenther Exp $
+#	$OpenBSD: Makefile.inc,v 1.6 2015/10/17 21:48:42 guenther Exp $
 #
-CFLAGS+=-D__DBINTERFACE_PRIVATE
-
 .PATH: ${LIBCSRCDIR}/db/btree
 
 SRCS+=	bt_close.c bt_conv.c bt_debug.c bt_delete.c bt_get.c bt_open.c \

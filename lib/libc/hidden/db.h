@@ -1,4 +1,4 @@
-/*	$OpenBSD: db.h,v 1.2 2015/09/10 18:13:46 guenther Exp $	*/
+/*	$OpenBSD: db.h,v 1.3 2015/10/17 21:48:42 guenther Exp $	*/
 /*
  * Copyright (c) 2015 Philip Guenther <guenther@openbsd.org>
  *
@@ -19,6 +19,54 @@
 #define	_LIBC_DB_H_
 
 #include_next <db.h>
+
+/*
+ * Little endian <==> big endian 32-bit swap macros.
+ *	M_32_SWAP	swap a memory location
+ *	P_32_SWAP	swap a referenced memory location
+ *	P_32_COPY	swap from one location to another
+ */
+#define	M_32_SWAP(a) {							\
+	u_int32_t _tmp = a;						\
+	((char *)&a)[0] = ((char *)&_tmp)[3];				\
+	((char *)&a)[1] = ((char *)&_tmp)[2];				\
+	((char *)&a)[2] = ((char *)&_tmp)[1];				\
+	((char *)&a)[3] = ((char *)&_tmp)[0];				\
+}
+#define	P_32_SWAP(a) {							\
+	u_int32_t _tmp = *(u_int32_t *)a;				\
+	((char *)a)[0] = ((char *)&_tmp)[3];				\
+	((char *)a)[1] = ((char *)&_tmp)[2];				\
+	((char *)a)[2] = ((char *)&_tmp)[1];				\
+	((char *)a)[3] = ((char *)&_tmp)[0];				\
+}
+#define	P_32_COPY(a, b) {						\
+	((char *)&(b))[0] = ((char *)&(a))[3];				\
+	((char *)&(b))[1] = ((char *)&(a))[2];				\
+	((char *)&(b))[2] = ((char *)&(a))[1];				\
+	((char *)&(b))[3] = ((char *)&(a))[0];				\
+}
+
+/*
+ * Little endian <==> big endian 16-bit swap macros.
+ *	M_16_SWAP	swap a memory location
+ *	P_16_SWAP	swap a referenced memory location
+ *	P_16_COPY	swap from one location to another
+ */
+#define	M_16_SWAP(a) {							\
+	u_int16_t _tmp = a;						\
+	((char *)&a)[0] = ((char *)&_tmp)[1];				\
+	((char *)&a)[1] = ((char *)&_tmp)[0];				\
+}
+#define	P_16_SWAP(a) {							\
+	u_int16_t _tmp = *(u_int16_t *)a;				\
+	((char *)a)[0] = ((char *)&_tmp)[1];				\
+	((char *)a)[1] = ((char *)&_tmp)[0];				\
+}
+#define	P_16_COPY(a, b) {						\
+	((char *)&(b))[0] = ((char *)&(a))[1];				\
+	((char *)&(b))[1] = ((char *)&(a))[0];				\
+}
 
 __BEGIN_HIDDEN_DECLS
 DB	*__bt_open(const char *, int, int, const BTREEINFO *, int);
