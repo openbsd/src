@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.89 2015/10/09 01:37:07 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.90 2015/10/17 21:34:07 naddy Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -331,6 +331,10 @@ main(int argc, char *argv[])
 		}
 	argc -= optind;
 	argv += optind;
+
+	if (cflag || testmode || (!oflag && argc == 0))
+		if (pledge("stdio rpath", NULL) == -1)
+			err(1, "pledge");
 
 	if (argc == 0) {
 		argv = calloc(2, sizeof(char *));
