@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.210 2015/10/15 19:31:15 miod Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.211 2015/10/17 13:27:08 krw Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -74,8 +74,6 @@ char	*dkname, *specname, *fstabfile;
 char	tmpfil[] = _PATH_TMPFILE;
 char	*mountpoints[MAXPARTITIONS];
 struct	disklabel lab;
-char	bootarea[BBSIZE];
-
 enum {
 	UNSPEC, EDIT, EDITOR, READ, RESTORE, WRITE
 } op = UNSPEC;
@@ -91,7 +89,7 @@ char	print_unit;
 
 void	makedisktab(FILE *, struct disklabel *);
 void	makelabel(char *, char *, struct disklabel *);
-int	writelabel(int, char *, struct disklabel *);
+int	writelabel(int, struct disklabel *);
 void	l_perror(char *);
 int	edit(struct disklabel *, int);
 int	editit(const char *);
@@ -106,7 +104,6 @@ int
 main(int argc, char *argv[])
 {
 	int ch, f, error = 0;
-	struct disklabel *lp;
 	FILE *t;
 	char *autotable = NULL;
 
@@ -226,14 +223,12 @@ main(int argc, char *argv[])
 		if (argc < 2 || argc > 3)
 			usage();
 		readlabel(f);
-		lp = makebootarea(bootarea, &lab);
-		*lp = lab;
 		if (!(t = fopen(argv[1], "r")))
 			err(4, "%s", argv[1]);
-		error = getasciilabel(t, lp);
-		bzero(lp->d_uid, sizeof(lp->d_uid));
+		error = getasciilabel(t, &lab);
+		memset(&lab.d_uid, 0, sizeof(lab.d_uid));
 		if (error == 0) {
-			error = writelabel(f, bootarea, lp);
+			error = writelabel(f, &lab);
 			if (error == 0) {
 				if (ioctl(f, DIOCGDINFO, &lab) < 0)
 					err(4, "ioctl DIOCGDINFO");
@@ -249,11 +244,9 @@ main(int argc, char *argv[])
 			usage();
 		else
 			makelabel(argv[1], argc == 3 ? argv[2] : NULL, &lab);
-		lp = makebootarea(bootarea, &lab);
-		*lp = lab;
 		error = checklabel(&lab);
 		if (error == 0)
-			error = writelabel(f, bootarea, lp);
+			error = writelabel(f, &lab);
 		break;
 	default:
 		break;
@@ -283,7 +276,7 @@ makelabel(char *type, char *name, struct disklabel *lp)
 
 
 int
-writelabel(int f, char *boot, struct disklabel *lp)
+writelabel(int f, struct disklabel *lp)
 {
 	lp->d_magic = DISKMAGIC;
 	lp->d_magic2 = DISKMAGIC;
@@ -378,34 +371,6 @@ readlabel(int f)
 
 	if (aflag)
 		editor_allocspace(&lab);
-}
-
-/*
- * Construct a bootarea (d_bbsize bytes) in the specified buffer ``boot''
- * Returns a pointer to the disklabel portion of the bootarea.
- */
-struct disklabel *
-makebootarea(char *boot, struct disklabel *dp)
-{
-	struct disklabel *lp;
-	char *p;
-
-	/* XXX */
-	if (dp->d_secsize == 0) {
-		dp->d_secsize = DEV_BSIZE;
-		dp->d_bbsize = BBSIZE;
-	}
-	lp = (struct disklabel *)
-	    (boot + (LABELSECTOR * dp->d_secsize) + LABELOFFSET);
-	memset(lp, 0, sizeof *lp);
-	/*
-	 * Make sure no part of the bootstrap is written in the area
-	 * reserved for the label.
-	 */
-	for (p = (char *)lp; p < (char *)lp + sizeof(struct disklabel); p++)
-		if (*p)
-			errx(2, "Bootstrap doesn't leave room for disk label");
-	return (lp);
 }
 
 void
@@ -684,7 +649,7 @@ edit(struct disklabel *lp, int f)
 				return (0);
 			}
 			*lp = label;
-			if (writelabel(f, bootarea, lp) == 0) {
+			if (writelabel(f, lp) == 0) {
 				fclose(fp);
 				(void) unlink(tmpfil);
 				return (0);

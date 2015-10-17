@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.26 2015/04/29 09:58:16 henning Exp $	*/
+/*	$OpenBSD: extern.h,v 1.27 2015/10/17 13:27:08 krw Exp $	*/
 
 /*
  * Copyright (c) 2003 Theo de Raadt <deraadt@openbsd.org>
@@ -36,8 +36,8 @@ void	mpcopy(char **, char **);
 void	mpfree(char **);
 void	parse_autotable(char *);
 
-int	writelabel(int, char *, struct disklabel *);
-extern  char bootarea[], *specname, *fstabfile;
+int	writelabel(int, struct disklabel *);
+extern  char *specname, *fstabfile;
 extern	char *mountpoints[MAXPARTITIONS];
 extern  int aflag, dflag, uidflag;
 extern  int donothing;

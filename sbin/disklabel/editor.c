@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.297 2015/10/15 19:31:15 miod Exp $	*/
+/*	$OpenBSD: editor.c,v 1.298 2015/10/17 13:27:08 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -381,7 +381,7 @@ editor(int f)
 			} while (arg && tolower((unsigned char)*arg) != 'y' &&
 			    tolower((unsigned char)*arg) != 'n');
 			if (arg && tolower((unsigned char)*arg) == 'y') {
-				if (writelabel(f, bootarea, &newlab) == 0) {
+				if (writelabel(f, &newlab) == 0) {
 					newlab = lab; /* lab now has UID info */
 					goto done;
 				}
@@ -467,7 +467,7 @@ editor(int f)
 			}
 
 			/* Write label to disk. */
-			if (writelabel(f, bootarea, &newlab) != 0)
+			if (writelabel(f, &newlab) != 0)
 				warnx("unable to write label");
 			else {
 				dflag = aflag = 0;
