@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.125 2015/10/16 22:47:12 florian Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.126 2015/10/17 13:07:02 florian Exp $	*/
 /*	$KAME: ping6.c,v 1.163 2002/10/25 02:19:06 itojun Exp $	*/
 
 /*
@@ -355,18 +355,17 @@ main(int argc, char *argv[])
 				errx(1, "datalen value is %s: %s", errstr,
 				    optarg);
 			break;
-		case 'v':
-			options |= F_VERBOSE;
-			break;
 		case 'V':
-			rtableid = strtonum(optarg, 0, RT_TABLEID_MAX,
-			    &errstr);
+			rtableid = strtonum(optarg, 0, RT_TABLEID_MAX, &errstr);
 			if (errstr)
 				errx(1, "rtable value is %s: %s", errstr,
 				    optarg);
 			if (setsockopt(s, SOL_SOCKET, SO_RTABLE, &rtableid,
 			    sizeof(rtableid)) == -1)
 				err(1, "setsockopt SO_RTABLE");
+			break;
+		case 'v':
+			options |= F_VERBOSE;
 			break;
 		default:
 			usage();
