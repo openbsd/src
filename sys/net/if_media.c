@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_media.c,v 1.28 2015/09/29 10:11:40 deraadt Exp $	*/
+/*	$OpenBSD: if_media.c,v 1.29 2015/10/17 20:41:41 stsp Exp $	*/
 /*	$NetBSD: if_media.c,v 1.10 2000/03/13 23:52:39 soren Exp $	*/
 
 /*-
@@ -84,6 +84,9 @@
 #include <sys/malloc.h>
 
 #include <net/if.h>
+#ifdef IFMEDIA_DEBUG
+#include <net/if_var.h>
+#endif
 #include <net/if_media.h>
 #include <net/netisr.h>
 
@@ -239,7 +242,7 @@ ifmedia_ioctl(struct ifnet *ifp, struct ifreq *ifr, struct ifmedia *ifm,
 		if (match == NULL) {
 #ifdef IFMEDIA_DEBUG
 			if (ifmedia_debug) {
-				printf("ifmedia_ioctl: no media found for 0x%x\n",
+				printf("ifmedia_ioctl: no media found for 0x%llx\n",
 				    newmedia);
 			}
 #endif
