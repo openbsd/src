@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.41 2015/10/17 00:58:50 jca Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.42 2015/10/17 04:31:10 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -147,16 +147,24 @@ const u_int pledge_syscalls[SYS_MAXSYSCALL] = {
 
 	[SYS_fork] = PLEDGE_PROC,
 	[SYS_vfork] = PLEDGE_PROC,
-	[SYS_kill] = PLEDGE_SELF | PLEDGE_PROC,	
 	[SYS_setpgid] = PLEDGE_PROC,
 	[SYS_setsid] = PLEDGE_PROC,
-	[SYS_setrlimit] = PLEDGE_PROC,
+	[SYS_kill] = PLEDGE_SELF | PLEDGE_PROC,	
+
+	[SYS_setrlimit] = PLEDGE_PROC | PLEDGE_ID,
+	[SYS_getpriority] = PLEDGE_PROC | PLEDGE_ID,
+
+	[SYS_setuid] = PLEDGE_ID,
+	[SYS_seteuid] = PLEDGE_ID,
+	[SYS_setresuid] = PLEDGE_ID,
+	[SYS_setgid] = PLEDGE_ID,
+	[SYS_setegid] = PLEDGE_ID,
+	[SYS_setresgid] = PLEDGE_ID,
+	[SYS_setgroups] = PLEDGE_ID,
+	[SYS_setlogin] = PLEDGE_ID,
+	[SYS_setpriority] = PLEDGE_ID,
 
 	[SYS_execve] = PLEDGE_EXEC,
-
-	[SYS_setgroups] = PLEDGE_PROC,
-	[SYS_setresgid] = PLEDGE_PROC,
-	[SYS_setresuid] = PLEDGE_PROC,
 
 	/* FIONREAD/FIONBIO, plus further checks in pledge_ioctl_check() */
 	[SYS_ioctl] = PLEDGE_RW | PLEDGE_IOCTL | PLEDGE_TTY,
@@ -249,6 +257,7 @@ static const struct {
 	{ "sendfd",		PLEDGE_RW | PLEDGE_SENDFD },
 	{ "recvfd",		PLEDGE_RW | PLEDGE_RECVFD },
 	{ "ioctl",		PLEDGE_IOCTL },
+	{ "id",			PLEDGE_ID },
 	{ "route",		PLEDGE_ROUTE },
 	{ "mcast",		PLEDGE_MCAST },
 	{ "tty",		PLEDGE_TTY },

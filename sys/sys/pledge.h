@@ -1,4 +1,4 @@
-/*	$OpenBSD: pledge.h,v 1.4 2015/10/16 14:04:11 semarie Exp $	*/
+/*	$OpenBSD: pledge.h,v 1.5 2015/10/17 04:31:07 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -33,7 +33,7 @@
 #define PLEDGE_TMPPATH	0x00000040	/* for mk*temp() */
 #define PLEDGE_INET	0x00000080	/* AF_INET/AF_INET6 sockets */
 #define PLEDGE_UNIX	0x00000100	/* AF_UNIX sockets */
-// reuse, old CMSG	0x00000200
+#define PLEDGE_ID	0x00000200	/* allow setuid, setgid, etc */
 #define PLEDGE_IOCTL	0x00000400	/* Select ioctl */
 #define PLEDGE_GETPW	0x00000800	/* YP enables if ypbind.lock */
 #define PLEDGE_PROC	0x00001000	/* fork, waitpid, etc */
