@@ -1,4 +1,4 @@
-/*	$OpenBSD: nameser.h,v 1.1 2015/09/13 21:36:08 guenther Exp $	*/
+/*	$OpenBSD: nameser.h,v 1.2 2015/10/18 00:36:22 deraadt Exp $	*/
 /*
  * Copyright (c) 2015 Philip Guenther <guenther@openbsd.org>
  *
@@ -20,7 +20,13 @@
 
 #include_next <arpa/nameser.h>
 
+int	dnssocket(int, int, int);
+int	dnsconnect(int, const struct sockaddr *, socklen_t);
+
 PROTO_NORMAL(_getshort);
 PROTO_NORMAL(_getlong);
+
+PROTO_HIDDEN(dnssocket);
+PROTO_HIDDEN(dnsconnect);
 
 #endif /* !_LIBC_NAMESER_H_ */

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.131 2015/10/09 01:24:57 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.132 2015/10/18 00:36:20 deraadt Exp $
 #	$NetBSD: Makefile.inc,v 1.35 1995/10/16 23:49:07 jtc Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/17/93
 
@@ -29,7 +29,7 @@ ASM=	__get_tcb.o __getcwd.o __semctl.o __set_tcb.o __syscall.o \
 	__thrwakeup.o accept.o accept4.o access.o acct.o adjfreq.o adjtime.o \
 	bind.o chdir.o chflags.o chflagsat.o chmod.o chown.o chroot.o \
 	clock_getres.o clock_gettime.o clock_settime.o close.o \
-	closefrom.o connect.o dup.o dup2.o dup3.o execve.o faccessat.o \
+	closefrom.o dnsconnect.o connect.o dup.o dup2.o dup3.o execve.o faccessat.o \
 	fchdir.o fchflags.o fchmod.o fchmodat.o fchown.o \
 	fchownat.o fcntl.o fhopen.o fhstat.o fhstatfs.o \
 	flock.o fpathconf.o fstat.o fstatat.o fstatfs.o \
@@ -54,7 +54,7 @@ ASM=	__get_tcb.o __getcwd.o __semctl.o __set_tcb.o __syscall.o \
 	setpgid.o setpriority.o setregid.o setresgid.o setresuid.o \
 	setreuid.o setrlimit.o setrtable.o setsid.o setsockopt.o \
 	settimeofday.o setuid.o shmat.o shmctl.o shmdt.o \
-	shmget.o shutdown.o sigaction.o sigaltstack.o socket.o \
+	shmget.o shutdown.o sigaction.o sigaltstack.o dnssocket.o socket.o \
 	socketpair.o stat.o statfs.o swapctl.o symlink.o symlinkat.o \
 	sync.o sysarch.o sysctl.o umask.o unlink.o unlinkat.o \
 	unmount.o utimensat.o utimes.o utrace.o wait4.o write.o writev.o
