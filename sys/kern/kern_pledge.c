@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.52 2015/10/18 03:30:01 deraadt Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.53 2015/10/18 04:21:39 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -580,6 +580,7 @@ pledge_namei(struct proc *p, char *origpath)
 		    (p->p_pledgenote & ~(TMN_RPATH | TMN_WPATH)) == 0 &&
 		    strcmp(path, "/dev/tty") == 0) {
 			return (0);
+		}
 
 		/* DNS needs /etc/{resolv.conf,hosts,services}. */
 		if ((p->p_pledgenote == TMN_RPATH) &&
