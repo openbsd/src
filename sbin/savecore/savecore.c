@@ -1,4 +1,4 @@
-/*	$OpenBSD: savecore.c,v 1.53 2015/04/26 01:23:19 guenther Exp $	*/
+/*	$OpenBSD: savecore.c,v 1.54 2015/10/18 03:13:07 deraadt Exp $	*/
 /*	$NetBSD: savecore.c,v 1.26 1996/03/18 21:16:05 leo Exp $	*/
 
 /*-
@@ -112,13 +112,10 @@ int	clear, zcompress, force, verbose;	/* flags */
 void	 check_kmem(void);
 int	 check_space(void);
 void	 clear_dump(void);
-int	 Create(char *, int);
 int	 dump_exists(void);
 char	*find_dev(dev_t, int);
 int	 get_crashtime(void);
 void	 kmem_setup(void);
-void	 Lseek(int, off_t, int);
-int	 Open(char *, int rw);
 char	*rawname(char *s);
 void	 save_core(void);
 void	 usage(void);
@@ -253,7 +250,12 @@ kmem_setup(void)
 	}
 
 	ddname = find_dev(dumpdev, S_IFBLK);
-	dumpfd = Open(ddname, O_RDWR);
+	dumpfd = open(ddname, O_RDWR);
+	if (dumpfd == -1) {
+		syslog(LOG_ERR, "%s: %m", ddname);
+		exit(1);
+	}
+
 
 	dump_sys = kernel ? kernel : _PATH_UNIX;
 	kd_dump = kvm_openfiles(kernel, ddname, NULL, O_RDWR, errbuf);
@@ -417,7 +419,13 @@ err1:			syslog(LOG_WARNING, "%s: %s", path, strerror(errno));
 			exit(1);
 		}
 	} else {
-		ofd = Create(path, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+		ofd = open(path, O_WRONLY | O_CREAT | O_TRUNC,
+		    S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+		if (ofd == -1) {
+			syslog(LOG_ERR, "%s: %m", path);
+			exit(1);
+		}
+		
 		fp  = fdopen(ofd, "w");
 		if (fp == NULL) {
 			syslog(LOG_ERR, "%s: fdopen: %s", path, strerror(errno));
@@ -433,7 +441,10 @@ err1:			syslog(LOG_WARNING, "%s: %s", path, strerror(errno));
 	}
 
 	/* Seek to the start of the core. */
-	Lseek(ifd, dumpoff, SEEK_SET);
+	if (lseek(ifd, dumpoff, SEEK_SET) == -1) {
+		syslog(LOG_ERR, "lseek: %m");
+		exit(1);
+	}
 
 	if (kvm_dump_wrtheader(kd_dump, fp, dumpsize) == -1) {
 		syslog(LOG_ERR, "kvm_dump_wrtheader: %s : %s", path,
@@ -470,7 +481,11 @@ err2:			syslog(LOG_WARNING,
 	(void)fclose(fp);
 
 	/* Copy the kernel. */
-	ifd = Open(kernel ? kernel : _PATH_UNIX, O_RDONLY);
+	ifd = open(kernel ? kernel : _PATH_UNIX, O_RDONLY);
+	if (ifd == -1) {
+		syslog(LOG_ERR, "%s: %m", kernel ? kernel : _PATH_UNIX);
+		exit(1);
+	}
 	(void)snprintf(path, sizeof(path), "%s%s.%d%s",
 	    dirn, _PATH_UNIX, bounds, zcompress ? ".Z" : "");
 	if (zcompress) {
@@ -478,8 +493,14 @@ err2:			syslog(LOG_WARNING,
 			syslog(LOG_ERR, "%s: %s", path, strerror(errno));
 			exit(1);
 		}
-	} else
-		ofd = Create(path, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+	} else {
+		ofd = open(path, O_WRONLY | O_CREAT | O_TRUNC,
+		    S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+		if (ofd == -1) {
+			syslog(LOG_ERR, "%s: %m", path);
+			exit(1);
+		}
+	}
 	syslog(LOG_NOTICE, "writing %skernel to %s",
 	    zcompress ? "compressed " : "", path);
 	while ((nr = read(ifd, buf, sizeof(buf))) > 0) {
@@ -638,43 +659,6 @@ check_space(void)
 		syslog(LOG_WARNING,
 		    "dump performed, but free space threshold crossed");
 	return (1);
-}
-
-int
-Open(char *name, int rw)
-{
-	int fd;
-
-	if ((fd = open(name, rw, 0)) < 0) {
-		syslog(LOG_ERR, "%s: %m", name);
-		exit(1);
-	}
-	return (fd);
-}
-
-void
-Lseek(int fd, off_t off, int flag)
-{
-	off_t ret;
-
-	ret = lseek(fd, off, flag);
-	if (ret == -1) {
-		syslog(LOG_ERR, "lseek: %m");
-		exit(1);
-	}
-}
-
-int
-Create(char *file, int mode)
-{
-	int fd;
-
-	fd = open(file, O_WRONLY | O_CREAT | O_TRUNC, mode);
-	if (fd < 0) {
-		syslog(LOG_ERR, "%s: %m", file);
-		exit(1);
-	}
-	return (fd);
 }
 
 void
