@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.354 2015/09/10 18:10:34 deraadt Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.355 2015/10/18 20:24:10 uaa Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -2784,6 +2784,7 @@ piix_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		    PIIX_IDETIM_IDE) == 0) {
 			printf("%s: %s ignored (disabled)\n",
 			    sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
+			cp->hw_ok = 0;
 			continue;
 		}
 		pciide_map_compat_intr(pa, cp, channel, interface);
@@ -3307,6 +3308,7 @@ amd756_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		if ((chanenable & AMD756_CHAN_EN(channel)) == 0) {
 			printf("%s: %s ignored (disabled)\n",
 			    sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
+			cp->hw_ok = 0;
 			continue;
 		}
 		pciide_map_compat_intr(pa, cp, channel, interface);
@@ -3580,6 +3582,7 @@ apollo_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 			if ((ideconf & APO_IDECONF_EN(channel)) == 0) {
 				printf("%s: %s ignored (disabled)\n",
 				    sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
+				cp->hw_ok = 0;
 				continue;
 			}
 		}
@@ -3782,9 +3785,10 @@ cmd_channel_map(struct pci_attach_args *pa, struct pciide_softc *sc,
 	 * there's no way to disable the first channel without disabling
 	 * the whole device
 	 */
-	 if (channel != 0 && (ctrl & CMD_CTRL_2PORT) == 0) {
+	if (channel != 0 && (ctrl & CMD_CTRL_2PORT) == 0) {
 		printf("%s: %s ignored (disabled)\n",
 		    sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
+		cp->hw_ok = 0;
 		return;
 	}
 	cp->hw_ok = 1;
@@ -5237,6 +5241,7 @@ sis_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		    (channel == 1 && (sis_ctr0 & SIS_CTRL0_CHAN1_EN) == 0)) {
 			printf("%s: %s ignored (disabled)\n",
 			    sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
+			cp->hw_ok = 0;
 			continue;
 		}
 		pciide_map_compat_intr(pa, cp, channel, interface);
@@ -5845,6 +5850,7 @@ acer_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		if ((interface & PCIIDE_CHAN_EN(channel)) == 0) {
 			printf("%s: %s ignored (disabled)\n",
 			    sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
+			cp->hw_ok = 0;
 			continue;
 		}
 		pciide_map_compat_intr(pa, cp, channel, interface);
@@ -6092,6 +6098,7 @@ hpt_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 			    HPT370_CTRL1(i)) & HPT370_CTRL1_EN) == 0) {
 				printf("%s: %s ignored (disabled)\n",
 				    sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
+				cp->hw_ok = 0;
 				continue;
 			}
 		}
@@ -6456,6 +6463,7 @@ pdc202xx_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		    PDC262_STATE_EN(channel):PDC246_STATE_EN(channel))) == 0) {
 			printf("%s: %s ignored (disabled)\n",
 			    sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
+			cp->hw_ok = 0;
 			continue;
 		}
 		pciide_map_compat_intr(pa, cp, channel, interface);
@@ -7417,6 +7425,7 @@ opti_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		    (init_ctrl & OPTI_INIT_CONTROL_CH2_DISABLE) != 0) {
 			printf("%s: %s ignored (disabled)\n",
 			    sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
+			cp->hw_ok = 0;
 			continue;
 		}
 		pciide_map_compat_intr(pa, cp, channel, interface);
@@ -8271,6 +8280,7 @@ nforce_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		if ((conf & NFORCE_CHAN_EN(channel)) == 0) {
 			printf("%s: %s ignored (disabled)\n",
 			    sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
+			cp->hw_ok = 0;
 			continue;
 		}
 
@@ -8818,6 +8828,7 @@ jmicron_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		if ((conf & JMICRON_CHAN_EN(channel)) == 0) {
 			printf("%s: %s ignored (disabled)\n",
 			    sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
+			cp->hw_ok = 0;
 			continue;
 		}
 #endif
@@ -9188,6 +9199,7 @@ rdc_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		if ((patr & RDCIDE_PATR_EN(channel)) == 0) {
 			printf("%s: %s ignored (disabled)\n",
 			       sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
+			cp->hw_ok = 0;
 			continue;
 		}
 		pciide_map_compat_intr(pa, cp, channel, interface);
