@@ -1,4 +1,4 @@
-/*	$OpenBSD: csh.c,v 1.28 2015/02/08 05:51:37 tedu Exp $	*/
+/*	$OpenBSD: csh.c,v 1.29 2015/10/18 03:09:11 deraadt Exp $	*/
 /*	$NetBSD: csh.c,v 1.14 1995/04/29 23:21:28 mycroft Exp $	*/
 
 /*-
@@ -103,6 +103,10 @@ main(int argc, char *argv[])
     cshin = stdin;
     cshout = stdout;
     csherr = stderr;
+
+    if (pledge("stdio rpath wpath cpath fattr getpw proc exec tty",
+	NULL) == -1)
+	    perror("pledge");
 
     settimes();			/* Immed. estab. timing base */
 
