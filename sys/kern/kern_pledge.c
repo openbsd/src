@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.51 2015/10/18 01:53:31 deraadt Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.52 2015/10/18 03:30:01 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -575,6 +575,12 @@ pledge_namei(struct proc *p, char *origpath)
 				return (0);
 		}
 
+		/* "YP server for domain %s not responding, still trying" */
+		if ((p->p_p->ps_pledge & PLEDGE_GETPW) &&
+		    (p->p_pledgenote & ~(TMN_RPATH | TMN_WPATH)) == 0 &&
+		    strcmp(path, "/dev/tty") == 0) {
+			return (0);
+
 		/* DNS needs /etc/{resolv.conf,hosts,services}. */
 		if ((p->p_pledgenote == TMN_RPATH) &&
 		    (p->p_p->ps_pledge & PLEDGE_DNS)) {
@@ -585,6 +591,7 @@ pledge_namei(struct proc *p, char *origpath)
 			if (strcmp(path, "/etc/services") == 0)
 				return (0);
 		}
+
 		if ((p->p_pledgenote == TMN_RPATH) &&
 		    (p->p_p->ps_pledge & PLEDGE_GETPW)) {
 			if (strcmp(path, "/var/run/ypbind.lock") == 0) {
@@ -595,6 +602,7 @@ pledge_namei(struct proc *p, char *origpath)
 			    sizeof("/var/yp/binding/") - 1) == 0)
 				return (0);
 		}
+
 		/* tzset() needs these. */
 		if ((p->p_pledgenote == TMN_RPATH) &&
 		    strncmp(path, "/usr/share/zoneinfo/",
