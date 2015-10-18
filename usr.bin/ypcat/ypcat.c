@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypcat.c,v 1.18 2015/10/18 17:20:49 miod Exp $ */
+/*	$OpenBSD: ypcat.c,v 1.19 2015/10/18 17:53:51 miod Exp $ */
 
 /*
  * Copyright (c) 1992, 1993, 1996 Theo de Raadt <deraadt@theos.com>
@@ -88,7 +88,7 @@ main(int argc, char *argv[])
 	extern int optind;
 	int notrans, c, r, i;
 
-	if (pledge("stdio rpath inet flock", NULL) == -1)
+	if (pledge("stdio rpath inet getpw", NULL) == -1)
 		perror("pledge");
 
 	notrans = key = 0;
