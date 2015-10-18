@@ -1,4 +1,4 @@
-/*	$OpenBSD: manager.c,v 1.2 2015/10/09 11:38:05 semarie Exp $ */
+/*	$OpenBSD: manager.c,v 1.3 2015/10/18 12:25:33 semarie Exp $ */
 /*
  * Copyright (c) 2015 Sebastien Marie <semarie@openbsd.org>
  *
@@ -18,6 +18,7 @@
 #include <sys/syslimits.h>
 #include <sys/wait.h>
 
+#include <ctype.h>
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -125,7 +126,14 @@ grab_syscall(pid_t pid)
 		/* check if found */
 		if (strncmp(search, line, searchlen) == 0) {
 			const char *errstr = NULL;
-			/* found */
+			char *c;
+			/* truncate at first no-number */
+			for (c = line + searchlen; (*c != '\0') && isdigit(*c);
+			    c++)
+				;
+			*c = '\0';
+
+			/* convert it */
 			ret = strtonum(line + searchlen, 0, 255, &errstr);
 			if (errstr) {
 				warn("strtonum: line=%s err=%s", line, errstr);
