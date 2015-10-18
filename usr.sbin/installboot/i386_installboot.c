@@ -1,4 +1,4 @@
-/*	$OpenBSD: i386_installboot.c,v 1.13 2015/10/14 14:13:12 jsg Exp $	*/
+/*	$OpenBSD: i386_installboot.c,v 1.14 2015/10/18 17:24:25 rpe Exp $	*/
 /*	$NetBSD: installboot.c,v 1.5 1995/11/17 23:23:50 gwr Exp $ */
 
 /*
@@ -288,7 +288,7 @@ write_efisystem(struct disklabel *dl, char part)
 		}
 	}
 
-	/* Create "/efi/boot" directory in <duid>.<part>. */
+	/* Create "/efi/BOOT" directory in <duid>.<part>. */
 	if (strlcat(dst, "/efi", sizeof(dst)) >= sizeof(dst)) {
 		rslt = -1;
 		warn("unable to build /efi directory");
@@ -311,7 +311,7 @@ write_efisystem(struct disklabel *dl, char part)
 	}
 
 	/*
-	 * Copy BOOTIA32.EFI and BOOTX64.EFI to /efi/boot.
+	 * Copy BOOTIA32.EFI and BOOTX64.EFI to /efi/BOOT/.
 	 *
 	 * N.B.: BOOTIA32.EFI is longer than BOOTX64.EFI, so src can be reused!
 	 */
