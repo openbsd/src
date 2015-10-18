@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.54 2014/11/03 03:22:22 deraadt Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.55 2015/10/18 02:30:53 mmcc Exp $	*/
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
  * Copyright (c) 2003, 2004 Markus Friedl <markus@openbsd.org>
@@ -780,7 +780,7 @@ pfkey_reply(int sd, u_int8_t **datap, ssize_t *lenp)
 		err(1, "pfkey_reply: malloc");
 	if (read(sd, data, len) != len) {
 		warn("PF_KEY short read");
-		bzero(data, len);
+		explicit_bzero(data, len);
 		free(data);
 		return -1;
 	}
@@ -789,7 +789,7 @@ pfkey_reply(int sd, u_int8_t **datap, ssize_t *lenp)
 		if (lenp)
 			*lenp = len;
 	} else {
-		bzero(data, len);
+		explicit_bzero(data, len);
 		free(data);
 	}
 	if (datap == NULL && hdr.sadb_msg_errno != 0) {
@@ -1341,7 +1341,7 @@ pfkey_monitor(int opts)
 		pfkey_monitor_sa(msg, opts);
 		if (opts & IPSECCTL_OPT_VERBOSE)
 			pfkey_print_raw(data, len);
-		memset(data, 0, len);
+		explicit_bzero(data, len);
 		free(data);
 	}
 	close(fd);
