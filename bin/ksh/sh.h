@@ -1,4 +1,4 @@
-/*	$OpenBSD: sh.h,v 1.39 2015/10/17 18:43:22 mmcc Exp $	*/
+/*	$OpenBSD: sh.h,v 1.40 2015/10/18 18:05:35 mmcc Exp $	*/
 
 /*
  * Public Domain Bourne/Korn shell
@@ -57,14 +57,14 @@
 #define	LINE	2048		/* input line size */
 #define	PATH	1024		/* pathname size (todo: PATH_MAX/pathconf()) */
 
-EXTERN	const char *kshname;	/* $0 */
-EXTERN	pid_t	kshpid;		/* $$, shell pid */
-EXTERN	pid_t	procpid;	/* pid of executing process */
-EXTERN	uid_t	ksheuid;	/* effective uid of shell */
-EXTERN	int	exstat;		/* exit status */
-EXTERN	int	subst_exstat;	/* exit status of last $(..)/`..` */
-EXTERN	const char *safe_prompt; /* safe prompt if PS1 substitution fails */
-EXTERN	char	username[];	/* username for \u prompt expansion */
+extern	const char *kshname;	/* $0 */
+extern	pid_t	kshpid;		/* $$, shell pid */
+extern	pid_t	procpid;	/* pid of executing process */
+extern	uid_t	ksheuid;	/* effective uid of shell */
+extern	int	exstat;		/* exit status */
+extern	int	subst_exstat;	/* exit status of last $(..)/`..` */
+extern	const char *safe_prompt; /* safe prompt if PS1 substitution fails */
+extern	char	username[];	/* username for \u prompt expansion */
 
 /*
  * Area-based allocation built on malloc/free
