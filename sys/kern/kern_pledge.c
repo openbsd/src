@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.49 2015/10/18 00:04:43 deraadt Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.50 2015/10/18 01:07:19 doug Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -610,6 +610,13 @@ pledge_namei(struct proc *p, char *origpath)
 		    sizeof("/usr/share/nls/") - 1) == 0 &&
 		    strcmp(path + strlen(path) - 9, "/libc.cat") == 0)
 			return (0);
+
+		/* Allow opening r/w on /dev/tty when "tty" is specified. */
+		if ((p->p_p->ps_pledge & PLEDGE_TTY) &&
+		    (p->p_pledgenote & ~(TMN_RPATH | TMN_WPATH)) == 0 &&
+		    strcmp(path, "/dev/tty") == 0) {
+			return (0);
+		}
 		break;
 	case SYS_readlink:
 		/* Allow /etc/malloc.conf for malloc(3). */
