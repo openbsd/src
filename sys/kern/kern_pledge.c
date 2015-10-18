@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.53 2015/10/18 04:21:39 deraadt Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.54 2015/10/18 05:26:55 semarie Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -1006,13 +1006,6 @@ pledge_ioctl_check(struct proc *p, long com, void *v)
 	struct file *fp = v;
 	struct vnode *vp = NULL;
 
-	if (fp->f_type == DTYPE_SOCKET) {
-		struct socket *so = fp->f_data;
-
-		if (so->so_state & SS_DNS)
-			return (EINVAL);
-	}
-
 	if ((p->p_p->ps_flags & PS_PLEDGE) == 0)
 		return (0);
 
@@ -1027,8 +1020,7 @@ pledge_ioctl_check(struct proc *p, long com, void *v)
 		return (0);
 	}
 
-	if (fp == NULL)
-		return (EBADF);
+	/* fp != NULL was already checked */
 	vp = (struct vnode *)fp->f_data;
 
 	/*

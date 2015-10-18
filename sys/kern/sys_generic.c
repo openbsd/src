@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_generic.c,v 1.107 2015/10/11 23:13:02 deraadt Exp $	*/
+/*	$OpenBSD: sys_generic.c,v 1.108 2015/10/18 05:26:55 semarie Exp $	*/
 /*	$NetBSD: sys_generic.c,v 1.24 1996/03/29 00:25:32 cgd Exp $	*/
 
 /*
@@ -404,12 +404,19 @@ sys_ioctl(struct proc *p, void *v, register_t *retval)
 	fdp = p->p_fd;
 	fp = fd_getfile_mode(fdp, SCARG(uap, fd), FREAD|FWRITE);
 
+	if (fp == NULL)
+		return (EBADF);
+
+	if (fp->f_type == DTYPE_SOCKET) {
+		struct socket *so = fp->f_data;
+
+		if (so->so_state & SS_DNS)
+			return (EINVAL);
+	}
+
 	error = pledge_ioctl_check(p, com, fp);
 	if (error)
 		return (error);
-
-	if (fp == NULL)
-		return (EBADF);
 
 	switch (com) {
 	case FIONCLEX:
