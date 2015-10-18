@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.2 2015/10/09 11:38:05 semarie Exp $ */
+/*	$OpenBSD: main.c,v 1.3 2015/10/18 12:53:32 semarie Exp $ */
 /*
  * Copyright (c) 2015 Sebastien Marie <semarie@openbsd.org>
  *
@@ -295,7 +295,7 @@ main(int argc, char *argv[])
 
 	start_test(&ret, "rpath", NULL, test_rpath);
 	start_test(&ret, "wpath", NULL, test_wpath);
-	start_test(&ret, "cpath", NULL, test_cpath);
+	start_test(&ret, "rpath cpath", NULL, test_cpath);
 
 	/*
 	 * test whitelist path
