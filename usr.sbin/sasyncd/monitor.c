@@ -1,4 +1,4 @@
-/*	$OpenBSD: monitor.c,v 1.20 2015/08/20 22:39:29 deraadt Exp $	*/
+/*	$OpenBSD: monitor.c,v 1.21 2015/10/18 02:39:04 mmcc Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -285,7 +285,7 @@ monitor_get_pfkey_snap(u_int8_t **sadb, u_int32_t *sadbsize, u_int8_t **spd,
 		}
 		rbytes = m_read(m_state.s, *sadb, *sadbsize);
 		if (rbytes < 1) {
-			memset(*sadb, 0, *sadbsize);
+			explicit_bzero(*sadb, *sadbsize);
 			free(*sadb);
 			return -1;
 		}
@@ -294,7 +294,7 @@ monitor_get_pfkey_snap(u_int8_t **sadb, u_int32_t *sadbsize, u_int8_t **spd,
 	/* Read SPD data */
 	if (m_read(m_state.s, spdsize, sizeof *spdsize) < 1) {
 		if (*sadbsize) {
-			memset(*sadb, 0, *sadbsize);
+			explicit_bzero(*sadb, *sadbsize);
 			free(*sadb);
 		}
 		return -1;
@@ -305,17 +305,17 @@ monitor_get_pfkey_snap(u_int8_t **sadb, u_int32_t *sadbsize, u_int8_t **spd,
 			log_err("monitor_get_pfkey_snap: malloc()");
 			monitor_drain_input();
 			if (*sadbsize) {
-				memset(*sadb, 0, *sadbsize);
+				explicit_bzero(*sadb, *sadbsize);
 				free(*sadb);
 			}
 			return -1;
 		}
 		rbytes = m_read(m_state.s, *spd, *spdsize);
 		if (rbytes < 1) {
-			memset(*spd, 0, *spdsize);
+			explicit_bzero(*spd, *spdsize);
 			free(*spd);
 			if (*sadbsize) {
-				memset(*sadb, 0, *sadbsize);
+				explicit_bzero(*sadb, *sadbsize);
 				free(*sadb);
 			}
 			return -1;
@@ -442,11 +442,11 @@ m_priv_pfkey_snap(int s)
 
 cleanup:
 	if (sadb_buf) {
-		memset(sadb_buf, 0, sadb_buflen);
+		explicit_bzero(sadb_buf, sadb_buflen);
 		free(sadb_buf);
 	}
 	if (spd_buf) {
-		memset(spd_buf, 0, spd_buflen);
+		explicit_bzero(spd_buf, spd_buflen);
 		free(spd_buf);
 	}
 }
