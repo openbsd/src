@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgplg.c,v 1.13 2015/01/16 06:40:06 deraadt Exp $	*/
+/*	$OpenBSD: bgplg.c,v 1.14 2015/10/18 22:37:30 benno Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Reyk Floeter <reyk@openbsd.org>
@@ -28,6 +28,7 @@
 #include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <err.h>
 
 #include "bgplg.h"
 
@@ -252,6 +253,9 @@ main(void)
 	struct stat st;
 	u_int i;
 	struct cmd *cmdp = NULL;
+
+	if (pledge("stdio rpath proc exec", NULL) == -1)
+		err(1, "pledge");
 
 	if (gethostname(myname, sizeof(myname)) != 0)
 		return (1);
