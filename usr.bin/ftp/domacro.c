@@ -1,4 +1,4 @@
-/*	$OpenBSD: domacro.c,v 1.17 2009/05/05 19:35:30 martynas Exp $	*/
+/*	$OpenBSD: domacro.c,v 1.18 2015/10/18 03:04:11 mmcc Exp $	*/
 /*	$NetBSD: domacro.c,v 1.10 1997/07/20 09:45:45 lukem Exp $	*/
 
 /*
@@ -65,7 +65,7 @@ domacro(int argc, char *argv[])
 TOP:
 	cp1 = macros[i].mac_start;
 	while (cp1 != macros[i].mac_end) {
-		while (isspace(*cp1)) {
+		while (isspace((unsigned char)*cp1)) {
 			cp1++;
 		}
 		cp2 = line;
@@ -75,9 +75,9 @@ TOP:
 				 *cp2++ = *++cp1;
 				 break;
 			    case '$':
-				 if (isdigit(*(cp1+1))) {
+				 if (isdigit((unsigned char)*(cp1 + 1))) {
 				    j = 0;
-				    while (isdigit(*++cp1)) {
+				    while (isdigit((unsigned char)*++cp1)) {
 					  j = 10*j +  *cp1 - '0';
 				    }
 				    cp1--;

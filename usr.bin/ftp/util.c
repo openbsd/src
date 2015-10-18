@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.72 2015/03/17 19:31:30 millert Exp $	*/
+/*	$OpenBSD: util.c,v 1.73 2015/10/18 03:04:11 mmcc Exp $	*/
 /*	$NetBSD: util.c,v 1.12 1997/08/18 10:20:27 lukem Exp $	*/
 
 /*-
@@ -488,7 +488,7 @@ top:
 	(void)fflush(ttyout);
 	if (fgets(str, sizeof(str), stdin) == NULL)
 		goto quit;
-	switch (tolower(*str)) {
+	switch (tolower((unsigned char)*str)) {
 		case '?':
 			fprintf(ttyout,
 			    "?	help\n"
@@ -582,7 +582,7 @@ remotesize(const char *file, int noisy)
 		if (cp != NULL) {
 			cp++;
 			size = strtoq(cp, &ep, 10);
-			if (*ep != '\0' && !isspace(*ep))
+			if (*ep != '\0' && !isspace((unsigned char)*ep))
 				size = -1;
 		}
 	} else if (noisy
@@ -626,9 +626,9 @@ remotemodtime(const char *file, int noisy)
 		char *timestr = reply_string;
 
 		/* Repair `19%02d' bug on server side */
-		while (!isspace(*timestr))
+		while (!isspace((unsigned char)*timestr))
 			timestr++;
-		while (isspace(*timestr))
+		while (isspace((unsigned char)*timestr))
 			timestr++;
 		if (strncmp(timestr, "191", 3) == 0) {
  			fprintf(ttyout,

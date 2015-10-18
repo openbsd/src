@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmds.c,v 1.74 2015/01/30 04:45:45 tedu Exp $	*/
+/*	$OpenBSD: cmds.c,v 1.75 2015/10/18 03:04:11 mmcc Exp $	*/
 /*	$NetBSD: cmds.c,v 1.27 1997/08/18 10:20:15 lukem Exp $	*/
 
 /*
@@ -279,16 +279,16 @@ usage:
 			if (mflag && confirm(argv[0], cp)) {
 				tp = cp;
 				if (mcase) {
-					while (*tp && !islower(*tp)) {
+					while (*tp && !islower((unsigned char)*tp)) {
 						tp++;
 					}
 					if (!*tp) {
 						tp = cp;
 						tp2 = tmpbuf;
 						while ((*tp2 = *tp) != '\0') {
-						     if (isupper(*tp2)) {
+						     if (isupper((unsigned char)*tp2)) {
 							    *tp2 =
-								tolower(*tp2);
+								tolower((unsigned char)*tp2);
 						     }
 						     tp++;
 						     tp2++;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: small.c,v 1.4 2015/01/30 04:45:45 tedu Exp $	*/
+/*	$OpenBSD: small.c,v 1.5 2015/10/18 03:04:11 mmcc Exp $	*/
 /*	$NetBSD: cmds.c,v 1.27 1997/08/18 10:20:15 lukem Exp $	*/
 
 /*
@@ -238,15 +238,15 @@ usage:
 	if (loc && mcase) {
 		char *tp = argv[1], *tp2, tmpbuf[PATH_MAX];
 
-		while (*tp && !islower(*tp)) {
+		while (*tp && !islower((unsigned char)*tp)) {
 			tp++;
 		}
 		if (!*tp) {
 			tp = argv[2];
 			tp2 = tmpbuf;
 			while ((*tp2 = *tp) != '\0') {
-				if (isupper(*tp2)) {
-					*tp2 = tolower(*tp2);
+				if (isupper((unsigned char)*tp2)) {
+					*tp2 = tolower((unsigned char)*tp2);
 				}
 				tp++;
 				tp2++;
@@ -612,7 +612,7 @@ domap(char *name)
 				break;
 			case '[':
 LOOP:
-				if (*++cp2 == '$' && isdigit(*(cp2+1))) {
+				if (*++cp2 == '$' && isdigit((unsigned char)*(cp2 + 1))) {
 					if (*++cp2 == '0') {
 						char *cp3 = name;
 
@@ -637,7 +637,7 @@ LOOP:
 							cp2++;
 						}
 						else if (*cp2 == '$' &&
-   						        isdigit(*(cp2+1))) {
+   						        isdigit((unsigned char)*(cp2 + 1))) {
 							if (*++cp2 == '0') {
 							   char *cp3 = name;
 
@@ -691,7 +691,7 @@ LOOP:
 				}
 				break;
 			case '$':
-				if (isdigit(*(cp2 + 1))) {
+				if (isdigit((unsigned char)*(cp2 + 1))) {
 					if (*++cp2 == '0') {
 						char *cp3 = name;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: complete.c,v 1.28 2015/01/16 06:40:08 deraadt Exp $	*/
+/*	$OpenBSD: complete.c,v 1.29 2015/10/18 03:04:11 mmcc Exp $	*/
 /*	$NetBSD: complete.c,v 1.10 1997/08/18 10:20:18 lukem Exp $	*/
 
 /*-
@@ -322,7 +322,7 @@ complete(EditLine *el, int ch)
 
 		/* check for 'continuation' completes (which are uppercase) */
 	if ((cursor_argc > celems) && (celems > 0)
-	    && isupper(c->c_complete[celems-1]))
+	    && isupper((unsigned char)c->c_complete[celems - 1]))
 		cursor_argc = celems;
 
 	if (cursor_argc > celems)
