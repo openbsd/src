@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.3 2015/10/18 12:53:32 semarie Exp $ */
+/*	$OpenBSD: main.c,v 1.4 2015/10/18 12:54:25 semarie Exp $ */
 /*
  * Copyright (c) 2015 Sebastien Marie <semarie@openbsd.org>
  *
@@ -286,7 +286,6 @@ main(int argc, char *argv[])
 
 	/* tests req without PLEDGE_SELF for "permitted syscalls" */
 	// XXX it is a documentation bug
-	start_test(&ret, "cmsg",  NULL, test_allowed_syscalls);
 	start_test(&ret, "ioctl", NULL, test_allowed_syscalls);
 	start_test(&ret, "proc",  NULL, test_allowed_syscalls);
 	start_test(&ret, "cpath", NULL, test_allowed_syscalls);
