@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.37 2015/10/09 01:37:09 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.38 2015/10/18 03:54:22 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.6 1995/05/21 16:54:10 mycroft Exp $	*/
 
 /*
@@ -171,7 +171,7 @@ main(int argc, char *argv[])
 {
 	f = -1;
 
-	if (pledge("stdio inet rpath wpath cpath", NULL) == -1)
+	if (pledge("stdio rpath wpath cpath dns inet", NULL) == -1)
 		err(1, "pledge");
 
 	/* set default transfer mode */

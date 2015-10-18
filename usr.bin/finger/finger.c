@@ -1,4 +1,4 @@
-/*	$OpenBSD: finger.c,v 1.23 2015/10/10 20:35:00 deraadt Exp $	*/
+/*	$OpenBSD: finger.c,v 1.24 2015/10/18 03:54:22 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -126,7 +126,7 @@ main(int argc, char *argv[])
 			mflag++;
 	}
 
-	if (pledge("stdio rpath getpw inet", NULL) == -1)
+	if (pledge("stdio rpath getpw dns inet", NULL) == -1)
 		err(1, "pledge");
 
 	(void)time(&now);
