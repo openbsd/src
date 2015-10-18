@@ -1,4 +1,4 @@
-/* $OpenBSD: crunchide.c,v 1.10 2015/08/20 22:39:29 deraadt Exp $	 */
+/* $OpenBSD: crunchide.c,v 1.11 2015/10/18 17:32:22 tobias Exp $	 */
 
 /*
  * Copyright (c) 1994 University of Maryland
@@ -58,6 +58,7 @@
 #include <sys/stat.h>
 
 #include <fcntl.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -206,8 +207,8 @@ hide_syms(char *filename)
 		close(inf);
 		return;
 	}
-	if (infstat.st_size < sizeof(Elf_Ehdr)) {
-		fprintf(stderr, "%s: short file\n", filename);
+	if (infstat.st_size < sizeof(Elf_Ehdr) || infstat.st_size > SIZE_MAX) {
+		fprintf(stderr, "%s: invalid file size\n", filename);
 		close(inf);
 		return;
 	}
