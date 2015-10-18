@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.54 2015/10/18 05:26:55 semarie Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.55 2015/10/18 20:15:10 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -733,135 +733,66 @@ pledge_aftersyscall(struct proc *p, int code, int error)
 }
 
 /*
- * By default, only the advisory cmsg's can be received from the kernel,
- * such as TIMESTAMP ntpd.
- *
- * If PLEDGE_RECVFD is set SCM_RIGHTS is also allowed in for a carefully
- * selected set of descriptors (specifically to exclude directories).
- *
- * This results in a kill upon recv, if some other process on the system
- * send a SCM_RIGHTS to an open socket of some sort.  That will discourage
- * leaving such sockets lying around...
+ * Only allow reception of safe file descriptors.
  */
 int
-pledge_cmsg_recv(struct proc *p, struct mbuf *control)
+pledge_recvfd_check(struct proc *p, struct file *fp)
 {
-	struct msghdr tmp;
-	struct cmsghdr *cmsg;
-	int *fdp, fd;
-	struct file *fp;
-	int nfds, i;
+	struct vnode *vp;
+	char *vtypes[] = { VTYPE_NAMES };
 
 	if ((p->p_p->ps_flags & PS_PLEDGE) == 0)
 		return (0);
-
-	/* Scan the cmsg */
-	memset(&tmp, 0, sizeof(tmp));
-	tmp.msg_control = mtod(control, struct cmsghdr *);
-	tmp.msg_controllen = control->m_len;
-	cmsg = CMSG_FIRSTHDR(&tmp);
-
-	while (cmsg != NULL) {
-		if (cmsg->cmsg_level == SOL_SOCKET &&
-		    cmsg->cmsg_type == SCM_RIGHTS)
-			break;
-		cmsg = CMSG_NXTHDR(&tmp, cmsg);
+	if ((p->p_p->ps_pledge & PLEDGE_RECVFD) == 0) {
+		printf("recvmsg not allowed\n");
+		return pledge_fail(p, EPERM, PLEDGE_RECVFD);
 	}
 
-	/* No SCM_RIGHTS found -> OK */
-	if (cmsg == NULL)
+	switch (fp->f_type) {
+	case DTYPE_SOCKET:
+	case DTYPE_PIPE:
 		return (0);
+	case DTYPE_VNODE:
+		vp = (struct vnode *)fp->f_data;
 
-	if ((p->p_p->ps_pledge & PLEDGE_RECVFD) == 0)
-		return pledge_fail(p, EPERM, PLEDGE_RECVFD);
-
-	/* In OpenBSD, a CMSG only contains one SCM_RIGHTS.  Check it. */
-	fdp = (int *)CMSG_DATA(cmsg);
-	nfds = (cmsg->cmsg_len - CMSG_ALIGN(sizeof(*cmsg))) /
-	    sizeof(struct file *);
-	for (i = 0; i < nfds; i++) {
-		struct vnode *vp;
-
-		fd = *fdp++;
-		fp = fd_getfile(p->p_fd, fd);
-		if (fp == NULL)
-			return pledge_fail(p, EBADF, PLEDGE_RECVFD);
-
-		/* Only allow passing of sockets, pipes, and pure files */
-		switch (fp->f_type) {
-		case DTYPE_SOCKET:
-		case DTYPE_PIPE:
-			continue;
-		case DTYPE_VNODE:
-			vp = (struct vnode *)fp->f_data;
-			if (vp->v_type == VREG)
-				continue;
-			break;
-		default:
-			break;
-		}
-		return pledge_fail(p, EPERM, PLEDGE_RECVFD);
+		if (vp->v_type != VDIR)
+			return (0);
+		break;
 	}
-	return (0);
+	printf("recvfd type %d %s\n", fp->f_type, vtypes[fp->f_type]);
+	return pledge_fail(p, EPERM, PLEDGE_RECVFD);
 }
 
 /*
- * When pledged, default prevents sending of a cmsg.
- *
- * Unlike pledge_cmsg_recv pledge_cmsg_send is called with individual
- * cmsgs one per mbuf. So no need to loop or scan.
+ * Only allow sending of safe file descriptors.
  */
 int
-pledge_cmsg_send(struct proc *p, struct mbuf *control)
+pledge_sendfd_check(struct proc *p, struct file *fp)
 {
-	struct cmsghdr *cmsg;
-	int *fdp, fd;
-	struct file *fp;
-	int nfds, i;
+	struct vnode *vp;
+	char *vtypes[] = { VTYPE_NAMES };
 
 	if ((p->p_p->ps_flags & PS_PLEDGE) == 0)
 		return (0);
 
-	/* Scan the cmsg */
-	cmsg = mtod(control, struct cmsghdr *);
-
-	/* Contains no SCM_RIGHTS, so OK */
-	if (!(cmsg->cmsg_level == SOL_SOCKET &&
-	    cmsg->cmsg_type == SCM_RIGHTS))
-		return (0);
-
-	if ((p->p_p->ps_pledge & PLEDGE_SENDFD) == 0)
-		return pledge_fail(p, EPERM, PLEDGE_SENDFD);
-
-	/* In OpenBSD, a CMSG only contains one SCM_RIGHTS.  Check it. */
-	fdp = (int *)CMSG_DATA(cmsg);
-	nfds = (cmsg->cmsg_len - CMSG_ALIGN(sizeof(*cmsg))) /
-	    sizeof(struct file *);
-	for (i = 0; i < nfds; i++) {
-		struct vnode *vp;
-
-		fd = *fdp++;
-		fp = fd_getfile(p->p_fd, fd);
-		if (fp == NULL)
-			return pledge_fail(p, EBADF, PLEDGE_SENDFD);
-
-		/* Only allow passing of sockets, pipes, and pure files */
-		switch (fp->f_type) {
-		case DTYPE_SOCKET:
-		case DTYPE_PIPE:
-			continue;
-		case DTYPE_VNODE:
-			vp = (struct vnode *)fp->f_data;
-			if (vp->v_type == VREG)
-				continue;
-			break;
-		default:
-			break;
-		}
-		/* Not allowed to send a bad fd type */
+	if ((p->p_p->ps_pledge & PLEDGE_SENDFD) == 0) {
+		printf("sendmsg not allowed\n");
 		return pledge_fail(p, EPERM, PLEDGE_SENDFD);
 	}
-	return (0);
+
+	switch (fp->f_type) {
+	case DTYPE_SOCKET:
+	case DTYPE_PIPE:
+		return (0);
+	case DTYPE_VNODE:
+		vp = (struct vnode *)fp->f_data;
+	
+		if (vp->v_type != VDIR)
+			return (0);
+		break;
+	}
+	printf("sendfd type %d %s\n", fp->f_type, vtypes[fp->f_type]);
+	return pledge_fail(p, EPERM, PLEDGE_SENDFD);
 }
 
 int
@@ -1060,9 +991,9 @@ pledge_ioctl_check(struct proc *p, long com, void *v)
 #if NPTY > 0
 		case PTMGET:
 			if ((p->p_p->ps_pledge & PLEDGE_RPATH) == 0)
-		                break;
+				break;
 			if ((p->p_p->ps_pledge & PLEDGE_WPATH) == 0)
-		                break;
+				break;
 			if (fp->f_type != DTYPE_VNODE || vp->v_type != VCHR)
 				break;
 			if (cdevsw[major(vp->v_rdev)].d_open != ptmopen)

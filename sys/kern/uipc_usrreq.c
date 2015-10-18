@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.88 2015/10/17 23:15:10 deraadt Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.89 2015/10/18 20:15:10 deraadt Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -49,6 +49,7 @@
 #include <sys/stat.h>
 #include <sys/mbuf.h>
 #include <sys/task.h>
+#include <sys/pledge.h>
 
 void	uipc_setaddr(const struct unpcb *, struct mbuf *);
 
@@ -682,6 +683,10 @@ unp_externalize(struct mbuf *rights, socklen_t controllen, int flags)
 		rp = (struct file **)CMSG_DATA(cm);
 		for (i = 0; i < nfds; i++) {
 			fp = *rp++;
+
+			error = pledge_recvfd_check(p, fp);
+			if (error)
+				break;
 			/*
 			 * No to block devices.  If passing a directory,
 			 * make sure that it is underneath the root.
@@ -844,6 +849,10 @@ morespace:
 			error = EDEADLK;
 			goto fail;
 		}
+		error = pledge_sendfd_check(p, fp);
+		if (error)
+			goto fail;
+		    
 		/* kq and systrace descriptors cannot be copied */
 		if (fp->f_type == DTYPE_KQUEUE ||
 		    fp->f_type == DTYPE_SYSTRACE) {

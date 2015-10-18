@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.114 2015/10/18 00:04:43 deraadt Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.115 2015/10/18 20:15:10 deraadt Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -632,12 +632,6 @@ sendit(struct proc *p, int s, struct msghdr *mp, int flags, register_t *retsize)
 			ktrcmsghdr(p, mtod(control, char *),
 			    mp->msg_controllen);
 #endif
-
-		if (pledge_cmsg_send(p, control)) {
-			m_free(control);
-			error = EPERM;
-			goto bad;
-		}
 	} else
 		control = 0;
 #ifdef KTRACE
@@ -870,10 +864,6 @@ recvit(struct proc *p, int s, struct msghdr *mp, caddr_t namelenp,
 				if (len < i) {
 					mp->msg_flags |= MSG_CTRUNC;
 					i = len;
-				}
-				if (pledge_cmsg_recv(p, m)) {
-					error = EPERM;
-					goto out;
 				}
 				error = copyout(mtod(m, caddr_t), cp, i);
 				if (m->m_next)
