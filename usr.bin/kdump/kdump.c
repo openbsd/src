@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdump.c,v 1.115 2015/10/10 20:35:00 deraadt Exp $	*/
+/*	$OpenBSD: kdump.c,v 1.116 2015/10/18 01:32:05 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -798,7 +798,9 @@ static const formatter scargs[][8] = {
     [SYS_fsync]		= { Pfd },
     [SYS_setpriority]	= { Prioname, Ppid_t, Pdecint },
     [SYS_socket]	= { Sockfamilyname, Socktypename, Sockprotoname },
+    [SYS_dnssocket]	= { Sockfamilyname, Socktypename, Sockprotoname },
     [SYS_connect]	= { Pfd, Pptr, Pucount },
+    [SYS_dnsconnect]	= { Pfd, Pptr, Pucount },
     [SYS_getdents]	= { Pfd, Pptr, Pbigsize },
     [SYS_getpriority]	= { Prioname, Ppid_t },
     [SYS_pipe2]		= { Pptr, Flagsname },
