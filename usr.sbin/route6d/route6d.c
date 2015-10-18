@@ -1,4 +1,4 @@
-/*	$OpenBSD: route6d.c,v 1.69 2015/10/17 01:01:09 jca Exp $	*/
+/*	$OpenBSD: route6d.c,v 1.70 2015/10/18 14:35:36 jca Exp $	*/
 /*	$KAME: route6d.c,v 1.111 2006/10/25 06:38:13 jinmei Exp $	*/
 
 /*
@@ -42,7 +42,6 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <errno.h>
-#include <err.h>
 #include <util.h>
 #include <poll.h>
 
@@ -348,7 +347,7 @@ main(int argc, char *argv[])
 	init();
 
 	if (pledge("stdio rpath wpath cpath inet route mcast", NULL) == -1)
-		err(1, "pledge");
+		fatal("pledge");
 
 	ifconfig();
 
