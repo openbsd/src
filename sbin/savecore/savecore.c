@@ -1,4 +1,4 @@
-/*	$OpenBSD: savecore.c,v 1.54 2015/10/18 03:13:07 deraadt Exp $	*/
+/*	$OpenBSD: savecore.c,v 1.55 2015/10/18 03:17:48 deraadt Exp $	*/
 /*	$NetBSD: savecore.c,v 1.26 1996/03/18 21:16:05 leo Exp $	*/
 
 /*-
@@ -170,6 +170,11 @@ main(int argc, char *argv[])
 
 	(void)time(&now);
 	kmem_setup();
+
+	if (pledge("stdio rpath wpath cpath", NULL) == -1) {
+		syslog(LOG_ERR, "pledge: %m");
+		exit(1);
+	}
 
 	if (clear) {
 		clear_dump();
