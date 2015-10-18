@@ -1,4 +1,4 @@
-/*	$OpenBSD: ktrstruct.c,v 1.12 2015/10/09 01:37:08 deraadt Exp $	*/
+/*	$OpenBSD: ktrstruct.c,v 1.13 2015/10/18 05:03:22 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -45,6 +45,7 @@
 #include <netdb.h>
 #include <poll.h>
 #include <signal.h>
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
@@ -117,13 +118,12 @@ ktrsockaddr(struct sockaddr *sa)
 		struct sockaddr_un *sa_un;
 
 		sa_un = (struct sockaddr_un *)sa;
-		if (sa_un->sun_len <= sizeof(sa_un->sun_len) +
-		    sizeof(sa_un->sun_family)) {
+		if (sa_un->sun_len <= offsetof(struct sockaddr_un, sun_path)) {
 			printf("invalid");
 			break;
 		}
 		printf("\"%.*s\"", (int)(sa_un->sun_len -
-		    sizeof(sa_un->sun_len) - sizeof(sa_un->sun_family)),
+		    offsetof(struct sockaddr_un, sun_path)),
 		    sa_un->sun_path);
 		break;
 	}
