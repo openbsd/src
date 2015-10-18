@@ -1,4 +1,4 @@
-# $OpenBSD: id.policy,v 1.5 2015/09/13 17:08:04 guenther Exp $
+# $OpenBSD: id.policy,v 1.6 2015/10/18 11:27:17 doug Exp $
 Policy: /usr/bin/id, Emulation: native
 	native-__set_tcb: permit
 	native-break: permit
@@ -28,6 +28,7 @@ Policy: /usr/bin/id, Emulation: native
 	native-mprotect: permit
 	native-mquery: permit
 	native-munmap: permit
+	native-pledge: permit
 	native-pread: permit
 	native-read: permit
 	native-sendsyslog: permit
