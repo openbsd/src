@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_fork.c,v 1.13 2015/05/19 20:50:06 guenther Exp $ */
+/*	$OpenBSD: rthread_fork.c,v 1.14 2015/10/18 08:02:58 guenther Exp $ */
 
 /*
  * Copyright (c) 2008 Kurt Miller <kurt@openbsd.org>
@@ -40,7 +40,6 @@
 #include <pthread.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <signal.h>
 
 #include "thread_private.h"	/* in libc/include */
 
@@ -56,9 +55,6 @@ _dofork(int is_vfork)
 	pthread_t me;
 	pid_t (*sys_fork)(void);
 	pid_t newid;
-#ifndef NO_PIC
-	sigset_t nmask, omask;
-#endif
 
 	sys_fork = is_vfork ? &_thread_sys_vfork : &_thread_sys_fork;
 
@@ -70,9 +66,8 @@ _dofork(int is_vfork)
 	/*
 	 * Protect important libc/ld.so critical areas across the fork call.
 	 * dlclose() will grab the atexit lock via __cxa_finalize() so lock
-	 * the dl_lock first. malloc()/free() can grab the arc4 lock so lock
-	 * malloc_lock first. Finally lock the bind_lock last so that any lazy
-	 * binding in the other locking functions can succeed.
+	 * the dl_lock first. malloc()/free() can use arc4random(), so lock
+	 * malloc_lock before arc4_lock
 	 */
 
 #ifndef NO_PIC
@@ -84,22 +79,7 @@ _dofork(int is_vfork)
 	_thread_malloc_lock();
 	_thread_arc4_lock();
 
-#ifndef NO_PIC
-	if (_DYNAMIC) {
-		sigfillset(&nmask);
-		_thread_sys_sigprocmask(SIG_BLOCK, &nmask, &omask);
-		_rthread_bind_lock(0);
-	}
-#endif
-
 	newid = sys_fork();
-
-#ifndef NO_PIC
-	if (_DYNAMIC) {
-		_rthread_bind_lock(1);
-		_thread_sys_sigprocmask(SIG_SETMASK, &omask, NULL);
-	}
-#endif
 
 	_thread_arc4_unlock();
 	_thread_malloc_unlock();

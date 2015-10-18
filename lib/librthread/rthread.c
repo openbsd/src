@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread.c,v 1.83 2015/05/19 20:50:06 guenther Exp $ */
+/*	$OpenBSD: rthread.c,v 1.84 2015/10/18 08:02:58 guenther Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -207,18 +207,7 @@ _rthread_init(void)
 
 #ifndef NO_PIC
 	if (_DYNAMIC) {
-		/*
-		 * To avoid recursion problems in ld.so, we need to trigger the
-		 * functions once to fully bind them before registering them
-		 * for use.
-		 */
-		_rthread_dl_lock(0);
-		_rthread_dl_lock(1);
-		_rthread_bind_lock(0);
-		_rthread_bind_lock(1);
-		sched_yield();
 		dlctl(NULL, DL_SETTHREADLCK, _rthread_dl_lock);
-		dlctl(NULL, DL_SETBINDLCK, _rthread_bind_lock);
 	}
 #endif
 
@@ -708,17 +697,6 @@ _rthread_dl_lock(int what)
 			owner = NULL;
 		TAILQ_INIT(&lockers);
 	}
-}
-
-void
-_rthread_bind_lock(int what)
-{
-	static struct _spinlock lock = _SPINLOCK_UNLOCKED;
-
-	if (what == 0)
-		_spinlock(&lock);
-	else
-		_spinunlock(&lock);
 }
 #endif
 
