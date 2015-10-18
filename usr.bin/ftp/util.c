@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.74 2015/10/18 03:39:37 deraadt Exp $	*/
+/*	$OpenBSD: util.c,v 1.75 2015/10/18 03:41:14 deraadt Exp $	*/
 /*	$NetBSD: util.c,v 1.12 1997/08/18 10:20:27 lukem Exp $	*/
 
 /*-
@@ -390,7 +390,8 @@ remglob2(char *argv[], int doswitch, char **errbuf, FILE **ftemp, char *type)
 	if (*ftemp == NULL) {
 		int len;
 
-		cp = _PATH_TMP;
+		if ((cp = getenv("TMPDIR")) == NULL || *cp == '\0')
+		    cp = _PATH_TMP;
 		len = strlen(cp);
 		if (len + sizeof(TMPFILE) + (cp[len-1] != '/') > sizeof(temp)) {
 			warnx("unable to create temporary file: %s",
