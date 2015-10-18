@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.562 2015/09/25 15:53:07 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.563 2015/10/18 20:42:42 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -395,11 +395,12 @@ enum msgtype {
 	MSG_IDENTIFY_FLAGS = 100,
 	MSG_IDENTIFY_TERM,
 	MSG_IDENTIFY_TTYNAME,
-	MSG_IDENTIFY_CWD,
+	MSG_IDENTIFY_OLDCWD, /* unused */
 	MSG_IDENTIFY_STDIN,
 	MSG_IDENTIFY_ENVIRON,
 	MSG_IDENTIFY_DONE,
 	MSG_IDENTIFY_CLIENTPID,
+	MSG_IDENTIFY_CWD,
 
 	MSG_COMMAND = 200,
 	MSG_DETACH,
