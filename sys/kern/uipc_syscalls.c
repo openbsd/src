@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.113 2015/10/16 14:04:11 semarie Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.114 2015/10/18 00:04:43 deraadt Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -64,9 +64,23 @@ extern	struct fileops socketops;
 
 int	copyaddrout(struct proc *, struct mbuf *, struct sockaddr *, socklen_t,
 	    socklen_t *);
+int	socketit(struct proc *p, void *v, register_t *retval, int);
+int	connectit(struct proc *p, void *v, register_t *retval, int);
+
+int
+sys_dnssocket(struct proc *p, void *v, register_t *retval)
+{
+	return socketit(p, v, retval, 1);
+}
 
 int
 sys_socket(struct proc *p, void *v, register_t *retval)
+{
+	return socketit(p, v, retval, 0);
+}
+
+int
+socketit(struct proc *p, void *v, register_t *retval, int dns)
 {
 	struct sys_socket_args /* {
 		syscallarg(int) domain;
@@ -77,10 +91,11 @@ sys_socket(struct proc *p, void *v, register_t *retval)
 	struct socket *so;
 	struct file *fp;
 	int type = SCARG(uap, type);
+	int domain = SCARG(uap, domain);
 	int fd, error;
 
-	if (pledge_socket_check(p, SCARG(uap, domain)))
-		return (pledge_fail(p, EPERM, PLEDGE_UNIX));
+	if (dns && !(domain == AF_INET || domain == AF_INET6))
+		return (EINVAL);
 
 	fdplock(fdp);
 	error = falloc(p, &fp, &fd);
@@ -104,12 +119,21 @@ sys_socket(struct proc *p, void *v, register_t *retval)
 		fp->f_data = so;
 		if (type & SOCK_NONBLOCK)
 			(*fp->f_ops->fo_ioctl)(fp, FIONBIO, (caddr_t)&type, p);
+		if (dns)
+			so->so_state |= SS_DNS;
 		FILE_SET_MATURE(fp, p);
 		*retval = fd;
 	}
 out:
 	return (error);
 }
+
+static inline int
+isdnssocket(struct socket *so)
+{
+	return (so->so_state & SS_DNS);
+}
+
 
 /* ARGSUSED */
 int
@@ -126,6 +150,10 @@ sys_bind(struct proc *p, void *v, register_t *retval)
 
 	if ((error = getsock(p, SCARG(uap, s), &fp)) != 0)
 		return (error);
+	if (isdnssocket((struct socket *)fp->f_data)) {
+		FRELE(fp, p);
+		return (EINVAL);
+	}
 	error = sockargs(&nam, SCARG(uap, name), SCARG(uap, namelen),
 	    MT_SONAME);
 	if (error == 0) {
@@ -204,6 +232,10 @@ doaccept(struct proc *p, int sock, struct sockaddr *name, socklen_t *anamelen,
 		return (error);
 	if ((error = getsock(p, sock, &fp)) != 0)
 		return (error);
+	if (isdnssocket((struct socket *)fp->f_data)) {
+		error = EINVAL;
+		goto bad;
+	}
 	headfp = fp;
 	s = splsoftnet();
 	head = fp->f_data;
@@ -307,7 +339,20 @@ bad:
 
 /* ARGSUSED */
 int
+sys_dnsconnect(struct proc *p, void *v, register_t *retval)
+{
+	return connectit(p, v, retval, 1);
+}
+
+/* ARGSUSED */
+int
 sys_connect(struct proc *p, void *v, register_t *retval)
+{
+	return connectit(p, v, retval, 0);
+}
+
+int
+connectit(struct proc *p, void *v, register_t *retval, int dns)
 {
 	struct sys_connect_args /* {
 		syscallarg(int) s;
@@ -319,12 +364,14 @@ sys_connect(struct proc *p, void *v, register_t *retval)
 	struct mbuf *nam = NULL;
 	int error, s;
 
-	if (pledge_connect_check(p))
-		return (pledge_fail(p, EPERM, PLEDGE_UNIX));
-
 	if ((error = getsock(p, SCARG(uap, s), &fp)) != 0)
 		return (error);
 	so = fp->f_data;
+	if ((dns && !isdnssocket(so)) || (!dns && isdnssocket(so))) {
+		FRELE(fp, p);
+		return EINVAL;
+	}
+
 	if ((so->so_state & SS_NBIO) && (so->so_state & SS_ISCONNECTING)) {
 		FRELE(fp, p);
 		return (EALREADY);
@@ -462,9 +509,6 @@ sys_sendto(struct proc *p, void *v, register_t *retval)
 	struct msghdr msg;
 	struct iovec aiov;
 
-	if (pledge_sendto_check(p, SCARG(uap, to)))
-		return (pledge_fail(p, EPERM, PLEDGE_UNIX));
-
 	msg.msg_name = (caddr_t)SCARG(uap, to);
 	msg.msg_namelen = SCARG(uap, tolen);
 	msg.msg_iov = &aiov;
@@ -495,9 +539,6 @@ sys_sendmsg(struct proc *p, void *v, register_t *retval)
 	if (KTRPOINT(p, KTR_STRUCT))
 		ktrmsghdr(p, &msg);
 #endif
-
-	if (pledge_sendto_check(p, msg.msg_name))
-		return (pledge_fail(p, EPERM, PLEDGE_UNIX));
 
 	if (msg.msg_iovlen > IOV_MAX)
 		return (EMSGSIZE);
@@ -542,6 +583,15 @@ sendit(struct proc *p, int s, struct msghdr *mp, int flags, register_t *retsize)
 
 	if ((error = getsock(p, s, &fp)) != 0)
 		return (error);
+	if (mp->msg_name && isdnssocket((struct socket *)fp->f_data)) {
+		error = EINVAL;
+		goto bad;
+	}
+	if (pledge_sendit_check(p, mp->msg_name)) {
+		error = pledge_fail(p, EPERM, PLEDGE_RW);
+		goto bad;
+	}
+
 	auio.uio_iov = mp->msg_iov;
 	auio.uio_iovcnt = mp->msg_iovlen;
 	auio.uio_segflg = UIO_USERSPACE;
@@ -642,9 +692,6 @@ sys_recvfrom(struct proc *p, void *v, register_t *retval)
 	struct iovec aiov;
 	int error;
 
-	if (pledge_recvfrom_check(p, SCARG(uap, from)))
-		return (pledge_fail(p, EPERM, PLEDGE_UNIX));
-
 	if (SCARG(uap, fromlenaddr)) {
 		error = copyin(SCARG(uap, fromlenaddr),
 		    &msg.msg_namelen, sizeof (msg.msg_namelen));
@@ -678,9 +725,6 @@ sys_recvmsg(struct proc *p, void *v, register_t *retval)
 	error = copyin(SCARG(uap, msg), &msg, sizeof (msg));
 	if (error)
 		return (error);
-
-	if (pledge_recvfrom_check(p, msg.msg_name))
-		return (pledge_fail(p, EPERM, PLEDGE_UNIX));
 
 	if (msg.msg_iovlen > IOV_MAX)
 		return (EMSGSIZE);
@@ -733,6 +777,15 @@ recvit(struct proc *p, int s, struct msghdr *mp, caddr_t namelenp,
 
 	if ((error = getsock(p, s, &fp)) != 0)
 		return (error);
+	if (mp->msg_name && isdnssocket((struct socket *)fp->f_data)) {
+		FRELE(fp, p);
+		return (EINVAL);
+	}
+	if (pledge_recvit_check(p, mp->msg_name)) {
+		FRELE(fp, p);
+		return (pledge_fail(p, EPERM, PLEDGE_RW));
+	}
+
 	auio.uio_iov = mp->msg_iov;
 	auio.uio_iovcnt = mp->msg_iovlen;
 	auio.uio_segflg = UIO_USERSPACE;
@@ -880,11 +933,17 @@ sys_setsockopt(struct proc *p, void *v, register_t *retval)
 	struct mbuf *m = NULL;
 	int error;
 
-	if (pledge_setsockopt_check(p, SCARG(uap, level), SCARG(uap, name)))
-		return (pledge_fail(p, EPERM, PLEDGE_INET));
 
 	if ((error = getsock(p, SCARG(uap, s), &fp)) != 0)
 		return (error);
+	if (isdnssocket((struct socket *)fp->f_data)) {
+		error = EINVAL;
+		goto bad;
+	}
+	if (pledge_setsockopt_check(p, SCARG(uap, level), SCARG(uap, name))) {
+		error = pledge_fail(p, EPERM, PLEDGE_INET);
+		goto bad;
+	}
 	if (SCARG(uap, valsize) > MCLBYTES) {
 		error = EINVAL;
 		goto bad;
@@ -936,6 +995,10 @@ sys_getsockopt(struct proc *p, void *v, register_t *retval)
 
 	if ((error = getsock(p, SCARG(uap, s), &fp)) != 0)
 		return (error);
+	if (isdnssocket((struct socket *)fp->f_data)) {
+		error = EINVAL;
+		goto out;
+	}
 	if (SCARG(uap, val)) {
 		error = copyin(SCARG(uap, avalsize),
 		    &valsize, sizeof (valsize));

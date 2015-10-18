@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.48 2015/10/17 23:50:04 deraadt Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.49 2015/10/18 00:04:43 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -25,6 +25,7 @@
 #include <sys/fcntl.h>
 #include <sys/file.h>
 #include <sys/filedesc.h>
+#include <sys/socketvar.h>
 #include <sys/vnode.h>
 #include <sys/mbuf.h>
 #include <sys/sysctl.h>
@@ -141,10 +142,10 @@ const u_int pledge_syscalls[SYS_MAXSYSCALL] = {
 	[SYS_socketpair] = PLEDGE_RW,
 	[SYS_getdents] = PLEDGE_RW,
 
-	[SYS_sendto] = PLEDGE_RW | PLEDGE_DNS_ACTIVE | PLEDGE_YP_ACTIVE,
+	[SYS_sendto] = PLEDGE_RW | PLEDGE_YP_ACTIVE,
 	[SYS_sendmsg] = PLEDGE_RW,
 	[SYS_recvmsg] = PLEDGE_RW,
-	[SYS_recvfrom] = PLEDGE_RW | PLEDGE_DNS_ACTIVE | PLEDGE_YP_ACTIVE,
+	[SYS_recvfrom] = PLEDGE_RW | PLEDGE_YP_ACTIVE,
 
 	[SYS_fork] = PLEDGE_PROC,
 	[SYS_vfork] = PLEDGE_PROC,
@@ -226,8 +227,12 @@ const u_int pledge_syscalls[SYS_MAXSYSCALL] = {
 	[SYS_lchown] = PLEDGE_FATTR,
 	[SYS_fchown] = PLEDGE_FATTR,
 
-	[SYS_socket] = PLEDGE_INET | PLEDGE_UNIX | PLEDGE_DNS_ACTIVE | PLEDGE_YP_ACTIVE,
-	[SYS_connect] = PLEDGE_INET | PLEDGE_UNIX | PLEDGE_DNS_ACTIVE | PLEDGE_YP_ACTIVE,
+	/* XXX remove PLEDGE_DNS from socket/connect in 1 week */
+	[SYS_socket] = PLEDGE_INET | PLEDGE_UNIX | PLEDGE_DNS | PLEDGE_YP_ACTIVE,
+	[SYS_connect] = PLEDGE_INET | PLEDGE_UNIX | PLEDGE_DNS | PLEDGE_YP_ACTIVE,
+
+	[SYS_dnssocket] = PLEDGE_DNS,
+	[SYS_dnsconnect] = PLEDGE_DNS,
 
 	[SYS_listen] = PLEDGE_INET | PLEDGE_UNIX,
 	[SYS_bind] = PLEDGE_INET | PLEDGE_UNIX,
@@ -253,7 +258,7 @@ static const struct {
 	{ "tmppath",		PLEDGE_SELF | PLEDGE_RW | PLEDGE_TMPPATH },
 	{ "inet",		PLEDGE_SELF | PLEDGE_RW | PLEDGE_INET },
 	{ "unix",		PLEDGE_SELF | PLEDGE_RW | PLEDGE_UNIX },
-	{ "dns",		PLEDGE_SELF | PLEDGE_MALLOC | PLEDGE_DNSPATH },
+	{ "dns",		PLEDGE_SELF | PLEDGE_MALLOC | PLEDGE_DNS },
 	{ "getpw",		PLEDGE_SELF | PLEDGE_MALLOC | PLEDGE_RW | PLEDGE_GETPW },
 	{ "sendfd",		PLEDGE_RW | PLEDGE_SENDFD },
 	{ "recvfd",		PLEDGE_RW | PLEDGE_RECVFD },
@@ -572,11 +577,9 @@ pledge_namei(struct proc *p, char *origpath)
 
 		/* DNS needs /etc/{resolv.conf,hosts,services}. */
 		if ((p->p_pledgenote == TMN_RPATH) &&
-		    (p->p_p->ps_pledge & PLEDGE_DNSPATH)) {
-			if (strcmp(path, "/etc/resolv.conf") == 0) {
-				p->p_pledgeafter |= TMA_DNSRESOLV;
+		    (p->p_p->ps_pledge & PLEDGE_DNS)) {
+			if (strcmp(path, "/etc/resolv.conf") == 0)
 				return (0);
-			}
 			if (strcmp(path, "/etc/hosts") == 0)
 				return (0);
 			if (strcmp(path, "/etc/services") == 0)
@@ -617,12 +620,9 @@ pledge_namei(struct proc *p, char *origpath)
 	case SYS_stat:
 		/* DNS needs /etc/resolv.conf. */
 		if ((p->p_pledgenote == TMN_RPATH) &&
-		    (p->p_p->ps_pledge & PLEDGE_DNSPATH)) {
-			if (strcmp(path, "/etc/resolv.conf") == 0) {
-				p->p_pledgeafter |= TMA_DNSRESOLV;
-				return (0);
-			}
-		}
+		    (p->p_p->ps_pledge & PLEDGE_DNS) &&
+		    strcmp(path, "/etc/resolv.conf") == 0)
+			return (0);
 		break;
 	}
 
@@ -714,8 +714,6 @@ pledge_aftersyscall(struct proc *p, int code, int error)
 {
 	if ((p->p_pledgeafter & TMA_YPLOCK) && error == 0)
 		atomic_setbits_int(&p->p_p->ps_pledge, PLEDGE_YP_ACTIVE | PLEDGE_INET);
-	if ((p->p_pledgeafter & TMA_DNSRESOLV) && error == 0)
-		atomic_setbits_int(&p->p_p->ps_pledge, PLEDGE_DNS_ACTIVE);
 }
 
 /*
@@ -939,6 +937,7 @@ pledge_chown_check(struct proc *p, uid_t uid, gid_t gid)
 {
 	if ((p->p_p->ps_flags & PS_PLEDGE) == 0)
 		return (0);
+
 	if (uid != -1 && uid != p->p_ucred->cr_uid)
 		return (EPERM);
 	if (gid != -1 && !groupmember(gid, p->p_ucred))
@@ -960,68 +959,28 @@ pledge_adjtime_check(struct proc *p, const void *v)
 }
 
 int
-pledge_connect_check(struct proc *p)
+pledge_recvit_check(struct proc *p, const void *from)
 {
 	if ((p->p_p->ps_flags & PS_PLEDGE) == 0)
 		return (0);
-
-	if ((p->p_p->ps_pledge & PLEDGE_DNS_ACTIVE))
-		return (0);	/* A port check happens inside sys_connect() */
 
 	if ((p->p_p->ps_pledge & (PLEDGE_INET | PLEDGE_UNIX)))
-		return (0);
-	return (EPERM);
-}
-
-int
-pledge_recvfrom_check(struct proc *p, void *v)
-{
-	struct sockaddr *from = v;
-
-	if ((p->p_p->ps_flags & PS_PLEDGE) == 0)
-		return (0);
-
-	if ((p->p_p->ps_pledge & PLEDGE_DNS_ACTIVE) && from == NULL)
-		return (0);
-	if (p->p_p->ps_pledge & PLEDGE_INET)
-		return (0);
-	if (p->p_p->ps_pledge & PLEDGE_UNIX)
-		return (0);
+		return (0);		/* may use address */
 	if (from == NULL)
-		return (0);		/* behaves just like write */
+		return (0);		/* behaves just like read */
 	return (EPERM);
 }
 
 int
-pledge_sendto_check(struct proc *p, const void *v)
+pledge_sendit_check(struct proc *p, const void *to)
 {
-	const struct sockaddr *to = v;
-
 	if ((p->p_p->ps_flags & PS_PLEDGE) == 0)
 		return (0);
 
-	if ((p->p_p->ps_pledge & PLEDGE_DNS_ACTIVE) && to == NULL)
-		return (0);
-
-	if ((p->p_p->ps_pledge & PLEDGE_INET))
-		return (0);
-	if ((p->p_p->ps_pledge & PLEDGE_UNIX))
-		return (0);
+	if ((p->p_p->ps_pledge & (PLEDGE_INET | PLEDGE_UNIX)))
+		return (0);		/* may use address */
 	if (to == NULL)
 		return (0);		/* behaves just like write */
-	return (EPERM);
-}
-
-int
-pledge_socket_check(struct proc *p, int domain)
-{
-	if ((p->p_p->ps_flags & PS_PLEDGE) == 0)
-		return (0);
-	if ((p->p_p->ps_pledge & (PLEDGE_INET | PLEDGE_UNIX)))
-		return (0);
-	if ((p->p_p->ps_pledge & PLEDGE_DNS_ACTIVE) &&
-	    (domain == AF_INET || domain == AF_INET6))
-		return (0);
 	return (EPERM);
 }
 
@@ -1030,6 +989,13 @@ pledge_ioctl_check(struct proc *p, long com, void *v)
 {
 	struct file *fp = v;
 	struct vnode *vp = NULL;
+
+	if (fp->f_type == DTYPE_SOCKET) {
+		struct socket *so = fp->f_data;
+
+		if (so->so_state & SS_DNS)
+			return (EINVAL);
+	}
 
 	if ((p->p_p->ps_flags & PS_PLEDGE) == 0)
 		return (0);
@@ -1231,7 +1197,7 @@ pledge_dns_check(struct proc *p, in_port_t port)
 
 	if ((p->p_p->ps_pledge & PLEDGE_INET))
 		return (0);
-	if ((p->p_p->ps_pledge & PLEDGE_DNS_ACTIVE) && port == htons(53))
+	if ((p->p_p->ps_pledge & PLEDGE_DNS) && port == htons(53))
 		return (0);	/* Allow a DNS connect outbound */
 	return (EPERM);
 }
@@ -1241,6 +1207,7 @@ pledge_flock_check(struct proc *p)
 {
 	if ((p->p_p->ps_flags & PS_PLEDGE) == 0)
 		return (0);
+
 	if ((p->p_p->ps_pledge & PLEDGE_FLOCK))
 		return (0);
 	return (pledge_fail(p, EPERM, PLEDGE_FLOCK));

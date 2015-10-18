@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_pcb.c,v 1.77 2015/10/15 10:27:18 vgross Exp $	*/
+/*	$OpenBSD: in6_pcb.c,v 1.78 2015/10/18 00:04:43 deraadt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -404,7 +404,7 @@ in6_pcbconnect(struct inpcb *inp, struct mbuf *nam)
 		return (EADDRNOTAVAIL);
 
 	if (pledge_dns_check(p, sin6->sin6_port))
-		return (pledge_fail(p, EPERM, PLEDGE_DNSPATH));
+		return (pledge_fail(p, EPERM, PLEDGE_DNS));
 
 	/* reject IPv4 mapped address, we have no support for it */
 	if (IN6_IS_ADDR_V4MAPPED(&sin6->sin6_addr))
