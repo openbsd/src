@@ -1,9 +1,9 @@
-#	$OpenBSD: tests.out,v 1.5 2015/10/18 12:54:25 semarie Exp $
+#	$OpenBSD: tests.out,v 1.6 2015/10/18 13:01:40 semarie Exp $
 test(test_nop): pledge=("",NULL) status=0 exit=0
 test(test_inet): pledge=("",NULL) status=9 signal=9 pledged_syscall=97
 test(test_inet): pledge=("abort",NULL) status=134 signal=6 coredump=present pledged_syscall=97
 test(test_inet): pledge=("inet",NULL) status=0 exit=0
-test(test_kill): pledge=("inet",NULL) status=9 signal=9 pledged_syscall=37
+test(test_kill): pledge=("fattr",NULL) status=9 signal=9 pledged_syscall=37
 test(test_kill): pledge=("proc",NULL) status=2 signal=2 pledged_syscall=not_found
 test(test_allowed_syscalls): pledge=("malloc",NULL) status=0 exit=0
 test(test_allowed_syscalls): pledge=("rw",NULL) status=0 exit=0

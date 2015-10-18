@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.4 2015/10/18 12:54:25 semarie Exp $ */
+/*	$OpenBSD: main.c,v 1.5 2015/10/18 13:01:40 semarie Exp $ */
 /*
  * Copyright (c) 2015 Sebastien Marie <semarie@openbsd.org>
  *
@@ -266,8 +266,8 @@ main(int argc, char *argv[])
 	/* inet under inet is ok */
 	start_test(&ret, "inet", NULL, test_inet);
 
-	/* kill under inet is forbidden */
-	start_test(&ret, "inet", NULL, test_kill);
+	/* kill under fattr is forbidden (don't have PLEDGE_SELF) */
+	start_test(&ret, "fattr", NULL, test_kill);
 
 	/* kill under proc is allowed */
 	start_test(&ret, "proc", NULL, test_kill);
