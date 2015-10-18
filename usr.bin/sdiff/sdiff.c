@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdiff.c,v 1.34 2015/10/15 23:06:46 deraadt Exp $ */
+/*	$OpenBSD: sdiff.c,v 1.35 2015/10/18 04:18:41 deraadt Exp $ */
 
 /*
  * Written by Raymond Lai <ray@cyth.net>.
@@ -313,9 +313,6 @@ main(int argc, char **argv)
 	case -1:
 		err(2, "could not fork");
 	}
-
-	if (pledge("stdio rpath wpath cpath", NULL) == -1)
-		err(1, "pledge");
 
 	/* parent */
 	/* We don't write to the pipe. */
