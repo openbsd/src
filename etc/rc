@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.466 2015/10/18 03:51:11 deraadt Exp $
+#	$OpenBSD: rc,v 1.467 2015/10/18 21:33:18 rpe Exp $
 
 # System startup script run by init on autoboot or after single-user.
 # Output and error are redirected to console by init, and the console is the
@@ -398,7 +398,7 @@ chmod 666 /dev/tty[pqrstuvwxyzPQRST]*
 chown root:wheel /dev/tty[pqrstuvwxyzPQRST]*
 
 # Check the password temp/lock file.
-if [ -f /etc/ptmp ]; then
+if [[ -f /etc/ptmp ]]; then
 	logger -s -p auth.err \
 	    'password file may be incorrect -- /etc/ptmp exists'
 fi
@@ -416,17 +416,17 @@ echo clearing /tmp
 # correct permissions.
 [[ -d /usr/X11R6/lib ]] && mkdir -m 1777 /tmp/.{X11,ICE}-unix
 
-[ -f /etc/rc.securelevel ] && sh /etc/rc.securelevel
+[[ -f /etc/rc.securelevel ]] && sh /etc/rc.securelevel
+
 # rc.securelevel did not specifically set -1 or 2, so select the default: 1.
-if [ `sysctl -n kern.securelevel` -eq 0 ]; then
-	sysctl kern.securelevel=1
-fi
+(($(sysctl -n kern.securelevel) == 0)) && sysctl kern.securelevel=1
+
 
 # Patch /etc/motd.
-if [ ! -f /etc/motd ]; then
+if [[ ! -f /etc/motd ]]; then
 	install -c -o root -g wheel -m 664 /dev/null /etc/motd
 fi
-if T=`mktemp /tmp/_motd.XXXXXXXXXX`; then
+if T=$(mktemp /tmp/_motd.XXXXXXXXXX); then
 	sysctl -n kern.version | sed 1q >$T
 	echo "" >>$T
 	sed '1,/^$/d' </etc/motd >>$T
@@ -434,21 +434,16 @@ if T=`mktemp /tmp/_motd.XXXXXXXXXX`; then
 	rm -f $T
 fi
 
-if [ X"${accounting}" = X"YES" ]; then
-	if [ ! -f /var/account/acct ]; then
-		touch /var/account/acct
-	fi
-	echo 'turning on accounting'; accton /var/account/acct
+if [[ $accounting == YES ]]; then
+	[[ ! -f /var/account/acct ]] && touch /var/account/acct
+	echo 'turning on accounting'
+	accton /var/account/acct
 fi
 
-if [ -f /sbin/ldconfig ]; then
+if [[ -x /sbin/ldconfig ]]; then
 	echo 'creating runtime link editor directory cache.'
-	if [ -d /usr/local/lib ]; then
-		shlib_dirs="/usr/local/lib $shlib_dirs"
-	fi
-	if [ -d /usr/X11R6/lib ]; then
-		shlib_dirs="/usr/X11R6/lib $shlib_dirs"
-	fi
+	[[ -d /usr/local/lib ]] && shlib_dirs="/usr/local/lib"
+	[[ -d /usr/X11R6/lib ]] && shlib_dirs="/usr/X11R6/lib $shlib_dirs"
 	ldconfig $shlib_dirs
 fi
 
@@ -459,8 +454,7 @@ start_daemon ldomd sshd snmpd ldpd ripd ospfd ospf6d bgpd ifstated
 start_daemon relayd dhcpd dhcrelay mrouted dvmrpd radiusd eigrpd
 
 if ifconfig lo0 inet6 >/dev/null 2>&1; then
-	fw=`sysctl -n net.inet6.ip6.forwarding`
-	if [ X"${fw}" = X"1" ]; then
+	if (($(sysctl -n net.inet6.ip6.forwarding) == 1)); then
 		start_daemon route6d rtadvd
 	fi
 fi
@@ -471,7 +465,7 @@ start_daemon rbootd mopd spamd spamlogd sndiod
 echo '.'
 
 # If rc.firsttime exists, run it just once, and make sure it is deleted.
-if [ -f /etc/rc.firsttime ]; then
+if [[ -f /etc/rc.firsttime ]]; then
 	mv /etc/rc.firsttime /etc/rc.firsttime.run
 	. /etc/rc.firsttime.run 2>&1 | tee /dev/tty |
 		mail -Es "`hostname` rc.firsttime output" root >/dev/null
@@ -479,23 +473,24 @@ fi
 rm -f /etc/rc.firsttime.run
 
 # Run rc.d(8) scripts from packages.
-if [ -n "${pkg_scripts}" ]; then
+if [[ -n $pkg_scripts ]]; then
 	echo -n 'starting package daemons:'
-	for _r in $pkg_scripts; do
-		if [ -x /etc/rc.d/${_r} ]; then
-			start_daemon ${_r}
+	for _daemon in $pkg_scripts; do
+		if [[ -x /etc/rc.d/$_daemon ]]; then
+			start_daemon $_daemon
 		else
-			echo -n " ${_r}(absent)"
+			echo -n " ${_daemon}(absent)"
 		fi
 	done
 	echo '.'
 fi
 
-[ -f /etc/rc.local ] && sh /etc/rc.local
+[[ -f /etc/rc.local ]] && sh /etc/rc.local
 
-ifconfig -g carp -carpdemote 128	# disable carp interlock
+ifconfig -g carp -carpdemote 128	# Disable carp interlock.
 
 mixerctl_conf
+
 echo -n 'starting local daemons:'
 start_daemon apmd sensorsd hotplugd watchdogd cron wsmoused xdm
 echo '.'
