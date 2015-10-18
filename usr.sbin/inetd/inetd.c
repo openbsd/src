@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetd.c,v 1.143 2015/01/16 06:40:17 deraadt Exp $	*/
+/*	$OpenBSD: inetd.c,v 1.144 2015/10/18 16:11:19 jca Exp $	*/
 
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
@@ -297,7 +297,7 @@ main(int argc, char *argv[])
 	int ch;
 	extern char *optarg;
 	extern int optind;
-	
+
 	while ((ch = getopt(argc, argv, "dR:")) != -1)
 		switch (ch) {
 		case 'd':
@@ -346,6 +346,9 @@ main(int argc, char *argv[])
 		if (uid == 0)
 			(void) setlogin("");
 	}
+
+	if (pledge("stdio rpath getpw dns inet proc exec id abort", NULL) == -1)
+		err(1, "pledge");
 
 	if (uid == 0) {
 		gid_t gid = getgid();
@@ -1770,6 +1773,10 @@ spawn(int ctrl, short events, void *xsep)
 		sleep(1);
 		return;
 	}
+
+	if (pledge("stdio rpath getpw inet proc exec id abort", NULL) == -1)
+		err(1, "pledge");
+
 	if (pid && sep->se_wait) {
 		sep->se_wait = pid;
 		event_del(&sep->se_event);
