@@ -1,4 +1,4 @@
-/*	$OpenBSD: sleep_test.c,v 1.1 2009/12/14 05:08:19 guenther Exp $ */
+/*	$OpenBSD: sleep_test.c,v 1.2 2015/10/18 23:27:43 guenther Exp $ */
 
 /*
  * Copyright (c) 2009 Philip Guenther
@@ -41,6 +41,7 @@
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
 static void
