@@ -1,4 +1,4 @@
-/*	$OpenBSD: sort.c,v 1.83 2015/10/17 14:33:01 tim Exp $	*/
+/*	$OpenBSD: sort.c,v 1.84 2015/10/18 17:02:03 millert Exp $	*/
 
 /*-
  * Copyright (C) 2009 Gabor Kovesdan <gabor@FreeBSD.org>
@@ -1107,12 +1107,10 @@ main(int argc, char *argv[])
 					sort_asprintf(&outfile, "%s.XXXXXXXXXX",
 					    real_outfile);
 					if ((fd = mkstemp(outfile)) == -1)
-						err(2, "mkstemp: %s", outfile);
-					if (fchown(fd, sb.st_uid, sb.st_gid) == -1)
-						warn("unable to set ownership of %s",
-						    outfile);
+						err(2, "%s", outfile);
+					(void)fchown(fd, sb.st_uid, sb.st_gid);
 					if (fchmod(fd, sb.st_mode & ACCESSPERMS) == -1)
-						err(2, "fchmod: %s", outfile);
+						err(2, "%s", outfile);
 					close(fd);
 					tmp_file_atexit(outfile);
 					break;
