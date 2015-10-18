@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.161 2015/02/01 07:45:02 jsg Exp $
+dnl	$OpenBSD: hardware,v 1.162 2015/10/18 07:09:44 jsg Exp $
 OpenBSD/MACHINE OSREV runs on the following classes of machines:
 	Ultra 1/1E
 	Ultra 2
@@ -79,6 +79,7 @@ as well on faithful clones of the above Sun systems, including:
 	RDI/Tadpole UltraBook 170/200
 	Tadpole SPARCLE 550SX/650SX
 	Tadpole Viper
+	Tadpole/Sun Voyager IIi
 
     Note: SPARC Enterprise T5120 and T5220 systems need at least OpenBoot
     4.28.0 to run OpenBSD.  Please refer to the ``Updating your firmware''
