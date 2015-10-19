@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.142 2015/10/19 12:02:11 mpi Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.143 2015/10/19 12:10:05 mpi Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -935,18 +935,14 @@ icmp_mtudisc_clone(struct in_addr dst, u_int rtableid)
 	sin.sin_addr = dst;
 
 	rt = rtalloc(sintosa(&sin), RT_REPORT|RT_RESOLVE, rtableid);
-	if (rt == NULL)
-		return (NULL);
 
 	/* Check if the route is actually usable */
-	if (rt->rt_flags & (RTF_REJECT | RTF_BLACKHOLE) ||
-	    (rt->rt_flags & RTF_UP) == 0) {
+	if (!rtisvalid(rt) || (rt->rt_flags & (RTF_REJECT|RTF_BLACKHOLE))) {
 		rtfree(rt);
 		return (NULL);
 	}
 
 	/* If we didn't get a host route, allocate one */
-
 	if ((rt->rt_flags & RTF_HOST) == 0) {
 		struct rtentry *nrt;
 		struct rt_addrinfo info;

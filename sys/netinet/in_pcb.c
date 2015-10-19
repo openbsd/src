@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.183 2015/10/19 08:49:13 vgross Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.184 2015/10/19 12:10:05 mpi Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -764,7 +764,7 @@ in_pcbrtentry(struct inpcb *inp)
 	ro = &inp->inp_route;
 
 	/* check if route is still valid */
-	if (ro->ro_rt && (ro->ro_rt->rt_flags & RTF_UP) == 0) {
+	if (!rtisvalid(ro->ro_rt)) {
 		rtfree(ro->ro_rt);
 		ro->ro_rt = NULL;
 	}
@@ -857,8 +857,8 @@ in_selectsrc(struct in_addr **insrc, struct sockaddr_in *sin,
 	 * If route is known or can be allocated now,
 	 * our src addr is taken from the i/f, else punt.
 	 */
-	if (ro->ro_rt && ((ro->ro_rt->rt_flags & RTF_UP) == 0 ||
-	    (satosin(&ro->ro_dst)->sin_addr.s_addr != sin->sin_addr.s_addr))) {
+	if (!rtisvalid(ro->ro_rt) || (ro->ro_tableid != rtableid) ||
+	    (satosin(&ro->ro_dst)->sin_addr.s_addr != sin->sin_addr.s_addr)) {
 		rtfree(ro->ro_rt);
 		ro->ro_rt = NULL;
 	}

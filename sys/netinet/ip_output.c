@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.301 2015/10/13 10:16:17 mpi Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.302 2015/10/19 12:10:05 mpi Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -588,8 +588,8 @@ sendit:
 		 * them, there is no way for one to update all its
 		 * routes when the MTU is changed.
 		 */
-		if (ro->ro_rt != NULL &&
-		    (ro->ro_rt->rt_flags & (RTF_UP | RTF_HOST)) &&
+		if (rtisvalid(ro->ro_rt) &&
+		    ISSET(ro->ro_rt->rt_flags, RTF_HOST) &&
 		    !(ro->ro_rt->rt_rmx.rmx_locks & RTV_MTU) &&
 		    (ro->ro_rt->rt_rmx.rmx_mtu > ifp->if_mtu)) {
 			ro->ro_rt->rt_rmx.rmx_mtu = ifp->if_mtu;
