@@ -1,4 +1,4 @@
-/*	$OpenBSD: bootstrap.c,v 1.7 2015/10/15 19:27:30 miod Exp $	*/
+/*	$OpenBSD: bootstrap.c,v 1.8 2015/10/19 19:07:59 krw Exp $	*/
 
 /*
  * Copyright (c) 2013 Joel Sing <jsing@openbsd.org>
@@ -106,8 +106,11 @@ bootstrap(int devfd, char *dev, char *bootfile, unsigned int overlap_allowance)
 		}
 	}
 
-	/* Make sure the bootstrap has left space for the disklabel. */
-        lp = (struct disklabel *)(boot + (LABELSECTOR * dl.d_secsize) +
+	/*
+	 * Make sure the bootstrap has left space for the disklabel.
+	 * N.B.: LABELSECTOR *is* a DEV_BSIZE quantity!
+	 */
+	lp = (struct disklabel *)(boot + (LABELSECTOR * DEV_BSIZE) +
 	    LABELOFFSET);
 	for (i = 0, p = (char *)lp; i < (int)sizeof(*lp); i++)
 		if (p[i] != 0)
