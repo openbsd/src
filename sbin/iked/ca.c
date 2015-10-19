@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.37 2015/10/01 10:59:23 reyk Exp $	*/
+/*	$OpenBSD: ca.c,v 1.38 2015/10/19 11:25:35 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -67,12 +67,10 @@ int	 ca_x509_subjectaltname(X509 *cert, struct iked_id *);
 int	 ca_privkey_serialize(EVP_PKEY *, struct iked_id *);
 int	 ca_pubkey_serialize(EVP_PKEY *, struct iked_id *);
 int	 ca_dispatch_parent(int, struct privsep_proc *, struct imsg *);
-int	 ca_dispatch_ikev1(int, struct privsep_proc *, struct imsg *);
 int	 ca_dispatch_ikev2(int, struct privsep_proc *, struct imsg *);
 
 static struct privsep_proc procs[] = {
 	{ "parent",	PROC_PARENT,	ca_dispatch_parent },
-	{ "ikev1",	PROC_IKEV1,	ca_dispatch_ikev1 },
 	{ "ikev2",	PROC_IKEV2,	ca_dispatch_ikev2 }
 };
 
@@ -174,12 +172,6 @@ ca_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 	}
 
 	return (0);
-}
-
-int
-ca_dispatch_ikev1(int fd, struct privsep_proc *p, struct imsg *imsg)
-{
-	return (-1);
 }
 
 int

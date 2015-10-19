@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.c,v 1.26 2015/10/15 18:40:38 mmcc Exp $	*/
+/*	$OpenBSD: iked.c,v 1.27 2015/10/19 11:25:35 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -39,13 +39,11 @@ __dead void usage(void);
 
 void	 parent_shutdown(struct iked *);
 void	 parent_sig_handler(int, short, void *);
-int	 parent_dispatch_ikev1(int, struct privsep_proc *, struct imsg *);
 int	 parent_dispatch_ikev2(int, struct privsep_proc *, struct imsg *);
 int	 parent_dispatch_ca(int, struct privsep_proc *, struct imsg *);
 int	 parent_configure(struct iked *);
 
 static struct privsep_proc procs[] = {
-	{ "ikev1",	PROC_IKEV1, parent_dispatch_ikev1, ikev1 },
 	{ "ikev2",	PROC_IKEV2, parent_dispatch_ikev2, ikev2 },
 	{ "ca",		PROC_CERT, parent_dispatch_ca, caproc, IKED_CA }
 };
@@ -200,7 +198,6 @@ parent_configure(struct iked *env)
 	config_setpfkey(env, PROC_IKEV2);
 
 	/* Now compile the policies and calculate skip steps */
-	config_setcompile(env, PROC_IKEV1);
 	config_setcompile(env, PROC_IKEV2);
 
 	bzero(&ss, sizeof(ss));
@@ -236,7 +233,6 @@ parent_reload(struct iked *env, int reset, const char *filename)
 	log_debug("%s: level %d config file %s", __func__, reset, filename);
 
 	if (reset == RESET_RELOAD) {
-		config_setreset(env, RESET_POLICY, PROC_IKEV1);
 		config_setreset(env, RESET_POLICY, PROC_IKEV2);
 		config_setreset(env, RESET_CA, PROC_CERT);
 
@@ -246,14 +242,12 @@ parent_reload(struct iked *env, int reset, const char *filename)
 		}
 
 		/* Re-compile policies and skip steps */
-		config_setcompile(env, PROC_IKEV1);
 		config_setcompile(env, PROC_IKEV2);
 
 		config_setcoupled(env, env->sc_decoupled ? 0 : 1);
 		config_setmode(env, env->sc_passive ? 1 : 0);
 		config_setocsp(env);
 	} else {
-		config_setreset(env, reset, PROC_IKEV1);
 		config_setreset(env, reset, PROC_IKEV2);
 		config_setreset(env, reset, PROC_CERT);
 	}
@@ -335,17 +329,6 @@ parent_sig_handler(int sig, short event, void *arg)
 }
 
 int
-parent_dispatch_ikev1(int fd, struct privsep_proc *p, struct imsg *imsg)
-{
-	switch (imsg->hdr.type) {
-	default:
-		break;
-	}
-
-	return (-1);
-}
-
-int
 parent_dispatch_ikev2(int fd, struct privsep_proc *p, struct imsg *imsg)
 {
 	switch (imsg->hdr.type) {
@@ -374,8 +357,6 @@ parent_dispatch_ca(int fd, struct privsep_proc *p, struct imsg *imsg)
 	case IMSG_CTL_DECOUPLE:
 	case IMSG_CTL_ACTIVE:
 	case IMSG_CTL_PASSIVE:
-		proc_compose_imsg(&env->sc_ps, PROC_IKEV1, -1,
-		    type, -1, NULL, 0);
 		proc_compose_imsg(&env->sc_ps, PROC_IKEV2, -1,
 		    type, -1, NULL, 0);
 		break;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.126 2015/10/15 18:40:38 mmcc Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.127 2015/10/19 11:25:35 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -46,7 +46,6 @@
 #include "dh.h"
 
 int	 ikev2_dispatch_parent(int, struct privsep_proc *, struct imsg *);
-int	 ikev2_dispatch_ikev1(int, struct privsep_proc *, struct imsg *);
 int	 ikev2_dispatch_cert(int, struct privsep_proc *, struct imsg *);
 
 struct iked_sa *
@@ -131,7 +130,6 @@ ssize_t	ikev2_add_sighashnotify(struct ibuf *, struct ikev2_payload **,
 
 static struct privsep_proc procs[] = {
 	{ "parent",	PROC_PARENT,	ikev2_dispatch_parent },
-	{ "ikev1",	PROC_IKEV1,	ikev2_dispatch_ikev1 },
 	{ "certstore",	PROC_CERT,	ikev2_dispatch_cert }
 };
 
@@ -170,39 +168,6 @@ ikev2_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 		return (config_getuser(env, imsg));
 	case IMSG_COMPILE:
 		return (config_getcompile(env, imsg));
-	default:
-		break;
-	}
-
-	return (-1);
-}
-
-int
-ikev2_dispatch_ikev1(int fd, struct privsep_proc *p, struct imsg *imsg)
-{
-	struct iked		*env = p->p_env;
-	struct iked_message	 msg;
-	uint8_t			*buf;
-	ssize_t			 len;
-
-	switch (imsg->hdr.type) {
-	case IMSG_IKE_MESSAGE:
-		log_debug("%s: message", __func__);
-		IMSG_SIZE_CHECK(imsg, &msg);
-		memcpy(&msg, imsg->data, sizeof(msg));
-
-		len = IMSG_DATA_SIZE(imsg) - sizeof(msg);
-		buf = (uint8_t *)imsg->data + sizeof(msg);
-		if (len <= 0 || (msg.msg_data = ibuf_new(buf, len)) == NULL) {
-			log_debug("%s: short message", __func__);
-			return (0);
-		}
-
-		log_debug("%s: message length %zd", __func__, len);
-
-		ikev2_recv(env, &msg);
-		ikev2_msg_cleanup(env, &msg);
-		return (0);
 	default:
 		break;
 	}

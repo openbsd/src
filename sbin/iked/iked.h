@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.89 2015/10/01 10:59:23 reyk Exp $	*/
+/*	$OpenBSD: iked.h,v 1.90 2015/10/19 11:25:35 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -737,9 +737,6 @@ size_t	 dsa_length(struct iked_dsa *);
 int	 dsa_update(struct iked_dsa *, const void *, size_t);
 ssize_t	 dsa_sign_final(struct iked_dsa *, void *, size_t);
 ssize_t	 dsa_verify_final(struct iked_dsa *, void *, size_t);
-
-/* ikev1.c */
-pid_t	 ikev1(struct privsep *, struct privsep_proc *);
 
 /* ikev2.c */
 pid_t	 ikev2(struct privsep *, struct privsep_proc *);

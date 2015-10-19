@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.38 2015/10/15 18:40:38 mmcc Exp $	*/
+/*	$OpenBSD: config.c,v 1.39 2015/10/19 11:25:35 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -414,7 +414,6 @@ config_setcoupled(struct iked *env, unsigned int couple)
 	unsigned int	 type;
 
 	type = couple ? IMSG_CTL_COUPLE : IMSG_CTL_DECOUPLE;
-	proc_compose_imsg(&env->sc_ps, PROC_IKEV1, -1, type, -1, NULL, 0);
 	proc_compose_imsg(&env->sc_ps, PROC_IKEV2, -1, type, -1, NULL, 0);
 
 	return (0);
@@ -433,7 +432,6 @@ config_setmode(struct iked *env, unsigned int passive)
 	unsigned int	 type;
 
 	type = passive ? IMSG_CTL_PASSIVE : IMSG_CTL_ACTIVE;
-	proc_compose_imsg(&env->sc_ps, PROC_IKEV1, -1, type, -1, NULL, 0);
 	proc_compose_imsg(&env->sc_ps, PROC_IKEV2, -1, type, -1, NULL, 0);
 
 	return (0);

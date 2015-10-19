@@ -1,4 +1,4 @@
-/*	$OpenBSD: types.h,v 1.21 2015/08/21 11:59:28 reyk Exp $	*/
+/*	$OpenBSD: types.h,v 1.22 2015/10/19 11:25:35 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -113,7 +113,6 @@ enum imsg_type {
 
 enum privsep_procid {
 	PROC_PARENT = 0,
-	PROC_IKEV1,
 	PROC_IKEV2,
 	PROC_CERT,
 	PROC_MAX

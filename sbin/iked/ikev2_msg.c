@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_msg.c,v 1.44 2015/10/15 18:40:38 mmcc Exp $	*/
+/*	$OpenBSD: ikev2_msg.c,v 1.45 2015/10/19 11:25:35 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -43,6 +43,7 @@
 #include "eap.h"
 #include "dh.h"
 
+void	 ikev1_recv(struct iked *, struct iked_message *);
 void	 ikev2_msg_response_timeout(struct iked *, void *);
 void	 ikev2_msg_retransmit_timeout(struct iked *, void *);
 
@@ -57,7 +58,6 @@ ikev2_msg_cb(int fd, short event, void *arg)
 	uint8_t			 buf[IKED_MSGBUF_MAX];
 	ssize_t			 len;
 	off_t			 off;
-	struct iovec		 iov[2];
 
 	bzero(&msg, sizeof(msg));
 	bzero(buf, sizeof(buf));
@@ -89,23 +89,42 @@ ikev2_msg_cb(int fd, short event, void *arg)
 	if ((msg.msg_data = ibuf_new(buf + off, len - off)) == NULL)
 		return;
 
-	if (hdr.ike_version == IKEV1_VERSION) {
-		iov[0].iov_base = &msg;
-		iov[0].iov_len = sizeof(msg);
-		iov[1].iov_base = buf;
-		iov[1].iov_len = len;
-
-		proc_composev_imsg(&env->sc_ps, PROC_IKEV1, -1,
-		    IMSG_IKE_MESSAGE, -1, iov, 2);
-		goto done;
-	}
 	TAILQ_INIT(&msg.msg_proposals);
-
 	msg.msg_fd = fd;
-	ikev2_recv(env, &msg);
 
- done:
+	if (hdr.ike_version == IKEV1_VERSION)
+		ikev1_recv(env, &msg);
+	else
+		ikev2_recv(env, &msg);
+
 	ikev2_msg_cleanup(env, &msg);
+}
+
+void
+ikev1_recv(struct iked *env, struct iked_message *msg)
+{
+	struct ike_header	*hdr;
+
+	if (ibuf_size(msg->msg_data) <= sizeof(*hdr)) {
+		log_debug("%s: short message", __func__);
+		return;
+	}
+
+	hdr = (struct ike_header *)ibuf_data(msg->msg_data);
+
+	log_debug("%s: header ispi %s rspi %s"
+	    " nextpayload %u version 0x%02x exchange %u flags 0x%02x"
+	    " msgid %u length %u", __func__,
+	    print_spi(betoh64(hdr->ike_ispi), 8),
+	    print_spi(betoh64(hdr->ike_rspi), 8),
+	    hdr->ike_nextpayload,
+	    hdr->ike_version,
+	    hdr->ike_exchange,
+	    hdr->ike_flags,
+	    betoh32(hdr->ike_msgid),
+	    betoh32(hdr->ike_length));
+
+	log_debug("%s: IKEv1 not supported", __func__);
 }
 
 struct ibuf *
