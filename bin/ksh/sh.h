@@ -1,4 +1,4 @@
-/*	$OpenBSD: sh.h,v 1.45 2015/10/19 17:10:53 mmcc Exp $	*/
+/*	$OpenBSD: sh.h,v 1.46 2015/10/19 17:15:53 mmcc Exp $	*/
 
 /*
  * Public Domain Bourne/Korn shell
@@ -50,7 +50,6 @@
  */
 #define	MAGIC		(7)	/* prefix for *?[!{,} during expand */
 #define ISMAGIC(c)	((unsigned char)(c) == MAGIC)
-#define	NOT		'!'	/* might use ^ (ie, [!...] vs [^..]) */
 
 #define	LINE	2048		/* input line size */
 #define	PATH	1024		/* pathname size (todo: PATH_MAX/pathconf()) */

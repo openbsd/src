@@ -1,4 +1,4 @@
-/*	$OpenBSD: eval.c,v 1.45 2015/10/19 14:42:16 mmcc Exp $	*/
+/*	$OpenBSD: eval.c,v 1.46 2015/10/19 17:15:53 mmcc Exp $	*/
 
 /*
  * Expansion - quoting, separation, substitution, globbing
@@ -603,7 +603,7 @@ expand(char *cp,	/* input word */
 			if (!quote)
 				switch (c) {
 				case '[':
-				case NOT:
+				case '!':
 				case '-':
 				case ']':
 					/* For character classes - doesn't hurt
@@ -1126,7 +1126,7 @@ copy_non_glob(XString *xs, char **xpp, char *p)
 			if (*p == '[') {
 				char *q = p + 1;
 
-				if (ISMAGIC(*q) && q[1] == NOT)
+				if (ISMAGIC(*q) && q[1] == '!')
 					q += 2;
 				if (ISMAGIC(*q) && q[1] == ']')
 					q += 2;

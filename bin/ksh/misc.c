@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.49 2015/10/19 14:42:16 mmcc Exp $	*/
+/*	$OpenBSD: misc.c,v 1.50 2015/10/19 17:15:53 mmcc Exp $	*/
 
 /*
  * Miscellaneous functions
@@ -548,7 +548,7 @@ has_globbing(const char *xp, const char *xpe)
 			if (!in_bracket) {
 				saw_glob = 1;
 				in_bracket = 1;
-				if (ISMAGIC(p[1]) && p[2] == NOT)
+				if (ISMAGIC(p[1]) && p[2] == '!')
 					p += 2;
 				if (ISMAGIC(p[1]) && p[2] == ']')
 					p += 2;
@@ -740,7 +740,7 @@ cclass(const unsigned char *p, int sub)
 	int c, d, rv, not, found = 0;
 	const unsigned char *orig_p = p;
 
-	if ((not = (ISMAGIC(*p) && *++p == NOT)))
+	if ((not = (ISMAGIC(*p) && *++p == '!')))
 		p++;
 	do {
 		/* check for POSIX character class (e.g. [[:alpha:]]) */
