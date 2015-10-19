@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.2 2015/10/04 22:54:38 renato Exp $ */
+/*	$OpenBSD: parse.y,v 1.3 2015/10/19 14:15:59 jsg Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -1161,14 +1161,19 @@ host(const char *s, union eigrpd_addr *addr, uint8_t *plen)
 	memset(addr, 0, sizeof(union eigrpd_addr));
 	switch (af) {
 	case AF_INET:
-		if (inet_pton(AF_INET, ps, &addr->v4) != 1)
+		if (inet_pton(AF_INET, ps, &addr->v4) != 1) {
+			free(ps);
 			return (-1);
+		}
 		break;
 	case AF_INET6:
-		if (inet_pton(AF_INET6, ps, &addr->v6) != 1)
+		if (inet_pton(AF_INET6, ps, &addr->v6) != 1) {
+			free(ps);
 			return (-1);
+		}
 		break;
 	default:
+		free(ps);
 		return (-1);
 	}
 	eigrp_applymask(af, addr, addr, *plen);
