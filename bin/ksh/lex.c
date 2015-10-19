@@ -1,4 +1,4 @@
-/*	$OpenBSD: lex.c,v 1.60 2015/10/19 02:15:45 mmcc Exp $	*/
+/*	$OpenBSD: lex.c,v 1.61 2015/10/19 14:42:16 mmcc Exp $	*/
 
 /*
  * lexical analysis and source input
@@ -6,6 +6,7 @@
 
 #include <ctype.h>
 #include <libgen.h>
+#include <string.h>
 
 #include "sh.h"
 

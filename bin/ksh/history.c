@@ -1,4 +1,4 @@
-/*	$OpenBSD: history.c,v 1.48 2015/10/19 02:15:45 mmcc Exp $	*/
+/*	$OpenBSD: history.c,v 1.49 2015/10/19 14:42:16 mmcc Exp $	*/
 
 /*
  * command history
@@ -14,6 +14,8 @@
  */
 
 #include <sys/stat.h>
+
+#include <string.h>
 
 #include "sh.h"
 

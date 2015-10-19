@@ -1,4 +1,4 @@
-/*	$OpenBSD: c_ksh.c,v 1.44 2015/10/19 02:15:45 mmcc Exp $	*/
+/*	$OpenBSD: c_ksh.c,v 1.45 2015/10/19 14:42:16 mmcc Exp $	*/
 
 /*
  * built-in Korn commands: c_*
@@ -7,6 +7,7 @@
 #include <sys/stat.h>
 
 #include <ctype.h>
+#include <string.h>
 
 #include "sh.h"
 

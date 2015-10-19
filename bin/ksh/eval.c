@@ -1,4 +1,4 @@
-/*	$OpenBSD: eval.c,v 1.44 2015/10/19 02:15:45 mmcc Exp $	*/
+/*	$OpenBSD: eval.c,v 1.45 2015/10/19 14:42:16 mmcc Exp $	*/
 
 /*
  * Expansion - quoting, separation, substitution, globbing
@@ -8,6 +8,7 @@
 
 #include <dirent.h>
 #include <pwd.h>
+#include <string.h>
 
 #include "sh.h"
 

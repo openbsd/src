@@ -1,6 +1,8 @@
-/*	$OpenBSD: path.c,v 1.16 2015/10/19 02:15:45 mmcc Exp $	*/
+/*	$OpenBSD: path.c,v 1.17 2015/10/19 14:42:16 mmcc Exp $	*/
 
 #include <sys/stat.h>
+
+#include <string.h>
 
 #include "sh.h"
 

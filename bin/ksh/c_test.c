@@ -1,4 +1,4 @@
-/*	$OpenBSD: c_test.c,v 1.21 2015/10/19 02:15:45 mmcc Exp $	*/
+/*	$OpenBSD: c_test.c,v 1.22 2015/10/19 14:42:16 mmcc Exp $	*/
 
 /*
  * test(1); version 7-like  --  author Erik Baalbergen
@@ -10,6 +10,8 @@
  */
 
 #include <sys/stat.h>
+
+#include <string.h>
 
 #include "sh.h"
 #include "c_test.h"

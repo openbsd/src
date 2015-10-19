@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.68 2015/10/19 14:01:37 mmcc Exp $	*/
+/*	$OpenBSD: main.c,v 1.69 2015/10/19 14:42:16 mmcc Exp $	*/
 
 /*
  * startup, main loop, environments and error handling
@@ -10,6 +10,7 @@
 
 #include <paths.h>
 #include <pwd.h>
+#include <string.h>
 
 #include "sh.h"
 
