@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd_bsdauth.c,v 1.4 2015/07/30 08:46:04 yasuoka Exp $	*/
+/*	$OpenBSD: radiusd_bsdauth.c,v 1.5 2015/10/19 07:58:28 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -167,7 +167,7 @@ main(int argc, char *argv[])
 
 				pw = getpwnam(user);
 				if (getgrnam_r(group, &gr0, g_buf,
-				    sizeof(g_buf), &gr) == -1)
+				    sizeof(g_buf), &gr) == -1 || gr == NULL)
 					goto group_done;
 
 				if (gr->gr_gid == pw->pw_gid) {
