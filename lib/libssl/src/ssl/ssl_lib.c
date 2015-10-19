@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.114 2015/10/16 14:23:22 beck Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.115 2015/10/19 17:59:39 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -503,9 +503,9 @@ SSL_free(SSL *s)
 		s->bbio = NULL;
 	}
 
-	if (s->wbio != s->rbio)
-		BIO_free_all(s->wbio);
-	BIO_free_all(s->rbio);
+	if (s->rbio != s->wbio)
+		BIO_free_all(s->rbio);
+	BIO_free_all(s->wbio);
 
 	if (s->init_buf != NULL)
 		BUF_MEM_free(s->init_buf);
@@ -572,10 +572,10 @@ SSL_set_bio(SSL *s, BIO *rbio, BIO *wbio)
 		}
 	}
 
-	if ((s->wbio != wbio) && (s->rbio != s->wbio))
-		BIO_free_all(s->wbio);
-	if (s->rbio != rbio)
+	if (s->rbio != rbio && s->rbio != s->wbio)
 		BIO_free_all(s->rbio);
+	if (s->wbio != wbio)
+		BIO_free_all(s->wbio);
 	s->rbio = rbio;
 	s->wbio = wbio;
 }
