@@ -230,7 +230,6 @@ _thread_sys_symlinkat
 _thread_sys_sync
 _thread_sys_sysarch
 _thread_sys_sysctl
-_thread_sys_tame
 _thread_sys_truncate
 _thread_sys_umask
 _thread_sys_unlink
@@ -427,7 +426,6 @@ symlinkat
 sync
 sysarch
 syscall
-tame
 timer_create
 timer_delete
 timer_getoverrun

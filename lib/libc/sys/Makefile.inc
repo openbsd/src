@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.132 2015/10/18 00:36:20 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.133 2015/10/19 23:13:38 deraadt Exp $
 #	$NetBSD: Makefile.inc,v 1.35 1995/10/16 23:49:07 jtc Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/17/93
 
@@ -17,7 +17,7 @@ SRCS+=	posix_madvise.c w_fork.c
 # with old syscall interfaces.
 SRCS+=	ftruncate.c lseek.c mquery.c mmap.c ptrace.c semctl.c truncate.c \
 	timer_create.c timer_delete.c timer_getoverrun.c timer_gettime.c \
-	timer_settime.c pread.c preadv.c pwrite.c pwritev.c tame.c
+	timer_settime.c pread.c preadv.c pwrite.c pwritev.c
 
 # stack protector helper functions
 SRCS+=	stack_protector.c
