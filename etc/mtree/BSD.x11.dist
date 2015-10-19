@@ -1,4 +1,4 @@
-#       $OpenBSD: BSD.x11.dist,v 1.40 2015/08/27 22:40:01 matthieu Exp $
+#       $OpenBSD: BSD.x11.dist,v 1.41 2015/10/19 07:55:31 dcoppa Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 .
@@ -74,7 +74,9 @@
                 fontconfig
                 ..
                 freetype2
-                    config
+                    freetype
+                        config
+                        ..
                     ..
                 ..
 		libdrm
