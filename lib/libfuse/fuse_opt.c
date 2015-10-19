@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_opt.c,v 1.14 2015/08/24 15:31:36 mpi Exp $ */
+/* $OpenBSD: fuse_opt.c,v 1.15 2015/10/19 17:24:07 tedu Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  * Copyright (c) 2013 Stefan Sperling <stsp@openbsd.org>
@@ -77,7 +77,7 @@ match_opt(const char *templ, const char *opt)
 		t++;
 		if (*t == '-')
 			t++;
-		if (*t == 'o' || t == '\0')
+		if (*t == 'o' || *t == '\0')
 			return (0);
 	}
 
