@@ -1,4 +1,4 @@
-/*	$OpenBSD: sh.h,v 1.41 2015/10/19 14:01:37 mmcc Exp $	*/
+/*	$OpenBSD: sh.h,v 1.42 2015/10/19 14:03:21 mmcc Exp $	*/
 
 /*
  * Public Domain Bourne/Korn shell
@@ -22,7 +22,6 @@
 
 #include <errno.h>
 #include <fcntl.h>
-#include <limits.h>
 
 #include <signal.h>
 
