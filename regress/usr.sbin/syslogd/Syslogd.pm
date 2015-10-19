@@ -1,4 +1,4 @@
-#	$OpenBSD: Syslogd.pm,v 1.15 2015/08/25 20:52:44 bluhm Exp $
+#	$OpenBSD: Syslogd.pm,v 1.16 2015/10/19 20:16:09 bluhm Exp $
 
 # Copyright (c) 2010-2015 Alexander Bluhm <bluhm@openbsd.org>
 # Copyright (c) 2014 Florian Riehm <mail@friehm.de>
@@ -42,6 +42,7 @@ sub new {
 	$args{conffile} ||= "syslogd.conf";
 	$args{outfile} ||= "file.log";
 	$args{outpipe} ||= "pipe.log";
+	$args{outtty} ||= "tty.log";
 	if ($args{memory}) {
 		$args{memory} = {} unless ref $args{memory};
 		$args{memory}{name} ||= "memory";
@@ -67,6 +68,7 @@ sub new {
 	    or die ref($self), " create conf file $self->{conffile} failed: $!";
 	print $fh "*.*\t$self->{outfile}\n";
 	print $fh "*.*\t|dd of=$self->{outpipe}\n";
+	print $fh "*.*\tsyslogd-regress\n";
 	my $memory = $self->{memory};
 	print $fh "*.*\t:$memory->{size}:$memory->{name}\n" if $memory;
 	my $loghost = $self->{loghost};
@@ -95,6 +97,17 @@ sub create_out {
 	close $fh;
 	chmod(0666, $self->{outpipe})
 	    or die ref($self), " chmod pipe file $self->{outpipe} failed: $!";
+
+	unlink($self->{outtty});
+	open($fh, '>', $self->{outtty})
+	    or die ref($self), " create tty file $self->{outtty} failed: $!";
+	close $fh;
+	my @sudo = $ENV{SUDO} ? $ENV{SUDO} : ();
+	my @cmd = (@sudo, "./ttylog", "syslogd-regress", $self->{outtty});
+	open($fh, '|-', @cmd)
+	    or die ref($self), " pipe to ttylog $self->{outfile} failed: $!";
+	# remember until object is destroyed, perl autoclose will send EOF
+	$self->{fhtty} = $fh;
 
 	return $self;
 }
@@ -157,6 +170,17 @@ sub up {
 		    "after $timeout seconds";
 		sleep .1;
 	}
+
+	while ($self->{fhtty}) {
+		open(my $fh, '<', $self->{outtty}) or die ref($self),
+		    " open $self->{outtty} for reading failed: $!";
+		last if grep { /ttylog: started/ } <$fh>;
+		time() < $end
+		    or croak ref($self), " no 'started' in $self->{outtty} ".
+		    "after $timeout seconds";
+		sleep .1;
+	}
+
 	return $self;
 }
 

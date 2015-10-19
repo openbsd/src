@@ -40,15 +40,14 @@ our %args = (
 	},
 	loggrep => {},
     },
-    pipe => {
-	loggrep => {},
-    },
     file => {
 	loggrep => {
 	    qr/syslogd: tls logger .* connection error: read failed: $errors/
 		=> 1,
 	},
     },
+    pipe => { nocheck => 1, },
+    tty => { nocheck => 1, },
 );
 
 1;

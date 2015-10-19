@@ -1,4 +1,4 @@
-#	$OpenBSD: funcs.pl,v 1.25 2015/10/09 17:07:06 bluhm Exp $
+#	$OpenBSD: funcs.pl,v 1.26 2015/10/19 20:16:09 bluhm Exp $
 
 # Copyright (c) 2010-2015 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -245,7 +245,7 @@ sub get_testlog {
 }
 
 sub get_testgrep {
-	return qr/$testlog$/;
+	return qr/$testlog\r*$/;
 }
 
 sub get_firstlog {
@@ -351,7 +351,7 @@ sub check_out {
 		$r->loggrep("bytes transferred", 1) or sleep 1;
 	}
 
-	foreach my $name (qw(file pipe)) {
+	foreach my $name (qw(file pipe tty)) {
 		next if $args{$name}{nocheck};
 		my $file = $r->{"out$name"} or die;
 		my $pattern = $args{$name}{loggrep} || get_testgrep();

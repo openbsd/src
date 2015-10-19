@@ -37,12 +37,11 @@ our %args = (
 	# syslog over TCP appends a \n
 	loggrep => { qr/^>>> 8193 .{8192}\n/ => 1 },
     },
-    pipe => {
-	nocheck => 1,
-    },
     file => {
 	loggrep => { qr/^.{$filelen}\n/ => 1 },
     },
+    pipe => { nocheck => 1 },
+    tty => { nocheck => 1 },
 );
 
 1;

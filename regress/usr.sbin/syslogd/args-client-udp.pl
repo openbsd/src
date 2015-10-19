@@ -26,6 +26,9 @@ our %args = (
     pipe => {
 	loggrep => get_testlog(),
     },
+    tty => {
+	loggrep => get_testlog(),
+    },
     file => {
 	# Sys::Syslog UDP is broken, it appends a \n\0.
 	loggrep => qr/ localhost syslogd-regress\[\d+\]: /.get_testlog().qr/ $/,

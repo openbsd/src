@@ -7,9 +7,10 @@ to syslogd.  From there UDP transport is used to reach the server.
 All processes write log files where the message has to show up.
 The test arguments are kept in the args-*.pl files.
 The content of a log file, the data sent to a pipe process and what
-the server received are checked.  The invocation of the sendsyslog(2)
-syscall is checked with ktrace, the open file descriptors of syslogd
-are checked with fstat.
+the server received are checked.  Logging to a user's tty is tested
+with a fake login.  The invocation of the sendsyslog(2) syscall is
+checked with ktrace, the open file descriptors of syslogd are checked
+with fstat.
 When invoked with "make libevent", all tests are executed three
 times.  They pass the EVENT_NO...  environment variables over sudo
 into syslogd.  This way the select(2) and poll(2) and kqueue(2)

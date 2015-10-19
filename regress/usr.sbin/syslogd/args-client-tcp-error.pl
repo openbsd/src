@@ -40,14 +40,13 @@ our %args = (
 	},
 	loggrep => {},
     },
-    pipe => {
-	loggrep => {},
-    },
     file => {
 	loggrep => {
 	    qr/syslogd: tcp logger .* connection error: $errors/ => 1,
 	},
     },
+    pipe => { nocheck => 1 },
+    tty => { nocheck => 1 },
 );
 
 1;

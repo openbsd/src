@@ -43,7 +43,8 @@ our %args = (
     file => {
 	loggrep => qr/syslogd: accept deferred: Too many open files/,
     },
-    pipe => { loggrep => {} },
+    pipe => { nocheck => 1 },
+    tty => { nocheck => 1 },
 );
 
 1;

@@ -38,14 +38,13 @@ our %args = (
 	},
 	loggrep => {},
     },
-    pipe => {
-	loggrep => {},
-    },
     file => {
 	loggrep => {
 	    qr/syslogd: tcp logger .* connection close/ => 1,
 	},
     },
+    pipe => { nocheck => 1 },
+    tty => { nocheck => 1 },
 );
 
 1;

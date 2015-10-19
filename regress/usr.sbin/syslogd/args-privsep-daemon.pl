@@ -37,9 +37,8 @@ our %args = (
 	    qr/RET   setsid.* errno / => 0,
 	},
     },
-    pipe => {
-	nocheck => 1,
-    },
+    pipe => { nocheck => 1 },
+    tty => { nocheck => 1 },
 );
 
 1;

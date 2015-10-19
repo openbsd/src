@@ -55,7 +55,8 @@ our %args = (
 	    generate_chars(MAXLINE).qr/$/ => 2,
 	},
     },
-    pipe => { loggrep => {} },  # XXX syslogd ignore short writes to pipe
+    pipe => { nocheck => 1 },  # XXX syslogd ignore short writes to pipe
+    tty => { nocheck => 1 },
 );
 
 1;

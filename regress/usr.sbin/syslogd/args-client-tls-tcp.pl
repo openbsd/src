@@ -38,9 +38,6 @@ our %args = (
 	},
 	loggrep => {},
     },
-    pipe => {
-	loggrep => {},
-    },
     file => {
 	loggrep => {
 	    qr/syslogd: tls logger .* connection error: /.
@@ -48,6 +45,8 @@ our %args = (
 		qr/SSL routines:SSL23_GET_CLIENT_HELLO:unknown protocol/ => 1,
 	},
     },
+    pipe => { nocheck => 1 },
+    tty => { nocheck => 1 },
 );
 
 1;

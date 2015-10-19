@@ -24,6 +24,9 @@ our %args = (
     pipe => {
 	loggrep => get_testlog(),
     },
+    tty => {
+	loggrep => get_testlog(),
+    },
     file => {
 	# Sys::Syslog unix is broken, it appends a \n\0.
 	loggrep => qr/ $host syslogd-regress\[\d+\]: /.get_testlog().qr/ $/,

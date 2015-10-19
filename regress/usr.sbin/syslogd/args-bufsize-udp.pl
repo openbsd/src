@@ -39,12 +39,11 @@ our %args = (
 	listen => { domain => AF_UNSPEC, proto => "tcp", addr => "localhost" },
 	loggrep => { get_charlog() => 8 },
     },
-    pipe => {
-	nocheck => 1,
-    },
     file => {
 	loggrep => { get_charlog() => 8 },
     },
+    pipe => { nocheck => 1 },
+    tty => { nocheck => 1 },
 );
 
 1;

@@ -36,9 +36,8 @@ our %args = (
 	    qr/CALL  setsid/ => 0,
 	},
     },
-    pipe => {
-	nocheck => 1,
-    },
+    pipe => { nocheck => 1 },
+    tty => { nocheck => 1 },
 );
 
 1;

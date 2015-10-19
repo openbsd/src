@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.12 2015/10/09 17:07:06 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.13 2015/10/19 20:16:09 bluhm Exp $
 
 # The following ports must be installed for the regression tests:
 # p5-IO-Socket-INET6	object interface for AF_INET and AF_INET6 domain sockets
@@ -33,8 +33,9 @@ TARGETS ?=		${ARGS}
 TARGETS ?=		${ARGS:Nargs-rsyslog*}
 .endif
 REGRESS_TARGETS =	${TARGETS:S/^/run-regress-/}
+LDFLAGS +=		-lutil
 CLEANFILES +=		*.log *.log.? *.conf ktrace.out stamp-*
-CLEANFILES +=		*.out *.sock *.ktrace *.fstat
+CLEANFILES +=		*.out *.sock *.ktrace *.fstat ttylog
 CLEANFILES +=		*.pem *.req *.crt *.key *.srl empty toobig
 
 .MAIN: all
@@ -99,6 +100,7 @@ ${REGRESS_TARGETS:M*tls*}: server.crt 127.0.0.1.crt
 ${REGRESS_TARGETS:M*empty*}: empty
 ${REGRESS_TARGETS:M*toobig*}: toobig
 ${REGRESS_TARGETS:M*fake*}: fake-ca.crt
+${REGRESS_TARGETS}: ttylog
 
 # make perl syntax check for all args files
 

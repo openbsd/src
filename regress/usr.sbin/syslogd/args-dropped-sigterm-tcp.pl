@@ -52,9 +52,6 @@ our %args = (
 	    get_charlog() => '>=10',
 	},
     },
-    pipe => {
-	loggrep => {},
-    },
     file => {
 	loggrep => {
 	    get_firstlog() => 1,
@@ -66,6 +63,8 @@ our %args = (
 	    qr/syslogd: dropped 2[0-9][0-9] messages to remote loghost/ => 1,
 	},
     },
+    pipe => { nocheck => 1 },
+    tty => { nocheck => 1 },
 );
 
 1;

@@ -40,6 +40,7 @@ our %args = (
     server => { loggrep => \%threegrep },
     file => { loggrep => \%threegrep },
     pipe => { loggrep => \%threegrep },
+    tty => { loggrep => \%threegrep },
 );
 
 1;
