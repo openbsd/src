@@ -1,4 +1,4 @@
-/* $OpenBSD: a_time_tm.c,v 1.5 2015/10/08 02:26:31 beck Exp $ */
+/* $OpenBSD: a_time_tm.c,v 1.6 2015/10/19 16:32:37 beck Exp $ */
 /*
  * Copyright (c) 2015 Bob Beck <beck@openbsd.org>
  *
@@ -14,7 +14,6 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-
 #include <ctype.h>
 #include <limits.h>
 #include <stdio.h>
@@ -25,8 +24,41 @@
 #include <openssl/err.h>
 
 #include "o_time.h"
-#include "asn1_locl.h"
 
+#define RFC5280 0
+#define GENTIME_LENGTH 15
+#define UTCTIME_LENGTH 13
+
+int
+asn1_tm_cmp(struct tm *tm1, struct tm *tm2) {
+	if (tm1->tm_year < tm2->tm_year)
+		return (-1);
+	if (tm1->tm_year > tm2->tm_year)
+		return (1);
+	if (tm1->tm_mon < tm2->tm_mon)
+		return (-1);
+	if (tm1->tm_mon > tm2->tm_mon)
+		return (1);
+	if (tm1->tm_mday < tm2->tm_mday)
+		return (-1);
+	if (tm1->tm_mday > tm2->tm_mday)
+		return (1);
+	if (tm1->tm_hour < tm2->tm_hour)
+		return (-1);
+	if (tm1->tm_hour > tm2->tm_hour)
+		return (1);
+	if (tm1->tm_min < tm2->tm_min)
+		return (-1);
+	if (tm1->tm_min > tm2->tm_min)
+		return (1);
+	if (tm1->tm_sec < tm2->tm_sec)
+		return (-1);
+	if (tm1->tm_sec > tm2->tm_sec)
+		return (1);
+	return 0;
+}
+
+/* Format a time as an RFC 5280 format Generalized time */
 char *
 gentime_string_from_tm(struct tm *tm)
 {
@@ -45,6 +77,7 @@ gentime_string_from_tm(struct tm *tm)
 	return (ret);
 }
 
+/* Format a time as an RFC 5280 format UTC time */
 char *
 utctime_string_from_tm(struct tm *tm)
 {
@@ -61,14 +94,32 @@ utctime_string_from_tm(struct tm *tm)
 	return (ret);
 }
 
+/* Format a time correctly for an X509 object as per RFC 5280 */
+char *
+rfc5280_string_from_tm(struct tm *tm)
+{
+	char *ret = NULL;
+	int year;
+
+	year = tm->tm_year + 1900;
+	if (year < 1950 || year > 9999)
+		return (NULL);
+
+	if (year < 2050)
+		ret = utctime_string_from_tm(tm);
+	else
+		ret = gentime_string_from_tm(tm);
+
+	return (ret);
+}
+
 /*
- * Parse an ASN.1 time string.
+ * Parse an RFC 5280 format ASN.1 time string.
  *
  * mode must be:
- * 0 if we expect to parse a time as specified in RFC 5280 from an
- * X509 certificate.
- * V_ASN1_UTCTIME if we wish to parse a legacy ASN1 UTC time.
- * V_ASN1_GENERALIZEDTIME if we wish to parse a legacy ASN1 Generalized time.
+ * 0 if we expect to parse a time as specified in RFC 5280 from an X509 object.
+ * V_ASN1_UTCTIME if we wish to parse on RFC5280 format UTC time.
+ * V_ASN1_GENERALIZEDTIME if we wish to parse an RFC5280 format Generalized time.
  *
  * Returns:
  * -1 if the string was invalid.
@@ -77,141 +128,54 @@ utctime_string_from_tm(struct tm *tm)
  *
  * Fills in *tm with the corresponding time if tm is non NULL.
  */
-#define RFC5280 0
 #define	ATOI2(ar)	((ar) += 2, ((ar)[-2] - '0') * 10 + ((ar)[-1] - '0'))
 int
 asn1_time_parse(const char *bytes, size_t len, struct tm *tm, int mode)
 {
-	char *p, *buf = NULL, *dot = NULL, *tz = NULL;
-	int i, offset = 0, noseconds = 0, type = 0, ret = -1;
+	int i, type = 0;
 	struct tm ltm;
 	struct tm *lt;
-	size_t tlen;
-	char tzc;
+	const char *p;
 
 	if (bytes == NULL)
-		goto err;
+		return (-1);
 
-	if (len > INT_MAX)
-		goto err;
-
-	/* Constrain the RFC5280 case within min/max valid lengths. */
-	if (mode == RFC5280 && (len < 13 || len > 15))
-		goto err;
-
-	if ((buf = strndup(bytes, len)) == NULL)
-		goto err;
+	/* Constrain to valid lengths. */
+	if (len != UTCTIME_LENGTH && len != GENTIME_LENGTH)
+		return (-1);
 
 	lt = tm;
 	if (lt == NULL) {
-		time_t t = time(NULL);
-		lt = gmtime_r(&t, &ltm);
-		if (lt == NULL)
-			goto err;
+		memset(&ltm, 0, sizeof(ltm));
+		lt = &ltm;
 	}
 
-	/*
-	 * Find position of the optional fractional seconds, and the
-	 * start of the timezone, while ensuring everything else is
-	 * digits.
-	 */
-	for (i = 0; i < len; i++) {
-		char *t = buf + i;
-		if (isdigit((unsigned char)*t))
+	/* Timezone is required and must be GMT (Zulu). */
+	if (bytes[len - 1] != 'Z')
+		return (-1);
+
+	/* Make sure everything else is digits. */
+	for (i = 0; i < len - 1; i++) {
+		if (isdigit((unsigned char)bytes[i]))
 			continue;
-		if (*t == '.' && dot == NULL && tz == NULL) {
-			dot = t;
-			continue;
-		}
-		if ((*t == 'Z' || *t == '+' || *t == '-') && tz == NULL) {
-			tz = t;
-			continue;
-		}
-		goto err;
-	}
-
-	/*
-	 * Timezone is required. For the non-RFC case it may be
-	 * either Z or +- HHMM, but for RFC5280 it may be only Z.
-	 */
-	if (tz == NULL)
-		goto err;
-	tzc = *tz;
-	*tz++ = '\0';
-	if (tzc == 'Z') {
-		if (*tz != '\0')
-			goto err;
-	} else if (mode != RFC5280 && (tzc == '+' || tzc == '-') &&
-	    strlen(tz) == 4) {
-		int hours = ATOI2(tz);
-		int mins = ATOI2(tz);
-
-		if (hours < 0 || hours > 12 || mins < 0 || mins > 59)
-			goto err;
-		offset = hours * 3600 + mins * 60;
-		if (tzc == '-')
-			offset = -offset;
-	} else
-		goto err;
-
-	if (offset != 0) {
-		/* XXX - yuck - OPENSSL_gmtime_adj should go away */
-		if (!OPENSSL_gmtime_adj(lt, 0, offset))
-			goto err;
-	}
-
-	/*
-	 * We only allow fractional seconds to be present if we are in
-	 * the non-RFC case of a Generalized time. RFC 5280 forbids
-	 * fractional seconds.
-	 */
-	if (dot != NULL) {
-		if (mode != V_ASN1_GENERALIZEDTIME)
-			goto err;
-		*dot++ = '\0';
-		if (!isdigit((unsigned char)*dot))
-			goto err;
+		return (-1);
 	}
 
 	/*
 	 * Validate and convert the time
 	 */
-	p = buf;
-	tlen = strlen(buf);
-	switch (tlen) {
-	case 14:
+	p = bytes;
+	switch (len) {
+	case GENTIME_LENGTH:
+		if (mode == V_ASN1_UTCTIME)
+			return (-1);
 		lt->tm_year = (ATOI2(p) * 100) - 1900;	/* cc */
-		if (mode != RFC5280 && mode != V_ASN1_GENERALIZEDTIME)
-			goto err;
 		type = V_ASN1_GENERALIZEDTIME;
 		/* FALLTHROUGH */
-	case 12:
-		if (type == 0 && mode == V_ASN1_GENERALIZEDTIME) {
-			/*
-			 * In the non-RFC case of a Generalized time
-			 * seconds may not have been provided.  RFC
-			 * 5280 mandates that seconds must be present.
-			 */
-			noseconds = 1;
-			lt->tm_year = (ATOI2(p) * 100) - 1900;	/* cc */
-			type = V_ASN1_GENERALIZEDTIME;
-		}
-		/* FALLTHROUGH */
-	case 10:
+	case UTCTIME_LENGTH:
 		if (type == 0) {
-			/*
-			 * At this point we must have a UTC time.
-			 * In the RFC 5280 case it must have the
-			 * seconds present. In the non-RFC case
-			 * may have no seconds.
-			 */
 			if (mode == V_ASN1_GENERALIZEDTIME)
-				goto err;
-			if (tlen == 10) {
-				if (mode != V_ASN1_UTCTIME)
-					goto err;
-				noseconds = 1;
-			}
+				return (-1);
 			type = V_ASN1_UTCTIME;
 		}
 		lt->tm_year += ATOI2(p);		/* yy */
@@ -221,40 +185,258 @@ asn1_time_parse(const char *bytes, size_t len, struct tm *tm, int mode)
 		}
 		lt->tm_mon = ATOI2(p) - 1;		/* mm */
 		if (lt->tm_mon < 0 || lt->tm_mon > 11)
-			goto err;
+			return (-1);
 		lt->tm_mday = ATOI2(p);			/* dd */
 		if (lt->tm_mday < 1 || lt->tm_mday > 31)
-			goto err;
+			return (-1);
 		lt->tm_hour = ATOI2(p);			/* HH */
 		if (lt->tm_hour < 0 || lt->tm_hour > 23)
-			goto err;
+			return (-1);
 		lt->tm_min = ATOI2(p);			/* MM */
-		if (lt->tm_hour < 0 || lt->tm_min > 59)
-			goto err;
-		lt->tm_sec = 0;				/* SS */
-		if (noseconds)
-			break;
-		lt->tm_sec = ATOI2(p);
+		if (lt->tm_min < 0 || lt->tm_min > 59)
+			return (-1);
+		lt->tm_sec = ATOI2(p);			/* SS */
 		/* Leap second 60 is not accepted. Reconsider later? */
-		if (lt->tm_hour < 0 || lt->tm_sec > 59)
-			goto err;
+		if (lt->tm_sec < 0 || lt->tm_sec > 59)
+			return (-1);
 		break;
 	default:
-		goto err;
+		return (-1);
 	}
 
-	/* RFC 5280 section 4.1.2.5 */
-	if (mode == RFC5280) {
-		if (lt->tm_year < 150 && type != V_ASN1_UTCTIME)
-			goto err;
-		if (lt->tm_year >= 150 && type != V_ASN1_GENERALIZEDTIME)
-			goto err;
-	}
-
-	ret = type;
-
-err:
-	free(buf);
-
-	return (ret);
+	return (type);
 }
+
+/*
+ * ASN1_TIME generic functions.
+ */
+
+static int
+ASN1_TIME_set_string_internal(ASN1_TIME *s, const char *str, int mode)
+{
+	int type;
+	char *tmp;
+	
+	if ((type = asn1_time_parse(str, strlen(str), NULL, mode)) == -1)
+		return (0);
+	if (mode != 0 && mode != type)
+		return (0);
+	if ((tmp = strdup(str)) == NULL)
+		return (0);
+	free(s->data);
+	s->data = tmp;
+	s->length = strlen(tmp);
+	s->type = type;
+	return (1);
+}
+
+static ASN1_TIME *
+ASN1_TIME_adj_internal(ASN1_TIME *s, time_t t, int offset_day, long offset_sec,
+    int mode)
+{
+	int allocated = 0;
+	struct tm tm;
+	size_t len;
+	char * p;
+
+ 	if (gmtime_r(&t, &tm) == NULL)
+ 		return (NULL);
+
+	if (offset_day || offset_sec) {
+		if (!OPENSSL_gmtime_adj(&tm, offset_day, offset_sec))
+			return (NULL);
+	}
+
+	switch (mode) {
+	case V_ASN1_UTCTIME:
+		p = utctime_string_from_tm(&tm);
+		break;
+	case V_ASN1_GENERALIZEDTIME:
+		p = gentime_string_from_tm(&tm);
+		break;
+	case RFC5280:
+		p = rfc5280_string_from_tm(&tm);
+		break;
+	default:
+		return (NULL);
+	}
+	if (p == NULL) {
+		ASN1err(ASN1_F_ASN1_GENERALIZEDTIME_ADJ,
+		    ASN1_R_ILLEGAL_TIME_VALUE);
+		return (NULL);
+	}
+
+	if (s == NULL) {
+		if ((s = ASN1_TIME_new()) == NULL)
+			return (NULL);
+		allocated = 1;
+	}
+
+	len = strlen(p);
+	switch (len) {
+	case GENTIME_LENGTH:
+		s->type = V_ASN1_GENERALIZEDTIME;
+		break;
+ 	case UTCTIME_LENGTH:
+		s->type = V_ASN1_UTCTIME;
+		break;
+	default:
+		if (allocated)
+			ASN1_TIME_free(s);
+		free(p);
+		return (NULL);
+	}
+	free(s->data);
+	s->data = p;
+	s->length = len;
+	return (s);
+}
+
+ASN1_TIME *
+ASN1_TIME_set(ASN1_TIME *s, time_t t)
+{
+	return (ASN1_TIME_adj(s, t, 0, 0));
+}
+
+ASN1_TIME *
+ASN1_TIME_adj(ASN1_TIME *s, time_t t, int offset_day, long offset_sec)
+{
+	return (ASN1_TIME_adj_internal(s, t, offset_day, offset_sec, RFC5280));
+}
+
+int
+ASN1_TIME_check(ASN1_TIME *t)
+{
+	if (t->type != V_ASN1_GENERALIZEDTIME && t->type != V_ASN1_UTCTIME)
+		return (0);
+	return (t->type == asn1_time_parse(t->data, t->length, NULL, t->type));
+}
+
+ASN1_GENERALIZEDTIME *
+ASN1_TIME_to_generalizedtime(ASN1_TIME *t, ASN1_GENERALIZEDTIME **out)
+{
+	ASN1_GENERALIZEDTIME *tmp = NULL;
+	struct tm tm;
+	char *str;
+
+	if (t->type != V_ASN1_GENERALIZEDTIME && t->type != V_ASN1_UTCTIME)
+		return (NULL);
+
+	memset(&tm, 0, sizeof(tm));
+	if (t->type != asn1_time_parse(t->data, t->length, &tm, t->type))
+		return (NULL);
+	if ((str = gentime_string_from_tm(&tm)) == NULL)
+		return (NULL);
+
+	if (out != NULL)
+		tmp = *out;
+	if (tmp == NULL && (tmp = ASN1_GENERALIZEDTIME_new()) == NULL) {
+		free(str);
+		return (NULL);
+	}
+	if (out != NULL)
+		*out = tmp;
+
+	free(tmp->data);
+	tmp->data = str;
+	tmp->length = strlen(str);
+	return (tmp);
+}
+
+int
+ASN1_TIME_set_string(ASN1_TIME *s, const char *str)
+{
+	return (ASN1_TIME_set_string_internal(s, str, 0));
+}
+
+/*
+ * ASN1_UTCTIME wrappers
+ */
+
+int
+ASN1_UTCTIME_check(ASN1_UTCTIME *d)
+{
+	if (d->type != V_ASN1_UTCTIME)
+		return (0);
+	return (d->type == asn1_time_parse(d->data, d->length, NULL, d->type));
+}
+
+int
+ASN1_UTCTIME_set_string(ASN1_UTCTIME *s, const char *str)
+{
+	if (s->type != V_ASN1_UTCTIME)
+		return (0);
+	return (ASN1_TIME_set_string_internal(s, str, V_ASN1_UTCTIME));
+}
+
+ASN1_UTCTIME *
+ASN1_UTCTIME_set(ASN1_UTCTIME *s, time_t t)
+{
+	return (ASN1_UTCTIME_adj(s, t, 0, 0));
+}
+
+ASN1_UTCTIME *
+ASN1_UTCTIME_adj(ASN1_UTCTIME *s, time_t t, int offset_day, long offset_sec)
+{
+	return (ASN1_TIME_adj_internal(s, t, offset_day, offset_sec,
+	    V_ASN1_UTCTIME));
+}
+
+int
+ASN1_UTCTIME_cmp_time_t(const ASN1_UTCTIME *s, time_t t2)
+{
+	struct tm tm1, tm2;
+
+	/*
+	 * This function has never handled failure conditions properly
+	 * and should be deprecated. The OpenSSL version used to
+	 * simply follow NULL pointers on failure. BoringSSL and
+	 * OpenSSL now make it return -2 on failure.
+	 *
+	 * The danger is that users of this function will not
+	 * differentiate the -2 failure case from t1 < t2.
+	 */
+	if (asn1_time_parse(s->data, s->length, &tm1, V_ASN1_UTCTIME) == -1)
+		return (-2); /* XXX */
+
+	if (gmtime_r(&t2, &tm2) == NULL)
+		return (-2); /* XXX */
+
+	return asn1_tm_cmp(&tm1, &tm2);
+}
+
+/*
+ * ASN1_GENERALIZEDTIME wrappers
+ */
+
+int
+ASN1_GENERALIZEDTIME_check(ASN1_GENERALIZEDTIME *d)
+{
+	if (d->type != V_ASN1_GENERALIZEDTIME)
+		return (0);
+	return (d->type == asn1_time_parse(d->data, d->length, NULL, d->type));
+}
+
+int
+ASN1_GENERALIZEDTIME_set_string(ASN1_GENERALIZEDTIME *s, const char *str)
+{
+	if (s->type != V_ASN1_GENERALIZEDTIME)
+		return (0);
+	return (ASN1_TIME_set_string_internal(s, str, V_ASN1_GENERALIZEDTIME));
+}
+
+ASN1_GENERALIZEDTIME *
+ASN1_GENERALIZEDTIME_set(ASN1_GENERALIZEDTIME *s, time_t t)
+{
+	return (ASN1_GENERALIZEDTIME_adj(s, t, 0, 0));
+}
+
+ASN1_GENERALIZEDTIME *
+ASN1_GENERALIZEDTIME_adj(ASN1_GENERALIZEDTIME *s, time_t t, int offset_day,
+    long offset_sec)
+{
+	return (ASN1_TIME_adj_internal(s, t, offset_day, offset_sec,
+	    V_ASN1_GENERALIZEDTIME));
+}
+
+

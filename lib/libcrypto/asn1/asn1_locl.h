@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1_locl.h,v 1.6 2015/10/02 15:04:45 beck Exp $ */
+/* $OpenBSD: asn1_locl.h,v 1.7 2015/10/19 16:32:37 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -57,10 +57,6 @@
  */
 
 /* Internal ASN1 structures and functions: not for application use */
-
-char * gentime_string_from_tm(struct tm *tm);
-char * utctime_string_from_tm(struct tm *tm);
-int asn1_time_parse(const char *, size_t, struct tm *, int);
 
 /* ASN1 print context structure */
 
