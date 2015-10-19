@@ -1,4 +1,4 @@
-/*	$OpenBSD: i386_nlist.c,v 1.4 2015/10/16 16:54:38 tobias Exp $	*/
+/*	$OpenBSD: i386_nlist.c,v 1.5 2015/10/19 19:22:32 krw Exp $	*/
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -117,7 +117,7 @@ __elf_fdnlist(int fd, struct nlist *list)
 
 	/* Make sure it's not too big to mmap */
 	if (SIZE_MAX - ehdr.e_shoff < shdr_size ||
-	    S_ISREG(st.st_mode) && ehdr.e_shoff + shdr_size > st.st_size) {
+	    (S_ISREG(st.st_mode) && ehdr.e_shoff + shdr_size > st.st_size)) {
 		errno = EFBIG;
 		return (-1);
 	}
@@ -187,7 +187,7 @@ __elf_fdnlist(int fd, struct nlist *list)
 
 	/* Check for files too large to mmap. */
 	if (SIZE_MAX - symstrsize < symstroff ||
-	    S_ISREG(st.st_mode) && symstrsize + symstroff > st.st_size) {
+	    (S_ISREG(st.st_mode) && symstrsize + symstroff > st.st_size)) {
 		errno = EFBIG;
 		return (-1);
 	}
@@ -288,7 +288,6 @@ __elf_fdnlist(int fd, struct nlist *list)
 			}
 		}
 	}
-elf_done:
 	if (usemalloc)
 		free(strtab);
 	else
