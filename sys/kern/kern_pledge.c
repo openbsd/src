@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.56 2015/10/19 12:55:32 nicm Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.57 2015/10/19 16:20:56 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -156,6 +156,9 @@ const u_int pledge_syscalls[SYS_MAXSYSCALL] = {
 	[SYS_setrlimit] = PLEDGE_PROC | PLEDGE_ID,
 	[SYS_getpriority] = PLEDGE_PROC | PLEDGE_ID,
 
+	/* XXX we should limit the power for the "proc"-only case */ 
+	[SYS_setpriority] = PLEDGE_PROC | PLEDGE_ID,
+
 	[SYS_setuid] = PLEDGE_ID,
 	[SYS_seteuid] = PLEDGE_ID,
 	[SYS_setresuid] = PLEDGE_ID,
@@ -164,7 +167,6 @@ const u_int pledge_syscalls[SYS_MAXSYSCALL] = {
 	[SYS_setresgid] = PLEDGE_ID,
 	[SYS_setgroups] = PLEDGE_ID,
 	[SYS_setlogin] = PLEDGE_ID,
-	[SYS_setpriority] = PLEDGE_ID,
 
 	[SYS_execve] = PLEDGE_EXEC,
 
