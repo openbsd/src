@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_src.c,v 1.63 2015/10/13 10:16:17 mpi Exp $	*/
+/*	$OpenBSD: in6_src.c,v 1.64 2015/10/19 12:11:28 mpi Exp $	*/
 /*	$KAME: in6_src.c,v 1.36 2001/02/06 04:08:17 itojun Exp $	*/
 
 /*
@@ -252,7 +252,7 @@ in6_selectsrc(struct in6_addr **in6src, struct sockaddr_in6 *dstsock,
 	 * our src addr is taken from the i/f, else punt.
 	 */
 	if (ro) {
-		if (!rtisvalid(ro->ro_rt) ||
+		if (!rtisvalid(ro->ro_rt) || (ro->ro_tableid != rtableid) ||
 		    !IN6_ARE_ADDR_EQUAL(&ro->ro_dst.sin6_addr, dst)) {
 			rtfree(ro->ro_rt);
 			ro->ro_rt = NULL;
@@ -327,9 +327,8 @@ in6_selectroute(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
 		 * by that address must be a neighbor of the sending host.
 		 */
 		ron = &opts->ip6po_nextroute;
-		if ((ron->ro_rt &&
-		    (ron->ro_rt->rt_flags & (RTF_UP | RTF_GATEWAY)) !=
-		    RTF_UP) ||
+		if (!rtisvalid(ron->ro_rt) ||
+		    ISSET(ron->ro_rt->rt_flags, RTF_GATEWAY) ||
 		    !IN6_ARE_ADDR_EQUAL(&ron->ro_dst.sin6_addr,
 		    &sin6_next->sin6_addr)) {
 			if (ron->ro_rt) {

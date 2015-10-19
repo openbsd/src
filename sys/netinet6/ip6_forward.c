@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_forward.c,v 1.82 2015/09/10 09:14:59 mpi Exp $	*/
+/*	$OpenBSD: ip6_forward.c,v 1.83 2015/10/19 12:11:28 mpi Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.75 2001/06/29 12:42:13 jinmei Exp $	*/
 
 /*
@@ -223,8 +223,7 @@ reroute:
 		/*
 		 * ip6_forward_rt.ro_dst.sin6_addr is equal to ip6->ip6_dst
 		 */
-		if (ip6_forward_rt.ro_rt == NULL ||
-		    (ip6_forward_rt.ro_rt->rt_flags & RTF_UP) == 0 ||
+		if (!rtisvalid(ip6_forward_rt.ro_rt) ||
 		    ip6_forward_rt.ro_tableid != rtableid) {
 			if (ip6_forward_rt.ro_rt) {
 				rtfree(ip6_forward_rt.ro_rt);
@@ -247,8 +246,7 @@ reroute:
 			m_freem(m);
 			return;
 		}
-	} else if (ip6_forward_rt.ro_rt == NULL ||
-	   (ip6_forward_rt.ro_rt->rt_flags & RTF_UP) == 0 ||
+	} else if (!rtisvalid(ip6_forward_rt.ro_rt) ||
 	   !IN6_ARE_ADDR_EQUAL(&ip6->ip6_dst, &dst->sin6_addr) ||
 	   ip6_forward_rt.ro_tableid != rtableid) {
 		if (ip6_forward_rt.ro_rt) {

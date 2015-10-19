@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp6_output.c,v 1.37 2015/09/11 08:17:06 claudio Exp $	*/
+/*	$OpenBSD: udp6_output.c,v 1.38 2015/10/19 12:11:28 mpi Exp $	*/
 /*	$KAME: udp6_output.c,v 1.21 2001/02/07 11:51:54 itojun Exp $	*/
 
 /*
@@ -208,8 +208,7 @@ udp6_output(struct inpcb *in6p, struct mbuf *m, struct mbuf *addr6,
 #endif
 	ip6->ip6_nxt	= IPPROTO_UDP;
 	ifp = NULL;
-	if (in6p->inp_route6.ro_rt &&
-	    in6p->inp_route6.ro_rt->rt_flags & RTF_UP)
+	if (rtisvalid(in6p->inp_route6.ro_rt))
 		ifp = in6p->inp_route6.ro_rt->rt_ifp;
 	ip6->ip6_hlim	= in6_selecthlim(in6p, ifp);
 	ip6->ip6_src	= *laddr;

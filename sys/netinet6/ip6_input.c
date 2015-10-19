@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.147 2015/10/13 10:29:16 mpi Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.148 2015/10/19 12:11:28 mpi Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -415,8 +415,7 @@ ip6_input(struct mbuf *m)
 	/*
 	 *  Unicast check
 	 */
-	if (ip6_forward_rt.ro_rt != NULL &&
-	    (ip6_forward_rt.ro_rt->rt_flags & RTF_UP) != 0 &&
+	if (rtisvalid(ip6_forward_rt.ro_rt) &&
 	    IN6_ARE_ADDR_EQUAL(&ip6->ip6_dst,
 			       &ip6_forward_rt.ro_dst.sin6_addr) &&
 	    rtableid == ip6_forward_rt.ro_tableid)

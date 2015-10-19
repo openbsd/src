@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip6.c,v 1.84 2015/09/11 08:17:06 claudio Exp $	*/
+/*	$OpenBSD: raw_ip6.c,v 1.85 2015/10/19 12:11:28 mpi Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.69 2001/03/04 15:55:44 itojun Exp $	*/
 
 /*
@@ -421,8 +421,7 @@ rip6_output(struct mbuf *m, ...)
 			goto bad;
 
 		ip6->ip6_src = *in6a;
-		if (in6p->inp_route6.ro_rt &&
-		    in6p->inp_route6.ro_rt->rt_flags & RTF_UP)
+		if (rtisvalid(in6p->inp_route6.ro_rt))
 			oifp = in6p->inp_route6.ro_rt->rt_ifp;
 	}
 

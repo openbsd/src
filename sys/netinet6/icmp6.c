@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.172 2015/09/18 14:26:22 mpi Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.173 2015/10/19 12:11:28 mpi Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -1568,8 +1568,9 @@ icmp6_redirect_output(struct mbuf *m0, struct rtentry *rt)
 		goto fail;
 
 	/* sanity check */
-	if (!m0 || !rt || !(rt->rt_flags & RTF_UP) || !(ifp = rt->rt_ifp))
+	if (m0 == NULL || !rtisvalid(rt))
 		goto fail;
+	ifp = rt->rt_ifp;
 
 	/*
 	 * Address check:

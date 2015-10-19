@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_pcb.c,v 1.79 2015/10/19 08:49:14 vgross Exp $	*/
+/*	$OpenBSD: in6_pcb.c,v 1.80 2015/10/19 12:11:28 mpi Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -416,7 +416,7 @@ in6_pcbconnect(struct inpcb *inp, struct mbuf *nam)
 	if (error)
 		return (error);
 
-	if (inp->inp_route6.ro_rt && inp->inp_route6.ro_rt->rt_flags & RTF_UP)
+	if (rtisvalid(inp->inp_route6.ro_rt))
 		ifp = inp->inp_route6.ro_rt->rt_ifp;
 
 	inp->inp_ipv6.ip6_hlim = (u_int8_t)in6_selecthlim(inp, ifp);

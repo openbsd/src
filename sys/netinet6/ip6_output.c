@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.189 2015/09/23 08:49:46 mpi Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.190 2015/10/19 12:11:28 mpi Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -1151,9 +1151,9 @@ ip6_getpmtu(struct route_in6 *ro_pmtu, struct route_in6 *ro,
 		/* The first hop and the final destination may differ. */
 		struct sockaddr_in6 *sa6_dst = &ro_pmtu->ro_dst;
 
-		if (ro_pmtu->ro_rt &&
-		    ((ro_pmtu->ro_rt->rt_flags & RTF_UP) == 0 ||
-		     !IN6_ARE_ADDR_EQUAL(&sa6_dst->sin6_addr, dst))) {
+		if (!rtisvalid(ro_pmtu->ro_rt) ||
+		    (ro_pmtu->ro_tableid != ifp->if_rdomain) ||
+		     !IN6_ARE_ADDR_EQUAL(&sa6_dst->sin6_addr, dst)) {
 			rtfree(ro_pmtu->ro_rt);
 			ro_pmtu->ro_rt = NULL;
 		}
