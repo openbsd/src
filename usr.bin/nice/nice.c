@@ -1,4 +1,4 @@
-/*	$OpenBSD: nice.c,v 1.14 2014/02/13 20:51:10 tedu Exp $	*/
+/*	$OpenBSD: nice.c,v 1.15 2015/10/19 18:53:35 deraadt Exp $	*/
 /*	$NetBSD: nice.c,v 1.9 1995/08/31 23:30:58 jtc Exp $	*/
 
 /*
@@ -53,6 +53,9 @@ main(int argc, char *argv[])
 
 	setlocale(LC_ALL, "");
 
+	if (pledge("stdio exec proc", NULL) == -1)
+		err(1, "pledge");
+
 	/* handle obsolete -number syntax */
 	if (argc > 1 && argv[1][0] == '-' &&
 	    isdigit((unsigned char)argv[1][1])) {
@@ -70,7 +73,6 @@ main(int argc, char *argv[])
 			if (errstr)
 				errx(1, "increment is %s", errstr);
 			break;
-		case '?':
 		default:
 			usage();
 			break;
@@ -84,16 +86,16 @@ main(int argc, char *argv[])
 
 	errno = 0;
 	prio += getpriority(PRIO_PROCESS, 0);
-	if (errno) {
+	if (errno)
 		err(1, "getpriority");
-		/* NOTREACHED */
-	}
 	if (setpriority(PRIO_PROCESS, 0, prio))
 		warn("setpriority");
 
+	if (pledge("stdio exec", NULL) == -1)
+		err(1, "pledge");
+
 	execvp(argv[0], &argv[0]);
 	err((errno == ENOENT) ? 127 : 126, "%s", argv[0]);
-	/* NOTREACHED */
 }
 
 static void
