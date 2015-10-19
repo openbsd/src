@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd_bsdauth.c,v 1.5 2015/10/19 07:58:28 yasuoka Exp $	*/
+/*	$OpenBSD: radiusd_bsdauth.c,v 1.6 2015/10/19 22:07:37 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -94,6 +94,10 @@ main(int argc, char *argv[])
 	openlog(NULL, LOG_PID, LOG_DAEMON);
 	setproctitle("[priv]");
 	imsg_init(&ibuf, pipe_chld);
+
+	if (pledge("stdio getpw rpath proc exec", NULL) == -1)
+		err(EXIT_FAILURE, "pledge");
+
 	for (;;) {
 		if ((n = imsg_read(&ibuf)) <= 0)
 			break;
@@ -230,6 +234,10 @@ module_bsdauth_main(int pipe_prnt, int pipe_chld)
 
 	module_load(module_bsdauth.base);
 	imsg_init(&module_bsdauth.ibuf, pipe_prnt);
+
+	if (pledge("stdio proc", NULL) == -1)
+		err(EXIT_FAILURE, "pledge");
+
 	while (module_run(module_bsdauth.base) == 0)
 		;
 

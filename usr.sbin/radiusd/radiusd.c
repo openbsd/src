@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd.c,v 1.8 2015/10/19 06:56:58 yasuoka Exp $	*/
+/*	$OpenBSD: radiusd.c,v 1.9 2015/10/19 22:07:37 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2013 Internet Initiative Japan Inc.
@@ -174,6 +174,14 @@ main(int argc, char *argv[])
 
 	if (radiusd_start(radiusd) != 0)
 		errx(EX_DATAERR, "start failed");
+
+#ifdef RADIUSD_DEBUG
+	if (pledge("stdio inet proc abort", NULL) == -1)
+		err(EXIT_FAILURE, "pledge");
+#else
+	if (pledge("stdio inet", NULL) == -1)
+		err(EXIT_FAILURE, "pledge");
+#endif
 
 	if (event_loop(0) < 0)
 		radiusd_stop(radiusd);
