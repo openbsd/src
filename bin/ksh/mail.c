@@ -1,15 +1,16 @@
-/*	$OpenBSD: mail.c,v 1.20 2015/10/09 19:36:27 tedu Exp $	*/
+/*	$OpenBSD: mail.c,v 1.21 2015/10/19 02:15:45 mmcc Exp $	*/
 
 /*
  * Mailbox checking code by Robert J. Gibson, adapted for PD ksh by
  * John R. MacMillan
  */
 
-#include "config.h"
-
-#include "sh.h"
 #include <sys/stat.h>
+
 #include <time.h>
+
+#include "config.h"
+#include "sh.h"
 
 #define MBMESSAGE	"you have mail in $_"
 

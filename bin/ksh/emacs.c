@@ -1,4 +1,4 @@
-/*	$OpenBSD: emacs.c,v 1.58 2015/10/16 23:18:59 mmcc Exp $	*/
+/*	$OpenBSD: emacs.c,v 1.59 2015/10/19 02:15:45 mmcc Exp $	*/
 
 /*
  *  Emacs-like command line editing and history
@@ -14,11 +14,13 @@
 #include "config.h"
 #ifdef EMACS
 
-#include "sh.h"
-#include <sys/stat.h>
 #include <sys/queue.h>
+#include <sys/stat.h>
+
 #include <ctype.h>
 #include <locale.h>
+
+#include "sh.h"
 #include "edit.h"
 
 static	Area	aedit;

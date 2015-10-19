@@ -1,4 +1,4 @@
-/*	$OpenBSD: expr.c,v 1.28 2015/09/22 21:50:40 millert Exp $	*/
+/*	$OpenBSD: expr.c,v 1.29 2015/10/19 02:15:45 mmcc Exp $	*/
 
 /*
  * Korn expression evaluation
@@ -7,9 +7,9 @@
  * todo: better error handling: if in builtin, should be builtin error, etc.
  */
 
-#include "sh.h"
 #include <ctype.h>
 
+#include "sh.h"
 
 /* The order of these enums is constrained by the order of opinfo[] */
 enum token {

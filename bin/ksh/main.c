@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.66 2015/10/18 18:05:35 mmcc Exp $	*/
+/*	$OpenBSD: main.c,v 1.67 2015/10/19 02:15:45 mmcc Exp $	*/
 
 /*
  * startup, main loop, environments and error handling
@@ -6,10 +6,12 @@
 
 #define	EXTERN				/* define EXTERNs in sh.h */
 
-#include "sh.h"
 #include <sys/stat.h>
-#include <pwd.h>
+
 #include <paths.h>
+#include <pwd.h>
+
+#include "sh.h"
 
 extern char **environ;
 

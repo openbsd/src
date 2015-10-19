@@ -1,14 +1,16 @@
-/*	$OpenBSD: exec.c,v 1.59 2015/10/17 18:43:22 mmcc Exp $	*/
+/*	$OpenBSD: exec.c,v 1.60 2015/10/19 02:15:45 mmcc Exp $	*/
 
 /*
  * execute command tree
  */
 
+#include <sys/stat.h>
+
+#include <ctype.h>
+#include <paths.h>
+
 #include "sh.h"
 #include "c_test.h"
-#include <ctype.h>
-#include <sys/stat.h>
-#include <paths.h>
 
 /* Does ps4 get parameter substitutions done? */
 # define PS4_SUBSTITUTE(s)	substitute((s), 0)

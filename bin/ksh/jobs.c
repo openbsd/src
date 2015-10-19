@@ -1,4 +1,4 @@
-/*	$OpenBSD: jobs.c,v 1.47 2015/09/17 21:39:54 nicm Exp $	*/
+/*	$OpenBSD: jobs.c,v 1.48 2015/10/19 02:15:45 mmcc Exp $	*/
 
 /*
  * Process and job control
@@ -15,11 +15,12 @@
  *
  */
 
-#include "sh.h"
-#include <sys/stat.h>
-#include <sys/wait.h>
-#include <sys/time.h>
 #include <sys/resource.h>
+#include <sys/stat.h>
+#include <sys/time.h>
+#include <sys/wait.h>
+
+#include "sh.h"
 #include "tty.h"
 
 /* Order important! */
