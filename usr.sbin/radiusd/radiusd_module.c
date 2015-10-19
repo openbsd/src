@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd_module.c,v 1.5 2015/10/19 07:18:31 yasuoka Exp $	*/
+/*	$OpenBSD: radiusd_module.c,v 1.6 2015/10/19 09:47:37 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -27,7 +27,6 @@
 #include <event.h>
 #include <fcntl.h>
 #include <imsg.h>
-#include <stdio.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
