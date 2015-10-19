@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.31 2015/10/17 10:20:33 reyk Exp $	*/
+/*	$OpenBSD: control.c,v 1.32 2015/10/19 09:17:23 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -173,8 +173,8 @@ control_accept(int listenfd, short event, void *arg)
 	socket_set_blockmode(connfd, BM_NONBLOCK);
 
 	if ((c = calloc(1, sizeof(struct ctl_conn))) == NULL) {
-		log_warn("%s", __func__);
 		close(connfd);
+		log_warn("%s: calloc", __func__);
 		return;
 	}
 
@@ -207,11 +207,11 @@ control_close(struct ctl_conn *c, const char *msg, struct imsg *imsg)
 	struct control_sock *cs = c->cs;
 
 	if (imsg) {
-		log_debug("%s: %s, imsg %d datalen %u", __func__, msg,
-		    imsg->hdr.type, IMSG_DATA_SIZE(imsg));
+		log_debug("%s: fd %d: %s, imsg %d datalen %u", __func__,
+		    c->iev.ibuf.fd, msg, imsg->hdr.type, IMSG_DATA_SIZE(imsg));
 		imsg_free(imsg);
 	} else
-		log_debug("%s: %s", __func__, msg);
+		log_debug("%s: fd %d: %s", __func__, c->iev.ibuf.fd, msg);
 
 	msgbuf_clear(&c->iev.ibuf.w);
 	TAILQ_REMOVE(&ctl_conns, c, entry);
