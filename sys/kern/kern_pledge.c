@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.55 2015/10/18 20:15:10 deraadt Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.56 2015/10/19 12:55:32 nicm Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -738,7 +738,7 @@ pledge_aftersyscall(struct proc *p, int code, int error)
 int
 pledge_recvfd_check(struct proc *p, struct file *fp)
 {
-	struct vnode *vp;
+	struct vnode *vp = NULL;
 	char *vtypes[] = { VTYPE_NAMES };
 
 	if ((p->p_p->ps_flags & PS_PLEDGE) == 0)
@@ -759,7 +759,7 @@ pledge_recvfd_check(struct proc *p, struct file *fp)
 			return (0);
 		break;
 	}
-	printf("recvfd type %d %s\n", fp->f_type, vtypes[fp->f_type]);
+	printf("recvfd type %d %s\n", fp->f_type, vp ? vtypes[vp->v_type] : "");
 	return pledge_fail(p, EPERM, PLEDGE_RECVFD);
 }
 
@@ -769,7 +769,7 @@ pledge_recvfd_check(struct proc *p, struct file *fp)
 int
 pledge_sendfd_check(struct proc *p, struct file *fp)
 {
-	struct vnode *vp;
+	struct vnode *vp = NULL;
 	char *vtypes[] = { VTYPE_NAMES };
 
 	if ((p->p_p->ps_flags & PS_PLEDGE) == 0)
@@ -786,12 +786,12 @@ pledge_sendfd_check(struct proc *p, struct file *fp)
 		return (0);
 	case DTYPE_VNODE:
 		vp = (struct vnode *)fp->f_data;
-	
+
 		if (vp->v_type != VDIR)
 			return (0);
 		break;
 	}
-	printf("sendfd type %d %s\n", fp->f_type, vtypes[fp->f_type]);
+	printf("sendfd type %d %s\n", fp->f_type, vp ? vtypes[vp->v_type] : "");
 	return pledge_fail(p, EPERM, PLEDGE_SENDFD);
 }
 
