@@ -1,4 +1,4 @@
-.\" $OpenBSD: iked.conf.5,v 1.39 2015/07/14 13:06:37 jmc Exp $
+.\" $OpenBSD: iked.conf.5,v 1.40 2015/10/19 21:32:13 naddy Exp $
 .\"
 .\" Copyright (c) 2010 - 2014 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 14 2015 $
+.Dd $Mdocdate: October 19 2015 $
 .Dt IKED.CONF 5
 .Os
 .Sh NAME
@@ -678,8 +678,10 @@ queue   ipsec parent std bandwidth 10M
 
 pass out on ix0 proto esp set queue ipsec
 
-pass out on ix0 tagged ipsec-developers.example.com set queue developers
-pass out on ix0 tagged ipsec-employees.example.com set queue employees
+pass out on ix0 tagged ipsec-developers.example.com \e
+	set queue developers
+pass out on ix0 tagged ipsec-employees.example.com \e
+	set queue employees
 .Ed
 .Pp
 The following example assigns the tags in the
@@ -718,7 +720,8 @@ a relevant NAT rule is required in
 For the example above,
 this would be:
 .Bd -literal -offset indent
-match out on enc0 from 192.168.1.0/24 to 192.168.2.0/24 nat-to 10.10.10.1
+match out on enc0 from 192.168.1.0/24 to 192.168.2.0/24 \e
+	nat-to 10.10.10.1
 .Ed
 .Pp
 From the peer's point of view,
