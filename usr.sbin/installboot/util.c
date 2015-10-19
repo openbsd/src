@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.9 2015/10/14 00:19:05 krw Exp $	*/
+/*	$OpenBSD: util.c,v 1.10 2015/10/19 19:05:24 krw Exp $	*/
 
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
@@ -37,7 +37,7 @@ filecopy(const char *srcfile, const char *dstfile)
 {
 	struct stat sb;
 	ssize_t sz, n;
-	int sfd, dfd, rslt = -1;
+	int sfd, dfd;
 	char *buf;
 
 	if ((buf = malloc(BUFSIZE)) == NULL) {
