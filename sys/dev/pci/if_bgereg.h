@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bgereg.h,v 1.127 2015/09/11 13:02:28 stsp Exp $	*/
+/*	$OpenBSD: if_bgereg.h,v 1.128 2015/10/19 05:31:25 jmatthew Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -2830,11 +2830,6 @@ struct bge_type {
 #define	BGE_TIMEOUT		100000
 #define	BGE_TXCONS_UNSET		0xFFFF	/* impossible value */
 
-struct txdmamap_pool_entry {
-	bus_dmamap_t dmamap;
-	SLIST_ENTRY(txdmamap_pool_entry) link;
-};
-
 #define	ASF_ENABLE		1
 #define	ASF_NEW_HANDSHAKE	2
 #define	ASF_STACKUP		4
@@ -2934,11 +2929,11 @@ struct bge_softc {
 	int			bge_txcnt;
 	struct timeout		bge_timeout;
 	struct timeout		bge_rxtimeout;
+	struct timeout		bge_rxtimeout_jumbo;
 	u_int32_t		bge_rx_discards;
 	u_int32_t		bge_tx_discards;
 	u_int32_t		bge_rx_inerrors;
 	u_int32_t		bge_rx_overruns;
 	u_int32_t		bge_tx_collisions;
-	SLIST_HEAD(, txdmamap_pool_entry) txdma_list;
-	struct txdmamap_pool_entry *txdma[BGE_TX_RING_CNT];
+	bus_dmamap_t		bge_txdma[BGE_TX_RING_CNT];
 };

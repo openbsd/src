@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.369 2015/07/19 06:28:12 yuo Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.370 2015/10/19 05:31:25 jmatthew Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -141,7 +141,7 @@ void bge_tick(void *);
 void bge_stats_update(struct bge_softc *);
 void bge_stats_update_regs(struct bge_softc *);
 int bge_cksum_pad(struct mbuf *);
-int bge_encap(struct bge_softc *, struct mbuf *, u_int32_t *);
+int bge_encap(struct bge_softc *, struct mbuf *, int *);
 int bge_compact_dma_runt(struct mbuf *);
 
 int bge_intr(void *);
@@ -1262,20 +1262,31 @@ uncreate:
 	return (1);
 }
 
+/*
+ * When the refill timeout for a ring is active, that ring is so empty
+ * that no more packets can be received on it, so the interrupt handler
+ * will not attempt to refill it, meaning we don't need to protect against
+ * interrupts here.
+ */
+
 void
 bge_rxtick(void *arg)
 {
 	struct bge_softc *sc = arg;
-	int s;
 
-	s = splnet();
 	if (ISSET(sc->bge_flags, BGE_RXRING_VALID) &&
 	    if_rxr_inuse(&sc->bge_std_ring) <= 8)
 		bge_fill_rx_ring_std(sc);
+}
+
+void
+bge_rxtick_jumbo(void *arg)
+{
+	struct bge_softc *sc = arg;
+
 	if (ISSET(sc->bge_flags, BGE_JUMBO_RXRING_VALID) &&
 	    if_rxr_inuse(&sc->bge_jumbo_ring) <= 8)
 		bge_fill_rx_ring_jumbo(sc);
-	splx(s);
 }
 
 void
@@ -1410,7 +1421,7 @@ bge_fill_rx_ring_jumbo(struct bge_softc *sc)
 	 * that now, then try again later.
 	 */
 	if (if_rxr_inuse(&sc->bge_jumbo_ring) <= 8)
-		timeout_add(&sc->bge_rxtimeout, 1);
+		timeout_add(&sc->bge_rxtimeout_jumbo, 1);
 }
 
 void
@@ -1446,7 +1457,6 @@ void
 bge_free_tx_ring(struct bge_softc *sc)
 {
 	int i;
-	struct txdmamap_pool_entry *dma;
 
 	if (!(sc->bge_flags & BGE_TXRING_VALID))
 		return;
@@ -1455,18 +1465,12 @@ bge_free_tx_ring(struct bge_softc *sc)
 		if (sc->bge_cdata.bge_tx_chain[i] != NULL) {
 			m_freem(sc->bge_cdata.bge_tx_chain[i]);
 			sc->bge_cdata.bge_tx_chain[i] = NULL;
-			SLIST_INSERT_HEAD(&sc->txdma_list, sc->txdma[i],
-					    link);
-			sc->txdma[i] = 0;
+			sc->bge_cdata.bge_tx_map[i] = NULL;
 		}
 		bzero(&sc->bge_rdata->bge_tx_ring[i],
 		    sizeof(struct bge_tx_bd));
-	}
 
-	while ((dma = SLIST_FIRST(&sc->txdma_list))) {
-		SLIST_REMOVE_HEAD(&sc->txdma_list, link);
-		bus_dmamap_destroy(sc->bge_dmatag, dma->dmamap);
-		free(dma, M_DEVBUF, 0);
+		bus_dmamap_destroy(sc->bge_dmatag, sc->bge_txdma[i]);
 	}
 
 	sc->bge_flags &= ~BGE_TXRING_VALID;
@@ -1476,9 +1480,7 @@ int
 bge_init_tx_ring(struct bge_softc *sc)
 {
 	int i;
-	bus_dmamap_t dmamap;
 	bus_size_t txsegsz, txmaxsegsz;
-	struct txdmamap_pool_entry *dma;
 
 	if (sc->bge_flags & BGE_TXRING_VALID)
 		return (0);
@@ -1505,22 +1507,10 @@ bge_init_tx_ring(struct bge_softc *sc)
 		txmaxsegsz = MCLBYTES;
 	}
 
-	SLIST_INIT(&sc->txdma_list);
 	for (i = 0; i < BGE_TX_RING_CNT; i++) {
 		if (bus_dmamap_create(sc->bge_dmatag, txmaxsegsz,
-		    BGE_NTXSEG, txsegsz, 0, BUS_DMA_NOWAIT, &dmamap))
+		    BGE_NTXSEG, txsegsz, 0, BUS_DMA_NOWAIT, &sc->bge_txdma[i]))
 			return (ENOBUFS);
-		if (dmamap == NULL)
-			panic("dmamap NULL in bge_init_tx_ring");
-		dma = malloc(sizeof(*dma), M_DEVBUF, M_NOWAIT);
-		if (dma == NULL) {
-			printf("%s: can't alloc txdmamap_pool_entry\n",
-			    sc->bge_dev.dv_xname);
-			bus_dmamap_destroy(sc->bge_dmatag, dmamap);
-			return (ENOMEM);
-		}
-		dma->dmamap = dmamap;
-		SLIST_INSERT_HEAD(&sc->txdma_list, dma, link);
 	}
 
 	sc->bge_flags |= BGE_TXRING_VALID;
@@ -3081,8 +3071,8 @@ bge_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Hookup IRQ last. */
 	DPRINTFN(5, ("pci_intr_establish\n"));
-	sc->bge_intrhand = pci_intr_establish(pc, ih, IPL_NET, bge_intr, sc,
-	    sc->bge_dev.dv_xname);
+	sc->bge_intrhand = pci_intr_establish(pc, ih, IPL_NET | IPL_MPSAFE,
+	    bge_intr, sc, sc->bge_dev.dv_xname);
 	if (sc->bge_intrhand == NULL) {
 		printf(": couldn't establish interrupt");
 		if (intrstr != NULL)
@@ -3139,6 +3129,7 @@ bge_attach(struct device *parent, struct device *self, void *aux)
 
 	timeout_set(&sc->bge_timeout, bge_tick, sc);
 	timeout_set(&sc->bge_rxtimeout, bge_rxtick, sc);
+	timeout_set(&sc->bge_rxtimeout_jumbo, bge_rxtick_jumbo, sc);
 	return;
 
 fail_6:
@@ -3578,15 +3569,17 @@ bge_txeof(struct bge_softc *sc)
 {
 	struct bge_tx_bd *cur_tx = NULL;
 	struct ifnet *ifp;
-	struct txdmamap_pool_entry *dma;
+	bus_dmamap_t dmamap;
 	bus_addr_t offset, toff;
 	bus_size_t tlen;
-	int tosync;
+	int tosync, freed, txcnt;
+	u_int32_t cons, newcons;
 	struct mbuf *m;
 
 	/* Nothing to do */
-	if (sc->bge_tx_saved_considx ==
-	    sc->bge_rdata->bge_status_block.bge_idx[0].bge_tx_cons_idx)
+	cons = sc->bge_tx_saved_considx; 
+	newcons = sc->bge_rdata->bge_status_block.bge_idx[0].bge_tx_cons_idx;
+	if (cons == newcons)
 		return;
 
 	ifp = &sc->arpcom.ac_if;
@@ -3597,14 +3590,12 @@ bge_txeof(struct bge_softc *sc)
 	    BUS_DMASYNC_POSTREAD);
 
 	offset = offsetof(struct bge_ring_data, bge_tx_ring);
-	tosync = sc->bge_rdata->bge_status_block.bge_idx[0].bge_tx_cons_idx -
-	    sc->bge_tx_saved_considx;
+	tosync = newcons - cons;
 
-	toff = offset + (sc->bge_tx_saved_considx * sizeof (struct bge_tx_bd));
+	toff = offset + (cons * sizeof (struct bge_tx_bd));
 
 	if (tosync < 0) {
-		tlen = (BGE_TX_RING_CNT - sc->bge_tx_saved_considx) *
-		    sizeof (struct bge_tx_bd);
+		tlen = (BGE_TX_RING_CNT - cons) * sizeof (struct bge_tx_bd);
 		bus_dmamap_sync(sc->bge_dmatag, sc->bge_ring_map,
 		    toff, tlen, BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 		tosync = -tosync;
@@ -3618,34 +3609,35 @@ bge_txeof(struct bge_softc *sc)
 	 * Go through our tx ring and free mbufs for those
 	 * frames that have been sent.
 	 */
-	while (sc->bge_tx_saved_considx !=
-	    sc->bge_rdata->bge_status_block.bge_idx[0].bge_tx_cons_idx) {
-		u_int32_t		idx = 0;
-
-		idx = sc->bge_tx_saved_considx;
-		cur_tx = &sc->bge_rdata->bge_tx_ring[idx];
+	freed = 0;
+	while (cons != newcons) {
+		cur_tx = &sc->bge_rdata->bge_tx_ring[cons];
 		if (cur_tx->bge_flags & BGE_TXBDFLAG_END)
 			ifp->if_opackets++;
-		m = sc->bge_cdata.bge_tx_chain[idx];
+		m = sc->bge_cdata.bge_tx_chain[cons];
 		if (m != NULL) {
-			sc->bge_cdata.bge_tx_chain[idx] = NULL;
-			dma = sc->txdma[idx];
-			bus_dmamap_sync(sc->bge_dmatag, dma->dmamap, 0,
-			    dma->dmamap->dm_mapsize, BUS_DMASYNC_POSTWRITE);
-			bus_dmamap_unload(sc->bge_dmatag, dma->dmamap);
-			SLIST_INSERT_HEAD(&sc->txdma_list, dma, link);
-			sc->txdma[idx] = NULL;
+			dmamap = sc->bge_cdata.bge_tx_map[cons];
+
+			sc->bge_cdata.bge_tx_chain[cons] = NULL;
+			sc->bge_cdata.bge_tx_map[cons] = NULL;
+			bus_dmamap_sync(sc->bge_dmatag, dmamap, 0,
+			    dmamap->dm_mapsize, BUS_DMASYNC_POSTWRITE);
+			bus_dmamap_unload(sc->bge_dmatag, dmamap);
 
 			m_freem(m);
 		}
-		sc->bge_txcnt--;
-		BGE_INC(sc->bge_tx_saved_considx, BGE_TX_RING_CNT);
+		freed++;
+		BGE_INC(cons, BGE_TX_RING_CNT);
 	}
 
-	if (sc->bge_txcnt < BGE_TX_RING_CNT - 16)
+	txcnt = atomic_sub_int_nv(&sc->bge_txcnt, freed);
+
+	if (txcnt < BGE_TX_RING_CNT - 16)
 		ifp->if_flags &= ~IFF_OACTIVE;
-	if (sc->bge_txcnt == 0)
+	if (txcnt == 0)
 		ifp->if_timer = 0;
+
+	sc->bge_tx_saved_considx = cons;
 }
 
 int
@@ -3693,8 +3685,11 @@ bge_intr(void *xsc)
 
 	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5700 ||
 	    statusword & BGE_STATFLAG_LINKSTATE_CHANGED ||
-	    BGE_STS_BIT(sc, BGE_STS_LINK_EVT))
+	    BGE_STS_BIT(sc, BGE_STS_LINK_EVT)) {
+		KERNEL_LOCK();
 		bge_link_upd(sc);
+		KERNEL_UNLOCK();
+	}
 
 	/* Re-enable interrupts. */
 	bge_writembx(sc, BGE_MBX_IRQ0_LO, statustag);
@@ -3706,8 +3701,11 @@ bge_intr(void *xsc)
 		/* Check TX ring producer/consumer */
 		bge_txeof(sc);
 
-		if (!IFQ_IS_EMPTY(&ifp->if_snd))
+		if (!IFQ_IS_EMPTY(&ifp->if_snd)) {
+			KERNEL_LOCK();
 			bge_start(ifp);
+			KERNEL_UNLOCK();
+		}
 	}
 
 	return (1);
@@ -3987,16 +3985,15 @@ bge_cksum_pad(struct mbuf *m)
  * pointers to descriptors.
  */
 int
-bge_encap(struct bge_softc *sc, struct mbuf *m_head, u_int32_t *txidx)
+bge_encap(struct bge_softc *sc, struct mbuf *m_head, int *txinc)
 {
 	struct bge_tx_bd	*f = NULL;
 	u_int32_t		frag, cur;
 	u_int16_t		csum_flags = 0;
-	struct txdmamap_pool_entry *dma;
-	bus_dmamap_t dmamap;
+	bus_dmamap_t		dmamap;
 	int			i = 0;
 
-	cur = frag = *txidx;
+	cur = frag = (sc->bge_tx_prodidx + *txinc) % BGE_TX_RING_CNT;
 
 	if (m_head->m_pkthdr.csum_flags) {
 		if (m_head->m_pkthdr.csum_flags & M_IPV4_CSUM_OUT)
@@ -4026,10 +4023,7 @@ bge_encap(struct bge_softc *sc, struct mbuf *m_head, u_int32_t *txidx)
 		return (ENOBUFS);
 
 doit:
-	dma = SLIST_FIRST(&sc->txdma_list);
-	if (dma == NULL)
-		return (ENOBUFS);
-	dmamap = dma->dmamap;
+	dmamap = sc->bge_txdma[cur];
 
 	/*
 	 * Start packing the mbufs in this chain into
@@ -4052,7 +4046,7 @@ doit:
 	}
 
 	/* Check if we have enough free send BDs. */
-	if (sc->bge_txcnt + dmamap->dm_nsegs >= BGE_TX_RING_CNT)
+	if (sc->bge_txcnt + *txinc + dmamap->dm_nsegs >= BGE_TX_RING_CNT)
 		goto fail_unload;
 
 	for (i = 0; i < dmamap->dm_nsegs; i++) {
@@ -4084,11 +4078,9 @@ doit:
 
 	sc->bge_rdata->bge_tx_ring[cur].bge_flags |= BGE_TXBDFLAG_END;
 	sc->bge_cdata.bge_tx_chain[cur] = m_head;
-	SLIST_REMOVE_HEAD(&sc->txdma_list, link);
-	sc->txdma[cur] = dma;
-	sc->bge_txcnt += dmamap->dm_nsegs;
-
-	*txidx = frag;
+	sc->bge_cdata.bge_tx_map[cur] = dmamap;
+	
+	*txinc += dmamap->dm_nsegs;
 
 	return (0);
 
@@ -4107,8 +4099,7 @@ bge_start(struct ifnet *ifp)
 {
 	struct bge_softc *sc;
 	struct mbuf *m_head;
-	u_int32_t prodidx;
-	int pkts;
+	int txinc;
 
 	sc = ifp->if_softc;
 
@@ -4117,55 +4108,44 @@ bge_start(struct ifnet *ifp)
 	if (!BGE_STS_BIT(sc, BGE_STS_LINK))
 		return;
 
-	prodidx = sc->bge_tx_prodidx;
-
-	for (pkts = 0; !IFQ_IS_EMPTY(&ifp->if_snd);) {
-		if (sc->bge_txcnt > BGE_TX_RING_CNT - 16) {
-			ifp->if_flags |= IFF_OACTIVE;
-			break;
-		}
-
+	txinc = 0;
+	while (1) {
 		IFQ_POLL(&ifp->if_snd, m_head);
 		if (m_head == NULL)
 			break;
 
-		/*
-		 * Pack the data into the transmit ring. If we
-		 * don't have room, set the OACTIVE flag and wait
-		 * for the NIC to drain the ring.
-		 */
-		if (bge_encap(sc, m_head, &prodidx)) {
-			ifp->if_flags |= IFF_OACTIVE;
+		if (bge_encap(sc, m_head, &txinc))
 			break;
-		}
 
 		/* now we are committed to transmit the packet */
 		IFQ_DEQUEUE(&ifp->if_snd, m_head);
-		pkts++;
 
 #if NBPFILTER > 0
-		/*
-		 * If there's a BPF listener, bounce a copy of this frame
-		 * to him.
-		 */
 		if (ifp->if_bpf)
 			bpf_mtap_ether(ifp->if_bpf, m_head, BPF_DIRECTION_OUT);
 #endif
 	}
-	if (pkts == 0)
-		return;
 
-	/* Transmit */
-	bge_writembx(sc, BGE_MBX_TX_HOST_PROD0_LO, prodidx);
-	if (BGE_CHIPREV(sc->bge_chipid) == BGE_CHIPREV_5700_BX)
-		bge_writembx(sc, BGE_MBX_TX_HOST_PROD0_LO, prodidx);
+	if (txinc != 0) {
+		int txcnt;
 
-	sc->bge_tx_prodidx = prodidx;
+		/* Transmit */
+		sc->bge_tx_prodidx = (sc->bge_tx_prodidx + txinc) %
+		    BGE_TX_RING_CNT;
+		bge_writembx(sc, BGE_MBX_TX_HOST_PROD0_LO, sc->bge_tx_prodidx);
+		if (BGE_CHIPREV(sc->bge_chipid) == BGE_CHIPREV_5700_BX)
+			bge_writembx(sc, BGE_MBX_TX_HOST_PROD0_LO,
+			    sc->bge_tx_prodidx);
 
-	/*
-	 * Set a timeout in case the chip goes out to lunch.
-	 */
-	ifp->if_timer = 5;
+		txcnt = atomic_add_int_nv(&sc->bge_txcnt, txinc);
+		if (txcnt > BGE_TX_RING_CNT - 16)
+			ifp->if_flags |= IFF_OACTIVE;
+
+		/*
+		 * Set a timeout in case the chip goes out to lunch.
+		 */
+		ifp->if_timer = 5;
+	}
 }
 
 void
@@ -4580,6 +4560,7 @@ bge_stop(struct bge_softc *sc)
 
 	timeout_del(&sc->bge_timeout);
 	timeout_del(&sc->bge_rxtimeout);
+	timeout_del(&sc->bge_rxtimeout_jumbo);
 
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 
@@ -4639,6 +4620,8 @@ bge_stop(struct bge_softc *sc)
 	 * Tell firmware we're shutting down.
 	 */
 	BGE_CLRBIT(sc, BGE_MODE_CTL, BGE_MODECTL_STACKUP);
+
+	intr_barrier(sc->bge_intrhand);
 
 	/* Free the RX lists. */
 	bge_free_rx_ring_std(sc);
