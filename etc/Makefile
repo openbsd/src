@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.410 2015/10/16 15:54:55 schwarze Exp $
+#	$OpenBSD: Makefile,v 1.411 2015/10/19 19:08:44 schwarze Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	Canada/Mountain
@@ -37,7 +37,7 @@ MUTABLE=changelist csh.cshrc csh.login csh.logout daily \
 	pf.os protocols rc rc.conf rpc services shells syslog.conf weekly
 
 # -rw-r--r--
-EXAMPLES=chio.conf dhclient.conf dhcpd.conf exports ftpchroot \
+EXAMPLES=chio.conf dhclient.conf dhcpd.conf exports \
 	httpd.conf ifstated.conf inetd.conf \
 	man.conf mixerctl.conf mrouted.conf \
 	ntpd.conf printcap rbootd.conf remote sensorsd.conf

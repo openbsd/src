@@ -1,4 +1,0 @@
-#	$OpenBSD: ftpchroot,v 1.1 2014/07/12 03:52:39 deraadt Exp $
-#
-# list of users (one per line) given ftp access to a chrooted area.
-# read by ftpd(8).

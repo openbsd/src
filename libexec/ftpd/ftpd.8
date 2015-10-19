@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ftpd.8,v 1.73 2015/01/15 19:06:32 schwarze Exp $
+.\"	$OpenBSD: ftpd.8,v 1.74 2015/10/19 19:08:44 schwarze Exp $
 .\"	$NetBSD: ftpd.8,v 1.8 1996/01/14 20:55:23 thorpej Exp $
 .\"
 .\" Copyright (c) 1985, 1988, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)ftpd.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: January 15 2015 $
+.Dd $Mdocdate: October 19 2015 $
 .Dt FTPD 8
 .Os
 .Sh NAME
@@ -315,6 +315,7 @@ The user must have a standard shell as described by
 .It
 If the user name appears in the file
 .Pa /etc/ftpchroot ,
+which is a text file containing one user name per line,
 the session's root will be changed to the user's login directory by
 .Xr chroot 2
 as for an
