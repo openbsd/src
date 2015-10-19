@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem.c,v 1.103 2015/10/07 09:53:00 kettenis Exp $	*/
+/*	$OpenBSD: i915_gem.c,v 1.104 2015/10/19 19:54:35 kettenis Exp $	*/
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -1060,7 +1060,6 @@ static bool missed_irq(struct drm_i915_private *dev_priv,
 	return test_bit(ring->id, &dev_priv->gpu_error.missed_irq_rings);
 }
 
-#ifdef notyet
 static bool can_wait_boost(struct drm_i915_file_private *file_priv)
 {
 	if (file_priv == NULL)
@@ -1068,7 +1067,6 @@ static bool can_wait_boost(struct drm_i915_file_private *file_priv)
 
 	return !atomic_xchg(&file_priv->rps_wait_boost, true);
 }
-#endif
 
 /**
  * __wait_seqno - wait until execution of seqno has finished
@@ -1211,7 +1209,6 @@ static int __wait_seqno(struct intel_ring_buffer *ring, u32 seqno,
 
 	timeout_expire = timeout ? jiffies + timespec_to_jiffies_timeout(timeout) : 0;
 
-#ifdef notyet
 	if (dev_priv->info->gen >= 6 && can_wait_boost(file_priv)) {
 		gen6_rps_boost(dev_priv);
 		if (file_priv)
@@ -1219,7 +1216,6 @@ static int __wait_seqno(struct intel_ring_buffer *ring, u32 seqno,
 					 &file_priv->mm.idle_work,
 					 msecs_to_jiffies(100));
 	}
-#endif
 
 	if (!irq_test_in_progress && WARN_ON(!ring->irq_get(ring)))
 		return -ENODEV;
