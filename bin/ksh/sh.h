@@ -1,4 +1,4 @@
-/*	$OpenBSD: sh.h,v 1.40 2015/10/18 18:05:35 mmcc Exp $	*/
+/*	$OpenBSD: sh.h,v 1.41 2015/10/19 14:01:37 mmcc Exp $	*/
 
 /*
  * Public Domain Bourne/Korn shell
@@ -73,7 +73,7 @@ typedef struct Area {
 	struct link *freelist;	/* free list */
 } Area;
 
-EXTERN	Area	aperm;		/* permanent object space */
+extern	Area	aperm;		/* permanent object space */
 #define	APERM	&aperm
 #define	ATEMP	&e->area
 
@@ -90,7 +90,7 @@ EXTERN	Area	aperm;		/* permanent object space */
 /*
  * parsing & execution environment
  */
-EXTERN	struct env {
+struct env {
 	short	type;			/* environment type - see below */
 	short	flags;			/* EF_* */
 	Area	area;			/* temporary allocation area */
@@ -99,7 +99,8 @@ EXTERN	struct env {
 	struct	env *oenv;		/* link to previous environment */
 	sigjmp_buf jbuf;		/* long jump back to env creator */
 	struct temp *temps;		/* temp files */
-} *e;
+};
+extern	struct env	*e;
 
 /* struct env.type values */
 #define	E_NONE	0		/* dummy environment */
@@ -203,7 +204,7 @@ enum sh_flag {
 
 #define Flag(f)	(shell_flags[(int) (f)])
 
-EXTERN	char shell_flags [FNFLAGS];
+extern	char shell_flags[FNFLAGS];
 
 EXTERN	char	null [] I__("");	/* null value for variable */
 
