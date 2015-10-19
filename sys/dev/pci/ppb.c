@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppb.c,v 1.63 2015/09/10 10:36:04 deraadt Exp $	*/
+/*	$OpenBSD: ppb.c,v 1.64 2015/10/19 19:24:54 kettenis Exp $	*/
 /*	$NetBSD: ppb.c,v 1.16 1997/06/06 23:48:05 thorpej Exp $	*/
 
 /*
@@ -429,7 +429,7 @@ ppbactivate(struct device *self, int act)
 
 		/* Restore prefetchable MMI/O window. */
 		blr = sc->sc_pmemlimit & PPB_MEM_MASK;
-		blr |= (sc->sc_pmembase >> PPB_MEM_SHIFT);
+		blr |= ((sc->sc_pmembase & PPB_MEM_MASK) >> PPB_MEM_SHIFT);
 		pci_conf_write(pc, tag, PPB_REG_PREFMEM, blr);
 #ifdef __LP64__
 		pci_conf_write(pc, tag, PPB_REG_PREFBASE_HI32,
