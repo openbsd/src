@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.257 2015/10/13 10:29:16 mpi Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.258 2015/10/19 11:59:26 mpi Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -1457,8 +1457,7 @@ ip_forward(struct mbuf *m, struct ifnet *ifp, int srcrt)
 	    satosin(rt_key(rt))->sin_addr.s_addr != 0 &&
 	    ipsendredirects && !srcrt &&
 	    !arpproxy(satosin(rt_key(rt))->sin_addr, m->m_pkthdr.ph_rtableid)) {
-		if (rt->rt_ifa &&
-		    (ip->ip_src.s_addr & ifatoia(rt->rt_ifa)->ia_netmask) ==
+		if ((ip->ip_src.s_addr & ifatoia(rt->rt_ifa)->ia_netmask) ==
 		    ifatoia(rt->rt_ifa)->ia_net) {
 		    if (rt->rt_flags & RTF_GATEWAY)
 			dest = satosin(rt->rt_gateway)->sin_addr.s_addr;

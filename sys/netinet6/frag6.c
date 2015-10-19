@@ -1,4 +1,4 @@
-/*	$OpenBSD: frag6.c,v 1.63 2015/09/10 16:39:39 mpi Exp $	*/
+/*	$OpenBSD: frag6.c,v 1.64 2015/10/19 11:59:26 mpi Exp $	*/
 /*	$KAME: frag6.c,v 1.40 2002/05/27 21:40:31 itojun Exp $	*/
 
 /*
@@ -183,10 +183,8 @@ frag6_input(struct mbuf **mp, int *offp, int proto)
 
 	rt = rtalloc_mpath(sin6tosa(&dst), &ip6->ip6_src.s6_addr32[0],
 	    m->m_pkthdr.ph_rtableid);
-
 	if (rt != NULL) {
-		if (rt->rt_ifa != NULL)
-			dstifp = ifatoia6(rt->rt_ifa)->ia_ifp;
+		dstifp = ifatoia6(rt->rt_ifa)->ia_ifp;
 		rtfree(rt);
 		rt = NULL;
 	}
