@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.157 2015/10/16 21:35:16 schwarze Exp $ */
+/*	$OpenBSD: main.c,v 1.158 2015/10/19 19:51:06 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2012, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -52,10 +52,6 @@ enum	outmode {
 	OUTMODE_ONE
 };
 
-typedef	void		(*out_mdoc)(void *, const struct roff_man *);
-typedef	void		(*out_man)(void *, const struct roff_man *);
-typedef	void		(*out_free)(void *);
-
 enum	outt {
 	OUTT_ASCII = 0,	/* -Tascii */
 	OUTT_LOCALE,	/* -Tlocale */
@@ -73,9 +69,6 @@ struct	curparse {
 	enum mandoclevel  wlevel;	/* ignore messages below this */
 	int		  wstop;	/* stop after a file with a warning */
 	enum outt	  outtype;	/* which output to use */
-	out_mdoc	  outmdoc;	/* mdoc output ptr */
-	out_man		  outman;	/* man output ptr */
-	out_free	  outfree;	/* free output ptr */
 	void		 *outdata;	/* data for output */
 	struct manoutput *outopts;	/* output options */
 };
@@ -453,8 +446,22 @@ main(int argc, char *argv[])
 			mparse_reset(curp.mp);
 	}
 
-	if (curp.outfree)
-		(*curp.outfree)(curp.outdata);
+	switch (curp.outtype) {
+	case OUTT_HTML:
+		html_free(curp.outdata);
+		break;
+	case OUTT_UTF8:
+	case OUTT_LOCALE:
+	case OUTT_ASCII:
+		ascii_free(curp.outdata);
+		break;
+	case OUTT_PDF:
+	case OUTT_PS:
+		pspdf_free(curp.outdata);
+		break;
+	default:
+		break;
+	}
 	mparse_free(curp.mp);
 	mchars_free();
 
@@ -633,56 +640,25 @@ parse(struct curparse *curp, int fd, const char *file)
 
 	/* If unset, allocate output dev now (if applicable). */
 
-	if ( ! (curp->outman && curp->outmdoc)) {
+	if (curp->outdata == NULL) {
 		switch (curp->outtype) {
 		case OUTT_HTML:
 			curp->outdata = html_alloc(curp->outopts);
-			curp->outfree = html_free;
 			break;
 		case OUTT_UTF8:
 			curp->outdata = utf8_alloc(curp->outopts);
-			curp->outfree = ascii_free;
 			break;
 		case OUTT_LOCALE:
 			curp->outdata = locale_alloc(curp->outopts);
-			curp->outfree = ascii_free;
 			break;
 		case OUTT_ASCII:
 			curp->outdata = ascii_alloc(curp->outopts);
-			curp->outfree = ascii_free;
 			break;
 		case OUTT_PDF:
 			curp->outdata = pdf_alloc(curp->outopts);
-			curp->outfree = pspdf_free;
 			break;
 		case OUTT_PS:
 			curp->outdata = ps_alloc(curp->outopts);
-			curp->outfree = pspdf_free;
-			break;
-		default:
-			break;
-		}
-
-		switch (curp->outtype) {
-		case OUTT_HTML:
-			curp->outman = html_man;
-			curp->outmdoc = html_mdoc;
-			break;
-		case OUTT_TREE:
-			curp->outman = tree_man;
-			curp->outmdoc = tree_mdoc;
-			break;
-		case OUTT_MAN:
-			curp->outmdoc = man_mdoc;
-			curp->outman = man_man;
-			break;
-		case OUTT_PDF:
-		case OUTT_ASCII:
-		case OUTT_UTF8:
-		case OUTT_LOCALE:
-		case OUTT_PS:
-			curp->outman = terminal_man;
-			curp->outmdoc = terminal_mdoc;
 			break;
 		default:
 			break;
@@ -695,10 +671,50 @@ parse(struct curparse *curp, int fd, const char *file)
 
 	if (man == NULL)
 		return;
-	if (curp->outmdoc != NULL && man->macroset == MACROSET_MDOC)
-		(*curp->outmdoc)(curp->outdata, man);
-	if (curp->outman != NULL && man->macroset == MACROSET_MAN)
-		(*curp->outman)(curp->outdata, man);
+	if (man->macroset == MACROSET_MDOC) {
+		switch (curp->outtype) {
+		case OUTT_HTML:
+			html_mdoc(curp->outdata, man);
+			break;
+		case OUTT_TREE:
+			tree_mdoc(curp->outdata, man);
+			break;
+		case OUTT_MAN:
+			man_mdoc(curp->outdata, man);
+			break;
+		case OUTT_PDF:
+		case OUTT_ASCII:
+		case OUTT_UTF8:
+		case OUTT_LOCALE:
+		case OUTT_PS:
+			terminal_mdoc(curp->outdata, man);
+			break;
+		default:
+			break;
+		}
+	}
+	if (man->macroset == MACROSET_MAN) {
+		switch (curp->outtype) {
+		case OUTT_HTML:
+			html_man(curp->outdata, man);
+			break;
+		case OUTT_TREE:
+			tree_man(curp->outdata, man);
+			break;
+		case OUTT_MAN:
+			man_man(curp->outdata, man);
+			break;
+		case OUTT_PDF:
+		case OUTT_ASCII:
+		case OUTT_UTF8:
+		case OUTT_LOCALE:
+		case OUTT_PS:
+			terminal_man(curp->outdata, man);
+			break;
+		default:
+			break;
+		}
+	}
 }
 
 static void
