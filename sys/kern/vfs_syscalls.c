@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.231 2015/10/16 13:37:43 millert Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.232 2015/10/20 06:40:00 semarie Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -1741,6 +1741,16 @@ dofstatat(struct proc *p, int fd, const char *path, struct stat *buf, int flag)
 	vput(nd.ni_vp);
 	if (error)
 		return (error);
+	if (p->p_pledgenote & TMN_STATLIE) {
+		if (S_ISDIR(sb.st_mode)) {
+			sb.st_mode &= ~ALLPERMS;
+			sb.st_mode |= S_IXUSR | S_IXGRP | S_IXOTH;
+			sb.st_uid = 0;
+			sb.st_gid = 0;
+			sb.st_gen = 0;
+		} else
+			return (ENOENT);
+	}
 	/* Don't let non-root see generation numbers (for NFS security) */
 	if (suser(p, 0))
 		sb.st_gen = 0;

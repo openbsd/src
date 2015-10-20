@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.59 2015/10/20 05:18:34 deraadt Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.60 2015/10/20 06:40:00 semarie Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -56,6 +56,7 @@
 #include "pty.h"
 
 int canonpath(const char *input, char *buf, size_t bufsize);
+int substrcmp(const char *p1, size_t s1, const char *p2, size_t s2);
 
 const u_int pledge_syscalls[SYS_MAXSYSCALL] = {
 	[SYS_exit] = 0xffffffff,
@@ -657,8 +658,8 @@ pledge_namei(struct proc *p, char *origpath)
 	if (p->p_p->ps_pledgepaths) {
 		struct whitepaths *wl = p->p_p->ps_pledgepaths;
 		char *fullpath, *builtpath = NULL, *canopath = NULL;
-		size_t builtlen = 0;
-		int i, error;
+		size_t builtlen = 0, canopathlen;
+		int i, error, pardir_found;
 
 		if (origpath[0] != '/') {
 			char *cwdpath, *cwd, *bp, *bpend;
@@ -704,16 +705,42 @@ pledge_namei(struct proc *p, char *origpath)
 		//    (long long)strlen(canopath));
 
 		error = ENOENT;
+		canopathlen = strlen(canopath);
+		pardir_found = 0;
 		for (i = 0; i < wl->wl_count && wl->wl_paths[i].name && error; i++) {
-			if (strncmp(canopath, wl->wl_paths[i].name,
-			    wl->wl_paths[i].len - 1) == 0) {
+			int substr = substrcmp(wl->wl_paths[i].name,
+			    wl->wl_paths[i].len - 1, canopath, canopathlen);
+
+			//printf("pledge: check: %s [%ld] %s [%ld] = %d\n",
+			//    wl->wl_paths[i].name, wl->wl_paths[i].len - 1,
+			//    canopath, canopathlen,
+			//    substr);
+
+			/* wl_paths[i].name is a substring of canopath */
+			if (substr == 1) {
 				u_char term = canopath[wl->wl_paths[i].len - 1];
 
 				if (term == '\0' || term == '/' ||
 				    wl->wl_paths[i].name[1] == '\0')
 					error = 0;
+
+			/* canopath is a substring of wl_paths[i].name */
+			} else if (substr == 2) {
+				u_char term = wl->wl_paths[i].name[canopathlen];
+
+				if (canopath[1] == '\0' || term == '/')
+					pardir_found = 1;
 			}
 		}
+		if (pardir_found)
+			switch (p->p_pledge_syscall) {
+			case SYS_stat:
+			case SYS_lstat:
+			case SYS_fstatat:
+			case SYS_fstat:
+				p->p_pledgenote |= TMN_STATLIE;
+				error = 0;
+			}
 		free(canopath, M_TEMP, MAXPATHLEN);
 		return (error);			/* Don't hint why it failed */
 	}
@@ -1253,4 +1280,20 @@ canonpath(const char *input, char *buf, size_t bufsize)
 		*(end - 1) = 0; /* remove trailing '/' */
 
 	return 0;
+}
+
+int
+substrcmp(const char *p1, size_t s1, const char *p2, size_t s2)
+{
+	size_t i;
+	for (i = 0; i < s1 || i < s2; i++) {
+		if (p1[i] != p2[i])
+			break;
+	}
+	if (i == s1) {
+		return (1);	/* string1 is a subpath of string2 */
+	} else if (i == s2)
+		return (2);	/* string2 is a subpath of string1 */
+	else
+		return (0);	/* no subpath */
 }
