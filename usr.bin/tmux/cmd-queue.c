@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-queue.c,v 1.26 2015/09/16 22:41:00 nicm Exp $ */
+/* $OpenBSD: cmd-queue.c,v 1.27 2015/10/20 21:12:08 nicm Exp $ */
 
 /*
  * Copyright (c) 2013 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -203,8 +203,8 @@ cmdq_continue(struct cmd_q *cmdq)
 	cmdq->references++;
 	notify_disable();
 
-	log_debug("continuing cmdq %p: flags=%#x, client=%d", cmdq, cmdq->flags,
-	    c != NULL ? c->ibuf.fd : -1);
+	log_debug("continuing cmdq %p: flags %#x, client %p", cmdq, cmdq->flags,
+	    c);
 
 	empty = TAILQ_EMPTY(&cmdq->queue);
 	if (empty)

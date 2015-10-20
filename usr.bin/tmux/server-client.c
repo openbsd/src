@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.156 2015/10/20 14:19:27 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.157 2015/10/20 21:12:09 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -131,7 +131,7 @@ server_client_create(int fd)
 	evtimer_set(&c->repeat_timer, server_client_repeat_timer, c);
 
 	TAILQ_INSERT_TAIL(&clients, c, entry);
-	log_debug("new client %d", fd);
+	log_debug("new client %p", c);
 }
 
 /* Open client terminal if needed. */
@@ -172,7 +172,7 @@ server_client_lost(struct client *c)
 		c->stdin_callback(c, 1, c->stdin_callback_data);
 
 	TAILQ_REMOVE(&clients, c, entry);
-	log_debug("lost client %d", c->ibuf.fd);
+	log_debug("lost client %p", c);
 
 	/*
 	 * If CLIENT_TERMINAL hasn't been set, then tty_init hasn't been called
@@ -238,7 +238,7 @@ server_client_lost(struct client *c)
 void
 server_client_unref(struct client *c)
 {
-	log_debug("unref client %d (%d references)", c->ibuf.fd, c->references);
+	log_debug("unref client %p (%d references)", c, c->references);
 
 	c->references--;
 	if (c->references == 0)
@@ -251,7 +251,7 @@ server_client_free(unused int fd, unused short events, void *arg)
 {
 	struct client	*c = arg;
 
-	log_debug("free client %d (%d references)", c->ibuf.fd, c->references);
+	log_debug("free client %p (%d references)", c, c->references);
 
 	if (c->references == 0)
 		free(c);
@@ -998,7 +998,7 @@ server_client_msg_dispatch(struct client *c)
 			continue;
 		}
 
-		log_debug("got %u from client %d", imsg.hdr.type, c->ibuf.fd);
+		log_debug("got %u from client %p", imsg.hdr.type, c);
 		switch (imsg.hdr.type) {
 		case MSG_IDENTIFY_FLAGS:
 		case MSG_IDENTIFY_TERM:

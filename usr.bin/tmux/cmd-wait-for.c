@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-wait-for.c,v 1.9 2015/09/13 10:45:55 nicm Exp $ */
+/* $OpenBSD: cmd-wait-for.c,v 1.10 2015/10/20 21:12:08 nicm Exp $ */
 
 /*
  * Copyright (c) 2013 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -170,12 +170,11 @@ cmd_wait_for_wait(struct cmd_q *cmdq, const char *name,
 		wc = cmd_wait_for_add(name);
 
 	if (wc->woken) {
-		log_debug("wait channel %s already woken (client %d)", wc->name,
-		    c->tty.fd);
+		log_debug("wait channel %s already woken (%p)", wc->name, c);
 		cmd_wait_for_remove(wc);
 		return (CMD_RETURN_NORMAL);
 	}
-	log_debug("wait channel %s not woken (client %d)", wc->name, c->tty.fd);
+	log_debug("wait channel %s not woken (%p)", wc->name, c);
 
 	TAILQ_INSERT_TAIL(&wc->waiters, cmdq, waitentry);
 	cmdq->references++;

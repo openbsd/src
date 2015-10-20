@@ -1,4 +1,4 @@
-/* $OpenBSD: server-fn.c,v 1.88 2015/09/10 08:58:14 nicm Exp $ */
+/* $OpenBSD: server-fn.c,v 1.89 2015/10/20 21:12:09 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -64,7 +64,7 @@ server_write_client(struct client *c, enum msgtype type, const void *buf,
 
 	if (c->flags & CLIENT_BAD)
 		return (-1);
-	log_debug("writing %d to client %d", type, c->ibuf.fd);
+	log_debug("writing %d to client %p", type, c);
 	error = imsg_compose(ibuf, type, PROTOCOL_VERSION, -1, -1,
 	    (void *) buf, len);
 	if (error == 1)

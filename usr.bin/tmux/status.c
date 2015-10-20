@@ -1,4 +1,4 @@
-/* $OpenBSD: status.c,v 1.135 2015/09/14 10:25:52 nicm Exp $ */
+/* $OpenBSD: status.c,v 1.136 2015/10/20 21:12:09 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -164,7 +164,7 @@ status_timer_callback(unused int fd, unused short events, void *arg)
 
 	if (tv.tv_sec != 0)
 		evtimer_add(&c->status_timer, &tv);
-	log_debug("client %d, status interval %d", c->ibuf.fd, (int)tv.tv_sec);
+	log_debug("client %p, status interval %d", c, (int)tv.tv_sec);
 }
 
 /* Start status timer for client. */
