@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.302 2015/10/19 12:10:05 mpi Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.303 2015/10/20 20:22:42 benno Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -1088,6 +1088,7 @@ ip_ctloutput(int op, struct socket *so, int level, int optname,
 		case IP_RECVDSTPORT:
 		case IP_RECVRTABLE:
 		case IP_IPSECFLOWINFO:
+		case IP_IPDEFTTL:
 			*mp = m = m_get(M_WAIT, MT_SOOPTS);
 			m->m_len = sizeof(int);
 			switch (optname) {
@@ -1102,6 +1103,10 @@ ip_ctloutput(int op, struct socket *so, int level, int optname,
 
 			case IP_MINTTL:
 				optval = inp->inp_ip_minttl;
+				break;
+
+			case IP_IPDEFTTL:
+				optval = ip_defttl;
 				break;
 
 #define	OPTBIT(bit)	(inp->inp_flags & bit ? 1 : 0)
