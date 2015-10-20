@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-bgp.c,v 1.17 2015/01/16 06:40:21 deraadt Exp $	*/
+/*	$OpenBSD: print-bgp.c,v 1.18 2015/10/20 11:29:07 sthen Exp $	*/
 
 /*
  * Copyright (C) 1999 WIDE Project.
@@ -441,18 +441,23 @@ bgp_attr_print(const struct bgp_attr *attr, const u_char *dat, int len)
 			break;
 		}
 		if (!len) {
+			/* valid: local originated routes to IBGP peers */
 			printf(" empty");
 			break;
 		}
 		while (p < dat + len) {
-			TCHECK(p[0]);
+			TCHECK2(p[0], 2);
 			if (asn_bytes == 0) {
+				if (p[1] == 0) {
+				/* invalid: segment contains one or more AS */
+					printf(" malformed");
+					break;
+				}
 				asn_bytes = (len-2)/p[1];
 			}
 			printf("%s",
 			    tok2str(bgp_as_path_segment_open_values,
 			    "?", p[0]));
-
 			for (i = 0; i < p[1] * asn_bytes; i += asn_bytes) {
 				TCHECK2(p[2 + i], asn_bytes);
 				printf("%s", i == 0 ? "" : " ");
@@ -464,11 +469,9 @@ bgp_attr_print(const struct bgp_attr *attr, const u_char *dat, int len)
 					printf("%u",
 					    EXTRACT_16BITS(&p[2 + i + 2]));
 			}
-			TCHECK(p[0]);
 			printf("%s",
 			    tok2str(bgp_as_path_segment_close_values,
 			    "?", p[0]));
-			TCHECK(p[1]);
 			p += 2 + p[1] * asn_bytes;
 		}
 		break;
