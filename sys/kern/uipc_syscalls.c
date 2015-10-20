@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.115 2015/10/18 20:15:10 deraadt Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.116 2015/10/20 01:44:00 deraadt Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -930,7 +930,7 @@ sys_setsockopt(struct proc *p, void *v, register_t *retval)
 		error = EINVAL;
 		goto bad;
 	}
-	if (pledge_setsockopt_check(p, SCARG(uap, level), SCARG(uap, name))) {
+	if (pledge_sockopt_check(p, SCARG(uap, level), SCARG(uap, name))) {
 		error = pledge_fail(p, EPERM, PLEDGE_INET);
 		goto bad;
 	}
@@ -985,6 +985,10 @@ sys_getsockopt(struct proc *p, void *v, register_t *retval)
 
 	if ((error = getsock(p, SCARG(uap, s), &fp)) != 0)
 		return (error);
+	if (pledge_sockopt_check(p, SCARG(uap, level), SCARG(uap, name))) {
+		error = pledge_fail(p, EPERM, PLEDGE_INET);
+		goto out;
+	}
 	if (isdnssocket((struct socket *)fp->f_data)) {
 		error = EINVAL;
 		goto out;

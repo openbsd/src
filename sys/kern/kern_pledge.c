@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.57 2015/10/19 16:20:56 deraadt Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.58 2015/10/20 01:44:00 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -86,6 +86,9 @@ const u_int pledge_syscalls[SYS_MAXSYSCALL] = {
 	[SYS_umask] = PLEDGE_SELF,
 	[SYS_sysctl] = PLEDGE_SELF,	/* read-only; narrow subset */
 	[SYS_adjtime] = PLEDGE_SELF,	/* read-only */
+
+	[SYS_setsockopt] = PLEDGE_SELF,	/* white list */
+	[SYS_getsockopt] = PLEDGE_SELF,
 
 	[SYS_fchdir] = PLEDGE_SELF,	/* careful of directory fd inside jails */
 
@@ -242,8 +245,6 @@ const u_int pledge_syscalls[SYS_MAXSYSCALL] = {
 	[SYS_accept] = PLEDGE_INET | PLEDGE_UNIX,
 	[SYS_getpeername] = PLEDGE_INET | PLEDGE_UNIX,
 	[SYS_getsockname] = PLEDGE_INET | PLEDGE_UNIX,
-	[SYS_setsockopt] = PLEDGE_INET | PLEDGE_UNIX,
-	[SYS_getsockopt] = PLEDGE_INET | PLEDGE_UNIX,
 
 	[SYS_flock] = PLEDGE_FLOCK | PLEDGE_YP_ACTIVE,
 };
@@ -1057,12 +1058,35 @@ pledge_ioctl_check(struct proc *p, long com, void *v)
 }
 
 int
-pledge_setsockopt_check(struct proc *p, int level, int optname)
+pledge_sockopt_check(struct proc *p, int level, int optname)
 {
 	if ((p->p_p->ps_flags & PS_PLEDGE) == 0)
 		return (0);
 
-	/* common case for PLEDGE_UNIX and PLEDGE_INET */
+	/* Always allow these, which are too common to reject */
+	switch (level) {
+	case SOL_SOCKET:
+	        switch (optname) {
+	        case SO_RCVBUF:
+	                return 0;
+	        }
+	        break;
+	}
+
+	if ((p->p_p->ps_pledge & (PLEDGE_INET|PLEDGE_UNIX|PLEDGE_DNS)) == 0)
+	        return (EPERM);
+	/* In use by some service libraries */
+	switch (level) {
+	case SOL_SOCKET:
+	        switch (optname) {
+	        case SO_TIMESTAMP:
+	                return 0;
+	        }
+	        break;
+	}
+
+	if ((p->p_p->ps_pledge & (PLEDGE_INET|PLEDGE_UNIX)) == 0)
+		return (EPERM);
 	switch (level) {
 	case SOL_SOCKET:
 		switch (optname) {
@@ -1074,7 +1098,6 @@ pledge_setsockopt_check(struct proc *p, int level, int optname)
 
 	if ((p->p_p->ps_pledge & PLEDGE_INET) == 0)
 		return (EPERM);
-
 	switch (level) {
 	case IPPROTO_TCP:
 		switch (optname) {
