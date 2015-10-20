@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vrreg.h,v 1.36 2014/07/08 05:35:19 dlg Exp $	*/
+/*	$OpenBSD: if_vrreg.h,v 1.37 2015/10/20 17:08:39 chrisz Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -413,6 +413,12 @@ struct vr_desc {
 #define VR_TXSTAT_BUSERR	0x00002000
 #define VR_TXSTAT_JABTIMEO	0x00004000
 #define VR_TXSTAT_ERRSUM	0x00008000
+/*
+ * Note there are only 15 bits total.
+ * The drop eligible indicator is left out.
+ * VLAN ID at the lower 12 bits 0x0FFF;
+ * priority code point at the upper 3 bits 0x7000.
+ */
 #define VR_TXSTAT_PQMASK	0x7FFF0000
 #define VR_TXSTAT_OWN		0x80000000
 #define VR_TXSTAT_PQSHIFT	16

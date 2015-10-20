@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vr.c,v 1.142 2015/09/12 10:15:10 miod Exp $	*/
+/*	$OpenBSD: if_vr.c,v 1.143 2015/10/20 17:08:39 chrisz Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -1242,11 +1242,16 @@ vr_encap(struct vr_softc *sc, struct vr_chain **cp, struct mbuf *m_head)
 	}
 
 #if NVLAN > 0
-	/* Tell chip to insert VLAN tag if needed. */
+	/*
+	 * Tell chip to insert VLAN tag if needed.
+	 * This chip expects the VLAN ID (0x0FFF) and the PCP (0xE000)
+	 * in only 15 bits without the gap at 0x1000 (reserved for DEI).
+	 * Therefore we need to de- / re-construct the VLAN header.
+	 */
 	if (m_head->m_flags & M_VLANTAG) {
 		u_int32_t vtag = m_head->m_pkthdr.ether_vtag;
-		vtag = (vtag << VR_TXSTAT_PQSHIFT) & VR_TXSTAT_PQMASK;
-		vr_status |= vtag;
+		vtag = EVL_VLANOFTAG(vtag) | EVL_PRIOFTAG(vtag) << 12;
+		vr_status |= vtag << VR_TXSTAT_PQSHIFT;
 		vr_ctl |= htole32(VR_TXCTL_INSERTTAG);
 	}
 #endif
