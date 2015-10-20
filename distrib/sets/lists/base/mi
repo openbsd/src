@@ -58,7 +58,6 @@
 ./etc/examples/dvmrpd.conf
 ./etc/examples/eigrpd.conf
 ./etc/examples/exports
-./etc/examples/ftpchroot
 ./etc/examples/hostapd.conf
 ./etc/examples/httpd.conf
 ./etc/examples/ifstated.conf
