@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_pcb.c,v 1.80 2015/10/19 12:11:28 mpi Exp $	*/
+/*	$OpenBSD: in6_pcb.c,v 1.81 2015/10/20 18:04:03 deraadt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -370,7 +370,6 @@ in6_pcbconnect(struct inpcb *inp, struct mbuf *nam)
 	struct in6_addr *in6a = NULL;
 	struct sockaddr_in6 *sin6 = mtod(nam, struct sockaddr_in6 *);
 	struct ifnet *ifp = NULL;	/* outgoing interface */
-	struct proc *p = curproc;
 	int error = 0;
 	struct sockaddr_in6 tmp;
 
@@ -382,9 +381,6 @@ in6_pcbconnect(struct inpcb *inp, struct mbuf *nam)
 		return (EAFNOSUPPORT);
 	if (sin6->sin6_port == 0)
 		return (EADDRNOTAVAIL);
-
-	if (pledge_dns_check(p, sin6->sin6_port))
-		return (pledge_fail(p, EPERM, PLEDGE_DNS));
 
 	/* reject IPv4 mapped address, we have no support for it */
 	if (IN6_IS_ADDR_V4MAPPED(&sin6->sin6_addr))

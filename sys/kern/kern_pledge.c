@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.61 2015/10/20 17:44:48 reyk Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.62 2015/10/20 18:04:03 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -233,19 +233,19 @@ const u_int pledge_syscalls[SYS_MAXSYSCALL] = {
 	[SYS_lchown] = PLEDGE_FATTR,
 	[SYS_fchown] = PLEDGE_FATTR,
 
-	/* XXX remove PLEDGE_DNS from socket/connect in 1 week */
 	[SYS_socket] = PLEDGE_INET | PLEDGE_UNIX | PLEDGE_DNS | PLEDGE_YP_ACTIVE,
 	[SYS_connect] = PLEDGE_INET | PLEDGE_UNIX | PLEDGE_DNS | PLEDGE_YP_ACTIVE,
+	[SYS_bind] = PLEDGE_INET | PLEDGE_UNIX | PLEDGE_DNS,
+	[SYS_getsockname] = PLEDGE_INET | PLEDGE_UNIX | PLEDGE_DNS,
 
+	/* XXX remove this, and the code in uipc_syscalls.c */
 	[SYS_dnssocket] = PLEDGE_DNS,
 	[SYS_dnsconnect] = PLEDGE_DNS,
 
 	[SYS_listen] = PLEDGE_INET | PLEDGE_UNIX,
-	[SYS_bind] = PLEDGE_INET | PLEDGE_UNIX,
 	[SYS_accept4] = PLEDGE_INET | PLEDGE_UNIX,
 	[SYS_accept] = PLEDGE_INET | PLEDGE_UNIX,
 	[SYS_getpeername] = PLEDGE_INET | PLEDGE_UNIX,
-	[SYS_getsockname] = PLEDGE_INET | PLEDGE_UNIX,
 
 	[SYS_flock] = PLEDGE_FLOCK | PLEDGE_YP_ACTIVE,
 };
@@ -936,25 +936,12 @@ pledge_adjtime_check(struct proc *p, const void *v)
 }
 
 int
-pledge_recvit_check(struct proc *p, const void *from)
-{
-	if ((p->p_p->ps_flags & PS_PLEDGE) == 0)
-		return (0);
-
-	if ((p->p_p->ps_pledge & (PLEDGE_INET | PLEDGE_UNIX)))
-		return (0);		/* may use address */
-	if (from == NULL)
-		return (0);		/* behaves just like read */
-	return (EPERM);
-}
-
-int
 pledge_sendit_check(struct proc *p, const void *to)
 {
 	if ((p->p_p->ps_flags & PS_PLEDGE) == 0)
 		return (0);
 
-	if ((p->p_p->ps_pledge & (PLEDGE_INET | PLEDGE_UNIX)))
+	if ((p->p_p->ps_pledge & (PLEDGE_INET | PLEDGE_UNIX | PLEDGE_DNS)))
 		return (0);		/* may use address */
 	if (to == NULL)
 		return (0);		/* behaves just like write */
@@ -1103,7 +1090,7 @@ pledge_sockopt_check(struct proc *p, int level, int optname)
 	}
 
 	if ((p->p_p->ps_pledge & (PLEDGE_INET|PLEDGE_UNIX|PLEDGE_DNS)) == 0)
-	        return (EPERM);
+	 	return (EINVAL);
 	/* In use by some service libraries */
 	switch (level) {
 	case SOL_SOCKET:
@@ -1115,18 +1102,18 @@ pledge_sockopt_check(struct proc *p, int level, int optname)
 	}
 
 	if ((p->p_p->ps_pledge & (PLEDGE_INET|PLEDGE_UNIX)) == 0)
-		return (EPERM);
+		return (EINVAL);
 	switch (level) {
 	case SOL_SOCKET:
 		switch (optname) {
 		case SO_RTABLE:
-			return (EPERM);
+			return (EINVAL);
 		}
 		return (0);
 	}
 
 	if ((p->p_p->ps_pledge & PLEDGE_INET) == 0)
-		return (EPERM);
+		return (EINVAL);
 	switch (level) {
 	case IPPROTO_TCP:
 		switch (optname) {
@@ -1183,15 +1170,15 @@ pledge_sockopt_check(struct proc *p, int level, int optname)
 }
 
 int
-pledge_dns_check(struct proc *p, in_port_t port)
+pledge_socket_check(struct proc *p, int dns)
 {
 	if ((p->p_p->ps_flags & PS_PLEDGE) == 0)
 		return (0);
 
-	if ((p->p_p->ps_pledge & PLEDGE_INET))
+	if (dns && (p->p_p->ps_pledge & PLEDGE_DNS))
 		return (0);
-	if ((p->p_p->ps_pledge & PLEDGE_DNS) && port == htons(53))
-		return (0);	/* Allow a DNS connect outbound */
+	if ((p->p_p->ps_pledge & (PLEDGE_INET|PLEDGE_UNIX|PLEDGE_YP_ACTIVE)))
+		return (0);
 	return (EPERM);
 }
 
