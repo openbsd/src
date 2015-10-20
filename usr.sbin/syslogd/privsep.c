@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.58 2015/10/18 16:35:06 bluhm Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.59 2015/10/20 12:40:19 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2003 Anil Madhavapeddy <anil@recoil.org>
@@ -144,7 +144,7 @@ priv_init(char *conf, int numeric, int lockfd, int nullfd, char *argv[])
 		return 0;
 	}
 
-	if (pledge("stdio rpath wpath cpath inet dns getpw sendfd id proc exec",
+	if (pledge("stdio rpath wpath cpath dns getpw sendfd id proc exec",
 	    NULL) == -1)
 		err(1, "pledge priv");
 
