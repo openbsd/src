@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.43 2013/10/18 14:04:04 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.44 2015/10/20 16:18:23 miod Exp $
 
 REV=		${OSrev}
 
@@ -62,13 +62,8 @@ ${FLOPPY}:	bsd.gz ${BOOT} ${BOOTXX}
 	disklabel -w ${VND} ${FLOPPYTYPE}
 	newfs ${NEWFSOPTS_FD} ${VND_RDEV}
 	mount ${VND_DEV} ${MOUNT_POINT}
-	cp ${BOOT} ${MOUNT_POINT}/
 	cp bsd.gz ${MOUNT_POINT}/bsd
-	${INSTALLBOOT} -v ${BOOTIN} ${BOOTXX} \
-		`echo ${VND_RDEV} | sed -e 's/a$$/c/'`
-.if (${MACHINE_ARCH} == "vax")
-	disklabel -B -b ${BOOTXX} ${VND}
-.endif
+	${INSTALLBOOT} -v -r ${MOUNT_POINT} ${VND} ${BOOTXX} ${BOOT}
 	@echo ""
 	@df -i ${MOUNT_POINT}
 	@echo ""
