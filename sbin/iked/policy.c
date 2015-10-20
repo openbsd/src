@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.40 2015/10/01 10:59:23 reyk Exp $	*/
+/*	$OpenBSD: policy.c,v 1.41 2015/10/20 06:42:59 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -47,6 +47,7 @@ void
 policy_init(struct iked *env)
 {
 	TAILQ_INIT(&env->sc_policies);
+	TAILQ_INIT(&env->sc_ocsp);
 	RB_INIT(&env->sc_users);
 	RB_INIT(&env->sc_sas);
 	RB_INIT(&env->sc_activesas);
