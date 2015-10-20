@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_dual.c,v 1.4 2015/10/05 01:59:33 renato Exp $ */
+/*	$OpenBSD: rde_dual.c,v 1.5 2015/10/20 11:26:40 jsg Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -1118,9 +1118,11 @@ rde_check_link_down_rn(struct rde_nbr *nbr, struct rt_node *rn,
 	struct eigrp_route	*successor;
 	uint32_t		 old_fdistance;
 	struct rinfo		 ri;
+	enum route_type		 type;
 
 	old_fdistance = rn->successor.fdistance;
 
+	type = route->type;
 	route_del(rn, route);
 
 	switch (rn->state) {
@@ -1158,7 +1160,7 @@ rde_check_link_down_rn(struct rde_nbr *nbr, struct rt_node *rn,
 	if (rn->state & DUAL_STA_ACTIVE_ALL) {
 		reply = reply_outstanding_find(rn, nbr);
 		if (reply) {
-			rinfo_fill_infinite(rn, route->type, &ri);
+			rinfo_fill_infinite(rn, type, &ri);
 			rde_check_reply(nbr, &ri, 0);
 		}
 	}
