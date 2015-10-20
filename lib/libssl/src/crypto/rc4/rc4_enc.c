@@ -1,25 +1,25 @@
-/* $OpenBSD: rc4_enc.c,v 1.13 2014/10/28 07:35:59 jsg Exp $ */
+/* $OpenBSD: rc4_enc.c,v 1.14 2015/10/20 15:50:13 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
  * by Eric Young (eay@cryptsoft.com).
  * The implementation was written so as to conform with Netscapes SSL.
- * 
+ *
  * This library is free for commercial and non-commercial use as long as
  * the following conditions are aheared to.  The following conditions
  * apply to all code found in this distribution, be it the RC4, RSA,
  * lhash, DES, etc., code; not just the SSL code.  The SSL documentation
  * included with this distribution is covered by the same copyright terms
  * except that the holder is Tim Hudson (tjh@cryptsoft.com).
- * 
+ *
  * Copyright remains Eric Young's, and as such any Copyright notices in
  * the code are not to be removed.
  * If this package is used in a product, Eric Young should be given attribution
  * as the author of the parts of the library used.
  * This can be in the form of a textual message at program startup or
  * in documentation (online or textual) provided with the package.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -34,10 +34,10 @@
  *     Eric Young (eay@cryptsoft.com)"
  *    The word 'cryptographic' can be left out if the rouines from the library
  *    being used are not cryptographic related :-).
- * 4. If you include any Windows specific code (or a derivative thereof) from 
+ * 4. If you include any Windows specific code (or a derivative thereof) from
  *    the apps directory (application code) you must include an acknowledgement:
  *    "This product includes software written by Tim Hudson (tjh@cryptsoft.com)"
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY ERIC YOUNG ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -49,7 +49,7 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- * 
+ *
  * The licence and distribution terms for any publically available version or
  * derivative of this code cannot be changed.  i.e. this code cannot simply be
  * copied and put under another distribution licence
@@ -68,16 +68,17 @@
  * Date: Wed, 14 Sep 1994 06:35:31 GMT
  */
 
-void RC4(RC4_KEY *key, size_t len, const unsigned char *indata,
-	     unsigned char *outdata)
-	{
-        RC4_INT *d;
-        RC4_INT x,y,tx,ty;
+void
+RC4(RC4_KEY *key, size_t len, const unsigned char *indata,
+    unsigned char *outdata)
+{
+	RC4_INT *d;
+	RC4_INT x, y,tx, ty;
 	size_t i;
-        
-        x=key->x;     
-        y=key->y;     
-        d=key->data; 
+
+	x = key->x;
+	y = key->y;
+	d = key->data;
 
 #if defined(RC4_CHUNK)
 	/*
@@ -121,10 +122,9 @@ void RC4(RC4_KEY *key, size_t len, const unsigned char *indata,
 			(RC4_CHUNK)d[(tx+ty)&0xff]\
 			)
 
-	if ( ( ((size_t)indata  & (sizeof(RC4_CHUNK)-1)) | 
-	       ((size_t)outdata & (sizeof(RC4_CHUNK)-1)) ) == 0 )
-		{
-		RC4_CHUNK ichunk,otp;
+	if ((((size_t)indata & (sizeof(RC4_CHUNK) - 1)) |
+	    ((size_t)outdata & (sizeof(RC4_CHUNK) - 1))) == 0 ) {
+		RC4_CHUNK ichunk, otp;
 
 		/*
 		 * I reckon we can afford to implement both endian
@@ -146,107 +146,110 @@ void RC4(RC4_KEY *key, size_t len, const unsigned char *indata,
 		 *   before);
 		 * - in case you wonder "&(sizeof(RC4_CHUNK)*8-1)" in
 		 *   [LB]ESHFT guards against "shift is out of range"
-		 *   warnings when sizeof(RC4_CHUNK)!=8 
+		 *   warnings when sizeof(RC4_CHUNK)!=8
 		 *
 		 *			<appro@fy.chalmers.se>
 		 */
-		if (BYTE_ORDER != LITTLE_ENDIAN)
-			{	/* BIG-ENDIAN CASE */
+		if (BYTE_ORDER != LITTLE_ENDIAN) {	/* BIG-ENDIAN CASE */
 # define BESHFT(c)	(((sizeof(RC4_CHUNK)-(c)-1)*8)&(sizeof(RC4_CHUNK)*8-1))
-			for (;len&(0-sizeof(RC4_CHUNK));len-=sizeof(RC4_CHUNK))
-				{
+			for (; len & (0 - sizeof(RC4_CHUNK)); len -= sizeof(RC4_CHUNK)) {
 				ichunk  = *(RC4_CHUNK *)indata;
-				otp  = RC4_STEP<<BESHFT(0);
-				otp |= RC4_STEP<<BESHFT(1);
-				otp |= RC4_STEP<<BESHFT(2);
-				otp |= RC4_STEP<<BESHFT(3);
-				if (sizeof(RC4_CHUNK)==8)
-					{
-					otp |= RC4_STEP<<BESHFT(4);
-					otp |= RC4_STEP<<BESHFT(5);
-					otp |= RC4_STEP<<BESHFT(6);
-					otp |= RC4_STEP<<BESHFT(7);
-					}
-				*(RC4_CHUNK *)outdata = otp^ichunk;
-				indata  += sizeof(RC4_CHUNK);
-				outdata += sizeof(RC4_CHUNK);
+				otp = RC4_STEP << BESHFT(0);
+				otp |= RC4_STEP << BESHFT(1);
+				otp |= RC4_STEP << BESHFT(2);
+				otp |= RC4_STEP << BESHFT(3);
+				if (sizeof(RC4_CHUNK) == 8) {
+					otp |= RC4_STEP << BESHFT(4);
+					otp |= RC4_STEP << BESHFT(5);
+					otp |= RC4_STEP << BESHFT(6);
+					otp |= RC4_STEP << BESHFT(7);
 				}
-			if (len)
-				{
-				RC4_CHUNK mask=(RC4_CHUNK)-1, ochunk;
+				*(RC4_CHUNK *)outdata = otp^ichunk;
+				indata += sizeof(RC4_CHUNK);
+				outdata += sizeof(RC4_CHUNK);
+			}
+			if (len) {
+				RC4_CHUNK mask = (RC4_CHUNK) - 1, ochunk;
 
 				ichunk = *(RC4_CHUNK *)indata;
 				ochunk = *(RC4_CHUNK *)outdata;
 				otp = 0;
 				i = BESHFT(0);
-				mask <<= (sizeof(RC4_CHUNK)-len)<<3;
-				switch (len&(sizeof(RC4_CHUNK)-1))
-					{
-					case 7:	otp  = RC4_STEP<<i, i-=8;
-					case 6:	otp |= RC4_STEP<<i, i-=8;
-					case 5:	otp |= RC4_STEP<<i, i-=8;
-					case 4:	otp |= RC4_STEP<<i, i-=8;
-					case 3:	otp |= RC4_STEP<<i, i-=8;
-					case 2:	otp |= RC4_STEP<<i, i-=8;
-					case 1:	otp |= RC4_STEP<<i, i-=8;
-					}
+				mask <<= (sizeof(RC4_CHUNK) - len) << 3;
+				switch (len & (sizeof(RC4_CHUNK) - 1)) {
+				case 7:
+					otp = RC4_STEP << i, i -= 8;
+				case 6:
+					otp |= RC4_STEP << i, i -= 8;
+				case 5:
+					otp |= RC4_STEP << i, i -= 8;
+				case 4:
+					otp |= RC4_STEP << i, i -= 8;
+				case 3:
+					otp |= RC4_STEP << i, i -= 8;
+				case 2:
+					otp |= RC4_STEP << i, i -= 8;
+				case 1:
+					otp |= RC4_STEP << i, i -= 8;
+				}
 				ochunk &= ~mask;
-				ochunk |= (otp^ichunk) & mask;
+				ochunk |= (otp ^ ichunk) & mask;
 				*(RC4_CHUNK *)outdata = ochunk;
-				}
-			key->x=x;     
-			key->y=y;
-			return;
 			}
-		else
-			{	/* LITTLE-ENDIAN CASE */
+			key->x = x;
+			key->y = y;
+			return;
+		} else {	/* LITTLE-ENDIAN CASE */
 # define LESHFT(c)	(((c)*8)&(sizeof(RC4_CHUNK)*8-1))
-			for (;len&(0-sizeof(RC4_CHUNK));len-=sizeof(RC4_CHUNK))
-				{
-				ichunk  = *(RC4_CHUNK *)indata;
-				otp  = RC4_STEP;
-				otp |= RC4_STEP<<8;
-				otp |= RC4_STEP<<16;
-				otp |= RC4_STEP<<24;
-				if (sizeof(RC4_CHUNK)==8)
-					{
-					otp |= RC4_STEP<<LESHFT(4);
-					otp |= RC4_STEP<<LESHFT(5);
-					otp |= RC4_STEP<<LESHFT(6);
-					otp |= RC4_STEP<<LESHFT(7);
-					}
-				*(RC4_CHUNK *)outdata = otp^ichunk;
-				indata  += sizeof(RC4_CHUNK);
-				outdata += sizeof(RC4_CHUNK);
+			for (; len & (0 - sizeof(RC4_CHUNK)); len -= sizeof(RC4_CHUNK)) {
+				ichunk = *(RC4_CHUNK *)indata;
+				otp = RC4_STEP;
+				otp |= RC4_STEP << 8;
+				otp |= RC4_STEP << 16;
+				otp |= RC4_STEP << 24;
+				if (sizeof(RC4_CHUNK) == 8) {
+					otp |= RC4_STEP << LESHFT(4);
+					otp |= RC4_STEP << LESHFT(5);
+					otp |= RC4_STEP << LESHFT(6);
+					otp |= RC4_STEP << LESHFT(7);
 				}
-			if (len)
-				{
-				RC4_CHUNK mask=(RC4_CHUNK)-1, ochunk;
+				*(RC4_CHUNK *)outdata = otp ^ ichunk;
+				indata += sizeof(RC4_CHUNK);
+				outdata += sizeof(RC4_CHUNK);
+			}
+			if (len) {
+				RC4_CHUNK mask = (RC4_CHUNK) - 1, ochunk;
 
 				ichunk = *(RC4_CHUNK *)indata;
 				ochunk = *(RC4_CHUNK *)outdata;
 				otp = 0;
-				i   = 0;
-				mask >>= (sizeof(RC4_CHUNK)-len)<<3;
-				switch (len&(sizeof(RC4_CHUNK)-1))
-					{
-					case 7:	otp  = RC4_STEP,    i+=8;
-					case 6:	otp |= RC4_STEP<<i, i+=8;
-					case 5:	otp |= RC4_STEP<<i, i+=8;
-					case 4:	otp |= RC4_STEP<<i, i+=8;
-					case 3:	otp |= RC4_STEP<<i, i+=8;
-					case 2:	otp |= RC4_STEP<<i, i+=8;
-					case 1:	otp |= RC4_STEP<<i, i+=8;
-					}
-				ochunk &= ~mask;
-				ochunk |= (otp^ichunk) & mask;
-				*(RC4_CHUNK *)outdata = ochunk;
+				i = 0;
+				mask >>= (sizeof(RC4_CHUNK) - len) << 3;
+				switch (len&(sizeof(RC4_CHUNK) - 1)) {
+				case 7:
+					otp = RC4_STEP, i += 8;
+				case 6:
+					otp |= RC4_STEP << i, i += 8;
+				case 5:
+					otp |= RC4_STEP << i, i += 8;
+				case 4:
+					otp |= RC4_STEP << i, i += 8;
+				case 3:
+					otp |= RC4_STEP << i, i += 8;
+				case 2:
+					otp |= RC4_STEP << i, i += 8;
+				case 1:
+					otp |= RC4_STEP << i, i += 8;
 				}
-			key->x=x;     
-			key->y=y;
-			return;
+				ochunk &= ~mask;
+				ochunk |= (otp ^ ichunk) & mask;
+				*(RC4_CHUNK *)outdata = ochunk;
 			}
+			key->x = x;
+			key->y = y;
+			return;
 		}
+	}
 #endif
 #define LOOP(in,out) \
 		x=((x+1)&0xff); \
@@ -262,40 +265,51 @@ void RC4(RC4_KEY *key, size_t len, const unsigned char *indata,
 #define RC4_LOOP(a,b,i)	LOOP(a[i],b[i])
 #endif
 
-	i=len>>3;
-	if (i)
-		{
-		for (;;)
-			{
-			RC4_LOOP(indata,outdata,0);
-			RC4_LOOP(indata,outdata,1);
-			RC4_LOOP(indata,outdata,2);
-			RC4_LOOP(indata,outdata,3);
-			RC4_LOOP(indata,outdata,4);
-			RC4_LOOP(indata,outdata,5);
-			RC4_LOOP(indata,outdata,6);
-			RC4_LOOP(indata,outdata,7);
+	i = len >> 3;
+	if (i) {
+		for (;;) {
+			RC4_LOOP(indata, outdata, 0);
+			RC4_LOOP(indata, outdata, 1);
+			RC4_LOOP(indata, outdata, 2);
+			RC4_LOOP(indata, outdata, 3);
+			RC4_LOOP(indata, outdata, 4);
+			RC4_LOOP(indata, outdata, 5);
+			RC4_LOOP(indata, outdata, 6);
+			RC4_LOOP(indata, outdata, 7);
 #ifdef RC4_INDEX
-			indata+=8;
-			outdata+=8;
+			indata += 8;
+			outdata += 8;
 #endif
-			if (--i == 0) break;
-			}
+			if (--i == 0)
+				break;
 		}
-	i=len&0x07;
-	if (i)
-		{
-		for (;;)
-			{
-			RC4_LOOP(indata,outdata,0); if (--i == 0) break;
-			RC4_LOOP(indata,outdata,1); if (--i == 0) break;
-			RC4_LOOP(indata,outdata,2); if (--i == 0) break;
-			RC4_LOOP(indata,outdata,3); if (--i == 0) break;
-			RC4_LOOP(indata,outdata,4); if (--i == 0) break;
-			RC4_LOOP(indata,outdata,5); if (--i == 0) break;
-			RC4_LOOP(indata,outdata,6); if (--i == 0) break;
-			}
-		}               
-	key->x=x;     
-	key->y=y;
 	}
+	i = len&0x07;
+	if (i) {
+		for (;;) {
+			RC4_LOOP(indata, outdata, 0);
+			if (--i == 0)
+				break;
+			RC4_LOOP(indata, outdata, 1);
+			if (--i == 0)
+				break;
+			RC4_LOOP(indata, outdata, 2);
+			if (--i == 0)
+				break;
+			RC4_LOOP(indata, outdata, 3);
+			if (--i == 0)
+				break;
+			RC4_LOOP(indata, outdata, 4);
+			if (--i == 0)
+				break;
+			RC4_LOOP(indata, outdata, 5);
+			if (--i == 0)
+				break;
+			RC4_LOOP(indata, outdata, 6);
+			if (--i == 0)
+				break;
+		}
+	}
+	key->x = x;
+	key->y = y;
+}
