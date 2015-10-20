@@ -1,4 +1,4 @@
-#	$OpenBSD: tests.out,v 1.6 2015/10/18 13:01:40 semarie Exp $
+#	$OpenBSD: tests.out,v 1.7 2015/10/20 06:44:51 semarie Exp $
 test(test_nop): pledge=("",NULL) status=0 exit=0
 test(test_inet): pledge=("",NULL) status=9 signal=9 pledged_syscall=97
 test(test_inet): pledge=("abort",NULL) status=134 signal=6 coredump=present pledged_syscall=97
@@ -91,12 +91,12 @@ test(test_pledge): pledge=("stdio rpath wpath",{"/",NULL}) status=256 exit=1 (er
 test(test_pledge): pledge=("stdio",NULL) status=256 exit=1 (errno: "Operation not permitted")
 test(test_pledge): pledge=("unix",NULL) status=256 exit=1 (errno: "Operation not permitted")
 test(test_stat): pledge=("stdio rpath",{"/usr/share/man",NULL})
- stat("/usr/share/man/man8/afterboot.8"): realpath=failed(2) uid=0 gid=7 mode=100444
- stat("/usr/share/man/man8/"): realpath=failed(2) uid=0 gid=0 mode=40755
- stat("/usr/share/man"): realpath=failed(2) uid=0 gid=0 mode=40755
- stat("/usr/share"): realpath=failed(2) errno=2
- stat("/usr"): realpath="/usr" errno=2
- stat("/"): realpath="/" errno=2
+ stat("/usr/share/man/man8/afterboot.8"): realpath="/usr/share/man/man8/afterboot.8" uid=0 gid=7 mode=100444
+ stat("/usr/share/man/man8/"): realpath="/usr/share/man/man8" uid=0 gid=0 mode=40755
+ stat("/usr/share/man"): realpath="/usr/share/man" uid=0 gid=0 mode=40755
+ stat("/usr/share"): realpath="/usr/share" uid=0 gid=0 mode=40111
+ stat("/usr"): realpath="/usr" uid=0 gid=0 mode=40111
+ stat("/"): realpath="/" uid=0 gid=0 mode=40111
  stat("/usr/bin/gzip"): realpath=failed(2) errno=2
  status=0 exit=0
 test(test_mmap): pledge=("rpath malloc prot_exec",{"/dev/zero",NULL}) status=0 exit=0
