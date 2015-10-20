@@ -1,4 +1,4 @@
-/*	$OpenBSD: write.c,v 1.31 2015/10/09 01:37:09 deraadt Exp $	*/
+/*	$OpenBSD: write.c,v 1.32 2015/10/20 20:21:18 bluhm Exp $	*/
 /*	$NetBSD: write.c,v 1.5 1995/08/31 21:48:32 jtc Exp $	*/
 
 /*
@@ -228,6 +228,7 @@ do_write(char *tty, char *mytty, uid_t myuid)
 	time_t now;
 	char path[PATH_MAX], host[HOST_NAME_MAX+1], line[512];
 	gid_t gid;
+	int fd;
 
 	/* Determine our login name before the we reopen() stdout */
 	if ((login = getlogin()) == NULL) {
@@ -238,8 +239,14 @@ do_write(char *tty, char *mytty, uid_t myuid)
 	}
 
 	(void)snprintf(path, sizeof(path), "%s%s", _PATH_DEV, tty);
-	if ((freopen(path, "r+", stdout)) == NULL)
-		err(1, "%s", path);
+	fd = open(path, O_WRONLY, 0666);
+	if (fd == -1)
+		err(1, "open %s", path);
+	fflush(stdout);
+	if (dup2(fd, STDOUT_FILENO) == -1)
+		err(1, "dup2 %s", path);
+	if (fd != STDOUT_FILENO)
+		close(fd);
 
 	/* revoke privs, now that we have opened the tty */
 	gid = getgid();
