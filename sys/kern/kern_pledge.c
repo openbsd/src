@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.58 2015/10/20 01:44:00 deraadt Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.59 2015/10/20 05:18:34 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -1068,6 +1068,7 @@ pledge_sockopt_check(struct proc *p, int level, int optname)
 	case SOL_SOCKET:
 	        switch (optname) {
 	        case SO_RCVBUF:
+		case SO_ERROR:
 	                return 0;
 	        }
 	        break;
