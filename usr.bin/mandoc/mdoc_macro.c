@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_macro.c,v 1.161 2015/10/17 00:19:58 schwarze Exp $ */
+/*	$OpenBSD: mdoc_macro.c,v 1.162 2015/10/20 02:00:49 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -226,6 +226,7 @@ mdoc_endparse(struct roff_man *mdoc)
 	/* Rewind to the first. */
 
 	rew_last(mdoc, mdoc->first);
+	mdoc_state_reset(mdoc);
 }
 
 /*
@@ -260,25 +261,18 @@ lookup(struct roff_man *mdoc, int from, int line, int ppos, const char *p)
 static void
 rew_last(struct roff_man *mdoc, const struct roff_node *to)
 {
-	struct roff_node	*np;
 
 	if (to->flags & MDOC_VALID)
 		return;
 
 	while (mdoc->last != to) {
-		/*
-		 * Save the parent here, because we may delete the
-		 * mdoc->last node in the post-validation phase and reset
-		 * it to mdoc->last->parent, causing a step in the closing
-		 * out to be lost.
-		 */
-		np = mdoc->last->parent;
-		mdoc_valid_post(mdoc);
-		mdoc->last = np;
-		assert(mdoc->last);
+		mdoc_state(mdoc, mdoc->last);
+		mdoc->last->flags |= MDOC_VALID | MDOC_ENDED;
+		mdoc->last = mdoc->last->parent;
 	}
+	mdoc_state(mdoc, mdoc->last);
+	mdoc->last->flags |= MDOC_VALID | MDOC_ENDED;
 	mdoc->next = ROFF_NEXT_SIBLING;
-	mdoc_valid_post(mdoc);
 }
 
 /*

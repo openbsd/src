@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgi.c,v 1.49 2015/10/13 22:57:49 schwarze Exp $ */
+/*	$OpenBSD: cgi.c,v 1.50 2015/10/20 02:00:49 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015 Ingo Schwarze <schwarze@usta.de>
@@ -31,6 +31,7 @@
 #include "mandoc_aux.h"
 #include "mandoc.h"
 #include "roff.h"
+#include "mdoc.h"
 #include "main.h"
 #include "manconf.h"
 #include "mansearch.h"
@@ -854,9 +855,10 @@ format(const struct req *req, const char *file)
 
 	vp = html_alloc(&conf);
 
-	if (man->macroset == MACROSET_MDOC)
+	if (man->macroset == MACROSET_MDOC) {
+		mdoc_validate(man);
 		html_mdoc(vp, man);
-	else
+	} else
 		html_man(vp, man);
 
 	html_free(vp);

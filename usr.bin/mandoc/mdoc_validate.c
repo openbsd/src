@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_validate.c,v 1.213 2015/10/19 20:03:57 schwarze Exp $ */
+/*	$OpenBSD: mdoc_validate.c,v 1.214 2015/10/20 02:00:49 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -61,7 +61,6 @@ static	void	 check_argv(struct roff_man *,
 			struct roff_node *, struct mdoc_argv *);
 static	void	 check_args(struct roff_man *, struct roff_node *);
 static	int	 child_an(const struct roff_node *);
-static	enum roff_sec	a2sec(const char *);
 static	size_t		macro2len(int);
 static	void	 rewrite_macro2len(char **);
 
@@ -109,25 +108,21 @@ static	void	 post_st(POST_ARGS);
 static	void	 pre_an(PRE_ARGS);
 static	void	 pre_bd(PRE_ARGS);
 static	void	 pre_bl(PRE_ARGS);
-static	void	 pre_dd(PRE_ARGS);
 static	void	 pre_display(PRE_ARGS);
-static	void	 pre_dt(PRE_ARGS);
-static	void	 pre_literal(PRE_ARGS);
 static	void	 pre_obsolete(PRE_ARGS);
-static	void	 pre_os(PRE_ARGS);
 static	void	 pre_par(PRE_ARGS);
 static	void	 pre_std(PRE_ARGS);
 
 static	const struct valids mdoc_valids[MDOC_MAX] = {
 	{ NULL, NULL },				/* Ap */
-	{ pre_dd, post_dd },			/* Dd */
-	{ pre_dt, post_dt },			/* Dt */
-	{ pre_os, post_os },			/* Os */
+	{ NULL, post_dd },			/* Dd */
+	{ NULL, post_dt },			/* Dt */
+	{ NULL, post_os },			/* Os */
 	{ NULL, post_sh },			/* Sh */
 	{ NULL, post_ignpar },			/* Ss */
 	{ pre_par, post_par },			/* Pp */
 	{ pre_display, post_d1 },		/* D1 */
-	{ pre_literal, post_literal },		/* Dl */
+	{ pre_display, post_literal },		/* Dl */
 	{ pre_bd, post_literal },		/* Bd */
 	{ NULL, NULL },				/* Ed */
 	{ pre_bl, post_bl },			/* Bl */
@@ -315,16 +310,23 @@ mdoc_valid_pre(struct roff_man *mdoc, struct roff_node *n)
 }
 
 void
-mdoc_valid_post(struct roff_man *mdoc)
+mdoc_node_validate(struct roff_man *mdoc)
 {
 	struct roff_node *n;
 	v_post p;
 
 	n = mdoc->last;
-	if (n->flags & MDOC_VALID)
-		return;
-	n->flags |= MDOC_VALID | MDOC_ENDED;
+	mdoc->last = mdoc->last->child;
+	while (mdoc->last != NULL) {
+		mdoc_node_validate(mdoc);
+		if (mdoc->last == n)
+			mdoc->last = mdoc->last->child;
+		else
+			mdoc->last = mdoc->last->next;
+	}
 
+	mdoc->last = n;
+	mdoc->next = ROFF_NEXT_SIBLING;
 	switch (n->type) {
 	case ROFFT_TEXT:
 	case ROFFT_EQN:
@@ -351,6 +353,8 @@ mdoc_valid_post(struct roff_man *mdoc)
 		p = mdoc_valids[n->tok].post;
 		if (*p)
 			(*p)(mdoc);
+		if (mdoc->last == n)
+			mdoc_state(mdoc, n);
 		break;
 	}
 }
@@ -592,7 +596,7 @@ pre_bd(PRE_ARGS)
 	int		  i;
 	enum mdoc_disp	  dt;
 
-	pre_literal(mdoc, n);
+	pre_display(mdoc, n);
 
 	if (n->type != ROFFT_BLOCK)
 		return;
@@ -709,48 +713,6 @@ pre_obsolete(PRE_ARGS)
 	if (n->type == ROFFT_ELEM || n->type == ROFFT_BLOCK)
 		mandoc_msg(MANDOCERR_MACRO_OBS, mdoc->parse,
 		    n->line, n->pos, mdoc_macronames[n->tok]);
-}
-
-static void
-pre_dt(PRE_ARGS)
-{
-
-	if (mdoc->meta.title != NULL)
-		mandoc_msg(MANDOCERR_PROLOG_REP, mdoc->parse,
-		    n->line, n->pos, "Dt");
-	else if (mdoc->meta.os != NULL)
-		mandoc_msg(MANDOCERR_PROLOG_ORDER, mdoc->parse,
-		    n->line, n->pos, "Dt after Os");
-}
-
-static void
-pre_os(PRE_ARGS)
-{
-
-	if (mdoc->meta.os != NULL)
-		mandoc_msg(MANDOCERR_PROLOG_REP, mdoc->parse,
-		    n->line, n->pos, "Os");
-	else if (mdoc->flags & MDOC_PBODY)
-		mandoc_msg(MANDOCERR_PROLOG_LATE, mdoc->parse,
-		    n->line, n->pos, "Os");
-}
-
-static void
-pre_dd(PRE_ARGS)
-{
-
-	if (mdoc->meta.date != NULL)
-		mandoc_msg(MANDOCERR_PROLOG_REP, mdoc->parse,
-		    n->line, n->pos, "Dd");
-	else if (mdoc->flags & MDOC_PBODY)
-		mandoc_msg(MANDOCERR_PROLOG_LATE, mdoc->parse,
-		    n->line, n->pos, "Dd");
-	else if (mdoc->meta.title != NULL)
-		mandoc_msg(MANDOCERR_PROLOG_ORDER, mdoc->parse,
-		    n->line, n->pos, "Dd after Dt");
-	else if (mdoc->meta.os != NULL)
-		mandoc_msg(MANDOCERR_PROLOG_ORDER, mdoc->parse,
-		    n->line, n->pos, "Dd after Os");
 }
 
 static void
@@ -977,19 +939,12 @@ post_literal(POST_ARGS)
 
 	n = mdoc->last;
 
-	if (n->type != ROFFT_BODY)
+	if (n->type != ROFFT_BODY || n->end != ENDBODY_NOT)
 		return;
 
 	if (n->child == NULL)
 		mandoc_msg(MANDOCERR_BLK_EMPTY, mdoc->parse,
 		    n->line, n->pos, mdoc_macronames[n->tok]);
-
-	if (n->tok == MDOC_Bd &&
-	    n->norm->Bd.type != DISP_literal &&
-	    n->norm->Bd.type != DISP_unfilled)
-		return;
-
-	mdoc->flags &= ~MDOC_LITERAL;
 }
 
 static void
@@ -1007,15 +962,16 @@ post_defaults(POST_ARGS)
 		return;
 
 	nn = mdoc->last;
-	mdoc->next = ROFF_NEXT_CHILD;
 
 	switch (nn->tok) {
 	case MDOC_Ar:
+		mdoc->next = ROFF_NEXT_CHILD;
 		roff_word_alloc(mdoc, nn->line, nn->pos, "file");
 		roff_word_alloc(mdoc, nn->line, nn->pos, "...");
 		break;
 	case MDOC_Pa:
 	case MDOC_Mt:
+		mdoc->next = ROFF_NEXT_CHILD;
 		roff_word_alloc(mdoc, nn->line, nn->pos, "~");
 		break;
 	default:
@@ -1375,6 +1331,8 @@ post_bl(POST_ARGS)
 	default:
 		return;
 	}
+	if (nbody->end != ENDBODY_NOT)
+		return;
 
 	nchild = nbody->child;
 	if (nchild == NULL) {
@@ -1819,9 +1777,7 @@ post_sh_authors(POST_ARGS)
 static void
 post_sh_head(POST_ARGS)
 {
-	struct roff_node *n;
 	const char	*goodsec;
-	char		*secname;
 	enum roff_sec	 sec;
 
 	/*
@@ -1831,20 +1787,18 @@ post_sh_head(POST_ARGS)
 	 * manual sections.
 	 */
 
-	secname = NULL;
-	deroff(&secname, mdoc->last);
-	sec = NULL == secname ? SEC_CUSTOM : a2sec(secname);
+	sec = mdoc->last->sec;
 
 	/* The NAME should be first. */
 
 	if (SEC_NAME != sec && SEC_NONE == mdoc->lastnamed)
 		mandoc_vmsg(MANDOCERR_NAMESEC_FIRST, mdoc->parse,
 		    mdoc->last->line, mdoc->last->pos,
-		    "Sh %s", secname);
+		    "Sh %s", secnames[sec]);
 
 	/* The SYNOPSIS gets special attention in other areas. */
 
-	if (SEC_SYNOPSIS == sec) {
+	if (sec == SEC_SYNOPSIS) {
 		roff_setreg(mdoc->roff, "nS", 1, '=');
 		mdoc->flags |= MDOC_SYNOPSIS;
 	} else {
@@ -1856,26 +1810,10 @@ post_sh_head(POST_ARGS)
 
 	mdoc->lastsec = sec;
 
-	/*
-	 * Set the section attribute for the current HEAD, for its
-	 * parent BLOCK, and for the HEAD children; the latter can
-	 * only be TEXT nodes, so no recursion is needed.
-	 * For other blocks and elements, including .Sh BODY, this is
-	 * done when allocating the node data structures, but for .Sh
-	 * BLOCK and HEAD, the section is still unknown at that time.
-	 */
-
-	mdoc->last->parent->sec = sec;
-	mdoc->last->sec = sec;
-	for (n = mdoc->last->child; n != NULL; n = n->next)
-		n->sec = sec;
-
 	/* We don't care about custom sections after this. */
 
-	if (SEC_CUSTOM == sec) {
-		free(secname);
+	if (sec == SEC_CUSTOM)
 		return;
-	}
 
 	/*
 	 * Check whether our non-custom section is being repeated or is
@@ -1885,12 +1823,12 @@ post_sh_head(POST_ARGS)
 	if (sec == mdoc->lastnamed)
 		mandoc_vmsg(MANDOCERR_SEC_REP, mdoc->parse,
 		    mdoc->last->line, mdoc->last->pos,
-		    "Sh %s", secname);
+		    "Sh %s", secnames[sec]);
 
 	if (sec < mdoc->lastnamed)
 		mandoc_vmsg(MANDOCERR_SEC_ORDER, mdoc->parse,
 		    mdoc->last->line, mdoc->last->pos,
-		    "Sh %s", secname);
+		    "Sh %s", secnames[sec]);
 
 	/* Mark the last named section. */
 
@@ -1898,10 +1836,8 @@ post_sh_head(POST_ARGS)
 
 	/* Check particular section/manual conventions. */
 
-	if (mdoc->meta.msec == NULL) {
-		free(secname);
+	if (mdoc->meta.msec == NULL)
 		return;
-	}
 
 	goodsec = NULL;
 	switch (sec) {
@@ -1926,12 +1862,11 @@ post_sh_head(POST_ARGS)
 			goodsec = "9";
 		mandoc_vmsg(MANDOCERR_SEC_MSEC, mdoc->parse,
 		    mdoc->last->line, mdoc->last->pos,
-		    "Sh %s for %s only", secname, goodsec);
+		    "Sh %s for %s only", secnames[sec], goodsec);
 		break;
 	default:
 		break;
 	}
-	free(secname);
 }
 
 static void
@@ -2034,44 +1969,26 @@ post_par(POST_ARGS)
 }
 
 static void
-pre_literal(PRE_ARGS)
-{
-
-	pre_display(mdoc, n);
-
-	if (n->type != ROFFT_BODY)
-		return;
-
-	/*
-	 * The `Dl' (note "el" not "one") and `Bd -literal' and `Bd
-	 * -unfilled' macros set MDOC_LITERAL on entrance to the body.
-	 */
-
-	switch (n->tok) {
-	case MDOC_Dl:
-		mdoc->flags |= MDOC_LITERAL;
-		break;
-	case MDOC_Bd:
-		if (DISP_literal == n->norm->Bd.type)
-			mdoc->flags |= MDOC_LITERAL;
-		if (DISP_unfilled == n->norm->Bd.type)
-			mdoc->flags |= MDOC_LITERAL;
-		break;
-	default:
-		abort();
-	}
-}
-
-static void
 post_dd(POST_ARGS)
 {
 	struct roff_node *n;
 	char		 *datestr;
 
-	if (mdoc->meta.date)
-		free(mdoc->meta.date);
-
 	n = mdoc->last;
+	if (mdoc->meta.date != NULL) {
+		mandoc_msg(MANDOCERR_PROLOG_REP, mdoc->parse,
+		    n->line, n->pos, "Dd");
+		free(mdoc->meta.date);
+	} else if (mdoc->flags & MDOC_PBODY)
+		mandoc_msg(MANDOCERR_PROLOG_LATE, mdoc->parse,
+		    n->line, n->pos, "Dd");
+	else if (mdoc->meta.title != NULL)
+		mandoc_msg(MANDOCERR_PROLOG_ORDER, mdoc->parse,
+		    n->line, n->pos, "Dd after Dt");
+	else if (mdoc->meta.os != NULL)
+		mandoc_msg(MANDOCERR_PROLOG_ORDER, mdoc->parse,
+		    n->line, n->pos, "Dd after Os");
+
 	if (n->child == NULL || n->child->string[0] == '\0') {
 		mdoc->meta.date = mdoc->quick ? mandoc_strdup("") :
 		    mandoc_normdate(mdoc->parse, NULL, n->line, n->pos);
@@ -2099,6 +2016,18 @@ post_dt(POST_ARGS)
 	char		 *p;
 
 	n = mdoc->last;
+	if (mdoc->flags & MDOC_PBODY) {
+		mandoc_msg(MANDOCERR_DT_LATE, mdoc->parse,
+		    n->line, n->pos, "Dt");
+		goto out;
+	}
+
+	if (mdoc->meta.title != NULL)
+		mandoc_msg(MANDOCERR_PROLOG_REP, mdoc->parse,
+		    n->line, n->pos, "Dt");
+	else if (mdoc->meta.os != NULL)
+		mandoc_msg(MANDOCERR_PROLOG_ORDER, mdoc->parse,
+		    n->line, n->pos, "Dt after Os");
 
 	free(mdoc->meta.title);
 	free(mdoc->meta.msec);
@@ -2201,6 +2130,12 @@ post_os(POST_ARGS)
 	struct roff_node *n;
 
 	n = mdoc->last;
+	if (mdoc->meta.os != NULL)
+		mandoc_msg(MANDOCERR_PROLOG_REP, mdoc->parse,
+		    n->line, n->pos, "Os");
+	else if (mdoc->flags & MDOC_PBODY)
+		mandoc_msg(MANDOCERR_PROLOG_LATE, mdoc->parse,
+		    n->line, n->pos, "Os");
 
 	/*
 	 * Set the operating system by way of the `Os' macro.
@@ -2266,8 +2201,8 @@ post_ex(POST_ARGS)
 	mdoc->last = n;
 }
 
-static enum roff_sec
-a2sec(const char *p)
+enum roff_sec
+mdoc_a2sec(const char *p)
 {
 	int		 i;
 

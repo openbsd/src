@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.98 2015/10/13 15:50:15 schwarze Exp $
+#	$OpenBSD: Makefile,v 1.99 2015/10/20 02:00:49 schwarze Exp $
 
 .include <bsd.own.mk>
 
@@ -9,7 +9,7 @@ LDADD	+= -lsqlite3 -lutil -lz
 SRCS=	mandoc.c mandoc_aux.c mandoc_ohash.c preconv.c read.c \
 	roff.c tbl.c tbl_opts.c tbl_layout.c tbl_data.c eqn.c
 SRCS+=	mdoc_macro.c mdoc.c mdoc_hash.c \
-	mdoc_argv.c mdoc_validate.c att.c msec.c st.c
+	mdoc_argv.c mdoc_state.c mdoc_validate.c att.c msec.c st.c
 SRCS+=	man_macro.c man.c man_hash.c man_validate.c
 SRCS+=	main.c mdoc_term.c tag.c chars.c term.c tree.c man_term.c eqn_term.c
 SRCS+=	mdoc_man.c
@@ -41,8 +41,8 @@ CLEANFILES += man.cgi cgi.o
 # To install, run:	sudo make installcgi
 # After that, read:	man man.cgi.8
 
-LIBMDOC_OBJS =	mdoc_argv.o mdoc_hash.o mdoc_macro.o mdoc_validate.o \
-		mdoc.o att.o st.o
+LIBMDOC_OBJS =	mdoc_argv.o mdoc_hash.o mdoc_macro.o mdoc_state.o \
+		mdoc_validate.o mdoc.o att.o st.o
 LIBMAN_OBJS =	man.o man_hash.o man_macro.o man_validate.o
 LIBROFF_OBJS =	roff.o eqn.o tbl.o tbl_data.o tbl_layout.o tbl_opts.o
 LIBMANDOC_OBJS = ${LIBMDOC_OBJS} ${LIBMAN_OBJS} ${LIBROFF_OBJS} \
@@ -52,7 +52,8 @@ HTML_OBJS =	html.o mdoc_html.o man_html.o tbl_html.o eqn_html.o out.o
 CGI_OBJS =	${LIBMANDOC_OBJS} ${HTML_OBJS} \
 		mansearch.o mansearch_const.o cgi.o
 
-cgi.o: main.h mandoc.h mandoc_aux.h mandoc_ohash.h manconf.h mansearch.h cgi.h
+cgi.o: cgi.h main.h manconf.h mandoc.h mandoc_aux.h mansearch.h \
+	mdoc.h roff.h
 
 man.cgi: ${CGI_OBJS}
 	${CC} ${LDFLAGS} ${STATIC} -o ${.TARGET} ${CGI_OBJS} ${LDADD}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: roff_int.h,v 1.3 2015/04/19 14:57:16 schwarze Exp $	*/
+/*	$OpenBSD: roff_int.h,v 1.4 2015/10/20 02:00:50 schwarze Exp $	*/
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -43,7 +43,6 @@ void		  man_breakscope(struct roff_man *, int);
 void		  man_valid_post(struct roff_man *);
 
 void		  mdoc_valid_pre(struct roff_man *, struct roff_node *);
-void		  mdoc_valid_post(struct roff_man *);
 void		  mdoc_argv_free(struct mdoc_arg *);
 
 __END_DECLS

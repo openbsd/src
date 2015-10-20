@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc.c,v 1.143 2015/10/12 00:07:27 schwarze Exp $ */
+/*	$OpenBSD: mdoc.c,v 1.144 2015/10/20 02:00:49 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -119,24 +119,6 @@ mdoc_macro(MACRO_PROT_ARGS)
 {
 	assert(tok > TOKEN_NONE && tok < MDOC_MAX);
 
-	if (mdoc->flags & MDOC_PBODY) {
-		if (tok == MDOC_Dt) {
-			mandoc_vmsg(MANDOCERR_DT_LATE,
-			    mdoc->parse, line, ppos,
-			    "Dt %s", buf + *pos);
-			return;
-		}
-	} else if ( ! (mdoc_macros[tok].flags & MDOC_PROLOGUE)) {
-		if (mdoc->meta.title == NULL) {
-			mandoc_vmsg(MANDOCERR_DT_NOTITLE,
-			    mdoc->parse, line, ppos, "%s %s",
-			    mdoc_macronames[tok], buf + *pos);
-			mdoc->meta.title = mandoc_strdup("UNTITLED");
-		}
-		if (NULL == mdoc->meta.vol)
-			mdoc->meta.vol = mandoc_strdup("LOCAL");
-		mdoc->flags |= MDOC_PBODY;
-	}
 	(*mdoc_macros[tok].fp)(mdoc, tok, line, ppos, pos, buf);
 }
 
@@ -317,8 +299,8 @@ mdoc_ptext(struct roff_man *mdoc, int line, char *buf, int offs)
 		 * behaviour that we want to work around it.
 		 */
 		roff_elem_alloc(mdoc, line, offs, MDOC_sp);
+		mdoc->last->flags |= MDOC_VALID | MDOC_ENDED;
 		mdoc->next = ROFF_NEXT_SIBLING;
-		mdoc_valid_post(mdoc);
 		return 1;
 	}
 
@@ -492,4 +474,13 @@ mdoc_isdelim(const char *p)
 		return DELIM_MIDDLE;
 
 	return DELIM_NONE;
+}
+
+void
+mdoc_validate(struct roff_man *mdoc)
+{
+
+	mdoc->last = mdoc->first;
+	mdoc_node_validate(mdoc);
+	mdoc_state_reset(mdoc);
 }

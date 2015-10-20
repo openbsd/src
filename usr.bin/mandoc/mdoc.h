@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc.h,v 1.67 2015/04/23 16:17:04 schwarze Exp $ */
+/*	$OpenBSD: mdoc.h,v 1.68 2015/10/20 02:00:49 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -279,3 +279,9 @@ extern	const char *const *mdoc_macronames;
 
 /* Names of macro args.  Index is enum mdocargt. */
 extern	const char *const *mdoc_argnames;
+
+__BEGIN_DECLS
+
+void		 mdoc_validate(struct roff_man *);
+
+__END_DECLS

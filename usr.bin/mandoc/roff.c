@@ -1,4 +1,4 @@
-/*	$OpenBSD: roff.c,v 1.152 2015/10/15 23:35:38 schwarze Exp $ */
+/*	$OpenBSD: roff.c,v 1.153 2015/10/20 02:00:50 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -1005,6 +1005,11 @@ roff_node_append(struct roff_man *man, struct roff_node *n)
 
 	switch (man->next) {
 	case ROFF_NEXT_SIBLING:
+		if (man->last->next != NULL) {
+			n->next = man->last->next;
+			man->last->next->prev = n;
+		} else
+			man->last->parent->last = n;
 		man->last->next = n;
 		n->prev = man->last;
 		n->parent = man->last->parent;
@@ -1012,12 +1017,12 @@ roff_node_append(struct roff_man *man, struct roff_node *n)
 	case ROFF_NEXT_CHILD:
 		man->last->child = n;
 		n->parent = man->last;
+		n->parent->last = n;
 		break;
 	default:
 		abort();
 	}
 	n->parent->nchild++;
-	n->parent->last = n;
 
 	/*
 	 * Copy over the normalised-data pointer of our parent.  Not
@@ -1070,7 +1075,7 @@ roff_word_alloc(struct roff_man *man, int line, int pos, const char *word)
 	n->string = roff_strdup(man->roff, word);
 	roff_node_append(man, n);
 	if (man->macroset == MACROSET_MDOC)
-		mdoc_valid_post(man);
+		n->flags |= MDOC_VALID | MDOC_ENDED;
 	else
 		man_valid_post(man);
 	man->next = ROFF_NEXT_SIBLING;
@@ -1158,7 +1163,7 @@ roff_addtbl(struct roff_man *man, const struct tbl_span *tbl)
 	n->span = tbl;
 	roff_node_append(man, n);
 	if (man->macroset == MACROSET_MDOC)
-		mdoc_valid_post(man);
+		n->flags |= MDOC_VALID | MDOC_ENDED;
 	else
 		man_valid_post(man);
 	man->next = ROFF_NEXT_SIBLING;
