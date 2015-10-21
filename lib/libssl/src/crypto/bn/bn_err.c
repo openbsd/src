@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_err.c,v 1.12 2014/07/10 22:45:56 jsing Exp $ */
+/* $OpenBSD: bn_err.c,v 1.13 2015/10/21 19:02:22 miod Exp $ */
 /* ====================================================================
  * Copyright (c) 1999-2007 The OpenSSL Project.  All rights reserved.
  *
@@ -89,6 +89,7 @@ static ERR_STRING_DATA BN_str_functs[]= {
 	{ERR_FUNC(BN_F_BN_EXP),	"BN_exp"},
 	{ERR_FUNC(BN_F_BN_EXPAND2),	"bn_expand2"},
 	{ERR_FUNC(BN_F_BN_EXPAND_INTERNAL),	"BN_EXPAND_INTERNAL"},
+	{ERR_FUNC(BN_F_BN_GENERATE_PRIME_EX),	"BN_generate_prime_ex"},
 	{ERR_FUNC(BN_F_BN_GF2M_MOD),	"BN_GF2m_mod"},
 	{ERR_FUNC(BN_F_BN_GF2M_MOD_EXP),	"BN_GF2m_mod_exp"},
 	{ERR_FUNC(BN_F_BN_GF2M_MOD_MUL),	"BN_GF2m_mod_mul"},
@@ -119,6 +120,7 @@ static ERR_STRING_DATA BN_str_reasons[]= {
 	{ERR_REASON(BN_R_ARG2_LT_ARG3)           , "arg2 lt arg3"},
 	{ERR_REASON(BN_R_BAD_RECIPROCAL)         , "bad reciprocal"},
 	{ERR_REASON(BN_R_BIGNUM_TOO_LONG)        , "bignum too long"},
+	{ERR_REASON(BN_R_BITS_TOO_SMALL)         , "bits too small"},
 	{ERR_REASON(BN_R_CALLED_WITH_EVEN_MODULUS), "called with even modulus"},
 	{ERR_REASON(BN_R_DIV_BY_ZERO)            , "div by zero"},
 	{ERR_REASON(BN_R_ENCODING_ERROR)         , "encoding error"},

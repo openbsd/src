@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_prime.c,v 1.13 2015/02/09 15:49:22 jsing Exp $ */
+/* $OpenBSD: bn_prime.c,v 1.14 2015/10/21 19:02:22 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -112,6 +112,8 @@
 #include <stdio.h>
 #include <time.h>
 
+#include <openssl/err.h>
+
 #include "bn_lcl.h"
 
 /* NB: these functions have been "upgraded", the deprecated versions (which are
@@ -164,7 +166,16 @@ BN_generate_prime_ex(BIGNUM *ret, int bits, int safe, const BIGNUM *add,
 	int found = 0;
 	int i, j, c1 = 0;
 	BN_CTX *ctx;
-	int checks = BN_prime_checks_for_size(bits);
+	int checks;
+
+	if (bits < 2 || (bits == 2 && safe)) {
+		/*
+		 * There are no prime numbers smaller than 2, and the smallest
+		 * safe prime (7) spans three bits.
+		 */
+		BNerr(BN_F_BN_GENERATE_PRIME_EX, BN_R_BITS_TOO_SMALL);
+		return 0;
+	}
 
 	ctx = BN_CTX_new();
 	if (ctx == NULL)
@@ -172,6 +183,9 @@ BN_generate_prime_ex(BIGNUM *ret, int bits, int safe, const BIGNUM *add,
 	BN_CTX_start(ctx);
 	if ((t = BN_CTX_get(ctx)) == NULL)
 		goto err;
+
+	checks = BN_prime_checks_for_size(bits);
+
 loop:
 	/* make a random number and set the top and bottom bits */
 	if (add == NULL) {

@@ -1,4 +1,4 @@
-/* $OpenBSD: bn.h,v 1.27 2015/10/16 12:41:29 beck Exp $ */
+/* $OpenBSD: bn.h,v 1.28 2015/10/21 19:02:22 miod Exp $ */
 /* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -768,6 +768,7 @@ void ERR_load_BN_strings(void);
 #define BN_F_BN_DIV_RECP				 130
 #define BN_F_BN_EXP					 123
 #define BN_F_BN_EXPAND2					 108
+#define BN_F_BN_GENERATE_PRIME_EX			 140
 #define BN_F_BN_EXPAND_INTERNAL				 120
 #define BN_F_BN_GF2M_MOD				 131
 #define BN_F_BN_GF2M_MOD_EXP				 132
@@ -797,6 +798,7 @@ void ERR_load_BN_strings(void);
 #define BN_R_ARG2_LT_ARG3				 100
 #define BN_R_BAD_RECIPROCAL				 101
 #define BN_R_BIGNUM_TOO_LONG				 114
+#define BN_R_BITS_TOO_SMALL				 117
 #define BN_R_CALLED_WITH_EVEN_MODULUS			 102
 #define BN_R_DIV_BY_ZERO				 103
 #define BN_R_ENCODING_ERROR				 104
