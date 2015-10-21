@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_dual.c,v 1.5 2015/10/20 11:26:40 jsg Exp $ */
+/*	$OpenBSD: rde_dual.c,v 1.6 2015/10/21 03:48:09 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -556,23 +556,6 @@ rinfo_fill_infinite(struct rt_node *rn, enum route_type type, struct rinfo *ri)
 	memcpy(&ri->prefix, &rn->prefix, sizeof(ri->prefix));
 	ri->prefixlen = rn->prefixlen;
 	ri->metric.delay = EIGRP_INFINITE_METRIC;
-	ri->metric.bandwidth = 0;
-	ri->metric.mtu[0] = 0;
-	ri->metric.mtu[1] = 0;
-	ri->metric.mtu[2] = 0;
-	ri->metric.hop_count = 0;
-	ri->metric.reliability = 0;
-	ri->metric.load = 0;
-	ri->metric.tag = 0;
-	ri->metric.flags = 0;
-	if (ri->type == EIGRP_ROUTE_EXTERNAL) {
-		ri->emetric.routerid = 0;
-		ri->emetric.as = 0;
-		ri->emetric.tag = 0;
-		ri->emetric.metric = 0;
-		ri->emetric.protocol = 0;
-		ri->emetric.flags = 0;
-	}
 }
 
 void
@@ -1196,7 +1179,7 @@ rde_check_link_down(unsigned int ifindex)
 }
 
 void
-rde_check_link_cost_change(struct rde_nbr *nbr, struct eigrp_interface *ei)
+rde_check_link_cost_change(struct rde_nbr *nbr, struct eigrp_iface *ei)
 {
 }
 

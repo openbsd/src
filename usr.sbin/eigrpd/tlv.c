@@ -1,4 +1,4 @@
-/*	$OpenBSD: tlv.c,v 1.4 2015/10/05 01:59:33 renato Exp $ */
+/*	$OpenBSD: tlv.c,v 1.5 2015/10/21 03:48:09 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -260,7 +260,7 @@ gen_route_tlv(struct ibuf *buf, struct rinfo *ri)
 
 	/* adjust tlv length */
 	if ((tlvp = ibuf_seek(buf, original_size, sizeof(*tlvp))) == NULL)
-                fatalx("gen_ipv4_internal_tlv: buf_seek failed");
+                fatalx("gen_route_tlv: buf_seek failed");
 	tlvp->length = htons(tlvlen);
 
 	return (0);

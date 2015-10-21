@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.6 2015/10/10 05:09:19 renato Exp $ */
+/*	$OpenBSD: interface.c,v 1.7 2015/10/21 03:48:09 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -93,13 +93,9 @@ if_new(struct eigrpd_conf *xconf, struct kif *kif)
 void
 if_del(struct iface *iface)
 {
-	struct eigrp_iface	*ei;
 	struct if_addr		*if_addr;
 
 	log_debug("%s: interface %s", __func__, iface->name);
-
-	while ((ei = TAILQ_FIRST(&iface->ei_list)) != NULL)
-		eigrp_if_del(ei);
 
 	while ((if_addr = TAILQ_FIRST(&iface->addr_list)) != NULL) {
 		TAILQ_REMOVE(&iface->addr_list, if_addr, entry);
@@ -316,6 +312,8 @@ eigrp_if_del(struct eigrp_iface *ei)
 	RB_REMOVE(iface_id_head, &ifaces_by_id, ei);
 	TAILQ_REMOVE(&ei->eigrp->ei_list, ei, e_entry);
 	TAILQ_REMOVE(&ei->iface->ei_list, ei, i_entry);
+	message_list_clr(&ei->query_list);
+	message_list_clr(&ei->update_list);
 
 	if (ei->state == IF_STA_ACTIVE)
 		eigrp_if_reset(ei);
