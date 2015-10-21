@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl.c,v 1.77 2015/10/16 21:13:33 sthen Exp $	*/
+/*	$OpenBSD: ssl.c,v 1.78 2015/10/21 16:45:13 jsing Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -90,7 +90,7 @@ ssl_setup(SSL_CTX **ctxp, struct pki *pki)
 	ssl_set_ephemeral_key_exchange(ctx, dh);
 	DH_free(dh);
 
-	ssl_set_ecdh_curve(ctx, SSL_ECDH_CURVE);
+	SSL_CTX_set_ecdh_auto(ctx, 1);
 
 	*ctxp = ctx;
 	return 1;
@@ -442,31 +442,6 @@ ssl_set_ephemeral_key_exchange(SSL_CTX *ctx, DH *dh)
 		ssl_error("ssl_set_ephemeral_key_exchange");
 		fatal("ssl_set_ephemeral_key_exchange: cannot set tmp dh");
 	}
-}
-
-void
-ssl_set_ecdh_curve(SSL_CTX *ctx, const char *curve)
-{
-	int	nid;
-	EC_KEY *ecdh;
-
-	if (curve == NULL)
-		curve = SSL_ECDH_CURVE;
-	if ((nid = OBJ_sn2nid(curve)) == 0) {
-		ssl_error("ssl_set_ecdh_curve");
-		fatal("ssl_set_ecdh_curve: unknown curve name "
-		    SSL_ECDH_CURVE);
-	}
-
-	if ((ecdh = EC_KEY_new_by_curve_name(nid)) == NULL) {
-		ssl_error("ssl_set_ecdh_curve");
-		fatal("ssl_set_ecdh_curve: unable to create curve "
-		    SSL_ECDH_CURVE);
-	}
-
-	SSL_CTX_set_tmp_ecdh(ctx, ecdh);
-	SSL_CTX_set_options(ctx, SSL_OP_SINGLE_ECDH_USE);
-	EC_KEY_free(ecdh);
 }
 
 int

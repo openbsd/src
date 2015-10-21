@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl.h,v 1.11 2015/01/22 09:26:05 reyk Exp $	*/
+/*	$OpenBSD: ssl.h,v 1.12 2015/10/21 16:45:13 jsing Exp $	*/
 /*
  * Copyright (c) 2013 Gilles Chehade <gilles@poolp.org>
  *
@@ -16,7 +16,6 @@
  */
 
 #define SSL_CIPHERS		"HIGH:!aNULL:!MD5"
-#define	SSL_ECDH_CURVE		"prime256v1"
 #define	SSL_SESSION_TIMEOUT	300
 
 struct pki {
@@ -49,7 +48,6 @@ int	        ssl_cmp(struct pki *, struct pki *);
 DH	       *get_dh1024(void);
 DH	       *get_dh_from_memory(char *, size_t);
 void		ssl_set_ephemeral_key_exchange(SSL_CTX *, DH *);
-void		ssl_set_ecdh_curve(SSL_CTX *, const char *);
 char	       *ssl_load_file(const char *, off_t *, mode_t);
 char	       *ssl_load_key(const char *, off_t *, char *, mode_t, const char *);
 
