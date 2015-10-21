@@ -1,4 +1,4 @@
-/* $OpenBSD: rc4_enc.c,v 1.14 2015/10/20 15:50:13 jsing Exp $ */
+/* $OpenBSD: rc4_enc.c,v 1.15 2015/10/21 16:36:50 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -168,37 +168,6 @@ RC4(RC4_KEY *key, size_t len, const unsigned char *indata,
 				indata += sizeof(RC4_CHUNK);
 				outdata += sizeof(RC4_CHUNK);
 			}
-			if (len) {
-				RC4_CHUNK mask = (RC4_CHUNK) - 1, ochunk;
-
-				ichunk = *(RC4_CHUNK *)indata;
-				ochunk = *(RC4_CHUNK *)outdata;
-				otp = 0;
-				i = BESHFT(0);
-				mask <<= (sizeof(RC4_CHUNK) - len) << 3;
-				switch (len & (sizeof(RC4_CHUNK) - 1)) {
-				case 7:
-					otp = RC4_STEP << i, i -= 8;
-				case 6:
-					otp |= RC4_STEP << i, i -= 8;
-				case 5:
-					otp |= RC4_STEP << i, i -= 8;
-				case 4:
-					otp |= RC4_STEP << i, i -= 8;
-				case 3:
-					otp |= RC4_STEP << i, i -= 8;
-				case 2:
-					otp |= RC4_STEP << i, i -= 8;
-				case 1:
-					otp |= RC4_STEP << i, i -= 8;
-				}
-				ochunk &= ~mask;
-				ochunk |= (otp ^ ichunk) & mask;
-				*(RC4_CHUNK *)outdata = ochunk;
-			}
-			key->x = x;
-			key->y = y;
-			return;
 		} else {	/* LITTLE-ENDIAN CASE */
 # define LESHFT(c)	(((c)*8)&(sizeof(RC4_CHUNK)*8-1))
 			for (; len & (0 - sizeof(RC4_CHUNK)); len -= sizeof(RC4_CHUNK)) {
@@ -217,37 +186,6 @@ RC4(RC4_KEY *key, size_t len, const unsigned char *indata,
 				indata += sizeof(RC4_CHUNK);
 				outdata += sizeof(RC4_CHUNK);
 			}
-			if (len) {
-				RC4_CHUNK mask = (RC4_CHUNK) - 1, ochunk;
-
-				ichunk = *(RC4_CHUNK *)indata;
-				ochunk = *(RC4_CHUNK *)outdata;
-				otp = 0;
-				i = 0;
-				mask >>= (sizeof(RC4_CHUNK) - len) << 3;
-				switch (len&(sizeof(RC4_CHUNK) - 1)) {
-				case 7:
-					otp = RC4_STEP, i += 8;
-				case 6:
-					otp |= RC4_STEP << i, i += 8;
-				case 5:
-					otp |= RC4_STEP << i, i += 8;
-				case 4:
-					otp |= RC4_STEP << i, i += 8;
-				case 3:
-					otp |= RC4_STEP << i, i += 8;
-				case 2:
-					otp |= RC4_STEP << i, i += 8;
-				case 1:
-					otp |= RC4_STEP << i, i += 8;
-				}
-				ochunk &= ~mask;
-				ochunk |= (otp ^ ichunk) & mask;
-				*(RC4_CHUNK *)outdata = ochunk;
-			}
-			key->x = x;
-			key->y = y;
-			return;
 		}
 	}
 #endif
