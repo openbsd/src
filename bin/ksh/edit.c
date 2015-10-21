@@ -1,4 +1,4 @@
-/*	$OpenBSD: edit.c,v 1.48 2015/10/19 14:42:16 mmcc Exp $	*/
+/*	$OpenBSD: edit.c,v 1.49 2015/10/21 14:31:28 mmcc Exp $	*/
 
 /*
  * Command line editing - common code
@@ -470,7 +470,7 @@ x_command_glob(int flags, const char *str, int slen, char ***wordsp)
 	if (flags & XCF_FULLPATH) {
 		/* Sort by basename, then path order */
 		struct path_order_info *info;
-		struct path_order_info *last_info = 0;
+		struct path_order_info *last_info = NULL;
 		char **words = (char **) XPptrv(w);
 		int path_order = 0;
 		int i;
