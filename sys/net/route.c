@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.253 2015/10/16 12:36:02 mpi Exp $	*/
+/*	$OpenBSD: route.c,v 1.254 2015/10/21 08:21:06 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -1099,8 +1099,8 @@ rt_ifa_add(struct ifaddr *ifa, int flags, struct sockaddr *dst)
 	struct rtentry		*rt;
 	struct sockaddr_rtlabel	 sa_rl;
 	struct rt_addrinfo	 info;
-	u_short			 rtableid = ifp->if_rdomain;
-	u_int8_t		 prio = ifp->if_priority + RTP_STATIC;
+	unsigned int		 rtableid = ifp->if_rdomain;
+	uint8_t			 prio = ifp->if_priority + RTP_STATIC;
 	int			 error;
 
 	memset(&info, 0, sizeof(info));
@@ -1168,8 +1168,8 @@ rt_ifa_del(struct ifaddr *ifa, int flags, struct sockaddr *dst)
 	struct sockaddr		*deldst;
 	struct rt_addrinfo	 info;
 	struct sockaddr_rtlabel	 sa_rl;
-	u_short			 rtableid = ifp->if_rdomain;
-	u_int8_t		 prio = ifp->if_priority + RTP_STATIC;
+	unsigned int		 rtableid = ifp->if_rdomain;
+	uint8_t			 prio = ifp->if_priority + RTP_STATIC;
 	int			 error;
 
 #ifdef MPLS
