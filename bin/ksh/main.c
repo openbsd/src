@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.69 2015/10/19 14:42:16 mmcc Exp $	*/
+/*	$OpenBSD: main.c,v 1.70 2015/10/21 14:30:43 mmcc Exp $	*/
 
 /*
  * startup, main loop, environments and error handling
@@ -38,6 +38,24 @@ Area	aperm;
 struct env	*e;
 
 char	shell_flags[FNFLAGS];
+
+char	null[] = "";
+
+int shl_stdout_ok;
+
+unsigned int	ksh_tmout;
+enum tmout_enum	ksh_tmout_state = TMOUT_EXECUTING;
+
+int	really_exit;
+
+int ifs0 = ' ';
+
+volatile sig_atomic_t	trap;
+volatile sig_atomic_t	intrsig;
+volatile sig_atomic_t	fatal_trap;
+
+Getopt	builtin_opt;
+Getopt	user_opt;
 
 /*
  * shell initialization
