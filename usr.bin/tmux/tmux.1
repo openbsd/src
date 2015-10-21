@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.450 2015/09/13 13:31:40 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.451 2015/10/21 13:14:36 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 13 2015 $
+.Dd $Mdocdate: October 21 2015 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -3357,6 +3357,7 @@ The following variables are available, where appropriate:
 .It Li "client_created_string" Ta "" Ta "String time client created"
 .It Li "client_control_mode" Ta "" Ta "1 if client is in control mode"
 .It Li "client_height" Ta "" Ta "Height of client"
+.It Li "client_key_table" Ta "" Ta "Current key table"
 .It Li "client_last_session" Ta "" Ta "Name of the client's last session"
 .It Li "client_pid" Ta "" Ta "PID of client process"
 .It Li "client_prefix" Ta "" Ta "1 if prefix key has been pressed"
