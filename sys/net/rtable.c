@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtable.c,v 1.12 2015/10/14 10:09:30 mpi Exp $ */
+/*	$OpenBSD: rtable.c,v 1.13 2015/10/21 08:47:01 mpi Exp $ */
 
 /*
  * Copyright (c) 2014-2015 Martin Pieuchot
@@ -113,8 +113,11 @@ rtable_add(unsigned int id)
 	unsigned int	  off;
 	int		  i;
 
-	if (id > RT_TABLEID_MAX || rtable_exists(id))
+	if (id > RT_TABLEID_MAX)
 		return (EINVAL);
+
+	if (rtable_exists(id))
+		return (EEXIST);
 
 	for (i = 0; (dp = domains[i]) != NULL; i++) {
 		if (dp->dom_rtoffset == 0)
