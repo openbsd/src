@@ -1,4 +1,4 @@
-/*	$OpenBSD: c_sh.c,v 1.52 2015/10/19 14:42:16 mmcc Exp $	*/
+/*	$OpenBSD: c_sh.c,v 1.53 2015/10/21 15:20:37 mmcc Exp $	*/
 
 /*
  * built-in Bourne commands
@@ -658,7 +658,7 @@ c_unset(char **wp)
 			}
 			unset(vp, strchr(id, '[') ? 1 : 0);
 		} else {		/* unset function */
-			define(id, (struct op *) NULL);
+			define(id, NULL);
 		}
 	return 0;
 }

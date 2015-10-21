@@ -1,4 +1,4 @@
-/*	$OpenBSD: c_ksh.c,v 1.45 2015/10/19 14:42:16 mmcc Exp $	*/
+/*	$OpenBSD: c_ksh.c,v 1.46 2015/10/21 15:20:37 mmcc Exp $	*/
 
 /*
  * built-in Korn commands: c_*
@@ -1356,7 +1356,7 @@ c_bind(char **wp)
 	wp += builtin_opt.optind;
 
 	if (*wp == NULL)	/* list all */
-		rv = x_bind((char*)NULL, (char*)NULL, 0, list);
+		rv = x_bind(NULL, NULL, 0, list);
 
 	for (; *wp != NULL; wp++) {
 		cp = strchr(*wp, '=');
