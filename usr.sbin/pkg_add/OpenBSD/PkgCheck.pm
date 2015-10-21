@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCheck.pm,v 1.56 2015/05/24 07:53:14 espie Exp $
+# $OpenBSD: PkgCheck.pm,v 1.57 2015/10/21 10:11:13 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -44,6 +44,7 @@ sub new
 	$state->{subst} = $mystate->{subst};
 	$state->{interactive} = $mystate->{interactive};
 	$state->{destdir} = $mystate->{destdir};
+	$state->progress->setup($state->opt('x'), $state->opt('m'), $state);
 	bless { state => $state}, $class;
 }
 
