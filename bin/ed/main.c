@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.53 2015/10/09 21:24:05 tobias Exp $	*/
+/*	$OpenBSD: main.c,v 1.54 2015/10/21 16:06:57 millert Exp $	*/
 /*	$NetBSD: main.c,v 1.3 1995/03/21 09:04:44 cgd Exp $	*/
 
 /* main.c: This file contains the main control and user-interface routines
@@ -174,7 +174,7 @@ top:
 	signal(SIGHUP, signal_hup);
 	signal(SIGQUIT, SIG_IGN);
 	signal(SIGINT, signal_int);
-	if (status = sigsetjmp(env, 1)) {
+	if ((status = sigsetjmp(env, 1))) {
 		fputs("\n?\n", stderr);
 		seterrmsg("interrupt");
 	} else {

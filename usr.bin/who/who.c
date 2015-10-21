@@ -1,4 +1,4 @@
-/*	$OpenBSD: who.c,v 1.26 2015/10/12 19:56:47 naddy Exp $	*/
+/*	$OpenBSD: who.c,v 1.27 2015/10/21 16:06:57 millert Exp $	*/
 /*	$NetBSD: who.c,v 1.4 1994/12/07 04:28:49 jtc Exp $	*/
 
 /*
@@ -77,7 +77,7 @@ main(int argc, char *argv[])
 	if (pledge("stdio rpath getpw", NULL) == -1)
 		err(1, "pledge");
 
-	if (mytty = ttyname(0)) {
+	if ((mytty = ttyname(0))) {
 		/* strip any directory component */
 		if ((t = strrchr(mytty, '/')))
 			mytty = t + 1;
