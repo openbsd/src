@@ -1,4 +1,4 @@
-/*	$OpenBSD: eigrpd.h,v 1.4 2015/10/21 03:48:09 renato Exp $ */
+/*	$OpenBSD: eigrpd.h,v 1.5 2015/10/21 03:52:12 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -176,6 +176,12 @@ TAILQ_HEAD(rinfo_head, rinfo_entry);
 #define	IF_STA_DOWN		0x01
 #define	IF_STA_ACTIVE		0x02
 
+struct summary_addr {
+	TAILQ_ENTRY(summary_addr) entry;
+	union eigrpd_addr	 prefix;
+	uint8_t			 prefixlen;
+};
+
 struct eigrp_iface {
 	RB_ENTRY(eigrp_iface)	 id_tree;
 	TAILQ_ENTRY(eigrp_iface) e_entry;
@@ -196,6 +202,7 @@ struct eigrp_iface {
 	struct nbr		*self;
 	struct rinfo_head	 update_list;	/* multicast updates */
 	struct rinfo_head	 query_list;	/* multicast queries */
+	TAILQ_HEAD(, summary_addr) summary_list;
 };
 
 #define INADDRSZ	4
@@ -289,6 +296,7 @@ struct eigrpd_conf {
 	unsigned int		 rdomain;
 	uint8_t			 fib_priority_internal;
 	uint8_t			 fib_priority_external;
+	uint8_t			 fib_priority_summary;
 	TAILQ_HEAD(, iface)	 iface_list;
 	TAILQ_HEAD(, eigrp)	 instances;
 	char			*csock;
@@ -424,6 +432,8 @@ void		 eigrp_applymask(int, union eigrpd_addr *,
     const union eigrpd_addr *, int);
 int		 eigrp_addrcmp(int, union eigrpd_addr *, union eigrpd_addr *);
 int		 eigrp_addrisset(int, union eigrpd_addr *);
+int		 eigrp_prefixcmp(int, const union eigrpd_addr *,
+    const union eigrpd_addr *, uint8_t);
 void		 embedscope(struct sockaddr_in6 *);
 void		 recoverscope(struct sockaddr_in6 *);
 void		 addscope(struct sockaddr_in6 *, uint32_t);

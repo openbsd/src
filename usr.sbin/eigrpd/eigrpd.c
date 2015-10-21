@@ -1,4 +1,4 @@
-/*	$OpenBSD: eigrpd.c,v 1.2 2015/10/10 05:12:33 renato Exp $ */
+/*	$OpenBSD: eigrpd.c,v 1.3 2015/10/21 03:52:12 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -590,6 +590,7 @@ merge_config(struct eigrpd_conf *conf, struct eigrpd_conf *xconf)
 	conf->rdomain= xconf->rdomain;
 	conf->fib_priority_internal = xconf->fib_priority_internal;
 	conf->fib_priority_external = xconf->fib_priority_external;
+	conf->fib_priority_summary = xconf->fib_priority_summary;
 
 	/* merge instances */
 	TAILQ_FOREACH_SAFE(eigrp, &conf->instances, entry, etmp) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.7 2015/10/21 03:48:09 renato Exp $ */
+/*	$OpenBSD: interface.c,v 1.8 2015/10/21 03:52:12 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -298,6 +298,7 @@ eigrp_if_new(struct eigrpd_conf *xconf, struct eigrp *eigrp, struct kif *kif)
 	TAILQ_INIT(&ei->nbr_list);
 	TAILQ_INIT(&ei->update_list);
 	TAILQ_INIT(&ei->query_list);
+	TAILQ_INIT(&ei->summary_list);
 	TAILQ_INSERT_TAIL(&iface->ei_list, ei, i_entry);
 	TAILQ_INSERT_TAIL(&eigrp->ei_list, ei, e_entry);
 	if (RB_INSERT(iface_id_head, &ifaces_by_id, ei) != NULL)
@@ -309,9 +310,15 @@ eigrp_if_new(struct eigrpd_conf *xconf, struct eigrp *eigrp, struct kif *kif)
 void
 eigrp_if_del(struct eigrp_iface *ei)
 {
+	struct summary_addr	*summary;
+
 	RB_REMOVE(iface_id_head, &ifaces_by_id, ei);
 	TAILQ_REMOVE(&ei->eigrp->ei_list, ei, e_entry);
 	TAILQ_REMOVE(&ei->iface->ei_list, ei, i_entry);
+	while ((summary = TAILQ_FIRST(&ei->summary_list)) != NULL) {
+		TAILQ_REMOVE(&ei->summary_list, summary, entry);
+		free(summary);
+	}
 	message_list_clr(&ei->query_list);
 	message_list_clr(&ei->update_list);
 

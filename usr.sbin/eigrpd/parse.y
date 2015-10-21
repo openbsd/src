@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.3 2015/10/19 14:15:59 jsg Exp $ */
+/*	$OpenBSD: parse.y,v 1.4 2015/10/21 03:52:12 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -125,6 +125,7 @@ typedef struct {
 
 %token	ROUTERID AS FIBUPDATE RDOMAIN REDISTRIBUTE METRIC DFLTMETRIC
 %token	MAXHOPS MAXPATHS VARIANCE FIBPRIORITY_INT FIBPRIORITY_EXT
+%token	FIBPRIORITY_SUMM SUMMARY_ADDR
 %token	AF IPV4 IPV6 HELLOINTERVAL HOLDTIME KVALUES ACTIVETIMEOUT
 %token	INTERFACE PASSIVE DELAY BANDWIDTH SPLITHORIZON
 %token	YES NO
@@ -233,6 +234,13 @@ conf_main	: ROUTERID STRING {
 				YYERROR;
 			}
 			conf->fib_priority_external = $2;
+		}
+		| FIBPRIORITY_SUMM NUMBER {
+			if ($2 <= RTP_NONE || $2 > RTP_MAX) {
+				yyerror("invalid fib-priority");
+				YYERROR;
+			}
+			conf->fib_priority_summary = $2;
 		}
 		| defaults
 		;
@@ -522,6 +530,21 @@ interfaceopts_l	: interfaceopts_l interfaceoptsl nl
 		;
 
 interfaceoptsl	: PASSIVE		{ ei->passive = 1; }
+		| SUMMARY_ADDR STRING {
+			struct summary_addr	*s;
+
+			if ((s = calloc(1, sizeof(*s))) == NULL)
+				fatal(NULL);
+			if (host($2, &s->prefix, &s->prefixlen) < 0) {
+				yyerror("invalid summary-address");
+				free($2);
+				free(s);
+				YYERROR;
+			}
+
+			free($2);
+			TAILQ_INSERT_TAIL(&ei->summary_list, s, entry);
+		}
 		| iface_defaults
 		;
 
@@ -567,6 +590,7 @@ lookup(char *s)
 		{"delay",			DELAY},
 		{"fib-priority-external",	FIBPRIORITY_EXT},
 		{"fib-priority-internal",	FIBPRIORITY_INT},
+		{"fib-priority-summary",	FIBPRIORITY_SUMM},
 		{"fib-update",			FIBUPDATE},
 		{"hello-interval",		HELLOINTERVAL},
 		{"holdtime",			HOLDTIME},
@@ -584,6 +608,7 @@ lookup(char *s)
 		{"redistribute",		REDISTRIBUTE},
 		{"router-id",			ROUTERID},
 		{"split-horizon",		SPLITHORIZON},
+		{"summary-address",		SUMMARY_ADDR},
 		{"variance",			VARIANCE},
 		{"yes",				YES}
 	};
@@ -919,6 +944,7 @@ parse_config(char *filename, int opts)
 	conf->rdomain = 0;
 	conf->fib_priority_internal = RTP_EIGRP;
 	conf->fib_priority_external = RTP_EIGRP;
+	conf->fib_priority_summary = RTP_EIGRP;
 
 	memset(&globaldefs, 0, sizeof(globaldefs));
 	defs = &globaldefs;

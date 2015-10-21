@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.2 2015/10/04 22:54:38 renato Exp $ */
+/*	$OpenBSD: printconf.c,v 1.3 2015/10/21 03:52:12 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -45,6 +45,7 @@ print_mainconf(struct eigrpd_conf *conf)
 	printf("rdomain %u\n", conf->rdomain);
 	printf("fib-priority-internal %u\n", conf->fib_priority_internal);
 	printf("fib-priority-external %u\n", conf->fib_priority_external);
+	printf("fib-priority-summary %u\n", conf->fib_priority_summary);
 }
 
 const char *
@@ -108,6 +109,8 @@ print_redistribute(struct eigrp *eigrp)
 void
 print_iface(struct eigrp_iface *ei)
 {
+	struct summary_addr	*summary;
+
 	printf("\t\tinterface %s {\n", ei->iface->name);
 	printf("\t\t\thello-interval %u\n", ei->hello_interval);
 	printf("\t\t\tholdtime %u\n", ei->hello_holdtime);
@@ -116,6 +119,9 @@ print_iface(struct eigrp_iface *ei)
 	printf("\t\t\tsplit-horizon %s\n", (ei->splithorizon) ? "yes" : "no");
 	if (ei->passive)
 		printf("\t\t\tpassive\n");
+	TAILQ_FOREACH(summary, &ei->summary_list, entry)
+		printf("\t\t\tsummary-address %s/%u\n", log_addr(ei->eigrp->af,
+		    &summary->prefix), summary->prefixlen);
 	printf("\t\t}\n");
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.5 2015/10/21 03:48:09 renato Exp $ */
+/*	$OpenBSD: rde.c,v 1.6 2015/10/21 03:52:12 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -422,6 +422,7 @@ rde_dispatch_parent(int fd, short event, void *bula)
 			TAILQ_INIT(&nei->nbr_list);
 			TAILQ_INIT(&nei->update_list);
 			TAILQ_INIT(&nei->query_list);
+			TAILQ_INIT(&nei->summary_list);
 			TAILQ_INSERT_TAIL(&niface->ei_list, nei, i_entry);
 			TAILQ_INSERT_TAIL(&neigrp->ei_list, nei, e_entry);
 			if (RB_INSERT(iface_id_head, &ifaces_by_id, nei) !=
@@ -665,6 +666,22 @@ rt_redist_set(struct kroute *kr, int withdraw)
 	}
 }
 
+void
+rt_summary_set(struct eigrp *eigrp, struct summary_addr *summary,
+    struct classic_metric *metric)
+{
+	struct rinfo		 ri;
+
+	memset(&ri, 0, sizeof(ri));
+	ri.af = eigrp->af;
+	ri.type = EIGRP_ROUTE_INTERNAL;
+	memcpy(&ri.prefix, &summary->prefix, sizeof(ri.prefix));
+	ri.prefixlen = summary->prefixlen;
+	memcpy(&ri.metric, metric, sizeof(ri.metric));
+
+	rde_check_update(eigrp->rnbr_summary, &ri);
+}
+
 /* send all known routing information to new neighbor */
 void
 rt_snap(struct rde_nbr *nbr)
@@ -674,7 +691,8 @@ rt_snap(struct rde_nbr *nbr)
 	struct rinfo		 ri;
 
 	RB_FOREACH(rn, rt_tree, &eigrp->topology)
-		if (rn->state == DUAL_STA_PASSIVE) {
+		if (rn->state == DUAL_STA_PASSIVE &&
+		    !rde_summary_check(nbr->ei, &rn->prefix, rn->prefixlen)) {
 			rinfo_fill_successor(rn, &ri);
 			rde_imsg_compose_eigrpe(IMSG_SEND_UPDATE,
 			    nbr->peerid, 0, &ri, sizeof(ri));

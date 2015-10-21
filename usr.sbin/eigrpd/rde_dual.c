@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_dual.c,v 1.6 2015/10/21 03:48:09 renato Exp $ */
+/*	$OpenBSD: rde_dual.c,v 1.7 2015/10/21 03:52:12 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -613,6 +613,10 @@ uninstall:
 void
 rt_set_successor(struct rt_node *rn, struct eigrp_route *successor)
 {
+	struct eigrp		*eigrp = rn->eigrp;
+	struct eigrp_iface	*ei;
+	struct summary_addr	*summary;
+
 	if (successor == NULL) {
 		rn->successor.nbr = NULL;
 		rn->successor.type = 0;
@@ -622,17 +626,22 @@ rt_set_successor(struct rt_node *rn, struct eigrp_route *successor)
 		    sizeof(rn->successor.metric));
 		memset(&rn->successor.emetric, 0,
 		    sizeof(rn->successor.emetric));
-		return;
+	} else {
+		rn->successor.nbr = successor->nbr;
+		rn->successor.type = successor->type;
+		rn->successor.fdistance = successor->distance;
+		rn->successor.rdistance = successor->rdistance;
+		memcpy(&rn->successor.metric, &successor->metric,
+		    sizeof(rn->successor.metric));
+		memcpy(&rn->successor.emetric, &successor->emetric,
+		    sizeof(rn->successor.emetric));
 	}
 
-	rn->successor.nbr = successor->nbr;
-	rn->successor.type = successor->type;
-	rn->successor.fdistance = successor->distance;
-	rn->successor.rdistance = successor->rdistance;
-	memcpy(&rn->successor.metric, &successor->metric,
-	    sizeof(rn->successor.metric));
-	memcpy(&rn->successor.emetric, &successor->emetric,
-	    sizeof(rn->successor.emetric));
+	TAILQ_FOREACH(ei, &eigrp->ei_list, e_entry) {
+		summary = rde_summary_check(ei, &rn->prefix, rn->prefixlen);
+		if (summary)
+			rt_summary_set(eigrp, summary, &rn->successor.metric);
+	}
 }
 
 struct eigrp_route *
@@ -674,10 +683,32 @@ rt_get_successor_fc(struct rt_node *rn)
 	return (successor);
 }
 
+struct summary_addr *
+rde_summary_check(struct eigrp_iface *ei, union eigrpd_addr *prefix,
+    uint8_t prefixlen)
+{
+	struct summary_addr	*summary;
+
+	TAILQ_FOREACH(summary, &ei->summary_list, entry) {
+		/* do not filter the summary itself */
+		if (summary->prefixlen == prefixlen &&
+		    !eigrp_addrcmp(ei->eigrp->af, prefix, &summary->prefix))
+			return (NULL);
+
+		if (summary->prefixlen <= prefixlen &&
+		    !eigrp_prefixcmp(ei->eigrp->af, prefix, &summary->prefix,
+		    summary->prefixlen))
+			return (summary);
+	}
+
+	return (NULL);
+}
+
 void
 rde_send_update(struct eigrp_iface *ei, struct rinfo *ri)
 {
-	if (ri->metric.hop_count >= ei->eigrp->maximum_hops)
+	if (ri->metric.hop_count >= ei->eigrp->maximum_hops ||
+	    rde_summary_check(ei, &ri->prefix, ri->prefixlen))
 		ri->metric.delay = EIGRP_INFINITE_METRIC;
 
 	rde_imsg_compose_eigrpe(IMSG_SEND_MUPDATE, ei->ifaceid, 0,
@@ -768,7 +799,8 @@ rde_send_reply(struct rde_nbr *nbr, struct rinfo *ri, int siareply)
 {
 	int	 type;
 
-	if (ri->metric.hop_count >= nbr->eigrp->maximum_hops)
+	if (ri->metric.hop_count >= nbr->eigrp->maximum_hops ||
+	    rde_summary_check(nbr->ei, &ri->prefix, ri->prefixlen))
 		ri->metric.delay = EIGRP_INFINITE_METRIC;
 
 	if (!siareply)

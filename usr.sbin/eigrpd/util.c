@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.2 2015/10/04 23:00:10 renato Exp $ */
+/*	$OpenBSD: util.c,v 1.3 2015/10/21 03:52:12 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -173,6 +173,47 @@ eigrp_addrisset(int af, union eigrpd_addr *addr)
 	}
 
 	return (0);
+}
+
+int
+eigrp_prefixcmp(int af, const union eigrpd_addr *a, const union eigrpd_addr *b,
+    uint8_t prefixlen)
+{
+	in_addr_t	mask, aa, ba;
+	int		i;
+	uint8_t		m;
+
+	switch (af) {
+	case AF_INET:
+		if (prefixlen == 0)
+			return (0);
+		if (prefixlen > 32)
+			fatalx("eigrp_prefixcmp: bad IPv4 prefixlen");
+		mask = htonl(prefixlen2mask(prefixlen));
+		aa = htonl(a->v4.s_addr) & mask;
+		ba = htonl(b->v4.s_addr) & mask;
+		return (aa - ba);
+	case AF_INET6:
+		if (prefixlen == 0)
+			return (0);
+		if (prefixlen > 128)
+			fatalx("eigrp_prefixcmp: bad IPv6 prefixlen");
+		for (i = 0; i < prefixlen / 8; i++)
+			if (a->v6.s6_addr[i] != b->v6.s6_addr[i])
+				return (a->v6.s6_addr[i] - b->v6.s6_addr[i]);
+		i = prefixlen % 8;
+		if (i) {
+			m = 0xff00 >> i;
+			if ((a->v6.s6_addr[prefixlen / 8] & m) !=
+			    (b->v6.s6_addr[prefixlen / 8] & m))
+				return ((a->v6.s6_addr[prefixlen / 8] & m) -
+				    (b->v6.s6_addr[prefixlen / 8] & m));
+		}
+		return (0);
+	default:
+		fatalx("eigrp_prefixcmp: unknown af");
+	}
+	return (-1);
 }
 
 #define IN6_IS_SCOPE_EMBED(a)   \
