@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_state.c,v 1.1 2015/10/20 02:00:49 schwarze Exp $ */
+/*	$OpenBSD: mdoc_state.c,v 1.2 2015/10/21 23:49:05 schwarze Exp $ */
 /*
  * Copyright (c) 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -30,6 +30,7 @@
 typedef	void	(*state_handler)(STATE_ARGS);
 
 static	void	 state_bd(STATE_ARGS);
+static	void	 state_bl(STATE_ARGS);
 static	void	 state_dl(STATE_ARGS);
 static	void	 state_sh(STATE_ARGS);
 static	void	 state_sm(STATE_ARGS);
@@ -46,7 +47,7 @@ static	const state_handler state_handlers[MDOC_MAX] = {
 	state_dl,	/* Dl */
 	state_bd,	/* Bd */
 	NULL,		/* Ed */
-	NULL,		/* Bl */
+	state_bl,	/* Bl */
 	NULL,		/* El */
 	NULL,		/* It */
 	NULL,		/* Ad */
@@ -199,6 +200,25 @@ state_bd(STATE_ARGS)
 		return;
 
 	state_dl(mdoc, n);
+}
+
+static void
+state_bl(STATE_ARGS)
+{
+
+	if (n->type != ROFFT_HEAD || n->parent->args == NULL)
+		return;
+
+	switch(n->parent->args->argv[0].arg) {
+	case MDOC_Diag:
+		n->norm->Bl.type = LIST_diag;
+		break;
+	case MDOC_Column:
+		n->norm->Bl.type = LIST_column;
+		break;
+	default:
+		break;
+	}
 }
 
 static void
