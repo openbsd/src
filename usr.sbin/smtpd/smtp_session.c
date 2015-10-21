@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.237 2015/10/16 21:13:33 sthen Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.238 2015/10/21 16:44:28 jsing Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -828,7 +828,8 @@ smtp_session_imsg(struct mproc *p, struct imsg *imsg)
 			pkiname = s->smtpname;
 		ssl_ctx = dict_get(env->sc_ssl_dict, pkiname);
 
-		ssl = ssl_smtp_init(ssl_ctx, smtp_sni_callback);
+		ssl = ssl_smtp_init(ssl_ctx, smtp_sni_callback,
+		    s->listener->flags & F_TLS_VERIFY);
 		io_set_read(&s->io);
 		io_start_tls(&s->io, ssl);
 
