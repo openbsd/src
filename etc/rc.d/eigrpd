@@ -1,4 +1,6 @@
 #!/bin/sh
+#
+# $OpenBSD: eigrpd,v 1.2 2015/10/21 11:28:02 gsoares Exp $
 
 daemon="/usr/sbin/eigrpd"
 
