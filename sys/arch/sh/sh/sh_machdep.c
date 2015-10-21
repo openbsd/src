@@ -1,4 +1,4 @@
-/*	$OpenBSD: sh_machdep.c,v 1.40 2015/05/15 23:20:25 deraadt Exp $	*/
+/*	$OpenBSD: sh_machdep.c,v 1.41 2015/10/21 07:59:18 mpi Exp $	*/
 /*	$NetBSD: sh3_machdep.c,v 1.59 2006/03/04 01:13:36 uwe Exp $	*/
 
 /*
@@ -99,7 +99,6 @@
 #include <sys/reboot.h>
 
 #include <uvm/uvm_extern.h>
-#include <uvm/uvm_swap.h>
 
 #include <dev/cons.h>
 
@@ -363,10 +362,6 @@ dumpsys()
 	blkno = dumplo;
 
 	printf("\ndumping to dev 0x%x offset %ld\n", dumpdev, dumplo);
-
-#ifdef UVM_SWAP_ENCRYPT
-	uvm_swap_finicrypt_all();
-#endif
 
 	printf("dump ");
 

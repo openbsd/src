@@ -1,4 +1,4 @@
-/*	$OpenBSD: stubs.c,v 1.9 2014/11/16 12:30:56 deraadt Exp $	*/
+/*	$OpenBSD: stubs.c,v 1.10 2015/10/21 07:59:17 mpi Exp $	*/
 /*	$NetBSD: stubs.c,v 1.14 2003/07/15 00:24:42 lukem Exp $	*/
 
 /*
@@ -51,7 +51,6 @@
 #include <sys/core.h>
 #include <sys/kcore.h>
 #include <uvm/uvm_extern.h>
-#include <uvm/uvm_swap.h>
 #include <machine/bootconfig.h>
 #include <machine/cpu.h>
 #include <machine/intr.h>
@@ -156,10 +155,6 @@ dumpsys()
 	}
 	printf("\ndumping to dev %u,%u offset %ld\n", major(dumpdev),
 	    minor(dumpdev), dumplo);
-
-#ifdef UVM_SWAP_ENCRYPT
-	uvm_swap_finicrypt_all();
-#endif
 
 	blkno = dumplo;
 	dumpspace = (vaddr_t) memhook;

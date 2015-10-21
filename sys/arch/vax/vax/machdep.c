@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.149 2015/05/13 08:01:21 mpi Exp $ */
+/* $OpenBSD: machdep.c,v 1.150 2015/10/21 07:59:18 mpi Exp $ */
 /* $NetBSD: machdep.c,v 1.108 2000/09/13 15:00:23 thorpej Exp $	 */
 
 /*
@@ -627,10 +627,6 @@ dumpsys()
 
 	printf("\ndumping to dev %u,%u offset %ld\n", major(dumpdev),
 	    minor(dumpdev), dumplo);
-
-#ifdef UVM_SWAP_ENCRYPT
-	uvm_swap_finicrypt_all();
-#endif
 
 	/* Setup the dump header */
 	kseg_p = (kcore_seg_t *)dump_hdr;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.241 2015/01/20 19:43:20 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.242 2015/10/21 07:59:18 mpi Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 Michael Shalayeff
@@ -1039,10 +1039,6 @@ dumpsys(void)
 		return;
 	}
 	printf("\ndumping to dev %x, offset %ld\n", dumpdev, dumplo);
-
-#ifdef UVM_SWAP_ENCRYPT
-	uvm_swap_finicrypt_all();
-#endif
 
 	psize = (*bdevsw[major(dumpdev)].d_psize)(dumpdev);
 	printf("dump ");

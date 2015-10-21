@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.117 2015/05/18 04:06:37 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.118 2015/10/21 07:59:18 mpi Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -588,10 +588,6 @@ dumpsys()
 
 	printf("\ndumping to dev %u,%u offset %ld\n", maj,
 	    minor(dumpdev), dumplo);
-
-#ifdef UVM_SWAP_ENCRYPT
-	uvm_swap_finicrypt_all();
-#endif
 
 	/* Setup the dump header */
 	kseg_p = (kcore_seg_t *)dump_hdr;
