@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttymsg.c,v 1.7 2015/07/06 16:12:16 millert Exp $	*/
+/*	$OpenBSD: ttymsg.c,v 1.8 2015/10/21 14:03:07 bluhm Exp $	*/
 /*	$NetBSD: ttymsg.c,v 1.3 1994/11/17 07:17:55 jtc Exp $	*/
 
 /*
@@ -33,31 +33,32 @@
 #include <sys/param.h>	/* nitems */
 #include <sys/stat.h>
 
-#include <signal.h>
-#include <fcntl.h>
 #include <dirent.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <paths.h>
-#include <unistd.h>
+#include <signal.h>
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
 #include "syslogd.h"
 
 /*
  * Display the contents of a uio structure on a terminal.
- * Forks and finishes in child if write would block, waiting up to tmout
+ * Forks and finishes in child if write would block, waiting up to TTYMSGTIME
  * seconds.  Returns pointer to error string on unexpected error;
  * string is not newline-terminated.  Various "normal" errors are ignored
  * (exclusive-use, lack of permission, etc.).
  */
 char *
-ttymsg(struct iovec *iov, int iovcnt, char *line, int tmout)
+ttymsg(struct iovec *iov, int iovcnt, char *utline)
 {
 	static char device[MAXNAMLEN] = _PATH_DEV;
-	static char errbuf[1024];
-	int cnt, fd, left;
+	static char ebuf[ERRBUFSIZE];
+	int cnt, fd;
+	size_t left;
 	ssize_t wret;
 	struct iovec localiov[6];
 	int forked = 0;
@@ -69,17 +70,17 @@ ttymsg(struct iovec *iov, int iovcnt, char *line, int tmout)
 	/*
 	 * Ignore lines that start with "ftp" or "uucp".
 	 */
-	if ((strncmp(line, "ftp", 3) == 0) ||
-	    (strncmp(line, "uucp", 4) == 0))
+	if ((strncmp(utline, "ftp", 3) == 0) ||
+	    (strncmp(utline, "uucp", 4) == 0))
 		return (NULL);
 
-	(void) strlcpy(device + sizeof(_PATH_DEV) - 1, line,
+	(void) strlcpy(device + sizeof(_PATH_DEV) - 1, utline,
 	    sizeof(device) - (sizeof(_PATH_DEV) - 1));
 	if (strchr(device + sizeof(_PATH_DEV) - 1, '/')) {
 		/* A slash is an attempt to break security... */
-		(void) snprintf(errbuf, sizeof(errbuf), "'/' in \"%s\"",
+		(void) snprintf(ebuf, sizeof(ebuf), "'/' in \"%s\"",
 		    device);
-		return (errbuf);
+		return (ebuf);
 	}
 
 	/*
@@ -89,26 +90,27 @@ ttymsg(struct iovec *iov, int iovcnt, char *line, int tmout)
 	if ((fd = priv_open_tty(device)) < 0) {
 		if (errno == EBUSY || errno == EACCES)
 			return (NULL);
-		(void) snprintf(errbuf, sizeof(errbuf),
+		(void) snprintf(ebuf, sizeof(ebuf),
 		    "%s: %s", device, strerror(errno));
-		return (errbuf);
+		return (ebuf);
 	}
 
-	for (cnt = left = 0; cnt < iovcnt; ++cnt)
+	left = 0;
+	for (cnt = 0; cnt < iovcnt; ++cnt)
 		left += iov[cnt].iov_len;
 
 	for (;;) {
 		wret = writev(fd, iov, iovcnt);
-		if (wret >= left)
-			break;
 		if (wret >= 0) {
+			if ((size_t)wret >= left)
+				break;
 			left -= wret;
 			if (iov != localiov) {
 				bcopy(iov, localiov,
 				    iovcnt * sizeof(struct iovec));
 				iov = localiov;
 			}
-			for (cnt = 0; (size_t)wret >= iov->iov_len; ++cnt) {
+			while ((size_t)wret >= iov->iov_len) {
 				wret -= iov->iov_len;
 				++iov;
 				--iovcnt;
@@ -127,24 +129,25 @@ ttymsg(struct iovec *iov, int iovcnt, char *line, int tmout)
 				(void) close(fd);
 				_exit(1);
 			}
+			logdebug("ttymsg delayed write\n");
 			cpid = fork();
 			if (cpid < 0) {
-				(void) snprintf(errbuf, sizeof(errbuf),
+				(void) snprintf(ebuf, sizeof(ebuf),
 				    "fork: %s", strerror(errno));
 				(void) close(fd);
-				return (errbuf);
+				return (ebuf);
 			}
 			if (cpid) {	/* parent */
 				(void) close(fd);
 				return (NULL);
 			}
 			forked++;
-			/* wait at most tmout seconds */
+			/* wait at most TTYMSGTIME seconds */
 			(void) signal(SIGALRM, SIG_DFL);
 			(void) signal(SIGTERM, SIG_DFL); /* XXX */
 			(void) sigemptyset(&mask);
 			(void) sigprocmask(SIG_SETMASK, &mask, NULL);
-			(void) alarm((u_int)tmout);
+			(void) alarm((u_int)TTYMSGTIME);
 			(void) fcntl(fd, O_NONBLOCK, &off);
 			continue;
 		}
@@ -157,9 +160,9 @@ ttymsg(struct iovec *iov, int iovcnt, char *line, int tmout)
 		(void) close(fd);
 		if (forked)
 			_exit(1);
-		(void) snprintf(errbuf, sizeof(errbuf),
+		(void) snprintf(ebuf, sizeof(ebuf),
 		    "%s: %s", device, strerror(errno));
-		return (errbuf);
+		return (ebuf);
 	}
 
 	(void) close(fd);

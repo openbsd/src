@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.h,v 1.21 2015/10/15 20:26:47 bluhm Exp $ */
+/*	$OpenBSD: syslogd.h,v 1.22 2015/10/21 14:03:07 bluhm Exp $ */
 
 /*
  * Copyright (c) 2003 Anil Madhavapeddy <anil@recoil.org>
@@ -32,7 +32,8 @@ int   priv_getaddrinfo(char *, char *, char *, struct sockaddr *, size_t);
 int   priv_getnameinfo(struct sockaddr *, socklen_t, char *, size_t);
 
 /* Terminal message */
-char *ttymsg(struct iovec *, int, char *, int);
+#define TTYMSGTIME	1		/* timeout used by ttymsg */
+char *ttymsg(struct iovec *, int, char *);
 
 /* File descriptor send/recv */
 void send_fd(int, int);
@@ -46,6 +47,7 @@ extern char *path_ctlsock;
 extern int fd_ctlsock, fd_ctlconn, fd_klog, fd_sendsys;
 extern int fd_udp, fd_udp6, fd_bind, fd_listen, fd_tls, fd_unix[MAXUNIX];
 
+#define ERRBUFSIZE	256
 void logdebug(const char *, ...) __attribute__((__format__ (printf, 1, 2)));
 extern int Debug;
 extern int Startup;
