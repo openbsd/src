@@ -1,4 +1,4 @@
-.\"     $OpenBSD: rtable_add.9,v 1.5 2014/03/26 13:57:54 mpi Exp $
+.\"     $OpenBSD: rtable_add.9,v 1.6 2015/10/21 08:48:12 mpi Exp $
 .\"
 .\" Copyright (c) 2011 Bret S. Lambert <blambert@openbsd.org>
 .\" All rights reserved.
@@ -15,40 +15,37 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 26 2014 $
+.Dd $Mdocdate: October 21 2015 $
 .Dt RTABLE_ADD 9
 .Os
 .Sh NAME
 .Nm rtable_add ,
 .Nm rtable_exists ,
-.Nm rtable_get ,
 .Nm rtable_l2 ,
 .Nm rtable_l2set
 .Nd routing tables and routing domains interface
 .Sh SYNOPSIS
 .In net/route.h
 .Ft int
-.Fn rtable_add "u_int id"
+.Fn rtable_add "unsigned int id"
 .Ft int
-.Fn rtable_exists "u_int id"
-.Ft struct radix_node_head *
-.Fn rtable_get "u_int id" "sa_family_t af"
-.Ft u_int
-.Fn rtable_l2 "u_int id"
+.Fn rtable_exists "unsigned int id"
+.Ft unsigned int
+.Fn rtable_l2 "unsigned int id"
 .Ft void
-.Fn rtable_l2set "u_int id" "u_int rdomain"
+.Fn rtable_l2set "unsigned int id" "unsigned int rdomain"
 .Sh DESCRIPTION
 Routing tables contain layer 2 and 3 forwarding information.
 Each address family in use will have its own routing table.
 Routing domains are a way of logically segmenting a router among multiple
 networks and may contain more than one routing table.
 .Bl -tag -width Ds
-.It Fn rtable_add "u_int id"
+.It Fn rtable_add "unsigned int id"
 Add routing table with ID of
 .Fa id
 to routing domain
 .Fa 0 .
-.It Fn rtable_exists "u_int id"
+.It Fn rtable_exists "unsigned int id"
 Return
 .Fa 1
 if routing table with ID
@@ -56,18 +53,10 @@ if routing table with ID
 exists,
 .Fa 0
 otherwise.
-.It Fn rtable_get "u_int id" "sa_family_t af"
-Return the root node for the family
-.Fa af
-of the routing table with ID of
-.Fa id
-if it exists,
-.Fa NULL
-otherwise.
-.It Fn rtable_l2 "u_int id"
+.It Fn rtable_l2 "unsigned int id"
 Get the routing domain of routing table with ID of
 .Fa id .
-.It Fn rtable_l2set "u_int id" "u_int rdomain"
+.It Fn rtable_l2set "unsigned int id" "unsigned int rdomain"
 Place routing table with ID of
 .Fa id
 under the routing domain with ID of
@@ -76,7 +65,6 @@ under the routing domain with ID of
 .Sh CONTEXT
 .Fn rtable_add ,
 .Fn rtable_exists ,
-.Fn rtable_get ,
 .Fn rtable_l2 ,
 and
 .Fn task_l2set
