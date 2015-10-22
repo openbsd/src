@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.392 2015/10/22 16:44:54 mpi Exp $	*/
+/*	$OpenBSD: if.c,v 1.393 2015/10/22 17:48:34 mpi Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -1271,30 +1271,6 @@ ifaof_ifpforaddr(struct sockaddr *addr, struct ifnet *ifp)
 			return (ifa);
 	}
 	return (ifa_maybe);
-}
-
-/*
- * Default action when installing a route with a Link Level gateway.
- * Lookup an appropriate real ifa to point to.
- * This should be moved to /sys/net/link.c eventually.
- */
-void
-link_rtrequest(int cmd, struct rtentry *rt)
-{
-	struct ifaddr *ifa;
-	struct sockaddr *dst;
-	struct ifnet *ifp;
-
-	if (cmd != RTM_ADD || ((ifa = rt->rt_ifa) == 0) ||
-	    ((ifp = ifa->ifa_ifp) == 0) || ((dst = rt_key(rt)) == 0))
-		return;
-	if ((ifa = ifaof_ifpforaddr(dst, ifp)) != NULL) {
-		ifa->ifa_refcnt++;
-		ifafree(rt->rt_ifa);
-		rt->rt_ifa = ifa;
-		if (ifa->ifa_rtrequest && ifa->ifa_rtrequest != link_rtrequest)
-			ifa->ifa_rtrequest(cmd, rt);
-	}
 }
 
 /*

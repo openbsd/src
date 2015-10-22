@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_enc.c,v 1.61 2015/10/22 15:37:47 bluhm Exp $	*/
+/*	$OpenBSD: if_enc.c,v 1.62 2015/10/22 17:48:34 mpi Exp $	*/
 
 /*
  * Copyright (c) 2010 Reyk Floeter <reyk@vantronix.net>
@@ -104,7 +104,6 @@ enc_clone_create(struct if_clone *ifc, int unit)
 	 */
 	if_alloc_sadl(ifp);
 	sc->sc_ifa.ifa_ifp = ifp;
-	sc->sc_ifa.ifa_rtrequest = link_rtrequest;
 	sc->sc_ifa.ifa_addr = sdltosa(ifp->if_sadl);
 	sc->sc_ifa.ifa_netmask = NULL;
 
