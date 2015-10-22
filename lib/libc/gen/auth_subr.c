@@ -1,4 +1,4 @@
-/*	$OpenBSD: auth_subr.c,v 1.45 2015/09/14 16:09:13 tedu Exp $	*/
+/*	$OpenBSD: auth_subr.c,v 1.46 2015/10/22 23:55:51 mmcc Exp $	*/
 
 /*
  * Copyright (c) 2000-2002,2004 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -363,7 +363,7 @@ auth_setenv(auth_session_t *as)
 			}
 		} else
 		if (!strncasecmp(line, BI_UNSETENV, sizeof(BI_UNSETENV)-1)) {
-			if (isblank(line[sizeof(BI_UNSETENV) - 1])) {
+			if (isblank((unsigned char)line[sizeof(BI_UNSETENV) - 1])) {
 				/* only do it once! */
 				line[2] = 'd'; line[3] = 'i'; line[4] = 'd';
 				line += sizeof(BI_UNSETENV) - 1;

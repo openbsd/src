@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet_network.c,v 1.12 2015/09/13 21:36:08 guenther Exp $ */
+/*	$OpenBSD: inet_network.c,v 1.13 2015/10/22 23:55:51 mmcc Exp $ */
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -71,7 +71,7 @@ again:
 		*pp++ = val, cp++;
 		goto again;
 	}
-	if (*cp && !isspace(*cp))
+	if (*cp && !isspace((unsigned char)*cp))
 		return (INADDR_NONE);
 	*pp++ = val;
 	n = pp - parts;
