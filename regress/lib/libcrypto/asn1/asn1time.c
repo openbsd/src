@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1time.c,v 1.5 2015/10/22 13:58:47 jsing Exp $ */
+/* $OpenBSD: asn1time.c,v 1.6 2015/10/22 14:10:55 jsing Exp $ */
 /*
  * Copyright (c) 2015 Joel Sing <jsing@openbsd.org>
  *
@@ -236,6 +236,12 @@ asn1_gentime_test(int test_no, struct asn1_time_test *att)
 	int failure = 1;
 	int len;
 
+	if (ASN1_GENERALIZEDTIME_set_string(NULL, att->str) != 1) {
+		fprintf(stderr, "FAIL: test %i - failed to set string '%s'\n",
+		    test_no, att->str);
+		goto done;
+	}
+
 	if ((gt = ASN1_GENERALIZEDTIME_new()) == NULL)
 		goto done;
 
@@ -293,6 +299,12 @@ asn1_utctime_test(int test_no, struct asn1_time_test *att)
 	int failure = 1;
 	int len;
 
+	if (ASN1_UTCTIME_set_string(NULL, att->str) != 1) {
+		fprintf(stderr, "FAIL: test %i - failed to set string '%s'\n",
+		    test_no, att->str);
+		goto done;
+	}
+
 	if ((ut = ASN1_UTCTIME_new()) == NULL)
 		goto done;
 
@@ -346,6 +358,12 @@ asn1_time_test(int test_no, struct asn1_time_test *att, int type)
 {
 	ASN1_TIME *t = NULL;
 	int failure = 1;
+
+	if (ASN1_TIME_set_string(NULL, att->str) != 1) {
+		fprintf(stderr, "FAIL: test %i - failed to set string '%s'\n",
+		    test_no, att->str);
+		goto done;
+	}
 
 	if ((t = ASN1_TIME_new()) == NULL)
 		goto done;
