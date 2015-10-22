@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_ifattach.c,v 1.96 2015/09/12 20:50:17 mpi Exp $	*/
+/*	$OpenBSD: in6_ifattach.c,v 1.97 2015/10/22 15:37:47 bluhm Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -144,7 +144,7 @@ get_hw_ifid(struct ifnet *ifp, struct in6_addr *in6)
 	static u_int8_t allone[8] =
 		{ 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
 
-	sdl = (struct sockaddr_dl *)ifp->if_sadl;
+	sdl = ifp->if_sadl;
 	if (sdl == NULL || sdl->sdl_alen == 0)
 		return -1;
 

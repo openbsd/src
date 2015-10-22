@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.171 2015/09/21 11:27:08 mpi Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.172 2015/10/22 15:37:47 bluhm Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -72,6 +72,7 @@
 #include <sys/protosw.h>
 
 #include <net/if.h>
+#include <net/if_dl.h>
 #include <net/if_var.h>
 #include <net/route.h>
 #include <net/raw_cb.h>
@@ -703,8 +704,7 @@ report:
 			info.rti_info[RTAX_IFA] = NULL;
 			if (rtm->rtm_addrs & (RTA_IFP | RTA_IFA) &&
 			    (ifp = rt->rt_ifp) != NULL) {
-				info.rti_info[RTAX_IFP] =
-					(struct sockaddr *)ifp->if_sadl;
+				info.rti_info[RTAX_IFP] = sdltosa(ifp->if_sadl);
 				info.rti_info[RTAX_IFA] = rt->rt_ifa->ifa_addr;
 				if (ifp->if_flags & IFF_POINTOPOINT)
 					info.rti_info[RTAX_BRD] =
@@ -1144,7 +1144,7 @@ rt_sendaddrmsg(struct rtentry *rt, int cmd)
 
 	memset(&info, 0, sizeof(info));
 	info.rti_info[RTAX_IFA] = ifa->ifa_addr;
-	info.rti_info[RTAX_IFP] = (struct sockaddr *)ifp->if_sadl;
+	info.rti_info[RTAX_IFP] = sdltosa(ifp->if_sadl);
 	info.rti_info[RTAX_NETMASK] = ifa->ifa_netmask;
 	info.rti_info[RTAX_BRD] = ifa->ifa_dstaddr;
 	if ((m = rt_msg1(cmd, &info)) == NULL)
@@ -1220,8 +1220,7 @@ sysctl_dumpentry(struct rtentry *rt, void *v, unsigned int id)
 	info.rti_info[RTAX_GATEWAY] = rt->rt_gateway;
 	info.rti_info[RTAX_NETMASK] = rt_mask(rt);
 	if (rt->rt_ifp) {
-		info.rti_info[RTAX_IFP] =
-		    (struct sockaddr *)rt->rt_ifp->if_sadl;
+		info.rti_info[RTAX_IFP] = sdltosa(rt->rt_ifp->if_sadl);
 		info.rti_info[RTAX_IFA] = rt->rt_ifa->ifa_addr;
 		if (rt->rt_ifp->if_flags & IFF_POINTOPOINT)
 			info.rti_info[RTAX_BRD] = rt->rt_ifa->ifa_dstaddr;
@@ -1275,7 +1274,7 @@ sysctl_iflist(int af, struct walkarg *w)
 		if (w->w_arg && w->w_arg != ifp->if_index)
 			continue;
 		/* Copy the link-layer address first */
-		info.rti_info[RTAX_IFP] = (struct sockaddr *)ifp->if_sadl;
+		info.rti_info[RTAX_IFP] = sdltosa(ifp->if_sadl);
 		len = rt_msg2(RTM_IFINFO, RTM_VERSION, &info, 0, w);
 		if (w->w_where && w->w_tmem && w->w_needed <= 0) {
 			struct if_msghdr *ifm;

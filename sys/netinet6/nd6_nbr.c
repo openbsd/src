@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_nbr.c,v 1.96 2015/09/18 14:26:22 mpi Exp $	*/
+/*	$OpenBSD: nd6_nbr.c,v 1.97 2015/10/22 15:37:47 bluhm Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -60,8 +60,6 @@
 #if NCARP > 0
 #include <netinet/ip_carp.h>
 #endif
-
-#define SDL(s) ((struct sockaddr_dl *)s)
 
 TAILQ_HEAD(dadq_head, dadq);
 struct dadq {
@@ -242,7 +240,7 @@ nd6_ns_input(struct mbuf *m, int off, int icmp6len)
 			    IN6_IFF_NOTREADY | IN6_IFF_ANYCAST)->ia_ifa;
 			if (ifa) {
 				proxy = 1;
-				proxydl = SDL(rt->rt_gateway);
+				proxydl = satosdl(rt->rt_gateway);
 				router = 0;	/* XXX */
 			}
 		}
@@ -317,7 +315,7 @@ nd6_ns_input(struct mbuf *m, int off, int icmp6len)
 		nd6_na_output(ifp, &saddr6, &taddr6,
 		    ((anycast || proxy || !tlladdr) ? 0 : ND_NA_FLAG_OVERRIDE) |
 		    (router ? ND_NA_FLAG_ROUTER : 0),
-		    tlladdr, (struct sockaddr *)proxydl);
+		    tlladdr, sdltosa(proxydl));
 		goto freeit;
 	}
 
@@ -326,7 +324,7 @@ nd6_ns_input(struct mbuf *m, int off, int icmp6len)
 	nd6_na_output(ifp, &saddr6, &taddr6,
 	    ((anycast || proxy || !tlladdr) ? 0 : ND_NA_FLAG_OVERRIDE) |
 	    (router ? ND_NA_FLAG_ROUTER : 0) | ND_NA_FLAG_SOLICITED,
-	    tlladdr, (struct sockaddr *)proxydl);
+	    tlladdr, sdltosa(proxydl));
  freeit:
 	m_freem(m);
 	if_put(ifp);
@@ -711,7 +709,7 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 	rt = nd6_lookup(&taddr6, 0, ifp, ifp->if_rdomain);
 	if ((rt == NULL) ||
 	   ((ln = (struct llinfo_nd6 *)rt->rt_llinfo) == NULL) ||
-	   ((sdl = SDL(rt->rt_gateway)) == NULL))
+	   ((sdl = satosdl(rt->rt_gateway)) == NULL))
 		goto freeit;
 
 	if (ln->ln_state == ND6_LLINFO_INCOMPLETE) {
@@ -1033,7 +1031,7 @@ nd6_na_output(struct ifnet *ifp, struct in6_addr *daddr6,
 			mac = nd6_ifptomac(ifp);
 		} else if (sdl0->sa_family == AF_LINK) {
 			struct sockaddr_dl *sdl;
-			sdl = (struct sockaddr_dl *)sdl0;
+			sdl = satosdl(sdl0);
 			if (sdl->sdl_alen == ifp->if_addrlen)
 				mac = LLADDR(sdl);
 		}

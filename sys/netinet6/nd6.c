@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.156 2015/10/22 10:27:22 mpi Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.157 2015/10/22 15:37:47 bluhm Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -63,8 +63,6 @@
 
 #define ND6_SLOWTIMER_INTERVAL (60 * 60) /* 1 hour */
 #define ND6_RECALC_REACHTM_INTERVAL (60 * 120) /* 2 hours */
-
-#define SDL(s) ((struct sockaddr_dl *)s)
 
 /* timer values */
 int	nd6_prune	= 1;	/* walk list every 1 seconds */
@@ -608,7 +606,7 @@ nd6_purge(struct ifnet *ifp)
 		rt = ln->ln_rt;
 		if (rt && rt->rt_gateway &&
 		    rt->rt_gateway->sa_family == AF_LINK) {
-			sdl = (struct sockaddr_dl *)rt->rt_gateway;
+			sdl = satosdl(rt->rt_gateway);
 			if (sdl->sdl_index == ifp->if_index)
 				nln = nd6_free(rt, 0);
 		}
@@ -669,8 +667,7 @@ nd6_lookup(struct in6_addr *addr6, int create, struct ifnet *ifp,
 			bzero(&info, sizeof(info));
 			info.rti_flags = RTF_HOST | RTF_LLINFO;
 			info.rti_info[RTAX_DST] = sin6tosa(&sin6);
-			info.rti_info[RTAX_GATEWAY] =
-			    (struct sockaddr *)ifp->if_sadl;
+			info.rti_info[RTAX_GATEWAY] = sdltosa(ifp->if_sadl);
 			error = rtrequest1(RTM_ADD, &info, RTP_CONNECTED, &rt,
 			    rtableid);
 			if (error)
@@ -1023,8 +1020,8 @@ nd6_rtrequest(int req, struct rtentry *rt)
 			    __func__, ifp->if_xname);
 			break;
 		}
-		SDL(gate)->sdl_type = ifp->if_type;
-		SDL(gate)->sdl_index = ifp->if_index;
+		satosdl(gate)->sdl_type = ifp->if_type;
+		satosdl(gate)->sdl_index = ifp->if_index;
 		if (ln != NULL)
 			break;	/* This happens on a route change */
 		/*
@@ -1360,7 +1357,7 @@ fail:
 		goto fail;
 	if (rt->rt_gateway->sa_family != AF_LINK)
 		goto fail;
-	sdl = SDL(rt->rt_gateway);
+	sdl = satosdl(rt->rt_gateway);
 
 	olladdr = (sdl->sdl_alen) ? 1 : 0;
 	if (olladdr && lladdr) {
@@ -1765,7 +1762,7 @@ nd6_storelladdr(struct ifnet *ifp, struct rtentry *rt0, struct mbuf *m,
 		m_freem(m);
 		return (EINVAL);
 	}
-	sdl = SDL(rt->rt_gateway);
+	sdl = satosdl(rt->rt_gateway);
 	if (sdl->sdl_alen != ETHER_ADDR_LEN) {
 		char addr[INET6_ADDRSTRLEN];
 		log(LOG_DEBUG, "%s: %s: incorrect nd6 information\n", __func__,

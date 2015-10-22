@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dl.h,v 1.9 2015/09/15 09:13:33 guenther Exp $	*/
+/*	$OpenBSD: if_dl.h,v 1.10 2015/10/22 15:37:47 bluhm Exp $	*/
 /*	$NetBSD: if_dl.h,v 1.8 1995/03/26 20:30:13 jtc Exp $	*/
 
 /*
@@ -71,7 +71,21 @@ struct sockaddr_dl {
 
 #define LLADDR(s) ((caddr_t)((s)->sdl_data + (s)->sdl_nlen))
 
-#ifndef _KERNEL
+#ifdef _KERNEL
+
+static __inline struct sockaddr_dl *
+satosdl(struct sockaddr *sa)
+{
+	return ((struct sockaddr_dl *)(sa));
+}
+
+static __inline struct sockaddr *
+sdltosa(struct sockaddr_dl *sdl)
+{
+	return ((struct sockaddr *)(sdl));
+}
+
+#else /* _KERNEL */
 
 __BEGIN_DECLS
 char	*link_ntoa(const struct sockaddr_dl *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.390 2015/10/22 10:46:26 mpi Exp $	*/
+/*	$OpenBSD: if.c,v 1.391 2015/10/22 15:37:47 bluhm Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -1945,7 +1945,7 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 	case SIOCSIFLLADDR:
 		if ((error = suser(p, 0)))
 			return (error);
-		sdl = (struct sockaddr_dl *)ifp->if_sadl;
+		sdl = ifp->if_sadl;
 		if (sdl == NULL)
 			return (EINVAL);
 		if (ifr->ifr_addr.sa_len != ETHER_ADDR_LEN)

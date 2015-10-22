@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.254 2015/10/21 08:21:06 mpi Exp $	*/
+/*	$OpenBSD: route.c,v 1.255 2015/10/22 15:37:47 bluhm Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -388,7 +388,7 @@ rt_sendmsg(struct rtentry *rt, int cmd, u_int rtableid)
 	info.rti_info[RTAX_NETMASK] = rt_mask(rt);
 	info.rti_info[RTAX_LABEL] = rtlabel_id2sa(rt->rt_labelid, &sa_rl);
 	if (rt->rt_ifp != NULL) {
-		info.rti_info[RTAX_IFP] =(struct sockaddr *)rt->rt_ifp->if_sadl;
+		info.rti_info[RTAX_IFP] = sdltosa(rt->rt_ifp->if_sadl);
 		info.rti_info[RTAX_IFA] = rt->rt_ifa->ifa_addr;
 	}
 
@@ -612,7 +612,7 @@ ifa_ifwithroute(int flags, struct sockaddr *dst, struct sockaddr *gateway,
 	}
 	if (ifa == NULL) {
 		if (gateway->sa_family == AF_LINK) {
-			struct sockaddr_dl *sdl = (struct sockaddr_dl *)gateway;
+			struct sockaddr_dl *sdl = satosdl(gateway);
 			struct ifnet *ifp = if_get(sdl->sdl_index);
 
 			if (ifp != NULL)
@@ -656,7 +656,7 @@ rt_getifa(struct rt_addrinfo *info, u_int rtid)
 	if (info->rti_info[RTAX_IFP] != NULL) {
 		struct sockaddr_dl *sdl;
 
-		sdl = (struct sockaddr_dl *)info->rti_info[RTAX_IFP];
+		sdl = satosdl(info->rti_info[RTAX_IFP]);
 		ifp = if_get(sdl->sdl_index);
 	}
 
@@ -808,7 +808,7 @@ rtrequest1(int req, struct rt_addrinfo *info, u_int8_t prio,
 
 		info->rti_flags = rt->rt_flags | (RTF_CLONED|RTF_HOST);
 		info->rti_flags &= ~(RTF_CLONING|RTF_CONNECTED|RTF_STATIC);
-		info->rti_info[RTAX_GATEWAY] = (struct sockaddr *)&sa_dl;
+		info->rti_info[RTAX_GATEWAY] = sdltosa(&sa_dl);
 		info->rti_info[RTAX_LABEL] =
 		    rtlabel_id2sa(rt->rt_labelid, &sa_rl2);
 		/* FALLTHROUGH */
@@ -1108,7 +1108,7 @@ rt_ifa_add(struct ifaddr *ifa, int flags, struct sockaddr *dst)
 	info.rti_flags = flags | RTF_MPATH;
 	info.rti_info[RTAX_DST] = dst;
 	if (flags & RTF_LLINFO)
-		info.rti_info[RTAX_GATEWAY] = (struct sockaddr *)ifp->if_sadl;
+		info.rti_info[RTAX_GATEWAY] = sdltosa(ifp->if_sadl);
 	else
 		info.rti_info[RTAX_GATEWAY] = ifa->ifa_addr;
 	info.rti_info[RTAX_LABEL] = rtlabel_id2sa(ifp->if_rtlabelid, &sa_rl);
