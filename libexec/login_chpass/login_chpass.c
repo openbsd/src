@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_chpass.c,v 1.17 2015/10/05 17:31:17 millert Exp $	*/
+/*	$OpenBSD: login_chpass.c,v 1.18 2015/10/22 12:32:33 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1995,1996 Berkeley Software Design, Inc. All rights reserved.
@@ -199,15 +199,10 @@ yp_chpass(char *username)
 		}
 	}
 	if (pw == NULL) {
-		char *p, salt[_PASSWORD_LEN + 1];
-		login_cap_t *lc;
-
-		/* no such user, get appropriate salt to thwart timing attack */
+		char *p;
+		/* no such user, but fake to thwart timing attack */
 		if ((p = getpass("Old password:")) != NULL) {
-			if ((lc = login_getclass(NULL)) == NULL ||
-			    pwd_gensalt(salt, sizeof(salt), lc, 'y') == 0)
-				strlcpy(salt, "xx", sizeof(salt));
-			crypt(p, salt);
+			crypt_checkpass(p, NULL);
 			explicit_bzero(p, strlen(p));
 		}
 		warnx("YP passwd database unchanged.");

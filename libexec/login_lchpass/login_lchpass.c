@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_lchpass.c,v 1.15 2015/10/05 17:31:17 millert Exp $	*/
+/*	$OpenBSD: login_lchpass.c,v 1.16 2015/10/22 12:32:33 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1995,1996 Berkeley Software Design, Inc. All rights reserved.
@@ -63,7 +63,7 @@ main(int argc, char *argv[])
 	login_cap_t *lc;
 	struct iovec iov[2];
 	struct passwd *pwd;
-	char *username = NULL, *salt, *p, saltbuf[_PASSWORD_LEN + 1];
+	char *username = NULL, *hash = NULL, *p;
 	struct rlimit rl;
 	int c;
 
@@ -119,15 +119,7 @@ main(int argc, char *argv[])
 	}
 
 	if (pwd)
-		salt = pwd->pw_passwd;
-	else {
-		/* no such user, get appropriate salt */
-		if ((lc = login_getclass(NULL)) == NULL ||
-		    pwd_gensalt(saltbuf, sizeof(saltbuf), lc, 'l') == 0)
-			salt = "xx";
-		else
-			salt = saltbuf;
-	}
+		hash = pwd->pw_passwd;
 
 	(void)setpriority(PRIO_PROCESS, 0, -4);
 
@@ -135,10 +127,11 @@ main(int argc, char *argv[])
 	if ((p = getpass("Old Password:")) == NULL)
 		exit(1);
 
-	salt = crypt(p, salt);
-	explicit_bzero(p, strlen(p));
-	if (!pwd || strcmp(salt, pwd->pw_passwd) != 0)
+	if (crypt_checkpass(p, hash) != 0) {
+		explicit_bzero(p, strlen(p));
 		exit(1);
+	}
+	explicit_bzero(p, strlen(p));
 
 	/*
 	 * We rely on local_passwd() to block signals during the
