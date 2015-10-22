@@ -1,4 +1,4 @@
-/*	$OpenBSD: csh.c,v 1.29 2015/10/18 03:09:11 deraadt Exp $	*/
+/*	$OpenBSD: csh.c,v 1.30 2015/10/22 12:09:03 deraadt Exp $	*/
 /*	$NetBSD: csh.c,v 1.14 1995/04/29 23:21:28 mycroft Exp $	*/
 
 /*-
@@ -104,10 +104,6 @@ main(int argc, char *argv[])
     cshout = stdout;
     csherr = stderr;
 
-    if (pledge("stdio rpath wpath cpath fattr getpw proc exec tty",
-	NULL) == -1)
-	    perror("pledge");
-
     settimes();			/* Immed. estab. timing base */
 
     /*
@@ -162,6 +158,11 @@ main(int argc, char *argv[])
     AsciiOnly = 1;
 #ifdef NLS
     (void) setlocale(LC_ALL, "");
+
+    if (pledge("stdio rpath wpath cpath fattr getpw proc exec tty",
+	NULL) == -1)
+	    perror("pledge");
+
     {
 	int     k;
 
