@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetd.c,v 1.146 2015/10/19 11:52:51 jca Exp $	*/
+/*	$OpenBSD: inetd.c,v 1.147 2015/10/22 12:34:25 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
@@ -346,7 +346,7 @@ main(int argc, char *argv[])
 			(void) setlogin("");
 	}
 
-	if (pledge("stdio rpath getpw dns inet proc exec id abort", NULL) == -1)
+	if (pledge("stdio rpath getpw dns inet proc exec id", NULL) == -1)
 		err(1, "pledge");
 
 	if (uid == 0) {
@@ -1773,7 +1773,7 @@ spawn(int ctrl, short events, void *xsep)
 		return;
 	}
 
-	if (pledge("stdio rpath getpw inet proc exec id abort", NULL) == -1)
+	if (pledge("stdio rpath getpw inet proc exec id", NULL) == -1)
 		err(1, "pledge");
 
 	if (pid && sep->se_wait) {
