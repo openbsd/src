@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.205 2015/09/16 20:25:41 stsp Exp $ */
+/*	$OpenBSD: kroute.c,v 1.206 2015/10/22 11:13:16 phessler Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -3119,8 +3119,10 @@ dispatch_rtmsg_addr(struct rt_msghdr *rtm, struct sockaddr *rti_info[RTAX_MAX],
 	prefixlen = 0;
 	bzero(&prefix, sizeof(prefix));
 
-	if ((sa = rti_info[RTAX_DST]) == NULL)
-		return (-1);
+	if ((sa = rti_info[RTAX_DST]) == NULL) {
+		log_warnx("empty route message");
+		return (0);
+	}
 
 	if (rtm->rtm_flags & RTF_STATIC)
 		flags |= F_STATIC;
