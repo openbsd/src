@@ -1,4 +1,4 @@
-/* $OpenBSD: doas.c,v 1.43 2015/10/22 04:57:20 deraadt Exp $ */
+/* $OpenBSD: doas.c,v 1.44 2015/10/22 12:43:26 tedu Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -417,8 +417,6 @@ main(int argc, char **argv, char **envp)
 	if (pledge("stdio rpath getpw exec id", NULL) == -1)
 		err(1, "pledge");
 
-	envp = copyenv((const char **)envp, rule);
-
 	pw = getpwuid(target);
 	if (!pw)
 		errx(1, "no passwd entry for target");
@@ -444,6 +442,8 @@ main(int argc, char **argv, char **envp)
 
 	syslog(LOG_AUTHPRIV | LOG_INFO, "%s ran command %s as %s from %s",
 	    myname, cmdline, pw->pw_name, cwd);
+
+	envp = copyenv((const char **)envp, rule);
 
 	if (rule->cmd) {
 		if (setenv("PATH", safepath, 1) == -1)
