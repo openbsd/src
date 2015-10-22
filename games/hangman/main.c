@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.12 2015/02/07 01:37:30 miod Exp $	*/
+/*	$OpenBSD: main.c,v 1.13 2015/10/22 05:28:42 doug Exp $	*/
 /*	$NetBSD: main.c,v 1.3 1995/03/23 08:32:50 cgd Exp $	*/
 
 /*
@@ -43,6 +43,9 @@ main(int argc, char *argv[])
 {
 	int ch;
 
+	if (pledge("stdio rpath tty", NULL) == -1)
+		err(1, "pledge");
+
 	while ((ch = getopt(argc, argv, "d:hk")) != -1) {
 		switch (ch) {
 		case 'd':
@@ -69,6 +72,10 @@ main(int argc, char *argv[])
 	}
 	signal(SIGINT, die);
 	setup();
+
+	if (pledge("stdio tty", NULL) == -1)
+		err(1, "pledge");
+
 	for (;;) {
 		Wordnum++;
 		playgame();
