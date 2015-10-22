@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.391 2015/10/22 15:37:47 bluhm Exp $	*/
+/*	$OpenBSD: if.c,v 1.392 2015/10/22 16:44:54 mpi Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -1321,6 +1321,8 @@ p2p_rtrequest(int req, struct rtentry *rt)
 		if (ifa == NULL)
 			break;
 
+		KASSERT(ifa == rt->rt_ifa);
+
 		/*
 		 * XXX Since lo0 is in the default rdomain we should not
 		 * (ab)use it for any route related to an interface of a
@@ -1335,17 +1337,6 @@ p2p_rtrequest(int req, struct rtentry *rt)
 			break;
 
 		rt->rt_flags &= ~RTF_LLINFO;
-
-		/*
-		 * make sure to set rt->rt_ifa to the interface
-		 * address we are using, otherwise we will have trouble
-		 * with source address selection.
-		 */
-		if (ifa != rt->rt_ifa) {
-			ifafree(rt->rt_ifa);
-			ifa->ifa_refcnt++;
-			rt->rt_ifa = ifa;
-		}
 		break;
 	case RTM_DELETE:
 	case RTM_RESOLVE:

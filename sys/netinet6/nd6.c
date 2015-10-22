@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.157 2015/10/22 15:37:47 bluhm Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.158 2015/10/22 16:44:54 mpi Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -1100,20 +1100,7 @@ nd6_rtrequest(int req, struct rtentry *rt)
 			nd6_llinfo_settimer(ln, -1);
 			ln->ln_state = ND6_LLINFO_REACHABLE;
 			ln->ln_byhint = 0;
-
-			/*
-			 * Make sure rt_ifa be equal to the ifaddr
-			 * corresponding to the address.
-			 * We need this because when we refer
-			 * rt_ifa->ia6_flags in ip6_input, we assume
-			 * that the rt_ifa points to the address instead
-			 * of the loopback address.
-			 */
-			if (ifa != rt->rt_ifa) {
-				ifafree(rt->rt_ifa);
-				ifa->ifa_refcnt++;
-				rt->rt_ifa = ifa;
-			}
+			KASSERT(ifa == rt->rt_ifa);
 		} else if (rt->rt_flags & RTF_ANNOUNCE) {
 			nd6_llinfo_settimer(ln, -1);
 			ln->ln_state = ND6_LLINFO_REACHABLE;

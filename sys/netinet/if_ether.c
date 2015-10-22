@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.174 2015/10/22 15:37:47 bluhm Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.175 2015/10/22 16:44:54 mpi Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -233,17 +233,8 @@ arp_rtrequest(int req, struct rtentry *rt)
 				break;
 		}
 		if (ifa) {
+			KASSERT(ifa == rt->rt_ifa);
 			rt->rt_expire = 0;
-			/*
-			 * make sure to set rt->rt_ifa to the interface
-			 * address we are using, otherwise we will have trouble
-			 * with source address selection.
-			 */
-			if (ifa != rt->rt_ifa) {
-				ifafree(rt->rt_ifa);
-				ifa->ifa_refcnt++;
-				rt->rt_ifa = ifa;
-			}
 		}
 		break;
 
