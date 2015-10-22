@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1time.c,v 1.4 2015/10/19 16:29:22 beck Exp $ */
+/* $OpenBSD: asn1time.c,v 1.5 2015/10/22 13:58:47 jsing Exp $ */
 /*
  * Copyright (c) 2015 Joel Sing <jsing@openbsd.org>
  *
@@ -211,7 +211,7 @@ asn1_invtime_test(int test_no, struct asn1_time_test *att)
 		    "string '%s'\n", test_no, att->str);
 		goto done;
 	}
-	if (ASN1_UTCTIME_set_string(ut, att->str) != 0) {
+	if (ASN1_TIME_set_string(t, att->str) != 0) {
 		fprintf(stderr, "FAIL: test %i - successfully set TIME "
 		    "string '%s'\n", test_no, att->str);
 		goto done;
