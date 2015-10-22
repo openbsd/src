@@ -9357,6 +9357,11 @@ main (int argc, char **argv)
 
   parse_args (argc, argv);
 
+  if (pledge ("stdio rpath", NULL) == -1) {
+    error (_("Failed to pledge\n"));
+    return 1;
+  }
+
   if (num_dump_sects > 0)
     {
       /* Make a copy of the dump_sects array.  */

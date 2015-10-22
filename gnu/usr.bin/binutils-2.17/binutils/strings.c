@@ -183,6 +183,9 @@ main (int argc, char **argv)
   bindtextdomain (PACKAGE, LOCALEDIR);
   textdomain (PACKAGE);
 
+  if (pledge ("stdio rpath", NULL) == -1)
+    fatal (_("Failed to pledge"));
+
   program_name = argv[0];
   xmalloc_set_program_name (program_name);
 
