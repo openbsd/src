@@ -1,4 +1,4 @@
-/*	$OpenBSD: frag6.c,v 1.64 2015/10/19 11:59:26 mpi Exp $	*/
+/*	$OpenBSD: frag6.c,v 1.65 2015/10/22 10:22:53 mpi Exp $	*/
 /*	$KAME: frag6.c,v 1.40 2002/05/27 21:40:31 itojun Exp $	*/
 
 /*
@@ -164,30 +164,12 @@ frag6_input(struct mbuf **mp, int *offp, int proto)
 	int offset = *offp, nxt, i, next;
 	int first_frag = 0;
 	int fragoff, frgpartlen;	/* must be larger than u_int16_t */
-	struct ifnet *dstifp;
-	struct sockaddr_in6 dst;
-	struct rtentry *rt;
 	u_int8_t ecn, ecn0;
 
 	ip6 = mtod(m, struct ip6_hdr *);
 	IP6_EXTHDR_GET(ip6f, struct ip6_frag *, m, offset, sizeof(*ip6f));
 	if (ip6f == NULL)
 		return IPPROTO_DONE;
-
-	dstifp = NULL;
-	/* find the destination interface of the packet. */
-	memset(&dst, 0, sizeof(dst));
-	dst.sin6_family = AF_INET6;
-	dst.sin6_len = sizeof(struct sockaddr_in6);
-	dst.sin6_addr = ip6->ip6_dst;
-
-	rt = rtalloc_mpath(sin6tosa(&dst), &ip6->ip6_src.s6_addr32[0],
-	    m->m_pkthdr.ph_rtableid);
-	if (rt != NULL) {
-		dstifp = ifatoia6(rt->rt_ifa)->ia_ifp;
-		rtfree(rt);
-		rt = NULL;
-	}
 
 	/* jumbo payload can't contain a fragment header */
 	if (ip6->ip6_plen == 0) {
