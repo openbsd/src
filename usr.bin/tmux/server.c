@@ -1,4 +1,4 @@
-/* $OpenBSD: server.c,v 1.141 2015/10/22 10:46:24 nicm Exp $ */
+/* $OpenBSD: server.c,v 1.142 2015/10/22 10:48:30 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -281,7 +281,7 @@ server_send_exit(void)
 		if (c->flags & (CLIENT_BAD|CLIENT_SUSPENDED))
 			server_client_lost(c);
 		else
-			server_write_client(c, MSG_EXIT, NULL, 0);
+			server_write_client(c, MSG_SHUTDOWN, NULL, 0);
 		c->session = NULL;
 	}
 
