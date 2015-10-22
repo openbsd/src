@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-select-pane.c,v 1.25 2015/09/14 11:34:50 nicm Exp $ */
+/* $OpenBSD: cmd-select-pane.c,v 1.26 2015/10/22 11:19:31 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -120,14 +120,19 @@ cmd_select_pane_exec(struct cmd *self, struct cmd_q *cmdq)
 		return (CMD_RETURN_NORMAL);
 	}
 
-	if (args_has(self->args, 'L'))
+	if (args_has(self->args, 'L')) {
+		server_unzoom_window(wp->window);
 		wp = window_pane_find_left(wp);
-	else if (args_has(self->args, 'R'))
+	} else if (args_has(self->args, 'R')) {
+		server_unzoom_window(wp->window);
 		wp = window_pane_find_right(wp);
-	else if (args_has(self->args, 'U'))
+	} else if (args_has(self->args, 'U')) {
+		server_unzoom_window(wp->window);
 		wp = window_pane_find_up(wp);
-	else if (args_has(self->args, 'D'))
+	} else if (args_has(self->args, 'D')) {
+		server_unzoom_window(wp->window);
 		wp = window_pane_find_down(wp);
+	}
 	if (wp == NULL)
 		return (CMD_RETURN_NORMAL);
 
