@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.255 2015/10/22 15:37:47 bluhm Exp $	*/
+/*	$OpenBSD: route.c,v 1.256 2015/10/22 16:32:41 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -1133,19 +1133,6 @@ rt_ifa_add(struct ifaddr *ifa, int flags, struct sockaddr *dst)
 
 	error = rtrequest1(RTM_ADD, &info, prio, &rt, rtableid);
 	if (error == 0) {
-		if (rt->rt_ifa != ifa) {
-			printf("%s: wrong ifa (%p) was (%p)\n", __func__,
-			    ifa, rt->rt_ifa);
-			if (rt->rt_ifa->ifa_rtrequest)
-				rt->rt_ifa->ifa_rtrequest(RTM_DELETE, rt);
-			ifafree(rt->rt_ifa);
-			rt->rt_ifa = ifa;
-			rt->rt_ifp = ifa->ifa_ifp;
-			ifa->ifa_refcnt++;
-			if (ifa->ifa_rtrequest)
-				ifa->ifa_rtrequest(RTM_ADD, rt);
-		}
-
 		/*
 		 * A local route is created for every address configured
 		 * on an interface, so use this information to notify
