@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.172 2015/10/13 10:21:27 mpi Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.173 2015/10/22 13:30:29 mpi Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -578,7 +578,7 @@ in_arpinput(struct mbuf *m)
 		    (IFF_UP|IFF_RUNNING))) {
 			if (op == ARPOP_REPLY)
 				break;
-			if (carp_iamatch(ifatoia(ifa), ea->arp_sha,
+			if (carp_iamatch(ifp, ea->arp_sha,
 			    &enaddr, &ether_shost))
 				break;
 			else

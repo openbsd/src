@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.276 2015/10/14 13:59:31 jsg Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.277 2015/10/22 13:30:29 mpi Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -1355,10 +1355,10 @@ carp_update_lsmask(struct carp_softc *sc)
 }
 
 int
-carp_iamatch(struct in_ifaddr *ia, u_char *src, u_int8_t **sha,
+carp_iamatch(struct ifnet *ifp, u_char *src, u_int8_t **sha,
     u_int8_t **ether_shost)
 {
-	struct carp_softc *sc = ia->ia_ifp->if_softc;
+	struct carp_softc *sc = ifp->if_softc;
 	struct carp_vhost_entry *vhe = SRPL_FIRST_LOCKED(&sc->carp_vhosts);
 
 	KERNEL_ASSERT_LOCKED(); /* touching carp_vhosts */
