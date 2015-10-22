@@ -1,4 +1,4 @@
-/*	$OpenBSD: yppasswdd_mkpw.c,v 1.31 2013/11/27 21:25:40 deraadt Exp $	*/
+/*	$OpenBSD: yppasswdd_mkpw.c,v 1.32 2015/10/22 12:52:15 tedu Exp $	*/
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -169,7 +169,7 @@ make_passwd(yppasswd *argp)
 	EXPAND(pw.pw_dir);
 	EXPAND(pw.pw_shell);
 
-	if (strcmp(crypt(argp->oldpass, pw.pw_passwd), pw.pw_passwd) != 0)
+	if (crypt_checkpass(argp->oldpass, pw.pw_passwd) != 0)
 		goto fail;
 
 	if (!nopw && badchars(argp->newpw.pw_passwd))
