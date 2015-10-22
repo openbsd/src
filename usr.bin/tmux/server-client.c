@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.157 2015/10/20 21:12:09 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.158 2015/10/22 11:00:51 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1155,38 +1155,45 @@ server_client_msg_identify(struct client *c, struct imsg *imsg)
 			fatalx("bad MSG_IDENTIFY_FLAGS size");
 		memcpy(&flags, data, sizeof flags);
 		c->flags |= flags;
+		log_debug("client %p IDENTIFY_FLAGS %#x", c, flags);
 		break;
 	case MSG_IDENTIFY_TERM:
 		if (datalen == 0 || data[datalen - 1] != '\0')
 			fatalx("bad MSG_IDENTIFY_TERM string");
 		c->term = xstrdup(data);
+		log_debug("client %p IDENTIFY_TERM %s", c, data);
 		break;
 	case MSG_IDENTIFY_TTYNAME:
 		if (datalen == 0 || data[datalen - 1] != '\0')
 			fatalx("bad MSG_IDENTIFY_TTYNAME string");
 		c->ttyname = xstrdup(data);
+		log_debug("client %p IDENTIFY_TTYNAME %s", c, data);
 		break;
 	case MSG_IDENTIFY_CWD:
 		if (datalen == 0 || data[datalen - 1] != '\0')
 			fatalx("bad MSG_IDENTIFY_CWD string");
 		if ((c->cwd = open(data, O_RDONLY)) == -1)
 			c->cwd = open("/", O_RDONLY);
+		log_debug("client %p IDENTIFY_CWD %s", c, data);
 		break;
 	case MSG_IDENTIFY_STDIN:
 		if (datalen != 0)
 			fatalx("bad MSG_IDENTIFY_STDIN size");
 		c->fd = imsg->fd;
+		log_debug("client %p IDENTIFY_STDIN %d", c, imsg->fd);
 		break;
 	case MSG_IDENTIFY_ENVIRON:
 		if (datalen == 0 || data[datalen - 1] != '\0')
 			fatalx("bad MSG_IDENTIFY_ENVIRON string");
 		if (strchr(data, '=') != NULL)
 			environ_put(&c->environ, data);
+		log_debug("client %p IDENTIFY_ENVIRON %s", c, data);
 		break;
 	case MSG_IDENTIFY_CLIENTPID:
 		if (datalen != sizeof c->pid)
 			fatalx("bad MSG_IDENTIFY_CLIENTPID size");
 		memcpy(&c->pid, data, sizeof c->pid);
+		log_debug("client %p IDENTIFY_CLIENTPID %ld", c, (long)c->pid);
 		break;
 	default:
 		break;
