@@ -1,4 +1,4 @@
-/* $OpenBSD: a_time_tm.c,v 1.7 2015/10/22 15:03:19 jsing Exp $ */
+/* $OpenBSD: a_time_tm.c,v 1.8 2015/10/22 15:38:05 jsing Exp $ */
 /*
  * Copyright (c) 2015 Bob Beck <beck@openbsd.org>
  *
@@ -369,7 +369,7 @@ ASN1_UTCTIME_check(ASN1_UTCTIME *d)
 int
 ASN1_UTCTIME_set_string(ASN1_UTCTIME *s, const char *str)
 {
-	if (s->type != V_ASN1_UTCTIME)
+	if (s != NULL && s->type != V_ASN1_UTCTIME)
 		return (0);
 	return (ASN1_TIME_set_string_internal(s, str, V_ASN1_UTCTIME));
 }
@@ -425,7 +425,7 @@ ASN1_GENERALIZEDTIME_check(ASN1_GENERALIZEDTIME *d)
 int
 ASN1_GENERALIZEDTIME_set_string(ASN1_GENERALIZEDTIME *s, const char *str)
 {
-	if (s->type != V_ASN1_GENERALIZEDTIME)
+	if (s != NULL && s->type != V_ASN1_GENERALIZEDTIME)
 		return (0);
 	return (ASN1_TIME_set_string_internal(s, str, V_ASN1_GENERALIZEDTIME));
 }
@@ -443,5 +443,3 @@ ASN1_GENERALIZEDTIME_adj(ASN1_GENERALIZEDTIME *s, time_t t, int offset_day,
 	return (ASN1_TIME_adj_internal(s, t, offset_day, offset_sec,
 	    V_ASN1_GENERALIZEDTIME));
 }
-
-
