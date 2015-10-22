@@ -1,4 +1,4 @@
-.\" $OpenBSD: pledge.2,v 1.7 2015/10/14 22:39:04 millert Exp $
+.\" $OpenBSD: pledge.2,v 1.8 2015/10/22 09:23:41 deraadt Exp $
 .\"
 .\" Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 14 2015 $
+.Dd $Mdocdate: October 22 2015 $
 .Dt PLEDGE 2
 .Os
 .Sh NAME
@@ -455,6 +455,20 @@ with
 .Xr mmap 2
 and
 .Xr mprotect 2 .
+.It Va "id"
+Allows the following system calls:
+.Pp
+.Xr setuid 2 ,
+.Xr seteuid 2 ,
+.Xr setresuid 2 ,
+.Xr setgid 2 ,
+.Xr setegid 2 ,
+.Xr setresgid 2 ,
+.Xr setgroups 2 ,
+.Xr setlogin 2 ,
+.Xr setrlimit 2 ,
+.Xr getpriority 2 ,
+.Xr setpriority 2
 .It Va "abort"
 Deliver an unblockable
 .Dv SIGABRT
