@@ -1,4 +1,4 @@
-/*	$OpenBSD: eigrpe.c,v 1.6 2015/10/21 03:52:12 renato Exp $ */
+/*	$OpenBSD: eigrpe.c,v 1.7 2015/10/22 10:42:14 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -190,7 +190,7 @@ eigrpe(struct eigrpd_conf *xconf, int pipe_parent2eigrpe[2], int pipe_eigrpe2rde
 	TAILQ_FOREACH(iface, &econf->iface_list, entry)
 		if_init(xconf, iface);
 
-	if (pledge("stdio inet mcast", NULL) == -1)
+	if (pledge("stdio cpath inet mcast", NULL) == -1)
 		fatal("pledge");
 
 	event_dispatch();
