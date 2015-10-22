@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.143 2015/10/19 12:10:05 mpi Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.144 2015/10/22 10:31:02 mpi Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -570,13 +570,13 @@ icmp_input_if(struct ifnet *ifp, struct mbuf *m, int hlen)
 		icp->icmp_type = ICMP_MASKREPLY;
 		icp->icmp_mask = ia->ia_sockmask.sin_addr.s_addr;
 		if (ip->ip_src.s_addr == 0) {
-			if (ia->ia_ifp->if_flags & IFF_BROADCAST) {
+			if (ifp->if_flags & IFF_BROADCAST) {
 				if (ia->ia_broadaddr.sin_addr.s_addr)
 					ip->ip_src = ia->ia_broadaddr.sin_addr;
 				else
 					ip->ip_src.s_addr = INADDR_BROADCAST;
 			}
-			else if (ia->ia_ifp->if_flags & IFF_POINTOPOINT)
+			else if (ifp->if_flags & IFF_POINTOPOINT)
 				ip->ip_src = ia->ia_dstaddr.sin_addr;
 		}
 reflect:
