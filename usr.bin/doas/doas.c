@@ -1,4 +1,4 @@
-/* $OpenBSD: doas.c,v 1.42 2015/09/19 02:47:46 tedu Exp $ */
+/* $OpenBSD: doas.c,v 1.43 2015/10/22 04:57:20 deraadt Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -323,6 +323,9 @@ main(int argc, char **argv, char **envp)
 	char cwdpath[PATH_MAX];
 	const char *cwd;
 
+	if (pledge("stdio rpath getpw proc exec id", NULL) == -1)
+		err(1, "pledge");
+
 	closefrom(STDERR_FILENO + 1);
 
 	uid = getuid();
@@ -410,20 +413,34 @@ main(int argc, char **argv, char **envp)
 			errc(1, EPERM, NULL);
 		}
 	}
+
+	if (pledge("stdio rpath getpw exec id", NULL) == -1)
+		err(1, "pledge");
+
 	envp = copyenv((const char **)envp, rule);
 
 	pw = getpwuid(target);
 	if (!pw)
 		errx(1, "no passwd entry for target");
+
+	if (pledge("stdio rpath id exec", NULL) == -1)
+		err(1, "pledge");
+
 	if (setusercontext(NULL, pw, target, LOGIN_SETGROUP |
 	    LOGIN_SETPRIORITY | LOGIN_SETRESOURCES | LOGIN_SETUMASK |
 	    LOGIN_SETUSER) != 0)
 		errx(1, "failed to set user context for target");
 
+	if (pledge("stdio rpath exec", NULL) == -1)
+		err(1, "pledge");
+
 	if (getcwd(cwdpath, sizeof(cwdpath)) == NULL)
 		cwd = "(failed)";
 	else
 		cwd = cwdpath;
+
+	if (pledge("stdio exec", NULL) == -1)
+		err(1, "pledge");
 
 	syslog(LOG_AUTHPRIV | LOG_INFO, "%s ran command %s as %s from %s",
 	    myname, cmdline, pw->pw_name, cwd);
