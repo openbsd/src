@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtable.c,v 1.13 2015/10/21 08:47:01 mpi Exp $ */
+/*	$OpenBSD: rtable.c,v 1.14 2015/10/22 17:19:38 mpi Exp $ */
 
 /*
  * Copyright (c) 2014-2015 Martin Pieuchot
@@ -329,6 +329,9 @@ rtable_delete(unsigned int rtableid, struct sockaddr *dst,
 	if (rn->rn_flags & (RNF_ACTIVE | RNF_ROOT))
 		panic("active node flags=%x", rn->rn_flags);
 
+	rt = ((struct rtentry *)rn);
+	rtfree(rt);
+
 	return (0);
 }
 
@@ -654,7 +657,8 @@ rtable_delete(unsigned int rtableid, struct sockaddr *dst,
 	rt->rt_node = NULL;
 	rt->rt_mask = NULL;
 	LIST_REMOVE(rt, rt_next);
-	KASSERT(rt->rt_refcnt >= 0);
+	KASSERT(rt->rt_refcnt >= 1);
+	rtfree(rt);
 
 #ifndef SMALL_KERNEL
 	if ((rt = LIST_FIRST(&an->an_rtlist)) != NULL) {

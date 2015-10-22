@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtable.h,v 1.6 2015/10/07 11:39:49 mpi Exp $ */
+/*	$OpenBSD: rtable.h,v 1.7 2015/10/22 17:19:38 mpi Exp $ */
 
 /*
  * Copyright (c) 2014-2015 Martin Pieuchot
@@ -31,7 +31,6 @@
 
 #define	rt_key(rt)	(((struct sockaddr *)(rt)->rt_nodes[0].rn_key))
 #define	rt_mask(rt)	(((struct sockaddr *)(rt)->rt_nodes[0].rn_mask))
-#define	RT_ACTIVE(rt)	((rt)->rt_nodes[0].rn_flags & RNF_ACTIVE)
 #define	RT_ROOT(rt)	((rt)->rt_nodes[0].rn_flags & RNF_ROOT)
 
 #else /* ART */
@@ -44,7 +43,6 @@
 
 #define	rt_key(rt)	((rt)->rt_dest)
 #define	rt_mask(rt)	((rt)->rt_mask)
-#define	RT_ACTIVE(rt)	((rt)->rt_node != NULL)
 #define	RT_ROOT(rt)	(0)
 
 #endif /* ART */

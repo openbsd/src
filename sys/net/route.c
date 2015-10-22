@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.257 2015/10/22 16:49:26 mpi Exp $	*/
+/*	$OpenBSD: route.c,v 1.258 2015/10/22 17:19:38 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -348,13 +348,9 @@ rtfree(struct rtentry *rt)
 	if (rt == NULL)
 		return;
 
-	rt->rt_refcnt--;
-
-	if (rt->rt_refcnt <= 0 && (rt->rt_flags & RTF_UP) == 0) {
-		if (rt->rt_refcnt == 0 && RT_ACTIVE(rt))
-			return; /* route still active but currently down */
-		if (RT_ACTIVE(rt) || RT_ROOT(rt))
-			panic("rtfree 2");
+	if (--rt->rt_refcnt <= 0) {
+		KASSERT(!ISSET(rt->rt_flags, RTF_UP));
+		KASSERT(!RT_ROOT(rt));
 		rttrash--;
 		if (rt->rt_refcnt < 0) {
 			printf("rtfree: %p not freed (neg refs)\n", rt);
@@ -846,6 +842,7 @@ rtrequest1(int req, struct rt_addrinfo *info, u_int8_t prio,
 			return (ENOBUFS);
 		}
 
+		rt->rt_refcnt = 1;
 		rt->rt_flags = info->rti_flags | RTF_UP;
 		rt->rt_tableid = tableid;
 		rt->rt_priority = prio;	/* init routing priority */
@@ -931,7 +928,7 @@ rtrequest1(int req, struct rt_addrinfo *info, u_int8_t prio,
 			rt->rt_rmx = (*ret_nrt)->rt_rmx; /* copy metrics */
 			rt->rt_priority = (*ret_nrt)->rt_priority;
 			rt->rt_parent = *ret_nrt;	 /* Back ptr. to parent. */
-			rt->rt_parent->rt_refcnt++;
+			rtref(rt->rt_parent);
 		}
 
 		/*
