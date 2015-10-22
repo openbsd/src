@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.90 2015/10/19 11:25:35 reyk Exp $	*/
+/*	$OpenBSD: iked.h,v 1.91 2015/10/22 15:55:18 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -612,6 +612,7 @@ struct iked_socket {
 void	 parent_reload(struct iked *, int, const char *);
 
 /* control.c */
+pid_t	 control(struct privsep *, struct privsep_proc *);
 int	 control_init(struct privsep *, struct control_sock *);
 int	 control_listen(struct control_sock *);
 void	 control_cleanup(struct control_sock *);

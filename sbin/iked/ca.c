@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.38 2015/10/19 11:25:35 reyk Exp $	*/
+/*	$OpenBSD: ca.c,v 1.39 2015/10/22 15:55:18 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -46,6 +46,7 @@
 #include "iked.h"
 #include "ikev2.h"
 
+void	 ca_run(struct privsep *, struct privsep_proc *, void *);
 void	 ca_reset(struct privsep *, struct privsep_proc *, void *);
 int	 ca_reload(struct iked *);
 
@@ -114,6 +115,21 @@ caproc(struct privsep *ps, struct privsep_proc *p)
 	EVP_PKEY_free(key);
 
 	return (proc_run(ps, p, procs, nitems(procs), ca_reset, store));
+}
+
+void
+ca_run(struct privsep *ps, struct privsep_proc *p, void *arg)
+{
+	/*
+	 * pledge in the ca process:
+	 * stdio - for malloc and basic I/O including events.
+	 * rpath - for certificate files.
+	 * recvfd - for ocsp sockets.
+	 */
+	if (pledge("stdio rpath recvfd", NULL) == -1)
+		fatal("pledge");
+
+	ca_reset(ps, p, arg);
 }
 
 void

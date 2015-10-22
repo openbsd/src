@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.18 2015/10/19 11:27:35 reyk Exp $	*/
+/*	$OpenBSD: control.c,v 1.19 2015/10/22 15:55:18 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -45,7 +45,32 @@ struct ctl_conn
 	*control_connbyfd(int);
 void	 control_close(int, struct control_sock *);
 void	 control_dispatch_imsg(int, short, void *);
+void	 control_dispatch_parent(int, short, void *);
 void	 control_imsg_forward(struct imsg *);
+void	 control_run(struct privsep *, struct privsep_proc *, void *);
+
+static struct privsep_proc procs[] = {
+	{ "parent",	PROC_PARENT, NULL }
+};
+
+pid_t
+control(struct privsep *ps, struct privsep_proc *p)
+{
+	return (proc_run(ps, p, procs, nitems(procs), control_run, NULL));
+}
+
+void
+control_run(struct privsep *ps, struct privsep_proc *p, void *arg)
+{
+	/*
+	 * pledge in the control process:
+ 	 * stdio - for malloc and basic I/O including events.
+	 * cpath - for unlinking the control socket.
+	 * unix - for the control socket.
+	 */
+	if (pledge("stdio cpath unix", NULL) == -1)
+		fatal("pledge");
+}
 
 int
 control_init(struct privsep *ps, struct control_sock *cs)

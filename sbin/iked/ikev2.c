@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.127 2015/10/19 11:25:35 reyk Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.128 2015/10/22 15:55:18 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -45,6 +45,7 @@
 #include "eap.h"
 #include "dh.h"
 
+void	 ikev2_run(struct privsep *, struct privsep_proc *, void *);
 int	 ikev2_dispatch_parent(int, struct privsep_proc *, struct imsg *);
 int	 ikev2_dispatch_cert(int, struct privsep_proc *, struct imsg *);
 
@@ -136,7 +137,21 @@ static struct privsep_proc procs[] = {
 pid_t
 ikev2(struct privsep *ps, struct privsep_proc *p)
 {
-	return (proc_run(ps, p, procs, nitems(procs), NULL, NULL));
+	return (proc_run(ps, p, procs, nitems(procs), ikev2_run, NULL));
+}
+
+void
+ikev2_run(struct privsep *ps, struct privsep_proc *p, void *arg)
+{
+	/*
+	 * pledge in the ikev2 process:
+	 * stdio - for malloc and basic I/O including events.
+	 * inet - for sendto with specified peer address.
+	 * recvfd - for PFKEYv2 and the listening UDP sockets.
+	 * In theory, recvfd could be dropped after getting the fds once.
+	 */
+	if (pledge("stdio inet recvfd", NULL) == -1)
+		fatal("pledge");
 }
 
 int
