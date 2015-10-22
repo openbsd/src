@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_src.c,v 1.64 2015/10/19 12:11:28 mpi Exp $	*/
+/*	$OpenBSD: in6_src.c,v 1.65 2015/10/22 16:33:32 mpi Exp $	*/
 /*	$KAME: in6_src.c,v 1.36 2001/02/06 04:08:17 itojun Exp $	*/
 
 /*
@@ -285,7 +285,7 @@ in6_selectsrc(struct in6_addr **in6src, struct sockaddr_in6 *dstsock,
 		 */
 
 		if (ro->ro_rt) {
-			ia6 = in6_ifawithscope(ro->ro_rt->rt_ifa->ifa_ifp, dst,
+			ia6 = in6_ifawithscope(ro->ro_rt->rt_ifp, dst,
 			    rtableid);
 			if (ia6 == NULL) /* xxx scope error ?*/
 				ia6 = ifatoia6(ro->ro_rt->rt_ifa);
@@ -456,15 +456,8 @@ in6_selectif(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
 	if (rt && (rt->rt_flags & (RTF_REJECT | RTF_BLACKHOLE)))
 		return (rt->rt_flags & RTF_HOST ? EHOSTUNREACH : ENETUNREACH);
 
-	/*
-	 * Adjust the "outgoing" interface.  If we're going to loop the packet
-	 * back to ourselves, the ifp would be the loopback interface.
-	 * However, we'd rather know the interface associated to the
-	 * destination address (which should probably be one of our own
-	 * addresses.)
-	 */
-	if (rt && rt->rt_ifa && rt->rt_ifa->ifa_ifp)
-		*retifp = if_ref(rt->rt_ifa->ifa_ifp);
+	if (rt != NULL)
+		*retifp = if_ref(rt->rt_ifp);
 
 	return (0);
 }
