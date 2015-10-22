@@ -1,4 +1,4 @@
-/* $OpenBSD: login_yubikey.c,v 1.12 2015/10/05 16:09:56 deraadt Exp $ */
+/* $OpenBSD: login_yubikey.c,v 1.13 2015/10/22 23:56:30 bmercer Exp $ */
 
 /*
  * Copyright (c) 2010 Daniel Hartmeier <daniel@benzedrine.cx>
@@ -33,6 +33,7 @@
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <sys/resource.h>
+#include <sys/unistd.h>
 #include <ctype.h>
 #include <login_cap.h>
 #include <pwd.h>
@@ -68,6 +69,12 @@ main(int argc, char *argv[])
 	char response[1024];
 
 	setpriority(PRIO_PROCESS, 0, 0);
+
+	if (pledge("stdio tty wpath rpath cpath", NULL) == -1) {
+		syslog(LOG_AUTH|LOG_ERR, "pledge: %m");
+		exit(EXIT_FAILURE);
+	}
+
 	openlog(NULL, LOG_ODELAY, LOG_AUTH);
 
 	while ((ch = getopt(argc, argv, "dv:s:")) != -1) {
