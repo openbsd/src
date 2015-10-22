@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.159 2015/10/20 02:00:49 schwarze Exp $ */
+/*	$OpenBSD: main.c,v 1.160 2015/10/22 21:02:55 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2012, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -446,21 +446,23 @@ main(int argc, char *argv[])
 			mparse_reset(curp.mp);
 	}
 
-	switch (curp.outtype) {
-	case OUTT_HTML:
-		html_free(curp.outdata);
-		break;
-	case OUTT_UTF8:
-	case OUTT_LOCALE:
-	case OUTT_ASCII:
-		ascii_free(curp.outdata);
-		break;
-	case OUTT_PDF:
-	case OUTT_PS:
-		pspdf_free(curp.outdata);
-		break;
-	default:
-		break;
+	if (curp.outdata != NULL) {
+		switch (curp.outtype) {
+		case OUTT_HTML:
+			html_free(curp.outdata);
+			break;
+		case OUTT_UTF8:
+		case OUTT_LOCALE:
+		case OUTT_ASCII:
+			ascii_free(curp.outdata);
+			break;
+		case OUTT_PDF:
+		case OUTT_PS:
+			pspdf_free(curp.outdata);
+			break;
+		default:
+			break;
+		}
 	}
 	mparse_free(curp.mp);
 	mchars_free();
