@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.175 2015/10/22 16:44:54 mpi Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.176 2015/10/22 18:14:53 mpi Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -496,18 +496,9 @@ arpintr(void)
 }
 
 /*
- * ARP for Internet protocols on Ethernet.
- * Algorithm is that given in RFC 826.
+ * ARP for Internet protocols on Ethernet, RFC 826.
  * In addition, a sanity check is performed on the sender
  * protocol address, to catch impersonators.
- * We no longer handle negotiations for use of trailer protocol:
- * Formerly, ARP replied for protocol type ETHERTYPE_TRAIL sent
- * along with IP replies if we wanted trailers sent to us,
- * and also sent them in response to IP replies.
- * This allowed either end to announce the desire to receive
- * trailer packets.
- * We no longer reply to requests for ETHERTYPE_TRAIL protocol either,
- * but formerly didn't normally send requests.
  */
 void
 in_arpinput(struct mbuf *m)
@@ -542,13 +533,6 @@ in_arpinput(struct mbuf *m)
 	op = ntohs(ea->arp_op);
 	if ((op != ARPOP_REQUEST) && (op != ARPOP_REPLY))
 		goto out;
-#if notyet
-	if ((op == ARPOP_REPLY) && (m->m_flags & (M_BCAST|M_MCAST))) {
-		log(LOG_ERR,
-		    "arp: received reply to broadcast or multicast address\n");
-		goto out;
-	}
-#endif
 
 	memcpy(&itaddr, ea->arp_tpa, sizeof(itaddr));
 	memcpy(&isaddr, ea->arp_spa, sizeof(isaddr));
