@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_reject.c,v 1.11 2015/10/14 17:06:58 deraadt Exp $	*/
+/*	$OpenBSD: login_reject.c,v 1.12 2015/10/22 12:55:23 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1995 Berkeley Software Design, Inc. All rights reserved.
@@ -56,7 +56,7 @@ main(int argc, char *argv[])
 {
 	struct rlimit rl;
 	FILE *back;
-	char passbuf[1], hash[_PASSWORD_LEN + 1];
+	char passbuf[1];
 	int mode = 0, c;
 
 	rl.rlim_cur = 0;
@@ -123,7 +123,7 @@ main(int argc, char *argv[])
 	} else
 		getpass("Password:");
 
-	bcrypt_newhash("password", 8, hash, sizeof(hash));
+	crypt_checkpass("password", NULL);
 
 	fprintf(back, BI_REJECT "\n");
 	exit(1);
