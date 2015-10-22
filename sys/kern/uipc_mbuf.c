@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.207 2015/08/14 05:25:29 dlg Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.208 2015/10/22 05:26:06 dlg Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -1243,8 +1243,6 @@ m_print(void *v,
  * mbuf lists
  */
 
-void ml_join(struct mbuf_list *, struct mbuf_list *);
-
 void
 ml_init(struct mbuf_list *ml)
 {
@@ -1267,7 +1265,7 @@ ml_enqueue(struct mbuf_list *ml, struct mbuf *m)
 }
 
 void
-ml_join(struct mbuf_list *mla, struct mbuf_list *mlb)
+ml_enlist(struct mbuf_list *mla, struct mbuf_list *mlb)
 {
 	if (!ml_empty(mlb)) {
 		if (ml_empty(mla))
@@ -1418,7 +1416,7 @@ mq_enlist(struct mbuf_queue *mq, struct mbuf_list *ml)
 
 	mtx_enter(&mq->mq_mtx);
 	if (mq_len(mq) < mq->mq_maxlen)
-		ml_join(&mq->mq_list, ml);
+		ml_enlist(&mq->mq_list, ml);
 	else {
 		dropped = ml_len(ml);
 		mq->mq_drops += dropped;

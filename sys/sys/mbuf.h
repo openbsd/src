@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.197 2015/10/08 11:36:15 dlg Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.198 2015/10/22 05:26:06 dlg Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -487,6 +487,7 @@ void			ml_init(struct mbuf_list *);
 void			ml_enqueue(struct mbuf_list *, struct mbuf *);
 struct mbuf *		ml_dequeue(struct mbuf_list *);
 void			ml_requeue(struct mbuf_list *, struct mbuf *);
+void			ml_enlist(struct mbuf_list *, struct mbuf_list *);
 struct mbuf *		ml_dechain(struct mbuf_list *);
 struct mbuf *		ml_filter(struct mbuf_list *,
 			    int (*)(void *, const struct mbuf *), void *);
