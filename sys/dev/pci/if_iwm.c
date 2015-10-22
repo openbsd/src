@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.60 2015/10/16 12:17:58 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.61 2015/10/22 11:51:28 jsg Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -406,7 +406,7 @@ int	iwm_init(struct ifnet *);
 void	iwm_start(struct ifnet *);
 void	iwm_stop(struct ifnet *, int);
 void	iwm_watchdog(struct ifnet *);
-int	iwm_ioctl(struct ifnet *, u_long, iwm_caddr_t);
+int	iwm_ioctl(struct ifnet *, u_long, caddr_t);
 #ifdef IWM_DEBUG
 const char *iwm_desc_lookup(uint32_t);
 void	iwm_nic_error(struct iwm_softc *);
@@ -415,7 +415,7 @@ void	iwm_notif_intr(struct iwm_softc *);
 int	iwm_intr(void *);
 int	iwm_match(struct device *, void *, void *);
 int	iwm_preinit(struct iwm_softc *);
-void	iwm_attach_hook(iwm_hookarg_t);
+void	iwm_attach_hook(void *);
 void	iwm_attach(struct device *, struct device *, void *);
 void	iwm_init_task(void *);
 int	iwm_activate(struct device *, int);
@@ -5685,7 +5685,7 @@ iwm_watchdog(struct ifnet *ifp)
 }
 
 int
-iwm_ioctl(struct ifnet *ifp, u_long cmd, iwm_caddr_t data)
+iwm_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct iwm_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
@@ -6376,7 +6376,7 @@ iwm_preinit(struct iwm_softc *sc)
 }
 
 void
-iwm_attach_hook(iwm_hookarg_t arg)
+iwm_attach_hook(void *arg)
 {
 	struct iwm_softc *sc = arg;
 
