@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.155 2015/10/01 09:10:22 mpi Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.156 2015/10/22 10:27:22 mpi Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -689,15 +689,10 @@ nd6_lookup(struct in6_addr *addr6, int create, struct ifnet *ifp,
 	 * route from a parent route that has the L flag (e.g. the default
 	 * route to a p2p interface) may have the flag, too, while the
 	 * destination is not actually a neighbor.
-	 * XXX: we can't use rt->rt_ifp to check for the interface, since
-	 *      it might be the loopback interface if the entry is for our
-	 *      own address on a non-loopback interface. Instead, we should
-	 *      use rt->rt_ifa->ifa_ifp, which would specify the REAL
-	 *	interface.
 	 */
 	if ((rt->rt_flags & RTF_GATEWAY) || (rt->rt_flags & RTF_LLINFO) == 0 ||
 	    rt->rt_gateway->sa_family != AF_LINK || rt->rt_llinfo == NULL ||
-	    (ifp && rt->rt_ifa->ifa_ifp != ifp)) {
+	    (ifp != NULL && rt->rt_ifp != ifp)) {
 		if (create) {
 			char addr[INET6_ADDRSTRLEN];
 			nd6log((LOG_DEBUG, "%s: failed to lookup %s (if=%s)\n",
