@@ -1,4 +1,4 @@
-/* $OpenBSD: a_time_tm.c,v 1.6 2015/10/19 16:32:37 beck Exp $ */
+/* $OpenBSD: a_time_tm.c,v 1.7 2015/10/22 15:03:19 jsing Exp $ */
 /*
  * Copyright (c) 2015 Bob Beck <beck@openbsd.org>
  *
@@ -216,17 +216,22 @@ ASN1_TIME_set_string_internal(ASN1_TIME *s, const char *str, int mode)
 {
 	int type;
 	char *tmp;
-	
+
 	if ((type = asn1_time_parse(str, strlen(str), NULL, mode)) == -1)
 		return (0);
 	if (mode != 0 && mode != type)
 		return (0);
+
+	if (s == NULL)
+		return (1);
+
 	if ((tmp = strdup(str)) == NULL)
 		return (0);
 	free(s->data);
 	s->data = tmp;
 	s->length = strlen(tmp);
 	s->type = type;
+
 	return (1);
 }
 
