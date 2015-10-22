@@ -1,4 +1,4 @@
-/*	$OpenBSD: sh.h,v 1.47 2015/10/21 14:30:43 mmcc Exp $	*/
+/*	$OpenBSD: sh.h,v 1.48 2015/10/22 15:37:04 mmcc Exp $	*/
 
 /*
  * Public Domain Bourne/Korn shell
@@ -25,15 +25,6 @@
 #include <signal.h>
 
 /* end of common headers */
-
-/* some useful #defines */
-#ifdef EXTERN
-# define I__(i) = i
-#else
-# define I__(i)
-# define EXTERN extern
-# define EXTERN_DEFINED
-#endif
 
 #define	NELEM(a) (sizeof(a) / sizeof((a)[0]))
 #define	sizeofN(type, n) (sizeof(type) * (n))
@@ -346,20 +337,20 @@ struct coproc {
 	int	njobs;		/* number of live jobs using output pipe */
 	void	*job;		/* 0 or job of co-process using input pipe */
 };
-EXTERN struct coproc coproc;
+extern struct coproc coproc;
 
 /* Used in jobs.c and by coprocess stuff in exec.c */
-EXTERN sigset_t		sm_default, sm_sigchld;
+extern sigset_t		sm_default, sm_sigchld;
 
 extern const char ksh_version[];
 
 /* name of called builtin function (used by error functions) */
-EXTERN char	*builtin_argv0;
-EXTERN int	builtin_flag;	/* flags of called builtin (SPEC_BI, etc.) */
+extern char	*builtin_argv0;
+extern int	builtin_flag;	/* flags of called builtin (SPEC_BI, etc.) */
 
 /* current working directory, and size of memory allocated for same */
-EXTERN char	*current_wd;
-EXTERN int	current_wd_size;
+extern char	*current_wd;
+extern int	current_wd_size;
 
 #ifdef EDIT
 /* Minimum required space to work with on a line - if the prompt leaves less
@@ -369,7 +360,7 @@ EXTERN int	current_wd_size;
 /* Minimum allowed value for x_cols: 2 for prompt, 3 for " < " at end of line
  */
 # define MIN_COLS	(2 + MIN_EDIT_SPACE + 3)
-EXTERN	int	x_cols I__(80);	/* tty columns */
+extern	int	x_cols;	/* tty columns */
 #else
 # define x_cols 80		/* for pr_menu(exec.c) */
 #endif
@@ -395,10 +386,3 @@ EXTERN	int	x_cols I__(80);	/* tty columns */
 #include "expand.h"
 #include "lex.h"
 #include "proto.h"
-
-/* be sure not to interfere with anyone else's idea about EXTERN */
-#ifdef EXTERN_DEFINED
-# undef EXTERN_DEFINED
-# undef EXTERN
-#endif
-#undef I__

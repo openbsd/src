@@ -1,10 +1,8 @@
-/*	$OpenBSD: main.c,v 1.70 2015/10/21 14:30:43 mmcc Exp $	*/
+/*	$OpenBSD: main.c,v 1.71 2015/10/22 15:37:04 mmcc Exp $	*/
 
 /*
  * startup, main loop, environments and error handling
  */
-
-#define	EXTERN				/* define EXTERNs in sh.h */
 
 #include <sys/stat.h>
 
@@ -56,6 +54,19 @@ volatile sig_atomic_t	fatal_trap;
 
 Getopt	builtin_opt;
 Getopt	user_opt;
+
+struct coproc	coproc;
+sigset_t	sm_default, sm_sigchld;
+
+char	*builtin_argv0;
+int	 builtin_flag;
+
+char	*current_wd;
+int	 current_wd_size;
+
+#ifdef EDIT
+int	x_cols = 80;
+#endif /* EDIT */
 
 /*
  * shell initialization
