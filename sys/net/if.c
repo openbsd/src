@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.389 2015/10/12 13:17:58 dlg Exp $	*/
+/*	$OpenBSD: if.c,v 1.390 2015/10/22 10:46:26 mpi Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -2527,7 +2527,7 @@ ifa_print_all(void)
 				break;
 #endif
 			}
-			printf(" on %s\n", ifa->ifa_ifp->if_xname);
+			printf(" on %s\n", ifp->if_xname);
 		}
 	}
 }
