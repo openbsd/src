@@ -1,4 +1,4 @@
-/*	$OpenBSD: renice.c,v 1.18 2015/05/15 19:34:31 jmc Exp $	*/
+/*	$OpenBSD: renice.c,v 1.19 2015/10/22 07:52:29 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2009, 2015 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -54,6 +54,9 @@ main(int argc, char **argv)
 	int pri = 0, pri_type = RENICE_NONE;
 	char *ep, *idstr;
 	const char *errstr;
+
+	if (pledge("stdio getpw proc", NULL) == -1)
+		err(1, "pledge");
 
 	if (argc < 3)
 		usage();
