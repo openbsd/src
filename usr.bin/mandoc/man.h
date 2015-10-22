@@ -1,4 +1,4 @@
-/*	$OpenBSD: man.h,v 1.55 2015/04/23 16:17:04 schwarze Exp $ */
+/*	$OpenBSD: man.h,v 1.56 2015/10/22 21:53:49 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -63,6 +63,7 @@ __BEGIN_DECLS
 
 struct	roff_man;
 
-const struct mparse   *man_mparse(const struct roff_man *);
+const struct mparse	*man_mparse(const struct roff_man *);
+void			 man_validate(struct roff_man *);
 
 __END_DECLS

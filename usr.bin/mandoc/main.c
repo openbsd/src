@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.160 2015/10/22 21:02:55 schwarze Exp $ */
+/*	$OpenBSD: main.c,v 1.161 2015/10/22 21:53:49 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2012, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -697,6 +697,7 @@ parse(struct curparse *curp, int fd, const char *file)
 		}
 	}
 	if (man->macroset == MACROSET_MAN) {
+		man_validate(man);
 		switch (curp->outtype) {
 		case OUTT_HTML:
 			html_man(curp->outdata, man);

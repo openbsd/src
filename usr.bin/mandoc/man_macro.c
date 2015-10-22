@@ -1,4 +1,4 @@
-/*	$OpenBSD: man_macro.c,v 1.74 2015/10/06 18:30:43 schwarze Exp $ */
+/*	$OpenBSD: man_macro.c,v 1.75 2015/10/22 21:53:49 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2012, 2013, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -128,7 +128,7 @@ man_unscope(struct roff_man *man, const struct roff_node *to)
 
 		man->last = n;
 		n = n->parent;
-		man_valid_post(man);
+		man->last->flags |= MAN_VALID;
 	}
 
 	/*
@@ -377,28 +377,13 @@ in_line_eoln(MACRO_PROT_ARGS)
 	assert(man->last->type != ROFFT_ROOT);
 	man->next = ROFF_NEXT_SIBLING;
 
-	/*
-	 * Rewind our element scope.  Note that when TH is pruned, we'll
-	 * be back at the root, so make sure that we don't clobber as
-	 * its sibling.
-	 */
+	/* Rewind our element scope. */
 
 	for ( ; man->last; man->last = man->last->parent) {
+		man_state(man, man->last);
 		if (man->last == n)
 			break;
-		if (man->last->type == ROFFT_ROOT)
-			break;
-		man_valid_post(man);
 	}
-
-	assert(man->last);
-
-	/*
-	 * Same here regarding whether we're back at the root.
-	 */
-
-	if (man->last->type != ROFFT_ROOT)
-		man_valid_post(man);
 }
 
 void
@@ -406,6 +391,7 @@ man_endparse(struct roff_man *man)
 {
 
 	man_unscope(man, man->first);
+	man->flags &= ~MAN_LITERAL;
 }
 
 static int
