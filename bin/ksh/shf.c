@@ -1,4 +1,4 @@
-/*	$OpenBSD: shf.c,v 1.25 2015/10/19 14:42:16 mmcc Exp $	*/
+/*	$OpenBSD: shf.c,v 1.26 2015/10/23 17:22:43 mmcc Exp $	*/
 
 /*
  *  Shell file I/O routines
@@ -707,10 +707,6 @@ shf_smprintf(const char *fmt, ...)
 	return shf_sclose(&shf); /* null terminates */
 }
 
-#define BUF_SIZE	128
-#define ABIGNUM		32000	/* big number that will fit in a short */
-#define LOG2_10		3.321928094887362347870319429	/* log base 2 of 10 */
-
 #define	FL_HASH		0x001	/* `#' seen */
 #define FL_PLUS		0x002	/* `+' seen */
 #define FL_RIGHT	0x004	/* `-' seen */
@@ -722,7 +718,6 @@ shf_smprintf(const char *fmt, ...)
 #define FL_DOT		0x100	/* '.' seen */
 #define FL_UPPER	0x200	/* format character was uppercase */
 #define FL_NUMBER	0x400	/* a number was formated %[douxefg] */
-
 
 int
 shf_vfprintf(struct shf *shf, const char *fmt, va_list args)
