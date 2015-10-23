@@ -1,7 +1,8 @@
-/*	$OpenBSD: if_nameindex.c,v 1.10 2010/09/24 13:29:29 claudio Exp $	*/
+/*	$OpenBSD: if_nameindex.c,v 1.11 2015/10/23 13:09:19 claudio Exp $	*/
 /*	$KAME: if_nameindex.c,v 1.7 2000/11/24 08:17:20 itojun Exp $	*/
 
 /*-
+ * Copyright (c) 2015 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 1997, 2000
  *	Berkeley Software Design, Inc.  All rights reserved.
  *
@@ -28,11 +29,11 @@
 
 #include <sys/types.h>
 #include <sys/socket.h>
-#include <net/if_dl.h>
+#include <sys/sysctl.h>
 #include <net/if.h>
-#include <ifaddrs.h>
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
 
 /*
  * From RFC 2553:
@@ -77,66 +78,62 @@
 struct if_nameindex *
 if_nameindex(void)
 {
-	struct ifaddrs *ifaddrs, *ifa;
-	unsigned int ni;
-	size_t nbytes;
-	struct if_nameindex *ifni, *ifni2;
+	struct if_nameindex_msg *ifnm = NULL;	
+	struct if_nameindex *ifni = NULL, *ifni2;
 	char *cp;
+	size_t nbytes, needed;
+	unsigned int ni, i;
+	int mib[6];
 
-	if (getifaddrs(&ifaddrs) < 0)
-		return(NULL);
+	mib[0] = CTL_NET;
+	mib[1] = PF_ROUTE;
+	mib[2] = 0;		/* protocol */
+	mib[3] = 0;		/* not used */
+	mib[4] = NET_RT_IFNAMES;
+	mib[5] = 0;		/* no flags */
+	while (1) {
+		struct if_nameindex_msg *buf = NULL;	
 
-	/*
-	 * First, find out how many interfaces there are, and how
-	 * much space we need for the string names.
-	 */
-	ni = 0;
-	nbytes = 0;
-	for (ifa = ifaddrs; ifa != NULL; ifa = ifa->ifa_next) {
-		if (ifa->ifa_addr &&
-		    ifa->ifa_addr->sa_family == AF_LINK) {
-			nbytes += strlen(ifa->ifa_name) + 1;
-			ni++;
+		if (sysctl(mib, 6, NULL, &needed, NULL, 0) == -1)
+			goto out;
+		if (needed == 0)
+			break;
+		if ((buf = realloc(ifnm, needed)) == NULL)
+			goto out;
+		ifnm = buf;
+		if (sysctl(mib, 6, ifnm, &needed, NULL, 0) == -1) {
+			if (errno == ENOMEM)
+				continue;
+			goto out;
 		}
+		break;
 	}
 
 	/*
-	 * Next, allocate a chunk of memory, use the first part
-	 * for the array of structures, and the last part for
-	 * the strings.
+	 * Allocate a chunk of memory, use the first part for the array of
+	 * structures, and the last part for the strings.
 	 */
-	cp = malloc((ni + 1) * sizeof(struct if_nameindex) + nbytes);
-	ifni = (struct if_nameindex *)cp;
+	ni = needed / sizeof(*ifnm);
+	ifni = calloc(ni + 1, sizeof(struct if_nameindex) + IF_NAMESIZE);
 	if (ifni == NULL)
 		goto out;
-	cp += (ni + 1) * sizeof(struct if_nameindex);
+	cp = (char *)(ifni + (ni + 1));
 
-	/*
-	 * Now just loop through the list of interfaces again,
-	 * filling in the if_nameindex array and making copies
-	 * of all the strings.
-	 */
 	ifni2 = ifni;
-	for (ifa = ifaddrs; ifa != NULL; ifa = ifa->ifa_next) {
-		if (ifa->ifa_addr &&
-		    ifa->ifa_addr->sa_family == AF_LINK) {
-			ifni2->if_index =
-			    ((struct sockaddr_dl*)ifa->ifa_addr)->sdl_index;
-			ifni2->if_name = cp;
-			nbytes = strlen(ifa->ifa_name) + 1;
-			memcpy(cp, ifa->ifa_name, nbytes);
-			ifni2++;
-			cp += nbytes;
-		}
+	for (i = 0; i < ni; i++) {
+		ifni2->if_index = ifnm[i].if_index;
+		/* don't care about truncation */
+		strlcpy(cp, ifnm[i].if_name, IF_NAMESIZE);
+		ifni2->if_name = cp;
+		ifni2++;
+		cp += IF_NAMESIZE;
 	}
-	/*
-	 * Finally, don't forget to terminate the array.
-	 */
+	/* Finally, terminate the array. */
 	ifni2->if_index = 0;
 	ifni2->if_name = NULL;
 out:
-	freeifaddrs(ifaddrs);
-	return(ifni);
+	free(ifnm);
+	return ifni;
 }
 
 void
@@ -144,3 +141,5 @@ if_freenameindex(struct if_nameindex *ptr)
 {
 	free(ptr);
 }
+DEF_WEAK(if_nameindex);
+DEF_WEAK(if_freenameindex);

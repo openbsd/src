@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.h,v 1.1 2015/09/14 10:47:01 guenther Exp $	*/
+/*	$OpenBSD: if.h,v 1.2 2015/10/23 13:09:19 claudio Exp $	*/
 /*
  * Copyright (c) 2015 Philip Guenther <guenther@openbsd.org>
  *
@@ -21,8 +21,8 @@
 #include_next <net/if.h>
 
 PROTO_NORMAL(if_indextoname);
-PROTO_DEPRECATED(if_freenameindex);
-PROTO_DEPRECATED(if_nameindex);
+PROTO_NORMAL(if_freenameindex);
+PROTO_NORMAL(if_nameindex);
 PROTO_NORMAL(if_nametoindex);
 
 #endif /* _LIBC_NET_IF_H_ */

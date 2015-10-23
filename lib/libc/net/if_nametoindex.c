@@ -1,7 +1,8 @@
-/*	$OpenBSD: if_nametoindex.c,v 1.9 2015/09/14 10:47:01 guenther Exp $	*/
+/*	$OpenBSD: if_nametoindex.c,v 1.10 2015/10/23 13:09:19 claudio Exp $	*/
 /*	$KAME: if_nametoindex.c,v 1.5 2000/11/24 08:04:40 itojun Exp $	*/
 
 /*-
+ * Copyright (c) 2015 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 1997, 2000
  *	Berkeley Software Design, Inc.  All rights reserved.
  *
@@ -29,8 +30,6 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <net/if.h>
-#include <net/if_dl.h>
-#include <ifaddrs.h>
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
@@ -57,26 +56,22 @@
 unsigned int
 if_nametoindex(const char *ifname)
 {
-	struct ifaddrs *ifaddrs, *ifa;
-	unsigned int ni;
+	struct if_nameindex *ifni, *ifni2;
+	unsigned int index;
 
-	if (getifaddrs(&ifaddrs) < 0)
+	if ((ifni = if_nameindex()) == NULL)
 		return(0);
 
-	ni = 0;
-
-	for (ifa = ifaddrs; ifa != NULL; ifa = ifa->ifa_next) {
-		if (ifa->ifa_addr &&
-		    ifa->ifa_addr->sa_family == AF_LINK &&
-		    strcmp(ifa->ifa_name, ifname) == 0) {
-			ni = ((struct sockaddr_dl*)ifa->ifa_addr)->sdl_index;
-			break;
+	for (ifni2 = ifni; ifni2->if_index != 0; ifni2++) {
+		if (strcmp(ifni2->if_name, ifname) == 0) {
+			index = ifni2->if_index;
+			if_freenameindex(ifni);
+			return index;
 		}
 	}
 
-	freeifaddrs(ifaddrs);
-	if (!ni)
-		errno = ENXIO;
-	return(ni);
+	if_freenameindex(ifni);
+	errno = ENXIO;
+	return 0;
 }
 DEF_WEAK(if_nametoindex);
