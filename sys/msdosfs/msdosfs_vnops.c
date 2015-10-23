@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vnops.c,v 1.102 2015/10/23 10:45:31 krw Exp $	*/
+/*	$OpenBSD: msdosfs_vnops.c,v 1.103 2015/10/23 17:21:34 krw Exp $	*/
 /*	$NetBSD: msdosfs_vnops.c,v 1.63 1997/10/17 11:24:19 ws Exp $	*/
 
 /*-
@@ -120,7 +120,7 @@ msdosfs_create(void *v)
 	struct timespec ts;
 
 #ifdef MSDOSFS_DEBUG
-	printf("msdosfs_create(cnp %08x, vap %08x\n", cnp, ap->a_vap);
+	printf("msdosfs_create(cnp %p, vap %p\n", cnp, ap->a_vap);
 #endif
 
 	/*
@@ -350,7 +350,7 @@ msdosfs_setattr(void *v)
 	int error = 0;
 
 #ifdef MSDOSFS_DEBUG
-	printf("msdosfs_setattr(): vp %08x, vap %08x, cred %08x, p %08x\n",
+	printf("msdosfs_setattr(): vp %p, vap %p, cred %p, p %p\n",
 	    ap->a_vp, vap, cred, ap->a_p);
 #endif
 	if ((vap->va_type != VNON) || (vap->va_nlink != VNOVAL) ||
@@ -359,10 +359,13 @@ msdosfs_setattr(void *v)
 	    (vap->va_bytes != VNOVAL) || (vap->va_gen != VNOVAL)) {
 #ifdef MSDOSFS_DEBUG
 		printf("msdosfs_setattr(): returning EINVAL\n");
-		printf("    va_type %d, va_nlink %x, va_fsid %x, va_fileid %x\n",
-		    vap->va_type, vap->va_nlink, vap->va_fsid, vap->va_fileid);
-		printf("    va_blocksize %x, va_rdev %x, va_bytes %x, va_gen %x\n",
-		    vap->va_blocksize, vap->va_rdev, vap->va_bytes, vap->va_gen);
+		printf("    va_type %d, va_nlink %x, va_fsid %ld, "
+		    "va_fileid %llx\n", vap->va_type, vap->va_nlink,
+		    vap->va_fsid, (unsigned long long)vap->va_fileid);
+		printf("    va_blocksize %lx, va_rdev %x, va_bytes %llx, "
+		    "va_gen %lx\n", vap->va_blocksize,
+		    (unsigned int)vap->va_rdev,
+		    (unsigned long long)vap->va_bytes, vap->va_gen);
 #endif
 		return (EINVAL);
 	}
@@ -612,7 +615,7 @@ msdosfs_write(void *v)
 	struct ucred *cred = ap->a_cred;
 
 #ifdef MSDOSFS_DEBUG
-	printf("msdosfs_write(vp %08x, uio %08x, ioflag %08x, cred %08x\n",
+	printf("msdosfs_write(vp %p, uio %p, ioflag %08x, cred %p\n",
 	    vp, uio, ioflag, cred);
 	printf("msdosfs_write(): diroff %d, dirclust %d, startcluster %d\n",
 	    dep->de_diroffset, dep->de_dirclust, dep->de_StartCluster);
@@ -852,7 +855,8 @@ msdosfs_remove(void *v)
 	VN_KNOTE(ap->a_dvp, NOTE_WRITE);
 
 #ifdef MSDOSFS_DEBUG
-	printf("msdosfs_remove(), dep %08x, v_usecount %d\n", dep, ap->a_vp->v_usecount);
+	printf("msdosfs_remove(), dep %p, v_usecount %d\n", dep,
+	    ap->a_vp->v_usecount);
 #endif
 	if (ddep == dep)
 		vrele(ap->a_vp);
@@ -1487,7 +1491,7 @@ msdosfs_readdir(void *v)
 	int chksum = -1;
 
 #ifdef MSDOSFS_DEBUG
-	printf("msdosfs_readdir(): vp %08x, uio %08x, cred %08x, eofflagp %08x\n",
+	printf("msdosfs_readdir(): vp %p, uio %p, cred %p, eofflagp %p\n",
 	    ap->a_vp, uio, ap->a_cred, ap->a_eofflag);
 #endif
 

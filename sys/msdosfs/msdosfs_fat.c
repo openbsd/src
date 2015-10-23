@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_fat.c,v 1.27 2015/10/23 10:45:31 krw Exp $	*/
+/*	$OpenBSD: msdosfs_fat.c,v 1.28 2015/10/23 17:21:34 krw Exp $	*/
 /*	$NetBSD: msdosfs_fat.c,v 1.26 1997/10/17 11:24:02 ws Exp $	*/
 
 /*-
@@ -325,7 +325,7 @@ updatefats(struct msdosfsmount *pmp, struct buf *bp, uint32_t fatbn)
 	struct buf *bpn;
 
 #ifdef MSDOSFS_DEBUG
-	printf("updatefats(pmp %08, buf %x, fatbn %ld)\n", pmp, bp, fatbn);
+	printf("updatefats(pmp %p, buf %p, fatbn %d)\n", pmp, bp, fatbn);
 #endif
 
 	/*
@@ -471,8 +471,8 @@ fatentry(int function, struct msdosfsmount *pmp, uint32_t cn, uint32_t *oldconte
 	struct buf *bp;
 
 #ifdef MSDOSFS_DEBUG
-	 printf("fatentry(func %d, pmp %08x, clust %d, oldcon %08x, newcon %d)\n",
-	     function, pmp, cn, oldcontents, newcontents);
+	 printf("fatentry(func %d, pmp %p, clust %d, oldcon %p, "
+	     "newcon %d)\n", function, pmp, cn, oldcontents, newcontents);
 #endif
 
 #ifdef DIAGNOSTIC
@@ -572,7 +572,7 @@ fatchain(struct msdosfsmount *pmp, uint32_t start, uint32_t count, uint32_t fill
 	struct buf *bp;
 
 #ifdef MSDOSFS_DEBUG
-	printf("fatchain(pmp %08x, start %d, count %d, fillwith %d)\n",
+	printf("fatchain(pmp %p, start %d, count %d, fillwith %d)\n",
 	    pmp, start, count, fillwith);
 #endif
 	/*

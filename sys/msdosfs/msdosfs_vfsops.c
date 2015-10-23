@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vfsops.c,v 1.72 2015/10/23 10:45:31 krw Exp $	*/
+/*	$OpenBSD: msdosfs_vfsops.c,v 1.73 2015/10/23 17:21:34 krw Exp $	*/
 /*	$NetBSD: msdosfs_vfsops.c,v 1.48 1997/10/18 02:54:57 briggs Exp $	*/
 
 /*-
@@ -261,7 +261,7 @@ msdosfs_mount(struct mount *mp, const char *path, void *data,
 	bcopy(&args, &mp->mnt_stat.mount_info.msdosfs_args, sizeof(args));
 
 #ifdef MSDOSFS_DEBUG
-	printf("msdosfs_mount(): mp %x, pmp %x, inusemap %x\n", mp,
+	printf("msdosfs_mount(): mp %p, pmp %p, inusemap %p\n", mp,
 	    pmp, pmp->pm_inusemap);
 #endif
 
@@ -647,7 +647,7 @@ msdosfs_root(struct mount *mp, struct vnode **vpp)
 		return (error);
 
 #ifdef MSDOSFS_DEBUG
-	printf("msdosfs_root(); mp %08x, pmp %08x, ndep %08x, vp %08x\n",
+	printf("msdosfs_root(); mp %p, pmp %p, ndep %p, vp %p\n",
 	    mp, pmp, ndep, DETOV(ndep));
 #endif
 

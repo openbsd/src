@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_lookup.c,v 1.28 2015/10/23 10:45:31 krw Exp $	*/
+/*	$OpenBSD: msdosfs_lookup.c,v 1.29 2015/10/23 17:21:34 krw Exp $	*/
 /*	$NetBSD: msdosfs_lookup.c,v 1.34 1997/10/18 22:12:27 ws Exp $	*/
 
 /*-
@@ -126,7 +126,7 @@ msdosfs_lookup(void *v)
 	lockparent = flags & LOCKPARENT;
 	wantparent = flags & (LOCKPARENT | WANTPARENT);
 #ifdef MSDOSFS_DEBUG
-	printf("msdosfs_lookup(): vdp %08x, dp %08x, Attr %02x\n",
+	printf("msdosfs_lookup(): vdp %p, dp %p, Attr %02x\n",
 	    vdp, dp, dp->de_Attributes);
 #endif
 
@@ -194,8 +194,8 @@ msdosfs_lookup(void *v)
 		slotcount = 0;
 
 #ifdef MSDOSFS_DEBUG
-	printf("msdosfs_lookup(): dos version of filename '%.11s', length %d\n",
-	    dosfilename, cnp->cn_namelen);
+	printf("msdosfs_lookup(): dos version of filename '%.11s', "
+	    "length %ld\n", dosfilename, cnp->cn_namelen);
 #endif
 
 	/*
@@ -364,7 +364,7 @@ notfound:;
 	 * the pathname and the directory hasn't been removed.
 	 */
 #ifdef MSDOSFS_DEBUG
-	printf("msdosfs_lookup(): op %d, refcnt %d\n",
+	printf("msdosfs_lookup(): op %d, refcnt %ld\n",
 	    nameiop, dp->de_refcnt);
 	printf("               slotcount %d, slotoffset %d\n",
 	    slotcount, slotoffset);
@@ -606,7 +606,7 @@ createde(struct denode *dep, struct denode *ddep, struct denode **depp,
 	int blsize;
 
 #ifdef MSDOSFS_DEBUG
-	printf("createde(dep %08x, ddep %08x, depp %08x, cnp %08x)\n",
+	printf("createde(dep %p, ddep %p, depp %p, cnp %p)\n",
 	    dep, ddep, depp, cnp);
 #endif
 
@@ -938,7 +938,7 @@ removede(struct denode *pdep, struct denode *dep)
 	uint32_t offset = pdep->de_fndoffset;
 
 #ifdef MSDOSFS_DEBUG
-	printf("removede(): filename %.11s, dep %08x, offset %08x\n",
+	printf("removede(): filename %.11s, dep %p, offset %x\n",
 	    dep->de_Name, dep, offset);
 #endif
 

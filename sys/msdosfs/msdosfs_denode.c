@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_denode.c,v 1.54 2015/10/23 10:45:31 krw Exp $	*/
+/*	$OpenBSD: msdosfs_denode.c,v 1.55 2015/10/23 17:21:34 krw Exp $	*/
 /*	$NetBSD: msdosfs_denode.c,v 1.23 1997/10/17 11:23:58 ws Exp $	*/
 
 /*-
@@ -192,7 +192,7 @@ deget(struct msdosfsmount *pmp, uint32_t dirclust, uint32_t diroffset,
 	struct proc *p = curproc; /* XXX */
 
 #ifdef MSDOSFS_DEBUG
-	printf("deget(pmp %08x, dirclust %d, diroffset %x, depp %08x)\n",
+	printf("deget(pmp %p, dirclust %d, diroffset %x, depp %p)\n",
 	    pmp, dirclust, diroffset, depp);
 #endif
 
@@ -390,7 +390,7 @@ detrunc(struct denode *dep, uint32_t length, int flags, struct ucred *cred,
 	struct msdosfsmount *pmp = dep->de_pmp;
 
 #ifdef MSDOSFS_DEBUG
-	printf("detrunc(): file %.11s, length %ld, flags %d\n",
+	printf("detrunc(): file %.11s, length %u, flags %d\n",
 	    dep->de_Name, length, flags);
 #endif
 
@@ -592,7 +592,7 @@ msdosfs_reclaim(void *v)
 #endif
 
 #ifdef MSDOSFS_DEBUG
-	printf("msdosfs_reclaim(): dep %08x, file %.11s, refcnt %d\n",
+	printf("msdosfs_reclaim(): dep %p, file %.11s, refcnt %ld\n",
 	    dep, dep->de_Name, dep->de_refcnt);
 #endif
 
@@ -632,7 +632,7 @@ msdosfs_inactive(void *v)
 #endif
 
 #ifdef MSDOSFS_DEBUG
-	printf("msdosfs_inactive(): dep %08x, de_Name[0] %x\n", dep,
+	printf("msdosfs_inactive(): dep %p, de_Name[0] %x\n", dep,
 	    dep->de_Name[0]);
 #endif
 
@@ -650,8 +650,9 @@ msdosfs_inactive(void *v)
 	 * as empty.  (This may not be necessary for the dos filesystem.)
 	 */
 #ifdef MSDOSFS_DEBUG
-	printf("msdosfs_inactive(): dep %08x, refcnt %d, mntflag %x, MNT_RDONLY %x\n",
-	       dep, dep->de_refcnt, vp->v_mount->mnt_flag, MNT_RDONLY);
+	printf("msdosfs_inactive(): dep %p, refcnt %ld, mntflag %x, "
+	    "MNT_RDONLY %x\n", dep, dep->de_refcnt, vp->v_mount->mnt_flag,
+	    MNT_RDONLY);
 #endif
 	if (dep->de_refcnt <= 0 && (vp->v_mount->mnt_flag & MNT_RDONLY) == 0) {
 		error = detrunc(dep, (uint32_t)0, 0, NOCRED, NULL);
