@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.64 2015/10/22 11:01:43 deraadt Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.65 2015/10/23 00:56:52 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -900,6 +900,9 @@ pledge_sysctl_check(struct proc *p, int miblen, int *mib, void *new)
 		return (0);
 	if (miblen == 2 &&			/* setproctitle() */
 	    mib[0] == CTL_VM && mib[1] == VM_PSSTRINGS)
+		return (0);
+	if (miblen == 2 &&			/* hw.ncpu */
+	    mib[0] == CTL_HW && mib[1] == HW_NCPU)
 		return (0);
 
 	printf("%s(%d): sysctl %d: %d %d %d %d %d %d\n",
