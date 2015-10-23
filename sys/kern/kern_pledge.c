@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.67 2015/10/23 10:22:29 claudio Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.68 2015/10/23 15:53:49 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -1121,13 +1121,14 @@ pledge_ioctl_check(struct proc *p, long com, void *v)
 	if ((p->p_p->ps_pledge & PLEDGE_ROUTE)) {
 		switch (com) {
 		case SIOCGIFADDR:
-		case SIOCGIFDSTADDR_IN6:
 		case SIOCGIFFLAGS:
 		case SIOCGIFMETRIC:
-		case SIOCGIFNETMASK_IN6:
-		case SIOCGIFRDOMAIN:
-		case SIOCGNBRINFO_IN6:
 		case SIOCGIFGMEMB:
+		case SIOCGIFRDOMAIN:
+		case SIOCGIFDSTADDR_IN6:
+		case SIOCGIFNETMASK_IN6:
+		case SIOCGNBRINFO_IN6:
+		case SIOCGIFINFO_IN6:
 			if (fp->f_type == DTYPE_SOCKET)
 				return (0);
 			break;
