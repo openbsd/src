@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.41 2015/10/23 11:43:16 zhuk Exp $	*/
+/*	$OpenBSD: io.c,v 1.42 2015/10/23 12:36:23 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -92,7 +92,7 @@ cal(void)
 			/* XXX remove KOI8 lines after 5.9 is out */
 			if (!strcmp(buf + 5, "ru_RU.UTF-8") ||
 			    !strcmp(buf + 5, "uk_UA.UTF-8") ||
-			    !strcmp(buf + 5, "by_BY.UTF-8")) ||
+			    !strcmp(buf + 5, "by_BY.UTF-8") ||
 			    !strcmp(buf + 5, "ru_RU.KOI8-R") ||
 			    !strcmp(buf + 5, "uk_UA.KOI8-U") ||
 			    !strcmp(buf + 5, "by_BY.KOI8-B")) {
