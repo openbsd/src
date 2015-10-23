@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.8,v 1.26 2015/09/03 12:23:23 millert Exp $
+.\"	$OpenBSD: smtpd.8,v 1.27 2015/10/23 15:48:16 jung Exp $
 .\"
 .\" Copyright (c) 2012, Eric Faurot <eric@openbsd.org>
 .\" Copyright (c) 2008, Gilles Chehade <gilles@poolp.org>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 3 2015 $
+.Dd $Mdocdate: October 23 2015 $
 .Dt SMTPD 8
 .Os
 .Sh NAME
@@ -66,6 +66,8 @@ will run in the foreground and log to
 .Em stderr .
 .It Fl f Ar file
 Specify an alternative configuration file.
+.It Fl h
+Display version and usage.
 .It Fl n
 Configtest mode.
 Only check the configuration file for validity.
