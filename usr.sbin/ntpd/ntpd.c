@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.c,v 1.97 2015/10/12 06:50:08 reyk Exp $ */
+/*	$OpenBSD: ntpd.c,v 1.98 2015/10/23 16:39:13 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -32,6 +32,7 @@
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
+#include <fcntl.h>
 #include <err.h>
 
 #include "ntpd.h"
@@ -214,6 +215,13 @@ main(int argc, char *argv[])
 	imsg_init(ibuf, pipe_chld[0]);
 
 	constraint_cnt = 0;
+
+	/*
+	 * Constraint processes are forked with certificates in memory,
+	 * then privdrop into chroot before speaking to the outside world.
+	 */
+	if (pledge("stdio rpath inet settime proc id", NULL) == -1)
+		err(1, "pledge");
 
 	while (quit == 0) {
 		new_cnt = PFD_MAX + constraint_cnt;
@@ -491,61 +499,59 @@ ntpd_settime(double d)
 	log_info("set local clock to %s (offset %fs)", buf, d);
 }
 
+static FILE *freqfp;
+
 void
 readfreq(void)
 {
-	FILE *fp;
 	int64_t current;
+	int fd;
 	double d;
 
-	fp = fopen(DRIFTFILE, "r");
-	if (fp == NULL) {
-		/* if the drift file has been deleted by the user, reset */
+	fd = open(DRIFTFILE, O_RDWR);
+	if (fd == -1) {
+		log_warnx("creating new %s", DRIFTFILE);
 		current = 0;
 		if (adjfreq(&current, NULL) == -1)
 			log_warn("adjfreq reset failed");
+		freqfp = fopen(DRIFTFILE, "w");
 		return;
 	}
+	
+	freqfp = fdopen(fd, "r+");
 
 	/* if we're adjusting frequency already, don't override */
 	if (adjfreq(NULL, &current) == -1)
 		log_warn("adjfreq failed");
-	else if (current == 0) {
-		if (fscanf(fp, "%lf", &d) == 1) {
+	else if (current == 0 && freqfp) {
+		if (fscanf(freqfp, "%lf", &d) == 1) {
 			d /= 1e6;	/* scale from ppm */
 			ntpd_adjfreq(d, 0);
 		} else
-			log_warnx("can't read %s", DRIFTFILE);
+			log_warnx("%s is empty", DRIFTFILE);
 	}
-	fclose(fp);
 }
 
 int
 writefreq(double d)
 {
 	int r;
-	FILE *fp;
 	static int warnonce = 1;
 
-	fp = fopen(DRIFTFILE, "w");
-	if (fp == NULL) {
-		if (warnonce) {
-			log_warn("can't open %s", DRIFTFILE);
-			warnonce = 0;
-		}
+	if (freqfp == NULL)
 		return 0;
-	}
-
-	fprintf(fp, "%.3f\n", d * 1e6);		/* scale to ppm */
-	r = ferror(fp);
-	if (fclose(fp) != 0 || r != 0) {
+	rewind(freqfp);
+	fprintf(freqfp, "%.3f\n", d * 1e6);	/* scale to ppm */
+	r = ferror(freqfp);
+	if (r != 0) {
 		if (warnonce) {
 			log_warnx("can't write %s", DRIFTFILE);
 			warnonce = 0;
 		}
-		unlink(DRIFTFILE);
 		return 0;
 	}
+	ftruncate(fileno(freqfp), ftello(freqfp));
+	fsync(fileno(freqfp));
 	return 1;
 }
 
