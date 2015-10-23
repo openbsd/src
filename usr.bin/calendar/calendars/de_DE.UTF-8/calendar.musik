@@ -1,29 +1,29 @@
 /*
  * Musik
  *
- * $OpenBSD: calendar.musik,v 1.4 2005/09/12 21:07:28 sturm Exp $
+ * $OpenBSD: calendar.musik,v 1.1 2015/10/23 09:32:14 tedu Exp $
  */
 
 #ifndef _de_DE_ISO_8859_1_musik_
 #define _de_DE_ISO_8859_1_musik_
 
-LANG=de_DE.ISO_8859-1
+LANG=de_DE.UTF-8
 
 /* Klassik */
 01/27	Wolfgang Amadeus Mozart in Salzburg geboren, 1756
 01/31	Franz Schubert in Lichtenthal bei Wien geboren, 1797
 02/03	Felix Mendelssohn Bartholdy in Hamburg geboren, 1809
 02/13	Richard Wagner in Venedig gestorben, 1883
-02/23	Georg Friedrich Händel in Halle an der Saale geboren, 1685
+02/23	Georg Friedrich HÃ¤ndel in Halle an der Saale geboren, 1685
 03/01	Frederic Chopin in Zelazowa-Wola bei Warschau geboren, 1810
 03/21	Johann Sebastian Bach in Eisenach geboren, 1685
 03/25	Bela Bartok in Nagyszentmiklos geboren, 1881
 03/26	Ludwig van Beethoven in Wien gestorben, 1827
 03/28	Sergej Rachmaninow in Beverley Hills gestorben, 1943
-03/29	Carl Orff in München gestorben, 1982
+03/29	Carl Orff in MÃ¼nchen gestorben, 1982
 03/31	Joseph Haydn in Rohrau geboren, 1732
 04/01	Sergej Rachmaninow in Oneg geboren, 1873
-04/14	Georg Friedrich Händel in London gestorben, 1759
+04/14	Georg Friedrich HÃ¤ndel in London gestorben, 1759
 05/07	Johannes Brahms in Hamburg geboren, 1833
 05/18	Gustav Mahler in Wien gestorben, 1911
 05/22	Richard Wagner in Leipzig geboren, 1813
@@ -31,10 +31,10 @@ LANG=de_DE.ISO_8859-1
 06/03	Georges Bizet in Bougival bei Paris gestorben, 1875
 06/05	Carl Maria von Weber in London gestorben, 1826
 06/08	Robert Schumann in Zwickau geboren, 1810
-06/11	Richard Strauss in München geboren, 1864
+06/11	Richard Strauss in MÃ¼nchen geboren, 1864
 06/15	Edvard Grieg in Bergen geboren, 1843
 07/07	Gustav Mahler in Kalischt geboren, 1860
-07/10	Carl Orff in München geboren, 1895
+07/10	Carl Orff in MÃ¼nchen geboren, 1895
 07/28	Johann Sebastian Bach in Leipzig gestorben, 1750
 07/29	Robert Schumann in Endenich bei Bonn gestorben, 1856
 09/04	Edvard Grieg in Bergen gestorben, 1907

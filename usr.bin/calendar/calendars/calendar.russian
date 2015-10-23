@@ -1,12 +1,12 @@
 /*
  * Russian calendar files
  *
- * $OpenBSD: calendar.russian,v 1.2 2001/09/04 20:44:35 mickey Exp $
+ * $OpenBSD: calendar.russian,v 1.3 2015/10/23 09:32:14 tedu Exp $
  */
 
 #ifndef _calendar_russian_
 #define _calendar_russian_
 
-#include <ru_RU.KOI8-R/calendar.all>
+#include <ru_RU.UTF-8/calendar.all>
 
 #endif /* !_calendar_russian_ */

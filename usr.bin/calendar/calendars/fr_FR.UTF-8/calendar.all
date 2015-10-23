@@ -1,0 +1,14 @@
+/*	$OpenBSD: calendar.all,v 1.1 2015/10/23 09:32:14 tedu Exp $	*/
+
+/*
+ * Calendrier français
+ */
+
+#ifndef _fr_FR_ISO8859_1_all_
+#define _fr_FR_ISO8859_1_all_
+
+#include <fr_FR.UTF-8/calendar.jferies>
+#include <fr_FR.UTF-8/calendar.fetes>
+#include <fr_FR.UTF-8/calendar.proverbes>
+
+#endif /* !_fr_FR.UTF-8_all_ */

@@ -1,13 +1,13 @@
 /*
  * Feiertage
  *
- * $OpenBSD: calendar.feiertag,v 1.3 2006/04/15 18:20:43 bernd Exp $
+ * $OpenBSD: calendar.feiertag,v 1.1 2015/10/23 09:32:14 tedu Exp $
  */
 
 #ifndef _de_DE_ISO_8859_1_feiertag_
 #define _de_DE_ISO_8859_1_feiertag_
 
-LANG=de_DE.ISO_8859-1
+LANG=de_DE.UTF-8
 
 /* arbeitsfreie staatliche Feiertage */
 01/01	Neujahr
@@ -27,7 +27,7 @@ Easter+39	Christi Himmelfahrt
 06/17	Arbeiteraufstand am 17. Juni 1953
 
 /* Jahreszeiten */
-03/21*	Frühlingsanfang
+03/21*	FrÃ¼hlingsanfang
 06/21*	Sommeranfang
 09/21*	Herbstanfang
 12/21*	Winteranfang	
@@ -36,7 +36,7 @@ Easter+39	Christi Himmelfahrt
 03/SundayLast	Anfang der Sommerzeit
 10/SundayLast	Ende der Sommerzeit
 
-/* Blumenverkäufer */
+/* BlumenverkÃ¤ufer */
 May Sun+2 	Muttertag
 
 #endif /*! _de_DE_ISO_8859_1_feiertag_ */

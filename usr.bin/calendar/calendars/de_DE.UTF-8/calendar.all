@@ -1,0 +1,17 @@
+/*
+ * deutscher Kalender
+ *
+ * $OpenBSD: calendar.all,v 1.1 2015/10/23 09:32:14 tedu Exp $
+ */
+
+#ifndef _de_DE_ISO_8859_1_all_
+#define _de_DE_ISO_8859_1_all_
+
+#include <de_DE.UTF-8/calendar.feiertag>
+#include <de_DE.UTF-8/calendar.geschichte>
+#include <de_DE.UTF-8/calendar.kirche>
+#include <de_DE.UTF-8/calendar.literatur>
+#include <de_DE.UTF-8/calendar.musik>
+#include <de_DE.UTF-8/calendar.wissenschaft>
+
+#endif /* !_de_DE.UTF-8_all_ */

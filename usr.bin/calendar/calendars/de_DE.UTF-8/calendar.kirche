@@ -1,13 +1,13 @@
 /*
  * Kirche in Deutschland
  *
- * $OpenBSD: calendar.kirche,v 1.2 1997/08/27 11:20:39 provos Exp $
+ * $OpenBSD: calendar.kirche,v 1.1 2015/10/23 09:32:14 tedu Exp $
  */
 
 #ifndef _de_DE_ISO_8859_1_kirche_
 #define _de_DE_ISO_8859_1_kirche_
 
-LANG=de_DE.ISO_8859-1
+LANG=de_DE.UTF-8
 
 Easter-46	Aschermittwoch
 Easter-48	Rosenmontag

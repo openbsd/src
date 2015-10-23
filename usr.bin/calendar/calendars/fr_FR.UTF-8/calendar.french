@@ -1,4 +1,4 @@
-/*	$OpenBSD: calendar.french,v 1.2 2004/01/16 18:43:28 mickey Exp $	*/
+/*	$OpenBSD: calendar.french,v 1.1 2015/10/23 09:32:14 tedu Exp $	*/
 
 /*
  * French calendar file(s)
@@ -7,6 +7,6 @@
 #ifndef _calendar_french_
 #define _calendar_french_
 
-#include <fr_FR.ISO8859-1/calendar.all>
+#include <fr_FR.UTF-8/calendar.all>
 
 #endif /* !_calendar_french_ */
