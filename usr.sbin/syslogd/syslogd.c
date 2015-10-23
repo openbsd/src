@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.199 2015/10/21 14:03:07 bluhm Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.200 2015/10/23 16:28:52 bluhm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -53,7 +53,6 @@
  * IPv6, libevent, syslog over TCP and TLS by Alexander Bluhm
  */
 
-#define MAXLINE		8192		/* maximum line length */
 #define MAX_UDPMSG	1180		/* maximum UDP send size */
 #define MIN_MEMBUF	(MAXLINE * 4)	/* Minimum memory buffer size */
 #define MAX_MEMBUF	(256 * 1024)	/* Maximum memory buffer size */
@@ -701,7 +700,7 @@ main(int argc, char *argv[])
 	if (priv_init(ConfFile, NoDNS, lockpipe[1], nullfd, argv) < 0)
 		errx(1, "unable to privsep");
 
-	if (pledge("stdio rpath unix inet proc recvfd", NULL) == -1)
+	if (pledge("stdio rpath unix inet recvfd", NULL) == -1)
 		err(1, "pledge");
 
 	/* Process is now unprivileged and inside a chroot */
@@ -1952,8 +1951,7 @@ wallmsg(struct filed *f, struct iovec *iov)
 				break;
 			if (!strncmp(f->f_un.f_uname[i], ut.ut_name,
 			    UT_NAMESIZE)) {
-				if ((p = ttymsg(iov, 6, utline))
-				    != NULL)
+				if ((p = ttymsg(iov, 6, utline)) != NULL)
 					logerrorx(p);
 				break;
 			}

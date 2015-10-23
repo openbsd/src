@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttymsg.c,v 1.8 2015/10/21 14:03:07 bluhm Exp $	*/
+/*	$OpenBSD: ttymsg.c,v 1.9 2015/10/23 16:28:52 bluhm Exp $	*/
 /*	$NetBSD: ttymsg.c,v 1.3 1994/11/17 07:17:55 jtc Exp $	*/
 
 /*
@@ -35,6 +35,7 @@
 
 #include <dirent.h>
 #include <errno.h>
+#include <event.h>
 #include <fcntl.h>
 #include <paths.h>
 #include <signal.h>
@@ -45,9 +46,17 @@
 
 #include "syslogd.h"
 
+struct tty_delay {
+	struct event	 td_event;
+	size_t		 td_length;
+	char		 td_line[MAXLINE];
+};
+int tty_delayed = 0;
+void ttycb(int, short, void *);
+
 /*
  * Display the contents of a uio structure on a terminal.
- * Forks and finishes in child if write would block, waiting up to TTYMSGTIME
+ * Schedules an event if write would block, waiting up to TTYMSGTIME
  * seconds.  Returns pointer to error string on unexpected error;
  * string is not newline-terminated.  Various "normal" errors are ignored
  * (exclusive-use, lack of permission, etc.).
@@ -61,8 +70,6 @@ ttymsg(struct iovec *iov, int iovcnt, char *utline)
 	size_t left;
 	ssize_t wret;
 	struct iovec localiov[6];
-	int forked = 0;
-	sigset_t mask;
 
 	if (iovcnt < 0 || (size_t)iovcnt > nitems(localiov))
 		return ("too many iov's (change code in syslogd/ttymsg.c)");
@@ -122,34 +129,44 @@ ttymsg(struct iovec *iov, int iovcnt, char *utline)
 			continue;
 		}
 		if (errno == EWOULDBLOCK) {
-			int off = 0;
-			pid_t cpid;
+			struct tty_delay	*td;
+			struct timeval		 to;
 
-			if (forked) {
-				(void) close(fd);
-				_exit(1);
-			}
-			logdebug("ttymsg delayed write\n");
-			cpid = fork();
-			if (cpid < 0) {
+			if (tty_delayed >= TTYMAXDELAY) {
 				(void) snprintf(ebuf, sizeof(ebuf),
-				    "fork: %s", strerror(errno));
-				(void) close(fd);
+				    "%s: too many delayed writes", device);
 				return (ebuf);
 			}
-			if (cpid) {	/* parent */
-				(void) close(fd);
-				return (NULL);
+			logdebug("ttymsg delayed write\n");
+			if (iov != localiov) {
+				bcopy(iov, localiov,
+				    iovcnt * sizeof(struct iovec));
+				iov = localiov;
 			}
-			forked++;
-			/* wait at most TTYMSGTIME seconds */
-			(void) signal(SIGALRM, SIG_DFL);
-			(void) signal(SIGTERM, SIG_DFL); /* XXX */
-			(void) sigemptyset(&mask);
-			(void) sigprocmask(SIG_SETMASK, &mask, NULL);
-			(void) alarm((u_int)TTYMSGTIME);
-			(void) fcntl(fd, O_NONBLOCK, &off);
-			continue;
+			if ((td = malloc(sizeof(*td))) == NULL) {
+				(void) snprintf(ebuf, sizeof(ebuf),
+				    "%s: malloc: %s", device, strerror(errno));
+				return (ebuf);
+			}
+			td->td_length = 0;
+			if (left > MAXLINE)
+				left = MAXLINE;
+			while (iovcnt && left) {
+				if (iov->iov_len > left)
+					iov->iov_len = left;
+				memcpy(td->td_line + td->td_length,
+				    iov->iov_base, iov->iov_len);
+				td->td_length += iov->iov_len;
+				left -= iov->iov_len;
+				++iov;
+				--iovcnt;
+			}
+			tty_delayed++;
+			event_set(&td->td_event, fd, EV_WRITE, ttycb, td);
+			to.tv_sec = TTYMSGTIME;
+			to.tv_usec = 0;
+			event_add(&td->td_event, &to);
+			return (NULL);
 		}
 		/*
 		 * We get ENODEV on a slip line if we're running as root,
@@ -158,15 +175,41 @@ ttymsg(struct iovec *iov, int iovcnt, char *utline)
 		if (errno == ENODEV || errno == EIO)
 			break;
 		(void) close(fd);
-		if (forked)
-			_exit(1);
 		(void) snprintf(ebuf, sizeof(ebuf),
 		    "%s: %s", device, strerror(errno));
 		return (ebuf);
 	}
 
 	(void) close(fd);
-	if (forked)
-		_exit(0);
 	return (NULL);
+}
+
+void
+ttycb(int fd, short event, void *arg)
+{
+	struct tty_delay	*td = arg;
+	struct timeval		 to;
+	ssize_t			 wret;
+
+	if (event != EV_WRITE)
+		goto done;
+
+	wret = write(fd, td->td_line, td->td_length);
+	if (wret < 0 && errno != EINTR && errno != EWOULDBLOCK)
+		goto done;
+	if (wret > 0) {
+		td->td_length -= wret;
+		if (td->td_length == 0)
+			goto done;
+		memmove(td->td_line, td->td_line + wret, td->td_length);
+	}
+	to.tv_sec = TTYMSGTIME;
+	to.tv_usec = 0;
+	event_add(&td->td_event, &to);
+	return;
+
+ done:
+	tty_delayed--;
+	close(fd);
+	free(td);
 }
