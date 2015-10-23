@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.202 2015/09/09 18:23:55 deraadt Exp $ */
+/*	$OpenBSD: mpi.c,v 1.203 2015/10/23 00:08:57 jsg Exp $ */
 
 /*
  * Copyright (c) 2005, 2006, 2009 David Gwynne <dlg@openbsd.org>
@@ -759,7 +759,7 @@ mpi_inq(struct mpi_softc *sc, u_int16_t target, int physdisk)
 {
 	struct mpi_ccb			*ccb;
 	struct scsi_inquiry		inq;
-	struct {
+	struct inq_bundle {
 		struct mpi_msg_scsi_io		io;
 		struct mpi_sge			sge;
 		struct scsi_inquiry_data	inqbuf;
@@ -809,14 +809,14 @@ mpi_inq(struct mpi_softc *sc, u_int16_t target, int physdisk)
 	htolem32(&io->data_length, sizeof(struct scsi_inquiry_data));
 
 	htolem32(&io->sense_buf_low_addr, ccb->ccb_cmd_dva +
-	    ((u_int8_t *)&bundle->sense - (u_int8_t *)bundle));
+	    offsetof(struct inq_bundle, sense));
 
 	htolem32(&sge->sg_hdr, MPI_SGE_FL_TYPE_SIMPLE | MPI_SGE_FL_SIZE_64 |
 	    MPI_SGE_FL_LAST | MPI_SGE_FL_EOB | MPI_SGE_FL_EOL |
 	    (u_int32_t)sizeof(inq));
 
 	mpi_dvatosge(sge, ccb->ccb_cmd_dva +
-	    ((u_int8_t *)&bundle->inqbuf - (u_int8_t *)bundle));
+	    offsetof(struct inq_bundle, inqbuf));
 
 	if (mpi_poll(sc, ccb, 5000) != 0)
 		return (1);
@@ -1369,7 +1369,7 @@ mpi_scsi_cmd(struct scsi_xfer *xs)
 	htolem32(&io->data_length, xs->datalen);
 
 	htolem32(&io->sense_buf_low_addr, ccb->ccb_cmd_dva +
-	    ((u_int8_t *)&mcb->mcb_sense - (u_int8_t *)mcb));
+	    offsetof(struct mpi_ccb_bundle, mcb_sense));
 
 	if (mpi_load_xs(ccb) != 0)
 		goto stuffup;
