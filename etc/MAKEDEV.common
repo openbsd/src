@@ -1,4 +1,4 @@
-vers(a, {-$OpenBSD: MAKEDEV.common,v 1.78 2014/12/11 19:46:15 tedu Exp $-})dnl
+vers(a, {-$OpenBSD: MAKEDEV.common,v 1.79 2015/10/23 15:14:11 claudio Exp $-})dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -448,9 +448,11 @@ _mkdev(pf, {-pf*-}, {-M pf c major_pf_c 0 600-})dnl
 __devitem(bpf, bpf*, Berkeley Packet Filter)dnl
 _mkdev(bpf, {-bpf*-}, {-M bpf$U c major_bpf_c $U 600-}, 600)dnl
 _mkdev(tun, {-tun*-}, {-M tun$U c major_tun_c $U 600-}, 600)dnl
+_mkdev(tap, {-tap*-}, {-M tap$U c major_tap_c $U 600-}, 600)dnl
 __devitem(speak, speaker, PC speaker,spkr)dnl
 _mkdev(speak, speaker, {-M speaker c major_speak_c 0 600-})dnl
 __devitem(tun, tun*, Network tunnel driver)dnl
+__devitem(tap, tap*, Ethernet tunnel driver)dnl
 __devitem(rnd, *random, In-kernel random data source,random)dnl
 _mkdev(rnd, *random, {-n=0
 	for pre in " " s u a

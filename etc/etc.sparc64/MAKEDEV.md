@@ -1,6 +1,6 @@
 define(MACHINE,sparc64)dnl
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.81 2015/03/11 18:43:11 deraadt Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.82 2015/10/23 15:14:12 claudio Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
@@ -122,6 +122,7 @@ _DEV(rmidi, 68)
 _DEV(rnd, 119)
 _DEV(systrace, 50)
 _DEV(tun, 111)
+_DEV(tap, 135)
 _DEV(uk, 60)
 _DEV(uperf, 25)
 _DEV(vi, 44)
@@ -162,6 +163,7 @@ target(all, pty, 0)dnl
 target(all, bpf, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9)dnl
 target(all, bio)dnl
 target(all, tun, 0, 1, 2, 3)dnl
+target(all, tap, 0, 1, 2, 3)dnl
 target(all, xy, 0, 1, 2, 3)dnl
 target(all, rd, 0)dnl
 target(all, cd, 0, 1)dnl

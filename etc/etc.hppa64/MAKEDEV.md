@@ -1,6 +1,6 @@
 define(MACHINE,hppa64)dnl
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.31 2014/12/11 19:48:03 tedu Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.32 2015/10/23 15:14:11 claudio Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
@@ -70,6 +70,7 @@ _DEV(pppx,57)
 _DEV(rnd, 20)
 _DEV(systrace, 34)
 _DEV(tun, 18)
+_DEV(tap, 59)
 _DEV(uk, 15)
 _DEV(vi, 33)
 _DEV(vscsi, 54)
@@ -78,7 +79,7 @@ divert(__mddivert)dnl
 dnl
 ramdisk)
 	_recurse std fd st0 st1 sd0 sd1 sd2 sd3 rd0 random
-	_recurse pty0 bpf0 bpf1 tun0 tun1 bio diskmap
+	_recurse pty0 bpf0 bpf1 bio diskmap
 	;;
 
 _std(1, 2, 25, 6)
@@ -97,6 +98,7 @@ target(all, pty, 0)dnl
 target(all, bpf, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9)dnl
 target(all, bio)dnl
 target(all, tun, 0, 1, 2, 3)dnl
+target(all, tap, 0, 1, 2, 3)dnl
 target(all, xy, 0, 1, 2, 3)dnl
 target(all, rd, 0)dnl
 target(all, cd, 0, 1)dnl
@@ -104,4 +106,3 @@ target(all, sd, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9)dnl
 target(all, vnd, 0, 1, 2, 3)dnl
 target(ramd, pty, 0)dnl
 target(ramd, hil)dnl
-target(ramd, tun, 0, 1)dnl
