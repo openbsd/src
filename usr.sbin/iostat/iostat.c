@@ -1,4 +1,4 @@
-/*	$OpenBSD: iostat.c,v 1.38 2015/03/18 15:14:47 tedu Exp $	*/
+/*	$OpenBSD: iostat.c,v 1.39 2015/10/23 08:21:27 tedu Exp $	*/
 /*	$NetBSD: iostat.c,v 1.10 1996/10/25 18:21:58 scottr Exp $	*/
 
 /*
@@ -402,15 +402,12 @@ selectdrives(char *argv[])
 	 * filled in and there are drives not taken care of, display the first
 	 * few that fit.
 	 *
-	 * The backward compatibility #ifdefs permit the syntax:
+	 * The backward compatibility syntax is:
 	 *	iostat [ drives ] [ interval [ count ] ]
 	 */
-#define	BACKWARD_COMPATIBILITY
 	for (ndrives = 0; *argv; ++argv) {
-#ifdef	BACKWARD_COMPATIBILITY
 		if (isdigit((unsigned char)**argv))
 			break;
-#endif
 		for (i = 0; i < dk_ndrive; i++) {
 			if (strcmp(cur.dk_name[i], *argv))
 				continue;
@@ -421,7 +418,6 @@ selectdrives(char *argv[])
 		if (i == dk_ndrive)
 			errx(1, "invalid interval or drive name: %s", *argv);
 	}
-#ifdef	BACKWARD_COMPATIBILITY
 	if (*argv) {
 		interval = strtonum(*argv, 1, INT_MAX, &errstr);
 		if (errstr)
@@ -430,9 +426,11 @@ selectdrives(char *argv[])
 			reps = strtonum(*argv, 1, INT_MAX, &errstr);
 			if (errstr)
 				errx(1, "repetition count is %s", errstr);
+			++argv;
 		}
 	}
-#endif
+	if (*argv)
+		errx(1, "too many arguments");
 
 	if (interval) {
 		if (!reps)
