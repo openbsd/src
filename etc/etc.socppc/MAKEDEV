@@ -3,8 +3,8 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.socppc/MAKEDEV.md,v 1.26 2014/12/11 19:48:03 tedu Exp 
-#	OpenBSD: MAKEDEV.common,v 1.78 2014/12/11 19:46:15 tedu Exp 
+#	OpenBSD: etc.socppc/MAKEDEV.md,v 1.27 2015/10/23 15:14:12 claudio Exp 
+#	OpenBSD: MAKEDEV.common,v 1.79 2015/10/23 15:14:11 claudio Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.81 2012/11/05 08:07:09 jasper Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
@@ -70,6 +70,7 @@
 #	*random	In-kernel random data source
 #	systrace*	System call tracing device
 #	tun*	Network tunnel driver
+#	tap*	Ethernet tunnel driver
 #	video*	Video V4L2 devices
 #	vscsi*	Virtual SCSI controller
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
@@ -219,6 +220,10 @@ vscsi*)
 video*)
 	M video$U  c 44 $U
 	MKlist[${#MKlist[*]}]=";[ -e video ] || ln -s video$U video"
+	;;
+
+tap*)
+	M tap$U c 86 $U 600
 	;;
 
 tun*)
@@ -415,12 +420,12 @@ ramdisk)
 
 all)
 	R vnd0 vnd1 vnd2 vnd3 sd0 sd1 sd2 sd3 sd4 sd5 sd6 sd7 sd8 sd9
-	R cd0 cd1 rd0 tun0 tun1 tun2 tun3 bpf0 bpf1 bpf2 bpf3 bpf4
-	R bpf5 bpf6 bpf7 bpf8 bpf9 pty0 diskmap vscsi0 ch0 fuse pppx
-	R hotplug ptm local wscons pci0 pci1 pci2 pci3 uall video0
-	R video1 random tty00 tty01 tty02 tty03 tty04 tty05 tty06
-	R tty07 tty08 tty09 tty0a tty0b pf systrace wd0 wd1 wd2 wd3
-	R std st0 st1 fd
+	R cd0 cd1 rd0 tap0 tap1 tap2 tap3 tun0 tun1 tun2 tun3 bpf0
+	R bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9 pty0 diskmap
+	R vscsi0 ch0 fuse pppx hotplug ptm local wscons pci0 pci1 pci2
+	R pci3 uall video0 video1 random tty00 tty01 tty02 tty03 tty04
+	R tty05 tty06 tty07 tty08 tty09 tty0a tty0b pf systrace wd0
+	R wd1 wd2 wd3 std st0 st1 fd
 	;;
 
 wd*|sd*)

@@ -3,8 +3,8 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.vax/MAKEDEV.md,v 1.52 2014/03/19 15:28:16 miod Exp 
-#	OpenBSD: MAKEDEV.common,v 1.76 2014/08/20 11:23:40 mikeb Exp 
+#	OpenBSD: etc.vax/MAKEDEV.md,v 1.54 2015/10/23 15:14:12 claudio Exp 
+#	OpenBSD: MAKEDEV.common,v 1.79 2015/10/23 15:14:11 claudio Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.81 2012/11/05 08:07:09 jasper Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
@@ -68,6 +68,7 @@
 #	*random	In-kernel random data source
 #	systrace*	System call tracing device
 #	tun*	Network tunnel driver
+#	tap*	Ethernet tunnel driver
 #	uk*	Unknown SCSI devices
 #	vscsi*	Virtual SCSI controller
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
@@ -252,6 +253,10 @@ vscsi*)
 
 uk*)
 	M uk$U c 65 $U 640 operator
+	;;
+
+tap*)
+	M tap$U c 83 $U 600
 	;;
 
 tun*)
@@ -467,10 +472,10 @@ local)
 
 all)
 	R qsc0 dl0 dz0 dhu0 mt0 mt1 hd0 hd1 hd2 vnd0 sd0 sd1 sd2 sd3
-	R cd0 tun0 tun1 bio bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7
-	R pty0 diskmap vscsi0 ch0 audio0 fuse pppx ptm local wscons
-	R uk0 random pf systrace rx0 rx1 ra0 ra1 ra2 ra3 std st0 st1
-	R fd
+	R cd0 tap0 tap1 tun0 tun1 bio bpf0 bpf1 bpf2 bpf3 bpf4 bpf5
+	R bpf6 bpf7 pty0 diskmap vscsi0 ch0 audio0 fuse pppx ptm local
+	R wscons uk0 random pf systrace rx0 rx1 ra0 ra1 ra2 ra3 std
+	R st0 st1 fd
 	;;
 
 sd*|rx*|ra*|hd*)
