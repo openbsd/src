@@ -1,4 +1,4 @@
-/*	$OpenBSD: hfsc.c,v 1.28 2015/10/23 02:08:37 dlg Exp $	*/
+/*	$OpenBSD: hfsc.c,v 1.29 2015/10/23 02:29:24 dlg Exp $	*/
 
 /*
  * Copyright (c) 2012-2013 Henning Brauer <henning@openbsd.org>
@@ -282,16 +282,17 @@ static void
 hfsc_grow_class_tbl(struct hfsc_if *hif, u_int howmany)
 {
 	struct hfsc_class **newtbl, **old;
+	size_t oldlen = sizeof(void *) * hif->hif_allocated;
 
 	newtbl = mallocarray(howmany, sizeof(void *), M_DEVBUF,
 	    M_WAITOK | M_ZERO);
 	old = hif->hif_class_tbl;
 
-	memcpy(newtbl, old, hif->hif_allocated * sizeof(void *));
+	memcpy(newtbl, old, oldlen);
 	hif->hif_class_tbl = newtbl;
 	hif->hif_allocated = howmany;
 
-	free(old, M_DEVBUF, 0);
+	free(old, M_DEVBUF, oldlen);
 }
 
 void
@@ -307,16 +308,14 @@ int
 hfsc_attach(struct ifnet *ifp)
 {
 	struct hfsc_if *hif;
-	size_t tblsize;
-
-	tblsize = HFSC_DEFAULT_CLASSES * sizeof(void *);
 
 	if (ifp == NULL || ifp->if_snd.ifq_hfsc != NULL)
 		return (0);
 
 	hif = malloc(sizeof(struct hfsc_if), M_DEVBUF, M_WAITOK | M_ZERO);
 	TAILQ_INIT(&hif->hif_eligible);
-	hif->hif_class_tbl = malloc(tblsize, M_DEVBUF, M_WAITOK | M_ZERO);
+	hif->hif_class_tbl = mallocarray(HFSC_DEFAULT_CLASSES, sizeof(void *),
+	    M_DEVBUF, M_WAITOK | M_ZERO);
 	hif->hif_allocated = HFSC_DEFAULT_CLASSES;
 
 	hif->hif_ifq = &ifp->if_snd;
@@ -341,8 +340,8 @@ hfsc_detach(struct ifnet *ifp)
 	timeout_del(&hif->hif_defer);
 	ifp->if_snd.ifq_hfsc = NULL;
 
-	free(hif->hif_class_tbl, M_DEVBUF, 0);
-	free(hif, M_DEVBUF, 0);
+	free(hif->hif_class_tbl, M_DEVBUF, hif->hif_allocated * sizeof(void *));
+	free(hif, M_DEVBUF, sizeof(struct hfsc_if));
 
 	return (0);
 }
