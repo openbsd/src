@@ -1,4 +1,4 @@
-/*	$OpenBSD: term.c,v 1.114 2015/10/13 22:57:49 schwarze Exp $ */
+/*	$OpenBSD: term.c,v 1.115 2015/10/23 14:49:13 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -562,7 +562,7 @@ encode1(struct termp *p, int c)
 	if (p->col + 7 >= p->maxcols)
 		adjbuf(p, p->col + 7);
 
-	f = (c == ASCII_HYPH || isgraph(c)) ?
+	f = (c == ASCII_HYPH || c > 127 || isgraph(c)) ?
 	    p->fontq[p->fonti] : TERMFONT_NONE;
 
 	if (p->flags & TERMP_BACKBEFORE) {
