@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-split-window.c,v 1.57 2015/04/26 20:25:20 nicm Exp $ */
+/* $OpenBSD: cmd-split-window.c,v 1.58 2015/10/23 16:30:15 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -101,7 +101,7 @@ cmd_split_window_exec(struct cmd *self, struct cmd_q *cmdq)
 				    strerror(errno));
 				return (CMD_RETURN_ERROR);
 			}
-		} else if (cp != NULL)
+		} else
 			free(cp);
 		cwd = fd;
 	} else if (cmdq->client != NULL && cmdq->client->session == NULL)

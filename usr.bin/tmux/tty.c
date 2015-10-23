@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.189 2015/10/23 15:52:54 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.190 2015/10/23 16:30:15 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -338,10 +338,8 @@ tty_free(struct tty *tty)
 	tty_close(tty);
 
 	free(tty->ccolour);
-	if (tty->path != NULL)
-		free(tty->path);
-	if (tty->termname != NULL)
-		free(tty->termname);
+	free(tty->path);
+	free(tty->termname);
 }
 
 void
