@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.62 2014/12/11 19:44:17 tedu Exp $ */
+/*	$OpenBSD: conf.c,v 1.63 2015/10/23 15:10:52 claudio Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -223,7 +223,7 @@ struct cdevsw cdevsw[] = {
 	cdev_vscsi_init(NVSCSI,vscsi),	/* 83: vscsi */
 	cdev_disk_init(1,diskmap),	/* 84: disk mapper */
 	cdev_pppx_init(NPPPX,pppx),	/* 85: pppx */
-	cdev_notdef(),			/* 86 */
+	cdev_tun_init(NTUN,tap),	/* 86: Ethernet network tunnel */
 	cdev_drm_init(NDRM,drm),	/* 87: drm */
 	cdev_fuse_init(NFUSE,fuse),	/* 88: fuse */
 };

@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.220 2015/08/10 20:35:36 sthen Exp $
+#	$OpenBSD: GENERIC,v 1.221 2015/10/23 15:10:53 claudio Exp $
 #
 #	Machine-independent option; used by all architectures for their
 #	GENERIC kernel
@@ -101,7 +101,7 @@ pseudo-device	pppoe		# PPP over Ethernet (RFC 2516)
 pseudo-device	pppx		# PPP multiplexer
 pseudo-device	sppp	1	# Sync PPP/HDLC
 pseudo-device	trunk		# Trunking support
-pseudo-device	tun		# network tunneling over tty
+pseudo-device	tun		# network tunneling over tty (tun & tap)
 pseudo-device	vether		# Virtual ethernet
 pseudo-device	vxlan		# Virtual extensible LAN
 pseudo-device	vlan		# IEEE 802.1Q VLAN

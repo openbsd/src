@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.15 2015/07/20 19:44:32 pirofti Exp $ */
+/*	$OpenBSD: conf.c,v 1.16 2015/10/23 15:10:52 claudio Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -225,6 +225,8 @@ struct cdevsw	cdevsw[] =
 	cdev_disk_init(1,diskmap),	/* 70: disk mapper */
 	cdev_pppx_init(NPPPX,pppx),	/* 71: pppx */
 	cdev_notdef(),			/* 72: was USB scanners */
+	cdev_notdef(),			/* 73: fuse on other mips64 */
+	cdev_tun_init(NTUN,tap),	/* 74: Ethernet network tunnel */
 };
 
 int	nchrdev = nitems(cdevsw);

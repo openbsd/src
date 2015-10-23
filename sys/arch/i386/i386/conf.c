@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.150 2014/12/11 19:44:17 tedu Exp $	*/
+/*	$OpenBSD: conf.c,v 1.151 2015/10/23 15:10:52 claudio Exp $	*/
 /*	$NetBSD: conf.c,v 1.75 1996/05/03 19:40:20 christos Exp $	*/
 
 /*
@@ -285,6 +285,7 @@ struct cdevsw	cdevsw[] =
 	cdev_disk_init(1,diskmap),	/* 91: disk mapper */
 	cdev_pppx_init(NPPPX,pppx),     /* 92: pppx */
 	cdev_fuse_init(NFUSE,fuse),	/* 93: fuse */ 
+	cdev_tun_init(NTUN,tap),	/* 94: Ethernet network tunnel */
 };
 int	nchrdev = nitems(cdevsw);
 

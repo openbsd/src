@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.62 2014/12/11 19:44:17 tedu Exp $	*/
+/*	$OpenBSD: conf.c,v 1.63 2015/10/23 15:10:52 claudio Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -184,6 +184,7 @@ struct cdevsw   cdevsw[] =
 	cdev_disk_init(1,diskmap),	/* 56: disk mapper */
 	cdev_pppx_init(NPPPX,pppx),	/* 57: pppx */
 	cdev_fuse_init(NFUSE,fuse),	/* 58: fuse */
+	cdev_tun_init(NTUN,tap),	/* 59: Ethernet network tunnel */
 };
 int nchrdev = nitems(cdevsw);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.31 2014/12/11 19:44:17 tedu Exp $	*/
+/*	$OpenBSD: conf.c,v 1.32 2015/10/23 15:10:52 claudio Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -357,6 +357,7 @@ struct cdevsw cdevsw[] = {
 	cdev_disk_init(1,diskmap),		/* 101: disk mapper */
 	cdev_pppx_init(NPPPX,pppx),		/* 102: pppx */
 	cdev_fuse_init(NFUSE,fuse),		/* 103: fuse */
+	cdev_tun_init(NTUN,tap),		/* 104: Ethernet network tap */
 };
 
 int nblkdev = nitems(bdevsw);
