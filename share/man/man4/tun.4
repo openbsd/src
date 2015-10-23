@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tun.4,v 1.42 2015/10/23 15:17:24 claudio Exp $
+.\"	$OpenBSD: tun.4,v 1.43 2015/10/23 16:45:51 claudio Exp $
 .\"
 .\" Copyright (c) 2003 Marcus D. Watts  All rights reserved.
 .\"
@@ -53,7 +53,7 @@ interface can be created at runtime using the
 command or by opening the character special device
 .Pa /dev/tunN .
 .Pp
-Each device has the exclusive open property; it cannot be opened
+Each device has an exclusive open property: it cannot be opened
 if it is already open and in use by another process.
 Each read returns at most one packet; if insufficient
 buffer space is provided, the packet is truncated.
