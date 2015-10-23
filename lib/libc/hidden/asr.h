@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr.h,v 1.2 2015/10/18 01:45:48 deraadt Exp $	*/
+/*	$OpenBSD: asr.h,v 1.3 2015/10/23 00:52:49 deraadt Exp $	*/
 /*
  * Copyright (c) 2015 Philip Guenther <guenther@openbsd.org>
  *
@@ -20,9 +20,6 @@
 
 #include_next <asr.h>
 
-int	dnssocket(int, int, int);
-int	dnsconnect(int, const struct sockaddr *, socklen_t);
-
 PROTO_DEPRECATED(asr_abort);
 PROTO_NORMAL(asr_run);
 PROTO_NORMAL(asr_run_sync);
@@ -37,8 +34,5 @@ PROTO_NORMAL(getrrsetbyname_async);
 PROTO_NORMAL(res_query_async);
 PROTO_NORMAL(res_search_async);
 PROTO_NORMAL(res_send_async);
-
-PROTO_NORMAL(dnssocket);
-PROTO_NORMAL(dnsconnect);
 
 #endif	/* _LIBC_ASR_H_ */
