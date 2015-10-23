@@ -1,5 +1,5 @@
 /*
- *	$OpenBSD: locate.c,v 1.27 2015/10/23 07:57:03 tedu Exp $
+ *	$OpenBSD: locate.c,v 1.28 2015/10/23 08:02:13 tedu Exp $
  *
  * Copyright (c) 1995 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *      $Id: locate.c,v 1.27 2015/10/23 07:57:03 tedu Exp $
+ *      $Id: locate.c,v 1.28 2015/10/23 08:02:13 tedu Exp $
  */
 
 /*
@@ -74,10 +74,10 @@
 #include <unistd.h>
 #include <limits.h>
 
-#  include <sys/types.h>
-#  include <sys/stat.h>
-#  include <sys/mman.h>
-#  include <fcntl.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/mman.h>
+#include <fcntl.h>
 
 
 #ifdef sun
