@@ -1,11 +1,9 @@
-# The client writes a message to Sys::Syslog native method.
-# The client writes an additional  message with local5 and err.
+# The client writes long messages to Sys::Syslog native method.
 # The syslogd writes it into a file and through a pipe and to tty.
-# The special message also goes to all users with wall *.
 # The syslogd passes it via UDP to the loghost.
 # The server receives the message on its UDP socket.
 # Find the message in client, file, pipe, tty, syslogd, server log.
-# Check that the special message is in the tty log twice.
+# Check that syslogd has logged that the tty blocked.
 
 use strict;
 use warnings;
@@ -15,17 +13,19 @@ our %args = (
     client => {
 	func => sub {
 	    my $self = shift;
-	    syslog(LOG_LOCAL5|LOG_ERR, "test message to all users");
+	    write_lines($self, 2, 900);
 	    write_log($self);
 	},
     },
     syslogd => {
-	conf => "local5.err\t*",
+	loggrep => {
+	    qr/ttymsg delayed write/ => '>=1',
+	},
     },
     tty => {
 	loggrep => {
-	    qr/Message from syslogd/ => 1,
-	    qr/syslogd-regress.* test message to all users/ => 2,
+	    qr/ 0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ.* [12]$/ => 2,
+	    get_testgrep() => 1,
 	},
     },
 );

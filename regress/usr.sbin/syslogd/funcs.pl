@@ -1,4 +1,4 @@
-#	$OpenBSD: funcs.pl,v 1.26 2015/10/19 20:16:09 bluhm Exp $
+#	$OpenBSD: funcs.pl,v 1.27 2015/10/23 14:06:55 bluhm Exp $
 
 # Copyright (c) 2010-2015 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -349,6 +349,12 @@ sub check_out {
 
 	unless ($args{pipe}{nocheck}) {
 		$r->loggrep("bytes transferred", 1) or sleep 1;
+	}
+	unless ($args{tty}{nocheck}) {
+		open(my $fh, '<', $r->{outtty})
+		    or die "Open file $r->{outtty} for reading failed: $!";
+		grep { qr/^logout/ } <$fh> or sleep 1;
+		close($fh);
 	}
 
 	foreach my $name (qw(file pipe tty)) {
