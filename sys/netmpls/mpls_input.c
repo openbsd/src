@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpls_input.c,v 1.50 2015/09/23 08:49:46 mpi Exp $	*/
+/*	$OpenBSD: mpls_input.c,v 1.51 2015/10/23 14:49:36 mpi Exp $	*/
 
 /*
  * Copyright (c) 2008 Claudio Jeker <claudio@openbsd.org>
@@ -170,9 +170,7 @@ do_v6:
 			}
 		}
 
-		KERNEL_LOCK();
 		rt = rtalloc(smplstosa(smpls), RT_REPORT|RT_RESOLVE, 0);
-		KERNEL_UNLOCK();
 		if (rt == NULL) {
 			/* no entry for this label */
 #ifdef MPLS_DEBUG
@@ -290,9 +288,7 @@ do_v6:
 		if (ifp != NULL && rt_mpls->mpls_operation != MPLS_OP_LOCAL)
 			break;
 
-		KERNEL_LOCK();
 		rtfree(rt);
-		KERNEL_UNLOCK();
 		rt = NULL;
 	}
 
@@ -323,11 +319,7 @@ do_v6:
 	(*ifp->if_ll_output)(ifp, m, smplstosa(smpls), rt);
 	KERNEL_UNLOCK();
 done:
-	if (rt) {
-		KERNEL_LOCK();
-		rtfree(rt);
-		KERNEL_UNLOCK();
-	}
+	rtfree(rt);
 }
 
 int
@@ -394,7 +386,7 @@ mpls_do_error(struct mbuf *m, int type, int code, int destmtu)
 	struct in_ifaddr *ia;
 	struct icmp *icp;
 	struct ip *ip;
-	int nstk;
+	int nstk, error;
 
 	for (nstk = 0; nstk < MPLS_INKERNEL_LOOP_MAX; nstk++) {
 		if (m->m_len < sizeof(*shim) &&
@@ -427,9 +419,7 @@ mpls_do_error(struct mbuf *m, int type, int code, int destmtu)
 		smpls->smpls_len = sizeof(*smpls);
 		smpls->smpls_label = shim->shim_label & MPLS_LABEL_MASK;
 
-		KERNEL_LOCK();
 		rt = rtalloc(smplstosa(smpls), RT_REPORT|RT_RESOLVE, 0);
-		KERNEL_UNLOCK();
 		if (rt == NULL) {
 			/* no entry for this label */
 			m_freem(m);
@@ -442,19 +432,16 @@ mpls_do_error(struct mbuf *m, int type, int code, int destmtu)
 			 * less interface we need to find some other IP to
 			 * use as source.
 			 */
-			KERNEL_LOCK();
 			rtfree(rt);
-			KERNEL_UNLOCK();
 			m_freem(m);
 			return (NULL);
 		}
-		KERNEL_LOCK();
 		rtfree(rt);
-		if (icmp_reflect(m, NULL, ia)) {
-			KERNEL_UNLOCK();
-			return (NULL);
-		}
+		KERNEL_LOCK();
+		error = icmp_reflect(m, NULL, ia);
 		KERNEL_UNLOCK();
+		if (error)
+			return (NULL);
 
 		ip = mtod(m, struct ip *);
 		/* stuff to fix up which is normaly done in ip_output */
