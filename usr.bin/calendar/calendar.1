@@ -1,4 +1,4 @@
-.\"	$OpenBSD: calendar.1,v 1.38 2015/09/25 16:36:00 schwarze Exp $
+.\"	$OpenBSD: calendar.1,v 1.39 2015/10/23 11:01:30 zhuk Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"     The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)calendar.1  8.1 (Berkeley) 6/29/93
 .\"
-.Dd $Mdocdate: September 25 2015 $
+.Dd $Mdocdate: October 23 2015 $
 .Dt CALENDAR 1
 .Os
 .Sh NAME
@@ -70,7 +70,7 @@ Print lines from today and previous
 .Ar num
 days (backward, past).
 .It Fl b
-Enforce special date calculation mode for KOI8 calendars.
+Enforce special date calculation mode for Cyrillic calendars.
 .It Fl f Ar calendarfile
 Use
 .Ar calendarfile
@@ -110,7 +110,7 @@ you should specify
 .Dq LANG=<local_name>
 and
 .Dq BODUN=<bodun_prefix>
-where <local_name> can be ru_RU.KOI8-R, uk_UA.KOI8-U or by_BY.KOI8-B.
+where <local_name> can be ru_RU.UTF-8, uk_UA.UTF-8 or by_BY.UTF-8.
 .Pp
 Other lines should begin with a month and day.
 They may be entered in almost any format, either numeric or as character
