@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.40 2015/10/23 11:01:30 zhuk Exp $	*/
+/*	$OpenBSD: io.c,v 1.41 2015/10/23 11:43:16 zhuk Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -163,13 +163,13 @@ cal(void)
 				var = 0;
 			if (printing) {
 				struct match *foo;
-				
+
 				ev1 = NULL;
 				while (m) {
 					cur_evt = malloc(sizeof(struct event));
 					if (cur_evt == NULL)
 						err(1, NULL);
-	
+
 					cur_evt->when = m->when;
 					snprintf(cur_evt->print_date,
 					    sizeof(cur_evt->print_date), "%s%c",
@@ -302,7 +302,7 @@ getfield(char *p, char **endp, int *flags)
 				 * number of special events. */
 				break;
 			}
-			*flags |= F_SPECIAL;	
+			*flags |= F_SPECIAL;
 		}
 		if (!(*flags & F_SPECIAL)) {
 			/* undefined rest */
@@ -354,7 +354,7 @@ opencal(void)
 			(void)close(pdes[1]);
 		}
 		(void)close(pdes[0]);
-		/* 
+		/*
 		 * Set stderr to /dev/null.  Necessary so that cron does not
 		 * wait for cpp to finish if it's running calendar -a.
 		 */

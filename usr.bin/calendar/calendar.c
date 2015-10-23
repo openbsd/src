@@ -1,4 +1,4 @@
-/*	$OpenBSD: calendar.c,v 1.31 2015/04/18 18:28:37 deraadt Exp $	*/
+/*	$OpenBSD: calendar.c,v 1.32 2015/10/23 11:43:16 zhuk Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -183,7 +183,7 @@ main(int argc, char *argv[])
 				if (acstat) {
 					if (chdir(pw->pw_dir) ||
 					    stat(calendarFile, &sbuf) != 0 ||
-					    chdir(calendarHome) || 
+					    chdir(calendarHome) ||
 					    stat(calendarNoMail, &sbuf) == 0 ||
 					    stat(calendarFile, &sbuf) != 0)
 						exit(0);

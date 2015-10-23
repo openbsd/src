@@ -1,4 +1,4 @@
-/*	$OpenBSD: day.c,v 1.29 2015/03/17 19:31:30 millert Exp $	*/
+/*	$OpenBSD: day.c,v 1.30 2015/10/23 11:43:16 zhuk Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -286,7 +286,7 @@ isnow(char *endp, int bodun)
 	/* adjust bodun rate */
 	if (bodun && !bodun_always)
 		bodun = !arc4random_uniform(3);
-		
+
 	/* Easter or Easter depending days */
 	if (flags & F_SPECIAL)
 		vwd = v1;
