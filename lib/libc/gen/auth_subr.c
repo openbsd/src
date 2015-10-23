@@ -1,4 +1,4 @@
-/*	$OpenBSD: auth_subr.c,v 1.46 2015/10/22 23:55:51 mmcc Exp $	*/
+/*	$OpenBSD: auth_subr.c,v 1.47 2015/10/23 04:52:21 guenther Exp $	*/
 
 /*
  * Copyright (c) 2000-2002,2004 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -896,17 +896,17 @@ auth_call(auth_session_t *as, char *path, ...)
 		as->index = 0;
 		_auth_spool(as, pfd[0]);
 		close(pfd[0]);
-		status = 0;
-		while (waitpid(pid, &status, 0) == -1 && errno == EINTR)
-			;
-		if (pid < 0) {
-			if (errno != ECHILD) {
-				syslog(LOG_ERR, "%s: waitpid: %m", path);
-				warnx("internal failure");
-				goto fail;
+		do {
+			if (waitpid(pid, &status, 0) != -1) {
+				if (!WIFEXITED(status))
+					goto fail;
+				break;
 			}
-		} else if (!WIFEXITED(status))
-			goto fail;
+			/*
+			 * could get ECHILD if it was waited for by
+			 * another thread or from a signal handler
+			 */
+		} while (errno == EINTR);
 	}
 
 	/*
