@@ -1,4 +1,4 @@
-/*	$OpenBSD: check_icmp.c,v 1.41 2015/08/21 08:45:51 yasuoka Exp $	*/
+/*	$OpenBSD: check_icmp.c,v 1.42 2015/10/23 12:22:02 benno Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -166,9 +166,8 @@ send_icmp(int s, short event, void *arg)
 	struct icmp6_hdr	*icp6;
 	ssize_t			 r;
 	u_char			 packet[ICMP_BUF_SIZE];
-	socklen_t		 slen;
-	int			 i = 0, ttl, mib[4];
-	size_t			 len;
+	socklen_t		 slen, len;
+	int			 i = 0, ttl;
 	u_int32_t		 id;
 
 	if (event == EV_TIMEOUT) {
@@ -227,14 +226,13 @@ send_icmp(int s, short event, void *arg)
 				    &host->conf.ttl, sizeof(int));
 			else {
 				/* Revert to default TTL */
-				mib[0] = CTL_NET;
-				mib[1] = cie->af;
-				mib[2] = IPPROTO_IP;
-				mib[3] = IPCTL_DEFTTL;
 				len = sizeof(ttl);
-				if (sysctl(mib, 4, &ttl, &len, NULL, 0) == 0)
+				if (getsockopt(s, IPPROTO_IP, IP_IPDEFTTL,
+				    &ttl, &len) == 0)
 					(void)setsockopt(s, IPPROTO_IP, IP_TTL,
-					    &ttl, sizeof(int));
+					    &ttl, len);
+				else
+				    log_warn("%s: getsockopt",__func__);
 			}
 
 			r = sendto(s, packet, sizeof(packet), 0, to, slen);
