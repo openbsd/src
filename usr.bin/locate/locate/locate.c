@@ -1,5 +1,5 @@
 /*
- *	$OpenBSD: locate.c,v 1.28 2015/10/23 08:02:13 tedu Exp $
+ *	$OpenBSD: locate.c,v 1.29 2015/10/23 14:16:02 tedu Exp $
  *
  * Copyright (c) 1995 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *      $Id: locate.c,v 1.28 2015/10/23 08:02:13 tedu Exp $
+ *      $Id: locate.c,v 1.29 2015/10/23 14:16:02 tedu Exp $
  */
 
 /*
@@ -110,7 +110,7 @@ void    fastfind_icase(FILE *, char *, char *);
 void    fastfind_mmap(char *, caddr_t, int, char *);
 void    fastfind_mmap_icase(char *, caddr_t, int, char *);
 void	search_mmap(char *, char **);
-void	search_stastic(char *, char **);
+void	search_statistic(char *, char **);
 unsigned long cputime(void);
 
 extern char     **colon(char **, char*, char*);
@@ -182,7 +182,7 @@ main(int argc, char *argv[])
 		dbv++;
 
 		if (f_statistic)
-			search_stastic(path_fcodes, argv);
+			search_statistic(path_fcodes, argv);
 		else
 			search_mmap(path_fcodes, argv);
 	}
@@ -194,7 +194,7 @@ main(int argc, char *argv[])
 
 
 void
-search_stastic(char *db, char **s)
+search_statistic(char *db, char **s)
 {
 	FILE *fp;
 #ifdef DEBUG
