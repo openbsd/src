@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.78 2015/08/22 07:16:10 mlarkin Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.79 2015/10/23 09:36:09 kettenis Exp $	*/
 /*	$NetBSD: pmap.h,v 1.44 2000/04/24 17:18:18 thorpej Exp $	*/
 
 /*
@@ -187,9 +187,7 @@ extern int nkptp_max;
 #define PMAP_REMOVE_ALL 0
 #define PMAP_REMOVE_SKIPWIRED 1
 
-#define ALLOCPV_NEED	0	/* need PV now */
-#define ALLOCPV_TRY	1	/* just try to allocate */
-#define ALLOCPV_NONEED	2	/* don't need PV, just growing cache */
+extern struct pool pmap_pv_pool;
 
 /*
  * Macros
@@ -234,11 +232,8 @@ void pmap_kenter_pa(vaddr_t, paddr_t, vm_prot_t);
 void pmap_kremove(vaddr_t, vsize_t);
 void pmap_zero_page(struct vm_page *);
 void pmap_copy_page(struct vm_page *, struct vm_page *);
-struct pv_entry *pmap_alloc_pv(struct pmap *, int);
 void pmap_enter_pv(struct vm_page *, struct pv_entry *,
     struct pmap *, vaddr_t, struct vm_page *);
-void pmap_free_pv(struct pmap *, struct pv_entry *);
-void pmap_free_pvs(struct pmap *, struct pv_entry *);
 boolean_t pmap_clear_attrs(struct vm_page *, int);
 static void pmap_page_protect(struct vm_page *, vm_prot_t);
 void pmap_page_remove(struct vm_page *);

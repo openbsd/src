@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmapae.c,v 1.46 2015/09/03 18:49:19 kettenis Exp $	*/
+/*	$OpenBSD: pmapae.c,v 1.47 2015/10/23 09:36:09 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2006-2008 Michael Shalayeff
@@ -1159,7 +1159,7 @@ pmap_do_remove_pae(struct pmap *pmap, vaddr_t sva, vaddr_t eva, int flags)
 
 	while ((pve = free_pvs) != NULL) {
 		free_pvs = pve->pv_next;
-		pmap_free_pv(pmap, pve);
+		pool_put(&pmap_pv_pool, pve);
 	}
 
 	while ((ptp = TAILQ_FIRST(&empty_ptps)) != NULL) {
@@ -1253,7 +1253,7 @@ pmap_page_remove_pae(struct vm_page *pg)
 
 		pmap_unmap_ptes_pae(pve->pv_pmap);	/* unlocks pmap */
 		pmap_destroy(pve->pv_pmap);
-		pmap_free_pv(NULL, pve);
+		pool_put(&pmap_pv_pool, pve);
 		mtx_enter(&pg->mdpage.pv_mtx);
 	}
 	mtx_leave(&pg->mdpage.pv_mtx);
@@ -1552,7 +1552,7 @@ pmap_enter_pae(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot,
 #endif
 
 	if (pmap_initialized)
-		pve = pmap_alloc_pv(pmap, ALLOCPV_NEED);
+		pve = pool_get(&pmap_pv_pool, PR_NOWAIT);
 	else
 		pve = NULL;
 	wired_count = resident_count = ptp_count = 0;
@@ -1730,9 +1730,9 @@ enter_now:
 
 out:
 	if (pve)
-		pmap_free_pv(pmap, pve);
+		pool_put(&pmap_pv_pool, pve);
 	if (opve)
-		pmap_free_pv(pmap, opve);
+		pool_put(&pmap_pv_pool, opve);
 
 	return error;
 }

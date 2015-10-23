@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.185 2015/09/03 18:49:19 kettenis Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.186 2015/10/23 09:36:09 kettenis Exp $	*/
 /*	$NetBSD: pmap.c,v 1.91 2000/06/02 17:46:37 thorpej Exp $	*/
 
 /*
@@ -1096,42 +1096,6 @@ pmap_init(void)
  * p v _ e n t r y   f u n c t i o n s
  */
 
-/*
- * pv_entry allocation functions:
- *   the main pv_entry allocation functions are:
- *     pmap_alloc_pv: allocate a pv_entry structure
- *     pmap_free_pv: free one pv_entry
- *
- * the rest are helper functions
- */
-
-/*
- * pmap_alloc_pv: inline function to allocate a pv_entry structure
- * => 3 modes:
- *    ALLOCPV_NEED   = we really need a pv_entry
- *    ALLOCPV_TRY    = we want a pv_entry
- *    ALLOCPV_NONEED = we are trying to grow our free list, don't really need
- *			one now
- *
- * "try" is for optional functions like pmap_copy().
- */
-
-struct pv_entry *
-pmap_alloc_pv(struct pmap *pmap, int mode)
-{
-	return pool_get(&pmap_pv_pool, PR_NOWAIT);
-}
-
-/*
- * pmap_free_pv: free a single pv_entry
- */
-
-void
-pmap_free_pv(struct pmap *pmap, struct pv_entry *pv)
-{
-	pool_put(&pmap_pv_pool, pv);
-}
-
 void *
 pmap_pv_page_alloc(struct pool *pp, int flags, int *slowdown)
 {
@@ -1922,7 +1886,7 @@ pmap_do_remove_86(struct pmap *pmap, vaddr_t sva, vaddr_t eva, int flags)
 
 	while ((pve = free_pvs) != NULL) {
 		free_pvs = pve->pv_next;
-		pmap_free_pv(pmap, pve);
+		pool_put(&pmap_pv_pool, pve);
 	}
 
 	while ((ptp = TAILQ_FIRST(&empty_ptps)) != NULL) {
@@ -2016,7 +1980,7 @@ pmap_page_remove_86(struct vm_page *pg)
 
 		pmap_unmap_ptes_86(pve->pv_pmap);	/* unlocks pmap */
 		pmap_destroy(pve->pv_pmap);
-		pmap_free_pv(NULL, pve);
+		pool_put(&pmap_pv_pool, pve);
 		mtx_enter(&pg->mdpage.pv_mtx);
 	}
 	mtx_leave(&pg->mdpage.pv_mtx);
@@ -2330,7 +2294,7 @@ pmap_enter_86(struct pmap *pmap, vaddr_t va, paddr_t pa,
 		panic("pmap_enter: missing kernel PTP!");
 #endif
 	if (pmap_initialized)
-		pve = pmap_alloc_pv(pmap, ALLOCPV_NEED);
+		pve = pool_get(&pmap_pv_pool, PR_NOWAIT);
 	else
 		pve = NULL;
 	wired_count = resident_count = ptp_count = 0;
@@ -2506,9 +2470,9 @@ enter_now:
 
 out:
 	if (pve)
-		pmap_free_pv(pmap, pve);
+		pool_put(&pmap_pv_pool, pve);
 	if (opve)
-		pmap_free_pv(pmap, opve);
+		pool_put(&pmap_pv_pool, opve);
 
 	return error;
 }
