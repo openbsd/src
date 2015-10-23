@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.451 2015/10/21 13:14:36 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.452 2015/10/23 16:02:21 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 21 2015 $
+.Dd $Mdocdate: October 23 2015 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -3406,6 +3406,7 @@ The following variables are available, where appropriate:
 .It Li "pid" Ta ""  Ta "Server PID"
 .It Li "scroll_region_lower" Ta "" Ta "Bottom of scroll region in pane"
 .It Li "scroll_region_upper" Ta "" Ta "Top of scroll region in pane"
+.It Li "scroll_position" Ta "" Ta "Scroll position in copy mode"
 .It Li "session_alerts" Ta "" Ta "List of window indexes with alerts"
 .It Li "session_attached" Ta "" Ta "Number of clients session is attached to"
 .It Li "session_activity" Ta "" Ta "Integer time of session last activity"

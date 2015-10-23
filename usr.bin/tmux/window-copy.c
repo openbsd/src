@@ -1,4 +1,4 @@
-/* $OpenBSD: window-copy.c,v 1.134 2015/09/14 11:57:22 nicm Exp $ */
+/* $OpenBSD: window-copy.c,v 1.135 2015/10/23 16:02:21 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -2217,6 +2217,16 @@ window_copy_scroll_down(struct window_pane *wp, u_int ny)
 		window_copy_write_line(wp, &ctx, 1);
 	screen_write_cursormove(&ctx, data->cx, data->cy);
 	screen_write_stop(&ctx);
+}
+
+int
+window_copy_scroll_position(struct window_pane *wp)
+{
+	struct window_copy_mode_data	*data = wp->modedata;
+
+	if (wp->mode != &window_copy_mode)
+		return (-1);
+	return (data->oy);
 }
 
 void

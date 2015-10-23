@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.563 2015/10/18 20:42:42 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.564 2015/10/23 16:02:21 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -2082,6 +2082,7 @@ void printflike(2, 3) window_copy_add(struct window_pane *, const char *, ...);
 void		 window_copy_vadd(struct window_pane *, const char *, va_list);
 void		 window_copy_pageup(struct window_pane *);
 void		 window_copy_start_drag(struct client *, struct mouse_event *);
+int		 window_copy_scroll_position(struct window_pane *);
 
 /* window-choose.c */
 extern const struct window_mode window_choose_mode;
