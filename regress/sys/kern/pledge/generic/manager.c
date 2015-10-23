@@ -1,4 +1,4 @@
-/*	$OpenBSD: manager.c,v 1.3 2015/10/18 12:25:33 semarie Exp $ */
+/*	$OpenBSD: manager.c,v 1.4 2015/10/23 18:50:54 mmcc Exp $ */
 /*
  * Copyright (c) 2015 Sebastien Marie <semarie@openbsd.org>
  *
@@ -128,8 +128,8 @@ grab_syscall(pid_t pid)
 			const char *errstr = NULL;
 			char *c;
 			/* truncate at first no-number */
-			for (c = line + searchlen; (*c != '\0') && isdigit(*c);
-			    c++)
+			for (c = line + searchlen; (*c != '\0') && isdigit((unsigned char)*c);
+			     c++)
 				;
 			*c = '\0';
 
