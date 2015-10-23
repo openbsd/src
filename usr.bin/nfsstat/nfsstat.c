@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsstat.c,v 1.34 2015/01/16 06:40:10 deraadt Exp $	*/
+/*	$OpenBSD: nfsstat.c,v 1.35 2015/10/23 08:18:30 tedu Exp $	*/
 /*	$NetBSD: nfsstat.c,v 1.7 1996/03/03 17:21:30 thorpej Exp $	*/
 
 /*
@@ -112,19 +112,13 @@ main(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 
-#define	BACKWARD_COMPATIBILITY
-#ifdef	BACKWARD_COMPATIBILITY
-	if (*argv) {
+	if (argc) {
 		interval = (u_int)strtonum(*argv, 0, 1000, &errstr);
 		if (errstr)
 			errx(1, "invalid interval %s: %s", *argv, errstr);
-		if (*++argv) {
-			nlistf = *argv;
-			if (*++argv)
-				memf = *argv;
-		}
+		++argv;
+		--argc;
 	}
-#endif
 	if (nlistf || memf) {
 		char errbuf[_POSIX2_LINE_MAX];
 
