@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.c,v 1.144 2015/09/14 12:12:24 nicm Exp $ */
+/* $OpenBSD: tmux.c,v 1.145 2015/10/23 16:07:29 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -19,6 +19,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
+#include <err.h>
 #include <errno.h>
 #include <event.h>
 #include <fcntl.h>
@@ -253,6 +254,10 @@ main(int argc, char **argv)
 
 	if (shell_cmd != NULL && argc != 0)
 		usage();
+
+	if (pledge("stdio rpath wpath cpath flock fattr unix sendfd recvfd "
+	    "proc exec tty ps", NULL) != 0)
+		err(1, "pledge");
 
 	if (!(flags & CLIENT_UTF8)) {
 		/*

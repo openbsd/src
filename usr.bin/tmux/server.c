@@ -1,4 +1,4 @@
-/* $OpenBSD: server.c,v 1.142 2015/10/22 10:48:30 nicm Exp $ */
+/* $OpenBSD: server.c,v 1.143 2015/10/23 16:07:29 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -177,6 +177,10 @@ server_start(struct event_base *base, int lockfd, char *lockfile)
 		return (pair[0]);
 	}
 	close(pair[0]);
+
+	if (pledge("stdio rpath wpath cpath fattr unix recvfd proc exec tty "
+	    "ps", NULL) != 0)
+		fatal("pledge failed");
 
 	/*
 	 * Must daemonise before loading configuration as the PID changes so
