@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.148 2015/10/19 12:11:28 mpi Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.149 2015/10/23 00:15:07 jsg Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -634,7 +634,7 @@ ip6_input(struct mbuf *m)
 				ip6 = mtod(m, struct ip6_hdr *);
 				icmp6_error(m, ICMP6_DST_UNREACH,
 					ICMP6_DST_UNREACH_ADDR,
-					(caddr_t)&ip6->ip6_dst - (caddr_t)ip6);
+					offsetof(struct ip6_hdr, ip6_dst));
 				break;
 			} else
 				goto bad;
