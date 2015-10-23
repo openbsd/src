@@ -6500,6 +6500,7 @@
 ./usr/share/man/man9/ml_dechain.9
 ./usr/share/man/man9/ml_dequeue.9
 ./usr/share/man/man9/ml_empty.9
+./usr/share/man/man9/ml_enlist.9
 ./usr/share/man/man9/ml_enqueue.9
 ./usr/share/man/man9/ml_filter.9
 ./usr/share/man/man9/ml_init.9
@@ -6617,7 +6618,6 @@
 ./usr/share/man/man9/rt_timer_remove_all.9
 ./usr/share/man/man9/rtable_add.9
 ./usr/share/man/man9/rtable_exists.9
-./usr/share/man/man9/rtable_get.9
 ./usr/share/man/man9/rtable_l2.9
 ./usr/share/man/man9/rtable_l2set.9
 ./usr/share/man/man9/rtalloc.9
