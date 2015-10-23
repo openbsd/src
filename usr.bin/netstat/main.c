@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.106 2015/02/12 01:49:02 claudio Exp $	*/
+/*	$OpenBSD: main.c,v 1.107 2015/10/23 08:03:48 tedu Exp $	*/
 /*	$NetBSD: main.c,v 1.9 1996/05/07 02:55:02 thorpej Exp $	*/
 
 /*
@@ -263,23 +263,18 @@ main(int argc, char *argv[])
 	argv += optind;
 	argc -= optind;
 
-#define	BACKWARD_COMPATIBILITY
-#ifdef	BACKWARD_COMPATIBILITY
 	if (*argv) {
 		if (isdigit((unsigned char)**argv)) {
 			interval = strtonum(*argv, 1, INT_MAX, &errstr);
 			if (errstr)
 				errx(1, "interval is %s", errstr);
 			++argv;
+			--argc;
 			iflag = 1;
 		}
-		if (*argv) {
-			nlistf = *argv;
-			if (*++argv)
-				memf = *argv;
-		}
 	}
-#endif
+	if (argc)
+		usage();
 
 	/*
 	 * Show per-interface statistics which don't need access to
