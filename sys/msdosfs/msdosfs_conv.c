@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_conv.c,v 1.18 2014/12/16 18:30:04 tedu Exp $	*/
+/*	$OpenBSD: msdosfs_conv.c,v 1.19 2015/10/23 10:45:31 krw Exp $	*/
 /*	$NetBSD: msdosfs_conv.c,v 1.24 1997/10/17 11:23:54 ws Exp $	*/
 
 /*-
@@ -34,17 +34,17 @@
  */
 /*
  * Written by Paul Popelka (paulp@uts.amdahl.com)
- * 
+ *
  * You can do anything you want with this software, just don't say you wrote
  * it, and don't remove this notice.
- * 
+ *
  * This software is provided "as is".
- * 
+ *
  * The author supplies this software to be publicly redistributed on the
  * understanding that the author is not responsible for the correct
  * functioning of this software in any circumstances and is not liable for
  * any damages caused by this software.
- * 
+ *
  * October 1992
  */
 
@@ -372,7 +372,7 @@ dos2unixfn(u_char dn[11], u_char *un, int lower)
 		c = dos2unix[*dn];
 	*un++ = lower ? u2l[c] : c;
 	dn++;
-	
+
 	/*
 	 * Copy the name portion into the unix filename string.
 	 */
@@ -382,7 +382,7 @@ dos2unixfn(u_char dn[11], u_char *un, int lower)
 		thislong++;
 	}
 	dn += 8 - i;
-	
+
 	/*
 	 * Now, if there is an extension then put in a period and copy in
 	 * the extension.
@@ -419,14 +419,14 @@ unix2dosfn(u_char *un, u_char dn[11], int unlen, u_int gen)
 	int conv = 1;
 	u_char *cp, *dp, *dp1;
 	u_char gentext[6];
-	
+
 	/*
 	 * Fill the dos filename string with blanks. These are DOS's pad
 	 * characters.
 	 */
 	for (i = 0; i < 11; i++)
 		dn[i] = ' ';
-	
+
 	/*
 	 * The filenames "." and ".." are handled specially, since they
 	 * don't follow dos filename rules.
@@ -449,7 +449,7 @@ unix2dosfn(u_char *un, u_char dn[11], int unlen, u_int gen)
 			break;
 	if (i < 0)
 		return 0;
-	
+
 	/*
 	 * Now find the extension
 	 * Note: dot as first char doesn't start extension
@@ -471,7 +471,7 @@ unix2dosfn(u_char *un, u_char dn[11], int unlen, u_int gen)
 			break;
 		}
 	}
-	
+
 	/*
 	 * Now convert it
 	 */
@@ -517,14 +517,14 @@ unix2dosfn(u_char *un, u_char dn[11], int unlen, u_int gen)
 	 */
 	if (!j)
 		dn[0] = '_';
-	
+
 	/*
 	 * The first character cannot be E5,
 	 * because that means a deleted entry
 	 */
 	if (dn[0] == 0xe5)
 		dn[0] = SLOT_E5;
-	
+
 	/*
 	 * If there wasn't any char dropped,
 	 * there is no place for generation numbers
@@ -534,7 +534,7 @@ unix2dosfn(u_char *un, u_char dn[11], int unlen, u_int gen)
 			return 0;
 		return conv;
 	}
-	
+
 	/*
 	 * Now insert the generation number into the filename part
 	 */
@@ -569,7 +569,7 @@ unix2winfn(u_char *un, int unlen, struct winentry *wep, int cnt, int chksum)
 
 	un += (cnt - 1) * WIN_CHARS;
 	unlen -= (cnt - 1) * WIN_CHARS;
-	
+
 	/*
 	 * Initialize winentry to some useful default
 	 */
@@ -579,7 +579,7 @@ unix2winfn(u_char *un, int unlen, struct winentry *wep, int cnt, int chksum)
 	wep->weReserved1 = 0;
 	wep->weChksum = chksum;
 	wep->weReserved2 = 0;
-	
+
 	/*
 	 * Now convert the filename parts
 	 */
@@ -621,7 +621,7 @@ winChkName(u_char *un, int unlen, struct winentry *wep, int chksum)
 {
 	u_int8_t *cp;
 	int i;
-	
+
 	/*
 	 * First compare checksums
 	 */
@@ -631,7 +631,7 @@ winChkName(u_char *un, int unlen, struct winentry *wep, int chksum)
 		chksum = -1;
 	if (chksum == -1)
 		return -1;
-	
+
 	/*
 	 * Offset of this entry
 	 */
@@ -642,7 +642,7 @@ winChkName(u_char *un, int unlen, struct winentry *wep, int chksum)
 
 	if ((wep->weCnt&WIN_LAST) && unlen > WIN_CHARS)
 		return -1;
-	
+
 	/*
 	 * Compare the name parts
 	 */
@@ -690,7 +690,7 @@ win2unixfn(struct winentry *wep, struct dirent *dp, int chksum)
 	if ((wep->weCnt&WIN_CNT) > howmany(WIN_MAXLEN, WIN_CHARS)
 	    || !(wep->weCnt&WIN_CNT))
 		return -1;
-	
+
 	/*
 	 * First compare checksums
 	 */
@@ -704,13 +704,13 @@ win2unixfn(struct winentry *wep, struct dirent *dp, int chksum)
 		chksum = -1;
 	if (chksum == -1)
 		return -1;
-	
+
 	/*
 	 * Offset of this entry
 	 */
 	i = ((wep->weCnt&WIN_CNT) - 1) * WIN_CHARS;
 	np = (u_int8_t *)dp->d_name + i;
-	
+
 	/*
 	 * Convert the name parts
 	 */
@@ -788,7 +788,7 @@ winChksum(u_int8_t *name)
 {
 	int i;
 	u_int8_t s;
-	
+
 	for (s = 0, i = 11; --i >= 0; s += *name++)
 		s = (s << 7)|(s >> 1);
 	return s;

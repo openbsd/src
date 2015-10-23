@@ -1,4 +1,4 @@
-/*	$OpenBSD: direntry.h,v 1.6 2002/03/14 01:27:09 millert Exp $	*/
+/*	$OpenBSD: direntry.h,v 1.7 2015/10/23 10:45:31 krw Exp $	*/
 /*	$NetBSD: direntry.h,v 1.13 1997/10/17 11:23:45 ws Exp $	*/
 
 /*-
@@ -34,17 +34,17 @@
  */
 /*
  * Written by Paul Popelka (paulp@uts.amdahl.com)
- * 
+ *
  * You can do anything you want with this software, just don't say you wrote
  * it, and don't remove this notice.
- * 
+ *
  * This software is provided "as is".
- * 
+ *
  * The author supplies this software to be publicly redistributed on the
  * understanding that the author is not responsible for the correct
  * functioning of this software in any circumstances and is not liable for
  * any damages caused by this software.
- * 
+ *
  * October 1992
  */
 

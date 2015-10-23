@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vfsops.c,v 1.71 2015/02/13 13:35:03 millert Exp $	*/
+/*	$OpenBSD: msdosfs_vfsops.c,v 1.72 2015/10/23 10:45:31 krw Exp $	*/
 /*	$NetBSD: msdosfs_vfsops.c,v 1.48 1997/10/18 02:54:57 briggs Exp $	*/
 
 /*-
@@ -34,17 +34,17 @@
  */
 /*
  * Written by Paul Popelka (paulp@uts.amdahl.com)
- * 
+ *
  * You can do anything you want with this software, just don't say you wrote
  * it, and don't remove this notice.
- * 
+ *
  * This software is provided "as is".
- * 
+ *
  * The author supplies this software to be publicly redistributed on the
  * understanding that the author is not responsible for the correct
  * functioning of this software in any circumstances and is not liable for
  * any damages caused by this software.
- * 
+ *
  * October 1992
  */
 
@@ -91,9 +91,9 @@ int msdosfs_mountfs(struct vnode *, struct mount *, struct proc *,
 int msdosfs_sync_vnode(struct vnode *, void *);
 
 /*
- * mp - path - addr in user space of mount point (ie /usr or whatever) 
+ * mp - path - addr in user space of mount point (ie /usr or whatever)
  * data - addr in user space of mount params including the name of the block
- * special file to treat as a filesystem. 
+ * special file to treat as a filesystem.
  */
 int
 msdosfs_mount(struct mount *mp, const char *path, void *data,
@@ -166,7 +166,7 @@ msdosfs_mount(struct mount *mp, const char *path, void *data,
 			/*
 			 * Process export requests.
 			 */
-			return (vfs_export(mp, &pmp->pm_export, 
+			return (vfs_export(mp, &pmp->pm_export,
 			    &args.export_info));
 		}
 	}
@@ -234,7 +234,7 @@ msdosfs_mount(struct mount *mp, const char *path, void *data,
 	else if (!(pmp->pm_flags &
 	    (MSDOSFSMNT_SHORTNAME | MSDOSFSMNT_LONGNAME))) {
 		struct vnode *rvp;
-		
+
 		/*
 		 * Try to divine whether to support Win'95 long filenames
 		 */
@@ -347,7 +347,7 @@ msdosfs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p,
 	/* Determine the number of DEV_BSIZE blocks in a MSDOSFS sector */
 	pmp->pm_BlkPerSec = pmp->pm_BytesPerSec / DEV_BSIZE;
 
-    	if (!pmp->pm_BytesPerSec || !SecPerClust || pmp->pm_SecPerTrack > 64) {
+	if (!pmp->pm_BytesPerSec || !SecPerClust || pmp->pm_SecPerTrack > 64) {
 		error = EFTYPE;
 		goto error_exit;
 	}
@@ -382,7 +382,7 @@ msdosfs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p,
 	 *	MSDOSFS sectors per cluster: >0 && power of 2
 	 *	MSDOSFS sector size: >= DEV_BSIZE && power of 2
 	 *	HUGE sector count: >0
-	 * 	FAT sectors: >0
+	 *	FAT sectors: >0
 	 */
 	if ((SecPerClust == 0) || (SecPerClust & (SecPerClust - 1)) ||
 	    (pmp->pm_BytesPerSec < DEV_BSIZE) ||
@@ -391,8 +391,8 @@ msdosfs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p,
 	    (SecPerClust * pmp->pm_BlkPerSec > MAXBSIZE / DEV_BSIZE)) {
 		error = EINVAL;
 		goto error_exit;
-	}		
-	
+	}
+
 	pmp->pm_HugeSectors *= pmp->pm_BlkPerSec;
 	pmp->pm_HiddenSects *= pmp->pm_BlkPerSec;
 	pmp->pm_FATsecs *= pmp->pm_BlkPerSec;
@@ -694,7 +694,7 @@ msdosfs_sync_vnode(struct vnode *vp, void *arg)
 	struct denode *dep;
 
 	dep = VTODE(vp);
-	if (vp->v_type == VNON || 
+	if (vp->v_type == VNON ||
 	    ((dep->de_flag & (DE_ACCESS | DE_CREATE | DE_UPDATE | DE_MODIFIED)) == 0
 	      && LIST_EMPTY(&vp->v_dirtyblkhd)) ||
 	    msa->waitfor == MNT_LAZY) {

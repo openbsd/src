@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_fat.c,v 1.26 2014/12/16 18:30:04 tedu Exp $	*/
+/*	$OpenBSD: msdosfs_fat.c,v 1.27 2015/10/23 10:45:31 krw Exp $	*/
 /*	$NetBSD: msdosfs_fat.c,v 1.26 1997/10/17 11:24:02 ws Exp $	*/
 
 /*-
@@ -34,17 +34,17 @@
  */
 /*
  * Written by Paul Popelka (paulp@uts.amdahl.com)
- * 
+ *
  * You can do anything you want with this software, just don't say you wrote
  * it, and don't remove this notice.
- * 
+ *
  * This software is provided "as is".
- * 
+ *
  * The author supplies this software to be publicly redistributed on the
  * understanding that the author is not responsible for the correct
  * functioning of this software in any circumstances and is not liable for
  * any damages caused by this software.
- * 
+ *
  * October 1992
  */
 
@@ -387,22 +387,22 @@ updatefats(struct msdosfsmount *pmp, struct buf *bp, uint32_t fatbn)
 
 /*
  * Updating entries in 12 bit fats is a pain in the butt.
- * 
+ *
  * The following picture shows where nibbles go when moving from a 12 bit
  * cluster number into the appropriate bytes in the FAT.
- * 
+ *
  *	byte m        byte m+1      byte m+2
  *	+----+----+   +----+----+   +----+----+
  *	|  0    1 |   |  2    3 |   |  4    5 |   FAT bytes
  *	+----+----+   +----+----+   +----+----+
- * 
+ *
  *	+----+----+----+   +----+----+----+
  *	|  3    0    1 |   |  4    5    2 |
  *	+----+----+----+   +----+----+----+
- *	cluster n  	   cluster n+1
- * 
+ *	cluster n	   cluster n+1
+ *
  * Where n is even. m = n + (n >> 2)
- * 
+ *
  */
 static __inline void
 usemap_alloc(struct msdosfsmount *pmp, uint32_t cn)
@@ -453,10 +453,10 @@ clusterfree(struct msdosfsmount *pmp, uint32_t cluster, uint32_t *oldcnp)
  *		  cluster'th entry if this is a get function
  * newcontents	- the new value to be written into the cluster'th element of
  *		  the fat if this is a set function.
- * 
+ *
  * This function can also be used to free a cluster by setting the fat entry
  * for a cluster to 0.
- * 
+ *
  * All copies of the fat are updated if this is a set function. NOTE: If
  * fatentry() marks a cluster as free it does not update the inusemap in
  * the msdosfsmount structure. This is left to the caller.
@@ -506,7 +506,7 @@ fatentry(int function, struct msdosfsmount *pmp, uint32_t cn, uint32_t *oldconte
 		brelse(bp);
 		return (error);
 	}
-	
+
 	if (function & FAT_GET) {
 		if (FAT32(pmp))
 			readcn = getulong(&bp->b_data[bo]);
@@ -570,7 +570,7 @@ fatchain(struct msdosfsmount *pmp, uint32_t start, uint32_t count, uint32_t fill
 	int error;
 	uint32_t bn, bo, bsize, byteoffset, readcn, newc;
 	struct buf *bp;
-	
+
 #ifdef MSDOSFS_DEBUG
 	printf("fatchain(pmp %08x, start %d, count %d, fillwith %d)\n",
 	    pmp, start, count, fillwith);
@@ -580,7 +580,7 @@ fatchain(struct msdosfsmount *pmp, uint32_t start, uint32_t count, uint32_t fill
 	 */
 	if (start < CLUST_FIRST || start + count - 1 > pmp->pm_maxcluster)
 		return (EINVAL);
-	
+
 	while (count > 0) {
 		byteoffset = FATOFS(pmp, start);
 		fatblock(pmp, byteoffset, &bn, &bsize, &bo);
@@ -641,7 +641,7 @@ chainlength(struct msdosfsmount *pmp, uint32_t start, uint32_t count)
 	uint32_t idx, max_idx;
 	u_int map;
 	uint32_t len;
-	
+
 	max_idx = pmp->pm_maxcluster / N_INUSEBITS;
 	idx = start / N_INUSEBITS;
 	start %= N_INUSEBITS;
@@ -718,7 +718,7 @@ clusteralloc(struct msdosfsmount *pmp, uint32_t start, uint32_t count,
 	uint32_t len, newst, foundl, cn, l;
 	uint32_t foundcn = 0; /* XXX: foundcn could be used uninitialized */
 	u_int map;
-	
+
 #ifdef MSDOSFS_DEBUG
 	printf("clusteralloc(): find %d clusters\n",count);
 #endif
@@ -730,19 +730,19 @@ clusteralloc(struct msdosfsmount *pmp, uint32_t start, uint32_t count,
 		 * This is a new file, initialize start
 		 */
 		struct timeval tv;
-		
+
 		microtime(&tv);
 		start = (tv.tv_usec >> 10) | tv.tv_usec;
 		len = 0;
 	}
-	
+
 	/*
 	 * Start at a (pseudo) random place to maximize cluster runs
 	 * under multiple writers.
 	 */
 	newst = (start * 1103515245 + 12345) % (pmp->pm_maxcluster + 1);
 	foundl = 0;
-	
+
 	for (cn = newst; cn <= pmp->pm_maxcluster;) {
 		idx = cn / N_INUSEBITS;
 		map = pmp->pm_inusemap[idx];
@@ -929,7 +929,7 @@ extendfile(struct denode *dep, uint32_t count, struct buf **bpp, uint32_t *ncp,
 	uint32_t cn, got;
 	struct msdosfsmount *pmp = dep->de_pmp;
 	struct buf *bp;
-	
+
 	/*
 	 * Don't try to extend the root directory
 	 */
@@ -977,9 +977,9 @@ extendfile(struct denode *dep, uint32_t count, struct buf **bpp, uint32_t *ncp,
 		error = clusteralloc(pmp, cn, count, CLUST_EOFE, &cn, &got);
 		if (error)
 			return (error);
-		
+
 		count -= got;
-		
+
 		/*
 		 * Give them the filesystem relative cluster number if they want
 		 * it.
@@ -988,7 +988,7 @@ extendfile(struct denode *dep, uint32_t count, struct buf **bpp, uint32_t *ncp,
 			*ncp = cn;
 			ncp = NULL;
 		}
-		
+
 		if (dep->de_StartCluster == 0) {
 			dep->de_StartCluster = cn;
 			frcn = 0;
@@ -1002,13 +1002,13 @@ extendfile(struct denode *dep, uint32_t count, struct buf **bpp, uint32_t *ncp,
 			}
 			frcn = dep->de_fc[FC_LASTFC].fc_frcn + 1;
 		}
-		
+
 		/*
 		 * Update the "last cluster of the file" entry in the denode's fat
 		 * cache.
 		 */
 		fc_setcache(dep, FC_LASTFC, frcn + got - 1, cn + got - 1);
-		
+
 		if (flags & DE_CLEAR) {
 			while (got-- > 0) {
 				/*
@@ -1039,6 +1039,6 @@ extendfile(struct denode *dep, uint32_t count, struct buf **bpp, uint32_t *ncp,
 			}
 		}
 	}
-	
+
 	return (0);
 }

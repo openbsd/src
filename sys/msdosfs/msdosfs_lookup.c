@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_lookup.c,v 1.27 2014/12/16 18:30:04 tedu Exp $	*/
+/*	$OpenBSD: msdosfs_lookup.c,v 1.28 2015/10/23 10:45:31 krw Exp $	*/
 /*	$NetBSD: msdosfs_lookup.c,v 1.34 1997/10/18 22:12:27 ws Exp $	*/
 
 /*-
@@ -34,17 +34,17 @@
  */
 /*
  * Written by Paul Popelka (paulp@uts.amdahl.com)
- * 
+ *
  * You can do anything you want with this software, just don't say you wrote
  * it, and don't remove this notice.
- * 
+ *
  * This software is provided "as is".
- * 
+ *
  * The author supplies this software to be publicly redistributed on the
  * understanding that the author is not responsible for the correct
  * functioning of this software in any circumstances and is not liable for
  * any damages caused by this software.
- * 
+ *
  * October 1992
  */
 
@@ -192,7 +192,7 @@ msdosfs_lookup(void *v)
 	if ((nameiop == CREATE || nameiop == RENAME) &&
 	    (flags & ISLASTCN))
 		slotcount = 0;
-	
+
 #ifdef MSDOSFS_DEBUG
 	printf("msdosfs_lookup(): dos version of filename '%.11s', length %d\n",
 	    dosfilename, cnp->cn_namelen);
@@ -257,7 +257,7 @@ msdosfs_lookup(void *v)
 				 * Drop memory of previous long matches
 				 */
 				chksum = -1;
-				
+
 				if (slotcount < wincnt) {
 					slotcount++;
 					slotoffset = diroff;
@@ -273,7 +273,7 @@ msdosfs_lookup(void *v)
 				 */
 				if (slotcount < wincnt)
 					slotcount = 0;
-				
+
 				/*
 				 * Check for Win95 long filename entry
 				 */
@@ -287,7 +287,7 @@ msdosfs_lookup(void *v)
 							    chksum);
 					continue;
 				}
-				
+
 				/*
 				 * Ignore volume labels (anywhere, not just
 				 * the root directory).
@@ -357,7 +357,7 @@ notfound:;
 	}
 	if (wincnt > slotcount)
 		slotoffset += sizeof(struct direntry) * (wincnt - slotcount);
-	
+
 	/*
 	 * If we get here we didn't find the entry we were looking for. But
 	 * that's ok if we are creating or renaming and are at the end of
@@ -447,7 +447,7 @@ found:;
 	 * in a deadlock.
 	 */
 	brelse(bp);
-	
+
 foundroot:;
 	/*
 	 * If we entered at foundroot, then we are looking for the . or ..
@@ -604,7 +604,7 @@ createde(struct denode *dep, struct denode *ddep, struct denode **depp,
 	struct buf *bp;
 	daddr_t bn;
 	int blsize;
-	
+
 #ifdef MSDOSFS_DEBUG
 	printf("createde(dep %08x, ddep %08x, depp %08x, cnp %08x)\n",
 	    dep, ddep, depp, cnp);
@@ -632,7 +632,7 @@ createde(struct denode *dep, struct denode *ddep, struct denode **depp,
 		 */
 		ddep->de_FileSize += de_cn2off(pmp, dirclust);
 	}
-	
+
 	/*
 	 * We just read in the cluster with space.  Copy the new directory
 	 * entry in.  Then write it to disk. NOTE:  DOS directories
@@ -650,7 +650,7 @@ createde(struct denode *dep, struct denode *ddep, struct denode **depp,
 		return error;
 	}
 	ndep = bptoep(pmp, bp, ddep->de_fndoffset);
-	
+
 	DE_EXTERNALIZE(ndep, dep);
 
 	/*
@@ -661,7 +661,7 @@ createde(struct denode *dep, struct denode *ddep, struct denode **depp,
 		u_char *un = (u_char *)cnp->cn_nameptr;
 		int unlen = cnp->cn_namelen;
 		int cnt = 1;
-		
+
 		while (--ddep->de_fndcnt >= 0) {
 			if (!(ddep->de_fndoffset & pmp->pm_crbomask)) {
 				if ((error = bwrite(bp)) != 0)
@@ -689,7 +689,7 @@ createde(struct denode *dep, struct denode *ddep, struct denode **depp,
 				break;
 		}
 	}
-	
+
 	if ((error = bwrite(bp)) != 0)
 		return error;
 
@@ -708,7 +708,7 @@ createde(struct denode *dep, struct denode *ddep, struct denode **depp,
 		}
 		return deget(pmp, dirclust, diroffset, depp);
 	}
-	
+
 	return 0;
 }
 
@@ -936,7 +936,7 @@ removede(struct denode *pdep, struct denode *dep)
 	int blsize;
 	struct msdosfsmount *pmp = pdep->de_pmp;
 	uint32_t offset = pdep->de_fndoffset;
-	
+
 #ifdef MSDOSFS_DEBUG
 	printf("removede(): filename %.11s, dep %08x, offset %08x\n",
 	    dep->de_Name, dep, offset);
@@ -1009,7 +1009,7 @@ uniqdosname(struct denode *dep, struct componentname *cnp, u_char *cp)
 		 */
 		if (!unix2dosfn((u_char *)cnp->cn_nameptr, cp, cnp->cn_namelen, gen))
 			return gen == 1 ? EINVAL : EEXIST;
-		
+
 		/*
 		 * Now look for a dir entry with this exact name
 		 */

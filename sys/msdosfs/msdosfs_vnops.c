@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vnops.c,v 1.101 2015/09/23 15:37:26 tedu Exp $	*/
+/*	$OpenBSD: msdosfs_vnops.c,v 1.102 2015/10/23 10:45:31 krw Exp $	*/
 /*	$NetBSD: msdosfs_vnops.c,v 1.63 1997/10/17 11:24:19 ws Exp $	*/
 
 /*-
@@ -333,7 +333,7 @@ msdosfs_getattr(void *v)
 	vap->va_gen = 0;
 	vap->va_blocksize = dep->de_pmp->pm_bpcluster;
 	vap->va_bytes = (dep->de_FileSize + dep->de_pmp->pm_crbomask) &
-	    			~(dep->de_pmp->pm_crbomask);
+				~(dep->de_pmp->pm_crbomask);
 	vap->va_type = ap->a_vp->v_type;
 	return (0);
 }
@@ -980,7 +980,7 @@ abortit:
 		vrele(fvp);
 		return (error);
 	}
-	
+
 	/*
 	 * If source and dest are the same, do nothing.
 	 */
@@ -1253,11 +1253,11 @@ struct {
 		CASE_LOWER_BASE | CASE_LOWER_EXT,	/* lower case */
 		0,					/* create time 100ths */
 		{ 0, 0 }, { 0, 0 },			/* create time & date */
-		{ 0, 0 },	 			/* access date */
+		{ 0, 0 },				/* access date */
 		{ 0, 0 },				/* high bits of start cluster */
 		{ 210, 4 }, { 210, 4 },			/* modify time & date */
 		{ 0, 0 },				/* startcluster */
-		{ 0, 0, 0, 0 } 				/* filesize */
+		{ 0, 0, 0, 0 }				/* filesize */
 	},
 	{	"..      ", "   ",			/* the .. entry */
 		ATTR_DIRECTORY,				/* file attribute */
@@ -1803,7 +1803,7 @@ msdosfs_strategy(void *v)
 			clrbuf(bp);
 	}
 	if (bp->b_blkno == -1) {
-		s = splbio();	
+		s = splbio();
 		biodone(bp);
 		splx(s);
 		return (error);
