@@ -1,4 +1,4 @@
-/*	$OpenBSD: ps.c,v 1.65 2015/06/29 15:03:33 bluhm Exp $	*/
+/*	$OpenBSD: ps.c,v 1.66 2015/10/23 03:26:24 deraadt Exp $	*/
 /*	$NetBSD: ps.c,v 1.15 1995/05/18 20:33:25 mycroft Exp $	*/
 
 /*-
@@ -277,6 +277,9 @@ main(int argc, char *argv[])
 	}
 	if (kd == NULL)
 		errx(1, "%s", errbuf);
+
+	if (pledge("stdio rpath ps", NULL) == -1)
+		err(1, "abort pledge");
 
 	if (!fmt) {
 		if (showthreads)

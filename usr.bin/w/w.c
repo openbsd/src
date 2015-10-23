@@ -1,4 +1,4 @@
-/*	$OpenBSD: w.c,v 1.59 2015/08/31 15:49:34 deraadt Exp $	*/
+/*	$OpenBSD: w.c,v 1.60 2015/10/23 03:26:24 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -111,6 +111,9 @@ main(int argc, char *argv[])
 	int ch, i, nentries, nusers, wcmd;
 	char *memf, *nlistf, *p, *x;
 	char buf[HOST_NAME_MAX+1], errbuf[_POSIX2_LINE_MAX];
+
+	if (pledge("stdio tty rpath ps vminfo", NULL) == -1)
+		err(1, "pledge");
 
 	/* Are we w(1) or uptime(1)? */
 	p = __progname;
