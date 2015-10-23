@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.66 2015/10/23 01:10:01 deraadt Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.67 2015/10/23 10:22:29 claudio Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -937,6 +937,10 @@ pledge_sysctl_check(struct proc *p, int miblen, int *mib, void *new)
 		return (0);
 	if (miblen == 2 &&			/* gethostname() */
 	    mib[0] == CTL_KERN && mib[1] == KERN_HOSTNAME)
+		return (0);
+	if (miblen == 6 &&		/* if_nameindex() */
+	    mib[0] == CTL_NET && mib[1] == PF_ROUTE &&
+	    mib[2] == 0 && mib[3] == 0 && mib[4] == NET_RT_IFNAMES)
 		return (0);
 	if (miblen == 2 &&			/* uname() */
 	    mib[0] == CTL_KERN && mib[1] == KERN_OSTYPE)

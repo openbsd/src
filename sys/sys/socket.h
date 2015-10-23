@@ -1,4 +1,4 @@
-/*	$OpenBSD: socket.h,v 1.89 2015/10/20 18:04:03 deraadt Exp $	*/
+/*	$OpenBSD: socket.h,v 1.90 2015/10/23 10:22:30 claudio Exp $	*/
 /*	$NetBSD: socket.h,v 1.14 1996/02/09 18:25:36 christos Exp $	*/
 
 /*
@@ -350,7 +350,8 @@ struct sockpeercred {
 #define NET_RT_IFLIST	3		/* survey interface list */
 #define	NET_RT_STATS	4		/* routing table statistics */
 #define	NET_RT_TABLE	5
-#define	NET_RT_MAXID	6
+#define	NET_RT_IFNAMES	6
+#define	NET_RT_MAXID	7
 
 #define CTL_NET_RT_NAMES { \
 	{ 0, 0 }, \
@@ -359,6 +360,7 @@ struct sockpeercred {
 	{ "iflist", CTLTYPE_STRUCT }, \
 	{ "stats", CTLTYPE_STRUCT }, \
 	{ "table", CTLTYPE_STRUCT }, \
+	{ "ifnames", CTLTYPE_STRUCT }, \
 }
 
 /*

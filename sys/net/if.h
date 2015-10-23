@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.h,v 1.170 2015/10/23 01:19:04 dlg Exp $	*/
+/*	$OpenBSD: if.h,v 1.171 2015/10/23 10:22:29 claudio Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -303,6 +303,12 @@ struct if_announcemsghdr {
 
 #define IFAN_ARRIVAL	0	/* interface arrival */
 #define IFAN_DEPARTURE	1	/* interface departure */
+
+/* message format used to pass interface name to index mappings */
+struct if_nameindex_msg {
+	unsigned int	if_index;
+	char		if_name[IFNAMSIZ];
+};
 
 /*
  * interface groups
