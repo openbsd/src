@@ -1,10 +1,10 @@
-.\" $OpenBSD: MAKEDEV.8,v 1.66 2014/10/09 04:40:08 tedu Exp $
+.\" $OpenBSD: MAKEDEV.8,v 1.67 2015/10/23 15:18:01 claudio Exp $
 .\"
 .\" THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 .\" generated from:
 .\"
-.\"	OpenBSD: etc.sparc/MAKEDEV.md,v 1.52 2014/01/05 01:16:52 deraadt Exp 
-.\"	OpenBSD: MAKEDEV.common,v 1.76 2014/08/20 11:23:40 mikeb Exp 
+.\"	OpenBSD: etc.sparc/MAKEDEV.md,v 1.56 2015/10/23 15:14:12 claudio Exp 
+.\"	OpenBSD: MAKEDEV.common,v 1.79 2015/10/23 15:14:11 claudio Exp 
 .\"	OpenBSD: MAKEDEV.man,v 1.7 2009/03/18 17:34:25 sobrado Exp 
 .\"	OpenBSD: MAKEDEV.mansub,v 1.2 2004/02/20 19:13:01 miod Exp 
 .\"
@@ -23,7 +23,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 9 2014 $
+.Dd $Mdocdate: October 23 2015 $
 .Dt MAKEDEV 8 sparc
 .Os
 .Sh NAME
@@ -226,6 +226,9 @@ System call tracing device, see
 .It Ar tun*
 Network tunnel driver, see
 .Xr tun 4 .
+.It Ar tap*
+Ethernet tunnel driver, see
+.Xr tap 4 .
 .It Ar uk*
 Unknown SCSI devices, see
 .Xr uk 4 .
