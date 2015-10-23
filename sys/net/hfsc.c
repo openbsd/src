@@ -1,4 +1,4 @@
-/*	$OpenBSD: hfsc.c,v 1.25 2015/10/23 01:02:46 dlg Exp $	*/
+/*	$OpenBSD: hfsc.c,v 1.26 2015/10/23 01:32:10 dlg Exp $	*/
 
 /*
  * Copyright (c) 2012-2013 Henning Brauer <henning@openbsd.org>
@@ -193,7 +193,6 @@ struct hfsc_if {
 
 	u_int	hif_allocated;			/* # of slots in hif_class_tbl */
 	u_int	hif_classes;			/* # of classes in the tree */
-	u_int	hif_packets;			/* # of packets in the tree */
 	u_int	hif_classid;			/* class id sequence number */
 
 	hfsc_ellist_t *hif_eligible;			/* eligible list */
@@ -673,7 +672,6 @@ hfsc_queue(struct ifqueue *ifq, struct mbuf *m,
 		return (ENOBUFS);
 	}
 	ifq->ifq_len++;
-	hif->hif_packets++;
 	m->m_pkthdr.pf.prio = IFQ_MAXPRIO;
 
 	/* successfully queued. */
@@ -692,7 +690,7 @@ hfsc_dequeue(struct ifqueue *ifq, int remove)
 	int next_len, realtime = 0;
 	u_int64_t cur_time;
 
-	if (hif->hif_packets == 0)
+	if (IFQ_LEN(ifq) == 0)
 		return (NULL);
 
 	cur_time = hfsc_microuptime();
@@ -749,7 +747,6 @@ hfsc_dequeue(struct ifqueue *ifq, int remove)
 	if ((m = hfsc_cl_dequeue(cl)) == NULL)
 		panic("hfsc_dequeue");
 
-	hif->hif_packets--;
 	ifq->ifq_len--;
 	PKTCNTR_INC(&cl->cl_stats.xmit_cnt, m->m_pkthdr.len);
 
@@ -833,7 +830,6 @@ hfsc_cl_purge(struct hfsc_if *hif, struct hfsc_class *cl)
 	while ((m = hfsc_cl_dequeue(cl)) != NULL) {
 		PKTCNTR_INC(&cl->cl_stats.drop_cnt, m->m_pkthdr.len);
 		m_freem(m);
-		hif->hif_packets--;
 		hif->hif_ifq->ifq_len--;
 	}
 
