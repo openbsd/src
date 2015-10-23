@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_send_async.c,v 1.28 2015/10/18 15:15:00 deraadt Exp $	*/
+/*	$OpenBSD: res_send_async.c,v 1.29 2015/10/23 00:52:09 deraadt Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -304,10 +304,11 @@ sockaddr_connect(const struct sockaddr *sa, int socktype)
 {
 	int errno_save, sock;
 
-	if ((sock = dnssocket(sa->sa_family, socktype | SOCK_NONBLOCK, 0)) == -1)
+	if ((sock = socket(sa->sa_family,
+	    socktype | SOCK_NONBLOCK | SOCK_DNS, 0)) == -1)
 		goto fail;
 
-	if (dnsconnect(sock, sa, sa->sa_len) == -1) {
+	if (connect(sock, sa, sa->sa_len) == -1) {
 		/*
 		 * In the TCP case, the caller will be asked to poll for
 		 * POLLOUT so that we start writing the packet in tcp_write()
