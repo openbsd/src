@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.107 2015/10/23 08:03:48 tedu Exp $	*/
+/*	$OpenBSD: main.c,v 1.108 2015/10/23 08:18:57 tedu Exp $	*/
 /*	$NetBSD: main.c,v 1.9 1996/05/07 02:55:02 thorpej Exp $	*/
 
 /*
@@ -263,15 +263,13 @@ main(int argc, char *argv[])
 	argv += optind;
 	argc -= optind;
 
-	if (*argv) {
-		if (isdigit((unsigned char)**argv)) {
-			interval = strtonum(*argv, 1, INT_MAX, &errstr);
-			if (errstr)
-				errx(1, "interval is %s", errstr);
-			++argv;
-			--argc;
-			iflag = 1;
-		}
+	if (argc) {
+		interval = strtonum(*argv, 1, INT_MAX, &errstr);
+		if (errstr)
+			errx(1, "interval is %s", errstr);
+		++argv;
+		--argc;
+		iflag = 1;
 	}
 	if (argc)
 		usage();
