@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.177 2015/09/11 20:08:40 mpi Exp $	*/
+/*	$OpenBSD: route.c,v 1.178 2015/10/23 15:03:25 deraadt Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -78,7 +78,7 @@ struct rt_metrics	rt_metrics;
 
 void	 flushroutes(int, char **);
 int	 newroute(int, char **);
-void	 show(int, char *[]);
+int	 show(int, char *[]);
 int	 keycmp(const void *, const void *);
 int	 keyword(char *);
 void	 monitor(int, char *[]);
@@ -175,30 +175,61 @@ main(int argc, char **argv)
 		errno = Terr;
 		err(1, "routing table %d", tableid);
 	}
-	switch (kw) {
-	case K_EXEC:
-		break;
-	case K_MONITOR:
-		monitor(argc, argv);
-		break;
-	default:
-		if (tflag)
-			s = open(_PATH_DEVNULL, O_WRONLY);
-		else
-			s = socket(PF_ROUTE, SOCK_RAW, 0);
-		if (s == -1)
-			err(1, "socket");
-		/* force socket onto table user requested */
-		if (Tflag == 1 && Terr == 0 &&
-		    setsockopt(s, AF_ROUTE, ROUTE_TABLEFILTER,
-		    &tableid, sizeof(tableid)) == -1)
-			err(1, "setsockopt(ROUTE_TABLEFILTER)");
-		break;
+	if (kw == K_EXEC)
+		exit(rdomain(argc - 1, argv + 1));
+
+	s = socket(PF_ROUTE, SOCK_RAW, 0);
+	if (s == -1)
+		err(1, "socket");
+	if (kw == K_MONITOR) {
+		unsigned int filter = 0;
+		int af = 0;
+
+		while (--argc > 0) {
+			if (**(++argv)== '-')
+				switch (keyword(*argv + 1)) {
+				case K_INET:
+					af = AF_INET;
+					break;
+				case K_INET6:
+					af = AF_INET6;
+					break;
+				case K_IFACE:
+				case K_INTERFACE:
+					filter = ROUTE_FILTER(RTM_IFINFO) |
+					    ROUTE_FILTER(RTM_IFANNOUNCE);
+					break;
+				default:
+					usage(*argv);
+					/* NOTREACHED */
+				}
+			else
+				usage(*argv);
+		}
+		if (setsockopt(s, AF_ROUTE, ROUTE_MSGFILTER, &filter,
+		    sizeof(filter)) == -1)
+			err(1, "setsockopt(ROUTE_MSGFILTER)");
 	}
+	/* force socket onto table user requested */
+	if (Tflag == 1 && Terr == 0 &&
+	    setsockopt(s, AF_ROUTE, ROUTE_TABLEFILTER,
+	    &tableid, sizeof(tableid)) == -1)
+		err(1, "setsockopt(ROUTE_TABLEFILTER)");
+
+	if (kw == K_SHOW) {
+		uid = 0;
+		exit(show(argc, argv));
+	}
+
+	if (nflag) {
+		if (pledge("stdio rpath dns", NULL) == -1)
+			err(1, "pledge");
+	} else {
+		if (pledge("stdio rpath dns", NULL) == -1)
+			err(1, "pledge");
+	}
+
 	switch (kw) {
-	case K_EXEC:
-		rval = rdomain(argc - 1, argv + 1);
-		break;
 	case K_GET:
 		uid = 0;
 		/* FALLTHROUGH */
@@ -207,12 +238,8 @@ main(int argc, char **argv)
 	case K_DELETE:
 		rval = newroute(argc, argv);
 		break;
-	case K_SHOW:
-		uid = 0;
-		show(argc, argv);
-		break;
 	case K_MONITOR:
-		/* handled above */
+		monitor(argc, argv);
 		break;
 	case K_FLUSH:
 		flushroutes(argc, argv);
@@ -648,7 +675,7 @@ newroute(int argc, char **argv)
 	return (ret != 0);
 }
 
-void
+int
 show(int argc, char *argv[])
 {
 	int		 af = 0;
@@ -691,6 +718,7 @@ show(int argc, char *argv[])
 	}
 
 	p_rttables(af, tableid, Tflag, prio);
+	return (0);
 }
 
 void
@@ -1046,44 +1074,12 @@ interfaces(void)
 void
 monitor(int argc, char *argv[])
 {
-	int af = 0;
-	unsigned int filter = 0;
 	int n;
 	char msg[2048];
 	time_t now;
 
-	while (--argc > 0) {
-		if (**(++argv)== '-')
-			switch (keyword(*argv + 1)) {
-			case K_INET:
-				af = AF_INET;
-				break;
-			case K_INET6:
-				af = AF_INET6;
-				break;
-			case K_IFACE:
-			case K_INTERFACE:
-				filter = ROUTE_FILTER(RTM_IFINFO) |
-				    ROUTE_FILTER(RTM_IFANNOUNCE);
-				break;
-			default:
-				usage(*argv);
-				/* NOTREACHED */
-			}
-		else
-			usage(*argv);
-	}
-
-	s = socket(PF_ROUTE, SOCK_RAW, af);
-	if (s == -1)
-		err(1, "socket");
-
-	if (setsockopt(s, AF_ROUTE, ROUTE_MSGFILTER, &filter,
-	    sizeof(filter)) == -1)
-		err(1, "setsockopt(ROUTE_MSGFILTER)");
-	if (Tflag && setsockopt(s, AF_ROUTE, ROUTE_TABLEFILTER, &tableid,
-	    sizeof(tableid)) == -1)
-		err(1, "setsockopt(ROUTE_TABLEFILTER)");
+	if (pledge("stdio rpath dns", NULL) == -1)
+		err(1, "pledge");
 
 	verbose = 1;
 	if (debugonly) {
