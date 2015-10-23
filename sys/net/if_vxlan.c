@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vxlan.c,v 1.31 2015/10/15 13:59:21 yasuoka Exp $	*/
+/*	$OpenBSD: if_vxlan.c,v 1.32 2015/10/23 01:19:04 dlg Exp $	*/
 
 /*
  * Copyright (c) 2013 Reyk Floeter <reyk@openbsd.org>
@@ -80,7 +80,7 @@ int	 vxlan_enable = 0;
 u_long	 vxlan_tagmask;
 
 #define VXLAN_TAGHASHSIZE		 32
-#define VXLAN_TAGHASH(tag)		 (tag & vxlan_tagmask)
+#define VXLAN_TAGHASH(tag)		 ((unsigned int)tag & vxlan_tagmask)
 LIST_HEAD(vxlan_taghash, vxlan_softc)	*vxlan_tagh;
 
 void
@@ -108,7 +108,7 @@ vxlan_clone_create(struct if_clone *ifc, int unit)
 	    M_WAITOK|M_ZERO);
 	sc->sc_imo.imo_max_memberships = IP_MIN_MEMBERSHIPS;
 	sc->sc_dstport = htons(VXLAN_PORT);
-	sc->sc_vnetid = 0;
+	sc->sc_vnetid = -1;
 
 	ifp = &sc->sc_ac.ac_if;
 	snprintf(ifp->if_xname, sizeof ifp->if_xname, "vxlan%d", unit);
@@ -420,18 +420,29 @@ vxlanioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 
 	case SIOCSVNETID:
-		if (ifr->ifr_vnetid < 0 || ifr->ifr_vnetid > 0x00ffffff) {
+		if (ifr->ifr_vnetid > 0x00ffffff) {
 			error = EINVAL;
 			break;
 		}
 		s = splnet();
-		sc->sc_vnetid = (u_int32_t)ifr->ifr_vnetid;
+		sc->sc_vnetid = (int)ifr->ifr_vnetid;
 		(void)vxlan_config(ifp, NULL, NULL);
 		splx(s);
 		break;
 
 	case SIOCGVNETID:
-		ifr->ifr_vnetid = (int)sc->sc_vnetid;
+		if (sc->sc_vnetid == -1) {
+			error = EADDRNOTAVAIL;
+			break;
+		}
+		ifr->ifr_vnetid = (uint32_t)sc->sc_vnetid;
+		break;
+
+	case SIOCDVNETID:
+		s = splnet();
+		sc->sc_vnetid = -1;
+		(void)vxlan_config(ifp, NULL, NULL);
+		splx(s);
 		break;
 
 	default:
@@ -462,7 +473,7 @@ vxlan_lookup(struct mbuf *m, struct udphdr *uh, int iphlen,
 	struct mbuf_list	 ml = MBUF_LIST_INITIALIZER();
 	struct vxlan_softc	*sc = NULL, *sc_cand = NULL;
 	struct vxlan_header	 v;
-	u_int32_t		 vni;
+	int			 vni;
 	struct ifnet		*ifp;
 	int			 skip;
 	struct ether_header	*eh;
@@ -479,14 +490,18 @@ vxlan_lookup(struct mbuf *m, struct udphdr *uh, int iphlen,
 	m_copydata(m, skip, sizeof(v), (caddr_t)&v);
 	skip += sizeof(v);
 
-	vni = ntohl(v.vxlan_id);
-
-	/* Validate header */
-	if ((vni == 0) || (vni & VXLAN_RESERVED2) ||
-	    (ntohl(v.vxlan_flags) != VXLAN_FLAGS_VNI))
+	if (v.vxlan_flags & htonl(VXLAN_RESERVED1) ||
+	    v.vxlan_id & htonl(VXLAN_RESERVED2))
 		return (0);
 
-	vni >>= VXLAN_VNI_S;
+	vni = ntohl(v.vxlan_id) >> VXLAN_VNI_S;
+	if ((v.vxlan_flags & htonl(VXLAN_FLAGS_VNI)) != 0) {
+		if (vni != 0)
+			return (0);
+
+		vni = -1;
+	}
+
 	LIST_FOREACH(sc, &vxlan_tagh[VXLAN_TAGHASH(vni)], sc_entry) {
 		if ((uh->uh_dport == sc->sc_dstport) &&
 		    vni == sc->sc_vnetid &&
@@ -613,8 +628,13 @@ vxlan_output(struct ifnet *ifp, struct mbuf *m)
 #endif
 
 	vi = (struct vxlanudpiphdr *)ui;
-	vi->ui_v.vxlan_flags = htonl(VXLAN_FLAGS_VNI);
-	vi->ui_v.vxlan_id = htonl(sc->sc_vnetid << VXLAN_VNI_S);
+	if (sc->sc_vnetid != -1) {
+		vi->ui_v.vxlan_flags = htonl(VXLAN_FLAGS_VNI);
+		vi->ui_v.vxlan_id = htonl(sc->sc_vnetid << VXLAN_VNI_S);
+	} else {
+		vi->ui_v.vxlan_flags = htonl(0);
+		vi->ui_v.vxlan_id = htonl(0);
+	}
 
 	/* UDP checksum should be 0 */
 	ui->ui_sum = 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vxlan.h,v 1.6 2014/12/19 17:14:40 tedu Exp $	*/
+/*	$OpenBSD: if_vxlan.h,v 1.7 2015/10/23 01:19:04 dlg Exp $	*/
 
 /*
  * Copyright (c) 2013 Reyk Floeter <reyk@openbsd.org>
@@ -53,7 +53,7 @@ struct vxlan_softc {
 	struct sockaddr_storage	 sc_dst;
 	in_port_t		 sc_dstport;
 	u_int			 sc_rdomain;
-	u_int32_t		 sc_vnetid;
+	int			 sc_vnetid;
 	u_int8_t		 sc_ttl;
 
 	LIST_ENTRY(vxlan_softc)	 sc_entry;

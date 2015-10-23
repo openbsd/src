@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.257 2015/10/06 17:23:21 benno Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.258 2015/10/23 01:19:04 dlg Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"     @(#)ifconfig.8	8.4 (Berkeley) 6/1/94
 .\"
-.Dd $Mdocdate: October 6 2015 $
+.Dd $Mdocdate: October 23 2015 $
 .Dt IFCONFIG 8
 .Os
 .Sh NAME
@@ -1504,6 +1504,7 @@ for a complete list of the available protocols,
 .Op Cm tunnel Ar src_address dest_address
 .Op Cm tunneldomain Ar tableid
 .Op Cm vnetid Ar network-id
+.Op Cm -vnetid
 .Ek
 .nr nS 0
 .Pp
@@ -1559,6 +1560,8 @@ to identify packets with a virtual network.
 The accepted size of the number depends on the individual tunnel protocol;
 it is a 24-bit number for
 .Xr vxlan 4 .
+.It Cm -vnetid
+Clear the virtual network identifier.
 .El
 .\" VLAN
 .Sh VLAN

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.302 2015/10/03 10:44:23 florian Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.303 2015/10/23 01:19:04 dlg Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -181,6 +181,7 @@ void	deletetunnel(const char *, int);
 void	settunnelinst(const char *, int);
 void	settunnelttl(const char *, int);
 void	setvnetid(const char *, int);
+void	delvnetid(const char *, int);
 #ifdef INET6
 void	setia6flags(const char *, int);
 void	setia6pltime(const char *, int);
@@ -413,6 +414,7 @@ const struct	cmd {
 	{ "tunneldomain", NEXTARG,	0,		settunnelinst } ,
 	{ "tunnelttl",	NEXTARG,	0,		settunnelttl } ,
 	{ "vnetid",	NEXTARG,	0,		setvnetid },
+	{ "-vnetid",	0,		0,		delvnetid },
 	{ "pppoedev",	NEXTARG,	0,		setpppoe_dev },
 	{ "pppoesvc",	NEXTARG,	0,		setpppoe_svc },
 	{ "-pppoesvc",	1,		0,		setpppoe_svc },
@@ -2868,7 +2870,7 @@ phys_status(int force)
 
 	if (dstport)
 		printf(":%u", ntohs(dstport));
-	if (ioctl(s, SIOCGVNETID, (caddr_t)&ifr) == 0 && ifr.ifr_vnetid > 0)
+	if (ioctl(s, SIOCGVNETID, (caddr_t)&ifr) == 0)
 		printf(" vnetid %d", ifr.ifr_vnetid);
 	if (ioctl(s, SIOCGLIFPHYTTL, (caddr_t)&ifr) == 0 && ifr.ifr_ttl > 0)
 		printf(" ttl %d", ifr.ifr_ttl);
@@ -3391,7 +3393,7 @@ void
 setvnetid(const char *id, int param)
 {
 	const char *errmsg = NULL;
-	int vnetid;
+	uint32_t vnetid;
 
 	vnetid = strtonum(id, 0, UINT_MAX, &errmsg);
 	if (errmsg)
@@ -3401,6 +3403,14 @@ setvnetid(const char *id, int param)
 	ifr.ifr_vnetid = vnetid;
 	if (ioctl(s, SIOCSVNETID, (caddr_t)&ifr) < 0)
 		warn("SIOCSVNETID");
+}
+
+/* ARGSUSED */
+void
+delvnetid(const char *ignored, int alsoignored)
+{
+	if (ioctl(s, SIOCDVNETID, &ifr) < 0)
+		warn("SIOCDVNETID");
 }
 
 void
