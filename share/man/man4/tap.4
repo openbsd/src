@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tun.4,v 1.42 2015/10/23 15:17:24 claudio Exp $
+.\"	$OpenBSD: tap.4,v 1.1 2015/10/23 15:17:24 claudio Exp $
 .\"
 .\" Copyright (c) 2003 Marcus D. Watts  All rights reserved.
 .\"
@@ -27,11 +27,11 @@
 .\" USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .Dd $Mdocdate: October 23 2015 $
-.Dt TUN 4
+.Dt TAP 4
 .Os
 .Sh NAME
-.Nm tun
-.Nd network tunnel pseudo-device
+.Nm tap
+.Nd Ethernet tunnel pseudo-device
 .Sh SYNOPSIS
 .Cd "pseudo-device tun"
 .Pp
@@ -40,7 +40,7 @@
 .Sh DESCRIPTION
 The
 .Nm
-driver provides a network interface pseudo-device.
+driver provides an Ethernet interface pseudo-device.
 Packets sent to this interface can be read by a userland process
 and processed as desired.
 Packets written by the userland process are injected back into
@@ -49,20 +49,20 @@ the kernel networking subsystem.
 A
 .Nm
 interface can be created at runtime using the
-.Ic ifconfig tun Ns Ar N Ic create
+.Ic ifconfig tap Ns Ar N Ic create
 command or by opening the character special device
-.Pa /dev/tunN .
+.Pa /dev/tapN .
 .Pp
 Each device has the exclusive open property; it cannot be opened
 if it is already open and in use by another process.
 Each read returns at most one packet; if insufficient
 buffer space is provided, the packet is truncated.
 Each write supplies exactly one packet.
-Each packet read or written is prefixed with a tunnel header consisting of
-a 4-byte network byte order integer containing the address family.
+Each packet read or written is an Ethernet packet.
+The Ethernet CRC at the end of the frame is not required.
 On the last close of the device, all queued packets are discarded.
 If the device was created by opening
-.Pa /dev/tunN ,
+.Pa /dev/tapN ,
 it will be automatically destroyed.
 Devices created via
 .Xr ifconfig 8
@@ -107,7 +107,7 @@ can include one or more of
 Flags given will be set; flags omitted will be cleared; flags not in this list
 will not be changed even when given.
 Flags default to
-.Dv IFF_POINTOPOINT .
+.Dv IFF_BROADCAST | IFF_MULTICAST .
 It is an error to set both
 .Dv IFF_POINTOPOINT
 and
@@ -115,7 +115,7 @@ and
 .\" should say what type affects...
 .Va type
 defaults to
-.Dv IFT_TUNNEL .
+.Dv IFT_ETHER .
 This sets the interface media address header type.
 .Pp
 .It Dv TUNSIFMODE Fa int *flags
@@ -140,10 +140,14 @@ via
 .Pp
 .It Dv FIONREAD Fa int *count
 Get the byte count of the next packet available to be read.
+.Pp
+.It Dv SIOCGIFADDR Fa struct ether_addr *addr
+.It Dv SIOCSIFADDR Fa struct ether_addr *addr
+Get or set the Ethernet address of the device.
 .El
 .Sh FILES
-.Bl -tag -width /dev/tun* -compact
-.It Pa /dev/tun*
+.Bl -tag -width /dev/tap* -compact
+.It Pa /dev/tap*
 .El
 .Sh ERRORS
 If open fails,
@@ -181,11 +185,7 @@ Attempt to set both
 and
 .Dv IFF_BROADCAST
 with
-.Dv TUNSIFMODE
-or using
-.Dv SIOCGIFADDR
-or
-.Dv SIOCSIFADDR .
+.Dv TUNSIFMODE .
 .It Bq Er ENOTTY
 Unrecognized ioctl command.
 .El
