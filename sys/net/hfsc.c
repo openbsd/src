@@ -1,4 +1,4 @@
-/*	$OpenBSD: hfsc.c,v 1.24 2015/09/30 22:57:47 dlg Exp $	*/
+/*	$OpenBSD: hfsc.c,v 1.25 2015/10/23 01:02:46 dlg Exp $	*/
 
 /*
  * Copyright (c) 2012-2013 Henning Brauer <henning@openbsd.org>
@@ -123,7 +123,6 @@ typedef TAILQ_ENTRY(hfsc_class) hfsc_actentry_t;
 struct hfsc_class {
 	u_int		cl_id;		/* class id (just for debug) */
 	u_int32_t	cl_handle;	/* class handle */
-	struct hfsc_if	*cl_hif;	/* back pointer to struct hfsc_if */
 	int		cl_flags;	/* misc flags */
 
 	struct hfsc_class *cl_parent;	/* parent class */
@@ -208,7 +207,8 @@ struct hfsc_class	*hfsc_class_create(struct hfsc_if *,
 			    struct hfsc_sc *, struct hfsc_sc *,
 			    struct hfsc_sc *, struct hfsc_class *, int,
 			    int, int);
-int			 hfsc_class_destroy(struct hfsc_class *);
+int			 hfsc_class_destroy(struct hfsc_if *,
+			    struct hfsc_class *);
 struct hfsc_class	*hfsc_nextclass(struct hfsc_class *);
 
 int		 hfsc_queue(struct ifqueue *, struct mbuf *,
@@ -217,22 +217,22 @@ int		 hfsc_cl_enqueue(struct hfsc_class *, struct mbuf *);
 struct mbuf	*hfsc_cl_dequeue(struct hfsc_class *);
 int		 hfsc_cl_requeue(struct hfsc_class *, struct mbuf *);
 struct mbuf	*hfsc_cl_poll(struct hfsc_class *);
-void		 hfsc_cl_purge(struct hfsc_class *);
+void		 hfsc_cl_purge(struct hfsc_if *, struct hfsc_class *);
 
 void		 hfsc_deferred(void *);
 void		 hfsc_update_cfmin(struct hfsc_class *);
-void		 hfsc_set_active(struct hfsc_class *, int);
-void		 hfsc_set_passive(struct hfsc_class *);
-void		 hfsc_init_ed(struct hfsc_class *, int);
-void		 hfsc_update_ed(struct hfsc_class *, int);
+void		 hfsc_set_active(struct hfsc_if *, struct hfsc_class *, int);
+void		 hfsc_set_passive(struct hfsc_if *, struct hfsc_class *);
+void		 hfsc_init_ed(struct hfsc_if *, struct hfsc_class *, int);
+void		 hfsc_update_ed(struct hfsc_if *, struct hfsc_class *, int);
 void		 hfsc_update_d(struct hfsc_class *, int);
 void		 hfsc_init_vf(struct hfsc_class *, int);
 void		 hfsc_update_vf(struct hfsc_class *, int, u_int64_t);
 hfsc_ellist_t	*hfsc_ellist_alloc(void);
 void		 hfsc_ellist_destroy(hfsc_ellist_t *);
-void		 hfsc_ellist_insert(struct hfsc_class *);
-void		 hfsc_ellist_remove(struct hfsc_class *);
-void		 hfsc_ellist_update(struct hfsc_class *);
+void		 hfsc_ellist_insert(hfsc_ellist_t *, struct hfsc_class *);
+void		 hfsc_ellist_remove(hfsc_ellist_t *, struct hfsc_class *);
+void		 hfsc_ellist_update(hfsc_ellist_t *, struct hfsc_class *);
 struct hfsc_class	*hfsc_ellist_get_mindl(hfsc_ellist_t *, u_int64_t);
 hfsc_actlist_t	*hfsc_actlist_alloc(void);
 void		 hfsc_actlist_destroy(hfsc_actlist_t *);
@@ -415,7 +415,7 @@ hfsc_delqueue(struct pf_queuespec *q)
 	if ((cl = hfsc_clh2cph(hif, q->qid)) == NULL)
 		return (EINVAL);
 
-	return (hfsc_class_destroy(cl));
+	return (hfsc_class_destroy(hif, cl));
 }
 
 int
@@ -454,7 +454,7 @@ hfsc_purge(struct ifqueue *ifq)
 
 	for (cl = hif->hif_rootclass; cl != NULL; cl = hfsc_nextclass(cl))
 		if (ml_len(&cl->cl_q.q) > 0)
-			hfsc_cl_purge(cl);
+			hfsc_cl_purge(hif, cl);
 	hif->hif_ifq->ifq_len = 0;
 }
 
@@ -503,7 +503,6 @@ hfsc_class_create(struct hfsc_if *hif, struct hfsc_sc *rsc,
 
 	cl->cl_id = hif->hif_classid++;
 	cl->cl_handle = qid;
-	cl->cl_hif = hif;
 	cl->cl_parent = parent;
 
 	s = splnet();
@@ -562,7 +561,7 @@ err_ret:
 }
 
 int
-hfsc_class_destroy(struct hfsc_class *cl)
+hfsc_class_destroy(struct hfsc_if *hif, struct hfsc_class *cl)
 {
 	int i, s;
 
@@ -575,7 +574,7 @@ hfsc_class_destroy(struct hfsc_class *cl)
 	s = splnet();
 
 	if (ml_len(&cl->cl_q.q) > 0)
-		hfsc_cl_purge(cl);
+		hfsc_cl_purge(hif, cl);
 
 	if (cl->cl_parent != NULL) {
 		struct hfsc_class *p = cl->cl_parent->cl_children;
@@ -590,21 +589,21 @@ hfsc_class_destroy(struct hfsc_class *cl)
 		} while ((p = p->cl_siblings) != NULL);
 	}
 
-	for (i = 0; i < cl->cl_hif->hif_allocated; i++)
-		if (cl->cl_hif->hif_class_tbl[i] == cl) {
-			cl->cl_hif->hif_class_tbl[i] = NULL;
+	for (i = 0; i < hif->hif_allocated; i++)
+		if (hif->hif_class_tbl[i] == cl) {
+			hif->hif_class_tbl[i] = NULL;
 			break;
 		}
 
-	cl->cl_hif->hif_classes--;
+	hif->hif_classes--;
 	splx(s);
 
 	hfsc_actlist_destroy(cl->cl_actc);
 
-	if (cl == cl->cl_hif->hif_rootclass)
-		cl->cl_hif->hif_rootclass = NULL;
-	if (cl == cl->cl_hif->hif_defaultclass)
-		cl->cl_hif->hif_defaultclass = NULL;
+	if (cl == hif->hif_rootclass)
+		hif->hif_rootclass = NULL;
+	if (cl == hif->hif_defaultclass)
+		hif->hif_defaultclass = NULL;
 
 	if (cl->cl_usc != NULL)
 		pool_put(&hfsc_internal_sc_pl, cl->cl_usc);
@@ -674,12 +673,12 @@ hfsc_queue(struct ifqueue *ifq, struct mbuf *m,
 		return (ENOBUFS);
 	}
 	ifq->ifq_len++;
-	cl->cl_hif->hif_packets++;
+	hif->hif_packets++;
 	m->m_pkthdr.pf.prio = IFQ_MAXPRIO;
 
 	/* successfully queued. */
 	if (ml_len(&cl->cl_q.q) == 1)
-		hfsc_set_active(cl, m->m_pkthdr.len);
+		hfsc_set_active(hif, cl, m->m_pkthdr.len);
 
 	return (0);
 }
@@ -750,7 +749,7 @@ hfsc_dequeue(struct ifqueue *ifq, int remove)
 	if ((m = hfsc_cl_dequeue(cl)) == NULL)
 		panic("hfsc_dequeue");
 
-	cl->cl_hif->hif_packets--;
+	hif->hif_packets--;
 	ifq->ifq_len--;
 	PKTCNTR_INC(&cl->cl_stats.xmit_cnt, m->m_pkthdr.len);
 
@@ -764,13 +763,13 @@ hfsc_dequeue(struct ifqueue *ifq, int remove)
 			next_len = cl->cl_q.q.ml_head->m_pkthdr.len;
 
 			if (realtime)
-				hfsc_update_ed(cl, next_len);
+				hfsc_update_ed(hif, cl, next_len);
 			else
 				hfsc_update_d(cl, next_len);
 		}
 	} else {
 		/* the class becomes passive */
-		hfsc_set_passive(cl);
+		hfsc_set_passive(hif, cl);
 	}
 
 	return (m);
@@ -824,7 +823,7 @@ hfsc_cl_poll(struct hfsc_class *cl)
 }
 
 void
-hfsc_cl_purge(struct hfsc_class *cl)
+hfsc_cl_purge(struct hfsc_if *hif, struct hfsc_class *cl)
 {
 	struct mbuf *m;
 
@@ -834,19 +833,19 @@ hfsc_cl_purge(struct hfsc_class *cl)
 	while ((m = hfsc_cl_dequeue(cl)) != NULL) {
 		PKTCNTR_INC(&cl->cl_stats.drop_cnt, m->m_pkthdr.len);
 		m_freem(m);
-		cl->cl_hif->hif_packets--;
-		cl->cl_hif->hif_ifq->ifq_len--;
+		hif->hif_packets--;
+		hif->hif_ifq->ifq_len--;
 	}
 
 	hfsc_update_vf(cl, 0, 0);	/* remove cl from the actlist */
-	hfsc_set_passive(cl);
+	hfsc_set_passive(hif, cl);
 }
 
 void
-hfsc_set_active(struct hfsc_class *cl, int len)
+hfsc_set_active(struct hfsc_if *hif, struct hfsc_class *cl, int len)
 {
 	if (cl->cl_rsc != NULL)
-		hfsc_init_ed(cl, len);
+		hfsc_init_ed(hif, cl, len);
 	if (cl->cl_fsc != NULL)
 		hfsc_init_vf(cl, len);
 
@@ -854,10 +853,10 @@ hfsc_set_active(struct hfsc_class *cl, int len)
 }
 
 void
-hfsc_set_passive(struct hfsc_class *cl)
+hfsc_set_passive(struct hfsc_if *hif, struct hfsc_class *cl)
 {
 	if (cl->cl_rsc != NULL)
-		hfsc_ellist_remove(cl);
+		hfsc_ellist_remove(hif->hif_eligible, cl);
 
 	/*
 	 * actlist is handled in hfsc_update_vf() so that hfsc_update_vf(cl, 0,
@@ -866,7 +865,7 @@ hfsc_set_passive(struct hfsc_class *cl)
 }
 
 void
-hfsc_init_ed(struct hfsc_class *cl, int next_len)
+hfsc_init_ed(struct hfsc_if *hif, struct hfsc_class *cl, int next_len)
 {
 	u_int64_t cur_time;
 
@@ -890,16 +889,16 @@ hfsc_init_ed(struct hfsc_class *cl, int next_len)
 	cl->cl_e = hfsc_rtsc_y2x(&cl->cl_eligible, cl->cl_cumul);
 	cl->cl_d = hfsc_rtsc_y2x(&cl->cl_deadline, cl->cl_cumul + next_len);
 
-	hfsc_ellist_insert(cl);
+	hfsc_ellist_insert(hif->hif_eligible, cl);
 }
 
 void
-hfsc_update_ed(struct hfsc_class *cl, int next_len)
+hfsc_update_ed(struct hfsc_if *hif, struct hfsc_class *cl, int next_len)
 {
 	cl->cl_e = hfsc_rtsc_y2x(&cl->cl_eligible, cl->cl_cumul);
 	cl->cl_d = hfsc_rtsc_y2x(&cl->cl_deadline, cl->cl_cumul + next_len);
 
-	hfsc_ellist_update(cl);
+	hfsc_ellist_update(hif->hif_eligible, cl);
 }
 
 void
@@ -1126,19 +1125,18 @@ hfsc_ellist_destroy(hfsc_ellist_t *head)
 }
 
 void
-hfsc_ellist_insert(struct hfsc_class *cl)
+hfsc_ellist_insert(hfsc_ellist_t *head, struct hfsc_class *cl)
 {
-	struct hfsc_if *hif = cl->cl_hif;
 	struct hfsc_class *p;
 
 	/* check the last entry first */
-	if ((p = TAILQ_LAST(hif->hif_eligible, hfsc_eligible)) == NULL ||
+	if ((p = TAILQ_LAST(head, hfsc_eligible)) == NULL ||
 	    p->cl_e <= cl->cl_e) {
-		TAILQ_INSERT_TAIL(hif->hif_eligible, cl, cl_ellist);
+		TAILQ_INSERT_TAIL(head, cl, cl_ellist);
 		return;
 	}
 
-	TAILQ_FOREACH(p, hif->hif_eligible, cl_ellist) {
+	TAILQ_FOREACH(p, head, cl_ellist) {
 		if (cl->cl_e < p->cl_e) {
 			TAILQ_INSERT_BEFORE(p, cl, cl_ellist);
 			return;
@@ -1147,17 +1145,14 @@ hfsc_ellist_insert(struct hfsc_class *cl)
 }
 
 void
-hfsc_ellist_remove(struct hfsc_class *cl)
+hfsc_ellist_remove(hfsc_ellist_t *head, struct hfsc_class *cl)
 {
-	struct hfsc_if	*hif = cl->cl_hif;
-
-	TAILQ_REMOVE(hif->hif_eligible, cl, cl_ellist);
+	TAILQ_REMOVE(head, cl, cl_ellist);
 }
 
 void
-hfsc_ellist_update(struct hfsc_class *cl)
+hfsc_ellist_update(hfsc_ellist_t *head, struct hfsc_class *cl)
 {
-	struct hfsc_if *hif = cl->cl_hif;
 	struct hfsc_class *p, *last;
 
 	/*
@@ -1169,10 +1164,10 @@ hfsc_ellist_update(struct hfsc_class *cl)
 		return;
 
 	/* check the last entry */
-	last = TAILQ_LAST(hif->hif_eligible, hfsc_eligible);
+	last = TAILQ_LAST(head, hfsc_eligible);
 	if (last->cl_e <= cl->cl_e) {
-		TAILQ_REMOVE(hif->hif_eligible, cl, cl_ellist);
-		TAILQ_INSERT_TAIL(hif->hif_eligible, cl, cl_ellist);
+		TAILQ_REMOVE(head, cl, cl_ellist);
+		TAILQ_INSERT_TAIL(head, cl, cl_ellist);
 		return;
 	}
 
@@ -1182,7 +1177,7 @@ hfsc_ellist_update(struct hfsc_class *cl)
 	 */
 	while ((p = TAILQ_NEXT(p, cl_ellist)) != NULL) {
 		if (cl->cl_e < p->cl_e) {
-			TAILQ_REMOVE(hif->hif_eligible, cl, cl_ellist);
+			TAILQ_REMOVE(head, cl, cl_ellist);
 			TAILQ_INSERT_BEFORE(p, cl, cl_ellist);
 			return;
 		}
