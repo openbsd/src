@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.158 2015/10/22 11:00:51 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.159 2015/10/23 23:46:36 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -598,7 +598,7 @@ server_client_handle_key(struct client *c, int key)
 		m->valid = 0;
 
 	/* Treat everything as a regular key when pasting is detected. */
-	if (server_client_assume_paste(s)) {
+	if (!KEYC_IS_MOUSE(key) && server_client_assume_paste(s)) {
 		if (!(c->flags & CLIENT_READONLY))
 			window_pane_key(wp, c, s, key, m);
 		return;
