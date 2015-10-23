@@ -1,11 +1,11 @@
 /*
  * Языческие праздники
  *
- * $OpenBSD: calendar.pagan,v 1.1 2015/10/23 09:32:14 tedu Exp $
+ * $OpenBSD: calendar.pagan,v 1.2 2015/10/23 19:56:10 zhuk Exp $
  */
 
-#ifndef _ru_RU_KOI8_R_pagan_
-#define _ru_RU_KOI8_R_pagan_
+#ifndef _ru_RU_UTF_8_pagan_
+#define _ru_RU_UTF_8_pagan_
 
 LANG=ru_RU.UTF-8
 BODUN=Бодун на утро от:
@@ -52,4 +52,4 @@ Paskha+55	Троицкие деды
 02/29	День Кащея
 03/01	День Марены
 
-#endif /* !_ru_RU_KOI8_R_pagan_ */
+#endif /* !_ru_RU_UTF_8_pagan_ */

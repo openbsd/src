@@ -1,17 +1,16 @@
 /*
  * Русский календарь
  *
- * $OpenBSD: calendar.all,v 1.1 2015/10/23 09:32:14 tedu Exp $
+ * $OpenBSD: calendar.all,v 1.2 2015/10/23 19:56:10 zhuk Exp $
  */
 
-#ifndef _ru_RU_KOI8_R_all
-#define _ru_RU_KOI8_R_all
+#ifndef _ru_RU_UTF_8_all
+#define _ru_RU_UTF_8_all
 
 #include <ru_RU.UTF-8/calendar.common>
-#include <ru_RU.UTF-8/calendar.msk>
 #include <ru_RU.UTF-8/calendar.pagan>
 #include <ru_RU.UTF-8/calendar.orthodox>
 #include <ru_RU.UTF-8/calendar.primety>
 #include <ru_RU.UTF-8/calendar.history>
 
-#endif /* !_ru_RU_KOI8_R_all */
+#endif /* !_ru_RU_UTF_8_all */

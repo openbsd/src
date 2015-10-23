@@ -1,10 +1,13 @@
-/*	$OpenBSD: calendar.primety,v 1.2 2015/10/23 09:35:52 tedu Exp $	*/
+/*	$OpenBSD: calendar.primety,v 1.3 2015/10/23 19:56:10 zhuk Exp $	*/
 
 /*	based on: http://www.rus-sky.com/rc/
  *	w/ the following license:
  *	Все материалы сервера могут использоваться и распространяться
  *	без каких-либо ограничений.
  */
+
+#ifndef _ru_RU_UTF_8_primety_
+#define _ru_RU_UTF_8_primety_
 
 LANG=ru_RU.UTF-8
 CALENDAR=julian
@@ -395,3 +398,5 @@ CALENDAR=julian
 	ягодисто. Под Василья ведьмы крадут месяц.
 
 CALENDAR=
+
+#endif /* !_ru_RU_UTF_8_primety_ */
