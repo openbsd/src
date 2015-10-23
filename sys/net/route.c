@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.258 2015/10/22 17:19:38 mpi Exp $	*/
+/*	$OpenBSD: route.c,v 1.259 2015/10/23 14:48:22 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -215,6 +215,7 @@ rtalloc(struct sockaddr *dst, int flags, unsigned int tableid)
 	info.rti_info[RTAX_DST] = dst;
 
 	s = splsoftnet();
+	KERNEL_LOCK();
 	rt = rtable_match(tableid, dst);
 	if (rt != NULL) {
 		if ((rt->rt_flags & RTF_CLONING) && ISSET(flags, RT_RESOLVE)) {
@@ -236,6 +237,7 @@ miss:
 		if (ISSET(flags, RT_REPORT))
 			rt_missmsg(RTM_MISS, &info, 0, NULL, error, tableid);
 	}
+	KERNEL_UNLOCK();
 	splx(s);
 	return (rt);
 }
@@ -337,25 +339,29 @@ rtalloc_mpath(struct sockaddr *dst, uint32_t *src, unsigned int rtableid)
 void
 rtref(struct rtentry *rt)
 {
-	rt->rt_refcnt++;
+	atomic_inc_int(&rt->rt_refcnt);
 }
 
 void
 rtfree(struct rtentry *rt)
 {
 	struct ifaddr	*ifa;
+	int		 refcnt;
 
 	if (rt == NULL)
 		return;
 
-	if (--rt->rt_refcnt <= 0) {
+	refcnt = (int)atomic_dec_int_nv(&rt->rt_refcnt);
+	if (refcnt <= 0) {
 		KASSERT(!ISSET(rt->rt_flags, RTF_UP));
 		KASSERT(!RT_ROOT(rt));
-		rttrash--;
-		if (rt->rt_refcnt < 0) {
+		atomic_dec_int(&rttrash);
+		if (refcnt < 0) {
 			printf("rtfree: %p not freed (neg refs)\n", rt);
 			return;
 		}
+
+		KERNEL_LOCK();
 		rt_timer_remove_all(rt);
 		ifa = rt->rt_ifa;
 		if (ifa)
@@ -368,6 +374,8 @@ rtfree(struct rtentry *rt)
 		if (rt->rt_gateway)
 			free(rt->rt_gateway, M_RTABLE, 0);
 		free(rt_key(rt), M_RTABLE, 0);
+		KERNEL_UNLOCK();
+
 		pool_put(&rtentry_pool, rt);
 	}
 }
@@ -773,7 +781,7 @@ rtrequest1(int req, struct rt_addrinfo *info, u_int8_t prio,
 		rt->rt_flags &= ~RTF_UP;
 		if ((ifa = rt->rt_ifa) && ifa->ifa_rtrequest)
 			ifa->ifa_rtrequest(RTM_DELETE, rt);
-		rttrash++;
+		atomic_inc_int(&rttrash);
 
 		if (ret_nrt != NULL)
 			*ret_nrt = rt;
