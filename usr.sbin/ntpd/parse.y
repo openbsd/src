@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.63 2015/07/18 00:53:44 bcook Exp $ */
+/*	$OpenBSD: parse.y,v 1.64 2015/10/23 14:52:20 phessler Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -106,8 +106,6 @@ main		: LISTEN ON address listen_opts	{
 			struct listen_addr	*la;
 			struct ntp_addr		*h, *next;
 
-			if ($3->a)
-				$3->a->rtable = $4.rtable;
 			if ((h = $3->a) == NULL &&
 			    (host_dns($3->name, &h) == -1 || !h)) {
 				yyerror("could not resolve \"%s\"", $3->name);
@@ -155,7 +153,6 @@ main		: LISTEN ON address listen_opts	{
 
 				p = new_peer();
 				p->weight = $3.weight;
-				p->rtable = $3.rtable;
 				p->addr = h;
 				p->addr_head.a = h;
 				p->addr_head.pool = 1;
@@ -164,7 +161,7 @@ main		: LISTEN ON address listen_opts	{
 					fatal(NULL);
 				if (p->addr != NULL)
 					p->state = STATE_DNS_DONE;
-				if (!(p->rtable > 0 && p->addr))
+				if (!(p->addr))
 					TAILQ_INSERT_TAIL(&conf->ntp_peers,
 					    p, entry);
 				h = next;
@@ -195,7 +192,6 @@ main		: LISTEN ON address listen_opts	{
 			}
 
 			p->weight = $3.weight;
-			p->rtable = $3.rtable;
 			p->addr_head.a = p->addr;
 			p->addr_head.pool = 0;
 			p->addr_head.name = strdup($2->name);
@@ -203,7 +199,7 @@ main		: LISTEN ON address listen_opts	{
 				fatal(NULL);
 			if (p->addr != NULL)
 				p->state = STATE_DNS_DONE;
-			if (!(p->rtable > 0 && p->addr))
+			if (!(p->addr))
 				TAILQ_INSERT_TAIL(&conf->ntp_peers, p, entry);
 			free($2->name);
 			free($2);
@@ -355,7 +351,6 @@ server_opts_l	: server_opts_l server_opt
 		| server_opt
 		;
 server_opt	: weight
-		| rtable
 		;
 
 sensor_opts	:	{ opts_default(); }
@@ -428,7 +423,6 @@ opts_default(void)
 {
 	memset(&opts, 0, sizeof opts);
 	opts.weight = 1;
-	opts.rtable = -1;
 	opts.stratum = 1;
 }
 

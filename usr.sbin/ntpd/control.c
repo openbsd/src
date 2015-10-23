@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.6 2015/07/18 00:53:44 bcook Exp $ */
+/*	$OpenBSD: control.c,v 1.7 2015/10/23 14:52:20 phessler Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -333,8 +333,7 @@ build_show_peer(struct ctl_show_peer *cp, struct ntp_peer *p)
 		addr_head_name = p->addr_head.name;
 
 	snprintf(cp->peer_desc, sizeof(cp->peer_desc),
-	    "%s %s%s %s", a, pool, addr_head_name,
-	    print_rtable(p->rtable) );
+	    "%s %s%s", a, pool, addr_head_name);
 
 	validdelaycnt = best = 0;
 	cp->offset = cp->delay = 0.0;

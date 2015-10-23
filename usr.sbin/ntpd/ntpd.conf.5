@@ -1,4 +1,4 @@
-.\" $OpenBSD: ntpd.conf.5,v 1.32 2015/08/28 02:59:29 deraadt Exp $
+.\" $OpenBSD: ntpd.conf.5,v 1.33 2015/10/23 14:52:20 phessler Exp $
 .\"
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
 .\" OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 28 2015 $
+.Dd $Mdocdate: October 23 2015 $
 .Dt NTPD.CONF 5
 .Os
 .Sh NAME
@@ -130,17 +130,12 @@ A stratum value other than the default of 1 can be assigned using
 the stratum keyword.
 .It Xo Ic server Ar address
 .Op Ic weight Ar weight-value
-.Op Ic rtable Ar table-id
 .Xc
 Specify the IP address or the hostname of an NTP
 server to synchronize to.
 If it appears multiple times,
 .Xr ntpd 8
 will try to synchronize to all of the servers specified.
-The
-.Cm rtable
-option specifies which routing table should be used for connection attempts.
-Hostname resolution will still happen using the default routing table.
 If a hostname resolves to multiple IPv4 and/or IPv6 addresses,
 .Xr ntpd 8
 uses the first address.
@@ -151,7 +146,7 @@ is found.
 For example:
 .Bd -literal -offset indent
 server 10.0.0.2 weight 5
-server ntp.example.org weight 1 rtable 4
+server ntp.example.org weight 1
 .Ed
 .Pp
 To provide redundancy, it is good practice to configure multiple servers.
@@ -159,7 +154,6 @@ In general, best accuracy is obtained by using servers that have a low
 network latency.
 .It Xo Ic servers Ar address
 .Op Ic weight Ar weight-value
-.Op Ic rtable Ar table-id
 .Xc
 As with
 .Cm server ,
@@ -173,7 +167,7 @@ will try to synchronize to all of them.
 For example:
 .Bd -literal -offset indent
 servers pool.ntp.org
-servers pool.ntp.org rtable 5
+servers pool.ntp.org weight 5
 .Ed
 .El
 .Sh CONSTRAINTS
@@ -231,9 +225,3 @@ The
 .Nm
 file format first appeared in
 .Ox 3.6 .
-.Sh CAVEATS
-When using different
-.Cm rtable
-options,
-.Xr ntpd 8
-must be started in rtable 0.

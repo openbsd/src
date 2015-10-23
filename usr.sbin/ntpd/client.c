@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.102 2015/07/18 00:53:44 bcook Exp $ */
+/*	$OpenBSD: client.c,v 1.103 2015/10/23 14:52:20 phessler Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -142,10 +142,6 @@ client_query(struct ntp_peer *p)
 		    0)) == -1)
 			fatal("client_query socket");
 
-		if (p->rtable != -1 &&
-		    setsockopt(p->query->fd, SOL_SOCKET, SO_RTABLE,
-		    &p->rtable, sizeof(p->rtable)) == -1)
-			fatal("client_query setsockopt SO_RTABLE");
 		if (connect(p->query->fd, sa, SA_LEN(sa)) == -1) {
 			if (errno == ECONNREFUSED || errno == ENETUNREACH ||
 			    errno == EHOSTUNREACH || errno == EADDRNOTAVAIL) {
@@ -247,11 +243,6 @@ client_dispatch(struct ntp_peer *p, u_int8_t settime)
 		set_next(p, error_interval());
 		return (0);
 	}
-
-	if (p->rtable != -1 &&
-	    setsockopt(p->query->fd, SOL_SOCKET, SO_RTABLE, &p->rtable,
-	    sizeof(p->rtable)) == -1)
-		fatal("client_dispatch setsockopt SO_RTABLE");
 
 	for (cmsg = CMSG_FIRSTHDR(&somsg); cmsg != NULL;
 	    cmsg = CMSG_NXTHDR(&somsg, cmsg)) {
@@ -393,10 +384,10 @@ client_dispatch(struct ntp_peer *p, u_int8_t settime)
 	}
 
 	log_debug("reply from %s: offset %f delay %f, "
-	    "next query %llds %s",
+	    "next query %llds",
 	    log_sockaddr((struct sockaddr *)&p->addr->ss),
 	    p->reply[p->shift].offset, p->reply[p->shift].delay,
-	    (long long)interval, print_rtable(p->rtable));
+	    (long long)interval);
 
 	client_update(p);
 	if (settime)
