@@ -1,4 +1,4 @@
-/*	$OpenBSD: su.c,v 1.67 2015/04/15 02:12:00 deraadt Exp $	*/
+/*	$OpenBSD: su.c,v 1.68 2015/10/23 03:44:59 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -72,6 +72,9 @@ main(int argc, char **argv)
 	login_cap_t *lc;
 	uid_t ruid;
 	u_int flags;
+
+	if (pledge("stdio rpath getpw proc exec id", NULL) == -1)
+		err(1, "pledge");
 
 	while ((ch = getopt(argc, argv, "a:c:fKLlms:-")) != -1)
 		switch (ch) {
@@ -212,6 +215,9 @@ main(int argc, char **argv)
 		fprintf(stderr, "Login incorrect\n");
 	}
 
+	if (pledge("stdio rpath exec id", NULL) == -1)
+		err(1, "pledge");
+
 	if (!altshell) {
 		if (asme) {
 			/* if asme and non-std target shell, must be root */
@@ -323,6 +329,10 @@ main(int argc, char **argv)
 	}
 	if (setusercontext(lc, pwd, pwd->pw_uid, flags) != 0)
 		auth_err(as, 1, "unable to set user context");
+
+	if (pledge("stdio rpath exec", NULL) == -1)
+		err(1, "pledge");
+
 	if (pwd->pw_uid && auth_approval(as, lc, pwd->pw_name, "su") <= 0)
 		auth_err(as, 1, "approval failure");
 	auth_close(as);
