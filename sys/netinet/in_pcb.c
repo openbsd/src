@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.185 2015/10/20 18:04:03 deraadt Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.186 2015/10/23 13:26:07 mpi Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -858,7 +858,7 @@ in_selectsrc(struct in_addr **insrc, struct sockaddr_in *sin,
 		rtfree(ro->ro_rt);
 		ro->ro_rt = NULL;
 	}
-	if ((ro->ro_rt == NULL || ro->ro_rt->rt_ifp == NULL)) {
+	if ((ro->ro_rt == NULL)) {
 		/* No route yet, so try to acquire one */
 		ro->ro_dst.sa_family = AF_INET;
 		ro->ro_dst.sa_len = sizeof(struct sockaddr_in);
@@ -877,7 +877,7 @@ in_selectsrc(struct in_addr **insrc, struct sockaddr_in *sin,
 	 * If we found a route, use the address
 	 * corresponding to the outgoing interface.
 	 */
-	if (ro->ro_rt && ro->ro_rt->rt_ifp)
+	if (ro->ro_rt != NULL)
 		ia = ifatoia(ro->ro_rt->rt_ifa);
 
 	if (ia == NULL)
