@@ -1,4 +1,4 @@
-/*	$OpenBSD: system.c,v 1.10 2015/09/14 08:51:07 guenther Exp $ */
+/*	$OpenBSD: system.c,v 1.11 2015/10/23 04:44:41 guenther Exp $ */
 /*
  * Copyright (c) 1988 The Regents of the University of California.
  * All rights reserved.
@@ -30,6 +30,7 @@
 
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <errno.h>
 #include <signal.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -40,8 +41,8 @@ extern char **environ;
 int
 system(const char *command)
 {
-	pid_t pid;
-	sig_t intsave, quitsave;
+	pid_t pid, cpid;
+	struct sigaction intsave, quitsave;
 	sigset_t mask, omask;
 	int pstat;
 	char *argp[] = {"sh", "-c", NULL, NULL};
@@ -54,7 +55,7 @@ system(const char *command)
 	sigemptyset(&mask);
 	sigaddset(&mask, SIGCHLD);
 	sigprocmask(SIG_BLOCK, &mask, &omask);
-	switch (pid = vfork()) {
+	switch (cpid = vfork()) {
 	case -1:			/* error */
 		sigprocmask(SIG_SETMASK, &omask, NULL);
 		return(-1);
@@ -64,12 +65,14 @@ system(const char *command)
 		_exit(127);
 	}
 
-	intsave = signal(SIGINT, SIG_IGN);
-	quitsave = signal(SIGQUIT, SIG_IGN);
-	pid = waitpid(pid, &pstat, 0);
+	sigaction(SIGINT, NULL, &intsave);
+	sigaction(SIGQUIT, NULL, &quitsave);
+	do {
+		pid = waitpid(cpid, &pstat, 0);
+	} while (pid == -1 && errno == EINTR);
 	sigprocmask(SIG_SETMASK, &omask, NULL);
-	(void)signal(SIGINT, intsave);
-	(void)signal(SIGQUIT, quitsave);
+	sigaction(SIGINT, &intsave, NULL);
+	sigaction(SIGQUIT, &quitsave, NULL);
 	return (pid == -1 ? -1 : pstat);
 }
 DEF_STRONG(system);
