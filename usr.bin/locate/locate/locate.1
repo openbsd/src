@@ -1,4 +1,4 @@
-.\"	$OpenBSD: locate.1,v 1.28 2010/07/15 20:51:38 schwarze Exp $
+.\"	$OpenBSD: locate.1,v 1.29 2015/10/23 07:57:03 tedu Exp $
 .\"
 .\" Copyright (c) 1995 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
 .\" Copyright (c) 1990, 1993
@@ -29,9 +29,9 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	@(#)locate.1	8.1 (Berkeley) 6/6/93
-.\"	$Id: locate.1,v 1.28 2010/07/15 20:51:38 schwarze Exp $
+.\"	$Id: locate.1,v 1.29 2015/10/23 07:57:03 tedu Exp $
 .\"
-.Dd $Mdocdate: July 15 2010 $
+.Dd $Mdocdate: October 23 2015 $
 .Dt LOCATE 1
 .Os
 .Sh NAME
@@ -39,7 +39,7 @@
 .Nd find filenames quickly
 .Sh SYNOPSIS
 .Nm locate
-.Op Fl bcimSs
+.Op Fl bciS
 .Op Fl d Ar database
 .Op Fl l Ar limit
 .Ar pattern ...
@@ -140,41 +140,12 @@ is the same as
 or
 .Pp
 .Dl $ locate -d db1:db2 -d db3 pattern
-.Pp
-If
-.Ql \-
-is given as the
-.Ar database
-name, standard input will be read instead.
-For example, you can compress your database
-and use:
-.Pp
-.Dl $ zcat database.gz | locate -d - pattern
-.Pp
-This might be useful on machines with a fast CPU, little RAM and slow I/O.
-.Sy Note:
-You can only use
-.Em one
-pattern for stdin.
 .It Fl i
 Ignore case distinctions in both the pattern and the database.
 .It Fl l Ar limit
 Limit output to a specific number of files and exit.
-.It Fl m
-Use
-.Xr mmap 2
-instead of the
-.Xr stdio 3
-library.
-This is the default behavior.
-It performs better in most cases.
 .It Fl S
 Print some statistics about the database and exit.
-.It Fl s
-Use the
-.Xr stdio 3
-library instead of
-.Xr mmap 2 .
 .El
 .Sh ENVIRONMENT
 .Bl -tag -width LOCATE_PATH -compact

@@ -1,5 +1,5 @@
 /*
- *	$OpenBSD: locate.c,v 1.26 2015/01/16 06:40:09 deraadt Exp $
+ *	$OpenBSD: locate.c,v 1.27 2015/10/23 07:57:03 tedu Exp $
  *
  * Copyright (c) 1995 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *      $Id: locate.c,v 1.26 2015/01/16 06:40:09 deraadt Exp $
+ *      $Id: locate.c,v 1.27 2015/10/23 07:57:03 tedu Exp $
  */
 
 /*
@@ -74,12 +74,10 @@
 #include <unistd.h>
 #include <limits.h>
 
-#ifdef MMAP
 #  include <sys/types.h>
 #  include <sys/stat.h>
 #  include <sys/mman.h>
 #  include <fcntl.h>
-#endif
 
 
 #ifdef sun
@@ -98,7 +96,6 @@
 char *path_fcodes;      /* locate database */
 int f_mmap;             /* use mmap */
 int f_icase;            /* ignore case */
-int f_stdin;            /* read database from stdin */
 int f_statistic;        /* print statistic */
 int f_silent;           /* suppress output, show only count of matches */
 int f_limit;            /* limit number of output lines, 0 == infinite */
@@ -113,7 +110,7 @@ void    fastfind_icase(FILE *, char *, char *);
 void    fastfind_mmap(char *, caddr_t, int, char *);
 void    fastfind_mmap_icase(char *, caddr_t, int, char *);
 void	search_mmap(char *, char **);
-void	search_fopen(char *, char **);
+void	search_stastic(char *, char **);
 unsigned long cputime(void);
 
 extern char     **colon(char **, char*, char*);
@@ -133,12 +130,9 @@ main(int argc, char *argv[])
 {
 	int ch;
 	char **dbv = NULL;
-#ifdef MMAP
-	f_mmap = 1;		/* mmap is default */
-#endif
 	(void) setlocale(LC_ALL, "");
 
-	while ((ch = getopt(argc, argv, "bScd:il:ms")) != -1)
+	while ((ch = getopt(argc, argv, "bScd:il:")) != -1)
 		switch (ch) {
 		case 'b':
 			f_basename = 1;
@@ -154,16 +148,6 @@ main(int argc, char *argv[])
 			break;
 		case 'i':	/* ignore case */
 			f_icase = 1;
-			break;
-		case 'm':	/* mmap */
-#ifdef MMAP
-			f_mmap = 1;
-#else
-			(void)fprintf(stderr, "mmap(2) not implemented\n");
-#endif
-			break;
-		case 's':	/* stdio lib */
-			f_mmap = 0;
 			break;
 		case 'c': /* suppress output, show only count of matches */
 			f_silent = 1;
@@ -197,16 +181,8 @@ main(int argc, char *argv[])
 	while ((path_fcodes = *dbv) != NULL) {
 		dbv++;
 
-		if (!strcmp(path_fcodes, "-"))
-			f_stdin = 1;
-		else
-			f_stdin = 0;
-
-#ifndef MMAP
-		f_mmap = 0;	/* be paranoid */
-#endif
-		if (!f_mmap || f_stdin || f_statistic)
-			search_fopen(path_fcodes, argv);
+		if (f_statistic)
+			search_stastic(path_fcodes, argv);
 		else
 			search_mmap(path_fcodes, argv);
 	}
@@ -218,55 +194,21 @@ main(int argc, char *argv[])
 
 
 void
-search_fopen(char *db, char **s)
+search_stastic(char *db, char **s)
 {
 	FILE *fp;
 #ifdef DEBUG
 	long t0;
 #endif
 
-	/* can only read stdin once */
-	if (f_stdin) {
-		fp = stdin;
-		if (*(s+1) != NULL) {
-			(void)fprintf(stderr,
-			    "read database from stdin, use only");
-			(void)fprintf(stderr, " `%s' as pattern\n", *s);
-			*(s+1) = NULL;
-		}
-	}
-	else if ((fp = fopen(path_fcodes, "r")) == NULL)
+	if ((fp = fopen(path_fcodes, "r")) == NULL)
 		err(1,  "`%s'", path_fcodes);
 
 	/* count only chars or lines */
-	if (f_statistic) {
-		statistic(fp, path_fcodes);
-		(void)fclose(fp);
-		return;
-	}
-
-	/* foreach search string ... */
-	while (*s != NULL) {
-#ifdef DEBUG
-		t0 = cputime();
-#endif
-		if (!f_stdin &&
-		    fseek(fp, (long)0, SEEK_SET) == -1)
-			err(1, "fseek to begin of ``%s''", path_fcodes);
-
-		if (f_icase)
-			fastfind_icase(fp, *s, path_fcodes);
-		else
-			fastfind(fp, *s, path_fcodes);
-#ifdef DEBUG
-		(void)fprintf(stderr, "fastfind %ld ms\n", cputime () - t0);
-#endif
-		s++;
-	}
+	statistic(fp, path_fcodes);
 	(void)fclose(fp);
 }
 
-#ifdef MMAP
 void
 search_mmap(char *db, char **s)
 {
@@ -308,7 +250,6 @@ search_mmap(char *db, char **s)
 
 	(void)close(fd);
 }
-#endif /* MMAP */
 
 #ifdef DEBUG
 unsigned long
@@ -324,7 +265,7 @@ cputime(void)
 void
 usage(void)
 {
-	(void)fprintf(stderr, "usage: locate [-bcimSs] [-d database] ");
+	(void)fprintf(stderr, "usage: locate [-bciS] [-d database] ");
 	(void)fprintf(stderr, "[-l limit] pattern ...\n");
 	(void)fprintf(stderr, "default database: `%s' or $LOCATE_PATH\n",
 	    _PATH_FCODES);
@@ -342,21 +283,6 @@ sane_count(int count)
 
 /* load fastfind functions */
 
-/* statistic */
-/* fastfind_mmap, fastfind_mmap_icase */
-#ifdef MMAP
-#undef FF_MMAP
-#undef FF_ICASE
-
-#define FF_MMAP
-#include "fastfind.c"
-#define FF_ICASE
-#include "fastfind.c"
-#endif /* MMAP */
-
-/* fopen */
-/* fastfind, fastfind_icase */
-#undef FF_MMAP
 #undef FF_ICASE
 #include "fastfind.c"
 #define FF_ICASE

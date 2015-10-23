@@ -1,4 +1,4 @@
-/*	$OpenBSD: fastfind.c,v 1.12 2015/01/16 06:40:09 deraadt Exp $	*/
+/*	$OpenBSD: fastfind.c,v 1.13 2015/10/23 07:57:03 tedu Exp $	*/
 
 /*
  * Copyright (c) 1995 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: fastfind.c,v 1.12 2015/01/16 06:40:09 deraadt Exp $
+ * $Id: fastfind.c,v 1.13 2015/10/23 07:57:03 tedu Exp $
  */
 
 #ifndef _LOCATE_STATISTIC_
@@ -103,7 +103,6 @@ statistic (fp, path_fcodes)
 
 
 void
-#ifdef FF_MMAP
 
 
 #ifdef FF_ICASE
@@ -118,22 +117,6 @@ fastfind_mmap
 	char *database; 	/* for error message */
 
 
-#else /* MMAP */
-
-
-#ifdef FF_ICASE
-fastfind_icase
-#else
-fastfind
-#endif /* FF_ICASE */
-
-(fp, pathpart, database)
-	FILE *fp;               /* open database */
-	char *pathpart;		/* search string */
-	char *database;		/* for error message */
-
-
-#endif /* MMAP */
 
 {
 	u_char *p, *s, *patend, *q, *foundchar;
@@ -150,7 +133,6 @@ fastfind
 #endif /* FF_ICASE*/
 
 	/* init bigram table */
-#ifdef FF_MMAP
 	if (len < (2*NBG)) {
 		(void)fprintf(stderr, "database too small: %s\n", database);
 		exit(1);
@@ -160,12 +142,6 @@ fastfind
 		p[c] = check_bigram_char(*paddr++);
 		s[c] = check_bigram_char(*paddr++);
 	}
-#else
-	for (c = 0, p = bigram1, s = bigram2; c < NBG; c++) {
-		p[c] = check_bigram_char(getc(fp));
-		s[c] = check_bigram_char(getc(fp));
-	}
-#endif /* FF_MMAP */
 
 	/* find optimal (last) char for searching */
 	for (p = pathpart; *p != '\0'; p++)
@@ -192,22 +168,13 @@ fastfind
 	found = count = 0;
 	foundchar = 0;
 
-#ifdef FF_MMAP
 	c = (u_char)*paddr++; len--;
 	for (; len > 0; ) {
-#else
-	c = getc(fp);
-	for (; c != EOF; ) {
-#endif /* FF_MMAP */
 
 		/* go forward or backward */
 		if (c == SWITCH) { /* big step, an integer */
-#ifdef FF_MMAP
 			count += getwm(paddr) - OFFSET;
 			len -= INTSIZE; paddr += INTSIZE;
-#else
-			count +=  getwf(fp) - OFFSET;
-#endif /* FF_MMAP */
 		} else {	   /* slow step, =< 14 chars */
 			count += c - OFFSET;
 		}
@@ -218,12 +185,8 @@ fastfind
 		foundchar = p - 1;
 
 		for (;;) {
-#ifdef FF_MMAP
 			c = (u_char)*paddr++;
 			len--;
-#else
-			c = getc(fp);
-#endif /* FF_MMAP */
 			/*
 			 * == UMLAUT: 8 bit char followed
 			 * <= SWITCH: offset
@@ -235,12 +198,8 @@ fastfind
 			if (c < PARITY) {
 				if (c <= UMLAUT) {
 					if (c == UMLAUT) {
-#ifdef FF_MMAP
 						c = (u_char)*paddr++;
 						len--;
-#else
-						c = getc(fp);
-#endif /* FF_MMAP */
 
 					} else
 						break; /* SWITCH */
