@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde.c,v 1.38 2015/07/21 04:52:29 renato Exp $ */
+/*	$OpenBSD: lde.c,v 1.39 2015/10/23 10:10:17 renato Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -112,6 +112,9 @@ lde(struct ldpd_conf *xconf, int pipe_parent2lde[2], int pipe_ldpe2lde[2],
 	    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||
 	    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
 		fatal("can't drop privileges");
+
+	if (pledge("stdio", NULL) == -1)
+		fatal("pledge");
 
 	event_init();
 

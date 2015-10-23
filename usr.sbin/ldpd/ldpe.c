@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpe.c,v 1.39 2015/07/21 05:04:12 renato Exp $ */
+/*	$OpenBSD: ldpe.c,v 1.40 2015/10/23 10:10:17 renato Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -270,6 +270,9 @@ ldpe(struct ldpd_conf *xconf, int pipe_parent2ldpe[2], int pipe_ldpe2lde[2],
 	/* start configured targeted neighbors */
 	LIST_FOREACH(tnbr, &leconf->tnbr_list, entry)
 		tnbr_init(xconf, tnbr);
+
+	if (pledge("stdio cpath inet mcast", NULL) == -1)
+		fatal("pledge");
 
 	event_dispatch();
 
