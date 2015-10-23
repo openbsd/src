@@ -1,4 +1,4 @@
-/*	$OpenBSD: hfsc.c,v 1.26 2015/10/23 01:32:10 dlg Exp $	*/
+/*	$OpenBSD: hfsc.c,v 1.27 2015/10/23 01:53:02 dlg Exp $	*/
 
 /*
  * Copyright (c) 2012-2013 Henning Brauer <henning@openbsd.org>
@@ -112,11 +112,9 @@ struct hfsc_classq {
 
 /* for TAILQ based ellist and actlist implementation */
 struct hfsc_class;
-typedef TAILQ_HEAD(hfsc_eligible, hfsc_class) hfsc_ellist_t;
-typedef TAILQ_ENTRY(hfsc_class) hfsc_elentry_t;
+TAILQ_HEAD(hfsc_eligible, hfsc_class);
 typedef TAILQ_HEAD(hfsc_active, hfsc_class) hfsc_actlist_t;
 typedef TAILQ_ENTRY(hfsc_class) hfsc_actentry_t;
-#define	hfsc_ellist_first(s)		TAILQ_FIRST(s)
 #define	hfsc_actlist_first(s)		TAILQ_FIRST(s)
 #define	hfsc_actlist_last(s)		TAILQ_LAST(s, hfsc_active)
 
@@ -171,7 +169,7 @@ struct hfsc_class {
 	hfsc_actlist_t	*cl_actc;	/* active children list */
 
 	hfsc_actentry_t	cl_actlist;	/* active children list entry */
-	hfsc_elentry_t	cl_ellist;	/* eligible list entry */
+	TAILQ_ENTRY(hfsc_class) cl_ellist; /* eligible list entry */
 
 	struct {
 		struct hfsc_pktcntr xmit_cnt;
@@ -195,7 +193,7 @@ struct hfsc_if {
 	u_int	hif_classes;			/* # of classes in the tree */
 	u_int	hif_classid;			/* class id sequence number */
 
-	hfsc_ellist_t *hif_eligible;			/* eligible list */
+	struct hfsc_eligible hif_eligible;	/* eligible list */
 	struct timeout hif_defer;	/* for queues that weren't ready */
 };
 
@@ -227,12 +225,10 @@ void		 hfsc_update_ed(struct hfsc_if *, struct hfsc_class *, int);
 void		 hfsc_update_d(struct hfsc_class *, int);
 void		 hfsc_init_vf(struct hfsc_class *, int);
 void		 hfsc_update_vf(struct hfsc_class *, int, u_int64_t);
-hfsc_ellist_t	*hfsc_ellist_alloc(void);
-void		 hfsc_ellist_destroy(hfsc_ellist_t *);
-void		 hfsc_ellist_insert(hfsc_ellist_t *, struct hfsc_class *);
-void		 hfsc_ellist_remove(hfsc_ellist_t *, struct hfsc_class *);
-void		 hfsc_ellist_update(hfsc_ellist_t *, struct hfsc_class *);
-struct hfsc_class	*hfsc_ellist_get_mindl(hfsc_ellist_t *, u_int64_t);
+void		 hfsc_ellist_insert(struct hfsc_if *, struct hfsc_class *);
+void		 hfsc_ellist_remove(struct hfsc_if *, struct hfsc_class *);
+void		 hfsc_ellist_update(struct hfsc_if *, struct hfsc_class *);
+struct hfsc_class	*hfsc_ellist_get_mindl(struct hfsc_if *, u_int64_t);
 hfsc_actlist_t	*hfsc_actlist_alloc(void);
 void		 hfsc_actlist_destroy(hfsc_actlist_t *);
 void		 hfsc_actlist_insert(struct hfsc_class *);
@@ -323,7 +319,7 @@ hfsc_attach(struct ifnet *ifp)
 		return (0);
 
 	hif = malloc(sizeof(struct hfsc_if), M_DEVBUF, M_WAITOK | M_ZERO);
-	hif->hif_eligible = hfsc_ellist_alloc();
+	TAILQ_INIT(&hif->hif_eligible);
 	hif->hif_class_tbl = malloc(tblsize, M_DEVBUF, M_WAITOK | M_ZERO);
 	hif->hif_allocated = HFSC_DEFAULT_CLASSES;
 
@@ -349,7 +345,6 @@ hfsc_detach(struct ifnet *ifp)
 	timeout_del(&hif->hif_defer);
 	ifp->if_snd.ifq_hfsc = NULL;
 
-	hfsc_ellist_destroy(hif->hif_eligible);
 	free(hif->hif_class_tbl, M_DEVBUF, 0);
 	free(hif, M_DEVBUF, 0);
 
@@ -707,8 +702,7 @@ hfsc_dequeue(struct ifqueue *ifq, int remove)
 		 * find the class with the minimum deadline among
 		 * the eligible classes.
 		 */
-		if ((cl = hfsc_ellist_get_mindl(hif->hif_eligible, cur_time)) !=
-		    NULL) {
+		if ((cl = hfsc_ellist_get_mindl(hif, cur_time)) != NULL) {
 			realtime = 1;
 		} else {
 			/*
@@ -852,7 +846,7 @@ void
 hfsc_set_passive(struct hfsc_if *hif, struct hfsc_class *cl)
 {
 	if (cl->cl_rsc != NULL)
-		hfsc_ellist_remove(hif->hif_eligible, cl);
+		hfsc_ellist_remove(hif, cl);
 
 	/*
 	 * actlist is handled in hfsc_update_vf() so that hfsc_update_vf(cl, 0,
@@ -885,7 +879,7 @@ hfsc_init_ed(struct hfsc_if *hif, struct hfsc_class *cl, int next_len)
 	cl->cl_e = hfsc_rtsc_y2x(&cl->cl_eligible, cl->cl_cumul);
 	cl->cl_d = hfsc_rtsc_y2x(&cl->cl_deadline, cl->cl_cumul + next_len);
 
-	hfsc_ellist_insert(hif->hif_eligible, cl);
+	hfsc_ellist_insert(hif, cl);
 }
 
 void
@@ -894,7 +888,7 @@ hfsc_update_ed(struct hfsc_if *hif, struct hfsc_class *cl, int next_len)
 	cl->cl_e = hfsc_rtsc_y2x(&cl->cl_eligible, cl->cl_cumul);
 	cl->cl_d = hfsc_rtsc_y2x(&cl->cl_deadline, cl->cl_cumul + next_len);
 
-	hfsc_ellist_update(hif->hif_eligible, cl);
+	hfsc_ellist_update(hif, cl);
 }
 
 void
@@ -1104,35 +1098,19 @@ hfsc_update_cfmin(struct hfsc_class *cl)
  * eligible list holds backlogged classes being sorted by their eligible times.
  * there is one eligible list per interface.
  */
-hfsc_ellist_t *
-hfsc_ellist_alloc(void)
-{
-	hfsc_ellist_t *head;
-
-	head = malloc(sizeof(hfsc_ellist_t), M_DEVBUF, M_WAITOK);
-	TAILQ_INIT(head);
-	return (head);
-}
-
 void
-hfsc_ellist_destroy(hfsc_ellist_t *head)
-{
-	free(head, M_DEVBUF, 0);
-}
-
-void
-hfsc_ellist_insert(hfsc_ellist_t *head, struct hfsc_class *cl)
+hfsc_ellist_insert(struct hfsc_if *hif, struct hfsc_class *cl)
 {
 	struct hfsc_class *p;
 
 	/* check the last entry first */
-	if ((p = TAILQ_LAST(head, hfsc_eligible)) == NULL ||
+	if ((p = TAILQ_LAST(&hif->hif_eligible, hfsc_eligible)) == NULL ||
 	    p->cl_e <= cl->cl_e) {
-		TAILQ_INSERT_TAIL(head, cl, cl_ellist);
+		TAILQ_INSERT_TAIL(&hif->hif_eligible, cl, cl_ellist);
 		return;
 	}
 
-	TAILQ_FOREACH(p, head, cl_ellist) {
+	TAILQ_FOREACH(p, &hif->hif_eligible, cl_ellist) {
 		if (cl->cl_e < p->cl_e) {
 			TAILQ_INSERT_BEFORE(p, cl, cl_ellist);
 			return;
@@ -1141,13 +1119,13 @@ hfsc_ellist_insert(hfsc_ellist_t *head, struct hfsc_class *cl)
 }
 
 void
-hfsc_ellist_remove(hfsc_ellist_t *head, struct hfsc_class *cl)
+hfsc_ellist_remove(struct hfsc_if *hif, struct hfsc_class *cl)
 {
-	TAILQ_REMOVE(head, cl, cl_ellist);
+	TAILQ_REMOVE(&hif->hif_eligible, cl, cl_ellist);
 }
 
 void
-hfsc_ellist_update(hfsc_ellist_t *head, struct hfsc_class *cl)
+hfsc_ellist_update(struct hfsc_if *hif, struct hfsc_class *cl)
 {
 	struct hfsc_class *p, *last;
 
@@ -1160,10 +1138,10 @@ hfsc_ellist_update(hfsc_ellist_t *head, struct hfsc_class *cl)
 		return;
 
 	/* check the last entry */
-	last = TAILQ_LAST(head, hfsc_eligible);
+	last = TAILQ_LAST(&hif->hif_eligible, hfsc_eligible);
 	if (last->cl_e <= cl->cl_e) {
-		TAILQ_REMOVE(head, cl, cl_ellist);
-		TAILQ_INSERT_TAIL(head, cl, cl_ellist);
+		TAILQ_REMOVE(&hif->hif_eligible, cl, cl_ellist);
+		TAILQ_INSERT_TAIL(&hif->hif_eligible, cl, cl_ellist);
 		return;
 	}
 
@@ -1173,7 +1151,7 @@ hfsc_ellist_update(hfsc_ellist_t *head, struct hfsc_class *cl)
 	 */
 	while ((p = TAILQ_NEXT(p, cl_ellist)) != NULL) {
 		if (cl->cl_e < p->cl_e) {
-			TAILQ_REMOVE(head, cl, cl_ellist);
+			TAILQ_REMOVE(&hif->hif_eligible, cl, cl_ellist);
 			TAILQ_INSERT_BEFORE(p, cl, cl_ellist);
 			return;
 		}
@@ -1182,11 +1160,11 @@ hfsc_ellist_update(hfsc_ellist_t *head, struct hfsc_class *cl)
 
 /* find the class with the minimum deadline among the eligible classes */
 struct hfsc_class *
-hfsc_ellist_get_mindl(hfsc_ellist_t *head, u_int64_t cur_time)
+hfsc_ellist_get_mindl(struct hfsc_if *hif, u_int64_t cur_time)
 {
 	struct hfsc_class *p, *cl = NULL;
 
-	TAILQ_FOREACH(p, head, cl_ellist) {
+	TAILQ_FOREACH(p, &hif->hif_eligible, cl_ellist) {
 		if (p->cl_e > cur_time)
 			break;
 		if (cl == NULL || p->cl_d < cl->cl_d)
