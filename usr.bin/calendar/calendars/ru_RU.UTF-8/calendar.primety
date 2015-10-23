@@ -1,4 +1,4 @@
-/*	$OpenBSD: calendar.primety,v 1.1 2015/10/23 09:32:14 tedu Exp $	*/
+/*	$OpenBSD: calendar.primety,v 1.2 2015/10/23 09:35:52 tedu Exp $	*/
 
 /*	based on: http://www.rus-sky.com/rc/
  *	w/ the following license:
@@ -6,6 +6,7 @@
  *	без каких-либо ограничений.
  */
 
+LANG=ru_RU.UTF-8
 CALENDAR=julian
 
 01/01	Васильев вечер. На Васильев вечер день прибавляется на куриный шаг.
