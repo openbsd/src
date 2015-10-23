@@ -1,4 +1,4 @@
-/*	$OpenBSD: hfsc.c,v 1.27 2015/10/23 01:53:02 dlg Exp $	*/
+/*	$OpenBSD: hfsc.c,v 1.28 2015/10/23 02:08:37 dlg Exp $	*/
 
 /*
  * Copyright (c) 2012-2013 Henning Brauer <henning@openbsd.org>
@@ -113,9 +113,7 @@ struct hfsc_classq {
 /* for TAILQ based ellist and actlist implementation */
 struct hfsc_class;
 TAILQ_HEAD(hfsc_eligible, hfsc_class);
-typedef TAILQ_HEAD(hfsc_active, hfsc_class) hfsc_actlist_t;
-typedef TAILQ_ENTRY(hfsc_class) hfsc_actentry_t;
-#define	hfsc_actlist_first(s)		TAILQ_FIRST(s)
+TAILQ_HEAD(hfsc_active, hfsc_class);
 #define	hfsc_actlist_last(s)		TAILQ_LAST(s, hfsc_active)
 
 struct hfsc_class {
@@ -166,9 +164,9 @@ struct hfsc_class {
 	u_int		cl_vtperiod;	/* vt period sequence no */
 	u_int		cl_parentperiod;  /* parent's vt period seqno */
 	int		cl_nactive;	/* number of active children */
-	hfsc_actlist_t	*cl_actc;	/* active children list */
+	struct hfsc_active	cl_actc; /* active children list */
 
-	hfsc_actentry_t	cl_actlist;	/* active children list entry */
+	TAILQ_ENTRY(hfsc_class) cl_actlist; /* active children list entry */
 	TAILQ_ENTRY(hfsc_class) cl_ellist; /* eligible list entry */
 
 	struct {
@@ -229,8 +227,6 @@ void		 hfsc_ellist_insert(struct hfsc_if *, struct hfsc_class *);
 void		 hfsc_ellist_remove(struct hfsc_if *, struct hfsc_class *);
 void		 hfsc_ellist_update(struct hfsc_if *, struct hfsc_class *);
 struct hfsc_class	*hfsc_ellist_get_mindl(struct hfsc_if *, u_int64_t);
-hfsc_actlist_t	*hfsc_actlist_alloc(void);
-void		 hfsc_actlist_destroy(hfsc_actlist_t *);
 void		 hfsc_actlist_insert(struct hfsc_class *);
 void		 hfsc_actlist_remove(struct hfsc_class *);
 void		 hfsc_actlist_update(struct hfsc_class *);
@@ -472,7 +468,7 @@ hfsc_class_create(struct hfsc_if *hif, struct hfsc_sc *rsc,
 	}
 
 	cl = pool_get(&hfsc_class_pl, PR_WAITOK | PR_ZERO);
-	cl->cl_actc = hfsc_actlist_alloc();
+	TAILQ_INIT(&cl->cl_actc);
 
 	ml_init(&cl->cl_q.q);
 	cl->cl_q.qlimit = qlimit;
@@ -542,8 +538,6 @@ hfsc_class_create(struct hfsc_if *hif, struct hfsc_sc *rsc,
 	return (cl);
 
 err_ret:
-	if (cl->cl_actc != NULL)
-		hfsc_actlist_destroy(cl->cl_actc);
 	if (cl->cl_fsc != NULL)
 		pool_put(&hfsc_internal_sc_pl, cl->cl_fsc);
 	if (cl->cl_rsc != NULL)
@@ -592,7 +586,7 @@ hfsc_class_destroy(struct hfsc_if *hif, struct hfsc_class *cl)
 	hif->hif_classes--;
 	splx(s);
 
-	hfsc_actlist_destroy(cl->cl_actc);
+	KASSERT(TAILQ_EMPTY(&cl->cl_actc));
 
 	if (cl == hif->hif_rootclass)
 		hif->hif_rootclass = NULL;
@@ -913,7 +907,8 @@ hfsc_init_vf(struct hfsc_class *cl, int len)
 			go_active = 0;
 
 		if (go_active) {
-			max_cl = hfsc_actlist_last(cl->cl_parent->cl_actc);
+			max_cl = TAILQ_LAST(&cl->cl_parent->cl_actc,
+			    hfsc_active);
 			if (max_cl != NULL) {
 				/*
 				 * set vt to the average of the min and max
@@ -1078,12 +1073,12 @@ hfsc_update_cfmin(struct hfsc_class *cl)
 	struct hfsc_class *p;
 	u_int64_t cfmin;
 
-	if (TAILQ_EMPTY(cl->cl_actc)) {
+	if (TAILQ_EMPTY(&cl->cl_actc)) {
 		cl->cl_cfmin = 0;
 		return;
 	}
 	cfmin = HFSC_HT_INFINITY;
-	TAILQ_FOREACH(p, cl->cl_actc, cl_actlist) {
+	TAILQ_FOREACH(p, &cl->cl_actc, cl_actlist) {
 		if (p->cl_f == 0) {
 			cl->cl_cfmin = 0;
 			return;
@@ -1178,35 +1173,19 @@ hfsc_ellist_get_mindl(struct hfsc_if *hif, u_int64_t cur_time)
  * by their virtual time.
  * each intermediate class has one active children list.
  */
-hfsc_actlist_t *
-hfsc_actlist_alloc(void)
-{
-	hfsc_actlist_t *head;
-
-	head = malloc(sizeof(hfsc_actlist_t), M_DEVBUF, M_WAITOK);
-	TAILQ_INIT(head);
-	return (head);
-}
-
-void
-hfsc_actlist_destroy(hfsc_actlist_t *head)
-{
-	free(head, M_DEVBUF, 0);
-}
-
 void
 hfsc_actlist_insert(struct hfsc_class *cl)
 {
 	struct hfsc_class *p;
 
 	/* check the last entry first */
-	if ((p = TAILQ_LAST(cl->cl_parent->cl_actc, hfsc_active)) == NULL
+	if ((p = TAILQ_LAST(&cl->cl_parent->cl_actc, hfsc_active)) == NULL
 	    || p->cl_vt <= cl->cl_vt) {
-		TAILQ_INSERT_TAIL(cl->cl_parent->cl_actc, cl, cl_actlist);
+		TAILQ_INSERT_TAIL(&cl->cl_parent->cl_actc, cl, cl_actlist);
 		return;
 	}
 
-	TAILQ_FOREACH(p, cl->cl_parent->cl_actc, cl_actlist) {
+	TAILQ_FOREACH(p, &cl->cl_parent->cl_actc, cl_actlist) {
 		if (cl->cl_vt < p->cl_vt) {
 			TAILQ_INSERT_BEFORE(p, cl, cl_actlist);
 			return;
@@ -1217,7 +1196,7 @@ hfsc_actlist_insert(struct hfsc_class *cl)
 void
 hfsc_actlist_remove(struct hfsc_class *cl)
 {
-	TAILQ_REMOVE(cl->cl_parent->cl_actc, cl, cl_actlist);
+	TAILQ_REMOVE(&cl->cl_parent->cl_actc, cl, cl_actlist);
 }
 
 void
@@ -1235,10 +1214,10 @@ hfsc_actlist_update(struct hfsc_class *cl)
 		return;
 
 	/* check the last entry */
-	last = TAILQ_LAST(cl->cl_parent->cl_actc, hfsc_active);
+	last = TAILQ_LAST(&cl->cl_parent->cl_actc, hfsc_active);
 	if (last->cl_vt <= cl->cl_vt) {
-		TAILQ_REMOVE(cl->cl_parent->cl_actc, cl, cl_actlist);
-		TAILQ_INSERT_TAIL(cl->cl_parent->cl_actc, cl, cl_actlist);
+		TAILQ_REMOVE(&cl->cl_parent->cl_actc, cl, cl_actlist);
+		TAILQ_INSERT_TAIL(&cl->cl_parent->cl_actc, cl, cl_actlist);
 		return;
 	}
 
@@ -1248,7 +1227,7 @@ hfsc_actlist_update(struct hfsc_class *cl)
 	 */
 	while ((p = TAILQ_NEXT(p, cl_actlist)) != NULL) {
 		if (cl->cl_vt < p->cl_vt) {
-			TAILQ_REMOVE(cl->cl_parent->cl_actc, cl, cl_actlist);
+			TAILQ_REMOVE(&cl->cl_parent->cl_actc, cl, cl_actlist);
 			TAILQ_INSERT_BEFORE(p, cl, cl_actlist);
 			return;
 		}
@@ -1260,7 +1239,7 @@ hfsc_actlist_firstfit(struct hfsc_class *cl, u_int64_t cur_time)
 {
 	struct hfsc_class *p;
 
-	TAILQ_FOREACH(p, cl->cl_actc, cl_actlist)
+	TAILQ_FOREACH(p, &cl->cl_actc, cl_actlist)
 		if (p->cl_f <= cur_time)
 			return (p);
 
