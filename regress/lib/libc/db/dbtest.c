@@ -1,4 +1,4 @@
-/*	$OpenBSD: dbtest.c,v 1.13 2015/02/06 23:21:58 millert Exp $	*/
+/*	$OpenBSD: dbtest.c,v 1.14 2015/10/23 18:47:21 mmcc Exp $	*/
 /*	$NetBSD: dbtest.c,v 1.8 1996/05/03 21:57:48 cgd Exp $	*/
 
 /*-
@@ -159,7 +159,7 @@ main(int argc, char *argv[])
 		/* Delete the newline, displaying the key/data is easier. */
 		if (ofd == STDOUT_FILENO && (t = strchr(p, '\n')) != NULL)
 			*t = '\0';
-		if ((len = strlen(buf)) == 0 || isspace(*p) || *p == '#')
+		if ((len = strlen(buf)) == 0 || isspace((unsigned char)*p) || *p == '#')
 			continue;
 
 		/* Convenient gdb break point. */
@@ -521,7 +521,7 @@ setflags(s)
 {
 	char *p;
 
-	for (; isspace(*s); ++s);
+	for (; isspace((unsigned char)*s); ++s);
 	if (*s == '\n' || *s == '\0')
 		return (0);
 	if ((p = strchr(s, '\n')) != NULL)
@@ -586,7 +586,7 @@ setinfo(type, s)
 	if ((eq = strchr(s, '=')) == NULL)
 		dberr("%s: illegal structure set statement", s);
 	*eq++ = '\0';
-	if (!isdigit(*eq))
+	if (!isdigit((unsigned char)*eq))
 		dberr("%s: structure set statement must be a number", s);
 		
 	switch (type) {
@@ -679,7 +679,7 @@ rfile(name, lenp)
 	int fd;
 	char *np;
 
-	for (; isspace(*name); ++name);
+	for (; isspace((unsigned char)*name); ++name);
 	if ((np = strchr(name, '\n')) != NULL)
 		*np = '\0';
 	if ((fd = open(name, O_RDONLY, 0)) < 0 ||
