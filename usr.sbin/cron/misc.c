@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.56 2015/10/06 14:58:37 tedu Exp $	*/
+/*	$OpenBSD: misc.c,v 1.57 2015/10/23 18:42:55 tedu Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -62,9 +62,7 @@ set_cron_cwd(void)
 	struct stat sb;
 	struct group *grp = NULL;
 
-#ifdef CRON_GROUP
 	grp = getgrnam(CRON_GROUP);
-#endif
 	/* first check for CRONDIR ("/var/cron" or some such)
 	 */
 	if (stat(CRONDIR, &sb) < 0 && errno == ENOENT) {
@@ -480,41 +478,6 @@ mkprints(src, len)
 	return (dst);
 }
 
-#ifdef MAIL_DATE
-/* Sat, 27 Feb 1993 11:44:51 -0800 (CST)
- * 1234567890123456789012345678901234567
- */
-char *
-arpadate(clock)
-	time_t *clock;
-{
-	time_t t = clock ? *clock : time(NULL);
-	struct tm *tm = localtime(&t);
-	static char ret[64];	/* zone name might be >3 chars */
-	char *qmark;
-	size_t len;
-	long gmtoff = get_gmtoff(&t, tm);
-	int hours = gmtoff / 3600;
-	int minutes = (gmtoff - (hours * 3600)) / 60;
-
-	if (minutes < 0)
-		minutes = -minutes;
-
-	/* Defensive coding (almost) never hurts... */
-	len = strftime(ret, sizeof(ret), "%a, %e %b %Y %T ????? (%Z)", tm);
-	if (len == 0) {
-		ret[0] = '?';
-		ret[1] = '\0';
-		return (ret);
-	}
-	qmark = strchr(ret, '?');
-	if (qmark && len - (qmark - ret) >= 6) {
-		snprintf(qmark, 6, "% .2d%.2d", hours, minutes);
-		qmark[5] = ' ';
-	}
-	return (ret);
-}
-#endif /*MAIL_DATE*/
 
 static gid_t save_egid;
 int swap_gids() { save_egid = getegid(); return (setegid(getgid())); }
@@ -567,9 +530,7 @@ open_socket(void)
 	}
 	unlink(s_un.sun_path);
 	s_un.sun_family = AF_UNIX;
-#ifdef SUN_LEN
 	s_un.sun_len = SUN_LEN(&s_un);
-#endif
 
 	omask = umask(007);
 	if (bind(sock, (struct sockaddr *)&s_un, sizeof(s_un))) {
@@ -607,9 +568,7 @@ poke_daemon(const char *spool_dir, unsigned char cookie)
 		return;
 	}
 	s_un.sun_family = AF_UNIX;
-#ifdef SUN_LEN
 	s_un.sun_len = SUN_LEN(&s_un);
-#endif
 	(void) signal(SIGPIPE, SIG_IGN);
 	if ((sock = socket(AF_UNIX, SOCK_STREAM, 0)) >= 0 &&
 	    connect(sock, (struct sockaddr *)&s_un, sizeof(s_un)) == 0)

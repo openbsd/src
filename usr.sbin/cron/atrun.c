@@ -1,4 +1,4 @@
-/*	$OpenBSD: atrun.c,v 1.31 2015/10/03 19:47:21 tedu Exp $	*/
+/*	$OpenBSD: atrun.c,v 1.32 2015/10/23 18:42:55 tedu Exp $	*/
 
 /*
  * Copyright (c) 2002-2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -177,10 +177,8 @@ atrun(at_db *db, double batch_maxload, time_t now)
 
 	/* Run a single batch job if there is one pending. */
 	if (batch != NULL
-#ifdef HAVE_GETLOADAVG
 	    && (batch_maxload == 0.0 ||
 	    ((getloadavg(&la, 1) == 1) && la <= batch_maxload))
-#endif
 	    ) {
 		snprintf(atfile, sizeof(atfile), "%s/%lld.%c", AT_DIR,
 		    (long long)batch->run_time, batch->queue);
@@ -486,9 +484,6 @@ run_job(atjob *job, char *atfile)
 		fprintf(mail, "To: %s\n", mailto);
 		fprintf(mail, "Subject: Output from \"at\" job\n");
 		fprintf(mail, "Auto-Submitted: auto-generated\n");
-#ifdef MAIL_DATE
-		fprintf(mail, "Date: %s\n", arpadate(&StartTime));
-#endif /*MAIL_DATE*/
 		fprintf(mail, "\nYour \"at\" job on %s\n\"%s/%s/%s\"\n",
 		    hostname, CRONDIR, AT_DIR, atfile);
 		fprintf(mail, "\nproduced the following output:\n\n");

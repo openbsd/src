@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.h,v 1.22 2015/10/06 14:58:37 tedu Exp $	*/
+/*	$OpenBSD: config.h,v 1.23 2015/10/23 18:42:55 tedu Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -38,20 +38,6 @@
 			 * -t    = Get recipient from headers
 			 */
 #define MAILARG _PATH_SENDMAIL				/*-*/
-
-/* #define MAILFMT "%s -d %s"				-*/
-			/* -d = undocumented but common flag: deliver locally?
-			 */
-/* #define MAILARG "/bin/mail",mailto			-*/
-
-/* #define MAILFMT "%s -mlrxto %s"			-*/
-/* #define MAILARG "/usr/mmdf/bin/submit",mailto	-*/
-
-			/* if your OS has the paths.h header */
-#define HAVE_PATHS_H			/*-*/
-
-			/* if your OS has a getloadavg() function */
-#define HAVE_GETLOADAVG			/*-*/
 
 			/* maximum load at which batch jobs will still run */
 #define BATCH_MAXLOAD	1.5		/*-*/

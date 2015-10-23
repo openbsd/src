@@ -1,4 +1,4 @@
-/*	$OpenBSD: pathnames.h,v 1.15 2015/10/06 14:58:37 tedu Exp $	*/
+/*	$OpenBSD: pathnames.h,v 1.16 2015/10/23 18:42:55 tedu Exp $	*/
 
 /* Copyright 1993,1994 by Paul Vixie
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -20,9 +20,7 @@
 #ifndef _PATHNAMES_H_
 #define _PATHNAMES_H_
 
-#ifdef HAVE_PATHS_H
 # include <paths.h>
-#endif /*HAVE_PATHS_H*/
 
 #ifndef CRONDIR
 			/* CRONDIR is where cron(8) and crontab(1) both chdir
