@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.14 2015/10/22 15:14:27 reyk Exp $
+# $OpenBSD: Makefile,v 1.15 2015/10/23 09:13:00 tedu Exp $
 
 PROG=		iked
 SRCS=		ca.c chap_ms.c config.c control.c crypto.c dh.c \
@@ -9,9 +9,6 @@ SRCS+=		eap_map.c ikev2_map.c
 SRCS+=		parse.y
 MAN=		iked.conf.5 iked.8
 #NOMAN=		yes
-
-# Don't compile iked as static binary by default
-LDSTATIC=
 
 LDADD=		-lutil -levent -lcrypto
 DPADD=		${LIBUTIL} ${LIBEVENT} ${LIBCRYPTO}
@@ -34,3 +31,6 @@ eap_map.c: genmap.sh eap.h
 ${PROG} beforedepend: ${GENERATED}
 
 .include <bsd.prog.mk>
+
+# Don't compile iked as static binary by default
+LDSTATIC=
