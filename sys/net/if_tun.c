@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.155 2015/09/10 17:41:15 dlg Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.156 2015/10/23 15:08:24 claudio Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -79,7 +79,7 @@ struct tun_softc {
 	struct arpcom	arpcom;		/* ethernet common data */
 	struct selinfo	tun_rsel;	/* read select */
 	struct selinfo	tun_wsel;	/* write select (not used) */
-	LIST_ENTRY(tun_softc) tun_list;	/* all tunnel interfaces */
+	LIST_ENTRY(tun_softc) entry;	/* all tunnel interfaces */
 	int		tun_unit;
 	uid_t		tun_siguid;	/* uid for process that set tun_pgid */
 	uid_t		tun_sigeuid;	/* euid for process that set tun_pgid */
@@ -102,31 +102,49 @@ int	tundebug = TUN_DEBUG;
 #define TUN_IFF_FLAGS (IFF_UP|IFF_POINTOPOINT|IFF_MULTICAST|IFF_BROADCAST)
 
 void	tunattach(int);
+
+/* cdev functions */
 int	tunopen(dev_t, int, int, struct proc *);
 int	tunclose(dev_t, int, int, struct proc *);
-int	tun_ioctl(struct ifnet *, u_long, caddr_t);
-int	tun_output(struct ifnet *, struct mbuf *, struct sockaddr *,
-	    struct rtentry *);
 int	tunioctl(dev_t, u_long, caddr_t, int, struct proc *);
 int	tunread(dev_t, struct uio *, int);
 int	tunwrite(dev_t, struct uio *, int);
 int	tunpoll(dev_t, int, struct proc *);
 int	tunkqfilter(dev_t, struct knote *);
+
+int	tapopen(dev_t, int, int, struct proc *);
+int	tapclose(dev_t, int, int, struct proc *);
+int	tapioctl(dev_t, u_long, caddr_t, int, struct proc *);
+int	tapread(dev_t, struct uio *, int);
+int	tapwrite(dev_t, struct uio *, int);
+int	tappoll(dev_t, int, struct proc *);
+int	tapkqfilter(dev_t, struct knote *);
+
+int	tun_dev_open(struct tun_softc *, int, int, struct proc *);
+int	tun_dev_close(struct tun_softc *, int, int, struct proc *);
+int	tun_dev_ioctl(struct tun_softc *, u_long, caddr_t, int, struct proc *);
+int	tun_dev_read(struct tun_softc *, struct uio *, int);
+int	tun_dev_write(struct tun_softc *, struct uio *, int);
+int	tun_dev_poll(struct tun_softc *, int, struct proc *);
+int	tun_dev_kqfilter(struct tun_softc *, struct knote *);
+
+
+int	tun_ioctl(struct ifnet *, u_long, caddr_t);
+int	tun_output(struct ifnet *, struct mbuf *, struct sockaddr *,
+	    struct rtentry *);
 int	tun_clone_create(struct if_clone *, int);
+int	tap_clone_create(struct if_clone *, int);
 int	tun_create(struct if_clone *, int, int);
 int	tun_clone_destroy(struct ifnet *);
-struct	tun_softc *tun_lookup(int);
+static inline struct	tun_softc *tun_lookup(int);
+static inline struct	tun_softc *tap_lookup(int);
 void	tun_wakeup(struct tun_softc *);
-int	tun_switch(struct tun_softc *, int);
-
-void	tun_ifattach(struct ifnet *, int);
-void	tun_ifdetach(struct ifnet *);
-int	tuninit(struct tun_softc *);
+int	tun_init(struct tun_softc *);
+void	tun_start(struct ifnet *);
 int	filt_tunread(struct knote *, long);
 int	filt_tunwrite(struct knote *, long);
 void	filt_tunrdetach(struct knote *);
 void	filt_tunwdetach(struct knote *);
-void	tunstart(struct ifnet *);
 void	tun_link_state(struct tun_softc *);
 
 struct filterops tunread_filtops =
@@ -136,15 +154,21 @@ struct filterops tunwrite_filtops =
 	{ 1, NULL, filt_tunwdetach, filt_tunwrite};
 
 LIST_HEAD(, tun_softc) tun_softc_list;
+LIST_HEAD(, tun_softc) tap_softc_list;
 
 struct if_clone tun_cloner =
     IF_CLONE_INITIALIZER("tun", tun_clone_create, tun_clone_destroy);
+
+struct if_clone tap_cloner =
+    IF_CLONE_INITIALIZER("tap", tap_clone_create, tun_clone_destroy);
 
 void
 tunattach(int n)
 {
 	LIST_INIT(&tun_softc_list);
+	LIST_INIT(&tap_softc_list);
 	if_clone_attach(&tun_cloner);
+	if_clone_attach(&tap_cloner);
 #ifdef PIPEX
 	pipex_init();
 #endif
@@ -156,15 +180,34 @@ tun_clone_create(struct if_clone *ifc, int unit)
 	return (tun_create(ifc, unit, 0));
 }
 
-void
-tun_ifattach(struct ifnet *ifp, int flags)
+int
+tap_clone_create(struct if_clone *ifc, int unit)
 {
-	struct tun_softc	*tp = ifp->if_softc;
+	return (tun_create(ifc, unit, TUN_LAYER2));
+}
+
+int
+tun_create(struct if_clone *ifc, int unit, int flags)
+{
+	struct tun_softc	*tp;
+	struct ifnet		*ifp;
 	int			 s;
+
+	tp = malloc(sizeof(*tp), M_DEVBUF, M_NOWAIT|M_ZERO);
+	if (tp == NULL)
+		return (ENOMEM);
+
+	tp->tun_unit = unit;
+	tp->tun_flags = TUN_INITED|TUN_STAYUP;
+
+	ifp = &tp->tun_if;
+	snprintf(ifp->if_xname, sizeof(ifp->if_xname), "%s%d", ifc->ifc_name,
+	    unit);
+	ifp->if_softc = tp;
 
 	ifp->if_ioctl = tun_ioctl;
 	ifp->if_output = tun_output;
-	ifp->if_start = tunstart;
+	ifp->if_start = tun_start;
 	ifp->if_hardmtu = TUNMRU;
 	ifp->if_link_state = LINK_STATE_DOWN;
 	IFQ_SET_MAXLEN(&ifp->if_snd, IFQ_MAXLEN);
@@ -182,33 +225,41 @@ tun_ifattach(struct ifnet *ifp, int flags)
 #if NBPFILTER > 0
 		bpfattach(&ifp->if_bpf, ifp, DLT_LOOP, sizeof(u_int32_t));
 #endif
+		s = splnet();
+		LIST_INSERT_HEAD(&tun_softc_list, tp, entry);
+		splx(s);
 	} else {
 		tp->tun_flags |= TUN_LAYER2;
+		ether_fakeaddr(ifp);
 		ifp->if_flags =
-		    (IFF_BROADCAST|IFF_SIMPLEX|IFF_MULTICAST|IFF_LINK0);
+		    (IFF_BROADCAST|IFF_SIMPLEX|IFF_MULTICAST);
 		ifp->if_capabilities = IFCAP_VLAN_MTU;
 
 		if_attach(ifp);
 		ether_ifattach(ifp);
+
+		s = splnet();
+		LIST_INSERT_HEAD(&tap_softc_list, tp, entry);
+		splx(s);
 	}
 
-	s = splnet();
-	LIST_INSERT_HEAD(&tun_softc_list, tp, tun_list);
-	splx(s);
 #ifdef PIPEX
-	pipex_iface_init(&tp->pipex_iface, ifp);
+	if ((tp->tun_flags & TUN_LAYER2) == 0)
+		pipex_iface_init(&tp->pipex_iface, ifp);
 #endif
 
+	return (0);
 }
 
-void
-tun_ifdetach(struct ifnet *ifp)
+int
+tun_clone_destroy(struct ifnet *ifp)
 {
 	struct tun_softc	*tp = ifp->if_softc;
 	int			 s;
 
 #ifdef PIPEX
-	pipex_iface_fini(&tp->pipex_iface);
+	if ((tp->tun_flags & TUN_LAYER2) == 0)
+		pipex_iface_fini(&tp->pipex_iface);
 #endif
 	tun_wakeup(tp);
 
@@ -218,117 +269,38 @@ tun_ifdetach(struct ifnet *ifp)
 	splx(s);
 
 	s = splnet();
-	LIST_REMOVE(tp, tun_list);
+	LIST_REMOVE(tp, entry);
 	splx(s);
 
 	if (tp->tun_flags & TUN_LAYER2)
 		ether_ifdetach(ifp);
 
 	if_detach(ifp);
-}
-
-int
-tun_create(struct if_clone *ifc, int unit, int flags)
-{
-	struct tun_softc	*tp;
-	struct ifnet		*ifp;
-
-	tp = malloc(sizeof(*tp), M_DEVBUF, M_NOWAIT|M_ZERO);
-	if (tp == NULL)
-		return (ENOMEM);
-
-	tp->tun_unit = unit;
-	tp->tun_flags = TUN_INITED|TUN_STAYUP;
-
-	ifp = &tp->tun_if;
-	snprintf(ifp->if_xname, sizeof(ifp->if_xname), "%s%d", ifc->ifc_name,
-	    unit);
-	ether_fakeaddr(ifp);
-	ifp->if_softc = tp;
-
-	tun_ifattach(ifp, flags);
-
-	return (0);
-}
-
-int
-tun_clone_destroy(struct ifnet *ifp)
-{
-	struct tun_softc	*tp = ifp->if_softc;
-
-	tun_ifdetach(ifp);
 
 	free(tp, M_DEVBUF, 0);
 	return (0);
 }
 
-struct tun_softc *
+static inline struct tun_softc *
 tun_lookup(int unit)
 {
 	struct tun_softc *tp;
 
-	LIST_FOREACH(tp, &tun_softc_list, tun_list)
+	LIST_FOREACH(tp, &tun_softc_list, entry)
 		if (tp->tun_unit == unit)
 			return (tp);
 	return (NULL);
 }
 
-int
-tun_switch(struct tun_softc *tp, int flags)
+static inline struct tun_softc *
+tap_lookup(int unit)
 {
-	struct ifnet		*ifp = &tp->tun_if;
-	int			 unit, open, s;
-	struct ifg_list		*ifgl;
-	u_int			ifgr_len;
-	char			*ifgrpnames, *p;
+	struct tun_softc *tp;
 
-	if ((tp->tun_flags & TUN_LAYER2) == (flags & TUN_LAYER2))
-		return (0);
-
-	/* tp will be removed so store unit number */
-	unit = tp->tun_unit;
-	open = tp->tun_flags & (TUN_OPEN|TUN_NBIO|TUN_ASYNC);
-	TUNDEBUG(("%s: switching to layer %d\n", ifp->if_xname,
-		    flags & TUN_LAYER2 ? 2 : 3));
-
-	/* remember joined groups */
-	ifgr_len = 0;
-	ifgrpnames = NULL;
-	TAILQ_FOREACH(ifgl, &ifp->if_groups, ifgl_next)
-		ifgr_len += IFNAMSIZ;
-	if (ifgr_len)
-		ifgrpnames = malloc(ifgr_len + 1, M_TEMP, M_NOWAIT|M_ZERO);
-	if (ifgrpnames) {
-		p = ifgrpnames;
-		TAILQ_FOREACH(ifgl, &ifp->if_groups, ifgl_next) {
-			strlcpy(p, ifgl->ifgl_group->ifg_group, IFNAMSIZ);
-			p += IFNAMSIZ;
-		}
-	}
-
-	if (ifp->if_flags & IFF_UP)
-		if_down(ifp);
-
-	tun_ifdetach(ifp);
-	tun_ifattach(ifp, flags);
-
-	/* rejoin groups */
-	for (p = ifgrpnames; p && *p; p += IFNAMSIZ)
-		if_addgroup(ifp, p);
-
-	if (open) {
-		/* already opened before ifconfig tunX link0 */
-		s = splnet();
-		tp->tun_flags |= open;
-		ifp->if_flags |= IFF_RUNNING;
-		tun_link_state(tp);
-		splx(s);
-		TUNDEBUG(("%s: already open\n", tp->tun_if.if_xname));
-	}
-	if (ifgrpnames)
-		free(ifgrpnames, M_TEMP, 0);
-
-	return (0);
+	LIST_FOREACH(tp, &tap_softc_list, entry)
+		if (tp->tun_unit == unit)
+			return (tp);
+	return (NULL);
 }
 
 /*
@@ -338,9 +310,8 @@ tun_switch(struct tun_softc *tp, int flags)
 int
 tunopen(dev_t dev, int flag, int mode, struct proc *p)
 {
-	struct tun_softc	*tp;
-	struct ifnet		*ifp;
-	int			 error, s;
+	struct tun_softc *tp;
+	int error;
 
 	if ((tp = tun_lookup(minor(dev))) == NULL) {	/* create on demand */
 		char	xname[IFNAMSIZ];
@@ -353,6 +324,36 @@ tunopen(dev_t dev, int flag, int mode, struct proc *p)
 			return (ENXIO);
 		tp->tun_flags &= ~TUN_STAYUP;
 	}
+
+	return (tun_dev_open(tp, flag, mode, p));
+}
+
+int
+tapopen(dev_t dev, int flag, int mode, struct proc *p)
+{
+	struct tun_softc *tp;
+	int error;
+
+	if ((tp = tap_lookup(minor(dev))) == NULL) {	/* create on demand */
+		char	xname[IFNAMSIZ];
+
+		snprintf(xname, sizeof(xname), "%s%d", "tap", minor(dev));
+		if ((error = if_clone_create(xname)) != 0)
+			return (error);
+
+		if ((tp = tap_lookup(minor(dev))) == NULL)
+			return (ENXIO);
+		tp->tun_flags &= ~TUN_STAYUP;
+	}
+
+	return (tun_dev_open(tp, flag, mode, p));
+}
+
+int
+tun_dev_open(struct tun_softc *tp, int flag, int mode, struct proc *p)
+{
+	struct ifnet *ifp;
+	int s;
 
 	if (tp->tun_flags & TUN_OPEN)
 		return (EBUSY);
@@ -377,12 +378,28 @@ tunopen(dev_t dev, int flag, int mode, struct proc *p)
 int
 tunclose(dev_t dev, int flag, int mode, struct proc *p)
 {
-	int			 s;
 	struct tun_softc	*tp;
-	struct ifnet		*ifp;
 
 	if ((tp = tun_lookup(minor(dev))) == NULL)
 		return (ENXIO);
+	return (tun_dev_close(tp, flag, mode, p));
+}
+
+int
+tapclose(dev_t dev, int flag, int mode, struct proc *p)
+{
+	struct tun_softc	*tp;
+
+	if ((tp = tap_lookup(minor(dev))) == NULL)
+		return (ENXIO);
+	return (tun_dev_close(tp, flag, mode, p));
+}
+
+int
+tun_dev_close(struct tun_softc *tp, int flag, int mode, struct proc *p)
+{
+	int			 s;
+	struct ifnet		*ifp;
 
 	ifp = &tp->tun_if;
 	tp->tun_flags &= ~(TUN_OPEN|TUN_NBIO|TUN_ASYNC);
@@ -409,12 +426,12 @@ tunclose(dev_t dev, int flag, int mode, struct proc *p)
 }
 
 int
-tuninit(struct tun_softc *tp)
+tun_init(struct tun_softc *tp)
 {
 	struct ifnet	*ifp = &tp->tun_if;
 	struct ifaddr	*ifa;
 
-	TUNDEBUG(("%s: tuninit\n", ifp->if_xname));
+	TUNDEBUG(("%s: tun_init\n", ifp->if_xname));
 
 	ifp->if_flags |= IFF_UP | IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE; /* we are never active */
@@ -479,7 +496,7 @@ tun_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 	switch (cmd) {
 	case SIOCSIFADDR:
-		tuninit(tp);
+		tun_init(tp);
 		TUNDEBUG(("%s: address set\n", ifp->if_xname));
 		if (tp->tun_flags & TUN_LAYER2) {
 			switch (ifa->ifa_addr->sa_family) {
@@ -494,7 +511,7 @@ tun_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		}
 		break;
 	case SIOCSIFDSTADDR:
-		tuninit(tp);
+		tun_init(tp);
 		TUNDEBUG(("%s: destination address set\n", ifp->if_xname));
 		break;
 	case SIOCSIFMTU:
@@ -507,8 +524,6 @@ tun_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	case SIOCDELMULTI:
 		break;
 	case SIOCSIFFLAGS:
-		error = tun_switch(tp,
-		    ifp->if_flags & IFF_LINK0 ? TUN_LAYER2 : 0);
 		break;
 	default:
 		if (tp->tun_flags & TUN_LAYER2)
@@ -601,13 +616,30 @@ tun_wakeup(struct tun_softc *tp)
 int
 tunioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
-	int			 s;
-	struct tun_softc	*tp;
-	struct tuninfo		*tunp;
-	struct mbuf		*m;
+	struct tun_softc *tp;
 
 	if ((tp = tun_lookup(minor(dev))) == NULL)
 		return (ENXIO);
+	return (tun_dev_ioctl(tp, cmd, data, flag, p));
+}
+
+int
+tapioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+{
+	struct tun_softc *tp;
+
+	if ((tp = tap_lookup(minor(dev))) == NULL)
+		return (ENXIO);
+	return (tun_dev_ioctl(tp, cmd, data, flag, p));
+}
+
+int
+tun_dev_ioctl(struct tun_softc *tp, u_long cmd, caddr_t data, int flag,
+    struct proc *p)
+{
+	int			 s;
+	struct tuninfo		*tunp;
+	struct mbuf		*m;
 
 	s = splnet();
 	switch (cmd) {
@@ -698,16 +730,15 @@ tunioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		break;
 	default:
 #ifdef PIPEX
-	    {
-		int ret;
-		ret = pipex_ioctl(&tp->pipex_iface, cmd, data);
-		splx(s);
-		return (ret);
-	    }
-#else
+	    	if (!(tp->tun_flags & TUN_LAYER2)) {
+			int ret;
+			ret = pipex_ioctl(&tp->pipex_iface, cmd, data);
+			splx(s);
+			return (ret);
+		}
+#endif
 		splx(s);
 		return (ENOTTY);
-#endif
 	}
 	splx(s);
 	return (0);
@@ -720,14 +751,30 @@ tunioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 int
 tunread(dev_t dev, struct uio *uio, int ioflag)
 {
-	struct tun_softc	*tp;
+	struct tun_softc *tp;
+
+	if ((tp = tun_lookup(minor(dev))) == NULL)
+		return (ENXIO);
+	return (tun_dev_read(tp, uio, ioflag));
+}
+
+int
+tapread(dev_t dev, struct uio *uio, int ioflag)
+{
+	struct tun_softc *tp;
+
+	if ((tp = tap_lookup(minor(dev))) == NULL)
+		return (ENXIO);
+	return (tun_dev_read(tp, uio, ioflag));
+}
+
+int
+tun_dev_read(struct tun_softc *tp, struct uio *uio, int ioflag)
+{
 	struct ifnet		*ifp;
 	struct mbuf		*m, *m0;
 	int			 error = 0, len, s;
 	unsigned int		ifindex;
-
-	if ((tp = tun_lookup(minor(dev))) == NULL)
-		return (ENXIO);
 
 	ifp = if_ref(&tp->tun_if);
 	ifindex = ifp->if_index;
@@ -800,7 +847,26 @@ tunread(dev_t dev, struct uio *uio, int ioflag)
 int
 tunwrite(dev_t dev, struct uio *uio, int ioflag)
 {
-	struct tun_softc	*tp;
+	struct tun_softc *tp;
+
+	if ((tp = tun_lookup(minor(dev))) == NULL)
+		return (ENXIO);
+	return (tun_dev_write(tp, uio, ioflag));
+}
+
+int
+tapwrite(dev_t dev, struct uio *uio, int ioflag)
+{
+	struct tun_softc *tp;
+
+	if ((tp = tap_lookup(minor(dev))) == NULL)
+		return (ENXIO);
+	return (tun_dev_write(tp, uio, ioflag));
+}
+
+int
+tun_dev_write(struct tun_softc *tp, struct uio *uio, int ioflag)
+{
 	struct ifnet		*ifp;
 	struct niqueue		*ifq;
 	u_int32_t		*th;
@@ -809,10 +875,6 @@ tunwrite(dev_t dev, struct uio *uio, int ioflag)
 #if NBPFILTER > 0
 	int			 s;
 #endif
-
-	if ((tp = tun_lookup(minor(dev))) == NULL)
-		return (ENXIO);
-
 	ifp = &tp->tun_if;
 	TUNDEBUG(("%s: tunwrite\n", ifp->if_xname));
 
@@ -935,13 +997,29 @@ tunwrite(dev_t dev, struct uio *uio, int ioflag)
 int
 tunpoll(dev_t dev, int events, struct proc *p)
 {
-	int			 revents, s;
-	struct tun_softc	*tp;
-	struct ifnet		*ifp;
-	struct mbuf		*m;
+	struct tun_softc *tp;
 
 	if ((tp = tun_lookup(minor(dev))) == NULL)
 		return (POLLERR);
+	return (tun_dev_poll(tp, events, p));
+}
+
+int
+tappoll(dev_t dev, int events, struct proc *p)
+{
+	struct tun_softc *tp;
+
+	if ((tp = tap_lookup(minor(dev))) == NULL)
+		return (POLLERR);
+	return (tun_dev_poll(tp, events, p));
+}
+
+int
+tun_dev_poll(struct tun_softc *tp, int events, struct proc *p)
+{
+	int			 revents, s;
+	struct ifnet		*ifp;
+	struct mbuf		*m;
 
 	ifp = &tp->tun_if;
 	revents = 0;
@@ -977,13 +1055,29 @@ tunpoll(dev_t dev, int events, struct proc *p)
 int
 tunkqfilter(dev_t dev, struct knote *kn)
 {
-	int			 s;
-	struct klist		*klist;
-	struct tun_softc	*tp;
-	struct ifnet		*ifp;
+	struct tun_softc *tp;
 
 	if ((tp = tun_lookup(minor(dev))) == NULL)
 		return (ENXIO);
+	return (tun_dev_kqfilter(tp, kn));
+}
+
+int
+tapkqfilter(dev_t dev, struct knote *kn)
+{
+	struct tun_softc *tp;
+
+	if ((tp = tun_lookup(minor(dev))) == NULL)
+		return (ENXIO);
+	return (tun_dev_kqfilter(tp, kn));
+}
+
+int
+tun_dev_kqfilter(struct tun_softc *tp, struct knote *kn)
+{
+	int			 s;
+	struct klist		*klist;
+	struct ifnet		*ifp;
 
 	ifp = &tp->tun_if;
 
@@ -1090,7 +1184,7 @@ filt_tunwrite(struct knote *kn, long hint)
 }
 
 void
-tunstart(struct ifnet *ifp)
+tun_start(struct ifnet *ifp)
 {
 	struct tun_softc	*tp = ifp->if_softc;
 	struct mbuf		*m;
