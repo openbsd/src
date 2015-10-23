@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigprocmask.S,v 1.6 2015/09/10 13:29:09 guenther Exp $ */
+/*	$OpenBSD: sigprocmask.S,v 1.7 2015/10/23 04:39:25 guenther Exp $ */
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -37,7 +37,7 @@
 /*
  * sigprocmask(int how, sigset_t *set, sigset_t *oset)
  */
-SYSENTRY(sigprocmask)
+SYSENTRY_HIDDEN(sigprocmask)
 	tst	%o1		! set == NULL?
 	bne,a	1f		! if not,
 	 ld	[%o1], %o1	!    replace it in %o1 with *set
@@ -55,4 +55,4 @@ SYSENTRY(sigprocmask)
 3:
 	retl			! in any case, return 0
 	 clr	%o0
-SYSCALL_END(sigprocmask)
+SYSCALL_END_HIDDEN(sigprocmask)

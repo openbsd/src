@@ -29,7 +29,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: SYS.h,v 1.23 2015/09/05 06:22:47 guenther Exp $
+ *	$OpenBSD: SYS.h,v 1.24 2015/10/23 04:39:24 guenther Exp $
  */
 
 #include <machine/asm.h>
@@ -160,5 +160,7 @@
 #define	RSYSCALL_HIDDEN(x)				\
 			PSEUDO_HIDDEN(x,x)
 #define	SYSCALL_END(x)	__END(x)
+#define	SYSCALL_END_HIDDEN(x)				\
+			__END_HIDDEN(x)
 
 	.globl	CERROR

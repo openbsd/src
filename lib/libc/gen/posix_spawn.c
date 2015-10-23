@@ -1,4 +1,4 @@
-/*	$OpenBSD: posix_spawn.c,v 1.7 2015/09/10 18:13:46 guenther Exp $	*/
+/*	$OpenBSD: posix_spawn.c,v 1.8 2015/10/23 04:39:24 guenther Exp $	*/
 /*-
  * Copyright (c) 2008 Ed Schouten <ed@FreeBSD.org>
  * All rights reserved.
@@ -119,12 +119,13 @@ process_spawnattr(const posix_spawnattr_t sa)
 
 	/* Set signal masks/defaults */
 	if (sa->sa_flags & POSIX_SPAWN_SETSIGMASK) {
-		sigprocmask(SIG_SETMASK, &sa->sa_sigmask, NULL);
+		WRAP(sigprocmask)(SIG_SETMASK, &sa->sa_sigmask, NULL);
 	}
 
 	if (sa->sa_flags & POSIX_SPAWN_SETSIGDEF) {
 		for (i = 1; i < _NSIG; i++) {
-			if (sigismember(&sa->sa_sigdefault, i))
+			/* silently ignore attempts to alter SIGTHR */
+			if (sigismember(&sa->sa_sigdefault, i) && i != SIGTHR)
 				if (sigaction(i, &sigact, NULL) != 0)
 					return (errno);
 		}

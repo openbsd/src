@@ -1,4 +1,4 @@
-/*	$OpenBSD: SYS.h,v 1.21 2015/09/10 13:29:09 guenther Exp $*/
+/*	$OpenBSD: SYS.h,v 1.22 2015/10/23 04:39:24 guenther Exp $*/
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -143,9 +143,11 @@
 #define	RSYSCALL_HIDDEN(x)	__PSEUDO_HIDDEN(_thread_sys_,x,x)
 #define	PSEUDO(x,y)		__PSEUDO(_thread_sys_,x,y)
 #define	PSEUDO_NOERROR(x,y)	__PSEUDO_NOERROR(_thread_sys_,x,y)
-#define	SYSENTRY(x)		__ENTRY(_thread_sys_,x);		\
+#define	SYSENTRY_HIDDEN(x)	__ENTRY(_thread_sys_,x)
+#define	SYSENTRY(x)		SYSENTRY_HIDDEN(x);		\
 				__ALIAS(_thread_sys_,x)
-#define	SYSCALL_END(x)		__END(_thread_sys_,x); END(x)
+#define	SYSCALL_END_HIDDEN(x)	__END(_thread_sys_,x)
+#define	SYSCALL_END(x)		SYSCALL_END_HIDDEN(x); END(x)
 
 #define	ASMSTR		.asciz
 

@@ -364,6 +364,7 @@ pread
 preadv
 profil
 pselect
+pthread_sigmask
 ptrace
 pwrite
 pwritev

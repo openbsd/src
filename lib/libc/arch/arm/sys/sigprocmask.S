@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigprocmask.S,v 1.3 2015/09/10 13:29:09 guenther Exp $	*/
+/*	$OpenBSD: sigprocmask.S,v 1.4 2015/10/23 04:39:24 guenther Exp $	*/
 /*	$NetBSD: sigprocmask.S,v 1.5 2003/08/07 16:42:05 agc Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 
 #include "SYS.h"
 
-SYSENTRY(sigprocmask)
+SYSENTRY_HIDDEN(sigprocmask)
 	teq	r1, #0x00000000
 	moveq	r0, #0x00000001
 	moveq	r1, #0x00000000
@@ -45,4 +45,4 @@ SYSENTRY(sigprocmask)
 	strne	r0, [r2]
 	mov	r0, #0x00000000
 	mov	r15, r14
-SYSCALL_END(sigprocmask)
+SYSCALL_END_HIDDEN(sigprocmask)

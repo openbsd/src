@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigprocmask.S,v 1.2 2015/09/10 13:29:09 guenther Exp $	*/
+/*	$OpenBSD: sigprocmask.S,v 1.3 2015/10/23 04:39:24 guenther Exp $	*/
 /*	$NetBSD: sigprocmask.S,v 1.6 2003/08/07 16:42:21 agc Exp $	*/
 
 /*-
@@ -37,7 +37,7 @@
 
 #include "SYS.h"
 
-SYSENTRY(sigprocmask)
+SYSENTRY_HIDDEN(sigprocmask)
 	mov	r5, r2			/* fetch new sigset pointer */
 	tst	r2, r2			/* check new sigset pointer */
 	bf	1f			/* if not null, indirect */
@@ -63,4 +63,4 @@ SYSENTRY(sigprocmask)
 	.align	2
 LSYS_sigprocmask:
 	.long	SYS_sigprocmask
-SYSCALL_END(sigpending)
+SYSCALL_END_HIDDEN(sigpending)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigsuspend.S,v 1.6 2005/08/07 16:40:13 espie Exp $	*/
+/*	$OpenBSD: sigsuspend.S,v 1.7 2015/10/23 04:39:24 guenther Exp $	*/
 /*	$NetBSD: sigsuspend.S,v 1.2 1996/10/17 03:08:22 cgd Exp $	*/
 
 /*
@@ -35,4 +35,4 @@ SYSLEAF(sigsuspend, 1)
 	CALLSYS_ERROR(sigsuspend)
 	mov	zero, v0		/* shouldn't need; just in case... */
 	RET
-SYSEND(sigsuspend)
+SYSCALL_END(sigsuspend)

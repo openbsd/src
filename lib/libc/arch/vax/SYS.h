@@ -1,4 +1,4 @@
-/*	$OpenBSD: SYS.h,v 1.19 2015/09/10 13:29:09 guenther Exp $ */
+/*	$OpenBSD: SYS.h,v 1.20 2015/10/23 04:39:25 guenther Exp $ */
 /*	$NetBSD: SYS.h,v 1.4 1997/05/02 18:15:32 kleink Exp $ */
 
 /*
@@ -68,7 +68,8 @@
  */
 #define	SYSCALL(x)		__ALIAS(_thread_sys_,x)		\
 				__SYSCALL(_thread_sys_,x,x)
-#define	SYSCALL_END(x)		__END(_thread_sys_,x); END(x)
+#define	SYSCALL_END_HIDDEN(x)	__END(_thread_sys_,x)
+#define	SYSCALL_END(x)		SYSCALL_END_HIDDEN(x); END(x)
 #define	RSYSCALL(x)		__ALIAS(_thread_sys_,x)		\
 				__PSEUDO(_thread_sys_,x,x);	\
 				END(x)
@@ -79,8 +80,9 @@
 #define	PSEUDO_NOERROR(x,y)	__ALIAS(_thread_sys_,x)		\
 				__PSEUDO_NOERROR(_thread_sys_,x,y); \
 				END(x)
+#define	SYSENTRY_HIDDEN(x)	__ENTRY(_thread_sys_,x)
 #define	SYSENTRY(x)		__ALIAS(_thread_sys_,x)		\
-				__ENTRY(_thread_sys_,x)
+				SYSENTRY_HIDDEN(x)
 #define	SYSNAME(x)		_CAT(__thread_sys_,x)
 
 	.globl	_C_LABEL(__cerror)

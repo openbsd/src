@@ -1,4 +1,4 @@
-/*	$OpenBSD: SYS.h,v 1.8 2015/09/10 13:29:09 guenther Exp $	*/
+/*	$OpenBSD: SYS.h,v 1.9 2015/10/23 04:39:24 guenther Exp $	*/
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -159,5 +159,6 @@
 #define RSYSCALL(x)			PSEUDO(x,x)
 #define RSYSCALL_HIDDEN(x)		PSEUDO_HIDDEN(x,x)
 #define SYSCALL_END(x)			__END(x)
+#define SYSCALL_END_HIDDEN(x)		__END_HIDDEN(x)
 
 	.globl	CERROR

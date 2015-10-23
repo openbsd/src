@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread.c,v 1.84 2015/10/18 08:02:58 guenther Exp $ */
+/*	$OpenBSD: rthread.c,v 1.85 2015/10/23 04:39:24 guenther Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -220,7 +220,7 @@ _rthread_init(void)
 	sa.sa_handler = sigthr_handler;
 	_thread_sys_sigaction(SIGTHR, &sa, NULL);
 	sigaddset(&sa.sa_mask, SIGTHR);
-	sigprocmask(SIG_UNBLOCK, &sa.sa_mask, NULL);
+	_thread_sys_sigprocmask(SIG_UNBLOCK, &sa.sa_mask, NULL);
 
 	return (0);
 }
@@ -757,8 +757,6 @@ static void *__libc_overrides[] __used = {
 	&select,
 	&sendmsg,
 	&sendto,
-	&sigaction,
-	&sigprocmask,
 	&sigsuspend,
 	&vfork,
 	&wait4,

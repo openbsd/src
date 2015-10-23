@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_sig.c,v 1.16 2014/11/16 05:24:25 guenther Exp $ */
+/*	$OpenBSD: rthread_sig.c,v 1.17 2015/10/23 04:39:24 guenther Exp $ */
 /*
  * Copyright (c) 2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -25,25 +25,6 @@
 #include <pthread.h>
 
 #include "rthread.h"
-
-int
-pthread_sigmask(int how, const sigset_t *set, sigset_t *oset)
-{
-	return (sigprocmask(how, set, oset) ? errno : 0);
-}
-
-int
-sigprocmask(int how, const sigset_t *set, sigset_t *oset)
-{
-	sigset_t s;
-
-	if (set != NULL && how != SIG_UNBLOCK && sigismember(set, SIGTHR)) {
-		s = *set;
-		sigdelset(&s, SIGTHR);
-		set = &s;
-	}
-	return (_thread_sys_sigprocmask(how, set, oset));
-}
 
 int
 sigwait(const sigset_t *set, int *sig)
@@ -94,20 +75,3 @@ sigtimedwait(const sigset_t *set, siginfo_t *info,
 	return (ret);
 }
 #endif
-
-int
-sigaction(int sig, const struct sigaction *act, struct sigaction *oact)
-{
-	struct sigaction sa;
-
-	if (sig == SIGTHR) {
-		errno = EINVAL;
-		return (-1);
-	}
-	if (act != NULL && sigismember(&act->sa_mask, SIGTHR)) {
-		sa = *act;
-		sigdelset(&sa.sa_mask, SIGTHR);
-		act = &sa;
-	}
-	return (_thread_sys_sigaction(sig, act, oact));
-}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigprocmask.S,v 1.7 2015/10/17 22:40:54 guenther Exp $	*/
+/*	$OpenBSD: sigprocmask.S,v 1.8 2015/10/23 04:39:24 guenther Exp $	*/
 /*	$NetBSD: sigprocmask.S,v 1.1 2001/06/19 00:25:06 fvdl Exp $	*/
 
 /*-
@@ -39,7 +39,7 @@
 
 #include "SYS.h"
 
-SYSENTRY(sigprocmask)
+SYSENTRY_HIDDEN(sigprocmask)
 	testq	%rsi,%rsi		# check new sigset pointer
 	jnz	1f			# if not null, indirect
 	movl	$1,%edi			# SIG_BLOCK
@@ -60,4 +60,4 @@ out:
 #else
 	jmp	CERROR
 #endif
-SYSCALL_END(sigprocmask)
+SYSCALL_END_HIDDEN(sigprocmask)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigprocmask.S,v 1.3 2015/09/05 06:22:47 guenther Exp $	*/
+/*	$OpenBSD: sigprocmask.S,v 1.4 2015/10/23 04:39:25 guenther Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -39,7 +39,7 @@
 /*
  * sigprocmask(int how, sigset_t *set, sigset_t *oset)
  */
-SYSENTRY(sigprocmask)
+SYSENTRY_HIDDEN(sigprocmask)
 	brnz,a	%o1, 1f		/* if (set != NULL) */
 	 ld	[%o1], %o1	/*    replace it in %o1 with *set */
 /*	clr	%o1		 * else block no signals ... */
@@ -56,4 +56,4 @@ SYSENTRY(sigprocmask)
 3:
 	retl			/* in any case, return 0 */
 	 clr	%o0
-SYSCALL_END(sigprocmask)
+SYSCALL_END_HIDDEN(sigprocmask)

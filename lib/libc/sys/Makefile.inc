@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.134 2015/10/23 00:52:49 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.135 2015/10/23 04:39:24 guenther Exp $
 #	$NetBSD: Makefile.inc,v 1.35 1995/10/16 23:49:07 jtc Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/17/93
 
@@ -11,7 +11,8 @@ SRCS+=	Ovfork.S brk.S cerror.S fork.S \
 	sigsuspend.S syscall.S tfork_thread.S
 
 # glue to offer userland wrappers for some syscalls
-SRCS+=	posix_madvise.c w_fork.c
+SRCS+=	posix_madvise.c pthread_sigmask.c \
+	w_fork.c w_sigaction.c w_sigprocmask.c
 
 # glue to provide compatibility between GCC 1.X and 2.X and for compat
 # with old syscall interfaces.
@@ -54,7 +55,7 @@ ASM=	__get_tcb.o __getcwd.o __semctl.o __set_tcb.o __syscall.o \
 	setpgid.o setpriority.o setregid.o setresgid.o setresuid.o \
 	setreuid.o setrlimit.o setrtable.o setsid.o setsockopt.o \
 	settimeofday.o setuid.o shmat.o shmctl.o shmdt.o \
-	shmget.o shutdown.o sigaction.o sigaltstack.o socket.o \
+	shmget.o shutdown.o sigaltstack.o socket.o \
 	socketpair.o stat.o statfs.o swapctl.o symlink.o symlinkat.o \
 	sync.o sysarch.o sysctl.o umask.o unlink.o unlinkat.o \
 	unmount.o utimensat.o utimes.o utrace.o wait4.o write.o writev.o
@@ -81,7 +82,13 @@ PPSEUDO_NOERR=${PSEUDO_NOERR:.o=.po}
 SPSEUDO_NOERR=${PSEUDO_NOERR:.o=.so}
 DPSEUDO_NOERR=${PSEUDO_NOERR:.o=.do}
 
-OBJS+=	${ASM} ${PSEUDO} ${PSEUDO_NOERR}
+HIDDEN= sigaction.o
+GHIDDEN=${HIDDEN:.o=.go}
+PHIDDEN=${HIDDEN:.o=.po}
+SHIDDEN=${HIDDEN:.o=.so}
+DHIDDEN=${HIDDEN:.o=.do}
+
+OBJS+=	${ASM} ${PSEUDO} ${PSEUDO_NOERR} ${HIDDEN}
 
 SYS_DEP =  ${LIBCSRCDIR}/arch/${MACHINE_CPU}/SYS.h /usr/include/sys/syscall.h
 
@@ -100,6 +107,9 @@ GENERATE.pseudo=\
 GENERATE.pseudo_noerr=\
 	echo creating ${.TARGET} && \
 	printf '\#include "SYS.h"\nPSEUDO_NOERROR(${.PREFIX},${.PREFIX:S/_//})\n'
+GENERATE.rsyscall_hidden=\
+	echo creating ${.TARGET} && \
+	printf '\#include "SYS.h"\nRSYSCALL_HIDDEN(${.PREFIX:S/_//})\n'
 
 # ...and one of these to control how it's compiled
 FINISH=	${COMPILE.S} ${CFLAGS:M-[ID]*} ${AINC} -x assembler-with-cpp -
@@ -127,6 +137,12 @@ ${PPSEUDO_NOERR}: ${SYS_DEP} ; @${GENERATE.pseudo_noerr} | ${FINISH.po}
 ${SPSEUDO_NOERR}: ${SYS_DEP} ; @${GENERATE.pseudo_noerr} | ${FINISH.so}
 ${DPSEUDO_NOERR}: ${SYS_DEP} ; @${GENERATE.pseudo_noerr} | ${FINISH.do}
 ${PSEUDO_NOERR}:  ${SYS_DEP} ; @${GENERATE.pseudo_noerr} | ${FINISH.o}
+
+${GHIDDEN}: ${SYS_DEP} ; @${GENERATE.rsyscall_hidden} | ${FINISH.go}
+${PHIDDEN}: ${SYS_DEP} ; @${GENERATE.rsyscall_hidden} | ${FINISH.po}
+${SHIDDEN}: ${SYS_DEP} ; @${GENERATE.rsyscall_hidden} | ${FINISH.so}
+${DHIDDEN}: ${SYS_DEP} ; @${GENERATE.rsyscall_hidden} | ${FINISH.do}
+${HIDDEN}:  ${SYS_DEP} ; @${GENERATE.rsyscall_hidden} | ${FINISH.o}
 
 
 MAN+=	__get_tcb.2 __thrsigdivert.2 __thrsleep.2 _exit.2 accept.2 \

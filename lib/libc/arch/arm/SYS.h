@@ -1,4 +1,4 @@
-/*	$OpenBSD: SYS.h,v 1.13 2015/09/10 13:29:09 guenther Exp $	*/
+/*	$OpenBSD: SYS.h,v 1.14 2015/10/23 04:39:24 guenther Exp $	*/
 /*	$NetBSD: SYS.h,v 1.8 2003/08/07 16:42:02 agc Exp $	*/
 
 /*-
@@ -127,5 +127,7 @@
 	PSEUDO_HIDDEN(x,x)
 #define SYSCALL_END(x)							\
 	__END(x)
+#define SYSCALL_END_HIDDEN(x)						\
+	__END_HIDDEN(x)
 
 	.globl	CERROR

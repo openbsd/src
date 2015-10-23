@@ -1,4 +1,4 @@
-/*	$OpenBSD: siginterrupt.c,v 1.7 2015/09/09 16:10:03 guenther Exp $ */
+/*	$OpenBSD: siginterrupt.c,v 1.8 2015/10/23 04:39:24 guenther Exp $ */
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -40,7 +40,7 @@ siginterrupt(int sig, int flag)
 	struct sigaction sa;
 	int ret;
 
-	if ((ret = sigaction(sig, (struct sigaction *)0, &sa)) < 0)
+	if ((ret = WRAP(sigaction)(sig, NULL, &sa)) < 0)
 		return (ret);
 	if (flag) {
 		sigaddset(&__sigintr, sig);
@@ -49,5 +49,5 @@ siginterrupt(int sig, int flag)
 		sigdelset(&__sigintr, sig);
 		sa.sa_flags |= SA_RESTART;
 	}
-	return (sigaction(sig, &sa, (struct sigaction *)0));
+	return (sigaction(sig, &sa, NULL));
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigpending.S,v 1.6 2015/10/04 06:34:35 guenther Exp $ */
+/*	$OpenBSD: sigpending.S,v 1.7 2015/10/23 04:39:24 guenther Exp $ */
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -38,7 +38,7 @@ GPOFF= FRAMESZ-2*REGSZ
 
 SYSLEAF(sigpending, FRAMESZ)
 	PTR_SUBU sp, FRAMESZ
-	SETUP_GP64(GPOFF, sigpending)
+	SETUP_GP64(GPOFF, _HIDDEN(sigpending))
 	.set	reorder
 	li	v0, SYS_sigpending
 	syscall
@@ -53,4 +53,4 @@ SYSLEAF(sigpending, FRAMESZ)
 	RESTORE_GP64
 	PTR_ADDU sp, FRAMESZ
 	jr	t9
-SYSEND(sigpending)
+SYSCALL_END(sigpending)

@@ -30,7 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: SYS.h,v 1.19 2015/09/10 13:29:09 guenther Exp $
+ *	$OpenBSD: SYS.h,v 1.20 2015/10/23 04:39:25 guenther Exp $
  */
 
 #include "DEFS.h"
@@ -109,6 +109,8 @@
 # define PSEUDO(x,y)		__PSEUDO(_thread_sys_,x,y)
 # define PSEUDO_NOERROR(x,y)	__PSEUDO_NOERROR(_thread_sys_,x,y)
 # define SYSENTRY(x)		__ENTRY(_thread_sys_,x)
+# define SYSENTRY_HIDDEN(x)	__ENTRY_HIDDEN(_thread_sys_,x)
 # define SYSCALL_END(x)		__END(_thread_sys_,x)
+# define SYSCALL_END_HIDDEN(x)	__END_HIDDEN(_thread_sys_,x)
 
 	.globl	_C_LABEL(__cerror)

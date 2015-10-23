@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigprocmask.S,v 1.11 2015/09/10 13:29:09 guenther Exp $	*/
+/*	$OpenBSD: sigprocmask.S,v 1.12 2015/10/23 04:39:24 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,7 +35,7 @@
 
 #include "SYS.h"
 
-SYSENTRY(sigprocmask)
+SYSENTRY_HIDDEN(sigprocmask)
 	bcnd	ne0,%r3,1f		/* if new sigset pointer is null */
 	or	%r2,%r0,1		/* how = SIG_BLOCK and do it */
 	br	2f
@@ -50,4 +50,4 @@ SYSENTRY(sigprocmask)
 3:
 	jmp.n	%r1
 	 or	%r2,%r0,0
-SYSCALL_END(sigprocmask)
+SYSCALL_END_HIDDEN(sigprocmask)

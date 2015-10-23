@@ -1,4 +1,4 @@
-/*	$OpenBSD: SYS.h,v 1.19 2015/09/05 06:22:47 guenther Exp $	*/
+/*	$OpenBSD: SYS.h,v 1.20 2015/10/23 04:39:24 guenther Exp $	*/
 /*-
  * Copyright (c) 1994
  *	Andrew Cagney.  All rights reserved.
@@ -86,10 +86,9 @@
 
 #define ALIAS(x,y)		WEAK_ALIAS(y,_CONCAT(x,y));
 		
+#define PREFIX_HIDDEN(x)	PSEUDO_PREFIX(_thread_sys_,x,x)
 #define PREFIX(x)		ALIAS(_thread_sys_,x) \
-				PSEUDO_PREFIX(_thread_sys_,x,x)
-#define PREFIX2(x,y)		ALIAS(_thread_sys_,x) \
-				PSEUDO_PREFIX(_thread_sys_,x,y)
+				PREFIX_HIDDEN(x)
 #define	PSEUDO_NOERROR(x,y)	ALIAS(_thread_sys_,x) \
 				PSEUDO_PREFIX(_thread_sys_,x,y) ; \
 				sc ; \
@@ -106,5 +105,6 @@
 
 #define RSYSCALL(x)		PSEUDO(x,x)
 #define RSYSCALL_HIDDEN(x)	PSEUDO_HIDDEN(x,x)
+#define SYSCALL_END_HIDDEN(x)	__END_HIDDEN(_thread_sys_,x)
 #define SYSCALL_END(x)		__END(_thread_sys_,x)
 

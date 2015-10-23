@@ -1,4 +1,4 @@
-/*	$OpenBSD: namespace.h,v 1.7 2015/09/11 09:18:27 guenther Exp $	*/
+/*	$OpenBSD: namespace.h,v 1.8 2015/10/23 04:39:24 guenther Exp $	*/
 
 #ifndef _LIBC_NAMESPACE_H_
 #define _LIBC_NAMESPACE_H_
@@ -69,7 +69,7 @@
  *
  *   WRAP(x)
  *	This expands to the internal, hidden name of a non-cancellation
- *	wrapper: _libc_x_wrap.  ex: WRAP(sigpending)(set)
+ *	wrapper: _libc_x_wrap.  ex: WRAP(sigprocmask)(set)
  *
  *
  * In order to actually set up the desired asm labels, we use these in
@@ -91,8 +91,9 @@
  *	ex: PROTO_CANCEL(wait4)
  *
  *   PROTO_WRAP(x)		Functions that have wrappers for other reasons
- *	This makes gcc convert use of x to use _libc_x_wrap instead.
- *	ex: PROTO_WRAP(setlogin)
+ *	Like PROTO_NORMAL(x), but also declares _libc_x_wrap.  Internal
+ *	calls that want the wrapper's processing should invoke WRAP(x)(...)
+ *	ex: PROTO_WRAP(sigaction)
  *
  *
  * Finally, to create the expected aliases, we use these in the .c files
@@ -144,7 +145,7 @@
 #define	PROTO_STD_DEPRECATED(x)	typeof(x) x __attribute__((deprecated))
 #define	PROTO_DEPRECATED(x)	typeof(x) x __attribute__((deprecated, weak))
 #define	PROTO_CANCEL(x)		PROTO_NORMAL(x), CANCEL(x)
-#define	PROTO_WRAP(x)		__dso_hidden typeof(x) x asm(WRAP_STRING(x))
+#define	PROTO_WRAP(x)		PROTO_NORMAL(x), WRAP(x)
 
 #define	DEF_STRONG(x)		__strong_alias(x, HIDDEN(x))
 #define	DEF_WEAK(x)		__weak_alias(x, HIDDEN(x))

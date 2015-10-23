@@ -1,4 +1,4 @@
-/*	$OpenBSD: SYS.h,v 1.14 2015/09/05 06:22:47 guenther Exp $	*/
+/*	$OpenBSD: SYS.h,v 1.15 2015/10/23 04:39:25 guenther Exp $	*/
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -160,13 +160,13 @@
 /*
  * SYSENTRY is for functions that pretend to be syscalls.
  */
-#define __SYSENTRY(p,x) __ENTRY(p,x)
-
 #define	SYSCALL(x)		__SYSCALL(_thread_sys_,x)
 #define	RSYSCALL(x)		__RSYSCALL(_thread_sys_,x)
 #define	RSYSCALL_HIDDEN(x)	__RSYSCALL_HIDDEN(_thread_sys_,x)
 #define	RSYSCALL_NOERROR(x,y)	__RSYSCALL_NOERROR(_thread_sys_,x,y)
 #define	PSEUDO(x,y)		__PSEUDO(_thread_sys_,x,y)
 #define	PSEUDO_NOERROR(x,y)	__PSEUDO_NOERROR(_thread_sys_,x,y)
-#define	SYSENTRY(x)		__SYSENTRY(_thread_sys_,x)
+#define	SYSENTRY(x)		__ENTRY(_thread_sys_,x)
+#define	SYSENTRY_HIDDEN(x)	__ENTRY_HIDDEN(_thread_sys_,x)
 #define	SYSCALL_END(x)		__END(_thread_sys_,x)
+#define	SYSCALL_END_HIDDEN(x)	__END_HIDDEN(_thread_sys_,x)

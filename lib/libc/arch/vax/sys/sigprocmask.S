@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigprocmask.S,v 1.10 2015/09/10 13:29:09 guenther Exp $ */
+/*	$OpenBSD: sigprocmask.S,v 1.11 2015/10/23 04:39:25 guenther Exp $ */
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -31,7 +31,7 @@
 #include "SYS.h"
 
 
-SYSENTRY(sigprocmask)
+SYSENTRY_HIDDEN(sigprocmask)
 	tstl	8(%ap)			# check new sigset pointer
 	bneq	1f			# if not null, indirect
 /*	movl	$0,8(%ap)		# null mask pointer: block empty set */
@@ -48,4 +48,4 @@ SYSENTRY(sigprocmask)
 	ret
 4:
 	jmp	_C_LABEL(__cerror)
-SYSCALL_END(sigprocmask)
+SYSCALL_END_HIDDEN(sigprocmask)

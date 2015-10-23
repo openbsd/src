@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigprocmask.S,v 1.5 2005/08/07 16:40:13 espie Exp $	*/
+/*	$OpenBSD: sigprocmask.S,v 1.6 2015/10/23 04:39:24 guenther Exp $	*/
 /*	$NetBSD: sigprocmask.S,v 1.2 1996/10/17 03:08:21 cgd Exp $	*/
 
 /*
@@ -30,7 +30,7 @@
 
 #include "SYS.h"
 
-SYSLEAF(sigprocmask, 3)
+SYSLEAF_HIDDEN(sigprocmask, 3)
 	mov	a2, a5			/* safe */
 	cmoveq	a1, 1, a0		/* if set == NULL, how = SIG_BLOCK */
 	beq	a1, Ldoit		/* and set = 0, and do it. */
@@ -41,4 +41,4 @@ Ldoit:	CALLSYS_ERROR(sigprocmask)
 Lret:	mov	zero, v0
 	RET
 
-SYSEND(sigprocmask)
+SYSCALL_END_HIDDEN(sigprocmask)

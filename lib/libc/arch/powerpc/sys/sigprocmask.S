@@ -1,4 +1,4 @@
-/* $OpenBSD: sigprocmask.S,v 1.9 2015/09/05 06:22:47 guenther Exp $ */
+/* $OpenBSD: sigprocmask.S,v 1.10 2015/10/23 04:39:24 guenther Exp $ */
 
 /*
  * Copyright (c) 1996 Dale Rahn
@@ -30,7 +30,7 @@
 #include "SYS.h"
 
 	.text
-PREFIX(sigprocmask)
+PREFIX_HIDDEN(sigprocmask)
 	stwu	1, -16(1)
 	stw	5, 12(1)
 	
@@ -60,4 +60,4 @@ PREFIX(sigprocmask)
 	li	3, 0
 	addi	1, 1, 16
 	blr
-SYSCALL_END(sigprocmask)
+SYSCALL_END_HIDDEN(sigprocmask)

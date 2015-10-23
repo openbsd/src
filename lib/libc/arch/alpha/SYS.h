@@ -1,4 +1,4 @@
-/*	$OpenBSD: SYS.h,v 1.12 2015/09/10 13:29:09 guenther Exp $	*/
+/*	$OpenBSD: SYS.h,v 1.13 2015/10/23 04:39:24 guenther Exp $	*/
 /*	$NetBSD: SYS.h,v 1.4 1996/10/17 03:03:53 cgd Exp $	*/
 
 /*
@@ -132,7 +132,9 @@ __END(p,label);
 # define PSEUDO_NOERROR(x,y)	ALIAS(_thread_sys_,x) \
 				__PSEUDO_NOERROR(_thread_sys_,x,y); \
 				_END(x)
+# define SYSLEAF_HIDDEN(x,e)	__LEAF(_thread_sys_,x,e)
 # define SYSLEAF(x,e)		ALIAS(_thread_sys_,x) \
-				__LEAF(_thread_sys_,x,e)
-# define SYSEND(x)		__END(_thread_sys_,x); \
+				SYSLEAF_HIDDEN(x,e)
+# define SYSCALL_END_HIDDEN(x)	__END(_thread_sys_,x)
+# define SYSCALL_END(x)		SYSCALL_END_HIDDEN(x); \
 				_END(x)

@@ -29,7 +29,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *      $OpenBSD: SYS.h,v 1.10 2015/09/05 17:32:18 miod Exp $ 
+ *      $OpenBSD: SYS.h,v 1.11 2015/10/23 04:39:24 guenther Exp $ 
  */
 
 #include <sys/syscall.h>
@@ -78,8 +78,6 @@
 # define __END2(p,x)		__END2_HIDDEN(p,x);	\
 				.size x, . - x
 
-# define __CLABEL2(p,x)		_C_LABEL(p ## x)
-
 #define __PSEUDO_NOERROR(p,x,y)				\
 		__LEAF2(p,x, 0);			\
 			__DO_SYSCALL(y);		\
@@ -89,7 +87,7 @@
 #define __PSEUDO(p,x,y)   				\
 		__LEAF2(p,x,32);			\
 			PTR_SUBU sp,32;			\
-			SETUP_GP64(16,__CLABEL2(p,x));	\
+			SETUP_GP64(16,_HIDDEN(x));	\
 			__DO_SYSCALL(y);		\
 			bne	a3,zero,1f;		\
 			RESTORE_GP64;			\
@@ -103,7 +101,7 @@
 #define __PSEUDO_HIDDEN(p,x,y)   			\
 		LEAF(p ## x,32);			\
 			PTR_SUBU sp,32;			\
-			SETUP_GP64(16,__CLABEL2(p,x));	\
+			SETUP_GP64(16,_HIDDEN(x));	\
 			__DO_SYSCALL(y);		\
 			bne	a3,zero,1f;		\
 			RESTORE_GP64;			\
@@ -122,5 +120,7 @@
 #define PSEUDO_NOERROR(x,y)	__PSEUDO_NOERROR(_thread_sys_,x,y)
 
 #define	SYSLEAF(x, sz)		__LEAF2(_thread_sys_,x, sz)
-#define	SYSEND(x)		__END2(_thread_sys_,x)
+#define	SYSLEAF_HIDDEN(x, sz)	LEAF(_thread_sys_ ## x, sz)
+#define	SYSCALL_END(x)		__END2(_thread_sys_,x)
+#define	SYSCALL_END_HIDDEN(x)	__END2_HIDDEN(_thread_sys_,x)
 
