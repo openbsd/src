@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.65 2015/10/23 00:56:52 deraadt Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.66 2015/10/23 01:10:01 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -86,7 +86,6 @@ const u_int pledge_syscalls[SYS_MAXSYSCALL] = {
 	[SYS_getpid] = PLEDGE_SELF,
 	[SYS_umask] = PLEDGE_SELF,
 	[SYS_sysctl] = PLEDGE_SELF,	/* read-only; narrow subset */
-	[SYS_adjtime] = PLEDGE_SELF,	/* read-only */
 
 	[SYS_setsockopt] = PLEDGE_SELF,	/* white list */
 	[SYS_getsockopt] = PLEDGE_SELF,
@@ -115,6 +114,10 @@ const u_int pledge_syscalls[SYS_MAXSYSCALL] = {
 	[SYS_pledge] = PLEDGE_SELF,
 
 	[SYS_wait4] = PLEDGE_SELF,
+
+	[SYS_adjtime] = PLEDGE_SELF,	/* read-only, unless "settime" */
+	[SYS_adjfreq] = PLEDGE_SETTIME,
+	[SYS_settimeofday] = PLEDGE_SETTIME,
 
 	[SYS_poll] = PLEDGE_RW,
 	[SYS_kevent] = PLEDGE_RW,
@@ -191,6 +194,7 @@ const u_int pledge_syscalls[SYS_MAXSYSCALL] = {
 	[SYS_readlink] = PLEDGE_SELF,		/* further checks in namei */
 
 	[SYS_chdir] = PLEDGE_RPATH,
+	[SYS_chroot] = PLEDGE_ID,
 	[SYS_openat] = PLEDGE_RPATH | PLEDGE_WPATH,
 	[SYS_fstatat] = PLEDGE_RPATH | PLEDGE_WPATH,
 	[SYS_faccessat] = PLEDGE_RPATH | PLEDGE_WPATH,
@@ -248,6 +252,8 @@ const u_int pledge_syscalls[SYS_MAXSYSCALL] = {
 	[SYS_getpeername] = PLEDGE_INET | PLEDGE_UNIX,
 
 	[SYS_flock] = PLEDGE_FLOCK | PLEDGE_YP_ACTIVE,
+
+	[SYS_swapctl] = PLEDGE_VMINFO,	/* XXX should limit to "get" operations */
 };
 
 static const struct {
@@ -278,6 +284,9 @@ static const struct {
 	{ "fattr",		PLEDGE_FATTR },
 	{ "prot_exec",		PLEDGE_PROTEXEC },
 	{ "flock",		PLEDGE_FLOCK },
+	{ "ps",			PLEDGE_PS },
+	{ "vminfo",		PLEDGE_VMINFO },
+	{ "settime",		PLEDGE_SETTIME },
 };
 
 int
@@ -644,6 +653,11 @@ pledge_namei(struct proc *p, char *origpath)
 		    strcmp(path, "/etc/resolv.conf") == 0)
 			return (0);
 		break;
+	case SYS_chroot:
+		/* Allowed for "proc id" */
+		if ((p->p_p->ps_pledge & PLEDGE_PROC))
+			return (0);
+		break;
 	}
 
 	/* ensure PLEDGE_RPATH request for doing read */
@@ -857,6 +871,53 @@ pledge_sysctl_check(struct proc *p, int miblen, int *mib, void *new)
 			return (0);
 	}
 
+	if (p->p_p->ps_pledge & (PLEDGE_PS | PLEDGE_VMINFO)) {
+		if (miblen == 2 &&			/* kern.fscale */
+		    mib[0] == CTL_KERN && mib[1] == KERN_FSCALE)
+			return (0);
+		if (miblen == 2 &&			/* kern.boottime */
+		    mib[0] == CTL_KERN && mib[1] == KERN_BOOTTIME)
+			return (0);
+		if (miblen == 2 &&			/* kern.consdev */
+		    mib[0] == CTL_KERN && mib[1] == KERN_CONSDEV)
+			return (0);
+		if (miblen == 2 &&			/* kern.loadavg */
+		    mib[0] == CTL_VM && mib[1] == VM_LOADAVG)
+			return (0);
+		if (miblen == 3 &&			/* kern.cptime2 */
+		    mib[0] == CTL_KERN && mib[1] == KERN_CPTIME2)
+			return (0);
+	}
+
+	if ((p->p_p->ps_pledge & PLEDGE_PS)) {
+		if (miblen == 4 &&			/* kern.procargs.* */
+		    mib[0] == CTL_KERN && mib[1] == KERN_PROC_ARGS &&
+		    (mib[3] == KERN_PROC_ARGV || mib[3] == KERN_PROC_ENV))
+			return (0);
+		if (miblen == 6 &&			/* kern.proc.* */
+		    mib[0] == CTL_KERN && mib[1] == KERN_PROC)
+			return (0);
+		if (miblen == 2 &&			/* hw.physmem */
+		    mib[0] == CTL_HW && mib[1] == HW_PHYSMEM64)
+			return (0);
+		if (miblen == 2 &&			/* kern.ccpu */
+		    mib[0] == CTL_KERN && mib[1] == KERN_CCPU)
+			return (0);
+		if (miblen == 2 &&			/* vm.maxslp */
+		    mib[0] == CTL_VM && mib[1] == VM_MAXSLP)
+			return (0);
+	}
+
+	if ((p->p_p->ps_pledge & PLEDGE_VMINFO)) {
+		if (miblen == 2 &&			/* vm.uvmexp */
+		    mib[0] == CTL_VM && mib[1] == VM_UVMEXP)
+			return (0);
+		if (miblen == 3 &&			/* vfs.generic.bcachestat */
+		    mib[0] == CTL_VFS && mib[1] == VFS_GENERIC &&
+		    mib[2] == VFS_BCACHESTAT)
+			return (0);
+	}
+
 	if ((p->p_p->ps_pledge & (PLEDGE_ROUTE | PLEDGE_INET))) {
 		if (miblen == 6 &&		/* getifaddrs() */
 		    mib[0] == CTL_NET && mib[1] == PF_ROUTE &&
@@ -932,6 +993,8 @@ pledge_adjtime_check(struct proc *p, const void *v)
 	if ((p->p_p->ps_flags & PS_PLEDGE) == 0)
 		return (0);
 
+	if ((p->p_p->ps_pledge & PLEDGE_SETTIME))
+		return (0);
 	if (delta)
 		return (EFAULT);
 	return (0);
@@ -1189,6 +1252,14 @@ pledge_flock_check(struct proc *p)
 	if ((p->p_p->ps_pledge & PLEDGE_FLOCK))
 		return (0);
 	return (pledge_fail(p, EPERM, PLEDGE_FLOCK));
+}
+
+int
+pledge_swapctl_check(struct proc *p)
+{
+	if ((p->p_p->ps_flags & PS_PLEDGE) == 0)
+		return (0);
+	return (EPERM);
 }
 
 void

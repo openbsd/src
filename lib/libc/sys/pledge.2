@@ -1,4 +1,4 @@
-.\" $OpenBSD: pledge.2,v 1.8 2015/10/22 09:23:41 deraadt Exp $
+.\" $OpenBSD: pledge.2,v 1.9 2015/10/23 01:10:01 deraadt Exp $
 .\"
 .\" Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 22 2015 $
+.Dd $Mdocdate: October 23 2015 $
 .Dt PLEDGE 2
 .Os
 .Sh NAME
@@ -455,6 +455,28 @@ with
 .Xr mmap 2
 and
 .Xr mprotect 2 .
+.It Va "settime"
+Allows the setting of system time, via the
+.Xr settimeofday 2 ,
+.Xr adjtime 2 ,
+and
+.Xr adjfreq 2
+system calls.
+.It Va "ps"
+Allows enough
+.Xr sysctl 2
+interfaces to allow inspection of processes operating on the system using
+programs like
+.Xr ps 1 .
+Allows the following system calls:
+.It Va "vminfo"
+Allows enough
+.Xr sysctl 2
+interfaces to allow inspection of the system's virtual memory by
+programs like
+.Xr top 1 ,
+and
+.Xr vmstat 8 .
 .It Va "id"
 Allows the following system calls:
 .Pp

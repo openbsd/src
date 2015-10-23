@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_swap.c,v 1.137 2015/09/06 17:06:43 deraadt Exp $	*/
+/*	$OpenBSD: uvm_swap.c,v 1.138 2015/10/23 01:10:01 deraadt Exp $	*/
 /*	$NetBSD: uvm_swap.c,v 1.40 2000/11/17 11:39:39 mrg Exp $	*/
 
 /*
@@ -51,6 +51,7 @@
 #include <sys/swap.h>
 #include <sys/disk.h>
 #include <sys/task.h>
+#include <sys/pledge.h>
 #if defined(NFSCLIENT)
 #include <sys/socket.h>
 #include <sys/domain.h>
@@ -669,7 +670,7 @@ sys_swapctl(struct proc *p, void *v, register_t *retval)
 	}
 
 	/* all other requests require superuser privs.   verify. */
-	if ((error = suser(p, 0)))
+	if ((error = suser(p, 0)) || pledge_swapctl_check(p))
 		goto out;
 
 	/*

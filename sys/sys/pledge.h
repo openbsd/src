@@ -1,4 +1,4 @@
-/*	$OpenBSD: pledge.h,v 1.9 2015/10/20 18:04:03 deraadt Exp $	*/
+/*	$OpenBSD: pledge.h,v 1.10 2015/10/23 01:10:01 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -47,6 +47,9 @@
 #define PLEDGE_ROUTE	0x00100000	/* routing lookups */
 #define PLEDGE_MCAST	0x00200000	/* multicast joins */
 #define PLEDGE_FLOCK	0x00400000	/* file locking */
+#define PLEDGE_PS	0x00800000	/* ps listings */
+#define PLEDGE_VMINFO	0x01000000	/* vminfo listings */
+#define PLEDGE_SETTIME	0x02000000	/* able to set/adj time/freq */
 
 #define PLEDGE_ABORT	0x08000000	/* SIGABRT instead of SIGKILL */
 
@@ -72,6 +75,7 @@ int	pledge_sockopt_check(struct proc *p, int level, int optname);
 int	pledge_socket_check(struct proc *p, int dns);
 int	pledge_ioctl_check(struct proc *p, long com, void *);
 int	pledge_flock_check(struct proc *p);
+int	pledge_swapctl_check(struct proc *p);
 
 #define PLEDGE_MAXPATHS	8192
 
