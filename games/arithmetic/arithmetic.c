@@ -1,4 +1,4 @@
-/*	$OpenBSD: arithmetic.c,v 1.20 2015/10/10 22:32:55 doug Exp $	*/
+/*	$OpenBSD: arithmetic.c,v 1.21 2015/10/24 17:13:27 mmcc Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -222,8 +222,8 @@ retry:
 			(void)printf("\n");
 			return(EOF);
 		}
-		for (p = line; isspace(*p); ++p);
-		if (!isdigit(*p)) {
+		for (p = line; isspace((unsigned char)*p); ++p);
+		if (!isdigit((unsigned char)*p)) {
 			(void)printf("Please type a number.\n");
 			continue;
 		}
