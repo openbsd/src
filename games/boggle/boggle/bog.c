@@ -1,4 +1,4 @@
-/*	$OpenBSD: bog.c,v 1.24 2014/12/04 06:12:33 deraadt Exp $	*/
+/*	$OpenBSD: bog.c,v 1.25 2015/10/24 17:23:14 mmcc Exp $	*/
 /*	$NetBSD: bog.c,v 1.5 1995/04/24 12:22:32 cgd Exp $	*/
 
 /*-
@@ -138,7 +138,7 @@ main(int argc, char *argv[])
 	}
 
 	if (argc > 0) {
-		if (islower(argv[0][0])) {
+		if (islower((unsigned char)argv[0][0])) {
 			if (strlen(argv[0]) != ncubes) {
 				usage();
 			} else {
