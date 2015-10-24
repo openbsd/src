@@ -1,4 +1,4 @@
-/*	$OpenBSD: primes.c,v 1.16 2015/09/07 00:49:20 tedu Exp $	*/
+/*	$OpenBSD: primes.c,v 1.17 2015/10/24 17:34:16 mmcc Exp $	*/
 /*	$NetBSD: primes.c,v 1.5 1995/04/24 12:24:47 cgd Exp $	*/
 
 /*
@@ -184,7 +184,7 @@ read_num_buf(void)
 			exit(0);
 		}
 		buf[strcspn(buf, "\n")] = '\0';
-		for (p = buf; isblank(*p); ++p)
+		for (p = buf; isblank((unsigned char)*p); ++p)
 			;
 		if (*p == '\0')
 			continue;
@@ -194,7 +194,7 @@ read_num_buf(void)
 		val = strtoul(buf, &p, 10);
 		if (errno)
 			err(1, "%s", buf);
-		for (; isblank(*p); ++p)
+		for (; isblank((unsigned char)*p); ++p)
 			;
 		if (*p != '\0')
 			errx(1, "%s: illegal numeric format.", buf);
