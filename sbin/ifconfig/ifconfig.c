@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.303 2015/10/23 01:19:04 dlg Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.304 2015/10/24 10:52:05 reyk Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -276,6 +276,8 @@ void	setifipdst(const char *, int);
 void	setifdesc(const char *, int);
 void	unsetifdesc(const char *, int);
 void	printifhwfeatures(const char *, int);
+void	setpair(const char *, int);
+void	unsetpair(const char *, int);
 #else
 void	setignore(const char *, int);
 #endif
@@ -492,6 +494,8 @@ const struct	cmd {
 	{ "-descr",	1,		0,		unsetifdesc },
 	{ "wol",	IFXF_WOL,	0,		setifxflags },
 	{ "-wol",	-IFXF_WOL,	0,		setifxflags },
+	{ "patch",	NEXTARG,	0,		setpair },
+	{ "-patch",	1,		0,		unsetpair },
 #else /* SMALL */
 	{ "powersave",	NEXTARG0,	0,		setignore },
 	{ "priority",	NEXTARG,	0,		setignore },
@@ -2919,6 +2923,7 @@ status(int link, struct sockaddr_dl *sdl, int ls)
 	struct ifreq ifrdesc;
 	struct ifkalivereq ikardesc;
 	char ifdescr[IFDESCRSIZE];
+	char ifname[IF_NAMESIZE];
 #endif
 	uint64_t *media_list;
 	int i;
@@ -2957,6 +2962,9 @@ status(int link, struct sockaddr_dl *sdl, int ls)
 	    (ikardesc.ikar_timeo != 0 || ikardesc.ikar_cnt != 0))
 		printf("\tkeepalive: timeout %d count %d\n",
 		    ikardesc.ikar_timeo, ikardesc.ikar_cnt);
+	if (ioctl(s, SIOCGIFPAIR, &ifrdesc) == 0 && ifrdesc.ifr_index != 0 &&
+	    if_indextoname(ifrdesc.ifr_index, ifname) != NULL)
+		printf("\tpatch: %s\n", ifname);
 #endif
 	vlan_status();
 #ifndef SMALL
@@ -5209,6 +5217,29 @@ setinstance(const char *id, int param)
 	ifr.ifr_rdomainid = rdomainid;
 	if (ioctl(s, SIOCSIFRDOMAIN, (caddr_t)&ifr) < 0)
 		warn("SIOCSIFRDOMAIN");
+}
+#endif
+
+#ifndef SMALL
+void
+setpair(const char *val, int d)
+{
+	strlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
+	if ((ifr.ifr_index = if_nametoindex(val)) == 0) {
+		errno = ENOENT;
+		err(1, "patch %s", val);
+	}
+	if (ioctl(s, SIOCSIFPAIR, (caddr_t)&ifr) < 0)
+		warn("SIOCSIFPAIR");
+}
+
+void
+unsetpair(const char *val, int d)
+{
+	ifr.ifr_index = 0;
+	strlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
+	if (ioctl(s, SIOCSIFPAIR, (caddr_t)&ifr) < 0)
+		warn("SIOCSIFPAIR");
 }
 #endif
 

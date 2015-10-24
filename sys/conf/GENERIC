@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.221 2015/10/23 15:10:53 claudio Exp $
+#	$OpenBSD: GENERIC,v 1.222 2015/10/24 10:52:05 reyk Exp $
 #
 #	Machine-independent option; used by all architectures for their
 #	GENERIC kernel
@@ -96,6 +96,7 @@ pseudo-device	gre		# GRE encapsulation interface
 pseudo-device	loop		# network loopback
 pseudo-device	mpe		# MPLS PE interface
 pseudo-device	mpw		# MPLS pseudowire support
+pseudo-device	pair		# Virtual Ethernet interface pair
 pseudo-device	ppp		# PPP
 pseudo-device	pppoe		# PPP over Ethernet (RFC 2516)
 pseudo-device	pppx		# PPP multiplexer

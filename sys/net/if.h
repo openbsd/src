@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.h,v 1.171 2015/10/23 10:22:29 claudio Exp $	*/
+/*	$OpenBSD: if.h,v 1.172 2015/10/24 10:52:05 reyk Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -363,6 +363,7 @@ struct	ifreq {
 		uint32_t		ifru_vnetid;
 		uint64_t		ifru_media;
 		caddr_t			ifru_data;
+		unsigned int		ifru_index;
 	} ifr_ifru;
 #define	ifr_addr	ifr_ifru.ifru_addr	/* address */
 #define	ifr_dstaddr	ifr_ifru.ifru_dstaddr	/* other end of p-to-p link */
@@ -376,6 +377,7 @@ struct	ifreq {
 #define ifr_vnetid	ifr_ifru.ifru_vnetid	/* Virtual Net Id */
 #define ifr_ttl		ifr_ifru.ifru_metric	/* tunnel TTL (overload) */
 #define	ifr_data	ifr_ifru.ifru_data	/* for use by interface */
+#define ifr_index	ifr_ifru.ifru_index	/* interface index */
 };
 
 struct ifaliasreq {

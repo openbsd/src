@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.259 2015/10/24 08:42:57 jmc Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.260 2015/10/24 10:52:05 reyk Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -1269,6 +1269,33 @@ The
 .Ar dest-address
 is an IPv4 address that will be used to find the nexthop in the MPLS
 network.
+.El
+.\" PAIR
+.Sh PAIR
+.nr nS 1
+.Bk -words
+.Nm ifconfig
+.Ar pair-interface
+.Op Oo Fl Oc Ns Cm patch Ar interface
+.Ek
+.nr nS 0
+.Pp
+The following options are available for a
+.Xr pair 4
+interface:
+.Bl -tag -width Ds
+.It Cm patch Ar interface
+Connect the interface with a second
+.Xr pair 4
+interface.
+Any outgoing packets from the first
+.Ar pair-interface
+will be received by the second
+.Ar interface
+and vice versa.
+This link allows to interconnect two routing domains locally.
+.It Fl patch
+If configured, disconnect the interface pair.
 .El
 .\" PFLOW
 .Sh PFLOW

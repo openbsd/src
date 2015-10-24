@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_var.h,v 1.49 2015/10/22 17:48:34 mpi Exp $	*/
+/*	$OpenBSD: if_var.h,v 1.50 2015/10/24 10:52:05 reyk Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -429,6 +429,9 @@ void	if_clone_detach(struct if_clone *);
 
 int	if_clone_create(const char *);
 int	if_clone_destroy(const char *);
+
+struct if_clone *
+	if_clone_lookup(const char *, int *);
 
 int     sysctl_mq(int *, u_int, void *, size_t *, void *, size_t,
 	    struct mbuf_queue *);
