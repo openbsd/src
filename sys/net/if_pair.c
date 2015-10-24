@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pair.c,v 1.1 2015/10/24 10:52:05 reyk Exp $	*/
+/*	$OpenBSD: if_pair.c,v 1.2 2015/10/24 11:01:39 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -258,7 +258,6 @@ pairioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 				break;
 			}
 
-			pairedsc = newifp->if_softc;
 			pairedsc->sc_pairedif = ifp->if_index;
 			sc->sc_pairedif = ifr->ifr_index;
 		} else
