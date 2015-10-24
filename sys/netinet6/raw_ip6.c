@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip6.c,v 1.85 2015/10/19 12:11:28 mpi Exp $	*/
+/*	$OpenBSD: raw_ip6.c,v 1.86 2015/10/24 16:08:48 mpi Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.69 2001/03/04 15:55:44 itojun Exp $	*/
 
 /*
@@ -344,7 +344,6 @@ rip6_output(struct mbuf *m, ...)
 	u_int	plen = m->m_pkthdr.len;
 	int error = 0;
 	struct ip6_pktopts opt, *optp = NULL, *origoptp;
-	struct ifnet *oifp = NULL;
 	int type, code;		/* for ICMPv6 output statistics only */
 	int priv = 0;
 	va_list ap;
@@ -421,8 +420,6 @@ rip6_output(struct mbuf *m, ...)
 			goto bad;
 
 		ip6->ip6_src = *in6a;
-		if (rtisvalid(in6p->inp_route6.ro_rt))
-			oifp = in6p->inp_route6.ro_rt->rt_ifp;
 	}
 
 	ip6->ip6_flow = in6p->inp_flowinfo & IPV6_FLOWINFO_MASK;
@@ -432,7 +429,7 @@ rip6_output(struct mbuf *m, ...)
 	ip6->ip6_plen  = htons((u_short)plen);
 #endif
 	ip6->ip6_nxt   = in6p->inp_ipv6.ip6_nxt;
-	ip6->ip6_hlim = in6_selecthlim(in6p, oifp);
+	ip6->ip6_hlim = in6_selecthlim(in6p);
 
 	if (so->so_proto->pr_protocol == IPPROTO_ICMPV6 ||
 	    in6p->inp_cksum6 != -1) {

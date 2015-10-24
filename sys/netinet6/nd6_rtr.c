@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_rtr.c,v 1.126 2015/10/22 15:37:47 bluhm Exp $	*/
+/*	$OpenBSD: nd6_rtr.c,v 1.127 2015/10/24 16:08:48 mpi Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.97 2001/02/07 11:09:13 itojun Exp $	*/
 
 /*
@@ -435,8 +435,12 @@ nd6_ra_input(struct mbuf *m, int off, int icmp6len)
 	}
 	if (nd_ra->nd_ra_retransmit)
 		ndi->retrans = ntohl(nd_ra->nd_ra_retransmit);
-	if (nd_ra->nd_ra_curhoplimit)
-		ndi->chlim = nd_ra->nd_ra_curhoplimit;
+	if (nd_ra->nd_ra_curhoplimit) {
+		/*
+		 * Ignore it.  The router doesn't know the diameter of
+		 * the Internet better than this source code.
+		 */
+	}
 	dr = defrtrlist_update(&dr0);
     }
 

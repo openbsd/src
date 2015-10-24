@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.149 2015/10/02 09:51:54 tedu Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.150 2015/10/24 16:08:48 mpi Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -254,7 +254,7 @@ tcp_template(tp)
 
 			ip6->ip6_nxt = IPPROTO_TCP;
 			ip6->ip6_plen = htons(sizeof(struct tcphdr)); /*XXX*/
-			ip6->ip6_hlim = in6_selecthlim(inp, NULL);	/*XXX*/
+			ip6->ip6_hlim = in6_selecthlim(inp);	/*XXX*/
 
 			th = (struct tcphdr *)(mtod(m, caddr_t) +
 				sizeof(struct ip6_hdr));
@@ -400,7 +400,7 @@ tcp_respond(struct tcpcb *tp, caddr_t template, struct tcphdr *th0,
 	case AF_INET6:
 		ip6->ip6_flow = htonl(0x60000000);
 		ip6->ip6_nxt  = IPPROTO_TCP;
-		ip6->ip6_hlim = in6_selecthlim(tp ? tp->t_inpcb : NULL, NULL);	/*XXX*/
+		ip6->ip6_hlim = in6_selecthlim(tp ? tp->t_inpcb : NULL);	/*XXX*/
 		ip6->ip6_plen = tlen - sizeof(struct ip6_hdr);
 		ip6->ip6_plen = htons(ip6->ip6_plen);
 		ip6_output(m, tp ? tp->t_inpcb->inp_outputopts6 : NULL,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_src.c,v 1.66 2015/10/24 12:33:16 mpi Exp $	*/
+/*	$OpenBSD: in6_src.c,v 1.67 2015/10/24 16:08:48 mpi Exp $	*/
 /*	$KAME: in6_src.c,v 1.36 2001/02/06 04:08:17 itojun Exp $	*/
 
 /*
@@ -470,14 +470,12 @@ in6_selectif(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
  * 3. The system default hoplimit.
 */
 int
-in6_selecthlim(struct inpcb *in6p, struct ifnet *ifp)
+in6_selecthlim(struct inpcb *in6p)
 {
 	if (in6p && in6p->inp_hops >= 0)
 		return (in6p->inp_hops);
-	else if (ifp)
-		return (ND_IFINFO(ifp)->chlim);
-	else
-		return (ip6_defhlim);
+
+	return (ip6_defhlim);
 }
 
 /*

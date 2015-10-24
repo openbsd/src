@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_pcb.c,v 1.81 2015/10/20 18:04:03 deraadt Exp $	*/
+/*	$OpenBSD: in6_pcb.c,v 1.82 2015/10/24 16:08:48 mpi Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -369,7 +369,6 @@ in6_pcbconnect(struct inpcb *inp, struct mbuf *nam)
 {
 	struct in6_addr *in6a = NULL;
 	struct sockaddr_in6 *sin6 = mtod(nam, struct sockaddr_in6 *);
-	struct ifnet *ifp = NULL;	/* outgoing interface */
 	int error = 0;
 	struct sockaddr_in6 tmp;
 
@@ -412,10 +411,7 @@ in6_pcbconnect(struct inpcb *inp, struct mbuf *nam)
 	if (error)
 		return (error);
 
-	if (rtisvalid(inp->inp_route6.ro_rt))
-		ifp = inp->inp_route6.ro_rt->rt_ifp;
-
-	inp->inp_ipv6.ip6_hlim = (u_int8_t)in6_selecthlim(inp, ifp);
+	inp->inp_ipv6.ip6_hlim = (u_int8_t)in6_selecthlim(inp);
 
 	if (in_pcblookup(inp->inp_table, &sin6->sin6_addr, sin6->sin6_port,
 	    IN6_IS_ADDR_UNSPECIFIED(&inp->inp_laddr6) ? in6a : &inp->inp_laddr6,

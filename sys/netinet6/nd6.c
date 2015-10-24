@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.158 2015/10/22 16:44:54 mpi Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.159 2015/10/24 16:08:48 mpi Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -147,7 +147,6 @@ nd6_ifattach(struct ifnet *ifp)
 
 	nd->initialized = 1;
 
-	nd->chlim = IPV6_DEFHLIM;
 	nd->basereachable = REACHABLE_TIME;
 	nd->reachable = ND_COMPUTE_RTIME(nd->basereachable);
 	nd->retrans = RETRANS_TIMER;
