@@ -1,5 +1,5 @@
 #!/bin/sh
-# $OpenBSD: keywords.sh,v 1.28 2015/07/18 00:05:02 phessler Exp $
+# $OpenBSD: keywords.sh,v 1.29 2015/10/24 11:53:41 bluhm Exp $
 # $NetBSD: keywords.sh,v 1.2 1996/11/15 18:57:21 gwr Exp $
 # @(#)keywords	8.2 (Berkeley) 3/19/94
 #
@@ -67,7 +67,6 @@ show
 ssthresh
 static
 swap
-xresolve
 _EOF_
 
 
