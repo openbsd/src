@@ -1,4 +1,4 @@
-/*	$OpenBSD: sort.c,v 1.84 2015/10/18 17:02:03 millert Exp $	*/
+/*	$OpenBSD: sort.c,v 1.85 2015/10/24 15:19:01 millert Exp $	*/
 
 /*-
  * Copyright (C) 2009 Gabor Kovesdan <gabor@FreeBSD.org>
@@ -1147,11 +1147,12 @@ main(int argc, char *argv[])
 
 		ks = &(keys[i]);
 
-		if (sort_modifier_empty(&(ks->sm)) && !(ks->pos1b) &&
-		    !(ks->pos2b)) {
+		if (sort_modifier_empty(&(ks->sm))) {
 #ifdef GNUSORT_COMPATIBILITY
-			ks->pos1b = sm->bflag;
-			ks->pos2b = sm->bflag;
+			if (!(ks->pos1b) && !(ks->pos2b)) {
+				ks->pos1b = sm->bflag;
+				ks->pos2b = sm->bflag;
+			}
 #endif
 			memcpy(&(ks->sm), sm, sizeof(struct sort_mods));
 		}
