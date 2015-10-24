@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkdict.c,v 1.11 2009/10/27 23:59:24 deraadt Exp $	*/
+/*	$OpenBSD: mkdict.c,v 1.12 2015/10/24 17:27:06 mmcc Exp $	*/
 /*	$NetBSD: mkdict.c,v 1.2 1995/03/21 12:14:49 cgd Exp $	*/
 
 /*-
@@ -80,7 +80,7 @@ main(int argc, char *argv[])
 		}
 		len = 0;
 		for (p = buf[current]; *p != '\n'; p++) {
-			if (!islower(*p))
+			if (!islower((unsigned char)*p))
 				break;
 			if (*p == 'q') {
 				q = p + 1;
