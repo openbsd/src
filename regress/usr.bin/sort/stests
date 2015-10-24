@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: stests,v 1.16 2015/10/13 22:14:51 tim Exp $
+#	$OpenBSD: stests,v 1.17 2015/10/24 15:16:53 millert Exp $
 #	from: @(#)stests	8.1 (Berkeley) 6/6/93
 
 #Latest version.  My sort passes all tests because I wrote it.
@@ -1038,3 +1038,20 @@ $SORTPROG -c in out 2>/dev/null
 test $? -eq 2 || echo ${TEST}A failed
 $SORTPROG -C in out 2>/dev/null
 test $? -eq 2 || echo ${TEST}B failed
+
+#---------------------------------------------------------------
+TEST=45; echo $TEST	# field limits with -b
+cat <<! >in
+ a	2
+a	1
+ b	2
+b	1
+!
+cat <<! >out
+b	1
+ b	2
+a	1
+ a	2
+!
+
+xsort "" -br -k1,1 -k2n
