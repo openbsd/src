@@ -1,4 +1,4 @@
-/*	$OpenBSD: fortune.c,v 1.43 2015/08/26 14:49:20 semarie Exp $	*/
+/*	$OpenBSD: fortune.c,v 1.44 2015/10/24 18:02:28 mmcc Exp $	*/
 /*	$NetBSD: fortune.c,v 1.8 1995/03/23 08:28:40 cgd Exp $	*/
 
 /*-
@@ -324,11 +324,11 @@ form_file_list(char **files, int file_cnt)
 	}
 	for (i = 0; i < file_cnt; i++) {
 		percent = NO_PROB;
-		if (!isdigit(files[i][0]))
+		if (!isdigit((unsigned char)files[i][0]))
 			sp = files[i];
 		else {
 			percent = 0;
-			for (sp = files[i]; isdigit(*sp); sp++)
+			for (sp = files[i]; isdigit((unsigned char)*sp); sp++)
 				percent = percent * 10 + *sp - '0';
 			if (percent > 100) {
 				fprintf(stderr, "percentages must be <= 100\n");
