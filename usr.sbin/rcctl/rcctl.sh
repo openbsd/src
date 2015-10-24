@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: rcctl.sh,v 1.82 2015/10/06 18:46:05 schwarze Exp $
+# $OpenBSD: rcctl.sh,v 1.83 2015/10/24 13:57:24 ajacoutot Exp $
 #
 # Copyright (c) 2014, 2015 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -31,7 +31,7 @@ usage()
 	_rc_err \
 	"usage:	rcctl get|getdef|set service | daemon [variable [arguments]]
 	rcctl [-df] action daemon ...
-	rcctl order [daemon ...]
+	rcctl disable|enable|order [daemon ...]
 	rcctl ls lsarg"
 }
 
@@ -437,8 +437,11 @@ case ${action} in
 	order)
 		shift 1
 		svcs="$*"
+		for svc in ${svcs}; do
+			svc_is_avail ${svc} || \
+				rcctl_err "service ${svc} does not exist" 2
+		done
 		;;
-	# enable|disable: undocumented, deprecated
 	disable|enable|start|stop|restart|reload|check)
 		shift 1
 		svcs="$*"
@@ -486,14 +489,14 @@ case ${action} in
 esac
 
 case ${action} in
-	disable) # undocumented, deprecated
+	disable)
 		needs_root ${action}
 		for svc in ${svcs}; do
 			svc_set ${svc} status off || ret=$?;
 		done
 		exit ${ret}
 		;;
-	enable) # undocumented, deprecated
+	enable)
 		needs_root ${action}
 		for svc in ${svcs}; do
 			svc_set ${svc} status on || ret=$?;
