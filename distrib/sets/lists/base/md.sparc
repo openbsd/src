@@ -1544,6 +1544,7 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sys/param.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sys/pciio.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sys/pipe.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/sys/pledge.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sys/poll.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sys/pool.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sys/proc.ph
@@ -1584,7 +1585,6 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sys/syslimits.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sys/syslog.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sys/systm.ph
-./usr/libdata/perl5/site_perl/sparc-openbsd/sys/pledge.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sys/task.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sys/termios.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sys/time.ph

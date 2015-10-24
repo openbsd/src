@@ -1933,6 +1933,7 @@
 ./usr/share/man/man4/svlan.4
 ./usr/share/man/man4/sym.4
 ./usr/share/man/man4/systrace.4
+./usr/share/man/man4/tap.4
 ./usr/share/man/man4/tcic.4
 ./usr/share/man/man4/tcp.4
 ./usr/share/man/man4/termios.4

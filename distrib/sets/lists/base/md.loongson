@@ -2014,6 +2014,7 @@
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/sys/param.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/sys/pciio.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/sys/pipe.ph
+./usr/libdata/perl5/site_perl/mips64el-openbsd/sys/pledge.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/sys/poll.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/sys/pool.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/sys/proc.ph
@@ -2054,7 +2055,6 @@
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/sys/syslimits.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/sys/syslog.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/sys/systm.ph
-./usr/libdata/perl5/site_perl/mips64el-openbsd/sys/pledge.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/sys/task.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/sys/termios.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/sys/time.ph
