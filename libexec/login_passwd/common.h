@@ -1,4 +1,4 @@
-/* $OpenBSD: common.h,v 1.5 2015/01/16 06:39:50 deraadt Exp $ */
+/* $OpenBSD: common.h,v 1.6 2015/10/24 13:53:20 ajacoutot Exp $ */
 /*-
  * Copyright (c) 2001 Hans Insulander <hin@openbsd.org>.
  * All rights reserved.
@@ -56,7 +56,6 @@ extern FILE *back;
 
 #ifdef PASSWD
 int pwd_login(char *, char *, char *, int, char *);
-int pwd_gensalt(char *, int, login_cap_t *, char);
 #endif
 #ifdef KRB5
 int krb5_login(char *, char *, char *, int, int, char *);
