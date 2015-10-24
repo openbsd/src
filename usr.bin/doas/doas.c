@@ -1,4 +1,4 @@
-/* $OpenBSD: doas.c,v 1.44 2015/10/22 12:43:26 tedu Exp $ */
+/* $OpenBSD: doas.c,v 1.45 2015/10/24 19:23:48 miod Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -420,9 +420,6 @@ main(int argc, char **argv, char **envp)
 	pw = getpwuid(target);
 	if (!pw)
 		errx(1, "no passwd entry for target");
-
-	if (pledge("stdio rpath id exec", NULL) == -1)
-		err(1, "pledge");
 
 	if (setusercontext(NULL, pw, target, LOGIN_SETGROUP |
 	    LOGIN_SETPRIORITY | LOGIN_SETRESOURCES | LOGIN_SETUMASK |
