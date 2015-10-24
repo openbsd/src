@@ -1,4 +1,4 @@
-/*	$OpenBSD: pig.c,v 1.12 2015/10/14 08:12:12 doug Exp $	*/
+/*	$OpenBSD: pig.c,v 1.13 2015/10/24 18:29:15 mmcc Exp $	*/
 /*	$NetBSD: pig.c,v 1.2 1995/03/23 08:41:40 cgd Exp $	*/
 
 /*-
@@ -84,9 +84,9 @@ pigout(char *buf, int len)
 	int olen, allupper, firstupper;
 
 	/* See if the word is all upper case */
-	allupper = firstupper = isupper(buf[0]);
+	allupper = firstupper = isupper((unsigned char)buf[0]);
 	for (i = 1; i < len && allupper; i++)
-		allupper = allupper && isupper(buf[i]);
+		allupper = allupper && isupper((unsigned char)buf[i]);
 
 	/*
 	 * If the word starts with a vowel, append "way".  Don't treat 'y'
@@ -103,7 +103,7 @@ pigout(char *buf, int len)
 	 * isn't treated as a vowel.
 	 */
 	if (!allupper)
-		buf[0] = tolower(buf[0]);
+		buf[0] = tolower((unsigned char)buf[0]);
 	for (start = 0, olen = len;
 	    !strchr("aeiouyAEIOUY", buf[start]) && start < olen;) {
 		ch = buf[len++] = buf[start++];
@@ -112,7 +112,7 @@ pigout(char *buf, int len)
 			buf[len++] = buf[start++];
 	}
 	if (firstupper)
-		buf[start] = toupper(buf[start]);
+		buf[start] = toupper((unsigned char)buf[start]);
 	(void)printf("%.*s%s", olen, buf + start, allupper ? "AY" : "ay");
 }
 
