@@ -16,7 +16,7 @@ our %args = (
 	    qr/CAfile larger than 50MB/ => 2,
 	    qr/Logging to FORWTLS \@tls:\/\/localhost:\d+/ => '>=4',
 	    qr/syslogd: tls_connect_socket .*: /.
-		qr/ssl verify setup failure/ => 2,
+		qr/ssl verify memory setup failure/ => 2,
 	    get_testgrep() => 1,
 	},
 	cacrt => "toobig",
