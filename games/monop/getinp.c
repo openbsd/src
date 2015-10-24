@@ -1,4 +1,4 @@
-/*	$OpenBSD: getinp.c,v 1.9 2009/10/27 23:59:26 deraadt Exp $	*/
+/*	$OpenBSD: getinp.c,v 1.10 2015/10/24 18:39:05 mmcc Exp $	*/
 /*	$NetBSD: getinp.c,v 1.4 1995/04/24 12:24:20 cgd Exp $	*/
 
 /*
@@ -79,8 +79,8 @@ getinp(prompt, list)
 		if ((sp = strchr(buf, '\n')) != NULL)
 			*sp = '\0';
 		for (sp = buf; *sp; sp++)
-			if (isupper(*sp))
-				*sp = tolower(*sp);
+			if (isupper((unsigned char)*sp))
+				*sp = tolower((unsigned char)*sp);
 		for (i = n_match = 0; list[i]; i++)
 			if (comp(list[i])) {
 				n_match++;
@@ -102,7 +102,8 @@ comp(s1)
 
 	if (buf[0] != '\0')
 		for (sp = buf, tsp = s1; *sp; ) {
-			c = isupper(*tsp) ? tolower(*tsp) : *tsp;
+			c = isupper((unsigned char)*tsp) ?
+			    tolower((unsigned char)*tsp) : *tsp;
 			tsp++;
 			if (c != *sp++)
 				return 0;
