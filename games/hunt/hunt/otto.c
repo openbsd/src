@@ -1,4 +1,4 @@
-/*	$OpenBSD: otto.c,v 1.10 2013/08/29 20:22:14 naddy Exp $	*/
+/*	$OpenBSD: otto.c,v 1.11 2015/10/24 17:46:19 mmcc Exp $	*/
 /*	$NetBSD: otto.c,v 1.2 1997/10/10 16:32:39 lukem Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
@@ -395,7 +395,7 @@ face_and_move_direction(rel_dir, distance)
 		int	i;
 		struct	item	items[NUMDIRECTIONS];
 
-		command[comlen++] = toupper(cmd);
+		command[comlen++] = toupper((unsigned char)cmd);
 		if (distance == 0) {
 			/* rotate ottolook's to be in right position */
 			for (i = 0; i < NUMDIRECTIONS; i++)
