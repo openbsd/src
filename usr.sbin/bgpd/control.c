@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.78 2015/10/17 13:07:07 reyk Exp $ */
+/*	$OpenBSD: control.c,v 1.79 2015/10/24 15:15:55 benno Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -427,11 +427,21 @@ control_dispatch_msg(struct pollfd *pfd, u_int *ctl_cnt)
 					}
 					ribreq->peerid = p->conf.id;
 				}
+				if ((ribreq->flags & 
+				     (F_CTL_ADJ_OUT | F_CTL_ADJ_IN)) && !p) {
+					/*
+					 * both in and out tables are only
+					 * meaningful if used on a single
+                                         * peer.
+					 */
+					control_result(c, CTL_RES_NOSUCHPEER);
+					break;
+				}
 				if ((ribreq->flags & F_CTL_ADJ_IN) && p &&
 				    !p->conf.softreconfig_in) {
 					/*
-					 * if no neighbor was specified we
-					 * try our best.
+					 * without softreconfig_in we do not
+					 * have an Adj-RIB-In table
 					 */
 					control_result(c, CTL_RES_NOCAP);
 					break;
