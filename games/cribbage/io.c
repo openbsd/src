@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.19 2014/05/09 23:56:26 schwarze Exp $	*/
+/*	$OpenBSD: io.c,v 1.20 2015/10/24 18:04:06 mmcc Exp $	*/
 /*	$NetBSD: io.c,v 1.9 1997/07/09 06:25:47 phil Exp $	*/
 
 /*-
@@ -318,15 +318,15 @@ number(int lo, int hi, char *prompt)
 		}
 		sum = 0;
 
-		if (!isdigit(*p))
+		if (!isdigit((unsigned char)*p))
 			sum = lo - 1;
 		else
-			while (isdigit(*p)) {
+			while (isdigit((unsigned char)*p)) {
 				tmp = 10 * sum + (*p - '0');
 				/* Overflow */
 				if (tmp < sum) {
 					sum = hi + 1;
-					while (isdigit(*p))
+					while (isdigit((unsigned char)*p))
 						++p;
 					break;
 				}
@@ -398,8 +398,8 @@ endmsg(void)
 
 	/* All messages should start with uppercase */
 	mvaddch(lastline + Y_MSG_START, SCORE_X, ' ');
-	if (islower(Msgbuf[0]) && Msgbuf[1] != ')')
-		Msgbuf[0] = toupper(Msgbuf[0]);
+	if (islower((unsigned char)Msgbuf[0]) && Msgbuf[1] != ')')
+		Msgbuf[0] = toupper((unsigned char)Msgbuf[0]);
 	mp = Msgbuf;
 	len = strlen(mp);
 	if (len / MSG_X + Lineno >= MSG_Y) {
