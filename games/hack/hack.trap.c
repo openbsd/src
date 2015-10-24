@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.trap.c,v 1.7 2009/10/27 23:59:25 deraadt Exp $	*/
+/*	$OpenBSD: hack.trap.c,v 1.8 2015/10/24 18:49:39 mmcc Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -476,7 +476,8 @@ level_tele()
 	    do {
 	      pline("To what level do you want to teleport? [type a number] ");
 	      getlin(buf);
-	    } while(!isdigit(buf[0]) && (buf[0] != '-' || !isdigit(buf[1])));
+	    } while(!isdigit((unsigned char)buf[0]) &&
+	        (buf[0] != '-' || !isdigit((unsigned char)buf[1])));
 	    newlevel = atoi(buf);
 	} else {
 	    newlevel  = 5 + rn2(20);	/* 5 - 24 */

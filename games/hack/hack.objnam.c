@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.objnam.c,v 1.9 2009/10/27 23:59:25 deraadt Exp $	*/
+/*	$OpenBSD: hack.objnam.c,v 1.10 2015/10/24 18:49:39 mmcc Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -449,9 +449,9 @@ readobjnam(char *bp, size_t len)
 		cnt = 1;
 		cp += 2;
 	}
-	if(!cnt && isdigit(*cp)){
+	if(!cnt && isdigit((unsigned char)*cp)){
 		cnt = atoi(cp);
-		while(isdigit(*cp)) cp++;
+		while(isdigit((unsigned char)*cp)) cp++;
 		while(*cp == ' ') cp++;
 	}
 	if(!cnt) cnt = 1;		/* %% what with "gems" etc. ? */
@@ -459,7 +459,7 @@ readobjnam(char *bp, size_t len)
 	if(*cp == '+' || *cp == '-'){
 		spesgn = (*cp++ == '+') ? 1 : -1;
 		spe = atoi(cp);
-		while(isdigit(*cp)) cp++;
+		while(isdigit((unsigned char)*cp)) cp++;
 		while(*cp == ' ') cp++;
 	} else {
 		p = strrchr(cp, '(');
@@ -468,7 +468,7 @@ readobjnam(char *bp, size_t len)
 			else *p = 0;
 			p++;
 			spe = atoi(p);
-			while(isdigit(*p)) p++;
+			while(isdigit((unsigned char)*p)) p++;
 			if(strcmp(p, ")")) spe = 0;
 			else spesgn = 1;
 		}
