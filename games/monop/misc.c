@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.11 2010/05/10 08:53:12 nicm Exp $	*/
+/*	$OpenBSD: misc.c,v 1.12 2015/10/24 17:44:49 mmcc Exp $	*/
 /*	$NetBSD: misc.c,v 1.4 1995/03/23 08:34:47 cgd Exp $	*/
 
 /*
@@ -106,9 +106,9 @@ get_int(prompt)
 		*sp = c;
 		if (sp == buf)
 			continue;
-		for (sp = buf; isspace(*sp); sp++)
+		for (sp = buf; isspace((unsigned char)*sp); sp++)
 			;
-		for (; isdigit(*sp); sp++) {
+		for (; isdigit((unsigned char)*sp); sp++) {
 			snum = num;
 			num = num * 10 + *sp - '0';
 			if (num < snum) {
