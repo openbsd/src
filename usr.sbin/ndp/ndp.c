@@ -1,4 +1,4 @@
-/*	$OpenBSD: ndp.c,v 1.63 2015/10/23 15:47:54 benno Exp $	*/
+/*	$OpenBSD: ndp.c,v 1.64 2015/10/24 20:41:40 matthieu Exp $	*/
 /*	$KAME: ndp.c,v 1.101 2002/07/17 08:46:33 itojun Exp $	*/
 
 /*
@@ -967,7 +967,6 @@ ifinfo(char *ifname, int argc, char **argv)
 	}
 
 	printf("linkmtu=%d", ND.linkmtu);
-	printf(", curhlim=%d", ND.chlim);
 	printf(", basereachable=%ds%dms",
 	    ND.basereachable / 1000, ND.basereachable % 1000);
 	printf(", reachable=%ds", ND.reachable);
