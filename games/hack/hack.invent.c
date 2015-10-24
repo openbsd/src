@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.invent.c,v 1.11 2015/09/27 05:13:11 guenther Exp $	*/
+/*	$OpenBSD: hack.invent.c,v 1.12 2015/10/24 17:37:56 mmcc Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -437,7 +437,7 @@ getobj(char *let, char *word)
 
 		cnt = 0;
 		ilet = readchar();
-		while(isdigit(ilet) && allowcnt) {
+		while(isdigit((unsigned char)ilet) && allowcnt) {
 			if (cnt < 100000000)
 			    cnt = 10*cnt + (ilet - '0');
 			else
@@ -445,7 +445,7 @@ getobj(char *let, char *word)
 			allowcnt = 2;	/* signal presence of cnt */
 			ilet = readchar();
 		}
-		if(isdigit(ilet)) {
+		if(isdigit((unsigned char)ilet)) {
 			pline("No count allowed with this command.");
 			continue;
 		}
