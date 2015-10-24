@@ -1,4 +1,4 @@
-/*	$OpenBSD: su.c,v 1.68 2015/10/23 03:44:59 deraadt Exp $	*/
+/*	$OpenBSD: su.c,v 1.69 2015/10/24 19:47:44 miod Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -215,9 +215,6 @@ main(int argc, char **argv)
 		fprintf(stderr, "Login incorrect\n");
 	}
 
-	if (pledge("stdio rpath exec id", NULL) == -1)
-		err(1, "pledge");
-
 	if (!altshell) {
 		if (asme) {
 			/* if asme and non-std target shell, must be root */
@@ -285,6 +282,9 @@ main(int argc, char **argv)
 		if (setenv("SHELL", shell, 1) == -1)
 			auth_err(as, 1, "unable to set environment");
 	}
+
+	if (pledge("stdio rpath exec id", NULL) == -1)
+		err(1, "pledge");
 
 	np = *argv ? argv : argv - 1;
 	if (iscsh == YES) {
