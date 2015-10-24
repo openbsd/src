@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.175 2015/10/23 13:41:41 bluhm Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.176 2015/10/24 11:58:47 mpi Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -603,7 +603,7 @@ route_output(struct mbuf *m, ...)
 			    &saved_nrt->rt_rmx);
 			/* write back the priority the kernel used */
 			rtm->rtm_priority = saved_nrt->rt_priority & RTP_MASK;
-			rtm->rtm_index = saved_nrt->rt_ifp->if_index;
+			rtm->rtm_index = saved_nrt->rt_ifidx;
 			rtm->rtm_flags = saved_nrt->rt_flags;
 			rtfree(saved_nrt);
 		}
@@ -705,8 +705,8 @@ report:
 #endif
 			info.rti_info[RTAX_IFP] = NULL;
 			info.rti_info[RTAX_IFA] = NULL;
-			if (rtm->rtm_addrs & (RTA_IFP | RTA_IFA) &&
-			    (ifp = rt->rt_ifp) != NULL) {
+			ifp = if_get(rt->rt_ifidx);
+			if (ifp != NULL && rtm->rtm_addrs & (RTA_IFP|RTA_IFA)) {
 				info.rti_info[RTAX_IFP] = sdltosa(ifp->if_sadl);
 				info.rti_info[RTAX_IFA] = rt->rt_ifa->ifa_addr;
 				if (ifp->if_flags & IFF_POINTOPOINT)
@@ -716,6 +716,7 @@ report:
 					info.rti_info[RTAX_BRD] = NULL;
 				rtm->rtm_index = ifp->if_index;
 			}
+			if_put(ifp);
 			len = rt_msg2(rtm->rtm_type, RTM_VERSION, &info, NULL,
 			    NULL);
 			if (len > rtm->rtm_msglen) {
@@ -828,7 +829,7 @@ report:
 
 			rt_setmetrics(rtm->rtm_inits, &rtm->rtm_rmx,
 			    &rt->rt_rmx);
-			rtm->rtm_index = rt->rt_ifp->if_index;
+			rtm->rtm_index = rt->rt_ifidx;
 			rtm->rtm_priority = rt->rt_priority & RTP_MASK;
 			rtm->rtm_flags = rt->rt_flags;
 			if (rt->rt_ifa && rt->rt_ifa->ifa_rtrequest)
@@ -1199,6 +1200,7 @@ sysctl_dumpentry(struct rtentry *rt, void *v, unsigned int id)
 	struct walkarg		*w = v;
 	int			 error = 0, size;
 	struct rt_addrinfo	 info;
+	struct ifnet		*ifp;
 #ifdef MPLS
 	struct sockaddr_mpls	 sa_mpls;
 #endif
@@ -1223,12 +1225,14 @@ sysctl_dumpentry(struct rtentry *rt, void *v, unsigned int id)
 	info.rti_info[RTAX_DST] = rt_key(rt);
 	info.rti_info[RTAX_GATEWAY] = rt->rt_gateway;
 	info.rti_info[RTAX_NETMASK] = rt_mask(rt);
-	if (rt->rt_ifp) {
-		info.rti_info[RTAX_IFP] = sdltosa(rt->rt_ifp->if_sadl);
+	ifp = if_get(rt->rt_ifidx);
+	if (ifp != NULL) {
+		info.rti_info[RTAX_IFP] = sdltosa(ifp->if_sadl);
 		info.rti_info[RTAX_IFA] = rt->rt_ifa->ifa_addr;
-		if (rt->rt_ifp->if_flags & IFF_POINTOPOINT)
+		if (ifp->if_flags & IFF_POINTOPOINT)
 			info.rti_info[RTAX_BRD] = rt->rt_ifa->ifa_dstaddr;
 	}
+	if_put(ifp);
 	info.rti_info[RTAX_LABEL] = rtlabel_id2sa(rt->rt_labelid, &sa_rl);
 #ifdef MPLS
 	if (rt->rt_flags & RTF_MPLS) {
@@ -1252,7 +1256,7 @@ sysctl_dumpentry(struct rtentry *rt, void *v, unsigned int id)
 		rt_getmetrics(&rt->rt_rmx, &rtm->rtm_rmx);
 		/* Do not account the routing table's reference. */
 		rtm->rtm_rmx.rmx_refcnt = rt->rt_refcnt - 1;
-		rtm->rtm_index = rt->rt_ifp->if_index;
+		rtm->rtm_index = rt->rt_ifidx;
 		rtm->rtm_addrs = info.rti_addrs;
 		rtm->rtm_tableid = id;
 #ifdef MPLS

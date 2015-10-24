@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.259 2015/10/23 14:48:22 mpi Exp $	*/
+/*	$OpenBSD: route.c,v 1.260 2015/10/24 11:58:46 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -383,20 +383,23 @@ rtfree(struct rtentry *rt)
 void
 rt_sendmsg(struct rtentry *rt, int cmd, u_int rtableid)
 {
-	struct rt_addrinfo info;
-	struct sockaddr_rtlabel sa_rl;
+	struct rt_addrinfo	 info;
+	struct ifnet		*ifp;
+	struct sockaddr_rtlabel	 sa_rl;
 
 	memset(&info, 0, sizeof(info));
 	info.rti_info[RTAX_DST] = rt_key(rt);
 	info.rti_info[RTAX_GATEWAY] = rt->rt_gateway;
 	info.rti_info[RTAX_NETMASK] = rt_mask(rt);
 	info.rti_info[RTAX_LABEL] = rtlabel_id2sa(rt->rt_labelid, &sa_rl);
-	if (rt->rt_ifp != NULL) {
-		info.rti_info[RTAX_IFP] = sdltosa(rt->rt_ifp->if_sadl);
+	ifp = if_get(rt->rt_ifidx);
+	if (ifp != NULL) {
+		info.rti_info[RTAX_IFP] = sdltosa(ifp->if_sadl);
 		info.rti_info[RTAX_IFA] = rt->rt_ifa->ifa_addr;
 	}
 
-	rt_missmsg(cmd, &info, rt->rt_flags, rt->rt_ifp, 0, rtableid);
+	rt_missmsg(cmd, &info, rt->rt_flags, ifp, 0, rtableid);
+	if_put(ifp);
 }
 
 void
@@ -541,11 +544,12 @@ rtdeletemsg(struct rtentry *rt, u_int tableid)
 	info.rti_info[RTAX_NETMASK] = rt_mask(rt);
 	info.rti_info[RTAX_GATEWAY] = rt->rt_gateway;
 	info.rti_flags = rt->rt_flags;
-	ifp = rt->rt_ifp;
+	ifp = if_get(rt->rt_ifidx);
 	error = rtrequest1(RTM_DELETE, &info, rt->rt_priority, &rt, tableid);
 	rt_missmsg(RTM_DELETE, &info, info.rti_flags, ifp, error, tableid);
 	if (error == 0)
 		rtfree(rt);
+	if_put(ifp);
 	return (error);
 }
 
@@ -1061,7 +1065,7 @@ rt_checkgate(struct ifnet *ifp, struct rtentry *rt, struct sockaddr *dst,
 		 * loops, for example when rt->rt_gwroute points to rt.
 		 */
 		if (((rt->rt_gwroute->rt_flags & (RTF_UP|RTF_GATEWAY)) !=
-		    RTF_UP) || (rt->rt_gwroute->rt_ifp != ifp)) {
+		    RTF_UP) || (rt->rt_gwroute->rt_ifidx != ifp->if_index)) {
 			rtfree(rt->rt_gwroute);
 			rt->rt_gwroute = NULL;
 			return (EHOSTUNREACH);
@@ -1616,7 +1620,7 @@ rt_if_remove_rtdelete(struct rtentry *rt, void *vifp, u_int id)
 {
 	struct ifnet	*ifp = vifp;
 
-	if (rt->rt_ifp == ifp) {
+	if (rt->rt_ifidx == ifp->if_index) {
 		int	cloning = (rt->rt_flags & RTF_CLONING);
 
 		if (rtdeletemsg(rt, id) == 0 && cloning)
@@ -1658,7 +1662,7 @@ rt_if_linkstate_change(struct rtentry *rt, void *arg, u_int id)
 {
 	struct ifnet *ifp = arg;
 
-	if (rt->rt_ifp != ifp)
+	if (rt->rt_ifidx != ifp->if_index)
 	    	return (0);
 
 	/* Local routes are always usable. */
@@ -1753,13 +1757,7 @@ db_show_rtentry(struct rtentry *rt, void *w, unsigned int id)
 	db_printf(" key="); db_print_sa(rt_key(rt));
 	db_printf(" mask="); db_print_sa(rt_mask(rt));
 	db_printf(" gw="); db_print_sa(rt->rt_gateway);
-
-	db_printf(" ifp=%p ", rt->rt_ifp);
-	if (rt->rt_ifp)
-		db_printf("(%s)", rt->rt_ifp->if_xname);
-	else
-		db_printf("(NULL)");
-
+	db_printf(" ifidx=%u ", rt->rt_ifidx);
 	db_printf(" ifa=%p\n", rt->rt_ifa);
 	db_print_ifa(rt->rt_ifa);
 
