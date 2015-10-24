@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_src.c,v 1.67 2015/10/24 16:08:48 mpi Exp $	*/
+/*	$OpenBSD: in6_src.c,v 1.68 2015/10/24 16:57:46 mpi Exp $	*/
 /*	$KAME: in6_src.c,v 1.36 2001/02/06 04:08:17 itojun Exp $	*/
 
 /*
@@ -233,8 +233,12 @@ in6_selectsrc(struct in6_addr **in6src, struct sockaddr_in6 *dstsock,
 			rt = nd6_lookup(&sin6_next->sin6_addr, 1, NULL,
 			    rtableid);
 			if (rt != NULL) {
-				ia6 = in6_ifawithscope(rt->rt_ifp, dst,
-				    rtableid);
+				ifp = if_get(rt->rt_ifidx);
+				if (ifp != NULL) {
+					ia6 = in6_ifawithscope(ifp, dst,
+					    rtableid);
+					if_put(ifp);
+				}
 				if (ia6 == NULL)
 					ia6 = ifatoia6(rt->rt_ifa);
 				rtfree(rt);
@@ -285,8 +289,11 @@ in6_selectsrc(struct in6_addr **in6src, struct sockaddr_in6 *dstsock,
 		 */
 
 		if (ro->ro_rt) {
-			ia6 = in6_ifawithscope(ro->ro_rt->rt_ifp, dst,
-			    rtableid);
+			ifp = if_get(ro->ro_rt->rt_ifidx);
+			if (ifp != NULL) {
+				ia6 = in6_ifawithscope(ifp, dst, rtableid);
+				if_put(ifp);
+			}
 			if (ia6 == NULL) /* xxx scope error ?*/
 				ia6 = ifatoia6(ro->ro_rt->rt_ifa);
 		}
