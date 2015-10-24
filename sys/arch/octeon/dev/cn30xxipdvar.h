@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxipdvar.h,v 1.3 2014/08/11 18:29:56 miod Exp $	*/
+/*	$OpenBSD: cn30xxipdvar.h,v 1.4 2015/10/24 05:35:42 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -51,7 +51,7 @@ void			cn30xxipd_init(struct cn30xxipd_attach_args *,
 int			cn30xxipd_enable(struct cn30xxipd_softc *);
 int			cn30xxipd_config(struct cn30xxipd_softc *);
 void			cn30xxipd_sub_port_fcs(struct cn30xxipd_softc *, int);
-void			cn30xxipd_offload(uint64_t, caddr_t, uint16_t *);
+void			cn30xxipd_offload(uint64_t, uint16_t *);
 
 #ifdef OCTEON_ETH_DEBUG
 void	cn30xxipd_int_enable(struct cn30xxipd_softc *, int);

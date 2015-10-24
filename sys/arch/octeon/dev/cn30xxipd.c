@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxipd.c,v 1.5 2014/08/11 18:29:56 miod Exp $	*/
+/*	$OpenBSD: cn30xxipd.c,v 1.6 2015/10/24 05:35:42 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -38,11 +38,6 @@
 #include <octeon/dev/cn30xxpipreg.h>
 #include <octeon/dev/cn30xxipdreg.h>
 #include <octeon/dev/cn30xxipdvar.h>
-
-#include <netinet/in.h>
-
-#define IP_OFFSET(data, word2) \
-	((caddr_t)(data) + ((word2 & PIP_WQE_WORD2_IP_OFFSET) >> PIP_WQE_WORD2_IP_OFFSET_SHIFT))
 
 #ifdef OCTEON_ETH_DEBUG
 void	cn30xxipd_intr_rml(void *);
@@ -163,55 +158,26 @@ cn30xxipd_config(struct cn30xxipd_softc *sc)
  * L3 error & L4 error
  */
 void
-cn30xxipd_offload(uint64_t word2, caddr_t data, uint16_t *rcflags)
+cn30xxipd_offload(uint64_t word2, uint16_t *rcflags)
 {
-#if 0 /* XXX */
 	int cflags;
 
+	/* Skip if the packet is non-IP. */
 	if (ISSET(word2, PIP_WQE_WORD2_IP_NI))
 		return;
 
-	cflags = 0;
+	/* Check IP checksum status. */
+	if (!ISSET(word2, PIP_WQE_WORD2_IP_V6) &&
+	    !ISSET(word2, PIP_WQE_WORD2_IP_IE))
+		SET(cflags, M_IPV4_CSUM_IN_OK);
 
-	if (!ISSET(word2, PIP_WQE_WORD2_IP_V6))
-		SET(cflags, M_CSUM_IPv4);
-
-	if (ISSET(word2, PIP_WQE_WORD2_IP_TU)) {
-		SET(cflags,
-		    !ISSET(word2, PIP_WQE_WORD2_IP_V6) ?
-		    (M_CSUM_TCPv4 | M_CSUM_UDPv4) : 
-		    (M_CSUM_TCPv6 | M_CSUM_UDPv6));
-	}
-
-	/* check L3 (IP) error */
-	if (ISSET(word2, PIP_WQE_WORD2_IP_IE)) {
-		struct ip *ip;
-
-		switch (word2 & PIP_WQE_WORD2_IP_OPECODE) {
-		case IPD_WQE_L3_V4_CSUM_ERR:
-			/* CN31XX_Pass_1.1_Issues_v1.5 2.4.5.1 */
-			ip = (struct ip *)(IP_OFFSET(data, word2));
-			if (ip->ip_hl == 5)
-				SET(cflags, M_CSUM_IPv4_BAD);
-			break;
-		default:
-			break;
-		}
-	}
-
-	/* check L4 (UDP / TCP) error */
-	if (ISSET(word2, PIP_WQE_WORD2_IP_LE)) {
-		switch (word2 & PIP_WQE_WORD2_IP_OPECODE) {
-		case IPD_WQE_L4_CSUM_ERR:
-			SET(cflags, M_CSUM_TCP_UDP_BAD);
-			break;
-		default:
-			break;
-		}
-	}
+	/* Check TCP/UDP checksum status. Skip if the packet is a fragment. */
+	if (ISSET(word2, PIP_WQE_WORD2_IP_TU) &&
+	    !ISSET(word2, PIP_WQE_WORD2_IP_FR) &&
+	    !ISSET(word2, PIP_WQE_WORD2_IP_LE))
+		SET(cflags, M_TCP_CSUM_IN_OK | M_UDP_CSUM_IN_OK);
 
 	*rcflags = cflags;
-#endif
 }
 
 void

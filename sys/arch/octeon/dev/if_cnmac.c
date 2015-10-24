@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cnmac.c,v 1.25 2015/10/15 14:06:04 visa Exp $	*/
+/*	$OpenBSD: if_cnmac.c,v 1.26 2015/10/24 05:35:42 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -1389,7 +1389,7 @@ octeon_eth_recv(struct octeon_eth_softc *sc, uint64_t *work)
 
 	OCTEON_ETH_KASSERT(m != NULL);
 
-	cn30xxipd_offload(word2, m->m_data, &m->m_pkthdr.csum_flags);
+	cn30xxipd_offload(word2, &m->m_pkthdr.csum_flags);
 
 	ml_enqueue(&ml, m);
 	if_input(ifp, &ml);
