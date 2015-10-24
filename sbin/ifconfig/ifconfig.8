@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.260 2015/10/24 10:52:05 reyk Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.261 2015/10/24 13:32:45 jmc Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -427,7 +427,7 @@ is in the range of 0 to 15 with smaller numbers being better.
 .It Cm rdomain Ar rdomainid
 Attach the interface to the routing domain with the specified
 .Ar rdomainid .
-Interfaces in different routing domains are separated and can not directly
+Interfaces in different routing domains are separated and cannot directly
 pass traffic between each other.
 It is therefore possible to reuse the same addresses in different routing
 domains.
@@ -488,6 +488,8 @@ interface groups
 .Xr mpe 4
 .It
 .Xr mpw 4
+.It
+.Xr pair 4
 .It
 .Xr pflow 4
 .It
@@ -1291,9 +1293,9 @@ interface.
 Any outgoing packets from the first
 .Ar pair-interface
 will be received by the second
-.Ar interface
+.Ar interface ,
 and vice versa.
-This link allows to interconnect two routing domains locally.
+This makes it possible to interconnect two routing domains locally.
 .It Fl patch
 If configured, disconnect the interface pair.
 .El
@@ -1557,7 +1559,7 @@ is 2 since the round-trip time of keepalive packets needs to be accounted for.
 Disable the
 .Xr gre 4
 keepalive mechanism.
-.It Cm tunnel Ar src_address dest_address Ns Op Ns : Ns Ar dest_port
+.It Cm tunnel Ar src_address dest_address Ns Op : Ns Ar dest_port
 Set the source and destination tunnel addresses on a tunnel interface,
 including
 .Xr gif 4 .
