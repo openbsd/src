@@ -1,4 +1,4 @@
-/*	$OpenBSD: number.c,v 1.15 2015/10/14 08:12:12 doug Exp $	*/
+/*	$OpenBSD: number.c,v 1.16 2015/10/24 18:37:23 mmcc Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -126,18 +126,18 @@ convert(char *line)
 
 	/* strip trailing and leading whitespace */
 	len = strlen(line) - 1;
-	while ((isblank(line[len])) || (line[len] == '\n'))
+	while ((isblank((unsigned char)line[len])) || (line[len] == '\n'))
 		line[len--] = '\0';
-	while ((isblank(line[0])) || (line[0] == '\n'))
+	while ((isblank((unsigned char)line[0])) || (line[0] == '\n'))
 		line++;
 	if (strchr(line, 'e') || strchr(line, 'E'))
 		convertexp(line);
 	else {
 	fraction = NULL;
 	for (p = line; *p != '\0' && *p != '\n'; ++p) {
-		if (isblank(*p))
+		if (isblank((unsigned char)*p))
 			goto badnum;
-		if (isdigit(*p))
+		if (isdigit((unsigned char)*p))
 			continue;
 		switch (*p) {
 		case '.':
@@ -215,7 +215,7 @@ convertexp(char *line)
 	 */
 	j = strlen(line);
 	for (i = 0; i < j; i++)
-		if ((!isdigit(locline[i])) && (locline[i]))
+		if ((!isdigit((unsigned char)locline[i])) && (locline[i]))
 			if (((locline[i] != '+') && (locline[i] != '-')) ||
 				((i != 0) && (i != part3 - locline)))
 				errx(1, "illegal number: %s", line);
