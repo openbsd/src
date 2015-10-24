@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.156 2015/10/23 15:08:24 claudio Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.157 2015/10/24 04:12:24 dlg Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -1067,7 +1067,7 @@ tapkqfilter(dev_t dev, struct knote *kn)
 {
 	struct tun_softc *tp;
 
-	if ((tp = tun_lookup(minor(dev))) == NULL)
+	if ((tp = tap_lookup(minor(dev))) == NULL)
 		return (ENXIO);
 	return (tun_dev_kqfilter(tp, kn));
 }
