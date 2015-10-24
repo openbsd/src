@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.options.c,v 1.10 2015/09/27 05:13:11 guenther Exp $	*/
+/*	$OpenBSD: hack.options.c,v 1.11 2015/10/24 17:56:42 mmcc Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -178,9 +178,9 @@ parseoptions(char *opts, boolean from_env)
 		op++;
 		while(*op) {
 			num = 1;
-			if(isdigit(*op)) {
+			if(isdigit((unsigned char)*op)) {
 				num = atoi(op);
-				while(isdigit(*op)) op++;
+				while(isdigit((unsigned char)*op)) op++;
 			} else
 			if(*op == '!') {
 				negated = !negated;
