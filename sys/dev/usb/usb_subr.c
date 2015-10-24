@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_subr.c,v 1.117 2015/03/23 22:26:01 jsg Exp $ */
+/*	$OpenBSD: usb_subr.c,v 1.118 2015/10/24 14:01:40 stsp Exp $ */
 /*	$NetBSD: usb_subr.c,v 1.103 2003/01/10 11:19:13 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -1150,6 +1150,9 @@ usbd_new_device(struct device *parent, struct usbd_bus *bus, int depth,
 		up->device = NULL;
 		return (USBD_SET_ADDR_FAILED);
  	}
+
+	/* Wait for device to settle before reloading the descriptor. */
+	usbd_delay_ms(dev, 10);
 
 	/*
 	 * If this device is attached to an xHCI controller, this
