@@ -1,4 +1,4 @@
-/*	$OpenBSD: stoc.c,v 1.8 2009/10/27 23:59:24 deraadt Exp $	*/
+/*	$OpenBSD: stoc.c,v 1.9 2015/10/24 17:36:06 mmcc Exp $	*/
 /*
  * Copyright (c) 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -78,7 +78,7 @@ ctos(mp)
 	for (i = 0; mv[i].m_code >= 0; i++)
 		if (strcmp(mp, mv[i].m_text) == 0)
 			return(mv[i].m_code);
-	if (!isalpha(mp[0]))
+	if (!isalpha((unsigned char)mp[0]))
 		return(ILLEGAL);
 	i = atoi(&mp[1]);
 	if (i < 1 || i > 19)
