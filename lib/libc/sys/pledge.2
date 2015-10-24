@@ -1,4 +1,4 @@
-.\" $OpenBSD: pledge.2,v 1.9 2015/10/23 01:10:01 deraadt Exp $
+.\" $OpenBSD: pledge.2,v 1.10 2015/10/24 08:46:05 jmc Exp $
 .\"
 .\" Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 23 2015 $
+.Dd $Mdocdate: October 24 2015 $
 .Dt PLEDGE 2
 .Os
 .Sh NAME
@@ -464,14 +464,13 @@ and
 system calls.
 .It Va "ps"
 Allows enough
-.Xr sysctl 2
+.Xr sysctl 3
 interfaces to allow inspection of processes operating on the system using
 programs like
 .Xr ps 1 .
-Allows the following system calls:
 .It Va "vminfo"
 Allows enough
-.Xr sysctl 2
+.Xr sysctl 3
 interfaces to allow inspection of the system's virtual memory by
 programs like
 .Xr top 1 ,
