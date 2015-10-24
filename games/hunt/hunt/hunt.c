@@ -1,4 +1,4 @@
-/*	$OpenBSD: hunt.c,v 1.14 2014/11/16 04:49:48 guenther Exp $	*/
+/*	$OpenBSD: hunt.c,v 1.15 2015/10/24 18:35:08 mmcc Exp $	*/
 /*	$NetBSD: hunt.c,v 1.8 1998/09/13 15:27:28 hubertf Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
@@ -110,7 +110,7 @@ main(ac, av)
 			break;
 		case 't':
 			team = *optarg;
-			if (!isdigit(team) && team != ' ') {
+			if (!isdigit((unsigned char)team) && team != ' ') {
 				warnx("Team names must be numeric or space");
 				team = '-';
 			}
@@ -603,7 +603,7 @@ env_init(enter_status)
 			}
 			else if (strncmp(envp, "team=", s - envp + 1) == 0) {
 				team = *(s + 1);
-				if (!isdigit(team))
+				if (!isdigit((unsigned char)team))
 					team = ' ';
 				if ((s = strchr(envp, ',')) == NULL) {
 					*envp = '\0';
@@ -669,7 +669,7 @@ again:
 		goto again;
 	}
 	for (cp = name; *cp != '\0'; cp++)
-		if (!isprint(*cp)) {
+		if (!isprint((unsigned char)*cp)) {
 			name[0] = '\0';
 			printf("Illegal character in your code name.\n");
 			goto again;
