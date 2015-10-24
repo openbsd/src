@@ -1,4 +1,4 @@
-/*	$OpenBSD: getword.c,v 1.8 2013/08/29 20:22:14 naddy Exp $	*/
+/*	$OpenBSD: getword.c,v 1.9 2015/10/24 17:55:02 mmcc Exp $	*/
 /*	$NetBSD: getword.c,v 1.4 1995/03/23 08:32:45 cgd Exp $	*/
 
 /*
@@ -66,7 +66,7 @@ getword(void)
 		if (wordlen < MINLEN || wordlen > MAXLEN)
 			continue;
 		for (wp = Word; *wp; wp++)
-			if (!islower(*wp))
+			if (!islower((unsigned char)*wp))
 				goto cont;
 		break;
 cont:		;
