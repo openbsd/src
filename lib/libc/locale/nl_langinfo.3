@@ -1,9 +1,9 @@
-.\"	$OpenBSD: nl_langinfo.3,v 1.10 2014/01/21 03:15:45 schwarze Exp $
+.\"	$OpenBSD: nl_langinfo.3,v 1.11 2015/10/24 13:32:18 bentley Exp $
 .\"
 .\" Written by J.T. Conklin <jtc@netbsd.org>.
 .\" Public domain.
 .\"
-.Dd $Mdocdate: January 21 2014 $
+.Dd $Mdocdate: October 24 2015 $
 .Dt NL_LANGINFO 3
 .Os
 .Sh NAME
@@ -30,3 +30,8 @@ returns a pointer to an empty string if
 is invalid.
 .Sh SEE ALSO
 .Xr setlocale 3
+.Sh STANDARDS
+The
+.Fn nl_langinfo
+function conforms to
+.St -p1003.1-2008 .
