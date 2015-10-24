@@ -1,4 +1,4 @@
-.\"	$OpenBSD: relayd.conf.5,v 1.165 2015/08/10 20:45:35 sthen Exp $
+.\"	$OpenBSD: relayd.conf.5,v 1.166 2015/10/24 11:37:17 benno Exp $
 .\"
 .\" Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 10 2015 $
+.Dd $Mdocdate: October 24 2015 $
 .Dt RELAYD.CONF 5
 .Os
 .Sh NAME
@@ -636,6 +636,9 @@ This directive can be specified multiple times \(en subsequent entries
 will be used as the backup table if all hosts in the previous table
 are down.
 At least one entry for the main table is mandatory.
+As above, use the
+.Ic with tls
+directive to enable client-side TLS mode when connecting to the remote host.
 .It Xo
 .Ic forward to
 .Ic destination
@@ -650,6 +653,9 @@ If an additional
 .Ic forward to
 directive to a specified address or table is present,
 it will be used as a backup if the lookup failed.
+As above, use the
+.Ic with tls
+directive to enable client-side TLS mode when connecting to the remote host.
 .It Xo
 .Ic forward to
 .Ic nat lookup
