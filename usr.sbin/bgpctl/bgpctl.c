@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.183 2015/10/11 19:53:57 sthen Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.184 2015/10/24 11:41:03 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -900,7 +900,8 @@ show_fib_head(void)
 {
 	printf("flags: "
 	    "* = valid, B = BGP, C = Connected, S = Static, D = Dynamic\n");
-	printf("       N = BGP Nexthop reachable via this route\n");
+	printf("       "
+	    "N = BGP Nexthop reachable via this route R = redistributed\n");
 	printf("       r = reject route, b = blackhole route\n\n");
 	printf("flags prio destination          gateway\n");
 }
@@ -942,6 +943,11 @@ show_fib_flags(u_int16_t flags)
 	else
 		printf(" ");
 
+	if (flags & F_REDISTRIBUTED)
+		printf("R");
+	else
+		printf(" ");
+
 	if (flags & F_REJECT && flags & F_BLACKHOLE)
 		printf("f");
 	else if (flags & F_REJECT)
@@ -951,7 +957,7 @@ show_fib_flags(u_int16_t flags)
 	else
 		printf(" ");
 
-	printf("  ");
+	printf(" ");
 }
 
 int
