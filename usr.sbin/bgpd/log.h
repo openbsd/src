@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.h,v 1.16 2015/10/11 19:25:06 phessler Exp $ */
+/*	$OpenBSD: log.h,v 1.17 2015/10/24 08:06:45 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -24,6 +24,15 @@ static const char * const statenames[] = {
 	"OpenSent",
 	"OpenConfirm",
 	"Established"
+};
+
+static const char * const msgtypenames[] = {
+	"NONE",
+	"OPEN",
+	"UPDATE",
+	"NOTIFICATION",
+	"KEEPALIVE",
+	"RREFRESH"
 };
 
 static const char * const eventnames[] = {
