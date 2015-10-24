@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pair.4,v 1.1 2015/10/24 10:52:05 reyk Exp $
+.\"	$OpenBSD: pair.4,v 1.2 2015/10/24 13:35:33 jmc Exp $
 .\"
 .\" Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2009 Theo de Raadt <deraadt@openbsd.org>
@@ -16,7 +16,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .Dd $Mdocdate: October 24 2015 $
-.Dt pair 4
+.Dt PAIR 4
 .Os
 .Sh NAME
 .Nm pair
@@ -34,8 +34,8 @@ To use it, the administrator needs to create two
 .Nm
 interfaces and connect them;
 the interfaces are
-.Sq patched
-as it would be done with physical network ports.
+.Sq patched ,
+as would be done with physical network ports.
 All packets that are sent on the first interface are received on the
 second interface.
 .Sh EXAMPLES
@@ -68,7 +68,7 @@ driver is based on
 by
 .An Theo de Raadt Aq Mt deraadt@openbsd.org .
 It has been extended and turned into
-.Xr pair 4
+.Nm
 by
 .An Reyk Floeter Aq Mt reyk@openbsd.org .
 .Sh BUGS
