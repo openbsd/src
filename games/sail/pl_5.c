@@ -1,4 +1,4 @@
-/*	$OpenBSD: pl_5.c,v 1.6 2009/10/27 23:59:27 deraadt Exp $	*/
+/*	$OpenBSD: pl_5.c,v 1.7 2015/10/24 18:14:09 mmcc Exp $	*/
 /*	$NetBSD: pl_5.c,v 1.4 1995/04/24 12:25:21 cgd Exp $	*/
 
 /*
@@ -106,7 +106,7 @@ acceptmove()
 				*p-- = '\0';
 			break;
 		default:
-			if (!isspace(*p)) {
+			if (!isspace((unsigned char)*p)) {
 				Msg("Input error.");
 				*p-- = '\0';
 			}
@@ -202,7 +202,7 @@ parties(crew, to, isdefense, buf)
 
 	for (k = 0; k < 3; k++)
 		temp[k] = crew[k];
-	if (isdigit(buf)) {
+	if (isdigit((unsigned char)buf)) {
 		ptr = isdefense ? to->file->DBP : to->file->OBP; 
 		for (j = 0; j < NBP && ptr[j].turnsent; j++)
 			;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pl_4.c,v 1.4 2009/10/27 23:59:27 deraadt Exp $	*/
+/*	$OpenBSD: pl_4.c,v 1.5 2015/10/24 18:14:09 mmcc Exp $	*/
 /*	$NetBSD: pl_4.c,v 1.4 1995/04/24 12:25:17 cgd Exp $	*/
 
 /*
@@ -84,7 +84,7 @@ lookout()
 	sgetstr("What ship? ", buf, sizeof buf);
 	foreachship(sp) {
 		c = *countryname[sp->nationality];
-		if ((c == *buf || tolower(c) == *buf || colours(sp) == *buf)
+		if ((c == *buf || tolower((unsigned char)c) == *buf || colours(sp) == *buf)
 		    && (sp->file->stern == buf[1] || sterncolour(sp) == buf[1]
 			|| buf[1] == '?')) {
 			eyeball(sp);
