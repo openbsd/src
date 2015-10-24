@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrtparser.c,v 1.6 2015/01/09 08:09:39 henning Exp $ */
+/*	$OpenBSD: mrtparser.c,v 1.7 2015/10/24 11:54:50 claudio Exp $ */
 /*
  * Copyright (c) 2011 Claudio Jeker <claudio@openbsd.org>
  *
@@ -48,6 +48,9 @@ void	mrt_free_bgp_msg(struct mrt_bgp_msg *);
 u_char *mrt_aspath_inflate(void *, u_int16_t, u_int16_t *);
 int	mrt_extract_addr(void *, u_int, union mrt_addr *, sa_family_t);
 
+struct mrt_bgp_state	*mrt_parse_state(struct mrt_hdr *, void *);
+struct mrt_bgp_msg	*mrt_parse_msg(struct mrt_hdr *, void *);
+
 void *
 mrt_read_msg(int fd, struct mrt_hdr *hdr)
 {
@@ -91,10 +94,12 @@ mrt_read_buf(int fd, void *buf, size_t len)
 void
 mrt_parse(int fd, struct mrt_parser *p, int verbose)
 {
-	struct mrt_hdr	h;
-	struct mrt_peer	*pctx = NULL;
-	struct mrt_rib	*r;
-	void		*msg;
+	struct mrt_hdr		h;
+	struct mrt_peer		*pctx = NULL;
+	struct mrt_rib		*r;
+	struct mrt_bgp_state	*s;
+	struct mrt_bgp_msg	*m;
+	void			*msg;
 
 	while ((msg = mrt_read_msg(fd, &h))) {
 		switch (ntohs(h.type)) {
@@ -129,7 +134,8 @@ mrt_parse(int fd, struct mrt_parser *p, int verbose)
 				if (p->dump == NULL)
 					break;
 				if (mrt_parse_dump(&h, msg, &pctx, &r) == 0) {
-					p->dump(r, pctx, p->arg);
+					if (p->dump)
+						p->dump(r, pctx, p->arg);
 					mrt_free_rib(r);
 				}
 				break;
@@ -158,7 +164,8 @@ mrt_parse(int fd, struct mrt_parser *p, int verbose)
 					break;
 				r = mrt_parse_v2_rib(&h, msg);
 				if (r) {
-					p->dump(r, pctx, p->arg);
+					if (p->dump)
+						p->dump(r, pctx, p->arg);
 					mrt_free_rib(r);
 				}
 				break;
@@ -174,22 +181,30 @@ mrt_parse(int fd, struct mrt_parser *p, int verbose)
 			switch (ntohs(h.subtype)) {
 			case BGP4MP_STATE_CHANGE:
 			case BGP4MP_STATE_CHANGE_AS4:
-				/* XXX p->state(s, p->arg); */
-				errx(1, "BGP4MP subtype not yet implemented");
+				if ((s = mrt_parse_state(&h, msg))) {
+					if (p->state)
+						p->state(s, p->arg);
+					free(s);
+				}
 				break;
 			case BGP4MP_MESSAGE:
 			case BGP4MP_MESSAGE_AS4:
 			case BGP4MP_MESSAGE_LOCAL:
 			case BGP4MP_MESSAGE_AS4_LOCAL:
-				/* XXX p->message(m, p->arg); */
-				errx(1, "BGP4MP subtype not yet implemented");
+				if ((m = mrt_parse_msg(&h, msg))) {
+					if (p->message)
+						p->message(m, p->arg);
+					free(m->msg);
+					free(m);
+				}
 				break;
 			case BGP4MP_ENTRY:
 				if (p->dump == NULL)
 					break;
 				if (mrt_parse_dump_mp(&h, msg, &pctx, &r) ==
 				    0) {
-					p->dump(r, pctx, p->arg);
+					if (p->dump)
+						p->dump(r, pctx, p->arg);
 					mrt_free_rib(r);
 				}
 				break;
@@ -971,4 +986,209 @@ mrt_extract_addr(void *msg, u_int len, union mrt_addr *addr, sa_family_t af)
 	default:
 		return (-1);
 	}
+}
+
+struct mrt_bgp_state *
+mrt_parse_state(struct mrt_hdr *hdr, void *msg)
+{
+	struct mrt_bgp_state	*s;
+	u_int8_t		*b = msg;
+	u_int			 len = ntohl(hdr->length);
+	u_int32_t		 sas, das;
+	u_int16_t		 tmp16, afi;
+	int			 r;
+	sa_family_t		 af;
+	
+	switch (ntohs(hdr->subtype)) {
+	case BGP4MP_STATE_CHANGE:
+		if (len < 8)
+			return (0);
+		/* source as */
+		memcpy(&tmp16, b, sizeof(tmp16));
+		b += sizeof(tmp16);
+		len -= sizeof(tmp16);
+		sas = ntohs(tmp16);
+		/* dest as */
+		memcpy(&tmp16, b, sizeof(tmp16));
+		b += sizeof(tmp16);
+		len -= sizeof(tmp16);
+		das = ntohs(tmp16);
+		/* if_index, ignored */
+		b += sizeof(tmp16);
+		len -= sizeof(tmp16);
+		/* afi */
+		memcpy(&tmp16, b, sizeof(tmp16));
+		b += sizeof(tmp16);
+		len -= sizeof(tmp16);
+		afi = ntohs(tmp16);
+		break;
+	case BGP4MP_STATE_CHANGE_AS4:
+		if (len < 12)
+			return (0);
+		/* source as */
+		memcpy(&sas, b, sizeof(sas));
+		b += sizeof(sas);
+		len -= sizeof(sas);
+		sas = ntohl(sas);
+		/* dest as */
+		memcpy(&das, b, sizeof(das));
+		b += sizeof(das);
+		len -= sizeof(das);
+		das = ntohl(das);
+		/* if_index, ignored */
+		b += sizeof(tmp16);
+		len -= sizeof(tmp16);
+		/* afi */
+		memcpy(&tmp16, b, sizeof(tmp16));
+		b += sizeof(tmp16);
+		len -= sizeof(tmp16);
+		afi = ntohs(tmp16);
+		break;
+	default:
+		errx(1, "mrt_parse_state: bad subtype");
+	}
+
+	/* src & dst addr */
+	switch (afi) {
+	case MRT_DUMP_AFI_IP:
+		af = AF_INET;
+		break;
+	case MRT_DUMP_AFI_IPv6:
+		af = AF_INET6;
+		break;
+	default:
+		 errx(1, "mrt_parse_state: bad afi");
+	}
+
+	if ((s = calloc(1, sizeof(struct mrt_bgp_state))) == NULL)
+		err(1, "calloc");
+	s->src_as = sas;
+	s->dst_as = das;
+
+	if ((r = mrt_extract_addr(b, len, &s->src, af)) == -1)
+		goto fail;
+	b += r;
+	len -= r;
+	if ((r = mrt_extract_addr(b, len, &s->dst, af)) == -1)
+		goto fail;
+	b += r;
+	len -= r;
+
+	/* states */
+	memcpy(&tmp16, b, sizeof(tmp16));
+	b += sizeof(tmp16);
+	len -= sizeof(tmp16);
+	s->old_state = ntohs(tmp16);
+	memcpy(&tmp16, b, sizeof(tmp16));
+	b += sizeof(tmp16);
+	len -= sizeof(tmp16);
+	s->new_state = ntohs(tmp16);
+
+	return (s);
+
+fail:
+	free(s);
+	return (NULL);
+}
+
+struct mrt_bgp_msg *
+mrt_parse_msg(struct mrt_hdr *hdr, void *msg)
+{
+	struct mrt_bgp_msg	*m;
+	u_int8_t		*b = msg;
+	u_int			 len = ntohl(hdr->length);
+	u_int32_t		 sas, das;
+	u_int16_t		 tmp16, afi;
+	int			 r;
+	sa_family_t		 af;
+	
+	switch (ntohs(hdr->subtype)) {
+	case BGP4MP_MESSAGE:
+		if (len < 8)
+			return (0);
+		/* source as */
+		memcpy(&tmp16, b, sizeof(tmp16));
+		b += sizeof(tmp16);
+		len -= sizeof(tmp16);
+		sas = ntohs(tmp16);
+		/* dest as */
+		memcpy(&tmp16, b, sizeof(tmp16));
+		b += sizeof(tmp16);
+		len -= sizeof(tmp16);
+		das = ntohs(tmp16);
+		/* if_index, ignored */
+		b += sizeof(tmp16);
+		len -= sizeof(tmp16);
+		/* afi */
+		memcpy(&tmp16, b, sizeof(tmp16));
+		b += sizeof(tmp16);
+		len -= sizeof(tmp16);
+		afi = ntohs(tmp16);
+		break;
+	case BGP4MP_MESSAGE_AS4:
+		if (len < 12)
+			return (0);
+		/* source as */
+		memcpy(&sas, b, sizeof(sas));
+		b += sizeof(sas);
+		len -= sizeof(sas);
+		sas = ntohl(sas);
+		/* dest as */
+		memcpy(&das, b, sizeof(das));
+		b += sizeof(das);
+		len -= sizeof(das);
+		das = ntohl(das);
+		/* if_index, ignored */
+		b += sizeof(tmp16);
+		len -= sizeof(tmp16);
+		/* afi */
+		memcpy(&tmp16, b, sizeof(tmp16));
+		b += sizeof(tmp16);
+		len -= sizeof(tmp16);
+		afi = ntohs(tmp16);
+		break;
+	default:
+		errx(1, "mrt_parse_msg: bad subtype");
+	}
+
+	/* src & dst addr */
+	switch (afi) {
+	case MRT_DUMP_AFI_IP:
+		af = AF_INET;
+		break;
+	case MRT_DUMP_AFI_IPv6:
+		af = AF_INET6;
+		break;
+	default:
+		 errx(1, "mrt_parse_msg: bad afi");
+	}
+
+	if ((m = calloc(1, sizeof(struct mrt_bgp_msg))) == NULL)
+		err(1, "calloc");
+	m->src_as = sas;
+	m->dst_as = das;
+
+	if ((r = mrt_extract_addr(b, len, &m->src, af)) == -1)
+		goto fail;
+	b += r;
+	len -= r;
+	if ((r = mrt_extract_addr(b, len, &m->dst, af)) == -1)
+		goto fail;
+	b += r;
+	len -= r;
+
+	/* msg */
+	if (len > 0) {
+		m->msg_len = len;
+		if ((m->msg = malloc(len)) == NULL)
+			err(1, "malloc");
+		memcpy(m->msg, b, len);
+	}
+
+	return (m);
+
+fail:
+	free(m->msg);
+	free(m);
+	return (NULL);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.184 2015/10/24 11:41:03 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.185 2015/10/24 11:54:50 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -86,13 +86,14 @@ void		 show_ext_community(u_char *, u_int16_t);
 char		*fmt_mem(int64_t);
 int		 show_rib_memory_msg(struct imsg *);
 void		 send_filterset(struct imsgbuf *, struct filter_set_head *);
-static const char	*get_errstr(u_int8_t, u_int8_t);
+const char	*get_errstr(u_int8_t, u_int8_t);
 int		 show_result(struct imsg *);
 void		 show_mrt_dump(struct mrt_rib *, struct mrt_peer *, void *);
 void		 network_mrt_dump(struct mrt_rib *, struct mrt_peer *, void *);
 void		 show_mrt_state(struct mrt_bgp_state *, void *);
 void		 show_mrt_msg(struct mrt_bgp_msg *, void *);
 void		 mrt_to_bgpd_addr(union mrt_addr *, struct bgpd_addr *);
+const char	*msg_type(u_int8_t);
 void		 network_bulk(struct parse_result *);
 const char	*print_auth_method(enum auth_method);
 
@@ -1615,7 +1616,7 @@ send_filterset(struct imsgbuf *i, struct filter_set_head *set)
 	}
 }
 
-static const char *
+const char *
 get_errstr(u_int8_t errcode, u_int8_t subcode)
 {
 	static const char	*errstr = NULL;
@@ -1876,13 +1877,24 @@ network_mrt_dump(struct mrt_rib *mr, struct mrt_peer *mp, void *arg)
 void
 show_mrt_state(struct mrt_bgp_state *ms, void *arg)
 {
-	printf("show_mrt_state\n");
+	struct bgpd_addr src, dst;
+
+	mrt_to_bgpd_addr(&ms->src, &src);
+	mrt_to_bgpd_addr(&ms->dst, &dst);
+	printf("%s[%u] -> ", log_addr(&src), ms->src_as);
+	printf("%s[%u]: %s -> %s\n", log_addr(&dst), ms->dst_as,
+	    statenames[ms->old_state], statenames[ms->new_state]);
 }
 
 void
 show_mrt_msg(struct mrt_bgp_msg *mm, void *arg)
 {
-	printf("show_mrt_msg\n");
+	struct bgpd_addr src, dst;
+
+	mrt_to_bgpd_addr(&mm->src, &src);
+	mrt_to_bgpd_addr(&mm->dst, &dst);
+	printf("%s[%u] -> ", log_addr(&src), mm->src_as);
+	printf("%s[%u]: size %u\n", log_addr(&dst), mm->dst_as, mm->msg_len);
 }
 
 void
@@ -1904,7 +1916,15 @@ mrt_to_bgpd_addr(union mrt_addr *ma, struct bgpd_addr *ba)
 	}
 }
 
-/* following functions are necessary for imsg framework */
+const char *
+msg_type(u_int8_t type)
+{
+	if (type >= sizeof(msgtypenames)/sizeof(msgtypenames[0]))
+		return "BAD";
+	return (msgtypenames[type]);
+}
+
+/* following functions are necessary for the imsg framework */
 void
 log_warnx(const char *emsg, ...)
 {
