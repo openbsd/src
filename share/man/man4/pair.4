@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pair.4,v 1.2 2015/10/24 13:35:33 jmc Exp $
+.\"	$OpenBSD: pair.4,v 1.3 2015/10/24 15:46:10 reyk Exp $
 .\"
 .\" Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2009 Theo de Raadt <deraadt@openbsd.org>
@@ -52,6 +52,7 @@ Set up a pair of interfaces where each of them is a member of a different
 .Xr inet 4 ,
 .Xr inet6 4 ,
 .Xr rdomain 4 ,
+.Xr vether 4 ,
 .Xr hostname.if 5 ,
 .Xr ifconfig 8 ,
 .Xr netstart 8
@@ -71,6 +72,18 @@ It has been extended and turned into
 .Nm
 by
 .An Reyk Floeter Aq Mt reyk@openbsd.org .
+.Sh CAVEATS
+Unlike
+.Xr vether 4 ,
+the
+.Nm
+interface cannot be used as a stand-alone member in a
+.Xr bridge 4 :
+the link state remains down until it is connected to the second interface.
+Any associated routes will be marked down until it is patched.
+Use
+.Xr vether 4
+as a bridge endpoint for routing purposes instead.
 .Sh BUGS
 Like
 .Xr tun 4 ,
