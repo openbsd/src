@@ -1,4 +1,4 @@
-/*	$OpenBSD: bs.c,v 1.28 2015/09/27 05:27:42 guenther Exp $	*/
+/*	$OpenBSD: bs.c,v 1.29 2015/10/24 17:29:03 mmcc Exp $	*/
 /*
  * Copyright (c) 1986, Bruce Holloway
  * All rights reserved.
@@ -241,7 +241,7 @@ static void intro(void)
     if ((tmpname = getlogin()) != NULL)
     {
 	(void)strlcpy(name, tmpname, sizeof(name));
-	name[0] = toupper(name[0]);
+	name[0] = toupper((unsigned char)name[0]);
     }
     else
 	(void)strlcpy(name, dftname, sizeof(name));
