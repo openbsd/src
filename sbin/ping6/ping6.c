@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.130 2015/10/24 16:41:11 florian Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.131 2015/10/24 16:59:15 florian Exp $	*/
 /*	$KAME: ping6.c,v 1.163 2002/10/25 02:19:06 itojun Exp $	*/
 
 /*
@@ -210,7 +210,6 @@ int	 pinger(void);
 const char *pr_addr(struct sockaddr *, socklen_t);
 void	 pr_icmph(struct icmp6_hdr *, u_char *);
 void	 pr_iph(struct ip6_hdr *);
-int	 myechoreply(const struct icmp6_hdr *);
 void	 pr_pack(u_char *, int, struct msghdr *);
 void	 pr_exthdrs(struct msghdr *);
 void	 pr_ip6opt(void *);
@@ -872,15 +871,6 @@ pinger(void)
 	return(0);
 }
 
-int
-myechoreply(const struct icmp6_hdr *icp)
-{
-	if (ntohs(icp->icmp6_id) == ident)
-		return 1;
-	else
-		return 0;
-}
-
 #define MINIMUM(a,b) (((a)<(b))?(a):(b))
 
 /*
@@ -937,7 +927,9 @@ pr_pack(u_char *buf, int cc, struct msghdr *mhdr)
 		return;
 	}
 
-	if (icp->icmp6_type == ICMP6_ECHO_REPLY && myechoreply(icp)) {
+	if (icp->icmp6_type == ICMP6_ECHO_REPLY) {
+		if (ntohs(icp->icmp6_id) != ident)
+			return;			/* 'Twas not our ECHO */
 		seq = ntohs(icp->icmp6_seq);
 		++nreceived;
 		if (timing) {
