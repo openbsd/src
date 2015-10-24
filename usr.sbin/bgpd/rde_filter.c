@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_filter.c,v 1.74 2015/07/16 18:26:04 claudio Exp $ */
+/*	$OpenBSD: rde_filter.c,v 1.75 2015/10/24 08:02:24 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -358,7 +358,7 @@ rde_filter_match(struct filter_rule *f, struct rde_aspath *asp,
 	}
 	if (f->match.nexthop.flags != 0) {
 		struct bgpd_addr *nexthop, *cmpaddr;
-		if (asp->nexthop == NULL)
+		if (asp != NULL && asp->nexthop == NULL)
 			/* no nexthop, skip */
 			return (0);
 		nexthop = &asp->nexthop->exit_nexthop;
