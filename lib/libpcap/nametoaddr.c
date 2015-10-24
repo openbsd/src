@@ -1,4 +1,4 @@
-/*	$OpenBSD: nametoaddr.c,v 1.16 2015/01/16 03:19:57 lteo Exp $	*/
+/*	$OpenBSD: nametoaddr.c,v 1.17 2015/10/24 06:07:43 mmcc Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996
@@ -324,7 +324,7 @@ pcap_ether_aton(const char *s)
 		if (*s == ':')
 			s += 1;
 		d = xdtoi(*s++);
-		if (isxdigit(*s)) {
+		if (isxdigit((unsigned char)*s)) {
 			d <<= 4;
 			d |= xdtoi(*s++);
 		}
