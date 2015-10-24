@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.128 2015/10/17 15:43:31 florian Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.129 2015/10/24 16:32:26 florian Exp $	*/
 /*	$KAME: ping6.c,v 1.163 2002/10/25 02:19:06 itojun Exp $	*/
 
 /*
@@ -571,7 +571,7 @@ main(int argc, char *argv[])
 		scmsgp = CMSG_NXTHDR(&smsghdr, scmsgp);
 	}
 
-	if (!(options & F_SRCADDR)) {
+	if (!(options & F_SRCADDR) && options & F_VERBOSE) {
 		/*
 		 * get the source address. XXX since we revoked the root
 		 * privilege, we cannot use a raw socket for this.
@@ -635,10 +635,12 @@ main(int argc, char *argv[])
 	arc4random_buf(&tv64_offset, sizeof(tv64_offset));
 	arc4random_buf(&mac_key, sizeof(mac_key));
 
-	printf("PING6(%lu=40+8+%lu bytes) ", (unsigned long)(40 + ICMP6ECHOLEN
-	    + datalen), (unsigned long)(ICMP6ECHOLEN + datalen - 8));
-	printf("%s --> ", pr_addr((struct sockaddr *)&src, sizeof(src)));
-	printf("%s\n", pr_addr((struct sockaddr *)&dst, sizeof(dst)));
+	printf("PING6 %s (", hostname);
+	if (options & F_VERBOSE)
+		printf("%s --> ", pr_addr((struct sockaddr *)&src,
+		    sizeof(src)));
+	printf("%s): %d data bytes\n", pr_addr((struct sockaddr *)&dst,
+	    sizeof(dst)), datalen);
 
 	while (preload--)		/* Fire off them quickies. */
 		(void)pinger();
@@ -1326,7 +1328,7 @@ summary(int signo)
 
 	buf[0] = '\0';
 
-	snprintf(buft, sizeof(buft), "\n--- %s ping6 statistics ---\n",
+	snprintf(buft, sizeof(buft), "--- %s ping6 statistics ---\n",
 	    hostname);
 	strlcat(buf, buft, sizeof(buf));
 	snprintf(buft, sizeof(buft), "%ld packets transmitted, ",
