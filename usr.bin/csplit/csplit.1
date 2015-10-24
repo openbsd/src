@@ -1,4 +1,4 @@
-.\"	$OpenBSD: csplit.1,v 1.11 2014/02/04 13:26:36 jmc Exp $
+.\"	$OpenBSD: csplit.1,v 1.12 2015/10/24 15:32:50 zhuk Exp $
 .\"
 .\" Copyright (c) 2002 Tim J. Robbins.
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\"
 .\" $FreeBSD: src/usr.bin/csplit/csplit.1,v 1.11 2005/01/25 22:29:51 tjr Exp $
 .\"
-.Dd $Mdocdate: February 4 2014 $
+.Dd $Mdocdate: October 24 2015 $
 .Dt CSPLIT 1
 .Os
 .Sh NAME
@@ -138,11 +138,12 @@ Split the
 .Xr mdoc 7
 file
 .Pa foo.1
-into one file for each section (up to 21):
+into one file for each section (up to 21 files):
 .Pp
 .Dl "$ csplit -k foo.1 '%^\e.Sh%' '/^\e.Sh/' '{20}'"
 .Pp
-Split standard input after the first 99 lines and every 100 lines thereafter:
+Split standard input after the first 99 lines and every 100 lines
+thereafter (up to 21 files):
 .Pp
 .Dl "$ csplit -k - 100 '{19}'"
 .Sh SEE ALSO
