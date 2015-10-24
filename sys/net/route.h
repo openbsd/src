@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.h,v 1.115 2015/10/07 10:50:35 mpi Exp $	*/
+/*	$OpenBSD: route.h,v 1.116 2015/10/24 11:47:07 mpi Exp $	*/
 /*	$NetBSD: route.h,v 1.9 1996/02/13 22:00:49 christos Exp $	*/
 
 /*
@@ -103,6 +103,7 @@ struct rtentry {
 #endif
 	struct sockaddr	*rt_gateway;	/* value */
 	struct ifnet	*rt_ifp;	/* the answer: interface to use */
+#define rt_ifidx rt_ifp->if_index
 	struct ifaddr	*rt_ifa;	/* the answer: interface addr to use */
 	caddr_t		 rt_llinfo;	/* pointer to link level info cache or
 					   to an MPLS structure */ 
