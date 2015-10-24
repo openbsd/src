@@ -1,4 +1,4 @@
-/*	$OpenBSD: localtime.c,v 1.54 2015/09/19 04:02:21 guenther Exp $ */
+/*	$OpenBSD: localtime.c,v 1.55 2015/10/24 18:13:18 guenther Exp $ */
 /*
 ** This file is in the public domain, so clarified as of
 ** 1996-06-05 by Arthur David Olson.
@@ -10,8 +10,13 @@
 */
 
 #include <ctype.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <float.h>	/* for FLT_MAX and DBL_MAX */
+#include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
 #include "private.h"
 #include "tzfile.h"
@@ -324,7 +329,7 @@ tzload(const char *name, struct state *sp, int doextend)
 	} u_t;
 	u_t *			up;
 	int			doaccess;
-	char			fullname[FILENAME_MAX];
+	char			fullname[PATH_MAX];
 
 	up = calloc(1, sizeof *up);
 	if (up == NULL)

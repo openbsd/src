@@ -1,4 +1,4 @@
-/*	$OpenBSD: strftime.c,v 1.27 2015/09/12 14:35:40 guenther Exp $ */
+/*	$OpenBSD: strftime.c,v 1.28 2015/10/24 18:13:18 guenther Exp $ */
 /*
 ** Copyright (c) 1989, 1993
 **	The Regents of the University of California.  All rights reserved.
@@ -30,6 +30,7 @@
 
 #include <fcntl.h>
 #include <locale.h>
+#include <stdio.h>
 
 #include "private.h"
 #include "tzfile.h"
@@ -612,7 +613,7 @@ _loc(void)
 	char *			p;
 	const char **		ap;
 	const char *		plim;
-	char			filename[FILENAME_MAX];
+	char			filename[PATH_MAX];
 	struct stat		st;
 	size_t			namesize;
 	size_t			bufsize;

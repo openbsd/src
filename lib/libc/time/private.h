@@ -1,4 +1,4 @@
-/*	$OpenBSD: private.h,v 1.37 2015/04/07 01:47:04 millert Exp $	*/
+/*	$OpenBSD: private.h,v 1.38 2015/10/24 18:13:18 guenther Exp $	*/
 #ifndef PRIVATE_H
 
 #define PRIVATE_H
@@ -30,20 +30,8 @@
 ** Nested includes
 */
 
-#include <sys/types.h>	/* for time_t */
-#include <stdio.h>
-#include <errno.h>
-#include <string.h>
 #include <limits.h>	/* for CHAR_BIT et al. */
 #include <time.h>
-#include <stdlib.h>
-
-
-#include <sys/wait.h>	/* for WIFEXITED and WEXITSTATUS */
-
-#include <unistd.h>	/* for F_OK, R_OK, and other POSIX goodness */
-
-#include <stdint.h>
 
 /*
 ** Finally, some convenience items.

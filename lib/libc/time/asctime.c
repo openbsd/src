@@ -1,4 +1,4 @@
-/*	$OpenBSD: asctime.c,v 1.22 2015/09/12 14:35:40 guenther Exp $ */
+/*	$OpenBSD: asctime.c,v 1.23 2015/10/24 18:13:18 guenther Exp $ */
 /*
 ** This file is in the public domain, so clarified as of
 ** 1996-06-05 by Arthur David Olson.
@@ -10,6 +10,9 @@
 ** whereas the output of asctime is supposed to be constant.
 */
 
+#include <errno.h>
+#include <stdio.h>
+#include <string.h>
 #include "private.h"
 #include "tzfile.h"
 #include "thread_private.h"
