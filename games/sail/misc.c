@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.6 2014/11/16 04:49:48 guenther Exp $	*/
+/*	$OpenBSD: misc.c,v 1.7 2015/10/24 18:16:40 mmcc Exp $	*/
 /*	$NetBSD: misc.c,v 1.3 1995/04/22 10:37:03 cgd Exp $	*/
 
 /*
@@ -182,7 +182,7 @@ colours(sp)
 	if (sp->file->sink)
 		flag = '~';
 	flag = *countryname[capship(sp)->nationality];
-	return sp->file->FS ? flag : tolower(flag);
+	return sp->file->FS ? flag : tolower((unsigned char)flag);
 }
 
 void

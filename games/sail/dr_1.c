@@ -1,4 +1,4 @@
-/*	$OpenBSD: dr_1.c,v 1.6 2009/10/27 23:59:27 deraadt Exp $	*/
+/*	$OpenBSD: dr_1.c,v 1.7 2015/10/24 18:16:40 mmcc Exp $	*/
 /*	$NetBSD: dr_1.c,v 1.4 1995/04/24 12:25:10 cgd Exp $	*/
 
 /*
@@ -417,8 +417,8 @@ next()
 			if (tp == 0)
 				p = "Driver";
 			else {
-				if (islower(*tp))
-					*tp = toupper(*tp);
+				if (islower((unsigned char)*tp))
+					*tp = toupper((unsigned char)*tp);
 				p = tp;
 			}
 			(void) strncpy(bestship->file->captain, p,
