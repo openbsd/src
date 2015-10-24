@@ -1,4 +1,4 @@
-/*	$OpenBSD: identd.c,v 1.32 2015/10/16 05:55:23 doug Exp $ */
+/*	$OpenBSD: identd.c,v 1.33 2015/10/24 15:31:00 jca Exp $ */
 
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
@@ -314,7 +314,7 @@ main(int argc, char *argv[])
 		lerr(1, "signal(SIGPIPE)");
 
 	if (parent) {
-		if (pledge("stdio proc getpw rpath", NULL) == -1)
+		if (pledge("stdio getpw rpath id", NULL) == -1)
 			err(1, "pledge");
 
 		SIMPLEQ_INIT(&sc.parent.replies);
