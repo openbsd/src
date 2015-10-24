@@ -1,4 +1,4 @@
-/*	$OpenBSD: pom.c,v 1.17 2015/10/14 08:12:12 doug Exp $	*/
+/*	$OpenBSD: pom.c,v 1.18 2015/10/24 17:33:05 mmcc Exp $	*/
 /*    $NetBSD: pom.c,v 1.6 1996/02/06 22:47:29 jtc Exp $      */
 
 /*
@@ -208,7 +208,7 @@ parsetime(char *p)
 	char *t;
 	
 	for (t = p; *t; ++t) {
-		if (isdigit(*t))
+		if (isdigit((unsigned char)*t))
 			continue;
 		badformat();
 	}
