@@ -118,7 +118,7 @@ $ ESHUTDOWN
 $ ETOOMANYREFS
 59 Too many references: can't splice
 $ ETIMEDOUT
-60 Connection timed out
+60 Operation timed out
 $ ECONNREFUSED
 61 Connection refused
 $ ELOOP
@@ -136,7 +136,7 @@ $ EPROCLIM
 $ EUSERS
 68 Too many users
 $ EDQUOT
-69 Disc quota exceeded
+69 Disk quota exceeded
 $ ESTALE
 70 Stale NFS file handle
 $ EREMOTE
@@ -146,7 +146,7 @@ $ EBADRPC
 $ ERPCMISMATCH
 73 RPC version wrong
 $ EPROGUNAVAIL
-74 RPC prog. not avail
+74 RPC program not available
 $ EPROGMISMATCH
 75 Program version wrong
 $ EPROCUNAVAIL

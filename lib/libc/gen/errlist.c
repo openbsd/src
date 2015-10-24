@@ -1,4 +1,4 @@
-/*	$OpenBSD: errlist.c,v 1.17 2015/09/19 04:02:21 guenther Exp $ */
+/*	$OpenBSD: errlist.c,v 1.18 2015/10/24 10:42:02 bluhm Exp $ */
 /*
  * Copyright (c) 1982, 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -122,7 +122,7 @@ const char *const sys_errlist[] = {
 	"Too many levels of remote in path",	/* 71 - EREMOTE */
 	"RPC struct is bad",			/* 72 - EBADRPC */
 	"RPC version wrong",			/* 73 - ERPCMISMATCH */
-	"RPC prog. not avail",			/* 74 - EPROGUNAVAIL */
+	"RPC program not available",		/* 74 - EPROGUNAVAIL */
 	"Program version wrong",		/* 75 - EPROGMISMATCH */
 	"Bad procedure for program",		/* 76 - EPROCUNAVAIL */
 
