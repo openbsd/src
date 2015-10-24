@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.cmd.c,v 1.7 2009/10/27 23:59:25 deraadt Exp $	*/
+/*	$OpenBSD: hack.cmd.c,v 1.8 2015/10/24 18:26:13 mmcc Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -163,7 +163,7 @@ rhack(char *cmd)
 		domove();
 		return;
 	}
-	if(movecmd(tolower(*cmd))) {
+	if(movecmd(tolower((unsigned char)*cmd))) {
 		flags.run = 1;
 	rush:
 		if(firsttime){
@@ -185,7 +185,7 @@ rhack(char *cmd)
 		flags.run = 2;
 		goto rush;
 	}
-	if(*cmd == 'F' && movecmd(tolower(cmd[1]))) {
+	if(*cmd == 'F' && movecmd(tolower((unsigned char)cmd[1]))) {
 		flags.run = 3;
 		goto rush;
 	}
@@ -194,7 +194,7 @@ rhack(char *cmd)
 		flags.nopick = 1;
 		goto walk;
 	}
-	if(*cmd == 'M' && movecmd(tolower(cmd[1]))) {
+	if(*cmd == 'M' && movecmd(tolower((unsigned char)cmd[1]))) {
 		flags.run = 1;
 		flags.nopick = 1;
 		goto rush;

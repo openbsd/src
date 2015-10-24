@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.end.c,v 1.12 2014/03/11 08:05:15 guenther Exp $	*/
+/*	$OpenBSD: hack.end.c,v 1.13 2015/10/24 18:26:13 mmcc Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -685,7 +685,7 @@ prscore(int argc, char **argv)
 		  (players[i][0] == '-' &&
 		   players[i][1] == t1->plchar &&
 		   players[i][2] == 0) ||
-		  (isdigit(players[i][0]) && rank <= atoi(players[i])))
+		  (isdigit((unsigned char)players[i][0]) && rank <= atoi(players[i])))
 			flg++;
 	  }
 	  t1 = t1->tt_next = newttentry();
@@ -720,7 +720,7 @@ prscore(int argc, char **argv)
 			  (players[i][0] == '-' &&
 			   players[i][1] == t1->plchar &&
 			   players[i][2] == 0) ||
-			  (isdigit(players[i][0]) && rank <= atoi(players[i]))){
+			  (isdigit((unsigned char)players[i][0]) && rank <= atoi(players[i]))){
 			outwithit:
 				if(outflg)
 				    (void) outentry(rank, t1, 0);
