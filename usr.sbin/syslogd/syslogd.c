@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.200 2015/10/23 16:28:52 bluhm Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.201 2015/10/24 12:49:37 bluhm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -550,6 +550,7 @@ main(int argc, char *argv[])
 			tls_config_insecure_noverifyname(client_config);
 		} else {
 			struct stat sb;
+			int fail = 1;
 
 			fd = -1;
 			p = NULL;
@@ -567,9 +568,13 @@ main(int argc, char *argv[])
 			    sb.st_size) == -1) {
 				logerrorx("tls_config_set_ca_mem");
 			} else {
+				fail = 0;
 				logdebug("CAfile %s, size %lld\n",
 				    CAfile, sb.st_size);
 			}
+			/* avoid reading default certs in chroot */
+			if (fail)
+				tls_config_set_ca_mem(client_config, "", 0);
 			free(p);
 			close(fd);
 		}
@@ -700,7 +705,7 @@ main(int argc, char *argv[])
 	if (priv_init(ConfFile, NoDNS, lockpipe[1], nullfd, argv) < 0)
 		errx(1, "unable to privsep");
 
-	if (pledge("stdio rpath unix inet recvfd", NULL) == -1)
+	if (pledge("stdio unix inet recvfd", NULL) == -1)
 		err(1, "pledge");
 
 	/* Process is now unprivileged and inside a chroot */
