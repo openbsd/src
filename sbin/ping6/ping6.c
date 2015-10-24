@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.129 2015/10/24 16:32:26 florian Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.130 2015/10/24 16:41:11 florian Exp $	*/
 /*	$KAME: ping6.c,v 1.163 2002/10/25 02:19:06 itojun Exp $	*/
 
 /*
@@ -168,7 +168,6 @@ char BSPACE = '\b';		/* characters written for flood */
 char DOT = '.';
 char *hostname;
 int ident;			/* process id to identify our packets */
-u_int8_t nonce[8];		/* nonce field for node information */
 int hoplimit = -1;		/* hoplimit */
 
 /* counters */
@@ -501,7 +500,6 @@ main(int argc, char *argv[])
 			*datap++ = i;
 
 	ident = getpid() & 0xFFFF;
-	arc4random_buf(nonce, sizeof(nonce));
 
 	optval = 1;
 
