@@ -1,4 +1,4 @@
-/*	$OpenBSD: getcom.c,v 1.14 2009/10/27 23:59:24 deraadt Exp $	*/
+/*	$OpenBSD: getcom.c,v 1.15 2015/10/24 17:20:17 mmcc Exp $	*/
 /*	$NetBSD: getcom.c,v 1.3 1995/03/21 15:07:30 cgd Exp $	*/
 
 /*
@@ -43,7 +43,7 @@ getcom(char *buf, int size, const char *prompt, const char *error)
 			clearerr(stdin);
 			continue;
 		}
-		while (isspace(*buf))
+		while (isspace((unsigned char)*buf))
 			buf++;
 		if (*buf)
 			break;
@@ -70,26 +70,26 @@ getword(char *buf1, char *buf2, int flag)
 	int cnt;
 
 	cnt = 1;
-	while (isspace(*buf1))
+	while (isspace((unsigned char)*buf1))
 		buf1++;
 	if (*buf1 != ',' && *buf1 != '.') {
 		if (!*buf1) {
 			*buf2 = '\0';
 			return (0);
 		}
-		while (cnt < WORDLEN && *buf1 && !isspace(*buf1) &&
-		    *buf1 != ',' && *buf1 != '.')
+		while (cnt < WORDLEN && *buf1 && !isspace((unsigned char)*buf1) &&
+		       *buf1 != ',' && *buf1 != '.')
 			if (flag < 0) {
-				if (isupper(*buf1)) {
-					*buf2++ = tolower(*buf1++);
+				if (isupper((unsigned char)*buf1)) {
+					*buf2++ = tolower((unsigned char)*buf1++);
 					cnt++;
 				} else {
 					*buf2++ = *buf1++;
 					cnt++;
 				}
 			} else if (flag > 0) {
-				if (islower(*buf1)) {
-					*buf2++ = toupper(*buf1++);
+				if (islower((unsigned char)*buf1)) {
+					*buf2++ = toupper((unsigned char)*buf1++);
 					cnt++;
 				} else {
 					*buf2++ = *buf1++;
@@ -100,12 +100,12 @@ getword(char *buf1, char *buf2, int flag)
 				cnt++;
 			}
 		if (cnt == WORDLEN)
-			while (*buf1 && !isspace(*buf1))
+			while (*buf1 && !isspace((unsigned char)*buf1))
 				buf1++;
 	} else
 		*buf2++ = *buf1++;
 	*buf2 = '\0';
-	while (isspace(*buf1))
+	while (isspace((unsigned char)*buf1))
 		buf1++;
 	return (*buf1 ? buf1 : NULL);
 }
