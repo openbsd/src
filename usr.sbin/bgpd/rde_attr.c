@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_attr.c,v 1.94 2015/08/30 23:20:43 deraadt Exp $ */
+/*	$OpenBSD: rde_attr.c,v 1.95 2015/10/24 08:00:42 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -801,11 +801,10 @@ aspath_loopfree(struct aspath *aspath, u_int32_t myAS)
 {
 	u_int8_t	*seg;
 	u_int16_t	 len, seg_size;
-	u_int8_t	 i, seg_len, seg_type;
+	u_int8_t	 i, seg_len;
 
 	seg = aspath->data;
 	for (len = aspath->len; len > 0; len -= seg_size, seg += seg_size) {
-		seg_type = seg[0];
 		seg_len = seg[1];
 		seg_size = 2 + sizeof(u_int32_t) * seg_len;
 
@@ -939,7 +938,7 @@ aspath_lenmatch(struct aspath *a, enum aslen_spec type, u_int aslen)
 	u_int32_t	 as, lastas = 0;
 	u_int		 count = 0;
 	u_int16_t	 len, seg_size;
-	u_int8_t	 i, seg_type, seg_len;
+	u_int8_t	 i, seg_len;
 
 	if (type == ASLEN_MAX) {
 		if (aslen < aspath_count(a->data, a->len))
@@ -951,7 +950,6 @@ aspath_lenmatch(struct aspath *a, enum aslen_spec type, u_int aslen)
 	/* type == ASLEN_SEQ */
 	seg = a->data;
 	for (len = a->len; len > 0; len -= seg_size, seg += seg_size) {
-		seg_type = seg[0];
 		seg_len = seg[1];
 		seg_size = 2 + sizeof(u_int32_t) * seg_len;
 

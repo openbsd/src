@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.19 2014/11/11 08:02:09 claudio Exp $ */
+/*	$OpenBSD: util.c,v 1.20 2015/10/24 08:00:42 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -312,7 +312,7 @@ aspath_match(void *data, u_int16_t len, enum as_spec type, u_int32_t as)
 	u_int8_t	*seg;
 	int		 final;
 	u_int16_t	 seg_size;
-	u_int8_t	 i, seg_type, seg_len;
+	u_int8_t	 i, seg_len;
 
 	if (type == AS_EMPTY) {
 		if (len == 0)
@@ -321,10 +321,8 @@ aspath_match(void *data, u_int16_t len, enum as_spec type, u_int32_t as)
 			return (0);
 	}
 
-	final = 0;
 	seg = data;
 	for (; len > 0; len -= seg_size, seg += seg_size) {
-		seg_type = seg[0];
 		seg_len = seg[1];
 		seg_size = 2 + sizeof(u_int32_t) * seg_len;
 
