@@ -1,4 +1,4 @@
-/*	$OpenBSD: strfile.c,v 1.22 2015/09/16 16:32:11 tedu Exp $	*/
+/*	$OpenBSD: strfile.c,v 1.23 2015/10/24 18:33:22 mmcc Exp $	*/
 /*	$NetBSD: strfile.c,v 1.4 1995/04/24 12:23:09 cgd Exp $	*/
 
 /*-
@@ -173,12 +173,12 @@ main(int ac, char *av[])
 				Tbl.str_shortlen = length;
 			first = Oflag;
 		} else if (first) {
-			for (nsp = sp; !isalnum(*nsp); nsp++)
+			for (nsp = sp; !isalnum((unsigned char)*nsp); nsp++)
 				continue;
 			ALLOC(Firstch, Num_pts);
 			fp = &Firstch[Num_pts - 1];
-			if (Iflag && isupper(*nsp))
-				fp->first = tolower(*nsp);
+			if (Iflag && isupper((unsigned char)*nsp))
+				fp->first = tolower((unsigned char)*nsp);
 			else
 				fp->first = *nsp;
 			fp->pos = Seekpts[Num_pts - 1];
@@ -254,7 +254,7 @@ getargs(int argc, char *argv[])
 		switch(ch) {
 		case 'c':			/* new delimiting char */
 			Delimch = *optarg;
-			if (!isascii(Delimch)) {
+			if (!isascii((unsigned char)Delimch)) {
 				printf("bad delimiting character: '\\%o\n'",
 				       Delimch);
 			}
@@ -357,7 +357,7 @@ unctrl(char c)
 {
 	static char	buf[3];
 
-	if (isprint(c)) {
+	if (isprint((unsigned char)c)) {
 		buf[0] = c;
 		buf[1] = '\0';
 	} else if (c == 0177) {
