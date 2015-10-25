@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtadvd.c,v 1.56 2015/10/25 21:23:42 jca Exp $	*/
+/*	$OpenBSD: rtadvd.c,v 1.57 2015/10/25 21:31:58 jca Exp $	*/
 /*	$KAME: rtadvd.c,v 1.66 2002/05/29 14:18:36 itojun Exp $	*/
 
 /*
@@ -237,6 +237,9 @@ main(argc, argv)
 	    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||
 	    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
 		fatal("cannot drop privileges");
+
+	if (pledge("stdio inet route", NULL) == -1)
+		err(1, "pledge");
 
 	npfd = 1;
 	pfd[0].fd = sock;
