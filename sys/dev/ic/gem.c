@@ -1,4 +1,4 @@
-/*	$OpenBSD: gem.c,v 1.113 2015/09/11 13:02:28 stsp Exp $	*/
+/*	$OpenBSD: gem.c,v 1.114 2015/10/25 12:48:46 mpi Exp $	*/
 /*	$NetBSD: gem.c,v 1.1 2001/09/16 00:11:43 eeh Exp $ */
 
 /*
@@ -1490,7 +1490,6 @@ int
 gem_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct gem_softc *sc = ifp->if_softc;
-	struct ifaddr *ifa = (struct ifaddr *)data;
 	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
 
@@ -1501,8 +1500,6 @@ gem_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		ifp->if_flags |= IFF_UP;
 		if ((ifp->if_flags & IFF_RUNNING) == 0)
 			gem_init(ifp);
-		if (ifa->ifa_addr->sa_family == AF_INET)
-			arp_ifinit(&sc->sc_arpcom, ifa);
 		break;
 
 	case SIOCSIFFLAGS:

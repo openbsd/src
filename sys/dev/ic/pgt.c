@@ -1,4 +1,4 @@
-/*	$OpenBSD: pgt.c,v 1.78 2015/05/21 09:36:20 mpi Exp $  */
+/*	$OpenBSD: pgt.c,v 1.79 2015/10/25 12:48:46 mpi Exp $  */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -2231,7 +2231,6 @@ int
 pgt_ioctl(struct ifnet *ifp, u_long cmd, caddr_t req)
 {
 	struct pgt_softc *sc = ifp->if_softc;
-	struct ifaddr *ifa;
 	struct ifreq *ifr;
 	struct wi_req *wreq;
 	struct ieee80211_nodereq_all *na;
@@ -2348,10 +2347,7 @@ pgt_ioctl(struct ifnet *ifp, u_long cmd, caddr_t req)
 		break;
 	}
 	case SIOCSIFADDR:
-		ifa = (struct ifaddr *)req;
 		ifp->if_flags |= IFF_UP;
-		if (ifa->ifa_addr->sa_family == AF_INET)
-			 arp_ifinit(&sc->sc_ic.ic_ac, ifa);
 		/* FALLTHROUGH */
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.180 2015/09/04 07:05:44 jsg Exp $	*/
+/*	$OpenBSD: re.c,v 1.181 2015/10/25 12:48:46 mpi Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -2066,7 +2066,6 @@ re_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 {
 	struct rl_softc	*sc = ifp->if_softc;
 	struct ifreq	*ifr = (struct ifreq *) data;
-	struct ifaddr *ifa = (struct ifaddr *)data;
 	int		s, error = 0;
 
 	s = splnet();
@@ -2076,8 +2075,6 @@ re_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		ifp->if_flags |= IFF_UP;
 		if (!(ifp->if_flags & IFF_RUNNING))
 			re_init(ifp);
-		if (ifa->ifa_addr->sa_family == AF_INET)
-			arp_ifinit(&sc->sc_arpcom, ifa);
 		break;
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP) {

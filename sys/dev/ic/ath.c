@@ -1,4 +1,4 @@
-/*      $OpenBSD: ath.c,v 1.105 2015/03/14 03:38:47 jsg Exp $  */
+/*      $OpenBSD: ath.c,v 1.106 2015/10/25 12:48:46 mpi Exp $  */
 /*	$NetBSD: ath.c,v 1.37 2004/08/18 21:59:39 dyoung Exp $	*/
 
 /*-
@@ -977,16 +977,12 @@ ath_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	struct ath_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifreq *ifr = (struct ifreq *)data;
-	struct ifaddr *ifa = (struct ifaddr *)data;
 	int error = 0, s;
 
 	s = splnet();
 	switch (cmd) {
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
-		if (ifa->ifa_addr->sa_family == AF_INET) {
-			arp_ifinit(&ic->ic_ac, ifa);
-		}
 		/* FALLTHROUGH */
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP) {

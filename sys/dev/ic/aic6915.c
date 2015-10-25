@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic6915.c,v 1.17 2015/06/24 09:40:54 mpi Exp $	*/
+/*	$OpenBSD: aic6915.c,v 1.18 2015/10/25 12:48:46 mpi Exp $	*/
 /*	$NetBSD: aic6915.c,v 1.15 2005/12/24 20:27:29 perry Exp $	*/
 
 /*-
@@ -508,7 +508,6 @@ int
 sf_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct sf_softc *sc = (struct sf_softc *)ifp->if_softc;
-	struct ifaddr *ifa = (struct ifaddr *)data;
 	struct ifreq *ifr = (struct ifreq *) data;
 	int s, error = 0;
 
@@ -519,8 +518,6 @@ sf_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		ifp->if_flags |= IFF_UP;
 		if (!(ifp->if_flags & IFF_RUNNING))
 			sf_init(ifp);
-		if (ifa->ifa_addr->sa_family == AF_INET)
-			arp_ifinit(&sc->sc_arpcom, ifa);
 		break;
 
 	case SIOCSIFFLAGS:

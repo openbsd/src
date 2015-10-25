@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2860.c,v 1.81 2015/08/29 20:55:34 deraadt Exp $	*/
+/*	$OpenBSD: rt2860.c,v 1.82 2015/10/25 12:48:46 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -1815,7 +1815,6 @@ rt2860_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct rt2860_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
-	struct ifaddr *ifa;
 	struct ifreq *ifr;
 	int s, error = 0;
 
@@ -1823,10 +1822,7 @@ rt2860_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 	switch (cmd) {
 	case SIOCSIFADDR:
-		ifa = (struct ifaddr *)data;
 		ifp->if_flags |= IFF_UP;
-		if (ifa->ifa_addr->sa_family == AF_INET)
-			arp_ifinit(&ic->ic_ac, ifa);
 		/* FALLTHROUGH */
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP) {

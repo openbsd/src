@@ -1,4 +1,4 @@
-/*	$OpenBSD: xl.c,v 1.126 2015/09/11 13:02:28 stsp Exp $	*/
+/*	$OpenBSD: xl.c,v 1.127 2015/10/25 12:48:46 mpi Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -2162,7 +2162,6 @@ xl_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 {
 	struct xl_softc *sc = ifp->if_softc;
 	struct ifreq *ifr = (struct ifreq *)data;
-	struct ifaddr *ifa = (struct ifaddr *)data;
 	int s, error = 0;
 	struct mii_data *mii = NULL;
 
@@ -2173,8 +2172,6 @@ xl_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		ifp->if_flags |= IFF_UP;
 		if (!(ifp->if_flags & IFF_RUNNING))
 			xl_init(sc);
-		if (ifa->ifa_addr->sa_family == AF_INET)
-			arp_ifinit(&sc->sc_arpcom, ifa);
 		break;
 
 	case SIOCSIFFLAGS:

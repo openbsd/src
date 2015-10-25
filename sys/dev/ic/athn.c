@@ -1,4 +1,4 @@
-/*	$OpenBSD: athn.c,v 1.86 2015/03/14 03:38:47 jsg Exp $	*/
+/*	$OpenBSD: athn.c,v 1.87 2015/10/25 12:48:46 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -2657,7 +2657,6 @@ athn_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct athn_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
-	struct ifaddr *ifa;
 	struct ifreq *ifr;
 	int s, error = 0;
 
@@ -2665,10 +2664,7 @@ athn_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 	switch (cmd) {
 	case SIOCSIFADDR:
-		ifa = (struct ifaddr *)data;
 		ifp->if_flags |= IFF_UP;
-		if (ifa->ifa_addr->sa_family == AF_INET)
-			arp_ifinit(&ic->ic_ac, ifa);
 		/* FALLTHROUGH */
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP) {

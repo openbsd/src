@@ -1,4 +1,4 @@
-/*	$OpenBSD: hme.c,v 1.74 2015/09/11 13:02:28 stsp Exp $	*/
+/*	$OpenBSD: hme.c,v 1.75 2015/10/25 12:48:46 mpi Exp $	*/
 /*	$NetBSD: hme.c,v 1.21 2001/07/07 15:59:37 thorpej Exp $	*/
 
 /*-
@@ -1152,7 +1152,6 @@ int
 hme_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct hme_softc *sc = ifp->if_softc;
-	struct ifaddr *ifa = (struct ifaddr *)data;
 	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
 
@@ -1163,8 +1162,6 @@ hme_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		ifp->if_flags |= IFF_UP;
 		if (!(ifp->if_flags & IFF_RUNNING))
 			hme_init(sc);
-		if (ifa->ifa_addr->sa_family == AF_INET)
-			arp_ifinit(&sc->sc_arpcom, ifa);
 		break;
 
 	case SIOCSIFFLAGS:

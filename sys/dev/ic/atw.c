@@ -1,4 +1,4 @@
-/*	$OpenBSD: atw.c,v 1.88 2015/09/06 04:10:58 deraadt Exp $	*/
+/*	$OpenBSD: atw.c,v 1.89 2015/10/25 12:48:46 mpi Exp $	*/
 /*	$NetBSD: atw.c,v 1.69 2004/07/23 07:07:55 dyoung Exp $	*/
 
 /*-
@@ -4004,9 +4004,7 @@ int
 atw_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct atw_softc *sc = ifp->if_softc;
-	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifreq *ifr = (struct ifreq *)data;
-   	struct ifaddr *ifa = (struct ifaddr *)data;
 	int s, error = 0;
 
 	/* XXX monkey see, monkey do. comes from wi_ioctl. */
@@ -4018,9 +4016,6 @@ atw_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	switch (cmd) {
         case SIOCSIFADDR:
                 ifp->if_flags |= IFF_UP;
-                if (ifa->ifa_addr->sa_family == AF_INET) {
-                        arp_ifinit(&ic->ic_ac, ifa);
-                }
 		/* FALLTHROUGH */
 
 	case SIOCSIFFLAGS:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwi.c,v 1.117 2015/08/29 20:55:34 deraadt Exp $	*/
+/*	$OpenBSD: bwi.c,v 1.118 2015/10/25 12:48:46 mpi Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -7112,7 +7112,6 @@ bwi_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct bwi_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
-	struct ifaddr *ifa;
 	struct ifreq *ifr;
 	int s, error = 0;
 	uint8_t chan;
@@ -7121,10 +7120,7 @@ bwi_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 	switch (cmd) {
 	case SIOCSIFADDR:
-		ifa = (struct ifaddr *)data;
 		ifp->if_flags |= IFF_UP;
-		if (ifa->ifa_addr->sa_family == AF_INET)
-			arp_ifinit(&ic->ic_ac, ifa);
 		/* FALLTHROUGH */
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP) {

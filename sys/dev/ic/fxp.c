@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxp.c,v 1.122 2015/08/29 20:55:34 deraadt Exp $	*/
+/*	$OpenBSD: fxp.c,v 1.123 2015/10/25 12:48:46 mpi Exp $	*/
 /*	$NetBSD: if_fxp.c,v 1.2 1997/06/05 02:01:55 thorpej Exp $	*/
 
 /*
@@ -1632,7 +1632,6 @@ fxp_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 {
 	struct fxp_softc *sc = ifp->if_softc;
 	struct ifreq *ifr = (struct ifreq *)data;
-	struct ifaddr *ifa = (struct ifaddr *)data;
 	int s, error = 0;
 
 	s = splnet();
@@ -1642,8 +1641,6 @@ fxp_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		ifp->if_flags |= IFF_UP;
 		if (!(ifp->if_flags & IFF_RUNNING))
 			fxp_init(sc);
-		if (ifa->ifa_addr->sa_family == AF_INET)
-			arp_ifinit(&sc->sc_arpcom, ifa);
 		break;
 
 	case SIOCSIFFLAGS:

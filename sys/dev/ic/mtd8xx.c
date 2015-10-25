@@ -1,4 +1,4 @@
-/*	$OpenBSD: mtd8xx.c,v 1.27 2015/06/24 09:40:54 mpi Exp $	*/
+/*	$OpenBSD: mtd8xx.c,v 1.28 2015/10/25 12:48:46 mpi Exp $	*/
 
 /*
  * Copyright (c) 2003 Oleg Safiullin <form@pdp11.org.ru>
@@ -572,7 +572,6 @@ static int
 mtd_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 {
 	struct mtd_softc *sc = ifp->if_softc;
-	struct ifaddr *ifa = (struct ifaddr *)data;
 	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
 
@@ -582,11 +581,6 @@ mtd_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
 		mtd_init(ifp);
-		switch (ifa->ifa_addr->sa_family) {
-		case AF_INET:
-			arp_ifinit(&sc->sc_arpcom, ifa);
-			break;
-		}
 		break;
 
 	case SIOCSIFFLAGS:

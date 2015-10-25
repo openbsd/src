@@ -1,4 +1,4 @@
-/* $OpenBSD: lemac.c,v 1.21 2015/09/11 13:02:28 stsp Exp $ */
+/* $OpenBSD: lemac.c,v 1.22 2015/10/25 12:48:46 mpi Exp $ */
 /* $NetBSD: lemac.c,v 1.20 2001/06/13 10:46:02 wiz Exp $ */
 
 /*-
@@ -771,7 +771,6 @@ int
 lemac_ifioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct lemac_softc *const sc = LEMAC_IFP_TO_SOFTC(ifp);
-	struct ifaddr *ifa = (struct ifaddr *)data;
 	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
 
@@ -781,14 +780,6 @@ lemac_ifioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
 		lemac_init(sc);
-		switch (ifa->ifa_addr->sa_family) {
-		case AF_INET:
-			arp_ifinit(&sc->sc_arpcom, ifa);
-			break;
-
-		default:
-			break;
-		}
 		break;
 
 	case SIOCSIFFLAGS:

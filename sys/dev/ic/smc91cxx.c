@@ -1,4 +1,4 @@
-/*	$OpenBSD: smc91cxx.c,v 1.41 2015/09/11 13:02:28 stsp Exp $	*/
+/*	$OpenBSD: smc91cxx.c,v 1.42 2015/10/25 12:48:46 mpi Exp $	*/
 /*	$NetBSD: smc91cxx.c,v 1.11 1998/08/08 23:51:41 mycroft Exp $	*/
 
 /*-
@@ -1022,7 +1022,6 @@ smc91cxx_ioctl(ifp, cmd, data)
 	caddr_t data;
 {
 	struct smc91cxx_softc *sc = ifp->if_softc;
-	struct ifaddr *ifa = (struct ifaddr *)data;
 	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
 
@@ -1033,15 +1032,7 @@ smc91cxx_ioctl(ifp, cmd, data)
 		if ((error = smc91cxx_enable(sc)) != 0)
 			break;
 		ifp->if_flags |= IFF_UP;
-		switch (ifa->ifa_addr->sa_family) {
-		case AF_INET:
-			smc91cxx_init(sc);
-			arp_ifinit(&sc->sc_arpcom, ifa);
-			break;
-		default:
-			smc91cxx_init(sc);
-			break;
-		}
+		smc91cxx_init(sc);
 		break;
 
 	case SIOCSIFFLAGS:

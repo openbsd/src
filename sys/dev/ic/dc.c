@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.144 2015/09/12 09:56:36 miod Exp $	*/
+/*	$OpenBSD: dc.c,v 1.145 2015/10/25 12:48:46 mpi Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -2914,7 +2914,6 @@ dc_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 {
 	struct dc_softc		*sc = ifp->if_softc;
 	struct ifreq		*ifr = (struct ifreq *) data;
-	struct ifaddr		*ifa = (struct ifaddr *)data;
 	int			s, error = 0;
 
 	s = splnet();
@@ -2924,8 +2923,6 @@ dc_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		ifp->if_flags |= IFF_UP;
 		if (!(ifp->if_flags & IFF_RUNNING))
 			dc_init(sc);
-		if (ifa->ifa_addr->sa_family == AF_INET)
-			arp_ifinit(&sc->sc_arpcom, ifa);
 		break;
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP) {

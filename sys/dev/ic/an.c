@@ -1,4 +1,4 @@
-/*	$OpenBSD: an.c,v 1.65 2015/06/21 21:22:27 krw Exp $	*/
+/*	$OpenBSD: an.c,v 1.66 2015/10/25 12:48:46 mpi Exp $	*/
 /*	$NetBSD: an.c,v 1.34 2005/06/20 02:49:18 atatat Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -874,7 +874,6 @@ int
 an_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 {
 	struct an_softc *sc = ifp->if_softc;
-	struct ifaddr *ifa = (struct ifaddr *)data;
 	int s, error = 0;
 
 	if ((sc->sc_dev.dv_flags & DVF_ACTIVE) == 0)
@@ -885,15 +884,7 @@ an_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 	switch(command) {
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
-		switch (ifa->ifa_addr->sa_family) {
-		case AF_INET:
-			error = an_init(ifp);
-			arp_ifinit(&sc->sc_ic.ic_ac, ifa);
-			break;
-		default:
-			error = an_init(ifp);
-			break;
-		}
+		error = an_init(ifp);
 		break;
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP) {

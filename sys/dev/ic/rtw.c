@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtw.c,v 1.90 2015/02/10 23:25:46 mpi Exp $	*/
+/*	$OpenBSD: rtw.c,v 1.91 2015/10/25 12:48:46 mpi Exp $	*/
 /*	$NetBSD: rtw.c,v 1.29 2004/12/27 19:49:16 dyoung Exp $ */
 
 /*-
@@ -2603,8 +2603,6 @@ int
 rtw_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct rtw_softc *sc = ifp->if_softc;
-	struct ieee80211com *ic = &sc->sc_ic;
-	struct ifaddr *ifa = (struct ifaddr *)data;
 	struct ifreq *ifr = (struct ifreq *)data;
 	int rc = 0, s;
 
@@ -2613,9 +2611,6 @@ rtw_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	switch (cmd) {
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
-		if (ifa->ifa_addr->sa_family == AF_INET) {
-			arp_ifinit(&ic->ic_ac, ifa);
-		}
 		/* FALLTHROUGH */
 
 	case SIOCSIFFLAGS:

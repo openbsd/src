@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82596.c,v 1.44 2015/09/18 09:54:08 miod Exp $	*/
+/*	$OpenBSD: i82596.c,v 1.45 2015/10/25 12:48:46 mpi Exp $	*/
 /*	$NetBSD: i82586.c,v 1.18 1998/08/15 04:42:42 mycroft Exp $	*/
 
 /*-
@@ -1852,7 +1852,6 @@ i82596_ioctl(ifp, cmd, data)
 	caddr_t data;
 {
 	struct ie_softc *sc = ifp->if_softc;
-	struct ifaddr *ifa = (struct ifaddr *)data;
 	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
 
@@ -1861,16 +1860,7 @@ i82596_ioctl(ifp, cmd, data)
 	switch(cmd) {
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
-
-		switch(ifa->ifa_addr->sa_family) {
-		case AF_INET:
-			i82596_init(sc);
-			arp_ifinit(&sc->sc_arpcom, ifa);
-			break;
-		default:
-			i82596_init(sc);
-			break;
-		}
+		i82596_init(sc);
 		break;
 
 	case SIOCSIFFLAGS:

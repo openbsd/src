@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2661.c,v 1.82 2015/09/09 19:26:05 deraadt Exp $	*/
+/*	$OpenBSD: rt2661.c,v 1.83 2015/10/25 12:48:46 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -2011,7 +2011,6 @@ rt2661_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct rt2661_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
-	struct ifaddr *ifa;
 	struct ifreq *ifr;
 	int s, error = 0;
 
@@ -2019,10 +2018,7 @@ rt2661_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 	switch (cmd) {
 	case SIOCSIFADDR:
-		ifa = (struct ifaddr *)data;
 		ifp->if_flags |= IFF_UP;
-		if (ifa->ifa_addr->sa_family == AF_INET)
-			arp_ifinit(&ic->ic_ac, ifa);
 		/* FALLTHROUGH */
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP) {

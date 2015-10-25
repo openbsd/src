@@ -1,4 +1,4 @@
-/*	$OpenBSD: dp8390.c,v 1.55 2015/06/24 09:40:54 mpi Exp $	*/
+/*	$OpenBSD: dp8390.c,v 1.56 2015/10/25 12:48:46 mpi Exp $	*/
 /*	$NetBSD: dp8390.c,v 1.13 1998/07/05 06:49:11 jonathan Exp $	*/
 
 /*
@@ -814,7 +814,6 @@ int
 dp8390_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct dp8390_softc *sc = ifp->if_softc;
-	struct ifaddr *ifa = (struct ifaddr *) data;
 	struct ifreq *ifr = (struct ifreq *) data;
 	int s, error = 0;
 
@@ -827,8 +826,6 @@ dp8390_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		ifp->if_flags |= IFF_UP;
 		if (!(ifp->if_flags & IFF_RUNNING))
 			dp8390_init(sc);
-		if (ifa->ifa_addr->sa_family == AF_INET)
-			arp_ifinit(&sc->sc_arpcom, ifa);
 		break;
 
 	case SIOCSIFFLAGS:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.163 2015/09/11 13:02:28 stsp Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.164 2015/10/25 12:48:46 mpi Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1526,7 +1526,6 @@ wi_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 	struct wi_softc		*sc = ifp->if_softc;
 	struct ifreq		*ifr = (struct ifreq *)data;
 	struct proc		*p = curproc;
-	struct ifaddr		*ifa = (struct ifaddr *)data;
 	struct wi_scan_res	*res;
 	struct wi_scan_p2_hdr	*p2;
 	struct wi_req		*wreq = NULL;
@@ -1560,15 +1559,7 @@ wi_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 	switch(command) {
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
-		switch (ifa->ifa_addr->sa_family) {
-		case AF_INET:
-			wi_init(sc);
-			arp_ifinit(&sc->sc_ic.ic_ac, ifa);
-			break;
-		default:
-			wi_init(sc);
-			break;
-		}
+		wi_init(sc);
 		break;
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP) {
