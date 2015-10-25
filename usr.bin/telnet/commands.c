@@ -1,4 +1,4 @@
-/*	$OpenBSD: commands.c,v 1.71 2015/01/16 06:40:13 deraadt Exp $	*/
+/*	$OpenBSD: commands.c,v 1.72 2015/10/25 14:11:37 jca Exp $	*/
 /*	$NetBSD: commands.c,v 1.14 1996/03/24 22:03:48 jtk Exp $	*/
 
 /*
@@ -53,8 +53,6 @@
 #include <sys/wait.h>
 #define PATH_SKEY	"/usr/bin/skey"
 #endif
-
-static unsigned long sourceroute(char *arg, char **cpp, int *lenp);
 
 int tos = -1;
 
@@ -1852,9 +1850,6 @@ tn(int argc, char *argv[])
     struct addrinfo hints, *res, *res0;
     int error;
     struct sockaddr_in sin;
-    unsigned long temp;
-    char *srp = 0;
-    int srlen;
     char *cmd, *hostp = 0, *portp = 0, *user = 0, *aliasp = 0;
     int retry;
     const int niflags = NI_NUMERICHOST;
@@ -1918,47 +1913,26 @@ tn(int argc, char *argv[])
     if (hostp == 0)
 	goto usage;
 
-    if (hostp[0] == '@' || hostp[0] == '!') {
-	if ((hostname = strrchr(hostp, ':')) == NULL)
-	    hostname = strrchr(hostp, '@');
-	hostname++;
-	srp = 0;
-	temp = sourceroute(hostp, &srp, &srlen);
-	if (temp == 0) {
-	    herror(srp);
-	    return 0;
-	} else if (temp == -1) {
-	    printf("Bad source route option: %s\r\n", hostp);
-	    return 0;
-	} else {
-	    abort();
-	}
+    hostname = hostp;
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_family = family;
+    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_flags = AI_CANONNAME;
+    if (portp == NULL) {
+        portp = "telnet";
+        telnetport = 1;
+    } else if (*portp == '-') {
+        portp++;
+        telnetport = 1;
     } else
-    {
-	hostname = hostp;
-	memset(&hints, 0, sizeof(hints));
-	hints.ai_family = family;
-	hints.ai_socktype = SOCK_STREAM;
-	hints.ai_flags = AI_CANONNAME;
-	if (portp == NULL) {
-	    portp = "telnet";
-	    telnetport = 1;
-	} else if (*portp == '-') {
-	    portp++;
-	    telnetport = 1;
-	} else
-	    telnetport = 0;
-	h_errno = 0;
-	error = getaddrinfo(hostp, portp, &hints, &res0);
-	if (error) {
-	    if (error == EAI_SERVICE)
-		warnx("%s: bad port", portp);
-	    else
-		warnx("%s: %s", hostp, gai_strerror(error));
-	    if (h_errno)
-		herror(hostp);
-	    return 0;
-	}
+        telnetport = 0;
+    error = getaddrinfo(hostp, portp, &hints, &res0);
+    if (error) {
+        if (error == EAI_SERVICE)
+            warnx("%s: bad port", portp);
+        else
+            warnx("%s: %s", hostp, gai_strerror(error));
+        return 0;
     }
 
     net = -1;
@@ -2004,9 +1978,6 @@ tn(int argc, char *argv[])
             }
 	    freeaddrinfo(ares);
 	}
-	if (srp && res->ai_family == AF_INET
-	 && setsockopt(net, IPPROTO_IP, IP_OPTIONS, srp, srlen) < 0)
-		perror("setsockopt (IP_OPTIONS)");
 	if (res->ai_family == AF_INET) {
 	    if (tos < 0)
 		tos = IPTOS_LOWDELAY;	/* Low Delay bit */
@@ -2236,144 +2207,4 @@ help(int argc, char *argv[])
 			printf("%s\r\n", c->help);
 	}
 	return 0;
-}
-
-/*
- * Source route is handed in as
- *	[!]@hop1@hop2...[@|:]dst
- * If the leading ! is present, it is a
- * strict source route, otherwise it is
- * assmed to be a loose source route.
- *
- * We fill in the source route option as
- *	hop1,hop2,hop3...dest
- * and return a pointer to hop1, which will
- * be the address to connect() to.
- *
- * Arguments:
- *	arg:	pointer to route list to decipher
- *
- *	cpp: 	If *cpp is not equal to NULL, this is a
- *		pointer to a pointer to a character array
- *		that should be filled in with the option.
- *
- *	lenp:	pointer to an integer that contains the
- *		length of *cpp if *cpp != NULL.
- *
- * Return values:
- *
- *	Returns the address of the host to connect to.  If the
- *	return value is -1, there was a syntax error in the
- *	option, either unknown characters, or too many hosts.
- *	If the return value is 0, one of the hostnames in the
- *	path is unknown, and *cpp is set to point to the bad
- *	hostname.
- *
- *	*cpp:	If *cpp was equal to NULL, it will be filled
- *		in with a pointer to our static area that has
- *		the option filled in.  This will be 32bit aligned.
- *
- *	*lenp:	This will be filled in with how long the option
- *		pointed to by *cpp is.
- *
- */
-
-static unsigned long
-sourceroute(char *arg, char **cpp, int *lenp)
-{
-	static char lsr[44];
-	char *cp, *cp2, *lsrp, *lsrep;
-	struct in_addr addr;
-	struct hostent *host = 0;
-	char c;
-
-	/*
-	 * Verify the arguments, and make sure we have
-	 * at least 7 bytes for the option.
-	 */
-	if (cpp == NULL || lenp == NULL)
-		return((unsigned long)-1);
-	if (*cpp != NULL && *lenp < 7)
-		return((unsigned long)-1);
-	/*
-	 * Decide whether we have a buffer passed to us,
-	 * or if we need to use our own static buffer.
-	 */
-	if (*cpp) {
-		lsrp = *cpp;
-		lsrep = lsrp + *lenp;
-	} else {
-		*cpp = lsrp = lsr;
-		lsrep = lsrp + 44;
-	}
-
-	cp = arg;
-
-	/*
-	 * Next, decide whether we have a loose source
-	 * route or a strict source route, and fill in
-	 * the begining of the option.
-	 */
-	if (*cp == '!') {
-		cp++;
-		*lsrp++ = IPOPT_SSRR;
-	} else
-		*lsrp++ = IPOPT_LSRR;
-
-	if (*cp != '@')
-		return((unsigned long)-1);
-
-	lsrp++;		/* skip over length, we'll fill it in later */
-	*lsrp++ = 4;
-
-	cp++;
-
-	addr.s_addr = 0;
-
-	for (c = 0;;) {
-		if (c == ':')
-			cp2 = 0;
-		else for (cp2 = cp; (c = *cp2); cp2++) {
-			if (c == ',') {
-				*cp2++ = '\0';
-				if (*cp2 == '@')
-					cp2++;
-			} else if (c == '@') {
-				*cp2++ = '\0';
-			} else if (c == ':') {
-				*cp2++ = '\0';
-			} else
-				continue;
-			break;
-		}
-		if (!c)
-			cp2 = 0;
-
-		if ((addr.s_addr = inet_addr(cp)) == INADDR_NONE) {
-			if ((host = gethostbyname(cp)) == NULL) {
-				*cpp = cp;
-				return(0);
-			}
-			memcpy(&addr, host->h_addr_list[0], sizeof addr);
-		}
-		memcpy(lsrp, &addr, 4);
-		lsrp += 4;
-		if (cp2)
-			cp = cp2;
-		else
-			break;
-		/*
-		 * Check to make sure there is space for next address
-		 */
-		if (lsrp + 4 > lsrep)
-			return((unsigned long)-1);
-	}
-	if ((*(*cpp+IPOPT_OLEN) = lsrp - *cpp) <= 7) {
-		*cpp = 0;
-		*lenp = 0;
-		return((unsigned long)-1);
-	}
-	*lsrp++ = IPOPT_NOP; /* 32 bit word align it */
-	*lenp = lsrp - *cpp;
-	return(addr.s_addr);
 }
