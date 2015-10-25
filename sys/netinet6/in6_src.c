@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_src.c,v 1.68 2015/10/24 16:57:46 mpi Exp $	*/
+/*	$OpenBSD: in6_src.c,v 1.69 2015/10/25 13:55:51 mpi Exp $	*/
 /*	$KAME: in6_src.c,v 1.36 2001/02/06 04:08:17 itojun Exp $	*/
 
 /*
@@ -403,8 +403,8 @@ in6_selectroute(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
 		if (opts && opts->ip6po_pktinfo &&
 		    opts->ip6po_pktinfo->ipi6_ifindex) {
 			if (ro->ro_rt != NULL &&
-			    (ro->ro_rt->rt_ifp->if_flags & IFF_LOOPBACK) == 0 &&
-			    ro->ro_rt->rt_ifp->if_index !=
+			    !ISSET(ro->ro_rt->rt_flags, RTF_LOCAL) &&
+			    ro->ro_rt->rt_ifidx !=
 			    opts->ip6po_pktinfo->ipi6_ifindex) {
 			    	return (NULL);
 			}
