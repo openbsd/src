@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pcn.c,v 1.37 2015/06/24 09:40:54 mpi Exp $	*/
+/*	$OpenBSD: if_pcn.c,v 1.38 2015/10/25 13:04:28 mpi Exp $	*/
 /*	$NetBSD: if_pcn.c,v 1.26 2005/05/07 09:15:44 is Exp $	*/
 
 /*
@@ -1043,7 +1043,6 @@ int
 pcn_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct pcn_softc *sc = ifp->if_softc;
-	struct ifaddr *ifa = (struct ifaddr *) data;
 	struct ifreq *ifr = (struct ifreq *) data;
 	int s, error = 0;
 
@@ -1054,8 +1053,6 @@ pcn_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		ifp->if_flags |= IFF_UP;
 		if (!(ifp->if_flags & IFF_RUNNING))
 			pcn_init(ifp);
-		if (ifa->ifa_addr->sa_family == AF_INET)
-			arp_ifinit(&sc->sc_arpcom, ifa);
 		break;
 
 	case SIOCSIFFLAGS:

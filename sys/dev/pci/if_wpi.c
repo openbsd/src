@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpi.c,v 1.128 2015/09/06 04:09:59 deraadt Exp $	*/
+/*	$OpenBSD: if_wpi.c,v 1.129 2015/10/25 13:04:28 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2006-2008
@@ -1965,7 +1965,6 @@ wpi_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct wpi_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
-	struct ifaddr *ifa;
 	struct ifreq *ifr;
 	int s, error = 0;
 
@@ -1984,10 +1983,7 @@ wpi_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 	switch (cmd) {
 	case SIOCSIFADDR:
-		ifa = (struct ifaddr *)data;
 		ifp->if_flags |= IFF_UP;
-		if (ifa->ifa_addr->sa_family == AF_INET)
-			arp_ifinit(&ic->ic_ac, ifa);
 		/* FALLTHROUGH */
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nep.c,v 1.19 2015/06/24 09:40:54 mpi Exp $	*/
+/*	$OpenBSD: if_nep.c,v 1.20 2015/10/25 13:04:28 mpi Exp $	*/
 /*
  * Copyright (c) 2014, 2015 Mark Kettenis
  *
@@ -1929,7 +1929,6 @@ int
 nep_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct nep_softc *sc = (struct nep_softc *)ifp->if_softc;
-	struct ifaddr *ifa = (struct ifaddr *)data;
 	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
 
@@ -1938,8 +1937,6 @@ nep_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	switch (cmd) {
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
-		if (ifa->ifa_addr->sa_family == AF_INET)
-			arp_ifinit(&sc->sc_ac, ifa);
 		/* FALLTHROUGH */
 
 	case SIOCSIFFLAGS:

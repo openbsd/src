@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnx.c,v 1.114 2015/09/10 18:10:34 deraadt Exp $	*/
+/*	$OpenBSD: if_bnx.c,v 1.115 2015/10/25 13:04:28 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2006 Broadcom Corporation
@@ -5068,7 +5068,6 @@ int
 bnx_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 {
 	struct bnx_softc	*sc = ifp->if_softc;
-	struct ifaddr		*ifa = (struct ifaddr *) data;
 	struct ifreq		*ifr = (struct ifreq *) data;
 	struct mii_data		*mii = &sc->bnx_mii;
 	int			s, error = 0;
@@ -5080,8 +5079,6 @@ bnx_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		ifp->if_flags |= IFF_UP;
 		if (!(ifp->if_flags & IFF_RUNNING))
 			bnx_init(sc);
-		if (ifa->ifa_addr->sa_family == AF_INET)
-			arp_ifinit(&sc->arpcom, ifa);
 		break;
 
 	case SIOCSIFFLAGS:

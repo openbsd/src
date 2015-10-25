@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rtwn.c,v 1.6 2015/08/28 00:03:53 deraadt Exp $	*/
+/*	$OpenBSD: if_rtwn.c,v 1.7 2015/10/25 13:04:28 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -1929,7 +1929,6 @@ rtwn_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct rtwn_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
-	struct ifaddr *ifa;
 	struct ifreq *ifr;
 	int s, error = 0;
 
@@ -1948,10 +1947,7 @@ rtwn_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 	switch (cmd) {
 	case SIOCSIFADDR:
-		ifa = (struct ifaddr *)data;
 		ifp->if_flags |= IFF_UP;
-		if (ifa->ifa_addr->sa_family == AF_INET)
-			arp_ifinit(&ic->ic_ac, ifa);
 		/* FALLTHROUGH */
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP) {

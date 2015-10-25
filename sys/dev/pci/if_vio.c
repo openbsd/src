@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vio.c,v 1.33 2015/06/24 09:40:54 mpi Exp $	*/
+/*	$OpenBSD: if_vio.c,v 1.34 2015/10/25 13:04:28 mpi Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch, Alexander Fiveg.
@@ -853,7 +853,6 @@ int
 vio_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct vio_softc *sc = ifp->if_softc;
-	struct ifaddr *ifa = (struct ifaddr *)data;
 	struct ifreq *ifr = (struct ifreq *)data;
 	int s, r = 0;
 
@@ -863,8 +862,6 @@ vio_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		ifp->if_flags |= IFF_UP;
 		if (!(ifp->if_flags & IFF_RUNNING))
 			vio_init(ifp);
-		if (ifa->ifa_addr->sa_family == AF_INET)
-			arp_ifinit(&sc->sc_ac, ifa);
 		break;
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP) {

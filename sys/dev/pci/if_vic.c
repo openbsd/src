@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vic.c,v 1.91 2015/06/24 09:40:54 mpi Exp $	*/
+/*	$OpenBSD: if_vic.c,v 1.92 2015/10/25 13:04:28 mpi Exp $	*/
 
 /*
  * Copyright (c) 2006 Reyk Floeter <reyk@openbsd.org>
@@ -1177,7 +1177,6 @@ int
 vic_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct vic_softc *sc = (struct vic_softc *)ifp->if_softc;
-	struct ifaddr *ifa = (struct ifaddr *)data;
 	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
 
@@ -1186,8 +1185,6 @@ vic_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	switch (cmd) {
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
-		if (ifa->ifa_addr->sa_family == AF_INET)
-			arp_ifinit(&sc->sc_ac, ifa);
 		/* FALLTHROUGH */
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP) {

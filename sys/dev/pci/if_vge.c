@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vge.c,v 1.64 2015/09/11 13:02:28 stsp Exp $	*/
+/*	$OpenBSD: if_vge.c,v 1.65 2015/10/25 13:04:28 mpi Exp $	*/
 /*	$FreeBSD: if_vge.c,v 1.3 2004/09/11 22:13:25 wpaul Exp $	*/
 /*
  * Copyright (c) 2004
@@ -1759,7 +1759,6 @@ int
 vge_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 {
 	struct vge_softc	*sc = ifp->if_softc;
-	struct ifaddr		*ifa = (struct ifaddr *) data;
 	struct ifreq		*ifr = (struct ifreq *) data;
 	int			s, error = 0;
 
@@ -1770,8 +1769,6 @@ vge_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		ifp->if_flags |= IFF_UP;
 		if (!(ifp->if_flags & IFF_RUNNING))
 			vge_init(ifp);
-		if (ifa->ifa_addr->sa_family == AF_INET)
-			arp_ifinit(&sc->arpcom, ifa);
 		break;
 
 	case SIOCSIFFLAGS:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vte.c,v 1.13 2015/06/24 09:40:54 mpi Exp $	*/
+/*	$OpenBSD: if_vte.c,v 1.14 2015/10/25 13:04:28 mpi Exp $	*/
 /*-
  * Copyright (c) 2010, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
@@ -725,7 +725,6 @@ vte_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct vte_softc *sc = ifp->if_softc;
 	struct mii_data *mii = &sc->sc_miibus;
-	struct ifaddr *ifa = (struct ifaddr *)data;
 	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
 
@@ -736,8 +735,6 @@ vte_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		ifp->if_flags |= IFF_UP;
 		if (!(ifp->if_flags & IFF_RUNNING))
 			vte_init(ifp);
-		if (ifa->ifa_addr->sa_family == AF_INET)
-			arp_ifinit(&sc->sc_arpcom, ifa);
 		break;
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP) {

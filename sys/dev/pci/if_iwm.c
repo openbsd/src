@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.61 2015/10/22 11:51:28 jsg Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.62 2015/10/25 13:04:28 mpi Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -5689,7 +5689,6 @@ iwm_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct iwm_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
-	struct ifaddr *ifa;
 	struct ifreq *ifr;
 	int s, error = 0;
 
@@ -5710,9 +5709,6 @@ iwm_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	switch (cmd) {
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
-		ifa = (struct ifaddr *)data;
-		if (ifa->ifa_addr->sa_family == AF_INET)
-			arp_ifinit(&ic->ic_ac, ifa);
 		/* FALLTHROUGH */
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.144 2015/09/01 07:09:55 deraadt Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.145 2015/10/25 13:04:28 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -3106,7 +3106,6 @@ iwn_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct iwn_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
-	struct ifaddr *ifa;
 	struct ifreq *ifr;
 	int s, error = 0;
 
@@ -3125,10 +3124,7 @@ iwn_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 	switch (cmd) {
 	case SIOCSIFADDR:
-		ifa = (struct ifaddr *)data;
 		ifp->if_flags |= IFF_UP;
-		if (ifa->ifa_addr->sa_family == AF_INET)
-			arp_ifinit(&ic->ic_ac, ifa);
 		/* FALLTHROUGH */
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP) {

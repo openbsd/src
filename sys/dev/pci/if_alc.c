@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_alc.c,v 1.34 2015/09/11 13:02:28 stsp Exp $	*/
+/*	$OpenBSD: if_alc.c,v 1.35 2015/10/25 13:04:28 mpi Exp $	*/
 /*-
  * Copyright (c) 2009, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
@@ -1446,7 +1446,6 @@ alc_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct alc_softc *sc = ifp->if_softc;
 	struct mii_data *mii = &sc->sc_miibus;
-	struct ifaddr *ifa = (struct ifaddr *)data;
 	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
 
@@ -1457,8 +1456,6 @@ alc_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		ifp->if_flags |= IFF_UP;
 		if (!(ifp->if_flags & IFF_RUNNING))
 			alc_init(ifp);
-		if (ifa->ifa_addr->sa_family == AF_INET)
-			arp_ifinit(&sc->sc_arpcom, ifa);
 		break;
 
 	case SIOCSIFFLAGS:

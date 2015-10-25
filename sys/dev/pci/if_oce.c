@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_oce.c,v 1.87 2015/09/29 17:04:20 chris Exp $	*/
+/*	$OpenBSD: if_oce.c,v 1.88 2015/10/25 13:04:28 mpi Exp $	*/
 
 /*
  * Copyright (c) 2012 Mike Belopuhov
@@ -849,7 +849,6 @@ int
 oce_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 {
 	struct oce_softc *sc = ifp->if_softc;
-	struct ifaddr *ifa = (struct ifaddr *)data;
 	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
 
@@ -860,8 +859,6 @@ oce_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		ifp->if_flags |= IFF_UP;
 		if (!(ifp->if_flags & IFF_RUNNING))
 			oce_init(sc);
-		if (ifa->ifa_addr->sa_family == AF_INET)
-			arp_ifinit(&sc->sc_ac, ifa);
 		break;
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP) {

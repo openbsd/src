@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_de.c,v 1.123 2015/06/26 11:50:39 kettenis Exp $	*/
+/*	$OpenBSD: if_de.c,v 1.124 2015/10/25 13:04:28 mpi Exp $	*/
 /*	$NetBSD: if_de.c,v 1.58 1998/01/12 09:39:58 thorpej Exp $	*/
 
 /*-
@@ -4146,7 +4146,6 @@ tulip_ifioctl(struct ifnet * ifp, u_long cmd, caddr_t data)
 {
     TULIP_PERFSTART(ifioctl)
     tulip_softc_t * const sc = TULIP_IFP_TO_SOFTC(ifp);
-    struct ifaddr *ifa = (struct ifaddr *)data;
     struct ifreq *ifr = (struct ifreq *) data;
     int s;
     int error = 0;
@@ -4157,16 +4156,6 @@ tulip_ifioctl(struct ifnet * ifp, u_long cmd, caddr_t data)
     case SIOCSIFADDR: {
 	ifp->if_flags |= IFF_UP;
 	tulip_init(sc);
-	switch(ifa->ifa_addr->sa_family) {
-	case AF_INET: {
-	    arp_ifinit(&sc->tulip_ac, ifa);
-	    break;
-	}
-
-	default: {
-	    break;
-	}
-	}
 	break;
     }
 

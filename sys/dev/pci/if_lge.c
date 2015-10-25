@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lge.c,v 1.67 2015/06/24 09:40:54 mpi Exp $	*/
+/*	$OpenBSD: if_lge.c,v 1.68 2015/10/25 13:04:28 mpi Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -1153,7 +1153,6 @@ int
 lge_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 {
 	struct lge_softc	*sc = ifp->if_softc;
-	struct ifaddr		*ifa = (struct ifaddr *) data;
 	struct ifreq		*ifr = (struct ifreq *) data;
 	struct mii_data		*mii;
 	int			s, error = 0;
@@ -1165,8 +1164,6 @@ lge_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		ifp->if_flags |= IFF_UP;
 		if (!(ifp->if_flags & IFF_RUNNING))
 			lge_init(sc);
-		if (ifa->ifa_addr->sa_family == AF_INET)
-			arp_ifinit(&sc->arpcom, ifa);
 		break;
 
 	case SIOCSIFFLAGS:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lii.c,v 1.37 2015/06/24 09:40:54 mpi Exp $	*/
+/*	$OpenBSD: if_lii.c,v 1.38 2015/10/25 13:04:28 mpi Exp $	*/
 
 /*
  *  Copyright (c) 2007 The NetBSD Foundation.
@@ -1069,7 +1069,6 @@ int
 lii_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr)
 {
 	struct lii_softc *sc = ifp->if_softc;
-	struct ifaddr *ifa = (struct ifaddr *)addr;
 	struct ifreq *ifr = (struct ifreq *)addr;
 	int s, error = 0;
 
@@ -1078,8 +1077,6 @@ lii_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr)
 	switch(cmd) {
 	case SIOCSIFADDR:
 		SET(ifp->if_flags, IFF_UP);
-		if (ifa->ifa_addr->sa_family == AF_INET)
-			arp_ifinit(&sc->sc_ac, ifa);
 		/* FALLTHROUGH */
 
 	case SIOCSIFFLAGS:

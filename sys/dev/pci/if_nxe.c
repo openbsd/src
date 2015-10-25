@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nxe.c,v 1.67 2014/12/22 02:28:52 tedu Exp $ */
+/*	$OpenBSD: if_nxe.c,v 1.68 2015/10/25 13:04:28 mpi Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -1015,7 +1015,6 @@ int
 nxe_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr)
 {
 	struct nxe_softc		*sc = ifp->if_softc;
-	struct ifaddr			*ifa = (struct ifaddr *)addr;
 	struct ifreq			*ifr = (struct ifreq *)addr;
 	int				s, error = 0;
 
@@ -1027,8 +1026,6 @@ nxe_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr)
 	switch (cmd) {
 	case SIOCSIFADDR:
 		SET(ifp->if_flags, IFF_UP);
-		if (ifa->ifa_addr->sa_family == AF_INET)
-			arp_ifinit(&sc->sc_ac, ifa);
 		/* FALLTHROUGH */
 
 	case SIOCSIFFLAGS:

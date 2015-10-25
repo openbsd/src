@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nge.c,v 1.85 2015/09/12 10:15:10 miod Exp $	*/
+/*	$OpenBSD: if_nge.c,v 1.86 2015/10/25 13:04:28 mpi Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -1775,7 +1775,6 @@ int
 nge_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 {
 	struct nge_softc	*sc = ifp->if_softc;
-	struct ifaddr		*ifa = (struct ifaddr *) data;
 	struct ifreq		*ifr = (struct ifreq *) data;
 	struct mii_data		*mii;
 	int			s, error = 0;
@@ -1785,15 +1784,7 @@ nge_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 	switch(command) {
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
-		switch (ifa->ifa_addr->sa_family) {
-		case AF_INET:
-			nge_init(sc);
-			arp_ifinit(&sc->arpcom, ifa);
-			break;
-		default:
-			nge_init(sc);
-			break;
-                }
+		nge_init(sc);
 		break;
 
 	case SIOCSIFFLAGS:

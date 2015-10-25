@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.125 2015/09/11 12:09:10 claudio Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.126 2015/10/25 13:04:28 mpi Exp $	*/
 
 /******************************************************************************
 
@@ -427,7 +427,6 @@ int
 ixgbe_ioctl(struct ifnet * ifp, u_long command, caddr_t data)
 {
 	struct ix_softc	*sc = ifp->if_softc;
-	struct ifaddr	*ifa = (struct ifaddr *) data;
 	struct ifreq	*ifr = (struct ifreq *) data;
 	int		s, error = 0;
 
@@ -439,8 +438,6 @@ ixgbe_ioctl(struct ifnet * ifp, u_long command, caddr_t data)
 		ifp->if_flags |= IFF_UP;
 		if (!(ifp->if_flags & IFF_RUNNING))
 			ixgbe_init(sc);
-		if (ifa->ifa_addr->sa_family == AF_INET)
-			arp_ifinit(&sc->arpcom, ifa);
 		break;
 
 	case SIOCSIFFLAGS:

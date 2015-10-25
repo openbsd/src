@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_et.c,v 1.29 2015/07/08 14:41:30 mpi Exp $	*/
+/*	$OpenBSD: if_et.c,v 1.30 2015/10/25 13:04:28 mpi Exp $	*/
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
  * 
@@ -1007,7 +1007,6 @@ int
 et_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct et_softc *sc = ifp->if_softc;
-	struct ifaddr *ifa = (struct ifaddr *)data;
 	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
 
@@ -1018,8 +1017,6 @@ et_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		ifp->if_flags |= IFF_UP;
 		if (!(ifp->if_flags & IFF_RUNNING))
 			et_init(ifp);
-		if (ifa->ifa_addr->sa_family == AF_INET)
-			arp_ifinit(&sc->sc_arpcom, ifa);
 		break;
 
 	case SIOCSIFFLAGS:

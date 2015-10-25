@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_se.c,v 1.13 2015/06/24 09:40:54 mpi Exp $	*/
+/*	$OpenBSD: if_se.c,v 1.14 2015/10/25 13:04:28 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2009, 2010 Christopher Zimmermann <madroach@zakweb.de>
@@ -1354,7 +1354,6 @@ se_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 {
 	struct se_softc *sc = ifp->if_softc;
 	struct ifreq *ifr = (struct ifreq *) data;
-	struct ifaddr *ifa = (struct ifaddr *)data;
 	int s, rc = 0;
 
 	s = splnet();
@@ -1364,10 +1363,6 @@ se_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		ifp->if_flags |= IFF_UP;
 		if ((ifp->if_flags & IFF_RUNNING) == 0)
 			rc = se_init(ifp);
-		if (rc == 0) {
-			if (ifa->ifa_addr->sa_family == AF_INET)
-				arp_ifinit(&sc->sc_ac, ifa);
-		}
 		break;
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vr.c,v 1.143 2015/10/20 17:08:39 chrisz Exp $	*/
+/*	$OpenBSD: if_vr.c,v 1.144 2015/10/25 13:04:28 mpi Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -1537,7 +1537,6 @@ int
 vr_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 {
 	struct vr_softc		*sc = ifp->if_softc;
-	struct ifaddr		*ifa = (struct ifaddr *) data;
 	struct ifreq		*ifr = (struct ifreq *) data;
 	int			s, error = 0;
 
@@ -1548,8 +1547,6 @@ vr_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		ifp->if_flags |= IFF_UP;
 		if (!(ifp->if_flags & IFF_RUNNING))
 			vr_init(sc);
-		if (ifa->ifa_addr->sa_family == AF_INET)
-			arp_ifinit(&sc->arpcom, ifa);
 		break;
 
 	case SIOCSIFFLAGS:

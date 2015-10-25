@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vmx.c,v 1.33 2015/09/20 22:26:18 dlg Exp $	*/
+/*	$OpenBSD: if_vmx.c,v 1.34 2015/10/25 13:04:28 mpi Exp $	*/
 
 /*
  * Copyright (c) 2013 Tsubai Masanari
@@ -999,7 +999,6 @@ vmxnet3_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct vmxnet3_softc *sc = ifp->if_softc;
 	struct ifreq *ifr = (struct ifreq *)data;
-	struct ifaddr *ifa = (struct ifaddr *)data;
 	int error = 0, s;
 
 	s = splnet();
@@ -1009,8 +1008,6 @@ vmxnet3_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		ifp->if_flags |= IFF_UP;
 		if ((ifp->if_flags & IFF_RUNNING) == 0)
 			error = vmxnet3_init(sc);
-		if (ifa->ifa_addr->sa_family == AF_INET)
-			arp_ifinit(&sc->sc_arpcom, ifa);
 		break;
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP) {

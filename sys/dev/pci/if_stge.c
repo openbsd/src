@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_stge.c,v 1.61 2015/06/24 09:40:54 mpi Exp $	*/
+/*	$OpenBSD: if_stge.c,v 1.62 2015/10/25 13:04:28 mpi Exp $	*/
 /*	$NetBSD: if_stge.c,v 1.27 2005/05/16 21:35:32 bouyer Exp $	*/
 
 /*-
@@ -661,7 +661,6 @@ int
 stge_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct stge_softc *sc = ifp->if_softc;
-	struct ifaddr *ifa = (struct ifaddr *)data;
 	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
 
@@ -672,9 +671,6 @@ stge_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		ifp->if_flags |= IFF_UP;
 		if (!(ifp->if_flags & IFF_RUNNING))
 			stge_init(ifp);
-
-		if (ifa->ifa_addr->sa_family == AF_INET)
-			arp_ifinit(&sc->sc_arpcom, ifa);
 		break;
 
 	case SIOCSIFFLAGS:

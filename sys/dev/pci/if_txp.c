@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_txp.c,v 1.116 2015/06/24 09:40:54 mpi Exp $	*/
+/*	$OpenBSD: if_txp.c,v 1.117 2015/10/25 13:04:28 mpi Exp $	*/
 
 /*
  * Copyright (c) 2001
@@ -1159,7 +1159,6 @@ int
 txp_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 {
 	struct txp_softc *sc = ifp->if_softc;
-	struct ifaddr *ifa = (struct ifaddr *) data;
 	struct ifreq *ifr = (struct ifreq *) data;
 	int s, error = 0;
 
@@ -1168,15 +1167,7 @@ txp_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 	switch(command) {
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
-		switch (ifa->ifa_addr->sa_family) {
-		case AF_INET:
-			txp_init(sc);
-			arp_ifinit(&sc->sc_arpcom, ifa);
-			break;
-		default:
-			txp_init(sc);
-			break;
-		}
+		txp_init(sc);
 		break;
 
 	case SIOCSIFFLAGS:

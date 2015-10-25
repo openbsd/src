@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sis.c,v 1.127 2015/06/24 09:40:54 mpi Exp $ */
+/*	$OpenBSD: if_sis.c,v 1.128 2015/10/25 13:04:28 mpi Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -1889,7 +1889,6 @@ int
 sis_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 {
 	struct sis_softc	*sc = ifp->if_softc;
-	struct ifaddr		*ifa = (struct ifaddr *) data;
 	struct ifreq		*ifr = (struct ifreq *) data;
 	struct mii_data		*mii;
 	int			s, error = 0;
@@ -1901,8 +1900,6 @@ sis_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		ifp->if_flags |= IFF_UP;
 		if (!(ifp->if_flags & IFF_RUNNING))
 			sis_init(sc);
-		if (ifa->ifa_addr->sa_family == AF_INET)
-			arp_ifinit(&sc->arpcom, ifa);
 		break;
 
 	case SIOCSIFFLAGS:

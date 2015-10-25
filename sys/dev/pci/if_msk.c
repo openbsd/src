@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_msk.c,v 1.116 2015/09/11 09:14:52 deraadt Exp $	*/
+/*	$OpenBSD: if_msk.c,v 1.117 2015/10/25 13:04:28 mpi Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -578,7 +578,6 @@ int
 msk_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 {
 	struct sk_if_softc *sc_if = ifp->if_softc;
-	struct ifaddr *ifa = (struct ifaddr *) data;
 	struct ifreq *ifr = (struct ifreq *) data;
 	struct mii_data *mii;
 	int s, error = 0;
@@ -590,8 +589,6 @@ msk_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		ifp->if_flags |= IFF_UP;
 		if (!(ifp->if_flags & IFF_RUNNING))
 			msk_init(sc_if);
-		if (ifa->ifa_addr->sa_family == AF_INET)
-			arp_ifinit(&sc_if->arpcom, ifa);
 		break;
 
 	case SIOCSIFFLAGS:
