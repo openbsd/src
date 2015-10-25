@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.94 2015/09/10 17:57:50 jsing Exp $ */
+/* $OpenBSD: ssl.h,v 1.95 2015/10/25 15:58:57 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -537,8 +537,6 @@ struct ssl_session_st {
 
 /* As server, disallow session resumption on renegotiation */
 #define SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION	0x00010000L
-/* Don't use compression even if supported */
-#define SSL_OP_NO_COMPRESSION				0x00020000L
 /* If set, always create a new key when using tmp_ecdh parameters */
 #define SSL_OP_SINGLE_ECDH_USE				0x00080000L
 /* If set, always create a new key when using tmp_dh parameters */
@@ -552,8 +550,6 @@ struct ssl_session_st {
  * forbidden to prevent version rollback attacks. */
 #define SSL_OP_TLS_ROLLBACK_BUG				0x00800000L
 
-#define SSL_OP_NO_SSLv2					0x01000000L
-#define SSL_OP_NO_SSLv3					0x02000000L
 #define SSL_OP_NO_TLSv1					0x04000000L
 #define SSL_OP_NO_TLSv1_2				0x08000000L
 #define SSL_OP_NO_TLSv1_1				0x10000000L
@@ -588,6 +584,9 @@ struct ssl_session_st {
 #define SSL_OP_TLS_D5_BUG				0x0
 #define SSL_OP_MICROSOFT_BIG_SSLV3_BUFFER		0x0
 #define SSL_OP_CISCO_ANYCONNECT				0x0
+#define SSL_OP_NO_COMPRESSION				0x0
+#define SSL_OP_NO_SSLv2					0x0
+#define SSL_OP_NO_SSLv3					0x0
 
 /* Allow SSL_write(..., n) to return r with 0 < r < n (i.e. report success
  * when just a single record has been written): */
