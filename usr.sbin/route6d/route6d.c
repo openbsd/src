@@ -1,4 +1,4 @@
-/*	$OpenBSD: route6d.c,v 1.76 2015/10/25 23:50:23 jca Exp $	*/
+/*	$OpenBSD: route6d.c,v 1.77 2015/10/25 23:53:35 jca Exp $	*/
 /*	$KAME: route6d.c,v 1.111 2006/10/25 06:38:13 jinmei Exp $	*/
 
 /*
@@ -235,7 +235,7 @@ struct in6_addr *getroute(struct netinfo6 *, struct in6_addr *);
 void krtread(int);
 int tobeadv(struct riprt *, struct ifc *);
 char *xstrdup(const char *);
-char *hms(void);
+const char *hms(void);
 const char *inet6_n2p(const struct in6_addr *);
 struct ifac *ifa_match(const struct ifc *, const struct in6_addr *, int);
 struct in6_addr *plen2mask(int);
@@ -3230,7 +3230,7 @@ xstrdup(const char *p)
 	return q;
 }
 
-char *
+const char *
 hms(void)
 {
 	static char buf[BUFSIZ];
