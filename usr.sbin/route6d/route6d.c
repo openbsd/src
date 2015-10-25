@@ -1,4 +1,4 @@
-/*	$OpenBSD: route6d.c,v 1.71 2015/10/25 22:38:48 jca Exp $	*/
+/*	$OpenBSD: route6d.c,v 1.72 2015/10/25 22:57:09 jca Exp $	*/
 /*	$KAME: route6d.c,v 1.111 2006/10/25 06:38:13 jinmei Exp $	*/
 
 /*
@@ -234,7 +234,7 @@ int delroute(struct netinfo6 *, struct in6_addr *);
 struct in6_addr *getroute(struct netinfo6 *, struct in6_addr *);
 void krtread(int);
 int tobeadv(struct riprt *, struct ifc *);
-char *allocopy(char *);
+char *xstrdup(const char *);
 char *hms(void);
 const char *inet6_n2p(const struct in6_addr *);
 struct ifac *ifa_match(const struct ifc *, const struct in6_addr *, int);
@@ -282,7 +282,7 @@ main(int argc, char *argv[])
 				/*NOTREACHED*/
 			}
 			filtertype[nfilter] = ch;
-			filter[nfilter++] = allocopy(optarg);
+			filter[nfilter++] = xstrdup(optarg);
 			break;
 		case 't':
 			ep = NULL;
@@ -1422,7 +1422,7 @@ ifconfig(void)
 			ifcp->ifc_next = ifc;
 			ifc = ifcp;
 			nifc++;
-			ifcp->ifc_name = allocopy(ifa->ifa_name);
+			ifcp->ifc_name = xstrdup(ifa->ifa_name);
 			ifcp->ifc_addr = 0;
 			ifcp->ifc_filter = 0;
 			ifcp->ifc_flags = ifa->ifa_flags;
@@ -3230,17 +3230,15 @@ plen2mask(int n)
 }
 
 char *
-allocopy(char *p)
+xstrdup(const char *p)
 {
-	int len = strlen(p) + 1;
-	char *q = malloc(len);
+	char *q;
 
-	if (!q) {
-		fatal("malloc");
+	q = strdup(p);
+	if (q == NULL) {
+		fatal("strdup");
 		/*NOTREACHED*/
 	}
-
-	strlcpy(q, p, len);
 	return q;
 }
 
