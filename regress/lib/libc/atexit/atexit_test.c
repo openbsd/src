@@ -1,4 +1,4 @@
-/*	$OpenBSD: atexit_test.c,v 1.7 2014/06/18 19:01:10 kettenis Exp $ */
+/*	$OpenBSD: atexit_test.c,v 1.8 2015/10/25 04:11:00 guenther Exp $ */
 
 /*
  * Copyright (c) 2002 Daniel Hartmeier
@@ -38,6 +38,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <signal.h>
+#include <unistd.h>
 #include "stdlib/atexit.h"
 
 void	handle_first(void);
@@ -131,10 +132,10 @@ handle_signal(int sigraised)
 {
 	switch (sigraised) {
 	case SIGSEGV:
-		fprintf(stderr, "SIGSEGV\n");
+		dprintf(STDERR_FILENO, "SIGSEGV\n");
 		exit(0);
 	default:
-		fprintf(stderr, "unexpected signal caught\n");
+		dprintf(STDERR_FILENO, "unexpected signal caught\n");
 		exit(1);
 	}
 }
