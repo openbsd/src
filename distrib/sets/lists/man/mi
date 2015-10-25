@@ -1632,6 +1632,7 @@
 ./usr/share/man/man4/owid.4
 ./usr/share/man/man4/owsbm.4
 ./usr/share/man/man4/owtemp.4
+./usr/share/man/man4/pair.4
 ./usr/share/man/man4/pcagpio.4
 ./usr/share/man/man4/pcaled.4
 ./usr/share/man/man4/pcdisplay.4
