@@ -1,4 +1,4 @@
-/*	$OpenBSD: route6d.h,v 1.6 2001/12/01 23:27:23 miod Exp $	*/
+/*	$OpenBSD: route6d.h,v 1.7 2015/10/25 22:45:21 jca Exp $	*/
 /*	$KAME: route6d.h,v 1.4 2001/01/15 03:50:54 inoue Exp $	*/
 
 /*
@@ -29,10 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-/* not yet in use 
-#define	ROUTE6D_CONF	"/usr/local/v6/etc/route6d.conf"
-*/
 
 #define	ROUTE6D_DUMP	"/var/run/route6d_dump"
 
