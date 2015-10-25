@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.134 2015/10/25 19:58:56 florian Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.135 2015/10/25 20:01:21 florian Exp $	*/
 /*	$KAME: ping6.c,v 1.163 2002/10/25 02:19:06 itojun Exp $	*/
 
 /*
@@ -217,7 +217,6 @@ void	 pr_pack(u_char *, int, struct msghdr *);
 void	 pr_exthdrs(struct msghdr *);
 void	 pr_ip6opt(void *);
 void	 pr_rthdr(void *);
-int	 pr_bitrange(u_int32_t, int, int);
 void	 pr_retip(struct ip6_hdr *, u_char *);
 void	 summary(int);
 void	 usage(void);
@@ -1141,52 +1140,6 @@ pr_rthdr(void *extbuf)
 
 	return;
 
-}
-
-int
-pr_bitrange(u_int32_t v, int soff, int ii)
-{
-	int off;
-	int i;
-
-	off = 0;
-	while (off < 32) {
-		/* shift till we have 0x01 */
-		if ((v & 0x01) == 0) {
-			if (ii > 1)
-				printf("-%u", soff + off - 1);
-			ii = 0;
-			switch (v & 0x0f) {
-			case 0x00:
-				v >>= 4;
-				off += 4;
-				continue;
-			case 0x08:
-				v >>= 3;
-				off += 3;
-				continue;
-			case 0x04: case 0x0c:
-				v >>= 2;
-				off += 2;
-				continue;
-			default:
-				v >>= 1;
-				off += 1;
-				continue;
-			}
-		}
-
-		/* we have 0x01 with us */
-		for (i = 0; i < 32 - off; i++) {
-			if ((v & (0x01 << i)) == 0)
-				break;
-		}
-		if (!ii)
-			printf(" %u", soff + off);
-		ii += i;
-		v >>= i; off += i;
-	}
-	return ii;
 }
 
 int
