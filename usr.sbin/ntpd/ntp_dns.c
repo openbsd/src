@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp_dns.c,v 1.13 2015/10/10 20:10:14 deraadt Exp $ */
+/*	$OpenBSD: ntp_dns.c,v 1.14 2015/10/25 10:52:48 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003-2008 Henning Brauer <henning@openbsd.org>
@@ -23,6 +23,7 @@
 #include <err.h>
 #include <errno.h>
 #include <poll.h>
+#include <fcntl.h>
 #include <signal.h>
 #include <stdlib.h>
 #include <string.h>
@@ -52,7 +53,7 @@ ntp_dns(int pipe_ntp[2], struct ntpd_conf *nconf, struct passwd *pw)
 {
 	pid_t			 pid;
 	struct pollfd		 pfd[1];
-	int			 nfds;
+	int			 nfds, nullfd;
 
 	switch (pid = fork()) {
 	case -1:
@@ -73,6 +74,16 @@ ntp_dns(int pipe_ntp[2], struct ntpd_conf *nconf, struct passwd *pw)
 		if (setsid() == -1)
 			fatal("setsid");
 	}
+
+	if ((nullfd = open("/dev/null", O_RDWR, 0)) == -1)
+		fatal(NULL);
+
+	if (!nconf->debug) {
+		dup2(nullfd, STDIN_FILENO);
+		dup2(nullfd, STDOUT_FILENO);
+		dup2(nullfd, STDERR_FILENO);
+	}
+	close(nullfd);
 
 	setproctitle("dns engine");
 	close(pipe_ntp[0]);
