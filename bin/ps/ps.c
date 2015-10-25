@@ -1,4 +1,4 @@
-/*	$OpenBSD: ps.c,v 1.66 2015/10/23 03:26:24 deraadt Exp $	*/
+/*	$OpenBSD: ps.c,v 1.67 2015/10/25 09:39:00 deraadt Exp $	*/
 /*	$NetBSD: ps.c,v 1.15 1995/05/18 20:33:25 mycroft Exp $	*/
 
 /*-
@@ -278,7 +278,7 @@ main(int argc, char *argv[])
 	if (kd == NULL)
 		errx(1, "%s", errbuf);
 
-	if (pledge("stdio rpath ps", NULL) == -1)
+	if (pledge("stdio rpath getpw ps", NULL) == -1)
 		err(1, "abort pledge");
 
 	if (!fmt) {
