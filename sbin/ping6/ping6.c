@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.133 2015/10/25 14:43:48 florian Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.134 2015/10/25 19:58:56 florian Exp $	*/
 /*	$KAME: ping6.c,v 1.163 2002/10/25 02:19:06 itojun Exp $	*/
 
 /*
@@ -209,7 +209,6 @@ struct in6_pktinfo *get_rcvpktinfo(struct msghdr *);
 void	 onsignal(int);
 void	 retransmit(void);
 void	 onint(int);
-size_t	 pingerlen(void);
 int	 pinger(void);
 const char *pr_addr(struct sockaddr *, socklen_t);
 void	 pr_icmph(struct icmp6_hdr *, u_char *);
