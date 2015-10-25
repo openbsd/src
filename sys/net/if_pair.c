@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pair.c,v 1.2 2015/10/24 11:01:39 reyk Exp $	*/
+/*	$OpenBSD: if_pair.c,v 1.3 2015/10/25 12:05:40 mpi Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -209,8 +209,6 @@ pairioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	switch (cmd) {
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
-		if (ifa->ifa_addr->sa_family == AF_INET)
-			arp_ifinit(&sc->sc_ac, ifa);
 		/* FALLTHROUGH */
 
 	case SIOCSIFFLAGS:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.395 2015/10/25 11:58:11 mpi Exp $	*/
+/*	$OpenBSD: if.c,v 1.396 2015/10/25 12:05:40 mpi Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -2529,11 +2529,6 @@ ifnewlladdr(struct ifnet *ifp)
 	ifrq.ifr_flags = ifp->if_flags;
 	(*ifp->if_ioctl)(ifp, SIOCSIFFLAGS, (caddr_t)&ifrq);
 
-	TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
-		if (ifa->ifa_addr != NULL &&
-		    ifa->ifa_addr->sa_family == AF_INET)
-			arp_ifinit((struct arpcom *)ifp, ifa);
-	}
 #ifdef INET6
 	/*
 	 * Update the link-local address.  Don't do it if we're

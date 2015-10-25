@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.c,v 1.121 2015/10/08 13:58:07 mikeb Exp $	*/
+/*	$OpenBSD: if_trunk.c,v 1.122 2015/10/25 12:05:40 mpi Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -619,7 +619,6 @@ trunk_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	struct trunk_reqall *ra = (struct trunk_reqall *)data;
 	struct trunk_reqport *rp = (struct trunk_reqport *)data, rpbuf;
 	struct ifreq *ifr = (struct ifreq *)data;
-	struct ifaddr *ifa = (struct ifaddr *)data;
 	struct trunk_port *tp;
 	struct ifnet *tpif;
 	int s, i, error = 0;
@@ -737,10 +736,7 @@ trunk_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
-		if (ifa->ifa_addr->sa_family == AF_INET)
-			arp_ifinit(&tr->tr_ac, ifa);
-		error = ENETRESET;
-		break;
+		/* FALLTHROUGH */
 	case SIOCSIFFLAGS:
 		error = ENETRESET;
 		break;

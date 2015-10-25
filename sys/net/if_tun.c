@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.158 2015/10/25 11:58:11 mpi Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.159 2015/10/25 12:05:40 mpi Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -490,7 +490,6 @@ tun_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct tun_softc	*tp = (struct tun_softc *)(ifp->if_softc);
 	struct ifreq		*ifr = (struct ifreq *)data;
-	struct ifaddr		*ifa = (struct ifaddr *)data;
 	int			 error = 0, s;
 
 	s = splnet();
@@ -498,16 +497,6 @@ tun_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	switch (cmd) {
 	case SIOCSIFADDR:
 		tun_init(tp);
-		TUNDEBUG(("%s: address set\n", ifp->if_xname));
-		if (tp->tun_flags & TUN_LAYER2) {
-			switch (ifa->ifa_addr->sa_family) {
-			case AF_INET:
-				arp_ifinit(&tp->arpcom, ifa);
-				break;
-			default:
-				break;
-			}
-		}
 		break;
 	case SIOCSIFDSTADDR:
 		tun_init(tp);

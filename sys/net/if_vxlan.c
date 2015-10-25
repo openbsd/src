@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vxlan.c,v 1.32 2015/10/23 01:19:04 dlg Exp $	*/
+/*	$OpenBSD: if_vxlan.c,v 1.33 2015/10/25 12:05:40 mpi Exp $	*/
 
 /*
  * Copyright (c) 2013 Reyk Floeter <reyk@openbsd.org>
@@ -328,7 +328,6 @@ int
 vxlanioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct vxlan_softc	*sc = (struct vxlan_softc *)ifp->if_softc;
-	struct ifaddr		*ifa = (struct ifaddr *)data;
 	struct ifreq		*ifr = (struct ifreq *)data;
 	struct if_laddrreq	*lifr = (struct if_laddrreq *)data;
 	int			 error = 0, s;
@@ -336,8 +335,6 @@ vxlanioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	switch (cmd) {
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
-		if (ifa->ifa_addr->sa_family == AF_INET)
-			arp_ifinit(&sc->sc_ac, ifa);
 		/* FALLTHROUGH */
 
 	case SIOCSIFFLAGS:

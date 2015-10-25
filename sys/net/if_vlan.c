@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.145 2015/10/05 19:05:09 uebayasi Exp $	*/
+/*	$OpenBSD: if_vlan.c,v 1.146 2015/10/25 12:05:40 mpi Exp $	*/
 
 /*
  * Copyright 1998 Massachusetts Institute of Technology
@@ -595,11 +595,9 @@ vlan_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 	switch (cmd) {
 	case SIOCSIFADDR:
-		if (ifv->ifv_p != NULL) {
+		if (ifv->ifv_p != NULL)
 			ifp->if_flags |= IFF_UP;
-			if (ifa->ifa_addr->sa_family == AF_INET)
-				arp_ifinit(&ifv->ifv_ac, ifa);
-		} else
+		else
 			error = EINVAL;
 		break;
 
