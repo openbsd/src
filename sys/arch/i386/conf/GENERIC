@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.806 2015/09/30 12:15:12 jung Exp $
+#	$OpenBSD: GENERIC,v 1.807 2015/10/25 19:32:33 jung Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -154,7 +154,7 @@ uguru0	at isa? disable port 0xe0	# ABIT uGuru
 fins0	at isa? port 0x4e		# Fintek F71805 Super I/O
 
 aps0	at isa? port 0x1600		# ThinkPad Active Protection System
-#asmc0	at isa? port 0x300		# Apple SMC
+asmc0	at isa? port 0x300		# Apple SMC
 
 itherm*	at pci?				# Intel 3400 Thermal Sensor
 adc*	at iic?				# Analog Devices AD7416/AD7417/7418
