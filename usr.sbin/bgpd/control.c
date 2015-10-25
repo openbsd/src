@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.79 2015/10/24 15:15:55 benno Exp $ */
+/*	$OpenBSD: control.c,v 1.80 2015/10/25 18:49:01 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -272,10 +272,10 @@ control_dispatch_msg(struct pollfd *pfd, u_int *ctl_cnt)
 					break;
 				}
 				if (!neighbor->show_timers) {
-					imsg_compose_rde(imsg.hdr.type,
+					imsg_ctl_rde(imsg.hdr.type,
 					    imsg.hdr.pid,
 					    p, sizeof(struct peer));
-					imsg_compose_rde(IMSG_CTL_END,
+					imsg_ctl_rde(IMSG_CTL_END,
 					    imsg.hdr.pid, NULL, 0);
 				} else {
 					u_int			 i;
@@ -299,10 +299,10 @@ control_dispatch_msg(struct pollfd *pfd, u_int *ctl_cnt)
 				}
 			} else {
 				for (p = peers; p != NULL; p = p->next)
-					imsg_compose_rde(imsg.hdr.type,
+					imsg_ctl_rde(imsg.hdr.type,
 					    imsg.hdr.pid,
 					    p, sizeof(struct peer));
-				imsg_compose_rde(IMSG_CTL_END, imsg.hdr.pid,
+				imsg_ctl_rde(IMSG_CTL_END, imsg.hdr.pid,
 					NULL, 0);
 			}
 			break;
@@ -314,7 +314,7 @@ control_dispatch_msg(struct pollfd *pfd, u_int *ctl_cnt)
 			break;
 		case IMSG_CTL_FIB_COUPLE:
 		case IMSG_CTL_FIB_DECOUPLE:
-			imsg_compose_parent(imsg.hdr.type, imsg.hdr.peerid,
+			imsg_ctl_parent(imsg.hdr.type, imsg.hdr.peerid,
 			    0, NULL, 0);
 			break;
 		case IMSG_CTL_NEIGHBOR_UP:
@@ -389,14 +389,14 @@ control_dispatch_msg(struct pollfd *pfd, u_int *ctl_cnt)
 		case IMSG_CTL_SHOW_INTERFACE:
 		case IMSG_CTL_SHOW_FIB_TABLES:
 			c->ibuf.pid = imsg.hdr.pid;
-			imsg_compose_parent(imsg.hdr.type, 0, imsg.hdr.pid,
+			imsg_ctl_parent(imsg.hdr.type, 0, imsg.hdr.pid,
 			    imsg.data, imsg.hdr.len - IMSG_HEADER_SIZE);
 			break;
 		case IMSG_CTL_KROUTE:
 		case IMSG_CTL_KROUTE_ADDR:
 		case IMSG_CTL_SHOW_NEXTHOP:
 			c->ibuf.pid = imsg.hdr.pid;
-			imsg_compose_parent(imsg.hdr.type, imsg.hdr.peerid,
+			imsg_ctl_parent(imsg.hdr.type, imsg.hdr.peerid,
 			    imsg.hdr.pid, imsg.data, imsg.hdr.len -
 			    IMSG_HEADER_SIZE);
 			break;
@@ -453,7 +453,7 @@ control_dispatch_msg(struct pollfd *pfd, u_int *ctl_cnt)
 					break;
 				}
 				c->ibuf.pid = imsg.hdr.pid;
-				imsg_compose_rde(imsg.hdr.type, imsg.hdr.pid,
+				imsg_ctl_rde(imsg.hdr.type, imsg.hdr.pid,
 				    imsg.data, imsg.hdr.len - IMSG_HEADER_SIZE);
 			} else
 				log_warnx("got IMSG_CTL_SHOW_RIB with "
@@ -463,7 +463,7 @@ control_dispatch_msg(struct pollfd *pfd, u_int *ctl_cnt)
 		case IMSG_CTL_SHOW_RIB_COMMUNITY:
 		case IMSG_CTL_SHOW_NETWORK:
 			c->ibuf.pid = imsg.hdr.pid;
-			imsg_compose_rde(imsg.hdr.type, imsg.hdr.pid,
+			imsg_ctl_rde(imsg.hdr.type, imsg.hdr.pid,
 			    imsg.data, imsg.hdr.len - IMSG_HEADER_SIZE);
 			break;
 		case IMSG_NETWORK_ADD:
@@ -473,7 +473,7 @@ control_dispatch_msg(struct pollfd *pfd, u_int *ctl_cnt)
 		case IMSG_NETWORK_FLUSH:
 		case IMSG_NETWORK_DONE:
 		case IMSG_FILTER_SET:
-			imsg_compose_rde(imsg.hdr.type, 0,
+			imsg_ctl_rde(imsg.hdr.type, 0,
 			    imsg.data, imsg.hdr.len - IMSG_HEADER_SIZE);
 			break;
 		case IMSG_CTL_LOG_VERBOSE:
@@ -482,9 +482,9 @@ control_dispatch_msg(struct pollfd *pfd, u_int *ctl_cnt)
 				break;
 
 			/* forward to other processes */
-			imsg_compose_parent(imsg.hdr.type, 0, imsg.hdr.pid,
+			imsg_ctl_parent(imsg.hdr.type, 0, imsg.hdr.pid,
 			    imsg.data, imsg.hdr.len - IMSG_HEADER_SIZE);
-			imsg_compose_rde(imsg.hdr.type, 0,
+			imsg_ctl_rde(imsg.hdr.type, 0,
 			    imsg.data, imsg.hdr.len - IMSG_HEADER_SIZE);
 
 			memcpy(&verbose, imsg.data, sizeof(verbose));

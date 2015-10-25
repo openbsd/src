@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.344 2015/10/09 01:37:09 deraadt Exp $ */
+/*	$OpenBSD: session.c,v 1.345 2015/10/25 18:49:01 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -3130,16 +3130,20 @@ session_up(struct peer *p)
 }
 
 int
-imsg_compose_parent(int type, u_int32_t peerid, pid_t pid, void *data,
+imsg_ctl_parent(int type, u_int32_t peerid, pid_t pid, void *data,
     u_int16_t datalen)
 {
 	return (imsg_compose(ibuf_main, type, peerid, pid, -1, data, datalen));
 }
 
 int
-imsg_compose_rde(int type, pid_t pid, void *data, u_int16_t datalen)
+imsg_ctl_rde(int type, pid_t pid, void *data, u_int16_t datalen)
 {
-	return (imsg_compose(ibuf_rde, type, 0, pid, -1, data, datalen));
+	/*
+	 * Use control socket to talk to RDE to bypass the queue of the
+	 * regular imsg socket.
+	 */
+	return (imsg_compose(ibuf_rde_ctl, type, 0, pid, -1, data, datalen));
 }
 
 void
