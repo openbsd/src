@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.35 2015/10/05 04:31:21 miod Exp $
+#	$OpenBSD: install.md,v 1.36 2015/10/25 10:20:51 krw Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -58,12 +58,7 @@ md_prep_fdisk() {
 		case $resp in
 		w*|W*)
 			echo -n "Setting OpenBSD MBR partition to whole $_disk..."
-			fdisk -e ${_disk} <<__EOT >/dev/null
-reinit
-update
-write
-quit
-__EOT
+			fdisk -iy $_disk >/dev/null
 			echo "done."
 			return ;;
 		e*|E*)
