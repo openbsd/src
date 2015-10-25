@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.262 2015/10/25 11:58:11 mpi Exp $	*/
+/*	$OpenBSD: route.c,v 1.263 2015/10/25 14:48:51 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -837,15 +837,6 @@ rtrequest1(int req, struct rt_addrinfo *info, u_int8_t prio,
 		else
 			memcpy(ndst, info->rti_info[RTAX_DST], dlen);
 
-#ifndef SMALL_KERNEL
-		/* Do not permit exactly the same dst/mask/gw pair. */
-		if (rtable_mpath_conflict(tableid, ndst,
-		    info->rti_info[RTAX_NETMASK], info->rti_info[RTAX_GATEWAY],
-		    prio, info->rti_flags & RTF_MPATH)) {
-			free(ndst, M_RTABLE, dlen);
-			return (EEXIST);
-		}
-#endif
 		rt = pool_get(&rtentry_pool, PR_NOWAIT | PR_ZERO);
 		if (rt == NULL) {
 			free(ndst, M_RTABLE, dlen);
@@ -953,13 +944,15 @@ rtrequest1(int req, struct rt_addrinfo *info, u_int8_t prio,
 		}
 
 		error = rtable_insert(tableid, ndst,
-		    info->rti_info[RTAX_NETMASK], rt->rt_priority, rt);
+		    info->rti_info[RTAX_NETMASK], info->rti_info[RTAX_GATEWAY],
+		    rt->rt_priority, rt);
 		if (error != 0 && (crt = rtalloc(ndst, 0, tableid)) != NULL) {
 			/* overwrite cloned route */
 			if ((crt->rt_flags & RTF_CLONED) != 0) {
 				rtdeletemsg(crt, tableid);
 				error = rtable_insert(tableid, ndst,
 				    info->rti_info[RTAX_NETMASK],
+				    info->rti_info[RTAX_GATEWAY],
 				    rt->rt_priority, rt);
 			}
 			rtfree(crt);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtable.h,v 1.7 2015/10/22 17:19:38 mpi Exp $ */
+/*	$OpenBSD: rtable.h,v 1.8 2015/10/25 14:48:51 mpi Exp $ */
 
 /*
  * Copyright (c) 2014-2015 Martin Pieuchot
@@ -57,7 +57,8 @@ struct rtentry	*rtable_lookup(unsigned int, struct sockaddr *,
 		     struct sockaddr *);
 struct rtentry	*rtable_match(unsigned int, struct sockaddr *);
 int		 rtable_insert(unsigned int, struct sockaddr *,
-		     struct sockaddr *, uint8_t, struct rtentry *);
+		     struct sockaddr *, struct sockaddr *, uint8_t,
+		     struct rtentry *);
 int		 rtable_delete(unsigned int, struct sockaddr *,
 		     struct sockaddr *, uint8_t, struct rtentry *);
 int		 rtable_walk(unsigned int, sa_family_t,
@@ -66,8 +67,6 @@ int		 rtable_walk(unsigned int, sa_family_t,
 int		 rtable_mpath_capable(unsigned int, sa_family_t);
 struct rtentry	*rtable_mpath_match(unsigned int, struct rtentry *,
 		     struct sockaddr *, uint8_t);
-int		 rtable_mpath_conflict(unsigned int, struct sockaddr *,
-		     struct sockaddr *, struct sockaddr *, uint8_t, int);
 struct rtentry	*rtable_mpath_select(struct rtentry *, uint32_t);
 void		 rtable_mpath_reprio(struct rtentry *, uint8_t);
 #endif /* _NET_RTABLE_H_ */

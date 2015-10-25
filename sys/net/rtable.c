@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtable.c,v 1.14 2015/10/22 17:19:38 mpi Exp $ */
+/*	$OpenBSD: rtable.c,v 1.15 2015/10/25 14:48:51 mpi Exp $ */
 
 /*
  * Copyright (c) 2014-2015 Martin Pieuchot
@@ -292,7 +292,8 @@ rtable_match(unsigned int rtableid, struct sockaddr *dst)
 
 int
 rtable_insert(unsigned int rtableid, struct sockaddr *dst,
-    struct sockaddr *mask, uint8_t prio, struct rtentry *rt)
+    struct sockaddr *mask, struct sockaddr *gateway, uint8_t prio,
+    struct rtentry *rt)
 {
 	struct radix_node_head	*rnh;
 	struct radix_node	*rn = (struct radix_node *)rt;
@@ -300,6 +301,15 @@ rtable_insert(unsigned int rtableid, struct sockaddr *dst,
 	rnh = rtable_get(rtableid, dst->sa_family);
 	if (rnh == NULL)
 		return (EAFNOSUPPORT);
+
+#ifndef SMALL_KERNEL
+	if (rnh->rnh_multipath) {
+		/* Do not permit exactly the same dst/mask/gw pair. */
+		if (rt_mpath_conflict(rnh, dst, mask, gateway, prio,
+	    	    ISSET(rt->rt_flags, RTF_MPATH)))
+			return (EEXIST);
+	}
+#endif
 
 	rn = rn_addroute(dst, mask, rnh, rn, prio);
 	if (rn == NULL)
@@ -380,22 +390,6 @@ rtable_mpath_match(unsigned int rtableid, struct rtentry *rt0,
 	rtfree(rt0);
 
 	return (rt);
-}
-
-int
-rtable_mpath_conflict(unsigned int rtableid, struct sockaddr *dst,
-    struct sockaddr *mask, struct sockaddr *gateway, uint8_t prio, int mpathok)
-{
-	struct radix_node_head	*rnh;
-
-	rnh = rtable_get(rtableid, dst->sa_family);
-	if (rnh == NULL)
-		return (EAFNOSUPPORT);
-
-	if (rnh->rnh_multipath == 0)
-		return (0);
-
-	return (rt_mpath_conflict(rnh, dst, mask, gateway, prio, mpathok));
 }
 
 /* Gateway selection by Hash-Threshold (RFC 2992) */
@@ -526,7 +520,8 @@ rtable_match(unsigned int rtableid, struct sockaddr *dst)
 
 int
 rtable_insert(unsigned int rtableid, struct sockaddr *dst,
-    struct sockaddr *mask, uint8_t prio, struct rtentry *rt)
+    struct sockaddr *mask, struct sockaddr *gateway, uint8_t prio,
+    struct rtentry *rt)
 {
 #ifndef SMALL_KERNEL
 	struct rtentry			*mrt;
@@ -544,6 +539,29 @@ rtable_insert(unsigned int rtableid, struct sockaddr *dst,
 	plen = satoplen(ar, mask);
 	if (plen == -1)
 		return (EINVAL);
+
+#ifndef SMALL_KERNEL
+	/* Do not permit exactly the same dst/mask/gw pair. */
+	an = art_lookup(ar, addr, plen);
+	if (an != NULL && an->an_plen == plen &&
+	    !memcmp(an->an_dst, dst, dst->sa_len)) {
+	    	struct rtentry	*mrt;
+		int		 mpathok = ISSET(rt->rt_flags, RTF_MPATH);
+
+		LIST_FOREACH(mrt, &an->an_rtlist, rt_next) {
+			if (prio != RTP_ANY &&
+			    (mrt->rt_priority & RTP_MASK) != (prio & RTP_MASK))
+				continue;
+
+			if (!mpathok)
+				return (EEXIST);
+
+			if (mrt->rt_gateway->sa_len == gateway->sa_len &&
+			    !memcmp(mrt->rt_gateway, gateway, gateway->sa_len))
+				return (EEXIST);
+		}
+	}
+#endif
 
 	an = pool_get(&an_pool, PR_NOWAIT | PR_ZERO);
 	if (an == NULL)
@@ -754,48 +772,6 @@ rtable_mpath_match(unsigned int rtableid, struct rtentry *rt0,
 	rtfree(rt0);
 
 	return (rt);
-}
-
-int
-rtable_mpath_conflict(unsigned int rtableid, struct sockaddr *dst,
-    struct sockaddr *mask, struct sockaddr *gateway, uint8_t prio, int mpathok)
-{
-	struct art_root			*ar;
-	struct art_node			*an;
-	struct rtentry			*rt;
-	uint8_t				*addr;
-	int				 plen;
-
-	ar = rtable_get(rtableid, dst->sa_family);
-	if (ar == NULL)
-		return (EAFNOSUPPORT);
-
-	addr = satoaddr(ar, dst);
-	plen = satoplen(ar, mask);
-	if (plen == -1)
-		return (EINVAL);
-
-	an = art_lookup(ar, addr, plen);
-	/* Make sure we've got a perfect match. */
-	if (an == NULL || an->an_plen != plen ||
-	    memcmp(an->an_dst, dst, dst->sa_len))
-		return (0);
-
-	LIST_FOREACH(rt, &an->an_rtlist, rt_next) {
-		if (prio != RTP_ANY &&
-		    (rt->rt_priority & RTP_MASK) != (prio & RTP_MASK))
-			continue;
-
-		if (!mpathok)
-			return (EEXIST);
-
-		if (rt->rt_gateway->sa_len == gateway->sa_len &&
-		    memcmp(rt->rt_gateway, gateway, gateway->sa_len) == 0)
-			return (EEXIST);
-	}
-
-
-	return (0);
 }
 
 /* Gateway selection by Hash-Threshold (RFC 2992) */
