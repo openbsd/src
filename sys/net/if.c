@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.397 2015/10/25 13:52:45 mpi Exp $	*/
+/*	$OpenBSD: if.c,v 1.398 2015/10/25 21:58:04 deraadt Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -2511,7 +2511,9 @@ ifa_print_all(void)
 void
 ifnewlladdr(struct ifnet *ifp)
 {
+#ifdef INET6
 	struct ifaddr *ifa;
+#endif
 	struct ifreq ifrq;
 	short up;
 	int s;
