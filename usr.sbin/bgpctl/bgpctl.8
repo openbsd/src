@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpctl.8,v 1.66 2015/10/24 16:02:04 benno Exp $
+.\" $OpenBSD: bgpctl.8,v 1.67 2015/10/25 13:08:29 jmc Exp $
 .\"
 .\" Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 24 2015 $
+.Dd $Mdocdate: October 25 2015 $
 .Dt BGPCTL 8
 .Os
 .Sh NAME
@@ -345,12 +345,12 @@ Show routes from the unfiltered Adj-RIB-In.
 This is only possible if
 .Em softreconfig in
 is enabled for the neighbor.
-The 
+The
 .Cm neighbor
 needs to be specified.
 .It Cm out
 Show the filtered routes sent to a neighbor.
-The 
+The
 .Cm neighbor
 needs to be specified.
 .El
