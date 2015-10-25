@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.70 2015/10/25 01:57:09 millert Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.71 2015/10/25 10:30:58 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -895,6 +895,9 @@ pledge_sysctl_check(struct proc *p, int miblen, int *mib, void *new)
 			return (0);
 		if (miblen == 6 &&			/* kern.proc.* */
 		    mib[0] == CTL_KERN && mib[1] == KERN_PROC)
+			return (0);
+		if (miblen == 3 &&			/* kern.proc_cwd.* */
+		    mib[0] == CTL_KERN && mib[1] == KERN_PROC_CWD)
 			return (0);
 		if (miblen == 2 &&			/* hw.physmem */
 		    mib[0] == CTL_HW && mib[1] == HW_PHYSMEM64)
