@@ -1,4 +1,4 @@
-/*	$OpenBSD: bytestringtest.c,v 1.9 2015/07/18 21:57:00 bcook Exp $	*/
+/*	$OpenBSD: bytestringtest.c,v 1.10 2015/10/25 20:15:06 doug Exp $	*/
 /*
  * Copyright (c) 2014, Google Inc.
  *
@@ -138,7 +138,7 @@ test_get_asn1(void)
 	static const uint8_t kData2[] = {0x30, 3, 1, 2};
 	static const uint8_t kData3[] = {0x30, 0x80};
 	static const uint8_t kData4[] = {0x30, 0x81, 1, 1};
-	static const uint8_t kData5[] = {0x30, 0x82, 0, 1, 1};
+	static const uint8_t kData5[4 + 0x80] = {0x30, 0x82, 0, 0x80};
 	static const uint8_t kData6[] = {0xa1, 3, 0x4, 1, 1};
 	static const uint8_t kData7[] = {0xa1, 3, 0x4, 2, 1};
 	static const uint8_t kData8[] = {0xa1, 3, 0x2, 1, 1};
