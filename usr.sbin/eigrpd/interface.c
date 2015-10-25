@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.8 2015/10/21 03:52:12 renato Exp $ */
+/*	$OpenBSD: interface.c,v 1.9 2015/10/25 00:43:35 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -230,29 +230,40 @@ if_update(struct iface *iface, int af)
 {
 	struct eigrp_iface	*ei;
 	int			 link_ok;
-	int			 addr_ok = 1;
+	int			 addr_ok, addr4_ok = 0, addr6_ok = 0;
 	struct if_addr		*if_addr;
 
 	link_ok = (iface->flags & IFF_UP) &&
 	    LINK_STATE_IS_UP(iface->linkstate);
 
 	/*
-	 * NOTE: For EIGRPv4, each interface should have a valid IP address
-	 * otherwise they can not be enabled in the routing domain. For IPv6
-	 * this limitation does not exist because the link-local addresses
-	 * are used to form the adjacencies.
+	 * NOTE: for EIGRPv4, each interface should have at least one valid
+	 * IP address otherwise they can not be enabled in the routing domain.
 	 */
-	if (af == AF_INET) {
-		TAILQ_FOREACH(if_addr, &iface->addr_list, entry)
-			if (if_addr->af == AF_INET)
-				break;
-		if (if_addr == NULL)
-			addr_ok = 0;
+	TAILQ_FOREACH(if_addr, &iface->addr_list, entry) {
+		if (if_addr->af == AF_INET) {
+			addr4_ok = 1;
+			break;
+		}
 	}
+	/* for IPv6 the link-local address is enough. */
+	if (IN6_IS_ADDR_LINKLOCAL(&iface->linklocal))
+		addr6_ok = 1;
 
 	TAILQ_FOREACH(ei, &iface->ei_list, i_entry) {
 		if (af != AF_UNSPEC && ei->eigrp->af != af)
 			continue;
+
+		switch (ei->eigrp->af) {
+		case AF_INET:
+			addr_ok = addr4_ok;
+			break;
+		case AF_INET6:
+			addr_ok = addr6_ok;
+			break;
+		default:
+			fatalx("if_update: unknown af");
+		}
 
 		if (ei->state == IF_STA_DOWN) {
 			if (!link_ok || !addr_ok)
