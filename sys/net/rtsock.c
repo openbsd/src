@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.178 2015/10/25 11:58:11 mpi Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.179 2015/10/25 14:41:09 claudio Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -714,7 +714,6 @@ report:
 					    rt->rt_ifa->ifa_dstaddr;
 				else
 					info.rti_info[RTAX_BRD] = NULL;
-				rtm->rtm_index = ifp->if_index;
 			}
 			if_put(ifp);
 			len = rt_msg2(rtm->rtm_type, RTM_VERSION, &info, NULL,
@@ -735,6 +734,7 @@ report:
 			rtm->rtm_flags = rt->rt_flags;
 			rtm->rtm_use = 0;
 			rtm->rtm_priority = rt->rt_priority & RTP_MASK;
+			rtm->rtm_index = rt->rt_ifidx;
 			rt_getmetrics(&rt->rt_rmx, &rtm->rtm_rmx);
 			rtm->rtm_addrs = info.rti_addrs;
 			break;
@@ -1248,6 +1248,7 @@ sysctl_dumpentry(struct rtentry *rt, void *v, unsigned int id)
 	if (w->w_where && w->w_tmem && w->w_needed <= 0) {
 		struct rt_msghdr *rtm = (struct rt_msghdr *)w->w_tmem;
 
+		rtm->rtm_pid = curproc->p_p->ps_pid;
 		rtm->rtm_flags = rt->rt_flags;
 		rtm->rtm_priority = rt->rt_priority & RTP_MASK;
 		rt_getmetrics(&rt->rt_rmx, &rtm->rtm_rmx);
