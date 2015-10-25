@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.341 2015/10/09 01:37:09 deraadt Exp $ */
+/*	$OpenBSD: rde.c,v 1.342 2015/10/25 18:45:04 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -301,7 +301,8 @@ rde_main(int debug, int verbose)
 		rde_update_queue_runner();
 		for (aid = AID_INET6; aid < AID_MAX; aid++)
 			rde_update6_queue_runner(aid);
-		if (ibuf_se_ctl && ibuf_se_ctl->w.queued <= 0)
+		if (rib_dump_pending() &&
+		    ibuf_se_ctl && ibuf_se_ctl->w.queued <= 10)
 			rib_dump_runner();
 	}
 
