@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ip6.4,v 1.33 2014/06/11 16:59:47 chrisz Exp $
+.\"	$OpenBSD: ip6.4,v 1.34 2015/10/25 14:43:07 florian Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -26,7 +26,7 @@
 .\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
-.Dd $Mdocdate: June 11 2014 $
+.Dd $Mdocdate: October 25 2015 $
 .Dt IP6 4
 .Os
 .Sh NAME
@@ -251,17 +251,6 @@ The value is stored as an
 in the ancillary data returned.
 Turning this option on will result in this socket getting cmsg data of
 type IPV6_HOPLIMIT.
-.It Dv IPV6_NEXTHOP Fa "int *"
-Get or set whether the address of the next hop for subsequent
-packets will be provided as ancillary data along with the payload in
-subsequent
-.Xr recvmsg 2
-calls.
-The option is stored as a
-.Vt sockaddr
-structure in the ancillary data returned.
-.Pp
-This option requires superuser privileges.
 .It Dv IPV6_RECVHOPOPTS Fa "int *"
 Get or set whether the hop-by-hop options from subsequent packets will be
 provided as ancillary data along with the payload in subsequent

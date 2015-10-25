@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.191 2015/10/24 12:33:16 mpi Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.192 2015/10/25 14:43:06 florian Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -558,17 +558,9 @@ reroute:
 		*dst = dstsock;
 	}
 
-	if (rt && !IN6_IS_ADDR_MULTICAST(&ip6->ip6_dst)) {
-		if (opt && opt->ip6po_nextroute.ro_rt) {
-			/*
-			 * The nexthop is explicitly specified by the
-			 * application.  We assume the next hop is an IPv6
-			 * address.
-			 */
-			dst = satosin6(opt->ip6po_nexthop);
-		} else if ((rt->rt_flags & RTF_GATEWAY))
-			dst = satosin6(rt->rt_gateway);
-	}
+	if (rt && (rt->rt_flags & RTF_GATEWAY) &&
+	    !IN6_IS_ADDR_MULTICAST(&ip6->ip6_dst))
+		dst = satosin6(rt->rt_gateway);
 
 	if (!IN6_IS_ADDR_MULTICAST(&ip6->ip6_dst)) {
 		/* Unicast */
@@ -1484,7 +1476,6 @@ do { \
 			case IPV6_RTHDR:
 			case IPV6_DSTOPTS:
 			case IPV6_RTHDRDSTOPTS:
-			case IPV6_NEXTHOP:
 			{
 				/* new advanced API (RFC3542) */
 				u_char *optbuf;
@@ -1817,7 +1808,6 @@ do { \
 			case IPV6_RTHDR:
 			case IPV6_DSTOPTS:
 			case IPV6_RTHDRDSTOPTS:
-			case IPV6_NEXTHOP:
 			case IPV6_TCLASS:
 			case IPV6_DONTFRAG:
 			case IPV6_USE_MIN_MTU:
@@ -2095,12 +2085,6 @@ ip6_getpcbopt(struct ip6_pktopts *pktopt, int optname, struct mbuf **mp)
 			optdatalen = (ip6e->ip6e_len + 1) << 3;
 		}
 		break;
-	case IPV6_NEXTHOP:
-		if (pktopt && pktopt->ip6po_nexthop) {
-			optdata = (void *)pktopt->ip6po_nexthop;
-			optdatalen = pktopt->ip6po_nexthop->sa_len;
-		}
-		break;
 	case IPV6_USE_MIN_MTU:
 		if (pktopt)
 			optdata = (void *)&pktopt->ip6po_minmtu;
@@ -2147,15 +2131,6 @@ ip6_clearpktopts(struct ip6_pktopts *pktopt, int optname)
 		pktopt->ip6po_hlim = -1;
 	if (optname == -1 || optname == IPV6_TCLASS)
 		pktopt->ip6po_tclass = -1;
-	if (optname == -1 || optname == IPV6_NEXTHOP) {
-		if (pktopt->ip6po_nextroute.ro_rt) {
-			rtfree(pktopt->ip6po_nextroute.ro_rt);
-			pktopt->ip6po_nextroute.ro_rt = NULL;
-		}
-		if (pktopt->ip6po_nexthop)
-			free(pktopt->ip6po_nexthop, M_IP6OPT, 0);
-		pktopt->ip6po_nexthop = NULL;
-	}
 	if (optname == -1 || optname == IPV6_HOPOPTS) {
 		if (pktopt->ip6po_hbh)
 			free(pktopt->ip6po_hbh, M_IP6OPT, 0);
@@ -2205,14 +2180,6 @@ copypktopts(struct ip6_pktopts *dst, struct ip6_pktopts *src, int canwait)
 		if (dst->ip6po_pktinfo == NULL)
 			goto bad;
 		*dst->ip6po_pktinfo = *src->ip6po_pktinfo;
-	}
-	if (src->ip6po_nexthop) {
-		dst->ip6po_nexthop = malloc(src->ip6po_nexthop->sa_len,
-		    M_IP6OPT, canwait);
-		if (dst->ip6po_nexthop == NULL)
-			goto bad;
-		bcopy(src->ip6po_nexthop, dst->ip6po_nexthop,
-		    src->ip6po_nexthop->sa_len);
 	}
 	PKTOPT_EXTHDRCPY(ip6po_hbh);
 	PKTOPT_EXTHDRCPY(ip6po_dest1);
@@ -2682,7 +2649,6 @@ ip6_setpktopt(int optname, u_char *buf, int len, struct ip6_pktopts *opt,
 		switch (optname) {
 		case IPV6_2292PKTINFO:
 		case IPV6_2292HOPLIMIT:
-		case IPV6_2292NEXTHOP:
 		case IPV6_2292HOPOPTS:
 		case IPV6_2292DSTOPTS:
 		case IPV6_2292RTHDR:
@@ -2694,7 +2660,6 @@ ip6_setpktopt(int optname, u_char *buf, int len, struct ip6_pktopts *opt,
 		switch (optname) {
 		case IPV6_PKTINFO:
 		case IPV6_HOPLIMIT:
-		case IPV6_NEXTHOP:
 		case IPV6_HOPOPTS:
 		case IPV6_DSTOPTS:
 		case IPV6_RTHDRDSTOPTS:
@@ -2798,58 +2763,6 @@ ip6_setpktopt(int optname, u_char *buf, int len, struct ip6_pktopts *opt,
 		opt->ip6po_tclass = tclass;
 		break;
 	}
-
-	case IPV6_2292NEXTHOP:
-	case IPV6_NEXTHOP:
-		if (!priv)
-			return (EPERM);
-
-		if (len == 0) {	/* just remove the option */
-			ip6_clearpktopts(opt, IPV6_NEXTHOP);
-			break;
-		}
-
-		/* check if cmsg_len is large enough for sa_len */
-		if (len < sizeof(struct sockaddr) || len < *buf)
-			return (EINVAL);
-
-		switch (((struct sockaddr *)buf)->sa_family) {
-		case AF_INET6:
-		{
-			struct sockaddr_in6 *sa6 = (struct sockaddr_in6 *)buf;
-
-			if (sa6->sin6_len != sizeof(struct sockaddr_in6))
-				return (EINVAL);
-
-			if (IN6_IS_ADDR_UNSPECIFIED(&sa6->sin6_addr) ||
-			    IN6_IS_ADDR_MULTICAST(&sa6->sin6_addr)) {
-				return (EINVAL);
-			}
-			if (IN6_IS_SCOPE_EMBED(&sa6->sin6_addr)) {
-				struct ifnet *ifp;
-				ifp = if_get(sa6->sin6_scope_id);
-				if (ifp == NULL)
-					return (EINVAL);
-				if_put(ifp);
-				sa6->sin6_addr.s6_addr16[1] =
-				    htonl(sa6->sin6_scope_id);
-			} else if (sa6->sin6_scope_id)
-				return (EINVAL);
-			break;
-		}
-		case AF_LINK:	/* eventually be supported? */
-		default:
-			return (EAFNOSUPPORT);
-		}
-
-		/* turn off the previous option, then set the new option. */
-		ip6_clearpktopts(opt, IPV6_NEXTHOP);
-		opt->ip6po_nexthop = malloc(*buf, M_IP6OPT, M_NOWAIT);
-		if (opt->ip6po_nexthop == NULL)
-			return (ENOBUFS);
-		bcopy(buf, opt->ip6po_nexthop, *buf);
-		break;
-
 	case IPV6_2292HOPOPTS:
 	case IPV6_HOPOPTS:
 	{

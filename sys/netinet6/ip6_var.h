@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_var.h,v 1.55 2015/09/11 19:23:00 mpi Exp $	*/
+/*	$OpenBSD: ip6_var.h,v 1.56 2015/10/25 14:43:06 florian Exp $	*/
 /*	$KAME: ip6_var.h,v 1.33 2000/06/11 14:59:20 jinmei Exp $	*/
 
 /*
@@ -110,23 +110,12 @@ struct	ip6po_rhinfo {
 #define ip6po_rthdr	ip6po_rhinfo.ip6po_rhi_rthdr
 #define ip6po_route	ip6po_rhinfo.ip6po_rhi_route
 
-/* Nexthop related info */
-struct	ip6po_nhinfo {
-	struct sockaddr *ip6po_nhi_nexthop;
-	struct route_in6 ip6po_nhi_route;
-};
-#define ip6po_nexthop	ip6po_nhinfo.ip6po_nhi_nexthop
-#define ip6po_nextroute	ip6po_nhinfo.ip6po_nhi_route
-
 struct	ip6_pktopts {
 	/* Hoplimit for outgoing packets */
 	int	ip6po_hlim;
 
 	/* Outgoing IF/address information */
 	struct in6_pktinfo *ip6po_pktinfo;
-
-	/* Next-hop address information */
-	struct	ip6po_nhinfo ip6po_nhinfo;
 
 	/* Hop-by-Hop options header */
 	struct	ip6_hbh *ip6po_hbh;

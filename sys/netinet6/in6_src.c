@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_src.c,v 1.69 2015/10/25 13:55:51 mpi Exp $	*/
+/*	$OpenBSD: in6_src.c,v 1.70 2015/10/25 14:43:06 florian Exp $	*/
 /*	$KAME: in6_src.c,v 1.36 2001/02/06 04:08:17 itojun Exp $	*/
 
 /*
@@ -220,38 +220,6 @@ in6_selectsrc(struct in6_addr **in6src, struct sockaddr_in6 *dstsock,
 	}
 
 	/*
-	 * If the next hop address for the packet is specified
-	 * by caller, use an address associated with the route
-	 * to the next hop.
-	 */
-	{
-		struct sockaddr_in6 *sin6_next;
-		struct rtentry *rt;
-
-		if (opts && opts->ip6po_nexthop) {
-			sin6_next = satosin6(opts->ip6po_nexthop);
-			rt = nd6_lookup(&sin6_next->sin6_addr, 1, NULL,
-			    rtableid);
-			if (rt != NULL) {
-				ifp = if_get(rt->rt_ifidx);
-				if (ifp != NULL) {
-					ia6 = in6_ifawithscope(ifp, dst,
-					    rtableid);
-					if_put(ifp);
-				}
-				if (ia6 == NULL)
-					ia6 = ifatoia6(rt->rt_ifa);
-				rtfree(rt);
-			}
-			if (ia6 == NULL)
-				return (EADDRNOTAVAIL);
-
-			*in6src = &ia6->ia_addr.sin6_addr;
-			return (0);
-		}
-	}
-
-	/*
 	 * If route is known or can be allocated now,
 	 * our src addr is taken from the i/f, else punt.
 	 */
@@ -311,61 +279,9 @@ struct rtentry *
 in6_selectroute(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
     struct route_in6 *ro, unsigned int rtableid)
 {
-	struct sockaddr_in6 *sin6_next;
 	struct in6_addr *dst;
 
 	dst = &dstsock->sin6_addr;
-
-	/*
-	 * If the next hop address for the packet is specified by the caller,
-	 * use it as the gateway.
-	 */
-	if (opts && opts->ip6po_nexthop) {
-		struct route_in6 *ron;
-
-		sin6_next = satosin6(opts->ip6po_nexthop);
-
-		/* We only support AF_INET6 next hops */
-		if (sin6_next->sin6_family != AF_INET6)
-			return (NULL);
-
-		/*
-		 * If the next hop is an IPv6 address, then the node identified
-		 * by that address must be a neighbor of the sending host.
-		 */
-		ron = &opts->ip6po_nextroute;
-		if (!rtisvalid(ron->ro_rt) ||
-		    ISSET(ron->ro_rt->rt_flags, RTF_GATEWAY) ||
-		    !IN6_ARE_ADDR_EQUAL(&ron->ro_dst.sin6_addr,
-		    &sin6_next->sin6_addr)) {
-			if (ron->ro_rt) {
-				rtfree(ron->ro_rt);
-				ron->ro_rt = NULL;
-			}
-			ron->ro_dst = *sin6_next;
-			ron->ro_tableid = rtableid;
-		}
-		if (ron->ro_rt == NULL) {
-			/* multi path case? */
-			ron->ro_rt = rtalloc(sin6tosa(&ron->ro_dst),
-			    RT_REPORT|RT_RESOLVE, ron->ro_tableid);
-			if (ron->ro_rt == NULL ||
-			    (ron->ro_rt->rt_flags & RTF_GATEWAY)) {
-				if (ron->ro_rt) {
-					rtfree(ron->ro_rt);
-					ron->ro_rt = NULL;
-				}
-				return (NULL);
-			}
-		}
-		if (!nd6_is_addr_neighbor(sin6_next, ron->ro_rt->rt_ifp)) {
-			rtfree(ron->ro_rt);
-			ron->ro_rt = NULL;
-			return (NULL);
-		}
-
-		return (ron->ro_rt);
-	}
 
 	/*
 	 * Use a cached route if it exists and is valid, else try to allocate
