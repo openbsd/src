@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-choose-client.c,v 1.24 2015/04/27 16:25:57 nicm Exp $ */
+/* $OpenBSD: cmd-choose-client.c,v 1.25 2015/10/25 22:29:17 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -31,7 +31,7 @@
 	"#{client_tty}: #{session_name} "			\
 	"[#{client_width}x#{client_height} #{client_termname}]"	\
 	"#{?client_utf8, (utf8),}#{?client_readonly, (ro),} "	\
-	"(last used #{client_activity_string})"
+	"(last used #{t:client_activity})"
 
 enum cmd_retval	 cmd_choose_client_exec(struct cmd *, struct cmd_q *);
 
