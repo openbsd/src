@@ -1,4 +1,4 @@
-/*	$OpenBSD: atexit.h,v 1.9 2014/06/18 19:01:10 kettenis Exp $ */
+/*	$OpenBSD: atexit.h,v 1.10 2015/10/25 18:01:24 guenther Exp $ */
 
 /*
  * Copyright (c) 2002 Daniel Hartmeier
@@ -41,7 +41,12 @@ struct atexit {
 	} fns[1];			/* the table itself */
 };
 
+__BEGIN_HIDDEN_DECLS
 extern struct atexit *__atexit;		/* points to head of LIFO stack */
+__END_HIDDEN_DECLS
 
 int	__cxa_atexit(void (*)(void *), void *, void *);
 void	__cxa_finalize(void *);
+
+PROTO_NORMAL(__cxa_atexit);
+PROTO_NORMAL(__cxa_finalize);

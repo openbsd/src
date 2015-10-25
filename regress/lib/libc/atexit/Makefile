@@ -1,9 +1,10 @@
-#	$OpenBSD: Makefile,v 1.5 2003/07/31 22:46:59 david Exp $
+#	$OpenBSD: Makefile,v 1.6 2015/10/25 18:01:24 guenther Exp $
 
 NOMAN=
 PROG=atexit_test
-CPPFLAGS+=-I${.CURDIR}/../../../../lib/libc
+CPPFLAGS+=-I${.CURDIR}/../../../../lib/libc -D'PROTO_NORMAL(x)=__asm("")'
 CLEANFILES+= invalid.out valid.out
+LDADD=-static
 
 run-regress-atexit_test: ${PROG}
 	./${PROG} -valid 2>${.OBJDIR}/valid.out

@@ -1,4 +1,4 @@
-/*	$OpenBSD: local.h,v 1.22 2015/10/04 07:33:46 guenther Exp $	*/
+/*	$OpenBSD: local.h,v 1.23 2015/10/25 18:01:24 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -44,8 +44,6 @@
 void	_cleanup(void);
 int	_fwalk(int (*)(FILE *));
 PROTO_NORMAL(_fwalk);
-
-extern void __atexit_register_cleanup(void (*)(void));
 
 __BEGIN_HIDDEN_DECLS
 int	__sflush(FILE *);

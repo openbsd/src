@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdlib.h,v 1.4 2015/09/19 04:02:21 guenther Exp $	*/
+/*	$OpenBSD: stdlib.h,v 1.5 2015/10/25 18:01:24 guenther Exp $	*/
 /*	$NetBSD: stdlib.h,v 1.25 1995/12/27 21:19:08 jtc Exp $	*/
 
 /*-
@@ -39,6 +39,7 @@
 
 __BEGIN_HIDDEN_DECLS
 char	*__findenv(const char *, int, int *);
+void	__atexit_register_cleanup(void (*)(void));
 __END_HIDDEN_DECLS
 
 #if 0

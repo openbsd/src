@@ -1,4 +1,4 @@
-/*	$OpenBSD: atexit.c,v 1.21 2015/04/07 01:27:07 guenther Exp $ */
+/*	$OpenBSD: atexit.c,v 1.22 2015/10/25 18:01:24 guenther Exp $ */
 /*
  * Copyright (c) 2002 Daniel Hartmeier
  * All rights reserved.
@@ -103,6 +103,7 @@ unlock:
 	_ATEXIT_UNLOCK();
 	return (ret);
 }
+DEF_STRONG(__cxa_atexit);
 
 /*
  * Call all handlers registered with __cxa_atexit() for the shared
@@ -180,6 +181,7 @@ restart:
 
 	}
 }
+DEF_STRONG(__cxa_finalize);
 
 /*
  * Register the cleanup function
