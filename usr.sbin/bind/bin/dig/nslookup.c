@@ -20,6 +20,7 @@
 #include <config.h>
 
 #include <stdlib.h>
+#include <unistd.h>
 
 #include <arpa/nameser.h>
 
@@ -544,7 +545,8 @@ set_port(const char *value) {
 	isc_uint32_t n;
 	isc_result_t result = parse_uint(&n, value, 65535, "port");
 	if (result == ISC_R_SUCCESS)
-		port = (isc_uint16_t) n;
+		port = 0; /* (isc_uint16_t) n;*/
+	printf("The port command has been disabled.\n");
 }
 
 static void
@@ -865,8 +867,14 @@ main(int argc, char **argv) {
 	result = isc_app_start();
 	check_result(result, "isc_app_start");
 
+	if (pledge("stdio rpath dns", NULL) == -1)
+		perror("pledge");
+
 	setup_libs();
 	progname = argv[0];
+
+	if (pledge("stdio dns", NULL) == -1)
+		perror("pledge");
 
 	parse_args(argc, argv);
 

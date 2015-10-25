@@ -21,6 +21,7 @@
 
 #include <config.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <time.h>
 #include <ctype.h>
 
@@ -1191,7 +1192,8 @@ dash_option(char *option, char *next, dig_lookup_t **lookup,
 		strlcpy(keyfile, value, sizeof(keyfile));
 		return (value_from_next);
 	case 'p':
-		port = (in_port_t) parse_uint(value, "port number", MAXPORT);
+		fprintf(stderr, ";; Warning, -p option ignored\n");
+		/* port = (in_port_t) parse_uint(value, "port number", MAXPORT); */
 		return (value_from_next);
 	case 'q':
 		if (!config_only) {
@@ -1753,6 +1755,9 @@ main(int argc, char **argv) {
 	ISC_LIST_INIT(server_list);
 	ISC_LIST_INIT(search_list);
 
+	if (pledge("stdio rpath dns", NULL) == -1)
+		perror("pledge");
+
 	debug("main()");
 	preparse_args(argc, argv);
 	progname = argv[0];
@@ -1760,6 +1765,10 @@ main(int argc, char **argv) {
 	check_result(result, "isc_app_start");
 	setup_libs();
 	parse_args(ISC_FALSE, ISC_FALSE, argc, argv);
+
+	if (pledge("stdio dns", NULL) == -1)
+		perror("pledge");
+
 	setup_system();
 	if (domainopt[0] != '\0') {
 		set_search_domain(domainopt);

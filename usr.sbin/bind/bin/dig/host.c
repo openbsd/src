@@ -21,6 +21,7 @@
 
 #include <config.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <limits.h>
 
 #ifdef HAVE_LOCALE_H
@@ -838,6 +839,9 @@ main(int argc, char **argv) {
 	idnoptions = IDN_ASCCHECK;
 #endif
 
+	if (pledge("stdio rpath dns inet", NULL) == -1)
+		perror("pledge");
+
 	debug("main()");
 	progname = argv[0];
 	pre_parse_args(argc, argv);
@@ -845,6 +849,10 @@ main(int argc, char **argv) {
 	check_result(result, "isc_app_start");
 	setup_libs();
 	parse_args(ISC_FALSE, argc, argv);
+
+	if (pledge("stdio dns", NULL) == -1)
+		perror("pledge");
+
 	setup_system();
 	result = isc_app_onrun(mctx, global_task, onrun_callback, NULL);
 	check_result(result, "isc_app_onrun");

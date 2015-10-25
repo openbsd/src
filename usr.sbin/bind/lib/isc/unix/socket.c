@@ -1503,10 +1503,10 @@ isc_socket_create(isc_socketmgr_t *manager, int pf, isc_sockettype_t type,
  again:
 	switch (type) {
 	case isc_sockettype_udp:
-		sock->fd = socket(pf, SOCK_DGRAM, IPPROTO_UDP);
+		sock->fd = socket(pf, SOCK_DGRAM | SOCK_DNS, IPPROTO_UDP);
 		break;
 	case isc_sockettype_tcp:
-		sock->fd = socket(pf, SOCK_STREAM, IPPROTO_TCP);
+		sock->fd = socket(pf, SOCK_STREAM | SOCK_DNS, IPPROTO_TCP);
 		break;
 	case isc_sockettype_unix:
 		sock->fd = socket(pf, SOCK_STREAM, 0);

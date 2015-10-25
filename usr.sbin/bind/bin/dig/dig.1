@@ -33,7 +33,7 @@
 dig \- DNS lookup utility
 .SH "SYNOPSIS"
 .HP 4
-\fBdig\fR [@server] [\fB\-b\ \fR\fB\fIaddress\fR\fR] [\fB\-c\ \fR\fB\fIclass\fR\fR] [\fB\-f\ \fR\fB\fIfilename\fR\fR] [\fB\-k\ \fR\fB\fIfilename\fR\fR] [\fB\-p\ \fR\fB\fIport#\fR\fR] [\fB\-q\ \fR\fB\fIname\fR\fR] [\fB\-t\ \fR\fB\fItype\fR\fR] [\fB\-x\ \fR\fB\fIaddr\fR\fR] [\fB\-y\ \fR\fB\fI[hmac:]\fR\fIname:key\fR\fR] [\fB\-4\fR] [\fB\-6\fR] [name] [type] [class] [queryopt...]
+\fBdig\fR [@server] [\fB\-b\ \fR\fB\fIaddress\fR\fR] [\fB\-c\ \fR\fB\fIclass\fR\fR] [\fB\-f\ \fR\fB\fIfilename\fR\fR] [\fB\-k\ \fR\fB\fIfilename\fR\fR] [\fB\-q\ \fR\fB\fIname\fR\fR] [\fB\-t\ \fR\fB\fItype\fR\fR] [\fB\-x\ \fR\fB\fIaddr\fR\fR] [\fB\-y\ \fR\fB\fI[hmac:]\fR\fIname:key\fR\fR] [\fB\-4\fR] [\fB\-6\fR] [name] [type] [class] [queryopt...]
 .HP 4
 \fBdig\fR [\fB\-h\fR]
 .HP 4
@@ -122,7 +122,7 @@ will perform a lookup for an A record.
 The
 \fB\-b\fR
 option sets the source IP address of the query to
-\fIaddress\fR. This must be a valid address on one of the host's network interfaces or "0.0.0.0" or "::". An optional port may be specified by appending "#<port>"
+\fIaddress\fR. This must be a valid address on one of the host's network interfaces or "0.0.0.0" or "::".
 .PP
 The default query class (IN for internet) is overridden by the
 \fB\-c\fR
@@ -138,14 +138,6 @@ operate in batch mode by reading a list of lookup requests to process from the f
 \fIfilename\fR. The file contains a number of queries, one per line. Each entry in the file should be organized in the same way they would be presented as queries to
 \fBdig\fR
 using the command\-line interface.
-.PP
-If a non\-standard port number is to be queried, the
-\fB\-p\fR
-option is used.
-\fIport#\fR
-is the port number that
-\fBdig\fR
-will send its queries instead of the standard DNS port number 53. This option would be used to test a name server that has been configured to listen for queries on a non\-standard port number.
 .PP
 The
 \fB\-4\fR
