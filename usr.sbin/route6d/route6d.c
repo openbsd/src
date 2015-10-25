@@ -1,4 +1,4 @@
-/*	$OpenBSD: route6d.c,v 1.72 2015/10/25 22:57:09 jca Exp $	*/
+/*	$OpenBSD: route6d.c,v 1.73 2015/10/25 23:03:07 jca Exp $	*/
 /*	$KAME: route6d.c,v 1.111 2006/10/25 06:38:13 jinmei Exp $	*/
 
 /*
@@ -3400,10 +3400,10 @@ setindex2ifc(int idx, struct ifc *ifcp)
 	if (n != nindex2ifc) {
 		p = reallocarray(index2ifc, nindex2ifc, sizeof(*index2ifc));
 		if (p == NULL) {
-			fatal("realloc");
+			fatal("reallocarray");
 			/*NOTREACHED*/
 		}
-		memset(p + n, 0, sizeof(*index2ifc) * (nindex2ifc - n));
+		memset(p + n, 0, (nindex2ifc - n) * sizeof(*index2ifc));
 		index2ifc = p;
 	}
 	index2ifc[idx] = ifcp;
