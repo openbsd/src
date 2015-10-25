@@ -1,4 +1,4 @@
-/*	$OpenBSD: dump.c,v 1.15 2015/06/03 02:24:36 millert Exp $	*/
+/*	$OpenBSD: dump.c,v 1.16 2015/10/25 22:11:34 jca Exp $	*/
 /*	$KAME: dump.c,v 1.27 2002/05/29 14:23:55 itojun Exp $	*/
 
 /*
@@ -71,8 +71,7 @@ static char *rtpref_str[] = {
 };
 
 static char *
-ether_str(sdl)
-	struct sockaddr_dl *sdl;
+ether_str(struct sockaddr_dl *sdl)
 {
 	static char hbuf[NI_MAXHOST];
 	u_char *cp;

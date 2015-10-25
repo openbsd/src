@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtadvd.c,v 1.57 2015/10/25 21:31:58 jca Exp $	*/
+/*	$OpenBSD: rtadvd.c,v 1.58 2015/10/25 22:11:34 jca Exp $	*/
 /*	$KAME: rtadvd.c,v 1.66 2002/05/29 14:18:36 itojun Exp $	*/
 
 /*
@@ -154,9 +154,7 @@ static void rtmsg_input(void);
 static void rtadvd_set_dump(int);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	struct pollfd pfd[2];
 	struct timeval *timeout;
@@ -305,7 +303,7 @@ set_die(int signo)
 }
 
 static void
-die()
+die(void)
 {
 	struct rainfo *ra;
 	int i;
@@ -328,7 +326,7 @@ die()
 }
 
 static void
-rtmsg_input()
+rtmsg_input(void)
 {
 	int n, type, ifindex = 0, plen;
 	size_t len;
@@ -503,7 +501,7 @@ rtmsg_input()
 }
 
 void
-rtadvd_input()
+rtadvd_input(void)
 {
 	int i;
 	int *hlimp = NULL;
@@ -1184,7 +1182,7 @@ free_ndopts(union nd_opts *ndopts)
 }
 
 void
-sock_open()
+sock_open(void)
 {
 	struct rainfo	*ra;
 	struct icmp6_filter filt;
@@ -1293,7 +1291,7 @@ sock_open()
 
 /* open a routing socket to watch the routing table */
 static void
-rtsock_open()
+rtsock_open(void)
 {
 	if ((rtsock = socket(PF_ROUTE, SOCK_RAW, 0)) < 0)
 		fatal("socket");
@@ -1313,8 +1311,7 @@ if_indextorainfo(int index)
 }
 
 static void
-ra_output(rainfo)
-struct rainfo *rainfo;
+ra_output(struct rainfo *rainfo)
 {
 	int i;
 	struct cmsghdr *cm;

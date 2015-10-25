@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.28 2015/08/20 22:39:29 deraadt Exp $	*/
+/*	$OpenBSD: if.c,v 1.29 2015/10/25 22:11:34 jca Exp $	*/
 /*	$KAME: if.c,v 1.17 2001/01/21 15:27:30 itojun Exp $	*/
 
 /*
@@ -513,7 +513,7 @@ parse_iflist(struct if_msghdr ***ifmlist_p, char *buf, size_t bufsize)
 }
 
 void
-init_iflist()
+init_iflist(void)
 {
 	if (ifblock) {
 		free(ifblock);

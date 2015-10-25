@@ -1,4 +1,4 @@
-/*	$OpenBSD: timer.c,v 1.13 2014/11/02 02:45:46 deraadt Exp $	*/
+/*	$OpenBSD: timer.c,v 1.14 2015/10/25 22:11:34 jca Exp $	*/
 /*	$KAME: timer.c,v 1.7 2002/05/21 14:26:55 itojun Exp $	*/
 
 /*
@@ -91,7 +91,7 @@ rtadvd_set_timer(struct timeval *tm, struct rtadvd_timer *timer)
  * Return the next interval.
  */
 struct timeval *
-rtadvd_check_timer()
+rtadvd_check_timer(void)
 {
 	static struct timeval returnval;
 	struct timeval now;
