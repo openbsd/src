@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.263 2015/10/25 14:48:51 mpi Exp $	*/
+/*	$OpenBSD: route.c,v 1.264 2015/10/25 15:24:03 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -369,11 +369,11 @@ rtfree(struct rtentry *rt)
 		rtlabel_unref(rt->rt_labelid);
 #ifdef MPLS
 		if (rt->rt_flags & RTF_MPLS)
-			free(rt->rt_llinfo, M_TEMP, 0);
+			free(rt->rt_llinfo, M_TEMP, sizeof(struct rt_mpls));
 #endif
 		if (rt->rt_gateway)
 			free(rt->rt_gateway, M_RTABLE, 0);
-		free(rt_key(rt), M_RTABLE, 0);
+		free(rt_key(rt), M_RTABLE, rt_key(rt)->sa_len);
 		KERNEL_UNLOCK();
 
 		pool_put(&rtentry_pool, rt);
@@ -733,25 +733,10 @@ rtrequest1(int req, struct rt_addrinfo *info, u_int8_t prio,
 	switch (req) {
 	case RTM_DELETE:
 		rt = rtable_lookup(tableid, info->rti_info[RTAX_DST],
-		    info->rti_info[RTAX_NETMASK]);
+		    info->rti_info[RTAX_NETMASK], info->rti_info[RTAX_GATEWAY],
+		    prio );
 		if (rt == NULL)
 			return (ESRCH);
-#ifndef SMALL_KERNEL
-		rt = rtable_mpath_match(tableid, rt,
-		    info->rti_info[RTAX_GATEWAY], prio);
-		if (rt == NULL)
-			return (ESRCH);
-
-		/*
-		 * If we got multipath routes, we require users to specify
-		 * a matching gateway.
-		 */
-		if ((rt->rt_flags & RTF_MPATH) &&
-		    info->rti_info[RTAX_GATEWAY] == NULL) {
-		    	rtfree(rt);
-			return (ESRCH);
-		}
-#endif
 
 		/*
 		 * Since RTP_LOCAL cannot be set by userland, make
@@ -1386,7 +1371,7 @@ rt_timer_queue_destroy(struct rttimer_queue *rtq)
 	}
 
 	LIST_REMOVE(rtq, rtq_link);
-	free(rtq, M_RTABLE, 0);
+	free(rtq, M_RTABLE, sizeof(*rtq));
 }
 
 unsigned long
@@ -1572,7 +1557,7 @@ rtlabel_unref(u_int16_t id)
 		if (id == p->rtl_id) {
 			if (--p->rtl_ref == 0) {
 				TAILQ_REMOVE(&rt_labels, p, rtl_entry);
-				free(p, M_TEMP, 0);
+				free(p, M_TEMP, sizeof(*p));
 			}
 			break;
 		}
