@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.264 2015/10/25 15:24:03 mpi Exp $	*/
+/*	$OpenBSD: route.c,v 1.265 2015/10/25 16:25:23 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -733,10 +733,25 @@ rtrequest1(int req, struct rt_addrinfo *info, u_int8_t prio,
 	switch (req) {
 	case RTM_DELETE:
 		rt = rtable_lookup(tableid, info->rti_info[RTAX_DST],
-		    info->rti_info[RTAX_NETMASK], info->rti_info[RTAX_GATEWAY],
-		    prio );
+		    info->rti_info[RTAX_NETMASK]);
 		if (rt == NULL)
 			return (ESRCH);
+#ifndef SMALL_KERNEL
+		rt = rtable_mpath_match(tableid, rt,
+		    info->rti_info[RTAX_GATEWAY], prio);
+		if (rt == NULL)
+			return (ESRCH);
+
+		/*
+		 * If we got multipath routes, we require users to specify
+		 * a matching gateway.
+		 */
+		if ((rt->rt_flags & RTF_MPATH) &&
+		    info->rti_info[RTAX_GATEWAY] == NULL) {
+		    	rtfree(rt);
+			return (ESRCH);
+		}
+#endif
 
 		/*
 		 * Since RTP_LOCAL cannot be set by userland, make
