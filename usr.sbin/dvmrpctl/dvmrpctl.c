@@ -1,4 +1,4 @@
-/*	$OpenBSD: dvmrpctl.c,v 1.13 2015/10/10 22:11:37 deraadt Exp $ */
+/*	$OpenBSD: dvmrpctl.c,v 1.14 2015/10/25 20:23:00 deraadt Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -95,7 +95,7 @@ main(int argc, char *argv[])
 	if (connect(ctl_sock, (struct sockaddr *)&sun, sizeof(sun)) == -1)
 		err(1, "connect: %s", DVMRPD_SOCKET);
 
-	if (pledge("stdio route", NULL) == -1)
+	if (pledge("stdio", NULL) == -1)
 		err(1, "pledge");
 
 	if ((ibuf = malloc(sizeof(struct imsgbuf))) == NULL)
