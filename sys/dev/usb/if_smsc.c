@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_smsc.c,v 1.20 2015/06/24 09:40:54 mpi Exp $	*/
+/*	$OpenBSD: if_smsc.c,v 1.21 2015/10/25 12:11:56 mpi Exp $	*/
 /* $FreeBSD: src/sys/dev/usb/net/if_smsc.c,v 1.1 2012/08/15 04:03:55 gonzo Exp $ */
 /*-
  * Copyright (c) 2012
@@ -861,7 +861,6 @@ smsc_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct smsc_softc	*sc = ifp->if_softc;
 	struct ifreq		*ifr = (struct ifreq *)data;
-	struct ifaddr		*ifa = (struct ifaddr *)data;
 	int			s, error = 0;
 
 	s = splnet();
@@ -871,8 +870,6 @@ smsc_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		ifp->if_flags |= IFF_UP;
 		if (!(ifp->if_flags & IFF_RUNNING))
 			smsc_init(sc);
-		if (ifa->ifa_addr->sa_family == AF_INET)
-			arp_ifinit(&sc->sc_ac, ifa);
 		break;
 
 	case SIOCSIFFLAGS:

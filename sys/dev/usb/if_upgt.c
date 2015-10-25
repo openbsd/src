@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_upgt.c,v 1.69 2015/05/02 10:44:29 jsg Exp $ */
+/*	$OpenBSD: if_upgt.c,v 1.70 2015/10/25 12:11:56 mpi Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -1139,7 +1139,6 @@ upgt_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct upgt_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
-	struct ifaddr *ifa;
 	struct ifreq *ifr;
 	int s, error = 0;
 	uint8_t chan;
@@ -1148,10 +1147,7 @@ upgt_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 	switch (cmd) {
 	case SIOCSIFADDR:
-		ifa = (struct ifaddr *)data;
 		ifp->if_flags |= IFF_UP;
-		if (ifa->ifa_addr->sa_family == AF_INET)
-			arp_ifinit(&ic->ic_ac, ifa);
 		/* FALLTHROUGH */
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP) {

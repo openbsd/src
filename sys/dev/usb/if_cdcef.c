@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cdcef.c,v 1.37 2015/06/24 09:40:54 mpi Exp $	*/
+/*	$OpenBSD: if_cdcef.c,v 1.38 2015/10/25 12:11:56 mpi Exp $	*/
 
 /*
  * Copyright (c) 2007 Dale Rahn <drahn@openbsd.org>
@@ -458,7 +458,6 @@ int
 cdcef_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 {
 	struct cdcef_softc	*sc = ifp->if_softc;
-	struct ifaddr		*ifa = (struct ifaddr *)data;
 	int			 s, error = 0;
 
 	s = splnet();
@@ -468,8 +467,6 @@ cdcef_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		ifp->if_flags |= IFF_UP;
 		if (!(ifp->if_flags & IFF_RUNNING))
 			cdcef_init(sc);
-		if (ifa->ifa_addr->sa_family == AF_INET)
-			arp_ifinit(&sc->sc_arpcom, ifa);
 		break;
 
 	case SIOCSIFFLAGS:

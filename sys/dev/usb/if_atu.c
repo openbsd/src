@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atu.c,v 1.112 2015/06/24 09:40:54 mpi Exp $ */
+/*	$OpenBSD: if_atu.c,v 1.113 2015/10/25 12:11:56 mpi Exp $ */
 /*
  * Copyright (c) 2003, 2004
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -2111,7 +2111,6 @@ int
 atu_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 {
 	struct atu_softc	*sc = ifp->if_softc;
-	struct ifaddr		*ifa;
 	int			err = 0, s;
 
 	s = splnet();
@@ -2119,15 +2118,8 @@ atu_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 	case SIOCSIFADDR:
 		DPRINTFN(15, ("%s: SIOCSIFADDR\n", sc->atu_dev.dv_xname));
 
-		ifa = (struct ifaddr *)data;
 		ifp->if_flags |= IFF_UP;
 		atu_init(ifp);
-
-		switch (ifa->ifa_addr->sa_family) {
-		case AF_INET:
-			arp_ifinit(&sc->sc_ic.ic_ac, ifa);
-			break;
-		}
 		break;
 
 	case SIOCSIFFLAGS:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_kue.c,v 1.80 2015/06/24 09:40:54 mpi Exp $ */
+/*	$OpenBSD: if_kue.c,v 1.81 2015/10/25 12:11:56 mpi Exp $ */
 /*	$NetBSD: if_kue.c,v 1.50 2002/07/16 22:00:31 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -998,7 +998,6 @@ int
 kue_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 {
 	struct kue_softc	*sc = ifp->if_softc;
-	struct ifaddr 		*ifa = (struct ifaddr *)data;
 	int			s, error = 0;
 
 	DPRINTFN(5,("%s: %s: enter\n", sc->kue_dev.dv_xname,__func__));
@@ -1019,12 +1018,6 @@ kue_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
 		kue_init(sc);
-
-		switch (ifa->ifa_addr->sa_family) {
-		case AF_INET:
-			arp_ifinit(&sc->arpcom, ifa);
-			break;
-		}
 		break;
 
 	case SIOCSIFFLAGS:

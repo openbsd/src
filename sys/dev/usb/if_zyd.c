@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_zyd.c,v 1.108 2015/03/14 03:38:49 jsg Exp $	*/
+/*	$OpenBSD: if_zyd.c,v 1.109 2015/10/25 12:11:56 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -2301,7 +2301,6 @@ zyd_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct zyd_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
-	struct ifaddr *ifa;
 	struct ifreq *ifr;
 	int s, error = 0;
 
@@ -2309,10 +2308,7 @@ zyd_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 	switch (cmd) {
 	case SIOCSIFADDR:
-		ifa = (struct ifaddr *)data;
 		ifp->if_flags |= IFF_UP;
-		if (ifa->ifa_addr->sa_family == AF_INET)
-			arp_ifinit(&ic->ic_ac, ifa);
 		/* FALLTHROUGH */
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP) {

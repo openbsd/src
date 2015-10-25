@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cdce.c,v 1.65 2015/06/24 09:40:54 mpi Exp $ */
+/*	$OpenBSD: if_cdce.c,v 1.66 2015/10/25 12:11:56 mpi Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -509,7 +509,6 @@ int
 cdce_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 {
 	struct cdce_softc	*sc = ifp->if_softc;
-	struct ifaddr		*ifa = (struct ifaddr *)data;
 	int			 s, error = 0;
 
 	if (usbd_is_dying(sc->cdce_udev))
@@ -522,8 +521,6 @@ cdce_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		ifp->if_flags |= IFF_UP;
 		if (!(ifp->if_flags & IFF_RUNNING))
 			cdce_init(sc);
-		if (ifa->ifa_addr->sa_family == AF_INET)
-			arp_ifinit(&sc->cdce_arpcom, ifa);
 		break;
 
 	case SIOCSIFFLAGS:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axe.c,v 1.132 2015/06/24 09:40:54 mpi Exp $	*/
+/*	$OpenBSD: if_axe.c,v 1.133 2015/10/25 12:11:56 mpi Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Jonathan Gray <jsg@openbsd.org>
@@ -1392,7 +1392,6 @@ axe_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct axe_softc	*sc = ifp->if_softc;
 	struct ifreq		*ifr = (struct ifreq *)data;
-	struct ifaddr		*ifa = (struct ifaddr *)data;
 	int			s, error = 0;
 
 	s = splnet();
@@ -1402,8 +1401,6 @@ axe_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		ifp->if_flags |= IFF_UP;
 		if (!(ifp->if_flags & IFF_RUNNING))
 			axe_init(sc);
-		if (ifa->ifa_addr->sa_family == AF_INET)
-			arp_ifinit(&sc->arpcom, ifa);
 		break;
 
 	case SIOCSIFFLAGS:

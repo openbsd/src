@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urndis.c,v 1.55 2015/06/24 09:40:54 mpi Exp $ */
+/*	$OpenBSD: if_urndis.c,v 1.56 2015/10/25 12:11:56 mpi Exp $ */
 
 /*
  * Copyright (c) 2010 Jonathan Armani <armani@openbsd.org>
@@ -968,7 +968,6 @@ int
 urndis_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 {
 	struct urndis_softc	*sc = ifp->if_softc;
-	struct ifaddr		*ifa = (struct ifaddr *)data;
 	int			 s, error = 0;
 
 	if (usbd_is_dying(sc->sc_udev))
@@ -981,8 +980,6 @@ urndis_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		ifp->if_flags |= IFF_UP;
 		if (!(ifp->if_flags & IFF_RUNNING))
 			urndis_init(sc);
-		if (ifa->ifa_addr->sa_family == AF_INET)
-			arp_ifinit(&sc->sc_arpcom, ifa);
 		break;
 
 	case SIOCSIFFLAGS:

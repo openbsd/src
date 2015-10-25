@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cue.c,v 1.71 2015/06/24 09:40:54 mpi Exp $ */
+/*	$OpenBSD: if_cue.c,v 1.72 2015/10/25 12:11:56 mpi Exp $ */
 /*	$NetBSD: if_cue.c,v 1.40 2002/07/11 21:14:26 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -1041,7 +1041,6 @@ int
 cue_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 {
 	struct cue_softc	*sc = ifp->if_softc;
-	struct ifaddr 		*ifa = (struct ifaddr *)data;
 	int			s, error = 0;
 
 	if (usbd_is_dying(sc->cue_udev))
@@ -1053,12 +1052,6 @@ cue_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
 		cue_init(sc);
-
-		switch (ifa->ifa_addr->sa_family) {
-		case AF_INET:
-			arp_ifinit(&sc->arpcom, ifa);
-			break;
-		}
 		break;
 
 	case SIOCSIFFLAGS:

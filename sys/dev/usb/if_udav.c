@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_udav.c,v 1.72 2015/06/24 09:40:54 mpi Exp $ */
+/*	$OpenBSD: if_udav.c,v 1.73 2015/10/25 12:11:56 mpi Exp $ */
 /*	$NetBSD: if_udav.c,v 1.3 2004/04/23 17:25:25 itojun Exp $	*/
 /*	$nabe: if_udav.c,v 1.3 2003/08/21 16:57:19 nabe Exp $	*/
 /*
@@ -1133,7 +1133,6 @@ int
 udav_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct udav_softc *sc = ifp->if_softc;
-	struct ifaddr *ifa = (struct ifaddr *)data;
 	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
 
@@ -1149,9 +1148,6 @@ udav_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		ifp->if_flags |= IFF_UP;
 		if (!(ifp->if_flags & IFF_RUNNING))
 			udav_init(ifp);
-
-		if (ifa->ifa_addr->sa_family == AF_INET)
-			arp_ifinit(&sc->sc_ac, ifa);
 		break;
 
 	case SIOCSIFFLAGS:

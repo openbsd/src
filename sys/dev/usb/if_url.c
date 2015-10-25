@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_url.c,v 1.75 2015/06/24 09:40:54 mpi Exp $ */
+/*	$OpenBSD: if_url.c,v 1.76 2015/10/25 12:11:56 mpi Exp $ */
 /*	$NetBSD: if_url.c,v 1.6 2002/09/29 10:19:21 martin Exp $	*/
 /*
  * Copyright (c) 2001, 2002
@@ -1000,7 +1000,6 @@ int
 url_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct url_softc *sc = ifp->if_softc;
-	struct ifaddr *ifa = (struct ifaddr *)data;
 	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
 
@@ -1016,8 +1015,6 @@ url_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		ifp->if_flags |= IFF_UP;
 		if (!(ifp->if_flags & IFF_RUNNING))
 			url_init(ifp);
-		if (ifa->ifa_addr->sa_family == AF_INET)
-			arp_ifinit(&sc->sc_ac, ifa);
 		break;
 
 	case SIOCSIFFLAGS:
