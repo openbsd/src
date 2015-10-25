@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.68 2015/10/23 15:53:49 deraadt Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.69 2015/10/25 00:02:00 nicm Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -1193,6 +1193,10 @@ pledge_sockopt_check(struct proc *p, int level, int optname)
 		break;
 	case IPPROTO_IP:
 		switch (optname) {
+		case IP_OPTIONS:
+			if (p->p_pledge_syscall == SYS_getsockopt)
+				return (0);
+			break;
 		case IP_TOS:
 		case IP_TTL:
 		case IP_MINTTL:
