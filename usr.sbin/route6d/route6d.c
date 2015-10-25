@@ -1,4 +1,4 @@
-/*	$OpenBSD: route6d.c,v 1.75 2015/10/25 23:41:50 jca Exp $	*/
+/*	$OpenBSD: route6d.c,v 1.76 2015/10/25 23:50:23 jca Exp $	*/
 /*	$KAME: route6d.c,v 1.111 2006/10/25 06:38:13 jinmei Exp $	*/
 
 /*
@@ -1544,8 +1544,8 @@ rtrecv(void)
 		exit(1);
 	}
 	if (len < sizeof(*rtm)) {
-		trace(1, "short read from rtsock: %d (should be > %lu)\n",
-			len, (u_long)sizeof(*rtm));
+		trace(1, "short read from rtsock: %d (should be > %zu)\n",
+			len, sizeof(*rtm));
 		return;
 	}
 	if (dflag >= 2) {
@@ -2453,8 +2453,8 @@ krtread(int again)
 		}
 	} while (retry < 5 && errmsg != NULL);
 	if (errmsg) {
-		fatal("%s (with %d retries, msize=%lu)", errmsg, retry,
-		    (u_long)msize);
+		fatal("%s (with %d retries, msize=%zu)", errmsg, retry,
+		    msize);
 		/*NOTREACHED*/
 	} else if (1 < retry)
 		syslog(LOG_INFO, "NET_RT_DUMP %d retires", retry);
@@ -2932,11 +2932,11 @@ rtdump(int sig)
 			age = t - rrt->rrt_t;
 		inet_ntop(AF_INET6, (void *)&rrt->rrt_info.rip6_dest,
 			buf, sizeof(buf));
-		fprintf(dump, "    %s/%d if(%d:%s) gw(%s) [%d] age(%ld)",
+		fprintf(dump, "    %s/%d if(%d:%s) gw(%s) [%d] age(%lld)",
 			buf, rrt->rrt_info.rip6_plen, rrt->rrt_index,
 			index2ifc[rrt->rrt_index]->ifc_name,
 			inet6_n2p(&rrt->rrt_gw),
-			rrt->rrt_info.rip6_metric, (long)age);
+			rrt->rrt_info.rip6_metric, (long long)age);
 		if (rrt->rrt_info.rip6_tag) {
 			fprintf(dump, " tag(0x%04x)",
 				ntohs(rrt->rrt_info.rip6_tag) & 0xffff);
