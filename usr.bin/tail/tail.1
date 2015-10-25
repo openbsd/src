@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tail.1,v 1.22 2015/09/15 19:15:32 schwarze Exp $
+.\"	$OpenBSD: tail.1,v 1.23 2015/10/25 21:50:32 zhuk Exp $
 .\"	$NetBSD: tail.1,v 1.4 1994/11/23 07:42:13 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1991, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)tail.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: September 15 2015 $
+.Dd $Mdocdate: October 25 2015 $
 .Dt TAIL 1
 .Os
 .Sh NAME
@@ -125,12 +125,12 @@ The default for the
 option is to display all of the input.
 .El
 .Pp
-If more than a single file is specified, each file is preceded by a
-header consisting of the string
-.Dq ==> XXX <==
-where
-.Dq XXX
-is the name of the file.
+If more than one file is specified,
+.Nm
+precedes the output of each file with the following, in order
+to distinguish files:
+.Pp
+.Dl ==> Ar file No <==
 .Sh EXIT STATUS
 .Ex -std tail
 .Sh EXAMPLES
