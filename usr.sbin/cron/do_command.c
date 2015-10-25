@@ -1,4 +1,4 @@
-/*	$OpenBSD: do_command.c,v 1.49 2015/10/23 18:42:55 tedu Exp $	*/
+/*	$OpenBSD: do_command.c,v 1.50 2015/10/25 21:30:11 millert Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -38,7 +38,6 @@ do_command(entry *e, user *u)
 		break;
 	case 0:
 		/* child process */
-		acquire_daemonlock(1);
 		child_process(e, u);
 		_exit(EXIT_SUCCESS);
 		break;

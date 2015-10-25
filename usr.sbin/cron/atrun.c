@@ -1,4 +1,4 @@
-/*	$OpenBSD: atrun.c,v 1.32 2015/10/23 18:42:55 tedu Exp $	*/
+/*	$OpenBSD: atrun.c,v 1.33 2015/10/25 21:30:11 millert Exp $	*/
 
 /*
  * Copyright (c) 2002-2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -247,8 +247,6 @@ run_job(atjob *job, char *atfile)
 		close(fd);
 		return;
 	}
-
-	acquire_daemonlock(1);			/* close lock fd */
 
 	/*
 	 * We don't want the main cron daemon to wait for our children--

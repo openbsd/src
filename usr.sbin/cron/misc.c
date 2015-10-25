@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.57 2015/10/23 18:42:55 tedu Exp $	*/
+/*	$OpenBSD: misc.c,v 1.58 2015/10/25 21:30:11 millert Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -136,93 +136,6 @@ set_cron_cwd(void)
 		if (sb.st_mode != 01770)
 			chmod(AT_DIR, 01770);
 	}
-}
-
-/* acquire_daemonlock() - write our PID into /var/run/cron.pid, unless
- *	another daemon is already running, which we detect here.
- *
- * note: main() calls us twice; once before forking, once after.
- *	we maintain static storage of the file pointer so that we
- *	can rewrite our PID into _PATH_CRON_PID after the fork.
- */
-void
-acquire_daemonlock(int closeflag)
-{
-	static int fd = -1;
-	char buf[3*MAX_FNAME];
-	const char *pidfile;
-	char *ep;
-	long otherpid;
-	ssize_t num;
-
-	if (closeflag) {
-		/* close stashed fd for child so we don't leak it. */
-		if (fd != -1) {
-			close(fd);
-			fd = -1;
-		}
-		return;
-	}
-
-	if (fd == -1) {
-		pidfile = _PATH_CRON_PID;
-		fd = open(pidfile,
-		    O_RDWR|O_CREAT|O_EXLOCK|O_NONBLOCK|O_CLOEXEC, 0644);
-		if (fd == -1) {
-			int save_errno = errno;
-
-			if (errno != EWOULDBLOCK)  {
-				snprintf(buf, sizeof buf,
-				    "can't open or create %s: %s", pidfile,
-				    strerror(save_errno));
-				fprintf(stderr, "%s: %s\n", ProgramName, buf);
-				log_it("CRON", getpid(), "DEATH", buf);
-				exit(EXIT_FAILURE);
-			}
-
-			/* couldn't lock the pid file, try to read existing. */
-			bzero(buf, sizeof(buf));
-			if ((fd = open(pidfile, O_RDONLY, 0)) >= 0 &&
-			    (num = read(fd, buf, sizeof(buf) - 1)) > 0 &&
-			    (otherpid = strtol(buf, &ep, 10)) > 0 &&
-			    ep != buf && *ep == '\n' && otherpid != LONG_MAX) {
-				snprintf(buf, sizeof buf,
-				    "can't lock %s, otherpid may be %ld: %s",
-				    pidfile, otherpid, strerror(save_errno));
-			} else {
-				snprintf(buf, sizeof buf,
-				    "can't lock %s, otherpid unknown: %s",
-				    pidfile, strerror(save_errno));
-			}
-			fprintf(stderr, "%s: %s\n", ProgramName, buf);
-			log_it("CRON", getpid(), "DEATH", buf);
-			exit(EXIT_FAILURE);
-		}
-		/* fd must be > STDERR_FILENO since we dup fd 0-2 to /dev/null */
-		if (fd <= STDERR_FILENO) {
-			int newfd;
-
-			newfd = fcntl(fd, F_DUPFD_CLOEXEC, STDERR_FILENO + 1);
-			if (newfd < 0) {
-				snprintf(buf, sizeof buf,
-				    "can't dup pid fd: %s", strerror(errno));
-				fprintf(stderr, "%s: %s\n", ProgramName, buf);
-				log_it("CRON", getpid(), "DEATH", buf);
-				exit(EXIT_FAILURE);
-			}
-			close(fd);
-			fd = newfd;
-		}
-	}
-
-	snprintf(buf, sizeof(buf), "%ld\n", (long)getpid());
-	(void) lseek(fd, 0, SEEK_SET);
-	num = write(fd, buf, strlen(buf));
-	(void) ftruncate(fd, num);
-
-	/* abandon fd even though the file is open. we need to keep
-	 * it open and locked, but we don't need the handles elsewhere.
-	 */
 }
 
 /* get_char(file) : like getc() but increment LineNumber on newlines
@@ -490,8 +403,9 @@ int swap_gids_back() { return (setegid(save_egid)); }
  *	If the local pointer is non-NULL it *must* point to a local copy.
  */
 
-/* void open_socket(void)
+/* int open_socket(void)
  *	opens a UNIX domain socket that crontab uses to poke cron.
+ *	If the socket is already in use, return an error.
  */
 int
 open_socket(void)
@@ -528,9 +442,16 @@ open_socket(void)
 		log_it("CRON", getpid(), "DEATH", "path too long");
 		exit(EXIT_FAILURE);
 	}
-	unlink(s_un.sun_path);
 	s_un.sun_family = AF_UNIX;
 	s_un.sun_len = SUN_LEN(&s_un);
+
+	if (connect(sock, (struct sockaddr *)&s_un, sizeof(s_un)) == 0) {
+		fprintf(stderr, "%s: already running\n", ProgramName);
+		log_it("CRON", getpid(), "DEATH", "already running");
+		exit(EXIT_FAILURE);
+	}
+	if (errno != ENOENT)
+		unlink(s_un.sun_path);
 
 	omask = umask(007);
 	if (bind(sock, (struct sockaddr *)&s_un, sizeof(s_un))) {
