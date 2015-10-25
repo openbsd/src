@@ -1,4 +1,4 @@
-/*	$OpenBSD: advcap.c,v 1.16 2015/10/25 22:11:34 jca Exp $	*/
+/*	$OpenBSD: advcap.c,v 1.17 2015/10/25 22:36:17 jca Exp $	*/
 /*	$KAME: advcap.c,v 1.9 2002/05/29 14:28:35 itojun Exp $	*/
 
 /*
@@ -128,7 +128,7 @@ getent(char *bp, char *name, char *cp)
 		tf = open(cp, O_RDONLY);
 	}
 	if (tf < 0) {
-		log_warn("open");
+		log_warn("open(\"%s\")", cp);
 		return (-2);
 	}
 	for (;;) {
