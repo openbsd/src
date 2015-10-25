@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_lchpass.c,v 1.16 2015/10/22 12:32:33 tedu Exp $	*/
+/*	$OpenBSD: login_lchpass.c,v 1.17 2015/10/25 08:39:26 ajacoutot Exp $	*/
 
 /*-
  * Copyright (c) 1995,1996 Berkeley Software Design, Inc. All rights reserved.
@@ -55,7 +55,6 @@
 #define BACK_CHANNEL	3
 
 int local_passwd(char *, int);
-int pwd_gensalt(char *, int, login_cap_t *, char);
 
 int
 main(int argc, char *argv[])

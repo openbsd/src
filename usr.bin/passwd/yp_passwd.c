@@ -1,4 +1,4 @@
-/*	$OpenBSD: yp_passwd.c,v 1.36 2015/08/20 22:32:41 deraadt Exp $	*/
+/*	$OpenBSD: yp_passwd.c,v 1.37 2015/10/25 08:39:26 ajacoutot Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -54,7 +54,6 @@
 #define _PASSWORD_LEN PASS_MAX
 #endif
 
-extern int	pwd_gensalt(char *, int, login_cap_t *, char);
 extern int	pwd_check(login_cap_t *, char *);
 extern int	pwd_gettries(login_cap_t *);
 extern void	kbintr(int);

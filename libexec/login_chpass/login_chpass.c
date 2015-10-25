@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_chpass.c,v 1.18 2015/10/22 12:32:33 tedu Exp $	*/
+/*	$OpenBSD: login_chpass.c,v 1.19 2015/10/25 08:39:26 ajacoutot Exp $	*/
 
 /*-
  * Copyright (c) 1995,1996 Berkeley Software Design, Inc. All rights reserved.
@@ -72,7 +72,6 @@ int	_yp_check(char **);
 char	*ypgetnewpasswd(struct passwd *, char **);
 struct passwd *ypgetpwnam(char *);
 void	kbintr(int);
-int	pwd_gensalt(char *, int, login_cap_t *, char);
 #endif
 
 void	local_chpass(char **);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: local_passwd.c,v 1.44 2014/11/21 05:13:44 tedu Exp $	*/
+/*	$OpenBSD: local_passwd.c,v 1.45 2015/10/25 08:39:26 ajacoutot Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -48,7 +48,6 @@
 #define UNCHANGED_MSG	"Password unchanged.\n"
 
 static uid_t uid;
-extern int pwd_gensalt(char *, int, login_cap_t *, char);
 extern int pwd_check(login_cap_t *, char *);
 extern int pwd_gettries(login_cap_t *);
 
