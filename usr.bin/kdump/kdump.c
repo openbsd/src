@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdump.c,v 1.116 2015/10/18 01:32:05 deraadt Exp $	*/
+/*	$OpenBSD: kdump.c,v 1.117 2015/10/25 20:39:54 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -46,6 +46,9 @@
 #include <sys/vmmeter.h>
 #include <sys/tty.h>
 #include <sys/wait.h>
+#define PLEDGENAMES
+#include <sys/pledge.h>
+#undef PLEDGENAMES
 #define _KERNEL
 #include <errno.h>
 #undef _KERNEL
@@ -148,6 +151,7 @@ static const char *kresolvsysctl(int, const int *);
 static void ktrsysret(struct ktr_sysret *, size_t);
 static void ktruser(struct ktr_user *, size_t);
 static void ktrexec(const char*, size_t);
+static void ktrpledge(struct ktr_pledge *, size_t);
 static void setemul(const char *);
 static void usage(void);
 static void ioctldecode(int);
@@ -310,6 +314,9 @@ main(int argc, char *argv[])
 		case KTR_EXECENV:
 			ktrexec(m, ktrlen);
 			break;
+		case KTR_PLEDGE:
+			ktrpledge((struct ktr_pledge *)m, ktrlen);
+			break;
 		}
 		if (tail)
 			(void)fflush(stdout);
@@ -398,6 +405,9 @@ dumpheader(struct ktr_header *kth)
 		break;
 	case KTR_EXECENV:
 		type = "ENV ";
+		break;
+	case KTR_PLEDGE:
+		type = "PLDG";
 		break;
 	default:
 		(void)snprintf(unknown, sizeof unknown, "UNKNOWN(%d)",
@@ -1426,6 +1436,31 @@ ktrexec(const char *ptr, size_t len)
 		len -= l + 1;
 		ptr += l + 1;
 	}
+}
+
+static void
+ktrpledge(struct ktr_pledge *pledge, size_t len)
+{
+	int i;
+
+	if (len < sizeof(struct ktr_pledge))
+		errx(1, "invalid ktr pledge length %zu", len);
+
+	if (pledge->syscall >= current->nsysnames || pledge->syscall < 0)
+		(void)printf("[%d]", pledge->syscall);
+	else
+		(void)printf("%s", current->sysnames[pledge->syscall]);
+	printf(", ");
+	for (i = 0; pledgenames[i].bits != 0; i++) {
+		if (pledgenames[i].bits & pledge->code) {
+			printf("\"%s\"", pledgenames[i].name);
+			break;
+		}
+	}
+	(void)printf(", errno %d", pledge->error);
+	if (fancy)
+		(void)printf(" %s", strerror(pledge->error));
+	printf("\n");
 }
 
 static void

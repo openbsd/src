@@ -1,4 +1,4 @@
-/*	$OpenBSD: pledge.h,v 1.11 2015/10/25 17:45:29 deraadt Exp $	*/
+/*	$OpenBSD: pledge.h,v 1.12 2015/10/25 20:39:54 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -20,24 +20,22 @@
 #ifndef _SYS_PLEDGE_H_
 #define _SYS_PLEDGE_H_
 
-#ifdef _KERNEL
-
 #include <sys/cdefs.h>
 
-#define PLEDGE_SELF	0x00000001	/* operate on own pid */
-#define PLEDGE_RW		0x00000002	/* basic io operations */
-#define PLEDGE_MALLOC	0x00000004	/* enough for malloc */
-#define PLEDGE_DNS	0x00000008	/* DNS services */
-#define PLEDGE_RPATH	0x00000010	/* allow open for read */
-#define PLEDGE_WPATH	0x00000020	/* allow open for write */
-#define PLEDGE_TMPPATH	0x00000040	/* for mk*temp() */
-#define PLEDGE_INET	0x00000080	/* AF_INET/AF_INET6 sockets */
+#define PLEDGE_RPATH	0x00000001	/* allow open for read */
+#define PLEDGE_WPATH	0x00000002	/* allow open for write */
+#define PLEDGE_CPATH	0x00000004	/* allow creat, mkdir, path creations */
+#define PLEDGE_STDIO	0x00000008	/* operate on own pid */
+#define PLEDGE_TMPPATH	0x00000010	/* for mk*temp() */
+#define PLEDGE_DNS	0x00000020	/* DNS services */
+#define PLEDGE_INET	0x00000040	/* AF_INET/AF_INET6 sockets */
+#define PLEDGE_FLOCK	0x00000080	/* file locking */
 #define PLEDGE_UNIX	0x00000100	/* AF_UNIX sockets */
 #define PLEDGE_ID	0x00000200	/* allow setuid, setgid, etc */
 #define PLEDGE_IOCTL	0x00000400	/* Select ioctl */
 #define PLEDGE_GETPW	0x00000800	/* YP enables if ypbind.lock */
 #define PLEDGE_PROC	0x00001000	/* fork, waitpid, etc */
-#define PLEDGE_CPATH	0x00002000	/* allow creat, mkdir, path creations */
+#define PLEDGE_SETTIME	0x00002000	/* able to set/adj time/freq */
 #define PLEDGE_FATTR	0x00004000	/* allow explicit file st_* mods */
 #define PLEDGE_PROTEXEC	0x00008000	/* allow use of PROT_EXEC */
 #define PLEDGE_TTY	0x00010000	/* tty setting */
@@ -46,17 +44,52 @@
 #define PLEDGE_EXEC	0x00080000	/* execve, child is free of pledge */
 #define PLEDGE_ROUTE	0x00100000	/* routing lookups */
 #define PLEDGE_MCAST	0x00200000	/* multicast joins */
-#define PLEDGE_FLOCK	0x00400000	/* file locking */
+#define PLEDGE_VMINFO	0x00400000	/* vminfo listings */
 #define PLEDGE_PS	0x00800000	/* ps listings */
-#define PLEDGE_VMINFO	0x01000000	/* vminfo listings */
-#define PLEDGE_SETTIME	0x02000000	/* able to set/adj time/freq */
-
-#define PLEDGE_ABORT	0x08000000	/* SIGABRT instead of SIGKILL */
+#define PLEDGE_COREDUMP	0x01000000	/* generates coredump (default) */
 
 /* Following flags are set by kernel, as it learns things.
  * Not user settable. Should be moved to a seperate variable */
+
+#define PLEDGE_STATLIE	0x40000000
+#define PLEDGE_YPACTIVE	0x80000000	/* YP use detected and allowed */
 #define PLEDGE_USERSET	0x0fffffff
-#define PLEDGE_YP_ACTIVE	0x10000000	/* YP use detected and allowed */
+
+#ifdef PLEDGENAMES
+static struct {
+	u_int32_t	bits;
+	char		*name;
+} pledgenames[] = {
+	{ PLEDGE_RPATH,		"rpath" },
+	{ PLEDGE_WPATH,		"wpath" },
+	{ PLEDGE_CPATH,		"cpath" },
+	{ PLEDGE_STDIO,		"stdio" },
+	{ PLEDGE_TMPPATH,	"tmppath" },
+	{ PLEDGE_DNS,		"dns" },
+	{ PLEDGE_INET,		"inet" },
+	{ PLEDGE_FLOCK,		"flock" },
+	{ PLEDGE_UNIX,		"unix" },
+	{ PLEDGE_ID,		"id" },
+	{ PLEDGE_IOCTL,		"ioctl" },
+	{ PLEDGE_GETPW,		"getpw" },
+	{ PLEDGE_PROC,		"proc" },
+	{ PLEDGE_SETTIME,	"settime" },
+	{ PLEDGE_FATTR,		"fattr" },
+	{ PLEDGE_PROTEXEC,	"protexec" },
+	{ PLEDGE_TTY,		"tty" },
+	{ PLEDGE_SENDFD,	"sendfd" },
+	{ PLEDGE_RECVFD,	"recvfd" },
+	{ PLEDGE_EXEC,		"exec" },
+	{ PLEDGE_ROUTE,		"route" },
+	{ PLEDGE_MCAST,		"mcast" },
+	{ PLEDGE_VMINFO,	"vminfo" },
+	{ PLEDGE_PS,		"ps" },
+	{ PLEDGE_COREDUMP,	"coredump" },
+	{ 0, NULL },
+};
+#endif
+
+#ifdef _KERNEL
 
 int	pledge_check(struct proc *, int);
 int	pledge_fail(struct proc *, int, int);

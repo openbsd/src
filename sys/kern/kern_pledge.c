@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.73 2015/10/25 17:45:29 deraadt Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.74 2015/10/25 20:39:54 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -51,6 +51,7 @@
 #include <sys/syscall.h>
 #include <sys/syscallargs.h>
 #include <sys/systm.h>
+#define PLEDGENAMES
 #include <sys/pledge.h>
 
 #include "pty.h"
@@ -63,107 +64,107 @@ const u_int pledge_syscalls[SYS_MAXSYSCALL] = {
 	[SYS_kbind] = 0xffffffff,
 	[SYS___get_tcb] = 0xffffffff,
 
-	[SYS_getuid] = PLEDGE_SELF,
-	[SYS_geteuid] = PLEDGE_SELF,
-	[SYS_getresuid] = PLEDGE_SELF,
-	[SYS_getgid] = PLEDGE_SELF,
-	[SYS_getegid] = PLEDGE_SELF,
-	[SYS_getresgid] = PLEDGE_SELF,
-	[SYS_getgroups] = PLEDGE_SELF,
-	[SYS_getlogin] = PLEDGE_SELF,
-	[SYS_getpgrp] = PLEDGE_SELF,
-	[SYS_getpgid] = PLEDGE_SELF,
-	[SYS_getppid] = PLEDGE_SELF,
-	[SYS_getsid] = PLEDGE_SELF,
-	[SYS_getthrid] = PLEDGE_SELF,
-	[SYS_getrlimit] = PLEDGE_SELF,
-	[SYS_gettimeofday] = PLEDGE_SELF,
-	[SYS_getdtablecount] = PLEDGE_SELF,
-	[SYS_getrusage] = PLEDGE_SELF,
-	[SYS_issetugid] = PLEDGE_SELF,
-	[SYS_clock_getres] = PLEDGE_SELF,
-	[SYS_clock_gettime] = PLEDGE_SELF,
-	[SYS_getpid] = PLEDGE_SELF,
-	[SYS_umask] = PLEDGE_SELF,
-	[SYS_sysctl] = PLEDGE_SELF,	/* read-only; narrow subset */
+	[SYS_getuid] = PLEDGE_STDIO,
+	[SYS_geteuid] = PLEDGE_STDIO,
+	[SYS_getresuid] = PLEDGE_STDIO,
+	[SYS_getgid] = PLEDGE_STDIO,
+	[SYS_getegid] = PLEDGE_STDIO,
+	[SYS_getresgid] = PLEDGE_STDIO,
+	[SYS_getgroups] = PLEDGE_STDIO,
+	[SYS_getlogin] = PLEDGE_STDIO,
+	[SYS_getpgrp] = PLEDGE_STDIO,
+	[SYS_getpgid] = PLEDGE_STDIO,
+	[SYS_getppid] = PLEDGE_STDIO,
+	[SYS_getsid] = PLEDGE_STDIO,
+	[SYS_getthrid] = PLEDGE_STDIO,
+	[SYS_getrlimit] = PLEDGE_STDIO,
+	[SYS_gettimeofday] = PLEDGE_STDIO,
+	[SYS_getdtablecount] = PLEDGE_STDIO,
+	[SYS_getrusage] = PLEDGE_STDIO,
+	[SYS_issetugid] = PLEDGE_STDIO,
+	[SYS_clock_getres] = PLEDGE_STDIO,
+	[SYS_clock_gettime] = PLEDGE_STDIO,
+	[SYS_getpid] = PLEDGE_STDIO,
+	[SYS_umask] = PLEDGE_STDIO,
+	[SYS_sysctl] = PLEDGE_STDIO,	/* read-only; narrow subset */
 
-	[SYS_setsockopt] = PLEDGE_SELF,	/* white list */
-	[SYS_getsockopt] = PLEDGE_SELF,
+	[SYS_setsockopt] = PLEDGE_STDIO,	/* white list */
+	[SYS_getsockopt] = PLEDGE_STDIO,
 
-	[SYS_fchdir] = PLEDGE_SELF,	/* careful of directory fd inside jails */
+	[SYS_fchdir] = PLEDGE_STDIO,	/* careful of directory fd inside jails */
 
 	/* needed by threaded programs */
 	[SYS___tfork] = PLEDGE_PROC,
-	[SYS_sched_yield] = PLEDGE_SELF,
-	[SYS___thrsleep] = PLEDGE_SELF,
-	[SYS___thrwakeup] = PLEDGE_SELF,
-	[SYS___threxit] = PLEDGE_SELF,
-	[SYS___thrsigdivert] = PLEDGE_SELF,
+	[SYS_sched_yield] = PLEDGE_STDIO,
+	[SYS___thrsleep] = PLEDGE_STDIO,
+	[SYS___thrwakeup] = PLEDGE_STDIO,
+	[SYS___threxit] = PLEDGE_STDIO,
+	[SYS___thrsigdivert] = PLEDGE_STDIO,
 
-	[SYS_sendsyslog] = PLEDGE_SELF,
-	[SYS_nanosleep] = PLEDGE_SELF,
-	[SYS_sigaltstack] = PLEDGE_SELF,
-	[SYS_sigprocmask] = PLEDGE_SELF,
-	[SYS_sigsuspend] = PLEDGE_SELF,
-	[SYS_sigaction] = PLEDGE_SELF,
-	[SYS_sigreturn] = PLEDGE_SELF,
-	[SYS_sigpending] = PLEDGE_SELF,
-	[SYS_getitimer] = PLEDGE_SELF,
-	[SYS_setitimer] = PLEDGE_SELF,
+	[SYS_sendsyslog] = PLEDGE_STDIO,
+	[SYS_nanosleep] = PLEDGE_STDIO,
+	[SYS_sigaltstack] = PLEDGE_STDIO,
+	[SYS_sigprocmask] = PLEDGE_STDIO,
+	[SYS_sigsuspend] = PLEDGE_STDIO,
+	[SYS_sigaction] = PLEDGE_STDIO,
+	[SYS_sigreturn] = PLEDGE_STDIO,
+	[SYS_sigpending] = PLEDGE_STDIO,
+	[SYS_getitimer] = PLEDGE_STDIO,
+	[SYS_setitimer] = PLEDGE_STDIO,
 
-	[SYS_pledge] = PLEDGE_SELF,
+	[SYS_pledge] = PLEDGE_STDIO,
 
-	[SYS_wait4] = PLEDGE_SELF,
+	[SYS_wait4] = PLEDGE_STDIO,
 
-	[SYS_adjtime] = PLEDGE_SELF,	/* read-only, unless "settime" */
+	[SYS_adjtime] = PLEDGE_STDIO,	/* read-only, unless "settime" */
 	[SYS_adjfreq] = PLEDGE_SETTIME,
 	[SYS_settimeofday] = PLEDGE_SETTIME,
 
-	[SYS_poll] = PLEDGE_RW,
-	[SYS_kevent] = PLEDGE_RW,
-	[SYS_kqueue] = PLEDGE_RW,
-	[SYS_select] = PLEDGE_RW,
+	[SYS_poll] = PLEDGE_STDIO,
+	[SYS_kevent] = PLEDGE_STDIO,
+	[SYS_kqueue] = PLEDGE_STDIO,
+	[SYS_select] = PLEDGE_STDIO,
 
-	[SYS_close] = PLEDGE_RW,
-	[SYS_dup] = PLEDGE_RW,
-	[SYS_dup2] = PLEDGE_RW,
-	[SYS_dup3] = PLEDGE_RW,
-	[SYS_closefrom] = PLEDGE_RW,
-	[SYS_shutdown] = PLEDGE_RW,
-	[SYS_read] = PLEDGE_RW,
-	[SYS_readv] = PLEDGE_RW,
-	[SYS_pread] = PLEDGE_RW,
-	[SYS_preadv] = PLEDGE_RW,
-	[SYS_write] = PLEDGE_RW,
-	[SYS_writev] = PLEDGE_RW,
-	[SYS_pwrite] = PLEDGE_RW,
-	[SYS_pwritev] = PLEDGE_RW,
-	[SYS_ftruncate] = PLEDGE_RW,
-	[SYS_lseek] = PLEDGE_RW,
-	[SYS_fstat] = PLEDGE_RW,
+	[SYS_close] = PLEDGE_STDIO,
+	[SYS_dup] = PLEDGE_STDIO,
+	[SYS_dup2] = PLEDGE_STDIO,
+	[SYS_dup3] = PLEDGE_STDIO,
+	[SYS_closefrom] = PLEDGE_STDIO,
+	[SYS_shutdown] = PLEDGE_STDIO,
+	[SYS_read] = PLEDGE_STDIO,
+	[SYS_readv] = PLEDGE_STDIO,
+	[SYS_pread] = PLEDGE_STDIO,
+	[SYS_preadv] = PLEDGE_STDIO,
+	[SYS_write] = PLEDGE_STDIO,
+	[SYS_writev] = PLEDGE_STDIO,
+	[SYS_pwrite] = PLEDGE_STDIO,
+	[SYS_pwritev] = PLEDGE_STDIO,
+	[SYS_ftruncate] = PLEDGE_STDIO,
+	[SYS_lseek] = PLEDGE_STDIO,
+	[SYS_fstat] = PLEDGE_STDIO,
 
-	[SYS_fcntl] = PLEDGE_RW,
-	[SYS_fsync] = PLEDGE_RW,
-	[SYS_pipe] = PLEDGE_RW,
-	[SYS_pipe2] = PLEDGE_RW,
-	[SYS_socketpair] = PLEDGE_RW,
-	[SYS_getdents] = PLEDGE_RW,
+	[SYS_fcntl] = PLEDGE_STDIO,
+	[SYS_fsync] = PLEDGE_STDIO,
+	[SYS_pipe] = PLEDGE_STDIO,
+	[SYS_pipe2] = PLEDGE_STDIO,
+	[SYS_socketpair] = PLEDGE_STDIO,
+	[SYS_getdents] = PLEDGE_STDIO,
 
-	[SYS_sendto] = PLEDGE_RW | PLEDGE_YP_ACTIVE,
-	[SYS_sendmsg] = PLEDGE_RW,
-	[SYS_recvmsg] = PLEDGE_RW,
-	[SYS_recvfrom] = PLEDGE_RW | PLEDGE_YP_ACTIVE,
+	[SYS_sendto] = PLEDGE_STDIO | PLEDGE_YPACTIVE,
+	[SYS_sendmsg] = PLEDGE_STDIO,
+	[SYS_recvmsg] = PLEDGE_STDIO,
+	[SYS_recvfrom] = PLEDGE_STDIO | PLEDGE_YPACTIVE,
 
 	[SYS_fork] = PLEDGE_PROC,
 	[SYS_vfork] = PLEDGE_PROC,
 	[SYS_setpgid] = PLEDGE_PROC,
 	[SYS_setsid] = PLEDGE_PROC,
-	[SYS_kill] = PLEDGE_SELF | PLEDGE_PROC,
+	[SYS_kill] = PLEDGE_STDIO | PLEDGE_PROC,
 
 	[SYS_setrlimit] = PLEDGE_PROC | PLEDGE_ID,
 	[SYS_getpriority] = PLEDGE_PROC | PLEDGE_ID,
 
-	/* XXX we should limit the power for the "proc"-only case */ 
+	/* XXX we should limit the power for the "proc"-only case */
 	[SYS_setpriority] = PLEDGE_PROC | PLEDGE_ID,
 
 	[SYS_setuid] = PLEDGE_ID,
@@ -178,20 +179,20 @@ const u_int pledge_syscalls[SYS_MAXSYSCALL] = {
 	[SYS_execve] = PLEDGE_EXEC,
 
 	/* FIONREAD/FIONBIO, plus further checks in pledge_ioctl_check() */
-	[SYS_ioctl] = PLEDGE_RW | PLEDGE_IOCTL | PLEDGE_TTY,
+	[SYS_ioctl] = PLEDGE_STDIO | PLEDGE_IOCTL | PLEDGE_TTY,
 
-	[SYS_getentropy] = PLEDGE_MALLOC,
-	[SYS_madvise] = PLEDGE_MALLOC,
-	[SYS_minherit] = PLEDGE_MALLOC,
-	[SYS_mmap] = PLEDGE_MALLOC,
-	[SYS_mprotect] = PLEDGE_MALLOC,
-	[SYS_mquery] = PLEDGE_MALLOC,
-	[SYS_munmap] = PLEDGE_MALLOC,
+	[SYS_getentropy] = PLEDGE_STDIO,
+	[SYS_madvise] = PLEDGE_STDIO,
+	[SYS_minherit] = PLEDGE_STDIO,
+	[SYS_mmap] = PLEDGE_STDIO,
+	[SYS_mprotect] = PLEDGE_STDIO,
+	[SYS_mquery] = PLEDGE_STDIO,
+	[SYS_munmap] = PLEDGE_STDIO,
 
-	[SYS_open] = PLEDGE_SELF,			/* further checks in namei */
-	[SYS_stat] = PLEDGE_SELF,			/* further checks in namei */
-	[SYS_access] = PLEDGE_SELF,		/* further checks in namei */
-	[SYS_readlink] = PLEDGE_SELF,		/* further checks in namei */
+	[SYS_open] = PLEDGE_STDIO,		/* further checks in namei */
+	[SYS_stat] = PLEDGE_STDIO,		/* further checks in namei */
+	[SYS_access] = PLEDGE_STDIO,		/* further checks in namei */
+	[SYS_readlink] = PLEDGE_STDIO,		/* further checks in namei */
 
 	[SYS_chdir] = PLEDGE_RPATH,
 	[SYS_chroot] = PLEDGE_ID,
@@ -237,8 +238,8 @@ const u_int pledge_syscalls[SYS_MAXSYSCALL] = {
 	[SYS_lchown] = PLEDGE_FATTR,
 	[SYS_fchown] = PLEDGE_FATTR,
 
-	[SYS_socket] = PLEDGE_INET | PLEDGE_UNIX | PLEDGE_DNS | PLEDGE_YP_ACTIVE,
-	[SYS_connect] = PLEDGE_INET | PLEDGE_UNIX | PLEDGE_DNS | PLEDGE_YP_ACTIVE,
+	[SYS_socket] = PLEDGE_INET | PLEDGE_UNIX | PLEDGE_DNS | PLEDGE_YPACTIVE,
+	[SYS_connect] = PLEDGE_INET | PLEDGE_UNIX | PLEDGE_DNS | PLEDGE_YPACTIVE,
 	[SYS_bind] = PLEDGE_INET | PLEDGE_UNIX | PLEDGE_DNS,
 	[SYS_getsockname] = PLEDGE_INET | PLEDGE_UNIX | PLEDGE_DNS,
 
@@ -251,7 +252,7 @@ const u_int pledge_syscalls[SYS_MAXSYSCALL] = {
 	[SYS_accept] = PLEDGE_INET | PLEDGE_UNIX,
 	[SYS_getpeername] = PLEDGE_INET | PLEDGE_UNIX,
 
-	[SYS_flock] = PLEDGE_FLOCK | PLEDGE_YP_ACTIVE,
+	[SYS_flock] = PLEDGE_FLOCK | PLEDGE_YPACTIVE,
 
 	[SYS_swapctl] = PLEDGE_VMINFO,	/* XXX should limit to "get" operations */
 };
@@ -260,18 +261,16 @@ static const struct {
 	char *name;
 	int flags;
 } pledgereq[] = {
-	{ "malloc",		PLEDGE_SELF | PLEDGE_MALLOC },
-	{ "rw",			PLEDGE_SELF | PLEDGE_RW },
-	{ "stdio",		PLEDGE_SELF | PLEDGE_MALLOC | PLEDGE_RW },
-	{ "rpath",		PLEDGE_SELF | PLEDGE_RW | PLEDGE_RPATH },
-	{ "wpath",		PLEDGE_SELF | PLEDGE_RW | PLEDGE_WPATH },
-	{ "tmppath",		PLEDGE_SELF | PLEDGE_RW | PLEDGE_TMPPATH },
-	{ "inet",		PLEDGE_SELF | PLEDGE_RW | PLEDGE_INET },
-	{ "unix",		PLEDGE_SELF | PLEDGE_RW | PLEDGE_UNIX },
-	{ "dns",		PLEDGE_SELF | PLEDGE_MALLOC | PLEDGE_DNS },
-	{ "getpw",		PLEDGE_SELF | PLEDGE_MALLOC | PLEDGE_RW | PLEDGE_GETPW },
-	{ "sendfd",		PLEDGE_RW | PLEDGE_SENDFD },
-	{ "recvfd",		PLEDGE_RW | PLEDGE_RECVFD },
+	{ "stdio",		PLEDGE_STDIO },
+	{ "rpath",		PLEDGE_RPATH },
+	{ "wpath",		PLEDGE_WPATH },
+	{ "tmppath",		PLEDGE_TMPPATH },
+	{ "inet",		PLEDGE_INET },
+	{ "unix",		PLEDGE_UNIX },
+	{ "dns",		PLEDGE_DNS },
+	{ "getpw",		PLEDGE_GETPW },
+	{ "sendfd",		PLEDGE_SENDFD },
+	{ "recvfd",		PLEDGE_RECVFD },
 	{ "ioctl",		PLEDGE_IOCTL },
 	{ "id",			PLEDGE_ID },
 	{ "route",		PLEDGE_ROUTE },
@@ -280,13 +279,13 @@ static const struct {
 	{ "proc",		PLEDGE_PROC },
 	{ "exec",		PLEDGE_EXEC },
 	{ "cpath",		PLEDGE_CPATH },
-	{ "abort",		PLEDGE_ABORT },
 	{ "fattr",		PLEDGE_FATTR },
 	{ "prot_exec",		PLEDGE_PROTEXEC },
 	{ "flock",		PLEDGE_FLOCK },
 	{ "ps",			PLEDGE_PS },
 	{ "vminfo",		PLEDGE_VMINFO },
 	{ "settime",		PLEDGE_SETTIME },
+	{ "abort",		0 },	/* XXX reserve for later */
 };
 
 int
@@ -472,6 +471,7 @@ sys_pledge(struct proc *p, void *v, register_t *retval)
 	}
 
 	p->p_p->ps_pledge = flags;
+	p->p_p->ps_pledge |= PLEDGE_COREDUMP;	/* XXX temporary */
 	p->p_p->ps_flags |= PS_PLEDGE;
 	return (0);
 }
@@ -493,8 +493,19 @@ pledge_check(struct proc *p, int code)
 int
 pledge_fail(struct proc *p, int error, int code)
 {
-	printf("%s(%d): syscall %d\n", p->p_comm, p->p_pid, p->p_pledge_syscall);
-	if (p->p_p->ps_pledge & PLEDGE_ABORT) {	/* Core dump requested */
+	int i;
+
+	/* Print first matching pledge */
+	for (i = 0; pledgenames[i].bits != 0; i++)
+		if (pledgenames[i].bits & code)
+			break;
+	printf("%s(%d): syscall %d \"%s\"\n", p->p_comm, p->p_pid,
+	    p->p_pledge_syscall, pledgenames[i].name);
+#ifdef KTRACE
+	ktrpledge(p, error, code, p->p_pledge_syscall);
+#endif
+	if (p->p_p->ps_pledge & PLEDGE_COREDUMP) {
+		/* Core dump requested */
 		struct sigaction sa;
 
 		memset(&sa, 0, sizeof sa);
@@ -516,24 +527,25 @@ int
 pledge_namei(struct proc *p, char *origpath)
 {
 	char path[PATH_MAX];
+	int error;
 
-	if (p->p_pledgenote == TMN_COREDUMP)
+	if (p->p_pledgenote == PLEDGE_COREDUMP)
 		return (0);			/* Allow a coredump */
 
-	if (canonpath(origpath, path, sizeof(path)) != 0)
-		return (pledge_fail(p, EPERM, PLEDGE_RPATH));
+	error = canonpath(origpath, path, sizeof(path));
+	if (error)
+		return (pledge_fail(p, error, p->p_pledgenote));
 
-	if ((p->p_pledgenote & TMN_FATTR) &&
+	/* chmod(2), chflags(2), ... */
+	if ((p->p_pledgenote & PLEDGE_FATTR) &&
 	    (p->p_p->ps_pledge & PLEDGE_FATTR) == 0) {
-		printf("%s(%d): inode syscall%d, not allowed\n",
-		    p->p_comm, p->p_pid, p->p_pledge_syscall);
-		return (pledge_fail(p, EPERM, PLEDGE_FATTR));
+		return (pledge_fail(p, EPERM, p->p_pledgenote));
 	}
 
 	/* Detect what looks like a mkstemp(3) family operation */
 	if ((p->p_p->ps_pledge & PLEDGE_TMPPATH) &&
 	    (p->p_pledge_syscall == SYS_open) &&
-	    (p->p_pledgenote & TMN_CPATH) &&
+	    (p->p_pledgenote & PLEDGE_CPATH) &&
 	    strncmp(path, "/tmp/", sizeof("/tmp/") - 1) == 0) {
 		return (0);
 	}
@@ -548,12 +560,12 @@ pledge_namei(struct proc *p, char *origpath)
 	}
 
 	/* open, mkdir, or other path creation operation */
-	if ((p->p_pledgenote & TMN_CPATH) &&
+	if ((p->p_pledgenote & PLEDGE_CPATH) &&
 	    ((p->p_p->ps_pledge & PLEDGE_CPATH) == 0))
 		return (pledge_fail(p, EPERM, PLEDGE_CPATH));
 
 	/* Doing a permitted execve() */
-	if ((p->p_pledgenote & TMN_XPATH) &&
+	if ((p->p_pledgenote & PLEDGE_EXEC) &&
 	    (p->p_p->ps_pledge & PLEDGE_EXEC))
 		return (0);
 
@@ -561,14 +573,14 @@ pledge_namei(struct proc *p, char *origpath)
 	switch (p->p_pledge_syscall) {
 	case SYS_open:
 		/* daemon(3) or other such functions */
-		if ((p->p_pledgenote & ~(TMN_RPATH | TMN_WPATH)) == 0 &&
+		if ((p->p_pledgenote & ~(PLEDGE_RPATH | PLEDGE_WPATH)) == 0 &&
 		    strcmp(path, "/dev/null") == 0) {
 			return (0);
 		}
 
 		/* readpassphrase(3), getpw*(3) */
 		if ((p->p_p->ps_pledge & (PLEDGE_TTY | PLEDGE_GETPW)) &&
-		    (p->p_pledgenote & ~(TMN_RPATH | TMN_WPATH)) == 0 &&
+		    (p->p_pledgenote & ~(PLEDGE_RPATH | PLEDGE_WPATH)) == 0 &&
 		    strcmp(path, "/dev/tty") == 0) {
 			return (0);
 		}
@@ -576,7 +588,7 @@ pledge_namei(struct proc *p, char *origpath)
 	}
 
 	/* ensure PLEDGE_WPATH request for doing write */
-	if ((p->p_pledgenote & TMN_WPATH) &&
+	if ((p->p_pledgenote & PLEDGE_WPATH) &&
 	    (p->p_p->ps_pledge & PLEDGE_WPATH) == 0)
 		return (pledge_fail(p, EPERM, PLEDGE_WPATH));
 
@@ -584,13 +596,13 @@ pledge_namei(struct proc *p, char *origpath)
 	switch (p->p_pledge_syscall) {
 	case SYS_access:
 		/* tzset() needs this. */
-		if ((p->p_pledgenote == TMN_RPATH) &&
+		if ((p->p_pledgenote == PLEDGE_RPATH) &&
 		    strcmp(path, "/etc/localtime") == 0)
 			return (0);
 		break;
 	case SYS_open:
 		/* getpw* and friends need a few files */
-		if ((p->p_pledgenote == TMN_RPATH) &&
+		if ((p->p_pledgenote == PLEDGE_RPATH) &&
 		    (p->p_p->ps_pledge & PLEDGE_GETPW)) {
 			if (strcmp(path, "/etc/spwd.db") == 0)
 				return (EPERM);
@@ -601,7 +613,7 @@ pledge_namei(struct proc *p, char *origpath)
 		}
 
 		/* DNS needs /etc/{resolv.conf,hosts,services}. */
-		if ((p->p_pledgenote == TMN_RPATH) &&
+		if ((p->p_pledgenote == PLEDGE_RPATH) &&
 		    (p->p_p->ps_pledge & PLEDGE_DNS)) {
 			if (strcmp(path, "/etc/resolv.conf") == 0)
 				return (0);
@@ -611,10 +623,10 @@ pledge_namei(struct proc *p, char *origpath)
 				return (0);
 		}
 
-		if ((p->p_pledgenote == TMN_RPATH) &&
+		if ((p->p_pledgenote == PLEDGE_RPATH) &&
 		    (p->p_p->ps_pledge & PLEDGE_GETPW)) {
 			if (strcmp(path, "/var/run/ypbind.lock") == 0) {
-				p->p_pledgeafter |= TMA_YPLOCK;
+				p->p_pledgeafter |= PLEDGE_YPACTIVE;
 				return (0);
 			}
 			if (strncmp(path, "/var/yp/binding/",
@@ -623,16 +635,16 @@ pledge_namei(struct proc *p, char *origpath)
 		}
 
 		/* tzset() needs these. */
-		if ((p->p_pledgenote == TMN_RPATH) &&
+		if ((p->p_pledgenote == PLEDGE_RPATH) &&
 		    strncmp(path, "/usr/share/zoneinfo/",
 		    sizeof("/usr/share/zoneinfo/") - 1) == 0)
 			return (0);
-		if ((p->p_pledgenote == TMN_RPATH) &&
+		if ((p->p_pledgenote == PLEDGE_RPATH) &&
 		    strcmp(path, "/etc/localtime") == 0)
 			return (0);
 
 		/* /usr/share/nls/../libc.cat has to succeed for strerror(3). */
-		if ((p->p_pledgenote == TMN_RPATH) &&
+		if ((p->p_pledgenote == PLEDGE_RPATH) &&
 		    strncmp(path, "/usr/share/nls/",
 		    sizeof("/usr/share/nls/") - 1) == 0 &&
 		    strcmp(path + strlen(path) - 9, "/libc.cat") == 0)
@@ -641,13 +653,13 @@ pledge_namei(struct proc *p, char *origpath)
 		break;
 	case SYS_readlink:
 		/* Allow /etc/malloc.conf for malloc(3). */
-		if ((p->p_pledgenote == TMN_RPATH) &&
+		if ((p->p_pledgenote == PLEDGE_RPATH) &&
 		    strcmp(path, "/etc/malloc.conf") == 0)
 			return (0);
 		break;
 	case SYS_stat:
 		/* DNS needs /etc/resolv.conf. */
-		if ((p->p_pledgenote == TMN_RPATH) &&
+		if ((p->p_pledgenote == PLEDGE_RPATH) &&
 		    (p->p_p->ps_pledge & PLEDGE_DNS) &&
 		    strcmp(path, "/etc/resolv.conf") == 0)
 			return (0);
@@ -660,7 +672,7 @@ pledge_namei(struct proc *p, char *origpath)
 	}
 
 	/* ensure PLEDGE_RPATH request for doing read */
-	if ((p->p_pledgenote & TMN_RPATH) &&
+	if ((p->p_pledgenote & PLEDGE_RPATH) &&
 	    (p->p_p->ps_pledge & PLEDGE_RPATH) == 0)
 		return (pledge_fail(p, EPERM, PLEDGE_RPATH));
 
@@ -711,7 +723,7 @@ pledge_namei(struct proc *p, char *origpath)
 		free(builtpath, M_TEMP, builtlen);
 		if (error != 0) {
 			free(canopath, M_TEMP, MAXPATHLEN);
-			return (pledge_fail(p, EPERM, PLEDGE_RPATH));
+			return (pledge_fail(p, error, p->p_pledgenote));
 		}
 
 		//printf("namei: canopath = %s strlen %lld\n", canopath,
@@ -751,7 +763,7 @@ pledge_namei(struct proc *p, char *origpath)
 			case SYS_lstat:
 			case SYS_fstatat:
 			case SYS_fstat:
-				p->p_pledgenote |= TMN_STATLIE;
+				p->p_pledgenote |= PLEDGE_STATLIE;
 				error = 0;
 			}
 		free(canopath, M_TEMP, MAXPATHLEN);
@@ -765,14 +777,14 @@ pledge_namei(struct proc *p, char *origpath)
 	if (p->p_p->ps_pledge & PLEDGE_CPATH)
 		return (0);
 
-	return (pledge_fail(p, EPERM, PLEDGE_RPATH));
+	return (pledge_fail(p, EPERM, p->p_pledgenote));
 }
 
 void
 pledge_aftersyscall(struct proc *p, int code, int error)
 {
-	if ((p->p_pledgeafter & TMA_YPLOCK) && error == 0)
-		atomic_setbits_int(&p->p_p->ps_pledge, PLEDGE_YP_ACTIVE | PLEDGE_INET);
+	if ((p->p_pledgeafter & PLEDGE_YPACTIVE) && error == 0)
+		atomic_setbits_int(&p->p_p->ps_pledge, PLEDGE_YPACTIVE | PLEDGE_INET);
 }
 
 /*
@@ -975,7 +987,7 @@ pledge_sysctl_check(struct proc *p, int miblen, int *mib, void *new)
 	printf("%s(%d): sysctl %d: %d %d %d %d %d %d\n",
 	    p->p_comm, p->p_pid, miblen, mib[0], mib[1],
 	    mib[2], mib[3], mib[4], mib[5]);
-	return (EFAULT);
+	return (EPERM);
 }
 
 int
@@ -1249,7 +1261,7 @@ pledge_socket_check(struct proc *p, int dns)
 
 	if (dns && (p->p_p->ps_pledge & PLEDGE_DNS))
 		return (0);
-	if ((p->p_p->ps_pledge & (PLEDGE_INET|PLEDGE_UNIX|PLEDGE_YP_ACTIVE)))
+	if ((p->p_p->ps_pledge & (PLEDGE_INET|PLEDGE_UNIX|PLEDGE_YPACTIVE)))
 		return (0);
 	return (EPERM);
 }

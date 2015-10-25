@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.186 2015/10/10 19:12:39 deraadt Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.187 2015/10/25 20:39:54 deraadt Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -576,7 +576,7 @@ sys_kill(struct proc *cp, void *v, register_t *retval)
 		    pid == cp->p_pid || pid == 0)
 			;
 		else
-			return pledge_fail(cp, EPERM, PLEDGE_SELF);
+			return pledge_fail(cp, EPERM, PLEDGE_PROC);
 	}
 
 	if (((u_int)signum) >= NSIG)
@@ -1527,7 +1527,7 @@ coredump(struct proc *p)
 		cred->cr_gid = 0;
 	}
 
-	p->p_pledgenote = TMN_COREDUMP;
+	p->p_pledgenote = PLEDGE_COREDUMP;
 	NDINIT(&nd, LOOKUP, NOFOLLOW, UIO_SYSSPACE, name, p);
 
 	error = vn_open(&nd, O_CREAT | FWRITE | O_NOFOLLOW, S_IRUSR | S_IWUSR);

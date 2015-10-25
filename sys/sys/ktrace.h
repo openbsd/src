@@ -1,4 +1,4 @@
-/*	$OpenBSD: ktrace.h,v 1.25 2015/10/02 05:07:41 guenther Exp $	*/
+/*	$OpenBSD: ktrace.h,v 1.26 2015/10/25 20:39:54 deraadt Exp $	*/
 /*	$NetBSD: ktrace.h,v 1.12 1996/02/04 02:12:29 christos Exp $	*/
 
 /*
@@ -166,6 +166,16 @@ struct ktr_user {
 
 
 /*
+ * KTR_PLEDGE - details of pledge violation
+ */
+#define	KTR_PLEDGE	12
+struct ktr_pledge {
+	int	error;
+	int	code;
+	int	syscall;
+};
+
+/*
  * kernel trace points (in p_traceflag)
  */
 #define KTRFAC_MASK	0x00ffffff
@@ -179,6 +189,7 @@ struct ktr_user {
 #define KTRFAC_USER	(1<<KTR_USER)
 #define KTRFAC_EXECARGS	(1<<KTR_EXECARGS)
 #define KTRFAC_EXECENV	(1<<KTR_EXECENV)
+#define	KTRFAC_PLEDGE	(1<<KTR_PLEDGE)
 
 /*
  * trace flags (also in p_traceflags)
@@ -206,6 +217,7 @@ void ktrsysret(struct proc *, register_t, int, const register_t [2]);
 void ktr_kuser(const char *, void *, size_t);
 int ktruser(struct proc *, const char *, const void *, size_t);
 void ktrexec(struct proc *, int, const char *, ssize_t);
+void ktrpledge(struct proc *, int, int, int);
 
 void ktrcleartrace(struct process *);
 void ktrsettrace(struct process *, int, struct vnode *, struct ucred *);

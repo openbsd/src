@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.209 2015/10/20 06:40:01 semarie Exp $	*/
+/*	$OpenBSD: proc.h,v 1.210 2015/10/25 20:39:54 deraadt Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -328,15 +328,7 @@ struct proc {
 
 	int	p_pledge_syscall;	/* Cache of current syscall */
 	int	p_pledgenote;	/* Observance during syscall */
-#define TMN_RPATH	0x00000001
-#define TMN_WPATH	0x00000002
-#define TMN_CPATH	0x00000004
-#define TMN_XPATH	0x00000008
-#define TMN_FATTR	0x00000010
-#define TMN_COREDUMP	0x00000020
-#define TMN_STATLIE	0x00000040
 	int	p_pledgeafter;
-#define TMA_YPLOCK	0x00000001
 
 #ifndef	__HAVE_MD_TCB
 	void	*p_tcb;		/* user-space thread-control-block address */

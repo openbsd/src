@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_ktrace.c,v 1.80 2015/10/09 01:10:27 deraadt Exp $	*/
+/*	$OpenBSD: kern_ktrace.c,v 1.81 2015/10/25 20:39:54 deraadt Exp $	*/
 /*	$NetBSD: kern_ktrace.c,v 1.23 1996/02/09 18:59:36 christos Exp $	*/
 
 /*
@@ -44,6 +44,7 @@
 #include <sys/malloc.h>
 #include <sys/syslog.h>
 #include <sys/sysctl.h>
+#include <sys/pledge.h>
 
 #include <sys/mount.h>
 #include <sys/syscall.h>
@@ -398,6 +399,22 @@ ktrexec(struct proc *p, int type, const char *data, ssize_t len)
 	atomic_clearbits_int(&p->p_flag, P_INKTR);
 }
 
+void
+ktrpledge(struct proc *p, int error, int code, int syscall)
+{
+	struct ktr_header kth;
+	struct ktr_pledge kp;
+
+	atomic_setbits_int(&p->p_flag, P_INKTR);
+	ktrinitheader(&kth, p, KTR_PLEDGE);
+	kp.error = error;
+	kp.code = code;
+	kp.syscall = syscall;
+
+	ktrwrite(p, &kth, &kp, sizeof(kp));
+	atomic_clearbits_int(&p->p_flag, P_INKTR);
+}
+
 /* Interface and common routines */
 
 /*
@@ -429,7 +446,7 @@ sys_ktrace(struct proc *p, void *v, register_t *retval)
 		 * an operation which requires a file argument.
 		 */
 		cred = p->p_ucred;
-		p->p_pledgenote = TMN_CPATH;
+		p->p_pledgenote = PLEDGE_CPATH;
 		NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, fname),
 		    p);
 		if ((error = vn_open(&nd, FREAD|FWRITE|O_NOFOLLOW, 0)) != 0)

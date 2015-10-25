@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.118 2015/10/25 17:45:29 deraadt Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.119 2015/10/25 20:39:54 deraadt Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -612,8 +612,9 @@ sendit(struct proc *p, int s, struct msghdr *mp, int flags, register_t *retsize)
 		if (error)
 			return (error);
 	}
-	if (pledge_sendit_check(p, mp->msg_name)) {
-		error = pledge_fail(p, EPERM, PLEDGE_RW);
+	error = pledge_sendit_check(p, mp->msg_name);
+	if (error) {
+		error = pledge_fail(p, error, PLEDGE_STDIO);
 		goto bad;
 	}
 
