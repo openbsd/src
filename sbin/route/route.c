@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.178 2015/10/23 15:03:25 deraadt Exp $	*/
+/*	$OpenBSD: route.c,v 1.179 2015/10/25 09:37:08 deraadt Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -76,7 +76,7 @@ u_int	tableid;
 
 struct rt_metrics	rt_metrics;
 
-void	 flushroutes(int, char **);
+int	 flushroutes(int, char **);
 int	 newroute(int, char **);
 int	 show(int, char *[]);
 int	 keycmp(const void *, const void *);
@@ -216,11 +216,16 @@ main(int argc, char **argv)
 	    &tableid, sizeof(tableid)) == -1)
 		err(1, "setsockopt(ROUTE_TABLEFILTER)");
 
-	if (kw == K_SHOW) {
+	switch (kw) {
+	case K_SHOW:
 		uid = 0;
 		exit(show(argc, argv));
+		break;
+	case K_FLUSH:
+		exit(flushroutes(argc, argv));
+		break;
 	}
-
+		
 	if (nflag) {
 		if (pledge("stdio rpath dns", NULL) == -1)
 			err(1, "pledge");
@@ -241,9 +246,6 @@ main(int argc, char **argv)
 	case K_MONITOR:
 		monitor(argc, argv);
 		break;
-	case K_FLUSH:
-		flushroutes(argc, argv);
-		break;
 	default:
 		usage(*argv);
 		/* NOTREACHED */
@@ -255,7 +257,7 @@ main(int argc, char **argv)
  * Purge all entries in the routing tables not
  * associated with network interfaces.
  */
-void
+int
 flushroutes(int argc, char **argv)
 {
 	size_t needed;
@@ -326,13 +328,22 @@ flushroutes(int argc, char **argv)
 		lim = buf + needed;
 		break;
 	}
+
+	if (nflag) {
+		if (pledge("stdio rpath dns", NULL) == -1)
+			err(1, "pledge");
+	} else {
+		if (pledge("stdio rpath dns", NULL) == -1)
+			err(1, "pledge");
+	}
+
 	if (verbose) {
 		printf("Examining routing table from sysctl\n");
 		if (af)
 			printf("(address family %s)\n", (*argv + 1));
 	}
 	if (buf == NULL)
-		return;
+		return (1);
 
 	seqno = 0;
 	for (next = buf; next < lim; next += rtm->rtm_msglen) {
@@ -382,6 +393,7 @@ flushroutes(int argc, char **argv)
 		}
 	}
 	free(buf);
+	return (0);
 }
 
 void
