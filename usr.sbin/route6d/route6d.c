@@ -1,4 +1,4 @@
-/*	$OpenBSD: route6d.c,v 1.73 2015/10/25 23:03:07 jca Exp $	*/
+/*	$OpenBSD: route6d.c,v 1.74 2015/10/25 23:10:32 jca Exp $	*/
 /*	$KAME: route6d.c,v 1.111 2006/10/25 06:38:13 jinmei Exp $	*/
 
 /*
@@ -473,7 +473,6 @@ sighandler(int signo)
 /*
  * gracefully exits after resetting sockopts.
  */
-/* ARGSUSED */
 void
 rtdexit(void)
 {
@@ -500,7 +499,6 @@ rtdexit(void)
  * to invoke this function in every 1 or 5 or 10 seconds only to age the
  * routes more precisely.
  */
-/* ARGSUSED */
 void
 ripalarm(void)
 {
