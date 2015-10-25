@@ -1,4 +1,4 @@
-/*	$OpenBSD: ndp.c,v 1.65 2015/10/25 08:07:31 deraadt Exp $	*/
+/*	$OpenBSD: ndp.c,v 1.66 2015/10/25 11:44:30 deraadt Exp $	*/
 /*	$KAME: ndp.c,v 1.101 2002/07/17 08:46:33 itojun Exp $	*/
 
 /*
@@ -332,18 +332,12 @@ file(char *name)
 void
 getsocket(void)
 {
-	if (s >= 0)
-		return;
-	s = socket(PF_ROUTE, SOCK_RAW, 0);
-	if (s < 0)
-		err(1, "socket");
-
-	if (nflag) {
-		if (pledge("stdio", NULL) == -1)
-			err(1, "pledge");
-	} else {
-		if (pledge("stdio dns", NULL) == -1)
-			err(1, "pledge");
+	if (s < 0) {
+		s = socket(PF_ROUTE, SOCK_RAW, 0);
+		if (s < 0) {
+			err(1, "socket");
+			/* NOTREACHED */
+		}
 	}
 }
 
@@ -606,14 +600,6 @@ again:;
 		break;
 	}
 
-	if (nflag) {
-		if (pledge("stdio route", NULL) == -1)
-			err(1, "pledge");
-	} else {
-		if (pledge("stdio route dns", NULL) == -1)
-			err(1, "pledge");
-	}
-
 	for (next = buf; next && next < lim; next += rtm->rtm_msglen) {
 		int isrouter = 0, prbs = 0;
 
@@ -808,8 +794,8 @@ usage(void)
 {
 	printf("usage: ndp [-nrt] [-a | -c | -p] [-H | -P | -R] ");
 	printf("[-A wait] [-d hostname]\n");
-	printf("           [-f filename] [-i interface [flag ...]]\n");
-	printf("           [-s nodename etheraddr [temp] [proxy]] ");
+	printf("\t[-f filename] [-i interface [flag ...]]\n");
+	printf("\t[-s nodename etheraddr [temp] [proxy]] ");
 	printf("[-V rdomain] [hostname]\n");
 	exit(1);
 }
