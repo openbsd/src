@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.115 2015/10/19 17:59:39 beck Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.116 2015/10/25 15:52:49 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1899,9 +1899,6 @@ SSL_CTX_new(const SSL_METHOD *meth)
 	 * deployed might change this.
 	 */
 	ret->options |= SSL_OP_LEGACY_SERVER_CONNECT;
-
-	/* Disable SSLv3 by default. */
-	ret->options |= SSL_OP_NO_SSLv3;
 
 	return (ret);
 err:
