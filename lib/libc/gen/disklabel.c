@@ -70,11 +70,6 @@ getdiskbyname(const char *name)
 	    (*cq = *cp) && *cq != '|' && *cq != ':')
 		cq++, cp++;
 	*cq = '\0';
-	/*
-	 * boot name (optional)  xxboot, bootxx
-	 */
-	cgetstr(buf, "b0", &dp->d_boot0);
-	cgetstr(buf, "b1", &dp->d_boot1);
 
 	if (cgetcap(buf, "sf", ':') != NULL)
 		dp->d_flags |= D_BADSECT;
