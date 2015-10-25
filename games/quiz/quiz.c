@@ -1,4 +1,4 @@
-/*	$OpenBSD: quiz.c,v 1.21 2013/08/29 20:22:18 naddy Exp $	*/
+/*	$OpenBSD: quiz.c,v 1.22 2015/10/25 09:34:49 tedu Exp $	*/
 /*	$NetBSD: quiz.c,v 1.9 1995/04/22 10:16:58 cgd Exp $	*/
 
 /*-
@@ -65,6 +65,9 @@ main(int argc, char *argv[])
 {
 	int ch;
 	const char *indexfile;
+
+	if (pledge("stdio rpath", NULL) == -1)
+		err(1, "pledge");
 
 	indexfile = _PATH_QUIZIDX;
 	while ((ch = getopt(argc, argv, "i:t")) != -1)
@@ -144,30 +147,21 @@ show_index(void)
 {
 	QE *qp;
 	const char *p, *s;
-	FILE *pf;
-	const char *pager;
 
-	if (!isatty(1))
-		pager = "/bin/cat";
-	else if (!(pager = getenv("PAGER")) || (*pager == 0))
-			pager = _PATH_PAGER;
-	if ((pf = popen(pager, "w")) == NULL)
-		err(1, "%s", pager);
-	(void)fprintf(pf, "Subjects:\n\n");
+	printf("Subjects:\n\n");
 	for (qp = qlist.q_next; qp; qp = qp->q_next) {
 		for (s = next_cat(qp->q_text); s; s = next_cat(s)) {
 			if (!rxp_compile(s))
 				errx(1, "%s", rxperr);
 			if ((p = rxp_expand()))
-				(void)fprintf(pf, "%s ", p);
+				printf("%s ", p);
 		}
-		(void)fprintf(pf, "\n");
+		printf("\n");
 	}
-	(void)fprintf(pf, "\n%s\n%s\n%s\n",
+	printf("\n%s\n%s\n%s\n",
 "For example, \"quiz victim killer\" prints a victim's name and you reply",
 "with the killer, and \"quiz killer victim\" works the other way around.",
 "Type an empty line to get the correct answer.");
-	(void)pclose(pf);
 }
 
 void
