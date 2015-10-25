@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.95 2015/10/25 15:58:57 doug Exp $ */
+/* $OpenBSD: ssl.h,v 1.96 2015/10/25 16:07:04 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -568,13 +568,18 @@ struct ssl_session_st {
 
 /* Obsolete flags kept for compatibility. No sane code should use them. */
 #define SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION	0x0
+#define SSL_OP_CISCO_ANYCONNECT				0x0
 #define SSL_OP_EPHEMERAL_RSA				0x0
+#define SSL_OP_MICROSOFT_BIG_SSLV3_BUFFER		0x0
 #define SSL_OP_MICROSOFT_SESS_ID_BUG			0x0
 #define SSL_OP_MSIE_SSLV2_RSA_PADDING			0x0
 #define SSL_OP_NETSCAPE_CA_DN_BUG			0x0
 #define SSL_OP_NETSCAPE_CHALLENGE_BUG			0x0
 #define SSL_OP_NETSCAPE_DEMO_CIPHER_CHANGE_BUG		0x0
 #define SSL_OP_NETSCAPE_REUSE_CIPHER_CHANGE_BUG		0x0
+#define SSL_OP_NO_COMPRESSION				0x0
+#define SSL_OP_NO_SSLv2					0x0
+#define SSL_OP_NO_SSLv3					0x0
 #define SSL_OP_PKCS1_CHECK_1				0x0
 #define SSL_OP_PKCS1_CHECK_2				0x0
 #define SSL_OP_SAFARI_ECDHE_ECDSA_BUG			0x0
@@ -582,11 +587,6 @@ struct ssl_session_st {
 #define SSL_OP_SSLREF2_REUSE_CERT_TYPE_BUG		0x0
 #define SSL_OP_TLS_BLOCK_PADDING_BUG			0x0
 #define SSL_OP_TLS_D5_BUG				0x0
-#define SSL_OP_MICROSOFT_BIG_SSLV3_BUFFER		0x0
-#define SSL_OP_CISCO_ANYCONNECT				0x0
-#define SSL_OP_NO_COMPRESSION				0x0
-#define SSL_OP_NO_SSLv2					0x0
-#define SSL_OP_NO_SSLv3					0x0
 
 /* Allow SSL_write(..., n) to return r with 0 < r < n (i.e. report success
  * when just a single record has been written): */
