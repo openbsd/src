@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.396 2015/10/25 12:05:40 mpi Exp $	*/
+/*	$OpenBSD: if.c,v 1.397 2015/10/25 13:52:45 mpi Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -520,7 +520,8 @@ if_attach_common(struct ifnet *ifp)
 	    M_TEMP, M_WAITOK);
 	TAILQ_INIT(ifp->if_detachhooks);
 
-	ifp->if_rtrequest = if_rtrequest_dummy;
+	if (ifp->if_rtrequest == NULL)
+		ifp->if_rtrequest = if_rtrequest_dummy;
 	ifp->if_slowtimo = malloc(sizeof(*ifp->if_slowtimo), M_TEMP,
 	    M_WAITOK|M_ZERO);
 	ifp->if_watchdogtask = malloc(sizeof(*ifp->if_watchdogtask),
