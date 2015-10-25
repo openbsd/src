@@ -1,4 +1,4 @@
-/*	$OpenBSD: w_fork.c,v 1.1 2015/04/07 01:27:07 guenther Exp $ */
+/*	$OpenBSD: w_fork.c,v 1.2 2015/10/25 18:03:17 guenther Exp $ */
 
 /*
  * Copyright (c) 2008 Kurt Miller <kurt@openbsd.org>
@@ -33,9 +33,6 @@
 #include <unistd.h>
 #include "thread_private.h"
 #include "atfork.h"
-
-/* define and initialize the list */
-struct atfork_listhead _atfork_list = TAILQ_HEAD_INITIALIZER(_atfork_list);
 
 pid_t	_thread_fork(void);
 
