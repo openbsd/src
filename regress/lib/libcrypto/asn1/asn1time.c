@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1time.c,v 1.6 2015/10/22 14:10:55 jsing Exp $ */
+/* $OpenBSD: asn1time.c,v 1.7 2015/10/25 11:59:37 miod Exp $ */
 /*
  * Copyright (c) 2015 Joel Sing <jsing@openbsd.org>
  *
@@ -295,7 +295,7 @@ asn1_utctime_test(int test_no, struct asn1_time_test *att)
 {
 	const unsigned char *der;
 	unsigned char *p = NULL;
-	ASN1_UTCTIME *ut;
+	ASN1_UTCTIME *ut = NULL;
 	int failure = 1;
 	int len;
 
