@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ftpd.8,v 1.74 2015/10/19 19:08:44 schwarze Exp $
+.\"	$OpenBSD: ftpd.8,v 1.75 2015/10/25 23:10:53 millert Exp $
 .\"	$NetBSD: ftpd.8,v 1.8 1996/01/14 20:55:23 thorpej Exp $
 .\"
 .\" Copyright (c) 1985, 1988, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)ftpd.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: October 19 2015 $
+.Dd $Mdocdate: October 25 2015 $
 .Dt FTPD 8
 .Os
 .Sh NAME
@@ -518,7 +518,7 @@ variables
 and
 .Va net.inet.ip.porthilast .
 .Sh FILES
-.Bl -tag -width /var/run/ftpd.pid -compact
+.Bl -tag -width /etc/ftpwelcome -compact
 .It Pa /etc/ftpchroot
 list of normal users who should be chrooted
 .It Pa /etc/ftpusers
@@ -535,8 +535,6 @@ displayed and access refused
 log file for anonymous downloads
 .It Pa /var/log/wtmp
 login account records
-.It Pa /var/run/ftpd.pid
-process ID if running in daemon mode
 .It Pa /var/run/utmp
 list of users on the system
 .El

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.209 2015/10/04 11:58:09 tedu Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.210 2015/10/25 23:10:53 millert Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -96,7 +96,6 @@
 #include <time.h>
 #include <vis.h>
 #include <unistd.h>
-#include <util.h>
 #include <utmp.h>
 #include <poll.h>
 
@@ -479,9 +478,6 @@ main(int argc, char *argv[])
 			exit(1);
 		}
 
-		/* Stash pid in pidfile */
-		if (pidfile(NULL))
-			syslog(LOG_ERR, "can't open pidfile: %m");
 		/*
 		 * Loop forever accepting connection requests and forking off
 		 * children to handle them.
