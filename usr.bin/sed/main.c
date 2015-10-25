@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.27 2015/10/10 20:18:30 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.28 2015/10/25 20:18:37 tobias Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -389,7 +389,7 @@ mf_fgets(SPACE *sp, enum e_spflag spflag)
 			outfname = "stdout";
 		}
 		if ((infile = fopen(fname, "r")) == NULL) {
-			err(WARNING, "%s", fname);
+			err(WARNING, "%s", strerror(errno));
 			rval = 1;
 			continue;
 		}
