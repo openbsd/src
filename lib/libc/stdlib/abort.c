@@ -1,4 +1,4 @@
-/*	$OpenBSD: abort.c,v 1.19 2015/10/23 04:39:24 guenther Exp $ */
+/*	$OpenBSD: abort.c,v 1.20 2015/10/25 04:13:59 guenther Exp $ */
 /*
  * Copyright (c) 1985 Regents of the University of California.
  * All rights reserved.
@@ -39,7 +39,7 @@ void
 abort(void)
 {
 	sigset_t mask;
-
+	struct sigaction sa;
 
 	sigfillset(&mask);
 	/*
@@ -55,7 +55,9 @@ abort(void)
 	 * if SIGABRT ignored, or caught and the handler returns, do
 	 * it again, only harder.
 	 */
-	(void)signal(SIGABRT, SIG_DFL);
+	memset(&sa, 0, sizeof(sa));
+	sa.sa_handler = SIG_DFL;
+	(void)sigaction(SIGABRT, &sa, NULL);
 	(void)sigprocmask(SIG_SETMASK, &mask, NULL);
 	(void)raise(SIGABRT);
 	_exit(1);

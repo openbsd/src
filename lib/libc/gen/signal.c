@@ -1,4 +1,4 @@
-/*	$OpenBSD: signal.c,v 1.9 2015/10/23 04:39:24 guenther Exp $ */
+/*	$OpenBSD: signal.c,v 1.10 2015/10/25 04:13:59 guenther Exp $ */
 /*
  * Copyright (c) 1985, 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -51,6 +51,5 @@ signal(int s, sig_t a)
 		return (SIG_ERR);
 	return (osa.sa_handler);
 }
-DEF_STRONG(signal);
 
 __weak_alias(bsd_signal, signal);
