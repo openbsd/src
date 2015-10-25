@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpcmd.y,v 1.60 2015/08/18 17:35:59 deraadt Exp $	*/
+/*	$OpenBSD: ftpcmd.y,v 1.61 2015/10/25 22:13:39 tedu Exp $	*/
 /*	$NetBSD: ftpcmd.y,v 1.7 1996/04/08 19:03:11 jtc Exp $	*/
 
 /*
@@ -574,16 +574,7 @@ cmd
 	| SYST check_login CRLF
 		{
 			if ($2)
-#ifdef unix
-#ifdef BSD
-			reply(215, "UNIX Type: L%d Version: BSD-%d",
-				NBBY, BSD);
-#else /* BSD */
 			reply(215, "UNIX Type: L%d", NBBY);
-#endif /* BSD */
-#else /* unix */
-			reply(215, "UNKNOWN Type: L%d", NBBY);
-#endif /* unix */
 		}
 
 		/*
