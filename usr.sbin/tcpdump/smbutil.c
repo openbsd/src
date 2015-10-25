@@ -1,4 +1,4 @@
-/*	$OpenBSD: smbutil.c,v 1.9 2015/01/16 06:40:22 deraadt Exp $	*/
+/*	$OpenBSD: smbutil.c,v 1.10 2015/10/25 18:25:41 mmcc Exp $	*/
 
 /*
    Copyright (C) Andrew Tridgell 1995-1999
@@ -148,7 +148,7 @@ static int name_interpret(const uchar *in,const uchar *maxbuf,char *out)
     out--;
   *out = '\0';
   for (; *ob; ob++)
-    if (!isprint(*ob))
+    if (!isprint((unsigned char)*ob))
       *ob = 'X';
 
   return(ret);
@@ -335,7 +335,7 @@ static const uchar *fdata1(const uchar *buf, const char *fmt, const uchar *maxbu
 	int l = atoi(fmt+1);
 	buf += l;
 	fmt++;
-	while (isdigit(*fmt)) fmt++;
+	while (isdigit((unsigned char)*fmt)) fmt++;
 	break;
       }
     case 'r':
@@ -425,14 +425,14 @@ static const uchar *fdata1(const uchar *buf, const char *fmt, const uchar *maxbu
 	int l = atoi(fmt+1);
 	printf("%-*.*s",l,l,buf);
 	buf += l;
-	fmt++; while (isdigit(*fmt)) fmt++;
+	fmt++; while (isdigit((unsigned char)*fmt)) fmt++;
 	break;
       }
     case 'h':
       {
 	int l = atoi(fmt+1);
 	while (l--) printf("%02x",*buf++);
-	fmt++; while (isdigit(*fmt)) fmt++;
+	fmt++; while (isdigit((unsigned char)*fmt)) fmt++;
 	break;
       }
     case 'n':
@@ -461,7 +461,7 @@ static const uchar *fdata1(const uchar *buf, const char *fmt, const uchar *maxbu
 	  buf += 16;
 	  break;
 	}
-	fmt++; while (isdigit(*fmt)) fmt++;
+	fmt++; while (isdigit((unsigned char)*fmt)) fmt++;
 	break;
       }
     case 'T':
@@ -491,7 +491,7 @@ static const uchar *fdata1(const uchar *buf, const char *fmt, const uchar *maxbu
 	  error("fdata1: invalid fmt: %s", fmt);
 	}
 	printf("%s",t?asctime(localtime(&t)):"NULL ");
-	fmt++; while (isdigit(*fmt)) fmt++;
+	fmt++; while (isdigit((unsigned char)*fmt)) fmt++;
 	break;
       }
     default:
