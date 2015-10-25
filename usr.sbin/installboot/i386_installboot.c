@@ -1,4 +1,4 @@
-/*	$OpenBSD: i386_installboot.c,v 1.14 2015/10/18 17:24:25 rpe Exp $	*/
+/*	$OpenBSD: i386_installboot.c,v 1.15 2015/10/25 21:21:15 stsp Exp $	*/
 /*	$NetBSD: installboot.c,v 1.5 1995/11/17 23:23:50 gwr Exp $ */
 
 /*
@@ -88,7 +88,6 @@ struct sym_data pbr_symbols[] = {
 
 static void	devread(int, void *, daddr_t, size_t, char *);
 static u_int	findopenbsd(int, struct disklabel *);
-static int	findgptefisys(int, struct disklabel *);
 static int	getbootparams(char *, int, struct disklabel *);
 static char	*loadproto(char *, long *);
 
@@ -448,7 +447,7 @@ again:
 	return ((u_int)-1);
 }
 
-static int
+int
 findgptefisys(int devfd, struct disklabel *dl)
 {
 	struct gpt_partition	 gp[NGPTPARTITIONS];
