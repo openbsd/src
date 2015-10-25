@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ping6.8,v 1.57 2015/10/17 13:08:14 florian Exp $
+.\"	$OpenBSD: ping6.8,v 1.58 2015/10/25 12:47:26 florian Exp $
 .\"	$KAME: ping6.8,v 1.57 2002/05/26 13:18:25 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -28,7 +28,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: October 17 2015 $
+.Dd $Mdocdate: October 25 2015 $
 .Dt PING6 8
 .Os
 .Sh NAME
@@ -36,7 +36,7 @@
 .Nd send ICMPv6 ECHO_REQUEST packets to network hosts
 .Sh SYNOPSIS
 .Nm ping6
-.Op Fl dEefHmnqv
+.Op Fl dEefHLmnqv
 .Op Fl c Ar count
 .Op Fl g Ar gateway
 .Op Fl h Ar hoplimit
@@ -132,6 +132,10 @@ The default is to wait for one second between each packet.
 This option is incompatible with the
 .Fl f
 option.
+.It Fl L
+Disable the loopback, so the transmitting host doesn't see the ICMP
+requests.
+For multicast pings.
 .It Fl l Ar preload
 If
 .Ar preload

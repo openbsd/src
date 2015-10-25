@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.131 2015/10/24 16:59:15 florian Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.132 2015/10/25 12:47:26 florian Exp $	*/
 /*	$KAME: ping6.c,v 1.163 2002/10/25 02:19:06 itojun Exp $	*/
 
 /*
@@ -148,6 +148,10 @@ struct payload {
 #define F_AUD_MISS	0x400000
 u_int options;
 
+/* multicast options */
+int moptions;
+#define	MULTICAST_NOLOOP	0x001
+
 #define DUMMY_PORT	10101
 
 /*
@@ -235,7 +239,7 @@ main(int argc, char *argv[])
 	struct cmsghdr *scmsgp = NULL;
 	struct in6_pktinfo *pktinfo = NULL;
 	double intval;
-	int mflag = 0;
+	int mflag = 0, loop = 1;
 	uid_t uid;
 	u_int rtableid = 0;
 
@@ -250,7 +254,7 @@ main(int argc, char *argv[])
 	preload = 0;
 	datap = &outpack[ICMP6ECHOLEN + ICMP6ECHOTMLEN];
 	while ((ch = getopt(argc, argv,
-	    "c:dEefg:Hh:I:i:l:mNnp:qS:s:V:vw:")) != -1) {
+	    "c:dEefg:Hh:I:i:Ll:mNnp:qS:s:V:vw:")) != -1) {
 		switch (ch) {
 		case 'c':
 			npackets = strtonum(optarg, 0, INT_MAX, &errstr);
@@ -325,6 +329,10 @@ main(int argc, char *argv[])
 				interval.tv_usec = 10000;
 			}
 			options |= F_INTERVAL;
+			break;
+		case 'L':
+			moptions |= MULTICAST_NOLOOP;
+			loop = 0;
 			break;
 		case 'l':
 			if (getuid()) {
@@ -462,6 +470,11 @@ main(int argc, char *argv[])
 
 	if ((options & F_FLOOD) && (options & (F_AUD_RECV | F_AUD_MISS)))
 		warnx("No audible output for flood pings");
+
+	if ((moptions & MULTICAST_NOLOOP) &&
+	    setsockopt(s, IPPROTO_IPV6, IPV6_MULTICAST_LOOP, &loop,
+	    sizeof(loop)) < 0)
+		err(1, "setsockopt IP6_MULTICAST_LOOP");
 
 	if (datalen >= sizeof(struct payload)) {
 		/* we can time transfer */
@@ -1645,7 +1658,7 @@ void
 usage(void)
 {
 	(void)fprintf(stderr,
-	    "usage: ping6 [-dEefHmnqv] [-c count] [-g gateway] [-h hoplimit] "
+	    "usage: ping6 [-dEefHLmnqv] [-c count] [-g gateway] [-h hoplimit] "
 	    "[-I sourceaddr]\n\t[-i wait] [-l preload] [-p pattern] "
 	    "[-s packetsize] [-V rtable]\n\t[-w maxwait] host\n");
 	exit(1);
