@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.69 2015/10/25 00:02:00 nicm Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.70 2015/10/25 01:57:09 millert Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -571,10 +571,9 @@ pledge_namei(struct proc *p, char *origpath)
 		break;
 	case SYS_open:
 		/* daemon(3) or other such functions */
-		if ((p->p_pledgenote == TMN_RPATH ||
-		    p->p_pledgenote == TMN_WPATH)) {
-			if (strcmp(path, "/dev/null") == 0)
-				return (0);
+		if ((p->p_pledgenote & ~(TMN_RPATH | TMN_WPATH)) == 0 &&
+		    strcmp(path, "/dev/null") == 0) {
+			return (0);
 		}
 
 		/* getpw* and friends need a few files */
