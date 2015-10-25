@@ -1,4 +1,4 @@
-/* $OpenBSD: s23_srvr.c,v 1.45 2015/09/11 18:08:21 jsing Exp $ */
+/* $OpenBSD: s23_srvr.c,v 1.46 2015/10/25 15:49:04 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -247,15 +247,14 @@ ssl23_get_client_hello(SSL *s)
 			 * SSLv2 header
 			 */
 			if ((p[3] == 0x00) && (p[4] == 0x02)) {
-				v[0] = p[3];
-				v[1] = p[4];
-				/* SSLv2 */
-				if (!(s->options & SSL_OP_NO_SSLv2))
-					type = 1;
+				/* SSLv2 support has been removed */
+				goto unsupported;
+
 			} else if (p[3] == SSL3_VERSION_MAJOR) {
 				v[0] = p[3];
 				v[1] = p[4];
-				/* SSLv3/TLSv1 */
+				/* SSLv3/TLS */
+
 				if (p[4] >= TLS1_VERSION_MINOR) {
 					if (p[4] >= TLS1_2_VERSION_MINOR &&
 					    !(s->options & SSL_OP_NO_TLSv1_2)) {
@@ -270,16 +269,13 @@ ssl23_get_client_hello(SSL *s)
 						s->version = TLS1_VERSION;
 						/* type=2; */ /* done later to survive restarts */
 						s->state = SSL23_ST_SR_CLNT_HELLO_B;
-					} else if (!(s->options & SSL_OP_NO_SSLv3)) {
-						type = 1;
-					} else if (!(s->options & SSL_OP_NO_SSLv2)) {
-						type = 1;
+					} else {
+						goto unsupported;
 					}
-				} else if (!(s->options & SSL_OP_NO_SSLv3)) {
-					type = 1;
-				} else if (!(s->options & SSL_OP_NO_SSLv2))
-					type = 1;
-
+				} else {
+					/* SSLv3 support has been removed */
+					goto unsupported;
+				}
 			}
 		} else if ((p[0] == SSL3_RT_HANDSHAKE) &&
 		    (p[1] == SSL3_VERSION_MAJOR) &&
@@ -325,13 +321,18 @@ ssl23_get_client_hello(SSL *s)
 				} else if (!(s->options & SSL_OP_NO_TLSv1)) {
 					s->version = TLS1_VERSION;
 					type = 3;
+				} else {
+					goto unsupported;
 				}
 			} else {
+				/* SSLv3 */
 				if (!(s->options & SSL_OP_NO_TLSv1)) {
 					/* we won't be able to use TLS of course,
 					 * but this will send an appropriate alert */
 					s->version = TLS1_VERSION;
 					type = 3;
+				} else {
+					goto unsupported;
 				}
 			}
 		}
@@ -454,12 +455,7 @@ ssl23_get_client_hello(SSL *s)
 	/* imaginary new state (for program structure): */
 	/* s->state = SSL23_SR_CLNT_HELLO_C */
 
-	if (type == 1) {
-		SSLerr(SSL_F_SSL23_GET_CLIENT_HELLO, SSL_R_UNSUPPORTED_PROTOCOL);
-		return -1;
-	}
-
-	if ((type == 2) || (type == 3)) {
+	if (type == 2 || type == 3) {
 		/* we have SSLv3/TLSv1 (type 2: SSL2 style, type 3: SSL3/TLS style) */
 
 		if (!ssl_init_wbio_buffer(s, 1))
@@ -490,12 +486,12 @@ ssl23_get_client_hello(SSL *s)
 			s->method = TLSv1_2_server_method();
 		else if (s->version == TLS1_1_VERSION)
 			s->method = TLSv1_1_server_method();
-		else
+		else if (s->version == TLS1_VERSION)
 			s->method = TLSv1_server_method();
+		else
+			goto unsupported;
 		s->handshake_func = s->method->ssl_accept;
-	}
-
-	if ((type < 1) || (type > 3)) {
+	} else {
 		/* bad, very bad */
 		SSLerr(SSL_F_SSL23_GET_CLIENT_HELLO, SSL_R_UNKNOWN_PROTOCOL);
 		return -1;
@@ -503,4 +499,8 @@ ssl23_get_client_hello(SSL *s)
 	s->init_num = 0;
 
 	return (SSL_accept(s));
+
+ unsupported:
+	SSLerr(SSL_F_SSL23_GET_CLIENT_HELLO, SSL_R_UNSUPPORTED_PROTOCOL);
+	return -1;
 }
