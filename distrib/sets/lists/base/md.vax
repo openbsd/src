@@ -2021,8 +2021,5 @@
 ./usr/libdata/perl5/vax-openbsd/5.20.2/threads/shared.pm
 ./usr/local/libdata/perl5/site_perl/vax-openbsd
 ./usr/mdec/boot
-./usr/mdec/hdboot
-./usr/mdec/raboot
-./usr/mdec/sdboot
 ./usr/mdec/xxboot
 ./usr/sbin/wsconscfg
