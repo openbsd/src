@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.160 2015/10/25 11:58:11 mpi Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.161 2015/10/25 15:01:59 mpi Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -421,7 +421,7 @@ nd6_llinfo_timer(void *arg)
 				 * XXX: should we consider
 				 * older rcvif?
 				 */
-				m->m_pkthdr.ph_ifidx = rt->rt_ifp->if_index;
+				m->m_pkthdr.ph_ifidx = rt->rt_ifidx;
 
 				icmp6_error(m, ICMP6_DST_UNREACH,
 				    ICMP6_DST_UNREACH_ADDR, 0);

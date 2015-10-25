@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_forward.c,v 1.83 2015/10/19 12:11:28 mpi Exp $	*/
+/*	$OpenBSD: ip6_forward.c,v 1.84 2015/10/25 15:01:59 mpi Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.75 2001/06/29 12:42:13 jinmei Exp $	*/
 
 /*
@@ -283,7 +283,7 @@ reroute:
 	 * [draft-ietf-ipngwg-icmp-v3-00.txt, Section 3.1]
 	 */
 	if (in6_addr2scopeid(m->m_pkthdr.ph_ifidx, &ip6->ip6_src) !=
-	    in6_addr2scopeid(rt->rt_ifp->if_index, &ip6->ip6_src)) {
+	    in6_addr2scopeid(rt->rt_ifidx, &ip6->ip6_src)) {
 		ip6stat.ip6s_cantforward++;
 		ip6stat.ip6s_badscope++;
 
@@ -296,7 +296,7 @@ reroute:
 			    "src %s, dst %s, nxt %d, rcvif %u, outif %u\n",
 			    src6, dst6,
 			    ip6->ip6_nxt,
-			    m->m_pkthdr.ph_ifidx, rt->rt_ifp->if_index);
+			    m->m_pkthdr.ph_ifidx, rt->rt_ifidx);
 		}
 		if (mcopy)
 			icmp6_error(mcopy, ICMP6_DST_UNREACH,
