@@ -1,4 +1,4 @@
-/*	$OpenBSD: be.c,v 1.34 2015/09/12 10:15:10 miod Exp $	*/
+/*	$OpenBSD: be.c,v 1.35 2015/10/25 13:13:06 mpi Exp $	*/
 /*	$NetBSD: be.c,v 1.26 2001/03/20 15:39:20 pk Exp $	*/
 
 /*-
@@ -912,7 +912,6 @@ int
 beioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct be_softc *sc = ifp->if_softc;
-	struct ifaddr *ifa = (struct ifaddr *)data;
 	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
 
@@ -921,15 +920,7 @@ beioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	switch (cmd) {
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
-		switch (ifa->ifa_addr->sa_family) {
-		case AF_INET:
-			beinit(sc);
-			arp_ifinit(&sc->sc_arpcom, ifa);
-			break;
-		default:
-			beinit(sc);
-			break;
-		}
+		beinit(sc);
 		break;
 
 	case SIOCSIFFLAGS:

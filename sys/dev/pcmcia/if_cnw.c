@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cnw.c,v 1.32 2015/07/08 07:21:50 mpi Exp $	*/
+/*	$OpenBSD: if_cnw.c,v 1.33 2015/10/25 13:13:06 mpi Exp $	*/
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -749,7 +749,6 @@ cnw_ioctl(ifp, cmd, data)
 	caddr_t data;
 {
 	struct cnw_softc *sc = ifp->if_softc;
-	struct ifaddr *ifa = (struct ifaddr *)data;
 	int s, error = 0;
 
 	s = splnet();
@@ -760,11 +759,6 @@ cnw_ioctl(ifp, cmd, data)
 		    (error = cnw_enable(sc)) != 0)
 			break;
 		ifp->if_flags |= IFF_UP;
-		switch (ifa->ifa_addr->sa_family) {
-		case AF_INET:
-			arp_ifinit(&sc->sc_arpcom, ifa);
-			break;
-		}
 		break;
 
 	case SIOCSIFFLAGS:

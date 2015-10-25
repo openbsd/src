@@ -1,4 +1,4 @@
-/*	$OpenBSD: qe.c,v 1.31 2015/09/11 13:02:28 stsp Exp $	*/
+/*	$OpenBSD: qe.c,v 1.32 2015/10/25 13:13:06 mpi Exp $	*/
 /*	$NetBSD: qe.c,v 1.16 2001/03/30 17:30:18 christos Exp $	*/
 
 /*-
@@ -884,7 +884,6 @@ qeioctl(ifp, cmd, data)
 	caddr_t data;
 {
 	struct qe_softc *sc = ifp->if_softc;
-	struct ifaddr *ifa = (struct ifaddr *)data;
 	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
 
@@ -893,15 +892,7 @@ qeioctl(ifp, cmd, data)
 	switch (cmd) {
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
-		switch (ifa->ifa_addr->sa_family) {
-		case AF_INET:
-			qeinit(sc);
-			arp_ifinit(&sc->sc_arpcom, ifa);
-			break;
-		default:
-			qeinit(sc);
-			break;
-		}
+		qeinit(sc);
 		break;
 
 	case SIOCSIFFLAGS:

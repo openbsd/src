@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_eg.c,v 1.39 2015/06/24 09:40:54 mpi Exp $	*/
+/*	$OpenBSD: if_eg.c,v 1.40 2015/10/25 13:13:06 mpi Exp $	*/
 /*	$NetBSD: if_eg.c,v 1.26 1996/05/12 23:52:27 mycroft Exp $	*/
 
 /*
@@ -738,7 +738,6 @@ int
 egioctl(register struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct eg_softc *sc = ifp->if_softc;
-	struct ifaddr *ifa = (struct ifaddr *)data;
 	int s, error = 0;
 
 	s = splnet();
@@ -746,16 +745,7 @@ egioctl(register struct ifnet *ifp, u_long cmd, caddr_t data)
 	switch (cmd) {
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
-
-		switch (ifa->ifa_addr->sa_family) {
-		case AF_INET:
-			eginit(sc);
-			arp_ifinit(&sc->sc_arpcom, ifa);
-			break;
-		default:
-			eginit(sc);
-			break;
-		}
+		eginit(sc);
 		break;
 
 	case SIOCSIFFLAGS:

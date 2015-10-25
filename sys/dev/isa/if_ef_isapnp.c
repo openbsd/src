@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ef_isapnp.c,v 1.30 2015/07/08 07:21:50 mpi Exp $	*/
+/*	$OpenBSD: if_ef_isapnp.c,v 1.31 2015/10/25 13:13:06 mpi Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -335,7 +335,6 @@ efioctl(ifp, cmd, data)
 	caddr_t data;
 {
 	struct ef_softc *sc = ifp->if_softc;
-	struct ifaddr *ifa = (struct ifaddr *)data;
 	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
 
@@ -344,15 +343,7 @@ efioctl(ifp, cmd, data)
 	switch (cmd) {
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
-		switch (ifa->ifa_addr->sa_family) {
-		case AF_INET:
-			efinit(sc);
-			arp_ifinit(&sc->sc_arpcom, ifa);
-			break;
-		default:
-			efinit(sc);
-			break;
-		}
+		efinit(sc);
 		break;
 	case SIOCSIFMEDIA:
 	case SIOCGIFMEDIA:

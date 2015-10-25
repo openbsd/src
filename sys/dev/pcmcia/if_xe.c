@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xe.c,v 1.52 2015/07/08 07:21:50 mpi Exp $	*/
+/*	$OpenBSD: if_xe.c,v 1.53 2015/10/25 13:13:06 mpi Exp $	*/
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist, Brandon Creighton, Job de Haas
@@ -1160,7 +1160,6 @@ xe_ioctl(ifp, command, data)
 	caddr_t data;
 {
 	struct xe_softc *sc = ifp->if_softc;
-	struct ifaddr *ifa = (struct ifaddr *)data;
 	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
 
@@ -1170,8 +1169,6 @@ xe_ioctl(ifp, command, data)
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
 		xe_init(sc);
-		if (ifa->ifa_addr->sa_family == AF_INET)
-			arp_ifinit(&sc->sc_arpcom, ifa);
 		break;
 
 	case SIOCSIFFLAGS:

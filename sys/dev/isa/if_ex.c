@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ex.c,v 1.40 2015/09/11 13:02:28 stsp Exp $	*/
+/*	$OpenBSD: if_ex.c,v 1.41 2015/10/25 13:13:06 mpi Exp $	*/
 /*
  * Copyright (c) 1997, Donald A. Schmidt
  * Copyright (c) 1996, Javier Martín Rueda (jmrueda@diatel.upm.es)
@@ -731,7 +731,6 @@ int
 ex_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct ex_softc *sc = ifp->if_softc;
-	struct ifaddr *ifa = (struct ifaddr *) data;
 	struct ifreq *ifr = (struct ifreq *) data;
 	int s, error = 0;
 
@@ -745,8 +744,6 @@ ex_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		ifp->if_flags |= IFF_UP;
 		if (!(ifp->if_flags & IFF_RUNNING))
 			ex_init(sc);
-		if (ifa->ifa_addr->sa_family == AF_INET)
-			arp_ifinit(&sc->arpcom, ifa);
 		break;
 	case SIOCSIFFLAGS:
 		DODEBUG(Start_End, printf("SIOCSIFFLAGS"););

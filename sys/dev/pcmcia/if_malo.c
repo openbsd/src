@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_malo.c,v 1.85 2015/06/24 09:40:54 mpi Exp $ */
+/*      $OpenBSD: if_malo.c,v 1.86 2015/10/25 13:13:06 mpi Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -370,7 +370,6 @@ cmalo_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ieee80211_nodereq_all *na;
 	struct ieee80211_nodereq *nr;
-	struct ifaddr *ifa;
 	struct ifreq *ifr;
 	int i, j, s, error = 0;
 
@@ -389,10 +388,7 @@ cmalo_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 	switch (cmd) {
 	case SIOCSIFADDR:
-		ifa = (struct ifaddr *)data;
 		ifp->if_flags |= IFF_UP;
-		if (ifa->ifa_addr->sa_family == AF_INET)
-			arp_ifinit(&ic->ic_ac, ifa);
 		/* FALLTHROUGH */
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP) {
