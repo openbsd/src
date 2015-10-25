@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ppp.c,v 1.90 2015/10/12 13:17:58 dlg Exp $	*/
+/*	$OpenBSD: if_ppp.c,v 1.91 2015/10/25 11:58:11 mpi Exp $	*/
 /*	$NetBSD: if_ppp.c,v 1.39 1997/05/17 21:11:59 christos Exp $	*/
 
 /*
@@ -223,6 +223,7 @@ ppp_clone_create(struct if_clone *ifc, int unit)
     sc->sc_if.if_ioctl = pppsioctl;
     sc->sc_if.if_output = pppoutput;
     sc->sc_if.if_start = ppp_ifstart;
+    sc->sc_if.if_rtrequest = p2p_rtrequest;
     IFQ_SET_MAXLEN(&sc->sc_if.if_snd, IFQ_MAXLEN);
     mq_init(&sc->sc_inq, IFQ_MAXLEN, IPL_NET);
     IFQ_SET_MAXLEN(&sc->sc_fastq, IFQ_MAXLEN);
@@ -593,7 +594,6 @@ pppsioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
     case SIOCSIFADDR:
 	if (ifa->ifa_addr->sa_family != AF_INET)
 	    error = EAFNOSUPPORT;
-	ifa->ifa_rtrequest = p2p_rtrequest;
 	break;
 
     case SIOCSIFDSTADDR:

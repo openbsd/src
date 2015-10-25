@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.277 2015/10/22 13:30:29 mpi Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.278 2015/10/25 11:58:11 mpi Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -2097,7 +2097,6 @@ carp_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr)
 		switch (ifa->ifa_addr->sa_family) {
 		case AF_INET:
 			sc->sc_if.if_flags |= IFF_UP;
-			ifa->ifa_rtrequest = arp_rtrequest;
 			error = carp_set_addr(sc, satosin(ifa->ifa_addr));
 			break;
 #ifdef INET6

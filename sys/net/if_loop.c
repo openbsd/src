@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_loop.c,v 1.71 2015/09/12 13:34:12 mpi Exp $	*/
+/*	$OpenBSD: if_loop.c,v 1.72 2015/10/25 11:58:11 mpi Exp $	*/
 /*	$NetBSD: if_loop.c,v 1.15 1996/05/07 02:40:33 thorpej Exp $	*/
 
 /*
@@ -168,6 +168,7 @@ loop_clone_create(struct if_clone *ifc, int unit)
 	ifp->if_softc = NULL;
 	ifp->if_mtu = LOMTU;
 	ifp->if_flags = IFF_LOOPBACK | IFF_MULTICAST;
+	ifp->if_rtrequest = lortrequest;
 	ifp->if_ioctl = loioctl;
 	ifp->if_output = looutput;
 	ifp->if_type = IFT_LOOP;
@@ -217,7 +218,7 @@ looutput(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 
 /* ARGSUSED */
 void
-lortrequest(int cmd, struct rtentry *rt)
+lortrequest(struct ifnet *ifp, int cmd, struct rtentry *rt)
 {
 	if (rt && rt->rt_rmx.rmx_mtu == 0)
 		rt->rt_rmx.rmx_mtu = LOMTU;
@@ -230,7 +231,6 @@ lortrequest(int cmd, struct rtentry *rt)
 int
 loioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
-	struct ifaddr *ifa;
 	struct ifreq *ifr;
 	int error = 0;
 
@@ -239,10 +239,6 @@ loioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_RUNNING;
 		if_up(ifp);		/* send up RTM_IFINFO */
-
-		ifa = (struct ifaddr *)data;
-		if (ifa != 0)
-			ifa->ifa_rtrequest = lortrequest;
 		/*
 		 * Everything else is done at a higher level.
 		 */

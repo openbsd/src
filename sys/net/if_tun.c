@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.157 2015/10/24 04:12:24 dlg Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.158 2015/10/25 11:58:11 mpi Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -219,6 +219,7 @@ tun_create(struct if_clone *ifc, int unit, int flags)
 		ifp->if_flags = IFF_POINTOPOINT;
 		ifp->if_type = IFT_TUNNEL;
 		ifp->if_hdrlen = sizeof(u_int32_t);
+		ifp->if_rtrequest = p2p_rtrequest;
 
 		if_attach(ifp);
 		if_alloc_sadl(ifp);
@@ -506,8 +507,6 @@ tun_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			default:
 				break;
 			}
-		} else {
-			ifa->ifa_rtrequest = p2p_rtrequest;
 		}
 		break;
 	case SIOCSIFDSTADDR:

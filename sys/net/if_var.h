@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_var.h,v 1.50 2015/10/24 10:52:05 reyk Exp $	*/
+/*	$OpenBSD: if_var.h,v 1.51 2015/10/25 11:58:11 mpi Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -129,6 +129,8 @@ struct ifnet {				/* and the entries */
 	struct hook_desc_head *if_addrhooks; /* address change callbacks */
 	struct hook_desc_head *if_linkstatehooks; /* link change callbacks */
 	struct hook_desc_head *if_detachhooks; /* detach callbacks */
+					/* check or clean routes (+ or -)'d */
+	void	(*if_rtrequest)(struct ifnet *, int, struct rtentry *);
 	char	if_xname[IFNAMSIZ];	/* external name (name + unit) */
 	int	if_pcount;		/* number of promiscuous listeners */
 	caddr_t	if_bpf;			/* packet filter structure */
@@ -213,8 +215,6 @@ struct ifaddr {
 	struct	sockaddr *ifa_netmask;	/* used to determine subnet */
 	struct	ifnet *ifa_ifp;		/* back-pointer to interface */
 	TAILQ_ENTRY(ifaddr) ifa_list;	/* list of addresses for interface */
-					/* check or clean routes (+ or -)'d */
-	void	(*ifa_rtrequest)(int, struct rtentry *);
 	u_int	ifa_flags;		/* interface flags, see below */
 	u_int	ifa_refcnt;		/* number of `rt_ifa` references */
 	int	ifa_metric;		/* cost of going out this interface */
@@ -408,6 +408,8 @@ void	if_start(struct ifnet *);
 int	if_enqueue(struct ifnet *, struct mbuf *);
 void	if_input(struct ifnet *, struct mbuf_list *);
 int	if_input_local(struct ifnet *, struct mbuf *, sa_family_t);
+void	if_rtrequest_dummy(struct ifnet *, int, struct rtentry *);
+void	p2p_rtrequest(struct ifnet *, int, struct rtentry *);
 
 void	ether_ifattach(struct ifnet *);
 void	ether_ifdetach(struct ifnet *);
@@ -415,6 +417,7 @@ int	ether_ioctl(struct ifnet *, struct arpcom *, u_long, caddr_t);
 int	ether_input(struct ifnet *, struct mbuf *, void *);
 int	ether_output(struct ifnet *,
 	    struct mbuf *, struct sockaddr *, struct rtentry *);
+void	ether_rtrequest(struct ifnet *, int, struct rtentry *);
 char	*ether_sprintf(u_char *);
 
 struct	ifaddr *ifa_ifwithaddr(struct sockaddr *, u_int);
@@ -422,7 +425,6 @@ struct	ifaddr *ifa_ifwithdstaddr(struct sockaddr *, u_int);
 struct	ifaddr *ifa_ifwithnet(struct sockaddr *, u_int);
 struct	ifaddr *ifaof_ifpforaddr(struct sockaddr *, struct ifnet *);
 void	ifafree(struct ifaddr *);
-void	p2p_rtrequest(int, struct rtentry *);
 
 void	if_clone_attach(struct if_clone *);
 void	if_clone_detach(struct if_clone *);
@@ -440,7 +442,7 @@ int	loioctl(struct ifnet *, u_long, caddr_t);
 void	loopattach(int);
 int	looutput(struct ifnet *,
 	    struct mbuf *, struct sockaddr *, struct rtentry *);
-void	lortrequest(int, struct rtentry *);
+void	lortrequest(struct ifnet *, int, struct rtentry *);
 
 void	ifa_add(struct ifnet *, struct ifaddr *);
 void	ifa_del(struct ifnet *, struct ifaddr *);

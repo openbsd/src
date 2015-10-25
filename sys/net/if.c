@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.394 2015/10/24 10:52:05 reyk Exp $	*/
+/*	$OpenBSD: if.c,v 1.395 2015/10/25 11:58:11 mpi Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -520,6 +520,7 @@ if_attach_common(struct ifnet *ifp)
 	    M_TEMP, M_WAITOK);
 	TAILQ_INIT(ifp->if_detachhooks);
 
+	ifp->if_rtrequest = if_rtrequest_dummy;
 	ifp->if_slowtimo = malloc(sizeof(*ifp->if_slowtimo), M_TEMP,
 	    M_WAITOK|M_ZERO);
 	ifp->if_watchdogtask = malloc(sizeof(*ifp->if_watchdogtask),
@@ -1273,14 +1274,18 @@ ifaof_ifpforaddr(struct sockaddr *addr, struct ifnet *ifp)
 	return (ifa_maybe);
 }
 
+void
+if_rtrequest_dummy(struct ifnet *ifp, int req, struct rtentry *rt)
+{
+}
+
 /*
  * Default action when installing a local route on a point-to-point
  * interface.
  */
 void
-p2p_rtrequest(int req, struct rtentry *rt)
+p2p_rtrequest(struct ifnet *ifp, int req, struct rtentry *rt)
 {
-	struct ifnet *ifp = rt->rt_ifp;
 	struct ifaddr *ifa, *lo0ifa;
 
 	switch (req) {

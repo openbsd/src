@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.261 2015/10/25 10:05:09 bluhm Exp $	*/
+/*	$OpenBSD: route.c,v 1.262 2015/10/25 11:58:11 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -782,8 +782,7 @@ rtrequest1(int req, struct rt_addrinfo *info, u_int8_t prio,
 		rt->rt_parent = NULL;
 
 		rt->rt_flags &= ~RTF_UP;
-		if ((ifa = rt->rt_ifa) && ifa->ifa_rtrequest)
-			ifa->ifa_rtrequest(RTM_DELETE, rt);
+		rt->rt_ifp->if_rtrequest(rt->rt_ifp, RTM_DELETE, rt);
 		atomic_inc_int(&rttrash);
 
 		if (ret_nrt != NULL)
@@ -922,15 +921,14 @@ rtrequest1(int req, struct rt_addrinfo *info, u_int8_t prio,
 			if ((*ret_nrt)->rt_ifa->ifa_ifp == NULL) {
 				printf("rtrequest1 RTM_RESOLVE: wrong ifa (%p) "
 				    "was (%p)\n", ifa, (*ret_nrt)->rt_ifa);
-				if ((*ret_nrt)->rt_ifa->ifa_rtrequest)
-					(*ret_nrt)->rt_ifa->ifa_rtrequest(
-					    RTM_DELETE, *ret_nrt);
+				(*ret_nrt)->rt_ifp->if_rtrequest(rt->rt_ifp,
+				    RTM_DELETE, *ret_nrt);
 				ifafree((*ret_nrt)->rt_ifa);
 				(*ret_nrt)->rt_ifa = ifa;
 				(*ret_nrt)->rt_ifp = ifa->ifa_ifp;
 				ifa->ifa_refcnt++;
-				if (ifa->ifa_rtrequest)
-					ifa->ifa_rtrequest(RTM_ADD, *ret_nrt);
+				(*ret_nrt)->rt_ifp->if_rtrequest(rt->rt_ifp,
+				    RTM_ADD, *ret_nrt);
 			}
 			/*
 			 * Copy both metrics and a back pointer to the cloned
@@ -978,9 +976,7 @@ rtrequest1(int req, struct rt_addrinfo *info, u_int8_t prio,
 			pool_put(&rtentry_pool, rt);
 			return (EEXIST);
 		}
-
-		if (ifa->ifa_rtrequest)
-			ifa->ifa_rtrequest(req, rt);
+		rt->rt_ifp->if_rtrequest(rt->rt_ifp, req, rt);
 
 		if ((rt->rt_flags & RTF_CLONING) != 0) {
 			/* clean up any cloned children */

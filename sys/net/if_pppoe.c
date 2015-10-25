@@ -1,4 +1,4 @@
-/* $OpenBSD: if_pppoe.c,v 1.48 2015/09/13 17:53:44 mpi Exp $ */
+/* $OpenBSD: if_pppoe.c,v 1.49 2015/10/25 11:58:11 mpi Exp $ */
 /* $NetBSD: if_pppoe.c,v 1.51 2003/11/28 08:56:48 keihan Exp $ */
 
 /*
@@ -228,6 +228,7 @@ pppoe_clone_create(struct if_clone *ifc, int unit)
 	sc->sc_sppp.pp_framebytes = PPPOE_HEADERLEN;	/* framing added to ppp packets */
 	sc->sc_sppp.pp_if.if_ioctl = pppoe_ioctl;
 	sc->sc_sppp.pp_if.if_start = pppoe_start;
+	sc->sc_sppp.pp_if.if_rtrequest = p2p_rtrequest;
 	sc->sc_sppp.pp_tls = pppoe_tls;
 	sc->sc_sppp.pp_tlf = pppoe_tlf;
 	IFQ_SET_MAXLEN(&sc->sc_sppp.pp_if.if_snd, IFQ_MAXLEN);

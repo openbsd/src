@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.229 2015/10/22 15:37:47 bluhm Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.230 2015/10/25 11:58:11 mpi Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -161,6 +161,23 @@ ether_ioctl(struct ifnet *ifp, struct arpcom *arp, u_long cmd, caddr_t data)
 	return (error);
 }
 
+
+void
+ether_rtrequest(struct ifnet *ifp, int req, struct rtentry *rt)
+{
+	switch (rt_key(rt)->sa_family) {
+	case AF_INET:
+		arp_rtrequest(ifp, req, rt);
+		break;
+#ifdef INET6
+	case AF_INET6:
+		nd6_rtrequest(ifp, req, rt);
+		break;
+#endif
+	default:
+		break;
+	}
+}
 /*
  * Ethernet output routine.
  * Encapsulate a packet of type family for the local net.
@@ -505,6 +522,7 @@ ether_ifattach(struct ifnet *ifp)
 	ifp->if_hdrlen = ETHER_HDR_LEN;
 	ifp->if_mtu = ETHERMTU;
 	ifp->if_output = ether_output;
+	ifp->if_rtrequest = ether_rtrequest;
 
 	if_ih_insert(ifp, ether_input, NULL);
 

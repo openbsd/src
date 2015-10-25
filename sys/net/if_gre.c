@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_gre.c,v 1.75 2015/07/16 16:12:15 mpi Exp $ */
+/*      $OpenBSD: if_gre.c,v 1.76 2015/10/25 11:58:11 mpi Exp $ */
 /*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -132,6 +132,7 @@ gre_clone_create(struct if_clone *ifc, int unit)
 	sc->sc_if.if_flags = IFF_POINTOPOINT|IFF_MULTICAST;
 	sc->sc_if.if_output = gre_output;
 	sc->sc_if.if_ioctl = gre_ioctl;
+	sc->sc_if.if_rtrequest = p2p_rtrequest;
 	sc->sc_if.if_collisions = 0;
 	sc->sc_if.if_ierrors = 0;
 	sc->sc_if.if_oerrors = 0;
@@ -436,7 +437,6 @@ gre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 
 	struct ifreq *ifr = (struct ifreq *)data;
-	struct ifaddr *ifa = (struct ifaddr *)data;
 	struct if_laddrreq *lifr = (struct if_laddrreq *)data;
 	struct ifkalivereq *ikar = (struct ifkalivereq *)data;
 	struct gre_softc *sc = ifp->if_softc;
@@ -450,7 +450,6 @@ gre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	switch(cmd) {
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
-		ifa->ifa_rtrequest = p2p_rtrequest;
 		break;
 	case SIOCSIFDSTADDR:
 		break;

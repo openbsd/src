@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.176 2015/10/22 18:14:53 mpi Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.177 2015/10/25 11:58:11 mpi Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -137,11 +137,10 @@ arptimer(void *arg)
 }
 
 void
-arp_rtrequest(int req, struct rtentry *rt)
+arp_rtrequest(struct ifnet *ifp, int req, struct rtentry *rt)
 {
 	struct sockaddr *gate = rt->rt_gateway;
 	struct llinfo_arp *la = (struct llinfo_arp *)rt->rt_llinfo;
-	struct ifnet *ifp = rt->rt_ifp;
 	struct ifaddr *ifa;
 	struct mbuf *m;
 
@@ -821,7 +820,6 @@ arpproxy(struct in_addr in, unsigned int rtableid)
 void
 arp_ifinit(struct arpcom *ac, struct ifaddr *ifa)
 {
-	ifa->ifa_rtrequest = arp_rtrequest;
 }
 
 /*

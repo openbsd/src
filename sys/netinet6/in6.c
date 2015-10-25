@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.175 2015/09/12 20:50:17 mpi Exp $	*/
+/*	$OpenBSD: in6.c,v 1.176 2015/10/25 11:58:11 mpi Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -1261,14 +1261,8 @@ in6_ifinit(struct ifnet *ifp, struct in6_ifaddr *ia6, int newhost)
 		ia6->ia_flags |= IFA_ROUTE;
 	}
 
-	/* Add ownaddr as loopback rtentry, if necessary (ex. on p2p link). */
-	if (newhost) {
-		/* set the rtrequest function to create llinfo */
-		if ((ifp->if_flags & (IFF_LOOPBACK | IFF_POINTOPOINT)) == 0)
-			ia6->ia_ifa.ifa_rtrequest = nd6_rtrequest;
-
+	if (newhost)
 		rt_ifa_addlocal(&(ia6->ia_ifa));
-	}
 
 	return (error);
 }

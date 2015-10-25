@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pppx.c,v 1.43 2015/09/06 12:59:20 kettenis Exp $ */
+/*	$OpenBSD: if_pppx.c,v 1.44 2015/10/25 11:58:11 mpi Exp $ */
 
 /*
  * Copyright (c) 2010 Claudio Jeker <claudio@openbsd.org>
@@ -832,6 +832,7 @@ pppx_add_session(struct pppx_dev *pxd, struct pipex_session_req *req)
 	ifp->if_start = pppx_if_start;
 	ifp->if_output = pppx_if_output;
 	ifp->if_ioctl = pppx_if_ioctl;
+	ifp->if_rtrequest = p2p_rtrequest;
 	ifp->if_type = IFT_PPP;
 	IFQ_SET_MAXLEN(&ifp->if_snd, 1);
 	IFQ_SET_READY(&ifp->if_snd);
@@ -1069,12 +1070,10 @@ pppx_if_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr)
 {
 	struct pppx_if *pxi = (struct pppx_if *)ifp->if_softc;
 	struct ifreq *ifr = (struct ifreq *)addr;
-	struct ifaddr *ifa = (struct ifaddr *)addr;
 	int error = 0;
 
 	switch (cmd) {
 	case SIOCSIFADDR:
-		ifa->ifa_rtrequest = p2p_rtrequest;
 		break;
 
 	case SIOCSIFFLAGS:

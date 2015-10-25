@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gif.c,v 1.80 2015/09/28 08:32:05 mpi Exp $	*/
+/*	$OpenBSD: if_gif.c,v 1.81 2015/10/25 11:58:11 mpi Exp $	*/
 /*	$KAME: if_gif.c,v 1.43 2001/02/20 08:51:07 itojun Exp $	*/
 
 /*
@@ -120,6 +120,7 @@ gif_clone_create(struct if_clone *ifc, int unit)
 	sc->gif_if.if_ioctl  = gif_ioctl;
 	sc->gif_if.if_start  = gif_start;
 	sc->gif_if.if_output = gif_output;
+	sc->gif_if.if_rtrequest = p2p_rtrequest;
 	sc->gif_if.if_type   = IFT_GIF;
 	IFQ_SET_MAXLEN(&sc->gif_if.if_snd, IFQ_MAXLEN);
 	IFQ_SET_READY(&sc->gif_if.if_snd);
@@ -326,7 +327,6 @@ gif_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct gif_softc *sc  = (struct gif_softc*)ifp;
 	struct ifreq     *ifr = (struct ifreq *)data;
-	struct ifaddr	 *ifa = (struct ifaddr *)data;
 	int error = 0, size;
 	struct sockaddr *dst, *src;
 	struct sockaddr *sa;
@@ -335,7 +335,6 @@ gif_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 	switch (cmd) {
 	case SIOCSIFADDR:
-		ifa->ifa_rtrequest = p2p_rtrequest;
 		break;
 
 	case SIOCSIFDSTADDR:

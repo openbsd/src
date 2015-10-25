@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_rtr.c,v 1.127 2015/10/24 16:08:48 mpi Exp $	*/
+/*	$OpenBSD: nd6_rtr.c,v 1.128 2015/10/25 11:58:11 mpi Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.97 2001/02/07 11:09:13 itojun Exp $	*/
 
 /*
@@ -1789,10 +1789,6 @@ nd6_prefix_onlink(struct nd_prefix *pr)
 		return (0);
 	}
 
-	/*
-	 * in6_ifinit() sets nd6_rtrequest to ifa_rtrequest for all ifaddrs.
-	 * ifa->ifa_rtrequest = nd6_rtrequest;
-	 */
 	bzero(&mask6, sizeof(mask6));
 	mask6.sin6_len = sizeof(mask6);
 	mask6.sin6_addr = pr->ndpr_mask;
