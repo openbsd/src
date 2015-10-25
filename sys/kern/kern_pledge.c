@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.71 2015/10/25 10:30:58 deraadt Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.72 2015/10/25 11:09:28 semarie Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -557,11 +557,30 @@ pledge_namei(struct proc *p, char *origpath)
 	    (p->p_p->ps_pledge & PLEDGE_EXEC))
 		return (0);
 
+	/* Whitelisted read/write paths */
+	switch (p->p_pledge_syscall) {
+	case SYS_open:
+		/* daemon(3) or other such functions */
+		if ((p->p_pledgenote & ~(TMN_RPATH | TMN_WPATH)) == 0 &&
+		    strcmp(path, "/dev/null") == 0) {
+			return (0);
+		}
+
+		/* readpassphrase(3), getpw*(3) */
+		if ((p->p_p->ps_pledge & (PLEDGE_TTY | PLEDGE_GETPW)) &&
+		    (p->p_pledgenote & ~(TMN_RPATH | TMN_WPATH)) == 0 &&
+		    strcmp(path, "/dev/tty") == 0) {
+			return (0);
+		}
+		break;
+	}
+
+	/* ensure PLEDGE_WPATH request for doing write */
 	if ((p->p_pledgenote & TMN_WPATH) &&
 	    (p->p_p->ps_pledge & PLEDGE_WPATH) == 0)
 		return (pledge_fail(p, EPERM, PLEDGE_WPATH));
 
-	/* Read-only paths used occasionally by libc */
+	/* Whitelisted read-only paths */
 	switch (p->p_pledge_syscall) {
 	case SYS_access:
 		/* tzset() needs this. */
@@ -570,12 +589,6 @@ pledge_namei(struct proc *p, char *origpath)
 			return (0);
 		break;
 	case SYS_open:
-		/* daemon(3) or other such functions */
-		if ((p->p_pledgenote & ~(TMN_RPATH | TMN_WPATH)) == 0 &&
-		    strcmp(path, "/dev/null") == 0) {
-			return (0);
-		}
-
 		/* getpw* and friends need a few files */
 		if ((p->p_pledgenote == TMN_RPATH) &&
 		    (p->p_p->ps_pledge & PLEDGE_GETPW)) {
@@ -585,13 +598,6 @@ pledge_namei(struct proc *p, char *origpath)
 				return (0);
 			if (strcmp(path, "/etc/group") == 0)
 				return (0);
-		}
-
-		/* "YP server for domain %s not responding, still trying" */
-		if ((p->p_p->ps_pledge & PLEDGE_GETPW) &&
-		    (p->p_pledgenote & ~(TMN_RPATH | TMN_WPATH)) == 0 &&
-		    strcmp(path, "/dev/tty") == 0) {
-			return (0);
 		}
 
 		/* DNS needs /etc/{resolv.conf,hosts,services}. */
@@ -632,12 +638,6 @@ pledge_namei(struct proc *p, char *origpath)
 		    strcmp(path + strlen(path) - 9, "/libc.cat") == 0)
 			return (0);
 
-		/* Allow opening r/w on /dev/tty when "tty" is specified. */
-		if ((p->p_p->ps_pledge & PLEDGE_TTY) &&
-		    (p->p_pledgenote & ~(TMN_RPATH | TMN_WPATH)) == 0 &&
-		    strcmp(path, "/dev/tty") == 0) {
-			return (0);
-		}
 		break;
 	case SYS_readlink:
 		/* Allow /etc/malloc.conf for malloc(3). */
