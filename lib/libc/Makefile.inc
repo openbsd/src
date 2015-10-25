@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.25 2015/09/10 18:13:46 guenther Exp $
+#	$OpenBSD: Makefile.inc,v 1.26 2015/10/25 10:22:09 bluhm Exp $
 #
 # This file contains make rules used to build libc
 #
@@ -66,5 +66,3 @@ AINC+=  -nostdinc -idirafter ${DESTDIR}/usr/include
 .endif
 
 ${OBJS} ${GOBJS} ${POBJS} ${SOBJS} ${DOBJS}: ${LIBCSRCDIR}/include/namespace.h
-
-CFLAGS+=-DNLS

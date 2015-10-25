@@ -1,8 +1,4 @@
-#	$OpenBSD: Makefile,v 1.36 2015/08/29 06:08:49 deraadt Exp $
-#
-# The NLS (message catalog) functions are always in libc.  To choose that
-# strerror(), perror(), strsignal(), psignal(), etc. actually call the NLS
-# functions, put -DNLS on the CFLAGS line below.
+#	$OpenBSD: Makefile,v 1.37 2015/10/25 10:22:09 bluhm Exp $
 #
 # The YP functions are always in libc. To choose that getpwent() and friends
 # actually call the YP functions, put -DYP on the CFLAGS line below.
@@ -22,12 +18,6 @@ SYMBOL_LISTS=	${LIBCSRCDIR}/Symbols.list \
 
 LIBCSRCDIR=${.CURDIR}
 .include "${LIBCSRCDIR}/Makefile.inc"
-
-NLS= 	C.msg Pig.msg da.ISO8859-1.msg da.UTF-8.msg de.ISO8859-1.msg \
-	de.UTF-8.msg es.ISO8859-1.msg es.UTF-8.msg fi.ISO8859-1.msg \
-	fi.UTF-8.msg fr.ISO8859-1.msg fr.UTF-8.msg it.UTF-8.msg \
-	nl.ISO8859-1.msg nl.UTF-8.msg no.ISO8859-1.msg no.UTF-8.msg \
-	ru.KOI8-R.msg ru.UTF-8.msg sv.ISO8859-1.msg sv.UTF-8.msg
 
 all: tags
 tags: ${SRCS}
