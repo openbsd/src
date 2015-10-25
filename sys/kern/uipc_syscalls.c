@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.117 2015/10/20 18:04:03 deraadt Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.118 2015/10/25 17:45:29 deraadt Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -943,7 +943,7 @@ sys_setsockopt(struct proc *p, void *v, register_t *retval)
 
 	if ((error = getsock(p, SCARG(uap, s), &fp)) != 0)
 		return (error);
-	error = pledge_sockopt_check(p, SCARG(uap, level), SCARG(uap, name));
+	error = pledge_sockopt_check(p, 1, SCARG(uap, level), SCARG(uap, name));
 	if (error) {
 		error = pledge_fail(p, error, PLEDGE_INET);
 		goto bad;
@@ -999,7 +999,7 @@ sys_getsockopt(struct proc *p, void *v, register_t *retval)
 
 	if ((error = getsock(p, SCARG(uap, s), &fp)) != 0)
 		return (error);
-	error = pledge_sockopt_check(p, SCARG(uap, level), SCARG(uap, name));
+	error = pledge_sockopt_check(p, 0, SCARG(uap, level), SCARG(uap, name));
 	if (error) {
 		error = pledge_fail(p, error, PLEDGE_INET);
 		goto out;

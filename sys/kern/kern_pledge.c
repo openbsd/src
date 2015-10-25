@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.72 2015/10/25 11:09:28 semarie Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.73 2015/10/25 17:45:29 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -1141,7 +1141,7 @@ pledge_ioctl_check(struct proc *p, long com, void *v)
 }
 
 int
-pledge_sockopt_check(struct proc *p, int level, int optname)
+pledge_sockopt_check(struct proc *p, int set, int level, int optname)
 {
 	if ((p->p_p->ps_flags & PS_PLEDGE) == 0)
 		return (0);
@@ -1149,12 +1149,12 @@ pledge_sockopt_check(struct proc *p, int level, int optname)
 	/* Always allow these, which are too common to reject */
 	switch (level) {
 	case SOL_SOCKET:
-	        switch (optname) {
-	        case SO_RCVBUF:
+		switch (optname) {
+		case SO_RCVBUF:
 		case SO_ERROR:
-	                return 0;
-	        }
-	        break;
+			return 0;
+		}
+		break;
 	}
 
 	if ((p->p_p->ps_pledge & (PLEDGE_INET|PLEDGE_UNIX|PLEDGE_DNS)) == 0)
@@ -1162,11 +1162,11 @@ pledge_sockopt_check(struct proc *p, int level, int optname)
 	/* In use by some service libraries */
 	switch (level) {
 	case SOL_SOCKET:
-	        switch (optname) {
-	        case SO_TIMESTAMP:
-	                return 0;
-	        }
-	        break;
+		switch (optname) {
+		case SO_TIMESTAMP:
+			return 0;
+		}
+		break;
 	}
 
 	if ((p->p_p->ps_pledge & (PLEDGE_INET|PLEDGE_UNIX)) == 0)
@@ -1196,7 +1196,7 @@ pledge_sockopt_check(struct proc *p, int level, int optname)
 	case IPPROTO_IP:
 		switch (optname) {
 		case IP_OPTIONS:
-			if (p->p_pledge_syscall == SYS_getsockopt)
+			if (!set)
 				return (0);
 			break;
 		case IP_TOS:
