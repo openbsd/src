@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bm.c,v 1.35 2015/08/24 16:38:43 mpi Exp $	*/
+/*	$OpenBSD: if_bm.c,v 1.36 2015/10/25 13:22:09 mpi Exp $	*/
 /*	$NetBSD: if_bm.c,v 1.1 1999/01/01 01:27:52 tsubai Exp $	*/
 
 /*-
@@ -740,7 +740,6 @@ int
 bmac_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct bmac_softc *sc = ifp->if_softc;
-	struct ifaddr *ifa = (struct ifaddr *)data;
 	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
 
@@ -749,16 +748,7 @@ bmac_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	switch (cmd) {
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
-
-		switch (ifa->ifa_addr->sa_family) {
-		case AF_INET:
-			bmac_init(sc);
-			arp_ifinit(&sc->arpcom, ifa);
-			break;
-		default:
-			bmac_init(sc);
-			break;
-		}
+		bmac_init(sc);
 		break;
 
 	case SIOCSIFFLAGS:

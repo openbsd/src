@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnet.c,v 1.46 2015/06/24 09:40:53 mpi Exp $	*/
+/*	$OpenBSD: vnet.c,v 1.47 2015/10/25 13:22:09 mpi Exp $	*/
 /*
  * Copyright (c) 2009, 2015 Mark Kettenis
  *
@@ -1243,7 +1243,6 @@ int
 vnet_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct vnet_softc *sc = ifp->if_softc;
-	struct ifaddr *ifa = (struct ifaddr *)data;
 	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
 
@@ -1252,8 +1251,6 @@ vnet_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	switch (cmd) {
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
-		if (ifa->ifa_addr->sa_family == AF_INET)
-			arp_ifinit(&sc->sc_ac, ifa);
 		/* FALLTHROUGH */
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP) {

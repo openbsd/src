@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iec.c,v 1.15 2015/09/18 11:15:20 visa Exp $	*/
+/*	$OpenBSD: if_iec.c,v 1.16 2015/10/25 13:22:09 mpi Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -1016,7 +1016,6 @@ iec_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct iec_softc *sc = ifp->if_softc;
 	struct ifreq *ifr = (struct ifreq *)data;
-	struct ifaddr *ifa = (struct ifaddr *)data;
 	int s, error = 0;
 
 	s = splnet();
@@ -1026,8 +1025,6 @@ iec_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		ifp->if_flags |= IFF_UP;
 		if (!(ifp->if_flags & IFF_RUNNING))
 			iec_init(ifp);
-		if (ifa->ifa_addr->sa_family == AF_INET)
-			arp_ifinit(&sc->sc_ac, ifa);
 		break;
 
 	case SIOCSIFFLAGS:

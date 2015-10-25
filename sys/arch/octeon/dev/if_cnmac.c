@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cnmac.c,v 1.26 2015/10/24 05:35:42 visa Exp $	*/
+/*	$OpenBSD: if_cnmac.c,v 1.27 2015/10/25 13:22:09 mpi Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -702,7 +702,6 @@ int
 octeon_eth_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct octeon_eth_softc *sc = ifp->if_softc;
-	struct ifaddr *ifa = (struct ifaddr *)data;
 	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
 
@@ -713,8 +712,6 @@ octeon_eth_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		ifp->if_flags |= IFF_UP;
 		if (!(ifp->if_flags & IFF_RUNNING))
 			octeon_eth_init(ifp);
-		if (ifa->ifa_addr->sa_family == AF_INET)
-			arp_ifinit(&sc->sc_arpcom, ifa);
 		break;
 
 	case SIOCSIFFLAGS:

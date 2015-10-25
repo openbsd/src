@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mec.c,v 1.30 2015/06/24 09:40:53 mpi Exp $ */
+/*	$OpenBSD: if_mec.c,v 1.31 2015/10/25 13:22:09 mpi Exp $ */
 /*	$NetBSD: if_mec_mace.c,v 1.5 2004/08/01 06:36:36 tsutsui Exp $ */
 
 /*
@@ -1026,7 +1026,6 @@ mec_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct mec_softc *sc = ifp->if_softc;
 	struct ifreq *ifr = (struct ifreq *)data;
-	struct ifaddr *ifa = (struct ifaddr *)data;
 	int s, error = 0;
 
 	s = splnet();
@@ -1036,8 +1035,6 @@ mec_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		ifp->if_flags |= IFF_UP;
 		if (!(ifp->if_flags & IFF_RUNNING))
 			mec_init(ifp);
-		if (ifa->ifa_addr->sa_family == AF_INET)
-			arp_ifinit(&sc->sc_ac, ifa);
 		break;
 
 	case SIOCSIFFLAGS:
