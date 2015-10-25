@@ -1,4 +1,4 @@
-/*	$OpenBSD: route6d.c,v 1.70 2015/10/18 14:35:36 jca Exp $	*/
+/*	$OpenBSD: route6d.c,v 1.71 2015/10/25 22:38:48 jca Exp $	*/
 /*	$KAME: route6d.c,v 1.111 2006/10/25 06:38:13 jinmei Exp $	*/
 
 /*
@@ -371,8 +371,6 @@ main(int argc, char *argv[])
 	krtread(0);
 	if (dflag)
 		ifrtdump(0);
-
-	pidfile(NULL);
 
 	if ((ripbuf = malloc(RIP6_MAXMTU)) == NULL) {
 		fatal("malloc");
