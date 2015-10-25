@@ -1,4 +1,4 @@
-/*	$OpenBSD: commands.c,v 1.72 2015/10/25 14:11:37 jca Exp $	*/
+/*	$OpenBSD: commands.c,v 1.73 2015/10/25 14:42:02 jca Exp $	*/
 /*	$NetBSD: commands.c,v 1.14 1996/03/24 22:03:48 jtk Exp $	*/
 
 /*
@@ -1848,14 +1848,9 @@ int
 tn(int argc, char *argv[])
 {
     struct addrinfo hints, *res, *res0;
-    int error;
-    struct sockaddr_in sin;
     char *cmd, *hostp = 0, *portp = 0, *user = 0, *aliasp = 0;
-    int retry;
+    int error, retry;
     const int niflags = NI_NUMERICHOST;
-
-    /* clear the socket address prior to use */
-    memset(&sin, 0, sizeof(sin));
 
     if (connected) {
 	printf("?Already connected to %s\r\n", hostname);
