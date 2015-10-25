@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.132 2015/10/25 12:47:26 florian Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.133 2015/10/25 14:43:48 florian Exp $	*/
 /*	$KAME: ping6.c,v 1.163 2002/10/25 02:19:06 itojun Exp $	*/
 
 /*
@@ -233,7 +233,7 @@ main(int argc, char *argv[])
 	int ch, i, maxsize, packlen, preload, optval, error;
 	socklen_t maxsizelen;
 	u_char *datap, *packet;
-	char *e, *target, *gateway = NULL;
+	char *e, *target;
 	const char *errstr;
 	int ip6optlen = 0;
 	struct cmsghdr *scmsgp = NULL;
@@ -254,7 +254,7 @@ main(int argc, char *argv[])
 	preload = 0;
 	datap = &outpack[ICMP6ECHOLEN + ICMP6ECHOTMLEN];
 	while ((ch = getopt(argc, argv,
-	    "c:dEefg:Hh:I:i:Ll:mNnp:qS:s:V:vw:")) != -1) {
+	    "c:dEefHh:I:i:Ll:mNnp:qS:s:V:vw:")) != -1) {
 		switch (ch) {
 		case 'c':
 			npackets = strtonum(optarg, 0, INT_MAX, &errstr);
@@ -279,9 +279,6 @@ main(int argc, char *argv[])
 			}
 			options |= F_FLOOD;
 			setbuf(stdout, (char *)NULL);
-			break;
-		case 'g':
-			gateway = optarg;
 			break;
 		case 'H':
 			options |= F_HOSTNAME;
@@ -427,27 +424,6 @@ main(int argc, char *argv[])
 	if ((options & F_SRCADDR) &&
 	    bind(s, (struct sockaddr *)&src, sizeof(src)) != 0) {
 		err(1, "bind");
-	}
-
-	/* set the gateway (next hop) if specified */
-	if (gateway) {
-		memset(&hints, 0, sizeof(hints));
-		hints.ai_family = AF_INET6;
-		hints.ai_socktype = SOCK_RAW;
-		hints.ai_protocol = IPPROTO_ICMPV6;
-
-		error = getaddrinfo(gateway, NULL, &hints, &res0);
-		if (error)
-			errx(1, "gateway %s: %s", gateway, gai_strerror(error));
-
-		if (res0->ai_next && (options & F_VERBOSE))
-			warnx("gateway resolves to multiple addresses");
-
-		if (setsockopt(s, IPPROTO_IPV6, IPV6_NEXTHOP, res0->ai_addr,
-		    res0->ai_addrlen))
-			err(1, "setsockopt(IPV6_NEXTHOP)");
-
-		freeaddrinfo(res0);
 	}
 
 	/*
@@ -1658,7 +1634,7 @@ void
 usage(void)
 {
 	(void)fprintf(stderr,
-	    "usage: ping6 [-dEefHLmnqv] [-c count] [-g gateway] [-h hoplimit] "
+	    "usage: ping6 [-dEefHLmnqv] [-c count] [-h hoplimit] "
 	    "[-I sourceaddr]\n\t[-i wait] [-l preload] [-p pattern] "
 	    "[-s packetsize] [-V rtable]\n\t[-w maxwait] host\n");
 	exit(1);
