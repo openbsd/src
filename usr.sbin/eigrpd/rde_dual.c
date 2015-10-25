@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_dual.c,v 1.8 2015/10/25 00:39:14 renato Exp $ */
+/*	$OpenBSD: rde_dual.c,v 1.9 2015/10/25 00:42:02 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -328,13 +328,18 @@ eigrp_real_delay(uint32_t delay)
 uint32_t
 eigrp_composite_bandwidth(uint32_t bandwidth)
 {
-	return ((EIGRP_SCALING_FACTOR * (uint32_t)10000000) / bandwidth);
+	/* truncate before applying the scaling factor */
+	bandwidth = 10000000 / bandwidth;
+	return (EIGRP_SCALING_FACTOR * bandwidth);
 }
 
-/* the formula is the same but let's focus on keeping the code readable */
 uint32_t
 eigrp_real_bandwidth(uint32_t bandwidth)
 {
+	/*
+	 * apply the scaling factor before the division and only then truncate.
+	 * this is to keep consistent with what cisco does.
+	 */
 	return ((EIGRP_SCALING_FACTOR * (uint32_t)10000000) / bandwidth);
 }
 
