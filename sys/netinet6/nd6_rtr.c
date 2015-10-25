@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_rtr.c,v 1.128 2015/10/25 11:58:11 mpi Exp $	*/
+/*	$OpenBSD: nd6_rtr.c,v 1.129 2015/10/25 21:32:16 florian Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.97 2001/02/07 11:09:13 itojun Exp $	*/
 
 /*
@@ -314,11 +314,19 @@ void
 nd6_rs_attach(struct ifnet *ifp)
 {
 	if (!ISSET(ifp->if_xflags, IFXF_AUTOCONF6)) {
+		/*
+		 * We are being called from net/if.c, autoconf is not yet
+		 * enabled on the interface.
+		 */
 		nd6_rs_timeout_count++;
 		RS_LHCOOKIE(ifp) = hook_establish(ifp->if_linkstatehooks, 1,
 		    nd6_rs_dev_state, ifp);
 	}
 
+	/*
+	 * (re)send solicitation regardless if we are enableing autoconf
+	 * for the first time or if the link comes up
+	 */
 	nd6_rs_output_set_timo(ND6_RS_OUTPUT_QUICK_INTERVAL);
 }
 
