@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.h,v 1.38 2013/07/03 15:05:21 fgsch Exp $	*/
+/*	$OpenBSD: queue.h,v 1.39 2015/10/26 14:12:13 bluhm Exp $	*/
 /*	$NetBSD: queue.h,v 1.11 1996/05/16 05:17:14 mycroft Exp $	*/
 
 /*
@@ -157,8 +157,8 @@ struct {								\
 			curelm = curelm->field.sle_next;		\
 		curelm->field.sle_next =				\
 		    curelm->field.sle_next->field.sle_next;		\
-		_Q_INVALIDATE((elm)->field.sle_next);			\
 	}								\
+	_Q_INVALIDATE((elm)->field.sle_next);				\
 } while (0)
 
 /*
