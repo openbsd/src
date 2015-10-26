@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.159 2015/10/23 23:46:36 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.160 2015/10/26 17:17:06 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -369,6 +369,8 @@ server_client_check_mouse(struct client *c)
 			wp = window_get_active_at(s->curw->window, x, y);
 			if (wp != NULL)
 				where = PANE;
+			log_debug("mouse at %u,%u is on pane %%%u", x, y,
+			    wp->id);
 		}
 		if (where == NOWHERE)
 			return (KEYC_NONE);
