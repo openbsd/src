@@ -1,4 +1,4 @@
-/*	$OpenBSD: test_tty.c,v 1.2 2015/10/09 11:42:54 semarie Exp $ */
+/*	$OpenBSD: test_tty.c,v 1.3 2015/10/26 18:52:19 semarie Exp $ */
 /*
  * Copyright (c) 2015 Sebastien Marie <semarie@openbsd.org>
  *
@@ -35,8 +35,8 @@ test_request_tty()
 
 	/* TODO: get a tty */
 
-	/* tests that need tty+proc (malloc for self) */
-	if (pledge("tty proc malloc", NULL) == -1)
+	/* tests that need tty+proc (stdio for pledge(2) */
+	if (pledge("stdio tty proc", NULL) == -1)
 		_exit(errno);
 
 	/* TIOCSPGRP (tty+proc) */

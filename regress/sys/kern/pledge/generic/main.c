@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.5 2015/10/18 13:01:40 semarie Exp $ */
+/*	$OpenBSD: main.c,v 1.6 2015/10/26 18:52:19 semarie Exp $ */
 /*
  * Copyright (c) 2015 Sebastien Marie <semarie@openbsd.org>
  *
@@ -37,6 +37,7 @@
 
 #include "manager.h"
 
+void test_request_stdio(void);
 void test_request_tty(void);
 
 static void
@@ -59,39 +60,6 @@ test_kill()
 {
 	kill(0, SIGINT);
 }
-
-static void
-test_allowed_syscalls()
-{
-	clock_getres(CLOCK_MONOTONIC, NULL);
-	clock_gettime(CLOCK_MONOTONIC, NULL);
-	/* fchdir(); */
-	getdtablecount();
-	getegid();
-	geteuid();
-	getgid();
-	getgroups(0, NULL);
-	getitimer(ITIMER_REAL, NULL);
-	getlogin();
-	getpgid(0);
-	getpgrp();
-	getpid();
-	getppid();
-	/* getresgid(); */
-	/* getresuid(); */
-	{ struct rlimit rl; getrlimit(RLIMIT_CORE, &rl); }
-	getsid(0);
-	getthrid();
-	{ struct timeval tp; gettimeofday(&tp, NULL); }
-	getuid();
-	geteuid();
-	issetugid();
-	/* nanosleep(); */
-	/* sigreturn(); */
-	umask(0000);
-	/* wait4(); */
-}
-
 
 static void
 open_close(const char *filename)
@@ -263,37 +231,20 @@ main(int argc, char *argv[])
 	/* test coredump */
 	start_test(&ret, "abort", NULL, test_inet);
 
-	/* inet under inet is ok */
+	/* inet under inet is ok (stdio is needed of close(2)) */
+	start_test(&ret, "stdio", NULL, test_inet);
 	start_test(&ret, "inet", NULL, test_inet);
+	start_test(&ret, "stdio inet", NULL, test_inet);
 
-	/* kill under fattr is forbidden (don't have PLEDGE_SELF) */
+	/* kill under fattr is forbidden */
 	start_test(&ret, "fattr", NULL, test_kill);
 
 	/* kill under proc is allowed */
 	start_test(&ret, "proc", NULL, test_kill);
 
-	/* tests PLEDGE_SELF for permitted syscalls */
-	start_test(&ret, "malloc",  NULL, test_allowed_syscalls);
-	start_test(&ret, "rw",      NULL, test_allowed_syscalls);
-	start_test(&ret, "stdio",   NULL, test_allowed_syscalls);
-	start_test(&ret, "rpath",   NULL, test_allowed_syscalls);
-	start_test(&ret, "wpath",   NULL, test_allowed_syscalls);
-	start_test(&ret, "tmppath", NULL, test_allowed_syscalls);
-	start_test(&ret, "inet",    NULL, test_allowed_syscalls);
-	start_test(&ret, "unix",    NULL, test_allowed_syscalls);
-	start_test(&ret, "dns",     NULL, test_allowed_syscalls);
-	start_test(&ret, "getpw",   NULL, test_allowed_syscalls);
-
-	/* tests req without PLEDGE_SELF for "permitted syscalls" */
-	// XXX it is a documentation bug
-	start_test(&ret, "ioctl", NULL, test_allowed_syscalls);
-	start_test(&ret, "proc",  NULL, test_allowed_syscalls);
-	start_test(&ret, "cpath", NULL, test_allowed_syscalls);
-	start_test(&ret, "abort", NULL, test_allowed_syscalls);
-	start_test(&ret, "fattr", NULL, test_allowed_syscalls);
-
-	start_test(&ret, "rpath", NULL, test_rpath);
-	start_test(&ret, "wpath", NULL, test_wpath);
+	/* stdio for open(2) */
+	start_test(&ret, "stdio rpath", NULL, test_rpath);
+	start_test(&ret, "stdio wpath", NULL, test_wpath);
 	start_test(&ret, "rpath cpath", NULL, test_cpath);
 
 	/*
@@ -316,8 +267,6 @@ main(int argc, char *argv[])
 	 */
 	/* same request */
 	start_test(&ret, "stdio rpath", NULL, test_pledge);
-	/* same request (stdio = malloc rw) */
-	start_test(&ret, "malloc rw rpath", NULL, test_pledge);
 	/* reduce request */
 	start_test(&ret, "stdio rpath wpath", NULL, test_pledge);
 	/* reduce request (with same/other wpaths) */
@@ -326,14 +275,17 @@ main(int argc, char *argv[])
 	/* add request */
 	start_test(&ret, "stdio", NULL, test_pledge);
 	/* change request */
-	start_test(&ret, "unix", NULL, test_pledge);
+	start_test(&ret, "stdio unix", NULL, test_pledge);
 
 	/* test stat(2) */
 	start_test1(&ret, "stdio rpath", "/usr/share/man", test_stat);
 
 	/* mmap */
-	start_test1(&ret, "rpath malloc prot_exec", "/dev/zero", test_mmap);
-	start_test1(&ret, "rpath malloc", "/dev/zero", test_mmap);
+	start_test1(&ret, "stdio rpath prot_exec", "/dev/zero", test_mmap);
+	start_test1(&ret, "stdio rpath", "/dev/zero", test_mmap);
+
+	/* stdio */
+	start_test(&ret, NULL, NULL, test_request_stdio);
 
 	/* tty */
 	start_test(&ret, NULL, NULL, test_request_tty);
