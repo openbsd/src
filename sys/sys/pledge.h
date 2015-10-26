@@ -1,4 +1,4 @@
-/*	$OpenBSD: pledge.h,v 1.12 2015/10/25 20:39:54 deraadt Exp $	*/
+/*	$OpenBSD: pledge.h,v 1.13 2015/10/26 07:24:20 semarie Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -91,7 +91,7 @@ static struct {
 
 #ifdef _KERNEL
 
-int	pledge_check(struct proc *, int);
+int	pledge_check(struct proc *, int, int *);
 int	pledge_fail(struct proc *, int, int);
 int	pledge_namei(struct proc *, char *);
 void	pledge_aftersyscall(struct proc *, int, int);

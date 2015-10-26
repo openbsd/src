@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.74 2015/10/25 20:39:54 deraadt Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.75 2015/10/26 07:24:20 semarie Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -477,17 +477,24 @@ sys_pledge(struct proc *p, void *v, register_t *retval)
 }
 
 int
-pledge_check(struct proc *p, int code)
+pledge_check(struct proc *p, int code, int *tval)
 {
 	p->p_pledgenote = p->p_pledgeafter = 0;	/* XX optimise? */
 	p->p_pledge_syscall = code;
+	*tval = 0;
 
 	if (code < 0 || code > SYS_MAXSYSCALL - 1)
+		return (EINVAL);
+
+	if ((p->p_p->ps_pledge == 0) &&
+	    (code == SYS_exit || code == SYS_kbind))
 		return (0);
 
-	if (p->p_p->ps_pledge == 0)
-		return (code == SYS_exit || code == SYS_kbind);
-	return (p->p_p->ps_pledge & pledge_syscalls[code]);
+	if (p->p_p->ps_pledge & pledge_syscalls[code])
+		return (0);
+
+	*tval = pledge_syscalls[code];
+	return (EPERM);
 }
 
 int
