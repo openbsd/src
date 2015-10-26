@@ -2371,7 +2371,6 @@
 ./usr/sbin/relayd
 ./usr/sbin/repquota
 ./usr/sbin/revnetgroup
-./usr/sbin/rip6query
 ./usr/sbin/ripctl
 ./usr/sbin/ripd
 ./usr/sbin/rmgroup
@@ -2582,7 +2581,6 @@
 ./usr/share/mk/bsd.dep.mk
 ./usr/share/mk/bsd.lib.mk
 ./usr/share/mk/bsd.man.mk
-./usr/share/mk/bsd.nls.mk
 ./usr/share/mk/bsd.obj.mk
 ./usr/share/mk/bsd.own.mk
 ./usr/share/mk/bsd.port.arch.mk

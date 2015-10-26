@@ -2595,7 +2595,6 @@
 ./usr/share/man/man8/repquota.8
 ./usr/share/man/man8/restore.8
 ./usr/share/man/man8/revnetgroup.8
-./usr/share/man/man8/rip6query.8
 ./usr/share/man/man8/ripctl.8
 ./usr/share/man/man8/ripd.8
 ./usr/share/man/man8/rmgroup.8
