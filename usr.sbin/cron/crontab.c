@@ -1,4 +1,4 @@
-/*	$OpenBSD: crontab.c,v 1.73 2015/10/26 14:27:41 millert Exp $	*/
+/*	$OpenBSD: crontab.c,v 1.74 2015/10/26 15:50:06 millert Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -264,7 +264,6 @@ static void
 edit_cmd(void)
 {
 	char n[MAX_FNAME], q[MAX_TEMPSTR];
-	const char *tmpdir;
 	FILE *f;
 	int t;
 	struct stat statbuf, xstatbuf;
@@ -300,13 +299,8 @@ edit_cmd(void)
 	(void)signal(SIGINT, SIG_IGN);
 	(void)signal(SIGQUIT, SIG_IGN);
 
-	tmpdir = getenv("TMPDIR");
-	if (tmpdir == NULL || tmpdir[0] == '\0')
-		tmpdir = _PATH_TMP;
-	for (t = strlen(tmpdir); t != 0 && tmpdir[t - 1] == '/'; t--)
-		continue;
-	if (snprintf(Filename, sizeof Filename, "%.*s/crontab.XXXXXXXXXX",
-	    t, tmpdir) >= sizeof(Filename)) {
+	if (snprintf(Filename, sizeof Filename, "%scrontab.XXXXXXXXXX",
+	    _PATH_TMP) >= sizeof(Filename)) {
 		fprintf(stderr, "path too long\n");
 		goto fatal;
 	}
