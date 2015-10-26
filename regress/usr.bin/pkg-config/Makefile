@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.52 2015/10/11 11:47:21 jasper Exp $
+#	$OpenBSD: Makefile,v 1.53 2015/10/26 18:09:32 jasper Exp $
 
 REGRESS_TARGETS=cmp-vers1-1 \
 		cmp-vers1-2 \
@@ -63,6 +63,8 @@ REGRESS_TARGETS=cmp-vers1-1 \
 		whitespace-libs \
 		whitespace-linebreak \
 		whitespace-name \
+		whitespace-property-1 \
+		whitespace-property-2 \
 		quoting \
 		broken-require-1 \
 		broken-require-2 \
@@ -467,6 +469,18 @@ whitespace-name:
 	# Test whitespace in Name
 	@echo "Requested 'whitespace > 0.2.0' but version of Whitespace test is 0.0.0" > ${WANT}
 	@if ${VPCONFIG} "whitespace > 0.2.0"; then false; fi
+	@diff -u ${WANT} ${GOT}
+
+whitespace-property-1:
+	# Test lack of whitespace after property name
+	@echo "-I/usr/local/include" > ${WANT}
+	@${VPCONFIG} --cflags whitespace-prop-1
+	@diff -u ${WANT} ${GOT}
+
+whitespace-property-2:
+	# Test whitespace after property name
+	@echo "0.0.0" > ${WANT}
+	@${VPCONFIG} --modversion whitespace-prop-3
 	@diff -u ${WANT} ${GOT}
 
 quoting:
