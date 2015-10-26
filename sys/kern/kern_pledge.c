@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.76 2015/10/26 07:44:43 semarie Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.77 2015/10/26 11:11:45 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -169,9 +169,11 @@ const u_int pledge_syscalls[SYS_MAXSYSCALL] = {
 
 	[SYS_setuid] = PLEDGE_ID,
 	[SYS_seteuid] = PLEDGE_ID,
+	[SYS_setreuid] = PLEDGE_ID,
 	[SYS_setresuid] = PLEDGE_ID,
 	[SYS_setgid] = PLEDGE_ID,
 	[SYS_setegid] = PLEDGE_ID,
+	[SYS_setregid] = PLEDGE_ID,
 	[SYS_setresgid] = PLEDGE_ID,
 	[SYS_setgroups] = PLEDGE_ID,
 	[SYS_setlogin] = PLEDGE_ID,
