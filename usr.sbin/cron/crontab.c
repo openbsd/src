@@ -1,4 +1,4 @@
-/*	$OpenBSD: crontab.c,v 1.72 2015/10/06 14:58:37 tedu Exp $	*/
+/*	$OpenBSD: crontab.c,v 1.73 2015/10/26 14:27:41 millert Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -126,7 +126,7 @@ parse_args(int argc, char *argv[])
 	while (-1 != (argch = getopt(argc, argv, getoptargs))) {
 		switch (argch) {
 		case 'u':
-			if (getuid() != ROOT_UID) {
+			if (getuid() != 0) {
 				fprintf(stderr,
 					"must be privileged to use -u\n");
 				exit(EXIT_FAILURE);

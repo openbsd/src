@@ -1,4 +1,4 @@
-/*	$OpenBSD: entry.c,v 1.42 2015/10/06 14:58:37 tedu Exp $	*/
+/*	$OpenBSD: entry.c,v 1.43 2015/10/26 14:27:41 millert Exp $	*/
 
 /*
  * Copyright 1988,1990,1993,1994 by Paul Vixie
@@ -165,7 +165,7 @@ load_entry(FILE *file, void (*error_func)(const char *), struct passwd *pw,
 		if (ch == '*')
 			e->flags |= MIN_STAR;
 		ch = get_list(e->minute, FIRST_MINUTE, LAST_MINUTE,
-			      PPC_NULL, ch, file);
+			      NULL, ch, file);
 		if (ch == EOF) {
 			ecode = e_minute;
 			goto eof;
@@ -177,7 +177,7 @@ load_entry(FILE *file, void (*error_func)(const char *), struct passwd *pw,
 		if (ch == '*')
 			e->flags |= HR_STAR;
 		ch = get_list(e->hour, FIRST_HOUR, LAST_HOUR,
-			      PPC_NULL, ch, file);
+			      NULL, ch, file);
 		if (ch == EOF) {
 			ecode = e_hour;
 			goto eof;
@@ -189,7 +189,7 @@ load_entry(FILE *file, void (*error_func)(const char *), struct passwd *pw,
 		if (ch == '*')
 			e->flags |= DOM_STAR;
 		ch = get_list(e->dom, FIRST_DOM, LAST_DOM,
-			      PPC_NULL, ch, file);
+			      NULL, ch, file);
 		if (ch == EOF) {
 			ecode = e_dom;
 			goto eof;
@@ -462,7 +462,7 @@ get_range(bitstr_t *bits, int low, int high, const char *names[],
 		 * element id, it's a step size.  'low' is
 		 * sent as a 0 since there is no offset either.
 		 */
-		ch = get_number(&num3, 0, PPC_NULL, ch, file, ", \t\n");
+		ch = get_number(&num3, 0, NULL, ch, file, ", \t\n");
 		if (ch == EOF || num3 == 0)
 			return (EOF);
 	} else {

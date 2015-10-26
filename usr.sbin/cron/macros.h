@@ -1,4 +1,4 @@
-/*	$OpenBSD: macros.h,v 1.12 2015/10/06 14:58:37 tedu Exp $	*/
+/*	$OpenBSD: macros.h,v 1.13 2015/10/26 14:27:41 millert Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -20,7 +20,6 @@
 #define TRUE		1
 #define FALSE		0
 
-#define	INIT_PID	1	/* parent of orphans */
 #define READ_PIPE	0	/* which end of a pipe pair do you read? */
 #define WRITE_PIPE	1	/*   or write to? */
 #define	MAX_FNAME	100	/* max length of internally generated fn */
@@ -28,10 +27,6 @@
 #define	MAX_ENVSTR	1000	/* max length of envvar=value\0 strings */
 #define	MAX_TEMPSTR	100	/* obvious */
 #define	MAX_UNAME	(_PW_NAME_LEN+1)	/* max length of username, should be overkill */
-#define	ROOT_UID	0	/* don't change this, it really must be root */
-#define	ROOT_USER	"root"	/* ditto */
-
-#define	PPC_NULL	((const char **)NULL)
 
 #define	Skip_Blanks(c, f) \
 			while (c == '\t' || c == ' ') \

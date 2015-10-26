@@ -1,4 +1,4 @@
-/*	$OpenBSD: cron.c,v 1.55 2015/10/25 21:30:11 millert Exp $	*/
+/*	$OpenBSD: cron.c,v 1.56 2015/10/26 14:27:41 millert Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -77,7 +77,6 @@ main(int argc, char *argv[])
 	sact.sa_handler = SIG_IGN;
 	(void) sigaction(SIGPIPE, &sact, NULL);
 
-	set_cron_uid();
 	set_cron_cwd();
 
 	cronSock = open_socket();

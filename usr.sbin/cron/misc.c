@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.58 2015/10/25 21:30:11 millert Exp $	*/
+/*	$OpenBSD: misc.c,v 1.59 2015/10/26 14:27:41 millert Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -45,15 +45,6 @@ strcmp_until(const char *left, const char *right, char until)
 		return (0);
 	}
 	return (*left - *right);
-}
-
-void
-set_cron_uid(void)
-{
-	if (seteuid(ROOT_UID) < 0) {
-		perror("seteuid");
-		exit(EXIT_FAILURE);
-	}
 }
 
 void
@@ -261,7 +252,7 @@ allowed(const char *username, const char *allow_file, const char *deny_file)
 	FILE	*fp;
 	int	isallowed;
 
-	if (strcmp(username, ROOT_USER) == 0)
+	if (strcmp(username, "root") == 0)
 		return (TRUE);
 	isallowed = FALSE;
 	if ((fp = fopen(allow_file, "r")) != NULL) {

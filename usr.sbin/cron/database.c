@@ -1,4 +1,4 @@
-/*	$OpenBSD: database.c,v 1.26 2015/10/06 14:58:37 tedu Exp $	*/
+/*	$OpenBSD: database.c,v 1.27 2015/10/26 14:27:41 millert Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -68,7 +68,7 @@ load_database(cron_db *old_db)
 	new_db.head = new_db.tail = NULL;
 
 	if (syscron_stat.st_mtime) {
-		process_crontab(ROOT_USER, NULL, SYSCRONTAB, &syscron_stat,
+		process_crontab("root", NULL, SYSCRONTAB, &syscron_stat,
 				&new_db, old_db);
 	}
 
@@ -201,7 +201,7 @@ process_crontab(const char *uname, const char *fname, const char *tabname,
 			goto next_crontab;
 		}
 	}
-	if (statbuf->st_uid != ROOT_UID && (pw == NULL ||
+	if (statbuf->st_uid != 0 && (pw == NULL ||
 	    statbuf->st_uid != pw->pw_uid || strcmp(uname, pw->pw_name) != 0)) {
 		log_it(fname, getpid(), "WRONG FILE OWNER", tabname);
 		goto next_crontab;
