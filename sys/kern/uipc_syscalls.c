@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.119 2015/10/25 20:39:54 deraadt Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.120 2015/10/26 12:17:03 tedu Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -607,11 +607,6 @@ sendit(struct proc *p, int s, struct msghdr *mp, int flags, register_t *retsize)
 		return (error);
 	so = fp->f_data;
 
-	if (mp->msg_name && mp->msg_namelen && isdnssocket(so)) {
-		error = dns_portcheck(p, so, mp->msg_name, mp->msg_namelen);
-		if (error)
-			return (error);
-	}
 	error = pledge_sendit_check(p, mp->msg_name);
 	if (error) {
 		error = pledge_fail(p, error, PLEDGE_STDIO);
@@ -639,6 +634,12 @@ sendit(struct proc *p, int s, struct msghdr *mp, int flags, register_t *retsize)
 		    MT_SONAME);
 		if (error)
 			goto bad;
+		if (isdnssocket(so)) {
+			error = dns_portcheck(p, so, mtod(to, caddr_t),
+			    mp->msg_namelen);
+			if (error)
+				goto bad;
+		}
 #ifdef KTRACE
 		if (KTRPOINT(p, KTR_STRUCT))
 		 	ktrsockaddr(p, mtod(to, caddr_t), mp->msg_namelen);
