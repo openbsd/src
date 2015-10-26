@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.21 2015/06/17 03:48:21 deraadt Exp $	*/
+/*	$OpenBSD: extern.h,v 1.22 2015/10/26 15:01:15 naddy Exp $	*/
 /*	$NetBSD: extern.h,v 1.8 1996/10/31 23:50:54 christos Exp $	*/
 
 /*-
@@ -210,10 +210,6 @@ char	 *strsave(char *);
 char	 *strspl(char *, char *);
 void	  udvar(Char *);
 
-#ifndef	SHORT_STRINGS
-char	 *strend(char *);
-#endif
-
 /*
  * parse.c
  */
@@ -298,7 +294,6 @@ void *	Calloc(size_t, size_t);
 /*
  * str.c:
  */
-#ifdef SHORT_STRINGS
 size_t	  s_strlcpy(Char *, const Char *, size_t);
 size_t	  s_strlcat(Char *, const Char *, size_t);
 Char	 *s_strchr(Char *, int);
@@ -314,6 +309,5 @@ Char	 *str2short(char *);
 Char	**blk2short(char **);
 char	 *short2str(Char *);
 char	**short2blk(Char **);
-#endif /* SHORT_STRINGS */
 char	 *short2qstr(Char *);
 char	 *vis_str(Char *);

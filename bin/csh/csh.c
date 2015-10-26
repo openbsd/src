@@ -1,4 +1,4 @@
-/*	$OpenBSD: csh.c,v 1.30 2015/10/22 12:09:03 deraadt Exp $	*/
+/*	$OpenBSD: csh.c,v 1.31 2015/10/26 15:01:15 naddy Exp $	*/
 /*	$NetBSD: csh.c,v 1.14 1995/04/29 23:21:28 mycroft Exp $	*/
 
 /*-
@@ -156,7 +156,7 @@ main(int argc, char *argv[])
 	(void) time(&chktim);
 
     AsciiOnly = 1;
-#ifdef NLS
+
     (void) setlocale(LC_ALL, "");
 
     if (pledge("stdio rpath wpath cpath fattr getpw proc exec tty",
@@ -170,9 +170,6 @@ main(int argc, char *argv[])
 	    continue;
 	AsciiOnly = k > 0377;
     }
-#else
-    AsciiOnly = getenv("LANG") == NULL && getenv("LC_CTYPE") == NULL;
-#endif				/* NLS */
 
     /*
      * Move the descriptors to safe places. The variable didfds is 0 while we

@@ -1,4 +1,4 @@
-/*	$OpenBSD: str.c,v 1.16 2014/10/16 19:43:31 deraadt Exp $	*/
+/*	$OpenBSD: str.c,v 1.17 2015/10/26 15:01:15 naddy Exp $	*/
 /*	$NetBSD: str.c,v 1.6 1995/03/21 09:03:24 cgd Exp $	*/
 
 /*-
@@ -43,8 +43,6 @@
 
 #include "csh.h"
 #include "extern.h"
-
-#ifdef SHORT_STRINGS
 
 Char  **
 blk2short(char **src)
@@ -341,7 +339,6 @@ s_strstr(Char *s, Char *t)
     } while (*s++ != '\0');
     return (NULL);
 }
-#endif				/* SHORT_STRINGS */
 
 char   *
 short2qstr(Char *src)

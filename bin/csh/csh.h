@@ -1,4 +1,4 @@
-/*	$OpenBSD: csh.h,v 1.22 2015/06/17 03:48:21 deraadt Exp $	*/
+/*	$OpenBSD: csh.h,v 1.23 2015/10/26 15:01:15 naddy Exp $	*/
 /*	$NetBSD: csh.h,v 1.9 1995/03/21 09:02:40 cgd Exp $	*/
 
 /*-
@@ -57,15 +57,9 @@
 #define	xexit(n)	done(n)
 #endif
 
-#ifdef SHORT_STRINGS
 typedef short Char;
 
 #define SAVE(a) (Strsave(str2short(a)))
-#else
-typedef char Char;
-
-#define SAVE(a) (strsave(a))
-#endif
 
 /*
  * Make sure a variable is not stored in register a by taking its address
@@ -196,15 +190,8 @@ sig_t parterm;			/* Parents terminate catch */
  */
 #define	META		0200
 #define	ASCII		0177
-#ifdef SHORT_STRINGS
-#define	CHAR		0377
 #define	QUOTE 		0100000U /* 16nth char bit used for 'ing */
 #define	TRIM		0077777	/* Mask to strip quote bit */
-#else
-#define	CHAR		0177
-#define	QUOTE 		0200	/* Eighth char bit used for 'ing */
-#define	TRIM		0177	/* Mask to strip quote bit */
-#endif
 
 int     AsciiOnly;		/* If set only 7 bits is expected in characters */
 
@@ -475,25 +462,6 @@ Char    HISTSUB;		/* auto-substitute character */
 /*
  * strings.h:
  */
-#ifndef SHORT_STRINGS
-#define Strchr(a, b)		strchr(a, b)
-#define Strrchr(a, b)		strrchr(a, b)
-#define Strlcat(a, b, l)	strlcat(a, b, l)
-#define Strlcpy(a, b, l)	strlcpy(a, b, l)
-#define Strlen(a)		strlen(a)
-#define Strcmp(a, b)		strcmp(a, b)
-#define Strncmp(a, b, c)	strncmp(a, b, c)
-
-#define Strspl(a, b)		strspl(a, b)
-#define Strsave(a)		strsave(a)
-#define Strend(a)		strend(a)
-#define Strstr(a, b)		strstr(a, b)
-
-#define str2short(a) 		(a)
-#define blk2short(a) 		saveblk(a)
-#define short2blk(a) 		saveblk(a)
-#define short2str(a) 		strip(a)
-#else
 #define Strchr(a, b)		s_strchr(a, b)
 #define Strrchr(a, b) 		s_strrchr(a, b)
 #define Strlcat(a, b, l)	s_strlcat(a, b, l)
@@ -506,7 +474,6 @@ Char    HISTSUB;		/* auto-substitute character */
 #define Strsave(a)		s_strsave(a)
 #define Strend(a)		s_strend(a)
 #define Strstr(a, b)		s_strstr(a, b)
-#endif
 
 /*
  * setname is a macro to save space (see sh.err.c)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.15 2015/02/08 06:09:50 tedu Exp $	*/
+/*	$OpenBSD: misc.c,v 1.16 2015/10/26 15:01:15 naddy Exp $	*/
 /*	$NetBSD: misc.c,v 1.6 1995/03/21 09:03:09 cgd Exp $	*/
 
 /*-
@@ -157,31 +157,6 @@ strstr(char *s, char *t)
 
 #endif /* NOTUSED */
 
-#ifndef SHORT_STRINGS
-char   *
-strspl(char *cp, char *dp)
-{
-    char   *ep;
-    char *p, *q;
-
-    if (!cp)
-	cp = "";
-    if (!dp)
-	dp = "";
-    for (p = cp; *p++;)
-	continue;
-    for (q = dp; *q++;)
-	continue;
-    ep = xreallocarray(NULL, ((p - cp) + (q - dp) - 1), sizeof(char));
-    for (p = ep, q = cp; *p++ = *q++;)
-	continue;
-    for (p--, q = dp; *p++ = *q++;)
-	continue;
-    return (ep);
-}
-
-#endif
-
 Char  **
 blkspl(Char **up, Char **vp)
 {
@@ -322,19 +297,6 @@ copyblk(Char **v)
 
     return (blkcpy(nv, v));
 }
-
-#ifndef SHORT_STRINGS
-char   *
-strend(char *cp)
-{
-    if (!cp)
-	return (cp);
-    while (*cp)
-	cp++;
-    return (cp);
-}
-
-#endif /* SHORT_STRINGS */
 
 Char   *
 strip(Char *cp)

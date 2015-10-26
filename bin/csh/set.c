@@ -1,4 +1,4 @@
-/*	$OpenBSD: set.c,v 1.16 2015/09/29 20:10:41 guenther Exp $	*/
+/*	$OpenBSD: set.c,v 1.17 2015/10/26 15:01:15 naddy Exp $	*/
 /*	$NetBSD: set.c,v 1.8 1995/03/21 18:35:52 mycroft Exp $	*/
 
 /*-
@@ -32,9 +32,6 @@
 
 #include <sys/types.h>
 #include <stdlib.h>
-#ifndef SHORT_STRINGS
-#include <string.h>
-#endif /* SHORT_STRINGS */
 #include <stdarg.h>
 
 #include "csh.h"
