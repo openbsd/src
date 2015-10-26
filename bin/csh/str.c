@@ -1,4 +1,4 @@
-/*	$OpenBSD: str.c,v 1.17 2015/10/26 15:01:15 naddy Exp $	*/
+/*	$OpenBSD: str.c,v 1.18 2015/10/26 16:27:04 naddy Exp $	*/
 /*	$NetBSD: str.c,v 1.6 1995/03/21 09:03:24 cgd Exp $	*/
 
 /*-
@@ -399,10 +399,6 @@ vis_str(Char *cp)
 	sdst = xreallocarray(sdst, n, sizeof(char));
 	dstsize = n;
     }
-    /*
-     * XXX: When we are in AsciiOnly we want all characters >= 0200 to
-     * be encoded, but currently there is no way in vis to do that.
-     */
     (void) strnvis(sdst, short2str(cp), dstsize, VIS_NOSLASH);
     return (sdst);
 }

@@ -1,4 +1,4 @@
-/*    $OpenBSD: func.c,v 1.30 2015/10/26 15:01:15 naddy Exp $       */
+/*    $OpenBSD: func.c,v 1.31 2015/10/26 16:27:04 naddy Exp $       */
 /*    $NetBSD: func.c,v 1.11 1996/02/09 02:28:29 christos Exp $       */
 
 /*-
@@ -917,14 +917,6 @@ dosetenv(Char **v, struct command *t)
 	importpath(lp);
 	dohash(NULL, NULL);
     }
-    else if (eq(vp, STRLANG) || eq(vp, STRLC_CTYPE)) {
-	int     k;
-
-	(void) setlocale(LC_ALL, "");
-	for (k = 0200; k <= 0377 && !Isprint(k); k++)
-		continue;
-	AsciiOnly = k > 0377;
-    }
     xfree(lp);
 }
 
@@ -959,14 +951,6 @@ dounsetenv(Char **v, struct command *t)
 		if (!Gmatch(name, *v))
 		    continue;
 		maxi = 1;
-		if (eq(name, STRLANG) || eq(name, STRLC_CTYPE)) {
-		    int     k;
-
-		    (void) setlocale(LC_ALL, "");
-		    for (k = 0200; k <= 0377 && !Isprint(k); k++)
-			continue;
-		    AsciiOnly = k > 0377;
-		}
 		/*
 		 * Delete name, and start again cause the environment changes
 		 */

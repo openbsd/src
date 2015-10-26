@@ -1,4 +1,4 @@
-/*	$OpenBSD: char.c,v 1.5 2015/10/26 15:01:15 naddy Exp $	*/
+/*	$OpenBSD: char.c,v 1.6 2015/10/26 16:27:04 naddy Exp $	*/
 /*	$NetBSD: char.c,v 1.6 1995/03/21 09:02:26 cgd Exp $	*/
 
 /*-
@@ -130,101 +130,8 @@ unsigned short _cmap[256] = {
 	_META|_CMD,	0,		0,		_CTR,
 
 /****************************************************************/
-/* 128 - 255 The below is supposedly ISO 8859/1			*/
+/* 128 - 255							*/
 /****************************************************************/
-/*	(undef)		(undef)		(undef)		(undef)		*/
-	_CTR,		_CTR,		_CTR,		_CTR,
-
-/*	(undef)		(undef)		(undef)		(undef)		*/
-	_CTR,		_CTR,		_CTR,		_CTR,
-
-/*	(undef)		(undef)		(undef)		(undef)		*/
-	_CTR,		_CTR,		_CTR,		_CTR,
-
-/*	(undef)		(undef)		(undef)		(undef)		*/
-	_CTR,		_CTR,		_CTR,		_CTR,
-
-/*	(undef)		(undef)		(undef)		(undef)		*/
-	_CTR,		_CTR,		_CTR,		_CTR,
-
-/*	(undef)		(undef)		(undef)		(undef)		*/
-	_CTR,		_CTR,		_CTR,		_CTR,
-
-/*	(undef)		(undef)		(undef)		(undef)		*/
-	_CTR,		_CTR,		_CTR,		_CTR,
-
-/*	(undef)		(undef)		(undef)		(undef)		*/
-	_CTR,		_CTR,		_CTR,		_CTR,
-
-/*	nobreakspace	exclamdown	cent		sterling	*/
-	_SP,		0,		0,		0,
-
-/*	currency	yen		brokenbar	section		*/
-	0,		0,		0,		0,
-
-/*	diaeresis	copyright	ordfeminine	guillemotleft	*/
-	0,		0,		0,		0,
-
-/*	notsign		hyphen		registered	macron		*/
-	0,		0,		0,		0,
-
-/*	degree		plusminus	twosuperior	threesuperior	*/
-	0,		0,		0,		0,
-
-/*	acute		mu		paragraph	periodcentered	*/
-	0,		0,		0,		0,
-
-/*	cedilla		onesuperior	masculine	guillemotright	*/
-	0,		0,		0,		0,
-
-/*	onequarter	onehalf		threequarters	questiondown	*/
-	0,		0,		0,		0,
-
-/*	Agrave		Aacute		Acircumflex	Atilde		*/
-	_LET|_UP,	_LET|_UP,	_LET|_UP,	_LET|_UP,
-
-/*	Adiaeresis	Aring		AE		Ccedilla	*/
-	_LET|_UP,	_LET|_UP,	_LET|_UP,	_LET|_UP,
-
-/*	Egrave		Eacute		Ecircumflex	Ediaeresis	*/
-	_LET|_UP,	_LET|_UP,	_LET|_UP,	_LET|_UP,
-
-/*	Igrave		Iacute		Icircumflex	Idiaeresis	*/
-	_LET|_UP,	_LET|_UP,	_LET|_UP,	_LET|_UP,
-
-/*	ETH		Ntilde		Ograve		Oacute		*/
-	_LET|_UP,	_LET|_UP,	_LET|_UP,	_LET|_UP,
-
-/*	Ocircumflex	Otilde		Odiaeresis	multiply	*/
-	_LET|_UP,	_LET|_UP,	_LET|_UP,	0,
-
-/*	Ooblique	Ugrave		Uacute		Ucircumflex	*/
-	_LET|_UP,	_LET|_UP,	_LET|_UP,	_LET|_UP,
-
-/*	Udiaeresis	Yacute		THORN		ssharp		*/
-	_LET|_UP,	_LET|_UP,	_LET|_UP,	_LET|_LOW,
-
-/*	agrave		aacute		acircumflex	atilde		*/
-	_LET|_LOW,	_LET|_LOW,	_LET|_LOW,	_LET|_LOW,
-
-/*	adiaeresis	aring		ae		ccedilla	*/
-	_LET|_LOW,	_LET|_LOW,	_LET|_LOW,	_LET|_LOW,
-
-/*	egrave		eacute		ecircumflex	ediaeresis	*/
-	_LET|_LOW,	_LET|_LOW,	_LET|_LOW,	_LET|_LOW,
-
-/*	igrave		iacute		icircumflex	idiaeresis	*/
-	_LET|_LOW,	_LET|_LOW,	_LET|_LOW,	_LET|_LOW,
-
-/*	eth		ntilde		ograve		oacute		*/
-	_LET|_LOW,	_LET|_LOW,	_LET|_LOW,	_LET|_LOW,
-
-/*	ocircumflex	otilde		odiaeresis	division	*/
-	_LET|_LOW,	_LET|_LOW,	_LET|_LOW,	0,
-
-/*	oslash		ugrave		uacute		ucircumflex	*/
-	_LET|_LOW,	_LET|_LOW,	_LET|_LOW,	_LET|_LOW,
-
-/*	udiaeresis	yacute		thorn		ydiaeresis	*/
-	_LET|_LOW,	_LET|_LOW,	_LET|_LOW,	_LET|_LOW,
+/*	(undef)		...					*/
+	0,
 };

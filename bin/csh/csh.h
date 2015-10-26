@@ -1,4 +1,4 @@
-/*	$OpenBSD: csh.h,v 1.23 2015/10/26 15:01:15 naddy Exp $	*/
+/*	$OpenBSD: csh.h,v 1.24 2015/10/26 16:27:04 naddy Exp $	*/
 /*	$NetBSD: csh.h,v 1.9 1995/03/21 09:02:40 cgd Exp $	*/
 
 /*-
@@ -192,8 +192,6 @@ sig_t parterm;			/* Parents terminate catch */
 #define	ASCII		0177
 #define	QUOTE 		0100000U /* 16nth char bit used for 'ing */
 #define	TRIM		0077777	/* Mask to strip quote bit */
-
-int     AsciiOnly;		/* If set only 7 bits is expected in characters */
 
 /*
  * Each level of input has a buffered input structure.

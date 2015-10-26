@@ -1,4 +1,4 @@
-/*	$OpenBSD: csh.c,v 1.31 2015/10/26 15:01:15 naddy Exp $	*/
+/*	$OpenBSD: csh.c,v 1.32 2015/10/26 16:27:04 naddy Exp $	*/
 /*	$NetBSD: csh.c,v 1.14 1995/04/29 23:21:28 mycroft Exp $	*/
 
 /*-
@@ -155,21 +155,9 @@ main(int argc, char *argv[])
     if (loginsh)
 	(void) time(&chktim);
 
-    AsciiOnly = 1;
-
-    (void) setlocale(LC_ALL, "");
-
     if (pledge("stdio rpath wpath cpath fattr getpw proc exec tty",
 	NULL) == -1)
 	    perror("pledge");
-
-    {
-	int     k;
-
-	for (k = 0200; k <= 0377 && !Isprint(k); k++)
-	    continue;
-	AsciiOnly = k > 0377;
-    }
 
     /*
      * Move the descriptors to safe places. The variable didfds is 0 while we
@@ -1247,10 +1235,6 @@ vis_fputc(int ch, FILE *fp)
 
     if (ch & QUOTE)
 	return fputc(ch & TRIM, fp);
-    /*
-     * XXX: When we are in AsciiOnly we want all characters >= 0200 to
-     * be encoded, but currently there is no way in vis to do that.
-     */
     (void) vis(uenc, ch & TRIM, VIS_NOSLASH, 0);
     return fputs(uenc, fp);
 }

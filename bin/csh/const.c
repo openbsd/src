@@ -1,4 +1,4 @@
-/*	$OpenBSD: const.c,v 1.7 2015/06/17 03:48:21 deraadt Exp $	*/
+/*	$OpenBSD: const.c,v 1.8 2015/10/26 16:27:04 naddy Exp $	*/
 /*	$NetBSD: const.c,v 1.6 1995/03/21 09:02:31 cgd Exp $	*/
 
 /*-
@@ -39,8 +39,6 @@
 Char STR0[]		= { '0', '\0' };
 Char STR1[]		= { '1', '\0' };
 Char STRHOME[]		= { 'H', 'O', 'M', 'E', '\0' };
-Char STRLANG[]		= { 'L', 'A', 'N', 'G', '\0' };
-Char STRLC_CTYPE[]	= { 'L', 'C', '_', 'C', 'T', 'Y', 'P', 'E' ,'\0' };
 Char STRLOGNAME[]	= { 'L', 'O', 'G', 'N', 'A', 'M', 'E', '\0' };
 Char STRLbrace[]	= { '{', '\0' };
 Char STRLparen[]	= { '(', '\0' };
