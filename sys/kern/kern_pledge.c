@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.75 2015/10/26 07:24:20 semarie Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.76 2015/10/26 07:44:43 semarie Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -546,7 +546,7 @@ pledge_namei(struct proc *p, char *origpath)
 	/* chmod(2), chflags(2), ... */
 	if ((p->p_pledgenote & PLEDGE_FATTR) &&
 	    (p->p_p->ps_pledge & PLEDGE_FATTR) == 0) {
-		return (pledge_fail(p, EPERM, p->p_pledgenote));
+		return (pledge_fail(p, EPERM, PLEDGE_FATTR));
 	}
 
 	/* Detect what looks like a mkstemp(3) family operation */
@@ -822,7 +822,7 @@ pledge_recvfd_check(struct proc *p, struct file *fp)
 		break;
 	}
 	printf("recvfd type %d %s\n", fp->f_type, vp ? vtypes[vp->v_type] : "");
-	return pledge_fail(p, EPERM, PLEDGE_RECVFD);
+	return pledge_fail(p, EINVAL, PLEDGE_RECVFD);
 }
 
 /*
@@ -854,7 +854,7 @@ pledge_sendfd_check(struct proc *p, struct file *fp)
 		break;
 	}
 	printf("sendfd type %d %s\n", fp->f_type, vp ? vtypes[vp->v_type] : "");
-	return pledge_fail(p, EPERM, PLEDGE_SENDFD);
+	return pledge_fail(p, EINVAL, PLEDGE_SENDFD);
 }
 
 int
