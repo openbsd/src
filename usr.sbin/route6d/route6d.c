@@ -1,4 +1,4 @@
-/*	$OpenBSD: route6d.c,v 1.77 2015/10/25 23:53:35 jca Exp $	*/
+/*	$OpenBSD: route6d.c,v 1.78 2015/10/26 00:05:47 jca Exp $	*/
 /*	$KAME: route6d.c,v 1.111 2006/10/25 06:38:13 jinmei Exp $	*/
 
 /*
@@ -179,8 +179,6 @@ time_t	sup_trig_update = 0;
 
 FILE	*rtlog = NULL;
 
-int logopened = 0;
-
 static	int	seq = 0;
 
 volatile sig_atomic_t seenalrm;
@@ -215,7 +213,6 @@ const char *rtflags(struct rt_msghdr *);
 const char *ifflags(int);
 int ifrt(struct ifc *, int);
 void ifrt_p2p(struct ifc *, int);
-void applymask(struct in6_addr *, struct in6_addr *);
 void applyplen(struct in6_addr *, int);
 void ifrtdump(int);
 void ifdump(int);
@@ -334,7 +331,6 @@ main(int argc, char *argv[])
 	}
 
 	openlog(progname, LOG_NDELAY|LOG_PID, LOG_DAEMON);
-	logopened++;
 
 	if ((ripbuf = malloc(RIP6_MAXMTU)) == NULL)
 		fatal("malloc");
@@ -3160,17 +3156,6 @@ mask2len(const struct in6_addr *addr, int lenlim)
 		}
 	}
 	return i;
-}
-
-void
-applymask(struct in6_addr *addr, struct in6_addr *mask)
-{
-	int	i;
-	u_long	*p, *q;
-
-	p = (u_long *)addr; q = (u_long *)mask;
-	for (i = 0; i < 4; i++)
-		*p++ &= *q++;
 }
 
 static const u_char plent[8] = {
