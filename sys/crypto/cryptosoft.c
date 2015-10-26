@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptosoft.c,v 1.74 2015/08/31 18:13:27 deraadt Exp $	*/
+/*	$OpenBSD: cryptosoft.c,v 1.75 2015/10/26 17:22:50 mikeb Exp $	*/
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -590,11 +590,11 @@ swcr_authenc(struct cryptop *crp)
 		bcopy(crda->crd_esn, blk + 4, 4);
 		oskip = iskip + 4; /* offset output buffer blk by 8 */
 	}
-	for (i = iskip; i < crda->crd_len; i += blksz) {
-		len = MIN(crda->crd_len - i, blksz - oskip);
+	for (i = iskip; i < crda->crd_len; i += axf->hashsize) {
+		len = MIN(crda->crd_len - i, axf->hashsize - oskip);
 		COPYDATA(outtype, buf, crda->crd_skip + i, len, blk + oskip);
-		bzero(blk + len + oskip, blksz - len - oskip);
-		axf->Update(&ctx, blk, blksz);
+		bzero(blk + len + oskip, axf->hashsize - len - oskip);
+		axf->Update(&ctx, blk, axf->hashsize);
 		oskip = 0; /* reset initial output offset */
 	}
 
@@ -623,12 +623,12 @@ swcr_authenc(struct cryptop *crp)
 		case CRYPTO_AES_192_GMAC:
 		case CRYPTO_AES_256_GMAC:
 			/* length block */
-			bzero(blk, blksz);
+			bzero(blk, axf->hashsize);
 			blkp = (uint32_t *)blk + 1;
 			*blkp = htobe32(aadlen * 8);
 			blkp = (uint32_t *)blk + 3;
 			*blkp = htobe32(crde->crd_len * 8);
-			axf->Update(&ctx, blk, blksz);
+			axf->Update(&ctx, blk, axf->hashsize);
 			break;
 	}
 
