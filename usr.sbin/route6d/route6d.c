@@ -1,4 +1,4 @@
-/*	$OpenBSD: route6d.c,v 1.78 2015/10/26 00:05:47 jca Exp $	*/
+/*	$OpenBSD: route6d.c,v 1.79 2015/10/26 00:20:44 jca Exp $	*/
 /*	$KAME: route6d.c,v 1.111 2006/10/25 06:38:13 jinmei Exp $	*/
 
 /*
@@ -173,7 +173,6 @@ pid_t	pid;
 
 struct	sockaddr_storage ripsin;
 
-int	interval = 1;
 time_t	nextalarm = 0;
 time_t	sup_trig_update = 0;
 
@@ -627,11 +626,11 @@ init(void)
  * ripflush flushes the rip datagram stored in the rip buffer
  */
 static int nrt;
-static struct netinfo6 *np;
 
 void
 ripflush(struct ifc *ifcp, struct sockaddr_in6 *sin6)
 {
+	struct netinfo6 *np;
 	int i;
 	int error;
 
@@ -672,7 +671,7 @@ ripflush(struct ifc *ifcp, struct sockaddr_in6 *sin6)
 			ifcp->ifc_name, inet6_n2p(&ifcp->ifc_ripsin.sin6_addr));
 		ifcp->ifc_flags &= ~IFF_UP;	/* As if down for AF_INET6 */
 	}
-	nrt = 0; np = ripbuf->rip6_nets;
+	nrt = 0;
 }
 
 /*
@@ -681,6 +680,7 @@ ripflush(struct ifc *ifcp, struct sockaddr_in6 *sin6)
 void
 ripsend(struct ifc *ifcp, struct sockaddr_in6 *sin6, int flag)
 {
+	struct	netinfo6 *np;
 	struct	riprt *rrt;
 	struct	in6_addr *nh;	/* next hop */
 	int	maxrte;
@@ -3158,13 +3158,12 @@ mask2len(const struct in6_addr *addr, int lenlim)
 	return i;
 }
 
-static const u_char plent[8] = {
-	0x00, 0x80, 0xc0, 0xe0, 0xf0, 0xf8, 0xfc, 0xfe
-};
-
 void
 applyplen(struct in6_addr *ia, int plen)
 {
+	static const u_char plent[8] = {
+		0x00, 0x80, 0xc0, 0xe0, 0xf0, 0xf8, 0xfc, 0xfe
+	};
 	u_char	*p;
 	int	i;
 
@@ -3178,13 +3177,12 @@ applyplen(struct in6_addr *ia, int plen)
 	}
 }
 
-static const int pl2m[9] = {
-	0x00, 0x80, 0xc0, 0xe0, 0xf0, 0xf8, 0xfc, 0xfe, 0xff
-};
-
 struct in6_addr *
 plen2mask(int n)
 {
+	static const int pl2m[9] = {
+		0x00, 0x80, 0xc0, 0xe0, 0xf0, 0xf8, 0xfc, 0xfe, 0xff
+	};
 	static struct in6_addr ia;
 	u_char	*p;
 	int	i;
@@ -3238,6 +3236,7 @@ int
 ripinterval(int timer)
 {
 	double r = arc4random();
+	int interval;
 
 	interval = (int)(timer + timer * RIPRANDDEV * (r / UINT32_MAX - 0.5));
 	nextalarm = time(NULL) + interval;
