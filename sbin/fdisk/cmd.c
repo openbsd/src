@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.82 2015/04/02 18:00:55 krw Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.83 2015/10/26 15:08:26 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -16,6 +16,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <sys/param.h>
 #include <sys/types.h>
 #include <sys/fcntl.h>
 #include <sys/disklabel.h>
@@ -26,30 +27,53 @@
 #include <stdlib.h>
 #include <signal.h>
 #include <unistd.h>
+#include <uuid.h>
 
 #include "disk.h"
 #include "misc.h"
 #include "part.h"
 #include "mbr.h"
+#include "gpt.h"
 #include "user.h"
 #include "cmd.h"
 
 int reinited;
 
+/* Some helper functions for GPT handling. */
+int Xgedit(char *);
+int Xgsetpid(char *);
+
 int
 Xreinit(char *args, struct mbr *mbr)
 {
 	struct dos_mbr dos_mbr;
+	int dogpt;
+
+	if (strncasecmp(args, "gpt", 3) == 0)
+		dogpt = 1;
+	else if (strncasecmp(args, "mbr", 3) == 0)
+		dogpt = 0;
+	else if (strlen(args) > 0) {
+		printf("Unrecognized modifier '%s'\n", args);
+		return (CMD_CONT);
+	} else if (MBR_protective_mbr(&initial_mbr) == 0)
+		dogpt = 1;
+	else
+		dogpt = 0;
 
 	MBR_make(&initial_mbr, &dos_mbr);
 	MBR_parse(&dos_mbr, mbr->offset, mbr->reloffset, mbr);
 
-	MBR_init(mbr);
+	if (dogpt) {
+		MBR_init_GPT(mbr);
+		GPT_init();
+		GPT_print("s");
+	} else {
+		MBR_init(mbr);
+		MBR_print(mbr, "s");
+	}
 	reinited = 1;
 
-	/* Tell em we did something */
-	printf("In memory copy is initialized to:\n");
-	MBR_print(mbr, args);
 	printf("Use 'write' to update disk.\n");
 
 	return (CMD_DIRTY);
@@ -91,8 +115,9 @@ Xswap(char *args, struct mbr *mbr)
 {
 	const char *errstr;
 	char *from, *to;
-	int pf, pt;
+	int pf, pt, maxpn;
 	struct prt pp;
+	struct gpt_partition gg;
 
 	to = args;
 	from = strsep(&to, " \t");
@@ -102,12 +127,17 @@ Xswap(char *args, struct mbr *mbr)
 		return (CMD_CONT);
 	}
 
-	pf = strtonum(from, 0, 3, &errstr);
+	if (letoh64(gh.gh_sig) == GPTSIGNATURE)
+		maxpn = NGPTPARTITIONS - 1;
+	else
+		maxpn = NDOSPART - 1;
+
+	pf = strtonum(from, 0, maxpn, &errstr);
 	if (errstr) {
 		printf("partition number is %s: %s\n", errstr, from);
 		return (CMD_CONT);
 	}
-	pt = strtonum(to, 0, 3, &errstr);
+	pt = strtonum(to, 0, maxpn, &errstr);
 	if (errstr) {
 		printf("partition number is %s: %s\n", errstr, to);
 		return (CMD_CONT);
@@ -118,11 +148,59 @@ Xswap(char *args, struct mbr *mbr)
 		return (CMD_CONT);
 	}
 
-	pp = mbr->part[pt];
-	mbr->part[pt] = mbr->part[pf];
-	mbr->part[pf] = pp;
+	if (letoh64(gh.gh_sig) == GPTSIGNATURE) {
+		gg = gp[pt];
+		gp[pt] = gp[pf];
+		gp[pf] = gg;
+	} else {
+		pp = mbr->part[pt];
+		mbr->part[pt] = mbr->part[pf];
+		mbr->part[pf] = pp;
+	}
 
 	return (CMD_DIRTY);
+}
+
+int
+Xgedit(char *args)
+{
+	const char *errstr;
+	struct gpt_partition *gg;
+	char *name;
+	u_int64_t bs, ns;
+	int pn, ret;
+
+	pn = strtonum(args, 0, NGPTPARTITIONS - 1, &errstr);
+	if (errstr) {
+		printf("partition number is %s: %s\n", errstr, args);
+		return (CMD_CONT);
+	}
+	gg = &gp[pn];
+
+	/* Edit partition type */
+	ret = Xgsetpid(args);
+
+	/* Unused, so just zero out */
+	if (uuid_is_nil(&gg->gp_type, NULL)) {
+		memset(gg, 0, sizeof(struct gpt_partition));
+		printf("Partition %d is disabled.\n", pn);
+		return (ret);
+	}
+
+	/* Change table entry */
+	bs = getuint64("Partition offset", letoh64(gh.gh_lba_start),
+	    letoh64(gh.gh_lba_end));
+	ns = getuint64("Partition size", letoh64(gh.gh_lba_end) - bs + 1,
+	    letoh64(gh.gh_lba_end) - bs + 1);
+
+	gg->gp_lba_start = htole64(bs);
+	gg->gp_lba_end = htole64(bs + ns - 1);
+
+	/* Ask for partition name. */
+	name = ask_string("partition name", utf16le_to_string(gg->gp_name));
+	memcpy(gg->gp_name, string_to_utf16le(name), sizeof(gg->gp_name));
+
+	return (ret);
 }
 
 int
@@ -131,6 +209,9 @@ Xedit(char *args, struct mbr *mbr)
 	const char *errstr;
 	int pn, num, ret;
 	struct prt *pp;
+
+	if (letoh64(gh.gh_sig) == GPTSIGNATURE)
+		return (Xgedit(args));
 
 	pn = strtonum(args, 0, 3, &errstr);
 	if (errstr) {
@@ -187,11 +268,51 @@ Xedit(char *args, struct mbr *mbr)
 }
 
 int
+Xgsetpid(char *args)
+{
+	const char *errstr;
+	struct uuid guid;
+	struct gpt_partition *gg;
+	int pn, num, status;
+
+	pn = strtonum(args, 0, NGPTPARTITIONS - 1, &errstr);
+	if (errstr) {
+		printf("partition number is %s: %s\n", errstr, args);
+		return (CMD_CONT);
+	}
+	gg = &gp[pn];
+
+	/* Print out current table entry */
+	GPT_print_parthdr();
+	GPT_print_part(pn, "s");
+
+	/* Ask for partition type or GUID. */
+	num = ask_pid(0, &guid);
+	if (num <= 0xff)
+		guid = *(PRT_type_to_uuid(num));
+	uuid_enc_le(&gg->gp_type, &guid);
+
+	if (uuid_is_nil(&gg->gp_guid, NULL)) {
+		uuid_create(&guid, &status);
+		if (status != uuid_s_ok) {
+			printf("could not create guid for partition\n");
+			return (CMD_CONT);
+		}
+		uuid_enc_le(&gg->gp_guid, &guid);
+	}
+
+	return (CMD_DIRTY);
+}
+
+int
 Xsetpid(char *args, struct mbr *mbr)
 {
 	const char *errstr;
 	int pn, num;
 	struct prt *pp;
+
+	if (letoh64(gh.gh_sig) == GPTSIGNATURE)
+		return (Xgsetpid(args));
 
 	pn = strtonum(args, 0, 3, &errstr);
 	if (errstr) {
@@ -205,7 +326,7 @@ Xsetpid(char *args, struct mbr *mbr)
 	PRT_print(pn, pp, NULL);
 
 	/* Ask for MBR partition type */
-	num = ask_pid(pp->id, 0x01, 0xff);
+	num = ask_pid(pp->id, NULL);
 	if (num == pp->id)
 		return (CMD_CONT);
 
@@ -258,8 +379,10 @@ int
 Xprint(char *args, struct mbr *mbr)
 {
 
-	DISK_printgeometry(args);
-	MBR_print(mbr, args);
+	if (MBR_protective_mbr(mbr) == 0 && letoh64(gh.gh_sig) == GPTSIGNATURE)
+		GPT_print(args);
+	else
+		MBR_print(mbr, args);
 
 	return (CMD_CONT);
 }
@@ -291,9 +414,19 @@ Xwrite(char *args, struct mbr *mbr)
 		return (CMD_CONT);
 	}
 
-	/* Make sure GPT doesn't get in the way. */
-	if (reinited)
+	if (letoh64(gh.gh_sig) == GPTSIGNATURE) {
+		printf("Writing GPT.\n");
+		if (GPT_write(fd) == -1) {
+			int saved_errno = errno;
+			warn("error writing GPT");
+			close(fd);
+			errno = saved_errno;
+			return (CMD_CONT);
+		}
+	} else if (reinited) {
+		/* Make sure GPT doesn't get in the way. */
 		MBR_zapgpt(fd, &dos_mbr, DL_GETDSIZE(&dl) - 1);
+	}
 
 	/* Refresh in memory copy to reflect what was just written. */
 	MBR_parse(&dos_mbr, mbr->offset, mbr->reloffset, mbr);
@@ -324,10 +457,26 @@ Xexit(char *args, struct mbr *mbr)
 int
 Xhelp(char *args, struct mbr *mbr)
 {
+	char *mbrstr, *gpthelp;
 	int i;
 
-	for (i = 0; cmd_table[i].cmd != NULL; i++)
+	for (i = 0; cmd_table[i].cmd != NULL; i++) {
+		if (letoh64(gh.gh_sig) == GPTSIGNATURE) {
+			if (cmd_table[i].gpt == 0)
+				continue;
+			gpthelp = strdup(cmd_table[i].help);
+			mbrstr = strstr(gpthelp, "MBR");
+			if (mbrstr) {
+				memcpy(mbrstr, "GPT", 3);
+				printf("\t%s\t\t%s\n", cmd_table[i].cmd,
+				    gpthelp);
+				free(gpthelp);
+				continue;
+			}
+		}
 		printf("\t%s\t\t%s\n", cmd_table[i].cmd, cmd_table[i].help);
+	}
+
 	return (CMD_CONT);
 }
 
@@ -345,38 +494,57 @@ int
 Xflag(char *args, struct mbr *mbr)
 {
 	const char *errstr;
-	int i, pn = -1, val = -1;
+	int i, maxpn, pn = -1;
+	long long val = -1;
 	char *part, *flag;
 
 	flag = args;
 	part = strsep(&flag, " \t");
 
-	pn = strtonum(part, 0, 3, &errstr);
+	if (letoh64(gh.gh_sig) == GPTSIGNATURE)
+		maxpn = NGPTPARTITIONS - 1;
+	else
+		maxpn = NDOSPART - 1;
+
+	pn = strtonum(part, 0, maxpn, &errstr);
 	if (errstr) {
 		printf("partition number is %s: %s.\n", errstr, part);
 		return (CMD_CONT);
 	}
 
 	if (flag != NULL) {
-		val = (int)strtonum(flag, 0, 0xff, &errstr);
+		/* Set flag to value provided. */
+		if (letoh64(gh.gh_sig) == GPTSIGNATURE)
+			val = strtonum(flag, 0, LLONG_MAX, &errstr);
+		else
+			val = strtonum(flag, 0, 0xff, &errstr);
 		if (errstr) {
 			printf("flag value is %s: %s.\n", errstr, flag);
 			return (CMD_CONT);
 		}
-	}
-
-	if (val == -1) {
+		if (letoh64(gh.gh_sig) == GPTSIGNATURE)
+			gp[pn].gp_attrs = htole64(val);
+		else
+			mbr->part[pn].flag = val;
+		printf("Partition %d flag value set to 0x%llx.\n", pn, val);
+	} else {
 		/* Set active flag */
-		for (i = 0; i < 4; i++) {
-			if (i == pn)
-				mbr->part[i].flag = DOSACTIVE;
-			else
-				mbr->part[i].flag = 0x00;
+		if (letoh64(gh.gh_sig) == GPTSIGNATURE) {
+			for (i = 0; i < NGPTPARTITIONS; i++) {
+				if (i == pn)
+					gp[i].gp_attrs = htole64(GPTDOSACTIVE);
+				else
+					gp[i].gp_attrs = htole64(0);
+			}
+		} else {
+			for (i = 0; i < NDOSPART; i++) {
+				if (i == pn)
+					mbr->part[i].flag = DOSACTIVE;
+				else
+					mbr->part[i].flag = 0x00;
+			}
 		}
 		printf("Partition %d marked active.\n", pn);
-	} else {
-		mbr->part[pn].flag = val;
-		printf("Partition %d flag value set to 0x%x.\n", pn, val);
 	}
 
 	return (CMD_DIRTY);

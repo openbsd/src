@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdisk.c,v 1.78 2015/10/05 01:39:08 krw Exp $	*/
+/*	$OpenBSD: fdisk.c,v 1.79 2015/10/26 15:08:26 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -71,8 +71,8 @@ int
 main(int argc, char *argv[])
 {
 	ssize_t len;
-	int ch, fd;
-	int i_flag = 0, e_flag = 0, u_flag = 0;
+	int ch, fd, error;
+	int i_flag = 0, e_flag = 0, f_flag = 0, u_flag = 0;
 	int c_arg = 0, h_arg = 0, s_arg = 0;
 	u_int32_t l_arg = 0;
 	char *query;
@@ -97,6 +97,7 @@ main(int argc, char *argv[])
 			e_flag = 1;
 			break;
 		case 'f':
+			f_flag = 1;
 			mbrfile = optarg;
 			break;
 		case 'c':
@@ -148,18 +149,24 @@ main(int argc, char *argv[])
 	else
 		disk.name = argv[0];
 
-	if (g_flag != 0 && i_flag == 0) {
-		warnx("-g specified without -i");
-		usage();
-	}
+	/* Start with the disklabel geometry and get the sector size. */
+	DISK_getlabelgeometry();
 
 	if (b_arg > 0 && i_flag == 0) {
 		warnx("-b specified without -i");
 		usage();
 	}
 
-	/* Start with the disklabel geometry and get the sector size. */
-	DISK_getlabelgeometry();
+	if (g_flag != 0 && i_flag == 0) {
+		warnx("-g specified without -i");
+		usage();
+	}
+
+	/* Get the GPT if present. */
+	if (GPT_get_gpt()) {
+		memset(&gh, 0, sizeof(gh));
+		memset(&gp, 0, sizeof(gp));
+	}
 
 	if (c_arg | h_arg | s_arg) {
 		/* Use supplied geometry if it is completely specified. */
@@ -188,13 +195,25 @@ main(int argc, char *argv[])
 		USER_print_disk();
 
 	/* Create initial/default MBR. */
+	if (i_flag == 0) {
+		fd = DISK_open(disk.name, O_RDONLY);
+		error = MBR_read(fd, 0, &dos_mbr);
+		close(fd);
+		if (error)
+			errx(1, "Can't read sector 0!");
+		MBR_parse(&dos_mbr, 0, 0, &initial_mbr);
+	}
+
 	if (mbrfile != NULL && (fd = open(mbrfile, O_RDONLY)) == -1) {
 		warn("%s", mbrfile);
 		warnx("using builtin MBR");
+		memset(&initial_mbr, 0, sizeof(initial_mbr));
 		mbrfile = NULL;
 	}
 	if (mbrfile == NULL) {
-		memcpy(&dos_mbr, builtin_mbr, sizeof(dos_mbr));
+		if (MBR_protective_mbr(&initial_mbr) != 0) {
+			memcpy(&dos_mbr, builtin_mbr, sizeof(dos_mbr));
+		}
 	} else {
 		len = read(fd, &dos_mbr, sizeof(dos_mbr));
 		if (len == -1)
@@ -204,7 +223,10 @@ main(int argc, char *argv[])
 			    mbrfile);
 		close(fd);
 	}
-	MBR_parse(&dos_mbr, 0, 0, &initial_mbr);
+	if (f_flag || MBR_protective_mbr(&initial_mbr) != 0)  {
+		memset(&gh, 0, sizeof(struct gpt_header));
+		MBR_parse(&dos_mbr, 0, 0, &initial_mbr);
+	}
 
 	query = NULL;
 	if (i_flag) {
@@ -221,15 +243,8 @@ main(int argc, char *argv[])
 		MBR_pcopy(&initial_mbr);
 		query = "Do you wish to write new MBR?";
 	}
-	if (query && ask_yn(query)) {
+	if (query && ask_yn(query))
 		Xwrite(NULL, &initial_mbr);
-		if (g_flag) {
-			fd = DISK_open(disk.name, O_RDWR);
-			if (GPT_write(fd) == -1)
-				warn("error writing GPT");
-			close(fd);
-		}
-	}
 
 	if (e_flag)
 		USER_edit(0, 0);

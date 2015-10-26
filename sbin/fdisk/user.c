@@ -1,4 +1,4 @@
-/*	$OpenBSD: user.c,v 1.44 2015/04/02 18:00:55 krw Exp $	*/
+/*	$OpenBSD: user.c,v 1.45 2015/10/26 15:08:26 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -30,25 +30,26 @@
 #include "misc.h"
 #include "cmd.h"
 #include "user.h"
+#include "gpt.h"
 
 /* Our command table */
 struct cmd cmd_table[] = {
-	{"help",   Xhelp,	"Command help list"},
-	{"manual", Xmanual,	"Show entire OpenBSD man page for fdisk"},
-	{"reinit", Xreinit,	"Re-initialize loaded MBR (to defaults)"},
-	{"setpid", Xsetpid,	"Set the identifier of a given table entry"},
-	{"disk",   Xdisk,	"Edit current drive stats"},
-	{"edit",   Xedit,	"Edit given table entry"},
-	{"flag",   Xflag,	"Flag given table entry as bootable"},
-	{"update", Xupdate,	"Update machine code in loaded MBR"},
-	{"select", Xselect,	"Select extended partition table entry MBR"},
-	{"swap",   Xswap,	"Swap two partition entries"},
-	{"print",  Xprint,	"Print loaded MBR partition table"},
-	{"write",  Xwrite,	"Write loaded MBR to disk"},
-	{"exit",   Xexit,	"Exit edit of current MBR, without saving changes"},
-	{"quit",   Xquit,	"Quit edit of current MBR, saving current changes"},
-	{"abort",  Xabort,	"Abort program without saving current changes"},
-	{NULL,     NULL,	NULL}
+	{"help",   1, Xhelp,   "Command help list"},
+	{"manual", 1, Xmanual, "Show entire OpenBSD man page for fdisk"},
+	{"reinit", 1, Xreinit, "Re-initialize loaded MBR (to defaults)"},
+	{"setpid", 1, Xsetpid, "Set the identifier of a given table entry"},
+	{"disk",   0, Xdisk,   "Edit current drive stats"},
+	{"edit",   1, Xedit,   "Edit given table entry"},
+	{"flag",   1, Xflag,   "Flag given table entry as bootable"},
+	{"update", 0, Xupdate, "Update machine code in loaded MBR"},
+	{"select", 0, Xselect, "Select extended partition table entry MBR"},
+	{"swap",   1, Xswap,   "Swap two partition entries"},
+	{"print",  1, Xprint,  "Print loaded MBR partition table"},
+	{"write",  1, Xwrite,  "Write loaded MBR to disk"},
+	{"exit",   1, Xexit,   "Exit edit of current MBR, without saving changes"},
+	{"quit",   1, Xquit,   "Quit edit of current MBR, saving current changes"},
+	{"abort",  1, Xabort,  "Abort program without saving current changes"},
+	{NULL,     0, NULL,    NULL}
 };
 
 
@@ -96,7 +97,8 @@ again:
 			i = 0;
 
 		/* Check for valid command */
-		if (cmd_table[i].cmd == NULL) {
+		if ((cmd_table[i].cmd == NULL) || (letoh64(gh.gh_sig) ==
+		    GPTSIGNATURE && cmd_table[i].gpt == 0)) {
 			printf("Invalid command '%s'.  Try 'help'.\n", cmd);
 			continue;
 		}
@@ -141,13 +143,17 @@ USER_print_disk(void)
 	fd = DISK_open(disk.name, O_RDONLY);
 	offset = firstoff = 0;
 
-	DISK_printgeometry(NULL);
-
 	do {
 		error = MBR_read(fd, offset, &dos_mbr);
 		if (error == -1)
 			break;
 		MBR_parse(&dos_mbr, offset, firstoff, &mbr);
+		if (offset == 0 && MBR_protective_mbr(&mbr) == 0) {
+			if (letoh64(gh.gh_sig) == GPTSIGNATURE) {
+				GPT_print("s");
+				break;
+			}
+		}
 
 		MBR_print(&mbr, NULL);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.h,v 1.30 2015/03/30 17:11:49 krw Exp $	*/
+/*	$OpenBSD: misc.h,v 1.31 2015/10/26 15:08:26 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -29,12 +29,15 @@ extern struct unit_type unit_types[];
 
 /* Prototypes */
 int unit_lookup(char *);
+int string_from_line(char *, size_t);
 int ask_cmd(char **, char **);
 int ask_num(const char *, int, int, int);
-int ask_pid(int, int, int);
+int ask_pid(int, struct uuid *);
 char *ask_string(const char *, const char *);
 int ask_yn(const char *);
 u_int64_t getuint64(char *, u_int64_t, u_int64_t);
 u_int32_t crc32(const u_char *, const u_int32_t);
+char *utf16le_to_string(u_int16_t *);
+u_int16_t *string_to_utf16le(char *);
 
 #endif /* _MISC_H */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbr.c,v 1.55 2015/10/05 01:39:08 krw Exp $	*/
+/*	$OpenBSD: mbr.c,v 1.56 2015/10/26 15:08:26 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -28,6 +28,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <memory.h>
 
 #include "disk.h"
@@ -36,6 +37,33 @@
 #include "mbr.h"
 
 struct mbr initial_mbr;
+
+int
+MBR_protective_mbr(struct mbr *mbr)
+{
+	u_int64_t dsize;
+	int efi, found, i;
+	u_int32_t psize;
+
+	found = efi = 0;
+	for (i = 0; i < NDOSPART; i++) {
+		if (mbr->part[i].id == DOSPTYP_UNUSED)
+			continue;
+		found++;
+		if (mbr->part[i].id != DOSPTYP_EFI)
+			continue;
+		dsize = DL_GETDSIZE(&dl);
+		psize = mbr->part[i].ns;
+		if (psize == (dsize - 1) || psize == UINT32_MAX) {
+			if (mbr->part[i].bs == 1)
+				efi++;
+		}
+	}
+	if (found == 1 && efi == 1)
+		return (0);
+
+	return (1);
+}
 
 void
 MBR_init_GPT(struct mbr *mbr)
@@ -166,6 +194,8 @@ void
 MBR_print(struct mbr *mbr, char *units)
 {
 	int i;
+
+	DISK_printgeometry(NULL);
 
 	/* Header */
 	printf("Offset: %lld\t", (long long)mbr->offset);
