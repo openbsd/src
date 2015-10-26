@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.251 2015/10/22 08:46:31 gilles Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.252 2015/10/26 09:56:01 jung Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -46,7 +46,6 @@
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
-#include <util.h>
 
 #include <openssl/ssl.h>
 #include <openssl/evp.h>
@@ -684,9 +683,6 @@ main(int argc, char *argv[])
 	offline_timeout.tv_sec = 1;
 	offline_timeout.tv_usec = 0;
 	evtimer_add(&offline_ev, &offline_timeout);
-
-	if (pidfile(NULL) < 0)
-		err(1, "pidfile");
 
 	purge_task();
 
