@@ -1,4 +1,4 @@
-/*	$OpenBSD: pwcache.c,v 1.9 2005/08/08 08:05:34 espie Exp $ */
+/*	$OpenBSD: pwcache.c,v 1.10 2015/10/26 15:04:51 tedu Exp $ */
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -45,17 +45,12 @@ user_from_uid(uid_t uid, int nouser)
 		uid_t	uid;
 		char	name[_PW_NAME_LEN + 1];
 	} c_uid[NCACHE];
-	static int pwopen;
 	static char nbuf[15];		/* 32 bits == 10 digits */
 	struct passwd *pw;
 	struct ncache *cp;
 
 	cp = c_uid + (uid & MASK);
 	if (cp->uid != uid || !*cp->name) {
-		if (pwopen == 0) {
-			setpassent(1);
-			pwopen = 1;
-		}
 		if ((pw = getpwuid(uid)) == NULL) {
 			if (nouser)
 				return (NULL);
@@ -75,17 +70,12 @@ group_from_gid(gid_t gid, int nogroup)
 		gid_t	gid;
 		char	name[_PW_NAME_LEN + 1];
 	} c_gid[NCACHE];
-	static int gropen;
 	static char nbuf[15];		/* 32 bits == 10 digits */
 	struct group *gr;
 	struct ncache *cp;
 
 	cp = c_gid + (gid & MASK);
 	if (cp->gid != gid || !*cp->name) {
-		if (gropen == 0) {
-			setgroupent(1);
-			gropen = 1;
-		}
 		if ((gr = getgrgid(gid)) == NULL) {
 			if (nogroup)
 				return (NULL);
