@@ -1,4 +1,4 @@
-/*	$OpenBSD: net.c,v 1.18 2015/07/16 16:12:15 mpi Exp $	*/
+/*	$OpenBSD: net.c,v 1.19 2015/10/26 02:33:07 mmcc Exp $	*/
 /*	$NetBSD: net.c,v 1.14 1996/10/13 02:29:02 christos Exp $	*/
 
 /*
@@ -233,7 +233,7 @@ intoa(u_int32_t addr)
 static const char *
 number(const char *s, int *n)
 {
-	for (*n = 0; isdigit(*s); s++)
+	for (*n = 0; isdigit((unsigned char)*s); s++)
 		*n = (*n * 10) + *s - '0';
 	return s;
 }
