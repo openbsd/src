@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.79 2015/10/26 12:13:45 deraadt Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.80 2015/10/26 17:52:19 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -121,6 +121,7 @@ const u_int pledge_syscalls[SYS_MAXSYSCALL] = {
 	[SYS_settimeofday] = PLEDGE_SETTIME,
 
 	[SYS_poll] = PLEDGE_STDIO,
+	[SYS_ppoll] = PLEDGE_STDIO,
 	[SYS_kevent] = PLEDGE_STDIO,
 	[SYS_kqueue] = PLEDGE_STDIO,
 	[SYS_select] = PLEDGE_STDIO,
