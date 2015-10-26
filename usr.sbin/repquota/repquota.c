@@ -102,7 +102,7 @@ main(int argc, char *argv[])
 	}
 	argc -= optind;
 	argv += optind;
-	if (argc == 0 && !aflag)
+	if ((argc == 0) == (aflag == 0))
 		usage();
 	if (!gflag && !uflag) {
 		if (aflag)
