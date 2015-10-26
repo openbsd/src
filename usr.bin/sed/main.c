@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.28 2015/10/25 20:18:37 tobias Exp $	*/
+/*	$OpenBSD: main.c,v 1.29 2015/10/26 14:08:47 mmcc Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -161,10 +161,10 @@ main(int argc, char *argv[])
 
 	if (inplace != NULL) {
 		if (pledge("stdio rpath wpath cpath fattr", NULL) == -1)
-			err(1, "pledge");
+			error(1, "pledge");
 	} else {
 		if (pledge("stdio rpath wpath cpath", NULL) == -1)
-			err(1, "pledge");
+			error(1, "pledge");
 	}
 
 	/* First usage case; script is the first arg */
@@ -184,7 +184,7 @@ main(int argc, char *argv[])
 	process();
 	cfclose(prog, NULL);
 	if (fclose(stdout))
-		err(FATAL, "stdout: %s", strerror(errno));
+		error(FATAL, "stdout: %s", strerror(errno));
 	exit (rval);
 }
 
@@ -214,7 +214,7 @@ again:
 		switch (script->type) {
 		case CU_FILE:
 			if ((f = fopen(script->s, "r")) == NULL)
-				err(FATAL,
+				error(FATAL,
 				    "%s: %s", script->s, strerror(errno));
 			fname = script->s;
 			state = ST_FILE;
@@ -305,7 +305,7 @@ mf_fgets(SPACE *sp, enum e_spflag spflag)
 		/* stdin? */
 		if (files->fname == NULL) {
 			if (inplace != NULL)
-				err(FATAL, "-i may not be used with stdin");
+				error(FATAL, "-i may not be used with stdin");
 			infile = stdin;
 			fname = "stdin";
 			outfile = stdout;
@@ -329,7 +329,7 @@ mf_fgets(SPACE *sp, enum e_spflag spflag)
 			fclose(infile);
 			if (*oldfname != '\0') {
 				if (rename(fname, oldfname) != 0) {
-					err(WARNING, "rename()");
+					error(WARNING, "rename()");
 					unlink(tmpfname);
 					exit(1);
 				}
@@ -355,10 +355,10 @@ mf_fgets(SPACE *sp, enum e_spflag spflag)
 		fname = files->fname;
 		if (inplace != NULL) {
 			if (lstat(fname, &sb) != 0)
-				err(1, "%s: %s", fname,
+				error(1, "%s: %s", fname,
 				    strerror(errno ? errno : EIO));
 			if (!S_ISREG(sb.st_mode))
-				err(FATAL, "%s: %s %s", fname,
+				error(FATAL, "%s: %s %s", fname,
 				    "in-place editing only",
 				    "works for regular files");
 			if (*inplace != '\0') {
@@ -367,17 +367,17 @@ mf_fgets(SPACE *sp, enum e_spflag spflag)
 				len = strlcat(oldfname, inplace,
 				    sizeof(oldfname));
 				if (len > sizeof(oldfname))
-					err(FATAL, "%s: name too long", fname);
+					error(FATAL, "%s: name too long", fname);
 			}
 			len = snprintf(tmpfname, sizeof(tmpfname), "%s/sedXXXXXXXXXX",
 			    dirname(fname));
 			if (len >= sizeof(tmpfname))
-				err(FATAL, "%s: name too long", fname);
+				error(FATAL, "%s: name too long", fname);
 			if ((fd = mkstemp(tmpfname)) == -1)
-				err(FATAL, "%s", fname);
+				error(FATAL, "%s", fname);
 			if ((outfile = fdopen(fd, "w")) == NULL) {
 				unlink(tmpfname);
-				err(FATAL, "%s", fname);
+				error(FATAL, "%s", fname);
 			}
 			fchown(fileno(outfile), sb.st_uid, sb.st_gid);
 			fchmod(fileno(outfile), sb.st_mode & ALLPERMS);
@@ -389,7 +389,7 @@ mf_fgets(SPACE *sp, enum e_spflag spflag)
 			outfname = "stdout";
 		}
 		if ((infile = fopen(fname, "r")) == NULL) {
-			err(WARNING, "%s", strerror(errno));
+			error(WARNING, "%s", strerror(errno));
 			rval = 1;
 			continue;
 		}
@@ -405,7 +405,7 @@ mf_fgets(SPACE *sp, enum e_spflag spflag)
 	 */
 	p = fgetln(infile, &len);
 	if (ferror(infile))
-		err(FATAL, "%s: %s", fname, strerror(errno ? errno : EIO));
+		error(FATAL, "%s: %s", fname, strerror(errno ? errno : EIO));
 	if (len != 0 && p[len - 1] == '\n') {
 		sp->append_newline = 1;
 		len--;

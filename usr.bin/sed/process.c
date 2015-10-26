@@ -1,4 +1,4 @@
-/*	$OpenBSD: process.c,v 1.26 2015/07/20 18:24:15 jasper Exp $	*/
+/*	$OpenBSD: process.c,v 1.27 2015/10/26 14:08:47 mmcc Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -226,11 +226,11 @@ redirect:
 				if (cp->u.fd == -1 && (cp->u.fd = open(cp->t,
 				    O_WRONLY|O_APPEND|O_CREAT|O_TRUNC,
 				    DEFFILEMODE)) == -1)
-					err(FATAL, "%s: %s",
+					error(FATAL, "%s: %s",
 					    cp->t, strerror(errno));
 				if (write(cp->u.fd, ps, psl) != psl ||
 				    write(cp->u.fd, "\n", 1) != 1)
-					err(FATAL, "%s: %s",
+					error(FATAL, "%s: %s",
 					    cp->t, strerror(errno));
 				break;
 			case 'x':
@@ -342,7 +342,7 @@ substitute(struct s_command *cp)
 	if (re == NULL) {
 		if (defpreg != NULL && cp->u.s->maxbref > defpreg->re_nsub) {
 			linenum = cp->u.s->linenum;
-			err(COMPILE, "\\%d not defined in the RE",
+			error(COMPILE, "\\%d not defined in the RE",
 			    cp->u.s->maxbref);
 		}
 	}
@@ -422,10 +422,10 @@ substitute(struct s_command *cp)
 	if (cp->u.s->wfile && !pd) {
 		if (cp->u.s->wfd == -1 && (cp->u.s->wfd = open(cp->u.s->wfile,
 		    O_WRONLY|O_APPEND|O_CREAT|O_TRUNC, DEFFILEMODE)) == -1)
-			err(FATAL, "%s: %s", cp->u.s->wfile, strerror(errno));
+			error(FATAL, "%s: %s", cp->u.s->wfile, strerror(errno));
 		if (write(cp->u.s->wfd, ps, psl) != psl ||
 		    write(cp->u.s->wfd, "\n", 1) != 1)
-			err(FATAL, "%s: %s", cp->u.s->wfile, strerror(errno));
+			error(FATAL, "%s: %s", cp->u.s->wfile, strerror(errno));
 	}
 	return (1);
 }
@@ -464,7 +464,7 @@ flush_appends(void)
 			break;
 		}
 	if (ferror(outfile))
-		err(FATAL, "%s: %s", outfname, strerror(errno ? errno : EIO));
+		error(FATAL, "%s: %s", outfname, strerror(errno ? errno : EIO));
 	appendx = sdone = 0;
 }
 
@@ -504,7 +504,7 @@ lputs(char *s)
 	(void)fputc('$', outfile);
 	(void)fputc('\n', outfile);
 	if (ferror(outfile))
-		err(FATAL, "%s: %s", outfname, strerror(errno ? errno : EIO));
+		error(FATAL, "%s: %s", outfname, strerror(errno ? errno : EIO));
 }
 
 static inline int
@@ -515,7 +515,7 @@ regexec_e(regex_t *preg, const char *string, int eflags,
 
 	if (preg == NULL) {
 		if (defpreg == NULL)
-			err(FATAL, "first RE may not be empty");
+			error(FATAL, "first RE may not be empty");
 	} else
 		defpreg = preg;
 
@@ -531,7 +531,7 @@ regexec_e(regex_t *preg, const char *string, int eflags,
 	case REG_NOMATCH:
 		return (0);
 	}
-	err(FATAL, "RE error: %s", strregerror(eval, defpreg));
+	error(FATAL, "RE error: %s", strregerror(eval, defpreg));
 	/* NOTREACHED */
 }
 
@@ -616,13 +616,13 @@ cfclose(struct s_command *cp, struct s_command *end)
 		switch (cp->code) {
 		case 's':
 			if (cp->u.s->wfd != -1 && close(cp->u.s->wfd))
-				err(FATAL,
+				error(FATAL,
 				    "%s: %s", cp->u.s->wfile, strerror(errno));
 			cp->u.s->wfd = -1;
 			break;
 		case 'w':
 			if (cp->u.fd != -1 && close(cp->u.fd))
-				err(FATAL, "%s: %s", cp->t, strerror(errno));
+				error(FATAL, "%s: %s", cp->t, strerror(errno));
 			cp->u.fd = -1;
 			break;
 		case '{':

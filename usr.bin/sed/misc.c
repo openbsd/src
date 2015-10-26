@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.10 2014/10/08 04:19:08 deraadt Exp $	*/
+/*	$OpenBSD: misc.c,v 1.11 2015/10/26 14:08:47 mmcc Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -54,7 +54,7 @@ xmalloc(size_t size)
 	void *p;
 
 	if ((p = malloc(size)) == NULL)
-		err(FATAL, "%s", strerror(errno));
+		error(FATAL, "%s", strerror(errno));
 	return (p);
 }
 
@@ -64,7 +64,7 @@ xreallocarray(void *o, size_t nmemb, size_t size)
 	void *p;
 
 	if ((p = reallocarray(o, nmemb, size)) == NULL)
-		err(FATAL, "%s", strerror(errno));
+		error(FATAL, "%s", strerror(errno));
 	return (p);
 }
 
@@ -76,7 +76,7 @@ xrealloc(void *p, size_t size)
 {
 
 	if ((p = realloc(p, size)) == NULL)
-		err(FATAL, "%s", strerror(errno));
+		error(FATAL, "%s", strerror(errno));
 	return (p);
 }
 
@@ -102,7 +102,7 @@ strregerror(int errcode, regex_t *preg)
  * Error reporting function
  */
 void
-err(int severity, const char *fmt, ...)
+error(int severity, const char *fmt, ...)
 {
 	va_list ap;
 
