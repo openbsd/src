@@ -1,4 +1,4 @@
-/*	$OpenBSD: route6d.c,v 1.79 2015/10/26 00:20:44 jca Exp $	*/
+/*	$OpenBSD: route6d.c,v 1.80 2015/10/26 00:25:45 jca Exp $	*/
 /*	$KAME: route6d.c,v 1.111 2006/10/25 06:38:13 jinmei Exp $	*/
 
 /*
@@ -124,7 +124,7 @@ int	nifc;		/* number of valid ifc's */
 struct	ifc **index2ifc;
 int	nindex2ifc;
 struct	ifc *loopifcp = NULL;	/* pointing to loopback */
-struct	pollfd set[2];
+struct	pollfd pfd[2];
 int	rtsock;		/* the routing socket */
 int	ripsock;	/* socket to send/receive RIP datagram */
 
@@ -410,7 +410,7 @@ main(int argc, char *argv[])
 			continue;
 		}
 
-		switch (poll(set, 2, INFTIM))
+		switch (poll(pfd, 2, INFTIM))
 		{
 		case -1:
 			if (errno != EINTR) {
@@ -421,12 +421,12 @@ main(int argc, char *argv[])
 		case 0:
 			continue;
 		default:
-			if (set[0].revents & POLLIN) {
+			if (pfd[0].revents & POLLIN) {
 				sigprocmask(SIG_BLOCK, &mask, &omask);
 				riprecv();
 				sigprocmask(SIG_SETMASK, &omask, NULL);
 			}
-			if (set[1].revents & POLLIN) {
+			if (pfd[1].revents & POLLIN) {
 				sigprocmask(SIG_BLOCK, &mask, &omask);
 				rtrecv();
 				sigprocmask(SIG_SETMASK, &omask, NULL);
@@ -604,18 +604,18 @@ init(void)
 	}
 	memcpy(&ripsin, res->ai_addr, res->ai_addrlen);
 
-	set[0].fd = ripsock;
-	set[0].events = POLLIN;
+	pfd[0].fd = ripsock;
+	pfd[0].events = POLLIN;
 
 	if (nflag == 0) {
 		if ((rtsock = socket(PF_ROUTE, SOCK_RAW, 0)) < 0) {
 			fatal("route socket");
 			/*NOTREACHED*/
 		}
-		set[1].fd = rtsock;
-		set[1].events = POLLIN;
+		pfd[1].fd = rtsock;
+		pfd[1].events = POLLIN;
 	} else
-		set[1].fd = -1;
+		pfd[1].fd = -1;
 
 }
 
