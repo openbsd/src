@@ -1,4 +1,4 @@
-/*	$OpenBSD: lex.c,v 1.19 2015/06/17 03:59:12 deraadt Exp $	*/
+/*	$OpenBSD: lex.c,v 1.20 2015/10/26 22:03:06 naddy Exp $	*/
 /*	$NetBSD: lex.c,v 1.9 1995/09/27 00:38:46 jtc Exp $	*/
 
 /*-
@@ -445,15 +445,6 @@ getdol(void)
     default:
 	toolong = 0;
 	if (Isdigit(c)) {
-#ifdef notdef
-	    /* let $?0 pass for now */
-	    if (special) {
-		seterror(ERR_DIGIT);
-		*np = 0;
-		addla(name);
-		return;
-	    }
-#endif
 	    /* we know that np < &name[4] */
 	    ep = &np[MAXVARLEN];
 	    while ((c = getC(DOEXCL)) != '\0'){
@@ -750,13 +741,6 @@ getsub(struct wordent *en)
 	    }
 	    (void) Strlcpy(lhsb, slhs, sizeof(lhsb)/sizeof(Char));
 	    break;
-
-#ifdef notdef
-	case '~':
-	    if (lhsb[0] == 0)
-		goto badlhs;
-	    break;
-#endif
 
 	case 's':
 	    delim = getC(0);

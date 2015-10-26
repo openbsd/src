@@ -1,4 +1,4 @@
-/*	$OpenBSD: exp.c,v 1.14 2015/10/26 21:57:42 naddy Exp $	*/
+/*	$OpenBSD: exp.c,v 1.15 2015/10/26 22:03:06 naddy Exp $	*/
 /*	$NetBSD: exp.c,v 1.6 1995/03/21 09:02:51 cgd Exp $	*/
 
 /*-
@@ -426,10 +426,7 @@ exp6(Char ***vp, bool ignore)
 	    break;
 
 	default:
-	    if (
-#ifdef S_IFLNK
-		cp[1] == 'l' ? lstat(short2str(ep), &stb) :
-#endif
+	    if (cp[1] == 'l' ? lstat(short2str(ep), &stb) :
 		stat(short2str(ep), &stb)) {
 		xfree(ep);
 		return (Strsave(STR0));
@@ -445,27 +442,15 @@ exp6(Char ***vp, bool ignore)
 		break;
 
 	    case 'p':
-#ifdef S_ISFIFO
 		i = S_ISFIFO(stb.st_mode);
-#else
-		i = 0;
-#endif
 		break;
 
 	    case 'l':
-#ifdef S_ISLNK
 		i = S_ISLNK(stb.st_mode);
-#else
-		i = 0;
-#endif
 		break;
 
 	    case 's':
-#ifdef S_ISSOCK
 		i = S_ISSOCK(stb.st_mode);
-#else
-		i = 0;
-#endif
 		break;
 
 	    case 'z':

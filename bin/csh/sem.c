@@ -1,4 +1,4 @@
-/*	$OpenBSD: sem.c,v 1.19 2015/02/08 05:47:28 tedu Exp $	*/
+/*	$OpenBSD: sem.c,v 1.20 2015/10/26 22:03:06 naddy Exp $	*/
 /*	$NetBSD: sem.c,v 1.9 1995/09/27 00:38:50 jtc Exp $	*/
 
 /*-
@@ -562,12 +562,7 @@ doio(struct command *t, int *pipein, int *pipeout)
 	(void) dcopy(SHOUT, 1);
 	(void) dcopy(SHERR, 2);
 	if ((flags & F_APPEND) &&
-#ifdef O_APPEND
 	    (fd = open(tmp, O_WRONLY | O_APPEND)) >= 0);
-#else
-	    (fd = open(tmp, O_WRONLY)) >= 0)
-	    (void) lseek(STDOUT_FILENO, (off_t) 0, SEEK_END);
-#endif
 	else {
 	    if (!(flags & F_OVERWRITE) && adrof(STRnoclobber)) {
 		if (flags & F_APPEND)

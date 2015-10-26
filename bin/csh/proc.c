@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.c,v 1.28 2015/10/26 21:57:42 naddy Exp $	*/
+/*	$OpenBSD: proc.c,v 1.29 2015/10/26 22:03:06 naddy Exp $	*/
 /*	$NetBSD: proc.c,v 1.9 1995/04/29 23:21:33 mycroft Exp $	*/
 
 /*-
@@ -160,9 +160,6 @@ found:
 	    pclrcurr(fp);
 	if (jobflags & PFOREGND) {
 	    if (jobflags & (PSIGNALED | PSTOPPED | PPTIME) ||
-#ifdef IIASA
-		jobflags & PAEXITED ||
-#endif
 		!eq(dcwd->di_name, fp->p_cwd->di_name)) {
 		;		/* print in pjwait */
 	    }

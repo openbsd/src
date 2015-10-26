@@ -1,4 +1,4 @@
-/*	$OpenBSD: set.c,v 1.17 2015/10/26 15:01:15 naddy Exp $	*/
+/*	$OpenBSD: set.c,v 1.18 2015/10/26 22:03:06 naddy Exp $	*/
 /*	$NetBSD: set.c,v 1.8 1995/03/21 18:35:52 mycroft Exp $	*/
 
 /*-
@@ -585,11 +585,7 @@ exportpath(Char **val)
     Setenv(STRPATH, exppath);
 }
 
-#ifndef lint
- /*
-  * Lint thinks these have null effect
-  */
- /* macros to do single rotations on node p */
+/* macros to do single rotations on node p */
 #define rright(p) (\
 	t = (p)->v_left,\
 	(t)->v_parent = (p)->v_parent,\
@@ -602,20 +598,6 @@ exportpath(Char **val)
 	((p)->v_right = t->v_left) ? (t->v_left->v_parent = (p)) : 0,\
 	(t->v_left = (p))->v_parent = t,\
 	(p) = t)
-#else
-struct varent *
-rleft(struct varent *p)
-{
-    return (p);
-}
-struct varent *
-rright(struct varent *p)
-{
-    return (p);
-}
-
-#endif				/* ! lint */
-
 
 /*
  * Rebalance a tree, starting at p and up.
@@ -626,11 +608,7 @@ static void
 balance(struct varent *p, int f, int d)
 {
     struct varent *pp;
-
-#ifndef lint
     struct varent *t;	/* used by the rotate macros */
-
-#endif
     int ff;
 
     /*

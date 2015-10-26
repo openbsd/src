@@ -1,4 +1,4 @@
-/*	$OpenBSD: csh.c,v 1.33 2015/10/26 21:57:42 naddy Exp $	*/
+/*	$OpenBSD: csh.c,v 1.34 2015/10/26 22:03:06 naddy Exp $	*/
 /*	$NetBSD: csh.c,v 1.14 1995/04/29 23:21:28 mycroft Exp $	*/
 
 /*-
@@ -1277,11 +1277,6 @@ defaultpath(void)
     DIRAPPEND(_PATH_USRBIN);
 
 #undef DIRAPPEND
-
-#if 0
-    if (euid != 0 && uid != 0)
-	*blkp++ = Strsave(STRdot);
-#endif
 
     *blkp = NULL;
     return (blk);

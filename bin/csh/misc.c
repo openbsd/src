@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.16 2015/10/26 15:01:15 naddy Exp $	*/
+/*	$OpenBSD: misc.c,v 1.17 2015/10/26 22:03:06 naddy Exp $	*/
 /*	$NetBSD: misc.c,v 1.6 1995/03/21 09:03:09 cgd Exp $	*/
 
 /*-
@@ -138,24 +138,6 @@ saveblk(Char **v)
 	*newv++ = Strsave(*v++);
     return (onewv);
 }
-
-#ifdef NOTUSED
-char   *
-strstr(char *s, char *t)
-{
-    do {
-	char *ss = s;
-	char *tt = t;
-
-	do
-	    if (*tt == '\0')
-		return (s);
-	while (*ss++ == *tt++);
-    } while (*s++ != '\0');
-    return (NULL);
-}
-
-#endif /* NOTUSED */
 
 Char  **
 blkspl(Char **up, Char **vp)
