@@ -1,4 +1,4 @@
-/* $OpenBSD: display.c,v 1.49 2015/05/06 07:53:29 mpi Exp $	 */
+/* $OpenBSD: display.c,v 1.50 2015/10/26 12:44:22 tedu Exp $	 */
 
 /*
  *  Top users/processes display for Unix
@@ -56,6 +56,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <sys/sysctl.h>
 
 #include "screen.h"		/* interface to screen package */
 #include "layout.h"		/* defines for screen position layout */
@@ -204,6 +205,40 @@ display_init(struct statics * statics)
 	/* return number of lines available */
 	return (display_lines);
 }
+static void
+format_uptime(char *buf, size_t buflen)
+{
+	time_t now, uptime;
+	int days, hrs, mins;
+	int mib[2];
+	size_t size;
+	struct timeval boottime;
+
+	now = time(NULL);
+	/*
+	 * Print how long system has been up.
+	 * (Found by getting "boottime" from the kernel)
+	 */
+	mib[0] = CTL_KERN;
+	mib[1] = KERN_BOOTTIME;
+	size = sizeof(boottime);
+	if (sysctl(mib, 2, &boottime, &size, NULL, 0) != -1) {
+		uptime = now - boottime.tv_sec;
+		uptime += 30;
+		days = uptime / (3600 * 24);
+		uptime %= (3600 * 24);
+		hrs = uptime / 3600;
+		uptime %= 3600;
+		mins = uptime / 60;
+		if (days > 0)
+			snprintf(buf, buflen, "up %d day%s, %2d:%02d",
+			    days, days > 1 ? "s" : "", hrs, mins);
+		else
+			snprintf(buf, buflen, "up %2d:%02d",
+			    hrs, mins);
+	}
+}
+
 
 void
 i_loadave(pid_t mpid, double *avenrun)
@@ -222,6 +257,7 @@ i_loadave(pid_t mpid, double *avenrun)
 		for (i = 0; i < 3; i++)
 			printwp("%c %5.2f", i == 0 ? ':' : ',', avenrun[i]);
 	}
+
 }
 
 /*
@@ -272,6 +308,7 @@ i_procstates(int total, int *states, int threads)
 {
 	if (screen_length > 2 || !smart_terminal) {
 		char procstates_buffer[MAX_COLS];
+		char uptime[40];
 
 		move(1, 0);
 		clrtoeol();
@@ -286,6 +323,13 @@ i_procstates(int total, int *states, int threads)
 		    states, procstate_names);
 
 		addstrp(procstates_buffer);
+
+		format_uptime(uptime, sizeof(uptime));
+		if (smart_terminal)
+			move(1, screen_width - strlen(uptime));
+		else
+			printwp("  ");
+		printwp("%s", uptime);
 		putn();
 	}
 }
