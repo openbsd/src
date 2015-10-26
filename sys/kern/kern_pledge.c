@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.78 2015/10/26 11:17:52 deraadt Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.79 2015/10/26 12:13:45 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -944,7 +944,7 @@ pledge_sysctl_check(struct proc *p, int miblen, int *mib, void *new)
 			return (0);
 	}
 
-	if ((p->p_p->ps_pledge & (PLEDGE_ROUTE | PLEDGE_INET))) {
+	if ((p->p_p->ps_pledge & (PLEDGE_ROUTE | PLEDGE_INET | PLEDGE_DNS))) {
 		if (miblen == 6 &&		/* getifaddrs() */
 		    mib[0] == CTL_NET && mib[1] == PF_ROUTE &&
 		    mib[2] == 0 &&
