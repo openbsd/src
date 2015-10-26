@@ -1,5 +1,5 @@
-#	$OpenBSD: Makefile,v 1.1 2013/10/31 01:24:06 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.2 2015/10/26 08:06:51 vgross Exp $
 
-SUBDIR =	frag6 nd6 rh0
+SUBDIR =	autoport frag6 nd6 rh0
 
 .include <bsd.subdir.mk>
