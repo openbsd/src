@@ -1,4 +1,4 @@
-/*	$OpenBSD: csh.h,v 1.24 2015/10/26 16:27:04 naddy Exp $	*/
+/*	$OpenBSD: csh.h,v 1.25 2015/10/26 16:31:09 naddy Exp $	*/
 /*	$NetBSD: csh.h,v 1.9 1995/03/21 09:02:40 cgd Exp $	*/
 
 /*-
@@ -456,22 +456,6 @@ int     lastev;			/* Last event reference (default) */
 
 Char    HIST;			/* history invocation character */
 Char    HISTSUB;		/* auto-substitute character */
-
-/*
- * strings.h:
- */
-#define Strchr(a, b)		s_strchr(a, b)
-#define Strrchr(a, b) 		s_strrchr(a, b)
-#define Strlcat(a, b, l)	s_strlcat(a, b, l)
-#define Strlcpy(a, b, l)	s_strlcpy(a, b, l)
-#define Strlen(a)		s_strlen(a)
-#define Strcmp(a, b)		s_strcmp(a, b)
-#define Strncmp(a, b, c)	s_strncmp(a, b, c)
-
-#define Strspl(a, b)		s_strspl(a, b)
-#define Strsave(a)		s_strsave(a)
-#define Strend(a)		s_strend(a)
-#define Strstr(a, b)		s_strstr(a, b)
 
 /*
  * setname is a macro to save space (see sh.err.c)

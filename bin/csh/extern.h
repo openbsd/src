@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.22 2015/10/26 15:01:15 naddy Exp $	*/
+/*	$OpenBSD: extern.h,v 1.23 2015/10/26 16:31:09 naddy Exp $	*/
 /*	$NetBSD: extern.h,v 1.8 1996/10/31 23:50:54 christos Exp $	*/
 
 /*-
@@ -294,17 +294,17 @@ void *	Calloc(size_t, size_t);
 /*
  * str.c:
  */
-size_t	  s_strlcpy(Char *, const Char *, size_t);
-size_t	  s_strlcat(Char *, const Char *, size_t);
-Char	 *s_strchr(Char *, int);
-Char	 *s_strrchr(Char *, int);
-Char	 *s_strspl(Char *, Char *);
-size_t	  s_strlen(Char *);
-int	  s_strcmp(Char *, Char *);
-int	  s_strncmp(Char *, Char *, size_t);
-Char	 *s_strsave(Char *);
-Char	 *s_strend(Char *);
-Char	 *s_strstr(Char *, Char *);
+size_t	  Strlcpy(Char *, const Char *, size_t);
+size_t	  Strlcat(Char *, const Char *, size_t);
+Char	 *Strchr(Char *, int);
+Char	 *Strrchr(Char *, int);
+Char	 *Strspl(Char *, Char *);
+size_t	  Strlen(Char *);
+int	  Strcmp(Char *, Char *);
+int	  Strncmp(Char *, Char *, size_t);
+Char	 *Strsave(Char *);
+Char	 *Strend(Char *);
+Char	 *Strstr(Char *, Char *);
 Char	 *str2short(char *);
 Char	**blk2short(char **);
 char	 *short2str(Char *);
