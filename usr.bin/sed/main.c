@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.29 2015/10/26 14:08:47 mmcc Exp $	*/
+/*	$OpenBSD: main.c,v 1.30 2015/10/26 22:22:56 jca Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -161,10 +161,10 @@ main(int argc, char *argv[])
 
 	if (inplace != NULL) {
 		if (pledge("stdio rpath wpath cpath fattr", NULL) == -1)
-			error(1, "pledge");
+			error(FATAL, "pledge: %s", strerror(errno));
 	} else {
 		if (pledge("stdio rpath wpath cpath", NULL) == -1)
-			error(1, "pledge");
+			error(FATAL, "pledge: %s", strerror(errno));
 	}
 
 	/* First usage case; script is the first arg */
@@ -355,7 +355,7 @@ mf_fgets(SPACE *sp, enum e_spflag spflag)
 		fname = files->fname;
 		if (inplace != NULL) {
 			if (lstat(fname, &sb) != 0)
-				error(1, "%s: %s", fname,
+				error(FATAL, "%s: %s", fname,
 				    strerror(errno ? errno : EIO));
 			if (!S_ISREG(sb.st_mode))
 				error(FATAL, "%s: %s %s", fname,
