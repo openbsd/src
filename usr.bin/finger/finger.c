@@ -1,4 +1,4 @@
-/*	$OpenBSD: finger.c,v 1.24 2015/10/18 03:54:22 deraadt Exp $	*/
+/*	$OpenBSD: finger.c,v 1.25 2015/10/26 16:57:13 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -130,7 +130,6 @@ main(int argc, char *argv[])
 		err(1, "pledge");
 
 	(void)time(&now);
-	setpassent(1);
 	if (!*argv) {
 		/*
 		 * Assign explicit "small" format if no names given and -l
@@ -174,6 +173,7 @@ loginlist(void)
 	if (!freopen(_PATH_UTMP, "r", stdin))
 		err(2, _PATH_UTMP);
 	name[UT_NAMESIZE] = '\0';
+	setpassent(1);
 	while (fread((char *)&user, sizeof(user), 1, stdin) == 1) {
 		if (!user.ut_name[0])
 			continue;
@@ -185,6 +185,7 @@ loginlist(void)
 		}
 		enter_where(&user, pn);
 	}
+	endpwent();
 	for (pn = phead; lflag && pn != NULL; pn = pn->next)
 		enter_lastlog(pn);
 }
@@ -227,6 +228,7 @@ userlist(int argc, char **argv)
 	 * traverse the list of possible login names and check the login name
 	 * and real name against the name specified by the user.
 	 */
+	setpassent(1);
 	if ((mflag - Mflag) > 0) {
 		for (i = 0; i < argc; i++)
 			if (used[i] >= 0 && (pw = getpwnam(argv[i]))) {
@@ -241,6 +243,7 @@ userlist(int argc, char **argv)
 				enter_person(pw);
 				used[i] = 1;
 			}
+	endpwent();
 
 	/* list errors */
 	for (i = 0; i < argc; i++)
