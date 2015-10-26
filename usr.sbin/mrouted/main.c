@@ -219,8 +219,6 @@ usage:	fprintf(stderr,
     if (debug)
 	fprintf(stderr, "pruning %s\n", pruning ? "on" : "off");
 
-    pidfile(NULL);
-
     (void)signal(SIGALRM, fasttimer);
 
     (void)signal(SIGHUP,  restart);
