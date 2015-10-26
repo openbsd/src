@@ -1,4 +1,4 @@
-/*	$OpenBSD: compile.c,v 1.39 2015/10/26 14:08:47 mmcc Exp $	*/
+/*	$OpenBSD: compile.c,v 1.40 2015/10/26 22:24:44 jca Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -784,7 +784,7 @@ fixuplabel(struct s_command *cp, struct s_command *end)
 				break;
 			}
 			if ((cp->u.c = findlabel(cp->t)) == NULL)
-				error(COMPILE2, "undefined label '%s'", cp->t);
+				error(COMPILE, "undefined label '%s'", cp->t);
 			free(cp->t);
 			break;
 		case '{':
@@ -809,7 +809,7 @@ enterlabel(struct s_command *cp)
 	lhp = &labels[h & LHMASK];
 	for (lh = *lhp; lh != NULL; lh = lh->lh_next)
 		if (lh->lh_hash == h && strcmp(cp->t, lh->lh_cmd->t) == 0)
-			error(COMPILE2, "duplicate label '%s'", cp->t);
+			error(COMPILE, "duplicate label '%s'", cp->t);
 	lh = xmalloc(sizeof *lh);
 	lh->lh_next = *lhp;
 	lh->lh_hash = h;
