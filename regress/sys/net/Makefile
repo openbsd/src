@@ -1,6 +1,6 @@
-#	$OpenBSD: Makefile,v 1.6 2014/07/12 21:41:49 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.7 2015/10/26 08:04:10 vgross Exp $
 
-SUBDIR +=	pf_divert pf_forward pf_fragment
+SUBDIR +=	pf_divert pf_forward pf_fragment rdomains
 
 .MAIN: regress
 
