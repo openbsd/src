@@ -1,4 +1,4 @@
-.\"	$OpenBSD: csh.1,v 1.75 2015/02/28 21:51:57 bentley Exp $
+.\"	$OpenBSD: csh.1,v 1.76 2015/10/26 20:44:00 naddy Exp $
 .\"	$NetBSD: csh.1,v 1.10 1995/03/21 09:02:35 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)csh.1	8.2 (Berkeley) 1/21/94
 .\"
-.Dd $Mdocdate: February 28 2015 $
+.Dd $Mdocdate: October 26 2015 $
 .Dt CSH 1
 .Os
 .Sh NAME
@@ -1457,6 +1457,10 @@ o	ownership
 z	zero size
 f	plain file
 d	directory
+p	named pipe (FIFO)
+l	symbolic link
+.\" Intentionally undocumented since it is incompatible with tcsh:
+.\" s	socket
 .Ed
 .Pp
 The specified name is command and filename expanded and then tested
