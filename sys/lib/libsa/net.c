@@ -1,4 +1,4 @@
-/*	$OpenBSD: net.c,v 1.19 2015/10/26 02:33:07 mmcc Exp $	*/
+/*	$OpenBSD: net.c,v 1.20 2015/10/26 14:48:54 mmcc Exp $	*/
 /*	$NetBSD: net.c,v 1.14 1996/10/13 02:29:02 christos Exp $	*/
 
 /*
@@ -244,7 +244,7 @@ ip_convertaddr(const char *p)
 #define IP_ANYADDR	0
 	u_int32_t addr = 0, n;
 
-	if (p == (char *)0 || *p == '\0')
+	if (p == NULL || *p == '\0')
 		return IP_ANYADDR;
 	p = number(p, &n);
 	addr |= (n << 24) & 0xff000000;
