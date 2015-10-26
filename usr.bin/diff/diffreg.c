@@ -1,4 +1,4 @@
-/*	$OpenBSD: diffreg.c,v 1.89 2015/10/13 16:37:17 tobias Exp $	*/
+/*	$OpenBSD: diffreg.c,v 1.90 2015/10/26 12:52:27 tedu Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -446,7 +446,7 @@ files_differ(FILE *f1, FILE *f2, int flags)
 static FILE *
 opentemp(const char *file)
 {
-	char buf[BUFSIZ], *tempdir, tempfile[PATH_MAX];
+	char buf[BUFSIZ], tempfile[PATH_MAX];
 	ssize_t nread;
 	int ifd, ofd;
 
@@ -455,16 +455,7 @@ opentemp(const char *file)
 	else if ((ifd = open(file, O_RDONLY, 0644)) < 0)
 		return (NULL);
 
-	if ((tempdir = getenv("TMPDIR")) == NULL)
-		tempdir = _PATH_TMP;
-
-	if (strlcpy(tempfile, tempdir, sizeof(tempfile)) >= sizeof(tempfile) ||
-	    strlcat(tempfile, "/diff.XXXXXXXX", sizeof(tempfile)) >=
-	    sizeof(tempfile)) {
-		close(ifd);
-		errno = ENAMETOOLONG;
-		return (NULL);
-	}
+	(void)strlcpy(tempfile, _PATH_TMP "/diff.XXXXXXXX", sizeof(tempfile));
 
 	if ((ofd = mkstemp(tempfile)) < 0) {
 		close(ifd);
