@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.77 2015/10/26 11:11:45 deraadt Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.78 2015/10/26 11:17:52 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -502,14 +502,17 @@ pledge_check(struct proc *p, int code, int *tval)
 int
 pledge_fail(struct proc *p, int error, int code)
 {
+	char *codes = "";
 	int i;
 
 	/* Print first matching pledge */
-	for (i = 0; pledgenames[i].bits != 0; i++)
-		if (pledgenames[i].bits & code)
+	for (i = 0; code && pledgenames[i].bits != 0; i++)
+		if (pledgenames[i].bits & code) {
+			codes = pledgenames[i].name;
 			break;
+		}
 	printf("%s(%d): syscall %d \"%s\"\n", p->p_comm, p->p_pid,
-	    p->p_pledge_syscall, pledgenames[i].name);
+	    p->p_pledge_syscall, codes);
 #ifdef KTRACE
 	ktrpledge(p, error, code, p->p_pledge_syscall);
 #endif

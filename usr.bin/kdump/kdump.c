@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdump.c,v 1.117 2015/10/25 20:39:54 deraadt Exp $	*/
+/*	$OpenBSD: kdump.c,v 1.118 2015/10/26 11:17:52 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -1441,6 +1441,7 @@ ktrexec(const char *ptr, size_t len)
 static void
 ktrpledge(struct ktr_pledge *pledge, size_t len)
 {
+	char *name = "";
 	int i;
 
 	if (len < sizeof(struct ktr_pledge))
@@ -1451,12 +1452,13 @@ ktrpledge(struct ktr_pledge *pledge, size_t len)
 	else
 		(void)printf("%s", current->sysnames[pledge->syscall]);
 	printf(", ");
-	for (i = 0; pledgenames[i].bits != 0; i++) {
+	for (i = 0; pledge->code && pledgenames[i].bits != 0; i++) {
 		if (pledgenames[i].bits & pledge->code) {
-			printf("\"%s\"", pledgenames[i].name);
+			name = pledgenames[i].name;
 			break;
 		}
 	}
+	printf("\"%s\"", name);
 	(void)printf(", errno %d", pledge->error);
 	if (fancy)
 		(void)printf(" %s", strerror(pledge->error));
