@@ -1,4 +1,4 @@
-/* $OpenBSD: rebound.c,v 1.27 2015/10/26 12:23:40 tedu Exp $ */
+/* $OpenBSD: rebound.c,v 1.28 2015/10/26 12:24:48 tedu Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -496,6 +496,8 @@ launch(const char *confname, int ud, int ld, int kq)
 			timespecsub(&req->ts, &now, &ts);
 			timeout = &ts;
 		}
+		if (timeout)
+			timeout->tv_sec += 1;
 
 	}
 	/* not reached */
