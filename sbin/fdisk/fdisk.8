@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fdisk.8,v 1.85 2015/10/05 01:48:48 krw Exp $
+.\"	$OpenBSD: fdisk.8,v 1.86 2015/10/26 14:37:50 krw Exp $
 .\"
 .\"
 .\" Copyright (c) 1997 Tobias Weingartner
@@ -15,12 +15,12 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 5 2015 $
+.Dd $Mdocdate: October 26 2015 $
 .Dt FDISK 8
 .Os
 .Sh NAME
 .Nm fdisk
-.Nd MBR partition maintenance program
+.Nd partition table maintenance program
 .Sh SYNOPSIS
 .Nm fdisk
 .Op Fl egy
@@ -36,9 +36,10 @@
 .Ar disk
 .Sh DESCRIPTION
 .Nm fdisk
-makes changes to the MBR table found on some disks.
+makes changes to the MBR and GPT tables found on some disks.
 On such disks sector 0 contains a 4-entry MBR partition table
 that divides the space.
+The GPT partition table, when present, starts at sector 1.
 .Pp
 Each entry has a type.
 A type of
@@ -79,9 +80,7 @@ has passed to the kernel.
 .It Fl e
 Use the
 .Nm
-interactive editor to modify an MBR partition table.
-The editor permits configuration of the MBR partition, as well as
-extended MBR partitions.
+interactive editor to modify the partition table.
 See
 .Sx COMMAND MODE ,
 below, for more information.
@@ -90,37 +89,33 @@ Specifies an alternate MBR template file.
 The default file is
 .Pa /usr/mdec/mbr .
 .It Fl g
-A protective MBR and a GPT label will be written to disk.
-The GPT label will have a single
+A protective MBR and a default GPT will be written to disk.
+The default GPT will have a single
 .Ox
-partition
-containing all available space.
-If
+partition containing all available space not allocated by a
 .Fl b
-is specified, an EFI System partition of the requested size
-is created before the remaining space is put into the
-.Ox
-partition.
+specification.
 Only valid with
 .Fl i .
 .It Fl i
-Requests that the MBR partition data be re-initialized.
+Requests that the partition table data be re-initialized.
 In this mode,
 .Nm
-will completely overwrite the primary MBR bootcode and MBR partition table
-using the default MBR template
+will completely overwrite the primary MBR bootcode and MBR partition table.
+.Pp
+If
+.Fl g
+is not specified then the MBR will be overwritten by the
+the default MBR template
 .Pa /usr/mdec/mbr
 (or the one optionally specified by the
 .Fl f
 flag).
 In the default template, MBR partition number 3 will be configured as an
 .Ox
-MBR partition spanning the entire disk, except for a zone left at the start
-for booting.
-This mode is designed to initialize the MBR the very first time.
-If the
-.Fl g
-flag is also specified, a protective MBR and GPT label will be created.
+MBR partition containing all available space not allocated by a
+.Fl b
+specification.
 .Pp
 Only one of
 .Fl i
@@ -132,8 +127,8 @@ Specify the number of blocks in the disk, and force the MBR to be in LBA
 mode only.
 .It Fl u
 Update MBR bootcode, preserving existing MBR partition table.
-The MBR bootcode extends from offset 0x000 to the start of the MBR partition table
-at offset 0x1BE.
+The MBR bootcode extends from offset 0x000 to the start of the MBR partition
+table at offset 0x1BE.
 It is similar to the
 .Fl i
 flag, except the existing MBR partition table is preserved.
@@ -168,7 +163,10 @@ or
 .Sh TYPICAL LAYOUT
 When called with no special flags,
 .Nm
-prints the MBR partition table of the specified disk:
+prints the partition table of the specified disk.
+.Pp
+If the disk does not contain a valid GPT the contents
+of the MBR are displayed. e.g.:
 .Bd -literal -offset 1n
 # fdisk sd0
 Disk: sd0       geometry: 121601/255/63 [1953525168 Sectors]
@@ -219,9 +217,47 @@ for the system to be able to boot and use the drive correctly.
 These values must be kept correctly synchronized or a variety of
 problems develop which are very difficult to diagnose.
 .Pp
-The
+If the disk contains a protective MBR and a valid GPT, the contents of the GPT
+are displayed. e.g.:
+.Bd -literal -offset 1n
+Disk: sd1 ca501b80-5b85-40fd-a00e-abc6ffc5f97c [7907328 Sectors]
+      First usable LBA: 64  Last usable LBA: 7907264
+   #: uuid                                         lba         size 
+      type                                 name
+---------------------------------------------------------------------
+   1: 415afb62-3f56-43c5-a1b3-9405aace56f9           64          960 
+      EFI Sys                              EFI System Area                     
+   3: 6bcc08a8-66a6-43ae-aa1f-9869ab4c8a27         1024      7906241 
+      OpenBSD                              OpenBSD Area                        
+.Ed
+.Pp
+This 7907328 sector disk drive is divided into two 
+partitions that span the whole disk.
+The first partition is a 960 sector EFI Sys partition.
+the second is a 7906241 sector
 .Ox
-MBR partition shown above is subdivided further using the
+partition using the remainder of the disk.
+The fields of the output are:
+.Bl -tag -width "uuid"
+.It Em "#"
+Number identifying each partition table entry.
+.It Em "uuid"
+The UUID of the partition.
+.It Em "lba"
+The sector the partion starts on.
+.It Em "size"
+The number of sectors in the partition.
+.It Em "type"
+The partition type identifier.
+If the type is recognized the name of the type is displayed.
+Otherwise the type UUID is displayed.
+.It Em "name"
+The partition's name.
+.El
+.Pp
+In either the MBR or GPT case the
+.Ox
+partition shown above is subdivided further using the
 functionality provided by
 .Xr disklabel 8 ,
 which provides
@@ -288,7 +324,7 @@ process.
 .Dl fdisk:*1\*(Gt
 .Pp
 .Sq *
-means that the in-memory copy of the boot block has been modified, but
+means that the in-memory copy of the partition table has been modified, but
 not yet written to disk.
 .Pp
 1 is the disk offset of the currently selected boot block being edited.
@@ -309,18 +345,33 @@ Display a list of commands that
 understands in the interactive edit mode.
 .It Cm manual
 Display this manual page.
-.It Cm reinit
+.It Cm reinit Op Cm gpt | Cm mbr
 Initialize the currently selected, in-memory copy of the
 boot block.
+If
+.Cm gpt
+is specified a protective MBR and a GPT are initialized.
+If
+.Cm mbr
+is specified only an MBR is initialized.
+If neither
+.Cm mbr
+nor
+.Cm gpt
+are specified then a protective MBR and a GPT are initialized if a protective
+MBR already exists.
+Otherwise only an MBR is initialized.
 .It Cm disk
 Display the current drive geometry that
 .Nm
 probed using kernel provided information and various heuristics.
 The disk geometry may be changed at this point.
+Not available when editing a GPT.
 .It Cm edit Ar #
 Edit a given table entry in the memory copy of
 the current boot block.
-Sizes may be adjusted in BIOS geometry mode or using sector offsets and sizes.
+Sizes may be adjusted in BIOS geometry mode (MBR only) or using
+ sector offsets and sizes.
 A unit
 .Sq b ,
 .Sq k ,
@@ -347,23 +398,25 @@ the MBR partition is marked as not bootable,
 but no other MBR partitions are touched.
 .It Cm update
 Update the machine MBR bootcode and 0xAA55 signature in the memory copy
-of the currently selected boot block.
+of the currently selected MBR.
 Note that this option will overwrite an NT disk
 signature, if present.
+Not available when editing a GPT.
 .It Cm select Ar #
-Select and load into memory the boot block pointed
+Select and load into memory the MBR pointed
 to by the extended MBR partition table entry in the current boot block.
+Not available when editing a GPT.
 .It Cm setpid Ar #
-Change the MBR partition
-identifier of the given MBR partition table entry.
+Change the partition
+identifier of the given partition table entry.
 This command is particularly useful for reassigning
-an existing MBR partition to
+an existing partition to
 .Ox .
 .It Cm swap Ar # Ar #
-Swap two MBR entries.
+Swap two partition entries.
 .It Cm print Op Ar unit
-Print the currently selected in-memory copy of the boot
-block and its MBR table to the terminal.
+Print the currently selected in-memory copy of the 
+partition table to the terminal.
 A
 .Ar unit
 .Sq b ,
@@ -374,18 +427,18 @@ or
 may be appended to indicate bytes, kilobytes, megabytes, or gigabytes.
 Otherwise the number of sectors is printed.
 .It Cm write
-Write the in-memory copy of the boot block to disk.
+Write the in-memory copy of the partition table to disk.
 .It Cm exit
 Exit the current level of
 .Nm fdisk ,
 either returning to the
-previously selected in-memory copy of a boot block, or exiting the
+previously selected in-memory copy of a MBR, or exiting the
 program if there is none.
 .It Cm quit
 Exit the current level of
 .Nm fdisk ,
 either returning to the
-previously selected in-memory copy of a boot block, or exiting the
+previously selected in-memory copy of a MBR, or exiting the
 program if there is none.
 Unlike
 .Em exit
