@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.59 2015/10/26 14:27:41 millert Exp $	*/
+/*	$OpenBSD: misc.c,v 1.60 2015/10/26 15:16:30 millert Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -405,25 +405,11 @@ open_socket(void)
 	mode_t		   omask;
 	struct sockaddr_un s_un;
 
-	sock = socket(AF_UNIX, SOCK_STREAM, 0);
+	sock = socket(AF_UNIX, SOCK_STREAM|SOCK_CLOEXEC|SOCK_NONBLOCK, 0);
 	if (sock == -1) {
 		fprintf(stderr, "%s: can't create socket: %s\n",
 		    ProgramName, strerror(errno));
 		log_it("CRON", getpid(), "DEATH", "can't create socket");
-		exit(EXIT_FAILURE);
-	}
-	if (fcntl(sock, F_SETFD, FD_CLOEXEC) == -1) {
-		fprintf(stderr, "%s: can't make socket close on exec: %s\n",
-		    ProgramName, strerror(errno));
-		log_it("CRON", getpid(), "DEATH",
-		    "can't make socket close on exec");
-		exit(EXIT_FAILURE);
-	}
-	if (fcntl(sock, F_SETFL, O_NONBLOCK) == -1) {
-		fprintf(stderr, "%s: can't make socket non-blocking: %s\n",
-		    ProgramName, strerror(errno));
-		log_it("CRON", getpid(), "DEATH",
-		    "can't make socket non-blocking");
 		exit(EXIT_FAILURE);
 	}
 	bzero(&s_un, sizeof(s_un));
