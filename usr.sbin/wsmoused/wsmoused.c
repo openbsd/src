@@ -1,4 +1,4 @@
-/* $OpenBSD: wsmoused.c,v 1.35 2014/12/23 10:24:22 shadchin Exp $ */
+/* $OpenBSD: wsmoused.c,v 1.36 2015/10/26 09:58:18 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001 Jean-Baptiste Marchand, Julien Montagne and Jerome Verdon
@@ -73,7 +73,6 @@
 #include "wsmoused.h"
 
 #define	DEFAULT_TTY	"/dev/ttyCcfg"
-#define	DEFAULT_PIDFILE	"/var/run/wsmoused.pid"
 
 extern char *__progname;
 extern char *mouse_names[];
@@ -82,7 +81,6 @@ int debug = 0;
 int background = FALSE;
 int nodaemon = FALSE;
 int identify = FALSE;
-char *pidfile = NULL;
 
 mouse_t mouse = {
 	.flags = 0,
@@ -233,8 +231,6 @@ terminate(int sig)
 		close(mouse.mfd);
 		mouse.mfd = -1;
 	}
-	if (pidfile != NULL)
-		unlink(pidfile);
 	_exit(0);
 }
 
@@ -433,7 +429,7 @@ wsmoused(void)
 static void
 usage(void)
 {
-	fprintf(stderr, "usage: %s [-2dfi] [-C thresh] [-D device] [-I file]"
+	fprintf(stderr, "usage: %s [-2dfi] [-C thresh] [-D device]"
 	    " [-M N=M]\n\t[-p device] [-t type]\n", __progname);
 	exit(1);
 }
@@ -441,12 +437,11 @@ usage(void)
 int
 main(int argc, char **argv)
 {
-	FILE *fp;
 	unsigned int type;
 	int opt;
 	int i;
 
-#define GETOPT_STRING "2dfhip:t:C:D:I:M:"
+#define GETOPT_STRING "2dfhip:t:C:D:M:"
 	while ((opt = (getopt(argc, argv, GETOPT_STRING))) != -1) {
 		switch (opt) {
 		case '2':
@@ -500,9 +495,6 @@ main(int argc, char **argv)
 		case 'D':
 			if ((mouse.ttyname = strdup(optarg)) == NULL)
 				logerr(1, "out of memory");
-			break;
-		case 'I':
-			pidfile = optarg;
 			break;
 		case 'M':
 			if (!mouse_installmap(optarg)) {
@@ -570,13 +562,6 @@ main(int argc, char **argv)
 			logerr(1, "failed to become a daemon");
 		} else {
 			background = TRUE;
-			if (pidfile != NULL) {
-				fp = fopen(pidfile, "w");
-				if (fp != NULL) {
-					fprintf(fp, "%ld\n", (long)getpid());
-					fclose(fp);
-				}
-			}
 		}
 	}
 

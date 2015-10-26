@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wsmoused.8,v 1.19 2013/07/16 11:13:34 schwarze Exp $
+.\"	$OpenBSD: wsmoused.8,v 1.20 2015/10/26 09:58:18 deraadt Exp $
 .\"
 .\" Copyright (c) 2001 Jean-Baptiste Marchand
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 16 2013 $
+.Dd $Mdocdate: October 26 2015 $
 .Dt WSMOUSED 8 i386
 .Os
 .Sh NAME
@@ -35,7 +35,6 @@
 .Op Fl 2dfi
 .Op Fl C Ar thresh
 .Op Fl D Ar device
-.Op Fl I Ar file
 .Oo
 .Fl M
 .Ar N Ns = Ns Ar M
@@ -87,11 +86,6 @@ Enable debugging messages.
 .It Fl f
 Do not become a daemon and instead run as a foreground process.
 Useful for testing and debugging.
-.It Fl I Ar file
-Write the process ID of
-.Nm
-to the specified
-.Ar file .
 .It Fl i
 Print the type and the protocol of the mouse and exit.
 .It Fl M Ar N Ns = Ns Ar M

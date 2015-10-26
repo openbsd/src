@@ -1,4 +1,4 @@
-/* $OpenBSD: wsmoused.h,v 1.11 2014/05/14 18:23:22 shadchin Exp $ */
+/* $OpenBSD: wsmoused.h,v 1.12 2015/10/26 09:58:18 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001 Jean-Baptiste Marchand, Julien Montagne and Jerome Verdon
@@ -55,15 +55,11 @@
 
 /* Logging macros */
 
-extern char *pidfile;
-
 #define debug(fmt, ...) \
 	if (debug&&nodaemon) printf(fmt, __VA_ARGS__)
 
 #define logerr(e, ...) 				\
 	do {							\
-		if (pidfile != NULL)				\
-			unlink(pidfile);			\
 		if (background) {				\
 			syslog(LOG_ERR, __VA_ARGS__);		\
 			exit(e);				\
