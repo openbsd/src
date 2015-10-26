@@ -1,4 +1,4 @@
-/*	$OpenBSD: route6d.c,v 1.80 2015/10/26 00:25:45 jca Exp $	*/
+/*	$OpenBSD: route6d.c,v 1.81 2015/10/26 00:37:44 jca Exp $	*/
 /*	$KAME: route6d.c,v 1.111 2006/10/25 06:38:13 jinmei Exp $	*/
 
 /*
@@ -626,11 +626,11 @@ init(void)
  * ripflush flushes the rip datagram stored in the rip buffer
  */
 static int nrt;
+static struct netinfo6 *np;
 
 void
 ripflush(struct ifc *ifcp, struct sockaddr_in6 *sin6)
 {
-	struct netinfo6 *np;
 	int i;
 	int error;
 
@@ -671,7 +671,7 @@ ripflush(struct ifc *ifcp, struct sockaddr_in6 *sin6)
 			ifcp->ifc_name, inet6_n2p(&ifcp->ifc_ripsin.sin6_addr));
 		ifcp->ifc_flags &= ~IFF_UP;	/* As if down for AF_INET6 */
 	}
-	nrt = 0;
+	nrt = 0; np = ripbuf->rip6_nets;
 }
 
 /*
@@ -680,7 +680,6 @@ ripflush(struct ifc *ifcp, struct sockaddr_in6 *sin6)
 void
 ripsend(struct ifc *ifcp, struct sockaddr_in6 *sin6, int flag)
 {
-	struct	netinfo6 *np;
 	struct	riprt *rrt;
 	struct	in6_addr *nh;	/* next hop */
 	int	maxrte;
