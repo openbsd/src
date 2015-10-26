@@ -23,7 +23,6 @@
 #include <stdarg.h>
 #include <fcntl.h>
 #include <poll.h>
-#include <util.h>
 #include <err.h>
 
 extern char *configfilename;

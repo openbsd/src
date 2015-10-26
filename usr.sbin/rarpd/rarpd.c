@@ -1,4 +1,4 @@
-/*	$OpenBSD: rarpd.c,v 1.63 2015/10/26 09:57:55 deraadt Exp $ */
+/*	$OpenBSD: rarpd.c,v 1.64 2015/10/26 10:08:14 jung Exp $ */
 /*	$NetBSD: rarpd.c,v 1.25 1998/04/23 02:48:33 mrg Exp $	*/
 
 /*
@@ -48,7 +48,6 @@
 #include <netdb.h>
 #include <arpa/inet.h>
 #include <dirent.h>
-#include <util.h>
 #include <poll.h>
 #include <ifaddrs.h>
 #include <paths.h>

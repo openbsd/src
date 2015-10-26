@@ -1,4 +1,4 @@
-/*	$OpenBSD: rbootd.c,v 1.27 2015/10/26 09:57:55 deraadt Exp $	*/
+/*	$OpenBSD: rbootd.c,v 1.28 2015/10/26 10:08:14 jung Exp $	*/
 /*	$NetBSD: rbootd.c,v 1.5 1995/10/06 05:12:17 thorpej Exp $	*/
 
 /*
@@ -56,7 +56,6 @@
 #include <syslog.h>
 #include <unistd.h>
 #include <limits.h>
-#include <util.h>
 #include <pwd.h>
 #include <poll.h>
 
