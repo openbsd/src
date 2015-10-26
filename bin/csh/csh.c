@@ -1,4 +1,4 @@
-/*	$OpenBSD: csh.c,v 1.32 2015/10/26 16:27:04 naddy Exp $	*/
+/*	$OpenBSD: csh.c,v 1.33 2015/10/26 21:57:42 naddy Exp $	*/
 /*	$NetBSD: csh.c,v 1.14 1995/04/29 23:21:28 mycroft Exp $	*/
 
 /*-
@@ -819,9 +819,6 @@ void
 exitstat(void)
 {
     Char *s;
-#ifdef PROF
-    monitor(0);
-#endif
     /*
      * Note that if STATUS is corrupted (i.e. getn bombs) then error will exit
      * directly because we poke child here. Otherwise we might continue
@@ -1257,11 +1254,7 @@ initdesc(void)
 
 
 void
-#ifdef PROF
-done(int i)
-#else
 xexit(int i)
-#endif
 {
     untty();
     _exit(i);

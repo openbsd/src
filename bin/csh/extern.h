@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.23 2015/10/26 16:31:09 naddy Exp $	*/
+/*	$OpenBSD: extern.h,v 1.24 2015/10/26 21:57:42 naddy Exp $	*/
 /*	$NetBSD: extern.h,v 1.8 1996/10/31 23:50:54 christos Exp $	*/
 
 /*-
@@ -48,12 +48,7 @@ void	process(bool);
 void	rechist(void);
 void	untty(void);
 int	vis_fputc(int, FILE *);
-
-#ifdef PROF
-void done(int);
-#else
-void xexit(int);
-#endif
+void	xexit(int);
 
 /*
  * dir.c

@@ -1,4 +1,4 @@
-/*	$OpenBSD: csh.h,v 1.25 2015/10/26 16:31:09 naddy Exp $	*/
+/*	$OpenBSD: csh.h,v 1.26 2015/10/26 21:57:42 naddy Exp $	*/
 /*	$NetBSD: csh.h,v 1.9 1995/03/21 09:02:40 cgd Exp $	*/
 
 /*-
@@ -52,10 +52,6 @@
 #define	FSHOUT	17		/* ... shell output */
 #define	FSHERR	18		/* ... shell diagnostics */
 #define	FOLDSTD	19		/* ... old std input */
-
-#ifdef PROF
-#define	xexit(n)	done(n)
-#endif
 
 typedef short Char;
 
