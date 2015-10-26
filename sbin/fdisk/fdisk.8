@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fdisk.8,v 1.86 2015/10/26 14:37:50 krw Exp $
+.\"	$OpenBSD: fdisk.8,v 1.87 2015/10/26 18:05:25 jmc Exp $
 .\"
 .\"
 .\" Copyright (c) 1997 Tobias Weingartner
@@ -44,7 +44,9 @@ The GPT partition table, when present, starts at sector 1.
 Each entry has a type.
 A type of
 .Ar 0xA6
-indicates an OpenBSD MBR partition, which starts with its own
+indicates an
+.Ox
+MBR partition, which starts with its own
 16-entry partition table known as a
 .Xr disklabel 5 .
 This can be edited using
@@ -105,7 +107,7 @@ will completely overwrite the primary MBR bootcode and MBR partition table.
 .Pp
 If
 .Fl g
-is not specified then the MBR will be overwritten by the
+is not specified then the MBR will be overwritten by
 the default MBR template
 .Pa /usr/mdec/mbr
 (or the one optionally specified by the
@@ -166,7 +168,8 @@ When called with no special flags,
 prints the partition table of the specified disk.
 .Pp
 If the disk does not contain a valid GPT the contents
-of the MBR are displayed. e.g.:
+of the MBR are displayed.
+For example:
 .Bd -literal -offset 1n
 # fdisk sd0
 Disk: sd0       geometry: 121601/255/63 [1953525168 Sectors]
@@ -218,20 +221,21 @@ These values must be kept correctly synchronized or a variety of
 problems develop which are very difficult to diagnose.
 .Pp
 If the disk contains a protective MBR and a valid GPT, the contents of the GPT
-are displayed. e.g.:
+are displayed.
+For example:
 .Bd -literal -offset 1n
 Disk: sd1 ca501b80-5b85-40fd-a00e-abc6ffc5f97c [7907328 Sectors]
       First usable LBA: 64  Last usable LBA: 7907264
-   #: uuid                                         lba         size 
+   #: uuid                                         lba         size
       type                                 name
 ---------------------------------------------------------------------
-   1: 415afb62-3f56-43c5-a1b3-9405aace56f9           64          960 
-      EFI Sys                              EFI System Area                     
-   3: 6bcc08a8-66a6-43ae-aa1f-9869ab4c8a27         1024      7906241 
-      OpenBSD                              OpenBSD Area                        
+   1: 415afb62-3f56-43c5-a1b3-9405aace56f9           64          960
+      EFI Sys                              EFI System Area
+   3: 6bcc08a8-66a6-43ae-aa1f-9869ab4c8a27         1024      7906241
+      OpenBSD                              OpenBSD Area
 .Ed
 .Pp
-This 7907328 sector disk drive is divided into two 
+This 7907328 sector disk drive is divided into two
 partitions that span the whole disk.
 The first partition is a 960 sector EFI Sys partition.
 the second is a 7906241 sector
@@ -244,7 +248,7 @@ Number identifying each partition table entry.
 .It Em "uuid"
 The UUID of the partition.
 .It Em "lba"
-The sector the partion starts on.
+The sector the partition starts on.
 .It Em "size"
 The number of sectors in the partition.
 .It Em "type"
@@ -371,7 +375,7 @@ Not available when editing a GPT.
 Edit a given table entry in the memory copy of
 the current boot block.
 Sizes may be adjusted in BIOS geometry mode (MBR only) or using
- sector offsets and sizes.
+sector offsets and sizes.
 A unit
 .Sq b ,
 .Sq k ,
@@ -415,7 +419,7 @@ an existing partition to
 .It Cm swap Ar # Ar #
 Swap two partition entries.
 .It Cm print Op Ar unit
-Print the currently selected in-memory copy of the 
+Print the currently selected in-memory copy of the
 partition table to the terminal.
 A
 .Ar unit
