@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.README,v 1.60 2015/07/20 23:52:29 yasuoka Exp $
+#	$OpenBSD: bsd.README,v 1.61 2015/10/26 10:43:42 bluhm Exp $
 #	$NetBSD: bsd.README,v 1.17 1996/04/13 02:08:08 thorpej Exp $
 #	@(#)bsd.README	5.1 (Berkeley) 5/11/90
 
@@ -9,7 +9,6 @@ convention, named with the suffix ".mk".
 bsd.dep.mk		- handle Makefile dependencies
 bsd.lib.mk		- support for building libraries
 bsd.man.mk		- installing manual pages and their links
-bsd.nls.mk		- National Language Support
 bsd.obj.mk		- creating 'obj' directories and cleaning up
 bsd.own.mk		- define common variables
 bsd.port.mk		- building ports
@@ -189,15 +188,6 @@ DOCGRP		Documentation group. [bin]
 DOCOWN		Documentation owner. [root]
 
 DOCMODE		Documentation mode. [${NONBINMODE}]
-
-NLSDIR		Base path for National Language Support files installation.
-		[/usr/share/nls]
-
-NLSGRP		National Language Support files group. [bin]
-
-NLSOWN		National Language Support files owner. [root]
-
-NLSMODE		National Language Support files mode. [${NONBINMODE}]
 
 INSTALL_STRIP	The flag passed to the install program to cause the binary
 		to be stripped.  This is to be used when building your
