@@ -1,4 +1,4 @@
-/* $OpenBSD: rebound.c,v 1.26 2015/10/17 00:38:57 tedu Exp $ */
+/* $OpenBSD: rebound.c,v 1.27 2015/10/26 12:23:40 tedu Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -423,17 +423,15 @@ launch(const char *confname, int ud, int ld, int kq)
 				logmsg(LOG_INFO, "parent died");
 				exit(0);
 			} else if (kev[i].ident == ud) {
-				req = newrequest(ud,
-				    (struct sockaddr *)&remoteaddr);
-				if (req) {
+				while ((req = newrequest(ud,
+				    (struct sockaddr *)&remoteaddr))) {
 					EV_SET(&chlist[0], req->s, EVFILT_READ,
 					    EV_ADD, 0, 0, NULL);
 					kevent(kq, chlist, 1, NULL, 0, NULL);
 				}
 			} else if (kev[i].ident == ld) {
-				req = newtcprequest(ld,
-				    (struct sockaddr *)&remoteaddr);
-				if (req) {
+				while ((req = newtcprequest(ld,
+				    (struct sockaddr *)&remoteaddr))) {
 					EV_SET(&chlist[0], req->s,
 					    req->phase == 1 ? EVFILT_WRITE :
 					    EVFILT_READ, EV_ADD, 0, 0, NULL);
@@ -556,13 +554,13 @@ main(int argc, char **argv)
 	bindaddr.sin_port = htons(53);
 	inet_aton("127.0.0.1", &bindaddr.sin_addr);
 
-	ud = socket(AF_INET, SOCK_DGRAM, 0);
+	ud = socket(AF_INET, SOCK_DGRAM | SOCK_NONBLOCK, 0);
 	if (ud == -1)
 		err(1, "socket");
 	if (bind(ud, (struct sockaddr *)&bindaddr, sizeof(bindaddr)) == -1)
 		err(1, "bind");
 
-	ld = socket(AF_INET, SOCK_STREAM, 0);
+	ld = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0);
 	if (ld == -1)
 		err(1, "socket");
 	one = 1;
