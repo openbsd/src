@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.258 2015/10/19 11:59:26 mpi Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.259 2015/10/26 15:49:13 mpi Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -1452,7 +1452,7 @@ ip_forward(struct mbuf *m, struct ifnet *ifp, int srcrt)
 	 * Don't send redirect if we advertise destination's arp address
 	 * as ours (proxy arp).
 	 */
-	if (rt->rt_ifp == ifp &&
+	if ((rt->rt_ifidx == ifp->if_index) &&
 	    (rt->rt_flags & (RTF_DYNAMIC|RTF_MODIFIED)) == 0 &&
 	    satosin(rt_key(rt))->sin_addr.s_addr != 0 &&
 	    ipsendredirects && !srcrt &&
