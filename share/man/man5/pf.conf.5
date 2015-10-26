@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.548 2015/10/22 11:02:48 sobrado Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.549 2015/10/26 00:49:34 schwarze Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" Copyright (c) 2003 - 2013 Henning Brauer <henning@openbsd.org>
@@ -28,7 +28,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: October 22 2015 $
+.Dd $Mdocdate: October 26 2015 $
 .Dt PF.CONF 5
 .Os
 .Sh NAME
@@ -42,27 +42,27 @@ definitions specified in
 .Nm .
 .Pp
 This is an overview of the sections in this manual page:
-.Bl -ohang
-.It Sy Packet Filtering
-Packet filtering, including network address translation (NAT).
-.It Sy Options
-Global options tune the behaviour of the packet filtering engine.
-.It Sy Queueing
-Queueing provides rule-based bandwidth control.
-.It Sy Tables
-Tables provide a method for dealing with large numbers of addresses.
-.It Sy Anchors
-Anchors are containers for rules and tables.
-.It Sy Stateful Filtering
-Stateful filtering tracks packets by state.
-.It Sy Traffic Normalisation
-Including scrub, fragment handling, and blocking spoofed traffic.
-.It Sy Operating System Fingerprinting
-A method for detecting a host's operating system.
-.It Sy Examples
-Some example rulesets.
-.It Sy Grammar
-Complete BNF grammar reference.
+.Bl -inset
+.It Sx PACKET FILTERING
+including network address translation (NAT).
+.It Sx OPTIONS
+globally tune the behaviour of the packet filtering engine.
+.It Sx QUEUEING
+provides rule-based bandwidth control.
+.It Sx TABLES
+provide a method for dealing with large numbers of addresses.
+.It Sx ANCHORS
+are containers for rules and tables.
+.It Sx STATEFUL FILTERING
+tracks packets by state.
+.It Sx TRAFFIC NORMALISATION
+includes scrub, fragment handling, and blocking spoofed traffic.
+.It Sx OPERATING SYSTEM FINGERPRINTING
+is a method for detecting a host's operating system.
+.It Sx EXAMPLES
+provides some example rulesets.
+.It Sx GRAMMAR
+provides a complete BNF grammar reference.
 .El
 .Pp
 The current line can be extended over multiple lines using a backslash
@@ -87,9 +87,9 @@ Macros can be defined that will later be expanded in context.
 Macro names must start with a letter, digit, or underscore,
 and may contain any of those characters.
 Macro names may not be reserved words (for example
-.Ar pass ,
-.Ar in ,
-.Ar out ) .
+.Ic pass ,
+.Cm in ,
+.Cm out ) .
 Macros are not expanded inside quotes.
 .Pp
 For example:
@@ -102,10 +102,10 @@ pass in  on $ext_if proto tcp from any to any port 25
 .Sh PACKET FILTERING
 .Xr pf 4
 has the ability to
-.Ar block ,
-.Ar pass ,
+.Ic block ,
+.Ic pass ,
 and
-.Ar match
+.Ic match
 packets based on attributes of their layer 3
 and layer 4 headers.
 Filter rules determine which of these actions are taken;
@@ -114,14 +114,14 @@ filter parameters specify the packets to which a rule applies.
 For each packet processed by the packet filter, the filter rules are
 evaluated in sequential order, from first to last.
 For
-.Ar block
+.Ic block
 and
-.Ar pass ,
+.Ic pass ,
 the last matching rule decides what action is taken;
 if no rule matches the packet, the default action is to pass
 the packet without creating a state.
 For
-.Ar match ,
+.Ic match ,
 rules are evaluated every time they match;
 the pass/block state of a packet remains unchanged.
 .Pp
@@ -136,7 +136,7 @@ By default
 .Xr pf 4
 filters packets statefully:
 the first time a packet matches a
-.Ar pass
+.Ic pass
 rule, a state entry is created.
 The packet filter examines each packet to see if it matches an existing state.
 If it does, the packet is passed without evaluation of any rules.
@@ -144,35 +144,35 @@ After the connection is closed or times out, the state entry is automatically
 removed.
 .Pp
 The following actions can be used in the filter:
-.Bl -tag -width xxxx
-.It Ar block
+.Bl -tag -width Ds
+.It Ic block
 The packet is blocked.
 There are a number of ways in which a
-.Ar block
+.Ic block
 rule can behave when blocking a packet.
 The default behaviour is to
-.Ar drop
+.Cm drop
 packets silently, however this can be overridden or made
 explicit either globally, by setting the
-.Ar block-policy
+.Cm block-policy
 option, or on a per-rule basis with one of the following options:
 .Pp
-.Bl -tag -width "return-icmp6XXX" -compact
-.It Ar drop
+.Bl -tag -width return-icmp6 -compact
+.It Cm drop
 The packet is silently dropped.
-.It Ar return
+.It Cm return
 This causes a TCP RST to be returned for TCP packets
 and an ICMP UNREACHABLE for other types of packets.
-.It Ar return-icmp
-.It Ar return-icmp6
+.It Cm return-icmp
+.It Cm return-icmp6
 This causes ICMP messages to be returned for packets which match the rule.
 By default this is an ICMP UNREACHABLE message, however this
 can be overridden by specifying a message as a code or number.
-.It Ar return-rst
+.It Cm return-rst
 This applies only to TCP packets,
 and issues a TCP RST which closes the connection.
 An optional parameter,
-.Ar ttl ,
+.Cm ttl ,
 may be given with a TTL value.
 .El
 .Pp
@@ -186,57 +186,61 @@ The simplest mechanism to block everything by default and only pass
 packets that match explicit rules is specify a first filter rule of:
 .Pp
 .Dl block all
-.It Ar match
+.It Ic match
 The packet is matched.
 This mechanism is used to provide fine grained filtering
 without altering the block/pass state of a packet.
-.Ar match
-rules differ from block and pass rules in that
-parameters are set every time a packet matches the rule,
-not only on the last matching rule.
+.Ic match
+rules differ from
+.Ic block
+and
+.Ic pass
+rules in that parameters are set every time a packet matches the
+rule, not only on the last matching rule.
 For the following parameters,
 this means that the parameter effectively becomes
 .Dq sticky
 until explicitly overridden:
-.Ar nat-to ,
-.Ar binat-to ,
-.Ar rdr-to ,
-.Ar queue ,
-.Ar rtable ,
+.Cm nat-to ,
+.Cm binat-to ,
+.Cm rdr-to ,
+.Cm queue ,
+.Cm rtable ,
 and
-.Ar scrub .
+.Cm scrub .
 .Pp
-.Ar log
+.Cm log
 is different still,
 in that the action happens every time a rule matches
 i.e. a single packet can get logged more than once.
-.It Ar pass
+.It Ic pass
 The packet is passed;
 state is created unless the
-.Ar no state
+.Cm no state
 option is specified.
 .El
 .Pp
 The following parameters can be used in the filter:
 .Bl -tag -width Ds
-.It Ar in No or Ar out
+.It Cm in No or Cm out
 A packet always comes in on, or goes out through, one interface.
-.Ar in
+.Cm in
 and
-.Ar out
+.Cm out
 apply to incoming and outgoing packets;
 if neither are specified,
 the rule will match packets in both directions.
-.It Ar log Pq Cm all | matches | to Ao Ar interface Ac | Cm user
+.It Cm log Op Cm all | matches | to Ar interface | Cm user
 In addition to any action specified,
 log the packet.
 Only the packet that establishes the state is logged,
 unless the
-.Ar no state
+.Cm no state
 option is specified.
 The logged packets are sent to a
 .Xr pflog 4
-interface, by default pflog0;
+interface, by default
+.Pa pflog0 ;
 pflog0 is monitored by the
 .Xr pflogd 8
 logging daemon which logs to the file
@@ -256,7 +260,7 @@ Use
 .Cm all
 to force logging of all packets for a connection.
 This is not necessary when
-.Ar no state
+.Cm no state
 is explicitly specified.
 .Pp
 If
@@ -264,7 +268,7 @@ If
 is specified,
 it logs the packet on all subsequent matching rules.
 It is often combined with
-.Cm to Aq Ar interface
+.Cm to Ar interface
 to avoid adding noise to the default log file.
 .Pp
 The keyword
@@ -273,16 +277,17 @@ logs the UID and PID of the
 socket on the local host used to send or receive a packet,
 in addition to the normal information.
 .Pp
-To specify a logging interface other than pflog0,
+To specify a logging interface other than
+.Pa pflog0 ,
 use the syntax
-.Cm to Aq Ar interface .
-.It Ar quick
+.Cm to Ar interface .
+.It Cm quick
 If a packet matches a rule which has the
-.Ar quick
+.Cm quick
 option set, this rule
 is considered the last matching rule, and evaluation of subsequent rules
 is skipped.
-.It Ar on Aq Ar interface
+.It Cm on Ar interface | Cm any
 This rule applies only to packets coming in on, or going out through, this
 particular interface or interface group.
 For more information on interface groups,
@@ -290,30 +295,26 @@ see the
 .Ic group
 keyword in
 .Xr ifconfig 8 .
-.Ar any
+.Cm any
 will match any existing interface except loopback ones.
-.It Ar on Ar rdomain Aq Ar number
+.It Cm on rdomain Ar number
 This rule applies only to packets coming in on, or going out through, this
 particular routing domain.
-.It Aq Ar af
+.It Cm inet | inet6
 This rule applies only to packets of this address family.
-Supported values are
-.Ar inet
-and
-.Ar inet6 .
-.It Ar proto Aq Ar protocol
+.It Cm proto Ar protocol
 This rule applies only to packets of this protocol.
 Common protocols are ICMP, ICMP6, TCP, and UDP.
 For a list of all the protocol name to number mappings used by
 .Xr pfctl 8 ,
 see the file
-.Em /etc/protocols .
+.Pa /etc/protocols .
 .It Xo
-.Ar from Aq Ar source
-.Ar port Aq Ar source
-.Ar os Aq Ar source
-.Ar to Aq Ar dest
-.Ar port Aq Ar dest
+.Cm from Ar source
+.Cm port Ar source
+.Cm os Ar source
+.Cm to Ar dest
+.Cm port Ar dest
 .Xc
 This rule applies only to packets with the specified source and destination
 addresses and ports.
@@ -322,20 +323,21 @@ Addresses can be specified in CIDR notation (matching netblocks), as
 symbolic host names, interface names or interface group names, or as any
 of the following keywords:
 .Pp
-.Bl -tag -width xxxxxxxxxxxxxx -compact
-.It Ar any
+.Bl -tag -width urpf-failed -compact
+.It Cm any
 Any address.
-.It Ar no-route
+.It Cm no-route
 Any address which is not currently routable.
-.It Ar route Aq Ar label
+.It Cm route Ar label
 Any address matching the given
 .Xr route 8
-label.
-.It Ar self
+.Ar label .
+.It Cm self
 Expands to all addresses assigned to all interfaces.
-.It Aq Ar table
-Any address matching the given table.
-.It Ar urpf-failed
+.It Pf < Ar table Ns >
+Any address matching the given
+.Ar table .
+.It Cm urpf-failed
 Any source address that fails a unicast reverse path forwarding (URPF)
 check, i.e. packets coming in on an interface other than that which holds
 the route back to the packet's source address.
@@ -350,23 +352,23 @@ means all addresses from 10.1.1.10 to 10.1.1.12,
 hence addresses 10.1.1.10, 10.1.1.11, and 10.1.1.12.
 .Pp
 Interface names, interface group names, and
-.Ar self
+.Cm self
 can have modifiers appended:
 .Pp
-.Bl -tag -width xxxxxxxxxxxx -compact
-.It Ar :0
+.Bl -tag -width :broadcast -compact
+.It Cm :0
 Do not include interface aliases.
-.It Ar :broadcast
+.It Cm :broadcast
 Translates to the interface's broadcast address(es).
-.It Ar :network
+.It Cm :network
 Translates to the network(s) attached to the interface.
-.It Ar :peer
+.It Cm :peer
 Translates to the point-to-point interface's peer address(es).
 .El
 .Pp
 Host names may also have the
-.Ar :0
-option appended to restrict the name resolution to the first of each
+.Cm :0
+modfier appended to restrict the name resolution to the first of each
 v4 and v6 address found.
 .Pp
 Host name resolution and interface to address translation are done at
@@ -379,12 +381,11 @@ changes this behaviour.
 When the interface name is surrounded by parentheses, the rule is
 automatically updated whenever the interface changes its address.
 The ruleset does not need to be reloaded.
-This is especially useful with
-.Ar nat .
+This is especially useful with NAT.
 .Pp
 Ports can be specified either by number or by name.
 For example, port 80 can be specified as
-.Em www .
+.Cm www .
 For a list of all port name to number mappings used by
 .Xr pfctl 8 ,
 see the file
@@ -410,15 +411,15 @@ and
 are binary operators (they take two arguments).
 For instance:
 .Bl -tag -width Ds
-.It port 2000:2004
+.It Li port 2000:2004
 means
 .Sq all ports \(>= 2000 and \(<= 2004 ,
 hence ports 2000, 2001, 2002, 2003, and 2004.
-.It port 2000 >< 2004
+.It Li port 2000 >< 2004
 means
 .Sq all ports > 2000 and < 2004 ,
 hence ports 2001, 2002, and 2003.
-.It port 2000 <> 2004
+.It Li port 2000 <> 2004
 means
 .Sq all ports < 2000 or > 2004 ,
 hence ports 1\(en1999 and 2005\(en65535.
@@ -426,14 +427,18 @@ hence ports 1\(en1999 and 2005\(en65535.
 .Pp
 The operating system of the source host can be specified in the case of TCP
 rules with the
-.Ar os
+.Cm os
 modifier.
 See the
 .Sx OPERATING SYSTEM FINGERPRINTING
 section for more information.
 .Pp
-The host, port, and OS specifications are optional,
-as in the following examples:
+The
+.Cm host ,
+.Cm port ,
+and
+.Cm os
+specifications are optional, as in the following examples:
 .Bd -literal -offset indent
 pass in all
 pass in from any to any
@@ -449,46 +454,43 @@ pass in proto tcp from route "DTAG"
 The following additional parameters can be used in the filter:
 .Pp
 .Bl -tag -width Ds -compact
-.It Ar all
-This is equivalent to "from any to any".
+.It Cm all
+This is equivalent to
+.Ql from any to any .
 .Pp
-.It Ar allow-opts
+.It Cm allow-opts
 By default, IPv4 packets with IP options or IPv6 packets with routing
 extension headers are blocked.
 When
-.Ar allow-opts
+.Cm allow-opts
 is specified for a
-.Ar pass
+.Ic pass
 rule, packets that pass the filter based on that rule (last matching)
 do so even if they contain IP options or routing extension headers.
 For packets that match state, the rule that initially created the
 state is used.
-The implicit
-.Ar pass
-rule that is used when a packet does not match any rules does not
-allow IP options.
+The implicit pass rule that is used when a packet does not match
+any rules does not allow IP options.
 .Pp
-.It Ar divert-packet Ar port Aq Ar port
+.It Cm divert-packet port Ar port
 Used to send matching packets to
 .Xr divert 4
 sockets bound to port
 .Ar port .
 If the default option of fragment reassembly is enabled, scrubbing with
-.Ar reassemble tcp
+.Cm reassemble tcp
 is also enabled for
-.Ar divert-packet
+.Cm divert-packet
 rules.
 .Pp
-.It Ar divert-reply
+.It Cm divert-reply
 Used to receive replies for sockets that are bound to addresses
 which are not local to the machine.
 See
 .Xr setsockopt 2
 for information on how to bind these sockets.
 .Pp
-.It Xo Ar divert-to Aq Ar host
-.Ar port Aq Ar port
-.Xc
+.It Cm divert-to Ar host Cm port Ar port
 Used to redirect packets to a local socket bound to
 .Ar host
 and
@@ -497,44 +499,44 @@ The packets will not be modified, so
 .Xr getsockname 2
 on the socket will return the original destination address of the packet.
 .Pp
-.It Ar flags Ao Ar a Ac Ns / Ns Ao Ar b Ac | Ar any
+.It Cm flags Ar a Ns / Ns Ar b | Cm any
 This rule only applies to TCP packets that have the flags
-.Aq Ar a
+.Ar a
 set out of set
-.Aq Ar b .
+.Ar b .
 Flags not specified in
-.Aq Ar b
+.Ar b
 are ignored.
 For stateful connections, the default is
-.Ar flags S/SA .
+.Cm flags S/SA .
 To indicate that flags should not be checked at all, specify
-.Ar flags any .
+.Cm flags any .
 The flags are: (F)IN, (S)YN, (R)ST, (P)USH, (A)CK, (U)RG, (E)CE, and C(W)R.
-.Bl -tag -width Fl
-.It Ar flags S/S
+.Bl -tag -width "flags /SFRA"
+.It Cm flags S/S
 Flag SYN is set.
 The other flags are ignored.
-.It Ar flags S/SA
+.It Cm flags S/SA
 This is the default setting for stateful connections.
 Out of SYN and ACK, exactly SYN may be set.
 SYN, SYN+PSH, and SYN+RST match, but SYN+ACK, ACK, and ACK+RST do not.
 This is more restrictive than the previous example.
-.It Ar flags /SFRA
+.It Cm flags /SFRA
 If the first set is not specified, it defaults to none.
 All of SYN, FIN, RST, and ACK must be unset.
 .El
 .Pp
 Because
-.Ar flags S/SA
+.Cm flags S/SA
 is applied by default (unless
-.Ar no state
+.Cm no state
 is specified), only the initial SYN packet of a TCP handshake will create
 a state for a TCP connection.
 It is possible to be less restrictive, and allow state creation from
 intermediate
 .Pq non-SYN
 packets, by specifying
-.Ar flags any .
+.Cm flags any .
 This will cause
 .Xr pf 4
 to synchronize to existing connections, for instance
@@ -542,28 +544,25 @@ if one flushes the state table.
 However, states created from such intermediate packets may be missing
 connection details such as the TCP window scaling factor.
 States which modify the packet flow, such as those affected by
-.Ar af-to ,
-.Ar modulate ,
-.Ar nat-to ,
-.Ar rdr-to ,
+.Cm af-to ,
+.Cm modulate state ,
+.Cm nat-to ,
+.Cm rdr-to ,
 or
-.Ar synproxy state
+.Cm synproxy state
 options, or scrubbed with
-.Ar reassemble tcp ,
+.Cm reassemble tcp ,
 will also not be recoverable from intermediate packets.
 Such connections will stall and time out.
 .Pp
-.It Ar group Aq Ar group
+.It Cm group Ar group
 Similar to
-.Ar user ,
-this rule only applies to packets of sockets owned by the specified group.
+.Cm user ,
+this rule only applies to packets of sockets owned by the specified
+.Ar group .
 .Pp
-.It Xo Ar icmp-type Aq Ar type
-.Ar code Aq Ar code
-.Xc
-.It Xo Ar icmp6-type Aq Ar type
-.Ar code Aq Ar code
-.Xc
+.It Cm icmp-type Ar type Cm code Ar code
+.It Cm icmp6-type Ar type Cm code Ar code
 This rule only applies to ICMP or ICMP6 packets with the specified type
 and code.
 Text names for ICMP types and codes are listed in
@@ -572,34 +571,34 @@ and
 .Xr icmp6 4 .
 The protocol and the ICMP type indicator
 .Po
-.Ar icmp-type
+.Cm icmp-type
 or
-.Ar icmp6-type
+.Cm icmp6-type
 .Pc
 must match.
 .Pp
-.It Ar label Aq Ar string
+.It Cm label Ar string
 Adds a label to the rule, which can be used to identify the rule.
 For instance,
-.Dq pfctl -s labels
+.Ql pfctl -s labels
 shows per-rule statistics for rules that have labels.
 .Pp
 The following macros can be used in labels:
 .Pp
 .Bl -tag -width "$srcaddrXXX" -compact -offset indent
-.It Ar $dstaddr
+.It Va $dstaddr
 The destination IP address.
-.It Ar $dstport
+.It Va $dstport
 The destination port specification.
-.It Ar $if
+.It Va $if
 The interface.
-.It Ar $nr
+.It Va $nr
 The rule number.
-.It Ar $proto
+.It Va $proto
 The protocol name.
-.It Ar $srcaddr
+.It Va $srcaddr
 The source IP address.
-.It Ar $srcport
+.It Va $srcport
 The source port specification.
 .El
 .Pp
@@ -619,16 +618,16 @@ pass in inet proto tcp from any to 1.2.3.5 \e
 .Ed
 .Pp
 The macro expansion for the
-.Ar label
+.Cm label
 directive occurs only at configuration file parse time, not during runtime.
 .Pp
-.It Ar once
+.It Cm once
 Creates a one shot rule that will remove itself from an active ruleset after
 the first match.
 In case this is the only rule in the anchor, the anchor will be destroyed
 automatically after the rule is matched.
 .Pp
-.It Ar probability Aq Ar number
+.It Cm probability Ar number Ns %
 A probability attribute can be attached to a rule,
 with a value set between 0 and 100%,
 in which case the rule is honoured using the given probability value.
@@ -636,26 +635,21 @@ For example, the following rule will drop 20% of incoming ICMP packets:
 .Pp
 .Dl block in proto icmp probability 20%
 .Pp
-.It Ar prio Aq Ar number
+.It Cm prio Ar number
 Only match packets which have the given queueing priority assigned.
 .Pp
-.It Ar received-on Aq Ar interface
+.It Cm received-on Ar interface
 Only match packets which were received on the specified
-.Ar interface
+.Cm interface
 (or interface group).
-.Ar any
+.Cm any
 will match any existing interface except loopback ones.
 .Pp
-.It Ar rtable Aq Ar number
+.It Cm rtable Ar number
 Used to select an alternate routing table for the routing lookup.
 Only effective before the route lookup happened, i.e. when filtering inbound.
 .Pp
-.It Xo Ar set prio Aq Ar priority
-.No \&| Po
-.Aq Ar priority ,
-.Aq Ar priority
-.Pc
-.Xc
+.It Cm set prio Ar priority | Pq Ar priority , priority
 Packets matching this rule will be assigned a specific queueing priority.
 Priorities are assigned as integers 0 through 7,
 with a default priority of 3.
@@ -664,7 +658,7 @@ If the packet is transmitted on a
 interface, the queueing priority will also be written as the priority
 code point in the 802.1Q VLAN header.
 If two priorities are given, packets which have a TOS of
-.Ar lowdelay
+.Cm lowdelay
 and TCP ACKs with no data payload will be assigned to the second one.
 Packets with a higher priority number are processed first,
 and packets with the same priority are processed
@@ -677,21 +671,17 @@ pass in proto tcp to port 22 set prio (2, 5)
 .Ed
 .Pp
 The interface priority queues accessed by the
-.Ar set prio
+.Cm set prio
 keyword are always enabled and do not require any additional
 configuration, unlike the queues described below and in the
 .Sx QUEUEING
 section.
 .Pp
-.It Xo Ar set queue Aq Ar queue
-.No \&| Po
-.Aq Ar queue ,
-.Aq Ar queue
-.Pc
-.Xc
-Packets matching this rule will be assigned to the specified queue.
+.It Cm set queue Ar queue | Pq Ar queue , queue
+Packets matching this rule will be assigned to the specified
+.Ar queue .
 If two queues are given, packets which have a TOS of
-.Ar lowdelay
+.Cm lowdelay
 and TCP ACKs with no data payload will be assigned to the second one.
 See
 .Sx QUEUEING
@@ -703,35 +693,33 @@ pass in proto tcp to port 25 set queue mail
 pass in proto tcp to port 22 set queue(ssh_bulk, ssh_prio)
 .Ed
 .Pp
-.It Xo Ar set tos Aq Ar string
-.No \&| Aq Ar number
-.Xc
+.It Cm set tos Ar string | number
 Enforces a TOS for matching packets.
 .Ar string
 may be one of
-.Ar critical ,
-.Ar inetcontrol ,
-.Ar lowdelay ,
-.Ar netcontrol ,
-.Ar throughput ,
-.Ar reliability ,
+.Cm critical ,
+.Cm inetcontrol ,
+.Cm lowdelay ,
+.Cm netcontrol ,
+.Cm throughput ,
+.Cm reliability ,
 or one of the DiffServ Code Points:
-.Ar ef ,
-.Ar af11 ... af43 ,
-.Ar cs0 ... cs7 ;
+.Cm ef ,
+.Cm af11 No ... Cm af43 ,
+.Cm cs0 No ... Cm cs7 ;
 .Ar number
 may be either a hex or decimal number.
 .Pp
-.It Ar tag Aq Ar string
-Packets matching this rule will be tagged with the
-specified string.
+.It Cm tag Ar string
+Packets matching this rule will be tagged with the specified
+.Ar string .
 The tag acts as an internal marker that can be used to
 identify these packets later on.
 This can be used, for example, to provide trust between
 interfaces and to determine if packets have been
 processed by translation rules.
 Tags are
-.Qq sticky ,
+.Dq sticky ,
 meaning that the packet will be tagged even if the rule
 is not the last matching rule.
 Further matching rules can replace the tag with a
@@ -739,33 +727,33 @@ new one but will not remove a previously applied tag.
 A packet is only ever assigned one tag at a time.
 Tags take the same macros as labels (see above).
 .Pp
-.It Ar tagged Aq Ar string
+.It Oo Cm \&! Oc Ns Cm tagged Ar string
 Used with filter or translation rules
 to specify that packets must already
-be tagged with the given tag in order to match the rule.
+be tagged with the given
+.Ar string
+in order to match the rule.
 Inverse tag matching can also be done
 by specifying the
 .Cm !\&
 operator before the
-.Ar tagged
+.Cm tagged
 keyword.
 .Pp
-.It Xo Ar tos Aq Ar string
-.No \&| Aq Ar number
-.Xc
+.It Cm tos Ar string | number
 This rule applies to packets with the specified TOS bits set.
 .Ar string
 may be one of
-.Ar critical ,
-.Ar inetcontrol ,
-.Ar lowdelay ,
-.Ar netcontrol ,
-.Ar throughput ,
-.Ar reliability ,
+.Cm critical ,
+.Cm inetcontrol ,
+.Cm lowdelay ,
+.Cm netcontrol ,
+.Cm throughput ,
+.Cm reliability ,
 or one of the DiffServ Code Points:
-.Ar ef ,
-.Ar af11 ... af43 ,
-.Ar cs0 ... cs7 ;
+.Cm ef ,
+.Cm af11 No ... Cm af43 ,
+.Cm cs0 No ... Cm cs7 ;
 .Ar number
 may be either a hex or decimal number.
 .Pp
@@ -776,8 +764,9 @@ pass all tos 0x10
 pass all tos 16
 .Ed
 .Pp
-.It Ar user Aq Ar user
-This rule only applies to packets of sockets owned by the specified user.
+.It Cm user Ar user
+This rule only applies to packets of sockets owned by the specified
+.Ar user .
 For outgoing connections initiated from the firewall, this is the user
 that opened the connection.
 For incoming connections to the firewall itself, this is the user that
@@ -787,15 +776,19 @@ When listening sockets are bound to the wildcard address,
 .Xr pf 4
 cannot determine if a connection is destined for the firewall itself.
 To avoid false matches on just the destination port, combine a
-.Ar user
+.Cm user
 rule with source or destination address
-.Ar self .
+.Cm self .
 .Pp
 All packets, both outgoing and incoming, of one connection are associated
 with the same user and group.
 Only TCP and UDP packets can be associated with users.
 .Pp
-User and group refer to the effective (as opposed to the real) IDs, in
+The
+.Ar user
+and
+.Ar group
+arguments refer to the effective (as opposed to the real) IDs, in
 case the socket is created by a setuid/setgid process.
 User and group IDs are stored when a socket is created;
 when a process creates a listening socket as root (for instance, by
@@ -829,15 +822,15 @@ to keep track of the original address for traffic associated with that state
 and correctly direct return traffic for that connection.
 .Pp
 Different types of translation are possible with pf:
-.Bl -tag -width xxxxxxxx
-.It Ar af-to
+.Bl -tag -width binat-to
+.It Cm af-to
 Translation between different address families (NAT64) is handled
 using
-.Ar af-to
+.Cm af-to
 rules.
 Because address family translation overrides the routing table, it's
 only possible to use
-.Ar af-to
+.Cm af-to
 on inbound rules, and a source address for the resulting translation
 must always be specified.
 .Pp
@@ -880,24 +873,26 @@ translated to 198.51.100.100.
 .Pp
 The current implementation will only extract IPv4 addresses from the
 IPv6 addresses with a prefix length of /96 and greater.
-.It Ar binat-to
+.It Cm binat-to
 A
-.Ar binat-to
+.Cm binat-to
 rule specifies a bidirectional mapping between an external IP
 netblock and an internal IP netblock.
 It expands to an outbound
-.Ar nat-to
+.Cm nat-to
 rule and an inbound
-.Ar rdr-to
+.Cm rdr-to
 rule.
-.It Ar nat-to
+.It Cm nat-to
 A
-.Ar nat-to
+.Cm nat-to
 option specifies that IP addresses are to be changed as the packet
 traverses the given interface.
 This technique allows one or more IP addresses
 on the translating host to support network traffic for a larger range of
-machines on an "inside" network.
+machines on an
+.Dq inside
+network.
 Although in theory any IP address can be used on the inside, it is strongly
 recommended that one of the address ranges defined by RFC 1918 be used.
 Those netblocks are:
@@ -907,13 +902,13 @@ Those netblocks are:
 192.168.0.0 \(en 192.168.255.255 (i.e. 192.168/16)
 .Ed
 .Pp
-.Ar nat-to
+.Cm nat-to
 is usually applied outbound.
 If applied inbound, nat-to to a local IP address is not supported.
-.It Ar rdr-to
+.It Cm rdr-to
 The packet is redirected to another destination and possibly a
 different port.
-.Ar rdr-to
+.Cm rdr-to
 can optionally specify port ranges instead of single ports.
 For instance:
 .Bl -tag -width Ds
@@ -923,7 +918,7 @@ redirects ports 2000 to 2999 (inclusive) to port 4000.
 redirects port 2000 to 4000, port 2001 to 4001, ..., port 2999 to 4999.
 .El
 .Pp
-.Ar rdr-to
+.Cm rdr-to
 is usually applied inbound.
 If applied outbound, rdr-to to a local IP address is not supported.
 .El
@@ -931,12 +926,12 @@ If applied outbound, rdr-to to a local IP address is not supported.
 In addition to modifying the address, some translation rules may modify
 source or destination ports for TCP or UDP connections;
 implicitly in the case of
-.Ar nat-to
+.Cm nat-to
 options and explicitly in the case of
-.Ar rdr-to
+.Cm rdr-to
 ones.
 Port numbers are never translated with a
-.Ar binat-to
+.Cm binat-to
 rule.
 .Pp
 Translation options apply only to packets that pass through the specified
@@ -977,33 +972,33 @@ connections only to daemons bound to this address or not bound to
 any address.
 .Pp
 For
-.Ar af-to ,
-.Ar nat-to
+.Cm af-to ,
+.Cm nat-to
 and
-.Ar rdr-to
+.Cm rdr-to
 options for which there is a single redirection address which has a
 subnet mask smaller than 32 for IPv4 or 128 for IPv6 (more than one IP
 address), a variety of different methods for assigning this address can be
 used:
 .Bl -tag -width xxxx
-.It Ar bitmask
+.It Cm bitmask
 The
-.Ar bitmask
+.Cm bitmask
 option applies the network portion of the redirection address to the address
 to be modified (source with
-.Ar nat-to ,
+.Cm nat-to ,
 destination with
-.Ar rdr-to ) .
-.It Ar least-states Op Ar sticky-address
+.Cm rdr-to ) .
+.It Cm least-states Op Cm sticky-address
 The
-.Ar least-states
+.Cm least-states
 option selects the address with the least active states from
 a given address pool and considers given weights
 associated with address(es).
 Weights can be specified between 1 and 65535.
 Addresses with higher weights are selected more often.
 .Pp
-.Ar sticky-address
+.Cm sticky-address
 can be specified to ensure that multiple connections from the
 same source are mapped to the same redirection address.
 Associations are destroyed as soon as there are
@@ -1011,25 +1006,25 @@ no longer states which refer to them;
 in order to make the mappings last
 beyond the lifetime of the states,
 increase the global options with
-.Ar set timeout src.track .
-.It Ar random Op Ar sticky-address
+.Ic set Cm timeout src.track .
+.It Cm random Op Cm sticky-address
 The
-.Ar random
+.Cm random
 option selects an address at random within the defined block of addresses.
-.Ar sticky-address
+.Cm sticky-address
 is as described above.
-.It Ar round-robin Op Ar sticky-address
+.It Cm round-robin Op Cm sticky-address
 The
-.Ar round-robin
+.Cm round-robin
 option loops through the redirection address(es) and considers given weights
 associated with address(es).
 Weights can be specified between 1 and 65535.
 Addresses with higher weights are selected more often.
-.Ar sticky-address
+.Cm sticky-address
 is as described above.
-.It Ar source-hash Op Ar key
+.It Cm source-hash Op Ar key
 The
-.Ar source-hash
+.Cm source-hash
 option uses a hash of the source address to determine the redirection address,
 ensuring that the redirection address is always the same for a given source.
 An optional
@@ -1039,51 +1034,51 @@ by default
 .Xr pfctl 8
 randomly generates a key for source-hash every time the
 ruleset is reloaded.
-.It Ar static-port
+.It Cm static-port
 With
-.Ar nat
+.Cm nat-to
 rules, the
-.Ar static-port
+.Cm static-port
 option prevents
 .Xr pf 4
 from modifying the source port on TCP and UDP packets.
 .El
 .Pp
 When more than one redirection address or a table is specified,
-.Ar bitmask
+.Cm bitmask
 is not permitted as a pool type.
 .Ss Routing
 If a packet matches a rule with one of the following route options set,
 the packet filter will route the packet according to the type of route option.
 When such a rule creates state, the route option is also applied to all
 packets matching the same connection.
-.Bl -tag -width xxxx
-.It Ar dup-to
+.Bl -tag -width route-to
+.It Cm dup-to
 The
-.Ar dup-to
+.Cm dup-to
 option creates a duplicate of the packet and routes it like
-.Ar route-to .
+.Cm route-to .
 The original packet gets routed as it normally would.
-.It Ar reply-to
+.It Cm reply-to
 The
-.Ar reply-to
+.Cm reply-to
 option is similar to
-.Ar route-to ,
+.Cm route-to ,
 but routes packets that pass in the opposite direction (replies) to the
 specified interface.
 Opposite direction is only defined in the context of a state entry, and
-.Ar reply-to
+.Cm reply-to
 is useful only in rules that create state.
 It can be used on systems with multiple external connections to
 route all outgoing packets of a connection through the interface
 the incoming connection arrived through (symmetric routing enforcement).
-.It Ar route-to
+.It Cm route-to
 The
-.Ar route-to
+.Cm route-to
 option routes the packet to the specified interface with an optional address
 for the next hop.
 When a
-.Ar route-to
+.Cm route-to
 rule creates state, only packets that pass in the same direction as the
 filter rule specifies will be routed in this way.
 Packets passing in the opposite direction (replies) are not affected
@@ -1091,44 +1086,44 @@ and are routed normally.
 .El
 .Pp
 For the
-.Ar dup-to ,
-.Ar reply-to ,
+.Cm dup-to ,
+.Cm reply-to ,
 and
-.Ar route-to
+.Cm route-to
 route options
 for which there is a single redirection address which has a
 subnet mask smaller than 32 for IPv4 or 128 for IPv6 (more than one IP
 address),
 the methods
-.Ar least-states ,
-.Ar random ,
-.Ar round-robin ,
+.Cm least-states ,
+.Cm random ,
+.Cm round-robin ,
 and
-.Ar source-hash ,
+.Cm source-hash ,
 as described above,
 can be used.
 .Sh OPTIONS
 .Xr pf 4
 may be tuned for various situations using the
-.Ar set
+.Ic set
 command.
 .Bl -tag -width Ds
-.It Ar set block-policy
+.It Ic set Cm block-policy drop | return
 The
-.Ar block-policy
+.Cm block-policy
 option sets the default behaviour for the packet
-.Ar block
+.Ic block
 action:
 .Pp
-.Bl -tag -width xxxxxxxx -compact
-.It Ar drop
+.Bl -tag -width return -compact
+.It Cm drop
 Packet is silently dropped.
-.It Ar return
+.It Cm return
 A TCP RST is returned for blocked TCP packets,
 an ICMP UNREACHABLE is returned for blocked UDP packets,
 and all other packets are silently dropped.
 .El
-.It Ar set debug
+.It Ic set Cm debug Ar level
 Set the debug
 .Ar level ,
 which limits the severity of log messages printed by
@@ -1147,8 +1142,9 @@ and
 These keywords correspond to the similar (LOG_) values specified to the
 .Xr syslog 3
 library routine.
-.It Ar set fingerprints
-Load fingerprints of known operating systems from the given filename.
+.It Cm set Cm fingerprints Ar filename
+Load fingerprints of known operating systems from the given
+.Ar filename .
 By default fingerprints of known operating systems are automatically
 loaded from
 .Xr pf.os 5 ,
@@ -1156,9 +1152,9 @@ but can be overridden via this option.
 Setting this option may leave a small period of time where the fingerprints
 referenced by the currently active ruleset are inconsistent until the new
 ruleset finishes loading.
-.It Ar set hostid
-The 32-bit
-.Ar hostid
+.It Ic set Cm hostid Ar number
+The 32-bit hostid
+.Ar number
 identifies this firewall's state table entries to other firewalls
 in a
 .Xr pfsync 4
@@ -1167,7 +1163,7 @@ By default the hostid is set to a pseudo-random value, however it may be
 desirable to manually configure it, for example to more easily identify the
 source of state table entries.
 The hostid may be specified in either decimal or hexadecimal.
-.It Ar set limit
+.It Ic set Cm limit Ar limit-item number
 Sets hard limits on the memory pools used by the packet filter.
 See
 .Xr pool 9
@@ -1176,9 +1172,9 @@ for an explanation of memory pools.
 For example,
 to set the maximum number of entries in the memory pool used by state table
 entries (generated by
-.Ar pass
+.Ic pass
 rules which do not specify
-.Ar no state )
+.Cm no state )
 to 20000:
 .Pp
 .Dl set limit states 20000
@@ -1195,9 +1191,9 @@ in the system.
 .Pp
 To set the maximum number of entries in the memory pool used for tracking
 source IP addresses (generated by the
-.Ar sticky-address
+.Cm sticky-address
 and
-.Ar src.track
+.Cm src.track
 options) to 2000:
 .Pp
 .Dl set limit src-nodes 2000
@@ -1216,7 +1212,7 @@ Various limits can be combined on a single line:
 .Bd -literal -offset indent
 set limit { states 20000, frags 2000, src-nodes 2000 }
 .Ed
-.It Ar set loginterface
+.It Ic set Cm loginterface Ar interface | Cm none
 Enable collection of packet and byte count statistics for the given
 interface or interface group.
 These statistics can be viewed using:
@@ -1232,48 +1228,48 @@ collects statistics on the interface named dc0:
 One can disable the loginterface using:
 .Pp
 .Dl set loginterface none
-.It Ar set optimization
+.It Ic set Cm optimization Ar environment
 Optimize state timeouts for one of the following network environments:
 .Pp
 .Bl -tag -width Ds -compact
-.It Ar aggressive
+.It Cm aggressive
 Aggressively expire connections.
 This can greatly reduce the memory usage of the firewall at the cost of
 dropping idle connections early.
-.It Ar conservative
+.It Cm conservative
 Extremely conservative settings.
 Avoid dropping legitimate connections at the
 expense of greater memory utilization (possibly much greater on a busy
 network) and slightly increased processor utilization.
-.It Ar high-latency
+.It Cm high-latency
 A high-latency environment (such as a satellite connection).
-.It Ar normal
+.It Cm normal
 A normal network environment.
 Suitable for almost all networks.
-.It Ar satellite
+.It Cm satellite
 Alias for
-.Ar high-latency .
+.Cm high-latency .
 .El
-.It Ar set reassemble
+.It Ic set Cm reassemble yes | no Op Cm no-df
 The
-.Ar reassemble
+.Cm reassemble
 option is used to enable or disable the reassembly of fragmented packets,
 and can be set to
-.Ar yes
+.Cm yes
 (the default) or
-.Ar no .
+.Cm no .
 If
-.Ar no-df
+.Cm no-df
 is also specified, fragments with the
-.Ar dont-fragment
+.Dq dont-fragment
 bit set are reassembled too,
 instead of being dropped;
 the reassembled packet will have the
-.Ar dont-fragment
+.Dq dont-fragment
 bit cleared.
-.It Ar set ruleset-optimization
-.Bl -tag -width xxxxxxxx -compact
-.It Ar basic
+.It Ic set Cm ruleset-optimization Ar level
+.Bl -tag -width profile -compact
+.It Cm basic
 Enable basic ruleset optimization.
 This is the default behaviour.
 Basic ruleset optimization does four things to improve the
@@ -1289,11 +1285,14 @@ combine multiple rules into a table when advantageous
 .It
 re-order the rules to improve evaluation performance
 .El
-.It Ar none
+.Pp
+.It Cm none
 Disable the ruleset optimizer.
-.It Ar profile
+.It Cm profile
 Uses the currently loaded ruleset as a feedback profile to tailor the
-ordering of quick rules to actual network traffic.
+ordering of
+.Cm quick
+rules to actual network traffic.
 .El
 .Pp
 It is important to note that the ruleset optimizer will modify the ruleset
@@ -1308,7 +1307,7 @@ Optimization can also be set as a command-line argument to
 .Xr pfctl 8 ,
 overriding the settings in
 .Nm .
-.It Ar set skip on Aq Ar ifspec
+.It Ic set Cm skip on Ar ifspec
 List interfaces for which packets should not be filtered.
 Packets passing in or out on such interfaces are passed as if pf was
 disabled, i.e. pf does not process them in any way.
@@ -1317,33 +1316,33 @@ packet filtering is not desired and can have unexpected effects.
 .Ar ifspec
 is only evaluated when the ruleset is loaded; interfaces created
 later will not be skipped.
-.It Ar set state-defaults
+.It Ic set Cm state-defaults Ar state-option , ...
 The
-.Ar state-defaults
+.Cm state-defaults
 option sets the state options for states created from rules
 without an explicit
-.Ar keep state .
+.Cm keep state .
 For example:
 .Pp
 .Dl set state-defaults pflow, no-sync
-.It Ar set state-policy
+.It Ic set Cm state-policy if-bound | floating
 The
-.Ar state-policy
+.Cm state-policy
 option sets the default behaviour for states:
 .Pp
 .Bl -tag -width if-bound -compact
-.It Ar if-bound
+.It Cm if-bound
 States are bound to an interface.
-.It Ar floating
+.It Cm floating
 States can match packets on any interfaces (the default).
 .El
-.It Ar set timeout
+.It Ic set Cm timeout Ar variable value
 .Bl -tag -width "src.track" -compact
-.It Ar frag
+.It Cm frag
 Seconds before an unassembled fragment is expired.
-.It Ar interval
+.It Cm interval
 Interval between purging expired states and fragments.
-.It Ar src.track
+.It Cm src.track
 Length of time to retain a source tracking entry after the last state
 expires.
 .El
@@ -1357,24 +1356,24 @@ Tuning these values may improve the performance of the
 firewall at the risk of dropping valid idle connections.
 .Pp
 .Bl -tag -width Ds -compact
-.It Ar tcp.closed
+.It Cm tcp.closed
 The state after one endpoint sends an RST.
-.It Ar tcp.closing
+.It Cm tcp.closing
 The state after the first FIN has been sent.
-.It Ar tcp.established
+.It Cm tcp.established
 The fully established state.
-.It Ar tcp.finwait
+.It Cm tcp.finwait
 The state after both FINs have been exchanged and the connection is closed.
 Some hosts (notably web servers on Solaris) send TCP packets even after closing
 the connection.
 Increasing
-.Ar tcp.finwait
+.Cm tcp.finwait
 (and possibly
-.Ar tcp.closing )
+.Cm tcp.closing )
 can prevent blocking of such packets.
-.It Ar tcp.first
+.It Cm tcp.first
 The state after the first packet.
-.It Ar tcp.opening
+.It Cm tcp.opening
 The state after the second packet but before both endpoints have
 acknowledged the connection.
 .El
@@ -1383,15 +1382,15 @@ ICMP and UDP are handled in a fashion similar to TCP, but with a much more
 limited set of states:
 .Pp
 .Bl -tag -width Ds -compact
-.It Ar icmp.error
+.It Cm icmp.error
 The state after an ICMP error came back in response to an ICMP packet.
-.It Ar icmp.first
+.It Cm icmp.first
 The state after the first packet.
-.It Ar udp.first
+.It Cm udp.first
 The state after the first packet.
-.It Ar udp.multiple
+.It Cm udp.multiple
 The state if both hosts have sent packets.
-.It Ar udp.single
+.It Cm udp.single
 The state if the source host sends more than one packet but the destination
 host has never sent one back.
 .El
@@ -1399,21 +1398,21 @@ host has never sent one back.
 Other protocols are handled similarly to UDP:
 .Pp
 .Bl -tag -width xxxx -compact
-.It Ar other.first
-.It Ar other.multiple
-.It Ar other.single
+.It Cm other.first
+.It Cm other.multiple
+.It Cm other.single
 .El
 .Pp
 Timeout values can be reduced adaptively as the number of state table
 entries grows.
 .Pp
 .Bl -tag -width Ds -compact
-.It Ar adaptive.end
+.It Cm adaptive.end
 When reaching this number of state entries, all timeout values become
 zero, effectively purging all state entries immediately.
 This value is used to define the scale factor; it should not actually
 be reached (set a lower state limit, see below).
-.It Ar adaptive.start
+.It Cm adaptive.start
 When the number of state entries exceeds this value, adaptive scaling
 begins.
 All timeout values are scaled linearly with factor
@@ -1476,7 +1475,7 @@ The specified bandwidth is the target bandwidth, every queue can receive
 more bandwidth as long as the parent still has some available.
 The maximum bandwidth that should be assigned to a given queue can be limited
 using the
-.Ar max
+.Cm max
 keyword.
 Similarly, a minimum (reserved) bandwidth can be specified.
 .Bd -literal -offset indent
@@ -1490,13 +1489,13 @@ queue ssh parent std bandwidth 10M burst 90M for 100ms
 .Ed
 .Pp
 All
-.Ar bandwidth
+.Cm bandwidth
 values must be specified as an absolute value.
 The suffixes
-.Ar K ,
-.Ar M ,
+.Cm K ,
+.Cm M ,
 and
-.Ar G
+.Cm G
 are used to represent bits, kilobits, megabits, and
 gigabits per second, respectively.
 The value must not exceed the interface bandwidth.
@@ -1504,29 +1503,29 @@ The value must not exceed the interface bandwidth.
 In addition to the bandwidth specifications queues support the following
 options:
 .Bl -tag -width xxxx
-.It Ar default
+.It Cm default
 Packets not matched by another queue are assigned to this queue.
 Exactly one default queue per interface is required.
-.It Ar on Aq Ar interface
+.It Cm on Ar interface
 Specifies the interface the queue operates on.
 If not given, it operates on all matching interfaces.
-.It Ar parent Aq Ar name
+.It Cm parent Ar name
 Defines which parent queue the queue should be attached to.
 Mandatory for all queues except root queues.
 The parent queue must exist.
-.It Ar qlimit Aq Ar limit
+.It Cm qlimit Ar limit
 The maximum number of packets held in the queue.
 The default is 50.
 .El
 .Pp
 Packets can be assigned to queues based on filter rules by using the
-.Ar queue
+.Cm queue
 keyword.
 Normally only one
 .Ar queue
 is specified; when a second one is specified it will instead be used for
 packets which have a TOS of
-.Ar lowdelay
+.Cm lowdelay
 and for TCP ACKs with no data payload.
 .Pp
 To continue the previous example, the examples below would specify the
@@ -1577,11 +1576,11 @@ expansion).
 Tables can be used as the source or destination of filter
 or translation rules.
 They can also be used for the redirect address of
-.Ar nat-to
+.Cm nat-to
 and
-.Ar rdr-to
+.Cm rdr-to
 and in the routing options of filter rules, but not for
-.Ar bitmask
+.Cm bitmask
 pools.
 .Pp
 Tables can be defined with any of the following
@@ -1589,21 +1588,21 @@ Tables can be defined with any of the following
 mechanisms.
 As with macros, reserved words may not be used as table names.
 .Bl -tag -width "manually"
-.It Ar manually
+.It manually
 Persistent tables can be manually created with the
-.Ar add
+.Cm add
 or
-.Ar replace
+.Cm replace
 option of
 .Xr pfctl 8 ,
 before or after the ruleset has been loaded.
-.It Pa pf.conf
+.It Nm
 Table definitions can be placed directly in this file and loaded at the
 same time as other rules are loaded, atomically.
 Table definitions inside
 .Nm
 use the
-.Ar table
+.Ic table
 statement, and are especially useful to define non-persistent tables.
 The contents of a pre-existing table defined without a list of addresses
 to initialize it is not altered when
@@ -1616,9 +1615,9 @@ will be cleared on load.
 .Pp
 Tables may be defined with the following attributes:
 .Bl -tag -width counters
-.It Ar const
+.It Cm const
 The
-.Ar const
+.Cm const
 flag prevents the user from altering the contents of the table once it
 has been created.
 Without that flag,
@@ -1627,23 +1626,24 @@ can be used to add or remove addresses from the table at any time, even
 when running with
 .Xr securelevel 7
 = 2.
-.It Ar counters
+.It Cm counters
 The
-.Ar counters
+.Cm counters
 flag enables per-address packet and byte counters, which can be displayed with
 .Xr pfctl 8 .
-.It Ar persist
+.It Cm persist
 The
-.Ar persist
+.Cm persist
 flag forces the kernel to keep the table even when no rules refer to it.
 If the flag is not set, the kernel will automatically remove the table
 when the last rule referring to it is flushed.
 .El
 .Pp
-This example
-creates a table called private,
+This example creates a table called
+.Dq private ,
 to hold RFC 1918 private network blocks,
-and a table called badhosts,
+and a table called
+.Dq badhosts ,
 which is initially empty.
 A filter rule is set up to block all traffic coming from addresses listed in
 either table:
@@ -1678,23 +1678,21 @@ are treated as comments and ignored.
 In addition to being specified by IP address, hosts may also be
 specified by their hostname.
 When the resolver is called to add a hostname to a table,
-.Ar all
+.Em all
 resulting IPv4 and IPv6 addresses are placed into the table.
 IP addresses can also be entered in a table by specifying a valid interface
 name, a valid interface group, or the
-.Ar self
+.Cm self
 keyword, in which case all addresses assigned to the interface(s) will be
 added to the table.
 .Sh ANCHORS
 Besides the main ruleset,
 .Nm
-can specify
-.Ar anchor
-attachment points.
+can specify anchor attachment points.
 An anchor is a container that can hold rules,
 address tables, and other anchors.
 When evaluation of the main ruleset reaches an
-.Ar anchor
+.Ic anchor
 rule,
 .Xr pf 4
 will proceed to evaluate all rules specified in that anchor.
@@ -1721,7 +1719,7 @@ which blocks all packets from a specific address:
 .Ed
 .Pp
 The anchor can also be populated by adding a
-.Ar load anchor
+.Ic load anchor
 rule after the anchor rule.
 When
 .Xr pfctl 8
@@ -1774,11 +1772,11 @@ will only block connections from 1.2.3.4 to port 25:
 .Ed
 .Pp
 Matching filter and translation rules marked with the
-.Ar quick
+.Cm quick
 option are final and abort the evaluation of the rules in other
 anchors and the main ruleset.
 If the anchor itself is marked with the
-.Ar quick
+.Cm quick
 option,
 ruleset evaluation will terminate when the anchor is exited if the packet is
 matched by any rule within the anchor.
@@ -1786,7 +1784,7 @@ matched by any rule within the anchor.
 An anchor references other anchor attachment points
 using the following syntax:
 .Bl -tag -width xxxx
-.It Ar anchor Aq Ar name
+.It Ic anchor Ar name
 Evaluates the filter rules in the specified anchor.
 .El
 .Pp
@@ -1805,7 +1803,7 @@ For example,
 all anchor rules specified in the main ruleset will reference
 anchor attachment points underneath the main ruleset,
 and anchor rules specified in a file loaded from a
-.Ar load anchor
+.Ic load anchor
 rule will be attached under that anchor point.
 .Pp
 Anchors may end with the asterisk
@@ -1839,7 +1837,7 @@ As an example, consider the following:
 Evaluation of the main ruleset will lead into the
 spam/allowed anchor, which will evaluate the rules in the
 spam/banned anchor, if any, before finally evaluating the
-.Ar pass
+.Ic pass
 rule.
 .Sh STATEFUL FILTERING
 .Xr pf 4
@@ -1847,7 +1845,7 @@ filters packets statefully,
 which has several advantages.
 For TCP connections, comparing a packet to a state involves checking
 its sequence numbers, as well as TCP timestamps if a rule using the
-.Ar reassemble tcp
+.Cm reassemble tcp
 parameter applies to the connection.
 If these values are outside the narrow windows of expected
 values, the packet is dropped.
@@ -1879,9 +1877,9 @@ For example if an ICMP source quench message referring to a stateful TCP
 connection arrives, it will be matched to the state and get passed.
 .Pp
 Finally, state tracking is required for
-.Ar nat-to
+.Cm nat-to
 and
-.Ar rdr-to
+.Cm rdr-to
 options, in order to track address and port translations and reverse the
 translation on returning packets.
 .Pp
@@ -1893,13 +1891,13 @@ and other protocols are matched to states using only the host addresses.
 .Pp
 If stateless filtering of individual packets is desired,
 the
-.Ar no state
+.Cm no state
 keyword can be used to specify that state will not be created
 if this is the last matching rule.
 Note that packets which match neither block nor pass rules,
 and thus are passed by default,
 are effectively passed as if
-.Ar no state
+.Cm no state
 had been specified.
 .Pp
 A number of parameters can also be set to affect how
@@ -1913,14 +1911,14 @@ Some popular stack implementations choose
 .Em very
 poor ISNs and thus are normally susceptible to ISN prediction exploits.
 By applying a
-.Ar modulate state
+.Cm modulate state
 rule to a TCP connection,
 .Xr pf 4
 will create a high quality random sequence number for each connection
 endpoint.
 .Pp
 The
-.Ar modulate state
+.Cm modulate state
 directive implicitly keeps state on the rule and is
 only applicable to TCP connections.
 .Pp
@@ -1942,9 +1940,9 @@ respective endpoints time out the connection.
 It is possible on a fast local network for the endpoints to start an ACK
 storm while trying to resynchronize after the loss of the modulator.
 The default
-.Ar flags
+.Cm flags
 settings (or a more strict equivalent) should be used on
-.Ar modulate state
+.Cm modulate state
 rules to prevent ACK storms.
 .Pp
 Note that alternative methods are available
@@ -1961,7 +1959,7 @@ By default,
 passes packets that are part of a
 TCP handshake between the endpoints.
 The
-.Ar synproxy state
+.Cm synproxy state
 option can be used to cause
 .Xr pf 4
 itself to complete the handshake with the active endpoint, perform a handshake
@@ -1979,12 +1977,12 @@ chooses random initial sequence numbers for both handshakes.
 Once the handshakes are completed, the sequence number modulators
 (see previous section) are used to translate further packets of the
 connection.
-.Ar synproxy state
+.Cm synproxy state
 includes
-.Ar modulate state .
+.Cm modulate state .
 .Pp
 Rules with
-.Ar synproxy
+.Cm synproxy state
 will not work if
 .Xr pf 4
 operates on a
@@ -1998,49 +1996,51 @@ pass in proto tcp from any to any port www synproxy state
 A number of options related to stateful tracking can be applied on a
 per-rule basis.
 One of
-.Ar keep state ,
-.Ar modulate state ,
+.Cm keep state ,
+.Cm modulate state ,
 or
-.Ar synproxy state
+.Cm synproxy state
 must be specified explicitly to apply these options to a rule.
 .Pp
 .Bl -tag -width xxxx -compact
-.It Ar floating
+.It Cm floating
 States can match packets on any interfaces
 (the opposite of
-.Ar if-bound ) .
+.Cm if-bound ) .
 This is the default.
-.It Ar if-bound
+.It Cm if-bound
 States are bound to an interface
 (the opposite of
-.Ar floating ) .
-.It Ar max Aq Ar number
+.Cm floating ) .
+.It Cm max Ar number
 Limits the number of concurrent states the rule may create.
 When this limit is reached, further packets that would create
 state are dropped until existing states time out.
-.It Ar no-sync
+.It Cm no-sync
 Prevent state changes for states created by this rule from appearing on the
 .Xr pfsync 4
 interface.
-.It Ar pflow
+.It Cm pflow
 States created by this rule are exported on the
 .Xr pflow 4
 interface.
-.It Ar sloppy
+.It Cm sloppy
 Uses a sloppy TCP connection tracker that does not check sequence
 numbers at all, which makes insertion and ICMP teardown attacks way
 easier.
 This is intended to be used in situations where one does not see all
 packets of a connection, e.g. in asymmetric routing situations.
 It cannot be used with
-.Ar modulate
+.Cm modulate state
 or
-.Ar synproxy state .
-.It Xo Aq Ar timeout
-.Aq Ar seconds
-.Xc
-Changes the timeout values used for states created by this rule.
-For a list of all valid timeout names, see
+.Cm synproxy state .
+.It Ar timeout seconds
+Changes the
+.Ar timeout
+values used for states created by this rule.
+For a list of all valid
+.Ar timeout
+names, see
 .Sx OPTIONS
 above.
 .El
@@ -2054,23 +2054,23 @@ pass in proto tcp from any to any \e
 .Ed
 .Pp
 When the
-.Ar source-track
+.Cm source-track
 keyword is specified, the number of states per source IP is tracked.
 .Pp
 .Bl -tag -width xxxx -compact
-.It Ar source-track global
+.It Cm source-track global
 The number of states created by all rules that use this option is limited.
 Each rule can specify different
-.Ar max-src-nodes
+.Cm max-src-nodes
 and
-.Ar max-src-states
+.Cm max-src-states
 options, however state entries created by any participating rule count towards
 each individual rule's limits.
-.It Ar source-track rule
+.It Cm source-track rule
 The maximum number of states created by this rule is limited by the rule's
-.Ar max-src-nodes
+.Cm max-src-nodes
 and
-.Ar max-src-states
+.Cm max-src-states
 options.
 Only state entries created by this particular rule count toward the rule's
 limits.
@@ -2079,10 +2079,10 @@ limits.
 The following limits can be set:
 .Pp
 .Bl -tag -width xxxx -compact
-.It Ar max-src-nodes Aq Ar number
+.It Cm max-src-nodes Ar number
 Limits the maximum number of source addresses which can simultaneously
 have state table entries.
-.It Ar max-src-states Aq Ar number
+.It Cm max-src-states Ar number
 Limits the maximum number of simultaneous state entries that a single
 source address can create with this rule.
 .El
@@ -2092,12 +2092,10 @@ which have completed the TCP 3-way handshake) can also be enforced
 per source IP.
 .Pp
 .Bl -tag -width xxxx -compact
-.It Ar max-src-conn Aq Ar number
+.It Cm max-src-conn Ar number
 Limits the maximum number of simultaneous TCP connections which have
 completed the 3-way handshake that a single host can make.
-.It Xo Ar max-src-conn-rate Aq Ar number
-.No / Aq Ar seconds
-.Xc
+.It Cm max-src-conn-rate Ar number Ns / Ns Ar seconds
 Limit the rate of new connections over a time interval.
 The connection rate is an approximation calculated as a moving average.
 .El
@@ -2108,28 +2106,29 @@ state are dropped until existing states time out.
 Because the 3-way handshake ensures that the source address is not being
 spoofed, more aggressive action can be taken based on these limits.
 With the
-.Ar overload Aq Ar table
+.Cm overload Pf < Ar table Ns >
 state option, source IP addresses which hit either of the limits on
-established connections will be added to the named table.
+established connections will be added to the named
+.Ar table .
 This table can be used in the ruleset to block further activity from
 the offending host, redirect it to a tarpit process, or restrict its
 bandwidth.
 .Pp
 The optional
-.Ar flush
+.Cm flush
 keyword kills all states created by the matching rule which originate
 from the host which exceeds these limits.
 The
-.Ar global
-modifier to the flush command kills all states originating from the
+.Cm global
+modifier to the
+.Cm flush
+command kills all states originating from the
 offending host, regardless of which rule created the state.
 .Pp
 For example, the following rules will protect the webserver against
 hosts making more than 100 connections in 10 seconds.
 Any host which connects faster than this rate will have its address added
-to the
-.Aq bad_hosts
-table and have all states originating from it flushed.
+to the <bad_hosts> table and have all states originating from it flushed.
 Any new packets arriving from this host will be dropped unconditionally
 by the block rule.
 .Bd -literal -offset indent
@@ -2146,58 +2145,58 @@ and other irregularities.
 Scrub involves sanitising packet content in such a way
 that there are no ambiguities in packet interpretation on the receiving side.
 It is invoked with the
-.Ar scrub
+.Cm scrub
 option, added to regular rules.
 .Pp
 Parameters are specified enclosed in parentheses.
 At least one of the following parameters must be specified:
 .Bl -tag -width xxxx
-.It Ar max-mss Aq Ar number
+.It Cm max-mss Ar number
 Enforces a maximum segment size (MSS) for matching TCP packets.
-.It Ar min-ttl Aq Ar number
+.It Cm min-ttl Ar number
 Enforces a minimum TTL for matching IP packets.
-.It Ar no-df
+.It Cm no-df
 Clears the
-.Ar dont-fragment
+.Dq dont-fragment
 bit from a matching IPv4 packet.
 Some operating systems have NFS implementations
 which are known to generate fragmented packets with the
-.Ar dont-fragment
+.Dq dont-fragment
 bit set.
 .Xr pf 4
 will drop such fragmented
-.Ar dont-fragment
+.Dq dont-fragment
 packets unless
-.Ar no-df
+.Cm no-df
 is specified.
 .Pp
 Unfortunately some operating systems also generate their
-.Ar dont-fragment
+.Dq dont-fragment
 packets with a zero IP identification field.
 Clearing the
-.Ar dont-fragment
+.Dq dont-fragment
 bit on packets with a zero IP ID may cause deleterious results if an
 upstream router later fragments the packet.
 Using
-.Ar random-id
+.Cm random-id
 is recommended in combination with
-.Ar no-df
+.Cm no-df
 to ensure unique IP identifiers.
-.It Ar random-id
+.It Cm random-id
 Replaces the IPv4 identification field with random values to compensate
 for predictable values generated by many hosts.
 This option only applies to packets that are not fragmented
 after the optional fragment reassembly.
-.It Ar reassemble tcp
+.It Cm reassemble tcp
 Statefully normalises TCP connections.
-.Ar reassemble tcp
+.Cm reassemble tcp
 performs the following normalisations:
 .Bl -ohang
 .It TTL
 Neither side of the connection is allowed to reduce their IP TTL.
 An attacker may send a packet such that it reaches the firewall, affects
 the firewall state, and expires before reaching the destination host.
-.Ar reassemble tcp
+.Cm reassemble tcp
 will raise the TTL of all packets back up to the highest value seen on
 the connection.
 .It Timestamp Modulation
@@ -2213,9 +2212,9 @@ And spoofing TCP packets into a connection requires knowing or guessing
 valid timestamps.
 Timestamps merely need to be monotonically increasing and not derived off a
 guessable base time.
-.Ar reassemble tcp
+.Cm reassemble tcp
 will cause
-.Ar scrub
+.Cm scrub
 to modulate the TCP timestamps with a random number.
 .It Extended PAWS Checks
 There is a problem with TCP on long fat pipes, in that a packet might get
@@ -2227,7 +2226,7 @@ The solution to this is called PAWS: Protection Against Wrapped Sequence
 numbers.
 It protects against it by making sure the timestamp on each packet does
 not go backwards.
-.Ar reassemble tcp
+.Cm reassemble tcp
 also makes sure the timestamp on the packet does not go forward more
 than the RFC allows.
 By doing this,
@@ -2261,11 +2260,11 @@ Without reassembly, fragments can only be filtered based on IP header
 fields (source/destination address, protocol), since subprotocol header
 fields are not available (TCP/UDP port numbers, ICMP code/type).
 The
-.Ar fragment
+.Cm fragment
 option can be used to restrict filter rules to apply only to
 fragments, but not complete packets.
 Filter rules without the
-.Ar fragment
+.Cm fragment
 option still apply to fragments, if they only specify IP header fields.
 For instance:
 .Bd -literal -offset indent
@@ -2298,7 +2297,7 @@ path MTU discovery.
 Spoofing is the faking of IP addresses,
 typically for malicious purposes.
 The
-.Ar antispoof
+.Ic antispoof
 directive expands to a set of filter rules which will block all
 traffic with a source IP from the network(s) directly connected
 to the specified interface(s) from entering the system through
@@ -2327,7 +2326,7 @@ block drop in inet from 10.0.0.1 to any
 .Ed
 .Pp
 Caveat: Rules created by the
-.Ar antispoof
+.Ic antispoof
 directive interfere with packets sent over loopback interfaces
 to local addresses.
 One should pass these explicitly.
@@ -2360,7 +2359,7 @@ In the case of
 .Ox ,
 the only subtype is for a fingerprint that was
 normalised by the
-.Ar no-df
+.Cm no-df
 scrub option and would be specified as:
 .Pp
 .Dl \&"OpenBSD 3.3 no-df\&"
@@ -2380,7 +2379,7 @@ Policy could limit traffic to approved operating systems or even ban traffic
 from hosts that aren't at the latest service pack.
 .Pp
 The
-.Ar unknown
+.Cm unknown
 class can also be used as the fingerprint which will match packets for
 which no operating system fingerprint is known.
 .Pp
@@ -2406,7 +2405,8 @@ will match it until the database is updated;
 and multiple operating systems may have the same fingerprint.
 .Sh EXAMPLES
 In this example,
-the external interface is kue0.
+the external interface is
+.Pa kue0 .
 We use a macro for the interface name, so it can be changed easily.
 All incoming traffic is "normalised",
 and everything is blocked and logged by default.
@@ -2507,9 +2507,9 @@ match in on $ext_if proto tcp from any to any port 80 \e
 .Ed
 .Pp
 If a
-.Ar pass
+.Ic pass
 rule is used with the
-.Ar quick
+.Cm quick
 modifier, packets matching the translation rule are passed without
 inspecting subsequent filter rules.
 .Bd -literal -offset 4n
@@ -2555,7 +2555,7 @@ match out on $ext_if inet proto udp from any port isakmp to any \e
 .Ed
 .Pp
 One more example uses
-.Ar rdr-to
+.Cm rdr-to
 to redirect a TCP and UDP port to an internal machine.
 .Bd -literal -offset 4n
 match in on $ext_if inet proto tcp from any to ($ext_if) port 8080 \e
@@ -2567,7 +2567,9 @@ match in on $ext_if inet proto udp from any to ($ext_if) port 8080 \e
 In this example, a NAT gateway is set up to translate internal addresses
 using a pool of public addresses (192.0.2.16/28).
 A given source address is always translated to the same pool address by
-using the source-hash keyword.
+using the
+.Cm source-hash
+keyword.
 The gateway also translates incoming web server connections
 to a group of web servers on the internal network.
 .Bd -literal -offset 4n
@@ -2579,11 +2581,11 @@ match in  on $ext_if proto tcp from any to any port 80 \e
 .Ed
 .Pp
 The bidirectional address translation example uses a single
-.Ar binat-to
+.Cm binat-to
 rule that expands to a
-.Ar nat-to
+.Cm nat-to
 and an
-.Ar rdr-to
+.Cm rdr-to
 rule.
 .Bd -literal -offset 4n
 pass on $ext_if from 10.1.2.120 to any binat-to 192.0.2.17
@@ -2790,7 +2792,7 @@ limit-item     = ( "states" | "frags" | "src-nodes" | "tables" |
 pooltype       = ( "bitmask" | "least-states" |
                  "random" | "round-robin" |
                  "source-hash" [ ( hex-key | string-key ) ] )
-                 [ sticky-address ]
+                 [ "sticky-address" ]
 
 include        = "include" filename
 .Ed
