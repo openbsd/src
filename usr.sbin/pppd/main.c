@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.51 2015/01/16 06:40:19 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.52 2015/10/26 11:10:53 deraadt Exp $	*/
 
 /*
  * main.c - Point-to-Point Protocol main module
@@ -92,7 +92,6 @@ int ifunit;			/* Interface unit number */
 
 char *progname;			/* Name of this program */
 char hostname[HOST_NAME_MAX+1];	/* Our hostname */
-static char pidfilename[PATH_MAX];	/* name of pid file */
 static char default_devnam[PATH_MAX];	/* name of default device */
 static pid_t pid;		/* Our pid */
 static uid_t uid;		/* Our real user-id */
@@ -125,7 +124,6 @@ char *no_ppp_msg = "Sorry - this system lacks PPP kernel support\n";
 
 /* Prototypes for procedures local to this file. */
 
-static void create_pidfile(void);
 static void cleanup(void);
 static void close_tty(void);
 static void get_input(void);
@@ -391,8 +389,6 @@ main(argc, argv)
 	(void) snprintf(ifname, sizeof ifname, "ppp%d", ifunit);
 	script_setenv("IFNAME", ifname);
 
-	create_pidfile();	/* write pid to file */
-
 	/*
 	 * Configure the interface and mark it up, etc.
 	 */
@@ -529,8 +525,6 @@ main(argc, argv)
 	    syslog(LOG_INFO, "Using interface ppp%d", ifunit);
 	    (void) snprintf(ifname, sizeof ifname, "ppp%d", ifunit);
 	    script_setenv("IFNAME", ifname);
-
-	    create_pidfile();	/* write pid to file */
 	}
 
 	/*
@@ -589,13 +583,6 @@ main(argc, argv)
 	    locked = 0;
 	}
 
-	if (!demand) {
-	    if (pidfilename[0] != 0
-		&& unlink(pidfilename) < 0 && errno != ENOENT)
-		syslog(LOG_WARNING, "unable to delete pid file: %m");
-	    pidfilename[0] = 0;
-	}
-
 	if (!persist)
 	    die(1);
 
@@ -634,28 +621,6 @@ detach()
     }
     detached = 1;
     pid = getpid();
-    /* update pid file if it has been written already */
-    if (pidfilename[0])
-	create_pidfile();
-}
-
-/*
- * Create a file containing our process ID.
- */
-static void
-create_pidfile()
-{
-    FILE *pidfile;
-
-    (void) snprintf(pidfilename, sizeof pidfilename,
-	"%s%s.pid", _PATH_VARRUN, ifname);
-    if ((pidfile = fopen(pidfilename, "w")) != NULL) {
-	fprintf(pidfile, "%ld\n", (long)pid);
-	(void) fclose(pidfile);
-    } else {
-	syslog(LOG_ERR, "Failed to create pid file %s: %m", pidfilename);
-	pidfilename[0] = 0;
-    }
 }
 
 /*
@@ -781,10 +746,6 @@ cleanup()
 
     if (ttyfd >= 0)
 	close_tty();
-
-    if (pidfilename[0] != 0 && unlink(pidfilename) < 0 && errno != ENOENT)
-	syslog(LOG_WARNING, "unable to delete pid file: %m");
-    pidfilename[0] = 0;
 
     if (locked)
 	unlock();
