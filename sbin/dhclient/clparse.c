@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.92 2015/05/18 17:51:21 krw Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.93 2015/10/26 16:32:33 krw Exp $	*/
 
 /* Parser for dhclient config and lease files. */
 
@@ -88,6 +88,8 @@ read_client_conf(void)
 	    [config->requested_option_count++] = DHO_ROUTERS;
 	config->requested_options
 	    [config->requested_option_count++] = DHO_DOMAIN_NAME;
+	config->requested_options
+	    [config->requested_option_count++] = DHO_DOMAIN_SEARCH;
 	config->requested_options
 	    [config->requested_option_count++] = DHO_DOMAIN_NAME_SERVERS;
 	config->requested_options

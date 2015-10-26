@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.151 2015/08/19 17:52:10 krw Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.152 2015/10/26 16:32:33 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -216,6 +216,8 @@ int cons_options(struct option_data *);
 char *pretty_print_option(unsigned int, struct option_data *, int);
 int pretty_print_string(unsigned char *, size_t, unsigned char *, size_t, int);
 int pretty_print_classless_routes(unsigned char *, size_t, unsigned char *,
+    size_t);
+int pretty_print_domain_search(unsigned char *, size_t, unsigned char *,
     size_t);
 void do_packet(unsigned int, struct in_addr, struct ether_addr *);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.364 2015/09/08 17:19:20 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.365 2015/10/26 16:32:33 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -99,7 +99,7 @@ int		 res_hnok_list(const char *dn);
 void		 fork_privchld(int, int);
 void		 get_ifname(char *);
 char		*resolv_conf_contents(struct option_data  *,
-		     struct option_data *);
+		     struct option_data *, struct option_data *);
 void		 write_resolv_conf(u_int8_t *, size_t);
 void		 write_option_db(u_int8_t *, size_t);
 
@@ -905,7 +905,8 @@ bind_lease(void)
 	}
 
 	client->new->resolv_conf = resolv_conf_contents(
-	    &options[DHO_DOMAIN_NAME], &options[DHO_DOMAIN_NAME_SERVERS]);
+	    &options[DHO_DOMAIN_NAME], &options[DHO_DOMAIN_NAME_SERVERS],
+	    &options[DHO_DOMAIN_SEARCH]);
 
 	/* Replace the old active lease with the new one. */
 	client->active = client->new;
@@ -1097,8 +1098,8 @@ struct client_lease *
 packet_to_lease(struct in_addr client_addr, struct option_data *options)
 {
 	struct client_lease *lease;
-	char *pretty;
-	int i;
+	char *pretty, *buf;
+	int i, sz;
 
 	lease = calloc(1, sizeof(struct client_lease));
 	if (!lease) {
@@ -1120,6 +1121,21 @@ packet_to_lease(struct in_addr client_addr, struct option_data *options)
 		if (strlen(pretty) == 0)
 			continue;
 		switch (i) {
+		case DHO_DOMAIN_SEARCH:
+			/* Must decode the option into text to check names. */
+			buf = calloc(1, DHCP_DOMAIN_SEARCH_LEN);
+			if (buf == NULL)
+				error("No memory to decode domain search");
+			sz = pretty_print_domain_search(buf,
+			    DHCP_DOMAIN_SEARCH_LEN,
+			    options[i].data, options[i].len);
+			if (strlen(buf) == 0)
+				continue;
+			if (sz == -1 || !res_hnok_list(buf))
+				warning("Bogus data for option %s",
+				    dhcp_options[i].name);
+			free(buf);
+			break;
 		case DHO_DOMAIN_NAME:
 			/*
 			 * Allow deviant but historically blessed
@@ -1917,8 +1933,9 @@ res_hnok(const char *name)
 }
 
 /*
- * resolv_conf(5) says a max of 6 domains and total length of 1024 bytes are
- * acceptable for the 'search' statement.
+ * resolv_conf(5) says a max of DHCP_DOMAIN_SEARCH_CNT domains and total
+ * length of DHCP_DOMAIN_SEARCH_LEN bytes are acceptable for the 'search'
+ * statement.
  */
 int
 res_hnok_list(const char *names)
@@ -1926,7 +1943,7 @@ res_hnok_list(const char *names)
 	char *dupnames, *hn, *inputstring;
 	int count;
 
-	if (strlen(names) >= 1024)
+	if (strlen(names) >= DHCP_DOMAIN_SEARCH_LEN)
 		return (0);
 
 	dupnames = inputstring = strdup(names);
@@ -1940,7 +1957,7 @@ res_hnok_list(const char *names)
 		if (res_hnok(hn) == 0)
 			break;
 		count++;
-		if (count > 6)
+		if (count > DHCP_DOMAIN_SEARCH_CNT)
 			break;
 	}
 
@@ -2095,15 +2112,29 @@ get_ifname(char *arg)
  */
 char *
 resolv_conf_contents(struct option_data  *domainname,
-    struct option_data *nameservers)
+    struct option_data *nameservers, struct option_data *domainsearch)
 {
-	char *dn, *ns, *nss[MAXNS], *contents, *courtesy, *p;
+	char *dn, *ns, *nss[MAXNS], *contents, *courtesy, *p, *buf;
 	size_t len;
-	int i, rslt;
+	int i, rslt, sz;
 
 	memset(nss, 0, sizeof(nss));
 
-	if (domainname->len) {
+	if (domainsearch->len) {
+		buf = calloc(1, DHCP_DOMAIN_SEARCH_LEN);
+		if (buf == NULL)
+			error("No memory to decode domain search");
+		sz = pretty_print_domain_search(buf, DHCP_DOMAIN_SEARCH_LEN,
+		    domainsearch->data, domainsearch->len);
+		if (sz == -1)
+			dn = strdup("");
+		else {
+			rslt = asprintf(&dn, "search %s\n", buf);
+			if (rslt == -1)
+				dn = NULL;
+		}
+		free(buf);
+	} else if (domainname->len) {
 		rslt = asprintf(&dn, "search %s\n",
 		    pretty_print_option(DHO_DOMAIN_NAME, domainname, 0));
 		if (rslt == -1)

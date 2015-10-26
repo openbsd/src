@@ -1,4 +1,4 @@
-/*	$OpenBSD: tables.c,v 1.18 2014/01/21 03:07:50 krw Exp $	*/
+/*	$OpenBSD: tables.c,v 1.19 2015/10/26 16:32:33 krw Exp $	*/
 
 /* Tables of information. */
 
@@ -179,7 +179,7 @@ const struct option dhcp_options[256] = {
 	/* 116 */ { "option-116", "X" },
 	/* 117 */ { "option-117", "X" },
 	/* 118 */ { "option-118", "X" },
-	/* 119 */ { "option-119", "X" },
+	/* 119 */ { "domain-search", "X" },
 	/* 120 */ { "option-120", "X" },
 	/* 121 */ { "classless-static-routes", "CIA" },
 	/* 122 */ { "option-122", "X" },

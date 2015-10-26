@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcp.h,v 1.17 2014/01/21 03:07:50 krw Exp $	*/
+/*	$OpenBSD: dhcp.h,v 1.18 2015/10/26 16:32:33 krw Exp $	*/
 
 /* Protocol structures. */
 
@@ -49,6 +49,10 @@
 						/* Everything but options. */
 #define DHCP_MTU_MAX		1500
 #define DHCP_OPTION_LEN		(DHCP_MTU_MAX - DHCP_FIXED_LEN)
+
+/* Respect historical limits on 'search' line in resolv.conf(5) */
+#define DHCP_DOMAIN_SEARCH_LEN	1024
+#define DHCP_DOMAIN_SEARCH_CNT	6
 
 #define BOOTP_MIN_LEN		300
 
@@ -171,6 +175,7 @@ struct dhcp_packet {
 #define DHO_NDS_SERVERS			85
 #define DHO_NDS_TREE_NAME		86
 #define DHO_NDS_CONTEXT			87
+#define	DHO_DOMAIN_SEARCH		119
 #define DHO_CLASSLESS_STATIC_ROUTES	121
 #define DHO_TFTP_CONFIG_FILE		144
 #define DHO_VOIP_CONFIGURATION_SERVER	150

@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.73 2014/10/27 17:01:28 krw Exp $	*/
+/*	$OpenBSD: options.c,v 1.74 2015/10/26 16:32:33 krw Exp $	*/
 
 /* DHCP options parsing and reassembly. */
 
@@ -45,6 +45,7 @@
 #include <vis.h>
 
 int parse_option_buffer(struct option_data *, unsigned char *, int);
+int expand_search_domain_name(unsigned char *, size_t, int *, unsigned char *);
 
 /*
  * Parse options out of the specified buffer, storing addresses of
@@ -287,6 +288,129 @@ pretty_print_classless_routes(unsigned char *dst, size_t dstlen,
 	}
 
 	return (total);
+}
+
+int
+expand_search_domain_name(unsigned char *src, size_t srclen, int *offset,
+    unsigned char *domain_search)
+{
+	int domain_name_len, i, label_len, pointer, pointed_len;
+	char *cursor;
+
+	cursor = domain_search + strlen(domain_search);
+	domain_name_len = 0;
+
+	i = *offset;
+	while (i <= srclen) {
+		label_len = src[i];
+		if (label_len == 0) {
+			/*
+			 * A zero-length label marks the end of this
+			 * domain name.
+			 */
+			*offset = i + 1;
+			return (domain_name_len);
+		} else if (label_len & 0xC0) {
+			/* This is a pointer to another list of labels. */
+			if (i + 1 >= srclen) {
+				/* The pointer is truncated. */
+				warning("Truncated pointer in DHCP Domain "
+				    "Search option.");
+				return (-1);
+			}
+
+			pointer = ((label_len & ~(0xC0)) << 8) + src[i + 1];
+			if (pointer >= *offset) {
+				/*
+				 * The pointer must indicates a prior
+				 * occurance.
+				 */
+				warning("Invalid forward pointer in DHCP "
+				    "Domain Search option compression.");
+				return (-1);
+			}
+
+			pointed_len = expand_search_domain_name(src, srclen,
+			    &pointer, domain_search);
+			domain_name_len += pointed_len;
+
+			*offset = i + 2;
+			return (domain_name_len);
+		}
+		if (i + label_len + 1 > srclen) {
+			warning("Truncated label in DHCP Domain Search "
+			    "option.");
+			return (-1);
+		}
+		/*
+		 * Update the domain name length with the length of the
+		 * current label, plus a trailing dot ('.').
+		 */
+		domain_name_len += label_len + 1;
+
+		if (strlen(domain_search) + domain_name_len >=
+		    DHCP_DOMAIN_SEARCH_LEN) {
+			warning("Domain search list too long.");
+			return (-1);
+		}
+
+		/* Copy the label found. */
+		memcpy(cursor, src + i + 1, label_len);
+		cursor[label_len] = '.';
+
+		/* Move cursor. */
+		i += label_len + 1;
+		cursor += label_len + 1;
+	}
+
+	warning("Truncated DHCP Domain Search option.");
+
+	return (-1);
+}
+
+/*
+ * Must special case DHO_DOMAIN_SEARCH because it is encoded as described
+ * in RFC 1035 section 4.1.4.
+ */
+int
+pretty_print_domain_search(unsigned char *dst, size_t dstlen,
+    unsigned char *src, size_t srclen)
+{
+	int offset, len, expanded_len, domains;
+	unsigned char *domain_search, *cursor;
+
+	domain_search = calloc(1, DHCP_DOMAIN_SEARCH_LEN);
+	if (domain_search == NULL)
+		error("Can't allocate storage for expanded domain-search\n");
+
+	/* Compute expanded length. */
+	expanded_len = len = 0;
+	domains = 0;
+	offset = 0;
+	while (offset < srclen) {
+		cursor = domain_search + strlen(domain_search);
+		if (domain_search[0]) {
+			*cursor = ' ';
+			expanded_len++;
+		}
+		len = expand_search_domain_name(src, srclen, &offset,
+		    domain_search);
+		if (len == -1) {
+			free(domain_search);
+			return (-1);
+		}
+		domains++;
+		expanded_len += len;
+		if (domains > DHCP_DOMAIN_SEARCH_CNT) {
+			free(domain_search);
+			return (-1);
+		}
+	}
+
+	strlcat(dst, domain_search, dstlen);
+	free(domain_search);
+
+	return (0);
 }
 
 /*
