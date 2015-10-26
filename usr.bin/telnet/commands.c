@@ -1,4 +1,4 @@
-/*	$OpenBSD: commands.c,v 1.73 2015/10/25 14:42:02 jca Exp $	*/
+/*	$OpenBSD: commands.c,v 1.74 2015/10/26 00:33:03 jca Exp $	*/
 /*	$NetBSD: commands.c,v 1.14 1996/03/24 22:03:48 jtk Exp $	*/
 
 /*
@@ -53,8 +53,6 @@
 #include <sys/wait.h>
 #define PATH_SKEY	"/usr/bin/skey"
 #endif
-
-int tos = -1;
 
 char	*hostname;
 
@@ -1850,7 +1848,7 @@ tn(int argc, char *argv[])
     struct addrinfo hints, *res, *res0;
     char *cmd, *hostp = 0, *portp = 0, *user = 0, *aliasp = 0;
     int error, retry;
-    const int niflags = NI_NUMERICHOST;
+    const int niflags = NI_NUMERICHOST, tos = IPTOS_LOWDELAY;
 
     if (connected) {
 	printf("?Already connected to %s\r\n", hostname);
@@ -1973,13 +1971,18 @@ tn(int argc, char *argv[])
             }
 	    freeaddrinfo(ares);
 	}
-	if (res->ai_family == AF_INET) {
-	    if (tos < 0)
-		tos = IPTOS_LOWDELAY;	/* Low Delay bit */
-	    if (tos
-		&& (setsockopt(net, IPPROTO_IP, IP_TOS, &tos, sizeof(int)) < 0)
-		&& (errno != ENOPROTOOPT))
-		    perror("telnet: setsockopt (IP_TOS) (ignored)");
+
+	switch (res->ai_family) {
+	case AF_INET:
+		if (setsockopt(net, IPPROTO_IP, IP_TOS, &tos, sizeof(tos)) < 0
+		    && errno != ENOPROTOOPT)
+			perror("telnet: setsockopt (IP_TOS) (ignored)");
+		break;
+	case AF_INET6:
+		if (setsockopt(net, IPPROTO_IPV6, IPV6_TCLASS, &tos,
+		    sizeof(tos)) < 0 && errno != ENOPROTOOPT)
+			perror("telnet: setsockopt (IPV6_TCLASS) (ignored)");
+		break;
 	}
 
 	if (debug) {
