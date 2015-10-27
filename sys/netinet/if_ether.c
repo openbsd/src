@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.177 2015/10/25 11:58:11 mpi Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.178 2015/10/27 10:54:52 mpi Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -536,6 +536,16 @@ in_arpinput(struct mbuf *m)
 	memcpy(&itaddr, ea->arp_tpa, sizeof(itaddr));
 	memcpy(&isaddr, ea->arp_spa, sizeof(isaddr));
 
+	if (ETHER_IS_MULTICAST(&ea->arp_sha[0])) {
+		if (!memcmp(ea->arp_sha, etherbroadcastaddr,
+		    sizeof (ea->arp_sha))) {
+			inet_ntop(AF_INET, &isaddr, addr, sizeof(addr));
+			log(LOG_ERR, "arp: ether address is broadcast for "
+			    "IP address %s!\n", addr);
+			goto out;
+		}
+	}
+
 	/* First try: check target against our addresses */
 	TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
 		if (ifa->ifa_addr->sa_family != AF_INET)
@@ -589,15 +599,8 @@ in_arpinput(struct mbuf *m)
 
 	if (!memcmp(ea->arp_sha, enaddr, sizeof(ea->arp_sha)))
 		goto out;	/* it's from me, ignore it. */
-	if (ETHER_IS_MULTICAST(&ea->arp_sha[0]))
-		if (!memcmp(ea->arp_sha, etherbroadcastaddr,
-		    sizeof (ea->arp_sha))) {
-			inet_ntop(AF_INET, &isaddr, addr, sizeof(addr));
-			log(LOG_ERR, "arp: ether address is broadcast for "
-			    "IP address %s!\n", addr);
-			goto out;
-		}
-	if (myaddr.s_addr && isaddr.s_addr == myaddr.s_addr) {
+
+	if (myaddr.s_addr != INADDR_ANY && isaddr.s_addr == myaddr.s_addr) {
 		inet_ntop(AF_INET, &isaddr, addr, sizeof(addr));
 		log(LOG_ERR,
 		   "duplicate IP address %s sent from ethernet address %s\n",
@@ -605,6 +608,7 @@ in_arpinput(struct mbuf *m)
 		itaddr = myaddr;
 		goto reply;
 	}
+
 	rt = arplookup(isaddr.s_addr, itaddr.s_addr == myaddr.s_addr, 0,
 	    rtable_l2(m->m_pkthdr.ph_rtableid));
 	if (rt != NULL && (sdl = satosdl(rt->rt_gateway)) != NULL) {
