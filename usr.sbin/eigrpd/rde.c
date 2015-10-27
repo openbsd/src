@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.6 2015/10/21 03:52:12 renato Exp $ */
+/*	$OpenBSD: rde.c,v 1.7 2015/10/27 03:27:35 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -501,11 +501,30 @@ rde_send_change_kroute(struct rt_node *rn, struct eigrp_route *route)
 		memcpy(&kr.nexthop, &route->nexthop, sizeof(kr.nexthop));
 	else
 		memcpy(&kr.nexthop, &route->nbr->addr, sizeof(kr.nexthop));
-	kr.ifindex = route->nbr->ei->iface->ifindex;
+	if (route->nbr->ei)
+		kr.ifindex = route->nbr->ei->iface->ifindex;
+	else {
+		switch (eigrp->af) {
+		case AF_INET:
+			inet_pton(AF_INET, "127.0.0.1", &kr.nexthop.v4);
+			break;
+		case AF_INET6:
+			inet_pton(AF_INET, "::1", &kr.nexthop.v6);
+			break;
+		default:
+			fatalx("rde_send_delete_kroute: unknown af");
+			break;
+		}
+		kr.flags = F_BLACKHOLE;
+	}
 	if (route->type == EIGRP_ROUTE_EXTERNAL)
 		kr.priority = rdeconf->fib_priority_external;
-	else
-		kr.priority = rdeconf->fib_priority_internal;
+	else {
+		if (route->nbr->flags & F_RDE_NBR_SUMMARY)
+			kr.priority = rdeconf->fib_priority_summary;
+		else
+			kr.priority = rdeconf->fib_priority_internal;
+	}
 
 	rde_imsg_compose_parent(IMSG_KROUTE_CHANGE, 0, &kr, sizeof(kr));
 
@@ -529,11 +548,30 @@ rde_send_delete_kroute(struct rt_node *rn, struct eigrp_route *route)
 		memcpy(&kr.nexthop, &route->nexthop, sizeof(kr.nexthop));
 	else
 		memcpy(&kr.nexthop, &route->nbr->addr, sizeof(kr.nexthop));
-	kr.ifindex = route->nbr->ei->iface->ifindex;
+	if (route->nbr->ei)
+		kr.ifindex = route->nbr->ei->iface->ifindex;
+	else {
+		switch (eigrp->af) {
+		case AF_INET:
+			inet_pton(AF_INET, "127.0.0.1", &kr.nexthop.v4);
+			break;
+		case AF_INET6:
+			inet_pton(AF_INET, "::1", &kr.nexthop.v6);
+			break;
+		default:
+			fatalx("rde_send_delete_kroute: unknown af");
+			break;
+		}
+		kr.flags = F_BLACKHOLE;
+	}
 	if (route->type == EIGRP_ROUTE_EXTERNAL)
 		kr.priority = rdeconf->fib_priority_external;
-	else
-		kr.priority = rdeconf->fib_priority_internal;
+	else {
+		if (route->nbr->flags & F_RDE_NBR_SUMMARY)
+			kr.priority = rdeconf->fib_priority_summary;
+		else
+			kr.priority = rdeconf->fib_priority_internal;
+	}
 
 	rde_imsg_compose_parent(IMSG_KROUTE_DELETE, 0, &kr, sizeof(kr));
 

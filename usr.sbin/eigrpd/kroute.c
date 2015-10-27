@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.5 2015/10/25 00:43:35 renato Exp $ */
+/*	$OpenBSD: kroute.c,v 1.6 2015/10/27 03:27:35 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -1107,6 +1107,8 @@ send_rtmsg_v4(int fd, int action, struct kroute *kr)
 		hdr.rtm_fmask = RTF_REJECT|RTF_BLACKHOLE;
 	else
 		hdr.rtm_flags = RTF_MPATH;
+	if (kr->flags & F_BLACKHOLE)
+		hdr.rtm_flags |= RTF_BLACKHOLE;
 	hdr.rtm_seq = kr_state.rtseq++;	/* overflow doesn't matter */
 	hdr.rtm_msglen = sizeof(hdr);
 	/* adjust iovec */
