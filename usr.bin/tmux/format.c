@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.87 2015/10/25 22:29:17 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.88 2015/10/27 09:18:06 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -643,6 +643,8 @@ format_find(struct format_tree *ft, const char *key, int modifiers)
 	return (NULL);
 
 found:
+	if (found == NULL)
+		return (NULL);
 	copy = xstrdup(found);
 	if (modifiers & FORMAT_BASENAME) {
 		saved = copy;
