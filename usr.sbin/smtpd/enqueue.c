@@ -1,4 +1,4 @@
-/*	$OpenBSD: enqueue.c,v 1.103 2015/10/17 16:20:46 sunil Exp $	*/
+/*	$OpenBSD: enqueue.c,v 1.104 2015/10/27 21:01:09 gilles Exp $	*/
 
 /*
  * Copyright (c) 2005 Henning Brauer <henning@bulabula.org>
@@ -296,7 +296,7 @@ enqueue(int argc, char *argv[], FILE *ofp)
 	if ((msg.fd = open_connection()) == -1)
 		errx(EX_UNAVAILABLE, "server too busy");
 
-	if (pledge("stdio", NULL) == -1)
+	if (pledge("stdio wpath cpath", NULL) == -1)
 		err(1, "pledge");
 
 	fout = fdopen(msg.fd, "a+");
