@@ -1,4 +1,4 @@
-/* $OpenBSD: delivery_lmtp.c,v 1.12 2015/10/19 09:15:35 sunil Exp $ */
+/* $OpenBSD: delivery_lmtp.c,v 1.13 2015/10/27 21:11:27 jung Exp $ */
 
 /*
  * Copyright (c) 2013 Ashish SHUKLA <ashish.is@lostca.se>
@@ -128,7 +128,7 @@ lmtp_open(struct deliver *deliver)
 	if ((fp = fdopen(s, "r+")) == NULL)
 		err(1, "fdopen");
 
-	if ((len = getline(&buf, &sz, fp)) == -1)
+	if (getline(&buf, &sz, fp) == -1)
 		err(1, "getline");
 
 	if (buf[0] != '2')
@@ -150,9 +150,7 @@ lmtp_open(struct deliver *deliver)
 		errx(1, "Invalid DATA reply: %s", buf);
 
 	while ((len = getline(&buf, &sz, stdin)) != -1) {
-		if (len >= 2 && buf[len - 2] == '\r')
-			buf[len - 2] = '\0';
-		else if (buf[len - 1] == '\n')
+		if (buf[len - 1] == '\n')
 			buf[len - 1] = '\0';
 
 		if (fprintf(fp, "%s%s\r\n", buf[0] == '.' ? "." : "", buf) < 0)
