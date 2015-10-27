@@ -1,4 +1,4 @@
-/*	$OpenBSD: startdaemon.c,v 1.16 2015/10/11 20:23:49 guenther Exp $	*/
+/*	$OpenBSD: startdaemon.c,v 1.17 2015/10/27 15:23:28 millert Exp $	*/
 /*	$NetBSD: startdaemon.c,v 1.10 1998/07/18 05:04:39 lukem Exp $	*/
 
 /*
@@ -56,13 +56,13 @@ startdaemon(char *printer)
 	size_t n;
 	char buf[BUFSIZ];
 
-	s = socket(AF_LOCAL, SOCK_STREAM, 0);
+	s = socket(AF_UNIX, SOCK_STREAM, 0);
 	if (s < 0) {
 		warn("socket");
 		return(0);
 	}
 	memset(&un, 0, sizeof(un));
-	un.sun_family = AF_LOCAL;
+	un.sun_family = AF_UNIX;
 	strlcpy(un.sun_path, _PATH_SOCKETNAME, sizeof(un.sun_path));
 	siginterrupt(SIGINT, 1);
 	PRIV_START;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpd.c,v 1.60 2015/10/11 20:23:49 guenther Exp $ */
+/*	$OpenBSD: lpd.c,v 1.61 2015/10/27 15:23:28 millert Exp $ */
 /*	$NetBSD: lpd.c,v 1.33 2002/01/21 14:42:29 wiz Exp $	*/
 
 /*
@@ -259,7 +259,7 @@ main(int argc, char **argv)
 	PRIV_START;
 	(void)unlink(_PATH_SOCKETNAME);
 	PRIV_END;
-	funix = socket(AF_LOCAL, SOCK_STREAM, 0);
+	funix = socket(AF_UNIX, SOCK_STREAM, 0);
 	if (funix < 0) {
 		syslog(LOG_ERR, "socket: %m");
 		exit(1);
@@ -277,7 +277,7 @@ main(int argc, char **argv)
 	signal(SIGQUIT, mcleanup);
 	signal(SIGTERM, mcleanup);
 	memset(&un, 0, sizeof(un));
-	un.sun_family = AF_LOCAL;
+	un.sun_family = AF_UNIX;
 	strlcpy(un.sun_path, _PATH_SOCKETNAME, sizeof(un.sun_path));
 	PRIV_START;
 	if (bind(funix, (struct sockaddr *)&un, sizeof(un)) < 0) {
@@ -343,7 +343,7 @@ main(int argc, char **argv)
 			continue;
 		}
 		if (FD_ISSET(funix, &readfds)) {
-			domain = AF_LOCAL;
+			domain = AF_UNIX;
 			fromlen = sizeof(fromunix);
 			s = accept(funix,
 			    (struct sockaddr *)&fromunix, &fromlen);
