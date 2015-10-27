@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.2 2015/10/04 23:00:10 renato Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.3 2015/10/27 03:25:55 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -143,7 +143,7 @@ nbr_init(struct nbr *nbr)
 	memcpy(&rnbr.addr, &nbr->addr, sizeof(rnbr.addr));
 	rnbr.ifaceid = nbr->ei->ifaceid;
 	if (nbr->flags & F_EIGRP_NBR_SELF)
-		rnbr.flags = F_RDE_NBR_SELF;
+		rnbr.flags = F_RDE_NBR_SELF|F_RDE_NBR_LOCAL;
 
 	/* rde is not aware of pending nbrs */
 	eigrpe_imsg_compose_rde(IMSG_NEIGHBOR_UP, nbr->peerid, 0, &rnbr,

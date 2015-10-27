@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_dual.c,v 1.9 2015/10/25 00:42:02 renato Exp $ */
+/*	$OpenBSD: rde_dual.c,v 1.10 2015/10/27 03:25:55 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -565,26 +565,24 @@ rinfo_fill_infinite(struct rt_node *rn, enum route_type type, struct rinfo *ri)
 void
 rt_update_fib(struct rt_node *rn)
 {
-	uint8_t			 maximum_paths = rn->eigrp->maximum_paths;
-	uint8_t			 variance = rn->eigrp->variance;
+	struct eigrp		*eigrp = rn->eigrp;
+	uint8_t			 maximum_paths = eigrp->maximum_paths;
+	uint8_t			 variance = eigrp->variance;
 	int			 installed = 0;
 	struct eigrp_route	*route;
 
 	if (rn->state == DUAL_STA_PASSIVE) {
-		TAILQ_FOREACH(route, &rn->routes, entry) {
-			if (route->nbr->flags & F_RDE_NBR_SELF)
-				continue;
+		/* no multipath for attached networks. */
+		if (rn->successor.nbr &&
+		    (rn->successor.nbr->flags & F_RDE_NBR_LOCAL))
+			return;
 
+		TAILQ_FOREACH(route, &rn->routes, entry) {
 			/*
 			 * only feasible successors and the successor itself
 			 * are elegible to be installed.
 			 */
 			if (route->rdistance > rn->successor.fdistance)
-				goto uninstall;
-
-			/* no multipath for attached networks. */
-			if (rn->successor.rdistance == 0 &&
-			    route->distance > 0)
 				goto uninstall;
 
 			if (route->distance >
@@ -661,7 +659,7 @@ rt_get_successor_fc(struct rt_node *rn)
 			 * connected routes should always be prefered over
 			 * received routes independent of the metric.
 			 */
-			if (route->rdistance == 0)
+			if (route->nbr->flags & F_RDE_NBR_LOCAL)
 				return (route);
 
 			external_only = 0;

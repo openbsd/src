@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.4 2015/10/21 03:52:12 renato Exp $ */
+/*	$OpenBSD: rde.h,v 1.5 2015/10/27 03:25:55 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -47,8 +47,9 @@ struct rde_nbr {
  * routes.
  */
 #define F_RDE_NBR_SELF		0x01
-#define F_RDE_NBR_REDIST	0x02
-#define F_RDE_NBR_SUMMARY	0x04
+#define F_RDE_NBR_LOCAL		0x02
+#define F_RDE_NBR_REDIST	0x04
+#define F_RDE_NBR_SUMMARY	0x08
 
 struct reply_node {
 	TAILQ_ENTRY(reply_node)	 rn_entry;
