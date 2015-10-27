@@ -1,4 +1,4 @@
-/*	$OpenBSD: aliases.c,v 1.66 2015/01/20 17:37:54 deraadt Exp $	*/
+/*	$OpenBSD: aliases.c,v 1.67 2015/10/27 20:14:19 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -49,7 +49,7 @@ aliases_get(struct expand *expand, const char *username)
 
 	mapping = expand->rule->r_mapping;
 	userbase = expand->rule->r_userbase;
-	
+
 	xlowercase(buf, username, sizeof(buf));
 	ret = table_lookup(mapping, NULL, buf, K_ALIAS, &lk);
 	if (ret <= 0)
@@ -73,50 +73,6 @@ aliases_get(struct expand *expand, const char *username)
 
 	log_debug("debug: aliases_get: returned %zd aliases", nbaliases);
 	return nbaliases;
-}
-
-int
-aliases_virtual_check(struct table *table, const struct mailaddr *maddr)
-{
-	char			buf[LINE_MAX];
-	char		       *pbuf;
-	int			ret;
-
-	if (! bsnprintf(buf, sizeof(buf), "%s@%s", maddr->user,
-		maddr->domain))
-		return 0;	
-	xlowercase(buf, buf, sizeof(buf));
-
-	/* First, we lookup for full entry: user@domain */
-	ret = table_lookup(table, NULL, buf, K_ALIAS, NULL);
-	if (ret < 0)
-		return (-1);
-	if (ret)
-		return 1;
-
-	/* Failed ? We lookup for username only */
-	pbuf = strchr(buf, '@');
-	*pbuf = '\0';
-	ret = table_lookup(table, NULL, buf, K_ALIAS, NULL);
-	if (ret < 0)
-		return (-1);
-	if (ret)
-		return 1;
-
-	*pbuf = '@';
-	/* Failed ? We lookup for catch all for virtual domain */
-	ret = table_lookup(table, NULL, pbuf, K_ALIAS, NULL);
-	if (ret < 0)
-		return (-1);
-	if (ret)
-		return 1;
-
-	/* Failed ? We lookup for a *global* catch all */
-	ret = table_lookup(table, NULL, "@", K_ALIAS, NULL);
-	if (ret <= 0)
-		return (ret);
-
-	return 1;
 }
 
 int

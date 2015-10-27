@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.479 2015/10/21 16:44:28 jsing Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.480 2015/10/27 20:14:19 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1061,7 +1061,6 @@ struct ca_vrfy_resp_msg {
 
 /* aliases.c */
 int aliases_get(struct expand *, const char *);
-int aliases_virtual_check(struct table *, const struct mailaddr *);
 int aliases_virtual_get(struct expand *, const struct mailaddr *);
 int alias_parse(struct expandnode *, const char *);
 
