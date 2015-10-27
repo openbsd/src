@@ -1,4 +1,4 @@
-/* $OpenBSD: window-clock.c,v 1.13 2015/09/14 13:22:02 nicm Exp $ */
+/* $OpenBSD: window-clock.c,v 1.14 2015/10/27 15:58:43 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -204,8 +204,8 @@ window_clock_draw_screen(struct window_pane *wp)
 	struct tm			*tm;
 	u_int				 i, j, x, y, idx;
 
-	colour = options_get_number(&wp->window->options, "clock-mode-colour");
-	style = options_get_number(&wp->window->options, "clock-mode-style");
+	colour = options_get_number(wp->window->options, "clock-mode-colour");
+	style = options_get_number(wp->window->options, "clock-mode-style");
 
 	screen_write_start(&ctx, NULL, s);
 

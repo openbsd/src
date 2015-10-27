@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-move-window.c,v 1.20 2015/06/17 16:50:28 nicm Exp $ */
+/* $OpenBSD: cmd-move-window.c,v 1.21 2015/10/27 15:58:42 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -95,7 +95,7 @@ cmd_move_window_exec(struct cmd *self, struct cmd_q *cmdq)
 	 * session already has the correct winlink id to us, either
 	 * automatically or specified by -s.
 	 */
-	if (!sflag && options_get_number(&src->options, "renumber-windows"))
+	if (!sflag && options_get_number(src->options, "renumber-windows"))
 		session_renumber_windows(src);
 
 	recalculate_sizes();

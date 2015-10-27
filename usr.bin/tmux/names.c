@@ -1,4 +1,4 @@
-/* $OpenBSD: names.c,v 1.29 2015/08/29 00:29:15 nicm Exp $ */
+/* $OpenBSD: names.c,v 1.30 2015/10/27 15:58:42 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -58,7 +58,7 @@ check_window_name(struct window *w)
 	if (w->active == NULL)
 		return;
 
-	if (!options_get_number(&w->options, "automatic-rename"))
+	if (!options_get_number(w->options, "automatic-rename"))
 		return;
 
 	if (~w->active->flags & PANE_CHANGED) {
@@ -122,7 +122,7 @@ format_window_name(struct window *w)
 	format_defaults_window(ft, w);
 	format_defaults_pane(ft, w->active);
 
-	fmt = options_get_string(&w->options, "automatic-rename-format");
+	fmt = options_get_string(w->options, "automatic-rename-format");
 	name = format_expand(ft, fmt);
 
 	format_free(ft);

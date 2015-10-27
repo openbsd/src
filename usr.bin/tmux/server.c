@@ -1,4 +1,4 @@
-/* $OpenBSD: server.c,v 1.144 2015/10/27 13:23:24 nicm Exp $ */
+/* $OpenBSD: server.c,v 1.145 2015/10/27 15:58:42 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -217,7 +217,7 @@ server_loop(void)
 
 	server_client_loop();
 
-	if (!options_get_number(&global_options, "exit-unattached")) {
+	if (!options_get_number(global_options, "exit-unattached")) {
 		if (!RB_EMPTY(&sessions))
 			return (0);
 	}

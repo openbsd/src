@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-choose-buffer.c,v 1.23 2015/08/29 09:25:00 nicm Exp $ */
+/* $OpenBSD: cmd-choose-buffer.c,v 1.24 2015/10/27 15:58:42 nicm Exp $ */
 
 /*
  * Copyright (c) 2010 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -63,7 +63,7 @@ cmd_choose_buffer_exec(struct cmd *self, struct cmd_q *cmdq)
 
 	if ((wl = cmd_find_window(cmdq, args_get(args, 't'), NULL)) == NULL)
 		return (CMD_RETURN_ERROR);
-	utf8flag = options_get_number(&wl->window->options, "utf8");
+	utf8flag = options_get_number(wl->window->options, "utf8");
 
 	if (paste_get_top(NULL) == NULL)
 		return (CMD_RETURN_NORMAL);

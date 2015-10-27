@@ -1,4 +1,4 @@
-/* $OpenBSD: tty-term.c,v 1.40 2015/09/24 07:02:18 nicm Exp $ */
+/* $OpenBSD: tty-term.c,v 1.41 2015/10/27 15:58:43 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -457,7 +457,7 @@ tty_term_find(char *name, int fd, char **cause)
 	}
 
 	/* Apply terminal overrides. */
-	s = options_get_string(&global_options, "terminal-overrides");
+	s = options_get_string(global_options, "terminal-overrides");
 	tty_term_override(term, s);
 
 	/* Delete curses data. */

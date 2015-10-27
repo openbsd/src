@@ -1,4 +1,4 @@
-/* $OpenBSD: paste.c,v 1.31 2015/09/14 13:22:02 nicm Exp $ */
+/* $OpenBSD: paste.c,v 1.32 2015/10/27 15:58:42 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -151,7 +151,7 @@ paste_add(char *data, size_t size)
 	if (size == 0)
 		return;
 
-	limit = options_get_number(&global_options, "buffer-limit");
+	limit = options_get_number(global_options, "buffer-limit");
 	RB_FOREACH_REVERSE_SAFE(pb, paste_time_tree, &paste_by_time, pb1) {
 		if (paste_num_automatic < limit)
 			break;

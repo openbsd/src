@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-new-window.c,v 1.47 2015/10/23 16:30:15 nicm Exp $ */
+/* $OpenBSD: cmd-new-window.c,v 1.48 2015/10/27 15:58:42 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -71,7 +71,7 @@ cmd_new_window_exec(struct cmd *self, struct cmd_q *cmdq)
 	detached = args_has(args, 'd');
 
 	if (args->argc == 0) {
-		cmd = options_get_string(&s->options, "default-command");
+		cmd = options_get_string(s->options, "default-command");
 		if (cmd != NULL && *cmd != '\0') {
 			argc = 1;
 			argv = (char **)&cmd;
@@ -136,7 +136,7 @@ cmd_new_window_exec(struct cmd *self, struct cmd_q *cmdq)
 	}
 
 	if (idx == -1)
-		idx = -1 - options_get_number(&s->options, "base-index");
+		idx = -1 - options_get_number(s->options, "base-index");
 	wl = session_new(s, args_get(args, 'n'), argc, argv, path, cwd, idx,
 		&cause);
 	if (wl == NULL) {

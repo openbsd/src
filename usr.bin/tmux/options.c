@@ -1,4 +1,4 @@
-/* $OpenBSD: options.c,v 1.12 2015/02/18 15:32:37 nicm Exp $ */
+/* $OpenBSD: options.c,v 1.13 2015/10/27 15:58:42 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -29,6 +29,13 @@
  * a red-black tree.
  */
 
+struct options {
+	RB_HEAD(options_tree, options_entry) tree;
+	struct options	*parent;
+};
+
+int	options_cmp(struct options_entry *, struct options_entry *);
+RB_PROTOTYPE(options_tree, options_entry, entry, options_cmp);
 RB_GENERATE(options_tree, options_entry, entry, options_cmp);
 
 int
@@ -37,11 +44,15 @@ options_cmp(struct options_entry *o1, struct options_entry *o2)
 	return (strcmp(o1->name, o2->name));
 }
 
-void
-options_init(struct options *oo, struct options *parent)
+struct options *
+options_create(struct options *parent)
 {
+	struct options *oo;
+
+	oo = xcalloc(1, sizeof *oo);
 	RB_INIT(&oo->tree);
 	oo->parent = parent;
+	return (oo);
 }
 
 void
@@ -57,6 +68,19 @@ options_free(struct options *oo)
 			free(o->str);
 		free(o);
 	}
+	free(oo);
+}
+
+struct options_entry *
+options_first(struct options *oo)
+{
+	return (RB_MIN(options_tree, &oo->tree));
+}
+
+struct options_entry *
+options_next(struct options_entry *o)
+{
+	return (RB_NEXT(options_tree, &oo->tree, o));
 }
 
 struct options_entry *

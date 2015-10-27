@@ -1,4 +1,4 @@
-/* $OpenBSD: layout-set.c,v 1.12 2015/08/29 23:55:55 nicm Exp $ */
+/* $OpenBSD: layout-set.c,v 1.13 2015/10/27 15:58:42 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -245,10 +245,10 @@ layout_set_main_h(struct window *w)
 	width = (w->sx - (n - 1)) / columns;
 
 	/* Get the main pane height and add one for separator line. */
-	mainheight = options_get_number(&w->options, "main-pane-height") + 1;
+	mainheight = options_get_number(w->options, "main-pane-height") + 1;
 
 	/* Get the optional other pane height and add one for separator line. */
-	otherheight = options_get_number(&w->options, "other-pane-height") + 1;
+	otherheight = options_get_number(w->options, "other-pane-height") + 1;
 
 	/*
 	 * If an other pane height was specified, honour it so long as it
@@ -366,10 +366,10 @@ layout_set_main_v(struct window *w)
 	height = (w->sy - (n - 1)) / rows;
 
 	/* Get the main pane width and add one for separator line. */
-	mainwidth = options_get_number(&w->options, "main-pane-width") + 1;
+	mainwidth = options_get_number(w->options, "main-pane-width") + 1;
 
 	/* Get the optional other pane width and add one for separator line. */
-	otherwidth = options_get_number(&w->options, "other-pane-width") + 1;
+	otherwidth = options_get_number(w->options, "other-pane-width") + 1;
 
 	/*
 	 * If an other pane width was specified, honour it so long as it

@@ -1,4 +1,4 @@
-/* $OpenBSD: window-choose.c,v 1.66 2015/08/28 12:25:42 nicm Exp $ */
+/* $OpenBSD: window-choose.c,v 1.67 2015/10/27 15:58:43 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -169,7 +169,7 @@ window_choose_init(struct window_pane *wp)
 	screen_init(s, screen_size_x(&wp->base), screen_size_y(&wp->base), 0);
 	s->mode &= ~MODE_CURSOR;
 
-	keys = options_get_number(&wp->window->options, "mode-keys");
+	keys = options_get_number(wp->window->options, "mode-keys");
 	if (keys == MODEKEY_EMACS)
 		mode_key_init(&data->mdata, &mode_key_tree_emacs_choice);
 	else
@@ -748,7 +748,7 @@ window_choose_write_line(
 {
 	struct window_choose_mode_data	*data = wp->modedata;
 	struct window_choose_mode_item	*item;
-	struct options			*oo = &wp->window->options;
+	struct options			*oo = wp->window->options;
 	struct screen			*s = &data->screen;
 	struct grid_cell		 gc;
 	size_t				 last, xoff = 0;
@@ -759,7 +759,7 @@ window_choose_write_line(
 		fatalx("called before callback assigned");
 
 	last = screen_size_y(s) - 1;
-	utf8flag = options_get_number(&wp->window->options, "utf8");
+	utf8flag = options_get_number(wp->window->options, "utf8");
 	memcpy(&gc, &grid_default_cell, sizeof gc);
 	if (data->selected == data->top + py)
 		style_apply(&gc, oo, "mode-style");
