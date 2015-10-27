@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd.c,v 1.9 2015/10/19 22:07:37 yasuoka Exp $	*/
+/*	$OpenBSD: radiusd.c,v 1.10 2015/10/27 04:18:36 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2013 Internet Initiative Japan Inc.
@@ -930,7 +930,7 @@ radiusd_module_load(struct radiusd *radiusd, const char *path, const char *name)
 {
 	struct radiusd_module		*module = NULL;
 	pid_t				 pid;
-	int				 on, pairsock[] = { -1, -1 };
+	int				 ival, pairsock[] = { -1, -1 };
 	const char			*av[3];
 	ssize_t				 n;
 	struct imsg			 imsg;
@@ -967,9 +967,13 @@ radiusd_module_load(struct radiusd *radiusd, const char *path, const char *name)
 	close(pairsock[1]);
 
 	module->fd = pairsock[0];
-	on = 1;
-	if (fcntl(module->fd, O_NONBLOCK, &on) == -1) {
-		log_warn("Could not load module `%s': fcntl(,O_NONBLOCK)",
+	if ((ival = fcntl(module->fd, F_GETFL, 0)) < 0) {
+		log_warn("Could not load module `%s': fcntl(F_GETFL)",
+		    name);
+		goto on_error;
+	}
+	if (fcntl(module->fd, F_SETFL, ival | O_NONBLOCK) < 0) {
+		log_warn("Could not load module `%s': fcntl(F_SETFL,O_NONBLOCK)",
 		    name);
 		goto on_error;
 	}
