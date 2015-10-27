@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd_radius.c,v 1.8 2015/10/19 22:07:37 yasuoka Exp $	*/
+/*	$OpenBSD: radiusd_radius.c,v 1.9 2015/10/27 04:27:01 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2013 Internet Initiative Japan Inc.
@@ -22,7 +22,9 @@
 #include <netinet/in.h>
 
 #include <err.h>
+#include <errno.h>
 #include <event.h>
+#include <fcntl.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -326,6 +328,7 @@ on_fail:
 static int
 radius_server_start(struct radius_server *server)
 {
+	int		 ival;
 	socklen_t	 locallen;
 	char		 buf0[NI_MAXHOST + NI_MAXSERV + 32];
 	char		 buf1[NI_MAXHOST + NI_MAXSERV + 32];
@@ -341,6 +344,16 @@ radius_server_start(struct radius_server *server)
 		    "%s: connect to %s failed", __func__,
 		    addrport_tostring((struct sockaddr *)&server->addr,
 			server->addr.sin4.sin_len, buf1, sizeof(buf1)));
+		goto on_error;
+	}
+	if ((ival = fcntl(server->sock, F_GETFL, 0)) < 0) {
+		module_radius_log(server->module, LOG_WARNING,
+		    "%s: fcntl(F_GETFL) failed", __func__);
+		goto on_error;
+	}
+	if (fcntl(server->sock, F_SETFL, ival | O_NONBLOCK) < 0) {
+		module_radius_log(server->module, LOG_WARNING,
+		    "%s: fcntl(F_SETFL) failed", __func__);
 		goto on_error;
 	}
 	locallen = sizeof(server->local);
@@ -394,7 +407,9 @@ radius_server_on_event(int fd, short evmask, void *ctx)
 	struct sockaddr			*peer;
 
 	peer = (struct sockaddr *)&server->addr;
-	if ((sz = recv(server->sock, pkt, sizeof(pkt), 0)) <= 0) {
+	if ((sz = recv(server->sock, pkt, sizeof(pkt), 0)) == -1) {
+		if (errno == EAGAIN)
+			return;
 		module_radius_log(server->module, LOG_WARNING,
 		    "server=%s recv() failed: %m",
 		    addrport_tostring(peer, peer->sa_len, buf, sizeof(buf)));
