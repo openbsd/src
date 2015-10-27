@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.3 2015/10/21 03:52:12 renato Exp $ */
+/*	$OpenBSD: printconf.c,v 1.4 2015/10/27 03:23:30 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -100,8 +100,10 @@ print_redistribute(struct eigrp *eigrp)
 			break;
 		}
 
-		if (r->metric)
+		if (r->metric) {
+			printf(" metric");
 			print_redist_metric(r->metric);
+		}
 		printf("\n");
 	}
 }
