@@ -437,16 +437,7 @@ lines which makes the server (significantly) slower.  Odd (nonprintable)
 characters in names are printed as '?'.
 .TP
 .B pidfile: \fI<filename>
-The process id is written to the file. Default is "@UNBOUND_PIDFILE@". 
-So,
-.nf
-kill \-HUP `cat @UNBOUND_PIDFILE@` 
-.fi
-triggers a reload,
-.nf
-kill \-QUIT `cat @UNBOUND_PIDFILE@` 
-.fi
-gracefully terminates.
+The process id is written to the file. Default is to not write to a file.
 .TP
 .B root\-hints: \fI<filename>
 Read the root hints from this file. Default is nothing, using builtin hints
