@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxie.c,v 1.9 2015/06/24 09:40:53 mpi Exp $	*/
+/*	$OpenBSD: sxie.c,v 1.10 2015/10/27 15:07:56 mpi Exp $	*/
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2013 Artturi Alm
@@ -626,7 +626,6 @@ sxie_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct sxie_softc *sc = ifp->if_softc;
 	struct ifreq *ifr = (struct ifreq *)data;
-	struct ifaddr *ifa = (struct ifaddr *)data;
 	int s, error = 0;
 
 	s = splnet();
@@ -637,8 +636,6 @@ sxie_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			ifp->if_flags |= IFF_UP;
 			sxie_init(sc);
 		}
-		if (ifa->ifa_addr->sa_family == AF_INET)
-			arp_ifinit(&sc->sc_ac, ifa);
 		break;
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP) {

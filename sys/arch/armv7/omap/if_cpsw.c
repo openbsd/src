@@ -1,4 +1,4 @@
-/* $OpenBSD: if_cpsw.c,v 1.27 2015/08/25 13:13:12 bmercer Exp $ */
+/* $OpenBSD: if_cpsw.c,v 1.28 2015/10/27 15:07:56 mpi Exp $ */
 /*	$NetBSD: if_cpsw.c,v 1.3 2013/04/17 14:36:34 bouyer Exp $	*/
 
 /*
@@ -567,7 +567,6 @@ int
 cpsw_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct cpsw_softc *sc = ifp->if_softc;
-	struct ifaddr *ifa = (struct ifaddr *)data;
 	struct ifreq *ifr = (struct ifreq *)data;
 	int s = splnet();
 	int error = 0;
@@ -575,9 +574,7 @@ cpsw_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	switch (cmd) {
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
-		if (ifa->ifa_addr->sa_family == AF_INET)
-			arp_ifinit(&sc->sc_ac, ifa);
-
+		/* FALLTHROUGH */
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP) {
 			if (ifp->if_flags & IFF_RUNNING)
