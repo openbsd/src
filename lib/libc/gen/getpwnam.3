@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getpwnam.3,v 1.7 2015/01/15 03:19:43 millert Exp $
+.\"	$OpenBSD: getpwnam.3,v 1.8 2015/10/27 04:41:18 guenther Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 15 2015 $
+.Dd $Mdocdate: October 27 2015 $
 .Dt GETPWNAM 3
 .Os
 .Sh NAME
@@ -106,12 +106,9 @@ These file descriptors can be closed by a call to
 It is dangerous for long-running programs to keep the file descriptors
 open as the database will become out of date if it is updated while the
 program is running.
-Furthermore, programs that run child processes should be careful to call
-.Xr endpwent 3
-to close these descriptors before calling
+However the file descriptors are automatically closed when
 .Xr execve 2
-or
-.Xr system 3 .
+is called.
 .Pp
 These routines have been written to
 .Dq shadow
