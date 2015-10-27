@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.128 2015/10/11 00:20:29 guenther Exp $	*/
+/*	$OpenBSD: ping.c,v 1.129 2015/10/27 13:58:45 dlg Exp $	*/
 /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
@@ -406,7 +406,7 @@ main(int argc, char *argv[])
 	if (!(options & F_PINGFILLED) && datalen > sizeof(struct payload)) {
 		u_int8_t key[32];
 		arc4random_buf(key, sizeof(key));
-		chacha_keysetup(&fill_stream, key, sizeof(key) * 8, 0);
+		chacha_keysetup(&fill_stream, key, sizeof(key) * 8);
 	}
 
 	ident = getpid() & 0xFFFF;
@@ -661,7 +661,7 @@ pinger(void)
 		if (!(options & F_PINGFILLED) && datalen >= sizeof(payload)) {
 			u_int8_t *dp = &outpack[8 + sizeof(payload)];
 
-			chacha_ivsetup(&fill_stream, payload.mac);
+			chacha_ivsetup(&fill_stream, payload.mac, 0);
 			chacha_encrypt_bytes(&fill_stream, dp, dp,
 			    datalen - sizeof(payload));
 		}
@@ -810,7 +810,7 @@ pr_pack(char *buf, int cc, struct sockaddr_in *from)
 			cp = (u_char *)&icp->icmp_data[sizeof(struct payload)];
 			dp = &outpack[8 + sizeof(struct payload)];
 			if (!(options & F_PINGFILLED) && datalen >= sizeof(payload)) {
-				chacha_ivsetup(&fill_stream, payload.mac);
+				chacha_ivsetup(&fill_stream, payload.mac, 0);
 				chacha_encrypt_bytes(&fill_stream, dp, dp,
 				    datalen - sizeof(payload));
 			}
