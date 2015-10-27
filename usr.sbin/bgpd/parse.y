@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.285 2015/10/22 13:30:07 reyk Exp $ */
+/*	$OpenBSD: parse.y,v 1.286 2015/10/27 18:19:33 mmcc Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -3509,7 +3509,7 @@ copy_filterset(struct filter_set_head *source, struct filter_set_head *dest)
 		return;
 
 	TAILQ_FOREACH(s, source, entry) {
-		if ((t = calloc(1, sizeof(struct filter_set))) == NULL)
+		if ((t = malloc(sizeof(struct filter_set))) == NULL)
 			fatal(NULL);
 		memcpy(t, s, sizeof(struct filter_set));
 		TAILQ_INSERT_TAIL(dest, t, entry);
