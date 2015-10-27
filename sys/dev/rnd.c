@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.175 2015/05/25 03:07:07 deraadt Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.176 2015/10/27 11:13:06 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2011 Theo de Raadt.
@@ -568,8 +568,8 @@ static inline void
 _rs_init(u_char *buf, size_t n)
 {
 	KASSERT(n >= KEYSZ + IVSZ);
-	chacha_keysetup(&rs, buf, KEYSZ * 8, 0);
-	chacha_ivsetup(&rs, buf + KEYSZ);
+	chacha_keysetup(&rs, buf, KEYSZ * 8);
+	chacha_ivsetup(&rs, buf + KEYSZ, NULL);
 }
 
 static void
@@ -833,8 +833,8 @@ randomread(dev_t dev, struct uio *uio, int ioflag)
 	buf = malloc(POOLBYTES, M_TEMP, M_WAITOK);
 	if (total > ARC4_MAIN_MAX_BYTES) {
 		arc4random_buf(lbuf, sizeof(lbuf));
-		chacha_keysetup(&lctx, lbuf, KEYSZ * 8, 0);
-		chacha_ivsetup(&lctx, lbuf + KEYSZ);
+		chacha_keysetup(&lctx, lbuf, KEYSZ * 8);
+		chacha_ivsetup(&lctx, lbuf + KEYSZ, NULL);
 		explicit_bzero(lbuf, sizeof(lbuf));
 		myctx = 1;
 	}
