@@ -1,4 +1,4 @@
-.\"	$OpenBSD: eigrpd.8,v 1.1 2015/10/02 04:26:47 renato Exp $
+.\"	$OpenBSD: eigrpd.8,v 1.2 2015/10/27 03:30:23 renato Exp $
 .\"
 .\" Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
 .\" Copyright (c) 2004, 2005, 2007 Esben Norby <norby@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 2 2015 $
+.Dd $Mdocdate: October 27 2015 $
 .Dt EIGRPD 8
 .Os
 .Sh NAME
@@ -99,11 +99,16 @@ socket used for communication with
 .Rs
 .%A Savage, et al.
 .%D April, 2014
-.%R draft-savage-eigrp-02
+.%R draft-savage-eigrp-04
 .%T Enhanced Interior Gateway Routing Protocol
 .Re
 .Sh HISTORY
 The
 .Nm
 program first appeared in
-.Ox 5.8 .
+.Ox 5.9 .
+.Sh AUTHORS
+The
+.Nm
+program was written by
+.An Renato Westphal Aq Mt renato@openbsd.org .
