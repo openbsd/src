@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.178 2015/10/27 10:54:52 mpi Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.179 2015/10/27 15:22:58 mpi Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -819,11 +819,6 @@ arpproxy(struct in_addr in, unsigned int rtableid)
 
 	rtfree(rt);
 	return (found);
-}
-
-void
-arp_ifinit(struct arpcom *ac, struct ifaddr *ifa)
-{
 }
 
 /*
