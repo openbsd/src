@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd.c,v 1.11 2015/10/27 04:27:01 yasuoka Exp $	*/
+/*	$OpenBSD: radiusd.c,v 1.12 2015/10/27 04:48:06 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2013 Internet Initiative Japan Inc.
@@ -467,7 +467,7 @@ radiusd_listen_on_event(int fd, short evmask, void *ctx)
 			    radius_code_string(req_code), req_code, peerstr,
 			    req_id, q->id);
 			/* XXX RFC 5080 suggests to answer the cached result */
-			return;
+			goto on_error;
 		}
 
 		/* FIXME: we can support other request codes */
