@@ -1,4 +1,4 @@
-/*	$OpenBSD: mda.c,v 1.111 2015/10/26 09:22:03 jsg Exp $	*/
+/*	$OpenBSD: mda.c,v 1.112 2015/10/27 21:20:11 jung Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -349,6 +349,8 @@ mda_imsg(struct mproc *p, struct imsg *imsg)
 				    sizeof(deliver.user));
 				(void)strlcpy(deliver.from, e->sender,
 				    sizeof(deliver.from));
+				(void)strlcpy(deliver.dest, e->dest,
+				    sizeof(deliver.dest));
 				if (strlcpy(deliver.to, e->buffer,
 					sizeof(deliver.to))
 				    >= sizeof(deliver.to)) {

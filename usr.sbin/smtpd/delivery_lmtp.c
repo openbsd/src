@@ -1,4 +1,4 @@
-/* $OpenBSD: delivery_lmtp.c,v 1.13 2015/10/27 21:11:27 jung Exp $ */
+/* $OpenBSD: delivery_lmtp.c,v 1.14 2015/10/27 21:20:11 jung Exp $ */
 
 /*
  * Copyright (c) 2013 Ashish SHUKLA <ashish.is@lostca.se>
@@ -119,11 +119,13 @@ static void
 lmtp_open(struct deliver *deliver)
 {
 	FILE		*fp;
-	char		*buf = NULL, hn[HOST_NAME_MAX+1], *to = deliver->to;
+	char		*buf = NULL, hn[HOST_NAME_MAX + 1],
+			*rcpt = deliver->to, *to = deliver->to;
 	size_t		 sz = 0;
 	ssize_t		 len;
 	int		 s;
 
+	strsep(&rcpt, " "); 
 	s = (to[0] == '/') ? unix_socket(to) : inet_socket(to);
 	if ((fp = fdopen(s, "r+")) == NULL)
 		err(1, "fdopen");
@@ -143,7 +145,8 @@ lmtp_open(struct deliver *deliver)
 	if (lmtp_cmd(&buf, &sz, '2', fp, "MAIL FROM:<%s>", deliver->from) != 0)
 		errx(1, "MAIL FROM rejected: %s", buf);
 
-	if (lmtp_cmd(&buf, &sz, '2', fp, "RCPT TO:<%s>", deliver->user) != 0)
+	if (lmtp_cmd(&buf, &sz, '2', fp, "RCPT TO:<%s>",
+	    rcpt ? deliver->dest : deliver->user) != 0)
 		errx(1, "RCPT TO rejected: %s", buf);
 
 	if (lmtp_cmd(&buf, &sz, '3', fp, "DATA") != 0)

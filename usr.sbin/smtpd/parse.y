@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.154 2015/09/07 15:36:53 gilles Exp $	*/
+/*	$OpenBSD: parse.y,v 1.155 2015/10/27 21:20:11 jung Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -163,7 +163,7 @@ typedef struct {
 
 %token	AS QUEUE COMPRESSION ENCRYPTION MAXMESSAGESIZE MAXMTADEFERRED LISTEN ON ANY PORT EXPIRE
 %token	TABLE SECURE SMTPS CERTIFICATE DOMAIN BOUNCEWARN LIMIT INET4 INET6 NODSN
-%token  RELAY BACKUP VIA DELIVER TO LMTP MAILDIR MBOX HOSTNAME HOSTNAMES
+%token  RELAY BACKUP VIA DELIVER TO LMTP MAILDIR MBOX RCPTTO HOSTNAME HOSTNAMES
 %token	ACCEPT REJECT INCLUDE ERROR MDA FROM FOR SOURCE MTA PKI SCHEDULER
 %token	ARROW AUTH TLS LOCAL VIRTUAL TAG TAGGED ALIAS FILTER KEY CA DHPARAMS
 %token	AUTH_OPTIONAL TLS_REQUIRE USERBASE SENDER MASK_SOURCE VERIFY FORWARDONLY RECIPIENT
@@ -993,6 +993,21 @@ deliver_action	: DELIVER TO MAILDIR			{
 				fatal("invalid lmtp destination");
 			free($4);
 		}
+		| DELIVER TO LMTP STRING RCPTTO 	{
+			rule->r_action = A_LMTP;
+			if (strchr($4, ':') || $4[0] == '/') {
+				if (strlcpy(rule->r_value.buffer, $4,
+					sizeof(rule->r_value.buffer))
+					>= sizeof(rule->r_value.buffer))
+					fatal("lmtp destination too long");
+				if (strlcat(rule->r_value.buffer, " rcpt-to",
+					sizeof(rule->r_value.buffer))
+					>= sizeof(rule->r_value.buffer))
+					fatal("lmtp recipient too long");
+			} else
+				fatal("invalid lmtp destination");
+			free($4);
+		}
 		| DELIVER TO MDA STRING			{
 			rule->r_action = A_MDA;
 			if (strlcpy(rule->r_value.buffer, $4,
@@ -1306,6 +1321,7 @@ lookup(char *s)
 		{ "pki",		PKI },
 		{ "port",		PORT },
 		{ "queue",		QUEUE },
+		{ "rcpt-to",		RCPTTO },
 		{ "recipient",		RECIPIENT },
 		{ "reject",		REJECT },
 		{ "relay",		RELAY },
