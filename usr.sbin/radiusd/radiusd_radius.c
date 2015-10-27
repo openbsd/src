@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd_radius.c,v 1.9 2015/10/27 04:27:01 yasuoka Exp $	*/
+/*	$OpenBSD: radiusd_radius.c,v 1.10 2015/10/27 04:30:44 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2013 Internet Initiative Japan Inc.
@@ -278,7 +278,7 @@ module_radius_access_request(void *ctx, u_int q_id, const u_char *pkt,
 	u_char				 attrbuf[256];
 	ssize_t				 attrlen;
 
-	req = malloc(sizeof(struct module_radius_req));
+	req = calloc(1, sizeof(struct module_radius_req));
 	if (req == NULL) {
 		module_radius_log(module, LOG_WARNING,
 		    "%s: Out of memory: %m", __func__);
