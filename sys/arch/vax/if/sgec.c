@@ -1,4 +1,4 @@
-/*	$OpenBSD: sgec.c,v 1.29 2015/06/24 09:40:54 mpi Exp $	*/
+/*	$OpenBSD: sgec.c,v 1.30 2015/10/27 15:20:13 mpi Exp $	*/
 /*      $NetBSD: sgec.c,v 1.5 2000/06/04 02:14:14 matt Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -618,7 +618,6 @@ zeioctl(ifp, cmd, data)
 	caddr_t data;
 {
 	struct ze_softc *sc = ifp->if_softc;
-	struct ifaddr *ifa = (struct ifaddr *)data;
 	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
 
@@ -627,12 +626,7 @@ zeioctl(ifp, cmd, data)
 	switch (cmd) {
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
-		switch(ifa->ifa_addr->sa_family) {
-		case AF_INET:
-			zeinit(sc);
-			arp_ifinit(&sc->sc_ac, ifa);
-			break;
-		}
+		zeinit(sc);
 		break;
 
 	case SIOCSIFMEDIA:

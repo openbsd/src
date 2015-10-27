@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_de.c,v 1.30 2015/07/04 17:32:20 miod Exp $	*/
+/*	$OpenBSD: if_de.c,v 1.31 2015/10/27 15:20:13 mpi Exp $	*/
 /*	$NetBSD: if_de.c,v 1.27 1997/04/19 15:02:29 ragge Exp $	*/
 
 /*
@@ -562,7 +562,6 @@ deioctl(ifp, cmd, data)
 	u_long	cmd;
 	caddr_t data;
 {
-	register struct ifaddr *ifa = (struct ifaddr *)data;
 	register struct de_softc *ds = ifp->if_softc;
 	int s, error = 0;
 
@@ -572,12 +571,6 @@ deioctl(ifp, cmd, data)
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
 		deinit(ds);
-
-		switch (ifa->ifa_addr->sa_family) {
-		case AF_INET:
-			arp_ifinit(&ds->ds_ac, ifa);
-			break;
-		}
 		break;
 
 	case SIOCSIFFLAGS:
