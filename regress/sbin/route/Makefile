@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.7 2015/08/31 08:34:46 mpi Exp $
+# $OpenBSD: Makefile,v 1.8 2015/10/27 12:48:14 mpi Exp $
 
 RDOMAIN?=	5
 
@@ -234,6 +234,17 @@ rttest${n}:
 	${RCMD} add 10.8.1/26 192.0.2.2
 	${RCMD} delete -mpath 10.8.1/25 192.0.2.3
 	${RCMD} show -inet -gateway 2>&1 | \
+		diff -u ${.CURDIR}/${.TARGET}.ok /dev/stdin
+
+# RTM_GET for mpath routes does not need a gateway argument
+n=	20
+RTTEST_TARGETS+:=rttest${n}
+rttest${n}:
+	${SUDO} ifconfig lo10001 inet6 fd88::1/64
+	${SUDO} ifconfig lo10002 inet6 fd88::2/64
+	${RCMD} add -inet6 2001:ee0:2001:c0::/64 fd88::1
+	${RCMD} add -inet6 -mpath 2001:ee0:2001:c0::/64 fd88::2
+	${RCMD} get -inet6 2001:ee0:2001:c0::/64 2>&1 | \
 		diff -u ${.CURDIR}/${.TARGET}.ok /dev/stdin
 
 
