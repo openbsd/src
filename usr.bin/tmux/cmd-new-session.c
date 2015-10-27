@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-new-session.c,v 1.72 2015/10/23 16:30:15 nicm Exp $ */
+/* $OpenBSD: cmd-new-session.c,v 1.73 2015/10/27 13:23:24 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -270,9 +270,10 @@ cmd_new_session_exec(struct cmd *self, struct cmd_q *cmdq)
 	 * taking this session and needs to get MSG_READY and stay around.
 	 */
 	if (!detached) {
-		if (!already_attached)
-			server_write_ready(c);
-		else if (c->session != NULL)
+		if (!already_attached) {
+			if (~c->flags & CLIENT_CONTROL)
+				proc_send(c->peer, MSG_READY, -1, NULL, 0);
+		} else if (c->session != NULL)
 			c->last_session = c->session;
 		c->session = s;
 		status_timer_start(c);

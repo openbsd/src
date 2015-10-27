@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-detach-client.c,v 1.20 2015/04/24 23:17:11 nicm Exp $ */
+/* $OpenBSD: cmd-detach-client.c,v 1.21 2015/10/27 13:23:24 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -57,7 +57,7 @@ cmd_detach_client_exec(struct cmd *self, struct cmd_q *cmdq)
 			return (CMD_RETURN_ERROR);
 		tty_stop_tty(&c->tty);
 		c->flags |= CLIENT_SUSPENDED;
-		server_write_client(c, MSG_SUSPEND, NULL, 0);
+		proc_send(c->peer, MSG_SUSPEND, -1, NULL, 0);
 		return (CMD_RETURN_NORMAL);
 	}
 
@@ -74,9 +74,7 @@ cmd_detach_client_exec(struct cmd *self, struct cmd_q *cmdq)
 		TAILQ_FOREACH(cloop, &clients, entry) {
 			if (cloop->session != s)
 				continue;
-			server_write_client(cloop, msgtype,
-			    cloop->session->name,
-			    strlen(cloop->session->name) + 1);
+			proc_send_s(cloop->peer, msgtype, cloop->session->name);
 		}
 		return (CMD_RETURN_STOP);
 	}
@@ -89,14 +87,11 @@ cmd_detach_client_exec(struct cmd *self, struct cmd_q *cmdq)
 		TAILQ_FOREACH(cloop, &clients, entry) {
 			if (cloop->session == NULL || cloop == c)
 				continue;
-			server_write_client(cloop, msgtype,
-			    cloop->session->name,
-			    strlen(cloop->session->name) + 1);
+			proc_send_s(cloop->peer, msgtype, cloop->session->name);
 		}
 		return (CMD_RETURN_NORMAL);
 	}
 
-	server_write_client(c, msgtype, c->session->name,
-	    strlen(c->session->name) + 1);
+	proc_send_s(c->peer, msgtype, c->session->name);
 	return (CMD_RETURN_STOP);
 }
