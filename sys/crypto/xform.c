@@ -1,4 +1,4 @@
-/*	$OpenBSD: xform.c,v 1.46 2015/03/14 03:38:46 jsg Exp $	*/
+/*	$OpenBSD: xform.c,v 1.47 2015/10/27 12:00:25 mikeb Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -285,8 +285,8 @@ struct auth_hash auth_hash_hmac_sha2_512_256 = {
 
 struct auth_hash auth_hash_gmac_aes_128 = {
 	CRYPTO_AES_128_GMAC, "GMAC-AES-128",
-	16+4, 16, 16, sizeof(AES_GMAC_CTX), GMAC_BLOCK_LEN,
-	(void (*)(void *)) AES_GMAC_Init,
+	16+4, GMAC_BLOCK_LEN, GMAC_DIGEST_LEN, sizeof(AES_GMAC_CTX),
+	AESCTR_BLOCKSIZE, (void (*)(void *)) AES_GMAC_Init,
 	(void (*)(void *, const u_int8_t *, u_int16_t)) AES_GMAC_Setkey,
 	(void (*)(void *, const u_int8_t *, u_int16_t)) AES_GMAC_Reinit,
 	(int  (*)(void *, const u_int8_t *, u_int16_t)) AES_GMAC_Update,
@@ -295,8 +295,8 @@ struct auth_hash auth_hash_gmac_aes_128 = {
 
 struct auth_hash auth_hash_gmac_aes_192 = {
 	CRYPTO_AES_192_GMAC, "GMAC-AES-192",
-	24+4, 16, 16, sizeof(AES_GMAC_CTX), GMAC_BLOCK_LEN,
-	(void (*)(void *)) AES_GMAC_Init,
+	24+4, GMAC_BLOCK_LEN, GMAC_DIGEST_LEN, sizeof(AES_GMAC_CTX),
+	AESCTR_BLOCKSIZE, (void (*)(void *)) AES_GMAC_Init,
 	(void (*)(void *, const u_int8_t *, u_int16_t)) AES_GMAC_Setkey,
 	(void (*)(void *, const u_int8_t *, u_int16_t)) AES_GMAC_Reinit,
 	(int  (*)(void *, const u_int8_t *, u_int16_t)) AES_GMAC_Update,
@@ -305,8 +305,8 @@ struct auth_hash auth_hash_gmac_aes_192 = {
 
 struct auth_hash auth_hash_gmac_aes_256 = {
 	CRYPTO_AES_256_GMAC, "GMAC-AES-256",
-	32+4, 16, 16, sizeof(AES_GMAC_CTX), GMAC_BLOCK_LEN,
-	(void (*)(void *)) AES_GMAC_Init,
+	32+4, GMAC_BLOCK_LEN, GMAC_DIGEST_LEN, sizeof(AES_GMAC_CTX),
+	AESCTR_BLOCKSIZE, (void (*)(void *)) AES_GMAC_Init,
 	(void (*)(void *, const u_int8_t *, u_int16_t)) AES_GMAC_Setkey,
 	(void (*)(void *, const u_int8_t *, u_int16_t)) AES_GMAC_Reinit,
 	(int  (*)(void *, const u_int8_t *, u_int16_t)) AES_GMAC_Update,
