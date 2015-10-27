@@ -1,4 +1,4 @@
-/*	$OpenBSD: flt_rounds.c,v 1.3 2012/06/25 17:01:11 deraadt Exp $	*/
+/*	$OpenBSD: flt_rounds.c,v 1.4 2015/10/27 05:54:49 guenther Exp $	*/
 /*	$NetBSD: flt_rounds.c,v 1.1 1998/09/11 04:56:23 eeh Exp $	*/
 
 /*
@@ -24,3 +24,4 @@ __flt_rounds()
 	__asm__("st %%fsr,%0" : "=m" (*&x));
 	return map[(x >> 30) & 0x03];
 }
+DEF_STRONG(__flt_rounds);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: flt_rounds.c,v 1.3 2014/04/18 15:09:52 guenther Exp $	*/
+/*	$OpenBSD: flt_rounds.c,v 1.4 2015/10/27 05:54:49 guenther Exp $	*/
 
 /*
  * Written by Miodrag Vallat.  Public domain.
@@ -22,3 +22,4 @@ __flt_rounds()
 	__asm__ volatile("fstd %%fr0,0(%1)" : "=m" (fpsr) : "r" (&fpsr));
 	return map[(fpsr >> 41) & 0x03];
 }
+DEF_STRONG(__flt_rounds);

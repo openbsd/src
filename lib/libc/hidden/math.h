@@ -1,6 +1,6 @@
-/*	$OpenBSD: fpclassifyl.c,v 1.2 2015/10/27 05:54:49 guenther Exp $	*/
+/*	$OpenBSD: math.h,v 1.1 2015/10/27 05:54:49 guenther Exp $	*/
 /*
- * Copyright (c) 2008 Martynas Venckus <martynas@openbsd.org>
+ * Copyright (c) 2015 Philip Guenther <guenther@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,31 +15,19 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/types.h>
-#include <machine/ieee.h>
-#include <math.h>
+#ifndef _LIBC_MATH_H_
+#define _LIBC_MATH_H_
 
-int
-__fpclassifyl(long double e)
-{
-	struct ieee_ext *p = (struct ieee_ext *)&e;
+#include_next <math.h>
 
-	if (p->ext_exp == 0) {
-		if (p->ext_frach == 0 && p->ext_fracl == 0)
-			return FP_ZERO;
-		else
-			return FP_SUBNORMAL;
-	}
+/*
+ * This file only wraps the handful of functions that are both
+ * defined and used by libc.
+ */
 
-	p->ext_frach &= ~0x80000000;	/* clear normalization bit */
+PROTO_NORMAL(__fpclassify);
+PROTO_NORMAL(__fpclassifyf);
+PROTO_NORMAL(__fpclassifyl);
+PROTO_NORMAL(ldexp);
 
-	if (p->ext_exp == EXT_EXP_INFNAN) {
-		if (p->ext_frach == 0 && p->ext_fracl == 0)
-			return FP_INFINITE;
-		else
-			return FP_NAN;
-	}
-
-	return FP_NORMAL;
-}
-DEF_STRONG(__fpclassifyl);
+#endif /* !_LIBC_MATH_H_ */

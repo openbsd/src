@@ -1,4 +1,4 @@
-/*	$OpenBSD: flt_rounds.c,v 1.6 2012/06/25 17:01:11 deraadt Exp $ */
+/*	$OpenBSD: flt_rounds.c,v 1.7 2015/10/27 05:54:49 guenther Exp $ */
 /*
  * Written by J.T. Conklin, Apr 10, 1995
  * Public domain.
@@ -22,3 +22,4 @@ __flt_rounds()
 	__asm__("st %%fsr,%0" : "=m" (*&x));
 	return map[(x >> 30) & 0x03];
 }
+DEF_STRONG(__flt_rounds);

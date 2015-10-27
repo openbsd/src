@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldexp.c,v 1.4 2015/01/04 16:12:42 daniel Exp $	*/
+/*	$OpenBSD: ldexp.c,v 1.5 2015/10/27 05:54:49 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -47,3 +47,4 @@ ldexp(double value, int exp)
 		: "0" (value), "u" ((double)exp));
 	return (temp);
 }
+DEF_STRONG(ldexp);

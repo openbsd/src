@@ -1,4 +1,4 @@
-/*	$OpenBSD: flt_rounds.c,v 1.5 2014/04/17 09:01:25 guenther Exp $	*/
+/*	$OpenBSD: flt_rounds.c,v 1.6 2015/10/27 05:54:49 guenther Exp $	*/
 /*	$NetBSD: flt_rounds.c,v 1.5 2001/05/25 12:14:05 simonb Exp $	*/
 
 /*
@@ -56,3 +56,4 @@ __flt_rounds()
 	return map[x & 0x03];
 #endif
 }
+DEF_STRONG(__flt_rounds);
