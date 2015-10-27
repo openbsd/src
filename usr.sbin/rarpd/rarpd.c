@@ -1,4 +1,4 @@
-/*	$OpenBSD: rarpd.c,v 1.64 2015/10/26 10:08:14 jung Exp $ */
+/*	$OpenBSD: rarpd.c,v 1.65 2015/10/27 11:47:17 jca Exp $ */
 /*	$NetBSD: rarpd.c,v 1.25 1998/04/23 02:48:33 mrg Exp $	*/
 
 /*
@@ -381,7 +381,7 @@ rarp_loop(void)
 		numfd++;
 	pfd = reallocarray(NULL, numfd, sizeof(*pfd));
 	if (pfd == NULL) {
-		error(FATAL, "malloc: %s", strerror(errno));
+		error(FATAL, "reallocarray: %s", strerror(errno));
 		/* NOTREACHED */
 	}
 	for (i = 0, ii = iflist; ii; ii = ii->ii_next, i++) {
@@ -393,7 +393,7 @@ rarp_loop(void)
 		if (poll(pfd, numfd, -1) == -1) {
 			if (errno == EINTR)
 				continue;
-			error(FATAL, "select: %s", strerror(errno));
+			error(FATAL, "poll: %s", strerror(errno));
 			/* NOTREACHED */
 		}
 		for (i = 0, ii = iflist; ii; ii = ii->ii_next, i++) {
