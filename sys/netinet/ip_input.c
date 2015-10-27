@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.259 2015/10/26 15:49:13 mpi Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.260 2015/10/27 12:06:37 mpi Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -646,9 +646,9 @@ bad:
 int
 in_ouraddr(struct mbuf *m, struct ifnet *ifp, struct in_addr ina)
 {
-	struct in_ifaddr	*ia = NULL;
 	struct rtentry		*rt;
 	struct sockaddr_in	 sin;
+	int			 match = 0;
 #if NPF > 0
 	struct pf_state_key	*key;
 
@@ -671,11 +671,25 @@ in_ouraddr(struct mbuf *m, struct ifnet *ifp, struct in_addr ina)
 	sin.sin_family = AF_INET;
 	sin.sin_addr = ina;
 	rt = rtalloc(sintosa(&sin), 0, m->m_pkthdr.ph_rtableid);
-	if (rtisvalid(rt) && ISSET(rt->rt_flags, RTF_LOCAL|RTF_BROADCAST))
-		ia = ifatoia(rt->rt_ifa);
+	if (rtisvalid(rt)) {
+		if (ISSET(rt->rt_flags, RTF_LOCAL))
+			match = 1;
+
+		/*
+		 * If directedbcast is enabled we only consider it local
+		 * if it is received on the interface with that address.
+		 */
+		if (ISSET(rt->rt_flags, RTF_BROADCAST) &&
+		    (!ip_directedbcast || rt->rt_ifidx == ifp->if_index)) {
+			match = 1;
+
+			/* Make sure M_BCAST is set */
+			m->m_flags |= M_BCAST;
+		}
+	}
 	rtfree(rt);
 
-	if (ia == NULL) {
+	if (!match) {
 		struct ifaddr *ifa;
 
 		/*
@@ -695,33 +709,21 @@ in_ouraddr(struct mbuf *m, struct ifnet *ifp, struct in_addr ina)
 		 * interface, and that M_BCAST will only be set on a BROADCAST
 		 * interface.
 		 */
+		KERNEL_LOCK();
 		TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
 			if (ifa->ifa_addr->sa_family != AF_INET)
 				continue;
 
 			if (IN_CLASSFULBROADCAST(ina.s_addr,
-			    ifatoia(ifa)->ia_addr.sin_addr.s_addr))
-				return (1);
+			    ifatoia(ifa)->ia_addr.sin_addr.s_addr)) {
+			    	match = 1;
+			    	break;
+			}
 		}
-
-		return (0);
+		KERNEL_UNLOCK();
 	}
 
-	if (ina.s_addr != ia->ia_addr.sin_addr.s_addr) {
-		/*
-		 * This matches a broadcast address on one of our interfaces.
-		 * If directedbcast is enabled we only consider it local if it
-		 * is received on the interface with that address.
-		 */
-		if (ip_directedbcast && ia->ia_ifp != ifp)
-			return (0);
-
-		/* Make sure M_BCAST is set */
-		if (m)
-			m->m_flags |= M_BCAST;
-	}
-
-	return (1);
+	return (match);
 }
 
 /*
