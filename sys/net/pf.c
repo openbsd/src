@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.947 2015/10/13 19:32:31 sashan Exp $ */
+/*	$OpenBSD: pf.c,v 1.948 2015/10/27 10:52:17 mpi Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2912,6 +2912,7 @@ pf_get_mss(struct pf_pdesc *pd)
 u_int16_t
 pf_calc_mss(struct pf_addr *addr, sa_family_t af, int rtableid, u_int16_t offer)
 {
+	struct ifnet		*ifp;
 	struct sockaddr_in	*dst;
 #ifdef INET6
 	struct sockaddr_in6	*dst6;
@@ -2944,11 +2945,12 @@ pf_calc_mss(struct pf_addr *addr, sa_family_t af, int rtableid, u_int16_t offer)
 #endif /* INET6 */
 	}
 
-	if (rt && rt->rt_ifp) {
-		mss = rt->rt_ifp->if_mtu - hlen - sizeof(struct tcphdr);
+	if (rt != NULL && (ifp = if_get(rt->rt_ifidx)) != NULL) {
+		mss = ifp->if_mtu - hlen - sizeof(struct tcphdr);
 		mss = max(tcp_mssdflt, mss);
-		rtfree(rt);
+		if_put(ifp);
 	}
+	rtfree(rt);
 	mss = min(mss, offer);
 	mss = max(mss, 64);		/* sanity - at least max opt space */
 	return (mss);
