@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.82 2015/10/28 09:35:03 deraadt Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.83 2015/10/28 12:03:39 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -245,10 +245,6 @@ const u_int pledge_syscalls[SYS_MAXSYSCALL] = {
 	[SYS_connect] = PLEDGE_INET | PLEDGE_UNIX | PLEDGE_DNS | PLEDGE_YPACTIVE,
 	[SYS_bind] = PLEDGE_INET | PLEDGE_UNIX | PLEDGE_DNS,
 	[SYS_getsockname] = PLEDGE_INET | PLEDGE_UNIX | PLEDGE_DNS,
-
-	/* XXX remove this, and the code in uipc_syscalls.c */
-	[SYS_dnssocket] = PLEDGE_DNS,
-	[SYS_dnsconnect] = PLEDGE_DNS,
 
 	[SYS_listen] = PLEDGE_INET | PLEDGE_UNIX,
 	[SYS_accept4] = PLEDGE_INET | PLEDGE_UNIX,

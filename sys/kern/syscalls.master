@@ -1,4 +1,4 @@
-;	$OpenBSD: syscalls.master,v 1.163 2015/10/18 00:04:43 deraadt Exp $
+;	$OpenBSD: syscalls.master,v 1.164 2015/10/28 12:03:39 deraadt Exp $
 ;	$NetBSD: syscalls.master,v 1.32 1996/04/23 10:24:21 mycroft Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -297,9 +297,8 @@
 156	OBSOL		ogetdirentries
 157	OBSOL		statfs25
 158	OBSOL		fstatfs25
-159	STD		{ int sys_dnsconnect(int s, const struct sockaddr *name, \
-			    socklen_t namelen); }
-160	STD		{ int sys_dnssocket(int domain, int type, int protocol); }
+159	UNIMPL
+160	UNIMPL
 161	STD		{ int sys_getfh(const char *fname, fhandle_t *fhp); }
 162	OBSOL		ogetdomainname
 163	OBSOL		osetdomainname
