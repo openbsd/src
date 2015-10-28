@@ -1,4 +1,4 @@
-.\" $OpenBSD: mbtowc.3,v 1.4 2013/06/05 03:39:22 tedu Exp $
+.\" $OpenBSD: mbtowc.3,v 1.5 2015/10/28 08:45:49 stsp Exp $
 .\" $NetBSD: mbtowc.3,v 1.5 2003/09/08 17:54:31 wiz Exp $
 .\"
 .\" Copyright (c)2002 Citrus Project,
@@ -25,7 +25,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 5 2013 $
+.Dd $Mdocdate: October 28 2015 $
 .Dt MBTOWC 3
 .Os
 .\" ----------------------------------------------------------------------
@@ -40,26 +40,14 @@
 .Sh DESCRIPTION
 The
 .Fn mbtowc
-usually converts the multibyte character pointed to by
+function converts the multibyte character pointed to by
 .Fa s
 to a wide character, and stores it in the wchar_t object pointed to by
-.Fa pwc
-if
-.Fa pwc
-is non-null and
-.Fa s
-points to a valid character.
-This function may inspect at most n bytes of the array beginning from
+.Fa pwc .
+This function may inspect at most
+.Fa n
+bytes of the array pointed to by
 .Fa s .
-.Pp
-In state-dependent encodings,
-.Fa s
-may point to the special sequence bytes to change the shift-state.
-Although such sequence bytes correspond to no individual
-wide-character code,
-.Fn mbtowc
-changes its own state by the sequence bytes and treats them
-as if they are a part of the subsequence multibyte character.
 .Pp
 Unlike
 .Xr mbrtowc 3 ,
@@ -68,52 +56,74 @@ the first
 bytes pointed to by
 .Fa s
 need to form an entire multibyte character.
-Otherwise, this function causes an error.
+Otherwise, this function returns an error and the internal state will
+be undefined.
 .Pp
-Calling any other functions in
-.Em libc
-never change the internal
-state of the
-.Fn mbtowc ,
-except for calling
-.Xr setlocale 3
-with the
-.Dv LC_CTYPE
-category changed to that of the current locale.
-Such
-.Xr setlocale 3
-calls cause the internal state of this function to be indeterminate.
+If a call to
+.Fn mbtowc
+resulted in an undefined internal state,
+.Fn mbtowc
+must be called with
+.Ar s
+set to
+.Dv NULL
+to reset the internal state before it can safely be used again.
 .Pp
 The behaviour of
 .Fn mbtowc
 is affected by the
 .Dv LC_CTYPE
 category of the current locale.
+Calling any other functions in
+.Em libc
+never changes the internal
+state of
+.Fn mbtowc ,
+except for calling
+.Xr setlocale 3
+with the
+.Dv LC_CTYPE
+category set to a different locale.
+Such
+.Xr setlocale 3
+calls cause the internal state of this function to be undefined.
 .Pp
-These are the special cases:
+In state-dependent encodings such as ISO/IEC 2022-JP,
+.Fa s
+may point to the special sequence of bytes to change the shift-state.
+Because such sequence bytes do not correspond to any individual wide character,
+.Fn mbtowc
+treats them as if they were part of the subsequent multibyte character.
+.Pp
+The following special cases apply to the arguments:
 .Bl -tag -width 012345678901
 .It s == NULL
 .Fn mbtowc
-initializes its own internal state to an initial state, and
+initializes its own internal state to the initial state, and
 determines whether the current encoding is state-dependent.
-This function returns 0 if the encoding is state-independent,
+.Fn mbtowc
+returns 0 if the encoding is state-independent,
 otherwise non-zero.
-In this case,
 .Fa pwc
-is completely ignored.
+is ignored.
 .It pwc == NULL
 .Fn mbtowc
-executes the conversion as if
+behaves just as if
 .Fa pwc
-is non-null, but a result of the conversion is discarded.
+was not
+.Dv NULL ,
+including modifications to internal state,
+except that the result of the conversion is discarded.
+This can be used to determine the size of the wide character
+representation of a multibyte string.
+Another use case is a check for illegal or incomplete multibyte sequences.
 .It n == 0
 In this case,
 the first
 .Fa n
 bytes of the array pointed to by
 .Fa s
-never form a complete character.
-Thus, the
+never form a complete character and
 .Fn mbtowc
 always fails.
 .El
@@ -137,14 +147,14 @@ macro.
 .It -1
 .Fa s
 points to an invalid or an incomplete multibyte character.
-The
-.Fn mbtowc
-also sets errno to indicate the error.
+.Va errno
+is set to indicate the error.
 .El
 .Pp
 When
 .Fa s
-is equal to NULL,
+is
+.Dv NULL ,
 .Fn mbtowc
 returns:
 .Bl -tag -width 0123456789
@@ -156,7 +166,9 @@ The current encoding is state-dependent.
 .\" ----------------------------------------------------------------------
 .Sh ERRORS
 .Fn mbtowc
-may cause an error in the following cases:
+will set
+.Va errno
+in the following cases:
 .Bl -tag -width Er
 .It Bq Er EILSEQ
 .Fa s
