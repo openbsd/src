@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr.c,v 1.46 2015/10/07 13:59:34 deraadt Exp $	*/
+/*	$OpenBSD: asr.c,v 1.47 2015/10/28 11:52:26 deraadt Exp $	*/
 /*
  * Copyright (c) 2010-2012 Eric Faurot <eric@openbsd.org>
  *
@@ -750,28 +750,7 @@ asr_ctx_envopts(struct asr_ctx *ac)
 static int
 asr_parse_nameserver(struct sockaddr *sa, const char *s)
 {
-	const char	*estr;
-	char		 buf[256];
-	char		*port = NULL;
 	in_port_t	 portno = 53;
-
-	if (*s == '[') {
-		strlcpy(buf, s + 1, sizeof buf);
-		s = buf;
-		port = strchr(buf, ']');
-		if (port == NULL)
-			return (-1);
-		*port++ = '\0';
-		if (*port != ':')
-			return (-1);
-		port++;
-	}
-
-	if (port) {
-		portno = strtonum(port, 1, USHRT_MAX, &estr);
-		if (estr)
-			return (-1);
-	}
 
 	if (_asr_sockaddr_from_str(sa, PF_UNSPEC, s) == -1)
 		return (-1);

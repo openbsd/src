@@ -1,4 +1,4 @@
-.\"	$OpenBSD: resolv.conf.5,v 1.46 2014/11/05 15:12:23 jmc Exp $
+.\"	$OpenBSD: resolv.conf.5,v 1.47 2015/10/28 11:52:26 deraadt Exp $
 .\"	$NetBSD: resolv.conf.5,v 1.7 1996/03/06 18:22:16 scottr Exp $
 .\"
 .\" Copyright (c) 1986, 1991 The Regents of the University of California.
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)resolver.5	5.12 (Berkeley) 5/10/91
 .\"
-.Dd $Mdocdate: November 5 2014 $
+.Dd $Mdocdate: October 28 2015 $
 .Dt RESOLV.CONF 5
 .Os
 .Sh NAME
@@ -116,13 +116,6 @@ Scoped IPv6 address notation is accepted as well
 (see
 .Xr inet6 4
 for details).
-A non-standard port may also be specified,
-with the host address enclosed in square brackets.
-For example:
-.Bd -literal -offset indent
-nameserver [10.0.0.1]:5353
-nameserver [::1]:5353
-.Ed
 .Pp
 Up to
 .Dv MAXNS
