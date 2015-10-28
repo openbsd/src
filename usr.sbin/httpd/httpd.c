@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.c,v 1.43 2015/10/28 15:45:51 mmcc Exp $	*/
+/*	$OpenBSD: httpd.c,v 1.44 2015/10/28 15:50:04 mmcc Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -1016,8 +1016,7 @@ kv_set(struct kv *kv, char *fmt, ...)
 	}
 
 	/* Set the new value */
-	if (kv->kv_value != NULL)
-		free(kv->kv_value);
+	free(kv->kv_value);
 	kv->kv_value = value;
 
 	return (0);
@@ -1034,8 +1033,7 @@ kv_setkey(struct kv *kv, char *fmt, ...)
 		return (-1);
 	va_end(ap);
 
-	if (kv->kv_key != NULL)
-		free(kv->kv_key);
+	free(kv->kv_key);
 	kv->kv_key = key;
 
 	return (0);
@@ -1090,13 +1088,9 @@ kv_purge(struct kvtree *keys)
 void
 kv_free(struct kv *kv)
 {
-	if (kv->kv_key != NULL) {
-		free(kv->kv_key);
-	}
+	free(kv->kv_key);
 	kv->kv_key = NULL;
-	if (kv->kv_value != NULL) {
-		free(kv->kv_value);
-	}
+	free(kv->kv_value);
 	kv->kv_value = NULL;
 	memset(kv, 0, sizeof(*kv));
 }
