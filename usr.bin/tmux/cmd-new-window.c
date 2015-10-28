@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-new-window.c,v 1.48 2015/10/27 15:58:42 nicm Exp $ */
+/* $OpenBSD: cmd-new-window.c,v 1.49 2015/10/28 09:51:55 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -86,9 +86,9 @@ cmd_new_window_exec(struct cmd *self, struct cmd_q *cmdq)
 
 	path = NULL;
 	if (cmdq->client != NULL && cmdq->client->session == NULL)
-		envent = environ_find(&cmdq->client->environ, "PATH");
+		envent = environ_find(cmdq->client->environ, "PATH");
 	else
-		envent = environ_find(&s->environ, "PATH");
+		envent = environ_find(s->environ, "PATH");
 	if (envent != NULL)
 		path = envent->value;
 

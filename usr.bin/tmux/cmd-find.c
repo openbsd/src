@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-find.c,v 1.16 2015/10/27 13:23:24 nicm Exp $ */
+/* $OpenBSD: cmd-find.c,v 1.17 2015/10/28 09:51:55 nicm Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -121,7 +121,7 @@ cmd_find_try_TMUX(struct client *c, struct window *w)
 	u_int			 session;
 	struct session		*s;
 
-	envent = environ_find(&c->environ, "TMUX");
+	envent = environ_find(c->environ, "TMUX");
 	if (envent == NULL)
 		return (NULL);
 

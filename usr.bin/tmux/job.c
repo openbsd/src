@@ -1,4 +1,4 @@
-/* $OpenBSD: job.c,v 1.36 2015/06/17 16:44:49 nicm Exp $ */
+/* $OpenBSD: job.c,v 1.37 2015/10/28 09:51:55 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -45,22 +45,22 @@ job_run(const char *cmd, struct session *s, int cwd,
     void (*callbackfn)(struct job *), void (*freefn)(void *), void *data)
 {
 	struct job	*job;
-	struct environ	 env;
+	struct environ	*env;
 	pid_t		 pid;
 	int		 nullfd, out[2];
 
 	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, out) != 0)
 		return (NULL);
 
-	environ_init(&env);
-	environ_copy(&global_environ, &env);
+	env = environ_create();
+	environ_copy(global_environ, env);
 	if (s != NULL)
-		environ_copy(&s->environ, &env);
-	server_fill_environ(s, &env);
+		environ_copy(s->environ, env);
+	server_fill_environ(s, env);
 
 	switch (pid = fork()) {
 	case -1:
-		environ_free(&env);
+		environ_free(env);
 		close(out[0]);
 		close(out[1]);
 		return (NULL);
@@ -70,8 +70,8 @@ job_run(const char *cmd, struct session *s, int cwd,
 		if (cwd != -1 && fchdir(cwd) != 0)
 			chdir("/");
 
-		environ_push(&env);
-		environ_free(&env);
+		environ_push(env);
+		environ_free(env);
 
 		if (dup2(out[1], STDIN_FILENO) == -1)
 			fatal("dup2 failed");
@@ -96,7 +96,7 @@ job_run(const char *cmd, struct session *s, int cwd,
 	}
 
 	/* parent */
-	environ_free(&env);
+	environ_free(env);
 	close(out[1]);
 
 	job = xmalloc(sizeof *job);

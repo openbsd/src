@@ -1,4 +1,4 @@
-/* $OpenBSD: client.c,v 1.100 2015/10/27 15:58:42 nicm Exp $ */
+/* $OpenBSD: client.c,v 1.101 2015/10/28 09:51:55 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -294,7 +294,7 @@ client_main(struct event_base *base, int argc, char **argv, int flags)
 	options_free(global_options);
 	options_free(global_s_options);
 	options_free(global_w_options);
-	environ_free(&global_environ);
+	environ_free(global_environ);
 
 	/* Create stdin handler. */
 	setblocking(STDIN_FILENO, 0);
