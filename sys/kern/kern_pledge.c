@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.86 2015/10/28 13:42:57 semarie Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.87 2015/10/28 13:59:07 semarie Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -550,12 +550,6 @@ pledge_namei(struct proc *p, char *origpath)
 	if (error)
 		return (pledge_fail(p, error, 0));
 
-	/* chmod(2), chflags(2), ... */
-	if ((p->p_pledgenote & PLEDGE_FATTR) &&
-	    (p->p_p->ps_pledge & PLEDGE_FATTR) == 0) {
-		return (pledge_fail(p, EPERM, PLEDGE_FATTR));
-	}
-
 	/* Detect what looks like a mkstemp(3) family operation */
 	if ((p->p_p->ps_pledge & PLEDGE_TMPPATH) &&
 	    (p->p_pledge_syscall == SYS_open) &&
@@ -572,11 +566,6 @@ pledge_namei(struct proc *p, char *origpath)
 	    strncmp(path, "/tmp/", sizeof("/tmp/") - 1) == 0) {
 		return (0);
 	}
-
-	/* open, mkdir, or other path creation operation */
-	if ((p->p_pledgenote & PLEDGE_CPATH) &&
-	    ((p->p_p->ps_pledge & PLEDGE_CPATH) == 0))
-		return (pledge_fail(p, EPERM, PLEDGE_CPATH));
 
 	/* Whitelisted read/write paths */
 	switch (p->p_pledge_syscall) {
@@ -595,11 +584,6 @@ pledge_namei(struct proc *p, char *origpath)
 		}
 		break;
 	}
-
-	/* ensure PLEDGE_WPATH request for doing write */
-	if ((p->p_pledgenote & PLEDGE_WPATH) &&
-	    (p->p_p->ps_pledge & PLEDGE_WPATH) == 0)
-		return (pledge_fail(p, EPERM, PLEDGE_WPATH));
 
 	/* Whitelisted read-only paths */
 	switch (p->p_pledge_syscall) {
@@ -680,10 +664,22 @@ pledge_namei(struct proc *p, char *origpath)
 		break;
 	}
 
-	/* ensure PLEDGE_RPATH request for doing read */
-	if ((p->p_pledgenote & PLEDGE_RPATH) &&
-	    (p->p_p->ps_pledge & PLEDGE_RPATH) == 0)
-		return (pledge_fail(p, EPERM, PLEDGE_RPATH));
+	/*
+	 * Ensure each flag of p_pledgenote has counterpart allowing it in
+	 * ps_pledge
+	 */
+	if (p->p_pledgenote & ~p->p_p->ps_pledge)
+		return (pledge_fail(p, EPERM, (p->p_pledgenote &
+		    ~p->p_p->ps_pledge)));
+
+	/* generic check for unsetted p_pledgenote */
+	if (p->p_pledgenote == 0) {
+		//printf("pledge_namei: %s(%d): syscall %d p_pledgenote=0\n",
+		//    p->p_comm, p->p_pid, p->p_pledge_syscall);
+
+		if ((p->p_p->ps_pledge & (PLEDGE_RPATH | PLEDGE_WPATH | PLEDGE_CPATH)) == 0)
+			return (pledge_fail(p, EPERM, PLEDGE_RPATH));
+	}
 
 	/*
 	 * If a whitelist is set, compare canonical paths.  Anything
@@ -779,14 +775,7 @@ pledge_namei(struct proc *p, char *origpath)
 		return (error);			/* Don't hint why it failed */
 	}
 
-	if (p->p_p->ps_pledge & PLEDGE_RPATH)
-		return (0);
-	if (p->p_p->ps_pledge & PLEDGE_WPATH)
-		return (0);
-	if (p->p_p->ps_pledge & PLEDGE_CPATH)
-		return (0);
-
-	return (pledge_fail(p, EPERM, p->p_pledgenote));
+	return (0);
 }
 
 void
