@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.121 2015/10/28 12:03:39 deraadt Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.122 2015/10/28 16:03:08 semarie Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -86,7 +86,8 @@ sys_socket(struct proc *p, void *v, register_t *retval)
 		return (EINVAL);
 	error = pledge_socket_check(p, type & SOCK_DNS);
 	if (error)
-		return (pledge_fail(p, EPERM, PLEDGE_DNS));
+		return (pledge_fail(p, error,
+		    (type & SOCK_DNS) ? PLEDGE_DNS : PLEDGE_INET));
 
 	fdplock(fdp);
 	error = falloc(p, &fp, &fd);
