@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.87 2015/10/28 13:59:07 semarie Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.88 2015/10/28 14:07:58 semarie Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -655,11 +655,6 @@ pledge_namei(struct proc *p, char *origpath)
 		if ((p->p_pledgenote == PLEDGE_RPATH) &&
 		    (p->p_p->ps_pledge & PLEDGE_DNS) &&
 		    strcmp(path, "/etc/resolv.conf") == 0)
-			return (0);
-		break;
-	case SYS_chroot:
-		/* Allowed for "proc id" */
-		if ((p->p_p->ps_pledge & PLEDGE_PROC))
 			return (0);
 		break;
 	}

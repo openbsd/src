@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.234 2015/10/28 11:18:58 deraadt Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.235 2015/10/28 14:07:58 semarie Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -760,7 +760,7 @@ sys_chroot(struct proc *p, void *v, register_t *retval)
 
 	if ((error = suser(p, 0)) != 0)
 		return (error);
-	p->p_pledgenote = PLEDGE_RPATH;
+	p->p_pledgenote = PLEDGE_ID | PLEDGE_PROC | PLEDGE_RPATH;
 	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE,
 	    SCARG(uap, path), p);
 	if ((error = change_dir(&nd, p)) != 0)
