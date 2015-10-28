@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.480 2015/10/27 20:14:19 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.481 2015/10/28 07:25:30 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -431,7 +431,8 @@ enum expand_type {
 	EXPAND_FILTER,
 	EXPAND_INCLUDE,
 	EXPAND_ADDRESS,
-	EXPAND_ERROR
+	EXPAND_ERROR,
+	EXPAND_MAILDIR
 };
 
 struct expandnode {

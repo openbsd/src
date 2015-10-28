@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_session.c,v 1.71 2015/10/06 06:44:47 gilles Exp $	*/
+/*	$OpenBSD: lka_session.c,v 1.72 2015/10/28 07:25:30 gilles Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@poolp.org>
@@ -452,6 +452,27 @@ lka_expand(struct lka_session *lks, struct rule *rule, struct expandnode *xn)
 		    "[depth=%d]", xn->u.buffer, xn->depth);
 		lka_submit(lks, rule, xn);
 		break;
+
+	case EXPAND_MAILDIR:
+		log_trace(TRACE_EXPAND, "expand: lka_expand: maildir: %s "
+		    "[depth=%d]", xn->u.buffer, xn->depth);
+		r = table_lookup(rule->r_userbase, NULL,
+		    xn->parent->u.user, K_USERINFO, &lk);
+		if (r == -1) {
+			log_trace(TRACE_EXPAND, "expand: lka_expand: maildir: "
+			    "backend error while searching user");
+			lks->error = LKA_TEMPFAIL;
+			break;
+		}
+		if (r == 0) {
+			log_trace(TRACE_EXPAND, "expand: lka_expand: maildir: "
+			    "user-part does not match system user");
+			lks->error = LKA_PERMFAIL;
+			break;
+		}
+
+		lka_submit(lks, rule, xn);
+		break;
 	}
 }
 
@@ -542,6 +563,11 @@ lka_submit(struct lka_session *lks, struct rule *rule, struct expandnode *xn)
 		else if (xn->type == EXPAND_USERNAME) {
 			ep->agent.mda.method = rule->r_action;
 			(void)strlcpy(ep->agent.mda.buffer, rule->r_value.buffer,
+			    sizeof ep->agent.mda.buffer);
+		}
+		else if (xn->type == EXPAND_MAILDIR) {
+			ep->agent.mda.method = A_MAILDIR;
+			(void)strlcpy(ep->agent.mda.buffer, xn->u.buffer,
 			    sizeof ep->agent.mda.buffer);
 		}
 		else
