@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cnmac.c,v 1.28 2015/10/28 14:00:34 visa Exp $	*/
+/*	$OpenBSD: if_cnmac.c,v 1.29 2015/10/28 14:04:17 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -162,7 +162,7 @@ void	octeon_eth_start(struct ifnet *);
 
 int	octeon_eth_send_cmd(struct octeon_eth_softc *, uint64_t, uint64_t);
 uint64_t octeon_eth_send_makecmd_w1(int, paddr_t);
-uint64_t octeon_eth_send_makecmd_w0(uint64_t, uint64_t, size_t, int);
+uint64_t octeon_eth_send_makecmd_w0(uint64_t, uint64_t, size_t, int, int);
 int	octeon_eth_send_makecmd_gbuf(struct octeon_eth_softc *,
 	    struct mbuf *, uint64_t *, int *);
 int	octeon_eth_send_makecmd(struct octeon_eth_softc *,
@@ -330,7 +330,8 @@ octeon_eth_attach(struct device *parent, struct device *self, void *aux)
 	IFQ_SET_MAXLEN(&ifp->if_snd, max(GATHER_QUEUE_SIZE, IFQ_MAXLEN));
 	IFQ_SET_READY(&ifp->if_snd);
 
-	ifp->if_capabilities = IFCAP_VLAN_MTU;
+	ifp->if_capabilities = IFCAP_VLAN_MTU | IFCAP_CSUM_TCPv4 |
+	    IFCAP_CSUM_UDPv4 | IFCAP_CSUM_TCPv6 | IFCAP_CSUM_UDPv6;
 
 	cn30xxgmx_set_mac_addr(sc->sc_gmx_port, enaddr);
 	cn30xxgmx_set_filter(sc->sc_gmx_port);
@@ -764,7 +765,8 @@ octeon_eth_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 /* ---- send (output) */
 
 uint64_t
-octeon_eth_send_makecmd_w0(uint64_t fau0, uint64_t fau1, size_t len, int segs)
+octeon_eth_send_makecmd_w0(uint64_t fau0, uint64_t fau1, size_t len, int segs,
+    int ipoffp1)
 {
 	return cn30xxpko_cmd_word0(
 		OCT_FAU_OP_SIZE_64,		/* sz1 */
@@ -774,7 +776,7 @@ octeon_eth_send_makecmd_w0(uint64_t fau0, uint64_t fau1, size_t len, int segs)
 		octeon_eth_param_pko_cmd_w0_n2,	/* n2 */
 		1, 0,				/* q, r */
 		(segs == 1) ? 0 : 1,		/* g */
-		0, 0, 1,			/* ipoffp1, ii, df */
+		ipoffp1, 0, 1,			/* ipoffp1, ii, df */
 		segs, (int)len);		/* segs, totalbytes */
 }
 
@@ -865,6 +867,7 @@ octeon_eth_send_makecmd(struct octeon_eth_softc *sc, struct mbuf *m,
     uint64_t *gbuf, uint64_t *rpko_cmd_w0, uint64_t *rpko_cmd_w1)
 {
 	uint64_t pko_cmd_w0, pko_cmd_w1;
+	int ipoffp1;
 	int segs;
 	int result = 0;
 
@@ -875,6 +878,10 @@ octeon_eth_send_makecmd(struct octeon_eth_softc *sc, struct mbuf *m,
 		goto done;
 	}
 
+	/* Get the IP packet offset for TCP/UDP checksum offloading. */
+	ipoffp1 = (m->m_pkthdr.csum_flags & (M_TCP_CSUM_OUT | M_UDP_CSUM_OUT))
+	    ? (ETHER_HDR_LEN + 1) : 0;
+
 	/*
 	 * segs == 1	-> link mode (single continuous buffer)
 	 *		   WORD1[size] is number of bytes pointed by segment
@@ -883,7 +890,7 @@ octeon_eth_send_makecmd(struct octeon_eth_softc *sc, struct mbuf *m,
 	 *		   WORD1[size] is number of segments
 	 */
 	pko_cmd_w0 = octeon_eth_send_makecmd_w0(sc->sc_fau_done.fd_regno,
-	    0, m->m_pkthdr.len, segs);
+	    0, m->m_pkthdr.len, segs, ipoffp1);
 	pko_cmd_w1 = octeon_eth_send_makecmd_w1(
 	    (segs == 1) ? m->m_pkthdr.len : segs,
 	    (segs == 1) ? 
