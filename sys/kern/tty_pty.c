@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_pty.c,v 1.71 2015/09/28 19:16:04 deraadt Exp $	*/
+/*	$OpenBSD: tty_pty.c,v 1.72 2015/10/28 11:22:08 deraadt Exp $	*/
 /*	$NetBSD: tty_pty.c,v 1.33.4.1 1996/06/02 09:08:11 mrg Exp $	*/
 
 /*
@@ -55,6 +55,7 @@
 #include <sys/stat.h>
 #include <sys/sysctl.h>
 #include <sys/poll.h>
+#include <sys/pledge.h>
 #include <sys/rwlock.h>
 
 #define BUFSIZ 100		/* Chunk size iomoved to/from user */
@@ -1099,6 +1100,7 @@ retry:
 		if ((error = check_pty(minor(newdev))))
 			goto bad;
 		pti = pt_softc[minor(newdev)];
+		p->p_pledgenote = PLEDGE_RPATH | PLEDGE_WPATH;
 		NDINIT(&cnd, LOOKUP, NOFOLLOW|LOCKLEAF, UIO_SYSSPACE,
 		    pti->pty_pn, p);
 		if ((error = ptm_vn_open(&cnd)) != 0) {
@@ -1125,6 +1127,7 @@ retry:
 		 * 2. Revoke all the users of the slave.
 		 * 3. open the slave.
 		 */
+		p->p_pledgenote = PLEDGE_RPATH | PLEDGE_WPATH;
 		NDINIT(&snd, LOOKUP, NOFOLLOW|LOCKLEAF, UIO_SYSSPACE,
 		    pti->pty_sn, p);
 		if ((error = namei(&snd)) != 0)
@@ -1158,6 +1161,7 @@ retry:
 		 */
 		vrele(snd.ni_vp);
 
+		p->p_pledgenote = PLEDGE_RPATH | PLEDGE_WPATH;
 		NDINIT(&snd, LOOKUP, NOFOLLOW|LOCKLEAF, UIO_SYSSPACE,
 		    pti->pty_sn, p);
 		/* now open it */
