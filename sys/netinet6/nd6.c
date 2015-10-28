@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.164 2015/10/28 12:14:25 florian Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.165 2015/10/28 12:45:44 jsg Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -362,8 +362,10 @@ nd6_llinfo_timer(void *arg)
 
 	if ((rt = ln->ln_rt) == NULL)
 		panic("ln->ln_rt == NULL");
-	if ((ifp = if_get(rt->rt_ifidx)) == NULL)
+	if ((ifp = if_get(rt->rt_ifidx)) == NULL) {
+		splx(s);
 		return;
+	}
 	ndi = ND_IFINFO(ifp);
 	dst = satosin6(rt_key(rt));
 
