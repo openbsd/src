@@ -1512,7 +1512,6 @@ phyint_send6(struct ip6_hdr *ip6, struct mif6 *mifp, struct mbuf *m)
 	static struct route_in6 ro;
 	struct	in6_multi *in6m;
 	struct sockaddr_in6 *dst6;
-	u_long linkmtu;
 
 	/*
 	 * Make a new reference to the packet; make sure that
@@ -1572,8 +1571,7 @@ phyint_send6(struct ip6_hdr *ip6, struct mif6 *mifp, struct mbuf *m)
 	 * Put the packet into the sending queue of the outgoing interface
 	 * if it would fit in the MTU of the interface.
 	 */
-	linkmtu = IN6_LINKMTU(ifp);
-	if (mb_copy->m_pkthdr.len <= linkmtu || linkmtu < IPV6_MMTU) {
+	if (mb_copy->m_pkthdr.len <= ifp->if_mtu || ifp->if_mtu < IPV6_MMTU) {
 		dst6->sin6_len = sizeof(struct sockaddr_in6);
 		dst6->sin6_family = AF_INET6;
 		dst6->sin6_addr = ip6->ip6_dst;
@@ -1590,7 +1588,8 @@ phyint_send6(struct ip6_hdr *ip6, struct mif6 *mifp, struct mbuf *m)
 #endif
 	} else {
 		if (ip6_mcast_pmtu)
-			icmp6_error(mb_copy, ICMP6_PACKET_TOO_BIG, 0, linkmtu);
+			icmp6_error(mb_copy, ICMP6_PACKET_TOO_BIG, 0,
+			    ifp->if_mtu);
 		else {
 #ifdef MRT6DEBUG
 			char src[INET6_ADDRSTRLEN], dst[INET6_ADDRSTRLEN];

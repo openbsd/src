@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.399 2015/10/27 10:52:17 mpi Exp $	*/
+/*	$OpenBSD: if.c,v 1.400 2015/10/28 12:14:25 florian Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -1734,26 +1734,12 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 		break;
 
 	case SIOCSIFMTU:
-	{
-#ifdef INET6
-		int oldmtu = ifp->if_mtu;
-#endif
-
 		if ((error = suser(p, 0)) != 0)
 			return (error);
 		if (ifp->if_ioctl == NULL)
 			return (EOPNOTSUPP);
 		error = (*ifp->if_ioctl)(ifp, cmd, data);
-
-		/*
-		 * If the link MTU changed, do network layer specific procedure.
-		 */
-#ifdef INET6
-		if (ifp->if_mtu != oldmtu)
-			nd6_setmtu(ifp);
-#endif
 		break;
-	}
 
 	case SIOCSIFPHYADDR:
 	case SIOCDIFPHYADDR:

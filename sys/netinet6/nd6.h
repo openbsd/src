@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.h,v 1.51 2015/10/25 11:58:11 mpi Exp $	*/
+/*	$OpenBSD: nd6.h,v 1.52 2015/10/28 12:14:25 florian Exp $	*/
 /*	$KAME: nd6.h,v 1.95 2002/06/08 11:31:06 itojun Exp $	*/
 
 /*
@@ -49,8 +49,6 @@
 #define ND6_LLINFO_PROBE	4
 
 struct nd_ifinfo {
-	u_int32_t linkmtu;		/* LinkMTU */
-	u_int32_t maxmtu;		/* Upper bound of LinkMTU */
 	u_int32_t basereachable;	/* BaseReachableTime */
 	u_int32_t reachable;		/* Reachable Time */
 	u_int32_t retrans;		/* Retrans Timer */
@@ -135,13 +133,6 @@ struct	in6_ndifreq {
 
 #define RS_LHCOOKIE(ifp) \
 	((struct in6_ifextra *)(ifp)->if_afdata[AF_INET6])->rs_lhcookie
-
-#define IN6_LINKMTU(ifp) \
-	((ND_IFINFO(ifp)->linkmtu && ND_IFINFO(ifp)->linkmtu < (ifp)->if_mtu) \
-	    ? ND_IFINFO(ifp)->linkmtu \
-	    : ((ND_IFINFO(ifp)->maxmtu && ND_IFINFO(ifp)->maxmtu < (ifp)->if_mtu) \
-		? ND_IFINFO(ifp)->maxmtu : (ifp)->if_mtu))
-
 
 struct	llinfo_nd6 {
 	struct	llinfo_nd6 *ln_next;

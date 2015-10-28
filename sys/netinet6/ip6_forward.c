@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_forward.c,v 1.84 2015/10/25 15:01:59 mpi Exp $	*/
+/*	$OpenBSD: ip6_forward.c,v 1.85 2015/10/28 12:14:25 florian Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.75 2001/06/29 12:42:13 jinmei Exp $	*/
 
 /*
@@ -426,14 +426,10 @@ reroute:
 	in6_proto_cksum_out(m, rt->rt_ifp);
 
 	/* Check the size after pf_test to give pf a chance to refragment. */
-	if (m->m_pkthdr.len > IN6_LINKMTU(rt->rt_ifp)) {
-		if (mcopy) {
-			u_long mtu;
-
-			mtu = IN6_LINKMTU(rt->rt_ifp);
-
-			icmp6_error(mcopy, ICMP6_PACKET_TOO_BIG, 0, mtu);
-		}
+	if (m->m_pkthdr.len > rt->rt_ifp->if_mtu) {
+		if (mcopy)
+			icmp6_error(mcopy, ICMP6_PACKET_TOO_BIG, 0,
+			    rt->rt_ifp->if_mtu);
 		m_freem(m);
 		goto freert;
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.192 2015/10/25 14:43:06 florian Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.193 2015/10/28 12:14:25 florian Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -772,26 +772,7 @@ reroute:
 		error = EMSGSIZE;
 		goto bad;
 	}
-	if (dontfrag && tlen > IN6_LINKMTU(ifp)) {	/* case 2-b */
-		/*
-		 * Even if the DONTFRAG option is specified, we cannot send the
-		 * packet when the data length is larger than the MTU of the
-		 * outgoing interface.
-		 * Notify the error by sending IPV6_PATHMTU ancillary data as
-		 * well as returning an error code (the latter is not described
-		 * in the API spec.)
-		 */
-#if 0
-		u_int32_t mtu32;
-		struct ip6ctlparam ip6cp;
-
-		mtu32 = (u_int32_t)mtu;
-		bzero(&ip6cp, sizeof(ip6cp));
-		ip6cp.ip6c_cmdarg = (void *)&mtu32;
-		pfctlinput2(PRC_MSGSIZE, sin6tosa(&ro_pmtu->ro_dst),
-		    (void *)&ip6cp);
-#endif
-
+	if (dontfrag && tlen > ifp->if_mtu) {	/* case 2-b */
 		error = EMSGSIZE;
 		goto bad;
 	}
@@ -1161,14 +1142,11 @@ ip6_getpmtu(struct route_in6 *ro_pmtu, struct route_in6 *ro,
 		}
 	}
 	if (ro_pmtu->ro_rt) {
-		u_int32_t ifmtu;
-
 		if (ifp == NULL)
 			ifp = ro_pmtu->ro_rt->rt_ifp;
-		ifmtu = IN6_LINKMTU(ifp);
 		mtu = ro_pmtu->ro_rt->rt_rmx.rmx_mtu;
 		if (mtu == 0)
-			mtu = ifmtu;
+			mtu = ifp->if_mtu;
 		else if (mtu < IPV6_MMTU) {
 			/*
 			 * RFC2460 section 5, last paragraph:
@@ -1180,7 +1158,7 @@ ip6_getpmtu(struct route_in6 *ro_pmtu, struct route_in6 *ro,
 			 */
 			alwaysfrag = 1;
 			mtu = IPV6_MMTU;
-		} else if (mtu > ifmtu) {
+		} else if (mtu > ifp->if_mtu) {
 			/*
 			 * The MTU on the route is larger than the MTU on
 			 * the interface!  This shouldn't happen, unless the
@@ -1189,12 +1167,12 @@ ip6_getpmtu(struct route_in6 *ro_pmtu, struct route_in6 *ro,
 			 * route to match the interface MTU (as long as the
 			 * field isn't locked).
 			 */
-			mtu = ifmtu;
+			mtu = ifp->if_mtu;
 			if (!(ro_pmtu->ro_rt->rt_rmx.rmx_locks & RTV_MTU))
 				ro_pmtu->ro_rt->rt_rmx.rmx_mtu = mtu;
 		}
 	} else if (ifp) {
-		mtu = IN6_LINKMTU(ifp);
+		mtu = ifp->if_mtu;
 	} else
 		error = EHOSTUNREACH; /* XXX */
 

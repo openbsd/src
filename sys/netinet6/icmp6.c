@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.174 2015/10/22 15:37:47 bluhm Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.175 2015/10/28 12:14:25 florian Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -1022,7 +1022,7 @@ icmp6_mtudisc_update(struct ip6ctlparam *ip6cp, int validated)
 	if (rt && (rt->rt_flags & RTF_HOST) &&
 	    !(rt->rt_rmx.rmx_locks & RTV_MTU) &&
 	    (rt->rt_rmx.rmx_mtu > mtu || rt->rt_rmx.rmx_mtu == 0)) {
-		if (mtu < IN6_LINKMTU(rt->rt_ifp)) {
+		if (mtu < rt->rt_ifp->if_mtu) {
 			icmp6stat.icp6s_pmtuchg++;
 			rt->rt_rmx.rmx_mtu = mtu;
 		}

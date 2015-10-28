@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_rtr.c,v 1.129 2015/10/25 21:32:16 florian Exp $	*/
+/*	$OpenBSD: nd6_rtr.c,v 1.130 2015/10/28 12:14:25 florian Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.97 2001/02/07 11:09:13 itojun Exp $	*/
 
 /*
@@ -527,43 +527,6 @@ nd6_ra_input(struct mbuf *m, int off, int icmp6len)
 			(void)prelist_update(&pr, dr, m);
 		}
 	}
-
-	/*
-	 * MTU
-	 */
-	if (ndopts.nd_opts_mtu && ndopts.nd_opts_mtu->nd_opt_mtu_len == 1) {
-		u_long mtu;
-		u_long maxmtu;
-
-		mtu = ntohl(ndopts.nd_opts_mtu->nd_opt_mtu_mtu);
-
-		/* lower bound */
-		if (mtu < IPV6_MMTU) {
-			nd6log((LOG_INFO, "nd6_ra_input: bogus mtu option "
-			    "mtu=%lu sent from %s, ignoring\n",
-			    mtu,
-			    inet_ntop(AF_INET6, &ip6->ip6_src,
-				src, sizeof(src))));
-			goto skip;
-		}
-
-		/* upper bound */
-		maxmtu = (ndi->maxmtu && ndi->maxmtu < ifp->if_mtu)
-		    ? ndi->maxmtu : ifp->if_mtu;
-		if (mtu <= maxmtu) {
-			ndi->linkmtu = mtu;
-		} else {
-			nd6log((LOG_INFO, "nd6_ra_input: bogus mtu "
-			    "mtu=%lu sent from %s; "
-			    "exceeds maxmtu %lu, ignoring\n",
-			    mtu,
-			    inet_ntop(AF_INET6, &ip6->ip6_src,
-				src, sizeof(src)),
-			    maxmtu));
-		}
-	}
-
- skip:
 
 	/*
 	 * Source link layer address

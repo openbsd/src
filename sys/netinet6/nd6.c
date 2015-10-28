@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.163 2015/10/27 10:52:18 mpi Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.164 2015/10/28 12:14:25 florian Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -90,7 +90,6 @@ struct nd_prhead nd_prefix = { 0 };
 
 int nd6_recalc_reachtm_interval = ND6_RECALC_REACHTM_INTERVAL;
 
-void nd6_setmtu0(struct ifnet *, struct nd_ifinfo *);
 void nd6_slowtimo(void *);
 struct llinfo_nd6 *nd6_free(struct rtentry *, int);
 void nd6_llinfo_timer(void *);
@@ -153,9 +152,6 @@ nd6_ifattach(struct ifnet *ifp)
 	/* per-interface IFXF_AUTOCONF6 needs to be set too to accept RAs */
 	nd->flags = (ND6_IFF_PERFORMNUD | ND6_IFF_ACCEPT_RTADV);
 
-	/* XXX: we cannot call nd6_setmtu since ifp is not fully initialized */
-	nd6_setmtu0(ifp, nd);
-
 	return nd;
 }
 
@@ -164,32 +160,6 @@ nd6_ifdetach(struct nd_ifinfo *nd)
 {
 
 	free(nd, M_IP6NDP, 0);
-}
-
-void
-nd6_setmtu(struct ifnet *ifp)
-{
-	nd6_setmtu0(ifp, ND_IFINFO(ifp));
-}
-
-void
-nd6_setmtu0(struct ifnet *ifp, struct nd_ifinfo *ndi)
-{
-	u_int32_t omaxmtu;
-
-	omaxmtu = ndi->maxmtu;
-	ndi->maxmtu = ifp->if_mtu;
-
-	/*
-	 * Decreasing the interface MTU under IPV6 minimum MTU may cause
-	 * undesirable situation.  We thus notify the operator of the change
-	 * explicitly.  The check for omaxmtu is necessary to restrict the
-	 * log to the case of changing the MTU, not initializing it.
-	 */
-	if (omaxmtu >= IPV6_MMTU && ndi->maxmtu < IPV6_MMTU) {
-		log(LOG_NOTICE, "%s: link MTU on %s (%lu) too small for IPv6\n",
-		    __func__, ifp->if_xname, (unsigned long)ndi->maxmtu);
-	}
 }
 
 void
