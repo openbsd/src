@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.88 2015/10/28 14:07:58 semarie Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.89 2015/10/28 15:33:44 semarie Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -567,8 +567,14 @@ pledge_namei(struct proc *p, char *origpath)
 		return (0);
 	}
 
-	/* Whitelisted read/write paths */
+	/* Whitelisted paths */
 	switch (p->p_pledge_syscall) {
+	case SYS_access:
+		/* tzset() needs this. */
+		if ((p->p_pledgenote == PLEDGE_RPATH) &&
+		    strcmp(path, "/etc/localtime") == 0)
+			return (0);
+		break;
 	case SYS_open:
 		/* daemon(3) or other such functions */
 		if ((p->p_pledgenote & ~(PLEDGE_RPATH | PLEDGE_WPATH)) == 0 &&
@@ -582,18 +588,7 @@ pledge_namei(struct proc *p, char *origpath)
 		    strcmp(path, "/dev/tty") == 0) {
 			return (0);
 		}
-		break;
-	}
 
-	/* Whitelisted read-only paths */
-	switch (p->p_pledge_syscall) {
-	case SYS_access:
-		/* tzset() needs this. */
-		if ((p->p_pledgenote == PLEDGE_RPATH) &&
-		    strcmp(path, "/etc/localtime") == 0)
-			return (0);
-		break;
-	case SYS_open:
 		/* getpw* and friends need a few files */
 		if ((p->p_pledgenote == PLEDGE_RPATH) &&
 		    (p->p_p->ps_pledge & PLEDGE_GETPW)) {
