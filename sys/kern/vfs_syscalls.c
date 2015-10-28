@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.235 2015/10/28 14:07:58 semarie Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.236 2015/10/28 14:17:52 semarie Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -1617,7 +1617,6 @@ sys_access(struct proc *p, void *v, register_t *retval)
 		syscallarg(int) amode;
 	} */ *uap = v;
 
-	p->p_pledgenote = PLEDGE_RPATH;
 	return (dofaccessat(p, AT_FDCWD, SCARG(uap, path),
 	    SCARG(uap, amode), 0));
 }
@@ -2670,7 +2669,6 @@ sys_mkdir(struct proc *p, void *v, register_t *retval)
 		syscallarg(mode_t) mode;
 	} */ *uap = v;
 
-	p->p_pledgenote = PLEDGE_CPATH | PLEDGE_RPATH;
 	return (domkdirat(p, AT_FDCWD, SCARG(uap, path), SCARG(uap, mode)));
 }
 
@@ -2730,7 +2728,6 @@ sys_rmdir(struct proc *p, void *v, register_t *retval)
 		syscallarg(const char *) path;
 	} */ *uap = v;
 
-	p->p_pledgenote = PLEDGE_CPATH;
 	return (dounlinkat(p, AT_FDCWD, SCARG(uap, path), AT_REMOVEDIR));
 }
 
