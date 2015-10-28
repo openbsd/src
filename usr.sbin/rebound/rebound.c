@@ -1,4 +1,4 @@
-/* $OpenBSD: rebound.c,v 1.34 2015/10/28 20:43:12 tedu Exp $ */
+/* $OpenBSD: rebound.c,v 1.35 2015/10/28 20:56:43 tedu Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -80,6 +80,9 @@ static TAILQ_HEAD(, dnscache) cachefifo;
 static RB_HEAD(cachetree, dnscache) cachetree;
 RB_PROTOTYPE_STATIC(cachetree, dnscache, cachenode, cachecmp)
 
+static int cachecount;
+static int cachemax;
+
 /*
  * requests are kept on both fifo and tree, but only after socket s is set.
  */
@@ -101,7 +104,7 @@ static RB_HEAD(reqtree, request) reqtree;
 RB_PROTOTYPE_STATIC(reqtree, request, reqnode, reqcmp)
 
 static int conncount;
-static int connmax = 500;
+static int connmax;
 static int stopaccepting;
 
 static void
@@ -187,6 +190,7 @@ freerequest(struct request *req)
 static void
 freecacheent(struct dnscache *ent)
 {
+	cachecount -= 1;
 	RB_REMOVE(cachetree, &cachetree, ent);
 	TAILQ_REMOVE(&cachefifo, ent, fifo);
 	free(ent->req);
@@ -300,6 +304,7 @@ sendreply(int ud, struct request *req)
 			return;
 		memcpy(ent->resp, buf, r);
 		ent->resplen = r;
+		cachecount += 1;
 		TAILQ_INSERT_TAIL(&cachefifo, ent, fifo);
 		RB_INSERT(cachetree, &cachetree, ent);
 	}
@@ -529,6 +534,8 @@ launch(const char *confname, int ud, int ld, int kq)
 
 		while (conncount > connmax)
 			freerequest(TAILQ_FIRST(&reqfifo));
+		while (cachecount > cachemax)
+			freecacheent(TAILQ_FIRST(&cachefifo));
 
 		timeout = NULL;
 		/* burn old cache entries */
@@ -613,6 +620,8 @@ main(int argc, char **argv)
 	connmax = rlim.rlim_cur - 10;
 	if (connmax > 512)
 		connmax = 512;
+
+	cachemax = 10000; /* something big, but not huge */
 
 	openlog("rebound", LOG_PID | LOG_NDELAY, LOG_DAEMON);
 
