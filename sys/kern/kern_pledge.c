@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.83 2015/10/28 12:03:39 deraadt Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.84 2015/10/28 12:17:20 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -1295,6 +1295,17 @@ pledge_swapctl_check(struct proc *p)
 	if ((p->p_p->ps_flags & PS_PLEDGE) == 0)
 		return (0);
 	return (EPERM);
+}
+
+int
+pledge_fcntl_check(struct proc *p, int cmd)
+{
+	if ((p->p_p->ps_flags & PS_PLEDGE) == 0)
+		return (0);
+	if ((p->p_p->ps_pledge & PLEDGE_PROC) == 0 &&
+	    cmd == F_SETOWN)
+		return (EPERM);
+	return (0);
 }
 
 void

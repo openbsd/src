@@ -1,4 +1,4 @@
-/*	$OpenBSD: pledge.h,v 1.13 2015/10/26 07:24:20 semarie Exp $	*/
+/*	$OpenBSD: pledge.h,v 1.14 2015/10/28 12:17:20 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -108,6 +108,7 @@ int	pledge_sockopt_check(struct proc *p, int set, int level, int optname);
 int	pledge_socket_check(struct proc *p, int dns);
 int	pledge_ioctl_check(struct proc *p, long com, void *);
 int	pledge_flock_check(struct proc *p);
+int	pledge_fcntl_check(struct proc *p, int cmd);
 int	pledge_swapctl_check(struct proc *p);
 
 #define PLEDGE_MAXPATHS	8192
