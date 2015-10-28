@@ -1,4 +1,4 @@
-/* $OpenBSD: rebound.c,v 1.32 2015/10/28 20:20:35 tedu Exp $ */
+/* $OpenBSD: rebound.c,v 1.33 2015/10/28 20:25:46 tedu Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -80,6 +80,9 @@ static TAILQ_HEAD(, dnscache) cachefifo;
 static RB_HEAD(cachetree, dnscache) cachetree;
 RB_PROTOTYPE_STATIC(cachetree, dnscache, cachenode, cachecmp)
 
+/*
+ * requests are kept on both fifo and tree, but only after socket s is set.
+ */
 struct request {
 	int s;
 	int client;
@@ -167,12 +170,13 @@ freerequest(struct request *req)
 		conncount -= 2;
 	else
 		conncount -= 1;
-	TAILQ_REMOVE(&reqfifo, req, fifo);
-	RB_REMOVE(reqtree, &reqtree, req);
+	if (req->s != -1) {
+		TAILQ_REMOVE(&reqfifo, req, fifo);
+		RB_REMOVE(reqtree, &reqtree, req);
+		close(req->s);
+	}
 	if (req->client != -1)
 		close(req->client);
-	if (req->s != -1)
-		close(req->s);
 	if ((ent = req->cacheent) && !ent->resp) {
 		free(ent->req);
 		free(ent);
@@ -225,10 +229,9 @@ newrequest(int ud, struct sockaddr *remoteaddr)
 		return NULL;
 
 	conncount += 1;
-	TAILQ_INSERT_TAIL(&reqfifo, req, fifo);
-	RB_INSERT(reqtree, &reqtree, req);
 	req->ts = now;
 	req->ts.tv_sec += 30;
+	req->s = -1;
 
 	req->client = -1;
 	memcpy(&req->from, &from, fromlen);
@@ -263,6 +266,8 @@ newrequest(int ud, struct sockaddr *remoteaddr)
 	if (send(req->s, buf, r, 0) != r)
 		goto fail;
 
+	TAILQ_INSERT_TAIL(&reqfifo, req, fifo);
+	RB_INSERT(reqtree, &reqtree, req);
 	return req;
 
 fail:
@@ -334,8 +339,6 @@ newtcprequest(int ld, struct sockaddr *remoteaddr)
 		return NULL;
 
 	conncount += 2;
-	TAILQ_INSERT_TAIL(&reqfifo, req, fifo);
-	RB_INSERT(reqtree, &reqtree, req);
 	req->ts = now;
 	req->ts.tv_sec += 30;
 	req->tcp = 1;
@@ -356,6 +359,8 @@ newtcprequest(int ld, struct sockaddr *remoteaddr)
 		return tcpphasetwo(req);
 	}
 
+	TAILQ_INSERT_TAIL(&reqfifo, req, fifo);
+	RB_INSERT(reqtree, &reqtree, req);
 	return req;
 
 fail:
@@ -560,7 +565,7 @@ main(int argc, char **argv)
 	struct timespec ts, *timeout = NULL;
 	const char *conffile = "/etc/rebound.conf";
 
-	if (0 && pledge("stdio inet proc id rpath", NULL) == -1)
+	if (pledge("stdio inet proc id rpath", NULL) == -1)
 		logerr("pledge failed");
 
 	while ((ch = getopt(argc, argv, "c:d")) != -1) {
