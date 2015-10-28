@@ -1,4 +1,4 @@
-/*	$OpenBSD: i386_softraid.c,v 1.7 2015/10/28 19:38:08 krw Exp $	*/
+/*	$OpenBSD: i386_softraid.c,v 1.8 2015/10/28 20:32:41 stsp Exp $	*/
 /*
  * Copyright (c) 2012 Joel Sing <jsing@openbsd.org>
  *
@@ -86,6 +86,12 @@ sr_install_bootblk(int devfd, int vol, int disk)
 	/* Warn on unknown disklabel types. */
 	if (dl.d_type == 0)
 		warnx("disklabel type unknown");
+
+	efipart = findgptefisys(diskfd, &dl);
+	if (efipart != -1) {
+		write_efisystem(&dl, (char)efipart);
+		return;
+	}
 
 	/* Determine poffset and set symbol value. */
 	pp = &dl.d_partitions[part - 'a'];
