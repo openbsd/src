@@ -1,4 +1,4 @@
-/* $OpenBSD: rebound.c,v 1.31 2015/10/28 19:32:29 tedu Exp $ */
+/* $OpenBSD: rebound.c,v 1.32 2015/10/28 20:20:35 tedu Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -21,6 +21,7 @@
 #include <sys/queue.h>
 #include <sys/tree.h>
 #include <sys/event.h>
+#include <sys/resource.h>
 #include <sys/time.h>
 #include <sys/signal.h>
 #include <sys/wait.h>
@@ -82,7 +83,7 @@ RB_PROTOTYPE_STATIC(cachetree, dnscache, cachenode, cachecmp)
 struct request {
 	int s;
 	int client;
-	int phase;
+	int tcp;
 	struct sockaddr from;
 	socklen_t fromlen;
 	struct timespec ts;
@@ -95,6 +96,9 @@ struct request {
 static TAILQ_HEAD(, request) reqfifo;
 static RB_HEAD(reqtree, request) reqtree;
 RB_PROTOTYPE_STATIC(reqtree, request, reqnode, reqcmp)
+
+static int conncount;
+static int connmax = 500;
 
 
 static void
@@ -159,6 +163,10 @@ freerequest(struct request *req)
 {
 	struct dnscache *ent;
 
+	if (req->tcp)
+		conncount -= 2;
+	else
+		conncount -= 1;
 	TAILQ_REMOVE(&reqfifo, req, fifo);
 	RB_REMOVE(reqtree, &reqtree, req);
 	if (req->client != -1)
@@ -216,6 +224,7 @@ newrequest(int ud, struct sockaddr *remoteaddr)
 	if (!(req = calloc(1, sizeof(*req))))
 		return NULL;
 
+	conncount += 1;
 	TAILQ_INSERT_TAIL(&reqfifo, req, fifo);
 	RB_INSERT(reqtree, &reqtree, req);
 	req->ts = now;
@@ -297,7 +306,7 @@ tcpphasetwo(struct request *req)
 	int error;
 	socklen_t len = sizeof(error);
 
-	req->phase = 2;
+	req->tcp = 2;
 	
 	if (getsockopt(req->s, SOL_SOCKET, SO_ERROR, &error, &len) == -1 ||
 	    error != 0)
@@ -324,10 +333,12 @@ newtcprequest(int ld, struct sockaddr *remoteaddr)
 	if (!(req = calloc(1, sizeof(*req))))
 		return NULL;
 
+	conncount += 2;
 	TAILQ_INSERT_TAIL(&reqfifo, req, fifo);
 	RB_INSERT(reqtree, &reqtree, req);
 	req->ts = now;
 	req->ts.tv_sec += 30;
+	req->tcp = 1;
 
 	req->s = -1;
 	req->fromlen = sizeof(req->from);
@@ -338,7 +349,6 @@ newtcprequest(int ld, struct sockaddr *remoteaddr)
 	req->s = socket(remoteaddr->sa_family, SOCK_STREAM | SOCK_NONBLOCK, 0);
 	if (req->s == -1)
 		goto fail;
-	req->phase = 1;
 	if (connect(req->s, remoteaddr, remoteaddr->sa_len) == -1) {
 		if (errno != EINPROGRESS)
 			goto fail;
@@ -456,20 +466,24 @@ launch(const char *confname, int ud, int ld, int kq)
 					EV_SET(&chlist[0], req->s, EVFILT_READ,
 					    EV_ADD, 0, 0, NULL);
 					kevent(kq, chlist, 1, NULL, 0, NULL);
+					if (conncount > connmax)
+						break;
 				}
 			} else if (kev[i].ident == ld) {
 				while ((req = newtcprequest(ld,
 				    (struct sockaddr *)&remoteaddr))) {
 					EV_SET(&chlist[0], req->s,
-					    req->phase == 1 ? EVFILT_WRITE :
+					    req->tcp == 1 ? EVFILT_WRITE :
 					    EVFILT_READ, EV_ADD, 0, 0, NULL);
 					kevent(kq, chlist, 1, NULL, 0, NULL);
+					if (conncount > connmax)
+						break;
 				}
 			} else if (kev[i].filter == EVFILT_WRITE) {
 				reqkey.s = kev[i].ident;
 				req = RB_FIND(reqtree, &reqtree, &reqkey);
 				if (!req)
-					logerr("lost request");
+					logerr("lost partial tcp request");
 				req = tcpphasetwo(req);
 				if (req) {
 					EV_SET(&chlist[0], req->s, EVFILT_WRITE,
@@ -483,13 +497,16 @@ launch(const char *confname, int ud, int ld, int kq)
 				req = RB_FIND(reqtree, &reqtree, &reqkey);
 				if (!req)
 					logerr("lost request");
-				if (req->client == -1)
+				if (req->tcp == 0)
 					sendreply(ud, req);
 				freerequest(req);
 			} else {
 				logerr("don't know what happened");
 			}
 		}
+
+		while (conncount > connmax)
+			freerequest(TAILQ_FIRST(&reqfifo));
 
 		timeout = NULL;
 		/* burn old cache entries */
@@ -539,10 +556,11 @@ main(int argc, char **argv)
 	int childdead, hupped;
 	pid_t child;
 	struct kevent kev;
+	struct rlimit rlim;
 	struct timespec ts, *timeout = NULL;
 	const char *conffile = "/etc/rebound.conf";
 
-	if (pledge("stdio inet proc id rpath", NULL) == -1)
+	if (0 && pledge("stdio inet proc id rpath", NULL) == -1)
 		logerr("pledge failed");
 
 	while ((ch = getopt(argc, argv, "c:d")) != -1) {
@@ -563,6 +581,15 @@ main(int argc, char **argv)
 
 	if (argc)
 		usage();
+
+	if (getrlimit(RLIMIT_NOFILE, &rlim) == -1)
+		err(1, "getrlimit");
+	rlim.rlim_cur = rlim.rlim_max;
+	if (setrlimit(RLIMIT_NOFILE, &rlim) == -1)
+		err(1, "setrlimit");
+	connmax = rlim.rlim_cur - 10;
+	if (connmax > 512)
+		connmax = 512;
 
 	openlog("rebound", LOG_PID | LOG_NDELAY, LOG_DAEMON);
 
