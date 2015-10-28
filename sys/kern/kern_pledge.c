@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.85 2015/10/28 13:36:38 semarie Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.86 2015/10/28 13:42:57 semarie Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -548,7 +548,7 @@ pledge_namei(struct proc *p, char *origpath)
 
 	error = canonpath(origpath, path, sizeof(path));
 	if (error)
-		return (pledge_fail(p, error, p->p_pledgenote));
+		return (pledge_fail(p, error, 0));
 
 	/* chmod(2), chflags(2), ... */
 	if ((p->p_pledgenote & PLEDGE_FATTR) &&
@@ -732,7 +732,7 @@ pledge_namei(struct proc *p, char *origpath)
 		free(builtpath, M_TEMP, builtlen);
 		if (error != 0) {
 			free(canopath, M_TEMP, MAXPATHLEN);
-			return (pledge_fail(p, error, p->p_pledgenote));
+			return (pledge_fail(p, error, 0));
 		}
 
 		//printf("namei: canopath = %s strlen %lld\n", canopath,
