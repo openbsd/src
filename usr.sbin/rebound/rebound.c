@@ -1,4 +1,4 @@
-/* $OpenBSD: rebound.c,v 1.29 2015/10/28 18:48:03 tedu Exp $ */
+/* $OpenBSD: rebound.c,v 1.30 2015/10/28 19:09:58 tedu Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -67,14 +67,17 @@ struct dnsrr {
  */
 
 struct dnscache {
-	TAILQ_ENTRY(dnscache) cache;
+	TAILQ_ENTRY(dnscache) fifo;
+	RB_ENTRY(dnscache) cachenode;
 	struct dnspacket *req;
 	size_t reqlen;
 	struct dnspacket *resp;
 	size_t resplen;
 	struct timespec ts;
 };
-static TAILQ_HEAD(, dnscache) cache;
+static TAILQ_HEAD(, dnscache) cachefifo;
+static RB_HEAD(cachetree, dnscache) cachetree;
+RB_PROTOTYPE_STATIC(cachetree, dnscache, cachenode, cachecmp)
 
 struct request {
 	int s;
@@ -125,19 +128,28 @@ logerr(const char *msg, ...)
 	exit(1);
 }
 
+static int
+cachecmp(struct dnscache *c1, struct dnscache *c2)
+{
+	if (c1->reqlen == c2->reqlen)
+		return memcmp(c1->req, c2->req, c1->reqlen);
+	return c1->reqlen < c2->reqlen ? -1 : 1;
+}
+RB_GENERATE_STATIC(cachetree, dnscache, cachenode, cachecmp)
+
 static struct dnscache *
 cachelookup(struct dnspacket *dnsreq, size_t reqlen)
 {
-	struct dnscache *hit;
+	struct dnscache *hit, key;
 	uint16_t origid;
 
 	origid = dnsreq->id;
 	dnsreq->id = 0;
-	TAILQ_FOREACH(hit, &cache, cache) {
-		if (hit->reqlen == reqlen &&
-		    memcmp(hit->req, dnsreq, reqlen) == 0)
-			break;
-	}
+
+	key.reqlen = reqlen;
+	key.req = dnsreq;
+	hit = RB_FIND(cachetree, &cachetree, &key);
+
 	dnsreq->id = origid;
 	return hit;
 }
@@ -163,7 +175,8 @@ freerequest(struct request *req)
 static void
 freecacheent(struct dnscache *ent)
 {
-	TAILQ_REMOVE(&cache, ent, cache);
+	RB_REMOVE(cachetree, &cachetree, ent);
+	TAILQ_REMOVE(&cachefifo, ent, fifo);
 	free(ent->req);
 	free(ent->resp);
 	free(ent);
@@ -273,7 +286,8 @@ sendreply(int ud, struct request *req)
 			return;
 		memcpy(ent->resp, buf, r);
 		ent->resplen = r;
-		TAILQ_INSERT_TAIL(&cache, ent, cache);
+		TAILQ_INSERT_TAIL(&cachefifo, ent, fifo);
+		RB_INSERT(cachetree, &cachetree, ent);
 	}
 }
 
@@ -479,7 +493,7 @@ launch(const char *confname, int ud, int ld, int kq)
 
 		timeout = NULL;
 		/* burn old cache entries */
-		while ((ent = TAILQ_FIRST(&cache))) {
+		while ((ent = TAILQ_FIRST(&cachefifo))) {
 			if (timespeccmp(&ent->ts, &now, <=))
 				freecacheent(ent);
 			else
@@ -554,7 +568,7 @@ main(int argc, char **argv)
 
 	RB_INIT(&reqtree);
 	TAILQ_INIT(&reqfifo);
-	TAILQ_INIT(&cache);
+	TAILQ_INIT(&cachefifo);
 
 	memset(&bindaddr, 0, sizeof(bindaddr));
 	bindaddr.sin_len = sizeof(bindaddr);
