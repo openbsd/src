@@ -1,4 +1,4 @@
-/*	$OpenBSD: csh.c,v 1.34 2015/10/26 22:03:06 naddy Exp $	*/
+/*	$OpenBSD: csh.c,v 1.35 2015/10/28 22:18:53 naddy Exp $	*/
 /*	$NetBSD: csh.c,v 1.14 1995/04/29 23:21:28 mycroft Exp $	*/
 
 /*-
@@ -109,12 +109,8 @@ main(int argc, char *argv[])
     /*
      * Initialize non constant strings
      */
-#ifdef _PATH_BSHELL
     STR_BSHELL = SAVE(_PATH_BSHELL);
-#endif
-#ifdef _PATH_CSHELL
     STR_SHELLPATH = SAVE(_PATH_CSHELL);
-#endif
     STR_environ = blk2short(environ);
     environ = short2blk(STR_environ);	/* So that we can free it */
     STR_WORD_CHARS = SAVE(WORD_CHARS);
@@ -499,15 +495,11 @@ notty:
 
 	    setintr = 0;
 	    parintr = SIG_IGN;	/* Disable onintr */
-#ifdef _PATH_DOTCSHRC
 	    (void) srcfile(_PATH_DOTCSHRC, 0, 0);
-#endif
 	    if (!fast && !arginp && !onelflg)
 		dohash(NULL, NULL);
-#ifdef _PATH_DOTLOGIN
 	    if (loginsh)
 		(void) srcfile(_PATH_DOTLOGIN, 0, 0);
-#endif
 	    sigprocmask(SIG_SETMASK, &osigset, NULL);
 	    setintr = osetintr;
 	    parintr = oparintr;
@@ -806,9 +798,7 @@ goodbye(void)
 	setintr = 0;		/* No interrupts after "logout" */
 	if (!(adrof(STRlogout)))
 	    set(STRlogout, STRnormal);
-#ifdef _PATH_DOTLOGOUT
 	(void) srcfile(_PATH_DOTLOGOUT, 0, 0);
-#endif
 	if (adrof(STRhome))
 	    (void) srccat(value(STRhome), STRsldtlogout);
     }

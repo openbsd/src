@@ -1,4 +1,4 @@
-/*	$OpenBSD: csh.h,v 1.26 2015/10/26 21:57:42 naddy Exp $	*/
+/*	$OpenBSD: csh.h,v 1.27 2015/10/28 22:18:53 naddy Exp $	*/
 /*	$NetBSD: csh.h,v 1.9 1995/03/21 09:02:40 cgd Exp $	*/
 
 /*-
@@ -478,8 +478,6 @@ Char   *word_chars;
 Char   *STR_SHELLPATH;
 
 #include <paths.h>
-#ifdef _PATH_BSHELL
 Char   *STR_BSHELL;
-#endif
 Char   *STR_WORD_CHARS;
 Char  **STR_environ;

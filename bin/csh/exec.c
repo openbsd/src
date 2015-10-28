@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.c,v 1.17 2015/02/08 05:51:37 tedu Exp $	*/
+/*	$OpenBSD: exec.c,v 1.18 2015/10/28 22:18:53 naddy Exp $	*/
 /*	$NetBSD: exec.c,v 1.9 1996/09/30 20:03:54 christos Exp $	*/
 
 /*-
@@ -288,10 +288,8 @@ texec(Char *sf, Char **st)
 		    stderror(ERR_ARCH, f, strerror(errno));
 		}
 	    }
-#ifdef _PATH_BSHELL
 	    else
 		c = '#';
-#endif
 	    (void) close(fd);
 	}
 	/*
@@ -304,10 +302,8 @@ texec(Char *sf, Char **st)
 	    vp = lastsh;
 	    vp[0] = adrof(STRshell) ? value(STRshell) : STR_SHELLPATH;
 	    vp[1] = NULL;
-#ifdef _PATH_BSHELL
 	    if (fd != -1 && c != '#')
 		vp[0] = STR_BSHELL;
-#endif
 	}
 	else
 	    vp = v->vec;
