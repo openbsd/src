@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cnmac.c,v 1.27 2015/10/25 13:22:09 mpi Exp $	*/
+/*	$OpenBSD: if_cnmac.c,v 1.28 2015/10/28 14:00:34 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -1201,6 +1201,8 @@ octeon_eth_configure_common(struct octeon_eth_softc *sc)
 {
 	static int once;
 
+	uint64_t reg;
+
 	if (once == 1)
 		return 0;
 	once = 1;
@@ -1213,6 +1215,12 @@ octeon_eth_configure_common(struct octeon_eth_softc *sc)
 	cn30xxpko_config(sc->sc_pko);
 
 	cn30xxpow_config(sc->sc_pow, OCTEON_POW_GROUP_PIP);
+
+	/* Set padding for packets that Octeon does not recognize as IP. */
+	reg = octeon_xkphys_read_8(PIP_GBL_CFG);
+	reg &= ~PIP_GBL_CFG_NIP_SHF_MASK;
+	reg |= ETHER_ALIGN << PIP_GBL_CFG_NIP_SHF_SHIFT;
+	octeon_xkphys_write_8(PIP_GBL_CFG, reg);
 
 	return 0;
 }

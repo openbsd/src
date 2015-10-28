@@ -3,7 +3,7 @@
  * DONT EDIT THIS FILE
  */
 
-/*	$OpenBSD: cn30xxpipreg.h,v 1.2 2014/08/11 18:29:56 miod Exp $	*/
+/*	$OpenBSD: cn30xxpipreg.h,v 1.3 2015/10/28 14:00:34 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -272,7 +272,8 @@
 #define	PIP_GBL_CFG_15_11			0x000000000000f800ULL
 #define	PIP_GBL_CFG_RAW_SHF			0x0000000000000700ULL
 #define	PIP_GBL_CFG_7_3				0x00000000000000f8ULL
-#define	PIP_GBL_CFG_NIP_SHF			0x0000000000000007ULL
+#define	PIP_GBL_CFG_NIP_SHF_MASK		0x0000000000000007ULL
+#define	PIP_GBL_CFG_NIP_SHF_SHIFT		0
 
 /*
  * PIP_SFT_RST
