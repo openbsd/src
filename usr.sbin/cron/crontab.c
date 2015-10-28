@@ -1,4 +1,4 @@
-/*	$OpenBSD: crontab.c,v 1.74 2015/10/26 15:50:06 millert Exp $	*/
+/*	$OpenBSD: crontab.c,v 1.75 2015/10/28 20:17:31 deraadt Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -67,6 +67,12 @@ main(int argc, char *argv[])
 
 	Pid = getpid();
 	ProgramName = argv[0];
+
+	if (pledge("stdio rpath wpath cpath fattr getpw unix flock id",
+	    NULL) == -1) {
+		log_it(RealUser, getpid(), "pledge", strerror(errno));
+		exit(1);
+	}
 
 	setlocale(LC_ALL, "");
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cron.c,v 1.57 2015/10/26 15:16:30 millert Exp $	*/
+/*	$OpenBSD: cron.c,v 1.58 2015/10/28 20:17:31 deraadt Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -78,6 +78,10 @@ main(int argc, char *argv[])
 	(void) sigaction(SIGPIPE, &sact, NULL);
 
 	set_cron_cwd();
+
+	if (pledge("stdio rpath wpath cpath fattr getpw unix flock id dns proc exec",
+	    NULL) == -1)
+		log_it("CRON", getpid(), "pledge", strerror(errno));
 
 	cronSock = open_socket();
 
