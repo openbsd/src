@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr_private.h,v 1.35 2015/10/07 13:59:34 deraadt Exp $	*/
+/*	$OpenBSD: asr_private.h,v 1.36 2015/10/28 21:38:45 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -140,7 +140,6 @@ struct asr_ctx {
 };
 
 struct asr {
-	char		*a_path;
 	pid_t		 a_pid;
 	time_t		 a_mtime;
 	time_t		 a_rtime;
