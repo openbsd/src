@@ -1,4 +1,4 @@
-.\" $OpenBSD: pppd.8,v 1.45 2015/09/14 20:06:59 schwarze Exp $
+.\" $OpenBSD: pppd.8,v 1.46 2015/10/28 10:02:59 jmc Exp $
 .\" Id: pppd.8,v 1.27 1998/03/31 04:31:08 paulus Exp $
 .\"
 .\" Copyright (c) 1993-2003 Paul Mackerras <paulus@samba.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 14 2015 $
+.Dd $Mdocdate: October 28 2015 $
 .Dt PPPD 8
 .Os
 .Sh NAME
@@ -1241,14 +1241,6 @@ script.
 .El
 .Sh FILES
 .Bl -tag -width Ds
-.It Pa /var/run/ppp Ns Ar n Ns .pid
-.\" (BSD or Linux),
-.\" /etc/ppp/ppp Ns Ar n Ns .pid
-.\" (others)
-Process-ID for
-.Nm
-process on PPP interface unit
-.Ar n .
 .It Pa /etc/ppp/pap-secrets
 Usernames, passwords and IP addresses for PAP authentication.
 This file should be owned by root and not readable or writable by any other

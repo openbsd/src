@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ypserv.8,v 1.27 2013/07/16 11:13:34 schwarze Exp $
+.\"	$OpenBSD: ypserv.8,v 1.28 2015/10/28 10:02:59 jmc Exp $
 .\"
 .\" Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 16 2013 $
+.Dd $Mdocdate: October 28 2015 $
 .Dt YPSERV 8
 .Os
 .Sh NAME
@@ -98,9 +98,6 @@ map files and the
 or
 .Xr securenet 5
 configuration file.
-The process ID
-can be found in the file
-.Pa /var/run/ypserv.pid .
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
@@ -136,7 +133,6 @@ or
 .Bl -tag -width /var/yp/ypserv.log -compact
 .It Pa /var/yp/ypserv.log
 .It Pa /var/yp/securenet
-.It Pa /var/run/ypserv.pid
 .El
 .Sh SEE ALSO
 .Xr securenet 5 ,

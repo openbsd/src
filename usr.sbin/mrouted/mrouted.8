@@ -1,11 +1,11 @@
-.\"	$OpenBSD: mrouted.8,v 1.25 2014/09/08 01:27:55 schwarze Exp $
+.\"	$OpenBSD: mrouted.8,v 1.26 2015/10/28 10:02:59 jmc Exp $
 .\" The mrouted program is covered by the license in the accompanying file
 .\" named "LICENSE".  Use of the mrouted program represents acceptance of
 .\" the terms and conditions listed in that file.
 .\"
 .\" The mrouted program is COPYRIGHT 1989 by The Board of Trustees of
 .\" Leland Stanford Junior University.
-.Dd $Mdocdate: September 8 2014 $
+.Dd $Mdocdate: October 28 2015 $
 .Dt MROUTED 8
 .Os
 .Sh NAME
@@ -344,18 +344,11 @@ Dumps the internal routing tables to stderr (only if
 .Nm
 was invoked with a non-zero debug level).
 .El
-.Pp
-For convenience in sending signals,
-.Nm
-writes its process ID to
-.Pa /var/run/mrouted.pid
-upon startup.
 .Sh FILES
 .Bl -tag -width /var/tmp/mrouted.cache -compact
 .It Pa /etc/mrouted.conf
 .It Pa /var/tmp/mrouted.cache
 .It Pa /var/tmp/mrouted.dump
-.It Pa /var/run/mrouted.pid
 .El
 .Sh EXAMPLES
 The routing tables look like this:
