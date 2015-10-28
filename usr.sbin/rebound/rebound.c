@@ -1,4 +1,4 @@
-/* $OpenBSD: rebound.c,v 1.28 2015/10/26 12:24:48 tedu Exp $ */
+/* $OpenBSD: rebound.c,v 1.29 2015/10/28 18:48:03 tedu Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -19,6 +19,7 @@
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <sys/queue.h>
+#include <sys/tree.h>
 #include <sys/event.h>
 #include <sys/time.h>
 #include <sys/signal.h>
@@ -83,11 +84,14 @@ struct request {
 	socklen_t fromlen;
 	struct timespec ts;
 	TAILQ_ENTRY(request) fifo;
+	RB_ENTRY(request) reqnode;
 	uint16_t clientid;
 	uint16_t reqid;
 	struct dnscache *cacheent;
 };
 static TAILQ_HEAD(, request) reqfifo;
+static RB_HEAD(reqtree, request) reqtree;
+RB_PROTOTYPE_STATIC(reqtree, request, reqnode, reqcmp)
 
 
 static void
@@ -144,6 +148,7 @@ freerequest(struct request *req)
 	struct dnscache *ent;
 
 	TAILQ_REMOVE(&reqfifo, req, fifo);
+	RB_REMOVE(reqtree, &reqtree, req);
 	if (req->client != -1)
 		close(req->client);
 	if (req->s != -1)
@@ -163,6 +168,13 @@ freecacheent(struct dnscache *ent)
 	free(ent->resp);
 	free(ent);
 }
+
+static int
+reqcmp(struct request *r1, struct request *r2)
+{
+	return (r1->s < r2->s ? -1 : r1->s > r2->s);
+}
+RB_GENERATE_STATIC(reqtree, request, reqnode, reqcmp)
 
 static struct request *
 newrequest(int ud, struct sockaddr *remoteaddr)
@@ -192,6 +204,7 @@ newrequest(int ud, struct sockaddr *remoteaddr)
 		return NULL;
 
 	TAILQ_INSERT_TAIL(&reqfifo, req, fifo);
+	RB_INSERT(reqtree, &reqtree, req);
 	req->ts = now;
 	req->ts.tv_sec += 30;
 
@@ -298,6 +311,7 @@ newtcprequest(int ld, struct sockaddr *remoteaddr)
 		return NULL;
 
 	TAILQ_INSERT_TAIL(&reqfifo, req, fifo);
+	RB_INSERT(reqtree, &reqtree, req);
 	req->ts = now;
 	req->ts.tv_sec += 30;
 
@@ -358,7 +372,7 @@ launch(const char *confname, int ud, int ld, int kq)
 	struct sockaddr_storage remoteaddr;
 	struct kevent chlist[2], kev[4];
 	struct timespec ts, *timeout = NULL;
-	struct request *req;
+	struct request reqkey, *req;
 	struct dnscache *ent;
 	struct passwd *pwd;
 	FILE *conf;
@@ -438,12 +452,8 @@ launch(const char *confname, int ud, int ld, int kq)
 					kevent(kq, chlist, 1, NULL, 0, NULL);
 				}
 			} else if (kev[i].filter == EVFILT_WRITE) {
-				req = TAILQ_FIRST(&reqfifo);
-				while (req) {
-					if (req->s == kev[i].ident)
-						break;
-					req = TAILQ_NEXT(req, fifo);
-				}
+				reqkey.s = kev[i].ident;
+				req = RB_FIND(reqtree, &reqtree, &reqkey);
 				if (!req)
 					logerr("lost request");
 				req = tcpphasetwo(req);
@@ -455,13 +465,8 @@ launch(const char *confname, int ud, int ld, int kq)
 					kevent(kq, chlist, 2, NULL, 0, NULL);
 				}
 			} else if (kev[i].filter == EVFILT_READ) {
-				/* use a tree here? */
-				req = TAILQ_FIRST(&reqfifo);
-				while (req) {
-					if (req->s == kev[i].ident)
-						break;
-					req = TAILQ_NEXT(req, fifo);
-				}
+				reqkey.s = kev[i].ident;
+				req = RB_FIND(reqtree, &reqtree, &reqkey);
 				if (!req)
 					logerr("lost request");
 				if (req->client == -1)
@@ -547,6 +552,7 @@ main(int argc, char **argv)
 	if (!debug)
 		daemon(0, 0);
 
+	RB_INIT(&reqtree);
 	TAILQ_INIT(&reqfifo);
 	TAILQ_INIT(&cache);
 
