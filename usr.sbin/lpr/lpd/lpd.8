@@ -1,4 +1,4 @@
-.\"	$OpenBSD: lpd.8,v 1.27 2015/09/12 15:17:11 schwarze Exp $
+.\"	$OpenBSD: lpd.8,v 1.28 2015/10/28 13:25:55 millert Exp $
 .\"	$NetBSD: lpd.8,v 1.23 2002/02/08 01:38:50 ross Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)lpd.8	8.3 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: September 12 2015 $
+.Dd $Mdocdate: October 28 2015 $
 .Dt LPD 8
 .Os
 .Sh NAME
@@ -324,9 +324,6 @@ and
 .Bl -tag -width "/var/spool/output/*/minfree" -compact
 .It Pa /etc/printcap
 printer description file
-.It Pa /var/run/lpd.pid
-lock file for
-.Nm
 .It Pa /var/spool/output/*
 spool directories
 .It Pa /var/spool/output/*/minfree

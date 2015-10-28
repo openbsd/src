@@ -1,4 +1,4 @@
-/*	$OpenBSD: pathnames.h,v 1.5 2014/04/20 22:35:10 ajacoutot Exp $	*/
+/*	$OpenBSD: pathnames.h,v 1.6 2015/10/28 13:25:55 millert Exp $	*/
 /*	$NetBSD: pathnames.h,v 1.5 1995/11/28 19:43:27 jtc Exp $	*/
 
 /*
@@ -37,7 +37,6 @@
 #define	_PATH_DEFDEVLP		"/dev/lp"
 #define	_PATH_DEFSPOOL		"/var/spool/output/lpd"
 #define	_PATH_HOSTSLPD		"/etc/hosts.lpd"
-#define	_PATH_MASTERLOCK	"/var/run/lpd.pid"
 #define	_PATH_PR		"/usr/bin/pr"
 #define	_PATH_PRINTCAP		"/etc/printcap"
 #define	_PATH_SOCKETNAME	"/var/run/printer"

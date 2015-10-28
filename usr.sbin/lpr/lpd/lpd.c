@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpd.c,v 1.61 2015/10/27 15:23:28 millert Exp $ */
+/*	$OpenBSD: lpd.c,v 1.62 2015/10/28 13:25:55 millert Exp $	*/
 /*	$NetBSD: lpd.c,v 1.33 2002/01/21 14:42:29 wiz Exp $	*/
 
 /*
@@ -122,7 +122,7 @@ main(int argc, char **argv)
 	struct sockaddr_un un, fromunix;
 	struct sockaddr_storage frominet;
 	sigset_t mask, omask;
-	int lfd, i, f, funix, *finet;
+	int i, funix, *finet;
 	int options, maxfd;
 	long l;
 	long child_max = 32;	/* more than enough to hose the system */
@@ -222,6 +222,23 @@ main(int argc, char **argv)
 		usage();
 	}
 
+	funix = socket(AF_UNIX, SOCK_STREAM, 0);
+	if (funix < 0)
+		err(1, "socket");
+	memset(&un, 0, sizeof(un));
+	un.sun_family = AF_UNIX;
+	strlcpy(un.sun_path, _PATH_SOCKETNAME, sizeof(un.sun_path));
+	PRIV_START;
+	if (connect(funix, (struct sockaddr *)&un, sizeof(un)) == 0)
+		errx(1, "already running");
+	if (errno != ENOENT)
+		(void)unlink(un.sun_path);
+	if (bind(funix, (struct sockaddr *)&un, sizeof(un)) < 0)
+		err(1, "bind %s", un.sun_path);
+	chmod(_PATH_SOCKETNAME, 0660);
+	chown(_PATH_SOCKETNAME, -1, real_gid);
+	PRIV_END;
+
 #ifndef DEBUG
 	/*
 	 * Set up standard environment by detaching from the parent.
@@ -232,38 +249,11 @@ main(int argc, char **argv)
 	openlog("lpd", LOG_PID, LOG_LPR);
 	syslog(LOG_INFO, "restarted");
 	(void)umask(0);
-	PRIV_START;
-	lfd = open(_PATH_MASTERLOCK, O_WRONLY|O_CREAT|O_EXLOCK|O_NONBLOCK, 0644);
-	PRIV_END;
-	if (lfd < 0) {
-		if (errno == EWOULDBLOCK)	/* active daemon present */
-			exit(0);
-		syslog(LOG_ERR, "%s: %m", _PATH_MASTERLOCK);
-		exit(1);
-	}
-	ftruncate(lfd, 0);
-	/*
-	 * write process id for others to know
-	 */
-	(void)snprintf(line, sizeof(line), "%u\n", getpid());
-	f = strlen(line);
-	if (write(lfd, line, f) != f) {
-		syslog(LOG_ERR, "%s: %m", _PATH_MASTERLOCK);
-		exit(1);
-	}
 	signal(SIGCHLD, reapchild);
 	/*
 	 * Restart all the printers.
 	 */
 	startup();
-	PRIV_START;
-	(void)unlink(_PATH_SOCKETNAME);
-	PRIV_END;
-	funix = socket(AF_UNIX, SOCK_STREAM, 0);
-	if (funix < 0) {
-		syslog(LOG_ERR, "socket: %m");
-		exit(1);
-	}
 
 	sigemptyset(&mask);
 	sigaddset(&mask, SIGHUP);
@@ -276,18 +266,6 @@ main(int argc, char **argv)
 	signal(SIGINT, mcleanup);
 	signal(SIGQUIT, mcleanup);
 	signal(SIGTERM, mcleanup);
-	memset(&un, 0, sizeof(un));
-	un.sun_family = AF_UNIX;
-	strlcpy(un.sun_path, _PATH_SOCKETNAME, sizeof(un.sun_path));
-	PRIV_START;
-	if (bind(funix, (struct sockaddr *)&un, sizeof(un)) < 0) {
-		syslog(LOG_ERR, "ubind: %m");
-		exit(1);
-	}
-	chmod(_PATH_SOCKETNAME, 0660);
-	chown(_PATH_SOCKETNAME, -1, real_gid);
-	PRIV_END;
-	(void)umask(0);		/* XXX */
 	sigprocmask(SIG_SETMASK, &omask, NULL);
 	FD_ZERO(&defreadfds);
 	FD_SET(funix, &defreadfds);
@@ -438,7 +416,6 @@ mcleanup(int signo)
 		syslog_r(LOG_INFO, &sdata, "exiting");
 	PRIV_START;
 	unlink(_PATH_SOCKETNAME);
-	unlink(_PATH_MASTERLOCK);
 	_exit(0);
 }
 
