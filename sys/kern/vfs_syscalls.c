@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.236 2015/10/28 14:17:52 semarie Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.237 2015/10/28 18:41:16 deraadt Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -2693,7 +2693,7 @@ domkdirat(struct proc *p, int fd, const char *path, mode_t mode)
 	int error;
 	struct nameidata nd;
 
-	p->p_pledgenote = PLEDGE_CPATH | PLEDGE_RPATH;
+	p->p_pledgenote = PLEDGE_CPATH;
 	NDINITAT(&nd, CREATE, LOCKPARENT | STRIPSLASHES, UIO_USERSPACE,
 	    fd, path, p);
 	if ((error = namei(&nd)) != 0)
