@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.80 2015/10/26 17:52:19 deraadt Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.81 2015/10/28 02:12:54 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -907,6 +907,9 @@ pledge_sysctl_check(struct proc *p, int miblen, int *mib, void *new)
 			return (0);
 		if (miblen == 2 &&			/* kern.loadavg */
 		    mib[0] == CTL_VM && mib[1] == VM_LOADAVG)
+			return (0);
+		if (miblen == 3 &&			/* kern.cptime */
+		    mib[0] == CTL_KERN && mib[1] == KERN_CPTIME)
 			return (0);
 		if (miblen == 3 &&			/* kern.cptime2 */
 		    mib[0] == CTL_KERN && mib[1] == KERN_CPTIME2)
