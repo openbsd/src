@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.89 2015/10/28 15:33:44 semarie Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.90 2015/10/28 17:38:52 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -862,7 +862,7 @@ pledge_sysctl_check(struct proc *p, int miblen, int *mib, void *new)
 		    mib[4] == NET_RT_TABLE)
 			return (0);
 
-		if (miblen == 7 &&			/* exposes MACs */
+		if (miblen == 7 &&		/* exposes MACs */
 		    mib[0] == CTL_NET && mib[1] == PF_ROUTE &&
 		    mib[2] == 0 &&
 		    (mib[3] == 0 || mib[3] == AF_INET6 || mib[3] == AF_INET) &&
@@ -871,16 +871,16 @@ pledge_sysctl_check(struct proc *p, int miblen, int *mib, void *new)
 	}
 
 	if (p->p_p->ps_pledge & (PLEDGE_PS | PLEDGE_VMINFO)) {
-		if (miblen == 2 &&			/* kern.fscale */
+		if (miblen == 2 &&		/* kern.fscale */
 		    mib[0] == CTL_KERN && mib[1] == KERN_FSCALE)
 			return (0);
-		if (miblen == 2 &&			/* kern.boottime */
+		if (miblen == 2 &&		/* kern.boottime */
 		    mib[0] == CTL_KERN && mib[1] == KERN_BOOTTIME)
 			return (0);
-		if (miblen == 2 &&			/* kern.consdev */
+		if (miblen == 2 &&		/* kern.consdev */
 		    mib[0] == CTL_KERN && mib[1] == KERN_CONSDEV)
 			return (0);
-		if (miblen == 2 &&			/* kern.loadavg */
+		if (miblen == 2 &&		/* kern.loadavg */
 		    mib[0] == CTL_VM && mib[1] == VM_LOADAVG)
 			return (0);
 		if (miblen == 2 &&			/* kern.cptime */
@@ -892,32 +892,32 @@ pledge_sysctl_check(struct proc *p, int miblen, int *mib, void *new)
 	}
 
 	if ((p->p_p->ps_pledge & PLEDGE_PS)) {
-		if (miblen == 4 &&			/* kern.procargs.* */
+		if (miblen == 4 &&		/* kern.procargs.* */
 		    mib[0] == CTL_KERN && mib[1] == KERN_PROC_ARGS &&
 		    (mib[3] == KERN_PROC_ARGV || mib[3] == KERN_PROC_ENV))
 			return (0);
-		if (miblen == 6 &&			/* kern.proc.* */
+		if (miblen == 6 &&		/* kern.proc.* */
 		    mib[0] == CTL_KERN && mib[1] == KERN_PROC)
 			return (0);
-		if (miblen == 3 &&			/* kern.proc_cwd.* */
+		if (miblen == 3 &&		/* kern.proc_cwd.* */
 		    mib[0] == CTL_KERN && mib[1] == KERN_PROC_CWD)
 			return (0);
-		if (miblen == 2 &&			/* hw.physmem */
+		if (miblen == 2 &&		/* hw.physmem */
 		    mib[0] == CTL_HW && mib[1] == HW_PHYSMEM64)
 			return (0);
-		if (miblen == 2 &&			/* kern.ccpu */
+		if (miblen == 2 &&		/* kern.ccpu */
 		    mib[0] == CTL_KERN && mib[1] == KERN_CCPU)
 			return (0);
-		if (miblen == 2 &&			/* vm.maxslp */
+		if (miblen == 2 &&		/* vm.maxslp */
 		    mib[0] == CTL_VM && mib[1] == VM_MAXSLP)
 			return (0);
 	}
 
 	if ((p->p_p->ps_pledge & PLEDGE_VMINFO)) {
-		if (miblen == 2 &&			/* vm.uvmexp */
+		if (miblen == 2 &&		/* vm.uvmexp */
 		    mib[0] == CTL_VM && mib[1] == VM_UVMEXP)
 			return (0);
-		if (miblen == 3 &&			/* vfs.generic.bcachestat */
+		if (miblen == 3 &&		/* vfs.generic.bcachestat */
 		    mib[0] == CTL_VFS && mib[1] == VFS_GENERIC &&
 		    mib[2] == VFS_BCACHESTAT)
 			return (0);
@@ -932,8 +932,7 @@ pledge_sysctl_check(struct proc *p, int miblen, int *mib, void *new)
 			return (0);
 	}
 
-	/* used by ntpd(8) to read sensors. */
-	if (miblen >= 3 &&
+	if (miblen >= 3 &&			/* ntpd(8) to read sensors */
 	    mib[0] == CTL_HW && mib[1] == HW_SENSORS)
 		return (0);
 
