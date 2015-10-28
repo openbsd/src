@@ -1,4 +1,4 @@
-/* $OpenBSD: rebound.c,v 1.33 2015/10/28 20:25:46 tedu Exp $ */
+/* $OpenBSD: rebound.c,v 1.34 2015/10/28 20:43:12 tedu Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -102,7 +102,7 @@ RB_PROTOTYPE_STATIC(reqtree, request, reqnode, reqcmp)
 
 static int conncount;
 static int connmax = 500;
-
+static int stopaccepting;
 
 static void
 logmsg(int prio, const char *msg, ...)
@@ -346,8 +346,11 @@ newtcprequest(int ld, struct sockaddr *remoteaddr)
 	req->s = -1;
 	req->fromlen = sizeof(req->from);
 	req->client = accept(ld, &req->from, &req->fromlen);
-	if (req->client == -1)
+	if (req->client == -1) {
+		if (errno == ENFILE || errno == EMFILE)
+			stopaccepting = 1;
 		goto fail;
+	}
 
 	req->s = socket(remoteaddr->sa_family, SOCK_STREAM | SOCK_NONBLOCK, 0);
 	if (req->s == -1)
@@ -458,6 +461,12 @@ launch(const char *confname, int ud, int ld, int kq)
 
 		clock_gettime(CLOCK_MONOTONIC, &now);
 
+		if (stopaccepting) {
+			EV_SET(&chlist[0], ld, EVFILT_READ, EV_ADD, 0, 0, NULL);
+			kevent(kq, chlist, 1, NULL, 0, NULL);
+			stopaccepting = 0;
+		}
+
 		for (i = 0; i < r; i++) {
 			if (kev[i].filter == EVFILT_SIGNAL) {
 				logmsg(LOG_INFO, "hupped, exiting");
@@ -510,6 +519,14 @@ launch(const char *confname, int ud, int ld, int kq)
 			}
 		}
 
+		if (stopaccepting) {
+			EV_SET(&chlist[0], ld, EVFILT_READ, EV_DELETE, 0, 0, NULL);
+			kevent(kq, chlist, 1, NULL, 0, NULL);
+			memset(&ts, 0, sizeof(ts));
+			/* one second added below */
+			timeout = &ts;
+		}
+
 		while (conncount > connmax)
 			freerequest(TAILQ_FIRST(&reqfifo));
 
@@ -537,6 +554,7 @@ launch(const char *confname, int ud, int ld, int kq)
 			timespecsub(&req->ts, &now, &ts);
 			timeout = &ts;
 		}
+		/* one second grace to avoid spinning */
 		if (timeout)
 			timeout->tv_sec += 1;
 
