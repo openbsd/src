@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.c,v 1.42 2015/10/26 11:03:29 jung Exp $	*/
+/*	$OpenBSD: httpd.c,v 1.43 2015/10/28 15:45:51 mmcc Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -454,8 +454,7 @@ parent_dispatch_logger(int fd, struct privsep_proc *p, struct imsg *imsg)
 		if (IMSG_DATA_SIZE(imsg) > 0)
 			str = get_string(imsg->data, IMSG_DATA_SIZE(imsg));
 		parent_reload(env, CONFIG_RELOAD, str);
-		if (str != NULL)
-			free(str);
+		free(str);
 		break;
 	case IMSG_CTL_SHUTDOWN:
 		parent_shutdown(env);
