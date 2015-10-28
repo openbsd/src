@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcpdump.c,v 1.75 2015/10/14 04:55:17 guenther Exp $	*/
+/*	$OpenBSD: tcpdump.c,v 1.76 2015/10/28 12:28:14 jca Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -522,10 +522,10 @@ cleanup(int signo)
 			write(STDERR_FILENO, buf, strlen(buf));
 		} else {
 			(void)snprintf(buf, sizeof buf,
-			    "%d packets received by filter\n", stat.ps_recv);
+			    "%u packets received by filter\n", stat.ps_recv);
 			write(STDERR_FILENO, buf, strlen(buf));
 			(void)snprintf(buf, sizeof buf,
-			    "%d packets dropped by kernel\n", stat.ps_drop);
+			    "%u packets dropped by kernel\n", stat.ps_drop);
 			write(STDERR_FILENO, buf, strlen(buf));
 		}
 	}
