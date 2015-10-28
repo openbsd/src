@@ -1,4 +1,4 @@
-/*	$OpenBSD: softraid.c,v 1.3 2015/07/23 16:35:34 krw Exp $	*/
+/*	$OpenBSD: softraid.c,v 1.4 2015/10/28 13:33:42 jsing Exp $	*/
 
 /*
  * Copyright (c) 2012 Joel Sing <jsing@openbsd.org>
@@ -572,6 +572,10 @@ sr_crypto_decrypt_keys(struct sr_boot_volume *bv)
 			c = getchar();
 			if (c == '\r' || c == '\n')
 				break;
+			else if (c == '\b') {
+				i = i > 0 ? i - 2 : -1;
+				continue;
+			}
 			passphrase[i] = (c & 0xff);
 		}
 		passphrase[i] = 0;
