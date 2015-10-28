@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.170 2015/10/25 20:39:54 deraadt Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.171 2015/10/28 11:13:41 deraadt Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -280,7 +280,6 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 	 * Mark this process as "leave me alone, I'm execing".
 	 */
 	atomic_setbits_int(&pr->ps_flags, PS_INEXEC);
-	p->p_pledgenote = PLEDGE_EXEC;
 
 #if NSYSTRACE > 0
 	if (ISSET(p->p_flag, P_SYSTRACE)) {
@@ -292,6 +291,7 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 			goto clrflag;
 	}
 #endif
+	p->p_pledgenote = PLEDGE_EXEC;
 	if (pathbuf != NULL) {
 		NDINIT(&nid, LOOKUP, NOFOLLOW, UIO_SYSSPACE, pathbuf, p);
 	} else {
