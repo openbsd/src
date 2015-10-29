@@ -1,4 +1,4 @@
-/*	$OpenBSD: cron.c,v 1.58 2015/10/28 20:17:31 deraadt Exp $	*/
+/*	$OpenBSD: cron.c,v 1.59 2015/10/29 21:24:09 millert Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -54,7 +54,6 @@ main(int argc, char *argv[])
 {
 	struct sigaction sact;
 	sigset_t blocked, omask;
-	int fd;
 
 	ProgramName = argv[0];
 

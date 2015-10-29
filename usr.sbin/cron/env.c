@@ -1,4 +1,4 @@
-/*	$OpenBSD: env.c,v 1.30 2015/10/29 21:19:09 millert Exp $	*/
+/*	$OpenBSD: env.c,v 1.31 2015/10/29 21:24:09 millert Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -100,7 +100,7 @@ env_get(char *name, char **envp)
 char **
 env_set(char **envp, char *envstr)
 {
-	size_t count, len;
+	size_t count;
 	char **p, *envcopy;
 
 	if ((envcopy = strdup(envstr)) == NULL)
