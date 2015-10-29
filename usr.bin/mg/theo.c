@@ -1,4 +1,4 @@
-/*	$OpenBSD: theo.c,v 1.147 2015/10/10 08:35:26 lum Exp $	*/
+/*	$OpenBSD: theo.c,v 1.148 2015/10/29 15:42:01 tedu Exp $	*/
 /*
  * Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
  * All rights reserved.
@@ -193,6 +193,7 @@ static const char *talk[] = {
 	"Kill the past with fire, and declare Duran Duran is less cool today.  Await remixes of the same thing performed by new talent.",
 	"Where did my \"fuck backwards compat\" compatriots go?",
 	"I want a new vax, one that's not so slow.",
+	"This sausage is made from unsound meat.",
 };
 
 static const int ntalk = sizeof(talk)/sizeof(talk[0]);
