@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1772 2015/09/27 14:31:04 kettenis Exp 
+ *	OpenBSD: pcidevs,v 1.1773 2015/10/29 05:06:56 jsg Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -1276,6 +1276,42 @@ static const struct pci_known_product pci_known_products[] = {
 	    "AMD64 16h Host",
 	},
 	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_CCP,
+	    "CCP",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_16_3X_RC,
+	    "AMD64 16h Root Complex",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_16_3X_HB,
+	    "AMD64 16h Host",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_16_3X_LINK,
+	    "AMD64 16h Link Cfg",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_16_3X_ADDR,
+	    "AMD64 16h Address Map",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_16_3X_DRAM,
+	    "AMD64 16h DRAM Cfg",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_16_3X_MISC,
+	    "AMD64 16h Misc Cfg",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_16_3X_CPU_PM,
+	    "AMD64 16h CPU Power",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_16_3X_MISC_2,
+	    "AMD64 16h Misc Cfg",
+	},
+	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_15_0x_LINK,
 	    "AMD64 15/0xh Link Cfg",
 	},
@@ -1662,6 +1698,14 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_HUDSON2_XHCI,
 	    "Hudson-2 xHCI",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_BOLTON_SDMMC,
+	    "Bolton SD/MMC",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_BOLTON_XHCI,
+	    "Bolton xHCI",
 	},
 	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_RS780_HB,
@@ -5302,6 +5346,14 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD7290,
 	    "Radeon HD 7290",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HDA,
+	    "Radeon HD Audio",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MULLINS_1,
+	    "Mullins",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_ARUBA_1,
