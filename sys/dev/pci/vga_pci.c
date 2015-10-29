@@ -1,4 +1,4 @@
-/* $OpenBSD: vga_pci.c,v 1.86 2015/08/20 04:41:46 mlarkin Exp $ */
+/* $OpenBSD: vga_pci.c,v 1.87 2015/10/29 07:47:03 kettenis Exp $ */
 /* $NetBSD: vga_pci.c,v 1.3 1998/06/08 06:55:58 thorpej Exp $ */
 
 /*
@@ -63,7 +63,6 @@
  */
 
 #include "vga.h"
-#include "drm.h"
 #if defined(__i386__) || defined(__amd64__)
 #include "acpi.h"
 #endif
@@ -94,17 +93,10 @@
 #include <machine/vga_post.h>
 #endif
 
-#include "intagp.h"
-
 int	vga_pci_match(struct device *, void *, void *);
 void	vga_pci_attach(struct device *, struct device *, void *);
 int	vga_pci_activate(struct device *, int);
 paddr_t	vga_pci_mmap(void* v, off_t off, int prot);
-
-#if NINTAGP > 0
-int	intagpsubmatch(struct device *, void *, void *);
-int	intagp_print(void *, const char *);
-#endif 
 
 #if !defined(SMALL_KERNEL) && NACPI > 0
 void	vga_save_state(struct vga_pci_softc *);
@@ -227,8 +219,6 @@ vga_pci_attach(struct device *parent, struct device *self, void *aux)
 
 	printf("\n");
 
-	vga_pci_bar_init(sc, pa);
-
 #if !defined(SMALL_KERNEL) && NACPI > 0
 
 #ifdef X86EMU
@@ -256,21 +246,6 @@ vga_pci_attach(struct device *parent, struct device *self, void *aux)
 #ifdef RAMDISK_HOOKS
 	if (vga_aperture_needed(pa))
 		printf("%s: aperture needed\n", sc->sc_dev.dv_xname);
-#endif
-
-#if NINTAGP > 0
-	/*
-	 * attach intagp here instead of pchb so it can share mappings
-	 * with the DRM.
-	 */
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_INTEL) {
-		config_found_sm(self, aux, intagp_print, intagpsubmatch);
-
-	}
-#endif
-
-#if NDRM > 0
-	config_found_sm(self, aux, NULL, vga_drmsubmatch);
 #endif
 
 	sc->sc_vc = vga_common_attach(self, pa->pa_iot, pa->pa_memt,
@@ -316,28 +291,6 @@ vga_pci_activate(struct device *self, int act)
 
 	return (rv);
 }
-
-#if NINTAGP > 0
-int
-intagpsubmatch(struct device *parent, void *match, void *aux)
-{
-	extern struct cfdriver intagp_cd;
-	struct cfdata *cf = match;
-
-	/* only allow intagp to attach */
-	if (cf->cf_driver == &intagp_cd)
-		return ((*cf->cf_attach->ca_match)(parent, match, aux));
-	return (0);
-}
-
-int
-intagp_print(void *vaa, const char *pnp)
-{
-	if (pnp)
-		printf("intagp at %s", pnp);
-	return (UNCONF);
-}
-#endif
 
 paddr_t
 vga_pci_mmap(void *v, off_t off, int prot)

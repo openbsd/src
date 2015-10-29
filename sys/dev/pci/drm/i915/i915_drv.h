@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.h,v 1.70 2015/10/17 21:41:12 kettenis Exp $ */
+/* $OpenBSD: i915_drv.h,v 1.71 2015/10/29 07:47:03 kettenis Exp $ */
 /* i915_drv.h -- Private header for the I915 driver -*- linux-c -*-
  */
 /*
@@ -1457,6 +1457,7 @@ typedef struct inteldrm_softc {
 	pci_intr_handle_t ih;
 	void *irqh;
 
+	struct vga_pci_bar bar;
 	struct vga_pci_bar *regs;
 
 	int nscreens;

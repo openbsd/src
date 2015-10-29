@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.807 2015/10/25 19:32:33 jung Exp $
+#	$OpenBSD: GENERIC,v 1.808 2015/10/29 07:47:02 kettenis Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -358,7 +358,6 @@ wsdisplay0	at pcdisplay? console 1
 wskbd*		at pckbd? mux 1
 wsmouse*	at pms? mux 0
 
-intagp*		at vga?		# intel integrated graphics agp
 aliagp*		at pchb?
 amdagp*		at pchb?
 intelagp*	at pchb?
@@ -366,7 +365,6 @@ sisagp*		at pchb?
 viaagp*		at pchb?
 #mmuagp*	at pchb?
 
-agp*		at intagp?	# AGP bridges
 agp*		at aliagp?	# AGP bridges
 agp*		at amdagp?	# AGP bridges
 agp*		at intelagp?	# AGP bridges
@@ -374,9 +372,13 @@ agp*		at sisagp?	# AGP bridges
 agp*		at viaagp?	# AGP bridges
 #agp*		at mmuagp?	
 
-inteldrm*	at vga?		# Intel i915, i945 DRM driver
+inteldrm*	at pci?		# Intel i915, i945 DRM driver
+intagp*		at inteldrm?
+agp*		at intagp?
 drm0		at inteldrm? console 1
 drm*		at inteldrm?
+wsdisplay0	at inteldrm? console 1
+wsdisplay*	at inteldrm?
 radeondrm*	at pci? 	# ATI Radeon DRM driver
 drm0		at radeondrm? console 1
 drm*		at radeondrm?

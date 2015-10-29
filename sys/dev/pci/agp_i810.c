@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_i810.c,v 1.91 2015/10/09 13:22:54 kettenis Exp $	*/
+/*	$OpenBSD: agp_i810.c,v 1.92 2015/10/29 07:47:03 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -43,11 +43,7 @@
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/agpvar.h>
 #include <dev/pci/agpreg.h>
-#include <dev/ic/mc6845reg.h>
-#include <dev/ic/pcdisplayvar.h>
-#include <dev/ic/vgareg.h>
-#include <dev/ic/vgavar.h>
-#include <dev/pci/vga_pcivar.h>
+#include <dev/pci/drm/i915/i915_drv.h>
 
 #include <machine/bus.h>
 
@@ -84,7 +80,9 @@ struct agp_i810_softc {
 	struct agp_softc	*agpdev;
 	struct agp_gatt		*gatt;
 	struct vga_pci_bar	*map;
-	struct vga_pci_bar	*gtt_map;
+	bus_space_tag_t		 gtt_bst;
+	bus_space_handle_t	 gtt_bsh;
+	bus_size_t		 gtt_size;
 	bus_dmamap_t		 scrib_dmamap;
 	bus_addr_t		 isc_apaddr;
 	bus_size_t		 isc_apsize;	/* current aperture size */
@@ -241,8 +239,9 @@ agp_i810_attach(struct device *parent, struct device *self, void *aux)
 	struct agp_i810_softc		*isc = (struct agp_i810_softc *)self;
 	struct agp_gatt 		*gatt;
 	struct pci_attach_args		*pa = aux, bpa;
-	struct vga_pci_softc		*vga = (struct vga_pci_softc *)parent;
+	struct inteldrm_softc		*psc = (struct inteldrm_softc *)parent;
 	bus_addr_t			 mmaddr, gmaddr, tmp;
+	bus_size_t			 gtt_off = 0;
 	pcireg_t			 memtype, reg;
 	u_int32_t			 stolen;
 	u_int16_t			 gcc1;
@@ -263,11 +262,16 @@ agp_i810_attach(struct device *parent, struct device *self, void *aux)
 		gmaddr = AGP_I965_GMADR;
 		mmaddr = AGP_I965_MMADR;
 		memtype = PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_64BIT;
+		if (isc->chiptype == CHIP_I965)
+			gtt_off = AGP_I965_GTT;
+		else
+			gtt_off = AGP_G4X_GTT;
 		break;
 	default:
 		gmaddr = AGP_APBASE;
 		mmaddr = AGP_I810_MMADR;
 		memtype = PCI_MAPREG_TYPE_MEM;
+		gtt_off = AGP_I810_GTT;
 		break;
 	}
 
@@ -277,17 +281,29 @@ agp_i810_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	isc->map = vga_pci_bar_map(vga, mmaddr, 0, BUS_SPACE_MAP_LINEAR);
-	if (isc->map == NULL) {
-		printf("can't map mmadr registers\n");
-		return;
-	}
+	isc->map = psc->regs;
 
 	if (isc->chiptype == CHIP_I915 || isc->chiptype == CHIP_G33 ||
 	    isc->chiptype == CHIP_PINEVIEW) {
-		isc->gtt_map = vga_pci_bar_map(vga, AGP_I915_GTTADR, 0,
-		    BUS_SPACE_MAP_LINEAR);
-		if (isc->gtt_map == NULL) {
+		if (pci_mapreg_map(pa, AGP_I915_GTTADR, memtype,
+		    BUS_SPACE_MAP_LINEAR, &isc->gtt_bst, &isc->gtt_bsh,
+		    NULL, &isc->gtt_size, 0)) {
+			printf("can't map gatt registers\n");
+			goto out;
+		}
+	} else if (gtt_off >= isc->map->size) {
+		isc->gtt_bst = isc->map->bst;
+		isc->gtt_size = (isc->isc_apsize >> AGP_PAGE_SHIFT) * 4;
+		if (bus_space_map(isc->gtt_bst, isc->map->base + gtt_off,
+		    isc->gtt_size, BUS_SPACE_MAP_LINEAR, &isc->gtt_bsh)) {
+			printf("can't map gatt registers\n");
+			isc->gtt_size = 0;
+			goto out;
+		}
+	} else {
+		isc->gtt_bst = isc->map->bst;
+		if (bus_space_subregion(isc->map->bst, isc->map->bsh, gtt_off,
+		    (isc->isc_apsize >> AGP_PAGE_SHIFT) * 4, &isc->gtt_bsh)) {
 			printf("can't map gatt registers\n");
 			goto out;
 		}
@@ -521,10 +537,8 @@ out:
 			    isc->gatt->ag_dmamap, &isc->gatt->ag_dmaseg);
 		free(isc->gatt, M_AGP, sizeof (*isc->gatt));
 	}
-	if (isc->gtt_map != NULL)
-		vga_pci_bar_unmap(isc->gtt_map);
-	if (isc->map != NULL)
-		vga_pci_bar_unmap(isc->map);
+	if (isc->gtt_size != 0)
+		bus_space_unmap(isc->gtt_bst, isc->gtt_bsh, isc->gtt_size);
 }
 
 int
@@ -777,7 +791,7 @@ void
 intagp_write_gtt(struct agp_i810_softc *isc, bus_size_t off, paddr_t v)
 {
 	u_int32_t	pte = 0;
-	bus_size_t	baseoff, wroff;
+	bus_size_t	wroff;
 
 	if (isc->chiptype != CHIP_I810 &&
 	    (off >> AGP_PAGE_SHIFT) < isc->stolen) {
@@ -800,25 +814,5 @@ intagp_write_gtt(struct agp_i810_softc *isc, bus_size_t off, paddr_t v)
 	}
 
 	wroff = (off >> AGP_PAGE_SHIFT) * 4;
-
-	switch(isc->chiptype) {
-	case CHIP_I915:
-		/* FALLTHROUGH */
-	case CHIP_G33:
-	case CHIP_PINEVIEW:
-		bus_space_write_4(isc->gtt_map->bst, isc->gtt_map->bsh,
-		    wroff, pte);
-		return;
-	case CHIP_I965:
-		baseoff = AGP_I965_GTT;
-		break;
-	case CHIP_G4X:
-	case CHIP_IRONLAKE:
-		baseoff = AGP_G4X_GTT;
-		break;
-	default:
-		baseoff = AGP_I810_GTT;
-		break;
-	}
-	bus_space_write_4(isc->map->bst, isc->map->bsh, baseoff + wroff, pte);
+	bus_space_write_4(isc->gtt_bst, isc->gtt_bsh, wroff, pte);
 }

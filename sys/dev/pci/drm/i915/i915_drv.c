@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.c,v 1.94 2015/10/17 21:41:12 kettenis Exp $ */
+/* $OpenBSD: i915_drv.c,v 1.95 2015/10/29 07:47:03 kettenis Exp $ */
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -476,9 +476,7 @@ static struct drm_driver_info inteldrm_driver = {
 	.minor = DRIVER_MINOR,
 	.patchlevel = DRIVER_PATCHLEVEL,
 
-	.flags			= DRIVER_AGP | DRIVER_AGP_REQUIRE |
-				    DRIVER_HAVE_IRQ | DRIVER_GEM |
-				    DRIVER_MODESET,
+	.flags = DRIVER_HAVE_IRQ | DRIVER_GEM | DRIVER_MODESET,
 };
 
 const struct intel_device_info *
@@ -497,7 +495,11 @@ i915_get_device_id(int device)
 int
 inteldrm_probe(struct device *parent, void *match, void *aux)
 {
-	return (drm_pciprobe((struct pci_attach_args *)aux, pciidlist));
+	struct pci_attach_args *pa = aux;
+
+	if (drm_pciprobe(aux, pciidlist) && pa->pa_function == 0)
+		return 20;
+	return 0;
 }
 
 static int
@@ -954,6 +956,32 @@ int i915_reset(struct drm_device *dev)
 	return 0;
 }
 
+#include "intagp.h"
+
+#if NINTAGP > 0
+int	intagpsubmatch(struct device *, void *, void *);
+int	intagp_print(void *, const char *);
+
+int
+intagpsubmatch(struct device *parent, void *match, void *aux)
+{
+	extern struct cfdriver intagp_cd;
+	struct cfdata *cf = match;
+
+	/* only allow intagp to attach */
+	if (cf->cf_driver == &intagp_cd)
+		return ((*cf->cf_attach->ca_match)(parent, match, aux));
+	return (0);
+}
+
+int
+intagp_print(void *vaa, const char *pnp)
+{
+	if (pnp)
+		printf("intagp at %s", pnp);
+	return (UNCONF);
+}
+#endif
 
 int inteldrm_wsioctl(void *, u_long, caddr_t, int, struct proc *);
 paddr_t inteldrm_wsmmap(void *, off_t, int);
@@ -1183,17 +1211,26 @@ void
 inteldrm_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct inteldrm_softc *dev_priv = (struct inteldrm_softc *)self;
-	struct vga_pci_softc *vga_sc = (struct vga_pci_softc *)parent;
 	struct pci_attach_args *pa = aux;
 	struct rasops_info *ri = &dev_priv->ro;
 	struct wsemuldisplaydev_attach_args aa;
-	extern int wsdisplay_console_initted;
-	struct vga_pci_bar *bar;
+	extern int vga_console_attached;
 	struct drm_device *dev;
 	const struct intel_device_info *info;
 	int ret = 0, mmio_bar, mmio_size;
+	pcireg_t mmio_type;
 	uint32_t aperture_size;
+	int console = 0;
 	int i;
+
+	if (PCI_CLASS(pa->pa_class) == PCI_CLASS_DISPLAY &&
+	    PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_DISPLAY_VGA &&
+	    (pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG)
+	    & (PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE))
+	    == (PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE)) {
+		console = 1;
+		vga_console_attached = 1;
+	}
 
 	info = i915_get_device_id(PCI_PRODUCT(pa->pa_id));
 	KASSERT(info->gen != 0);
@@ -1205,17 +1242,14 @@ inteldrm_attach(struct device *parent, struct device *self, void *aux)
 	dev_priv->dmat = pa->pa_dmat;
 	dev_priv->bst = pa->pa_memt;
 	dev_priv->memex = pa->pa_memex;
+	dev_priv->regs = &dev_priv->bar;
 
 	printf("\n");
 
-	if (dev_priv->info->gen >= 6)
-		inteldrm_driver.flags &= ~(DRIVER_AGP | DRIVER_AGP_REQUIRE);
-
 	inteldrm_driver.num_ioctls = i915_max_ioctl;
 
-	/* All intel chipsets need to be treated as agp, so just pass one */
 	dev = dev_priv->dev = (struct drm_device *)
-	    drm_attach_pci(&inteldrm_driver, pa, 1, 1, self);
+	    drm_attach_pci(&inteldrm_driver, pa, 0, console, self);
 
 	intel_gtt_chipset_setup(dev);
 	mtx_init(&mchdev_lock, IPL_TTY);
@@ -1262,20 +1296,27 @@ inteldrm_attach(struct device *parent, struct device *self, void *aux)
 	else
 		mmio_size = 2*1024*1024;
 
-	/* we need to use this api for now due to sharing with intagp */
-	bar = vga_pci_bar_info(vga_sc, mmio_bar);
-	if (bar == NULL) {
-		printf("%s: can't get BAR info\n",
-		    dev_priv->sc_dev.dv_xname);
-		goto free_priv;
-	}
-
-	dev_priv->regs = vga_pci_bar_map(vga_sc, bar->addr, mmio_size, 0);
-	if (dev_priv->regs == NULL) {
+	mmio_bar = 0x10 + mmio_bar * 0x04;
+	mmio_type = pci_mapreg_type(pa->pa_pc, pa->pa_tag, mmio_bar);
+	if (pci_mapreg_map(pa, mmio_bar, mmio_type, 0, &dev_priv->regs->bst,
+	    &dev_priv->regs->bsh, &dev_priv->regs->base,
+	    &dev_priv->regs->size, mmio_size)) {
 		printf("%s: can't map mmio space\n",
 		    dev_priv->sc_dev.dv_xname);
 		goto free_priv;
 	}
+
+#if NINTAGP > 0
+	if (dev_priv->info->gen <= 5) {
+		config_found_sm(self, aux, intagp_print, intagpsubmatch);
+		dev->agp = drm_agp_init();
+		if (dev->agp) {
+			if (drm_mtrr_add(dev->agp->info.ai_aperture_base,
+			    dev->agp->info.ai_aperture_size, DRM_MTRR_WC) == 0)
+				dev->agp->mtrr = 1;
+		}
+	}
+#endif
 
 	intel_uncore_early_sanitize(dev);
 
@@ -1473,23 +1514,22 @@ inteldrm_attach(struct device *parent, struct device *self, void *aux)
 	inteldrm_stdscreen.fontwidth = ri->ri_font->fontwidth;
 	inteldrm_stdscreen.fontheight = ri->ri_font->fontheight;
 
-	aa.console = 0;
+	aa.console = console;
 	aa.scrdata = &inteldrm_screenlist;
 	aa.accessops = &inteldrm_accessops;
 	aa.accesscookie = dev_priv;
 	aa.defaultscreens = 0;
 
-	if (wsdisplay_console_initted) {
+	if (console) {
 		long defattr;
 
 		ri->ri_ops.alloc_attr(ri->ri_active, 0, 0, 0, &defattr);
 		wsdisplay_cnattach(&inteldrm_stdscreen, ri->ri_active,
 		    0, 0, defattr);
-		aa.console = 1;
 	}
 
-	vga_sc->sc_type = -1;
-	config_found(parent, &aa, wsemuldisplaydevprint);
+	config_found_sm(self, &aa, wsemuldisplaydevprint,
+	    wsemuldisplaydevsubmatch);
 	return;
 
 out_power_well:
@@ -1524,7 +1564,8 @@ out_regs:
 #ifdef __linux__
 	pci_iounmap(dev->pdev, dev_priv->regs);
 #else
-	vga_pci_bar_unmap(dev_priv->regs);
+	bus_space_unmap(dev_priv->regs->bst, dev_priv->regs->bsh,
+	    dev_priv->regs->size);
 #endif
 free_priv:
 	dev->dev_private = NULL;
@@ -1556,7 +1597,8 @@ inteldrm_detach(struct device *self, int flags)
 	pci_intr_disestablish(dev_priv->pc, dev_priv->irqh);
 
 	if (dev_priv->regs != NULL)
-		vga_pci_bar_unmap(dev_priv->regs);
+		bus_space_unmap(dev_priv->regs->bst, dev_priv->regs->bsh,
+		    dev_priv->regs->size);
 
 	return (0);
 }
@@ -1573,18 +1615,22 @@ inteldrm_activate(struct device *self, int act)
 
 	switch (act) {
 	case DVACT_QUIESCE:
-		rv = config_activate_children(self, act);
+		rv = config_suspend((struct device *)dev, act);
 		i915_drm_freeze(dev);
 		break;
 	case DVACT_SUSPEND:
+		if (dev->agp)
+			config_suspend(dev->agp->agpdev->sc_chipc, act);
 		break;
 	case DVACT_RESUME:
+		if (dev->agp)
+			config_suspend(dev->agp->agpdev->sc_chipc, act);
 		break;
 	case DVACT_WAKEUP:
 		i915_drm_thaw_early(dev);
 		i915_drm_thaw(dev);
 		intel_fbdev_restore_mode(dev);
-		rv = config_activate_children(self, act);
+		rv = config_suspend((struct device *)dev, act);
 		break;
 	}
 
