@@ -1,4 +1,4 @@
-/*	$OpenBSD: asmc.c,v 1.12 2015/10/25 19:26:43 jung Exp $	*/
+/*	$OpenBSD: asmc.c,v 1.13 2015/10/29 13:29:04 jung Exp $	*/
 /*
  * Copyright (c) 2015 Joerg Jung <jung@openbsd.org>
  *
@@ -278,11 +278,13 @@ asmc_attach(struct device *parent, struct device *self, void *aux)
 		bus_space_unmap(ia->ia_iot, ia->ia_iobase, ASMC_IOSIZE);
 		return;
 	}
-	printf(", %u key%s", ntohl(*(uint32_t *)buf),
+	printf(", %u key%s\n", ntohl(*(uint32_t *)buf),
 	    (ntohl(*(uint32_t *)buf) == 1) ? "" : "s");
 
+	asmc_kbdled(sc, 127);
+
 	if (!(sc->sc_taskq = taskq_create("asmc", 1, IPL_NONE, 0))) {
-		printf(", can't create task queue\n");
+		printf("%s: can't create task queue\n", sc->sc_dev.dv_xname);
 		bus_space_unmap(ia->ia_iot, ia->ia_iobase, ASMC_IOSIZE);
 		return;
 	}
@@ -312,15 +314,11 @@ asmc_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_sensor_motion[i].flags |= SENSOR_FUNKNOWN;
 	}
 	if (!(sc->sc_sensor_task = sensor_task_register(sc, asmc_update, 5))) {
-		printf(", unable to register sensor task\n");
+		printf("%s: unable to register task\n", sc->sc_dev.dv_xname);
 		taskq_destroy(sc->sc_taskq);
 		bus_space_unmap(ia->ia_iot, ia->ia_iobase, ASMC_IOSIZE);
 		return;
 	}
-	printf("\n");
-
-	asmc_kbdled(sc, 127);
-
 	sensordev_install(&sc->sc_sensor_dev);
 	task_add(sc->sc_taskq, &sc->sc_task_init);
 }
@@ -331,8 +329,10 @@ asmc_detach(struct device *self, int flags)
 	struct asmc_softc *sc = (struct asmc_softc *)self;
 	int i;
 
-	if (sc->sc_sensor_task)
+	if (sc->sc_sensor_task) {
 		sensor_task_unregister(sc->sc_sensor_task);
+		sc->sc_sensor_task = NULL;
+	}
 	sensordev_deinstall(&sc->sc_sensor_dev);
 	for (i = 0; i < ASMC_MAXMOTION; i++)
 		sensor_detach(&sc->sc_sensor_dev, &sc->sc_sensor_motion[i]);
@@ -348,6 +348,9 @@ asmc_detach(struct device *self, int flags)
 		task_del(sc->sc_taskq, &sc->sc_task_init);
 		taskq_destroy(sc->sc_taskq);
 	}
+
+	asmc_kbdled(sc, 0);
+
 	return 0;
 }
 
