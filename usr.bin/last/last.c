@@ -1,4 +1,4 @@
-/*	$OpenBSD: last.c,v 1.49 2015/08/20 22:32:41 deraadt Exp $	*/
+/*	$OpenBSD: last.c,v 1.50 2015/10/29 03:00:31 deraadt Exp $	*/
 /*	$NetBSD: last.c,v 1.6 1994/12/24 16:49:02 cgd Exp $	*/
 
 /*
@@ -97,6 +97,9 @@ main(int argc, char *argv[])
 {
 	const char *errstr;
 	int ch, lastch = '\0', newarg = 1, prevoptind = 1;
+
+	if (pledge("stdio rpath", NULL) == -1)
+		err(1, "pledge");
 
 	while ((ch = getopt(argc, argv, "0123456789cf:h:n:st:d:T")) != -1) {
 		switch (ch) {
