@@ -1,4 +1,4 @@
-/* $OpenBSD: rebound.c,v 1.38 2015/10/29 14:00:06 tedu Exp $ */
+/* $OpenBSD: rebound.c,v 1.39 2015/10/29 14:01:01 tedu Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -541,6 +541,8 @@ launch(const char *confname, int ud, int ld, int kq)
 			}
 		}
 
+		timeout = NULL;
+
 		if (stopaccepting) {
 			EV_SET(&ch[0], ld, EVFILT_READ, EV_DELETE, 0, 0, NULL);
 			kevent(kq, ch, 1, NULL, 0, NULL);
@@ -554,7 +556,6 @@ launch(const char *confname, int ud, int ld, int kq)
 		while (cachecount > cachemax)
 			freecacheent(TAILQ_FIRST(&cachefifo));
 
-		timeout = NULL;
 		/* burn old cache entries */
 		while ((ent = TAILQ_FIRST(&cachefifo))) {
 			if (timespeccmp(&ent->ts, &now, <=))
