@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.129 2015/10/27 13:58:45 dlg Exp $	*/
+/*	$OpenBSD: ping.c,v 1.130 2015/10/29 13:01:29 florian Exp $	*/
 /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
@@ -74,8 +74,6 @@
 #include <stdlib.h>
 
 #include <siphash.h>
-#define KEYSTREAM_ONLY
-#include <crypto/chacha_private.h>
 
 struct tv64 {
 	u_int64_t	tv64_sec;
@@ -165,7 +163,6 @@ int bufspace = IP_MAXPACKET;
 
 struct tv64 tv64_offset;
 SIPHASH_KEY mac_key;
-chacha_ctx fill_stream;
 
 void fill(char *, char *);
 void catcher(int signo);
@@ -192,7 +189,7 @@ main(int argc, char *argv[])
 	struct hostent *hp;
 	struct sockaddr_in *to;
 	struct in_addr saddr;
-	int ch, optval = 1, packlen, preload, maxsize, df = 0, tos = 0;
+	int ch, i, optval = 1, packlen, preload, maxsize, df = 0, tos = 0;
 	u_char *datap, *packet, ttl = MAXTTL, loop = 1;
 	char *target, hnamebuf[HOST_NAME_MAX+1];
 	char rspace[3 + 4 * NROUTES + 1];	/* record route space */
@@ -403,11 +400,9 @@ main(int argc, char *argv[])
 	packlen = datalen + MAXIPLEN + MAXICMPLEN;
 	if (!(packet = malloc((size_t)packlen)))
 		err(1, "malloc");
-	if (!(options & F_PINGFILLED) && datalen > sizeof(struct payload)) {
-		u_int8_t key[32];
-		arc4random_buf(key, sizeof(key));
-		chacha_keysetup(&fill_stream, key, sizeof(key) * 8);
-	}
+	if (!(options & F_PINGFILLED))
+		for (i = sizeof(struct payload); i < datalen; ++i)
+			*datap++ = i;
 
 	ident = getpid() & 0xFFFF;
 
@@ -657,14 +652,6 @@ pinger(void)
 		SipHash24_Final(&payload.mac, &ctx);
 
 		memcpy(&outpack[8], &payload, sizeof(payload));
-
-		if (!(options & F_PINGFILLED) && datalen >= sizeof(payload)) {
-			u_int8_t *dp = &outpack[8 + sizeof(payload)];
-
-			chacha_ivsetup(&fill_stream, payload.mac, 0);
-			chacha_encrypt_bytes(&fill_stream, dp, dp,
-			    datalen - sizeof(payload));
-		}
 	}
 
 	cc = datalen + 8;			/* skips ICMP portion */
@@ -809,11 +796,6 @@ pr_pack(char *buf, int cc, struct sockaddr_in *from)
 				(void)printf(" (TRUNC!)");
 			cp = (u_char *)&icp->icmp_data[sizeof(struct payload)];
 			dp = &outpack[8 + sizeof(struct payload)];
-			if (!(options & F_PINGFILLED) && datalen >= sizeof(payload)) {
-				chacha_ivsetup(&fill_stream, payload.mac, 0);
-				chacha_encrypt_bytes(&fill_stream, dp, dp,
-				    datalen - sizeof(payload));
-			}
 			for (i = 8 + sizeof(struct payload);
 			    i < cc && i < datalen;
 			    ++i, ++cp, ++dp) {
