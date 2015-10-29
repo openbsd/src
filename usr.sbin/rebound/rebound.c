@@ -1,4 +1,4 @@
-/* $OpenBSD: rebound.c,v 1.37 2015/10/29 13:54:43 tedu Exp $ */
+/* $OpenBSD: rebound.c,v 1.38 2015/10/29 14:00:06 tedu Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -496,6 +496,21 @@ launch(const char *confname, int ud, int ld, int kq)
 			} else if (kev[i].filter == EVFILT_PROC) {
 				logmsg(LOG_INFO, "parent died");
 				exit(0);
+			} else if (kev[i].filter == EVFILT_WRITE) {
+				reqkey.s = kev[i].ident;
+				req = RB_FIND(reqtree, &reqtree, &reqkey);
+				if (!req)
+					logerr("lost partial tcp request");
+				req = tcpphasetwo(req);
+				if (req) {
+					EV_SET(&ch[0], req->s, EVFILT_WRITE,
+					    EV_DELETE, 0, 0, NULL);
+					EV_SET(&ch[1], req->s, EVFILT_READ,
+					    EV_ADD, 0, 0, NULL);
+					kevent(kq, ch, 2, NULL, 0, NULL);
+				}
+			} else if (kev[i].filter != EVFILT_READ) {
+				logerr("don't know what happened");
 			} else if (kev[i].ident == ud) {
 				while ((req = newrequest(ud,
 				    (struct sockaddr *)&remoteaddr))) {
@@ -515,20 +530,7 @@ launch(const char *confname, int ud, int ld, int kq)
 					if (conncount > connmax)
 						break;
 				}
-			} else if (kev[i].filter == EVFILT_WRITE) {
-				reqkey.s = kev[i].ident;
-				req = RB_FIND(reqtree, &reqtree, &reqkey);
-				if (!req)
-					logerr("lost partial tcp request");
-				req = tcpphasetwo(req);
-				if (req) {
-					EV_SET(&ch[0], req->s, EVFILT_WRITE,
-					    EV_DELETE, 0, 0, NULL);
-					EV_SET(&ch[1], req->s, EVFILT_READ,
-					    EV_ADD, 0, 0, NULL);
-					kevent(kq, ch, 2, NULL, 0, NULL);
-				}
-			} else if (kev[i].filter == EVFILT_READ) {
+			} else {
 				reqkey.s = kev[i].ident;
 				req = RB_FIND(reqtree, &reqtree, &reqkey);
 				if (!req)
@@ -536,8 +538,6 @@ launch(const char *confname, int ud, int ld, int kq)
 				if (req->tcp == 0)
 					sendreply(ud, req);
 				freerequest(req);
-			} else {
-				logerr("don't know what happened");
 			}
 		}
 
@@ -700,6 +700,7 @@ main(int argc, char **argv)
 				logerr("kevent failed (%d)", errno);
 
 			if (r == 0) {
+				/* timeout expired */
 				logerr("child died without HUP");
 			} else if (kev.filter == EVFILT_SIGNAL) {
 				/* signaled. kill child. */
