@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.65 2015/10/11 01:53:39 guenther Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.66 2015/10/29 13:20:44 jsing Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -955,9 +955,9 @@ knote_activate(struct knote *kn)
 void
 knote(struct klist *list, long hint)
 {
-	struct knote *kn;
+	struct knote *kn, *kn0;
 
-	SLIST_FOREACH(kn, list, kn_selnext)
+	SLIST_FOREACH_SAFE(kn, list, kn_selnext, kn0)
 		if (kn->kn_fop->f_event(kn, hint))
 			KNOTE_ACTIVATE(kn);
 }
@@ -1055,9 +1055,8 @@ knote_drop(struct knote *kn, struct proc *p, struct filedesc *fdp)
 	SLIST_REMOVE(list, kn, knote, kn_link);
 	if (kn->kn_status & KN_QUEUED)
 		knote_dequeue(kn);
-	if (kn->kn_fop->f_isfd) {
+	if (kn->kn_fop->f_isfd)
 		FRELE(kn->kn_fp, p);
-	}
 	knote_free(kn);
 }
 
