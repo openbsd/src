@@ -1,4 +1,4 @@
-/*	$OpenBSD: window.c,v 1.34 2015/10/09 07:27:56 lum Exp $	*/
+/*	$OpenBSD: window.c,v 1.35 2015/10/29 20:20:49 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -364,7 +364,7 @@ shrinkwind(int f, int n)
 		return (FALSE);
 	}
 	/*
-	 * Bit of flakiness - KRANDOM means it was an internal call, and
+	 * Bit of flakiness - FFRAND means it was an internal call, and
 	 * to be trusted implicitly about sizes.
 	 */
 	if (!(f & FFRAND) && curwp->w_ntrows <= n) {
