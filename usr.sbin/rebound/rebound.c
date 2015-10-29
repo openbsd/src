@@ -1,4 +1,4 @@
-/* $OpenBSD: rebound.c,v 1.35 2015/10/28 20:56:43 tedu Exp $ */
+/* $OpenBSD: rebound.c,v 1.36 2015/10/29 12:58:10 tedu Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -82,6 +82,7 @@ RB_PROTOTYPE_STATIC(cachetree, dnscache, cachenode, cachecmp)
 
 static int cachecount;
 static int cachemax;
+static uint64_t cachehits;
 
 /*
  * requests are kept on both fifo and tree, but only after socket s is set.
@@ -105,6 +106,7 @@ RB_PROTOTYPE_STATIC(reqtree, request, reqnode, reqcmp)
 
 static int conncount;
 static int connmax;
+static uint64_t conntotal;
 static int stopaccepting;
 
 static void
@@ -159,6 +161,8 @@ cachelookup(struct dnspacket *dnsreq, size_t reqlen)
 	key.reqlen = reqlen;
 	key.req = dnsreq;
 	hit = RB_FIND(cachetree, &cachetree, &key);
+	if (hit)
+		cachehits += 1;
 
 	dnsreq->id = origid;
 	return hit;
@@ -223,6 +227,7 @@ newrequest(int ud, struct sockaddr *remoteaddr)
 	if (r == 0 || r == -1 || r < sizeof(struct dnspacket))
 		return NULL;
 
+	conntotal += 1;
 	if ((hit = cachelookup(dnsreq, r))) {
 		hit->resp->id = dnsreq->id;
 		sendto(ud, hit->resp, hit->resplen, 0, &from, fromlen);
@@ -343,6 +348,7 @@ newtcprequest(int ld, struct sockaddr *remoteaddr)
 	if (!(req = calloc(1, sizeof(*req))))
 		return NULL;
 
+	conntotal += 1;
 	conncount += 2;
 	req->ts = now;
 	req->ts.tv_sec += 30;
@@ -456,7 +462,9 @@ launch(const char *confname, int ud, int ld, int kq)
 	EV_SET(&kev[0], ud, EVFILT_READ, EV_ADD, 0, 0, NULL);
 	EV_SET(&kev[1], ld, EVFILT_READ, EV_ADD, 0, 0, NULL);
 	EV_SET(&kev[2], SIGHUP, EVFILT_SIGNAL, EV_ADD, 0, 0, NULL);
-	kevent(kq, kev, 3, NULL, 0, NULL);
+	EV_SET(&kev[3], SIGUSR1, EVFILT_SIGNAL, EV_ADD, 0, 0, NULL);
+	kevent(kq, kev, 4, NULL, 0, NULL);
+	signal(SIGUSR1, SIG_IGN);
 	signal(SIGHUP, SIG_IGN);
 	logmsg(LOG_INFO, "worker process going to work");
 	while (1) {
@@ -474,8 +482,17 @@ launch(const char *confname, int ud, int ld, int kq)
 
 		for (i = 0; i < r; i++) {
 			if (kev[i].filter == EVFILT_SIGNAL) {
-				logmsg(LOG_INFO, "hupped, exiting");
-				exit(0);
+				if (kev[i].ident == SIGHUP) {
+					logmsg(LOG_INFO, "hupped, exiting");
+					exit(0);
+				} else {
+					logmsg(LOG_INFO, "connection stats: "
+					    "%d active, %llu total",
+					    conncount, conntotal);
+					logmsg(LOG_INFO, "cache stats: "
+					    "%d active, %llu hits",
+					    cachecount, cachehits);
+				}
 			} else if (kev[i].filter == EVFILT_PROC) {
 				logmsg(LOG_INFO, "parent died");
 				exit(0);
@@ -663,6 +680,7 @@ main(int argc, char **argv)
 
 	EV_SET(&kev, SIGHUP, EVFILT_SIGNAL, EV_ADD, 0, 0, NULL);
 	kevent(kq, &kev, 1, NULL, 0, NULL);
+	signal(SIGUSR1, SIG_IGN);
 	signal(SIGHUP, SIG_IGN);
 	while (1) {
 		hupped = 0;
