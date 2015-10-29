@@ -1,4 +1,4 @@
-/*	$OpenBSD: funcs.h,v 1.20 2015/10/29 21:19:09 millert Exp $	*/
+/*	$OpenBSD: funcs.h,v 1.21 2015/10/29 22:41:27 millert Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -59,13 +59,10 @@ int		strtot(const char *nptr, char **endptr, time_t *tp);
 
 char		*env_get(char *, char **),
 		*arpadate(time_t *),
-		*mkprints(unsigned char *, unsigned int),
 		*first_word(char *, char *),
 		**env_init(void),
 		**env_copy(char **),
 		**env_set(char **, char *);
-
-void		mkprint(char *, unsigned char *, int);
 
 user		*load_user(int, struct passwd *, const char *),
 		*find_user(cron_db *, const char *);

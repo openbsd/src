@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.62 2015/10/29 21:19:09 millert Exp $	*/
+/*	$OpenBSD: misc.c,v 1.63 2015/10/29 22:41:27 millert Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -306,57 +306,6 @@ first_word(char *s, char *t)
 	*rp = '\0';
 	return (rb);
 }
-
-/* warning:
- *	heavily ascii-dependent.
- */
-void
-mkprint(dst, src, len)
-	char *dst;
-	unsigned char *src;
-	int len;
-{
-	/*
-	 * XXX
-	 * We know this routine can't overflow the dst buffer because mkprints()
-	 * allocated enough space for the worst case.
-	 */
-	while (len-- > 0)
-	{
-		unsigned char ch = *src++;
-
-		if (ch < ' ') {			/* control character */
-			*dst++ = '^';
-			*dst++ = ch + '@';
-		} else if (ch < 0177) {		/* printable */
-			*dst++ = ch;
-		} else if (ch == 0177) {	/* delete/rubout */
-			*dst++ = '^';
-			*dst++ = '?';
-		} else {			/* parity character */
-			snprintf(dst, 5, "\\%03o", ch);
-			dst += strlen(dst);
-		}
-	}
-	*dst = '\0';
-}
-
-/* warning:
- *	returns a pointer to malloc'd storage, you must call free yourself.
- */
-char *
-mkprints(src, len)
-	unsigned char *src;
-	unsigned int len;
-{
-	char *dst = malloc(len*4 + 1);
-
-	if (dst)
-		mkprint(dst, src, len);
-
-	return (dst);
-}
-
 
 static gid_t save_egid;
 int swap_gids() { save_egid = getegid(); return (setegid(getgid())); }

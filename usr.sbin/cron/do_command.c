@@ -1,4 +1,4 @@
-/*	$OpenBSD: do_command.c,v 1.50 2015/10/25 21:30:11 millert Exp $	*/
+/*	$OpenBSD: do_command.c,v 1.51 2015/10/29 22:41:27 millert Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -18,6 +18,7 @@
  */
 
 #include "cron.h"
+#include <vis.h>
 
 static void		child_process(entry *, user *);
 
@@ -125,10 +126,11 @@ child_process(entry *e, user *u)
 		 * PID is part of the log message.
 		 */
 		if ((e->flags & DONT_LOG) == 0) {
-			char *x = mkprints((u_char *)e->cmd, strlen(e->cmd));
-
-			log_it(usernm, getpid(), "CMD", x);
-			free(x);
+			char *x;
+			if (stravis(&x, e->cmd, 0) != -1) {
+				log_it(usernm, getpid(), "CMD", x);
+				free(x);
+			}
 		}
 
 		/* that's the last thing we'll log.  close the log files.
