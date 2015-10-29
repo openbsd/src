@@ -1,4 +1,4 @@
-/*	$OpenBSD: sod.c,v 1.32 2014/11/18 20:51:00 krw Exp $	*/
+/*	$OpenBSD: sod.c,v 1.33 2015/10/29 13:07:41 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -180,8 +180,7 @@ _dl_maphints(void)
 	if (HH_BADMAG(*hheader) || hheader->hh_ehints > hsize)
 		goto bad_hints;
 
-	if (hheader->hh_version != LD_HINTS_VERSION_1 &&
-	    hheader->hh_version != LD_HINTS_VERSION_2)
+	if (hheader->hh_version != LD_HINTS_VERSION_2)
 		goto bad_hints;
 
 	hbuckets = (struct hints_bucket *)(addr + hheader->hh_hashtab);
@@ -275,8 +274,6 @@ _dl_hinthash(char *cp, int vmajor, int vminor)
 		k = (((k << 1) + (k >> 14)) ^ (*cp++)) & 0x3fff;
 
 	k = (((k << 1) + (k >> 14)) ^ (vmajor*257)) & 0x3fff;
-	if (hheader->hh_version == LD_HINTS_VERSION_1)
-		k = (((k << 1) + (k >> 14)) ^ (vminor*167)) & 0x3fff;
 
 	return k;
 }
