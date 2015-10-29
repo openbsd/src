@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.90 2015/10/28 17:38:52 deraadt Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.91 2015/10/29 12:51:06 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -59,11 +59,20 @@
 int canonpath(const char *input, char *buf, size_t bufsize);
 int substrcmp(const char *p1, size_t s1, const char *p2, size_t s2);
 
+/*
+ * Ordered in blocks starting with least risky and most required.
+ */
 const u_int pledge_syscalls[SYS_MAXSYSCALL] = {
+	/*
+	 * Minimum required 
+	 */
 	[SYS_exit] = 0xffffffff,
 	[SYS_kbind] = 0xffffffff,
 	[SYS___get_tcb] = 0xffffffff,
+	[SYS_pledge] = 0xffffffff,
+	[SYS_sendsyslog] = 0xffffffff,	/* stack protector reporting */
 
+	/* "getting" information about self is considered safe */
 	[SYS_getuid] = PLEDGE_STDIO,
 	[SYS_geteuid] = PLEDGE_STDIO,
 	[SYS_getresuid] = PLEDGE_STDIO,
@@ -85,23 +94,52 @@ const u_int pledge_syscalls[SYS_MAXSYSCALL] = {
 	[SYS_clock_getres] = PLEDGE_STDIO,
 	[SYS_clock_gettime] = PLEDGE_STDIO,
 	[SYS_getpid] = PLEDGE_STDIO,
+
+	/*
+	 * Almost exclusively read-only, Very narrow subset.
+	 * Use of "route", "inet", "dns", "ps", or "vminfo"
+	 * expands access.
+	 */
+	[SYS_sysctl] = PLEDGE_STDIO,
+
+	/* Support for malloc(3) family of operations */
+	[SYS_getentropy] = PLEDGE_STDIO,
+	[SYS_madvise] = PLEDGE_STDIO,
+	[SYS_minherit] = PLEDGE_STDIO,
+	[SYS_mmap] = PLEDGE_STDIO,
+	[SYS_mprotect] = PLEDGE_STDIO,
+	[SYS_mquery] = PLEDGE_STDIO,
+	[SYS_munmap] = PLEDGE_STDIO,
+
 	[SYS_umask] = PLEDGE_STDIO,
-	[SYS_sysctl] = PLEDGE_STDIO,	/* read-only; narrow subset */
 
-	[SYS_setsockopt] = PLEDGE_STDIO,	/* white list */
-	[SYS_getsockopt] = PLEDGE_STDIO,
+	/* read/write operations */
+	[SYS_read] = PLEDGE_STDIO,
+	[SYS_readv] = PLEDGE_STDIO,
+	[SYS_pread] = PLEDGE_STDIO,
+	[SYS_preadv] = PLEDGE_STDIO,
+	[SYS_write] = PLEDGE_STDIO,
+	[SYS_writev] = PLEDGE_STDIO,
+	[SYS_pwrite] = PLEDGE_STDIO,
+	[SYS_pwritev] = PLEDGE_STDIO,
+	[SYS_recvmsg] = PLEDGE_STDIO,
+	[SYS_recvfrom] = PLEDGE_STDIO | PLEDGE_YPACTIVE,
+	[SYS_ftruncate] = PLEDGE_STDIO,
+	[SYS_lseek] = PLEDGE_STDIO,
 
-	[SYS_fchdir] = PLEDGE_STDIO,	/* careful of directory fd inside jails */
+	/*
+	 * Address selection required a network pledge ("inet",
+	 * "unix", "dns".
+	 */
+	[SYS_sendto] = PLEDGE_STDIO | PLEDGE_YPACTIVE,
 
-	/* needed by threaded programs */
-	[SYS___tfork] = PLEDGE_PROC,
-	[SYS_sched_yield] = PLEDGE_STDIO,
-	[SYS___thrsleep] = PLEDGE_STDIO,
-	[SYS___thrwakeup] = PLEDGE_STDIO,
-	[SYS___threxit] = PLEDGE_STDIO,
-	[SYS___thrsigdivert] = PLEDGE_STDIO,
+	/*
+	 * Address specification required a network pledge ("inet",
+	 * "unix", "dns".  SCM_RIGHTS requires "sendfd" or "recvfd".
+	 */
+	[SYS_sendmsg] = PLEDGE_STDIO,
 
-	[SYS_sendsyslog] = PLEDGE_STDIO,
+	/* Common signal operations */ 
 	[SYS_nanosleep] = PLEDGE_STDIO,
 	[SYS_sigaltstack] = PLEDGE_STDIO,
 	[SYS_sigprocmask] = PLEDGE_STDIO,
@@ -112,19 +150,23 @@ const u_int pledge_syscalls[SYS_MAXSYSCALL] = {
 	[SYS_getitimer] = PLEDGE_STDIO,
 	[SYS_setitimer] = PLEDGE_STDIO,
 
-	[SYS_pledge] = PLEDGE_STDIO,
-
-	[SYS_wait4] = PLEDGE_STDIO,
-
-	[SYS_adjtime] = PLEDGE_STDIO,	/* read-only, unless "settime" */
-	[SYS_adjfreq] = PLEDGE_SETTIME,
-	[SYS_settimeofday] = PLEDGE_SETTIME,
-
+	/*
+	 * To support event driven programming.
+	 */
 	[SYS_poll] = PLEDGE_STDIO,
 	[SYS_ppoll] = PLEDGE_STDIO,
 	[SYS_kevent] = PLEDGE_STDIO,
 	[SYS_kqueue] = PLEDGE_STDIO,
 	[SYS_select] = PLEDGE_STDIO,
+
+	[SYS_fstat] = PLEDGE_STDIO,
+	[SYS_fsync] = PLEDGE_STDIO,
+
+	[SYS_setsockopt] = PLEDGE_STDIO,	/* narrow whitelist */
+	[SYS_getsockopt] = PLEDGE_STDIO,	/* narrow whitelist */
+
+	/* F_SETOWN requires PLEDGE_PROC */
+	[SYS_fcntl] = PLEDGE_STDIO,
 
 	[SYS_close] = PLEDGE_STDIO,
 	[SYS_dup] = PLEDGE_STDIO,
@@ -132,40 +174,59 @@ const u_int pledge_syscalls[SYS_MAXSYSCALL] = {
 	[SYS_dup3] = PLEDGE_STDIO,
 	[SYS_closefrom] = PLEDGE_STDIO,
 	[SYS_shutdown] = PLEDGE_STDIO,
-	[SYS_read] = PLEDGE_STDIO,
-	[SYS_readv] = PLEDGE_STDIO,
-	[SYS_pread] = PLEDGE_STDIO,
-	[SYS_preadv] = PLEDGE_STDIO,
-	[SYS_write] = PLEDGE_STDIO,
-	[SYS_writev] = PLEDGE_STDIO,
-	[SYS_pwrite] = PLEDGE_STDIO,
-	[SYS_pwritev] = PLEDGE_STDIO,
-	[SYS_ftruncate] = PLEDGE_STDIO,
-	[SYS_lseek] = PLEDGE_STDIO,
-	[SYS_fstat] = PLEDGE_STDIO,
+	[SYS_fchdir] = PLEDGE_STDIO,	/* XXX consider tightening */
 
-	[SYS_fcntl] = PLEDGE_STDIO,
-	[SYS_fsync] = PLEDGE_STDIO,
 	[SYS_pipe] = PLEDGE_STDIO,
 	[SYS_pipe2] = PLEDGE_STDIO,
 	[SYS_socketpair] = PLEDGE_STDIO,
-	[SYS_getdents] = PLEDGE_STDIO,
 
-	[SYS_sendto] = PLEDGE_STDIO | PLEDGE_YPACTIVE,
-	[SYS_sendmsg] = PLEDGE_STDIO,
-	[SYS_recvmsg] = PLEDGE_STDIO,
-	[SYS_recvfrom] = PLEDGE_STDIO | PLEDGE_YPACTIVE,
+	[SYS_wait4] = PLEDGE_STDIO,
+
+	/*
+	 * Can kill self with "stdio".  Killing another pid
+	 * requires "proc"
+	 */
+	[SYS_kill] = PLEDGE_STDIO,
+
+	/*
+	 * FIONREAD/FIONBIO for "stdio"
+	 * A few non-tty ioctl available using "ioctl"
+	 * tty-centric ioctl available using "tty"
+	 */
+	[SYS_ioctl] = PLEDGE_STDIO,
+
+	/*
+	 * Path access/creation calls encounter many extensive
+	 * checks are done during namei()
+	 */
+	[SYS_open] = PLEDGE_STDIO,
+	[SYS_stat] = PLEDGE_STDIO,
+	[SYS_access] = PLEDGE_STDIO,
+	[SYS_readlink] = PLEDGE_STDIO,
+
+	[SYS_adjtime] = PLEDGE_STDIO,   /* setting requires "settime" */
+	[SYS_adjfreq] = PLEDGE_SETTIME,
+	[SYS_settimeofday] = PLEDGE_SETTIME,
+
+	/*
+	 * Needed by threaded programs
+	 * XXX should we have a new "threads"?
+	 */
+	[SYS___tfork] = PLEDGE_STDIO,
+	[SYS_sched_yield] = PLEDGE_STDIO,
+	[SYS___thrsleep] = PLEDGE_STDIO,
+	[SYS___thrwakeup] = PLEDGE_STDIO,
+	[SYS___threxit] = PLEDGE_STDIO,
+	[SYS___thrsigdivert] = PLEDGE_STDIO,
 
 	[SYS_fork] = PLEDGE_PROC,
 	[SYS_vfork] = PLEDGE_PROC,
 	[SYS_setpgid] = PLEDGE_PROC,
 	[SYS_setsid] = PLEDGE_PROC,
-	[SYS_kill] = PLEDGE_STDIO | PLEDGE_PROC,
 
 	[SYS_setrlimit] = PLEDGE_PROC | PLEDGE_ID,
 	[SYS_getpriority] = PLEDGE_PROC | PLEDGE_ID,
 
-	/* XXX we should limit the power for the "proc"-only case */
 	[SYS_setpriority] = PLEDGE_PROC | PLEDGE_ID,
 
 	[SYS_setuid] = PLEDGE_ID,
@@ -181,24 +242,7 @@ const u_int pledge_syscalls[SYS_MAXSYSCALL] = {
 
 	[SYS_execve] = PLEDGE_EXEC,
 
-	/* FIONREAD/FIONBIO, plus further checks in pledge_ioctl_check() */
-	[SYS_ioctl] = PLEDGE_STDIO | PLEDGE_IOCTL | PLEDGE_TTY,
-
-	[SYS_getentropy] = PLEDGE_STDIO,
-	[SYS_madvise] = PLEDGE_STDIO,
-	[SYS_minherit] = PLEDGE_STDIO,
-	[SYS_mmap] = PLEDGE_STDIO,
-	[SYS_mprotect] = PLEDGE_STDIO,
-	[SYS_mquery] = PLEDGE_STDIO,
-	[SYS_munmap] = PLEDGE_STDIO,
-
-	[SYS_open] = PLEDGE_STDIO,		/* further checks in namei */
-	[SYS_stat] = PLEDGE_STDIO,		/* further checks in namei */
-	[SYS_access] = PLEDGE_STDIO,		/* further checks in namei */
-	[SYS_readlink] = PLEDGE_STDIO,		/* further checks in namei */
-
 	[SYS_chdir] = PLEDGE_RPATH,
-	[SYS_chroot] = PLEDGE_ID,
 	[SYS_openat] = PLEDGE_RPATH | PLEDGE_WPATH,
 	[SYS_fstatat] = PLEDGE_RPATH | PLEDGE_WPATH,
 	[SYS_faccessat] = PLEDGE_RPATH | PLEDGE_WPATH,
@@ -215,6 +259,8 @@ const u_int pledge_syscalls[SYS_MAXSYSCALL] = {
 	[SYS_mkdir] = PLEDGE_CPATH,
 	[SYS_mkdirat] = PLEDGE_CPATH,
 
+	[SYS_chroot] = PLEDGE_ID,	/* also requires PLEDGE_PROC */
+
 	/*
 	 * Classify as RPATH|WPATH, because of path information leakage.
 	 * WPATH due to unknown use of mk*temp(3) on non-/tmp paths..
@@ -222,6 +268,7 @@ const u_int pledge_syscalls[SYS_MAXSYSCALL] = {
 	[SYS___getcwd] = PLEDGE_RPATH | PLEDGE_WPATH,
 
 	/* Classify as RPATH, because these leak path information */
+	[SYS_getdents] = PLEDGE_RPATH,
 	[SYS_getfsstat] = PLEDGE_RPATH,
 	[SYS_statfs] = PLEDGE_RPATH,
 	[SYS_fstatfs] = PLEDGE_RPATH,
