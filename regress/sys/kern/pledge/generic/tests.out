@@ -1,4 +1,4 @@
-#	$OpenBSD: tests.out,v 1.8 2015/10/26 18:52:19 semarie Exp $
+#	$OpenBSD: tests.out,v 1.9 2015/10/29 10:23:55 semarie Exp $
 test(test_nop): pledge=("",NULL) status=0 exit=0
 test(test_inet): pledge=("",NULL) status=9 signal=9 pledged_syscall=97
 test(test_inet): pledge=("abort",NULL) status=134 signal=6 coredump=present pledged_syscall=97
@@ -9,7 +9,7 @@ test(test_kill): pledge=("fattr",NULL) status=9 signal=9 pledged_syscall=37
 test(test_kill): pledge=("proc",NULL) status=2 signal=2 pledged_syscall=not_found
 test(test_rpath): pledge=("stdio rpath",NULL) status=0 exit=0
 test(test_wpath): pledge=("stdio wpath",NULL) status=0 exit=0
-test(test_cpath): pledge=("rpath cpath",NULL) status=0 exit=0
+test(test_cpath): pledge=("cpath",NULL) status=0 exit=0
 test(test_wpaths): pledge=("stdio rpath",NULL)
  open_close("/etc/passwd") fd=3 errno=0
  open_close("generic") fd=3 errno=0
