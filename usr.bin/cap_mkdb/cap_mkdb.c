@@ -1,4 +1,4 @@
-/*	$OpenBSD: cap_mkdb.c,v 1.19 2015/01/16 06:40:06 deraadt Exp $	*/
+/*	$OpenBSD: cap_mkdb.c,v 1.20 2015/10/29 02:58:00 deraadt Exp $	*/
 /*	$NetBSD: cap_mkdb.c,v 1.5 1995/09/02 05:47:12 jtc Exp $	*/
 
 /*-
@@ -76,6 +76,9 @@ int
 main(int argc, char *argv[])
 {
 	int c;
+
+	if (pledge("stdio rpath wpath cpath", NULL) == -1)
+		err(1, "pledge");
 
 	capname = NULL;
 	while ((c = getopt(argc, argv, "f:iv")) != -1) {
