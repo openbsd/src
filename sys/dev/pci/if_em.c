@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.309 2015/10/25 13:04:28 mpi Exp $ */
+/* $OpenBSD: if_em.c,v 1.310 2015/10/29 03:19:42 jsg Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -1840,7 +1840,7 @@ em_hardware_init(struct em_softc *sc)
 			INIT_DEBUGOUT("\nHardware Initialization Deferred ");
 			return (EAGAIN);
 		}
-		printf("%s: Hardware Initialization Failed",
+		printf("\n%s: Hardware Initialization Failed\n",
 		       sc->sc_dv.dv_xname);
 		return (EIO);
 	}
