@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.60 2015/10/26 15:16:30 millert Exp $	*/
+/*	$OpenBSD: misc.c,v 1.61 2015/10/29 21:17:47 millert Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -18,18 +18,8 @@
  */
 
 #include "cron.h"
-#include <limits.h>
-
-#if defined(LOG_DAEMON) && !defined(LOG_CRON)
-# define LOG_CRON LOG_DAEMON
-#endif
-
-#ifndef FACILITY
-#define FACILITY LOG_CRON
-#endif
 
 static int LogFD = -1;
-
 static int syslog_open = FALSE;
 
 int
@@ -272,7 +262,7 @@ log_it(const char *username, pid_t xpid, const char *event, const char *detail)
 	    "END EDIT", "LIST", "MAIL", "RELOAD", "REPLACE", "STARTUP", NULL };
 
 	if (!syslog_open) {
-		openlog(ProgramName, LOG_PID, FACILITY);
+		openlog(ProgramName, LOG_PID, LOG_CRON);
 		syslog_open = TRUE;		/* assume openlog success */
 	}
 
