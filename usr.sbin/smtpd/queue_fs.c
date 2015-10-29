@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_fs.c,v 1.9 2015/10/12 22:29:49 gilles Exp $	*/
+/*	$OpenBSD: queue_fs.c,v 1.10 2015/10/29 10:25:36 sunil Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@poolp.org>
@@ -24,6 +24,7 @@
 #include <sys/stat.h>
 
 #include <ctype.h>
+#include <dirent.h>
 #include <err.h>
 #include <errno.h>
 #include <event.h>
@@ -345,6 +346,69 @@ queue_fs_envelope_delete(uint64_t evpid)
 }
 
 static int
+queue_fs_message_walk(uint64_t *evpid, char *buf, size_t len,
+    uint32_t msgid, int *done, void **data)
+{
+	struct dirent	*dp;
+	DIR		*dir = *data;
+	char		 path[PATH_MAX];
+	char		 msgid_str[9];
+	char		*tmp;
+	int		 r, *n;
+
+	if (*done)
+		return (-1);
+
+	if (! bsnprintf(path, sizeof path, "%s/%02x/%08x",
+	    PATH_QUEUE, (msgid  & 0xff000000) >> 24, msgid))
+		fatalx("queue_fs_message_walk: path does not fit buffer");
+
+	if (dir == NULL) {
+		if ((dir = opendir(path)) == NULL) {
+			log_warn("warn: queue_fs: opendir: %s", path);
+			*done = 1;
+			return (-1);
+		}
+
+		*data = dir;
+	}
+
+	(void)snprintf(msgid_str, sizeof msgid_str, "%08" PRIx32, msgid);
+	while ((dp = readdir(dir)) != NULL) {
+		if (dp->d_type != DT_REG)
+			continue;
+
+		/* ignore files other than envelopes */
+		if (dp->d_namlen != 16 || strncmp(dp->d_name, msgid_str, 8))
+			continue;
+
+		tmp = NULL;
+		*evpid = strtoull(dp->d_name, &tmp, 16);
+		if (tmp && *tmp !=  '\0') {
+			log_debug("debug: fsqueue: bogus file %s", dp->d_name);
+			continue;
+		}
+
+		memset(buf, 0, len);
+		r = queue_fs_envelope_load(*evpid, buf, len);
+		if (r) {
+			n = tree_pop(&evpcount, msgid);
+			if (n == NULL)
+				n = REF;
+
+			n += 1;
+			tree_xset(&evpcount, msgid, n);
+		}
+
+		return (r);
+	}
+
+	(void)closedir(dir);
+	*done = 1;
+	return (-1);
+}
+
+static int
 queue_fs_envelope_walk(uint64_t *evpid, char *buf, size_t len)
 {
 	static int	 done = 0;
@@ -653,6 +717,7 @@ queue_fs_init(struct passwd *pw, int server, const char *conf)
 	queue_api_on_envelope_update(queue_fs_envelope_update);
 	queue_api_on_envelope_load(queue_fs_envelope_load);
 	queue_api_on_envelope_walk(queue_fs_envelope_walk);
+	queue_api_on_message_walk(queue_fs_message_walk);
 
 	return (ret);
 }

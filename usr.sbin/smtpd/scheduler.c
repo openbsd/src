@@ -1,4 +1,4 @@
-/*	$OpenBSD: scheduler.c,v 1.49 2015/10/13 08:09:25 gilles Exp $	*/
+/*	$OpenBSD: scheduler.c,v 1.50 2015/10/29 10:25:36 sunil Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -92,6 +92,41 @@ scheduler_imsg(struct mproc *p, struct imsg *imsg)
 		m_msg(&m, imsg);
 		m_get_msgid(&m, &msgid);
 		m_end(&m);
+		log_trace(TRACE_SCHEDULER,
+		    "scheduler: committing msg:%08" PRIx32, msgid);
+		n = backend->commit(msgid);
+		stat_decrement("scheduler.envelope.incoming", n);
+		stat_increment("scheduler.envelope", n);
+		scheduler_reset_events();
+		return;
+
+	case IMSG_QUEUE_DISCOVER_EVPID:
+		m_msg(&m, imsg);
+		m_get_envelope(&m, &evp);
+		m_end(&m);
+		r = backend->query(evp.id);
+		if (r) {
+			log_debug("debug: scheduler: evp:%016" PRIx64
+			    " already scheduled", evp.id);
+			return;
+		}
+		log_trace(TRACE_SCHEDULER,
+		    "scheduler: discovering evp:%016" PRIx64, evp.id);
+		scheduler_info(&si, &evp);
+		stat_increment("scheduler.envelope.incoming", 1);
+		backend->insert(&si);
+		return;
+
+	case IMSG_QUEUE_DISCOVER_MSGID:
+		m_msg(&m, imsg);
+		m_get_msgid(&m, &msgid);
+		m_end(&m);
+		r = backend->query(msgid);
+		if (r) {
+			log_debug("debug: scheduler: msgid:%08" PRIx32
+			    " already scheduled", msgid);
+			return;
+		}
 		log_trace(TRACE_SCHEDULER,
 		    "scheduler: committing msg:%08" PRIx32, msgid);
 		n = backend->commit(msgid);

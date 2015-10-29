@@ -1,4 +1,4 @@
-.\" $OpenBSD: smtpctl.8,v 1.52 2015/10/15 08:18:23 sunil Exp $
+.\" $OpenBSD: smtpctl.8,v 1.53 2015/10/29 10:25:36 sunil Exp $
 .\"
 .\" Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
 .\" Copyright (c) 2012 Gilles Chehade <gilles@poolp.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 15 2015 $
+.Dd $Mdocdate: October 29 2015 $
 .Dt SMTPCTL 8
 .Os
 .Sh NAME
@@ -45,6 +45,9 @@ and is simply a shortcut for
 .Pp
 The following commands are available:
 .Bl -tag -width Ds
+.It Cm discover Ar envelope-id | message-id
+Schedule a single envelope, or all envelopes with the same message ID
+that were manually moved to the queue.
 .It Cm encrypt Op Ar string
 Encrypt the password
 .Ar string

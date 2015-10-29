@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_backend.c,v 1.56 2015/10/09 14:37:38 gilles Exp $	*/
+/*	$OpenBSD: queue_backend.c,v 1.57 2015/10/29 10:25:36 sunil Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@poolp.org>
@@ -70,6 +70,8 @@ static int (*handler_envelope_delete)(uint64_t);
 static int (*handler_envelope_update)(uint64_t, const char *, size_t);
 static int (*handler_envelope_load)(uint64_t, char *, size_t);
 static int (*handler_envelope_walk)(uint64_t *, char *, size_t);
+static int (*handler_message_walk)(uint64_t *, char *, size_t,
+    uint32_t, int *, void **);
 
 #ifdef QUEUE_PROFILING
 
@@ -619,6 +621,46 @@ queue_envelope_update(struct envelope *ep)
 }
 
 int
+queue_message_walk(struct envelope *ep, uint32_t msgid, int *done, void **data)
+{
+	char		 evpbuf[sizeof(struct envelope)];
+	uint64_t	 evpid;
+	int		 r;
+	const char	*e;
+
+	profile_enter("queue_message_walk");
+	r = handler_message_walk(&evpid, evpbuf, sizeof evpbuf,
+	    msgid, done, data);
+	profile_leave();
+
+	log_trace(TRACE_QUEUE,
+	    "queue-backend: queue_message_walk() -> %d (%016"PRIx64")",
+	    r, evpid);
+
+	if (r == -1)
+		return (r);
+
+	if (r && queue_envelope_load_buffer(ep, evpbuf, (size_t)r)) {
+		if ((e = envelope_validate(ep)) == NULL) {
+			ep->id = evpid;
+			/*
+			 * do not cache the envelope here, while discovering
+			 * envelopes one could re-run discover on already
+			 * scheduled envelopes which leads to triggering of 
+			 * strict checks in caching. Envelopes could anyway
+			 * be loaded from backend if it isn't cached.
+			 */
+			return (1);
+		}
+		log_debug("debug: invalid envelope %016" PRIx64 ": %s",
+		    ep->id, e);
+		(void)queue_message_corrupt(evpid_to_msgid(evpid));
+	}
+
+	return (-1);
+}
+
+int
 queue_envelope_walk(struct envelope *ep)
 {
 	const char	*e;
@@ -765,4 +807,11 @@ void
 queue_api_on_envelope_walk(int(*cb)(uint64_t *, char *, size_t))
 {
 	handler_envelope_walk = cb;
+}
+
+void
+queue_api_on_message_walk(int(*cb)(uint64_t *, char *, size_t,
+    uint32_t, int *, void **))
+{
+	handler_message_walk = cb;
 }
