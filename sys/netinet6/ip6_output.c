@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.195 2015/10/29 16:22:45 tedu Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.196 2015/10/29 16:27:45 tedu Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -2514,14 +2514,14 @@ ip6_setpktopt(int optname, u_char *buf, int len, struct ip6_pktopts *opt,
 		 * in6addr_any and ipi6_ifindex being zero.
 		 * [RFC 3542, Section 6]
 		 */
-		if (optname == IPV6_PKTINFO && opt->ip6po_pktinfo &&
+		if (opt->ip6po_pktinfo &&
 		    pktinfo->ipi6_ifindex == 0 &&
 		    IN6_IS_ADDR_UNSPECIFIED(&pktinfo->ipi6_addr)) {
 			ip6_clearpktopts(opt, optname);
 			break;
 		}
 
-		if (uproto == IPPROTO_TCP && optname == IPV6_PKTINFO &&
+		if (uproto == IPPROTO_TCP &&
 		    sticky && !IN6_IS_ADDR_UNSPECIFIED(&pktinfo->ipi6_addr)) {
 			return (EINVAL);
 		}
@@ -2561,7 +2561,7 @@ ip6_setpktopt(int optname, u_char *buf, int len, struct ip6_pktopts *opt,
 		 * RFC 3542 deprecated the usage of sticky IPV6_HOPLIMIT
 		 * to simplify the ordering among hoplimit options.
 		 */
-		if (optname == IPV6_HOPLIMIT && sticky)
+		if (sticky)
 			return (ENOPROTOOPT);
 
 		if (len != sizeof(int))
