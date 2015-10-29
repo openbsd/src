@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.194 2015/10/29 16:04:10 tedu Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.195 2015/10/29 16:22:45 tedu Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -2498,6 +2498,61 @@ ip6_setpktopt(int optname, u_char *buf, int len, struct ip6_pktopts *opt,
 	}
 
 	switch (optname) {
+	case IPV6_PKTINFO:
+	{
+		struct ifnet *ifp = NULL;
+		struct in6_pktinfo *pktinfo;
+
+		if (len != sizeof(struct in6_pktinfo))
+			return (EINVAL);
+
+		pktinfo = (struct in6_pktinfo *)buf;
+
+		/*
+		 * An application can clear any sticky IPV6_PKTINFO option by
+		 * doing a "regular" setsockopt with ipi6_addr being
+		 * in6addr_any and ipi6_ifindex being zero.
+		 * [RFC 3542, Section 6]
+		 */
+		if (optname == IPV6_PKTINFO && opt->ip6po_pktinfo &&
+		    pktinfo->ipi6_ifindex == 0 &&
+		    IN6_IS_ADDR_UNSPECIFIED(&pktinfo->ipi6_addr)) {
+			ip6_clearpktopts(opt, optname);
+			break;
+		}
+
+		if (uproto == IPPROTO_TCP && optname == IPV6_PKTINFO &&
+		    sticky && !IN6_IS_ADDR_UNSPECIFIED(&pktinfo->ipi6_addr)) {
+			return (EINVAL);
+		}
+
+		if (pktinfo->ipi6_ifindex) {
+			ifp = if_get(pktinfo->ipi6_ifindex);
+			if (ifp == NULL)
+				return (ENXIO);
+			if_put(ifp);
+		}
+
+		/*
+		 * We store the address anyway, and let in6_selectsrc()
+		 * validate the specified address.  This is because ipi6_addr
+		 * may not have enough information about its scope zone, and
+		 * we may need additional information (such as outgoing
+		 * interface or the scope zone of a destination address) to
+		 * disambiguate the scope.
+		 * XXX: the delay of the validation may confuse the
+		 * application when it is used as a sticky option.
+		 */
+		if (opt->ip6po_pktinfo == NULL) {
+			opt->ip6po_pktinfo = malloc(sizeof(*pktinfo),
+			    M_IP6OPT, M_NOWAIT);
+			if (opt->ip6po_pktinfo == NULL)
+				return (ENOBUFS);
+		}
+		bcopy(pktinfo, opt->ip6po_pktinfo, sizeof(*pktinfo));
+		break;
+	}
+
 	case IPV6_HOPLIMIT:
 	{
 		int *hlimp;
