@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.165 2015/10/28 12:45:44 jsg Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.166 2015/10/29 14:28:34 mpi Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -565,9 +565,6 @@ nd6_purge(struct ifnet *ifp)
 
 	/*
 	 * Nuke neighbor cache entries for the ifp.
-	 * Note that rt->rt_ifp may not be the same as ifp,
-	 * due to KAME goto ours hack.  See RTM_RESOLVE case in
-	 * nd6_rtrequest(), and ip6_input().
 	 */
 	ln = llinfo_nd6.ln_next;
 	while (ln && ln != &llinfo_nd6) {
