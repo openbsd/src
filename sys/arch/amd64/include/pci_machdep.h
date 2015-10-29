@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.h,v 1.23 2015/07/17 22:42:09 kettenis Exp $	*/
+/*	$OpenBSD: pci_machdep.h,v 1.24 2015/10/29 23:08:45 miod Exp $	*/
 /*	$NetBSD: pci_machdep.h,v 1.1 2003/02/26 21:26:11 fvdl Exp $	*/
 
 /*
@@ -88,8 +88,6 @@ const char	*pci_intr_string(pci_chipset_tag_t, pci_intr_handle_t);
 void		*pci_intr_establish(pci_chipset_tag_t, pci_intr_handle_t,
 		    int, int (*)(void *), void *, const char *);
 void		pci_intr_disestablish(pci_chipset_tag_t, void *);
-void		pci_decompose_tag(pci_chipset_tag_t, pcitag_t,
-		    int *, int *, int *);
 #define	pci_probe_device_hook(c, a)	(0)
 
 void 		pci_dev_postattach(struct device *, struct pci_attach_args *);
