@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.h,v 1.85 2015/09/11 07:42:35 claudio Exp $	*/
+/*	$OpenBSD: in6.h,v 1.86 2015/10/29 16:04:10 tedu Exp $	*/
 /*	$KAME: in6.h,v 1.83 2001/03/29 02:55:07 jinmei Exp $	*/
 
 /*
@@ -302,17 +302,6 @@ struct route_in6 {
 #define IPV6_PORTRANGE		14 /* int; range to choose for unspec port */
 #if __BSD_VISIBLE
 #define ICMP6_FILTER		18 /* icmp6_filter; icmp6 filter */
-#endif
-
-/* RFC2292 options */
-#ifdef _KERNEL
-#define IPV6_2292PKTINFO	19 /* bool; send/rcv if, src/dst addr */
-#define IPV6_2292HOPLIMIT	20 /* bool; hop limit */
-#define IPV6_2292NEXTHOP	21 /* bool; next hop addr */
-#define IPV6_2292HOPOPTS	22 /* bool; hop-by-hop option */
-#define IPV6_2292DSTOPTS	23 /* bool; destination option */
-#define IPV6_2292RTHDR		24 /* bool; routing header */
-#define IPV6_2292PKTOPTIONS	25 /* buf/cmsghdr; set/get IPv6 options */
 #endif
 
 #define IPV6_CHECKSUM		26 /* int; checksum offset for raw socket */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.193 2015/10/28 12:14:25 florian Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.194 2015/10/29 16:04:10 tedu Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -1206,11 +1206,6 @@ ip6_ctloutput(int op, struct socket *so, int level, int optname,
 		switch (op) {
 		case PRCO_SETOPT:
 			switch (optname) {
-			case IPV6_2292PKTOPTIONS:
-				error = ip6_pcbopts(&inp->inp_outputopts6,
-				    m, so);
-				break;
-
 			/*
 			 * Use of some Hop-by-Hop options or some
 			 * Destination options, might require special
@@ -1265,22 +1260,9 @@ do { \
 	else \
 		inp->inp_flags &= ~(bit); \
 } while (/*CONSTCOND*/ 0)
-#define OPTSET2292(bit) \
-do { \
-	inp->inp_flags |= IN6P_RFC2292; \
-	if (optval) \
-		inp->inp_flags |= (bit); \
-	else \
-		inp->inp_flags &= ~(bit); \
-} while (/*CONSTCOND*/ 0)
 #define OPTBIT(bit) (inp->inp_flags & (bit) ? 1 : 0)
 
 				case IPV6_RECVPKTINFO:
-					/* cannot mix with RFC2292 */
-					if (OPTBIT(IN6P_RFC2292)) {
-						error = EINVAL;
-						break;
-					}
 					OPTSET(IN6P_PKTINFO);
 					break;
 
@@ -1288,11 +1270,6 @@ do { \
 				{
 					struct ip6_pktopts **optp;
 
-					/* cannot mix with RFC2292 */
-					if (OPTBIT(IN6P_RFC2292)) {
-						error = EINVAL;
-						break;
-					}
 					optp = &inp->inp_outputopts6;
 					error = ip6_pcbopt(IPV6_HOPLIMIT,
 							   (u_char *)&optval,
@@ -1303,47 +1280,22 @@ do { \
 				}
 
 				case IPV6_RECVHOPLIMIT:
-					/* cannot mix with RFC2292 */
-					if (OPTBIT(IN6P_RFC2292)) {
-						error = EINVAL;
-						break;
-					}
 					OPTSET(IN6P_HOPLIMIT);
 					break;
 
 				case IPV6_RECVHOPOPTS:
-					/* cannot mix with RFC2292 */
-					if (OPTBIT(IN6P_RFC2292)) {
-						error = EINVAL;
-						break;
-					}
 					OPTSET(IN6P_HOPOPTS);
 					break;
 
 				case IPV6_RECVDSTOPTS:
-					/* cannot mix with RFC2292 */
-					if (OPTBIT(IN6P_RFC2292)) {
-						error = EINVAL;
-						break;
-					}
 					OPTSET(IN6P_DSTOPTS);
 					break;
 
 				case IPV6_RECVRTHDRDSTOPTS:
-					/* cannot mix with RFC2292 */
-					if (OPTBIT(IN6P_RFC2292)) {
-						error = EINVAL;
-						break;
-					}
 					OPTSET(IN6P_RTHDRDSTOPTS);
 					break;
 
 				case IPV6_RECVRTHDR:
-					/* cannot mix with RFC2292 */
-					if (OPTBIT(IN6P_RFC2292)) {
-						error = EINVAL;
-						break;
-					}
 					OPTSET(IN6P_RTHDR);
 					break;
 
@@ -1376,11 +1328,6 @@ do { \
 						error = EINVAL;
 					break;
 				case IPV6_RECVTCLASS:
-					/* cannot mix with RFC2292 XXX */
-					if (OPTBIT(IN6P_RFC2292)) {
-						error = EINVAL;
-						break;
-					}
 					OPTSET(IN6P_TCLASS);
 					break;
 				case IPV6_AUTOFLOWLABEL:
@@ -1412,43 +1359,6 @@ do { \
 					break;
 				}
 
-			case IPV6_2292PKTINFO:
-			case IPV6_2292HOPLIMIT:
-			case IPV6_2292HOPOPTS:
-			case IPV6_2292DSTOPTS:
-			case IPV6_2292RTHDR:
-				/* RFC 2292 */
-				if (m == NULL || m->m_len != sizeof(int)) {
-					error = EINVAL;
-					break;
-				}
-				optval = *mtod(m, int *);
-				switch (optname) {
-				case IPV6_2292PKTINFO:
-					OPTSET2292(IN6P_PKTINFO);
-					break;
-				case IPV6_2292HOPLIMIT:
-					OPTSET2292(IN6P_HOPLIMIT);
-					break;
-				case IPV6_2292HOPOPTS:
-					/*
-					 * Check super-user privilege.
-					 * See comments for IPV6_RECVHOPOPTS.
-					 */
-					if (!privileged)
-						return (EPERM);
-					OPTSET2292(IN6P_HOPOPTS);
-					break;
-				case IPV6_2292DSTOPTS:
-					if (!privileged)
-						return (EPERM);
-					OPTSET2292(IN6P_DSTOPTS|IN6P_RTHDRDSTOPTS); /* XXX */
-					break;
-				case IPV6_2292RTHDR:
-					OPTSET2292(IN6P_RTHDR);
-					break;
-				}
-				break;
 			case IPV6_PKTINFO:
 			case IPV6_HOPOPTS:
 			case IPV6_RTHDR:
@@ -1459,12 +1369,6 @@ do { \
 				u_char *optbuf;
 				int optbuflen;
 				struct ip6_pktopts **optp;
-
-				/* cannot mix with RFC2292 */
-				if (OPTBIT(IN6P_RFC2292)) {
-					error = EINVAL;
-					break;
-				}
 
 				if (m && m->m_next) {
 					error = EINVAL;	/* XXX */
@@ -1624,20 +1528,6 @@ do { \
 		case PRCO_GETOPT:
 			switch (optname) {
 
-			case IPV6_2292PKTOPTIONS:
-				/*
-				 * RFC3542 (effectively) deprecated the
-				 * semantics of the 2292-style pktoptions.
-				 * Since it was not reliable in nature (i.e.,
-				 * applications had to expect the lack of some
-				 * information after all), it would make sense
-				 * to simplify this part by always returning
-				 * empty data.
-				 */
-				*mp = m_get(M_WAIT, MT_SOOPTS);
-				(*mp)->m_len = 0;
-				break;
-
 			case IPV6_RECVHOPOPTS:
 			case IPV6_RECVDSTOPTS:
 			case IPV6_RECVRTHDRDSTOPTS:
@@ -1755,32 +1645,6 @@ do { \
 				break;
 			}
 
-			case IPV6_2292PKTINFO:
-			case IPV6_2292HOPLIMIT:
-			case IPV6_2292HOPOPTS:
-			case IPV6_2292RTHDR:
-			case IPV6_2292DSTOPTS:
-				switch (optname) {
-				case IPV6_2292PKTINFO:
-					optval = OPTBIT(IN6P_PKTINFO);
-					break;
-				case IPV6_2292HOPLIMIT:
-					optval = OPTBIT(IN6P_HOPLIMIT);
-					break;
-				case IPV6_2292HOPOPTS:
-					optval = OPTBIT(IN6P_HOPOPTS);
-					break;
-				case IPV6_2292RTHDR:
-					optval = OPTBIT(IN6P_RTHDR);
-					break;
-				case IPV6_2292DSTOPTS:
-					optval = OPTBIT(IN6P_DSTOPTS|IN6P_RTHDRDSTOPTS);
-					break;
-				}
-				*mp = m = m_get(M_WAIT, MT_SOOPTS);
-				m->m_len = sizeof(int);
-				*mtod(m, int *) = optval;
-				break;
 			case IPV6_PKTINFO:
 			case IPV6_HOPOPTS:
 			case IPV6_RTHDR:
@@ -2618,22 +2482,6 @@ ip6_setpktopt(int optname, u_char *buf, int len, struct ip6_pktopts *opt,
 		return (EINVAL);
 	}
 
-	/*
-	 * IPV6_2292xxx is for backward compatibility to RFC2292, and should
-	 * not be specified in the context of RFC3542.  Conversely,
-	 * RFC3542 types should not be specified in the context of RFC2292.
-	 */
-	if (!cmsg) {
-		switch (optname) {
-		case IPV6_2292PKTINFO:
-		case IPV6_2292HOPLIMIT:
-		case IPV6_2292HOPOPTS:
-		case IPV6_2292DSTOPTS:
-		case IPV6_2292RTHDR:
-		case IPV6_2292PKTOPTIONS:
-			return (ENOPROTOOPT);
-		}
-	}
 	if (sticky && cmsg) {
 		switch (optname) {
 		case IPV6_PKTINFO:
@@ -2650,63 +2498,6 @@ ip6_setpktopt(int optname, u_char *buf, int len, struct ip6_pktopts *opt,
 	}
 
 	switch (optname) {
-	case IPV6_2292PKTINFO:
-	case IPV6_PKTINFO:
-	{
-		struct ifnet *ifp = NULL;
-		struct in6_pktinfo *pktinfo;
-
-		if (len != sizeof(struct in6_pktinfo))
-			return (EINVAL);
-
-		pktinfo = (struct in6_pktinfo *)buf;
-
-		/*
-		 * An application can clear any sticky IPV6_PKTINFO option by
-		 * doing a "regular" setsockopt with ipi6_addr being
-		 * in6addr_any and ipi6_ifindex being zero.
-		 * [RFC 3542, Section 6]
-		 */
-		if (optname == IPV6_PKTINFO && opt->ip6po_pktinfo &&
-		    pktinfo->ipi6_ifindex == 0 &&
-		    IN6_IS_ADDR_UNSPECIFIED(&pktinfo->ipi6_addr)) {
-			ip6_clearpktopts(opt, optname);
-			break;
-		}
-
-		if (uproto == IPPROTO_TCP && optname == IPV6_PKTINFO &&
-		    sticky && !IN6_IS_ADDR_UNSPECIFIED(&pktinfo->ipi6_addr)) {
-			return (EINVAL);
-		}
-
-		if (pktinfo->ipi6_ifindex) {
-			ifp = if_get(pktinfo->ipi6_ifindex);
-			if (ifp == NULL)
-				return (ENXIO);
-			if_put(ifp);
-		}
-
-		/*
-		 * We store the address anyway, and let in6_selectsrc()
-		 * validate the specified address.  This is because ipi6_addr
-		 * may not have enough information about its scope zone, and
-		 * we may need additional information (such as outgoing
-		 * interface or the scope zone of a destination address) to
-		 * disambiguate the scope.
-		 * XXX: the delay of the validation may confuse the
-		 * application when it is used as a sticky option.
-		 */
-		if (opt->ip6po_pktinfo == NULL) {
-			opt->ip6po_pktinfo = malloc(sizeof(*pktinfo),
-			    M_IP6OPT, M_NOWAIT);
-			if (opt->ip6po_pktinfo == NULL)
-				return (ENOBUFS);
-		}
-		bcopy(pktinfo, opt->ip6po_pktinfo, sizeof(*pktinfo));
-		break;
-	}
-
-	case IPV6_2292HOPLIMIT:
 	case IPV6_HOPLIMIT:
 	{
 		int *hlimp;
@@ -2741,7 +2532,6 @@ ip6_setpktopt(int optname, u_char *buf, int len, struct ip6_pktopts *opt,
 		opt->ip6po_tclass = tclass;
 		break;
 	}
-	case IPV6_2292HOPOPTS:
 	case IPV6_HOPOPTS:
 	{
 		struct ip6_hbh *hbh;
@@ -2778,7 +2568,6 @@ ip6_setpktopt(int optname, u_char *buf, int len, struct ip6_pktopts *opt,
 		break;
 	}
 
-	case IPV6_2292DSTOPTS:
 	case IPV6_DSTOPTS:
 	case IPV6_RTHDRDSTOPTS:
 	{
@@ -2805,24 +2594,6 @@ ip6_setpktopt(int optname, u_char *buf, int len, struct ip6_pktopts *opt,
 		 * should be inserted; before or after the routing header.
 		 */
 		switch (optname) {
-		case IPV6_2292DSTOPTS:
-			/*
-			 * The old advanced API is ambiguous on this point.
-			 * Our approach is to determine the position based
-			 * according to the existence of a routing header.
-			 * Note, however, that this depends on the order of the
-			 * extension headers in the ancillary data; the 1st
-			 * part of the destination options header must appear
-			 * before the routing header in the ancillary data,
-			 * too.
-			 * RFC3542 solved the ambiguity by introducing
-			 * separate ancillary data or option types.
-			 */
-			if (opt->ip6po_rthdr == NULL)
-				newdest = &opt->ip6po_dest1;
-			else
-				newdest = &opt->ip6po_dest2;
-			break;
 		case IPV6_RTHDRDSTOPTS:
 			newdest = &opt->ip6po_dest1;
 			break;
@@ -2841,7 +2612,6 @@ ip6_setpktopt(int optname, u_char *buf, int len, struct ip6_pktopts *opt,
 		break;
 	}
 
-	case IPV6_2292RTHDR:
 	case IPV6_RTHDR:
 	{
 		struct ip6_rthdr *rth;

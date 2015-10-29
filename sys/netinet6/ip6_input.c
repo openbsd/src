@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.149 2015/10/23 00:15:07 jsg Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.150 2015/10/29 16:04:10 tedu Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -945,7 +945,6 @@ ip6_unknown_opt(u_int8_t *optp, struct mbuf *m, int off)
 void
 ip6_savecontrol(struct inpcb *in6p, struct mbuf *m, struct mbuf **mp)
 {
-#define IS2292(x, y)	((in6p->inp_flags & IN6P_RFC2292) ? (x) : (y))
 	struct ip6_hdr *ip6 = mtod(m, struct ip6_hdr *);
 
 #ifdef SO_TIMESTAMP
@@ -969,7 +968,7 @@ ip6_savecontrol(struct inpcb *in6p, struct mbuf *m, struct mbuf **mp)
 		pi6.ipi6_ifindex = m ? m->m_pkthdr.ph_ifidx : 0;
 		*mp = sbcreatecontrol((caddr_t) &pi6,
 		    sizeof(struct in6_pktinfo),
-		    IS2292(IPV6_2292PKTINFO, IPV6_PKTINFO), IPPROTO_IPV6);
+		    IPV6_PKTINFO, IPPROTO_IPV6);
 		if (*mp)
 			mp = &(*mp)->m_next;
 	}
@@ -977,7 +976,7 @@ ip6_savecontrol(struct inpcb *in6p, struct mbuf *m, struct mbuf **mp)
 	if ((in6p->inp_flags & IN6P_HOPLIMIT) != 0) {
 		int hlim = ip6->ip6_hlim & 0xff;
 		*mp = sbcreatecontrol((caddr_t) &hlim, sizeof(int),
-		    IS2292(IPV6_2292HOPLIMIT, IPV6_HOPLIMIT), IPPROTO_IPV6);
+		    IPV6_HOPLIMIT, IPPROTO_IPV6);
 		if (*mp)
 			mp = &(*mp)->m_next;
 	}
@@ -1039,7 +1038,7 @@ ip6_savecontrol(struct inpcb *in6p, struct mbuf *m, struct mbuf **mp)
 			 * Note: this constraint is removed in RFC3542.
 			 */
 			*mp = sbcreatecontrol((caddr_t)hbh, hbhlen,
-			    IS2292(IPV6_2292HOPOPTS, IPV6_HOPOPTS),
+			    IPV6_HOPOPTS,
 			    IPPROTO_IPV6);
 			if (*mp)
 				mp = &(*mp)->m_next;
@@ -1100,7 +1099,7 @@ ip6_savecontrol(struct inpcb *in6p, struct mbuf *m, struct mbuf **mp)
 					break;
 
 				*mp = sbcreatecontrol((caddr_t)ip6e, elen,
-				    IS2292(IPV6_2292DSTOPTS, IPV6_DSTOPTS),
+				    IPV6_DSTOPTS,
 				    IPPROTO_IPV6);
 				if (*mp)
 					mp = &(*mp)->m_next;
@@ -1111,7 +1110,7 @@ ip6_savecontrol(struct inpcb *in6p, struct mbuf *m, struct mbuf **mp)
 					break;
 
 				*mp = sbcreatecontrol((caddr_t)ip6e, elen,
-				    IS2292(IPV6_2292RTHDR, IPV6_RTHDR),
+				    IPV6_RTHDR,
 				    IPPROTO_IPV6);
 				if (*mp)
 					mp = &(*mp)->m_next;
