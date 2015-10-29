@@ -1,4 +1,4 @@
-.\"	$OpenBSD: msync.2,v 1.24 2015/03/13 19:58:40 jmc Exp $
+.\"	$OpenBSD: msync.2,v 1.25 2015/10/29 12:03:46 tedu Exp $
 .\"	$NetBSD: msync.2,v 1.8 1995/10/12 15:41:09 jtc Exp $
 .\"
 .\" Copyright (c) 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)msync.2	8.1 (Berkeley) 6/9/93
 .\"
-.Dd $Mdocdate: March 13 2015 $
+.Dd $Mdocdate: October 29 2015 $
 .Dt MSYNC 2
 .Os
 .Sh NAME
@@ -44,22 +44,13 @@
 The
 .Fn msync
 system call writes all pages with shared modifications
-in the specified
-region of the process's address space back to permanent
-storage and, if requested, invalidates cached data mapped
-in the region.
-If
-.Fa len
-is 0, all modified pages within the region containing
-.Fa addr
-will be flushed;
-if
-.Fa len
-is non-zero, only modified pages containing
-.Fa addr
-and
-.Fa len-1
-succeeding locations will be flushed.
+in the specified region starting from
+.Ar addr
+and continuing for
+.Ar len
+bytes.
+.Ar addr
+should be a multiple of the page size.
 Any required synchronization of memory caches
 will also take place at this time.
 Filesystem operations on a file that is mapped for shared modifications
