@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.75 2015/03/19 21:22:15 bcallah Exp $	*/
+/*	$OpenBSD: main.c,v 1.76 2015/10/29 19:46:47 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -150,6 +150,10 @@ notnum:
 				if (nfiles == 1)
 					splitwind(0, 1);
 
+				if (fisdir(cp) == TRUE) {
+					(void)do_dired(cp);
+					continue;					
+				}
 				if ((curbp = findbuffer(cp)) == NULL) {
 					vttidy();
 					errx(1, "Can't find current buffer!");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dired.c,v 1.79 2015/10/13 20:10:09 lum Exp $	*/
+/*	$OpenBSD: dired.c,v 1.80 2015/10/29 19:46:47 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -865,7 +865,7 @@ dired_(char *dname)
 	if ((access(dname, R_OK | X_OK)) == -1) {
 		if (errno == EACCES) {
 			dobeep();
-			ewprintf("Permission denied");
+			ewprintf("Permission denied: %s", dname);
 		}
 		return (NULL);
 	}
