@@ -1,4 +1,4 @@
-/*	$OpenBSD: env.c,v 1.29 2015/02/09 22:35:08 deraadt Exp $	*/
+/*	$OpenBSD: env.c,v 1.30 2015/10/29 21:19:09 millert Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -22,7 +22,7 @@
 char **
 env_init(void)
 {
-	char **p = malloc(sizeof(char **));
+	char **p = malloc(sizeof(char *));
 
 	if (p != NULL)
 		p[0] = NULL;
@@ -63,49 +63,64 @@ env_copy(char **envp)
 	return (p);
 }
 
+static char *
+env_find(char *name, char **envp, size_t *count)
+{
+	char **ep, *p, *q;
+	size_t len;
+
+	/*
+	 * Find name in envp and return its value along with the
+	 * index it was found at or the length of envp if not found.
+	 * We treat a '=' in name as end of string for env_set().
+	 */
+	for (p = name; *p && *p != '='; p++)
+		continue;
+	len = (size_t)(p - name);
+	for (ep = envp; (p = *ep) != NULL; ep++) {
+		if ((q = strchr(p, '=')) == NULL)
+			continue;
+		if ((size_t)(q - p) == len && strncmp(p, name, len) == 0) {
+			p = q + 1;
+			break;
+		}
+	}
+	*count = (size_t)(ep - envp);
+	return (p);
+}
+
+char *
+env_get(char *name, char **envp)
+{
+	size_t count;
+
+	return (env_find(name, envp, &count));
+}
+
 char **
 env_set(char **envp, char *envstr)
 {
-	int count, found;
-	char **p, *envtmp;
+	size_t count, len;
+	char **p, *envcopy;
 
-	/*
-	 * count the number of elements, including the null pointer;
-	 * also set 'found' to -1 or index of entry if already in here.
-	 */
-	found = -1;
-	for (count = 0; envp[count] != NULL; count++) {
-		if (!strcmp_until(envp[count], envstr, '='))
-			found = count;
-	}
-	count++;	/* for the NULL */
+	if ((envcopy = strdup(envstr)) == NULL)
+		return (NULL);
 
-	if (found != -1) {
-		/*
-		 * it exists already, so just free the existing setting,
-		 * save our new one there, and return the existing array.
-		 */
-		if ((envtmp = strdup(envstr)) == NULL)
-			return (NULL);
-		free(envp[found]);
-		envp[found] = envtmp;
+	/* Replace existing name if found. */
+	if (env_find(envstr, envp, &count) != NULL) {
+		free(envp[count]);
+		envp[count] = envcopy;
 		return (envp);
 	}
 
-	/*
-	 * it doesn't exist yet, so resize the array, move null pointer over
-	 * one, save our string over the old null pointer, and return resized
-	 * array.
-	 */
-	if ((envtmp = strdup(envstr)) == NULL)
-		return (NULL);
-	p = reallocarray(envp, count+1, sizeof(char **));
+	/* Realloc envp and append new variable. */
+	p = reallocarray(envp, count + 2, sizeof(char **));
 	if (p == NULL) {
-		free(envtmp);
+		free(envcopy);
 		return (NULL);
 	}
-	p[count] = p[count-1];
-	p[count-1] = envtmp;
+	p[count++] = envcopy;
+	p[count] = NULL;
 	return (p);
 }
 
@@ -225,19 +240,4 @@ load_env(char *envstr, FILE *f)
 	if (snprintf(envstr, MAX_ENVSTR, "%s=%s", name, val) >= MAX_ENVSTR)
 		return (FALSE);
 	return (TRUE);
-}
-
-char *
-env_get(char *name, char **envp)
-{
-	int len = strlen(name);
-	char *p, *q;
-
-	while ((p = *envp++) != NULL) {
-		if (!(q = strchr(p, '=')))
-			continue;
-		if ((q - p) == len && !strncmp(p, name, len))
-			return (q+1);
-	}
-	return (NULL);
 }

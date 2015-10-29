@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.61 2015/10/29 21:17:47 millert Exp $	*/
+/*	$OpenBSD: misc.c,v 1.62 2015/10/29 21:19:09 millert Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -21,21 +21,6 @@
 
 static int LogFD = -1;
 static int syslog_open = FALSE;
-
-int
-strcmp_until(const char *left, const char *right, char until)
-{
-	while (*left && *left != until && *left == *right) {
-		left++;
-		right++;
-	}
-
-	if ((*left=='\0' || *left == until) &&
-	    (*right=='\0' || *right == until)) {
-		return (0);
-	}
-	return (*left - *right);
-}
 
 void
 set_cron_cwd(void)

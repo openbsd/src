@@ -1,4 +1,4 @@
-/*	$OpenBSD: funcs.h,v 1.19 2015/10/06 14:58:37 tedu Exp $	*/
+/*	$OpenBSD: funcs.h,v 1.20 2015/10/29 21:19:09 millert Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -50,7 +50,6 @@ int		job_runqueue(void),
 		load_env(char *, FILE *),
 		cron_pclose(FILE *, pid_t),
 		glue_strings(char *, size_t, const char *, const char *, char),
-		strcmp_until(const char *, const char *, char),
 		allowed(const char *, const char *, const char *),
 		open_socket(void),
 		safe_p(const char *, const char *),
