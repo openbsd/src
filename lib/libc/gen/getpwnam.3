@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getpwnam.3,v 1.8 2015/10/27 04:41:18 guenther Exp $
+.\"	$OpenBSD: getpwnam.3,v 1.9 2015/10/30 03:12:33 guenther Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: October 27 2015 $
+.Dd $Mdocdate: October 30 2015 $
 .Dt GETPWNAM 3
 .Os
 .Sh NAME
@@ -44,9 +44,9 @@
 .Ft struct passwd *
 .Fn getpwuid "uid_t uid"
 .Ft int
-.Fn getpwnam_r "const char *login" "struct passwd *pwstore" "char *buf" "size_t buflen" "struct passwd **result"
+.Fn getpwnam_r "const char *login" "struct passwd *pwstore" "char *buf" "size_t bufsize" "struct passwd **result"
 .Ft int
-.Fn getpwuid_r "uid_t uid" "struct passwd *pwstore" "char *buf" "size_t buflen" "struct passwd **result"
+.Fn getpwuid_r "uid_t uid" "struct passwd *pwstore" "char *buf" "size_t bufsize" "struct passwd **result"
 .Ft int
 .Fn setpassent "int stayopen"
 .Sh DESCRIPTION
@@ -78,16 +78,27 @@ and
 search the password database for the given login name or user ID,
 respectively, always returning the first one encountered.
 .Pp
-The re-entrant versions,
+The
 .Fn getpwnam_r
 and
-.Fn getpwuid_r ,
-behave similarly but the various strings associated with the result
-are stored in
-.Fa buf ,
-and
+.Fn getpwuid_r
+functions both update the passwd structure pointed to by
 .Fa pwstore
-is updated to reference those strings.
+and store a pointer to that structure at the location pointed to by
+.Fa result .
+The structure is filled with an entry from the password database with a
+matching
+.Fa name
+or
+.Fa uid .
+Storage referenced by the passwd structure will be allocated from
+the memory provided with the
+.Fa buf
+parameter, which is
+.Fa bufsiz
+characters in size.
+The maximum size needed for this buffer can be determined with
+.Fn sysconf _SC_GETPW_R_SIZE_MAX .
 .Pp
 .Fn setpassent
 accomplishes two purposes.
@@ -189,7 +200,7 @@ functions may fail if:
 The storage supplied via
 .Fa buf
 and
-.Fa buflen
+.Fa bufsize
 is too small and cannot contain all the strings to be returned in
 .Fa pwstore .
 .El
@@ -214,6 +225,7 @@ subsystem.
 .Xr getgrouplist 3 ,
 .Xr getpwent 3 ,
 .Xr pw_dup 3 ,
+.Xr sysconf 3 ,
 .Xr passwd 5 ,
 .Xr Makefile.yp 8 ,
 .Xr pwd_mkdb 8 ,

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.70 2015/09/13 17:08:03 guenther Exp $
+#	$OpenBSD: Makefile.inc,v 1.71 2015/10/30 03:12:33 guenther Exp $
 
 # gen sources
 .PATH: ${LIBCSRCDIR}/arch/${MACHINE_CPU}/gen ${LIBCSRCDIR}/gen
@@ -100,7 +100,7 @@ MLINKS+=getdomainname.3 setdomainname.3
 MLINKS+=getfsent.3 endfsent.3 getfsent.3 getfsfile.3 getfsent.3 getfsspec.3 \
 	getfsent.3 setfsent.3
 MLINKS+=getgrent.3 endgrent.3 getgrent.3 setgroupent.3 getgrent.3 getgrgid.3 \
-	getgrent.3 getgrnam.3 getgrent.3 setgrent.3 getgrent.3 setgrfile.3 \
+	getgrent.3 getgrnam.3 getgrent.3 setgrent.3 \
 	getgrent.3 getgrgid_r.3 getgrent.3 getgrnam_r.3
 MLINKS+=gethostname.3 sethostname.3
 MLINKS+=getnetgrent.3 endnetgrent.3 getnetgrent.3 innetgr.3 \
