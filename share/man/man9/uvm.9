@@ -1,4 +1,4 @@
-.\"	$OpenBSD: uvm.9,v 1.60 2015/01/15 21:19:22 guenther Exp $
+.\"	$OpenBSD: uvm.9,v 1.61 2015/10/30 04:21:42 mmcc Exp $
 .\"	$NetBSD: uvm.9,v 1.14 2000/06/29 06:08:44 mrg Exp $
 .\"
 .\" Copyright (c) 1998 Matthew R. Green
@@ -30,7 +30,7 @@
 .\" XXX this manual sets nS to 1 or 0 in the description, to obtain
 .\" synopsis-like function prototypes.  any better way?
 .\"
-.Dd $Mdocdate: January 15 2015 $
+.Dd $Mdocdate: October 30 2015 $
 .Dt UVM 9
 .Os
 .Sh NAME
@@ -131,7 +131,7 @@ function initialises the swap subsystem.
 .Fn uvm_map_checkprot "vm_map_t map" "vaddr_t start" "vaddr_t end" "vm_prot_t protection"
 .Ft int
 .Fn uvm_map_protect "vm_map_t map" "vaddr_t start" "vaddr_t end" "vm_prot_t new_prot" "boolean_t set_max"
-.Ft int
+.Ft void
 .Fn uvm_deallocate "vm_map_t map" "vaddr_t start" "vsize_t size"
 .Ft struct vmspace *
 .Fn uvmspace_alloc "vaddr_t min" "vaddr_t max" "boolean_t pageable" "boolean_t remove_holes"
