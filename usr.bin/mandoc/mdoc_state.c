@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_state.c,v 1.2 2015/10/21 23:49:05 schwarze Exp $ */
+/*	$OpenBSD: mdoc_state.c,v 1.3 2015/10/30 18:53:37 schwarze Exp $ */
 /*
  * Copyright (c) 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -193,6 +193,9 @@ state_bd(STATE_ARGS)
 
 	if (n->type != ROFFT_HEAD &&
 	    (n->type != ROFFT_BODY || n->end != ENDBODY_NOT))
+		return;
+
+	if (n->parent->args == NULL)
 		return;
 
 	arg = n->parent->args->argv[0].arg;
