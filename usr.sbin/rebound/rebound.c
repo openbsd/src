@@ -1,4 +1,4 @@
-/* $OpenBSD: rebound.c,v 1.39 2015/10/29 14:01:01 tedu Exp $ */
+/* $OpenBSD: rebound.c,v 1.40 2015/10/30 15:44:12 tedu Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -641,6 +641,7 @@ main(int argc, char **argv)
 
 	cachemax = 10000; /* something big, but not huge */
 
+	tzset();
 	openlog("rebound", LOG_PID | LOG_NDELAY, LOG_DAEMON);
 
 	if (!debug)
