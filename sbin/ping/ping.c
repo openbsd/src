@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.130 2015/10/29 13:01:29 florian Exp $	*/
+/*	$OpenBSD: ping.c,v 1.131 2015/10/30 11:00:52 florian Exp $	*/
 /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
@@ -61,6 +61,7 @@
 #include <netinet/ip_icmp.h>
 #include <netinet/ip_var.h>
 #include <arpa/inet.h>
+#include <math.h>
 #include <netdb.h>
 #include <signal.h>
 #include <unistd.h>
@@ -154,11 +155,10 @@ struct itimerval interstr;	/* interval structure for use with setitimer */
 int timing;			/* flag to do timing */
 int timinginfo;
 unsigned int maxwait = MAXWAIT_DEFAULT;	/* max seconds to wait for response */
-quad_t tmin = 999999999;	/* minimum round trip time in usec */
-quad_t tmax = 0;		/* maximum round trip time in usec */
-quad_t tsum = 0;		/* sum of all times in usec, for doing average */
-quad_t tsumsq = 0;		/* sum of all times squared, for std. dev. */
-
+double tmin = 999999999.0;	/* minimum round trip time */
+double tmax = 0.0;		/* maximum round trip time */
+double tsum = 0.0;		/* sum of all times, for doing average */
+double tsumsq = 0.0;		/* sum of all times squared, for std. dev. */
 int bufspace = IP_MAXPACKET;
 
 struct tv64 tv64_offset;
@@ -176,7 +176,6 @@ int check_icmph(struct ip *);
 void pr_icmph(struct icmp *);
 void pr_pack(char *, int, struct sockaddr_in *);
 void pr_retip(struct ip *);
-quad_t qsqrt(quad_t);
 void pr_iph(struct ip *);
 #ifndef SMALL
 int map_tos(char *, int *);
@@ -702,7 +701,7 @@ pr_pack(char *buf, int cc, struct sockaddr_in *from)
 	struct ip *ip, *ip2;
 	struct timespec ts, tp;
 	char *pkttime;
-	quad_t triptime = 0;
+	double triptime = 0;
 	int hlen, hlen2, dupflag;
 	struct payload payload;
 
@@ -756,7 +755,8 @@ pr_pack(char *buf, int cc, struct sockaddr_in *from)
 			    tv64_offset.tv64_nsec;
 
 			timespecsub(&ts, &tp, &ts);
-			triptime = (ts.tv_sec * 1000000) + (ts.tv_nsec / 1000);
+			triptime = ((double)ts.tv_sec) * 1000.0 +
+			    ((double)ts.tv_nsec) / 1000000.0;
 			tsum += triptime;
 			tsumsq += triptime * triptime;
 			if (triptime < tmin)
@@ -784,11 +784,8 @@ pr_pack(char *buf, int cc, struct sockaddr_in *from)
 			    inet_ntoa(*(struct in_addr *)&from->sin_addr.s_addr),
 			    ntohs(icp->icmp_seq));
 			(void)printf(" ttl=%d", ip->ip_ttl);
-			if (cc >= 8 + sizeof(struct payload)) {
-				(void)printf(" time=%d.%03d ms",
-				    (int)(triptime / 1000),
-				    (int)(triptime % 1000));
-			}
+			if (cc >= 8 + sizeof(struct payload))
+				(void)printf(" time=%.3f ms", triptime);
 			if (dupflag)
 				(void)printf(" (DUP!)");
 			/* check the data */
@@ -1005,36 +1002,16 @@ summary(int header, int insig)
 	}
 	strlcat(buf, "\n", sizeof buf);
 	if (timinginfo) {
-		quad_t avg = tsum / timinginfo;
-		quad_t dev = qsqrt(tsumsq / timinginfo - avg * avg);
-
-		snprintf(buft, sizeof buft, "round-trip min/avg/max/std-dev = "
-		    "%d.%03d/%d.%03d/%d.%03d/%d.%03d ms\n",
-		    (int)(tmin / 1000), (int)(tmin % 1000),
-		    (int)(avg  / 1000), (int)(avg  % 1000),
-		    (int)(tmax / 1000), (int)(tmax % 1000),
-		    (int)(dev  / 1000), (int)(dev  % 1000));
-		strlcat(buf, buft, sizeof buf);
+		/* Only display average to microseconds */
+		double num = nreceived + nrepeats;
+		double avg = tsum / num;
+		double dev = sqrt(tsumsq / num - avg * avg);
+		snprintf(buft, sizeof(buft),
+		    "round-trip min/avg/max/std-dev = %.3f/%.3f/%.3f/%.3f ms\n",
+		    tmin, avg, tmax, dev);
+		strlcat(buf, buft, sizeof(buf));
 	}
 	write(STDOUT_FILENO, buf, strlen(buf));		/* XXX atomicio? */
-}
-
-quad_t
-qsqrt(quad_t qdev)
-{
-	quad_t y, x = 1;
-
-	if (!qdev)
-		return(0);
-
-	do { /* newton was a stinker */
-		y = x;
-		x = qdev / x;
-		x += y;
-		x /= 2;
-	} while ((x - y) > 1 || (x - y) < -1);
-
-	return(x);
 }
 
 /*
