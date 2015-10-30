@@ -1,4 +1,4 @@
-/*	$OpenBSD: test_tty.c,v 1.3 2015/10/26 18:52:19 semarie Exp $ */
+/*	$OpenBSD: test_tty.c,v 1.4 2015/10/30 07:24:20 semarie Exp $ */
 /*
  * Copyright (c) 2015 Sebastien Marie <semarie@openbsd.org>
  *
@@ -44,8 +44,8 @@ test_request_tty()
 		_exit(errno);
 	errno = 0; /* discard error */
 
-	/* tests that only need tty */	
-	if (pledge("tty", NULL) == -1)
+	/* tests that only need tty (and stdio for calling ioctl(2)) */	
+	if (pledge("stdio tty", NULL) == -1)
 		_exit(errno);
 
 
