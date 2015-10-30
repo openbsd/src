@@ -1,4 +1,4 @@
-.Dd July 5, 2014
+.Dd October 27, 2015
 .Dt BD-BADARGS 1
 .Os OpenBSD
 .Sh NAME
@@ -43,4 +43,9 @@ missing -file argument:
 .Bd -ragged -offset indent -file -compact
 ragged
 offset indent
+.Ed
+no argument whatsoever:
+.Bd
+no
+argument
 .Ed
