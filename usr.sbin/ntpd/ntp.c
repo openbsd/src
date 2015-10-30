@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.138 2015/10/23 14:52:20 phessler Exp $ */
+/*	$OpenBSD: ntp.c,v 1.139 2015/10/30 16:41:53 reyk Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -40,7 +40,6 @@
 #define	PFD_MAX		3
 
 volatile sig_atomic_t	 ntp_quit = 0;
-volatile sig_atomic_t	 ntp_report = 0;
 struct imsgbuf		*ibuf_main;
 struct imsgbuf		*ibuf_dns;
 struct ntpd_conf	*conf;
@@ -48,14 +47,12 @@ struct ctl_conns	 ctl_conns;
 u_int			 peer_cnt;
 u_int			 sensors_cnt;
 extern u_int		 constraint_cnt;
-time_t			 lastreport;
 
 void	ntp_sighdlr(int);
 int	ntp_dispatch_imsg(void);
 int	ntp_dispatch_imsg_dns(void);
 void	peer_add(struct ntp_peer *);
 void	peer_remove(struct ntp_peer *);
-void	report_peers(int);
 
 void
 ntp_sighdlr(int sig)
@@ -64,9 +61,6 @@ ntp_sighdlr(int sig)
 	case SIGINT:
 	case SIGTERM:
 		ntp_quit = 1;
-		break;
-	case SIGINFO:
-		ntp_report = 1;
 		break;
 	}
 }
@@ -160,7 +154,6 @@ ntp_main(int pipe_prnt[2], int fd_ctl, struct ntpd_conf *nconf,
 
 	signal(SIGTERM, ntp_sighdlr);
 	signal(SIGINT, ntp_sighdlr);
-	signal(SIGINFO, ntp_sighdlr);
 	signal(SIGPIPE, SIG_IGN);
 	signal(SIGHUP, SIG_IGN);
 	signal(SIGCHLD, SIG_DFL);
@@ -208,9 +201,6 @@ ntp_main(int pipe_prnt[2], int fd_ctl, struct ntpd_conf *nconf,
 	peer_cnt = 0;
 	TAILQ_FOREACH(p, &conf->ntp_peers, entry)
 		peer_cnt++;
-
-	/* wait 5 min before reporting first status to let things settle down */
-	lastreport = getmonotime() + (5 * 60) - REPORT_INTERVAL;
 
 	while (ntp_quit == 0) {
 		if (peer_cnt > idx2peer_elms) {
@@ -419,8 +409,6 @@ ntp_main(int pipe_prnt[2], int fd_ctl, struct ntpd_conf *nconf,
 			if (s->next <= getmonotime())
 				sensor_query(s);
 		}
-		report_peers(ntp_report);
-		ntp_report = 0;
 	}
 
 	msgbuf_write(&ibuf_main->w);
@@ -787,60 +775,4 @@ error_interval(void)
 	interval = INTERVAL_QUERY_PATHETIC * QSCALE_OFF_MAX / QSCALE_OFF_MIN;
 	r = arc4random_uniform(interval / 10);
 	return (interval + r);
-}
-
-void
-report_peers(int always)
-{
-	time_t now;
-	u_int badpeers = 0;
-	u_int badsensors = 0;
-	struct ntp_peer *p;
-	struct ntp_sensor *s;
-
-	TAILQ_FOREACH(p, &conf->ntp_peers, entry) {
-		if (p->trustlevel < TRUSTLEVEL_BADPEER)
-			badpeers++;
-	}
-	TAILQ_FOREACH(s, &conf->ntp_sensors, entry) {
-		if (!s->update.good)
-			badsensors++;
-	}
-
-	now = getmonotime();
-	if (!always) {
-		if ((peer_cnt == 0 || badpeers == 0 || badpeers < peer_cnt / 2)
-		    && (sensors_cnt == 0 || badsensors == 0 ||
-		    badsensors < sensors_cnt / 2))
-			return;
-
-		if (lastreport + REPORT_INTERVAL > now)
-			return;
-	}
-	lastreport = now;
-	if (peer_cnt > 0) {
-		log_warnx("%u out of %u peers valid", peer_cnt - badpeers,
-		    peer_cnt);
-		TAILQ_FOREACH(p, &conf->ntp_peers, entry) {
-			if (p->trustlevel < TRUSTLEVEL_BADPEER) {
-				const char *a = "not resolved";
-				const char *pool = "";
-				if (p->addr)
-					a = log_sockaddr(
-					    (struct sockaddr *)&p->addr->ss);
-				if (p->addr_head.pool)
-					pool = "from pool ";
-				log_warnx("bad peer %s%s (%s)",
-				    pool, p->addr_head.name, a);
-			}
-		}
-	}
-	if (sensors_cnt > 0) {
-		log_warnx("%u out of %u sensors valid",
-		    sensors_cnt - badsensors, sensors_cnt);
-		TAILQ_FOREACH(s, &conf->ntp_sensors, entry) {
-			if (!s->update.good)
-				log_warnx("bad sensor %s", s->device);
-		}
-	}
 }

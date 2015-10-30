@@ -1,4 +1,4 @@
-.\" $OpenBSD: ntpd.8,v 1.39 2015/03/26 20:34:54 jmc Exp $
+.\" $OpenBSD: ntpd.8,v 1.40 2015/10/30 16:41:53 reyk Exp $
 .\"
 .\" Copyright (c) 2003, 2004, 2006 Henning Brauer <henning@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
 .\" OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 26 2015 $
+.Dd $Mdocdate: October 30 2015 $
 .Dt NTPD 8
 .Os
 .Sh NAME
@@ -119,14 +119,6 @@ typically
 and its initial clock drift from
 .Pa /var/db/ntpd.drift .
 Clock drift is periodically written to the drift file thereafter.
-.Pp
-When
-.Nm
-.Pq engine
-receives a
-.Dv SIGINFO
-signal, it writes its peer and sensor status to
-.Xr syslog 3 .
 .Sh FILES
 .Bl -tag -width "/var/db/ntpd.driftXXX" -compact
 .It Pa /etc/ntpd.conf
