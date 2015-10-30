@@ -1,8 +1,8 @@
-.\"	$OpenBSD: ksh.1,v 1.162 2015/10/17 21:06:23 jmc Exp $
+.\"	$OpenBSD: ksh.1,v 1.163 2015/10/30 03:13:52 guenther Exp $
 .\"
 .\"	Public Domain
 .\"
-.Dd $Mdocdate: October 17 2015 $
+.Dd $Mdocdate: October 30 2015 $
 .Dt KSH 1
 .Os
 .Sh NAME
@@ -847,7 +847,7 @@ integer='typeset -i'
 local='typeset'
 login='exec login'
 nohup='nohup '
-r='fc -e -'
+r='fc -s'
 stop='kill -STOP'
 type='whence -v'
 .Ed
@@ -3159,7 +3159,7 @@ and
 .Fl s
 is identical: re-execute the selected command without invoking an editor.
 This command is usually accessed with the predefined
-.Ic alias r='fc -e -' .
+.Ic alias r='fc -s' .
 .Pp
 .It Ic fg Op Ar job ...
 Resume the specified job(s) in the foreground.
