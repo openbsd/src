@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.175 2015/10/28 12:14:25 florian Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.176 2015/10/30 09:39:42 bluhm Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -1922,7 +1922,7 @@ icmp6_mtudisc_clone(struct sockaddr *dst, u_int rdomain)
 		info.rti_info[RTAX_GATEWAY] = rt->rt_gateway;
 
 		s = splsoftnet();
-		error = rtrequest1(RTM_ADD, &info, rt->rt_priority, &nrt,
+		error = rtrequest(RTM_ADD, &info, rt->rt_priority, &nrt,
 		    rdomain);
 		splx(s);
 		if (error) {

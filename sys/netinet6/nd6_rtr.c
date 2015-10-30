@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_rtr.c,v 1.130 2015/10/28 12:14:25 florian Exp $	*/
+/*	$OpenBSD: nd6_rtr.c,v 1.131 2015/10/30 09:39:42 bluhm Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.97 2001/02/07 11:09:13 itojun Exp $	*/
 
 /*
@@ -599,7 +599,7 @@ defrouter_addreq(struct nd_defrouter *new)
 	info.rti_info[RTAX_NETMASK] = sin6tosa(&mask);
 
 	s = splsoftnet();
-	error = rtrequest1(RTM_ADD, &info, RTP_DEFAULT, &rt,
+	error = rtrequest(RTM_ADD, &info, RTP_DEFAULT, &rt,
 	    new->ifp->if_rdomain);
 	if (error == 0) {
 		rt_sendmsg(rt, RTM_ADD, new->ifp->if_rdomain);
@@ -704,7 +704,7 @@ defrouter_delreq(struct nd_defrouter *dr)
 	info.rti_info[RTAX_GATEWAY] = sin6tosa(&gw);
 	info.rti_info[RTAX_NETMASK] = sin6tosa(&mask);
 
-	error = rtrequest1(RTM_DELETE, &info, RTP_DEFAULT, &rt,
+	error = rtrequest(RTM_DELETE, &info, RTP_DEFAULT, &rt,
 	    dr->ifp->if_rdomain);
 	if (error == 0) {
 		rt_sendmsg(rt, RTM_DELETE, dr->ifp->if_rdomain);
@@ -1773,7 +1773,7 @@ nd6_prefix_onlink(struct nd_prefix *pr)
 	info.rti_info[RTAX_GATEWAY] = ifa->ifa_addr;
 	info.rti_info[RTAX_NETMASK] = sin6tosa(&mask6);
 
-	error = rtrequest1(RTM_ADD, &info, RTP_CONNECTED, &rt, ifp->if_rdomain);
+	error = rtrequest(RTM_ADD, &info, RTP_CONNECTED, &rt, ifp->if_rdomain);
 	if (error == 0) {
 		pr->ndpr_stateflags |= NDPRF_ONLINK;
 		rt_sendmsg(rt, RTM_ADD, ifp->if_rdomain);
@@ -1817,7 +1817,7 @@ nd6_prefix_offlink(struct nd_prefix *pr)
 	info.rti_info[RTAX_DST] = sin6tosa(&sa6);
 	info.rti_info[RTAX_NETMASK] = sin6tosa(&mask6);
 
-	error = rtrequest1(RTM_DELETE, &info, RTP_CONNECTED, &rt,
+	error = rtrequest(RTM_DELETE, &info, RTP_CONNECTED, &rt,
 	    ifp->if_rdomain);
 	if (error == 0) {
 		pr->ndpr_stateflags &= ~NDPRF_ONLINK;
@@ -2121,5 +2121,5 @@ rt6_deleteroute(struct rtentry *rt, void *arg, unsigned int id)
 	info.rti_info[RTAX_DST] = rt_key(rt);
 	info.rti_info[RTAX_GATEWAY] = rt->rt_gateway;
 	info.rti_info[RTAX_NETMASK] = rt_mask(rt);
-	return (rtrequest1(RTM_DELETE, &info, RTP_ANY, NULL, id));
+	return (rtrequest(RTM_DELETE, &info, RTP_ANY, NULL, id));
 }

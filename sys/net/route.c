@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.265 2015/10/25 16:25:23 mpi Exp $	*/
+/*	$OpenBSD: route.c,v 1.266 2015/10/30 09:39:42 bluhm Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -220,7 +220,7 @@ rtalloc(struct sockaddr *dst, int flags, unsigned int tableid)
 	if (rt != NULL) {
 		if ((rt->rt_flags & RTF_CLONING) && ISSET(flags, RT_RESOLVE)) {
 			rt0 = rt;
-			error = rtrequest1(RTM_RESOLVE, &info, RTP_DEFAULT,
+			error = rtrequest(RTM_RESOLVE, &info, RTP_DEFAULT,
 			    &rt, tableid);
 			if (error) {
 				rt0->rt_use++;
@@ -487,7 +487,7 @@ create:
 			info.rti_ifa = ifa;
 			info.rti_flags = flags;
 			rt = NULL;
-			error = rtrequest1(RTM_ADD, &info, RTP_DEFAULT, &rt,
+			error = rtrequest(RTM_ADD, &info, RTP_DEFAULT, &rt,
 			    rdomain);
 			if (error == 0)
 				flags = rt->rt_flags;
@@ -545,7 +545,7 @@ rtdeletemsg(struct rtentry *rt, u_int tableid)
 	info.rti_info[RTAX_GATEWAY] = rt->rt_gateway;
 	info.rti_flags = rt->rt_flags;
 	ifidx = rt->rt_ifidx;
-	error = rtrequest1(RTM_DELETE, &info, rt->rt_priority, &rt, tableid);
+	error = rtrequest(RTM_DELETE, &info, rt->rt_priority, &rt, tableid);
 	rt_missmsg(RTM_DELETE, &info, info.rti_flags, ifidx, error, tableid);
 	if (error == 0)
 		rtfree(rt);
@@ -711,7 +711,7 @@ rt_getifa(struct rt_addrinfo *info, u_int rtid)
 }
 
 int
-rtrequest1(int req, struct rt_addrinfo *info, u_int8_t prio,
+rtrequest(int req, struct rt_addrinfo *info, u_int8_t prio,
     struct rtentry **ret_nrt, u_int tableid)
 {
 	struct rtentry		*rt, *crt;
@@ -910,7 +910,7 @@ rtrequest1(int req, struct rt_addrinfo *info, u_int8_t prio,
 			 * route.
 			 */
 			if ((*ret_nrt)->rt_ifa->ifa_ifp == NULL) {
-				printf("rtrequest1 RTM_RESOLVE: wrong ifa (%p) "
+				printf("rtrequest RTM_RESOLVE: wrong ifa (%p) "
 				    "was (%p)\n", ifa, (*ret_nrt)->rt_ifa);
 				(*ret_nrt)->rt_ifp->if_rtrequest(rt->rt_ifp,
 				    RTM_DELETE, *ret_nrt);
@@ -1128,7 +1128,7 @@ rt_ifa_add(struct ifaddr *ifa, int flags, struct sockaddr *dst)
 	if (flags & RTF_CONNECTED)
 		prio = RTP_CONNECTED;
 
-	error = rtrequest1(RTM_ADD, &info, prio, &rt, rtableid);
+	error = rtrequest(RTM_ADD, &info, prio, &rt, rtableid);
 	if (error == 0) {
 		/*
 		 * A local route is created for every address configured
@@ -1188,7 +1188,7 @@ rt_ifa_del(struct ifaddr *ifa, int flags, struct sockaddr *dst)
 	if (flags & RTF_CONNECTED)
 		prio = RTP_CONNECTED;
 
-	error = rtrequest1(RTM_DELETE, &info, prio, &rt, rtableid);
+	error = rtrequest(RTM_DELETE, &info, prio, &rt, rtableid);
 	if (error == 0) {
 		rt_sendmsg(rt, RTM_DELETE, rtableid);
 		if (flags & RTF_LOCAL)
@@ -1315,7 +1315,7 @@ static int			rt_init_done = 0;
 		struct rt_addrinfo info;			\
 		bzero(&info, sizeof(info));			\
 		info.rti_info[RTAX_DST] = rt_key(r->rtt_rt);	\
-		rtrequest1(RTM_DELETE, &info,			\
+		rtrequest(RTM_DELETE, &info,			\
 		    r->rtt_rt->rt_priority, NULL, r->rtt_tableid);	\
 	}							\
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_enc.c,v 1.62 2015/10/22 17:48:34 mpi Exp $	*/
+/*	$OpenBSD: if_enc.c,v 1.63 2015/10/30 09:39:42 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2010 Reyk Floeter <reyk@vantronix.net>
@@ -98,7 +98,7 @@ enc_clone_create(struct if_clone *ifc, int unit)
 	if (unit == 0)
 		if_addgroup(ifp, ifc->ifc_name);
 	/*
-	 * enc(4) does not have a link-layer address but rtrequest1()
+	 * enc(4) does not have a link-layer address but rtrequest()
 	 * wants an ifa for every route entry.  So let's setup a fake
 	 * and empty ifa of type AF_LINK for this purpose.
 	 */

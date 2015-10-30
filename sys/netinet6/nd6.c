@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.166 2015/10/29 14:28:34 mpi Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.167 2015/10/30 09:39:42 bluhm Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -631,13 +631,13 @@ nd6_lookup(struct in6_addr *addr6, int create, struct ifnet *ifp,
 			 * Create a new route.  RTF_LLINFO is necessary
 			 * to create a Neighbor Cache entry for the
 			 * destination in nd6_rtrequest which will be
-			 * called in rtrequest1.
+			 * called in rtrequest.
 			 */
 			bzero(&info, sizeof(info));
 			info.rti_flags = RTF_HOST | RTF_LLINFO;
 			info.rti_info[RTAX_DST] = sin6tosa(&sin6);
 			info.rti_info[RTAX_GATEWAY] = sdltosa(ifp->if_sadl);
-			error = rtrequest1(RTM_ADD, &info, RTP_CONNECTED, &rt,
+			error = rtrequest(RTM_ADD, &info, RTP_CONNECTED, &rt,
 			    rtableid);
 			if (error)
 				return (NULL);
