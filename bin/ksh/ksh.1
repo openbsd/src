@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ksh.1,v 1.163 2015/10/30 03:13:52 guenther Exp $
+.\"	$OpenBSD: ksh.1,v 1.164 2015/10/30 13:48:11 millert Exp $
 .\"
 .\"	Public Domain
 .\"
@@ -3109,6 +3109,7 @@ A command that exits with a non-zero status.
 .Op Fl r
 .Op Ar first Op Ar last
 .Xc
+Fix command.
 .Ar first
 and
 .Ar last
@@ -3136,13 +3137,16 @@ parameter (if this parameter is not set,
 is used), and then executed by the shell.
 .Pp
 .It Xo
-.Ic fc
-.Cm -e - \*(Ba Fl s
+.Ic fc Fl s
 .Op Fl g
 .Op Ar old Ns = Ns Ar new
 .Op Ar prefix
 .Xc
-Re-execute the selected command (the previous command by default) after
+Re-execute the most recent command beginning with
+.Ar prefix ,
+or the previous command if no 
+.Ar prefix
+is specified,
 performing the optional substitution of
 .Ar old
 with
@@ -3153,11 +3157,12 @@ is specified, all occurrences of
 .Ar old
 are replaced with
 .Ar new .
-The meaning of
-.Cm -e -
-and
+The editor is not invoked when the
 .Fl s
-is identical: re-execute the selected command without invoking an editor.
+flag is used.
+The obsolescent equivalent
+.Dq Fl e No -
+is also accepted.
 This command is usually accessed with the predefined
 .Ic alias r='fc -s' .
 .Pp
