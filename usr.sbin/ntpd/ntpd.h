@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.h,v 1.123 2015/10/23 14:52:20 phessler Exp $ */
+/*	$OpenBSD: ntpd.h,v 1.124 2015/10/30 17:59:56 naddy Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -63,7 +63,6 @@
 #define	LOG_NEGLIGIBLE_ADJFREQ	0.05	/* negligible rate to not log (ppm) */
 #define	FREQUENCY_SAMPLES	8	/* samples for est. of permanent drift */
 #define	MAX_FREQUENCY_ADJUST	128e-5	/* max correction per iteration */
-#define REPORT_INTERVAL		(24*60*60) /* interval between status reports */
 #define MAX_SEND_ERRORS		3	/* max send errors before reconnect */
 #define	MAX_DISPLAY_WIDTH	80	/* max chars in ctl_show report line */
 
