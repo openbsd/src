@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rt_ifa_add.9,v 1.4 2014/11/24 12:43:54 mpi Exp $
+.\"	$OpenBSD: rt_ifa_add.9,v 1.5 2015/10/30 09:48:03 bluhm Exp $
 .\"
 .\" Copyright (c) 2014 Martin Pieuchot
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 24 2014 $
+.Dd $Mdocdate: October 30 2015 $
 .Dt RT_IFA_ADD 9
 .Os
 .Sh NAME
@@ -99,9 +99,9 @@ and
 will return
 .Dv 0
 on success and the return value of
-.Xr rtrequest1 9
+.Xr rtrequest 9
 otherwise.
 .Sh SEE ALSO
 .Xr lo 4 ,
 .Xr route 4 ,
-.Xr rtrequest1 9
+.Xr rtrequest 9

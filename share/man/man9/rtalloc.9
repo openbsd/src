@@ -1,4 +1,4 @@
-.\" $OpenBSD: rtalloc.9,v 1.8 2015/09/19 09:02:16 mpi Exp $
+.\" $OpenBSD: rtalloc.9,v 1.9 2015/10/30 09:48:03 bluhm Exp $
 .\"
 .\" Copyright (c) 2014-2015 Martin Pieuchot
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 19 2015 $
+.Dd $Mdocdate: October 30 2015 $
 .Dt RTALLOC 9
 .Os
 .Sh NAME
@@ -106,4 +106,4 @@ can be called during autoconf, from process context, or from interrupt context.
 returns 1 if the route entry is valid, otherwise 0.
 .Sh SEE ALSO
 .Xr route 4 ,
-.Xr rtrequest1 9
+.Xr rtrequest 9

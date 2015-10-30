@@ -1,4 +1,4 @@
-.\"     $OpenBSD: rtrequest1.9,v 1.5 2015/10/21 08:48:12 mpi Exp $
+.\"     $OpenBSD: rtrequest.9,v 1.1 2015/10/30 09:48:03 bluhm Exp $
 .\"
 .\" Copyright (c) 2011 Bret S. Lambert <blambert@openbsd.org>
 .\" All rights reserved.
@@ -15,17 +15,17 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 21 2015 $
+.Dd $Mdocdate: October 30 2015 $
 .Dt RTREQUEST1 9
 .Os
 .Sh NAME
-.Nm rtrequest1
+.Nm rtrequest
 .Nd add or remove entries from a routing table
 .Sh SYNOPSIS
 .In sys/types.h
 .In net/route.h
 .Ft int
-.Fn rtrequest1 "int req" "struct rt_addrinfo *info" "u_int8_t prio" \
+.Fn rtrequest "int req" "struct rt_addrinfo *info" "u_int8_t prio" \
 "struct rtentry **rtp" "u_int rtableid"
 .Bd -literal
 struct rt_addrinfo {
@@ -51,7 +51,7 @@ struct rt_addrinfo {
 .Ed
 .Sh DESCRIPTION
 The
-.Fn rtrequest1
+.Fn rtrequest
 function is used to add or remove entries from a specific routing table.
 It takes the following arguments:
 .Bl -tag -width rtableid
@@ -91,10 +91,10 @@ calling
 The ID of the routing table to modify.
 .El
 .Sh CONTEXT
-.Fn rtrequest1
+.Fn rtrequest
 can be called during autoconf, from process context, or from interrupt context.
 .Sh RETURN VALUES
-.Fn rtrequest1
+.Fn rtrequest
 may fail with:
 .Pp
 .Bl -tag -width Er -compact
