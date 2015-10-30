@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.h,v 1.39 2015/10/26 14:12:13 bluhm Exp $	*/
+/*	$OpenBSD: queue.h,v 1.40 2015/10/30 12:20:56 jasper Exp $	*/
 /*	$NetBSD: queue.h,v 1.11 1996/05/16 05:17:14 mycroft Exp $	*/
 
 /*
@@ -36,7 +36,7 @@
 #define	_SYS_QUEUE_H_
 
 /*
- * This file defines five types of data structures: singly-linked lists, 
+ * This file defines five types of data structures: singly-linked lists,
  * lists, simple queues, tail queues, and circular queues.
  *
  *
@@ -95,15 +95,15 @@
 struct name {								\
 	struct type *slh_first;	/* first element */			\
 }
- 
+
 #define	SLIST_HEAD_INITIALIZER(head)					\
 	{ NULL }
- 
+
 #define SLIST_ENTRY(type)						\
 struct {								\
 	struct type *sle_next;	/* next element */			\
 }
- 
+
 /*
  * Singly-linked List access methods.
  */
@@ -395,7 +395,7 @@ struct {								\
 		    XSIMPLEQ_XOR(head, &(elm)->field.sqx_next);		\
 } while (0)
 
-		    
+
 /*
  * Tail queue definitions.
  */
@@ -414,8 +414,8 @@ struct {								\
 	struct type **tqe_prev;	/* address of previous next element */	\
 }
 
-/* 
- * tail queue access methods 
+/*
+ * tail queue access methods
  */
 #define	TAILQ_FIRST(head)		((head)->tqh_first)
 #define	TAILQ_END(head)			NULL
@@ -535,7 +535,7 @@ struct {								\
 }
 
 /*
- * Circular queue access methods 
+ * Circular queue access methods
  */
 #define	CIRCLEQ_FIRST(head)		((head)->cqh_first)
 #define	CIRCLEQ_LAST(head)		((head)->cqh_last)
