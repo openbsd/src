@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.208 2015/10/22 05:26:06 dlg Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.209 2015/10/30 12:54:36 reyk Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -248,6 +248,18 @@ m_inithdr(struct mbuf *m)
 	m->m_pkthdr.pf.prio = IFQ_DEFPRIO;
 
 	return (m);
+}
+
+void
+m_resethdr(struct mbuf *m)
+{
+	/* like the previous, but keep any associated data and mbufs */
+	m->m_flags = M_PKTHDR;
+	memset(&m->m_pkthdr.pf, 0, sizeof(m->m_pkthdr.pf));
+	m->m_pkthdr.pf.prio = IFQ_DEFPRIO;
+
+	/* also delete all mbuf tags to reset the state */
+	m_tag_delete_chain(m);
 }
 
 struct mbuf *

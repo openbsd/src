@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pair.c,v 1.4 2015/10/25 12:59:57 mpi Exp $	*/
+/*	$OpenBSD: if_pair.c,v 1.5 2015/10/30 12:54:36 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -182,9 +182,11 @@ pairstart(struct ifnet *ifp)
 #endif /* NBPFILTER > 0 */
 
 		ifp->if_opackets++;
-		if (pairedifp != NULL)
+		if (pairedifp != NULL) {
+			if (m->m_flags & M_PKTHDR)
+				m_resethdr(m);
 			ml_enqueue(&ml, m);
-		else
+		} else
 			m_freem(m);
 	}
 
