@@ -734,7 +734,7 @@ plain[8+4], plain[8+5], plain[8+6], plain[8+7]);
 	printf("input word alignment test");
 	for (i=0; i<4; i++)
 		{
-		printf(" %d",i);
+		printf(" %u",i);
 		DES_ncbc_encrypt(&(cbc_out[i]),cbc_in,
 				 strlen((char *)cbc_data)+1,&ks,
 				 &cbc_iv,DES_ENCRYPT);
@@ -742,7 +742,7 @@ plain[8+4], plain[8+5], plain[8+6], plain[8+7]);
 	printf("\noutput word alignment test");
 	for (i=0; i<4; i++)
 		{
-		printf(" %d",i);
+		printf(" %u",i);
 		DES_ncbc_encrypt(cbc_out,&(cbc_in[i]),
 				 strlen((char *)cbc_data)+1,&ks,
 				 &cbc_iv,DES_ENCRYPT);
