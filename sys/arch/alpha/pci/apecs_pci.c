@@ -1,4 +1,4 @@
-/*	$OpenBSD: apecs_pci.c,v 1.11 2010/12/04 17:06:31 miod Exp $	*/
+/*	$OpenBSD: apecs_pci.c,v 1.12 2015/10/30 07:51:49 miod Exp $	*/
 /*	$NetBSD: apecs_pci.c,v 1.10 1996/11/13 21:13:25 cgd Exp $	*/
 
 /*
@@ -129,7 +129,7 @@ apecs_conf_read(cpv, tag, offset)
 	old_haxr2 = 0;				/* XXX gcc -Wuninitialized */
 
 	/* secondary if bus # != 0 */
-	pci_decompose_tag(&acp->ac_pc, tag, &secondary, 0, 0);
+	pci_decompose_tag(&acp->ac_pc, tag, &secondary, NULL, NULL);
 	if (secondary) {
 		s = splhigh();
 		old_haxr2 = REGVAL(EPIC_HAXR2);
@@ -178,7 +178,7 @@ apecs_conf_write(cpv, tag, offset, data)
 	old_haxr2 = 0;				/* XXX gcc -Wuninitialized */
 
 	/* secondary if bus # != 0 */
-	pci_decompose_tag(&acp->ac_pc, tag, &secondary, 0, 0);
+	pci_decompose_tag(&acp->ac_pc, tag, &secondary, NULL, NULL);
 	if (secondary) {
 		s = splhigh();
 		old_haxr2 = REGVAL(EPIC_HAXR2);

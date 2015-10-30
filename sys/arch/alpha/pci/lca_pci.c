@@ -1,4 +1,4 @@
-/*	$OpenBSD: lca_pci.c,v 1.11 2015/07/18 00:21:14 miod Exp $	*/
+/*	$OpenBSD: lca_pci.c,v 1.12 2015/10/30 07:51:49 miod Exp $	*/
 /* $NetBSD: lca_pci.c,v 1.13 1997/09/02 13:19:35 thorpej Exp $ */
 
 /*
@@ -134,7 +134,7 @@ lca_conf_read(cpv, tag, offset)
 	alpha_mb();
 
 	/* secondary if bus # != 0 */
-	pci_decompose_tag(&lcp->lc_pc, tag, &secondary, &device, 0);
+	pci_decompose_tag(&lcp->lc_pc, tag, &secondary, &device, NULL);
 	if (secondary) {
 		s = splhigh();
 		alpha_mb();
@@ -194,7 +194,7 @@ lca_conf_write(cpv, tag, offset, data)
 	s = 0;					/* XXX gcc -Wuninitialized */
 
 	/* secondary if bus # != 0 */
-	pci_decompose_tag(&lcp->lc_pc, tag, &secondary, &device, 0);
+	pci_decompose_tag(&lcp->lc_pc, tag, &secondary, &device, NULL);
 	if (secondary) {
 		s = splhigh();
 		alpha_mb();
