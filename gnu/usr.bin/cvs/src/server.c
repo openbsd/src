@@ -5530,8 +5530,6 @@ error 0 %s: no such user\n", username);
 
 #ifdef AUTH_SERVER_SUPPORT
 
-extern char *crypt PROTO((const char *, const char *));
-
 
 /* 
  * 0 means no entry found for this user.
@@ -5658,10 +5656,9 @@ check_repository_password (username, password, repository, host_user_ptr)
 	if (host_user_tmp == NULL)
             host_user_tmp = username;
 
-        /* Verify blank passwords directly, otherwise use crypt(). */
+        /* Verify blank passwords directly, otherwise use crypt_checkpass(). */
         if ((found_password == NULL)
-            || ((strcmp (found_password, crypt (password, found_password))
-                 == 0)))
+            || (crypt_checkpass (password, found_password) == 0))
         {
             /* Give host_user_ptr permanent storage. */
             *host_user_ptr = xstrdup (host_user_tmp);
@@ -5754,8 +5751,7 @@ error 0 %s: no such user\n", username);
 	if (*found_passwd)
         {
 	    /* user exists and has a password */
-	    host_user = ((! strcmp (found_passwd,
-                                    crypt (password, found_passwd)))
+	    host_user = ((! crypt_checkpass (password, found_passwd))
                          ? xstrdup (username) : NULL);
             goto handle_return;
         }
