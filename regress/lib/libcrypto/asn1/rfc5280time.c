@@ -1,4 +1,4 @@
-/* $OpenBSD: rfc5280time.c,v 1.3 2015/10/22 14:01:19 jsing Exp $ */
+/* $OpenBSD: rfc5280time.c,v 1.4 2015/10/30 15:52:55 miod Exp $ */
 /*
  * Copyright (c) 2015 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2015 Bob Beck <beck@opebsd.org>
@@ -95,19 +95,19 @@ struct rfc5280_time_test rfc5280_invtime_tests[] = {
 		/* (times before 2050 must be UTCTIME) Per RFC 5280 4.1.2.5 */
 		.str = "00000101000000Z",
 		.data = "00000101000000Z",
-		.time = -62167219200,
+		.time = -62167219200LL,
 	},
 	{
 		/* (times before 2050 must be UTCTIME) Per RFC 5280 4.1.2.5 */
 		.str = "20491231235959Z",
 		.data = "20491231235959Z",
-		.time = 2524607999,
+		.time = 2524607999LL,
 	},
 	{
 		/* (times before 2050 must be UTCTIME) Per RFC 5280 4.1.2.5 */
 		.str = "19500101000000Z",
 		.data = "19500101000000Z",
-		.time = -631152000,
+		.time = -631152000LL,
 	},
 };
 
@@ -116,18 +116,18 @@ struct rfc5280_time_test rfc5280_gentime_tests[] = {
 		/* Biggest RFC 5280 time */
 		.str = "99991231235959Z",
 		.data = "99991231235959Z",
-		.time = 253402300799,
+		.time = 253402300799LL,
 	},
 	{
 		.str = "21600218104000Z",
 		.data = "21600218104000Z",
-		.time = 6000000000,
+		.time = 6000000000LL,
 	},
 	{
 		/* Smallest RFC 5280 gen time */
 		.str = "20500101000000Z",
 		.data = "20500101000000Z",
-		.time =  2524608000,
+		.time =  2524608000LL,
 	},
 };
 struct rfc5280_time_test rfc5280_utctime_tests[] = {
@@ -144,7 +144,7 @@ struct rfc5280_time_test rfc5280_utctime_tests[] = {
 	{
 		.str = "491231235959Z",
 		.data = "491231235959Z",
-		.time = 2524607999,
+		.time = 2524607999LL,
 	},
 	{
 		.str = "700101000000Z",
