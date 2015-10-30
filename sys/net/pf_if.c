@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_if.c,v 1.80 2015/09/04 21:40:25 kettenis Exp $ */
+/*	$OpenBSD: pf_if.c,v 1.81 2015/10/30 11:33:55 mikeb Exp $ */
 
 /*
  * Copyright 2005 Henning Brauer <henning@openbsd.org>
@@ -99,14 +99,21 @@ pfi_initialize(void)
 }
 
 struct pfi_kif *
-pfi_kif_get(const char *kif_name)
+pfi_kif_find(const char *kif_name)
 {
-	struct pfi_kif		*kif;
 	struct pfi_kif_cmp	 s;
 
 	bzero(&s, sizeof(s));
 	strlcpy(s.pfik_name, kif_name, sizeof(s.pfik_name));
-	if ((kif = RB_FIND(pfi_ifhead, &pfi_ifs, (struct pfi_kif *)&s)) != NULL)
+	return (RB_FIND(pfi_ifhead, &pfi_ifs, (struct pfi_kif *)&s));
+}
+
+struct pfi_kif *
+pfi_kif_get(const char *kif_name)
+{
+	struct pfi_kif		*kif;
+
+	if ((kif = pfi_kif_find(kif_name)))
 		return (kif);
 
 	/* create new one */

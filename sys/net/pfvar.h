@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.421 2015/10/13 19:32:32 sashan Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.422 2015/10/30 11:33:55 mikeb Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1810,6 +1810,7 @@ int	pfr_ina_define(struct pfr_table *, struct pfr_addr *, int, int *,
 extern struct pfi_kif		*pfi_all;
 
 void		 pfi_initialize(void);
+struct pfi_kif	*pfi_kif_find(const char *);
 struct pfi_kif	*pfi_kif_get(const char *);
 void		 pfi_kif_ref(struct pfi_kif *, enum pfi_kif_refs);
 void		 pfi_kif_unref(struct pfi_kif *, enum pfi_kif_refs);

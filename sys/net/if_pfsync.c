@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.220 2015/09/11 08:17:06 claudio Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.221 2015/10/30 11:33:55 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -754,42 +754,25 @@ int
 pfsync_in_clr(caddr_t buf, int len, int count, int flags)
 {
 	struct pfsync_clr *clr;
-	int i;
-
 	struct pf_state *st, *nexts;
-	struct pf_state_key *sk, *nextsk;
-	struct pf_state_item *si;
+	struct pfi_kif *kif;
 	u_int32_t creatorid;
+	int i;
 
 	for (i = 0; i < count; i++) {
 		clr = (struct pfsync_clr *)buf + len * i;
+		kif = NULL;
 		creatorid = clr->creatorid;
+		if (strlen(clr->ifname) &&
+		    (kif = pfi_kif_find(clr->ifname)) == NULL)
+			continue;
 
-		if (clr->ifname[0] == '\0') {
-			for (st = RB_MIN(pf_state_tree_id, &tree_id);
-			    st; st = nexts) {
-				nexts = RB_NEXT(pf_state_tree_id, &tree_id, st);
-				if (st->creatorid == creatorid) {
-					SET(st->state_flags, PFSTATE_NOSYNC);
-					pf_unlink_state(st);
-				}
-			}
-		} else {
-			if (pfi_kif_get(clr->ifname) == NULL)
-				continue;
-
-			/* XXX correct? */
-			for (sk = RB_MIN(pf_state_tree, &pf_statetbl);
-			    sk; sk = nextsk) {
-				nextsk = RB_NEXT(pf_state_tree,
-				    &pf_statetbl, sk);
-				TAILQ_FOREACH(si, &sk->states, entry) {
-					if (si->s->creatorid == creatorid) {
-						SET(si->s->state_flags,
-						    PFSTATE_NOSYNC);
-						pf_unlink_state(si->s);
-					}
-				}
+		for (st = RB_MIN(pf_state_tree_id, &tree_id); st; st = nexts) {
+			nexts = RB_NEXT(pf_state_tree_id, &tree_id, st);
+			if (st->creatorid == creatorid &&
+			    ((kif && st->kif == kif) || !kif)) {
+				SET(st->state_flags, PFSTATE_NOSYNC);
+				pf_unlink_state(st);
 			}
 		}
 	}
