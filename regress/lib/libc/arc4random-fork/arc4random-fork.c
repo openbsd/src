@@ -23,6 +23,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <stdint.h>
 
 #define CHECK(x) assert(x)
 #define CHECK_EQ(a, b) assert((a) == (b))

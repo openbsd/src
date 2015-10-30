@@ -1,4 +1,4 @@
-/* $OpenBSD: bss_bio.c,v 1.20 2014/06/12 15:49:28 deraadt Exp $ */
+/* $OpenBSD: bss_bio.c,v 1.21 2015/10/30 15:45:57 miod Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2003 The OpenSSL Project.  All rights reserved.
  *
@@ -78,6 +78,7 @@
 #include <limits.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/types.h>
 
 #include <openssl/bio.h>
 #include <openssl/err.h>
