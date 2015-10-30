@@ -1,4 +1,4 @@
-/*	$OpenBSD: efifb.c,v 1.6 2015/09/07 18:19:58 kettenis Exp $	*/
+/*	$OpenBSD: efifb.c,v 1.7 2015/10/30 11:21:01 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -25,6 +25,7 @@
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsdisplayvar.h>
 #include <dev/rasops/rasops.h>
+#include <dev/pci/pcivar.h>
 
 #include <machine/biosvar.h>
 #include <machine/efifbvar.h>
@@ -93,7 +94,7 @@ efifb_match(struct device *parent, void *cf, void *aux)
 	struct efifb_attach_args *eaa = aux;
 
 	if (strcmp(eaa->eaa_name, efifb_cd.cd_name) == 0 &&
-	    bios_efiinfo != NULL)
+	    efifb_console.paddr != 0)
 		return (1);
 
 	return (0);
@@ -311,4 +312,41 @@ efifb_cnattach(void)
 	wsdisplay_cnattach(&efifb_std_descr, ri, 0, 0, defattr);
 
 	return (0);
+}
+
+int
+efifb_is_console(struct pci_attach_args *pa)
+{
+	pci_chipset_tag_t pc = pa->pa_pc;
+	pcitag_t tag = pa->pa_tag;
+	pcireg_t type;
+	bus_addr_t base;
+	bus_size_t size;
+	int reg;
+
+	for (reg = PCI_MAPREG_START; reg < PCI_MAPREG_END; reg += 4) {
+		if (!pci_mapreg_probe(pc, tag, reg, &type))
+			continue;
+
+		if (type == PCI_MAPREG_TYPE_IO)
+			continue;
+
+		if (pci_mapreg_info(pc, tag, reg, type, &base, &size, NULL))
+			continue;
+
+		if (efifb_console.paddr >= base &&
+		    efifb_console.paddr < base + size)
+			return 1;
+
+		if (type & PCI_MAPREG_MEM_TYPE_64BIT)
+			reg += 4;
+	}
+
+	return 0;
+}
+
+void
+efifb_cndetach(void)
+{
+	efifb_console.paddr = 0;
 }

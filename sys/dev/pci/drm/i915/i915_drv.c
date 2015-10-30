@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.c,v 1.95 2015/10/29 07:47:03 kettenis Exp $ */
+/* $OpenBSD: i915_drv.c,v 1.96 2015/10/30 11:21:01 kettenis Exp $ */
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -956,6 +956,14 @@ int i915_reset(struct drm_device *dev)
 	return 0;
 }
 
+#ifdef __amd64__
+#include "efifb.h"
+#endif
+
+#if NEFIFB > 0
+#include <machine/efifbvar.h>
+#endif
+
 #include "intagp.h"
 
 #if NINTAGP > 0
@@ -1223,15 +1231,6 @@ inteldrm_attach(struct device *parent, struct device *self, void *aux)
 	int console = 0;
 	int i;
 
-	if (PCI_CLASS(pa->pa_class) == PCI_CLASS_DISPLAY &&
-	    PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_DISPLAY_VGA &&
-	    (pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG)
-	    & (PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE))
-	    == (PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE)) {
-		console = 1;
-		vga_console_attached = 1;
-	}
-
 	info = i915_get_device_id(PCI_PRODUCT(pa->pa_id));
 	KASSERT(info->gen != 0);
 
@@ -1243,6 +1242,20 @@ inteldrm_attach(struct device *parent, struct device *self, void *aux)
 	dev_priv->bst = pa->pa_memt;
 	dev_priv->memex = pa->pa_memex;
 	dev_priv->regs = &dev_priv->bar;
+
+	if (PCI_CLASS(pa->pa_class) == PCI_CLASS_DISPLAY &&
+	    PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_DISPLAY_VGA &&
+	    (pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG)
+	    & (PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE))
+	    == (PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE)) {
+		vga_console_attached = 1;
+		console = 1;
+	}
+
+#if NEFIFB > 0
+	if (efifb_is_console(pa))
+		console = 1;
+#endif
 
 	printf("\n");
 
@@ -1495,12 +1508,17 @@ inteldrm_attach(struct device *parent, struct device *self, void *aux)
 	if (ri->ri_bits == NULL)
 		return;
 
+#if NEFIFB > 0
+	if (efifb_is_console(pa))
+		efifb_cndetach();
+#endif
+
 	printf("%s: %dx%d\n", dev_priv->sc_dev.dv_xname,
 	    ri->ri_width, ri->ri_height);
 
 	intel_fbdev_restore_mode(dev);
 
-	ri->ri_flg = RI_CENTER | RI_WRONLY | RI_VCONS;
+	ri->ri_flg = RI_CENTER | RI_WRONLY | RI_VCONS | RI_CLEAR;
 	ri->ri_hw = dev_priv;
 	rasops_init(ri, 160, 160);
 
