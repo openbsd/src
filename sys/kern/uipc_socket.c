@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.142 2015/08/24 14:28:25 bluhm Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.143 2015/10/30 19:47:40 bluhm Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -1325,10 +1325,8 @@ somove(struct socket *so, int wait)
 		goto release;
 	m->m_nextpkt = NULL;
 	if (m->m_flags & M_PKTHDR) {
-		m_tag_delete_chain(m);
-		memset(&m->m_pkthdr, 0, sizeof(m->m_pkthdr));
+		m_resethdr(m);
 		m->m_pkthdr.len = len;
-		m->m_pkthdr.pf.prio = IFQ_DEFPRIO;
 	}
 
 	/* Send window update to source peer as receive buffer has changed. */
