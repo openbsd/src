@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.249 2015/10/30 09:48:03 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.250 2015/10/30 21:21:19 benno Exp $
 #	$NetBSD: Makefile,v 1.4 1996/01/09 03:23:01 thorpej Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
@@ -244,8 +244,8 @@ MLINKS+=membar_sync.9 membar_enter.9 membar_sync.9 membar_exit.9 \
 	membar_sync.9 membar_producer.9 membar_sync.9 membar_consumer.9
 MLINKS+=mbuf.9 m_copym2.9 mbuf.9 m_copym.9 mbuf.9 m_free.9 \
 	mbuf.9 m_get.9 mbuf.9 MGET.9 mbuf.9 m_getclr.9 mbuf.9 m_gethdr.9 \
-	mbuf.9 MGETHDR.9 mbuf.9 m_prepend.9 mbuf.9 M_PREPEND.9 \
-	mbuf.9 m_pulldown.9 mbuf.9 m_pullup.9 \
+	mbuf.9 m_resethdr.9 mbuf.9 MGETHDR.9 mbuf.9 m_prepend.9 \
+	mbuf.9 M_PREPEND.9 mbuf.9 m_pulldown.9 mbuf.9 m_pullup.9 \
 	mbuf.9 m_split.9 \
 	mbuf.9 m_inject.9 mbuf.9 m_getptr.9 mbuf.9 m_adj.9 mbuf.9 m_copyback.9 \
 	mbuf.9 m_defrag.9 mbuf.9 m_freem.9 mbuf.9 m_reclaim.9 \
