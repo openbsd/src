@@ -1,3 +1,4 @@
+./usr/include/crypto/poly1305.h
 ./sys
 ./usr/bin/ar
 ./usr/bin/as
@@ -5342,7 +5343,6 @@
 ./usr/share/man/man3/setenv.3
 ./usr/share/man/man3/setfsent.3
 ./usr/share/man/man3/setgrent.3
-./usr/share/man/man3/setgrfile.3
 ./usr/share/man/man3/setgroupent.3
 ./usr/share/man/man3/sethostent.3
 ./usr/share/man/man3/sethostid.3
@@ -6631,7 +6631,7 @@
 ./usr/share/man/man9/rtlabel_unref.9
 ./usr/share/man/man9/rtredirect.9
 ./usr/share/man/man9/rtref.9
-./usr/share/man/man9/rtrequest1.9
+./usr/share/man/man9/rtrequest.9
 ./usr/share/man/man9/runtime.9
 ./usr/share/man/man9/rw_assert_rdlock.9
 ./usr/share/man/man9/rw_assert_unlocked.9

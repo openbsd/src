@@ -505,6 +505,7 @@
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/crypto/md5.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/crypto/michael.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/crypto/podd.ph
+./usr/libdata/perl5/site_perl/mips64el-openbsd/crypto/poly1305.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/crypto/rijndael.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/crypto/rmd160.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/crypto/sha1.ph

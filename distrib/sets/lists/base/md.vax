@@ -35,6 +35,7 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/crypto/md5.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/crypto/michael.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/crypto/podd.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/crypto/poly1305.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/crypto/rijndael.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/crypto/rmd160.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/crypto/sha1.ph
