@@ -12,8 +12,9 @@ use Sys::Hostname;
 use constant MAXLINE => 8192;
 
 (my $host = hostname()) =~ s/\..*//;
-# file entry is without <70> but with space and hostname
-my $filelen = MAXLINE - 4 + 1 + length($host);
+my $time = "... .. ..:..:..";  # Oct 30 19:10:11
+# file entry is without <70> but with space, timestamp and hostname
+my $filelen = MAXLINE - 4 + length($time) + 1 + length($host) + 1;
 
 our %args = (
     client => {
@@ -35,7 +36,7 @@ our %args = (
     server => {
 	listen => { domain => AF_UNSPEC, proto => "tcp", addr => "localhost" },
 	# syslog over TCP appends a \n
-	loggrep => { qr/^>>> 8193 .{8192}\n/ => 1 },
+	loggrep => { qr/^>>> 8209 <70>$time .{8188}\n/ => 1 },
     },
     file => {
 	loggrep => { qr/^.{$filelen}\n/ => 1 },
