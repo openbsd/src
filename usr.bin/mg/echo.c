@@ -1,4 +1,4 @@
-/*	$OpenBSD: echo.c,v 1.60 2015/09/29 02:07:49 guenther Exp $	*/
+/*	$OpenBSD: echo.c,v 1.61 2015/10/31 11:59:47 jasper Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -643,6 +643,7 @@ complt_list(int flags, char *buf, int cpos)
 	bp = bfind("*Completions*", TRUE);
 	if (bclear(bp) == FALSE)
 		return (FALSE);
+	bp->b_flag |= BFREADONLY;
 
 	/*
 	 * First get the list of objects.  This list may contain only
