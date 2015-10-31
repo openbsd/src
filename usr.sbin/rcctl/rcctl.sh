@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: rcctl.sh,v 1.83 2015/10/24 13:57:24 ajacoutot Exp $
+# $OpenBSD: rcctl.sh,v 1.84 2015/10/31 11:09:41 ajacoutot Exp $
 #
 # Copyright (c) 2014, 2015 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -150,6 +150,14 @@ svc_is_base()
 
 	grep -E 'start_daemon[[:space:]]+[[:alnum:]]' /etc/rc | \
 		cut -d ' ' -f2- | grep -qw -- ${_svc}
+}
+
+svc_is_meta()
+{
+	local _svc=$1
+	[ -n "${_svc}" ] || return
+
+	grep -q "^_pkg_scripts=" /etc/rc.d/${_svc}
 }
 
 svc_is_special()
@@ -457,6 +465,8 @@ case ${action} in
 		[ -z "${svc}" ] && usage
 		svc_is_avail ${svc} || \
 			rcctl_err "service ${svc} does not exist" 2
+		svc_is_meta ${svc} && \
+			rcctl_err "\"${svc}\" is a meta script, cannot \"${action} ${svc} ${var}\""
 		if [ -n "${var}" ]; then
 			[[ ${var} != @(class|flags|status|timeout|user) ]] && usage
 			if svc_is_special ${svc}; then
@@ -473,6 +483,8 @@ case ${action} in
 		[ -z "${svc}" ] && usage
 		svc_is_avail ${svc} || \
 			rcctl_err "service ${svc} does not exist" 2
+		svc_is_meta ${svc} && \
+			rcctl_err "\"${svc}\" is a meta script, cannot \"${action} ${svc} ${var}\""
 		[[ ${var} != @(class|flags|status|timeout|user) ]] && usage
 		[[ ${var} = flags && ${args} = NO ]] && \
 			rcctl_err "\"flags NO\" contradicts \"${action}\""
