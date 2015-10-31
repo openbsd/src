@@ -1,4 +1,4 @@
-/*	$OpenBSD: setjmp.S,v 1.2 2007/03/02 06:11:54 miod Exp $	*/
+/*	$OpenBSD: setjmp.S,v 1.3 2015/10/31 11:39:35 miod Exp $	*/
 /*	$NetBSD: setjmp.S,v 1.10 2006/01/05 19:21:37 uwe Exp $	*/
 
 /*-
@@ -35,7 +35,8 @@
  *	from: @(#)setjmp.s	5.1 (Berkeley) 4/23/90
  */
 
-#include <machine/asm.h>
+#include "SYS.h"
+
 #include <machine/setjmp.h>
 
 /*
@@ -104,7 +105,7 @@ ENTRY(setjmp)
 
 	.align	2
 .L_got_1:		PIC_GOT_DATUM
-.L_sigprocmask_1:	CALL_DATUM(_C_LABEL(sigprocmask), 1b)
+.L_sigprocmask_1:	CALL_DATUM(_C_LABEL(_HIDDEN(sigprocmask)), 1b)
 	SET_ENTRY_SIZE(setjmp)
 
 ENTRY(longjmp)
@@ -163,5 +164,5 @@ ENTRY(longjmp)
 
 	.align	2
 .L_got_2:		PIC_GOT_DATUM
-.L_sigprocmask_2:	CALL_DATUM(_C_LABEL(sigprocmask), 1b)
+.L_sigprocmask_2:	CALL_DATUM(_C_LABEL(_HIDDEN(sigprocmask)), 1b)
 	SET_ENTRY_SIZE(longjmp)
