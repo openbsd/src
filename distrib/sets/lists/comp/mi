@@ -1,4 +1,3 @@
-./usr/include/crypto/poly1305.h
 ./sys
 ./usr/bin/ar
 ./usr/bin/as
@@ -54,6 +53,7 @@
 ./usr/include/crypto/md5.h
 ./usr/include/crypto/michael.h
 ./usr/include/crypto/podd.h
+./usr/include/crypto/poly1305.h
 ./usr/include/crypto/rijndael.h
 ./usr/include/crypto/rmd160.h
 ./usr/include/crypto/sha1.h
@@ -6469,6 +6469,7 @@
 ./usr/share/man/man9/m_pulldown.9
 ./usr/share/man/man9/m_pullup.9
 ./usr/share/man/man9/m_reclaim.9
+./usr/share/man/man9/m_resethdr.9
 ./usr/share/man/man9/m_split.9
 ./usr/share/man/man9/m_tag_copy.9
 ./usr/share/man/man9/m_tag_copy_chain.9
