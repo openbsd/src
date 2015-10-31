@@ -1,4 +1,4 @@
-/*	$OpenBSD: crontab.c,v 1.77 2015/10/29 23:14:30 millert Exp $	*/
+/*	$OpenBSD: crontab.c,v 1.78 2015/10/31 12:13:01 millert Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -30,6 +30,7 @@ enum opt_t	{ opt_unknown, opt_list, opt_delete, opt_edit, opt_replace };
 static char	*getoptargs = "u:ler";
 
 static	pid_t		Pid;
+static	gid_t		save_egid;
 static	char		User[MAX_UNAME], RealUser[MAX_UNAME];
 static	char		Filename[MAX_FNAME], TempFilename[MAX_FNAME];
 static	FILE		*NewCrontab;
@@ -45,6 +46,17 @@ static	void		list_cmd(void),
 			copy_crontab(FILE *, FILE *),
 			die(int);
 static	int		replace_cmd(void);
+
+static int swap_gids(void)
+{
+	save_egid = getegid();
+	return (setegid(getgid()));
+}
+
+static int swap_gids_back(void)
+{
+	return (setegid(save_egid));
+}
 
 static void
 usage(const char *msg)

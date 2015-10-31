@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.63 2015/10/29 22:41:27 millert Exp $	*/
+/*	$OpenBSD: misc.c,v 1.64 2015/10/31 12:13:01 millert Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -306,17 +306,6 @@ first_word(char *s, char *t)
 	*rp = '\0';
 	return (rb);
 }
-
-static gid_t save_egid;
-int swap_gids() { save_egid = getegid(); return (setegid(getgid())); }
-int swap_gids_back() { return (setegid(save_egid)); }
-
-/* Return the offset from GMT in seconds (algorithm taken from sendmail).
- *
- * warning:
- *	clobbers the static storage space used by localtime() and gmtime().
- *	If the local pointer is non-NULL it *must* point to a local copy.
- */
 
 /* int open_socket(void)
  *	opens a UNIX domain socket that crontab uses to poke cron.
