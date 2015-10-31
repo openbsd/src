@@ -1,4 +1,4 @@
-/* $OpenBSD: client.c,v 1.102 2015/10/31 08:13:58 nicm Exp $ */
+/* $OpenBSD: client.c,v 1.103 2015/10/31 13:43:38 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -596,7 +596,7 @@ client_dispatch_wait(struct imsg *imsg)
 
 		fprintf(stderr, "protocol version mismatch "
 		    "(client %d, server %u)\n", PROTOCOL_VERSION,
-		    imsg->hdr.peerid);
+		    imsg->hdr.peerid & 0xff);
 		client_exitval = 1;
 		proc_exit(client_proc);
 		break;

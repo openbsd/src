@@ -1,4 +1,4 @@
-/* $OpenBSD: proc.c,v 1.2 2015/10/29 09:35:31 nicm Exp $ */
+/* $OpenBSD: proc.c,v 1.3 2015/10/31 13:43:38 nicm Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -122,7 +122,6 @@ peer_check_version(struct tmuxpeer *peer, struct imsg *imsg)
 
 		return (-1);
 	}
-	imsg->hdr.peerid >>= 8;
 	return (0);
 }
 
