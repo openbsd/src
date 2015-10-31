@@ -1,4 +1,4 @@
-.\" $OpenBSD: iked.conf.5,v 1.40 2015/10/19 21:32:13 naddy Exp $
+.\" $OpenBSD: iked.conf.5,v 1.41 2015/10/31 20:06:42 naddy Exp $
 .\"
 .\" Copyright (c) 2010 - 2014 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 19 2015 $
+.Dd $Mdocdate: October 31 2015 $
 .Dt IKED.CONF 5
 .Os
 .Sh NAME
@@ -743,8 +743,8 @@ keyword:
 The following pseudo-random function types are permitted with the
 .Ic prf
 keyword:
-.Bl -column "Authentication" "Key Length" "[IKE only]" -offset indent
-.It Em "Authentication" Ta Em "Key Length" Ta ""
+.Bl -column "hmac-sha2-512" "Key Length" "[IKE only]" -offset indent
+.It Em "PRF" Ta Em "Key Length" Ta ""
 .It Li hmac-md5 Ta "128 bits" Ta "[IKE only]"
 .It Li hmac-sha1 Ta "160 bits" Ta "[IKE only]"
 .It Li hmac-sha2-256 Ta "256 bits" Ta "[IKE only]"
