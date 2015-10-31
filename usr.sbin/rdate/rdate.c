@@ -1,4 +1,4 @@
-/*	$OpenBSD: rdate.c,v 1.33 2015/10/29 03:16:15 deraadt Exp $	*/
+/*	$OpenBSD: rdate.c,v 1.34 2015/10/31 18:24:01 deraadt Exp $	*/
 /*	$NetBSD: rdate.c,v 1.4 1996/03/16 12:37:45 pk Exp $	*/
 
 /*
@@ -144,7 +144,7 @@ main(int argc, char **argv)
 		break;
 	case 0:
 		if (pledge("stdio inet dns", NULL) == -1)
-			err(1, "fork");
+			err(1, "pledge");
 
 		close(p[0]);	/* read side of pipe */
 		dup2(p[1], STDIN_FILENO);
