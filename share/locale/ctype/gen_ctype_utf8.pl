@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-#	$OpenBSD: gen_ctype_utf8.pl,v 1.1 2015/08/18 05:14:32 afresh1 Exp $	#
+#	$OpenBSD: gen_ctype_utf8.pl,v 1.2 2015/10/31 20:45:47 afresh1 Exp $	#
 use 5.022;
 use warnings;
 
@@ -95,31 +95,23 @@ VARIABLE        CODESET=UTF-8
 
 EOL
 
-my $block_i = 0;
+for my $i ( 0 .. $#{ $blocks_ranges_ref } ) {
+	my $start = $blocks_ranges_ref->[ $i ];
+	my $end   = ( $blocks_ranges_ref->[ $i + 1 ] || 0 ) - 1;
 
-my %info;
-foreach my $codepoint ( 0x00 .. 0x110000 ) {
-	warn $codepoint, "\n" unless $codepoint % 100;
+	my $descr = sprintf "U+%04X - U+%04X : %s",
+	     $start, $end, $blocks_maps_ref->[$i];
 
-	if ( $codepoint == $blocks_ranges_ref->[$block_i] ) {
-		if (%info) {
-			print_info(%info);
-			%info = ();
-		}
+	warn "$descr\n";
+	print "\n/*\n * $descr\n */\n\n";
 
-		my $end = $blocks_ranges_ref->[ $block_i + 1 ] - 1;
-		print "\n/*\n";
-		printf " * U+%04X - U+%04X : %s\n", $codepoint, $end,
-		    $blocks_maps_ref->[$block_i];
-		print " */\n\n";
+	last if $end == -1;
+	next if $blocks_maps_ref->[$i] eq 'No_Block';
 
-		$block_i++;
-	}
-
-	categorize( $codepoint, \%info );
+	my %info;
+	categorize( $_, \%info ) for $start .. $end;
+	print_info(%info);
 }
-
-print_info(%info) if %info;
 
 # http://www.unicode.org/reports/tr44/tr44-16.html#General_Category_Values
 # Table 12. General_Category Values
@@ -229,7 +221,8 @@ sub categorize
 
 	if ( charprop( $code, 'Hex_Digit' ) eq 'Yes' ) {
 		push @{ $info->{XDIGIT} }, $code;
-		$info->{TODIGIT}{$code} = hex chr $code;
+		$info->{TODIGIT}{$code} = hex chr $code
+		    if charprop( $code, 'ASCII_Hex_Digit' ) eq 'Yes';
 		$matched = 1;
 	}
 
