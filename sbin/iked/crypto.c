@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto.c,v 1.18 2015/08/21 11:59:27 reyk Exp $	*/
+/*	$OpenBSD: crypto.c,v 1.19 2015/10/31 19:28:19 naddy Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -498,7 +498,7 @@ dsa_new(uint16_t id, struct iked_hash *prf, int sign)
 	case IKEV2_AUTH_ECDSA_384:
 		dsa.dsa_priv = EVP_sha384();
 		break;
-	case IKEV2_AUTH_ECDSA_512:
+	case IKEV2_AUTH_ECDSA_521:
 		dsa.dsa_priv = EVP_sha512();
 		break;
 	default:

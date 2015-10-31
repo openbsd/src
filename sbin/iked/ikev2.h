@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.h,v 1.22 2015/10/02 22:14:39 reyk Exp $	*/
+/*	$OpenBSD: ikev2.h,v 1.23 2015/10/31 19:28:19 naddy Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -454,7 +454,7 @@ struct ikev2_auth {
 #define IKEV2_AUTH_DSS_SIG		3	/* RFC4306 */
 #define IKEV2_AUTH_ECDSA_256		9	/* RFC4754 */
 #define IKEV2_AUTH_ECDSA_384		10	/* RFC4754 */
-#define IKEV2_AUTH_ECDSA_512		11	/* RFC4754 */
+#define IKEV2_AUTH_ECDSA_521		11	/* RFC4754 */
 #define IKEV2_AUTH_GSPM			12	/* RFC6467 */
 #define IKEV2_AUTH_NULL			13	/* RFC7619 */
 #define IKEV2_AUTH_SIG			14	/* RFC7427 */

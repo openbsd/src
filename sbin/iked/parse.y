@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.51 2015/10/02 16:56:34 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.52 2015/10/31 19:28:19 naddy Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -252,7 +252,7 @@ const struct ipsec_xf methodxfs[] = {
 	{ "dss",		IKEV2_AUTH_DSS_SIG },
 	{ "ecdsa-256",		IKEV2_AUTH_ECDSA_256 },
 	{ "ecdsa-384",		IKEV2_AUTH_ECDSA_384 },
-	{ "ecdsa-512",		IKEV2_AUTH_ECDSA_512 },
+	{ "ecdsa-521",		IKEV2_AUTH_ECDSA_521 },
 	{ NULL }
 };
 
