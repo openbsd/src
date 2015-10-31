@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigprocmask.S,v 1.3 2015/10/23 04:39:24 guenther Exp $	*/
+/*	$OpenBSD: sigprocmask.S,v 1.4 2015/10/31 09:30:57 miod Exp $	*/
 /*	$NetBSD: sigprocmask.S,v 1.6 2003/08/07 16:42:21 agc Exp $	*/
 
 /*-
@@ -63,4 +63,4 @@ SYSENTRY_HIDDEN(sigprocmask)
 	.align	2
 LSYS_sigprocmask:
 	.long	SYS_sigprocmask
-SYSCALL_END_HIDDEN(sigpending)
+SYSCALL_END_HIDDEN(sigprocmask)
