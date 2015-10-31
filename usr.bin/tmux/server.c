@@ -1,4 +1,4 @@
-/* $OpenBSD: server.c,v 1.145 2015/10/27 15:58:42 nicm Exp $ */
+/* $OpenBSD: server.c,v 1.146 2015/10/31 13:12:03 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -173,6 +173,8 @@ server_start(struct event_base *base, int lockfd, char *lockfile)
 	}
 	close(pair[0]);
 
+	if (debug_level > 3)
+		tty_create_log();
 	if (pledge("stdio rpath wpath cpath fattr unix recvfd proc exec tty "
 	    "ps", NULL) != 0)
 		fatal("pledge failed");

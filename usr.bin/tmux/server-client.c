@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.165 2015/10/31 08:13:58 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.166 2015/10/31 13:12:03 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1178,7 +1178,6 @@ server_client_dispatch_identify(struct client *c, struct imsg *imsg)
 		proc_send(c->peer, MSG_STDIN, -1, NULL, 0);
 
 		c->tty.fd = -1;
-		c->tty.log_fd = -1;
 
 		close(c->fd);
 		c->fd = -1;
