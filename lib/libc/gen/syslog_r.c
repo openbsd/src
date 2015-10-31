@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslog_r.c,v 1.9 2015/09/12 14:30:31 guenther Exp $ */
+/*	$OpenBSD: syslog_r.c,v 1.10 2015/10/31 02:57:16 deraadt Exp $ */
 /*
  * Copyright (c) 1983, 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -61,19 +61,16 @@ DEF_WEAK(syslog_r);
 void
 vsyslog_r(int pri, struct syslog_data *data, const char *fmt, va_list ap)
 {
-	__vsyslog_r(pri, data, NULL, fmt, ap);
+	__vsyslog_r(pri, data, 1, fmt, ap);
 }
 DEF_WEAK(vsyslog_r);
 
 /*
- * This is used by both syslog_r and syslog.  The latter supplies
- * a non-NULL gettime callback for filling in the date, but we also
- * use the presence of that callback to decide whether it's safe
- * to call strerror and what the name of the caller is
+ * This is used by both syslog_r and syslog.
  */
 void
 __vsyslog_r(int pri, struct syslog_data *data,
-    size_t (*gettime)(char *, size_t), const char *fmt, va_list ap)
+    int reentrant, const char *fmt, va_list ap)
 {
 	int cnt;
 	char ch, *p, *t;
@@ -88,7 +85,7 @@ __vsyslog_r(int pri, struct syslog_data *data,
 	if (pri & ~(LOG_PRIMASK|LOG_FACMASK)) {
 		syslog_r(INTERNALLOG, data,
 		    "syslog%s: unknown facility/priority: %x",
-		    gettime != NULL ? "" : "_r", pri);
+		    reentrant ? "_r" : "", pri);
 		pri &= LOG_PRIMASK|LOG_FACMASK;
 	}
 
@@ -120,15 +117,6 @@ __vsyslog_r(int pri, struct syslog_data *data,
 	if (data->log_stat & LOG_CONS)
 		conp = p;
 
-	/* 
-	 * syslogd will expand time automagically for reentrant case, and
-	 * for normal case, invoke the callback to do it just do like before
-	 */
-	if (gettime != NULL) {
-		prlen = gettime(p, tbuf_left);
-		DEC();
-	}
-
 	if (data->log_stat & LOG_PERROR)
 		stdp = p;
 	if (data->log_tag == NULL)
@@ -157,12 +145,12 @@ __vsyslog_r(int pri, struct syslog_data *data,
 	for (t = fmt_cpy, fmt_left = FMT_LEN; (ch = *fmt); ++fmt) {
 		if (ch == '%' && fmt[1] == 'm') {
 			++fmt;
-			if (gettime != NULL) {
-				prlen = snprintf(t, fmt_left, "%s",
-				    strerror(saved_errno)); 
-			} else {
+			if (reentrant) {
 				prlen = snprintf(t, fmt_left, "Error %d",
 				    saved_errno); 
+			} else {
+				prlen = snprintf(t, fmt_left, "%s",
+				    strerror(saved_errno)); 
 			}
 			if (prlen < 0)
 				prlen = 0;

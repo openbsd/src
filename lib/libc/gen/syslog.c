@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslog.c,v 1.32 2015/09/12 14:30:31 guenther Exp $ */
+/*	$OpenBSD: syslog.c,v 1.33 2015/10/31 02:57:16 deraadt Exp $ */
 /*
  * Copyright (c) 1983, 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,16 +35,6 @@
 
 static struct syslog_data sdata = SYSLOG_DATA_INIT;
 
-static size_t
-gettime(char *buf, size_t maxsize)
-{
-	time_t	now;
-
-	(void)time(&now);
-	return (strftime(buf, maxsize, "%h %e %T ", localtime(&now)));
-}
-
-
 /*
  * syslog, vsyslog --
  *	print message on log file; output is intended for syslogd(8).
@@ -63,7 +53,7 @@ DEF_WEAK(syslog);
 void
 vsyslog(int pri, const char *fmt, va_list ap)
 {
-	__vsyslog_r(pri, &sdata, &gettime, fmt, ap);
+	__vsyslog_r(pri, &sdata, 0, fmt, ap);
 }
 DEF_WEAK(vsyslog);
 
