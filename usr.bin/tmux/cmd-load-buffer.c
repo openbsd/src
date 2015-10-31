@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-load-buffer.c,v 1.34 2015/06/05 18:06:30 nicm Exp $ */
+/* $OpenBSD: cmd-load-buffer.c,v 1.35 2015/10/31 08:13:58 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Tiago Cunha <me@tiagocunha.org>
@@ -49,10 +49,10 @@ cmd_load_buffer_exec(struct cmd *self, struct cmd_q *cmdq)
 	struct client	*c = cmdq->client;
 	struct session  *s;
 	FILE		*f;
-	const char	*path, *bufname;
-	char		*pdata, *new_pdata, *cause;
+	const char	*path, *bufname, *cwd;
+	char		*pdata, *new_pdata, *cause, *file, resolved[PATH_MAX];
 	size_t		 psize;
-	int		 ch, error, cwd, fd;
+	int		 ch, error;
 
 	bufname = NULL;
 	if (args_has(args, 'b'))
@@ -75,13 +75,16 @@ cmd_load_buffer_exec(struct cmd *self, struct cmd_q *cmdq)
 	else if ((s = cmd_find_current(cmdq)) != NULL)
 		cwd = s->cwd;
 	else
-		cwd = AT_FDCWD;
+		cwd = ".";
 
-	if ((fd = openat(cwd, path, O_RDONLY)) == -1 ||
-	    (f = fdopen(fd, "rb")) == NULL) {
-		if (fd != -1)
-			close(fd);
-		cmdq_error(cmdq, "%s: %s", path, strerror(errno));
+	xasprintf(&file, "%s/%s", cwd, path);
+	if (realpath(file, resolved) == NULL)
+		f = NULL;
+	else
+		f = fopen(resolved, "rb");
+	free(file);
+	if (f == NULL) {
+		cmdq_error(cmdq, "%s: %s", resolved, strerror(errno));
 		return (CMD_RETURN_ERROR);
 	}
 
@@ -97,7 +100,7 @@ cmd_load_buffer_exec(struct cmd *self, struct cmd_q *cmdq)
 		pdata[psize++] = ch;
 	}
 	if (ferror(f)) {
-		cmdq_error(cmdq, "%s: read error", path);
+		cmdq_error(cmdq, "%s: read error", resolved);
 		goto error;
 	}
 	if (pdata != NULL)

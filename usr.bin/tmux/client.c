@@ -1,4 +1,4 @@
-/* $OpenBSD: client.c,v 1.101 2015/10/28 09:51:55 nicm Exp $ */
+/* $OpenBSD: client.c,v 1.102 2015/10/31 08:13:58 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -273,8 +273,10 @@ client_main(struct event_base *base, int argc, char **argv, int flags)
 	client_peer = proc_add_peer(client_proc, fd, client_dispatch, NULL);
 
 	/* Save these before pledge(). */
-	if ((cwd = getcwd(path, sizeof path)) == NULL)
-		cwd = "/";
+	if ((cwd = getcwd(path, sizeof path)) == NULL) {
+		if ((cwd = find_home()) == NULL)
+			cwd = "/";
+	}
 	if ((ttynam = ttyname(STDIN_FILENO)) == NULL)
 		ttynam = "";
 

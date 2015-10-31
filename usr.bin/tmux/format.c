@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.91 2015/10/28 09:51:55 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.92 2015/10/31 08:13:58 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -239,7 +239,7 @@ format_job_get(struct format_tree *ft, const char *cmd)
 
 	t = time(NULL);
 	if (fj->job == NULL && ((ft->flags & FORMAT_FORCE) || fj->last != t)) {
-		fj->job = job_run(fj->cmd, NULL, -1, format_job_callback,
+		fj->job = job_run(fj->cmd, NULL, NULL, format_job_callback,
 		    NULL, fj);
 		if (fj->job == NULL) {
 			free(fj->out);
