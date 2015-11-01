@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread.c,v 1.85 2015/10/23 04:39:24 guenther Exp $ */
+/*	$OpenBSD: rthread.c,v 1.86 2015/11/01 03:52:17 guenther Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -146,7 +146,6 @@ _rthread_start(void *v)
 	pthread_exit(retval);
 }
 
-/* ARGSUSED0 */
 static void
 sigthr_handler(__unused int sig)
 {

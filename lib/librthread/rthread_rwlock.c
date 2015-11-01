@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_rwlock.c,v 1.4 2013/06/01 23:06:26 tedu Exp $ */
+/*	$OpenBSD: rthread_rwlock.c,v 1.5 2015/11/01 03:52:17 guenther Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * Copyright (c) 2012 Philip Guenther <guenther@openbsd.org>
@@ -33,7 +33,6 @@
 
 static struct _spinlock rwlock_init_lock = _SPINLOCK_UNLOCKED;
 
-/* ARGSUSED1 */
 int
 pthread_rwlock_init(pthread_rwlock_t *lockp,
     const pthread_rwlockattr_t *attrp __unused)
