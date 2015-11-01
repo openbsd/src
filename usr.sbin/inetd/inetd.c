@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetd.c,v 1.148 2015/11/01 00:31:18 deraadt Exp $	*/
+/*	$OpenBSD: inetd.c,v 1.149 2015/11/01 19:59:28 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
@@ -346,7 +346,7 @@ main(int argc, char *argv[])
 			(void) setlogin("");
 	}
 
-	if (pledge("stdio rpath getpw dns inet unix proc exec id", NULL) == -1)
+	if (pledge("stdio rpath cpath getpw dns inet unix proc exec id", NULL) == -1)
 		err(1, "pledge");
 
 	if (uid == 0) {
