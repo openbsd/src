@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.90 2015/10/25 20:39:54 deraadt Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.91 2015/11/01 13:49:00 deraadt Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -434,7 +434,7 @@ unp_bind(struct unpcb *unp, struct mbuf *nam, struct proc *p)
 	/* Fixup sun_len to keep it in sync with m_len. */
 	soun->sun_len = nam2->m_len;
 
-	p->p_pledgenote = PLEDGE_CPATH;
+	p->p_pledgenote = PLEDGE_UNIX;
 	NDINIT(&nd, CREATE, NOFOLLOW | LOCKPARENT, UIO_SYSSPACE,
 	    soun->sun_path, p);
 /* SHOULD BE ABLE TO ADOPT EXISTING AND wakeup() ALA FIFO's */
