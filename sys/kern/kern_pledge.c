@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.95 2015/11/01 13:01:58 semarie Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.96 2015/11/01 15:43:50 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -533,7 +533,7 @@ pledge_check(struct proc *p, int code, int *tval)
 	if (code < 0 || code > SYS_MAXSYSCALL - 1)
 		return (EINVAL);
 
-	if ((p->p_p->ps_pledge == 0) && (pledge_syscalls[code] == PLEDGE_ALWAYS))
+	if (pledge_syscalls[code] == PLEDGE_ALWAYS)
 		return (0);
 
 	if (p->p_p->ps_pledge & pledge_syscalls[code])
