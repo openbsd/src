@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.167 2015/10/30 09:39:42 bluhm Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.168 2015/11/01 17:02:44 bluhm Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -370,7 +370,7 @@ nd6_llinfo_timer(void *arg)
 	dst = satosin6(rt_key(rt));
 
 	/* sanity check */
-	if (rt->rt_llinfo && (struct llinfo_nd6 *)rt->rt_llinfo != ln)
+	if (rt->rt_llinfo != NULL && (struct llinfo_nd6 *)rt->rt_llinfo != ln)
 		panic("rt_llinfo(%p) is not equal to ln(%p)",
 		      rt->rt_llinfo, ln);
 	if (!dst)
@@ -641,7 +641,7 @@ nd6_lookup(struct in6_addr *addr6, int create, struct ifnet *ifp,
 			    rtableid);
 			if (error)
 				return (NULL);
-			if (rt->rt_llinfo) {
+			if (rt->rt_llinfo != NULL) {
 				struct llinfo_nd6 *ln =
 				    (struct llinfo_nd6 *)rt->rt_llinfo;
 				ln->ln_state = ND6_LLINFO_NOSTATE;
@@ -861,7 +861,7 @@ nd6_nud_hint(struct rtentry *rt, u_int rtableid)
 
 	if ((rt->rt_flags & RTF_GATEWAY) != 0 ||
 	    (rt->rt_flags & RTF_LLINFO) == 0 ||
-	    !rt->rt_llinfo || !rt->rt_gateway ||
+	    rt->rt_llinfo == NULL || rt->rt_gateway == NULL ||
 	    rt->rt_gateway->sa_family != AF_LINK) {
 		/* This is not a host route. */
 		return;
@@ -947,8 +947,8 @@ nd6_rtrequest(struct ifnet *ifp, int req, struct rtentry *rt)
 		 *	   rt->rt_flags |= RTF_CLONING;
 		 */
 		if ((rt->rt_flags & RTF_CLONING) ||
-		    ((rt->rt_flags & (RTF_LLINFO | RTF_LOCAL)) && !ln)) {
-			if (ln)
+		    ((rt->rt_flags & (RTF_LLINFO | RTF_LOCAL)) && ln == NULL)) {
+			if (ln != NULL)
 				nd6_llinfo_settimer(ln, 0);
 			if ((rt->rt_flags & RTF_CLONING) != 0)
 				break;
@@ -998,7 +998,7 @@ nd6_rtrequest(struct ifnet *ifp, int req, struct rtentry *rt)
 		 */
 		ln = malloc(sizeof(*ln), M_RTABLE, M_NOWAIT | M_ZERO);
 		rt->rt_llinfo = (caddr_t)ln;
-		if (!ln) {
+		if (ln == NULL) {
 			log(LOG_DEBUG, "%s: malloc failed\n", __func__);
 			break;
 		}
@@ -1099,7 +1099,7 @@ nd6_rtrequest(struct ifnet *ifp, int req, struct rtentry *rt)
 		break;
 
 	case RTM_DELETE:
-		if (!ln)
+		if (ln == NULL)
 			break;
 		/* leave from solicited node multicast for proxy ND */
 		if ((rt->rt_flags & RTF_ANNOUNCE) != 0 &&
@@ -1123,7 +1123,7 @@ nd6_rtrequest(struct ifnet *ifp, int req, struct rtentry *rt)
 		ln->ln_prev->ln_next = ln->ln_next;
 		ln->ln_prev = NULL;
 		nd6_llinfo_settimer(ln, -1);
-		rt->rt_llinfo = 0;
+		rt->rt_llinfo = NULL;
 		rt->rt_flags &= ~RTF_LLINFO;
 		m_freem(ln->ln_hold);
 		free(ln, M_RTABLE, 0);
@@ -1309,9 +1309,9 @@ fail:
 		return;
 	}
 	ln = (struct llinfo_nd6 *)rt->rt_llinfo;
-	if (!ln)
+	if (ln == NULL)
 		goto fail;
-	if (!rt->rt_gateway)
+	if (rt->rt_gateway == NULL)
 		goto fail;
 	if (rt->rt_gateway->sa_family != AF_LINK)
 		goto fail;
@@ -1559,7 +1559,7 @@ nd6_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr_in6 *dst,
 	 */
 
 	/* Look up the neighbor cache for the nexthop */
-	if (rt && (rt->rt_flags & RTF_LLINFO) != 0)
+	if (rt != NULL && (rt->rt_flags & RTF_LLINFO) != 0)
 		ln = (struct llinfo_nd6 *)rt->rt_llinfo;
 	else {
 		/*
@@ -1576,7 +1576,7 @@ nd6_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr_in6 *dst,
 			}
 		}
 	}
-	if (!ln || !rt) {
+	if (ln == NULL || rt == NULL) {
 		if ((ifp->if_flags & IFF_POINTOPOINT) == 0 &&
 		    !(ND_IFINFO(ifp)->flags & ND6_IFF_PERFORMNUD)) {
 			char addr[INET6_ADDRSTRLEN];
