@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_uncore.c,v 1.2 2015/09/25 16:15:19 jsg Exp $	*/
+/*	$OpenBSD: intel_uncore.c,v 1.3 2015/11/01 03:54:20 jsg Exp $	*/
 /*
  * Copyright © 2013 Intel Corporation
  *
@@ -324,7 +324,7 @@ void intel_uncore_early_sanitize(struct drm_device *dev)
 	if (HAS_FPGA_DBG_UNCLAIMED(dev))
 		__raw_i915_write32(dev_priv, FPGA_DBG, FPGA_DBG_RM_NOCLAIM);
 
-	if (IS_HASWELL(dev) &&
+	if ((IS_HASWELL(dev) || IS_BROADWELL(dev)) &&
 	    (__raw_i915_read32(dev_priv, HSW_EDRAM_PRESENT) == 1)) {
 		/* The docs do not explain exactly how the calculation can be
 		 * made. It is somewhat guessable, but for now, it's always
