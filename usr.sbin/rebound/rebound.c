@@ -1,4 +1,4 @@
-/* $OpenBSD: rebound.c,v 1.40 2015/10/30 15:44:12 tedu Exp $ */
+/* $OpenBSD: rebound.c,v 1.41 2015/11/01 13:59:44 reyk Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -440,8 +440,10 @@ launch(const char *confname, int ud, int ld, int kq)
 	if (!(pwd = getpwnam("_rebound")))
 		logerr("getpwnam failed");
 
-	if (chroot("/var/empty") || chdir("/"))
+	if (chroot(pwd->pw_dir) == -1)
 		logerr("chroot failed (%d)", errno);
+	if (chdir("/") == -1)
+		logerr("chdir failed (%d)", errno);
 
 	setproctitle("worker");
 	EV_SET(&kev[0], parent, EVFILT_PROC, EV_ADD, NOTE_EXIT, 0, NULL);
