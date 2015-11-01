@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldapctl.c,v 1.5 2013/11/14 20:48:52 deraadt Exp $	*/
+/*	$OpenBSD: ldapctl.c,v 1.6 2015/11/01 07:39:28 jmatthew Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -290,6 +290,10 @@ main(int argc, char *argv[])
 	if (action == COMPACT_DB || action == INDEX_DB) {
 		if (parse_config(conffile) != 0)
 			exit(2);
+
+		if (pledge("stdio rpath wpath cpath flock", NULL) == -1)
+			err(1, "pledge");
+
 		if (action == COMPACT_DB)
 			return compact_namespaces();
 		else
@@ -308,6 +312,9 @@ main(int argc, char *argv[])
 
 	imsg_init(&ibuf, ctl_sock);
 	done = 0;
+
+	if (pledge("stdio", NULL) == -1)
+		err(1, "pledge");
 
 	/* process user request */
 	switch (action) {
