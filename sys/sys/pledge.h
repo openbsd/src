@@ -1,4 +1,4 @@
-/*	$OpenBSD: pledge.h,v 1.14 2015/10/28 12:17:20 deraadt Exp $	*/
+/*	$OpenBSD: pledge.h,v 1.15 2015/11/01 13:01:58 semarie Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -22,6 +22,7 @@
 
 #include <sys/cdefs.h>
 
+#define PLEDGE_ALWAYS	0xffffffff
 #define PLEDGE_RPATH	0x00000001	/* allow open for read */
 #define PLEDGE_WPATH	0x00000002	/* allow open for write */
 #define PLEDGE_CPATH	0x00000004	/* allow creat, mkdir, path creations */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.94 2015/10/31 21:53:53 deraadt Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.95 2015/11/01 13:01:58 semarie Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -66,11 +66,11 @@ const u_int pledge_syscalls[SYS_MAXSYSCALL] = {
 	/*
 	 * Minimum required 
 	 */
-	[SYS_exit] = 0xffffffff,
-	[SYS_kbind] = 0xffffffff,
-	[SYS___get_tcb] = 0xffffffff,
-	[SYS_pledge] = 0xffffffff,
-	[SYS_sendsyslog] = 0xffffffff,	/* stack protector reporting */
+	[SYS_exit] = PLEDGE_ALWAYS,
+	[SYS_kbind] = PLEDGE_ALWAYS,
+	[SYS___get_tcb] = PLEDGE_ALWAYS,
+	[SYS_pledge] = PLEDGE_ALWAYS,
+	[SYS_sendsyslog] = PLEDGE_ALWAYS,	/* stack protector reporting */
 
 	/* "getting" information about self is considered safe */
 	[SYS_getuid] = PLEDGE_STDIO,
@@ -533,8 +533,7 @@ pledge_check(struct proc *p, int code, int *tval)
 	if (code < 0 || code > SYS_MAXSYSCALL - 1)
 		return (EINVAL);
 
-	if ((p->p_p->ps_pledge == 0) &&
-	    (code == SYS_exit || code == SYS_kbind))
+	if ((p->p_p->ps_pledge == 0) && (pledge_syscalls[code] == PLEDGE_ALWAYS))
 		return (0);
 
 	if (p->p_p->ps_pledge & pledge_syscalls[code])
