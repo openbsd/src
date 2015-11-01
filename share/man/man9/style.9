@@ -22,9 +22,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: style.9,v 1.64 2015/10/12 17:20:53 schwarze Exp $
+.\"	$OpenBSD: style.9,v 1.65 2015/11/01 21:57:14 guenther Exp $
 .\"
-.Dd $Mdocdate: October 12 2015 $
+.Dd $Mdocdate: November 1 2015 $
 .Dt STYLE 9
 .Os
 .Sh NAME
@@ -589,8 +589,6 @@ placed in a single set of braces.
 If numbers are used as options, they should be placed first,
 as shown in the example below.
 Uppercase letters take precedence over lowercase.
-Note that the options list in manual pages should be purely alphabetical.
-That is, with no regard to whether an option takes an argument.
 .Bd -literal -offset indent
 "usage: f [-12aDde] [-b b_arg] [-m m_arg] req1 req2 [opt1 [opt2]]\en"
 "usage: f [-a | -b] [-c [-de] [-n number]]\en"
@@ -614,8 +612,8 @@ Whenever possible, code should be run through a code checker
 or splint from the ports tree) and produce minimal warnings.
 Since lint has been removed, the only lint-style comment that should
 be used is FALLTHROUGH, as it's useful to humans.
-Other lint-style comments such as ARGSUSED, LINTED, NOTREACHED, and
-PRINTFLIKE may be deleted.
+Other lint-style comments such as ARGSUSED, LINTED, and NOTREACHED
+may be deleted.
 .Pp
 Note that documentation follows its own style guide,
 as documented in
