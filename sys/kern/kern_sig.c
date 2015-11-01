@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.187 2015/10/25 20:39:54 deraadt Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.188 2015/11/01 19:03:33 semarie Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -569,16 +569,10 @@ sys_kill(struct proc *cp, void *v, register_t *retval)
 	struct proc *p;
 	int pid = SCARG(uap, pid);
 	int signum = SCARG(uap, signum);
+	int error;
 
-	if (cp->p_p->ps_flags & PS_PLEDGE) {
-		/* PLEDGE_PROC is required to signal another pid */
-		if ((cp->p_p->ps_pledge & PLEDGE_PROC) ||
-		    pid == cp->p_pid || pid == 0)
-			;
-		else
-			return pledge_fail(cp, EPERM, PLEDGE_PROC);
-	}
-
+	if ((error = pledge_kill(cp, pid)) != 0)
+		return (error);
 	if (((u_int)signum) >= NSIG)
 		return (EINVAL);
 	if (pid > 0) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.237 2015/10/28 18:41:16 deraadt Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.238 2015/11/01 19:03:33 semarie Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -863,7 +863,7 @@ doopenat(struct proc *p, int fd, const char *path, int oflags, mode_t mode,
 		p->p_pledgenote |= PLEDGE_CPATH;
 
 	if (oflags & (O_EXLOCK | O_SHLOCK)) {
-		error = pledge_flock_check(p);
+		error = pledge_flock(p);
 		if (error != 0)
 			return (error);
 	}
@@ -2120,7 +2120,7 @@ dofchownat(struct proc *p, int fd, const char *path, uid_t uid, gid_t gid,
 	if (vp->v_mount->mnt_flag & MNT_RDONLY)
 		error = EROFS;
 	else {
-		if ((error = pledge_chown_check(p, uid, gid)))
+		if ((error = pledge_chown(p, uid, gid)))
 			goto out;
 		if ((uid != -1 || gid != -1) &&
 		    (suser(p, 0) || suid_clear)) {
@@ -2172,7 +2172,7 @@ sys_lchown(struct proc *p, void *v, register_t *retval)
 	if (vp->v_mount->mnt_flag & MNT_RDONLY)
 		error = EROFS;
 	else {
-		if ((error = pledge_chown_check(p, uid, gid)))
+		if ((error = pledge_chown(p, uid, gid)))
 			goto out;
 		if ((uid != -1 || gid != -1) &&
 		    (suser(p, 0) || suid_clear)) {
@@ -2222,7 +2222,7 @@ sys_fchown(struct proc *p, void *v, register_t *retval)
 	if (vp->v_mount->mnt_flag & MNT_RDONLY)
 		error = EROFS;
 	else {
-		if ((error = pledge_chown_check(p, uid, gid)))
+		if ((error = pledge_chown(p, uid, gid)))
 			goto out;
 		if ((uid != -1 || gid != -1) &&
 		    (suser(p, 0) || suid_clear)) {

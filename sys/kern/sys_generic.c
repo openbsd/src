@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_generic.c,v 1.108 2015/10/18 05:26:55 semarie Exp $	*/
+/*	$OpenBSD: sys_generic.c,v 1.109 2015/11/01 19:03:33 semarie Exp $	*/
 /*	$NetBSD: sys_generic.c,v 1.24 1996/03/29 00:25:32 cgd Exp $	*/
 
 /*
@@ -414,7 +414,7 @@ sys_ioctl(struct proc *p, void *v, register_t *retval)
 			return (EINVAL);
 	}
 
-	error = pledge_ioctl_check(p, com, fp);
+	error = pledge_ioctl(p, com, fp);
 	if (error)
 		return (error);
 

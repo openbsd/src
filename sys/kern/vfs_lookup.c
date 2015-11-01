@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_lookup.c,v 1.57 2015/10/09 01:10:27 deraadt Exp $	*/
+/*	$OpenBSD: vfs_lookup.c,v 1.58 2015/11/01 19:03:33 semarie Exp $	*/
 /*	$NetBSD: vfs_lookup.c,v 1.17 1996/02/09 19:00:59 christos Exp $	*/
 
 /*
@@ -166,11 +166,10 @@ fail:
 	 */
 	if ((ndp->ni_rootdir = fdp->fd_rdir) == NULL)
 		ndp->ni_rootdir = rootvnode;
- 	if ((p->p_p->ps_flags & PS_PLEDGE)) {
-		error = pledge_namei(p, cnp->cn_pnbuf);
-		if (error)
-			goto fail;
-	}
+	
+	error = pledge_namei(p, cnp->cn_pnbuf);
+	if (error)
+		goto fail;
 
 	/*
 	 * Check if starting from root directory or current directory.

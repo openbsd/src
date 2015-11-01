@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_swap.c,v 1.138 2015/10/23 01:10:01 deraadt Exp $	*/
+/*	$OpenBSD: uvm_swap.c,v 1.139 2015/11/01 19:03:33 semarie Exp $	*/
 /*	$NetBSD: uvm_swap.c,v 1.40 2000/11/17 11:39:39 mrg Exp $	*/
 
 /*
@@ -670,7 +670,7 @@ sys_swapctl(struct proc *p, void *v, register_t *retval)
 	}
 
 	/* all other requests require superuser privs.   verify. */
-	if ((error = suser(p, 0)) || pledge_swapctl_check(p))
+	if ((error = suser(p, 0)) || (error = pledge_swapctl(p)))
 		goto out;
 
 	/*

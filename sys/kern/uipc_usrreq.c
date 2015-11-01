@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.91 2015/11/01 13:49:00 deraadt Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.92 2015/11/01 19:03:33 semarie Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -684,7 +684,7 @@ unp_externalize(struct mbuf *rights, socklen_t controllen, int flags)
 		for (i = 0; i < nfds; i++) {
 			fp = *rp++;
 
-			error = pledge_recvfd_check(p, fp);
+			error = pledge_recvfd(p, fp);
 			if (error)
 				break;
 			/*
@@ -849,7 +849,7 @@ morespace:
 			error = EDEADLK;
 			goto fail;
 		}
-		error = pledge_sendfd_check(p, fp);
+		error = pledge_sendfd(p, fp);
 		if (error)
 			goto fail;
 		    

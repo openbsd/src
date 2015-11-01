@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.122 2015/10/28 16:03:08 semarie Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.123 2015/11/01 19:03:33 semarie Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -84,10 +84,9 @@ sys_socket(struct proc *p, void *v, register_t *retval)
 
 	if ((type & SOCK_DNS) && !(domain == AF_INET || domain == AF_INET6))
 		return (EINVAL);
-	error = pledge_socket_check(p, type & SOCK_DNS);
+	error = pledge_socket(p, type & SOCK_DNS);
 	if (error)
-		return (pledge_fail(p, error,
-		    (type & SOCK_DNS) ? PLEDGE_DNS : PLEDGE_INET));
+		return (error);
 
 	fdplock(fdp);
 	error = falloc(p, &fp, &fd);
@@ -587,11 +586,9 @@ sendit(struct proc *p, int s, struct msghdr *mp, int flags, register_t *retsize)
 		return (error);
 	so = fp->f_data;
 
-	error = pledge_sendit_check(p, mp->msg_name);
-	if (error) {
-		error = pledge_fail(p, error, PLEDGE_STDIO);
+	error = pledge_sendit(p, mp->msg_name);
+	if (error)
 		goto bad;
-	}
 
 	auio.uio_iov = mp->msg_iov;
 	auio.uio_iovcnt = mp->msg_iovlen;
@@ -925,11 +922,9 @@ sys_setsockopt(struct proc *p, void *v, register_t *retval)
 
 	if ((error = getsock(p, SCARG(uap, s), &fp)) != 0)
 		return (error);
-	error = pledge_sockopt_check(p, 1, SCARG(uap, level), SCARG(uap, name));
-	if (error) {
-		error = pledge_fail(p, error, PLEDGE_INET);
+	error = pledge_sockopt(p, 1, SCARG(uap, level), SCARG(uap, name));
+	if (error)
 		goto bad;
-	}
 	if (SCARG(uap, valsize) > MCLBYTES) {
 		error = EINVAL;
 		goto bad;
@@ -981,11 +976,9 @@ sys_getsockopt(struct proc *p, void *v, register_t *retval)
 
 	if ((error = getsock(p, SCARG(uap, s), &fp)) != 0)
 		return (error);
-	error = pledge_sockopt_check(p, 0, SCARG(uap, level), SCARG(uap, name));
-	if (error) {
-		error = pledge_fail(p, error, PLEDGE_INET);
+	error = pledge_sockopt(p, 0, SCARG(uap, level), SCARG(uap, name));
+	if (error)
 		goto out;
-	}
 	if (SCARG(uap, val)) {
 		error = copyin(SCARG(uap, avalsize),
 		    &valsize, sizeof (valsize));
