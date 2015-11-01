@@ -1,4 +1,4 @@
-/*	$OpenBSD: addrtoname.c,v 1.34 2015/08/21 02:07:32 deraadt Exp $	*/
+/*	$OpenBSD: addrtoname.c,v 1.35 2015/11/01 21:41:23 mmcc Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -121,9 +121,9 @@ struct protoidmem protoidtable[HASHNAMESIZE];
 char *
 intoa(u_int32_t addr)
 {
-	register char *cp;
-	register u_int byte;
-	register int n;
+	char *cp;
+	u_int byte;
+	int n;
 	static char buf[sizeof(".xxx.xxx.xxx.xxx")];
 
 	NTOHL(addr);
@@ -248,7 +248,7 @@ getname6(const u_char *ap)
 	char host[HOST_NAME_MAX+1];
 	struct in6_addr addr;
 	struct h6namemem *p;
-	register char *cp;
+	char *cp;
 	char ntop_buf[INET6_ADDRSTRLEN];
 
 	memcpy(&addr, ap, sizeof(addr));
@@ -306,7 +306,7 @@ static char hex[] = "0123456789abcdef";
 static inline struct enamemem *
 lookup_emem(const u_char *ep)
 {
-	register u_int i, j, k;
+	u_int i, j, k;
 	struct enamemem *tp;
 
 	k = (ep[0] << 8) | ep[1];
@@ -337,10 +337,10 @@ lookup_emem(const u_char *ep)
  */
 
 static inline struct enamemem *
-lookup_bytestring(register const u_char *bs, const int nlen)
+lookup_bytestring(const u_char *bs, const int nlen)
 {
 	struct enamemem *tp;
-	register u_int i, j, k;
+	u_int i, j, k;
 
 	if (nlen >= 6) {
 		k = (bs[0] << 8) | bs[1];
@@ -381,9 +381,9 @@ lookup_bytestring(register const u_char *bs, const int nlen)
 /* Find the hash node that corresponds the NSAP 'nsap' */
 
 static inline struct enamemem *
-lookup_nsap(register const u_char *nsap)
+lookup_nsap(const u_char *nsap)
 {
-	register u_int i, j, k;
+	u_int i, j, k;
 	int nlen = *nsap;
 	struct enamemem *tp;
 	const u_char *ensap = nsap + nlen - 6;
@@ -426,7 +426,7 @@ lookup_nsap(register const u_char *nsap)
 static inline struct protoidmem *
 lookup_protoid(const u_char *pi)
 {
-	register u_int i, j;
+	u_int i, j;
 	struct protoidmem *tp;
 
 	/* 5 octets won't be aligned */
@@ -450,9 +450,9 @@ lookup_protoid(const u_char *pi)
 }
 
 char *
-etheraddr_string(register const u_char *ep)
+etheraddr_string(const u_char *ep)
 {
-	register struct enamemem *tp;
+	struct enamemem *tp;
 	struct ether_addr e;
 
 	tp = lookup_emem(ep);
@@ -476,9 +476,9 @@ etheraddr_string(register const u_char *ep)
 char *
 linkaddr_string(const u_char *ep, const int len)
 {
-	register u_int i, j;
-	register char *cp;
-	register struct enamemem *tp;
+	u_int i, j;
+	char *cp;
+	struct enamemem *tp;
 
 	if (len == 6)	/* XXX not totally correct... */
 		return etheraddr_string(ep);
@@ -506,9 +506,9 @@ linkaddr_string(const u_char *ep, const int len)
 char *
 etherproto_string(u_short port)
 {
-	register char *cp;
-	register struct hnamemem *tp;
-	register u_int32_t i = port;
+	char *cp;
+	struct hnamemem *tp;
+	u_int32_t i = port;
 	char buf[sizeof("0000")];
 
 	for (tp = &eprototable[i & (HASHNAMESIZE-1)]; tp->nxt; tp = tp->nxt)
@@ -530,11 +530,11 @@ etherproto_string(u_short port)
 }
 
 char *
-protoid_string(register const u_char *pi)
+protoid_string(const u_char *pi)
 {
-	register u_int i, j;
-	register char *cp;
-	register struct protoidmem *tp;
+	u_int i, j;
+	char *cp;
+	struct protoidmem *tp;
 	char buf[sizeof("00:00:00:00:00")];
 
 	tp = lookup_protoid(pi);
@@ -559,8 +559,8 @@ protoid_string(register const u_char *pi)
 char *
 llcsap_string(u_char sap)
 {
-	register struct hnamemem *tp;
-	register u_int32_t i = sap;
+	struct hnamemem *tp;
+	u_int32_t i = sap;
 	char buf[sizeof("sap 00")];
 
 	for (tp = &llcsaptable[i & (HASHNAMESIZE-1)]; tp->nxt; tp = tp->nxt)
@@ -578,9 +578,9 @@ llcsap_string(u_char sap)
 char *
 isonsap_string(const u_char *nsap)
 {
-	register u_int i, nlen = nsap[0];
-	register char *cp;
-	register struct enamemem *tp;
+	u_int i, nlen = nsap[0];
+	char *cp;
+	struct enamemem *tp;
 
 	tp = lookup_nsap(nsap);
 	if (tp->e_name)
@@ -603,8 +603,8 @@ isonsap_string(const u_char *nsap)
 char *
 tcpport_string(u_short port)
 {
-	register struct hnamemem *tp;
-	register u_int32_t i = port;
+	struct hnamemem *tp;
+	u_int32_t i = port;
 	char buf[sizeof("00000")];
 
 	for (tp = &tporttable[i & (HASHNAMESIZE-1)]; tp->nxt; tp = tp->nxt)
@@ -620,10 +620,10 @@ tcpport_string(u_short port)
 }
 
 char *
-udpport_string(register u_short port)
+udpport_string(u_short port)
 {
-	register struct hnamemem *tp;
-	register u_int32_t i = port;
+	struct hnamemem *tp;
+	u_int32_t i = port;
 	char buf[sizeof("00000")];
 
 	for (tp = &uporttable[i & (HASHNAMESIZE-1)]; tp->nxt; tp = tp->nxt)
@@ -705,8 +705,8 @@ extern struct eproto {
 static void
 init_eprotoarray(void)
 {
-	register int i;
-	register struct hnamemem *table;
+	int i;
+	struct hnamemem *table;
 
 	for (i = 0; eproto_db[i].s; i++) {
 		int j = ntohs(eproto_db[i].p) & (HASHNAMESIZE-1);
@@ -726,8 +726,8 @@ init_eprotoarray(void)
 static void
 init_protoidarray(void)
 {
-	register int i;
-	register struct protoidmem *tp;
+	int i;
+	struct protoidmem *tp;
 	u_char protoid[5];
 
 	protoid[0] = 0;
@@ -767,13 +767,13 @@ static struct etherlist {
 static void
 init_etherarray(void)
 {
-	register struct etherlist *el;
-	register struct enamemem *tp;
+	struct etherlist *el;
+	struct enamemem *tp;
 #ifdef HAVE_ETHER_NTOHOST
 	char name[HOST_NAME_MAX+1 + 1];
 #else
-	register struct pcap_etherent *ep;
-	register FILE *fp;
+	struct pcap_etherent *ep;
+	FILE *fp;
 
 	/* Suck in entire ethers file */
 	fp = fopen(PCAP_ETHERS_FILE, "r");
@@ -823,8 +823,8 @@ static struct tok llcsap_db[] = {
 static void
 init_llcsaparray(void)
 {
-	register int i;
-	register struct hnamemem *table;
+	int i;
+	struct hnamemem *table;
 
 	for (i = 0; llcsap_db[i].s != NULL; i++) {
 		table = &llcsaptable[llcsap_db[i].v];
@@ -869,7 +869,7 @@ init_addrtoname(u_int32_t localnet, u_int32_t mask)
 char *
 dnaddr_string(u_short dnaddr)
 {
-	register struct hnamemem *tp;
+	struct hnamemem *tp;
 
 	for (tp = &dnaddrtable[dnaddr & (HASHNAMESIZE-1)]; tp->nxt != 0;
 	     tp = tp->nxt)
@@ -890,7 +890,7 @@ dnaddr_string(u_short dnaddr)
 struct hnamemem *
 newhnamemem(void)
 {
-	register struct hnamemem *p;
+	struct hnamemem *p;
 	static struct hnamemem *ptr = NULL;
 	static u_int num = 0;
 
@@ -910,7 +910,7 @@ newhnamemem(void)
 struct h6namemem *
 newh6namemem(void)
 {
-	register struct h6namemem *p;
+	struct h6namemem *p;
 	static struct h6namemem *ptr = NULL;
 	static u_int num = 0;
 
