@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.168 2015/11/01 17:02:44 bluhm Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.169 2015/11/01 22:53:34 bluhm Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -39,6 +39,7 @@
 #include <sys/sockio.h>
 #include <sys/time.h>
 #include <sys/kernel.h>
+#include <sys/pool.h>
 #include <sys/protosw.h>
 #include <sys/errno.h>
 #include <sys/ioctl.h>
@@ -82,6 +83,7 @@ int nd6_debug = 1;
 int nd6_debug = 0;
 #endif
 
+struct	pool nd6_pool;		/* pool for llinfo_nd6 structures */
 static int nd6_inuse, nd6_allocated;
 
 struct llinfo_nd6 llinfo_nd6 = {&llinfo_nd6, &llinfo_nd6};
@@ -122,6 +124,8 @@ nd6_init(void)
 		log(LOG_NOTICE, "%s called more than once\n", __func__);
 		return;
 	}
+
+	pool_init(&nd6_pool, sizeof(struct llinfo_nd6), 0, 0, 0, "nd6", NULL);
 
 	/* initialization of the default router list */
 	TAILQ_INIT(&nd_defrouter);
@@ -996,10 +1000,10 @@ nd6_rtrequest(struct ifnet *ifp, int req, struct rtentry *rt)
 		 * Case 2: This route may come from cloning, or a manual route
 		 * add with a LL address.
 		 */
-		ln = malloc(sizeof(*ln), M_RTABLE, M_NOWAIT | M_ZERO);
+		ln = pool_get(&nd6_pool, PR_NOWAIT | PR_ZERO);
 		rt->rt_llinfo = (caddr_t)ln;
 		if (ln == NULL) {
-			log(LOG_DEBUG, "%s: malloc failed\n", __func__);
+			log(LOG_DEBUG, "%s: pool get failed\n", __func__);
 			break;
 		}
 		nd6_inuse++;
@@ -1126,7 +1130,7 @@ nd6_rtrequest(struct ifnet *ifp, int req, struct rtentry *rt)
 		rt->rt_llinfo = NULL;
 		rt->rt_flags &= ~RTF_LLINFO;
 		m_freem(ln->ln_hold);
-		free(ln, M_RTABLE, 0);
+		pool_put(&nd6_pool, ln);
 	}
 }
 
