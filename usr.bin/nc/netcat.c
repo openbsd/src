@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.140 2015/10/23 05:27:17 beck Exp $ */
+/* $OpenBSD: netcat.c,v 1.141 2015/11/01 01:05:31 deraadt Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  * Copyright (c) 2015 Bob Beck.  All rights reserved.
@@ -676,7 +676,6 @@ unix_bind(char *path, int flags)
 
 void
 tls_setup_client(struct tls *tls_ctx, int s, char *host)
-
 {
 	int i;
 
@@ -696,6 +695,7 @@ tls_setup_client(struct tls *tls_ctx, int s, char *host)
 	    strcmp(tls_expecthash, tls_peer_cert_hash(tls_ctx)) != 0)
 		errx(1, "peer certificate is not %s", tls_expecthash);
 }
+
 struct tls *
 tls_setup_server(struct tls *tls_ctx, int connfd, char *host)
 {
@@ -735,6 +735,7 @@ tls_setup_server(struct tls *tls_ctx, int connfd, char *host)
 	}
 	return NULL;
 }
+
 /*
  * unix_connect()
  * Returns a socket connected to a local unix socket. Returns -1 on failure.
@@ -1160,7 +1161,6 @@ drainbuf(int fd, unsigned char *buf, size_t *bufpos, struct tls *tls)
 	*bufpos -= n;
 	return n;
 }
-
 
 ssize_t
 fillbuf(int fd, unsigned char *buf, size_t *bufpos, struct tls *tls)
