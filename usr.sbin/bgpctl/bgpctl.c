@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.185 2015/10/24 11:54:50 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.186 2015/11/01 21:20:46 benno Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -124,6 +124,9 @@ main(int argc, char *argv[])
 	char			*sockname;
 	enum imsg_type		 type;
 
+	if (pledge("stdio rpath wpath cpath unix inet dns", NULL) == -1)
+		err(1, "pledge");
+
 	sockname = SOCKET_NAME;
 	while ((ch = getopt(argc, argv, "ns:")) != -1) {
 		switch (ch) {
@@ -151,6 +154,9 @@ main(int argc, char *argv[])
 		irr_main(res->as.as, res->flags, res->irr_outdir);
 	}
 
+	if (pledge("stdio rpath wpath unix", NULL) == -1)
+		err(1, "pledge");
+
 	memcpy(&neighbor.addr, &res->peeraddr, sizeof(neighbor.addr));
 	strlcpy(neighbor.descr, res->peerdesc, sizeof(neighbor.descr));
 
@@ -164,6 +170,9 @@ main(int argc, char *argv[])
 		errx(1, "socket name too long");
 	if (connect(fd, (struct sockaddr *)&sun, sizeof(sun)) == -1)
 		err(1, "connect: %s", sockname);
+
+	if (pledge("stdio rpath wpath", NULL) == -1)
+		err(1, "pledge");
 
 	if ((ibuf = malloc(sizeof(struct imsgbuf))) == NULL)
 		err(1, NULL);
