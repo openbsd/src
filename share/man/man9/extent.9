@@ -1,4 +1,4 @@
-.\"	$OpenBSD: extent.9,v 1.18 2014/02/08 20:29:01 kettenis Exp $
+.\"	$OpenBSD: extent.9,v 1.19 2015/11/01 21:26:48 jmc Exp $
 .\"	$NetBSD: extent.9,v 1.15 1999/03/16 00:40:47 garbled Exp $
 .\"
 .\" Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: February 8 2014 $
+.Dd $Mdocdate: November 1 2015 $
 .Dt EXTENT 9
 .Os
 .Sh NAME
@@ -204,7 +204,7 @@ extent by setting the flag
 .Dv EX_WAITSPACE .
 If
 .Dv EX_WAITSPACE
-is not set, the allocation will fail if the request can not be
+is not set, the allocation will fail if the request cannot be
 satisfied without sleeping.
 .Pp
 The request will be aligned to a multiple of
@@ -287,7 +287,7 @@ If neither
 .Dv EX_WAITSPACE
 nor
 .Dv EX_CONFLICTOK
-is set, the allocation will fail if the request can not be
+is set, the allocation will fail if the request cannot be
 satisfied without sleeping.
 .Pp
 .Fn extent_free

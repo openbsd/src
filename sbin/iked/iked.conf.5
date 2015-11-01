@@ -1,4 +1,4 @@
-.\" $OpenBSD: iked.conf.5,v 1.41 2015/10/31 20:06:42 naddy Exp $
+.\" $OpenBSD: iked.conf.5,v 1.42 2015/11/01 21:26:48 jmc Exp $
 .\"
 .\" Copyright (c) 2010 - 2014 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 31 2015 $
+.Dd $Mdocdate: November 1 2015 $
 .Dt IKED.CONF 5
 .Os
 .Sh NAME
@@ -794,7 +794,7 @@ Thus 160 bits of key material have to be supplied.
 The same applies to AES-GCM and AES-GMAC.
 .Pp
 Using AES-GMAC or NULL with ESP will only provide authentication.
-This is useful in setups where AH can not be used, e.g. when NAT is involved.
+This is useful in setups where AH cannot be used, e.g. when NAT is involved.
 .Pp
 The following group types are permitted with the
 .Ic group

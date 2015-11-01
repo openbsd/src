@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipsec.conf.5,v 1.149 2015/05/25 19:29:36 naddy Exp $
+.\"	$OpenBSD: ipsec.conf.5,v 1.150 2015/11/01 21:26:48 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
 .\"
@@ -22,7 +22,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 25 2015 $
+.Dd $Mdocdate: November 1 2015 $
 .Dt IPSEC.CONF 5
 .Os
 .Sh NAME
@@ -658,7 +658,7 @@ Thus 160, 224, or 288 bits of key material, respectively, have to be supplied.
 The same applies to AES-GCM and AES-GMAC.
 .Pp
 Using AES-GMAC or NULL with ESP will only provide authentication.
-This is useful in setups where AH can not be used, e.g. when NAT is involved.
+This is useful in setups where AH cannot be used, e.g. when NAT is involved.
 .Pp
 The following group types are permitted with the
 .Ic group
