@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: rcctl.sh,v 1.84 2015/10/31 11:09:41 ajacoutot Exp $
+# $OpenBSD: rcctl.sh,v 1.85 2015/11/01 10:59:23 ajacoutot Exp $
 #
 # Copyright (c) 2014, 2015 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -157,7 +157,7 @@ svc_is_meta()
 	local _svc=$1
 	[ -n "${_svc}" ] || return
 
-	grep -q "^_pkg_scripts=" /etc/rc.d/${_svc}
+	[ -r "/etc/rc.d/${_svc}" ] && grep -q "^_pkg_scripts=" /etc/rc.d/${_svc}
 }
 
 svc_is_special()
@@ -466,12 +466,12 @@ case ${action} in
 		svc_is_avail ${svc} || \
 			rcctl_err "service ${svc} does not exist" 2
 		svc_is_meta ${svc} && \
-			rcctl_err "\"${svc}\" is a meta script, cannot \"${action} ${svc} ${var}\""
+			rcctl_err "/etc/rc.d/${svc} is a meta script, cannot \"${action} ${var}\""
 		if [ -n "${var}" ]; then
 			[[ ${var} != @(class|flags|status|timeout|user) ]] && usage
 			if svc_is_special ${svc}; then
 				[[ ${var} == @(class|timeout|user) ]] && \
-					rcctl_err "\"${svc}\" is a special variable, cannot \"${action} ${svc} ${var}\""
+					rcctl_err "\"${svc}\" is a special variable, cannot \"${action} ${var}\""
 			fi
 		fi
 		;;
@@ -484,13 +484,13 @@ case ${action} in
 		svc_is_avail ${svc} || \
 			rcctl_err "service ${svc} does not exist" 2
 		svc_is_meta ${svc} && \
-			rcctl_err "\"${svc}\" is a meta script, cannot \"${action} ${svc} ${var}\""
+			rcctl_err "/etc/rc.d/${svc} is a meta script, cannot \"${action} ${var}\""
 		[[ ${var} != @(class|flags|status|timeout|user) ]] && usage
 		[[ ${var} = flags && ${args} = NO ]] && \
 			rcctl_err "\"flags NO\" contradicts \"${action}\""
 		if svc_is_special ${svc}; then
 			[[ ${var} != status ]] && \
-				rcctl_err "\"${svc}\" is a special variable, cannot \"${action} ${svc} ${var}\""
+				rcctl_err "\"${svc}\" is a special variable, cannot \"${action} ${var}\""
 		fi
 		[[ ${var} == class ]] && \
 			rcctl_err "\"${svc}_class\" is a read-only variable set in login.conf(5)"
