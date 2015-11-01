@@ -1,4 +1,4 @@
-/*	$OpenBSD: dlfcn_stubs.c,v 1.12 2013/03/24 01:37:23 deraadt Exp $	*/
+/*	$OpenBSD: dlfcn_stubs.c,v 1.13 2015/11/01 03:00:01 guenther Exp $	*/
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -50,7 +50,6 @@ int	 dl_iterate_phdr(int (*callback)(struct dl_phdr_info *, size_t, void *),	   
 
 #include <stdio.h>
 
-/*ARGSUSED*/
 void *
 dlopen(const char *libname, int how)
 {
@@ -58,7 +57,6 @@ dlopen(const char *libname, int how)
 	return NULL;
 }
 
-/*ARGSUSED*/
 int
 dlclose(void *handle)
 {
@@ -66,7 +64,6 @@ dlclose(void *handle)
 	return 0;
 }
 
-/*ARGSUSED*/
 void *
 dlsym(void *handle, const char *name)
 {
@@ -74,21 +71,18 @@ dlsym(void *handle, const char *name)
 	return NULL;
 }
 
-/*ARGSUSED*/
 int
 dlctl(void *handle, int command, void *data)
 {
 	return -1;
 }
 
-/*ARGSUSED*/
 char *
 dlerror(void)
 {
 	return "Wrong dl symbols!\n";
 }
 
-/*ARGSUSED*/
 int
 dl_iterate_phdr(int (*callback)(struct dl_phdr_info *, size_t, void *),
 	void *data)
@@ -96,7 +90,6 @@ dl_iterate_phdr(int (*callback)(struct dl_phdr_info *, size_t, void *),
 	return -1;
 }
 
-/*ARGSUSED*/
 int
 dladdr(const void *addr, struct dl_info *info)
 {
