@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.13 2015/09/11 15:57:37 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.14 2015/11/01 21:30:00 bluhm Exp $
 
 # The following ports must be installed:
 #
@@ -46,7 +46,7 @@ regress:
 #
 # Run make check-setup to see if you got the setup correct.
 
-SRC_IF ?=	tun0
+SRC_IF ?=	tap0
 SRC_MAC ?=	fe:e1:ba:d1:0a:dc
 PF_IFIN ?=	vio0
 PF_IFOUT ?=	vio1
@@ -156,7 +156,7 @@ run-regress-ping6: stamp-pfctl
 	ping6 -n -c 1 ${${ip}6}
 .endfor
 	@echo Check ping RPT_OUT6:
-	ping6 -n -c 1 -S ${RPT_OUT6} ${ECO_IN6}
+	ping6 -n -c 1 -I ${RPT_OUT6} ${ECO_IN6}
 
 # Send a large IPv4/ICMP-Echo-Request packet with enabled DF bit and
 # parse response packet to determine MTU of the packet filter.  The
@@ -284,7 +284,7 @@ check-setup:
 	@echo '\n======== $@ SRC ========'
 .for ip in SRC_OUT RPT_OUT
 	ping -n -c 1 ${${ip}}  # ${ip}
-	route -n get -inet ${${ip}} | fgrep -q 'interface: lo0'  # ${ip}
+	route -n get -inet ${${ip}} | grep -q 'flags: .*LOCAL'  # ${ip}
 .endfor
 	ping -n -c 1 ${PF_IN}  # PF_IN
 	route -n get -inet ${PF_IN} | fgrep -q 'interface: ${SRC_IF}'  # PF_IN SRC_IF
@@ -293,7 +293,7 @@ check-setup:
 .endfor
 .for ip in SRC_OUT RPT_OUT
 	ping6 -n -c 1 ${${ip}6}  # ${ip}6
-	route -n get -inet6 ${${ip}6} | fgrep -q 'interface: lo0'  # ${ip}6
+	route -n get -inet6 ${${ip}6} | grep -q 'flags: .*LOCAL'  # ${ip}6
 .endfor
 	ping6 -n -c 1 ${PF_IN6}  # PF_IN6
 	route -n get -inet6 ${PF_IN6} | fgrep -q 'interface: ${SRC_IF}'  # PF_IN6 SRC_IF
@@ -302,10 +302,10 @@ check-setup:
 .endfor
 	@echo '\n======== $@ PF ========'
 	ssh ${PF_SSH} ping -n -c 1 ${PF_IN}  # PF_IN
-	ssh ${PF_SSH} route -n get -inet ${PF_IN} | fgrep -q 'interface: lo0'  # PF_IN
+	ssh ${PF_SSH} route -n get -inet ${PF_IN} | grep -q 'flags: .*LOCAL'  # PF_IN
 	ssh ${PF_SSH} ping -n -c 1 ${SRC_OUT}  # SRC_OUT
 	ssh ${PF_SSH} ping -n -c 1 ${PF_OUT}  # PF_OUT
-	ssh ${PF_SSH} route -n get -inet ${PF_OUT} | fgrep -q 'interface: lo0'  # PF_OUT
+	ssh ${PF_SSH} route -n get -inet ${PF_OUT} | grep -q 'flags: .*LOCAL'  # PF_OUT
 	ssh ${PF_SSH} ping -n -c 1 ${RT_IN}  # RT_IN
 .for ip in RT_OUT ECO_IN ECO_OUT
 	ssh ${PF_SSH} route -n get -inet ${${ip}} | fgrep -q 'gateway: ${RT_IN}'  # ${ip} RT_IN
@@ -314,10 +314,10 @@ check-setup:
 	ssh ${PF_SSH} route -n get -inet ${${ip}} | grep -q 'flags: .*REJECT'  # ${ip} reject
 .endfor
 	ssh ${PF_SSH} ping6 -n -c 1 ${PF_IN6}  # PF_IN6
-	ssh ${PF_SSH} route -n get -inet6 ${PF_IN6} | fgrep -q 'interface: lo0'  # PF_IN6
+	ssh ${PF_SSH} route -n get -inet6 ${PF_IN6} | grep -q 'flags: .*LOCAL'  # PF_IN6
 	ssh ${PF_SSH} ping6 -n -c 1 ${SRC_OUT6}  # SRC_OUT6
 	ssh ${PF_SSH} ping6 -n -c 1 ${PF_OUT6}  # PF_OUT6
-	ssh ${PF_SSH} route -n get -inet6 ${PF_OUT6} | fgrep -q 'interface: lo0'  # PF_OUT6
+	ssh ${PF_SSH} route -n get -inet6 ${PF_OUT6} | grep -q 'flags: .*LOCAL'  # PF_OUT6
 	ssh ${PF_SSH} ping6 -n -c 1 ${RT_IN6}  # RT_IN6
 .for ip in RT_OUT ECO_IN ECO_OUT
 	ssh ${PF_SSH} route -n get -inet6 ${${ip}6} | fgrep -q 'gateway: ${RT_IN6}'  # ${ip}6 RT_IN6
@@ -332,25 +332,25 @@ check-setup:
 	ssh ${PF_SSH} ifconfig ${PF_IFOUT} | fgrep 'mtu 1400'
 	@echo '\n======== $@ RT ========'
 	ssh ${RT_SSH} ping -n -c 1 ${RT_IN}  # RT_IN
-	ssh ${RT_SSH} route -n get -inet ${RT_IN} | fgrep -q 'interface: lo0'  # RT_IN
+	ssh ${RT_SSH} route -n get -inet ${RT_IN} | grep -q 'flags: .*LOCAL'  # RT_IN
 	ssh ${RT_SSH} ping -n -c 1 ${PF_OUT}  # PF_OUT
 .for ip in PF_IN SRC_OUT RPT_OUT
 	ssh ${RT_SSH} route -n get -inet ${${ip}} | fgrep -q 'gateway: ${PF_OUT}'  # ${ip} PF_OUT
 .endfor
 	ssh ${RT_SSH} ping -n -c 1 ${RT_OUT}  # RT_OUT
-	ssh ${RT_SSH} route -n get -inet ${RT_OUT} | fgrep -q 'interface: lo0'  # RT_OUT
+	ssh ${RT_SSH} route -n get -inet ${RT_OUT} | grep -q 'flags: .*LOCAL'  # RT_OUT
 	ssh ${RT_SSH} ping -n -c 1 ${ECO_IN}  # ECO_IN
 .for ip in ECO_OUT RTT_IN
 	ssh ${RT_SSH} route -n get -inet ${${ip}} | fgrep -q 'gateway: ${ECO_IN}'  # ${ip} ECO_IN
 .endfor
 	ssh ${RT_SSH} ping6 -n -c 1 ${RT_IN6}  # RT_IN6
-	ssh ${RT_SSH} route -n get -inet6 ${RT_IN6} | fgrep -q 'interface: lo0'  # RT_IN6
+	ssh ${RT_SSH} route -n get -inet6 ${RT_IN6} | grep -q 'flags: .*LOCAL'  # RT_IN6
 	ssh ${RT_SSH} ping6 -n -c 1 ${PF_OUT6}  # PF_OUT6
 .for ip in PF_IN SRC_OUT RPT_OUT
 	ssh ${RT_SSH} route -n get -inet6 ${${ip}6} | fgrep -q 'gateway: ${PF_OUT6}'  # ${ip}6 PF_OUT6
 .endfor
 	ssh ${RT_SSH} ping6 -n -c 1 ${RT_OUT6}  # RT_OUT6
-	ssh ${RT_SSH} route -n get -inet6 ${RT_OUT6} | fgrep -q 'interface: lo0'  # RT_OUT6
+	ssh ${RT_SSH} route -n get -inet6 ${RT_OUT6} | grep -q 'flags: .*LOCAL'  # RT_OUT6
 	ssh ${RT_SSH} ping6 -n -c 1 ${ECO_IN6}  # ECO_IN6
 .for ip in ECO_OUT RTT_IN
 	ssh ${RT_SSH} route -n get -inet6 ${${ip}6} | fgrep -q 'gateway: ${ECO_IN6}'  # ${ip}6 ECO_IN6
@@ -361,7 +361,7 @@ check-setup:
 	@echo '\n======== $@ ECO ========'
 .for ip in ECO_IN ECO_OUT RTT_IN
 	ssh ${ECO_SSH} ping -n -c 1 ${${ip}}  # ${ip}
-	ssh ${ECO_SSH} route -n get -inet ${${ip}} | fgrep -q 'interface: lo0'  # ${ip}
+	ssh ${ECO_SSH} route -n get -inet ${${ip}} | grep -q 'flags: .*LOCAL'  # ${ip}
 .endfor
 	ssh ${ECO_SSH} ping -n -c 1 ${RT_OUT}  # RT_OUT
 .for ip in RT_IN PF_OUT PF_IN SRC_OUT RPT_OUT
@@ -369,7 +369,7 @@ check-setup:
 .endfor
 .for ip in ECO_IN ECO_OUT RTT_IN
 	ssh ${ECO_SSH} ping6 -n -c 1 ${${ip}6}  # ${ip}6
-	ssh ${ECO_SSH} route -n get -inet6 ${${ip}6} | fgrep -q 'interface: lo0'  # ${ip}6
+	ssh ${ECO_SSH} route -n get -inet6 ${${ip}6} | grep -q 'flags: .*LOCAL'  # ${ip}6
 .endfor
 	ssh ${ECO_SSH} ping6 -n -c 1 ${RT_OUT6}  # RT_OUT6
 .for ip in RT_IN PF_OUT PF_IN SRC_OUT RPT_OUT
