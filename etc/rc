@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.467 2015/10/18 21:33:18 rpe Exp $
+#	$OpenBSD: rc,v 1.468 2015/11/01 14:32:51 rpe Exp $
 
 # System startup script run by init on autoboot or after single-user.
 # Output and error are redirected to console by init, and the console is the
@@ -468,7 +468,7 @@ echo '.'
 if [[ -f /etc/rc.firsttime ]]; then
 	mv /etc/rc.firsttime /etc/rc.firsttime.run
 	. /etc/rc.firsttime.run 2>&1 | tee /dev/tty |
-		mail -Es "`hostname` rc.firsttime output" root >/dev/null
+		mail -Es "$(hostname) rc.firsttime output" root >/dev/null
 fi
 rm -f /etc/rc.firsttime.run
 
