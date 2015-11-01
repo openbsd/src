@@ -1,4 +1,4 @@
-/*	$OpenBSD: localtime.c,v 1.55 2015/10/24 18:13:18 guenther Exp $ */
+/*	$OpenBSD: localtime.c,v 1.56 2015/11/01 03:45:29 guenther Exp $ */
 /*
 ** This file is in the public domain, so clarified as of
 ** 1996-06-05 by Arthur David Olson.
@@ -1197,7 +1197,6 @@ DEF_WEAK(tzset);
 ** The unused offset argument is for the benefit of mktime variants.
 */
 
-/*ARGSUSED*/
 static struct tm *
 localsub(const time_t *timep, long offset, struct tm *tmp)
 {

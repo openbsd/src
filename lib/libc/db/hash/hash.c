@@ -1,4 +1,4 @@
-/*	$OpenBSD: hash.c,v 1.26 2015/01/16 16:48:51 deraadt Exp $	*/
+/*	$OpenBSD: hash.c,v 1.27 2015/11/01 03:45:28 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -87,7 +87,6 @@ int hash_accesses, hash_collisions, hash_expansions, hash_overflows;
 /************************** INTERFACE ROUTINES ***************************/
 /* OPEN/CLOSE */
 
-/* ARGSUSED */
 DB *
 __hash_open(const char *file, int flags, int mode,
     const HASHINFO *info,	/* Special directives for create */

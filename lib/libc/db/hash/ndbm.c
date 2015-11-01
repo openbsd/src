@@ -1,4 +1,4 @@
-/*	$OpenBSD: ndbm.c,v 1.24 2015/09/12 15:20:52 guenther Exp $	*/
+/*	$OpenBSD: ndbm.c,v 1.25 2015/11/01 03:45:28 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -130,7 +130,6 @@ firstkey()
  *	DATUM on success
  *	NULL on failure
  */
-/* ARGSUSED */
 datum
 nextkey(datum key)
 {

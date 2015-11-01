@@ -1,4 +1,4 @@
-/*	$OpenBSD: regcomp.c,v 1.26 2014/10/18 04:12:28 deraadt Exp $ */
+/*	$OpenBSD: regcomp.c,v 1.27 2015/11/01 03:45:29 guenther Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994 Henry Spencer.
  * Copyright (c) 1992, 1993, 1994
@@ -1201,7 +1201,6 @@ mcadd( struct parse *p, cset *cs, char *cp)
  * This would have to know the set of possibilities.  Implementation
  * is deferred.
  */
-/* ARGSUSED */
 static void
 mcinvert(struct parse *p, cset *cs)
 {
@@ -1214,7 +1213,6 @@ mcinvert(struct parse *p, cset *cs)
  * This would have to know the set of possibilities.  Implementation
  * is deferred.
  */
-/* ARGSUSED */
 static void
 mccase(struct parse *p, cset *cs)
 {

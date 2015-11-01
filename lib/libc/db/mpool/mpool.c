@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpool.c,v 1.20 2015/01/16 16:48:51 deraadt Exp $	*/
+/*	$OpenBSD: mpool.c,v 1.21 2015/11/01 03:45:28 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -51,7 +51,6 @@ static int  mpool_write(MPOOL *, BKT *);
  * mpool_open --
  *	Initialize a memory pool.
  */
-/* ARGSUSED */
 MPOOL *
 mpool_open(void *key, int fd, pgno_t pagesize, pgno_t maxcache)
 {
@@ -166,7 +165,6 @@ mpool_delete(MPOOL *mp, void *page)
  * mpool_get
  *	Get a page.
  */
-/* ARGSUSED */
 void *
 mpool_get(MPOOL *mp, pgno_t pgno,
     u_int flags)		/* XXX not used? */
@@ -261,7 +259,6 @@ mpool_get(MPOOL *mp, pgno_t pgno,
  * mpool_put
  *	Return a page.
  */
-/* ARGSUSED */
 int
 mpool_put(MPOOL *mp, void *page, u_int flags)
 {

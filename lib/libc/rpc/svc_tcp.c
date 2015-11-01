@@ -1,4 +1,4 @@
-/*	$OpenBSD: svc_tcp.c,v 1.36 2015/09/13 15:36:56 guenther Exp $ */
+/*	$OpenBSD: svc_tcp.c,v 1.37 2015/11/01 03:45:29 guenther Exp $ */
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -229,7 +229,6 @@ makefd_xprt(int fd, u_int sendsize, u_int recvsize)
 	return (xprt);
 }
 
-/* ARGSUSED */
 static bool_t
 rendezvous_request(SVCXPRT *xprt, struct rpc_msg *ignored)
 {
@@ -291,7 +290,6 @@ rendezvous_request(SVCXPRT *xprt, struct rpc_msg *ignored)
 	return (FALSE); /* there is never an rpc msg to be processed */
 }
 
-/* ARGSUSED */
 static enum xprt_stat
 rendezvous_stat(SVCXPRT *xprt)
 {

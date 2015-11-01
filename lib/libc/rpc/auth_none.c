@@ -1,4 +1,4 @@
-/*	$OpenBSD: auth_none.c,v 1.13 2015/09/13 15:36:56 guenther Exp $ */
+/*	$OpenBSD: auth_none.c,v 1.14 2015/11/01 03:45:29 guenther Exp $ */
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -95,7 +95,6 @@ authnone_create(void)
 }
 DEF_WEAK(authnone_create);
 
-/*ARGSUSED*/
 static bool_t
 authnone_marshal(AUTH *client, XDR *xdrs)
 {
@@ -107,13 +106,11 @@ authnone_marshal(AUTH *client, XDR *xdrs)
 	    ap->marshalled_client, ap->mcnt));
 }
 
-/*ARGSUSED*/
 static void 
 authnone_verf(struct __rpc_auth *none)
 {
 }
 
-/*ARGSUSED*/
 static bool_t
 authnone_validate(struct __rpc_auth *none, struct opaque_auth *noauth)
 {
@@ -121,7 +118,6 @@ authnone_validate(struct __rpc_auth *none, struct opaque_auth *noauth)
 	return (TRUE);
 }
 
-/*ARGSUSED*/
 static bool_t
 authnone_refresh(struct __rpc_auth *none)
 {
@@ -129,7 +125,6 @@ authnone_refresh(struct __rpc_auth *none)
 	return (FALSE);
 }
 
-/*ARGSUSED*/
 static void
 authnone_destroy(struct __rpc_auth *none)
 {

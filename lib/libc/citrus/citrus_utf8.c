@@ -1,4 +1,4 @@
-/*	$OpenBSD: citrus_utf8.c,v 1.14 2015/10/13 02:17:46 bentley Exp $ */
+/*	$OpenBSD: citrus_utf8.c,v 1.15 2015/11/01 03:45:28 guenther Exp $ */
 
 /*-
  * Copyright (c) 2002-2004 Tim J. Robbins
@@ -51,7 +51,6 @@ struct _utf8_state {
 };
 
 size_t
-/*ARGSUSED*/
 _citrus_utf8_ctype_mbrtowc(wchar_t * __restrict pwc,
 			   const char * __restrict s, size_t n,
 			   void * __restrict pspriv)
@@ -183,7 +182,6 @@ _citrus_utf8_ctype_mbrtowc(wchar_t * __restrict pwc,
 }
 
 int
-/*ARGSUSED*/
 _citrus_utf8_ctype_mbsinit(const void * __restrict pspriv)
 {
 	return (pspriv == NULL ||
@@ -191,7 +189,6 @@ _citrus_utf8_ctype_mbsinit(const void * __restrict pspriv)
 }
 
 size_t
-/*ARGSUSED*/
 _citrus_utf8_ctype_mbsnrtowcs(wchar_t * __restrict dst,
 			      const char ** __restrict src,
 			      size_t nmc, size_t len,
@@ -272,7 +269,6 @@ _citrus_utf8_ctype_mbsnrtowcs(wchar_t * __restrict dst,
 }
 
 size_t
-/*ARGSUSED*/
 _citrus_utf8_ctype_wcrtomb(char * __restrict s,
 			   wchar_t wc, void * __restrict pspriv)
 {
@@ -334,7 +330,6 @@ _citrus_utf8_ctype_wcrtomb(char * __restrict s,
 }
 
 size_t
-/*ARGSUSED*/
 _citrus_utf8_ctype_wcsnrtombs(char * __restrict dst,
 			      const wchar_t ** __restrict src,
 			      size_t nwc, size_t len,

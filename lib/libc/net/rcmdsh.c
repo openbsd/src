@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcmdsh.c,v 1.16 2015/10/23 04:45:32 guenther Exp $	*/ 
+/*	$OpenBSD: rcmdsh.c,v 1.17 2015/11/01 03:45:29 guenther Exp $	*/ 
 
 /*
  * Copyright (c) 2001, MagniComp
@@ -51,7 +51,6 @@
  * program in place of a direct rcmd(3) function call so as to
  * avoid having to be root.  Note that rport is ignored.
  */
-/* ARGSUSED */
 int
 rcmdsh(char **ahost, int rport, const char *locuser, const char *remuser,
     const char *cmd, char *rshprog)

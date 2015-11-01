@@ -1,4 +1,4 @@
-/*	$OpenBSD: auth_unix.c,v 1.25 2015/09/13 15:36:56 guenther Exp $ */
+/*	$OpenBSD: auth_unix.c,v 1.26 2015/11/01 03:45:29 guenther Exp $ */
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -207,7 +207,6 @@ DEF_WEAK(authunix_create_default);
 /*
  * authunix operations
  */
-/* ARGSUSED */
 static void
 authunix_nextverf(AUTH *auth)
 {

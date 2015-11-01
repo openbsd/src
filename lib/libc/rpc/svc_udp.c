@@ -1,4 +1,4 @@
-/*	$OpenBSD: svc_udp.c,v 1.24 2015/09/13 15:36:56 guenther Exp $ */
+/*	$OpenBSD: svc_udp.c,v 1.25 2015/11/01 03:45:29 guenther Exp $ */
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -169,7 +169,6 @@ svcudp_create(int sock)
 }
 DEF_WEAK(svcudp_create);
 
-/* ARGSUSED */
 static enum xprt_stat
 svcudp_stat(SVCXPRT *xprt)
 {

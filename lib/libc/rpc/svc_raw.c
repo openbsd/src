@@ -1,4 +1,4 @@
-/*	$OpenBSD: svc_raw.c,v 1.11 2015/08/20 21:49:29 deraadt Exp $ */
+/*	$OpenBSD: svc_raw.c,v 1.12 2015/11/01 03:45:29 guenther Exp $ */
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -88,7 +88,6 @@ svcraw_create(void)
 	return (&srp->server);
 }
 
-/* ARGSUSED */
 static enum xprt_stat
 svcraw_stat(SVCXPRT *xprt)
 {
@@ -96,7 +95,6 @@ svcraw_stat(SVCXPRT *xprt)
 	return (XPRT_IDLE);
 }
 
-/* ARGSUSED */
 static bool_t
 svcraw_recv(SVCXPRT *xprt, struct rpc_msg *msg)
 {
@@ -113,7 +111,6 @@ svcraw_recv(SVCXPRT *xprt, struct rpc_msg *msg)
 	return (TRUE);
 }
 
-/* ARGSUSED */
 static bool_t
 svcraw_reply(SVCXPRT *xprt, struct rpc_msg *msg)
 {
@@ -131,7 +128,6 @@ svcraw_reply(SVCXPRT *xprt, struct rpc_msg *msg)
 	return (TRUE);
 }
 
-/* ARGSUSED */
 static bool_t
 svcraw_getargs(SVCXPRT *xprt, xdrproc_t xdr_args, caddr_t args_ptr)
 {
@@ -142,7 +138,6 @@ svcraw_getargs(SVCXPRT *xprt, xdrproc_t xdr_args, caddr_t args_ptr)
 	return ((*xdr_args)(&srp->xdr_stream, args_ptr));
 }
 
-/* ARGSUSED */
 static bool_t
 svcraw_freeargs(SVCXPRT *xprt, xdrproc_t xdr_args, caddr_t args_ptr)
 { 
@@ -156,7 +151,6 @@ svcraw_freeargs(SVCXPRT *xprt, xdrproc_t xdr_args, caddr_t args_ptr)
 	return ((*xdr_args)(xdrs, args_ptr));
 } 
 
-/* ARGSUSED */
 static void
 svcraw_destroy(SVCXPRT *xprt)
 {

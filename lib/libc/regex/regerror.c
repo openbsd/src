@@ -1,4 +1,4 @@
-/*	$OpenBSD: regerror.c,v 1.13 2005/08/05 13:03:00 espie Exp $ */
+/*	$OpenBSD: regerror.c,v 1.14 2015/11/01 03:45:29 guenther Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994 Henry Spencer.
  * Copyright (c) 1992, 1993, 1994
@@ -74,7 +74,6 @@ static struct rerr {
  - regerror - the interface to error numbers
  = extern size_t regerror(int, const regex_t *, char *, size_t);
  */
-/* ARGSUSED */
 size_t
 regerror(int errcode, const regex_t *preg, char *errbuf, size_t errbuf_size)
 {

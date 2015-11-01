@@ -1,4 +1,4 @@
-/*	$OpenBSD: clnt_udp.c,v 1.31 2015/09/13 15:36:56 guenther Exp $ */
+/*	$OpenBSD: clnt_udp.c,v 1.32 2015/11/01 03:45:29 guenther Exp $ */
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -389,7 +389,6 @@ clntudp_freeres(CLIENT *cl, xdrproc_t xdr_res, caddr_t res_ptr)
 	return ((*xdr_res)(xdrs, res_ptr));
 }
 
-/*ARGSUSED*/
 static void 
 clntudp_abort(CLIENT *clnt)
 {

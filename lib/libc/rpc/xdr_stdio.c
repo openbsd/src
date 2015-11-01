@@ -1,4 +1,4 @@
-/*	$OpenBSD: xdr_stdio.c,v 1.13 2010/09/01 14:43:34 millert Exp $ */
+/*	$OpenBSD: xdr_stdio.c,v 1.14 2015/11/01 03:45:29 guenther Exp $ */
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -148,7 +148,6 @@ xdrstdio_setpos(XDR *xdrs, u_int pos)
 		FALSE : TRUE);
 }
 
-/* ARGSUSED */
 static int32_t *
 xdrstdio_inline(XDR *xdrs, u_int len)
 {

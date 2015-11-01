@@ -1,4 +1,4 @@
-/*	$OpenBSD: fts.c,v 1.52 2015/09/14 16:09:13 tedu Exp $	*/
+/*	$OpenBSD: fts.c,v 1.53 2015/11/01 03:45:29 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -449,7 +449,6 @@ DEF_WEAK(fts_read);
  * semantics to fts using fts_set.  An error return is allowed for similar
  * reasons.
  */
-/* ARGSUSED */
 int
 fts_set(FTS *sp, FTSENT *p, int instr)
 {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: clnt_raw.c,v 1.19 2015/08/20 21:49:29 deraadt Exp $ */
+/*	$OpenBSD: clnt_raw.c,v 1.20 2015/11/01 03:45:29 guenther Exp $ */
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -131,7 +131,6 @@ fail:
 	return (NULL);
 }
 
-/* ARGSUSED */
 static enum clnt_stat 
 clntraw_call(CLIENT *h, u_long proc, xdrproc_t xargs, caddr_t argsp,
     xdrproc_t xresults, caddr_t resultsp, struct timeval timeout)
@@ -208,13 +207,11 @@ call_again:
 	return (status);
 }
 
-/*ARGSUSED*/
 static void
 clntraw_geterr(CLIENT *clnt, struct rpc_err *err)
 {
 }
 
-/* ARGSUSED */
 static bool_t
 clntraw_freeres(CLIENT *cl, xdrproc_t xdr_res, caddr_t res_ptr)
 {
@@ -231,20 +228,17 @@ clntraw_freeres(CLIENT *cl, xdrproc_t xdr_res, caddr_t res_ptr)
 	return ((*xdr_res)(xdrs, res_ptr));
 }
 
-/*ARGSUSED*/
 static void
 clntraw_abort(CLIENT *clnt)
 {
 }
 
-/*ARGSUSED*/
 static bool_t
 clntraw_control(CLIENT *clnt, u_int i, void *v)
 {
 	return (FALSE);
 }
 
-/*ARGSUSED*/
 static void
 clntraw_destroy(CLIENT *clnt)
 {
