@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.36 2014/01/30 18:16:41 miod Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.37 2015/11/01 20:10:00 miod Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.32 2000/03/07 00:05:59 matt Exp $	*/
 
 /*-
@@ -43,13 +43,6 @@
  * Machine dependent constants for VAX.
  */
 
-/*
- * USRTEXT is the start of the user text/data space, while USRSTACK
- * is the top (end) of the user stack. Immediately above the user stack
- * resides kernel.
- */
-
-#define USRTEXT		PAGE_SIZE
 #define USRSTACK	KERNBASE
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.46 2015/02/10 10:02:55 tedu Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.47 2015/11/01 20:09:59 miod Exp $	*/
 
 /* 
  * Copyright (c) 1988-1994, The University of Utah and
@@ -29,13 +29,8 @@
 /*
  * Machine dependent constants for HP PA
  */
-/*
- * USRTEXT is the start of the user text/data space, while USRSTACK
- * is the bottm (start) of the user stack.
- */
-#define	USRTEXT		PAGE_SIZE		/* Start of user .text */
-#define	USRSTACK	0x78000000UL		/* Start of user stack */
-#define	SYSCALLGATE	0xC0000000		/* syscall gateway page */
+#define	USRSTACK	0x78000000UL	/* start (bottom) of user stack */
+#define	SYSCALLGATE	0xC0000000	/* syscall gateway page */
 
 /*
  * Virtual memory related constants, all in bytes

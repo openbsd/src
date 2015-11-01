@@ -1,4 +1,4 @@
-/* $OpenBSD: vmparam.h,v 1.27 2015/02/08 03:48:25 deraadt Exp $ */
+/* $OpenBSD: vmparam.h,v 1.28 2015/11/01 20:09:59 miod Exp $ */
 /* $NetBSD: vmparam.h,v 1.18 2000/05/22 17:13:54 thorpej Exp $ */
 
 /*
@@ -46,18 +46,6 @@
  * Machine dependent constants for Alpha.
  */
 
-/*
- * USRTEXT is the start of the user text/data space, while USRSTACK
- * is the top (end) of the user stack.  Immediately above the user stack
- * resides the user structure, which is UPAGES long and contains the
- * kernel stack.
- *
- * Digital UNIX (formerly DEC OSF/1) places the stack below the
- * text segment (i.e. growing downward from 4G).  We may want to
- * consider doing that at some point, but it might require changes
- * to the exec code.
- */
-#define	USRTEXT		PAGE_SIZE
 #define	USRSTACK	((vaddr_t)0x0000000200000000)		/* 8G */
 
 /*

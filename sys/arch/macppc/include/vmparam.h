@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.30 2015/02/10 10:02:55 tedu Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.31 2015/11/01 20:10:00 miod Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.1 1996/09/30 16:34:38 ws Exp $	*/
 
 /*-
@@ -35,7 +35,6 @@
 #ifndef MACHINE_VMPARAM_H
 #define MACHINE_VMPARAM_H
 
-#define	USRTEXT		PAGE_SIZE
 #define	USRSTACK	VM_MAXUSER_ADDRESS
 
 #ifndef	MAXTSIZ

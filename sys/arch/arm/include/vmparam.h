@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.15 2015/05/10 15:56:28 jsg Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.16 2015/11/01 20:09:59 miod Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.18 2003/05/21 18:04:44 thorpej Exp $	*/
 
 /*
@@ -43,7 +43,6 @@
  * Virtual Memory parameters common to all arm32 platforms.
  */
 
-#define	USRTEXT		VM_MIN_ADDRESS
 #define	USRSTACK	VM_MAXUSER_ADDRESS
 #define	KERNBASE	VM_MAXUSER_ADDRESS
 

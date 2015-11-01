@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.54 2015/04/26 09:22:33 sthen Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.55 2015/11/01 20:09:59 miod Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.15 1994/10/27 04:16:34 cgd Exp $	*/
 
 /*-
@@ -41,18 +41,6 @@
  * Machine dependent constants for 386.
  */
 
-/*
- * Virtual address space arrangement. On 386, both user and kernel
- * share the address space, not unlike the vax.
- * USRTEXT is the start of the user text/data space, while USRSTACK
- * is the top (end) of the user stack. Immediately above the user stack
- * resides the user structure, which is UPAGES long and contains the
- * kernel stack.
- *
- * Immediately after the user structure is the page table map, and then
- * kernel address space.
- */
-#define	USRTEXT		PAGE_SIZE
 #define	USRSTACK	VM_MAXUSER_ADDRESS
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.19 2015/02/10 10:02:55 tedu Exp $ */
+/*	$OpenBSD: vmparam.h,v 1.20 2015/11/01 20:10:00 miod Exp $ */
 /*
  * Mach Operating System
  * Copyright (c) 1992 Carnegie Mellon University
@@ -33,11 +33,6 @@
 #ifndef	_MACHINE_VM_PARAM_
 #define _MACHINE_VM_PARAM_
 
-/*
- * USRTEXT is the start of the user text/data space, while USRSTACK
- * is the top (end) of the user stack.
- */
-#define	USRTEXT		0x1000			/* Start of user text */
 #define	USRSTACK	VM_MAXUSER_ADDRESS	/* Start of user stack */
 
 /*
