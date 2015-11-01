@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.31 2015/10/28 12:25:13 deraadt Exp $	*/
+/*	$OpenBSD: apm.c,v 1.32 2015/11/01 14:13:30 deraadt Exp $	*/
 
 /*
  *  Copyright (c) 1996 John T. Kohl
@@ -160,9 +160,6 @@ main(int argc, char *argv[])
 	if (sysctl(cpuspeed_mib, 2, &cpuspeed, &cpuspeed_sz, NULL, 0) < 0)
 		err(1, "sysctl hw.cpuspeed");
 
-	if (pledge("stdio rpath wpath cpath unix", NULL) == -1)
-		err(1, "pledge");
-
 	while ((ch = getopt(argc, argv, "ACHLlmbvaPSzZf:")) != -1) {
 		switch (ch) {
 		case 'v':
@@ -245,6 +242,11 @@ main(int argc, char *argv[])
 	}
 
 	fd = open_socket(sockname);
+
+	if (fd != -1) {
+		if (pledge("stdio rpath wpath cpath", NULL) == -1)
+			err(1, "pledge");
+	}
 
 	if (!strcmp(__progname, "zzz")) {
 		if (fd < 0)
