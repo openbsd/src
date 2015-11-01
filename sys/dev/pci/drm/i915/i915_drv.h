@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.h,v 1.71 2015/10/29 07:47:03 kettenis Exp $ */
+/* $OpenBSD: i915_drv.h,v 1.72 2015/11/01 14:07:43 jsg Exp $ */
 /* i915_drv.h -- Private header for the I915 driver -*- linux-c -*-
  */
 /*
@@ -1946,8 +1946,8 @@ struct drm_i915_file_private {
 #define IS_HSW_EARLY_SDV(dev)	(IS_HASWELL(dev) && \
 				 ((dev)->pdev->device & 0xFF00) == 0x0C00)
 #define IS_BDW_ULT(dev)		(IS_BROADWELL(dev) && \
-				 (((dev)->pdev->device & 0xf) == 0x2  || \
-				 ((dev)->pdev->device & 0xf) == 0x6 || \
+				 (((dev)->pdev->device & 0xf) == 0x6 || \
+				 ((dev)->pdev->device & 0xf) == 0xb || \
 				 ((dev)->pdev->device & 0xf) == 0xe))
 #define IS_HSW_ULT(dev)		(IS_HASWELL(dev) && \
 				 ((dev)->pdev->device & 0xFF00) == 0x0A00)
