@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.158 2015/10/26 19:24:04 rpe Exp $
+#	$OpenBSD: netstart,v 1.159 2015/11/01 15:37:18 rpe Exp $
 
 # Turn off Strict Bourne shell mode.
 set +o sh
@@ -169,14 +169,8 @@ _rc_parse_conf
 
 # If we were invoked with a list of interface names, just reconfigure these
 # interfaces (or bridges) and return.
-if [[ $1 == autoboot ]]; then
-	shift
-fi
-if [ $# -gt 0 ]; then
-	while [ $# -gt 0 ]; do
-		ifstart $1
-		shift
-	done
+if (($# > 0)); then
+	for _if; do ifstart $_if; done
 	ifautoconf
 	return
 fi
@@ -184,9 +178,7 @@ fi
 # Otherwise, process with the complete network initialization.
 
 # /etc/myname contains my symbolic name.
-if [ -f /etc/myname ]; then
-	hostname "$(stripcom /etc/myname)"
-fi
+[[ -f /etc/myname ]] && hostname "$(stripcom /etc/myname)"
 
 # Set the address for the loopback interface.  Bringing the interface up,
 # automatically invokes the IPv6 address ::1.
@@ -287,7 +279,7 @@ NO:NO)
 NO:YES)
 	;;
 *:NO)
-	maddr=`if [ "$multicast_host" = "YES" ]; then
+	maddr=$(if [[ $multicast_host == YES ]]; then
 		ed -s '!route -qn show -inet' <<EOF
 /^default/p
 EOF
@@ -295,8 +287,8 @@ EOF
 		ed -s "!ifconfig $multicast_host" <<EOF
 /^	inet /p
 EOF
-	fi 2>/dev/null`
-	if [ "X${maddr}" != "X" ]; then
+	fi 2>/dev/null)
+	if [[ -n $maddr ]]; then
 		set $maddr
 		route -qn add -net 224.0.0.0/4 -interface $2 >/dev/null
 	else
@@ -320,10 +312,10 @@ ifmstart "pppoe tun tap gif gre bridge pflow"
 # Reject 127/8 other than 127.0.0.1.
 route -qn add -net 127 127.0.0.1 -reject >/dev/null
 
-if [ "$ip6kernel" = "YES" ]; then
+if [[ $ip6kernel == YES ]]; then
 	# This is to make sure DAD is completed before going further.
 	count=0
-	while [ $((count++)) -lt 10 -a "x"`sysctl -n net.inet6.ip6.dad_pending` != "x0" ]; do
+	while ((count++ < 10 && $(sysctl -n net.inet6.ip6.dad_pending) != 0)); do
 		sleep 1
 	done
 fi
