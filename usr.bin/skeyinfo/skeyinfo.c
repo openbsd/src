@@ -1,4 +1,4 @@
-/*	$OpenBSD: skeyinfo.c,v 1.14 2003/06/17 21:56:26 millert Exp $	*/
+/*	$OpenBSD: skeyinfo.c,v 1.15 2015/11/01 14:02:37 tim Exp $	*/
 
 /*
  * Copyright (c) 1997, 2001, 2002 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -41,6 +41,9 @@ main(int argc, char **argv)
 	struct skey key;
 	char *name = NULL;
 	int error, ch, verbose = 0;
+
+	if (pledge("stdio rpath wpath flock getpw", NULL) == -1)
+		err(1, "pledge");
 
 	while ((ch = getopt(argc, argv, "v")) != -1)
 		switch(ch) {

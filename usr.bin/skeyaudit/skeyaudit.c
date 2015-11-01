@@ -1,4 +1,4 @@
-/*	$OpenBSD: skeyaudit.c,v 1.25 2015/01/16 06:40:11 deraadt Exp $	*/
+/*	$OpenBSD: skeyaudit.c,v 1.26 2015/11/01 14:02:37 tim Exp $	*/
 
 /*
  * Copyright (c) 1997, 2000, 2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -47,6 +47,9 @@ main(int argc, char **argv)
 	char *name;
 	int ch, left, aflag, iflag, limit;
 
+	if (pledge("stdio rpath wpath flock getpw proc exec id", NULL) == -1)
+		err(1, "pledge");
+
 	aflag = iflag = 0;
 	limit = 12;
 	while ((ch = getopt(argc, argv, "ail:")) != -1)
@@ -70,6 +73,11 @@ main(int argc, char **argv)
 			break;
 		default:
 			usage();
+	}
+
+	if (iflag) {
+		if (pledge("stdio rpath wpath flock getpw", NULL) == -1)
+			err(1, "pledge");
 	}
 
 	/*
