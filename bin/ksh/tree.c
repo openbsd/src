@@ -1,4 +1,4 @@
-/*	$OpenBSD: tree.c,v 1.26 2015/10/19 14:42:16 mmcc Exp $	*/
+/*	$OpenBSD: tree.c,v 1.27 2015/11/01 15:38:53 mmcc Exp $	*/
 
 /*
  * command tree climbing
@@ -465,7 +465,8 @@ tcopy(struct op *t, Area *ap)
 	else {
 		for (tw = t->vars; *tw++ != NULL; )
 			;
-		rw = r->vars = alloc((tw - t->vars + 1) * sizeof(*tw), ap);
+		rw = r->vars = areallocarray(NULL, tw - t->vars + 1,
+		    sizeof(*tw), ap);
 		for (tw = t->vars; *tw != NULL; )
 			*rw++ = wdcopy(*tw++, ap);
 		*rw = NULL;
@@ -476,7 +477,8 @@ tcopy(struct op *t, Area *ap)
 	else {
 		for (tw = t->args; *tw++ != NULL; )
 			;
-		rw = r->args = alloc((tw - t->args + 1) * sizeof(*tw), ap);
+		rw = r->args = areallocarray(NULL, tw - t->args + 1,
+		    sizeof(*tw), ap);
 		for (tw = t->args; *tw != NULL; )
 			*rw++ = wdcopy(*tw++, ap);
 		*rw = NULL;
@@ -626,7 +628,7 @@ iocopy(struct ioword **iow, Area *ap)
 
 	for (ior = iow; *ior++ != NULL; )
 		;
-	ior = alloc((ior - iow + 1) * sizeof(*ior), ap);
+	ior = areallocarray(NULL, ior - iow + 1, sizeof(*ior), ap);
 
 	for (i = 0; iow[i] != NULL; i++) {
 		struct ioword *p, *q;

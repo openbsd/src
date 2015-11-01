@@ -1,4 +1,4 @@
-/*	$OpenBSD: expand.h,v 1.8 2015/09/17 14:21:33 nicm Exp $	*/
+/*	$OpenBSD: expand.h,v 1.9 2015/11/01 15:38:53 mmcc Exp $	*/
 
 /*
  * Expanding strings
@@ -82,7 +82,7 @@ typedef struct XPtrV {
 
 #define	XPinit(x, n) do { \
 			void **vp__; \
-			vp__ = alloc(sizeofN(void*, n), ATEMP); \
+			vp__ = areallocarray(NULL, n, sizeof(void *), ATEMP); \
 			(x).cur = (x).beg = vp__; \
 			(x).end = vp__ + n; \
 		} while (0)
@@ -90,8 +90,8 @@ typedef struct XPtrV {
 #define	XPput(x, p) do { \
 			if ((x).cur >= (x).end) { \
 				int n = XPsize(x); \
-				(x).beg = (void**) aresize((void*) (x).beg, \
-						   sizeofN(void*, n*2), ATEMP); \
+				(x).beg = (void**) areallocarray((x).beg, n*2, \
+						   sizeof(void *), ATEMP); \
 				(x).cur = (x).beg + n; \
 				(x).end = (x).cur + n; \
 			} \
@@ -101,7 +101,7 @@ typedef struct XPtrV {
 #define	XPptrv(x)	((x).beg)
 #define	XPsize(x)	((x).cur - (x).beg)
 
-#define	XPclose(x)	(void**) aresize((void*)(x).beg, \
-					 sizeofN(void*, XPsize(x)), ATEMP)
+#define	XPclose(x)	(void**) areallocarray((x).beg, XPsize(x), \
+					 sizeof(void *), ATEMP)
 
 #define	XPfree(x)	afree((x).beg, ATEMP)

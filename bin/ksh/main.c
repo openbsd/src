@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.72 2015/10/30 03:13:52 guenther Exp $	*/
+/*	$OpenBSD: main.c,v 1.73 2015/11/01 15:38:53 mmcc Exp $	*/
 
 /*
  * startup, main loop, environments and error handling
@@ -125,7 +125,7 @@ make_argv(int argc, char *argv[])
 	char **nargv = argv;
 
 	if (strcmp(argv[0], kshname) != 0) {
-		nargv = alloc(sizeof(char *) * (argc + 1), &aperm);
+		nargv = areallocarray(NULL, argc + 1, sizeof(char *), &aperm);
 		nargv[0] = (char *) kshname;
 		for (i = 1; i < argc; i++)
 			nargv[i] = argv[i];

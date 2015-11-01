@@ -1,4 +1,4 @@
-/*	$OpenBSD: history.c,v 1.51 2015/10/21 15:47:41 mmcc Exp $	*/
+/*	$OpenBSD: history.c,v 1.52 2015/11/01 15:38:53 mmcc Exp $	*/
 
 /*
  * command history
@@ -556,7 +556,7 @@ init_histvec(void)
 {
 	if (history == NULL) {
 		histsize = HISTORYSIZE;
-		history = alloc(histsize*sizeof (char *), APERM);
+		history = areallocarray(NULL, histsize, sizeof(char *), APERM);
 		histptr = history - 1;
 	}
 }
