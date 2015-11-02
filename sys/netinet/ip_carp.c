@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.279 2015/11/02 15:05:23 mpi Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.280 2015/11/02 15:56:46 mpi Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -114,7 +114,6 @@ struct carp_vhost_entry {
 	SHA1_CTX vhe_sha1[HMAC_MAX];
 
 	u_int8_t vhe_enaddr[ETHER_ADDR_LEN];
-	struct sockaddr_dl vhe_sdl;	/* for IPv6 ndp balancing */
 };
 
 void	carp_vh_ref(void *, void *);
@@ -1748,10 +1747,6 @@ carp_set_vhe_enaddr(struct carp_vhost_entry *vhe)
 		vhe->vhe_enaddr[3] = 0;
 		vhe->vhe_enaddr[4] = 1;
 		vhe->vhe_enaddr[5] = vhe->vhid;
-
-		vhe->vhe_sdl.sdl_family = AF_LINK;
-		vhe->vhe_sdl.sdl_alen = ETHER_ADDR_LEN;
-		bcopy(vhe->vhe_enaddr, vhe->vhe_sdl.sdl_data, ETHER_ADDR_LEN);
 	} else
 		memset(vhe->vhe_enaddr, 0, ETHER_ADDR_LEN);
 }
