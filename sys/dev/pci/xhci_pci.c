@@ -1,4 +1,4 @@
-/*	$OpenBSD: xhci_pci.c,v 1.6 2015/06/22 08:43:27 mpi Exp $ */
+/*	$OpenBSD: xhci_pci.c,v 1.7 2015/11/02 14:53:10 mpi Exp $ */
 
 /*
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -164,7 +164,7 @@ xhci_pci_attach(struct device *parent, struct device *self, void *aux)
 	}
 	intrstr = pci_intr_string(pa->pa_pc, ih);
 
-	psc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_USB,
+	psc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_USB | IPL_MPSAFE,
 	    xhci_intr, psc, psc->sc.sc_bus.bdev.dv_xname);
 	if (psc->sc_ih == NULL) {
 		printf(": couldn't establish interrupt");

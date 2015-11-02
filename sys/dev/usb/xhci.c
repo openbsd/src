@@ -1,4 +1,4 @@
-/* $OpenBSD: xhci.c,v 1.63 2015/07/12 12:54:31 mpi Exp $ */
+/* $OpenBSD: xhci.c,v 1.64 2015/11/02 14:53:10 mpi Exp $ */
 
 /*
  * Copyright (c) 2014-2015 Martin Pieuchot
@@ -606,13 +606,11 @@ xhci_intr1(struct xhci_softc *sc)
 	if ((intrs & XHCI_STS_EINT) == 0)
 		return (0);
 
-	sc->sc_bus.intr_context++;
 	sc->sc_bus.no_intrs++;
 
 	if (intrs & XHCI_STS_HSE) {
 		printf("%s: host system error\n", DEVNAME(sc));
 		sc->sc_bus.dying = 1;
-		sc->sc_bus.intr_context--;
 		return (1);
 	}
 
@@ -622,8 +620,6 @@ xhci_intr1(struct xhci_softc *sc)
 	/* Acknowledge PCI interrupt */
 	intrs = XRREAD4(sc, XHCI_IMAN(0));
 	XRWRITE4(sc, XHCI_IMAN(0), intrs | XHCI_IMAN_INTR_PEND);
-
-	sc->sc_bus.intr_context--;
 
 	return (1);
 }
