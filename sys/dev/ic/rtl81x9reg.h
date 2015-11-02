@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtl81x9reg.h,v 1.95 2015/09/04 07:05:44 jsg Exp $	*/
+/*	$OpenBSD: rtl81x9reg.h,v 1.96 2015/11/02 00:08:50 dlg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -700,15 +700,32 @@ struct rl_stats {
 	u_int16_t		rl_rx_underruns;
 };
 
-#define RL_RX_DESC_CNT		64
-#define RL_TX_DESC_CNT_8139	64
-#define RL_TX_DESC_CNT_8169	512
+/*
+ * Rx/Tx descriptor parameters (8139C+ and 8169 only)
+ *
+ * 8139C+
+ *  Number of descriptors supported : up to 64
+ *  Descriptor alignment : 256 bytes
+ *  Tx buffer : At least 4 bytes in length.
+ *  Rx buffer : At least 8 bytes in length and 8 bytes alignment required.
+ *
+ * 8169
+ *  Number of descriptors supported : up to 1024
+ *  Descriptor alignment : 256 bytes
+ *  Tx buffer : At least 4 bytes in length.
+ *  Rx buffer : At least 8 bytes in length and 8 bytes alignment required.
+ */
+#define RL_8169_TX_DESC_CNT	1024
+#define RL_8169_RX_DESC_CNT	1024
+#define RL_8139_TX_DESC_CNT	64
+#define RL_8139_RX_DESC_CNT	64
+#define RL_TX_DESC_CNT		RL_8169_TX_DESC_CNT
+#define RL_RX_DESC_CNT		RL_8169_RX_DESC_CNT
+#define RL_8169_NTXSEGS		32
+#define RL_8139_NTXSEGS		8
 
 #define RL_TX_QLEN		64
 
-#define RL_NTXSEGS		32
-
-#define RL_RX_LIST_SZ		(RL_RX_DESC_CNT * sizeof(struct rl_desc))
 #define RL_RING_ALIGN		256
 #define RL_PKTSZ(x)		((x)/* >> 3*/)
 #ifdef __STRICT_ALIGNMENT
@@ -719,14 +736,14 @@ struct rl_stats {
 #define RE_RX_DESC_BUFLEN	MCLBYTES
 #endif
 
-#define RL_TX_DESC_CNT(sc)	\
-	((sc)->rl_ldata.rl_tx_desc_cnt)
 #define RL_TX_LIST_SZ(sc)	\
-	(RL_TX_DESC_CNT(sc) * sizeof(struct rl_desc))
+	((sc)->rl_ldata.rl_tx_desc_cnt * sizeof(struct rl_desc))
+#define RL_RX_LIST_SZ(sc)	\
+	((sc)->rl_ldata.rl_rx_desc_cnt * sizeof(struct rl_desc))
 #define RL_NEXT_TX_DESC(sc, x)	\
-	(((x) + 1) % RL_TX_DESC_CNT(sc))
+	(((x) + 1) % (sc)->rl_ldata.rl_tx_desc_cnt)
 #define RL_NEXT_RX_DESC(sc, x)	\
-	(((x) + 1) % RL_RX_DESC_CNT)
+	(((x) + 1) % (sc)->rl_ldata.rl_rx_desc_cnt)
 #define RL_NEXT_TXQ(sc, x)	\
 	(((x) + 1) % RL_TX_QLEN)
 
@@ -825,6 +842,7 @@ struct rl_list_data {
 	struct rl_desc		*rl_rx_list;
 	int			rl_rx_considx;
 	int			rl_rx_prodidx;
+	int			rl_rx_desc_cnt;	/* # of descriptors */
 	struct if_rxring	rl_rx_ring;
 	bus_dma_segment_t	rl_rx_listseg;
 	int			rl_rx_listnseg;
@@ -913,10 +931,10 @@ struct rl_softc {
  * because RL_TX_LIST_SZ(sc) always occupies whole page but
  * RL_RX_LIST_SZ is less than PAGE_SIZE so there is some unused region.
  */
-#define RL_RX_DMAMEM_SZ		(RL_RX_LIST_SZ + RL_IP4CSUMTX_PADLEN)
-#define RL_TXPADOFF		RL_RX_LIST_SZ
+#define RL_RX_DMAMEM_SZ(sc)	(RL_RX_LIST_SZ(sc) + RL_IP4CSUMTX_PADLEN)
+#define RL_TXPADOFF(sc)		RL_RX_LIST_SZ(sc)
 #define RL_TXPADDADDR(sc)	\
-	((sc)->rl_ldata.rl_rx_list_map->dm_segs[0].ds_addr + RL_TXPADOFF)
+	((sc)->rl_ldata.rl_rx_list_map->dm_segs[0].ds_addr + RL_TXPADOFF(sc))
 
 /*
  * register space access macros
