@@ -1,4 +1,4 @@
-/* $OpenBSD: signify.c,v 1.103 2015/10/30 01:57:43 tedu Exp $ */
+/* $OpenBSD: signify.c,v 1.104 2015/11/02 22:01:10 bluhm Exp $ */
 /*
  * Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
  *
@@ -723,6 +723,9 @@ main(int argc, char **argv)
 	}
 	argc -= optind;
 	argv += optind;
+
+	if (setvbuf(stdout, NULL, _IOLBF, 0) != 0)
+		err(1, "setvbuf");
 
 	switch (verb) {
 	case GENERATE:
