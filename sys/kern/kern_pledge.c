@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.97 2015/11/01 19:03:33 semarie Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.98 2015/11/02 15:33:40 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -1355,7 +1355,7 @@ pledge_kill(struct proc *p, pid_t pid)
 		return 0;
 	if (p->p_p->ps_pledge & PLEDGE_PROC)
 		return 0;
-	if (pid == 0 || pid == p->p_pid)
+	if (pid == 0 || pid == p->p_pid || pid == p->p_pid + THREAD_PID_OFFSET)
 		return 0;
 	return pledge_fail(p, EPERM, PLEDGE_PROC);
 }
