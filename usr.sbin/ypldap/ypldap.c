@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypldap.c,v 1.15 2015/01/16 06:40:22 deraadt Exp $ */
+/*	$OpenBSD: ypldap.c,v 1.16 2015/11/02 10:06:06 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -29,7 +29,6 @@
 #include <err.h>
 #include <errno.h>
 #include <event.h>
-#include <fcntl.h>
 #include <unistd.h>
 #include <pwd.h>
 #include <stdio.h>
@@ -52,7 +51,6 @@ void		 main_end_update(struct env *);
 int		 main_create_user_groups(struct env *);
 void		 purge_config(struct env *);
 void		 reconfigure(struct env *);
-void		 set_nonblock(int);
 
 int		 pipe_main2client[2];
 
@@ -566,12 +564,9 @@ main(int argc, char *argv[])
 
 	log_info("startup%s", (debug > 1)?" [debug mode]":"");
 
-	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC,
+	if (socketpair(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK, PF_UNSPEC,
 	    pipe_main2client) == -1)
 		fatal("socketpair");
-
-	set_nonblock(pipe_main2client[0]);
-	set_nonblock(pipe_main2client[1]);
 
 	client_pid = ldapclient(pipe_main2client);
 
@@ -651,18 +646,4 @@ imsg_compose_event(struct imsgev *iev, u_int16_t type, u_int32_t peerid,
 	    pid, fd, data, datalen)) != -1)
 		imsg_event_add(iev);
 	return (ret);
-}
-
-void
-set_nonblock(int fd)
-{
-	int	flags;
-
-	if ((flags = fcntl(fd, F_GETFL, 0)) == -1)
-		fatal("fcntl F_GETFL");
-
-	flags |= O_NONBLOCK;
-
-	if ((flags = fcntl(fd, F_SETFL, flags)) == -1)
-		fatal("fcntl F_SETFL");
 }
