@@ -1,4 +1,4 @@
-/* $OpenBSD: dl_prebind.h,v 1.2 2006/05/10 03:26:50 deraadt Exp $ */
+/* $OpenBSD: dl_prebind.h,v 1.3 2015/11/02 07:19:14 guenther Exp $ */
 /*
  * Copyright (c) 2006 Dale Rahn <drahn@dalerahn.com>
  *
@@ -28,7 +28,6 @@ void	prebind_load_exe(Elf_Phdr *phdp, elf_object_t *exe_obj);
 
 void	prebind_validate(elf_object_t *req_obj, unsigned int symidx, int flags,
 	    const Elf_Sym *ref_sym);
-extern char *_dl_prebind_validate; /* XXX */
 
 void	prebind_symcache(elf_object_t *object, int pltflag);
 void	prebind_free(elf_object_t *object);
