@@ -1,4 +1,4 @@
-/*      $OpenBSD: whois.c,v 1.50 2015/10/09 01:37:09 deraadt Exp $   */
+/*      $OpenBSD: whois.c,v 1.51 2015/11/02 17:16:35 mmcc Exp $   */
 
 /*
  * Copyright (c) 1980, 1993
@@ -302,7 +302,7 @@ choose_server(const char *name, const char *country)
 			return (MNICHOST);
 		else
 			return (NICHOST);
-	} else if (isdigit(*(++qhead)))
+	} else if (isdigit((unsigned char)*(++qhead)))
 		return (ANICHOST);
 	len = strlen(qhead) + sizeof(QNICHOST_TAIL);
 	if ((nserver = realloc(server, len)) == NULL)
