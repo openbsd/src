@@ -1,4 +1,4 @@
-.\"	$OpenBSD: whois.1,v 1.33 2015/04/09 19:29:53 sthen Exp $
+.\"	$OpenBSD: whois.1,v 1.34 2015/11/02 20:39:37 sthen Exp $
 .\"	$NetBSD: whois.1,v 1.5 1995/08/31 21:51:32 jtc Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)whois.1	8.2 (Berkeley) 6/20/94
 .\"
-.Dd $Mdocdate: April 9 2015 $
+.Dd $Mdocdate: November 2 2015 $
 .Dt WHOIS 1
 .Os
 .Sh NAME
@@ -38,7 +38,7 @@
 .Nd Internet domain name and network number directory service
 .Sh SYNOPSIS
 .Nm whois
-.Op Fl AadgilmPQRr
+.Op Fl AadgIilmPQRr
 .Oo
 .Fl c Ar country-code | Fl h Ar host
 .Oc
@@ -124,6 +124,11 @@ If the query is not a domain name or IP address,
 .Nm
 will fall back to
 .Pa whois.crsnic.net .
+.It Fl I
+Use the Internet Assigned Numbers Authority
+.Pq whois.iana.org
+root zone database.
+It contains information about top-level domains.
 .It Fl i
 Use the Network Solutions Registry for Internet Numbers
 .Pq Tn whois.networksolutions.com
