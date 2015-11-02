@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_rtr.c,v 1.132 2015/11/02 07:24:08 mpi Exp $	*/
+/*	$OpenBSD: nd6_rtr.c,v 1.133 2015/11/02 13:54:46 sthen Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.97 2001/02/07 11:09:13 itojun Exp $	*/
 
 /*
@@ -554,7 +554,7 @@ nd6_ra_input(struct mbuf *m, int off, int icmp6len)
 	/*
 	 * Installing a link-layer address might change the state of the
 	 * router's neighbor cache, which might also affect our on-link
-	 * detection of adveritsed prefixes.
+	 * detection of advertised prefixes.
 	 */
 	pfxlist_onlink_check();
     }
