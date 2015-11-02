@@ -1,4 +1,4 @@
-/*	$OpenBSD: uniq.c,v 1.22 2015/10/09 01:37:09 deraadt Exp $	*/
+/*	$OpenBSD: uniq.c,v 1.23 2015/11/02 20:25:42 mmcc Exp $	*/
 /*	$NetBSD: uniq.c,v 1.7 1995/08/31 22:03:48 jtc Exp $	*/
 
 /*
@@ -214,7 +214,7 @@ obsolete(char *argv[])
 				return;
 		} else if (ap[1] == '-')
 			return;
-		if (!isdigit(ap[1]))
+		if (!isdigit((unsigned char)ap[1]))
 			continue;
 		/*
 		 * Digit signifies an old-style option.  Malloc space for dash,
