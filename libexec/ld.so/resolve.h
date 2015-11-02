@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.h,v 1.73 2015/09/19 20:56:47 guenther Exp $ */
+/*	$OpenBSD: resolve.h,v 1.74 2015/11/02 07:02:53 guenther Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -60,11 +60,6 @@ struct elf_object {
 	struct load_list *load_list;
 
 	u_int32_t  load_size;
-	Elf_Addr	got_addr;
-	Elf_Addr	got_start;
-	size_t		got_size;
-	Elf_Addr	plt_start;
-	size_t		plt_size;
 
 	union {
 		u_long		info[DT_NUM + DT_PROCNUM];
@@ -169,6 +164,8 @@ elf_object_t *_dl_finalize_object(const char *objname, Elf_Dyn *dynp,
     const long obase);
 void	_dl_remove_object(elf_object_t *object);
 void	_dl_cleanup_objects(void);
+void	*_dl_protect_segment(elf_object_t *_object, Elf_Addr _addr,
+	    const char *_start_sym, const char *_end_sym, int _prot);
 
 elf_object_t *_dl_load_shlib(const char *, elf_object_t *, int, int);
 elf_object_t *_dl_tryload_shlib(const char *libname, int type, int flags);

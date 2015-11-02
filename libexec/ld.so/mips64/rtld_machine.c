@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.19 2015/08/26 02:04:41 guenther Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.20 2015/11/02 07:02:53 guenther Exp $ */
 
 /*
  * Copyright (c) 1998-2004 Opsycon AB, Sweden.
@@ -207,18 +207,6 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 	    object->Dyn.info[DT_MIPS_GOTSYM - DT_LOPROC + DT_NUM];
 
 	this = NULL;
-	object->plt_size = 0;
-	object->got_size = 0;
-	ooff = _dl_find_symbol("__got_start", &this,
-	    SYM_SEARCH_OBJ|SYM_NOWARNNOTFOUND|SYM_PLT, NULL, object, NULL);
-	if (this != NULL)
-		object->got_start = ooff + this->st_value;
-
-	this = NULL;
-	ooff = _dl_find_symbol("__got_end", &this,
-	    SYM_SEARCH_OBJ|SYM_NOWARNNOTFOUND|SYM_PLT, NULL, object, NULL);
-	if (this != NULL)
-		object->got_size = ooff + this->st_value  - object->got_start;
 
 	if (object->traced)
 		lazy = 1;
@@ -266,10 +254,8 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 	}
 	object->status |= STAT_GOT_DONE;
 
-	DL_DEB(("got: %x, %x\n", object->got_start, object->got_size));
-	if (object->got_size != 0)
-		_dl_mprotect((void*)object->got_start, object->got_size,
-		    PROT_READ);
+	/* mprotect the GOT */
+	_dl_protect_segment(object, 0, "__got_start", "__got_end", PROT_READ);
 
 	return (0);
 }

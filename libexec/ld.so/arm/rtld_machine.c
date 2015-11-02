@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.21 2015/11/02 06:06:07 guenther Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.22 2015/11/02 07:02:53 guenther Exp $ */
 
 /*
  * Copyright (c) 2004 Dale Rahn
@@ -353,38 +353,11 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 {
 	int	fails = 0;
 	Elf_Addr *pltgot = (Elf_Addr *)object->Dyn.info[DT_PLTGOT];
-	Elf_Addr ooff;
-	const Elf_Sym *this;
 	int i, num;
 	Elf_Rel *rel;
 
 	if (object->Dyn.info[DT_PLTREL] != DT_REL)
 		return (0);
-
-	object->got_addr = 0;
-	object->got_size = 0;
-	this = NULL;
-	ooff = _dl_find_symbol("__got_start", &this,
-	    SYM_SEARCH_OBJ|SYM_NOWARNNOTFOUND|SYM_PLT, NULL, object, NULL);
-	if (this != NULL)
-		object->got_addr = ooff + this->st_value;
-
-	this = NULL;
-	ooff = _dl_find_symbol("__got_end", &this,
-	    SYM_SEARCH_OBJ|SYM_NOWARNNOTFOUND|SYM_PLT, NULL, object, NULL);
-	if (this != NULL)
-		object->got_size = ooff + this->st_value  - object->got_addr;
-
-	object->plt_size = 0;	/* Text PLT on ARM */
-
-	if (object->got_addr == 0)
-		object->got_start = 0;
-	else {
-		object->got_start = ELF_TRUNC(object->got_addr, _dl_pagesz);
-		object->got_size += object->got_addr - object->got_start;
-		object->got_size = ELF_ROUND(object->got_size, _dl_pagesz);
-	}
-	object->plt_start = 0;
 
 	if (object->traced)
 		lazy = 1;
@@ -404,12 +377,9 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 		pltgot[1] = (Elf_Addr)object;
 		pltgot[2] = (Elf_Addr)_dl_bind_start;
 	}
-	if (object->got_size != 0)
-		_dl_mprotect((void*)object->got_start, object->got_size,
-		    PROT_READ);
-	if (object->plt_size != 0)
-		_dl_mprotect((void*)object->plt_start, object->plt_size,
-		    PROT_READ|PROT_EXEC);
+
+	/* mprotect the GOT */
+	_dl_protect_segment(object, 0, "__got_start", "__got_end", PROT_READ);
 
 	return (fails);
 }

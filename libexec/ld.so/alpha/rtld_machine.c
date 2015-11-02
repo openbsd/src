@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.55 2015/09/23 22:52:12 kettenis Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.56 2015/11/02 07:02:53 guenther Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -268,76 +268,14 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 	Elf_Addr *pltgot;
 	extern void _dl_bind_start(void);	/* XXX */
 	extern void _dl_bind_secureplt(void);	/* XXX */
-	Elf_Addr ooff;
-	Elf_Addr plt_addr;
-	const Elf_Sym *this;
+	Elf_Addr seg_start;
 	u_long pltro;
+
+	if (object->Dyn.info[DT_PLTREL] != DT_RELA)
+		return (0);
 
 	pltro = object->Dyn.info[DT_PROC(DT_ALPHA_PLTRO)];
 	pltgot = (Elf_Addr *)object->Dyn.info[DT_PLTGOT];
-
-	object->got_addr = 0;
-	object->got_size = 0;
-	if (pltro != 0 && pltgot != NULL)
-		object->got_addr = (Elf_Addr)pltgot;
-	else {
-		this = NULL;
-		ooff = _dl_find_symbol("__got_start", &this,
-		    SYM_SEARCH_OBJ | SYM_NOWARNNOTFOUND | SYM_PLT, NULL,
-		    object, NULL);
-		if (this != NULL)
-			object->got_addr = ooff + this->st_value;
-	}
-
-	if (object->got_addr != 0) {
-		this = NULL;
-		ooff = _dl_find_symbol("__got_end", &this,
-		    SYM_SEARCH_OBJ | SYM_NOWARNNOTFOUND | SYM_PLT, NULL,
-		    object, NULL);
-		if (this != NULL)
-			object->got_size = ooff + this->st_value
-			    - object->got_addr;
-	}
-
-	plt_addr = 0;
-	object->plt_size = 0;
-	/*
-	 * Do not even attempt to locate the .plt section if we will not
-	 * have to write into it.
-	 */
-	if (pltro == 0) {
-		if (pltgot != NULL)
-			plt_addr = (Elf_Addr)pltgot;
-		else {
-			this = NULL;
-			ooff = _dl_find_symbol("__plt_start", &this,
-			    SYM_SEARCH_OBJ | SYM_NOWARNNOTFOUND | SYM_PLT, NULL,
-			    object, NULL);
-			if (this != NULL)
-				plt_addr = ooff + this->st_value;
-		}
-
-		if (plt_addr != 0) {
-			this = NULL;
-			ooff = _dl_find_symbol("__plt_end", &this,
-			    SYM_SEARCH_OBJ | SYM_NOWARNNOTFOUND | SYM_PLT,
-			    NULL, object, NULL);
-			if (this != NULL)
-				object->plt_size = ooff + this->st_value
-				    - plt_addr;
-		}
-	}
-
-	if (object->got_size != 0) {
-		object->got_start = ELF_TRUNC(object->got_addr, _dl_pagesz);
-		object->got_size += object->got_addr - object->got_start;
-		object->got_size = ELF_ROUND(object->got_size, _dl_pagesz);
-	}
-	if (object->plt_size != 0) {
-		object->plt_start = ELF_TRUNC(plt_addr, _dl_pagesz);
-		object->plt_size += plt_addr - object->plt_start;
-		object->plt_size = ELF_ROUND(object->plt_size, _dl_pagesz);
-	}
 
 	if (object->traced)
 		lazy = 1;
@@ -360,8 +298,6 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 				*addr += object->obj_base;
 			}
 		}
-	}
-	if (pltgot != NULL) {
 		if (pltro == 0) {
 			pltgot[2] = (Elf_Addr)_dl_bind_start;
 			pltgot[3] = (Elf_Addr)object;
@@ -370,12 +306,18 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 			pltgot[1] = (Elf_Addr)object;
 		}
 	}
-	if (object->got_size != 0)
-		_dl_mprotect((void*)object->got_start, object->got_size,
-		    PROT_READ);
-	if (object->plt_size != 0)
-		_dl_mprotect((void*)object->plt_start, object->plt_size,
-		    PROT_READ|PROT_EXEC);
+
+	/* mprotect the GOT */
+	seg_start = 0;
+	if (pltro != 0)
+		seg_start = (Elf_Addr)pltgot;
+	_dl_protect_segment(object, seg_start, "__got_start", "__got_end",
+	    PROT_READ);
+
+	/* mprotect the PLT, if it isn't already read-only */
+	if (pltro == 0)
+		_dl_protect_segment(object, (Elf_Addr)pltgot, "__plt_start",
+		    "__plt_end", PROT_READ|PROT_EXEC);
 
 	return (fails);
 }

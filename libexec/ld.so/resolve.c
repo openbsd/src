@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.c,v 1.68 2015/01/22 05:48:17 deraadt Exp $ */
+/*	$OpenBSD: resolve.c,v 1.69 2015/11/02 07:02:53 guenther Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -421,6 +421,48 @@ _dl_remove_object(elf_object_t *object)
 
 	object->next = free_objects;
 	free_objects = object;
+}
+
+/*
+ * mprotect a segment to the indicated protection.  If 'addr' is non-zero,
+ * then it's the start address, else the value of 'start_sym' is the start.
+ * The value of 'end_sym' is the end address.  The start is rounded down
+ * and the end is rounded up to page boundaries.  Returns 'addr' or the
+ * address of the start symbol.
+ */
+void *
+_dl_protect_segment(elf_object_t *object, Elf_Addr addr,
+    const char *start_sym, const char *end_sym, int prot)
+{
+	const Elf_Sym *this;
+	Elf_Addr ooff, start, end;
+
+	if (addr == 0) {
+		this = NULL;
+		ooff = _dl_find_symbol(start_sym, &this,
+		    SYM_SEARCH_OBJ | SYM_NOWARNNOTFOUND | SYM_PLT, NULL,
+		    object, NULL);
+		/* If not found, nothing to do */
+		if (this == NULL)
+			return (NULL);
+		addr = ooff + this->st_value;
+	}
+
+	this = NULL;
+	ooff = _dl_find_symbol(end_sym, &this,
+	    SYM_SEARCH_OBJ | SYM_NOWARNNOTFOUND | SYM_PLT, NULL, object, NULL);
+	if (this == NULL)
+		addr = 0;
+	else {
+		end = ooff + this->st_value;
+		if (addr < end) {
+			start = ELF_TRUNC(addr, _dl_pagesz);
+			end = ELF_ROUND(end, _dl_pagesz);
+			_dl_mprotect((void *)start, end - start, prot);
+		}
+	}
+
+	return ((void *)addr);
 }
 
 

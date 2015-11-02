@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.41 2015/09/09 12:16:43 miod Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.42 2015/11/02 07:02:53 guenther Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -417,13 +417,15 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 	int	fails = 0;
 	Elf_Addr *pltgot;
 	extern void _dl_bind_start(void);	/* XXX */
-	Elf_Addr ooff;
-	const Elf_Sym *this;
-	Elf_Addr plt_addr;
 
 	pltgot = (Elf_Addr *)object->Dyn.info[DT_PLTGOT];
 
-	if (pltgot != NULL) {
+	if (object->traced)
+		lazy = 1;
+
+	if (object->obj_type == OBJTYPE_LDR || !lazy || pltgot == NULL) {
+		fails = _dl_md_reloc(object, DT_JMPREL, DT_PLTRELSZ);
+	} else {
 		/*
 		 * PLTGOT is the PLT on the sparc.
 		 * The first entry holds the call the dynamic linker.
@@ -450,66 +452,12 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 		__asm volatile("nop;nop;nop;nop;nop");
 	}
 
-	object->got_addr = 0;
-	object->got_size = 0;
-	this = NULL;
-	ooff = _dl_find_symbol("__got_start", &this,
-	    SYM_SEARCH_OBJ|SYM_NOWARNNOTFOUND|SYM_PLT, NULL,
-	    object, NULL);
-	if (this != NULL)
-		object->got_addr = ooff + this->st_value;
+	/* mprotect the GOT */
+	_dl_protect_segment(object, 0, "__got_start", "__got_end", PROT_READ);
 
-	this = NULL;
-	ooff = _dl_find_symbol("__got_end", &this,
-	    SYM_SEARCH_OBJ|SYM_NOWARNNOTFOUND|SYM_PLT, NULL,
-	    object, NULL);
-	if (this != NULL)
-		object->got_size = ooff + this->st_value  - object->got_addr;
-
-	plt_addr = 0;
-	object->plt_size = 0;
-	this = NULL;
-	ooff = _dl_find_symbol("__plt_start", &this,
-	    SYM_SEARCH_OBJ|SYM_NOWARNNOTFOUND|SYM_PLT, NULL,
-	    object, NULL);
-	if (this != NULL)
-		plt_addr = ooff + this->st_value;
-
-	this = NULL;
-	ooff = _dl_find_symbol("__plt_end", &this,
-	    SYM_SEARCH_OBJ|SYM_NOWARNNOTFOUND|SYM_PLT, NULL,
-	    object, NULL);
-	if (this != NULL)
-		object->plt_size = ooff + this->st_value  - plt_addr;
-
-	if (object->got_addr == 0)
-		object->got_start = 0;
-	else {
-		object->got_start = ELF_TRUNC(object->got_addr, _dl_pagesz);
-		object->got_size += object->got_addr - object->got_start;
-		object->got_size = ELF_ROUND(object->got_size, _dl_pagesz);
-	}
-	if (plt_addr == 0)
-		object->plt_start = 0;
-	else {
-		object->plt_start = ELF_TRUNC(plt_addr, _dl_pagesz);
-		object->plt_size += plt_addr - object->plt_start;
-		object->plt_size = ELF_ROUND(object->plt_size, _dl_pagesz);
-	}
-
-	if (object->traced)
-		lazy = 1;
-
-	if (object->obj_type == OBJTYPE_LDR || !lazy || pltgot == NULL) {
-		fails = _dl_md_reloc(object, DT_JMPREL, DT_PLTRELSZ);
-	}
-
-	if (object->got_size != 0)
-		_dl_mprotect((void*)object->got_start, object->got_size,
-		    PROT_READ);
-	if (object->plt_size != 0)
-		_dl_mprotect((void*)object->plt_start, object->plt_size,
-		    PROT_READ|PROT_EXEC);
+	/* mprotect the PLT */
+	_dl_protect_segment(object, 0, "__plt_start", "__plt_end",
+	    PROT_READ|PROT_EXEC);
 
 	return (fails);
 }

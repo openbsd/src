@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.31 2015/08/27 20:55:34 kettenis Exp $	*/
+/*	$OpenBSD: rtld_machine.c,v 1.32 2015/11/02 07:02:53 guenther Exp $	*/
 
 /*
  * Copyright (c) 2004 Michael Shalayeff
@@ -310,32 +310,9 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 	Elf_RelA *rela;
 	Elf_Addr  ooff;
 	int	i, numrela, fails = 0;
-	const Elf_Sym *this;
 
 	if (object->dyn.pltrel != DT_RELA)
 		return (0);
-
-	object->got_addr = 0;
-	object->got_size = 0;
-	this = NULL;
-	ooff = _dl_find_symbol("__got_start", &this,
-	    SYM_SEARCH_OBJ|SYM_NOWARNNOTFOUND|SYM_PLT, NULL, object, NULL );
-	if (this != NULL)
-		object->got_addr = ooff + this->st_value;
-
-	this = NULL;
-	ooff = _dl_find_symbol("__got_end", &this,
-	    SYM_SEARCH_OBJ|SYM_NOWARNNOTFOUND|SYM_PLT, NULL, object, NULL);
-	if (this != NULL)
-		object->got_size = ooff + this->st_value  - object->got_addr;
-
-	if (object->got_addr == 0)
-		object->got_start = 0;
-	else {
-		object->got_start = ELF_TRUNC(object->got_addr, _dl_pagesz);
-		object->got_size += object->got_addr - object->got_start;
-		object->got_size = ELF_ROUND(object->got_size, _dl_pagesz);
-	}
 
 	if (object->traced)
 		lazy = 1;
@@ -429,9 +406,10 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 			}
 		}
 	}
-	if (object->got_size != 0)
-		_dl_mprotect((void *)object->got_start, object->got_size,
-		    GOT_PERMS|PROT_EXEC);
+
+	/* mprotect the GOT */
+	_dl_protect_segment(object, 0, "__got_start", "__got_end",
+	    GOT_PERMS|PROT_EXEC);
 
 	return (fails);
 }

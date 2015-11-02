@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.24 2015/08/23 20:45:14 guenther Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.25 2015/11/02 07:02:53 guenther Exp $ */
 
 /*
  * Copyright (c) 2002,2004 Dale Rahn
@@ -396,39 +396,12 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 	Elf_Addr *pltgot = (Elf_Addr *)object->Dyn.info[DT_PLTGOT];
 	int i, num;
 	Elf_RelA *rel;
-	Elf_Addr ooff;
-	const Elf_Sym *this;
 
 	if (pltgot == NULL)
 		return (0); /* it is possible to have no PLT/GOT relocations */
 
-	pltgot[1] = (Elf_Addr)object;
-	pltgot[2] = (Elf_Addr)&_dl_bind_start;
-
 	if (object->Dyn.info[DT_PLTREL] != DT_RELA)
 		return (0);
-
-	object->got_addr = 0;
-	object->got_size = 0;
-	this = NULL;
-	ooff = _dl_find_symbol("__got_start", &this,
-	    SYM_SEARCH_OBJ|SYM_NOWARNNOTFOUND|SYM_PLT, NULL, object, NULL);
-	if (this != NULL)
-		object->got_addr = ooff + this->st_value;
-
-	this = NULL;
-	ooff = _dl_find_symbol("__got_end", &this,
-	    SYM_SEARCH_OBJ|SYM_NOWARNNOTFOUND|SYM_PLT, NULL, object, NULL);
-	if (this != NULL)
-		object->got_size = ooff + this->st_value  - object->got_addr;
-
-	if (object->got_addr == 0)
-		object->got_start = 0;
-	else {
-		object->got_start = ELF_TRUNC(object->got_addr, _dl_pagesz);
-		object->got_size += object->got_addr - object->got_start;
-		object->got_size = ELF_ROUND(object->got_size, _dl_pagesz);
-	}
 
 	if (object->traced)
 		lazy = 1;
@@ -436,6 +409,9 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 	if (__predict_false(!lazy)) {
 		fails = _dl_md_reloc(object, DT_JMPREL, DT_PLTRELSZ);
 	} else {
+		pltgot[1] = (Elf_Addr)object;
+		pltgot[2] = (Elf_Addr)&_dl_bind_start;
+
 		rel = (Elf_RelA *)(object->Dyn.info[DT_JMPREL]);
 		num = (object->Dyn.info[DT_PLTRELSZ]);
 		for (i = 0; i < num/sizeof(Elf_RelA); i++, rel++) {
@@ -443,13 +419,10 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 			where = (Elf_Addr *)(rel->r_offset + object->obj_base);
 			*where += object->obj_base;
 		}
-
 	}
 
-	/* PLT is already RO on amd64, no point in mprotecting it, just GOT */
-	if (object->got_size != 0)
-		_dl_mprotect((void*)object->got_start, object->got_size,
-		    PROT_READ);
+	/* mprotect the GOT */
+	_dl_protect_segment(object, 0, "__got_start", "__got_end", PROT_READ);
 
 	return (fails);
 }
