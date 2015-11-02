@@ -1,4 +1,4 @@
-# $OpenBSD: ikeca.cnf,v 1.7 2015/11/02 12:01:28 jsg Exp $
+# $OpenBSD: ikeca.cnf,v 1.8 2015/11/02 12:21:27 jsg Exp $
 
 CERT_C			= DE
 CERT_ST			= Lower Saxony
@@ -20,7 +20,7 @@ NSCERTTYPE		= server,client
 
 [ req ]
 #default_bits		= 2048
-#default_md		= sha1
+#default_md		= sha256
 #default_keyfile 	= privkey.pem
 distinguished_name	= req_distinguished_name
 #attributes		= req_attributes
@@ -100,7 +100,7 @@ emailAddress			= optional
 [CA_default]
 database			= $ENV::CADB
 serial				= $ENV::CASERIAL
-default_md			= sha1
+default_md			= sha256
 default_days			= 365
 default_crl_days		= 365
 unique_subject			= yes
