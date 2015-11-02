@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.180 2015/11/01 22:53:34 bluhm Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.181 2015/11/02 14:08:54 bluhm Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -96,7 +96,7 @@ void in_arpinput(struct mbuf *);
 void revarpinput(struct mbuf *);
 void in_revarpinput(struct mbuf *);
 
-LIST_HEAD(, llinfo_arp) llinfo_arp;
+LIST_HEAD(, llinfo_arp) arp_list;
 struct	pool arp_pool;		/* pool for llinfo_arp structures */
 /* XXX hate magic numbers */
 struct	niqueue arpintrq = NIQUEUE_INITIALIZER(50, NETISR_ARP);
@@ -126,10 +126,9 @@ arptimer(void *arg)
 
 	s = splsoftnet();
 	timeout_add_sec(to, arpt_prune);
-	for (la = LIST_FIRST(&llinfo_arp); la != NULL; la = nla) {
+	LIST_FOREACH_SAFE(la, &arp_list, la_list, nla) {
 		struct rtentry *rt = la->la_rt;
 
-		nla = LIST_NEXT(la, la_list);
 		if (rt->rt_expire && rt->rt_expire <= time_second)
 			arptfree(rt); /* timer has expired; clear */
 	}
@@ -223,7 +222,7 @@ arp_rtrequest(struct ifnet *ifp, int req, struct rtentry *rt)
 		ml_init(&la->la_ml);
 		la->la_rt = rt;
 		rt->rt_flags |= RTF_LLINFO;
-		LIST_INSERT_HEAD(&llinfo_arp, la, la_list);
+		LIST_INSERT_HEAD(&arp_list, la, la_list);
 
 		TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
 			if ((ifa->ifa_addr->sa_family == AF_INET) &&
@@ -506,7 +505,7 @@ in_arpinput(struct mbuf *m)
 	struct ifnet *ifp;
 	struct arpcom *ac;
 	struct ether_header *eh;
-	struct llinfo_arp *la = 0;
+	struct llinfo_arp *la = NULL;
 	struct rtentry *rt = NULL;
 	struct ifaddr *ifa;
 	struct sockaddr_dl *sdl;
