@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall_mi.h,v 1.13 2015/11/01 19:03:33 semarie Exp $	*/
+/*	$OpenBSD: syscall_mi.h,v 1.14 2015/11/02 23:17:58 tedu Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -80,15 +80,18 @@ mi_syscall(struct proc *p, register_t code, const struct sysent *callp,
 		return (error);
 	}
 #if NSYSTRACE > 0
-	if (!pledged && ISSET(p->p_flag, P_SYSTRACE)) {
+	if (ISSET(p->p_flag, P_SYSTRACE)) {
 		if (!lock)
 			KERNEL_LOCK();
 		error = systrace_redirect(code, p, argp, retval);
-		KERNEL_UNLOCK();
-		return (error);
+		lock = 1;
+		goto done;
 	}
 #endif
 	error = (*callp->sy_call)(p, argp, retval);
+#if NSYSTRACE > 0
+done:
+#endif
 	if (pledged && p->p_pledgeafter)
 		pledge_aftersyscall(p, code, error);
 	if (lock)
