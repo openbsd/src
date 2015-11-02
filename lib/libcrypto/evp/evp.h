@@ -1,4 +1,4 @@
-/* $OpenBSD: evp.h,v 1.48 2015/09/14 01:45:03 doug Exp $ */
+/* $OpenBSD: evp.h,v 1.49 2015/11/02 15:40:53 reyk Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1215,6 +1215,7 @@ const EVP_AEAD *EVP_aead_aes_256_gcm(void);
 #if !defined(OPENSSL_NO_CHACHA) && !defined(OPENSSL_NO_POLY1305)
 /* EVP_aead_chacha20_poly1305 is ChaCha20 with a Poly1305 authenticator. */
 const EVP_AEAD *EVP_aead_chacha20_poly1305(void);
+const EVP_AEAD *EVP_aead_chacha20_poly1305_ietf(void);
 #endif
 
 /* EVP_AEAD_key_length returns the length of the keys used. */

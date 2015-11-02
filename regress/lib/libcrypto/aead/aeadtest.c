@@ -134,6 +134,12 @@ aead_from_name(const EVP_AEAD **aead, const char *name)
 #else
 		fprintf(stderr, "No chacha20-poly1305 support.\n");
 #endif
+	} else if (strcmp(name, "chacha20-poly1305-ietf") == 0) {
+#if !defined(OPENSSL_NO_CHACHA) && !defined(OPENSSL_NO_POLY1305)
+		*aead = EVP_aead_chacha20_poly1305_ietf();
+#else
+		fprintf(stderr, "No chacha20-poly1305-ietf support.\n");
+#endif
 	} else {
 		fprintf(stderr, "Unknown AEAD: %s\n", name);
 		return -1;
