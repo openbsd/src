@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.118 2015/10/28 11:59:08 deraadt Exp $	*/
+/*	$OpenBSD: exec_elf.c,v 1.119 2015/11/02 16:31:55 semarie Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -328,8 +328,8 @@ ELFNAME(load_file)(struct proc *p, char *path, struct exec_package *epp,
 	int loop;
 	size_t randomizequota = ELF_RANDOMIZE_LIMIT;
 
-	p->p_pledgenote = PLEDGE_RPATH;
 	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_SYSSPACE, path, p);
+	nd.ni_pledge = PLEDGE_RPATH;
 	if ((error = namei(&nd)) != 0) {
 		return (error);
 	}

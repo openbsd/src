@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.171 2015/10/28 11:13:41 deraadt Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.172 2015/11/02 16:31:55 semarie Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -291,13 +291,13 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 			goto clrflag;
 	}
 #endif
-	p->p_pledgenote = PLEDGE_EXEC;
 	if (pathbuf != NULL) {
 		NDINIT(&nid, LOOKUP, NOFOLLOW, UIO_SYSSPACE, pathbuf, p);
 	} else {
 		NDINIT(&nid, LOOKUP, NOFOLLOW, UIO_USERSPACE,
 		    SCARG(uap, path), p);
 	}
+	nid.ni_pledge = PLEDGE_EXEC;
 
 	/*
 	 * initialize the fields of the exec package.

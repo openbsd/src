@@ -1,4 +1,4 @@
-/*	$OpenBSD: namei.h,v 1.28 2013/03/27 01:56:50 tedu Exp $	*/
+/*	$OpenBSD: namei.h,v 1.29 2015/11/02 16:31:55 semarie Exp $	*/
 /*	$NetBSD: namei.h,v 1.11 1996/02/09 18:25:20 christos Exp $	*/
 
 /*
@@ -62,6 +62,7 @@ struct nameidata {
      /* struct	ucred *ni_cred;		   credentials */
 	struct	vnode *ni_startdir;	/* starting directory */
 	struct	vnode *ni_rootdir;	/* logical root directory */
+	int	ni_pledge;		/* expected pledge for namei */
 	/*
 	 * Results: returned from/manipulated by lookup
 	 */
@@ -152,6 +153,7 @@ struct nameidata {
 	(ndp)->ni_dirfd = dirfd; \
 	(ndp)->ni_dirp = namep; \
 	(ndp)->ni_cnd.cn_proc = p; \
+	(ndp)->ni_pledge = 0; \
 }
 #define NDINIT(ndp, op, flags, segflp, namep, p) \
 	NDINITAT(ndp, op, flags, segflp, AT_FDCWD, namep, p)

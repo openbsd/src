@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.98 2015/11/02 15:33:40 deraadt Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.99 2015/11/02 16:31:55 semarie Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -25,6 +25,7 @@
 #include <sys/fcntl.h>
 #include <sys/file.h>
 #include <sys/filedesc.h>
+#include <sys/namei.h>
 #include <sys/socketvar.h>
 #include <sys/vnode.h>
 #include <sys/mbuf.h>
@@ -527,7 +528,7 @@ sys_pledge(struct proc *p, void *v, register_t *retval)
 int
 pledge_syscall(struct proc *p, int code, int *tval)
 {
-	p->p_pledgenote = p->p_pledgeafter = 0;	/* XX optimise? */
+	p->p_pledgeafter = 0;	/* XX optimise? */
 	p->p_pledge_syscall = code;
 	*tval = 0;
 
@@ -581,7 +582,7 @@ pledge_fail(struct proc *p, int error, int code)
  * without the right flags set
  */
 int
-pledge_namei(struct proc *p, char *origpath)
+pledge_namei(struct proc *p, struct nameidata *ni, char *origpath)
 {
 	char path[PATH_MAX];
 	int error;
@@ -589,11 +590,14 @@ pledge_namei(struct proc *p, char *origpath)
 	if ((p->p_p->ps_flags & PS_PLEDGE) == 0)
 		return (0);
 
-	if (p->p_pledgenote == PLEDGE_COREDUMP)
+	if (!ni || (ni->ni_pledge == 0))
+		panic("ni_pledge");
+
+	if (ni->ni_pledge == PLEDGE_COREDUMP)
 		return (0);			/* Allow a coredump */
 
 	/* Doing a permitted execve() */
-	if ((p->p_pledgenote & PLEDGE_EXEC) &&
+	if ((ni->ni_pledge & PLEDGE_EXEC) &&
 	    (p->p_p->ps_pledge & PLEDGE_EXEC))
 		return (0);
 
@@ -604,7 +608,7 @@ pledge_namei(struct proc *p, char *origpath)
 	/* Detect what looks like a mkstemp(3) family operation */
 	if ((p->p_p->ps_pledge & PLEDGE_TMPPATH) &&
 	    (p->p_pledge_syscall == SYS_open) &&
-	    (p->p_pledgenote & PLEDGE_CPATH) &&
+	    (ni->ni_pledge & PLEDGE_CPATH) &&
 	    strncmp(path, "/tmp/", sizeof("/tmp/") - 1) == 0) {
 		return (0);
 	}
@@ -622,26 +626,26 @@ pledge_namei(struct proc *p, char *origpath)
 	switch (p->p_pledge_syscall) {
 	case SYS_access:
 		/* tzset() needs this. */
-		if ((p->p_pledgenote == PLEDGE_RPATH) &&
+		if ((ni->ni_pledge == PLEDGE_RPATH) &&
 		    strcmp(path, "/etc/localtime") == 0)
 			return (0);
 		break;
 	case SYS_open:
 		/* daemon(3) or other such functions */
-		if ((p->p_pledgenote & ~(PLEDGE_RPATH | PLEDGE_WPATH)) == 0 &&
+		if ((ni->ni_pledge & ~(PLEDGE_RPATH | PLEDGE_WPATH)) == 0 &&
 		    strcmp(path, "/dev/null") == 0) {
 			return (0);
 		}
 
 		/* readpassphrase(3), getpw*(3) */
 		if ((p->p_p->ps_pledge & (PLEDGE_TTY | PLEDGE_GETPW)) &&
-		    (p->p_pledgenote & ~(PLEDGE_RPATH | PLEDGE_WPATH)) == 0 &&
+		    (ni->ni_pledge & ~(PLEDGE_RPATH | PLEDGE_WPATH)) == 0 &&
 		    strcmp(path, "/dev/tty") == 0) {
 			return (0);
 		}
 
 		/* getpw* and friends need a few files */
-		if ((p->p_pledgenote == PLEDGE_RPATH) &&
+		if ((ni->ni_pledge == PLEDGE_RPATH) &&
 		    (p->p_p->ps_pledge & PLEDGE_GETPW)) {
 			if (strcmp(path, "/etc/spwd.db") == 0)
 				return (EPERM);
@@ -652,7 +656,7 @@ pledge_namei(struct proc *p, char *origpath)
 		}
 
 		/* DNS needs /etc/{resolv.conf,hosts,services}. */
-		if ((p->p_pledgenote == PLEDGE_RPATH) &&
+		if ((ni->ni_pledge == PLEDGE_RPATH) &&
 		    (p->p_p->ps_pledge & PLEDGE_DNS)) {
 			if (strcmp(path, "/etc/resolv.conf") == 0)
 				return (0);
@@ -662,7 +666,7 @@ pledge_namei(struct proc *p, char *origpath)
 				return (0);
 		}
 
-		if ((p->p_pledgenote == PLEDGE_RPATH) &&
+		if ((ni->ni_pledge == PLEDGE_RPATH) &&
 		    (p->p_p->ps_pledge & PLEDGE_GETPW)) {
 			if (strcmp(path, "/var/run/ypbind.lock") == 0) {
 				p->p_pledgeafter |= PLEDGE_YPACTIVE;
@@ -674,16 +678,16 @@ pledge_namei(struct proc *p, char *origpath)
 		}
 
 		/* tzset() needs these. */
-		if ((p->p_pledgenote == PLEDGE_RPATH) &&
+		if ((ni->ni_pledge == PLEDGE_RPATH) &&
 		    strncmp(path, "/usr/share/zoneinfo/",
 		    sizeof("/usr/share/zoneinfo/") - 1) == 0)
 			return (0);
-		if ((p->p_pledgenote == PLEDGE_RPATH) &&
+		if ((ni->ni_pledge == PLEDGE_RPATH) &&
 		    strcmp(path, "/etc/localtime") == 0)
 			return (0);
 
 		/* /usr/share/nls/../libc.cat has to succeed for strerror(3). */
-		if ((p->p_pledgenote == PLEDGE_RPATH) &&
+		if ((ni->ni_pledge == PLEDGE_RPATH) &&
 		    strncmp(path, "/usr/share/nls/",
 		    sizeof("/usr/share/nls/") - 1) == 0 &&
 		    strcmp(path + strlen(path) - 9, "/libc.cat") == 0)
@@ -692,13 +696,13 @@ pledge_namei(struct proc *p, char *origpath)
 		break;
 	case SYS_readlink:
 		/* Allow /etc/malloc.conf for malloc(3). */
-		if ((p->p_pledgenote == PLEDGE_RPATH) &&
+		if ((ni->ni_pledge == PLEDGE_RPATH) &&
 		    strcmp(path, "/etc/malloc.conf") == 0)
 			return (0);
 		break;
 	case SYS_stat:
 		/* DNS needs /etc/resolv.conf. */
-		if ((p->p_pledgenote == PLEDGE_RPATH) &&
+		if ((ni->ni_pledge == PLEDGE_RPATH) &&
 		    (p->p_p->ps_pledge & PLEDGE_DNS) &&
 		    strcmp(path, "/etc/resolv.conf") == 0)
 			return (0);
@@ -709,18 +713,8 @@ pledge_namei(struct proc *p, char *origpath)
 	 * Ensure each flag of p_pledgenote has counterpart allowing it in
 	 * ps_pledge
 	 */
-	if (p->p_pledgenote & ~p->p_p->ps_pledge)
-		return (pledge_fail(p, EPERM, (p->p_pledgenote &
-		    ~p->p_p->ps_pledge)));
-
-	/* generic check for unsetted p_pledgenote */
-	if (p->p_pledgenote == 0) {
-		//printf("pledge_namei: %s(%d): syscall %d p_pledgenote=0\n",
-		//    p->p_comm, p->p_pid, p->p_pledge_syscall);
-
-		if ((p->p_p->ps_pledge & (PLEDGE_RPATH | PLEDGE_WPATH | PLEDGE_CPATH)) == 0)
-			return (pledge_fail(p, EPERM, PLEDGE_RPATH));
-	}
+	if (ni->ni_pledge & ~p->p_p->ps_pledge)
+		return (pledge_fail(p, EPERM, (ni->ni_pledge & ~p->p_p->ps_pledge)));
 
 	/*
 	 * If a whitelist is set, compare canonical paths.  Anything
@@ -809,7 +803,7 @@ pledge_namei(struct proc *p, char *origpath)
 			case SYS_lstat:
 			case SYS_fstatat:
 			case SYS_fstat:
-				p->p_pledgenote |= PLEDGE_STATLIE;
+				ni->ni_pledge |= PLEDGE_STATLIE;
 				error = 0;
 			}
 		free(canopath, M_TEMP, MAXPATHLEN);

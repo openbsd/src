@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.238 2015/11/01 19:03:33 semarie Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.239 2015/11/02 16:31:55 semarie Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -563,8 +563,8 @@ sys_statfs(struct proc *p, void *v, register_t *retval)
 	int error;
 	struct nameidata nd;
 
-	p->p_pledgenote = PLEDGE_RPATH;
 	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path), p);
+	nd.ni_pledge = PLEDGE_RPATH;
 	if ((error = namei(&nd)) != 0)
 		return (error);
 	mp = nd.ni_vp->v_mount;
@@ -732,9 +732,9 @@ sys_chdir(struct proc *p, void *v, register_t *retval)
 	int error;
 	struct nameidata nd;
 
-	p->p_pledgenote = PLEDGE_RPATH;
 	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE,
 	    SCARG(uap, path), p);
+	nd.ni_pledge = PLEDGE_RPATH;
 	if ((error = change_dir(&nd, p)) != 0)
 		return (error);
 	old_cdir = fdp->fd_cdir;
@@ -760,9 +760,9 @@ sys_chroot(struct proc *p, void *v, register_t *retval)
 
 	if ((error = suser(p, 0)) != 0)
 		return (error);
-	p->p_pledgenote = PLEDGE_ID | PLEDGE_PROC | PLEDGE_RPATH;
 	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE,
 	    SCARG(uap, path), p);
+	nd.ni_pledge = PLEDGE_ID | PLEDGE_PROC | PLEDGE_RPATH;
 	if ((error = change_dir(&nd, p)) != 0)
 		return (error);
 	if (fdp->fd_rdir != NULL) {
@@ -847,20 +847,21 @@ doopenat(struct proc *p, int fd, const char *path, int oflags, mode_t mode,
 	int type, indx, error, localtrunc = 0;
 	struct flock lf;
 	struct nameidata nd;
+	int ni_pledge;
 
 	switch (oflags & O_ACCMODE) {
 	case O_RDONLY:
-		p->p_pledgenote = PLEDGE_RPATH;
+		ni_pledge = PLEDGE_RPATH;
 		break;
 	case O_WRONLY:
-		p->p_pledgenote = PLEDGE_WPATH;
+		ni_pledge = PLEDGE_WPATH;
 		break;
 	case O_RDWR:
-		p->p_pledgenote = PLEDGE_RPATH | PLEDGE_WPATH;
+		ni_pledge = PLEDGE_RPATH | PLEDGE_WPATH;
 		break;
 	}
 	if (oflags & O_CREAT)
-		p->p_pledgenote |= PLEDGE_CPATH;
+		ni_pledge |= PLEDGE_CPATH;
 
 	if (oflags & (O_EXLOCK | O_SHLOCK)) {
 		error = pledge_flock(p);
@@ -878,6 +879,7 @@ doopenat(struct proc *p, int fd, const char *path, int oflags, mode_t mode,
 
 	cmode = ((mode &~ fdp->fd_cmask) & ALLPERMS) &~ S_ISTXT;
 	NDINITAT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, fd, path, p);
+	nd.ni_pledge = ni_pledge;
 	p->p_dupfd = -1;			/* XXX check for fdopen */
 	if ((flags & O_TRUNC) && (flags & (O_EXLOCK | O_SHLOCK))) {
 		localtrunc = 1;
@@ -1304,7 +1306,6 @@ sys_mkfifo(struct proc *p, void *v, register_t *retval)
 		syscallarg(mode_t) mode;
 	} */ *uap = v;
 
-	p->p_pledgenote = PLEDGE_CPATH | PLEDGE_RPATH;
 	return (domknodat(p, AT_FDCWD, SCARG(uap, path),
 	    (SCARG(uap, mode) & ALLPERMS) | S_IFIFO, 0));
 }
@@ -1366,8 +1367,8 @@ dolinkat(struct proc *p, int fd1, const char *path1, int fd2,
 		return (EINVAL);
 
 	follow = (flag & AT_SYMLINK_FOLLOW) ? FOLLOW : NOFOLLOW;
-	p->p_pledgenote = PLEDGE_RPATH;
 	NDINITAT(&nd, LOOKUP, follow, UIO_USERSPACE, fd1, path1, p);
+	nd.ni_pledge = PLEDGE_RPATH;
 	if ((error = namei(&nd)) != 0)
 		return (error);
 	vp = nd.ni_vp;
@@ -1377,8 +1378,8 @@ dolinkat(struct proc *p, int fd1, const char *path1, int fd2,
 		flags |= STRIPSLASHES;
 	}
 
-	p->p_pledgenote = PLEDGE_CPATH;
 	NDINITAT(&nd, CREATE, flags, UIO_USERSPACE, fd2, path2, p);
+	nd.ni_pledge = PLEDGE_CPATH;
 	if ((error = namei(&nd)) != 0)
 		goto out;
 	if (nd.ni_vp) {
@@ -1437,8 +1438,8 @@ dosymlinkat(struct proc *p, const char *upath, int fd, const char *link)
 	error = copyinstr(upath, path, MAXPATHLEN, NULL);
 	if (error)
 		goto out;
-	p->p_pledgenote = PLEDGE_CPATH;
 	NDINITAT(&nd, CREATE, LOCKPARENT, UIO_USERSPACE, fd, link, p);
+	nd.ni_pledge = PLEDGE_CPATH;
 	if ((error = namei(&nd)) != 0)
 		goto out;
 	if (nd.ni_vp) {
@@ -1496,9 +1497,9 @@ dounlinkat(struct proc *p, int fd, const char *path, int flag)
 	if (flag & ~AT_REMOVEDIR)
 		return (EINVAL);
 
-	p->p_pledgenote = PLEDGE_CPATH;
 	NDINITAT(&nd, DELETE, LOCKPARENT | LOCKLEAF, UIO_USERSPACE,
 	    fd, path, p);
+	nd.ni_pledge = PLEDGE_CPATH;
 	if ((error = namei(&nd)) != 0)
 		return (error);
 	vp = nd.ni_vp;
@@ -1663,8 +1664,8 @@ dofaccessat(struct proc *p, int fd, const char *path, int amode, int flag)
 		newcred->cr_gid = newcred->cr_rgid;
 	}
 
-	p->p_pledgenote = PLEDGE_RPATH;
 	NDINITAT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE, fd, path, p);
+	nd.ni_pledge = PLEDGE_RPATH;
 	if ((error = namei(&nd)) != 0)
 		goto out;
 	vp = nd.ni_vp;
@@ -1734,15 +1735,15 @@ dofstatat(struct proc *p, int fd, const char *path, struct stat *buf, int flag)
 
 
 	follow = (flag & AT_SYMLINK_NOFOLLOW) ? NOFOLLOW : FOLLOW;
-	p->p_pledgenote = PLEDGE_RPATH;
 	NDINITAT(&nd, LOOKUP, follow | LOCKLEAF, UIO_USERSPACE, fd, path, p);
+	nd.ni_pledge = PLEDGE_RPATH;
 	if ((error = namei(&nd)) != 0)
 		return (error);
 	error = vn_stat(nd.ni_vp, &sb, p);
 	vput(nd.ni_vp);
 	if (error)
 		return (error);
-	if (p->p_pledgenote & PLEDGE_STATLIE) {
+	if (nd.ni_pledge & PLEDGE_STATLIE) {
 		if (S_ISDIR(sb.st_mode)) {
 			sb.st_mode &= ~ALLPERMS;
 			sb.st_mode |= S_IXUSR | S_IXGRP | S_IXOTH;
@@ -1843,8 +1844,8 @@ doreadlinkat(struct proc *p, int fd, const char *path, char *buf,
 	int error;
 	struct nameidata nd;
 
-	p->p_pledgenote = PLEDGE_RPATH;
 	NDINITAT(&nd, LOOKUP, NOFOLLOW | LOCKLEAF, UIO_USERSPACE, fd, path, p);
+	nd.ni_pledge = PLEDGE_RPATH;
 	if ((error = namei(&nd)) != 0)
 		return (error);
 	vp = nd.ni_vp;
@@ -1906,8 +1907,8 @@ dochflagsat(struct proc *p, int fd, const char *path, u_int flags, int atflags)
 		return (EINVAL);
 
 	follow = (atflags & AT_SYMLINK_NOFOLLOW) ? NOFOLLOW : FOLLOW;
-	p->p_pledgenote = PLEDGE_FATTR | PLEDGE_RPATH;
 	NDINITAT(&nd, LOOKUP, follow, UIO_USERSPACE, fd, path, p);
+	nd.ni_pledge = PLEDGE_FATTR | PLEDGE_RPATH;
 	if ((error = namei(&nd)) != 0)
 		return (error);
 	return (dovchflags(p, nd.ni_vp, flags));
@@ -2010,8 +2011,8 @@ dofchmodat(struct proc *p, int fd, const char *path, mode_t mode, int flag)
 		return (EINVAL);
 
 	follow = (flag & AT_SYMLINK_NOFOLLOW) ? NOFOLLOW : FOLLOW;
-	p->p_pledgenote = PLEDGE_FATTR | PLEDGE_RPATH;
 	NDINITAT(&nd, LOOKUP, follow, UIO_USERSPACE, fd, path, p);
+	nd.ni_pledge = PLEDGE_FATTR | PLEDGE_RPATH;
 	if ((error = namei(&nd)) != 0)
 		return (error);
 	vp = nd.ni_vp;
@@ -2111,8 +2112,8 @@ dofchownat(struct proc *p, int fd, const char *path, uid_t uid, gid_t gid,
 		return (EINVAL);
 
 	follow = (flag & AT_SYMLINK_NOFOLLOW) ? NOFOLLOW : FOLLOW;
-	p->p_pledgenote = PLEDGE_FATTR | PLEDGE_RPATH;
 	NDINITAT(&nd, LOOKUP, follow, UIO_USERSPACE, fd, path, p);
+	nd.ni_pledge = PLEDGE_FATTR | PLEDGE_RPATH;
 	if ((error = namei(&nd)) != 0)
 		return (error);
 	vp = nd.ni_vp;
@@ -2163,8 +2164,8 @@ sys_lchown(struct proc *p, void *v, register_t *retval)
 	uid_t uid = SCARG(uap, uid);
 	gid_t gid = SCARG(uap, gid);
 
-	p->p_pledgenote = PLEDGE_FATTR | PLEDGE_RPATH;
 	NDINIT(&nd, LOOKUP, NOFOLLOW, UIO_USERSPACE, SCARG(uap, path), p);
+	nd.ni_pledge = PLEDGE_FATTR | PLEDGE_RPATH;
 	if ((error = namei(&nd)) != 0)
 		return (error);
 	vp = nd.ni_vp;
@@ -2314,8 +2315,8 @@ doutimensat(struct proc *p, int fd, const char *path,
 		return (EINVAL);
 
 	follow = (flag & AT_SYMLINK_NOFOLLOW) ? NOFOLLOW : FOLLOW;
-	p->p_pledgenote = PLEDGE_FATTR | PLEDGE_RPATH;
 	NDINITAT(&nd, LOOKUP, follow, UIO_USERSPACE, fd, path, p);
+	nd.ni_pledge = PLEDGE_FATTR | PLEDGE_RPATH;
 	if ((error = namei(&nd)) != 0)
 		return (error);
 	vp = nd.ni_vp;
@@ -2459,8 +2460,8 @@ sys_truncate(struct proc *p, void *v, register_t *retval)
 	int error;
 	struct nameidata nd;
 
-	p->p_pledgenote = PLEDGE_FATTR | PLEDGE_RPATH;
 	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path), p);
+	nd.ni_pledge = PLEDGE_FATTR | PLEDGE_RPATH;
 	if ((error = namei(&nd)) != 0)
 		return (error);
 	vp = nd.ni_vp;
@@ -2586,9 +2587,9 @@ dorenameat(struct proc *p, int fromfd, const char *from, int tofd,
 	int error;
 	int flags;
 
-	p->p_pledgenote = PLEDGE_RPATH | PLEDGE_CPATH;
 	NDINITAT(&fromnd, DELETE, WANTPARENT | SAVESTART, UIO_USERSPACE,
 	    fromfd, from, p);
+	fromnd.ni_pledge = PLEDGE_RPATH | PLEDGE_CPATH;
 	if ((error = namei(&fromnd)) != 0)
 		return (error);
 	fvp = fromnd.ni_vp;
@@ -2600,8 +2601,8 @@ dorenameat(struct proc *p, int fromfd, const char *from, int tofd,
 	if (fvp->v_type == VDIR)
 		flags |= STRIPSLASHES;
 
-	p->p_pledgenote = PLEDGE_CPATH;
 	NDINITAT(&tond, RENAME, flags, UIO_USERSPACE, tofd, to, p);
+	tond.ni_pledge = PLEDGE_CPATH;
 	if ((error = namei(&tond)) != 0) {
 		VOP_ABORTOP(fromnd.ni_dvp, &fromnd.ni_cnd);
 		vrele(fromnd.ni_dvp);
@@ -2693,9 +2694,9 @@ domkdirat(struct proc *p, int fd, const char *path, mode_t mode)
 	int error;
 	struct nameidata nd;
 
-	p->p_pledgenote = PLEDGE_CPATH;
 	NDINITAT(&nd, CREATE, LOCKPARENT | STRIPSLASHES, UIO_USERSPACE,
 	    fd, path, p);
+	nd.ni_pledge = PLEDGE_CPATH;
 	if ((error = namei(&nd)) != 0)
 		return (error);
 	vp = nd.ni_vp;

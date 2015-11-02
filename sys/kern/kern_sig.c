@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.188 2015/11/01 19:03:33 semarie Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.189 2015/11/02 16:31:55 semarie Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -1521,8 +1521,8 @@ coredump(struct proc *p)
 		cred->cr_gid = 0;
 	}
 
-	p->p_pledgenote = PLEDGE_COREDUMP;
 	NDINIT(&nd, LOOKUP, NOFOLLOW, UIO_SYSSPACE, name, p);
+	nd.ni_pledge = PLEDGE_COREDUMP;
 
 	error = vn_open(&nd, O_CREAT | FWRITE | O_NOFOLLOW, S_IRUSR | S_IWUSR);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_ktrace.c,v 1.82 2015/10/28 11:16:23 deraadt Exp $	*/
+/*	$OpenBSD: kern_ktrace.c,v 1.83 2015/11/02 16:31:55 semarie Exp $	*/
 /*	$NetBSD: kern_ktrace.c,v 1.23 1996/02/09 18:59:36 christos Exp $	*/
 
 /*
@@ -446,9 +446,9 @@ sys_ktrace(struct proc *p, void *v, register_t *retval)
 		 * an operation which requires a file argument.
 		 */
 		cred = p->p_ucred;
-		p->p_pledgenote = PLEDGE_CPATH | PLEDGE_WPATH;
 		NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, fname),
 		    p);
+		nd.ni_pledge = PLEDGE_CPATH | PLEDGE_WPATH;
 		if ((error = vn_open(&nd, FREAD|FWRITE|O_NOFOLLOW, 0)) != 0)
 			goto done;
 		vp = nd.ni_vp;

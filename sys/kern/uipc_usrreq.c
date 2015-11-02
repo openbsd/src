@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.92 2015/11/01 19:03:33 semarie Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.93 2015/11/02 16:31:55 semarie Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -434,9 +434,9 @@ unp_bind(struct unpcb *unp, struct mbuf *nam, struct proc *p)
 	/* Fixup sun_len to keep it in sync with m_len. */
 	soun->sun_len = nam2->m_len;
 
-	p->p_pledgenote = PLEDGE_UNIX;
 	NDINIT(&nd, CREATE, NOFOLLOW | LOCKPARENT, UIO_SYSSPACE,
 	    soun->sun_path, p);
+	nd.ni_pledge = PLEDGE_UNIX;
 /* SHOULD BE ABLE TO ADOPT EXISTING AND wakeup() ALA FIFO's */
 	if ((error = namei(&nd)) != 0) {
 		m_freem(nam2);
@@ -493,8 +493,8 @@ unp_connect(struct socket *so, struct mbuf *nam, struct proc *p)
 	else if (memchr(soun->sun_path, '\0', sizeof(soun->sun_path)) == NULL)
 		return (EINVAL);
 
-	p->p_pledgenote = PLEDGE_RPATH | PLEDGE_WPATH;
 	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_SYSSPACE, soun->sun_path, p);
+	nd.ni_pledge = PLEDGE_RPATH | PLEDGE_WPATH;
 	if ((error = namei(&nd)) != 0)
 		return (error);
 	vp = nd.ni_vp;
