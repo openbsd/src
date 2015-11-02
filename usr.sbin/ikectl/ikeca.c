@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikeca.c,v 1.38 2015/11/02 10:27:44 jsg Exp $	*/
+/*	$OpenBSD: ikeca.c,v 1.39 2015/11/02 12:01:28 jsg Exp $	*/
 
 /*
  * Copyright (c) 2010 Jonathan Gray <jsg@openbsd.org>
@@ -64,6 +64,8 @@
 struct ca {
 	char		 sslpath[PATH_MAX];
 	char		 passfile[PATH_MAX];
+	char		 index[PATH_MAX];
+	char		 serial[PATH_MAX];
 	char		 sslcnf[PATH_MAX];
 	char		 extcnf[PATH_MAX];
 	char		 batch[PATH_MAX];
@@ -85,6 +87,7 @@ struct {
 /* explicitly list allowed variables */
 const char *ca_env[][2] = {
 	{ "$ENV::CADB", NULL },
+	{ "$ENV::CASERIAL", NULL },
 	{ "$ENV::CERTFQDN", NULL },
 	{ "$ENV::CERTIP", NULL },
 	{ "$ENV::CERTPATHLEN", NULL },
@@ -112,6 +115,7 @@ void		 ca_hier(char *);
 void		 ca_setenv(const char *, const char *);
 void		 ca_clrenv(void);
 void		 ca_setcnf(struct ca *, const char *);
+void		 ca_create_index(struct ca *);
 
 /* util.c */
 int		 expand_string(char *, size_t, const char *, const char *);
@@ -239,16 +243,23 @@ ca_sign(struct ca *ca, char *keyname, int type)
 		errx(1, "unknown host type %d", type);
 	}
 
+	ca_create_index(ca);
+
+	ca_setenv("$ENV::CADB", ca->index);
+	ca_setenv("$ENV::CASERIAL", ca->serial);
 	ca_setcnf(ca, keyname);
 
-	snprintf(cmd, sizeof(cmd), "%s x509 -req"
-	    " -days 365 -in %s/private/%s.csr"
-	    " -CA %s/ca.crt -CAkey %s/private/ca.key -CAcreateserial"
+	snprintf(cmd, sizeof(cmd),
+	    "%s ca -config %s -keyfile %s/private/ca.key"
+	    " -cert %s/ca.crt"
 	    " -extfile %s -extensions %s -out %s/%s.crt"
-	    " -passin file:%s",
-	    PATH_OPENSSL,
-	    ca->sslpath, keyname, ca->sslpath, ca->sslpath,
-	    ca->extcnf, extensions, ca->sslpath, keyname, ca->passfile);
+	    " -in %s/private/%s.csr"
+	    " -passin file:%s -outdir %s -batch",
+	    PATH_OPENSSL, ca->sslcnf, ca->sslpath,
+	    ca->sslpath,
+	    ca->extcnf, extensions, ca->sslpath, keyname,
+	    ca->sslpath, keyname,
+	    ca->passfile, ca->sslpath);
 
 	system(cmd);
 
@@ -813,14 +824,49 @@ ca_readpass(char *path, size_t *len)
 	return (r);
 }
 
+/* create index if it doesn't already exist */
+void
+ca_create_index(struct ca *ca)
+{
+	struct stat	 st;
+	int		 fd;
+
+	if (snprintf(ca->index, sizeof(ca->index), "%s/index.txt",
+	    ca->sslpath) < 0)
+		err(1, "snprintf");
+	if (stat(ca->index, &st) != 0) {
+		if  (errno == ENOENT) {
+			if ((fd = open(ca->index, O_WRONLY | O_CREAT, 0644))
+			    == -1)
+				err(1, "could not create file %s", ca->index);
+			close(fd);
+		} else
+			err(1, "could not access %s", ca->index);
+	}
+
+	if (snprintf(ca->serial, sizeof(ca->serial), "%s/serial.txt",
+	    ca->sslpath) < 0)
+		err(1, "snprintf");
+	if (stat(ca->serial, &st) != 0) {
+		if  (errno == ENOENT) {
+			if ((fd = open(ca->serial, O_WRONLY | O_CREAT, 0644))
+			    == -1)
+				err(1, "could not create file %s", ca->serial);
+			/* serial file must be created with a number */
+			if (write(fd, "01\n", 3) != 3)
+				err(1, "write %s", ca->serial);
+			close(fd);
+		} else
+			err(1, "could not access %s", ca->serial);
+	}
+}
+
 int
 ca_revoke(struct ca *ca, char *keyname)
 {
 	struct stat	 st;
 	char		 cmd[PATH_MAX * 2];
 	char		 path[PATH_MAX];
-	char		 cadb[PATH_MAX];
-	int		 fd;
 	char		*pass;
 	size_t		 len;
 
@@ -838,19 +884,10 @@ ca_revoke(struct ca *ca, char *keyname)
 	if (pass == NULL)
 		errx(1, "could not open passphrase file");
 
-	/* create index if it doesn't already exist */
-	snprintf(path, sizeof(path), "%s/index.txt", ca->sslpath);
-	if (stat(path, &st) != 0) {
-		if  (errno == ENOENT) {
-			if ((fd = open(path, O_WRONLY | O_CREAT, 0644)) == -1)
-				err(1, "could not create file %s", path);
-			close(fd);
-		} else
-			err(1, "could not access %s", path);
-	}
+	ca_create_index(ca);
 
-	snprintf(cadb, sizeof(cadb), "%s/index.txt", ca->sslpath);
-	ca_setenv("$ENV::CADB", cadb);
+	ca_setenv("$ENV::CADB", ca->index);
+	ca_setenv("$ENV::CASERIAL", ca->serial);
 	ca_setcnf(ca, "ca-revoke");
 
 	if (keyname) {
@@ -858,7 +895,6 @@ ca_revoke(struct ca *ca, char *keyname)
 		    "%s ca %s-config %s -keyfile %s/private/ca.key"
 		    " -key %s"
 		    " -cert %s/ca.crt"
-		    " -md sha1"
 		    " -revoke %s/%s.crt",
 		    PATH_OPENSSL, ca->batch, ca->sslcnf,
 		    ca->sslpath, pass, ca->sslpath, ca->sslpath, keyname);
@@ -870,7 +906,6 @@ ca_revoke(struct ca *ca, char *keyname)
 	    " -key %s"
 	    " -gencrl"
 	    " -cert %s/ca.crt"
-	    " -md sha1"
 	    " -crldays 365"
 	    " -out %s/ca.crl",
 	    PATH_OPENSSL, ca->batch, ca->sslcnf, ca->sslpath,
