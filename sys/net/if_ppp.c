@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ppp.c,v 1.91 2015/10/25 11:58:11 mpi Exp $	*/
+/*	$OpenBSD: if_ppp.c,v 1.92 2015/11/02 23:39:20 dlg Exp $	*/
 /*	$NetBSD: if_ppp.c,v 1.39 1997/05/17 21:11:59 christos Exp $	*/
 
 /*
@@ -163,7 +163,6 @@ struct mbuf *	ppp_pkt_mbuf(struct ppp_pkt *);
  * We steal two bits in the mbuf m_flags, to mark high-priority packets
  * for output, and received packets following lost/corrupted packets.
  */
-#define M_HIGHPRI	M_PROTO1	/* output packet for sc_fastq */
 #define M_ERRMARK	M_LINK0		/* steal a bit in mbuf m_flags */
 
 
@@ -226,7 +225,6 @@ ppp_clone_create(struct if_clone *ifc, int unit)
     sc->sc_if.if_rtrequest = p2p_rtrequest;
     IFQ_SET_MAXLEN(&sc->sc_if.if_snd, IFQ_MAXLEN);
     mq_init(&sc->sc_inq, IFQ_MAXLEN, IPL_NET);
-    IFQ_SET_MAXLEN(&sc->sc_fastq, IFQ_MAXLEN);
     ppp_pkt_list_init(&sc->sc_rawq, IFQ_MAXLEN);
     IFQ_SET_READY(&sc->sc_if.if_snd);
     if_attach(&sc->sc_if);
@@ -321,12 +319,6 @@ pppdealloc(struct ppp_softc *sc)
 	ppp_pkt_free(pkt);
     while ((m = mq_dequeue(&sc->sc_inq)) != NULL)
 	m_freem(m);
-    for (;;) {
-	IF_DEQUEUE(&sc->sc_fastq, m);
-	if (m == NULL)
-	    break;
-	m_freem(m);
-    }
     while ((m = sc->sc_npqueue) != NULL) {
 	sc->sc_npqueue = m->m_nextpkt;
 	m_freem(m);
@@ -657,8 +649,6 @@ pppoutput(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
     int protocol, address, control;
     u_char *cp;
     int s, error;
-    struct ip *ip;
-    struct ifqueue *ifq;
     enum NPmode mode;
     int len;
 
@@ -679,21 +669,12 @@ pppoutput(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
     /*
      * Compute PPP header.
      */
-    m0->m_flags &= ~M_HIGHPRI;
     switch (dst->sa_family) {
     case AF_INET:
 	address = PPP_ALLSTATIONS;
 	control = PPP_UI;
 	protocol = PPP_IP;
 	mode = sc->sc_npmode[NP_IP];
-
-	/*
-	 * If this packet has the "low delay" bit set in the IP header,
-	 * put it on the fastq instead.
-	 */
-	ip = mtod(m0, struct ip *);
-	if (ip->ip_tos & IPTOS_LOWDELAY)
-	    m0->m_flags |= M_HIGHPRI;
 	break;
     case AF_UNSPEC:
 	address = PPP_ADDRESS(dst->sa_data);
@@ -792,19 +773,7 @@ pppoutput(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 	m0->m_nextpkt = NULL;
 	sc->sc_npqtail = &m0->m_nextpkt;
     } else {
-	if (m0->m_flags & M_HIGHPRI) {
-	    ifq = &sc->sc_fastq;
-	    if (IF_QFULL(ifq) && dst->sa_family != AF_UNSPEC) {
-		IF_DROP(ifq);
-		m_freem(m0);
-		error = ENOBUFS;
-	    }
-	    else {
-		IF_ENQUEUE(ifq, m0);
-		error = 0;
-	    }
-	} else
-	    IFQ_ENQUEUE(&sc->sc_if.if_snd, m0, error);
+	IFQ_ENQUEUE(&sc->sc_if.if_snd, m0, error);
 	if (error) {
 	    splx(s);
 	    sc->sc_if.if_oerrors++;
@@ -833,7 +802,6 @@ static void
 ppp_requeue(struct ppp_softc *sc)
 {
     struct mbuf *m, **mpp;
-    struct ifqueue *ifq;
     enum NPmode mode;
     int error;
 
@@ -855,19 +823,7 @@ ppp_requeue(struct ppp_softc *sc)
 	     */
 	    *mpp = m->m_nextpkt;
 	    m->m_nextpkt = NULL;
-	    if (m->m_flags & M_HIGHPRI) {
-		ifq = &sc->sc_fastq;
-		if (IF_QFULL(ifq)) {
-		    IF_DROP(ifq);
-		    m_freem(m);
-		    error = ENOBUFS;
-		}
-		else {
-		    IF_ENQUEUE(ifq, m);
-		    error = 0;
-		}
-	    } else
-		IFQ_ENQUEUE(&sc->sc_if.if_snd, m, error);
+	    IFQ_ENQUEUE(&sc->sc_if.if_snd, m, error);
 	    if (error) {
 		sc->sc_if.if_oerrors++;
 		sc->sc_stats.ppp_oerrors++;
@@ -919,9 +875,7 @@ ppp_dequeue(struct ppp_softc *sc)
      * Grab a packet to send: first try the fast queue, then the
      * normal queue.
      */
-    IF_DEQUEUE(&sc->sc_fastq, m);
-    if (m == NULL)
-	IFQ_DEQUEUE(&sc->sc_if.if_snd, m);
+    IFQ_DEQUEUE(&sc->sc_if.if_snd, m);
     if (m == NULL)
       return NULL;
 
@@ -1048,8 +1002,7 @@ pppintr(void)
 
     LIST_FOREACH(sc, &ppp_softc_list, sc_list) {
 	if (!(sc->sc_flags & SC_TBUSY)
-	    && (!IFQ_IS_EMPTY(&sc->sc_if.if_snd) ||
-	    !IFQ_IS_EMPTY(&sc->sc_fastq))) {
+	    && (!IFQ_IS_EMPTY(&sc->sc_if.if_snd))) {
 	    s = splnet();
 	    sc->sc_flags |= SC_TBUSY;
 	    splx(s);
