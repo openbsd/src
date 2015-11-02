@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.250 2015/10/30 21:21:19 benno Exp $
+#	$OpenBSD: Makefile,v 1.251 2015/11/02 09:21:48 dlg Exp $
 #	$NetBSD: Makefile,v 1.4 1996/01/09 03:23:01 thorpej Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
@@ -269,6 +269,7 @@ MLINKS+=microtime.9 getmicrotime.9 microtime.9 microuptime.9 \
 MLINKS+=ml_init.9 ml_enqueue.9 ml_init.9 ml_dequeue.9 ml_init.9 ml_requeue.9 \
 	ml_init.9 ml_enlist.9 ml_init.9 ml_dechain.9 \
 	ml_init.9 ml_filter.9 ml_init.9 ml_len.9 ml_init.9 ml_empty.9 \
+	ml_init.9 ml_purge.9 \
 	ml_init.9 MBUF_LIST_INITIALIZER.9 ml_init.9 MBUF_LIST_FOREACH.9
 MLINKS+=mountroothook_establish.9 mountroothook_disestablish.9
 MLINKS+=mutex.9 mtx_init.9 mutex.9 mtx_enter.9 mutex.9 mtx_leave.9 \
@@ -277,7 +278,7 @@ MLINKS+=mutex.9 mtx_init.9 mutex.9 mtx_enter.9 mutex.9 mtx_leave.9 \
 MLINKS+=mutex.9 mtx_enter_try.9
 MLINKS+=mq_init.9 mq_enqueue.9 mq_init.9 mq_dequeue.9 mq_init.9 mq_requeue.9 \
 	mq_init.9 mq_enlist.9 mq_init.9 mq_delist.9 \
-	mq_init.9 mq_dechain.9 mq_init.9 mq_filter.9 \
+	mq_init.9 mq_dechain.9 mq_init.9 mq_filter.9 mq_init.9 mq_purge.9 \
 	mq_init.9 mq_len.9 mq_init.9 mq_empty.9 mq_init.9 mq_drops.9 \
 	mq_init.9 mq_set_maxlen.9 mq_init.9 MBUF_QUEUE_INITIALIZER.9
 MLINKS+=namei.9 vfs_lookup.9 namei.9 vfs_relookup.9 namei.9 NDINIT.9

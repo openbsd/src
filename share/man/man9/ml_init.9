@@ -1,4 +1,4 @@
-.\"     $OpenBSD: ml_init.9,v 1.7 2015/10/22 05:26:06 dlg Exp $
+.\"     $OpenBSD: ml_init.9,v 1.8 2015/11/02 09:21:48 dlg Exp $
 .\"
 .\"  Copyright (c) 2015 David Gwynne <dlg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 22 2015 $
+.Dd $Mdocdate: November 2 2015 $
 .Dt ML_INIT 9
 .Os
 .Sh NAME
@@ -53,6 +53,8 @@
 .Fn ml_len "struct mbuf_list *ml"
 .Ft int
 .Fn ml_empty "struct mbuf_list *ml"
+.Ft unsigned int
+.Fn ml_purge "struct mbuf_list *ml"
 .Ft struct mbuf_list
 .Fn MBUF_LIST_INITIALIZER
 .Fn MBUF_LIST_FOREACH "struct mbuf_list *ml" "VARNAME"
@@ -132,6 +134,10 @@ mbuf list.
 Return if the
 .Fa ml
 mbuf list is empty.
+.It Fn ml_purge "struct mbuf_list *ml"
+Free all the mbufs on the
+.Fa ml
+mbuf list.
 .It Fn MBUF_LIST_FOREACH "struct mbuf_list *ml" "VARNAME"
 A convenience macro that can be used to iterate over the contents of the
 .Fa ml
@@ -150,6 +156,7 @@ Note that it is unsafe to modify the list while iterating over it.
 .Fn ml_dechain ,
 .Fn ml_len ,
 .Fn ml_empty ,
+.Fn ml_purge ,
 .Fn MBUF_LIST_INITIALIZER ,
 and
 .Fn MBUF_LIST_FOREACH
@@ -180,5 +187,8 @@ returns the number of mbufs on the list.
 .Pp
 .Fn ml_empty
 return a non-zero value if the list is empty, otherwise 0.
+.Pp
+.Fn ml_purge
+returns the number of mbufs that were freed.
 .Sh SEE ALSO
 .Xr mbuf 9

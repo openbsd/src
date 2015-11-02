@@ -1,4 +1,4 @@
-.\"     $OpenBSD: mq_init.9,v 1.4 2015/09/23 12:44:35 dlg Exp $
+.\"     $OpenBSD: mq_init.9,v 1.5 2015/11/02 09:21:48 dlg Exp $
 .\"
 .\"  Copyright (c) 2015 David Gwynne <dlg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 23 2015 $
+.Dd $Mdocdate: November 2 2015 $
 .Dt MQ_INIT 9
 .Os
 .Sh NAME
@@ -27,6 +27,7 @@
 .Nm mq_dechain ,
 .Nm mq_len ,
 .Nm mq_empty ,
+.Nm mq_purge ,
 .Nm mq_drops ,
 .Nm mq_set_maxlen ,
 .Nm MBUF_QUEUE_INITIALIZER
@@ -57,6 +58,8 @@
 .Fn mq_len "struct mbuf_queue *mq"
 .Ft int
 .Fn mq_empty "struct mbuf_queue *mq"
+.Ft unsigned int
+.Fn mq_purge "struct mbuf_queue *mq"
 .Ft unsigned int
 .Fn mq_drops "struct mbuf_queue *mq"
 .Ft void
@@ -168,6 +171,10 @@ mbuf queue.
 Return if the
 .Fa mq
 mbuf queue is empty.
+.It Fn mq_purge "struct mbuf_queue *mq"
+Free all the mbufs on the
+.Fa mq
+mbuf queue.
 .It Fn mq_drops "struct mbuf_queue *mq"
 Return how many mbufs were dropped and freed by
 .Xr m_freem 9
@@ -193,6 +200,7 @@ already exist on the queue.
 .Fn mq_dechain ,
 .Fn mq_len ,
 .Fn mq_empty ,
+.Fn mq_purge ,
 .Fn mq_drops ,
 .Fn mq_set_maxlen ,
 and
@@ -237,6 +245,9 @@ length.
 .Fn mq_enlist
 returns the number of mbufs that were dropped from the list if the
 length of the queue exceeded its maximum length.
+.Pp
+.Fn mq_purge
+returns the number of mbufs that were freed.
 .Pp
 .Fn mq_drops
 returns the number of mbufs that were freed during

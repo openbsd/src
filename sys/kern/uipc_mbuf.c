@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.210 2015/10/30 19:47:40 bluhm Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.211 2015/11/02 09:21:48 dlg Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -1368,6 +1368,23 @@ ml_filter(struct mbuf_list *ml,
 	return (matches.ml_head); /* ml_dechain */
 }
 
+unsigned int
+ml_purge(struct mbuf_list *ml)
+{
+	struct mbuf *m, *n;
+	unsigned int len;
+
+	for (m = ml->ml_head; m != NULL; m = n) {
+		n = m->m_nextpkt;
+		m_freem(m);
+	}
+
+	len = ml->ml_len;
+	ml_init(ml);
+
+	return (len);
+}
+
 /*
  * mbuf queues
  */
@@ -1480,4 +1497,14 @@ mq_filter(struct mbuf_queue *mq,
 	mtx_leave(&mq->mq_mtx);
 
 	return (m0);
+}
+
+unsigned int
+mq_purge(struct mbuf_queue *mq)
+{
+	struct mbuf_list ml;
+
+	mq_delist(mq, &ml);
+
+	return (ml_purge(&ml));
 }
