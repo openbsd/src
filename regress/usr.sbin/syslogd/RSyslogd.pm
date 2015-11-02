@@ -1,4 +1,4 @@
-#	$OpenBSD: RSyslogd.pm,v 1.3 2015/07/07 18:03:11 bluhm Exp $
+#	$OpenBSD: RSyslogd.pm,v 1.4 2015/11/02 00:48:17 bluhm Exp $
 
 # Copyright (c) 2010-2014 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -86,12 +86,26 @@ sub new {
 		print $fh "\$InputTCPServerRun $listenport\n";
 	}
 	if ($connectdomain && $connectproto eq "udp") {
-		print $fh "*.* \@$connectaddr:$connectport\n";
+		print $fh "*.*\t\@$connectaddr:$connectport\n";
 	}
 	if ($connectdomain && $connectproto eq "tcp") {
-		print $fh "*.* \@\@$connectaddr:$connectport\n";
+		print $fh "*.*\t\@\@$connectaddr:$connectport\n";
 	}
-	print $fh "*.*	$self->{outfile}\n";
+	if ($connectdomain && $connectproto eq "tls") {
+		print $fh "\$DefaultNetstreamDriver gtls\n";
+		my %cert = (
+		    CA   => "127.0.0.1.crt",
+		);
+		while(my ($k, $v) = each %cert) {
+			_make_abspath(\$v);
+			print $fh "\$DefaultNetstreamDriver${k}File $v\n";
+		}
+		print $fh "\$ActionSendStreamDriverAuthMode x509/name\n";
+		print $fh "\$ActionSendStreamDriverPermittedPeer 127.0.0.1\n";
+		print $fh "\$ActionSendStreamDriverMode 1\n";
+		print $fh "*.*\t\@\@$connectaddr:$connectport\n";
+	}
+	print $fh "*.*\t$self->{outfile}\n";
 	print $fh $self->{conf} if $self->{conf};
 	close $fh;
 

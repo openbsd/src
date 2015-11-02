@@ -1,4 +1,4 @@
-#	$OpenBSD: Client.pm,v 1.5 2015/10/09 17:07:06 bluhm Exp $
+#	$OpenBSD: Client.pm,v 1.6 2015/11/02 00:48:17 bluhm Exp $
 
 # Copyright (c) 2010-2014 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -78,6 +78,12 @@ sub child {
 				    $cs->get_sslversion(),"\n";
 				print STDERR "ssl cipher: ",
 				    $cs->get_cipher(),"\n";
+				print STDERR "ssl issuer: ",
+				    $cs->peer_certificate('issuer'),"\n";
+				print STDERR "ssl subject: ",
+				    $cs->peer_certificate('subject'),"\n";
+				print STDERR "ssl cn: ",
+				    $cs->peer_certificate('cn'),"\n";
 			}
 		}
 
