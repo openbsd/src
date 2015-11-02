@@ -1,4 +1,4 @@
-/*	$OpenBSD: crontab.c,v 1.78 2015/10/31 12:13:01 millert Exp $	*/
+/*	$OpenBSD: crontab.c,v 1.79 2015/11/02 20:09:02 millert Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -30,7 +30,8 @@ enum opt_t	{ opt_unknown, opt_list, opt_delete, opt_edit, opt_replace };
 static char	*getoptargs = "u:ler";
 
 static	pid_t		Pid;
-static	gid_t		save_egid;
+static	gid_t		crontab_gid;
+static	gid_t		user_gid;
 static	char		User[MAX_UNAME], RealUser[MAX_UNAME];
 static	char		Filename[MAX_FNAME], TempFilename[MAX_FNAME];
 static	FILE		*NewCrontab;
@@ -46,17 +47,6 @@ static	void		list_cmd(void),
 			copy_crontab(FILE *, FILE *),
 			die(int);
 static	int		replace_cmd(void);
-
-static int swap_gids(void)
-{
-	save_egid = getegid();
-	return (setegid(getgid()));
-}
-
-static int swap_gids_back(void)
-{
-	return (setegid(save_egid));
-}
 
 static void
 usage(const char *msg)
@@ -78,6 +68,8 @@ main(int argc, char *argv[])
 	int exitstatus;
 
 	Pid = getpid();
+	user_gid = getgid();
+	crontab_gid = getegid();
 	ProgramName = argv[0];
 
 	if (pledge("stdio rpath wpath cpath fattr getpw unix flock id proc exec",
@@ -208,16 +200,16 @@ parse_args(int argc, char *argv[])
 			 * the race.
 			 */
 
-			if (swap_gids() < 0) {
-				perror("swapping gids");
+			if (setegid(user_gid) < 0) {
+				perror("setegid(user_gid)");
 				exit(EXIT_FAILURE);
 			}
 			if (!(NewCrontab = fopen(Filename, "r"))) {
 				perror(Filename);
 				exit(EXIT_FAILURE);
 			}
-			if (swap_gids_back() < 0) {
-				perror("swapping gids back");
+			if (setegid(crontab_gid) < 0) {
+				perror("setegid(crontab_gid)");
 				exit(EXIT_FAILURE);
 			}
 		}
@@ -322,13 +314,13 @@ edit_cmd(void)
 		fprintf(stderr, "path too long\n");
 		goto fatal;
 	}
-	if (swap_gids() < 0) {
-		perror("swapping gids");
+	if (setegid(user_gid) < 0) {
+		perror("setegid(user_gid)");
 		exit(EXIT_FAILURE);
 	}
 	t = mkstemp(Filename);
-	if (swap_gids_back() < 0) {
-		perror("swapping gids back");
+	if (setegid(crontab_gid) < 0) {
+		perror("setegid(crontab_gid)");
 		exit(EXIT_FAILURE);
 	}
 	if (t == -1) {
@@ -355,13 +347,13 @@ edit_cmd(void)
 		fprintf(stderr, "%s: error while writing new crontab to %s\n",
 			ProgramName, Filename);
  fatal:
-		if (swap_gids() < 0) {
-			perror("swapping gids");
+		if (setegid(user_gid) < 0) {
+			perror("setegid(user_gid)");
 			exit(EXIT_FAILURE);
 		}
 		unlink(Filename);
-		if (swap_gids_back() < 0) {
-			perror("swapping gids back");
+		if (setegid(crontab_gid) < 0) {
+			perror("setegid(crontab_gid)");
 			exit(EXIT_FAILURE);
 		}
 		exit(EXIT_FAILURE);
@@ -384,8 +376,8 @@ edit_cmd(void)
 		goto fatal;
 	}
 	if (timespeccmp(&ts[1], &statbuf.st_mtim, ==)) {
-		if (swap_gids() < 0) {
-			perror("swapping gids");
+		if (setegid(user_gid) < 0) {
+			perror("setegid(user_gid)");
 			exit(EXIT_FAILURE);
 		}
 		if (lstat(Filename, &xstatbuf) == 0 &&
@@ -393,8 +385,8 @@ edit_cmd(void)
 			fprintf(stderr, "%s: crontab temp file moved, editor "
 			   "may create backup files improperly\n", ProgramName);
 		}
-		if (swap_gids_back() < 0) {
-			perror("swapping gids back");
+		if (setegid(crontab_gid) < 0) {
+			perror("setegid(crontab_gid)");
 			exit(EXIT_FAILURE);
 		}
 		fprintf(stderr, "%s: no changes made to crontab\n",
@@ -437,13 +429,13 @@ edit_cmd(void)
 		goto fatal;
 	}
  remove:
-	if (swap_gids() < 0) {
-		perror("swapping gids");
+	if (setegid(user_gid) < 0) {
+		perror("setegid(user_gid)");
 		exit(EXIT_FAILURE);
 	}
 	unlink(Filename);
-	if (swap_gids_back() < 0) {
-		perror("swapping gids back");
+	if (setegid(crontab_gid) < 0) {
+		perror("setegid(crontab_gid)");
 		exit(EXIT_FAILURE);
 	}
  done:
