@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.99 2015/11/02 16:31:55 semarie Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.100 2015/11/02 17:53:00 semarie Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -58,6 +58,7 @@
 
 #include "pty.h"
 
+int pledgereq_flags(const char *req);
 int canonpath(const char *input, char *buf, size_t bufsize);
 int substrcmp(const char *p1, size_t s1, const char *p2, size_t s2);
 
@@ -310,31 +311,31 @@ static const struct {
 	char *name;
 	int flags;
 } pledgereq[] = {
-	{ "stdio",		PLEDGE_STDIO },
-	{ "rpath",		PLEDGE_RPATH },
-	{ "wpath",		PLEDGE_WPATH },
-	{ "tmppath",		PLEDGE_TMPPATH },
-	{ "inet",		PLEDGE_INET },
-	{ "unix",		PLEDGE_UNIX },
-	{ "dns",		PLEDGE_DNS },
-	{ "getpw",		PLEDGE_GETPW },
-	{ "sendfd",		PLEDGE_SENDFD },
-	{ "recvfd",		PLEDGE_RECVFD },
-	{ "ioctl",		PLEDGE_IOCTL },
-	{ "id",			PLEDGE_ID },
-	{ "route",		PLEDGE_ROUTE },
-	{ "mcast",		PLEDGE_MCAST },
-	{ "tty",		PLEDGE_TTY },
-	{ "proc",		PLEDGE_PROC },
-	{ "exec",		PLEDGE_EXEC },
-	{ "cpath",		PLEDGE_CPATH },
-	{ "fattr",		PLEDGE_FATTR },
-	{ "prot_exec",		PLEDGE_PROTEXEC },
-	{ "flock",		PLEDGE_FLOCK },
-	{ "ps",			PLEDGE_PS },
-	{ "vminfo",		PLEDGE_VMINFO },
-	{ "settime",		PLEDGE_SETTIME },
 	{ "abort",		0 },	/* XXX reserve for later */
+	{ "cpath",		PLEDGE_CPATH },
+	{ "dns",		PLEDGE_DNS },
+	{ "exec",		PLEDGE_EXEC },
+	{ "fattr",		PLEDGE_FATTR },
+	{ "flock",		PLEDGE_FLOCK },
+	{ "getpw",		PLEDGE_GETPW },
+	{ "id",			PLEDGE_ID },
+	{ "inet",		PLEDGE_INET },
+	{ "ioctl",		PLEDGE_IOCTL },
+	{ "mcast",		PLEDGE_MCAST },
+	{ "proc",		PLEDGE_PROC },
+	{ "prot_exec",		PLEDGE_PROTEXEC },
+	{ "ps",			PLEDGE_PS },
+	{ "recvfd",		PLEDGE_RECVFD },
+	{ "route",		PLEDGE_ROUTE },
+	{ "rpath",		PLEDGE_RPATH },
+	{ "sendfd",		PLEDGE_SENDFD },
+	{ "settime",		PLEDGE_SETTIME },
+	{ "stdio",		PLEDGE_STDIO },
+	{ "tmppath",		PLEDGE_TMPPATH },
+	{ "tty",		PLEDGE_TTY },
+	{ "unix",		PLEDGE_UNIX },
+	{ "vminfo",		PLEDGE_VMINFO },
+	{ "wpath",		PLEDGE_WPATH },
 };
 
 int
@@ -350,7 +351,7 @@ sys_pledge(struct proc *p, void *v, register_t *retval)
 	if (SCARG(uap, request)) {
 		size_t rbuflen;
 		char *rbuf, *rp, *pn;
-		int f, i;
+		int f;
 
 		rbuf = malloc(MAXPATHLEN, M_TEMP, M_WAITOK);
 		error = copyinstr(SCARG(uap, request), rbuf, MAXPATHLEN,
@@ -371,13 +372,7 @@ sys_pledge(struct proc *p, void *v, register_t *retval)
 					*pn++ = '\0';
 			}
 
-			for (f = i = 0; i < nitems(pledgereq); i++) {
-				if (strcmp(rp, pledgereq[i].name) == 0) {
-					f = pledgereq[i].flags;
-					break;
-				}
-			}
-			if (f == 0) {
+			if ((f = pledgereq_flags(rp)) == 0) {
 				free(rbuf, M_TEMP, MAXPATHLEN);
 				return (EINVAL);
 			}
@@ -1330,6 +1325,25 @@ pledge_swapctl(struct proc *p)
 	if ((p->p_p->ps_flags & PS_PLEDGE) == 0)
 		return (0);
 	return (EPERM);
+}
+
+/* bsearch over pledgereq. return flags value if found, 0 else */
+int
+pledgereq_flags(const char *req_name)
+{
+	int base = 0, cmp, i, lim;
+
+	for (lim = nitems(pledgereq); lim != 0; lim >>= 1) {
+		i = base + (lim >> 1);
+		cmp = strcmp(req_name, pledgereq[i].name);
+		if (cmp == 0)
+			return (pledgereq[i].flags);
+		if (cmp > 0) { /* not found before, move right */
+			base = i + 1;
+			lim--;
+		} /* else move left */
+	}
+	return (0);
 }
 
 int
