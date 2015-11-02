@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.400 2015/10/28 12:14:25 florian Exp $	*/
+/*	$OpenBSD: if.c,v 1.401 2015/11/02 14:40:09 mpi Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -2347,7 +2347,7 @@ if_group_egress_build(void)
 	bzero(&sa_in, sizeof(sa_in));
 	sa_in.sin_len = sizeof(sa_in);
 	sa_in.sin_family = AF_INET;
-	rt0 = rtable_lookup(0, sintosa(&sa_in), sintosa(&sa_in));
+	rt0 = rtable_lookup(0, sintosa(&sa_in), sintosa(&sa_in), NULL, RTP_ANY);
 	if (rt0 != NULL) {
 		rt = rt0;
 		do {
@@ -2367,7 +2367,8 @@ if_group_egress_build(void)
 
 #ifdef INET6
 	bcopy(&sa6_any, &sa_in6, sizeof(sa_in6));
-	rt0 = rtable_lookup(0, sin6tosa(&sa_in6), sin6tosa(&sa_in6));
+	rt0 = rtable_lookup(0, sin6tosa(&sa_in6), sin6tosa(&sa_in6), NULL,
+	    RTP_ANY);
 	if (rt0 != NULL) {
 		rt = rt0;
 		do {

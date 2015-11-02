@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtable.c,v 1.15 2015/10/25 14:48:51 mpi Exp $ */
+/*	$OpenBSD: rtable.c,v 1.16 2015/11/02 14:40:09 mpi Exp $ */
 
 /*
  * Copyright (c) 2014-2015 Martin Pieuchot
@@ -249,7 +249,7 @@ rtable_free(unsigned int rtableid)
 
 struct rtentry *
 rtable_lookup(unsigned int rtableid, struct sockaddr *dst,
-    struct sockaddr *mask)
+    struct sockaddr *mask, struct sockaddr *gateway, uint8_t prio)
 {
 	struct radix_node_head	*rnh;
 	struct radix_node	*rn;
@@ -264,6 +264,15 @@ rtable_lookup(unsigned int rtableid, struct sockaddr *dst,
 		return (NULL);
 
 	rt = ((struct rtentry *)rn);
+
+#ifndef SMALL_KERNEL
+	if (rnh->rnh_multipath) {
+		rt = rt_mpath_matchgate(rt, gateway, prio);
+		if (rt == NULL)
+			return (NULL);
+	}
+#endif /* !SMALL_KERNEL */
+
 	rtref(rt);
 
 	return (rt);
@@ -372,26 +381,6 @@ rtable_mpath_capable(unsigned int rtableid, sa_family_t af)
 	return (rnh->rnh_multipath);
 }
 
-struct rtentry *
-rtable_mpath_match(unsigned int rtableid, struct rtentry *rt0,
-    struct sockaddr *gateway, uint8_t prio)
-{
-	struct radix_node_head	*rnh;
-	struct rtentry		*rt;
-
-	rnh = rtable_get(rtableid, rt_key(rt0)->sa_family);
-	if (rnh == NULL || rnh->rnh_multipath == 0)
-		return (rt0);
-
-	rt = rt_mpath_matchgate(rt0, gateway, prio);
-
-	if (rt != NULL)
-		rtref(rt);
-	rtfree(rt0);
-
-	return (rt);
-}
-
 /* Gateway selection by Hash-Threshold (RFC 2992) */
 struct rtentry *
 rtable_mpath_select(struct rtentry *rt, uint32_t hash)
@@ -457,7 +446,7 @@ rtable_free(unsigned int rtableid)
 
 struct rtentry *
 rtable_lookup(unsigned int rtableid, struct sockaddr *dst,
-    struct sockaddr *mask)
+    struct sockaddr *mask, struct sockaddr *gateway, uint8_t prio)
 {
 	struct art_root			*ar;
 	struct art_node			*an;
@@ -489,7 +478,25 @@ rtable_lookup(unsigned int rtableid, struct sockaddr *dst,
 	if (an == NULL)
 		return (NULL);
 
+#ifdef SMALL_KERNEL
 	rt = LIST_FIRST(&an->an_rtlist);
+#else
+	LIST_FOREACH(rt, &an->an_rtlist, rt_next) {
+		if (prio != RTP_ANY &&
+		    (rt->rt_priority & RTP_MASK) != (prio & RTP_MASK))
+			continue;
+
+		if (gateway == NULL)
+			break;
+
+		if (rt->rt_gateway->sa_len == gateway->sa_len &&
+		    memcmp(rt->rt_gateway, gateway, gateway->sa_len) == 0)
+			break;
+	}
+	if (rt == NULL)
+		return (NULL);
+#endif /* SMALL_KERNEL */
+
 	rtref(rt);
 
 	return (rt);
@@ -745,33 +752,6 @@ int
 rtable_mpath_capable(unsigned int rtableid, sa_family_t af)
 {
 	return (1);
-}
-
-struct rtentry *
-rtable_mpath_match(unsigned int rtableid, struct rtentry *rt0,
-    struct sockaddr *gateway, uint8_t prio)
-{
-	struct art_node			*an = rt0->rt_node;
-	struct rtentry			*rt;
-
-	LIST_FOREACH(rt, &an->an_rtlist, rt_next) {
-		if (prio != RTP_ANY &&
-		    (rt->rt_priority & RTP_MASK) != (prio & RTP_MASK))
-			continue;
-
-		if (gateway == NULL)
-			break;
-
-		if (rt->rt_gateway->sa_len == gateway->sa_len &&
-		    memcmp(rt->rt_gateway, gateway, gateway->sa_len) == 0)
-			break;
-	}
-
-	if (rt != NULL)
-		rtref(rt);
-	rtfree(rt0);
-
-	return (rt);
 }
 
 /* Gateway selection by Hash-Threshold (RFC 2992) */
