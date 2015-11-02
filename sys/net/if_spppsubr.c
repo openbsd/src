@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.143 2015/10/25 11:58:11 mpi Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.144 2015/11/02 11:19:30 dlg Exp $	*/
 /*
  * Synchronous PPP link level subroutines.
  *
@@ -842,26 +842,6 @@ sppp_dequeue(struct ifnet *ifp)
 	}
 	splx(s);
 	return m;
-}
-
-/*
- * Pick the next packet, do not remove it from the queue.
- */
-struct mbuf *
-sppp_pick(struct ifnet *ifp)
-{
-	struct sppp *sp = (struct sppp*)ifp;
-	struct mbuf *m;
-	int s;
-
-	s = splnet();
-	IF_POLL(&sp->pp_cpq, m);
-	if (m == NULL &&
-	    (sp->pp_phase == PHASE_NETWORK)) {
-		IFQ_POLL(&sp->pp_if.if_snd, m);
-	}
-	splx (s);
-	return (m);
 }
 
 /*
