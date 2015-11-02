@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.177 2015/10/30 09:39:42 bluhm Exp $	*/
+/*	$OpenBSD: in6.c,v 1.178 2015/11/02 15:05:23 mpi Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -1648,9 +1648,6 @@ in6_ifawithscope(struct ifnet *oifp, struct in6_addr *dst, u_int rdomain)
 	struct ifaddr *ifa;
 	struct ifnet *ifp;
 	struct in6_ifaddr *ia6_best = NULL;
-#if NCARP > 0
-	struct sockaddr_dl *proxydl = NULL;
-#endif
 
 	if (oifp == NULL) {
 		printf("in6_ifawithscope: output interface is not specified\n");
@@ -1670,8 +1667,7 @@ in6_ifawithscope(struct ifnet *oifp, struct in6_addr *dst, u_int rdomain)
 		 * Never use a carp address of an interface which is not
 		 * the master.
 		 */
-		if (ifp->if_type == IFT_CARP &&
-		    !carp_iamatch6(ifp, NULL, &proxydl))
+		if (ifp->if_type == IFT_CARP && !carp_iamatch6(ifp))
 			continue;
 #endif
 

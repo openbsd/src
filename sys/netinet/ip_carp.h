@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.h,v 1.35 2015/10/22 13:30:29 mpi Exp $	*/
+/*	$OpenBSD: ip_carp.h,v 1.36 2015/11/02 15:05:23 mpi Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -132,13 +132,12 @@ struct carpreq {
 	u_int8_t	carpr_vhids[CARP_MAXNODES];
 	u_int8_t	carpr_advskews[CARP_MAXNODES];
 	u_int8_t	carpr_states[CARP_MAXNODES];
-#define	CARP_BAL_MODES	"none", "arp", "ip", "ip-stealth", "ip-unicast"
+#define	CARP_BAL_MODES	"none", "ip", "ip-stealth", "ip-unicast"
 #define CARP_BAL_NONE		0
-#define CARP_BAL_ARP		1
-#define CARP_BAL_IP		2
-#define CARP_BAL_IPSTEALTH	3
-#define CARP_BAL_IPUNICAST	4
-#define CARP_BAL_MAXID		4
+#define CARP_BAL_IP		1
+#define CARP_BAL_IPSTEALTH	2
+#define CARP_BAL_IPUNICAST	3
+#define CARP_BAL_MAXID		3
 	u_int8_t	carpr_balancing;
 	int		carpr_advbase;
 	unsigned char	carpr_key[CARP_KEY_LEN];
@@ -168,9 +167,8 @@ void		 carp_proto_input (struct mbuf *, ...);
 void		 carp_carpdev_state(void *);
 void		 carp_group_demote_adj(struct ifnet *, int, char *);
 int		 carp6_proto_input(struct mbuf **, int *, int);
-int		 carp_iamatch(struct ifnet *, u_char *, u_int8_t **,
-		     u_int8_t **);
-int		 carp_iamatch6(struct ifnet *, u_char *, struct sockaddr_dl **);
+int		 carp_iamatch(struct ifnet *, uint8_t **);
+int		 carp_iamatch6(struct ifnet *);
 struct ifnet	*carp_ourether(void *, u_int8_t *);
 int		 carp_output(struct ifnet *, struct mbuf *, struct sockaddr *,
 		     struct rtentry *);

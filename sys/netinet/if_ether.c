@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.181 2015/11/02 14:08:54 bluhm Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.182 2015/11/02 15:05:23 mpi Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -514,7 +514,7 @@ in_arpinput(struct mbuf *m)
 	struct mbuf *mh;
 	u_int8_t *enaddr = NULL;
 #if NCARP > 0
-	u_int8_t *ether_shost = NULL;
+	uint8_t *ethshost = NULL;
 #endif
 	char addr[INET_ADDRSTRLEN];
 	int op, changed = 0;
@@ -553,18 +553,11 @@ in_arpinput(struct mbuf *m)
 		if (itaddr.s_addr != ifatoia(ifa)->ia_addr.sin_addr.s_addr)
 			continue;
 
+		if (op == ARPOP_REPLY)
+			break;
 #if NCARP > 0
-		if (ifp->if_type == IFT_CARP &&
-		    ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) ==
-		    (IFF_UP|IFF_RUNNING))) {
-			if (op == ARPOP_REPLY)
-				break;
-			if (carp_iamatch(ifp, ea->arp_sha,
-			    &enaddr, &ether_shost))
-				break;
-			else
-				goto out;
-		}
+		if (ifp->if_type == IFT_CARP && !carp_iamatch(ifp, &ethshost))
+			goto out;
 #endif
 		break;
 	}
@@ -730,8 +723,8 @@ out:
 	eh = (struct ether_header *)sa.sa_data;
 	memcpy(eh->ether_dhost, ea->arp_tha, sizeof(eh->ether_dhost));
 #if NCARP > 0
-	if (ether_shost)
-		enaddr = ether_shost;
+	if (ethshost)
+		enaddr = ethshost;
 #endif
 	memcpy(eh->ether_shost, enaddr, sizeof(eh->ether_shost));
 

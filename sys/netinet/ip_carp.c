@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.278 2015/10/25 11:58:11 mpi Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.279 2015/11/02 15:05:23 mpi Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -236,7 +236,6 @@ int	carp_set_ifp(struct carp_softc *, struct ifnet *);
 void	carp_set_enaddr(struct carp_softc *);
 void	carp_set_vhe_enaddr(struct carp_vhost_entry *);
 void	carp_addr_updated(void *);
-u_int32_t	carp_hash(struct carp_softc *, u_char *);
 int	carp_set_addr(struct carp_softc *, struct sockaddr_in *);
 int	carp_join_multicast(struct carp_softc *);
 #ifdef INET6
@@ -1297,48 +1296,13 @@ carp_send_na(struct carp_softc *sc)
 }
 #endif /* INET6 */
 
-/*
- * Originated from bridge_hash() in if_bridge.c
- */
-#define	mix(a, b, c) do {						\
-	a -= b; a -= c; a ^= (c >> 13);					\
-	b -= c; b -= a; b ^= (a << 8);					\
-	c -= a; c -= b; c ^= (b >> 13);					\
-	a -= b; a -= c; a ^= (c >> 12);					\
-	b -= c; b -= a; b ^= (a << 16);					\
-	c -= a; c -= b; c ^= (b >> 5);					\
-	a -= b; a -= c; a ^= (c >> 3);					\
-	b -= c; b -= a; b ^= (a << 10);					\
-	c -= a; c -= b; c ^= (b >> 15);					\
-} while (0)
-
-u_int32_t
-carp_hash(struct carp_softc *sc, u_char *src)
-{
-	u_int32_t a = 0x9e3779b9, b = sc->sc_hashkey[0], c = sc->sc_hashkey[1];
-
-	c += sc->sc_key[3] << 24;
-	c += sc->sc_key[2] << 16;
-	c += sc->sc_key[1] << 8;
-	c += sc->sc_key[0];
-	b += src[5] << 8;
-	b += src[4];
-	a += src[3] << 24;
-	a += src[2] << 16;
-	a += src[1] << 8;
-	a += src[0];
-
-	mix(a, b, c);
-	return (c);
-}
-
 void
 carp_update_lsmask(struct carp_softc *sc)
 {
 	struct carp_vhost_entry *vhe;
 	int count;
 
-	if (!sc->sc_balancing)
+	if (sc->sc_balancing == CARP_BAL_NONE)
 		return;
 
 	sc->sc_lsmask = 0;
@@ -1355,48 +1319,20 @@ carp_update_lsmask(struct carp_softc *sc)
 }
 
 int
-carp_iamatch(struct ifnet *ifp, u_char *src, u_int8_t **sha,
-    u_int8_t **ether_shost)
+carp_iamatch(struct ifnet *ifp, uint8_t **ether_shost)
 {
 	struct carp_softc *sc = ifp->if_softc;
 	struct carp_vhost_entry *vhe = SRPL_FIRST_LOCKED(&sc->carp_vhosts);
 
 	KERNEL_ASSERT_LOCKED(); /* touching carp_vhosts */
 
-	if (sc->sc_balancing == CARP_BAL_ARP) {
-		int lshash;
-		/*
-		 * We use the source MAC address to decide which virtual host
-		 * should handle the request. If we're master of that virtual
-		 * host, then we respond, otherwise, just drop the arp packet
-		 * on the floor.
-		 */
-
-		if (sc->sc_lscount == 0) /* just to be safe */
-			return (0);
-		lshash = carp_hash(sc, src) % sc->sc_lscount;
-		if ((1 << lshash) & sc->sc_lsmask) {
-			int i = 0;
-			SRPL_FOREACH_LOCKED(vhe, &sc->carp_vhosts,
-			    vhost_entries) {
-				if (i++ == lshash)
-					break;
-			}
-			if (vhe == NULL)
-				return (0);
-			*sha = vhe->vhe_enaddr;
-			return (1);
+	if (vhe->state == MASTER) {
+		if (sc->sc_balancing == CARP_BAL_IPSTEALTH ||
+		    sc->sc_balancing == CARP_BAL_IP) {
+		    	struct arpcom *ac = (struct arpcom *)sc->sc_carpdev;
+			*ether_shost = ac->ac_enaddr;
 		}
-	} else if (sc->sc_balancing == CARP_BAL_IPSTEALTH ||
-	    sc->sc_balancing == CARP_BAL_IP) {
-		if (vhe->state == MASTER) {
-			*ether_shost = ((struct arpcom *)sc->sc_carpdev)->
-			    ac_enaddr;
-			return (1);
-		}
-	} else {
-		if (vhe->state == MASTER)
-			return (1);
+		return (1);
 	}
 
 	return (0);
@@ -1404,44 +1340,15 @@ carp_iamatch(struct ifnet *ifp, u_char *src, u_int8_t **sha,
 
 #ifdef INET6
 int
-carp_iamatch6(struct ifnet *ifp, u_char *src, struct sockaddr_dl **sdl)
+carp_iamatch6(struct ifnet *ifp)
 {
 	struct carp_softc *sc = ifp->if_softc;
 	struct carp_vhost_entry *vhe = SRPL_FIRST_LOCKED(&sc->carp_vhosts);
 
 	KERNEL_ASSERT_LOCKED(); /* touching carp_vhosts */
 
-	if (sc->sc_balancing == CARP_BAL_ARP) {
-		int lshash;
-		/*
-		 * We use the source MAC address to decide which virtual host
-		 * should handle the request. If we're master of that virtual
-		 * host, then we respond, otherwise, just drop the ndp packet
-		 * on the floor.
-		 */
-
-		/* can happen if optional src lladdr is not provided */
-		if (src == NULL)
-			return (0);
-		if (sc->sc_lscount == 0) /* just to be safe */
-			return (0);
-		lshash = carp_hash(sc, src) % sc->sc_lscount;
-		if ((1 << lshash) & sc->sc_lsmask) {
-			int i = 0;
-			SRPL_FOREACH_LOCKED(vhe, &sc->carp_vhosts,
-			    vhost_entries) {
-				if (i++ == lshash)
-					break;
-			}
-			if (vhe == NULL)
-				return (0);
-			*sdl = &vhe->vhe_sdl;
-			return (1);
-		}
-	} else {
-		if (vhe->state == MASTER)
-			return (1);
-	}
+	if (vhe->state == MASTER)
+		return (1);
 
 	return (0);
 }
@@ -1460,20 +1367,10 @@ carp_ourether(void *v, u_int8_t *ena)
 		if ((vh->sc_if.if_flags & (IFF_UP|IFF_RUNNING)) !=
 		    (IFF_UP|IFF_RUNNING))
 			continue;
-		if (vh->sc_balancing == CARP_BAL_ARP) {
-			SRPL_FOREACH_LOCKED(vhe, &vh->carp_vhosts,
-			    vhost_entries)
-				if (vhe->state == MASTER &&
-				    !memcmp(ena, vhe->vhe_enaddr,
-				    ETHER_ADDR_LEN))
-					return (&vh->sc_if);
-		} else {
-			vhe = SRPL_FIRST_LOCKED(&vh->carp_vhosts);
-			if ((vhe->state == MASTER ||
-			    vh->sc_balancing >= CARP_BAL_IP) &&
-			    !memcmp(ena, vh->sc_ac.ac_enaddr, ETHER_ADDR_LEN))
-				return (&vh->sc_if);
-		}
+		vhe = SRPL_FIRST_LOCKED(&vh->carp_vhosts);
+		if ((vhe->state == MASTER || vh->sc_balancing >= CARP_BAL_IP) &&
+		    !memcmp(ena, vh->sc_ac.ac_enaddr, ETHER_ADDR_LEN))
+			return (&vh->sc_if);
 	}
 	return (NULL);
 }
@@ -1485,22 +1382,10 @@ carp_vhe_match(struct carp_softc *sc, uint8_t *ena)
 	struct srpl_iter i;
 	int match = 0;
 
-	if (sc->sc_balancing == CARP_BAL_ARP) {
-		SRPL_FOREACH(vhe, &sc->carp_vhosts, &i, vhost_entries) {
-			if (vhe->state == MASTER &&
-			    !memcmp(ena, vhe->vhe_enaddr, ETHER_ADDR_LEN)) {
-				match = 1;
-				break;
-			}
-		}
-		SRPL_LEAVE(&i, vhe);
-	} else {
-		vhe = SRPL_ENTER(&sc->carp_vhosts, &i); /* head */
-		match = (vhe->state == MASTER ||
-		    sc->sc_balancing >= CARP_BAL_IP) &&
-		    !memcmp(ena, sc->sc_ac.ac_enaddr, ETHER_ADDR_LEN);
-		SRPL_LEAVE(&i, vhe);
-	}
+	vhe = SRPL_ENTER(&sc->carp_vhosts, &i); /* head */
+	match = (vhe->state == MASTER || sc->sc_balancing >= CARP_BAL_IP) &&
+	    !memcmp(ena, sc->sc_ac.ac_enaddr, ETHER_ADDR_LEN);
+	SRPL_LEAVE(&i, vhe);
 
 	return (match);
 }
@@ -1583,7 +1468,7 @@ carp_lsdrop(struct mbuf *m, sa_family_t af, u_int32_t *src, u_int32_t *dst)
 	KASSERT(ifp != NULL);
 
 	sc = ifp->if_softc;
-	if (sc->sc_balancing < CARP_BAL_IP)
+	if (sc->sc_balancing == CARP_BAL_NONE)
 		goto done;
 	/*
 	 * Never drop carp advertisements.
@@ -2430,7 +2315,7 @@ carp_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *sa,
 	vhe = sc->cur_vhe ? sc->cur_vhe : SRPL_FIRST_LOCKED(&sc->carp_vhosts);
 
 	if ((sc->sc_carpdev == NULL) ||
-	    (!sc->sc_balancing && vhe->state != MASTER)) {
+	    (sc->sc_balancing == CARP_BAL_NONE && vhe->state != MASTER)) {
 		m_freem(m);
 		return (ENETUNREACH);
 	}
