@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_msdos.c,v 1.30 2015/04/18 18:28:37 deraadt Exp $	*/
+/*	$OpenBSD: mount_msdos.c,v 1.31 2015/11/02 01:22:37 chl Exp $	*/
 /*	$NetBSD: mount_msdos.c,v 1.16 1996/10/24 00:12:50 cgd Exp $	*/
 
 /*
@@ -159,7 +159,6 @@ a_gid(char *s)
 {
 	struct group *gr;
 	const char *errstr;
-	char *gname;
 	gid_t gid;
 
 	if ((gr = getgrnam(s)) != NULL)
@@ -175,7 +174,6 @@ a_uid(char *s)
 {
 	struct passwd *pw;
 	const char *errstr;
-	char *uname;
 	uid_t uid;
 
 	if ((pw = getpwnam(s)) != NULL)
