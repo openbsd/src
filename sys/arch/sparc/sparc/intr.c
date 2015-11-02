@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.41 2015/09/08 10:21:16 deraadt Exp $ */
+/*	$OpenBSD: intr.c,v 1.42 2015/11/02 16:55:31 mpi Exp $ */
 /*	$NetBSD: intr.c,v 1.20 1997/07/29 09:42:03 fair Exp $ */
 
 /*
@@ -411,6 +411,11 @@ intr_fastuntrap(int level)
 	fastvec_share[level].cb = NULL;
 
 	splx(s);
+}
+
+void
+intr_barrier(void *cookie)
+{
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.4 2012/11/05 13:20:16 miod Exp $	*/
+/*	$OpenBSD: intr.h,v 1.5 2015/11/02 16:55:31 mpi Exp $	*/
 /*	$NetBSD: cpu.h,v 1.24 1997/03/15 22:25:15 pk Exp $ */
 
 /*
@@ -67,6 +67,8 @@ extern struct intrhand *intrhand[15];		/* XXX obio.c */
 
 void	intr_establish(int, struct intrhand *, int, const char *);
 void	vmeintr_establish(int, int, struct intrhand *, int, const char *);
+
+void	intr_barrier(void *);
 
 /*
  * intr_fasttrap() is a lot like intr_establish, but is used for ``fast''
