@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsmerge.c,v 1.55 2015/01/16 06:40:11 deraadt Exp $	*/
+/*	$OpenBSD: rcsmerge.c,v 1.56 2015/11/02 16:45:21 nicm Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
  * All rights reserved.
@@ -173,12 +173,8 @@ rcsmerge_main(int argc, char **argv)
 
 out:
 	rcs_close(file);
-
-	if (rev1 != NULL)
-		rcsnum_free(rev1);
-	if (rev2 != NULL)
-		rcsnum_free(rev2);
-
+	rcsnum_free(rev1);
+	rcsnum_free(rev2);
 	return (status);
 }
 

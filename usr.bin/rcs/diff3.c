@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff3.c,v 1.37 2015/09/05 09:47:08 jsg Exp $	*/
+/*	$OpenBSD: diff3.c,v 1.38 2015/11/02 16:45:21 nicm Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -234,14 +234,10 @@ merge_diff3(char **av, int flags)
 		warnx("warning: overlaps or other problems during merge");
 
 out:
-	if (b2 != NULL)
-		buf_free(b2);
-	if (b3 != NULL)
-		buf_free(b3);
-	if (d1 != NULL)
-		buf_free(d1);
-	if (d2 != NULL)
-		buf_free(d2);
+	buf_free(b2);
+	buf_free(b3);
+	buf_free(d1);
+	buf_free(d2);
 
 	(void)unlink(path1);
 	(void)unlink(path2);
@@ -354,14 +350,10 @@ rcs_diff3(RCSFILE *rf, char *workfile, RCSNUM *rev1, RCSNUM *rev2, int flags)
 		warnx("warning: overlaps or other problems during merge");
 
 out:
-	if (b2 != NULL)
-		buf_free(b2);
-	if (b3 != NULL)
-		buf_free(b3);
-	if (d1 != NULL)
-		buf_free(d1);
-	if (d2 != NULL)
-		buf_free(d2);
+	buf_free(b2);
+	buf_free(b3);
+	buf_free(d1);
+	buf_free(d2);
 
 	(void)unlink(path1);
 	(void)unlink(path2);

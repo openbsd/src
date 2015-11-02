@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsclean.c,v 1.54 2015/01/16 06:40:11 deraadt Exp $	*/
+/*	$OpenBSD: rcsclean.c,v 1.55 2015/11/02 16:45:21 nicm Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -209,10 +209,8 @@ rcsclean_file(char *fname, const char *rev_str)
 		rcs_set_mtime(file, rcs_mtime);
 
 out:
-	if (b1 != NULL)
-		buf_free(b1);
-	if (b2 != NULL)
-		buf_free(b2);
+	buf_free(b1);
+	buf_free(b2);
 	if (file != NULL)
 		rcs_close(file);
 }

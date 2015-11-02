@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.222 2015/09/05 09:38:23 jsg Exp $	*/
+/*	$OpenBSD: ci.c,v 1.223 2015/11/02 16:45:21 nicm Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -369,12 +369,9 @@ checkin_diff_file(struct checkin_params *pb)
 
 	return (b3);
 out:
-	if (b1 != NULL)
-		buf_free(b1);
-	if (b2 != NULL)
-		buf_free(b2);
-	if (b3 != NULL)
-		buf_free(b3);
+	buf_free(b1);
+	buf_free(b2);
+	buf_free(b3);
 	free(path1);
 	free(path2);
 

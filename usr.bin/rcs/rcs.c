@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.83 2015/06/13 20:15:21 nicm Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.84 2015/11/02 16:45:21 nicm Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -177,10 +177,8 @@ rcs_close(RCSFILE *rfp)
 		free(rlp);
 	}
 
-	if (rfp->rf_head != NULL)
-		rcsnum_free(rfp->rf_head);
-	if (rfp->rf_branch != NULL)
-		rcsnum_free(rfp->rf_branch);
+	rcsnum_free(rfp->rf_head);
+	rcsnum_free(rfp->rf_branch);
 
 	if (rfp->rf_file != NULL)
 		fclose(rfp->rf_file);
@@ -1406,10 +1404,8 @@ rcs_freedelta(struct rcs_delta *rdp)
 {
 	struct rcs_branch *rb;
 
-	if (rdp->rd_num != NULL)
-		rcsnum_free(rdp->rd_num);
-	if (rdp->rd_next != NULL)
-		rcsnum_free(rdp->rd_next);
+	rcsnum_free(rdp->rd_num);
+	rcsnum_free(rdp->rd_next);
 
 	free(rdp->rd_author);
 	free(rdp->rd_locker);
