@@ -1,4 +1,4 @@
-/*	$OpenBSD: times.c,v 1.6 2015/01/16 16:48:51 deraadt Exp $ */
+/*	$OpenBSD: times.c,v 1.7 2015/11/02 17:02:37 mmcc Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -52,7 +52,7 @@ times(struct tms *tp)
 		return ((clock_t)-1);
 	tp->tms_cutime = CONVTCK(ru.ru_utime);
 	tp->tms_cstime = CONVTCK(ru.ru_stime);
-	if (gettimeofday(&t, (struct timezone *)0))
+	if (gettimeofday(&t, NULL))
 		return ((clock_t)-1);
 	return ((clock_t)(CONVTCK(t)));
 }
