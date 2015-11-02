@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-icmp6.c,v 1.15 2015/01/16 06:40:21 deraadt Exp $	*/
+/*	$OpenBSD: print-icmp6.c,v 1.16 2015/11/02 17:48:33 sthen Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1993, 1994
@@ -511,8 +511,9 @@ icmp6_opt_print(register const u_char *bp, int resid)
 	register const struct nd_opt_prefix_info *opp;
 	register const struct icmp6_opts_redirect *opr;
 	register const struct nd_opt_mtu *opm;
+	register const struct nd_opt_rdnss *oprd;
 	register const u_char *ep;
-	int	opts_len;
+	int	i, opts_len;
 #if 0
 	register const struct ip6_hdr *ip;
 	register const char *str;
@@ -623,6 +624,34 @@ icmp6_opt_print(register const u_char *bp, int resid)
 		if (opm->nd_opt_mtu_len != 1)
 			printf("!");
 		printf(")");
+		icmp6_opt_print((const u_char *)op + (op->nd_opt_len << 3),
+				resid - (op->nd_opt_len << 3));
+		break;
+	case ND_OPT_ROUTE_INFO:
+		printf("(route-info: opt_len=%d)", op->nd_opt_len);
+		icmp6_opt_print((const u_char *)op + (op->nd_opt_len << 3),
+				resid - (op->nd_opt_len << 3));
+		break;
+	case ND_OPT_RDNSS:
+		oprd = (const struct nd_opt_rdnss *)op;
+		printf("(rdnss: ");
+		TCHECK(oprd->nd_opt_rdnss_lifetime);
+		printf("lifetime=%us",
+		    (u_int32_t)ntohl(oprd->nd_opt_rdnss_lifetime));
+		if (oprd->nd_opt_rdnss_len < 3) {
+			printf("!");
+		} else for (i = 0; i < ((oprd->nd_opt_rdnss_len - 1) / 2); i++) {
+			struct in6_addr *addr = (struct in6_addr *)(oprd + 1) + i;
+			TCHECK2(*addr, sizeof(struct in6_addr));
+			printf(", addr=%s", ip6addr_string(addr));
+		}
+		printf(")");
+		icmp6_opt_print((const u_char *)op + (op->nd_opt_len << 3),
+				resid - (op->nd_opt_len << 3));
+		break;
+	case ND_OPT_DNSSL:
+		printf("(dnssl: opt_len=%d)", op->nd_opt_len);
+		/* XXX */
 		icmp6_opt_print((const u_char *)op + (op->nd_opt_len << 3),
 				resid - (op->nd_opt_len << 3));
 		break;
