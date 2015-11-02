@@ -1,4 +1,4 @@
-/*	$OpenBSD: history.c,v 1.52 2015/11/01 15:38:53 mmcc Exp $	*/
+/*	$OpenBSD: history.c,v 1.53 2015/11/02 16:38:35 mmcc Exp $	*/
 
 /*
  * command history
@@ -507,7 +507,7 @@ sethistsize(int n)
 			cursize = n;
 		}
 
-		history = (char **)aresize(history, n*sizeof(char *), APERM);
+		history = areallocarray(history, n, sizeof(char *), APERM);
 
 		histsize = n;
 		histptr = history + cursize;
