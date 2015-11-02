@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikeca.c,v 1.37 2015/08/19 21:07:23 reyk Exp $	*/
+/*	$OpenBSD: ikeca.c,v 1.38 2015/11/02 10:27:44 jsg Exp $	*/
 
 /*
  * Copyright (c) 2010 Jonathan Gray <jsg@openbsd.org>
@@ -272,6 +272,11 @@ ca_certificate(struct ca *ca, char *keyname, int type, int action)
 		ca_setenv("$ENV::NSCERTTYPE", "client");
 		ca_setenv("$ENV::CERTUSAGE",
 		    "digitalSignature,keyAgreement");
+		break;
+	case CA_OCSP:
+		ca_setenv("$ENV::EXTCERTUSAGE", "OCSPSigning");
+		ca_setenv("$ENV::CERTUSAGE",
+		    "nonRepudiation,digitalSignature,keyEncipherment");
 		break;
 	default:
 		break;
