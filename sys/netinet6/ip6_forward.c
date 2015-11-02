@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_forward.c,v 1.85 2015/10/28 12:14:25 florian Exp $	*/
+/*	$OpenBSD: ip6_forward.c,v 1.86 2015/11/02 07:22:28 mpi Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.75 2001/06/29 12:42:13 jinmei Exp $	*/
 
 /*
@@ -89,6 +89,7 @@ ip6_forward(struct mbuf *m, int srcrt)
 	struct ip6_hdr *ip6 = mtod(m, struct ip6_hdr *);
 	struct sockaddr_in6 *dst;
 	struct rtentry *rt;
+	struct ifnet *ifp = NULL;
 	int error = 0, type = 0, code = 0;
 	struct mbuf *mcopy = NULL;
 #ifdef IPSEC
@@ -362,11 +363,12 @@ reroute:
 	 * Also, don't send redirect if forwarding using a route
 	 * modified by a redirect.
 	 */
-	if (rt->rt_ifp->if_index == m->m_pkthdr.ph_ifidx && !srcrt &&
+	ifp = if_get(rt->rt_ifidx);
+	if (rt->rt_ifidx == m->m_pkthdr.ph_ifidx && !srcrt &&
 	    ip6_sendredirects &&
 	    (rt->rt_flags & (RTF_DYNAMIC|RTF_MODIFIED)) == 0) {
-		if ((rt->rt_ifp->if_flags & IFF_POINTOPOINT) &&
-		    nd6_is_addr_neighbor(&ip6_forward_rt.ro_dst, rt->rt_ifp)) {
+		if ((ifp->if_flags & IFF_POINTOPOINT) &&
+		    nd6_is_addr_neighbor(&ip6_forward_rt.ro_dst, ifp)) {
 			/*
 			 * If the incoming interface is equal to the outgoing
 			 * one, the link attached to the interface is
@@ -405,7 +407,7 @@ reroute:
 		ip6->ip6_dst.s6_addr16[1] = 0;
 
 #if NPF > 0
-	if (pf_test(AF_INET6, PF_FWD, rt->rt_ifp, &m) != PF_PASS) {
+	if (pf_test(AF_INET6, PF_FWD, ifp, &m) != PF_PASS) {
 		m_freem(m);
 		goto senderr;
 	}
@@ -420,21 +422,23 @@ reroute:
 		/* tag as generated to skip over pf_test on rerun */
 		m->m_pkthdr.pf.flags |= PF_TAG_GENERATED;
 		srcrt = 1;
+		if_put(ifp);
+		ifp = NULL;
 		goto reroute;
 	}
 #endif
-	in6_proto_cksum_out(m, rt->rt_ifp);
+	in6_proto_cksum_out(m, ifp);
 
 	/* Check the size after pf_test to give pf a chance to refragment. */
-	if (m->m_pkthdr.len > rt->rt_ifp->if_mtu) {
+	if (m->m_pkthdr.len > ifp->if_mtu) {
 		if (mcopy)
 			icmp6_error(mcopy, ICMP6_PACKET_TOO_BIG, 0,
-			    rt->rt_ifp->if_mtu);
+			    ifp->if_mtu);
 		m_freem(m);
 		goto freert;
 	}
 
-	error = nd6_output(rt->rt_ifp, m, dst, rt);
+	error = nd6_output(ifp, m, dst, rt);
 	if (error) {
 		ip6stat.ip6s_cantforward++;
 	} else {
@@ -490,5 +494,5 @@ senderr:
 		ip6_forward_rt.ro_rt = NULL;
 	}
 #endif
-	return;
+	if_put(ifp);
 }
