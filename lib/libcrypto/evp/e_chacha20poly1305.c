@@ -1,4 +1,4 @@
-/* $OpenBSD: e_chacha20poly1305.c,v 1.11 2015/11/02 15:40:53 reyk Exp $ */
+/* $OpenBSD: e_chacha20poly1305.c,v 1.12 2015/11/02 15:43:55 reyk Exp $ */
 
 /*
  * Copyright (c) 2015 Reyk Floter <reyk@openbsd.org>
@@ -37,8 +37,8 @@
 /*
  * The informational RFC 7539, "ChaCha20 and Poly1305 for IETF Protocols",
  * introduced a modified AEAD construction that is incompatible with the
- * common style that that has been already used in TLS.  The IETF version
- * also adds a constant (salt) that is prepended to the nonce.
+ * common style that has been already used in TLS.  The IETF version also
+ * adds a constant (salt) that is prepended to the nonce.
  */
 #define CHACHA20_CONSTANT_LEN 4
 #define CHACHA20_IV_LEN 8
