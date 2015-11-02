@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.187 2015/06/26 11:17:34 mpi Exp $ */
+/*	$OpenBSD: ehci.c,v 1.188 2015/11/02 14:55:41 mpi Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -540,13 +540,12 @@ ehci_intr1(struct ehci_softc *sc)
 		return (0);
 
 	EOWRITE4(sc, EHCI_USBSTS, intrs); /* Acknowledge */
-	sc->sc_bus.intr_context++;
 	sc->sc_bus.no_intrs++;
+
 	if (eintrs & EHCI_STS_HSE) {
 		printf("%s: unrecoverable error, controller halted\n",
 		       sc->sc_bus.bdev.dv_xname);
 		sc->sc_bus.dying = 1;
-		sc->sc_bus.intr_context--;
 		return (1);
 	}
 	if (eintrs & EHCI_STS_IAA) {
@@ -558,11 +557,10 @@ ehci_intr1(struct ehci_softc *sc)
 		eintrs &= ~(EHCI_STS_INT | EHCI_STS_ERRINT);
 	}
 	if (eintrs & EHCI_STS_PCD) {
-		ehci_pcd(sc, sc->sc_intrxfer);
+		atomic_setbits_int(&sc->sc_flags, EHCIF_PCB_INTR);
+		usb_schedsoftintr(&sc->sc_bus);
 		eintrs &= ~EHCI_STS_PCD;
 	}
-
-	sc->sc_bus.intr_context--;
 
 	if (eintrs != 0) {
 		/* Block unprocessed interrupts. */
@@ -644,6 +642,11 @@ ehci_softintr(void *v)
 		return;
 
 	sc->sc_bus.intr_context++;
+
+	if (sc->sc_flags & EHCIF_PCB_INTR) {
+		atomic_clearbits_int(&sc->sc_flags, EHCIF_PCB_INTR);
+		ehci_pcd(sc, sc->sc_intrxfer);
+	}
 
 	/*
 	 * The only explanation I can think of for why EHCI is as brain dead

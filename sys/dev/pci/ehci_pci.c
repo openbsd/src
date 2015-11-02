@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci_pci.c,v 1.27 2014/05/16 18:17:03 mpi Exp $ */
+/*	$OpenBSD: ehci_pci.c,v 1.28 2015/11/02 14:55:41 mpi Exp $ */
 /*	$NetBSD: ehci_pci.c,v 1.15 2004/04/23 21:13:06 itojun Exp $	*/
 
 /*
@@ -171,7 +171,8 @@ ehci_pci_attach(struct device *parent, struct device *self, void *aux)
 		goto unmap_ret;
 	}
 	intrstr = pci_intr_string(pc, ih);
-	sc->sc_ih = pci_intr_establish(pc, ih, IPL_USB, ehci_intr, sc, devname);
+	sc->sc_ih = pci_intr_establish(pc, ih, IPL_USB | IPL_MPSAFE,
+	    ehci_intr, sc, devname);
 	if (sc->sc_ih == NULL) {
 		printf(": couldn't establish interrupt");
 		if (intrstr != NULL)
@@ -204,7 +205,7 @@ ehci_pci_attach(struct device *parent, struct device *self, void *aux)
 	else
 		snprintf(sc->sc.sc_vendor, sizeof(sc->sc.sc_vendor),
 		    "vendor 0x%04x", PCI_VENDOR(pa->pa_id));
-	
+
 	/* Enable workaround for dropped interrupts as required */
 	if (sc->sc.sc_id_vendor == PCI_VENDOR_VIATECH)
 		sc->sc.sc_flags |= EHCIF_DROPPED_INTR_WORKAROUND;
