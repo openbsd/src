@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC-IP28,v 1.4 2014/08/22 20:03:56 deraadt Exp $
+#	$OpenBSD: GENERIC-IP28,v 1.5 2015/11/02 20:14:36 miod Exp $
 #
 # THIS KERNEL IS FOR POWER INDIGO2 R10000 (IP28) SYSTEMS ONLY.
 #
@@ -17,6 +17,7 @@ maxusers	32		# Estimated number of users
 
 # Make options
 makeoption	LINK_ADDRESS="0xa800000020020000"
+option		KERNBASE="0xa800000020000000"
 
 option	WSDISPLAY_COMPAT_RAWKBD	# Provide raw scancodes; needed for X11
 

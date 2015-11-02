@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK-IP30,v 1.32 2015/07/17 22:52:29 tedu Exp $
+#	$OpenBSD: RAMDISK-IP30,v 1.33 2015/11/02 20:14:36 miod Exp $
 #
 # THIS KERNEL IS FOR Octane and Octane 2 (IP30) SYSTEMS ONLY.
 
@@ -24,6 +24,7 @@ option		NFSCLIENT
 option		INET6
 
 makeoption	LINK_ADDRESS="0xa800000020020000"
+option		KERNBASE="0xa800000020000000"
 
 option		TGT_OCTANE		# Octane, Octane 2
 option		TGT_COHERENT

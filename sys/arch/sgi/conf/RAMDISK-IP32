@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK-IP32,v 1.28 2015/07/17 22:52:29 tedu Exp $
+#	$OpenBSD: RAMDISK-IP32,v 1.29 2015/11/02 20:14:36 miod Exp $
 #
 # THIS KERNEL IS FOR O2 (IP32) SYSTEMS ONLY.
 
@@ -15,6 +15,7 @@ option		MINIROOTSIZE=10240
 option		RAMDISK_HOOKS
 
 makeoption	LINK_ADDRESS="0xffffffff80100000"
+option		KERNBASE="0xffffffff80000000"
 
 option		PCIVERBOSE
 option		USBVERBOSE

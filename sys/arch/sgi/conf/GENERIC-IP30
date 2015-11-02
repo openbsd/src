@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC-IP30,v 1.53 2015/04/16 09:09:49 mpi Exp $
+#	$OpenBSD: GENERIC-IP30,v 1.54 2015/11/02 20:14:36 miod Exp $
 #
 # THIS KERNEL IS FOR Octane and Octane 2 (IP30) SYSTEMS ONLY.
 #
@@ -17,6 +17,7 @@ maxusers	32		# Estimated number of users
 
 # Make options
 makeoption	LINK_ADDRESS="0xa800000020020000"
+option		KERNBASE="0xa800000020000000"
 
 option		PCIVERBOSE
 option		USER_PCICONF	# User-space PCI configuration

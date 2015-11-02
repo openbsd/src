@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK-IP22,v 1.14 2015/07/17 22:52:29 tedu Exp $
+#	$OpenBSD: RAMDISK-IP22,v 1.15 2015/11/02 20:14:36 miod Exp $
 #
 # THIS KERNEL IS FOR INDIGO (IP20), INDY (IP22) AND INDIGO2 (IP24) SYSTEMS ONLY.
 
@@ -23,6 +23,7 @@ option		NFSCLIENT
 option		INET6
 
 makeoption	LINK_ADDRESS="0xffffffff88800000"
+option		KERNBASE="0xffffffff88000000"
 # Force use of 16KB pages. The R5000 Indy, which has the infamous XKPHYS
 # coherency bug wrt ll/sc instructions, can not have more than 256MB of
 # physical memory, all of it fitting within CKSEG0.

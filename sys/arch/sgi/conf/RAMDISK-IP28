@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK-IP28,v 1.5 2015/07/17 22:52:29 tedu Exp $
+#	$OpenBSD: RAMDISK-IP28,v 1.6 2015/11/02 20:14:36 miod Exp $
 #
 # THIS KERNEL IS FOR POWER INDIGO2 R10000 (IP28) SYSTEMS ONLY.
 
@@ -23,6 +23,7 @@ option		NFSCLIENT
 option		INET6
 
 makeoption	LINK_ADDRESS="0xa800000020020000"
+option		KERNBASE="0xa800000020000000"
 option		TGT_INDIGO2		# Indigo2
 option		ARCBIOS			# mandatory
 option		CPU_R10000		# R10000 support
