@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldape.c,v 1.20 2015/06/03 02:24:36 millert Exp $ */
+/*	$OpenBSD: ldape.c,v 1.21 2015/11/02 04:48:43 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -444,6 +444,9 @@ ldape(struct passwd *pw, char *csockpath, int pipe_parent2ldap[2])
 		    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
 			fatal("cannot drop privileges");
 	}
+
+	if (pledge("stdio flock inet unix recvfd", NULL) == -1)
+		fatal("pledge");
 
 	log_debug("ldape: entering event loop");
 	event_dispatch();

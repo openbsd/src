@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldapd.c,v 1.12 2015/01/16 16:04:38 deraadt Exp $ */
+/*	$OpenBSD: ldapd.c,v 1.13 2015/11/02 04:48:43 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -221,6 +221,10 @@ main(int argc, char *argv[])
 		fatal("calloc");
 	imsgev_init(iev_ldape, pipe_parent2ldap[0], NULL, ldapd_imsgev,
 	    ldapd_needfd);
+
+	if (pledge("stdio rpath wpath cpath getpw sendfd proc exec",
+	    NULL) == -1)
+		err(1, "pledge");
 
 	event_dispatch();
 	log_debug("ldapd: exiting");
