@@ -1,4 +1,4 @@
-/*	$OpenBSD: conn.c,v 1.11 2013/11/02 13:31:51 deraadt Exp $ */
+/*	$OpenBSD: conn.c,v 1.12 2015/11/02 06:32:51 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -290,8 +290,6 @@ conn_accept(int fd, short event, void *data)
 		print_host(&remote_addr, host, sizeof(host));
 		log_debug("accepted connection from %s on fd %d", host, afd);
 	}
-
-	fd_nonblock(afd);
 
 	if ((conn = calloc(1, sizeof(*conn))) == NULL) {
 		log_warn("malloc");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldapd.c,v 1.13 2015/11/02 04:48:43 jmatthew Exp $ */
+/*	$OpenBSD: ldapd.c,v 1.14 2015/11/02 06:32:51 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -99,18 +99,6 @@ ldapd_sigchld_handler(int sig, short why, void *data)
 	}
 }
 
-/* set socket non-blocking */
-void
-fd_nonblock(int fd)
-{
-	int flags = fcntl(fd, F_GETFL, 0);
-	int rc = fcntl(fd, F_SETFL, flags | O_NONBLOCK);
-	if (rc == -1) {
-		log_warn("failed to set fd %d non-blocking", fd);
-	}
-}
-
-
 int
 main(int argc, char *argv[])
 {
@@ -194,11 +182,9 @@ main(int argc, char *argv[])
 	log_init(debug);
 	log_info("startup");
 
-	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, pipe_parent2ldap) != 0)
+	if (socketpair(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK, PF_UNSPEC,
+	    pipe_parent2ldap) != 0)
 		fatal("socketpair");
-
-	fd_nonblock(pipe_parent2ldap[0]);
-	fd_nonblock(pipe_parent2ldap[1]);
 
 	ldape_pid = ldape(pw, csockpath, pipe_parent2ldap);
 

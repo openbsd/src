@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldapd.h,v 1.24 2015/01/16 16:04:38 deraadt Exp $ */
+/*	$OpenBSD: ldapd.h,v 1.25 2015/11/02 06:32:51 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -332,7 +332,6 @@ struct control_sock {
 extern struct ldapd_stats	 stats;
 extern struct ldapd_config	*conf;
 
-void			 fd_nonblock(int fd);
 void			 imsg_event_add(struct imsgev *iev);
 int			 imsg_compose_event(struct imsgev *iev, u_int16_t type,
 			    u_int32_t peerid, pid_t pid, int fd, void *data,

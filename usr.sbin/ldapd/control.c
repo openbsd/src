@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.10 2015/01/16 16:04:38 deraadt Exp $	*/
+/*	$OpenBSD: control.c,v 1.11 2015/11/02 06:32:51 jmatthew Exp $	*/
 
 /*
  * Copyright (c) 2010 Martin Hedenfalk <martin@bzero.se>
@@ -55,7 +55,7 @@ control_init(struct control_sock *cs)
 	if (cs->cs_name == NULL)
 		return;
 
-	if ((fd = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
+	if ((fd = socket(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK, 0)) == -1)
 		fatal("control_init: socket");
 
 	bzero(&sun, sizeof(sun));
@@ -89,7 +89,6 @@ control_init(struct control_sock *cs)
 		fatal("control_init: chmod");
 	}
 
-	fd_nonblock(fd);
 	cs->cs_fd = fd;
 }
 
@@ -148,8 +147,6 @@ control_accept(int listenfd, short event, void *arg)
 			log_warn("control_accept");
 		return;
 	}
-
-	fd_nonblock(connfd);
 
 	if ((c = calloc(1, sizeof(*c))) == NULL) {
 		log_warn("control_accept");
