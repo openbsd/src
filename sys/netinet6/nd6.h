@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.h,v 1.53 2015/11/02 07:24:08 mpi Exp $	*/
+/*	$OpenBSD: nd6.h,v 1.54 2015/11/02 12:51:16 bluhm Exp $	*/
 /*	$KAME: nd6.h,v 1.95 2002/06/08 11:31:06 itojun Exp $	*/
 
 /*
@@ -135,8 +135,7 @@ struct	in6_ndifreq {
 	((struct in6_ifextra *)(ifp)->if_afdata[AF_INET6])->rs_lhcookie
 
 struct	llinfo_nd6 {
-	struct	llinfo_nd6 *ln_next;
-	struct	llinfo_nd6 *ln_prev;
+	TAILQ_ENTRY(llinfo_nd6)	ln_list;
 	struct	rtentry *ln_rt;
 	struct	mbuf *ln_hold;	/* last packet until resolved/timeout */
 	time_t	ln_expire;	/* lifetime for NDP state transition */
@@ -214,7 +213,6 @@ extern int nd6_umaxtries;
 extern int nd6_mmaxtries;
 extern int nd6_maxnudhint;
 extern int nd6_gctimer;
-extern struct llinfo_nd6 llinfo_nd6;
 extern struct nd_drhead nd_defrouter;
 extern struct nd_prhead nd_prefix;
 extern int nd6_debug;

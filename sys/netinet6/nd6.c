@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.170 2015/11/02 07:24:08 mpi Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.171 2015/11/02 12:51:16 bluhm Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -83,10 +83,10 @@ int nd6_debug = 1;
 int nd6_debug = 0;
 #endif
 
+TAILQ_HEAD(llinfo_nd6_head, llinfo_nd6) nd6_list;
 struct	pool nd6_pool;		/* pool for llinfo_nd6 structures */
-static int nd6_inuse, nd6_allocated;
+int	nd6_inuse, nd6_allocated;
 
-struct llinfo_nd6 llinfo_nd6 = {&llinfo_nd6, &llinfo_nd6};
 struct nd_drhead nd_defrouter;
 struct nd_prhead nd_prefix = { 0 };
 
@@ -104,17 +104,6 @@ void nd6_timer_work(void *);
 int fill_drlist(void *, size_t *, size_t);
 int fill_prlist(void *, size_t *, size_t);
 
-#define LN_DEQUEUE(ln) do { \
-	(ln)->ln_next->ln_prev = (ln)->ln_prev; \
-	(ln)->ln_prev->ln_next = (ln)->ln_next; \
-	} while (0)
-#define LN_INSERTHEAD(ln) do { \
-	(ln)->ln_next = llinfo_nd6.ln_next; \
-	llinfo_nd6.ln_next = (ln); \
-	(ln)->ln_prev = &llinfo_nd6; \
-	(ln)->ln_next->ln_prev = (ln); \
-	} while (0)
-
 void
 nd6_init(void)
 {
@@ -125,6 +114,7 @@ nd6_init(void)
 		return;
 	}
 
+	TAILQ_INIT(&nd6_list);
 	pool_init(&nd6_pool, sizeof(struct llinfo_nd6), 0, 0, 0, "nd6", NULL);
 
 	/* initialization of the default router list */
@@ -570,20 +560,17 @@ nd6_purge(struct ifnet *ifp)
 	/*
 	 * Nuke neighbor cache entries for the ifp.
 	 */
-	ln = llinfo_nd6.ln_next;
-	while (ln && ln != &llinfo_nd6) {
+	TAILQ_FOREACH_SAFE(ln, &nd6_list, ln_list, nln) {
 		struct rtentry *rt;
 		struct sockaddr_dl *sdl;
 
-		nln = ln->ln_next;
 		rt = ln->ln_rt;
-		if (rt && rt->rt_gateway &&
+		if (rt != NULL && rt->rt_gateway != NULL &&
 		    rt->rt_gateway->sa_family == AF_LINK) {
 			sdl = satosdl(rt->rt_gateway);
 			if (sdl->sdl_index == ifp->if_index)
 				nln = nd6_free(rt, 0);
 		}
-		ln = nln;
 	}
 }
 
@@ -790,7 +777,7 @@ nd6_free(struct rtentry *rt, int gc)
 				nd6_llinfo_settimer(ln, (long)nd6_gctimer * hz);
 			splx(s);
 			if_put(ifp);
-			return (ln->ln_next);
+			return (TAILQ_NEXT(ln, ln_list));
 		}
 
 		if (ln->ln_router || dr) {
@@ -839,7 +826,7 @@ nd6_free(struct rtentry *rt, int gc)
 	 * might have freed other entries (particularly the old next entry) as
 	 * a side effect (XXX).
 	 */
-	next = ln->ln_next;
+	next = TAILQ_NEXT(ln, ln_list);
 
 	/*
 	 * Detach the route from the routing tree and the list of neighbor
@@ -1034,10 +1021,7 @@ nd6_rtrequest(struct ifnet *ifp, int req, struct rtentry *rt)
 			nd6_llinfo_settimer(ln, 0);
 		}
 		rt->rt_flags |= RTF_LLINFO;
-		ln->ln_next = llinfo_nd6.ln_next;
-		llinfo_nd6.ln_next = ln;
-		ln->ln_prev = &llinfo_nd6;
-		ln->ln_next->ln_prev = ln;
+		TAILQ_INSERT_HEAD(&nd6_list, ln, ln_list);
 
 		/*
 		 * If we have too many cache entries, initiate immediate
@@ -1050,12 +1034,16 @@ nd6_rtrequest(struct ifnet *ifp, int req, struct rtentry *rt)
 		    nd6_inuse >= ip6_neighborgcthresh) {
 			int i;
 
-			for (i = 0; i < 10 && llinfo_nd6.ln_prev != ln; i++) {
-				struct llinfo_nd6 *ln_end = llinfo_nd6.ln_prev;
+			for (i = 0; i < 10; i++) {
+				struct llinfo_nd6 *ln_end;
+
+				ln_end = TAILQ_LAST(&nd6_list, llinfo_nd6_head);
+				if (ln_end == ln)
+					break;
 
 				/* Move this entry to the head */
-				LN_DEQUEUE(ln_end);
-				LN_INSERTHEAD(ln_end);
+				TAILQ_REMOVE(&nd6_list, ln_end, ln_list);
+				TAILQ_INSERT_HEAD(&nd6_list, ln_end, ln_list);
 
 				if (ND6_LLINFO_PERMANENT(ln_end))
 					continue;
@@ -1129,9 +1117,7 @@ nd6_rtrequest(struct ifnet *ifp, int req, struct rtentry *rt)
 				in6_delmulti(in6m);
 		}
 		nd6_inuse--;
-		ln->ln_next->ln_prev = ln->ln_prev;
-		ln->ln_prev->ln_next = ln->ln_next;
-		ln->ln_prev = NULL;
+		TAILQ_REMOVE(&nd6_list, ln, ln_list);
 		nd6_llinfo_settimer(ln, -1);
 		rt->rt_llinfo = NULL;
 		rt->rt_flags &= ~RTF_LLINFO;
@@ -1610,8 +1596,8 @@ nd6_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr_in6 *dst,
 	 * for this entry to be a target of forced garbage collection (see
 	 * nd6_rtrequest()).
 	 */
-	LN_DEQUEUE(ln);
-	LN_INSERTHEAD(ln);
+	TAILQ_REMOVE(&nd6_list, ln, ln_list);
+	TAILQ_INSERT_HEAD(&nd6_list, ln, ln_list);
 
 	/* We don't have to do link-layer address resolution on a p2p link. */
 	if ((ifp->if_flags & IFF_POINTOPOINT) != 0 &&
