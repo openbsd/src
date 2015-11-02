@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.h,v 1.52 2015/10/28 12:14:25 florian Exp $	*/
+/*	$OpenBSD: nd6.h,v 1.53 2015/11/02 07:24:08 mpi Exp $	*/
 /*	$KAME: nd6.h,v 1.95 2002/06/08 11:31:06 itojun Exp $	*/
 
 /*
@@ -299,7 +299,7 @@ int prelist_update(struct nd_prefix *, struct nd_defrouter *, struct mbuf *);
 int nd6_prelist_add(struct nd_prefix *, struct nd_defrouter *,
 	struct nd_prefix **);
 void pfxlist_onlink_check(void);
-struct nd_defrouter *defrouter_lookup(struct in6_addr *, struct ifnet *);
+struct nd_defrouter *defrouter_lookup(struct in6_addr *, unsigned int);
 
 struct nd_prefix *nd6_prefix_lookup(struct nd_prefix *);
 int in6_ifdel(struct ifnet *, struct in6_addr *);

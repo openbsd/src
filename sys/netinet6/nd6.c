@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.169 2015/11/01 22:53:34 bluhm Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.170 2015/11/02 07:24:08 mpi Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -662,7 +662,7 @@ nd6_lookup(struct in6_addr *addr6, int create, struct ifnet *ifp,
 	 */
 	if ((rt->rt_flags & RTF_GATEWAY) || (rt->rt_flags & RTF_LLINFO) == 0 ||
 	    rt->rt_gateway->sa_family != AF_LINK || rt->rt_llinfo == NULL ||
-	    (ifp != NULL && rt->rt_ifp != ifp)) {
+	    (ifp != NULL && rt->rt_ifidx != ifp->if_index)) {
 		if (create) {
 			char addr[INET6_ADDRSTRLEN];
 			nd6log((LOG_DEBUG, "%s: failed to lookup %s (if=%s)\n",
@@ -755,17 +755,19 @@ nd6_free(struct rtentry *rt, int gc)
 	struct llinfo_nd6 *ln = (struct llinfo_nd6 *)rt->rt_llinfo, *next;
 	struct in6_addr in6 = satosin6(rt_key(rt))->sin6_addr;
 	struct nd_defrouter *dr;
+	struct ifnet *ifp;
 	int s;
 
 	/*
 	 * we used to have pfctlinput(PRC_HOSTDEAD) here.
 	 * even though it is not harmful, it was not really necessary.
 	 */
+	ifp = if_get(rt->rt_ifidx);
 
 	s = splsoftnet();
 	if (!ip6_forwarding) {
 		dr = defrouter_lookup(&satosin6(rt_key(rt))->sin6_addr,
-		    rt->rt_ifp);
+		    rt->rt_ifidx);
 
 		if (dr != NULL && dr->expire &&
 		    ln->ln_state == ND6_LLINFO_STALE && gc) {
@@ -787,6 +789,7 @@ nd6_free(struct rtentry *rt, int gc)
 			} else
 				nd6_llinfo_settimer(ln, (long)nd6_gctimer * hz);
 			splx(s);
+			if_put(ifp);
 			return (ln->ln_next);
 		}
 
@@ -796,7 +799,7 @@ nd6_free(struct rtentry *rt, int gc)
 			 * is in the Default Router List.
 			 * See a corresponding comment in nd6_na_input().
 			 */
-			rt6_flush(&in6, rt->rt_ifp);
+			rt6_flush(&in6, ifp);
 		}
 
 		if (dr) {
@@ -843,8 +846,10 @@ nd6_free(struct rtentry *rt, int gc)
 	 * caches, and disable the route entry not to be used in already
 	 * cached routes.
 	 */
-	rtdeletemsg(rt, rt->rt_ifp->if_rdomain);
+	rtdeletemsg(rt, ifp->if_rdomain);
 	splx(s);
+
+	if_put(ifp);
 
 	return (next);
 }
@@ -903,7 +908,8 @@ nd6_rtrequest(struct ifnet *ifp, int req, struct rtentry *rt)
 	    &in6addr_any) && rt_mask(rt) && (rt_mask(rt)->sa_len == 0 ||
 	    IN6_ARE_ADDR_EQUAL(&(satosin6(rt_mask(rt)))->sin6_addr,
 	    &in6addr_any)))) {
-		dr = defrouter_lookup(&satosin6(gate)->sin6_addr, ifp);
+		dr = defrouter_lookup(&satosin6(gate)->sin6_addr,
+		    ifp->if_index);
 		if (dr)
 			dr->installed = 0;
 	}

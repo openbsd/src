@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_nbr.c,v 1.97 2015/10/22 15:37:47 bluhm Exp $	*/
+/*	$OpenBSD: nd6_nbr.c,v 1.98 2015/11/02 07:24:08 mpi Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -730,7 +730,7 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 			ln->ln_byhint = 0;
 			if (!ND6_LLINFO_PERMANENT(ln)) {
 				nd6_llinfo_settimer(ln,
-				    (long)ND_IFINFO(rt->rt_ifp)->reachable * hz);
+				    (long)ND_IFINFO(ifp)->reachable * hz);
 			}
 		} else {
 			ln->ln_state = ND6_LLINFO_STALE;
@@ -851,7 +851,7 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 			 * context.  However, we keep it just for safety.
 			 */
 			s = splsoftnet();
-			dr = defrouter_lookup(in6, rt->rt_ifp);
+			dr = defrouter_lookup(in6, rt->rt_ifidx);
 			if (dr)
 				defrtrlist_del(dr);
 			else if (!ip6_forwarding) {
@@ -862,7 +862,7 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 				 * (e.g. redirect case). So we must
 				 * call rt6_flush explicitly.
 				 */
-				rt6_flush(&ip6->ip6_src, rt->rt_ifp);
+				rt6_flush(&ip6->ip6_src, ifp);
 			}
 			splx(s);
 		}

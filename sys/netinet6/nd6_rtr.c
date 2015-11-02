@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_rtr.c,v 1.131 2015/10/30 09:39:42 bluhm Exp $	*/
+/*	$OpenBSD: nd6_rtr.c,v 1.132 2015/11/02 07:24:08 mpi Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.97 2001/02/07 11:09:13 itojun Exp $	*/
 
 /*
@@ -611,12 +611,13 @@ defrouter_addreq(struct nd_defrouter *new)
 }
 
 struct nd_defrouter *
-defrouter_lookup(struct in6_addr *addr, struct ifnet *ifp)
+defrouter_lookup(struct in6_addr *addr, unsigned int ifidx)
 {
 	struct nd_defrouter *dr;
 
 	TAILQ_FOREACH(dr, &nd_defrouter, dr_entry)
-		if (dr->ifp == ifp && IN6_ARE_ADDR_EQUAL(addr, &dr->rtaddr))
+		if (dr->ifp->if_index == ifidx &&
+		    IN6_ARE_ADDR_EQUAL(addr, &dr->rtaddr))
 			return (dr);
 
 	return (NULL);		/* search failed */
@@ -873,7 +874,7 @@ defrtrlist_update(struct nd_defrouter *new)
 	struct in6_ifextra *ext = new->ifp->if_afdata[AF_INET6];
 	int s = splsoftnet();
 
-	if ((dr = defrouter_lookup(&new->rtaddr, new->ifp)) != NULL) {
+	if ((dr = defrouter_lookup(&new->rtaddr, new->ifp->if_index)) != NULL) {
 		/* entry exists */
 		if (new->rtlifetime == 0) {
 			defrtrlist_del(dr);
