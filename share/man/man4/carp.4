@@ -1,4 +1,4 @@
-.\"	$OpenBSD: carp.4,v 1.36 2015/08/03 17:40:07 benno Exp $
+.\"	$OpenBSD: carp.4,v 1.37 2015/11/02 15:18:51 mpi Exp $
 .\"
 .\" Copyright (c) 2003, Ryan McBride.  All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 3 2015 $
+.Dd $Mdocdate: November 2 2015 $
 .Dt CARP 4
 .Os
 .Sh NAME
@@ -108,27 +108,13 @@ The default value is 2, which limits logging to changes in CARP state.
 .El
 .Sh LOAD BALANCING
 .Nm
-provides two mechanisms to load balance incoming traffic
+provides a mechanism to load balance incoming traffic
 over a group of
 .Nm
-hosts:
-ARP balancing and IP balancing.
-.Pp
-Which one to use mainly depends on the network environment
-.Nm
-is being used in.
-ARP balancing has limited abilities for load balancing the
-incoming connections between hosts in an Ethernet network.
-It only works for clients in the local network, because
-ARP balancing spreads the load by varying ARP replies
-based on the source MAC address of the host sending the query.
-Therefore it cannot balance traffic that crosses a router, because the
-router itself will always be balanced to the same virtual host.
-.Pp
+hosts: IP balancing.
 IP balancing is not dependent on ARP and therefore also works
 for traffic that comes over a router.
-This method should work in all environments and can
-also provide more fine grained load balancing than ARP balancing.
+This method should work in all environments.
 The downside of IP balancing is that it requires the traffic
 that is destined towards the load balanced IP addresses
 to be received by all
@@ -137,10 +123,6 @@ hosts.
 While this is always the case when connected to a hub,
 it has to play some tricks in switched networks, which
 will result in a higher network load.
-.Pp
-A rule of thumb might be to use ARP balancing if there
-are many hosts on the same network segment and
-to use IP balancing for all other cases.
 .Pp
 To configure load balancing one has to specify multiple
 carp nodes using the
@@ -169,46 +151,7 @@ for a different
 .Cm advskew
 value within the carpnodes specification.
 .Pp
-See the
-.Sx EXAMPLES
-section for a practical example of load balancing.
-.Ss ARP BALANCING
-For ARP balancing, one has to configure multiple
-.Cm carpnodes
-and choose the
-.Cm balancing
-mode
-.Ar arp .
-.Pp
-Once an ARP request is received, the CARP protocol will use a hashing
-function against the source MAC address in the ARP request to determine
-which carpnode the request belongs to.
-If the corresponding
-carpnode is in master state, the ARP request will be answered, otherwise
-it will be ignored.
-.Pp
-The ARP load balancing has some limitations.
-Firstly, ARP balancing only works on the local network segment.
-It cannot balance traffic that crosses a router, because the
-router itself will always be balanced to the same carpnode.
-Secondly, ARP load balancing can lead to asymmetric routing
-of incoming and outgoing traffic, thus combining it with
-.Xr pfsync 4
-requires special care, because this can create a race condition between
-balanced routers and the host they are serving.
-ARP balancing can be safely used with pfsync if the
-.Xr pf 4
-ruleset translates the source address to an unshared address on the
-outgoing interface using a NAT rule.
-This requires multiple CARP groups with
-.Em different
-IP addresses on the outgoing interface, configured so that each host is the
-master of one group.
-.Pp
-ARP balancing also works for IPv6, but instead of ARP the Neighbor Discovery
-Protocol (NDP) is used.
-.Ss IP BALANCING
-IP load balancing works by utilizing the network itself to distribute
+IP balancing works by utilizing the network itself to distribute
 incoming traffic to all
 .Nm
 nodes in the cluster.
@@ -313,8 +256,7 @@ the carpnode entry with virtual host 1 rather than virtual host 2.
 .Pp
 .Dl # ifconfig carp0 192.168.1.10 carpdev em0 carpnodes 1:100,2:0 balancing ip
 .Pp
-If ARP balancing or a different mode of IP balancing is desired
-the
+If a different mode of load balancing is desired the
 .Cm balancing
 mode can be adjusted accordingly.
 .Sh SEE ALSO
