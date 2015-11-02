@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kill.2,v 1.22 2014/12/14 07:42:50 schwarze Exp $
+.\"	$OpenBSD: kill.2,v 1.23 2015/11/02 17:32:54 deraadt Exp $
 .\"	$NetBSD: kill.2,v 1.7 1995/02/27 12:33:53 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)kill.2	8.3 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: December 14 2014 $
+.Dd $Mdocdate: November 2 2015 $
 .Dt KILL 2
 .Os
 .Sh NAME
@@ -149,12 +149,3 @@ The
 .Fa sig
 argument was introduced in
 .At v4 .
-.Sh BUGS
-.St -p1003.1-2008
-specifies that
-.Fn kill 0 sig
-should send signal
-.Fa sig
-to the calling process, but
-.Ox
-doesn't do so for historical reasons.
