@@ -1,4 +1,4 @@
-/*	$OpenBSD: crontab.c,v 1.79 2015/11/02 20:09:02 millert Exp $	*/
+/*	$OpenBSD: crontab.c,v 1.80 2015/11/03 16:30:31 millert Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -314,15 +314,7 @@ edit_cmd(void)
 		fprintf(stderr, "path too long\n");
 		goto fatal;
 	}
-	if (setegid(user_gid) < 0) {
-		perror("setegid(user_gid)");
-		exit(EXIT_FAILURE);
-	}
 	t = mkstemp(Filename);
-	if (setegid(crontab_gid) < 0) {
-		perror("setegid(crontab_gid)");
-		exit(EXIT_FAILURE);
-	}
 	if (t == -1) {
 		perror(Filename);
 		goto fatal;
@@ -347,15 +339,7 @@ edit_cmd(void)
 		fprintf(stderr, "%s: error while writing new crontab to %s\n",
 			ProgramName, Filename);
  fatal:
-		if (setegid(user_gid) < 0) {
-			perror("setegid(user_gid)");
-			exit(EXIT_FAILURE);
-		}
 		unlink(Filename);
-		if (setegid(crontab_gid) < 0) {
-			perror("setegid(crontab_gid)");
-			exit(EXIT_FAILURE);
-		}
 		exit(EXIT_FAILURE);
 	}
 
@@ -376,18 +360,10 @@ edit_cmd(void)
 		goto fatal;
 	}
 	if (timespeccmp(&ts[1], &statbuf.st_mtim, ==)) {
-		if (setegid(user_gid) < 0) {
-			perror("setegid(user_gid)");
-			exit(EXIT_FAILURE);
-		}
 		if (lstat(Filename, &xstatbuf) == 0 &&
 		    statbuf.st_ino != xstatbuf.st_ino) {
 			fprintf(stderr, "%s: crontab temp file moved, editor "
 			   "may create backup files improperly\n", ProgramName);
-		}
-		if (setegid(crontab_gid) < 0) {
-			perror("setegid(crontab_gid)");
-			exit(EXIT_FAILURE);
 		}
 		fprintf(stderr, "%s: no changes made to crontab\n",
 			ProgramName);
@@ -429,15 +405,7 @@ edit_cmd(void)
 		goto fatal;
 	}
  remove:
-	if (setegid(user_gid) < 0) {
-		perror("setegid(user_gid)");
-		exit(EXIT_FAILURE);
-	}
 	unlink(Filename);
-	if (setegid(crontab_gid) < 0) {
-		perror("setegid(crontab_gid)");
-		exit(EXIT_FAILURE);
-	}
  done:
 	log_it(RealUser, Pid, "END EDIT", User);
 }
