@@ -1,4 +1,6 @@
-Policy: /usr/obj/regress/sys/kern/pledge/generic/generic, Emulation: native
+# $OpenBSD: systrace.filter.in,v 1.2 2015/11/03 10:32:41 semarie Exp $
+
+Policy: ${OBJDIR}/generic, Emulation: native
 	native-issetugid: permit
 	native-mprotect: prot eq "PROT_READ" then permit
 	native-getentropy: permit
