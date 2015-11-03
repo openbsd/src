@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.197 2015/11/03 21:11:48 naddy Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.198 2015/11/03 21:39:34 chl Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -222,7 +222,6 @@ ip6_output(struct mbuf *m0, struct ip6_pktopts *opt, struct route_in6 *ro,
 	 * Check if there was an outgoing SA bound to the flow
 	 * from a transport protocol.
 	 */
-	ip6 = mtod(m, struct ip6_hdr *);
 
 	/* Do we have any pending SAs to apply ? */
 	tdb = ipsp_spd_lookup(m, AF_INET6, sizeof(struct ip6_hdr),
@@ -498,7 +497,6 @@ reroute:
 		}
 		if (m == NULL)
 			goto done;
-		ip6 = mtod(m, struct ip6_hdr *);
 		/*
 		 * PF_TAG_REROUTE handling or not...
 		 * Packet is entering IPsec so the routing is
