@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.c,v 1.134 2015/07/15 22:16:42 deraadt Exp $ */
+/*	$OpenBSD: ip_esp.c,v 1.135 2015/11/03 01:50:36 mikeb Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -135,6 +135,10 @@ esp_init(struct tdb *tdbp, struct xformsw *xsp, struct ipsecinit *ii)
 			txform = &enc_xform_aes_gmac;
 			break;
 
+		case SADB_X_EALG_CHACHA20POLY1305:
+			txform = &enc_xform_chacha20_poly1305;
+			break;
+
 		case SADB_X_EALG_BLF:
 			txform = &enc_xform_blf;
 			break;
@@ -176,6 +180,10 @@ esp_init(struct tdb *tdbp, struct xformsw *xsp, struct ipsecinit *ii)
 				ii->ii_authalg = SADB_X_AALG_AES256GMAC;
 				break;
 			}
+			ii->ii_authkeylen = ii->ii_enckeylen;
+			ii->ii_authkey = ii->ii_enckey;
+		} else if (ii->ii_encalg == SADB_X_EALG_CHACHA20POLY1305) {
+			ii->ii_authalg = SADB_X_AALG_CHACHA20POLY1305;
 			ii->ii_authkeylen = ii->ii_enckeylen;
 			ii->ii_authkey = ii->ii_enckey;
 		}
@@ -224,6 +232,10 @@ esp_init(struct tdb *tdbp, struct xformsw *xsp, struct ipsecinit *ii)
 
 		case SADB_X_AALG_AES256GMAC:
 			thash = &auth_hash_gmac_aes_256;
+			break;
+
+		case SADB_X_AALG_CHACHA20POLY1305:
+			thash = &auth_hash_chacha20_poly1305;
 			break;
 
 		default:
@@ -470,7 +482,9 @@ esp_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 			crda->crd_flags |= CRD_F_ESN;
 		}
 
-		if (espx && espx->type == CRYPTO_AES_GCM_16)
+		if (espx &&
+		    (espx->type == CRYPTO_AES_GCM_16 ||
+		     espx->type == CRYPTO_CHACHA20_POLY1305))
 			crda->crd_len = hlen - tdb->tdb_ivlen;
 		else
 			crda->crd_len = m->m_pkthdr.len - (skip + alen);
@@ -1025,7 +1039,9 @@ esp_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 			crda->crd_flags |= CRD_F_ESN;
 		}
 
-		if (espx && espx->type == CRYPTO_AES_GCM_16)
+		if (espx &&
+		    (espx->type == CRYPTO_AES_GCM_16 ||
+		     espx->type == CRYPTO_CHACHA20_POLY1305))
 			crda->crd_len = hlen - tdb->tdb_ivlen;
 		else
 			crda->crd_len = m->m_pkthdr.len - (skip + alen);
