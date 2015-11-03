@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.1 2015/10/31 12:19:41 millert Exp $	*/
+/*	$OpenBSD: client.c,v 1.2 2015/11/03 04:16:36 guenther Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -89,14 +89,12 @@ poke_daemon(const char *spool_dir, unsigned char cookie)
 		return;
 	}
 	s_un.sun_family = AF_UNIX;
-	(void) signal(SIGPIPE, SIG_IGN);
 	if ((sock = socket(AF_UNIX, SOCK_STREAM, 0)) >= 0 &&
 	    connect(sock, (struct sockaddr *)&s_un, sizeof(s_un)) == 0)
-		write(sock, &cookie, 1);
+		send(sock, &cookie, 1, MSG_NOSIGNAL);
 	else
 		fprintf(stderr, "%s: warning, cron does not appear to be "
 		    "running.\n", ProgramName);
 	if (sock >= 0)
 		close(sock);
-	(void) signal(SIGPIPE, SIG_DFL);
 }
