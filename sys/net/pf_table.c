@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_table.c,v 1.115 2015/10/07 11:57:44 mpi Exp $	*/
+/*	$OpenBSD: pf_table.c,v 1.116 2015/11/03 22:10:33 sashan Exp $	*/
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -491,11 +491,11 @@ pfr_set_addrs(struct pfr_table *tbl, struct pfr_addr *addr, int size,
 			if (pfr_route_kentry(tmpkt, p)) {
 				pfr_destroy_kentry(p);
 				ad.pfra_fback = PFR_FB_NONE;
-			} else {
-				SLIST_INSERT_HEAD(&addq, p, pfrke_workq);
-				ad.pfra_fback = PFR_FB_ADDED;
-				xadd++;
+				goto _skip;
 			}
+			SLIST_INSERT_HEAD(&addq, p, pfrke_workq);
+			ad.pfra_fback = PFR_FB_ADDED;
+			xadd++;
 			if (p->pfrke_type == PFRKE_COST)
 				kt->pfrkt_refcntcost++;
 			pfr_ktable_winfo_update(kt, p);
