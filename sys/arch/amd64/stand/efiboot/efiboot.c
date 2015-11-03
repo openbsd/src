@@ -1,4 +1,4 @@
-/*	$OpenBSD: efiboot.c,v 1.6 2015/10/05 22:59:39 yasuoka Exp $	*/
+/*	$OpenBSD: efiboot.c,v 1.7 2015/11/03 10:56:38 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -46,8 +46,9 @@ EFI_PHYSICAL_ADDRESS	 heap;
 EFI_LOADED_IMAGE	*loadedImage;
 UINTN			 heapsiz = 1 * 1024 * 1024;
 UINTN			 mmap_key;
-static EFI_GUID		 imgdp_guid = { 0xbc62157e, 0x3e33, 0x4fec,
-			    { 0x99, 0x20, 0x2d, 0x3b, 0x36, 0xd7, 0x50, 0xdf }};
+static EFI_GUID		 imgp_guid = LOADED_IMAGE_PROTOCOL;
+static EFI_GUID		 blkio_guid = BLOCK_IO_PROTOCOL;
+static EFI_GUID		 devp_guid = DEVICE_PATH_PROTOCOL;
 u_long			 efi_loadaddr;
 
 static void	 efi_heap_init(void);
@@ -65,6 +66,7 @@ EFI_STATUS
 efi_main(EFI_HANDLE image, EFI_SYSTEM_TABLE *systab)
 {
 	extern char		*progname;
+	EFI_LOADED_IMAGE	*imgp;
 	EFI_DEVICE_PATH		*dp0 = NULL, *dp;
 	EFI_STATUS		 status;
 	EFI_PHYSICAL_ADDRESS	 stack;
@@ -77,8 +79,11 @@ efi_main(EFI_HANDLE image, EFI_SYSTEM_TABLE *systab)
 	efi_video_init();
 	efi_heap_init();
 
-	status = EFI_CALL(BS->HandleProtocol, image, &imgdp_guid,
-	    (void **)&dp0);
+	status = EFI_CALL(BS->HandleProtocol, image, &imgp_guid,
+	    (void **)&imgp);
+	if (status == EFI_SUCCESS)
+		status = EFI_CALL(BS->HandleProtocol, imgp->DeviceHandle,
+		    &devp_guid, (void **)&dp0);
 	if (status == EFI_SUCCESS) {
 		for (dp = dp0; !IsDevicePathEnd(dp);
 		    dp = NextDevicePathNode(dp)) {
@@ -139,8 +144,6 @@ efi_cleanup(void)
 /***********************************************************************
  * Disk
  ***********************************************************************/
-static EFI_GUID blkio_guid = BLOCK_IO_PROTOCOL;
-static EFI_GUID devp_guid = DEVICE_PATH_PROTOCOL;
 struct disklist_lh efi_disklist;
 
 void
@@ -169,7 +172,6 @@ efi_diskprobe(void)
 
 	for (i = 0; i < sz / sizeof(EFI_HANDLE); i++) {
 		bootdev = 0;
-		blkio = handles[i];
 		status = EFI_CALL(BS->HandleProtocol, handles[i], &blkio_guid,
 		    (void **)&blkio);
 		if (EFI_ERROR(status))
