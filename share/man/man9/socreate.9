@@ -1,4 +1,4 @@
-.\"	$OpenBSD: socreate.9,v 1.4 2015/10/23 03:16:19 dlg Exp $
+.\"	$OpenBSD: socreate.9,v 1.5 2015/11/03 00:13:17 dlg Exp $
 .\"
 .\" Copyright (c) 2006 Robert N. M. Watson
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\"
 .\" $FreeBSD: src/share/man/man9/socket.9,v 1.2 2006/12/16 10:32:10 rwatson Exp $
 .\"
-.Dd $Mdocdate: October 23 2015 $
+.Dd $Mdocdate: November 3 2015 $
 .Dt SOCREATE 9
 .Os
 .Sh NAME
@@ -195,12 +195,13 @@ Data may be retrieved directly to kernel or user memory via the
 argument, or as an mbuf chain returned to the caller via
 .Fa mp0 ,
 avoiding a data copy.
-Only one of the
-.Fa uio
-or
+If
 .Fa mp0
-pointers may be
-.Pf non- Dv NULL .
+is not
+.Dv NULL ,
+.Fa uio
+must still be passed with uio_resid set to specify the maximum
+amount of data to be returned to the caller via an mbuf chain.
 The caller may optionally retrieve a socket address on a protocol with the
 .Dv PR_ADDR
 capability by providing storage via a
