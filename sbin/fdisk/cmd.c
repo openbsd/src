@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.83 2015/10/26 15:08:26 krw Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.84 2015/11/03 14:20:00 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -198,6 +198,12 @@ Xgedit(char *args)
 
 	/* Ask for partition name. */
 	name = ask_string("partition name", utf16le_to_string(gg->gp_name));
+	if (strlen(name) >= GPTPARTNAMESIZE) {
+		printf("partition name must be < %d characters\n",
+		    GPTPARTNAMESIZE);
+		return (CMD_CONT);
+	}
+	memset(gg->gp_name, 0, sizeof(gg->gp_name));
 	memcpy(gg->gp_name, string_to_utf16le(name), sizeof(gg->gp_name));
 
 	return (ret);
