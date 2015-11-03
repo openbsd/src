@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.38 2015/10/09 01:37:09 deraadt Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.39 2015/11/03 05:04:06 mmcc Exp $	*/
 
 /*
  * Copyright (c) 2003 Can Erkin Acar
@@ -281,8 +281,10 @@ priv_init(int argc, char **argv)
 		case PRIV_INIT_DONE:
 			test_state(cmd, STATE_RUN);
 			impl_init_done(socks[0], &bpfd);
+
 			if (pledge("stdio rpath inet unix ioctl dns recvfd", NULL) == -1)
 				err(1, "pledge");
+
 			break;
 		case PRIV_GETHOSTBYADDR:
 			test_state(cmd, STATE_RUN);
