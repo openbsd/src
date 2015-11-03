@@ -1,4 +1,4 @@
-/*	$OpenBSD: enqueue.c,v 1.104 2015/10/27 21:01:09 gilles Exp $	*/
+/*	$OpenBSD: enqueue.c,v 1.105 2015/11/03 05:06:24 mmcc Exp $	*/
 
 /*
  * Copyright (c) 2005 Henning Brauer <henning@bulabula.org>
@@ -290,6 +290,7 @@ enqueue(int argc, char *argv[], FILE *ofp)
 	if (!srv_connected()) {
 		if (pledge("stdio", NULL) == -1)
 			err(1, "pledge");
+
 		return (enqueue_offline(save_argc, save_argv, fp, ofp));
 	}
 
