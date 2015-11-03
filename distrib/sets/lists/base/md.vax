@@ -24,6 +24,7 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/crypto/cast.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/crypto/castsb.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/crypto/chacha_private.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/crypto/chachapoly.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/crypto/cmac.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/crypto/cryptodev.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/crypto/cryptosoft.ph

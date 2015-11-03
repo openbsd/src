@@ -42,6 +42,7 @@
 ./usr/include/crypto/cast.h
 ./usr/include/crypto/castsb.h
 ./usr/include/crypto/chacha_private.h
+./usr/include/crypto/chachapoly.h
 ./usr/include/crypto/cmac.h
 ./usr/include/crypto/cryptodev.h
 ./usr/include/crypto/cryptosoft.h
@@ -6506,6 +6507,7 @@
 ./usr/share/man/man9/ml_filter.9
 ./usr/share/man/man9/ml_init.9
 ./usr/share/man/man9/ml_len.9
+./usr/share/man/man9/ml_purge.9
 ./usr/share/man/man9/ml_requeue.9
 ./usr/share/man/man9/mono_time.9
 ./usr/share/man/man9/mountroothook_disestablish.9
@@ -6520,6 +6522,7 @@
 ./usr/share/man/man9/mq_filter.9
 ./usr/share/man/man9/mq_init.9
 ./usr/share/man/man9/mq_len.9
+./usr/share/man/man9/mq_purge.9
 ./usr/share/man/man9/mq_requeue.9
 ./usr/share/man/man9/mq_set_maxlen.9
 ./usr/share/man/man9/msleep.9

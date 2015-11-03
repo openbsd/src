@@ -58,7 +58,7 @@
 ./sbin/kbd
 ./sbin/wsconsctl
 ./usr/lib/libc.so.84.0
-./usr/lib/libcrypto.so.36.0
+./usr/lib/libcrypto.so.36.1
 ./usr/lib/libcurses.so.14.0
 ./usr/lib/libedit.so.5.2
 ./usr/lib/libevent.so.4.1
@@ -88,11 +88,11 @@
 ./usr/lib/libskey.so.6.0
 ./usr/lib/libsndio.so.6.0
 ./usr/lib/libsqlite3.so.31.0
-./usr/lib/libssl.so.37.0
+./usr/lib/libssl.so.37.1
 ./usr/lib/libstdc++.so.57.0
 ./usr/lib/libtermcap.so.14.0
 ./usr/lib/libtermlib.so.14.0
-./usr/lib/libtls.so.9.0
+./usr/lib/libtls.so.9.1
 ./usr/lib/libusbhid.so.7.0
 ./usr/lib/libutil.so.12.1
 ./usr/lib/libz.so.5.0
@@ -518,6 +518,7 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/crypto/cast.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/crypto/castsb.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/crypto/chacha_private.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/crypto/chachapoly.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/crypto/cmac.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/crypto/cryptodev.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/crypto/cryptosoft.ph
