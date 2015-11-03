@@ -1,4 +1,4 @@
-/*	$OpenBSD: iapp.h,v 1.3 2006/03/10 18:10:16 reyk Exp $	*/
+/*	$OpenBSD: iapp.h,v 1.4 2015/11/03 12:21:50 mpi Exp $	*/
 
 /*
  * Copyright (c) 2005 Reyk Floeter <reyk@openbsd.org>
@@ -58,7 +58,7 @@ enum ieee80211_iapp_frame_type {
 	"reserved#10",							\
 	"reserved#11",							\
 	"hostapd radiotap",						\
-	"hostapd pcap"							\
+	"hostapd pcap",							\
 	"reserved#14",							\
 	"reserved#15",							\
 }
