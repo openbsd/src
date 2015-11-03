@@ -1,4 +1,4 @@
-.\"	$OpenBSD: systrace.4,v 1.24 2015/10/09 07:39:56 deraadt Exp $
+.\"	$OpenBSD: systrace.4,v 1.25 2015/11/03 07:39:19 jmc Exp $
 .\"
 .\" Copyright (c) 2002, 2003 CubeSoft Communications, Inc.
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" IN ANY WAY OUT OF THE USE OF THIS SOFTWARE EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: October 9 2015 $
+.Dd $Mdocdate: November 3 2015 $
 .Dt SYSTRACE 4
 .Os
 .Sh NAME
@@ -484,9 +484,3 @@ When creating new policies, if
 .Va strp_maxents
 is not large enough to accommodate any system calls needed for
 fundamental process operations, the traced process will block forever.
-.Pp
-It is not possible to
-.Nm
-a
-.Xr pledge 2
-program.
