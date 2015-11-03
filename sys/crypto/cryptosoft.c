@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptosoft.c,v 1.75 2015/10/26 17:22:50 mikeb Exp $	*/
+/*	$OpenBSD: cryptosoft.c,v 1.76 2015/11/03 01:35:16 mikeb Exp $	*/
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -513,6 +513,7 @@ swcr_authenc(struct cryptop *crp)
 		switch (sw->sw_alg) {
 		case CRYPTO_AES_GCM_16:
 		case CRYPTO_AES_GMAC:
+		case CRYPTO_CHACHA20_POLY1305:
 			swe = sw;
 			crde = crd;
 			exf = swe->sw_exf;
@@ -521,6 +522,7 @@ swcr_authenc(struct cryptop *crp)
 		case CRYPTO_AES_128_GMAC:
 		case CRYPTO_AES_192_GMAC:
 		case CRYPTO_AES_256_GMAC:
+		case CRYPTO_CHACHA20_POLY1305_MAC:
 			swa = sw;
 			crda = crd;
 			axf = swa->sw_axf;
@@ -628,6 +630,15 @@ swcr_authenc(struct cryptop *crp)
 			*blkp = htobe32(aadlen * 8);
 			blkp = (uint32_t *)blk + 3;
 			*blkp = htobe32(crde->crd_len * 8);
+			axf->Update(&ctx, blk, axf->hashsize);
+			break;
+		case CRYPTO_CHACHA20_POLY1305_MAC:
+			/* length block */
+			bzero(blk, axf->hashsize);
+			blkp = (uint32_t *)blk;
+			*blkp = htole32(aadlen);
+			blkp = (uint32_t *)blk + 2;
+			*blkp = htole32(crde->crd_len);
 			axf->Update(&ctx, blk, axf->hashsize);
 			break;
 	}
@@ -811,6 +822,9 @@ swcr_newsession(u_int32_t *sid, struct cryptoini *cri)
 			txf = &enc_xform_aes_gmac;
 			(*swd)->sw_exf = txf;
 			break;
+		case CRYPTO_CHACHA20_POLY1305:
+			txf = &enc_xform_chacha20_poly1305;
+			goto enccommon;
 		case CRYPTO_NULL:
 			txf = &enc_xform_null;
 			goto enccommon;
@@ -914,6 +928,10 @@ swcr_newsession(u_int32_t *sid, struct cryptoini *cri)
 
 		case CRYPTO_AES_256_GMAC:
 			axf = &auth_hash_gmac_aes_256;
+			goto auth4common;
+
+		case CRYPTO_CHACHA20_POLY1305_MAC:
+			axf = &auth_hash_chacha20_poly1305;
 		auth4common:
 			(*swd)->sw_ictx = malloc(axf->ctxsize, M_CRYPTO_DATA,
 			    M_NOWAIT);
@@ -978,6 +996,7 @@ swcr_freesession(u_int64_t tid)
 		case CRYPTO_AES_XTS:
 		case CRYPTO_AES_GCM_16:
 		case CRYPTO_AES_GMAC:
+		case CRYPTO_CHACHA20_POLY1305:
 		case CRYPTO_NULL:
 			txf = swd->sw_exf;
 
@@ -1008,6 +1027,7 @@ swcr_freesession(u_int64_t tid)
 		case CRYPTO_AES_128_GMAC:
 		case CRYPTO_AES_192_GMAC:
 		case CRYPTO_AES_256_GMAC:
+		case CRYPTO_CHACHA20_POLY1305_MAC:
 		case CRYPTO_MD5:
 		case CRYPTO_SHA1:
 			axf = swd->sw_axf;
@@ -1110,6 +1130,8 @@ swcr_process(struct cryptop *crp)
 		case CRYPTO_AES_128_GMAC:
 		case CRYPTO_AES_192_GMAC:
 		case CRYPTO_AES_256_GMAC:
+		case CRYPTO_CHACHA20_POLY1305:
+		case CRYPTO_CHACHA20_POLY1305_MAC:
 			crp->crp_etype = swcr_authenc(crp);
 			goto done;
 
@@ -1173,6 +1195,8 @@ swcr_init(void)
 	algs[CRYPTO_AES_128_GMAC] = CRYPTO_ALG_FLAG_SUPPORTED;
 	algs[CRYPTO_AES_192_GMAC] = CRYPTO_ALG_FLAG_SUPPORTED;
 	algs[CRYPTO_AES_256_GMAC] = CRYPTO_ALG_FLAG_SUPPORTED;
+	algs[CRYPTO_CHACHA20_POLY1305] = CRYPTO_ALG_FLAG_SUPPORTED;
+	algs[CRYPTO_CHACHA20_POLY1305_MAC] = CRYPTO_ALG_FLAG_SUPPORTED;
 	algs[CRYPTO_ESN] = CRYPTO_ALG_FLAG_SUPPORTED;
 
 	crypto_register(swcr_id, algs, swcr_newsession,
