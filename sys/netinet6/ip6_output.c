@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.196 2015/10/29 16:27:45 tedu Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.197 2015/11/03 21:11:48 naddy Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -2902,14 +2902,14 @@ in6_delayed_cksum(struct mbuf *m, u_int8_t nxt)
 void
 in6_proto_cksum_out(struct mbuf *m, struct ifnet *ifp)
 {
+	struct ip6_hdr *ip6 = mtod(m, struct ip6_hdr *);
+
 	/* some hw and in6_delayed_cksum need the pseudo header cksum */
 	if (m->m_pkthdr.csum_flags &
 	    (M_TCP_CSUM_OUT|M_UDP_CSUM_OUT|M_ICMP_CSUM_OUT)) {
-		struct ip6_hdr *ip6;
 		int nxt, offset;
 		u_int16_t csum;
 
-		ip6 = mtod(m, struct ip6_hdr *);
 		offset = ip6_lasthdr(m, 0, IPPROTO_IPV6, &nxt);
 		csum = in6_cksum_phdr(&ip6->ip6_src, &ip6->ip6_dst,
 		    htonl(m->m_pkthdr.len - offset), htonl(nxt));
@@ -2927,6 +2927,7 @@ in6_proto_cksum_out(struct mbuf *m, struct ifnet *ifp)
 
 	if (m->m_pkthdr.csum_flags & M_TCP_CSUM_OUT) {
 		if (!ifp || !(ifp->if_capabilities & IFCAP_CSUM_TCPv6) ||
+		    ip6->ip6_nxt != IPPROTO_TCP ||
 		    ifp->if_bridgeport != NULL) {
 			tcpstat.tcps_outswcsum++;
 			in6_delayed_cksum(m, IPPROTO_TCP);
@@ -2934,6 +2935,7 @@ in6_proto_cksum_out(struct mbuf *m, struct ifnet *ifp)
 		}
 	} else if (m->m_pkthdr.csum_flags & M_UDP_CSUM_OUT) {
 		if (!ifp || !(ifp->if_capabilities & IFCAP_CSUM_UDPv6) ||
+		    ip6->ip6_nxt != IPPROTO_UDP ||
 		    ifp->if_bridgeport != NULL) {
 			udpstat.udps_outswcsum++;
 			in6_delayed_cksum(m, IPPROTO_UDP);
