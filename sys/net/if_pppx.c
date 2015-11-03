@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pppx.c,v 1.44 2015/10/25 11:58:11 mpi Exp $ */
+/*	$OpenBSD: if_pppx.c,v 1.45 2015/11/03 12:02:59 dlg Exp $ */
 
 /*
  * Copyright (c) 2010 Claudio Jeker <claudio@openbsd.org>
@@ -122,7 +122,7 @@ struct pppx_dev {
 	struct mutex		pxd_wsel_mtx;
 
 	/* queue of packets for userland to service - protected by splnet */
-	struct ifqueue		pxd_svcq;
+	struct mbuf_queue	pxd_svcq;
 	int			pxd_waiting;
 	LIST_HEAD(,pppx_if)	pxd_pxis;
 };
@@ -258,7 +258,7 @@ pppxopen(dev_t dev, int flags, int mode, struct proc *p)
 	mtx_init(&pxd->pxd_wsel_mtx, IPL_NET);
 	LIST_INIT(&pxd->pxd_pxis);
 
-	IFQ_SET_MAXLEN(&pxd->pxd_svcq, 128);
+	mq_init(&pxd->pxd_svcq, 128, IPL_NET);
 	LIST_INSERT_HEAD(&pppx_devs, pxd, pxd_entry);
 
 out:
@@ -277,25 +277,18 @@ pppxread(dev_t dev, struct uio *uio, int ioflag)
 	if (!pxd)
 		return (ENXIO);
 
-	s = splnet();
-	for (;;) {
-		IF_DEQUEUE(&pxd->pxd_svcq, m0);
-		if (m0 != NULL)
-			break;
-
-		if (ISSET(ioflag, IO_NDELAY)) {
-			splx(s);
+	while ((m0 = mq_dequeue(&pxd->pxd_svcq)) == NULL) {
+		if (ISSET(ioflag, IO_NDELAY))
 			return (EWOULDBLOCK);
-		}
 
+		s = splnet();
 		pxd->pxd_waiting = 1;
 		error = tsleep(pxd, (PZERO + 1)|PCATCH, "pppxread", 0);
+		splx(s);
 		if (error != 0) {
-			splx(s);
 			return (error);
 		}
 	}
-	splx(s);
 
 	while (m0 != NULL && uio->uio_resid > 0 && error == 0) {
 		len = min(uio->uio_resid, m0->m_len);
@@ -459,13 +452,11 @@ int
 pppxpoll(dev_t dev, int events, struct proc *p)
 {
 	struct pppx_dev *pxd = pppx_dev2pxd(dev);
-	int s, revents = 0;
+	int revents = 0;
 
 	if (events & (POLLIN | POLLRDNORM)) {
-		s = splnet();
-		if (!IF_IS_EMPTY(&pxd->pxd_svcq))
+		if (!mq_empty(&pxd->pxd_svcq))
 			revents |= events & (POLLIN | POLLRDNORM);
-		splx(s);
 	}
 	if (events & (POLLOUT | POLLWRNORM))
 		revents |= events & (POLLOUT | POLLWRNORM);
@@ -527,21 +518,15 @@ int
 filt_pppx_read(struct knote *kn, long hint)
 {
 	struct pppx_dev *pxd = (struct pppx_dev *)kn->kn_hook;
-	int s, event = 0;
 
 	if (ISSET(kn->kn_status, KN_DETACHED)) {
 		kn->kn_data = 0;
 		return (1);
 	}
 
-	s = splnet();
-	if (!IF_IS_EMPTY(&pxd->pxd_svcq)) {
-		event = 1;
-		kn->kn_data = IF_LEN(&pxd->pxd_svcq);
-	}
-	splx(s);
+	kn->kn_data = mq_len(&pxd->pxd_svcq);
 
-	return (event);
+	return (kn->kn_data > 0);
 }
 
 void
@@ -570,7 +555,6 @@ pppxclose(dev_t dev, int flags, int mode, struct proc *p)
 {
 	struct pppx_dev *pxd;
 	struct pppx_if	*pxi;
-	int s;
 
 	rw_enter_write(&pppx_devs_lk);
 
@@ -582,9 +566,7 @@ pppxclose(dev_t dev, int flags, int mode, struct proc *p)
 
 	LIST_REMOVE(pxd, pxd_entry);
 
-	s = splnet();
-	IF_PURGE(&pxd->pxd_svcq);
-	splx(s);
+	mq_purge(&pxd->pxd_svcq);
 
 	free(pxd, M_DEVBUF, 0);
 
