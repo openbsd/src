@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.31 2015/07/18 00:27:32 claudio Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.32 2015/11/03 07:48:03 gerhard Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -365,12 +365,6 @@ kr_iflastchange(void)
 int
 kr_updateif(u_int if_index)
 {
-	struct kif_node	*kn;
-
-	if ((kn = kif_find(if_index)) != NULL)
-		kif_remove(kn);
-
-	/* Do not update the interface address list */
 	return (fetchifs(if_index));
 }
 
@@ -1380,6 +1374,12 @@ rtmsg_process(char *buf, int len)
 			break;
 		case RTM_IFANNOUNCE:
 			if_announce(next);
+			break;
+		case RTM_DESYNC:
+			kr_shutdown();
+			if (fetchifs(0) == -1)
+				fatalx("rtmsg_process: fetchifs");
+			ktable_init();
 			break;
 		default:
 			/* ignore for now */
