@@ -1,0 +1,76 @@
+Policy: /usr/obj/regress/sys/kern/pledge/generic/generic, Emulation: native
+	native-issetugid: permit
+	native-mprotect: prot eq "PROT_READ" then permit
+	native-getentropy: permit
+	native-mmap: prot eq "PROT_READ|PROT_WRITE" then permit
+	native-mprotect: prot eq "PROT_NONE" then permit
+	native-fsread: filename eq "/var/run/ld.so.hints" then permit
+	native-fstat: permit
+	native-mmap: prot eq "PROT_READ" then permit
+	native-close: permit
+	native-fsread: filename match "/usr/lib/libc.so.*" then permit
+	native-read: permit
+	native-mmap: prot eq "PROT_READ|PROT_EXEC" then permit
+	native-mprotect: prot eq "PROT_READ|PROT_WRITE|PROT_EXEC" then permit
+	native-mprotect: prot eq "PROT_READ|PROT_WRITE" then permit
+	native-mprotect: prot eq "PROT_READ|PROT_EXEC" then permit
+	native-munmap: permit
+	native-kbind: permit
+	native-sysctl: permit
+	native-fsread: filename eq "/etc/malloc.conf" then permit
+	native-minherit: permit
+	native-fcntl: cmd eq "<unknown>: 11" then permit
+	native-fswrite: filename eq "${OBJDIR}/generic.core" then permit
+	native-write: permit
+	native-pipe: permit
+	native-fork: permit
+	native-dup2: permit
+	native-setsid: permit
+	native-pledge: permit
+	native-exit: permit
+	native-wait4: permit
+	native-pipe2: permit
+	native-vfork: permit
+	native-execve: filename eq "/bin/sh" and argv eq "sh -c /sbin/dmesg" then permit
+	native-fcntl: cmd eq "F_GETFL" then permit
+	native-fcntl: cmd eq "F_GETFD" then permit
+	native-fcntl: cmd eq "F_SETFD" then permit
+	native-fsread: filename eq "${OBJDIR}/generic.core" then permit
+	native-socket: sockdom eq "AF_INET" and socktype eq "SOCK_STREAM" then permit
+	native-kill: pidname eq "<own process group>" and signame eq "SIGINT" then permit
+	native-fsread: filename eq "/dev/zero" then permit
+	native-fswrite: filename eq "/dev/null" then permit
+	native-fswrite: filename eq "/tmp/generic-test-cpath" then permit
+	native-fsread: filename eq "/etc/passwd" then permit
+	native-fsread: filename eq "${OBJDIR}/generic" then permit
+	native-fsread: filename eq "/nonexistent" then permit
+	native-fsread: filename eq "/usr" then permit
+	native-fsread: filename eq "/usr/share" then permit
+	native-fsread: filename eq "/usr/share/man" then permit
+	native-fsread: filename eq "/usr/share/man/man8" then permit
+	native-fsread: filename eq "/usr/share/man/man8/afterboot.8" then permit
+	native-fsread: filename eq "/" then permit
+	native-fsread: filename eq "/usr/bin" then permit
+	native-fsread: filename eq "/usr/bin/gzip" then permit
+	native-mmap: prot eq "PROT_READ|PROT_WRITE|PROT_EXEC" then permit
+	native-clock_getres: permit
+	native-clock_gettime: permit
+	native-getdtablecount: permit
+	native-getegid: permit
+	native-geteuid: permit
+	native-getgid: permit
+	native-getgroups: permit
+	native-getitimer: permit
+	native-getlogin: permit
+	native-getpgid: permit
+	native-getpgrp: permit
+	native-getpid: permit
+	native-getppid: permit
+	native-getrlimit: permit
+	native-getsid: permit
+	native-getthrid: permit
+	native-gettimeofday: permit
+	native-getuid: permit
+	native-umask: permit
+	native-ioctl: permit
+
