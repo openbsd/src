@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.93 2015/11/02 16:31:55 semarie Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.94 2015/11/03 20:33:30 deraadt Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -494,7 +494,7 @@ unp_connect(struct socket *so, struct mbuf *nam, struct proc *p)
 		return (EINVAL);
 
 	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_SYSSPACE, soun->sun_path, p);
-	nd.ni_pledge = PLEDGE_RPATH | PLEDGE_WPATH;
+	nd.ni_pledge = PLEDGE_UNIX;
 	if ((error = namei(&nd)) != 0)
 		return (error);
 	vp = nd.ni_vp;
