@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.c,v 1.83 2015/10/07 10:50:35 mpi Exp $	*/
+/*	$OpenBSD: pipex.c,v 1.84 2015/11/03 21:33:56 chl Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -1168,7 +1168,6 @@ Static void
 pipex_ip6_input(struct mbuf *m0, struct pipex_session *session)
 {
 	struct ifnet *ifp;
-	struct ip6_hdr *ip6;
 	int len;
 
 	/* change recvif */
@@ -1187,7 +1186,6 @@ pipex_ip6_input(struct mbuf *m0, struct pipex_session *session)
 			goto drop;
 	}
 #endif
-	ip6 = mtod(m0, struct ip6_hdr *);
 
 	/*
 	 * XXX: what is reasonable ingress filter ???
