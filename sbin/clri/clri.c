@@ -1,4 +1,4 @@
-/*	$OpenBSD: clri.c,v 1.17 2015/10/12 01:43:52 deraadt Exp $	*/
+/*	$OpenBSD: clri.c,v 1.18 2015/11/03 04:47:55 mmcc Exp $	*/
 /*	$NetBSD: clri.c,v 1.19 2005/01/20 15:50:47 xtraeme Exp $	*/
 
 /*
@@ -78,8 +78,10 @@ main(int argc, char *argv[])
 	/* get the superblock. */
 	if ((fd = open(fs, O_RDWR, 0)) < 0)
 		err(1, "%s", fs);
+
 	if (pledge("stdio", NULL) == -1)
 		err(1, "pledge");
+
 	for (i = 0; sblock_try[i] != -1; i++) {
 		offset = (off_t)(sblock_try[i]);
 		if (pread(fd, sblock, sizeof(sblock), offset) != sizeof(sblock))
