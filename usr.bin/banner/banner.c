@@ -1,4 +1,4 @@
-/*	$OpenBSD: banner.c,v 1.11 2015/10/09 01:37:06 deraadt Exp $	*/
+/*	$OpenBSD: banner.c,v 1.12 2015/11/03 04:54:07 mmcc Exp $	*/
 /*	$NetBSD: banner.c,v 1.2 1995/04/09 06:00:15 cgd Exp $	*/
 
 /*
@@ -155,6 +155,7 @@ main(int argc, char *argv[])
 	
 	if (pledge("stdio", NULL) == -1)
 		err(1, "pledge");
+
 	while (*++argv) {
 		(void)strlcpy(word, *argv, sizeof (word));
 		scan_out(1, word, '\0');
