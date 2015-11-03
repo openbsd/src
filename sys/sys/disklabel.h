@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.h,v 1.73 2015/10/25 16:35:40 krw Exp $	*/
+/*	$OpenBSD: disklabel.h,v 1.74 2015/11/03 13:59:07 krw Exp $	*/
 /*	$NetBSD: disklabel.h,v 1.41 1996/05/10 23:07:37 mark Exp $	*/
 
 /*
@@ -375,6 +375,7 @@ struct partinfo {
 #define	GPTDOSACTIVE		0x2
 #define	GPTMINHDRSIZE		92
 #define	GPTMINPARTSIZE		128
+#define	GPTPARTNAMESIZE		36
 
 /* all values in the GPT need to be little endian as per UEFI specification */
 struct gpt_header {
@@ -405,7 +406,7 @@ struct gpt_partition {
 	u_int64_t gp_lba_end;	/* ending LBA of this partition, inclusive,
 				   usually odd */
 	u_int64_t gp_attrs;	/* attribute flags */
-	u_int16_t gp_name[36];	/* partition name, utf-16le */
+	u_int16_t gp_name[GPTPARTNAMESIZE]; /* partition name, utf-16le */
 	/* the rest of the GPT partition entry, if any, is reserved by UEFI
 	   and must be zero */
 };
