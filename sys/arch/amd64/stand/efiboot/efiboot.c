@@ -1,4 +1,4 @@
-/*	$OpenBSD: efiboot.c,v 1.7 2015/11/03 10:56:38 yasuoka Exp $	*/
+/*	$OpenBSD: efiboot.c,v 1.8 2015/11/03 16:03:04 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -178,7 +178,7 @@ efi_diskprobe(void)
 			panic("BS->HandleProtocol() returns %d", status);
 
 		media = blkio->Media;
-		if (media->LogicalPartition)
+		if (media->LogicalPartition || !media->MediaPresent)
 			continue;
 		di = alloc(sizeof(struct diskinfo));
 		efid_init(di, blkio);
