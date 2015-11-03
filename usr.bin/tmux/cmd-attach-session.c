@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-attach-session.c,v 1.47 2015/10/31 14:51:15 nicm Exp $ */
+/* $OpenBSD: cmd-attach-session.c,v 1.48 2015/11/03 15:07:36 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -139,7 +139,7 @@ cmd_attach_session(struct cmd_q *cmdq, const char *tflag, int dflag, int rflag,
 			TAILQ_FOREACH(c_loop, &clients, entry) {
 				if (c_loop->session != s || c == c_loop)
 					continue;
-				proc_send_s(c->peer, MSG_DETACH, s->name);
+				proc_send_s(c_loop->peer, MSG_DETACH, s->name);
 			}
 		}
 
