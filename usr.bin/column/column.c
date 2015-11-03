@@ -1,4 +1,4 @@
-/*	$OpenBSD: column.c,v 1.21 2015/10/09 01:37:07 deraadt Exp $	*/
+/*	$OpenBSD: column.c,v 1.22 2015/11/03 04:55:44 mmcc Exp $	*/
 /*	$NetBSD: column.c,v 1.4 1995/09/02 05:53:03 jtc Exp $	*/
 
 /*
@@ -116,6 +116,7 @@ main(int argc, char *argv[])
 			}
 		}
 	}
+
 	if (pledge("stdio", NULL) == -1)
 		err(1, "pledge");
 
