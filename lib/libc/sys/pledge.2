@@ -1,4 +1,4 @@
-.\" $OpenBSD: pledge.2,v 1.11 2015/11/03 01:51:33 tedu Exp $
+.\" $OpenBSD: pledge.2,v 1.12 2015/11/03 16:31:54 deraadt Exp $
 .\"
 .\" Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
 .\"
@@ -23,7 +23,7 @@
 .Sh SYNOPSIS
 .In unistd.h
 .Ft int
-.Fn pledge "const char *request" "const char *paths[]"
+.Fn pledge "const char *promises" "const char *paths[]"
 .Sh DESCRIPTION
 The current process is forced into a restricted-service operating mode.
 A few subsets are available, roughly described as computation, memory
@@ -31,7 +31,7 @@ management, read-write operations on file descriptors, opening of files,
 networking.
 In general, these modes were selected by studying the operation
 of many programs using libc and other such interfaces, and setting
-.Ar request
+.Ar promises
 or
 .Ar paths .
 .Pp
@@ -44,61 +44,16 @@ Subsequent calls to
 can reduce the abilities further, but abilities can never be regained.
 .Pp
 A process which attempts a restricted operation is killed with
-.Dv SIGKILL .
-If
-.Va "abort"
-is set, then a non-blockable
-.Dv SIGABRT
-is delivered instead, possibly resulting in a
-.Xr core 5
-file.
+.Dv SIGABRT ,
+delivering a core file if possible.
 .Pp
 A
-.Fa request
+.Fa promises
 value of "" restricts the process to the
 .Xr _exit 2
 system call.
 This can be used for pure computation operating on memory shared
 with another process.
-.Pp
-All
-.Dv requests
-below (with the exception of
-.Va "abort" )
-permit the following system calls:
-.Bd -ragged -offset indent
-.Xr clock_getres 2 ,
-.Xr clock_gettime 2 ,
-.Xr fchdir 2 ,
-.Xr getdtablecount 2 ,
-.Xr getegid 2 ,
-.Xr geteuid 2 ,
-.Xr getgid 2 ,
-.Xr getgroups 2 ,
-.Xr getitimer 2 ,
-.Xr getlogin 2 ,
-.Xr getpgid 2 ,
-.Xr getpgrp 2 ,
-.Xr getpid 2 ,
-.Xr getppid 2 ,
-.Xr getresgid 2 ,
-.Xr getresuid 2 ,
-.Xr getrlimit 2 ,
-.Xr getsid 2 ,
-.Xr getthrid 2 ,
-.Xr gettimeofday 2 ,
-.Xr getuid 2 ,
-.Xr getuid 2 ,
-.Xr issetugid 2 ,
-.Xr nanosleep 2 ,
-.Xr sendsyslog 2 ,
-.Xr setitimer 2 ,
-.Xr sigaction 2 ,
-.Xr sigprocmask 2 ,
-.Xr sigreturn 2 ,
-.Xr umask 2 ,
-.Xr wait4 2 .
-.Ed
 .Pp
 Some system calls, when allowed, have restrictions applied to them:
 .Pp
@@ -117,7 +72,7 @@ Only the
 and
 .Dv FIONBIO
 operations are allowed by default.
-Use of the "tty" and "ioctl" requests will enable more ioctl requests.
+Use of the "tty" and "ioctl" promises receive more ioctl requests.
 .Pp
 .It Xr chmod 2
 .It Xr fchmod 2
@@ -164,71 +119,89 @@ once.
 .El
 .Pp
 The
-.Ar request
+.Ar promises
 is specified as a string, with space separate keywords:
 .Bl -tag -width "tmppath" -offset indent
-.It Va "malloc"
-To allow use of the
-.Xr malloc 3
-family of functions, the following system calls are permitted:
+.It Va "stdio"
+The following system calls are permitted to allow most basic functions
+in libc, including memory allocation, most types of IO operations on
+previously allocated file descriptors:
 .Pp
+.Xr clock_getres 2 ,
+.Xr clock_gettime 2 ,
+.Xr close 2 ,
+.Xr closefrom 2 ,
+.Xr dup 2 ,
+.Xr dup2 2 ,
+.Xr dup3 2 ,
+.Xr fchdir 2 ,
+.Xr fcntl 2 ,
+.Xr fstat 2 ,
+.Xr fsync 2 ,
+.Xr ftruncate 2 ,
+.Xr getdents 2 ,
+.Xr getdtablecount 2 ,
+.Xr getegid 2 ,
 .Xr getentropy 2 ,
+.Xr geteuid 2 ,
+.Xr getgid 2 ,
+.Xr getgroups 2 ,
+.Xr getitimer 2 ,
+.Xr getlogin 2 ,
+.Xr getpgid 2 ,
+.Xr getpgrp 2 ,
+.Xr getpid 2 ,
+.Xr getppid 2 ,
+.Xr getresgid 2 ,
+.Xr getresuid 2 ,
+.Xr getrlimit 2 ,
+.Xr getsid 2 ,
+.Xr getthrid 2 ,
+.Xr gettimeofday 2 ,
+.Xr getuid 2 ,
+.Xr getuid 2 ,
+.Xr issetugid 2 ,
+.Xr kevent 2 ,
+.Xr kqueue 2 ,
+.Xr lseek 2 ,
 .Xr madvise 2 ,
 .Xr minherit 2 ,
 .Xr mmap 2 ,
 .Xr mprotect 2 ,
 .Xr mquery 2 ,
-.Xr munmap 2 .
-.It Va "rw"
-The following system calls are permitted to allow most types of IO
-operations on previously allocated file descriptors, including
-libevent or handwritten async IO loops:
-.Pp
-.Xr poll 2 ,
-.Xr kevent 2 ,
-.Xr kqueue 2 ,
-.Xr select 2 ,
-.Xr close 2 ,
-.Xr dup 2 ,
-.Xr dup2 2 ,
-.Xr dup3 2 ,
-.Xr closefrom 2 ,
-.Xr shutdown 2 ,
-.Xr read 2 ,
-.Xr readv 2 ,
-.Xr pread 2 ,
-.Xr preadv 2 ,
-.Xr write 2 ,
-.Xr writev 2 ,
-.Xr pwrite 2 ,
-.Xr pwritev 2 ,
-.Xr ftruncate 2 ,
-.Xr lseek 2 ,
-.Xr fcntl 2 ,
-.Xr fsync 2 ,
+.Xr munmap 2 ,
+.Xr nanosleep 2 ,
 .Xr pipe 2 ,
 .Xr pipe2 2 ,
-.Xr socketpair 2 ,
-.Xr getdents 2 ,
-.Xr sendto 2 ,
-.Xr sendmsg 2 ,
-.Xr recvmsg 2 ,
+.Xr poll 2 ,
+.Xr pread 2 ,
+.Xr preadv 2 ,
+.Xr pwrite 2 ,
+.Xr pwritev 2 ,
+.Xr read 2 ,
+.Xr readv 2 ,
 .Xr recvfrom 2 ,
-.Xr fstat 2 .
+.Xr recvmsg 2 ,
+.Xr select 2 ,
+.Xr sendmsg 2 ,
+.Xr sendsyslog 2 ,
+.Xr sendto 2 ,
+.Xr setitimer 2 ,
+.Xr shutdown 2 ,
+.Xr sigaction 2 ,
+.Xr sigprocmask 2 ,
+.Xr sigreturn 2 ,
+.Xr socketpair 2 ,
+.Xr umask 2 ,
+.Xr wait4 2 ,
+.Xr write 2 ,
+.Xr writev 2 .
 .Pp
 Note that
 .Xr sendto 2
 is only permitted if its destination socket address is
 .Dv NULL .
-.It Va "stdio"
-This subset is simply the combination of
-.Va "malloc"
-and
-.Va "rw" .
-As a result, all the expected functionalities of libc
-stdio work.
-Use of "stdio" is recommended instead of "malloc rw",
-to better express the intent of the program.
+As a result, all the expected functionalities of libc stdio work.
 .It Va "rpath"
 A number of system calls are allowed if they only cause
 read-only effects on the filesystem:
@@ -343,7 +316,7 @@ and
 .Xr open 2
 is allowed.
 No distinction is made between shared and exclusive locks.
-This request is required for unlock as well as lock.
+This promise is required for unlock as well as lock.
 .It Va "unix"
 The following system calls are allowed to operate in the
 .Dv AF_UNIX
@@ -392,9 +365,11 @@ operations.
 .It Va "sendfd"
 Allows sending of file descriptors using
 .Xr sendmsg 2 .
+File descriptors referering to directories may not be passed.
 .It Va "recvfd"
 Allows receiving of file descriptors using
 .Xr recvmsg 2 .
+File descriptors referering to directories may not be passed.
 .It Va "ioctl"
 Allows a subset of
 .Xr ioctl 2
@@ -418,7 +393,7 @@ A few other operations are allowed, but not listed here.
 .It Va "tty"
 This opens up a variety of
 .Xr ioctl 2
-requests used by tty devices:
+used by tty devices:
 .Dv TIOCSPGRP ,
 .Dv TIOCGETA ,
 .Dv TIOCGPGRP ,
@@ -444,7 +419,7 @@ Allows a process to call
 .Xr execve 2 .
 Coupled with the
 .Va "proc"
-request, this allows a process to fork and execute another program.
+promise, this allows a process to fork and execute another program.
 The new program starts running without pledge active and hopefully
 makes a new
 .Fn pledge .
@@ -477,7 +452,8 @@ programs like
 and
 .Xr vmstat 8 .
 .It Va "id"
-Allows the following system calls:
+Allows the following system calls which can change the rights of a
+process:
 .Pp
 .Xr setuid 2 ,
 .Xr seteuid 2 ,
@@ -490,11 +466,6 @@ Allows the following system calls:
 .Xr setrlimit 2 ,
 .Xr getpriority 2 ,
 .Xr setpriority 2
-.It Va "abort"
-Deliver an unblockable
-.Dv SIGABRT
-upon violation instead of
-.Dv SIGKILL .
 .El
 .Pp
 A whitelist of permitted paths may be provided in
@@ -510,7 +481,7 @@ will fail if:
 .It Bq Er EFAULT
 .Fa paths
 or one of its elements, or
-.Fa request
+.Fa promises
 points outside the process's allocated address space.
 .It Bq Er EINVAL
 .Ar request
@@ -523,7 +494,7 @@ is too large, prepending
 to it would exceed
 .Dv PATH_MAX
 bytes, or
-.Fa request
+.Fa promises
 is too long.
 .It Bq Er EPERM
 This process is attempting to increase permissions.
