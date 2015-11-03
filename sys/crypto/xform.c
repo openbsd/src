@@ -1,4 +1,4 @@
-/*	$OpenBSD: xform.c,v 1.47 2015/10/27 12:00:25 mikeb Exp $	*/
+/*	$OpenBSD: xform.c,v 1.48 2015/11/03 01:31:36 mikeb Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -58,6 +58,7 @@
 #include <crypto/cryptodev.h>
 #include <crypto/xform.h>
 #include <crypto/gmac.h>
+#include <crypto/chachapoly.h>
 
 extern void des_ecb3_encrypt(caddr_t, caddr_t, caddr_t, caddr_t, caddr_t, int);
 extern void des_ecb_encrypt(caddr_t, caddr_t, caddr_t, int);
@@ -216,6 +217,16 @@ struct enc_xform enc_xform_aes_xts = {
 	aes_xts_reinit
 };
 
+struct enc_xform enc_xform_chacha20_poly1305 = {
+	CRYPTO_CHACHA20_POLY1305, "CHACHA20-POLY1305",
+	1, 8, 32+4, 32+4,
+	sizeof(struct chacha20_ctx),
+	chacha20_crypt,
+	chacha20_crypt,
+	chacha20_setkey,
+	chacha20_reinit
+};
+
 struct enc_xform enc_xform_arc4 = {
 	CRYPTO_ARC4, "ARC4",
 	1, 1, 1, 32, 0,
@@ -311,6 +322,17 @@ struct auth_hash auth_hash_gmac_aes_256 = {
 	(void (*)(void *, const u_int8_t *, u_int16_t)) AES_GMAC_Reinit,
 	(int  (*)(void *, const u_int8_t *, u_int16_t)) AES_GMAC_Update,
 	(void (*)(u_int8_t *, void *)) AES_GMAC_Final
+};
+
+struct auth_hash auth_hash_chacha20_poly1305 = {
+	CRYPTO_CHACHA20_POLY1305_MAC, "CHACHA20-POLY1305",
+	CHACHA20_KEYSIZE+CHACHA20_SALT, POLY1305_BLOCK_LEN, POLY1305_TAGLEN,
+	sizeof(CHACHA20_POLY1305_CTX), CHACHA20_BLOCK_LEN,
+	(void (*)(void *))Chacha20_Poly1305_Init,
+	(void (*)(void *, const u_int8_t *, u_int16_t))Chacha20_Poly1305_Setkey,
+	(void (*)(void *, const u_int8_t *, u_int16_t))Chacha20_Poly1305_Reinit,
+	(int  (*)(void *, const u_int8_t *, u_int16_t))Chacha20_Poly1305_Update,
+	(void (*)(u_int8_t *, void *))Chacha20_Poly1305_Final
 };
 
 struct auth_hash auth_hash_md5 = {

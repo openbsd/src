@@ -1,4 +1,4 @@
-/*	$OpenBSD: xform.h,v 1.24 2014/12/28 10:02:37 tedu Exp $	*/
+/*	$OpenBSD: xform.h,v 1.25 2015/11/03 01:31:36 mikeb Exp $	*/
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -85,6 +85,7 @@ extern struct enc_xform enc_xform_aes_ctr;
 extern struct enc_xform enc_xform_aes_gcm;
 extern struct enc_xform enc_xform_aes_gmac;
 extern struct enc_xform enc_xform_aes_xts;
+extern struct enc_xform enc_xform_chacha20_poly1305;
 extern struct enc_xform enc_xform_arc4;
 extern struct enc_xform enc_xform_null;
 
@@ -99,6 +100,7 @@ extern struct auth_hash auth_hash_hmac_sha2_512_256;
 extern struct auth_hash auth_hash_gmac_aes_128;
 extern struct auth_hash auth_hash_gmac_aes_192;
 extern struct auth_hash auth_hash_gmac_aes_256;
+extern struct auth_hash auth_hash_chacha20_poly1305;
 
 extern struct comp_algo comp_algo_deflate;
 extern struct comp_algo comp_algo_lzs;
