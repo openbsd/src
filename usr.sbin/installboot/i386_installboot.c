@@ -1,4 +1,4 @@
-/*	$OpenBSD: i386_installboot.c,v 1.15 2015/10/25 21:21:15 stsp Exp $	*/
+/*	$OpenBSD: i386_installboot.c,v 1.16 2015/11/03 11:38:41 jsg Exp $	*/
 /*	$NetBSD: installboot.c,v 1.5 1995/11/17 23:23:50 gwr Exp $ */
 
 /*
@@ -502,8 +502,10 @@ findgptefisys(int devfd, struct disklabel *dl)
 		err(1, NULL);
 	for (i = 0; i < (ghpartnum + ghpartspersec - 1) / ghpartspersec; i++) {
 		len = pread(devfd, secbuf, dl->d_secsize, off);
-		if (len != dl->d_secsize)
+		if (len != dl->d_secsize) {
+			free(secbuf);
 			return (-1);
+		}
 		memcpy(gp + i * ghpartspersec, secbuf,
 		    ghpartspersec * sizeof(struct gpt_partition));
 		off += dl->d_secsize;
