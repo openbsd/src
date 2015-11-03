@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnode.h,v 1.132 2015/05/07 08:53:33 mpi Exp $	*/
+/*	$OpenBSD: vnode.h,v 1.133 2015/11/03 06:25:01 guenther Exp $	*/
 /*	$NetBSD: vnode.h,v 1.38 1996/02/29 20:59:05 cgd Exp $	*/
 
 /*
@@ -138,8 +138,6 @@ struct vnode {
 #define	VLARVAL		0x1000	/* vnode data not yet set up by higher level */
 #define	VLOCKSWORK	0x4000	/* FS supports locking discipline */
 #define	VCLONE		0x8000	/* vnode is a clone */
-#define	VBITS	"\010\001ROOT\002TEXT\003SYSTEM\004ISTTY\010XLOCK" \
-    "\011XWANT\013ALIASED\014LARVAL\016LOCKSWORK\017CLONE"
 
 /*
  * (v_bioflag) Flags that may be manipulated by interrupt handlers
