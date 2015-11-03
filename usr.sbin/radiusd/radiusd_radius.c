@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd_radius.c,v 1.10 2015/10/27 04:30:44 yasuoka Exp $	*/
+/*	$OpenBSD: radiusd_radius.c,v 1.11 2015/11/03 05:09:22 mmcc Exp $	*/
 
 /*
  * Copyright (c) 2013 Internet Initiative Japan Inc.
@@ -131,8 +131,10 @@ main(int argc, char *argv[])
 	module_load(module_radius.base);
 	log_init(0);
 	event_init();
+
 	if (pledge("stdio inet", NULL) == -1)
 		err(EXIT_FAILURE, "pledge");
+
 	module_start(module_radius.base);
 	event_loop(0);
 
