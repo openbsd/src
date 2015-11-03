@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.401 2015/11/02 14:40:09 mpi Exp $	*/
+/*	$OpenBSD: if.c,v 1.402 2015/11/03 12:25:37 mpi Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -564,7 +564,6 @@ if_enqueue(struct ifnet *ifp, struct mbuf *m)
 #if NBRIDGE > 0
 	if (ifp->if_bridgeport && (m->m_flags & M_PROTO1) == 0)
 		return (bridge_output(ifp, m, NULL, NULL));
-	m->m_flags &= ~M_PROTO1;	/* Loop prevention */
 #endif
 
 	length = m->m_pkthdr.len;
