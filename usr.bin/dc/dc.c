@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.16 2015/10/10 19:28:54 deraadt Exp $	*/
+/*	$OpenBSD: dc.c,v 1.17 2015/11/03 04:58:58 mmcc Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -88,8 +88,10 @@ dc_main(int argc, char *argv[])
 		file = fopen(argv[0], "r");
 		if (file == NULL)
 			err(1, "cannot open file %s", argv[0]);
+
 		if (pledge("stdio", NULL) == -1)
 			err(1, "pledge");
+
 		if (fstat(fileno(file), &st) == -1)
 			err(1, "%s", argv[0]);
 		if (S_ISDIR(st.st_mode))
@@ -104,8 +106,10 @@ dc_main(int argc, char *argv[])
 		 */
 		 return (0);
 	}
+
 	if (pledge("stdio", NULL) == -1)
 		err(1, "pledge");
+
 	src_setstream(&src, stdin);
 	reset_bmachine(&src);
 	eval();
