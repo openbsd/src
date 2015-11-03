@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.29 2015/10/25 22:11:34 jca Exp $	*/
+/*	$OpenBSD: if.c,v 1.30 2015/11/03 15:59:31 mpi Exp $	*/
 /*	$KAME: if.c,v 1.17 2001/01/21 15:27:30 itojun Exp $	*/
 
 /*
@@ -180,6 +180,7 @@ int
 lladdropt_length(struct sockaddr_dl *sdl)
 {
 	switch (sdl->sdl_type) {
+	case IFT_CARP:
 	case IFT_ETHER:
 	case IFT_FDDI:
 		return(ROUNDUP8(ETHER_ADDR_LEN + 2));
@@ -196,6 +197,7 @@ lladdropt_fill(struct sockaddr_dl *sdl, struct nd_opt_hdr *ndopt)
 	ndopt->nd_opt_type = ND_OPT_SOURCE_LINKADDR; /* fixed */
 
 	switch (sdl->sdl_type) {
+	case IFT_CARP:
 	case IFT_ETHER:
 	case IFT_FDDI:
 		ndopt->nd_opt_len = (ROUNDUP8(ETHER_ADDR_LEN + 2)) >> 3;
