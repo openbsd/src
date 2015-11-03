@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ip6.4,v 1.34 2015/10/25 14:43:07 florian Exp $
+.\"	$OpenBSD: ip6.4,v 1.35 2015/11/03 02:17:45 jca Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -26,7 +26,7 @@
 .\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
-.Dd $Mdocdate: October 25 2015 $
+.Dd $Mdocdate: November 3 2015 $
 .Dt IP6 4
 .Os
 .Sh NAME
@@ -331,35 +331,6 @@ routine and family of routines may be used to manipulate this data.
 This option requires superuser privileges.
 Turning this option on will result in this socket getting cmsg data of
 type IPV6_RTHDR.
-.It Dv IPV6_PKTOPTIONS Fa "struct cmsghdr *"
-Get or set all header options and extension headers at one time on the
-last packet sent or received on the socket.
-All options must fit within the size of an mbuf (see
-.Xr mbuf 9 ) .
-Options are specified as a series of
-.Vt cmsghdr
-structures followed by corresponding values.
-.Va cmsg_level
-is set to
-.Dv IPPROTO_IPV6 ,
-.Va cmsg_type
-to one of the other values in this list, and trailing data to the option
-value.
-When setting options, if the length
-.Va optlen
-to
-.Xr setsockopt 2
-is zero, all header options will be reset to their default values.
-Otherwise, the length should specify the size the series of control
-messages consumes.
-.Pp
-Instead of using
-.Xr sendmsg 2
-to specify option values, the ancillary data used in these calls that
-correspond to the desired header options may be directly specified as
-the control message in the series of control messages provided as the
-argument to
-.Xr setsockopt 2 .
 .It Dv IPV6_CHECKSUM Fa "int *"
 Get or set the byte offset into a packet where the 16-bit checksum is
 located.
@@ -461,15 +432,10 @@ This implementation determines the value in the following way:
 options specified by using ancillary data (i.e.,
 .Xr sendmsg 2 )
 are considered first,
-options specified by using
-.Dv IPV6_PKTOPTIONS
-to set
-.Dq sticky
-options are considered second,
 options specified by using the individual, basic, and direct socket
 options (e.g.,
 .Dv IPV6_UNICAST_HOPS )
-are considered third,
+are considered second,
 and options specified in the socket address supplied to
 .Xr sendto 2
 are the last choice.
