@@ -1,4 +1,4 @@
-/*	$OpenBSD: at.c,v 1.66 2015/10/28 20:17:31 deraadt Exp $	*/
+/*	$OpenBSD: at.c,v 1.67 2015/11/03 16:28:43 millert Exp $	*/
 
 /*
  *  at.c : Put file into atrun queue
@@ -35,7 +35,6 @@
 
 #include "cron.h"
 #include "at.h"
-#include "privs.h"
 #include <limits.h>
 
 #define ALARMC 10		/* Number of seconds to wait for timeout */
@@ -56,6 +55,9 @@ char vflag = 0;			/* show completed but unremoved jobs (atq) */
 char force = 0;			/* suppress errors (atrm) */
 char interactive = 0;		/* interactive mode (atrm) */
 static int send_mail = 0;	/* whether we are sending mail */
+uid_t user_uid;			/* user's real uid */
+gid_t user_gid;			/* user's real gid */
+gid_t spool_gid;		/* gid for writing to at spool */
 
 static void sigc(int);
 static void alarmc(int);
@@ -77,11 +79,8 @@ static __dead void
 panic(const char *a)
 {
 	(void)fprintf(stderr, "%s: %s\n", ProgramName, a);
-	if (fcreated) {
-		PRIV_START;
+	if (fcreated)
 		unlink(atfile);
-		PRIV_END;
-	}
 
 	exit(EXIT_FAILURE);
 }
@@ -93,11 +92,8 @@ static __dead void
 panic2(const char *a, const char *b)
 {
 	(void)fprintf(stderr, "%s: %s%s\n", ProgramName, a, b);
-	if (fcreated) {
-		PRIV_START;
+	if (fcreated)
 		unlink(atfile);
-		PRIV_END;
-	}
 
 	exit(EXIT_FAILURE);
 }
@@ -110,11 +106,8 @@ perr(const char *a)
 {
 	if (!force)
 		perror(a);
-	if (fcreated) {
-		PRIV_START;
+	if (fcreated)
 		unlink(atfile);
-		PRIV_END;
-	}
 
 	exit(EXIT_FAILURE);
 }
@@ -135,11 +128,8 @@ static void
 sigc(int signo)
 {
 	/* If the user presses ^C, remove the spool file and exit. */
-	if (fcreated) {
-		PRIV_START;
+	if (fcreated)
 		(void)unlink(atfile);
-		PRIV_END;
-	}
 
 	_exit(EXIT_FAILURE);
 }
@@ -204,8 +194,6 @@ writefile(const char *cwd, time_t runtimer, char queue)
 	act.sa_flags = 0;
 	sigaction(SIGINT, &act, NULL);
 
-	PRIV_START;
-
 	if ((lockdes = open(AT_DIR, O_RDONLY, 0)) < 0)
 		perr("Cannot open jobs dir");
 
@@ -241,10 +229,8 @@ writefile(const char *cwd, time_t runtimer, char queue)
 	if ((fd2 = dup(fdes)) < 0)
 		perr("Error in dup() of job file");
 
-	if (fchown(fd2, real_uid, real_gid) != 0)
+	if (fchown(fd2, user_uid, user_gid) != 0)
 		perr("Cannot give away file");
-
-	PRIV_END;
 
 	/*
 	 * We've successfully created the file; let's set the flag so it
@@ -268,7 +254,7 @@ writefile(const char *cwd, time_t runtimer, char queue)
 
 	if ((mailname == NULL) || (mailname[0] == '\0') ||
 	    (strlen(mailname) > MAX_UNAME) || (getpwnam(mailname) == NULL)) {
-		pass_entry = getpwuid(real_uid);
+		pass_entry = getpwuid(user_uid);
 		if (pass_entry != NULL)
 			mailname = pass_entry->pw_name;
 	}
@@ -279,7 +265,7 @@ writefile(const char *cwd, time_t runtimer, char queue)
 	 * that, /bin/sh.
 	 */
 	if ((shell = getenv("SHELL")) == NULL || *shell == '\0') {
-		pass_entry = getpwuid(real_uid);
+		pass_entry = getpwuid(user_uid);
 		if (pass_entry != NULL && *pass_entry->pw_shell != '\0')
 			shell = pass_entry->pw_shell;
 		else
@@ -287,7 +273,7 @@ writefile(const char *cwd, time_t runtimer, char queue)
 	}
 
 	(void)fprintf(fp, "#!/bin/sh\n# atrun uid=%lu gid=%lu\n# mail %*s %d\n",
-	    (unsigned long)real_uid, (unsigned long)real_gid,
+	    (unsigned long)user_uid, (unsigned long)user_gid,
 	    MAX_UNAME, mailname, send_mail);
 
 	/* Write out the umask at the time of invocation */
@@ -394,9 +380,7 @@ writefile(const char *cwd, time_t runtimer, char queue)
 	(void)close(fd2);
 
 	/* Poke cron so it knows to reload the at spool. */
-	PRIV_START;
 	poke_daemon(AT_DIR, RELOAD_AT);
-	PRIV_END;
 
 	runtime = *localtime(&runtimer);
 	strftime(timestr, TIMESIZE, "%a %b %e %T %Y", &runtime);
@@ -485,7 +469,7 @@ list_jobs(int argc, char **argv, int count_only, int csort)
 		for (i = 0; i < argc; i++) {
 			if ((pw = getpwnam(argv[i])) == NULL)
 				panic2(argv[i], ": invalid user name");
-			if (pw->pw_uid != real_uid && real_uid != 0)
+			if (pw->pw_uid != user_uid && user_uid != 0)
 				panic("Only the superuser may display other users' jobs");
 			uids[i] = pw->pw_uid;
 		}
@@ -494,15 +478,11 @@ list_jobs(int argc, char **argv, int count_only, int csort)
 
 	shortformat = strcmp(ProgramName, "at") == 0;
 
-	PRIV_START;
-
 	if (chdir(AT_DIR) != 0)
 		perr2("Cannot change to ", AT_DIR);
 
 	if ((spool = opendir(".")) == NULL)
 		perr2("Cannot open ", AT_DIR);
-
-	PRIV_END;
 
 	if (fstat(dirfd(spool), &stbuf) != 0)
 		perr2("Cannot stat ", AT_DIR);
@@ -520,19 +500,15 @@ list_jobs(int argc, char **argv, int count_only, int csort)
 
 	/* Loop over every file in the directory. */
 	while ((dirent = readdir(spool)) != NULL) {
-		PRIV_START;
-
 		if (stat(dirent->d_name, &stbuf) != 0)
 			perr2("Cannot stat in ", AT_DIR);
-
-		PRIV_END;
 
 		/*
 		 * See it's a regular file and has its x bit turned on and
 		 * is the user's
 		 */
 		if (!S_ISREG(stbuf.st_mode)
-		    || ((stbuf.st_uid != real_uid) && !(real_uid == 0))
+		    || ((stbuf.st_uid != user_uid) && !(user_uid == 0))
 		    || !(S_IXUSR & stbuf.st_mode || vflag))
 			continue;
 
@@ -638,15 +614,11 @@ process_jobs(int argc, char **argv, int what)
 	int job_matches, jobs_len, uids_len;
 	int error, i, ch, changed;
 
-	PRIV_START;
-
 	if (chdir(AT_DIR) != 0)
 		perr2("Cannot change to ", AT_DIR);
 
 	if ((spool = opendir(".")) == NULL)
 		perr2("Cannot open ", AT_DIR);
-
-	PRIV_END;
 
 	/* Convert argv into a list of jobs and uids. */
 	jobs = NULL;
@@ -663,7 +635,7 @@ process_jobs(int argc, char **argv, int what)
 			    *(ep + 2) == '\0' && l > 0 && l < INT_MAX)
 				jobs[jobs_len++] = argv[i];
 			else if ((pw = getpwnam(argv[i])) != NULL) {
-				if (real_uid != pw->pw_uid && real_uid != 0) {
+				if (user_uid != pw->pw_uid && user_uid != 0) {
 					fprintf(stderr, "%s: Only the superuser"
 					    " may %s other users' jobs\n",
 					    ProgramName, what == ATRM
@@ -679,13 +651,10 @@ process_jobs(int argc, char **argv, int what)
 	/* Loop over every file in the directory */
 	changed = 0;
 	while ((dirent = readdir(spool)) != NULL) {
-
-		PRIV_START;
 		if (stat(dirent->d_name, &stbuf) != 0)
 			perr2("Cannot stat in ", AT_DIR);
-		PRIV_END;
 
-		if (stbuf.st_uid != real_uid && real_uid != 0)
+		if (stbuf.st_uid != user_uid && user_uid != 0)
 			continue;
 
 		if (strtot(dirent->d_name, &ep, &runtimer) == -1)
@@ -718,8 +687,6 @@ process_jobs(int argc, char **argv, int what)
 		if (job_matches) {
 			switch (what) {
 			case ATRM:
-				PRIV_START;
-
 				if (!interactive ||
 				    (interactive && rmok(runtimer))) {
 					if (unlink(dirent->d_name) == 0)
@@ -731,18 +698,10 @@ process_jobs(int argc, char **argv, int what)
 						    "%s removed\n",
 						    dirent->d_name);
 				}
-
-				PRIV_END;
-
 				break;
 
 			case CAT:
-				PRIV_START;
-
 				fp = fopen(dirent->d_name, "r");
-
-				PRIV_END;
-
 				if (!fp)
 					perr("Cannot open file");
 
@@ -773,12 +732,10 @@ process_jobs(int argc, char **argv, int what)
 
 	/* If we modied the spool, poke cron so it knows to reload. */
 	if (changed) {
-		PRIV_START;
 		if (chdir(CRONDIR) != 0)
 			perror(CRONDIR);
 		else
 			poke_daemon(AT_DIR, RELOAD_AT);
-		PRIV_END;
 	}
 
 	return (error);
@@ -870,22 +827,14 @@ ttime(char *arg)
 static int
 check_permission(void)
 {
-	int ok;
-	uid_t uid = geteuid();
 	struct passwd *pw;
 
-	if ((pw = getpwuid(uid)) == NULL) {
+	if ((pw = getpwuid(user_uid)) == NULL) {
 		perror("Cannot access password database");
 		exit(EXIT_FAILURE);
 	}
 
-	PRIV_START;
-
-	ok = allowed(pw->pw_name, AT_ALLOW, AT_DENY);
-
-	PRIV_END;
-
-	return (ok);
+	return (allowed(pw->pw_name, AT_ALLOW, AT_DENY));
 }
 
 static __dead void
@@ -942,7 +891,9 @@ main(int argc, char **argv)
 	else
 		ProgramName = argv[0];
 
-	RELINQUISH_PRIVS;
+	user_uid = getuid();
+	user_gid = getgid();
+	spool_gid = getegid();
 
 	/* find out what this program is supposed to do */
 	if (strcmp(ProgramName, "atq") == 0) {
@@ -1046,8 +997,12 @@ main(int argc, char **argv)
 	case AT:
 	case BATCH:
 		if (atinput != NULL) {
+			if (setegid(user_gid) != 0)
+				perr("setegid(user_gid)");
 			if (freopen(atinput, "r", stdin) == NULL)
 				perr("Cannot open input file");
+			if (setegid(spool_gid) != 0)
+				perr("setegid(spool_gid)");
 		}
 		break;
 	default:
