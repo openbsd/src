@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.211 2015/11/02 16:31:55 semarie Exp $	*/
+/*	$OpenBSD: proc.h,v 1.212 2015/11/03 16:14:14 deraadt Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -327,7 +327,6 @@ struct proc {
 	char	p_comm[MAXCOMLEN+1];
 
 	int	p_pledge_syscall;	/* Cache of current syscall */
-	int	p_pledgeafter;	/* Observance during syscall */
 
 #ifndef	__HAVE_MD_TCB
 	void	*p_tcb;		/* user-space thread-control-block address */

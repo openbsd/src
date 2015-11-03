@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.101 2015/11/02 23:17:23 tedu Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.102 2015/11/03 16:14:14 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -523,7 +523,6 @@ sys_pledge(struct proc *p, void *v, register_t *retval)
 int
 pledge_syscall(struct proc *p, int code, int *tval)
 {
-	p->p_pledgeafter = 0;	/* XX optimise? */
 	p->p_pledge_syscall = code;
 	*tval = 0;
 
@@ -664,7 +663,16 @@ pledge_namei(struct proc *p, struct nameidata *ni, char *origpath)
 		if ((ni->ni_pledge == PLEDGE_RPATH) &&
 		    (p->p_p->ps_pledge & PLEDGE_GETPW)) {
 			if (strcmp(path, "/var/run/ypbind.lock") == 0) {
-				p->p_pledgeafter |= PLEDGE_YPACTIVE;
+				/*
+				 * XXX
+				 * The current hack for YP support in "getpw"
+				 * is to enable some "inet" features until
+				 * next pledge call.  This is not considered
+				 * worse than pre-pledge, but is a work in
+				 * progress, needing a clever design.
+				 */
+				atomic_setbits_int(&p->p_p->ps_pledge,
+				    PLEDGE_YPACTIVE | PLEDGE_INET);
 				return (0);
 			}
 			if (strncmp(path, "/var/yp/binding/",
@@ -806,13 +814,6 @@ pledge_namei(struct proc *p, struct nameidata *ni, char *origpath)
 	}
 
 	return (0);
-}
-
-void
-pledge_aftersyscall(struct proc *p, int code, int error)
-{
-	if ((p->p_pledgeafter & PLEDGE_YPACTIVE) && error == 0)
-		atomic_setbits_int(&p->p_p->ps_pledge, PLEDGE_YPACTIVE | PLEDGE_INET);
 }
 
 /*
