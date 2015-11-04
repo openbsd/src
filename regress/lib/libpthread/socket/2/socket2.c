@@ -1,4 +1,4 @@
-/*	$OpenBSD: socket2.c,v 1.6 2005/10/30 23:59:43 fgsch Exp $	*/
+/*	$OpenBSD: socket2.c,v 1.7 2015/11/04 21:29:20 tedu Exp $	*/
 /*
  * Copyright (c) 1993, 1994, 1995, 1996 by Chris Provenzano and contributors, 
  * proven@mit.edu All rights reserved.
@@ -177,8 +177,8 @@ main(int argc, char *argv[])
 {
 	pthread_t thread;
 
-	setbuf(stdout, NULL);
-	setbuf(stderr, NULL);
+	setvbuf(stdout, NULL, _IONBF, 0);
+	setvbuf(stderr, NULL, _IONBF, 0);
 
 	CHECKr(pthread_create(&thread, NULL, sock_accept, 
 	    (void *)0xdeadbeaf));

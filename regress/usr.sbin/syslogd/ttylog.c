@@ -68,7 +68,7 @@ main(int argc, char *argv[])
 
 	if ((lg = fopen(logfile, "w")) == NULL)
 		err(1, "fopen %s", logfile);
-	if (setlinebuf(lg) != 0)
+	if (setvbuf(lg, NULL, _IOLBF, 0) != 0)
 		err(1, "setlinebuf");
 
 	memset(&act, 0, sizeof(act));

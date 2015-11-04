@@ -1,4 +1,4 @@
-/*	$OpenBSD: socket2a.c,v 1.4 2003/07/31 21:48:06 deraadt Exp $	*/
+/*	$OpenBSD: socket2a.c,v 1.5 2015/11/04 21:29:20 tedu Exp $	*/
 /*
  * Copyright (c) 1993, 1994, 1995, 1996 by Chris Provenzano and contributors, 
  * proven@mit.edu All rights reserved.
@@ -100,8 +100,8 @@ main(int argc, char *argv[])
 
 	if (argc == 3 && (!strcmp(argv[1], "fork okay"))) {
 		sleep(1);
-		setbuf(stdout, NULL);
-		setbuf(stderr, NULL);
+		setvbuf(stdout, NULL, _IONBF, 0);
+		setvbuf(stderr, NULL, _IONBF, 0);
 
 		CHECKr(pthread_create(&thread, NULL, sock_connect, 
 		    (void *)argv[2]));

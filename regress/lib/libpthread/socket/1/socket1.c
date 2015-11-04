@@ -1,4 +1,4 @@
-/*	$OpenBSD: socket1.c,v 1.3 2006/01/05 03:47:19 tedu Exp $	*/
+/*	$OpenBSD: socket1.c,v 1.4 2015/11/04 21:29:20 tedu Exp $	*/
 /*
  * Copyright (c) 1993, 1994, 1995, 1996 by Chris Provenzano and contributors, 
  * proven@mit.edu All rights reserved.
@@ -176,8 +176,8 @@ main(int argc, char *argv[])
 {
 	pthread_t thread;
 
-	setbuf(stdout, NULL);
-	setbuf(stderr, NULL);
+	setvbuf(stdout, NULL, _IONBUF, 0);
+	setvbuf(stderr, NULL, _IONBUF, 0);
 
 	CHECKr(pthread_attr_init(&attr));
 #if 0
