@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ppp.c,v 1.92 2015/11/02 23:39:20 dlg Exp $	*/
+/*	$OpenBSD: if_ppp.c,v 1.93 2015/11/04 01:54:14 dlg Exp $	*/
 /*	$NetBSD: if_ppp.c,v 1.39 1997/05/17 21:11:59 christos Exp $	*/
 
 /*
@@ -317,8 +317,7 @@ pppdealloc(struct ppp_softc *sc)
     sc->sc_xfer = 0;
     while ((pkt = ppp_pkt_dequeue(&sc->sc_rawq)) != NULL)
 	ppp_pkt_free(pkt);
-    while ((m = mq_dequeue(&sc->sc_inq)) != NULL)
-	m_freem(m);
+    mq_purge(&sc->sc_inq);
     while ((m = sc->sc_npqueue) != NULL) {
 	sc->sc_npqueue = m->m_nextpkt;
 	m_freem(m);
