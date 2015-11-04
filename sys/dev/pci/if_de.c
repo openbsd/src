@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_de.c,v 1.125 2015/11/04 00:09:59 dlg Exp $	*/
+/*	$OpenBSD: if_de.c,v 1.126 2015/11/04 00:10:50 dlg Exp $	*/
 /*	$NetBSD: if_de.c,v 1.58 1998/01/12 09:39:58 thorpej Exp $	*/
 
 /*-
@@ -3869,7 +3869,7 @@ tulip_txput(tulip_softc_t * const sc, struct mbuf *m, int notonqueue)
 	    struct mbuf *tmp;
 	    if (!notonqueue) {
 #ifdef DIAGNOSTIC
-		if (IF_IS_EMPTY(&ifp->if_snd))
+		if (IFQ_IS_EMPTY(&ifp->if_snd))
 			panic("%s: if_snd queue empty", ifp->if_xname);
 #endif
 		IFQ_DEQUEUE(&ifp->if_snd, tmp);
@@ -3953,7 +3953,7 @@ tulip_txput(tulip_softc_t * const sc, struct mbuf *m, int notonqueue)
 	/* remove the mbuf from the queue */
 	struct mbuf *tmp;
 #ifdef DIAGNOSTIC
-	if (IF_IS_EMPTY(&ifp->if_snd))
+	if (IFQ_IS_EMPTY(&ifp->if_snd))
 	    panic("%s: if_snd queue empty", ifp->if_xname);
 #endif
 	IFQ_DEQUEUE(&ifp->if_snd, tmp);
