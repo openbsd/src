@@ -1,4 +1,4 @@
-/*	$OpenBSD: entry.c,v 1.44 2015/11/04 12:53:05 millert Exp $	*/
+/*	$OpenBSD: entry.c,v 1.45 2015/11/04 20:28:17 millert Exp $	*/
 
 /*
  * Copyright 1988,1990,1993,1994 by Paul Vixie
@@ -18,7 +18,21 @@
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "cron.h"
+#include <sys/types.h>
+
+#include <bitstring.h>		/* for structs.h */
+#include <ctype.h>
+#include <pwd.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>		/* for structs.h */
+#include <unistd.h>
+
+#include "pathnames.h"
+#include "macros.h"
+#include "structs.h"
+#include "funcs.h"
 
 typedef	enum ecode {
 	e_none, e_minute, e_hour, e_dom, e_month, e_dow,

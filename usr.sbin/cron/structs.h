@@ -1,4 +1,4 @@
-/*	$OpenBSD: structs.h,v 1.5 2004/06/17 22:11:55 millert Exp $	*/
+/*	$OpenBSD: structs.h,v 1.6 2015/11/04 20:28:17 millert Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -16,6 +16,8 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
+struct passwd;
 
 typedef	struct _entry {
 	struct _entry	*next;

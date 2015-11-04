@@ -1,4 +1,4 @@
-/*	$OpenBSD: at.c,v 1.67 2015/11/03 16:28:43 millert Exp $	*/
+/*	$OpenBSD: at.c,v 1.68 2015/11/04 20:28:17 millert Exp $	*/
 
 /*
  *  at.c : Put file into atrun queue
@@ -33,9 +33,31 @@
 
 #define	MAIN_PROGRAM
 
-#include "cron.h"
-#include "at.h"
+#include <sys/types.h>
+#include <sys/stat.h>
+
+#include <bitstring.h>                  /* for structs.h */
+#include <ctype.h>
+#include <dirent.h>
+#include <errno.h>
+#include <fcntl.h>
 #include <limits.h>
+#include <locale.h>
+#include <pwd.h>
+#include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
+#include <unistd.h>
+
+#include "pathnames.h"
+#include "macros.h"
+#include "structs.h"
+#include "funcs.h"
+#include "globals.h"
+
+#include "at.h"
 
 #define ALARMC 10		/* Number of seconds to wait for timeout */
 #define TIMESIZE 50		/* Size of buffer passed to strftime() */

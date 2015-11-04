@@ -1,4 +1,4 @@
-/*	$OpenBSD: database.c,v 1.27 2015/10/26 14:27:41 millert Exp $	*/
+/*	$OpenBSD: database.c,v 1.28 2015/11/04 20:28:17 millert Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,24 @@
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "cron.h"
+#include <sys/types.h>
+#include <sys/stat.h>
+
+#include <bitstring.h>		/* for structs.h */
+#include <dirent.h>
+#include <fcntl.h>
+#include <limits.h>
+#include <pwd.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>		/* for structs.h */
+#include <unistd.h>
+
+#include "pathnames.h"
+#include "macros.h"
+#include "structs.h"
+#include "funcs.h"
 
 #define HASH(a,b) ((a)+(b))
 

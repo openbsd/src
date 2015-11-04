@@ -1,4 +1,4 @@
-/*	$OpenBSD: crontab.c,v 1.81 2015/11/03 21:10:08 millert Exp $	*/
+/*	$OpenBSD: crontab.c,v 1.82 2015/11/04 20:28:17 millert Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -17,17 +17,33 @@
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <err.h>
-
 #define	MAIN_PROGRAM
 
-#include "cron.h"
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/wait.h>
+
+#include <bitstring.h>		/* for structs.h */
+#include <err.h>
+#include <errno.h>
+#include <locale.h>
+#include <pwd.h>
+#include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
+#include <unistd.h>
+
+#include "pathnames.h"
+#include "macros.h"
+#include "structs.h"
+#include "funcs.h"
+#include "globals.h"
 
 #define NHEADER_LINES 3
 
 enum opt_t	{ opt_unknown, opt_list, opt_delete, opt_edit, opt_replace };
-
-static char	*getoptargs = "u:ler";
 
 static	pid_t		Pid;
 static	gid_t		crontab_gid;
@@ -133,7 +149,7 @@ parse_args(int argc, char *argv[])
 	strlcpy(RealUser, User, sizeof(RealUser));
 	Filename[0] = '\0';
 	Option = opt_unknown;
-	while (-1 != (argch = getopt(argc, argv, getoptargs))) {
+	while ((argch = getopt(argc, argv, "u:ler")) != -1) {
 		switch (argch) {
 		case 'u':
 			if (getuid() != 0) {

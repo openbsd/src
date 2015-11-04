@@ -1,4 +1,4 @@
-/*	$OpenBSD: popen.c,v 1.28 2015/10/04 09:08:46 tedu Exp $	*/
+/*	$OpenBSD: popen.c,v 1.29 2015/11/04 20:28:17 millert Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -37,7 +37,23 @@
  * globbing stuff since we don't need it.  also execvp instead of execv.
  */
 
-#include "cron.h"
+#include <sys/types.h>
+#include <sys/wait.h>
+
+#include <bitstring.h>		/* for structs.h */
+#include <errno.h>
+#include <login_cap.h>
+#include <pwd.h>
+#include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <time.h>		/* for structs.h */
+
+#include "macros.h"
+#include "structs.h"
+#include "funcs.h"
 
 #define MAX_ARGV	100
 #define MAX_GARGV	1000

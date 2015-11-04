@@ -1,4 +1,4 @@
-/*	$OpenBSD: macros.h,v 1.13 2015/10/26 14:27:41 millert Exp $	*/
+/*	$OpenBSD: macros.h,v 1.14 2015/11/04 20:28:17 millert Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -16,6 +16,8 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
+#define CRON_VERSION	"V5.0"
 
 #define TRUE		1
 #define FALSE		0

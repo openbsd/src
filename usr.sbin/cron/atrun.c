@@ -1,4 +1,4 @@
-/*	$OpenBSD: atrun.c,v 1.33 2015/10/25 21:30:11 millert Exp $	*/
+/*	$OpenBSD: atrun.c,v 1.34 2015/11/04 20:28:17 millert Exp $	*/
 
 /*
  * Copyright (c) 2002-2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -20,9 +20,33 @@
  * Materiel Command, USAF, under agreement number F39502-99-1-0512.
  */
 
-#include "cron.h"
-#include <limits.h>
+#include <sys/types.h>
 #include <sys/resource.h>
+#include <sys/stat.h>
+#include <sys/wait.h>
+
+#include <bitstring.h>		/* for structs.h */
+#include <bsd_auth.h>
+#include <ctype.h>
+#include <dirent.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <limits.h>
+#include <login_cap.h>
+#include <pwd.h>
+#include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
+#include <unistd.h>
+
+#include "config.h"
+#include "pathnames.h"
+#include "macros.h"
+#include "structs.h"
+#include "funcs.h"
+#include "globals.h"
 
 static void unlink_job(at_db *, atjob *);
 static void run_job(atjob *, char *);

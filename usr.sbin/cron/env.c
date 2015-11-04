@@ -1,4 +1,4 @@
-/*	$OpenBSD: env.c,v 1.31 2015/10/29 21:24:09 millert Exp $	*/
+/*	$OpenBSD: env.c,v 1.32 2015/11/04 20:28:17 millert Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,20 @@
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "cron.h"
+#include <sys/types.h>
+
+#include <bitstring.h>		/* for structs.h */
+#include <ctype.h>
+#include <errno.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>		/* for structs.h */
+
+#include "macros.h"
+#include "structs.h"
+#include "funcs.h"
+#include "globals.h"
 
 char **
 env_init(void)

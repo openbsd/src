@@ -1,4 +1,4 @@
-/*	$OpenBSD: cron.c,v 1.61 2015/11/04 12:53:05 millert Exp $	*/
+/*	$OpenBSD: cron.c,v 1.62 2015/11/04 20:28:17 millert Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -19,7 +19,29 @@
 
 #define	MAIN_PROGRAM
 
-#include "cron.h"
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <sys/stat.h>
+#include <sys/un.h>
+#include <sys/wait.h>
+
+#include <bitstring.h>
+#include <errno.h>
+#include <locale.h>
+#include <poll.h>
+#include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
+#include <unistd.h>
+
+#include "config.h"
+#include "pathnames.h"
+#include "macros.h"
+#include "structs.h"
+#include "funcs.h"
+#include "globals.h"
 
 enum timejump { negative, small, medium, large };
 

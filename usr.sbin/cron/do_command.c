@@ -1,4 +1,4 @@
-/*	$OpenBSD: do_command.c,v 1.51 2015/10/29 22:41:27 millert Exp $	*/
+/*	$OpenBSD: do_command.c,v 1.52 2015/11/04 20:28:17 millert Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -17,8 +17,30 @@
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "cron.h"
+#include <sys/types.h>
+#include <sys/wait.h>
+
+#include <bitstring.h>		/* for structs.h */
+#include <bsd_auth.h>
+#include <ctype.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <limits.h>
+#include <login_cap.h>
+#include <pwd.h>
+#include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>		/* for structs.h */
+#include <unistd.h>
 #include <vis.h>
+
+#include "config.h"
+#include "pathnames.h"
+#include "macros.h"
+#include "structs.h"
+#include "funcs.h"
 
 static void		child_process(entry *, user *);
 

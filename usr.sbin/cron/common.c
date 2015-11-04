@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.c,v 1.1 2015/10/31 12:19:41 millert Exp $	*/
+/*	$OpenBSD: common.c,v 1.2 2015/11/04 20:28:17 millert Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,25 @@
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "cron.h"
+#include <sys/types.h>
+#include <sys/stat.h>
+
+#include <bitstring.h>		/* for structs.h */
+#include <errno.h>
+#include <grp.h>
+#include <limits.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
+#include <unistd.h>
+
+#include "config.h"
+#include "pathnames.h"
+#include "macros.h"
+#include "structs.h"
+#include "funcs.h"
+#include "globals.h"
 
 void
 set_cron_cwd(void)
