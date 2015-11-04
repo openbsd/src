@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkdump.c,v 1.39 2015/04/17 10:04:37 mikeb Exp $	*/
+/*	$OpenBSD: pfkdump.c,v 1.40 2015/11/04 12:46:13 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2003 Markus Friedl.  All rights reserved.
@@ -151,6 +151,7 @@ struct idname auth_types[] = {
 	{ SADB_X_AALG_AES128GMAC,	"gmac-aes-128",		NULL },
 	{ SADB_X_AALG_AES192GMAC,	"gmac-aes-192",		NULL },
 	{ SADB_X_AALG_AES256GMAC,	"gmac-aes-256",		NULL },
+	{ SADB_X_AALG_CHACHA20POLY1305,	"chacha20-poly1305",	NULL },
 	{ 0,				NULL,			NULL }
 };
 
@@ -171,6 +172,7 @@ struct idname enc_types[] = {
 	{ SADB_EALG_NULL,		"null",			NULL },
 	{ SADB_X_EALG_RC4,		"rc4",			NULL },
 	{ SADB_X_EALG_RC5,		"rc5",			NULL },
+	{ SADB_X_EALG_CHACHA20POLY1305,	"chacha20-poly1305",	NULL },
 	{ 0,				NULL,			NULL }
 };
 
@@ -744,6 +746,9 @@ pfkey_print_sa(struct sadb_msg *msg, int opts)
 				break;
 			case SADB_X_EALG_CAST:
 				xfs.encxf = &encxfs[ENCXF_CAST128];
+				break;
+			case SADB_X_EALG_CHACHA20POLY1305:
+				xfs.encxf = &encxfs[ENCXF_CHACHA20_POLY1305];
 				break;
 			case SADB_EALG_NULL:
 				xfs.encxf = &encxfs[ENCXF_NULL];

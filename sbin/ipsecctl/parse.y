@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.162 2015/06/03 02:24:36 millert Exp $	*/
+/*	$OpenBSD: parse.y,v 1.163 2015/11/04 12:46:13 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -122,6 +122,7 @@ const struct ipsec_xf encxfs[] = {
 	{ "aes-256-gmac",	ENCXF_AES_256_GMAC,	32+4,	32+4,	1, 1 },
 	{ "blowfish",		ENCXF_BLOWFISH,		5,	56,	0, 0 },
 	{ "cast128",		ENCXF_CAST128,		5,	16,	0, 0 },
+	{ "chacha20-poly1305",	ENCXF_CHACHA20_POLY1305, 32+4,	32+4,	1, 1 },
 	{ "null",		ENCXF_NULL,		0,	0,	0, 0 },
 	{ NULL,			0,			0,	0,	0, 0 },
 };
