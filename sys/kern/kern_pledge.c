@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.102 2015/11/03 16:14:14 deraadt Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.103 2015/11/04 19:18:21 semarie Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -599,6 +599,18 @@ pledge_namei(struct proc *p, struct nameidata *ni, char *origpath)
 	if (error)
 		return (pledge_fail(p, error, 0));
 
+	/* Blacklisted paths */
+	switch (p->p_pledge_syscall) {
+	case SYS_stat:
+	case SYS_lstat:
+	case SYS_fstatat:
+	case SYS_fstat:
+		break;
+	default:
+		if (strcmp(path, "/etc/spwd.db") == 0)
+			return (EPERM);
+	}
+
 	/* Detect what looks like a mkstemp(3) family operation */
 	if ((p->p_p->ps_pledge & PLEDGE_TMPPATH) &&
 	    (p->p_pledge_syscall == SYS_open) &&
@@ -641,8 +653,6 @@ pledge_namei(struct proc *p, struct nameidata *ni, char *origpath)
 		/* getpw* and friends need a few files */
 		if ((ni->ni_pledge == PLEDGE_RPATH) &&
 		    (p->p_p->ps_pledge & PLEDGE_GETPW)) {
-			if (strcmp(path, "/etc/spwd.db") == 0)
-				return (EPERM);
 			if (strcmp(path, "/etc/pwd.db") == 0)
 				return (0);
 			if (strcmp(path, "/etc/group") == 0)
