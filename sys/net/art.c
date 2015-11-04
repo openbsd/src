@@ -1,4 +1,4 @@
-/*	$OpenBSD: art.c,v 1.5 2015/10/14 10:09:30 mpi Exp $ */
+/*	$OpenBSD: art.c,v 1.6 2015/11/04 09:50:21 mpi Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -24,10 +24,14 @@
  *	http://www.hariguchi.org/art/art.pdf
  */
 
+#ifndef _KERNEL
+#include "kern_compat.h"
+#else
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/socket.h>
+#endif
 
 #include <net/art.h>
 

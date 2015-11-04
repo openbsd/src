@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtable.c,v 1.17 2015/11/04 09:48:09 mpi Exp $ */
+/*	$OpenBSD: rtable.c,v 1.18 2015/11/04 09:50:21 mpi Exp $ */
 
 /*
  * Copyright (c) 2014-2015 Martin Pieuchot
@@ -16,6 +16,9 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#ifndef _KERNEL
+#include "kern_compat.h"
+#else
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/socket.h>
@@ -23,6 +26,7 @@
 #include <sys/pool.h>
 #include <sys/queue.h>
 #include <sys/domain.h>
+#endif
 
 #include <net/rtable.h>
 #include <net/route.h>

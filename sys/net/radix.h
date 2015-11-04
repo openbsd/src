@@ -1,4 +1,4 @@
-/*	$OpenBSD: radix.h,v 1.27 2015/10/08 08:41:58 mpi Exp $	*/
+/*	$OpenBSD: radix.h,v 1.28 2015/11/04 09:50:21 mpi Exp $	*/
 /*	$NetBSD: radix.h,v 1.8 1996/02/13 22:00:37 christos Exp $	*/
 
 /*
@@ -97,8 +97,6 @@ struct radix_node_head {
 	u_int	rnh_rtableid;
 };
 
-#ifdef _KERNEL
-
 void	rn_init(unsigned int);
 int	rn_inithead(void **, int);
 int	rn_inithead0(struct radix_node_head *, int);
@@ -115,7 +113,5 @@ struct radix_node	*rn_delete(void *, void *, struct radix_node_head *,
 			    struct radix_node *);
 struct radix_node	*rn_lookup(void *, void *, struct radix_node_head *);
 struct radix_node	*rn_match(void *, struct radix_node_head *);
-
-#endif /* _KERNEL */
 
 #endif /* _NET_RADIX_H_ */
