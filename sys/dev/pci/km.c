@@ -1,4 +1,4 @@
-/*	$OpenBSD: km.c,v 1.10 2015/03/14 03:38:48 jsg Exp $	*/
+/*	$OpenBSD: km.c,v 1.11 2015/11/04 19:39:30 sthen Exp $	*/
 
 /*
  * Copyright (c) 2008 Constantine A. Murenin <cnst+openbsd@bugmail.mojo.ru>
@@ -72,7 +72,8 @@ static const struct pci_matchid km_devices[] = {
 	{ PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_14_MISC },
 	{ PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_15_0x_MISC },
 	{ PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_15_1x_MISC },
-	{ PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_16_MISC }
+	{ PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_16_MISC },
+	{ PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_16_3X_MISC }
 };
 
 
