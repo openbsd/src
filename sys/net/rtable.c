@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtable.c,v 1.18 2015/11/04 09:50:21 mpi Exp $ */
+/*	$OpenBSD: rtable.c,v 1.19 2015/11/04 10:11:45 mpi Exp $ */
 
 /*
  * Copyright (c) 2014-2015 Martin Pieuchot
@@ -546,9 +546,9 @@ out:
 struct rtentry *
 rtable_match(unsigned int rtableid, struct sockaddr *dst)
 {
-	struct rtentry			*rt;
 	struct art_root			*ar;
-	struct art_node			*an = NULL;
+	struct art_node			*an;
+	struct rtentry			*rt = NULL;
 	uint8_t				*addr;
 
 	ar = rtable_get(rtableid, dst->sa_family);
