@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.131 2015/10/30 11:00:52 florian Exp $	*/
+/*	$OpenBSD: ping.c,v 1.132 2015/11/04 21:26:30 tedu Exp $	*/
 /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
@@ -234,7 +234,7 @@ main(int argc, char *argv[])
 			if (getuid())
 				errx(1, "%s", strerror(EPERM));
 			options |= F_FLOOD;
-			setbuf(stdout, (char *)NULL);
+			setvbuf(stdout, NULL, _IONBF, 0);
 			break;
 		case 'I':
 		case 'S':	/* deprecated */
