@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.46 2015/10/15 18:40:38 mmcc Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.47 2015/11/04 12:40:49 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -84,6 +84,7 @@ static const struct pfkey_constmap pfkey_encr[] = {
 	{ SADB_X_EALG_AESCTR,	IKEV2_XFORMENCR_AES_CTR },
 	{ SADB_X_EALG_AESGCM16,	IKEV2_XFORMENCR_AES_GCM_16 },
 	{ SADB_X_EALG_AESGMAC,	IKEV2_XFORMENCR_NULL_AES_GMAC },
+	{ SADB_X_EALG_CHACHA20POLY1305, IKEV2_XFORMENCR_CHACHA20_POLY1305 },
 	{ 0 }
 };
 
