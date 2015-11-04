@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.66 2015/10/31 12:19:41 millert Exp $	*/
+/*	$OpenBSD: misc.c,v 1.67 2015/11/04 14:47:02 millert Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -19,7 +19,6 @@
 
 #include "cron.h"
 
-static int LogFD = -1;
 static int syslog_open = FALSE;
 
 /* get_char(file) : like getc() but increment LineNumber on newlines
@@ -130,10 +129,6 @@ log_it(const char *username, pid_t xpid, const char *event, const char *detail)
 void
 log_close(void)
 {
-	if (LogFD != -1) {
-		close(LogFD);
-		LogFD = -1;
-	}
 	closelog();
 	syslog_open = FALSE;
 }
