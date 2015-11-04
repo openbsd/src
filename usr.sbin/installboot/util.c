@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.10 2015/10/19 19:05:24 krw Exp $	*/
+/*	$OpenBSD: util.c,v 1.11 2015/11/04 02:12:49 jsg Exp $	*/
 
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
@@ -40,11 +40,6 @@ filecopy(const char *srcfile, const char *dstfile)
 	int sfd, dfd;
 	char *buf;
 
-	if ((buf = malloc(BUFSIZE)) == NULL) {
-		warn("malloc");
-		return (-1);
-	}
-
 	sfd = open(srcfile, O_RDONLY);
 	if (sfd == -1) {
 		warn("open %s", srcfile);
@@ -71,15 +66,22 @@ filecopy(const char *srcfile, const char *dstfile)
 		return (-1);
 	}
 
+	if ((buf = malloc(BUFSIZE)) == NULL) {
+		warn("malloc");
+		return (-1);
+	}
+
 	while (sz > 0) {
 		n = MINIMUM(sz, BUFSIZE);
 		if ((n = read(sfd, buf, n)) == -1) {
 			warn("read");
+			free(buf);
 			return (-1);
 		}
 		sz -= n;
 		if (write(dfd, buf, n) != n) {
 			warn("write");
+			free(buf);
 			return (-1);
 		}
 	}
