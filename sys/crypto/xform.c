@@ -1,4 +1,4 @@
-/*	$OpenBSD: xform.c,v 1.48 2015/11/03 01:31:36 mikeb Exp $	*/
+/*	$OpenBSD: xform.c,v 1.49 2015/11/04 12:32:37 mikeb Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -328,11 +328,9 @@ struct auth_hash auth_hash_chacha20_poly1305 = {
 	CRYPTO_CHACHA20_POLY1305_MAC, "CHACHA20-POLY1305",
 	CHACHA20_KEYSIZE+CHACHA20_SALT, POLY1305_BLOCK_LEN, POLY1305_TAGLEN,
 	sizeof(CHACHA20_POLY1305_CTX), CHACHA20_BLOCK_LEN,
-	(void (*)(void *))Chacha20_Poly1305_Init,
-	(void (*)(void *, const u_int8_t *, u_int16_t))Chacha20_Poly1305_Setkey,
-	(void (*)(void *, const u_int8_t *, u_int16_t))Chacha20_Poly1305_Reinit,
-	(int  (*)(void *, const u_int8_t *, u_int16_t))Chacha20_Poly1305_Update,
-	(void (*)(u_int8_t *, void *))Chacha20_Poly1305_Final
+	Chacha20_Poly1305_Init, Chacha20_Poly1305_Setkey,
+	Chacha20_Poly1305_Reinit, Chacha20_Poly1305_Update,
+	Chacha20_Poly1305_Final
 };
 
 struct auth_hash auth_hash_md5 = {

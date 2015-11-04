@@ -55,15 +55,18 @@ chacha20_crypt(caddr_t key, u_int8_t *data)
 }
 
 void
-Chacha20_Poly1305_Init(CHACHA20_POLY1305_CTX *ctx)
+Chacha20_Poly1305_Init(void *xctx)
 {
+	CHACHA20_POLY1305_CTX *ctx = xctx;
+
 	memset(ctx, 0, sizeof(*ctx));
 }
 
 void
-Chacha20_Poly1305_Setkey(CHACHA20_POLY1305_CTX *ctx, const uint8_t *key,
-    uint16_t klen)
+Chacha20_Poly1305_Setkey(void *xctx, const uint8_t *key, uint16_t klen)
 {
+	CHACHA20_POLY1305_CTX *ctx = xctx;
+
 	/* salt is provided with the key material */
 	memcpy(ctx->nonce + CHACHA20_CTR, key + CHACHA20_KEYSIZE,
 	    CHACHA20_SALT);
@@ -71,9 +74,10 @@ Chacha20_Poly1305_Setkey(CHACHA20_POLY1305_CTX *ctx, const uint8_t *key,
 }
 
 void
-Chacha20_Poly1305_Reinit(CHACHA20_POLY1305_CTX *ctx, const uint8_t *iv,
-    uint16_t ivlen)
+Chacha20_Poly1305_Reinit(void *xctx, const uint8_t *iv, uint16_t ivlen)
 {
+	CHACHA20_POLY1305_CTX *ctx = xctx;
+
 	/* initial counter is 0 */
 	chacha_ivsetup((chacha_ctx *)&ctx->chacha, iv, ctx->nonce);
 	chacha_encrypt_bytes((chacha_ctx *)&ctx->chacha, ctx->key, ctx->key,
@@ -82,9 +86,10 @@ Chacha20_Poly1305_Reinit(CHACHA20_POLY1305_CTX *ctx, const uint8_t *iv,
 }
 
 int
-Chacha20_Poly1305_Update(CHACHA20_POLY1305_CTX *ctx, const uint8_t *data,
-    uint16_t len)
+Chacha20_Poly1305_Update(void *xctx, const uint8_t *data, uint16_t len)
 {
+	CHACHA20_POLY1305_CTX *ctx = xctx;
+
 	static const char zeroes[POLY1305_BLOCK_LEN];
 	size_t rem;
 
@@ -99,9 +104,10 @@ Chacha20_Poly1305_Update(CHACHA20_POLY1305_CTX *ctx, const uint8_t *data,
 }
 
 void
-Chacha20_Poly1305_Final(uint8_t tag[POLY1305_TAGLEN],
-    CHACHA20_POLY1305_CTX *ctx)
+Chacha20_Poly1305_Final(uint8_t tag[POLY1305_TAGLEN], void *xctx)
 {
+	CHACHA20_POLY1305_CTX *ctx = xctx;
+
 	poly1305_finish((poly1305_state *)&ctx->poly, tag);
 	explicit_bzero(ctx, sizeof(*ctx));
 }

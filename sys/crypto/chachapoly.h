@@ -53,14 +53,10 @@ typedef struct {
 	struct poly1305_ctx	poly;
 } CHACHA20_POLY1305_CTX;
 
-void	Chacha20_Poly1305_Init(CHACHA20_POLY1305_CTX *);
-void	Chacha20_Poly1305_Setkey(CHACHA20_POLY1305_CTX *, const uint8_t *,
-	    uint16_t);
-void	Chacha20_Poly1305_Reinit(CHACHA20_POLY1305_CTX *, const uint8_t *,
-	    uint16_t);
-int	Chacha20_Poly1305_Update(CHACHA20_POLY1305_CTX *, const uint8_t *,
-	    uint16_t);
-void	Chacha20_Poly1305_Final(uint8_t[POLY1305_TAGLEN],
-	    CHACHA20_POLY1305_CTX *);
+void	Chacha20_Poly1305_Init(void *);
+void	Chacha20_Poly1305_Setkey(void *, const uint8_t *, uint16_t);
+void	Chacha20_Poly1305_Reinit(void *, const uint8_t *, uint16_t);
+int	Chacha20_Poly1305_Update(void *, const uint8_t *, uint16_t);
+void	Chacha20_Poly1305_Final(uint8_t[POLY1305_TAGLEN], void *);
 
 #endif	/* _CHACHAPOLY_H_ */
