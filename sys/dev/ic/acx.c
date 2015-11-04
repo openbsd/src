@@ -1,4 +1,4 @@
-/*	$OpenBSD: acx.c,v 1.113 2015/10/25 12:48:46 mpi Exp $ */
+/*	$OpenBSD: acx.c,v 1.114 2015/11/04 12:11:59 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -930,7 +930,7 @@ acx_start(struct ifnet *ifp)
 		struct mbuf *m;
 		int rate;
 
-		IF_DEQUEUE(&ic->ic_mgtq, m);
+		m = mq_dequeue(&ic->ic_mgtq);
 		/* first dequeue management frames */
 		if (m != NULL) {
 			ni = m->m_pkthdr.ph_cookie;
@@ -958,7 +958,7 @@ acx_start(struct ifnet *ifp)
 			struct ether_header *eh;
 
 			/* then dequeue packets on the powersave queue */
-			IF_DEQUEUE(&ic->ic_pwrsaveq, m);
+			m = mq_dequeue(&ic->ic_pwrsaveq);
 			if (m != NULL) {
 				ni = m->m_pkthdr.ph_cookie;
 				goto encapped;

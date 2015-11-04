@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.h,v 1.46 2014/09/12 16:02:40 sthen Exp $	*/
+/*	$OpenBSD: ieee80211_node.h,v 1.47 2015/11/04 12:12:00 dlg Exp $	*/
 /*	$NetBSD: ieee80211_node.h,v 1.9 2004/04/30 22:57:32 dyoung Exp $	*/
 
 /*-
@@ -188,7 +188,7 @@ struct ieee80211_node {
 
 	/* power saving mode */
 	u_int8_t		ni_pwrsave;
-	struct ifqueue		ni_savedq;	/* packets queued for pspoll */
+	struct mbuf_queue	ni_savedq;	/* packets queued for pspoll */
 
 	/* RSN */
 	struct timeout		ni_eapol_to;

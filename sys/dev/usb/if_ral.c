@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ral.c,v 1.133 2015/10/25 12:11:56 mpi Exp $	*/
+/*	$OpenBSD: if_ral.c,v 1.134 2015/11/04 12:12:00 dlg Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006
@@ -1238,13 +1238,13 @@ ural_start(struct ifnet *ifp)
 		return;
 
 	for (;;) {
-		IF_POLL(&ic->ic_mgtq, m0);
+		m0 = mq_dequeue(&ic->ic_mgtq);
 		if (m0 != NULL) {
 			if (sc->tx_queued >= RAL_TX_LIST_COUNT - 1) {
+				mq_requeue(&ic->ic_mgtq, m0);
 				ifp->if_flags |= IFF_OACTIVE;
 				break;
 			}
-			IF_DEQUEUE(&ic->ic_mgtq, m0);
 
 			ni = m0->m_pkthdr.ph_cookie;
 #if NBPFILTER > 0

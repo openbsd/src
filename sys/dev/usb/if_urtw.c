@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urtw.c,v 1.55 2015/10/25 12:11:56 mpi Exp $	*/
+/*	$OpenBSD: if_urtw.c,v 1.56 2015/11/04 12:12:00 dlg Exp $	*/
 
 /*-
  * Copyright (c) 2009 Martynas Venckus <martynas@openbsd.org>
@@ -2429,15 +2429,15 @@ urtw_start(struct ifnet *ifp)
 		return;
 
 	for (;;) {
-		IF_POLL(&ic->ic_mgtq, m0);
+		m0 = mq_dequeue(&ic->ic_mgtq);
 		if (m0 != NULL) {
 			if (sc->sc_tx_low_queued >= URTW_TX_DATA_LIST_COUNT ||
 			    sc->sc_tx_normal_queued >=
 			    URTW_TX_DATA_LIST_COUNT) {
+				mq_requeue(&ic->ic_mgtq, m0);
 				ifp->if_flags |= IFF_OACTIVE;
 				break;
 			}
-			IF_DEQUEUE(&ic->ic_mgtq, m0);
 			ni = m0->m_pkthdr.ph_cookie;
 #if NBPFILTER > 0
 			if (ic->ic_rawbpf != NULL)

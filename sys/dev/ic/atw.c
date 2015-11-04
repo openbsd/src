@@ -1,4 +1,4 @@
-/*	$OpenBSD: atw.c,v 1.89 2015/10/25 12:48:46 mpi Exp $	*/
+/*	$OpenBSD: atw.c,v 1.90 2015/11/04 12:11:59 dlg Exp $	*/
 /*	$NetBSD: atw.c,v 1.69 2004/07/23 07:07:55 dyoung Exp $	*/
 
 /*-
@@ -3596,7 +3596,7 @@ atw_start(struct ifnet *ifp)
 		 * Grab a packet off the management queue, if it
 		 * is not empty. Otherwise, from the data queue.
 		 */
-		IF_DEQUEUE(&ic->ic_mgtq, m0);
+		m0 = mq_dequeue(&ic->ic_mgtq);
 		if (m0 != NULL) {
 			ni = m0->m_pkthdr.ph_cookie;
 		} else {

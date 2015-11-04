@@ -1,4 +1,4 @@
-/*      $OpenBSD: ath.c,v 1.106 2015/10/25 12:48:46 mpi Exp $  */
+/*      $OpenBSD: ath.c,v 1.107 2015/11/04 12:11:59 dlg Exp $  */
 /*	$NetBSD: ath.c,v 1.37 2004/08/18 21:59:39 dyoung Exp $	*/
 
 /*-
@@ -857,7 +857,7 @@ ath_start(struct ifnet *ifp)
 		 * Poll the management queue for frames; they
 		 * have priority over normal data frames.
 		 */
-		IF_DEQUEUE(&ic->ic_mgtq, m);
+		m = mq_dequeue(&ic->ic_mgtq);
 		if (m == NULL) {
 			/*
 			 * No data frames go out unless we're associated.

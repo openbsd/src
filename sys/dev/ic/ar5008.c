@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5008.c,v 1.29 2015/03/14 03:38:47 jsg Exp $	*/
+/*	$OpenBSD: ar5008.c,v 1.30 2015/11/04 12:11:59 dlg Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -1058,7 +1058,7 @@ ar5008_swba_intr(struct athn_softc *sc)
 	int error, totlen;
 
 	if (ic->ic_tim_mcast_pending &&
-	    IF_IS_EMPTY(&ni->ni_savedq) &&
+	    mq_empty(&ni->ni_savedq) &&
 	    SIMPLEQ_EMPTY(&sc->txq[ATHN_QID_CAB].head))
 		ic->ic_tim_mcast_pending = 0;
 
@@ -1139,10 +1139,10 @@ ar5008_swba_intr(struct athn_softc *sc)
 		if (SIMPLEQ_EMPTY(&sc->txbufs))
 			break;
 
-		IF_DEQUEUE(&ni->ni_savedq, m);
+		m = mq_dequeue(&ni->ni_savedq);
 		if (m == NULL)
 			break;
-		if (!IF_IS_EMPTY(&ni->ni_savedq)) {
+		if (!mq_empty(&ni->ni_savedq)) {
 			/* more queued frames, set the more data bit */
 			wh = mtod(m, struct ieee80211_frame *);
 			wh->i_fc[1] |= IEEE80211_FC1_MORE_DATA;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_upgt.c,v 1.70 2015/10/25 12:11:56 mpi Exp $ */
+/*	$OpenBSD: if_upgt.c,v 1.71 2015/11/04 12:12:00 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -1377,11 +1377,9 @@ upgt_start(struct ifnet *ifp)
 	for (i = 0; i < UPGT_TX_COUNT; i++) {
 		struct upgt_data *data_tx = &sc->tx_data[i];
 
-		IF_POLL(&ic->ic_mgtq, m);
+		m = mq_dequeue(&ic->ic_mgtq);
 		if (m != NULL) {
 			/* management frame */
-			IF_DEQUEUE(&ic->ic_mgtq, m);
-
 			ni = m->m_pkthdr.ph_cookie;
 #if NBPFILTER > 0
 			if (ic->ic_rawbpf != NULL)

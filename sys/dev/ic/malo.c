@@ -1,4 +1,4 @@
-/*	$OpenBSD: malo.c,v 1.108 2015/10/25 12:48:46 mpi Exp $ */
+/*	$OpenBSD: malo.c,v 1.109 2015/11/04 12:11:59 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -1010,13 +1010,13 @@ malo_start(struct ifnet *ifp)
 		return;
 
 	for (;;) {
-		IF_POLL(&ic->ic_mgtq, m0);
+		m0 = mq_dequeue(&ic->ic_mgtq);
 		if (m0 != NULL) {
 			if (sc->sc_txring.queued >= MALO_TX_RING_COUNT) {
 				ifp->if_flags |= IFF_OACTIVE;
+				mq_requeue(&ic->ic_mgtq, m0);
 				break;
 			}
-			IF_DEQUEUE(&ic->ic_mgtq, m0);
 
 			ni = m0->m_pkthdr.ph_cookie;
 #if NBPFILTER > 0

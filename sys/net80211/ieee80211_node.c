@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.88 2015/07/15 22:16:42 deraadt Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.89 2015/11/04 12:12:00 dlg Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -191,7 +191,7 @@ ieee80211_node_lateattach(struct ifnet *ifp)
 	ic->ic_bss = ieee80211_ref_node(ni);
 	ic->ic_txpower = IEEE80211_TXPOWER_MAX;
 #ifndef IEEE80211_STA_ONLY
-	IFQ_SET_MAXLEN(&ni->ni_savedq, IEEE80211_PS_MAX_QUEUE);
+	mq_init(&ni->ni_savedq, IEEE80211_PS_MAX_QUEUE, IPL_NET);
 #endif
 }
 
@@ -797,7 +797,7 @@ ieee80211_setup_node(struct ieee80211com *ic,
 
 	ni->ni_ic = ic;	/* back-pointer */
 #ifndef IEEE80211_STA_ONLY
-	IFQ_SET_MAXLEN(&ni->ni_savedq, IEEE80211_PS_MAX_QUEUE);
+	mq_init(&ni->ni_savedq, IEEE80211_PS_MAX_QUEUE, IPL_NET);
 	timeout_set(&ni->ni_eapol_to, ieee80211_eapol_timeout, ni);
 	timeout_set(&ni->ni_sa_query_to, ieee80211_sa_query_timeout, ni);
 #endif
@@ -1083,8 +1083,7 @@ ieee80211_free_node(struct ieee80211com *ic, struct ieee80211_node *ni)
 	RB_REMOVE(ieee80211_tree, &ic->ic_tree, ni);
 	ic->ic_nnodes--;
 #ifndef IEEE80211_STA_ONLY
-	if (!IF_IS_EMPTY(&ni->ni_savedq)) {
-		IF_PURGE(&ni->ni_savedq);
+	if (mq_purge(&ni->ni_savedq) > 0) {
 		if (ic->ic_set_tim != NULL)
 			(*ic->ic_set_tim)(ic, ni->ni_associd, 0);
 	}
@@ -1611,8 +1610,7 @@ ieee80211_node_leave(struct ieee80211com *ic, struct ieee80211_node *ni)
 		ni->ni_pwrsave = IEEE80211_PS_AWAKE;
 	}
 
-	if (!IF_IS_EMPTY(&ni->ni_savedq)) {
-		IF_PURGE(&ni->ni_savedq);
+	if (mq_purge(&ni->ni_savedq) > 0) {
 		if (ic->ic_set_tim != NULL)
 			(*ic->ic_set_tim)(ic, ni->ni_associd, 0);
 	}
@@ -1772,16 +1770,13 @@ ieee80211_notify_dtim(struct ieee80211com *ic)
 
 	KASSERT(ic->ic_opmode == IEEE80211_M_HOSTAP);
 
-	for (;;) {
-		IF_DEQUEUE(&ni->ni_savedq, m);
-		if (m == NULL)
-			break;
-		if (!IF_IS_EMPTY(&ni->ni_savedq)) {
+	while ((m = mq_dequeue(&ni->ni_savedq)) != NULL) {
+		if (!mq_empty(&ni->ni_savedq)) {
 			/* more queued frames, set the more data bit */
 			wh = mtod(m, struct ieee80211_frame *);
 			wh->i_fc[1] |= IEEE80211_FC1_MORE_DATA;
 		}
-		IF_ENQUEUE(&ic->ic_pwrsaveq, m);
+		mq_enqueue(&ic->ic_pwrsaveq, m);
 		(*ifp->if_start)(ifp);
 	}
 	/* XXX assumes everything has been sent */

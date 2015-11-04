@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_run.c,v 1.111 2015/10/25 12:11:56 mpi Exp $	*/
+/*	$OpenBSD: if_run.c,v 1.112 2015/11/04 12:12:00 dlg Exp $	*/
 
 /*-
  * Copyright (c) 2008-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -2530,7 +2530,7 @@ run_start(struct ifnet *ifp)
 			break;
 		}
 		/* send pending management frames first */
-		IF_DEQUEUE(&ic->ic_mgtq, m);
+		m = mq_dequeue(&ic->ic_mgtq);
 		if (m != NULL) {
 			ni = m->m_pkthdr.ph_cookie;
 			goto sendit;

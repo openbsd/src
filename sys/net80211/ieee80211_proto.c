@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_proto.c,v 1.52 2015/07/15 22:16:42 deraadt Exp $	*/
+/*	$OpenBSD: ieee80211_proto.c,v 1.53 2015/11/04 12:12:00 dlg Exp $	*/
 /*	$NetBSD: ieee80211_proto.c,v 1.8 2004/04/30 23:58:20 dyoung Exp $	*/
 
 /*-
@@ -84,6 +84,9 @@ ieee80211_proto_attach(struct ifnet *ifp)
 {
 	struct ieee80211com *ic = (void *)ifp;
 
+	mq_init(&ic->ic_mgtq, IFQ_MAXLEN, IPL_NET);
+	mq_init(&ic->ic_pwrsaveq, IFQ_MAXLEN, IPL_NET);
+
 	ifp->if_hdrlen = sizeof(struct ieee80211_frame);
 
 #ifdef notdef
@@ -108,8 +111,8 @@ ieee80211_proto_detach(struct ifnet *ifp)
 {
 	struct ieee80211com *ic = (void *)ifp;
 
-	IF_PURGE(&ic->ic_mgtq);
-	IF_PURGE(&ic->ic_pwrsaveq);
+	mq_purge(&ic->ic_mgtq);
+	mq_purge(&ic->ic_pwrsaveq);
 }
 
 void
@@ -835,8 +838,8 @@ justcleanup:
 				timeout_del(&ic->ic_rsn_timeout);
 #endif
 			ic->ic_mgt_timer = 0;
-			IF_PURGE(&ic->ic_mgtq);
-			IF_PURGE(&ic->ic_pwrsaveq);
+			mq_purge(&ic->ic_mgtq);
+			mq_purge(&ic->ic_pwrsaveq);
 			ieee80211_free_allnodes(ic);
 			break;
 		}

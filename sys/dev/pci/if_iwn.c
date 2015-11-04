@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.145 2015/10/25 13:04:28 mpi Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.146 2015/11/04 12:11:59 dlg Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -3046,7 +3046,7 @@ iwn_start(struct ifnet *ifp)
 			break;
 		}
 		/* Send pending management frames first. */
-		IF_DEQUEUE(&ic->ic_mgtq, m);
+		m = mq_dequeue(&ic->ic_mgtq);
 		if (m != NULL) {
 			ni = m->m_pkthdr.ph_cookie;
 			goto sendit;

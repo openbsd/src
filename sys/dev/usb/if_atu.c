@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atu.c,v 1.113 2015/10/25 12:11:56 mpi Exp $ */
+/*	$OpenBSD: if_atu.c,v 1.114 2015/11/04 12:12:00 dlg Exp $ */
 /*
  * Copyright (c) 2003, 2004
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -1944,7 +1944,7 @@ atu_start(struct ifnet *ifp)
 		 * Poll the management queue for frames, it has priority over
 		 * normal data frames.
 		 */
-		IF_DEQUEUE(&ic->ic_mgtq, m);
+		m = mq_dequeue(&ic->ic_mgtq);
 		if (m == NULL) {
 			DPRINTFN(10, ("%s: atu_start: data packet\n",
 			    sc->atu_dev.dv_xname));

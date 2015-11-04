@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_output.c,v 1.97 2015/07/15 22:16:42 deraadt Exp $	*/
+/*	$OpenBSD: ieee80211_output.c,v 1.98 2015/11/04 12:12:00 dlg Exp $	*/
 /*	$NetBSD: ieee80211_output.c,v 1.13 2004/05/31 11:02:55 dyoung Exp $	*/
 
 /*-
@@ -239,7 +239,7 @@ ieee80211_mgmt_output(struct ifnet *ifp, struct ieee80211_node *ni,
 	    ieee80211_pwrsave(ic, m, ni) != 0)
 		return 0;
 #endif
-	IF_ENQUEUE(&ic->ic_mgtq, m);
+	mq_enqueue(&ic->ic_mgtq, m);
 	ifp->if_timer = 1;
 	(*ifp->if_start)(ifp);
 	return 0;
@@ -1867,22 +1867,16 @@ ieee80211_pwrsave(struct ieee80211com *ic, struct mbuf *m,
 		    (wh->i_fc[0] & IEEE80211_FC0_TYPE_MASK) ==
 		    IEEE80211_FC0_TYPE_CTL)
 			return 0;
-		if (IF_IS_EMPTY(&ni->ni_savedq))
+		if (mq_empty(&ni->ni_savedq))
 			(*ic->ic_set_tim)(ic, ni->ni_associd, 1);
 	}
 	/* NB: ni == ic->ic_bss for broadcast/multicast */
-	if (IF_QFULL(&ni->ni_savedq)) {
-		/* XXX should we drop the oldest instead? */
-		IF_DROP(&ni->ni_savedq);
-		m_freem(m);
-	} else {
-		IF_ENQUEUE(&ni->ni_savedq, m);
-		/*
-		 * Similar to ieee80211_mgmt_output, store the node in a
-		 * special pkthdr field.
-		 */
-		m->m_pkthdr.ph_cookie = ni;
-	}
+	/*
+	 * Similar to ieee80211_mgmt_output, store the node in a
+	 * special pkthdr field.
+	 */
+	m->m_pkthdr.ph_cookie = ni;
+	mq_enqueue(&ni->ni_savedq, m);
 	return 1;
 }
 #endif	/* IEEE80211_STA_ONLY */

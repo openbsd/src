@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.62 2015/10/25 13:04:28 mpi Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.63 2015/11/04 12:11:59 dlg Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -5591,7 +5591,7 @@ iwm_start(struct ifnet *ifp)
 		}
 
 		/* need to send management frames even if we're not RUNning */
-		IF_DEQUEUE(&ic->ic_mgtq, m);
+		m = mq_dequeue(&ic->ic_mgtq);
 		if (m) {
 			ni = m->m_pkthdr.ph_cookie;
 			goto sendit;

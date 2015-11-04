@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.137 2015/07/15 22:16:42 deraadt Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.138 2015/11/04 12:12:00 dlg Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -316,6 +316,8 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 				    ether_sprintf(wh->i_addr2), ic->ic_pssta));
 			}
 		} else if (ni->ni_pwrsave == IEEE80211_PS_DOZE) {
+			struct mbuf *m;
+
 			/* turn off PS mode */
 			ni->ni_pwrsave = IEEE80211_PS_AWAKE;
 			ic->ic_pssta--;
@@ -325,10 +327,8 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 			(*ic->ic_set_tim)(ic, ni->ni_associd, 0);
 
 			/* dequeue buffered unicast frames */
-			while (!IF_IS_EMPTY(&ni->ni_savedq)) {
-				struct mbuf *m;
-				IF_DEQUEUE(&ni->ni_savedq, m);
-				IF_ENQUEUE(&ic->ic_pwrsaveq, m);
+			while ((m = mq_dequeue(&ni->ni_savedq)) != NULL) {
+				mq_enqueue(&ic->ic_pwrsaveq, m);
 				(*ifp->if_start)(ifp);
 			}
 		}
@@ -2799,10 +2799,10 @@ ieee80211_recv_pspoll(struct ieee80211com *ic, struct mbuf *m,
 	}
 
 	/* take the first queued frame and put it out.. */
-	IF_DEQUEUE(&ni->ni_savedq, m);
+	m = mq_dequeue(&ni->ni_savedq);
 	if (m == NULL)
 		return;
-	if (IF_IS_EMPTY(&ni->ni_savedq)) {
+	if (mq_empty(&ni->ni_savedq)) {
 		/* last queued frame, turn off the TIM bit */
 		(*ic->ic_set_tim)(ic, ni->ni_associd, 0);
 	} else {
@@ -2810,7 +2810,7 @@ ieee80211_recv_pspoll(struct ieee80211com *ic, struct mbuf *m,
 		wh = mtod(m, struct ieee80211_frame *);
 		wh->i_fc[1] |= IEEE80211_FC1_MORE_DATA;
 	}
-	IF_ENQUEUE(&ic->ic_pwrsaveq, m);
+	mq_enqueue(&ic->ic_pwrsaveq, m);
 	(*ifp->if_start)(ifp);
 }
 #endif	/* IEEE80211_STA_ONLY */

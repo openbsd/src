@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtw.c,v 1.91 2015/10/25 12:48:46 mpi Exp $	*/
+/*	$OpenBSD: rtw.c,v 1.92 2015/11/04 12:11:59 dlg Exp $	*/
 /*	$NetBSD: rtw.c,v 1.29 2004/12/27 19:49:16 dyoung Exp $ */
 
 /*-
@@ -185,7 +185,7 @@ void	 rtw_rxdesc_init_all(struct rtw_rxdesc_blk *, struct rtw_rxsoft *,
 int	 rtw_txring_choose(struct rtw_softc *, struct rtw_txsoft_blk **,
 	    struct rtw_txdesc_blk **, int);
 u_int	 rtw_txring_next(struct rtw_regs *, struct rtw_txdesc_blk *);
-struct mbuf *rtw_80211_dequeue(struct rtw_softc *, struct ifqueue *, int,
+struct mbuf *rtw_80211_dequeue(struct rtw_softc *, struct mbuf_queue *, int,
 	    struct rtw_txsoft_blk **, struct rtw_txdesc_blk **,
 	    struct ieee80211_node **, short *);
 uint64_t rtw_tsf_extend(struct rtw_regs *, u_int32_t);
@@ -1500,7 +1500,7 @@ rtw_intr_beacon(struct rtw_softc *sc, u_int16_t isr)
 			return;
 		}
 		m->m_pkthdr.ph_cookie = ieee80211_ref_node(ic->ic_bss);
-		IF_ENQUEUE(&sc->sc_beaconq, m);
+		mq_enqueue(&sc->sc_beaconq, m);
 		rtw_start(&sc->sc_if);
 	}
 }
@@ -2678,13 +2678,13 @@ rtw_txring_choose(struct rtw_softc *sc, struct rtw_txsoft_blk **tsbp,
 }
 
 struct mbuf *
-rtw_80211_dequeue(struct rtw_softc *sc, struct ifqueue *ifq, int pri,
+rtw_80211_dequeue(struct rtw_softc *sc, struct mbuf_queue *ifq, int pri,
     struct rtw_txsoft_blk **tsbp, struct rtw_txdesc_blk **tdbp,
     struct ieee80211_node **nip, short *if_flagsp)
 {
 	struct mbuf *m;
 
-	if (IF_IS_EMPTY(ifq))
+	if (mq_empty(ifq))
 		return NULL;
 	if (rtw_txring_choose(sc, tsbp, tdbp, pri) == -1) {
 		DPRINTF(sc, RTW_DEBUG_XMIT_RSRC, ("%s: no ring %d descriptor\n",
@@ -2693,7 +2693,7 @@ rtw_80211_dequeue(struct rtw_softc *sc, struct ifqueue *ifq, int pri,
 		sc->sc_if.if_timer = 1;
 		return NULL;
 	}
-	IF_DEQUEUE(ifq, m);
+	m = mq_dequeue(ifq);
 	*nip = m->m_pkthdr.ph_cookie;
 	return m;
 }

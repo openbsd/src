@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_otus.c,v 1.47 2015/10/25 12:11:56 mpi Exp $	*/
+/*	$OpenBSD: if_otus.c,v 1.48 2015/11/04 12:12:00 dlg Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -1416,7 +1416,7 @@ otus_start(struct ifnet *ifp)
 			break;
 		}
 		/* Send pending management frames first. */
-		IF_DEQUEUE(&ic->ic_mgtq, m);
+		m = mq_dequeue(&ic->ic_mgtq);
 		if (m != NULL) {
 			ni = m->m_pkthdr.ph_cookie;
 			goto sendit;
