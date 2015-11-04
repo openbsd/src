@@ -1,4 +1,4 @@
-/*	$OpenBSD: externs.h,v 1.17 2015/10/06 14:58:37 tedu Exp $	*/
+/*	$OpenBSD: externs.h,v 1.18 2015/11/04 12:53:05 millert Exp $	*/
 
 /* Copyright 1993,1994 by Paul Vixie
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -45,18 +45,6 @@
 #include <poll.h>
 #include <unistd.h>
 #include <utime.h>
-
-# include <syslog.h>
-
-# include <login_cap.h>
-
-# include <bsd_auth.h>
-
-#ifndef TZNAME_ALREADY_DEFINED
-extern char *tzname[2];
-#endif
-#define TZONE(tm) tzname[(tm).tm_isdst]
-
-#ifndef WCOREDUMP
-# define WCOREDUMP(st)          (((st) & 0200) != 0)
-#endif
+#include <syslog.h>
+#include <login_cap.h>
+#include <bsd_auth.h>

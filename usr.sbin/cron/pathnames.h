@@ -1,4 +1,4 @@
-/*	$OpenBSD: pathnames.h,v 1.17 2015/10/25 21:36:55 millert Exp $	*/
+/*	$OpenBSD: pathnames.h,v 1.18 2015/11/04 12:53:05 millert Exp $	*/
 
 /* Copyright 1993,1994 by Paul Vixie
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -20,15 +20,13 @@
 #ifndef _PATHNAMES_H_
 #define _PATHNAMES_H_
 
-# include <paths.h>
+#include <paths.h>
 
-#ifndef CRONDIR
 			/* CRONDIR is where cron(8) and crontab(1) both chdir
 			 * to; SPOOL_DIR, CRON_ALLOW, CRON_DENY, and LOG_FILE
 			 * are all relative to this directory.
 			 */
 #define CRONDIR		"/var/cron"
-#endif
 
 			/* SPOOLDIR is where the crontabs live.
 			 * This directory will have its modtime updated
@@ -73,30 +71,6 @@
 			/* what editor to use if no EDITOR or VISUAL
 			 * environment variable specified.
 			 */
-#if defined(_PATH_VI)
-# define EDITOR _PATH_VI
-#else
-# define EDITOR "/usr/ucb/vi"
-#endif
-
-#ifndef _PATH_SENDMAIL
-# define _PATH_SENDMAIL "/usr/lib/sendmail"
-#endif
-
-#ifndef _PATH_BSHELL
-# define _PATH_BSHELL "/bin/sh"
-#endif
-
-#ifndef _PATH_DEFPATH
-# define _PATH_DEFPATH "/usr/bin:/bin"
-#endif
-
-#ifndef _PATH_TMP
-# define _PATH_TMP "/tmp/"
-#endif
-
-#ifndef _PATH_DEVNULL
-# define _PATH_DEVNULL "/dev/null"
-#endif
+#define EDITOR		_PATH_VI
 
 #endif /* _PATHNAMES_H_ */

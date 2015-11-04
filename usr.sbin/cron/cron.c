@@ -1,4 +1,4 @@
-/*	$OpenBSD: cron.c,v 1.60 2015/10/31 12:14:16 millert Exp $	*/
+/*	$OpenBSD: cron.c,v 1.61 2015/11/04 12:53:05 millert Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -42,6 +42,8 @@ static	long			GMToff;
 static	cron_db			database;
 static	at_db			at_database;
 static	double			batch_maxload = BATCH_MAXLOAD;
+static	int			NoFork;
+static	time_t			StartTime;
 
 static void
 usage(void)
@@ -64,7 +66,6 @@ main(int argc, char *argv[])
 	setvbuf(stdout, NULL, _IOLBF, 0);
 	setvbuf(stderr, NULL, _IOLBF, 0);
 
-	NoFork = 0;
 	parse_args(argc, argv);
 
 	bzero((char *)&sact, sizeof sact);

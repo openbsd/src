@@ -1,4 +1,4 @@
-/*	$OpenBSD: funcs.h,v 1.23 2015/10/31 12:14:16 millert Exp $	*/
+/*	$OpenBSD: funcs.h,v 1.24 2015/11/04 12:53:05 millert Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -22,11 +22,8 @@
  *	We should reorg this into sections by module.
  */
 
-void		set_cron_uid(void),
-		set_cron_cwd(void),
+void		set_cron_cwd(void),
 		load_database(cron_db *),
-		open_logfile(void),
-		sigpipe_func(void),
 		job_add(entry *, user *),
 		do_command(entry *, user *),
 		link_user(cron_db *, user *),
@@ -35,7 +32,6 @@ void		set_cron_uid(void),
 		env_free(char **),
 		unget_char(int, FILE *),
 		free_entry(entry *),
-		acquire_daemonlock(int),
 		skip_comments(FILE *),
 		log_it(const char *, int, const char *, const char *),
 		log_close(void),
@@ -47,7 +43,6 @@ int		job_runqueue(void),
 		get_string(char *, int, FILE *, char *),
 		load_env(char *, FILE *),
 		cron_pclose(FILE *, pid_t),
-		glue_strings(char *, size_t, const char *, const char *, char),
 		allowed(const char *, const char *, const char *),
 		safe_p(const char *, const char *),
 		scan_atjobs(at_db *, struct timespec *);
@@ -55,7 +50,6 @@ int		job_runqueue(void),
 int		strtot(const char *nptr, char **endptr, time_t *tp);
 
 char		*env_get(char *, char **),
-		*arpadate(time_t *),
 		*first_word(char *, char *),
 		**env_init(void),
 		**env_copy(char **),
@@ -68,4 +62,3 @@ entry		*load_entry(FILE *,
 		    void (*)(const char *), struct passwd *, char **);
 
 FILE		*cron_popen(char *, char *, struct passwd *, pid_t *);
-

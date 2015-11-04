@@ -1,4 +1,4 @@
-/*	$OpenBSD: entry.c,v 1.43 2015/10/26 14:27:41 millert Exp $	*/
+/*	$OpenBSD: entry.c,v 1.44 2015/11/04 12:53:05 millert Exp $	*/
 
 /*
  * Copyright 1988,1990,1993,1994 by Paul Vixie
@@ -25,20 +25,30 @@ typedef	enum ecode {
 	e_cmd, e_timespec, e_username, e_option, e_memory
 } ecode_e;
 
-static const char *ecodes[] =
-	{
-		"no error",
-		"bad minute",
-		"bad hour",
-		"bad day-of-month",
-		"bad month",
-		"bad day-of-week",
-		"bad command",
-		"bad time specifier",
-		"bad username",
-		"bad option",
-		"out of memory"
-	};
+static const char *ecodes[] = {
+	"no error",
+	"bad minute",
+	"bad hour",
+	"bad day-of-month",
+	"bad month",
+	"bad day-of-week",
+	"bad command",
+	"bad time specifier",
+	"bad username",
+	"bad option",
+	"out of memory"
+};
+
+static const char *MonthNames[] = {
+	"Jan", "Feb", "Mar", "Apr", "May", "Jun",
+	"Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+	NULL
+};
+
+static const char *DowNames[] = {
+	"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun",
+	NULL
+};
 
 static int	get_list(bitstr_t *, int, int, const char *[], int, FILE *),
 		get_range(bitstr_t *, int, int, const char *[], int, FILE *),
