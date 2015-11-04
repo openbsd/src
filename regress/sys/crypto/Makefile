@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.10 2014/07/03 21:12:24 miod Exp $
+#	$OpenBSD: Makefile,v 1.11 2015/11/04 12:24:31 mikeb Exp $
 
 SUBDIR+= cmac
 SUBDIR+= gmac
@@ -10,6 +10,7 @@ SUBDIR+= enc
 SUBDIR+= aesctr
 SUBDIR+= aesxts
 SUBDIR+= aes
+SUBDIR+= chachapoly
 .endif
 
 install:
