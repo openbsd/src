@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_hostap.c,v 1.47 2014/11/18 02:37:30 tedu Exp $	*/
+/*	$OpenBSD: if_wi_hostap.c,v 1.48 2015/11/04 12:22:01 dlg Exp $	*/
 
 /*
  * Copyright (c) 2002
@@ -1163,18 +1163,7 @@ wihap_data_input(struct wi_softc *sc, struct wi_frame *rxfrm, struct mbuf *m)
 
 		/* Queue up for repeating.
 		 */
-		if (IF_QFULL(&ifp->if_snd)) {
-			IF_DROP(&ifp->if_snd);
-			m_freem(m);
-		}
-		else {
-			ifp->if_obytes += m->m_pkthdr.len;
-			if (m->m_flags & M_MCAST)
-				ifp->if_omcasts++;
-			IF_ENQUEUE(&ifp->if_snd, m);
-			if ((ifp->if_flags & IFF_OACTIVE) == 0)
-				(*ifp->if_start)(ifp);
-		}
+		if_enqueue(ifp, m);
 		return (!mcast);
 	}
 
