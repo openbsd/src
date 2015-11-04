@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.135 2015/10/25 20:01:21 florian Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.136 2015/11/04 20:04:10 florian Exp $	*/
 /*	$KAME: ping6.c,v 1.163 2002/10/25 02:19:06 itojun Exp $	*/
 
 /*
@@ -1066,7 +1066,6 @@ pr_ip6opt(void *extbuf)
 	size_t extlen;
 	socklen_t len;
 	void *databuf;
-	size_t offset;
 	u_int16_t value2;
 	u_int32_t value4;
 
@@ -1087,16 +1086,12 @@ pr_ip6opt(void *extbuf)
 		 * options.
 		 */
 		case IP6OPT_JUMBO:
-			offset = 0;
-			offset = inet6_opt_get_val(databuf, offset,
-			    &value4, sizeof(value4));
+			inet6_opt_get_val(databuf, 0, &value4, sizeof(value4));
 			printf("    Jumbo Payload Opt: Length %u\n",
 			    (u_int32_t)ntohl(value4));
 			break;
 		case IP6OPT_ROUTER_ALERT:
-			offset = 0;
-			offset = inet6_opt_get_val(databuf, offset,
-						   &value2, sizeof(value2));
+			inet6_opt_get_val(databuf, 0, &value2, sizeof(value2));
 			printf("    Router Alert Opt: Type %u\n",
 			    ntohs(value2));
 			break;
