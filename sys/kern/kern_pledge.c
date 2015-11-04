@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.103 2015/11/04 19:18:21 semarie Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.104 2015/11/04 21:24:23 tedu Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -1073,9 +1073,8 @@ pledge_sendit(struct proc *p, const void *to)
 }
 
 int
-pledge_ioctl(struct proc *p, long com, void *v)
+pledge_ioctl(struct proc *p, long com, struct file *fp)
 {
-	struct file *fp = v;
 	struct vnode *vp = NULL;
 
 	if ((p->p_p->ps_flags & PS_PLEDGE) == 0)
@@ -1093,7 +1092,8 @@ pledge_ioctl(struct proc *p, long com, void *v)
 	}
 
 	/* fp != NULL was already checked */
-	vp = (struct vnode *)fp->f_data;
+	if (fp->f_type == DTYPE_VNODE)
+		vp = (struct vnode *)fp->f_data;
 
 	/*
 	 * Further sets of ioctl become available, but are checked a
