@@ -1,4 +1,4 @@
-/*	$OpenBSD: rmt.c,v 1.18 2015/10/20 18:47:21 deraadt Exp $	*/
+/*	$OpenBSD: rmt.c,v 1.19 2015/11/04 21:27:03 tedu Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -113,7 +113,7 @@ main(int argc, char *argv[])
 		debug = fopen(*argv, "w");
 		if (debug == 0)
 			err(1, "cannot open debug file");
-		(void) setbuf(debug, (char *)0);
+		setvbuf(debug, NULL, _IONBF, 0);
 	}
 
 	if (dir) {

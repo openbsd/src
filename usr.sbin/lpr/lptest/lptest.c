@@ -1,4 +1,4 @@
-/*	$OpenBSD: lptest.c,v 1.8 2009/10/27 23:59:52 deraadt Exp $ */
+/*	$OpenBSD: lptest.c,v 1.9 2015/11/04 21:27:03 tedu Exp $ */
 /*	$NetBSD: lptest.c,v 1.6 1996/12/09 09:57:50 mrg Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ main(int argc, char **argv)
 	int i, j, fc, nc;
 	char outbuf[BUFSIZ];
 
-	setbuf(stdout, outbuf);
+	setvbuf(stdout, outbuf, _IOFBF, sizeof outbuf);
 	if (argc >= 2)
 		len = atoi(argv[1]);
 	else
