@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_devar.h,v 1.36 2015/09/11 13:02:28 stsp Exp $	*/
+/*	$OpenBSD: if_devar.h,v 1.37 2015/11/04 00:09:59 dlg Exp $	*/
 /*	$NetBSD: if_devar.h,v 1.13 1997/06/08 18:46:36 thorpej Exp $	*/
 
 /*-
@@ -589,8 +589,8 @@ struct _tulip_softc_t {
     } tulip_perfstats[TULIP_PERF_MAX];
 #define	tulip_curperfstats		tulip_perfstats[TULIP_PERF_CURRENT]
 #endif
-    struct ifqueue tulip_txq;
-    struct ifqueue tulip_rxq;
+    struct mbuf_list tulip_txq;
+    struct mbuf_list tulip_rxq;
     tulip_dot3_stats_t tulip_dot3stats;
     tulip_ringinfo_t tulip_rxinfo;
     tulip_ringinfo_t tulip_txinfo;

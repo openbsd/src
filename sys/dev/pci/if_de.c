@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_de.c,v 1.124 2015/10/25 13:04:28 mpi Exp $	*/
+/*	$OpenBSD: if_de.c,v 1.125 2015/11/04 00:09:59 dlg Exp $	*/
 /*	$NetBSD: if_de.c,v 1.58 1998/01/12 09:39:58 thorpej Exp $	*/
 
 /*-
@@ -3051,14 +3051,13 @@ tulip_reset(tulip_softc_t * const sc)
 		      TULIP_BUSMODE_DESC_BIGENDIAN : 0));
 
     sc->tulip_txtimer = 0;
-    IFQ_SET_MAXLEN(&sc->tulip_txq, TULIP_TXDESCS);
     /*
      * Free all the mbufs that were on the transmit ring.
      */
     for (;;) {
 	bus_dmamap_t map;
 	struct mbuf *m;
-	IF_DEQUEUE(&sc->tulip_txq, m);
+	m = ml_dequeue(&sc->tulip_txq);
 	if (m == NULL)
 	    break;
 	map = TULIP_GETCTX(m, bus_dmamap_t);
@@ -3096,7 +3095,7 @@ tulip_reset(tulip_softc_t * const sc)
     for (;;) {
 	bus_dmamap_t map;
 	struct mbuf *m;
-	IF_DEQUEUE(&sc->tulip_rxq, m);
+	m = ml_dequeue(&sc->tulip_rxq);
 	if (m == NULL)
 	    break;
 	map = TULIP_GETCTX(m, bus_dmamap_t);
@@ -3196,7 +3195,7 @@ tulip_rx_intr(tulip_softc_t * const sc)
 	bus_dmamap_t map;
 	int error;
 
-	if (fillok && IF_LEN(&sc->tulip_rxq) < TULIP_RXQ_TARGET)
+	if (fillok && ml_len(&sc->tulip_rxq) < TULIP_RXQ_TARGET)
 	    goto queue_mbuf;
 
 #if defined(TULIP_DEBUG)
@@ -3217,10 +3216,10 @@ tulip_rx_intr(tulip_softc_t * const sc)
 	TULIP_RXDESC_POSTSYNC(sc, eop, sizeof(*eop));
 	if ((((volatile tulip_desc_t *) eop)->d_status & (TULIP_DSTS_OWNER|TULIP_DSTS_RxFIRSTDESC|TULIP_DSTS_RxLASTDESC)) == (TULIP_DSTS_RxFIRSTDESC|TULIP_DSTS_RxLASTDESC)) {
 #ifdef DIAGNOSTIC
-	    if (IF_IS_EMPTY(&sc->tulip_rxq))
+	    if (ml_empty(&sc->tulip_rxq))
 		panic("%s: tulip_rxq empty", sc->tulip_if.if_xname);
 #endif
-	    IF_DEQUEUE(&sc->tulip_rxq, ms);
+	    ms = ml_dequeue(&sc->tulip_rxq);
 	    me = ms;
 	} else {
 	    /*
@@ -3254,7 +3253,7 @@ tulip_rx_intr(tulip_softc_t * const sc)
 	     * won't go into the loop and thereby saving a ourselves from
 	     * doing a multiplication by 0 in the normal case).
 	     */
-	    IF_DEQUEUE(&sc->tulip_rxq, ms);
+	    ms = ml_dequeue(&sc->tulip_rxq);
 	    for (me = ms; total_len > 0; total_len--) {
 		map = TULIP_GETCTX(me, bus_dmamap_t);
 		TULIP_RXMAP_POSTSYNC(sc, map);
@@ -3265,7 +3264,7 @@ tulip_rx_intr(tulip_softc_t * const sc)
 #endif
 		me->m_len = TULIP_RX_BUFLEN;
 		last_offset += TULIP_RX_BUFLEN;
-		IF_DEQUEUE(&sc->tulip_rxq, me->m_next);
+		me->m_next = ml_dequeue(&sc->tulip_rxq);
 		me = me->m_next;
 	    }
 	}
@@ -3432,10 +3431,10 @@ tulip_rx_intr(tulip_softc_t * const sc)
 		ri->ri_nextout = ri->ri_first;
 	    me = ms->m_next;
 	    ms->m_next = NULL;
-	    IF_ENQUEUE(&sc->tulip_rxq, ms);
+	    ml_enqueue(&sc->tulip_rxq, ms);
 	} while ((ms = me) != NULL);
 
-	if (IF_LEN(&sc->tulip_rxq) >= TULIP_RXQ_TARGET)
+	if (ml_len(&sc->tulip_rxq) >= TULIP_RXQ_TARGET)
 	    sc->tulip_flags &= ~TULIP_RXBUFSLOW;
 	TULIP_PERFEND(rxget);
     }
@@ -3491,7 +3490,7 @@ tulip_tx_intr(tulip_softc_t * const sc)
 		}
 	    } else {
 		const u_int32_t d_status = ri->ri_nextin->d_status;
-		IF_DEQUEUE(&sc->tulip_txq, m);
+		m = ml_dequeue(&sc->tulip_txq);
 		if (m != NULL) {
 		    bus_dmamap_t map = TULIP_GETCTX(m, bus_dmamap_t);
 		    TULIP_TXMAP_POSTSYNC(sc, map);
@@ -3964,7 +3963,7 @@ tulip_txput(tulip_softc_t * const sc, struct mbuf *m, int notonqueue)
 #endif
     }
 
-    IF_ENQUEUE(&sc->tulip_txq, m);
+    ml_enqueue(&sc->tulip_txq, m);
     m = NULL;
 
     /*
@@ -4471,6 +4470,9 @@ tulip_attach(struct device * const parent, struct device * const self, void * co
 	       TULIP_MAX_DEVICES);
 	return;
     }
+
+    ml_init(&sc->tulip_txq);
+    ml_init(&sc->tulip_rxq);
 
     revinfo  = PCI_CONF_READ(PCI_CFRV) & 0xFF;
     id       = PCI_CONF_READ(PCI_CFID);
