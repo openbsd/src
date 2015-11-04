@@ -1,4 +1,4 @@
-/*	$OpenBSD: cat.c,v 1.23 2015/10/09 01:37:06 deraadt Exp $	*/
+/*	$OpenBSD: cat.c,v 1.24 2015/11/04 21:28:01 tedu Exp $	*/
 /*	$NetBSD: cat.c,v 1.11 1995/09/07 06:12:54 jtc Exp $	*/
 
 /*
@@ -87,7 +87,7 @@ main(int argc, char *argv[])
 			tflag = vflag = 1;	/* -t implies -v */
 			break;
 		case 'u':
-			setbuf(stdout, NULL);
+			setvbuf(stdout, NULL, _IONBF, 0);
 			break;
 		case 'v':
 			vflag = 1;

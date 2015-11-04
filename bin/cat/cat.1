@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cat.1,v 1.34 2015/01/15 19:06:31 schwarze Exp $
+.\"	$OpenBSD: cat.1,v 1.35 2015/11/04 21:28:01 tedu Exp $
 .\"	$NetBSD: cat.1,v 1.12 1995/09/27 05:38:55 cgd Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)cat.1	8.3 (Berkeley) 5/2/95
 .\"
-.Dd $Mdocdate: January 15 2015 $
+.Dd $Mdocdate: November 4 2015 $
 .Dt CAT 1
 .Os
 .Sh NAME
@@ -82,7 +82,7 @@ option and also prints tab characters as
 .Ql ^I .
 .It Fl u
 The output is guaranteed to be unbuffered (see
-.Xr setbuf 3 ) .
+.Xr setvbuf 3 ) .
 .It Fl v
 Displays non-printing characters so they are visible.
 Control characters print as
@@ -149,7 +149,7 @@ operand.
 .Xr sh 1 ,
 .Xr tail 1 ,
 .Xr vis 1 ,
-.Xr setbuf 3
+.Xr setvbuf 3
 .Rs
 .%A Rob Pike
 .%T "UNIX Style, or cat -v Considered Harmful"
