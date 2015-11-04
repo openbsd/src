@@ -1,4 +1,4 @@
-/*	$OpenBSD: move.c,v 1.14 2015/10/24 17:51:59 mmcc Exp $	*/
+/*	$OpenBSD: move.c,v 1.15 2015/11/04 21:22:10 tedu Exp $	*/
 /*	$NetBSD: move.c,v 1.4 1995/03/24 05:01:57 cgd Exp $	*/
 
 /*
@@ -442,7 +442,7 @@ over:
 				leaveok(Board, TRUE);
 				if ((outf = fopen(buf, "w")) == NULL)
 					warn("%s", buf);
-				setbuf(outf, (char *)NULL);
+				setvbuf(outf, NULL, _IONBF, 0);
 			}
 			Debug = !Debug;
 			break;

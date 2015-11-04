@@ -1,4 +1,4 @@
-/*	$OpenBSD: random.c,v 1.13 2015/10/14 08:12:12 doug Exp $	*/
+/*	$OpenBSD: random.c,v 1.14 2015/11/04 21:22:10 tedu Exp $	*/
 /*	$NetBSD: random.c,v 1.3 1995/04/22 07:44:05 cgd Exp $	*/
 
 /*
@@ -101,7 +101,7 @@ main(int argc, char *argv[])
 	 * to write to the standard output.
 	 */
 	if (unbuffer_output)
-		setbuf(stdout, NULL);
+		setvbuf(stdout, NULL, _IONBF, 0);
 	
 	/*
 	 * Select whether to print the first line.  (Prime the pump.)

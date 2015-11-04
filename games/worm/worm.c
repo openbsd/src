@@ -1,4 +1,4 @@
-/*	$OpenBSD: worm.c,v 1.32 2015/08/26 01:25:57 rzalamena Exp $	*/
+/*	$OpenBSD: worm.c,v 1.33 2015/11/04 21:22:10 tedu Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -94,7 +94,7 @@ main(int argc, char **argv)
 
 	timespecclear(&t);
 
-	setbuf(stdout, outbuf);
+	setvbuf(stdout, outbuf, _IOFBF, sizeof outbuf);
 	signal(SIGINT, leave);
 	signal(SIGQUIT, leave);
 	signal(SIGTSTP, suspend);	/* process control signal */

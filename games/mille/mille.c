@@ -1,4 +1,4 @@
-/*	$OpenBSD: mille.c,v 1.20 2015/01/19 00:47:01 deraadt Exp $	*/
+/*	$OpenBSD: mille.c,v 1.21 2015/11/04 21:22:10 tedu Exp $	*/
 /*	$NetBSD: mille.c,v 1.4 1995/03/24 05:01:48 cgd Exp $	*/
 
 /*
@@ -48,7 +48,7 @@ main(ac, av)
 #ifdef DEBUG
 	if (strcmp(av[0], "a.out") == 0) {
 		outf = fopen("q", "w");
-		setbuf(outf, (char *)NULL);
+		setvbuf(outf, NULL, _IONBF, 0);
 		Debug = TRUE;
 	}
 #endif

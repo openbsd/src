@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.27 2014/12/07 19:56:19 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.28 2015/11/04 21:22:10 tedu Exp $	*/
 /*
  * Copyright (c) 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -155,7 +155,7 @@ again:
 			clrtoeol();
 		}
 	} else {
-		setbuf(stdout, 0);
+		setvbuf(stdout, NULL, _IONBF, 0);
 		get_line(buf, sizeof(buf));
 		if (strcmp(buf, "black") == 0)
 			color = BLACK;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.main.c,v 1.17 2015/09/27 05:13:11 guenther Exp $	*/
+/*	$OpenBSD: hack.main.c,v 1.18 2015/11/04 21:22:10 tedu Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -175,7 +175,7 @@ main(int argc, char **argv)
 	 * Remember tty modes, to be restored on exit.
 	 */
 	gettty();
-	setbuf(stdout,obuf);
+	setvbuf(stdout, obuf, _IOFBF, sizeof obuf);
 	umask(007);
 	startup();
 	cls();
