@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.267 2015/11/02 14:40:09 mpi Exp $	*/
+/*	$OpenBSD: route.c,v 1.268 2015/11/04 10:13:55 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -477,8 +477,7 @@ rtredirect(struct sockaddr *dst, struct sockaddr *gateway,
 			 * Create new route, rather than smashing route to net.
 			 */
 create:
-			if (rt)
-				rtfree(rt);
+			rtfree(rt);
 			flags |= RTF_GATEWAY | RTF_DYNAMIC;
 			bzero(&info, sizeof(info));
 			info.rti_info[RTAX_DST] = dst;
@@ -1236,8 +1235,7 @@ rt_ifa_addlocal(struct ifaddr *ifa)
 	rt = rtalloc(ifa->ifa_addr, 0, ifa->ifa_ifp->if_rdomain);
 	if (rt == NULL || !ISSET(rt->rt_flags, flags))
 		error = rt_ifa_add(ifa, flags, ifa->ifa_addr);
-	if (rt)
-		rtfree(rt);
+	rtfree(rt);
 
 	return (error);
 }
@@ -1286,8 +1284,7 @@ rt_ifa_dellocal(struct ifaddr *ifa)
 	rt = rtalloc(ifa->ifa_addr, 0, ifa->ifa_ifp->if_rdomain);
 	if (rt != NULL && ISSET(rt->rt_flags, flags))
 		error = rt_ifa_del(ifa, flags, ifa->ifa_addr);
-	if (rt)
-		rtfree(rt);
+	rtfree(rt);
 
 	return (error);
 }
