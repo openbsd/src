@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.182 2015/11/02 15:05:23 mpi Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.183 2015/11/04 00:16:12 dlg Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -141,7 +141,6 @@ arp_rtrequest(struct ifnet *ifp, int req, struct rtentry *rt)
 	struct sockaddr *gate = rt->rt_gateway;
 	struct llinfo_arp *la = (struct llinfo_arp *)rt->rt_llinfo;
 	struct ifaddr *ifa;
-	struct mbuf *m;
 
 	if (!arpinit_done) {
 		static struct timeout arptimer_to;
@@ -243,10 +242,7 @@ arp_rtrequest(struct ifnet *ifp, int req, struct rtentry *rt)
 		LIST_REMOVE(la, la_list);
 		rt->rt_llinfo = 0;
 		rt->rt_flags &= ~RTF_LLINFO;
-		while ((m = ml_dequeue(&la->la_ml)) != NULL) {
-			la_hold_total--;
-			m_freem(m);
-		}
+		la_hold_total -= ml_purge(&la->la_ml);
 		pool_put(&arp_pool, la);
 	}
 }
@@ -395,10 +391,7 @@ arpresolve(struct ifnet *ifp, struct rtentry *rt0, struct mbuf *m,
 		ml_enqueue(&la->la_ml, m);
 		la_hold_total++;
 	} else {
-		while ((mh = ml_dequeue(&la->la_ml)) != NULL) {
-			la_hold_total--;
-			m_freem(mh);
-		}
+		la_hold_total -= ml_purge(&la->la_ml);
 		m_freem(m);
 	}
 
@@ -431,10 +424,7 @@ arpresolve(struct ifnet *ifp, struct rtentry *rt0, struct mbuf *m,
 				rt->rt_flags |= RTF_REJECT;
 				rt->rt_expire += arpt_down;
 				la->la_asked = 0;
-				while ((mh = ml_dequeue(&la->la_ml)) != NULL) {
-					la_hold_total--;
-					m_freem(mh);
-				}
+				la_hold_total -= ml_purge(&la->la_ml);
 			}
 		}
 	}
