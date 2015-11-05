@@ -1,4 +1,4 @@
-.\"     $OpenBSD: man.cgi.8,v 1.11 2015/11/05 17:47:53 schwarze Exp $
+.\"     $OpenBSD: man.cgi.8,v 1.12 2015/11/05 20:55:46 schwarze Exp $
 .\"
 .\" Copyright (c) 2014 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -182,14 +182,8 @@ and to be specified without a trailing slash.
 When not specified, the CSS files
 are assumed to be in the document root.
 This is used in generated HTML code.
-.It Ev CUSTOMIZE_BEGIN
-A HTML string to be inserted right after opening the
-.Aq BODY
-element.
 .It Ev CUSTOMIZE_TITLE
-An ASCII string to be used for the HTML
-.Aq TITLE
-element.
+An ASCII string to be used for the HTML <TITLE> element.
 .It Ev HTTP_HOST
 The FQDN of the (possibly virtual) host the HTTP server is running on.
 This is used for
@@ -366,6 +360,12 @@ or any character not contained in the
 .Sx Restricted character set ,
 .Nm
 reports an internal server error and exits without doing anything.
+.It Pa /man/header.html
+An optional file containing static HTML code to be inserted right
+after opening the <BODY> element.
+.It Pa /man/footer.html
+An optional file containing static HTML code to be inserted right
+before closing the <BODY> element.
 .It Pa /man/OpenBSD-current/man1/mandoc.1
 An example
 .Xr mdoc 7
