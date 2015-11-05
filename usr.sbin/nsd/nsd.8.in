@@ -1,9 +1,9 @@
-.TH "NSD" "8" "Feb  3, 2015" "NLnet Labs" "NSD 4.1.1"
+.TH "NSD" "8" "Oct 22, 2015" "NLnet Labs" "NSD 4.1.6"
 .\" Copyright (c) 2001\-2008, NLnet Labs. All rights reserved.
 .\" See LICENSE for the license.
 .SH "NAME"
 .B nsd
-\- Name Server Daemon (NSD) version 4.1.1.
+\- Name Server Daemon (NSD) version 4.1.6.
 .SH "SYNOPSIS"
 .B nsd
 .RB [ \-4 ] 
@@ -79,8 +79,9 @@ configfile.
 .P
 Normally
 .B NSD
-should be started with the `nsd\-control(8) start` command invoked from
-.IR /etc/rc.d/nsd .
+should be started with the `nsd\-control(8) start` command invoked from a
+.I /etc/rc.d/nsd.sh
+script or similar at the operating system startup.
 .TP
 .B \-4
 Only listen to IPv4 connections.
@@ -102,7 +103,8 @@ listens to the wildcard interface.
 .TP
 .B \-c\fI configfile
 Read specified 
-.I configfile instead of the default
+.I configfile
+instead of the default
 .IR @nsdconfigfile@ .
 For format description see nsd.conf(5).
 .TP
@@ -183,7 +185,12 @@ to the daemon periodically.
 .B \-t\fI chroot
 Specifies a directory to 
 .I chroot 
-to upon startup.
+to upon startup. This option requires you to ensure that appropriate 
+syslogd(8) socket (e.g.
+.I chrootdir 
+/dev/log) is available, otherwise
+.B NSD
+won't produce any log output.
 .TP
 .B \-u\fI username
 Drop user and group privileges to those of
@@ -230,6 +237,7 @@ default
 .B NSD
 configuration file
 .SH "DIAGNOSTICS"
+.B NSD
 will log all the problems via the standard syslog(8)
 .I daemon
 facility, unless the

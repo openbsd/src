@@ -67,7 +67,7 @@ extern config_parser_state_t* cfg_parser;
 %token VAR_RRL_IPV4_PREFIX_LENGTH VAR_RRL_IPV6_PREFIX_LENGTH
 %token VAR_RRL_WHITELIST_RATELIMIT VAR_RRL_WHITELIST
 %token VAR_ZONEFILES_CHECK VAR_ZONEFILES_WRITE VAR_LOG_TIME_ASCII
-%token VAR_ROUND_ROBIN VAR_ZONESTATS
+%token VAR_ROUND_ROBIN VAR_ZONESTATS VAR_REUSEPORT
 
 %%
 toplevelvars: /* empty */ | toplevelvars toplevelvar ;
@@ -96,7 +96,8 @@ content_server: server_ip_address | server_ip_transparent | server_debug_mode | 
 	server_rrl_size | server_rrl_ratelimit | server_rrl_slip | 
 	server_rrl_ipv4_prefix_length | server_rrl_ipv6_prefix_length | server_rrl_whitelist_ratelimit |
 	server_zonefiles_check | server_do_ip4 | server_do_ip6 |
-	server_zonefiles_write | server_log_time_ascii | server_round_robin;
+	server_zonefiles_write | server_log_time_ascii | server_round_robin |
+	server_reuseport;
 server_ip_address: VAR_IP_ADDRESS STRING 
 	{ 
 		OUTYY(("P(server_ip_address:%s)\n", $2)); 
@@ -189,6 +190,14 @@ server_do_ip6: VAR_DO_IP6 STRING
 		if(strcmp($2, "yes") != 0 && strcmp($2, "no") != 0)
 			yyerror("expected yes or no.");
 		else cfg_parser->opt->do_ip6 = (strcmp($2, "yes")==0);
+	}
+	;
+server_reuseport: VAR_REUSEPORT STRING 
+	{ 
+		OUTYY(("P(server_reuseport:%s)\n", $2)); 
+		if(strcmp($2, "yes") != 0 && strcmp($2, "no") != 0)
+			yyerror("expected yes or no.");
+		else cfg_parser->opt->reuseport = (strcmp($2, "yes")==0);
 	}
 	;
 server_database: VAR_DATABASE STRING

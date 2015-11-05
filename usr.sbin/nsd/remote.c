@@ -834,7 +834,7 @@ do_notify(SSL* ssl, xfrd_state_t* xfrd, char* arg)
 		struct notify_zone_t* n = (struct notify_zone_t*)rbtree_search(
 			xfrd->notify_zones, (const dname_type*)zo->node.key);
 		if(n) {
-			xfrd_notify_start(n);
+			xfrd_notify_start(n, xfrd);
 			send_ok(ssl);
 		} else {
 			ssl_printf(ssl, "error zone does not have notify\n");
@@ -842,7 +842,7 @@ do_notify(SSL* ssl, xfrd_state_t* xfrd, char* arg)
 	} else {
 		struct notify_zone_t* n;
 		RBTREE_FOR(n, struct notify_zone_t*, xfrd->notify_zones) {
-			xfrd_notify_start(n);
+			xfrd_notify_start(n, xfrd);
 		}
 		send_ok(ssl);
 	}
@@ -1495,7 +1495,7 @@ repat_interrupt_notify_start(xfrd_state_t* xfrd)
 				nz->notify_current = nz->options->pattern->notify;
 			if(nz->notify_restart == 2) {
 				if(nz->notify_restart)
-					xfrd_notify_start(nz);
+					xfrd_notify_start(nz, xfrd);
 			}
 		}
 	}

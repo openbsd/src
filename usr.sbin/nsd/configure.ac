@@ -4,7 +4,7 @@ dnl
 
 sinclude(acx_nlnetlabs.m4)
 
-AC_INIT(NSD,4.1.3,nsd-bugs@nlnetlabs.nl)
+AC_INIT(NSD,4.1.6,nsd-bugs@nlnetlabs.nl)
 AC_CONFIG_HEADER([config.h])
 
 CFLAGS="$CFLAGS"
@@ -282,6 +282,8 @@ if test "x$CFLAGS" = "x" ; then
 	# we do not use O3 because it causes miscompilations.
 	ACX_CHECK_COMPILER_FLAG(O2, [CFLAGS="$CFLAGS -O2"])
 	ACX_CHECK_FLTO
+	ACX_CHECK_PIE
+	ACX_CHECK_RELRO_NOW
 fi
 AC_C_CONST
 AC_C_INLINE
@@ -501,6 +503,12 @@ AC_SEARCH_LIBS(socket, [socket])
 AC_CHECK_STRPTIME_WORKS
 ACX_CHECK_NONBLOCKING_BROKEN
 ACX_MKDIR_ONE_ARG
+
+# see if reuseport is enabled by default (also a config option).
+# freebsd can compile the option, but it does not work, it works on Linux.
+if test "`uname`" = "Linux"; then
+	AC_DEFINE([REUSEPORT_BY_DEFAULT], 1, [enable reuseport option by default.])
+fi
 
 # set -I. and -Isrcdir
 if test -n "$CPPFLAGS"; then
@@ -734,15 +742,6 @@ AC_ARG_WITH([facility],
         AC_HELP_STRING([--with-facility=name], [Syslog default facility (LOG_DAEMON)]),
         [facility=$withval])
 AC_DEFINE_UNQUOTED([FACILITY], $facility, [Define to the default facility for syslog.])
-
-dnl
-dnl Determine the maximum number of ip-addresses that are allowed
-dnl
-max_ips=32
-AC_ARG_WITH([max_ips],
-	AC_HELP_STRING([--with-max-ips=number], [Limit on the number of ip-addresses that may be specified]),
-	[max_ips=$withval])
-AC_DEFINE_UNQUOTED([MAX_INTERFACES], $max_ips, [Define to the maximum ip-addresses to serve.])
 
 dnl
 dnl Determine the default tcp timeout

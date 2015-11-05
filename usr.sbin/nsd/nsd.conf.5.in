@@ -1,4 +1,4 @@
-.TH "nsd.conf" "5" "Jun 23, 2015" "NLnet Labs" "nsd 4.1.3"
+.TH "nsd.conf" "5" "Oct 22, 2015" "NLnet Labs" "nsd 4.1.6"
 .\" Copyright (c) 2001\-2008, NLnet Labs. All rights reserved.
 .\" See LICENSE for the license.
 .SH "NAME"
@@ -153,6 +153,13 @@ NSD will bind to the listed ip\-address. Can be give multiple times
 to bind multiple ip\-addresses. Optionally, a port number can be given.
 If none are given NSD listens to the wildcard interface. Same as commandline option 
 .BR \-a.
+For servers with multiple IP addresses that can be used to send traffic
+to the internet, list them one by one, or the source address of replies
+could be wrong.  This is because if the udp socket associates a source
+address of 0.0.0.0 then the kernel picks an ip-address with which to
+send to the internet, and it picks the wrong one.  Typically needed for
+anycast instances.  Use ip-transparent to be able to list addresses that
+turn on later (typical for certain load-balancing).
 .TP
 .B interface:\fR <ip4 or ip6>[@port]
 Same as ip\-address (for easy of compatibility with unbound.conf).
@@ -162,10 +169,23 @@ Allows NSD to bind to non local addresses. This is useful to have NSD
 listen to IP addresses that are not (yet) added to the network interface, so
 that it can answer immediately when the address is added. Default is no.
 .TP
+.B reuseport:\fR <yes or no>
+Use the SO_REUSEPORT socket option, and create file descriptors for every
+server in the server\-count.  This improves performance of the network
+stack.  Only really useful if you also configure a server\-count higher
+than 1 (such as, equal to the number of cpus).  The default is yes on
+Linux (where it works, and has been (backported) to 2.6 and 3.x kernels).
+On FreeBSD it is known to fail (default is no), but you can enable it
+if you think it is fixed.  And a cautious default of no is used for
+other systems.
+.TP
 .B debug\-mode:\fR <yes or no>
 Turns on debugging mode for nsd, does not fork a daemon process. 
-Default is no. Same as commandline option 
+Default is no. Same as commandline option
 .BR \-d.
+If set to yes it does not fork and stays in the foreground, which can
+be helpful for commandline debugging, but is also used by certain
+server supervisor processes to ascertain that the server is running.
 .TP
 .B do\-ip4:\fR <yes or no>
 If yes, NSD listens to IPv4 connections.  Default yes.
@@ -298,7 +318,8 @@ once per the number of seconds. The default is 1 second.
 .B verbosity:\fR <level>
 This value specifies the verbosity level for (non\-debug) logging. 
 Default is 0. 1 gives more information about incoming notifies and
-zone transfers. 2 lists soft warnings that are encountered.
+zone transfers. 2 lists soft warnings that are encountered. 3 prints
+more information.
 .IP
 Verbosity 0 will print warnings and errors, and other events that are
 important to keep NSD running.

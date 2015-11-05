@@ -1014,7 +1014,7 @@ rcode2str(int rc)
 		case RCODE_FORMAT:
 			return "FORMAT ERROR";
 		case RCODE_SERVFAIL:
-			return "SERV FAIL";
+			return "SERVFAIL";
 		case RCODE_NXDOMAIN:
 			return "NAME ERROR";
 		case RCODE_IMPL:
@@ -1030,6 +1030,7 @@ rcode2str(int rc)
 		case RCODE_NOTAUTH:
 			return "SERVER NOT AUTHORITATIVE FOR ZONE";
 		case RCODE_NOTZONE:
+			/* Name not contained in zone */
 			return "NOTZONE";
 		default:
 			return "UNKNOWN ERROR";

@@ -135,6 +135,7 @@ query_error (struct query *q, nsd_rc_type rcode)
 	buffer_clear(q->packet);
 
 	QR_SET(q->packet);	   /* This is an answer.  */
+	AD_CLR(q->packet);
 	RCODE_SET(q->packet, (int) rcode); /* Error code.  */
 
 	/* Truncate the question as well... */
@@ -1267,7 +1268,7 @@ answer_query(struct nsd *nsd, struct query *q)
 }
 
 void
-query_prepare_response(query_type *q)
+query_prepare_response(query_type *q, nsd_type *nsd)
 {
 	uint16_t flags;
 
@@ -1282,6 +1283,9 @@ query_prepare_response(query_type *q)
 	 */
 	q->reserved_space = edns_reserved_space(&q->edns);
 	q->reserved_space += tsig_reserved_space(&q->tsig);
+	if(q->edns.nsid == 1 && nsd->nsid_len > 0 &&
+		q->edns.status != EDNS_NOT_PRESENT)
+		q->reserved_space += OPT_HDR + nsd->nsid_len;
 
 	/* Update the flags.  */
 	flags = FLAGS(q->packet);
@@ -1411,7 +1415,7 @@ query_process(query_type *q, nsd_type *nsd)
 		return query_error(q, NSD_RC_OK);
 	}
 
-	query_prepare_response(q);
+	query_prepare_response(q, nsd);
 
 	if (q->qclass != CLASS_IN && q->qclass != CLASS_ANY) {
 		if (q->qclass == CLASS_CH) {
@@ -1450,8 +1454,8 @@ query_add_optional(query_type *q, nsd_type *nsd)
 		if (q->edns.dnssec_ok)	edns->ok[7] = 0x80;
 		else			edns->ok[7] = 0x00;
 		buffer_write(q->packet, edns->ok, OPT_LEN);
-		if (nsd->nsid_len > 0 && q->edns.nsid == 1 &&
-				!query_overflow_nsid(q, nsd->nsid_len)) {
+		if (nsd->nsid_len > 0 && q->edns.nsid == 1 && buffer_available(
+			q->packet, OPT_RDATA+OPT_HDR+nsd->nsid_len)) {
 			/* rdata length */
 			buffer_write(q->packet, edns->rdata_nsid, OPT_RDATA);
 			/* nsid opt header */

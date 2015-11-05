@@ -359,9 +359,6 @@
 /* Define to the maximum message length to pass to syslog. */
 #undef MAXSYSLOGMSGLEN
 
-/* Define to the maximum ip-addresses to serve. */
-#undef MAX_INTERFACES
-
 /* Define if memcmp() does not compare unsigned bytes */
 #undef MEMCMP_IS_BROKEN
 
@@ -416,6 +413,9 @@
 
 /* Define as the return type of signal handlers (`int' or `void'). */
 #undef RETSIGTYPE
+
+/* enable reuseport option by default. */
+#undef REUSEPORT_BY_DEFAULT
 
 /* Define this to configure as a root server. */
 #undef ROOT_SERVER

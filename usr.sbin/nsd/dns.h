@@ -154,7 +154,7 @@ typedef enum nsd_rc nsd_rc_type;
 #define TYPE_MAILB	253	/* A request for mailbox-related records (MB, MG or MR) */
 #define TYPE_MAILA	254	/* A request for mail agent RRs (Obsolete - see MX) */
 #define TYPE_ANY	255	/* any type (wildcard) */
-
+#define TYPE_URI	256	/* RFC 7553 */
 #define TYPE_CAA	257	/* RFC 6844 */
 
 #define TYPE_DLV	32769	/* RFC 4431 */

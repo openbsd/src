@@ -568,7 +568,10 @@ xfrd_tcp_setup_write_packet(struct xfrd_tcp_pipeline* tp, xfrd_zone_t* zone)
 	assert(zone->tcp_waiting == 0);
 	/* start AXFR or IXFR for the zone */
 	if(zone->soa_disk_acquired == 0 || zone->master->use_axfr_only ||
-						zone->master->ixfr_disabled) {
+		zone->master->ixfr_disabled ||
+		/* if zone expired, after the first round, do not ask for
+		 * IXFR any more, but full AXFR (of any serial number) */
+		(zone->state == xfrd_zone_expired && zone->round_num != 0)) {
 		DEBUG(DEBUG_XFRD,1, (LOG_INFO, "request full zone transfer "
 						"(AXFR) for %s to %s",
 			zone->apex_str, zone->master->ip_address_spec));

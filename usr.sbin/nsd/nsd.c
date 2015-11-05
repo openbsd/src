@@ -167,6 +167,28 @@ get_ip_port_frm_str(const char* arg, const char** hostname,
         *hostname = arg;
 }
 
+/* append interface to interface array (names, udp, tcp) */
+void
+add_interface(char*** nodes, struct nsd* nsd, char* ip)
+{
+	/* realloc the arrays */
+	if(nsd->ifs == 0) {
+		*nodes = xalloc_zero(sizeof(*nodes));
+		nsd->udp = xalloc_zero(sizeof(*nsd->udp));
+		nsd->tcp = xalloc_zero(sizeof(*nsd->udp));
+	} else {
+		*nodes = xrealloc(*nodes, (nsd->ifs+1)*sizeof(*nodes));
+		nsd->udp = xrealloc(nsd->udp, (nsd->ifs+1)*sizeof(*nsd->udp));
+		nsd->tcp = xrealloc(nsd->tcp, (nsd->ifs+1)*sizeof(*nsd->udp));
+		(*nodes)[nsd->ifs] = NULL;
+		memset(&nsd->udp[nsd->ifs], 0, sizeof(*nsd->udp));
+		memset(&nsd->tcp[nsd->ifs], 0, sizeof(*nsd->tcp));
+	}
+
+	/* add it */
+	(*nodes)[nsd->ifs] = ip;
+	++nsd->ifs;
+}
 
 /*
  * Fetch the nsd parent process id from the nsd pidfile
@@ -404,10 +426,9 @@ main(int argc, char *argv[])
 	struct passwd *pwd = NULL;
 #endif /* HAVE_GETPWNAM */
 
-	/* For initialising the address info structures */
-	/* static so it can get very big without overflowing the stack */
-	static struct addrinfo hints[MAX_INTERFACES];
-	static const char *nodes[MAX_INTERFACES];
+	struct addrinfo hints[2];
+	int hints_in_use = 1;
+	char** nodes = NULL; /* array of address strings, size nsd.ifs */
 	const char *udp_port = 0;
 	const char *tcp_port = 0;
 
@@ -423,14 +444,11 @@ main(int argc, char *argv[])
 	nsd.dbfile	= 0;
 	nsd.pidfile	= 0;
 	nsd.server_kind = NSD_SERVER_MAIN;
-
-	for (i = 0; i < MAX_INTERFACES; i++) {
-		memset(&hints[i], 0, sizeof(hints[i]));
-		hints[i].ai_family = DEFAULT_AI_FAMILY;
-		hints[i].ai_flags = AI_PASSIVE;
-		nodes[i] = NULL;
-	}
-
+	memset(&hints, 0, sizeof(*hints)*2);
+	hints[0].ai_family = DEFAULT_AI_FAMILY;
+	hints[0].ai_flags = AI_PASSIVE;
+	hints[1].ai_family = DEFAULT_AI_FAMILY;
+	hints[1].ai_flags = AI_PASSIVE;
 	nsd.identity	= 0;
 	nsd.version	= VERSION;
 	nsd.username	= 0;
@@ -454,7 +472,6 @@ main(int argc, char *argv[])
 		nsd.identity = IDENTITY;
 	}
 
-
 	/* Parse the command line... */
 	while ((c = getopt(argc, argv, "46a:c:df:hi:I:l:N:n:P:p:s:u:t:X:V:v"
 #ifndef NDEBUG /* <mattthijs> only when configured with --enable-checking */
@@ -463,26 +480,17 @@ main(int argc, char *argv[])
 		)) != -1) {
 		switch (c) {
 		case '4':
-			for (i = 0; i < MAX_INTERFACES; ++i) {
-				hints[i].ai_family = AF_INET;
-			}
+			hints[0].ai_family = AF_INET;
 			break;
 		case '6':
 #ifdef INET6
-			for (i = 0; i < MAX_INTERFACES; ++i) {
-				hints[i].ai_family = AF_INET6;
-			}
+			hints[0].ai_family = AF_INET6;
 #else /* !INET6 */
 			error("IPv6 support not enabled.");
 #endif /* INET6 */
 			break;
 		case 'a':
-			if (nsd.ifs < MAX_INTERFACES) {
-				nodes[nsd.ifs] = optarg;
-				++nsd.ifs;
-			} else {
-				error("too many interfaces ('-a') specified.");
-			}
+			add_interface(&nodes, &nsd, optarg);
 			break;
 		case 'c':
 			configfile = optarg;
@@ -613,29 +621,18 @@ main(int argc, char *argv[])
 			nsd.options->zonelistfile);
 	}
 	if(nsd.options->do_ip4 && !nsd.options->do_ip6) {
-		for (i = 0; i < MAX_INTERFACES; ++i) {
-			hints[i].ai_family = AF_INET;
-		}
+		hints[0].ai_family = AF_INET;
 	}
 #ifdef INET6
 	if(nsd.options->do_ip6 && !nsd.options->do_ip4) {
-		for (i = 0; i < MAX_INTERFACES; ++i) {
-			hints[i].ai_family = AF_INET6;
-		}
+		hints[0].ai_family = AF_INET6;
 	}
 #endif /* INET6 */
 	if(nsd.options->ip_addresses)
 	{
 		ip_address_option_t* ip = nsd.options->ip_addresses;
 		while(ip) {
-			if (nsd.ifs < MAX_INTERFACES) {
-				nodes[nsd.ifs] = ip->address;
-				++nsd.ifs;
-			} else {
-				error("too many interfaces ('-a' + "
-				      "'ip-address:') specified.");
-				break;
-			}
+			add_interface(&nodes, &nsd, ip->address);
 			ip = ip->next;
 		}
 	}
@@ -671,6 +668,11 @@ main(int argc, char *argv[])
 	if(nsd.child_count == 0) {
 		nsd.child_count = nsd.options->server_count;
 	}
+#ifdef SO_REUSEPORT
+	if(nsd.options->reuseport && nsd.child_count > 1) {
+		nsd.reuseport = nsd.child_count;
+	}
+#endif /* SO_REUSEPORT */
 	if(nsd.maximum_tcp_count == 0) {
 		nsd.maximum_tcp_count = nsd.options->tcp_count;
 	}
@@ -761,7 +763,7 @@ main(int argc, char *argv[])
 
 	/* We need at least one active interface */
 	if (nsd.ifs == 0) {
-		nsd.ifs = 1;
+		add_interface(&nodes, &nsd, NULL);
 
 		/*
 		 * With IPv6 we'd like to open two separate sockets,
@@ -778,9 +780,10 @@ main(int argc, char *argv[])
 #ifdef INET6
 		if (hints[0].ai_family == AF_UNSPEC) {
 #ifdef IPV6_V6ONLY
+			add_interface(&nodes, &nsd, NULL);
 			hints[0].ai_family = AF_INET6;
 			hints[1].ai_family = AF_INET;
-			nsd.ifs = 2;
+			hints_in_use = 2;
 			nsd.grab_ip6_optional = 1;
 #else /* !IPV6_V6ONLY */
 			hints[0].ai_family = AF_INET6;
@@ -794,14 +797,15 @@ main(int argc, char *argv[])
 		int r;
 		const char* node = NULL;
 		const char* service = NULL;
+		int h = ((hints_in_use == 1)?0:i%hints_in_use);
 
 		/* We don't perform name-lookups */
 		if (nodes[i] != NULL)
-			hints[i].ai_flags |= AI_NUMERICHOST;
+			hints[h].ai_flags |= AI_NUMERICHOST;
 		get_ip_port_frm_str(nodes[i], &node, &service);
 
-		hints[i].ai_socktype = SOCK_DGRAM;
-		if ((r=getaddrinfo(node, (service?service:udp_port), &hints[i], &nsd.udp[i].addr)) != 0) {
+		hints[h].ai_socktype = SOCK_DGRAM;
+		if ((r=getaddrinfo(node, (service?service:udp_port), &hints[h], &nsd.udp[i].addr)) != 0) {
 #ifdef INET6
 			if(nsd.grab_ip6_optional && hints[0].ai_family == AF_INET6) {
 				log_msg(LOG_WARNING, "No IPv6, fallback to IPv4. getaddrinfo: %s",
@@ -815,8 +819,8 @@ main(int argc, char *argv[])
 				r==EAI_SYSTEM?strerror(errno):"");
 		}
 
-		hints[i].ai_socktype = SOCK_STREAM;
-		if ((r=getaddrinfo(node, (service?service:tcp_port), &hints[i], &nsd.tcp[i].addr)) != 0) {
+		hints[h].ai_socktype = SOCK_STREAM;
+		if ((r=getaddrinfo(node, (service?service:tcp_port), &hints[h], &nsd.tcp[i].addr)) != 0) {
 			error("cannot parse address '%s': getaddrinfo: %s %s",
 				nodes[i]?nodes[i]:"(null)",
 				gai_strerror(r),

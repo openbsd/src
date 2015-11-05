@@ -30,6 +30,7 @@
 #include <unistd.h>
 #include <signal.h>
 #include <netdb.h>
+#include <poll.h>
 #ifndef SHUT_WR
 #define SHUT_WR 1
 #endif
@@ -304,6 +305,7 @@ restart_child_servers(struct nsd *nsd, region_type* region, netio_type* netio,
 				nsd->child_count = 0;
 				nsd->server_kind = nsd->children[i].kind;
 				nsd->this_child = &nsd->children[i];
+				nsd->this_child->child_num = i;
 				/* remove signal flags inherited from parent
 				   the parent will handle them. */
 				nsd->signal_hint_reload_hup = 0;
@@ -546,29 +548,30 @@ initialize_dname_compression_tables(struct nsd *nsd)
 	compressed_dname_offsets[0] = QHEADERSZ; /* The original query name */
 }
 
-/*
- * Initialize the server, create and bind the sockets.
- *
- */
-int
-server_init(struct nsd *nsd)
+/* create and bind sockets.  */
+static int
+server_init_ifs(struct nsd *nsd, size_t from, size_t to, int* reuseport_works)
 {
+	struct addrinfo* addr;
 	size_t i;
-#if defined(SO_REUSEADDR) || (defined(INET6) && (defined(IPV6_V6ONLY) || defined(IPV6_USE_MIN_MTU) || defined(IPV6_MTU) || defined(IP_TRANSPARENT)))
+#if defined(SO_REUSEPORT) || defined(SO_REUSEADDR) || (defined(INET6) && (defined(IPV6_V6ONLY) || defined(IPV6_USE_MIN_MTU) || defined(IPV6_MTU) || defined(IP_TRANSPARENT)))
 	int on = 1;
 #endif
 
 	/* UDP */
 
 	/* Make a socket... */
-	for (i = 0; i < nsd->ifs; i++) {
-		if (!nsd->udp[i].addr) {
+	for (i = from; i < to; i++) {
+		/* for reuseports copy socket specs of first entries */
+		addr = nsd->udp[i%nsd->ifs].addr;
+		if (!addr) {
 			nsd->udp[i].s = -1;
 			continue;
 		}
-		if ((nsd->udp[i].s = socket(nsd->udp[i].addr->ai_family, nsd->udp[i].addr->ai_socktype, 0)) == -1) {
+		nsd->udp[i].fam = (int)addr->ai_family;
+		if ((nsd->udp[i].s = socket(addr->ai_family, addr->ai_socktype, 0)) == -1) {
 #if defined(INET6)
-			if (nsd->udp[i].addr->ai_family == AF_INET6 &&
+			if (addr->ai_family == AF_INET6 &&
 				errno == EAFNOSUPPORT && nsd->grab_ip6_optional) {
 				log_msg(LOG_WARNING, "fallback to UDP4, no IPv6: not supported");
 				continue;
@@ -578,6 +581,22 @@ server_init(struct nsd *nsd)
 			return -1;
 		}
 
+#ifdef SO_REUSEPORT
+		if(nsd->reuseport && *reuseport_works &&
+			setsockopt(nsd->udp[i].s, SOL_SOCKET, SO_REUSEPORT,
+			(void*)&on, (socklen_t)sizeof(on)) < 0) {
+			if(verbosity >= 3
+#ifdef ENOPROTOOPT
+				|| errno != ENOPROTOOPT
+#endif
+				)
+			    log_msg(LOG_ERR, "setsockopt(..., SO_REUSEPORT, "
+				"...) failed: %s", strerror(errno));
+			*reuseport_works = 0;
+		}
+#else
+		(void)reuseport_works;
+#endif /* SO_REUSEPORT */
 #if defined(SO_RCVBUF) || defined(SO_SNDBUF)
 	if(1) {
 	int rcv = 1*1024*1024;
@@ -633,7 +652,7 @@ server_init(struct nsd *nsd)
 #endif /* defined(SO_RCVBUF) || defined(SO_SNDBUF) */
 
 #if defined(INET6)
-		if (nsd->udp[i].addr->ai_family == AF_INET6) {
+		if (addr->ai_family == AF_INET6) {
 # if defined(IPV6_V6ONLY)
 			if (setsockopt(nsd->udp[i].s,
 				       IPPROTO_IPV6, IPV6_V6ONLY,
@@ -679,7 +698,7 @@ server_init(struct nsd *nsd)
 		}
 #endif
 #if defined(AF_INET)
-		if (nsd->udp[i].addr->ai_family == AF_INET) {
+		if (addr->ai_family == AF_INET) {
 #  if defined(IP_MTU_DISCOVER) && defined(IP_PMTUDISC_DONT)
 			int action = IP_PMTUDISC_DONT;
 			if (setsockopt(nsd->udp[i].s, IPPROTO_IP, 
@@ -718,7 +737,7 @@ server_init(struct nsd *nsd)
 #endif /* IP_TRANSPARENT */
 		}
 
-		if (bind(nsd->udp[i].s, (struct sockaddr *) nsd->udp[i].addr->ai_addr, nsd->udp[i].addr->ai_addrlen) != 0) {
+		if (bind(nsd->udp[i].s, (struct sockaddr *) addr->ai_addr, addr->ai_addrlen) != 0) {
 			log_msg(LOG_ERR, "can't bind udp socket: %s", strerror(errno));
 			return -1;
 		}
@@ -727,14 +746,17 @@ server_init(struct nsd *nsd)
 	/* TCP */
 
 	/* Make a socket... */
-	for (i = 0; i < nsd->ifs; i++) {
-		if (!nsd->tcp[i].addr) {
+	for (i = from; i < to; i++) {
+		/* for reuseports copy socket specs of first entries */
+		addr = nsd->tcp[i%nsd->ifs].addr;
+		if (!addr) {
 			nsd->tcp[i].s = -1;
 			continue;
 		}
-		if ((nsd->tcp[i].s = socket(nsd->tcp[i].addr->ai_family, nsd->tcp[i].addr->ai_socktype, 0)) == -1) {
+		nsd->tcp[i].fam = (int)addr->ai_family;
+		if ((nsd->tcp[i].s = socket(addr->ai_family, addr->ai_socktype, 0)) == -1) {
 #if defined(INET6)
-			if (nsd->tcp[i].addr->ai_family == AF_INET6 &&
+			if (addr->ai_family == AF_INET6 &&
 				errno == EAFNOSUPPORT && nsd->grab_ip6_optional) {
 				log_msg(LOG_WARNING, "fallback to TCP4, no IPv6: not supported");
 				continue;
@@ -744,6 +766,20 @@ server_init(struct nsd *nsd)
 			return -1;
 		}
 
+#ifdef SO_REUSEPORT
+		if(nsd->reuseport && *reuseport_works &&
+			setsockopt(nsd->tcp[i].s, SOL_SOCKET, SO_REUSEPORT,
+			(void*)&on, (socklen_t)sizeof(on)) < 0) {
+			if(verbosity >= 3
+#ifdef ENOPROTOOPT
+				|| errno != ENOPROTOOPT
+#endif
+				)
+			    log_msg(LOG_ERR, "setsockopt(..., SO_REUSEPORT, "
+				"...) failed: %s", strerror(errno));
+			*reuseport_works = 0;
+		}
+#endif /* SO_REUSEPORT */
 #ifdef	SO_REUSEADDR
 		if (setsockopt(nsd->tcp[i].s, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on)) < 0) {
 			log_msg(LOG_ERR, "setsockopt(..., SO_REUSEADDR, ...) failed: %s", strerror(errno));
@@ -751,7 +787,7 @@ server_init(struct nsd *nsd)
 #endif /* SO_REUSEADDR */
 
 #if defined(INET6)
-		if (nsd->tcp[i].addr->ai_family == AF_INET6) {
+		if (addr->ai_family == AF_INET6) {
 # if defined(IPV6_V6ONLY)
 			if (setsockopt(nsd->tcp[i].s, IPPROTO_IPV6, IPV6_V6ONLY,
 				&on, sizeof(on)) < 0) {
@@ -802,7 +838,7 @@ server_init(struct nsd *nsd)
 #endif /* IP_TRANSPARENT */
 		}
 
-		if (bind(nsd->tcp[i].s, (struct sockaddr *) nsd->tcp[i].addr->ai_addr, nsd->tcp[i].addr->ai_addrlen) != 0) {
+		if (bind(nsd->tcp[i].s, (struct sockaddr *) addr->ai_addr, addr->ai_addrlen) != 0) {
 			log_msg(LOG_ERR, "can't bind tcp socket: %s", strerror(errno));
 			return -1;
 		}
@@ -814,6 +850,43 @@ server_init(struct nsd *nsd)
 		}
 	}
 
+	return 0;
+}
+
+/*
+ * Initialize the server, reuseport, create and bind the sockets.
+ */
+int
+server_init(struct nsd *nsd)
+{
+	int reuseport_successful = 1; /* see if reuseport works in OS */
+	if(nsd->reuseport) {
+		/* increase the size of the udp and tcp interface arrays,
+		 * there are going to be separate interface file descriptors
+		 * for every server instance */
+		nsd->udp = xrealloc(nsd->udp, (nsd->ifs*nsd->reuseport)*
+			sizeof(*nsd->udp));
+		nsd->tcp = xrealloc(nsd->tcp, (nsd->ifs*nsd->reuseport)*
+			sizeof(*nsd->tcp));
+		memset(&nsd->udp[nsd->ifs], 0, sizeof(*nsd->udp)*
+			(nsd->ifs*(nsd->reuseport-1)));
+		memset(&nsd->tcp[nsd->ifs], 0, sizeof(*nsd->tcp)*
+			(nsd->ifs*(nsd->reuseport-1)));
+	}
+
+	/* open the server interface ports */
+	if(server_init_ifs(nsd, 0, nsd->ifs, &reuseport_successful) == -1)
+		return -1;
+
+	/* continue to open the remaining reuseport ports */
+	if(nsd->reuseport && reuseport_successful) {
+		if(server_init_ifs(nsd, nsd->ifs, nsd->ifs*nsd->reuseport,
+			&reuseport_successful) == -1)
+			return -1;
+		nsd->ifs *= nsd->reuseport;
+	} else {
+		nsd->reuseport = 0;
+	}
 	return 0;
 }
 
@@ -902,7 +975,8 @@ server_close_all_sockets(struct nsd_socket sockets[], size_t n)
 	for (i = 0; i < n; ++i) {
 		if (sockets[i].s != -1) {
 			close(sockets[i].s);
-			freeaddrinfo(sockets[i].addr);
+			if(sockets[i].addr)
+				freeaddrinfo(sockets[i].addr);
 			sockets[i].s = -1;
 		}
 	}
@@ -1168,16 +1242,14 @@ block_read(struct nsd* nsd, int s, void* p, ssize_t sz, int timeout)
 {
 	uint8_t* buf = (uint8_t*) p;
 	ssize_t total = 0;
-	fd_set rfds;
-	struct timeval tv;
-	FD_ZERO(&rfds);
-
+	struct pollfd fd;
+	memset(&fd, 0, sizeof(fd));
+	fd.fd = s;
+	fd.events = POLLIN;
+	
 	while( total < sz) {
 		ssize_t ret;
-		FD_SET(s, &rfds);
-		tv.tv_sec = timeout;
-		tv.tv_usec = 0;
-		ret = select(s+1, &rfds, NULL, NULL, timeout==-1?NULL:&tv);
+		ret = poll(&fd, 1, (timeout==-1)?-1:timeout*1000);
 		if(ret == -1) {
 			if(errno == EAGAIN)
 				/* blocking read */
@@ -1850,7 +1922,7 @@ nsd_child_event_base(void)
 void
 server_child(struct nsd *nsd)
 {
-	size_t i;
+	size_t i, from, numifs;
 	region_type *server_region = region_create(xalloc, free);
 	struct event_base* event_base = nsd_child_event_base();
 	query_type *udp_query;
@@ -1862,7 +1934,7 @@ server_child(struct nsd *nsd)
 	}
 
 #ifdef RATELIMIT
-	rrl_init((nsd->this_child - nsd->children)/sizeof(nsd->children[0]));
+	rrl_init(nsd->this_child->child_num);
 #endif
 
 	assert(nsd->server_kind != NSD_SERVER_MAIN);
@@ -1893,6 +1965,18 @@ server_child(struct nsd *nsd)
 			log_msg(LOG_ERR, "nsd ipcchild: event_add failed");
 	}
 
+	if(nsd->reuseport) {
+		numifs = nsd->ifs / nsd->reuseport;
+		from = numifs * nsd->this_child->child_num;
+		if(from+numifs > nsd->ifs) { /* should not happen */
+			from = 0;
+			numifs = nsd->ifs;
+		}
+	} else {
+		from = 0;
+		numifs = nsd->ifs;
+	}
+
 	if (nsd->server_kind & NSD_SERVER_UDP) {
 #if (defined(NONBLOCKING_IS_BROKEN) || !defined(HAVE_RECVMMSG))
 		udp_query = query_create(server_region,
@@ -1912,7 +1996,7 @@ server_child(struct nsd *nsd)
 			msgs[i].msg_hdr.msg_namelen = queries[i]->addrlen;
 		}
 #endif
-		for (i = 0; i < nsd->ifs; ++i) {
+		for (i = from; i < from+numifs; ++i) {
 			struct udp_handler_data *data;
 			struct event *handler;
 
@@ -1939,15 +2023,15 @@ server_child(struct nsd *nsd)
 	 * and disable them based on the current number of active TCP
 	 * connections.
 	 */
-	tcp_accept_handler_count = nsd->ifs;
+	tcp_accept_handler_count = numifs;
 	tcp_accept_handlers = (struct tcp_accept_handler_data*)
 		region_alloc_array(server_region,
-		nsd->ifs, sizeof(*tcp_accept_handlers));
+		numifs, sizeof(*tcp_accept_handlers));
 	if (nsd->server_kind & NSD_SERVER_TCP) {
-		for (i = 0; i < nsd->ifs; ++i) {
-			struct event *handler = &tcp_accept_handlers[i].event;
+		for (i = from; i < numifs; ++i) {
+			struct event *handler = &tcp_accept_handlers[i-from].event;
 			struct tcp_accept_handler_data* data =
-				&tcp_accept_handlers[i];
+				&tcp_accept_handlers[i-from];
 			data->nsd = nsd;
 			data->socket = &nsd->tcp[i];
 			event_set(handler, nsd->tcp[i].s, EV_PERSIST|EV_READ,
@@ -2060,9 +2144,9 @@ handle_udp(int fd, short event, void* arg)
 
 		/* Account... */
 #ifdef BIND8_STATS
-		if (data->socket->addr->ai_family == AF_INET) {
+		if (data->socket->fam == AF_INET) {
 			STATUP(data->nsd, qudp);
-		} else if (data->socket->addr->ai_family == AF_INET6) {
+		} else if (data->socket->fam == AF_INET6) {
 			STATUP(data->nsd, qudp6);
 		}
 #endif
@@ -2078,9 +2162,9 @@ handle_udp(int fd, short event, void* arg)
 			}
 
 #ifdef USE_ZONE_STATS
-			if (data->socket->addr->ai_family == AF_INET) {
+			if (data->socket->fam == AF_INET) {
 				ZTATUP(data->nsd, q->zone, qudp);
-			} else if (data->socket->addr->ai_family == AF_INET6) {
+			} else if (data->socket->fam == AF_INET6) {
 				ZTATUP(data->nsd, q->zone, qudp6);
 			}
 #endif
@@ -2218,9 +2302,9 @@ handle_udp(int fd, short event, void* arg)
 #endif /* NONBLOCKING_IS_BROKEN || !HAVE_RECVMMSG */
 
 		/* Account... */
-		if (data->socket->addr->ai_family == AF_INET) {
+		if (data->socket->fam == AF_INET) {
 			STATUP(data->nsd, qudp);
-		} else if (data->socket->addr->ai_family == AF_INET6) {
+		} else if (data->socket->fam == AF_INET6) {
 			STATUP(data->nsd, qudp6);
 		}
 
@@ -2235,9 +2319,9 @@ handle_udp(int fd, short event, void* arg)
 			}
 
 #ifdef USE_ZONE_STATS
-			if (data->socket->addr->ai_family == AF_INET) {
+			if (data->socket->fam == AF_INET) {
 				ZTATUP(data->nsd, q->zone, qudp);
-			} else if (data->socket->addr->ai_family == AF_INET6) {
+			} else if (data->socket->fam == AF_INET6) {
 				ZTATUP(data->nsd, q->zone, qudp6);
 			}
 #endif

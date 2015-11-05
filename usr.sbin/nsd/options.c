@@ -24,6 +24,7 @@ int c_parse(void);
 int c_lex(void);
 int c_wrap(void);
 void c_error(const char *message);
+extern char* c_text;
 
 static int
 rbtree_strcmp(const void* p1, const void* p2)
@@ -68,6 +69,11 @@ nsd_options_create(region_type* region)
 	opt->pidfile = PIDFILE;
 	opt->port = UDP_PORT;
 /* deprecated?	opt->port = TCP_PORT; */
+#ifdef REUSEPORT_BY_DEFAULT
+	opt->reuseport = 1;
+#else
+	opt->reuseport = 0;
+#endif
 	opt->statistics = 0;
 	opt->chroot = 0;
 	opt->username = USER;
@@ -682,25 +688,43 @@ zone_list_close(nsd_options_t* opt)
 	opt->zonelist = NULL;
 }
 
-
 void
-c_error_va_list(const char* fmt, va_list args)
+c_error_va_list_pos(int showpos, const char* fmt, va_list args)
 {
+	char* at = NULL;
 	cfg_parser->errors++;
+	if(showpos && c_text && c_text[0]!=0) {
+		at = c_text;
+	}
 	if(cfg_parser->err) {
 		char m[MAXSYSLOGMSGLEN];
-		snprintf(m, sizeof(m), "%s:%d: error: ", cfg_parser->filename,
+		snprintf(m, sizeof(m), "%s:%d: ", cfg_parser->filename,
 			cfg_parser->line);
 		(*cfg_parser->err)(cfg_parser->err_arg, m);
+		if(at) {
+			snprintf(m, sizeof(m), "at '%s': ", at);
+			(*cfg_parser->err)(cfg_parser->err_arg, m);
+		}
+		(*cfg_parser->err)(cfg_parser->err_arg, "error: ");
 		vsnprintf(m, sizeof(m), fmt, args);
 		(*cfg_parser->err)(cfg_parser->err_arg, m);
 		(*cfg_parser->err)(cfg_parser->err_arg, "\n");
 		return;
 	}
-        fprintf(stderr, "%s:%d: error: ", cfg_parser->filename,
-		cfg_parser->line);
+        fprintf(stderr, "%s:%d: ", cfg_parser->filename, cfg_parser->line);
+	if(at) fprintf(stderr, "at '%s': ", at);
+	fprintf(stderr, "error: ");
 	vfprintf(stderr, fmt, args);
 	fprintf(stderr, "\n");
+}
+
+void
+c_error_msg_pos(int showpos, const char* fmt, ...)
+{
+        va_list args;
+        va_start(args, fmt);
+        c_error_va_list_pos(showpos, fmt, args);
+        va_end(args);
 }
 
 void
@@ -708,14 +732,16 @@ c_error_msg(const char* fmt, ...)
 {
         va_list args;
         va_start(args, fmt);
-        c_error_va_list(fmt, args);
+        c_error_va_list_pos(0, fmt, args);
         va_end(args);
 }
 
 void
 c_error(const char* str)
 {
-	c_error_msg("%s", str);
+	if((strcmp(str, "syntax error")==0 || strcmp(str, "parse error")==0))
+		c_error_msg_pos(1, "%s", str);
+	else	c_error_msg("%s", str);
 }
 
 int

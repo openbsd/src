@@ -91,7 +91,7 @@ query_axfr(struct nsd *nsd, struct query *query)
 		query->edns.status = EDNS_NOT_PRESENT;
 		buffer_set_limit(query->packet, QHEADERSZ);
 		QDCOUNT_SET(query->packet, 0);
-		query_prepare_response(query);
+		query_prepare_response(query, nsd);
 	}
 
 	/* Add zone RRs until answer is full.  */
@@ -193,6 +193,13 @@ answer_axfr_ixfr(struct nsd *nsd, struct query *q)
 			}
 			DEBUG(DEBUG_XFRD,1, (LOG_INFO, "axfr admitted acl %s %s",
 				acl->ip_address_spec, acl->key_name?acl->key_name:"NOKEY"));
+			if (verbosity >= 1) {
+				char a[128];
+				addr2str(&q->addr, a, sizeof(a));
+				VERBOSITY(1, (LOG_INFO, "%s for %s from %s",
+					(q->qtype==TYPE_AXFR?"axfr":"ixfr"),
+					dname_to_string(q->qname, NULL), a));
+			}
 			return query_axfr(nsd, q);
 		}
 		/** Fallthrough: AXFR over UDP queries are discarded. */

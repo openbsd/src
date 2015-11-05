@@ -1449,7 +1449,7 @@ process_rr(void)
 			return 0;
 		}
 		if(rrset->rr_count == 65535) {
-			zc_error_prev_line("too may RRs for domain RRset");
+			zc_error_prev_line("too many RRs for domain RRset");
 			return 0;
 		}
 
