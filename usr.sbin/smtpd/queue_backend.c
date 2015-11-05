@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_backend.c,v 1.57 2015/10/29 10:25:36 sunil Exp $	*/
+/*	$OpenBSD: queue_backend.c,v 1.58 2015/11/05 08:59:23 sunil Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@poolp.org>
@@ -657,7 +657,7 @@ queue_message_walk(struct envelope *ep, uint32_t msgid, int *done, void **data)
 		(void)queue_message_corrupt(evpid_to_msgid(evpid));
 	}
 
-	return (-1);
+	return (0);
 }
 
 int
