@@ -31,7 +31,7 @@ off_t	start_attnpos = -1;
 off_t	end_attnpos = -1;
 int	wscroll;
 
-static char 	*progname;
+static char	*progname;
 
 int	quitting;
 int	secure;
@@ -43,8 +43,8 @@ char *namelogfile = NULL;
 char *editor;
 char *editproto;
 
-extern char 	*tags;
-extern char 	*tagoption;
+extern char	*tags;
+extern char	*tagoption;
 extern int	jump_sline;
 extern int	less_is_more;
 extern int	missing_cap;

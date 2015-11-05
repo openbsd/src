@@ -102,7 +102,7 @@ struct cs_alias {
 	{ "KOI8-R",		"koi8-r" },
 	{ "KOI8-U",		"koi8-r" },
 	{ "GEORGIAN-PS",	"georgianps" },
-	{ "TCVN5712-1", 	"tcvn" },
+	{ "TCVN5712-1",		"tcvn" },
 	{ "NEXTSTEP",		"next" },
 	{ "windows",		"windows-1252" }, /* backward compatibility */
 	{ "CP1251",		"windows-1251" },

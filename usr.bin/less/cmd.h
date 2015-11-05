@@ -90,7 +90,7 @@
 #define	EC_LEFT		4
 #define	EC_W_LEFT	5
 #define	EC_W_RIGHT	6
-#define	EC_INSERT 	7
+#define	EC_INSERT	7
 #define	EC_DELETE	8
 #define	EC_HOME		9
 #define	EC_END		10

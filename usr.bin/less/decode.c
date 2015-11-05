@@ -178,7 +178,7 @@ static unsigned char moretable[] = {
 
 static unsigned char edittable[] =
 {
-	'\t', 0,    			EC_F_COMPLETE,	/* TAB */
+	'\t', 0,			EC_F_COMPLETE,	/* TAB */
 	'\17', 0,			EC_B_COMPLETE,	/* BACKTAB */
 	SK(SK_BACKTAB), 0,		EC_B_COMPLETE,	/* BACKTAB */
 	ESC, '\t', 0,			EC_B_COMPLETE,	/* ESC TAB */
@@ -550,7 +550,7 @@ old_lesskey(char *buf, int len)
 	/*
 	 * Old-style lesskey file.
 	 * The file must end with either
-	 * 	..,cmd,0,action
+	 *	..,cmd,0,action
 	 * or	...,cmd,0,action|A_EXTRA,string,0
 	 * So the last byte or the second to last byte must be zero.
 	 */
