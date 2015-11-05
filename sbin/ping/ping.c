@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.132 2015/11/04 21:26:30 tedu Exp $	*/
+/*	$OpenBSD: ping.c,v 1.133 2015/11/05 21:53:35 florian Exp $	*/
 /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
@@ -52,7 +52,6 @@
  */
 
 #include <sys/types.h>
-#include <sys/queue.h>
 #include <sys/socket.h>
 #include <sys/time.h>
 
@@ -61,20 +60,21 @@
 #include <netinet/ip_icmp.h>
 #include <netinet/ip_var.h>
 #include <arpa/inet.h>
-#include <math.h>
 #include <netdb.h>
-#include <signal.h>
-#include <unistd.h>
-#include <stdio.h>
+
 #include <ctype.h>
 #include <err.h>
 #include <errno.h>
-#include <poll.h>
-#include <string.h>
 #include <limits.h>
-#include <stdlib.h>
-
+#include <math.h>
+#include <poll.h>
+#include <signal.h>
 #include <siphash.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
+#include <unistd.h>
 
 struct tv64 {
 	u_int64_t	tv64_sec;
