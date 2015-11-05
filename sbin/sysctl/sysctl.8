@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.8,v 1.189 2015/11/05 12:15:42 logan Exp $
+.\"	$OpenBSD: sysctl.8,v 1.190 2015/11/05 12:50:53 sthen Exp $
 .\"	$NetBSD: sysctl.8,v 1.4 1995/09/30 07:12:49 thorpej Exp $
 .\"
 .\" Copyright (c) 1993
@@ -309,6 +309,8 @@ and a few require a kernel compiled with non-standard
 .It net.inet6.ip6.dad_pending Ta integer Ta yes
 .It net.inet6.ip6.mtudisctimeout Ta integer Ta yes
 .It net.inet6.ip6.ifq.len Ta integer Ta no
+.It net.inet6.ip6.ifq.maxlen Ta integer Ta yes
+.It net.inet6.ip6.ifq.drops Ta integer Ta no
 .It net.inet6.icmp6.redirtimeout Ta integer Ta yes
 .It net.inet6.icmp6.nd6_prune Ta integer Ta yes
 .It net.inet6.icmp6.nd6_delay Ta integer Ta yes
