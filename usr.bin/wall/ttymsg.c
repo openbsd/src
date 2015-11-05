@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttymsg.c,v 1.16 2009/10/27 23:59:49 deraadt Exp $	*/
+/*	$OpenBSD: ttymsg.c,v 1.17 2015/11/05 22:20:11 benno Exp $	*/
 /*	$NetBSD: ttymsg.c,v 1.3 1994/11/17 07:17:55 jtc Exp $	*/
 
 /*
@@ -31,6 +31,7 @@
  */
 
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <sys/uio.h>
 #include <signal.h>
 #include <fcntl.h>
@@ -41,7 +42,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include <sys/stat.h>
+#include <err.h>
 
 char *ttymsg(struct iovec *, int, char *, int);
 
@@ -151,6 +152,10 @@ ttymsg(iov, iovcnt, line, tmout)
 				(void) close(fd);
 				return (NULL);
 			}
+
+			if (pledge("stdio", NULL) == -1)
+				err(1, "pledge");
+
 			forked++;
 			/* wait at most tmout seconds */
 			(void) signal(SIGALRM, SIG_DFL);

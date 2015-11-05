@@ -1,4 +1,4 @@
-/*	$OpenBSD: wall.c,v 1.28 2015/09/29 03:19:24 guenther Exp $	*/
+/*	$OpenBSD: wall.c,v 1.29 2015/11/05 22:20:11 benno Exp $	*/
 /*	$NetBSD: wall.c,v 1.6 1994/11/17 07:17:58 jtc Exp $	*/
 
 /*
@@ -35,6 +35,7 @@
  * is entitled "Mechanisms for Broadcast and Selective Broadcast".
  */
 
+#include <sys/queue.h>
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <sys/uio.h>
@@ -57,6 +58,11 @@ struct wallgroup {
 	char	**mem;
 	struct wallgroup *next;
 } *grouplist;
+
+struct utmptty {
+	char	*tty;
+	SLIST_ENTRY(utmptty) next;
+};
 
 void	makemsg(char *);
 void	addgroup(struct group *, char *);
@@ -81,6 +87,9 @@ main(int argc, char **argv)
 	struct passwd *pw;
 	struct group *grp;
 	struct wallgroup *g;
+	struct utmptty *un;
+	SLIST_HEAD(,utmptty) utmphead;
+	SLIST_INIT(&utmphead);
 
 	while ((ch = getopt(argc, argv, "ng:")) != -1)
 		switch (ch) {
@@ -105,10 +114,14 @@ main(int argc, char **argv)
 
 	makemsg(*argv);
 
+	if (pledge("stdio rpath wpath getpw proc", NULL) == -1)
+		err(1, "pledge");
+
 	if (!(fp = fopen(_PATH_UTMP, "r")))
 		err(1, "cannot read %s", _PATH_UTMP);
 	iov.iov_base = mbuf;
 	iov.iov_len = mbufsize;
+
 	while (fread(&utmp, sizeof(utmp), 1, fp) == 1) {
 		if (!utmp.ut_name[0])
 			continue;
@@ -131,9 +144,24 @@ main(int argc, char **argv)
 		}
 		strncpy(line, utmp.ut_line, sizeof(utmp.ut_line));
 		line[sizeof(utmp.ut_line)] = '\0';
-		if ((p = ttymsg(&iov, 1, line, 60*5)) != NULL)
+		un = malloc(sizeof(struct utmptty));
+		if (un == NULL)
+			err(1, "malloc");
+		un->tty = strndup(line, sizeof(utmp.ut_line));
+		if (un->tty == NULL)
+			err(1, "strndup");
+		SLIST_INSERT_HEAD(&utmphead, un, next);
+	}
+	fclose(fp);
+
+	if (pledge("stdio rpath wpath proc", NULL) == -1)
+		err(1, "pledge");
+
+	SLIST_FOREACH(un, &utmphead, next) {
+		if ((p = ttymsg(&iov, 1, un->tty, 60*5)) != NULL)
 			warnx("%s", p);
 	}
+
 	exit(0);
 }
 
