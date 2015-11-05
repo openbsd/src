@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 2013/10/31 01:24:06 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.3 2015/11/05 12:56:12 bluhm Exp $
 
 # The following ports must be installed:
 #
@@ -95,7 +95,7 @@ PYTHON =	PYTHONPATH=${.OBJDIR} python2.7 ${.CURDIR}/
 TARGETS +=	ping6
 run-regress-ping6:
 	@echo '\n======== $@ ========'
-	sudo ndp -c
+	${SUDO} ndp -c
 .for ip in SRC_OUT DST_IN
 	@echo Check ping6 ${ip}6:
 	ping6 -n -c 1 ${${ip}6}
