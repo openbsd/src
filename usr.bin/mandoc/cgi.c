@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgi.c,v 1.51 2015/10/22 22:05:42 schwarze Exp $ */
+/*	$OpenBSD: cgi.c,v 1.52 2015/11/05 17:47:53 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015 Ingo Schwarze <schwarze@usta.de>
@@ -375,15 +375,13 @@ resp_begin_html(int code, const char *msg)
 	       "<HTML>\n"
 	       "<HEAD>\n"
 	       "<META CHARSET=\"UTF-8\" />\n"
-	       "<LINK REL=\"stylesheet\" HREF=\"%s/man-cgi.css\""
-	       " TYPE=\"text/css\" media=\"all\">\n"
-	       "<LINK REL=\"stylesheet\" HREF=\"%s/man.css\""
+	       "<LINK REL=\"stylesheet\" HREF=\"%s/mandoc.css\""
 	       " TYPE=\"text/css\" media=\"all\">\n"
 	       "<TITLE>%s</TITLE>\n"
 	       "</HEAD>\n"
 	       "<BODY>\n"
 	       "<!-- Begin page content. //-->\n",
-	       CSS_DIR, CSS_DIR, CUSTOMIZE_TITLE);
+	       CSS_DIR, CUSTOMIZE_TITLE);
 }
 
 static void

@@ -1,4 +1,4 @@
-.\"     $OpenBSD: man.cgi.8,v 1.10 2014/09/14 19:44:20 schwarze Exp $
+.\"     $OpenBSD: man.cgi.8,v 1.11 2015/11/05 17:47:53 schwarze Exp $
 .\"
 .\" Copyright (c) 2014 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 14 2014 $
+.Dd $Mdocdate: November 5 2015 $
 .Dt MAN.CGI 8
 .Os
 .Sh NAME
@@ -344,15 +344,10 @@ Can be overridden by
 The path to the server document root relative to the server root.
 This is part of the web server configuration and not specific to
 .Nm .
-.It Pa /htdocs/man-cgi.css
-A style sheet for general
-.Nm
-styling, referenced from each generated HTML page.
-.It Pa /htdocs/man.css
+.It Pa /htdocs/mandoc.css
 A style sheet for
 .Xr mandoc 1
-HTML styling, referenced from each generated HTML page after
-.Pa man-cgi.css .
+HTML styling, referenced from each generated HTML page.
 .It Pa /man
 Default
 .Nm
