@@ -1,4 +1,4 @@
-/*	$OpenBSD: catopen.c,v 1.18 2015/10/23 18:49:07 tobias Exp $ */
+/*	$OpenBSD: catopen.c,v 1.19 2015/11/05 23:38:07 bluhm Exp $ */
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -43,7 +43,6 @@
 
 #define MAXIMUM(a, b)	(((a) > (b)) ? (a) : (b))
 
-#define NLS_DEFAULT_PATH "/usr/share/nls/%L/%N.cat:/usr/share/nls/%l.%c/%N.cat:/usr/share/nls/%l/%N.cat"
 #define NLS_DEFAULT_LANG "C"
 
 static nl_catd	load_msgcat(const char *);
@@ -67,7 +66,7 @@ catopen(const char *name, int oflag)
 		return load_msgcat(name);
 
 	if (issetugid() != 0 || (nlspath = getenv("NLSPATH")) == NULL)
-		nlspath = NLS_DEFAULT_PATH;
+		return (nl_catd) -1;
 
 	lang = NULL;
 	if (oflag & NL_CAT_LOCALE) {

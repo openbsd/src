@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.274 2015/10/10 09:45:15 ajacoutot Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.275 2015/11/05 23:38:07 bluhm Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 
@@ -612,8 +612,6 @@ usr
         misc
         ..
         mk
-        ..
-        nls
         ..
 
         # ./usr/share/snmp
