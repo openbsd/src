@@ -6,104 +6,90 @@
  *
  * For more information, see the README file.
  */
-
+/*
+ * Modified for use with illumos.
+ * Copyright 2014 Garrett D'Amore <garrett@damore.org>
+ */
 
 /*
  * Entry point, initialization, miscellaneous routines.
  */
 
+#include <libgen.h>
+#include <stdarg.h>
+#include <sys/types.h>
 #include "less.h"
-#if MSDOS_COMPILER==WIN32C
-#include <windows.h>
-#endif
 
-public char *	every_first_cmd = NULL;
-public int	new_file;
-public int	is_tty;
-public IFILE	curr_ifile = NULL_IFILE;
-public IFILE	old_ifile = NULL_IFILE;
-public struct scrpos initial_scrpos;
-public int	any_display = FALSE;
-public POSITION	start_attnpos = NULL_POSITION;
-public POSITION	end_attnpos = NULL_POSITION;
-public int	wscroll;
-public char *	progname;
-public int	quitting;
-public int	secure;
-public int	dohelp;
+char	*every_first_cmd = NULL;
+int	new_file;
+int	is_tty;
+IFILE	curr_ifile = NULL_IFILE;
+IFILE	old_ifile = NULL_IFILE;
+struct scrpos initial_scrpos;
+int	any_display = FALSE;
+off_t	start_attnpos = -1;
+off_t	end_attnpos = -1;
+int	wscroll;
 
-#if LOGFILE
-public int	logfile = -1;
-public int	force_logfile = FALSE;
-public char *	namelogfile = NULL;
-#endif
+static char 	*progname;
 
-#if EDITOR
-public char *	editor;
-public char *	editproto;
-#endif
+int	quitting;
+int	secure;
+int	dohelp;
 
-#if TAGS
-extern char *	tags;
-extern char *	tagoption;
+int logfile = -1;
+int force_logfile = FALSE;
+char *namelogfile = NULL;
+char *editor;
+char *editproto;
+
+extern char 	*tags;
+extern char 	*tagoption;
 extern int	jump_sline;
-#endif
-
-#ifdef WIN32
-static char consoleTitle[256];
-#endif
-
 extern int	less_is_more;
 extern int	missing_cap;
 extern int	know_dumb;
+extern int	quit_if_one_screen;
+extern int	quit_at_eof;
 extern int	pr_type;
+extern int	hilite_search;
+extern int	use_lessopen;
+extern int	no_init;
+extern int	top_scroll;
+extern int	errmsgs;
 
 
 /*
  * Entry point.
  */
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	IFILE ifile;
 	char *s;
 
-#ifdef __EMX__
-	_response(&argc, &argv);
-	_wildcard(&argc, &argv);
-#endif
-
-	progname = *argv++;
+	progname = basename(argv[0]);
+	argv++;
 	argc--;
+
+	/*
+	 * If the name of the executable program is "more",
+	 * act like LESS_IS_MORE is set.  We have to set this as early
+	 * as possible for POSIX.
+	 */
+	if ((strcmp(progname, "more") == 0) ||
+	    (strcmp(progname, "page") == 0)) {
+		less_is_more = 1;
+	} else {
+		s = lgetenv("LESS_IS_MORE");
+		if (s != NULL && *s != '\0')
+			less_is_more = 1;
+	}
 
 	secure = 0;
 	s = lgetenv("LESSSECURE");
 	if (s != NULL && *s != '\0')
 		secure = 1;
-
-#ifdef WIN32
-	if (getenv("HOME") == NULL)
-	{
-		/*
-		 * If there is no HOME environment variable,
-		 * try the concatenation of HOMEDRIVE + HOMEPATH.
-		 */
-		char *drive = getenv("HOMEDRIVE");
-		char *path  = getenv("HOMEPATH");
-		if (drive != NULL && path != NULL)
-		{
-			size_t len = strlen(drive) + strlen(path) + 6;
-			char *env = (char *) ecalloc(len, sizeof(char));
-			strlcpy(env, "HOME=", len);
-			strlcat(env, drive, len);
-			strlcat(env, path, len);
-			putenv(env);
-		}
-	}
-	GetConsoleTitle(consoleTitle, sizeof(consoleTitle)/sizeof(char));
-#endif /* WIN32 */
 
 	/*
 	 * Process command line arguments and LESS environment arguments.
@@ -118,34 +104,38 @@ main(argc, argv)
 	init_option();
 	init_search();
 
-	/*
-	 * If the name of the executable program is "more",
-	 * act like LESS_IS_MORE is set.
-	 */
-	for (s = progname + strlen(progname);  s > progname;  s--)
-	{
-		if (s[-1] == PATHNAME_SEP[0])
-			break;
-	}
-	if (strcmp(s, "more") == 0)
-		less_is_more = 1;
 
 	init_prompt();
-
-	if (less_is_more) {
-		scan_option("-G");
-		scan_option("-L");
-		scan_option("-X");
-		scan_option("-c");
-	}
 
 	s = lgetenv(less_is_more ? "MORE" : "LESS");
 	if (s != NULL)
 		scan_option(save(s));
 
+	if (less_is_more) {
+		/* this is specified by XPG */
+		quit_at_eof = OPT_ON;
+
+		/* more users don't like the warning */
+		know_dumb = OPT_ON;
+
+		/* default prompt is medium */
+		pr_type = OPT_ON;
+
+		/* do not hilight search terms */
+		hilite_search = OPT_OFF;
+
+		/* do not use LESSOPEN */
+		use_lessopen = OPT_OFF;
+
+		/* do not set init strings to terminal */
+		no_init = OPT_ON;
+
+		/* repaint from top of screen */
+		top_scroll = OPT_OFF;
+	}
+
 #define	isoptstring(s)	(((s)[0] == '-' || (s)[0] == '+') && (s)[1] != '\0')
-	while (argc > 0 && (isoptstring(*argv) || isoptpending()))
-	{
+	while (argc > 0 && (isoptstring(*argv) || isoptpending())) {
 		s = *argv++;
 		argc--;
 		if (strcmp(s, "--") == 0)
@@ -154,8 +144,7 @@ main(argc, argv)
 	}
 #undef isoptstring
 
-	if (isoptpending())
-	{
+	if (isoptpending()) {
 		/*
 		 * Last command line option was a flag requiring a
 		 * following string, but there was no following string.
@@ -164,10 +153,20 @@ main(argc, argv)
 		quit(QUIT_OK);
 	}
 
-#if EDITOR
+	if (errmsgs) {
+		quit(QUIT_ERROR);
+	}
+	if (less_is_more && quit_at_eof == OPT_ONPLUS) {
+		extern int no_init;
+		no_init = OPT_ON;
+	}
+	if (less_is_more && pr_type == OPT_ONPLUS) {
+		extern int quiet;
+		quiet = VERY_QUIET;
+	}
+
 	editor = lgetenv("VISUAL");
-	if (editor == NULL || *editor == '\0')
-	{
+	if (editor == NULL || *editor == '\0') {
 		editor = lgetenv("EDITOR");
 		if (editor == NULL || *editor == '\0')
 			editor = EDIT_PGM;
@@ -175,40 +174,16 @@ main(argc, argv)
 	editproto = lgetenv("LESSEDIT");
 	if (editproto == NULL || *editproto == '\0')
 		editproto = "%E ?lm+%lm. %f";
-#endif
 
 	/*
 	 * Call get_ifile with all the command line filenames
 	 * to "register" them with the ifile system.
 	 */
 	ifile = NULL_IFILE;
-#if !SMALL
 	if (dohelp)
 		ifile = get_ifile(helpfile(), ifile);
-#endif /* !SMALL */
-	while (argc-- > 0)
-	{
+	while (argc-- > 0) {
 		char *filename;
-#if (MSDOS_COMPILER && MSDOS_COMPILER != DJGPPC)
-		/*
-		 * Because the "shell" doesn't expand filename patterns,
-		 * treat each argument as a filename pattern rather than
-		 * a single filename.  
-		 * Expand the pattern and iterate over the expanded list.
-		 */
-		struct textlist tlist;
-		char *gfilename;
-		
-		gfilename = lglob(*argv++);
-		init_textlist(&tlist, gfilename);
-		filename = NULL;
-		while ((filename = forw_textlist(&tlist, filename)) != NULL)
-		{
-			(void) get_ifile(filename, ifile);
-			ifile = prev_ifile(NULL_IFILE);
-		}
-		free(gfilename);
-#else
 		filename = shell_quote(*argv);
 		if (filename == NULL)
 			filename = *argv;
@@ -216,24 +191,19 @@ main(argc, argv)
 		(void) get_ifile(filename, ifile);
 		ifile = prev_ifile(NULL_IFILE);
 		free(filename);
-#endif
 	}
 	/*
 	 * Set up terminal, etc.
 	 */
-	if (!is_tty)
-	{
+	if (!is_tty) {
 		/*
 		 * Output is not a tty.
 		 * Just copy the input file(s) to output.
 		 */
-		SET_BINARY(1);
-		if (nifile() == 0)
-		{
+		if (nifile() == 0) {
 			if (edit_stdin() == 0)
 				cat_file();
-		} else if (edit_first() == 0)
-		{
+		} else if (edit_first() == 0) {
 			do {
 				cat_file();
 			} while (edit_next(1) == 0);
@@ -241,7 +211,7 @@ main(argc, argv)
 		quit(QUIT_OK);
 	}
 
-	if (missing_cap && !know_dumb && !less_is_more)
+	if (missing_cap && !know_dumb)
 		error("WARNING: terminal is not fully functional", NULL_PARG);
 	init_mark();
 	open_getchr();
@@ -251,17 +221,14 @@ main(argc, argv)
 	/*
 	 * Select the first file to examine.
 	 */
-#if TAGS
-	if (tagoption != NULL || strcmp(tags, "-") == 0)
-	{
+	if (tagoption != NULL || strcmp(tags, "-") == 0) {
 		/*
 		 * A -t option was given.
 		 * Verify that no filenames were also given.
 		 * Edit the file selected by the "tags" search,
 		 * and search for the proper line in the file.
 		 */
-		if (nifile() > 0)
-		{
+		if (nifile() > 0) {
 			error("No filenames allowed with -t option", NULL_PARG);
 			quit(QUIT_ERROR);
 		}
@@ -273,17 +240,13 @@ main(argc, argv)
 		 * Set up initial_scrpos so we display that line.
 		 */
 		initial_scrpos.pos = tagsearch();
-		if (initial_scrpos.pos == NULL_POSITION)
+		if (initial_scrpos.pos == -1)
 			quit(QUIT_ERROR);
 		initial_scrpos.ln = jump_sline;
-	} else
-#endif
-	if (nifile() == 0)
-	{
+	} else if (nifile() == 0) {
 		if (edit_stdin())  /* Edit standard input */
 			quit(QUIT_ERROR);
-	} else 
-	{
+	} else {
 		if (edit_first())  /* Edit first valid file in cmd line */
 			quit(QUIT_ERROR);
 	}
@@ -299,15 +262,13 @@ main(argc, argv)
  * Copy a string to a "safe" place
  * (that is, to a buffer allocated by calloc).
  */
-	public char *
-save(s)
-	char *s;
+char *
+save(const char *s)
 {
-	register char *p;
-	size_t len = strlen(s) + 1;
+	char *p;
 
-	p = (char *) ecalloc(len, sizeof(char));
-	strlcpy(p, s, len);
+	if ((p = estrdup(s)) == NULL)
+		quit(QUIT_ERROR);
 	return (p);
 }
 
@@ -315,14 +276,12 @@ save(s)
  * Allocate memory.
  * Like calloc(), but never returns an error (NULL).
  */
-	public VOID_POINTER
-ecalloc(count, size)
-	int count;
-	unsigned int size;
+void *
+ecalloc(int count, unsigned int size)
 {
-	register VOID_POINTER p;
+	void *p;
 
-	p = (VOID_POINTER) calloc(count, size);
+	p = calloc(count, size);
 	if (p != NULL)
 		return (p);
 	error("Cannot allocate memory", NULL_PARG);
@@ -331,61 +290,81 @@ ecalloc(count, size)
 	return (NULL);
 }
 
+char *
+easprintf(const char *fmt, ...)
+{
+	char *p = NULL;
+	int rv;
+	va_list ap;
+
+	va_start(ap, fmt);
+	rv = vasprintf(&p, fmt, ap);
+	va_end(ap);
+
+	if (p == NULL || rv < 0) {
+		error("Cannot allocate memory", NULL_PARG);
+		quit(QUIT_ERROR);
+		/*NOTREACHED*/
+	}
+	return (p);
+}
+
+char *
+estrdup(const char *str)
+{
+	char *n = strdup(str);
+	if (n == NULL && str != NULL) {
+		error("Cannot allocate memory", NULL_PARG);
+	}
+	return (n);
+}
+
 /*
  * Skip leading spaces in a string.
  */
-	public char *
-skipsp(s)
-	register char *s;
+char *
+skipsp(char *s)
 {
-	while (*s == ' ' || *s == '\t')	
+	while (*s == ' ' || *s == '\t')
 		s++;
 	return (s);
 }
 
-#if GNU_OPTIONS
 /*
  * See how many characters of two strings are identical.
  * If uppercase is true, the first string must begin with an uppercase
  * character; the remainder of the first string may be either case.
  */
-	public int
-sprefix(ps, s, uppercase)
-	char *ps;
-	char *s;
-	int uppercase;
+int
+sprefix(char *ps, char *s, int uppercase)
 {
-	register int c;
-	register int sc;
-	register int len = 0;
+	int c;
+	int sc;
+	int len = 0;
 
-	for ( ;  *s != '\0';  s++, ps++)
-	{
+	for (; *s != '\0';  s++, ps++) {
 		c = *ps;
-		if (uppercase)
-		{
-			if (len == 0 && ASCII_IS_LOWER(c))
+		if (uppercase) {
+			if (len == 0 && isupper(c))
 				return (-1);
-			if (ASCII_IS_UPPER(c))
-				c = ASCII_TO_LOWER(c);
+			if (isupper(c))
+				c = tolower(c);
 		}
 		sc = *s;
-		if (len > 0 && ASCII_IS_UPPER(sc))
-			sc = ASCII_TO_LOWER(sc);
+		if (len > 0 && isupper(sc))
+			sc = tolower(sc);
 		if (c != sc)
 			break;
 		len++;
 	}
 	return (len);
 }
-#endif /* GNU_OPTIONS */
 
 /*
  * Exit the program.
  */
-	public void
-quit(status)
-	int status;
+void
+quit(int status)
 {
 	static int save_status;
 
@@ -398,33 +377,19 @@ quit(status)
 	else
 		save_status = status;
 	quitting = 1;
-	edit((char*)NULL);
+	edit(NULL);
 	save_cmdhist();
 	if (any_display && is_tty)
 		clear_bot();
 	deinit();
 	flush();
 	raw_mode(0);
-#if MSDOS_COMPILER && MSDOS_COMPILER != DJGPPC
-	/* 
-	 * If we don't close 2, we get some garbage from
-	 * 2's buffer when it flushes automatically.
-	 * I cannot track this one down  RB
-	 * The same bug shows up if we use ^C^C to abort.
-	 */
-	close(2);
-#endif
-#ifdef WIN32
-	SetConsoleTitle(consoleTitle);
-#endif
 	close_getchr();
 	exit(status);
 }
 
-#if !SMALL
-	public char *
+char *
 helpfile(void)
 {
 	return (less_is_more ? HELPDIR "/more.help" : HELPDIR "/less.help");
 }
-#endif /* !SMALL */

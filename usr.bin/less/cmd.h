@@ -6,7 +6,10 @@
  *
  * For more information, see the README file.
  */
-
+/*
+ * Modified for use with illumos.
+ * Copyright 2014 Garrett D'Amore <garrett@damore.org>
+ */
 
 #define	MAX_USERCMD		1000
 #define	MAX_CMDLEN		16
@@ -66,6 +69,7 @@
 #define	A_PREV_TAG		54
 #define	A_FILTER		55
 #define	A_F_UNTIL_HILITE	56
+#define	A_F_SKIP		57
 
 #define	A_INVALID		100
 #define	A_NOACTION		101
@@ -73,7 +77,7 @@
 #define	A_END_LIST		103
 #define	A_SPECIAL_KEY		104
 
-#define A_SKIP			127
+#define	A_SKIP			127
 
 #define	A_EXTRA			0200
 
@@ -113,21 +117,21 @@
 #define	EV_OK		01
 
 /* Special keys (keys which output different strings on different terminals) */
-#define SK_SPECIAL_KEY		CONTROL('K')
-#define SK_RIGHT_ARROW		1
-#define SK_LEFT_ARROW		2
-#define SK_UP_ARROW		3
-#define SK_DOWN_ARROW		4
-#define SK_PAGE_UP		5
-#define SK_PAGE_DOWN		6
-#define SK_HOME			7
-#define SK_END			8
-#define SK_DELETE		9
-#define SK_INSERT		10
-#define SK_CTL_LEFT_ARROW	11
-#define SK_CTL_RIGHT_ARROW	12
-#define SK_CTL_DELETE		13
-#define SK_F1			14
-#define SK_BACKTAB		15
-#define SK_CTL_BACKSPACE	16
-#define SK_CONTROL_K		40
+#define	SK_SPECIAL_KEY		CONTROL('K')
+#define	SK_RIGHT_ARROW		1
+#define	SK_LEFT_ARROW		2
+#define	SK_UP_ARROW		3
+#define	SK_DOWN_ARROW		4
+#define	SK_PAGE_UP		5
+#define	SK_PAGE_DOWN		6
+#define	SK_HOME			7
+#define	SK_END			8
+#define	SK_DELETE		9
+#define	SK_INSERT		10
+#define	SK_CTL_LEFT_ARROW	11
+#define	SK_CTL_RIGHT_ARROW	12
+#define	SK_CTL_DELETE		13
+#define	SK_F1			14
+#define	SK_BACKTAB		15
+#define	SK_CTL_BACKSPACE	16
+#define	SK_CONTROL_K		40

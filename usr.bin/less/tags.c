@@ -6,15 +6,16 @@
  *
  * For more information, see the README file.
  */
-
+/*
+ * Modified for use with illumos.
+ * Copyright 2014 Garrett D'Amore <garrett@damore.org>
+ */
 
 #include "less.h"
 
-#define	WHITESP(c)	((c)==' ' || (c)=='\t')
+#define	WHITESP(c)	((c) == ' ' || (c) == '\t')
 
-#if TAGS
-
-public char *tags = "tags";
+char *tags = "tags";
 
 static int total;
 static int curseq;
@@ -46,8 +47,8 @@ static enum tag_result findctag();
 static enum tag_result findgtag();
 static char *nextgtag();
 static char *prevgtag();
-static POSITION ctagsearch();
-static POSITION gtagsearch();
+static off_t ctagsearch();
+static off_t gtagsearch();
 static int getentry();
 
 /*
@@ -62,42 +63,41 @@ struct taglist {
 	struct tag *tl_first;
 	struct tag *tl_last;
 };
-#define TAG_END  ((struct tag *) &taglist)
+#define	TAG_END  ((struct tag *)&taglist)
 static struct taglist taglist = { TAG_END, TAG_END };
 struct tag {
 	struct tag *next, *prev; /* List links */
 	char *tag_file;		/* Source file containing the tag */
 	LINENUM tag_linenum;	/* Appropriate line number in source file */
 	char *tag_pattern;	/* Pattern used to find the tag */
-	char tag_endline;	/* True if the pattern includes '$' */
+	int tag_endline;	/* True if the pattern includes '$' */
 };
 static struct tag *curtag;
 
-#define TAG_INS(tp) \
+#define	TAG_INS(tp) \
 	(tp)->next = TAG_END; \
 	(tp)->prev = taglist.tl_last; \
 	taglist.tl_last->next = (tp); \
 	taglist.tl_last = (tp);
 
-#define TAG_RM(tp) \
+#define	TAG_RM(tp) \
 	(tp)->next->prev = (tp)->prev; \
 	(tp)->prev->next = (tp)->next;
 
 /*
  * Delete tag structures.
  */
-	public void
-cleantags()
+void
+cleantags(void)
 {
-	register struct tag *tp;
+	struct tag *tp;
 
 	/*
 	 * Delete any existing tag list.
 	 * {{ Ideally, we wouldn't do this until after we know that we
 	 *    can load some other tag information. }}
 	 */
-	while ((tp = taglist.tl_first) != TAG_END)
-	{
+	while ((tp = taglist.tl_first) != TAG_END) {
 		TAG_RM(tp);
 		free(tp);
 	}
@@ -108,17 +108,12 @@ cleantags()
 /*
  * Create a new tag entry.
  */
-	static struct tag *
-maketagent(name, file, linenum, pattern, endline)
-	char *name;
-	char *file;
-	LINENUM linenum;
-	char *pattern;
-	int endline;
+static struct tag *
+maketagent(char *file, LINENUM linenum, char *pattern, int endline)
 {
-	register struct tag *tp;
+	struct tag *tp;
 
-	tp = (struct tag *) ecalloc(sizeof(struct tag), 1);
+	tp = ecalloc(sizeof (struct tag), 1);
 	tp->tag_file = save(file);
 	tp->tag_linenum = linenum;
 	tp->tag_endline = endline;
@@ -132,28 +127,27 @@ maketagent(name, file, linenum, pattern, endline)
 /*
  * Get tag mode.
  */
-	public int
-gettagtype()
+static int
+gettagtype(void)
 {
 	int f;
 
 	if (strcmp(tags, "GTAGS") == 0)
-		return T_GTAGS;
+		return (T_GTAGS);
 	if (strcmp(tags, "GRTAGS") == 0)
-		return T_GRTAGS;
+		return (T_GRTAGS);
 	if (strcmp(tags, "GSYMS") == 0)
-		return T_GSYMS;
+		return (T_GSYMS);
 	if (strcmp(tags, "GPATH") == 0)
-		return T_GPATH;
+		return (T_GPATH);
 	if (strcmp(tags, "-") == 0)
-		return T_CTAGS_X;
+		return (T_CTAGS_X);
 	f = open(tags, OPEN_READ);
-	if (f >= 0)
-	{
-		close(f);
-		return T_CTAGS;
+	if (f >= 0) {
+		(void) close(f);
+		return (T_CTAGS);
 	}
-	return T_GTAGS;
+	return (T_GTAGS);
 }
 
 /*
@@ -163,9 +157,8 @@ gettagtype()
  * and "tagpattern" to the search pattern which should be used
  * to find the tag.
  */
-	public void
-findtag(tag)
-	register char *tag;
+void
+findtag(char *tag)
 {
 	int type = gettagtype();
 	enum tag_result result;
@@ -174,8 +167,7 @@ findtag(tag)
 		result = findctag(tag);
 	else
 		result = findgtag(tag, type);
-	switch (result)
-	{
+	switch (result) {
 	case TAG_FOUND:
 	case TAG_INTR:
 		break;
@@ -194,64 +186,62 @@ findtag(tag)
 /*
  * Search for a tag.
  */
-	public POSITION
-tagsearch()
+off_t
+tagsearch(void)
 {
 	if (curtag == NULL)
-		return (NULL_POSITION);  /* No gtags loaded! */
+		return (-1);  /* No gtags loaded! */
 	if (curtag->tag_linenum != 0)
-		return gtagsearch();
+		return (gtagsearch());
 	else
-		return ctagsearch();
+		return (ctagsearch());
 }
 
 /*
  * Go to the next tag.
  */
-	public char *
-nexttag(n)
-	int n;
+char *
+nexttag(int n)
 {
-	char *tagfile = (char *) NULL;
+	char *tagfile = NULL;
 
 	while (n-- > 0)
 		tagfile = nextgtag();
-	return tagfile;
+	return (tagfile);
 }
 
 /*
  * Go to the previous tag.
  */
-	public char *
-prevtag(n)
-	int n;
+char *
+prevtag(int n)
 {
-	char *tagfile = (char *) NULL;
+	char *tagfile = NULL;
 
 	while (n-- > 0)
 		tagfile = prevgtag();
-	return tagfile;
+	return (tagfile);
 }
 
 /*
  * Return the total number of tags.
  */
-	public int
-ntags()
+int
+ntags(void)
 {
-	return total;
+	return (total);
 }
 
 /*
  * Return the sequence number of current tag.
  */
-	public int
-curr_tag()
+int
+curr_tag(void)
 {
-	return curseq;
+	return (curseq);
 }
 
-/*****************************************************************************
+/*
  * ctags
  */
 
@@ -259,13 +249,12 @@ curr_tag()
  * Find tags in the "tags" file.
  * Sets curtag to the first tag entry.
  */
-	static enum tag_result
-findctag(tag)
-	register char *tag;
+static enum tag_result
+findctag(char *tag)
 {
 	char *p;
-	register FILE *f;
-	register int taglen;
+	FILE *f;
+	int taglen;
 	LINENUM taglinenum;
 	char *tagfile;
 	char *tagpattern;
@@ -279,7 +268,7 @@ findctag(tag)
 	f = fopen(p, "r");
 	free(p);
 	if (f == NULL)
-		return TAG_NOFILE;
+		return (TAG_NOFILE);
 
 	cleantags();
 	total = 0;
@@ -288,8 +277,7 @@ findctag(tag)
 	/*
 	 * Search the tags file for the desired tag.
 	 */
-	while (fgets(tline, sizeof(tline), f) != NULL)
-	{
+	while (fgets(tline, sizeof (tline), f) != NULL) {
 		if (tline[0] == '!')
 			/* Skip header of extended format. */
 			continue;
@@ -300,7 +288,7 @@ findctag(tag)
 		 * Found it.
 		 * The line contains the tag, the filename and the
 		 * location in the file, separated by white space.
-		 * The location is either a decimal line number, 
+		 * The location is either a decimal line number,
 		 * or a search pattern surrounded by a pair of delimiters.
 		 * Parse the line and extract these parts.
 		 */
@@ -328,15 +316,14 @@ findctag(tag)
 			continue;
 
 		/*
-		 * First see if it is a line number. 
+		 * First see if it is a line number.
 		 */
 		tagendline = 0;
 		taglinenum = getnum(&p, 0, &err);
-		if (err)
-		{
+		if (err) {
 			/*
 			 * No, it must be a pattern.
-			 * Delete the initial "^" (if present) and 
+			 * Delete the initial "^" (if present) and
 			 * the final "$" from the pattern.
 			 * Delete any backslash in the pattern.
 			 */
@@ -345,8 +332,7 @@ findctag(tag)
 			if (*p == '^')
 				p++;
 			tagpattern = p;
-			while (*p != search_char && *p != '\0')
-			{
+			while (*p != search_char && *p != '\0') {
 				if (*p == '\\')
 					p++;
 				p++;
@@ -356,23 +342,23 @@ findctag(tag)
 				p--;
 			*p = '\0';
 		}
-		tp = maketagent(tag, tagfile, taglinenum, tagpattern, tagendline);
+		tp = maketagent(tagfile, taglinenum, tagpattern, tagendline);
 		TAG_INS(tp);
 		total++;
 	}
 	fclose(f);
 	if (total == 0)
-		return TAG_NOTAG;
+		return (TAG_NOTAG);
 	curtag = taglist.tl_first;
 	curseq = 1;
-	return TAG_FOUND;
+	return (TAG_FOUND);
 }
 
 /*
  * Edit current tagged file.
  */
-	public int
-edit_tagfile()
+int
+edit_tagfile(void)
 {
 	if (curtag == NULL)
 		return (1);
@@ -385,13 +371,13 @@ edit_tagfile()
  * We don't use search() for several reasons:
  *   -	We don't want to blow away any search string we may have saved.
  *   -	The various regular-expression functions (from different systems:
- *	regcmp vs. re_comp) behave differently in the presence of 
+ *	regcmp vs. re_comp) behave differently in the presence of
  *	parentheses (which are almost always found in a tag).
  */
-	static POSITION
-ctagsearch()
+static off_t
+ctagsearch(void)
 {
-	POSITION pos, linepos;
+	off_t pos, linepos;
 	LINENUM linenum;
 	int len;
 	char *line;
@@ -399,17 +385,16 @@ ctagsearch()
 	pos = ch_zero();
 	linenum = find_linenum(pos);
 
-	for (;;)
-	{
+	for (;;) {
 		/*
-		 * Get lines until we find a matching one or 
+		 * Get lines until we find a matching one or
 		 * until we hit end-of-file.
 		 */
 		if (ABORT_SIGS())
-			return (NULL_POSITION);
+			return (-1);
 
 		/*
-		 * Read the next line, and save the 
+		 * Read the next line, and save the
 		 * starting position of that line in linepos.
 		 */
 		linepos = pos;
@@ -417,13 +402,12 @@ ctagsearch()
 		if (linenum != 0)
 			linenum++;
 
-		if (pos == NULL_POSITION)
-		{
+		if (pos == -1) {
 			/*
 			 * We hit EOF without a match.
 			 */
 			error("Tag not found", NULL_PARG);
-			return (NULL_POSITION);
+			return (-1);
 		}
 
 		/*
@@ -443,8 +427,8 @@ ctagsearch()
 		 */
 		len = strlen(curtag->tag_pattern);
 		if (strncmp(curtag->tag_pattern, line, len) == 0 &&
-		    (!curtag->tag_endline || line[len] == '\0' || line[len] == '\r'))
-		{
+		    (!curtag->tag_endline || line[len] == '\0' ||
+		    line[len] == '\r')) {
 			curtag->tag_linenum = find_linenum(linepos);
 			break;
 		}
@@ -453,7 +437,7 @@ ctagsearch()
 	return (linepos);
 }
 
-/*******************************************************************************
+/*
  * gtags
  */
 
@@ -464,18 +448,15 @@ ctagsearch()
  * for future use by gtagsearch().
  * Sets curtag to the first tag entry.
  */
-	static enum tag_result
-findgtag(tag, type)
-	char *tag;		/* tag to load */
-	int type;		/* tags type */
+static enum tag_result
+findgtag(char *tag, int type)
 {
 	char buf[256];
 	FILE *fp;
 	struct tag *tp;
-	size_t len;
 
 	if (type != T_CTAGS_X && tag == NULL)
-		return TAG_NOFILE;
+		return (TAG_NOFILE);
 
 	cleantags();
 	total = 0;
@@ -484,28 +465,22 @@ findgtag(tag, type)
 	 * If type == T_CTAGS_X then read ctags's -x format from stdin
 	 * else execute global(1) and read from it.
 	 */
-	if (type == T_CTAGS_X)
-	{
+	if (type == T_CTAGS_X) {
 		fp = stdin;
 		/* Set tag default because we cannot read stdin again. */
 		tags = "tags";
-	} else
-	{
-#if !HAVE_POPEN
-		return TAG_NOFILE;
-#else
+	} else {
 		char *command;
 		char *flag;
 		char *qtag;
 		char *cmd = lgetenv("LESSGLOBALTAGS");
 
 		if (cmd == NULL || *cmd == '\0')
-			return TAG_NOFILE;
+			return (TAG_NOFILE);
 		/* Get suitable flag value for global(1). */
-		switch (type)
-		{
+		switch (type) {
 		case T_GTAGS:
-			flag = "" ;
+			flag = "";
 			break;
 		case T_GRTAGS:
 			flag = "r";
@@ -517,49 +492,40 @@ findgtag(tag, type)
 			flag = "P";
 			break;
 		default:
-			return TAG_NOTYPE;
+			return (TAG_NOTYPE);
 		}
 
 		/* Get our data from global(1). */
 		qtag = shell_quote(tag);
 		if (qtag == NULL)
 			qtag = tag;
-		len = strlen(cmd) + strlen(flag) + strlen(qtag) + 5;
-		command = (char *) ecalloc(len, sizeof(char));
-		snprintf(command, len, "%s -x%s %s", cmd, flag, qtag);
+		command = easprintf("%s -x%s %s", cmd, flag, qtag);
 		if (qtag != tag)
 			free(qtag);
 		fp = popen(command, "r");
 		free(command);
-#endif
 	}
-	if (fp != NULL)
-	{
-		while (fgets(buf, sizeof(buf), fp))
-		{
+	if (fp != NULL) {
+		while (fgets(buf, sizeof (buf), fp)) {
 			char *name, *file, *line;
+			int len;
 
-			if (sigs)
-			{
-#if HAVE_POPEN
+			if (sigs) {
 				if (fp != stdin)
 					pclose(fp);
-#endif
-				return TAG_INTR;
+				return (TAG_INTR);
 			}
 			len = strlen(buf);
-			if (len > 0 && buf[len-1] == '\n')
+			if (len > 0 && buf[len-1] == '\n') {
 				buf[len-1] = '\0';
-			else
-			{
+			} else {
 				int c;
 				do {
 					c = fgetc(fp);
 				} while (c != '\n' && c != EOF);
 			}
 
- 			if (getentry(buf, &name, &file, &line))
-			{
+			if (getentry(buf, &name, &file, &line)) {
 				/*
 				 * Couldn't parse this line for some reason.
 				 * We'll just pretend it never happened.
@@ -568,17 +534,15 @@ findgtag(tag, type)
 			}
 
 			/* Make new entry and add to list. */
-			tp = maketagent(name, file, (LINENUM) atoi(line), NULL, 0);
+			tp = maketagent(file, (LINENUM) atoi(line), NULL, 0);
 			TAG_INS(tp);
 			total++;
 		}
-		if (fp != stdin)
-		{
-			if (pclose(fp))
-			{
+		if (fp != stdin) {
+			if (pclose(fp)) {
 				curtag = NULL;
 				total = curseq = 0;
-				return TAG_NOFILE;
+				return (TAG_NOFILE);
 			}
 		}
 	}
@@ -586,10 +550,10 @@ findgtag(tag, type)
 	/* Check to see if we found anything. */
 	tp = taglist.tl_first;
 	if (tp == TAG_END)
-		return TAG_NOTAG;
+		return (TAG_NOTAG);
 	curtag = tp;
 	curseq = 1;
-	return TAG_FOUND;
+	return (TAG_FOUND);
 }
 
 static int circular = 0;	/* 1: circular tag structure */
@@ -599,25 +563,23 @@ static int circular = 0;	/* 1: circular tag structure */
  * by findgtag().  The next call to gtagsearch() will try to position at the
  * appropriate tag.
  */
-	static char *
-nextgtag()
+static char *
+nextgtag(void)
 {
 	struct tag *tp;
 
 	if (curtag == NULL)
 		/* No tag loaded */
-		return NULL;
+		return (NULL);
 
 	tp = curtag->next;
-	if (tp == TAG_END)
-	{
+	if (tp == TAG_END) {
 		if (!circular)
-			return NULL;
+			return (NULL);
 		/* Wrapped around to the head of the queue */
 		curtag = taglist.tl_first;
 		curseq = 1;
-	} else
-	{
+	} else {
 		curtag = tp;
 		curseq++;
 	}
@@ -629,25 +591,23 @@ nextgtag()
  * setup by findgtat().  The next call to gtagsearch() will try to position
  * at the appropriate tag.
  */
-	static char *
-prevgtag()
+static char *
+prevgtag(void)
 {
 	struct tag *tp;
 
 	if (curtag == NULL)
 		/* No tag loaded */
-		return NULL;
+		return (NULL);
 
 	tp = curtag->prev;
-	if (tp == TAG_END)
-	{
+	if (tp == TAG_END) {
 		if (!circular)
-			return NULL;
+			return (NULL);
 		/* Wrapped around to the tail of the queue */
 		curtag = taglist.tl_last;
 		curseq = total;
-	} else
-	{
+	} else {
 		curtag = tp;
 		curseq--;
 	}
@@ -659,11 +619,11 @@ prevgtag()
  * using either findtag() or one of nextgtag() and prevgtag().  Returns -1
  * if it was unable to position at the tag, 0 if successful.
  */
-	static POSITION
-gtagsearch()
+static off_t
+gtagsearch(void)
 {
 	if (curtag == NULL)
-		return (NULL_POSITION);  /* No gtags loaded! */
+		return (-1);  /* No gtags loaded! */
 	return (find_pos(curtag->tag_linenum));
 }
 
@@ -695,21 +655,17 @@ gtagsearch()
  * The tag, file, and line will each be NUL-terminated pointers
  * into buf.
  */
-	static int
-getentry(buf, tag, file, line)
-	char *buf;	/* standard or extended ctags -x format data */
-	char **tag;	/* name of the tag we actually found */
-	char **file;	/* file in which to find this tag */
-	char **line;	/* line number of file where this tag is found */
+static int
+getentry(char *buf, char **tag, char **file, char **line)
 {
 	char *p = buf;
 
-	for (*tag = p;  *p && !IS_SPACE(*p);  p++)	/* tag name */
+	for (*tag = p; *p && !isspace(*p); p++)		/* tag name */
 		;
 	if (*p == 0)
 		return (-1);
 	*p++ = 0;
-	for ( ;  *p && IS_SPACE(*p);  p++)		/* (skip blanks) */
+	for (; *p && isspace(*p); p++)			/* (skip blanks) */
 		;
 	if (*p == 0)
 		return (-1);
@@ -717,27 +673,26 @@ getentry(buf, tag, file, line)
 	 * If the second part begin with other than digit,
 	 * it is assumed tag type. Skip it.
 	 */
-	if (!IS_DIGIT(*p))
-	{
-		for ( ;  *p && !IS_SPACE(*p);  p++)	/* (skip tag type) */
+	if (!isdigit(*p)) {
+		for (; *p && !isspace(*p); p++)		/* (skip tag type) */
 			;
-		for (;  *p && IS_SPACE(*p);  p++)	/* (skip blanks) */
+		for (; *p && isspace(*p); p++)		/* (skip blanks) */
 			;
 	}
-	if (!IS_DIGIT(*p))
+	if (!isdigit(*p))
 		return (-1);
 	*line = p;					/* line number */
-	for (*line = p;  *p && !IS_SPACE(*p);  p++)
+	for (*line = p;  *p && !isspace(*p);  p++)
 		;
 	if (*p == 0)
 		return (-1);
 	*p++ = 0;
-	for ( ; *p && IS_SPACE(*p);  p++)		/* (skip blanks) */
+	for (; *p && isspace(*p); p++)		/* (skip blanks) */
 		;
 	if (*p == 0)
 		return (-1);
 	*file = p;					/* file name */
-	for (*file = p;  *p && !IS_SPACE(*p);  p++)
+	for (*file = p;  *p && !isspace(*p);  p++)
 		;
 	if (*p == 0)
 		return (-1);
@@ -748,5 +703,3 @@ getentry(buf, tag, file, line)
 		return (0);
 	return (-1);
 }
-  
-#endif

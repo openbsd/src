@@ -1,4 +1,6 @@
-#	$OpenBSD: Makefile,v 1.4 2014/05/10 16:45:23 schwarze Exp $
+#	$OpenBSD: Makefile,v 1.5 2015/11/05 22:08:44 nicm Exp $
+
+.PATH:	${.CURDIR}/..
 
 PROG=	less
 SRCS=	main.c screen.c brac.c ch.c charset.c cmdbuf.c command.c cvt.c \
@@ -13,10 +15,11 @@ DPADD=	${LIBCURSES}
 LINKS=	${BINDIR}/less ${BINDIR}/more
 
 MAN=	less.1 more.1
+BINDIR=	/usr/bin
 
 HELPDIR=${SHAREDIR}/misc
 
-CFLAGS+=-DBINDIR=\"${BINDIR}\" -DSYSDIR=\"/etc\" -DHELPDIR=\"${HELPDIR}\"
+CFLAGS+=-I${.CURDIR}/.. -DSYSDIR=\"/etc\" -DHELPDIR=\"${HELPDIR}\"
 
 CDIAGFLAGS+=-Wall -W
 

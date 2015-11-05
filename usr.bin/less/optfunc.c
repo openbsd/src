@@ -6,7 +6,10 @@
  *
  * For more information, see the README file.
  */
-
+/*
+ * Modified for use with illumos.
+ * Copyright 2014 Garrett D'Amore <garrett@damore.org>
+ */
 
 /*
  * Handling functions for command line options.
@@ -27,7 +30,6 @@
 #include "less.h"
 #include "option.h"
 
-extern int nbufs;
 extern int bufspace;
 extern int pr_type;
 extern int plusoption;
@@ -47,57 +49,38 @@ extern IFILE curr_ifile;
 extern char version[];
 extern int jump_sline;
 extern int jump_sline_fraction;
-extern int shift_count;
-extern int shift_count_fraction;
 extern int less_is_more;
-#if LOGFILE
 extern char *namelogfile;
 extern int force_logfile;
 extern int logfile;
-#endif
-#if TAGS
-public char *tagoption = NULL;
+char *tagoption = NULL;
 extern char *tags;
-#endif
-#if MSDOS_COMPILER
-extern int nm_fg_color, nm_bg_color;
-extern int bo_fg_color, bo_bg_color;
-extern int ul_fg_color, ul_bg_color;
-extern int so_fg_color, so_bg_color;
-extern int bl_fg_color, bl_bg_color;
-#endif
-extern char *every_first_cmd;
 
+int shift_count;	/* Number of positions to shift horizontally */
+static int shift_count_fraction = -1;
 
-#if LOGFILE
 /*
  * Handler for -o option.
  */
-	public void
-opt_o(type, s)
-	int type;
-	char *s;
+void
+opt_o(int type, char *s)
 {
 	PARG parg;
 
-	if (secure)
-	{
+	if (secure) {
 		error("log file support is not available", NULL_PARG);
 		return;
 	}
-	switch (type)
-	{
+	switch (type) {
 	case INIT:
 		namelogfile = s;
 		break;
 	case TOGGLE:
-		if (ch_getflags() & CH_CANSEEK)
-		{
+		if (ch_getflags() & CH_CANSEEK) {
 			error("Input is not a pipe", NULL_PARG);
 			return;
 		}
-		if (logfile >= 0)
-		{
+		if (logfile >= 0) {
 			error("Log file is already in use", NULL_PARG);
 			return;
 		}
@@ -107,10 +90,9 @@ opt_o(type, s)
 		sync_logfile();
 		break;
 	case QUERY:
-		if (logfile < 0)
+		if (logfile < 0) {
 			error("No log file", NULL_PARG);
-		else
-		{
+		} else {
 			parg.p_string = namelogfile;
 			error("Log file \"%s\"", &parg);
 		}
@@ -121,62 +103,51 @@ opt_o(type, s)
 /*
  * Handler for -O option.
  */
-	public void
-opt__O(type, s)
-	int type;
-	char *s;
+void
+opt__O(int type, char *s)
 {
 	force_logfile = TRUE;
 	opt_o(type, s);
 }
-#endif
 
 /*
  * Handlers for -j option.
  */
-	public void
-opt_j(type, s)
-	int type;
-	char *s;
+void
+opt_j(int type, char *s)
 {
 	PARG parg;
 	char buf[16];
 	int len;
 	int err;
 
-	switch (type)
-	{
+	switch (type) {
 	case INIT:
 	case TOGGLE:
-		if (*s == '.')
-		{
+		if (*s == '.') {
 			s++;
 			jump_sline_fraction = getfraction(&s, "j", &err);
 			if (err)
 				error("Invalid line fraction", NULL_PARG);
 			else
 				calc_jump_sline();
-		} else
-		{
+		} else {
 			int sline = getnum(&s, "j", &err);
-			if (err)
+			if (err) {
 				error("Invalid line number", NULL_PARG);
-			else
-			{
+			} else {
 				jump_sline = sline;
 				jump_sline_fraction = -1;
 			}
 		}
 		break;
 	case QUERY:
-		if (jump_sline_fraction < 0)
-		{
+		if (jump_sline_fraction < 0) {
 			parg.p_int =  jump_sline;
 			error("Position target at screen line %d", &parg);
-		} else
-		{
-
-			snprintf(buf, sizeof(buf), ".%06d", jump_sline_fraction);
+		} else {
+			(void) snprintf(buf, sizeof (buf), ".%06d",
+			    jump_sline_fraction);
 			len = strlen(buf);
 			while (len > 2 && buf[len-1] == '0')
 				len--;
@@ -188,8 +159,8 @@ opt_j(type, s)
 	}
 }
 
-	public void
-calc_jump_sline()
+void
+calc_jump_sline(void)
 {
 	if (jump_sline_fraction < 0)
 		return;
@@ -199,49 +170,42 @@ calc_jump_sline()
 /*
  * Handlers for -# option.
  */
-	public void
-opt_shift(type, s)
-	int type;
-	char *s;
+void
+opt_shift(int type, char *s)
 {
 	PARG parg;
 	char buf[16];
 	int len;
 	int err;
 
-	switch (type)
-	{
+	switch (type) {
 	case INIT:
 	case TOGGLE:
-		if (*s == '.')
-		{
+		if (*s == '.') {
 			s++;
 			shift_count_fraction = getfraction(&s, "#", &err);
 			if (err)
 				error("Invalid column fraction", NULL_PARG);
 			else
 				calc_shift_count();
-		} else
-		{
+		} else {
 			int hs = getnum(&s, "#", &err);
-			if (err)
+			if (err) {
 				error("Invalid column number", NULL_PARG);
-			else
-			{
+			} else {
 				shift_count = hs;
 				shift_count_fraction = -1;
 			}
 		}
 		break;
 	case QUERY:
-		if (shift_count_fraction < 0)
-		{
+		if (shift_count_fraction < 0) {
 			parg.p_int = shift_count;
 			error("Horizontal shift %d columns", &parg);
-		} else
-		{
+		} else {
 
-			snprintf(buf, sizeof(buf), ".%06d", shift_count_fraction);
+			(void) snprintf(buf, sizeof (buf), ".%06d",
+			    shift_count_fraction);
 			len = strlen(buf);
 			while (len > 2 && buf[len-1] == '0')
 				len--;
@@ -252,56 +216,46 @@ opt_shift(type, s)
 		break;
 	}
 }
-	public void
-calc_shift_count()
+
+void
+calc_shift_count(void)
 {
 	if (shift_count_fraction < 0)
 		return;
 	shift_count = sc_width * shift_count_fraction / NUM_FRAC_DENOM;
 }
 
-#if USERFILE
-	public void
-opt_k(type, s)
-	int type;
-	char *s;
+void
+opt_k(int type, char *s)
 {
 	PARG parg;
 
-	switch (type)
-	{
+	switch (type) {
 	case INIT:
-		if (lesskey(s, 0))
-		{
+		if (lesskey(s, 0)) {
 			parg.p_string = s;
 			error("Cannot use lesskey file \"%s\"", &parg);
 		}
 		break;
 	}
 }
-#endif
 
-#if TAGS
 /*
  * Handler for -t option.
  */
-	public void
-opt_t(type, s)
-	int type;
-	char *s;
+void
+opt_t(int type, char *s)
 {
 	IFILE save_ifile;
-	POSITION pos;
+	off_t pos;
 
-	switch (type)
-	{
+	switch (type) {
 	case INIT:
 		tagoption = s;
 		/* Do the rest in main() */
 		break;
 	case TOGGLE:
-		if (secure)
-		{
+		if (secure) {
 			error("tags support is not available", NULL_PARG);
 			break;
 		}
@@ -311,8 +265,7 @@ opt_t(type, s)
 		 * Try to open the file containing the tag
 		 * and search for the tag in that file.
 		 */
-		if (edit_tagfile() || (pos = tagsearch()) == NULL_POSITION)
-		{
+		if (edit_tagfile() || (pos = tagsearch()) == -1) {
 			/* Failed: reopen the old file. */
 			reedit_ifile(save_ifile);
 			break;
@@ -326,15 +279,12 @@ opt_t(type, s)
 /*
  * Handler for -T option.
  */
-	public void
-opt__T(type, s)
-	int type;
-	char *s;
+void
+opt__T(int type, char *s)
 {
 	PARG parg;
 
-	switch (type)
-	{
+	switch (type) {
 	case INIT:
 		tags = s;
 		break;
@@ -348,35 +298,28 @@ opt__T(type, s)
 		break;
 	}
 }
-#endif
 
 /*
  * Handler for -p option.
  */
-	public void
-opt_p(type, s)
-	int type;
-	register char *s;
+void
+opt_p(int type, char *s)
 {
-	switch (type)
-	{
+	switch (type) {
 	case INIT:
 		/*
 		 * Unget a search command for the specified string.
 		 * {{ This won't work if the "/" command is
 		 *    changed or invalidated by a .lesskey file. }}
 		 */
-		if (less_is_more) {
-			/*
-			 * In "more" mode, the -p argument is a command,
-			 * not a search string, run for each file.
-			 */
-			every_first_cmd = save(s);
-		} else {
-			plusoption = TRUE;
-			ungetsc(s);
+		plusoption = TRUE;
+		ungetsc(s);
+		/*
+		 * In "more" mode, the -p argument is a command,
+		 * not a search string, so we don't need a slash.
+		 */
+		if (!less_is_more)
 			ungetsc("/");
-		}
 		break;
 	}
 }
@@ -384,23 +327,19 @@ opt_p(type, s)
 /*
  * Handler for -P option.
  */
-	public void
-opt__P(type, s)
-	int type;
-	register char *s;
+void
+opt__P(int type, char *s)
 {
-	register char **proto;
+	char **proto;
 	PARG parg;
 
-	switch (type)
-	{
+	switch (type) {
 	case INIT:
 	case TOGGLE:
 		/*
 		 * Figure out which prototype string should be changed.
 		 */
-		switch (*s)
-		{
+		switch (*s) {
 		case 's':  proto = &prproto[PR_SHORT];	s++;	break;
 		case 'm':  proto = &prproto[PR_MEDIUM];	s++;	break;
 		case 'M':  proto = &prproto[PR_LONG];	s++;	break;
@@ -422,14 +361,11 @@ opt__P(type, s)
 /*
  * Handler for the -b option.
  */
-	/*ARGSUSED*/
-	public void
-opt_b(type, s)
-	int type;
-	char *s;
+/*ARGSUSED*/
+void
+opt_b(int type, char *s)
 {
-	switch (type)
-	{
+	switch (type) {
 	case INIT:
 	case TOGGLE:
 		/*
@@ -445,14 +381,11 @@ opt_b(type, s)
 /*
  * Handler for the -i option.
  */
-	/*ARGSUSED*/
-	public void
-opt_i(type, s)
-	int type;
-	char *s;
+/*ARGSUSED*/
+void
+opt_i(int type, char *s)
 {
-	switch (type)
-	{
+	switch (type) {
 	case TOGGLE:
 		chg_caseless();
 		break;
@@ -465,14 +398,11 @@ opt_i(type, s)
 /*
  * Handler for the -V option.
  */
-	/*ARGSUSED*/
-	public void
-opt__V(type, s)
-	int type;
-	char *s;
+/*ARGSUSED*/
+void
+opt__V(int type, char *s)
 {
-	switch (type)
-	{
+	switch (type) {
 	case TOGGLE:
 	case QUERY:
 		dispversion();
@@ -485,128 +415,27 @@ opt__V(type, s)
 		putstr("less ");
 		putstr(version);
 		putstr(" (");
-#if HAVE_GNU_REGEX
-		putstr("GNU ");
-#endif
-#if HAVE_POSIX_REGCOMP
 		putstr("POSIX ");
-#endif
-#if HAVE_PCRE
-		putstr("PCRE ");
-#endif
-#if HAVE_RE_COMP
-		putstr("BSD ");
-#endif
-#if HAVE_REGCMP
-		putstr("V8 ");
-#endif
-#if HAVE_V8_REGCOMP
-		putstr("Spencer V8 ");
-#endif
-#if !HAVE_GNU_REGEX && !HAVE_POSIX_REGCOMP && !HAVE_PCRE && !HAVE_RE_COMP && !HAVE_REGCMP && !HAVE_V8_REGCOMP
-		putstr("no ");
-#endif
 		putstr("regular expressions)\n");
 		putstr("Copyright (C) 1984-2012 Mark Nudelman\n\n");
-		putstr("less comes with NO WARRANTY, to the extent permitted by law.\n");
+		putstr("less comes with NO WARRANTY, ");
+		putstr("to the extent permitted by law.\n");
 		putstr("For information about the terms of redistribution,\n");
 		putstr("see the file named README in the less distribution.\n");
 		putstr("Homepage: http://www.greenwoodsoftware.com/less\n");
+		putstr("\n");
+		putstr("Modified for use with illumos.\n");
+		putstr("Copyright 2014 Garrett D'Amore\n");
 		quit(QUIT_OK);
 		break;
 	}
 }
 
-#if MSDOS_COMPILER
-/*
- * Parse an MSDOS color descriptor.
- */
-   	static void
-colordesc(s, fg_color, bg_color)
-	char *s;
-	int *fg_color;
-	int *bg_color;
-{
-	int fg, bg;
-	int err;
-	
-	fg = getnum(&s, "D", &err);
-	if (err)
-	{
-		error("Missing fg color in -D", NULL_PARG);
-		return;
-	}
-	if (*s != '.')
-		bg = nm_bg_color;
-	else
-	{
-		s++;
-		bg = getnum(&s, "D", &err);
-		if (err)
-		{
-			error("Missing bg color in -D", NULL_PARG);
-			return;
-		}
-	}
-	if (*s != '\0')
-		error("Extra characters at end of -D option", NULL_PARG);
-	*fg_color = fg;
-	*bg_color = bg;
-}
-
-/*
- * Handler for the -D option.
- */
-	/*ARGSUSED*/
-	public void
-opt_D(type, s)
-	int type;
-	char *s;
-{
-	switch (type)
-	{
-	case INIT:
-	case TOGGLE:
-		switch (*s++)
-		{
-		case 'n':
-			colordesc(s, &nm_fg_color, &nm_bg_color);
-			break;
-		case 'd':
-			colordesc(s, &bo_fg_color, &bo_bg_color);
-			break;
-		case 'u':
-			colordesc(s, &ul_fg_color, &ul_bg_color);
-			break;
-		case 'k':
-			colordesc(s, &bl_fg_color, &bl_bg_color);
-			break;
-		case 's':
-			colordesc(s, &so_fg_color, &so_bg_color);
-			break;
-		default:
-			error("-D must be followed by n, d, u, k or s", NULL_PARG);
-			break;
-		}
-		if (type == TOGGLE)
-		{
-			at_enter(AT_STANDOUT);
-			at_exit();
-		}
-		break;
-	case QUERY:
-		break;
-	}
-}
-#endif
-
 /*
  * Handler for the -x option.
  */
-	public void
-opt_x(type, s)
-	int type;
-	register char *s;
+void
+opt_x(int type, char *s)
 {
 	extern int tabstops[];
 	extern int ntabstops;
@@ -615,13 +444,11 @@ opt_x(type, s)
 	int i;
 	PARG p;
 
-	switch (type)
-	{
+	switch (type) {
 	case INIT:
 	case TOGGLE:
 		/* Start at 1 because tabstops[0] is always zero. */
-		for (i = 1;  i < TABSTOP_MAX;  )
-		{
+		for (i = 1; i < TABSTOP_MAX; ) {
 			int n = 0;
 			s = skipsp(s);
 			while (*s >= '0' && *s <= '9')
@@ -638,20 +465,18 @@ opt_x(type, s)
 		tabdefault = tabstops[ntabstops-1] - tabstops[ntabstops-2];
 		break;
 	case QUERY:
-		strlcpy(msg, "Tab stops ", sizeof(msg));
-		if (ntabstops > 2)
-		{
-			for (i = 1;  i < ntabstops;  i++)
-			{
+		(void) strlcpy(msg, "Tab stops ", sizeof(msg));
+		if (ntabstops > 2) {
+			for (i = 1;  i < ntabstops;  i++) {
 				if (i > 1)
 					strlcat(msg, ",", sizeof(msg));
-				snprintf(msg+strlen(msg),
+				(void) snprintf(msg+strlen(msg),
 				    sizeof(msg)-strlen(msg), "%d", tabstops[i]);
 			}
-			snprintf(msg+strlen(msg), sizeof(msg)-strlen(msg),
+			(void) snprintf(msg+strlen(msg), sizeof(msg)-strlen(msg),
 			    " and then ");
 		}
-		snprintf(msg+strlen(msg), sizeof(msg)-strlen(msg),
+		(void) snprintf(msg+strlen(msg), sizeof(msg)-strlen(msg),
 		    "every %d spaces", tabdefault);
 		p.p_string = msg;
 		error("%s", &p);
@@ -663,26 +488,22 @@ opt_x(type, s)
 /*
  * Handler for the -" option.
  */
-	public void
-opt_quote(type, s)
-	int type;
-	register char *s;
+void
+opt_quote(int type, char *s)
 {
 	char buf[3];
 	PARG parg;
 
-	switch (type)
-	{
+	switch (type) {
 	case INIT:
 	case TOGGLE:
-		if (s[0] == '\0')
-		{
+		if (s[0] == '\0') {
 			openquote = closequote = '\0';
 			break;
 		}
-		if (s[1] != '\0' && s[2] != '\0')
-		{
-			error("-\" must be followed by 1 or 2 chars", NULL_PARG);
+		if (s[1] != '\0' && s[2] != '\0') {
+			error("-\" must be followed by 1 or 2 chars",
+			    NULL_PARG);
 			return;
 		}
 		openquote = s[0];
@@ -705,14 +526,11 @@ opt_quote(type, s)
  * "-?" means display a help message.
  * If from the command line, exit immediately.
  */
-	/*ARGSUSED*/
-	public void
-opt_query(type, s)
-	int type;
-	char *s;
+/*ARGSUSED*/
+void
+opt_query(int type, char *s)
 {
-	switch (type)
-	{
+	switch (type) {
 	case QUERY:
 	case TOGGLE:
 		error("Use \"h\" for help", NULL_PARG);
@@ -725,11 +543,10 @@ opt_query(type, s)
 /*
  * Get the "screen window" size.
  */
-	public int
-get_swindow()
+int
+get_swindow(void)
 {
 	if (swindow > 0)
 		return (swindow);
 	return (sc_height + swindow);
 }
-

@@ -6,7 +6,10 @@
  *
  * For more information, see the README file.
  */
-
+/*
+ * Modified for use with illumos.
+ * Copyright 2014 Garrett D'Amore <garrett@damore.org>
+ */
 
 /*
  * Routines dealing with the "position" table.
@@ -14,14 +17,14 @@
  * first char on each currently displayed line.
  *
  * {{ The position table is scrolled by moving all the entries.
- *    Would be better to have a circular table 
- *    and just change a couple of pointers. }}
+ * Would be better to have a circular table
+ * and just change a couple of pointers. }}
  */
 
 #include "less.h"
 #include "position.h"
 
-static POSITION *table = NULL;	/* The position table */
+static off_t *table = NULL;	/* The position table */
 static int table_size;
 
 extern int sc_width, sc_height;
@@ -35,12 +38,10 @@ extern int sc_width, sc_height;
  *	the bottom line on the screen
  *	the line after the bottom line on the screen
  */
-	public POSITION
-position(where)
-	int where;
+off_t
+position(int where)
 {
-	switch (where)
-	{
+	switch (where) {
 	case BOTTOM:
 		where = sc_height - 2;
 		break;
@@ -56,11 +57,10 @@ position(where)
 /*
  * Add a new file position to the bottom of the position table.
  */
-	public void
-add_forw_pos(pos)
-	POSITION pos;
+void
+add_forw_pos(off_t pos)
 {
-	register int i;
+	int i;
 
 	/*
 	 * Scroll the position table up.
@@ -73,11 +73,10 @@ add_forw_pos(pos)
 /*
  * Add a new file position to the top of the position table.
  */
-	public void
-add_back_pos(pos)
-	POSITION pos;
+void
+add_back_pos(off_t pos)
 {
-	register int i;
+	int i;
 
 	/*
 	 * Scroll the position table down.
@@ -90,20 +89,20 @@ add_back_pos(pos)
 /*
  * Initialize the position table, done whenever we clear the screen.
  */
-	public void
-pos_clear()
+void
+pos_clear(void)
 {
-	register int i;
+	int i;
 
 	for (i = 0;  i < sc_height;  i++)
-		table[i] = NULL_POSITION;
+		table[i] = -1;
 }
 
 /*
  * Allocate or reallocate the position table.
  */
-	public void
-pos_init()
+void
+pos_init(void)
 {
 	struct scrpos scrpos;
 
@@ -113,16 +112,16 @@ pos_init()
 	 * If we already have a table, remember the first line in it
 	 * before we free it, so we can copy that line to the new table.
 	 */
-	if (table != NULL)
-	{
+	if (table != NULL) {
 		get_scrpos(&scrpos);
-		free((char*)table);
-	} else
-		scrpos.pos = NULL_POSITION;
-	table = (POSITION *) ecalloc(sc_height, sizeof(POSITION));
+		free(table);
+	} else {
+		scrpos.pos = -1;
+	}
+	table = ecalloc(sc_height, sizeof (off_t));
 	table_size = sc_height;
 	pos_clear();
-	if (scrpos.pos != NULL_POSITION)
+	if (scrpos.pos != -1)
 		table[scrpos.ln-1] = scrpos.pos;
 }
 
@@ -131,9 +130,8 @@ pos_init()
  * Check the position table to see if the position falls within its range.
  * Return the position table entry if found, -1 if not.
  */
-	public int
-onscreen(pos)
-	POSITION pos;
+int
+onscreen(off_t pos)
 {
 	register int i;
 
@@ -148,21 +146,19 @@ onscreen(pos)
 /*
  * See if the entire screen is empty.
  */
-	public int
-empty_screen()
+int
+empty_screen(void)
 {
 	return (empty_lines(0, sc_height-1));
 }
 
-	public int
-empty_lines(s, e)
-	int s;
-	int e;
+int
+empty_lines(int s, int e)
 {
-	register int i;
+	int i;
 
 	for (i = s;  i <= e;  i++)
-		if (table[i] != NULL_POSITION && table[i] != 0)
+		if (table[i] != -1 && table[i] != 0)
 			return (0);
 	return (1);
 }
@@ -175,19 +171,17 @@ empty_lines(s, e)
  * such that the top few lines are empty, we may have to set
  * the screen line to a number > 0.
  */
-	public void
-get_scrpos(scrpos)
-	struct scrpos *scrpos;
+void
+get_scrpos(struct scrpos *scrpos)
 {
-	register int i;
+	int i;
 
 	/*
 	 * Find the first line on the screen which has something on it,
 	 * and return the screen line number and the file position.
 	 */
 	for (i = 0; i < sc_height;  i++)
-		if (table[i] != NULL_POSITION)
-		{
+		if (table[i] != -1) {
 			scrpos->ln = i+1;
 			scrpos->pos = table[i];
 			return;
@@ -195,7 +189,7 @@ get_scrpos(scrpos)
 	/*
 	 * The screen is empty.
 	 */
-	scrpos->pos = NULL_POSITION;
+	scrpos->pos = -1;
 }
 
 /*
@@ -207,9 +201,8 @@ get_scrpos(scrpos)
  * or it may be in { -1 .. -(sc_height-1) } to refer to lines
  * relative to the bottom of the screen.
  */
-	public int
-adjsline(sline)
-	int sline;
+int
+adjsline(int sline)
 {
 	/*
 	 * Negative screen line number means

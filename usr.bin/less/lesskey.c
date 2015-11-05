@@ -6,12 +6,15 @@
  *
  * For more information, see the README file.
  */
-
+/*
+ * Modified for use with illumos.
+ * Copyright 2014 Garrett D'Amore <garrett@damore.org>
+ */
 
 /*
  *	lesskey [-o output] [input]
  *
- * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
+ * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  *
  *	Make a .less file.
  *	If no input file is specified, standard input is used.
@@ -21,9 +24,9 @@
  *	key bindings.  Basically any sequence of 1 to MAX_CMDLEN
  *	keystrokes may be bound to an existing less function.
  *
- * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
+ * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  *
- *	The input file is an ascii file consisting of a 
+ *	The input file is an ascii file consisting of a
  *	sequence of lines of the form:
  *		string <whitespace> action [chars] <newline>
  *
@@ -37,14 +40,14 @@
  *		   to specify a character by its octal value.
  *		4. A backslash followed by b, e, n, r or t
  *		   to specify \b, ESC, \n, \r or \t, respectively.
- *		5. Any character (other than those mentioned above) preceded 
+ *		5. Any character (other than those mentioned above) preceded
  *		   by a \ to specify the character itself (characters which
  *		   must be preceded by \ include ^, \, and whitespace.
  *	"action" is the name of a "less" action, from the table below.
  *	"chars" is an optional sequence of characters which is treated
  *		as keyboard input after the command is executed.
  *
- *	Blank lines and lines which start with # are ignored, 
+ *	Blank lines and lines which start with # are ignored,
  *	except for the special control lines:
  *		#command	Signals the beginning of the command
  *				keys section.
@@ -55,7 +58,7 @@
  *		#stop		Stops command parsing in less;
  *				causes all default keys to be disabled.
  *
- * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
+ * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  *
  *	The output file is a non-ascii file, consisting of a header,
  *	one or more sections, and a trailer.
@@ -63,7 +66,7 @@
  *	and the section data.  Normally there are three sections:
  *		CMD_SECTION	Definition of command keys.
  *		EDIT_SECTION	Definition of editing keys.
- *		END_SECTION	A special section header, with no 
+ *		END_SECTION	A special section header, with no
  *				length word or section data.
  *
  *	Section data consists of zero or more byte sequences of the form:
@@ -77,7 +80,7 @@
  *	If action is ORed with A_EXTRA, the action byte is followed
  *		by the null-terminated "chars" string.
  *
- * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
+ * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  */
 
 #include "less.h"
@@ -90,71 +93,73 @@ struct cmdname
 	int cn_action;
 };
 
-struct cmdname cmdnames[] = 
+static void lkerr(char *s);
+
+struct cmdname cmdnames[] =
 {
-	{ "back-bracket",         A_B_BRACKET },
-	{ "back-line",            A_B_LINE },
-	{ "back-line-force",      A_BF_LINE },
-	{ "back-screen",          A_B_SCREEN },
-	{ "back-scroll",          A_B_SCROLL },
-	{ "back-search",          A_B_SEARCH },
-	{ "back-window",          A_B_WINDOW },
-	{ "debug",                A_DEBUG },
-	{ "digit",                A_DIGIT },
-	{ "display-flag",         A_DISP_OPTION },
-	{ "display-option",       A_DISP_OPTION },
-	{ "end",                  A_GOEND },
-	{ "examine",              A_EXAMINE },
-	{ "filter",               A_FILTER },
-	{ "first-cmd",            A_FIRSTCMD },
-	{ "firstcmd",             A_FIRSTCMD },
-	{ "flush-repaint",        A_FREPAINT },
-	{ "forw-bracket",         A_F_BRACKET },
-	{ "forw-forever",         A_F_FOREVER },
-	{ "forw-until-hilite",    A_F_UNTIL_HILITE },
-	{ "forw-line",            A_F_LINE },
-	{ "forw-line-force",      A_FF_LINE },
-	{ "forw-screen",          A_F_SCREEN },
-	{ "forw-screen-force",    A_FF_SCREEN },
-	{ "forw-scroll",          A_F_SCROLL },
-	{ "forw-search",          A_F_SEARCH },
-	{ "forw-window",          A_F_WINDOW },
-	{ "goto-end",             A_GOEND },
-	{ "goto-line",            A_GOLINE },
-	{ "goto-mark",            A_GOMARK },
-	{ "help",                 A_HELP },
-	{ "index-file",           A_INDEX_FILE },
-	{ "invalid",              A_UINVALID },
-	{ "left-scroll",          A_LSHIFT },
-	{ "next-file",            A_NEXT_FILE },
-	{ "next-tag",             A_NEXT_TAG },
-	{ "noaction",             A_NOACTION },
-	{ "percent",              A_PERCENT },
-	{ "pipe",                 A_PIPE },
-	{ "prev-file",            A_PREV_FILE },
-	{ "prev-tag",             A_PREV_TAG },
-	{ "quit",                 A_QUIT },
-	{ "remove-file",          A_REMOVE_FILE },
-	{ "repaint",              A_REPAINT },
-	{ "repaint-flush",        A_FREPAINT },
-	{ "repeat-search",        A_AGAIN_SEARCH },
-	{ "repeat-search-all",    A_T_AGAIN_SEARCH },
-	{ "reverse-search",       A_REVERSE_SEARCH },
-	{ "reverse-search-all",   A_T_REVERSE_SEARCH },
-	{ "right-scroll",         A_RSHIFT },
-	{ "set-mark",             A_SETMARK },
-	{ "shell",                A_SHELL },
-	{ "status",               A_STAT },
-	{ "toggle-flag",          A_OPT_TOGGLE },
-	{ "toggle-option",        A_OPT_TOGGLE },
-	{ "undo-hilite",          A_UNDO_SEARCH },
-	{ "version",              A_VERSION },
-	{ "visual",               A_VISUAL },
-	{ NULL,   0 }
+	{ "back-bracket",		A_B_BRACKET },
+	{ "back-line",			A_B_LINE },
+	{ "back-line-force",		A_BF_LINE },
+	{ "back-screen",		A_B_SCREEN },
+	{ "back-scroll",		A_B_SCROLL },
+	{ "back-search",		A_B_SEARCH },
+	{ "back-window",		A_B_WINDOW },
+	{ "debug",			A_DEBUG },
+	{ "digit",			A_DIGIT },
+	{ "display-flag",		A_DISP_OPTION },
+	{ "display-option",		A_DISP_OPTION },
+	{ "end",			A_GOEND },
+	{ "examine",			A_EXAMINE },
+	{ "filter",			A_FILTER },
+	{ "first-cmd",			A_FIRSTCMD },
+	{ "firstcmd",			A_FIRSTCMD },
+	{ "flush-repaint",		A_FREPAINT },
+	{ "forw-bracket",		A_F_BRACKET },
+	{ "forw-forever",		A_F_FOREVER },
+	{ "forw-until-hilite",		A_F_UNTIL_HILITE },
+	{ "forw-line",			A_F_LINE },
+	{ "forw-line-force",		A_FF_LINE },
+	{ "forw-screen",		A_F_SCREEN },
+	{ "forw-screen-force",		A_FF_SCREEN },
+	{ "forw-scroll",		A_F_SCROLL },
+	{ "forw-search",		A_F_SEARCH },
+	{ "forw-skip",			A_F_SKIP },
+	{ "forw-window",		A_F_WINDOW },
+	{ "goto-end",			A_GOEND },
+	{ "goto-line",			A_GOLINE },
+	{ "goto-mark",			A_GOMARK },
+	{ "help",			A_HELP },
+	{ "index-file",			A_INDEX_FILE },
+	{ "invalid",			A_UINVALID },
+	{ "left-scroll",		A_LSHIFT },
+	{ "next-file",			A_NEXT_FILE },
+	{ "next-tag",			A_NEXT_TAG },
+	{ "noaction",			A_NOACTION },
+	{ "percent",			A_PERCENT },
+	{ "pipe",			A_PIPE },
+	{ "prev-file",			A_PREV_FILE },
+	{ "prev-tag",			A_PREV_TAG },
+	{ "quit",			A_QUIT },
+	{ "remove-file",		A_REMOVE_FILE },
+	{ "repaint",			A_REPAINT },
+	{ "repaint-flush",		A_FREPAINT },
+	{ "repeat-search",		A_AGAIN_SEARCH },
+	{ "repeat-search-all",		A_T_AGAIN_SEARCH },
+	{ "reverse-search",		A_REVERSE_SEARCH },
+	{ "reverse-search-all",		A_T_REVERSE_SEARCH },
+	{ "right-scroll",		A_RSHIFT },
+	{ "set-mark",			A_SETMARK },
+	{ "shell",			A_SHELL },
+	{ "status",			A_STAT },
+	{ "toggle-flag",		A_OPT_TOGGLE },
+	{ "toggle-option",		A_OPT_TOGGLE },
+	{ "undo-hilite",		A_UNDO_SEARCH },
+	{ "version",			A_VERSION },
+	{ "visual",			A_VISUAL },
+	{ NULL,				0 }
 };
 
-struct cmdname editnames[] = 
-{
+struct cmdname editnames[] = {
 	{ "back-complete",	EC_B_COMPLETE },
 	{ "backspace",		EC_BACKSPACE },
 	{ "delete",		EC_DELETE },
@@ -191,14 +196,14 @@ struct table vartable;
 struct table *currtable = &cmdtable;
 
 char fileheader[] = {
-	C0_LESSKEY_MAGIC, 
-	C1_LESSKEY_MAGIC, 
-	C2_LESSKEY_MAGIC, 
+	C0_LESSKEY_MAGIC,
+	C1_LESSKEY_MAGIC,
+	C2_LESSKEY_MAGIC,
 	C3_LESSKEY_MAGIC
 };
 char filetrailer[] = {
-	C0_END_LESSKEY_MAGIC, 
-	C1_END_LESSKEY_MAGIC, 
+	C0_END_LESSKEY_MAGIC,
+	C1_END_LESSKEY_MAGIC,
 	C2_END_LESSKEY_MAGIC
 };
 char cmdsection[1] =	{ CMD_SECTION };
@@ -207,55 +212,50 @@ char varsection[1] =	{ VAR_SECTION };
 char endsection[1] =	{ END_SECTION };
 
 char *infile = NULL;
-char *outfile = NULL ;
+char *outfile = NULL;
 
 int linenum;
 int errors;
 
 extern char version[];
 
-	void
-usage()
+void
+usage(void)
 {
-	fprintf(stderr, "usage: lesskey [-o output] [input]\n");
+	(void) fprintf(stderr, "usage: lesskey [-o output] [input]\n");
 	exit(1);
 }
 
-	char *
-mkpathname(dirname, filename)
-	char *dirname;
-	char *filename;
+char *
+mkpathname(char *dirname, char *filename)
 {
 	char *pathname;
 	size_t len;
 
 	len = strlen(dirname) + strlen(filename) + 2;
-	pathname = calloc(len, sizeof(char));
-	strlcpy(pathname, dirname, len);
-	strlcat(pathname, PATHNAME_SEP, len);
-	strlcat(pathname, filename, len);
+	pathname = calloc(1, len);
+	if (pathname == NULL) {
+		fprintf(stderr, "mkpathname: out of memory\n");
+		exit(1);
+	}
+	(void) snprintf(pathname, len, "%s/%s", dirname, filename);
 	return (pathname);
 }
 
 /*
  * Figure out the name of a default file (in the user's HOME directory).
  */
-	char *
-homefile(filename)
-	char *filename;
+char *
+homefile(char *filename)
 {
 	char *p;
 	char *pathname;
 
-	if ((p = getenv("HOME")) != NULL && *p != '\0')
+	if ((p = getenv("HOME")) != NULL && *p != '\0') {
 		pathname = mkpathname(p, filename);
-#if OS2
-	else if ((p = getenv("INIT")) != NULL && *p != '\0')
-		pathname = mkpathname(p, filename);
-#endif
-	else
-	{
-		fprintf(stderr, "cannot find $HOME - using current directory\n");
+	} else {
+		(void) fprintf(stderr, "cannot find $HOME - "
+		    "using current directory\n");
 		pathname = mkpathname(".", filename);
 	}
 	return (pathname);
@@ -264,16 +264,13 @@ homefile(filename)
 /*
  * Parse command line arguments.
  */
-	void
-parse_args(argc, argv)
-	int argc;
-	char **argv;
+void
+parse_args(int argc, char **argv)
 {
 	char *arg;
 
 	outfile = NULL;
-	while (--argc > 0)
-	{
+	while (--argc > 0) {
 		arg = *++argv;
 		if (arg[0] != '-')
 			/* Arg does not start with "-"; it's not an option. */
@@ -281,18 +278,15 @@ parse_args(argc, argv)
 		if (arg[1] == '\0')
 			/* "-" means standard input. */
 			break;
-		if (arg[1] == '-' && arg[2] == '\0')
-		{
+		if (arg[1] == '-' && arg[2] == '\0') {
 			/* "--" means end of options. */
 			argc--;
 			argv++;
 			break;
 		}
-		switch (arg[1])
-		{
+		switch (arg[1]) {
 		case '-':
-			if (strncmp(arg, "--output", 8) == 0)
-			{
+			if (strncmp(arg, "--output", 8) == 0) {
 				if (arg[8] == '\0')
 					outfile = &arg[8];
 				else if (arg[8] == '=')
@@ -301,8 +295,7 @@ parse_args(argc, argv)
 					usage();
 				goto opt_o;
 			}
-			if (strcmp(arg, "--version") == 0)
-			{
+			if (strcmp(arg, "--version") == 0) {
 				goto opt_V;
 			}
 			usage();
@@ -310,8 +303,7 @@ parse_args(argc, argv)
 		case 'o':
 			outfile = &argv[0][2];
 		opt_o:
-			if (*outfile == '\0')
-			{
+			if (*outfile == '\0') {
 				if (--argc <= 0)
 					usage();
 				outfile = *(++argv);
@@ -319,7 +311,7 @@ parse_args(argc, argv)
 			break;
 		case 'V':
 		opt_V:
-			printf("lesskey  version %s\n", version);
+			(void) printf("lesskey  version %s\n", version);
 			exit(0);
 		default:
 			usage();
@@ -339,8 +331,8 @@ parse_args(argc, argv)
 /*
  * Initialize data structures.
  */
-	void
-init_tables()
+void
+init_tables(void)
 {
 	cmdtable.names = cmdnames;
 	cmdtable.pbuffer = cmdtable.buffer;
@@ -355,25 +347,21 @@ init_tables()
 /*
  * Parse one character of a string.
  */
-	char *
-tstr(pp, xlate)
-	char **pp;
-	int xlate;
+char *
+tstr(char **pp, int xlate)
 {
-	register char *p;
-	register char ch;
-	register int i;
+	char *p;
+	char ch;
+	int i;
 	static char buf[10];
 	static char tstr_control_k[] =
 		{ SK_SPECIAL_KEY, SK_CONTROL_K, 6, 1, 1, 1, '\0' };
 
 	p = *pp;
-	switch (*p)
-	{
+	switch (*p) {
 	case '\\':
 		++p;
-		switch (*p)
-		{
+		switch (*p) {
 		case '0': case '1': case '2': case '3':
 		case '4': case '5': case '6': case '7':
 			/*
@@ -383,10 +371,11 @@ tstr(pp, xlate)
 			i = 0;
 			do
 				ch = 8*ch + (*p - '0');
-			while (*++p >= '0' && *p <= '7' && ++i < 3);
+			while (*++p >= '0' && *p <= '7' && ++i < 3)
+				;
 			*pp = p;
 			if (xlate && ch == CONTROL('K'))
-				return tstr_control_k;
+				return (tstr_control_k);
 			buf[0] = ch;
 			buf[1] = '\0';
 			return (buf);
@@ -408,10 +397,8 @@ tstr(pp, xlate)
 			*pp = p+1;
 			return ("\t");
 		case 'k':
-			if (xlate)
-			{
-				switch (*++p)
-				{
+			if (xlate) {
+				switch (*++p) {
 				case 'u': ch = SK_UP_ARROW; break;
 				case 'd': ch = SK_DOWN_ARROW; break;
 				case 'r': ch = SK_RIGHT_ARROW; break;
@@ -422,7 +409,7 @@ tstr(pp, xlate)
 				case 'e': ch = SK_END; break;
 				case 'x': ch = SK_DELETE; break;
 				default:
-					error("illegal char after \\k");
+					lkerr("illegal char after \\k");
 					*pp = p+1;
 					return ("");
 				}
@@ -439,14 +426,14 @@ tstr(pp, xlate)
 			/* FALLTHRU */
 		default:
 			/*
-			 * Backslash followed by any other char 
+			 * Backslash followed by any other char
 			 * just means that char.
 			 */
 			*pp = p+1;
 			buf[0] = *p;
 			buf[1] = '\0';
 			if (xlate && buf[0] == CONTROL('K'))
-				return tstr_control_k;
+				return (tstr_control_k);
 			return (buf);
 		}
 	case '^':
@@ -457,25 +444,24 @@ tstr(pp, xlate)
 		buf[0] = CONTROL(p[1]);
 		buf[1] = '\0';
 		if (buf[0] == CONTROL('K'))
-			return tstr_control_k;
+			return (tstr_control_k);
 		return (buf);
 	}
 	*pp = p+1;
 	buf[0] = *p;
 	buf[1] = '\0';
 	if (xlate && buf[0] == CONTROL('K'))
-		return tstr_control_k;
+		return (tstr_control_k);
 	return (buf);
 }
 
 /*
  * Skip leading spaces in a string.
  */
-	public char *
-skipsp(s)
-	register char *s;
+char *
+skipsp(char *s)
 {
-	while (*s == ' ' || *s == '\t')	
+	while (*s == ' ' || *s == '\t')
 		s++;
 	return (s);
 }
@@ -483,9 +469,8 @@ skipsp(s)
 /*
  * Skip non-space characters in a string.
  */
-	public char *
-skipnsp(s)
-	register char *s;
+char *
+skipnsp(char *s)
 {
 	while (*s != '\0' && *s != ' ' && *s != '\t')
 		s++;
@@ -496,11 +481,10 @@ skipnsp(s)
  * Clean up an input line:
  * strip off the trailing newline & any trailing # comment.
  */
-	char *
-clean_line(s)
-	char *s;
+char *
+clean_line(char *s)
 {
-	register int i;
+	int i;
 
 	s = skipsp(s);
 	for (i = 0;  s[i] != '\n' && s[i] != '\r' && s[i] != '\0';  i++)
@@ -513,55 +497,47 @@ clean_line(s)
 /*
  * Add a byte to the output command table.
  */
-	void
-add_cmd_char(c)
-	int c;
+void
+add_cmd_char(int c)
 {
-	if (currtable->pbuffer >= currtable->buffer + MAX_USERCMD)
-	{
-		error("too many commands");
+	if (currtable->pbuffer >= currtable->buffer + MAX_USERCMD) {
+		lkerr("too many commands");
 		exit(1);
 	}
-	*(currtable->pbuffer)++ = c;
+	*(currtable->pbuffer)++ = (char)c;
 }
 
 /*
  * Add a string to the output command table.
  */
-	void
-add_cmd_str(s)
-	char *s;
+void
+add_cmd_str(char *s)
 {
-	for ( ;  *s != '\0';  s++)
+	for (; *s != '\0'; s++)
 		add_cmd_char(*s);
 }
 
 /*
  * See if we have a special "control" line.
  */
-	int
-control_line(s)
-	char *s;
+int
+control_line(char *s)
 {
-#define	PREFIX(str,pat)	(strncmp(str,pat,strlen(pat)) == 0)
+#define	PREFIX(str, pat)	(strncmp(str, pat, strlen(pat)) == 0)
 
-	if (PREFIX(s, "#line-edit"))
-	{
+	if (PREFIX(s, "#line-edit")) {
 		currtable = &edittable;
 		return (1);
 	}
-	if (PREFIX(s, "#command"))
-	{
+	if (PREFIX(s, "#command")) {
 		currtable = &cmdtable;
 		return (1);
 	}
-	if (PREFIX(s, "#env"))
-	{
+	if (PREFIX(s, "#env")) {
 		currtable = &vartable;
 		return (1);
 	}
-	if (PREFIX(s, "#stop"))
-	{
+	if (PREFIX(s, "#stop")) {
 		add_cmd_char('\0');
 		add_cmd_char(A_END_LIST);
 		return (1);
@@ -572,15 +548,11 @@ control_line(s)
 /*
  * Output some bytes.
  */
-	void
-fputbytes(fd, buf, len)
-	FILE *fd;
-	char *buf;
-	int len;
+void
+fputbytes(FILE *fd, char *buf, int len)
 {
-	while (len-- > 0)
-	{
-		fwrite(buf, sizeof(char), 1, fd);
+	while (len-- > 0) {
+		(void) fwrite(buf, sizeof (char), 1, fd);
 		buf++;
 	}
 }
@@ -588,53 +560,47 @@ fputbytes(fd, buf, len)
 /*
  * Output an integer, in special KRADIX form.
  */
-	void
-fputint(fd, val)
-	FILE *fd;
-	unsigned int val;
+void
+fputint(FILE *fd, unsigned int val)
 {
 	char c;
 
-	if (val >= KRADIX*KRADIX)
-	{
-		fprintf(stderr, "error: integer too big (%d > %d)\n", 
-			val, KRADIX*KRADIX);
+	if (val >= KRADIX*KRADIX) {
+		(void) fprintf(stderr, "error: integer too big (%d > %d)\n",
+		    val, KRADIX*KRADIX);
 		exit(1);
 	}
 	c = val % KRADIX;
-	fwrite(&c, sizeof(char), 1, fd);
+	(void) fwrite(&c, sizeof (char), 1, fd);
 	c = val / KRADIX;
-	fwrite(&c, sizeof(char), 1, fd);
+	(void) fwrite(&c, sizeof (char), 1, fd);
 }
 
 /*
  * Find an action, given the name of the action.
  */
-	int
-findaction(actname)
-	char *actname;
+int
+findaction(char *actname)
 {
 	int i;
 
 	for (i = 0;  currtable->names[i].cn_name != NULL;  i++)
 		if (strcmp(currtable->names[i].cn_name, actname) == 0)
 			return (currtable->names[i].cn_action);
-	error("unknown action");
+	lkerr("unknown action");
 	return (A_INVALID);
 }
 
-	void
-error(s)
-	char *s;
+void
+lkerr(char *s)
 {
-	fprintf(stderr, "line %d: %s\n", linenum, s);
+	(void) fprintf(stderr, "line %d: %s\n", linenum, s);
 	errors++;
 }
 
 
-	void
-parse_cmdline(p)
-	char *p;
+void
+parse_cmdline(char *p)
 {
 	int cmdlen;
 	char *actname;
@@ -646,12 +612,11 @@ parse_cmdline(p)
 	 * Parse the command string and store it in the current table.
 	 */
 	cmdlen = 0;
-	do
-	{
+	do {
 		s = tstr(&p, 1);
 		cmdlen += strlen(s);
 		if (cmdlen > MAX_CMDLEN)
-			error("command too long");
+			lkerr("command too long");
 		else
 			add_cmd_str(s);
 	} while (*p != ' ' && *p != '\t' && *p != '\0');
@@ -666,9 +631,8 @@ parse_cmdline(p)
 	 * Terminate the action name with a null byte.
 	 */
 	p = skipsp(p);
-	if (*p == '\0')
-	{
-		error("missing action");
+	if (*p == '\0') {
+		lkerr("missing action");
 		return;
 	}
 	actname = p;
@@ -686,11 +650,9 @@ parse_cmdline(p)
 	 */
 	*p = c;
 	p = skipsp(p);
-	if (*p == '\0')
-	{
+	if (*p == '\0') {
 		add_cmd_char(action);
-	} else
-	{
+	} else {
 		/*
 		 * OR the special value A_EXTRA into the action byte.
 		 * Put the extra string after the action byte.
@@ -702,14 +664,12 @@ parse_cmdline(p)
 	}
 }
 
-	void
-parse_varline(p)
-	char *p;
+void
+parse_varline(char *p)
 {
 	char *s;
 
-	do
-	{
+	do {
 		s = tstr(&p, 0);
 		add_cmd_str(s);
 	} while (*p != ' ' && *p != '\t' && *p != '=' && *p != '\0');
@@ -719,17 +679,15 @@ parse_varline(p)
 	add_cmd_char('\0');
 
 	p = skipsp(p);
-	if (*p++ != '=')
-	{
-		error("missing =");
+	if (*p++ != '=') {
+		lkerr("missing =");
 		return;
 	}
 
 	add_cmd_char(EV_OK|A_EXTRA);
 
 	p = skipsp(p);
-	while (*p != '\0')
-	{
+	while (*p != '\0') {
 		s = tstr(&p, 0);
 		add_cmd_str(s);
 	}
@@ -739,9 +697,8 @@ parse_varline(p)
 /*
  * Parse a line from the lesskey file.
  */
-	void
-parse_line(line)
-	char *line;
+void
+parse_line(char *line)
 {
 	char *p;
 
@@ -765,35 +722,12 @@ parse_line(line)
 		parse_cmdline(p);
 }
 
-	int
-main(argc, argv)
-	int argc;
-	char *argv[];
+int
+main(int argc, char **argv)
 {
 	FILE *desc;
 	FILE *out;
 	char line[1024];
-
-#ifdef WIN32
-	if (getenv("HOME") == NULL)
-	{
-		/*
-		 * If there is no HOME environment variable,
-		 * try the concatenation of HOMEDRIVE + HOMEPATH.
-		 */
-		char *drive = getenv("HOMEDRIVE");
-		char *path  = getenv("HOMEPATH");
-		if (drive != NULL && path != NULL)
-		{
-			size_t len = strlen(drive) + strlen(path) + 6;
-			char *env = (char *) calloc(len, sizeof(char));
-			strlcpy(env, "HOME=", len);
-			strlcat(env, drive, len);
-			strlcat(env, path, len);
-			putenv(env);
-		}
-	}
-#endif /* WIN32 */
 
 	/*
 	 * Process command line arguments.
@@ -806,13 +740,8 @@ main(argc, argv)
 	 */
 	if (strcmp(infile, "-") == 0)
 		desc = stdin;
-	else if ((desc = fopen(infile, "r")) == NULL)
-	{
-#if HAVE_PERROR
+	else if ((desc = fopen(infile, "r")) == NULL) {
 		perror(infile);
-#else
-		fprintf(stderr, "Cannot open %s\n", infile);
-#endif
 		usage();
 	}
 
@@ -821,8 +750,7 @@ main(argc, argv)
 	 */
 	errors = 0;
 	linenum = 0;
-	while (fgets(line, sizeof(line), desc) != NULL)
-	{
+	while (fgets(line, sizeof (line), desc) != NULL) {
 		++linenum;
 		parse_line(line);
 	}
@@ -831,9 +759,9 @@ main(argc, argv)
 	 * Write the output file.
 	 * If no output file was specified, use "$HOME/.less"
 	 */
-	if (errors > 0)
-	{
-		fprintf(stderr, "%d errors; no output produced\n", errors);
+	if (errors > 0) {
+		(void) fprintf(stderr, "%d errors; no output produced\n",
+		    errors);
 		exit(1);
 	}
 
@@ -841,35 +769,34 @@ main(argc, argv)
 		outfile = getenv("LESSKEY");
 	if (outfile == NULL)
 		outfile = homefile(LESSKEYFILE);
-	if ((out = fopen(outfile, "wb")) == NULL)
-	{
-#if HAVE_PERROR
+	if ((out = fopen(outfile, "wb")) == NULL) {
 		perror(outfile);
-#else
-		fprintf(stderr, "Cannot open %s\n", outfile);
-#endif
 		exit(1);
 	}
 
 	/* File header */
-	fputbytes(out, fileheader, sizeof(fileheader));
+	fputbytes(out, fileheader, sizeof (fileheader));
 
 	/* Command key section */
-	fputbytes(out, cmdsection, sizeof(cmdsection));
+	fputbytes(out, cmdsection, sizeof (cmdsection));
 	fputint(out, cmdtable.pbuffer - cmdtable.buffer);
-	fputbytes(out, (char *)cmdtable.buffer, cmdtable.pbuffer-cmdtable.buffer);
+	fputbytes(out, (char *)cmdtable.buffer,
+	    cmdtable.pbuffer-cmdtable.buffer);
+
 	/* Edit key section */
-	fputbytes(out, editsection, sizeof(editsection));
+	fputbytes(out, editsection, sizeof (editsection));
 	fputint(out, edittable.pbuffer - edittable.buffer);
-	fputbytes(out, (char *)edittable.buffer, edittable.pbuffer-edittable.buffer);
+	fputbytes(out, (char *)edittable.buffer,
+	    edittable.pbuffer-edittable.buffer);
 
 	/* Environment variable section */
-	fputbytes(out, varsection, sizeof(varsection)); 
+	fputbytes(out, varsection, sizeof (varsection));
 	fputint(out, vartable.pbuffer - vartable.buffer);
-	fputbytes(out, (char *)vartable.buffer, vartable.pbuffer-vartable.buffer);
+	fputbytes(out, (char *)vartable.buffer,
+	    vartable.pbuffer-vartable.buffer);
 
 	/* File trailer */
-	fputbytes(out, endsection, sizeof(endsection));
-	fputbytes(out, filetrailer, sizeof(filetrailer));
+	fputbytes(out, endsection, sizeof (endsection));
+	fputbytes(out, filetrailer, sizeof (filetrailer));
 	return (0);
 }

@@ -6,7 +6,10 @@
  *
  * For more information, see the README file.
  */
-
+/*
+ * Modified for use with illumos.
+ * Copyright 2014 Garrett D'Amore <garrett@damore.org>
+ */
 
 #define	END_OPTION_STRING	('$')
 
@@ -23,10 +26,11 @@
 #define	HL_REPAINT	0200	/* Repaint hilites after toggling option */
 #define	NO_QUERY	0400	/* Option cannot be queried with "_" cmd */
 #define	INIT_HANDLER	01000	/* Call option handler function at startup */
+#define	MORE_OK		02000	/* Allow when less_is_more */
 
 #define	OTYPE		(BOOL|TRIPLE|NUMBER|STRING|NOVAR)
 
-#define OLETTER_NONE    '\1'     /* Invalid option letter */
+#define	OLETTER_NONE	'\1'	/* Invalid option letter */
 
 /*
  * Argument to a handling function tells what type of activity:
@@ -40,18 +44,18 @@
 #define	OPT_TOGGLE	1
 #define	OPT_UNSET	2
 #define	OPT_SET		3
-#define OPT_NO_PROMPT	0100
+#define	OPT_NO_PROMPT	0100
 
 /* Error code from findopt_name */
-#define OPT_AMBIG       1
+#define	OPT_AMBIG	1
 
 struct optname
 {
-	char *oname;            /* Long (GNU-style) option name */
+	char *oname;		/* Long (GNU-style) option name */
 	struct optname *onext;  /* List of synonymous option names */
 };
 
-#define OPTNAME_MAX	32	/* Max length of long option name */
+#define	OPTNAME_MAX	32	/* Max length of long option name */
 
 struct loption
 {
@@ -63,4 +67,3 @@ struct loption
 	void (*ofunc)();	/* Pointer to special handling function */
 	char *odesc[3];		/* Description of each value */
 };
-

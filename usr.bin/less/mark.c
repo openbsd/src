@@ -6,7 +6,10 @@
  *
  * For more information, see the README file.
  */
-
+/*
+ * Modified for use with illumos.
+ * Copyright 2014 Garrett D'Amore <garrett@damore.org>
+ */
 
 #include "less.h"
 
@@ -34,21 +37,20 @@ static struct mark marks[NMARKS];
 /*
  * Initialize the mark table to show no marks are set.
  */
-	public void
-init_mark()
+void
+init_mark(void)
 {
 	int i;
 
 	for (i = 0;  i < NMARKS;  i++)
-		marks[i].m_scrpos.pos = NULL_POSITION;
+		marks[i].m_scrpos.pos = -1;
 }
 
 /*
  * See if a mark letter is valid (between a and z).
  */
-	static struct mark *
-getumark(c)
-	int c;
+static struct mark *
+getumark(int c)
 {
 	if (c >= 'a' && c <= 'z')
 		return (&marks[c-'a']);
@@ -65,15 +67,13 @@ getumark(c)
  * The mark struct may come either from the mark table
  * or may be constructed on the fly for certain characters like ^, $.
  */
-	static struct mark *
-getmark(c)
-	int c;
+static struct mark *
+getmark(int c)
 {
 	register struct mark *m;
 	static struct mark sm;
 
-	switch (c)
-	{
+	switch (c) {
 	case '^':
 		/*
 		 * Beginning of the current file.
@@ -87,8 +87,7 @@ getmark(c)
 		/*
 		 * End of the current file.
 		 */
-		if (ch_end_seek())
-		{
+		if (ch_end_seek()) {
 			error("Cannot seek to end of file", NULL_PARG);
 			return (NULL);
 		}
@@ -118,8 +117,7 @@ getmark(c)
 		m = getumark(c);
 		if (m == NULL)
 			break;
-		if (m->m_scrpos.pos == NULL_POSITION)
-		{
+		if (m->m_scrpos.pos == -1) {
 			error("Mark not set", NULL_PARG);
 			return (NULL);
 		}
@@ -128,24 +126,20 @@ getmark(c)
 	return (m);
 }
 
-#if PIPEC
 /*
  * Is a mark letter is invalid?
  */
-	public int
-badmark(c)
-	int c;
+int
+badmark(int c)
 {
 	return (getmark(c) == NULL);
 }
-#endif /* PIPEC */
 
 /*
  * Set a user-defined mark.
  */
-	public void
-setmark(c)
-	int c;
+void
+setmark(int c)
 {
 	register struct mark *m;
 	struct scrpos scrpos;
@@ -161,15 +155,15 @@ setmark(c)
 /*
  * Set lmark (the mark named by the apostrophe).
  */
-	public void
-lastmark()
+void
+lastmark(void)
 {
 	struct scrpos scrpos;
 
 	if (ch_getflags() & CH_HELPFILE)
 		return;
 	get_scrpos(&scrpos);
-	if (scrpos.pos == NULL_POSITION)
+	if (scrpos.pos == -1)
 		return;
 	marks[LASTMARK].m_scrpos = scrpos;
 	marks[LASTMARK].m_ifile = curr_ifile;
@@ -178,11 +172,10 @@ lastmark()
 /*
  * Go to a mark.
  */
-	public void
-gomark(c)
-	int c;
+void
+gomark(int c)
 {
-	register struct mark *m;
+	struct mark *m;
 	struct scrpos scrpos;
 
 	m = getmark(c);
@@ -190,12 +183,11 @@ gomark(c)
 		return;
 
 	/*
-	 * If we're trying to go to the lastmark and 
+	 * If we're trying to go to the lastmark and
 	 * it has not been set to anything yet,
 	 * set it to the beginning of the current file.
 	 */
-	if (m == &marks[LASTMARK] && m->m_scrpos.pos == NULL_POSITION)
-	{
+	if (m == &marks[LASTMARK] && m->m_scrpos.pos == -1) {
 		m->m_ifile = curr_ifile;
 		m->m_scrpos.pos = ch_zero();
 		m->m_scrpos.ln = jump_sline;
@@ -207,8 +199,7 @@ gomark(c)
 	 * (We save the screen position even if we're not using lmark.)
 	 */
 	scrpos = m->m_scrpos;
-	if (m->m_ifile != curr_ifile)
-	{
+	if (m->m_ifile != curr_ifile) {
 		/*
 		 * Not in the current file; edit the correct file.
 		 */
@@ -219,43 +210,38 @@ gomark(c)
 	jump_loc(scrpos.pos, scrpos.ln);
 }
 
-#if PIPEC
 /*
  * Return the position associated with a given mark letter.
  *
- * We don't return which screen line the position 
+ * We don't return which screen line the position
  * is associated with, but this doesn't matter much,
  * because it's always the first non-blank line on the screen.
  */
-	public POSITION
-markpos(c)
-	int c;
+off_t
+markpos(int c)
 {
-	register struct mark *m;
+	struct mark *m;
 
 	m = getmark(c);
 	if (m == NULL)
-		return (NULL_POSITION);
+		return (-1);
 
-	if (m->m_ifile != curr_ifile)
-	{
+	if (m->m_ifile != curr_ifile) {
 		error("Mark not in current file", NULL_PARG);
-		return (NULL_POSITION);
+		return (-1);
 	}
 	return (m->m_scrpos.pos);
 }
-#endif /* PIPEC */
 
 /*
  * Clear the marks associated with a specified ifile.
  */
-	public void
-unmark(ifile)
-	IFILE ifile;
+void
+unmark(IFILE ifile)
 {
 	int i;
 
 	for (i = 0;  i < NMARKS;  i++)
 		if (marks[i].m_ifile == ifile)
-			marks[i].m_scrpos.pos = NULL_POSITION;
+			marks[i].m_scrpos.pos = -1;
 }

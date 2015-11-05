@@ -6,10 +6,13 @@
  *
  * For more information, see the README file.
  */
-
+/*
+ * Modified for use with illumos.
+ * Copyright 2014 Garrett D'Amore <garrett@damore.org>
+ */
 
 /*
- * High level routines dealing with getting lines of input 
+ * High level routines dealing with getting lines of input
  * from the file being viewed.
  *
  * When we speak of "lines" here, we mean PRINTABLE lines;
@@ -27,12 +30,10 @@ extern int quit_if_one_screen;
 extern volatile sig_atomic_t sigs;
 extern int ignore_eoi;
 extern int status_col;
-extern POSITION start_attnpos;
-extern POSITION end_attnpos;
-#if HILITE_SEARCH
+extern off_t start_attnpos;
+extern off_t end_attnpos;
 extern int hilite_search;
 extern int size_linebuf;
-#endif
 
 /*
  * Get the next line.
@@ -41,24 +42,21 @@ extern int size_linebuf;
  * a line.  The new position is the position of the first character
  * of the NEXT line.  The line obtained is the line starting at curr_pos.
  */
-	public POSITION
-forw_line(curr_pos)
-	POSITION curr_pos;
+off_t
+forw_line(off_t curr_pos)
 {
-	POSITION base_pos;
-	POSITION new_pos;
+	off_t base_pos;
+	off_t new_pos;
 	register int c;
 	int blankline;
 	int endline;
 	int backchars;
 
 get_forw_line:
-	if (curr_pos == NULL_POSITION)
-	{
+	if (curr_pos == -1) {
 		null_line();
-		return (NULL_POSITION);
+		return (-1);
 	}
-#if HILITE_SEARCH
 	if (hilite_search == OPT_ONPLUS || is_filtering() || status_col)
 		/*
 		 * If we are ignoring EOI (command F), only prepare
@@ -67,31 +65,26 @@ get_forw_line:
 		 * If we're not ignoring EOI, we *could* do the same, but
 		 * for efficiency we prepare several lines ahead at once.
 		 */
-		prep_hilite(curr_pos, curr_pos + 3*size_linebuf, 
-				ignore_eoi ? 1 : -1);
-#endif
-	if (ch_seek(curr_pos))
-	{
+		prep_hilite(curr_pos, curr_pos + 3*size_linebuf,
+		    ignore_eoi ? 1 : -1);
+	if (ch_seek(curr_pos)) {
 		null_line();
-		return (NULL_POSITION);
+		return (-1);
 	}
 
 	/*
 	 * Step back to the beginning of the line.
 	 */
 	base_pos = curr_pos;
-	for (;;)
-	{
-		if (ABORT_SIGS())
-		{
+	for (;;) {
+		if (ABORT_SIGS()) {
 			null_line();
-			return (NULL_POSITION);
+			return (-1);
 		}
 		c = ch_back_get();
 		if (c == EOI)
 			break;
-		if (c == '\n')
-		{
+		if (c == '\n') {
 			(void) ch_forw_get();
 			break;
 		}
@@ -101,22 +94,19 @@ get_forw_line:
 	/*
 	 * Read forward again to the position we should start at.
 	 */
- 	prewind();
+	prewind();
 	plinenum(base_pos);
 	(void) ch_seek(base_pos);
 	new_pos = base_pos;
-	while (new_pos < curr_pos)
-	{
-		if (ABORT_SIGS())
-		{
+	while (new_pos < curr_pos) {
+		if (ABORT_SIGS()) {
 			null_line();
-			return (NULL_POSITION);
+			return (-1);
 		}
 		c = ch_forw_get();
 		backchars = pappend(c, new_pos);
 		new_pos++;
-		if (backchars > 0)
-		{
+		if (backchars > 0) {
 			pshift_all();
 			new_pos -= backchars;
 			while (--backchars >= 0)
@@ -130,32 +120,27 @@ get_forw_line:
 	 * Read the first character to display.
 	 */
 	c = ch_forw_get();
-	if (c == EOI)
-	{
+	if (c == EOI) {
 		null_line();
-		return (NULL_POSITION);
+		return (-1);
 	}
 	blankline = (c == '\n' || c == '\r');
 
 	/*
 	 * Read each character in the line and append to the line buffer.
 	 */
-	for (;;)
-	{
-		if (ABORT_SIGS())
-		{
+	for (;;) {
+		if (ABORT_SIGS()) {
 			null_line();
-			return (NULL_POSITION);
+			return (-1);
 		}
-		if (c == '\n' || c == EOI)
-		{
+		if (c == '\n' || c == EOI) {
 			/*
 			 * End of the line.
 			 */
 			backchars = pflushmbc();
 			new_pos = ch_tell();
-			if (backchars > 0 && !chopline && hshift == 0)
-			{
+			if (backchars > 0 && !chopline && hshift == 0) {
 				new_pos -= backchars + 1;
 				endline = FALSE;
 			} else
@@ -169,29 +154,24 @@ get_forw_line:
 		 * Append the char to the line and get the next char.
 		 */
 		backchars = pappend(c, ch_tell()-1);
-		if (backchars > 0)
-		{
+		if (backchars > 0) {
 			/*
 			 * The char won't fit in the line; the line
 			 * is too long to print in the screen width.
 			 * End the line here.
 			 */
-			if (chopline || hshift > 0)
-			{
-				do
-				{
-					if (ABORT_SIGS())
-					{
+			if (chopline || hshift > 0) {
+				do {
+					if (ABORT_SIGS()) {
 						null_line();
-						return (NULL_POSITION);
+						return (-1);
 					}
 					c = ch_forw_get();
 				} while (c != '\n' && c != EOI);
 				new_pos = ch_tell();
 				endline = TRUE;
 				quit_if_one_screen = FALSE;
-			} else
-			{
+			} else {
 				new_pos = ch_tell() - backchars;
 				endline = FALSE;
 			}
@@ -202,9 +182,7 @@ get_forw_line:
 
 	pdone(endline, 1);
 
-#if HILITE_SEARCH
-	if (is_filtered(base_pos))
-	{
+	if (is_filtered(base_pos)) {
 		/*
 		 * We don't want to display this line.
 		 * Get the next line.
@@ -215,20 +193,17 @@ get_forw_line:
 
 	if (status_col && is_hilited(base_pos, ch_tell()-1, 1, NULL))
 		set_status_col('*');
-#endif
 
-	if (squeeze && blankline)
-	{
+	if (squeeze && blankline) {
 		/*
 		 * This line is blank.
 		 * Skip down to the last contiguous blank line
 		 * and pretend it is the one which we are returning.
 		 */
 		while ((c = ch_forw_get()) == '\n' || c == '\r')
-			if (ABORT_SIGS())
-			{
+			if (ABORT_SIGS()) {
 				null_line();
-				return (NULL_POSITION);
+				return (-1);
 			}
 		if (c != EOI)
 			(void) ch_back_get();
@@ -245,59 +220,50 @@ get_forw_line:
  * a line.  The new position is the position of the first character
  * of the PREVIOUS line.  The line obtained is the one starting at new_pos.
  */
-	public POSITION
-back_line(curr_pos)
-	POSITION curr_pos;
+off_t
+back_line(off_t curr_pos)
 {
-	POSITION new_pos, begin_new_pos, base_pos;
+	off_t new_pos, begin_new_pos, base_pos;
 	int c;
 	int endline;
 	int backchars;
 
 get_back_line:
-	if (curr_pos == NULL_POSITION || curr_pos <= ch_zero())
-	{
+	if (curr_pos == -1 || curr_pos <= ch_zero()) {
 		null_line();
-		return (NULL_POSITION);
+		return (-1);
 	}
-#if HILITE_SEARCH
 	if (hilite_search == OPT_ONPLUS || is_filtering() || status_col)
-		prep_hilite((curr_pos < 3*size_linebuf) ? 
-				0 : curr_pos - 3*size_linebuf, curr_pos, -1);
-#endif
-	if (ch_seek(curr_pos-1))
-	{
+		prep_hilite((curr_pos < 3*size_linebuf) ?
+		    0 : curr_pos - 3*size_linebuf, curr_pos, -1);
+	if (ch_seek(curr_pos-1)) {
 		null_line();
-		return (NULL_POSITION);
+		return (-1);
 	}
 
-	if (squeeze)
-	{
+	if (squeeze) {
 		/*
 		 * Find out if the "current" line was blank.
 		 */
-		(void) ch_forw_get();    /* Skip the newline */
-		c = ch_forw_get();       /* First char of "current" line */
-		(void) ch_back_get();    /* Restore our position */
+		(void) ch_forw_get();	/* Skip the newline */
+		c = ch_forw_get();	/* First char of "current" line */
+		(void) ch_back_get();	/* Restore our position */
 		(void) ch_back_get();
 
-		if (c == '\n' || c == '\r')
-		{
+		if (c == '\n' || c == '\r') {
 			/*
 			 * The "current" line was blank.
 			 * Skip over any preceding blank lines,
 			 * since we skipped them in forw_line().
 			 */
 			while ((c = ch_back_get()) == '\n' || c == '\r')
-				if (ABORT_SIGS())
-				{
+				if (ABORT_SIGS()) {
 					null_line();
-					return (NULL_POSITION);
+					return (-1);
 				}
-			if (c == EOI)
-			{
+			if (c == EOI) {
 				null_line();
-				return (NULL_POSITION);
+				return (-1);
 			}
 			(void) ch_forw_get();
 		}
@@ -306,16 +272,13 @@ get_back_line:
 	/*
 	 * Scan backwards until we hit the beginning of the line.
 	 */
-	for (;;)
-	{
-		if (ABORT_SIGS())
-		{
+	for (;;) {
+		if (ABORT_SIGS()) {
 			null_line();
-			return (NULL_POSITION);
+			return (-1);
 		}
 		c = ch_back_get();
-		if (c == '\n')
-		{
+		if (c == '\n') {
 			/*
 			 * This is the newline ending the previous line.
 			 * We have hit the beginning of the line.
@@ -323,8 +286,7 @@ get_back_line:
 			base_pos = ch_tell() + 1;
 			break;
 		}
-		if (c == EOI)
-		{
+		if (c == EOI) {
 			/*
 			 * We have hit the beginning of the file.
 			 * This must be the first line in the file.
@@ -341,36 +303,31 @@ get_back_line:
 	 * until we reach the curr_pos.
 	 *
 	 * {{ This algorithm is pretty inefficient if the lines
-	 *    are much longer than the screen width, 
+	 *    are much longer than the screen width,
 	 *    but I don't know of any better way. }}
 	 */
 	new_pos = base_pos;
-	if (ch_seek(new_pos))
-	{
+	if (ch_seek(new_pos)) {
 		null_line();
-		return (NULL_POSITION);
+		return (-1);
 	}
 	endline = FALSE;
 	prewind();
 	plinenum(new_pos);
-    loop:
+loop:
 	begin_new_pos = new_pos;
 	(void) ch_seek(new_pos);
 
-	do
-	{
+	do {
 		c = ch_forw_get();
-		if (c == EOI || ABORT_SIGS())
-		{
+		if (c == EOI || ABORT_SIGS()) {
 			null_line();
-			return (NULL_POSITION);
+			return (-1);
 		}
 		new_pos++;
-		if (c == '\n')
-		{
+		if (c == '\n') {
 			backchars = pflushmbc();
-			if (backchars > 0 && !chopline && hshift == 0)
-			{
+			if (backchars > 0 && !chopline && hshift == 0) {
 				backchars++;
 				goto shift;
 			}
@@ -378,23 +335,20 @@ get_back_line:
 			break;
 		}
 		backchars = pappend(c, ch_tell()-1);
-		if (backchars > 0)
-		{
+		if (backchars > 0) {
 			/*
 			 * Got a full printable line, but we haven't
 			 * reached our curr_pos yet.  Discard the line
 			 * and start a new one.
 			 */
-			if (chopline || hshift > 0)
-			{
+			if (chopline || hshift > 0) {
 				endline = TRUE;
 				quit_if_one_screen = FALSE;
 				break;
 			}
 		shift:
 			pshift_all();
-			while (backchars-- > 0)
-			{
+			while (backchars-- > 0) {
 				(void) ch_back_get();
 				new_pos--;
 			}
@@ -404,9 +358,7 @@ get_back_line:
 
 	pdone(endline, 0);
 
-#if HILITE_SEARCH
-	if (is_filtered(base_pos))
-	{
+	if (is_filtered(base_pos)) {
 		/*
 		 * We don't want to display this line.
 		 * Get the previous line.
@@ -415,9 +367,9 @@ get_back_line:
 		goto get_back_line;
 	}
 
-	if (status_col && curr_pos > 0 && is_hilited(base_pos, curr_pos-1, 1, NULL))
+	if (status_col && curr_pos > 0 &&
+	    is_hilited(base_pos, curr_pos-1, 1, NULL))
 		set_status_col('*');
-#endif
 
 	return (begin_new_pos);
 }
@@ -425,18 +377,15 @@ get_back_line:
 /*
  * Set attnpos.
  */
-	public void
-set_attnpos(pos)
-	POSITION pos;
+void
+set_attnpos(off_t pos)
 {
 	int c;
 
-	if (pos != NULL_POSITION)
-	{
+	if (pos != -1) {
 		if (ch_seek(pos))
 			return;
-		for (;;)
-		{
+		for (;;) {
 			c = ch_forw_get();
 			if (c == EOI)
 				return;
@@ -446,8 +395,7 @@ set_attnpos(pos)
 		}
 	}
 	start_attnpos = pos;
-	for (;;)
-	{
+	for (;;) {
 		c = ch_forw_get();
 		pos++;
 		if (c == EOI || c == '\n' || c == '\r')

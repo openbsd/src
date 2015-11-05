@@ -6,7 +6,10 @@
  *
  * For more information, see the README file.
  */
-
+/*
+ * Modified for use with illumos.
+ * Copyright 2014 Garrett D'Amore <garrett@damore.org>
+ */
 
 /*
  * Primitives for displaying the file on the screen,
@@ -16,10 +19,10 @@
 #include "less.h"
 #include "position.h"
 
-public int screen_trashed;
-public int squished;
-public int no_back_scroll = 0;
-public int forw_prompt;
+int screen_trashed;
+int squished;
+int no_back_scroll = 0;
+int forw_prompt;
 
 extern volatile sig_atomic_t sigs;
 extern int top_scroll;
@@ -32,18 +35,16 @@ extern int ignore_eoi;
 extern int clear_bg;
 extern int final_attr;
 extern int oldbot;
-#if TAGS
 extern char *tagoption;
-#endif
 
 /*
  * Sound the bell to indicate user is trying to move past end of file.
  */
-	static void
-eof_bell()
+static void
+eof_bell(void)
 {
 	if (quiet == NOT_QUIET)
-		bell();
+		ring_bell();
 	else
 		vbell();
 }
@@ -51,15 +52,15 @@ eof_bell()
 /*
  * Check to see if the end of file is currently displayed.
  */
-	public int
-eof_displayed()
+int
+eof_displayed(void)
 {
-	POSITION pos;
+	off_t pos;
 
 	if (ignore_eoi)
 		return (0);
 
-	if (ch_length() == NULL_POSITION)
+	if (ch_length() == -1)
 		/*
 		 * If the file length is not known,
 		 * we can't possibly be displaying EOF.
@@ -72,16 +73,16 @@ eof_displayed()
 	 * we must be just at EOF.
 	 */
 	pos = position(BOTTOM_PLUS_ONE);
-	return (pos == NULL_POSITION || pos == ch_length());
+	return (pos == -1 || pos == ch_length());
 }
 
 /*
  * Check to see if the entire file is currently displayed.
  */
-	public int
-entire_file_displayed()
+int
+entire_file_displayed(void)
 {
-	POSITION pos;
+	off_t pos;
 
 	/* Make sure last line of file is displayed. */
 	if (!eof_displayed())
@@ -89,7 +90,7 @@ entire_file_displayed()
 
 	/* Make sure first line of file is displayed. */
 	pos = position(0);
-	return (pos == NULL_POSITION || pos == 0);
+	return (pos == -1 || pos == 0);
 }
 
 /*
@@ -98,8 +99,8 @@ entire_file_displayed()
  * of the screen; this can happen when we display a short file
  * for the first time.
  */
-	public void
-squish_check()
+void
+squish_check(void)
 {
 	if (!squished)
 		return;
@@ -108,23 +109,17 @@ squish_check()
 }
 
 /*
- * Display n lines, scrolling forward, 
+ * Display n lines, scrolling forward,
  * starting at position pos in the input file.
  * "force" means display the n lines even if we hit end of file.
  * "only_last" means display only the last screenful if n > screen size.
  * "nblank" is the number of blank lines to draw before the first
- *   real line.  If nblank > 0, the pos must be NULL_POSITION.
+ *   real line.  If nblank > 0, the pos must be -1.
  *   The first real line after the blanks will start at ch_zero().
  */
-	public void
-forw(n, pos, force, only_last, nblank)
-	register int n;
-	POSITION pos;
-	int force;
-	int only_last;
-	int nblank;
+void
+forw(int n, off_t pos, int force, int only_last, int nblank)
 {
-	int eof = 0;
 	int nlines = 0;
 	int do_repaint;
 	static int first_time = 1;
@@ -132,21 +127,19 @@ forw(n, pos, force, only_last, nblank)
 	squish_check();
 
 	/*
-	 * do_repaint tells us not to display anything till the end, 
+	 * do_repaint tells us not to display anything till the end,
 	 * then just repaint the entire screen.
-	 * We repaint if we are supposed to display only the last 
+	 * We repaint if we are supposed to display only the last
 	 * screenful and the request is for more than a screenful.
 	 * Also if the request exceeds the forward scroll limit
 	 * (but not if the request is for exactly a screenful, since
 	 * repainting itself involves scrolling forward a screenful).
 	 */
-	do_repaint = (only_last && n > sc_height-1) || 
-		(forw_scroll >= 0 && n > forw_scroll && n != sc_height-1);
+	do_repaint = (only_last && n > sc_height-1) ||
+	    (forw_scroll >= 0 && n > forw_scroll && n != sc_height-1);
 
-	if (!do_repaint)
-	{
-		if (top_scroll && n >= sc_height - 1 && pos != ch_length())
-		{
+	if (!do_repaint) {
+		if (top_scroll && n >= sc_height - 1 && pos != ch_length()) {
 			/*
 			 * Start a new screen.
 			 * {{ This is not really desirable if we happen
@@ -156,66 +149,58 @@ forw(n, pos, force, only_last, nblank)
 			pos_clear();
 			add_forw_pos(pos);
 			force = 1;
-			clear();
+			do_clear();
 			home();
 		}
 
-		if (pos != position(BOTTOM_PLUS_ONE) || empty_screen())
-		{
+		if (pos != position(BOTTOM_PLUS_ONE) || empty_screen()) {
 			/*
 			 * This is not contiguous with what is
-			 * currently displayed.  Clear the screen image 
+			 * currently displayed.  Clear the screen image
 			 * (position table) and start a new screen.
 			 */
 			pos_clear();
 			add_forw_pos(pos);
 			force = 1;
-			if (top_scroll)
-			{
-				clear();
+			if (top_scroll) {
+				do_clear();
 				home();
-			} else if (!first_time)
-			{
+			} else if (!first_time) {
 				putstr("...skipping...\n");
 			}
 		}
 	}
 
-	while (--n >= 0)
-	{
+	while (--n >= 0) {
 		/*
 		 * Read the next line of input.
 		 */
-		if (nblank > 0)
-		{
+		if (nblank > 0) {
 			/*
-			 * Still drawing blanks; don't get a line 
+			 * Still drawing blanks; don't get a line
 			 * from the file yet.
 			 * If this is the last blank line, get ready to
 			 * read a line starting at ch_zero() next time.
 			 */
 			if (--nblank == 0)
 				pos = ch_zero();
-		} else
-		{
-			/* 
+		} else {
+			/*
 			 * Get the next line from the file.
 			 */
 			pos = forw_line(pos);
-			if (pos == NULL_POSITION)
-			{
+			if (pos == -1) {
 				/*
-				 * End of file: stop here unless the top line 
+				 * End of file: stop here unless the top line
 				 * is still empty, or "force" is true.
 				 * Even if force is true, stop when the last
 				 * line in the file reaches the top of screen.
 				 */
-				eof = 1;
-				if (!force && position(TOP) != NULL_POSITION)
+				if (!force && position(TOP) != -1)
 					break;
-				if (!empty_lines(0, 0) && 
+				if (!empty_lines(0, 0) &&
 				    !empty_lines(1, 1) &&
-				     empty_lines(2, sc_height-1))
+				    empty_lines(2, sc_height-1))
 					break;
 			}
 		}
@@ -237,37 +222,12 @@ forw(n, pos, force, only_last, nblank)
 		 * start the display after the beginning of the file,
 		 * and it is not appropriate to squish in that case.
 		 */
-		if (first_time && pos == NULL_POSITION && !top_scroll && 
-#if TAGS
-		    tagoption == NULL &&
-#endif
-		    !plusoption)
-		{
+		if (first_time && pos == -1 && !top_scroll &&
+		    tagoption == NULL && !plusoption) {
 			squished = 1;
 			continue;
 		}
 		put_line();
-#if 0
-		/* {{ 
-		 * Can't call clear_eol here.  The cursor might be at end of line
-		 * on an ignaw terminal, so clear_eol would clear the last char
-		 * of the current line instead of all of the next line.
-		 * If we really need to do this on clear_bg terminals, we need
-		 * to find a better way.
-		 * }}
-		 */
-		if (clear_bg && apply_at_specials(final_attr) != AT_NORMAL)
-		{
-			/*
-			 * Writing the last character on the last line
-			 * of the display may have scrolled the screen.
-			 * If we were in standout mode, clear_bg terminals 
-			 * will fill the new line with the standout color.
-			 * Now we're in normal mode again, so clear the line.
-			 */
-			clear_eol();
-		}
-#endif
 		forw_prompt = 1;
 	}
 
@@ -282,26 +242,20 @@ forw(n, pos, force, only_last, nblank)
 /*
  * Display n lines, scrolling backward.
  */
-	public void
-back(n, pos, force, only_last)
-	register int n;
-	POSITION pos;
-	int force;
-	int only_last;
+void
+back(int n, off_t pos, int force, int only_last)
 {
 	int nlines = 0;
 	int do_repaint;
 
 	squish_check();
 	do_repaint = (n > get_back_scroll() || (only_last && n > sc_height-1));
-	while (--n >= 0)
-	{
+	while (--n >= 0) {
 		/*
 		 * Get the previous line of input.
 		 */
 		pos = back_line(pos);
-		if (pos == NULL_POSITION)
-		{
+		if (pos == -1) {
 			/*
 			 * Beginning of file: stop here unless "force" is true.
 			 */
@@ -314,8 +268,7 @@ back(n, pos, force, only_last)
 		 */
 		add_back_pos(pos);
 		nlines++;
-		if (!do_repaint)
-		{
+		if (!do_repaint) {
 			home();
 			add_line();
 			put_line();
@@ -335,16 +288,13 @@ back(n, pos, force, only_last)
  * Display n more lines, forward.
  * Start just after the line currently displayed at the bottom of the screen.
  */
-	public void
-forward(n, force, only_last)
-	int n;
-	int force;
-	int only_last;
+void
+forward(int n, int force, int only_last)
 {
-	POSITION pos;
+	off_t pos;
 
-	if (get_quit_at_eof() && eof_displayed() && !(ch_getflags() & CH_HELPFILE))
-	{
+	if (get_quit_at_eof() && eof_displayed() &&
+	    !(ch_getflags() & CH_HELPFILE)) {
 		/*
 		 * If the -e flag is set and we're trying to go
 		 * forward from end-of-file, go on to the next file.
@@ -355,27 +305,22 @@ forward(n, force, only_last)
 	}
 
 	pos = position(BOTTOM_PLUS_ONE);
-	if (pos == NULL_POSITION && (!force || empty_lines(2, sc_height-1)))
-	{
-		if (ignore_eoi)
-		{
+	if (pos == -1 && (!force || empty_lines(2, sc_height-1))) {
+		if (ignore_eoi) {
 			/*
 			 * ignore_eoi is to support A_F_FOREVER.
 			 * Back up until there is a line at the bottom
 			 * of the screen.
 			 */
-			if (empty_screen())
+			if (empty_screen()) {
 				pos = ch_zero();
-			else
-			{
-				do
-				{
+			} else {
+				do {
 					back(1, position(TOP), 1, 0);
 					pos = position(BOTTOM_PLUS_ONE);
-				} while (pos == NULL_POSITION);
+				} while (pos == -1);
 			}
-		} else
-		{
+		} else {
 			eof_bell();
 			return;
 		}
@@ -387,19 +332,15 @@ forward(n, force, only_last)
  * Display n more lines, backward.
  * Start just before the line currently displayed at the top of the screen.
  */
-	public void
-backward(n, force, only_last)
-	int n;
-	int force;
-	int only_last;
+void
+backward(int n, int force, int only_last)
 {
-	POSITION pos;
+	off_t pos;
 
 	pos = position(TOP);
-	if (pos == NULL_POSITION && (!force || position(BOTTOM) == 0))
-	{
+	if (pos == -1 && (!force || position(BOTTOM) == 0)) {
 		eof_bell();
-		return;   
+		return;
 	}
 	back(n, pos, force, only_last);
 }
@@ -410,8 +351,8 @@ backward(n, force, only_last)
  * back_scroll, because the default case depends on sc_height and
  * top_scroll, as well as back_scroll.
  */
-	public int
-get_back_scroll()
+int
+get_back_scroll(void)
 {
 	if (no_back_scroll)
 		return (0);

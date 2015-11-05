@@ -6,53 +6,12 @@
  *
  * For more information, see the README file.
  */
+/*
+ * Modified for use with illumos.
+ * Copyright 2014 Garrett D'Amore <garrett@damore.org>
+ */
 
-#if HAVE_GNU_REGEX
-#define __USE_GNU 1
 #include <regex.h>
-#define DEFINE_PATTERN(name)  struct re_pattern_buffer *name
-#define CLEAR_PATTERN(name)   name = NULL
-#endif
-
-#if HAVE_POSIX_REGCOMP
-#include <regex.h>
-#ifdef REG_EXTENDED
 #define	REGCOMP_FLAG	REG_EXTENDED
-#else
-#define	REGCOMP_FLAG	0
-#endif
-#define DEFINE_PATTERN(name)  regex_t *name
-#define CLEAR_PATTERN(name)   name = NULL
-#endif
-
-#if HAVE_PCRE
-#include <pcre.h>
-#define DEFINE_PATTERN(name)  pcre *name
-#define CLEAR_PATTERN(name)   name = NULL
-#endif
-
-#if HAVE_RE_COMP
-char *re_comp();
-int re_exec();
-#define DEFINE_PATTERN(name)  int name
-#define CLEAR_PATTERN(name)   name = 0
-#endif
-
-#if HAVE_REGCMP
-char *regcmp();
-char *regex();
-extern char *__loc1;
-#define DEFINE_PATTERN(name)  char *name
-#define CLEAR_PATTERN(name)   name = NULL
-#endif
-
-#if HAVE_V8_REGCOMP
-#include "regexp.h"
-#define DEFINE_PATTERN(name)  struct regexp *name
-#define CLEAR_PATTERN(name)   name = NULL
-#endif
-
-#if NO_REGEX
-#define DEFINE_PATTERN(name)  
-#define CLEAR_PATTERN(name)   
-#endif
+#define	DEFINE_PATTERN(name)	regex_t *name
+#define	CLEAR_PATTERN(name)	name = NULL
