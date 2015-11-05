@@ -1,4 +1,4 @@
-/* $OpenBSD: key-bindings.c,v 1.53 2015/10/27 09:15:21 nicm Exp $ */
+/* $OpenBSD: key-bindings.c,v 1.54 2015/11/05 11:05:30 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -226,7 +226,7 @@ key_bindings_init(void)
 		"bind -n WheelDownStatus next-window",
 		"bind -n WheelUpStatus previous-window",
 		"bind -n MouseDrag1Pane if -Ft= '#{mouse_any_flag}' 'if -Ft= \"#{pane_in_mode}\" \"copy-mode -M\" \"send-keys -M\"' 'copy-mode -M'",
-		"bind -n MouseDown3Pane select-pane -mt=",
+		"bind -n MouseDown3Pane if-shell -Ft= '#{mouse_any_flag}' 'select-pane -t=; send-keys -M' 'select-pane -mt='",
 		"bind -n WheelUpPane if-shell -Ft= '#{mouse_any_flag}' 'send-keys -M' 'if -Ft= \"#{pane_in_mode}\" \"send-keys -M\" \"copy-mode -et=\"'",
 	};
 	u_int		 i;
