@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.138 2015/11/04 21:26:30 tedu Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.139 2015/11/05 21:30:45 florian Exp $	*/
 /*	$KAME: ping6.c,v 1.163 2002/10/25 02:19:06 itojun Exp $	*/
 
 /*
@@ -81,35 +81,30 @@
  */
 
 #include <sys/types.h>
-#include <sys/uio.h>
 #include <sys/socket.h>
-
-#include <net/if.h>
-#include <net/route.h>
+#include <sys/time.h>
+#include <sys/uio.h>
 
 #include <netinet/in.h>
 #include <netinet/ip6.h>
 #include <netinet/icmp6.h>
 #include <netinet/ip_ah.h>
 #include <arpa/inet.h>
-#include <arpa/nameser.h>
 #include <netdb.h>
 
 #include <ctype.h>
 #include <err.h>
 #include <errno.h>
-#include <fcntl.h>
-#include <time.h>
+#include <limits.h>
 #include <math.h>
+#include <poll.h>
 #include <signal.h>
+#include <siphash.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <unistd.h>
-#include <poll.h>
-
-#include <md5.h>
-#include <siphash.h>
 
 struct tv64 {
 	u_int64_t tv64_sec;
