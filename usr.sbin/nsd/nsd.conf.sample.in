@@ -17,12 +17,19 @@ server:
 
 	# uncomment to specify specific interfaces to bind (default are the
 	# wildcard interfaces 0.0.0.0 and ::0).
+	# For servers with multiple IP addresses, list them one by one,
+	# or the source address of replies could be wrong.
+	# Use ip-transparent to be able to list addresses that turn on later.
 	# ip-address: 1.2.3.4
 	# ip-address: 1.2.3.4@5678
 	# ip-address: 12fe::8ef0
 
 	# Allow binding to non local addresses. Default no.
 	# ip-transparent: no
+
+	# use the reuseport socket option for performance.
+	# The default is yes on linux, no for others.
+	# reuseport: no
 
 	# enable debug mode, does not fork daemon process into the background.
 	# debug-mode: no

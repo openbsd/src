@@ -325,11 +325,15 @@ notify_enable(struct notify_zone_t* zone, struct xfrd_soa* new_soa)
 }
 
 void
-xfrd_notify_start(struct notify_zone_t* zone)
+xfrd_notify_start(struct notify_zone_t* zone, struct xfrd_state* xfrd)
 {
+	xfrd_zone_t* xz;
 	if(zone->is_waiting || zone->notify_send_enable)
 		return;
-	notify_enable(zone, NULL);
+	xz = (xfrd_zone_t*)rbtree_search(xfrd->zones, zone->apex);
+	if(xz && xz->soa_nsd_acquired)
+		notify_enable(zone, &xz->soa_nsd);
+	else	notify_enable(zone, NULL);
 }
 
 void

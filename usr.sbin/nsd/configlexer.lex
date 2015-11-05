@@ -217,6 +217,7 @@ ipv4-edns-size{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_IPV4_EDNS_SIZE;}
 ipv6-edns-size{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_IPV6_EDNS_SIZE;}
 pidfile{COLON}		{ LEXOUT(("v(%s) ", yytext)); return VAR_PIDFILE;}
 port{COLON}		{ LEXOUT(("v(%s) ", yytext)); return VAR_PORT;}
+reuseport{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_REUSEPORT;}
 statistics{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_STATISTICS;}
 chroot{COLON}		{ LEXOUT(("v(%s) ", yytext)); return VAR_CHROOT;}
 username{COLON}		{ LEXOUT(("v(%s) ", yytext)); return VAR_USERNAME;}

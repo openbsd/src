@@ -108,6 +108,7 @@ struct nsd_socket
 {
 	struct addrinfo	*	addr;
 	int			s;
+	int			fam;
 };
 
 struct nsd_child
@@ -117,6 +118,9 @@ struct nsd_child
 
 	/* The child's process id.  */
 	pid_t pid;
+
+	/* child number in child array */
+	int child_num;
 
 	/*
 	 * Socket used by the parent process to send commands and
@@ -198,15 +202,17 @@ struct	nsd
 	unsigned char   *nsid;
 	uint8_t 		file_rotation_ok;
 
-	/* number of interfaces, ifs < MAX_INTERFACES */
+	/* number of interfaces */
 	size_t	ifs;
 	uint8_t grab_ip6_optional;
+	/* non0 if so_reuseport is in use, if so, tcp, udp array increased */
+	int reuseport;
 
-	/* TCP specific configuration */
-	struct nsd_socket tcp[MAX_INTERFACES];
+	/* TCP specific configuration (array size ifs) */
+	struct nsd_socket* tcp;
 
-	/* UDP specific configuration */
-	struct nsd_socket udp[MAX_INTERFACES];
+	/* UDP specific configuration (array size ifs) */
+	struct nsd_socket* udp;
 
 	edns_data_type edns_ipv4;
 #if defined(INET6)

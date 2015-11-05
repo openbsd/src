@@ -73,7 +73,7 @@ void xfrd_del_notify(struct xfrd_state* xfrd, const dname_type* dname);
 void xfrd_send_notify(rbtree_t* tree, const struct dname* apex,
 	struct xfrd_soa* new_soa);
 /* start notifications, if not started already (does not clobber SOA) */
-void xfrd_notify_start(struct notify_zone_t* zone);
+void xfrd_notify_start(struct notify_zone_t* zone, struct xfrd_state* xfrd);
 
 /* handle soa update notify for a master zone. newsoa can be NULL.
    Makes sure that the soa (serial) has changed. Or drops notify. */
