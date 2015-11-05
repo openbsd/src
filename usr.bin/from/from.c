@@ -1,4 +1,4 @@
-/*	$OpenBSD: from.c,v 1.23 2015/11/03 05:11:46 mmcc Exp $	*/
+/*	$OpenBSD: from.c,v 1.24 2015/11/05 18:42:41 mmcc Exp $	*/
 /*	$NetBSD: from.c,v 1.6 1995/09/01 01:39:10 jtc Exp $	*/
 
 /*
@@ -83,8 +83,10 @@ main(int argc, char *argv[])
 			exit(EXIT_SUCCESS);
 		err(1, "%s", file);
 	}
+
 	if (pledge("stdio", NULL) == -1)
 		err(1, "pledge");
+
 	for (newline = 1; (linelen = getline(&line, &linesize, fp)) != -1;) {
 		if (*line == '\n') {
 			newline = 1;
