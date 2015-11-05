@@ -1,4 +1,4 @@
-/*	$OpenBSD: expand.h,v 1.10 2015/11/01 16:03:11 mmcc Exp $	*/
+/*	$OpenBSD: expand.h,v 1.11 2015/11/05 18:39:34 mmcc Exp $	*/
 
 /*
  * Expanding strings
@@ -58,8 +58,7 @@ typedef char * XStringP;
 #define	Xfree(xs, xp)	afree((xs).beg, (xs).areap)
 
 /* close, return string */
-#define	Xclose(xs, xp)	(char*) aresize((void*)(xs).beg, \
-					(size_t)((xp) - (xs).beg), (xs).areap)
+#define	Xclose(xs, xp)	aresize((xs).beg, ((xp) - (xs).beg), (xs).areap)
 /* begin of string */
 #define	Xstring(xs, xp)	((xs).beg)
 
