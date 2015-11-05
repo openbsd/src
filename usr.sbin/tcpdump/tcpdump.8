@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tcpdump.8,v 1.87 2015/09/25 14:56:33 schwarze Exp $
+.\"	$OpenBSD: tcpdump.8,v 1.88 2015/11/05 09:56:21 jmc Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1989, 1990, 1991, 1992, 1994, 1995, 1996
 .\"	The Regents of the University of California.  All rights reserved.
@@ -19,7 +19,7 @@
 .\" WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
 .\" MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 .\"
-.Dd $Mdocdate: September 25 2015 $
+.Dd $Mdocdate: November 5 2015 $
 .Dt TCPDUMP 8
 .Os
 .Sh NAME
@@ -986,7 +986,7 @@ To print all packets arriving at or departing from sundown:
 .Dl # tcpdump host sundown
 .Pp
 To print traffic between helios and either hot or ace
-(the expression is quoted to prevent the shell from mis-interpreting
+(the expression is quoted to prevent the shell from misinterpreting
 the parentheses):
 .Pp
 .Dl # tcpdump 'host helios and (hot or ace)'
