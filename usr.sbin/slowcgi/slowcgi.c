@@ -1,4 +1,4 @@
-/*	$OpenBSD: slowcgi.c,v 1.46 2015/11/05 19:14:56 florian Exp $ */
+/*	$OpenBSD: slowcgi.c,v 1.47 2015/11/05 19:15:22 florian Exp $ */
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
  * Copyright (c) 2013 Florian Obser <florian@openbsd.org>
@@ -335,6 +335,9 @@ main(int argc, char *argv[])
 	    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||
 	    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
 		lerr(1, "unable to revoke privs");
+
+	if (pledge("stdio rpath unix proc exec", NULL) == -1)
+		lerr(1, "pledge");
 
 	SLIST_INIT(&slowcgi_proc.requests);
 	event_init();
@@ -883,6 +886,8 @@ exec_cgi(struct request *c)
 		return;
 	case 0:
 		/* Child process */
+		if (pledge("stdio rpath exec", NULL) == -1)
+			lerr(1, "pledge");
 		close(s_in[0]);
 		close(s_out[0]);
 		close(s_err[0]);
