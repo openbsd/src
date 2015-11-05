@@ -1,4 +1,4 @@
-/*	$OpenBSD: canfield.c,v 1.14 2014/11/03 19:18:16 tedu Exp $	*/
+/*	$OpenBSD: canfield.c,v 1.15 2015/11/05 23:16:44 tedu Exp $	*/
 /*	$NetBSD: canfield.c,v 1.7 1995/05/13 07:28:35 jtc Exp $	*/
 
 /*
@@ -1374,9 +1374,6 @@ getcmd(int row, int col, const char *cp)
 void
 suspend(void)
 {
-#ifndef SIGTSTP
-	char *sh;
-#endif
 
 	updatebettinginfo();
 	move(21, 0);
@@ -1738,15 +1735,7 @@ int
 main(int argc, char *argv[])
 {
 	gid_t gid;
-#ifdef MAXLOAD
-	double vec[3];
 
-	loadav(vec);
-	if (vec[2] >= MAXLOAD) {
-		puts("The system load is too high.  Try again later.");
-		exit(0);
-	}
-#endif
 	signal(SIGINT, askquit);
 	signal(SIGHUP, cleanup);
 	signal(SIGTERM, cleanup);
