@@ -1,4 +1,4 @@
-/*	$OpenBSD: mach.c,v 1.15 2015/10/24 18:51:40 mmcc Exp $	*/
+/*	$OpenBSD: mach.c,v 1.16 2015/11/05 08:40:34 guenther Exp $	*/
 /*	$NetBSD: mach.c,v 1.5 1995/04/28 22:28:48 mycroft Exp $	*/
 
 /*-
@@ -415,6 +415,39 @@ showword(int n)
 }
 
 /*
+ * Walk the path of a word, refreshing the letters,
+ * optionally pausing after each
+ */
+static void
+doword(int pause, int r, int c)
+{
+	extern char *board;
+	extern int wordpath[];
+	int i, row, col;
+	unsigned char ch;
+
+	for (i = 0; wordpath[i] != -1; i++) {
+		row = BOARD_LINE + (wordpath[i] / 4) * 2 + 1;
+		col = BOARD_COL + (wordpath[i] % 4) * 4 + 2;
+		move(row, col);
+		ch = board[wordpath[i]];
+		if (HISET(ch))
+			attron(A_BOLD);
+		if (SEVENBIT(ch) == 'q')
+			printw("Qu");
+		else
+			printw("%c", toupper(SEVENBIT(ch)));
+		if (HISET(ch))
+			attroff(A_BOLD);
+		if (pause) {
+			move(r, c);
+			refresh();
+			delay(5);
+		}
+	}
+}
+
+/*
  * Get a word from the user and check if it is in either of the two
  * word lists
  * If it's found, show the word on the board for a short time and then
@@ -427,7 +460,6 @@ findword(void)
 {
 	int c, col, found, i, r, row;
 	char buf[MAXWORDLEN + 1];
-	extern char *board;
 	extern int usedbits, wordpath[];
 	extern char **mword, **pword;
 	extern int nmwords, npwords;
@@ -465,30 +497,10 @@ findword(void)
 	}
 
 	standout();
-	for (i = 0; wordpath[i] != -1; i++) {
-		row = BOARD_LINE + (wordpath[i] / 4) * 2 + 1;
-		col = BOARD_COL + (wordpath[i] % 4) * 4 + 2;
-		move(row, col);
-		if (board[wordpath[i]] == 'q')
-			printw("Qu");
-		else
-			printw("%c", toupper(board[wordpath[i]]));
-		move(r, c);
-		refresh();
-		delay(5);
-	}
-
+	doword(1, r, c);
 	standend();
+	doword(0, r, c);
 
-	for (i = 0; wordpath[i] != -1; i++) {
-		row = BOARD_LINE + (wordpath[i] / 4) * 2 + 1;
-		col = BOARD_COL + (wordpath[i] % 4) * 4 + 2;
-		move(row, col);
-		if (board[wordpath[i]] == 'q')
-			printw("Qu");
-		else
-			printw("%c", toupper(board[wordpath[i]]));
-	}
 	move(r, c);
 	clrtoeol();
 	refresh();
