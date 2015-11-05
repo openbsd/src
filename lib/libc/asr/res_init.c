@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_init.c,v 1.7 2015/11/05 22:44:37 bluhm Exp $	*/
+/*	$OpenBSD: res_init.c,v 1.8 2015/11/05 23:59:47 bluhm Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -57,7 +57,6 @@ res_init(void)
 		if (_res.lookups[0] == '\0')
 			strlcpy(_res.lookups, ac->ac_db, sizeof(_res.lookups));
 
-		_res.nscount = ac->ac_nscount;
 		for (i = 0, j = 0; i < ac->ac_nscount && j < MAXNS; i++) {
 			if (ac->ac_ns[i]->sa_family != AF_INET ||
 			    ac->ac_ns[i]->sa_len > sizeof(_res.nsaddr_list[j]))
@@ -66,6 +65,7 @@ res_init(void)
 			    ac->ac_ns[i]->sa_len);
 			j++;
 		}
+		_res.nscount = j;
 		_res.options |= RES_INIT;
 	}
 	_THREAD_PRIVATE_MUTEX_UNLOCK(init);
