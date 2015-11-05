@@ -1,4 +1,4 @@
-/* $OpenBSD: aes_core.c,v 1.12 2015/02/10 09:46:30 miod Exp $ */
+/* $OpenBSD: aes_core.c,v 1.13 2015/11/05 21:59:13 miod Exp $ */
 /**
  * rijndael-alg-fst.c
  *
@@ -1132,28 +1132,28 @@ AES_decrypt(const unsigned char *in, unsigned char *out, const AES_KEY *key)
 	 * map cipher state to byte array block:
 	 */
 	s0 =
-	    (Td4[(t0 >> 24)] << 24) ^
+	    (((uint32_t)Td4[(t0 >> 24)]) << 24) ^
 	    (Td4[(t3 >> 16) & 0xff] << 16) ^
 	    (Td4[(t2 >> 8) & 0xff] <<  8) ^
 	    (Td4[(t1) & 0xff]) ^
 	    rk[0];
 	PUTU32(out, s0);
 	s1 =
-	    (Td4[(t1 >> 24)] << 24) ^
+	    (((uint32_t)Td4[(t1 >> 24)]) << 24) ^
 	    (Td4[(t0 >> 16) & 0xff] << 16) ^
 	    (Td4[(t3 >> 8) & 0xff] <<  8) ^
 	    (Td4[(t2) & 0xff]) ^
 	    rk[1];
 	PUTU32(out + 4, s1);
 	s2 =
-	    (Td4[(t2 >> 24)] << 24) ^
+	    (((uint32_t)Td4[(t2 >> 24)]) << 24) ^
 	    (Td4[(t1 >> 16) & 0xff] << 16) ^
 	    (Td4[(t0 >> 8) & 0xff] <<  8) ^
 	    (Td4[(t3) & 0xff]) ^
 	    rk[2];
 	PUTU32(out + 8, s2);
 	s3 =
-	    (Td4[(t3 >> 24)] << 24) ^
+	    (((uint32_t)Td4[(t3 >> 24)]) << 24) ^
 	    (Td4[(t2 >> 16) & 0xff] << 16) ^
 	    (Td4[(t1 >> 8) & 0xff] <<  8) ^
 	    (Td4[(t0) & 0xff]) ^
