@@ -1,4 +1,4 @@
-/*	$OpenBSD: vi.c,v 1.37 2015/11/05 01:24:50 mmcc Exp $	*/
+/*	$OpenBSD: vi.c,v 1.38 2015/11/05 18:41:02 mmcc Exp $	*/
 
 /*
  *	vi command editing
@@ -18,7 +18,7 @@
 #include "edit.h"
 
 #define CMDLEN		2048
-#define Ctrl(c)		(c&0x1f)
+#define CTRL(c)		(c & 0x1f)
 
 struct edstate {
 	int	winleft;
@@ -259,7 +259,7 @@ vi_hook(int ch)
 
 	case VNORMAL:
 		if (insert != 0) {
-			if (ch == Ctrl('v')) {
+			if (ch == CTRL('v')) {
 				state = VLIT;
 				ch = '^';
 			}
@@ -373,7 +373,7 @@ vi_hook(int ch)
 		break;
 
 	case VXCH:
-		if (ch == Ctrl('['))
+		if (ch == CTRL('['))
 			state = VNORMAL;
 		else {
 			curcmd[cmdlen++] = ch;
@@ -382,7 +382,7 @@ vi_hook(int ch)
 		break;
 
 	case VSEARCH:
-		if (ch == '\r' || ch == '\n' /*|| ch == Ctrl('[')*/ ) {
+		if (ch == '\r' || ch == '\n' /*|| ch == CTRL('[')*/ ) {
 			restore_cbuf();
 			/* Repeat last search? */
 			if (srchlen == 0) {
@@ -397,7 +397,7 @@ vi_hook(int ch)
 				(void) strlcpy(srchpat, locpat, sizeof srchpat);
 			}
 			state = VCMD;
-		} else if (ch == edchars.erase || ch == Ctrl('h')) {
+		} else if (ch == edchars.erase || ch == CTRL('h')) {
 			if (srchlen != 0) {
 				srchlen--;
 				es->linelen -= char_len((unsigned char)locpat[srchlen]);
@@ -549,7 +549,7 @@ nextstate(int ch)
 		return VXCH;
 	else if (ch == '.')
 		return VREDO;
-	else if (ch == Ctrl('v'))
+	else if (ch == CTRL('v'))
 		return VVERSION;
 	else if (is_cmd(ch))
 		return VCMD;
@@ -562,7 +562,7 @@ vi_insert(int ch)
 {
 	int	tcursor;
 
-	if (ch == edchars.erase || ch == Ctrl('h')) {
+	if (ch == edchars.erase || ch == CTRL('h')) {
 		if (insert == REPLACE) {
 			if (es->cursor == undo->cursor) {
 				vi_error();
@@ -620,7 +620,7 @@ vi_insert(int ch)
 	 * buffer (if user inserts & deletes char, ibuf gets trashed and
 	 * we don't want to use it)
 	 */
-	if (first_insert && ch != Ctrl('['))
+	if (first_insert && ch != CTRL('['))
 		saved_inslen = 0;
 	switch (ch) {
 	case '\0':
@@ -630,7 +630,7 @@ vi_insert(int ch)
 	case '\n':
 		return 1;
 
-	case Ctrl('['):
+	case CTRL('['):
 		expanded = NONE;
 		if (first_insert) {
 			first_insert = 0;
@@ -648,19 +648,19 @@ vi_insert(int ch)
 			return redo_insert(lastac - 1);
 
 	/* { Begin nonstandard vi commands */
-	case Ctrl('x'):
+	case CTRL('x'):
 		expand_word(0);
 		break;
 
-	case Ctrl('f'):
+	case CTRL('f'):
 		complete_word(0, 0);
 		break;
 
-	case Ctrl('e'):
+	case CTRL('e'):
 		print_expansions(es, 0);
 		break;
 
-	case Ctrl('i'):
+	case CTRL('i'):
 		if (Flag(FVITABCOMPLETE)) {
 			complete_word(0, 0);
 			break;
@@ -715,8 +715,8 @@ vi_cmd(int argcnt, const char *cmd)
 		}
 		switch (*cmd) {
 
-		case Ctrl('l'):
-		case Ctrl('r'):
+		case CTRL('l'):
+		case CTRL('r'):
 			redraw_line(1);
 			break;
 
@@ -888,7 +888,7 @@ vi_cmd(int argcnt, const char *cmd)
 
 		case 'j':
 		case '+':
-		case Ctrl('n'):
+		case CTRL('n'):
 			if (grabhist(modified, hnum + argcnt) < 0)
 				return -1;
 			else {
@@ -899,7 +899,7 @@ vi_cmd(int argcnt, const char *cmd)
 
 		case 'k':
 		case '-':
-		case Ctrl('p'):
+		case CTRL('p'):
 			if (grabhist(modified, hnum - argcnt) < 0)
 				return -1;
 			else {
@@ -1115,28 +1115,28 @@ vi_cmd(int argcnt, const char *cmd)
 		    }
 
 		case '=':			/* at&t ksh */
-		case Ctrl('e'):			/* Nonstandard vi/ksh */
+		case CTRL('e'):			/* Nonstandard vi/ksh */
 			print_expansions(es, 1);
 			break;
 
 
-		case Ctrl('i'):			/* Nonstandard vi/ksh */
+		case CTRL('i'):			/* Nonstandard vi/ksh */
 			if (!Flag(FVITABCOMPLETE))
 				return -1;
 			complete_word(1, argcnt);
 			break;
 
-		case Ctrl('['):			/* some annoying at&t ksh's */
+		case CTRL('['):			/* some annoying at&t ksh's */
 			if (!Flag(FVIESCCOMPLETE))
 				return -1;
 		case '\\':			/* at&t ksh */
-		case Ctrl('f'):			/* Nonstandard vi/ksh */
+		case CTRL('f'):			/* Nonstandard vi/ksh */
 			complete_word(1, argcnt);
 			break;
 
 
 		case '*':			/* at&t ksh */
-		case Ctrl('x'):			/* Nonstandard vi/ksh */
+		case CTRL('x'):			/* Nonstandard vi/ksh */
 			expand_word(1);
 			break;
 		}
@@ -1205,7 +1205,7 @@ domove(int argcnt, const char *cmd, int sub)
 		break;
 
 	case 'h':
-	case Ctrl('h'):
+	case CTRL('h'):
 		if (!sub && es->cursor == 0)
 			return -1;
 		ncursor = es->cursor - argcnt;
