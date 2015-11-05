@@ -1,0 +1,16 @@
+Regression tests for the ARP implementation in the kernel.
+
+The test suite runs on the machine LOCAL, the kernel under test is
+running on REMOTE.  On LOCAL Scapy is generating ARP packes and
+sends them to REMOTE.  The replies to LOCAL are analyzed.  The
+kernel log files are fetched from REMOTE via SCP and grepped for
+messages.  The ARP table of REMOTE is inspected via SSH login.
+
+Interfaces and adresses on REMOTE and LOCAL must be preconfigured.
+The test manually adds entries into the REMOTE ARP table and tries
+to overwrite them with fake ARP packets.  Some addresses are on the
+REMOTE interface facing LOCAL other are on a second interface.  The
+ARP input code has different cases for that.  So all possible log
+messages from ARP input can be triggered by a subtest.
+
+Additionally check that REMOTE can answer a Proxy ARP Requests.
