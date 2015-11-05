@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ypxfr.8,v 1.20 2013/07/16 11:13:34 schwarze Exp $
+.\"	$OpenBSD: ypxfr.8,v 1.21 2015/11/05 10:00:00 jmc Exp $
 .\"
 .\" Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
 .\" All rights reserved.
@@ -24,9 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: ypxfr.8,v 1.20 2013/07/16 11:13:34 schwarze Exp $
-.\"
-.Dd $Mdocdate: July 16 2013 $
+.Dd $Mdocdate: November 5 2015 $
 .Dt YPXFR 8
 .Os
 .Sh NAME
@@ -61,7 +59,7 @@ This option is only used by ypserv.
 This is to open communication with a yppush on another host.
 .It Fl c
 Don't send a "Clear current map" to local ypserv process.
-Useful if ypserv isn't running localy to avoid timeout message.
+Useful if ypserv isn't running locally to avoid timeout message.
 .It Fl d Ar domain
 Don't use default domain, use the specified domain.
 .It Fl f
