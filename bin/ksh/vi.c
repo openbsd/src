@@ -1,4 +1,4 @@
-/*	$OpenBSD: vi.c,v 1.36 2015/10/19 14:42:16 mmcc Exp $	*/
+/*	$OpenBSD: vi.c,v 1.37 2015/11/05 01:24:50 mmcc Exp $	*/
 
 /*
  *	vi command editing
@@ -19,7 +19,6 @@
 
 #define CMDLEN		2048
 #define Ctrl(c)		(c&0x1f)
-#define	is_wordch(c)	(letnum(c))
 
 struct edstate {
 	int	winleft;
@@ -1522,12 +1521,12 @@ forwword(int argcnt)
 
 	ncursor = es->cursor;
 	while (ncursor < es->linelen && argcnt--) {
-		if (is_wordch(es->cbuf[ncursor]))
-			while (is_wordch(es->cbuf[ncursor]) &&
+		if (letnum(es->cbuf[ncursor]))
+			while (letnum(es->cbuf[ncursor]) &&
 			    ncursor < es->linelen)
 				ncursor++;
 		else if (!isspace((unsigned char)es->cbuf[ncursor]))
-			while (!is_wordch(es->cbuf[ncursor]) &&
+			while (!letnum(es->cbuf[ncursor]) &&
 			    !isspace((unsigned char)es->cbuf[ncursor]) &&
 			    ncursor < es->linelen)
 				ncursor++;
@@ -1548,13 +1547,13 @@ backword(int argcnt)
 		while (--ncursor > 0 && isspace((unsigned char)es->cbuf[ncursor]))
 			;
 		if (ncursor > 0) {
-			if (is_wordch(es->cbuf[ncursor]))
+			if (letnum(es->cbuf[ncursor]))
 				while (--ncursor >= 0 &&
-				    is_wordch(es->cbuf[ncursor]))
+				    letnum(es->cbuf[ncursor]))
 					;
 			else
 				while (--ncursor >= 0 &&
-				    !is_wordch(es->cbuf[ncursor]) &&
+				    !letnum(es->cbuf[ncursor]) &&
 				    !isspace((unsigned char)es->cbuf[ncursor]))
 					;
 			ncursor++;
@@ -1574,13 +1573,13 @@ endword(int argcnt)
 		    isspace((unsigned char)es->cbuf[ncursor]))
 			;
 		if (ncursor < es->linelen - 1) {
-			if (is_wordch(es->cbuf[ncursor]))
+			if (letnum(es->cbuf[ncursor]))
 				while (++ncursor < es->linelen &&
-				    is_wordch(es->cbuf[ncursor]))
+				    letnum(es->cbuf[ncursor]))
 					;
 			else
 				while (++ncursor < es->linelen &&
-				    !is_wordch(es->cbuf[ncursor]) &&
+				    !letnum(es->cbuf[ncursor]) &&
 				    !isspace((unsigned char)es->cbuf[ncursor]))
 					;
 			ncursor--;
