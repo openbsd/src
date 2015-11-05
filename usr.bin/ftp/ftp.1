@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ftp.1,v 1.100 2015/09/25 20:32:39 schwarze Exp $
+.\"	$OpenBSD: ftp.1,v 1.101 2015/11/05 16:25:57 schwarze Exp $
 .\"	$NetBSD: ftp.1,v 1.22 1997/08/18 10:20:22 lukem Exp $
 .\"
 .\" Copyright (c) 1985, 1989, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)ftp.1	8.3 (Berkeley) 10/9/94
 .\"
-.Dd $Mdocdate: September 25 2015 $
+.Dd $Mdocdate: November 5 2015 $
 .Dt FTP 1
 .Os
 .Sh NAME
@@ -1461,13 +1461,13 @@ Files specified as arguments to
 commands are processed according to the following rules.
 .Bl -enum
 .It
-If the file name
+If
 .Sq -
-is specified, the standard input (for reading)
+is specified as a local file name, the standard input (for reading)
 or standard output (for writing)
 is used.
 .It
-If the first character of the file name is
+If the first character of a local file name is
 .Sq \&| ,
 the
 remainder of the argument is interpreted as a shell command.
@@ -1481,7 +1481,7 @@ must be quoted; e.g.,
 .Qq ls -lt .
 A particularly
 useful example of this mechanism is:
-.Qq dir |more .
+.Qq ls \&. |more .
 .It
 Failing the above checks, if
 .Dq globbing
