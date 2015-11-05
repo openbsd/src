@@ -133,7 +133,7 @@ pos_init(void)
 int
 onscreen(off_t pos)
 {
-	register int i;
+	int i;
 
 	if (pos < table[0])
 		return (-1);

@@ -187,8 +187,8 @@ iprint_linenum(LINENUM num)
 static int
 less_printf(const char *fmt, PARG *parg)
 {
-	register char *s;
-	register int col;
+	char *s;
+	int col;
 
 	col = 0;
 	while (*fmt != '\0') {
@@ -310,7 +310,7 @@ ierror(const char *fmt, PARG *parg)
 int
 query(const char *fmt, PARG *parg)
 {
-	register int c;
+	int c;
 	int col = 0;
 
 	if (any_display && is_tty)

@@ -47,7 +47,7 @@ forw_line(off_t curr_pos)
 {
 	off_t base_pos;
 	off_t new_pos;
-	register int c;
+	int c;
 	int blankline;
 	int endline;
 	int backchars;

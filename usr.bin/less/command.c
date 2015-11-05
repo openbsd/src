@@ -796,7 +796,7 @@ ungetcc(int c)
 void
 ungetsc(char *s)
 {
-	register char *p;
+	char *p;
 
 	for (p = s + strlen(s) - 1;  p >= s;  p--)
 		ungetcc(*p);

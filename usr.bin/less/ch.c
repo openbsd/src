@@ -409,9 +409,9 @@ sync_logfile(void)
 static int
 buffered(BLOCKNUM block)
 {
-	register struct buf *bp;
-	register struct bufnode *bn;
-	register int h;
+	struct buf *bp;
+	struct bufnode *bn;
+	int h;
 
 	h = BUFHASH(block);
 	FOR_BUFS_IN_CHAIN(h, bn) {

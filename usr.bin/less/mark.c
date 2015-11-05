@@ -70,7 +70,7 @@ getumark(int c)
 static struct mark *
 getmark(int c)
 {
-	register struct mark *m;
+	struct mark *m;
 	static struct mark sm;
 
 	switch (c) {
@@ -141,7 +141,7 @@ badmark(int c)
 void
 setmark(int c)
 {
-	register struct mark *m;
+	struct mark *m;
 	struct scrpos scrpos;
 
 	m = getumark(c);
