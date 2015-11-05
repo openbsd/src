@@ -1,4 +1,4 @@
-/*	$OpenBSD: hidms.c,v 1.7 2014/05/12 09:50:44 mpi Exp $ */
+/*	$OpenBSD: hidms.c,v 1.8 2015/11/05 15:41:15 jcs Exp $ */
 /*	$NetBSD: ums.c,v 1.60 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -147,7 +147,10 @@ hidms_setup(struct device *self, struct hidms *ms, uint32_t quirks,
 		/*
 		 * We might have both a wheel and Z direction; in this case,
 		 * report the Z direction on the W axis.
-		*/
+		 *
+		 * Otherwise, check for a W direction as an AC Pan input used
+		 * on some newer mice.
+		 */
 		if (hid_locate(desc, dlen,
 		    HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_Z), id,
 		    hid_input, &ms->sc_loc_w, &flags)) {
@@ -159,6 +162,10 @@ hidms_setup(struct device *self, struct hidms *ms, uint32_t quirks,
 			}
 			else
 				ms->sc_flags |= HIDMS_W;
+		} else if (hid_locate(desc, dlen,
+		    HID_USAGE2(HUP_CONSUMER, HUC_AC_PAN), id, hid_input,
+		    &ms->sc_loc_w, &flags)) {
+			ms->sc_flags |= HIDMS_W;
 		}
 	} else if (hid_locate(desc, dlen,
 	    HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_Z), id,
