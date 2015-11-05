@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Dependencies.pm,v 1.156 2015/08/14 10:12:02 espie Exp $
+# $OpenBSD: Dependencies.pm,v 1.157 2015/11/05 13:26:39 espie Exp $
 #
 # Copyright (c) 2005-2010 Marc Espie <espie@openbsd.org>
 #
@@ -380,7 +380,7 @@ sub solve_depends
 	$self->{all_dependencies} = {};
 	$self->{to_register} = {};
 	$self->{deplist} = {};
-	delete $self->{installed};
+	delete $self->{installed_list};
 
 	for my $package ($self->{set}->newer, $self->{set}->kept) {
 		$package->{before} = [];
@@ -388,8 +388,8 @@ sub solve_depends
 			my $v = $self->solve_dependency($state, $dep, $package);
 			# XXX
 			next if !defined $v;
-			$self->{all_dependencies}->{$v} = $dep;
-			$self->{to_register}->{$package}->{$v} = $dep;
+			$self->{all_dependencies}{$v} = $dep;
+			$self->{to_register}{$package}{$v} = $dep;
 		}
 	}
 
@@ -469,7 +469,8 @@ sub find_dep_in_self
 {
 	my ($self, $state, $dep) = @_;
 
-	return $self->find_candidate($dep, $self->{set}->newer_names);
+	return $self->find_candidate($dep, $self->{set}->newer_names,
+	    $self->{set}->kept_names);
 }
 
 use OpenBSD::PackageInfo;
@@ -693,7 +694,7 @@ sub check_depends
 	for my $dep ($self->dependencies) {
 		push(@{$self->{bad}}, $dep)
 		    unless is_installed($dep) or
-		    	defined $self->{set}->{newer}->{$dep};
+		    	defined $self->{set}{newer}{$dep};
 	}
 	return $self->{bad};
 }
@@ -705,7 +706,7 @@ sub register_dependencies
 	require OpenBSD::RequiredBy;
 	for my $pkg ($self->{set}->newer) {
 		my $pkgname = $pkg->pkgname;
-		my @l = keys %{$self->{to_register}->{$pkg}};
+		my @l = keys %{$self->{to_register}{$pkg}};
 
 		OpenBSD::Requiring->new($pkgname)->add(@l);
 		for my $dep (@l) {
