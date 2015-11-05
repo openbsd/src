@@ -1,4 +1,4 @@
-/*	$OpenBSD: slowcgi.c,v 1.45 2015/09/25 20:15:28 millert Exp $ */
+/*	$OpenBSD: slowcgi.c,v 1.46 2015/11/05 19:14:56 florian Exp $ */
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
  * Copyright (c) 2013 Florian Obser <florian@openbsd.org>
@@ -160,7 +160,7 @@ struct fcgi_end_request_body {
 }__packed;
 
 __dead void	usage(void);
-void		slowcgi_listen(char *, struct passwd *);
+int		slowcgi_listen(char *, struct passwd *);
 void		slowcgi_paused(int, short, void *);
 int		accept_reserve(int, struct sockaddr *, socklen_t *, int,
 		    volatile int *);
@@ -254,6 +254,7 @@ int
 main(int argc, char *argv[])
 {
 	extern char *__progname;
+	struct listener	*l = NULL;
 	struct passwd	*pw;
 	struct stat	 sb;
 	int		 c, fd;
@@ -308,13 +309,11 @@ main(int argc, char *argv[])
 		logger = &syslogger;
 	}
 
-	event_init();
-
 	pw = getpwnam(SLOWCGI_USER);
 	if (pw == NULL)
 		lerrx(1, "no %s user", SLOWCGI_USER);
 
-	slowcgi_listen(fcgi_socket, pw);
+	fd = slowcgi_listen(fcgi_socket, pw);
 
 	lwarnx("slowcgi_user: %s", slowcgi_user);
 	pw = getpwnam(slowcgi_user);
@@ -338,6 +337,15 @@ main(int argc, char *argv[])
 		lerr(1, "unable to revoke privs");
 
 	SLIST_INIT(&slowcgi_proc.requests);
+	event_init();
+
+	l = calloc(1, sizeof(*l));
+	if (l == NULL)
+		lerr(1, "listener ev alloc");
+
+	event_set(&l->ev, fd, EV_READ | EV_PERSIST, slowcgi_accept, l);
+	event_add(&l->ev, NULL);
+	evtimer_set(&l->pause, slowcgi_paused, l);
 
 	signal_set(&slowcgi_proc.ev_sigchld, SIGCHLD, slowcgi_sig_handler,
 	    &slowcgi_proc);
@@ -350,10 +358,10 @@ main(int argc, char *argv[])
 	event_dispatch();
 	return (0);
 }
-void
+
+int
 slowcgi_listen(char *path, struct passwd *pw)
 {
-	struct listener		 *l = NULL;
 	struct sockaddr_un	 sun;
 	mode_t			 old_umask;
 	int			 fd;
@@ -386,15 +394,8 @@ slowcgi_listen(char *path, struct passwd *pw)
 	if (listen(fd, 5) == -1)
 		lerr(1, "listen");
 
-	l = calloc(1, sizeof(*l));
-	if (l == NULL)
-		lerr(1, "listener ev alloc");
-
-	event_set(&l->ev, fd, EV_READ | EV_PERSIST, slowcgi_accept, l);
-	event_add(&l->ev, NULL);
-	evtimer_set(&l->pause, slowcgi_paused, l);
-
 	ldebug("socket: %s", path);
+	return fd;
 }
 
 void
