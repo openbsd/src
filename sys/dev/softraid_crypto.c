@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_crypto.c,v 1.122 2015/07/27 04:11:58 halex Exp $ */
+/* $OpenBSD: softraid_crypto.c,v 1.123 2015/11/05 20:03:04 naddy Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Hans-Joerg Hoexer <hshoexer@openbsd.org>
@@ -295,6 +295,7 @@ sr_crypto_prepare(struct sr_workunit *wu, int encrypt)
 	crwu->cr_crp->crp_opaque = crwu;
 	crwu->cr_crp->crp_ilen = xs->datalen;
 	crwu->cr_crp->crp_alloctype = M_DEVBUF;
+	crwu->cr_crp->crp_flags = CRYPTO_F_IOV;
 	crwu->cr_crp->crp_buf = &crwu->cr_uio;
 	for (i = 0, crd = crwu->cr_crp->crp_desc; crd;
 	    i++, blkno++, crd = crd->crd_next) {
