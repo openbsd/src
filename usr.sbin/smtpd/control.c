@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.107 2015/10/29 10:25:36 sunil Exp $	*/
+/*	$OpenBSD: control.c,v 1.108 2015/11/05 09:14:31 sunil Exp $	*/
 
 /*
  * Copyright (c) 2012 Gilles Chehade <gilles@poolp.org>
@@ -118,6 +118,7 @@ control_imsg(struct mproc *p, struct imsg *imsg)
 		case IMSG_CTL_LIST_ENVELOPES:
 		case IMSG_CTL_DISCOVER_EVPID:
 		case IMSG_CTL_DISCOVER_MSGID:
+		case IMSG_CTL_UNCORRUPT_MSGID:
 			c = tree_get(&ctl_conns, imsg->hdr.peerid);
 			if (c == NULL)
 				return;
@@ -811,6 +812,7 @@ control_dispatch_ext(struct mproc *p, struct imsg *imsg)
 		return;
 
 	case IMSG_CTL_DISCOVER_MSGID:
+	case IMSG_CTL_UNCORRUPT_MSGID:
 		if (c->euid)
 			goto badcred;
 

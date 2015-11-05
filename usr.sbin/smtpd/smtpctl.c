@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpctl.c,v 1.135 2015/10/29 10:25:36 sunil Exp $	*/
+/*	$OpenBSD: smtpctl.c,v 1.136 2015/11/05 09:14:31 sunil Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -942,6 +942,31 @@ do_discover(int argc, struct parameter *argv)
 	return (0);
 }
 
+static int
+do_uncorrupt(int argc, struct parameter *argv)
+{
+	uint32_t msgid;
+	int	 ret;
+
+	if (ibuf == NULL && !srv_connect())
+		errx(1, "smtpd doesn't seem to be running");
+
+	msgid = argv[0].u.u_msgid;
+	srv_send(IMSG_CTL_UNCORRUPT_MSGID, &msgid, sizeof msgid);
+	srv_recv(IMSG_CTL_UNCORRUPT_MSGID);
+
+	if (rlen == 0) {
+		srv_end();
+		return (0);
+	} else {
+		srv_read(&ret, sizeof ret);
+		srv_end();
+	}
+
+	printf("command %s\n", ret ? "succeeded" : "failed");
+	return (0);
+}
+
 int
 main(int argc, char **argv)
 {
@@ -1016,6 +1041,7 @@ main(int argc, char **argv)
 	cmd_install("show status",		do_show_status);
 	cmd_install("stop",			do_stop);
 	cmd_install("trace <str>",		do_trace);
+	cmd_install("uncorrupt <msgid>",	do_uncorrupt);
 	cmd_install("unprofile <str>",		do_unprofile);
 	cmd_install("untrace <str>",		do_untrace);
 	cmd_install("update table <str>",	do_update_table);
