@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-tcp.c,v 1.33 2015/08/20 22:39:29 deraadt Exp $	*/
+/*	$OpenBSD: print-tcp.c,v 1.34 2015/11/05 11:57:31 jca Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -221,7 +221,7 @@ tcp_print(register const u_char *bp, register u_int length,
 
 	ch = '\0';
 	if (length < sizeof(*tp)) {
-		(void)printf("truncated-tcp %d", length);
+		(void)printf("truncated-tcp %u", length);
 		return;
 	}
 
@@ -476,15 +476,14 @@ tcp_print(register const u_char *bp, register u_int length,
 
 	length -= hlen;
 	if (vflag > 1 || length > 0 || flags & (TH_SYN | TH_FIN | TH_RST))
-		(void)printf(" %lu:%lu(%d)", (long) seq, (long) (seq + length),
-		    length);
+		(void)printf(" %u:%u(%u)", seq, seq + length, length);
 	if (flags & TH_ACK)
 		(void)printf(" ack %u", ack);
 
-	(void)printf(" win %d", win);
+	(void)printf(" win %u", win);
 
 	if (flags & TH_URG)
-		(void)printf(" urg %d", urp);
+		(void)printf(" urg %u", urp);
 	/*
 	 * Handle any options.
 	 */
