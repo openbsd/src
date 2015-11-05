@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.16 2015/01/16 06:40:07 deraadt Exp $	*/
+/*	$OpenBSD: config.c,v 1.17 2015/11/05 09:48:21 nicm Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -48,8 +48,7 @@ config_parse_line(char *line, int lineno)
 	*(val++) = '\0';
 
 	if (!strcmp(opt, "tag")) {
-		if (cvs_tagname != NULL)
-			xfree(cvs_tagname);
+		free(cvs_tagname);
 		cvs_tagname = xstrdup(val);
 	} else if (!strcmp(opt, "umask")) {
 		cvs_umask = strtol(val, &ep, 8);
@@ -115,8 +114,6 @@ cvs_read_config(char *name, int (*cb)(char *, int))
 			break;
 	}
 
-	if (lbuf != NULL)
-		xfree(lbuf);
-
+	free(lbuf);
 	(void)fclose(fp);
 }

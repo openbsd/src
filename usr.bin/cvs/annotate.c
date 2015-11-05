@@ -1,4 +1,4 @@
-/*	$OpenBSD: annotate.c,v 1.64 2015/01/16 06:40:06 deraadt Exp $	*/
+/*	$OpenBSD: annotate.c,v 1.65 2015/11/05 09:48:21 nicm Exp $	*/
 /*
  * Copyright (c) 2007 Tobias Stoeckmann <tobias@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -235,7 +235,7 @@ cvs_annotate_local(struct cvs_file *cf)
 			p[line->l_len] = '\0';
 
 			if (line->l_needsfree)
-				xfree(line->l_line);
+				free(line->l_line);
 			line->l_line = p;
 			line->l_len++;
 			line->l_needsfree = 1;
@@ -244,9 +244,9 @@ cvs_annotate_local(struct cvs_file *cf)
 		    line->l_delta->rd_author, date, line->l_line);
 
 		if (line->l_needsfree)
-			xfree(line->l_line);
-		xfree(line);
+			free(line->l_line);
+		free(line);
 	}
 
-	xfree(alines);
+	free(alines);
 }

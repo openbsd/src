@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.102 2015/01/16 06:40:07 deraadt Exp $	*/
+/*	$OpenBSD: server.c,v 1.103 2015/11/05 09:48:21 nicm Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -138,7 +138,7 @@ cvs_server(int argc, char **argv)
 			    "the `Directory` request first", cmd);
 
 		(*req->hdlr)(data);
-		xfree(cmd);
+		free(cmd);
 	}
 
 	return (0);
@@ -159,7 +159,7 @@ cvs_server_send_response(char *fmt, ...)
 
 	cvs_log(LP_TRACE, "%s", data);
 	cvs_remote_output(data);
-	xfree(data);
+	free(data);
 }
 
 void
@@ -237,7 +237,7 @@ cvs_server_validreq(char *data)
 
 	cvs_server_send_response("Valid-requests %s", d);
 	cvs_server_send_response("ok");
-	xfree(d);
+	free(d);
 }
 
 void
@@ -363,14 +363,14 @@ cvs_server_directory(char *data)
 
 		entlist = cvs_ent_open(parent);
 		cvs_ent_add(entlist, entry);
-		xfree(entry);
+		free(entry);
 	}
 
 	if (server_currentdir != NULL)
-		xfree(server_currentdir);
+		free(server_currentdir);
 	server_currentdir = p;
 
-	xfree(dir);
+	free(dir);
 }
 
 void
@@ -404,12 +404,12 @@ cvs_server_modified(char *data)
 	len = cvs_remote_input();
 
 	cvs_strtomode(mode, &fmode);
-	xfree(mode);
+	free(mode);
 
 	flen = strtonum(len, 0, INT_MAX, &errstr);
 	if (errstr != NULL)
 		fatal("cvs_server_modified: %s", errstr);
-	xfree(len);
+	free(len);
 
 	(void)xsnprintf(fpath, PATH_MAX, "%s/%s", server_currentdir, data);
 
@@ -829,6 +829,6 @@ cvs_server_exp_modules(char *module)
 	cvs_server_send_response("ok");
 
 	server_argc--;
-	xfree(server_argv[1]);
+	free(server_argv[1]);
 	server_argv[1] = NULL;
 }

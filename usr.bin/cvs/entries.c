@@ -1,4 +1,4 @@
-/*	$OpenBSD: entries.c,v 1.105 2015/08/20 22:32:41 deraadt Exp $	*/
+/*	$OpenBSD: entries.c,v 1.106 2015/11/05 09:48:21 nicm Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -16,6 +16,7 @@
  */
 
 #include <errno.h>
+#include <stdlib.h>
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
@@ -101,8 +102,8 @@ cvs_ent_open(const char *dir)
 				if (line != NULL) {
 					TAILQ_REMOVE(&(ep->cef_ent), line,
 					    entries_list);
-					xfree(line->buf);
-					xfree(line);
+					free(line->buf);
+					free(line);
 				}
 				cvs_ent_free(ent);
 			}
@@ -276,8 +277,8 @@ cvs_ent_close(CVSENTRIES *ep, int writefile)
 		}
 
 		TAILQ_REMOVE(&(ep->cef_ent), l, entries_list);
-		xfree(l->buf);
-		xfree(l);
+		free(l->buf);
+		free(l);
 	}
 
 	if (fp != NULL) {
@@ -294,10 +295,10 @@ cvs_ent_close(CVSENTRIES *ep, int writefile)
 		(void)unlink(ep->cef_lpath);
 	}
 
-	xfree(ep->cef_path);
-	xfree(ep->cef_bpath);
-	xfree(ep->cef_lpath);
-	xfree(ep);
+	free(ep->cef_path);
+	free(ep->cef_bpath);
+	free(ep->cef_lpath);
+	free(ep);
 }
 
 void
@@ -358,8 +359,8 @@ cvs_ent_remove(CVSENTRIES *ep, const char *name)
 	(void)fclose(fp);
 
 	TAILQ_REMOVE(&(ep->cef_ent), l, entries_list);
-	xfree(l->buf);
-	xfree(l);
+	free(l->buf);
+	free(l);
 }
 
 /*
@@ -386,11 +387,9 @@ cvs_ent_free(struct cvs_ent *ent)
 {
 	if (ent->ce_rev != NULL)
 		rcsnum_free(ent->ce_rev);
-	if (ent->ce_time != NULL)
-		xfree(ent->ce_time);
-
-	xfree(ent->ce_buf);
-	xfree(ent);
+	free(ent->ce_time);
+	free(ent->ce_buf);
+	free(ent);
 }
 
 static struct cvs_ent_line *

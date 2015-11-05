@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff3.c,v 1.58 2015/09/05 09:47:08 jsg Exp $	*/
+/*	$OpenBSD: diff3.c,v 1.59 2015/11/05 09:48:21 nicm Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -257,20 +257,19 @@ cvs_merge_file(struct cvs_file *cf, int verbose)
 
 	cvs_freelines(dlines);
 
-	if (data != NULL)
-		xfree(data);
-	xfree(patch);
+	free(data);
+	free(patch);
 
 	for (i = 0; i < 3; i++)
 		fclose(fp[i]);
 
 	worklist_run(&temp_files, worklist_unlink);
 
-	xfree(path1);
-	xfree(path2);
-	xfree(path3);
-	xfree(dp13);
-	xfree(dp23);
+	free(path1);
+	free(path2);
+	free(path3);
+	free(dp13);
+	free(dp23);
 }
 
 static int
@@ -291,17 +290,12 @@ diff3_internal(int argc, char **argv, const char *fmark, const char *rmark)
 	szchanges = 0;
 	memset(last, 0, sizeof(last));
 	memset(cline, 0, sizeof(cline));
-	if (d13 != NULL)
-		xfree(d13);
-	if (d23 != NULL)
-		xfree(d23);
-	if (overlap != NULL)
-		xfree(overlap);
-	if (de != NULL)
-		xfree(de);
+	free(d13);
+	free(d23);
+	free(overlap);
+	free(de);
 
-	overlap = NULL;
-	de = d13 = d23 = NULL;
+	de = d13 = d23 = overlap = NULL;
 
 	increase();
 

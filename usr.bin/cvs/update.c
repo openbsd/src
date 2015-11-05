@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.170 2015/02/05 12:59:57 millert Exp $	*/
+/*	$OpenBSD: update.c,v 1.171 2015/11/05 09:48:21 nicm Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -21,6 +21,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <stdint.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
@@ -203,8 +204,7 @@ cvs_update_enterdir(struct cvs_file *cf)
 		cvs_parse_tagfile(cf->file_wd, &dirtag, NULL, NULL);
 		cvs_mkpath(cf->file_path, cvs_specified_tag != NULL ?
 		    cvs_specified_tag : dirtag);
-		if (dirtag != NULL)
-			xfree(dirtag);
+		free(dirtag);
 
 		if ((cf->fd = open(cf->file_path, O_RDONLY)) == -1)
 			fatal("cvs_update_enterdir: `%s': %s",
@@ -218,7 +218,7 @@ cvs_update_enterdir(struct cvs_file *cf)
 
 			entlist = cvs_ent_open(cf->file_wd);
 			cvs_ent_add(entlist, entry);
-			xfree(entry);
+			free(entry);
 		}
 	} else if ((cf->file_status == DIR_CREATE && build_dirs == 0) ||
 		    cf->file_status == FILE_UNKNOWN) {
@@ -299,7 +299,7 @@ cvs_update_leavedir(struct cvs_file *cf)
 	if (nbytes == -1)
 		fatal("cvs_update_leavedir: %s", strerror(errno));
 
-	xfree(buf);
+	free(buf);
 
 prune_it:
 	if ((isempty == 1 && prune_dirs == 1) ||
@@ -526,7 +526,7 @@ update_clear_conflict(struct cvs_file *cf)
 
 	entlist = cvs_ent_open(cf->file_wd);
 	cvs_ent_add(entlist, entry);
-	xfree(entry);
+	free(entry);
 }
 
 /*
@@ -574,7 +574,7 @@ update_has_conflict_markers(struct cvs_file *cf)
 	}
 
 	cvs_freelines(lines);
-	xfree(content);
+	free(content);
 	return (conflict);
 }
 
@@ -717,10 +717,8 @@ out:
 	if (rev2 != NULL)
 		rcsnum_free(rev2);
 
-	if (jrev1 != NULL)
-		xfree(jrev1);
-	if (jrev2 != NULL)
-		xfree(jrev2);
+	free(jrev1);
+	free(jrev2);
 }
 
 void

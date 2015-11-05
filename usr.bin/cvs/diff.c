@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.160 2011/04/20 18:33:13 nicm Exp $	*/
+/*	$OpenBSD: diff.c,v 1.161 2015/11/05 09:48:21 nicm Exp $	*/
 /*
  * Copyright (c) 2008 Tobias Stoeckmann <tobias@openbsd.org>
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
@@ -605,20 +605,18 @@ cvs_diff_local(struct cvs_file *cf)
 
 	worklist_run(&temp_files, worklist_unlink);
 
-	if (p1 != NULL)
-		xfree(p1);
-	if (p2 != NULL)
-		xfree(p2);
+	free(p1);
+	free(p2);
 
 cleanup:
 	if (diff_rev1 != NULL &&
 	    (cf->file_rcs == NULL || diff_rev1 != cf->file_rcs->rf_head) &&
 	    (cf->file_ent == NULL || diff_rev1 != cf->file_ent->ce_rev))
-		xfree(diff_rev1);
+		free(diff_rev1);
 	diff_rev1 = NULL;
 
 	if (diff_rev2 != NULL &&
 	    (cf->file_rcs == NULL || diff_rev2 != cf->file_rcs->rf_head))
-		xfree(diff_rev2);
+		free(diff_rev2);
 	diff_rev2 = NULL;
 }

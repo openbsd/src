@@ -1,4 +1,4 @@
-/*	$OpenBSD: tag.c,v 1.81 2015/01/16 06:40:07 deraadt Exp $	*/
+/*	$OpenBSD: tag.c,v 1.82 2015/11/05 09:48:21 nicm Exp $	*/
 /*
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
  *
@@ -16,6 +16,7 @@
  */
 
 #include <errno.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
@@ -308,19 +309,14 @@ cvs_tag_check_files(struct cvs_file *cf)
 	return;
 
 bad:
-	if (fi->file_path != NULL)
-		xfree(fi->file_path);
-	if (fi->crevstr != NULL)
-		xfree(fi->crevstr);
-	if (fi->nrevstr != NULL)
-		xfree(fi->nrevstr);
-	if (fi->tag_new != NULL)
-		xfree(fi->tag_new);
-	if (fi->tag_old != NULL)
-		xfree(fi->tag_old);
+	free(fi->file_path);
+	free(fi->crevstr);
+	free(fi->nrevstr);
+	free(fi->tag_new);
+	free(fi->tag_old);
 	if (rev != NULL)
 		rcsnum_free(rev);
-	xfree(fi);
+	free(fi);
 }
 
 void

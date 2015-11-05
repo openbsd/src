@@ -1,4 +1,4 @@
-/*	$OpenBSD: add.c,v 1.111 2015/01/16 06:40:06 deraadt Exp $	*/
+/*	$OpenBSD: add.c,v 1.112 2015/11/05 09:48:21 nicm Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -20,6 +20,7 @@
 
 #include <errno.h>
 #include <fcntl.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
@@ -146,7 +147,7 @@ cvs_add_entry(struct cvs_file *cf)
 		entlist = cvs_ent_open(cf->file_wd);
 		cvs_ent_add(entlist, entry);
 
-		xfree(entry);
+		free(entry);
 	} else {
 		add_entry(cf);
 	}
@@ -252,7 +253,7 @@ cvs_add_tobranch(struct cvs_file *cf, char *tag)
 	(void)xsnprintf(attic, PATH_MAX, "%s/%s/%s%s", repo,
 	    CVS_PATH_ATTIC, cf->file_name, RCS_FILE_EXT);
 
-	xfree(cf->file_rpath);
+	free(cf->file_rpath);
 	cf->file_rpath = xstrdup(attic);
 
 	cf->repo_fd = open(cf->file_rpath, O_CREAT|O_RDONLY);
@@ -277,7 +278,7 @@ cvs_add_tobranch(struct cvs_file *cf, char *tag)
 	if (rcs_rev_add(cf->file_rcs, RCS_HEAD_REV, msg, -1, NULL) == -1)
 		fatal("cvs_add_tobranch: failed to create first branch "
 		    "revision");
-	xfree(msg);
+	free(msg);
 
 	if (rcs_findrev(cf->file_rcs, cf->file_rcs->rf_head) == NULL)
 		fatal("cvs_add_tobranch: cannot find newly added revision");
@@ -359,7 +360,7 @@ add_directory(struct cvs_file *cf)
 
 			entlist = cvs_ent_open(cf->file_wd);
 			cvs_ent_add(entlist, p);
-			xfree(p);
+			free(p);
 		}
 	}
 
@@ -381,10 +382,8 @@ add_directory(struct cvs_file *cf)
 		}
 		cvs_printf("%s\n", msg);
 
-		if (tag != NULL)
-			xfree(tag);
-		if (date != NULL)
-			xfree(date);
+		free(tag);
+		free(date);
 
 		cvs_get_repository_name(cf->file_path, repo, PATH_MAX);
 		line_list = cvs_trigger_getlines(CVS_PATH_LOGINFO, repo);
@@ -400,8 +399,7 @@ add_directory(struct cvs_file *cf)
 
 			cvs_trigger_freeinfo(&files_info);
 			cvs_trigger_freelist(line_list);
-			if (loginfo != NULL)
-				xfree(loginfo);
+			free(loginfo);
 		}
 	}
 
@@ -564,5 +562,5 @@ add_entry(struct cvs_file *cf)
 		entlist = cvs_ent_open(cf->file_wd);
 		cvs_ent_add(entlist, entry);
 	}
-	xfree(entry);
+	free(entry);
 }

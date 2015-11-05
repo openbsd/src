@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.124 2015/01/16 06:40:06 deraadt Exp $	*/
+/*	$OpenBSD: client.c,v 1.125 2015/11/05 09:48:21 nicm Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -190,7 +190,7 @@ client_check_directory(char *data, char *repository)
 	entlist = cvs_ent_open(parent);
 	cvs_ent_add(entlist, entry);
 
-	xfree(entry);
+	free(entry);
 }
 
 void
@@ -273,7 +273,7 @@ cvs_client_connect_to_server(void)
 
 	resp = client_get_supported_responses();
 	cvs_client_send_request("Valid-responses %s", resp);
-	xfree(resp);
+	free(resp);
 
 	cvs_client_send_request("valid-requests");
 	cvs_client_get_responses();
@@ -339,7 +339,7 @@ cvs_client_send_request(char *fmt, ...)
 	cvs_log(LP_TRACE, "%s", data);
 
 	cvs_remote_output(data);
-	xfree(data);
+	free(data);
 }
 
 void
@@ -361,7 +361,7 @@ cvs_client_read_response(void)
 
 	(*resp->hdlr)(data);
 
-	xfree(cmd);
+	free(cmd);
 }
 
 void
@@ -391,7 +391,7 @@ cvs_client_send_logmsg(char *msg)
 		}
 	}
 
-	xfree(buf);
+	free(buf);
 }
 
 void
@@ -439,16 +439,11 @@ cvs_client_senddir(const char *dir)
 
 		cvs_client_send_request("Sticky %s", buf);
 
-		if (tag != NULL)
-			xfree(tag);
-		if (date != NULL)
-			xfree(date);
+		free(tag);
+		free(date);
 	}
-	if (d != NULL)
-		xfree(d);
-
-	if (lastdir != NULL)
-		xfree(lastdir);
+	free(d);
+	free(lastdir);
 	lastdir = xstrdup(dir);
 }
 
@@ -637,12 +632,12 @@ cvs_client_checkedin(char *data)
 
 	dir = cvs_remote_input();
 	e = cvs_remote_input();
-	xfree(dir);
+	free(dir);
 
 	entlist = cvs_ent_open(data);
 	newent = cvs_ent_parse(e);
 	ent = cvs_ent_get(entlist, newent->ce_name);
-	xfree(e);
+	free(e);
 
 	rcsnum_tostr(newent->ce_rev, rev, sizeof(rev));
 
@@ -685,7 +680,7 @@ cvs_client_checkedin(char *data)
 	cvs_ent_free(newent);
 	cvs_ent_add(entlist, entry);
 
-	xfree(entry);
+	free(entry);
 }
 
 void
@@ -730,10 +725,10 @@ cvs_client_updated(char *data)
 	flen = strtonum(len, 0, INT_MAX, &errstr);
 	if (errstr != NULL)
 		fatal("cvs_client_updated: %s: %s", len, errstr);
-	xfree(len);
+	free(len);
 
 	cvs_strtomode(mode, &fmode);
-	xfree(mode);
+	free(mode);
 	fmode &= ~cvs_umask;
 
 	time(&now);
@@ -742,7 +737,7 @@ cvs_client_updated(char *data)
 	timebuf[strcspn(timebuf, "\n")] = '\0';
 
 	e = cvs_ent_parse(en);
-	xfree(en);
+	free(en);
 
 	sticky[0] = '\0';
 	if (e->ce_tag != NULL) {
@@ -767,7 +762,7 @@ cvs_client_updated(char *data)
 		cvs_ent_add(ent, entry);
 	}
 
-	xfree(entry);
+	free(entry);
 
 	(void)unlink(fpath);
 	if ((fd = open(fpath, O_CREAT | O_WRONLY | O_TRUNC)) == -1)
@@ -788,7 +783,7 @@ cvs_client_updated(char *data)
 
 	(void)close(fd);
 
-	xfree(rpath);
+	free(rpath);
 }
 
 void
@@ -826,15 +821,15 @@ cvs_client_merged(char *data)
 	fpath = rpath + strlen(repo) + 1;
 	if ((wdir = dirname(fpath)) == NULL)
 		fatal("cvs_client_merged: dirname: %s", strerror(errno));
-	xfree(repo);
+	free(repo);
 
 	flen = strtonum(len, 0, INT_MAX, &errstr);
 	if (errstr != NULL)
 		fatal("cvs_client_merged: %s: %s", len, errstr);
-	xfree(len);
+	free(len);
 
 	cvs_strtomode(mode, &fmode);
-	xfree(mode);
+	free(mode);
 	fmode &= ~cvs_umask;
 
 	time(&now);
@@ -844,7 +839,7 @@ cvs_client_merged(char *data)
 
 	ent = cvs_ent_open(wdir);
 	cvs_ent_add(ent, entry);
-	xfree(entry);
+	free(entry);
 
 	(void)unlink(fpath);
 	if ((fd = open(fpath, O_CREAT | O_WRONLY | O_TRUNC)) == -1)
@@ -865,7 +860,7 @@ cvs_client_merged(char *data)
 
 	(void)close(fd);
 
-	xfree(rpath);
+	free(rpath);
 }
 
 void
@@ -888,7 +883,7 @@ cvs_client_removed(char *data)
 	(void)xsnprintf(fpath, PATH_MAX, "%s/%s", data, filename);
 	(void)unlink(fpath);
 
-	xfree(rpath);
+	free(rpath);
 }
 
 void
@@ -908,7 +903,7 @@ cvs_client_remove_entry(char *data)
 	entlist = cvs_ent_open(data);
 	cvs_ent_remove(entlist, filename);
 
-	xfree(rpath);
+	free(rpath);
 }
 
 void
@@ -923,7 +918,7 @@ cvs_client_set_static_directory(char *data)
 	STRIP_SLASH(data);
 
 	dir = cvs_remote_input();
-	xfree(dir);
+	free(dir);
 
 	if (cvs_cmdop == CVS_OP_EXPORT)
 		return;
@@ -949,7 +944,7 @@ cvs_client_clear_static_directory(char *data)
 	STRIP_SLASH(data);
 
 	dir = cvs_remote_input();
-	xfree(dir);
+	free(dir);
 
 	if (cvs_cmdop == CVS_OP_EXPORT)
 		return;
@@ -989,8 +984,8 @@ cvs_client_set_sticky(char *data)
 	(void)fprintf(fp, "%s\n", tag);
 	(void)fclose(fp);
 out:
-	xfree(tag);
-	xfree(dir);
+	free(tag);
+	free(dir);
 }
 
 void
@@ -1006,7 +1001,7 @@ cvs_client_clear_sticky(char *data)
 	dir = cvs_remote_input();
 
 	if (cvs_cmdop == CVS_OP_EXPORT) {
-		xfree(dir);
+		free(dir);
 		return;
 	}
 
@@ -1015,7 +1010,7 @@ cvs_client_clear_sticky(char *data)
 	(void)xsnprintf(tagpath, PATH_MAX, "%s/%s", data, CVS_PATH_TAG);
 	(void)unlink(tagpath);
 
-	xfree(dir);
+	free(dir);
 }
 
 
@@ -1054,7 +1049,7 @@ cvs_client_initlog(void)
 	if (strlcpy(rpath, envdup, sizeof(rpath)) >= sizeof(rpath))
 		fatal("cvs_client_initlog: truncation");
 
-	xfree(envdup);
+	free(envdup);
 
 	s = buf;
 	while ((s = strchr(s, '%')) != NULL) {

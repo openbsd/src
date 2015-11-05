@@ -1,4 +1,4 @@
-/*	$OpenBSD: admin.c,v 1.65 2015/01/16 06:40:06 deraadt Exp $	*/
+/*	$OpenBSD: admin.c,v 1.66 2015/11/05 09:48:21 nicm Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
@@ -23,6 +23,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <libgen.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
@@ -304,8 +305,8 @@ cvs_admin_local(struct cvs_file *cf)
 		while (!TAILQ_EMPTY(&(cf->file_rcs->rf_access))) {
 			rap = TAILQ_FIRST(&(cf->file_rcs->rf_access));
 			TAILQ_REMOVE(&(cf->file_rcs->rf_access), rap, ra_list);
-			xfree(rap->ra_name);
-			xfree(rap);
+			free(rap->ra_name);
+			free(rap);
 		}
 		/* no synced anymore */
 		cf->file_rcs->rf_flags &= ~RCS_SYNCED;

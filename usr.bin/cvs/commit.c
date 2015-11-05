@@ -1,4 +1,4 @@
-/*	$OpenBSD: commit.c,v 1.153 2015/01/16 06:40:07 deraadt Exp $	*/
+/*	$OpenBSD: commit.c,v 1.154 2015/11/05 09:48:21 nicm Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -21,6 +21,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <libgen.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
@@ -77,8 +78,7 @@ cvs_commit(int argc, char **argv)
 		switch (ch) {
 		case 'F':
 			/* free previously assigned value */
-			if (logmsg != NULL)
-				xfree(logmsg);
+			free(logmsg);
 			logmsg = cvs_logmsg_read(optarg);
 			Fflag = 1;
 			break;
@@ -89,8 +89,7 @@ cvs_commit(int argc, char **argv)
 			break;
 		case 'm':
 			/* free previously assigned value */
-			if (logmsg != NULL)
-				xfree(logmsg);
+			free(logmsg);
 			logmsg = xstrdup(optarg);
 			mflag = 1;
 			break;
@@ -210,7 +209,7 @@ cvs_commit(int argc, char **argv)
 			cvs_trigger_handle(CVS_TRIGGER_LOGINFO, repo,
 			    loginfo, line_list, &files_info);
 
-			xfree(loginfo);
+			free(loginfo);
 			cvs_trigger_freelist(line_list);
 			cvs_trigger_freeinfo(&files_info);
 		}
@@ -223,8 +222,7 @@ cvs_commit(int argc, char **argv)
 
 end:
 	cvs_trigger_freeinfo(&files_info);
-	if (logmsg != NULL)
-		xfree(logmsg);
+	free(logmsg);
 	return (0);
 }
 
@@ -568,7 +566,7 @@ cvs_commit_local(struct cvs_file *cf)
 					    "move %s outside the Attic: %s",
 					    cf->file_path, strerror(errno));
 
-				xfree(cf->file_rpath);
+				free(cf->file_rpath);
 				cf->file_rpath = xstrdup(rcsfile);
 				isnew = 0;
 			}
@@ -761,8 +759,8 @@ commit_diff(struct cvs_file *cf, RCSNUM *rev, int reverse)
 	close(fd1);
 	close(fd2);
 
-	xfree(p1);
-	xfree(p2);
+	free(p1);
+	free(p2);
 
 	return (b);
 }
@@ -789,5 +787,5 @@ commit_desc_set(struct cvs_file *cf)
 	(void)close(fd);
 	(void)cvs_unlink(desc_path);
 
-	xfree(desc);
+	free(desc);
 }

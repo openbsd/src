@@ -1,4 +1,4 @@
-/*	$OpenBSD: checkout.c,v 1.169 2015/01/16 06:40:06 deraadt Exp $	*/
+/*	$OpenBSD: checkout.c,v 1.170 2015/11/05 09:48:21 nicm Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -360,8 +360,7 @@ checkout_check_repository(int argc, char **argv)
 			    mc->mc_flags & MODULE_RUN_ON_CHECKOUT)
 				cvs_exec(mc->mc_prog, NULL, 0);
 
-			if (module_repo_root != NULL)
-				xfree(module_repo_root);
+			free(module_repo_root);
 		}
 
 		if (mc->mc_canfree == 1) {
@@ -371,17 +370,17 @@ checkout_check_repository(int argc, char **argv)
 				    &(mc->mc_modules), fl);
 				RB_REMOVE(cvs_flisthead,
 				    &(mc->mc_modules), fl);
-				xfree(fl->file_path);
-				xfree(fl);
+				free(fl->file_path);
+				free(fl);
 			}
 		}
 
 		while ((ip = TAILQ_FIRST(&checkout_ign_pats)) != NULL) {
 			TAILQ_REMOVE(&checkout_ign_pats, ip, ip_list);
-			xfree(ip);
+			free(ip);
 		}
 
-		xfree(mc);
+		free(mc);
 	}
 }
 
@@ -634,5 +633,5 @@ cvs_checkout_file(struct cvs_file *cf, RCSNUM *rnum, char *tag, int co_flags)
 		}
 	}
 
-	xfree(entry);
+	free(entry);
 }

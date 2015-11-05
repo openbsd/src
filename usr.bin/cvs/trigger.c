@@ -1,4 +1,4 @@
-/*	$OpenBSD: trigger.c,v 1.22 2015/01/16 06:40:07 deraadt Exp $	*/
+/*	$OpenBSD: trigger.c,v 1.23 2015/11/05 09:48:21 nicm Exp $	*/
 /*
  * Copyright (c) 2008 Tobias Stoeckmann <tobias@openbsd.org>
  * Copyright (c) 2008 Jonathan Armani <dbd@asystant.net>
@@ -322,8 +322,7 @@ again:
 			expanded = 1;
 		}
 
-		if (q != NULL)
-			xfree(q);
+		free(q);
 	}
 
 	if (!expanded && default_args != NULL) {
@@ -336,8 +335,7 @@ again:
 	return (buf_release(buf));
 
 bad:
-	if (q != NULL)
-		xfree(q);
+	free(q);
 	cvs_log(LP_NOTICE, "%s contains malformed command '%s'", file, cmd);
 	buf_free(buf);
 	return (NULL);
@@ -359,7 +357,7 @@ cvs_trigger_handle(int type, char *repo, char *in, struct trigger_list *list,
 		case CVS_TRIGGER_TAGINFO:
 		case CVS_TRIGGER_VERIFYMSG:
 			if ((r = cvs_exec(cmd, NULL, 1)) != 0) {
-				xfree(cmd);
+				free(cmd);
 				return (r);
 			}
 			break;
@@ -367,7 +365,7 @@ cvs_trigger_handle(int type, char *repo, char *in, struct trigger_list *list,
 			(void)cvs_exec(cmd, in, 1);
 			break;
 		}
-		xfree(cmd);
+		free(cmd);
 	}
 
 	return (0);
@@ -460,8 +458,7 @@ cvs_trigger_getlines(char * file, char * repo)
 		}
 	}
 
-	if (nline != NULL)
-		xfree(nline);
+	free(nline);
 
 	if (defaultline != NULL) {
 		if (!match) {
@@ -469,13 +466,13 @@ cvs_trigger_getlines(char * file, char * repo)
 			tline->line = defaultline;
 			TAILQ_INSERT_HEAD(list, tline, flist);
 		} else
-			xfree(defaultline);
+			free(defaultline);
 	}
 
 	(void)fclose(fp);
 	
 	if (TAILQ_EMPTY(list)) {
-		xfree(list);
+		free(list);
 		list = NULL;
 	}
 
@@ -483,9 +480,7 @@ cvs_trigger_getlines(char * file, char * repo)
 
 bad:
 	cvs_log(LP_NOTICE, "%s: malformed line %d", file, lineno);
-
-	if (defaultline != NULL)
-		xfree(defaultline);
+	free(defaultline);
 	cvs_trigger_freelist(list);
 
 	(void)fclose(fp);
@@ -500,11 +495,11 @@ cvs_trigger_freelist(struct trigger_list * list)
 
 	while ((line = TAILQ_FIRST(list)) != NULL) {
 		TAILQ_REMOVE(list, line, flist);
-		xfree(line->line);
-		xfree(line);
+		free(line->line);
+		free(line);
 	}
 
-	xfree(list);
+	free(list);
 }
 
 void
@@ -515,20 +510,13 @@ cvs_trigger_freeinfo(struct file_info_list * list)
 	while ((fi = TAILQ_FIRST(list)) != NULL) {
 		TAILQ_REMOVE(list, fi, flist);
 
-		if (fi->file_path != NULL)
-			xfree(fi->file_path);
-		if (fi->file_wd != NULL)
-			xfree(fi->file_wd);
-		if (fi->crevstr != NULL)
-			xfree(fi->crevstr);
-		if (fi->nrevstr != NULL)
-			xfree(fi->nrevstr);
-		if (fi->tag_new != NULL)
-			xfree(fi->tag_new);
-		if (fi->tag_old != NULL)
-			xfree(fi->tag_old);
-
-		xfree(fi);
+		free(fi->file_path);
+		free(fi->file_wd);
+		free(fi->crevstr);
+		free(fi->nrevstr);
+		free(fi->tag_new);
+		free(fi->tag_old);
+		free(fi);
 	}
 }
 

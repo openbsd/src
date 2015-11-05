@@ -1,4 +1,4 @@
-/*	$OpenBSD: logmsg.c,v 1.56 2015/02/05 12:59:57 millert Exp $	*/
+/*	$OpenBSD: logmsg.c,v 1.57 2015/11/05 09:48:21 nicm Exp $	*/
 /*
  * Copyright (c) 2007 Joris Vink <joris@openbsd.org>
  *
@@ -83,8 +83,7 @@ cvs_logmsg_read(const char *path)
 		buf_putc(bp, '\n');
 	}
 
-	if (lbuf != NULL)
-		xfree(lbuf);
+	free(lbuf);
 
 	(void)fclose(fp);
 
@@ -149,7 +148,7 @@ cvs_logmsg_create(char *dir, struct cvs_flisthead *added,
 			logmsg = xmalloc(st.st_size);
 			fread(logmsg, st.st_size, 1, rp);
 			fwrite(logmsg, st.st_size, 1, fp);
-			xfree(logmsg);
+			free(logmsg);
 			(void)fclose(rp);
 		}
 		cvs_trigger_freelist(line_list);
@@ -215,8 +214,7 @@ cvs_logmsg_create(char *dir, struct cvs_flisthead *added,
 
 		if (st1.st_mtime != st2.st_mtime) {
 			logmsg = cvs_logmsg_read(fpath);
-			if (prevmsg != NULL)
-				xfree(prevmsg);
+			free(prevmsg);
 			prevmsg = xstrdup(logmsg);
 			break;
 		}
@@ -250,7 +248,7 @@ cvs_logmsg_create(char *dir, struct cvs_flisthead *added,
 
 	(void)fclose(fp);
 	(void)unlink(fpath);
-	xfree(fpath);
+	free(fpath);
 
 	return (logmsg);
 }
@@ -284,7 +282,7 @@ cvs_logmsg_edit(const char *pathname)
 	while (waitpid(pid, &st, 0) == -1)
 		if (errno != EINTR)
 			goto fail;
-	xfree(p);
+	free(p);
 	(void)signal(SIGHUP, sighup);
 	(void)signal(SIGINT, sigint);
 	(void)signal(SIGQUIT, sigquit);
@@ -299,7 +297,7 @@ cvs_logmsg_edit(const char *pathname)
 	(void)signal(SIGHUP, sighup);
 	(void)signal(SIGINT, sigint);
 	(void)signal(SIGQUIT, sigquit);
-	xfree(p);
+	free(p);
 	errno = saved_errno;
 	return (-1);
 }
@@ -334,7 +332,7 @@ cvs_logmsg_verify(char *logmsg)
 		cvs_trigger_freeinfo(&files_info);
 		(void)close(fd);
 		(void)unlink(fpath);
-		xfree(fpath);
+		free(fpath);
 		cvs_trigger_freelist(line_list);
 	}
 

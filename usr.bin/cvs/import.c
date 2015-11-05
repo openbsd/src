@@ -1,4 +1,4 @@
-/*	$OpenBSD: import.c,v 1.104 2015/01/16 06:40:07 deraadt Exp $	*/
+/*	$OpenBSD: import.c,v 1.105 2015/11/05 09:48:21 nicm Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -19,6 +19,7 @@
 
 #include <errno.h>
 #include <fcntl.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
@@ -191,7 +192,7 @@ cvs_import(int argc, char **argv)
 		cvs_trigger_freelist(line_list);
 	}
 
-	xfree(loginfo);
+	free(loginfo);
 	return (0);
 }
 
@@ -209,7 +210,7 @@ import_printf(const char *fmt, ...)
 	cvs_printf("%s", str);
 	buf_puts(logbuf, str);
 
-	xfree(str);
+	free(str);
 }
 
 void
@@ -482,8 +483,8 @@ import_get_rcsdiff(struct cvs_file *cf, RCSNUM *rev)
 	(void)unlink(p1);
 	(void)unlink(p2);
 
-	xfree(p1);
-	xfree(p2);
+	free(p1);
+	free(p2);
 
 	return (b2);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.c,v 1.155 2015/01/16 06:40:07 deraadt Exp $	*/
+/*	$OpenBSD: cvs.c,v 1.156 2015/11/05 09:48:21 nicm Exp $	*/
 /*
  * Copyright (c) 2006, 2007 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -113,7 +113,7 @@ cvs_cleanup(void)
 			cvs_log(LP_ERR,
 			    "warning: failed to remove server directory: %s",
 			    cvs_server_path);
-		xfree(cvs_server_path);
+		free(cvs_server_path);
 		cvs_server_path = NULL;
 	}
 
@@ -257,7 +257,7 @@ main(int argc, char **argv)
 
 			cvs_getopt(i, targv);
 			cvs_freeargv(targv, i);
-			xfree(targv);
+			free(targv);
 		}
 	}
 
@@ -513,8 +513,7 @@ cvs_read_rcfile(void)
 			cmd_parsed = 1;
 		}
 	}
-	if (lbuf != NULL)
-		xfree(lbuf);
+	free(lbuf);
 
 	if (ferror(fp)) {
 		cvs_log(LP_NOTICE, "failed to read line from `%s'", rcpath);
@@ -561,7 +560,7 @@ cvs_var_set(const char *var, const char *val)
 		TAILQ_INSERT_TAIL(&cvs_variables, vp, cv_link);
 
 	} else	/* free the previous value */
-		xfree(vp->cv_val);
+		free(vp->cv_val);
 
 	vp->cv_val = xstrdup(val);
 
@@ -582,9 +581,9 @@ cvs_var_unset(const char *var)
 	TAILQ_FOREACH(vp, &cvs_variables, cv_link)
 		if (strcmp(vp->cv_name, var) == 0) {
 			TAILQ_REMOVE(&cvs_variables, vp, cv_link);
-			xfree(vp->cv_name);
-			xfree(vp->cv_val);
-			xfree(vp);
+			free(vp->cv_name);
+			free(vp->cv_val);
+			free(vp);
 			return (0);
 		}
 

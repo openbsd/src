@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: date.y,v 1.24 2013/12/03 00:23:45 deraadt Exp $	*/
+/*	$OpenBSD: date.y,v 1.25 2015/11/05 09:48:21 nicm Exp $	*/
 
 /*
 **  Originally written by Steven M. Bellovin <smb@research.att.com> while
@@ -488,7 +488,7 @@ yyerror(const char *s)
 
 	(void)xasprintf(&str, "parsing date string: %s", s);
 	cvs_log(LP_ERR, "%s", str);
-	xfree(str);
+	free(str);
 #endif
 	return (0);
 }

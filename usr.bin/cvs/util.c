@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.157 2015/01/16 06:40:07 deraadt Exp $	*/
+/*	$OpenBSD: util.c,v 1.158 2015/11/05 09:48:21 nicm Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2005, 2006 Joris Vink <joris@openbsd.org>
@@ -239,11 +239,11 @@ cvs_getargv(const char *line, char **argv, int argvlen)
 	if (error != 0) {
 		/* ditch the argument vector */
 		for (i = 0; i < (u_int)argc; i++)
-			xfree(argv[i]);
+			free(argv[i]);
 		argc = -1;
 	}
 
-	xfree(linebuf);
+	free(linebuf);
 	return (argc);
 }
 
@@ -284,8 +284,7 @@ cvs_freeargv(char **argv, int argc)
 	int i;
 
 	for (i = 0; i < argc; i++)
-		if (argv[i] != NULL)
-			xfree(argv[i]);
+		free(argv[i]);
 }
 
 /*
@@ -648,14 +647,14 @@ cvs_mkpath(const char *path, char *tag)
 
 			ent = cvs_ent_open(rpath);
 			cvs_ent_add(ent, entry);
-			xfree(entry);
+			free(entry);
 
 			if (p != NULL)
 				*p = '/';
 		}
 	}
 
-	xfree(dir);
+	free(dir);
 }
 
 void
@@ -696,7 +695,7 @@ cvs_mkdir(const char *path, mode_t mode)
 			fatal("cvs_mkdir: %s: %s", rpath, strerror(errno));
 	}
 
-	xfree(dir);
+	free(dir);
 }
 
 /*
@@ -741,11 +740,11 @@ cvs_freelines(struct rcs_lines *lines)
 	while ((lp = TAILQ_FIRST(&(lines->l_lines))) != NULL) {
 		TAILQ_REMOVE(&(lines->l_lines), lp, l_list);
 		if (lp->l_needsfree == 1)
-			xfree(lp->l_line);
-		xfree(lp);
+			free(lp->l_line);
+		free(lp);
 	}
 
-	xfree(lines);
+	free(lines);
 }
 
 /*
@@ -784,9 +783,9 @@ cvs_strsplit(char *str, const char *sep)
 void
 cvs_argv_destroy(struct cvs_argvector *av)
 {
-	xfree(av->str);
-	xfree(av->argv);
-	xfree(av);
+	free(av->str);
+	free(av->argv);
+	free(av);
 }
 
 u_int

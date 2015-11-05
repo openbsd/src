@@ -1,4 +1,4 @@
-/*	$OpenBSD: edit.c,v 1.50 2015/01/16 06:40:07 deraadt Exp $	*/
+/*	$OpenBSD: edit.c,v 1.51 2015/11/05 09:48:21 nicm Exp $	*/
 /*
  * Copyright (c) 2006, 2007 Xavier Santolaria <xsa@openbsd.org>
  *
@@ -18,6 +18,7 @@
 #include <sys/stat.h>
 
 #include <errno.h>
+#include <stdlib.h>
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
@@ -409,7 +410,7 @@ cvs_unedit_local(struct cvs_file *cf)
 
 		cvs_ent_free(ent);
 
-		xfree(entry);
+		free(entry);
 	}
 
 	rcsnum_free(ba_rev);

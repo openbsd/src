@@ -1,4 +1,4 @@
-/*	$OpenBSD: remove.c,v 1.82 2015/01/16 06:40:07 deraadt Exp $	*/
+/*	$OpenBSD: remove.c,v 1.83 2015/11/05 09:48:21 nicm Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
  *
@@ -16,6 +16,7 @@
  */
 
 #include <errno.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
@@ -212,7 +213,7 @@ cvs_remove_local(struct cvs_file *cf)
 				cvs_ent_add(entlist, entry);
 			}
 
-			xfree(entry);
+			free(entry);
 
 			if (verbosity > 0) {
 				cvs_log(LP_NOTICE,

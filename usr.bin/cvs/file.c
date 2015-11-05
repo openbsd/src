@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.266 2015/08/20 22:32:41 deraadt Exp $	*/
+/*	$OpenBSD: file.c,v 1.267 2015/11/05 09:48:21 nicm Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -36,6 +36,7 @@
 #include <fnmatch.h>
 #include <libgen.h>
 #include <stdint.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
@@ -375,10 +376,8 @@ cvs_file_walklist(struct cvs_flisthead *fl, struct cvs_recursion *cr)
 			if (l->flags & FILE_USER_SUPPLIED) {
 				if (cmdp->cmd_flags & CVS_LOCK_REPO)
 					cvs_repository_unlock(repo);
-				if (cvs_directory_tag != NULL) {
-					xfree(cvs_directory_tag);
-					cvs_directory_tag = NULL;
-				}
+				free(cvs_directory_tag);
+				cvs_directory_tag = NULL;
 			}
 		}
 
@@ -562,11 +561,11 @@ cvs_file_walkdir(struct cvs_file *cf, struct cvs_recursion *cr)
 		fatal("cvs_file_walkdir: %s %s", cf->file_path,
 		    strerror(errno));
 
-	xfree(buf);
+	free(buf);
 
 	while ((ip = TAILQ_FIRST(&dir_ign_pats)) != NULL) {
 		TAILQ_REMOVE(&dir_ign_pats, ip, ip_list);
-		xfree(ip);
+		free(ip);
 	}
 
 	entlist = cvs_ent_open(cf->file_path);
@@ -613,7 +612,7 @@ walkrepo:
 
 	if (cvs_directory_tag != NULL && cmdp->cmd_flags & CVS_USE_WDIR) {
 		cvs_write_tagfile(cf->file_path, cvs_directory_tag, NULL);
-		xfree(cvs_directory_tag);
+		free(cvs_directory_tag);
 		cvs_directory_tag = NULL;
 	}
 
@@ -632,8 +631,8 @@ cvs_file_freelist(struct cvs_flisthead *fl)
 	for (f = RB_MIN(cvs_flisthead, fl); f != NULL; f = nxt) {
 		nxt = RB_NEXT(cvs_flisthead, fl, f);
 		RB_REMOVE(cvs_flisthead, fl, f);
-		xfree(f->file_path);
-		xfree(f);
+		free(f->file_path);
+		free(f);
 	}
 }
 
@@ -754,7 +753,7 @@ cvs_file_classify(struct cvs_file *cf, const char *tag)
 
 		cf->repo_fd = open(rcsfile, O_RDONLY);
 		if (cf->repo_fd != -1) {
-			xfree(cf->file_rpath);
+			free(cf->file_rpath);
 			cf->file_rpath = xstrdup(rcsfile);
 			cf->file_rcs = rcs_open(cf->file_rpath,
 			    cf->repo_fd, rflags);
@@ -975,14 +974,13 @@ cvs_file_classify(struct cvs_file *cf, const char *tag)
 void
 cvs_file_free(struct cvs_file *cf)
 {
-	xfree(cf->file_name);
-	xfree(cf->file_wd);
-	xfree(cf->file_path);
+	free(cf->file_name);
+	free(cf->file_wd);
+	free(cf->file_path);
 
 	if (cf->file_rcsrev != NULL)
 		rcsnum_free(cf->file_rcsrev);
-	if (cf->file_rpath != NULL)
-		xfree(cf->file_rpath);
+	free(cf->file_rpath);
 	if (cf->file_ent != NULL)
 		cvs_ent_free(cf->file_ent);
 	if (cf->file_rcs != NULL)
@@ -991,7 +989,7 @@ cvs_file_free(struct cvs_file *cf)
 		(void)close(cf->fd);
 	if (cf->repo_fd != -1)
 		(void)close(cf->repo_fd);
-	xfree(cf);
+	free(cf);
 }
 
 int

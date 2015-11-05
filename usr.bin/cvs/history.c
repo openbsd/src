@@ -1,4 +1,4 @@
-/*	$OpenBSD: history.c,v 1.42 2015/01/16 06:40:07 deraadt Exp $	*/
+/*	$OpenBSD: history.c,v 1.43 2015/11/05 09:48:21 nicm Exp $	*/
 /*
  * Copyright (c) 2007 Joris Vink <joris@openbsd.org>
  *
@@ -181,9 +181,9 @@ cvs_history_add(int type, struct cvs_file *cf, const char *argument)
 	}
 
 	if (rev != revbuf)
-		xfree(rev);
+		free(rev);
 	if (cvs_server_active != 1)
-		xfree(cwd);
+		free(cwd);
 }
 
 static void
