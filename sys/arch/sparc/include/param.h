@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.51 2015/03/30 20:30:22 miod Exp $	*/
+/*	$OpenBSD: param.h,v 1.52 2015/11/05 22:41:32 miod Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -109,7 +109,7 @@
  * Maximum size of the kernel malloc arena in PAGE_SIZE-sized
  * logical pages.
  */
-#define	NKMEMPAGES_MAX_DEFAULT		((4 * 1024 * 1024) >> PAGE_SHIFT)
+#define	NKMEMPAGES_MAX_DEFAULT		((64 * 1024 * 1024) >> PAGE_SHIFT)
 
 #ifndef _LOCORE
 extern struct extent	*dvmamap_extent;
