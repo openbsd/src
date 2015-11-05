@@ -1,4 +1,4 @@
-/* $OpenBSD: ampintc.c,v 1.7 2015/07/15 21:09:40 jsg Exp $ */
+/* $OpenBSD: ampintc.c,v 1.8 2015/11/05 19:54:17 miod Exp $ */
 /*
  * Copyright (c) 2007,2009,2011 Dale Rahn <drahn@openbsd.org>
  *
@@ -386,13 +386,6 @@ ampintc_calc_mask(void)
 		if (max == IPL_NONE)
 			min = IPL_NONE;
 
-#ifdef DEBUG_INTC
-		if (min != IPL_NONE) {
-			printf("irq %d to block at %d %d reg %d bit %d\n",
-			    irq, max, min, AMPINTC_IRQ_TO_REG(irq),
-			    AMPINTC_IRQ_TO_REGi(irq));
-		}
-#endif
 		/* Enable interrupts at lower levels, clear -> enable */
 		/* Set interrupt priority/enable */
 		if (min != IPL_NONE) {
@@ -494,15 +487,16 @@ ampintc_irq_handler(void *frame)
 	int			 irq, pri, s;
 
 	iack_val = ampintc_iack();
-//#define DEBUG_INTC
 #ifdef DEBUG_INTC
 	if (iack_val != 27)
-	printf("irq  %d fired\n", iack_val);
+		printf("irq  %d fired\n", iack_val);
 	else {
 		static int cnt = 0;
 		if ((cnt++ % 100) == 0) {
 			printf("irq  %d fired * _100\n", iack_val);
+#ifdef DDB
 			Debugger();
+#endif
 		}
 
 	}
