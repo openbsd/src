@@ -1,4 +1,4 @@
-/*	$OpenBSD: htpasswd.c,v 1.14 2015/10/16 13:37:44 millert Exp $ */
+/*	$OpenBSD: htpasswd.c,v 1.15 2015/11/05 20:07:15 florian Exp $ */
 /*
  * Copyright (c) 2014 Florian Obser <florian@openbsd.org>
  *
@@ -80,6 +80,9 @@ main(int argc, char** argv)
 			file = argv[0];
 		else if (argc > 1)
 			usage();
+		else if (pledge("stdio", NULL) == -1)
+			err(1, "pledge");
+
 		if ((linelen = getline(&line, &linesize, stdin)) == -1)
 			err(1, "cannot read login:password from stdin");
 		line[linelen-1] = '\0';
@@ -97,6 +100,8 @@ main(int argc, char** argv)
 
 		switch (argc) {
 		case 1:
+			if (pledge("stdio tty", NULL) == -1)
+				err(1, "pledge");
 			if ((loginlen = asprintf(&login, "%s:", argv[0])) == -1)
 				err(1, "asprintf");
 			break;
