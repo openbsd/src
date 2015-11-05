@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_mkdb.c,v 1.24 2015/10/16 13:37:44 millert Exp $	*/
+/*	$OpenBSD: kvm_mkdb.c,v 1.25 2015/11/05 16:15:47 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -98,6 +98,9 @@ main(int argc, char *argv[])
 	if (argc > 1)
 		usage();
 
+	if (pledge("stdio rpath wpath cpath fattr flock", NULL) == -1)
+		err(1, "pledge");
+
 	/* If no kernel specified use _PATH_KSYMS and fall back to _PATH_UNIX */
 	if (argc > 0) {
 		nlistpath = argv[0];
@@ -168,10 +171,6 @@ kvm_mkdb(int fd, const char *dbdir, char *nlistpath, char *nlistname,
 		(void)unlink(dbtemp);
 		return(1);
 	}
-
-	/* rename() later */
-	if (pledge("stdio rpath wpath cpath flock", NULL) == -1)
-		err(1, "pledge");
 
 	if (create_knlist(nlistpath, fd, db) != 0) {
 		warn("cannot determine executable type of %s", nlistpath);
