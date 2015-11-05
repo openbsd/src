@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.238 2015/10/21 16:44:28 jsing Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.239 2015/11/05 08:55:09 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1104,6 +1104,8 @@ smtp_io(struct io *io, int evt)
 
 		/* End of body */
 		if (s->state == STATE_BODY) {
+			rfc2822_parser_flush(&s->rfc2822_parser);
+
 			iobuf_normalize(&s->iobuf);
 			io_set_write(io);
 
