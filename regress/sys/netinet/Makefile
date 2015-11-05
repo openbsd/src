@@ -1,5 +1,5 @@
-#	$OpenBSD: Makefile,v 1.1 2015/10/14 12:47:07 vgross Exp $
+#	$OpenBSD: Makefile,v 1.2 2015/11/05 12:54:24 bluhm Exp $
 
-SUBDIR =	autoport
+SUBDIR =	arp autoport
 
 .include <bsd.subdir.mk>
