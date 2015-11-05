@@ -1,4 +1,4 @@
-/*	$OpenBSD: ber.h,v 1.3 2013/01/26 09:37:23 gilles Exp $ */
+/*	$OpenBSD: ber.h,v 1.4 2015/11/05 12:35:58 jung Exp $ */
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@vantronix.net>
@@ -23,7 +23,7 @@ struct ber_element {
 	unsigned long		 be_encoding;
 	size_t			 be_len;
 	int			 be_free;
-	u_int8_t		 be_class;
+	uint8_t			 be_class;
 	union {
 		struct ber_element	*bv_sub;
 		void			*bv_val;
@@ -35,13 +35,13 @@ struct ber_element {
 };
 
 struct ber {
-	int	 fd;
-	u_char	*br_wbuf;
-	u_char	*br_wptr;
-	u_char	*br_wend;
-	u_char	*br_rbuf;
-	u_char	*br_rptr;
-	u_char	*br_rend;
+	int		 fd;
+	unsigned char	*br_wbuf;
+	unsigned char	*br_wptr;
+	unsigned char	*br_wend;
+	unsigned char	*br_rbuf;
+	unsigned char	*br_rptr;
+	unsigned char	*br_rend;
 
 	unsigned long	(*br_application)(struct ber_element *);
 };
@@ -73,7 +73,7 @@ struct ber {
 #define BER_MAX_OID_LEN		32	/* OBJECT */
 
 struct ber_oid {
-	u_int32_t	bo_id[BER_MAX_OID_LEN + 1];
+	uint32_t	bo_id[BER_MAX_OID_LEN + 1];
 	size_t		bo_n;
 };
 
@@ -112,7 +112,7 @@ struct ber_element	*ber_add_oid(struct ber_element *, struct ber_oid *);
 struct ber_element	*ber_add_noid(struct ber_element *, struct ber_oid *, int);
 struct ber_element	*ber_add_oidstring(struct ber_element *, const char *);
 int			 ber_get_oid(struct ber_element *, struct ber_oid *);
-size_t			 ber_oid2ber(struct ber_oid *, u_int8_t *, size_t);
+size_t			 ber_oid2ber(struct ber_oid *, uint8_t *, size_t);
 int			 ber_string2oid(const char *, struct ber_oid *);
 struct ber_element	*ber_printf_elements(struct ber_element *, char *, ...);
 int			 ber_scanf_elements(struct ber_element *, char *, ...);

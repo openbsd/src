@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl.c,v 1.78 2015/10/21 16:45:13 jsing Exp $	*/
+/*	$OpenBSD: ssl.c,v 1.79 2015/11/05 12:35:58 jung Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -55,9 +55,9 @@ ssl_init(void)
 
 	SSL_library_init();
 	SSL_load_error_strings();
-	
+
 	OpenSSL_add_all_algorithms();
-	
+
 	/* Init hardware crypto engines. */
 	ENGINE_load_builtin_engines();
 	ENGINE_register_all_complete();
@@ -69,7 +69,7 @@ ssl_setup(SSL_CTX **ctxp, struct pki *pki)
 {
 	DH	*dh;
 	SSL_CTX	*ctx;
-	u_int8_t sid[SSL_MAX_SID_CTX_LENGTH];
+	uint8_t sid[SSL_MAX_SID_CTX_LENGTH];
 
 	ctx = ssl_ctx_create(pki->pki_name, pki->pki_cert, pki->pki_cert_len);
 

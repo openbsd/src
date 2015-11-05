@@ -1,4 +1,4 @@
-/*	$OpenBSD: aldap.h,v 1.5 2015/01/20 17:37:54 deraadt Exp $ */
+/*	$OpenBSD: aldap.h,v 1.6 2015/11/05 12:35:58 jung Exp $ */
 
 /*
  * Copyright (c) 2008 Alexander Schrijver <aschrijver@openbsd.org>
@@ -28,7 +28,7 @@ struct aldap {
 #define ALDAP_ERR_PARSER_ERROR		1
 #define ALDAP_ERR_INVALID_FILTER	2
 #define ALDAP_ERR_OPERATION_FAILED	3
-	u_int8_t	err;
+	uint8_t		err;
 	int		msgid;
 	struct ber	ber;
 };
@@ -61,7 +61,7 @@ struct aldap_message {
 		}			 search;
 	} body;
 	struct ber_element	*references;
-	struct aldap_page_control *page; 
+	struct aldap_page_control *page;
 };
 
 enum aldap_protocol {

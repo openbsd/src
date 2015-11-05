@@ -1,4 +1,4 @@
-/*	$OpenBSD: ber.c,v 1.6 2015/02/12 00:30:38 pelikan Exp $ */
+/*	$OpenBSD: ber.c,v 1.7 2015/11/05 12:35:58 jung Exp $ */
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@vantronix.net>
@@ -42,14 +42,14 @@
 
 static int	ber_dump_element(struct ber *ber, struct ber_element *root);
 static void	ber_dump_header(struct ber *ber, struct ber_element *root);
-static void	ber_putc(struct ber *ber, u_char c);
+static void	ber_putc(struct ber *ber, unsigned char c);
 static void	ber_write(struct ber *ber, void *buf, size_t len);
 static ssize_t	get_id(struct ber *b, unsigned long *tag, int *class,
     int *cstruct);
 static ssize_t	get_len(struct ber *b, ssize_t *len);
 static ssize_t	ber_read_element(struct ber *ber, struct ber_element *elm);
 static ssize_t	ber_readbuf(struct ber *b, void *buf, size_t nbytes);
-static ssize_t	ber_getc(struct ber *b, u_char *c);
+static ssize_t	ber_getc(struct ber *b, unsigned char *c);
 static ssize_t	ber_read(struct ber *ber, void *buf, size_t len);
 
 #ifdef DEBUG
@@ -156,8 +156,8 @@ struct ber_element *
 ber_add_enumerated(struct ber_element *prev, long long val)
 {
 	struct ber_element *elm;
-	u_int i, len = 0;
-	u_char cur, last = 0;
+	unsigned int i, len = 0;
+	unsigned char cur, last = 0;
 
 	if ((elm = ber_get_element(BER_TYPE_ENUMERATED)) == NULL)
 		return NULL;
@@ -185,8 +185,8 @@ struct ber_element *
 ber_add_integer(struct ber_element *prev, long long val)
 {
 	struct ber_element *elm;
-	u_int i, len = 0;
-	u_char cur, last = 0;
+	unsigned int i, len = 0;
+	unsigned char cur, last = 0;
 
 	if ((elm = ber_get_element(BER_TYPE_INTEGER)) == NULL)
 		return NULL;
@@ -386,10 +386,10 @@ ber_get_eoc(struct ber_element *elm)
 }
 
 size_t
-ber_oid2ber(struct ber_oid *o, u_int8_t *buf, size_t len)
+ber_oid2ber(struct ber_oid *o, uint8_t *buf, size_t len)
 {
-	u_int32_t	 v;
-	u_int		 i, j = 0, k;
+	uint32_t	 v;
+	unsigned int	 i, j = 0, k;
 
 	if (o->bo_n < BER_MIN_OID_LEN || o->bo_n > BER_MAX_OID_LEN ||
 	    o->bo_id[0] > 2 || o->bo_id[1] > 40)
@@ -398,7 +398,7 @@ ber_oid2ber(struct ber_oid *o, u_int8_t *buf, size_t len)
 	v = (o->bo_id[0] * 40) + o->bo_id[1];
 	for (i = 2, j = 0; i <= o->bo_n; v = o->bo_id[i], i++) {
 		for (k = 28; k >= 7; k -= 7) {
-			if (v >= (u_int)(1 << k)) {
+			if (v >= (unsigned int)(1 << k)) {
 				if (len)
 					buf[j] = v >> k | BER_TAG_MORE;
 				j++;
@@ -438,7 +438,7 @@ struct ber_element *
 ber_add_oid(struct ber_element *prev, struct ber_oid *o)
 {
 	struct ber_element	*elm;
-	u_int8_t		*buf;
+	uint8_t			*buf;
 	size_t			 len;
 
 	if ((elm = ber_get_element(BER_TYPE_OBJECT)) == NULL)
@@ -493,7 +493,7 @@ ber_add_oidstring(struct ber_element *prev, const char *oidstr)
 int
 ber_get_oid(struct ber_element *elm, struct ber_oid *o)
 {
-	u_int8_t	*buf;
+	uint8_t		*buf;
 	size_t		 len, i = 0, j = 0;
 
 	if (elm->be_encoding != BER_TYPE_OBJECT)
@@ -918,7 +918,7 @@ ber_dump_element(struct ber *ber, struct ber_element *root)
 static void
 ber_dump_header(struct ber *ber, struct ber_element *root)
 {
-	u_char	id = 0, t, buf[8];
+	unsigned char id = 0, t, buf[8];
 	unsigned long type;
 	size_t size;
 
@@ -964,7 +964,7 @@ ber_dump_header(struct ber *ber, struct ber_element *root)
 }
 
 static void
-ber_putc(struct ber *ber, u_char c)
+ber_putc(struct ber *ber, unsigned char c)
 {
 	if (ber->br_wptr + 1 <= ber->br_wend)
 		*ber->br_wptr = c;
@@ -986,7 +986,7 @@ ber_write(struct ber *ber, void *buf, size_t len)
 static ssize_t
 get_id(struct ber *b, unsigned long *tag, int *class, int *cstruct)
 {
-	u_char u;
+	unsigned char u;
 	size_t i = 0;
 	unsigned long t = 0;
 
@@ -1023,7 +1023,7 @@ get_id(struct ber *b, unsigned long *tag, int *class, int *cstruct)
 static ssize_t
 get_len(struct ber *b, ssize_t *len)
 {
-	u_char	u, n;
+	unsigned char u, n;
 	ssize_t	s, r;
 
 	if (ber_getc(b, &u) == -1)
@@ -1071,7 +1071,7 @@ ber_read_element(struct ber *ber, struct ber_element *elm)
 	unsigned long type;
 	int i, class, cstruct;
 	ssize_t len, r, totlen = 0;
-	u_char c;
+	unsigned char c;
 
 	if ((r = get_id(ber, &type, &class, &cstruct)) == -1)
 		return -1;
@@ -1141,7 +1141,7 @@ ber_read_element(struct ber *ber, struct ber_element *elm)
 		elm->be_free = 1;
 		elm->be_len = len;
 		ber_read(ber, elm->be_val, len);
-		((u_char *)elm->be_val)[len] = '\0';
+		((unsigned char *)elm->be_val)[len] = '\0';
 		break;
 	case BER_TYPE_NULL:	/* no payload */
 		if (len != 0)
@@ -1197,7 +1197,7 @@ void
 ber_set_readbuf(struct ber *b, void *buf, size_t len)
 {
 	b->br_rbuf = b->br_rptr = buf;
-	b->br_rend = (u_int8_t *)buf + len;
+	b->br_rend = (uint8_t *)buf + len;
 }
 
 ssize_t
@@ -1223,7 +1223,7 @@ ber_free(struct ber *b)
 }
 
 static ssize_t
-ber_getc(struct ber *b, u_char *c)
+ber_getc(struct ber *b, unsigned char *c)
 {
 	ssize_t r;
 	/*
@@ -1241,7 +1241,7 @@ ber_getc(struct ber *b, u_char *c)
 static ssize_t
 ber_read(struct ber *ber, void *buf, size_t len)
 {
-	u_char *b = buf;
+	unsigned char *b = buf;
 	ssize_t	r, remain = len;
 
 	/*
@@ -1261,9 +1261,9 @@ ber_read(struct ber *ber, void *buf, size_t len)
 			return -1;
 		}
 		if (r == 0)
-			return (b - (u_char *)buf);
+			return (b - (unsigned char *)buf);
 		b += r;
 		remain -= r;
 	}
-	return (b - (u_char *)buf);
+	return (b - (unsigned char *)buf);
 }
