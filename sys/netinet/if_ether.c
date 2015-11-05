@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.183 2015/11/04 00:16:12 dlg Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.184 2015/11/05 12:46:23 bluhm Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -497,18 +497,20 @@ in_arpinput(struct mbuf *m)
 	struct ether_header *eh;
 	struct llinfo_arp *la = NULL;
 	struct rtentry *rt = NULL;
-	struct ifaddr *ifa;
 	struct sockaddr_dl *sdl;
 	struct sockaddr sa;
-	struct in_addr isaddr, itaddr, myaddr;
+	struct sockaddr_in sin;
+	struct in_addr isaddr, itaddr;
 	struct mbuf *mh;
 	u_int8_t *enaddr = NULL;
 #if NCARP > 0
 	uint8_t *ethshost = NULL;
 #endif
 	char addr[INET_ADDRSTRLEN];
-	int op, changed = 0;
-	unsigned int len;
+	int op, changed = 0, target = 0, sender = 0;
+	unsigned int len, rdomain;
+
+	rdomain = rtable_l2(m->m_pkthdr.ph_rtableid);
 
 	ifp = if_get(m->m_pkthdr.ph_ifidx);
 	if (ifp == NULL) {
@@ -524,6 +526,9 @@ in_arpinput(struct mbuf *m)
 
 	memcpy(&itaddr, ea->arp_tpa, sizeof(itaddr));
 	memcpy(&isaddr, ea->arp_spa, sizeof(isaddr));
+	memset(&sin, 0, sizeof(sin));
+	sin.sin_len = sizeof(sin);
+	sin.sin_family = AF_INET;
 
 	if (ETHER_IS_MULTICAST(&ea->arp_sha[0])) {
 		if (!memcmp(ea->arp_sha, etherbroadcastaddr,
@@ -536,63 +541,45 @@ in_arpinput(struct mbuf *m)
 	}
 
 	/* First try: check target against our addresses */
-	TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
-		if (ifa->ifa_addr->sa_family != AF_INET)
-			continue;
-
-		if (itaddr.s_addr != ifatoia(ifa)->ia_addr.sin_addr.s_addr)
-			continue;
-
-		if (op == ARPOP_REPLY)
-			break;
+	sin.sin_addr = itaddr;
+	rt = rtalloc(sintosa(&sin), 0, rdomain);
+	if (rtisvalid(rt) && ISSET(rt->rt_flags, RTF_LOCAL) &&
+	    rt->rt_ifidx == ifp->if_index)
+		target = 1;
+	rtfree(rt);
+	rt = NULL;
+	
 #if NCARP > 0
-		if (ifp->if_type == IFT_CARP && !carp_iamatch(ifp, &ethshost))
-			goto out;
-#endif
-		break;
-	}
-
-	/* Second try: check source against our addresses */
-	if (ifa == NULL) {
-		TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
-			if (ifa->ifa_addr->sa_family != AF_INET)
-				continue;
-
-			if (isaddr.s_addr ==
-			    ifatoia(ifa)->ia_addr.sin_addr.s_addr)
-				break;
-		}
-	}
-
-	/* Third try: not one of our addresses, just find a usable ia */
-	if (ifa == NULL) {
-		TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
-			if (ifa->ifa_addr->sa_family == AF_INET)
-				break;
-		}
-	}
-
-	if (ifa == NULL)
+	if (target && op == ARPOP_REQUEST && ifp->if_type == IFT_CARP &&
+	    !carp_iamatch(ifp, &ethshost))
 		goto out;
+#endif
+
+	/* Second try: check sender against our addresses */
+	sin.sin_addr = isaddr;
+	rt = rtalloc(sintosa(&sin), 0, rdomain);
+	if (rtisvalid(rt) && ISSET(rt->rt_flags, RTF_LOCAL) &&
+	    rt->rt_ifidx == ifp->if_index)
+		sender = 1;
+	rtfree(rt);
+	rt = NULL;
 
 	if (!enaddr)
 		enaddr = ac->ac_enaddr;
-	myaddr = ifatoia(ifa)->ia_addr.sin_addr;
-
 	if (!memcmp(ea->arp_sha, enaddr, sizeof(ea->arp_sha)))
 		goto out;	/* it's from me, ignore it. */
 
-	if (myaddr.s_addr != INADDR_ANY && isaddr.s_addr == myaddr.s_addr) {
+	if (sender && isaddr.s_addr != INADDR_ANY) {
 		inet_ntop(AF_INET, &isaddr, addr, sizeof(addr));
 		log(LOG_ERR,
 		   "duplicate IP address %s sent from ethernet address %s\n",
 		   addr, ether_sprintf(ea->arp_sha));
-		itaddr = myaddr;
+		itaddr = isaddr;
 		goto reply;
 	}
 
-	rt = arplookup(isaddr.s_addr, itaddr.s_addr == myaddr.s_addr, 0,
-	    rtable_l2(m->m_pkthdr.ph_rtableid));
+	/* Do we have an ARP cache for the sender?  Create if we are target. */
+	rt = arplookup(isaddr.s_addr, target, 0, rdomain);
 	if (rt != NULL && (sdl = satosdl(rt->rt_gateway)) != NULL) {
 		la = (struct llinfo_arp *)rt->rt_llinfo;
 		if (sdl->sdl_alen) {
@@ -689,13 +676,12 @@ out:
 	}
 
 	rtfree(rt);
-	if (itaddr.s_addr == myaddr.s_addr) {
-		/* I am the target */
+	if (target) {
+		/* We are the target and already have all info for the reply */
 		memcpy(ea->arp_tha, ea->arp_sha, sizeof(ea->arp_sha));
 		memcpy(ea->arp_sha, enaddr, sizeof(ea->arp_sha));
 	} else {
-		rt = arplookup(itaddr.s_addr, 0, SIN_PROXY,
-		    rtable_l2(m->m_pkthdr.ph_rtableid));
+		rt = arplookup(itaddr.s_addr, 0, SIN_PROXY, rdomain);
 		if (rt == NULL)
 			goto out;
 		if (rt->rt_ifp->if_type == IFT_CARP && ifp->if_type != IFT_CARP)
