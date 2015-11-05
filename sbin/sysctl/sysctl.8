@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.8,v 1.187 2015/10/03 09:17:13 zhuk Exp $
+.\"	$OpenBSD: sysctl.8,v 1.188 2015/11/05 11:24:24 logan Exp $
 .\"	$NetBSD: sysctl.8,v 1.4 1995/09/30 07:12:49 thorpej Exp $
 .\"
 .\" Copyright (c) 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)sysctl.8	8.2 (Berkeley) 5/9/95
 .\"
-.Dd $Mdocdate: October 3 2015 $
+.Dd $Mdocdate: November 5 2015 $
 .Dt SYSCTL 8
 .Os
 .Sh NAME
@@ -308,6 +308,7 @@ and a few require a kernel compiled with non-standard
 .It net.inet6.ip6.maxdynroutes Ta integer Ta yes
 .It net.inet6.ip6.dad_pending Ta integer Ta yes
 .It net.inet6.ip6.mtudisctimeout Ta integer Ta yes
+.It net.inet6.ip6.ifq Ta integer Ta no
 .It net.inet6.icmp6.redirtimeout Ta integer Ta yes
 .It net.inet6.icmp6.nd6_prune Ta integer Ta yes
 .It net.inet6.icmp6.nd6_delay Ta integer Ta yes
