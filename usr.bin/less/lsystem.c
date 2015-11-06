@@ -212,7 +212,7 @@ pipe_data(char *cmd, off_t spos, off_t epos)
 	flush();
 	raw_mode(0);
 	init_signals(0);
-	LSIGNAL(SIGPIPE, SIG_IGN);
+	lsignal(SIGPIPE, SIG_IGN);
 
 	c = EOI;
 	while (epos == -1 || spos++ <= epos) {
@@ -239,7 +239,7 @@ pipe_data(char *cmd, off_t spos, off_t epos)
 
 	(void) pclose(f);
 
-	LSIGNAL(SIGPIPE, SIG_DFL);
+	lsignal(SIGPIPE, SIG_DFL);
 	init_signals(1);
 	raw_mode(1);
 	init();

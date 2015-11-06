@@ -198,8 +198,6 @@ struct textlist
 #define	ESC		CONTROL('[')
 #define	CSI		((unsigned char)'\233')
 
-#define	LSIGNAL(sig, func)	lsignal(sig, func)
-
 #define	S_INTERRUPT	01
 #define	S_STOP		02
 #define	S_WINCH		04

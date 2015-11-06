@@ -74,18 +74,18 @@ init_signals(int on)
 		/*
 		 * Set signal handlers.
 		 */
-		(void) LSIGNAL(SIGINT, u_interrupt);
-		(void) LSIGNAL(SIGTSTP, stop);
-		(void) LSIGNAL(SIGWINCH, sigwinch);
-		(void) LSIGNAL(SIGQUIT, SIG_IGN);
+		(void) lsignal(SIGINT, u_interrupt);
+		(void) lsignal(SIGTSTP, stop);
+		(void) lsignal(SIGWINCH, sigwinch);
+		(void) lsignal(SIGQUIT, SIG_IGN);
 	} else {
 		/*
 		 * Restore signals to defaults.
 		 */
-		(void) LSIGNAL(SIGINT, SIG_DFL);
-		(void) LSIGNAL(SIGTSTP, SIG_DFL);
-		(void) LSIGNAL(SIGWINCH, SIG_IGN);
-		(void) LSIGNAL(SIGQUIT, SIG_DFL);
+		(void) lsignal(SIGINT, SIG_DFL);
+		(void) lsignal(SIGTSTP, SIG_DFL);
+		(void) lsignal(SIGWINCH, SIG_IGN);
+		(void) lsignal(SIGQUIT, SIG_DFL);
 	}
 }
 
@@ -106,13 +106,13 @@ psignals(void)
 		/*
 		 * Clean up the terminal.
 		 */
-		LSIGNAL(SIGTTOU, SIG_IGN);
+		lsignal(SIGTTOU, SIG_IGN);
 		clear_bot();
 		deinit();
 		flush();
 		raw_mode(0);
-		LSIGNAL(SIGTTOU, SIG_DFL);
-		LSIGNAL(SIGTSTP, SIG_DFL);
+		lsignal(SIGTTOU, SIG_DFL);
+		lsignal(SIGTSTP, SIG_DFL);
 		kill(getpid(), SIGTSTP);
 		/*
 		 * ... Bye bye. ...
@@ -120,7 +120,7 @@ psignals(void)
 		 * Reset the terminal and arrange to repaint the
 		 * screen when we get back to the main command loop.
 		 */
-		LSIGNAL(SIGTSTP, stop);
+		lsignal(SIGTSTP, stop);
 		raw_mode(1);
 		init();
 		screen_trashed = 1;
