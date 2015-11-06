@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ppp.c,v 1.94 2015/11/05 10:53:54 dlg Exp $	*/
+/*	$OpenBSD: if_ppp.c,v 1.95 2015/11/06 07:07:19 dlg Exp $	*/
 /*	$NetBSD: if_ppp.c,v 1.39 1997/05/17 21:11:59 christos Exp $	*/
 
 /*
@@ -295,8 +295,7 @@ pppalloc(pid_t pid)
 #endif /* PPP_COMPRESS */
 	for (i = 0; i < NUM_NP; ++i)
 		sc->sc_npmode[i] = NPMODE_ERROR;
-	sc->sc_npqueue = NULL;
-	sc->sc_npqtail = &sc->sc_npqueue;
+	ml_init(&sc->sc_npqueue);
 	sc->sc_last_sent = sc->sc_last_recv = time_second;
 
 	return sc;
@@ -309,7 +308,6 @@ void
 pppdealloc(struct ppp_softc *sc)
 {
 	struct ppp_pkt *pkt;
-	struct mbuf *m;
 
 	splsoftassert(IPL_SOFTNET);
 
@@ -320,10 +318,7 @@ pppdealloc(struct ppp_softc *sc)
 	while ((pkt = ppp_pkt_dequeue(&sc->sc_rawq)) != NULL)
 		ppp_pkt_free(pkt);
 	mq_purge(&sc->sc_inq);
-	while ((m = sc->sc_npqueue) != NULL) {
-		sc->sc_npqueue = m->m_nextpkt;
-		m_freem(m);
-	}
+	ml_purge(&sc->sc_npqueue);
 	m_freem(sc->sc_togo);
 	sc->sc_togo = NULL;
 
@@ -787,9 +782,7 @@ pppoutput(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 	s = splsoftnet();
 	if (mode == NPMODE_QUEUE) {
 		/* XXX we should limit the number of packets on this queue */
-		*sc->sc_npqtail = m0;
-		m0->m_nextpkt = NULL;
-		sc->sc_npqtail = &m0->m_nextpkt;
+		ml_enqueue(&sc->sc_npqueue, m0);
 	} else {
 		IFQ_ENQUEUE(&sc->sc_if.if_snd, m0, error);
 		if (error) {
@@ -811,6 +804,8 @@ bad:
 	return (error);
 }
 
+
+
 /*
  * After a change in the NPmode for some NP, move packets from the
  * npqueue to the send queue or the fast queue as appropriate.
@@ -819,13 +814,14 @@ bad:
 static void
 ppp_requeue(struct ppp_softc *sc)
 {
-	struct mbuf *m, **mpp;
+	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
+	struct mbuf *m;
 	enum NPmode mode;
 	int error;
 
 	splsoftassert(IPL_SOFTNET);
 
-	for (mpp = &sc->sc_npqueue; (m = *mpp) != NULL; ) {
+	while ((m = ml_dequeue(&sc->sc_npqueue)) != NULL) {
 		switch (PPP_PROTOCOL(mtod(m, u_char *))) {
 		case PPP_IP:
 			mode = sc->sc_npmode[NP_IP];
@@ -836,12 +832,6 @@ ppp_requeue(struct ppp_softc *sc)
 
 		switch (mode) {
 		case NPMODE_PASS:
-			/*
-			 * This packet can now go on one of the queues
-			 * to be sent.
-			 */
-			*mpp = m->m_nextpkt;
-			m->m_nextpkt = NULL;
 			IFQ_ENQUEUE(&sc->sc_if.if_snd, m, error);
 			if (error) {
 				sc->sc_if.if_oerrors++;
@@ -851,16 +841,15 @@ ppp_requeue(struct ppp_softc *sc)
 
 		case NPMODE_DROP:
 		case NPMODE_ERROR:
-			*mpp = m->m_nextpkt;
 			m_freem(m);
 			break;
 
 		case NPMODE_QUEUE:
-			mpp = &m->m_nextpkt;
+			ml_enqueue(&ml, m);
 			break;
 		}
 	}
-	sc->sc_npqtail = mpp;
+	sc->sc_npqueue = ml;
 }
 
 /*
