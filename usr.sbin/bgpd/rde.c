@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.342 2015/10/25 18:45:04 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.343 2015/11/06 16:23:26 phessler Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2606,6 +2606,8 @@ rde_reload_done(void)
 	rdomains_l = newdomains;
 	/* XXX WHERE IS THE SYNC ??? */
 
+	rde_filter_calc_skip_steps(out_rules_tmp);
+
 	/*
 	 * make the new filter rules the active one but keep the old for
 	 * softrconfig. This is needed so that changes happening are using
@@ -2639,6 +2641,8 @@ rde_reload_done(void)
 	for (rid = 0; rid < rib_size; rid++) {
 		if (*ribs[rid].name == '\0')
 			continue;
+		rde_filter_calc_skip_steps(ribs[rid].in_rules_tmp);
+
 		/* flip rules, make new active */
 		fh = ribs[rid].in_rules;
 		ribs[rid].in_rules = ribs[rid].in_rules_tmp;

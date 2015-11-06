@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.291 2015/10/11 19:30:12 phessler Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.292 2015/11/06 16:23:26 phessler Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -788,12 +788,23 @@ struct filter_match {
 	struct filter_extcommunity	ext_community;
 };
 
+union filter_rule_ptr {
+	struct filter_rule		*ptr;
+	u_int32_t			 nr;
+};
+
 struct filter_rule {
 	TAILQ_ENTRY(filter_rule)	entry;
 	char				rib[PEER_DESCR_LEN];
 	struct filter_peers		peer;
 	struct filter_match		match;
 	struct filter_set_head		set;
+#define RDE_FILTER_SKIP_DIR		0
+#define RDE_FILTER_SKIP_GROUPID		1
+#define RDE_FILTER_SKIP_REMOTE_AS	2
+#define RDE_FILTER_SKIP_PEERID		3
+#define RDE_FILTER_SKIP_COUNT		4
+	union filter_rule_ptr		skip[RDE_FILTER_SKIP_COUNT];
 	enum filter_actions		action;
 	enum directions			dir;
 	u_int8_t			quick;

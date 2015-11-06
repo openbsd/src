@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_filter.c,v 1.75 2015/10/24 08:02:24 claudio Exp $ */
+/*	$OpenBSD: rde_filter.c,v 1.76 2015/11/06 16:23:26 phessler Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -28,57 +28,6 @@
 int	rde_filter_match(struct filter_rule *, struct rde_aspath *,
 	    struct bgpd_addr *, u_int8_t, struct rde_peer *, struct rde_peer *);
 int	filterset_equal(struct filter_set_head *, struct filter_set_head *);
-
-enum filter_actions
-rde_filter(struct filter_head *rules, struct rde_aspath **new,
-    struct rde_peer *peer, struct rde_aspath *asp, struct bgpd_addr *prefix,
-    u_int8_t prefixlen, struct rde_peer *from)
-{
-	struct filter_rule	*f;
-	enum filter_actions	 action = ACTION_ALLOW; /* default allow */
-
-	if (new != NULL)
-		*new = NULL;
-
-	if (asp->flags & F_ATTR_PARSE_ERR)
-		/*
-	 	 * don't try to filter bad updates just deny them
-		 * so they act as implicit withdraws
-		 */
-		return (ACTION_DENY);
-
-	if (rules == NULL)
-		return (action);
-
-	TAILQ_FOREACH(f, rules, entry) {
-		if (f->peer.groupid != 0 &&
-		    f->peer.groupid != peer->conf.groupid)
-			continue;
-		if (f->peer.peerid != 0 &&
-		    f->peer.peerid != peer->conf.id)
-			continue;
-		if (f->peer.remote_as != 0 &&
-		    f->peer.remote_as != peer->conf.remote_as)
-			continue;
-		if (rde_filter_match(f, asp, prefix, prefixlen, peer, from)) {
-			if (asp != NULL && new != NULL) {
-				/* asp may get modified so create a copy */
-				if (*new == NULL) {
-					*new = path_copy(asp);
-					/* ... and use the copy from now on */
-					asp = *new;
-				}
-				rde_apply_set(asp, &f->set, prefix->aid,
-				    from, peer);
-			}
-			if (f->action != ACTION_NONE)
-				action = f->action;
-			if (f->quick)
-				return (action);
-		}
-	}
-	return (action);
-}
 
 void
 rde_apply_set(struct rde_aspath *asp, struct filter_set_head *sh,
@@ -696,4 +645,143 @@ filterset_name(enum action_types type)
 	}
 
 	fatalx("filterset_name: got lost");
+}
+
+/*
+ * Copyright (c) 2001 Daniel Hartmeier
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *
+ *    - Redistributions of source code must retain the above copyright
+ *      notice, this list of conditions and the following disclaimer.
+ *    - Redistributions in binary form must reproduce the above
+ *      copyright notice, this list of conditions and the following
+ *      disclaimer in the documentation and/or other materials provided
+ *      with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+ * FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+ * COPYRIGHT HOLDERS OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+ * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+ * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+ * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ *
+ * Effort sponsored in part by the Defense Advanced Research Projects
+ * Agency (DARPA) and Air Force Research Laboratory, Air Force
+ * Materiel Command, USAF, under agreement number F30602-01-2-0537.
+ *
+ */
+
+#define RDE_FILTER_SET_SKIP_STEPS(i)				\
+	do {							\
+		while (head[i] != cur) {			\
+			head[i]->skip[i].ptr = cur;		\
+			head[i] = TAILQ_NEXT(head[i], entry);	\
+		}						\
+	} while (0)
+
+struct peer;
+void print_rule(struct peer *, struct filter_rule *);
+
+void
+rde_filter_calc_skip_steps(struct filter_head *rules)
+{
+	struct filter_rule *cur, *prev, *head[RDE_FILTER_SKIP_COUNT];
+	int i;
+
+	if (rules == NULL)
+		return;
+
+	cur = TAILQ_FIRST(rules);
+
+	prev = cur;
+	for (i = 0; i < RDE_FILTER_SKIP_COUNT; ++i)
+		head[i] = cur;
+	while (cur != NULL) {
+		if (cur->peer.groupid != prev->peer.groupid)
+			RDE_FILTER_SET_SKIP_STEPS(RDE_FILTER_SKIP_GROUPID);
+		if (cur->peer.remote_as != prev->peer.remote_as)
+			RDE_FILTER_SET_SKIP_STEPS(RDE_FILTER_SKIP_REMOTE_AS);
+		 if (cur->peer.peerid != prev->peer.peerid)
+			RDE_FILTER_SET_SKIP_STEPS(RDE_FILTER_SKIP_PEERID);
+		prev = cur;
+		cur = TAILQ_NEXT(cur, entry);
+	}
+	for (i = 0; i < RDE_FILTER_SKIP_COUNT; ++i)
+		RDE_FILTER_SET_SKIP_STEPS(i);
+
+}
+
+#define RDE_FILTER_TEST_ATTRIB(t, a)				\
+	do {							\
+		if (t) {					\
+			f = a;					\
+			goto nextrule;				\
+		}						\
+	} while (0)
+
+enum filter_actions
+rde_filter(struct filter_head *rules, struct rde_aspath **new,
+    struct rde_peer *peer, struct rde_aspath *asp, struct bgpd_addr *prefix,
+    u_int8_t prefixlen, struct rde_peer *from)
+{
+	struct filter_rule	*f;
+	enum filter_actions	 action = ACTION_ALLOW; /* default allow */
+
+	if (new != NULL)
+		*new = NULL;
+
+	if (asp->flags & F_ATTR_PARSE_ERR)
+		/*
+	 	 * don't try to filter bad updates just deny them
+		 * so they act as implicit withdraws
+		 */
+		return (ACTION_DENY);
+
+	if (rules == NULL)
+		return (action);
+
+	f = TAILQ_FIRST(rules);
+	while (f != NULL) {
+		RDE_FILTER_TEST_ATTRIB(
+		    (f->peer.groupid &&
+		     f->peer.groupid != peer->conf.groupid),
+		     f->skip[RDE_FILTER_SKIP_GROUPID].ptr);
+		RDE_FILTER_TEST_ATTRIB(
+		    (f->peer.remote_as &&
+		     f->peer.remote_as != peer->conf.remote_as),
+		     f->skip[RDE_FILTER_SKIP_REMOTE_AS].ptr);
+		RDE_FILTER_TEST_ATTRIB(
+		    (f->peer.peerid &&
+		     f->peer.peerid != peer->conf.id),
+		     f->skip[RDE_FILTER_SKIP_PEERID].ptr);
+		if (rde_filter_match(f, asp, prefix, prefixlen, peer, from)) {
+			if (asp != NULL && new != NULL) {
+				/* asp may get modified so create a copy */
+				if (*new == NULL) {
+					*new = path_copy(asp);
+					/* ... and use the copy from now on */
+					asp = *new;
+				}
+				rde_apply_set(asp, &f->set, prefix->aid,
+				    from, peer);
+			}
+			if (f->action != ACTION_NONE)
+				action = f->action;
+			if (f->quick)
+				return (action);
+		}
+		f = TAILQ_NEXT(f, entry);
+ nextrule: ;
+	}
+	return (action);
 }
