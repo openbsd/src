@@ -1,4 +1,4 @@
-/*	$OpenBSD: cron.c,v 1.62 2015/11/04 20:28:17 millert Exp $	*/
+/*	$OpenBSD: cron.c,v 1.63 2015/11/06 23:47:42 millert Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -16,8 +16,6 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-
-#define	MAIN_PROGRAM
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -71,7 +69,7 @@ static void
 usage(void)
 {
 
-	fprintf(stderr, "usage: %s [-n] [-l load_avg]\n", ProgramName);
+	fprintf(stderr, "usage: %s [-n] [-l load_avg]\n", __progname);
 	exit(EXIT_FAILURE);
 }
 
@@ -80,8 +78,6 @@ main(int argc, char *argv[])
 {
 	struct sigaction sact;
 	sigset_t blocked, omask;
-
-	ProgramName = argv[0];
 
 	setlocale(LC_ALL, "");
 
@@ -434,7 +430,7 @@ open_socket(void)
 	sock = socket(AF_UNIX, SOCK_STREAM|SOCK_CLOEXEC|SOCK_NONBLOCK, 0);
 	if (sock == -1) {
 		fprintf(stderr, "%s: can't create socket: %s\n",
-		    ProgramName, strerror(errno));
+		    __progname, strerror(errno));
 		log_it("CRON", getpid(), "DEATH", "can't create socket");
 		exit(EXIT_FAILURE);
 	}
@@ -448,7 +444,7 @@ open_socket(void)
 	s_un.sun_family = AF_UNIX;
 
 	if (connect(sock, (struct sockaddr *)&s_un, sizeof(s_un)) == 0) {
-		fprintf(stderr, "%s: already running\n", ProgramName);
+		fprintf(stderr, "%s: already running\n", __progname);
 		log_it("CRON", getpid(), "DEATH", "already running");
 		exit(EXIT_FAILURE);
 	}
@@ -460,13 +456,13 @@ open_socket(void)
 	umask(omask);
 	if (rc != 0) {
 		fprintf(stderr, "%s: can't bind socket: %s\n",
-		    ProgramName, strerror(errno));
+		    __progname, strerror(errno));
 		log_it("CRON", getpid(), "DEATH", "can't bind socket");
 		exit(EXIT_FAILURE);
 	}
 	if (listen(sock, SOMAXCONN)) {
 		fprintf(stderr, "%s: can't listen on socket: %s\n",
-		    ProgramName, strerror(errno));
+		    __progname, strerror(errno));
 		log_it("CRON", getpid(), "DEATH", "can't listen on socket");
 		exit(EXIT_FAILURE);
 	}

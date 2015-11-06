@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.3 2015/11/04 20:28:17 millert Exp $	*/
+/*	$OpenBSD: client.c,v 1.4 2015/11/06 23:47:42 millert Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -101,7 +101,7 @@ poke_daemon(const char *spool_dir, unsigned char cookie)
 	if (snprintf(s_un.sun_path, sizeof s_un.sun_path, "%s/%s",
 	      SPOOL_DIR, CRONSOCK) >= sizeof(s_un.sun_path)) {
 		fprintf(stderr, "%s: %s/%s: path too long\n",
-		    ProgramName, SPOOL_DIR, CRONSOCK);
+		    __progname, SPOOL_DIR, CRONSOCK);
 		return;
 	}
 	s_un.sun_family = AF_UNIX;
@@ -110,7 +110,7 @@ poke_daemon(const char *spool_dir, unsigned char cookie)
 		send(sock, &cookie, 1, MSG_NOSIGNAL);
 	else
 		fprintf(stderr, "%s: warning, cron does not appear to be "
-		    "running.\n", ProgramName);
+		    "running.\n", __progname);
 	if (sock >= 0)
 		close(sock);
 }

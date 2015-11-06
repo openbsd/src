@@ -1,4 +1,4 @@
-/*	$OpenBSD: globals.h,v 1.12 2015/11/04 12:53:05 millert Exp $	*/
+/*	$OpenBSD: globals.h,v 1.13 2015/11/06 23:47:42 millert Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -17,13 +17,5 @@
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifdef MAIN_PROGRAM
-# define XTRN
-# define INIT(x) = x
-#else
-# define XTRN extern
-# define INIT(x)
-#endif
-
-XTRN char	*ProgramName INIT("amnesia");
-XTRN int	LineNumber INIT(0);
+extern int	LineNumber;
+extern char	*__progname;

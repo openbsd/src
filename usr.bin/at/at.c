@@ -1,4 +1,4 @@
-/*	$OpenBSD: at.c,v 1.68 2015/11/04 20:28:17 millert Exp $	*/
+/*	$OpenBSD: at.c,v 1.69 2015/11/06 23:47:42 millert Exp $	*/
 
 /*
  *  at.c : Put file into atrun queue
@@ -30,8 +30,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-#define	MAIN_PROGRAM
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -100,7 +98,7 @@ time_t parsetime(int, char **);
 static __dead void
 panic(const char *a)
 {
-	(void)fprintf(stderr, "%s: %s\n", ProgramName, a);
+	(void)fprintf(stderr, "%s: %s\n", __progname, a);
 	if (fcreated)
 		unlink(atfile);
 
@@ -113,7 +111,7 @@ panic(const char *a)
 static __dead void
 panic2(const char *a, const char *b)
 {
-	(void)fprintf(stderr, "%s: %s%s\n", ProgramName, a, b);
+	(void)fprintf(stderr, "%s: %s%s\n", __progname, a, b);
 	if (fcreated)
 		unlink(atfile);
 
@@ -498,7 +496,7 @@ list_jobs(int argc, char **argv, int count_only, int csort)
 	} else
 		uids = NULL;
 
-	shortformat = strcmp(ProgramName, "at") == 0;
+	shortformat = strcmp(__progname, "at") == 0;
 
 	if (chdir(AT_DIR) != 0)
 		perr2("Cannot change to ", AT_DIR);
@@ -660,7 +658,7 @@ process_jobs(int argc, char **argv, int what)
 				if (user_uid != pw->pw_uid && user_uid != 0) {
 					fprintf(stderr, "%s: Only the superuser"
 					    " may %s other users' jobs\n",
-					    ProgramName, what == ATRM
+					    __progname, what == ATRM
 					    ? "remove" : "view");
 					exit(EXIT_FAILURE);
 				}
@@ -745,7 +743,7 @@ process_jobs(int argc, char **argv, int what)
 		if (jobs[i] != NULL) {
 			if (!force)
 				fprintf(stderr, "%s: %s: no such job\n",
-				    ProgramName, jobs[i]);
+				    __progname, jobs[i]);
 			error++;
 		}
 	}
@@ -908,23 +906,18 @@ main(int argc, char **argv)
 	if (argc < 1)
 		usage();
 
-	if ((ProgramName = strrchr(argv[0], '/')) != NULL)
-		ProgramName++;
-	else
-		ProgramName = argv[0];
-
 	user_uid = getuid();
 	user_gid = getgid();
 	spool_gid = getegid();
 
 	/* find out what this program is supposed to do */
-	if (strcmp(ProgramName, "atq") == 0) {
+	if (strcmp(__progname, "atq") == 0) {
 		program = ATQ;
 		options = "cnvq:";
-	} else if (strcmp(ProgramName, "atrm") == 0) {
+	} else if (strcmp(__progname, "atrm") == 0) {
 		program = ATRM;
 		options = "afi";
-	} else if (strcmp(ProgramName, "batch") == 0) {
+	} else if (strcmp(__progname, "batch") == 0) {
 		program = BATCH;
 		options = "f:q:mv";
 	}

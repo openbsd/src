@@ -1,4 +1,4 @@
-/*	$OpenBSD: crontab.c,v 1.82 2015/11/04 20:28:17 millert Exp $	*/
+/*	$OpenBSD: crontab.c,v 1.83 2015/11/06 23:47:42 millert Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -16,8 +16,6 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-
-#define	MAIN_PROGRAM
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -67,9 +65,9 @@ static	int		replace_cmd(void);
 static void
 usage(const char *msg)
 {
-	fprintf(stderr, "%s: usage error: %s\n", ProgramName, msg);
-	fprintf(stderr, "usage: %s [-u user] file\n", ProgramName);
-	fprintf(stderr, "       %s [-e | -l | -r] [-u user]\n", ProgramName);
+	fprintf(stderr, "%s: usage error: %s\n", __progname, msg);
+	fprintf(stderr, "usage: %s [-u user] file\n", __progname);
+	fprintf(stderr, "       %s [-e | -l | -r] [-u user]\n", __progname);
 	fprintf(stderr,
 	    "\t\t(default operation is replace, per 1003.2)\n"
 	    "\t-e\t(edit user's crontab)\n"
@@ -86,7 +84,6 @@ main(int argc, char *argv[])
 	Pid = getpid();
 	user_gid = getgid();
 	crontab_gid = getegid();
-	ProgramName = argv[0];
 
 	if (pledge("stdio rpath wpath cpath fattr getpw unix flock id proc exec",
 	    NULL) == -1) {
@@ -102,7 +99,7 @@ main(int argc, char *argv[])
 	if (!allowed(RealUser, CRON_ALLOW, CRON_DENY)) {
 		fprintf(stderr,
 			"You (%s) are not allowed to use this program (%s)\n",
-			User, ProgramName);
+			User, __progname);
 		fprintf(stderr, "See crontab(1) for more information\n");
 		log_it(RealUser, Pid, "AUTH", "crontab command not allowed");
 		exit(EXIT_FAILURE);
@@ -137,7 +134,7 @@ parse_args(int argc, char *argv[])
 
 	if (!(pw = getpwuid(getuid()))) {
 		fprintf(stderr, "%s: your UID isn't in the passwd file.\n",
-			ProgramName);
+			__progname);
 		fprintf(stderr, "bailing out.\n");
 		exit(EXIT_FAILURE);
 	}
@@ -159,7 +156,7 @@ parse_args(int argc, char *argv[])
 			}
 			if (!(pw = getpwnam(optarg))) {
 				fprintf(stderr, "%s:  user `%s' unknown\n",
-					ProgramName, optarg);
+					__progname, optarg);
 				exit(EXIT_FAILURE);
 			}
 			if (strlcpy(User, optarg, sizeof User) >= sizeof User)
@@ -353,7 +350,7 @@ edit_cmd(void)
 	rewind(NewCrontab);
 	if (ferror(NewCrontab)) {
 		fprintf(stderr, "%s: error while writing new crontab to %s\n",
-			ProgramName, Filename);
+			__progname, Filename);
  fatal:
 		unlink(Filename);
 		exit(EXIT_FAILURE);
@@ -379,13 +376,13 @@ edit_cmd(void)
 		if (lstat(Filename, &xstatbuf) == 0 &&
 		    statbuf.st_ino != xstatbuf.st_ino) {
 			fprintf(stderr, "%s: crontab temp file moved, editor "
-			   "may create backup files improperly\n", ProgramName);
+			   "may create backup files improperly\n", __progname);
 		}
 		fprintf(stderr, "%s: no changes made to crontab\n",
-			ProgramName);
+			__progname);
 		goto remove;
 	}
-	fprintf(stderr, "%s: installing new crontab\n", ProgramName);
+	fprintf(stderr, "%s: installing new crontab\n", __progname);
 	switch (replace_cmd()) {
 	case 0:
 		break;
@@ -413,11 +410,11 @@ edit_cmd(void)
 	case -2:
 	abandon:
 		fprintf(stderr, "%s: edits left in %s\n",
-			ProgramName, Filename);
+			__progname, Filename);
 		goto done;
 	default:
 		fprintf(stderr, "%s: panic: bad switch() in replace_cmd()\n",
-			ProgramName);
+			__progname);
 		goto fatal;
 	}
  remove:
@@ -442,7 +439,7 @@ replace_cmd(void)
 	char **envp = env_init();
 
 	if (envp == NULL) {
-		fprintf(stderr, "%s: Cannot allocate memory.\n", ProgramName);
+		fprintf(stderr, "%s: Cannot allocate memory.\n", __progname);
 		return (-2);
 	}
 	if (snprintf(TempFilename, sizeof TempFilename, "%s/tmp.XXXXXXXXX",
@@ -484,7 +481,7 @@ replace_cmd(void)
 
 	if (ferror(tmp)) {
 		fprintf(stderr, "%s: error while writing new crontab to %s\n",
-			ProgramName, TempFilename);
+			__progname, TempFilename);
 		fclose(tmp);
 		error = -2;
 		goto done;
@@ -546,7 +543,7 @@ replace_cmd(void)
 	}
 	if (rename(TempFilename, n)) {
 		fprintf(stderr, "%s: error renaming %s to %s\n",
-			ProgramName, TempFilename, n);
+			__progname, TempFilename, n);
 		perror("rename");
 		error = -2;
 		goto done;

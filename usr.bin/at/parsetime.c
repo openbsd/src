@@ -1,4 +1,4 @@
-/*	$OpenBSD: parsetime.c,v 1.23 2015/08/20 22:32:41 deraadt Exp $	*/
+/*	$OpenBSD: parsetime.c,v 1.24 2015/11/06 23:47:42 millert Exp $	*/
 
 /*
  * parsetime.c - parse time for at(1)
@@ -182,7 +182,7 @@ init_scanner(int argc, char **argv)
 
 	if ((sc_token = malloc(sc_len)) == NULL) {
 		fprintf(stderr, "%s: Insufficient virtual memory\n",
-		    ProgramName);
+		    __progname);
 		return (-1);
 	}
 	return (0);
@@ -264,7 +264,7 @@ token(void)
 static void
 plonk(int tok)
 {
-	fprintf(stderr, "%s: %s time\n", ProgramName,
+	fprintf(stderr, "%s: %s time\n", __progname,
 	    (tok == EOF) ? "incomplete" : "garbled");
 }
 
@@ -368,7 +368,7 @@ plus(struct tm *tm)
 	case MINUTES:
 		if (expectplur != sc_tokplur)
 			fprintf(stderr, "%s: pluralization is wrong\n",
-			    ProgramName);
+			    __progname);
 		dateadd(increment, tm);
 		return (0);
 	}
@@ -446,7 +446,7 @@ tod(struct tm *tm)
 	}
 	return (0);
 bad:
-	fprintf(stderr, "%s: garbled time\n", ProgramName);
+	fprintf(stderr, "%s: garbled time\n", __progname);
 	return (-1);
 }
 
@@ -607,7 +607,7 @@ month(struct tm *tm)
 	}
 	return (0);
 bad:
-	fprintf(stderr, "%s: garbled time\n", ProgramName);
+	fprintf(stderr, "%s: garbled time\n", __progname);
 	return (-1);
 }
 
@@ -700,13 +700,13 @@ parsetime(int argc, char **argv)
 	}
 
 	if (runtimer < 0) {
-		fprintf(stderr, "%s: garbled time\n", ProgramName);
+		fprintf(stderr, "%s: garbled time\n", __progname);
 		return (-1);
 	}
 
 	if (nowtimer > runtimer) {
 		fprintf(stderr, "%s: cannot schedule jobs in the past\n",
-		    ProgramName);
+		    __progname);
 		return (-1);
 	}
 

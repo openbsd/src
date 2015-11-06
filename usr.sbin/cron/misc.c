@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.68 2015/11/04 20:28:17 millert Exp $	*/
+/*	$OpenBSD: misc.c,v 1.69 2015/11/06 23:47:42 millert Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -33,6 +33,7 @@
 #include "globals.h"
 
 static int syslog_open = FALSE;
+int LineNumber;
 
 /* get_char(file) : like getc() but increment LineNumber on newlines
  */
@@ -126,7 +127,7 @@ log_it(const char *username, pid_t xpid, const char *event, const char *detail)
 	    "END EDIT", "LIST", "MAIL", "RELOAD", "REPLACE", "STARTUP", NULL };
 
 	if (!syslog_open) {
-		openlog(ProgramName, LOG_PID, LOG_CRON);
+		openlog(__progname, LOG_PID, LOG_CRON);
 		syslog_open = TRUE;		/* assume openlog success */
 	}
 
@@ -140,8 +141,10 @@ log_it(const char *username, pid_t xpid, const char *event, const char *detail)
 void
 log_close(void)
 {
-	closelog();
-	syslog_open = FALSE;
+	if (syslog_open) {
+		closelog();
+		syslog_open = FALSE;
+	}
 }
 
 /* char *first_word(char *s, char *t)
