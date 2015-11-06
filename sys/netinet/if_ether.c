@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.184 2015/11/05 12:46:23 bluhm Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.185 2015/11/06 23:45:21 bluhm Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -507,7 +507,7 @@ in_arpinput(struct mbuf *m)
 	uint8_t *ethshost = NULL;
 #endif
 	char addr[INET_ADDRSTRLEN];
-	int op, changed = 0, target = 0, sender = 0;
+	int op, changed = 0, target = 0;
 	unsigned int len, rdomain;
 
 	rdomain = rtable_l2(m->m_pkthdr.ph_rtableid);
@@ -540,7 +540,7 @@ in_arpinput(struct mbuf *m)
 		}
 	}
 
-	/* First try: check target against our addresses */
+	/* Check target against our interface addresses. */
 	sin.sin_addr = itaddr;
 	rt = rtalloc(sintosa(&sin), 0, rdomain);
 	if (rtisvalid(rt) && ISSET(rt->rt_flags, RTF_LOCAL) &&
@@ -555,32 +555,23 @@ in_arpinput(struct mbuf *m)
 		goto out;
 #endif
 
-	/* Second try: check sender against our addresses */
-	sin.sin_addr = isaddr;
-	rt = rtalloc(sintosa(&sin), 0, rdomain);
-	if (rtisvalid(rt) && ISSET(rt->rt_flags, RTF_LOCAL) &&
-	    rt->rt_ifidx == ifp->if_index)
-		sender = 1;
-	rtfree(rt);
-	rt = NULL;
-
 	if (!enaddr)
 		enaddr = ac->ac_enaddr;
 	if (!memcmp(ea->arp_sha, enaddr, sizeof(ea->arp_sha)))
 		goto out;	/* it's from me, ignore it. */
 
-	if (sender && isaddr.s_addr != INADDR_ANY) {
+	/* Do we have an ARP cache for the sender?  Create if we are target. */
+	rt = arplookup(isaddr.s_addr, target, 0, rdomain);
+
+	/* Check sender against our interface addresses. */
+	if (rtisvalid(rt) && ISSET(rt->rt_flags, RTF_LOCAL) &&
+	    rt->rt_ifidx == ifp->if_index && isaddr.s_addr != INADDR_ANY) {
 		inet_ntop(AF_INET, &isaddr, addr, sizeof(addr));
 		log(LOG_ERR,
 		   "duplicate IP address %s sent from ethernet address %s\n",
 		   addr, ether_sprintf(ea->arp_sha));
 		itaddr = isaddr;
-		goto reply;
-	}
-
-	/* Do we have an ARP cache for the sender?  Create if we are target. */
-	rt = arplookup(isaddr.s_addr, target, 0, rdomain);
-	if (rt != NULL && (sdl = satosdl(rt->rt_gateway)) != NULL) {
+	} else if (rt != NULL && (sdl = satosdl(rt->rt_gateway)) != NULL) {
 		la = (struct llinfo_arp *)rt->rt_llinfo;
 		if (sdl->sdl_alen) {
 			if (memcmp(ea->arp_sha, LLADDR(sdl), sdl->sdl_alen)) {
@@ -666,7 +657,7 @@ in_arpinput(struct mbuf *m)
 			}
 		}
 	}
-reply:
+
 	if (op != ARPOP_REQUEST) {
 out:
 		rtfree(rt);
