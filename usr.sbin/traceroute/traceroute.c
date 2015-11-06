@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.c,v 1.143 2015/10/09 01:37:10 deraadt Exp $	*/
+/*	$OpenBSD: traceroute.c,v 1.144 2015/11/06 19:13:36 florian Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*
@@ -326,7 +326,6 @@ struct in6_pktinfo *rcvpktinfo;
 int datalen;			/* How much data */
 int headerlen;			/* How long packet's header is */
 
-char *source = 0;
 char *hostname;
 
 int nprobes = 3;
@@ -369,7 +368,7 @@ main(int argc, char *argv[])
 	u_int32_t tmprnd;
 	struct ip *ip = NULL;
 	u_int8_t ttl;
-	char *ep, hbuf[NI_MAXHOST], *dest;
+	char *ep, hbuf[NI_MAXHOST], *dest, *source = NULL;
 	const char *errstr;
 	long l;
 	uid_t uid;
