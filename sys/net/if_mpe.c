@@ -1,4 +1,4 @@
-/* $OpenBSD: if_mpe.c,v 1.49 2015/10/22 17:48:34 mpi Exp $ */
+/* $OpenBSD: if_mpe.c,v 1.50 2015/11/06 11:45:42 mpi Exp $ */
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -139,17 +139,18 @@ struct sockaddr_storage	 mpedst;
  * Start output on the mpe interface.
  */
 void
-mpestart(struct ifnet *ifp)
+mpestart(struct ifnet *ifp0)
 {
 	struct mbuf 		*m;
 	struct sockaddr		*sa = (struct sockaddr *)&mpedst;
 	int			 s;
 	sa_family_t		 af;
 	struct rtentry		*rt;
+	struct ifnet		*ifp;
 
 	for (;;) {
 		s = splnet();
-		IFQ_DEQUEUE(&ifp->if_snd, m);
+		IFQ_DEQUEUE(&ifp0->if_snd, m);
 		splx(s);
 
 		if (m == NULL)
@@ -172,19 +173,26 @@ mpestart(struct ifnet *ifp)
 		}
 
 		rt = rtalloc(sa, RT_REPORT|RT_RESOLVE, 0);
-		if (rt == NULL) {
-			/* no route give up */
+		if (!rtisvalid(rt)) {
 			m_freem(m);
+			rtfree(rt);
+			continue;
+		}
+
+		ifp = if_get(rt->rt_ifidx);
+		if (ifp == NULL) {
+			m_freem(m);
+			rtfree(rt);
 			continue;
 		}
 
 #if NBPFILTER > 0
-		if (ifp->if_bpf) {
+		if (ifp0->if_bpf) {
 			/* remove MPLS label before passing packet to bpf */
 			m->m_data += sizeof(struct shim_hdr);
 			m->m_len -= sizeof(struct shim_hdr);
 			m->m_pkthdr.len -= sizeof(struct shim_hdr);
-			bpf_mtap_af(ifp->if_bpf, af, m, BPF_DIRECTION_OUT);
+			bpf_mtap_af(ifp0->if_bpf, af, m, BPF_DIRECTION_OUT);
 			m->m_data -= sizeof(struct shim_hdr);
 			m->m_len += sizeof(struct shim_hdr);
 			m->m_pkthdr.len += sizeof(struct shim_hdr);
@@ -193,7 +201,8 @@ mpestart(struct ifnet *ifp)
 		/* XXX lie, but mpls_output will only look at sa_family */
 		sa->sa_family = AF_MPLS;
 
-		mpls_output(rt->rt_ifp, m, sa, rt);
+		mpls_output(ifp, m, sa, rt);
+		if_put(ifp);
 		rtfree(rt);
 	}
 }
