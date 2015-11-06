@@ -1,14 +1,12 @@
 /*
  * Copyright (C) 1984-2012  Mark Nudelman
+ * Modified for use with illumos by Garrett D'Amore.
+ * Copyright 2014 Garrett D'Amore <garrett@damore.org>
  *
  * You may distribute under the terms of either the GNU General Public
  * License or the Less License, as specified in the README file.
  *
  * For more information, see the README file.
- */
-/*
- * Modified for use with illumos.
- * Copyright 2014 Garrett D'Amore <garrett@damore.org>
  */
 
 /*
@@ -417,15 +415,15 @@ opt__V(int type, char *s)
 		putstr(" (");
 		putstr("POSIX ");
 		putstr("regular expressions)\n");
-		putstr("Copyright (C) 1984-2012 Mark Nudelman\n\n");
+		putstr("Copyright (C) 1984-2012 Mark Nudelman\n");
+		putstr("Modified for use with illumos by Garrett D'Amore.\n");
+		putstr("Copyright 2014 Garrett D'Amore\n\n");
 		putstr("less comes with NO WARRANTY, ");
 		putstr("to the extent permitted by law.\n");
 		putstr("For information about the terms of redistribution,\n");
 		putstr("see the file named README in the less distribution.\n");
 		putstr("Homepage: http://www.greenwoodsoftware.com/less\n");
 		putstr("\n");
-		putstr("Modified for use with illumos.\n");
-		putstr("Copyright 2014 Garrett D'Amore\n");
 		quit(QUIT_OK);
 		break;
 	}
