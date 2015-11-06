@@ -150,7 +150,6 @@ static unsigned char cmdtable[] =
 	':', 't', 0,			A_OPT_TOGGLE|A_EXTRA,	't', 0,
 	'|', 0,				A_PIPE,
 	'v', 0,				A_VISUAL,
-	'!', 0,				A_SHELL,
 	'+', 0,				A_FIRSTCMD,
 
 	'H', 0,				A_HELP,

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: less.1,v 1.45 2014/11/23 09:56:32 jmc Exp $
+.\"	$OpenBSD: less.1,v 1.46 2015/11/06 15:58:01 nicm Exp $
 .\"
 .\" Copyright (C) 1984-2012  Mark Nudelman
 .\"
@@ -23,7 +23,7 @@
 .\" OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 .\" IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 23 2014 $
+.Dd $Mdocdate: November 6 2015 $
 .Dt LESS 1
 .Os
 .Sh NAME
@@ -1144,15 +1144,6 @@ is defined.
 See also the discussion of LESSEDIT under the section on
 .Sx PROMPTS
 below.
-.It Ic \&! Ar shell-command
-Invokes a shell to run the shell-command given.
-A percent sign (%) in the command is replaced by the name of the current file.
-A pound sign (#) is replaced by the name of the previously examined file.
-"!!" repeats the last shell command.
-"!" with no shell command simply invokes a shell.
-The shell is taken from the environment variable
-.Ev SHELL ,
-or defaults to "sh".
 .It Ic | <m> Ar shell-command
 <m> represents any mark letter.
 Pipes a section of the input file to the given shell command.
@@ -1788,8 +1779,6 @@ is set to 1,
 runs in a "secure" mode.
 This means these features are disabled:
 .Bl -tag -width Ds
-.It \&!
-The shell command.
 .It |
 The pipe command.
 .It :e
@@ -2009,7 +1998,7 @@ automatically when running in
 .Xr more 1
 compatible mode.
 .It Ev SHELL
-The shell used to execute the ! command, as well as to expand filenames.
+The shell used to expand filenames.
 .It Ev TERM
 Specifies the terminal type.
 Used by

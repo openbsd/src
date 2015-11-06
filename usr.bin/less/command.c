@@ -50,7 +50,6 @@ extern int shift_count;
 extern int oldbot;
 extern int forw_prompt;
 
-static char *shellcmd = NULL;	/* For holding last shell command for "!!" */
 static int mca;			/* The multicharacter command (action) */
 static int search_type;		/* The previous type of search */
 static LINENUM number;		/* The number typed by the user */
@@ -242,25 +241,6 @@ exec_mca(void)
 		edit_list(cbuf);
 		/* If tag structure is loaded then clean it up. */
 		cleantags();
-		break;
-	case A_SHELL:
-		/*
-		 * !! just uses whatever is in shellcmd.
-		 * Otherwise, copy cmdbuf to shellcmd,
-		 * expanding any special characters ("%" or "#").
-		 */
-		if (*cbuf != '!') {
-			if (shellcmd != NULL)
-				free(shellcmd);
-			shellcmd = fexpand(cbuf);
-		}
-
-		if (secure)
-			break;
-		if (shellcmd == NULL)
-			lsystem("", "!done");
-		else
-			lsystem(shellcmd, "!done");
 		break;
 	case A_PIPE:
 		if (secure)
@@ -1435,7 +1415,6 @@ again:
 				error("WARNING: This file was viewed via "
 				    "LESSOPEN", NULL_PARG);
 			}
-			start_mca(A_SHELL, "!", ml_shell, 0);
 			/*
 			 * Expand the editor prototype string
 			 * and pass it to the system to execute.
@@ -1560,18 +1539,6 @@ again:
 			 * Set an initial command for new files.
 			 */
 			start_mca(A_FIRSTCMD, "+", NULL, 0);
-			c = getcc();
-			goto again;
-
-		case A_SHELL:
-			/*
-			 * Shell escape.
-			 */
-			if (secure) {
-				error("Command not available", NULL_PARG);
-				break;
-			}
-			start_mca(A_SHELL, "!", ml_shell, 0);
 			c = getcc();
 			goto again;
 

@@ -147,7 +147,6 @@ struct cmdname cmdnames[] =
 	{ "reverse-search-all",		A_T_REVERSE_SEARCH },
 	{ "right-scroll",		A_RSHIFT },
 	{ "set-mark",			A_SETMARK },
-	{ "shell",			A_SHELL },
 	{ "status",			A_STAT },
 	{ "toggle-flag",		A_OPT_TOGGLE },
 	{ "toggle-option",		A_OPT_TOGGLE },
