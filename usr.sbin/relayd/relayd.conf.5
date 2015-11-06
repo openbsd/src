@@ -1,4 +1,4 @@
-.\"	$OpenBSD: relayd.conf.5,v 1.167 2015/10/27 12:27:54 benno Exp $
+.\"	$OpenBSD: relayd.conf.5,v 1.168 2015/11/06 18:06:29 bentley Exp $
 .\"
 .\" Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 27 2015 $
+.Dd $Mdocdate: November 6 2015 $
 .Dt RELAYD.CONF 5
 .Os
 .Sh NAME
@@ -110,7 +110,7 @@ For example:
 .Bd -literal -offset indent
 www1="10.0.0.1"
 www2="10.0.0.2"
-table \*(Ltwebhosts\*(Gt {
+table <webhosts> {
 	$www1
 	$www2
 }
@@ -132,12 +132,12 @@ to new states or log
 .Ic all
 state notifications, even if the state didn't change.
 The host state can be
-.Ar up
+.Dq up
 (the health check completed successfully),
-.Ar down
+.Dq down
 (the host is down or didn't match the check criteria),
 or
-.Ar unknown
+.Dq unknown
 (the host is disabled or has not been checked yet).
 .It Ic prefork Ar number
 When using relays, run the specified number of processes to handle
@@ -158,7 +158,7 @@ and request it send a trap to the registered trap receivers.
 If
 .Ar path
 is not specified, a default path of
-.Ar /var/run/agentx.sock
+.Pa /var/run/agentx.sock
 will be used.
 See
 .Xr snmpd.conf 5
@@ -206,7 +206,8 @@ starting with 1; it can be shown with the
 commands.
 .It Ic priority Ar number
 Change the route priority used when adding a route.
-If not specified, the kernel will set a priority of 8 (RTP_STATIC).
+If not specified, the kernel will set a priority of 8
+.Pq Dv RTP_STATIC .
 In ordinary use, a fallback route should be added statically with a very
 high (e.g. 52) priority.
 Unused in all other modes.
@@ -221,13 +222,13 @@ retries for outgoing connection attempts.
 .Pp
 For example:
 .Bd -literal -offset indent
-table \*(Ltservice\*(Gt { 192.168.1.1, 192.168.1.2, 192.168.2.3 }
-table \*(Ltfallback\*(Gt disable { 10.1.5.1 retry 2 }
+table <service> { 192.168.1.1, 192.168.1.2, 192.168.2.3 }
+table <fallback> disable { 10.1.5.1 retry 2 }
 
 redirect "www" {
 	listen on www.example.com port 80
-	forward to \*(Ltservice\*(Gt check http "/" code 200
-	forward to \*(Ltfallback\*(Gt check http "/" code 200
+	forward to <service> check http "/" code 200
+	forward to <fallback> check http "/" code 200
 }
 .Ed
 .Pp
@@ -434,7 +435,7 @@ argument can be specified for the
 and
 .Ic source-hash
 modes as either a hex value with a leading
-.Ar 0x
+.Ql 0x
 or as a string.
 If omitted,
 .Xr relayd 8
@@ -458,7 +459,7 @@ It can be later enabled through
 .Xr relayctl 8 .
 .It Xo
 .Ic forward to
-.Aq Ar table
+.Pf < Ar table Ns >
 .Op Ic port Ar number
 .Ar options ...
 .Xc
@@ -495,15 +496,15 @@ the format is
 The optional argument
 .Ar ip-proto
 can be used to specify an IP protocol like
-.Ar tcp
+.Cm tcp
 or
-.Ar udp ;
+.Cm udp ;
 it defaults to
-.Ar tcp .
+.Cm tcp .
 The rule can be optionally restricted to a given interface name.
 .It Xo
 .Ic route to
-.Aq Ar table
+.Pf < Ar table Ns >
 .Op Ic port Ar number
 .Ar options ...
 .Xc
@@ -540,11 +541,11 @@ This allows simpler filter rules.
 The optional
 .Ic match
 keyword will change the default rule action from
-.Ar pass in quick
+.Ql pass in quick
 to
-.Ar match in
+.Ql match in
 to allow further evaluation in the pf ruleset using the
-.Ar tagged name
+.Cm tagged Ar name
 rule option.
 .El
 .Sh RELAYS
@@ -624,7 +625,7 @@ relayed to the IPv6 address 2001:db8:7395:ffff::a01:101.
 .El
 .It Xo
 .Ic forward to
-.Aq Ar table
+.Pf < Ar table Ns >
 .Op Ic port Ar port
 .Ar options ...
 .Xc
@@ -850,7 +851,7 @@ variable.
 This option for the underlying IP connection may be used to discard packets
 with a TTL lower than the specified value.
 This can be used to implement the
-.Ar Generalized TTL Security Mechanism (GTSM)
+Generalized TTL Security Mechanism (GTSM)
 according to RFC 5082.
 .It Ic ip ttl Ar number
 Change the default time-to-live value in the IP headers.
@@ -926,7 +927,7 @@ option is specified.
 .It Ic ciphers Ar string
 Set the string defining the TLS cipher suite.
 If not specified, the default value
-.Ar HIGH:!aNULL
+.Ql HIGH:!aNULL
 will be used (strong crypto cipher suites without anonymous DH).
 See the CIPHERS section of
 .Xr openssl 1
@@ -945,7 +946,7 @@ cipher suites with Perfect Forward Secrecy (PFS).
 If the curve
 .Ar name
 is not specified, the default curve
-.Ar prime256v1
+.Cm prime256v1
 will be used.
 ECDHE is enabled by default.
 .It Ic no ecdh
@@ -956,15 +957,9 @@ older clients that do not support ECDHE.
 If the
 .Ar maximum
 length of the DH params for EDH is not specified, the default value of
-.Ar 1024
-bits will be used.
+1024 bits will be used.
 Other possible values are numbers between 1024 and 8192, including
-.Ar 1024 ,
-.Ar 1536 ,
-.Ar 2048 ,
-.Ar 4096 ,
-or
-.Ar 8192 .
+1024, 1536, 2048, 4096, or 8192.
 Values higher than 1024 bits can cause incompatibilities with older
 TLS clients.
 .It Ic no edh
@@ -1023,14 +1018,14 @@ filter parameters.
 For each connection that is processed by a relay, the filter rules are
 evaluated in sequential order, from first to last.
 For
-.Ar block
+.Ic block
 and
-.Ar pass ,
+.Ic pass ,
 the last matching rule decides what action is taken;
 if no rule matches the connection, the default action is to establish
 the connection without any additional action.
 For
-.Ar match ,
+.Ic match ,
 rules are evaluated every time they match;
 the pass/block state of a connection remains unchanged.
 .Pp
@@ -1071,7 +1066,7 @@ HTTP), exchange data in a bidirectional way (like arbitrary TCP
 sessions), or just contain a single datagram and an optional response
 (like UDP-based protocols).
 But the client always
-.Ar requests
+.Em requests
 to communicate with a remote peer; the server.
 .It Ic quick
 If a connection is matched by a rule with the
@@ -1090,8 +1085,8 @@ The label will be printed as part of the error message if the
 option is set and may contain HTML tags, for example:
 .Bd -literal -offset indent
 block request url digest 5c1e03f58f8ce0b457474ffb371fd1ef \e
-	label "\*(Lta href='http://example.com/adv.pl?id=7359'\*(Gt\e
-	Advisory provided by example.com\*(Lt/a\*(Gt"
+	label "<a href='http://example.com/adv.pl?id=7359'>\e
+	Advisory provided by example.com</a>"
 .Ed
 .It Ic no Ar parameter
 Reset a sticky parameter that was previously set by a matching rule.
@@ -1111,7 +1106,7 @@ the tag will be replaced if the connection is already tagged.
 .It Ic tagged Ar string
 Match the connection if it is already tagged with a given tag by a
 previous rule.
-.It Ic forward to Aq Ar table
+.It Ic forward to Pf < Ar table Ns >
 Forward the request to a server in the specified table.
 With this option, requests can be passed to specific backend servers.
 A corresponding
@@ -1125,7 +1120,7 @@ The following parameters are available when using the
 .Ic http
 protocol:
 .Bl -tag -width Ds
-.It Ic method Ar NAME
+.It Ic method Ar name
 Match the HTTP request method.
 The method is specified by
 .Ar name
@@ -1178,8 +1173,9 @@ specified by
 .Ar path
 that contains one key per line.
 Lines will be stripped at the first whitespace or newline character
-and any empty lines or lines beginning with a hash mark (`#') will be
-ignored.
+and any empty lines or lines beginning with a hash mark
+.Pq Ql #
+will be ignored.
 .Pp
 If the
 .Ic digest
@@ -1255,7 +1251,7 @@ combinations by stripping subdomains and path components (up to 5
 levels), and the query string.
 For example, the following
 lookups will be done for
-.Ar http://www.example.com:81/1/2/3/4/5.html?query=yes :
+http://www.example.com:81/1/2/3/4/5.html?query=yes:
 .Bd -literal -offset indent
 www.example.com/1/2/3/4/5.html?query=yes
 www.example.com/1/2/3/4/5.html
@@ -1373,7 +1369,7 @@ context are described below:
 .Bl -tag -width Ds
 .It Xo
 .Ic forward to
-.Aq Ar table
+.Pf < Ar table Ns >
 .Ic port Ar number
 .Ar options ...
 .Xc
@@ -1434,8 +1430,8 @@ www4=front-www4.private.example.com
 
 interval 5
 
-table \*(Ltphphosts\*(Gt { $www1, $www2, $www3, $www4 }
-table \*(Ltsorryhost\*(Gt disable { sorryhost.private.example.com }
+table <phphosts> { $www1, $www2, $www3, $www4 }
+table <sorryhost> disable { sorryhost.private.example.com }
 
 redirect "www" {
 	listen on www.example.com port 8080 interface trunk0
@@ -1443,9 +1439,9 @@ redirect "www" {
 
 	pftag REDIRECTED
 
-	forward to \*(Ltphphosts\*(Gt port 8080 timeout 300 \e
+	forward to <phphosts> port 8080 timeout 300 \e
 		check http "/" digest "630aa3c2f..."
-	forward to \*(Ltsorryhost\*(Gt port 8080 timeout 300 check icmp
+	forward to <sorryhost> port 8080 timeout 300 check icmp
 }
 .Ed
 .Pp
@@ -1456,7 +1452,7 @@ redirect "dns" {
 	listen on dns.example.com tcp port 53
 	listen on dns.example.com udp port 53
 
-	forward to \*(Ltdnshosts\*(Gt port 53 check tcp
+	forward to <dnshosts> port 53 check tcp
 }
 .Ed
 .Pp
@@ -1492,7 +1488,7 @@ http protocol "https" {
 relay "tlsaccel" {
 	listen on www.example.com port 443 tls
 	protocol "https"
-	forward to \*(Ltphphosts\*(Gt port 8080 mode loadbalance check tcp
+	forward to <phphosts> port 8080 mode loadbalance check tcp
 }
 .Ed
 .Pp
@@ -1566,10 +1562,10 @@ relay tlsinspect {
 The next simple router configuration example can be used to run
 redundant, health-checked WAN links:
 .Bd -literal -offset indent
-table \*(Ltgateways\*(Gt { $gw1 ip ttl 1, $gw2 ip ttl 1 }
+table <gateways> { $gw1 ip ttl 1, $gw2 ip ttl 1 }
 router "uplinks" {
 	route 0.0.0.0/0
-	forward to \*(Ltgateways\*(Gt check icmp
+	forward to <gateways> check icmp
 }
 .Ed
 .Sh SEE ALSO
