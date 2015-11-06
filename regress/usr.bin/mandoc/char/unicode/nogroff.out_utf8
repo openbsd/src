@@ -7,23 +7,23 @@ NNAAMMEE
 
 DDEESSCCRRIIPPTTIIOONN
        BEGINTEST
-       ��     <control> NULL
-       ��     <control> START OF HEADING
-       ��     <control> BELL
-       ��     <control> BACKSPACE
+       ��   <control> NULL
+       ��   <control> START OF HEADING
+       ��   <control> BELL
+       ��   <control> BACKSPACE
                       <control> CHARACTER TABULATION
-       ��     <control> LINE FEED
-       ��     <control> LINE TABULATION
-       ��     <control> FORM FEED
-       ��     <control> CARRIAGE RETURN
-       ��     <control> ESCAPE
-       ��     <control> DELETE
-       ��     <control> 0x80
-       ��     <control> 0x81
-       ��     <control> BREAK PERMITTED HERE
-       ��     <control> NO BREAK HERE
-       ��     <control> PRIVACY MESSAGE
-       ��     <control> APPLICATION PROGRAM COMMAND
+       ��   <control> LINE FEED
+       ��   <control> LINE TABULATION
+       ��   <control> FORM FEED
+       ��   <control> CARRIAGE RETURN
+       ��   <control> ESCAPE
+       ��   <control> DELETE
+       ��   <control> 0x80
+       ��   <control> 0x81
+       ��   <control> BREAK PERMITTED HERE
+       ��   <control> NO BREAK HERE
+       ��   <control> PRIVACY MESSAGE
+       ��   <control> APPLICATION PROGRAM COMMAND
        ≪≪   MUCH LESS-THAN
        ≫≫   MUCH GREATER-THAN
        ﬀﬀ   LATIN SMALL LIGATURE FF
@@ -31,10 +31,10 @@ DDEESSCCRRIIPPTTIIOONN
        ﬂﬂ   LATIN SMALL LIGATURE FL
        ﬃﬃ   LATIN SMALL LIGATURE FFI
        ﬄﬄ   LATIN SMALL LIGATURE FFL
-       �     REPLACEMENT CHARACTER
+       �    REPLACEMENT CHARACTER
        ￾     <undefined>
        ￿     <undefined>
-       𐀀     LINEAR B SYLLABLE B008 A
+       𐀀    LINEAR B SYLLABLE B008 A
        󿿽     <Plane 15 Private Use, Last>
        󿿾     <undefined>
        󿿿     <undefined>

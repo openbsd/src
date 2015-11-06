@@ -13,15 +13,15 @@ DDEESSCCRRIIPPTTIIOONN
        U+0000   0x00   �?   lowest ASCII
        U+001f   0x1f   �?   highest ASCII control character
        U+007f   0x7f   �?   highest ASCII
-                0x80   ?   leading lowest continuation
-                0xbf   ?   leading highest continuation
+                0x80   ?    leading lowest continuation
+                0xbf   ?    leading highest continuation
 
    TTwwoo--bbyyttee rraannggee
 
        U+0000   0xc080     ??   lowest obfuscated ASCII
        U+007f   0xc1bf     ??   highest obfuscated ASCII
                 0xc278     ?x   ASCII continuation
-       U+0080   0xc280     ��     lowest two-byte
+       U+0080   0xc280     ��   lowest two-byte
                 0xc2c380   ?À   high continuation
        U+07FF   0xdfbf     ߿߿     highest two-byte
 
@@ -50,7 +50,7 @@ DDEESSCCRRIIPPTTIIOONN
        U+07FF     0xf0809fbf     ????    highest obfuscated two-byte
        U+0800     0xf080a080     ????    lowest obfuscated three-byte
        U+FFFF     0xf08fbfbf     ????    highest obfuscated three-byte
-       U+10000    0xf0908080     𐀀𐀀        lowest four-byte
+       U+10000    0xf0908080     𐀀𐀀      lowest four-byte
        U+3FFFF    0xf0bfbfbf     𿿿𿿿        end of first middle byte
        U+40000    0xf1808080     񀀀񀀀        second middle byte
        U+FFFFF    0xf3bfbfbf     󿿿󿿿        last normal middle byte
