@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pppvar.h,v 1.17 2015/06/03 00:50:09 dlg Exp $	*/
+/*	$OpenBSD: if_pppvar.h,v 1.18 2015/11/06 09:04:36 dlg Exp $	*/
 /*	$NetBSD: if_pppvar.h,v 1.5 1997/01/03 07:23:29 mikel Exp $	*/
 /*
  * if_pppvar.h - private structures and declarations for PPP.
@@ -111,8 +111,7 @@ struct ppp_softc {
 	struct	mbuf_queue sc_inq;	/* queue of input packets for daemon */
 	struct	ifqueue sc_fastq;	/* interactive output packet q */
 	struct	mbuf *sc_togo;		/* output packet ready to go */
-	struct	mbuf *sc_npqueue;	/* output packets not to be sent yet */
-	struct	mbuf **sc_npqtail;	/* ptr to last next ptr in npqueue */
+	struct	mbuf_list sc_npqueue;	/* output packets not to be sent yet */
 	struct	pppstat sc_stats;	/* count of bytes/pkts sent/rcvd */
 	caddr_t	sc_bpf;			/* hook for BPF */
 	enum	NPmode sc_npmode[NUM_NP]; /* what to do with each NP */
