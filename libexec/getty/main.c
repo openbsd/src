@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.38 2015/10/16 22:25:50 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.39 2015/11/06 16:39:53 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -158,7 +158,7 @@ main(int argc, char *argv[])
 	char *tname;
 	int repcnt = 0, failopenlogged = 0;
 	struct rlimit limit;
-	int rval, off = 0;
+	int off = 0;
 
 	signal(SIGINT, SIG_IGN);
 /*
@@ -278,14 +278,7 @@ main(int argc, char *argv[])
 			signal(SIGALRM, dingdong);
 			alarm(TO);
 		}
-		if ((rval = getname()) == 2) {
-			oflush();
-			alarm(0);
-			signal(SIGALRM, SIG_DFL);
-			execle(PP, "ppplogin", ttyn, (char *) 0, env);
-			syslog(LOG_ERR, "%s: %m", PP);
-			exit(1);
-		} else if (rval) {
+		if (getname()) {
 			int i;
 
 			oflush();
@@ -339,7 +332,6 @@ main(int argc, char *argv[])
 static int
 getname(void)
 {
-	int ppp_state = 0, ppp_connection = 0;
 	unsigned char cs;
 	int c, r;
 	char *np;
@@ -373,33 +365,6 @@ getname(void)
 		}
 		if ((c = cs&0177) == 0)
 			return (0);
-
-		/*
-		 * PPP detection state machine..
-		 * Look for sequences:
-		 * PPP_FRAME, PPP_STATION, PPP_ESCAPE, PPP_CONTROL_ESCAPED or
-		 * PPP_FRAME, PPP_STATION, PPP_CONTROL (deviant from RFC)
-		 * See RFC1662.
-		 * Derived from code from Michael Hancock <michaelh@cet.co.jp>
-		 * and Erik 'PPP' Olson <eriko@wrq.com>
-		 */
-		if (PP && cs == PPP_FRAME) {
-			ppp_state = 1;
-		} else if (ppp_state == 1 && cs == PPP_STATION) {
-			ppp_state = 2;
-		} else if (ppp_state == 2 && cs == PPP_ESCAPE) {
-			ppp_state = 3;
-		} else if ((ppp_state == 2 && cs == PPP_CONTROL) ||
-		    (ppp_state == 3 && cs == PPP_CONTROL_ESCAPED)) {
-			ppp_state = 4;
-		} else if (ppp_state == 4 && cs == PPP_LCP_HI) {
-			ppp_state = 5;
-		} else if (ppp_state == 5 && cs == PPP_LCP_LOW) {
-			ppp_connection = 1;
-			break;
-		} else {
-			ppp_state = 0;
-		}
 
 		if (c == EOT)
 			exit(1);
@@ -446,7 +411,7 @@ getname(void)
 	*np = 0;
 	if (c == '\r')
 		crmod = 1;
-	return (1 + ppp_connection);
+	return (1);
 }
 
 static void
