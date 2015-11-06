@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikectl.c,v 1.21 2015/11/02 10:27:44 jsg Exp $	*/
+/*	$OpenBSD: ikectl.c,v 1.22 2015/11/06 06:29:11 jsg Exp $	*/
 
 /*
  * Copyright (c) 2007-2013 Reyk Floeter <reyk@openbsd.org>
@@ -205,6 +205,9 @@ main(int argc, char *argv[])
 	case CA_KEY_DELETE:
 	case CA_KEY_INSTALL:
 	case CA_KEY_IMPORT:
+		if (pledge("stdio proc exec rpath wpath cpath fattr tty", NULL)
+		    == -1)
+			err(1, "pledge");
 		ca_opt(res);
 		break;
 	case NONE:
@@ -234,6 +237,9 @@ main(int argc, char *argv[])
 		}
 		err(1, "connect: %s", sock);
 	}
+
+	if (pledge("stdio", NULL) == -1)
+		err(1, "pledge");
 
 	if (res->ibuf != NULL)
 		ibuf = res->ibuf;
