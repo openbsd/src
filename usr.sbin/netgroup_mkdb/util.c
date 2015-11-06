@@ -43,7 +43,7 @@ emalloc(size_t s)
 {
 	void *ptr = malloc(s);
 	if (ptr == NULL)
-		err(1, "%s", "");
+		err(1, NULL);
 	return ptr;
 }
 
@@ -56,7 +56,7 @@ erealloc(void *p, size_t s)
 {
 	void *ptr = realloc(p, s);
 	if (ptr == NULL)
-		err(1, "%s", "");
+		err(1, NULL);
 	return ptr;
 }
 
