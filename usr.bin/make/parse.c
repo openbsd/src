@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.112 2015/01/23 22:35:57 espie Exp $	*/
+/*	$OpenBSD: parse.c,v 1.113 2015/11/06 18:41:02 espie Exp $	*/
 /*	$NetBSD: parse.c,v 1.29 1997/03/10 21:20:04 christos Exp $	*/
 
 /*
@@ -63,9 +63,11 @@
 
 #include <assert.h>
 #include <ctype.h>
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ohash.h>
 #include "config.h"
 #include "defines.h"
 #include "dir.h"
@@ -1384,15 +1386,31 @@ handle_bsd_command(Buffer linebuf, Buffer copy, const char *line)
  ***/
 
 static void
+register_for_groupling(GNode *gn, struct ohash *temp)
+{
+	unsigned int slot;
+	uint32_t hv;
+	const char *ename = NULL;
+	GNode *gn2;
+
+	hv = ohash_interval(gn->name, &ename);
+
+	slot = ohash_lookup_interval(temp, gn->name, ename, hv);
+	gn2 = ohash_find(temp, slot);
+
+	if (gn2 == NULL)
+		ohash_insert(temp, slot, gn);
+}
+
+static void
 build_target_group(struct growableArray *targets)
 {
-	unsigned int i;
 	LstNode ln;
 	bool seen_target = false;
+	unsigned int i;
 
-	if (targets->n == 1)
-		return;
-	if (targets->a[0]->groupling != NULL)
+	/* may be 0 if wildcard expansion resulted in zero match */
+	if (targets->n <= 1)
 		return;
 	/* XXX */
 	if (targets->a[0]->type & OP_TRANSFORM)
@@ -1416,9 +1434,33 @@ build_target_group(struct growableArray *targets)
 	if (seen_target)
 		return;
 
+	/* target list MAY hold duplicates AND targets may already participate
+	 * in groupling lists, so rebuild the circular list "from scratch"
+	 */
+
+	struct ohash t;
+	GNode *gn, *gn2;
+
+	ohash_init(&t, 5, &gnode_info);
+
 	for (i = 0; i < targets->n; i++) {
-		targets->a[i]->groupling = targets->a[(i+1)%targets->n];
+		gn = targets->a[i];
+		register_for_groupling(gn, &t);
+		for (gn2 = gn->groupling; gn2 != gn; gn2 = gn2->groupling) {	
+			if (!gn2)
+				break;
+		    	register_for_groupling(gn2, &t);
+		}
 	}
+
+	for (gn = ohash_first(&t, &i); gn != NULL; gn = ohash_next(&t, &i)) {
+		gn->groupling = gn2;
+		gn2 = gn;
+	}
+	gn = ohash_first(&t, &i);
+	gn->groupling = gn2;
+
+	ohash_delete(&t);
 }
 
 static void
