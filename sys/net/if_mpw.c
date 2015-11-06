@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mpw.c,v 1.9 2015/11/03 11:51:07 dlg Exp $ */
+/*	$OpenBSD: if_mpw.c,v 1.10 2015/11/06 11:45:04 mpi Exp $ */
 
 /*
  * Copyright (c) 2015 Rafael Zalamena <rzalamena@openbsd.org>
@@ -491,18 +491,27 @@ mpw_vlan_handle(struct mbuf *m, struct mpw_softc *sc)
 #endif /* NVLAN */
 
 void
-mpw_start(struct ifnet *ifp)
+mpw_start(struct ifnet *ifp0)
 {
-	struct mpw_softc *sc = ifp->if_softc;
+	struct mpw_softc *sc = ifp0->if_softc;
 	struct mbuf *m;
 	struct rtentry *rt;
+	struct ifnet *ifp;
 	struct shim_hdr *shim;
 	struct sockaddr_storage ss;
 
 	rt = rtalloc((struct sockaddr *) &sc->sc_nexthop,
 	    RT_REPORT | RT_RESOLVE, 0);
-	if (rt == NULL)
+	if (!rtisvalid(rt)) {
+		rtfree(rt);
 		return;
+	}
+
+	ifp = if_get(rt->rt_ifidx);
+	if (ifp == NULL) {
+		rtfree(rt);
+		return;
+	}
 
 	/*
 	 * XXX: lie about being MPLS, so mpls_output() get the TTL from
@@ -512,11 +521,11 @@ mpw_start(struct ifnet *ifp)
 	((struct sockaddr *) &ss)->sa_family = AF_MPLS;
 
 	for (;;) {
-		IFQ_DEQUEUE(&ifp->if_snd, m);
+		IFQ_DEQUEUE(&ifp0->if_snd, m);
 		if (m == NULL)
 			break;
 
-		if ((ifp->if_flags & IFF_RUNNING) == 0 ||
+		if ((ifp0->if_flags & IFF_RUNNING) == 0 ||
 		    sc->sc_rshim.shim_label == 0 ||
 		    sc->sc_type == IMR_TYPE_NONE) {
 			m_freem(m);
@@ -560,8 +569,9 @@ mpw_start(struct ifnet *ifp)
 		/* XXX: MPLS only uses domain 0 */
 		m->m_pkthdr.ph_rtableid = 0;
 
-		mpls_output(rt->rt_ifp, m, (struct sockaddr *) &ss, rt);
+		mpls_output(ifp, m, (struct sockaddr *) &ss, rt);
 	}
 
+	if_put(ifp);
 	rtfree(rt);
 }
