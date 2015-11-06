@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.h,v 1.119 2015/11/06 17:44:45 mpi Exp $	*/
+/*	$OpenBSD: route.h,v 1.120 2015/11/06 17:55:55 mpi Exp $	*/
 /*	$NetBSD: route.h,v 1.9 1996/02/13 22:00:49 christos Exp $	*/
 
 /*
@@ -401,8 +401,6 @@ void	 rt_if_track(struct ifnet *);
 int	 rt_if_linkstate_change(struct rtentry *, void *, u_int);
 #endif
 int	 rtdeletemsg(struct rtentry *, u_int);
-
-struct rtentry *rt_mpath_next(struct rtentry *);
 #endif /* _KERNEL */
 
 #endif /* _NET_ROUTE_H_ */

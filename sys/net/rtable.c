@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtable.c,v 1.21 2015/11/06 17:44:45 mpi Exp $ */
+/*	$OpenBSD: rtable.c,v 1.22 2015/11/06 17:55:55 mpi Exp $ */
 
 /*
  * Copyright (c) 2014-2015 Martin Pieuchot
@@ -429,7 +429,7 @@ rtable_mpath_select(struct rtentry *rt, uint32_t hash)
 	int npaths, threshold;
 
 	npaths = 1;
-	while ((mrt = rt_mpath_next(mrt)) != NULL)
+	while ((mrt = rtable_mpath_next(mrt)) != NULL)
 		npaths++;
 
 	threshold = (0xffff / npaths) + 1;
@@ -437,7 +437,7 @@ rtable_mpath_select(struct rtentry *rt, uint32_t hash)
 	mrt = rt;
 	while (hash > threshold && mrt != NULL) {
 		/* stay within the multipath routes */
-		mrt = rt_mpath_next(mrt);
+		mrt = rtable_mpath_next(mrt);
 		hash -= threshold;
 	}
 
@@ -457,6 +457,14 @@ rtable_mpath_reprio(struct rtentry *rt, uint8_t newprio)
 	struct radix_node	*rn = (struct radix_node *)rt;
 
 	rn_mpath_reprio(rn, newprio);
+}
+
+struct rtentry *
+rtable_mpath_next(struct rtentry *rt)
+{
+	struct radix_node *rn = (struct radix_node *)rt;
+
+	return ((struct rtentry *)rn_mpath_next(rn, RMP_MODE_ACTIVE));
 }
 #endif /* SMALL_KERNEL */
 
@@ -886,6 +894,12 @@ rtable_mpath_reprio(struct rtentry *rt, uint8_t prio)
 	} else {
 		SLIST_INSERT_HEAD(&an->an_rtlist, rt, rt_next);
 	}
+}
+
+struct rtentry *
+rtable_mpath_next(struct rtentry *rt)
+{
+	return (SLIST_NEXT(rt, rt_next));
 }
 #endif /* SMALL_KERNEL */
 

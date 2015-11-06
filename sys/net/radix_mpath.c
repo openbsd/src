@@ -1,4 +1,4 @@
-/*	$OpenBSD: radix_mpath.c,v 1.34 2015/10/08 08:41:58 mpi Exp $	*/
+/*	$OpenBSD: radix_mpath.c,v 1.35 2015/11/06 17:55:55 mpi Exp $	*/
 /*	$KAME: radix_mpath.c,v 1.13 2002/10/28 21:05:59 itojun Exp $	*/
 
 /*
@@ -94,14 +94,6 @@ rn_mpath_next(struct radix_node *rn, int mode)
 		break;
 	}
 	return next;
-}
-
-struct rtentry *
-rt_mpath_next(struct rtentry *rt)
-{
-	struct radix_node *rn = (struct radix_node *)rt;
-
-	return ((struct rtentry *)rn_mpath_next(rn, RMP_MODE_ACTIVE));
 }
 
 /*

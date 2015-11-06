@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtable.h,v 1.9 2015/11/02 14:40:09 mpi Exp $ */
+/*	$OpenBSD: rtable.h,v 1.10 2015/11/06 17:55:55 mpi Exp $ */
 
 /*
  * Copyright (c) 2014-2015 Martin Pieuchot
@@ -69,4 +69,5 @@ struct rtentry	*rtable_mpath_match(unsigned int, struct rtentry *,
 		     struct sockaddr *, uint8_t);
 struct rtentry	*rtable_mpath_select(struct rtentry *, uint32_t);
 void		 rtable_mpath_reprio(struct rtentry *, uint8_t);
+struct rtentry	*rtable_mpath_next(struct rtentry *);
 #endif /* _NET_RTABLE_H_ */

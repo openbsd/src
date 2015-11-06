@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.402 2015/11/03 12:25:37 mpi Exp $	*/
+/*	$OpenBSD: if.c,v 1.403 2015/11/06 17:55:55 mpi Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -2356,7 +2356,7 @@ if_group_egress_build(void)
 				if_put(ifp);
 			}
 #ifndef SMALL_KERNEL
-			rt = rt_mpath_next(rt);
+			rt = rtable_mpath_next(rt);
 #else
 			rt = NULL;
 #endif
@@ -2377,7 +2377,7 @@ if_group_egress_build(void)
 				if_put(ifp);
 			}
 #ifndef SMALL_KERNEL
-			rt = rt_mpath_next(rt);
+			rt = rtable_mpath_next(rt);
 #else
 			rt = NULL;
 #endif
