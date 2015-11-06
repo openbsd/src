@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.162 2015/11/06 16:27:13 schwarze Exp $ */
+/*	$OpenBSD: main.c,v 1.163 2015/11/06 17:23:50 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2012, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -128,7 +128,7 @@ main(int argc, char *argv[])
 		return mandocdb(argc, argv);
 
 	if (pledge("stdio rpath tmppath proc exec flock", NULL) == -1)
-		err(1, "pledge");
+		err((int)MANDOCLEVEL_SYSERR, "pledge");
 
 	/* Search options. */
 
@@ -270,7 +270,7 @@ main(int argc, char *argv[])
 		use_pager = 0;
 
 	if (!use_pager && pledge("stdio rpath flock", NULL) == -1)
-		err(1, "pledge");
+		err((int)MANDOCLEVEL_SYSERR, "pledge");
 
 	/* Parse arguments. */
 
@@ -389,7 +389,7 @@ main(int argc, char *argv[])
 
 	if (pledge(use_pager ? "stdio rpath tmppath proc exec" :
 	    "stdio rpath", NULL) == -1)
-		err(1, "pledge");
+		err((int)MANDOCLEVEL_SYSERR, "pledge");
 
 	if (search.argmode == ARG_FILE && ! moptions(&options, auxpaths))
 		return (int)MANDOCLEVEL_BADARG;
@@ -978,7 +978,7 @@ spawn_pager(struct tag_files *tag_files)
 		break;
 	default:
 		if (pledge("stdio rpath tmppath", NULL) == -1)
-			err(1, "pledge");
+			err((int)MANDOCLEVEL_SYSERR, "pledge");
 		return pager_pid;
 	}
 
