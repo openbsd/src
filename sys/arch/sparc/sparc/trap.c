@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.71 2015/03/27 20:25:39 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.72 2015/11/06 06:33:26 guenther Exp $	*/
 /*	$NetBSD: trap.c,v 1.58 1997/09/12 08:55:01 pk Exp $ */
 
 /*
@@ -1066,18 +1066,35 @@ syscall(code, tf, pc)
  * Process the tail end of a fork() for the child.
  */
 void
-child_return(arg)
-	void *arg;
+child_return(void *arg)
 {
 	struct proc *p = arg;
 	struct trapframe *tf = p->p_md.md_tf;
+	vaddr_t dest;
+
+	/* Duplicate efforts of syscall(), but slightly differently */
+	if (tf->tf_global[1] & SYSCALL_G2RFLAG) {
+		/* jmp %g2 on success */
+		dest = tf->tf_global[2];
+	} else {
+		/*
+		 * old system call convention: clear C on success
+		 * note: proc_trampoline() sets a fresh psr when
+		 * returning to user mode.
+		 */
+		dest = tf->tf_npc;
+		tf->tf_psr &= ~PSR_C;
+	}
+
+	/* Skip trap instruction. */
+	tf->tf_pc = dest;
+	tf->tf_npc = dest + 4;
 
 	/*
 	 * Return values in the frame set by cpu_fork().
 	 */
 	tf->tf_out[0] = 0;
 	tf->tf_out[1] = 0;
-	tf->tf_psr &= ~PSR_C;
 
 	mi_child_return(p);
 }

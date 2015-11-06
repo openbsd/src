@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.86 2015/06/05 16:07:24 kettenis Exp $	*/
+/*	$OpenBSD: trap.c,v 1.87 2015/11/06 06:33:26 guenther Exp $	*/
 /*	$NetBSD: trap.c,v 1.73 2001/08/09 01:03:01 eeh Exp $ */
 
 /*
@@ -1353,21 +1353,32 @@ syscall(tf, code, pc)
  * Process the tail end of a fork() for the child.
  */
 void
-child_return(arg)
-	void *arg;
+child_return(void *arg)
 {
-	struct proc *p = (struct proc *)arg;
+	struct proc *p = arg;
 	struct trapframe64 *tf = p->p_md.md_tf;
+	vaddr_t dest;
+
+	/* Duplicate efforts of syscall(), but slightly differently */
+	if (tf->tf_global[1] & SYSCALL_G2RFLAG) {
+		/* jmp %g2 on success */
+		dest = tf->tf_global[2];
+	} else {
+		dest = tf->tf_npc;
+		tf->tf_tstate &= ~(((int64_t)(ICC_C|XCC_C))<<TSTATE_CCR_SHIFT);
+	}
+
+	/* Skip trap instruction. */
+	tf->tf_pc = dest;
+	tf->tf_npc = dest + 4;
 
 	/*
 	 * Return values in the frame set by cpu_fork().
 	 */
 	tf->tf_out[0] = 0;
 	tf->tf_out[1] = 0;
-	tf->tf_tstate &= ~(((int64_t)(ICC_C|XCC_C))<<TSTATE_CCR_SHIFT);
 
 	KERNEL_UNLOCK();
 
 	mi_child_return(p);
 }
-

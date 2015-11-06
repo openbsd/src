@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.61 2015/09/08 10:21:16 deraadt Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.62 2015/11/06 06:33:26 guenther Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.30 1997/03/10 23:55:40 pk Exp $ */
 
 /*
@@ -216,27 +216,6 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 
 	/* Copy parent's trapframe */
 	*tf2 = *(struct trapframe *)((int)opcb + USPACE - sizeof(*tf2));
-
-	/* Duplicate efforts of syscall(), but slightly differently */
-	if (tf2->tf_global[1] & SYSCALL_G2RFLAG) {
-		/* jmp %g2 (or %g7, deprecated) on success */
-		tf2->tf_npc = tf2->tf_global[2];
-	} else {
-		/*
-		 * old system call convention: clear C on success
-		 * note: proc_trampoline() sets a fresh psr when
-		 * returning to user mode.
-		 */
-		/*tf2->tf_psr &= ~PSR_C;   -* success */
-	}
-
-	/* Set return values in child mode */
-	tf2->tf_out[0] = 0;
-	tf2->tf_out[1] = 1;
-
-	/* Skip trap instruction. */
-	tf2->tf_pc = tf2->tf_npc;
-	tf2->tf_npc += 4;
 
 	/* Construct kernel frame to return to in cpu_switch() */
 	rp = (struct rwindow *)((u_int)npcb + TOPFRAMEOFF);
