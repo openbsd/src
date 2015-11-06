@@ -227,7 +227,6 @@ extern	void init_option(void);
 extern	struct loption *findopt(int);
 extern	struct loption *findopt_name(char **, char **, int *);
 extern	int iread(int, unsigned char *, unsigned int);
-extern	long get_time(void);
 extern	char *errno_message(char *);
 extern	int percentage(off_t, off_t);
 extern	off_t percent_pos(off_t, int, long);

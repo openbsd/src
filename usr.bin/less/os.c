@@ -56,18 +56,6 @@ start:
 }
 
 /*
- * Return the current time.
- */
-long
-get_time(void)
-{
-	time_t t;
-
-	(void) time(&t);
-	return (t);
-}
-
-/*
  * errno_message: Return an error message based on the value of "errno".
  */
 char *

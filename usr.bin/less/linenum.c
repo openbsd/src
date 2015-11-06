@@ -210,14 +210,14 @@ longloopmessage(void)
 }
 
 static int loopcount;
-static long startime;
+static time_t startime;
 
 static void
 longish(void)
 {
 	if (loopcount >= 0 && ++loopcount > 100) {
 		loopcount = 0;
-		if (get_time() >= startime + LONGTIME) {
+		if (time(NULL) >= startime + LONGTIME) {
 			longloopmessage();
 			loopcount = -1;
 		}
@@ -287,7 +287,7 @@ find_linenum(off_t pos)
 	 * The decision is based on which way involves
 	 * traversing fewer bytes in the file.
 	 */
-	startime = get_time();
+	startime = time(NULL);
 	if (p == &anchor || pos - p->prev->pos < p->pos - pos) {
 		/*
 		 * Go forward.
