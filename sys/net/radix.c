@@ -1,4 +1,4 @@
-/*	$OpenBSD: radix.c,v 1.51 2015/11/04 09:50:21 mpi Exp $	*/
+/*	$OpenBSD: radix.c,v 1.52 2015/11/06 18:07:57 mpi Exp $	*/
 /*	$NetBSD: radix.c,v 1.20 2003/08/07 16:32:56 agc Exp $	*/
 
 /*
@@ -47,6 +47,10 @@
 #endif
 
 #include <net/radix.h>
+
+#if defined(ART) && !defined(SMALL_KERNEL)
+#define SMALL_KERNEL
+#endif
 
 #ifndef SMALL_KERNEL
 #include <sys/socket.h>
