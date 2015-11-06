@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_lcl.h,v 1.21 2014/10/28 07:35:58 jsg Exp $ */
+/* $OpenBSD: bn_lcl.h,v 1.22 2015/11/06 21:42:32 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -259,7 +259,7 @@ extern "C" {
 #  endif
 # elif defined(__mips) && defined(_LP64)
 #  if defined(__GNUC__) && __GNUC__>=2
-#   if __GNUC__>=4 && __GNUC_MINOR__>=4 /* "h" constraint is no more since 4.4 */
+#   if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 4) /* "h" constraint is no more since 4.4 */
 #     define BN_UMULT_HIGH(a,b)		 (((__uint128_t)(a)*(b))>>64)
 #     define BN_UMULT_LOHI(low,high,a,b) ({	\
 	__uint128_t ret=(__uint128_t)(a)*(b);	\
