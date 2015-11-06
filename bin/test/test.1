@@ -1,4 +1,4 @@
-.\"	$OpenBSD: test.1,v 1.31 2014/06/03 20:26:37 jmc Exp $
+.\"	$OpenBSD: test.1,v 1.32 2015/11/06 21:56:46 jmc Exp $
 .\"	$NetBSD: test.1,v 1.6 1995/03/21 07:04:03 cgd Exp $
 .\"
 .\" Copyright (c) 1991, 1993
@@ -33,11 +33,12 @@
 .\"
 .\"     @(#)test.1	8.1 (Berkeley) 5/31/93
 .\"
-.Dd $Mdocdate: June 3 2014 $
+.Dd $Mdocdate: November 6 2015 $
 .Dt TEST 1
 .Os
 .Sh NAME
-.Nm test
+.Nm test ,
+.Nm \&[
 .Nd condition evaluation utility
 .Sh SYNOPSIS
 .Nm test
@@ -58,6 +59,10 @@ is given,
 .Nm
 also
 returns 1 (false).
+The form
+.Nm \&[
+is an alias for
+.Nm test .
 .Pp
 All operators and flags are separate arguments to the
 .Nm
