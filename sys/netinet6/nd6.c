@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.171 2015/11/02 12:51:16 bluhm Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.172 2015/11/06 11:20:56 mpi Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -847,25 +847,26 @@ nd6_free(struct rtentry *rt, int gc)
  * XXX cost-effective methods?
  */
 void
-nd6_nud_hint(struct rtentry *rt, u_int rtableid)
+nd6_nud_hint(struct rtentry *rt)
 {
 	struct llinfo_nd6 *ln;
+	struct ifnet *ifp;
 
-	if (rt == NULL) {
+	ifp = if_get(rt->rt_ifidx);
+	if (ifp == NULL)
 		return;
-	}
 
 	if ((rt->rt_flags & RTF_GATEWAY) != 0 ||
 	    (rt->rt_flags & RTF_LLINFO) == 0 ||
 	    rt->rt_llinfo == NULL || rt->rt_gateway == NULL ||
 	    rt->rt_gateway->sa_family != AF_LINK) {
 		/* This is not a host route. */
-		return;
+		goto out;
 	}
 
 	ln = (struct llinfo_nd6 *)rt->rt_llinfo;
 	if (ln->ln_state < ND6_LLINFO_REACHABLE)
-		return;
+		goto out;
 
 	/*
 	 * if we get upper-layer reachability confirmation many times,
@@ -873,13 +874,13 @@ nd6_nud_hint(struct rtentry *rt, u_int rtableid)
 	 */
 	ln->ln_byhint++;
 	if (ln->ln_byhint > nd6_maxnudhint)
-		return;
+		goto out;
 
 	ln->ln_state = ND6_LLINFO_REACHABLE;
-	if (!ND6_LLINFO_PERMANENT(ln)) {
-		nd6_llinfo_settimer(ln,
-		    (long)ND_IFINFO(rt->rt_ifp)->reachable * hz);
-	}
+	if (!ND6_LLINFO_PERMANENT(ln))
+		nd6_llinfo_settimer(ln, (long)ND_IFINFO(ifp)->reachable * hz);
+out:
+	if_put(ifp);
 }
 
 void
