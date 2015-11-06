@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtable.c,v 1.19 2015/11/04 10:11:45 mpi Exp $ */
+/*	$OpenBSD: rtable.c,v 1.20 2015/11/06 15:26:44 mpi Exp $ */
 
 /*
  * Copyright (c) 2014-2015 Martin Pieuchot
@@ -707,7 +707,33 @@ rtable_delete(unsigned int rtableid, struct sockaddr *dst,
 	struct art_root			*ar;
 	struct art_node			*an = rt->rt_node;
 	uint8_t				*addr;
-	int				 plen;
+	int				 plen, error = 0;
+#ifndef SMALL_KERNEL
+	struct rtentry			*mrt;
+	int				 npaths = 0;
+
+	/*
+	 * If other multipath route entries are still attached to
+	 * this ART node we only have to unlink it.
+	 */
+	LIST_FOREACH(mrt, &an->an_rtlist, rt_next)
+		npaths++;
+
+	if (npaths > 1) {
+		free(rt->rt_mask, M_RTABLE, 0);
+		rt->rt_mask = NULL;
+		rt->rt_node = NULL;
+		LIST_REMOVE(rt, rt_next);
+		KASSERT(rt->rt_refcnt >= 1);
+		rtfree(rt);
+
+		mrt = LIST_FIRST(&an->an_rtlist);
+		an->an_dst = mrt->rt_dest;
+		if (npaths == 2)
+			mrt->rt_flags &= ~RTF_MPATH;
+		return (0);
+	}
+#endif /* SMALL_KERNEL */
 
 	ar = rtable_get(rtableid, dst->sa_family);
 	if (ar == NULL)
@@ -720,39 +746,29 @@ rtable_delete(unsigned int rtableid, struct sockaddr *dst,
 		panic("mask do not match");
 #endif
 
+	addr = satoaddr(ar, an->an_dst);
+	plen = an->an_plen;
+
+	if (art_delete(ar, an, addr, plen) == NULL) {
+		error = ESRCH;
+		goto out;
+	}
+
 	/*
 	 * XXX Is it safe to free the mask now?  Are we sure rt_mask()
 	 * is only used when entries are in the table?
 	 */
 	free(rt->rt_mask, M_RTABLE, 0);
-
-	/* Remove rt <-> ART glue. */
 	rt->rt_node = NULL;
 	rt->rt_mask = NULL;
 	LIST_REMOVE(rt, rt_next);
 	KASSERT(rt->rt_refcnt >= 1);
 	rtfree(rt);
 
-#ifndef SMALL_KERNEL
-	if ((rt = LIST_FIRST(&an->an_rtlist)) != NULL) {
-		an->an_dst = rt->rt_dest;
-		if (LIST_NEXT(rt, rt_next) == NULL)
-			rt->rt_flags &= ~RTF_MPATH;
-		rtable_put(ar);
-		return (0);
-	}
-#endif /* SMALL_KERNEL */
-
-	addr = satoaddr(ar, an->an_dst);
-	plen = an->an_plen;
-
-	/* XXX should return ESRCH and recover properly. */
-	if (art_delete(ar, an, addr, plen) == NULL)
-		panic("unable to delete art note");
-
 	pool_put(&an_pool, an);
+out:
 	rtable_put(ar);
-	return (0);
+	return (error);
 }
 
 struct rtable_walk_cookie {
