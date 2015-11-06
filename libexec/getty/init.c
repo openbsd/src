@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.9 2013/12/10 20:56:59 naddy Exp $	*/
+/*	$OpenBSD: init.c,v 1.10 2015/11/06 16:42:30 tedu Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -66,7 +66,6 @@ struct	gettystrs gettystrs[] = {
 	{ "fl", &tmode.c_cc[VDISCARD] },/* flush output */
 	{ "we", &tmode.c_cc[VWERASE] },	/* word erase */
 	{ "ln", &tmode.c_cc[VLNEXT] },	/* literal next */
-	{ "pp" },			/* ppp login program */
 	{ 0 }
 };
 

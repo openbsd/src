@@ -1,4 +1,4 @@
-/*	$OpenBSD: gettytab.h,v 1.7 2013/12/10 20:56:59 naddy Exp $*/
+/*	$OpenBSD: gettytab.h,v 1.8 2015/11/06 16:42:30 tedu Exp $*/
 
 /*
  * Copyright (c) 1983, 1993, 1994
@@ -82,7 +82,6 @@ struct gettyflags {
 #define FL	gettystrs[21].value
 #define WE	gettystrs[22].value
 #define LN	gettystrs[23].value
-#define PP	gettystrs[24].value
 
 /*
  * Numeric definitions.

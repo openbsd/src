@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.39 2015/11/06 16:39:53 tedu Exp $	*/
+/*	$OpenBSD: main.c,v 1.40 2015/11/06 16:42:30 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -56,16 +56,6 @@
  * before deciding that something is wrong and exit.
  */
 #define GETTY_TIMEOUT	60 /* seconds */
-
-/* defines for auto detection of incoming PPP calls (->PAP/CHAP) */
-
-#define PPP_FRAME	    0x7e  /* PPP Framing character */
-#define PPP_STATION	    0xff  /* "All Station" character */
-#define PPP_ESCAPE	    0x7d  /* Escape Character */
-#define PPP_CONTROL	    0x03  /* PPP Control Field */
-#define PPP_CONTROL_ESCAPED 0x23  /* PPP Control Field, escaped */
-#define PPP_LCP_HI	    0xc0  /* LCP protocol - high byte */
-#define PPP_LCP_LOW	    0x21  /* LCP protocol - low byte */
 
 struct termios tmode, omode;
 
