@@ -2593,7 +2593,6 @@
 ./usr/share/mk/bsd.xconf.mk
 ./usr/share/mk/bsd.xorg.mk
 ./usr/share/mk/sys.mk
-./usr/share/nls
 ./usr/share/snmp
 ./usr/share/snmp/mibs
 ./usr/share/snmp/mibs/OPENBSD-BASE-MIB.txt
