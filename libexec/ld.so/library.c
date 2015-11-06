@@ -1,4 +1,4 @@
-/*	$OpenBSD: library.c,v 1.71 2015/01/16 16:18:07 deraadt Exp $ */
+/*	$OpenBSD: library.c,v 1.72 2015/11/06 05:12:30 guenther Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -59,9 +59,27 @@ void
 _dl_unload_shlib(elf_object_t *object)
 {
 	struct dep_node *n;
+	elf_object_t *load_object = object->load_object;
+
+	/*
+	 * If our load object has become unreferenced then we lost the
+	 * last group reference to it, so the entire group should be taken
+	 * down.  The current object is somewhere below load_object in
+	 * the child_list tree, so it'll get cleaned up by the recursion.
+	 * That means we can just switch here to the load object.
+	 */
+	if (load_object != object && OBJECT_REF_CNT(load_object) == 0 &&
+	    (load_object->status & STAT_UNLOADED) == 0) {
+		DL_DEB(("unload_shlib switched from %s to %s\n",
+		    object->load_name, load_object->load_name));
+		object = load_object;
+		goto unload;
+	}
+
 	DL_DEB(("unload_shlib called on %s\n", object->load_name));
 	if (OBJECT_REF_CNT(object) == 0 &&
 	    (object->status & STAT_UNLOADED) == 0) {
+unload:
 		object->status |= STAT_UNLOADED;
 		TAILQ_FOREACH(n, &object->child_list, next_sib)
 			_dl_unload_shlib(n->data);
