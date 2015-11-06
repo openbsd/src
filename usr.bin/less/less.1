@@ -1,4 +1,4 @@
-.\"	$OpenBSD: less.1,v 1.46 2015/11/06 15:58:01 nicm Exp $
+.\"	$OpenBSD: less.1,v 1.47 2015/11/06 16:20:37 tedu Exp $
 .\"
 .\" Copyright (C) 1984-2012  Mark Nudelman
 .\"
@@ -1473,40 +1473,7 @@ It is the only character set that supports multi-byte characters.
 Selects a character set appropriate for Microsoft Windows (cp 1251).
 .El
 .Pp
-In rare cases, it may be desired to tailor
-.Nm
-to use a character set other than the ones definable by LESSCHARSET.
-In this case, the environment variable
-.Ev LESSCHARDEF
-can be used to define a character set.
-It should be set to a string where each character in the string represents
-one character in the character set.
-The character "." is used for a normal character, "c" for control,
-and "b" for binary.
-A decimal number may be used for repetition.
-For example, "bccc4b." would mean character 0 is binary,
-1, 2 and 3 are control, 4, 5, 6 and 7 are binary, and 8 is normal.
-All characters after the last are taken to be the same as the last,
-so characters 9 through 255 would be normal.
-(This is an example, and does not necessarily
-represent any real character set.)
-.Pp
-This table shows the value of LESSCHARDEF which is equivalent
-to each of the possible values for LESSCHARSET:
-.Bd -literal -offset indent
-ascii		8bcccbcc18b95.b
-dos		8bcccbcc12bc5b95.b.
-ebcdic		5bc6bcc7bcc41b.9b7.9b5.b..8b6.10b6.b9.7b
-		9.8b8.17b3.3b9.7b9.8b8.6b10.b.b.b.
-IBM-1047	4cbcbc3b9cbccbccbb4c6bcc5b3cbbc4bc4bccbc
-		191.b
-iso8859		8bcccbcc18b95.33b.
-koi8-r		8bcccbcc18b95.b128.
-latin1		8bcccbcc18b95.33b.
-next		8bcccbcc18b95.bb125.bb
-.Ed
-.Pp
-If neither LESSCHARSET nor LESSCHARDEF is set,
+If neither LESSCHARSET is not set,
 but any of the strings "UTF-8", "UTF8", "utf-8" or "utf8" is found in the
 .Ev LC_ALL , LC_CTYPE
 or
@@ -1935,8 +1902,6 @@ end character in an ANSI color escape sequence
 (default "0123456789;[?!"'#%()*+\ ").
 .It Ev LESSBINFMT
 Format for displaying non-printable, non-control characters.
-.It Ev LESSCHARDEF
-Defines a character set.
 .It Ev LESSCHARSET
 Selects a predefined character set.
 .It Ev LESSCLOSE

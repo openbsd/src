@@ -350,15 +350,6 @@ set_charset(void)
 		return;
 
 	/*
-	 * LESSCHARSET is not defined: try LESSCHARDEF.
-	 */
-	s = lgetenv("LESSCHARDEF");
-	if (s != NULL && *s != '\0') {
-		ichardef(s);
-		return;
-	}
-
-	/*
 	 * Try using the codeset name as the charset name.
 	 */
 	s = nl_langinfo(CODESET);
