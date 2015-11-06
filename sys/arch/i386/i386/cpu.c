@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.67 2015/07/18 19:21:03 sf Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.68 2015/11/06 02:49:06 jsg Exp $	*/
 /* $NetBSD: cpu.c,v 1.1.2.7 2000/06/26 02:04:05 sommerfeld Exp $ */
 
 /*-
@@ -354,7 +354,7 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 void
 cpu_init(struct cpu_info *ci)
 {
-	u_int cr4;
+	u_int cr4 = 0;
 
 	/* configure the CPU if needed */
 	if (ci->cpu_setup != NULL)
@@ -372,7 +372,6 @@ cpu_init(struct cpu_info *ci)
 	 */
 	lcr0(rcr0() | CR0_WP);
 
-	cr4 = rcr4();
 	if (cpu_feature & CPUID_PGE)
 		cr4 |= CR4_PGE;	/* enable global TLB caching */
 
@@ -395,7 +394,9 @@ cpu_init(struct cpu_info *ci)
 		if (cpu_feature & (CPUID_SSE|CPUID_SSE2))
 			cr4 |= CR4_OSXMMEXCPT;
 	}
-	lcr4(cr4);
+	/* no cr4 on most 486s */
+	if (cr4 != 0)
+		lcr4(rcr4()|cr4);
 
 #ifdef MULTIPROCESSOR
 	ci->ci_flags |= CPUF_RUNNING;
