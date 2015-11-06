@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tsec.c,v 1.38 2015/10/25 13:22:09 mpi Exp $	*/
+/*	$OpenBSD: if_tsec.c,v 1.39 2015/11/06 11:35:48 mpi Exp $	*/
 
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -514,7 +514,7 @@ tsec_start(struct ifnet *ifp)
 {
 	struct tsec_softc *sc = ifp->if_softc;
 	struct mbuf *m;
-	int idx;
+	int error, idx;
 
 	if (!(ifp->if_flags & IFF_RUNNING))
 		return;
@@ -531,9 +531,16 @@ tsec_start(struct ifnet *ifp)
 		if (m == NULL)
 			break;
 
-		if (tsec_encap(sc, m, &idx)) {
+		error = tsec_encap(sc, m, &idx);
+		if (error == ENOBUFS) {
 			ifp->if_flags |= IFF_OACTIVE;
 			break;
+		} 
+		if (error == EFBIG) {
+			IFQ_DEQUEUE(&ifp->if_snd, m);
+			m_freem(m); /* give up: drop it */
+			ifp->if_oerrors++;
+			continue;
 		}
 
 		/* Now we are committed to transmit the packet. */
@@ -1131,8 +1138,12 @@ tsec_encap(struct tsec_softc *sc, struct mbuf *m, int *idx)
 	cur = frag = *idx;
 	map = sc->sc_txbuf[cur].tb_map;
 
-	if (bus_dmamap_load_mbuf(sc->sc_dmat, map, m, BUS_DMA_NOWAIT))
-		return (ENOBUFS);
+	if (bus_dmamap_load_mbuf(sc->sc_dmat, map, m, BUS_DMA_NOWAIT)) {
+		if (m_defrag(m, M_DONTWAIT))
+			return (EFBIG);
+		if (bus_dmamap_load_mbuf(sc->sc_dmat, map, m, BUS_DMA_NOWAIT))
+			return (EFBIG);
+	}
 
 	if (map->dm_nsegs > (TSEC_NTXDESC - sc->sc_tx_cnt - 2)) {
 		bus_dmamap_unload(sc->sc_dmat, map);
