@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.h,v 1.118 2015/10/30 09:39:42 bluhm Exp $	*/
+/*	$OpenBSD: route.h,v 1.119 2015/11/06 17:44:45 mpi Exp $	*/
 /*	$NetBSD: route.h,v 1.9 1996/02/13 22:00:49 christos Exp $	*/
 
 /*
@@ -99,7 +99,7 @@ struct rtentry {
 	struct art_node	*rt_node;	/* ART entry */
 	struct sockaddr	*rt_dest;	/* destination */
 	struct sockaddr *rt_mask;	/* mask (radix tree compat) */
-	LIST_ENTRY(rtentry)  rt_next;	/* Next multipath entry to our dst. */
+	SLIST_ENTRY(rtentry)  rt_next;	/* Next multipath entry to our dst. */
 #endif
 	struct sockaddr	*rt_gateway;	/* value */
 	struct ifnet	*rt_ifp;	/* the answer: interface to use */

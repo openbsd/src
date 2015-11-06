@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtable.c,v 1.20 2015/11/06 15:26:44 mpi Exp $ */
+/*	$OpenBSD: rtable.c,v 1.21 2015/11/06 17:44:45 mpi Exp $ */
 
 /*
  * Copyright (c) 2014-2015 Martin Pieuchot
@@ -518,9 +518,9 @@ rtable_lookup(unsigned int rtableid, struct sockaddr *dst,
 	}
 
 #ifdef SMALL_KERNEL
-	rt = LIST_FIRST(&an->an_rtlist);
+	rt = SLIST_FIRST(&an->an_rtlist);
 #else
-	LIST_FOREACH(rt, &an->an_rtlist, rt_next) {
+	SLIST_FOREACH(rt, &an->an_rtlist, rt_next) {
 		if (prio != RTP_ANY &&
 		    (rt->rt_priority & RTP_MASK) != (prio & RTP_MASK))
 			continue;
@@ -560,7 +560,7 @@ rtable_match(unsigned int rtableid, struct sockaddr *dst)
 	if (an == NULL)
 		goto out;
 
-	rt = LIST_FIRST(&an->an_rtlist);
+	rt = SLIST_FIRST(&an->an_rtlist);
 	rtref(rt);
 
 out:
@@ -600,7 +600,7 @@ rtable_insert(unsigned int rtableid, struct sockaddr *dst,
 	    	struct rtentry	*mrt;
 		int		 mpathok = ISSET(rt->rt_flags, RTF_MPATH);
 
-		LIST_FOREACH(mrt, &an->an_rtlist, rt_next) {
+		SLIST_FOREACH(mrt, &an->an_rtlist, rt_next) {
 			if (prio != RTP_ANY &&
 			    (mrt->rt_priority & RTP_MASK) != (prio & RTP_MASK))
 				continue;
@@ -638,8 +638,7 @@ rtable_insert(unsigned int rtableid, struct sockaddr *dst,
 #ifndef SMALL_KERNEL
 		an = prev;
 
-		mrt = LIST_FIRST(&an->an_rtlist);
-
+		mrt = SLIST_FIRST(&an->an_rtlist);
 		KASSERT(mrt != NULL);
 		KASSERT((rt->rt_flags & RTF_MPATH) || mrt->rt_priority != prio);
 
@@ -653,7 +652,7 @@ rtable_insert(unsigned int rtableid, struct sockaddr *dst,
 			 * the same gateway.
 			 */
 			rt->rt_flags &= ~RTF_MPATH;
-			LIST_FOREACH(mrt, &an->an_rtlist, rt_next) {
+			SLIST_FOREACH(mrt, &an->an_rtlist, rt_next) {
 				if (mrt->rt_priority == prio) {
 					mrt->rt_flags |= RTF_MPATH;
 					rt->rt_flags |= RTF_MPATH;
@@ -688,7 +687,7 @@ rtable_insert(unsigned int rtableid, struct sockaddr *dst,
 	}
 
 	rtref(rt);
-	LIST_INSERT_HEAD(&an->an_rtlist, rt, rt_next);
+	SLIST_INSERT_HEAD(&an->an_rtlist, rt, rt_next);
 
 #ifndef SMALL_KERNEL
 	/* Put newly inserted entry at the right place. */
@@ -716,18 +715,18 @@ rtable_delete(unsigned int rtableid, struct sockaddr *dst,
 	 * If other multipath route entries are still attached to
 	 * this ART node we only have to unlink it.
 	 */
-	LIST_FOREACH(mrt, &an->an_rtlist, rt_next)
+	SLIST_FOREACH(mrt, &an->an_rtlist, rt_next)
 		npaths++;
 
 	if (npaths > 1) {
 		free(rt->rt_mask, M_RTABLE, 0);
 		rt->rt_mask = NULL;
 		rt->rt_node = NULL;
-		LIST_REMOVE(rt, rt_next);
+		SLIST_REMOVE(&an->an_rtlist, rt, rtentry, rt_next);
 		KASSERT(rt->rt_refcnt >= 1);
 		rtfree(rt);
 
-		mrt = LIST_FIRST(&an->an_rtlist);
+		mrt = SLIST_FIRST(&an->an_rtlist);
 		an->an_dst = mrt->rt_dest;
 		if (npaths == 2)
 			mrt->rt_flags &= ~RTF_MPATH;
@@ -761,7 +760,7 @@ rtable_delete(unsigned int rtableid, struct sockaddr *dst,
 	free(rt->rt_mask, M_RTABLE, 0);
 	rt->rt_node = NULL;
 	rt->rt_mask = NULL;
-	LIST_REMOVE(rt, rt_next);
+	SLIST_REMOVE(&an->an_rtlist, rt, rtentry, rt_next);
 	KASSERT(rt->rt_refcnt >= 1);
 	rtfree(rt);
 
@@ -787,7 +786,7 @@ rtable_walk_helper(struct art_node *an, void *xrwc)
 	struct rtentry			*rt, *nrt;
 	int				 error = 0;
 
-	LIST_FOREACH_SAFE(rt, &an->an_rtlist, rt_next, nrt) {
+	SLIST_FOREACH_SAFE(rt, &an->an_rtlist, rt_next, nrt) {
 		if ((error = (*rwc->rwc_func)(rt, rwc->rwc_arg, rwc->rwc_rid)))
 			break;
 	}
@@ -833,7 +832,7 @@ rtable_mpath_select(struct rtentry *rt, uint32_t hash)
 	int				 npaths, threshold;
 
 	npaths = 0;
-	LIST_FOREACH(mrt, &an->an_rtlist, rt_next) {
+	SLIST_FOREACH(mrt, &an->an_rtlist, rt_next) {
 		/* Only count nexthops with the same priority. */
 		if (mrt->rt_priority == rt->rt_priority)
 			npaths++;
@@ -841,11 +840,11 @@ rtable_mpath_select(struct rtentry *rt, uint32_t hash)
 
 	threshold = (0xffff / npaths) + 1;
 
-	mrt = LIST_FIRST(&an->an_rtlist);
+	mrt = SLIST_FIRST(&an->an_rtlist);
 	while (hash > threshold && mrt != NULL) {
 		if (mrt->rt_priority == rt->rt_priority)
 			hash -= threshold;
-		mrt = LIST_NEXT(mrt, rt_next);
+		mrt = SLIST_NEXT(mrt, rt_next);
 	}
 
 	if (mrt != NULL) {
@@ -861,27 +860,31 @@ void
 rtable_mpath_reprio(struct rtentry *rt, uint8_t prio)
 {
 	struct art_node			*an = rt->rt_node;
-	struct rtentry			*mrt;
+	struct rtentry			*mrt, *prt;
 
-	LIST_REMOVE(rt, rt_next);
+	SLIST_REMOVE(&an->an_rtlist, rt, rtentry, rt_next);
 	rt->rt_priority = prio;
 
-	if ((mrt = LIST_FIRST(&an->an_rtlist)) != NULL) {
+	if ((mrt = SLIST_FIRST(&an->an_rtlist)) != NULL) {
 		/*
 		 * Select the order of the MPATH routes.
 		 */
-		while (LIST_NEXT(mrt, rt_next) != NULL) {
+		while (SLIST_NEXT(mrt, rt_next) != NULL) {
 			if (mrt->rt_priority > prio)
 				break;
-			mrt = LIST_NEXT(mrt, rt_next);
+		    	prt = mrt;
+			mrt = SLIST_NEXT(mrt, rt_next);
 		}
 
-		if (mrt->rt_priority > prio)
-			LIST_INSERT_BEFORE(mrt, rt, rt_next);
-		else
-			LIST_INSERT_AFTER(mrt, rt, rt_next);
+		if (mrt->rt_priority > prio) {
+			/* prt -> rt -> mrt */
+			SLIST_INSERT_AFTER(prt, rt, rt_next);
+		} else {
+			/* prt -> mrt -> rt */
+			SLIST_INSERT_AFTER(mrt, rt, rt_next);
+		}
 	} else {
-		LIST_INSERT_HEAD(&an->an_rtlist, rt, rt_next);
+		SLIST_INSERT_HEAD(&an->an_rtlist, rt, rt_next);
 	}
 }
 #endif /* SMALL_KERNEL */
