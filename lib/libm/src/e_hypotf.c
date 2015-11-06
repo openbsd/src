@@ -38,22 +38,22 @@ hypotf(float x, float y)
 	       if(hb == 0x7f800000) w = b;
 	       return w;
 	   }
-	   /* scale a and b by 2**-60 */
-	   ha -= 0x5d800000; hb -= 0x5d800000;	k += 60;
+	   /* scale a and b by 2**-68 */
+	   ha -= 0x22000000; hb -= 0x22000000;	k += 68;
 	   SET_FLOAT_WORD(a,ha);
 	   SET_FLOAT_WORD(b,hb);
 	}
 	if(hb < 0x26800000) {	/* b < 2**-50 */
 	    if(hb <= 0x007fffff) {	/* subnormal b or 0 */	
 	        if(hb==0) return a;
-		SET_FLOAT_WORD(t1,0x3f000000);	/* t1=2^126 */
+		SET_FLOAT_WORD(t1,0x7e800000);	/* t1=2^126 */
 		b *= t1;
 		a *= t1;
 		k -= 126;
-	    } else {		/* scale a and b by 2^60 */
-	        ha += 0x5d800000; 	/* a *= 2^60 */
-		hb += 0x5d800000;	/* b *= 2^60 */
-		k -= 60;
+	    } else {		/* scale a and b by 2^68 */
+	        ha += 0x22000000; 	/* a *= 2^68 */
+		hb += 0x22000000;	/* b *= 2^68 */
+		k -= 68;
 		SET_FLOAT_WORD(a,ha);
 		SET_FLOAT_WORD(b,hb);
 	    }
