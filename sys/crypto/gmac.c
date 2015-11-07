@@ -1,4 +1,4 @@
-/*	$OpenBSD: gmac.c,v 1.6 2015/11/07 01:37:26 naddy Exp $	*/
+/*	$OpenBSD: gmac.c,v 1.7 2015/11/07 17:46:07 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2010 Mike Belopuhov <mike@vantronix.net>
@@ -99,8 +99,10 @@ ghash_update_mi(GHASH_CTX *ctx, uint8_t *X, size_t len)
 #define AESCTR_NONCESIZE	4
 
 void
-AES_GMAC_Init(AES_GMAC_CTX *ctx)
+AES_GMAC_Init(void *xctx)
 {
+	AES_GMAC_CTX	*ctx = xctx;
+
 	bzero(ctx->ghash.H, GMAC_BLOCK_LEN);
 	bzero(ctx->ghash.S, GMAC_BLOCK_LEN);
 	bzero(ctx->ghash.Z, GMAC_BLOCK_LEN);
@@ -108,8 +110,10 @@ AES_GMAC_Init(AES_GMAC_CTX *ctx)
 }
 
 void
-AES_GMAC_Setkey(AES_GMAC_CTX *ctx, const uint8_t *key, uint16_t klen)
+AES_GMAC_Setkey(void *xctx, const uint8_t *key, uint16_t klen)
 {
+	AES_GMAC_CTX	*ctx = xctx;
+
 	ctx->rounds = rijndaelKeySetupEnc(ctx->K, (u_char *)key,
 	    (klen - AESCTR_NONCESIZE) * 8);
 	/* copy out salt to the counter block */
@@ -119,15 +123,18 @@ AES_GMAC_Setkey(AES_GMAC_CTX *ctx, const uint8_t *key, uint16_t klen)
 }
 
 void
-AES_GMAC_Reinit(AES_GMAC_CTX *ctx, const uint8_t *iv, uint16_t ivlen)
+AES_GMAC_Reinit(void *xctx, const uint8_t *iv, uint16_t ivlen)
 {
+	AES_GMAC_CTX	*ctx = xctx;
+
 	/* copy out IV to the counter block */
 	bcopy(iv, ctx->J + AESCTR_NONCESIZE, ivlen);
 }
 
 int
-AES_GMAC_Update(AES_GMAC_CTX *ctx, const uint8_t *data, uint16_t len)
+AES_GMAC_Update(void *xctx, const uint8_t *data, uint16_t len)
 {
+	AES_GMAC_CTX	*ctx = xctx;
 	uint32_t	blk[4] = { 0, 0, 0, 0 };
 	int		plen;
 
@@ -147,8 +154,9 @@ AES_GMAC_Update(AES_GMAC_CTX *ctx, const uint8_t *data, uint16_t len)
 }
 
 void
-AES_GMAC_Final(uint8_t digest[GMAC_DIGEST_LEN], AES_GMAC_CTX *ctx)
+AES_GMAC_Final(uint8_t digest[GMAC_DIGEST_LEN], void *xctx)
 {
+	AES_GMAC_CTX	*ctx = xctx;
 	uint8_t		keystream[GMAC_BLOCK_LEN];
 	int		i;
 
