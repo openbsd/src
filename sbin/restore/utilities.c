@@ -1,4 +1,4 @@
-/*	$OpenBSD: utilities.c,v 1.18 2015/01/16 06:40:00 deraadt Exp $	*/
+/*	$OpenBSD: utilities.c,v 1.19 2015/11/07 21:52:55 guenther Exp $	*/
 /*	$NetBSD: utilities.c,v 1.11 1997/03/19 08:42:56 lukem Exp $	*/
 
 /*
@@ -36,6 +36,7 @@
 #include <ufs/ufs/dir.h>
 
 #include <err.h>
+#include <fcntl.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -200,7 +201,8 @@ linkit(char *existing, char *new, int type)
 			return (FAIL);
 		}
 	} else if (type == HARDLINK) {
-		if (!Nflag && link(existing, new) < 0) {
+		if (!Nflag && linkat(AT_FDCWD, existing, AT_FDCWD, new, 0)
+		    < 0) {
 			warn("cannot create hard link %s->%s",
 			    new, existing);
 			return (FAIL);
