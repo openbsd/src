@@ -1,4 +1,4 @@
-/*      $OpenBSD: gmac_test.c,v 1.2 2011/04/04 16:46:22 deraadt Exp $  */
+/*      $OpenBSD: gmac_test.c,v 1.3 2015/11/07 17:50:07 mikeb Exp $  */
 
 /*
  * Copyright (c) 2010 Mike Belopuhov <mikeb@openbsd.org>
@@ -540,8 +540,9 @@ dogmac(const unsigned char *key, size_t klen,
     const unsigned char *in, unsigned char *out, size_t len)
 {
 	AES_GMAC_CTX ctx;
-	uint8_t blk[16];
+	uint8_t blk[GMAC_BLOCK_LEN];
 	uint32_t *p;
+	int i;
 
 	AES_GMAC_Init(&ctx);
 
@@ -549,9 +550,16 @@ dogmac(const unsigned char *key, size_t klen,
 
 	AES_GMAC_Reinit(&ctx, iv, ivlen);
 
-	AES_GMAC_Update(&ctx, aad, aadlen);
+	for (i = 0; i < aadlen; i += GMAC_BLOCK_LEN) {
+		memset(blk, 0, GMAC_BLOCK_LEN);
+		memcpy(blk, aad + i, MIN(aadlen - i, GMAC_BLOCK_LEN));
+		AES_GMAC_Update(&ctx, blk, GMAC_BLOCK_LEN);
+	}
 
-	AES_GMAC_Update(&ctx, in, len);
+	for (i = 0; i < len; i += GMAC_BLOCK_LEN) {
+		int dlen = MIN(len - i, GMAC_BLOCK_LEN);
+		AES_GMAC_Update(&ctx, in + i, dlen);
+	}
 
 	bzero(blk, sizeof blk);
 	p = (uint32_t *)blk + 1;
