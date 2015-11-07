@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ether.c,v 1.78 2015/07/31 15:38:10 rzalamena Exp $  */
+/*	$OpenBSD: ip_ether.c,v 1.79 2015/11/07 12:42:19 mpi Exp $  */
 /*
  * The author of this code is Angelos D. Keromytis (kermit@adk.gr)
  *
@@ -164,7 +164,7 @@ etherip_decap(struct mbuf *m, int iphlen)
 {
 	struct etherip_header eip;
 	struct gif_softc *sc;
-	int s;
+	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
 
 	etheripstat.etherip_ipackets++;
 
@@ -231,33 +231,12 @@ etherip_decap(struct mbuf *m, int iphlen)
 	/* Reset the flags based on the inner packet */
 	m->m_flags &= ~(M_BCAST|M_MCAST|M_AUTH|M_CONF|M_PROTO1);
 
-#if NBPFILTER > 0
-	if (sc->gif_if.if_bpf)
-		bpf_mtap_af(sc->gif_if.if_bpf, AF_LINK, m, BPF_DIRECTION_IN);
-#endif
-
-	/*
-	 * Tap the packet off here for a bridge. bridge_input() returns
-	 * NULL if it has consumed the packet.  In the case of gif's,
-	 * bridge_input() returns non-NULL when an error occurs.
-	 */
 #if NPF > 0
 	pf_pkt_addr_changed(m);
 #endif
-	m->m_pkthdr.ph_ifidx = sc->gif_if.if_index;
-	m->m_pkthdr.ph_rtableid = sc->gif_if.if_rdomain;
-	if (m->m_flags & (M_BCAST|M_MCAST))
-		sc->gif_if.if_imcasts++;
 
-	s = splnet();
-	m = bridge_input(&sc->gif_if, m);
-	splx(s);
-	if (m == NULL)
-		return;
-
-	etheripstat.etherip_noifdrops++;
-	m_freem(m);
-	return;
+	ml_enqueue(&ml, m);
+	if_input(&sc->gif_if, &ml);
 }
 #endif
 

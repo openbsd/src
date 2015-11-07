@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.269 2015/11/07 12:37:18 mpi Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.270 2015/11/07 12:42:19 mpi Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -114,6 +114,7 @@
 
 void	bridgeattach(int);
 int	bridge_ioctl(struct ifnet *, u_long, caddr_t);
+int	bridge_input(struct ifnet *, struct mbuf *, void *);
 void	bridge_start(struct ifnet *);
 void	bridge_process(struct ifnet *, struct mbuf *);
 void	bridgeintr_frame(struct bridge_softc *, struct ifnet *, struct mbuf *);
@@ -270,6 +271,7 @@ bridge_delete(struct bridge_softc *sc, struct bridge_iflist *p)
 	p->ifp->if_bridgeport = NULL;
 	error = ifpromisc(p->ifp, 0);
 
+	if_ih_remove(p->ifp, bridge_input, NULL);
 	TAILQ_REMOVE(&sc->sc_iflist, p, next);
 	bridge_rtdelete(sc, p->ifp, 0);
 	bridge_flushrule(p);
@@ -388,6 +390,7 @@ bridge_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		SIMPLEQ_INIT(&p->bif_brlin);
 		SIMPLEQ_INIT(&p->bif_brlout);
 		ifs->if_bridgeport = (caddr_t)p;
+		if_ih_insert(p->ifp, bridge_input, NULL);
 		TAILQ_INSERT_TAIL(&sc->sc_iflist, p, next);
 		break;
 	case SIOCBRDGDEL:
@@ -1261,14 +1264,19 @@ bridgeintr_frame(struct bridge_softc *sc, struct ifnet *src_if, struct mbuf *m)
  * Receive input from an interface.  Queue the packet for bridging if its
  * not for us, and schedule an interrupt.
  */
-struct mbuf *
-bridge_input(struct ifnet *ifp, struct mbuf *m)
+int
+bridge_input(struct ifnet *ifp, struct mbuf *m, void *cookie)
 {
-	if ((m->m_flags & M_PKTHDR) == 0)
-		panic("bridge_input(): no HDR");
+	KASSERT(m->m_flags & M_PKTHDR);
+
+	if (m->m_flags & M_PROTO1) {
+		m->m_flags &= ~M_PROTO1;
+		return (0);
+	}
 
 	niq_enqueue(&bridgeintrq, m);
-	return (NULL);
+
+	return (1);
 }
 
 void
