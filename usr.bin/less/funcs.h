@@ -9,7 +9,6 @@
 struct mlist;
 struct loption;
 
-extern char *save(const char *);
 extern void *ecalloc(int, unsigned int);
 /*PRINTFLIKE1*/
 extern char *easprintf(const char *, ...);

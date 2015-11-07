@@ -75,12 +75,12 @@ static char *mp;
 void
 init_prompt(void)
 {
-	prproto[0] = save(s_proto);
-	prproto[1] = save(less_is_more ? more_proto : m_proto);
-	prproto[2] = save(less_is_more ? more_M_proto : M_proto);
-	eqproto = save(e_proto);
-	hproto = save(h_proto);
-	wproto = save(w_proto);
+	prproto[0] = estrdup(s_proto);
+	prproto[1] = estrdup(less_is_more ? more_proto : m_proto);
+	prproto[2] = estrdup(less_is_more ? more_M_proto : M_proto);
+	eqproto = estrdup(e_proto);
+	hproto = estrdup(h_proto);
+	wproto = estrdup(w_proto);
 }
 
 /*

@@ -347,7 +347,7 @@ opt__P(int type, char *s)
 		default:   proto = &prproto[PR_SHORT];		break;
 		}
 		free(*proto);
-		*proto = save(s);
+		*proto = estrdup(s);
 		break;
 	case QUERY:
 		parg.p_string = prproto[pr_type];

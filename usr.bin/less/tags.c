@@ -112,13 +112,13 @@ maketagent(char *file, LINENUM linenum, char *pattern, int endline)
 	struct tag *tp;
 
 	tp = ecalloc(sizeof (struct tag), 1);
-	tp->tag_file = save(file);
+	tp->tag_file = estrdup(file);
 	tp->tag_linenum = linenum;
 	tp->tag_endline = endline;
 	if (pattern == NULL)
 		tp->tag_pattern = NULL;
 	else
-		tp->tag_pattern = save(pattern);
+		tp->tag_pattern = estrdup(pattern);
 	return (tp);
 }
 

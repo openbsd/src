@@ -85,7 +85,7 @@ lsystem(const char *cmd, const char *donemsg)
 	p = NULL;
 	if ((shell = lgetenv("SHELL")) != NULL && *shell != '\0') {
 		if (*cmd == '\0') {
-			p = save(shell);
+			p = estrdup(shell);
 		} else {
 			char *esccmd = shell_quote(cmd);
 			if (esccmd != NULL) {
@@ -96,9 +96,9 @@ lsystem(const char *cmd, const char *donemsg)
 	}
 	if (p == NULL) {
 		if (*cmd == '\0')
-			p = save("sh");
+			p = estrdup("sh");
 		else
-			p = save(cmd);
+			p = estrdup(cmd);
 	}
 	(void) system(p);
 	free(p);

@@ -232,7 +232,7 @@ edit_ifile(IFILE ifile)
 		return (0);
 	}
 
-	filename = save(get_filename(ifile));
+	filename = estrdup(get_filename(ifile));
 	/*
 	 * See if LESSOPEN specifies an "alternate" file to open.
 	 */

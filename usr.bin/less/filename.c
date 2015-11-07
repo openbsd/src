@@ -643,14 +643,14 @@ open_altfile(char *filename, int *pf, void **pfd)
 			if (returnfd > 1 && status == 0) {
 				*pfd = NULL;
 				*pf = -1;
-				return (save(FAKE_EMPTYFILE));
+				return (estrdup(FAKE_EMPTYFILE));
 			}
 			return (NULL);
 		}
 		ch_ungetchar(c);
 		*pfd = (void *) fd;
 		*pf = f;
-		return (save("-"));
+		return (estrdup("-"));
 	}
 	cmd = readfd(fd);
 	pclose(fd);

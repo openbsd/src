@@ -688,7 +688,7 @@ cmd_addhist(struct mlist *mlist, const char *cmd)
 		 * Save the command and put it at the end of the history list.
 		 */
 		ml = ecalloc(1, sizeof (struct mlist));
-		ml->string = save(cmd);
+		ml->string = estrdup(cmd);
 		ml->next = mlist;
 		ml->prev = mlist->prev;
 		mlist->prev->next = ml;
@@ -1207,7 +1207,7 @@ histfile_name(void)
 		if (strcmp(name, "-") == 0 || strcmp(name, "/dev/null") == 0)
 			/* $LESSHISTFILE == "-" means don't use history file */
 			return (NULL);
-		return (save(name));
+		return (estrdup(name));
 	}
 
 	/* Otherwise, file is in $HOME if enabled. */

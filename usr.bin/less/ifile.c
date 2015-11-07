@@ -107,7 +107,7 @@ new_ifile(char *filename, struct ifile *prev)
 	 * Allocate and initialize structure.
 	 */
 	p = ecalloc(1, sizeof (struct ifile));
-	p->h_filename = save(filename);
+	p->h_filename = estrdup(filename);
 	p->h_scrpos.pos = -1;
 	p->h_opened = 0;
 	p->h_hold = 0;

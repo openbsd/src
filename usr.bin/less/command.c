@@ -203,7 +203,7 @@ exec_mca(void)
 		if (*cbuf == '\0')
 			every_first_cmd = NULL;
 		else
-			every_first_cmd = save(cbuf);
+			every_first_cmd = estrdup(cbuf);
 		break;
 	case A_OPT_TOGGLE:
 		toggle_option(curropt, opt_lower, cbuf, optflag);

@@ -680,9 +680,9 @@ add_hometable(char *envname, char *def_filename, int sysvar)
 	PARG parg;
 
 	if (envname != NULL && (filename = lgetenv(envname)) != NULL)
-		filename = save(filename);
+		filename = estrdup(filename);
 	else if (sysvar)
-		filename = save(def_filename);
+		filename = estrdup(def_filename);
 	else
 		filename = homefile(def_filename);
 	if (filename == NULL)

@@ -107,7 +107,7 @@ main(int argc, char *argv[])
 
 	s = lgetenv(less_is_more ? "MORE" : "LESS");
 	if (s != NULL)
-		scan_option(save(s));
+		scan_option(estrdup(s));
 
 	if (less_is_more) {
 		/* this is specified by XPG */
@@ -257,20 +257,6 @@ main(int argc, char *argv[])
 }
 
 /*
- * Copy a string to a "safe" place
- * (that is, to a buffer allocated by calloc).
- */
-char *
-save(const char *s)
-{
-	char *p;
-
-	if ((p = estrdup(s)) == NULL)
-		quit(QUIT_ERROR);
-	return (p);
-}
-
-/*
  * Allocate memory.
  * Like calloc(), but never returns an error (NULL).
  */
@@ -310,9 +296,12 @@ easprintf(const char *fmt, ...)
 char *
 estrdup(const char *str)
 {
-	char *n = strdup(str);
-	if (n == NULL && str != NULL) {
+	char *n;
+	
+	n = strdup(str);
+	if (n == NULL) {
 		error("Cannot allocate memory", NULL_PARG);
+		quit(QUIT_ERROR);
 	}
 	return (n);
 }

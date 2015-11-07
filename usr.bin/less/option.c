@@ -151,7 +151,7 @@ scan_option(char *s)
 			if (s == NULL)
 				return;
 			if (*str == '+')
-				every_first_cmd = save(str+1);
+				every_first_cmd = estrdup(str+1);
 			else
 				ungetsc(str);
 			free(str);
