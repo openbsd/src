@@ -1,4 +1,4 @@
-/* $OpenBSD: umcs.h,v 1.1 2014/12/04 11:05:26 mpi Exp $ */
+/* $OpenBSD: umcs.h,v 1.2 2015/11/07 19:06:05 miod Exp $ */
 /* $NetBSD: umcs.h,v 1.1 2014/03/16 09:34:45 martin Exp $ */
 
 /*-
@@ -137,7 +137,7 @@
 
 /* Bits for CTRL registers */
 #define	UMCS_CTRL_HWFC		0x01	/* Enable hardware flow control */
-#define	UMCS_CTRL_UNUNSED1	0x02	/* Reserved */
+#define	UMCS_CTRL_UNUSED1	0x02	/* Reserved */
 #define	UMCS_CTRL_CTS_ENABLE	0x04	/* CTS changes are translated to MSR */
 #define	UMCS_CTRL_UNUSED2	0x08	/* Reserved for ports 2,3,4 */
 #define	UMCS_CTRL1_DRIVER_DONE	0x08	/* Memory can be use as FIFO */
