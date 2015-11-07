@@ -1,4 +1,4 @@
-/*	$OpenBSD: sh.h,v 1.51 2015/11/01 15:38:53 mmcc Exp $	*/
+/*	$OpenBSD: sh.h,v 1.52 2015/11/07 20:48:28 mmcc Exp $	*/
 
 /*
  * Public Domain Bourne/Korn shell
@@ -478,7 +478,7 @@ char  **hist_get_newest(int);
 /* io.c */
 void	errorf(const char *, ...)
 	    __attribute__((__noreturn__, __format__ (printf, 1, 2)));
-void	warningf(int, const char *, ...)
+void	warningf(bool, const char *, ...)
 	    __attribute__((__format__ (printf, 2, 3)));
 void	bi_errorf(const char *, ...)
 	    __attribute__((__format__ (printf, 1, 2)));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.32 2015/10/19 14:42:16 mmcc Exp $	*/
+/*	$OpenBSD: io.c,v 1.33 2015/11/07 20:48:28 mmcc Exp $	*/
 
 /*
  * shell buffered IO and formatted output
@@ -39,11 +39,11 @@ errorf(const char *fmt, ...)
 
 /* like errorf(), but no unwind is done */
 void
-warningf(int fileline, const char *fmt, ...)
+warningf(bool show_lineno, const char *fmt, ...)
 {
 	va_list va;
 
-	error_prefix(fileline);
+	error_prefix(show_lineno);
 	va_start(va, fmt);
 	shf_vfprintf(shl_out, fmt, va);
 	va_end(va);
