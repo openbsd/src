@@ -1,4 +1,4 @@
-/*	$OpenBSD: bridgestp.c,v 1.61 2015/11/02 14:35:12 reyk Exp $	*/
+/*	$OpenBSD: bridgestp.c,v 1.62 2015/11/07 12:37:18 mpi Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -465,11 +465,6 @@ bstp_send_bpdu(struct bstp_state *bs, struct bstp_port *bp,
 	s = splnet();
 	if (ifp == NULL || (ifp->if_flags & IFF_RUNNING) == 0)
 		goto done;
-
-	if (IF_QFULL(&ifp->if_snd)) {
-		IF_DROP(&ifp->if_snd);
-		goto done;
-	}
 
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == NULL)
