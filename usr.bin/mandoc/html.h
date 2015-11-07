@@ -1,4 +1,4 @@
-/*	$OpenBSD: html.h,v 1.33 2015/10/13 22:57:49 schwarze Exp $ */
+/*	$OpenBSD: html.h,v 1.34 2015/11/07 13:57:55 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -142,7 +142,6 @@ struct	html {
 #define	HTML_FRAGMENT	 (1 << 0) /* don't emit HTML/HEAD/BODY */
 };
 
-__BEGIN_DECLS
 
 struct	tbl_span;
 struct	eqn;
@@ -172,5 +171,3 @@ void		  buffmt_man(struct html *,
 void		  buffmt_includes(struct html *, const char *);
 
 int		  html_strlen(const char *);
-
-__END_DECLS

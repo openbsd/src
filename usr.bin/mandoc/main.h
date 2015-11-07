@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.h,v 1.18 2015/10/13 22:57:49 schwarze Exp $ */
+/*	$OpenBSD: main.h,v 1.19 2015/11/07 13:57:55 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -17,8 +17,6 @@
  */
 
 #define	UNCONST(a)	((void *)(uintptr_t)(const void *)(a))
-
-__BEGIN_DECLS
 
 struct	roff_man;
 struct	manoutput;
@@ -53,5 +51,3 @@ void		  pspdf_free(void *);
 
 void		  terminal_mdoc(void *, const struct roff_man *);
 void		  terminal_man(void *, const struct roff_man *);
-
-__END_DECLS

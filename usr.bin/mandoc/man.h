@@ -1,4 +1,4 @@
-/*	$OpenBSD: man.h,v 1.56 2015/10/22 21:53:49 schwarze Exp $ */
+/*	$OpenBSD: man.h,v 1.57 2015/11/07 13:57:55 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -59,11 +59,8 @@
 /* Names of macros. */
 extern	const char *const *man_macronames;
 
-__BEGIN_DECLS
 
 struct	roff_man;
 
 const struct mparse	*man_mparse(const struct roff_man *);
 void			 man_validate(struct roff_man *);
-
-__END_DECLS

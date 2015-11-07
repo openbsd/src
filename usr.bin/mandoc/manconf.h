@@ -1,4 +1,4 @@
-/*	$OpenBSD: manconf.h,v 1.1 2015/03/27 17:36:56 schwarze Exp $	*/
+/*	$OpenBSD: manconf.h,v 1.2 2015/11/07 13:57:55 schwarze Exp $	*/
 /*
  * Copyright (c) 2011, 2015 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -42,10 +42,7 @@ struct	manconf {
 	struct manpaths		  manpath;
 };
 
-__BEGIN_DECLS
 
 void	 manconf_parse(struct manconf *, const char *, char *, char *);
 void	 manconf_output(struct manoutput *, const char *);
 void	 manconf_free(struct manconf *);
-
-__END_DECLS

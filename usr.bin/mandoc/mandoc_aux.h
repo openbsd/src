@@ -1,4 +1,4 @@
-/*	$OpenBSD: mandoc_aux.h,v 1.5 2014/11/28 19:25:03 schwarze Exp $ */
+/*	$OpenBSD: mandoc_aux.h,v 1.6 2015/11/07 13:57:55 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -16,8 +16,6 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-__BEGIN_DECLS
-
 int		  mandoc_asprintf(char **, const char *, ...);
 void		 *mandoc_calloc(size_t, size_t);
 void		 *mandoc_malloc(size_t);
@@ -25,5 +23,3 @@ void		 *mandoc_realloc(void *, size_t);
 void		 *mandoc_reallocarray(void *, size_t, size_t);
 char		 *mandoc_strdup(const char *);
 char		 *mandoc_strndup(const char *, size_t);
-
-__END_DECLS

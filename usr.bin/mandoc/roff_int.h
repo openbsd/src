@@ -1,4 +1,4 @@
-/*	$OpenBSD: roff_int.h,v 1.6 2015/10/22 21:53:49 schwarze Exp $	*/
+/*	$OpenBSD: roff_int.h,v 1.7 2015/11/07 13:57:55 schwarze Exp $	*/
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,8 +15,6 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-
-__BEGIN_DECLS
 
 struct roff_node *roff_node_alloc(struct roff_man *, int, int,
 			enum roff_type, int);
@@ -41,5 +39,3 @@ void		  roff_node_delete(struct roff_man *, struct roff_node *);
 
 void		  man_breakscope(struct roff_man *, int);
 void		  mdoc_argv_free(struct mdoc_arg *);
-
-__END_DECLS

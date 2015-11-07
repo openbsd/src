@@ -1,4 +1,4 @@
-/*	$OpenBSD: term.h,v 1.61 2015/10/13 22:57:49 schwarze Exp $ */
+/*	$OpenBSD: term.h,v 1.62 2015/11/07 13:57:55 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -105,7 +105,6 @@ struct	termp {
 	struct termp_ps	 *ps;
 };
 
-__BEGIN_DECLS
 
 struct	tbl_span;
 struct	eqn;
@@ -134,5 +133,3 @@ void		  term_fontpop(struct termp *);
 void		  term_fontpopq(struct termp *, int);
 void		  term_fontrepl(struct termp *, enum termfont);
 void		  term_fontlast(struct termp *);
-
-__END_DECLS

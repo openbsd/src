@@ -1,4 +1,4 @@
-/*	$OpenBSD: roff.h,v 1.17 2015/10/17 00:19:58 schwarze Exp $	*/
+/*	$OpenBSD: roff.h,v 1.18 2015/11/07 13:57:55 schwarze Exp $	*/
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -161,8 +161,5 @@ struct	roff_man {
 	enum roff_next	  next;    /* Where to put the next node. */
 };
 
-__BEGIN_DECLS
 
 void		 deroff(char **, const struct roff_node *);
-
-__END_DECLS

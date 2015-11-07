@@ -1,4 +1,4 @@
-/*	$OpenBSD: mansearch.h,v 1.19 2014/12/01 08:05:02 schwarze Exp $ */
+/*	$OpenBSD: mansearch.h,v 1.20 2015/11/07 13:57:55 schwarze Exp $ */
 /*
  * Copyright (c) 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -95,7 +95,6 @@ struct	mansearch {
 	int		 firstmatch; /* first matching database only */
 };
 
-__BEGIN_DECLS
 
 struct	manpaths;
 
@@ -107,5 +106,3 @@ int	mansearch(const struct mansearch *cfg, /* options */
 		struct manpage **res, /* results */
 		size_t *ressz); /* results returned */
 void	mansearch_free(struct manpage *, size_t);
-
-__END_DECLS
