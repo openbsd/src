@@ -23,37 +23,6 @@
 
 int utf_mode = 0;
 
-/*
- * Predefined character sets,
- * selected by the LESSCHARSET environment variable.
- */
-struct charset {
-	char *name;
-	int *p_flag;
-	char *desc;
-} charsets[] = {
-	/* BEGIN CSTYLED */
-	{ "ascii",		NULL,	"8bcccbcc18b95.b" },
-	{ "utf-8",		&utf_mode,	 "8bcccbcc18b95.b126.bb" },
-	{ NULL, NULL, NULL }
-	/* END CSTYLED */
-};
-
-/*
- * Support "locale charmap"/nl_langinfo(CODESET) values, as well as others.
- */
-struct cs_alias {
-	char *name;
-	char *oname;
-} cs_aliases[] = {
-	{ "UTF-8",		"utf-8" },
-	{ "ANSI_X3.4-1968",	"ascii" },
-	{ "US-ASCII",		"ascii" },
-	{ "646",		"ascii" },
-	{ "C",			"ascii" },
-	{ NULL, NULL }
-};
-
 #define	IS_BINARY_CHAR	01
 #define	IS_CONTROL_CHAR	02
 
@@ -62,109 +31,6 @@ static const char *binfmt = NULL;
 static const char *utfbinfmt = NULL;
 int binattr = AT_STANDOUT;
 
-
-/*
- * Define a charset, given a description string.
- * The string consists of 256 letters,
- * one for each character in the charset.
- * If the string is shorter than 256 letters, missing letters
- * are taken to be identical to the last one.
- * A decimal number followed by a letter is taken to be a
- * repetition of the letter.
- *
- * Each letter is one of:
- *	. normal character
- *	b binary character
- *	c control character
- */
-static void
-ichardef(char *s)
-{
-	char *cp;
-	int n;
-	char v;
-
-	n = 0;
-	v = 0;
-	cp = chardef;
-	while (*s != '\0') {
-		switch (*s++) {
-		case '.':
-			v = 0;
-			break;
-		case 'c':
-			v = IS_CONTROL_CHAR;
-			break;
-		case 'b':
-			v = IS_BINARY_CHAR|IS_CONTROL_CHAR;
-			break;
-
-		case '0': case '1': case '2': case '3': case '4':
-		case '5': case '6': case '7': case '8': case '9':
-			n = (10 * n) + (s[-1] - '0');
-			continue;
-
-		default:
-			error("invalid chardef", NULL_PARG);
-			quit(QUIT_ERROR);
-			/*NOTREACHED*/
-		}
-
-		do {
-			if (cp >= chardef + sizeof (chardef)) {
-				error("chardef longer than 256", NULL_PARG);
-				quit(QUIT_ERROR);
-				/*NOTREACHED*/
-			}
-			*cp++ = v;
-		} while (--n > 0);
-		n = 0;
-	}
-
-	while (cp < chardef + sizeof (chardef))
-		*cp++ = v;
-}
-
-/*
- * Define a charset, given a charset name.
- * The valid charset names are listed in the "charsets" array.
- */
-static int
-icharset(char *name, int no_error)
-{
-	struct charset *p;
-	struct cs_alias *a;
-
-	if (name == NULL || *name == '\0')
-		return (0);
-
-	/* First see if the name is an alias. */
-	for (a = cs_aliases;  a->name != NULL;  a++) {
-		if (strcmp(name, a->name) == 0) {
-			name = a->oname;
-			break;
-		}
-	}
-
-	for (p = charsets;  p->name != NULL;  p++) {
-		if (strcmp(name, p->name) == 0) {
-			ichardef(p->desc);
-			if (p->p_flag != NULL)
-				*(p->p_flag) = 1;
-			return (1);
-		}
-	}
-
-	if (!no_error) {
-		error("invalid charset name", NULL_PARG);
-		quit(QUIT_ERROR);
-	}
-	return (0);
-}
-
-/*
- * Define a charset, given a locale name.
- */
 static void
 ilocale(void)
 {
@@ -287,17 +153,10 @@ set_charset(void)
 {
 	char *s;
 
-	/*
-	 * Try using the codeset name as the charset name.
-	 */
 	s = nl_langinfo(CODESET);
-	if (icharset(s, 1))
-		return;
+	if (s && strcasecmp(s, "utf-8") == 0)
+		utf_mode = 1;
 
-	/*
-	 * Get character definitions from locale functions,
-	 * rather than from predefined charset entry.
-	 */
 	ilocale();
 }
 
