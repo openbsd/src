@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.163 2015/11/06 17:23:50 schwarze Exp $ */
+/*	$OpenBSD: main.c,v 1.164 2015/11/07 17:58:52 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2012, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -729,12 +729,12 @@ passthrough(const char *file, int fd, int synopsis_only)
 
 	FILE		*stream;
 	const char	*syscall;
-	char		*line;
-	size_t		 len, off;
-	ssize_t		 nw;
+	char		*line, *cp;
+	size_t		 linesz;
 	int		 print;
 
-	fflush(stdout);
+	line = NULL;
+	linesz = 0;
 
 	if ((stream = fdopen(fd, "r")) == NULL) {
 		close(fd);
@@ -743,45 +743,41 @@ passthrough(const char *file, int fd, int synopsis_only)
 	}
 
 	print = 0;
-	while ((line = fgetln(stream, &len)) != NULL) {
+	while (getline(&line, &linesz, stream) != -1) {
+		cp = line;
 		if (synopsis_only) {
 			if (print) {
-				if ( ! isspace((unsigned char)*line))
+				if ( ! isspace((unsigned char)*cp))
 					goto done;
-				while (len &&
-				    isspace((unsigned char)*line)) {
-					line++;
-					len--;
-				}
+				while (isspace((unsigned char)*cp))
+					cp++;
 			} else {
-				if ((len == sizeof(synb) &&
-				     ! strncmp(line, synb, len - 1)) ||
-				    (len == sizeof(synr) &&
-				     ! strncmp(line, synr, len - 1)))
+				if (strcmp(cp, synb) == 0 ||
+				    strcmp(cp, synr) == 0)
 					print = 1;
 				continue;
 			}
 		}
-		for (off = 0; off < len; off += nw)
-			if ((nw = write(STDOUT_FILENO, line + off,
-			    len - off)) == -1 || nw == 0) {
-				fclose(stream);
-				syscall = "write";
-				goto fail;
-			}
+		if (fputs(cp, stdout)) {
+			fclose(stream);
+			syscall = "fputs";
+			goto fail;
+		}
 	}
 
 	if (ferror(stream)) {
 		fclose(stream);
-		syscall = "fgetln";
+		syscall = "getline";
 		goto fail;
 	}
 
 done:
+	free(line);
 	fclose(stream);
 	return;
 
 fail:
+	free(line);
 	warn("%s: SYSERR: %s", file, syscall);
 	if (rc < MANDOCLEVEL_SYSERR)
 		rc = MANDOCLEVEL_SYSERR;
