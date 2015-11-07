@@ -1,9 +1,10 @@
-/*	$OpenBSD: xform.c,v 1.50 2015/11/07 17:46:07 mikeb Exp $	*/
+/*	$OpenBSD: xform.c,v 1.51 2015/11/07 17:46:49 mikeb Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
- * Niels Provos (provos@physnet.uni-hamburg.de) and
- * Damien Miller (djm@mindrot.org).
+ * Niels Provos (provos@physnet.uni-hamburg.de),
+ * Damien Miller (djm@mindrot.org) and
+ * Mike Belopuhov (mikeb@openbsd.org).
  *
  * This code was written by John Ioannidis for BSD/OS in Athens, Greece,
  * in November 1995.
@@ -18,12 +19,16 @@
  *
  * AES XTS implementation in 2008 by Damien Miller
  *
+ * AES-GCM-16 and Chacha20-Poly1305 AEAD modes by Mike Belopuhov.
+ *
  * Copyright (C) 1995, 1996, 1997, 1998, 1999 by John Ioannidis,
  * Angelos D. Keromytis and Niels Provos.
  *
  * Copyright (C) 2001, Angelos D. Keromytis.
  *
  * Copyright (C) 2008, Damien Miller
+ *
+ * Copyright (C) 2010, 2015, Mike Belopuhov
  *
  * Permission to use, copy, and modify this software with or without fee
  * is hereby granted, provided that this entire notice is included in

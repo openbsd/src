@@ -1,7 +1,7 @@
-/*	$OpenBSD: gmac.h,v 1.4 2015/11/07 17:46:07 mikeb Exp $	*/
+/*	$OpenBSD: gmac.h,v 1.5 2015/11/07 17:46:49 mikeb Exp $	*/
 
 /*
- * Copyright (c) 2010 Mike Belopuhov <mike@vantronix.net>
+ * Copyright (c) 2010 Mike Belopuhov
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
