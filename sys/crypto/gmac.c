@@ -1,4 +1,4 @@
-/*	$OpenBSD: gmac.c,v 1.5 2015/11/06 16:43:51 naddy Exp $	*/
+/*	$OpenBSD: gmac.c,v 1.6 2015/11/07 01:37:26 naddy Exp $	*/
 
 /*
  * Copyright (c) 2010 Mike Belopuhov <mike@vantronix.net>
@@ -29,7 +29,10 @@
 #include <crypto/gmac.h>
 
 void	ghash_gfmul(uint32_t *, uint32_t *, uint32_t *);
-void	ghash_update(GHASH_CTX *, uint8_t *, size_t);
+void	ghash_update_mi(GHASH_CTX *, uint8_t *, size_t);
+
+/* Allow overriding with optimized MD function */
+void	(*ghash_update)(GHASH_CTX *, uint8_t *, size_t) = ghash_update_mi;
 
 /* Computes a block multiplication in the GF(2^128) */
 void
@@ -70,7 +73,7 @@ ghash_gfmul(uint32_t *X, uint32_t *Y, uint32_t *product)
 }
 
 void
-ghash_update(GHASH_CTX *ctx, uint8_t *X, size_t len)
+ghash_update_mi(GHASH_CTX *ctx, uint8_t *X, size_t len)
 {
 	uint32_t	*x = (uint32_t *)X;
 	uint32_t	*s = (uint32_t *)ctx->S;
@@ -131,11 +134,12 @@ AES_GMAC_Update(AES_GMAC_CTX *ctx, const uint8_t *data, uint16_t len)
 	if (len > 0) {
 		plen = len % GMAC_BLOCK_LEN;
 		if (len >= GMAC_BLOCK_LEN)
-			ghash_update(&ctx->ghash, (uint8_t *)data, len - plen);
+			(*ghash_update)(&ctx->ghash, (uint8_t *)data,
+			    len - plen);
 		if (plen) {
 			bcopy((uint8_t *)data + (len - plen), (uint8_t *)blk,
 			    plen);
-			ghash_update(&ctx->ghash, (uint8_t *)blk,
+			(*ghash_update)(&ctx->ghash, (uint8_t *)blk,
 			    GMAC_BLOCK_LEN);
 		}
 	}

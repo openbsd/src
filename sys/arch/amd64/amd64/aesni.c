@@ -1,4 +1,4 @@
-/*	$OpenBSD: aesni.c,v 1.35 2015/08/28 19:59:36 tedu Exp $	*/
+/*	$OpenBSD: aesni.c,v 1.36 2015/11/07 01:37:26 naddy Exp $	*/
 /*-
  * Copyright (c) 2003 Jason Wright
  * Copyright (c) 2003, 2004 Theo de Raadt
@@ -119,6 +119,9 @@ int	aesni_swauth(struct cryptop *, struct cryptodesc *, struct swcr_data *,
 
 int	aesni_encdec(struct cryptop *, struct cryptodesc *,
 	    struct cryptodesc *, struct aesni_session *);
+
+void	pclmul_setup(void);
+void	ghash_update_pclmul(GHASH_CTX *, uint8_t *, size_t);
 
 void
 aesni_setup(void)
@@ -662,4 +665,18 @@ out:
 	crp->crp_etype = err;
 	crypto_done(crp);
 	return (err);
+}
+
+void
+pclmul_setup(void)
+{
+	ghash_update = ghash_update_pclmul;
+}
+
+void
+ghash_update_pclmul(GHASH_CTX *ghash, uint8_t *src, size_t len)
+{
+	fpu_kernel_enter();
+	aesni_gmac_update(ghash, src, len);
+	fpu_kernel_exit();
 }
