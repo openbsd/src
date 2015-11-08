@@ -1,0 +1,10 @@
+# $OpenBSD: mk39,v 1.1 2015/11/08 10:47:22 espie Exp $
+
+# duplicate target in list, may fuck up groupling
+
+a b c a:
+	@echo "Did it work"
+
+# wildcards that don't expend to anything, empty target list
+*/*.hqueue:
+	@echo this has no target
