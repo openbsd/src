@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.139 2015/11/08 18:48:07 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.140 2015/11/08 18:51:47 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -1221,7 +1221,9 @@ ieee80211_parse_rsn_body(struct ieee80211com *ic, const u_int8_t *frm,
 	if (frm + 4 > efrm)
 		return 0;
 	rsn->rsn_groupcipher = ieee80211_parse_rsn_cipher(frm);
-	if (rsn->rsn_groupcipher == IEEE80211_CIPHER_USEGROUP)
+	if (rsn->rsn_groupcipher == IEEE80211_CIPHER_NONE ||
+	    rsn->rsn_groupcipher == IEEE80211_CIPHER_USEGROUP ||
+	    rsn->rsn_groupcipher == IEEE80211_CIPHER_BIP)
 		return IEEE80211_STATUS_BAD_GROUP_CIPHER;
 	frm += 4;
 
@@ -1285,6 +1287,8 @@ ieee80211_parse_rsn_body(struct ieee80211com *ic, const u_int8_t *frm,
 	if (frm + 4 > efrm)
 		return 0;
 	rsn->rsn_groupmgmtcipher = ieee80211_parse_rsn_cipher(frm);
+	if (rsn->rsn_groupmgmtcipher != IEEE80211_CIPHER_BIP)
+		return IEEE80211_STATUS_BAD_GROUP_CIPHER;
 
 	return IEEE80211_STATUS_SUCCESS;
 }
