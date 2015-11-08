@@ -1,4 +1,4 @@
-/*	$OpenBSD: efiboot.c,v 1.8 2015/11/03 16:03:04 yasuoka Exp $	*/
+/*	$OpenBSD: efiboot.c,v 1.9 2015/11/08 00:17:29 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -580,10 +580,10 @@ _rtt(void)
 time_t
 getsecs(void)
 {
-	EFI_TIME		t;
-	time_t			r = 0;
-	int			y = 0;
-	int			daytab[][14] = {
+	EFI_TIME	t;
+	time_t		r = 0;
+	int		y = 0;
+	const int	daytab[][14] = {
 	    { 0, -1, 30, 58, 89, 119, 150, 180, 211, 242, 272, 303, 333, 364 },
 	    { 0, -1, 30, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334, 365 },
 	};
