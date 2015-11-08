@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched_bsd.c,v 1.41 2015/03/14 03:38:50 jsg Exp $	*/
+/*	$OpenBSD: sched_bsd.c,v 1.42 2015/11/08 20:45:57 naddy Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*-
@@ -578,8 +578,8 @@ int perfpolicy = PERFPOL_MANUAL;
  */
 #include <sys/sysctl.h>
 
-struct timeout setperf_to;
 void setperf_auto(void *);
+struct timeout setperf_to = TIMEOUT_INITIALIZER(setperf_auto, NULL);
 
 void
 setperf_auto(void *v)
