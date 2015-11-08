@@ -1,4 +1,4 @@
-/*	$OpenBSD: entry.c,v 1.45 2015/11/04 20:28:17 millert Exp $	*/
+/*	$OpenBSD: entry.c,v 1.46 2015/11/08 14:40:23 millert Exp $	*/
 
 /*
  * Copyright 1988,1990,1993,1994 by Paul Vixie
@@ -117,7 +117,7 @@ load_entry(FILE *file, void (*error_func)(const char *), struct passwd *pw,
 	 * of a list of minutes.
 	 */
 
-	e = calloc(sizeof(entry), sizeof(char));
+	e = calloc(sizeof(entry), 1);
 	if (e == NULL) {
 		ecode = e_memory;
 		goto eof;
