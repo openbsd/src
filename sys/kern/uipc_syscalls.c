@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.123 2015/11/01 19:03:33 semarie Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.124 2015/11/08 23:23:12 tedu Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -240,13 +240,15 @@ doaccept(struct proc *p, int sock, struct sockaddr *name, socklen_t *anamelen,
 		return (error);
 	if ((error = getsock(p, sock, &fp)) != 0)
 		return (error);
+
+	s = splsoftnet();
+	headfp = fp;
+	head = fp->f_data;
+
 	if (isdnssocket((struct socket *)fp->f_data)) {
 		error = EINVAL;
 		goto bad;
 	}
-	headfp = fp;
-	s = splsoftnet();
-	head = fp->f_data;
 redo:
 	if ((head->so_options & SO_ACCEPTCONN) == 0) {
 		error = EINVAL;
