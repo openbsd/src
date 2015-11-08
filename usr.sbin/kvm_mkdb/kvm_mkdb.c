@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_mkdb.c,v 1.25 2015/11/05 16:15:47 deraadt Exp $	*/
+/*	$OpenBSD: kvm_mkdb.c,v 1.26 2015/11/08 17:48:48 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -48,8 +48,8 @@
 
 #include "extern.h"
 
-void usage(void);
-int kvm_mkdb(int, const char *, char *, char *, int);
+__dead void usage(void);
+int kvm_mkdb(int, const char *, char *, char *, gid_t, int);
 
 HASHINFO openinfo = {
 	4096,		/* bsize */
@@ -64,9 +64,23 @@ int
 main(int argc, char *argv[])
 {
 	struct rlimit rl;
+	struct group *gr;
+	gid_t kvm_gid = -1;
 	int fd, rval, ch, verbose = 0;
 	char *nlistpath, *nlistname;
 	char dbdir[PATH_MAX];
+
+	if (pledge("stdio rpath wpath cpath fattr flock id", NULL) == -1)
+		err(1, "pledge");
+
+	/* Try to use the kmem group to be able to fchown() in kvm_mkdb(). */
+	if ((gr = getgrnam("kmem")) == NULL) {
+		warn("can't find kmem group");
+	} else {
+		kvm_gid = gr->gr_gid;
+		if (setegid(kvm_gid) == -1)
+			err(1, "setegid");
+	}
 
 	/* Increase our data size to the max if we can. */
 	if (getrlimit(RLIMIT_DATA, &rl) == 0) {
@@ -74,6 +88,9 @@ main(int argc, char *argv[])
 		if (setrlimit(RLIMIT_DATA, &rl) < 0)
 			warn("can't set rlimit data size");
 	}
+
+	if (pledge("stdio rpath wpath cpath fattr flock", NULL) == -1)
+		err(1, "pledge");
 
 	strlcpy(dbdir, _PATH_VARDB, sizeof(dbdir));
 	while ((ch = getopt(argc, argv, "vo:")) != -1)
@@ -98,20 +115,18 @@ main(int argc, char *argv[])
 	if (argc > 1)
 		usage();
 
-	if (pledge("stdio rpath wpath cpath fattr flock", NULL) == -1)
-		err(1, "pledge");
-
 	/* If no kernel specified use _PATH_KSYMS and fall back to _PATH_UNIX */
 	if (argc > 0) {
 		nlistpath = argv[0];
 		nlistname = basename(nlistpath);
 		if ((fd = open(nlistpath, O_RDONLY, 0)) == -1)
 			err(1, "can't open %s", nlistpath);
-		rval = kvm_mkdb(fd, dbdir, nlistpath, nlistname, verbose);
+		rval = kvm_mkdb(fd, dbdir, nlistpath, nlistname, kvm_gid,
+		    verbose);
 	} else {
 		nlistname = basename(_PATH_UNIX);
 		if ((fd = open((nlistpath = _PATH_KSYMS), O_RDONLY, 0)) == -1 ||
-		    (rval = kvm_mkdb(fd, dbdir, nlistpath, nlistname, 
+		    (rval = kvm_mkdb(fd, dbdir, nlistpath, nlistname, kvm_gid,
 		    verbose)) != 0) {
 			if (fd == -1) 
 				warnx("can't open %s", _PATH_KSYMS);
@@ -119,21 +134,20 @@ main(int argc, char *argv[])
 				warnx("will try again using %s instead", _PATH_UNIX);
 			if ((fd = open((nlistpath = _PATH_UNIX), O_RDONLY, 0)) == -1)
 				err(1, "can't open %s", nlistpath);
-			rval = kvm_mkdb(fd, dbdir, nlistpath, nlistname, 
-			    verbose);
+			rval = kvm_mkdb(fd, dbdir, nlistpath, nlistname,
+			    kvm_gid, verbose);
 		}
 	}
 	exit(rval);
 }
 
 int
-kvm_mkdb(int fd, const char *dbdir, char *nlistpath, char *nlistname, 
+kvm_mkdb(int fd, const char *dbdir, char *nlistpath, char *nlistname, gid_t gid, 
     int verbose)
 {
 	DB *db;
 	char dbtemp[PATH_MAX], dbname[PATH_MAX];
 	int r;
-	struct group *gr;
 
 	r = snprintf(dbtemp, sizeof(dbtemp), "%skvm_%s.tmp",
 	    dbdir, nlistname);
@@ -164,9 +178,7 @@ kvm_mkdb(int fd, const char *dbdir, char *nlistpath, char *nlistname,
 		return(1);
 	}
 
-	if ((gr = getgrnam("kmem")) == NULL) {
-		warn("can't find kmem group");
-	} else if (fchown(db->fd(db), -1, gr->gr_gid)) {
+	if (gid != -1 && fchown(db->fd(db), -1, gid) == -1) {
 		warn("can't chown %s", dbtemp);
 		(void)unlink(dbtemp);
 		return(1);
@@ -192,7 +204,7 @@ kvm_mkdb(int fd, const char *dbdir, char *nlistpath, char *nlistname,
 	return(0);
 }
 
-void
+__dead void
 usage(void)
 {
 	(void)fprintf(stderr, "usage: kvm_mkdb [-v] [-o directory] [file]\n");
