@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_output.c,v 1.98 2015/11/04 12:12:00 dlg Exp $	*/
+/*	$OpenBSD: ieee80211_output.c,v 1.99 2015/11/08 18:48:07 stsp Exp $	*/
 /*	$NetBSD: ieee80211_output.c,v 1.13 2004/05/31 11:02:55 dyoung Exp $	*/
 
 /*-
@@ -833,7 +833,7 @@ ieee80211_add_qos_capability(u_int8_t *frm, struct ieee80211com *ic)
 }
 
 /*
- * Add an RSN element to a frame (see 7.3.2.25).
+ * Add an RSN element to a frame (see 802.11-2012 8.4.2.27)
  */
 u_int8_t *
 ieee80211_add_rsn_body(u_int8_t *frm, struct ieee80211com *ic,
@@ -846,7 +846,7 @@ ieee80211_add_rsn_body(u_int8_t *frm, struct ieee80211com *ic,
 	/* write Version field */
 	LE_WRITE_2(frm, 1); frm += 2;
 
-	/* write Group Data Cipher Suite field (see Table 20da) */
+	/* write Group Data Cipher Suite field (see 802.11-2012 Table 8-99) */
 	memcpy(frm, oui, 3); frm += 3;
 	switch (ni->ni_rsngroupcipher) {
 	case IEEE80211_CIPHER_WEP40:
