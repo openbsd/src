@@ -1,4 +1,4 @@
-/*	$OpenBSD: efidev.c,v 1.6 2015/10/01 20:28:12 krw Exp $	*/
+/*	$OpenBSD: efidev.c,v 1.7 2015/11/08 00:42:39 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -598,4 +598,36 @@ efiioctl(struct open_file *f, u_long cmd, void *data)
 {
 
 	return 0;
+}
+
+void
+efi_dump_diskinfo(void)
+{
+	efi_diskinfo_t	 ed;
+	struct diskinfo	*dip;
+	bios_diskinfo_t *bdi;
+	uint64_t	 siz;
+	const char	*sizu;
+
+	printf("Disk\tBlkSiz\tIoAlign\tSize\tFlags\tChecksum\n");
+	TAILQ_FOREACH(dip, &disklist, list) {
+		bdi = &dip->bios_info;
+		ed = dip->efi_info;
+
+		siz = ed->blkio->Media->LastBlock * ed->blkio->Media->BlockSize;
+		siz /= 1024 * 1024;
+		if (siz < 10000)
+			sizu = "MB";
+		else {
+			siz /= 1024;
+			sizu = "GB";
+		}
+		
+		printf("hd%d\t%u\t%u\t%u%s\t0x%x\t0x%x\t%s\n",
+		    (bdi->bios_number & 0x7f),
+		    ed->blkio->Media->BlockSize,
+		    ed->blkio->Media->IoAlign, siz, sizu,
+		    bdi->flags, bdi->checksum,
+		    (ed->blkio->Media->RemovableMedia)? "Removable" : "");
+	}
 }

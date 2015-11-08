@@ -1,4 +1,4 @@
-/*	$OpenBSD: efidev.h,v 1.2 2015/09/02 08:24:29 yasuoka Exp $	*/
+/*	$OpenBSD: efidev.h,v 1.3 2015/11/08 00:42:39 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -35,3 +35,4 @@ int		 efiopen(struct open_file *, ...);
 int		 efistrategy(void *, int, daddr32_t, size_t, void *, size_t *);
 int		 eficlose(struct open_file *);
 int		 efiioctl(struct open_file *, u_long, void *);
+void		 efi_dump_diskinfo(void);
