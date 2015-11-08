@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.76 2015/10/29 19:46:47 lum Exp $	*/
+/*	$OpenBSD: main.c,v 1.77 2015/11/08 19:31:57 jasper Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -115,7 +115,7 @@ main(int argc, char **argv)
 	if ((cp = startupfile(NULL)) != NULL)
 		(void)load(cp);
 
-	/* 
+	/*
 	 * Now ensure any default buffer modes from the startup file are
 	 * given to any files opened when parsing the startup file.
 	 * Note *scratch* will also be updated.
@@ -152,7 +152,7 @@ notnum:
 
 				if (fisdir(cp) == TRUE) {
 					(void)do_dired(cp);
-					continue;					
+					continue;
 				}
 				if ((curbp = findbuffer(cp)) == NULL) {
 					vttidy();
