@@ -42,12 +42,6 @@ Boston, MA 02111-1307, USA.  */
 #ifndef LIBSTDCXX_PROFILE
 #define LIBSTDCXX_PROFILE "-lstdc++"
 #endif
-#ifndef LIBSUPCXX
-#define LIBSUPCXX "-lsupc++"
-#endif
-#ifndef LIBSUPCXX_PROFILE
-#define LIBSUPCXX_PROFILE "-lsupc++"
-#endif
 
 void
 lang_specific_driver (in_argc, in_argv, in_added_libraries)
@@ -66,10 +60,6 @@ lang_specific_driver (in_argc, in_argv, in_added_libraries)
   /* This will be 0 if we encounter a situation where we should not
      link in libstdc++.  */
   int library = 1;
-
-  /* This will be 1 if we encounter a situation where we should link
-     libsupc++. */
-  int libsupcxx = 0;
 
   /* The number of arguments being added to what's in argv, other than
      libraries.  We use this to track the number of times we've inserted
@@ -142,13 +132,6 @@ lang_specific_driver (in_argc, in_argv, in_added_libraries)
 			       || strcmp (argv[i], "-nodefaultlibs") == 0))
 	    {
 	      library = 0;
-	      libsupcxx = -1;
-	    }
-	  else if (strcmp (argv[i], "-shared") == 0)
-	    {
-	      library = 0;
-	      if (libsupcxx == 0)
-	        libsupcxx = 1;
 	    }
 	  else if (strcmp (argv[i], "-lm") == 0
 		   || strcmp (argv[i], "-lmath") == 0
@@ -163,8 +146,6 @@ lang_specific_driver (in_argc, in_argv, in_added_libraries)
 	    }
 	  else if (strcmp (argv[i], "-lc") == 0)
 	    args[i] |= WITHLIBC;
-	  else if (strcmp (argv[i], "-lstdc++") == 0)
-	    libsupcxx = -1;
 	  else if (strcmp (argv[i], "-pg") == 0 || strcmp (argv[i], "-p") == 0)
 	    saw_profile_flag++;
 	  else if (strcmp (argv[i], "-v") == 0)
@@ -288,12 +269,6 @@ lang_specific_driver (in_argc, in_argv, in_added_libraries)
       j++;
     }
 
-  /* Add -lsupc++ for shared. */
-  if (libsupcxx == 1)
-    {
-      arglist[j++] = saw_profile_flag ? LIBSUPCXX_PROFILE : LIBSUPCXX;
-      added_libraries++;
-    }
   /* Add `-lstdc++' if we haven't already done so.  */
   if (library)
     {
