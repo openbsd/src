@@ -4,7 +4,7 @@
 int
 TEST_SETJMP(int argc, char *argv[])
 {
-	jmp_buf env;
+	JMP_BUF env;
 	int rv;
 
 	/* Set up the FPU control word register. */
