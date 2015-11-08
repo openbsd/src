@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmcreg.h,v 1.6 2014/09/23 12:08:13 rapha Exp $	*/
+/*	$OpenBSD: sdmmcreg.h,v 1.7 2015/11/08 12:10:27 jsg Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -48,6 +48,9 @@
 
 /* OCR bits */
 #define MMC_OCR_MEM_READY		(1<<31)	/* memory power-up status bit */
+#define MMC_OCR_ACCESS_MODE_MASK	0x60000000 /* bits 30:29 */
+#define MMC_OCR_SECTOR_MODE		(1<<30)
+#define MMC_OCR_BYTE_MODE		(1<<29)
 #define MMC_OCR_3_5V_3_6V		(1<<23)
 #define MMC_OCR_3_4V_3_5V		(1<<22)
 #define MMC_OCR_3_3V_3_4V		(1<<21)

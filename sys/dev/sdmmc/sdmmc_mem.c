@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc_mem.c,v 1.21 2015/04/22 04:02:06 jsg Exp $	*/
+/*	$OpenBSD: sdmmc_mem.c,v 1.22 2015/11/08 12:10:27 jsg Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -525,6 +525,8 @@ sdmmc_mem_send_op_cond(struct sdmmc_softc *sc, u_int32_t ocr,
 			cmd.c_opcode = SD_APP_OP_COND;
 			error = sdmmc_app_command(sc, &cmd);
 		} else {
+			cmd.c_arg &= ~MMC_OCR_ACCESS_MODE_MASK;
+			cmd.c_arg |= MMC_OCR_SECTOR_MODE;
 			cmd.c_opcode = MMC_SEND_OP_COND;
 			error = sdmmc_mmc_command(sc, &cmd);
 		}
