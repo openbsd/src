@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr53c9x.c,v 1.60 2015/03/14 03:38:47 jsg Exp $	*/
+/*	$OpenBSD: ncr53c9x.c,v 1.61 2015/11/08 22:27:10 miod Exp $	*/
 /*     $NetBSD: ncr53c9x.c,v 1.56 2000/11/30 14:41:46 thorpej Exp $    */
 
 /*
@@ -667,6 +667,7 @@ ncr53c9x_select(sc, ecb)
 			NCRDMA_GO(sc);
 		} else {
 			ncr53c9x_wrfifo(sc, (u_char *)&ecb->cmd.cmd, ecb->clen);
+			sc->sc_cmdlen = 0;
 			NCRCMD(sc, NCRCMD_SELNATN);
 		}
 		return;
@@ -736,6 +737,7 @@ ncr53c9x_select(sc, ecb)
 	 */
 
 	/* Now get the command into the FIFO */
+	sc->sc_cmdlen = 0;
 	ncr53c9x_wrfifo(sc, cmd, clen);
 
 	/* And get the targets attention */
@@ -1946,6 +1948,7 @@ ncr53c9x_msgout(sc)
 		 */
 		ncr53c9x_flushfifo(sc);
 		ncr53c9x_wrfifo(sc, sc->sc_omp, sc->sc_omlen);
+		sc->sc_cmdlen = 0;
 		NCRCMD(sc, NCRCMD_TRANS);
 	} else {
 		/* (re)send the message */
@@ -2626,6 +2629,7 @@ msgin:
 			NCRDMA_GO(sc);
 		} else {
 			ncr53c9x_wrfifo(sc, (u_char *)&ecb->cmd.cmd, ecb->clen);
+			sc->sc_cmdlen = 0;
 			NCRCMD(sc, NCRCMD_TRANS);
 		}
 		sc->sc_prevphase = COMMAND_PHASE;
