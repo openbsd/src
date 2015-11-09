@@ -1,4 +1,4 @@
-/*	$OpenBSD: atrun.c,v 1.35 2015/11/09 01:12:27 millert Exp $	*/
+/*	$OpenBSD: atrun.c,v 1.36 2015/11/09 14:44:05 millert Exp $	*/
 
 /*
  * Copyright (c) 2002-2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -57,52 +57,45 @@ int
 scan_atjobs(at_db **db, struct timespec *ts)
 {
 	DIR *atdir = NULL;
-	int cwd, queue, pending;
+	int dfd, queue, pending;
 	time_t run_time;
 	char *ep;
 	at_db *new_db, *old_db = *db;
 	atjob *job;
 	struct dirent *file;
-	struct stat statbuf;
+	struct stat sb;
 
-	if (stat(AT_DIR, &statbuf) != 0) {
-		log_it("CRON", getpid(), "CAN'T STAT", AT_DIR);
+	if ((dfd = open(AT_DIR, O_RDONLY|O_DIRECTORY)) == -1) {
+		log_it("CRON", getpid(), "OPEN FAILED", AT_DIR);
+		return (0);
+	}
+	if (fstat(dfd, &sb) != 0) {
+		log_it("CRON", getpid(), "FSTAT FAILED", AT_DIR);
+		close(dfd);
+		return (0);
+	}
+	if (old_db != NULL && old_db->mtime == sb.st_mtime) {
+		close(dfd);
 		return (0);
 	}
 
-	if (old_db != NULL && old_db->mtime == statbuf.st_mtime) {
-		return (0);
-	}
-
-	/* XXX - use fstatat/openat instead of chdir */
-	if ((cwd = open(".", O_RDONLY, 0)) < 0) {
-		log_it("CRON", getpid(), "CAN'T OPEN", ".");
-		return (0);
-	}
-
-	if (chdir(AT_DIR) != 0 || (atdir = opendir(".")) == NULL) {
-		if (atdir == NULL)
-			log_it("CRON", getpid(), "OPENDIR FAILED", AT_DIR);
-		else
-			log_it("CRON", getpid(), "CHDIR FAILED", AT_DIR);
-		fchdir(cwd);
-		close(cwd);
+	if ((atdir = fdopendir(dfd)) == NULL) {
+		log_it("CRON", getpid(), "OPENDIR FAILED", AT_DIR);
+		close(dfd);
 		return (0);
 	}
 
 	if ((new_db = malloc(sizeof(*new_db))) == NULL) {
 		closedir(atdir);
-		fchdir(cwd);
-		close(cwd);
 		return (0);
 	}
-	new_db->mtime = statbuf.st_mtime;	/* stash at dir mtime */
+	new_db->mtime = sb.st_mtime;	/* stash at dir mtime */
 	TAILQ_INIT(&new_db->jobs);
 
 	pending = 0;
 	while ((file = readdir(atdir)) != NULL) {
-		if (stat(file->d_name, &statbuf) != 0 ||
-		    !S_ISREG(statbuf.st_mode))
+		if (fstatat(dfd, file->d_name, &sb, AT_SYMLINK_NOFOLLOW) != 0 ||
+		    !S_ISREG(sb.st_mode))
 			continue;
 
 		/*
@@ -124,12 +117,10 @@ scan_atjobs(at_db **db, struct timespec *ts)
 			}
 			free(new_db);
 			closedir(atdir);
-			fchdir(cwd);
-			close(cwd);
 			return (0);
 		}
-		job->uid = statbuf.st_uid;
-		job->gid = statbuf.st_gid;
+		job->uid = sb.st_uid;
+		job->gid = sb.st_gid;
 		job->queue = queue;
 		job->run_time = run_time;
 		TAILQ_INSERT_TAIL(&new_db->jobs, job, entries);
@@ -148,10 +139,6 @@ scan_atjobs(at_db **db, struct timespec *ts)
 	}
 	*db = new_db;
 
-	/* Change back to the normal cron dir. */
-	fchdir(cwd);
-	close(cwd);
-
 	return (pending);
 }
 
@@ -162,7 +149,7 @@ void
 atrun(at_db *db, double batch_maxload, time_t now)
 {
 	char atfile[MAX_FNAME];
-	struct stat statbuf;
+	struct stat sb;
 	double la;
 	atjob *job, *tjob, *batch = NULL;
 
@@ -177,7 +164,7 @@ atrun(at_db *db, double batch_maxload, time_t now)
 		snprintf(atfile, sizeof(atfile), "%s/%lld.%c", AT_DIR,
 		    (long long)job->run_time, job->queue);
 
-		if (lstat(atfile, &statbuf) != 0 || !S_ISREG(statbuf.st_mode)) {
+		if (lstat(atfile, &sb) != 0 || !S_ISREG(sb.st_mode)) {
 			TAILQ_REMOVE(&db->jobs, job, entries);
 			free(job);
 			continue;		/* disapeared or not a file */
@@ -186,7 +173,7 @@ atrun(at_db *db, double batch_maxload, time_t now)
 		/*
 		 * Pending jobs have the user execute bit set.
 		 */
-		if (statbuf.st_mode & S_IXUSR) {
+		if (sb.st_mode & S_IXUSR) {
 			/* new job to run */
 			if (isupper(job->queue)) {
 				/* we run one batch job per atrun() call */
@@ -221,7 +208,7 @@ atrun(at_db *db, double batch_maxload, time_t now)
 static void
 run_job(atjob *job, char *atfile)
 {
-	struct stat statbuf;
+	struct stat sb;
 	struct passwd *pw;
 	pid_t pid;
 	long nuid, ngid;
@@ -280,23 +267,23 @@ run_job(atjob *job, char *atfile)
 	}
 
 	/* Sanity checks */
-	if (fstat(fd, &statbuf) < 0) {
+	if (fstat(fd, &sb) < 0) {
 		log_it(pw->pw_name, getpid(), "FSTAT FAILED", atfile);
 		_exit(EXIT_FAILURE);
 	}
-	if (!S_ISREG(statbuf.st_mode)) {
+	if (!S_ISREG(sb.st_mode)) {
 		log_it(pw->pw_name, getpid(), "NOT REGULAR", atfile);
 		_exit(EXIT_FAILURE);
 	}
-	if ((statbuf.st_mode & ALLPERMS) != (S_IRUSR | S_IWUSR | S_IXUSR)) {
+	if ((sb.st_mode & ALLPERMS) != (S_IRUSR | S_IWUSR | S_IXUSR)) {
 		log_it(pw->pw_name, getpid(), "BAD FILE MODE", atfile);
 		_exit(EXIT_FAILURE);
 	}
-	if (statbuf.st_uid != 0 && statbuf.st_uid != job->uid) {
+	if (sb.st_uid != 0 && sb.st_uid != job->uid) {
 		log_it(pw->pw_name, getpid(), "WRONG FILE OWNER", atfile);
 		_exit(EXIT_FAILURE);
 	}
-	if (statbuf.st_nlink > 1) {
+	if (sb.st_nlink > 1) {
 		log_it(pw->pw_name, getpid(), "BAD LINK COUNT", atfile);
 		_exit(EXIT_FAILURE);
 	}
