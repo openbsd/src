@@ -282,7 +282,6 @@ extern	int ntags(void);
 extern	int curr_tag(void);
 extern	int edit_tagfile(void);
 extern	void open_getchr(void);
-extern	void close_getchr(void);
 extern	int getchr(void);
 extern	void *lsignal(int, void (*)(int));
 extern	char *helpfile(void);

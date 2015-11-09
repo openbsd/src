@@ -371,7 +371,6 @@ quit(int status)
 	deinit();
 	flush();
 	raw_mode(0);
-	close_getchr();
 	exit(status);
 }
 

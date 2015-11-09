@@ -37,14 +37,6 @@ open_getchr(void)
 }
 
 /*
- * Close the keyboard.
- */
-void
-close_getchr(void)
-{
-}
-
-/*
  * Get a character from the keyboard.
  */
 int
