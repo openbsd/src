@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.144 2015/11/02 11:19:30 dlg Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.145 2015/11/09 10:26:26 mpi Exp $	*/
 /*
  * Synchronous PPP link level subroutines.
  *
@@ -4244,10 +4244,9 @@ sppp_update_gw_walker(struct rtentry *rt, void *arg, unsigned int id)
 	if (rt->rt_ifidx == ifp->if_index) {
 		if (rt->rt_ifa->ifa_dstaddr->sa_family !=
 		    rt->rt_gateway->sa_family ||
-		    (rt->rt_flags & RTF_GATEWAY) == 0)
+		    !ISSET(rt->rt_flags, RTF_GATEWAY))
 			return (0);	/* do not modify non-gateway routes */
-		bcopy(rt->rt_ifa->ifa_dstaddr, rt->rt_gateway,
-		    rt->rt_ifa->ifa_dstaddr->sa_len);
+		rt_setgate(rt, rt->rt_ifa->ifa_dstaddr);
 	}
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.h,v 1.120 2015/11/06 17:55:55 mpi Exp $	*/
+/*	$OpenBSD: route.h,v 1.121 2015/11/09 10:26:26 mpi Exp $	*/
 /*	$NetBSD: route.h,v 1.9 1996/02/13 22:00:49 christos Exp $	*/
 
 /*
@@ -119,6 +119,8 @@ struct rtentry {
 };
 #define	rt_use		rt_rmx.rmx_pksent
 #define	rt_expire	rt_rmx.rmx_expire
+#define	rt_locks	rt_rmx.rmx_locks
+#define	rt_mtu		rt_rmx.rmx_mtu
 
 #define	RTF_UP		0x1		/* route usable */
 #define	RTF_GATEWAY	0x2		/* destination is a gateway */
@@ -358,7 +360,7 @@ void	 rt_maskedcopy(struct sockaddr *,
 void	 rt_sendmsg(struct rtentry *, int, u_int);
 void	 rt_sendaddrmsg(struct rtentry *, int);
 void	 rt_missmsg(int, struct rt_addrinfo *, int, u_int, int, u_int);
-int	 rt_setgate(struct rtentry *, struct sockaddr *, unsigned int);
+int	 rt_setgate(struct rtentry *, struct sockaddr *);
 int	 rt_checkgate(struct ifnet *, struct rtentry *, struct sockaddr *,
 	    unsigned int, struct rtentry **);
 void	 rt_setmetrics(u_long, struct rt_metrics *, struct rt_kmetrics *);
