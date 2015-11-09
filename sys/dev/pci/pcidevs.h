@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1774 2015/11/02 04:43:24 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1775 2015/11/09 00:37:44 mlarkin Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -58,6 +58,7 @@
 #define	PCI_VENDOR_DYNALINK	0x0675		/* Dynalink */
 #define	PCI_VENDOR_COREGA2	0x07aa		/* Corega */
 #define	PCI_VENDOR_RHINO	0x0b0b		/* Rhino Equipment */
+#define	PCI_VENDOR_OPENBSD	0x0b5d		/* OpenBSD */
 #define	PCI_VENDOR_COMPAQ	0x0e11		/* Compaq */
 #define	PCI_VENDOR_SYMBIOS	0x1000		/* Symbios Logic */
 #define	PCI_VENDOR_ATI	0x1002		/* ATI */
@@ -5967,6 +5968,9 @@
 #define	PCI_PRODUCT_OPTI_82C701	0xc701		/* 82C701 */
 #define	PCI_PRODUCT_OPTI_82C822	0xc822		/* 82C822 */
 #define	PCI_PRODUCT_OPTI_82C861	0xc861		/* 82C861 */
+
+/* OpenBSD VMM products */
+#define	PCI_PRODUCT_OPENBSD_PCHB	0x0666		/* VMM PCI Host Bridge */
 
 /* Option products */
 #define	PCI_PRODUCT_OPTION_F32	0x000c		/* 3G+ UMTS HSDPA */

@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1774 2015/11/02 04:43:24 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1775 2015/11/09 00:37:44 mlarkin Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -20820,6 +20820,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "82C861",
 	},
 	{
+	    PCI_VENDOR_OPENBSD, PCI_PRODUCT_OPENBSD_PCHB,
+	    "VMM PCI Host Bridge",
+	},
+	{
 	    PCI_VENDOR_OPTION, PCI_PRODUCT_OPTION_F32,
 	    "3G+ UMTS HSDPA",
 	},
@@ -25314,6 +25318,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_RHINO,
 	    "Rhino Equipment",
+	},
+	{
+	    PCI_VENDOR_OPENBSD,
+	    "OpenBSD",
 	},
 	{
 	    PCI_VENDOR_COMPAQ,
