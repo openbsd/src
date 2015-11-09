@@ -157,7 +157,6 @@ raw_mode(int on)
 		s = save_term;
 	}
 	(void) tcsetattr(tty, TCSASOFT | TCSADRAIN, &s);
-	(void) fsync(tty);
 	curr_on = on;
 }
 
