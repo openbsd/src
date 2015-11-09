@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ale.c,v 1.40 2015/10/25 13:04:28 mpi Exp $	*/
+/*	$OpenBSD: if_ale.c,v 1.41 2015/11/09 00:29:06 dlg Exp $	*/
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
@@ -96,7 +96,7 @@ void	ale_txeof(struct ale_softc *);
 
 int	ale_dma_alloc(struct ale_softc *);
 void	ale_dma_free(struct ale_softc *);
-int	ale_encap(struct ale_softc *, struct mbuf **);
+int	ale_encap(struct ale_softc *, struct mbuf *);
 void	ale_init_rx_pages(struct ale_softc *);
 void	ale_init_tx_ring(struct ale_softc *);
 
@@ -866,16 +866,14 @@ ale_dma_free(struct ale_softc *sc)
 }
 
 int
-ale_encap(struct ale_softc *sc, struct mbuf **m_head)
+ale_encap(struct ale_softc *sc, struct mbuf *m)
 {
 	struct ale_txdesc *txd, *txd_last;
 	struct tx_desc *desc;
-	struct mbuf *m;
 	bus_dmamap_t map;
 	uint32_t cflags, poff, vtag;
 	int error, i, prod;
 
-	m = *m_head;
 	cflags = vtag = 0;
 	poff = 0;
 
@@ -884,30 +882,23 @@ ale_encap(struct ale_softc *sc, struct mbuf **m_head)
 	txd_last = txd;
 	map = txd->tx_dmamap;
 
-	error = bus_dmamap_load_mbuf(sc->sc_dmat, map, *m_head, BUS_DMA_NOWAIT);
+	error = bus_dmamap_load_mbuf(sc->sc_dmat, map, m, BUS_DMA_NOWAIT);
 	if (error != 0 && error != EFBIG)
 		goto drop;
 	if (error != 0) {
-		if (m_defrag(*m_head, M_DONTWAIT)) {
+		if (m_defrag(m, M_DONTWAIT)) {
 			error = ENOBUFS;
 			goto drop;
 		}
-		error = bus_dmamap_load_mbuf(sc->sc_dmat, map, *m_head,
+		error = bus_dmamap_load_mbuf(sc->sc_dmat, map, m,
 		    BUS_DMA_NOWAIT);
 		if (error != 0)
 			goto drop;
 	}
 
-	/* Check descriptor overrun. */
-	if (sc->ale_cdata.ale_tx_cnt + map->dm_nsegs >= ALE_TX_RING_CNT - 2) {
-		bus_dmamap_unload(sc->sc_dmat, map);
-		return (ENOBUFS);
-	}
-
 	bus_dmamap_sync(sc->sc_dmat, map, 0, map->dm_mapsize,
 	    BUS_DMASYNC_PREWRITE);
 
-	m = *m_head;
 	/* Configure Tx checksum offload. */
 	if ((m->m_pkthdr.csum_flags & ALE_CSUM_FEATURES) != 0) {
 		/*
@@ -980,8 +971,7 @@ ale_encap(struct ale_softc *sc, struct mbuf **m_head)
 	return (0);
 
  drop:
-	m_freem(*m_head);
-	*m_head = NULL;
+	m_freem(m);
 	return (error);
 }
 
@@ -989,7 +979,7 @@ void
 ale_start(struct ifnet *ifp)
 {
         struct ale_softc *sc = ifp->if_softc;
-	struct mbuf *m_head;
+	struct mbuf *m;
 	int enq;
 
 	/* Reclaim transmitted frames. */
@@ -1005,8 +995,15 @@ ale_start(struct ifnet *ifp)
 
 	enq = 0;
 	for (;;) {
-		IFQ_DEQUEUE(&ifp->if_snd, m_head);
-		if (m_head == NULL)
+		/* Check descriptor overrun. */
+		if (sc->ale_cdata.ale_tx_cnt + ALE_MAXTXSEGS >=
+		    ALE_TX_RING_CNT - 2) {
+			ifp->if_flags |= IFF_OACTIVE;
+			break;
+		}
+
+		IFQ_DEQUEUE(&ifp->if_snd, m);
+		if (m == NULL)
 			break;
 
 		/*
@@ -1014,14 +1011,9 @@ ale_start(struct ifnet *ifp)
 		 * don't have room, set the OACTIVE flag and wait
 		 * for the NIC to drain the ring.
 		 */
-		if (ale_encap(sc, &m_head)) {
-			if (m_head == NULL)
-				ifp->if_oerrors++;
-			else {
-				IF_PREPEND(&ifp->if_snd, m_head);
-				ifp->if_flags |= IFF_OACTIVE;
-			}
-			break;
+		if (ale_encap(sc, m) != 0) {
+			ifp->if_oerrors++;
+			continue;
 		}
 
 		enq = 1;
@@ -1032,7 +1024,7 @@ ale_start(struct ifnet *ifp)
 		 * to him.
 		 */
 		if (ifp->if_bpf != NULL)
-			bpf_mtap_ether(ifp->if_bpf, m_head, BPF_DIRECTION_OUT);
+			bpf_mtap_ether(ifp->if_bpf, m, BPF_DIRECTION_OUT);
 #endif
 	}
 

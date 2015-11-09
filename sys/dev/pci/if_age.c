@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_age.c,v 1.29 2015/10/25 13:04:28 mpi Exp $	*/
+/*	$OpenBSD: if_age.c,v 1.30 2015/11/09 00:29:06 dlg Exp $	*/
 
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -89,7 +89,7 @@ void	age_dma_free(struct age_softc *);
 void	age_get_macaddr(struct age_softc *);
 void	age_phy_reset(struct age_softc *);
 
-int	age_encap(struct age_softc *, struct mbuf **);
+int	age_encap(struct age_softc *, struct mbuf *);
 void	age_init_tx_ring(struct age_softc *);
 int	age_init_rx_ring(struct age_softc *);
 void	age_init_rr_ring(struct age_softc *);
@@ -957,7 +957,7 @@ void
 age_start(struct ifnet *ifp)
 {
         struct age_softc *sc = ifp->if_softc;
-        struct mbuf *m_head;
+        struct mbuf *m;
 	int enq;
 
 	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
@@ -969,8 +969,14 @@ age_start(struct ifnet *ifp)
 
 	enq = 0;
 	for (;;) {
-		IFQ_DEQUEUE(&ifp->if_snd, m_head);
-		if (m_head == NULL)
+		if (sc->age_cdata.age_tx_cnt + AGE_MAXTXSEGS >=
+		    AGE_TX_RING_CNT - 2) {
+			ifp->if_flags |= IFF_OACTIVE;
+			break;
+		}
+
+		IFQ_DEQUEUE(&ifp->if_snd, m);
+		if (m == NULL)
 			break;
 
 		/*
@@ -978,14 +984,9 @@ age_start(struct ifnet *ifp)
 		 * don't have room, set the OACTIVE flag and wait
 		 * for the NIC to drain the ring.
 		 */
-		if (age_encap(sc, &m_head)) {
-			if (m_head == NULL)
-				ifp->if_oerrors++;
-			else {
-				IF_PREPEND(&ifp->if_snd, m_head);
-				ifp->if_flags |= IFF_OACTIVE;
-			}
-			break;
+		if (age_encap(sc, m) != 0) {
+			ifp->if_oerrors++;
+			continue;
 		}
 		enq = 1;
 
@@ -995,7 +996,7 @@ age_start(struct ifnet *ifp)
 		 * to him.
 		 */
 		if (ifp->if_bpf != NULL)
-			bpf_mtap_ether(ifp->if_bpf, m_head, BPF_DIRECTION_OUT);
+			bpf_mtap_ether(ifp->if_bpf, m, BPF_DIRECTION_OUT);
 #endif
 	}
 
@@ -1115,16 +1116,14 @@ age_mac_config(struct age_softc *sc)
 }
 
 int
-age_encap(struct age_softc *sc, struct mbuf **m_head)
+age_encap(struct age_softc *sc, struct mbuf *m)
 {
 	struct age_txdesc *txd, *txd_last;
 	struct tx_desc *desc;
-	struct mbuf *m;
 	bus_dmamap_t map;
 	uint32_t cflags, poff, vtag;
 	int error, i, prod;
 
-	m = *m_head;
 	cflags = vtag = 0;
 	poff = 0;
 
@@ -1133,27 +1132,20 @@ age_encap(struct age_softc *sc, struct mbuf **m_head)
 	txd_last = txd;
 	map = txd->tx_dmamap;
 
-	error = bus_dmamap_load_mbuf(sc->sc_dmat, map, *m_head, BUS_DMA_NOWAIT);
+	error = bus_dmamap_load_mbuf(sc->sc_dmat, map, m, BUS_DMA_NOWAIT);
 	if (error != 0 && error != EFBIG)
 		goto drop;
 	if (error != 0) {
-		if (m_defrag(*m_head, M_DONTWAIT)) {
+		if (m_defrag(m, M_DONTWAIT)) {
 			error = ENOBUFS;
 			goto drop;
 		}
-		error = bus_dmamap_load_mbuf(sc->sc_dmat, map, *m_head,
+		error = bus_dmamap_load_mbuf(sc->sc_dmat, map, m,
 		    BUS_DMA_NOWAIT);
 		if (error != 0)
 			goto drop;
 	}
 
-	/* Check descriptor overrun. */
-	if (sc->age_cdata.age_tx_cnt + map->dm_nsegs >= AGE_TX_RING_CNT - 2) {
-		bus_dmamap_unload(sc->sc_dmat, map);
-		return (ENOBUFS);
-	}
-
-	m = *m_head;
 	/* Configure Tx IP/TCP/UDP checksum offload. */
 	if ((m->m_pkthdr.csum_flags & AGE_CSUM_FEATURES) != 0) {
 		cflags |= AGE_TD_CSUM;
@@ -1210,8 +1202,7 @@ age_encap(struct age_softc *sc, struct mbuf **m_head)
 	return (0);
 
  drop:
-	m_freem(*m_head);
-	*m_head = NULL;
+	m_freem(m);
 	return (error);
 }
 

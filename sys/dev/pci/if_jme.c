@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_jme.c,v 1.42 2015/10/25 13:04:28 mpi Exp $	*/
+/*	$OpenBSD: if_jme.c,v 1.43 2015/11/09 00:29:06 dlg Exp $	*/
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
@@ -100,7 +100,7 @@ int	jme_init_rx_ring(struct jme_softc *);
 void	jme_init_tx_ring(struct jme_softc *);
 void	jme_init_ssb(struct jme_softc *);
 int	jme_newbuf(struct jme_softc *, struct jme_rxdesc *);
-int	jme_encap(struct jme_softc *, struct mbuf **);
+int	jme_encap(struct jme_softc *, struct mbuf *);
 void	jme_rxpkt(struct jme_softc *);
 
 void	jme_tick(void *);
@@ -1108,11 +1108,10 @@ jme_setwol(struct jme_softc *sc)
 #endif
 
 int
-jme_encap(struct jme_softc *sc, struct mbuf **m_head)
+jme_encap(struct jme_softc *sc, struct mbuf *m)
 {
 	struct jme_txdesc *txd;
 	struct jme_desc *desc;
-	struct mbuf *m;
 	int error, i, prod;
 	uint32_t cflags;
 
@@ -1120,32 +1119,20 @@ jme_encap(struct jme_softc *sc, struct mbuf **m_head)
 	txd = &sc->jme_cdata.jme_txdesc[prod];
 
 	error = bus_dmamap_load_mbuf(sc->sc_dmat, txd->tx_dmamap,
-				     *m_head, BUS_DMA_NOWAIT);
+	    m, BUS_DMA_NOWAIT);
 	if (error != 0 && error != EFBIG)
 		goto drop;
 	if (error != 0) {
-		if (m_defrag(*m_head, M_DONTWAIT)) {
+		if (m_defrag(m, M_DONTWAIT)) {
 			error = ENOBUFS;
 			goto drop;
 		}
 		error = bus_dmamap_load_mbuf(sc->sc_dmat, txd->tx_dmamap,
-					     *m_head, BUS_DMA_NOWAIT);
+					     m, BUS_DMA_NOWAIT);
 		if (error != 0)
 			goto drop;
 	}
 
-	/*
-	 * Check descriptor overrun. Leave one free descriptor.
-	 * Since we always use 64bit address mode for transmitting,
-	 * each Tx request requires one more dummy descriptor.
-	 */
-	if (sc->jme_cdata.jme_tx_cnt + txd->tx_dmamap->dm_nsegs + JME_TXD_RSVD >
-	    JME_TX_RING_CNT - JME_TXD_RSVD) {
-		bus_dmamap_unload(sc->sc_dmat, txd->tx_dmamap);
-		return (ENOBUFS);
-	}
-
-	m = *m_head;
 	cflags = 0;
 
 	/* Configure checksum offload. */
@@ -1204,8 +1191,7 @@ jme_encap(struct jme_softc *sc, struct mbuf **m_head)
 	return (0);
 
   drop:
-	m_freem(*m_head);
-	*m_head = NULL;
+	m_freem(m);
 	return (error);
 }
 
@@ -1213,7 +1199,7 @@ void
 jme_start(struct ifnet *ifp)
 {
 	struct jme_softc *sc = ifp->if_softc;
-	struct mbuf *m_head;
+	struct mbuf *m;
 	int enq = 0;
 
 	/* Reclaim transmitted frames. */
@@ -1238,8 +1224,8 @@ jme_start(struct ifnet *ifp)
 			break;
 		}
 
-		IFQ_DEQUEUE(&ifp->if_snd, m_head);
-		if (m_head == NULL)
+		IFQ_DEQUEUE(&ifp->if_snd, m);
+		if (m == NULL)
 			break;
 
 		/*
@@ -1247,14 +1233,9 @@ jme_start(struct ifnet *ifp)
 		 * don't have room, set the OACTIVE flag and wait
 		 * for the NIC to drain the ring.
 		 */
-		if (jme_encap(sc, &m_head)) {
-			if (m_head == NULL)
-				ifp->if_oerrors++;
-			else {
-				IF_PREPEND(&ifp->if_snd, m_head);
-				ifp->if_flags |= IFF_OACTIVE;
-			}
-			break;
+		if (jme_encap(sc, m) != 0) {
+			ifp->if_oerrors++;
+			continue;
 		}
 
 		enq++;
@@ -1265,7 +1246,7 @@ jme_start(struct ifnet *ifp)
 		 * to him.
 		 */
 		if (ifp->if_bpf != NULL)
-			bpf_mtap_ether(ifp->if_bpf, m_head, BPF_DIRECTION_OUT);
+			bpf_mtap_ether(ifp->if_bpf, m, BPF_DIRECTION_OUT);
 #endif
 	}
 
