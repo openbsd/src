@@ -1,4 +1,4 @@
-.\"	$OpenBSD: npppd.8,v 1.5 2013/01/29 15:42:20 yasuoka Exp $
+.\"	$OpenBSD: npppd.8,v 1.6 2015/11/09 01:14:22 yasuoka Exp $
 .\"
 .\" Copyright (c) 2012 YASUOKA Masahiko <yasuoka@openbsd.org>
 .\"
@@ -15,7 +15,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\" The following requests are required for all man pages.
 .\"
-.Dd $Mdocdate: January 29 2013 $
+.Dd $Mdocdate: November 9 2015 $
 .Dt NPPPD 8
 .Os
 .Sh NAME
@@ -23,7 +23,7 @@
 .Nd new Point-to-Point Protocol daemon
 .Sh SYNOPSIS
 .Nm npppd
-.Op Fl dhn
+.Op Fl dn
 .Op Fl f Ar config_file
 .Sh DESCRIPTION
 .Nm
@@ -38,8 +38,6 @@ will run in the foreground and log to
 .Em stderr .
 .It Fl f Ar config_file
 Specify an alternative configuration file.
-.It Fl h
-Show the usage.
 .It Fl n
 Configtest mode.
 Only check the configuration file for validity.

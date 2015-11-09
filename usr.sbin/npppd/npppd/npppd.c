@@ -1,4 +1,4 @@
-/*	$OpenBSD: npppd.c,v 1.41 2015/06/24 04:57:55 yasuoka Exp $ */
+/*	$OpenBSD: npppd.c,v 1.42 2015/11/09 01:14:22 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2005-2008,2009 Internet Initiative Japan Inc.
@@ -29,7 +29,7 @@
  * Next pppd(nppd). This file provides a npppd daemon process and operations
  * for npppd instance.
  * @author	Yasuoka Masahiko
- * $Id: npppd.c,v 1.41 2015/06/24 04:57:55 yasuoka Exp $
+ * $Id: npppd.c,v 1.42 2015/11/09 01:14:22 yasuoka Exp $
  */
 #include "version.h"
 #include <sys/param.h>	/* ALIGNED_POINTER */
@@ -98,7 +98,7 @@ static npppd s_npppd;	/* singleton */
 static void         npppd_reload0 (npppd *);
 static void         npppd_update_pool_reference (npppd *);
 static int          npppd_rd_walktree_delete(struct radish_head *);
-static void         usage (void);
+static __dead void  usage (void);
 static void         npppd_stop_really (npppd *);
 static uint32_t     str_hash(const void *, int);
 static void         npppd_on_sighup (int, short, void *);
@@ -145,7 +145,7 @@ main(int argc, char *argv[])
 	const char    *npppd_conf0 = DEFAULT_NPPPD_CONF;
 	struct passwd *pw;
 
-	while ((ch = getopt(argc, argv, "nf:dh")) != -1) {
+	while ((ch = getopt(argc, argv, "nf:d")) != -1) {
 		switch (ch) {
 		case 'n':
 			nflag = 1;
@@ -157,18 +157,14 @@ main(int argc, char *argv[])
 			debuglevel++;
 			runasdaemon = 0;
 			break;
-		case '?':
-		case 'h':
+		default:
 			usage();
-			exit(1);
 		}
 	}
 	argc -= optind;
 	argv += optind;
-	if (argc != 0) {
+	if (argc != 0)
 		usage();
-		exit(1);
-	}
 	if (nflag) {
 		debuglevel++;
 		runasdaemon = 0;
@@ -225,10 +221,11 @@ main(int argc, char *argv[])
 	exit((!stop_by_error)? EXIT_SUCCESS : EXIT_FAILURE);
 }
 
-static void
-usage()
+static __dead void
+usage(void)
 {
-	fprintf(stderr, "usage: npppd [-dhn] [-f config_file]\n");
+	fprintf(stderr, "usage: npppd [-dn] [-f config_file]\n");
+	exit(1);
 }
 
 /** Returns the singleton npppd instance */
