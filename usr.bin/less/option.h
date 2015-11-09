@@ -47,16 +47,14 @@
 /* Error code from findopt_name */
 #define	OPT_AMBIG	1
 
-struct optname
-{
+struct optname {
 	char *oname;		/* Long (GNU-style) option name */
 	struct optname *onext;  /* List of synonymous option names */
 };
 
 #define	OPTNAME_MAX	32	/* Max length of long option name */
 
-struct loption
-{
+struct loption {
 	char oletter;		/* The controlling letter (a-z) */
 	struct optname *onames; /* Long (GNU-style) option name */
 	int otype;		/* Type of the option */

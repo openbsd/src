@@ -85,16 +85,14 @@
 #include "lesskey.h"
 #include "cmd.h"
 
-struct cmdname
-{
+struct cmdname {
 	char *cn_name;
 	int cn_action;
 };
 
 static void lkerr(char *s);
 
-struct cmdname cmdnames[] =
-{
+struct cmdname cmdnames[] = {
 	{ "back-bracket",		A_B_BRACKET },
 	{ "back-line",			A_B_LINE },
 	{ "back-line-force",		A_BF_LINE },
@@ -180,8 +178,7 @@ struct cmdname editnames[] = {
 	{ NULL, 0 }
 };
 
-struct table
-{
+struct table {
 	struct cmdname *names;
 	char *pbuffer;
 	char buffer[MAX_USERCMD];

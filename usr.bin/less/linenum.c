@@ -39,8 +39,7 @@
  * Structure to keep track of a line number and the associated file position.
  * A doubly-linked circular list of line numbers is kept ordered by line number.
  */
-struct linenum_info
-{
+struct linenum_info {
 	struct linenum_info *next;	/* Link to next in the list */
 	struct linenum_info *prev;	/* Line to previous in the list */
 	off_t pos;			/* File position */

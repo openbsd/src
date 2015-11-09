@@ -215,8 +215,7 @@ static unsigned char edittable[] =
 /*
  * Structure to support a list of command tables.
  */
-struct tablelist
-{
+struct tablelist {
 	struct tablelist *t_next;
 	char *t_start;
 	char *t_end;

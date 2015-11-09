@@ -55,8 +55,7 @@ char closequote = '"';
 /*
  * A mlist structure represents a command history.
  */
-struct mlist
-{
+struct mlist {
 	struct mlist *next;
 	struct mlist *prev;
 	struct mlist *curr_mp;

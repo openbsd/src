@@ -109,8 +109,7 @@ struct scrpos {
 	int ln;
 };
 
-typedef union parg
-{
+typedef union parg {
 	char *p_string;
 	int p_int;
 	LINENUM p_linenum;
@@ -118,8 +117,7 @@ typedef union parg
 
 #define	NULL_PARG	((PARG *)NULL)
 
-struct textlist
-{
+struct textlist {
 	char *string;
 	char *endstring;
 };
