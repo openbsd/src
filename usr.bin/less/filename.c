@@ -225,7 +225,7 @@ fexpand(char *s)
 	IFILE ifile;
 
 #define	fchar_ifile(c) \
-	((c) == '%' ? curr_ifile : (c) == '#' ? old_ifile : NULL_IFILE)
+	((c) == '%' ? curr_ifile : (c) == '#' ? old_ifile : NULL)
 
 	/*
 	 * Make one pass to see how big a buffer we
@@ -247,7 +247,7 @@ fexpand(char *s)
 				 * Single char (not repeated).  Treat specially.
 				 */
 				ifile = fchar_ifile(*fr);
-				if (ifile == NULL_IFILE)
+				if (ifile == NULL)
 					n++;
 				else
 					n += strlen(get_filename(ifile));
@@ -277,7 +277,7 @@ fexpand(char *s)
 				*to++ = *fr;
 			} else if (fr[1] != *fr) {
 				ifile = fchar_ifile(*fr);
-				if (ifile == NULL_IFILE) {
+				if (ifile == NULL) {
 					*to++ = *fr;
 				} else {
 					(void) strlcpy(to, get_filename(ifile),

@@ -130,7 +130,7 @@ close_file(void)
 {
 	struct scrpos scrpos;
 
-	if (curr_ifile == NULL_IFILE)
+	if (curr_ifile == NULL)
 		return;
 
 	/*
@@ -156,7 +156,7 @@ close_file(void)
 		free(curr_altfilename);
 		curr_altfilename = NULL;
 	}
-	curr_ifile = NULL_IFILE;
+	curr_ifile = NULL;
 	curr_ino = curr_dev = 0;
 }
 
@@ -169,7 +169,7 @@ int
 edit(char *filename)
 {
 	if (filename == NULL)
-		return (edit_ifile(NULL_IFILE));
+		return (edit_ifile(NULL));
 	return (edit_ifile(get_ifile(filename, curr_ifile)));
 }
 
@@ -208,7 +208,7 @@ edit_ifile(IFILE ifile)
 	 */
 	end_logfile();
 	was_curr_ifile = save_curr_ifile();
-	if (curr_ifile != NULL_IFILE) {
+	if (curr_ifile != NULL) {
 		chflags = ch_getflags();
 		close_file();
 		if ((chflags & CH_HELPFILE) &&
@@ -221,7 +221,7 @@ edit_ifile(IFILE ifile)
 		}
 	}
 
-	if (ifile == NULL_IFILE) {
+	if (ifile == NULL) {
 		/*
 		 * No new file to open.
 		 * (Don't set old_ifile, because if you call edit_ifile(NULL),
@@ -318,7 +318,7 @@ err1:
 	 * Get the new ifile.
 	 * Get the saved position for the file.
 	 */
-	if (was_curr_ifile != NULL_IFILE) {
+	if (was_curr_ifile != NULL) {
 		old_ifile = was_curr_ifile;
 		unsave_ifile(was_curr_ifile);
 	}
@@ -439,7 +439,7 @@ edit_list(char *filelist)
 int
 edit_first(void)
 {
-	curr_ifile = NULL_IFILE;
+	curr_ifile = NULL;
 	return (edit_next(1));
 }
 
@@ -449,7 +449,7 @@ edit_first(void)
 int
 edit_last(void)
 {
-	curr_ifile = NULL_IFILE;
+	curr_ifile = NULL;
 	return (edit_prev(1));
 }
 
@@ -471,7 +471,7 @@ edit_istep(IFILE h, int n, int dir)
 			if (edit_ifile(h) == 0)
 				break;
 		}
-		if (next == NULL_IFILE) {
+		if (next == NULL) {
 			/*
 			 * Reached end of the ifile list.
 			 */
@@ -524,9 +524,9 @@ edit_index(int n)
 {
 	IFILE h;
 
-	h = NULL_IFILE;
+	h = NULL;
 	do {
-		if ((h = next_ifile(h)) == NULL_IFILE) {
+		if ((h = next_ifile(h)) == NULL) {
 			/*
 			 * Reached end of the list without finding it.
 			 */
@@ -540,7 +540,7 @@ edit_index(int n)
 IFILE
 save_curr_ifile(void)
 {
-	if (curr_ifile != NULL_IFILE)
+	if (curr_ifile != NULL)
 		hold_ifile(curr_ifile, 1);
 	return (curr_ifile);
 }
@@ -548,7 +548,7 @@ save_curr_ifile(void)
 void
 unsave_ifile(IFILE save_ifile)
 {
-	if (save_ifile != NULL_IFILE)
+	if (save_ifile != NULL)
 		hold_ifile(save_ifile, -1);
 }
 
@@ -575,12 +575,12 @@ reedit_ifile(IFILE save_ifile)
 	/*
 	 * If can't reopen it, open the next input file in the list.
 	 */
-	if (next != NULL_IFILE && edit_inext(next, 0) == 0)
+	if (next != NULL && edit_inext(next, 0) == 0)
 		return;
 	/*
 	 * If can't open THAT one, open the previous input file in the list.
 	 */
-	if (prev != NULL_IFILE && edit_iprev(prev, 0) == 0)
+	if (prev != NULL && edit_iprev(prev, 0) == 0)
 		return;
 	/*
 	 * If can't even open that, we're stuck.  Just quit.

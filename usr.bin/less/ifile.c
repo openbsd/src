@@ -124,7 +124,7 @@ del_ifile(IFILE h)
 {
 	struct ifile *p;
 
-	if (h == NULL_IFILE)
+	if (h == NULL)
 		return;
 	/*
 	 * If the ifile we're deleting is the currently open ifile,
@@ -147,9 +147,9 @@ next_ifile(IFILE h)
 {
 	struct ifile *p;
 
-	p = (h == NULL_IFILE) ? &anchor : int_ifile(h);
+	p = (h == NULL) ? &anchor : int_ifile(h);
 	if (p->h_next == &anchor)
-		return (NULL_IFILE);
+		return (NULL);
 	return (ext_ifile(p->h_next));
 }
 
@@ -161,9 +161,9 @@ prev_ifile(IFILE h)
 {
 	struct ifile *p;
 
-	p = (h == NULL_IFILE) ? &anchor : int_ifile(h);
+	p = (h == NULL) ? &anchor : int_ifile(h);
 	if (p->h_prev == &anchor)
-		return (NULL_IFILE);
+		return (NULL);
 	return (ext_ifile(p->h_prev));
 }
 
@@ -175,11 +175,11 @@ getoff_ifile(IFILE ifile)
 {
 	IFILE newifile;
 
-	if ((newifile = prev_ifile(ifile)) != NULL_IFILE)
+	if ((newifile = prev_ifile(ifile)) != NULL)
 		return (newifile);
-	if ((newifile = next_ifile(ifile)) != NULL_IFILE)
+	if ((newifile = next_ifile(ifile)) != NULL)
 		return (newifile);
-	return (NULL_IFILE);
+	return (NULL);
 }
 
 /*

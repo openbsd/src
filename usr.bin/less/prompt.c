@@ -216,7 +216,7 @@ cond(char c, int where)
 	case 'x':	/* Is there a "next" file? */
 		if (ntags())
 			return (0);
-		return (next_ifile(curr_ifile) != NULL_IFILE);
+		return (next_ifile(curr_ifile) != NULL);
 	}
 	return (0);
 }
@@ -350,7 +350,7 @@ protochar(int c, int where)
 		break;
 	case 'x':	/* Name of next file */
 		h = next_ifile(curr_ifile);
-		if (h != NULL_IFILE)
+		if (h != NULL)
 			ap_str(get_filename(h));
 		else
 			ap_quest();

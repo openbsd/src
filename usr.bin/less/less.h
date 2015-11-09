@@ -91,7 +91,6 @@ typedef off_t		LINENUM;
  * An IFILE represents an input file.
  */
 #define	IFILE		void *
-#define	NULL_IFILE	(NULL)
 
 /*
  * The structure used to represent a "screen position".

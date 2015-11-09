@@ -637,7 +637,7 @@ prompt(void)
 	 */
 	if (get_quit_at_eof() == OPT_ONPLUS &&
 	    eof_displayed() && !(ch_getflags() & CH_HELPFILE) &&
-	    next_ifile(curr_ifile) == NULL_IFILE)
+	    next_ifile(curr_ifile) == NULL)
 		quit(QUIT_OK);
 
 	/*
@@ -645,7 +645,7 @@ prompt(void)
 	 */
 	if (quit_if_one_screen &&
 	    entire_file_displayed() && !(ch_getflags() & CH_HELPFILE) &&
-	    next_ifile(curr_ifile) == NULL_IFILE)
+	    next_ifile(curr_ifile) == NULL)
 		quit(QUIT_OK);
 
 	/*
@@ -1268,7 +1268,7 @@ again:
 			/*
 			 * Exit.
 			 */
-			if (curr_ifile != NULL_IFILE &&
+			if (curr_ifile != NULL &&
 			    ch_getflags() & CH_HELPFILE) {
 				/*
 				 * Quit while viewing the help file
@@ -1505,7 +1505,7 @@ again:
 				break;
 			old_ifile = curr_ifile;
 			new_ifile = getoff_ifile(curr_ifile);
-			if (new_ifile == NULL_IFILE) {
+			if (new_ifile == NULL) {
 				ring_bell();
 				break;
 			}

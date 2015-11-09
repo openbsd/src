@@ -21,8 +21,8 @@
 char	*every_first_cmd = NULL;
 int	new_file;
 int	is_tty;
-IFILE	curr_ifile = NULL_IFILE;
-IFILE	old_ifile = NULL_IFILE;
+IFILE	curr_ifile = NULL;
+IFILE	old_ifile = NULL;
 struct scrpos initial_scrpos;
 int	any_display = FALSE;
 off_t	start_attnpos = -1;
@@ -185,7 +185,7 @@ main(int argc, char *argv[])
 	 * Call get_ifile with all the command line filenames
 	 * to "register" them with the ifile system.
 	 */
-	ifile = NULL_IFILE;
+	ifile = NULL;
 	if (dohelp)
 		ifile = get_ifile(helpfile(), ifile);
 	while (argc-- > 0) {
@@ -195,7 +195,7 @@ main(int argc, char *argv[])
 			filename = *argv;
 		argv++;
 		(void) get_ifile(filename, ifile);
-		ifile = prev_ifile(NULL_IFILE);
+		ifile = prev_ifile(NULL);
 		free(filename);
 	}
 	/*

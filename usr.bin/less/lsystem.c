@@ -52,7 +52,7 @@ lsystem(const char *cmd, const char *donemsg)
 	 * Close the current input file.
 	 */
 	save_ifile = save_curr_ifile();
-	(void) edit_ifile(NULL_IFILE);
+	(void) edit_ifile(NULL);
 
 	/*
 	 * De-initialize the terminal and take out of raw mode.
