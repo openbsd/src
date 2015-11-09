@@ -365,7 +365,8 @@ quit(int status)
 		save_status = status;
 	quitting = 1;
 	edit(NULL);
-	save_cmdhist();
+	if (!secure)
+		save_cmdhist();
 	if (any_display && is_tty)
 		clear_bot();
 	deinit();
