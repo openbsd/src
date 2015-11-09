@@ -1,4 +1,4 @@
-/*	$OpenBSD: cron.c,v 1.64 2015/11/09 01:12:27 millert Exp $	*/
+/*	$OpenBSD: cron.c,v 1.65 2015/11/09 15:57:39 millert Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -430,8 +430,8 @@ open_socket(void)
 	}
 	bzero(&s_un, sizeof(s_un));
 	if (snprintf(s_un.sun_path, sizeof(s_un.sun_path), "%s/%s",
-	      SPOOL_DIR, CRONSOCK) >= sizeof(s_un.sun_path)) {
-		fprintf(stderr, "%s/%s: path too long\n", SPOOL_DIR, CRONSOCK);
+	      CRON_SPOOL, CRONSOCK) >= sizeof(s_un.sun_path)) {
+		fprintf(stderr, "%s/%s: path too long\n", CRON_SPOOL, CRONSOCK);
 		log_it("CRON", getpid(), "DEATH", "path too long");
 		exit(EXIT_FAILURE);
 	}

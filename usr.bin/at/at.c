@@ -1,4 +1,4 @@
-/*	$OpenBSD: at.c,v 1.69 2015/11/06 23:47:42 millert Exp $	*/
+/*	$OpenBSD: at.c,v 1.70 2015/11/09 15:57:39 millert Exp $	*/
 
 /*
  *  at.c : Put file into atrun queue
@@ -172,7 +172,7 @@ newjob(time_t runtimer, int queue)
 	 * queues instead...
 	 */
 	for (i = 0; i < 120; i++) {
-		snprintf(atfile, sizeof(atfile), "%s/%lld.%c", AT_DIR,
+		snprintf(atfile, sizeof(atfile), "%s/%lld.%c", AT_SPOOL,
 		    (long long)runtimer, queue);
 		fd = open(atfile, O_WRONLY | O_CREAT | O_EXCL, S_IRUSR);
 		if (fd >= 0)
@@ -214,7 +214,7 @@ writefile(const char *cwd, time_t runtimer, char queue)
 	act.sa_flags = 0;
 	sigaction(SIGINT, &act, NULL);
 
-	if ((lockdes = open(AT_DIR, O_RDONLY, 0)) < 0)
+	if ((lockdes = open(AT_SPOOL, O_RDONLY, 0)) < 0)
 		perr("Cannot open jobs dir");
 
 	/*
@@ -400,12 +400,12 @@ writefile(const char *cwd, time_t runtimer, char queue)
 	(void)close(fd2);
 
 	/* Poke cron so it knows to reload the at spool. */
-	poke_daemon(AT_DIR, RELOAD_AT);
+	poke_daemon(AT_SPOOL, RELOAD_AT);
 
 	runtime = *localtime(&runtimer);
 	strftime(timestr, TIMESIZE, "%a %b %e %T %Y", &runtime);
 	(void)fprintf(stderr, "commands will be executed using %s\n", shell);
-	(void)fprintf(stderr, "job %s at %s\n", &atfile[sizeof(AT_DIR)],
+	(void)fprintf(stderr, "job %s at %s\n", &atfile[sizeof(AT_SPOOL)],
 	    timestr);
 }
 
@@ -463,7 +463,7 @@ print_job(struct atjob *job, int n, int shortformat)
 
 /*
  * List all of a user's jobs in the queue, by looping through
- * AT_DIR, or all jobs if we are root.  If argc is > 0, argv
+ * AT_SPOOL, or all jobs if we are root.  If argc is > 0, argv
  * contains the list of users whose jobs shall be displayed. By
  * default, the list is sorted by execution date and queue.  If
  * csort is non-zero jobs will be sorted by creation/submission date.
@@ -498,14 +498,14 @@ list_jobs(int argc, char **argv, int count_only, int csort)
 
 	shortformat = strcmp(__progname, "at") == 0;
 
-	if (chdir(AT_DIR) != 0)
-		perr2("Cannot change to ", AT_DIR);
+	if (chdir(AT_SPOOL) != 0)
+		perr2("Cannot change to ", AT_SPOOL);
 
 	if ((spool = opendir(".")) == NULL)
-		perr2("Cannot open ", AT_DIR);
+		perr2("Cannot open ", AT_SPOOL);
 
 	if (fstat(dirfd(spool), &stbuf) != 0)
-		perr2("Cannot stat ", AT_DIR);
+		perr2("Cannot stat ", AT_SPOOL);
 
 	/*
 	 * The directory's link count should give us a good idea
@@ -521,7 +521,7 @@ list_jobs(int argc, char **argv, int count_only, int csort)
 	/* Loop over every file in the directory. */
 	while ((dirent = readdir(spool)) != NULL) {
 		if (stat(dirent->d_name, &stbuf) != 0)
-			perr2("Cannot stat in ", AT_DIR);
+			perr2("Cannot stat in ", AT_SPOOL);
 
 		/*
 		 * See it's a regular file and has its x bit turned on and
@@ -615,7 +615,7 @@ rmok(long long job)
 }
 
 /*
- * Loop through all jobs in AT_DIR and display or delete ones
+ * Loop through all jobs in AT_SPOOL and display or delete ones
  * that match argv (may be job or username), or all if argc == 0.
  * Only the superuser may display/delete other people's jobs.
  */
@@ -634,11 +634,11 @@ process_jobs(int argc, char **argv, int what)
 	int job_matches, jobs_len, uids_len;
 	int error, i, ch, changed;
 
-	if (chdir(AT_DIR) != 0)
-		perr2("Cannot change to ", AT_DIR);
+	if (chdir(AT_SPOOL) != 0)
+		perr2("Cannot change to ", AT_SPOOL);
 
 	if ((spool = opendir(".")) == NULL)
-		perr2("Cannot open ", AT_DIR);
+		perr2("Cannot open ", AT_SPOOL);
 
 	/* Convert argv into a list of jobs and uids. */
 	jobs = NULL;
@@ -672,7 +672,7 @@ process_jobs(int argc, char **argv, int what)
 	changed = 0;
 	while ((dirent = readdir(spool)) != NULL) {
 		if (stat(dirent->d_name, &stbuf) != 0)
-			perr2("Cannot stat in ", AT_DIR);
+			perr2("Cannot stat in ", AT_SPOOL);
 
 		if (stbuf.st_uid != user_uid && user_uid != 0)
 			continue;
@@ -755,7 +755,7 @@ process_jobs(int argc, char **argv, int what)
 		if (chdir(CRONDIR) != 0)
 			perror(CRONDIR);
 		else
-			poke_daemon(AT_DIR, RELOAD_AT);
+			poke_daemon(AT_SPOOL, RELOAD_AT);
 	}
 
 	return (error);

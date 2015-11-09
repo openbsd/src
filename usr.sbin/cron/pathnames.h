@@ -1,4 +1,4 @@
-/*	$OpenBSD: pathnames.h,v 1.18 2015/11/04 12:53:05 millert Exp $	*/
+/*	$OpenBSD: pathnames.h,v 1.19 2015/11/09 15:57:39 millert Exp $	*/
 
 /* Copyright 1993,1994 by Paul Vixie
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -23,7 +23,7 @@
 #include <paths.h>
 
 			/* CRONDIR is where cron(8) and crontab(1) both chdir
-			 * to; SPOOL_DIR, CRON_ALLOW, CRON_DENY, and LOG_FILE
+			 * to; CRON_SPOOL, CRON_ALLOW, CRON_DENY, and LOG_FILE
 			 * are all relative to this directory.
 			 */
 #define CRONDIR		"/var/cron"
@@ -36,15 +36,15 @@
 			 * newer than they were last time around (or which
 			 * didn't exist last time around...)
 			 */
-#define SPOOL_DIR	"tabs"
+#define CRON_SPOOL	"tabs"
 
-			/* ATDIR is where the at jobs live (relative to CRONDIR)
-			 * This directory will have its modtime updated
-			 * whenever at(1) changes a crontab; this is
+			/* AT_SPOOL is where the at jobs live (relative to
+			 * CRONDIR). This directory will have its modtime
+			 * updated whenever at(1) changes a crontab; this is
 			 * the signal for cron(8) to look for changes in the
 			 * jobs directory (new, changed or jobs).
 			 */
-#define AT_DIR		"atjobs"
+#define AT_SPOOL	"atjobs"
 
 			/* CRONSOCK is the name of the socket used by at and
 			 * crontab to poke cron to re-read the at and cron

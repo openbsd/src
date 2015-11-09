@@ -1,4 +1,4 @@
-/*	$OpenBSD: database.c,v 1.29 2015/11/09 01:12:27 millert Exp $	*/
+/*	$OpenBSD: database.c,v 1.30 2015/11/09 15:57:39 millert Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -51,12 +51,12 @@ load_database(cron_db **db)
 	DIR *dir;
 	user *u;
 
-	/* before we start loading any data, do a stat on SPOOL_DIR
+	/* before we start loading any data, do a stat on CRON_SPOOL
 	 * so that if anything changes as of this moment (i.e., before we've
 	 * cached any of the database), we'll see the changes next time.
 	 */
-	if (stat(SPOOL_DIR, &statbuf) < 0) {
-		log_it("CRON", getpid(), "STAT FAILED", SPOOL_DIR);
+	if (stat(CRON_SPOOL, &statbuf) < 0) {
+		log_it("CRON", getpid(), "STAT FAILED", CRON_SPOOL);
 		return;
 	}
 
@@ -92,8 +92,8 @@ load_database(cron_db **db)
 	 * efficiency.  however, we need to close it in every fork, and
 	 * we fork a lot more often than the mtime of the dir changes.
 	 */
-	if (!(dir = opendir(SPOOL_DIR))) {
-		log_it("CRON", getpid(), "OPENDIR FAILED", SPOOL_DIR);
+	if (!(dir = opendir(CRON_SPOOL))) {
+		log_it("CRON", getpid(), "OPENDIR FAILED", CRON_SPOOL);
 		/* Restore system crontab entry as needed. */
 		if (!TAILQ_EMPTY(&new_db->users) &&
 		    (u = TAILQ_FIRST(&old_db->users))) {
@@ -122,7 +122,7 @@ load_database(cron_db **db)
 		if (strlcpy(fname, dp->d_name, sizeof fname) >= sizeof fname)
 			continue;	/* XXX log? */
 
-		if (snprintf(tabname, sizeof tabname, "%s/%s", SPOOL_DIR, fname) >=
+		if (snprintf(tabname, sizeof tabname, "%s/%s", CRON_SPOOL, fname) >=
 			sizeof(tabname))
 			continue;	/* XXX log? */
 

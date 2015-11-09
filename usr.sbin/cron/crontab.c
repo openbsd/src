@@ -1,4 +1,4 @@
-/*	$OpenBSD: crontab.c,v 1.83 2015/11/06 23:47:42 millert Exp $	*/
+/*	$OpenBSD: crontab.c,v 1.84 2015/11/09 15:57:39 millert Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -236,7 +236,7 @@ list_cmd(void)
 	FILE *f;
 
 	log_it(RealUser, Pid, "LIST", User);
-	if (snprintf(n, sizeof n, "%s/%s", SPOOL_DIR, User) >= sizeof(n)) {
+	if (snprintf(n, sizeof n, "%s/%s", CRON_SPOOL, User) >= sizeof(n)) {
 		fprintf(stderr, "path too long\n");
 		exit(EXIT_FAILURE);
 	}
@@ -262,7 +262,7 @@ delete_cmd(void)
 	char n[MAX_FNAME];
 
 	log_it(RealUser, Pid, "DELETE", User);
-	if (snprintf(n, sizeof n, "%s/%s", SPOOL_DIR, User) >= sizeof(n)) {
+	if (snprintf(n, sizeof n, "%s/%s", CRON_SPOOL, User) >= sizeof(n)) {
 		fprintf(stderr, "path too long\n");
 		exit(EXIT_FAILURE);
 	}
@@ -273,7 +273,7 @@ delete_cmd(void)
 			perror(n);
 		exit(EXIT_FAILURE);
 	}
-	poke_daemon(SPOOL_DIR, RELOAD_CRON);
+	poke_daemon(CRON_SPOOL, RELOAD_CRON);
 }
 
 static void
@@ -293,7 +293,7 @@ edit_cmd(void)
 	struct timespec ts[2];
 
 	log_it(RealUser, Pid, "BEGIN EDIT", User);
-	if (snprintf(n, sizeof n, "%s/%s", SPOOL_DIR, User) >= sizeof(n)) {
+	if (snprintf(n, sizeof n, "%s/%s", CRON_SPOOL, User) >= sizeof(n)) {
 		fprintf(stderr, "path too long\n");
 		exit(EXIT_FAILURE);
 	}
@@ -443,7 +443,7 @@ replace_cmd(void)
 		return (-2);
 	}
 	if (snprintf(TempFilename, sizeof TempFilename, "%s/tmp.XXXXXXXXX",
-	    SPOOL_DIR) >= sizeof(TempFilename)) {
+	    CRON_SPOOL) >= sizeof(TempFilename)) {
 		TempFilename[0] = '\0';
 		fprintf(stderr, "path too long\n");
 		return (-2);
@@ -536,7 +536,7 @@ replace_cmd(void)
 		goto done;
 	}
 
-	if (snprintf(n, sizeof n, "%s/%s", SPOOL_DIR, User) >= sizeof(n)) {
+	if (snprintf(n, sizeof n, "%s/%s", CRON_SPOOL, User) >= sizeof(n)) {
 		fprintf(stderr, "path too long\n");
 		error = -2;
 		goto done;
@@ -551,7 +551,7 @@ replace_cmd(void)
 	TempFilename[0] = '\0';
 	log_it(RealUser, Pid, "REPLACE", User);
 
-	poke_daemon(SPOOL_DIR, RELOAD_CRON);
+	poke_daemon(CRON_SPOOL, RELOAD_CRON);
 
 done:
 	(void) signal(SIGHUP, SIG_DFL);

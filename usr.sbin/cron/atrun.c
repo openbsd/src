@@ -1,4 +1,4 @@
-/*	$OpenBSD: atrun.c,v 1.36 2015/11/09 14:44:05 millert Exp $	*/
+/*	$OpenBSD: atrun.c,v 1.37 2015/11/09 15:57:39 millert Exp $	*/
 
 /*
  * Copyright (c) 2002-2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -65,12 +65,12 @@ scan_atjobs(at_db **db, struct timespec *ts)
 	struct dirent *file;
 	struct stat sb;
 
-	if ((dfd = open(AT_DIR, O_RDONLY|O_DIRECTORY)) == -1) {
-		log_it("CRON", getpid(), "OPEN FAILED", AT_DIR);
+	if ((dfd = open(AT_SPOOL, O_RDONLY|O_DIRECTORY)) == -1) {
+		log_it("CRON", getpid(), "OPEN FAILED", AT_SPOOL);
 		return (0);
 	}
 	if (fstat(dfd, &sb) != 0) {
-		log_it("CRON", getpid(), "FSTAT FAILED", AT_DIR);
+		log_it("CRON", getpid(), "FSTAT FAILED", AT_SPOOL);
 		close(dfd);
 		return (0);
 	}
@@ -80,7 +80,7 @@ scan_atjobs(at_db **db, struct timespec *ts)
 	}
 
 	if ((atdir = fdopendir(dfd)) == NULL) {
-		log_it("CRON", getpid(), "OPENDIR FAILED", AT_DIR);
+		log_it("CRON", getpid(), "OPENDIR FAILED", AT_SPOOL);
 		close(dfd);
 		return (0);
 	}
@@ -161,7 +161,7 @@ atrun(at_db *db, double batch_maxload, time_t now)
 		if (job->run_time > now)
 			continue;
 
-		snprintf(atfile, sizeof(atfile), "%s/%lld.%c", AT_DIR,
+		snprintf(atfile, sizeof(atfile), "%s/%lld.%c", AT_SPOOL,
 		    (long long)job->run_time, job->queue);
 
 		if (lstat(atfile, &sb) != 0 || !S_ISREG(sb.st_mode)) {
@@ -194,7 +194,7 @@ atrun(at_db *db, double batch_maxload, time_t now)
 	    && (batch_maxload == 0.0 ||
 	    ((getloadavg(&la, 1) == 1) && la <= batch_maxload))
 	    ) {
-		snprintf(atfile, sizeof(atfile), "%s/%lld.%c", AT_DIR,
+		snprintf(atfile, sizeof(atfile), "%s/%lld.%c", AT_SPOOL,
 		    (long long)batch->run_time, batch->queue);
 		run_job(batch, atfile);
 		TAILQ_REMOVE(&db->jobs, batch, entries);
@@ -481,7 +481,7 @@ run_job(atjob *job, char *atfile)
 		fprintf(mail, "Subject: Output from \"at\" job\n");
 		fprintf(mail, "Auto-Submitted: auto-generated\n");
 		fprintf(mail, "\nYour \"at\" job on %s\n\"%s/%s/%s\"\n",
-		    hostname, CRONDIR, AT_DIR, atfile);
+		    hostname, CRONDIR, AT_SPOOL, atfile);
 		fprintf(mail, "\nproduced the following output:\n\n");
 
 		/* Pipe the job's output to sendmail. */

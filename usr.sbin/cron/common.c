@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.c,v 1.2 2015/11/04 20:28:17 millert Exp $	*/
+/*	$OpenBSD: common.c,v 1.3 2015/11/09 15:57:39 millert Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -68,54 +68,54 @@ set_cron_cwd(void)
 		exit(EXIT_FAILURE);
 	}
 
-	/* CRONDIR okay (now==CWD), now look at SPOOL_DIR ("tabs" or some such)
+	/* CRONDIR okay (now==CWD), now look at CRON_SPOOL ("tabs" or some such)
 	 */
-	if (stat(SPOOL_DIR, &sb) < 0 && errno == ENOENT) {
-		perror(SPOOL_DIR);
-		if (0 == mkdir(SPOOL_DIR, 0700)) {
-			fprintf(stderr, "%s: created\n", SPOOL_DIR);
-			stat(SPOOL_DIR, &sb);
+	if (stat(CRON_SPOOL, &sb) < 0 && errno == ENOENT) {
+		perror(CRON_SPOOL);
+		if (0 == mkdir(CRON_SPOOL, 0700)) {
+			fprintf(stderr, "%s: created\n", CRON_SPOOL);
+			stat(CRON_SPOOL, &sb);
 		} else {
-			fprintf(stderr, "%s: ", SPOOL_DIR);
+			fprintf(stderr, "%s: ", CRON_SPOOL);
 			perror("mkdir");
 			exit(EXIT_FAILURE);
 		}
 	}
 	if (!S_ISDIR(sb.st_mode)) {
 		fprintf(stderr, "'%s' is not a directory, bailing out.\n",
-			SPOOL_DIR);
+			CRON_SPOOL);
 		exit(EXIT_FAILURE);
 	}
 	if (grp != NULL) {
 		if (sb.st_gid != grp->gr_gid)
-			chown(SPOOL_DIR, -1, grp->gr_gid);
+			chown(CRON_SPOOL, -1, grp->gr_gid);
 		if (sb.st_mode != 01730)
-			chmod(SPOOL_DIR, 01730);
+			chmod(CRON_SPOOL, 01730);
 	}
 
-	/* finally, look at AT_DIR ("atjobs" or some such)
+	/* finally, look at AT_SPOOL ("atjobs" or some such)
 	 */
-	if (stat(AT_DIR, &sb) < 0 && errno == ENOENT) {
-		perror(AT_DIR);
-		if (0 == mkdir(AT_DIR, 0700)) {
-			fprintf(stderr, "%s: created\n", AT_DIR);
-			stat(AT_DIR, &sb);
+	if (stat(AT_SPOOL, &sb) < 0 && errno == ENOENT) {
+		perror(AT_SPOOL);
+		if (0 == mkdir(AT_SPOOL, 0700)) {
+			fprintf(stderr, "%s: created\n", AT_SPOOL);
+			stat(AT_SPOOL, &sb);
 		} else {
-			fprintf(stderr, "%s: ", AT_DIR);
+			fprintf(stderr, "%s: ", AT_SPOOL);
 			perror("mkdir");
 			exit(EXIT_FAILURE);
 		}
 	}
 	if (!S_ISDIR(sb.st_mode)) {
 		fprintf(stderr, "'%s' is not a directory, bailing out.\n",
-			AT_DIR);
+			AT_SPOOL);
 		exit(EXIT_FAILURE);
 	}
 	if (grp != NULL) {
 		if (sb.st_gid != grp->gr_gid)
-			chown(AT_DIR, -1, grp->gr_gid);
+			chown(AT_SPOOL, -1, grp->gr_gid);
 		if (sb.st_mode != 01770)
-			chmod(AT_DIR, 01770);
+			chmod(AT_SPOOL, 01770);
 	}
 }
 
