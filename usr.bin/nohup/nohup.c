@@ -1,4 +1,4 @@
-/*	$OpenBSD: nohup.c,v 1.15 2015/01/16 06:40:10 deraadt Exp $	*/
+/*	$OpenBSD: nohup.c,v 1.16 2015/11/09 16:52:32 deraadt Exp $	*/
 /*	$NetBSD: nohup.c,v 1.6 1995/08/31 23:35:25 jtc Exp $	*/
 
 /*
@@ -73,11 +73,18 @@ main(int argc, char *argv[])
 {
 	int exit_status;
 
+	if (pledge("stdio rpath wpath cpath exec", NULL) == -1)
+		err(1, "pledge");
+
 	if (argc < 2)
 		usage();
 
 	if (isatty(STDOUT_FILENO))
 		dofile();
+
+	if (pledge("stdio exec", NULL) == -1)
+		err(1, "pledge");
+
 	if (isatty(STDERR_FILENO) && dup2(STDOUT_FILENO, STDERR_FILENO) == -1) {
 		/* may have just closed stderr */
 		(void)fprintf(stdin, "nohup: %s\n", strerror(errno));
