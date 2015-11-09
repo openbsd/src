@@ -1372,6 +1372,10 @@ static const template i386_optab[] =
 {"mwait",     2, 0x0f01, 0xc9, CpuPNI|Cpu64, NoSuf|ImmExt|NoRex64,	{ Reg64, Reg64, 0} },
 
 /* VMX instructions.  */
+{"invept", 2, 0x660f3880, X, CpuVMX|CpuNo64, Modrm|IgnoreSize|No_bSuf|No_wSuf|No_sSuf|No_qSuf|No_xSuf|NoRex64, { BaseIndex|Disp8|Disp16|Disp32|Disp32S, Reg32 } },
+{"invept", 2, 0x660f3880, X, CpuVMX|Cpu64, Modrm|IgnoreSize|No_bSuf|No_wSuf|No_sSuf|No_qSuf|No_xSuf|NoRex64, { BaseIndex|Disp8|Disp16|Disp32|Disp32S, Reg64 } },
+{"invvpid", 2, 0x660f3881, X, CpuVMX|CpuNo64, Modrm|IgnoreSize|No_bSuf|No_wSuf|No_sSuf|No_qSuf|No_xSuf|NoRex64, { BaseIndex|Disp8|Disp16|Disp32|Disp32S, Reg32 } },
+{"invvpid", 2, 0x660f3881, X, CpuVMX|Cpu64, Modrm|IgnoreSize|No_bSuf|No_wSuf|No_sSuf|No_qSuf|No_xSuf|NoRex64, { BaseIndex|Disp8|Disp16|Disp32|Disp32S, Reg64 } },
 {"vmcall",    0, 0x0f01, 0xc1, CpuVMX, NoSuf|ImmExt,	{ 0, 0, 0} },
 {"vmclear",   1, 0x660fc7,  6, CpuVMX, NoSuf|IgnoreSize|Modrm|NoRex64,	{ LLongMem, 0, 0} },
 {"vmlaunch",  0, 0x0f01, 0xc2, CpuVMX, NoSuf|ImmExt,	{ 0, 0, 0} },

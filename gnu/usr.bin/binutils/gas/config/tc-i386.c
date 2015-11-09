@@ -1318,6 +1318,7 @@ md_assemble (line)
      have two immediate operands.  */
   if (intel_syntax && i.operands > 1
       && (strcmp (mnemonic, "bound") != 0)
+      && (strcmp (mnemonic, "invlpga") != 0)
       && !((i.types[0] & Imm) && (i.types[1] & Imm)))
     swap_operands ();
 
@@ -3155,6 +3156,7 @@ output_insn ()
       /* Output normal instructions here.  */
       char *p;
       unsigned char *q;
+      unsigned int prefix;
 
       /* All opcodes on i386 have either 1 or 2 bytes, PadLock instructions
 	 have 3 bytes.  We may use one more higher byte to specify a prefix
@@ -3168,6 +3170,15 @@ output_insn ()
 	  if (prefix != REPE_PREFIX_OPCODE
 	      || i.prefix[LOCKREP_PREFIX] != REPE_PREFIX_OPCODE)
 	    add_prefix (prefix);
+	}
+	else if (i.tm.base_opcode == 0x660f3880 || i.tm.base_opcode == 0x660f3881) {
+          /* invept and invvpid are 3 byte instructions with a
+             mandatory prefix. */
+          if (i.tm.base_opcode & 0xff000000)
+            {
+              prefix = (i.tm.base_opcode >> 24) & 0xff;
+              add_prefix (prefix);
+            }
 	}
       else
 	if ((i.tm.cpu_flags & CpuPadLock) == 0
@@ -3198,6 +3209,12 @@ output_insn ()
 	      p = frag_more (3);
 	      *p++ = (i.tm.base_opcode >> 16) & 0xff;
 	    }
+          else if (i.tm.base_opcode == 0x660f3880 ||
+                   i.tm.base_opcode == 0x660f3881)
+            {
+              p = frag_more (3);
+              *p++ = (i.tm.base_opcode >> 16) & 0xff;
+            }
 	  else
 	    p = frag_more (2);
 
