@@ -89,6 +89,14 @@ main(int argc, char *argv[])
 	if (s != NULL && *s != '\0')
 		secure = 1;
 
+	if (secure) {
+		if (pledge("stdio rpath wpath tty", NULL) == -1)
+			err(1, "pledge");
+	} else {
+		if (pledge("stdio rpath wpath cpath fattr proc exec tty", NULL) == -1)
+			err(1, "pledge");
+	}
+
 	/*
 	 * Process command line arguments and LESS environment arguments.
 	 * Command line arguments override environment arguments.
@@ -213,6 +221,11 @@ main(int argc, char *argv[])
 		error("WARNING: terminal is not fully functional", NULL_PARG);
 	init_mark();
 	open_getchr();
+
+	if (secure)
+		if (pledge("stdio rpath tty", NULL) == -1)
+			err(1, "pledge");
+
 	raw_mode(1);
 	init_signals(1);
 
