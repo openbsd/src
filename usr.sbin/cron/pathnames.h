@@ -1,4 +1,4 @@
-/*	$OpenBSD: pathnames.h,v 1.19 2015/11/09 15:57:39 millert Exp $	*/
+/*	$OpenBSD: pathnames.h,v 1.20 2015/11/09 16:00:39 millert Exp $	*/
 
 /* Copyright 1993,1994 by Paul Vixie
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -22,9 +22,10 @@
 
 #include <paths.h>
 
-			/* CRONDIR is where cron(8) and crontab(1) both chdir
-			 * to; CRON_SPOOL, CRON_ALLOW, CRON_DENY, and LOG_FILE
-			 * are all relative to this directory.
+			/* CRONDIR is where cron(8), crontab(1) and at(1)
+			 * chdir to; CRON_SPOOL, CRON_ALLOW, CRON_DENY,
+			 * AT_SPOOL, AT_ALLOW and AT_DENY are all relative
+			 * to this directory.
 			 */
 #define CRONDIR		"/var/cron"
 
