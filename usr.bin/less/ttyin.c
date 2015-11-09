@@ -31,7 +31,7 @@ open_getchr(void)
 	 * which in Unix is usually attached to the screen,
 	 * but also usually lets you read from the keyboard.
 	 */
-	tty = open("/dev/tty", OPEN_READ);
+	tty = open("/dev/tty", O_RDONLY);
 	if (tty < 0)
 		tty = 2;
 }

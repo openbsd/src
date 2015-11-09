@@ -73,7 +73,7 @@ lsystem(const char *cmd, const char *donemsg)
 	 */
 	inp = dup(0);
 	(void) close(0);
-	if (open("/dev/tty", OPEN_READ) < 0)
+	if (open("/dev/tty", O_RDONLY) < 0)
 		(void) dup(inp);
 
 	/*

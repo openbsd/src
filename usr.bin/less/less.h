@@ -87,12 +87,6 @@ typedef off_t		LINENUM;
 #define	MIN_LINENUM_WIDTH  7	/* Min printing width of a line number */
 #define	MAX_UTF_CHAR_LEN   6	/* Max bytes in one UTF-8 char */
 
-/*
- * Flags for open()
- */
-#define	OPEN_READ	(O_RDONLY)
-#define	OPEN_APPEND	(O_APPEND|O_WRONLY)
-
 #define	SHELL_META_QUEST 1
 
 #define	SPACES_IN_FILENAMES 1

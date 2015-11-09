@@ -651,7 +651,7 @@ use_logfile(char *filename)
 	 * {{ We could use access() here. }}
 	 */
 	filename = shell_unquote(filename);
-	exists = open(filename, OPEN_READ);
+	exists = open(filename, O_RDONLY);
 	close(exists);
 	exists = (exists >= 0);
 
@@ -685,7 +685,7 @@ loop:
 		/*
 		 * Append: open the file and seek to the end.
 		 */
-		logfile = open(filename, OPEN_APPEND);
+		logfile = open(filename, O_WRONLY | O_APPEND);
 		if (lseek(logfile, (off_t)0, SEEK_END) == BAD_LSEEK) {
 			close(logfile);
 			logfile = -1;
