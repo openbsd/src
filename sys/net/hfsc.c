@@ -1,4 +1,4 @@
-/*	$OpenBSD: hfsc.c,v 1.29 2015/10/23 02:29:24 dlg Exp $	*/
+/*	$OpenBSD: hfsc.c,v 1.30 2015/11/09 01:06:31 dlg Exp $	*/
 
 /*
  * Copyright (c) 2012-2013 Henning Brauer <henning@openbsd.org>
@@ -206,11 +206,7 @@ int			 hfsc_class_destroy(struct hfsc_if *,
 			    struct hfsc_class *);
 struct hfsc_class	*hfsc_nextclass(struct hfsc_class *);
 
-int		 hfsc_queue(struct ifqueue *, struct mbuf *,
-		     int (*)(struct hfsc_class *, struct mbuf *));
-int		 hfsc_cl_enqueue(struct hfsc_class *, struct mbuf *);
 struct mbuf	*hfsc_cl_dequeue(struct hfsc_class *);
-int		 hfsc_cl_requeue(struct hfsc_class *, struct mbuf *);
 struct mbuf	*hfsc_cl_poll(struct hfsc_class *);
 void		 hfsc_cl_purge(struct hfsc_if *, struct hfsc_class *);
 
@@ -630,19 +626,6 @@ hfsc_nextclass(struct hfsc_class *cl)
 int
 hfsc_enqueue(struct ifqueue *ifq, struct mbuf *m)
 {
-	return (hfsc_queue(ifq, m, hfsc_cl_enqueue));
-}
-
-void
-hfsc_requeue(struct ifqueue *ifq, struct mbuf *m)
-{
-	(void)hfsc_queue(ifq, m, hfsc_cl_requeue);
-}
-
-int
-hfsc_queue(struct ifqueue *ifq, struct mbuf *m,
-    int (*queue)(struct hfsc_class *, struct mbuf *))
-{
 	struct hfsc_if	*hif = ifq->ifq_hfsc;
 	struct hfsc_class *cl;
 
@@ -654,11 +637,12 @@ hfsc_queue(struct ifqueue *ifq, struct mbuf *m,
 		cl->cl_pktattr = NULL;
 	}
 
-	if ((*queue)(cl, m) != 0) {
-		/* drop occurred.  mbuf needs to be freed */
+	if (ml_len(&cl->cl_q.q) >= cl->cl_q.qlimit) {
+		/* drop. mbuf needs to be freed */
 		PKTCNTR_INC(&cl->cl_stats.drop_cnt, m->m_pkthdr.len);
 		return (ENOBUFS);
 	}
+	ml_enqueue(&cl->cl_q.q, m);
 	ifq->ifq_len++;
 	m->m_pkthdr.pf.prio = IFQ_MAXPRIO;
 
@@ -772,25 +756,6 @@ hfsc_deferred(void *arg)
 
 	/* XXX HRTIMER nearest virtual/fit time is likely less than 1/HZ. */
 	timeout_add(&ifp->if_snd.ifq_hfsc->hif_defer, 1);
-}
-
-int
-hfsc_cl_enqueue(struct hfsc_class *cl, struct mbuf *m)
-{
-	if (ml_len(&cl->cl_q.q) >= cl->cl_q.qlimit)
-		return (-1);
-
-	ml_enqueue(&cl->cl_q.q, m);
-
-	return (0);
-}
-
-int
-hfsc_cl_requeue(struct hfsc_class *cl, struct mbuf *m)
-{
-	ml_requeue(&cl->cl_q.q, m);
-
-	return (0);
 }
 
 struct mbuf *
