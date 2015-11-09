@@ -1,4 +1,4 @@
-/*	$OpenBSD: echo.c,v 1.62 2015/11/09 07:52:18 jasper Exp $	*/
+/*	$OpenBSD: echo.c,v 1.63 2015/11/09 11:44:00 jasper Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -132,14 +132,9 @@ eyesno(const char *sp)
 				maclcur->l_fp = lp->l_fp;
 				free(lp);
 			}
-			if ((rep[0] == 'y' || rep[0] == 'Y') &&
-			    (rep[1] == 'e' || rep[1] == 'E') &&
-			    (rep[2] == 's' || rep[2] == 'S') &&
-			    (rep[3] == '\0'))
+			if (strncasecmp(rep, "yes", sizeof(rep)) == 0)
 				return (TRUE);
-			if ((rep[0] == 'n' || rep[0] == 'N') &&
-			    (rep[1] == 'o' || rep[0] == 'O') &&
-			    (rep[2] == '\0'))
+			if (strncasecmp(rep, "no", sizeof(rep)) == 0)
 				return (FALSE);
 		}
 		rep = eread("Please answer yes or no.  %s? (yes or no) ",
