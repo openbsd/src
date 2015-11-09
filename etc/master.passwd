@@ -51,4 +51,5 @@ _smtpq:*:103:103::0:0:SMTP Daemon:/var/empty:/sbin/nologin
 _file:*:104:104::0:0:file privsep:/var/empty:/sbin/nologin
 _radiusd:*:105:105::0:0:RADIUS Daemon:/var/empty:/sbin/nologin
 _eigrpd:*:106:106::0:0:EIGRP Daemon:/var/empty:/sbin/nologin
+_vmd:*:107:107::0:0:VM Daemon:/var/empty:/sbin/nologin
 nobody:*:32767:32767::0:0:Unprivileged user:/nonexistent:/sbin/nologin
