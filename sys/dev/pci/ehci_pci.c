@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci_pci.c,v 1.28 2015/11/02 14:55:41 mpi Exp $ */
+/*	$OpenBSD: ehci_pci.c,v 1.29 2015/11/09 10:01:17 mpi Exp $ */
 /*	$NetBSD: ehci_pci.c,v 1.15 2004/04/23 21:13:06 itojun Exp $	*/
 
 /*
@@ -217,10 +217,9 @@ ehci_pci_attach(struct device *parent, struct device *self, void *aux)
 		goto disestablish_ret;
 	}
 
-	splx(s);
-
 	/* Attach usb device. */
 	config_found(self, &sc->sc.sc_bus, usbctlprint);
+	splx(s);
 	return;
 
 disestablish_ret:
