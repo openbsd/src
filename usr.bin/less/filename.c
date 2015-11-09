@@ -341,7 +341,7 @@ bin_file(int f)
 
 	if (!seekable(f))
 		return (0);
-	if (lseek(f, (off_t)0, SEEK_SET) == BAD_LSEEK)
+	if (lseek(f, (off_t)0, SEEK_SET) == (off_t)-1)
 		return (0);
 	n = read(f, data, sizeof (data));
 	pend = &data[n];
@@ -370,7 +370,7 @@ seek_filesize(int f)
 	off_t spos;
 
 	spos = lseek(f, (off_t)0, SEEK_END);
-	if (spos == BAD_LSEEK)
+	if (spos == (off_t)-1)
 		return (-1);
 	return (spos);
 }

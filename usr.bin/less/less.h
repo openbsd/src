@@ -66,8 +66,6 @@
 #define	OPT_ON		1
 #define	OPT_ONPLUS	2
 
-#define	BAD_LSEEK	((off_t)-1)
-
 #ifndef CHAR_BIT
 #define	CHAR_BIT 8
 #endif

@@ -226,7 +226,7 @@ read_more:
 		 */
 		if (!(ch_flags & CH_CANSEEK))
 			return ('?');
-		if (lseek(ch_file, (off_t)pos, SEEK_SET) == BAD_LSEEK) {
+		if (lseek(ch_file, (off_t)pos, SEEK_SET) == (off_t)-1) {
 			error("seek error", NULL);
 			clear_eol();
 			return (EOI);
@@ -655,7 +655,7 @@ ch_flush(void)
 	}
 #endif
 
-	if (lseek(ch_file, (off_t)0, SEEK_SET) == BAD_LSEEK) {
+	if (lseek(ch_file, (off_t)0, SEEK_SET) == (off_t)-1) {
 		/*
 		 * Warning only; even if the seek fails for some reason,
 		 * there's a good chance we're at the beginning anyway.
@@ -728,7 +728,7 @@ ch_delbufs(void)
 int
 seekable(int f)
 {
-	return (lseek(f, (off_t)1, SEEK_SET) != BAD_LSEEK);
+	return (lseek(f, (off_t)1, SEEK_SET) != (off_t)-1);
 }
 
 /*

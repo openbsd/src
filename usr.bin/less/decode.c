@@ -647,7 +647,7 @@ lesskey(char *filename, int sysvar)
 		(void) close(f);
 		return (-1);
 	}
-	if (lseek(f, (off_t)0, SEEK_SET) == BAD_LSEEK) {
+	if (lseek(f, (off_t)0, SEEK_SET) == (off_t)-1) {
 		free(buf);
 		(void) close(f);
 		return (-1);
