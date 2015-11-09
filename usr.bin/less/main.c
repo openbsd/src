@@ -75,10 +75,9 @@ main(int argc, char *argv[])
 	 * act like LESS_IS_MORE is set.  We have to set this as early
 	 * as possible for POSIX.
 	 */
-	if ((strcmp(progname, "more") == 0) ||
-	    (strcmp(progname, "page") == 0)) {
+	if (strcmp(progname, "more") == 0)
 		less_is_more = 1;
-	} else {
+	else {
 		s = lgetenv("LESS_IS_MORE");
 		if (s != NULL && *s != '\0')
 			less_is_more = 1;
