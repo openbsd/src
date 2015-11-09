@@ -1,4 +1,4 @@
-/*	$OpenBSD: database.c,v 1.30 2015/11/09 15:57:39 millert Exp $	*/
+/*	$OpenBSD: database.c,v 1.31 2015/11/09 16:37:07 millert Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -56,7 +56,7 @@ load_database(cron_db **db)
 	 * cached any of the database), we'll see the changes next time.
 	 */
 	if (stat(CRON_SPOOL, &statbuf) < 0) {
-		log_it("CRON", getpid(), "STAT FAILED", CRON_SPOOL);
+		log_it("CRON", "STAT FAILED", CRON_SPOOL);
 		return;
 	}
 
@@ -93,7 +93,7 @@ load_database(cron_db **db)
 	 * we fork a lot more often than the mtime of the dir changes.
 	 */
 	if (!(dir = opendir(CRON_SPOOL))) {
-		log_it("CRON", getpid(), "OPENDIR FAILED", CRON_SPOOL);
+		log_it("CRON", "OPENDIR FAILED", CRON_SPOOL);
 		/* Restore system crontab entry as needed. */
 		if (!TAILQ_EMPTY(&new_db->users) &&
 		    (u = TAILQ_FIRST(&old_db->users))) {
@@ -181,39 +181,39 @@ process_crontab(const char *uname, const char *fname, const char *tabname,
 	} else if ((pw = getpwnam(uname)) == NULL) {
 		/* file doesn't have a user in passwd file.
 		 */
-		log_it(fname, getpid(), "ORPHAN", "no passwd entry");
+		log_it(fname, "ORPHAN", "no passwd entry");
 		goto next_crontab;
 	}
 
 	if ((crontab_fd = open(tabname, O_RDONLY|O_NONBLOCK|O_NOFOLLOW, 0)) < 0) {
 		/* crontab not accessible?
 		 */
-		log_it(fname, getpid(), "CAN'T OPEN", tabname);
+		log_it(fname, "CAN'T OPEN", tabname);
 		goto next_crontab;
 	}
 
 	if (fstat(crontab_fd, statbuf) < 0) {
-		log_it(fname, getpid(), "FSTAT FAILED", tabname);
+		log_it(fname, "FSTAT FAILED", tabname);
 		goto next_crontab;
 	}
 	if (!S_ISREG(statbuf->st_mode)) {
-		log_it(fname, getpid(), "NOT REGULAR", tabname);
+		log_it(fname, "NOT REGULAR", tabname);
 		goto next_crontab;
 	}
 	if ((statbuf->st_mode & 07577) != 0400) {
 		/* Looser permissions on system crontab. */
 		if (pw != NULL || (statbuf->st_mode & 022) != 0) {
-			log_it(fname, getpid(), "BAD FILE MODE", tabname);
+			log_it(fname, "BAD FILE MODE", tabname);
 			goto next_crontab;
 		}
 	}
 	if (statbuf->st_uid != 0 && (pw == NULL ||
 	    statbuf->st_uid != pw->pw_uid || strcmp(uname, pw->pw_name) != 0)) {
-		log_it(fname, getpid(), "WRONG FILE OWNER", tabname);
+		log_it(fname, "WRONG FILE OWNER", tabname);
 		goto next_crontab;
 	}
 	if (pw != NULL && statbuf->st_nlink != 1) {
-		log_it(fname, getpid(), "BAD LINK COUNT", tabname);
+		log_it(fname, "BAD LINK COUNT", tabname);
 		goto next_crontab;
 	}
 
@@ -237,7 +237,7 @@ process_crontab(const char *uname, const char *fname, const char *tabname,
 		 */
 		TAILQ_REMOVE(&old_db->users, u, entries);
 		free_user(u);
-		log_it(fname, getpid(), "RELOAD", tabname);
+		log_it(fname, "RELOAD", tabname);
 	}
 	u = load_user(crontab_fd, pw, fname);
 	if (u != NULL) {

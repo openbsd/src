@@ -1,4 +1,4 @@
-/*	$OpenBSD: cron.c,v 1.65 2015/11/09 15:57:39 millert Exp $	*/
+/*	$OpenBSD: cron.c,v 1.66 2015/11/09 16:37:07 millert Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -101,21 +101,21 @@ main(int argc, char *argv[])
 
 	if (pledge("stdio rpath wpath cpath fattr getpw unix flock id dns proc exec",
 	    NULL) == -1)
-		log_it("CRON", getpid(), "pledge", strerror(errno));
+		log_it("CRON", "pledge", strerror(errno));
 
 	cronSock = open_socket();
 
 	if (putenv("PATH="_PATH_DEFPATH) < 0) {
-		log_it("CRON", getpid(), "DEATH", "can't malloc");
+		log_it("CRON", "DEATH", "can't malloc");
 		exit(EXIT_FAILURE);
 	}
 
 	if (NoFork == 0) {
 		if (daemon(1, 0) == -1) {
-			log_it("CRON",getpid(),"DEATH","can't fork");
+			log_it("CRON", "DEATH", "can't fork");
 			exit(EXIT_FAILURE);
 		}
-		log_it("CRON",getpid(),"STARTUP",CRON_VERSION);
+		log_it("CRON", "STARTUP", CRON_VERSION);
 	}
 
 	load_database(&database);
@@ -425,21 +425,21 @@ open_socket(void)
 	if (sock == -1) {
 		fprintf(stderr, "%s: can't create socket: %s\n",
 		    __progname, strerror(errno));
-		log_it("CRON", getpid(), "DEATH", "can't create socket");
+		log_it("CRON", "DEATH", "can't create socket");
 		exit(EXIT_FAILURE);
 	}
 	bzero(&s_un, sizeof(s_un));
 	if (snprintf(s_un.sun_path, sizeof(s_un.sun_path), "%s/%s",
 	      CRON_SPOOL, CRONSOCK) >= sizeof(s_un.sun_path)) {
 		fprintf(stderr, "%s/%s: path too long\n", CRON_SPOOL, CRONSOCK);
-		log_it("CRON", getpid(), "DEATH", "path too long");
+		log_it("CRON", "DEATH", "path too long");
 		exit(EXIT_FAILURE);
 	}
 	s_un.sun_family = AF_UNIX;
 
 	if (connect(sock, (struct sockaddr *)&s_un, sizeof(s_un)) == 0) {
 		fprintf(stderr, "%s: already running\n", __progname);
-		log_it("CRON", getpid(), "DEATH", "already running");
+		log_it("CRON", "DEATH", "already running");
 		exit(EXIT_FAILURE);
 	}
 	if (errno != ENOENT)
@@ -451,13 +451,13 @@ open_socket(void)
 	if (rc != 0) {
 		fprintf(stderr, "%s: can't bind socket: %s\n",
 		    __progname, strerror(errno));
-		log_it("CRON", getpid(), "DEATH", "can't bind socket");
+		log_it("CRON", "DEATH", "can't bind socket");
 		exit(EXIT_FAILURE);
 	}
 	if (listen(sock, SOMAXCONN)) {
 		fprintf(stderr, "%s: can't listen on socket: %s\n",
 		    __progname, strerror(errno));
-		log_it("CRON", getpid(), "DEATH", "can't listen on socket");
+		log_it("CRON", "DEATH", "can't listen on socket");
 		exit(EXIT_FAILURE);
 	}
 	chmod(s_un.sun_path, 0660);

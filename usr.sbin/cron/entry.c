@@ -1,4 +1,4 @@
-/*	$OpenBSD: entry.c,v 1.46 2015/11/08 14:40:23 millert Exp $	*/
+/*	$OpenBSD: entry.c,v 1.47 2015/11/09 16:37:07 millert Exp $	*/
 
 /*
  * Copyright 1988,1990,1993,1994 by Paul Vixie
@@ -290,7 +290,7 @@ load_entry(FILE *file, void (*error_func)(const char *), struct passwd *pw,
 	if (!env_get("SHELL", e->envp)) {
 		if (snprintf(envstr, sizeof envstr, "SHELL=%s", _PATH_BSHELL) >=
 		    sizeof(envstr))
-			log_it("CRON", getpid(), "error", "can't set SHELL");
+			log_it("CRON", "error", "can't set SHELL");
 		else {
 			if ((tenvp = env_set(e->envp, envstr)) == NULL) {
 				ecode = e_memory;
@@ -302,7 +302,7 @@ load_entry(FILE *file, void (*error_func)(const char *), struct passwd *pw,
 	if (!env_get("HOME", e->envp)) {
 		if (snprintf(envstr, sizeof envstr, "HOME=%s", pw->pw_dir) >=
 		    sizeof(envstr))
-			log_it("CRON", getpid(), "error", "can't set HOME");
+			log_it("CRON", "error", "can't set HOME");
 		else {
 			if ((tenvp = env_set(e->envp, envstr)) == NULL) {
 				ecode = e_memory;
@@ -313,7 +313,7 @@ load_entry(FILE *file, void (*error_func)(const char *), struct passwd *pw,
 	}
 	if (snprintf(envstr, sizeof envstr, "LOGNAME=%s", pw->pw_name) >=
 		sizeof(envstr))
-		log_it("CRON", getpid(), "error", "can't set LOGNAME");
+		log_it("CRON", "error", "can't set LOGNAME");
 	else {
 		if ((tenvp = env_set(e->envp, envstr)) == NULL) {
 			ecode = e_memory;
@@ -323,7 +323,7 @@ load_entry(FILE *file, void (*error_func)(const char *), struct passwd *pw,
 	}
 	if (snprintf(envstr, sizeof envstr, "USER=%s", pw->pw_name) >=
 		sizeof(envstr))
-		log_it("CRON", getpid(), "error", "can't set USER");
+		log_it("CRON", "error", "can't set USER");
 	else {
 		if ((tenvp = env_set(e->envp, envstr)) == NULL) {
 			ecode = e_memory;

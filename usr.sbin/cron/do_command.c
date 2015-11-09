@@ -1,4 +1,4 @@
-/*	$OpenBSD: do_command.c,v 1.52 2015/11/04 20:28:17 millert Exp $	*/
+/*	$OpenBSD: do_command.c,v 1.53 2015/11/09 16:37:07 millert Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -57,7 +57,7 @@ do_command(entry *e, user *u)
 	 */
 	switch (fork()) {
 	case -1:
-		log_it("CRON", getpid(), "error", "can't fork");
+		log_it("CRON", "error", "can't fork");
 		break;
 	case 0:
 		/* child process */
@@ -138,7 +138,7 @@ child_process(entry *e, user *u)
 	 */
 	switch (fork()) {
 	case -1:
-		log_it("CRON", getpid(), "error", "can't fork");
+		log_it("CRON", "error", "can't fork");
 		_exit(EXIT_FAILURE);
 		/*NOTREACHED*/
 	case 0:
@@ -150,7 +150,7 @@ child_process(entry *e, user *u)
 		if ((e->flags & DONT_LOG) == 0) {
 			char *x;
 			if (stravis(&x, e->cmd, 0) != -1) {
-				log_it(usernm, getpid(), "CMD", x);
+				log_it(usernm, "CMD", x);
 				free(x);
 			}
 		}
@@ -431,7 +431,7 @@ child_process(entry *e, user *u)
 			"mailed %d byte%s of output but got status 0x%04x\n",
 					bytes, (bytes==1)?"":"s",
 					status);
-				log_it(usernm, getpid(), "MAIL", buf);
+				log_it(usernm, "MAIL", buf);
 			}
 
 		} /*if data from grandchild*/
@@ -469,7 +469,7 @@ safe_p(const char *usernm, const char *s)
 		    (isalnum(ch) || ch == '_' ||
 		    (!first && strchr(safe_delim, ch))))
 			continue;
-		log_it(usernm, getpid(), "UNSAFE", s);
+		log_it(usernm, "UNSAFE", s);
 		return (FALSE);
 	}
 	return (TRUE);

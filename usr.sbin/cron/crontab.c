@@ -1,4 +1,4 @@
-/*	$OpenBSD: crontab.c,v 1.84 2015/11/09 15:57:39 millert Exp $	*/
+/*	$OpenBSD: crontab.c,v 1.85 2015/11/09 16:37:07 millert Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -43,7 +43,6 @@
 
 enum opt_t	{ opt_unknown, opt_list, opt_delete, opt_edit, opt_replace };
 
-static	pid_t		Pid;
 static	gid_t		crontab_gid;
 static	gid_t		user_gid;
 static	char		User[MAX_UNAME], RealUser[MAX_UNAME];
@@ -81,7 +80,6 @@ main(int argc, char *argv[])
 {
 	int exitstatus;
 
-	Pid = getpid();
 	user_gid = getgid();
 	crontab_gid = getegid();
 
@@ -101,7 +99,7 @@ main(int argc, char *argv[])
 			"You (%s) are not allowed to use this program (%s)\n",
 			User, __progname);
 		fprintf(stderr, "See crontab(1) for more information\n");
-		log_it(RealUser, Pid, "AUTH", "crontab command not allowed");
+		log_it(RealUser, "AUTH", "crontab command not allowed");
 		exit(EXIT_FAILURE);
 	}
 	exitstatus = EXIT_SUCCESS;
@@ -235,7 +233,7 @@ list_cmd(void)
 	char n[MAX_FNAME];
 	FILE *f;
 
-	log_it(RealUser, Pid, "LIST", User);
+	log_it(RealUser, "LIST", User);
 	if (snprintf(n, sizeof n, "%s/%s", CRON_SPOOL, User) >= sizeof(n)) {
 		fprintf(stderr, "path too long\n");
 		exit(EXIT_FAILURE);
@@ -261,7 +259,7 @@ delete_cmd(void)
 {
 	char n[MAX_FNAME];
 
-	log_it(RealUser, Pid, "DELETE", User);
+	log_it(RealUser, "DELETE", User);
 	if (snprintf(n, sizeof n, "%s/%s", CRON_SPOOL, User) >= sizeof(n)) {
 		fprintf(stderr, "path too long\n");
 		exit(EXIT_FAILURE);
@@ -292,7 +290,7 @@ edit_cmd(void)
 	struct stat statbuf, xstatbuf;
 	struct timespec ts[2];
 
-	log_it(RealUser, Pid, "BEGIN EDIT", User);
+	log_it(RealUser, "BEGIN EDIT", User);
 	if (snprintf(n, sizeof n, "%s/%s", CRON_SPOOL, User) >= sizeof(n)) {
 		fprintf(stderr, "path too long\n");
 		exit(EXIT_FAILURE);
@@ -420,7 +418,7 @@ edit_cmd(void)
  remove:
 	unlink(Filename);
  done:
-	log_it(RealUser, Pid, "END EDIT", User);
+	log_it(RealUser, "END EDIT", User);
 }
 
 /* returns	0	on success
@@ -549,7 +547,7 @@ replace_cmd(void)
 		goto done;
 	}
 	TempFilename[0] = '\0';
-	log_it(RealUser, Pid, "REPLACE", User);
+	log_it(RealUser, "REPLACE", User);
 
 	poke_daemon(CRON_SPOOL, RELOAD_CRON);
 

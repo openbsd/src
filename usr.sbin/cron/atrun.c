@@ -1,4 +1,4 @@
-/*	$OpenBSD: atrun.c,v 1.37 2015/11/09 15:57:39 millert Exp $	*/
+/*	$OpenBSD: atrun.c,v 1.38 2015/11/09 16:37:07 millert Exp $	*/
 
 /*
  * Copyright (c) 2002-2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -66,11 +66,11 @@ scan_atjobs(at_db **db, struct timespec *ts)
 	struct stat sb;
 
 	if ((dfd = open(AT_SPOOL, O_RDONLY|O_DIRECTORY)) == -1) {
-		log_it("CRON", getpid(), "OPEN FAILED", AT_SPOOL);
+		log_it("CRON", "OPEN FAILED", AT_SPOOL);
 		return (0);
 	}
 	if (fstat(dfd, &sb) != 0) {
-		log_it("CRON", getpid(), "FSTAT FAILED", AT_SPOOL);
+		log_it("CRON", "FSTAT FAILED", AT_SPOOL);
 		close(dfd);
 		return (0);
 	}
@@ -80,7 +80,7 @@ scan_atjobs(at_db **db, struct timespec *ts)
 	}
 
 	if ((atdir = fdopendir(dfd)) == NULL) {
-		log_it("CRON", getpid(), "OPENDIR FAILED", AT_SPOOL);
+		log_it("CRON", "OPENDIR FAILED", AT_SPOOL);
 		close(dfd);
 		return (0);
 	}
@@ -222,7 +222,7 @@ run_job(atjob *job, char *atfile)
 
 	/* Open the file and unlink it so we don't try running it again. */
 	if ((fd = open(atfile, O_RDONLY|O_NONBLOCK|O_NOFOLLOW, 0)) < 0) {
-		log_it("CRON", getpid(), "CAN'T OPEN", atfile);
+		log_it("CRON", "CAN'T OPEN", atfile);
 		return;
 	}
 	unlink(atfile);
@@ -238,7 +238,7 @@ run_job(atjob *job, char *atfile)
 		break;
 	case -1:
 		/* error */
-		log_it("CRON", getpid(), "error", "can't fork");
+		log_it("CRON", "error", "can't fork");
 		/* FALLTHROUGH */
 	default:
 		/* parent */
@@ -257,39 +257,39 @@ run_job(atjob *job, char *atfile)
 	 */
 	pw = getpwuid(job->uid);
 	if (pw == NULL) {
-		log_it("CRON", getpid(), "ORPHANED JOB", atfile);
+		log_it("CRON", "ORPHANED JOB", atfile);
 		_exit(EXIT_FAILURE);
 	}
 	if (pw->pw_expire && time(NULL) >= pw->pw_expire) {
-		log_it(pw->pw_name, getpid(), "ACCOUNT EXPIRED, JOB ABORTED",
+		log_it(pw->pw_name, "ACCOUNT EXPIRED, JOB ABORTED",
 		    atfile);
 		_exit(EXIT_FAILURE);
 	}
 
 	/* Sanity checks */
 	if (fstat(fd, &sb) < 0) {
-		log_it(pw->pw_name, getpid(), "FSTAT FAILED", atfile);
+		log_it(pw->pw_name, "FSTAT FAILED", atfile);
 		_exit(EXIT_FAILURE);
 	}
 	if (!S_ISREG(sb.st_mode)) {
-		log_it(pw->pw_name, getpid(), "NOT REGULAR", atfile);
+		log_it(pw->pw_name, "NOT REGULAR", atfile);
 		_exit(EXIT_FAILURE);
 	}
 	if ((sb.st_mode & ALLPERMS) != (S_IRUSR | S_IWUSR | S_IXUSR)) {
-		log_it(pw->pw_name, getpid(), "BAD FILE MODE", atfile);
+		log_it(pw->pw_name, "BAD FILE MODE", atfile);
 		_exit(EXIT_FAILURE);
 	}
 	if (sb.st_uid != 0 && sb.st_uid != job->uid) {
-		log_it(pw->pw_name, getpid(), "WRONG FILE OWNER", atfile);
+		log_it(pw->pw_name, "WRONG FILE OWNER", atfile);
 		_exit(EXIT_FAILURE);
 	}
 	if (sb.st_nlink > 1) {
-		log_it(pw->pw_name, getpid(), "BAD LINK COUNT", atfile);
+		log_it(pw->pw_name, "BAD LINK COUNT", atfile);
 		_exit(EXIT_FAILURE);
 	}
 
 	if ((fp = fdopen(dup(fd), "r")) == NULL) {
-		log_it("CRON", getpid(), "error", "dup(2) failed");
+		log_it("CRON", "error", "dup(2) failed");
 		_exit(EXIT_FAILURE);
 	}
 
@@ -343,11 +343,11 @@ run_job(atjob *job, char *atfile)
 	if (!safe_p(pw->pw_name, mailto))
 		_exit(EXIT_FAILURE);
 	if ((uid_t)nuid != job->uid) {
-		log_it(pw->pw_name, getpid(), "UID MISMATCH", atfile);
+		log_it(pw->pw_name, "UID MISMATCH", atfile);
 		_exit(EXIT_FAILURE);
 	}
 	if ((gid_t)ngid != job->gid) {
-		log_it(pw->pw_name, getpid(), "GID MISMATCH", atfile);
+		log_it(pw->pw_name, "GID MISMATCH", atfile);
 		_exit(EXIT_FAILURE);
 	}
 
@@ -359,12 +359,12 @@ run_job(atjob *job, char *atfile)
 	/* Fork again, child will run the job, parent will catch output. */
 	switch ((pid = fork())) {
 	case -1:
-		log_it("CRON", getpid(), "error", "can't fork");
+		log_it("CRON", "error", "can't fork");
 		_exit(EXIT_FAILURE);
 		/*NOTREACHED*/
 	case 0:
 		/* Write log message now that we have our real pid. */
-		log_it(pw->pw_name, getpid(), "ATJOB", atfile);
+		log_it(pw->pw_name, "ATJOB", atfile);
 
 		/* Close log file (or syslog) */
 		log_close();
@@ -498,7 +498,7 @@ run_job(atjob *job, char *atfile)
 			snprintf(buf, sizeof(buf), "mailed %lu byte%s of output"
 			    " but got status 0x%04x\n", (unsigned long)bytes,
 			    (bytes == 1) ? "" : "s", status);
-			log_it(pw->pw_name, getpid(), "MAIL", buf);
+			log_it(pw->pw_name, "MAIL", buf);
 		}
 	}
 
@@ -521,6 +521,6 @@ run_job(atjob *job, char *atfile)
 	_exit(EXIT_SUCCESS);
 
 bad_file:
-	log_it(pw->pw_name, getpid(), "BAD FILE FORMAT", atfile);
+	log_it(pw->pw_name, "BAD FILE FORMAT", atfile);
 	_exit(EXIT_FAILURE);
 }

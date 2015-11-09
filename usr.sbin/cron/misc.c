@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.69 2015/11/06 23:47:42 millert Exp $	*/
+/*	$OpenBSD: misc.c,v 1.70 2015/11/09 16:37:07 millert Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -121,7 +121,7 @@ skip_comments(FILE *file)
 }
 
 void
-log_it(const char *username, pid_t xpid, const char *event, const char *detail)
+log_it(const char *username, const char *event, const char *detail)
 {
 	char **info, *info_events[] = { "CMD", "ATJOB", "BEGIN EDIT", "DELETE",
 	    "END EDIT", "LIST", "MAIL", "RELOAD", "REPLACE", "STARTUP", NULL };
