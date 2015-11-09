@@ -33,7 +33,7 @@ open_getchr(void)
 	 */
 	tty = open("/dev/tty", O_RDONLY);
 	if (tty < 0)
-		tty = 2;
+		tty = STDERR_FILENO;
 }
 
 /*
