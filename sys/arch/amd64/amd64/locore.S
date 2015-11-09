@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.72 2015/07/17 15:37:58 guenther Exp $	*/
+/*	$OpenBSD: locore.S,v 1.73 2015/11/09 01:08:56 mlarkin Exp $	*/
 /*	$NetBSD: locore.S,v 1.13 2004/03/25 18:33:17 drochner Exp $	*/
 
 /*
@@ -169,6 +169,7 @@ _C_LABEL(lapic_isr):
 
 	.globl	_C_LABEL(cpu_id),_C_LABEL(cpu_vendor)
 	.globl	_C_LABEL(cpuid_level),_C_LABEL(cpu_feature)
+	.globl	_C_LABEL(cpu_ebxfeature)
 	.globl	_C_LABEL(cpu_ecxfeature),_C_LABEL(ecpu_ecxfeature)
 	.globl	_C_LABEL(cpu_perf_eax)
 	.globl	_C_LABEL(cpu_perf_ebx)
@@ -183,7 +184,8 @@ _C_LABEL(lapic_isr):
 _C_LABEL(cpu_id):	.long	0	# saved from `cpuid' instruction
 _C_LABEL(cpu_feature):	.long	0	# feature flags from 'cpuid'
 					#   instruction
-_C_LABEL(cpu_ecxfeature):.long	0	# extended feature flags from 'cpuid'
+_C_LABEL(cpu_ebxfeature):.long	0	# ext. ebx feature flags from 'cpuid'
+_C_LABEL(cpu_ecxfeature):.long	0	# ext. ecx feature flags from 'cpuid'
 _C_LABEL(ecpu_ecxfeature):.long	0	# extended ecx feature flags
 _C_LABEL(cpu_perf_eax):	.long	0	# arch. perf. mon. flags from 'cpuid'
 _C_LABEL(cpu_perf_ebx):	.long	0	# arch. perf. mon. flags from 'cpuid'
@@ -319,6 +321,7 @@ bi_size_ok:
 	movl	$1,%eax
 	cpuid
 	movl	%eax,RELOC(cpu_id)
+	movl	%ebx,RELOC(cpu_ebxfeature)
 	movl	%ecx,RELOC(cpu_ecxfeature)
 	movl	%edx,RELOC(cpu_feature)
 
