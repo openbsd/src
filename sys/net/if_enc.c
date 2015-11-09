@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_enc.c,v 1.63 2015/10/30 09:39:42 bluhm Exp $	*/
+/*	$OpenBSD: if_enc.c,v 1.64 2015/11/09 10:19:10 dlg Exp $	*/
 
 /*
  * Copyright (c) 2010 Reyk Floeter <reyk@vantronix.net>
@@ -162,8 +162,7 @@ enc_start(struct ifnet *ifp)
 	struct mbuf	*m;
 
 	for (;;) {
-		IF_DROP(&ifp->if_snd);
-		IF_DEQUEUE(&ifp->if_snd, m);
+		IFQ_DEQUEUE(&ifp->if_snd, m);
 		if (m == NULL)
 			break;
 		m_freem(m);
