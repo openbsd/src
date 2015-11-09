@@ -1,4 +1,4 @@
-/*	$OpenBSD: echo.c,v 1.61 2015/10/31 11:59:47 jasper Exp $	*/
+/*	$OpenBSD: echo.c,v 1.62 2015/11/09 07:52:18 jasper Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -174,11 +174,10 @@ veread(const char *fp, char *buf, size_t nbuf, int flag, va_list ap)
 	int	 dynbuf = (buf == NULL);
 	int	 cpos, epos;		/* cursor, end position in buf */
 	int	 c, i, y;
-	int	 cplflag = FALSE;	/* display completion list */
+	int	 cplflag;		/* display completion list */
 	int	 cwin = FALSE;		/* completion list created */
-	int	 mr = 0;		/* match left arrow */
-	int	 ml = 0;		/* match right arrow */
-	int	 esc = 0;		/* position in esc pattern */
+	int	 mr, ml;		/* match left/right arrows */
+	int	 esc;			/* position in esc pattern */
 	struct buffer	*bp;			/* completion list buffer */
 	struct mgwin	*wp;			/* window for compl list */
 	int	 match;			/* esc match found */
