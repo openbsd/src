@@ -1,4 +1,4 @@
-/*	$OpenBSD: user.c,v 1.16 2015/11/04 20:28:17 millert Exp $	*/
+/*	$OpenBSD: user.c,v 1.17 2015/11/09 01:12:27 millert Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -34,13 +34,13 @@
 void
 free_user(user *u)
 {
-	entry *e, *ne;
+	entry *e;
 
-	free(u->name);
-	for (e = u->crontab;  e != NULL;  e = ne) {
-		ne = e->next;
+	while ((e = SLIST_FIRST(&u->crontab))) {
+		SLIST_REMOVE_HEAD(&u->crontab, entries);
 		free_entry(e);
 	}
+	free(u->name);
 	free(u);
 }
 
@@ -69,7 +69,7 @@ load_user(int crontab_fd, struct passwd	*pw, const char *name)
 		errno = save_errno;
 		return (NULL);
 	}
-	u->crontab = NULL;
+	SLIST_INIT(&u->crontab);
 
 	/* init environment.  this will be copied/augmented for each entry.
 	 */
@@ -86,11 +86,10 @@ load_user(int crontab_fd, struct passwd	*pw, const char *name)
 	while ((status = load_env(envstr, file)) >= 0) {
 		switch (status) {
 		case FALSE:
+			/* Not an env variable, parse as crontab entry. */
 			e = load_entry(file, NULL, pw, envp);
-			if (e) {
-				e->next = u->crontab;
-				u->crontab = e;
-			}
+			if (e)
+				SLIST_INSERT_HEAD(&u->crontab, e, entries);
 			break;
 		case TRUE:
 			if ((tenvp = env_set(envp, envstr)) == NULL) {

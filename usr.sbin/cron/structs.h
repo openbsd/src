@@ -1,4 +1,4 @@
-/*	$OpenBSD: structs.h,v 1.6 2015/11/04 20:28:17 millert Exp $	*/
+/*	$OpenBSD: structs.h,v 1.7 2015/11/09 01:12:27 millert Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -17,10 +17,12 @@
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <sys/queue.h>
+
 struct passwd;
 
 typedef	struct _entry {
-	struct _entry	*next;
+	SLIST_ENTRY(_entry) entries;
 	struct passwd	*pwd;
 	char		**envp;
 	char		*cmd;
@@ -46,19 +48,19 @@ typedef	struct _entry {
 			 */
 
 typedef	struct _user {
-	struct _user	*next, *prev;	/* links */
+	TAILQ_ENTRY(_user) entries;	/* links */
 	char		*name;
 	time_t		mtime;		/* last modtime of crontab */
-	entry		*crontab;	/* this person's crontab */
+	SLIST_HEAD(crontab_list, _entry) crontab;	/* this person's crontab */
 } user;
 
 typedef	struct _cron_db {
-	user		*head, *tail;	/* links */
+	TAILQ_HEAD(user_list, _user) users;
 	time_t		mtime;		/* last modtime on spooldir */
 } cron_db;
 
 typedef struct _atjob {
-	struct _atjob	*next, *prev;	/* links */
+	TAILQ_ENTRY(_atjob) entries;	/* links */
 	uid_t		uid;		/* uid of the job */
 	gid_t		gid;		/* gid of the job */
 	int		queue;		/* name of the at queue */
@@ -66,10 +68,6 @@ typedef struct _atjob {
 } atjob;
 
 typedef struct _at_db {
-	atjob		*head, *tail;	/* links */
+	TAILQ_HEAD(atjob_list, _atjob) jobs;
 	time_t		mtime;		/* last modtime on spooldir */
 } at_db;
-				/* in the C tradition, we only create
-				 * variables for the main program, just
-				 * extern them elsewhere.
-				 */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: job.c,v 1.12 2015/11/04 20:28:17 millert Exp $	*/
+/*	$OpenBSD: job.c,v 1.13 2015/11/09 01:12:27 millert Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -29,12 +29,13 @@
 #include "funcs.h"
 
 typedef	struct _job {
-	struct _job	*next;
+	SIMPLEQ_ENTRY(_job) entries;
 	entry		*e;
 	user		*u;
 } job;
 
-static job	*jhead = NULL, *jtail = NULL;
+
+static SIMPLEQ_HEAD(job_queue, _job) jobs = SIMPLEQ_HEAD_INITIALIZER(jobs);
 
 void
 job_add(entry *e, user *u)
@@ -42,37 +43,31 @@ job_add(entry *e, user *u)
 	job *j;
 
 	/* if already on queue, keep going */
-	for (j = jhead; j != NULL; j = j->next)
+	SIMPLEQ_FOREACH(j, &jobs, entries)
 		if (j->e == e && j->u == u)
 			return;
 
 	/* build a job queue element */
 	if ((j = malloc(sizeof(job))) == NULL)
 		return;
-	j->next = NULL;
 	j->e = e;
 	j->u = u;
 
 	/* add it to the tail */
-	if (jhead == NULL)
-		jhead = j;
-	else
-		jtail->next = j;
-	jtail = j;
+	SIMPLEQ_INSERT_TAIL(&jobs, j, entries);
 }
 
 int
 job_runqueue(void)
 {
-	job *j, *jn;
+	job *j;
 	int run = 0;
 
-	for (j = jhead; j; j = jn) {
+	while ((j = SIMPLEQ_FIRST(&jobs))) {
+		SIMPLEQ_REMOVE_HEAD(&jobs, entries);
 		do_command(j->e, j->u);
-		jn = j->next;
 		free(j);
 		run++;
 	}
-	jhead = jtail = NULL;
 	return (run);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cron.c,v 1.63 2015/11/06 23:47:42 millert Exp $	*/
+/*	$OpenBSD: cron.c,v 1.64 2015/11/09 01:12:27 millert Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -59,8 +59,8 @@ static	volatile sig_atomic_t	got_sighup, got_sigchld;
 static	time_t			timeRunning, virtualTime, clockTime;
 static	int			cronSock;
 static	long			GMToff;
-static	cron_db			database;
-static	at_db			at_database;
+static	cron_db			*database;
+static	at_db			*at_database;
 static	double			batch_maxload = BATCH_MAXLOAD;
 static	int			NoFork;
 static	time_t			StartTime;
@@ -118,16 +118,10 @@ main(int argc, char *argv[])
 		log_it("CRON",getpid(),"STARTUP",CRON_VERSION);
 	}
 
-	database.head = NULL;
-	database.tail = NULL;
-	database.mtime = 0;
 	load_database(&database);
-	at_database.head = NULL;
-	at_database.tail = NULL;
-	at_database.mtime = 0;
 	scan_atjobs(&at_database, NULL);
 	set_time(TRUE);
-	run_reboot_jobs(&database);
+	run_reboot_jobs(database);
 	timeRunning = virtualTime = clockTime;
 
 	/*
@@ -169,7 +163,7 @@ main(int argc, char *argv[])
 		/* shortcut for the most common case */
 		if (timeDiff == 1) {
 			virtualTime = timeRunning;
-			find_jobs(virtualTime, &database, TRUE, TRUE);
+			find_jobs(virtualTime, database, TRUE, TRUE);
 		} else {
 			if (timeDiff > (3*MINUTE_COUNT) ||
 			    timeDiff < -(3*MINUTE_COUNT))
@@ -192,7 +186,7 @@ main(int argc, char *argv[])
 					if (job_runqueue())
 						sleep(10);
 					virtualTime++;
-					find_jobs(virtualTime, &database,
+					find_jobs(virtualTime, database,
 					    TRUE, TRUE);
 				} while (virtualTime < timeRunning);
 				break;
@@ -210,14 +204,14 @@ main(int argc, char *argv[])
 				 * housekeeping.
 				 */
 				/* run wildcard jobs for current minute */
-				find_jobs(timeRunning, &database, TRUE, FALSE);
+				find_jobs(timeRunning, database, TRUE, FALSE);
 
 				/* run fixed-time jobs for each minute missed */
 				do {
 					if (job_runqueue())
 						sleep(10);
 					virtualTime++;
-					find_jobs(virtualTime, &database,
+					find_jobs(virtualTime, database,
 					    FALSE, TRUE);
 					set_time(FALSE);
 				} while (virtualTime< timeRunning &&
@@ -233,7 +227,7 @@ main(int argc, char *argv[])
 				 * not be repeated.  Virtual time does not
 				 * change until we are caught up.
 				 */
-				find_jobs(timeRunning, &database, TRUE, FALSE);
+				find_jobs(timeRunning, database, TRUE, FALSE);
 				break;
 			default:
 				/*
@@ -241,7 +235,7 @@ main(int argc, char *argv[])
 				 * jump virtual time, and run everything
 				 */
 				virtualTime = timeRunning;
-				find_jobs(timeRunning, &database, TRUE, TRUE);
+				find_jobs(timeRunning, database, TRUE, TRUE);
 			}
 		}
 
@@ -249,7 +243,7 @@ main(int argc, char *argv[])
 		job_runqueue();
 
 		/* Run any jobs in the at queue. */
-		atrun(&at_database, batch_maxload,
+		atrun(at_database, batch_maxload,
 		    timeRunning * SECONDS_PER_MINUTE - GMToff);
 
 		/* Reload jobs as needed. */
@@ -264,8 +258,8 @@ run_reboot_jobs(cron_db *db)
 	user *u;
 	entry *e;
 
-	for (u = db->head; u != NULL; u = u->next) {
-		for (e = u->crontab; e != NULL; e = e->next) {
+	TAILQ_FOREACH(u, &db->users, entries) {
+		SLIST_FOREACH(e, &u->crontab, entries) {
 			if (e->flags & WHEN_REBOOT)
 				job_add(e, u);
 		}
@@ -296,8 +290,8 @@ find_jobs(time_t vtime, cron_db *db, int doWild, int doNonWild)
 	 * is why we keep 'e->dow_star' and 'e->dom_star'.  yes, it's bizarre.
 	 * like many bizarre things, it's the standard.
 	 */
-	for (u = db->head; u != NULL; u = u->next) {
-		for (e = u->crontab; e != NULL; e = e->next) {
+	TAILQ_FOREACH(u, &db->users, entries) {
+		SLIST_FOREACH(e, &u->crontab, entries) {
 			if (bit_test(e->minute, minute) &&
 			    bit_test(e->hour, hour) &&
 			    bit_test(e->month, month) &&
@@ -375,7 +369,7 @@ cron_sleep(time_t target, sigset_t *mask)
 				(void) read(fd, &poke, 1);
 				close(fd);
 				if (poke & RELOAD_CRON) {
-					database.mtime = 0;
+					database->mtime = 0;
 					load_database(&database);
 				}
 				if (poke & RELOAD_AT) {
@@ -385,9 +379,9 @@ cron_sleep(time_t target, sigset_t *mask)
 					 * jobs immediately.
 					 */
 					clock_gettime(CLOCK_REALTIME, &t2);
-					at_database.mtime = 0;
+					at_database->mtime = 0;
 					if (scan_atjobs(&at_database, &t2))
-						atrun(&at_database,
+						atrun(at_database,
 						    batch_maxload, t2.tv_sec);
 				}
 			}

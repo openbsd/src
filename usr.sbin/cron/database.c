@@ -1,4 +1,4 @@
-/*	$OpenBSD: database.c,v 1.28 2015/11/04 20:28:17 millert Exp $	*/
+/*	$OpenBSD: database.c,v 1.29 2015/11/09 01:12:27 millert Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -43,13 +43,13 @@ static	void		process_crontab(const char *, const char *,
 					cron_db *, cron_db *);
 
 void
-load_database(cron_db *old_db)
+load_database(cron_db **db)
 {
 	struct stat statbuf, syscron_stat;
-	cron_db new_db;
+	cron_db *new_db, *old_db = *db;
 	struct dirent *dp;
 	DIR *dir;
-	user *u, *nu;
+	user *u;
 
 	/* before we start loading any data, do a stat on SPOOL_DIR
 	 * so that if anything changes as of this moment (i.e., before we've
@@ -67,12 +67,9 @@ load_database(cron_db *old_db)
 
 	/* if spooldir's mtime has not changed, we don't need to fiddle with
 	 * the database.
-	 *
-	 * Note that old_db->mtime is initialized to 0 in main(), and
-	 * so is guaranteed to be different than the stat() mtime the first
-	 * time this function is called.
 	 */
-	if (old_db->mtime == HASH(statbuf.st_mtime, syscron_stat.st_mtime)) {
+	if (old_db != NULL &&
+	    old_db->mtime == HASH(statbuf.st_mtime, syscron_stat.st_mtime)) {
 		return;
 	}
 
@@ -81,12 +78,14 @@ load_database(cron_db *old_db)
 	 * actually changed.  Whatever is left in the old database when
 	 * we're done is chaff -- crontabs that disappeared.
 	 */
-	new_db.mtime = HASH(statbuf.st_mtime, syscron_stat.st_mtime);
-	new_db.head = new_db.tail = NULL;
+	if ((new_db = malloc(sizeof(*new_db))) == NULL)
+		return;
+	new_db->mtime = HASH(statbuf.st_mtime, syscron_stat.st_mtime);
+	TAILQ_INIT(&new_db->users);
 
 	if (syscron_stat.st_mtime) {
 		process_crontab("root", NULL, SYSCRONTAB, &syscron_stat,
-				&new_db, old_db);
+				new_db, old_db);
 	}
 
 	/* we used to keep this dir open all the time, for the sake of
@@ -95,6 +94,17 @@ load_database(cron_db *old_db)
 	 */
 	if (!(dir = opendir(SPOOL_DIR))) {
 		log_it("CRON", getpid(), "OPENDIR FAILED", SPOOL_DIR);
+		/* Restore system crontab entry as needed. */
+		if (!TAILQ_EMPTY(&new_db->users) &&
+		    (u = TAILQ_FIRST(&old_db->users))) {
+			if (strcmp(u->name, "*system*") == 0) {
+				TAILQ_REMOVE(&old_db->users, u, entries);
+				free_user(u);
+				TAILQ_INSERT_HEAD(&old_db->users,
+				    TAILQ_FIRST(&new_db->users), entries);
+			}
+		}
+		free(new_db);
 		return;
 	}
 
@@ -117,7 +127,7 @@ load_database(cron_db *old_db)
 			continue;	/* XXX log? */
 
 		process_crontab(fname, fname, tabname,
-				&statbuf, &new_db, old_db);
+				&statbuf, new_db, old_db);
 	}
 	closedir(dir);
 
@@ -129,51 +139,30 @@ load_database(cron_db *old_db)
 
 	/* whatever's left in the old database is now junk.
 	 */
-	for (u = old_db->head;  u != NULL;  u = nu) {
-		nu = u->next;
-		unlink_user(old_db, u);
-		free_user(u);
+	if (old_db != NULL) {
+		while ((u = TAILQ_FIRST(&old_db->users))) {
+			TAILQ_REMOVE(&old_db->users, u, entries);
+			free_user(u);
+		}
+		free(old_db);
 	}
 
 	/* overwrite the database control block with the new one.
 	 */
-	*old_db = new_db;
-}
-
-void
-link_user(cron_db *db, user *u)
-{
-	if (db->head == NULL)
-		db->head = u;
-	if (db->tail)
-		db->tail->next = u;
-	u->prev = db->tail;
-	u->next = NULL;
-	db->tail = u;
-}
-
-void
-unlink_user(cron_db *db, user *u)
-{
-	if (u->prev == NULL)
-		db->head = u->next;
-	else
-		u->prev->next = u->next;
-
-	if (u->next == NULL)
-		db->tail = u->prev;
-	else
-		u->next->prev = u->prev;
+	*db = new_db;
 }
 
 user *
 find_user(cron_db *db, const char *name)
 {
-	user *u;
+	user *u = NULL;
 
-	for (u = db->head;  u != NULL;  u = u->next)
-		if (strcmp(u->name, name) == 0)
-			break;
+	if (db != NULL) {
+		TAILQ_FOREACH(u, &db->users, entries) {
+			if (strcmp(u->name, name) == 0)
+				break;
+		}
+	}
 	return (u);
 }
 
@@ -234,8 +223,8 @@ process_crontab(const char *uname, const char *fname, const char *tabname,
 		 * in, then we can just use our existing entry.
 		 */
 		if (u->mtime == statbuf->st_mtime) {
-			unlink_user(old_db, u);
-			link_user(new_db, u);
+			TAILQ_REMOVE(&old_db->users, u, entries);
+			TAILQ_INSERT_TAIL(&new_db->users, u, entries);
 			goto next_crontab;
 		}
 
@@ -246,14 +235,14 @@ process_crontab(const char *uname, const char *fname, const char *tabname,
 		 * users will be deleted from the old database when
 		 * we finish with the crontab...
 		 */
-		unlink_user(old_db, u);
+		TAILQ_REMOVE(&old_db->users, u, entries);
 		free_user(u);
 		log_it(fname, getpid(), "RELOAD", tabname);
 	}
 	u = load_user(crontab_fd, pw, fname);
 	if (u != NULL) {
 		u->mtime = statbuf->st_mtime;
-		link_user(new_db, u);
+		TAILQ_INSERT_TAIL(&new_db->users, u, entries);
 	}
 
  next_crontab:

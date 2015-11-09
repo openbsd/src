@@ -1,4 +1,4 @@
-/*	$OpenBSD: funcs.h,v 1.24 2015/11/04 12:53:05 millert Exp $	*/
+/*	$OpenBSD: funcs.h,v 1.25 2015/11/09 01:12:27 millert Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -23,11 +23,9 @@
  */
 
 void		set_cron_cwd(void),
-		load_database(cron_db *),
+		load_database(cron_db **),
 		job_add(entry *, user *),
 		do_command(entry *, user *),
-		link_user(cron_db *, user *),
-		unlink_user(cron_db *, user *),
 		free_user(user *),
 		env_free(char **),
 		unget_char(int, FILE *),
@@ -45,7 +43,7 @@ int		job_runqueue(void),
 		cron_pclose(FILE *, pid_t),
 		allowed(const char *, const char *, const char *),
 		safe_p(const char *, const char *),
-		scan_atjobs(at_db *, struct timespec *);
+		scan_atjobs(at_db **, struct timespec *);
 
 int		strtot(const char *nptr, char **endptr, time_t *tp);
 

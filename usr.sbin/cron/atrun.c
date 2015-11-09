@@ -1,4 +1,4 @@
-/*	$OpenBSD: atrun.c,v 1.34 2015/11/04 20:28:17 millert Exp $	*/
+/*	$OpenBSD: atrun.c,v 1.35 2015/11/09 01:12:27 millert Exp $	*/
 
 /*
  * Copyright (c) 2002-2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -48,21 +48,20 @@
 #include "funcs.h"
 #include "globals.h"
 
-static void unlink_job(at_db *, atjob *);
 static void run_job(atjob *, char *);
 
 /*
  * Scan the at jobs dir and build up a list of jobs found.
  */
 int
-scan_atjobs(at_db *old_db, struct timespec *ts)
+scan_atjobs(at_db **db, struct timespec *ts)
 {
 	DIR *atdir = NULL;
 	int cwd, queue, pending;
 	time_t run_time;
 	char *ep;
-	at_db new_db;
-	atjob *job, *tjob;
+	at_db *new_db, *old_db = *db;
+	atjob *job;
 	struct dirent *file;
 	struct stat statbuf;
 
@@ -71,11 +70,11 @@ scan_atjobs(at_db *old_db, struct timespec *ts)
 		return (0);
 	}
 
-	if (old_db->mtime == statbuf.st_mtime) {
+	if (old_db != NULL && old_db->mtime == statbuf.st_mtime) {
 		return (0);
 	}
 
-	/* XXX - would be nice to stash the crontab cwd */
+	/* XXX - use fstatat/openat instead of chdir */
 	if ((cwd = open(".", O_RDONLY, 0)) < 0) {
 		log_it("CRON", getpid(), "CAN'T OPEN", ".");
 		return (0);
@@ -91,8 +90,14 @@ scan_atjobs(at_db *old_db, struct timespec *ts)
 		return (0);
 	}
 
-	new_db.mtime = statbuf.st_mtime;	/* stash at dir mtime */
-	new_db.head = new_db.tail = NULL;
+	if ((new_db = malloc(sizeof(*new_db))) == NULL) {
+		closedir(atdir);
+		fchdir(cwd);
+		close(cwd);
+		return (0);
+	}
+	new_db->mtime = statbuf.st_mtime;	/* stash at dir mtime */
+	TAILQ_INIT(&new_db->jobs);
 
 	pending = 0;
 	while ((file = readdir(atdir)) != NULL) {
@@ -113,11 +118,11 @@ scan_atjobs(at_db *old_db, struct timespec *ts)
 
 		job = malloc(sizeof(*job));
 		if (job == NULL) {
-			for (job = new_db.head; job != NULL; ) {
-				tjob = job;
-				job = job->next;
-				free(tjob);
+			while ((job = TAILQ_FIRST(&new_db->jobs))) {
+				TAILQ_REMOVE(&new_db->jobs, job, entries);
+				free(job);
 			}
+			free(new_db);
 			closedir(atdir);
 			fchdir(cwd);
 			close(cwd);
@@ -127,31 +132,25 @@ scan_atjobs(at_db *old_db, struct timespec *ts)
 		job->gid = statbuf.st_gid;
 		job->queue = queue;
 		job->run_time = run_time;
-		job->prev = new_db.tail;
-		job->next = NULL;
-		if (new_db.head == NULL)
-			new_db.head = job;
-		if (new_db.tail != NULL)
-			new_db.tail->next = job;
-		new_db.tail = job;
+		TAILQ_INSERT_TAIL(&new_db->jobs, job, entries);
 		if (ts != NULL && run_time <= ts->tv_sec)
 			pending = 1;
 	}
 	closedir(atdir);
 
-	/* Free up old at db */
-	for (job = old_db->head; job != NULL; ) {
-		tjob = job;
-		job = job->next;
-		free(tjob);
+	/* Free up old at db and install new one */
+	if (old_db != NULL) {
+		while ((job = TAILQ_FIRST(&old_db->jobs))) {
+			TAILQ_REMOVE(&old_db->jobs, job, entries);
+			free(job);
+		}
+		free(old_db);
 	}
+	*db = new_db;
 
 	/* Change back to the normal cron dir. */
 	fchdir(cwd);
 	close(cwd);
-
-	/* Install the new database */
-	*old_db = new_db;
 
 	return (pending);
 }
@@ -165,9 +164,12 @@ atrun(at_db *db, double batch_maxload, time_t now)
 	char atfile[MAX_FNAME];
 	struct stat statbuf;
 	double la;
-	atjob *job, *batch;
+	atjob *job, *tjob, *batch = NULL;
 
-	for (batch = NULL, job = db->head; job; job = job->next) {
+	if (db == NULL)
+		return;
+
+	TAILQ_FOREACH_SAFE(job, &db->jobs, entries, tjob) {
 		/* Skip jobs in the future */
 		if (job->run_time > now)
 			continue;
@@ -175,11 +177,11 @@ atrun(at_db *db, double batch_maxload, time_t now)
 		snprintf(atfile, sizeof(atfile), "%s/%lld.%c", AT_DIR,
 		    (long long)job->run_time, job->queue);
 
-		if (stat(atfile, &statbuf) != 0)
-			unlink_job(db, job);	/* disapeared */
-
-		if (!S_ISREG(statbuf.st_mode))
-			continue;		/* should not happen */
+		if (lstat(atfile, &statbuf) != 0 || !S_ISREG(statbuf.st_mode)) {
+			TAILQ_REMOVE(&db->jobs, job, entries);
+			free(job);
+			continue;		/* disapeared or not a file */
+		}
 
 		/*
 		 * Pending jobs have the user execute bit set.
@@ -194,7 +196,8 @@ atrun(at_db *db, double batch_maxload, time_t now)
 			} else {
 				/* normal at job */
 				run_job(job, atfile);
-				unlink_job(db, job);
+				TAILQ_REMOVE(&db->jobs, job, entries);
+				free(job);
 			}
 		}
 	}
@@ -207,25 +210,9 @@ atrun(at_db *db, double batch_maxload, time_t now)
 		snprintf(atfile, sizeof(atfile), "%s/%lld.%c", AT_DIR,
 		    (long long)batch->run_time, batch->queue);
 		run_job(batch, atfile);
-		unlink_job(db, batch);
+		TAILQ_REMOVE(&db->jobs, batch, entries);
+		free(job);
 	}
-}
-
-/*
- * Remove the specified at job from the database.
- */
-static void
-unlink_job(at_db *db, atjob *job)
-{
-	if (job->prev == NULL)
-		db->head = job->next;
-	else
-		job->prev->next = job->next;
-
-	if (job->next == NULL)
-		db->tail = job->prev;
-	else
-		job->next->prev = job->prev;
 }
 
 /*
