@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.65 2015/10/25 10:20:51 krw Exp $
+#	$OpenBSD: install.md,v 1.66 2015/11/09 20:54:12 rpe Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@ md_prep_fdisk() {
 		if fdisk $_disk | grep -q 'Signature: 0xAA55'; then
 			fdisk $_disk
 			if fdisk $_disk | grep -q '^..: A6 '; then
-				_q=", use the (O)penBSD area,"
+				_q=", use the (O)penBSD area"
 				_d=OpenBSD
 			fi
 		else
