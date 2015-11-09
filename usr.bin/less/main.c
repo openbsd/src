@@ -90,10 +90,10 @@ main(int argc, char *argv[])
 
 	if (secure) {
 		if (pledge("stdio rpath wpath tty", NULL) == -1)
-			err(1, "pledge");
+			perror("pledge");
 	} else {
 		if (pledge("stdio rpath wpath cpath fattr proc exec tty", NULL) == -1)
-			err(1, "pledge");
+			perror("pledge");
 	}
 
 	/*
@@ -223,7 +223,7 @@ main(int argc, char *argv[])
 
 	if (secure)
 		if (pledge("stdio rpath tty", NULL) == -1)
-			err(1, "pledge");
+			perror("pledge");
 
 	raw_mode(1);
 	init_signals(1);
