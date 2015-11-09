@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vr.c,v 1.144 2015/10/25 13:04:28 mpi Exp $	*/
+/*	$OpenBSD: if_vr.c,v 1.145 2015/11/09 00:22:57 dlg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -1185,61 +1185,50 @@ vr_intr(void *arg)
  * pointers to the fragment pointers.
  */
 int
-vr_encap(struct vr_softc *sc, struct vr_chain **cp, struct mbuf *m_head)
+vr_encap(struct vr_softc *sc, struct vr_chain **cp, struct mbuf *m)
 {
 	struct vr_chain		*c = *cp;
 	struct vr_desc		*f = NULL;
-	struct mbuf		*m_new = NULL;
 	u_int32_t		vr_ctl = 0, vr_status = 0, intdisable = 0;
 	bus_dmamap_t		txmap;
 	int			i, runt = 0;
+	int			error;
 
 	if (sc->vr_quirks & VR_Q_CSUM) {
-		if (m_head->m_pkthdr.csum_flags & M_IPV4_CSUM_OUT)
+		if (m->m_pkthdr.csum_flags & M_IPV4_CSUM_OUT)
 			vr_ctl |= VR_TXCTL_IPCSUM;
-		if (m_head->m_pkthdr.csum_flags & M_TCP_CSUM_OUT)
+		if (m->m_pkthdr.csum_flags & M_TCP_CSUM_OUT)
 			vr_ctl |= VR_TXCTL_TCPCSUM;
-		if (m_head->m_pkthdr.csum_flags & M_UDP_CSUM_OUT)
+		if (m->m_pkthdr.csum_flags & M_UDP_CSUM_OUT)
 			vr_ctl |= VR_TXCTL_UDPCSUM;
 	}
 
-	/* Deep copy for chips that need alignment, or too many segments */
-	if (sc->vr_quirks & VR_Q_NEEDALIGN ||
-	    bus_dmamap_load_mbuf(sc->sc_dmat, c->vr_map, m_head,
-				 BUS_DMA_NOWAIT | BUS_DMA_WRITE)) {
-		MGETHDR(m_new, M_DONTWAIT, MT_DATA);
-		if (m_new == NULL)
-			return (1);
-		if (m_head->m_pkthdr.len > MHLEN) {
-			MCLGET(m_new, M_DONTWAIT);
-			if (!(m_new->m_flags & M_EXT)) {
-				m_freem(m_new);
-				return (1);
-			}
-		}
-		m_copydata(m_head, 0, m_head->m_pkthdr.len,
-		    mtod(m_new, caddr_t));
-		m_new->m_pkthdr.len = m_new->m_len = m_head->m_pkthdr.len;
-
-		if (bus_dmamap_load_mbuf(sc->sc_dmat, c->vr_map, m_new,
-		    BUS_DMA_NOWAIT | BUS_DMA_WRITE)) {
-			m_freem(m_new);
-			return(1);
-		}
+	if (sc->vr_quirks & VR_Q_NEEDALIGN) {
+		/* Deep copy for chips that need alignment */
+		error = EFBIG;
+	} else {
+		error = bus_dmamap_load_mbuf(sc->sc_dmat, c->vr_map, m,
+		    BUS_DMA_NOWAIT | BUS_DMA_WRITE);
 	}
+
+	switch (error) {
+	case 0:
+		break;
+	case EFBIG:
+		if (m_defrag(m, M_DONTWAIT) == 0 &&
+                    bus_dmamap_load_mbuf(sc->sc_dmat, c->vr_map, m,
+                     BUS_DMA_NOWAIT) == 0)
+                        break;
+
+		/* FALLTHROUGH */
+        default:
+		return (ENOBUFS);
+        }
 
 	bus_dmamap_sync(sc->sc_dmat, c->vr_map, 0, c->vr_map->dm_mapsize,
 	    BUS_DMASYNC_PREWRITE);
 	if (c->vr_map->dm_mapsize < VR_MIN_FRAMELEN)
 		runt = 1;
-
-	/* Check number of available descriptors */
-	if (sc->vr_cdata.vr_tx_cnt + c->vr_map->dm_nsegs + runt >=
-	    (VR_TX_LIST_CNT - 1)) {
-		if (m_new)
-			m_freem(m_new);
-		return(1);
-	}
 
 #if NVLAN > 0
 	/*
@@ -1248,8 +1237,8 @@ vr_encap(struct vr_softc *sc, struct vr_chain **cp, struct mbuf *m_head)
 	 * in only 15 bits without the gap at 0x1000 (reserved for DEI).
 	 * Therefore we need to de- / re-construct the VLAN header.
 	 */
-	if (m_head->m_flags & M_VLANTAG) {
-		u_int32_t vtag = m_head->m_pkthdr.ether_vtag;
+	if (m->m_flags & M_VLANTAG) {
+		u_int32_t vtag = m->m_pkthdr.ether_vtag;
 		vtag = EVL_VLANOFTAG(vtag) | EVL_PRIOFTAG(vtag) << 12;
 		vr_status |= vtag << VR_TXSTAT_PQSHIFT;
 		vr_ctl |= htole32(VR_TXCTL_INSERTTAG);
@@ -1268,12 +1257,7 @@ vr_encap(struct vr_softc *sc, struct vr_chain **cp, struct mbuf *m_head)
 	    sc->vr_quirks & VR_Q_INTDISABLE)
 		intdisable = VR_TXNEXT_INTDISABLE;
 
-	if (m_new != NULL) {
-		m_freem(m_head);
-
-		c->vr_mbuf = m_new;
-	} else
-		c->vr_mbuf = m_head;
+	c->vr_mbuf = m;
 	txmap = c->vr_map;
 	for (i = 0; i < txmap->dm_nsegs; i++) {
 		if (i != 0)
@@ -1321,7 +1305,7 @@ void
 vr_start(struct ifnet *ifp)
 {
 	struct vr_softc		*sc;
-	struct mbuf		*m_head;
+	struct mbuf		*m;
 	struct vr_chain		*cur_tx, *head_tx;
 	unsigned int		 queued = 0;
 
@@ -1334,17 +1318,22 @@ vr_start(struct ifnet *ifp)
 		return;
 
 	cur_tx = sc->vr_cdata.vr_tx_prod;
-	while (cur_tx->vr_mbuf == NULL) {
-		IFQ_DEQUEUE(&ifp->if_snd, m_head);
-		if (m_head == NULL)
+	for (;;) {
+		if (sc->vr_cdata.vr_tx_cnt + VR_MAXFRAGS >=
+		    VR_TX_LIST_CNT - 1) {
+			ifp->if_flags |= IFF_OACTIVE;
+			break;
+		}
+
+		IFQ_DEQUEUE(&ifp->if_snd, m);
+		if (m== NULL)
 			break;
 
 		/* Pack the data into the descriptor. */
 		head_tx = cur_tx;
-		if (vr_encap(sc, &cur_tx, m_head)) {
-			/* Rollback, send what we were able to encap. */
-			IF_PREPEND(&ifp->if_snd, m_head);
-			break;
+		if (vr_encap(sc, &cur_tx, m)) {
+			ifp->if_oerrors++;
+			continue;
 		}
 		queued++;
 
@@ -1357,8 +1346,7 @@ vr_start(struct ifnet *ifp)
 		 * to him.
 		 */
 		if (ifp->if_bpf)
-			bpf_mtap_ether(ifp->if_bpf, head_tx->vr_mbuf,
-			BPF_DIRECTION_OUT);
+			bpf_mtap_ether(ifp->if_bpf, m, BPF_DIRECTION_OUT);
 #endif
 		cur_tx = cur_tx->vr_nextdesc;
 	}
@@ -1374,9 +1362,6 @@ vr_start(struct ifnet *ifp)
 
 		/* Set a timeout in case the chip goes out to lunch. */
 		ifp->if_timer = 5;
-
-		if (cur_tx->vr_mbuf != NULL)
-			ifp->if_flags |= IFF_OACTIVE;
 	}
 }
 
