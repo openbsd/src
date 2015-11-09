@@ -56,7 +56,7 @@ getumark(int c)
 	if (c >= 'A' && c <= 'Z')
 		return (&marks[c-'A'+26]);
 
-	error("Invalid mark letter", NULL_PARG);
+	error("Invalid mark letter", NULL);
 	return (NULL);
 }
 
@@ -86,7 +86,7 @@ getmark(int c)
 		 * End of the current file.
 		 */
 		if (ch_end_seek()) {
-			error("Cannot seek to end of file", NULL_PARG);
+			error("Cannot seek to end of file", NULL);
 			return (NULL);
 		}
 		m = &sm;
@@ -116,7 +116,7 @@ getmark(int c)
 		if (m == NULL)
 			break;
 		if (m->m_scrpos.pos == -1) {
-			error("Mark not set", NULL_PARG);
+			error("Mark not set", NULL);
 			return (NULL);
 		}
 		break;
@@ -225,7 +225,7 @@ markpos(int c)
 		return (-1);
 
 	if (m->m_ifile != curr_ifile) {
-		error("Mark not in current file", NULL_PARG);
+		error("Mark not in current file", NULL);
 		return (-1);
 	}
 	return (m->m_scrpos.pos);

@@ -218,7 +218,7 @@ main(int argc, char *argv[])
 	}
 
 	if (missing_cap && !know_dumb)
-		error("WARNING: terminal is not fully functional", NULL_PARG);
+		error("WARNING: terminal is not fully functional", NULL);
 	init_mark();
 	open_getchr();
 
@@ -240,7 +240,7 @@ main(int argc, char *argv[])
 		 * and search for the proper line in the file.
 		 */
 		if (nifile() > 0) {
-			error("No filenames allowed with -t option", NULL_PARG);
+			error("No filenames allowed with -t option", NULL);
 			quit(QUIT_ERROR);
 		}
 		findtag(tagoption);
@@ -281,7 +281,7 @@ ecalloc(int count, unsigned int size)
 	p = calloc(count, size);
 	if (p != NULL)
 		return (p);
-	error("Cannot allocate memory", NULL_PARG);
+	error("Cannot allocate memory", NULL);
 	quit(QUIT_ERROR);
 	/*NOTREACHED*/
 	return (NULL);
@@ -299,7 +299,7 @@ easprintf(const char *fmt, ...)
 	va_end(ap);
 
 	if (p == NULL || rv < 0) {
-		error("Cannot allocate memory", NULL_PARG);
+		error("Cannot allocate memory", NULL);
 		quit(QUIT_ERROR);
 		/*NOTREACHED*/
 	}
@@ -313,7 +313,7 @@ estrdup(const char *str)
 	
 	n = strdup(str);
 	if (n == NULL) {
-		error("Cannot allocate memory", NULL_PARG);
+		error("Cannot allocate memory", NULL);
 		quit(QUIT_ERROR);
 	}
 	return (n);

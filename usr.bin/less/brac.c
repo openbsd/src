@@ -40,9 +40,9 @@ match_brac(int obrac, int cbrac, int forwdir, int n)
 	pos = position((forwdir) ? TOP : BOTTOM);
 	if (pos == -1 || ch_seek(pos)) {
 		if (forwdir)
-			error("Nothing in top line", NULL_PARG);
+			error("Nothing in top line", NULL);
 		else
-			error("Nothing in bottom line", NULL_PARG);
+			error("Nothing in bottom line", NULL);
 		return;
 	}
 
@@ -52,9 +52,9 @@ match_brac(int obrac, int cbrac, int forwdir, int n)
 	do {
 		if ((c = ch_forw_get()) == '\n' || c == EOI) {
 			if (forwdir)
-				error("No bracket in top line", NULL_PARG);
+				error("No bracket in top line", NULL);
 			else
-				error("No bracket in bottom line", NULL_PARG);
+				error("No bracket in bottom line", NULL);
 			return;
 		}
 	} while (c != obrac || --n > 0);
@@ -86,5 +86,5 @@ match_brac(int obrac, int cbrac, int forwdir, int n)
 			return;
 		}
 	}
-	error("No matching bracket", NULL_PARG);
+	error("No matching bracket", NULL);
 }

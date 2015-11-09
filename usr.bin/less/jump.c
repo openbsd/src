@@ -33,7 +33,7 @@ jump_forw(void)
 	off_t end_pos;
 
 	if (ch_end_seek()) {
-		error("Cannot seek to end of file", NULL_PARG);
+		error("Cannot seek to end of file", NULL);
 		return;
 	}
 	/*
@@ -81,7 +81,7 @@ jump_back(LINENUM linenum)
 		jump_loc(pos, jump_sline);
 	} else if (linenum <= 1 && ch_beg_seek() == 0) {
 		jump_loc(ch_tell(), jump_sline);
-		error("Cannot seek to beginning of file", NULL_PARG);
+		error("Cannot seek to beginning of file", NULL);
 	} else {
 		parg.p_linenum = linenum;
 		error("Cannot seek to line number %n", &parg);
@@ -117,11 +117,11 @@ jump_percent(int percent, long fraction)
 	 * (the specified percentage of the file's length).
 	 */
 	if ((len = ch_length()) == -1) {
-		ierror("Determining length of file", NULL_PARG);
+		ierror("Determining length of file", NULL);
 		ch_end_seek();
 	}
 	if ((len = ch_length()) == -1) {
-		error("Don't know length of file", NULL_PARG);
+		error("Don't know length of file", NULL);
 		return;
 	}
 	pos = percent_pos(len, percent, fraction);
@@ -193,7 +193,7 @@ jump_loc(off_t pos, int sline)
 	 * Seek to the desired location.
 	 */
 	if (ch_seek(pos)) {
-		error("Cannot seek to that file position", NULL_PARG);
+		error("Cannot seek to that file position", NULL);
 		return;
 	}
 

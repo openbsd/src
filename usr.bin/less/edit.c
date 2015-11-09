@@ -605,10 +605,10 @@ edit_stdin(void)
 	if (isatty(fd0)) {
 		if (less_is_more) {
 			error("Missing filename (\"more -h\" for help)",
-			    NULL_PARG);
+			    NULL);
 		} else {
 			error("Missing filename (\"less --help\" for help)",
-			    NULL_PARG);
+			    NULL);
 		}
 		quit(QUIT_OK);
 	}
@@ -705,7 +705,7 @@ loop:
 		 * Eh?
 		 */
 		answer = query("Overwrite, Append, or Don't log? "
-		    "(Type \"O\", \"A\", \"D\" or \"q\") ", NULL_PARG);
+		    "(Type \"O\", \"A\", \"D\" or \"q\") ", NULL);
 		goto loop;
 	}
 

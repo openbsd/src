@@ -203,7 +203,7 @@ add_lnum(LINENUM linenum, off_t pos)
 static void
 longloopmessage(void)
 {
-	ierror("Calculating line numbers", NULL_PARG);
+	ierror("Calculating line numbers", NULL);
 }
 
 static int loopcount;
@@ -234,7 +234,7 @@ abort_long(void)
 		 */
 		screen_trashed = 1;
 	linenums = 0;
-	error("Line numbers turned off", NULL_PARG);
+	error("Line numbers turned off", NULL);
 }
 
 /*

@@ -115,8 +115,6 @@ typedef union parg {
 	LINENUM p_linenum;
 } PARG;
 
-#define	NULL_PARG	((PARG *)NULL)
-
 struct textlist {
 	char *string;
 	char *endstring;

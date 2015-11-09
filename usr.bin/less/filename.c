@@ -611,7 +611,7 @@ open_altfile(char *filename, int *pf, void **pfd)
 	}
 
 	if ((cmd = expand_pct_s(lessopen, filename, NULL)) == NULL) {
-		error("Invalid LESSOPEN variable", NULL_PARG);
+		error("Invalid LESSOPEN variable", NULL);
 		return (NULL);
 	}
 	fd = shellcmd(cmd);
@@ -681,7 +681,7 @@ close_altfile(char *altfilename, char *filename, void *pipefd)
 		return;
 	cmd = expand_pct_s(lessclose, filename, altfilename, NULL);
 	if (cmd == NULL) {
-		error("Invalid LESSCLOSE variable", NULL_PARG);
+		error("Invalid LESSCLOSE variable", NULL);
 		return;
 	}
 	fd = shellcmd(cmd);

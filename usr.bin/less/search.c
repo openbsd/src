@@ -271,7 +271,7 @@ void
 undo_search(void)
 {
 	if (!prev_pattern(&search_info)) {
-		error("No previous regular expression", NULL_PARG);
+		error("No previous regular expression", NULL);
 		return;
 	}
 	hide_hilite = !hide_hilite;
@@ -860,12 +860,12 @@ search(int search_type, char *pattern, int n)
 		 */
 		search_type |= SRCH_AFTER_TARGET;
 		if (!prev_pattern(&search_info) && !hist_pattern(search_type)) {
-			error("No previous regular expression", NULL_PARG);
+			error("No previous regular expression", NULL);
 			return (-1);
 		}
 		if ((search_type & SRCH_NO_REGEX) !=
 		    (search_info.search_type & SRCH_NO_REGEX)) {
-			error("Please re-enter search pattern", NULL_PARG);
+			error("Please re-enter search pattern", NULL);
 			return (-1);
 		}
 		if (hilite_search == OPT_ON) {
@@ -919,7 +919,7 @@ search(int search_type, char *pattern, int n)
 		if (search_type & SRCH_PAST_EOF)
 			return (n);
 		/* repaint(); -- why was this here? */
-		error("Nothing to search", NULL_PARG);
+		error("Nothing to search", NULL);
 		return (-1);
 	}
 

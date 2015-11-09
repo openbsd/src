@@ -116,13 +116,13 @@ findtag(char *tag)
 	case TAG_INTR:
 		break;
 	case TAG_NOFILE:
-		error("No tags file", NULL_PARG);
+		error("No tags file", NULL);
 		break;
 	case TAG_NOTAG:
-		error("No such tag in tags file", NULL_PARG);
+		error("No such tag in tags file", NULL);
 		break;
 	case TAG_NOTYPE:
-		error("unknown tag type", NULL_PARG);
+		error("unknown tag type", NULL);
 		break;
 	}
 }
@@ -345,7 +345,7 @@ ctagsearch(void)
 			/*
 			 * We hit EOF without a match.
 			 */
-			error("Tag not found", NULL_PARG);
+			error("Tag not found", NULL);
 			return (-1);
 		}
 
