@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_gre.c,v 1.76 2015/10/25 11:58:11 mpi Exp $ */
+/*      $OpenBSD: if_gre.c,v 1.77 2015/11/09 15:18:52 benno Exp $ */
 /*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -692,6 +692,9 @@ gre_send_keepalive(void *arg)
 
 	m->m_len = m->m_pkthdr.len = sizeof(*ip) + sizeof(*gh);
 	MH_ALIGN(m, m->m_len);
+
+	/* use the interface's rdomain when sending keepalives. */
+	m->m_pkthdr.ph_rtableid = sc->sc_if.if_rdomain;
 
 	/* build the ip header */
 	ip = mtod(m, struct ip *);
