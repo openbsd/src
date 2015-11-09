@@ -87,8 +87,6 @@ typedef off_t		LINENUM;
 
 #define	SHELL_META_QUEST 1
 
-#define	SPACES_IN_FILENAMES 1
-
 /*
  * An IFILE represents an input file.
  */
