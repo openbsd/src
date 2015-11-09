@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1774 2015/11/02 04:43:24 jsg Exp $
+$OpenBSD: pcidevs,v 1.1775 2015/11/09 00:37:44 mlarkin Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -53,6 +53,7 @@ vendor	TTTECH		0x0357	TTTech
 vendor	DYNALINK	0x0675	Dynalink
 vendor	COREGA2		0x07aa	Corega
 vendor	RHINO		0x0b0b	Rhino Equipment
+vendor	OPENBSD		0x0b5d	OpenBSD
 vendor	COMPAQ		0x0e11	Compaq
 vendor	SYMBIOS		0x1000	Symbios Logic
 vendor	ATI		0x1002	ATI
@@ -5962,6 +5963,9 @@ product OPTI 82C700		0xc700	82C700
 product OPTI 82C701		0xc701	82C701
 product OPTI 82C822		0xc822	82C822
 product OPTI 82C861		0xc861	82C861
+
+/* OpenBSD VMM products */
+product OPENBSD PCHB		0x0666	VMM PCI Host Bridge
 
 /* Option products */
 product OPTION F32		0x000c	3G+ UMTS HSDPA
