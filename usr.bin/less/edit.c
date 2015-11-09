@@ -679,7 +679,7 @@ loop:
 		/*
 		 * Overwrite: create the file.
 		 */
-		logfile = creat(filename, 0644);
+		logfile = open(filename, O_CREAT | O_TRUNC | O_WRONLY, 0644);
 		break;
 	case 'A': case 'a':
 		/*
