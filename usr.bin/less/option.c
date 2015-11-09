@@ -307,8 +307,7 @@ scan_option(char *s)
 		 */
 		if (o->ofunc != NULL)
 			(*o->ofunc)(INIT, str);
-		if (str != NULL)
-			free(str);
+		free(str);
 	}
 }
 

@@ -97,12 +97,10 @@ set_pattern(struct pattern_info *info, char *pattern, int search_type)
 	else if (compile_pattern(pattern, search_type, &info->compiled) < 0)
 		return (-1);
 	/* Pattern compiled successfully; save the text too. */
-	if (info->text != NULL)
-		free(info->text);
+	free(info->text);
 	info->text = NULL;
-	if (pattern != NULL) {
+	if (pattern != NULL)
 		info->text = estrdup(pattern);
-	}
 	info->search_type = search_type;
 
 	/*
@@ -291,7 +289,7 @@ clr_hlist(struct hilite *anchor)
 
 	for (hl = anchor->hl_first; hl != NULL; hl = nexthl) {
 		nexthl = hl->hl_next;
-		free((void*)hl);
+		free(hl);
 	}
 	anchor->hl_first = NULL;
 	prep_startpos = prep_endpos = -1;

@@ -198,8 +198,7 @@ exec_mca(void)
 		 */
 		while (*cbuf == '+' || *cbuf == ' ')
 			cbuf++;
-		if (every_first_cmd != NULL)
-			free(every_first_cmd);
+		free(every_first_cmd);
 		if (*cbuf == '\0')
 			every_first_cmd = NULL;
 		else
