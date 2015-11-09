@@ -1,4 +1,4 @@
-/*	$OpenBSD: utils.h,v 1.1 2015/01/21 08:43:55 ratchov Exp $	*/
+/*	$OpenBSD: utils.h,v 1.2 2015/11/09 14:44:23 mmcc Exp $	*/
 /*
  * Copyright (c) 2003-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -29,7 +29,6 @@ void log_flush(void);
 
 void *xmalloc(size_t);
 char *xstrdup(char *);
-void xfree(void *);
 
 /*
  * Log levels:
