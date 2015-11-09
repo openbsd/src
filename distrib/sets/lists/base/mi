@@ -526,7 +526,6 @@
 ./usr/bin/skeyinfo
 ./usr/bin/skeyinit
 ./usr/bin/skeyprune
-./usr/bin/slogin
 ./usr/bin/sndiod
 ./usr/bin/sort
 ./usr/bin/spell
