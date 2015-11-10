@@ -1,14 +1,17 @@
-.\"	$OpenBSD: tzset.3,v 1.21 2015/10/11 21:30:02 schwarze Exp $
-.Dd $Mdocdate: October 11 2015 $
+.\"	$OpenBSD: tzset.3,v 1.22 2015/11/10 20:58:20 millert Exp $
+.Dd $Mdocdate: November 10 2015 $
 .Dt TZSET 3
 .Os
 .Sh NAME
-.Nm tzset
+.Nm tzset ,
+.Nm tzsetwall
 .Nd initialize time conversion information
 .Sh SYNOPSIS
 .In time.h
 .Ft void
 .Fn tzset "void"
+.Ft void
+.Fn tzsetwall "void"
 .Sh DESCRIPTION
 .Fn tzset
 uses the value of the environment variable
@@ -22,8 +25,8 @@ the best available approximation to local wall clock time, as specified
 by the
 .Xr tzfile 5
 format file
-.Em localtime
-in the system time conversion information directory, is used by
+.Pa /etc/localtime ,
+is used by
 .Xr localtime 3 .
 .Pp
 If
@@ -236,6 +239,15 @@ environment variable does not specify a
 format file
 and cannot be interpreted as a direct specification,
 UTC is used.
+.Pp
+.Fn tzsetwall
+behaves identically to
+.Fn tzset
+but it only uses the
+.Pa /etc/localtime
+file (that is, it ignores the
+.Ev TZ
+environment variable).
 .Sh FILES
 .Bl -tag -width "/usr/share/zoneinfo/posixrules" -compact
 .It Pa /usr/share/zoneinfo
@@ -260,5 +272,14 @@ UTC leap seconds are loaded from
 .Xr strftime 3 ,
 .Xr time 3 ,
 .Xr tzfile 5
+.Sh STANDARDS
+The
+.Fn tzset
+function
+conforms to
+.St -p1003.1-2008 .
+The
+.Fn tzsetwall
+function is an extension to that specification.
 .\" This file is in the public domain, so clarified as of
 .\" 2009-05-17 by Arthur David Olson.
