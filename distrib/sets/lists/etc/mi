@@ -43,6 +43,7 @@
 ./etc/ssh/ssh_config
 ./etc/ssh/sshd_config
 ./etc/ssl/cert.pem
+./etc/ssl/ikeca.cnf
 ./etc/ssl/openssl.cnf
 ./etc/ssl/x509v3.cnf
 ./etc/syslog.conf
