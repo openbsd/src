@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_gre.c,v 1.77 2015/11/09 15:18:52 benno Exp $ */
+/*      $OpenBSD: if_gre.c,v 1.78 2015/11/10 06:34:35 dlg Exp $ */
 /*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -215,7 +215,6 @@ gre_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 	for (mtag = m_tag_find(m, PACKET_TAG_GRE, NULL); mtag;
 	     mtag = m_tag_find(m, PACKET_TAG_GRE, mtag)) {
 		if (!bcmp((caddr_t)(mtag + 1), &ifp, sizeof(struct ifnet *))) {
-			IF_DROP(&ifp->if_snd);
 			m_freem(m);
 			error = EIO;
 			goto end;
@@ -224,7 +223,6 @@ gre_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 
 	mtag = m_tag_get(PACKET_TAG_GRE, sizeof(struct ifnet *), M_NOWAIT);
 	if (mtag == NULL) {
-		IF_DROP(&ifp->if_snd);
 		m_freem(m);
 		error = ENOBUFS;
 		goto end;
@@ -241,7 +239,6 @@ gre_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 
 	if (sc->g_proto == IPPROTO_MOBILE) {
 		if (ip_mobile_allow == 0) {
-			IF_DROP(&ifp->if_snd);
 			m_freem(m);
 			error = EACCES;
 			goto end;
@@ -258,7 +255,6 @@ gre_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 			if (m->m_len < sizeof(struct ip)) {
 				m = m_pullup(m, sizeof(struct ip));
 				if (m == NULL) {
-					IF_DROP(&ifp->if_snd);
 					error = ENOBUFS;
 					goto end;
 				} else
@@ -267,7 +263,6 @@ gre_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 				if (m->m_len < inp->ip_hl << 2) {
 					m = m_pullup(m, inp->ip_hl << 2);
 					if (m == NULL) {
-						IF_DROP(&ifp->if_snd);
 						error = ENOBUFS;
 						goto end;
 					}
@@ -303,7 +298,6 @@ gre_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 				/* Need new mbuf */
 				MGETHDR(m0, M_DONTWAIT, MT_HEADER);
 				if (m0 == NULL) {
-					IF_DROP(&ifp->if_snd);
 					m_freem(m);
 					error = ENOBUFS;
 					goto end;
@@ -334,14 +328,12 @@ gre_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 			bcopy(&mob_h, (caddr_t)(inp + 1), (unsigned) msiz);
 			inp->ip_len = htons(ntohs(inp->ip_len) + msiz);
 		} else {  /* AF_INET */
-			IF_DROP(&ifp->if_snd);
 			m_freem(m);
 			error = EINVAL;
 			goto end;
 		}
 	} else if (sc->g_proto == IPPROTO_GRE) {
 		if (gre_allow == 0) {
-			IF_DROP(&ifp->if_snd);
 			m_freem(m);
 			error = EACCES;
 			goto end;
@@ -352,7 +344,6 @@ gre_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 			if (m->m_len < sizeof(struct ip)) {
 				m = m_pullup(m, sizeof(struct ip));
 				if (m == NULL) {
-					IF_DROP(&ifp->if_snd);
 					error = ENOBUFS;
 					goto end;
 				}
@@ -376,7 +367,6 @@ gre_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 			break;
 #endif
 		default:
-			IF_DROP(&ifp->if_snd);
 			m_freem(m);
 			error = EAFNOSUPPORT;
 			goto end;
@@ -384,14 +374,12 @@ gre_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 
 		M_PREPEND(m, sizeof(struct greip), M_DONTWAIT);
 	} else {
-		IF_DROP(&ifp->if_snd);
 		m_freem(m);
 		error = EINVAL;
 		goto end;
 	}
 
 	if (m == NULL) {
-		IF_DROP(&ifp->if_snd);
 		error = ENOBUFS;
 		goto end;
 	}
