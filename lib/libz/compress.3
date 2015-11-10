@@ -1,4 +1,4 @@
-.\"	$OpenBSD: compress.3,v 1.16 2015/09/10 17:55:21 schwarze Exp $
+.\"	$OpenBSD: compress.3,v 1.17 2015/11/10 23:48:18 jmc Exp $
 .\"
 .\"  Copyright (C) 1995-2005 Jean-loup Gailly and Mark Adler
 .\"
@@ -23,11 +23,65 @@
 .\"
 .\" This page corresponds to zlib version 1.2.3
 .\"
-.Dd $Mdocdate: September 10 2015 $
+.Dd $Mdocdate: November 10 2015 $
 .Dt COMPRESS 3
 .Os
 .Sh NAME
-.Nm compress
+.Nm compress ,
+.Nm zlibVersion ,
+.Nm deflateInit ,
+.Nm deflate ,
+.Nm deflateEnd ,
+.Nm inflateInit ,
+.Nm inflate ,
+.Nm inflateEnd ,
+.Nm deflateInit2 ,
+.Nm deflateSetDictionary ,
+.Nm deflateCopy ,
+.Nm deflateReset ,
+.Nm deflateParams ,
+.Nm deflateTune ,
+.Nm deflateBound ,
+.Nm deflatePrime ,
+.Nm deflateSetHeader ,
+.Nm inflateInit2 ,
+.Nm inflateSetDictionary ,
+.Nm inflateSync ,
+.Nm inflateCopy ,
+.Nm inflateReset ,
+.Nm inflatePrime ,
+.Nm inflateGetHeader ,
+.Nm inflateBackInit ,
+.Nm inflateBack ,
+.Nm inflateBackEnd ,
+.Nm zlibCompileFlags ,
+.Nm compress2 ,
+.Nm compressBound ,
+.Nm uncompress ,
+.Nm gzopen ,
+.Nm gzdopen ,
+.Nm gzsetparams ,
+.Nm gzread ,
+.Nm gzwrite ,
+.Nm gzprintf ,
+.Nm gzputs ,
+.Nm gzgets ,
+.Nm gzputc ,
+.Nm gzgetc ,
+.Nm gzungetc ,
+.Nm gzflush ,
+.Nm gzseek ,
+.Nm gzrewind ,
+.Nm gztell ,
+.Nm gzeof ,
+.Nm gzdirect ,
+.Nm gzclose ,
+.Nm gzerror ,
+.Nm gzclearerr ,
+.Nm adler32 ,
+.Nm adler32_combine ,
+.Nm crc32 ,
+.Nm crc32_combine
 .Nd zlib general purpose compression library
 .Sh SYNOPSIS
 .In zlib.h

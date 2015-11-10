@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sha2.3,v 1.22 2015/02/05 02:33:09 schwarze Exp $
+.\"	$OpenBSD: sha2.3,v 1.23 2015/11/10 23:48:18 jmc Exp $
 .\"
 .\" Copyright (c) 2003, 2004 Todd C. Miller <Todd.Miller@courtesan.com>
 .\"
@@ -20,10 +20,19 @@
 .\"
 .\" See http://www.nist.gov/sha/ for the detailed standard
 .\"
-.Dd $Mdocdate: February 5 2015 $
-.Dt SHA2 3
+.Dd $Mdocdate: November 10 2015 $
+.Dt SHA256INIT 3
 .Os
 .Sh NAME
+.Nm SHA224Init ,
+.Nm SHA224Update ,
+.Nm SHA224Pad ,
+.Nm SHA224Final ,
+.Nm SHA224Transform ,
+.Nm SHA224End ,
+.Nm SHA224File ,
+.Nm SHA224FileChunk ,
+.Nm SHA224Data ,
 .Nm SHA256Init ,
 .Nm SHA256Update ,
 .Nm SHA256Pad ,
@@ -32,7 +41,25 @@
 .Nm SHA256End ,
 .Nm SHA256File ,
 .Nm SHA256FileChunk ,
-.Nm SHA256Data
+.Nm SHA256Data ,
+.Nm SHA384Init ,
+.Nm SHA384Update ,
+.Nm SHA384Pad ,
+.Nm SHA384Final ,
+.Nm SHA384Transform ,
+.Nm SHA384End ,
+.Nm SHA384File ,
+.Nm SHA384FileChunk ,
+.Nm SHA384Data ,
+.Nm SHA512Init ,
+.Nm SHA512Update ,
+.Nm SHA512Pad ,
+.Nm SHA512Final ,
+.Nm SHA512Transform ,
+.Nm SHA512End ,
+.Nm SHA512File ,
+.Nm SHA512FileChunk ,
+.Nm SHA512Data
 .Nd calculate the NIST Secure Hash Standard (version 2)
 .Sh SYNOPSIS
 .In sys/types.h
@@ -114,7 +141,7 @@ The SHA2 functions implement the NIST Secure Hash Standard,
 FIPS PUB 180-2.
 The SHA2 functions are used to generate a condensed representation of a
 message called a message digest, suitable for use as a digital signature.
-There are three families of functions, with names corresponding to
+There are four families of functions, with names corresponding to
 the number of bits in the resulting message digest.
 The SHA-224 and SHA-256 functions are limited to processing a message of less
 than 2^64 bits as input.

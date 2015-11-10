@@ -1,4 +1,4 @@
-.\" $OpenBSD: keynote.3,v 1.50 2015/09/23 16:23:32 sobrado Exp $
+.\" $OpenBSD: keynote.3,v 1.51 2015/11/10 23:48:18 jmc Exp $
 .\"
 .\" The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
 .\"
@@ -20,12 +20,37 @@
 .\" MERCHANTABILITY OF THIS SOFTWARE OR ITS FITNESS FOR ANY PARTICULAR
 .\" PURPOSE.
 .\"
-.Dd $Mdocdate: September 23 2015 $
-.Dt KEYNOTE 3
+.Dd $Mdocdate: November 10 2015 $
+.Dt KN_INIT 3
 .\" .TH KeyNote 3 local
 .Os
 .Sh NAME
-.Nm keynote
+.Nm kn_init ,
+.Nm kn_add_assertion ,
+.Nm kn_remove_assertion ,
+.Nm kn_add_action ,
+.Nm kn_remove_action ,
+.Nm kn_add_authorizer ,
+.Nm kn_remove_authorizer ,
+.Nm kn_do_query ,
+.Nm kn_get_failed ,
+.Nm kn_cleanup_action_environment ,
+.Nm kn_close ,
+.Nm kn_query ,
+.Nm kn_read_asserts ,
+.Nm kn_keycompare ,
+.Nm kn_get_authorizer ,
+.Nm kn_get_licensees ,
+.Nm kn_encode_base64 ,
+.Nm kn_decode_base64 ,
+.Nm kn_encode_hex ,
+.Nm kn_decode_hex ,
+.Nm kn_encode_key ,
+.Nm kn_decode_key ,
+.Nm kn_sign_assertion ,
+.Nm kn_verify_assertion ,
+.Nm kn_free_key ,
+.Nm kn_get_string
 .Nd a trust-management system library
 .Sh SYNOPSIS
 .In sys/types.h
