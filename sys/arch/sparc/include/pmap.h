@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.59 2015/03/27 20:25:39 miod Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.60 2015/11/10 20:18:53 miod Exp $	*/
 /*	$NetBSD: pmap.h,v 1.30 1997/08/04 20:00:47 pk Exp $ */
 
 /*
@@ -277,6 +277,8 @@ void		pmap_writetext(unsigned char *, int);
 #define		pmap_deactivate(p)		do { /* nothing */ } while (0)
 #define		pmap_proc_iflush(p,va,len)	do { /* nothing */ } while (0)
 #define		pmap_update(pm)			do { /* nothing */ } while (0)
+
+#define		pmap_nested(pm)			0
 
 /* SUN4/SUN4C SPECIFIC DECLARATIONS */
 
