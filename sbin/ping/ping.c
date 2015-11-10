@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.133 2015/11/05 21:53:35 florian Exp $	*/
+/*	$OpenBSD: ping.c,v 1.134 2015/11/10 18:36:33 florian Exp $	*/
 /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
@@ -127,7 +127,7 @@ int moptions;
  * number of received sequence numbers we can keep track of.  Change 128
  * to 8192 for complete accuracy...
  */
-#define	MAX_DUP_CHK	(8 * 128)
+#define	MAX_DUP_CHK	(8 * 8192)
 int mx_dup_ck = MAX_DUP_CHK;
 char rcvd_tbl[MAX_DUP_CHK / 8];
 
@@ -195,7 +195,7 @@ main(int argc, char *argv[])
 	socklen_t maxsizelen;
 	const char *errstr;
 	uid_t uid;
-	u_int rtableid;
+	u_int rtableid = 0;
 
 	if ((s = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP)) < 0)
 		err(1, "socket");
@@ -271,8 +271,8 @@ main(int argc, char *argv[])
 				errx(1, "%s", strerror(EPERM));
 			preload = strtonum(optarg, 1, INT_MAX, &errstr);
 			if (errstr)
-				errx(1, "preload value is %s: %s",
-				    errstr, optarg);
+				errx(1, "preload value is %s: %s", errstr,
+				    optarg);
 			break;
 		case 'n':
 			options |= F_NUMERIC;
@@ -290,8 +290,8 @@ main(int argc, char *argv[])
 		case 's':		/* size of packet to send */
 			datalen = strtonum(optarg, 0, MAXPAYLOAD, &errstr);
 			if (errstr)
-				errx(1, "packet size is %s: %s",
-				    errstr, optarg);
+				errx(1, "packet size is %s: %s", errstr,
+				    optarg);
 			break;
 #ifndef SMALL
 		case 'T':
@@ -318,9 +318,8 @@ main(int argc, char *argv[])
 		case 'V':
 			rtableid = strtonum(optarg, 0, RT_TABLEID_MAX, &errstr);
 			if (errstr)
-				errx(1, "rtable value is %s: %s",
-				    errstr, optarg);
-
+				errx(1, "rtable value is %s: %s", errstr,
+				    optarg);
 			if (setsockopt(s, SOL_SOCKET, SO_RTABLE, &rtableid,
 			    sizeof(rtableid)) == -1)
 				err(1, "setsockopt SO_RTABLE");

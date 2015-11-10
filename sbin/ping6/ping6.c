@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.140 2015/11/05 21:56:56 florian Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.141 2015/11/10 18:36:33 florian Exp $	*/
 /*	$KAME: ping6.c,v 1.163 2002/10/25 02:19:06 itojun Exp $	*/
 
 /*
@@ -122,7 +122,7 @@ struct payload {
 #define ICMP6ECHOTMLEN sizeof(struct payload)
 #define	EXTRA		256	/* for AH and various other headers. weird. */
 #define	DEFDATALEN	ICMP6ECHOTMLEN
-#define MAXDATALEN	MAXPACKETLEN - IP6LEN - ICMP6ECHOLEN
+#define MAXPAYLOAD	MAXPACKETLEN - IP6LEN - ICMP6ECHOLEN
 #define	MAXWAIT_DEFAULT	10	/* secs to wait for response */
 
 #define	A(bit)		rcvd_tbl[(bit)>>3]	/* identify byte in array */
@@ -237,7 +237,7 @@ main(int argc, char *argv[])
 	if ((s = socket(AF_INET6, SOCK_RAW, IPPROTO_ICMPV6)) < 0)
 		err(1, "socket");
 
-	/* revoke root privilege */
+	/* revoke privs */
 	uid = getuid();
 	if (setresuid(uid, uid, uid) == -1)
 		err(1, "setresuid");
@@ -264,10 +264,8 @@ main(int argc, char *argv[])
 			options |= F_AUD_RECV;
 			break;
 		case 'f':
-			if (getuid()) {
-				errno = EPERM;
-				errx(1, "Must be superuser to flood ping");
-			}
+			if (getuid())
+				errx(1, "%s", strerror(EPERM));
 			options |= F_FLOOD;
 			setvbuf(stdout, NULL, _IONBF, 0);
 			break;
@@ -323,11 +321,9 @@ main(int argc, char *argv[])
 			loop = 0;
 			break;
 		case 'l':
-			if (getuid()) {
-				errno = EPERM;
-				errx(1, "Must be superuser to preload");
-			}
-			preload = strtonum(optarg, 0, INT_MAX, &errstr);
+			if (getuid())
+				errx(1, "%s", strerror(EPERM));
+			preload = strtonum(optarg, 1, INT_MAX, &errstr);
 			if (errstr)
 				errx(1, "preload value is %s: %s", errstr,
 				    optarg);
@@ -346,9 +342,9 @@ main(int argc, char *argv[])
 			options |= F_QUIET;
 			break;
 		case 's':		/* size of packet to send */
-			datalen = strtonum(optarg, 1, MAXDATALEN, &errstr);
+			datalen = strtonum(optarg, 0, MAXPAYLOAD, &errstr);
 			if (errstr)
-				errx(1, "datalen value is %s: %s", errstr,
+				errx(1, "packet size is %s: %s", errstr,
 				    optarg);
 			break;
 		case 'V':
@@ -1549,7 +1545,7 @@ fill(char *bp, char *patp)
 /* xxx */
 	if (ii > 0)
 		for (kk = 0;
-		    kk <= MAXDATALEN - (8 + sizeof(struct payload) + ii);
+		    kk <= MAXPAYLOAD - (8 + sizeof(struct payload) + ii);
 		    kk += ii)
 			for (jj = 0; jj < ii; ++jj)
 				bp[jj + kk] = pat[jj];
