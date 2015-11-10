@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdlib.h,v 1.5 2015/10/25 18:01:24 guenther Exp $	*/
+/*	$OpenBSD: stdlib.h,v 1.6 2015/11/10 04:14:03 guenther Exp $	*/
 /*	$NetBSD: stdlib.h,v 1.25 1995/12/27 21:19:08 jtc Exp $	*/
 
 /*-
@@ -54,7 +54,7 @@ PROTO_NORMAL(abs);
 PROTO_NORMAL(arc4random);
 PROTO_NORMAL(arc4random_buf);
 PROTO_NORMAL(arc4random_uniform);
-/*PROTO_NORMAL(atexit);			actually in csu */
+PROTO_NORMAL(atexit);
 PROTO_STD_DEPRECATED(atof);
 PROTO_NORMAL(atoi);
 PROTO_STD_DEPRECATED(atol);

@@ -7,8 +7,6 @@
  */
 
 /* symbols that no one should be using currently */
-_init
-_fini
 __data_start
 __bss_start
 _edata
@@ -1434,6 +1432,7 @@ __isthreaded
 a64l
 abort
 abs
+atexit
 atof
 atoi
 atol
@@ -1622,6 +1621,7 @@ _thread_mutex_unlock
 _thread_tag_lock
 _thread_tag_storage
 _thread_tag_unlock
+pthread_atfork
 
 /* time */
 asctime

@@ -1,4 +1,4 @@
-/*	$OpenBSD: atfork.c,v 1.1 2015/04/07 01:27:07 guenther Exp $ */
+/*	$OpenBSD: atfork.c,v 1.2 2015/11/10 04:14:03 guenther Exp $ */
 
 /*
  * Copyright (c) 2008 Kurt Miller <kurt@openbsd.org>
@@ -32,9 +32,14 @@
 
 #include <errno.h>
 #include <stdlib.h>
+#include <pthread.h>
 
 #include "thread_private.h"
 #include "atfork.h"
+
+int	_thread_atfork(void (*_prepare)(void), void (*_parent)(void),
+	    void (*_child)(void), void *_dso);
+PROTO_NORMAL(_thread_atfork);
 
 int
 _thread_atfork(void (*prepare)(void), void (*parent)(void),
@@ -53,4 +58,16 @@ _thread_atfork(void (*prepare)(void), void (*parent)(void),
 	TAILQ_INSERT_TAIL(&_atfork_list, af, fn_next);
 	_ATFORK_UNLOCK();
 	return (0);
+}
+DEF_STRONG(_thread_atfork);
+
+/*
+ * Copy of pthread_atfork() used by libc and anything staticly linked
+ * into the executable.  This passes NULL for the dso, so the callbacks
+ * are never removed by dlclose()
+ */
+int
+pthread_atfork(void (*prep)(void), void (*parent)(void), void (*child)(void))
+{
+	return (_thread_atfork(prep, parent, child, NULL));
 }

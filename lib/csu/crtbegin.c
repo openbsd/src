@@ -1,4 +1,4 @@
-/*	$OpenBSD: crtbegin.c,v 1.19 2015/04/07 01:27:06 guenther Exp $	*/
+/*	$OpenBSD: crtbegin.c,v 1.20 2015/11/10 04:14:03 guenther Exp $	*/
 /*	$NetBSD: crtbegin.c,v 1.1 1996/09/12 16:59:03 cgd Exp $	*/
 
 /*
@@ -82,27 +82,6 @@ void *__dso_handle = NULL;
 __asm(".hidden  __dso_handle");
 
 long __guard_local __dso_hidden __attribute__((section(".openbsd.randomdata")));
-
-extern int __cxa_atexit(void (*)(void *), void *, void *) __attribute__((weak));
-
-int
-atexit(void (*fn)(void))
-{
-	return (__cxa_atexit((void (*)(void *))fn, NULL, NULL));
-}
-
-/*
- * Ditto for pthread_atfork()
- */
-int	_thread_atfork(void (*)(void), void (*)(void), void (*)(void), void *)
-	    __attribute__((weak));
-
-int
-pthread_atfork(void (*prep)(void), void (*parent)(void), void (*child)(void))
-{
-	return (_thread_atfork(prep, parent, child, NULL));
-}
-asm(".weak pthread_atfork");
 
 
 static const init_f __CTOR_LIST__[1]
