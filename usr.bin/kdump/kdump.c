@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdump.c,v 1.119 2015/10/28 16:03:06 deraadt Exp $	*/
+/*	$OpenBSD: kdump.c,v 1.120 2015/11/10 04:30:59 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -822,6 +822,7 @@ static const formatter scargs[][8] = {
     [SYS_pselect]	= { Pcount, Pptr, Pptr, Pptr, Pptr, Pptr },
     [SYS_sigsuspend]	= { Sigset },
     [SYS_getsockopt]	= { Pfd, PASS_TWO, Sockoptlevelname, Pptr, Pptr },
+    [SYS_thrkill]	= { Ppid_t, Signame, Pptr },
     [SYS_readv]		= { Pfd, Pptr, Pcount },
     [SYS_writev]	= { Pfd, Pptr, Pcount },
     [SYS_fchown]	= { Pfd, Uidname, Gidname },

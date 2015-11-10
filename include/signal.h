@@ -1,4 +1,4 @@
-/*	$OpenBSD: signal.h,v 1.22 2014/07/12 02:51:52 guenther Exp $	*/
+/*	$OpenBSD: signal.h,v 1.23 2015/11/10 04:30:59 guenther Exp $	*/
 /*	$NetBSD: signal.h,v 1.8 1996/02/29 00:04:57 jtc Exp $	*/
 
 /*-
@@ -113,6 +113,7 @@ int	sigblock(int);
 int	sigreturn(struct sigcontext *);
 int	sigsetmask(int);
 int	sigvec(int, struct sigvec *, struct sigvec *);
+int	thrkill(pid_t _tid, int _signum, void *_tcb);
 #endif
 #endif /* __BSD_VISIBLE || __XPG_VISIBLE >= 420 */
 #if __BSD_VISIBLE ||  __POSIX_VISIBLE >= 199309 || __XPG_VISIBLE >= 500

@@ -1,4 +1,4 @@
-/*	$OpenBSD: stack_protector.c,v 1.18 2015/11/10 04:14:03 guenther Exp $	*/
+/*	$OpenBSD: stack_protector.c,v 1.19 2015/11/10 04:30:59 guenther Exp $	*/
 
 /*
  * Copyright (c) 2002 Hiroaki Etoh, Federico G. Schwindt, and Miodrag Vallat.
@@ -57,18 +57,17 @@ __stack_smash_handler(const char func[], int damaged)
 	/* Immediately block all signal handlers from running code */
 	sigfillset(&mask);
 	sigdelset(&mask, SIGABRT);
-	sigprocmask(SIG_BLOCK, &mask, NULL);
+	sigprocmask(SIG_SETMASK, &mask, NULL);
 
-	/* This may fail on a chroot jail... */
 	syslog_r(LOG_CRIT, &sdata, message, func);
 
-	bzero(&sa, sizeof(struct sigaction));
+	memset(&sa, 0, sizeof(sa));
 	sigemptyset(&sa.sa_mask);
 	sa.sa_flags = 0;
 	sa.sa_handler = SIG_DFL;
 	sigaction(SIGABRT, &sa, NULL);
 
-	kill(getpid(), SIGABRT);
+	thrkill(0, SIGABRT, NULL);
 
 	_exit(127);
 }

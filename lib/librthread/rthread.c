@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread.c,v 1.86 2015/11/01 03:52:17 guenther Exp $ */
+/*	$OpenBSD: rthread.c,v 1.87 2015/11/10 04:30:59 guenther Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -283,7 +283,7 @@ restart:
 		_rthread_debug(3, "rthread reaping %p stack %p\n",
 		    (void *)thread, (void *)thread->stack);
 		_rthread_free_stack(thread->stack);
-		_rtld_free_tls(thread->arg,
+		_rtld_free_tls(thread->tcb,
 		    sizeof(struct thread_control_block), sizeof(void *));
 		free(thread);
 		goto restart;
@@ -320,11 +320,6 @@ pthread_exit(void *retval)
 	LIST_REMOVE(thread, threads);
 	_spinunlock(&_thread_lock);
 
-#ifdef TCB_GET
-	thread->arg = TCB_GET();
-#else
-	thread->arg = __get_tcb();
-#endif
 	_spinlock(&thread->flags_lock);
 	if (thread->flags & THREAD_DETACHED) {
 		_spinunlock(&thread->flags_lock);
@@ -440,6 +435,7 @@ pthread_create(pthread_t *threadp, const pthread_attr_t *attr,
 		goto fail2;
 	}
 	TCB_INIT(tcb, thread, &thread->myerrno);
+	thread->tcb = tcb;
 
 	param.tf_tcb = tcb;
 	param.tf_tid = &thread->tid;
@@ -475,27 +471,11 @@ fail1:
 int
 pthread_kill(pthread_t thread, int sig)
 {
-	pid_t tid;
-	int ret;
-
-	/* killing myself?  do it without locking */
-	if (thread == TCB_THREAD())
-		return (kill(thread->tid, sig) == 0 ? 0 : errno);
-
-	/* block the other thread from exiting */
-	_spinlock(&thread->flags_lock);
-	if (thread->flags & THREAD_DYING)
-		ret = (thread->flags & THREAD_DETACHED) ? ESRCH : 0;
-	else {
-		tid = thread->tid;
-		if (tid == 0) {
-			/* should be impossible without DYING being set */
-			ret = ESRCH;
-		} else
-			ret = kill(tid, sig) == 0 ? 0 : errno;
-	}
-	_spinunlock(&thread->flags_lock);
-	return (ret);
+	if (sig == SIGTHR)
+		return (EINVAL);
+	if (_thread_sys_thrkill(thread->tid, sig, thread->tcb))
+		return (errno);
+	return (0);
 }
 
 int
@@ -516,15 +496,9 @@ pthread_cancel(pthread_t thread)
 		thread->flags |= THREAD_CANCELED;
 
 		if (thread->flags & THREAD_CANCEL_ENABLE) {
-
-			/* canceling myself?  release the lock first */
-			if (thread == TCB_THREAD()) {
-				_spinunlock(&thread->flags_lock);
-				kill(tid, SIGTHR);
-				return (0);
-			}
-
-			kill(tid, SIGTHR);
+			_spinunlock(&thread->flags_lock);
+			_thread_sys_thrkill(tid, SIGTHR, thread->tcb);
+			return (0);
 		}
 	}
 	_spinunlock(&thread->flags_lock);

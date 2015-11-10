@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.189 2015/11/02 16:31:55 semarie Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.190 2015/11/10 04:30:59 guenther Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -68,6 +68,10 @@
 #include <sys/syscallargs.h>
 
 #include <uvm/uvm_extern.h>
+
+#ifdef  __HAVE_MD_TCB
+# include <machine/tcb.h>
+#endif
 
 int	filt_sigattach(struct knote *kn);
 void	filt_sigdetach(struct knote *kn);
@@ -558,11 +562,10 @@ sys_sigaltstack(struct proc *p, void *v, register_t *retval)
 	return (0);
 }
 
-/* ARGSUSED */
 int
-sys_kill(struct proc *cp, void *v, register_t *retval)
+sys_o58_kill(struct proc *cp, void *v, register_t *retval)
 {
-	struct sys_kill_args /* {
+	struct sys_o58_kill_args /* {
 		syscallarg(int) pid;
 		syscallarg(int) signum;
 	} */ *uap = v;
@@ -571,7 +574,7 @@ sys_kill(struct proc *cp, void *v, register_t *retval)
 	int signum = SCARG(uap, signum);
 	int error;
 
-	if ((error = pledge_kill(cp, pid)) != 0)
+	if (pid <= THREAD_PID_OFFSET && (error = pledge_kill(cp, pid)) != 0)
 		return (error);
 	if (((u_int)signum) >= NSIG)
 		return (EINVAL);
@@ -614,6 +617,80 @@ sys_kill(struct proc *cp, void *v, register_t *retval)
 		return (killpg1(cp, signum, -pid, 0));
 	}
 	/* NOTREACHED */
+}
+
+int
+sys_kill(struct proc *cp, void *v, register_t *retval)
+{
+	struct sys_kill_args /* {
+		syscallarg(int) pid;
+		syscallarg(int) signum;
+	} */ *uap = v;
+	struct process *pr;
+	int pid = SCARG(uap, pid);
+	int signum = SCARG(uap, signum);
+	int error;
+
+	if ((error = pledge_kill(cp, pid)) != 0)
+		return (error);
+	if (((u_int)signum) >= NSIG)
+		return (EINVAL);
+	if (pid > 0) {
+		if ((pr = prfind(pid)) == NULL)
+			return (ESRCH);
+		if (!cansignal(cp, pr, signum))
+			return (EPERM);
+
+		/* kill single process */
+		if (signum)
+			prsignal(pr, signum);
+		return (0);
+	}
+	switch (pid) {
+	case -1:		/* broadcast signal */
+		return (killpg1(cp, signum, 0, 1));
+	case 0:			/* signal own process group */
+		return (killpg1(cp, signum, 0, 0));
+	default:		/* negative explicit process group */
+		return (killpg1(cp, signum, -pid, 0));
+	}
+}
+
+int
+sys_thrkill(struct proc *cp, void *v, register_t *retval)
+{
+	struct sys_thrkill_args /* {
+		syscallarg(pid_t) tid;
+		syscallarg(int) signum;
+		syscallarg(void *) tcb;
+	} */ *uap = v;
+	struct proc *p;
+	int tid = SCARG(uap, tid);
+	int signum = SCARG(uap, signum);
+	void *tcb;
+
+	if (((u_int)signum) >= NSIG)
+		return (EINVAL);
+	if (tid > THREAD_PID_OFFSET) {
+		if ((p = pfind(tid - THREAD_PID_OFFSET)) == NULL)
+			return (ESRCH);
+
+		/* can only kill threads in the same process */
+		if (p->p_p != cp->p_p)
+			return (ESRCH);
+	} else if (tid == 0)
+		p = cp;
+	else
+		return (EINVAL);
+
+	/* optionally require the target thread to have the given tcb addr */
+	tcb = SCARG(uap, tcb);
+	if (tcb != NULL && tcb != TCB_GET(p))
+		return (ESRCH);
+
+	if (signum)
+		ptsignal(p, signum, STHREAD);
+	return (0);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.105 2015/11/05 15:10:11 semarie Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.106 2015/11/10 04:30:59 guenther Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -74,6 +74,7 @@ const u_int pledge_syscalls[SYS_MAXSYSCALL] = {
 	[SYS___get_tcb] = PLEDGE_ALWAYS,
 	[SYS_pledge] = PLEDGE_ALWAYS,
 	[SYS_sendsyslog] = PLEDGE_ALWAYS,	/* stack protector reporting */
+	[SYS_thrkill] = PLEDGE_ALWAYS,		/* raise, abort, stack pro */
 
 	/* "getting" information about self is considered safe */
 	[SYS_getuid] = PLEDGE_STDIO,
@@ -190,6 +191,7 @@ const u_int pledge_syscalls[SYS_MAXSYSCALL] = {
 	 * Can kill self with "stdio".  Killing another pid
 	 * requires "proc"
 	 */
+	[SYS_o58_kill] = PLEDGE_STDIO,
 	[SYS_kill] = PLEDGE_STDIO,
 
 	/*
@@ -1364,7 +1366,7 @@ pledge_kill(struct proc *p, pid_t pid)
 		return 0;
 	if (p->p_p->ps_pledge & PLEDGE_PROC)
 		return 0;
-	if (pid == 0 || pid == p->p_p->ps_pid || pid > THREAD_PID_OFFSET)
+	if (pid == 0 || pid == p->p_p->ps_pid)
 		return 0;
 	return pledge_fail(p, EPERM, PLEDGE_PROC);
 }

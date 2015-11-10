@@ -1,4 +1,4 @@
-/*	$OpenBSD: raise.c,v 1.7 2015/09/12 16:46:12 guenther Exp $ */
+/*	$OpenBSD: raise.c,v 1.8 2015/11/10 04:30:59 guenther Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -34,6 +34,6 @@
 int
 raise(int s)
 {
-	return (kill(getthrid(), s));
+	return (thrkill(0, s, NULL));
 }
 DEF_STRONG(raise);
