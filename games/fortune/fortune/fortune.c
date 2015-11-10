@@ -1,4 +1,4 @@
-/*	$OpenBSD: fortune.c,v 1.45 2015/11/10 14:50:04 deraadt Exp $	*/
+/*	$OpenBSD: fortune.c,v 1.46 2015/11/10 14:56:50 deraadt Exp $	*/
 /*	$NetBSD: fortune.c,v 1.8 1995/03/23 08:28:40 cgd Exp $	*/
 
 /*-
@@ -149,6 +149,11 @@ regex_t regex;
 int
 main(int ac, char *av[])
 {
+	if (pledge("stdio rpath", NULL) == -1) {
+		perror("pledge");
+		exit(1);
+	}
+
 	getargs(ac, av);
 
 	if (Match)
