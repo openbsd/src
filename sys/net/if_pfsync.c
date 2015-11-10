@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.221 2015/10/30 11:33:55 mikeb Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.222 2015/11/10 06:36:14 dlg Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -253,8 +253,6 @@ int	pfsyncioctl(struct ifnet *, u_long, caddr_t);
 void	pfsyncstart(struct ifnet *);
 void	pfsync_syncdev_state(void *);
 
-struct mbuf *pfsync_if_dequeue(struct ifnet *);
-
 void	pfsync_deferred(struct pf_state *, int);
 void	pfsync_undefer(struct pfsync_deferral *, int);
 void	pfsync_defer_tmo(void *);
@@ -390,31 +388,13 @@ pfsync_clone_destroy(struct ifnet *ifp)
 	return (0);
 }
 
-struct mbuf *
-pfsync_if_dequeue(struct ifnet *ifp)
-{
-	struct mbuf *m;
-
-	IF_DEQUEUE(&ifp->if_snd, m);
-
-	return (m);
-}
-
 /*
  * Start output on the pfsync interface.
  */
 void
 pfsyncstart(struct ifnet *ifp)
 {
-	struct mbuf *m;
-	int s;
-
-	s = splnet();
-	while ((m = pfsync_if_dequeue(ifp)) != NULL) {
-		IF_DROP(&ifp->if_snd);
-		m_freem(m);
-	}
-	splx(s);
+	IFQ_PURGE(&ifp->if_snd);
 }
 
 void
