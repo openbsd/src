@@ -2964,7 +2964,7 @@
 ./usr/share/man/man3/SSL_CTX_sess_set_cache_size.3
 ./usr/share/man/man3/SSL_CTX_sess_set_get_cb.3
 ./usr/share/man/man3/SSL_CTX_sess_set_new_cb.3
-./usr/share/man/man3/SSL_CTX_sess_set_remove.3
+./usr/share/man/man3/SSL_CTX_sess_set_remove_cb.3
 ./usr/share/man/man3/SSL_CTX_sess_timeouts.3
 ./usr/share/man/man3/SSL_CTX_sessions.3
 ./usr/share/man/man3/SSL_CTX_set_cert_store.3
