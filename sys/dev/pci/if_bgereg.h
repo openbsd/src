@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bgereg.h,v 1.128 2015/10/19 05:31:25 jmatthew Exp $	*/
+/*	$OpenBSD: if_bgereg.h,v 1.129 2015/11/10 20:20:34 miod Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -47,7 +47,7 @@
  *
  * The NIC's memory can be accessed by the host in one of 3 ways:
  *
- * 1) Indirect register access. The MEMWIN_BASEADDR and MEMWIN_DATA
+ * 1) Indirect register access. The REG_BASEADDR and REG_DATA
  *    registers in PCI config space can be used to read any 32-bit
  *    address within the NIC's memory.
  *
@@ -2272,15 +2272,15 @@
 #define	BGE_MEMWIN_READ(pc, tag, x, val)				\
 	do {								\
 		pci_conf_write(pc, tag, BGE_PCI_MEMWIN_BASEADDR,	\
-		    (0xFFFF0000 & x));					\
-		val = CSR_READ_4(sc, BGE_MEMWIN_START + (x & 0xFFFF));	\
+		    (0xFFFF8000 & x));					\
+		val = CSR_READ_4(sc, BGE_MEMWIN_START + (x & 0x7FFF));	\
 	} while(0)
 
 #define	BGE_MEMWIN_WRITE(pc, tag, x, val)				\
 	do {								\
 		pci_conf_write(pc, tag, BGE_PCI_MEMWIN_BASEADDR,	\
-		    (0xFFFF0000 & x));					\
-		CSR_WRITE_4(sc, BGE_MEMWIN_START + (x & 0xFFFF), val);	\
+		    (0xFFFF8000 & x));					\
+		CSR_WRITE_4(sc, BGE_MEMWIN_START + (x & 0x7FFF), val);	\
 	} while(0)
 
 /*
