@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.96 2015/09/08 21:28:35 kettenis Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.97 2015/11/10 08:57:39 mlarkin Exp $	*/
 /*	$NetBSD: pmap.c,v 1.3 2003/05/08 18:13:13 thorpej Exp $	*/
 
 /*
@@ -403,6 +403,68 @@ pmap_unmap_ptes(struct pmap *pmap, paddr_t save_cr3)
 	}
 }
 
+/*
+ * pmap_fix_ept
+ *
+ * Fixes up an EPT PTE for vaddr 'va' by reconfiguring the low bits to
+ * conform to the EPT format (separate R/W/X bits and various "must be
+ * 0 bits")
+ *
+ * Parameters:
+ *  pm: The pmap in question
+ *  va: The VA to fix up
+ *  offs: (out) return the offset into the PD/PT for this va
+ *
+ * Return value:
+ *  int value corresponding to the level this VA was found
+ */
+int
+pmap_fix_ept(struct pmap *pm, vaddr_t va, int *offs)
+{
+	u_long mask, shift;
+	pd_entry_t pde, *pd;
+	paddr_t pdpa;
+	int lev;
+
+	pdpa = pm->pm_pdirpa;
+	shift = L4_SHIFT;
+	mask = L4_MASK;
+	for (lev = PTP_LEVELS; lev > 0; lev--) {
+		pd = (pd_entry_t *)PMAP_DIRECT_MAP(pdpa);
+		*offs = (VA_SIGN_POS(va) & mask) >> shift;
+
+		pd[*offs] |= EPT_R | EPT_W | EPT_X;
+		/*
+		 * Levels 3-4 have bits 3:7 'must be 0'
+		 * Level 2 has bits 3:6 'must be 0', and bit 7 is always
+		 * 0 in our EPT format (thus, bits 3:7 == 0)
+		 */
+		switch(lev) {
+		case 4:
+		case 3:
+		case 2:
+			/* Bits 3:7 = 0 */
+			pd[*offs] &= ~(0xF8);
+			break;
+		case 1: pd[*offs] |= EPT_WB;
+			break;
+		}
+		
+		pde = pd[*offs];
+
+		/* Large pages are different, break early if we run into one. */
+		if ((pde & (PG_PS|PG_V)) != PG_V)
+			return (lev - 1);
+
+		pdpa = (pd[*offs] & PG_FRAME);
+		/* 4096/8 == 512 == 2^9 entries per level */
+		shift -= 9;
+		mask >>= 9;
+	}
+
+	return (0);
+}
+
 int
 pmap_find_pte_direct(struct pmap *pm, vaddr_t va, pt_entry_t **pd, int *offs)
 {
@@ -584,6 +646,8 @@ pmap_bootstrap(paddr_t first_avail, paddr_t max_pa)
 	kpm->pm_pdirpa = proc0.p_addr->u_pcb.pcb_cr3;
 	kpm->pm_stats.wired_count = kpm->pm_stats.resident_count =
 		atop(kva_start - VM_MIN_KERNEL_ADDRESS);
+
+	kpm->pm_type = PMAP_TYPE_NORMAL;
 
 	/*
 	 * the above is just a rough estimate and not critical to the proper
@@ -1023,6 +1087,7 @@ pmap_create(void)
 	pmap->pm_stats.wired_count = 0;
 	pmap->pm_stats.resident_count = 1;	/* count the PDP allocd below */
 	pmap->pm_cpus = 0;
+	pmap->pm_type = PMAP_TYPE_NORMAL;
 
 	/* allocate PDP */
 
@@ -2390,6 +2455,34 @@ pmap_virtual_space(vaddr_t *vstartp, vaddr_t *vendp)
 {
 	*vstartp = virtual_avail;
 	*vendp = VM_MAX_KERNEL_ADDRESS;
+}
+
+/*
+ * pmap_convert
+ *
+ * Converts 'pmap' to the new 'mode'.
+ *
+ * Parameters:
+ *  pmap: the pmap to convert
+ *  mode: the new mode (see pmap.h, PMAP_TYPE_xxx)
+ *
+ * Return value:
+ *  always 0
+ */
+int
+pmap_convert(struct pmap *pmap, int mode)
+{
+	pt_entry_t *pte;
+
+	pmap->pm_type = mode;
+
+	if (mode == PMAP_TYPE_EPT) {
+		/* Clear low 512GB region (first PML4E) */
+		pte = (pt_entry_t *)pmap->pm_pdir;
+		*pte = 0;
+	}
+
+	return (0);	
 }
 
 #ifdef MULTIPROCESSOR
