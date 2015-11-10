@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcb.h,v 1.2 2011/12/24 04:21:19 guenther Exp $	*/
+/*	$OpenBSD: tcb.h,v 1.3 2015/11/10 06:06:35 guenther Exp $	*/
 /*
  * Copyright (c) 2011 Philip Guenther <guenther@openbsd.org>
  *
@@ -24,7 +24,7 @@
 #include <machine/pcb.h>
 
 #define TCB_GET(p)		\
-	i386_get_threadbase(p, TSEG_GS)
+	((void *)i386_get_threadbase(p, TSEG_GS))
 #define TCB_SET(p, addr)	\
 	i386_set_threadbase(p, (uint32_t)(addr), TSEG_GS)
 
