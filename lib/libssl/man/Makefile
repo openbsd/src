@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.31 2015/02/06 01:37:11 reyk Exp $
+# $OpenBSD: Makefile,v 1.32 2015/11/10 16:20:31 jmc Exp $
 
 .include <bsd.own.mk>		# for NOMAN
 
@@ -152,7 +152,7 @@ MLINKS+=\
 	SSL_CTX_sess_set_get_cb.3 SSL_CTX_sess_get_new_cb.3 \
 	SSL_CTX_sess_set_get_cb.3 SSL_CTX_sess_get_remove_cb.3 \
 	SSL_CTX_sess_set_get_cb.3 SSL_CTX_sess_set_new_cb.3 \
-	SSL_CTX_sess_set_get_cb.3 SSL_CTX_sess_set_remove.3 \
+	SSL_CTX_sess_set_get_cb.3 SSL_CTX_sess_set_remove_cb.3 \
 	SSL_CTX_set_cert_store.3 SSL_CTX_get_cert_store.3 \
 	SSL_CTX_set_cipher_list.3 SSL_set_cipher_list.3 \
 	SSL_CTX_set_client_CA_list.3 SSL_CTX_add_client_CA.3 \
