@@ -1,4 +1,4 @@
-/*	$OpenBSD: art.c,v 1.6 2015/11/04 09:50:21 mpi Exp $ */
+/*	$OpenBSD: art.c,v 1.7 2015/11/10 10:23:27 mpi Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -30,6 +30,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
+#include <sys/pool.h>
 #include <sys/socket.h>
 #endif
 
@@ -64,6 +65,9 @@ struct art_table {
 #define	at_refcnt	at_heap[0].count/* Refcounter (1 per different route) */
 #define	at_default	at_heap[1].node	/* Default route (was in parent heap) */
 
+/* Heap size for an ART table of stride length ``slen''. */
+#define AT_HEAPSIZE(slen)	((1 << ((slen) + 1)) * sizeof(void *))
+
 int			 art_bindex(struct art_table *, uint8_t *, int);
 void			 art_allot(struct art_table *at, int, struct art_node *,
 			     struct art_node *);
@@ -79,6 +83,11 @@ int			 art_table_free(struct art_root *, struct art_table *);
 int			 art_table_walk(struct art_table *,
 			     int (*f)(struct art_node *, void *), void *);
 
+int			at_init = 0;
+struct pool		at_pool;
+struct pool		at_heap_8_pool;
+struct pool		at_heap_16_pool;
+
 /*
  * Per routing table initialization API function.
  */
@@ -87,6 +96,16 @@ art_alloc(unsigned int rtableid, int off)
 {
 	struct art_root		*ar;
 	int			 i;
+
+	if (!at_init) {
+		at_init = 1;
+		pool_init(&at_pool, sizeof(struct art_table), 0, 0, 0,
+		    "art_table", NULL);
+		pool_init(&at_heap_8_pool, AT_HEAPSIZE(8), 0, 0, 0,
+		    "art_heap8", NULL);
+		pool_init(&at_heap_16_pool, AT_HEAPSIZE(16), 0, 0, 0,
+		    "art_heap16", NULL);
+	}
 
 	ar = malloc(sizeof(*ar), M_RTABLE, M_NOWAIT|M_ZERO);
 	if (ar == NULL)
@@ -597,7 +616,7 @@ struct art_table *
 art_table_get(struct art_root *ar, struct art_table *parent, int j)
 {
 	struct art_table	*at;
-	size_t			 size;
+	void			*at_heap;
 	uint32_t		 lvl;
 
 	KASSERT(j != 0 && j != 1);
@@ -610,17 +629,32 @@ art_table_get(struct art_root *ar, struct art_table *parent, int j)
 
 	KASSERT(lvl < ar->ar_nlvl);
 
-	size = sizeof(*at) + (1 << (ar->ar_bits[lvl] + 1)) * sizeof(void *);
-	at = malloc(size, M_RTABLE, M_NOWAIT|M_ZERO);
+	at = pool_get(&at_pool, PR_NOWAIT|PR_ZERO);
 	if (at == NULL)
 		return (NULL);
+
+	switch (AT_HEAPSIZE(ar->ar_bits[lvl])) {
+	case AT_HEAPSIZE(8):
+		at_heap = pool_get(&at_heap_8_pool, PR_NOWAIT|PR_ZERO);
+		break;
+	case AT_HEAPSIZE(16):
+		at_heap = pool_get(&at_heap_16_pool, PR_NOWAIT|PR_ZERO);
+		break;
+	default:
+		panic("incorrect stride length %u", ar->ar_bits[lvl]);
+	}
+
+	if (at_heap == NULL) {
+		pool_put(&at_pool, at);
+		return (NULL);
+	}
 
 	at->at_parent = parent;
 	at->at_index = j;
 	at->at_minfringe = (1 << ar->ar_bits[lvl]);
 	at->at_level = lvl;
 	at->at_bits = ar->ar_bits[lvl];
-	at->at_heap = (void *)(at + 1);
+	at->at_heap = at_heap;
 
 	art_table_ref(ar, at);
 
@@ -642,7 +676,6 @@ struct art_table *
 art_table_put(struct art_root *ar, struct art_table *at)
 {
 	struct art_table	*parent = at->at_parent;
-	size_t			 size;
 	uint32_t		 lvl = at->at_level;
 	uint32_t		 j = at->at_index;
 
@@ -654,8 +687,18 @@ art_table_put(struct art_root *ar, struct art_table *at)
 	parent->at_heap[j].node = at->at_default;
 	art_table_free(ar, parent);
 
-	size = sizeof(*at) + (1 << (ar->ar_bits[lvl] + 1)) * sizeof(void *);
-	free(at, M_RTABLE, size);
+	switch (AT_HEAPSIZE(ar->ar_bits[lvl])) {
+	case AT_HEAPSIZE(8):
+		pool_put(&at_heap_8_pool, at->at_heap);
+		break;
+	case AT_HEAPSIZE(16):
+		pool_put(&at_heap_16_pool, at->at_heap);
+		break;
+	default:
+		panic("incorrect stride length %u", ar->ar_bits[lvl]);
+	}
+
+	pool_put(&at_pool, at);
 
 	return (parent);
 }

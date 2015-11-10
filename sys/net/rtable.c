@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtable.c,v 1.23 2015/11/09 12:15:29 mpi Exp $ */
+/*	$OpenBSD: rtable.c,v 1.24 2015/11/10 10:23:27 mpi Exp $ */
 
 /*
  * Copyright (c) 2014-2015 Martin Pieuchot
@@ -478,7 +478,7 @@ static inline uint8_t	*satoaddr(struct art_root *, struct sockaddr *);
 void
 rtable_init_backend(unsigned int keylen)
 {
-	pool_init(&an_pool, sizeof(struct art_node), 0, 0, 0, "art node", NULL);
+	pool_init(&an_pool, sizeof(struct art_node), 0, 0, 0, "art_node", NULL);
 }
 
 void *
