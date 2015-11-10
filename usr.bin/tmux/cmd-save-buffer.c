@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-save-buffer.c,v 1.32 2015/11/10 22:29:33 nicm Exp $ */
+/* $OpenBSD: cmd-save-buffer.c,v 1.33 2015/11/10 22:33:47 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Tiago Cunha <me@tiagocunha.org>
@@ -107,8 +107,9 @@ cmd_save_buffer_exec(struct cmd *self, struct cmd_q *cmdq)
 		file = xstrdup(path);
 	else
 		xasprintf(&file, "%s/%s", cwd, path);
-	if (realpath(file, resolved) == NULL)  {
-		cmdq_error(cmdq, "%s: %s", file, strerror(errno));
+	if (realpath(file, resolved) == NULL &&
+	    strlcpy(resolved, file, sizeof resolved) >= sizeof resolved) {
+		cmdq_error(cmdq, "%s: %s", file, strerror(ENAMETOOLONG));
 		return (CMD_RETURN_ERROR);
 	}
 	f = fopen(resolved, flags);
