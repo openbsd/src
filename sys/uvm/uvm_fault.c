@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_fault.c,v 1.86 2015/09/09 14:52:12 miod Exp $	*/
+/*	$OpenBSD: uvm_fault.c,v 1.87 2015/11/10 08:21:28 mlarkin Exp $	*/
 /*	$NetBSD: uvm_fault.c,v 1.51 2000/08/06 00:22:53 thorpej Exp $	*/
 
 /*
@@ -445,6 +445,16 @@ uvmfault_update_stats(struct uvm_faultinfo *ufi)
 	vsize_t			 res;
 
 	map = ufi->orig_map;
+
+	/*
+	 * If this is a nested pmap (eg, a virtual machine pmap managed
+	 * by vmm(4) on amd64/i386), don't do any updating, just return.
+	 *
+	 * pmap_nested() on other archs is #defined to 0, so this is a
+	 * no-op.
+	 */
+	if (pmap_nested(map->pmap))
+		return;
 
 	/* Update the maxrss for the process. */
 	if (map->flags & VM_MAP_ISVMSPACE) {
