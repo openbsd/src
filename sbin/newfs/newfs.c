@@ -1,4 +1,4 @@
-/*	$OpenBSD: newfs.c,v 1.100 2015/09/29 03:19:24 guenther Exp $	*/
+/*	$OpenBSD: newfs.c,v 1.101 2015/11/10 07:38:19 deraadt Exp $	*/
 /*	$NetBSD: newfs.c,v 1.20 1996/05/16 07:13:03 thorpej Exp $	*/
 
 /*
@@ -792,14 +792,10 @@ copy(char *src, char *dst, struct mfs_args *args)
 static int
 gettmpmnt(char *mountpoint, size_t len)
 {
-	const char *tmp;
+	const char *tmp = _PATH_TMP;
 	const char *mnt = _PATH_MNT;
 	struct statfs fs;
 	size_t n;
-
-	tmp = getenv("TMPDIR");
-	if (tmp == NULL || *tmp == '\0')
-		tmp = _PATH_TMP;
 
 	if (statfs(tmp, &fs) != 0)
 		err(1, "statfs %s", tmp);
