@@ -1,4 +1,4 @@
-vers(a, {-$OpenBSD: MAKEDEV.common,v 1.79 2015/10/23 15:14:11 claudio Exp $-})dnl
+vers(a, {-$OpenBSD: MAKEDEV.common,v 1.80 2015/11/10 21:42:28 sthen Exp $-})dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -167,6 +167,7 @@ target(all, ptm)dnl
 target(all, hotplug)dnl
 target(all, pppx)dnl
 target(all, fuse)dnl
+target(all, vmm)dnl
 dnl
 _mkdev(all, {-all-}, {-dnl
 show_target(all)dnl
@@ -522,4 +523,6 @@ __devitem(hotplug, hotplug, devices hot plugging)dnl
 _mkdev(hotplug, hotplug, {-M hotplug c major_hotplug_c $U 400-})dnl
 __devitem(gpio, gpio*, General Purpose Input/Output)dnl
 _mcdev(gpio, gpio*, gpio, {-major_gpio_c-}, 600)dnl
+__devitem(vmm, vmm, {Virtual Machine Monitor})dnl
+_mkdev(vmm, vmm, {-M vmm c major_vmm_c 0 640-})dnl
 _mkdev(local, local, {-test -s $T.local && sh $T.local-})dnl
