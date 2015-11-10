@@ -4,7 +4,7 @@
 # generated from:
 #
 #	OpenBSD: etc.vax/MAKEDEV.md,v 1.54 2015/10/23 15:14:12 claudio Exp 
-#	OpenBSD: MAKEDEV.common,v 1.79 2015/10/23 15:14:11 claudio Exp 
+#	OpenBSD: MAKEDEV.common,v 1.80 2015/11/10 21:42:28 sthen Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.81 2012/11/05 08:07:09 jasper Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
