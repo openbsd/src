@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.468 2015/11/01 14:32:51 rpe Exp $
+#	$OpenBSD: rc,v 1.469 2015/11/10 20:34:58 tim Exp $
 
 # System startup script run by init on autoboot or after single-user.
 # Output and error are redirected to console by init, and the console is the
@@ -129,7 +129,7 @@ start_daemon() {
 	done
 }
 
-# Generate keys for isakmpd, iked and sshd if the don't exist yet.
+# Generate keys for isakmpd, iked and sshd if they don't exist yet.
 make_keys() {
 	local _isakmpd_key=/etc/isakmpd/private/local.key
 	local _isakmpd_pub=/etc/isakmpd/local.pub
@@ -218,7 +218,7 @@ if [[ $1 == shutdown ]]; then
 		echo warning: cannot write random seed to disk
 	fi
 
-	# If we are in secure level 0, asume single user mode.
+	# If we are in secure level 0, assume single user mode.
 	if (($(sysctl -n kern.securelevel) == 0)); then
 		echo 'single user: not running shutdown scripts'
 	else
