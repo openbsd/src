@@ -1,4 +1,4 @@
-/*	$OpenBSD: fortune.c,v 1.46 2015/11/10 14:56:50 deraadt Exp $	*/
+/*	$OpenBSD: fortune.c,v 1.47 2015/11/10 15:29:11 deraadt Exp $	*/
 /*	$NetBSD: fortune.c,v 1.8 1995/03/23 08:28:40 cgd Exp $	*/
 
 /*-
@@ -962,7 +962,7 @@ open_fp(FILEDESC *fp)
 void
 open_dat(FILEDESC *fp)
 {
-	if (fp->datfd < 0 && (fp->datfd = open(fp->datfile, 0)) < 0) {
+	if (fp->datfd < 0 && (fp->datfd = open(fp->datfile, O_RDONLY)) < 0) {
 		perror(fp->datfile);
 		exit(1);
 	}
