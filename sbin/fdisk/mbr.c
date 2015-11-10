@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbr.c,v 1.56 2015/10/26 15:08:26 krw Exp $	*/
+/*	$OpenBSD: mbr.c,v 1.57 2015/11/10 18:07:12 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -68,13 +68,20 @@ MBR_protective_mbr(struct mbr *mbr)
 void
 MBR_init_GPT(struct mbr *mbr)
 {
+	u_int64_t sz;
+
+	sz = DL_GETDSIZE(&dl);
+
 	/* Initialize a protective MBR for GPT. */
 	bzero(&mbr->part, sizeof(mbr->part));
 
 	/* Use whole disk, starting after MBR. */
 	mbr->part[0].id = DOSPTYP_EFI;
 	mbr->part[0].bs = 1;
-	mbr->part[0].ns = disk.size - 1;
+	if (sz > UINT32_MAX)
+		mbr->part[0].ns = UINT32_MAX;
+	else
+		mbr->part[0].ns = sz - 1;
 
 	/* Fix up start/length fields. */
 	PRT_fix_CHS(&mbr->part[0]);
