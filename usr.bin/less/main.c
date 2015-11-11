@@ -89,11 +89,15 @@ main(int argc, char *argv[])
 		secure = 1;
 
 	if (secure) {
-		if (pledge("stdio rpath wpath tty", NULL) == -1)
+		if (pledge("stdio rpath wpath tty", NULL) == -1) {
 			perror("pledge");
+			exit(1);
+		}
 	} else {
-		if (pledge("stdio rpath wpath cpath fattr proc exec tty", NULL) == -1)
+		if (pledge("stdio rpath wpath cpath fattr proc exec tty", NULL) == -1) {
 			perror("pledge");
+			exit(1);
+		}
 	}
 
 	/*
@@ -222,8 +226,10 @@ main(int argc, char *argv[])
 	open_getchr();
 
 	if (secure)
-		if (pledge("stdio rpath tty", NULL) == -1)
+		if (pledge("stdio rpath tty", NULL) == -1) {
 			perror("pledge");
+			exit(1);
+		}
 
 	raw_mode(1);
 	init_signals(1);
