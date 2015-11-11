@@ -1,4 +1,4 @@
-/*	$OpenBSD: more.c,v 1.36 2015/10/15 16:10:57 deraadt Exp $	*/
+/*	$OpenBSD: more.c,v 1.37 2015/11/11 08:01:22 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -209,6 +209,11 @@ main(int argc, char **argv)
 	int		clearit = 0;
 	int		ch;
 	char		initbuf[80];
+
+	if (pledge("stdio rpath tty", NULL) == -1) {
+		perror("pledge");
+		exit(1);
+	}
 
 	setlocale(LC_ALL, "");
 
