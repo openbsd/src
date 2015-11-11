@@ -1,4 +1,4 @@
-/*	$OpenBSD: inp.c,v 1.44 2015/07/26 14:32:19 millert Exp $	*/
+/*	$OpenBSD: inp.c,v 1.45 2015/11/11 01:12:10 deraadt Exp $	*/
 
 /*
  * patch - a program to apply diffs to original files
@@ -159,7 +159,7 @@ plan_a(const char *filename)
 		if (check_only)
 			return true;
 		makedirs(filename, true);
-		close(creat(filename, 0666));
+		close(open(filename, O_CREAT | O_TRUNC | O_WRONLY, 0666));
 		statfailed = stat(filename, &filestat);
 	}
 	if (statfailed)

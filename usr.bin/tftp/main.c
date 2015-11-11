@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.38 2015/10/18 03:54:22 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.39 2015/11/11 01:12:10 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.6 1995/05/21 16:54:10 mycroft Exp $	*/
 
 /*
@@ -473,7 +473,7 @@ get(int argc, char *argv[])
 		}
 		if (argc < 4) {
 			cp = argc == 3 ? argv[2] : tail(src);
-			fd = creat(cp, 0644);
+			fd = open(cp, O_CREAT | O_TRUNC | O_WRONLY, 0644);
 			if (fd < 0) {
 				warn("create: %s", cp);
 				return;
@@ -485,7 +485,7 @@ get(int argc, char *argv[])
 			break;
 		}
 		cp = tail(src);	/* new .. jdg */
-		fd = creat(cp, 0644);
+		fd = open(cp, O_CREAT | O_TRUNC | O_WRONLY, 0644);
 		if (fd < 0) {
 			warn("create: %s", cp);
 			continue;

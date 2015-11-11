@@ -1,4 +1,4 @@
-/*	$OpenBSD: uucplock.c,v 1.16 2009/10/27 23:59:30 deraadt Exp $	*/
+/*	$OpenBSD: uucplock.c,v 1.17 2015/11/11 01:12:09 deraadt Exp $	*/
 /*
  * Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -70,7 +70,7 @@ uu_lock(const char *ttyname)
 	    (long)pid);
 	(void)snprintf(lckname, sizeof(lckname), _PATH_UUCPLOCK LOCKFMT,
 	    ttyname);
-	if ((tmpfd = creat(lcktmpname, 0664)) < 0)
+	if ((tmpfd = open(lcktmpname, O_CREAT | O_TRUNC | O_WRONLY, 0664)) < 0)
 		GORET(0, UU_LOCK_CREAT_ERR);
 
 	for (i = 0; i < MAXTRIES; i++) {

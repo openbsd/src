@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.unix.c,v 1.15 2014/11/16 04:49:48 guenther Exp $	*/
+/*	$OpenBSD: hack.unix.c,v 1.16 2015/11/11 01:12:10 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -286,7 +286,7 @@ getlock()
 	error(locknum ? "Too many hacks running now."
 		      : "There is a game in progress under your name.");
 gotlock:
-	fd = creat(lock, FMASK);
+	fd = open(lock, O_CREAT | O_TRUNC | O_WRONLY, FMASK);
 	if(unlink(LLOCK) == -1)
 		error("Cannot unlink %s.", LLOCK);
 	if(fd == -1) {

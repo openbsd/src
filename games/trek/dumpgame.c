@@ -1,4 +1,4 @@
-/*	$OpenBSD: dumpgame.c,v 1.9 2009/10/27 23:59:27 deraadt Exp $	*/
+/*	$OpenBSD: dumpgame.c,v 1.10 2015/11/11 01:12:10 deraadt Exp $	*/
 /*	$NetBSD: dumpgame.c,v 1.4 1995/04/24 12:25:54 cgd Exp $	*/
 
 /*
@@ -81,7 +81,7 @@ dumpgame(v)
 	struct dump	*d;
 	int		i;
 
-	if ((fd = creat("trek.dump", 0644)) < 0)
+	if ((fd = open("trek.dump", O_CREAT | O_TRUNC | O_WRONLY, 0644)) < 0)
 	{
 		warn("cannot open `trek.dump'");
 		return;
