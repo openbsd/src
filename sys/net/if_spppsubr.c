@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.145 2015/11/09 10:26:26 mpi Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.146 2015/11/11 01:49:17 dlg Exp $	*/
 /*
  * Synchronous PPP link level subroutines.
  *
@@ -334,7 +334,6 @@ void sppp_keepalive(void *dummy);
 void sppp_phase_network(struct sppp *sp);
 void sppp_print_bytes(const u_char *p, u_short len);
 void sppp_print_string(const char *p, u_short len);
-void sppp_qflush(struct ifqueue *ifq);
 int sppp_update_gw_walker(struct rtentry *rt, void *arg, unsigned int id);
 void sppp_update_gw(struct ifnet *ifp);
 void sppp_set_ip_addrs(void *);
@@ -736,7 +735,7 @@ sppp_attach(struct ifnet *ifp)
 	sp->pp_if.if_type = IFT_PPP;
 	sp->pp_if.if_output = sppp_output;
 	IFQ_SET_MAXLEN(&sp->pp_if.if_snd, 50);
-	IFQ_SET_MAXLEN(&sp->pp_cpq, 50);
+	mq_init(&sp->pp_cpq, 50, IPL_NET);
 	sp->pp_loopcnt = 0;
 	sp->pp_alivecnt = 0;
 	sp->pp_last_activity = 0;
@@ -802,7 +801,7 @@ sppp_flush(struct ifnet *ifp)
 	struct sppp *sp = (struct sppp*) ifp;
 
 	IFQ_PURGE(&sp->pp_if.if_snd);
-	sppp_qflush (&sp->pp_cpq);
+	mq_purge(&sp->pp_cpq);
 }
 
 /*
@@ -815,8 +814,7 @@ sppp_isempty(struct ifnet *ifp)
 	int empty, s;
 
 	s = splnet();
-	empty = IF_IS_EMPTY(&sp->pp_cpq) &&
-		IFQ_IS_EMPTY(&sp->pp_if.if_snd);
+	empty = mq_empty(&sp->pp_cpq) && IFQ_IS_EMPTY(&sp->pp_if.if_snd);
 	splx(s);
 	return (empty);
 }
@@ -836,7 +834,7 @@ sppp_dequeue(struct ifnet *ifp)
 	 * Process only the control protocol queue until we have at
 	 * least one NCP open.
 	 */
-	IF_DEQUEUE(&sp->pp_cpq, m);
+	m = mq_dequeue(&sp->pp_cpq);
 	if (m == NULL && sppp_ncp_check(sp)) {
 		IFQ_DEQUEUE (&sp->pp_if.if_snd, m);
 	}
@@ -999,13 +997,10 @@ sppp_cp_send(struct sppp *sp, u_short proto, u_char type,
 			sppp_print_bytes ((u_char*) (lh+1), len);
 		addlog(">\n");
 	}
-	if (IF_QFULL (&sp->pp_cpq)) {
-		IF_DROP (&ifp->if_snd);
-		m_freem (m);
+	if (mq_enqueue(&sp->pp_cpq, m) != 0) {
 		++ifp->if_oerrors;
 		m = NULL;
-	} else
-		IF_ENQUEUE (&sp->pp_cpq, m);
+	}
 	if (!(ifp->if_flags & IFF_OACTIVE))
 		(*ifp->if_start) (ifp);
 	if (m != NULL)
@@ -4106,26 +4101,14 @@ sppp_auth_send(const struct cp *cp, struct sppp *sp,
 			sppp_print_bytes((u_char*) (lh+1), len);
 		addlog(">\n");
 	}
-	if (IF_QFULL (&sp->pp_cpq)) {
-		IF_DROP (&ifp->if_snd);
-		m_freem (m);
+	if (mq_enqueue(&sp->pp_cpq, m) != 0) {
 		++ifp->if_oerrors;
 		m = NULL;
-	} else
-		IF_ENQUEUE (&sp->pp_cpq, m);
+	}
 	if (! (ifp->if_flags & IFF_OACTIVE))
 		(*ifp->if_start) (ifp);
 	if (m != NULL)
 		ifp->if_obytes += m->m_pkthdr.len + sp->pp_framebytes;
-}
-
-/*
- * Flush interface queue.
- */
-void
-sppp_qflush(struct ifqueue *ifq)
-{
-	IF_PURGE(ifq);
 }
 
 /*
@@ -4161,7 +4144,7 @@ sppp_keepalive(void *dummy)
 		if (sp->pp_alivecnt >= MAXALIVECNT) {
 			/* No keepalive packets got.  Stop the interface. */
 			if_down (ifp);
-			sppp_qflush (&sp->pp_cpq);
+			mq_purge(&sp->pp_cpq);
 			log(LOG_INFO, SPP_FMT "LCP keepalive timeout\n",
 			    SPP_ARGS(ifp));
 			sp->pp_alivecnt = 0;
