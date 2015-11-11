@@ -1,4 +1,4 @@
-/*	$OpenBSD: echo.c,v 1.63 2015/11/09 11:44:00 jasper Exp $	*/
+/*	$OpenBSD: echo.c,v 1.64 2015/11/11 08:52:12 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -66,12 +66,18 @@ eyorn(const char *sp)
 	ewprintf("%s? (y or n) ", sp);
 	for (;;) {
 		s = getkey(FALSE);
-		if (s == 'y' || s == 'Y' || s == ' ')
+		if (s == 'y' || s == 'Y' || s == ' ') {
+			ewprintf("");
 			return (TRUE);
-		if (s == 'n' || s == 'N' || s == CCHR('M'))
+		}
+		if (s == 'n' || s == 'N' || s == CCHR('M')) {
+			ewprintf("");
 			return (FALSE);
-		if (s == CCHR('G'))
+		}
+		if (s == CCHR('G')) {
+			ewprintf("");
 			return (ctrlg(FFRAND, 1));
+		}
 		ewprintf("Please answer y or n.  %s? (y or n) ", sp);
 	}
 	/* NOTREACHED */
@@ -94,14 +100,22 @@ eynorr(const char *sp)
 	ewprintf("%s? (y, n or r) ", sp);
 	for (;;) {
 		s = getkey(FALSE);
-		if (s == 'y' || s == 'Y' || s == ' ')
+		if (s == 'y' || s == 'Y' || s == ' ') {
+			ewprintf("");
 			return (TRUE);
-		if (s == 'n' || s == 'N' || s == CCHR('M'))
+		}
+		if (s == 'n' || s == 'N' || s == CCHR('M')) {
+			ewprintf("");
 			return (FALSE);
-		if (s == 'r' || s == 'R')
+		}
+		if (s == 'r' || s == 'R') {
+			ewprintf("");
 			return (REVERT);
-		if (s == CCHR('G'))
+		}
+		if (s == CCHR('G')) {
+			ewprintf("");
 			return (ctrlg(FFRAND, 1));
+		}
 		ewprintf("Please answer y, n or r.");
 	}
 	/* NOTREACHED */
@@ -122,8 +136,10 @@ eyesno(const char *sp)
 	rep = eread("%s? (yes or no) ", buf, sizeof(buf),
 	    EFNUL | EFNEW | EFCR, sp);
 	for (;;) {
-		if (rep == NULL)
+		if (rep == NULL) {
+			ewprintf("");
 			return (ABORT);
+		}
 		if (rep[0] != '\0') {
 			if (macrodef) {
 				struct line	*lp = maclcur;
@@ -132,10 +148,14 @@ eyesno(const char *sp)
 				maclcur->l_fp = lp->l_fp;
 				free(lp);
 			}
-			if (strncasecmp(rep, "yes", sizeof(rep)) == 0)
+			if (strncasecmp(rep, "yes", sizeof(rep)) == 0) {
+				ewprintf("");
 				return (TRUE);
-			if (strncasecmp(rep, "no", sizeof(rep)) == 0)
+			}
+			if (strncasecmp(rep, "no", sizeof(rep)) == 0) {
+				ewprintf("");
 				return (FALSE);
+			}
 		}
 		rep = eread("Please answer yes or no.  %s? (yes or no) ",
 		    buf, sizeof(buf), EFNUL | EFNEW | EFCR, sp);
