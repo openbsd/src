@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_mmap.c,v 1.121 2015/11/01 19:03:33 semarie Exp $	*/
+/*	$OpenBSD: uvm_mmap.c,v 1.122 2015/11/11 15:59:33 mmcc Exp $	*/
 /*	$NetBSD: uvm_mmap.c,v 1.49 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -982,7 +982,7 @@ uvm_mmapanon(vm_map_t map, vaddr_t *addr, vsize_t size, vm_prot_t prot,
 {
 	int error;
 	int advice = MADV_NORMAL;
-	uvm_flag_t uvmflag = 0;
+	unsigned int uvmflag = 0;
 	vsize_t align = 0;	/* userland page size */
 
 	/*
@@ -1035,7 +1035,7 @@ uvm_mmapfile(vm_map_t map, vaddr_t *addr, vsize_t size, vm_prot_t prot,
 	struct uvm_object *uobj;
 	int error;
 	int advice = MADV_NORMAL;
-	uvm_flag_t uvmflag = 0;
+	unsigned int uvmflag = 0;
 	vsize_t align = 0;	/* userland page size */
 
 	/*

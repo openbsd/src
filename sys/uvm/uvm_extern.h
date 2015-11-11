@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_extern.h,v 1.135 2015/09/28 18:33:42 tedu Exp $	*/
+/*	$OpenBSD: uvm_extern.h,v 1.136 2015/11/11 15:59:33 mmcc Exp $	*/
 /*	$NetBSD: uvm_extern.h,v 1.57 2001/03/09 01:02:12 chs Exp $	*/
 
 /*
@@ -60,7 +60,6 @@
 #ifndef _UVM_UVM_EXTERN_H_
 #define _UVM_UVM_EXTERN_H_
 
-typedef unsigned int  uvm_flag_t;
 typedef int vm_fault_t;
 
 typedef int vm_inherit_t;	/* XXX: inheritance codes */
@@ -413,8 +412,8 @@ void			*km_alloc(size_t, const struct kmem_va_mode *,
 void			km_free(void *, size_t, const struct kmem_va_mode *,
 			    const struct kmem_pa_mode *);
 int			uvm_map(vm_map_t, vaddr_t *, vsize_t,
-			    struct uvm_object *, voff_t, vsize_t, uvm_flag_t);
-int			uvm_mapanon(vm_map_t, vaddr_t *, vsize_t, vsize_t, uvm_flag_t);
+			    struct uvm_object *, voff_t, vsize_t, unsigned int);
+int			uvm_mapanon(vm_map_t, vaddr_t *, vsize_t, vsize_t, unsigned int);
 int			uvm_map_pageable(vm_map_t, vaddr_t, 
 			    vaddr_t, boolean_t, int);
 int			uvm_map_pageable_all(vm_map_t, int, vsize_t);
