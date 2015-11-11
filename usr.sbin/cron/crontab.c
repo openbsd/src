@@ -1,4 +1,4 @@
-/*	$OpenBSD: crontab.c,v 1.85 2015/11/09 16:37:07 millert Exp $	*/
+/*	$OpenBSD: crontab.c,v 1.86 2015/11/11 15:21:01 millert Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -433,6 +433,7 @@ replace_cmd(void)
 	int ch, eof, fd;
 	int error = 0;
 	entry *e;
+	uid_t euid = geteuid();
 	time_t now = time(NULL);
 	char **envp = env_init();
 
@@ -446,7 +447,22 @@ replace_cmd(void)
 		fprintf(stderr, "path too long\n");
 		return (-2);
 	}
-	if ((fd = mkstemp(TempFilename)) == -1 || !(tmp = fdopen(fd, "w+"))) {
+	if (euid != pw->pw_uid) {
+		if (seteuid(pw->pw_uid) == -1) {
+			fprintf(stderr, "%s: Unable to change uid to %u.\n",
+			    __progname, pw->pw_uid);
+			return (-2);
+		}
+	}
+	fd = mkstemp(TempFilename);
+	if (euid != pw->pw_uid) {
+		if (seteuid(euid) == -1) {
+			fprintf(stderr, "%s: Unable to change uid to %u.\n",
+			    __progname, euid);
+			return (-2);
+		}
+	}
+	if (fd == -1 || !(tmp = fdopen(fd, "w+"))) {
 		perror(TempFilename);
 		if (fd != -1) {
 			close(fd);
@@ -518,13 +534,6 @@ replace_cmd(void)
 		fprintf(stderr, "errors in crontab file, can't install.\n");
 		fclose(tmp);
 		error = -1;
-		goto done;
-	}
-
-	if (fchown(fileno(tmp), pw->pw_uid, -1) < 0) {
-		perror("fchown");
-		fclose(tmp);
-		error = -2;
 		goto done;
 	}
 
