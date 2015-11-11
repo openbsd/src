@@ -1,4 +1,4 @@
-/*	$OpenBSD: qe.c,v 1.32 2015/10/25 13:13:06 mpi Exp $	*/
+/*	$OpenBSD: qe.c,v 1.33 2015/11/11 10:07:25 mpi Exp $	*/
 /*	$NetBSD: qe.c,v 1.16 2001/03/30 17:30:18 christos Exp $	*/
 
 /*-
@@ -450,11 +450,10 @@ qestart(ifp)
 	bix = sc->sc_rb.rb_tdhead;
 
 	for (;;) {
-		IFQ_POLL(&ifp->if_snd, m);
+		IFQ_DEQUEUE(&ifp->if_snd, m);
 		if (m == NULL)
 			break;
 
-		IFQ_DEQUEUE(&ifp->if_snd, m);
 
 #if NBPFILTER > 0
 		/*

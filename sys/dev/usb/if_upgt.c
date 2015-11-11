@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_upgt.c,v 1.71 2015/11/04 12:12:00 dlg Exp $ */
+/*	$OpenBSD: if_upgt.c,v 1.72 2015/11/11 10:07:25 mpi Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -1398,11 +1398,10 @@ upgt_start(struct ifnet *ifp)
 			if (ic->ic_state != IEEE80211_S_RUN)
 				break;
 
-			IFQ_POLL(&ifp->if_snd, m);
+			IFQ_DEQUEUE(&ifp->if_snd, m);
 			if (m == NULL)
 				break;
 
-			IFQ_DEQUEUE(&ifp->if_snd, m);
 #if NBPFILTER > 0
 			if (ifp->if_bpf != NULL)
 				bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_OUT);
