@@ -1,4 +1,4 @@
-/*	$OpenBSD: parsetime.c,v 1.24 2015/11/06 23:47:42 millert Exp $	*/
+/*	$OpenBSD: parsetime.c,v 1.25 2015/11/11 17:40:31 millert Exp $	*/
 
 /*
  * parsetime.c - parse time for at(1)
@@ -694,10 +694,6 @@ parsetime(int argc, char **argv)
 	 */
 	runtime.tm_isdst = -1;
 	runtimer = mktime(&runtime);
-	if (runtime.tm_isdst > 0) {
-		runtimer -= 3600;
-		runtimer = mktime(&runtime);
-	}
 
 	if (runtimer < 0) {
 		fprintf(stderr, "%s: garbled time\n", __progname);
