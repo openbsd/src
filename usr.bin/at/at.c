@@ -1,4 +1,4 @@
-/*	$OpenBSD: at.c,v 1.71 2015/11/11 15:23:06 millert Exp $	*/
+/*	$OpenBSD: at.c,v 1.72 2015/11/11 17:17:56 millert Exp $	*/
 
 /*
  *  at.c : Put file into atrun queue
@@ -37,12 +37,14 @@
 #include <bitstring.h>                  /* for structs.h */
 #include <ctype.h>
 #include <dirent.h>
+#include <err.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
 #include <locale.h>
 #include <pwd.h>
 #include <signal.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -85,9 +87,10 @@ static void writefile(const char *, time_t, char);
 static void list_jobs(int, char **, int, int);
 static time_t ttime(char *);
 static int check_permission(void);
-static __dead void panic(const char *);
-static void perr(const char *);
-static void perr2(const char *, const char *);
+static __dead void fatal(const char *, ...)
+    __attribute__((__format__ (printf, 1, 2)));
+static __dead void fatalx(const char *, ...)
+    __attribute__((__format__ (printf, 1, 2)));
 static __dead void usage(void);
 static int rmok(long long);
 time_t parsetime(int, char **);
@@ -96,9 +99,14 @@ time_t parsetime(int, char **);
  * Something fatal has happened, print error message and exit.
  */
 static __dead void
-panic(const char *a)
+fatal(const char *fmt, ...)
 {
-	(void)fprintf(stderr, "%s: %s\n", __progname, a);
+	va_list ap;
+
+	va_start(ap, fmt);
+	vwarn(fmt, ap);
+	va_end(ap);
+
 	if (fcreated)
 		unlink(atfile);
 
@@ -106,41 +114,21 @@ panic(const char *a)
 }
 
 /*
- * Two-parameter version of panic().
+ * Something fatal has happened, print error message and exit.
  */
 static __dead void
-panic2(const char *a, const char *b)
+fatalx(const char *fmt, ...)
 {
-	(void)fprintf(stderr, "%s: %s%s\n", __progname, a, b);
+	va_list ap;
+
+	va_start(ap, fmt);
+	vwarnx(fmt, ap);
+	va_end(ap);
+
 	if (fcreated)
 		unlink(atfile);
 
 	exit(EXIT_FAILURE);
-}
-
-/*
- * Some operating system error; print error message and exit.
- */
-static __dead void
-perr(const char *a)
-{
-	if (!force)
-		perror(a);
-	if (fcreated)
-		unlink(atfile);
-
-	exit(EXIT_FAILURE);
-}
-
-/*
- * Two-parameter version of perr().
- */
-static __dead void
-perr2(const char *a, const char *b)
-{
-	if (!force)
-		(void)fputs(a, stderr);
-	perr(b);
 }
 
 /* ARGSUSED */
@@ -215,7 +203,7 @@ writefile(const char *cwd, time_t runtimer, char queue)
 	sigaction(SIGINT, &act, NULL);
 
 	if ((lockdes = open(AT_SPOOL, O_RDONLY|O_DIRECTORY, 0)) < 0)
-		perr2("Cannot open ", AT_SPOOL);
+		fatal(AT_SPOOL);
 
 	/*
 	 * Lock the jobs dir so we don't have to worry about someone
@@ -234,7 +222,7 @@ writefile(const char *cwd, time_t runtimer, char queue)
 	ch = flock(lockdes, LOCK_EX);
 	alarm(0);
 	if (ch != 0)
-		panic("Unable to lock jobs dir");
+		fatal("unable to lock %s", AT_SPOOL);
 
 	/*
 	 * Create the file. The x bit is only going to be set after it has
@@ -244,13 +232,13 @@ writefile(const char *cwd, time_t runtimer, char queue)
 	 */
 	cmask = umask(S_IRUSR | S_IWUSR | S_IXUSR);
 	if ((fdes = newjob(runtimer, queue)) == -1)
-		perr("Cannot create atjob file");
+		fatal("unable to create atjob file");
 
 	if ((fd2 = dup(fdes)) < 0)
-		perr("Error in dup() of job file");
+		fatal("dup");
 
-	if (fchown(fd2, user_uid, user_gid) != 0)
-		perr("Cannot give away file");
+	if (fchown(fd2, -1, user_gid) != 0)
+		fatal("fchown");
 
 	/*
 	 * We've successfully created the file; let's set the flag so it
@@ -262,7 +250,7 @@ writefile(const char *cwd, time_t runtimer, char queue)
 	(void)close(lockdes);
 
 	if ((fp = fdopen(fdes, "w")) == NULL)
-		panic("Cannot reopen atjob file");
+		fatal("unable to reopen atjob file");
 
 	/*
 	 * Get the userid to mail to, first by trying getlogin(), which asks
@@ -373,7 +361,7 @@ writefile(const char *cwd, time_t runtimer, char queue)
 	    " >&2\n\t exit 1\n}\n");
 
 	if ((ch = getchar()) == EOF)
-		panic("Input error");
+		fatalx("unexpected EOF");
 
 	/* We want the job to run under the user's shell. */
 	fprintf(fp, "%s << '_END_OF_AT_JOB'\n", shell);
@@ -383,11 +371,12 @@ writefile(const char *cwd, time_t runtimer, char queue)
 	} while ((ch = getchar()) != EOF);
 
 	(void)fprintf(fp, "\n_END_OF_AT_JOB\n");
+	(void)fflush(fp);
 	if (ferror(fp))
-		panic("Output error");
+		fatalx("write error");
 
 	if (ferror(stdin))
-		panic("Input error");
+		fatalx("read error");
 
 	(void)fclose(fp);
 
@@ -395,7 +384,7 @@ writefile(const char *cwd, time_t runtimer, char queue)
 	 * Set the x bit so that we're ready to start executing
 	 */
 	if (fchmod(fd2, S_IRUSR | S_IWUSR | S_IXUSR) < 0)
-		perr("Cannot give away file");
+		fatal("fchmod");
 
 	(void)close(fd2);
 
@@ -484,13 +473,13 @@ list_jobs(int argc, char **argv, int count_only, int csort)
 
 	if (argc) {
 		if ((uids = calloc(sizeof(uid_t), argc)) == NULL)
-			panic("Insufficient virtual memory");
+			fatal(NULL);
 
 		for (i = 0; i < argc; i++) {
 			if ((pw = getpwnam(argv[i])) == NULL)
-				panic2(argv[i], ": invalid user name");
+				fatalx("unknown user %s", argv[i]);
 			if (pw->pw_uid != user_uid && user_uid != 0)
-				panic("Only the superuser may display other users' jobs");
+				fatalx("only the superuser may display other users' jobs");
 			uids[i] = pw->pw_uid;
 		}
 	} else
@@ -500,10 +489,10 @@ list_jobs(int argc, char **argv, int count_only, int csort)
 
 	if ((dfd = open(AT_SPOOL, O_RDONLY|O_DIRECTORY)) == -1 ||
 	    (spool = fdopendir(dfd)) == NULL)
-		perr2("Cannot open ", AT_SPOOL);
+		fatal(AT_SPOOL);
 
 	if (fstat(dfd, &stbuf) != 0)
-		perr2("Cannot stat ", AT_SPOOL);
+		fatal(AT_SPOOL);
 
 	/*
 	 * The directory's link count should give us a good idea
@@ -514,12 +503,12 @@ list_jobs(int argc, char **argv, int count_only, int csort)
 	maxjobs = stbuf.st_nlink + 4;
 	atjobs = calloc(maxjobs, sizeof(struct atjob *));
 	if (atjobs == NULL)
-		panic("Insufficient virtual memory");
+		fatal(NULL);
 
 	/* Loop over every file in the directory. */
 	while ((dirent = readdir(spool)) != NULL) {
 		if (fstatat(dfd, dirent->d_name, &stbuf, AT_SYMLINK_NOFOLLOW) != 0)
-			perr2("Cannot stat ", dirent->d_name);
+			fatal("%s", dirent->d_name);
 
 		/*
 		 * See it's a regular file and has its x bit turned on and
@@ -557,7 +546,7 @@ list_jobs(int argc, char **argv, int count_only, int csort)
 
 		job = malloc(sizeof(struct atjob));
 		if (job == NULL)
-			panic("Insufficient virtual memory");
+			fatal(NULL);
 		job->runtimer = runtimer;
 		job->ctime = stbuf.st_ctime;
 		job->uid = stbuf.st_uid;
@@ -567,7 +556,7 @@ list_jobs(int argc, char **argv, int count_only, int csort)
 			size_t newjobs = maxjobs * 2;
 			newatjobs = reallocarray(atjobs, newjobs, sizeof(job));
 			if (newatjobs == NULL)
-				panic("Insufficient virtual memory");
+				fatal(NULL);
 			atjobs = newatjobs;
 			maxjobs = newjobs;
 		}
@@ -578,7 +567,7 @@ list_jobs(int argc, char **argv, int count_only, int csort)
 
 	if (count_only || numjobs == 0) {
 		if (numjobs == 0 && !shortformat)
-			fprintf(stderr, "no files in queue.\n");
+			warnx("no files in queue");
 		else if (count_only)
 			printf("%zu\n", numjobs);
 		free(atjobs);
@@ -634,7 +623,7 @@ process_jobs(int argc, char **argv, int what)
 
 	if ((dfd = open(AT_SPOOL, O_RDONLY|O_DIRECTORY)) == -1 ||
 	    (spool = fdopendir(dfd)) == NULL)
-		perr2("Cannot open ", AT_SPOOL);
+		fatal(AT_SPOOL);
 
 	/* Convert argv into a list of jobs and uids. */
 	jobs = NULL;
@@ -643,7 +632,7 @@ process_jobs(int argc, char **argv, int what)
 	if (argc > 0) {
 		if ((jobs = calloc(sizeof(char *), argc)) == NULL ||
 		    (uids = calloc(sizeof(uid_t), argc)) == NULL)
-			panic("Insufficient virtual memory");
+			fatal(NULL);
 
 		for (i = 0; i < argc; i++) {
 			l = strtol(argv[i], &ep, 10);
@@ -652,15 +641,13 @@ process_jobs(int argc, char **argv, int what)
 				jobs[jobs_len++] = argv[i];
 			else if ((pw = getpwnam(argv[i])) != NULL) {
 				if (user_uid != pw->pw_uid && user_uid != 0) {
-					fprintf(stderr, "%s: Only the superuser"
-					    " may %s other users' jobs\n",
-					    __progname, what == ATRM
-					    ? "remove" : "view");
-					exit(EXIT_FAILURE);
+					fatalx("only the superuser may %s "
+					    "other users' jobs",
+					    what == ATRM ? "remove" : "view");
 				}
 				uids[uids_len++] = pw->pw_uid;
 			} else
-				panic2(argv[i], ": invalid user name");
+				fatalx("unknown user %s", argv[i]);
 		}
 	}
 
@@ -668,7 +655,7 @@ process_jobs(int argc, char **argv, int what)
 	changed = 0;
 	while ((dirent = readdir(spool)) != NULL) {
 		if (fstatat(dfd, dirent->d_name, &stbuf, AT_SYMLINK_NOFOLLOW) != 0)
-			perr2("Cannot stat ", dirent->d_name);
+			fatal("%s", dirent->d_name);
 
 		if (stbuf.st_uid != user_uid && user_uid != 0)
 			continue;
@@ -707,11 +694,10 @@ process_jobs(int argc, char **argv, int what)
 				    (interactive && rmok(runtimer))) {
 					if (unlinkat(dfd, dirent->d_name, 0) == 0)
 						changed = 1;
-					else
-						perr(dirent->d_name);
+					else if (!force)
+						fatal("%s", dirent->d_name);
 					if (!force && !interactive)
-						fprintf(stderr,
-						    "%s removed\n",
+						warnx("%s removed",
 						    dirent->d_name);
 				}
 				break;
@@ -720,7 +706,7 @@ process_jobs(int argc, char **argv, int what)
 				i = openat(dfd, dirent->d_name,
 				    O_RDONLY|O_NOFOLLOW);
 				if (i == -1 || (fp = fdopen(i, "r")) == NULL)
-					perr2("Cannot open ", dirent->d_name);
+					fatal("%s", dirent->d_name);
 
 				while ((ch = getc(fp)) != EOF)
 					putchar(ch);
@@ -729,7 +715,7 @@ process_jobs(int argc, char **argv, int what)
 				break;
 
 			default:
-				panic("Internal error");
+				fatalx("internal error");
 				break;
 			}
 		}
@@ -739,8 +725,7 @@ process_jobs(int argc, char **argv, int what)
 	for (error = 0, i = 0; i < jobs_len; i++) {
 		if (jobs[i] != NULL) {
 			if (!force)
-				fprintf(stderr, "%s: %s: no such job\n",
-				    __progname, jobs[i]);
+				warnx("%s: no such job", jobs[i]);
 			error++;
 		}
 	}
@@ -768,7 +753,7 @@ ttime(char *arg)
 	char *dot, *p;
 
 	if (time(&now) == (time_t)-1 || (lt = localtime(&now)) == NULL)
-		panic("Cannot get current time");
+		fatal("unable to get current time");
 
 	/* Valid date format is [[CC]YY]MMDDhhmm[.SS] */
 	for (p = arg, dot = NULL; *p != '\0'; p++) {
@@ -830,10 +815,10 @@ ttime(char *arg)
 	then = mktime(lt);
 	if (then == (time_t)-1) {
     terr:
-		panic("illegal time specification: [[CC]YY]MMDDhhmm[.SS]");
+		fatalx("illegal time specification: [[CC]YY]MMDDhhmm[.SS]");
 	}
 	if (then < now)
-		panic("cannot schedule jobs in the past");
+		fatalx("cannot schedule jobs in the past");
 	return (then);
 }
 
@@ -842,10 +827,8 @@ check_permission(void)
 {
 	struct passwd *pw;
 
-	if ((pw = getpwuid(user_uid)) == NULL) {
-		perror("Cannot access password database");
-		exit(EXIT_FAILURE);
-	}
+	if ((pw = getpwuid(user_uid)) == NULL)
+		fatalx("unknown uid %u", user_uid);
 
 	return (allowed(pw->pw_name, AT_ALLOW, AT_DENY));
 }
@@ -894,7 +877,7 @@ main(int argc, char **argv)
 
 	if (pledge("stdio rpath wpath cpath fattr getpw unix flock id",
 	    NULL) == -1)
-		perr("pledge");
+		fatal("pledge");
 
 	if (argc < 1)
 		usage();
@@ -1006,11 +989,11 @@ main(int argc, char **argv)
 	case BATCH:
 		if (atinput != NULL) {
 			if (setegid(user_gid) != 0)
-				perr("setegid(user_gid)");
+				fatal("setegid(user_gid)");
 			if (freopen(atinput, "r", stdin) == NULL)
-				perr("Cannot open input file");
+				fatal("%s", atinput);
 			if (setegid(spool_gid) != 0)
-				perr("setegid(spool_gid)");
+				fatal("setegid(spool_gid)");
 		}
 		break;
 	default:
@@ -1018,12 +1001,12 @@ main(int argc, char **argv)
 	}
 
 	if (getcwd(cwd, sizeof(cwd)) == NULL)
-		perr("Cannot get current working directory");
+		fatal("unable to get current working directory");
 
 	set_cron_cwd();
 
 	if (!check_permission())
-		panic("You do not have permission to use at.");
+		fatalx("you do not have permission to use at.");
 
 	/* select our program */
 	switch (program) {
@@ -1064,7 +1047,7 @@ main(int argc, char **argv)
 		break;
 
 	default:
-		panic("Internal error");
+		fatalx("internal error");
 		break;
 	}
 	exit(EXIT_SUCCESS);
