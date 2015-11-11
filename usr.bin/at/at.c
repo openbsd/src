@@ -1,4 +1,4 @@
-/*	$OpenBSD: at.c,v 1.70 2015/11/09 15:57:39 millert Exp $	*/
+/*	$OpenBSD: at.c,v 1.71 2015/11/11 15:23:06 millert Exp $	*/
 
 /*
  *  at.c : Put file into atrun queue
@@ -214,8 +214,8 @@ writefile(const char *cwd, time_t runtimer, char queue)
 	act.sa_flags = 0;
 	sigaction(SIGINT, &act, NULL);
 
-	if ((lockdes = open(AT_SPOOL, O_RDONLY, 0)) < 0)
-		perr("Cannot open jobs dir");
+	if ((lockdes = open(AT_SPOOL, O_RDONLY|O_DIRECTORY, 0)) < 0)
+		perr2("Cannot open ", AT_SPOOL);
 
 	/*
 	 * Lock the jobs dir so we don't have to worry about someone
@@ -479,7 +479,7 @@ list_jobs(int argc, char **argv, int count_only, int csort)
 	uid_t *uids;
 	char queue, *ep;
 	DIR *spool;
-	int i, shortformat;
+	int dfd, i, shortformat;
 	size_t numjobs, maxjobs;
 
 	if (argc) {
@@ -498,13 +498,11 @@ list_jobs(int argc, char **argv, int count_only, int csort)
 
 	shortformat = strcmp(__progname, "at") == 0;
 
-	if (chdir(AT_SPOOL) != 0)
-		perr2("Cannot change to ", AT_SPOOL);
-
-	if ((spool = opendir(".")) == NULL)
+	if ((dfd = open(AT_SPOOL, O_RDONLY|O_DIRECTORY)) == -1 ||
+	    (spool = fdopendir(dfd)) == NULL)
 		perr2("Cannot open ", AT_SPOOL);
 
-	if (fstat(dirfd(spool), &stbuf) != 0)
+	if (fstat(dfd, &stbuf) != 0)
 		perr2("Cannot stat ", AT_SPOOL);
 
 	/*
@@ -520,8 +518,8 @@ list_jobs(int argc, char **argv, int count_only, int csort)
 
 	/* Loop over every file in the directory. */
 	while ((dirent = readdir(spool)) != NULL) {
-		if (stat(dirent->d_name, &stbuf) != 0)
-			perr2("Cannot stat in ", AT_SPOOL);
+		if (fstatat(dfd, dirent->d_name, &stbuf, AT_SYMLINK_NOFOLLOW) != 0)
+			perr2("Cannot stat ", dirent->d_name);
 
 		/*
 		 * See it's a regular file and has its x bit turned on and
@@ -632,12 +630,10 @@ process_jobs(int argc, char **argv, int what)
 	FILE *fp;
 	DIR *spool;
 	int job_matches, jobs_len, uids_len;
-	int error, i, ch, changed;
+	int error, i, ch, changed, dfd;
 
-	if (chdir(AT_SPOOL) != 0)
-		perr2("Cannot change to ", AT_SPOOL);
-
-	if ((spool = opendir(".")) == NULL)
+	if ((dfd = open(AT_SPOOL, O_RDONLY|O_DIRECTORY)) == -1 ||
+	    (spool = fdopendir(dfd)) == NULL)
 		perr2("Cannot open ", AT_SPOOL);
 
 	/* Convert argv into a list of jobs and uids. */
@@ -671,8 +667,8 @@ process_jobs(int argc, char **argv, int what)
 	/* Loop over every file in the directory */
 	changed = 0;
 	while ((dirent = readdir(spool)) != NULL) {
-		if (stat(dirent->d_name, &stbuf) != 0)
-			perr2("Cannot stat in ", AT_SPOOL);
+		if (fstatat(dfd, dirent->d_name, &stbuf, AT_SYMLINK_NOFOLLOW) != 0)
+			perr2("Cannot stat ", dirent->d_name);
 
 		if (stbuf.st_uid != user_uid && user_uid != 0)
 			continue;
@@ -709,7 +705,7 @@ process_jobs(int argc, char **argv, int what)
 			case ATRM:
 				if (!interactive ||
 				    (interactive && rmok(runtimer))) {
-					if (unlink(dirent->d_name) == 0)
+					if (unlinkat(dfd, dirent->d_name, 0) == 0)
 						changed = 1;
 					else
 						perr(dirent->d_name);
@@ -721,9 +717,10 @@ process_jobs(int argc, char **argv, int what)
 				break;
 
 			case CAT:
-				fp = fopen(dirent->d_name, "r");
-				if (!fp)
-					perr("Cannot open file");
+				i = openat(dfd, dirent->d_name,
+				    O_RDONLY|O_NOFOLLOW);
+				if (i == -1 || (fp = fdopen(i, "r")) == NULL)
+					perr2("Cannot open ", dirent->d_name);
 
 				while ((ch = getc(fp)) != EOF)
 					putchar(ch);
@@ -751,12 +748,8 @@ process_jobs(int argc, char **argv, int what)
 	free(uids);
 
 	/* If we modied the spool, poke cron so it knows to reload. */
-	if (changed) {
-		if (chdir(CRONDIR) != 0)
-			perror(CRONDIR);
-		else
-			poke_daemon(AT_SPOOL, RELOAD_AT);
-	}
+	if (changed)
+		poke_daemon(AT_SPOOL, RELOAD_AT);
 
 	return (error);
 }
