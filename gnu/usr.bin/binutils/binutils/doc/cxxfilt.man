@@ -130,7 +130,7 @@
 .IX Title "C++FILT 1"
 .TH C++FILT 1 "2004-04-09" "binutils-2.14.91" "GNU Development Tools"
 .SH "NAME"
-cxxfilt \- Demangle C++ and Java symbols.
+c++filt \- Demangle C++ and Java symbols.
 .SH "SYNOPSIS"
 .IX Header "SYNOPSIS"
 c++filt [\fB\-_\fR|\fB\-\-strip\-underscores\fR]
