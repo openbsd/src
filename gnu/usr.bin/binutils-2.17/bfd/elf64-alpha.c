@@ -2601,7 +2601,7 @@ elf64_alpha_calc_dynrel_sizes (struct alpha_elf_link_hash_entry *h,
 	  relent->srel->size +=
 	    entries * sizeof (Elf64_External_Rela) * relent->count;
 	  if (relent->reltext)
-	    info->flags |= DT_TEXTREL;
+	    info->flags |= DF_TEXTREL;
 	}
     }
 
