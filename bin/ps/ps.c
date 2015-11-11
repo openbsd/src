@@ -1,4 +1,4 @@
-/*	$OpenBSD: ps.c,v 1.67 2015/10/25 09:39:00 deraadt Exp $	*/
+/*	$OpenBSD: ps.c,v 1.68 2015/11/11 03:20:02 deraadt Exp $	*/
 /*	$NetBSD: ps.c,v 1.15 1995/05/18 20:33:25 mycroft Exp $	*/
 
 /*-
@@ -279,7 +279,7 @@ main(int argc, char *argv[])
 		errx(1, "%s", errbuf);
 
 	if (pledge("stdio rpath getpw ps", NULL) == -1)
-		err(1, "abort pledge");
+		err(1, "pledge");
 
 	if (!fmt) {
 		if (showthreads)
