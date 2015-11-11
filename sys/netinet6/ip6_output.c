@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.198 2015/11/03 21:39:34 chl Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.199 2015/11/11 10:23:23 mpi Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -549,7 +549,7 @@ reroute:
 			goto bad;
 		}
 		if (ISSET(rt->rt_flags, RTF_LOCAL))
-			ifp = if_ref(lo0ifp);
+			ifp = if_get(lo0ifidx);
 		else
 			ifp = if_get(rt->rt_ifidx);
 	} else {

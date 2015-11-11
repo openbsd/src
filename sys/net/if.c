@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.404 2015/11/07 12:42:19 mpi Exp $	*/
+/*	$OpenBSD: if.c,v 1.405 2015/11/11 10:23:23 mpi Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -250,7 +250,7 @@ struct srp_gc if_map_gc = SRP_GC_INITIALIZER(if_map_dtor, NULL);
 
 struct ifnet_head ifnet = TAILQ_HEAD_INITIALIZER(ifnet);
 struct ifnet_head iftxlist = TAILQ_HEAD_INITIALIZER(iftxlist);
-struct ifnet *lo0ifp;
+unsigned int lo0ifidx;
 
 void
 if_idxmap_init(unsigned int limit)
@@ -1275,11 +1275,12 @@ if_rtrequest_dummy(struct ifnet *ifp, int req, struct rtentry *rt)
 void
 p2p_rtrequest(struct ifnet *ifp, int req, struct rtentry *rt)
 {
+	struct ifnet *lo0ifp;
 	struct ifaddr *ifa, *lo0ifa;
 
 	switch (req) {
 	case RTM_ADD:
-		if ((rt->rt_flags & RTF_LOCAL) == 0)
+		if (!ISSET(rt->rt_flags, RTF_LOCAL))
 			break;
 
 		TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
@@ -1298,10 +1299,14 @@ p2p_rtrequest(struct ifnet *ifp, int req, struct rtentry *rt)
 		 * (ab)use it for any route related to an interface of a
 		 * different rdomain.
 		 */
-		TAILQ_FOREACH(lo0ifa, &lo0ifp->if_addrlist, ifa_list)
+		lo0ifp = if_get(lo0ifidx);
+		KASSERT(lo0ifp != NULL);
+		TAILQ_FOREACH(lo0ifa, &lo0ifp->if_addrlist, ifa_list) {
 			if (lo0ifa->ifa_addr->sa_family ==
 			    ifa->ifa_addr->sa_family)
 				break;
+		}
+		if_put(lo0ifp);
 
 		if (lo0ifa == NULL)
 			break;
@@ -1377,7 +1382,7 @@ if_up(struct ifnet *ifp)
 
 #ifdef INET6
 	/* Userland expects the kernel to set ::1 on lo0. */
-	if (ifp == lo0ifp)
+	if (ifp->if_index == lo0ifidx)
 		in6_ifattach(ifp);
 #endif
 

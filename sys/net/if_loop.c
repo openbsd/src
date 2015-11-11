@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_loop.c,v 1.72 2015/10/25 11:58:11 mpi Exp $	*/
+/*	$OpenBSD: if_loop.c,v 1.73 2015/11/11 10:23:23 mpi Exp $	*/
 /*	$NetBSD: if_loop.c,v 1.15 1996/05/07 02:40:33 thorpej Exp $	*/
 
 /*
@@ -176,9 +176,9 @@ loop_clone_create(struct if_clone *ifc, int unit)
 	ifp->if_addrlen = 0;
 	IFQ_SET_READY(&ifp->if_snd);
 	if (unit == 0) {
-		lo0ifp = ifp;
 		if_attachhead(ifp);
-		if_addgroup(lo0ifp, ifc->ifc_name);
+		if_addgroup(ifp, ifc->ifc_name);
+		lo0ifidx = ifp->if_index;
 	} else
 		if_attach(ifp);
 	if_alloc_sadl(ifp);
@@ -191,7 +191,7 @@ loop_clone_create(struct if_clone *ifc, int unit)
 int
 loop_clone_destroy(struct ifnet *ifp)
 {
-	if (ifp == lo0ifp)
+	if (ifp->if_index == lo0ifidx)
 		return (EPERM);
 
 	if_detach(ifp);
