@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.5 2015/11/09 15:57:39 millert Exp $	*/
+/*	$OpenBSD: client.c,v 1.6 2015/11/11 17:05:23 millert Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -27,7 +27,6 @@
 #include <string.h>
 #include <time.h>		/* for structs.h */
 #include <unistd.h>
-#include <utime.h>
 
 #include "pathnames.h"
 #include "macros.h"
@@ -94,8 +93,6 @@ poke_daemon(const char *spool_dir, unsigned char cookie)
 {
 	int sock = -1;
 	struct sockaddr_un s_un;
-
-	(void) utime(spool_dir, NULL);		/* old poke method */
 
 	bzero(&s_un, sizeof(s_un));
 	if (snprintf(s_un.sun_path, sizeof s_un.sun_path, "%s/%s",
