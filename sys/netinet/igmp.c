@@ -1,4 +1,4 @@
-/*	$OpenBSD: igmp.c,v 1.53 2015/09/13 17:47:07 mpi Exp $	*/
+/*	$OpenBSD: igmp.c,v 1.54 2015/11/11 10:01:46 mpi Exp $	*/
 /*	$NetBSD: igmp.c,v 1.15 1996/02/13 23:41:25 christos Exp $	*/
 
 /*
@@ -149,7 +149,7 @@ rti_fill(struct in_multi *inm)
 	struct router_info *rti;
 
 	for (rti = rti_head; rti != 0; rti = rti->rti_next) {
-		if (rti->rti_ifp->if_index == inm->inm_ifidx) {
+		if (rti->rti_ifidx == inm->inm_ifidx) {
 			inm->inm_rti = rti;
 			if (rti->rti_type == IGMP_v1_ROUTER)
 				return (IGMP_v1_HOST_MEMBERSHIP_REPORT);
@@ -162,7 +162,7 @@ rti_fill(struct in_multi *inm)
 					   M_MRTABLE, M_NOWAIT);
 	if (rti == NULL)
 		return (-1);
-	rti->rti_ifp = if_get(inm->inm_ifidx);
+	rti->rti_ifidx = inm->inm_ifidx;
 	rti->rti_type = IGMP_v2_ROUTER;
 	rti->rti_next = rti_head;
 	rti_head = rti;
@@ -176,7 +176,7 @@ rti_find(struct ifnet *ifp)
 	struct router_info *rti;
 
 	for (rti = rti_head; rti != 0; rti = rti->rti_next) {
-		if (rti->rti_ifp == ifp)
+		if (rti->rti_ifidx == ifp->if_index)
 			return (rti);
 	}
 
@@ -184,7 +184,7 @@ rti_find(struct ifnet *ifp)
 					   M_MRTABLE, M_NOWAIT);
 	if (rti == NULL)
 		return (NULL);
-	rti->rti_ifp = if_ref(ifp);
+	rti->rti_ifidx = ifp->if_index;
 	rti->rti_type = IGMP_v2_ROUTER;
 	rti->rti_next = rti_head;
 	rti_head = rti;
@@ -197,8 +197,7 @@ rti_delete(struct ifnet *ifp)
 	struct router_info *rti, **prti = &rti_head;
 
 	for (rti = rti_head; rti != 0; rti = rti->rti_next) {
-		if (rti->rti_ifp == ifp) {
-			if_put(ifp);
+		if (rti->rti_ifidx == ifp->if_index) {
 			*prti = rti->rti_next;
 			free(rti, M_MRTABLE, sizeof(*rti));
 			break;
@@ -225,7 +224,7 @@ igmp_input(struct mbuf *m, ...)
 		m_freem(m);
 		return;
 	}
-	
+
 	igmp_input_if(ifp, m, iphlen);
 	if_put(ifp);
 }
@@ -510,7 +509,7 @@ igmp_joingroup(struct in_multi *inm)
 	    ifp && (ifp->if_flags & IFF_LOOPBACK) == 0) {
 		if ((i = rti_fill(inm)) == -1)
 			goto out;
-		
+
 		igmp_sendpkt(inm, i, 0);
 		inm->inm_state = IGMP_DELAYING_MEMBER;
 		inm->inm_timer = IGMP_RANDOM_DELAY(

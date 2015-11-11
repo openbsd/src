@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_var.h,v 1.35 2015/01/12 13:51:45 mpi Exp $	*/
+/*	$OpenBSD: in_var.h,v 1.36 2015/11/11 10:01:46 mpi Exp $	*/
 /*	$NetBSD: in_var.h,v 1.16 1996/02/13 23:42:15 christos Exp $	*/
 
 /*
@@ -98,9 +98,9 @@ do {									\
  * Per-interface router version information.
  */
 struct router_info {
-	struct	ifnet *rti_ifp;
-	int	rti_type;	/* type of router on this interface */
-	int	rti_age;	/* time since last v1 query */
+	unsigned int	rti_ifidx;
+	int		rti_type;	/* type of router on this interface */
+	int		rti_age;	/* time since last v1 query */
 	struct	router_info *rti_next;
 };
 
