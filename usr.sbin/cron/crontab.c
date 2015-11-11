@@ -1,4 +1,4 @@
-/*	$OpenBSD: crontab.c,v 1.87 2015/11/11 17:19:22 millert Exp $	*/
+/*	$OpenBSD: crontab.c,v 1.88 2015/11/11 21:20:51 millert Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -64,7 +64,8 @@ static	int		replace_cmd(void);
 static void
 usage(const char *msg)
 {
-	fprintf(stderr, "%s: usage error: %s\n", __progname, msg);
+	if (msg != NULL)
+		warnx("usage error: %s", msg);
 	fprintf(stderr, "usage: %s [-u user] file\n", __progname);
 	fprintf(stderr, "       %s [-e | -l | -r] [-u user]\n", __progname);
 	fprintf(stderr,
@@ -85,8 +86,7 @@ main(int argc, char *argv[])
 
 	if (pledge("stdio rpath wpath cpath fattr getpw unix id proc exec",
 	    NULL) == -1) {
-		perror("pledge");
-		exit(EXIT_FAILURE);
+		err(EXIT_FAILURE, "pledge");
 	}
 
 	setlocale(LC_ALL, "");
@@ -95,9 +95,7 @@ main(int argc, char *argv[])
 	parse_args(argc, argv);		/* sets many globals, opens a file */
 	set_cron_cwd();
 	if (!allowed(RealUser, CRON_ALLOW, CRON_DENY)) {
-		fprintf(stderr,
-			"You (%s) are not allowed to use this program (%s)\n",
-			User, __progname);
+		fprintf(stderr, "You do not have permission to use crontab\n");
 		fprintf(stderr, "See crontab(1) for more information\n");
 		log_it(RealUser, "AUTH", "crontab command not allowed");
 		exit(EXIT_FAILURE);
@@ -130,16 +128,10 @@ parse_args(int argc, char *argv[])
 {
 	int argch;
 
-	if (!(pw = getpwuid(getuid()))) {
-		fprintf(stderr, "%s: your UID isn't in the passwd file.\n",
-			__progname);
-		fprintf(stderr, "bailing out.\n");
-		exit(EXIT_FAILURE);
-	}
-	if (strlen(pw->pw_name) >= sizeof User) {
-		fprintf(stderr, "username too long\n");
-		exit(EXIT_FAILURE);
-	}
+	if (!(pw = getpwuid(getuid())))
+		errx(EXIT_FAILURE, "your UID isn't in the password database");
+	if (strlen(pw->pw_name) >= sizeof User)
+		errx(EXIT_FAILURE, "username too long");
 	strlcpy(User, pw->pw_name, sizeof(User));
 	strlcpy(RealUser, User, sizeof(RealUser));
 	Filename[0] = '\0';
@@ -147,16 +139,11 @@ parse_args(int argc, char *argv[])
 	while ((argch = getopt(argc, argv, "u:ler")) != -1) {
 		switch (argch) {
 		case 'u':
-			if (getuid() != 0) {
-				fprintf(stderr,
-					"must be privileged to use -u\n");
-				exit(EXIT_FAILURE);
-			}
-			if (!(pw = getpwnam(optarg))) {
-				fprintf(stderr, "%s:  user `%s' unknown\n",
-					__progname, optarg);
-				exit(EXIT_FAILURE);
-			}
+			if (getuid() != 0)
+				errx(EXIT_FAILURE,
+				    "only the super user may use -u");
+			if (!(pw = getpwnam(optarg)))
+				errx(EXIT_FAILURE, "unknown user %s", optarg);
 			if (strlcpy(User, optarg, sizeof User) >= sizeof User)
 				usage("username too long");
 			break;
@@ -176,7 +163,7 @@ parse_args(int argc, char *argv[])
 			Option = opt_edit;
 			break;
 		default:
-			usage("unrecognized option");
+			usage(NULL);
 		}
 	}
 
@@ -211,18 +198,12 @@ parse_args(int argc, char *argv[])
 			 * the race.
 			 */
 
-			if (setegid(user_gid) < 0) {
-				perror("setegid(user_gid)");
-				exit(EXIT_FAILURE);
-			}
-			if (!(NewCrontab = fopen(Filename, "r"))) {
-				perror(Filename);
-				exit(EXIT_FAILURE);
-			}
-			if (setegid(crontab_gid) < 0) {
-				perror("setegid(crontab_gid)");
-				exit(EXIT_FAILURE);
-			}
+			if (setegid(user_gid) < 0)
+				err(EXIT_FAILURE, "setegid(user_gid)");
+			if (!(NewCrontab = fopen(Filename, "r")))
+				err(EXIT_FAILURE, "%s", Filename);
+			if (setegid(crontab_gid) < 0)
+				err(EXIT_FAILURE, "setegid(crontab_gid)");
 		}
 	}
 }
@@ -234,15 +215,13 @@ list_cmd(void)
 	FILE *f;
 
 	log_it(RealUser, "LIST", User);
-	if (snprintf(n, sizeof n, "%s/%s", CRON_SPOOL, User) >= sizeof(n)) {
-		fprintf(stderr, "path too long\n");
-		exit(EXIT_FAILURE);
-	}
+	if (snprintf(n, sizeof n, "%s/%s", CRON_SPOOL, User) >= sizeof(n))
+		errc(EXIT_FAILURE, ENAMETOOLONG, "%s/%s", CRON_SPOOL, User);
 	if (!(f = fopen(n, "r"))) {
 		if (errno == ENOENT)
-			fprintf(stderr, "no crontab for %s\n", User);
+			warnx("no crontab for %s", User);
 		else
-			perror(n);
+			warn("%s", n);
 		exit(EXIT_FAILURE);
 	}
 
@@ -260,15 +239,13 @@ delete_cmd(void)
 	char n[MAX_FNAME];
 
 	log_it(RealUser, "DELETE", User);
-	if (snprintf(n, sizeof n, "%s/%s", CRON_SPOOL, User) >= sizeof(n)) {
-		fprintf(stderr, "path too long\n");
-		exit(EXIT_FAILURE);
-	}
+	if (snprintf(n, sizeof n, "%s/%s", CRON_SPOOL, User) >= sizeof(n))
+		errc(EXIT_FAILURE, ENAMETOOLONG, "%s/%s", CRON_SPOOL, User);
 	if (unlink(n) != 0) {
 		if (errno == ENOENT)
-			fprintf(stderr, "no crontab for %s\n", User);
+			warnx("no crontab for %s", User);
 		else
-			perror(n);
+			warn("%s", n);
 		exit(EXIT_FAILURE);
 	}
 	poke_daemon(CRON_SPOOL, RELOAD_CRON);
@@ -291,25 +268,18 @@ edit_cmd(void)
 	struct timespec ts[2];
 
 	log_it(RealUser, "BEGIN EDIT", User);
-	if (snprintf(n, sizeof n, "%s/%s", CRON_SPOOL, User) >= sizeof(n)) {
-		fprintf(stderr, "path too long\n");
-		exit(EXIT_FAILURE);
-	}
+	if (snprintf(n, sizeof n, "%s/%s", CRON_SPOOL, User) >= sizeof(n))
+		errc(EXIT_FAILURE, ENAMETOOLONG, "%s/%s", CRON_SPOOL, User);
 	if (!(f = fopen(n, "r"))) {
-		if (errno != ENOENT) {
-			perror(n);
-			exit(EXIT_FAILURE);
-		}
-		fprintf(stderr, "no crontab for %s - using an empty one\n",
-			User);
-		if (!(f = fopen(_PATH_DEVNULL, "r"))) {
-			perror(_PATH_DEVNULL);
-			exit(EXIT_FAILURE);
-		}
+		if (errno != ENOENT)
+			err(EXIT_FAILURE, "%s", n);
+		warnx("creating new crontab for %s", User);
+		if (!(f = fopen(_PATH_DEVNULL, "r")))
+			err(EXIT_FAILURE, _PATH_DEVNULL);
 	}
 
 	if (fstat(fileno(f), &statbuf) < 0) {
-		perror("fstat");
+		warn("fstat");
 		goto fatal;
 	}
 	ts[0] = statbuf.st_atim;
@@ -322,16 +292,16 @@ edit_cmd(void)
 
 	if (snprintf(Filename, sizeof Filename, "%scrontab.XXXXXXXXXX",
 	    _PATH_TMP) >= sizeof(Filename)) {
-		fprintf(stderr, "path too long\n");
+		warnc(ENAMETOOLONG, "%scrontab.XXXXXXXXXX", _PATH_TMP);
 		goto fatal;
 	}
 	t = mkstemp(Filename);
 	if (t == -1) {
-		perror(Filename);
+		warn("%s", Filename);
 		goto fatal;
 	}
 	if (!(NewCrontab = fdopen(t, "r+"))) {
-		perror("fdopen");
+		warn("fdopen");
 		goto fatal;
 	}
 
@@ -339,16 +309,14 @@ edit_cmd(void)
 
 	copy_crontab(f, NewCrontab);
 	fclose(f);
-	if (fflush(NewCrontab) < 0) {
-		perror(Filename);
-		exit(EXIT_FAILURE);
-	}
-	(void)futimens(t, ts);
+	if (fflush(NewCrontab) < 0)
+		err(EXIT_FAILURE, "%s", Filename);
+	if (futimens(t, ts) == -1)
+		warn("unable to set times on %s", Filename);
  again:
 	rewind(NewCrontab);
 	if (ferror(NewCrontab)) {
-		fprintf(stderr, "%s: error while writing new crontab to %s\n",
-			__progname, Filename);
+		warnx("error writing new crontab to %s", Filename);
  fatal:
 		unlink(Filename);
 		exit(EXIT_FAILURE);
@@ -367,20 +335,19 @@ edit_cmd(void)
 	}
 
 	if (fstat(t, &statbuf) < 0) {
-		perror("fstat");
+		warn("fstat");
 		goto fatal;
 	}
 	if (timespeccmp(&ts[1], &statbuf.st_mtim, ==)) {
 		if (lstat(Filename, &xstatbuf) == 0 &&
 		    statbuf.st_ino != xstatbuf.st_ino) {
-			fprintf(stderr, "%s: crontab temp file moved, editor "
-			   "may create backup files improperly\n", __progname);
+			warnx("crontab temp file moved, editor "
+			   "may create backup files improperly");
 		}
-		fprintf(stderr, "%s: no changes made to crontab\n",
-			__progname);
+		warnx("no changes made to crontab");
 		goto remove;
 	}
-	fprintf(stderr, "%s: installing new crontab\n", __progname);
+	warnx("installing new crontab");
 	switch (replace_cmd()) {
 	case 0:
 		break;
@@ -407,12 +374,10 @@ edit_cmd(void)
 		/*NOTREACHED*/
 	case -2:
 	abandon:
-		fprintf(stderr, "%s: edits left in %s\n",
-			__progname, Filename);
+		warnx("edits left in %s", Filename);
 		goto done;
 	default:
-		fprintf(stderr, "%s: panic: bad switch() in replace_cmd()\n",
-			__progname);
+		warnx("panic: bad switch() in replace_cmd()");
 		goto fatal;
 	}
  remove:
@@ -438,32 +403,30 @@ replace_cmd(void)
 	char **envp = env_init();
 
 	if (envp == NULL) {
-		fprintf(stderr, "%s: Cannot allocate memory.\n", __progname);
+		warn(NULL);		/* ENOMEM */
 		return (-2);
 	}
 	if (snprintf(TempFilename, sizeof TempFilename, "%s/tmp.XXXXXXXXX",
 	    CRON_SPOOL) >= sizeof(TempFilename)) {
 		TempFilename[0] = '\0';
-		fprintf(stderr, "path too long\n");
+		warnc(ENAMETOOLONG, "%s/tmp.XXXXXXXXX", CRON_SPOOL);
 		return (-2);
 	}
 	if (euid != pw->pw_uid) {
 		if (seteuid(pw->pw_uid) == -1) {
-			fprintf(stderr, "%s: Unable to change uid to %u.\n",
-			    __progname, pw->pw_uid);
+			warn("unable to change uid to %u", pw->pw_uid);
 			return (-2);
 		}
 	}
 	fd = mkstemp(TempFilename);
 	if (euid != pw->pw_uid) {
 		if (seteuid(euid) == -1) {
-			fprintf(stderr, "%s: Unable to change uid to %u.\n",
-			    __progname, euid);
+			warn("unable to change uid to %u", euid);
 			return (-2);
 		}
 	}
 	if (fd == -1 || !(tmp = fdopen(fd, "w+"))) {
-		perror(TempFilename);
+		warn("%s", TempFilename);
 		if (fd != -1) {
 			close(fd);
 			unlink(TempFilename);
@@ -494,8 +457,7 @@ replace_cmd(void)
 	fflush(tmp);  rewind(tmp);
 
 	if (ferror(tmp)) {
-		fprintf(stderr, "%s: error while writing new crontab to %s\n",
-			__progname, TempFilename);
+		warnx("error while writing new crontab to %s", TempFilename);
 		fclose(tmp);
 		error = -2;
 		goto done;
@@ -531,27 +493,25 @@ replace_cmd(void)
 	}
 
 	if (CheckErrorCount != 0) {
-		fprintf(stderr, "errors in crontab file, can't install.\n");
+		warnx("errors in crontab file, unable to install");
 		fclose(tmp);
 		error = -1;
 		goto done;
 	}
 
 	if (fclose(tmp) == EOF) {
-		perror("fclose");
+		warn("fclose");
 		error = -2;
 		goto done;
 	}
 
 	if (snprintf(n, sizeof n, "%s/%s", CRON_SPOOL, User) >= sizeof(n)) {
-		fprintf(stderr, "path too long\n");
+		warnc(ENAMETOOLONG, "%s/%s", CRON_SPOOL, User);
 		error = -2;
 		goto done;
 	}
 	if (rename(TempFilename, n)) {
-		fprintf(stderr, "%s: error renaming %s to %s\n",
-			__progname, TempFilename, n);
-		perror("rename");
+		warn("unable to rename %s to %s", TempFilename, n);
 		error = -2;
 		goto done;
 	}
