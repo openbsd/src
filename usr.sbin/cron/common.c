@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.c,v 1.3 2015/11/09 15:57:39 millert Exp $	*/
+/*	$OpenBSD: common.c,v 1.4 2015/11/11 17:02:22 millert Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -89,7 +89,7 @@ set_cron_cwd(void)
 	if (grp != NULL) {
 		if (sb.st_gid != grp->gr_gid)
 			chown(CRON_SPOOL, -1, grp->gr_gid);
-		if (sb.st_mode != 01730)
+		if ((sb.st_mode & ALLPERMS) != 01730)
 			chmod(CRON_SPOOL, 01730);
 	}
 
@@ -114,7 +114,7 @@ set_cron_cwd(void)
 	if (grp != NULL) {
 		if (sb.st_gid != grp->gr_gid)
 			chown(AT_SPOOL, -1, grp->gr_gid);
-		if (sb.st_mode != 01770)
+		if ((sb.st_mode & ALLPERMS) != 01770)
 			chmod(AT_SPOOL, 01770);
 	}
 }
