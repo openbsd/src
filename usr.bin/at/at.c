@@ -1,4 +1,4 @@
-/*	$OpenBSD: at.c,v 1.72 2015/11/11 17:17:56 millert Exp $	*/
+/*	$OpenBSD: at.c,v 1.73 2015/11/11 21:53:51 millert Exp $	*/
 
 /*
  *  at.c : Put file into atrun queue
@@ -82,7 +82,6 @@ gid_t user_gid;			/* user's real gid */
 gid_t spool_gid;		/* gid for writing to at spool */
 
 static void sigc(int);
-static void alarmc(int);
 static void writefile(const char *, time_t, char);
 static void list_jobs(int, char **, int, int);
 static time_t ttime(char *);
@@ -142,13 +141,6 @@ sigc(int signo)
 	_exit(EXIT_FAILURE);
 }
 
-/* ARGSUSED */
-static void
-alarmc(int signo)
-{
-	/* just return */
-}
-
 static int
 newjob(time_t runtimer, int queue)
 {
@@ -182,7 +174,7 @@ writefile(const char *cwd, time_t runtimer, char queue)
 	char timestr[TIMESIZE];
 	struct passwd *pass_entry;
 	struct tm runtime;
-	int fdes, lockdes, fd2;
+	int fd;
 	FILE *fp;
 	struct sigaction act;
 	char **atenv;
@@ -202,28 +194,6 @@ writefile(const char *cwd, time_t runtimer, char queue)
 	act.sa_flags = 0;
 	sigaction(SIGINT, &act, NULL);
 
-	if ((lockdes = open(AT_SPOOL, O_RDONLY|O_DIRECTORY, 0)) < 0)
-		fatal(AT_SPOOL);
-
-	/*
-	 * Lock the jobs dir so we don't have to worry about someone
-	 * else grabbing a file name out from under us.
-	 * Set an alarm so we don't sleep forever waiting on the lock.
-	 * If we don't succeed with ALARMC seconds, something is wrong...
-	 */
-	bzero(&act, sizeof act);
-	act.sa_handler = alarmc;
-	sigemptyset(&act.sa_mask);
-#ifdef SA_INTERRUPT
-	act.sa_flags = SA_INTERRUPT;
-#endif
-	sigaction(SIGALRM, &act, NULL);
-	alarm(ALARMC);
-	ch = flock(lockdes, LOCK_EX);
-	alarm(0);
-	if (ch != 0)
-		fatal("unable to lock %s", AT_SPOOL);
-
 	/*
 	 * Create the file. The x bit is only going to be set after it has
 	 * been completely written out, to make sure it is not executed in
@@ -231,13 +201,10 @@ writefile(const char *cwd, time_t runtimer, char queue)
 	 * their r bit.  Yes, this is a kluge.
 	 */
 	cmask = umask(S_IRUSR | S_IWUSR | S_IXUSR);
-	if ((fdes = newjob(runtimer, queue)) == -1)
+	if ((fd = newjob(runtimer, queue)) == -1)
 		fatal("unable to create atjob file");
 
-	if ((fd2 = dup(fdes)) < 0)
-		fatal("dup");
-
-	if (fchown(fd2, -1, user_gid) != 0)
+	if (fchown(fd, -1, user_gid) != 0)
 		fatal("fchown");
 
 	/*
@@ -246,10 +213,7 @@ writefile(const char *cwd, time_t runtimer, char queue)
 	 */
 	fcreated = 1;
 
-	/* Now we can release the lock, so other people can access it */
-	(void)close(lockdes);
-
-	if ((fp = fdopen(fdes, "w")) == NULL)
+	if ((fp = fdopen(fd, "w")) == NULL)
 		fatal("unable to reopen atjob file");
 
 	/*
@@ -378,15 +342,13 @@ writefile(const char *cwd, time_t runtimer, char queue)
 	if (ferror(stdin))
 		fatalx("read error");
 
-	(void)fclose(fp);
-
 	/*
 	 * Set the x bit so that we're ready to start executing
 	 */
-	if (fchmod(fd2, S_IRUSR | S_IWUSR | S_IXUSR) < 0)
+	if (fchmod(fileno(fp), S_IRUSR | S_IWUSR | S_IXUSR) < 0)
 		fatal("fchmod");
 
-	(void)close(fd2);
+	(void)fclose(fp);
 
 	/* Poke cron so it knows to reload the at spool. */
 	poke_daemon(AT_SPOOL, RELOAD_AT);
@@ -875,8 +837,7 @@ main(int argc, char **argv)
 	int cflag = 0;
 	int nflag = 0;
 
-	if (pledge("stdio rpath wpath cpath fattr getpw unix flock id",
-	    NULL) == -1)
+	if (pledge("stdio rpath wpath cpath fattr getpw unix id", NULL) == -1)
 		fatal("pledge");
 
 	if (argc < 1)
