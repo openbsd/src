@@ -1,4 +1,4 @@
-/*	$OpenBSD: disk.c,v 1.48 2015/08/27 20:58:27 krw Exp $	*/
+/*	$OpenBSD: disk.c,v 1.49 2015/11/11 15:39:18 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -74,8 +74,6 @@ DISK_getlabelgeometry(void)
 			if (sz > UINT32_MAX) {
 				disk.cylinders = UINT32_MAX / spc;
 				disk.size = disk.cylinders * spc;
-				warnx("disk too large (%llu sectors)."
-				    " size truncated.", sz);
 			} else
 				disk.size = sz;
 			unit_types[SECTORS].conversion = dl.d_secsize;

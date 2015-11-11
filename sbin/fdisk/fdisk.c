@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdisk.c,v 1.79 2015/10/26 15:08:26 krw Exp $	*/
+/*	$OpenBSD: fdisk.c,v 1.80 2015/11/11 15:39:18 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -166,6 +166,9 @@ main(int argc, char *argv[])
 	if (GPT_get_gpt()) {
 		memset(&gh, 0, sizeof(gh));
 		memset(&gp, 0, sizeof(gp));
+		if (DL_GETDSIZE(&dl) > UINT32_MAX)
+			warnx("disk too large (%llu sectors). size truncated.",
+			    (unsigned long long)DL_GETDSIZE(&dl));
 	}
 
 	if (c_arg | h_arg | s_arg) {

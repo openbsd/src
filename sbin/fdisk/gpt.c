@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpt.c,v 1.2 2015/10/26 15:08:26 krw Exp $	*/
+/*	$OpenBSD: gpt.c,v 1.3 2015/11/11 15:39:18 krw Exp $	*/
 /*
  * Copyright (c) 2015 Markus Muller <mmu@grummel.net>
  * Copyright (c) 2015 Kenneth R Westerback <krw@openbsd.org>
@@ -242,7 +242,7 @@ GPT_print(char *units)
 	free(guidstr);
 
 	u = unit_lookup(units);
-	size = ((double)disk.size * secsize) / unit_types[u].conversion;
+	size = ((double)DL_GETDSIZE(&dl) * secsize) / unit_types[u].conversion;
 	printf("[%.0f ", size);
 	if (u == SECTORS && secsize != DEV_BSIZE)
 		printf("%d-byte ", secsize);
