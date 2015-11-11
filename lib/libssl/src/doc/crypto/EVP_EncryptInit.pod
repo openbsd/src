@@ -25,7 +25,9 @@ EVP_rc2_ecb, EVP_rc2_cfb, EVP_rc2_ofb, EVP_rc2_40_cbc, EVP_rc2_64_cbc,
 EVP_bf_cbc, EVP_bf_ecb, EVP_bf_cfb, EVP_bf_ofb, EVP_cast5_cbc,
 EVP_cast5_ecb, EVP_cast5_cfb, EVP_cast5_ofb, 
 EVP_aes_128_gcm, EVP_aes_192_gcm, EVP_aes_256_gcm, EVP_aes_128_ccm,
-EVP_aes_192_ccm, EVP_aes_256_ccm - EVP cipher routines
+EVP_aes_192_ccm, EVP_aes_256_ccm, EVP_rc5_32_12_16_cbc,
+EVP_rc5_32_12_16_cfb, EVP_rc5_32_12_16_ecb, EVP_rc5_32_12_16_ofb
+- EVP cipher routines
 
 =head1 SYNOPSIS
 

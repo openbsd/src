@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.27 2015/11/11 21:15:15 schwarze Exp $
+# $OpenBSD: Makefile,v 1.28 2015/11/11 22:14:39 jmc Exp $
 
 .include <bsd.own.mk>		# for NOMAN
 
@@ -741,7 +741,7 @@ MLINKS+=\
 	EVP_PKEY_CTX_ctrl.3 EVP_PKEY_CTX_set_rsa_pss_saltlen.3 \
 	EVP_PKEY_CTX_ctrl.3 EVP_PKEY_CTX_set_rsa_rsa_keygen_bits.3 \
 	EVP_PKEY_CTX_ctrl.3 EVP_PKEY_CTX_set_signature_md.3 \
-	EVP_PKEY_CTX_ctrl.3 EVP_PKEY_ctrl_str.3 \
+	EVP_PKEY_CTX_ctrl.3 EVP_PKEY_CTX_ctrl_str.3 \
 	EVP_PKEY_CTX_ctrl.3 EVP_PKEY_get_default_digest_nid.3 \
 	EVP_PKEY_CTX_new.3 EVP_PKEY_CTX_new_id.3 \
 	EVP_PKEY_CTX_new.3 EVP_PKEY_CTX_dup.3 \
@@ -927,7 +927,6 @@ MLINKS+=\
 	RSA_print.3 RSA_print_fp.3 \
 	RSA_private_encrypt.3 RSA_public_decrypt.3 \
 	RSA_public_encrypt.3 RSA_private_decrypt.3 \
-	RSA_set_method.3 RSA_PKCS1_RSAref.3 \
 	RSA_set_method.3 RSA_PKCS1_SSLeay.3 \
 	RSA_set_method.3 RSA_flags.3 \
 	RSA_set_method.3 RSA_get_default_method.3 \
