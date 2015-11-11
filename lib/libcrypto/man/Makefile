@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.26 2015/11/11 18:36:48 schwarze Exp $
+# $OpenBSD: Makefile,v 1.27 2015/11/11 21:15:15 schwarze Exp $
 
 .include <bsd.own.mk>		# for NOMAN
 
@@ -69,13 +69,14 @@ MAN=	\
 	CMS_uncompress.3 \
 	CMS_verify.3 \
 	CMS_verify_receipt.3 \
-	EVP_AEAD_CTX_init.3 \
-
-GENMAN= \
 	CONF_modules_free.3 \
 	CONF_modules_load_file.3 \
 	CRYPTO_set_ex_data.3 \
 	CRYPTO_set_locking_callback.3 \
+	EVP_AEAD_CTX_init.3 \
+	crypto.3 \
+
+GENMAN= \
 	DES_set_key.3 \
 	DH_generate_key.3 \
 	DH_generate_parameters.3 \
@@ -188,7 +189,6 @@ GENMAN= \
 	X509_verify_cert.3 \
 	bn.3 \
 	bn_internal.3 \
-	crypto.3 \
 	d2i_ASN1_OBJECT.3 \
 	d2i_DHparams.3 \
 	d2i_DSAPublicKey.3 \
