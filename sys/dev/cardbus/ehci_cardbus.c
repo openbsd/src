@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci_cardbus.c,v 1.21 2015/03/14 03:38:47 jsg Exp $ */
+/*	$OpenBSD: ehci_cardbus.c,v 1.22 2015/11/11 02:29:14 jsg Exp $ */
 /*	$NetBSD: ehci_cardbus.c,v 1.6.6.3 2004/09/21 13:27:25 skrll Exp $	*/
 
 /*
@@ -123,7 +123,7 @@ ehci_cardbus_attach(struct device *parent, struct device *self, void *aux)
 	EOWRITE2(&sc->sc, EHCI_USBINTR, 0);
 
 	sc->sc_ih = cardbus_intr_establish(cc, cf, ca->ca_intrline,
-					   IPL_USB, ehci_intr, sc, devname);
+	    IPL_USB | IPL_MPSAFE, ehci_intr, sc, devname);
 	if (sc->sc_ih == NULL) {
 		printf(": unable to establish interrupt\n");
 		return;
