@@ -1,4 +1,4 @@
-/*	$OpenBSD: pr.c,v 1.38 2015/10/09 01:37:08 deraadt Exp $	*/
+/*	$OpenBSD: pr.c,v 1.39 2015/11/11 02:52:46 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1991 Keith Muller.
@@ -140,8 +140,10 @@ main(int argc, char *argv[])
 {
     int ret_val;
 
-    if (pledge("stdio rpath", NULL) == -1)
+    if (pledge("stdio rpath", NULL) == -1) {
 	perror("pledge");
+	exit(1);
+    }
 
     if (signal(SIGINT, SIG_IGN) != SIG_IGN)
 	(void)signal(SIGINT, terminate);

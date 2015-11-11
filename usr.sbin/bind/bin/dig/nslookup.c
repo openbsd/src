@@ -867,14 +867,18 @@ main(int argc, char **argv) {
 	result = isc_app_start();
 	check_result(result, "isc_app_start");
 
-	if (pledge("stdio rpath dns", NULL) == -1)
+	if (pledge("stdio rpath dns", NULL) == -1) {
 		perror("pledge");
+		exit(1);
+	}
 
 	setup_libs();
 	progname = argv[0];
 
-	if (pledge("stdio dns", NULL) == -1)
+	if (pledge("stdio dns", NULL) == -1) {
 		perror("pledge");
+		exit(1);
+	}
 
 	parse_args(argc, argv);
 

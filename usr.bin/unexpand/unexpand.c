@@ -1,4 +1,4 @@
-/*	$OpenBSD: unexpand.c,v 1.11 2015/10/10 14:23:46 deraadt Exp $	*/
+/*	$OpenBSD: unexpand.c,v 1.12 2015/11/11 02:52:46 deraadt Exp $	*/
 /*	$NetBSD: unexpand.c,v 1.5 1994/12/24 17:08:05 cgd Exp $	*/
 
 /*-
@@ -49,8 +49,10 @@ main(int argc, char *argv[])
 {
 	char *cp;
 
-	if (pledge("stdio rpath", NULL) == -1)
+	if (pledge("stdio rpath", NULL) == -1) {
 		perror("pledge");
+		exit(1);
+	}
 
 	argc--, argv++;
 	if (argc > 0 && argv[0][0] == '-') {

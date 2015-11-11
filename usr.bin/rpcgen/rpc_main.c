@@ -1,4 +1,4 @@
-/* $OpenBSD: rpc_main.c,v 1.31 2015/10/10 20:57:00 deraadt Exp $	 */
+/* $OpenBSD: rpc_main.c,v 1.32 2015/11/11 02:52:46 deraadt Exp $	 */
 /* $NetBSD: rpc_main.c,v 1.9 1996/02/19 11:12:43 pk Exp $	 */
 
 /*
@@ -140,8 +140,10 @@ main(int argc, char *argv[])
 {
 	struct commandline cmd;
 
-	if (pledge("stdio rpath wpath cpath proc exec", NULL) == -1)
+	if (pledge("stdio rpath wpath cpath proc exec", NULL) == -1) {
 		perror("pledge");		
+		exit(1);
+	}
 
 	(void) memset((char *) &cmd, 0, sizeof(struct commandline));
 	clear_args();

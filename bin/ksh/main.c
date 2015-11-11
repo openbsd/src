@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.73 2015/11/01 15:38:53 mmcc Exp $	*/
+/*	$OpenBSD: main.c,v 1.74 2015/11/11 02:52:46 deraadt Exp $	*/
 
 /*
  * startup, main loop, environments and error handling
@@ -151,8 +151,10 @@ main(int argc, char *argv[])
 
 #ifndef MKNOD
 	if (pledge("stdio rpath wpath cpath fattr flock getpw proc exec tty",
-	    NULL) == -1)
+	    NULL) == -1) {
 		perror("pledge");
+		exit(1);
+	}
 #endif
 
 	ainit(&aperm);		/* initialize permanent Area */

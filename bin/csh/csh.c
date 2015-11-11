@@ -1,4 +1,4 @@
-/*	$OpenBSD: csh.c,v 1.35 2015/10/28 22:18:53 naddy Exp $	*/
+/*	$OpenBSD: csh.c,v 1.36 2015/11/11 02:52:46 deraadt Exp $	*/
 /*	$NetBSD: csh.c,v 1.14 1995/04/29 23:21:28 mycroft Exp $	*/
 
 /*-
@@ -152,8 +152,10 @@ main(int argc, char *argv[])
 	(void) time(&chktim);
 
     if (pledge("stdio rpath wpath cpath fattr getpw proc exec tty",
-	NULL) == -1)
+	NULL) == -1) {
 	    perror("pledge");
+	    exit(1);
+    }
 
     /*
      * Move the descriptors to safe places. The variable didfds is 0 while we

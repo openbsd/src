@@ -839,8 +839,10 @@ main(int argc, char **argv) {
 	idnoptions = IDN_ASCCHECK;
 #endif
 
-	if (pledge("stdio rpath dns inet", NULL) == -1)
+	if (pledge("stdio rpath dns inet", NULL) == -1) {
 		perror("pledge");
+		exit(1);
+	}
 
 	debug("main()");
 	progname = argv[0];
@@ -850,8 +852,10 @@ main(int argc, char **argv) {
 	setup_libs();
 	parse_args(ISC_FALSE, argc, argv);
 
-	if (pledge("stdio dns", NULL) == -1)
+	if (pledge("stdio dns", NULL) == -1) {
 		perror("pledge");
+		exit(1);
+	}
 
 	setup_system();
 	result = isc_app_onrun(mctx, global_task, onrun_callback, NULL);

@@ -1,4 +1,4 @@
-/* $OpenBSD: crunchgen.c,v 1.15 2015/10/13 15:11:48 deraadt Exp $	 */
+/* $OpenBSD: crunchgen.c,v 1.16 2015/11/11 02:52:46 deraadt Exp $	 */
 
 /*
  * Copyright (c) 1994 University of Maryland
@@ -118,8 +118,10 @@ main(int argc, char *argv[])
 	extern int      optind;
 	extern char    *optarg;
 
-	if (pledge("stdio rpath wpath cpath proc exec", NULL) == -1)
+	if (pledge("stdio rpath wpath cpath proc exec", NULL) == -1) {
 		perror("pledge");
+		exit(1);
+	}
 
 	while ((optc = getopt(argc, argv, "hm:c:e:fqD:EL:O:M")) != -1) {
 		switch (optc) {

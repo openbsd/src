@@ -1,4 +1,4 @@
-/*	$OpenBSD: infocmp.c,v 1.21 2015/10/10 15:08:49 deraadt Exp $	*/
+/*	$OpenBSD: infocmp.c,v 1.22 2015/11/11 02:52:46 deraadt Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998-2007,2008 Free Software Foundation, Inc.              *
@@ -44,7 +44,7 @@
 
 #include <dump_entry.h>
 
-MODULE_ID("$Id: infocmp.c,v 1.21 2015/10/10 15:08:49 deraadt Exp $")
+MODULE_ID("$Id: infocmp.c,v 1.22 2015/11/11 02:52:46 deraadt Exp $")
 
 #define L_CURL "{"
 #define R_CURL "}"
@@ -1282,8 +1282,10 @@ main(int argc, char *argv[])
     bool init_analyze = FALSE;
     bool suppress_untranslatable = FALSE;
 
-    if (pledge("stdio rpath", NULL) == -1)
+    if (pledge("stdio rpath", NULL) == -1) {
 	perror("pledge");
+	exit(1);
+    }
 
     /* where is the terminfo database location going to default to? */
     restdir = firstdir = 0;
