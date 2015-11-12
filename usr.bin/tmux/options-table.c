@@ -1,4 +1,4 @@
-/* $OpenBSD: options-table.c,v 1.64 2015/11/11 23:23:33 nicm Exp $ */
+/* $OpenBSD: options-table.c,v 1.65 2015/11/12 08:19:18 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -85,7 +85,7 @@ const struct options_table_entry server_options_table[] = {
 
 	{ .name = "history-file",
 	  .type = OPTIONS_TABLE_STRING,
-	  .default_str = NULL
+	  .default_str = ""
 	},
 
 	{ .name = "message-limit",
