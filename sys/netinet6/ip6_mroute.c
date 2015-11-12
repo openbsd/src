@@ -638,14 +638,9 @@ add_m6if(struct mif6ctl *mifcp)
 	mifp = mif6table + mifcp->mif6c_mifi;
 	if (mifp->m6_ifp)
 		return EADDRINUSE; /* XXX: is it appropriate? */
-	ifp = if_get(mifcp->mif6c_pifi);
-	if (!ifp)
-		return ENXIO;
 
 #ifdef PIM
 	if (mifcp->mif6c_flags & MIFF_REGISTER) {
-		if_put(ifp);
-
 		if (reg_mif_num == (mifi_t)-1) {
 			ifp = malloc(sizeof(*ifp), M_DEVBUF, M_NOWAIT|M_ZERO);
 			if (ifp == NULL)
@@ -666,6 +661,10 @@ add_m6if(struct mif6ctl *mifcp)
 	} else
 #endif
 	{
+		ifp = if_get(mifcp->mif6c_pifi);
+		if (ifp == NULL)
+			return ENXIO;
+
 		/* Make sure the interface supports multicast */
 		if ((ifp->if_flags & IFF_MULTICAST) == 0) {
 			if_put(ifp);
