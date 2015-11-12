@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_mroute.c,v 1.85 2015/11/12 16:58:45 mpi Exp $	*/
+/*	$OpenBSD: ip_mroute.c,v 1.86 2015/11/12 18:19:27 mpi Exp $	*/
 /*	$NetBSD: ip_mroute.c,v 1.85 2004/04/26 01:31:57 matt Exp $	*/
 
 /*
@@ -92,7 +92,6 @@
 #include <netinet/pim_var.h>
 #endif
 
-#define IP_MULTICASTOPTS 0
 #define	M_PULLUP(m, len)						 \
 	do {								 \
 		if ((m) && ((m)->m_flags & M_EXT || (m)->m_len < (len))) \
@@ -137,8 +136,6 @@ int get_vif_cnt(struct sioc_vif_req *);
 int get_vif_ctl(struct vifctl *);
 int ip_mrouter_init(struct socket *, struct mbuf *);
 int get_version(struct mbuf *);
-int set_assert(struct mbuf *);
-int get_assert(struct mbuf *);
 int add_vif(struct mbuf *);
 int del_vif(struct mbuf *);
 void update_mfc_params(struct mfc *, struct mfcctl2 *);
@@ -164,37 +161,9 @@ int pim_register_send_rp(struct ip *, struct vif *,
 int pim_register_send_upcall(struct ip *, struct vif *,
 		struct mbuf *, struct mfc *);
 struct mbuf *pim_register_prepare(struct ip *, struct mbuf *);
+int set_assert(struct mbuf *);
+int get_assert(struct mbuf *);
 #endif
-
-/*
- * 'Interfaces' associated with decapsulator (so we can tell
- * packets that went through it from ones that get reflected
- * by a broken gateway).  These interfaces are never linked into
- * the system ifnet list & no routes point to them.  I.e., packets
- * can't be sent this way.  They only exist as a placeholder for
- * multicast source verification.
- */
-#if 0
-struct ifnet multicast_decap_if[MAXVIFS];
-#endif
-
-#define	ENCAP_TTL	64
-#define	ENCAP_PROTO	IPPROTO_IPIP	/* 4 */
-
-/* prototype IP hdr for encapsulated packets */
-struct ip multicast_encap_iphdr = {
-#if BYTE_ORDER == LITTLE_ENDIAN
-	sizeof(struct ip) >> 2, IPVERSION,
-#else
-	IPVERSION, sizeof(struct ip) >> 2,
-#endif
-	0,				/* tos */
-	sizeof(struct ip),		/* total length */
-	0,				/* id */
-	0,				/* frag offset */
-	ENCAP_TTL, ENCAP_PROTO,
-	0,				/* checksum */
-};
 
 #ifdef PIM
 struct pimstat pimstat;
@@ -209,11 +178,11 @@ struct pimstat pimstat;
  * }
  *
  */
-
 struct pim_encap_pimhdr {
 	struct pim pim;
 	uint32_t   flags;
 };
+#define	PIM_ENCAP_TTL	64
 
 static struct ip pim_encap_iphdr = {
 #if BYTE_ORDER == LITTLE_ENDIAN
@@ -227,7 +196,7 @@ static struct ip pim_encap_iphdr = {
 	sizeof(struct ip),	/* total length */
 	0,			/* id */
 	0,			/* frag offset */ 
-	ENCAP_TTL,
+	PIM_ENCAP_TTL,
 	IPPROTO_PIM,
 	0,			/* checksum */
 };
@@ -347,9 +316,11 @@ ip_mrouter_set(struct socket *so, int optname, struct mbuf **mp)
 		case MRT_DEL_MFC:
 			error = del_mfc(*mp);
 			break;
+#ifdef PIM
 		case MRT_ASSERT:
 			error = set_assert(*mp);
 			break;
+#endif
 		case MRT_API_CONFIG:
 			error = set_api_config(*mp);
 			break;
@@ -380,9 +351,11 @@ ip_mrouter_get(struct socket *so, int optname, struct mbuf **mp)
 		case MRT_VERSION:
 			error = get_version(*mp);
 			break;
+#ifdef PIM
 		case MRT_ASSERT:
 			error = get_assert(*mp);
 			break;
+#endif
 		case MRT_API_SUPPORT:
 			error = get_api_support(*mp);
 			break;
@@ -705,6 +678,7 @@ get_version(struct mbuf *m)
 	return (0);
 }
 
+#ifdef PIM
 /*
  * Set PIM assert processing global
  */
@@ -733,6 +707,7 @@ get_assert(struct mbuf *m)
 	m->m_len = sizeof(int);
 	return (0);
 }
+#endif
 
 /*
  * Configure API capabilities
@@ -759,10 +734,12 @@ set_api_config(struct mbuf *m)
 		*apival = 0;
 		return (EPERM);
 	}
+#ifdef PIM
 	if (pim_assert) {
 		*apival = 0;
 		return (EPERM);
 	}
+#endif
 	for (i = 0; i < MFCTBLSIZ; i++) {
 		if (LIST_FIRST(&mfchashtbl[i]) != NULL) {
 			*apival = 0;
@@ -1546,6 +1523,7 @@ ip_mdq(struct mbuf *m, struct ifnet *ifp, struct mfc *rt)
 			    vifi >= numvifs ? 0 : viftable[vifi].v_ifp);
 		++mrtstat.mrts_wrong_if;
 		++rt->mfc_wrong_if;
+#ifdef PIM
 		/*
 		 * If we are doing PIM assert processing, send a message
 		 * to the routing daemon.
@@ -1558,10 +1536,8 @@ ip_mdq(struct mbuf *m, struct ifnet *ifp, struct mfc *rt)
 			struct timeval now;
 			u_int32_t delta;
 
-#ifdef PIM
 			if (ifp == &multicast_register_if)
 				pimstat.pims_rcv_registers_wrongiif++;
-#endif
 
 			/* Get vifi for the incoming packet */
 			for (vifi = 0;
@@ -1610,6 +1586,7 @@ ip_mdq(struct mbuf *m, struct ifnet *ifp, struct mfc *rt)
 				}
 			}
 		}
+#endif
 		return (0);
 	}
 
@@ -1680,7 +1657,7 @@ send_packet(struct vif *vifp, struct mbuf *m)
 	imo.imo_loop = 1;
 
 	s = splsoftnet();
-	ip_output(m, NULL, NULL, IP_FORWARDING|IP_MULTICASTOPTS, &imo, NULL, 0);
+	ip_output(m, NULL, NULL, IP_FORWARDING, &imo, NULL, 0);
 	splx(s);
 }
 
