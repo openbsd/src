@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbr.c,v 1.57 2015/11/10 18:07:12 krw Exp $	*/
+/*	$OpenBSD: mbr.c,v 1.58 2015/11/12 21:31:36 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -244,6 +244,8 @@ MBR_write(int fd, off_t where, struct dos_mbr *dos_mbr)
 	 */
 	memcpy(secbuf, dos_mbr, sizeof(*dos_mbr));
 	DISK_writesector(fd, secbuf, where);
+
+	/* Refresh in-kernel disklabel from the updated disk information. */
 	ioctl(fd, DIOCRLDINFO, 0);
 
 	free(secbuf);

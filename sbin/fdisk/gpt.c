@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpt.c,v 1.3 2015/11/11 15:39:18 krw Exp $	*/
+/*	$OpenBSD: gpt.c,v 1.4 2015/11/12 21:31:36 krw Exp $	*/
 /*
  * Copyright (c) 2015 Markus Muller <mmu@grummel.net>
  * Copyright (c) 2015 Kenneth R Westerback <krw@openbsd.org>
@@ -391,8 +391,6 @@ GPT_write(int fd)
 	off_t off;
 	u_int64_t altgh, altgp;
 
-	ioctl(fd, DIOCRLDINFO, 0);
-
 	/* Assume we always write full-size partition table. XXX */
 	altgh = DL_GETDSIZE(&dl) - 1;
 	altgp = DL_GETDSIZE(&dl) - 1 - (sizeof(gp) / secsize);
@@ -457,6 +455,9 @@ GPT_write(int fd)
 		errno = EIO;
 		return (-1);
 	}
+
+	/* Refresh in-kernel disklabel from the updated disk information. */
+	ioctl(fd, DIOCRLDINFO, 0);
 
 	return (0);
 }
