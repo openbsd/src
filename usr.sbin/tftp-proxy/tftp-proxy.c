@@ -1,4 +1,4 @@
-/* $OpenBSD: tftp-proxy.c,v 1.13 2015/11/12 19:13:47 deraadt Exp $
+/* $OpenBSD: tftp-proxy.c,v 1.14 2015/11/12 20:55:49 deraadt Exp $
  *
  * Copyright (c) 2005 DLS Internet Services
  * Copyright (c) 2004, 2005 Camiel Dobbelaar, <cd@sentia.nl>
@@ -301,10 +301,6 @@ main(int argc, char *argv[])
 	init_filter(NULL, verbose);
 
 	/* revoke privs */
-	pw = getpwnam(NOPRIV_USER);
-	if (!pw)
-		lerrx(1, "no such user %s", NOPRIV_USER);
-
 	if (chroot(CHROOT_DIR) == -1)
 		lerr(1, "chroot %s", CHROOT_DIR);
 
