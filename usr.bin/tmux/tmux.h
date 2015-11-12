@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.572 2015/11/12 11:09:11 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.573 2015/11/12 11:10:50 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -2189,6 +2189,7 @@ u_int		 utf8_combine(const struct utf8_data *);
 int		 utf8_split(u_int, struct utf8_data *);
 u_int		 utf8_split2(u_int, u_char *);
 int		 utf8_strvis(char *, const char *, size_t, int);
+char		*utf8_sanitize(const char *);
 struct utf8_data *utf8_fromcstr(const char *);
 char		*utf8_tocstr(struct utf8_data *);
 u_int		 utf8_cstrwidth(const char *);

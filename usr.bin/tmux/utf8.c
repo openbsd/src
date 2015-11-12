@@ -1,4 +1,4 @@
-/* $OpenBSD: utf8.c,v 1.15 2015/11/12 11:05:34 nicm Exp $ */
+/* $OpenBSD: utf8.c,v 1.16 2015/11/12 11:10:50 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -583,6 +583,50 @@ utf8_strvis(char *dst, const char *src, size_t len, int flag)
 
 	*dst = '\0';
 	return (dst - start);
+}
+
+/*
+ * Sanitize a string, changing any UTF-8 characters to '_'. Caller should free
+ * the returned string. Anything not valid printable ASCII or UTF-8 is
+ * stripped.
+ */
+char *
+utf8_sanitize(const char *src)
+{
+	char			*dst;
+	size_t			 n;
+	int			 more;
+	struct utf8_data	 utf8data;
+	u_int			 i;
+
+	dst = NULL;
+
+	n = 0;
+	while (*src != '\0') {
+		dst = xreallocarray(dst, n + 1, sizeof *dst);
+		if (utf8_open(&utf8data, *src)) {
+			more = 1;
+			while (*++src != '\0' && more)
+				more = utf8_append(&utf8data, *src);
+			if (!more) {
+				dst = xreallocarray(dst, n + utf8data.width,
+				    sizeof *dst);
+				for (i = 0; i < utf8data.width; i++)
+					dst[n++] = '_';
+				continue;
+			}
+			src -= utf8data.have;
+		}
+		if (*src > 0x1f && *src < 0x7f)
+			dst[n] = *src;
+		src++;
+
+		n++;
+	}
+
+	dst = xreallocarray(dst, n + 1, sizeof *dst);
+	dst[n] = '\0';
+	return (dst);
 }
 
 /*
