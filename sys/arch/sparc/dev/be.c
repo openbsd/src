@@ -1,4 +1,4 @@
-/*	$OpenBSD: be.c,v 1.52 2015/10/25 13:22:09 mpi Exp $	*/
+/*	$OpenBSD: be.c,v 1.53 2015/11/12 10:26:09 dlg Exp $	*/
 
 /*
  * Copyright (c) 1998 Theo de Raadt and Jason L. Wright.
@@ -261,11 +261,9 @@ bestart(ifp)
 	cnt = sc->sc_no_td;
 
 	for (;;) {
-		IFQ_POLL(&ifp->if_snd, m);
+		IFQ_DEQUEUE(&ifp->if_snd, m);
 		if (m == NULL)
 			break;
-
-		IFQ_DEQUEUE(&ifp->if_snd, m);
 
 #if NBPFILTER > 0
 		/*
