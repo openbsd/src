@@ -59,10 +59,10 @@ an infinite loop, aborting with a stack overflow.
 Overwrite mode does not work in macros.	 (Characters are inserted
 rather than overwriting.)
 
-Dired mode has some problems:  Rename does not update the buffer.
-Doing a dired again will update the buffer (whether it needs it or
-not) and will lose any marks for deletion.  .. and . are not
-recognized as special cases.
+Dired mode has some problems: .. and . are not recognized as special
+cases.  Also, mg uses the output of the command 'ls' to populate a
+dired buffer.  This is not ideal, dired mode should probably be
+rewritten to use the directory(3) set of functions. 
 
 On systems with 16 bit integers, the kill buffer cannot exceed 32767
 bytes.
