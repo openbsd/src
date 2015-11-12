@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.56 2015/11/12 15:07:41 krw Exp $	*/
+/*	$OpenBSD: misc.c,v 1.57 2015/11/12 17:54:50 tim Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -71,15 +71,12 @@ string_from_line(char *buf, size_t buflen)
 		return (1);
 
 	if (line[sz - 1] == '\n')
-		line[--sz] = '\0';
+		sz--;
+	if (sz >= buflen)
+		sz = buflen - 1;
 
-	if (sz < buflen) {
-		memcpy(buf, line, sz);
-		buf[sz] = '\0';
-	} else {
-		memcpy(buf, line, buflen - 1);
-		buf[buflen - 1] = '\0';
-	}
+	memcpy(buf, line, sz);
+	buf[sz] = '\0';
 
 	return (0);
 }
