@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwi.c,v 1.120 2015/11/11 10:07:25 mpi Exp $	*/
+/*	$OpenBSD: bwi.c,v 1.121 2015/11/12 10:25:03 dlg Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -7208,7 +7208,6 @@ bwi_start(struct ifnet *ifp)
 			IFQ_DEQUEUE(&ifp->if_snd, m);
 			if (m == NULL)
 				break;
-
 
 			if (m->m_len < sizeof(*eh)) {
 				m = m_pullup(m, sizeof(*eh));
