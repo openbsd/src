@@ -1,4 +1,4 @@
-/*	$OpenBSD: mandoc.c,v 1.65 2015/10/15 23:35:38 schwarze Exp $ */
+/*	$OpenBSD: mandoc.c,v 1.66 2015/11/12 22:43:30 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -473,17 +473,27 @@ time2a(time_t t)
 	 * up to 2 characters for the day + comma + blank
 	 * 4 characters for the year and a terminating '\0'
 	 */
+
 	p = buf = mandoc_malloc(10 + 4 + 4 + 1);
 
-	if (0 == (ssz = strftime(p, 10 + 1, "%B ", tm)))
+	if ((ssz = strftime(p, 10 + 1, "%B ", tm)) == 0)
 		goto fail;
 	p += (int)ssz;
 
-	if (-1 == (isz = snprintf(p, 4 + 1, "%d, ", tm->tm_mday)))
+	/*
+	 * The output format is just "%d" here, not "%2d" or "%02d".
+	 * That's also the reason why we can't just format the
+	 * date as a whole with "%B %e, %Y" or "%B %d, %Y".
+	 * Besides, the present approach is less prone to buffer
+	 * overflows, in case anybody should ever introduce the bug
+	 * of looking at LC_TIME.
+	 */
+
+	if ((isz = snprintf(p, 4 + 1, "%d, ", tm->tm_mday)) == -1)
 		goto fail;
 	p += isz;
 
-	if (0 == strftime(p, 4 + 1, "%Y", tm))
+	if (strftime(p, 4 + 1, "%Y", tm) == 0)
 		goto fail;
 	return buf;
 
@@ -495,23 +505,29 @@ fail:
 char *
 mandoc_normdate(struct mparse *parse, char *in, int ln, int pos)
 {
-	char		*out;
 	time_t		 t;
 
-	if (NULL == in || '\0' == *in ||
-	    0 == strcmp(in, "$" "Mdocdate$")) {
+	/* No date specified: use today's date. */
+
+	if (in == NULL || *in == '\0' || strcmp(in, "$" "Mdocdate$") == 0) {
 		mandoc_msg(MANDOCERR_DATE_MISSING, parse, ln, pos, NULL);
-		time(&t);
+		return time2a(time(NULL));
 	}
-	else if (a2time(&t, "%Y-%m-%d", in))
-		t = 0;
-	else if (!a2time(&t, "$" "Mdocdate: %b %d %Y $", in) &&
-	    !a2time(&t, "%b %d, %Y", in)) {
+
+	/* Valid mdoc(7) date format. */
+
+	if (a2time(&t, "$" "Mdocdate: %b %d %Y $", in) ||
+	    a2time(&t, "%b %d, %Y", in))
+		return time2a(t);
+
+	/* Do not warn about the legacy man(7) format. */
+
+	if ( ! a2time(&t, "%Y-%m-%d", in))
 		mandoc_msg(MANDOCERR_DATE_BAD, parse, ln, pos, in);
-		t = 0;
-	}
-	out = t ? time2a(t) : NULL;
-	return out ? out : mandoc_strdup(in);
+
+	/* Use any non-mdoc(7) date verbatim. */
+
+	return mandoc_strdup(in);
 }
 
 int
