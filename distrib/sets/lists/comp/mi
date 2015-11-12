@@ -1942,6 +1942,7 @@
 ./usr/share/man/man3/BIO_make_bio_pair.3
 ./usr/share/man/man3/BIO_method_type.3
 ./usr/share/man/man3/BIO_new.3
+./usr/share/man/man3/BIO_new_CMS.3
 ./usr/share/man/man3/BIO_new_accept.3
 ./usr/share/man/man3/BIO_new_bio_pair.3
 ./usr/share/man/man3/BIO_new_buffer_ssl_connect.3
@@ -2128,6 +2129,22 @@
 ./usr/share/man/man3/CMSG_LEN.3
 ./usr/share/man/man3/CMSG_NXTHDR.3
 ./usr/share/man/man3/CMSG_SPACE.3
+./usr/share/man/man3/CMS_add0_cert.3
+./usr/share/man/man3/CMS_add1_recipient_cert.3
+./usr/share/man/man3/CMS_add1_signer.3
+./usr/share/man/man3/CMS_compress.3
+./usr/share/man/man3/CMS_decrypt.3
+./usr/share/man/man3/CMS_encrypt.3
+./usr/share/man/man3/CMS_final.3
+./usr/share/man/man3/CMS_get0_RecipientInfos.3
+./usr/share/man/man3/CMS_get0_SignerInfos.3
+./usr/share/man/man3/CMS_get0_type.3
+./usr/share/man/man3/CMS_get1_ReceiptRequest.3
+./usr/share/man/man3/CMS_sign.3
+./usr/share/man/man3/CMS_sign_receipt.3
+./usr/share/man/man3/CMS_uncompress.3
+./usr/share/man/man3/CMS_verify.3
+./usr/share/man/man3/CMS_verify_receipt.3
 ./usr/share/man/man3/COLOR_PAIR.3
 ./usr/share/man/man3/CONF_modules_finish.3
 ./usr/share/man/man3/CONF_modules_free.3
@@ -2454,6 +2471,7 @@
 ./usr/share/man/man3/EVP_OpenInit.3
 ./usr/share/man/man3/EVP_OpenUpdate.3
 ./usr/share/man/man3/EVP_PKEY_CTX_ctrl.3
+./usr/share/man/man3/EVP_PKEY_CTX_ctrl_str.3
 ./usr/share/man/man3/EVP_PKEY_CTX_dup.3
 ./usr/share/man/man3/EVP_PKEY_CTX_free.3
 ./usr/share/man/man3/EVP_PKEY_CTX_get_app_data.3
@@ -2479,7 +2497,6 @@
 ./usr/share/man/man3/EVP_PKEY_cmp.3
 ./usr/share/man/man3/EVP_PKEY_cmp_parameters.3
 ./usr/share/man/man3/EVP_PKEY_copy_parameters.3
-./usr/share/man/man3/EVP_PKEY_ctrl_str.3
 ./usr/share/man/man3/EVP_PKEY_decrypt.3
 ./usr/share/man/man3/EVP_PKEY_decrypt_init.3
 ./usr/share/man/man3/EVP_PKEY_derive.3
@@ -2778,7 +2795,6 @@
 ./usr/share/man/man3/RMD160Pad.3
 ./usr/share/man/man3/RMD160Transform.3
 ./usr/share/man/man3/RMD160Update.3
-./usr/share/man/man3/RSA_PKCS1_RSAref.3
 ./usr/share/man/man3/RSA_PKCS1_SSLeay.3
 ./usr/share/man/man3/RSA_blinding_off.3
 ./usr/share/man/man3/RSA_blinding_on.3
@@ -3187,7 +3203,6 @@
 ./usr/share/man/man3/UI_get0_user_data.3
 ./usr/share/man/man3/UI_get_default_method.3
 ./usr/share/man/man3/UI_get_method.3
-./usr/share/man/man3/UI_new.3
 ./usr/share/man/man3/UI_new_method.3
 ./usr/share/man/man3/UI_process.3
 ./usr/share/man/man3/UI_set_default_method.3
@@ -3399,7 +3414,6 @@
 ./usr/share/man/man3/bn_expand.3
 ./usr/share/man/man3/bn_expand2.3
 ./usr/share/man/man3/bn_fix_top.3
-./usr/share/man/man3/bn_internal.3
 ./usr/share/man/man3/bn_mul_add_words.3
 ./usr/share/man/man3/bn_mul_comba4.3
 ./usr/share/man/man3/bn_mul_comba8.3
@@ -3664,7 +3678,6 @@
 ./usr/share/man/man3/d2i_ECPKParameters_bio.3
 ./usr/share/man/man3/d2i_ECPKParameters_fp.3
 ./usr/share/man/man3/d2i_Netscape_RSA.3
-./usr/share/man/man3/d2i_PKCS8PrivateKey.3
 ./usr/share/man/man3/d2i_PKCS8PrivateKey_bio.3
 ./usr/share/man/man3/d2i_PKCS8PrivateKey_fp.3
 ./usr/share/man/man3/d2i_RSAPrivateKey.3
@@ -3758,7 +3771,6 @@
 ./usr/share/man/man3/dupwin.3
 ./usr/share/man/man3/dynamic_field_info.3
 ./usr/share/man/man3/ec.3
-./usr/share/man/man3/ecdsa.3
 ./usr/share/man/man3/echo.3
 ./usr/share/man/man3/echo_wchar.3
 ./usr/share/man/man3/echochar.3
@@ -4548,7 +4560,6 @@
 ./usr/share/man/man3/lh_retrieve.3
 ./usr/share/man/man3/lh_stats.3
 ./usr/share/man/man3/lh_stats_bio.3
-./usr/share/man/man3/lhash.3
 ./usr/share/man/man3/link_field.3
 ./usr/share/man/man3/link_fieldtype.3
 ./usr/share/man/man3/link_ntoa.3
@@ -5723,8 +5734,7 @@
 ./usr/share/man/man3/tzset.3
 ./usr/share/man/man3/tzsetwall.3
 ./usr/share/man/man3/ualarm.3
-./usr/share/man/man3/ui.3
-./usr/share/man/man3/ui_compat.3
+./usr/share/man/man3/ui_new.3
 ./usr/share/man/man3/uname.3
 ./usr/share/man/man3/uncompress.3
 ./usr/share/man/man3/unctrl.3
