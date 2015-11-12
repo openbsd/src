@@ -1,4 +1,4 @@
-/*	$OpenBSD: cron.c,v 1.69 2015/11/12 13:42:42 millert Exp $	*/
+/*	$OpenBSD: cron.c,v 1.70 2015/11/12 21:12:05 millert Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -25,6 +25,7 @@
 
 #include <bitstring.h>
 #include <errno.h>
+#include <grp.h>
 #include <locale.h>
 #include <poll.h>
 #include <signal.h>
@@ -97,8 +98,6 @@ main(int argc, char *argv[])
 	sact.sa_handler = SIG_IGN;
 	(void) sigaction(SIGPIPE, &sact, NULL);
 
-	set_cron_cwd();
-
 	if (pledge("stdio rpath wpath cpath fattr getpw unix id dns proc exec",
 	    NULL) == -1) {
 		log_it("CRON", "pledge", strerror(errno));
@@ -113,7 +112,7 @@ main(int argc, char *argv[])
 	}
 
 	if (NoFork == 0) {
-		if (daemon(1, 0) == -1) {
+		if (daemon(0, 0) == -1) {
 			log_it("CRON", "DEATH", "can't fork");
 			exit(EXIT_FAILURE);
 		}
@@ -421,7 +420,11 @@ open_socket(void)
 {
 	int		   sock, rc;
 	mode_t		   omask;
+	struct group *grp;
 	struct sockaddr_un s_un;
+
+	if ((grp = getgrnam(CRON_GROUP)) == NULL)
+		log_it("CRON", "STARTUP", "can't find cron group");
 
 	sock = socket(AF_UNIX, SOCK_STREAM|SOCK_CLOEXEC|SOCK_NONBLOCK, 0);
 	if (sock == -1) {
@@ -431,9 +434,9 @@ open_socket(void)
 		exit(EXIT_FAILURE);
 	}
 	bzero(&s_un, sizeof(s_un));
-	if (strlcpy(s_un.sun_path, CRONSOCK, sizeof(s_un.sun_path))
+	if (strlcpy(s_un.sun_path, _PATH_CRON_SOCK, sizeof(s_un.sun_path))
 	    >= sizeof(s_un.sun_path)) {
-		fprintf(stderr, "%s: path too long\n", CRONSOCK);
+		fprintf(stderr, "%s: path too long\n", _PATH_CRON_SOCK);
 		log_it("CRON", "DEATH", "path too long");
 		exit(EXIT_FAILURE);
 	}
@@ -463,7 +466,13 @@ open_socket(void)
 		exit(EXIT_FAILURE);
 	}
 	chmod(s_un.sun_path, 0660);
-	chown(s_un.sun_path, -1, getegid());
+	if (grp != NULL) {
+		/* pledge won't let us change files to a foreign group. */
+		if (setegid(grp->gr_gid) == 0) {
+			chown(s_un.sun_path, -1, grp->gr_gid);
+			(void)setegid(getgid());
+		}
+	}
 
 	return(sock);
 }

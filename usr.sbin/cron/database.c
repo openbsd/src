@@ -1,4 +1,4 @@
-/*	$OpenBSD: database.c,v 1.31 2015/11/09 16:37:07 millert Exp $	*/
+/*	$OpenBSD: database.c,v 1.32 2015/11/12 21:12:05 millert Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -38,9 +38,8 @@
 
 #define HASH(a,b) ((a)+(b))
 
-static	void		process_crontab(const char *, const char *,
-					const char *, struct stat *,
-					cron_db *, cron_db *);
+static	void		process_crontab(int, const char *, const char *,
+					struct stat *, cron_db *, cron_db *);
 
 void
 load_database(cron_db **db)
@@ -51,18 +50,18 @@ load_database(cron_db **db)
 	DIR *dir;
 	user *u;
 
-	/* before we start loading any data, do a stat on CRON_SPOOL
+	/* before we start loading any data, do a stat on _PATH_CRON_SPOOL
 	 * so that if anything changes as of this moment (i.e., before we've
 	 * cached any of the database), we'll see the changes next time.
 	 */
-	if (stat(CRON_SPOOL, &statbuf) < 0) {
-		log_it("CRON", "STAT FAILED", CRON_SPOOL);
+	if (stat(_PATH_CRON_SPOOL, &statbuf) < 0) {
+		log_it("CRON", "STAT FAILED", _PATH_CRON_SPOOL);
 		return;
 	}
 
 	/* track system crontab file
 	 */
-	if (stat(SYSCRONTAB, &syscron_stat) < 0)
+	if (stat(_PATH_SYS_CRONTAB, &syscron_stat) < 0)
 		syscron_stat.st_mtime = 0;
 
 	/* if spooldir's mtime has not changed, we don't need to fiddle with
@@ -84,16 +83,16 @@ load_database(cron_db **db)
 	TAILQ_INIT(&new_db->users);
 
 	if (syscron_stat.st_mtime) {
-		process_crontab("root", NULL, SYSCRONTAB, &syscron_stat,
-				new_db, old_db);
+		process_crontab(AT_FDCWD, "*system*", _PATH_SYS_CRONTAB,
+				&syscron_stat, new_db, old_db);
 	}
 
 	/* we used to keep this dir open all the time, for the sake of
 	 * efficiency.  however, we need to close it in every fork, and
 	 * we fork a lot more often than the mtime of the dir changes.
 	 */
-	if (!(dir = opendir(CRON_SPOOL))) {
-		log_it("CRON", "OPENDIR FAILED", CRON_SPOOL);
+	if (!(dir = opendir(_PATH_CRON_SPOOL))) {
+		log_it("CRON", "OPENDIR FAILED", _PATH_CRON_SPOOL);
 		/* Restore system crontab entry as needed. */
 		if (!TAILQ_EMPTY(&new_db->users) &&
 		    (u = TAILQ_FIRST(&old_db->users))) {
@@ -109,8 +108,6 @@ load_database(cron_db **db)
 	}
 
 	while (NULL != (dp = readdir(dir))) {
-		char fname[NAME_MAX+1], tabname[MAX_FNAME];
-
 		/* avoid file names beginning with ".".  this is good
 		 * because we would otherwise waste two guaranteed calls
 		 * to getpwnam() for . and .., and also because user names
@@ -119,14 +116,7 @@ load_database(cron_db **db)
 		if (dp->d_name[0] == '.')
 			continue;
 
-		if (strlcpy(fname, dp->d_name, sizeof fname) >= sizeof fname)
-			continue;	/* XXX log? */
-
-		if (snprintf(tabname, sizeof tabname, "%s/%s", CRON_SPOOL, fname) >=
-			sizeof(tabname))
-			continue;	/* XXX log? */
-
-		process_crontab(fname, fname, tabname,
+		process_crontab(dirfd(dir), dp->d_name, dp->d_name,
 				&statbuf, new_db, old_db);
 	}
 	closedir(dir);
@@ -167,53 +157,51 @@ find_user(cron_db *db, const char *name)
 }
 
 static void
-process_crontab(const char *uname, const char *fname, const char *tabname,
+process_crontab(int dfd, const char *uname, const char *fname,
 		struct stat *statbuf, cron_db *new_db, cron_db *old_db)
 {
 	struct passwd *pw = NULL;
 	int crontab_fd = -1;
 	user *u;
 
-	if (fname == NULL) {
-		/* must be set to something for logging purposes.
-		 */
-		fname = "*system*";
-	} else if ((pw = getpwnam(uname)) == NULL) {
+	/* Note: pw must remain NULL for system crontab (see below). */
+	if (fname[0] != '/' && (pw = getpwnam(uname)) == NULL) {
 		/* file doesn't have a user in passwd file.
 		 */
-		log_it(fname, "ORPHAN", "no passwd entry");
+		log_it(uname, "ORPHAN", "no passwd entry");
 		goto next_crontab;
 	}
 
-	if ((crontab_fd = open(tabname, O_RDONLY|O_NONBLOCK|O_NOFOLLOW, 0)) < 0) {
+	crontab_fd = openat(dfd, fname, O_RDONLY|O_NONBLOCK|O_NOFOLLOW);
+	if (crontab_fd < 0) {
 		/* crontab not accessible?
 		 */
-		log_it(fname, "CAN'T OPEN", tabname);
+		log_it(uname, "CAN'T OPEN", fname);
 		goto next_crontab;
 	}
 
 	if (fstat(crontab_fd, statbuf) < 0) {
-		log_it(fname, "FSTAT FAILED", tabname);
+		log_it(uname, "FSTAT FAILED", fname);
 		goto next_crontab;
 	}
 	if (!S_ISREG(statbuf->st_mode)) {
-		log_it(fname, "NOT REGULAR", tabname);
+		log_it(uname, "NOT REGULAR", fname);
 		goto next_crontab;
 	}
-	if ((statbuf->st_mode & 07577) != 0400) {
+	if (pw != NULL) {
 		/* Looser permissions on system crontab. */
-		if (pw != NULL || (statbuf->st_mode & 022) != 0) {
-			log_it(fname, "BAD FILE MODE", tabname);
+		if ((statbuf->st_mode & 077) != 0) {
+			log_it(uname, "BAD FILE MODE", fname);
 			goto next_crontab;
 		}
 	}
 	if (statbuf->st_uid != 0 && (pw == NULL ||
 	    statbuf->st_uid != pw->pw_uid || strcmp(uname, pw->pw_name) != 0)) {
-		log_it(fname, "WRONG FILE OWNER", tabname);
+		log_it(uname, "WRONG FILE OWNER", fname);
 		goto next_crontab;
 	}
 	if (pw != NULL && statbuf->st_nlink != 1) {
-		log_it(fname, "BAD LINK COUNT", tabname);
+		log_it(uname, "BAD LINK COUNT", fname);
 		goto next_crontab;
 	}
 
@@ -237,7 +225,7 @@ process_crontab(const char *uname, const char *fname, const char *tabname,
 		 */
 		TAILQ_REMOVE(&old_db->users, u, entries);
 		free_user(u);
-		log_it(fname, "RELOAD", tabname);
+		log_it(uname, "RELOAD", fname);
 	}
 	u = load_user(crontab_fd, pw, fname);
 	if (u != NULL) {

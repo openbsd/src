@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.7 2015/11/12 13:42:42 millert Exp $	*/
+/*	$OpenBSD: client.c,v 1.8 2015/11/12 21:12:05 millert Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -88,19 +88,19 @@ allowed(const char *username, const char *allow_file, const char *deny_file)
 	return (isallowed);
 }
 
-/* void poke_daemon(const char *spool_dir, unsigned char cookie)
+/* void poke_daemon(unsigned char cookie)
  *	touches spool_dir and sends a poke to the cron daemon if running.
  */
 void
-poke_daemon(const char *spool_dir, unsigned char cookie)
+poke_daemon(unsigned char cookie)
 {
 	int sock = -1;
-	const char *cronsock = CRONSOCK;
+	const char *cronsock = _PATH_CRON_SOCK;
 	struct stat sb;
 	struct sockaddr_un s_un;
 
 	if (stat(cronsock, &sb) != 0)
-		cronsock = CRONSOCK_OLD;	/* backwards compatibility */
+		cronsock = _PATH_CRON_SOCK_OLD;	/* backwards compatibility */
 
 	bzero(&s_un, sizeof(s_un));
 	if (strlcpy(s_un.sun_path, cronsock, sizeof(s_un.sun_path)) >=

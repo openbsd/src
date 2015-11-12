@@ -1,4 +1,4 @@
-/*	$OpenBSD: at.c,v 1.73 2015/11/11 21:53:51 millert Exp $	*/
+/*	$OpenBSD: at.c,v 1.74 2015/11/12 21:12:05 millert Exp $	*/
 
 /*
  *  at.c : Put file into atrun queue
@@ -70,7 +70,7 @@ char *no_export[] =
 };
 
 int program = AT;		/* default program mode */
-char atfile[MAX_FNAME];		/* path to the at spool file */
+char atfile[PATH_MAX];		/* path to the at spool file */
 int fcreated;			/* whether or not we created the file yet */
 char atqueue = 0;		/* which queue to examine for jobs (atq) */
 char vflag = 0;			/* show completed but unremoved jobs (atq) */
@@ -142,6 +142,21 @@ sigc(int signo)
 }
 
 static int
+strtot(const char *nptr, char **endptr, time_t *tp)
+{
+	long long ll;
+
+	errno = 0;
+	ll = strtoll(nptr, endptr, 10);
+	if (*endptr == nptr)
+		return (-1);
+	if (ll < 0 || (errno == ERANGE && ll == LLONG_MAX) || (time_t)ll != ll)
+		return (-1);
+	*tp = (time_t)ll;
+	return (0);
+}
+
+static int
 newjob(time_t runtimer, int queue)
 {
 	int fd, i;
@@ -152,7 +167,7 @@ newjob(time_t runtimer, int queue)
 	 * queues instead...
 	 */
 	for (i = 0; i < 120; i++) {
-		snprintf(atfile, sizeof(atfile), "%s/%lld.%c", AT_SPOOL,
+		snprintf(atfile, sizeof(atfile), "%s/%lld.%c", _PATH_AT_SPOOL,
 		    (long long)runtimer, queue);
 		fd = open(atfile, O_WRONLY | O_CREAT | O_EXCL, S_IRUSR);
 		if (fd >= 0)
@@ -351,12 +366,12 @@ writefile(const char *cwd, time_t runtimer, char queue)
 	(void)fclose(fp);
 
 	/* Poke cron so it knows to reload the at spool. */
-	poke_daemon(AT_SPOOL, RELOAD_AT);
+	poke_daemon(RELOAD_AT);
 
 	runtime = *localtime(&runtimer);
 	strftime(timestr, TIMESIZE, "%a %b %e %T %Y", &runtime);
 	(void)fprintf(stderr, "commands will be executed using %s\n", shell);
-	(void)fprintf(stderr, "job %s at %s\n", &atfile[sizeof(AT_SPOOL)],
+	(void)fprintf(stderr, "job %s at %s\n", &atfile[sizeof(_PATH_AT_SPOOL)],
 	    timestr);
 }
 
@@ -414,7 +429,7 @@ print_job(struct atjob *job, int n, int shortformat)
 
 /*
  * List all of a user's jobs in the queue, by looping through
- * AT_SPOOL, or all jobs if we are root.  If argc is > 0, argv
+ * _PATH_AT_SPOOL, or all jobs if we are root.  If argc is > 0, argv
  * contains the list of users whose jobs shall be displayed. By
  * default, the list is sorted by execution date and queue.  If
  * csort is non-zero jobs will be sorted by creation/submission date.
@@ -449,12 +464,12 @@ list_jobs(int argc, char **argv, int count_only, int csort)
 
 	shortformat = strcmp(__progname, "at") == 0;
 
-	if ((dfd = open(AT_SPOOL, O_RDONLY|O_DIRECTORY)) == -1 ||
+	if ((dfd = open(_PATH_AT_SPOOL, O_RDONLY|O_DIRECTORY)) == -1 ||
 	    (spool = fdopendir(dfd)) == NULL)
-		fatal(AT_SPOOL);
+		fatal(_PATH_AT_SPOOL);
 
 	if (fstat(dfd, &stbuf) != 0)
-		fatal(AT_SPOOL);
+		fatal(_PATH_AT_SPOOL);
 
 	/*
 	 * The directory's link count should give us a good idea
@@ -564,7 +579,7 @@ rmok(long long job)
 }
 
 /*
- * Loop through all jobs in AT_SPOOL and display or delete ones
+ * Loop through all jobs in _PATH_AT_SPOOL and display or delete ones
  * that match argv (may be job or username), or all if argc == 0.
  * Only the superuser may display/delete other people's jobs.
  */
@@ -583,9 +598,9 @@ process_jobs(int argc, char **argv, int what)
 	int job_matches, jobs_len, uids_len;
 	int error, i, ch, changed, dfd;
 
-	if ((dfd = open(AT_SPOOL, O_RDONLY|O_DIRECTORY)) == -1 ||
+	if ((dfd = open(_PATH_AT_SPOOL, O_RDONLY|O_DIRECTORY)) == -1 ||
 	    (spool = fdopendir(dfd)) == NULL)
-		fatal(AT_SPOOL);
+		fatal(_PATH_AT_SPOOL);
 
 	/* Convert argv into a list of jobs and uids. */
 	jobs = NULL;
@@ -696,7 +711,7 @@ process_jobs(int argc, char **argv, int what)
 
 	/* If we modied the spool, poke cron so it knows to reload. */
 	if (changed)
-		poke_daemon(AT_SPOOL, RELOAD_AT);
+		poke_daemon(RELOAD_AT);
 
 	return (error);
 }
@@ -792,7 +807,7 @@ check_permission(void)
 	if ((pw = getpwuid(user_uid)) == NULL)
 		fatalx("unknown uid %u", user_uid);
 
-	return (allowed(pw->pw_name, AT_ALLOW, AT_DENY));
+	return (allowed(pw->pw_name, _PATH_AT_ALLOW, _PATH_AT_DENY));
 }
 
 static __dead void
@@ -963,8 +978,6 @@ main(int argc, char **argv)
 
 	if (getcwd(cwd, sizeof(cwd)) == NULL)
 		fatal("unable to get current working directory");
-
-	set_cron_cwd();
 
 	if (!check_permission())
 		fatalx("you do not have permission to use at.");

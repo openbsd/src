@@ -1,4 +1,4 @@
-/*	$OpenBSD: atrun.c,v 1.38 2015/11/09 16:37:07 millert Exp $	*/
+/*	$OpenBSD: atrun.c,v 1.39 2015/11/12 21:12:05 millert Exp $	*/
 
 /*
  * Copyright (c) 2002-2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -50,6 +50,21 @@
 
 static void run_job(atjob *, char *);
 
+static int
+strtot(const char *nptr, char **endptr, time_t *tp)
+{
+	long long ll;
+
+	errno = 0;
+	ll = strtoll(nptr, endptr, 10);
+	if (*endptr == nptr)
+		return (-1);
+	if (ll < 0 || (errno == ERANGE && ll == LLONG_MAX) || (time_t)ll != ll)
+		return (-1);
+	*tp = (time_t)ll;
+	return (0);
+}
+
 /*
  * Scan the at jobs dir and build up a list of jobs found.
  */
@@ -65,12 +80,12 @@ scan_atjobs(at_db **db, struct timespec *ts)
 	struct dirent *file;
 	struct stat sb;
 
-	if ((dfd = open(AT_SPOOL, O_RDONLY|O_DIRECTORY)) == -1) {
-		log_it("CRON", "OPEN FAILED", AT_SPOOL);
+	if ((dfd = open(_PATH_AT_SPOOL, O_RDONLY|O_DIRECTORY)) == -1) {
+		log_it("CRON", "OPEN FAILED", _PATH_AT_SPOOL);
 		return (0);
 	}
 	if (fstat(dfd, &sb) != 0) {
-		log_it("CRON", "FSTAT FAILED", AT_SPOOL);
+		log_it("CRON", "FSTAT FAILED", _PATH_AT_SPOOL);
 		close(dfd);
 		return (0);
 	}
@@ -80,7 +95,7 @@ scan_atjobs(at_db **db, struct timespec *ts)
 	}
 
 	if ((atdir = fdopendir(dfd)) == NULL) {
-		log_it("CRON", "OPENDIR FAILED", AT_SPOOL);
+		log_it("CRON", "OPENDIR FAILED", _PATH_AT_SPOOL);
 		close(dfd);
 		return (0);
 	}
@@ -148,7 +163,7 @@ scan_atjobs(at_db **db, struct timespec *ts)
 void
 atrun(at_db *db, double batch_maxload, time_t now)
 {
-	char atfile[MAX_FNAME];
+	char atfile[PATH_MAX];
 	struct stat sb;
 	double la;
 	atjob *job, *tjob, *batch = NULL;
@@ -161,7 +176,7 @@ atrun(at_db *db, double batch_maxload, time_t now)
 		if (job->run_time > now)
 			continue;
 
-		snprintf(atfile, sizeof(atfile), "%s/%lld.%c", AT_SPOOL,
+		snprintf(atfile, sizeof(atfile), "%s/%lld.%c", _PATH_AT_SPOOL,
 		    (long long)job->run_time, job->queue);
 
 		if (lstat(atfile, &sb) != 0 || !S_ISREG(sb.st_mode)) {
@@ -194,7 +209,7 @@ atrun(at_db *db, double batch_maxload, time_t now)
 	    && (batch_maxload == 0.0 ||
 	    ((getloadavg(&la, 1) == 1) && la <= batch_maxload))
 	    ) {
-		snprintf(atfile, sizeof(atfile), "%s/%lld.%c", AT_SPOOL,
+		snprintf(atfile, sizeof(atfile), "%s/%lld.%c", _PATH_AT_SPOOL,
 		    (long long)batch->run_time, batch->queue);
 		run_job(batch, atfile);
 		TAILQ_REMOVE(&db->jobs, batch, entries);
@@ -420,8 +435,6 @@ run_job(atjob *job, char *atfile)
 			login_close(lc);
 		}
 
-		chdir("/");		/* at job will chdir to correct place */
-
 		/* If this is a low priority job, nice ourself. */
 		if (job->queue > 'b')
 			(void)setpriority(PRIO_PROCESS, 0, job->queue - 'b');
@@ -480,8 +493,8 @@ run_job(atjob *job, char *atfile)
 		fprintf(mail, "To: %s\n", mailto);
 		fprintf(mail, "Subject: Output from \"at\" job\n");
 		fprintf(mail, "Auto-Submitted: auto-generated\n");
-		fprintf(mail, "\nYour \"at\" job on %s\n\"%s/%s/%s\"\n",
-		    hostname, CRONDIR, AT_SPOOL, atfile);
+		fprintf(mail, "\nYour \"at\" job on %s\n\"%s/%s\"\n",
+		    hostname, _PATH_AT_SPOOL, atfile);
 		fprintf(mail, "\nproduced the following output:\n\n");
 
 		/* Pipe the job's output to sendmail. */

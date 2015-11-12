@@ -1,4 +1,4 @@
-/*	$OpenBSD: funcs.h,v 1.26 2015/11/09 16:37:07 millert Exp $	*/
+/*	$OpenBSD: funcs.h,v 1.27 2015/11/12 21:12:05 millert Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -22,8 +22,7 @@
  *	We should reorg this into sections by module.
  */
 
-void		set_cron_cwd(void),
-		load_database(cron_db **),
+void		load_database(cron_db **),
 		job_add(entry *, user *),
 		do_command(entry *, user *),
 		free_user(user *),
@@ -33,7 +32,7 @@ void		set_cron_cwd(void),
 		skip_comments(FILE *),
 		log_it(const char *, const char *, const char *),
 		log_close(void),
-		poke_daemon(const char *, unsigned char),
+		poke_daemon(unsigned char),
 		atrun(at_db *, double, time_t);
 
 int		job_runqueue(void),
@@ -44,8 +43,6 @@ int		job_runqueue(void),
 		allowed(const char *, const char *, const char *),
 		safe_p(const char *, const char *),
 		scan_atjobs(at_db **, struct timespec *);
-
-int		strtot(const char *nptr, char **endptr, time_t *tp);
 
 char		*env_get(char *, char **),
 		*first_word(char *, char *),

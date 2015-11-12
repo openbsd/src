@@ -1,4 +1,4 @@
-/*	$OpenBSD: crontab.c,v 1.88 2015/11/11 21:20:51 millert Exp $	*/
+/*	$OpenBSD: crontab.c,v 1.89 2015/11/12 21:12:05 millert Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -24,6 +24,7 @@
 #include <bitstring.h>		/* for structs.h */
 #include <err.h>
 #include <errno.h>
+#include <limits.h>
 #include <locale.h>
 #include <pwd.h>
 #include <signal.h>
@@ -46,7 +47,7 @@ enum opt_t	{ opt_unknown, opt_list, opt_delete, opt_edit, opt_replace };
 static	gid_t		crontab_gid;
 static	gid_t		user_gid;
 static	char		User[MAX_UNAME], RealUser[MAX_UNAME];
-static	char		Filename[MAX_FNAME], TempFilename[MAX_FNAME];
+static	char		Filename[PATH_MAX], TempFilename[PATH_MAX];
 static	FILE		*NewCrontab;
 static	int		CheckErrorCount;
 static	enum opt_t	Option;
@@ -93,8 +94,7 @@ main(int argc, char *argv[])
 
 	setvbuf(stderr, NULL, _IOLBF, 0);
 	parse_args(argc, argv);		/* sets many globals, opens a file */
-	set_cron_cwd();
-	if (!allowed(RealUser, CRON_ALLOW, CRON_DENY)) {
+	if (!allowed(RealUser, _PATH_CRON_ALLOW, _PATH_CRON_DENY)) {
 		fprintf(stderr, "You do not have permission to use crontab\n");
 		fprintf(stderr, "See crontab(1) for more information\n");
 		log_it(RealUser, "AUTH", "crontab command not allowed");
@@ -183,10 +183,7 @@ parse_args(int argc, char *argv[])
 	}
 
 	if (Option == opt_replace) {
-		/* we have to open the file here because we're going to
-		 * chdir(2) into /var/cron before we get around to
-		 * reading the file.
-		 */
+		/* XXX - no longer need to open the file early, move this. */
 		if (!strcmp(Filename, "-"))
 			NewCrontab = stdin;
 		else {
@@ -211,12 +208,12 @@ parse_args(int argc, char *argv[])
 static void
 list_cmd(void)
 {
-	char n[MAX_FNAME];
+	char n[PATH_MAX];
 	FILE *f;
 
 	log_it(RealUser, "LIST", User);
-	if (snprintf(n, sizeof n, "%s/%s", CRON_SPOOL, User) >= sizeof(n))
-		errc(EXIT_FAILURE, ENAMETOOLONG, "%s/%s", CRON_SPOOL, User);
+	if (snprintf(n, sizeof n, "%s/%s", _PATH_CRON_SPOOL, User) >= sizeof(n))
+		errc(EXIT_FAILURE, ENAMETOOLONG, "%s/%s", _PATH_CRON_SPOOL, User);
 	if (!(f = fopen(n, "r"))) {
 		if (errno == ENOENT)
 			warnx("no crontab for %s", User);
@@ -236,11 +233,11 @@ list_cmd(void)
 static void
 delete_cmd(void)
 {
-	char n[MAX_FNAME];
+	char n[PATH_MAX];
 
 	log_it(RealUser, "DELETE", User);
-	if (snprintf(n, sizeof n, "%s/%s", CRON_SPOOL, User) >= sizeof(n))
-		errc(EXIT_FAILURE, ENAMETOOLONG, "%s/%s", CRON_SPOOL, User);
+	if (snprintf(n, sizeof n, "%s/%s", _PATH_CRON_SPOOL, User) >= sizeof(n))
+		errc(EXIT_FAILURE, ENAMETOOLONG, "%s/%s", _PATH_CRON_SPOOL, User);
 	if (unlink(n) != 0) {
 		if (errno == ENOENT)
 			warnx("no crontab for %s", User);
@@ -248,7 +245,7 @@ delete_cmd(void)
 			warn("%s", n);
 		exit(EXIT_FAILURE);
 	}
-	poke_daemon(CRON_SPOOL, RELOAD_CRON);
+	poke_daemon(RELOAD_CRON);
 }
 
 static void
@@ -261,15 +258,15 @@ check_error(const char *msg)
 static void
 edit_cmd(void)
 {
-	char n[MAX_FNAME], q[MAX_TEMPSTR];
+	char n[PATH_MAX], q[MAX_TEMPSTR];
 	FILE *f;
 	int t;
 	struct stat statbuf, xstatbuf;
 	struct timespec ts[2];
 
 	log_it(RealUser, "BEGIN EDIT", User);
-	if (snprintf(n, sizeof n, "%s/%s", CRON_SPOOL, User) >= sizeof(n))
-		errc(EXIT_FAILURE, ENAMETOOLONG, "%s/%s", CRON_SPOOL, User);
+	if (snprintf(n, sizeof n, "%s/%s", _PATH_CRON_SPOOL, User) >= sizeof(n))
+		errc(EXIT_FAILURE, ENAMETOOLONG, "%s/%s", _PATH_CRON_SPOOL, User);
 	if (!(f = fopen(n, "r"))) {
 		if (errno != ENOENT)
 			err(EXIT_FAILURE, "%s", n);
@@ -393,7 +390,7 @@ edit_cmd(void)
 static int
 replace_cmd(void)
 {
-	char n[MAX_FNAME], envstr[MAX_ENVSTR];
+	char n[PATH_MAX], envstr[MAX_ENVSTR];
 	FILE *tmp;
 	int ch, eof, fd;
 	int error = 0;
@@ -407,9 +404,9 @@ replace_cmd(void)
 		return (-2);
 	}
 	if (snprintf(TempFilename, sizeof TempFilename, "%s/tmp.XXXXXXXXX",
-	    CRON_SPOOL) >= sizeof(TempFilename)) {
+	    _PATH_CRON_SPOOL) >= sizeof(TempFilename)) {
 		TempFilename[0] = '\0';
-		warnc(ENAMETOOLONG, "%s/tmp.XXXXXXXXX", CRON_SPOOL);
+		warnc(ENAMETOOLONG, "%s/tmp.XXXXXXXXX", _PATH_CRON_SPOOL);
 		return (-2);
 	}
 	if (euid != pw->pw_uid) {
@@ -505,8 +502,8 @@ replace_cmd(void)
 		goto done;
 	}
 
-	if (snprintf(n, sizeof n, "%s/%s", CRON_SPOOL, User) >= sizeof(n)) {
-		warnc(ENAMETOOLONG, "%s/%s", CRON_SPOOL, User);
+	if (snprintf(n, sizeof n, "%s/%s", _PATH_CRON_SPOOL, User) >= sizeof(n)) {
+		warnc(ENAMETOOLONG, "%s/%s", _PATH_CRON_SPOOL, User);
 		error = -2;
 		goto done;
 	}
@@ -518,7 +515,7 @@ replace_cmd(void)
 	TempFilename[0] = '\0';
 	log_it(RealUser, "REPLACE", User);
 
-	poke_daemon(CRON_SPOOL, RELOAD_CRON);
+	poke_daemon(RELOAD_CRON);
 
 done:
 	(void) signal(SIGHUP, SIG_DFL);
