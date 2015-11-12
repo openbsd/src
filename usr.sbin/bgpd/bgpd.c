@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.179 2015/08/04 14:46:38 phessler Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.180 2015/11/12 20:49:46 benno Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -232,6 +232,21 @@ main(int argc, char *argv[])
 	mrt_init(ibuf_rde, ibuf_se);
 	if ((rfd = kr_init()) == -1)
 		quit = 1;
+
+	/*
+	 * rpath, read config file
+	 * cpath, unlink control socket
+	 * fattr, chmod on control socket
+	 * wpath, needed if we are doing mrt dumps
+	 * proc, for kill() when shutting down
+	 *
+	 * pledge placed here because kr_init() does a setsockopt on the
+	 * routing socket thats not allowed at all.
+	 */
+	if (pledge("stdio rpath wpath cpath fattr unix route recvfd sendfd "
+	    "proc", NULL) == -1)
+		fatal("pledge");
+
 	if (imsg_send_sockets(ibuf_se, ibuf_rde))
 		fatal("could not establish imsg links");
 	quit = reconfigure(conffile, conf, &peer_l);
