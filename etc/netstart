@@ -1,21 +1,25 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.159 2015/11/01 15:37:18 rpe Exp $
+#	$OpenBSD: netstart,v 1.160 2015/11/12 22:50:46 rpe Exp $
 
 # Turn off Strict Bourne shell mode.
 set +o sh
 
-# Strip comments (and leading/trailing whitespace if IFS is set) from a file
-# and spew to stdout.
+# Strip comment lines from a file.
+# Strip leading and trailing whitespace if IFS is set.
+# Usage: stripcom /path/to/file
 stripcom() {
-	local _l
-	[[ -f $1 ]] || return
-	while read _l; do
-		[[ -n ${_l%%#*} ]] && echo $_l
-	done<$1
+	local _file=$1 _line
+
+	[[ -f $_file ]] || return
+
+	while read _line; do
+		[[ -n ${_line%%#*} ]] && print -r -- "$_line"
+	done <$_file
 }
 
-# Start the $1 interface.
+# Start a single interface.
+# Usage: ifstart if1
 ifstart() {
 	if=$1
 	# Interface names must be alphanumeric only.  We check to avoid
