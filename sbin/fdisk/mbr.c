@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbr.c,v 1.58 2015/11/12 21:31:36 krw Exp $	*/
+/*	$OpenBSD: mbr.c,v 1.59 2015/11/12 23:49:37 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -35,6 +35,7 @@
 #include "part.h"
 #include "misc.h"
 #include "mbr.h"
+#include "gpt.h"
 
 struct mbr initial_mbr;
 
@@ -72,8 +73,7 @@ MBR_init_GPT(struct mbr *mbr)
 
 	sz = DL_GETDSIZE(&dl);
 
-	/* Initialize a protective MBR for GPT. */
-	bzero(&mbr->part, sizeof(mbr->part));
+	memset(&mbr->part, 0, sizeof(mbr->part));
 
 	/* Use whole disk, starting after MBR. */
 	mbr->part[0].id = DOSPTYP_EFI;
@@ -94,10 +94,9 @@ MBR_init(struct mbr *mbr)
 	u_int64_t adj;
 	daddr_t i;
 
-	/* Fix up given mbr for this disk */
-	mbr->part[0].flag = 0;
-	mbr->part[1].flag = 0;
-	mbr->part[2].flag = 0;
+	memset(&mbr->part, 0, sizeof(mbr->part));
+	memset(&gh, 0, sizeof(gh));
+	memset(&gp, 0, sizeof(gp));
 
 	mbr->part[3].flag = DOSACTIVE;
 	mbr->signature = DOSMBR_SIGNATURE;
