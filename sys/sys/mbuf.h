@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.200 2015/11/02 09:21:48 dlg Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.201 2015/11/12 10:07:14 mpi Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -125,7 +125,7 @@ struct	pkthdr {
 	SLIST_HEAD(packet_tags, m_tag) tags;	/* list of packet tags */
 	int			 len;		/* total packet length */
 	u_int16_t		 tagsset;	/* mtags attached */
-	u_int16_t		 flowid;	/* pseudo unique flow id */
+	u_int16_t		 ph_flowid;	/* pseudo unique flow id */
 	u_int16_t		 csum_flags;	/* checksum flags */
 	u_int16_t		 ether_vtag;	/* Ethernet 802.1p+Q vlan tag */
 	u_int			 ph_rtableid;	/* routing table id */

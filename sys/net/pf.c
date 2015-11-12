@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.949 2015/11/06 17:55:55 mpi Exp $ */
+/*	$OpenBSD: pf.c,v 1.950 2015/11/12 10:07:14 mpi Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -6531,7 +6531,7 @@ done:
 	}
 
 	if (s) {
-		pd.m->m_pkthdr.flowid = M_FLOWID_VALID |
+		pd.m->m_pkthdr.ph_flowid = M_FLOWID_VALID |
 		    (M_FLOWID_MASK & bemtoh64(&s->id));
 	}
 
