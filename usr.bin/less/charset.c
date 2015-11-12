@@ -23,28 +23,9 @@
 
 int utf_mode = 0;
 
-#define	IS_BINARY_CHAR	01
-#define	IS_CONTROL_CHAR	02
-
-static char chardef[256];
 static const char *binfmt = NULL;
 static const char *utfbinfmt = NULL;
 int binattr = AT_STANDOUT;
-
-static void
-ilocale(void)
-{
-	int c;
-
-	for (c = 0; c < sizeof (chardef); c++) {
-		if (isprint(c))
-			chardef[c] = 0;
-		else if (iscntrl(c))
-			chardef[c] = IS_CONTROL_CHAR;
-		else
-			chardef[c] = IS_BINARY_CHAR|IS_CONTROL_CHAR;
-	}
-}
 
 static int
 checkfmt(const char *s)
@@ -146,29 +127,18 @@ attr:
 }
 
 /*
- *
- */
-static void
-set_charset(void)
-{
-	char *s;
-
-	s = nl_langinfo(CODESET);
-	if (s && strcasecmp(s, "utf-8") == 0)
-		utf_mode = 1;
-
-	ilocale();
-}
-
-/*
  * Initialize charset data structures.
  */
 void
 init_charset(void)
 {
+	char *s;
+
 	setlocale(LC_ALL, "");
 
-	set_charset();
+	s = nl_langinfo(CODESET);
+	if (s && strcasecmp(s, "utf-8") == 0)
+		utf_mode = 1;
 
 	setbinfmt("LESSBINFMT", &binfmt, "*s<%02X>");
 	setbinfmt("LESSUTFBINFMT", &utfbinfmt, "<U+%04lX>");
@@ -183,7 +153,7 @@ binary_char(LWCHAR c)
 	if (utf_mode)
 		return (is_ubin_char(c));
 	c &= 0377;
-	return (chardef[c] & IS_BINARY_CHAR);
+	return (!isprint((unsigned char)c) && !iscntrl((unsigned char)c));
 }
 
 /*
@@ -193,7 +163,7 @@ int
 control_char(LWCHAR c)
 {
 	c &= 0377;
-	return (chardef[c] & IS_CONTROL_CHAR);
+	return (iscntrl((unsigned char)c));
 }
 
 /*
