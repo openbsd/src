@@ -1,4 +1,4 @@
-/* $OpenBSD: grid.c,v 1.46 2015/09/25 15:53:07 nicm Exp $ */
+/* $OpenBSD: grid.c,v 1.47 2015/11/12 14:50:57 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -41,10 +41,6 @@ const struct grid_cell grid_default_cell = { 0, 0, 8, 8, (1 << 4) | 1, " " };
 #define grid_put_cell(gd, px, py, gc) do {			\
 	memcpy(&gd->linedata[py].celldata[px], 			\
 	    gc, sizeof gd->linedata[py].celldata[px]);		\
-} while (0)
-#define grid_put_utf8(gd, px, py, gc) do {			\
-	memcpy(&gd->linedata[py].utf8data[px], 			\
-	    gc, sizeof gd->linedata[py].utf8data[px]);		\
 } while (0)
 
 int	grid_check_y(struct grid *, u_int);
