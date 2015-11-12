@@ -1,4 +1,4 @@
-/*	$OpenBSD: lex.c,v 1.62 2015/11/01 15:38:53 mmcc Exp $	*/
+/*	$OpenBSD: lex.c,v 1.63 2015/11/12 04:04:31 mmcc Exp $	*/
 
 /*
  * lexical analysis and source input
@@ -399,12 +399,12 @@ yylex(int cf)
 						Xcheck(ws, wp);
 						*wp++ = c;
 						c = getsc();
-					} while (ctype(c, C_ALPHA|C_DIGIT));
+					} while (ctype(c, C_ALPHA) || digit(c));
 					*wp++ = '\0';
 					*wp++ = CSUBST;
 					*wp++ = 'X';
 					ungetsc(c);
-				} else if (ctype(c, C_DIGIT|C_VAR1)) {
+				} else if (ctype(c, C_VAR1) || digit(c)) {
 					Xcheck(ws, wp);
 					*wp++ = OSUBST;
 					*wp++ = 'X';

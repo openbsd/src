@@ -1,4 +1,4 @@
-/*	$OpenBSD: shf.c,v 1.28 2015/11/01 23:31:54 mmcc Exp $	*/
+/*	$OpenBSD: shf.c,v 1.29 2015/11/12 04:04:31 mmcc Exp $	*/
 
 /*
  *  Shell file I/O routines
@@ -6,6 +6,7 @@
 
 #include <sys/stat.h>
 
+#include <ctype.h>
 #include <limits.h>
 #include <string.h>
 

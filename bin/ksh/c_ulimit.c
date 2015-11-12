@@ -1,4 +1,4 @@
-/*	$OpenBSD: c_ulimit.c,v 1.22 2015/10/19 14:42:16 mmcc Exp $	*/
+/*	$OpenBSD: c_ulimit.c,v 1.23 2015/11/12 04:04:31 mmcc Exp $	*/
 
 /*
 	ulimit -- handle "ulimit" builtin
@@ -20,6 +20,7 @@
 
 #include <sys/resource.h>
 
+#include <ctype.h>
 #include <string.h>
 
 #include "sh.h"

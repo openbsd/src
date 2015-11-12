@@ -1,4 +1,4 @@
-/*	$OpenBSD: jobs.c,v 1.50 2015/10/19 14:42:16 mmcc Exp $	*/
+/*	$OpenBSD: jobs.c,v 1.51 2015/11/12 04:04:31 mmcc Exp $	*/
 
 /*
  * Process and job control
@@ -20,6 +20,7 @@
 #include <sys/time.h>
 #include <sys/wait.h>
 
+#include <ctype.h>
 #include <limits.h>
 #include <string.h>
 

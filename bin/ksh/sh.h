@@ -1,4 +1,4 @@
-/*	$OpenBSD: sh.h,v 1.52 2015/11/07 20:48:28 mmcc Exp $	*/
+/*	$OpenBSD: sh.h,v 1.53 2015/11/12 04:04:31 mmcc Exp $	*/
 
 /*
  * Public Domain Bourne/Korn shell
@@ -282,7 +282,7 @@ extern int really_exit;
  * fast character classes
  */
 #define	C_ALPHA	 BIT(0)		/* a-z_A-Z */
-#define	C_DIGIT	 BIT(1)		/* 0-9 */
+/* was	C_DIGIT */
 #define	C_LEX1	 BIT(2)		/* \0 \t\n|&;<>() */
 #define	C_VAR1	 BIT(3)		/* *@#!$-? */
 #define	C_IFSWS	 BIT(4)		/* \t \n (IFS white space) */
@@ -295,8 +295,8 @@ extern	short ctypes [];
 
 #define	ctype(c, t)	!!(ctypes[(unsigned char)(c)]&(t))
 #define	letter(c)	ctype(c, C_ALPHA)
-#define	digit(c)	ctype(c, C_DIGIT)
-#define	letnum(c)	ctype(c, C_ALPHA|C_DIGIT)
+#define	digit(c)	isdigit((unsigned char)(c))
+#define	letnum(c)	(ctype(c, C_ALPHA) || isdigit((unsigned char)(c)))
 
 extern int ifs0;	/* for "$*" */
 

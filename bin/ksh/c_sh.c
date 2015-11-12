@@ -1,4 +1,4 @@
-/*	$OpenBSD: c_sh.c,v 1.54 2015/11/01 15:38:53 mmcc Exp $	*/
+/*	$OpenBSD: c_sh.c,v 1.55 2015/11/12 04:04:31 mmcc Exp $	*/
 
 /*
  * built-in Bourne commands
@@ -8,6 +8,7 @@
 #include <sys/stat.h>
 #include <sys/time.h>
 
+#include <ctype.h>
 #include <string.h>
 
 #include "sh.h"
