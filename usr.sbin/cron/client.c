@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.6 2015/11/11 17:05:23 millert Exp $	*/
+/*	$OpenBSD: client.c,v 1.7 2015/11/12 13:42:42 millert Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -19,9 +19,12 @@
 
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/stat.h>
 #include <sys/un.h>
 
 #include <bitstring.h>		/* for structs.h */
+#include <err.h>
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -92,13 +95,17 @@ void
 poke_daemon(const char *spool_dir, unsigned char cookie)
 {
 	int sock = -1;
+	const char *cronsock = CRONSOCK;
+	struct stat sb;
 	struct sockaddr_un s_un;
 
+	if (stat(cronsock, &sb) != 0)
+		cronsock = CRONSOCK_OLD;	/* backwards compatibility */
+
 	bzero(&s_un, sizeof(s_un));
-	if (snprintf(s_un.sun_path, sizeof s_un.sun_path, "%s/%s",
-	      CRON_SPOOL, CRONSOCK) >= sizeof(s_un.sun_path)) {
-		fprintf(stderr, "%s: %s/%s: path too long\n",
-		    __progname, CRON_SPOOL, CRONSOCK);
+	if (strlcpy(s_un.sun_path, cronsock, sizeof(s_un.sun_path)) >=
+	    sizeof(s_un.sun_path)) {
+		warnc(ENAMETOOLONG, "%s", cronsock);
 		return;
 	}
 	s_un.sun_family = AF_UNIX;
@@ -106,8 +113,7 @@ poke_daemon(const char *spool_dir, unsigned char cookie)
 	    connect(sock, (struct sockaddr *)&s_un, sizeof(s_un)) == 0)
 		send(sock, &cookie, 1, MSG_NOSIGNAL);
 	else
-		fprintf(stderr, "%s: warning, cron does not appear to be "
-		    "running.\n", __progname);
+		warnx("warning, cron does not appear to be running");
 	if (sock >= 0)
 		close(sock);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pathnames.h,v 1.20 2015/11/09 16:00:39 millert Exp $	*/
+/*	$OpenBSD: pathnames.h,v 1.21 2015/11/12 13:42:42 millert Exp $	*/
 
 /* Copyright 1993,1994 by Paul Vixie
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -50,9 +50,9 @@
 			/* CRONSOCK is the name of the socket used by at and
 			 * crontab to poke cron to re-read the at and cron
 			 * spool files while cron is asleep.
-			 * It lives in the spool directory.
 			 */
-#define	CRONSOCK	".sock"
+#define	CRONSOCK	"/var/run/cron.sock"
+#define	CRONSOCK_OLD	CRON_SPOOL "/.sock"
 
 			/* cron allow/deny file.  At least cron.deny must
 			 * exist for ordinary users to run crontab.
