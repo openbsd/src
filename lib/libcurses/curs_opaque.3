@@ -1,4 +1,4 @@
-.\" $OpenBSD: curs_opaque.3,v 1.1 2010/01/12 23:21:59 nicm Exp $
+.\" $OpenBSD: curs_opaque.3,v 1.2 2015/11/12 12:43:21 jmc Exp $
 .\"
 .\"***************************************************************************
 .\" Copyright (c) 2007 Free Software Foundation, Inc.                        *
@@ -28,7 +28,7 @@
 .\" authorization.                                                           *
 .\"***************************************************************************
 .\"
-.\" $Id: curs_opaque.3,v 1.1 2010/01/12 23:21:59 nicm Exp $
+.\" $Id: curs_opaque.3,v 1.2 2015/11/12 12:43:21 jmc Exp $
 .TH curs_opaque 3 ""
 .na
 .hy 0
@@ -40,9 +40,11 @@
 \fBis_keypad\fR,
 \fBis_leaveok\fR,
 \fBis_nodelay\fR,
-\fBis_timeout\fR,
+\fBis_notimeout\fR,
 \fBis_scrollok\fR,
-\fBis_syncok\fR - \fBcurses\fR window properties
+\fBis_syncok\fR,
+\fBwgetparent\fR,
+\fBwgetscrreg\fR - \fBcurses\fR window properties
 .ad
 .hy
 .SH SYNOPSIS
