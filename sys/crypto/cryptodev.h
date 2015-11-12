@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptodev.h,v 1.62 2015/11/03 01:55:28 mikeb Exp $	*/
+/*	$OpenBSD: cryptodev.h,v 1.63 2015/11/12 16:50:55 mikeb Exp $	*/
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -142,7 +142,6 @@ struct cryptodesc {
 #define	CRD_F_IV_PRESENT	0x02	/* When encrypting, IV is already in
 					   place, so don't copy. */
 #define	CRD_F_IV_EXPLICIT	0x04	/* IV explicitly provided */
-#define	CRD_F_DSA_SHA_NEEDED	0x08	/* Compute SHA-1 of buffer for DSA */
 #define CRD_F_COMP		0x10    /* Set when doing compression */
 #define CRD_F_ESN		0x20	/* Set when ESN field is provided */
 
