@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptosoft.c,v 1.76 2015/11/03 01:35:16 mikeb Exp $	*/
+/*	$OpenBSD: cryptosoft.c,v 1.77 2015/11/12 16:57:00 mikeb Exp $	*/
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -1162,8 +1162,7 @@ void
 swcr_init(void)
 {
 	int algs[CRYPTO_ALGORITHM_MAX + 1];
-	int flags = CRYPTOCAP_F_SOFTWARE | CRYPTOCAP_F_ENCRYPT_MAC |
-	    CRYPTOCAP_F_MAC_ENCRYPT;
+	int flags = CRYPTOCAP_F_SOFTWARE;
 
 	swcr_id = crypto_get_driverid(flags);
 	if (swcr_id < 0) {
