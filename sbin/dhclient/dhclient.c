@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.365 2015/10/26 16:32:33 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.366 2015/11/12 18:46:14 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -356,9 +356,10 @@ routehandler(void)
 					client->state = S_REBOOTING;
 					state_reboot();
 				}
-			} else if (strlen(path_option_db)) {
+			} else {
 				/* Let monitoring programs see link loss. */
-				write_option_db("", 0);
+				if (strlen(path_option_db))
+					write_option_db("", 0);
 				/* No need to wait for anything but link. */
 				cancel_timeout();
 			}
