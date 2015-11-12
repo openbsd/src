@@ -1,4 +1,4 @@
-/*	$OpenBSD: term_ascii.c,v 1.37 2015/10/13 22:57:49 schwarze Exp $ */
+/*	$OpenBSD: term_ascii.c,v 1.38 2015/11/12 21:49:29 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -77,8 +77,16 @@ ascii_init(enum termenc enc, const struct manoutput *outopts)
 	p->width = ascii_width;
 
 	if (TERMENC_ASCII != enc) {
+
+		/*
+		 * Do not change any of this to LC_ALL.  It might break
+		 * the formatting by subtly changing the behaviour of
+		 * various functions, for example strftime(3).  As a
+		 * worst case, it might even cause buffer overflows.
+		 */
+
 		v = TERMENC_LOCALE == enc ?
-		    setlocale(LC_ALL, "") :
+		    setlocale(LC_CTYPE, "") :
 		    setlocale(LC_CTYPE, "en_US.UTF-8");
 		if (NULL != v && MB_CUR_MAX > 1) {
 			p->enc = enc;
