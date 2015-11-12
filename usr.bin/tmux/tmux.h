@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.574 2015/11/12 12:19:57 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.575 2015/11/12 12:43:36 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -2194,6 +2194,7 @@ struct utf8_data *utf8_fromcstr(const char *);
 char		*utf8_tocstr(struct utf8_data *);
 u_int		 utf8_cstrwidth(const char *);
 char		*utf8_trimcstr(const char *, u_int);
+char		*utf8_padcstr(const char *, u_int);
 
 /* procname.c */
 char   *get_proc_name(int, char *);
