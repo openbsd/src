@@ -458,7 +458,8 @@ findopt(int c)
 	for (o = option;  o->oletter != '\0';  o++) {
 		if (o->oletter == c)
 			return (o);
-		if ((o->otype & TRIPLE) && (toupper(o->oletter) == c))
+		if ((o->otype & TRIPLE) &&
+		    (toupper((unsigned char)o->oletter) == c))
 			return (o);
 	}
 	return (NULL);
@@ -468,15 +469,12 @@ findopt(int c)
  *
  */
 static int
-is_optchar(char c)
+is_optchar(unsigned char c)
 {
-	if (isupper(c))
+	if (isupper(c) || islower(c) || c == '-')
 		return (1);
-	if (islower(c))
-		return (1);
-	if (c == '-')
-		return (1);
-	return (0);
+	else
+		return (0);
 }
 
 /*
