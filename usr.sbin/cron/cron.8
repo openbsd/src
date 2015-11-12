@@ -17,9 +17,9 @@
 .\" Agency (DARPA) and Air Force Research Laboratory, Air Force
 .\" Materiel Command, USAF, under agreement number F39502-99-1-0512.
 .\"
-.\" $OpenBSD: cron.8,v 1.32 2015/01/23 01:01:06 tedu Exp $
+.\" $OpenBSD: cron.8,v 1.33 2015/11/12 17:46:40 millert Exp $
 .\"
-.Dd $Mdocdate: January 23 2015 $
+.Dd $Mdocdate: November 12 2015 $
 .Dt CRON 8
 .Os
 .Sh NAME
@@ -127,20 +127,6 @@ will detach from the current tty and become a daemon.
 The
 .Fl n
 option disables this behavior and causes it to run in the foreground.
-.El
-.Sh SIGNALS
-.Bl -tag -width Ds
-.It Dv SIGHUP
-causes
-.Nm
-to close and reopen its log file.
-This is useful in scripts which rotate and age log files.
-On
-.Ox
-this has no effect because
-.Nm cron
-logs via
-.Xr syslog 3 .
 .El
 .Sh FILES
 .Bl -tag -width "/var/cron/tabs/.sock" -compact
