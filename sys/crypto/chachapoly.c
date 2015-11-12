@@ -88,9 +88,8 @@ Chacha20_Poly1305_Reinit(void *xctx, const uint8_t *iv, uint16_t ivlen)
 int
 Chacha20_Poly1305_Update(void *xctx, const uint8_t *data, uint16_t len)
 {
-	CHACHA20_POLY1305_CTX *ctx = xctx;
-
 	static const char zeroes[POLY1305_BLOCK_LEN];
+	CHACHA20_POLY1305_CTX *ctx = xctx;
 	size_t rem;
 
 	poly1305_update((poly1305_state *)&ctx->poly, data, len);
