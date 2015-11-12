@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypserv.c,v 1.42 2015/10/26 10:12:46 deraadt Exp $ */
+/*	$OpenBSD: ypserv.c,v 1.43 2015/11/12 22:33:07 deraadt Exp $ */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -451,10 +451,10 @@ main(int argc, char *argv[])
 		if (pid)
 			exit(0);
 		closefrom(0);
-		i = open("/dev/console", 2);
+		i = open("/dev/console", O_RDWR);
 		(void) dup2(i, 1);
 		(void) dup2(i, 2);
-		i = open("/dev/tty", 2);
+		i = open("/dev/tty", O_RDWR);
 		if (i >= 0) {
 			(void) ioctl(i, TIOCNOTTY, NULL);
 			(void) close(i);

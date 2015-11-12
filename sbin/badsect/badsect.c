@@ -1,4 +1,4 @@
-/*	$OpenBSD: badsect.c,v 1.26 2015/01/20 18:22:20 deraadt Exp $	*/
+/*	$OpenBSD: badsect.c,v 1.27 2015/11/12 22:33:07 deraadt Exp $	*/
 /*	$NetBSD: badsect.c,v 1.10 1995/03/18 14:54:28 cgd Exp $	*/
 
 /*
@@ -119,7 +119,7 @@ main(int argc, char *argv[])
 		err(5, "Cannot find dev 0%o corresponding to %s",
 			stbuf.st_rdev, argv[1]);
 
-	if ((fsi = open(name, 0)) < 0)
+	if ((fsi = open(name, O_RDONLY)) < 0)
 		err(6, "%s", name);
 
 	fs = &sblock;

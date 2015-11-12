@@ -139,7 +139,7 @@ usage:	fprintf(stderr,
 	(void)setpgrp();
 #else
 #ifdef TIOCNOTTY
-	t = open("/dev/tty", 2);
+	t = open("/dev/tty", O_RDWR);
 	if (t >= 0) {
 	    (void)ioctl(t, TIOCNOTTY, (char *)0);
 	    (void)close(t);

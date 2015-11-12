@@ -1,4 +1,4 @@
-/*	$OpenBSD: quot.c,v 1.27 2015/08/20 22:39:29 deraadt Exp $	*/
+/*	$OpenBSD: quot.c,v 1.28 2015/11/12 22:33:07 deraadt Exp $	*/
 
 /*
  * Copyright (C) 1991, 1994 Wolfgang Solfrank.
@@ -561,7 +561,7 @@ quot(char *name, char *mp)
 	 * XXX this is completely broken.  Of course you can't read a
 	 * directory, well, not anymore.  How to fix this, though...
 	 */
-	if ((fd = open(name, 0)) < 0) {
+	if ((fd = open(name, O_RDONLY)) < 0) {
 		warn("%s", name);
 		return;
 	}
