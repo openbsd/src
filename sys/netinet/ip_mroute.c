@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_mroute.c,v 1.84 2015/11/12 16:48:53 mpi Exp $	*/
+/*	$OpenBSD: ip_mroute.c,v 1.85 2015/11/12 16:58:45 mpi Exp $	*/
 /*	$NetBSD: ip_mroute.c,v 1.85 2004/04/26 01:31:57 matt Exp $	*/
 
 /*
@@ -67,13 +67,13 @@
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <sys/protosw.h>
-#include <sys/errno.h>
-#include <sys/time.h>
 #include <sys/kernel.h>
 #include <sys/ioctl.h>
 #include <sys/syslog.h>
 #include <sys/sysctl.h>
 #include <sys/timeout.h>
+
+#include <crypto/siphash.h>
 
 #include <net/if.h>
 #include <net/if_var.h>
@@ -83,18 +83,14 @@
 #include <netinet/ip.h>
 #include <netinet/ip_var.h>
 #include <netinet/in_pcb.h>
-#include <netinet/udp.h>
 #include <netinet/igmp.h>
 #include <netinet/igmp_var.h>
 #include <netinet/ip_mroute.h>
+
 #ifdef PIM
 #include <netinet/pim.h>
 #include <netinet/pim_var.h>
 #endif
-
-#include <sys/stdarg.h>
-
-#include <crypto/siphash.h>
 
 #define IP_MULTICASTOPTS 0
 #define	M_PULLUP(m, len)						 \

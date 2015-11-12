@@ -87,10 +87,7 @@
 #include <sys/mbuf.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
-#include <sys/sockio.h>
 #include <sys/protosw.h>
-#include <sys/errno.h>
-#include <sys/time.h>
 #include <sys/kernel.h>
 #include <sys/ioctl.h>
 #include <sys/syslog.h>
@@ -102,9 +99,9 @@
 #include <net/if_var.h>
 
 #include <netinet/in.h>
-#include <netinet/icmp6.h>
 #include <netinet6/in6_var.h>
 #include <netinet/ip6.h>
+#include <netinet/icmp6.h>
 #include <netinet6/ip6_var.h>
 #include <netinet6/ip6_mroute.h>
 
@@ -151,9 +148,7 @@ void expire_upcalls6(void *);
 #define		EXPIRE_TIMEOUT	(hz / 4)	/* 4x / second */
 #define		UPCALL_EXPIRE	6		/* number of timeouts */
 
-#ifdef MROUTING
 extern struct socket *ip_mrouter;
-#endif
 
 /*
  * 'Interfaces' associated with decapsulator (so we can tell
@@ -546,16 +541,13 @@ ip6_mrouter_done(void)
 	 * For each phyint in use, disable promiscuous reception of all IPv6
 	 * multicasts.
 	 */
-#ifdef MROUTING
 	/*
 	 * If there is still IPv4 multicast routing daemon,
 	 * we remain interfaces to receive all muliticasted packets.
 	 * XXX: there may be an interface in which the IPv4 multicast
 	 * daemon is not interested...
 	 */
-	if (!ip_mrouter)
-#endif
-	{
+	if (!ip_mrouter) {
 		for (mifi = 0; mifi < nummifs; mifi++) {
 			if (mif6table[mifi].m6_ifp &&
 			    !(mif6table[mifi].m6_flags & MIFF_REGISTER)) {
@@ -568,10 +560,6 @@ ip6_mrouter_done(void)
 			}
 		}
 	}
-#ifdef notyet
-	bzero((caddr_t)qtable, sizeof(qtable));
-	bzero((caddr_t)tbftable, sizeof(tbftable));
-#endif
 	bzero((caddr_t)mif6table, sizeof(mif6table));
 	nummifs = 0;
 
@@ -661,9 +649,6 @@ add_m6if(struct mif6ctl *mifcp)
 	struct ifnet *ifp;
 	struct in6_ifreq ifr;
 	int error, s;
-#ifdef notyet
-	struct tbf *m_tbf = tbftable + mifcp->mif6c_mifi;
-#endif
 
 	if (mifcp->mif6c_mifi >= MAXMIFS)
 		return EINVAL;
@@ -777,10 +762,6 @@ del_m6if(mifi_t *mifip)
 		(*ifp->if_ioctl)(ifp, SIOCDELMULTI, (caddr_t)&ifr);
 	}
 
-#ifdef notyet
-	bzero((caddr_t)qtable[*mifip], sizeof(qtable[*mifip]));
-	bzero((caddr_t)mifp->m6_tbf, sizeof(*(mifp->m6_tbf)));
-#endif
 	bzero((caddr_t)mifp, sizeof (*mifp));
 
 	/* Adjust nummifs down */
