@@ -1,4 +1,4 @@
-/* $OpenBSD: tftp-proxy.c,v 1.12 2015/10/10 23:06:32 guenther Exp $
+/* $OpenBSD: tftp-proxy.c,v 1.13 2015/11/12 19:13:47 deraadt Exp $
  *
  * Copyright (c) 2005 DLS Internet Services
  * Copyright (c) 2004, 2005 Camiel Dobbelaar, <cd@sentia.nl>
@@ -6,7 +6,7 @@
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright
@@ -14,7 +14,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
@@ -953,39 +953,39 @@ void
 syslog_vstrerror(int e, int priority, const char *fmt, va_list ap)
 {
 	char *s;
-  
+
 	if (vasprintf(&s, fmt, ap) == -1) {
 		syslog(LOG_EMERG, "unable to alloc in syslog_vstrerror");
 		exit(1);
 	}
- 
+
 	syslog(priority, "%s: %s", s, strerror(e));
- 
+
 	free(s);
 }
- 
+
 void
 syslog_err(int ecode, const char *fmt, ...)
 {
 	va_list ap;
- 
+
 	va_start(ap, fmt);
 	syslog_vstrerror(errno, LOG_EMERG, fmt, ap);
 	va_end(ap);
- 
+
 	exit(ecode);
 }
- 
+
 void
 syslog_errx(int ecode, const char *fmt, ...)
 {
 	va_list ap;
- 
+
 	va_start(ap, fmt);
 	vsyslog(LOG_WARNING, fmt, ap);
 	va_end(ap);
 
-	exit(ecode);  
+	exit(ecode);
 }
 
 void
@@ -995,7 +995,7 @@ syslog_warn(const char *fmt, ...)
 
 	va_start(ap, fmt);
 	syslog_vstrerror(errno, LOG_WARNING, fmt, ap);
-	va_end(ap);   
+	va_end(ap);
 }
 
 void
