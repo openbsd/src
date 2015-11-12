@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.1 2015/11/04 09:45:52 mpi Exp $ */
+/*	$OpenBSD: main.c,v 1.2 2015/11/12 14:32:02 mpi Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -25,6 +25,16 @@
 
 #include "util.h"
 
+#ifdef ART
+#include <net/rtable.h>
+#include <net/art.h>
+
+#include <assert.h>
+
+extern void  *rtable_get(unsigned int, sa_family_t);
+extern void   rtable_put(void *);
+#endif /* ART */
+
 __dead void
 usage(void)
 {
@@ -50,6 +60,16 @@ main(int argc, char *argv[])
 	do_from_file(0, AF_INET6, filename, route_insert);
 
 	rtable_walk(0, AF_INET6, rtentry_delete, NULL);
+
+	rtable_walk(0, AF_INET6, rtentry_dump, NULL);
+
+#ifdef ART
+	struct art_root *ar;
+	ar = rtable_get(0, AF_INET6);
+	assert(ar != NULL);
+	assert(ar->ar_root == NULL);
+	rtable_put(ar);
+#endif /* ART */
 
 	return (0);
 }
