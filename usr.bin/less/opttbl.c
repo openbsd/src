@@ -466,18 +466,6 @@ findopt(int c)
 }
 
 /*
- *
- */
-static int
-is_optchar(unsigned char c)
-{
-	if (isupper(c) || islower(c) || c == '-')
-		return (1);
-	else
-		return (0);
-}
-
-/*
  * Find an option in the option table, given its option name.
  * p_optname is the (possibly partial) name to look for, and
  * is updated to point after the matched name.
@@ -512,7 +500,10 @@ findopt_name(char **p_optname, char **p_oname, int *p_err)
 			 */
 			for (uppercase = 0;  uppercase <= 1;  uppercase++) {
 				len = sprefix(optname, oname->oname, uppercase);
-				if (len <= 0 || is_optchar(optname[len])) {
+				if (len <= 0 ||
+				    isupper((unsigned char)optname[len]) ||
+				    islower((unsigned char)optname[len]) ||
+				    optname[len] == '-') {
 					/*
 					 * We didn't use all of the option name.
 					 */
