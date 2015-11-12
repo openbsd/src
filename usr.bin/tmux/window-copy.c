@@ -1,4 +1,4 @@
-/* $OpenBSD: window-copy.c,v 1.137 2015/10/31 08:13:58 nicm Exp $ */
+/* $OpenBSD: window-copy.c,v 1.138 2015/11/12 11:05:34 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -28,9 +28,9 @@ struct screen *window_copy_init(struct window_pane *);
 void	window_copy_free(struct window_pane *);
 void	window_copy_resize(struct window_pane *, u_int, u_int);
 void	window_copy_key(struct window_pane *, struct client *, struct session *,
-	    int, struct mouse_event *);
-int	window_copy_key_input(struct window_pane *, int);
-int	window_copy_key_numeric_prefix(struct window_pane *, int);
+	    key_code, struct mouse_event *);
+int	window_copy_key_input(struct window_pane *, key_code);
+int	window_copy_key_numeric_prefix(struct window_pane *, key_code);
 
 void	window_copy_redraw_selection(struct window_pane *, u_int);
 void	window_copy_redraw_lines(struct window_pane *, u_int, u_int);
@@ -368,7 +368,7 @@ window_copy_resize(struct window_pane *wp, u_int sx, u_int sy)
 
 void
 window_copy_key(struct window_pane *wp, struct client *c, struct session *sess,
-    int key, struct mouse_event *m)
+    key_code key, struct mouse_event *m)
 {
 	const char			*word_separators;
 	struct window_copy_mode_data	*data = wp->modedata;
@@ -800,7 +800,7 @@ input_off:
 }
 
 int
-window_copy_key_input(struct window_pane *wp, int key)
+window_copy_key_input(struct window_pane *wp, key_code key)
 {
 	struct window_copy_mode_data	*data = wp->modedata;
 	struct screen			*s = &data->screen;
@@ -897,7 +897,7 @@ window_copy_key_input(struct window_pane *wp, int key)
 }
 
 int
-window_copy_key_numeric_prefix(struct window_pane *wp, int key)
+window_copy_key_numeric_prefix(struct window_pane *wp, key_code key)
 {
 	struct window_copy_mode_data	*data = wp->modedata;
 	struct screen			*s = &data->screen;
