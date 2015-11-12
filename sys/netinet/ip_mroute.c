@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_mroute.c,v 1.83 2015/11/12 16:34:13 mpi Exp $	*/
+/*	$OpenBSD: ip_mroute.c,v 1.84 2015/11/12 16:48:53 mpi Exp $	*/
 /*	$NetBSD: ip_mroute.c,v 1.85 2004/04/26 01:31:57 matt Exp $	*/
 
 /*
@@ -158,7 +158,6 @@ int socket_send(struct socket *, struct mbuf *,
 void expire_upcalls(void *);
 int ip_mdq(struct mbuf *, struct ifnet *, struct mfc *);
 void phyint_send(struct ip *, struct vif *, struct mbuf *);
-void encap_send(struct ip *, struct vif *, struct mbuf *);
 void send_packet(struct vif *, struct mbuf *);
 
 #ifdef PIM
@@ -845,7 +844,10 @@ add_vif(struct mbuf *m)
 	if (!in_nullhost(vifp->v_lcl_addr))
 		return (EADDRINUSE);
 
-	/* Find the interface with an address in AF_INET family. */
+	/* Tunnels are no longer supported use gif(4) instead. */
+	if (vifcp->vifc_flags & VIFF_TUNNEL)
+		return (EOPNOTSUPP);
+
 #ifdef PIM
 	if (vifcp->vifc_flags & VIFF_REGISTER) {
 		/*
@@ -862,11 +864,8 @@ add_vif(struct mbuf *m)
 			return (EADDRNOTAVAIL);
 	}
 
-	if (vifcp->vifc_flags & VIFF_TUNNEL) {
-		/* tunnels are no longer supported use gif(4) instead */
-		return (EOPNOTSUPP);
 #ifdef PIM
-	} else if (vifcp->vifc_flags & VIFF_REGISTER) {
+	if (vifcp->vifc_flags & VIFF_REGISTER) {
 		ifp = &multicast_register_if;
 		if (mrtdebug)
 			log(LOG_DEBUG, "Adding a register vif, ifp: %p\n",
@@ -879,8 +878,9 @@ add_vif(struct mbuf *m)
 			memset(&vifp->v_route, 0, sizeof(vifp->v_route));
 			reg_vif_num = vifcp->vifc_vifi;
 		}
+	} else
 #endif
-	} else {
+	 {
 		/* Use the physical interface associated with the address. */
 		ifp = ifa->ifa_ifp;
 
@@ -919,15 +919,6 @@ add_vif(struct mbuf *m)
 	if (numvifs <= vifcp->vifc_vifi)
 		numvifs = vifcp->vifc_vifi + 1;
 
-	if (mrtdebug)
-		log(LOG_DEBUG, "add_vif #%d, lcladdr %x, %s %x, "
-		    "thresh %x\n",
-		    vifcp->vifc_vifi,
-		    ntohl(vifcp->vifc_lcl_addr.s_addr),
-		    (vifcp->vifc_flags & VIFF_TUNNEL) ? "rmtaddr" : "mask",
-		    ntohl(vifcp->vifc_rmt_addr.s_addr),
-		    vifcp->vifc_threshold);
-
 	return (0);
 }
 
@@ -937,13 +928,12 @@ reset_vif(struct vif *vifp)
 	struct ifnet *ifp;
 	struct ifreq ifr;
 
-	if (vifp->v_flags & VIFF_TUNNEL) {
-		/* empty */
-	} else if (vifp->v_flags & VIFF_REGISTER) {
 #ifdef PIM
+	if (vifp->v_flags & VIFF_REGISTER) {
 		reg_vif_num = VIFI_INVALID;
+	} else
 #endif
-	} else {
+	{
 		memset(&ifr, 0, sizeof(ifr));
 		satosin(&ifr.ifr_addr)->sin_len = sizeof(struct sockaddr_in);
 		satosin(&ifr.ifr_addr)->sin_family = AF_INET;
@@ -1548,16 +1538,6 @@ ip_mdq(struct mbuf *m, struct ifnet *ifp, struct mfc *rt)
 	struct vif *vifp;
 	int plen = ntohs(ip->ip_len) - (ip->ip_hl << 2);
 
-/*
- * Macro to send packet on vif.
- */
-#define MC_SEND(ip, vifp, m) do {					\
-	if ((vifp)->v_flags & VIFF_TUNNEL)				\
-		encap_send((ip), (vifp), (m));				\
-	else								\
-		phyint_send((ip), (vifp), (m));				\
-} while (/*CONSTCOND*/ 0)
-
 	/*
 	 * Don't forward if it didn't arrive from the parent vif for its origin.
 	 */
@@ -1664,7 +1644,7 @@ ip_mdq(struct mbuf *m, struct ifnet *ifp, struct mfc *rt)
 				pim_register_send(ip, vifp, m, rt);
 			else
 #endif
-			MC_SEND(ip, vifp, m);
+			phyint_send(ip, vifp, m);
 		}
 
 	return (0);
@@ -1690,88 +1670,21 @@ phyint_send(struct ip *ip, struct vif *vifp, struct mbuf *m)
 }
 
 void
-encap_send(struct ip *ip, struct vif *vifp, struct mbuf *m)
-{
-	struct mbuf *mb_copy;
-	struct ip *ip_copy;
-	int i, len = ntohs(ip->ip_len) + sizeof(multicast_encap_iphdr);
-
-	in_proto_cksum_out(m, NULL);
-
-	/*
-	 * copy the old packet & pullup its IP header into the
-	 * new mbuf so we can modify it.  Try to fill the new
-	 * mbuf since if we don't the ethernet driver will.
-	 */
-	MGETHDR(mb_copy, M_DONTWAIT, MT_DATA);
-	if (mb_copy == NULL)
-		return;
-	mb_copy->m_data += max_linkhdr;
-	mb_copy->m_pkthdr.len = len;
-	mb_copy->m_len = sizeof(multicast_encap_iphdr);
-
-	if ((mb_copy->m_next = m_copym(m, 0, M_COPYALL, M_NOWAIT)) == NULL) {
-		m_freem(mb_copy);
-		return;
-	}
-	i = MHLEN - max_linkhdr;
-	if (i > len)
-		i = len;
-	mb_copy = m_pullup(mb_copy, i);
-	if (mb_copy == NULL)
-		return;
-
-	/*
-	 * fill in the encapsulating IP header.
-	 */
-	ip_copy = mtod(mb_copy, struct ip *);
-	*ip_copy = multicast_encap_iphdr;
-	ip_copy->ip_id = htons(ip_randomid());
-	ip_copy->ip_len = htons(len);
-	ip_copy->ip_src = vifp->v_lcl_addr;
-	ip_copy->ip_dst = vifp->v_rmt_addr;
-
-	/*
-	 * turn the encapsulated IP header back into a valid one.
-	 */
-	ip = (struct ip *)((caddr_t)ip_copy + sizeof(multicast_encap_iphdr));
-	--ip->ip_ttl;
-	ip->ip_sum = 0;
-	mb_copy->m_data += sizeof(multicast_encap_iphdr);
-	ip->ip_sum = in_cksum(mb_copy, ip->ip_hl << 2);
-	mb_copy->m_data -= sizeof(multicast_encap_iphdr);
-
-	send_packet(vifp, mb_copy);
-}
-
-void
 send_packet(struct vif *vifp, struct mbuf *m)
 {
-	int error;
-	int s = splsoftnet();
+	struct ip_moptions imo;
+	int s;
 
-	if (vifp->v_flags & VIFF_TUNNEL) {
-		/* If tunnel options */
-		ip_output(m, NULL, &vifp->v_route, IP_FORWARDING, NULL, NULL,
-		    0);
-	} else {
-		/*
-		 * if physical interface option, extract the options
-		 * and then send
-		 */
-		struct ip_moptions imo;
+	/*
+	 * if physical interface option, extract the options
+	 * and then send
+	 */
+	imo.imo_ifidx = vifp->v_ifp->if_index;
+	imo.imo_ttl = mtod(m, struct ip *)->ip_ttl - IPTTLDEC;
+	imo.imo_loop = 1;
 
-		imo.imo_ifidx = vifp->v_ifp->if_index;
-		imo.imo_ttl = mtod(m, struct ip *)->ip_ttl - IPTTLDEC;
-		imo.imo_loop = 1;
-
-		error = ip_output(m, NULL, NULL,
-		    IP_FORWARDING | IP_MULTICASTOPTS, &imo, NULL, 0);
-
-		if (mrtdebug & DEBUG_XMIT)
-			log(LOG_DEBUG, "phyint_send on vif %ld err %d\n",
-			    (long)(vifp - viftable), error);
-	}
+	s = splsoftnet();
+	ip_output(m, NULL, NULL, IP_FORWARDING|IP_MULTICASTOPTS, &imo, NULL, 0);
 	splx(s);
 }
 
