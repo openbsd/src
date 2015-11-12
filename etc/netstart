@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.160 2015/11/12 22:50:46 rpe Exp $
+#	$OpenBSD: netstart,v 1.161 2015/11/12 23:00:13 rpe Exp $
 
 # Turn off Strict Bourne shell mode.
 set +o sh
@@ -130,27 +130,25 @@ ifstart() {
 	done </etc/hostname.$if
 }
 
-# Start multiple:
-# Usage: ifmstart "if1 if2" "if3 if4"
+# Start multiple interfaces by driver name.
+# Usage: ifmstart "em iwm" "trunk vlan"
 #   Start "$1" interfaces in order or all interfaces if empty.
-#   Don't start "$2" interfaces.
+#   Don't start "$2" interfaces. "$2" is optional.
 ifmstart() {
-	for sif in ${1:-ALL}; do
-		for hn in /etc/hostname.*; do
-			# Strip off /etc/hostname. prefix.
-			if=${hn#/etc/hostname.}
-			[ "$if" = "*" ] && continue
+	local _sifs=$1 _xifs=$2 _hn _if _sif _xif
+
+	for _sif in ${_sifs:-ALL}; do
+		for _hn in /etc/hostname.*; do
+			_if=${_hn#/etc/hostname.}
+			[[ $_if == '*' ]] && continue
 
 			# Skip unwanted ifs.
-			s=""
-			for xf in $2; do
-				[ "$xf" = "${if%%[0-9]*}" ] && s="1" && break
+			for _xif in $_xifs; do
+				[[ $_xif == ${_if%%[0-9]*} ]] && continue 2
 			done
-			[ "$s" = "1" ] && continue
 
 			# Start wanted ifs.
-			[ "$sif" = "ALL" -o "$sif" = "${if%%[0-9]*}" ] &&
-				ifstart $if
+			[[ $_sif == @(ALL|${_if%%[0-9]*}) ]] && ifstart $_if
 		done
 	done
 }
