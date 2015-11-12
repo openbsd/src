@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.573 2015/11/12 11:10:50 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.574 2015/11/12 12:19:57 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -2181,7 +2181,7 @@ void		 session_group_synchronize1(struct session *, struct session *);
 void		 session_renumber_windows(struct session *);
 
 /* utf8.c */
-void		 utf8_build(void);
+u_int		 utf8_width(u_int);
 void		 utf8_set(struct utf8_data *, u_char);
 int		 utf8_open(struct utf8_data *, u_char);
 int		 utf8_append(struct utf8_data *, u_char);
