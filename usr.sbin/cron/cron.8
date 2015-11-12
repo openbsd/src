@@ -17,7 +17,7 @@
 .\" Agency (DARPA) and Air Force Research Laboratory, Air Force
 .\" Materiel Command, USAF, under agreement number F39502-99-1-0512.
 .\"
-.\" $OpenBSD: cron.8,v 1.33 2015/11/12 17:46:40 millert Exp $
+.\" $OpenBSD: cron.8,v 1.34 2015/11/12 21:14:01 jmc Exp $
 .\"
 .Dd $Mdocdate: November 12 2015 $
 .Dt CRON 8
@@ -129,7 +129,7 @@ The
 option disables this behavior and causes it to run in the foreground.
 .El
 .Sh FILES
-.Bl -tag -width "/var/cron/tabs/.sock" -compact
+.Bl -tag -width "/var/run/cron.sock" -compact
 .It Pa /etc/crontab
 system crontab file
 .It Pa /var/cron/atjobs
@@ -140,7 +140,7 @@ jobs
 cron's log file
 .It Pa /var/cron/tabs
 directory containing individual crontab files
-.It Pa /var/cron/tabs/.sock
+.It Pa /var/run/cron.sock
 used by
 .Xr crontab 1
 to tell
