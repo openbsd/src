@@ -133,13 +133,11 @@ struct mrt6stat	mrt6stat;
 struct mf6c	*mf6ctable[MF6CTBLSIZ];
 SIPHASH_KEY	mf6chashkey;
 u_char		n6expire[MF6CTBLSIZ];
-struct mif6 mif6table[MAXMIFS];
+struct mif6	mif6table[MAXMIFS];
 
 void expire_upcalls6(void *);
 #define		EXPIRE_TIMEOUT	(hz / 4)	/* 4x / second */
 #define		UPCALL_EXPIRE	6		/* number of timeouts */
-
-extern struct socket *ip_mrouter;
 
 /*
  * 'Interfaces' associated with decapsulator (so we can tell
@@ -522,32 +520,24 @@ ip6_mrouter_done(void)
 	 * For each phyint in use, disable promiscuous reception of all IPv6
 	 * multicasts.
 	 */
-	/*
-	 * If there is still IPv4 multicast routing daemon,
-	 * we remain interfaces to receive all muliticasted packets.
-	 * XXX: there may be an interface in which the IPv4 multicast
-	 * daemon is not interested...
-	 */
-	if (!ip_mrouter) {
-		for (mifi = 0; mifi < nummifs; mifi++) {
-			if (mif6table[mifi].m6_ifp == NULL)
-				continue;
+	for (mifi = 0; mifi < nummifs; mifi++) {
+		if (mif6table[mifi].m6_ifp == NULL)
+			continue;
 
-			if (!(mif6table[mifi].m6_flags & MIFF_REGISTER)) {
-				memset(&ifr, 0, sizeof(ifr));
-				ifr.ifr_addr.sin6_family = AF_INET6;
-				ifr.ifr_addr.sin6_addr= in6addr_any;
-				ifp = mif6table[mifi].m6_ifp;
-				(*ifp->if_ioctl)(ifp, SIOCDELMULTI,
-						 (caddr_t)&ifr);
-			} else {
-				/* Reset register interface */
-				if (reg_mif_num != (mifi_t)-1) {
-					if_detach(ifp);
-					free(ifp, M_DEVBUF, sizeof(*ifp));
-					reg_mif_num = (mifi_t)-1;
-					reg_mif_idx = 0;
-				}
+		if (!(mif6table[mifi].m6_flags & MIFF_REGISTER)) {
+			memset(&ifr, 0, sizeof(ifr));
+			ifr.ifr_addr.sin6_family = AF_INET6;
+			ifr.ifr_addr.sin6_addr= in6addr_any;
+			ifp = mif6table[mifi].m6_ifp;
+			(*ifp->if_ioctl)(ifp, SIOCDELMULTI,
+					 (caddr_t)&ifr);
+		} else {
+			/* Reset register interface */
+			if (reg_mif_num != (mifi_t)-1) {
+				if_detach(ifp);
+				free(ifp, M_DEVBUF, sizeof(*ifp));
+				reg_mif_num = (mifi_t)-1;
+				reg_mif_idx = 0;
 			}
 		}
 	}
