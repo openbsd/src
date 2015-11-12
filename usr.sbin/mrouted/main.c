@@ -132,7 +132,7 @@ usage:	fprintf(stderr,
 	(void)close(0);
 	(void)close(1);
 	(void)close(2);
-	(void)open("/", 0);
+	(void)open("/dev/null", O_RDONLY);
 	(void)dup2(0, 1);
 	(void)dup2(0, 2);
 #ifdef SYSV
