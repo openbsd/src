@@ -1,4 +1,4 @@
-.\" $OpenBSD: panel.3,v 1.9 2010/01/12 23:22:08 nicm Exp $
+.\" $OpenBSD: panel.3,v 1.10 2015/11/12 12:44:27 jmc Exp $
 .\"
 .\"***************************************************************************
 .\" Copyright (c) 1998-2006,2007 Free Software Foundation, Inc.              *
@@ -28,12 +28,15 @@
 .\" authorization.                                                           *
 .\"***************************************************************************
 .\"
-.\" $Id: panel.3,v 1.9 2010/01/12 23:22:08 nicm Exp $
+.\" $Id: panel.3,v 1.10 2015/11/12 12:44:27 jmc Exp $
 .TH panel 3 ""
 .ds n 5
 .ds d /usr/share/misc/terminfo
 .SH NAME
-panel - panel stack extension for curses
+new_panel, bottom_panel, top_panel, show_panel, update_panels,
+hide_panel, panel_window, replace_panel, move_panel, panel_hidden,
+panel_above, panel_below, set_panel_userptr, panel_userptr, del_panel
+- panel stack extension for curses
 .SH SYNOPSIS
 \fB#include <panel.h>\fR
 .P
