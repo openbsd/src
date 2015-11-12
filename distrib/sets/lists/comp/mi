@@ -5718,7 +5718,6 @@
 ./usr/share/man/man3/towctrans.3
 ./usr/share/man/man3/towlower.3
 ./usr/share/man/man3/towupper.3
-./usr/share/man/man3/tparam.3
 ./usr/share/man/man3/tparm.3
 ./usr/share/man/man3/tputs.3
 ./usr/share/man/man3/tree.3
