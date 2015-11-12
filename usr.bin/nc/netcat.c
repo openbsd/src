@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.141 2015/11/01 01:05:31 deraadt Exp $ */
+/* $OpenBSD: netcat.c,v 1.142 2015/11/12 20:33:52 benno Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  * Copyright (c) 2015 Bob Beck.  All rights reserved.
@@ -311,13 +311,10 @@ main(int argc, char *argv[])
 	argv += optind;
 
 	if (rtableid >= 0) {
-		/*
-		 * XXX No pledge if doing rtable manipulation!
-		 * XXX the routing table stuff is dangerous and can't be pledged.
-		 * XXX rtable should really have a better interface than sockopt
-		 */
+		if (setrtable(rtableid) == -1)
+			err(1, "setrtable");
 	}
-	else if (family == AF_UNIX) {
+	if (family == AF_UNIX) {
 		if (pledge("stdio rpath wpath cpath tmppath unix", NULL) == -1)
 			err(1, "pledge");
 	}
@@ -809,10 +806,6 @@ remote_connect(const char *host, const char *port, struct addrinfo hints)
 		    SOCK_NONBLOCK, res0->ai_protocol)) < 0)
 			continue;
 
-		if (rtableid >= 0 && (setsockopt(s, SOL_SOCKET, SO_RTABLE,
-		    &rtableid, sizeof(rtableid)) == -1))
-			err(1, "setsockopt SO_RTABLE");
-
 		/* Bind to a local port or source address if specified. */
 		if (sflag || pflag) {
 			struct addrinfo ahints, *ares;
@@ -908,10 +901,6 @@ local_listen(char *host, char *port, struct addrinfo hints)
 		if ((s = socket(res0->ai_family, res0->ai_socktype,
 		    res0->ai_protocol)) < 0)
 			continue;
-
-		if (rtableid >= 0 && (setsockopt(s, SOL_SOCKET, SO_RTABLE,
-		    &rtableid, sizeof(rtableid)) == -1))
-			err(1, "setsockopt SO_RTABLE");
 
 		ret = setsockopt(s, SOL_SOCKET, SO_REUSEPORT, &x, sizeof(x));
 		if (ret == -1)
