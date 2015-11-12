@@ -103,13 +103,15 @@
 
 #include <netinet/in.h>
 #include <netinet/icmp6.h>
-
 #include <netinet6/in6_var.h>
 #include <netinet/ip6.h>
 #include <netinet6/ip6_var.h>
 #include <netinet6/ip6_mroute.h>
+
+#ifdef PIM
+#include <netinet/pim.h>
 #include <netinet6/pim6_var.h>
-#include <netinet6/nd6.h>
+#endif
 
 int ip6_mdq(struct mbuf *, struct ifnet *, struct mf6c *);
 void phyint_send6(struct ip6_hdr *, struct mif6 *, struct mbuf *);
@@ -1899,7 +1901,7 @@ pim6_input(struct mbuf **mp, int *offp, int proto)
 #endif
 
 		if_input_local(mif6table[reg_mif_num].m6_ifp, m,
-		    dst->sin6_family);
+		    dst.sin6_family);
 
 		/* prepare the register head to send to the mrouting daemon */
 		m = mcp;
