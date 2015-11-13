@@ -1,4 +1,4 @@
-/* $OpenBSD: file.c,v 1.54 2015/11/13 08:30:18 nicm Exp $ */
+/* $OpenBSD: file.c,v 1.55 2015/11/13 08:32:10 nicm Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -74,6 +74,7 @@ extern char	*__progname;
 
 __dead void	 usage(void);
 
+static int	 prepare_message(struct input_msg *, int, const char *);
 static void	 send_message(struct imsgbuf *, void *, size_t, int);
 static int	 read_message(struct imsgbuf *, struct imsg *, pid_t);
 
@@ -116,7 +117,7 @@ usage(void)
 int
 main(int argc, char **argv)
 {
-	int			 opt, pair[2], fd, idx, mode, error;
+	int			 opt, pair[2], fd, idx;
 	char			*home;
 	struct passwd		*pw;
 	struct imsgbuf		 ibuf;
@@ -209,43 +210,7 @@ main(int argc, char **argv)
 
 	imsg_init(&ibuf, pair[0]);
 	for (idx = 0; idx < argc; idx++) {
-		memset(&msg, 0, sizeof msg);
-		msg.idx = idx;
-
-		if (strcmp(argv[idx], "-") == 0) {
-			if (fstat(STDIN_FILENO, &msg.sb) == -1) {
-				fd = -1;
-				msg.error = errno;
-			} else
-				fd = STDIN_FILENO;
-		} else {
-			if (Lflag)
-				error = stat(argv[idx], &msg.sb);
-			else
-				error = lstat(argv[idx], &msg.sb);
-			if (error == -1) {
-				fd = -1;
-				msg.error = errno;
-			} else {
-				/*
-				 * pledge(2) doesn't let us pass directory file
-				 * descriptors around - but in fact we don't
-				 * need them, so just don't open directories or
-				 * symlinks (which could be to directories).
-				 */
-				mode = msg.sb.st_mode;
-				if (!S_ISDIR(mode) && !S_ISLNK(mode)) {
-					fd = open(argv[idx],
-					    O_RDONLY|O_NONBLOCK);
-					if (fd == -1 && (errno == ENFILE ||
-					    errno == EMFILE))
-						err(1, "open");
-				} else
-					fd = -1;
-				if (S_ISLNK(mode))
-					read_link(&msg, argv[idx]);
-			}
-		}
+		fd = prepare_message(&msg, idx, argv[idx]);
 		send_message(&ibuf, &msg, sizeof msg, fd);
 
 		if (read_message(&ibuf, &imsg, pid) == 0)
@@ -265,6 +230,49 @@ wait_for_child:
 			err(1, "wait");
 	}
 	_exit(0); /* let the child flush */
+}
+
+static int
+prepare_message(struct input_msg *msg, int idx, const char *path)
+{
+	int	fd, mode, error;
+
+	memset(msg, 0, sizeof *msg);
+	msg->idx = idx;
+
+	if (strcmp(path, "-") == 0) {
+		if (fstat(STDIN_FILENO, &msg->sb) == -1) {
+			msg->error = errno;
+			return (-1);
+		}
+		return (STDIN_FILENO);
+	}
+
+	if (Lflag)
+		error = stat(path, &msg->sb);
+	else
+		error = lstat(path, &msg->sb);
+	if (error == -1) {
+		msg->error = errno;
+		return (-1);
+	}
+
+	/*
+	 * pledge(2) doesn't let us pass directory file descriptors around -
+	 * but in fact we don't need them, so just don't open directories or
+	 * symlinks (which could be to directories).
+	 */
+	mode = msg->sb.st_mode;
+	if (!S_ISDIR(mode) && !S_ISLNK(mode)) {
+		fd = open(path, O_RDONLY|O_NONBLOCK);
+		if (fd == -1 && (errno == ENFILE || errno == EMFILE))
+			err(1, "open");
+	} else
+		fd = -1;
+	if (S_ISLNK(mode))
+		read_link(msg, path);
+	return (fd);
+
 }
 
 static void
