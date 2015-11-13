@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.142 2015/11/12 20:33:52 benno Exp $ */
+/* $OpenBSD: netcat.c,v 1.143 2015/11/13 18:13:13 deraadt Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  * Copyright (c) 2015 Bob Beck.  All rights reserved.
@@ -310,23 +310,20 @@ main(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 
-	if (rtableid >= 0) {
+	if (rtableid >= 0)
 		if (setrtable(rtableid) == -1)
 			err(1, "setrtable");
-	}
+
 	if (family == AF_UNIX) {
 		if (pledge("stdio rpath wpath cpath tmppath unix", NULL) == -1)
 			err(1, "pledge");
-	}
-	else if (Fflag) {
+	} else if (Fflag) {
 		if (pledge("stdio inet dns sendfd", NULL) == -1)
 			err(1, "pledge");
-	}
-	else if (usetls) {
+	} else if (usetls) {
 		if (pledge("stdio rpath inet dns", NULL) == -1)
 			err(1, "pledge");
-	}
-	else if (pledge("stdio inet dns", NULL) == -1)
+	} else if (pledge("stdio inet dns", NULL) == -1)
 		err(1, "pledge");
 
 	/* Cruft to make sure options are clean, and used properly. */
@@ -830,7 +827,7 @@ remote_connect(const char *host, const char *port, struct addrinfo hints)
 
 		if (timeout_connect(s, res0->ai_addr, res0->ai_addrlen) == 0)
 			break;
-		else if (vflag)
+		if (vflag)
 			warn("connect to %s port %s (%s) failed", host, port,
 			    uflag ? "udp" : "tcp");
 
