@@ -196,6 +196,11 @@ main (int argc, char **argv)
   program_name = argv[0];
   xmalloc_set_program_name (program_name);
 
+  if (pledge ("stdio rpath wpath cpath fattr", NULL) == -1) {
+    einfo (_("%X%P: Failed to pledge"));
+    xexit (1);
+  }
+
   START_PROGRESS (program_name, 0);
 
   expandargv (&argc, &argv);
