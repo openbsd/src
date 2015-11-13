@@ -1,4 +1,4 @@
-/*	$OpenBSD: fingerd.c,v 1.38 2015/11/13 01:23:59 deraadt Exp $	*/
+/*	$OpenBSD: fingerd.c,v 1.39 2015/11/13 01:26:33 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -68,6 +68,9 @@ main(int argc, char *argv[])
 	char **ap, *av[ENTRIES + 1], line[8192], *lp, *hname;
 	char hostbuf[HOST_NAME_MAX+1];
 
+	if (pledge("stdio inet dns proc exec", NULL) == -1)
+		err(1, "pledge");
+
 	prog = _PATH_FINGER;
 	logging = secure = user_required = short_list = 0;
 	openlog("fingerd", LOG_PID, LOG_DAEMON);
@@ -117,12 +120,19 @@ main(int argc, char *argv[])
 		if (getpeername(0, (struct sockaddr *)&ss, &sval) < 0)
 			err(1, "getpeername");
 		sa = (struct sockaddr *)&ss;
+
+		if (pledge("stdio dns proc exec", NULL) == -1)
+			err(1, "pledge");
+
 		if (getnameinfo(sa, sa->sa_len, hostbuf, sizeof(hostbuf),
 		    NULL, 0, 0) != 0) {
 			strlcpy(hostbuf, "?", sizeof(hostbuf));
 		}
 		hname = hostbuf;
 	}
+
+	if (pledge("stdio proc exec", NULL) == -1)
+		err(1, "pledge");
 
 	if (fgets(line, sizeof(line), stdin) == NULL) {
 		if (logging)
@@ -201,6 +211,9 @@ main(int argc, char *argv[])
 	case -1:
 		logerr("fork: %s", strerror(errno));
 	}
+	if (pledge("stdio", NULL) == -1)
+		err(1, "pledge");
+
 	(void) close(p[1]);
 	if (!(fp = fdopen(p[0], "r")))
 		logerr("fdopen: %s", strerror(errno));
