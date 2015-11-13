@@ -986,8 +986,6 @@ quit(int sig, short event, void *arg)
 int
 main(int argc, char **argv)
 {
-	extern int optind;
-	extern char *optarg;
 	struct timeval tv;
 	unsigned int secs, rtable;
 
@@ -1108,6 +1106,9 @@ main(int argc, char **argv)
 		}
 	}
 
+	if (pledge("stdio rpath dns inet id proc", NULL) == -1)
+		err(1, "pledge");
+
 	argv += optind;
 	argc -= optind;
 	if ((argc != (ptb->sflag ? 0 : 1)) ||
@@ -1124,6 +1125,9 @@ main(int argc, char **argv)
 		ptb->ktcbtab = nl[0].n_value;
 	} else
 		drop_gid();
+
+	if (pledge("stdio id dns inet", NULL) == -1)
+		err(1, "pledge");
 
 	if (!ptb->sflag)
 		host = argv[0];
@@ -1169,6 +1173,9 @@ main(int argc, char **argv)
 			errx(1, "getaddrinfo: %s", gai_strerror(herr));
 	}
 
+	if (pledge("stdio id inet", NULL) == -1)
+		err(1, "pledge");
+
 	if (getrlimit(RLIMIT_NOFILE, &rl) == -1)
 		err(1, "getrlimit");
 	if (rl.rlim_cur < MAX_FD)
@@ -1177,7 +1184,10 @@ main(int argc, char **argv)
 		err(1, "setrlimit");
 	if (getrlimit(RLIMIT_NOFILE, &rl) == -1)
 		err(1, "getrlimit");
-	
+
+	if (pledge("stdio inet", NULL) == -1)
+		err(1, "pledge");
+
 	/* Init world */
 	TAILQ_INIT(&sc_queue);
 	if ((ptb->dummybuf = malloc(ptb->dummybuf_len)) == NULL)
@@ -1215,8 +1225,11 @@ main(int argc, char **argv)
 			evtimer_add(&ev_progtimer, &tv);
 		}
 		client_init(aitop, nconn, udp_sc, aib);
+
+		if (pledge("stdio", NULL) == -1)
+			err(1, "pledge");
 	}
-	
+
 	/* libevent main loop*/
 	event_dispatch();
 
