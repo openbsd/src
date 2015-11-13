@@ -1,4 +1,4 @@
-/*	$OpenBSD: at.c,v 1.75 2015/11/13 21:34:06 millert Exp $	*/
+/*	$OpenBSD: at.c,v 1.76 2015/11/13 21:35:34 millert Exp $	*/
 
 /*
  *  at.c : Put file into atrun queue
@@ -48,6 +48,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <syslog.h>
 #include <time.h>
 #include <unistd.h>
 
@@ -71,6 +72,7 @@ char *no_export[] =
 
 static int program = AT;	/* default program mode */
 static char atfile[PATH_MAX];	/* path to the at spool file */
+static char user_name[MAX_UNAME];/* invoking user name */
 static int fcreated;		/* whether or not we created the file yet */
 static char atqueue = 0;	/* which queue to examine for jobs (atq) */
 static char vflag = 0;		/* show completed but unremoved jobs (atq) */
@@ -85,7 +87,6 @@ static void sigc(int);
 static void writefile(const char *, time_t, char);
 static void list_jobs(int, char **, int, int);
 static time_t ttime(char *);
-static int check_permission(void);
 static __dead void fatal(const char *, ...)
     __attribute__((__format__ (printf, 1, 2)));
 static __dead void fatalx(const char *, ...)
@@ -241,9 +242,7 @@ writefile(const char *cwd, time_t runtimer, char queue)
 
 	if ((mailname == NULL) || (mailname[0] == '\0') ||
 	    (strlen(mailname) > MAX_UNAME) || (getpwnam(mailname) == NULL)) {
-		pass_entry = getpwuid(user_uid);
-		if (pass_entry != NULL)
-			mailname = pass_entry->pw_name;
+		mailname = user_name;
 	}
 
 	/*
@@ -373,6 +372,9 @@ writefile(const char *cwd, time_t runtimer, char queue)
 	(void)fprintf(stderr, "commands will be executed using %s\n", shell);
 	(void)fprintf(stderr, "job %s at %s\n", &atfile[sizeof(_PATH_AT_SPOOL)],
 	    timestr);
+
+	syslog(LOG_INFO, "(%s) CREATE (%s)", user_name,
+	    &atfile[sizeof(_PATH_AT_SPOOL)]);
 }
 
 /* Sort by creation time. */
@@ -447,6 +449,9 @@ list_jobs(int argc, char **argv, int count_only, int csort)
 	DIR *spool;
 	int dfd, i, shortformat;
 	size_t numjobs, maxjobs;
+
+	syslog(LOG_INFO, "(%s) LIST (%s)", user_name,
+	    user_uid ? user_name : "ALL");
 
 	if (argc) {
 		if ((uids = calloc(sizeof(uid_t), argc)) == NULL)
@@ -669,9 +674,12 @@ process_jobs(int argc, char **argv, int what)
 			case ATRM:
 				if (!interactive ||
 				    (interactive && rmok(runtimer))) {
-					if (unlinkat(dfd, dirent->d_name, 0) == 0)
+					if (unlinkat(dfd, dirent->d_name, 0) == 0) {
+						syslog(LOG_INFO,
+						    "(%s) DELETE (%s)",
+						    user_name, dirent->d_name);
 						changed = 1;
-					else if (!force)
+					} else if (!force)
 						fatal("%s", dirent->d_name);
 					if (!force && !interactive)
 						warnx("%s removed",
@@ -684,6 +692,8 @@ process_jobs(int argc, char **argv, int what)
 				    O_RDONLY|O_NOFOLLOW);
 				if (i == -1 || (fp = fdopen(i, "r")) == NULL)
 					fatal("%s", dirent->d_name);
+				syslog(LOG_INFO, "(%s) CAT (%s)",
+				    user_name, dirent->d_name);
 
 				while ((ch = getc(fp)) != EOF)
 					putchar(ch);
@@ -799,17 +809,6 @@ ttime(char *arg)
 	return (then);
 }
 
-static int
-check_permission(void)
-{
-	struct passwd *pw;
-
-	if ((pw = getpwuid(user_uid)) == NULL)
-		fatalx("unknown uid %u", user_uid);
-
-	return (allowed(pw->pw_name, _PATH_AT_ALLOW, _PATH_AT_DENY));
-}
-
 static __dead void
 usage(void)
 {
@@ -847,6 +846,7 @@ main(int argc, char **argv)
 	char queue_set = 0;
 	char *options = "q:f:t:bcdlmrv";	/* default options for at */
 	char cwd[PATH_MAX];
+	struct passwd *pw;
 	int ch;
 	int aflag = 0;
 	int cflag = 0;
@@ -854,6 +854,8 @@ main(int argc, char **argv)
 
 	if (pledge("stdio rpath wpath cpath fattr getpw unix id", NULL) == -1)
 		fatal("pledge");
+
+	openlog(__progname, LOG_PID, LOG_CRON);
 
 	if (argc < 1)
 		usage();
@@ -976,11 +978,19 @@ main(int argc, char **argv)
 		;
 	}
 
+	if ((pw = getpwuid(user_uid)) == NULL)
+	    fatalx("unknown uid %u", user_uid);
+	if (strlcpy(user_name, pw->pw_name, sizeof(user_name)) >= sizeof(user_name))
+	    fatalx("username too long");
+
 	if (getcwd(cwd, sizeof(cwd)) == NULL)
 		fatal("unable to get current working directory");
 
-	if (!check_permission())
+	if (!allowed(pw->pw_name, _PATH_AT_ALLOW, _PATH_AT_DENY)) {
+		syslog(LOG_WARNING, "(%s) AUTH (at command not allowed)",
+		    pw->pw_name);
 		fatalx("you do not have permission to use at.");
+	}
 
 	/* select our program */
 	switch (program) {
