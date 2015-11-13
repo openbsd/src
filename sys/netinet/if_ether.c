@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.185 2015/11/06 23:45:21 bluhm Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.186 2015/11/13 10:18:04 mpi Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -110,7 +110,7 @@ int	la_hold_total;
 /* revarp state */
 struct in_addr revarp_myip, revarp_srvip;
 int revarp_finished;
-struct ifnet *revarp_ifp;
+unsigned int revarp_ifidx;
 #endif /* NFSCLIENT */
 
 /*
@@ -826,6 +826,7 @@ out:
 void
 in_revarpinput(struct mbuf *m)
 {
+	struct ifnet *ifp = NULL;
 	struct ether_arp *ar;
 	int op;
 
@@ -843,14 +844,16 @@ in_revarpinput(struct mbuf *m)
 		goto out;
 	}
 #ifdef NFSCLIENT
-	if (revarp_ifp == NULL)
+	if (revarp_ifidx == 0)
 		goto out;
-	if (revarp_ifp->if_index != m->m_pkthdr.ph_ifidx) /* !same interface */
+	if (revarp_ifidx != m->m_pkthdr.ph_ifidx) /* !same interface */
 		goto out;
 	if (revarp_finished)
 		goto wake;
-	if (memcmp(ar->arp_tha, ((struct arpcom *)revarp_ifp)->ac_enaddr,
-	    sizeof(ar->arp_tha)))
+	ifp = if_get(revarp_ifidx);
+	if (ifp == NULL)
+		goto out;
+	if (memcmp(ar->arp_tha, LLADDR(ifp->if_sadl), sizeof(ar->arp_tha)))
 		goto out;
 	memcpy(&revarp_srvip, ar->arp_spa, sizeof(revarp_srvip));
 	memcpy(&revarp_myip, ar->arp_tpa, sizeof(revarp_myip));
@@ -861,6 +864,7 @@ wake:	/* Do wakeup every time in case it was missed. */
 
 out:
 	m_freem(m);
+	if_put(ifp);
 }
 
 /*
@@ -915,15 +919,14 @@ revarpwhoarewe(struct ifnet *ifp, struct in_addr *serv_in,
 	if (revarp_finished)
 		return EIO;
 
-	revarp_ifp = if_ref(ifp);
+	revarp_ifidx = ifp->if_index;
 	while (count--) {
 		revarprequest(ifp);
 		result = tsleep((caddr_t)&revarp_myip, PSOCK, "revarp", hz/2);
 		if (result != EWOULDBLOCK)
 			break;
 	}
-	if_put(revarp_ifp);
-	revarp_ifp = NULL;
+	revarp_ifidx = 0;
 	if (!revarp_finished)
 		return ENETUNREACH;
 

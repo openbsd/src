@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.h,v 1.62 2015/10/27 15:22:58 mpi Exp $	*/
+/*	$OpenBSD: if_ether.h,v 1.63 2015/11/13 10:18:04 mpi Exp $	*/
 /*	$NetBSD: if_ether.h,v 1.22 1996/05/11 13:00:00 mycroft Exp $	*/
 
 /*
@@ -269,7 +269,7 @@ do {									\
 } while (/* CONSTCOND */ 0)
 
 #ifdef NFSCLIENT
-extern struct ifnet *revarp_ifp;
+extern unsigned int revarp_ifidx;
 #endif /* NFSCLIENT */
 
 void arprequest(struct ifnet *, u_int32_t *, u_int32_t *, u_int8_t *);
