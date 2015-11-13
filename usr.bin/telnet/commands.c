@@ -1,4 +1,4 @@
-/*	$OpenBSD: commands.c,v 1.76 2015/11/13 16:50:03 deraadt Exp $	*/
+/*	$OpenBSD: commands.c,v 1.77 2015/11/13 16:53:46 deraadt Exp $	*/
 /*	$NetBSD: commands.c,v 1.14 1996/03/24 22:03:48 jtk Exp $	*/
 
 /*
@@ -740,7 +740,6 @@ static struct setlist Setlist[] = {
 #endif
     { "escape",	"character to escape back to telnet command mode", 0, &escape },
     { "rlogin", "rlogin escape character", 0, &rlogin },
-    { "tracefile", "file to write trace information to", SetNetTrace, (cc_t *)NetTraceFile},
     { " ", "" },
     { " ", "The following need 'localchars' to be toggled true", 0, 0 },
     { "flushoutput", "character to cause an Abort Output", 0, &termFlushChar },

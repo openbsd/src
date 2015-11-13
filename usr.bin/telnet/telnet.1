@@ -1,4 +1,4 @@
-.\"	$OpenBSD: telnet.1,v 1.58 2015/11/13 16:50:03 deraadt Exp $
+.\"	$OpenBSD: telnet.1,v 1.59 2015/11/13 16:53:46 deraadt Exp $
 .\"	$NetBSD: telnet.1,v 1.5 1996/02/28 21:04:12 thorpej Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
@@ -168,9 +168,16 @@ command.
 Opens
 .Ar tracefile
 for recording trace information.
-See the
-.Ic set tracefile
-command below.
+This is the file to which the output, caused by
+.Ic netdata
+or
+.Ic option
+tracing being
+.Dv TRUE ,
+will be written.
+If it is set to
+.Dq Fl ,
+then tracing information will be written to standard output (the default).
 .It Fl r
 Specifies a user interface similar to
 .Nm rlogin .
@@ -985,17 +992,6 @@ character is taken to be
 the terminal's
 .Ic suspend
 character.
-.It Ic tracefile
-This is the file to which the output, caused by
-.Ic netdata
-or
-.Ic option
-tracing being
-.Dv TRUE ,
-will be written.
-If it is set to
-.Dq Fl ,
-then tracing information will be written to standard output (the default).
 .It Ic worderase
 If
 .Nm
