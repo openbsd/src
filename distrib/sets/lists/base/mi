@@ -2538,6 +2538,7 @@
 ./usr/share/man/man2
 ./usr/share/man/man3
 ./usr/share/man/man3p
+./usr/share/man/man4/amd64/vmm.4
 ./usr/share/man/man7
 ./usr/share/man/man7/packages.7
 ./usr/share/man/man8
