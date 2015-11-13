@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.31 2015/11/13 17:01:12 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.32 2015/11/13 17:04:48 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.5 1996/02/28 21:04:05 thorpej Exp $	*/
 
 /*
@@ -162,6 +162,12 @@ main(int argc, char *argv[])
 			usage();
 		}
 	}
+
+	if (rtableid >= 0)
+		if (setrtable(rtableid) == -1) {
+			perror("setrtable");
+			exit(1);
+		}
 
 	if (autologin == -1)
 		autologin = (rlogin == _POSIX_VDISABLE) ? 0 : 1;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: commands.c,v 1.78 2015/11/13 17:01:12 deraadt Exp $	*/
+/*	$OpenBSD: commands.c,v 1.79 2015/11/13 17:04:48 deraadt Exp $	*/
 /*	$NetBSD: commands.c,v 1.14 1996/03/24 22:03:48 jtk Exp $	*/
 
 /*
@@ -1842,10 +1842,6 @@ tn(int argc, char *argv[])
 	net = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
 	if (net < 0)
 	    continue;
-
-	if (rtableid >= 0 && (setsockopt(net, SOL_SOCKET, SO_RTABLE, &rtableid,
-	    sizeof(rtableid)) == -1))
-		perror("setsockopt (SO_RTABLE)");
 
 	if (aliasp) {
 	    struct addrinfo ahints, *ares;
