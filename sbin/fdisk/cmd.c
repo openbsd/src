@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.84 2015/11/03 14:20:00 krw Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.85 2015/11/13 02:27:17 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -397,7 +397,7 @@ int
 Xwrite(char *args, struct mbr *mbr)
 {
 	struct dos_mbr dos_mbr;
-	int fd, i, n;
+	int i, n;
 
 	for (i = 0, n = 0; i < NDOSPART; i++)
 		if (mbr->part[i].id == 0xA6)
@@ -408,36 +408,27 @@ Xwrite(char *args, struct mbr *mbr)
 			return (CMD_CONT);
 	}
 
-	fd = DISK_open(disk.name, O_RDWR);
 	MBR_make(mbr, &dos_mbr);
 
 	printf("Writing MBR at offset %lld.\n", (long long)mbr->offset);
-	if (MBR_write(fd, mbr->offset, &dos_mbr) == -1) {
-		int saved_errno = errno;
+	if (MBR_write(mbr->offset, &dos_mbr) == -1) {
 		warn("error writing MBR");
-		close(fd);
-		errno = saved_errno;
 		return (CMD_CONT);
 	}
 
 	if (letoh64(gh.gh_sig) == GPTSIGNATURE) {
 		printf("Writing GPT.\n");
-		if (GPT_write(fd) == -1) {
-			int saved_errno = errno;
+		if (GPT_write() == -1) {
 			warn("error writing GPT");
-			close(fd);
-			errno = saved_errno;
 			return (CMD_CONT);
 		}
 	} else if (reinited) {
 		/* Make sure GPT doesn't get in the way. */
-		MBR_zapgpt(fd, &dos_mbr, DL_GETDSIZE(&dl) - 1);
+		MBR_zapgpt(&dos_mbr, DL_GETDSIZE(&dl) - 1);
 	}
 
 	/* Refresh in memory copy to reflect what was just written. */
 	MBR_parse(&dos_mbr, mbr->offset, mbr->reloffset, mbr);
-
-	close(fd);
 
 	return (CMD_CLEAN);
 }

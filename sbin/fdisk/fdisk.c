@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdisk.c,v 1.80 2015/11/11 15:39:18 krw Exp $	*/
+/*	$OpenBSD: fdisk.c,v 1.81 2015/11/13 02:27:17 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -149,8 +149,7 @@ main(int argc, char *argv[])
 	else
 		disk.name = argv[0];
 
-	/* Start with the disklabel geometry and get the sector size. */
-	DISK_getlabelgeometry();
+	DISK_open();
 
 	if (b_arg > 0 && i_flag == 0) {
 		warnx("-b specified without -i");
@@ -199,9 +198,7 @@ main(int argc, char *argv[])
 
 	/* Create initial/default MBR. */
 	if (i_flag == 0) {
-		fd = DISK_open(disk.name, O_RDONLY);
-		error = MBR_read(fd, 0, &dos_mbr);
-		close(fd);
+		error = MBR_read(0, &dos_mbr);
 		if (error)
 			errx(1, "Can't read sector 0!");
 		MBR_parse(&dos_mbr, 0, 0, &initial_mbr);
@@ -251,6 +248,8 @@ main(int argc, char *argv[])
 
 	if (e_flag)
 		USER_edit(0, 0);
+
+	close(disk.fd);
 
 	return (0);
 }

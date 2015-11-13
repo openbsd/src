@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpt.c,v 1.4 2015/11/12 21:31:36 krw Exp $	*/
+/*	$OpenBSD: gpt.c,v 1.5 2015/11/13 02:27:17 krw Exp $	*/
 /*
  * Copyright (c) 2015 Markus Muller <mmu@grummel.net>
  * Copyright (c) 2015 Kenneth R Westerback <krw@openbsd.org>
@@ -45,14 +45,14 @@ struct gpt_header gh;
 struct gpt_partition gp[NGPTPARTITIONS];
 
 int
-GPT_get_header(int fd, off_t where)
+GPT_get_header(off_t where)
 {
 	char *secbuf;
 	uint64_t partlastlba;
 	int partspersec;
 	uint32_t orig_gh_csum, new_gh_csum;
 
-	secbuf = DISK_readsector(fd, where);
+	secbuf = DISK_readsector(where);
 	if (secbuf == 0)
 		return (1);
 
@@ -146,7 +146,7 @@ GPT_get_header(int fd, off_t where)
 }
 
 int
-GPT_get_partition_table(int fd, off_t where)
+GPT_get_partition_table(off_t where)
 {
 	ssize_t len;
 	off_t off;
@@ -167,13 +167,13 @@ GPT_get_partition_table(int fd, off_t where)
 	memset(&gp, 0, sizeof(gp));
 
 	where *= dl.d_secsize;
-	off = lseek(fd, where, SEEK_SET);
+	off = lseek(disk.fd, where, SEEK_SET);
 	if (off == -1) {
 		DPRINTF("seek to gpt partition table @ sector %llu failed\n",
 		    (unsigned long long)where / dl.d_secsize);
 		return (1);
 	}
-	len = read(fd, &gp, secs * dl.d_secsize);
+	len = read(disk.fd, &gp, secs * dl.d_secsize);
 	if (len == -1 || len != secs * dl.d_secsize) {
 		DPRINTF("gpt partition table read failed.\n");
 		return (1);
@@ -193,31 +193,23 @@ GPT_get_partition_table(int fd, off_t where)
 int
 GPT_get_gpt(void)
 {
-	int fd, privalid, altvalid;
-
-	fd = DISK_open(disk.name, O_RDONLY);
+	int privalid, altvalid;
 
 	/*
 	 * primary header && primary partition table ||
 	 * alt header && alt partition table
 	 */
-	privalid = GPT_get_header(fd, GPTSECTOR);
+	privalid = GPT_get_header(GPTSECTOR);
 	if (privalid == 0)
-		privalid = GPT_get_partition_table(fd, gh.gh_part_lba);
-	if (privalid == 0) {
-		close(fd);
+		privalid = GPT_get_partition_table(gh.gh_part_lba);
+	if (privalid == 0)
 		return (0);
-	}
 
-	altvalid = GPT_get_header(fd, DL_GETDSIZE(&dl) - 1);
+	altvalid = GPT_get_header(DL_GETDSIZE(&dl) - 1);
 	if (altvalid == 0)
-		altvalid = GPT_get_partition_table(fd, gh.gh_part_lba);
-	if (altvalid == 0) {
-		close(fd);
+		altvalid = GPT_get_partition_table(gh.gh_part_lba);
+	if (altvalid == 0)
 		return (0);
-	}
-
-	close(fd);
 
 	return (1);
 }
@@ -383,7 +375,7 @@ GPT_init(void)
 }
 
 int
-GPT_write(int fd)
+GPT_write(void)
 {
 	char *secbuf;
 	const int secsize = unit_types[SECTORS].conversion;
@@ -406,12 +398,12 @@ GPT_write(int fd)
 	gh.gh_csum = 0;
 	gh.gh_csum = crc32((unsigned char *)&gh, letoh32(gh.gh_size));
 
-	secbuf = DISK_readsector(fd, 1);
+	secbuf = DISK_readsector(1);
 	if (secbuf == NULL)
 		return (-1);
 
 	memcpy(secbuf, &gh, sizeof(gh));
-	DISK_writesector(fd, secbuf, 1);
+	DISK_writesector(secbuf, 1);
 	free(secbuf);
 
 	gh.gh_lba_self = htole64(altgh);
@@ -420,12 +412,12 @@ GPT_write(int fd)
 	gh.gh_csum = 0;
 	gh.gh_csum = crc32((unsigned char *)&gh, letoh32(gh.gh_size));
 
-	secbuf = DISK_readsector(fd, altgh);
+	secbuf = DISK_readsector(altgh);
 	if (secbuf == NULL)
 		return (-1);
 
 	memcpy(secbuf, &gh, sizeof(gh));
-	DISK_writesector(fd, secbuf, altgh);
+	DISK_writesector(secbuf, altgh);
 	free(secbuf);
 
 	/*
@@ -435,9 +427,9 @@ GPT_write(int fd)
 	 * XXX ALWAYS NGPTPARTITIONS!
 	 * XXX ASSUME gp is multiple of sector size!
 	 */
-	off = lseek(fd, secsize * 2, SEEK_SET);
+	off = lseek(disk.fd, secsize * 2, SEEK_SET);
 	if (off == secsize * 2)
-		len = write(fd, &gp, sizeof(gp));
+		len = write(disk.fd, &gp, sizeof(gp));
 	else
 		len = -1;
 	if (len == -1 || len != sizeof(gp)) {
@@ -445,9 +437,9 @@ GPT_write(int fd)
 		return (-1);
 	}
 
-	off = lseek(fd, secsize * altgp, SEEK_SET);
+	off = lseek(disk.fd, secsize * altgp, SEEK_SET);
 	if (off == secsize * altgp)
-		len = write(fd, &gp, sizeof(gp));
+		len = write(disk.fd, &gp, sizeof(gp));
 	else
 		len = -1;
 
@@ -457,7 +449,7 @@ GPT_write(int fd)
 	}
 
 	/* Refresh in-kernel disklabel from the updated disk information. */
-	ioctl(fd, DIOCRLDINFO, 0);
+	ioctl(disk.fd, DIOCRLDINFO, 0);
 
 	return (0);
 }

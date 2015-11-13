@@ -1,4 +1,4 @@
-/*	$OpenBSD: disk.c,v 1.49 2015/11/11 15:39:18 krw Exp $	*/
+/*	$OpenBSD: disk.c,v 1.50 2015/11/13 02:27:17 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -36,49 +36,37 @@
 struct disk disk;
 struct disklabel dl;
 
-int
-DISK_open(char *disk, int mode)
+void
+DISK_open(void)
 {
 	struct stat st;
-	int fd;
+	u_int64_t sz, spc;
 
-	fd = opendev(disk, mode, OPENDEV_PART, NULL);
-	if (fd == -1)
-		err(1, "%s", disk);
-	if (fstat(fd, &st) == -1)
-		err(1, "%s", disk);
+	disk.fd = opendev(disk.name, O_RDWR, OPENDEV_PART, NULL);
+	if (disk.fd == -1)
+		err(1, "%s", disk.name);
+	if (fstat(disk.fd, &st) == -1)
+		err(1, "%s", disk.name);
 	if (!S_ISCHR(st.st_mode) && !S_ISREG(st.st_mode))
 		errx(1, "%s is not a character device or a regular file",
 		    disk);
 
-	return (fd);
-}
-
-void
-DISK_getlabelgeometry(void)
-{
-	u_int64_t sz, spc;
-	int fd;
-
 	/* Get label geometry. */
-	if ((fd = DISK_open(disk.name, O_RDONLY)) != -1) {
-		if (ioctl(fd, DIOCGPDINFO, &dl) == -1) {
-			warn("DIOCGPDINFO");
-		} else {
-			disk.cylinders = dl.d_ncylinders;
-			disk.heads = dl.d_ntracks;
-			disk.sectors = dl.d_nsectors;
-			/* MBR handles only first UINT32_MAX sectors. */
-			spc = (u_int64_t)disk.heads * disk.sectors;
-			sz = DL_GETDSIZE(&dl);
-			if (sz > UINT32_MAX) {
-				disk.cylinders = UINT32_MAX / spc;
-				disk.size = disk.cylinders * spc;
-			} else
-				disk.size = sz;
-			unit_types[SECTORS].conversion = dl.d_secsize;
-		}
-		close(fd);
+	if (ioctl(disk.fd, DIOCGPDINFO, &dl) == -1) {
+		warn("DIOCGPDINFO");
+	} else {
+		disk.cylinders = dl.d_ncylinders;
+		disk.heads = dl.d_ntracks;
+		disk.sectors = dl.d_nsectors;
+		/* MBR handles only first UINT32_MAX sectors. */
+		spc = (u_int64_t)disk.heads * disk.sectors;
+		sz = DL_GETDSIZE(&dl);
+		if (sz > UINT32_MAX) {
+			disk.cylinders = UINT32_MAX / spc;
+			disk.size = disk.cylinders * spc;
+		} else
+			disk.size = sz;
+		unit_types[SECTORS].conversion = dl.d_secsize;
 	}
 }
 
@@ -116,7 +104,7 @@ DISK_printgeometry(char *units)
  * The caller must free() the memory it gets.
  */
 char *
-DISK_readsector(int fd, off_t where)
+DISK_readsector(off_t where)
 {
 	int secsize;
 	char *secbuf;
@@ -126,7 +114,7 @@ DISK_readsector(int fd, off_t where)
 	secsize = dl.d_secsize;
 
 	where *= secsize;
-	off = lseek(fd, where, SEEK_SET);
+	off = lseek(disk.fd, where, SEEK_SET);
 	if (off != where)
 		return (NULL);
 
@@ -134,7 +122,7 @@ DISK_readsector(int fd, off_t where)
 	if (secbuf == NULL)
 		return (NULL);
 
-	len = read(fd, secbuf, secsize);
+	len = read(disk.fd, secbuf, secsize);
 	if (len == -1 || len != secsize) {
 		free(secbuf);
 		return (NULL);
@@ -149,7 +137,7 @@ DISK_readsector(int fd, off_t where)
  * errno if the write fails.
  */
 int
-DISK_writesector(int fd, char *secbuf, off_t where)
+DISK_writesector(char *secbuf, off_t where)
 {
 	int secsize;
 	ssize_t len;
@@ -159,9 +147,9 @@ DISK_writesector(int fd, char *secbuf, off_t where)
 	secsize = dl.d_secsize;
 
 	where *= secsize;
-	off = lseek(fd, where, SEEK_SET);
+	off = lseek(disk.fd, where, SEEK_SET);
 	if (off == where)
-		len = write(fd, secbuf, secsize);
+		len = write(disk.fd, secbuf, secsize);
 
 	if (len == -1 || len != secsize) {
 		/* short read or write */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbr.c,v 1.59 2015/11/12 23:49:37 krw Exp $	*/
+/*	$OpenBSD: mbr.c,v 1.60 2015/11/13 02:27:17 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -214,11 +214,11 @@ MBR_print(struct mbr *mbr, char *units)
 }
 
 int
-MBR_read(int fd, off_t where, struct dos_mbr *dos_mbr)
+MBR_read(off_t where, struct dos_mbr *dos_mbr)
 {
 	char *secbuf;
 
-	secbuf = DISK_readsector(fd, where);
+	secbuf = DISK_readsector(where);
 	if (secbuf == NULL)
 		return (-1);
 
@@ -229,11 +229,11 @@ MBR_read(int fd, off_t where, struct dos_mbr *dos_mbr)
 }
 
 int
-MBR_write(int fd, off_t where, struct dos_mbr *dos_mbr)
+MBR_write(off_t where, struct dos_mbr *dos_mbr)
 {
 	char *secbuf;
 
-	secbuf = DISK_readsector(fd, where);
+	secbuf = DISK_readsector(where);
 	if (secbuf == NULL)
 		return (-1);
 
@@ -242,10 +242,10 @@ MBR_write(int fd, off_t where, struct dos_mbr *dos_mbr)
 	 * write the sector back to "disk".
 	 */
 	memcpy(secbuf, dos_mbr, sizeof(*dos_mbr));
-	DISK_writesector(fd, secbuf, where);
+	DISK_writesector(secbuf, where);
 
 	/* Refresh in-kernel disklabel from the updated disk information. */
-	ioctl(fd, DIOCRLDINFO, 0);
+	ioctl(disk.fd, DIOCRLDINFO, 0);
 
 	free(secbuf);
 
@@ -261,11 +261,9 @@ MBR_pcopy(struct mbr *mbr)
 {
 	struct dos_partition dos_parts[NDOSPART];
 	struct dos_mbr dos_mbr;
-	int i, fd, error;
+	int i, error;
 
-	fd = DISK_open(disk.name, O_RDONLY);
-	error = MBR_read(fd, 0, &dos_mbr);
-	close(fd);
+	error = MBR_read(0, &dos_mbr);
 
 	if (error == -1)
 		return;
@@ -283,7 +281,7 @@ MBR_pcopy(struct mbr *mbr)
  * confused.
  */
 void
-MBR_zapgpt(int fd, struct dos_mbr *dos_mbr, uint64_t lastsec)
+MBR_zapgpt(struct dos_mbr *dos_mbr, uint64_t lastsec)
 {
 	struct dos_partition dos_parts[NDOSPART];
 	char *secbuf;
@@ -297,25 +295,25 @@ MBR_zapgpt(int fd, struct dos_mbr *dos_mbr, uint64_t lastsec)
 		    (dos_parts[i].dp_typ == DOSPTYP_EFISYS))
 			return;
 
-	secbuf = DISK_readsector(fd, GPTSECTOR);
+	secbuf = DISK_readsector(GPTSECTOR);
 	if (secbuf == NULL)
 		return;
 
 	memcpy(&sig, secbuf, sizeof(sig));
 	if (letoh64(sig) == GPTSIGNATURE) {
 		memset(secbuf, 0, sizeof(sig));
-		DISK_writesector(fd, secbuf, GPTSECTOR);
+		DISK_writesector(secbuf, GPTSECTOR);
 	}
 	free(secbuf);
 
-	secbuf = DISK_readsector(fd, lastsec);
+	secbuf = DISK_readsector(lastsec);
 	if (secbuf == NULL)
 		return;
 
 	memcpy(&sig, secbuf, sizeof(sig));
 	if (letoh64(sig) == GPTSIGNATURE) {
 		memset(secbuf, 0, sizeof(sig));
-		DISK_writesector(fd, secbuf, lastsec);
+		DISK_writesector(secbuf, lastsec);
 	}
 	free(secbuf);
 }
