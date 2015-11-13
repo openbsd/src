@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdisk.c,v 1.81 2015/11/13 02:27:17 krw Exp $	*/
+/*	$OpenBSD: fdisk.c,v 1.82 2015/11/13 15:32:36 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -50,14 +50,14 @@ usage(void)
 	extern char * __progname;
 
 	fprintf(stderr, "usage: %s "
-	    "[-egy] [-i|-u] [-b blocks] [-c # -h # -s #] "
-	    "[-f mbrfile] [-l blocks] disk\n"
-	    "\t-b: add special boot partition; requires -i\n"
+	    "[-egy] [-i|-u] [-b #] [-c # -h # -s #] "
+	    "[-f mbrfile] [-l # ] disk\n"
+	    "\t-b: specify special boot partition block count; requires -i\n"
 	    "\t-chs: specify disk geometry\n"
-	    "\t-e: edit MBRs on disk interactively\n"
+	    "\t-e: interactively edit MBR or GPT\n"
 	    "\t-f: specify non-standard MBR template\n"
-	    "\t-g: initialize disk with EFI/GPT partition; requires -i\n"
-	    "\t-i: initialize disk with virgin MBR\n"
+	    "\t-g: initialize disk with GPT; requires -i\n"
+	    "\t-i: initialize disk with MBR unless -g is also specified\n"
 	    "\t-l: specify LBA block count\n"
 	    "\t-u: update MBR code; preserve partition table\n"
 	    "\t-y: do not ask questions\n"
