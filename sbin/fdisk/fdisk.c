@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdisk.c,v 1.83 2015/11/13 21:54:10 krw Exp $	*/
+/*	$OpenBSD: fdisk.c,v 1.84 2015/11/13 22:27:35 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -142,22 +142,12 @@ main(int argc, char *argv[])
 	argv += optind;
 
 	/* Argument checking */
-	if (argc != 1 || (i_flag && u_flag))
+	if (argc != 1 || (i_flag && u_flag) ||
+	    (i_flag == 0 && (b_arg || g_flag)))
 		usage();
-	else
-		disk.name = argv[0];
 
+	disk.name = argv[0];
 	DISK_open();
-
-	if (b_arg > 0 && i_flag == 0) {
-		warnx("-b specified without -i");
-		usage();
-	}
-
-	if (g_flag != 0 && i_flag == 0) {
-		warnx("-g specified without -i");
-		usage();
-	}
 
 	/* Get the GPT if present. */
 	if (GPT_get_gpt()) {
