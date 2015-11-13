@@ -1,4 +1,4 @@
-/*	$OpenBSD: commands.c,v 1.77 2015/11/13 16:53:46 deraadt Exp $	*/
+/*	$OpenBSD: commands.c,v 1.78 2015/11/13 17:01:12 deraadt Exp $	*/
 /*	$NetBSD: commands.c,v 1.14 1996/03/24 22:03:48 jtk Exp $	*/
 
 /*
@@ -429,16 +429,6 @@ lclchars(int unused)
 }
 
 static int
-togdebug(int unused)
-{
-    if (net > 0 &&
-	(setsockopt(net, SOL_SOCKET, SO_DEBUG, &debug, sizeof(debug))) == -1) {
-	    perror("setsockopt (SO_DEBUG)");
-    }
-    return 1;
-}
-
-static int
 togcrlf(int unused)
 {
     if (crlf) {
@@ -605,11 +595,6 @@ static struct togglelist Togglelist[] = {
 		&localchars,
 		    "recognize certain control characters" },
     { " ", "", 0, 0 },		/* empty line */
-    { "debug",
-	"debugging",
-	    togdebug,
-		&debug,
-		    "turn on socket level debugging" },
     { "netdata",
 	"printing of hexadecimal network data (debugging)",
 	    0,
@@ -1897,14 +1882,6 @@ tn(int argc, char *argv[])
 		    sizeof(tos)) < 0 && errno != ENOPROTOOPT)
 			perror("telnet: setsockopt (IPV6_TCLASS) (ignored)");
 		break;
-	}
-
-	if (debug) {
-		int one = 1;
-
-		if (setsockopt(net, SOL_SOCKET, SO_DEBUG, &one,
-		    sizeof(one)) < 0)
-			perror("setsockopt (SO_DEBUG)");
 	}
 
 	if (connect(net, res->ai_addr, res->ai_addrlen) < 0) {

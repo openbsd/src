@@ -1,4 +1,4 @@
-.\"	$OpenBSD: telnet.1,v 1.59 2015/11/13 16:53:46 deraadt Exp $
+.\"	$OpenBSD: telnet.1,v 1.60 2015/11/13 17:01:12 deraadt Exp $
 .\"	$NetBSD: telnet.1,v 1.5 1996/02/28 21:04:12 thorpej Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
@@ -128,11 +128,6 @@ variable when it starts with
 or
 .Sq unix: .
 By default, these are replaced with the local hostname and a colon.
-.It Fl d
-Sets the initial value of the
-.Ic debug
-toggle to
-.Dv TRUE .
 .It Fl E
 Stops any character from being recognized as an escape character.
 .It Fl e Ar escapechar
@@ -1178,10 +1173,6 @@ This mode does not affect those characters typed by the user, only
 those received from the remote host.
 This mode is not very useful unless the remote host
 only sends carriage return, but never line feeds.
-The initial value for this toggle is
-.Dv FALSE .
-.It Ic debug
-Toggles socket level debugging (useful only to the superuser).
 The initial value for this toggle is
 .Dv FALSE .
 .It Ic localchars

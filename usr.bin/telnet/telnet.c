@@ -1,4 +1,4 @@
-/*	$OpenBSD: telnet.c,v 1.30 2014/09/09 03:41:08 guenther Exp $	*/
+/*	$OpenBSD: telnet.c,v 1.31 2015/11/13 17:01:12 deraadt Exp $	*/
 /*	$NetBSD: telnet.c,v 1.7 1996/02/28 21:04:15 thorpej Exp $	*/
 
 /*
@@ -83,7 +83,6 @@ int
 	connected,
 	showoptions,
 	ISend,		/* trying to send network data in */
-	debug = 0,
 	crmod,
 	netdata,	/* Print out network data flow */
 	crlf,		/* Should '\r' be mapped to <CR><LF> (or <CR><NUL>)? */
