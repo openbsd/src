@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.94 2015/11/12 11:09:11 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.95 2015/11/13 08:09:28 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -415,6 +415,7 @@ format_cb_history_bytes(struct format_tree *ft, struct format_entry *fe)
 	for (i = 0; i < gd->hsize; i++) {
 		gl = &gd->linedata[i];
 		size += gl->cellsize * sizeof *gl->celldata;
+		size += gl->extdsize * sizeof *gl->extddata;
 	}
 	size += gd->hsize * sizeof *gd->linedata;
 
