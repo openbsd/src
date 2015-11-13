@@ -76,6 +76,7 @@
 ./usr/include/amd64/trap.h
 ./usr/include/amd64/tss.h
 ./usr/include/amd64/vga_post.h
+./usr/include/amd64/vmmvar.h
 ./usr/include/amd64/vmparam.h
 ./usr/include/cpuid.h
 ./usr/include/emmintrin.h

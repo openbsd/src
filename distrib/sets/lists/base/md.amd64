@@ -582,6 +582,7 @@
 ./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/trap.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/tss.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/vga_post.ph
+./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/vmmvar.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/vmparam.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/ar.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/arpa
