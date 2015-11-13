@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_mroute.c,v 1.87 2015/11/13 10:25:48 mpi Exp $	*/
+/*	$OpenBSD: ip_mroute.c,v 1.88 2015/11/13 10:33:12 mpi Exp $	*/
 /*	$NetBSD: ip_mroute.c,v 1.85 2004/04/26 01:31:57 matt Exp $	*/
 
 /*
@@ -1159,8 +1159,7 @@ add_mfc(struct mbuf *m)
 			}
 		}
 		if (rt == NULL) {	/* no upcall, so make a new entry */
-			rt = (struct mfc *)malloc(sizeof(*rt), M_MRTABLE,
-			    M_NOWAIT);
+			rt = malloc(sizeof(*rt), M_MRTABLE, M_NOWAIT);
 			if (rt == NULL) {
 				splx(s);
 				return (ENOBUFS);
@@ -1327,8 +1326,7 @@ ip_mforward(struct mbuf *m, struct ifnet *ifp)
 		 * just going to fail anyway.  Make sure to pullup the header so
 		 * that other people can't step on it.
 		 */
-		rte = (struct rtdetq *)malloc(sizeof(*rte),
-		    M_MRTABLE, M_NOWAIT);
+		rte = malloc(sizeof(*rte), M_MRTABLE, M_NOWAIT);
 		if (rte == NULL) {
 			splx(s);
 			return (ENOBUFS);
@@ -1366,8 +1364,7 @@ ip_mforward(struct mbuf *m, struct ifnet *ifp)
 				goto non_fatal;
 
 			/* no upcall, so make a new entry */
-			rt = (struct mfc *)malloc(sizeof(*rt),
-			    M_MRTABLE, M_NOWAIT);
+			rt = malloc(sizeof(*rt), M_MRTABLE, M_NOWAIT);
 			if (rt == NULL)
 				goto fail;
 			/*

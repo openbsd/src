@@ -859,8 +859,7 @@ add_m6fc(struct mf6cctl *mfccp)
 		}
 		if (rt == NULL) {
 			/* no upcall, so make a new entry */
-			rt = (struct mf6c *)malloc(sizeof(*rt), M_MRTABLE,
-						  M_NOWAIT);
+			rt = malloc(sizeof(*rt), M_MRTABLE, M_NOWAIT);
 			if (rt == NULL) {
 				splx(s);
 				return ENOBUFS;
@@ -1022,8 +1021,7 @@ ip6_mforward(struct ip6_hdr *ip6, struct ifnet *ifp, struct mbuf *m)
 		 * Allocate mbufs early so that we don't do extra work if we
 		 * are just going to fail anyway.
 		 */
-		rte = (struct rtdetq *)malloc(sizeof(*rte), M_MRTABLE,
-					      M_NOWAIT);
+		rte = malloc(sizeof(*rte), M_MRTABLE, M_NOWAIT);
 		if (rte == NULL) {
 			splx(s);
 			return ENOBUFS;
@@ -1057,8 +1055,7 @@ ip6_mforward(struct ip6_hdr *ip6, struct ifnet *ifp, struct mbuf *m)
 			struct mrt6msg *im;
 
 			/* no upcall, so make a new entry */
-			rt = (struct mf6c *)malloc(sizeof(*rt), M_MRTABLE,
-						  M_NOWAIT);
+			rt = malloc(sizeof(*rt), M_MRTABLE, M_NOWAIT);
 			if (rt == NULL) {
 				free(rte, M_MRTABLE, 0);
 				m_freem(mb0);
