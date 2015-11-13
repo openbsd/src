@@ -1,4 +1,4 @@
-/*	$OpenBSD: xform.c,v 1.51 2015/11/07 17:46:49 mikeb Exp $	*/
+/*	$OpenBSD: xform.c,v 1.52 2015/11/13 12:21:16 mikeb Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -327,22 +327,6 @@ struct auth_hash auth_hash_chacha20_poly1305 = {
 	Chacha20_Poly1305_Init, Chacha20_Poly1305_Setkey,
 	Chacha20_Poly1305_Reinit, Chacha20_Poly1305_Update,
 	Chacha20_Poly1305_Final
-};
-
-struct auth_hash auth_hash_md5 = {
-	CRYPTO_MD5, "MD5",
-	0, 16, 16, sizeof(MD5_CTX), 0,
-	(void (*) (void *)) MD5Init, NULL, NULL,
-	MD5Update_int,
-	(void (*) (u_int8_t *, void *)) MD5Final
-};
-
-struct auth_hash auth_hash_sha1 = {
-	CRYPTO_SHA1, "SHA1",
-	0, 20, 20, sizeof(SHA1_CTX), 0,
-	(void (*)(void *)) SHA1Init, NULL, NULL,
-	SHA1Update_int,
-	(void (*)(u_int8_t *, void *)) SHA1Final
 };
 
 /* Compression instance */

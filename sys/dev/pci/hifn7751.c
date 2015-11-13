@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751.c,v 1.171 2015/09/10 18:10:34 deraadt Exp $	*/
+/*	$OpenBSD: hifn7751.c,v 1.172 2015/11/13 12:21:16 mikeb Exp $	*/
 
 /*
  * Invertex AEON / Hifn 7751 driver
@@ -294,8 +294,6 @@ hifn_attach(struct device *parent, struct device *self, void *aux)
 		algs[CRYPTO_ARC4] = CRYPTO_ALG_FLAG_SUPPORTED;
 		/*FALLTHROUGH*/
 	case HIFN_PUSTAT_ENA_1:
-		algs[CRYPTO_MD5] = CRYPTO_ALG_FLAG_SUPPORTED;
-		algs[CRYPTO_SHA1] = CRYPTO_ALG_FLAG_SUPPORTED;
 		algs[CRYPTO_MD5_HMAC] = CRYPTO_ALG_FLAG_SUPPORTED;
 		algs[CRYPTO_SHA1_HMAC] = CRYPTO_ALG_FLAG_SUPPORTED;
 		algs[CRYPTO_DES_CBC] = CRYPTO_ALG_FLAG_SUPPORTED;
@@ -1863,8 +1861,6 @@ hifn_newsession(u_int32_t *sidp, struct cryptoini *cri)
 
 	for (c = cri; c != NULL; c = c->cri_next) {
 		switch (c->cri_alg) {
-		case CRYPTO_MD5:
-		case CRYPTO_SHA1:
 		case CRYPTO_MD5_HMAC:
 		case CRYPTO_SHA1_HMAC:
 			if (mac)
@@ -1986,9 +1982,7 @@ hifn_process(struct cryptop *crp)
 
 	if (crd2 == NULL) {
 		if (crd1->crd_alg == CRYPTO_MD5_HMAC ||
-		    crd1->crd_alg == CRYPTO_SHA1_HMAC ||
-		    crd1->crd_alg == CRYPTO_SHA1 ||
-		    crd1->crd_alg == CRYPTO_MD5) {
+		    crd1->crd_alg == CRYPTO_SHA1_HMAC) {
 			maccrd = crd1;
 			enccrd = NULL;
 		} else if (crd1->crd_alg == CRYPTO_DES_CBC ||
@@ -2007,9 +2001,7 @@ hifn_process(struct cryptop *crp)
 		}
 	} else {
 		if ((crd1->crd_alg == CRYPTO_MD5_HMAC ||
-		     crd1->crd_alg == CRYPTO_SHA1_HMAC ||
-		     crd1->crd_alg == CRYPTO_MD5 ||
-		     crd1->crd_alg == CRYPTO_SHA1) &&
+		     crd1->crd_alg == CRYPTO_SHA1_HMAC) &&
 		    (crd2->crd_alg == CRYPTO_DES_CBC ||
 		     crd2->crd_alg == CRYPTO_3DES_CBC ||
 		     crd2->crd_alg == CRYPTO_AES_CBC ||
@@ -2023,9 +2015,7 @@ hifn_process(struct cryptop *crp)
 		     crd1->crd_alg == CRYPTO_AES_CBC ||
 		     crd1->crd_alg == CRYPTO_3DES_CBC) &&
 		    (crd2->crd_alg == CRYPTO_MD5_HMAC ||
-		     crd2->crd_alg == CRYPTO_SHA1_HMAC ||
-		     crd2->crd_alg == CRYPTO_MD5 ||
-		     crd2->crd_alg == CRYPTO_SHA1) &&
+		     crd2->crd_alg == CRYPTO_SHA1_HMAC) &&
 		    (crd1->crd_flags & CRD_F_ENCRYPT)) {
 			enccrd = crd1;
 			maccrd = crd2;
@@ -2132,20 +2122,10 @@ hifn_process(struct cryptop *crp)
 		cmd->base_masks |= HIFN_BASE_CMD_MAC;
 
 		switch (maccrd->crd_alg) {
-		case CRYPTO_MD5:
-			cmd->mac_masks |= HIFN_MAC_CMD_ALG_MD5 |
-			    HIFN_MAC_CMD_RESULT | HIFN_MAC_CMD_MODE_HASH |
-			    HIFN_MAC_CMD_POS_IPSEC;
-			break;
 		case CRYPTO_MD5_HMAC:
 			cmd->mac_masks |= HIFN_MAC_CMD_ALG_MD5 |
 			    HIFN_MAC_CMD_RESULT | HIFN_MAC_CMD_MODE_HMAC |
 			    HIFN_MAC_CMD_POS_IPSEC | HIFN_MAC_CMD_TRUNC;
-			break;
-		case CRYPTO_SHA1:
-			cmd->mac_masks |= HIFN_MAC_CMD_ALG_SHA1 |
-			    HIFN_MAC_CMD_RESULT | HIFN_MAC_CMD_MODE_HASH |
-			    HIFN_MAC_CMD_POS_IPSEC;
 			break;
 		case CRYPTO_SHA1_HMAC:
 			cmd->mac_masks |= HIFN_MAC_CMD_ALG_SHA1 |
@@ -2338,11 +2318,7 @@ hifn_callback(struct hifn_softc *sc, struct hifn_command *cmd,
 		for (crd = crp->crp_desc; crd; crd = crd->crd_next) {
 			int len;
 
-			if (crd->crd_alg == CRYPTO_MD5)
-				len = 16;
-			else if (crd->crd_alg == CRYPTO_SHA1)
-				len = 20;
-			else if (crd->crd_alg == CRYPTO_MD5_HMAC ||
+			if (crd->crd_alg == CRYPTO_MD5_HMAC ||
 			    crd->crd_alg == CRYPTO_SHA1_HMAC)
 				len = 12;
 			else

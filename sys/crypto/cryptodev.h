@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptodev.h,v 1.64 2015/11/12 16:57:00 mikeb Exp $	*/
+/*	$OpenBSD: cryptodev.h,v 1.65 2015/11/13 12:21:16 mikeb Exp $	*/
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -93,25 +93,23 @@
 #define CRYPTO_RIJNDAEL128_CBC	11 /* 128 bit blocksize */
 #define CRYPTO_AES_CBC		11 /* 128 bit blocksize -- the same as above */
 #define CRYPTO_ARC4		12
-#define CRYPTO_MD5		13
-#define CRYPTO_SHA1		14
-#define CRYPTO_DEFLATE_COMP	15 /* Deflate compression algorithm */
-#define CRYPTO_NULL		16
-#define CRYPTO_LZS_COMP		17 /* LZS compression algorithm */
-#define CRYPTO_SHA2_256_HMAC	18
-#define CRYPTO_SHA2_384_HMAC	19
-#define CRYPTO_SHA2_512_HMAC	20
-#define CRYPTO_AES_CTR		21
-#define CRYPTO_AES_XTS		22
-#define CRYPTO_AES_GCM_16	23
-#define CRYPTO_AES_128_GMAC	24
-#define CRYPTO_AES_192_GMAC	25
-#define CRYPTO_AES_256_GMAC	26
-#define CRYPTO_AES_GMAC		27
-#define CRYPTO_CHACHA20_POLY1305	28
-#define CRYPTO_CHACHA20_POLY1305_MAC	29
-#define CRYPTO_ESN		30 /* Support for Extended Sequence Numbers */
-#define CRYPTO_ALGORITHM_MAX	30 /* Keep updated */
+#define CRYPTO_DEFLATE_COMP	13 /* Deflate compression algorithm */
+#define CRYPTO_NULL		14
+#define CRYPTO_LZS_COMP		15 /* LZS compression algorithm */
+#define CRYPTO_SHA2_256_HMAC	16
+#define CRYPTO_SHA2_384_HMAC	17
+#define CRYPTO_SHA2_512_HMAC	18
+#define CRYPTO_AES_CTR		19
+#define CRYPTO_AES_XTS		20
+#define CRYPTO_AES_GCM_16	21
+#define CRYPTO_AES_128_GMAC	22
+#define CRYPTO_AES_192_GMAC	23
+#define CRYPTO_AES_256_GMAC	24
+#define CRYPTO_AES_GMAC		25
+#define CRYPTO_CHACHA20_POLY1305	26
+#define CRYPTO_CHACHA20_POLY1305_MAC	27
+#define CRYPTO_ESN		28 /* Support for Extended Sequence Numbers */
+#define CRYPTO_ALGORITHM_MAX	28 /* Keep updated */
 
 /* Algorithm flags */
 #define	CRYPTO_ALG_FLAG_SUPPORTED	0x01 /* Algorithm is supported */

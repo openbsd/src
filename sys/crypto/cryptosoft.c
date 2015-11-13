@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptosoft.c,v 1.77 2015/11/12 16:57:00 mikeb Exp $	*/
+/*	$OpenBSD: cryptosoft.c,v 1.78 2015/11/13 12:21:16 mikeb Exp $	*/
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -463,11 +463,6 @@ swcr_authcompute(struct cryptop *crp, struct cryptodesc *crd,
 		axf->Update(&ctx, aalg, axf->hashsize);
 		axf->Final(aalg, &ctx);
 		break;
-
-	case CRYPTO_MD5:
-	case CRYPTO_SHA1:
-		axf->Final(aalg, &ctx);
-		break;
 	}
 
 	/* Inject the authentication data */
@@ -900,24 +895,6 @@ swcr_newsession(u_int32_t *sid, struct cryptoini *cri)
 			(*swd)->sw_axf = axf;
 			break;
 
-		case CRYPTO_MD5:
-			axf = &auth_hash_md5;
-			goto auth3common;
-
-		case CRYPTO_SHA1:
-			axf = &auth_hash_sha1;
-		auth3common:
-			(*swd)->sw_ictx = malloc(axf->ctxsize, M_CRYPTO_DATA,
-			    M_NOWAIT);
-			if ((*swd)->sw_ictx == NULL) {
-				swcr_freesession(i);
-				return ENOBUFS;
-			}
-
-			axf->Init((*swd)->sw_ictx);
-			(*swd)->sw_axf = axf;
-			break;
-
 		case CRYPTO_AES_128_GMAC:
 			axf = &auth_hash_gmac_aes_128;
 			goto auth4common;
@@ -1028,8 +1005,6 @@ swcr_freesession(u_int64_t tid)
 		case CRYPTO_AES_192_GMAC:
 		case CRYPTO_AES_256_GMAC:
 		case CRYPTO_CHACHA20_POLY1305_MAC:
-		case CRYPTO_MD5:
-		case CRYPTO_SHA1:
 			axf = swd->sw_axf;
 
 			if (swd->sw_ictx) {
@@ -1118,8 +1093,6 @@ swcr_process(struct cryptop *crp)
 		case CRYPTO_SHA2_256_HMAC:
 		case CRYPTO_SHA2_384_HMAC:
 		case CRYPTO_SHA2_512_HMAC:
-		case CRYPTO_MD5:
-		case CRYPTO_SHA1:
 			if ((crp->crp_etype = swcr_authcompute(crp, crd, sw,
 			    crp->crp_buf, type)) != 0)
 				goto done;
@@ -1179,8 +1152,6 @@ swcr_init(void)
 	algs[CRYPTO_MD5_HMAC] = CRYPTO_ALG_FLAG_SUPPORTED;
 	algs[CRYPTO_SHA1_HMAC] = CRYPTO_ALG_FLAG_SUPPORTED;
 	algs[CRYPTO_RIPEMD160_HMAC] = CRYPTO_ALG_FLAG_SUPPORTED;
-	algs[CRYPTO_MD5] = CRYPTO_ALG_FLAG_SUPPORTED;
-	algs[CRYPTO_SHA1] = CRYPTO_ALG_FLAG_SUPPORTED;
 	algs[CRYPTO_RIJNDAEL128_CBC] = CRYPTO_ALG_FLAG_SUPPORTED;
 	algs[CRYPTO_AES_CTR] = CRYPTO_ALG_FLAG_SUPPORTED;
 	algs[CRYPTO_AES_XTS] = CRYPTO_ALG_FLAG_SUPPORTED;
