@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cnmac.c,v 1.29 2015/10/28 14:04:17 visa Exp $	*/
+/*	$OpenBSD: if_cnmac.c,v 1.30 2015/11/13 14:43:33 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -1036,10 +1036,6 @@ octeon_eth_start(struct ifnet *ifp)
 	}
 
 	for (;;) {
-		IFQ_POLL(&ifp->if_snd, m);
-		if (__predict_false(m == NULL))
-			break;
-
 		octeon_eth_send_queue_flush_fetch(sc); /* XXX */
 
 		/*
@@ -1053,6 +1049,8 @@ octeon_eth_start(struct ifnet *ifp)
 		/* XXX */
 
 		IFQ_DEQUEUE(&ifp->if_snd, m);
+		if (m == NULL)
+			return;
 
 		OCTEON_ETH_TAP(ifp, m, BPF_DIRECTION_OUT);
 
@@ -1073,24 +1071,6 @@ octeon_eth_start(struct ifnet *ifp)
 		 */
 		octeon_eth_send_queue_flush_prefetch(sc);
 	}
-
-/*
- * XXXSEIL
- * Don't schedule send-buffer-free callout every time - those buffers are freed
- * by "free tick".  This makes some packets like NFS slower, but it normally
- * doesn't happen on SEIL.
- */
-#ifdef OCTEON_ETH_USENFS
-	if (__predict_false(sc->sc_ext_callback_cnt > 0)) {
-		int timo;
-
-		/* ??? */
-		timo = hz - (100 * sc->sc_ext_callback_cnt);
-		if (timo < 10)
-			timo = 10;
-		callout_schedule(&sc->sc_tick_free_ch, timo);
-	}
-#endif
 
 last:
 	octeon_eth_send_queue_flush_fetch(sc);
