@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdisk.c,v 1.82 2015/11/13 15:32:36 krw Exp $	*/
+/*	$OpenBSD: fdisk.c,v 1.83 2015/11/13 21:54:10 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -140,8 +140,6 @@ main(int argc, char *argv[])
 	}
 	argc -= optind;
 	argv += optind;
-
-	memset(&disk, 0, sizeof(disk));
 
 	/* Argument checking */
 	if (argc != 1 || (i_flag && u_flag))
