@@ -1,4 +1,4 @@
-/*	$OpenBSD: fingerd.c,v 1.37 2015/01/16 06:39:50 deraadt Exp $	*/
+/*	$OpenBSD: fingerd.c,v 1.38 2015/11/13 01:23:59 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -196,7 +196,8 @@ main(int argc, char *argv[])
 			(void) close(p[1]);
 		}
 		execv(prog, comp);
-		logerr("execv: %s: %s", prog, strerror(errno));
+		syslog(LOG_ERR, "execv: %s: %s", prog, strerror(errno));
+		_exit(1);
 	case -1:
 		logerr("fork: %s", strerror(errno));
 	}
