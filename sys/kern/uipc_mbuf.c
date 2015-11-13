@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.212 2015/11/12 10:07:14 mpi Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.213 2015/11/13 10:12:39 mpi Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -1202,7 +1202,7 @@ m_dup_pkthdr(struct mbuf *to, struct mbuf *from, int wait)
 	to->m_flags |= (from->m_flags & M_COPYFLAGS);
 	to->m_pkthdr = from->m_pkthdr;
 
-	SLIST_INIT(&to->m_pkthdr.tags);
+	SLIST_INIT(&to->m_pkthdr.ph_tags);
 
 	if ((error = m_tag_copy_chain(to, from, wait)) != 0)
 		return (error);
@@ -1228,9 +1228,9 @@ m_print(void *v,
 	if (m->m_flags & M_PKTHDR) {
 		(*pr)("m_ptkhdr.ph_ifidx: %u\tm_pkthdr.len: %i\n",
 		    m->m_pkthdr.ph_ifidx, m->m_pkthdr.len);
-		(*pr)("m_ptkhdr.tags: %p\tm_pkthdr.tagsset: %b\n",
-		    SLIST_FIRST(&m->m_pkthdr.tags),
-		    m->m_pkthdr.tagsset, MTAG_BITS);
+		(*pr)("m_ptkhdr.ph_tags: %p\tm_pkthdr.ph_tagsset: %b\n",
+		    SLIST_FIRST(&m->m_pkthdr.ph_tags),
+		    m->m_pkthdr.ph_tagsset, MTAG_BITS);
 		(*pr)("m_pkthdr.ph_flowid: %u\n", m->m_pkthdr.ph_flowid);
 		(*pr)("m_pkthdr.csum_flags: %b\n",
 		    m->m_pkthdr.csum_flags, MCS_BITS);

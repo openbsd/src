@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.201 2015/11/12 10:07:14 mpi Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.202 2015/11/13 10:12:39 mpi Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -122,9 +122,9 @@ struct pkthdr_pf {
 /* record/packet header in first mbuf of chain; valid if M_PKTHDR set */
 struct	pkthdr {
 	void			*ph_cookie;	/* additional data */
-	SLIST_HEAD(packet_tags, m_tag) tags;	/* list of packet tags */
+	SLIST_HEAD(, m_tag)	 ph_tags;	/* list of packet tags */
 	int			 len;		/* total packet length */
-	u_int16_t		 tagsset;	/* mtags attached */
+	u_int16_t		 ph_tagsset;	/* mtags attached */
 	u_int16_t		 ph_flowid;	/* pseudo unique flow id */
 	u_int16_t		 csum_flags;	/* checksum flags */
 	u_int16_t		 ether_vtag;	/* Ethernet 802.1p+Q vlan tag */
@@ -315,7 +315,7 @@ struct mbuf {
 #define M_MOVE_HDR(to, from) do {					\
 	(to)->m_pkthdr = (from)->m_pkthdr;				\
 	(from)->m_flags &= ~M_PKTHDR;					\
-	SLIST_INIT(&(from)->m_pkthdr.tags);				\
+	SLIST_INIT(&(from)->m_pkthdr.ph_tags);				\
 } while (/* CONSTCOND */ 0)
 
 /*

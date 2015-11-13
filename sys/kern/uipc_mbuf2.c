@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf2.c,v 1.41 2015/06/30 15:30:17 mpi Exp $	*/
+/*	$OpenBSD: uipc_mbuf2.c,v 1.42 2015/11/13 10:12:39 mpi Exp $	*/
 /*	$KAME: uipc_mbuf2.c,v 1.29 2001/02/14 13:42:10 itojun Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.40 1999/04/01 00:23:25 thorpej Exp $	*/
 
@@ -272,23 +272,23 @@ m_tag_get(int type, int len, int wait)
 void
 m_tag_prepend(struct mbuf *m, struct m_tag *t)
 {
-	SLIST_INSERT_HEAD(&m->m_pkthdr.tags, t, m_tag_link);
-	m->m_pkthdr.tagsset |= t->m_tag_id;
+	SLIST_INSERT_HEAD(&m->m_pkthdr.ph_tags, t, m_tag_link);
+	m->m_pkthdr.ph_tagsset |= t->m_tag_id;
 }
 
 /* Unlink and free a packet tag. */
 void
 m_tag_delete(struct mbuf *m, struct m_tag *t)
 {
-	u_int32_t	 tagsset = 0;
+	u_int32_t	 ph_tagsset = 0;
 	struct m_tag	*p;
 
-	SLIST_REMOVE(&m->m_pkthdr.tags, t, m_tag, m_tag_link);
+	SLIST_REMOVE(&m->m_pkthdr.ph_tags, t, m_tag, m_tag_link);
 	pool_put(&mtagpool, t);
 
-	SLIST_FOREACH(p, &m->m_pkthdr.tags, m_tag_link)
-		tagsset |= p->m_tag_id;
-	m->m_pkthdr.tagsset = tagsset;
+	SLIST_FOREACH(p, &m->m_pkthdr.ph_tags, m_tag_link)
+		ph_tagsset |= p->m_tag_id;
+	m->m_pkthdr.ph_tagsset = ph_tagsset;
 
 }
 
@@ -298,11 +298,11 @@ m_tag_delete_chain(struct mbuf *m)
 {
 	struct m_tag *p;
 
-	while ((p = SLIST_FIRST(&m->m_pkthdr.tags)) != NULL) {
-		SLIST_REMOVE_HEAD(&m->m_pkthdr.tags, m_tag_link);
+	while ((p = SLIST_FIRST(&m->m_pkthdr.ph_tags)) != NULL) {
+		SLIST_REMOVE_HEAD(&m->m_pkthdr.ph_tags, m_tag_link);
 		pool_put(&mtagpool, p);
 	}
-	m->m_pkthdr.tagsset = 0;
+	m->m_pkthdr.ph_tagsset = 0;
 }
 
 /* Find a tag, starting from a given position. */
@@ -311,11 +311,11 @@ m_tag_find(struct mbuf *m, int type, struct m_tag *t)
 {
 	struct m_tag *p;
 
-	if (!(m->m_pkthdr.tagsset & type))
+	if (!(m->m_pkthdr.ph_tagsset & type))
 		return (NULL);
 
 	if (t == NULL)
-		p = SLIST_FIRST(&m->m_pkthdr.tags);
+		p = SLIST_FIRST(&m->m_pkthdr.ph_tags);
 	else
 		p = SLIST_NEXT(t, m_tag_link);
 	while (p != NULL) {
@@ -351,18 +351,18 @@ m_tag_copy_chain(struct mbuf *to, struct mbuf *from, int wait)
 	struct m_tag *p, *t, *tprev = NULL;
 
 	m_tag_delete_chain(to);
-	SLIST_FOREACH(p, &from->m_pkthdr.tags, m_tag_link) {
+	SLIST_FOREACH(p, &from->m_pkthdr.ph_tags, m_tag_link) {
 		t = m_tag_copy(p, wait);
 		if (t == NULL) {
 			m_tag_delete_chain(to);
 			return (ENOBUFS);
 		}
 		if (tprev == NULL)
-			SLIST_INSERT_HEAD(&to->m_pkthdr.tags, t, m_tag_link);
+			SLIST_INSERT_HEAD(&to->m_pkthdr.ph_tags, t, m_tag_link);
 		else
 			SLIST_INSERT_AFTER(tprev, t, m_tag_link);
 		tprev = t;
-		to->m_pkthdr.tagsset |= t->m_tag_id;
+		to->m_pkthdr.ph_tagsset |= t->m_tag_id;
 	}
 	return (0);
 }
@@ -371,14 +371,14 @@ m_tag_copy_chain(struct mbuf *to, struct mbuf *from, int wait)
 void
 m_tag_init(struct mbuf *m)
 {
-	SLIST_INIT(&m->m_pkthdr.tags);
+	SLIST_INIT(&m->m_pkthdr.ph_tags);
 }
 
 /* Get first tag in chain. */
 struct m_tag *
 m_tag_first(struct mbuf *m)
 {
-	return (SLIST_FIRST(&m->m_pkthdr.tags));
+	return (SLIST_FIRST(&m->m_pkthdr.ph_tags));
 }
 
 /* Get next tag in chain. */

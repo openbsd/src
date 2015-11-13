@@ -1,4 +1,4 @@
-.\"     $OpenBSD: mbuf.9,v 1.93 2015/11/12 10:07:14 mpi Exp $
+.\"     $OpenBSD: mbuf.9,v 1.94 2015/11/13 10:12:39 mpi Exp $
 .\"
 .\" Copyright (c) 2001 Jean-Jacques Bernard-Gundol <jjbg@openbsd.org>
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 12 2015 $
+.Dd $Mdocdate: November 13 2015 $
 .Dt MBUF 9
 .Os
 .Sh NAME
@@ -121,9 +121,9 @@ struct m_hdr {
 
 struct pkthdr {
 	void			*ph_cookie;
-	SLIST_HEAD(packet_tags, m_tag) tags;
+	SLIST_HEAD(, m_tag)	 ph_tags;
 	int			 len;
-	u_int16_t		 tagsset;
+	u_int16_t		 ph_tagsset;
 	u_int16_t		 ph_flowid;
 	u_int16_t		 csum_flags;
 	u_int16_t		 ether_vtag;
