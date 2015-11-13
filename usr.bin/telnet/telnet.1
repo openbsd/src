@@ -1,4 +1,4 @@
-.\"	$OpenBSD: telnet.1,v 1.56 2015/10/25 14:12:55 jca Exp $
+.\"	$OpenBSD: telnet.1,v 1.57 2015/11/13 16:46:30 deraadt Exp $
 .\"	$NetBSD: telnet.1,v 1.5 1996/02/28 21:04:12 thorpej Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	from: @(#)telnet.1	8.4 (Berkeley) 2/3/94
 .\"
-.Dd $Mdocdate: October 25 2015 $
+.Dd $Mdocdate: November 13 2015 $
 .Dt TELNET 1
 .Os
 .Sh NAME
@@ -1018,13 +1018,6 @@ Displays the legal
 .Pq Ic unset
 commands.
 .El
-.It Ic skey Ar sequence challenge
-The
-.Ic skey
-command computes a response to the S/Key challenge.
-See
-.Xr skey 1
-for more information on the S/Key system.
 .It Ic slc Ar state
 The
 .Ic slc
@@ -1330,7 +1323,6 @@ option.
 user customized telnet startup values
 .El
 .Sh SEE ALSO
-.Xr skey 1 ,
 .Xr ssh 1 ,
 .Xr stty 1
 .Sh HISTORY

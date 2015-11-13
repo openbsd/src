@@ -1,4 +1,4 @@
-/*	$OpenBSD: commands.c,v 1.74 2015/10/26 00:33:03 jca Exp $	*/
+/*	$OpenBSD: commands.c,v 1.75 2015/11/13 16:46:30 deraadt Exp $	*/
 /*	$NetBSD: commands.c,v 1.14 1996/03/24 22:03:48 jtk Exp $	*/
 
 /*
@@ -33,6 +33,7 @@
 #include "telnet_locl.h"
 
 #include <sys/socket.h>
+#include <sys/wait.h>
 #include <netinet/in.h>
 #include <netinet/ip.h>
 #include <arpa/inet.h>
@@ -49,11 +50,6 @@
 #include <unistd.h>
 #include <limits.h>
 
-#ifdef SKEY
-#include <sys/wait.h>
-#define PATH_SKEY	"/usr/bin/skey"
-#endif
-
 char	*hostname;
 
 typedef struct {
@@ -67,33 +63,6 @@ static char line[256];
 static char saveline[256];
 static int margc;
 static char *margv[20];
-
-#ifdef SKEY
-int
-skey_calc(int argc, char **argv)
-{
-	int status;
-
-	if(argc != 3) {
-		printf("usage: %s sequence challenge\n", argv[0]);
-		return 0;
-	}
-
-	switch(fork()) {
-	case 0:
-		execv(PATH_SKEY, argv);
-		exit (1);
-	case -1:
-		err(1, "fork");
-		break;
-	default:
-		(void) wait(&status);
-		if (WIFEXITED(status))
-			return (WEXITSTATUS(status));
-		return (0);
-	}
-}
-#endif
 
 static void
 makeargv(void)
@@ -2056,9 +2025,6 @@ static char
 	slchelp[] =	"change state of special charaters ('slc ?' for more)",
 	displayhelp[] =	"display operating parameters",
 	zhelp[] =	"suspend telnet",
-#ifdef SKEY
-	skeyhelp[] =	"compute response to s/key challenge",
-#endif
 	shellhelp[] =	"invoke a subshell",
 	envhelp[] =	"change environment variables ('environ ?' for more)",
 	modestring[] = "try to enter line or character mode ('mode ?' for more)";
@@ -2083,9 +2049,6 @@ static Command cmdtab[] = {
 	{ "!",		shellhelp,	shell,		0 },
 	{ "environ",	envhelp,	env_cmd,	0 },
 	{ "?",		helphelp,	help,		0 },
-#ifdef SKEY
-	{ "skey",	skeyhelp,	skey_calc,	0 },
-#endif		
 	{ 0,		0,		0,		0 }
 };
 

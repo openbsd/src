@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.33 2014/07/20 05:29:39 guenther Exp $
+#	$OpenBSD: Makefile,v 1.34 2015/11/13 16:46:30 deraadt Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -32,7 +32,7 @@
 
 PROG=	telnet
 
-CFLAGS+=-DKLUDGELINEMODE -DSKEY
+CFLAGS+=-DKLUDGELINEMODE
 CFLAGS+= -Wall
 LDADD+=	-lcurses
 DPADD=	${LIBCURSES}
