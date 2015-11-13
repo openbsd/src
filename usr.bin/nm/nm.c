@@ -1,4 +1,4 @@
-/*	$OpenBSD: nm.c,v 1.49 2015/10/09 01:37:08 deraadt Exp $	*/
+/*	$OpenBSD: nm.c,v 1.50 2015/11/13 15:22:44 deraadt Exp $	*/
 /*	$NetBSD: nm.c,v 1.7 1996/01/14 23:04:03 pk Exp $	*/
 
 /*
@@ -135,10 +135,16 @@ main(int argc, char *argv[])
 	const struct option *lopts;
 	int ch, eval;
 
+	if (pledge("stdio rpath proc exec", NULL) == -1)
+		err(1, "pledge");
+
 	optstr = OPTSTRING_NM;
 	lopts = longopts_nm;
 	if (!strcmp(__progname, "size")) {
-		issize++;
+		if (pledge("stdio rpath", NULL) == -1)
+			err(1, "pledge");
+
+		issize = 1;
 		optstr = "tw";
 		lopts = NULL;
 	}
