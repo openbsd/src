@@ -1,4 +1,4 @@
-/*	$OpenBSD: commands.c,v 1.75 2015/11/13 16:46:30 deraadt Exp $	*/
+/*	$OpenBSD: commands.c,v 1.76 2015/11/13 16:50:03 deraadt Exp $	*/
 /*	$NetBSD: commands.c,v 1.14 1996/03/24 22:03:48 jtk Exp $	*/
 
 /*
@@ -33,7 +33,6 @@
 #include "telnet_locl.h"
 
 #include <sys/socket.h>
-#include <sys/wait.h>
 #include <netinet/in.h>
 #include <netinet/ip.h>
 #include <arpa/inet.h>
@@ -60,7 +59,6 @@ typedef struct {
 } Command;
 
 static char line[256];
-static char saveline[256];
 static int margc;
 static char *margv[20];
 
@@ -72,12 +70,6 @@ makeargv(void)
 
     margc = 0;
     cp = line;
-    if (*cp == '!') {		/* Special case shell escape */
-	strlcpy(saveline, line, sizeof(saveline)); /* save for shell command */
-	*argp++ = "!";		/* No room in string to get this */
-	margc++;
-	cp++;
-    }
     while ((c = *cp)) {
 	int inquote = 0;
 	while (isspace((unsigned char)c))
@@ -1212,52 +1204,6 @@ telnetsuspend(int unused1, char *unused2[])
     return 1;
 }
 
-int
-shell(int argc, char *argv[])
-{
-    long oldrows, oldcols, newrows, newcols, err;
-
-    setcommandmode();
-
-    err = (TerminalWindowSize(&oldrows, &oldcols) == 0) ? 1 : 0;
-    switch(vfork()) {
-    case -1:
-	perror("Fork failed\r\n");
-	break;
-
-    case 0:
-	{
-	    /*
-	     * Fire up the shell in the child.
-	     */
-	    char *shellp, *shellname;
-
-	    shellp = getenv("SHELL");
-	    if (shellp == NULL)
-		shellp = "/bin/sh";
-	    if ((shellname = strrchr(shellp, '/')) == 0)
-		shellname = shellp;
-	    else
-		shellname++;
-	    if (argc > 1)
-		execl(shellp, shellname, "-c", &saveline[1], (char *)NULL);
-	    else
-		execl(shellp, shellname, (char *)NULL);
-	    perror("Execl");
-	    _exit(1);
-	}
-    default:
-	    (void)wait((int *)0);	/* Wait for the shell to complete */
-
-	    if (TerminalWindowSize(&newrows, &newcols) && connected &&
-		(err || ((oldrows != newrows) || (oldcols != newcols)))) {
-		    sendnaws();
-	    }
-	    break;
-    }
-    return 1;
-}
-
 static void
 close_connection(void)
 {
@@ -2025,7 +1971,6 @@ static char
 	slchelp[] =	"change state of special charaters ('slc ?' for more)",
 	displayhelp[] =	"display operating parameters",
 	zhelp[] =	"suspend telnet",
-	shellhelp[] =	"invoke a subshell",
 	envhelp[] =	"change environment variables ('environ ?' for more)",
 	modestring[] = "try to enter line or character mode ('mode ?' for more)";
 
@@ -2046,7 +1991,6 @@ static Command cmdtab[] = {
 	{ "slc",	slchelp,	slccmd,		0 },
 
 	{ "z",		zhelp,		telnetsuspend,	0 },
-	{ "!",		shellhelp,	shell,		0 },
 	{ "environ",	envhelp,	env_cmd,	0 },
 	{ "?",		helphelp,	help,		0 },
 	{ 0,		0,		0,		0 }
