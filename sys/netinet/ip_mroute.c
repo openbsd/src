@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_mroute.c,v 1.86 2015/11/12 18:19:27 mpi Exp $	*/
+/*	$OpenBSD: ip_mroute.c,v 1.87 2015/11/13 10:25:48 mpi Exp $	*/
 /*	$NetBSD: ip_mroute.c,v 1.85 2004/04/26 01:31:57 matt Exp $	*/
 
 /*
@@ -212,19 +212,15 @@ static struct pim_encap_pimhdr pim_encap_pimhdr = {
 
 static struct ifnet multicast_register_if;
 static vifi_t reg_vif_num = VIFI_INVALID;
-#endif /* PIM */
-
-
-/*
- * Private variables.
- */
-static vifi_t	   numvifs = 0;
-static int have_encap_tunnel = 0;
 
 /*
  * whether or not special PIM assert processing is enabled.
  */
 static int pim_assert;
+#endif /* PIM */
+
+static vifi_t	   numvifs = 0;
+
 /*
  * Rate limit for assert notification messages, in usec
  */
@@ -563,7 +559,9 @@ ip_mrouter_init(struct socket *so, struct mbuf *m)
 	arc4random_buf(&mfchashkey, sizeof(mfchashkey));
 	memset(nexpire, 0, sizeof(nexpire));
 
+#ifdef PIM
 	pim_assert = 0;
+#endif
 
 	timeout_set(&expire_upcalls_ch, expire_upcalls, NULL);
 	timeout_add_msec(&expire_upcalls_ch, EXPIRE_TIMEOUT);
@@ -607,8 +605,11 @@ ip_mrouter_done()
 	}
 
 	numvifs = 0;
-	pim_assert = 0;
 	mrt_api_config = 0;
+
+#ifdef PIM
+	pim_assert = 0;
+#endif
 
 	timeout_del(&expire_upcalls_ch);
 
@@ -628,9 +629,6 @@ ip_mrouter_done()
 	memset(nexpire, 0, sizeof(nexpire));
 	free(mfchashtbl, M_MRTABLE, 0);
 	mfchashtbl = NULL;
-
-	/* Reset de-encapsulation cache. */
-	have_encap_tunnel = 0;
 
 	ip_mrouter = NULL;
 
