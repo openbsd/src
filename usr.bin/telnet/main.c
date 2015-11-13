@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.32 2015/11/13 17:04:48 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.33 2015/11/13 17:13:59 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.5 1996/02/28 21:04:05 thorpej Exp $	*/
 
 /*
@@ -79,6 +79,11 @@ main(int argc, char *argv[])
 	int ch;
 	char *user, *alias;
 	const char *errstr;
+
+	if (pledge("stdio rpath wpath getpw inet tty", NULL) == -1) {
+		perror("pledge");
+		exit(1);
+	}
 
 	tninit();		/* Clear out things */
 
