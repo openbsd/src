@@ -81,7 +81,7 @@ cmd_exec(void)
 {
 	clear_attn();
 	clear_bot();
-	flush();
+	flush(0);
 }
 
 /*

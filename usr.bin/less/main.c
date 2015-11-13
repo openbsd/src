@@ -388,7 +388,7 @@ quit(int status)
 	if (any_display && is_tty)
 		clear_bot();
 	deinit();
-	flush();
+	flush(1);
 	raw_mode(0);
 	exit(status);
 }

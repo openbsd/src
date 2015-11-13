@@ -107,7 +107,7 @@ psignals(void)
 		lsignal(SIGTTOU, SIG_IGN);
 		clear_bot();
 		deinit();
-		flush();
+		flush(0);
 		raw_mode(0);
 		lsignal(SIGTTOU, SIG_DFL);
 		lsignal(SIGTSTP, SIG_DFL);

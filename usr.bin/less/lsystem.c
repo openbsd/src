@@ -58,7 +58,7 @@ lsystem(const char *cmd, const char *donemsg)
 	 * De-initialize the terminal and take out of raw mode.
 	 */
 	deinit();
-	flush();	/* Make sure the deinit chars get out */
+	flush(0);	/* Make sure the deinit chars get out */
 	raw_mode(0);
 
 	/*
@@ -117,7 +117,7 @@ lsystem(const char *cmd, const char *donemsg)
 		putstr("  (press RETURN)");
 		get_return();
 		(void) putchr('\n');
-		flush();
+		flush(0);
 	}
 	init();
 	screen_trashed = 1;
@@ -207,7 +207,7 @@ pipe_data(char *cmd, off_t spos, off_t epos)
 	putstr("\n");
 
 	deinit();
-	flush();
+	flush(0);
 	raw_mode(0);
 	init_signals(0);
 	lsignal(SIGPIPE, SIG_IGN);

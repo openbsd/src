@@ -76,7 +76,7 @@ static char *ob = obuf;
  * overwritten or scrolled away.
  */
 void
-flush(void)
+flush(int ignore_errors)
 {
 	int n;
 	int fd;
@@ -89,7 +89,7 @@ flush(void)
 	fd = (any_display) ? STDOUT_FILENO : STDERR_FILENO;
 	nwritten = write(fd, obuf, n);
 	if (nwritten != n) {
-		if (nwritten == -1)
+		if (nwritten == -1 && !ignore_errors)
 			quit(QUIT_ERROR);
 		screen_trashed = 1;
 	}
@@ -111,7 +111,7 @@ putchr(int c)
 	 * when we are still one char from the end of obuf.
 	 */
 	if (ob >= &obuf[sizeof (obuf)-1])
-		flush();
+		flush(0);
 	*ob++ = (char)c;
 	return (c);
 }
@@ -277,7 +277,7 @@ error(const char *fmt, PARG *parg)
 		 */
 		screen_trashed = 1;
 
-	flush();
+	flush(0);
 }
 
 static char intr_to_abort[] = "... (interrupt to abort)";
@@ -297,7 +297,7 @@ ierror(const char *fmt, PARG *parg)
 	(void) less_printf(fmt, parg);
 	putstr(intr_to_abort);
 	at_exit();
-	flush();
+	flush(0);
 	need_clr = 1;
 }
 
@@ -325,7 +325,7 @@ query(const char *fmt, PARG *parg)
 	lower_left();
 	if (col >= sc_width)
 		screen_trashed = 1;
-	flush();
+	flush(0);
 
 	return (c);
 }

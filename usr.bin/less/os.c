@@ -37,7 +37,7 @@ iread(int fd, unsigned char *buf, unsigned int len)
 	int n;
 
 start:
-	flush();
+	flush(0);
 	n = read(fd, buf, len);
 	if (n < 0) {
 		/*

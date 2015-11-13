@@ -230,7 +230,7 @@ extern	char *errno_message(char *);
 extern	int percentage(off_t, off_t);
 extern	off_t percent_pos(off_t, int, long);
 extern	void put_line(void);
-extern	void flush(void);
+extern	void flush(int);
 extern	int putchr(int);
 extern	void putstr(const char *);
 extern	void get_return(void);

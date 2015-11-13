@@ -347,7 +347,7 @@ err1:
 	}
 	free(qopen_filename);
 	no_display = !any_display;
-	flush();
+	flush(0);
 	any_display = TRUE;
 
 	if (is_tty) {
@@ -626,7 +626,7 @@ cat_file(void)
 
 	while ((c = ch_forw_get()) != EOI)
 		putchr(c);
-	flush();
+	flush(0);
 }
 
 /*
