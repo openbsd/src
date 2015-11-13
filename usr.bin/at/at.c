@@ -1,4 +1,4 @@
-/*	$OpenBSD: at.c,v 1.74 2015/11/12 21:12:05 millert Exp $	*/
+/*	$OpenBSD: at.c,v 1.75 2015/11/13 21:34:06 millert Exp $	*/
 
 /*
  *  at.c : Put file into atrun queue
@@ -69,17 +69,17 @@ char *no_export[] =
 	"EUID", "GROUPS", "PPID", "UID", "SSH_AUTH_SOCK", "SSH_AGENT_PID",
 };
 
-int program = AT;		/* default program mode */
-char atfile[PATH_MAX];		/* path to the at spool file */
-int fcreated;			/* whether or not we created the file yet */
-char atqueue = 0;		/* which queue to examine for jobs (atq) */
-char vflag = 0;			/* show completed but unremoved jobs (atq) */
-char force = 0;			/* suppress errors (atrm) */
-char interactive = 0;		/* interactive mode (atrm) */
+static int program = AT;	/* default program mode */
+static char atfile[PATH_MAX];	/* path to the at spool file */
+static int fcreated;		/* whether or not we created the file yet */
+static char atqueue = 0;	/* which queue to examine for jobs (atq) */
+static char vflag = 0;		/* show completed but unremoved jobs (atq) */
+static char force = 0;		/* suppress errors (atrm) */
+static char interactive = 0;	/* interactive mode (atrm) */
 static int send_mail = 0;	/* whether we are sending mail */
-uid_t user_uid;			/* user's real uid */
-gid_t user_gid;			/* user's real gid */
-gid_t spool_gid;		/* gid for writing to at spool */
+static uid_t user_uid;		/* user's real uid */
+static gid_t user_gid;		/* user's real gid */
+static gid_t spool_gid;		/* gid for writing to at spool */
 
 static void sigc(int);
 static void writefile(const char *, time_t, char);

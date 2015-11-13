@@ -1,4 +1,4 @@
-/*	$OpenBSD: at.h,v 1.11 2010/07/02 23:40:09 krw Exp $	*/
+/*	$OpenBSD: at.h,v 1.12 2015/11/13 21:34:06 millert Exp $	*/
 
 /*
  *  at.h -  header for at(1)
@@ -25,13 +25,6 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-extern int fcreated;
-extern int program;
-extern char atfile[];
-extern char vflag;
-extern char force;
-extern char interactive;
-
 enum { ATQ, ATRM, AT, BATCH, CAT };	/* what are we running as? */
 
 struct atjob {
@@ -45,6 +38,4 @@ struct atjob {
 #define DEFAULT_BATCH_QUEUE	'E'
 #define DEFAULT_AT_QUEUE	'c'
 
-
 time_t	parsetime(int, char **);
-
