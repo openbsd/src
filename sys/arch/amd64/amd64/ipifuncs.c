@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipifuncs.c,v 1.26 2015/03/14 03:38:46 jsg Exp $	*/
+/*	$OpenBSD: ipifuncs.c,v 1.27 2015/11/13 07:52:20 mlarkin Exp $	*/
 /*	$NetBSD: ipifuncs.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $ */
 
 /*-
@@ -54,11 +54,21 @@
 
 #include <machine/db_machdep.h>
 
+#include "vmm.h"
+#ifdef VMM
+#include <machine/vmmvar.h>
+#endif /* VMM */
+
 void x86_64_ipi_nop(struct cpu_info *);
 void x86_64_ipi_halt(struct cpu_info *);
 
 void x86_64_ipi_synch_fpu(struct cpu_info *);
 void x86_64_ipi_flush_fpu(struct cpu_info *);
+
+#ifdef VMM
+void x86_64_ipi_start_vmm(struct cpu_info *);
+void x86_64_ipi_stop_vmm(struct cpu_info *);
+#endif /* VMM */
 
 #ifdef HIBERNATE
 void x86_64_ipi_halt_realmode(struct cpu_info *);
@@ -85,6 +95,13 @@ void (*ipifunc[X86_NIPI])(struct cpu_info *) =
 #else
 	NULL,
 #endif
+#ifdef VMM
+	x86_64_ipi_start_vmm,
+	x86_64_ipi_stop_vmm,
+#else
+	NULL,
+	NULL,
+#endif /* VMM */
 };
 
 void
@@ -132,3 +149,17 @@ x86_64_ipi_reload_mtrr(struct cpu_info *ci)
 		mem_range_softc.mr_op->reload(&mem_range_softc);
 }
 #endif
+
+#ifdef VMM
+void
+x86_64_ipi_start_vmm(struct cpu_info *ci)
+{
+	start_vmm_on_cpu(ci);
+}
+
+void
+x86_64_ipi_stop_vmm(struct cpu_info *ci)
+{
+	stop_vmm_on_cpu(ci);
+}
+#endif /* VMM */

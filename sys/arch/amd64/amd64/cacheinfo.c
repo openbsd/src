@@ -1,4 +1,4 @@
-/*	$OpenBSD: cacheinfo.c,v 1.6 2012/03/16 01:53:00 haesbaert Exp $	*/
+/*	$OpenBSD: cacheinfo.c,v 1.7 2015/11/13 07:52:20 mlarkin Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -185,6 +185,10 @@ amd_cpu_cacheinfo(struct cpu_info *ci)
 	}
 
 	CPUID(0x80000005, descs[0], descs[1], descs[2], descs[3]);
+	ci->ci_amdcacheinfo[0] = descs[0];
+	ci->ci_amdcacheinfo[1] = descs[1];
+	ci->ci_amdcacheinfo[2] = descs[2];
+	ci->ci_amdcacheinfo[3] = descs[3];
 
 	/*
 	 * K6-III and higher have large page TLBs.
@@ -230,6 +234,10 @@ amd_cpu_cacheinfo(struct cpu_info *ci)
 	}
 
 	CPUID(0x80000006, descs[0], descs[1], descs[2], descs[3]);
+	ci->ci_extcacheinfo[0] = descs[0];
+	ci->ci_extcacheinfo[1] = descs[1];
+	ci->ci_extcacheinfo[2] = descs[2];
+	ci->ci_extcacheinfo[3] = descs[3];
 
 	cai = &ci->ci_cinfo[CAI_L2CACHE];
 	cai->cai_totalsize = AMD_L2_ECX_C_SIZE(descs[2]);

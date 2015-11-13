@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.88 2015/07/18 19:21:02 sf Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.89 2015/11/13 07:52:20 mlarkin Exp $	*/
 /* $NetBSD: cpu.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $ */
 
 /*-
@@ -66,6 +66,7 @@
 
 #include "lapic.h"
 #include "ioapic.h"
+#include "vmm.h"
 
 #include <sys/param.h>
 #include <sys/timeout.h>
@@ -114,6 +115,9 @@ int     cpu_match(struct device *, void *, void *);
 void    cpu_attach(struct device *, struct device *, void *);
 int     cpu_activate(struct device *, int);
 void	patinit(struct cpu_info *ci);
+#ifdef VMM
+void	cpu_init_vmm(struct cpu_info *ci);
+#endif /* VMM */
 
 struct cpu_softc {
 	struct device sc_dev;		/* device tree glue */
@@ -463,6 +467,9 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 		    sc->sc_dev.dv_xname, pcb, pcb->pcb_rsp);
 	}
 #endif
+#ifdef VMM
+	cpu_init_vmm(ci);
+#endif /* VMM */
 }
 
 /*
@@ -485,12 +492,12 @@ cpu_init(struct cpu_info *ci)
 
 	lcr0(rcr0() | CR0_WP);
 	cr4 = rcr4() | CR4_DEFAULT;
-	if (ci->ci_feature_sefflags & SEFF0EBX_SMEP)
+	if (ci->ci_feature_sefflags_ebx & SEFF0EBX_SMEP)
 		cr4 |= CR4_SMEP;
 #ifndef SMALL_KERNEL
-	if (ci->ci_feature_sefflags & SEFF0EBX_SMAP)
+	if (ci->ci_feature_sefflags_ebx & SEFF0EBX_SMAP)
 		cr4 |= CR4_SMAP;
-	if (ci->ci_feature_sefflags & SEFF0EBX_FSGSBASE)
+	if (ci->ci_feature_sefflags_ebx & SEFF0EBX_FSGSBASE)
 		cr4 |= CR4_FSGSBASE;
 #endif
 	if (cpu_ecxfeature & CPUIDECX_XSAVE)
@@ -515,6 +522,30 @@ cpu_init(struct cpu_info *ci)
 #endif
 }
 
+#ifdef VMM
+/*
+ * cpu_init_vmm
+ *
+ * Initializes per-cpu VMM state
+ *
+ * Parameters:
+ *  ci: the cpu for which state is being initialized
+ */
+void
+cpu_init_vmm(struct cpu_info *ci)
+{
+	/*
+	 * Allocate a per-cpu VMXON region for VMX CPUs
+	 */
+	if (ci->ci_vmm_flags & CI_VMM_VMX) {
+		ci->ci_vmxon_region = (struct vmxon_region *)malloc(PAGE_SIZE,
+		    M_DEVBUF, M_WAITOK | M_ZERO);
+		if (!pmap_extract(pmap_kernel(), (vaddr_t)ci->ci_vmxon_region,
+		    &ci->ci_vmxon_region_pa))
+			panic("Can't locate VMXON region in phys mem\n");	
+	}
+}
+#endif /* VMM */
 
 #ifdef MULTIPROCESSOR
 void
@@ -813,13 +844,6 @@ patinit(struct cpu_info *ci)
 
 	if ((ci->ci_feature_flags & CPUID_PAT) == 0)
 		return;
-#define	PATENTRY(n, type)	(type << ((n) * 8))
-#define	PAT_UC		0x0UL
-#define	PAT_WC		0x1UL
-#define	PAT_WT		0x4UL
-#define	PAT_WP		0x5UL
-#define	PAT_WB		0x6UL
-#define	PAT_UCMINUS	0x7UL
 	/*
 	 * Set up PAT bits.
 	 * The default pat table is the following:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.97 2015/07/02 01:33:59 dlg Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.98 2015/11/13 07:52:20 mlarkin Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 2003/04/26 18:39:39 fvdl Exp $	*/
 
 /*-
@@ -54,6 +54,36 @@
 
 #ifdef _KERNEL
 
+#ifdef VMM
+/* VMXON region (Intel) */
+struct vmxon_region {
+        uint32_t        vr_revision;
+};
+
+/*
+ * VMX for Intel CPUs
+ */
+struct vmx {
+	uint64_t	vmx_cr0_fixed0;
+	uint64_t	vmx_cr0_fixed1;
+	uint64_t	vmx_cr4_fixed0;
+	uint64_t	vmx_cr4_fixed1;
+	uint32_t	vmx_vmxon_revision;
+	uint32_t	vmx_msr_table_size;
+};
+
+/*
+ * SVM for AMD CPUs
+ */
+struct svm {
+};
+
+union vmm_cpu_cap {
+	struct vmx vcc_vmx;
+	struct svm vcc_svm;
+};
+#endif /* VMM */
+
 struct x86_64_tss;
 struct cpu_info {
 	struct device *ci_dev;
@@ -91,8 +121,15 @@ struct cpu_info {
 
 	u_int32_t	ci_feature_flags;
 	u_int32_t	ci_feature_eflags;
-	u_int32_t	ci_feature_sefflags;
+	u_int32_t	ci_feature_sefflags_ebx;
+	u_int32_t	ci_feature_sefflags_ecx;
 	u_int32_t	ci_feature_tpmflags;
+	u_int32_t	ci_pnfeatset;
+	u_int32_t	ci_efeature_eax;
+	u_int32_t	ci_efeature_ecx;
+	u_int32_t	ci_brand[12];
+	u_int32_t	ci_amdcacheinfo[4];
+	u_int32_t	ci_extcacheinfo[4];
 	u_int32_t	ci_signature;
 	u_int32_t	ci_family;
 	u_int32_t	ci_model;
@@ -140,6 +177,16 @@ struct cpu_info {
 #ifdef GPROF
 	struct gmonparam	*ci_gmon;
 #endif
+#ifdef VMM
+	u_int32_t	ci_vmm_flags;
+#define	CI_VMM_VMX	(1 << 0)
+#define	CI_VMM_SVM	(1 << 1)
+#define	CI_VMM_RVI	(1 << 2)
+#define	CI_VMM_EPT	(1 << 3)
+	union		vmm_cpu_cap ci_vmm_cap;
+	paddr_t		ci_vmxon_region_pa;
+	struct vmxon_region *ci_vmxon_region;
+#endif /* VMM */
 };
 
 #define CPUF_BSP	0x0001		/* CPU is the original BSP */
@@ -159,6 +206,7 @@ struct cpu_info {
 #define CPUF_PAUSE	0x4000		/* CPU is paused in DDB */
 #define CPUF_GO		0x8000		/* CPU should start running */
 #define CPUF_PARK	0x10000		/* CPU should self-park in real mode */
+#define CPUF_VMM	0x20000		/* CPU is executing in VMM mode */
 
 #define PROC_PC(p)	((p)->p_md.md_regs->tf_rip)
 #define PROC_STACK(p)	((p)->p_md.md_regs->tf_rsp)
@@ -282,6 +330,7 @@ extern int biosbasemem;
 extern int biosextmem;
 extern int cpu;
 extern int cpu_feature;
+extern int cpu_ebxfeature;
 extern int cpu_ecxfeature;
 extern int cpu_perf_eax;
 extern int cpu_perf_ebx;

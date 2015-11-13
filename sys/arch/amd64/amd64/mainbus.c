@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.33 2015/08/31 19:56:32 kettenis Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.34 2015/11/13 07:52:20 mlarkin Exp $	*/
 /*	$NetBSD: mainbus.c,v 1.1 2003/04/26 18:39:29 fvdl Exp $	*/
 
 /*
@@ -48,6 +48,7 @@
 #include "ipmi.h"
 #include "bios.h"
 #include "mpbios.h"
+#include "vmm.h"
 #include "pvbus.h"
 #include "efifb.h"
 
@@ -238,6 +239,11 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 	if (isa_has_been_seen == 0)
 		config_found(self, &mba_iba, mainbus_print);
 #endif
+
+#ifdef VMM
+	mba.mba_busname = "vmm";
+	config_found(self, &mba.mba_busname, mainbus_print);
+#endif /* VMM */
 
 #if NEFIFB > 0
 	if (bios_efiinfo != NULL) {

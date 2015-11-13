@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.amd64,v 1.65 2015/01/13 01:12:49 deraadt Exp $
+#	$OpenBSD: Makefile.amd64,v 1.66 2015/11/13 07:52:20 mlarkin Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -142,7 +142,7 @@ db_structinfo.h: $S/ddb/db_structinfo.c $S/ddb/parse_structinfo.pl
 	rm -f db_structinfo.o
 
 locore.o: ${_machdir}/${_mach}/locore.S assym.h
-mutex.o vector.o copy.o spl.o mptramp.o acpi_wakecode.o: assym.h
+mutex.o vector.o copy.o spl.o mptramp.o acpi_wakecode.o vmm_support.o: assym.h
 
 # The install target can be redefined by putting a
 # install-kernel-${MACHINE_NAME} target into /etc/mk.conf
