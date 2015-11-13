@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.96 2015/11/13 10:00:26 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.97 2015/11/13 12:18:52 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -48,7 +48,8 @@ void	 format_cb_host_short(struct format_tree *, struct format_entry *);
 void	 format_cb_pid(struct format_tree *, struct format_entry *);
 void	 format_cb_session_alerts(struct format_tree *, struct format_entry *);
 void	 format_cb_window_layout(struct format_tree *, struct format_entry *);
-void format_cb_window_visible_layout(struct format_tree *, struct format_entry *);
+void	 format_cb_window_visible_layout(struct format_tree *,
+	     struct format_entry *);
 void	 format_cb_start_command(struct format_tree *, struct format_entry *);
 void	 format_cb_current_command(struct format_tree *, struct format_entry *);
 void	 format_cb_history_bytes(struct format_tree *, struct format_entry *);
