@@ -797,6 +797,11 @@ main (int argc, char **argv)
 
   no_demangle = !! getenv ("COLLECT_NO_DEMANGLE");
 
+  if (pledge ("stdio rpath wpath cpath proc exec", NULL) == -1) {
+      error ("cannot pledge");
+      collect_exit (1);
+  }
+
   /* Suppress demangling by the real linker, which may be broken.  */
   putenv (xstrdup ("COLLECT_NO_DEMANGLE="));
 
