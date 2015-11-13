@@ -1,4 +1,4 @@
-/*	$OpenBSD: xform.c,v 1.52 2015/11/13 12:21:16 mikeb Exp $	*/
+/*	$OpenBSD: xform.c,v 1.53 2015/11/13 15:29:55 naddy Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -230,15 +230,6 @@ struct enc_xform enc_xform_chacha20_poly1305 = {
 	chacha20_crypt,
 	chacha20_setkey,
 	chacha20_reinit
-};
-
-struct enc_xform enc_xform_arc4 = {
-	CRYPTO_ARC4, "ARC4",
-	1, 1, 1, 32, 0,
-	NULL,
-	NULL,
-	NULL,
-	NULL
 };
 
 struct enc_xform enc_xform_null = {
