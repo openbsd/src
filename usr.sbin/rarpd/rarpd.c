@@ -1,4 +1,4 @@
-/*	$OpenBSD: rarpd.c,v 1.65 2015/10/27 11:47:17 jca Exp $ */
+/*	$OpenBSD: rarpd.c,v 1.66 2015/11/13 16:10:23 deraadt Exp $ */
 /*	$NetBSD: rarpd.c,v 1.25 1998/04/23 02:48:33 mrg Exp $	*/
 
 /*
@@ -369,6 +369,10 @@ rarp_loop(void)
 		error(FATAL, "BIOCGBLEN: %s", strerror(errno));
 		/* NOTREACHED */
 	}
+
+	if (pledge("stdio rpath dns", NULL) == -1)
+		error(FATAL, "pledge");
+
 	buf = malloc((size_t) bufsize);
 	if (buf == 0) {
 		error(FATAL, "malloc: %s", strerror(errno));
