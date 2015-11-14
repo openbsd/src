@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_mroute.c,v 1.88 2015/11/13 10:33:12 mpi Exp $	*/
+/*	$OpenBSD: ip_mroute.c,v 1.89 2015/11/14 15:54:27 mpi Exp $	*/
 /*	$NetBSD: ip_mroute.c,v 1.85 2004/04/26 01:31:57 matt Exp $	*/
 
 /*
@@ -118,12 +118,6 @@ SIPHASH_KEY mfchashkey;
 u_char		nexpire[MFCTBLSIZ];
 struct vif	viftable[MAXVIFS];
 struct mrtstat	mrtstat;
-u_int		mrtdebug = 0;	  /* debug level 	*/
-#define		DEBUG_MFC	0x02
-#define		DEBUG_FORWARD	0x04
-#define		DEBUG_EXPIRE	0x08
-#define		DEBUG_XMIT	0x10
-#define		DEBUG_PIM	0x20
 
 #define		VIFI_INVALID	((vifi_t) -1)
 
@@ -163,9 +157,7 @@ int pim_register_send_upcall(struct ip *, struct vif *,
 struct mbuf *pim_register_prepare(struct ip *, struct mbuf *);
 int set_assert(struct mbuf *);
 int get_assert(struct mbuf *);
-#endif
 
-#ifdef PIM
 struct pimstat pimstat;
 
 /*
@@ -534,11 +526,6 @@ ip_mrouter_init(struct socket *so, struct mbuf *m)
 {
 	int *v;
 
-	if (mrtdebug)
-		log(LOG_DEBUG,
-		    "ip_mrouter_init: so_type = %d, pr_protocol = %d\n",
-		    so->so_type, so->so_proto->pr_protocol);
-
 	if (so->so_type != SOCK_RAW ||
 	    so->so_proto->pr_protocol != IPPROTO_IGMP)
 		return (EOPNOTSUPP);
@@ -565,9 +552,6 @@ ip_mrouter_init(struct socket *so, struct mbuf *m)
 
 	timeout_set(&expire_upcalls_ch, expire_upcalls, NULL);
 	timeout_add_msec(&expire_upcalls_ch, EXPIRE_TIMEOUT);
-
-	if (mrtdebug)
-		log(LOG_DEBUG, "ip_mrouter_init\n");
 
 	return (0);
 }
@@ -633,9 +617,6 @@ ip_mrouter_done()
 	ip_mrouter = NULL;
 
 	splx(s);
-
-	if (mrtdebug)
-		log(LOG_DEBUG, "ip_mrouter_done\n");
 
 	return (0);
 }
@@ -838,9 +819,6 @@ add_vif(struct mbuf *m)
 #ifdef PIM
 	if (vifcp->vifc_flags & VIFF_REGISTER) {
 		ifp = &multicast_register_if;
-		if (mrtdebug)
-			log(LOG_DEBUG, "Adding a register vif, ifp: %p\n",
-			    (void *)ifp);
 		if (reg_vif_num == VIFI_INVALID) {
 			memset(ifp, 0, sizeof(*ifp));
 			snprintf(ifp->if_xname, sizeof ifp->if_xname,
@@ -948,9 +926,6 @@ del_vif(struct mbuf *m)
 	numvifs = vifi;
 
 	splx(s);
-
-	if (mrtdebug)
-		log(LOG_DEBUG, "del_vif %d, numvifs %d\n", *vifip, numvifs);
 
 	return (0);
 }
@@ -1080,14 +1055,7 @@ add_mfc(struct mbuf *m)
 
 	/* If an entry already exists, just update the fields */
 	if (rt) {
-		if (mrtdebug & DEBUG_MFC)
-			log(LOG_DEBUG, "add_mfc update o %x g %x p %x\n",
-			    ntohl(mfccp->mfcc_origin.s_addr),
-			    ntohl(mfccp->mfcc_mcastgrp.s_addr),
-			    mfccp->mfcc_parent);
-
 		update_mfc_params(rt, mfccp);
-
 		splx(s);
 		return (0);
 	}
@@ -1101,20 +1069,14 @@ add_mfc(struct mbuf *m)
 		if (in_hosteq(rt->mfc_origin, mfccp->mfcc_origin) &&
 		    in_hosteq(rt->mfc_mcastgrp, mfccp->mfcc_mcastgrp) &&
 		    rt->mfc_stall != NULL) {
-			if (nstl++)
+			if (nstl++) {
 				log(LOG_ERR, "add_mfc %s o %x g %x "
 				    "p %x dbx %p\n",
 				    "multiple kernel entries",
 				    ntohl(mfccp->mfcc_origin.s_addr),
 				    ntohl(mfccp->mfcc_mcastgrp.s_addr),
 				    mfccp->mfcc_parent, rt->mfc_stall);
-
-			if (mrtdebug & DEBUG_MFC)
-				log(LOG_DEBUG, "add_mfc o %x g %x "
-				    "p %x dbg %p\n",
-				    ntohl(mfccp->mfcc_origin.s_addr),
-				    ntohl(mfccp->mfcc_mcastgrp.s_addr),
-				    mfccp->mfcc_parent, rt->mfc_stall);
+			}
 
 			rte = rt->mfc_stall;
 			init_mfc_params(rt, mfccp);
@@ -1142,12 +1104,6 @@ add_mfc(struct mbuf *m)
 		/*
 		 * No mfc; make a new one
 		 */
-		if (mrtdebug & DEBUG_MFC)
-			log(LOG_DEBUG, "add_mfc no upcall o %x g %x p %x\n",
-			    ntohl(mfccp->mfcc_origin.s_addr),
-			    ntohl(mfccp->mfcc_mcastgrp.s_addr),
-			    mfccp->mfcc_parent);
-
 		LIST_FOREACH(rt, &mfchashtbl[hash], mfc_hash) {
 			if (in_hosteq(rt->mfc_origin, mfccp->mfcc_origin) &&
 			    in_hosteq(rt->mfc_mcastgrp, mfccp->mfcc_mcastgrp)) {
@@ -1205,11 +1161,6 @@ del_mfc(struct mbuf *m)
 
 	mfccp = &mfcctl2;
 
-	if (mrtdebug & DEBUG_MFC)
-		log(LOG_DEBUG, "del_mfc origin %x mcastgrp %x\n",
-		    ntohl(mfccp->mfcc_origin.s_addr),
-		    ntohl(mfccp->mfcc_mcastgrp.s_addr));
-
 	s = splsoftnet();
 
 	rt = mfc_find(&mfccp->mfcc_origin, &mfccp->mfcc_mcastgrp);
@@ -1262,10 +1213,6 @@ ip_mforward(struct mbuf *m, struct ifnet *ifp)
 	int s;
 	vifi_t vifi;
 
-	if (mrtdebug & DEBUG_FORWARD)
-		log(LOG_DEBUG, "ip_mforward: src %x, dst %x, ifp %p\n",
-		    ntohl(ip->ip_src.s_addr), ntohl(ip->ip_dst.s_addr), ifp);
-
 	if (ip->ip_hl < (IP_HDR_LEN + TUNNEL_LEN) >> 2 ||
 	    ((u_char *)(ip + 1))[1] != IPOPT_LSRR) {
 		/*
@@ -1316,11 +1263,6 @@ ip_mforward(struct mbuf *m, struct ifnet *ifp)
 		++mrtstat.mrts_mfc_misses;
 
 		mrtstat.mrts_no_route++;
-		if (mrtdebug & (DEBUG_FORWARD | DEBUG_MFC))
-			log(LOG_DEBUG, "ip_mforward: no rte s %x g %x\n",
-			    ntohl(ip->ip_src.s_addr),
-			    ntohl(ip->ip_dst.s_addr));
-
 		/*
 		 * Allocate mbufs early so that we don't do extra work if we are
 		 * just going to fail anyway.  Make sure to pullup the header so
@@ -1481,12 +1423,6 @@ expire_upcalls(void *v)
 			nexpire[i]--;
 
 			++mrtstat.mrts_cache_cleanups;
-			if (mrtdebug & DEBUG_EXPIRE)
-				log(LOG_DEBUG,
-				    "expire_upcalls: expiring (%x %x)\n",
-				    ntohl(rt->mfc_origin.s_addr),
-				    ntohl(rt->mfc_mcastgrp.s_addr));
-
 			expire_mfc(rt);
 		}
 	}
@@ -1512,10 +1448,6 @@ ip_mdq(struct mbuf *m, struct ifnet *ifp, struct mfc *rt)
 	vifi = rt->mfc_parent;
 	if ((vifi >= numvifs) || (viftable[vifi].v_ifp != ifp)) {
 		/* came in the wrong interface */
-		if (mrtdebug & DEBUG_FORWARD)
-			log(LOG_DEBUG, "wrong if: ifp %p vifi %d vififp %p\n",
-			    ifp, vifi,
-			    vifi >= numvifs ? 0 : viftable[vifi].v_ifp);
 		++mrtstat.mrts_wrong_if;
 		++rt->mfc_wrong_if;
 #ifdef PIM
@@ -1666,9 +1598,6 @@ pim_register_send(struct ip *ip, struct vif *vifp,
 {
 	struct mbuf *mb_copy, *mm;
 
-	if (mrtdebug & DEBUG_PIM)
-		log(LOG_DEBUG, "pim_register_send: ");
-
 	mb_copy = pim_register_prepare(ip, m);
 	if (mb_copy == NULL)
 		return (ENOBUFS);
@@ -1776,9 +1705,6 @@ pim_register_send_upcall(struct ip *ip, struct vif *vifp,
 	mrtstat.mrts_upcalls++;
 
 	if (socket_send(ip_mrouter, mb_first, &k_igmpsrc) < 0) {
-		if (mrtdebug & DEBUG_PIM)
-			log(LOG_WARNING, "mcast: pim_register_send_upcall: "
-			    "ip_mrouter socket queue full");
 		++mrtstat.mrts_upq_sockfull;
 		return (ENOBUFS);
 	}
@@ -1933,8 +1859,6 @@ pim_input(struct mbuf *m, ...)
 		/* do nothing, checksum okay */
 	} else if (in_cksum(m, datalen)) {
 		pimstat.pims_rcv_badsum++;
-		if (mrtdebug & DEBUG_PIM)
-			log(LOG_DEBUG, "pim_input: invalid checksum");
 		m_freem(m);
 		return;
 	}
@@ -1968,9 +1892,6 @@ pim_input(struct mbuf *m, ...)
 		s = splsoftnet();
 		if ((reg_vif_num >= numvifs) || (reg_vif_num == VIFI_INVALID)) {
 			splx(s);
-			if (mrtdebug & DEBUG_PIM)
-				log(LOG_DEBUG, "pim_input: register vif "
-				    "not set: %d\n", reg_vif_num);
 			m_freem(m);
 			return;
 		}
@@ -1992,22 +1913,9 @@ pim_input(struct mbuf *m, ...)
 		reghdr = (u_int32_t *)(pim + 1);
 		encap_ip = (struct ip *)(reghdr + 1);
 
-		if (mrtdebug & DEBUG_PIM) {
-			log(LOG_DEBUG, "pim_input[register], encap_ip: "
-			    "%lx -> %lx, encap_ip len %d\n",
-			    (u_long)ntohl(encap_ip->ip_src.s_addr),
-			    (u_long)ntohl(encap_ip->ip_dst.s_addr),
-			    ntohs(encap_ip->ip_len));
-		}
-
 		/* verify the version number of the inner packet */
 		if (encap_ip->ip_v != IPVERSION) {
 			pimstat.pims_rcv_badregisters++;
-			if (mrtdebug & DEBUG_PIM) {
-				log(LOG_DEBUG, "pim_input: invalid IP version"
-				    " (%d) of the inner packet\n",
-				    encap_ip->ip_v);
-			}
 			m_freem(m);
 			return;
 		}
@@ -2015,11 +1923,6 @@ pim_input(struct mbuf *m, ...)
 		/* verify the inner packet is destined to a mcast group */
 		if (!IN_MULTICAST(encap_ip->ip_dst.s_addr)) {
 			pimstat.pims_rcv_badregisters++;
-			if (mrtdebug & DEBUG_PIM)
-				log(LOG_DEBUG,
-				    "pim_input: inner packet of register is"
-				    " not multicast %lx\n",
-				    (u_long)ntohl(encap_ip->ip_dst.s_addr));
 			m_freem(m);
 			return;
 		}
@@ -2073,14 +1976,6 @@ pim_input(struct mbuf *m, ...)
 		/* forward the inner ip packet; point m_data at the inner ip. */
 		m_adj(m, iphlen + PIM_MINLEN);
 
-		if (mrtdebug & DEBUG_PIM) {
-			log(LOG_DEBUG,
-			    "pim_input: forwarding decapsulated register: "
-			    "src %lx, dst %lx, vif %d\n",
-			    (u_long)ntohl(encap_ip->ip_src.s_addr),
-			    (u_long)ntohl(encap_ip->ip_dst.s_addr),
-			    reg_vif_num);
-		}
 		/* NB: vifp was collected above; can it change on us? */
 		if_input_local(vifp, m, dst.sin_family);
 
