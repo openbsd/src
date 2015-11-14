@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.21 2011/11/21 12:00:57 espie Exp $
+#	$OpenBSD: Makefile,v 1.22 2015/11/14 01:17:02 jmc Exp $
 #	$NetBSD: Makefile,v 1.6 1994/12/22 10:50:05 cgd Exp $
 
 # missing: term.7
@@ -8,6 +8,6 @@ MAN=	ascii.7 eqn.7 environ.7 glob.7 hier.7 hostname.7 intro.7 kgdb.7 \
 	man.7 mandoc_char.7 mdoc.7 mirroring-ports.7 \
 	operator.7 packages.7 packages-specs.7 pkgpath.7 ports.7 roff.7 \
 	script.7 securelevel.7 tbl.7
-MLINKS=	mdoc.7 mandoc.7 mirroring-ports.7 mirror-maker.7
+MLINKS=	mirroring-ports.7 mirror-maker.7
 
 .include <bsd.prog.mk>
