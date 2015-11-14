@@ -1,5 +1,5 @@
 /* install-info -- create Info directory entry(ies) for an Info file.
-   $Id: install-info.c,v 1.8 2006/07/17 16:12:36 espie Exp $
+   $Id: install-info.c,v 1.9 2015/11/14 23:06:06 deraadt Exp $
 
    Copyright (C) 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004 Free Software
    Foundation, Inc.
@@ -1163,6 +1163,9 @@ main (int argc, char **argv)
   /* Set locale via LC_ALL.  */
   setlocale (LC_ALL, "");
 #endif
+
+  if (pledge ("stdio rpath wpath cpath proc exec", NULL) == -1)
+    pfatal_with_name ("pledge");
 
   /* Set the text message domain.  */
   bindtextdomain (PACKAGE, LOCALEDIR);

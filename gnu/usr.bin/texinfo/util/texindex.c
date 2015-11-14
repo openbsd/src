@@ -1,5 +1,5 @@
 /* texindex -- sort TeX index dribble output into an actual index.
-   $Id: texindex.c,v 1.5 2006/07/17 16:12:36 espie Exp $
+   $Id: texindex.c,v 1.6 2015/11/14 23:06:06 deraadt Exp $
 
    Copyright (C) 1987, 1991, 1992, 1996, 1997, 1998, 1999, 2000, 2001,
    2002, 2003, 2004 Free Software Foundation, Inc.
@@ -161,6 +161,9 @@ main (int argc, char **argv)
   /* Set locale via LC_ALL.  */
   setlocale (LC_ALL, "");
 #endif
+
+  if (pledge ("stdio rpath wpath cpath tmppath", NULL) == -1)
+    pfatal_with_name ("pledge");
 
   /* Set the text message domain.  */
   bindtextdomain (PACKAGE, LOCALEDIR);

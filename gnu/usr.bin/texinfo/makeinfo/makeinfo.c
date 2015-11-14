@@ -1,5 +1,5 @@
 /* makeinfo -- convert Texinfo source into other formats.
-   $Id: makeinfo.c,v 1.8 2006/07/17 16:12:36 espie Exp $
+   $Id: makeinfo.c,v 1.9 2015/11/14 23:06:06 deraadt Exp $
 
    Copyright (C) 1987, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
    2000, 2001, 2002, 2003, 2004 Free Software Foundation, Inc.
@@ -549,6 +549,11 @@ main (int argc, char **argv)
   setlocale (LC_CTYPE, "");
   setlocale (LC_COLLATE, "");
 #endif
+
+  if (pledge ("stdio rpath wpath cpath getpw", NULL) == -1) {
+    perror ("pledge");
+    exit (1);
+  }
 
 #ifdef ENABLE_NLS
   /* Set the text message domain.  */

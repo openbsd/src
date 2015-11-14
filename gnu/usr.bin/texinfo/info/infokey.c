@@ -1,5 +1,5 @@
 /* infokey.c -- compile ~/.infokey to ~/.info.
-   $Id: infokey.c,v 1.1.1.2 2006/07/17 16:03:45 espie Exp $
+   $Id: infokey.c,v 1.2 2015/11/14 23:06:06 deraadt Exp $
 
    Copyright (C) 1999, 2001, 2002, 2003, 2004 Free Software Foundation, Inc.
 
@@ -96,6 +96,11 @@ main (int argc, char **argv)
   /* Set locale via LC_ALL.  */
   setlocale (LC_ALL, "");
 #endif
+
+  if (pledge ("stdio rpath wpath cpath tty", NULL) == -1) {
+      perror("pledge");
+      exit(1);
+  }    
 
 #ifdef ENABLE_NLS
   /* Set the text message domain.  */
