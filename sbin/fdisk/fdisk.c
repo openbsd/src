@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdisk.c,v 1.87 2015/11/14 17:42:31 krw Exp $	*/
+/*	$OpenBSD: fdisk.c,v 1.88 2015/11/14 21:17:08 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -58,7 +58,7 @@ usage(void)
 	    "\t-f: specify non-standard MBR template\n"
 	    "\t-g: initialize disk with GPT; requires -i\n"
 	    "\t-i: initialize disk with MBR unless -g is also specified\n"
-	    "\t-l: specify LBA block count\n"
+	    "\t-l: specify LBA block count; cannot be used with -chs\n"
 	    "\t-u: update MBR code; preserve partition table\n"
 	    "\t-y: do not ask questions\n"
 	    "`disk' may be of the forms: sd0 or /dev/rsd0c.\n",
@@ -105,16 +105,22 @@ main(int argc, char *argv[])
 			if (errstr)
 				errx(1, "Cylinder argument %s [1..262144].",
 				    errstr);
+			disk.cylinders = c_arg;
+			disk.size = c_arg * h_arg * s_arg;
 			break;
 		case 'h':
 			h_arg = strtonum(optarg, 1, 256, &errstr);
 			if (errstr)
 				errx(1, "Head argument %s [1..256].", errstr);
+			disk.heads = h_arg;
+			disk.size = c_arg * h_arg * s_arg;
 			break;
 		case 's':
 			s_arg = strtonum(optarg, 1, 63, &errstr);
 			if (errstr)
 				errx(1, "Sector argument %s [1..63].", errstr);
+			disk.sectors = s_arg;
+			disk.size = c_arg * h_arg * s_arg;
 			break;
 		case 'g':
 			g_flag = 1;
@@ -130,6 +136,10 @@ main(int argc, char *argv[])
 			if (errstr)
 				errx(1, "Block argument %s [64..%u].", errstr,
 				    UINT32_MAX);
+			disk.cylinders = l_arg / 64;
+			disk.heads = 1;
+			disk.sectors = 64;
+			disk.size = l_arg;
 			break;
 		case 'y':
 			y_flag = 1;
@@ -144,7 +154,8 @@ main(int argc, char *argv[])
 	/* Argument checking */
 	if (argc != 1 || (i_flag && u_flag) ||
 	    (i_flag == 0 && (b_arg || g_flag)) ||
-	    ((c_arg | h_arg | s_arg) && !(c_arg && h_arg && s_arg)))
+	    ((c_arg | h_arg | s_arg) && !(c_arg && h_arg && s_arg)) ||
+	    ((c_arg | h_arg | s_arg) && l_arg))
 		usage();
 
 	disk.name = argv[0];
@@ -154,28 +165,10 @@ main(int argc, char *argv[])
 	if (GPT_get_gpt()) {
 		memset(&gh, 0, sizeof(gh));
 		memset(&gp, 0, sizeof(gp));
-		if (DL_GETDSIZE(&dl) > UINT32_MAX)
+		if (DL_GETDSIZE(&dl) > disk.size)
 			warnx("disk too large (%llu sectors). size truncated.",
 			    (unsigned long long)DL_GETDSIZE(&dl));
 	}
-
-	if (c_arg | h_arg | s_arg) {
-		disk.cylinders = c_arg;
-		disk.heads = h_arg;
-		disk.sectors = s_arg;
-		disk.size = c_arg * h_arg * s_arg;
-	} else if (l_arg) {
-		/* Use supplied size to calculate a geometry. */
-		disk.cylinders = l_arg / 64;
-		disk.heads = 1;
-		disk.sectors = 64;
-		disk.size = l_arg;
-	}
-
-	if (disk.size == 0 || disk.cylinders == 0 || disk.heads == 0 ||
-	    disk.sectors == 0 || unit_types[SECTORS].conversion == 0)
-		errx(1, "Can't get disk geometry, please use [-chs] "
-		    "to specify.");
 
 	if ((i_flag + u_flag + e_flag) == 0) {
 		if (pledge("stdio", NULL) == -1)

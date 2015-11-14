@@ -1,4 +1,4 @@
-/*	$OpenBSD: disk.c,v 1.50 2015/11/13 02:27:17 krw Exp $	*/
+/*	$OpenBSD: disk.c,v 1.51 2015/11/14 21:17:08 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -55,19 +55,27 @@ DISK_open(void)
 	if (ioctl(disk.fd, DIOCGPDINFO, &dl) == -1) {
 		warn("DIOCGPDINFO");
 	} else {
-		disk.cylinders = dl.d_ncylinders;
-		disk.heads = dl.d_ntracks;
-		disk.sectors = dl.d_nsectors;
-		/* MBR handles only first UINT32_MAX sectors. */
-		spc = (u_int64_t)disk.heads * disk.sectors;
-		sz = DL_GETDSIZE(&dl);
-		if (sz > UINT32_MAX) {
-			disk.cylinders = UINT32_MAX / spc;
-			disk.size = disk.cylinders * spc;
-		} else
-			disk.size = sz;
 		unit_types[SECTORS].conversion = dl.d_secsize;
+		if (disk.size == 0) {
+			/* -l or -c/-h/-s not used. Use disklabel info. */
+			disk.cylinders = dl.d_ncylinders;
+			disk.heads = dl.d_ntracks;
+			disk.sectors = dl.d_nsectors;
+			/* MBR handles only first UINT32_MAX sectors. */
+			spc = (u_int64_t)disk.heads * disk.sectors;
+			sz = DL_GETDSIZE(&dl);
+			if (sz > UINT32_MAX) {
+				disk.cylinders = UINT32_MAX / spc;
+				disk.size = disk.cylinders * spc;
+			} else
+				disk.size = sz;
+		}
 	}
+
+	if (disk.size == 0 || disk.cylinders == 0 || disk.heads == 0 ||
+	    disk.sectors == 0 || unit_types[SECTORS].conversion == 0)
+		errx(1, "Can't get disk geometry, please use [-chs] or [-l]"
+		    "to specify.");
 }
 
 /*
