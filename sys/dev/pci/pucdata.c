@@ -1,4 +1,4 @@
-/*	$OpenBSD: pucdata.c,v 1.98 2015/09/06 17:40:54 sf Exp $	*/
+/*	$OpenBSD: pucdata.c,v 1.99 2015/11/14 14:47:56 miod Exp $	*/
 /*	$NetBSD: pucdata.c,v 1.6 1999/07/03 05:55:23 cgd Exp $	*/
 
 /*
@@ -2005,7 +2005,7 @@ const struct puc_device_description puc_devs[] = {
 	/*
 	 * Cardbus devices which can potentially show up because of
 	 * Expresscard adapters
-	 * XXX Keep this list syncronized with cardbus/com_cardbus.c
+	 * XXX Keep this list synchronized with cardbus/com_cardbus.c
 	*/
 
 	{   /* "", */

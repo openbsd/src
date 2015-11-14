@@ -1,4 +1,4 @@
-/* $OpenBSD: com_cardbus.c,v 1.42 2012/07/12 08:20:53 deraadt Exp $ */
+/* $OpenBSD: com_cardbus.c,v 1.43 2015/11/14 14:47:56 miod Exp $ */
 /* $NetBSD: com_cardbus.c,v 1.4 2000/04/17 09:21:59 joda Exp $ */
 
 /*
@@ -100,7 +100,7 @@ struct cfattach com_cardbus_ca = {
 
 #define BUG_BROADCOM	0x01
 
-/* XXX Keep this list syncronized with the corresponding one in pucdata.c */
+/* XXX Keep this list synchronized with the corresponding one in pucdata.c */
 static struct csdev {
 	u_short		vendor;
 	u_short		product;

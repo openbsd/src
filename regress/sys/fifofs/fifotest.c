@@ -65,7 +65,7 @@ main(int argc, char **argv)
 	sa.sa_handler = sigalrm;
 	sigaction(SIGALRM, &sa, NULL);
 
-	/* SIGUSR1 is used for syncronization only. */
+	/* SIGUSR1 is used for synchronization only. */
 	sa.sa_flags = SA_RESTART;
 	sa.sa_handler = sigusr1;
 	sigaction(SIGUSR1, &sa, NULL);
