@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.prog.mk,v 1.69 2015/10/26 10:43:42 bluhm Exp $
+#	$OpenBSD: bsd.prog.mk,v 1.70 2015/11/14 23:56:50 deraadt Exp $
 #	$NetBSD: bsd.prog.mk,v 1.55 1996/04/08 21:19:26 jtc Exp $
 #	@(#)bsd.prog.mk	5.26 (Berkeley) 6/25/91
 
@@ -43,7 +43,6 @@ LIBM?=		${DESTDIR}/usr/lib/libm.a
 LIBMENU?=	${DESTDIR}/usr/lib/libmenu.a
 LIBMENUW?=	${DESTDIR}/usr/lib/libmenuw.a
 LIBRADIUS?=	${DESTDIR}/usr/lib/libradius.a
-LIBOLDCURSES?=	${DESTDIR}/usr/lib/libocurses.a
 LIBOSSAUDIO?=	${DESTDIR}/usr/lib/libossaudio.a
 LIBPANEL?=	${DESTDIR}/usr/lib/libpanel.a
 LIBPANELW?=	${DESTDIR}/usr/lib/libpanelw.a

@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.README,v 1.61 2015/10/26 10:43:42 bluhm Exp $
+#	$OpenBSD: bsd.README,v 1.62 2015/11/14 23:56:50 deraadt Exp $
 #	$NetBSD: bsd.README,v 1.17 1996/04/13 02:08:08 thorpej Exp $
 #	@(#)bsd.README	5.1 (Berkeley) 5/11/90
 
@@ -339,7 +339,6 @@ DPADD		Additional dependencies for the program.  Usually used for
 			LIBMENU		/usr/lib/libmenu.a
 			LIBMENUW	/usr/lib/libmenuw.a
 			LIBRADIUS	/usr/lib/libradius.a
-			LIBOLDCURSES	/usr/lib/libocurses.a
 			LIBOSSAUDIO	/usr/lib/libossaudio.a
 			LIBPANEL	/usr/lib/libpanel.a
 			LIBPANELW	/usr/lib/libpanelw.a

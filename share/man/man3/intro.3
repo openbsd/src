@@ -1,4 +1,4 @@
-.\"	$OpenBSD: intro.3,v 1.72 2015/09/22 08:17:34 sobrado Exp $
+.\"	$OpenBSD: intro.3,v 1.73 2015/11/14 23:56:50 deraadt Exp $
 .\"	$NetBSD: intro.3,v 1.5 1995/05/10 22:46:24 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)intro.3	8.1 (Berkeley) 6/5/93
 .\"
-.Dd $Mdocdate: September 22 2015 $
+.Dd $Mdocdate: November 14 2015 $
 .Dt INTRO 3
 .Os
 .Sh NAME
@@ -228,23 +228,6 @@ See
 .It libobjc Pq Fl lobjc
 Library for Objective C, an object-oriented superset of ANSI C.
 Use this to compile Objective C programs.
-.Pp
-.It libocurses Pq Fl locurses
-.It libotermcap Pq Fl lotermcap
-Routines to provide the user with a method of updating screens
-with reasonable optimisation.
-The
-.Xr ocurses 3
-library is compatible with the
-.Em curses
-library provided in 4.3.
-.Em libotermcap
-is the 4.3-compatible
-.Em termcap
-library, and is a hard link to
-.Em libocurses .
-See
-.Xr otermcap 3 .
 .Pp
 .It libossaudio Pq Fl lossaudio
 Provides an emulation of the OSS
