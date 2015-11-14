@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdisk.c,v 1.86 2015/11/14 00:20:59 krw Exp $	*/
+/*	$OpenBSD: fdisk.c,v 1.87 2015/11/14 17:42:31 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -53,7 +53,7 @@ usage(void)
 	    "[-egy] [-i|-u] [-b #] [-c # -h # -s #] "
 	    "[-f mbrfile] [-l # ] disk\n"
 	    "\t-b: specify special boot partition block count; requires -i\n"
-	    "\t-chs: specify disk geometry\n"
+	    "\t-chs: specify disk geometry; all three must be specified\n"
 	    "\t-e: interactively edit MBR or GPT\n"
 	    "\t-f: specify non-standard MBR template\n"
 	    "\t-g: initialize disk with GPT; requires -i\n"
@@ -143,7 +143,8 @@ main(int argc, char *argv[])
 
 	/* Argument checking */
 	if (argc != 1 || (i_flag && u_flag) ||
-	    (i_flag == 0 && (b_arg || g_flag)))
+	    (i_flag == 0 && (b_arg || g_flag)) ||
+	    ((c_arg | h_arg | s_arg) && !(c_arg && h_arg && s_arg)))
 		usage();
 
 	disk.name = argv[0];
@@ -159,14 +160,10 @@ main(int argc, char *argv[])
 	}
 
 	if (c_arg | h_arg | s_arg) {
-		/* Use supplied geometry if it is completely specified. */
-		if (c_arg && h_arg && s_arg) {
-			disk.cylinders = c_arg;
-			disk.heads = h_arg;
-			disk.sectors = s_arg;
-			disk.size = c_arg * h_arg * s_arg;
-		} else
-			errx(1, "Please specify a full geometry with [-chs].");
+		disk.cylinders = c_arg;
+		disk.heads = h_arg;
+		disk.sectors = s_arg;
+		disk.size = c_arg * h_arg * s_arg;
 	} else if (l_arg) {
 		/* Use supplied size to calculate a geometry. */
 		disk.cylinders = l_arg / 64;
