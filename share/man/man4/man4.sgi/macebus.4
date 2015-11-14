@@ -1,4 +1,4 @@
-.\"	$OpenBSD: macebus.4,v 1.11 2009/11/16 20:13:13 miod Exp $
+.\"	$OpenBSD: macebus.4,v 1.12 2015/11/14 08:34:24 jmc Exp $
 .\"	$NetBSD: mace.4,v 1.4 2004/02/10 16:54:02 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -25,7 +25,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 16 2009 $
+.Dd $Mdocdate: November 14 2015 $
 .Dt MACEBUS 4 sgi
 .Os
 .Sh NAME
@@ -44,7 +44,7 @@
 .Cd "power0 at macebus0"
 .Pp
 .Cd "macepcibr0 at macebus0"
-.Cd "pci* at macepcbir?"
+.Cd "pci* at macepcibr?"
 .Sh DESCRIPTION
 The
 .Nm
