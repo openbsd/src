@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_stge.c,v 1.62 2015/10/25 13:04:28 mpi Exp $	*/
+/*	$OpenBSD: if_stge.c,v 1.63 2015/11/14 17:54:57 mpi Exp $	*/
 /*	$NetBSD: if_stge.c,v 1.27 2005/05/16 21:35:32 bouyer Exp $	*/
 
 /*-
@@ -57,11 +57,6 @@
 #include <netinet/if_ether.h>
 
 #include <net/if_media.h>
-
-#if NVLAN > 0
-#include <net/if_types.h>
-#include <net/if_vlan_var.h>
-#endif
 
 #if NBPFILTER > 0
 #include <net/bpf.h>

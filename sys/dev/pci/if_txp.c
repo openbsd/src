@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_txp.c,v 1.117 2015/10/25 13:04:28 mpi Exp $	*/
+/*	$OpenBSD: if_txp.c,v 1.118 2015/11/14 17:54:57 mpi Exp $	*/
 
 /*
  * Copyright (c) 2001
@@ -55,10 +55,6 @@
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
-#endif
-
-#if NVLAN > 0
-#include <net/if_vlan_var.h>
 #endif
 
 #include <machine/bus.h>

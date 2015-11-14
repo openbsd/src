@@ -1,4 +1,4 @@
-/*	$OpenBSD: ti.c,v 1.18 2015/10/25 12:48:46 mpi Exp $	*/
+/*	$OpenBSD: ti.c,v 1.19 2015/11/14 17:54:57 mpi Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -94,10 +94,6 @@
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
-#endif
-
-#if NVLAN > 0
-#include <net/if_vlan_var.h>
 #endif
 
 #include <machine/bus.h>

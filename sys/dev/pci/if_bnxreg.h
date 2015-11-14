@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnxreg.h,v 1.46 2015/09/11 13:02:28 stsp Exp $	*/
+/*	$OpenBSD: if_bnxreg.h,v 1.47 2015/11/14 17:54:57 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2006 Broadcom Corporation
@@ -57,11 +57,6 @@
 
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
-
-#if NVLAN > 0
-#include <net/if_types.h>
-#include <net/if_vlan_var.h>
-#endif
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
