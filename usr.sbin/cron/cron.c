@@ -1,4 +1,4 @@
-/*	$OpenBSD: cron.c,v 1.70 2015/11/12 21:12:05 millert Exp $	*/
+/*	$OpenBSD: cron.c,v 1.71 2015/11/14 13:09:14 millert Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -32,6 +32,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <syslog.h>
 #include <time.h>
 #include <unistd.h>
 
@@ -50,13 +51,12 @@ static	void	usage(void),
 		set_time(int),
 		cron_sleep(time_t, sigset_t *),
 		sigchld_handler(int),
-		sighup_handler(int),
 		sigchld_reaper(void),
 		parse_args(int c, char *v[]);
 
 static	int	open_socket(void);
 
-static	volatile sig_atomic_t	got_sighup, got_sigchld;
+static	volatile sig_atomic_t	got_sigchld;
 static	time_t			timeRunning, virtualTime, clockTime;
 static	int			cronSock;
 static	long			GMToff;
@@ -93,30 +93,31 @@ main(int argc, char *argv[])
 	sact.sa_flags |= SA_RESTART;
 	sact.sa_handler = sigchld_handler;
 	(void) sigaction(SIGCHLD, &sact, NULL);
-	sact.sa_handler = sighup_handler;
-	(void) sigaction(SIGHUP, &sact, NULL);
 	sact.sa_handler = SIG_IGN;
+	(void) sigaction(SIGHUP, &sact, NULL);
 	(void) sigaction(SIGPIPE, &sact, NULL);
+
+	openlog(__progname, LOG_PID, LOG_CRON);
 
 	if (pledge("stdio rpath wpath cpath fattr getpw unix id dns proc exec",
 	    NULL) == -1) {
-		log_it("CRON", "pledge", strerror(errno));
+		syslog(LOG_ERR, "(CRON) PLEDGE (%m)");
 		exit(EXIT_FAILURE);
 	}
 
 	cronSock = open_socket();
 
 	if (putenv("PATH="_PATH_DEFPATH) < 0) {
-		log_it("CRON", "DEATH", "can't malloc");
+		syslog(LOG_ERR, "(CRON) DEATH (%m)");
 		exit(EXIT_FAILURE);
 	}
 
 	if (NoFork == 0) {
 		if (daemon(0, 0) == -1) {
-			log_it("CRON", "DEATH", "can't fork");
+			syslog(LOG_ERR, "(CRON) DEATH (%m)");
 			exit(EXIT_FAILURE);
 		}
-		log_it("CRON", "STARTUP", CRON_VERSION);
+		syslog(LOG_INFO, "(CRON) STARTUP (%s)", CRON_VERSION);
 	}
 
 	load_database(&database);
@@ -388,10 +389,6 @@ cron_sleep(time_t target, sigset_t *mask)
 			}
 		} else {
 			/* Interrupted by a signal. */
-			if (got_sighup) {
-				got_sighup = 0;
-				log_close();
-			}
 			if (got_sigchld) {
 				got_sigchld = 0;
 				sigchld_reaper();
@@ -424,27 +421,27 @@ open_socket(void)
 	struct sockaddr_un s_un;
 
 	if ((grp = getgrnam(CRON_GROUP)) == NULL)
-		log_it("CRON", "STARTUP", "can't find cron group");
+		syslog(LOG_WARNING, "(CRON) STARTUP (can't find cron group)");
 
 	sock = socket(AF_UNIX, SOCK_STREAM|SOCK_CLOEXEC|SOCK_NONBLOCK, 0);
 	if (sock == -1) {
 		fprintf(stderr, "%s: can't create socket: %s\n",
 		    __progname, strerror(errno));
-		log_it("CRON", "DEATH", "can't create socket");
+		syslog(LOG_ERR, "(CRON) DEATH (can't create socket)");
 		exit(EXIT_FAILURE);
 	}
 	bzero(&s_un, sizeof(s_un));
 	if (strlcpy(s_un.sun_path, _PATH_CRON_SOCK, sizeof(s_un.sun_path))
 	    >= sizeof(s_un.sun_path)) {
 		fprintf(stderr, "%s: path too long\n", _PATH_CRON_SOCK);
-		log_it("CRON", "DEATH", "path too long");
+		syslog(LOG_ERR, "(CRON) DEATH (socket path too long)");
 		exit(EXIT_FAILURE);
 	}
 	s_un.sun_family = AF_UNIX;
 
 	if (connect(sock, (struct sockaddr *)&s_un, sizeof(s_un)) == 0) {
 		fprintf(stderr, "%s: already running\n", __progname);
-		log_it("CRON", "DEATH", "already running");
+		syslog(LOG_ERR, "(CRON) DEATH (already running)");
 		exit(EXIT_FAILURE);
 	}
 	if (errno != ENOENT)
@@ -456,13 +453,13 @@ open_socket(void)
 	if (rc != 0) {
 		fprintf(stderr, "%s: can't bind socket: %s\n",
 		    __progname, strerror(errno));
-		log_it("CRON", "DEATH", "can't bind socket");
+		syslog(LOG_ERR, "(CRON) DEATH (can't bind socket)");
 		exit(EXIT_FAILURE);
 	}
 	if (listen(sock, SOMAXCONN)) {
 		fprintf(stderr, "%s: can't listen on socket: %s\n",
 		    __progname, strerror(errno));
-		log_it("CRON", "DEATH", "can't listen on socket");
+		syslog(LOG_ERR, "(CRON) DEATH (can't listen on socket)");
 		exit(EXIT_FAILURE);
 	}
 	chmod(s_un.sun_path, 0660);
@@ -475,12 +472,6 @@ open_socket(void)
 	}
 
 	return(sock);
-}
-
-static void
-sighup_handler(int x)
-{
-	got_sighup = 1;
 }
 
 static void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: do_command.c,v 1.53 2015/11/09 16:37:07 millert Exp $	*/
+/*	$OpenBSD: do_command.c,v 1.54 2015/11/14 13:09:14 millert Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -32,6 +32,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <syslog.h>
 #include <time.h>		/* for structs.h */
 #include <unistd.h>
 #include <vis.h>
@@ -57,7 +58,7 @@ do_command(entry *e, user *u)
 	 */
 	switch (fork()) {
 	case -1:
-		log_it("CRON", "error", "can't fork");
+		syslog(LOG_ERR, "(CRON) CAN'T FORK (%m)");
 		break;
 	case 0:
 		/* child process */
@@ -138,7 +139,7 @@ child_process(entry *e, user *u)
 	 */
 	switch (fork()) {
 	case -1:
-		log_it("CRON", "error", "can't fork");
+		syslog(LOG_ERR, "(CRON) CAN'T FORK (%m)");
 		_exit(EXIT_FAILURE);
 		/*NOTREACHED*/
 	case 0:
@@ -150,14 +151,14 @@ child_process(entry *e, user *u)
 		if ((e->flags & DONT_LOG) == 0) {
 			char *x;
 			if (stravis(&x, e->cmd, 0) != -1) {
-				log_it(usernm, "CMD", x);
+				syslog(LOG_INFO, "(%s) CMD (%s)", usernm, x);
 				free(x);
 			}
 		}
 
 		/* that's the last thing we'll log.  close the log files.
 		 */
-		log_close();
+		closelog();
 
 		/* get new pgrp, void tty, etc.
 		 */
@@ -342,7 +343,7 @@ child_process(entry *e, user *u)
 		if (ch != EOF) {
 			FILE	*mail = NULL;
 			char	*mailto;
-			int	bytes = 1;
+			size_t	bytes = 1;
 			int	status = 0;
 			pid_t	mailpid;
 
@@ -425,13 +426,9 @@ child_process(entry *e, user *u)
 			 * what's going on.
 			 */
 			if (mail && status) {
-				char buf[MAX_TEMPSTR];
-
-				snprintf(buf, sizeof buf,
-			"mailed %d byte%s of output but got status 0x%04x\n",
-					bytes, (bytes==1)?"":"s",
-					status);
-				log_it(usernm, "MAIL", buf);
+				syslog(LOG_NOTICE, "(%s) MAIL (mailed %zu byte"
+				"%s of output but got status 0x%04x)", usernm,
+				bytes, (bytes == 1) ? "" : "s", status);
 			}
 
 		} /*if data from grandchild*/
@@ -469,7 +466,7 @@ safe_p(const char *usernm, const char *s)
 		    (isalnum(ch) || ch == '_' ||
 		    (!first && strchr(safe_delim, ch))))
 			continue;
-		log_it(usernm, "UNSAFE", s);
+		syslog(LOG_WARNING, "(%s) UNSAFE (%s)", usernm, s);
 		return (FALSE);
 	}
 	return (TRUE);

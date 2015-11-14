@@ -1,4 +1,4 @@
-/*	$OpenBSD: funcs.h,v 1.27 2015/11/12 21:12:05 millert Exp $	*/
+/*	$OpenBSD: funcs.h,v 1.28 2015/11/14 13:09:14 millert Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -30,8 +30,6 @@ void		load_database(cron_db **),
 		unget_char(int, FILE *),
 		free_entry(entry *),
 		skip_comments(FILE *),
-		log_it(const char *, const char *, const char *),
-		log_close(void),
 		poke_daemon(unsigned char),
 		atrun(at_db *, double, time_t);
 

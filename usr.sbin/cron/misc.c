@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.70 2015/11/09 16:37:07 millert Exp $	*/
+/*	$OpenBSD: misc.c,v 1.71 2015/11/14 13:09:14 millert Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -24,7 +24,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <syslog.h>
 #include <time.h>		/* for structs.h */
 
 #include "macros.h"
@@ -32,7 +31,6 @@
 #include "funcs.h"
 #include "globals.h"
 
-static int syslog_open = FALSE;
 int LineNumber;
 
 /* get_char(file) : like getc() but increment LineNumber on newlines
@@ -118,33 +116,6 @@ skip_comments(FILE *file)
 	}
 	if (ch != EOF)
 		unget_char(ch, file);
-}
-
-void
-log_it(const char *username, const char *event, const char *detail)
-{
-	char **info, *info_events[] = { "CMD", "ATJOB", "BEGIN EDIT", "DELETE",
-	    "END EDIT", "LIST", "MAIL", "RELOAD", "REPLACE", "STARTUP", NULL };
-
-	if (!syslog_open) {
-		openlog(__progname, LOG_PID, LOG_CRON);
-		syslog_open = TRUE;		/* assume openlog success */
-	}
-
-	for (info = info_events; *info; info++)
-		if (!strcmp(event, *info))
-			break;
-	syslog(*info ? LOG_INFO : LOG_WARNING, "(%s) %s (%s)", username, event,
-	    detail);
-}
-
-void
-log_close(void)
-{
-	if (syslog_open) {
-		closelog();
-		syslog_open = FALSE;
-	}
 }
 
 /* char *first_word(char *s, char *t)

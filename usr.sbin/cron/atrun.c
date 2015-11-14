@@ -1,4 +1,4 @@
-/*	$OpenBSD: atrun.c,v 1.39 2015/11/12 21:12:05 millert Exp $	*/
+/*	$OpenBSD: atrun.c,v 1.40 2015/11/14 13:09:14 millert Exp $	*/
 
 /*
  * Copyright (c) 2002-2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -38,6 +38,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <syslog.h>
 #include <time.h>
 #include <unistd.h>
 
@@ -81,11 +82,11 @@ scan_atjobs(at_db **db, struct timespec *ts)
 	struct stat sb;
 
 	if ((dfd = open(_PATH_AT_SPOOL, O_RDONLY|O_DIRECTORY)) == -1) {
-		log_it("CRON", "OPEN FAILED", _PATH_AT_SPOOL);
+		syslog(LOG_ERR, "(CRON) OPEN FAILED (%s)", _PATH_AT_SPOOL);
 		return (0);
 	}
 	if (fstat(dfd, &sb) != 0) {
-		log_it("CRON", "FSTAT FAILED", _PATH_AT_SPOOL);
+		syslog(LOG_ERR, "(CRON) FSTAT FAILED (%s)", _PATH_AT_SPOOL);
 		close(dfd);
 		return (0);
 	}
@@ -95,7 +96,7 @@ scan_atjobs(at_db **db, struct timespec *ts)
 	}
 
 	if ((atdir = fdopendir(dfd)) == NULL) {
-		log_it("CRON", "OPENDIR FAILED", _PATH_AT_SPOOL);
+		syslog(LOG_ERR, "(CRON) OPENDIR FAILED (%s)", _PATH_AT_SPOOL);
 		close(dfd);
 		return (0);
 	}
@@ -237,7 +238,7 @@ run_job(atjob *job, char *atfile)
 
 	/* Open the file and unlink it so we don't try running it again. */
 	if ((fd = open(atfile, O_RDONLY|O_NONBLOCK|O_NOFOLLOW, 0)) < 0) {
-		log_it("CRON", "CAN'T OPEN", atfile);
+		syslog(LOG_ERR, "(CRON) CAN'T OPEN (%s)", atfile);
 		return;
 	}
 	unlink(atfile);
@@ -253,7 +254,7 @@ run_job(atjob *job, char *atfile)
 		break;
 	case -1:
 		/* error */
-		log_it("CRON", "error", "can't fork");
+		syslog(LOG_ERR, "(CRON) CAN'T FORK (%m)");
 		/* FALLTHROUGH */
 	default:
 		/* parent */
@@ -272,39 +273,43 @@ run_job(atjob *job, char *atfile)
 	 */
 	pw = getpwuid(job->uid);
 	if (pw == NULL) {
-		log_it("CRON", "ORPHANED JOB", atfile);
+		syslog(LOG_WARNING, "(CRON) ORPHANED JOB (%s)", atfile);
 		_exit(EXIT_FAILURE);
 	}
 	if (pw->pw_expire && time(NULL) >= pw->pw_expire) {
-		log_it(pw->pw_name, "ACCOUNT EXPIRED, JOB ABORTED",
-		    atfile);
+		syslog(LOG_NOTICE, "(%s) ACCOUNT EXPIRED, JOB ABORTED (%s)",
+		    pw->pw_name, atfile);
 		_exit(EXIT_FAILURE);
 	}
 
 	/* Sanity checks */
 	if (fstat(fd, &sb) < 0) {
-		log_it(pw->pw_name, "FSTAT FAILED", atfile);
+		syslog(LOG_ERR, "(%s) FSTAT FAILED (%s)", pw->pw_name, atfile);
 		_exit(EXIT_FAILURE);
 	}
 	if (!S_ISREG(sb.st_mode)) {
-		log_it(pw->pw_name, "NOT REGULAR", atfile);
+		syslog(LOG_WARNING, "(%s) NOT REGULAR (%s)", pw->pw_name,
+		    atfile);
 		_exit(EXIT_FAILURE);
 	}
 	if ((sb.st_mode & ALLPERMS) != (S_IRUSR | S_IWUSR | S_IXUSR)) {
-		log_it(pw->pw_name, "BAD FILE MODE", atfile);
+		syslog(LOG_WARNING, "(%s) BAD FILE MODE (%s)", pw->pw_name,
+		    atfile);
 		_exit(EXIT_FAILURE);
 	}
 	if (sb.st_uid != 0 && sb.st_uid != job->uid) {
-		log_it(pw->pw_name, "WRONG FILE OWNER", atfile);
+		syslog(LOG_WARNING, "(%s) WRONG FILE OWNER (%s)", pw->pw_name,
+		    atfile);
 		_exit(EXIT_FAILURE);
 	}
 	if (sb.st_nlink > 1) {
-		log_it(pw->pw_name, "BAD LINK COUNT", atfile);
+		syslog(LOG_WARNING, "(%s) BAD LINK COUNT (%s)", pw->pw_name,
+		    atfile);
 		_exit(EXIT_FAILURE);
 	}
 
 	if ((fp = fdopen(dup(fd), "r")) == NULL) {
-		log_it("CRON", "error", "dup(2) failed");
+		syslog(LOG_ERR, "(CRON) DUP FAILED (%m)");
 		_exit(EXIT_FAILURE);
 	}
 
@@ -358,11 +363,13 @@ run_job(atjob *job, char *atfile)
 	if (!safe_p(pw->pw_name, mailto))
 		_exit(EXIT_FAILURE);
 	if ((uid_t)nuid != job->uid) {
-		log_it(pw->pw_name, "UID MISMATCH", atfile);
+		syslog(LOG_WARNING, "(%s) UID MISMATCH (%s)", pw->pw_name,
+		    atfile);
 		_exit(EXIT_FAILURE);
 	}
 	if ((gid_t)ngid != job->gid) {
-		log_it(pw->pw_name, "GID MISMATCH", atfile);
+		syslog(LOG_WARNING, "(%s) GID MISMATCH (%s)", pw->pw_name,
+		    atfile);
 		_exit(EXIT_FAILURE);
 	}
 
@@ -374,15 +381,15 @@ run_job(atjob *job, char *atfile)
 	/* Fork again, child will run the job, parent will catch output. */
 	switch ((pid = fork())) {
 	case -1:
-		log_it("CRON", "error", "can't fork");
+		syslog(LOG_ERR, "(CRON) CAN'T FORK (%m)");
 		_exit(EXIT_FAILURE);
 		/*NOTREACHED*/
 	case 0:
 		/* Write log message now that we have our real pid. */
-		log_it(pw->pw_name, "ATJOB", atfile);
+		syslog(LOG_INFO, "(%s) ATJOB (%s)", pw->pw_name, atfile);
 
-		/* Close log file (or syslog) */
-		log_close();
+		/* Close syslog file */
+		closelog();
 
 		/* Connect grandchild's stdin to the at job file. */
 		if (lseek(fd, 0, SEEK_SET) < 0) {
@@ -480,7 +487,7 @@ run_job(atjob *job, char *atfile)
 
 		if (gethostname(hostname, sizeof(hostname)) != 0)
 			strlcpy(hostname, "unknown", sizeof(hostname));
-		if (snprintf(mailcmd, sizeof mailcmd,  MAILFMT,
+		if (snprintf(mailcmd, sizeof mailcmd, MAILFMT,
 		    MAILARG) >= sizeof mailcmd) {
 			fprintf(stderr, "mailcmd too long\n");
 			(void) _exit(EXIT_FAILURE);
@@ -508,10 +515,9 @@ run_job(atjob *job, char *atfile)
 		 * this fact so the problem can (hopefully) be debugged.
 		 */
 		if ((status = cron_pclose(mail, mailpid)) != 0) {
-			snprintf(buf, sizeof(buf), "mailed %lu byte%s of output"
-			    " but got status 0x%04x\n", (unsigned long)bytes,
-			    (bytes == 1) ? "" : "s", status);
-			log_it(pw->pw_name, "MAIL", buf);
+			syslog(LOG_NOTICE, "(%s) MAIL (mailed %zu byte%s of "
+			    "output but got status 0x%04x)", pw->pw_name,
+			    bytes, (bytes == 1) ? "" : "s", status);
 		}
 	}
 
@@ -534,6 +540,6 @@ run_job(atjob *job, char *atfile)
 	_exit(EXIT_SUCCESS);
 
 bad_file:
-	log_it(pw->pw_name, "BAD FILE FORMAT", atfile);
+	syslog(LOG_ERR, "(%s) BAD FILE FORMAT (%s)", pw->pw_name, atfile);
 	_exit(EXIT_FAILURE);
 }

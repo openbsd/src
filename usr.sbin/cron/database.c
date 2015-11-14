@@ -1,4 +1,4 @@
-/*	$OpenBSD: database.c,v 1.32 2015/11/12 21:12:05 millert Exp $	*/
+/*	$OpenBSD: database.c,v 1.33 2015/11/14 13:09:14 millert Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -28,6 +28,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <syslog.h>
 #include <time.h>		/* for structs.h */
 #include <unistd.h>
 
@@ -55,7 +56,7 @@ load_database(cron_db **db)
 	 * cached any of the database), we'll see the changes next time.
 	 */
 	if (stat(_PATH_CRON_SPOOL, &statbuf) < 0) {
-		log_it("CRON", "STAT FAILED", _PATH_CRON_SPOOL);
+		syslog(LOG_ERR, "(CRON) STAT FAILED (%s)", _PATH_CRON_SPOOL);
 		return;
 	}
 
@@ -92,7 +93,7 @@ load_database(cron_db **db)
 	 * we fork a lot more often than the mtime of the dir changes.
 	 */
 	if (!(dir = opendir(_PATH_CRON_SPOOL))) {
-		log_it("CRON", "OPENDIR FAILED", _PATH_CRON_SPOOL);
+		syslog(LOG_ERR, "(CRON) OPENDIR FAILED (%s)", _PATH_CRON_SPOOL);
 		/* Restore system crontab entry as needed. */
 		if (!TAILQ_EMPTY(&new_db->users) &&
 		    (u = TAILQ_FIRST(&old_db->users))) {
@@ -168,7 +169,7 @@ process_crontab(int dfd, const char *uname, const char *fname,
 	if (fname[0] != '/' && (pw = getpwnam(uname)) == NULL) {
 		/* file doesn't have a user in passwd file.
 		 */
-		log_it(uname, "ORPHAN", "no passwd entry");
+		syslog(LOG_WARNING, "(%s) ORPHAN (no passwd entry)", uname);
 		goto next_crontab;
 	}
 
@@ -176,32 +177,33 @@ process_crontab(int dfd, const char *uname, const char *fname,
 	if (crontab_fd < 0) {
 		/* crontab not accessible?
 		 */
-		log_it(uname, "CAN'T OPEN", fname);
+		syslog(LOG_ERR, "(%s) CAN'T OPEN (%s)", uname, fname);
 		goto next_crontab;
 	}
 
 	if (fstat(crontab_fd, statbuf) < 0) {
-		log_it(uname, "FSTAT FAILED", fname);
+		syslog(LOG_ERR, "(%s) FSTAT FAILED (%s)", uname, fname);
 		goto next_crontab;
 	}
 	if (!S_ISREG(statbuf->st_mode)) {
-		log_it(uname, "NOT REGULAR", fname);
+		syslog(LOG_WARNING, "(%s) NOT REGULAR (%s)", uname, fname);
 		goto next_crontab;
 	}
 	if (pw != NULL) {
 		/* Looser permissions on system crontab. */
 		if ((statbuf->st_mode & 077) != 0) {
-			log_it(uname, "BAD FILE MODE", fname);
+			syslog(LOG_WARNING, "(%s) BAD FILE MODE (%s)",
+			    uname, fname);
 			goto next_crontab;
 		}
 	}
 	if (statbuf->st_uid != 0 && (pw == NULL ||
 	    statbuf->st_uid != pw->pw_uid || strcmp(uname, pw->pw_name) != 0)) {
-		log_it(uname, "WRONG FILE OWNER", fname);
+		syslog(LOG_WARNING, "(%s) WRONG FILE OWNER (%s)", uname, fname);
 		goto next_crontab;
 	}
 	if (pw != NULL && statbuf->st_nlink != 1) {
-		log_it(uname, "BAD LINK COUNT", fname);
+		syslog(LOG_WARNING, "(%s) BAD LINK COUNT (%s)", uname, fname);
 		goto next_crontab;
 	}
 
@@ -225,7 +227,7 @@ process_crontab(int dfd, const char *uname, const char *fname,
 		 */
 		TAILQ_REMOVE(&old_db->users, u, entries);
 		free_user(u);
-		log_it(uname, "RELOAD", fname);
+		syslog(LOG_INFO, "(%s) RELOAD (%s)", uname, fname);
 	}
 	u = load_user(crontab_fd, pw, fname);
 	if (u != NULL) {

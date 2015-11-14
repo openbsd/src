@@ -1,4 +1,4 @@
-/*	$OpenBSD: crontab.c,v 1.89 2015/11/12 21:12:05 millert Exp $	*/
+/*	$OpenBSD: crontab.c,v 1.90 2015/11/14 13:09:14 millert Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -31,6 +31,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <syslog.h>
 #include <time.h>
 #include <unistd.h>
 
@@ -82,22 +83,24 @@ main(int argc, char *argv[])
 {
 	int exitstatus;
 
-	user_gid = getgid();
-	crontab_gid = getegid();
-
 	if (pledge("stdio rpath wpath cpath fattr getpw unix id proc exec",
 	    NULL) == -1) {
 		err(EXIT_FAILURE, "pledge");
 	}
 
+	user_gid = getgid();
+	crontab_gid = getegid();
+
 	setlocale(LC_ALL, "");
+	openlog(__progname, LOG_PID, LOG_CRON);
 
 	setvbuf(stderr, NULL, _IOLBF, 0);
 	parse_args(argc, argv);		/* sets many globals, opens a file */
 	if (!allowed(RealUser, _PATH_CRON_ALLOW, _PATH_CRON_DENY)) {
 		fprintf(stderr, "You do not have permission to use crontab\n");
 		fprintf(stderr, "See crontab(1) for more information\n");
-		log_it(RealUser, "AUTH", "crontab command not allowed");
+		syslog(LOG_WARNING, "(%s) AUTH (crontab command not allowed)",
+		    RealUser);
 		exit(EXIT_FAILURE);
 	}
 	exitstatus = EXIT_SUCCESS;
@@ -211,7 +214,7 @@ list_cmd(void)
 	char n[PATH_MAX];
 	FILE *f;
 
-	log_it(RealUser, "LIST", User);
+	syslog(LOG_INFO, "(%s) LIST (%s)", RealUser, User);
 	if (snprintf(n, sizeof n, "%s/%s", _PATH_CRON_SPOOL, User) >= sizeof(n))
 		errc(EXIT_FAILURE, ENAMETOOLONG, "%s/%s", _PATH_CRON_SPOOL, User);
 	if (!(f = fopen(n, "r"))) {
@@ -235,7 +238,7 @@ delete_cmd(void)
 {
 	char n[PATH_MAX];
 
-	log_it(RealUser, "DELETE", User);
+	syslog(LOG_INFO, "(%s) DELETE (%s)", RealUser, User);
 	if (snprintf(n, sizeof n, "%s/%s", _PATH_CRON_SPOOL, User) >= sizeof(n))
 		errc(EXIT_FAILURE, ENAMETOOLONG, "%s/%s", _PATH_CRON_SPOOL, User);
 	if (unlink(n) != 0) {
@@ -264,7 +267,7 @@ edit_cmd(void)
 	struct stat statbuf, xstatbuf;
 	struct timespec ts[2];
 
-	log_it(RealUser, "BEGIN EDIT", User);
+	syslog(LOG_INFO, "(%s) BEGIN EDIT (%s)", RealUser, User);
 	if (snprintf(n, sizeof n, "%s/%s", _PATH_CRON_SPOOL, User) >= sizeof(n))
 		errc(EXIT_FAILURE, ENAMETOOLONG, "%s/%s", _PATH_CRON_SPOOL, User);
 	if (!(f = fopen(n, "r"))) {
@@ -380,7 +383,7 @@ edit_cmd(void)
  remove:
 	unlink(Filename);
  done:
-	log_it(RealUser, "END EDIT", User);
+	syslog(LOG_INFO, "(%s) END EDIT (%s)", RealUser, User);
 }
 
 /* returns	0	on success
@@ -513,7 +516,7 @@ replace_cmd(void)
 		goto done;
 	}
 	TempFilename[0] = '\0';
-	log_it(RealUser, "REPLACE", User);
+	syslog(LOG_INFO, "(%s) REPLACE (%s)", RealUser, User);
 
 	poke_daemon(RELOAD_CRON);
 
