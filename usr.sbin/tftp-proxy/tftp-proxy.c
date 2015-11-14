@@ -1,4 +1,4 @@
-/* $OpenBSD: tftp-proxy.c,v 1.14 2015/11/12 20:55:49 deraadt Exp $
+/* $OpenBSD: tftp-proxy.c,v 1.15 2015/11/14 04:02:32 deraadt Exp $
  *
  * Copyright (c) 2005 DLS Internet Services
  * Copyright (c) 2004, 2005 Camiel Dobbelaar, <cd@sentia.nl>
@@ -373,6 +373,9 @@ proxy_privproc(int s, struct passwd *pw)
 	if (setgroups(1, &pw->pw_gid) ||
 	    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid))
 		lerr(1, "unable to set group ids");
+
+	if (pledge("stdio inet sendfd", NULL) == -1)
+		err(1, "pledge");
 
 	TAILQ_INIT(&p.replies);
 
