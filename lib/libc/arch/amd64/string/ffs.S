@@ -1,11 +1,11 @@
-/*	$OpenBSD: ffs.S,v 1.3 2015/08/31 02:53:56 guenther Exp $	*/
+/*	$OpenBSD: ffs.S,v 1.4 2015/11/14 21:53:03 guenther Exp $	*/
 /*
  * Written by J.T. Conklin <jtc@netbsd.org>.
  * Public domain.
  * Adapted for NetBSD/x86_64 by Frank van der Linden <fvdl@wasabisystems.com>
  */
 
-#include "SYS.h"
+#include "DEFS.h"
 
 ENTRY(ffs)
 	bsfl	%edi,%eax

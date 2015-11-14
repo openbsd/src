@@ -1,4 +1,4 @@
-#include "SYS.h"
+#include "DEFS.h"
 
 ENTRY(bcmp)
 	xorl	%eax,%eax		/* clear return value */

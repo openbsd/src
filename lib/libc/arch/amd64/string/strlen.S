@@ -1,4 +1,4 @@
-/*	$OpenBSD: strlen.S,v 1.5 2015/08/31 02:53:56 guenther Exp $	*/
+/*	$OpenBSD: strlen.S,v 1.6 2015/11/14 21:53:03 guenther Exp $	*/
 /*	$NetBSD: strlen.S,v 1.6 2014/03/22 19:16:34 jakllsch Exp $	*/
 
 /*-
@@ -35,7 +35,7 @@
  * (Only the long comment really remains his work!)
  */
 
-#include "SYS.h"
+#include "DEFS.h"
 
 /*
  * There are many well known branch-free sequences which are used

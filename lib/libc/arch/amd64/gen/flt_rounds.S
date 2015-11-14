@@ -1,4 +1,4 @@
-/*	$OpenBSD: flt_rounds.S,v 1.5 2015/10/27 05:54:49 guenther Exp $	*/
+/*	$OpenBSD: flt_rounds.S,v 1.6 2015/11/14 21:53:03 guenther Exp $	*/
 /*	$NetBSD: flt_rounds.S,v 1.2 2002/06/06 23:04:35 fvdl Exp $	*/
 
 /*
@@ -6,7 +6,7 @@
  * Public domain.
  */
 
-#include "SYS.h"
+#include "DEFS.h"
 
 	.text
 	_ALIGN_TEXT

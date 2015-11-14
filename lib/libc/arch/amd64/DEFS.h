@@ -1,8 +1,11 @@
+/*	$OpenBSD: DEFS.h,v 1.1 2015/11/14 21:53:03 guenther Exp $	*/
+
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
  *
- * This code is derived from locore.s.
+ * This code is derived from software contributed to Berkeley by
+ * William Jolitz.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -12,11 +15,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -31,60 +30,32 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ *
+ *	from: @(#)SYS.h	5.5 (Berkeley) 5/7/91
+ *	$NetBSD: SYS.h,v 1.5 2002/06/03 18:30:32 fvdl Exp $
  */
 
-#include "DEFS.h"
+#include <machine/asm.h>
 
-	/*
-	 * memmove (dst,src,cnt)
-	 *  ws@tools.de     (Wolfgang Solfrank, TooLs GmbH) +49-228-985800
-	 */
+/*
+ * We define a hidden alias with the prefix "_libc_" for each global symbol
+ * that may be used internally.  By referencing _libc_x instead of x, other
+ * parts of libc prevent overriding by the application and avoid unnecessary
+ * relocations.
+ */
+#define _HIDDEN(x)		_libc_##x
+#define _HIDDEN_ALIAS(x,y)			\
+	STRONG_ALIAS(_HIDDEN(x),y);		\
+	.hidden _HIDDEN(x)
+#define _HIDDEN_FALIAS(x,y)			\
+	_HIDDEN_ALIAS(x,y);			\
+	.type _HIDDEN(x),@function
 
-ENTRY(bcopy)
-	xchgq	%rdi,%rsi
-	/* fall into memmove */
+/*
+ * For functions implemented in ASM that aren't syscalls.
+ *   END_STRONG(x)	Like DEF_STRONG() in C; for standard/reserved C names
+ *   END_WEAK(x)	Like DEF_WEAK() in C; for non-ISO C names
+ */
+#define	END_STRONG(x)	END(x); _HIDDEN_FALIAS(x,x); END(_HIDDEN(x))
+#define	END_WEAK(x)	END_STRONG(x); .weak x
 
-ENTRY(memmove)
-	movq	%rdi,%r11	/* save dest */
-	movq	%rdx,%rcx
-	movq	%rdi,%rax
-	subq	%rsi,%rax
-	cmpq	%rcx,%rax	/* overlapping? */
-	jb	1f
-	jmp	2f		/* nope */
-
-// ENTRY(memcpy)
-	movq	%rdi,%r11	/* save dest */
-	movq	%rdx,%rcx
-2:
-	cld			/* copy forwards. */
-	shrq	$3,%rcx		/* copy by words */
-	rep
-	movsq
-	movq	%rdx,%rcx
-	andq	$7,%rcx		/* any bytes left? */
-	rep
-	movsb
-	movq	%r11,%rax
-	ret
-1:
-	addq	%rcx,%rdi	/* copy backwards. */
-	addq	%rcx,%rsi
-	std
-	andq	$7,%rcx		/* any fractional bytes? */
-	decq	%rdi
-	decq	%rsi
-	rep
-	movsb
-	movq	%rdx,%rcx	/* copy remainder by words */
-	shrq	$3,%rcx
-	subq	$7,%rsi
-	subq	$7,%rdi
-	rep
-	movsq
-	movq	%r11,%rax
-	cld
-	ret
-// END(memcpy)
-END_STRONG(memmove)
-END_WEAK(bcopy)

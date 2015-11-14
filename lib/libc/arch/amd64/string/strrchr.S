@@ -1,4 +1,4 @@
-/*	$OpenBSD: strrchr.S,v 1.7 2015/08/31 02:53:56 guenther Exp $	*/
+/*	$OpenBSD: strrchr.S,v 1.8 2015/11/14 21:53:03 guenther Exp $	*/
 /*	$NetBSD: strrchr.S,v 1.3 2014/03/22 19:16:34 jakllsch Exp $	*/
 
 /*
@@ -6,7 +6,7 @@
  * Public domain.
  */
 
-#include "SYS.h"
+#include "DEFS.h"
 
 WEAK_ALIAS(rindex, strrchr)
 

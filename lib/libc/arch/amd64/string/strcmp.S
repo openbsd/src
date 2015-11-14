@@ -1,4 +1,4 @@
-/*	$OpenBSD: strcmp.S,v 1.6 2015/08/31 02:53:56 guenther Exp $	*/
+/*	$OpenBSD: strcmp.S,v 1.7 2015/11/14 21:53:03 guenther Exp $	*/
 /*	$NetBSD: strcmp.S,v 1.2 2014/03/22 19:16:34 jakllsch Exp $	*/
 
 /*
@@ -6,7 +6,7 @@
  * Public domain.
  */
 
-#include "SYS.h"
+#include "DEFS.h"
 
 ENTRY(strcmp)
 	/*

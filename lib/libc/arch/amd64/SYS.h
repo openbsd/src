@@ -1,4 +1,4 @@
-/*	$OpenBSD: SYS.h,v 1.17 2015/10/23 04:39:24 guenther Exp $	*/
+/*	$OpenBSD: SYS.h,v 1.18 2015/11/14 21:53:03 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,30 +35,8 @@
  *	$NetBSD: SYS.h,v 1.5 2002/06/03 18:30:32 fvdl Exp $
  */
 
-#include <machine/asm.h>
+#include "DEFS.h"
 #include <sys/syscall.h>
-
-/*
- * We define a hidden alias with the prefix "_libc_" for each global symbol
- * that may be used internally.  By referencing _libc_x instead of x, other
- * parts of libc prevent overriding by the application and avoid unnecessary
- * relocations.
- */
-#define _HIDDEN(x)		_libc_##x
-#define _HIDDEN_ALIAS(x,y)			\
-	STRONG_ALIAS(_HIDDEN(x),y);		\
-	.hidden _HIDDEN(x)
-#define _HIDDEN_FALIAS(x,y)			\
-	_HIDDEN_ALIAS(x,y);			\
-	.type _HIDDEN(x),@function
-
-/*
- * For functions implemented in ASM that aren't syscalls.
- *   END_STRONG(x)	Like DEF_STRONG() in C; for standard/reserved C names
- *   END_WEAK(x)	Like DEF_WEAK() in C; for non-ISO C names
- */
-#define	END_STRONG(x)	END(x); _HIDDEN_FALIAS(x,x); END(_HIDDEN(x))
-#define	END_WEAK(x)	END_STRONG(x); .weak x
 
 
 #define SYSTRAP(x)	movl $(SYS_ ## x),%eax; movq %rcx, %r10; syscall

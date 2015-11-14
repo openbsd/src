@@ -4,7 +4,7 @@
  * Adapted for NetBSD/x86_64 by Frank van der Linden <fvdl@wasabisystems.com>
  */
 
-#include "SYS.h"
+#include "DEFS.h"
 
 ENTRY(memchr)
 	movb	%sil,%al		/* set character to search for */
