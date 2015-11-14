@@ -1,4 +1,4 @@
-/*	$OpenBSD: rs.c,v 1.28 2015/11/10 14:42:41 schwarze Exp $	*/
+/*	$OpenBSD: rs.c,v 1.29 2015/11/14 17:03:02 schwarze Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -276,20 +276,19 @@ prepfile(void)
 	if (!(colwidths = calloc(ocols, sizeof(short))))
 		errx(1, "malloc:  No gutter space");
 	if (flags & SQUEEZE) {
-		if (flags & TRANSPOSE)
-			for (ep = elem, i = 0; i < ocols; i++) {
+		for (ep = elem, i = 0; i < ocols; i++) {
+			max = 0;
+			if (flags & TRANSPOSE) {
 				for (j = 0; j < orows; j++)
 					if ((n = strlen(*ep++)) > max)
 						max = n;
-				colwidths[i] = max + gutter;
-			}
-		else
-			for (ep = elem, i = 0; i < ocols; i++) {
+			} else {
 				for (j = i; j < nelem; j += ocols)
 					if ((n = strlen(ep[j])) > max)
 						max = n;
-				colwidths[i] = max + gutter;
 			}
+			colwidths[i] = max + gutter;
+		}
 	} else {
 		for (i = 0; i < ocols; i++)
 			colwidths[i] = colw;
