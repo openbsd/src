@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.188 2015/11/02 14:55:41 mpi Exp $ */
+/*	$OpenBSD: ehci.c,v 1.189 2015/11/14 17:27:21 mpi Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -65,6 +65,7 @@
 #include <sys/timeout.h>
 #include <sys/pool.h>
 #include <sys/endian.h>
+#include <sys/atomic.h>
 
 #include <machine/bus.h>
 
