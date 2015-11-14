@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.260 2015/10/27 12:06:37 mpi Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.261 2015/11/14 15:40:40 mpi Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -352,6 +352,8 @@ ipv4_input(struct mbuf *m)
 
 #ifdef MROUTING
 		if (ipmforwarding && ip_mrouter) {
+			int rv;
+
 			if (m->m_flags & M_EXT) {
 				if ((m = m_pullup(m, hlen)) == NULL) {
 					ipstat.ips_toosmall++;
@@ -371,7 +373,10 @@ ipv4_input(struct mbuf *m)
 			 * as expected when ip_mforward() is called from
 			 * ip_output().)
 			 */
-			if (ip_mforward(m, ifp) != 0) {
+			KERNEL_LOCK();
+			rv = ip_mforward(m, ifp);
+			KERNEL_UNLOCK();
+			if (rv != 0) {
 				ipstat.ips_cantforward++;
 				goto bad;
 			}
