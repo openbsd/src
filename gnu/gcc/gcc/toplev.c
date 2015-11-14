@@ -2031,6 +2031,9 @@ toplev_main (unsigned int argc, const char **argv)
   /* Initialization of GCC's environment, and diagnostics.  */
   general_init (argv[0]);
 
+  if (pledge ("stdio rpath wpath cpath", NULL) == -1)
+	fatal_error ("can't pledge");
+
   /* Parse the options and do minimal processing; basically just
      enough to default flags appropriately.  */
   decode_options (argc, argv);
