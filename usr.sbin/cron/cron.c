@@ -1,4 +1,4 @@
-/*	$OpenBSD: cron.c,v 1.71 2015/11/14 13:09:14 millert Exp $	*/
+/*	$OpenBSD: cron.c,v 1.72 2015/11/14 13:11:32 millert Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -89,8 +89,7 @@ main(int argc, char *argv[])
 
 	bzero((char *)&sact, sizeof sact);
 	sigemptyset(&sact.sa_mask);
-	sact.sa_flags = 0;
-	sact.sa_flags |= SA_RESTART;
+	sact.sa_flags = SA_RESTART;
 	sact.sa_handler = sigchld_handler;
 	(void) sigaction(SIGCHLD, &sact, NULL);
 	sact.sa_handler = SIG_IGN;
