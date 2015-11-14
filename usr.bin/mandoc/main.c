@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.164 2015/11/07 17:58:52 schwarze Exp $ */
+/*	$OpenBSD: main.c,v 1.165 2015/11/14 23:56:41 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2012, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -24,6 +24,7 @@
 #include <assert.h>
 #include <ctype.h>
 #include <err.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <glob.h>
 #include <signal.h>
@@ -120,14 +121,16 @@ main(int argc, char *argv[])
 	int		 show_usage;
 	int		 options;
 	int		 use_pager;
+	int		 status;
 	int		 c;
+	pid_t		 pager_pid;
 
 	progname = getprogname();
 	if (strncmp(progname, "mandocdb", 8) == 0 ||
 	    strncmp(progname, "makewhatis", 10) == 0)
 		return mandocdb(argc, argv);
 
-	if (pledge("stdio rpath tmppath proc exec flock", NULL) == -1)
+	if (pledge("stdio rpath tmppath tty proc exec flock", NULL) == -1)
 		err((int)MANDOCLEVEL_SYSERR, "pledge");
 
 	/* Search options. */
@@ -387,7 +390,7 @@ main(int argc, char *argv[])
 
 	/* mandoc(1) */
 
-	if (pledge(use_pager ? "stdio rpath tmppath proc exec" :
+	if (pledge(use_pager ? "stdio rpath tmppath tty proc exec" :
 	    "stdio rpath", NULL) == -1)
 		err((int)MANDOCLEVEL_SYSERR, "pledge");
 
@@ -484,7 +487,29 @@ out:
 	if (tag_files != NULL) {
 		fclose(stdout);
 		tag_write();
-		waitpid(spawn_pager(tag_files), NULL, 0);
+		pager_pid = spawn_pager(tag_files);
+		for (;;) {
+			if (waitpid(pager_pid, &status, WUNTRACED) == -1) {
+				if (errno == EINTR)
+					continue;
+				warn("wait");
+				rc = MANDOCLEVEL_SYSERR;
+				break;
+			}
+			if (!WIFSTOPPED(status))
+				break;
+
+			(void)tcsetpgrp(STDIN_FILENO, getpgid(0));
+			kill(0, WSTOPSIG(status));
+	
+			/*
+			 * I'm now stopped.
+			 * When getting SIGCONT, continue here:
+			 */
+
+			(void)tcsetpgrp(STDIN_FILENO, pager_pid);
+			kill(pager_pid, SIGCONT);
+		}
 		tag_unlink();
 	}
 
@@ -971,9 +996,14 @@ spawn_pager(struct tag_files *tag_files)
 	case -1:
 		err((int)MANDOCLEVEL_SYSERR, "fork");
 	case 0:
+		/* Set pgrp in both parent and child to avoid racing exec. */
+		(void)setpgid(0, 0);
 		break;
 	default:
-		if (pledge("stdio rpath tmppath", NULL) == -1)
+		(void)setpgid(pager_pid, 0);
+		if (tcsetpgrp(STDIN_FILENO, pager_pid) == -1)
+			err((int)MANDOCLEVEL_SYSERR, "tcsetpgrp");
+		if (pledge("stdio rpath tmppath tty proc", NULL) == -1)
 			err((int)MANDOCLEVEL_SYSERR, "pledge");
 		return pager_pid;
 	}
