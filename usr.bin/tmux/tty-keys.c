@@ -1,4 +1,4 @@
-/* $OpenBSD: tty-keys.c,v 1.78 2015/11/14 10:56:31 nicm Exp $ */
+/* $OpenBSD: tty-keys.c,v 1.79 2015/11/14 10:57:59 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -546,6 +546,7 @@ first_key:
 				goto discard_key;
 			goto partial_key;
 		}
+		more = 1;
 		for (i = 1; i < size; i++)
 			more = utf8_append(&ud, (u_char)buf[i]);
 		if (more != 0)

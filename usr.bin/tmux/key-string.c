@@ -1,4 +1,4 @@
-/* $OpenBSD: key-string.c,v 1.30 2015/11/14 10:56:31 nicm Exp $ */
+/* $OpenBSD: key-string.c,v 1.31 2015/11/14 10:57:59 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -176,6 +176,7 @@ key_string_lookup_string(const char *string)
 		if (utf8_open(&ud, (u_char)*string)) {
 			if (strlen(string) != ud.size)
 				return (KEYC_NONE);
+			more = 1;
 			for (i = 1; i < ud.size; i++)
 				more = utf8_append(&ud, (u_char)string[i]);
 			if (more != 0)
