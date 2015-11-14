@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdisk.c,v 1.84 2015/11/13 22:27:35 krw Exp $	*/
+/*	$OpenBSD: fdisk.c,v 1.85 2015/11/14 00:13:47 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -180,9 +180,10 @@ main(int argc, char *argv[])
 		errx(1, "Can't get disk geometry, please use [-chs] "
 		    "to specify.");
 
-	/* Print out current MBRs on disk */
-	if ((i_flag + u_flag + e_flag) == 0)
+	if ((i_flag + u_flag + e_flag) == 0) {
 		USER_print_disk();
+		goto done;
+	}
 
 	/* Create initial/default MBR. */
 	if (i_flag == 0) {
@@ -237,6 +238,7 @@ main(int argc, char *argv[])
 	if (e_flag)
 		USER_edit(0, 0);
 
+done:
 	close(disk.fd);
 
 	return (0);
