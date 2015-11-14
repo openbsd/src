@@ -1,4 +1,4 @@
-/* $OpenBSD: input.c,v 1.89 2015/11/13 08:09:28 nicm Exp $ */
+/* $OpenBSD: input.c,v 1.90 2015/11/14 08:25:12 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1921,9 +1921,12 @@ input_exit_rename(struct input_ctx *ictx)
 int
 input_utf8_open(struct input_ctx *ictx)
 {
-	log_debug("%s", __func__);
+	struct utf8_data	*ud = &ictx->utf8data;
 
-	utf8_open(&ictx->utf8data, ictx->ch);
+	utf8_open(ud, ictx->ch);
+
+	log_debug("%s %hhu", __func__, ud->size);
+
 	return (0);
 }
 
@@ -1931,9 +1934,12 @@ input_utf8_open(struct input_ctx *ictx)
 int
 input_utf8_add(struct input_ctx *ictx)
 {
+	struct utf8_data	*ud = &ictx->utf8data;
+
+	utf8_append(ud, ictx->ch);
+
 	log_debug("%s", __func__);
 
-	utf8_append(&ictx->utf8data, ictx->ch);
 	return (0);
 }
 
@@ -1941,11 +1947,14 @@ input_utf8_add(struct input_ctx *ictx)
 int
 input_utf8_close(struct input_ctx *ictx)
 {
-	log_debug("%s", __func__);
+	struct utf8_data	*ud = &ictx->utf8data;
 
-	utf8_append(&ictx->utf8data, ictx->ch);
+	utf8_append(ud, ictx->ch);
 
-	utf8_copy(&ictx->cell.cell.data, &ictx->utf8data);
+	log_debug("%s %hhu '%*s' (width %hhu)", __func__, ud->size,
+	    (int)ud->size, ud->data, ud->width);
+
+	utf8_copy(&ictx->cell.cell.data, ud);
 	screen_write_cell(&ictx->ctx, &ictx->cell.cell);
 
 	return (0);
