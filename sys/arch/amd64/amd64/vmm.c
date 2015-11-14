@@ -375,6 +375,7 @@ vm_readpage(struct vm_readpage_params *vrp)
 
 	/* Find the phys page where this guest page exists in real memory */
 	if (!pmap_extract(vm->vm_map->pmap, vr_page, &host_pa)) {
+		rw_exit_read(&vmm_softc->vm_lock);
 		return (EFAULT);
 	}
 
