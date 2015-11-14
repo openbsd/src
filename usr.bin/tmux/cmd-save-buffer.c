@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-save-buffer.c,v 1.33 2015/11/10 22:33:47 nicm Exp $ */
+/* $OpenBSD: cmd-save-buffer.c,v 1.34 2015/11/14 09:41:06 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Tiago Cunha <me@tiagocunha.org>
@@ -130,7 +130,7 @@ cmd_save_buffer_exec(struct cmd *self, struct cmd_q *cmdq)
 
 do_stdout:
 	evbuffer_add(c->stdout_data, bufdata, bufsize);
-	server_push_stdout(c);
+	server_client_push_stdout(c);
 	return (CMD_RETURN_NORMAL);
 
 do_print:

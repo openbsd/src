@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.c,v 1.152 2015/11/12 11:24:08 nicm Exp $ */
+/* $OpenBSD: tmux.c,v 1.153 2015/11/14 09:41:07 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -255,7 +255,7 @@ main(int argc, char **argv)
 	if (shell_cmd != NULL && argc != 0)
 		usage();
 
-	if (pledge("stdio rpath wpath cpath flock fattr unix sendfd recvfd "
+	if (0 && pledge("stdio rpath wpath cpath flock fattr unix sendfd recvfd "
 	    "proc exec tty ps", NULL) != 0)
 		err(1, "pledge");
 

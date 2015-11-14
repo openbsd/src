@@ -1,4 +1,4 @@
-/* $OpenBSD: client.c,v 1.103 2015/10/31 13:43:38 nicm Exp $ */
+/* $OpenBSD: client.c,v 1.104 2015/11/14 09:41:06 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -289,7 +289,7 @@ client_main(struct event_base *base, int argc, char **argv, int flags)
 	 *
 	 * "sendfd" is dropped later in client_dispatch_wait().
 	 */
-	if (pledge("stdio unix sendfd proc exec tty", NULL) != 0)
+	if (0 && pledge("stdio unix sendfd proc exec tty", NULL) != 0)
 		fatal("pledge failed");
 
 	/* Free stuff that is not used in the client. */
@@ -541,7 +541,7 @@ client_dispatch_wait(struct imsg *imsg)
 	 * get the first message from the server.
 	 */
 	if (!pledge_applied) {
-		if (pledge("stdio unix proc exec tty", NULL) != 0)
+		if (0 && pledge("stdio unix proc exec tty", NULL) != 0)
 			fatal("pledge failed");
 		pledge_applied = 1;
 	};

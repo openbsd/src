@@ -1,4 +1,4 @@
-/* $OpenBSD: server-fn.c,v 1.91 2015/10/27 15:58:42 nicm Exp $ */
+/* $OpenBSD: server-fn.c,v 1.92 2015/11/14 09:41:07 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -448,50 +448,6 @@ server_callback_identify(unused int fd, unused short events, void *data)
 	struct client	*c = data;
 
 	server_clear_identify(c);
-}
-
-/* Push stdout to client if possible. */
-void
-server_push_stdout(struct client *c)
-{
-	struct msg_stdout_data data;
-	size_t                 size;
-
-	size = EVBUFFER_LENGTH(c->stdout_data);
-	if (size == 0)
-		return;
-	if (size > sizeof data.data)
-		size = sizeof data.data;
-
-	memcpy(data.data, EVBUFFER_DATA(c->stdout_data), size);
-	data.size = size;
-
-	if (proc_send(c->peer, MSG_STDOUT, -1, &data, sizeof data) == 0)
-		evbuffer_drain(c->stdout_data, size);
-}
-
-/* Push stderr to client if possible. */
-void
-server_push_stderr(struct client *c)
-{
-	struct msg_stderr_data data;
-	size_t                 size;
-
-	if (c->stderr_data == c->stdout_data) {
-		server_push_stdout(c);
-		return;
-	}
-	size = EVBUFFER_LENGTH(c->stderr_data);
-	if (size == 0)
-		return;
-	if (size > sizeof data.data)
-		size = sizeof data.data;
-
-	memcpy(data.data, EVBUFFER_DATA(c->stderr_data), size);
-	data.size = size;
-
-	if (proc_send(c->peer, MSG_STDERR, -1, &data, sizeof data) == 0)
-		evbuffer_drain(c->stderr_data, size);
 }
 
 /* Set stdin callback. */

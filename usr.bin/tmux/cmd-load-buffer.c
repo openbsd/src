@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-load-buffer.c,v 1.38 2015/11/12 11:10:50 nicm Exp $ */
+/* $OpenBSD: cmd-load-buffer.c,v 1.39 2015/11/14 09:41:06 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Tiago Cunha <me@tiagocunha.org>
@@ -160,7 +160,7 @@ cmd_load_buffer_callback(struct client *c, int closed, void *data)
 			free(saved);
 		}
 		evbuffer_add_printf(c->stderr_data, "%s", cause);
-		server_push_stderr(c);
+		server_client_push_stderr(c);
 		free(pdata);
 		free(cause);
 	}

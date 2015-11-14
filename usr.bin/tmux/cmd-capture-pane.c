@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-capture-pane.c,v 1.34 2015/10/16 07:43:29 nicm Exp $ */
+/* $OpenBSD: cmd-capture-pane.c,v 1.35 2015/11/14 09:41:06 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Jonathan Alvarado <radobobo@users.sourceforge.net>
@@ -203,7 +203,7 @@ cmd_capture_pane_exec(struct cmd *self, struct cmd_q *cmdq)
 		free(buf);
 		if (args_has(args, 'P') && len > 0)
 		    evbuffer_add(c->stdout_data, "\n", 1);
-		server_push_stdout(c);
+		server_client_push_stdout(c);
 	} else {
 		bufname = NULL;
 		if (args_has(args, 'b'))
