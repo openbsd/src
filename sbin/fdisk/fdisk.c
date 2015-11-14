@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdisk.c,v 1.85 2015/11/14 00:13:47 krw Exp $	*/
+/*	$OpenBSD: fdisk.c,v 1.86 2015/11/14 00:20:59 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -181,6 +181,8 @@ main(int argc, char *argv[])
 		    "to specify.");
 
 	if ((i_flag + u_flag + e_flag) == 0) {
+		if (pledge("stdio", NULL) == -1)
+			err(1, "pledge");
 		USER_print_disk();
 		goto done;
 	}
