@@ -350,13 +350,12 @@ sprefix(char *ps, char *s, int uppercase)
 	for (; *s != '\0';  s++, ps++) {
 		c = *ps;
 		if (uppercase) {
-			if (len == 0 && isupper(c))
+			if (len == 0 && islower(c))
 				return (-1);
-			if (isupper(c))
-				c = tolower(c);
+			c = tolower(c);
 		}
 		sc = *s;
-		if (len > 0 && isupper(sc))
+		if (len > 0)
 			sc = tolower(sc);
 		if (c != sc)
 			break;
