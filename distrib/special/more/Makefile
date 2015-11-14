@@ -1,9 +1,9 @@
-#	$OpenBSD: Makefile,v 1.10 2009/10/28 07:36:49 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.11 2015/11/14 23:40:12 deraadt Exp $
 
 PROG=	more
-CFLAGS+= -D_USE_OLD_CURSES_ -I.
-DPADD=	${LIBOCURSES}
-LDADD=	-locurses
+CFLAGS+= -I. -I${.CURDIR}/
+SRCS=	more.c tputs.c termcap.c tgoto.c 
+
 CLEANFILES+=morehelp.h
 
 beforedepend: morehelp.h
