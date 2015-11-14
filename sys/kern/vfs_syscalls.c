@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.239 2015/11/02 16:31:55 semarie Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.240 2015/11/14 22:23:22 deraadt Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -1796,6 +1796,7 @@ sys_pathconf(struct proc *p, void *v, register_t *retval)
 
 	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE,
 	    SCARG(uap, path), p);
+	nd.ni_pledge = PLEDGE_RPATH;
 	if ((error = namei(&nd)) != 0)
 		return (error);
 	error = VOP_PATHCONF(nd.ni_vp, SCARG(uap, name), retval);
