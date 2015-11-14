@@ -1,4 +1,4 @@
-/* $OpenBSD: apps.c,v 1.36 2015/09/13 12:41:01 bcook Exp $ */
+/* $OpenBSD: apps.c,v 1.37 2015/11/14 14:53:14 miod Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -1801,7 +1801,7 @@ parse_name(char *subject, long chtype, int multirdn)
 				mval[ne_num + 1] = 0;
 				break;
 			} else if (*sp == '+' && multirdn) {
-				/* a not escaped + signals a mutlivalued RDN */
+				/* a not escaped + signals a multivalued RDN */
 				sp++;
 				mval[ne_num + 1] = -1;
 				break;

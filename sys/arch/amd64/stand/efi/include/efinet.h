@@ -77,7 +77,7 @@ typedef struct {
     UINT64  RxBroadcastFrames;
 
     //
-    // Number of valid mutlicast frames received and not dropped.
+    // Number of valid multicast frames received and not dropped.
     //
     UINT64  RxMulticastFrames;
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: req.c,v 1.12 2015/10/17 15:00:11 doug Exp $ */
+/* $OpenBSD: req.c,v 1.13 2015/11/14 14:53:14 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -120,7 +120,7 @@
  *		  require.  This format is wrong
  */
 
-static int make_REQ(X509_REQ * req, EVP_PKEY * pkey, char *dn, int mutlirdn,
+static int make_REQ(X509_REQ * req, EVP_PKEY * pkey, char *dn, int multirdn,
     int attribs, unsigned long chtype);
 static int build_subject(X509_REQ * req, char *subj, unsigned long chtype,
     int multirdn);

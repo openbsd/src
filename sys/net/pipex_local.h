@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex_local.h,v 1.22 2015/04/23 09:45:24 dlg Exp $	*/
+/*	$OpenBSD: pipex_local.h,v 1.23 2015/11/14 14:53:13 miod Exp $	*/
 
 /*
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -166,7 +166,7 @@ struct pipex_session {
 
 	uint16_t	ip_forward:1,		/* {en|dis}ableIP forwarding */
 			ip6_forward:1,		/* {en|dis}able IPv6 forwarding */
-			is_multicast:1,		/* virtual entry for mutlicast */
+			is_multicast:1,		/* virtual entry for multicast */
 			reserved:13;
 	uint16_t	protocol;		/* tunnel protocol (PK) */
 	uint16_t	session_id;		/* session-id (PK) */

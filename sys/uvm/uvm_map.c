@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.203 2015/11/11 15:59:33 mmcc Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.204 2015/11/14 14:53:14 miod Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -4272,7 +4272,7 @@ deactivate_it:
 				break;
 			case PGO_FREE:
 				/*
-				 * If there are mutliple references to
+				 * If there are multiple references to
 				 * the amap, just deactivate the page.
 				 */
 				if (amap_refs(amap) > 1)
