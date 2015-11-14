@@ -1,4 +1,4 @@
-/* $OpenBSD: key-string.c,v 1.29 2015/11/12 22:04:37 nicm Exp $ */
+/* $OpenBSD: key-string.c,v 1.30 2015/11/14 10:56:31 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -144,7 +144,7 @@ key_string_lookup_string(const char *string)
 	static const char	*other = "!#()+,-.0123456789:;<=>?'\r\t";
 	key_code		 key;
 	u_short			 u;
-	int			 size;
+	int			 size, more;
 	key_code		 modifiers;
 	struct utf8_data	 ud;
 	u_int			 i;
@@ -177,7 +177,9 @@ key_string_lookup_string(const char *string)
 			if (strlen(string) != ud.size)
 				return (KEYC_NONE);
 			for (i = 1; i < ud.size; i++)
-				utf8_append(&ud, (u_char)string[i]);
+				more = utf8_append(&ud, (u_char)string[i]);
+			if (more != 0)
+				return (KEYC_NONE);
 			key = utf8_combine(&ud);
 			return (key | modifiers);
 		}

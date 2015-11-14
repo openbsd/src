@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.577 2015/11/14 09:41:07 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.578 2015/11/14 10:56:31 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -624,7 +624,7 @@ struct utf8_data {
 	u_char	have;
 	u_char	size;
 
-	u_char	width;
+	u_char	width;	/* 0xff if invalid */
 } __packed;
 
 /* Grid attributes. */
