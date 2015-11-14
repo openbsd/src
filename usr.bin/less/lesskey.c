@@ -723,6 +723,9 @@ main(int argc, char **argv)
 	FILE *out;
 	char line[1024];
 
+	if (pledge("stdio rpath wpath cpath", NULL) == -1)
+		err(1, "pledge");
+
 	/*
 	 * Process command line arguments.
 	 */
