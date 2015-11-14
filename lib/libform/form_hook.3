@@ -1,5 +1,5 @@
 '\" t
-.\" $OpenBSD: form_hook.3,v 1.10 2010/01/12 23:22:07 nicm Exp $
+.\" $OpenBSD: form_hook.3,v 1.11 2015/11/14 01:35:38 jmc Exp $
 .\"
 .\"***************************************************************************
 .\" Copyright (c) 1998-2006,2007 Free Software Foundation, Inc.              *
@@ -29,10 +29,14 @@
 .\" authorization.                                                           *
 .\"***************************************************************************
 .\"
-.\" $Id: form_hook.3,v 1.10 2010/01/12 23:22:07 nicm Exp $
+.\" $Id: form_hook.3,v 1.11 2015/11/14 01:35:38 jmc Exp $
 .TH form_hook 3 ""
 .SH NAME
-\fBform_hook\fR - set hooks for automatic invocation by applications
+\fBset_field_init\fR, \fBfield_init\fR,
+\fBset_field_term\fR, \fBfield_term\fR,
+\fBset_form_init\fR, \fBform_init\fR,
+\fBset_form_term\fR, \fBform_term\fR
+- set hooks for automatic invocation by applications
 .SH SYNOPSIS
 \fB#include <form.h>\fR
 .br
