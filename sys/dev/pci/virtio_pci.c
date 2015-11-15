@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio_pci.c,v 1.11 2015/07/18 16:35:33 sf Exp $	*/
+/*	$OpenBSD: virtio_pci.c,v 1.12 2015/11/15 16:00:15 deraadt Exp $	*/
 /*	$NetBSD: virtio.c,v 1.3 2011/11/02 23:05:52 njoly Exp $	*/
 
 /*
@@ -174,7 +174,6 @@ virtio_pci_attach(struct device *parent, struct device *self, void *aux)
 
 	/* subsystem ID shows what I am */
 	id = PCI_PRODUCT(pci_conf_read(pc, tag, PCI_SUBSYS_ID_REG));
-	printf(": Virtio %s Device", virtio_device_string(id));
 
 #ifdef notyet
 	if (pci_get_capability(pc, tag, PCI_CAP_MSIX, NULL, NULL))
