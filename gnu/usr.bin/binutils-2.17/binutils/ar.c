@@ -362,6 +362,9 @@ main (int argc, char **argv)
   program_name = argv[0];
   xmalloc_set_program_name (program_name);
 
+  if (pledge ("stdio rpath wpath cpath fattr", NULL) == -1)
+    fatal (_("pledge: %s"), strerror (errno));
+
   expandargv (&argc, &argv);
 
   if (is_ranlib < 0)

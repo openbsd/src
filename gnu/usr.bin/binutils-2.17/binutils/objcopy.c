@@ -3264,6 +3264,9 @@ main (int argc, char *argv[])
 
   START_PROGRESS (program_name, 0);
 
+  if (pledge ("stdio rpath wpath cpath fattr", NULL) == -1)
+    fatal (_("pledge: %s"), strerror (errno));
+
   expandargv (&argc, &argv);
 
   strip_symbols = STRIP_UNDEF;
