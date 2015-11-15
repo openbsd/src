@@ -177,6 +177,7 @@ smart_rename (const char *from, const char *to, int preserve_dates ATTRIBUTE_UNU
       ret = rename (from, to);
       if (ret == 0)
 	{
+#ifndef __OpenBSD__
 	  if (exists)
 	    {
 	      /* Try to preserve the permission bits and ownership of
@@ -195,6 +196,7 @@ smart_rename (const char *from, const char *to, int preserve_dates ATTRIBUTE_UNU
 	      if (chown (to, s.st_uid, s.st_gid) >= 0)
 		chmod (to, s.st_mode & 07777);
 	    }
+#endif /* !__OpenBSD__ */
 	}
       else
 	{
