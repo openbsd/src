@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pcap.3,v 1.42 2015/04/07 02:38:14 lteo Exp $
+.\"	$OpenBSD: pcap.3,v 1.43 2015/11/15 23:59:21 jmc Exp $
 .\"
 .\" Copyright (c) 1994, 1996, 1997
 .\"	The Regents of the University of California.  All rights reserved.
@@ -19,11 +19,66 @@
 .\" WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
 .\" MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 .\"
-.Dd $Mdocdate: April 7 2015 $
-.Dt PCAP 3
+.Dd $Mdocdate: November 15 2015 $
+.Dt PCAP_OPEN_LIVE 3
 .Os
 .Sh NAME
-.Nm pcap
+.Nm pcap_open_live ,
+.Nm pcap_open_offline ,
+.Nm pcap_dump_open ,
+.Nm pcap_dump_fopen ,
+.Nm pcap_lookupdev ,
+.Nm pcap_lookupnet ,
+.Nm pcap_dispatch ,
+.Nm pcap_loop ,
+.Nm pcap_dump ,
+.Nm pcap_inject ,
+.Nm pcap_sendpacket ,
+.Nm pcap_compile ,
+.Nm pcap_setfilter ,
+.Nm pcap_freecode ,
+.Nm pcap_next ,
+.Nm pcap_next_ex ,
+.Nm pcap_setdirection ,
+.Nm pcap_datalink ,
+.Nm pcap_snapshot ,
+.Nm pcap_is_swapped ,
+.Nm pcap_major_version ,
+.Nm pcap_minor_version ,
+.Nm pcap_stats ,
+.Nm pcap_file ,
+.Nm pcap_fileno ,
+.Nm pcap_get_selectable_fd ,
+.Nm pcap_perror ,
+.Nm pcap_geterr ,
+.Nm pcap_strerror ,
+.Nm pcap_close ,
+.Nm pcap_dump_file ,
+.Nm pcap_dump_ftell ,
+.Nm pcap_dump_flush ,
+.Nm pcap_dump_close ,
+.Nm pcap_breakloop ,
+.Nm pcap_findalldevs ,
+.Nm pcap_freealldevs ,
+.Nm pcap_getnonblock ,
+.Nm pcap_setnonblock ,
+.Nm pcap_set_datalink ,
+.Nm pcap_list_datalinks ,
+.Nm pcap_open_dead ,
+.Nm pcap_fopen_offline ,
+.Nm pcap_lib_version ,
+.Nm pcap_datalink_val_to_name ,
+.Nm pcap_datalink_val_to_description ,
+.Nm pcap_datalink_name_to_val ,
+.Nm pcap_create ,
+.Nm pcap_set_snaplen ,
+.Nm pcap_set_promisc ,
+.Nm pcap_can_set_rfmon ,
+.Nm pcap_set_rfmon ,
+.Nm pcap_set_timeout ,
+.Nm pcap_set_buffer_size ,
+.Nm pcap_activate ,
+.Nm pcap_statustostr
 .Nd Packet Capture library
 .Sh SYNOPSIS
 .In pcap.h
