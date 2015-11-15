@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211.c,v 1.48 2015/11/15 01:05:25 stsp Exp $	*/
+/*	$OpenBSD: ieee80211.c,v 1.49 2015/11/15 10:21:58 stsp Exp $	*/
 /*	$NetBSD: ieee80211.c,v 1.19 2004/06/06 05:45:29 dyoung Exp $	*/
 
 /*-
@@ -275,7 +275,7 @@ ieee80211_media_init(struct ifnet *ifp,
 	ifmedia_init(&ic->ic_media, 0, media_change, media_stat);
 	maxrate = 0;
 	memset(&allrates, 0, sizeof(allrates));
-	for (mode = IEEE80211_MODE_AUTO; mode < IEEE80211_MODE_MAX; mode++) {
+	for (mode = IEEE80211_MODE_AUTO; mode <= IEEE80211_MODE_TURBO; mode++) {
 		static const uint64_t mopts[] = {
 			IFM_AUTO,
 			IFM_IEEE80211_11A,
