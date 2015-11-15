@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.115 2015/10/14 13:50:22 espie Exp $ */
+/*	$OpenBSD: main.c,v 1.116 2015/11/15 06:19:22 daniel Exp $ */
 /*	$NetBSD: main.c,v 1.34 1997/03/24 20:56:36 gwr Exp $	*/
 
 /*
@@ -38,9 +38,7 @@
 #include <sys/param.h>	/* MACHINE MACHINE_ARCH */
 #include <sys/types.h>
 #include <sys/stat.h>
-#ifndef MAKE_BOOTSTRAP
 #include <sys/utsname.h>
-#endif
 #include <err.h>
 #include <errno.h>
 #include <stdio.h>
@@ -466,7 +464,6 @@ figure_out_MACHINE()
 {
 	char *r = getenv("MACHINE");
 	if (r == NULL) {
-#ifndef MAKE_BOOTSTRAP
 		static struct utsname utsname;
 
 		if (uname(&utsname) == -1) {
@@ -474,9 +471,6 @@ figure_out_MACHINE()
 			exit(2);
 		}
 		r = utsname.machine;
-#else
-		r = MACHINE;
-#endif
 	}
 	return r;
 }

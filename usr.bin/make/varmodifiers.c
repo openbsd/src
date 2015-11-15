@@ -1,4 +1,4 @@
-/*	$OpenBSD: varmodifiers.c,v 1.42 2015/08/20 22:32:41 deraadt Exp $	*/
+/*	$OpenBSD: varmodifiers.c,v 1.43 2015/11/15 06:19:22 daniel Exp $	*/
 /*	$NetBSD: var.c,v 1.18 1997/03/18 19:24:46 christos Exp $	*/
 
 /*
@@ -67,9 +67,7 @@
 
 #include <ctype.h>
 #include <sys/types.h>
-#ifndef MAKE_BOOTSTRAP
 #include <regex.h>
-#endif
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -127,7 +125,6 @@ static bool VarUniq(struct Name *, bool, Buffer, void *);
 static bool VarLoop(struct Name *, bool, Buffer, void *);
 
 
-#ifndef MAKE_BOOTSTRAP
 static void VarREError(int, regex_t *, const char *);
 static bool VarRESubstitute(struct Name *, bool, Buffer, void *);
 static char *do_regex(const char *, const struct Name *, void *);
@@ -139,7 +136,6 @@ typedef struct {
 	char	 *replace;
 	int 	  flags;
 } VarREPattern;
-#endif
 
 static bool VarSubstitute(struct Name *, bool, Buffer, void *);
 static char *VarGetPattern(SymTable *, int, const char **, int, int,
@@ -190,9 +186,7 @@ static struct modifier {
 	match_mod = {false, get_stringarg, NULL, VarMatch, free_stringarg},
 	nomatch_mod = {false, get_stringarg, NULL, VarNoMatch, free_stringarg},
 	subst_mod = {false, get_spatternarg, NULL, VarSubstitute, free_patternarg},
-#ifndef MAKE_BOOTSTRAP
 	resubst_mod = {false, get_patternarg, do_regex, NULL, free_patternarg},
-#endif
 	quote_mod = {false, check_quote, VarQuote, NULL , free},
 	tail_mod = {false, check_empty, NULL, VarTail, NULL},
 	head_mod = {false, check_empty, NULL, VarHead, NULL},
@@ -219,9 +213,7 @@ VarModifiers_Init()
 	choose_mod['M'] = &match_mod;
 	choose_mod['N'] = &nomatch_mod;
 	choose_mod['S'] = &subst_mod;
-#ifndef MAKE_BOOTSTRAP
 	choose_mod['C'] = &resubst_mod;
-#endif
 	choose_mod['Q'] = &quote_mod;
 	choose_mod['T'] = &tail_mod;
 	choose_mod['H'] = &head_mod;
@@ -799,7 +791,6 @@ VarSubstitute(struct Name *word, bool addSpace, Buffer buf,
     return true;
 }
 
-#ifndef MAKE_BOOTSTRAP
 /*-
  *-----------------------------------------------------------------------
  * VarREError --
@@ -942,7 +933,6 @@ VarRESubstitute(struct Name *word, bool addSpace, Buffer buf, void *patternp)
 	}
 	return addSpace||added;
 }
-#endif
 
 /*-
  *-----------------------------------------------------------------------
@@ -1396,7 +1386,6 @@ free_patternarg(void *p)
 	free(vp);
 }
 
-#ifndef MAKE_BOOTSTRAP
 static char *
 do_regex(const char *s, const struct Name *n UNUSED, void *arg)
 {
@@ -1423,7 +1412,6 @@ do_regex(const char *s, const struct Name *n UNUSED, void *arg)
 	free(p2.matches);
 	return result;
 }
-#endif
 
 char *
 VarModifiers_Apply(char *str, const struct Name *name, SymTable *ctxt,
