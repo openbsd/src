@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_proto.c,v 1.54 2015/11/15 11:14:17 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_proto.c,v 1.55 2015/11/15 12:34:07 stsp Exp $	*/
 /*	$NetBSD: ieee80211_proto.c,v 1.8 2004/04/30 23:58:20 dyoung Exp $	*/
 
 /*-
@@ -75,6 +75,7 @@ const char * const ieee80211_phymode_name[] = {
 	"11b",		/* IEEE80211_MODE_11B */
 	"11g",		/* IEEE80211_MODE_11G */
 	"turbo",	/* IEEE80211_MODE_TURBO */
+	"11n",		/* IEEE80211_MODE_11N */
 };
 
 int ieee80211_newstate(struct ieee80211com *, enum ieee80211_state, int);
@@ -96,6 +97,9 @@ ieee80211_proto_attach(struct ifnet *ifp)
 #endif
 	ic->ic_fragthreshold = 2346;		/* XXX not used yet */
 	ic->ic_fixed_rate = -1;			/* no fixed rate */
+#ifndef IEEE80211_NO_HT
+	ic->ic_fixed_mcs = -1;			/* no fixed mcs */
+#endif
 	ic->ic_protmode = IEEE80211_PROT_CTSONLY;
 
 	/* protocol state change handler */
@@ -891,8 +895,15 @@ justcleanup:
 		/* initialize bss for probe request */
 		IEEE80211_ADDR_COPY(ni->ni_macaddr, etherbroadcastaddr);
 		IEEE80211_ADDR_COPY(ni->ni_bssid, etherbroadcastaddr);
-		ni->ni_rates = ic->ic_sup_rates[
-			ieee80211_chan2mode(ic, ni->ni_chan)];
+#ifndef IEEE80211_NO_HT
+		if (ic->ic_curmode == IEEE80211_MODE_11N)
+			ni->ni_rates = ic->ic_sup_rates[
+			IEEE80211_IS_CHAN_2GHZ(ni->ni_chan) ?
+				IEEE80211_MODE_11G : IEEE80211_MODE_11A];
+		else
+#endif
+			ni->ni_rates = ic->ic_sup_rates[
+				ieee80211_chan2mode(ic, ni->ni_chan)];
 		ni->ni_associd = 0;
 		ni->ni_rstamp = 0;
 		switch (ostate) {
@@ -1013,16 +1024,24 @@ justcleanup:
 				    ni->ni_esslen);
 				rate = ni->ni_rates.rs_rates[ni->ni_txrate] &
 				    IEEE80211_RATE_VAL;
-				printf(" channel %d start %u%sMb",
-				    ieee80211_chan2ieee(ic, ni->ni_chan),
-				    rate / 2, (rate & 1) ? ".5" : "");
-				printf(" %s preamble %s slot time%s\n",
+				printf(" channel %d",
+				    ieee80211_chan2ieee(ic, ni->ni_chan));
+#ifndef IEEE80211_NO_HT
+				if (ni->ni_flags & IEEE80211_NODE_HT)
+					printf(" start MCS %u", ni->ni_txmcs);
+				else
+#endif
+					printf(" start %u%sMb",
+					    rate / 2, (rate & 1) ? ".5" : "");
+				printf(" %s preamble %s slot time%s%s\n",
 				    (ic->ic_flags & IEEE80211_F_SHPREAMBLE) ?
 					"short" : "long",
 				    (ic->ic_flags & IEEE80211_F_SHSLOT) ?
 					"short" : "long",
 				    (ic->ic_flags & IEEE80211_F_USEPROT) ?
-					" protection enabled" : "");
+					" protection enabled" : "",
+				    (ni->ni_flags & IEEE80211_NODE_HT) ?
+					" HT enabled" : "");
 			}
 			if (!(ic->ic_flags & IEEE80211_F_RSNON)) {
 				/*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_var.h,v 1.66 2015/11/15 01:05:25 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_var.h,v 1.67 2015/11/15 12:34:07 stsp Exp $	*/
 /*	$NetBSD: ieee80211_var.h,v 1.7 2004/05/06 03:07:10 dyoung Exp $	*/
 
 /*-
@@ -400,6 +400,11 @@ int	ieee80211_fix_rate(struct ieee80211com *, struct ieee80211_node *, int);
 uint64_t	ieee80211_rate2media(struct ieee80211com *, int,
 		    enum ieee80211_phymode);
 int	ieee80211_media2rate(uint64_t);
+#ifndef IEEE80211_NO_HT
+uint64_t	ieee80211_mcs2media(struct ieee80211com *, int,
+		    enum ieee80211_phymode);
+int	ieee80211_media2mcs(uint64_t);
+#endif
 u_int8_t ieee80211_rate2plcp(u_int8_t, enum ieee80211_phymode);
 u_int8_t ieee80211_plcp2rate(u_int8_t, enum ieee80211_phymode);
 u_int	ieee80211_mhz2ieee(u_int, u_int);

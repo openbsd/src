@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.h,v 1.48 2015/11/15 10:07:03 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_node.h,v 1.49 2015/11/15 12:34:07 stsp Exp $	*/
 /*	$NetBSD: ieee80211_node.h,v 1.9 2004/04/30 22:57:32 dyoung Exp $	*/
 
 /*-
@@ -241,6 +241,8 @@ struct ieee80211_node {
 	/* Block Ack records */
 	struct ieee80211_tx_ba	ni_tx_ba[IEEE80211_NUM_TID];
 	struct ieee80211_rx_ba	ni_rx_ba[IEEE80211_NUM_TID];
+
+	int			ni_txmcs;	/* current MCS used for TX */
 #endif
 
 	/* others */
