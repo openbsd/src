@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpt.h,v 1.3 2015/11/13 02:27:17 krw Exp $	*/
+/*	$OpenBSD: gpt.h,v 1.4 2015/11/15 01:22:39 krw Exp $	*/
 /*
  * Copyright (c) 2015 Markus Muller <mmu@grummel.net>
  * Copyright (c) 2015 Kenneth R Westerback <krw@openbsd.org>
@@ -18,7 +18,7 @@
 
 int GPT_get_hdr(off_t);
 int GPT_get_partition_table(off_t);
-int GPT_get_gpt(void);
+void GPT_get_gpt(void);
 int GPT_init(void);
 int GPT_write(void);
 

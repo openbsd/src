@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpt.c,v 1.5 2015/11/13 02:27:17 krw Exp $	*/
+/*	$OpenBSD: gpt.c,v 1.6 2015/11/15 01:22:39 krw Exp $	*/
 /*
  * Copyright (c) 2015 Markus Muller <mmu@grummel.net>
  * Copyright (c) 2015 Kenneth R Westerback <krw@openbsd.org>
@@ -190,7 +190,7 @@ GPT_get_partition_table(off_t where)
 	return (0);
 }
 
-int
+void
 GPT_get_gpt(void)
 {
 	int privalid, altvalid;
@@ -203,15 +203,17 @@ GPT_get_gpt(void)
 	if (privalid == 0)
 		privalid = GPT_get_partition_table(gh.gh_part_lba);
 	if (privalid == 0)
-		return (0);
+		return;
 
 	altvalid = GPT_get_header(DL_GETDSIZE(&dl) - 1);
 	if (altvalid == 0)
 		altvalid = GPT_get_partition_table(gh.gh_part_lba);
 	if (altvalid == 0)
-		return (0);
+		return;
 
-	return (1);
+	/* No valid GPT found. Zap any artifacts. */
+	memset(&gh, 0, sizeof(gh));
+	memset(&gp, 0, sizeof(gp));
 }
 
 void

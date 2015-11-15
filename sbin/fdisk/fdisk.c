@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdisk.c,v 1.88 2015/11/14 21:17:08 krw Exp $	*/
+/*	$OpenBSD: fdisk.c,v 1.89 2015/11/15 01:22:39 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -162,9 +162,9 @@ main(int argc, char *argv[])
 	DISK_open();
 
 	/* Get the GPT if present. */
-	if (GPT_get_gpt()) {
-		memset(&gh, 0, sizeof(gh));
-		memset(&gp, 0, sizeof(gp));
+	GPT_get_gpt();
+
+	if (letoh64(gh.gh_sig) != GPTSIGNATURE) {
 		if (DL_GETDSIZE(&dl) > disk.size)
 			warnx("disk too large (%llu sectors). size truncated.",
 			    (unsigned long long)DL_GETDSIZE(&dl));
@@ -205,7 +205,8 @@ main(int argc, char *argv[])
 		close(fd);
 	}
 	if (f_flag || MBR_protective_mbr(&initial_mbr) != 0)  {
-		memset(&gh, 0, sizeof(struct gpt_header));
+		memset(&gh, 0, sizeof(gh));
+		memset(&gp, 0, sizeof(gp));
 		MBR_parse(&dos_mbr, 0, 0, &initial_mbr);
 	}
 
