@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.252 2015/11/15 15:10:55 jmc Exp $
+#	$OpenBSD: Makefile,v 1.253 2015/11/15 19:35:05 jmc Exp $
 #	$NetBSD: Makefile,v 1.4 1996/01/09 03:23:01 thorpej Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
@@ -207,7 +207,6 @@ MLINKS+=ieee80211_node.9 ieee80211_node_attach.9 \
 MLINKS+=ieee80211_output.9 ieee80211_encap.9 \
 	ieee80211_output.9 ieee80211_add_rates.9 \
 	ieee80211_output.9 ieee80211_add_xrates.9 \
-	ieee80211_output.9 ieee80211_compute_duration.9 \
 	ieee80211_output.9 ieee80211_send_mgmt.9
 MLINKS+=ieee80211_proto.9 ieee80211_proto_attach.9 \
 	ieee80211_proto.9 ieee80211_proto_detach.9 \
