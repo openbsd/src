@@ -1,5 +1,5 @@
 /*
- *	$OpenBSD: locate.c,v 1.29 2015/10/23 14:16:02 tedu Exp $
+ *	$OpenBSD: locate.c,v 1.30 2015/11/15 07:44:38 deraadt Exp $
  *
  * Copyright (c) 1995 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *      $Id: locate.c,v 1.29 2015/10/23 14:16:02 tedu Exp $
+ *      $Id: locate.c,v 1.30 2015/11/15 07:44:38 deraadt Exp $
  */
 
 /*
@@ -131,6 +131,9 @@ main(int argc, char *argv[])
 	int ch;
 	char **dbv = NULL;
 	(void) setlocale(LC_ALL, "");
+
+	if (pledge("stdio rpath", NULL) == -1)
+		err(1, "pledge");
 
 	while ((ch = getopt(argc, argv, "bScd:il:")) != -1)
 		switch (ch) {

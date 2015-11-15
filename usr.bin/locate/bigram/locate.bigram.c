@@ -1,5 +1,5 @@
 /*
- *	$OpenBSD: locate.bigram.c,v 1.13 2015/01/16 06:40:09 deraadt Exp $
+ *	$OpenBSD: locate.bigram.c,v 1.14 2015/11/15 07:44:38 deraadt Exp $
  *
  * Copyright (c) 1995 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * 	$Id: locate.bigram.c,v 1.13 2015/01/16 06:40:09 deraadt Exp $
+ * 	$Id: locate.bigram.c,v 1.14 2015/11/15 07:44:38 deraadt Exp $
  */
 
 /*
@@ -58,6 +58,9 @@ main(void)
 	u_char *cp;
 	u_char *oldpath = buf1, *path = buf2;
 	u_int i, j;
+
+	if (pledge("stdio", NULL) == -1)
+		err(1, "pledge");
 
 	while (fgets(path, sizeof(buf2), stdin) != NULL) {
 
