@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwmreg.h,v 1.5 2015/10/16 10:04:56 stsp Exp $	*/
+/*	$OpenBSD: if_iwmreg.h,v 1.6 2015/11/15 09:39:09 stsp Exp $	*/
 
 /******************************************************************************
  *
@@ -3666,6 +3666,15 @@ enum {
 #define IWM_LQ_FLAG_DYNAMIC_BW_POS          6
 #define IWM_LQ_FLAG_DYNAMIC_BW_MSK          (1 << IWM_LQ_FLAG_DYNAMIC_BW_POS)
 
+/* Antenna flags. */
+#define IWM_ANT_A	(1 << 0)
+#define IWM_ANT_B	(1 << 1)
+#define IWM_ANT_C	(1 << 2)
+/* Shortcuts. */
+#define IWM_ANT_AB	(IWM_ANT_A | IWM_ANT_B)
+#define IWM_ANT_BC	(IWM_ANT_B | IWM_ANT_C)
+#define IWM_ANT_ABC	(IWM_ANT_A | IWM_ANT_B | IWM_ANT_C)
+
 /**
  * struct iwm_lq_cmd - link quality command
  * @sta_id: station to update
@@ -3674,8 +3683,8 @@ enum {
  * @mimo_delim: the first SISO index in rs_table, which separates MIMO
  *	and SISO rates
  * @single_stream_ant_msk: best antenna for SISO (can be dual in CDD).
- *	Should be ANT_[ABC]
- * @dual_stream_ant_msk: best antennas for MIMO, combination of ANT_[ABC]
+ *	Should be IWM_ANT_[ABC]
+ * @dual_stream_ant_msk: best antennas for MIMO, combination of IWM_ANT_[ABC]
  * @initial_rate_index: first index from rs_table per AC category
  * @agg_time_limit: aggregation max time threshold in usec/100, meaning
  *	value of 100 is one usec. Range is 100 to 8000
