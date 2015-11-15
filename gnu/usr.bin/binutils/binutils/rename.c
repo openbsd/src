@@ -177,21 +177,9 @@ smart_rename (const char *from, const char *to, int preserve_dates)
 	{
 	  if (exists)
 	    {
-	      /* Try to preserve the permission bits and ownership of
-		 TO.  First get the mode right except for the setuid
-		 bit.  Then change the ownership.  Then fix the setuid
-		 bit.  We do the chmod before the chown because if the
-		 chown succeeds, and we are a normal user, we won't be
-		 able to do the chmod afterward.  We don't bother to
-		 fix the setuid bit first because that might introduce
-		 a fleeting security problem, and because the chown
-		 will clear the setuid bit anyhow.  We only fix the
-		 setuid bit if the chown succeeds, because we don't
-		 want to introduce an unexpected setuid file owned by
-		 the user running objcopy.  */
+	      /* Try to preserve the permission bits of TO. Don't
+	       * restore special bits. */
 	      chmod (to, s.st_mode & 0777);
-	      if (chown (to, s.st_uid, s.st_gid) >= 0)
-		chmod (to, s.st_mode & 07777);
 	    }
 	}
       else
