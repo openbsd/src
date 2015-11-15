@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.89 2015/11/04 12:12:00 dlg Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.90 2015/11/15 10:07:03 stsp Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -1254,6 +1254,61 @@ ieee80211_iterate_nodes(struct ieee80211com *ic, ieee80211_iter_func *f,
 		(*f)(arg, ni);
 	splx(s);
 }
+
+
+#ifndef IEEE80211_NO_HT
+/*
+ * Install received HT caps information in the node's state block.
+ */
+void
+ieee80211_setup_htcaps(struct ieee80211_node *ni, const uint8_t *data,
+    uint8_t len)
+{
+	uint16_t rxrate;
+
+	if (len != 26)
+		return;
+
+	ni->ni_htcaps = (data[0] | (data[1] << 8));
+	ni->ni_ampdu_param = data[2];
+
+	memcpy(ni->ni_rxmcs, &data[3], sizeof(ni->ni_rxmcs));
+	/* clear reserved bits */
+	clrbit(ni->ni_rxmcs, 77);
+	clrbit(ni->ni_rxmcs, 78);
+	clrbit(ni->ni_rxmcs, 79);
+
+	/* Max MCS Rx rate in 1Mb/s units (0 means "not specified"). */
+	rxrate = ((data[13] | (data[14]) << 8) & IEEE80211_MCS_RX_RATE_HIGH);
+	if (rxrate < 1024)
+		ni->ni_max_rxrate = rxrate;
+
+	ni->ni_tx_mcs_set = data[15];
+	ni->ni_htxcaps = (data[19] | (data[20] << 8));
+	ni->ni_txbfcaps = (data[21] | (data[22] << 8) | (data[23] << 16) |
+		(data[24] << 24));
+	ni->ni_aselcaps = data[25];
+}
+
+/*
+ * Install received HT op information in the node's state block.
+ */
+void
+ieee80211_setup_htop(struct ieee80211_node *ni, const uint8_t *data,
+    uint8_t len)
+{
+	if (len != 22)
+		return;
+
+	ni->ni_primary_chan = data[0]; /* XXX corresponds to ni_chan */
+
+	ni->ni_htop0 = data[1];
+	ni->ni_htop1 = (data[2] | (data[3] << 8));
+	ni->ni_htop2 = (data[3] | (data[4] << 8));
+
+	memcpy(ni->ni_basic_mcs, &data[6], sizeof(ni->ni_basic_mcs));
+}
+#endif /* IEEE80211_NO_HT */
 
 /*
  * Install received rate set information in the node's state block.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.140 2015/11/08 18:51:47 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.141 2015/11/15 10:07:03 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -1628,7 +1628,12 @@ ieee80211_recv_probe_resp(struct ieee80211com *ic, struct mbuf *m,
 	ni->ni_erp = erp;
 	/* NB: must be after ni_chan is setup */
 	ieee80211_setup_rates(ic, ni, rates, xrates, IEEE80211_F_DOSORT);
-
+#ifndef IEEE80211_NO_HT
+	if (htcaps)
+		ieee80211_setup_htcaps(ni, htcaps + 2, htcaps[1]);
+	if (htop)
+		ieee80211_setup_htop(ni, htop + 2, htop[1]);
+#endif
 #ifndef IEEE80211_STA_ONLY
 	if (ic->ic_opmode == IEEE80211_M_IBSS && is_new && isprobe) {
 		/*
@@ -1734,6 +1739,10 @@ ieee80211_recv_probe_req(struct ieee80211com *ic, struct mbuf *m,
 		    ether_sprintf((u_int8_t *)wh->i_addr2)));
 		return;
 	}
+#ifndef IEEE80211_NO_HT
+	if (htcaps)
+		ieee80211_setup_htcaps(ni, htcaps + 2, htcaps[1]);
+#endif
 	IEEE80211_SEND_MGMT(ic, ni, IEEE80211_FC0_SUBTYPE_PROBE_RESP, 0);
 }
 #endif	/* IEEE80211_STA_ONLY */
@@ -2073,6 +2082,10 @@ ieee80211_recv_assoc_req(struct ieee80211com *ic, struct mbuf *m,
 	ni->ni_intval = bintval;
 	ni->ni_capinfo = capinfo;
 	ni->ni_chan = ic->ic_bss->ni_chan;
+#ifndef IEEE80211_NO_HT
+	if (htcaps)
+		ieee80211_setup_htcaps(ni, htcaps + 2, htcaps[1]);
+#endif
  end:
 	if (status != 0) {
 		IEEE80211_SEND_MGMT(ic, ni, resp, status);
