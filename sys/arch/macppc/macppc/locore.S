@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.50 2015/07/29 18:52:44 miod Exp $	*/
+/*	$OpenBSD: locore.S,v 1.51 2015/11/15 17:10:53 miod Exp $	*/
 /*	$NetBSD: locore.S,v 1.2 1996/10/16 19:33:09 ws Exp $	*/
 
 /*
@@ -175,6 +175,7 @@ switch_exited:
 	mfmsr	%r30
 	andi.	%r30,%r30,~PSL_EE@l
 	mtmsr	%r30
+	isync
 
 	stw	%r4,CI_CURPROC(%r5)	/* record new process */
 
@@ -223,6 +224,7 @@ _ENTRY(_C_LABEL(cpu_idle_enter))
 	mfmsr	%r3
 	andi.	%r3,%r3,~PSL_EE@l
 	mtmsr	%r3
+	isync
 1:
 	blr
 
@@ -890,6 +892,7 @@ trapexit:
 	mfmsr	%r3
 	andi.	%r3,%r3,~PSL_EE@l
 	mtmsr	%r3
+	isync
 /* Test AST pending: */
 	lwz	%r5,FRAME_SRR1+8(%r1)
 	mtcr	%r5
