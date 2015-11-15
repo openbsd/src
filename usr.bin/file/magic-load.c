@@ -1,4 +1,4 @@
-/* $OpenBSD: magic-load.c,v 1.18 2015/10/05 20:05:52 nicm Exp $ */
+/* $OpenBSD: magic-load.c,v 1.19 2015/11/15 22:11:18 tobias Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -871,7 +871,7 @@ magic_parse_value(struct magic_line *ml, char **line)
 	} else if ((*line)[0] == '>' && (*line)[1] == '=') {
 		ml->test_operator = ']';
 		(*line) += 2;
-	} else if (strchr("=<>&^", **line) != NULL) {
+	} else if (**line != '\0' && strchr("=<>&^", **line) != NULL) {
 		ml->test_operator = **line;
 		(*line)++;
 	}
@@ -964,7 +964,7 @@ magic_adjust_strength(struct magic *m, u_int at, struct magic_line *ml,
 		*cp = '\0';
 	cp = s;
 
-	if (strchr("+-*/", *s) == NULL) {
+	if (*s == '\0' || strchr("+-*/", *s) == NULL) {
 		magic_warnm(m, at, "invalid strength operator: %s", s);
 		return;
 	}
