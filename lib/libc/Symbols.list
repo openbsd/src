@@ -935,8 +935,6 @@ __mb_cur_max
 __mb_len_max_runtime
 __mlocale_changed
 __nlocale_changed
-_towctrans_ext
-_wctrans_init
 btowc
 iswalnum
 iswalpha
