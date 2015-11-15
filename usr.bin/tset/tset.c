@@ -1,4 +1,4 @@
-/*	$OpenBSD: tset.c,v 1.37 2015/08/20 22:28:58 deraadt Exp $	*/
+/*	$OpenBSD: tset.c,v 1.38 2015/11/15 14:14:20 deraadt Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998-2007,2008 Free Software Foundation, Inc.              *
@@ -104,28 +104,6 @@ char *ttyname(int fd);
 
 #include <dump_entry.h>
 #include <transform.h>
-
-MODULE_ID("$Id: tset.c,v 1.37 2015/08/20 22:28:58 deraadt Exp $")
-
-/*
- * SCO defines TIOCGSIZE and the corresponding struct.  Other systems (SunOS,
- * Solaris, IRIX) define TIOCGWINSZ and struct winsize.
- */
-#ifdef TIOCGSIZE
-# define IOCTL_GET_WINSIZE TIOCGSIZE
-# define IOCTL_SET_WINSIZE TIOCSSIZE
-# define STRUCT_WINSIZE struct ttysize
-# define WINSIZE_ROWS(n) n.ts_lines
-# define WINSIZE_COLS(n) n.ts_cols
-#else
-# ifdef TIOCGWINSZ
-#  define IOCTL_GET_WINSIZE TIOCGWINSZ
-#  define IOCTL_SET_WINSIZE TIOCSWINSZ
-#  define STRUCT_WINSIZE struct winsize
-#  define WINSIZE_ROWS(n) n.ws_row
-#  define WINSIZE_COLS(n) n.ws_col
-# endif
-#endif
 
 extern char **environ;
 
@@ -1251,15 +1229,15 @@ main(int argc, char **argv)
 
 #if HAVE_SIZECHANGE
 	if (opt_w) {
-	    STRUCT_WINSIZE win;
+	    struct winsize win;
 	    /* Set window size if not set already */
-	    (void) ioctl(STDERR_FILENO, IOCTL_GET_WINSIZE, &win);
-	    if (WINSIZE_ROWS(win) == 0 &&
-		WINSIZE_COLS(win) == 0 &&
+	    (void) ioctl(STDERR_FILENO, TIOCGWINSZ, &win);
+	    if (win.ws_row == 0 &&
+		win.ws_col == 0 &&
 		tlines > 0 && tcolumns > 0) {
-		WINSIZE_ROWS(win) = tlines;
-		WINSIZE_COLS(win) = tcolumns;
-		(void) ioctl(STDERR_FILENO, IOCTL_SET_WINSIZE, &win);
+		win.ws_row = tlines;
+		win.ws_col = tcolumns;
+		(void) ioctl(STDERR_FILENO, TIOCSWINSZ, &win);
 	    }
 	}
 #endif
