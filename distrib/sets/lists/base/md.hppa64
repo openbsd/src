@@ -80,9 +80,7 @@
 ./usr/lib/libncurses.so.14.0
 ./usr/lib/libncursesw.so.14.0
 ./usr/lib/libobjc.so.5.0
-./usr/lib/libocurses.so.6.0
 ./usr/lib/libossaudio.so.4.0
-./usr/lib/libotermcap.so.6.0
 ./usr/lib/libpanel.so.6.0
 ./usr/lib/libpanelw.so.6.0
 ./usr/lib/libpcap.so.8.0
@@ -1685,7 +1683,6 @@
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/objc/sarray.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/objc/thr.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/objc/typedstream.ph
-./usr/libdata/perl5/site_perl/hppa64-openbsd/ocurses.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/ohash.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/openssl
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/openssl/aes.ph

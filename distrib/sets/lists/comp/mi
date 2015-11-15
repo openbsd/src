@@ -1079,7 +1079,6 @@
 ./usr/include/objc/sarray.h
 ./usr/include/objc/thr.h
 ./usr/include/objc/typedstream.h
-./usr/include/ocurses.h
 ./usr/include/ohash.h
 ./usr/include/openssl
 ./usr/include/openssl/aes.h
@@ -1512,12 +1511,8 @@
 ./usr/lib/libncursesw_p.a
 ./usr/lib/libobjc.a
 ./usr/lib/libobjc_p.a
-./usr/lib/libocurses.a
-./usr/lib/libocurses_p.a
 ./usr/lib/libossaudio.a
 ./usr/lib/libossaudio_p.a
-./usr/lib/libotermcap.a
-./usr/lib/libotermcap_p.a
 ./usr/lib/libpanel.a
 ./usr/lib/libpanel_p.a
 ./usr/lib/libpanelw.a
@@ -4835,7 +4830,6 @@
 ./usr/share/man/man3/nrand48.3
 ./usr/share/man/man3/ntohl.3
 ./usr/share/man/man3/ntohs.3
-./usr/share/man/man3/ocurses.3
 ./usr/share/man/man3/offsetof.3
 ./usr/share/man/man3/ohash_create_entry.3
 ./usr/share/man/man3/ohash_delete.3
@@ -4860,7 +4854,6 @@
 ./usr/share/man/man3/openlog_r.3
 ./usr/share/man/man3/openpty.3
 ./usr/share/man/man3/ossaudio.3
-./usr/share/man/man3/otermcap.3
 ./usr/share/man/man3/overlay.3
 ./usr/share/man/man3/overwrite.3
 ./usr/share/man/man3/pair_content.3
