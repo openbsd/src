@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-bootp.c,v 1.19 2015/01/16 06:40:21 deraadt Exp $	*/
+/*	$OpenBSD: print-bootp.c,v 1.20 2015/11/15 20:35:36 mmcc Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993, 1994, 1995, 1996, 1997
@@ -50,10 +50,10 @@ static char tstr[] = " [|bootp]";
  * Print bootp requests
  */
 void
-bootp_print(register const u_char *cp, u_int length,
+bootp_print(const u_char *cp, u_int length,
 	    u_short sport, u_short dport)
 {
-	register const struct bootp *bp;
+	const struct bootp *bp;
 	static u_char vm_cmu[4] = VM_CMU;
 	static u_char vm_rfc1048[4] = VM_RFC1048;
 
@@ -119,8 +119,8 @@ bootp_print(register const u_char *cp, u_int length,
 
 	/* Client's Ethernet address */
 	if (bp->bp_htype == 1 && bp->bp_hlen == 6) {
-		register const struct ether_header *eh;
-		register const char *e;
+		const struct ether_header *eh;
+		const char *e;
 
 		TCHECK2(bp->bp_chaddr[0], 6);
 		eh = (struct ether_header *)packetp;
@@ -262,12 +262,12 @@ static struct tok tag2str[] = {
 };
 
 static void
-rfc1048_print(register const u_char *bp, register u_int length)
+rfc1048_print(const u_char *bp, u_int length)
 {
-	register u_char tag;
-	register u_int len, size;
-	register const char *cp;
-	register u_char c;
+	u_char tag;
+	u_int len, size;
+	const char *cp;
+	u_char c;
 	int first;
 	u_int32_t ul;
 	u_short us;
@@ -439,9 +439,9 @@ rfc1048_print(register const u_char *bp, register u_int length)
 }
 
 static void
-cmu_print(register const u_char *bp, register u_int length)
+cmu_print(const u_char *bp, u_int length)
 {
-	register const struct cmu_vend *cmu;
+	const struct cmu_vend *cmu;
 	static const char fmt[] = " %s:%s";
 
 #define PRINTCMUADDR(m, s) { TCHECK(cmu->m); \

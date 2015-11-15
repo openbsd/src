@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-cnfp.c,v 1.8 2008/10/22 10:05:55 gollo Exp $	*/
+/*	$OpenBSD: print-cnfp.c,v 1.9 2015/11/15 20:35:36 mmcc Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -68,11 +68,11 @@ struct nfrec {
 };
 
 void
-cnfp_print(register const u_char *cp, u_int len, register const u_char *bp)
+cnfp_print(const u_char *cp, u_int len, const u_char *bp)
 {
-	register const struct nfhdr *nh;
-	register const struct nfrec *nr;
-	register const struct ip *ip;
+	const struct nfhdr *nh;
+	const struct nfrec *nr;
+	const struct ip *ip;
 	int nrecs, ver, proto;
 	time_t t;
 

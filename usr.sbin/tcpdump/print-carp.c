@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-carp.c,v 1.6 2009/10/27 23:59:55 deraadt Exp $	*/
+/*	$OpenBSD: print-carp.c,v 1.7 2015/11/15 20:35:36 mmcc Exp $	*/
 
 /*
  * Copyright (c) 2000 William C. Fenner.
@@ -43,7 +43,7 @@
 #include "addrtoname.h"
 
 void
-carp_print(register const u_char *bp, register u_int len, int ttl)
+carp_print(const u_char *bp, u_int len, int ttl)
 {
 	int version, type;
 	char *type_s;

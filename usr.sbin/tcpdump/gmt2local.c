@@ -1,4 +1,4 @@
-/*	$OpenBSD: gmt2local.c,v 1.6 2015/04/05 17:02:57 guenther Exp $	*/
+/*	$OpenBSD: gmt2local.c,v 1.7 2015/11/15 20:35:36 mmcc Exp $	*/
 
 /*
  * Copyright (c) 1997
@@ -43,8 +43,8 @@
 int32_t
 gmt2local(time_t t)
 {
-	register int dt, dir;
-	register struct tm *gmt, *loc;
+	int dt, dir;
+	struct tm *gmt, *loc;
 	struct tm sgmt;
 
 	if (t == 0)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-atalk.c,v 1.29 2015/08/21 02:07:32 deraadt Exp $	*/
+/*	$OpenBSD: print-atalk.c,v 1.30 2015/11/15 20:35:36 mmcc Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -93,9 +93,9 @@ static const char *ddpskt_string(int);
  * from Ethertalk)
  */
 void
-atalk_print(register const u_char *bp, u_int length)
+atalk_print(const u_char *bp, u_int length)
 {
-	register const struct atDDP *dp;
+	const struct atDDP *dp;
 	u_short snet;
 
 	if (length < ddpSize) {
@@ -121,11 +121,11 @@ atalk_print(register const u_char *bp, u_int length)
  * interface if we have one, or from UDP encapsulated tunnels.
  */
 void
-atalk_print_llap(register const u_char *bp, u_int length)
+atalk_print_llap(const u_char *bp, u_int length)
 {
-	register const struct LAP *lp;
-	register const struct atDDP *dp;
-	register const struct atShortDDP *sdp;
+	const struct LAP *lp;
+	const struct atDDP *dp;
+	const struct atShortDDP *sdp;
 	u_short snet;
 
 	lp = (struct LAP *)bp;
@@ -180,9 +180,9 @@ atalk_print_llap(register const u_char *bp, u_int length)
 
 /* XXX should probably pass in the snap header and do checks like arp_print() */
 void
-aarp_print(register const u_char *bp, u_int length)
+aarp_print(const u_char *bp, u_int length)
 {
-	register const struct aarp *ap;
+	const struct aarp *ap;
 
 #define AT(member) ataddr_string((ap->member[1]<<8)|ap->member[2],ap->member[3])
 
@@ -213,8 +213,8 @@ aarp_print(register const u_char *bp, u_int length)
 }
 
 static void
-ddp_print(register const u_char *bp, register u_int length, register int t,
-	  register u_short snet, register u_char snode, u_char skt)
+ddp_print(const u_char *bp, u_int length, int t,
+	  u_short snet, u_char snode, u_char skt)
 {
 
 	if ((intptr_t)bp & (sizeof(long)-1)) {
@@ -251,7 +251,7 @@ ddp_print(register const u_char *bp, register u_int length, register int t,
 }
 
 static void
-atp_print(register const struct atATP *ap, u_int length)
+atp_print(const struct atATP *ap, u_int length)
 {
 	char c;
 	u_int32_t data;
@@ -343,10 +343,10 @@ atp_print(register const struct atATP *ap, u_int length)
 }
 
 static void
-atp_bitmap_print(register u_char bm)
+atp_bitmap_print(u_char bm)
 {
-	register char c;
-	register int i;
+	char c;
+	int i;
 
 	/*
 	 * The '& 0xff' below is needed for compilers that want to sign
@@ -374,10 +374,10 @@ atp_bitmap_print(register u_char bm)
 }
 
 static void
-nbp_print(register const struct atNBP *np, u_int length, register u_short snet,
-	  register u_char snode, register u_char skt)
+nbp_print(const struct atNBP *np, u_int length, u_short snet,
+	  u_char snode, u_char skt)
 {
-	register const struct atNBPtuple *tp =
+	const struct atNBPtuple *tp =
 			(struct atNBPtuple *)((u_char *)np + nbpHeaderSize);
 	int i;
 	const u_char *ep;
@@ -461,9 +461,9 @@ nbp_print(register const struct atNBP *np, u_int length, register u_short snet,
 
 /* print a counted string */
 static const char *
-print_cstring(register const char *cp, register const u_char *ep)
+print_cstring(const char *cp, const u_char *ep)
 {
-	register u_int length;
+	u_int length;
 
 	if (cp >= (const char *)ep) {
 		fputs(tstr, stdout);
@@ -487,12 +487,12 @@ print_cstring(register const char *cp, register const u_char *ep)
 }
 
 static const struct atNBPtuple *
-nbp_tuple_print(register const struct atNBPtuple *tp,
-		register const u_char *ep,
-		register u_short snet, register u_char snode,
-		register u_char skt)
+nbp_tuple_print(const struct atNBPtuple *tp,
+		const u_char *ep,
+		u_short snet, u_char snode,
+		u_char skt)
 {
-	register const struct atNBPtuple *tpn;
+	const struct atNBPtuple *tpn;
 
 	if ((const u_char *)(tp + 1) > ep) {
 		fputs(tstr, stdout);
@@ -517,9 +517,9 @@ nbp_tuple_print(register const struct atNBPtuple *tp,
 }
 
 static const struct atNBPtuple *
-nbp_name_print(const struct atNBPtuple *tp, register const u_char *ep)
+nbp_name_print(const struct atNBPtuple *tp, const u_char *ep)
 {
-	register const char *cp = (const char *)tp + nbpTupleSize;
+	const char *cp = (const char *)tp + nbpTupleSize;
 
 	putchar(' ');
 
@@ -585,8 +585,8 @@ init_atalk(void)
 static const char *
 ataddr_string(u_short atnet, u_char athost)
 {
-	register struct hnamemem *tp, *tp2;
-	register int i = (atnet << 8) | athost;
+	struct hnamemem *tp, *tp2;
+	int i = (atnet << 8) | athost;
 	char nambuf[HOST_NAME_MAX+1 + 20];
 	static int first = 1;
 
@@ -632,7 +632,7 @@ static struct tok skt2str[] = {
 };
 
 static const char *
-ddpskt_string(register int skt)
+ddpskt_string(int skt)
 {
 	static char buf[12];
 
