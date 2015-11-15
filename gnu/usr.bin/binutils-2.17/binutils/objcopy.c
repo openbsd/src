@@ -1195,7 +1195,7 @@ copy_unknown_object (bfd *ibfd, bfd *obfd)
       ncopied += tocopy;
     }
 
-  chmod (bfd_get_filename (obfd), buf.st_mode);
+  chmod (bfd_get_filename (obfd), buf.st_mode & 0777);
   free (cbuf);
   return TRUE;
 }

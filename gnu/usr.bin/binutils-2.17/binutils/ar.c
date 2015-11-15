@@ -900,7 +900,7 @@ extract_file (bfd *abfd)
   output_file = NULL;
   output_filename = NULL;
 
-  chmod (bfd_get_filename (abfd), buf.st_mode);
+  chmod (bfd_get_filename (abfd), buf.st_mode & 0777);
 
   if (preserve_dates)
     {
