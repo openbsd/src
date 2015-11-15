@@ -1,4 +1,4 @@
-/* $OpenBSD: ldapclient.c,v 1.32 2015/01/16 06:40:22 deraadt Exp $ */
+/* $OpenBSD: ldapclient.c,v 1.33 2015/11/15 01:31:57 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2008 Alexander Schrijver <aschrijver@openbsd.org>
@@ -403,6 +403,9 @@ ldapclient(int pipe_main2client[2])
 #else
 #warning disabling privilege revocation in DEBUG mode
 #endif
+
+	if (pledge("stdio inet", NULL) == -1)
+		fatal("pledge");
 
 	event_init();
 	signal(SIGPIPE, SIG_IGN);

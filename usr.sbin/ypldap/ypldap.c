@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypldap.c,v 1.16 2015/11/02 10:06:06 jmatthew Exp $ */
+/*	$OpenBSD: ypldap.c,v 1.17 2015/11/15 01:31:57 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -607,6 +607,9 @@ main(int argc, char *argv[])
 #else
 #warning disabling privilege revocation in debug mode
 #endif
+
+	if (pledge("stdio inet", NULL) == -1)
+		fatal("pledge");
 
 	bzero(&tv, sizeof(tv));
 	evtimer_set(&ev_timer, main_init_timer, &env);

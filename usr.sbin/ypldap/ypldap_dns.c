@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypldap_dns.c,v 1.8 2015/01/16 06:40:22 deraadt Exp $ */
+/*	$OpenBSD: ypldap_dns.c,v 1.9 2015/11/15 01:31:57 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2003-2008 Henning Brauer <henning@openbsd.org>
@@ -95,6 +95,9 @@ ypldap_dns(int pipe_ntp[2], struct passwd *pw)
 	    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
 		fatal("can't drop privileges");
 	endservent();
+
+	if (pledge("stdio dns", NULL) == -1)
+		fatal("pledge");
 
 	event_init();
 	signal_set(&ev_sigint, SIGINT, dns_sig_handler, NULL);
