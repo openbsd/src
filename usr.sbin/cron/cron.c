@@ -1,4 +1,4 @@
-/*	$OpenBSD: cron.c,v 1.72 2015/11/14 13:11:32 millert Exp $	*/
+/*	$OpenBSD: cron.c,v 1.73 2015/11/15 23:24:24 millert Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -24,6 +24,7 @@
 #include <sys/wait.h>
 
 #include <bitstring.h>
+#include <err.h>
 #include <errno.h>
 #include <grp.h>
 #include <locale.h>
@@ -100,6 +101,7 @@ main(int argc, char *argv[])
 
 	if (pledge("stdio rpath wpath cpath fattr getpw unix id dns proc exec",
 	    NULL) == -1) {
+		warn("pledge");
 		syslog(LOG_ERR, "(CRON) PLEDGE (%m)");
 		exit(EXIT_FAILURE);
 	}
@@ -107,6 +109,7 @@ main(int argc, char *argv[])
 	cronSock = open_socket();
 
 	if (putenv("PATH="_PATH_DEFPATH) < 0) {
+		warn("putenv");
 		syslog(LOG_ERR, "(CRON) DEATH (%m)");
 		exit(EXIT_FAILURE);
 	}
@@ -424,22 +427,21 @@ open_socket(void)
 
 	sock = socket(AF_UNIX, SOCK_STREAM|SOCK_CLOEXEC|SOCK_NONBLOCK, 0);
 	if (sock == -1) {
-		fprintf(stderr, "%s: can't create socket: %s\n",
-		    __progname, strerror(errno));
+		warn("socket");
 		syslog(LOG_ERR, "(CRON) DEATH (can't create socket)");
 		exit(EXIT_FAILURE);
 	}
 	bzero(&s_un, sizeof(s_un));
 	if (strlcpy(s_un.sun_path, _PATH_CRON_SOCK, sizeof(s_un.sun_path))
 	    >= sizeof(s_un.sun_path)) {
-		fprintf(stderr, "%s: path too long\n", _PATH_CRON_SOCK);
+		warnc(ENAMETOOLONG, _PATH_CRON_SOCK);
 		syslog(LOG_ERR, "(CRON) DEATH (socket path too long)");
 		exit(EXIT_FAILURE);
 	}
 	s_un.sun_family = AF_UNIX;
 
 	if (connect(sock, (struct sockaddr *)&s_un, sizeof(s_un)) == 0) {
-		fprintf(stderr, "%s: already running\n", __progname);
+		warnx("already running");
 		syslog(LOG_ERR, "(CRON) DEATH (already running)");
 		exit(EXIT_FAILURE);
 	}
@@ -450,14 +452,12 @@ open_socket(void)
 	rc = bind(sock, (struct sockaddr *)&s_un, sizeof(s_un));
 	umask(omask);
 	if (rc != 0) {
-		fprintf(stderr, "%s: can't bind socket: %s\n",
-		    __progname, strerror(errno));
+		warn("bind");
 		syslog(LOG_ERR, "(CRON) DEATH (can't bind socket)");
 		exit(EXIT_FAILURE);
 	}
 	if (listen(sock, SOMAXCONN)) {
-		fprintf(stderr, "%s: can't listen on socket: %s\n",
-		    __progname, strerror(errno));
+		warn("listen");
 		syslog(LOG_ERR, "(CRON) DEATH (can't listen on socket)");
 		exit(EXIT_FAILURE);
 	}
@@ -513,8 +513,7 @@ parse_args(int argc, char *argv[])
 			batch_maxload = strtod(optarg, &ep);
 			if (*ep != '\0' || ep == optarg || errno == ERANGE ||
 			    batch_maxload < 0) {
-				fprintf(stderr, "Illegal load average: %s\n",
-				    optarg);
+				warnx("illegal load average: %s", optarg);
 				usage();
 			}
 			break;

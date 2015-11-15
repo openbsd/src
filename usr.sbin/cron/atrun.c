@@ -1,4 +1,4 @@
-/*	$OpenBSD: atrun.c,v 1.40 2015/11/14 13:09:14 millert Exp $	*/
+/*	$OpenBSD: atrun.c,v 1.41 2015/11/15 23:24:24 millert Exp $	*/
 
 /*
  * Copyright (c) 2002-2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -29,6 +29,7 @@
 #include <bsd_auth.h>
 #include <ctype.h>
 #include <dirent.h>
+#include <err.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
@@ -226,6 +227,8 @@ run_job(atjob *job, char *atfile)
 {
 	struct stat sb;
 	struct passwd *pw;
+	login_cap_t *lc;
+	auth_session_t *as;
 	pid_t pid;
 	long nuid, ngid;
 	FILE *fp;
@@ -388,12 +391,9 @@ run_job(atjob *job, char *atfile)
 		/* Write log message now that we have our real pid. */
 		syslog(LOG_INFO, "(%s) ATJOB (%s)", pw->pw_name, atfile);
 
-		/* Close syslog file */
-		closelog();
-
 		/* Connect grandchild's stdin to the at job file. */
 		if (lseek(fd, 0, SEEK_SET) < 0) {
-			perror("lseek");
+			syslog(LOG_ERR, "(CRON) LSEEK (%m)");
 			_exit(EXIT_FAILURE);
 		}
 		if (fd != STDIN_FILENO) {
@@ -411,41 +411,50 @@ run_job(atjob *job, char *atfile)
 
 		(void) setsid();
 
-		{
-			login_cap_t *lc;
-			auth_session_t *as;
-			if ((lc = login_getclass(pw->pw_class)) == NULL) {
-				fprintf(stderr,
-				    "Cannot get login class for %s\n",
-				    pw->pw_name);
-				_exit(EXIT_FAILURE);
+		/*
+		 * From this point on, anything written to stderr will be
+		 * mailed to the user as output.
+		 */
 
-			}
+		/* Setup execution environment as per login.conf */
+		if ((lc = login_getclass(pw->pw_class)) == NULL) {
+			warnx("unable to get login class for %s",
+			    pw->pw_name);
+			syslog(LOG_ERR, "(CRON) CAN'T GET LOGIN CLASS (%s)",
+			    pw->pw_name);
+			_exit(EXIT_FAILURE);
 
-			if (setusercontext(lc, pw, pw->pw_uid, LOGIN_SETALL)) {
-				fprintf(stderr,
-				    "setusercontext failed for %s\n",
-				    pw->pw_name);
-				_exit(EXIT_FAILURE);
-			}
-			as = auth_open();
-			if (as == NULL || auth_setpwd(as, pw) != 0) {
-				fprintf(stderr, "can't malloc\n");
-				_exit(EXIT_FAILURE);
-			}
-			if (auth_approval(as, lc, pw->pw_name, "cron") <= 0) {
-				fprintf(stderr, "approval failed for %s\n",
-				    pw->pw_name);
-				_exit(EXIT_FAILURE);
-			}
-			auth_close(as);
-			login_close(lc);
+		}
+		if (setusercontext(lc, pw, pw->pw_uid, LOGIN_SETALL)) {
+			warn("setusercontext failed for %s", pw->pw_name);
+			syslog(LOG_ERR, "(%s) SETUSERCONTEXT FAILED (%m)",
+			    pw->pw_name);
+			_exit(EXIT_FAILURE);
 		}
 
-		/* If this is a low priority job, nice ourself. */
-		if (job->queue > 'b')
-			(void)setpriority(PRIO_PROCESS, 0, job->queue - 'b');
+		/* Run any approval scripts. */
+		as = auth_open();
+		if (as == NULL || auth_setpwd(as, pw) != 0) {
+			warn("auth_setpwd");
+			syslog(LOG_ERR, "(%s) AUTH_SETPWD FAILED (%m)",
+			    pw->pw_name);
+			_exit(EXIT_FAILURE);
+		}
+		if (auth_approval(as, lc, pw->pw_name, "cron") <= 0) {
+			warnx("approval failed for %s", pw->pw_name);
+			syslog(LOG_ERR, "(%s) APPROVAL FAILED (cron)",
+			    pw->pw_name);
+			_exit(EXIT_FAILURE);
+		}
+		auth_close(as);
+		login_close(lc);
 
+		/* If this is a low priority job, nice ourself. */
+		if (job->queue > 'b') {
+			if (setpriority(PRIO_PROCESS, 0, job->queue - 'b') != 0)
+				syslog(LOG_ERR, "(%s) CAN'T NICE (%m)",
+				    pw->pw_name);
+		}
 
 		(void) signal(SIGPIPE, SIG_DFL);
 
@@ -458,7 +467,9 @@ run_job(atjob *job, char *atfile)
 		nargv[1] = NULL;
 		nenvp[0] = NULL;
 		if (execve(_PATH_BSHELL, nargv, nenvp) != 0) {
-			perror("execve: " _PATH_BSHELL);
+			warn("unable to execute %s", _PATH_BSHELL);
+			syslog(LOG_ERR, "(%s) CAN'T EXEC (%s: %m)", pw->pw_name,
+			    _PATH_BSHELL);
 			_exit(EXIT_FAILURE);
 		}
 		break;
@@ -473,7 +484,7 @@ run_job(atjob *job, char *atfile)
 
 	/* Read piped output (if any) from the at job. */
 	if ((fp = fdopen(output_pipe[READ_PIPE], "r")) == NULL) {
-		perror("fdopen");
+		syslog(LOG_ERR, "(%s) FDOPEN (%m)", pw->pw_name);
 		(void) _exit(EXIT_FAILURE);
 	}
 	nread = fread(buf, 1, sizeof(buf), fp);
@@ -489,11 +500,12 @@ run_job(atjob *job, char *atfile)
 			strlcpy(hostname, "unknown", sizeof(hostname));
 		if (snprintf(mailcmd, sizeof mailcmd, MAILFMT,
 		    MAILARG) >= sizeof mailcmd) {
-			fprintf(stderr, "mailcmd too long\n");
+			syslog(LOG_ERR, "(%s) ERROR (mailcmd too long)",
+			    pw->pw_name);
 			(void) _exit(EXIT_FAILURE);
 		}
 		if (!(mail = cron_popen(mailcmd, "w", pw, &mailpid))) {
-			perror(mailcmd);
+			syslog(LOG_ERR, "(%s) POPEN (%s)", pw->pw_name, mailcmd);
 			(void) _exit(EXIT_FAILURE);
 		}
 		fprintf(mail, "From: %s (Atrun Service)\n", pw->pw_name);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: do_command.c,v 1.54 2015/11/14 13:09:14 millert Exp $	*/
+/*	$OpenBSD: do_command.c,v 1.55 2015/11/15 23:24:24 millert Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -23,6 +23,7 @@
 #include <bitstring.h>		/* for structs.h */
 #include <bsd_auth.h>
 #include <ctype.h>
+#include <err.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
@@ -76,8 +77,11 @@ child_process(entry *e, user *u)
 {
 	FILE *in;
 	int stdin_pipe[2], stdout_pipe[2];
-	char *input_data, *usernm;
+	char **p, *input_data, *usernm;
+	auth_session_t *as;
+	login_cap_t *lc;
 	int children = 0;
+	extern char **environ;
 
 	/* mark ourselves as different to PS command watchers */
 	setproctitle("running job");
@@ -156,10 +160,6 @@ child_process(entry *e, user *u)
 			}
 		}
 
-		/* that's the last thing we'll log.  close the log files.
-		 */
-		closelog();
-
 		/* get new pgrp, void tty, etc.
 		 */
 		(void) setsid();
@@ -186,51 +186,50 @@ child_process(entry *e, user *u)
 		}
 		dup2(STDOUT_FILENO, STDERR_FILENO);
 
-		/* set our directory, uid and gid.  Set gid first, since once
-		 * we set uid, we've lost root privileges.
+		/*
+		 * From this point on, anything written to stderr will be
+		 * mailed to the user as output.
 		 */
-		{
-			auth_session_t *as;
-			login_cap_t *lc;
-			char **p;
-			extern char **environ;
 
-			/* XXX - should just pass in a login_cap_t * */
-			if ((lc = login_getclass(e->pwd->pw_class)) == NULL) {
-				fprintf(stderr,
-				    "unable to get login class for %s\n",
-				    e->pwd->pw_name);
-				_exit(EXIT_FAILURE);
-			}
-			if (setusercontext(lc, e->pwd, e->pwd->pw_uid, LOGIN_SETALL) < 0) {
-				fprintf(stderr,
-				    "setusercontext failed for %s\n",
-				    e->pwd->pw_name);
-				_exit(EXIT_FAILURE);
-			}
-			as = auth_open();
-			if (as == NULL || auth_setpwd(as, e->pwd) != 0) {
-				fprintf(stderr, "can't malloc\n");
-				_exit(EXIT_FAILURE);
-			}
-			if (auth_approval(as, lc, usernm, "cron") <= 0) {
-				fprintf(stderr, "approval failed for %s\n",
-				    e->pwd->pw_name);
-				_exit(EXIT_FAILURE);
-			}
-			auth_close(as);
-			login_close(lc);
+		/* XXX - should just pass in a login_cap_t * */
+		if ((lc = login_getclass(e->pwd->pw_class)) == NULL) {
+			warnx("unable to get login class for %s",
+			    e->pwd->pw_name);
+			syslog(LOG_ERR, "(CRON) CAN'T GET LOGIN CLASS (%s)",
+			    e->pwd->pw_name);
+			_exit(EXIT_FAILURE);
+		}
+		if (setusercontext(lc, e->pwd, e->pwd->pw_uid, LOGIN_SETALL) < 0) {
+			warn("setusercontext failed for %s", e->pwd->pw_name);
+			syslog(LOG_ERR, "(%s) SETUSERCONTEXT FAILED (%m)",
+			    e->pwd->pw_name);
+			_exit(EXIT_FAILURE);
+		}
+		as = auth_open();
+		if (as == NULL || auth_setpwd(as, e->pwd) != 0) {
+			warn("auth_setpwd");
+			syslog(LOG_ERR, "(%s) AUTH_SETPWD FAILED (%m)",
+			    e->pwd->pw_name);
+			_exit(EXIT_FAILURE);
+		}
+		if (auth_approval(as, lc, usernm, "cron") <= 0) {
+			warnx("approval failed for %s", e->pwd->pw_name);
+			syslog(LOG_ERR, "(%s) APPROVAL FAILED (cron)",
+			    e->pwd->pw_name);
+			_exit(EXIT_FAILURE);
+		}
+		auth_close(as);
+		login_close(lc);
 
-			/* If no PATH specified in crontab file but
-			 * we just added one via login.conf, add it to
-			 * the crontab environment.
-			 */
-			if (env_get("PATH", e->envp) == NULL && environ != NULL) {
-				for (p = environ; *p; p++) {
-					if (strncmp(*p, "PATH=", 5) == 0) {
-						e->envp = env_set(e->envp, *p);
-						break;
-					}
+		/* If no PATH specified in crontab file but
+		 * we just added one via login.conf, add it to
+		 * the crontab environment.
+		 */
+		if (env_get("PATH", e->envp) == NULL && environ != NULL) {
+			for (p = environ; *p; p++) {
+				if (strncmp(*p, "PATH=", 5) == 0) {
+					e->envp = env_set(e->envp, *p);
+					break;
 				}
 			}
 		}
@@ -245,8 +244,9 @@ child_process(entry *e, user *u)
 			char	*shell = env_get("SHELL", e->envp);
 
 			execle(shell, shell, "-c", e->cmd, (char *)NULL, e->envp);
-			fprintf(stderr, "execle: couldn't exec `%s'\n", shell);
-			perror("execle");
+			warn("unable to execute %s", shell);
+			syslog(LOG_ERR, "(%s) CAN'T EXEC (%s: %m)",
+			    e->pwd->pw_name, shell);
 			_exit(EXIT_FAILURE);
 		}
 		break;
@@ -372,12 +372,15 @@ child_process(entry *e, user *u)
 				gethostname(hostname, sizeof(hostname));
 				if (snprintf(mailcmd, sizeof mailcmd,  MAILFMT,
 				    MAILARG) >= sizeof mailcmd) {
-					fprintf(stderr, "mailcmd too long\n");
+					syslog(LOG_ERR,
+					    "(%s) ERROR (mailcmd too long)",
+					    e->pwd->pw_name);
 					(void) _exit(EXIT_FAILURE);
 				}
 				if (!(mail = cron_popen(mailcmd, "w", e->pwd,
 				    &mailpid))) {
-					perror(mailcmd);
+					syslog(LOG_ERR, "(%s) POPEN (%s)",
+					    e->pwd->pw_name, mailcmd);
 					(void) _exit(EXIT_FAILURE);
 				}
 				fprintf(mail, "From: root (Cron Daemon)\n");

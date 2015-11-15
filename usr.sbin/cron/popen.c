@@ -1,4 +1,4 @@
-/*	$OpenBSD: popen.c,v 1.29 2015/11/04 20:28:17 millert Exp $	*/
+/*	$OpenBSD: popen.c,v 1.30 2015/11/15 23:24:24 millert Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -41,6 +41,7 @@
 #include <sys/wait.h>
 
 #include <bitstring.h>		/* for structs.h */
+#include <err.h>
 #include <errno.h>
 #include <login_cap.h>
 #include <pwd.h>
@@ -48,6 +49,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <syslog.h>
 #include <unistd.h>
 #include <time.h>		/* for structs.h */
 
@@ -91,8 +93,10 @@ cron_popen(char *program, char *type, struct passwd *pw, pid_t *pidptr)
 	case 0:				/* child */
 		if (pw) {
 			if (setusercontext(0, pw, pw->pw_uid, LOGIN_SETALL) < 0) {
-				fprintf(stderr,
-				    "setusercontext failed for %s\n",
+				syslog(LOG_ERR,
+				    "(%s) SETUSERCONTEXT FAILED (%m)",
+				    pw->pw_name);
+				warn("setusercontext failed for %s",
 				    pw->pw_name);
 				_exit(EXIT_FAILURE);
 			}
