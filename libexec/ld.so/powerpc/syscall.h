@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.h,v 1.37 2015/09/19 20:56:47 guenther Exp $ */
+/*	$OpenBSD: syscall.h,v 1.38 2015/11/15 03:41:24 deraadt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -52,6 +52,7 @@ int	_dl_munmap(const void *, size_t);
 int	_dl_open(const char *, int);
 ssize_t	_dl_read(int, const char *, size_t);
 ssize_t	_dl_readlink(const char *, char *, size_t);
+int	_dl_pledge(const char *, const char **);
 long	_dl__syscall(quad_t, ...);
 int	_dl_sysctl(const int *, u_int, void *, size_t *, void *, size_t);
 int	_dl_utrace(const char *, const void *, size_t);

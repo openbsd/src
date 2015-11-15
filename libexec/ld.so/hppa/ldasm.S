@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.17 2015/09/19 20:56:47 guenther Exp $	*/
+/*	$OpenBSD: ldasm.S,v 1.18 2015/11/15 03:41:24 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2004 Michael Shalayeff
@@ -277,5 +277,11 @@ ENTRY(_dl_sendsyslog,0)
 	bv	r0(rp)
 	nop
 EXIT(_dl_sendsyslog)
+
+ENTRY(_dl_pledge,0)
+	SYSCALL(pledge)
+	bv	r0(rp)
+	nop
+EXIT(_dl_pledge)
 
 	.end
