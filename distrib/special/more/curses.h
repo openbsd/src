@@ -78,7 +78,7 @@ extern char	 __unctrllen[256];	/* Control strings length. */
  * A line is an array of __LDATA structures pointed to by the 'line' pointer.
  *
  * IMPORTANT: the __LDATA structure must NOT induce any padding, so if new
- * fields are added -- padding fields with *constant values* should ensure 
+ * fields are added -- padding fields with *constant values* should ensure
  * that the compiler will not generate any padding when storing an array of
  *  __LDATA structures.  This is to enable consistent use of memcmp, and memcpy
  * for comparing and copying arrays.
@@ -86,7 +86,7 @@ extern char	 __unctrllen[256];	/* Control strings length. */
 typedef struct {
 	char ch;			/* the actual character */
 
-#define	__STANDOUT	0x01  		/* Added characters are standout. */
+#define	__STANDOUT	0x01		/* Added characters are standout. */
 	char attr;			/* attributes of character */
 } __LDATA;
 
@@ -121,7 +121,7 @@ typedef struct __window {		/* Window structure. */
 #define	__SCROLLOK	0x020		/* Scrolling ok. */
 #define	__CLEAROK	0x040		/* Clear on next refresh. */
 #define __WSTANDOUT	0x080		/* Standout window */
-#define __LEAVEOK	0x100		/* If curser left */	
+#define __LEAVEOK	0x100		/* If curser left */
 	unsigned int flags;
 } WINDOW;
 
@@ -247,7 +247,7 @@ int	 suspendwin(void);
 int	 touchline(WINDOW *, int, int, int);
 int	 touchoverlap(WINDOW *, WINDOW *);
 int	 touchwin(WINDOW *);
-int 	 vwprintw(WINDOW *, const char *, __va_list);
+int	 vwprintw(WINDOW *, const char *, __va_list);
 int      vwscanw(WINDOW *, const char *, __va_list);
 int	 waddch(WINDOW *, int);
 int	 waddnstr(WINDOW *, const char *, int);

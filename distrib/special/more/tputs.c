@@ -1,4 +1,4 @@
-/*	$OpenBSD: tputs.c,v 1.1 2015/11/14 23:43:26 deraadt Exp $	*/
+/*	$OpenBSD: tputs.c,v 1.2 2015/11/15 07:12:50 deraadt Exp $	*/
 /*	$NetBSD: tputs.c,v 1.5 1995/06/06 08:14:37 pk Exp $	*/
 
 /*
@@ -53,13 +53,9 @@ char	PC;
  * used to output one character is outc.
  */
 void
-tputs(cp, affcnt, outc)
-	register char *cp;
-	int affcnt;
-	void (*outc)(int);
+tputs(char *cp, int affcnt, void (*outc)(int))
 {
-	register int i = 0;
-	register int mspc10;
+	int i = 0, mspc10;
 
 	if (cp == 0)
 		return;
@@ -68,9 +64,9 @@ tputs(cp, affcnt, outc)
 	 * Convert the number representing the delay.
 	 */
 	if (isdigit(*cp)) {
-		do
+		do {
 			i = i * 10 + *cp++ - '0';
-		while (isdigit(*cp));
+		} while (isdigit(*cp));
 	}
 	i *= 10;
 	if (*cp == '.') {

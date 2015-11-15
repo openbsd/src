@@ -1,4 +1,4 @@
-/*	$OpenBSD: tgoto.c,v 1.1 2015/11/14 23:43:26 deraadt Exp $	*/
+/*	$OpenBSD: tgoto.c,v 1.2 2015/11/15 07:12:50 deraadt Exp $	*/
 /*	$NetBSD: tgoto.c,v 1.5 1995/06/05 19:45:54 pk Exp $	*/
 
 /*
@@ -65,17 +65,15 @@ char	*BC;
  * all other characters are ``self-inserting''.
  */
 char *
-tgoto(CM, destcol, destline)
-	char *CM;
-	int destcol, destline;
+tgoto(char *CM, int destcol, int destline)
 {
 	static char result[MAXRETURNSIZE];
 	static char added[10];
 	char *cp = CM;
-	register char *dp = result;
-	register int c;
+	char *dp = result;
+	int c;
 	int oncol = 0;
-	register int which = destline;
+	int which = destline;
 
 	if (cp == 0) {
 toohard:
@@ -116,7 +114,7 @@ toohard:
 			/* fall into... */
 
 		case '2':
-two:	
+two:
 			if (dp >= &result[MAXRETURNSIZE])
 				goto toohard;
 			*dp++ = which / 10 | '0';

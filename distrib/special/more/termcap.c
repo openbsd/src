@@ -1,4 +1,4 @@
-/*	$OpenBSD: termcap.c,v 1.1 2015/11/14 23:43:26 deraadt Exp $	*/
+/*	$OpenBSD: termcap.c,v 1.2 2015/11/15 07:12:50 deraadt Exp $	*/
 /*	$NetBSD: termcap.c,v 1.7 1995/06/05 19:45:52 pk Exp $	*/
 
 /*
@@ -62,14 +62,9 @@ static	char *tbuf;	/* termcap buffer */
  * Get an entry for terminal name in buffer bp from the termcap file.
  */
 int
-tgetent(bp, name)
-	char *bp, *name;
+tgetent(char *bp, char *name)
 {
-	register char *p;
-	register char *cp;
-	char  *dummy;
-	char **fname;
-	char  *home;
+	char *p, *cp, *dummy, **fname, *home;
 	int    i;
 	char   pathbuf[PATH_MAX];	/* holds raw path of filenames */
 	char  *pathvec[PVECSIZ];	/* to point to names in pathbuf */
@@ -129,7 +124,7 @@ tgetent(bp, name)
 
 	dummy = NULL;
 	i = cgetent(&dummy, pathvec, name);
-	
+
 	if (i == 0 && bp != NULL) {
 		strlcpy(bp, dummy, 1024);
 		if ((cp = strrchr(bp, ':')) != NULL)
@@ -156,8 +151,7 @@ tgetent(bp, name)
  * Note that we handle octal numbers beginning with 0.
  */
 int
-tgetnum(id)
-	char *id;
+tgetnum(char *id)
 {
 	long num;
 
@@ -174,8 +168,7 @@ tgetnum(id)
  * not given.
  */
 int
-tgetflag(id)
-	char *id;
+tgetflag(char *id)
 {
 	return (cgetcap(tbuf, id, ':') != NULL);
 }
@@ -189,13 +182,12 @@ tgetflag(id)
  * No checking on area overflow.
  */
 char *
-tgetstr(id, area)
-	char *id, **area;
+tgetstr(char *id, char **area)
 {
 	char ids[3];
 	char *s;
 	int i;
-	
+
 	/*
 	 * XXX
 	 * This is for all the boneheaded programs that relied on tgetstr
@@ -207,7 +199,7 @@ tgetstr(id, area)
 
 	if ((i = cgetstr(tbuf, ids, &s)) < 0)
 		return NULL;
-	
+
 	strlcpy(*area, s, 1024);
 	*area += i + 1;
 	return (s);
