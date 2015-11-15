@@ -1,5 +1,5 @@
 '\" t
-.\" $OpenBSD: menu_hook.3,v 1.7 2010/01/12 23:22:08 nicm Exp $
+.\" $OpenBSD: menu_hook.3,v 1.8 2015/11/15 22:10:16 jmc Exp $
 .\"
 .\"***************************************************************************
 .\" Copyright (c) 1998-2006,2007 Free Software Foundation, Inc.              *
@@ -29,10 +29,14 @@
 .\" authorization.                                                           *
 .\"***************************************************************************
 .\"
-.\" $Id: menu_hook.3,v 1.7 2010/01/12 23:22:08 nicm Exp $
+.\" $Id: menu_hook.3,v 1.8 2015/11/15 22:10:16 jmc Exp $
 .TH menu_hook 3 ""
 .SH NAME
-\fBmenu_hook\fR - set hooks for automatic invocation by applications
+\fBset_item_init\fR, \fBitem_init\fR,
+\fBset_item_term\fR, \fBitem_term\fR,
+\fBset_menu_init\fR, \fBmenu_init\fR,
+\fBset_menu_term\fR, \fBmenu_term\fR
+- set hooks for automatic invocation by applications
 .SH SYNOPSIS
 \fB#include <menu.h>\fR
 .br
