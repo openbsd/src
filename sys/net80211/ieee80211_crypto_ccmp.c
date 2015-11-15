@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_crypto_ccmp.c,v 1.16 2015/07/15 22:16:42 deraadt Exp $	*/
+/*	$OpenBSD: ieee80211_crypto_ccmp.c,v 1.17 2015/11/15 01:43:21 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -88,17 +88,18 @@ ieee80211_ccmp_phase1(rijndael_ctx *ctx, const struct ieee80211_frame *wh,
 	/* construct AAD (additional authenticated data) */
 	aad = &auth[2];	/* skip l(a), will be filled later */
 	*aad = wh->i_fc[0];
-	/* 11w: conditionnally mask subtype field */
+	/* 11w: conditionally mask subtype field */
 	if ((wh->i_fc[0] & IEEE80211_FC0_TYPE_MASK) ==
 	    IEEE80211_FC0_TYPE_DATA)
-		*aad &= ~IEEE80211_FC0_SUBTYPE_MASK;
+		*aad &= ~IEEE80211_FC0_SUBTYPE_MASK |
+		   IEEE80211_FC0_SUBTYPE_QOS;
 	aad++;
 	/* protected bit is already set in wh */
 	*aad = wh->i_fc[1];
 	*aad &= ~(IEEE80211_FC1_RETRY | IEEE80211_FC1_PWR_MGT |
 	    IEEE80211_FC1_MORE_DATA);
-	/* 11n: conditionnally mask order bit */
-	if (ieee80211_has_htc(wh))
+	/* 11n: conditionally mask order bit */
+	if (ieee80211_has_qos(wh))
 		*aad &= ~IEEE80211_FC1_ORDER;
 	aad++;
 	IEEE80211_ADDR_COPY(aad, wh->i_addr1); aad += IEEE80211_ADDR_LEN;
@@ -112,6 +113,10 @@ ieee80211_ccmp_phase1(rijndael_ctx *ctx, const struct ieee80211_frame *wh,
 		aad += IEEE80211_ADDR_LEN;
 	}
 	if (ieee80211_has_qos(wh)) {
+		/* 
+		 * XXX 802.11-2012 11.4.3.3.3 g says the A-MSDU present bit
+		 * must be set here if both STAs are SPP A-MSDU capable.
+		 */
 		*aad++ = tid = ieee80211_get_qos(wh) & IEEE80211_QOS_TID;
 		*aad++ = 0;
 	}
