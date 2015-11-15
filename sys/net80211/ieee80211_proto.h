@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_proto.h,v 1.39 2009/11/21 18:09:31 damien Exp $	*/
+/*	$OpenBSD: ieee80211_proto.h,v 1.40 2015/11/15 11:14:17 stsp Exp $	*/
 /*	$NetBSD: ieee80211_proto.h,v 1.3 2003/10/13 04:23:56 dyoung Exp $	*/
 
 /*-
@@ -154,6 +154,8 @@ extern	void ieee80211_sa_query_timeout(void *);
 extern	void ieee80211_sa_query_request(struct ieee80211com *,
 	    struct ieee80211_node *);
 #ifndef IEEE80211_NO_HT
+extern	void ieee80211_ht_negotiate(struct ieee80211com *,
+    struct ieee80211_node *);
 extern	void ieee80211_tx_ba_timeout(void *);
 extern	void ieee80211_rx_ba_timeout(void *);
 extern	int ieee80211_addba_request(struct ieee80211com *,

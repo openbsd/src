@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.141 2015/11/15 10:07:03 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.142 2015/11/15 11:14:17 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -2212,6 +2212,32 @@ ieee80211_recv_assoc_resp(struct ieee80211com *ic, struct mbuf *m,
 		else	/* for Reassociation */
 			ni->ni_flags &= ~IEEE80211_NODE_QOS;
 	}
+#ifndef IEEE80211_NO_HT
+	if (htcaps)
+		ieee80211_setup_htcaps(ni, htcaps + 2, htcaps[1]);
+	if (htop)
+		ieee80211_setup_htop(ni, htop + 2, htop[1]);
+	ieee80211_ht_negotiate(ic, ni);
+
+	/* Hop into 11n mode after associating to an HT AP in a non-11n mode. */
+	if (ic->ic_curmode != IEEE80211_MODE_AUTO &&
+	    ic->ic_curmode != IEEE80211_MODE_11N &&
+	    (ni->ni_flags & IEEE80211_NODE_HT))
+		ieee80211_setmode(ic, IEEE80211_MODE_11N);
+
+	/* Hop out of 11n mode after associating to a non-HT AP. */
+	if (ic->ic_curmode == IEEE80211_MODE_11N &&
+	    (ni->ni_flags & IEEE80211_NODE_HT) == 0) {
+		if (IEEE80211_IS_CHAN_T(ni->ni_chan))
+			ieee80211_setmode(ic, IEEE80211_MODE_TURBO);
+		else if (IEEE80211_IS_CHAN_A(ni->ni_chan))
+			ieee80211_setmode(ic, IEEE80211_MODE_11A);
+		else if (IEEE80211_IS_CHAN_G(ni->ni_chan))
+			ieee80211_setmode(ic, IEEE80211_MODE_11G);
+		else
+			ieee80211_setmode(ic, IEEE80211_MODE_11B);
+	}
+#endif
 	/*
 	 * Configure state now that we are associated.
 	 */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.90 2015/11/15 10:07:03 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.91 2015/11/15 11:14:17 stsp Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -1525,6 +1525,7 @@ ieee80211_node_join(struct ieee80211com *ic, struct ieee80211_node *ni,
 		ieee80211_node_join_rsn(ic, ni);
 
 #ifndef IEEE80211_NO_HT
+	ieee80211_ht_negotiate(ic, ni);
 	if (ni->ni_flags & IEEE80211_NODE_HT)
 		ieee80211_node_join_ht(ic, ni);
 #endif

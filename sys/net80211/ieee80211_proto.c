@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_proto.c,v 1.53 2015/11/04 12:12:00 dlg Exp $	*/
+/*	$OpenBSD: ieee80211_proto.c,v 1.54 2015/11/15 11:14:17 stsp Exp $	*/
 /*	$NetBSD: ieee80211_proto.c,v 1.8 2004/04/30 23:58:20 dyoung Exp $	*/
 
 /*-
@@ -545,6 +545,48 @@ ieee80211_sa_query_request(struct ieee80211com *ic, struct ieee80211_node *ni)
 #endif	/* IEEE80211_STA_ONLY */
 
 #ifndef IEEE80211_NO_HT
+void
+ieee80211_ht_negotiate(struct ieee80211com *ic, struct ieee80211_node *ni)
+{
+	int i;
+
+	ni->ni_flags &= ~IEEE80211_NODE_HT; 
+
+	/* Check if we support HT. */
+	if ((ic->ic_modecaps & (1 << IEEE80211_MODE_11N)) == 0)
+		return;
+
+	/* Check if HT support has been explicitly disabled. */
+	if ((ic->ic_flags & IEEE80211_F_HTON) == 0)
+		return;
+
+	/* Check if the peer supports HT. MCS 0-7 are mandatory. */
+	if (ni->ni_rxmcs[0] != 0xff)
+		return;
+
+	if (ic->ic_opmode == IEEE80211_M_STA) {
+		/* We must support the AP's basic MCS set. */
+		for (i = 0; i < IEEE80211_HT_NUM_MCS; i++) {
+			if (isset(ni->ni_basic_mcs, i) &&
+			    !isset(ic->ic_sup_mcs, i))
+				return;
+		}
+	}
+
+	/* 
+	 * Don't allow group cipher (includes WEP) or TKIP
+	 * for pairwise encryption (see 802.11-2012 11.1.6).
+	 */
+	if (ic->ic_flags & IEEE80211_F_WEPON)
+		return;
+	if ((ic->ic_flags & IEEE80211_F_RSNON) &&
+	    (ni->ni_rsnciphers & IEEE80211_CIPHER_USEGROUP ||
+	    ni->ni_rsnciphers & IEEE80211_CIPHER_TKIP))
+		return;
+
+	ni->ni_flags |= IEEE80211_NODE_HT; 
+}
+
 void
 ieee80211_tx_ba_timeout(void *arg)
 {
