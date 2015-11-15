@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_amrr.c,v 1.8 2014/12/23 03:24:08 tedu Exp $	*/
+/*	$OpenBSD: ieee80211_amrr.c,v 1.9 2015/11/15 13:20:16 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -38,16 +38,57 @@
 	((amn)->amn_retrycnt > (amn)->amn_txcnt / 3)
 #define is_enough(amn)		\
 	((amn)->amn_txcnt > 10)
-#define is_min_rate(ni)		\
-	((ni)->ni_txrate == 0)
-#define is_max_rate(ni)		\
-	((ni)->ni_txrate == (ni)->ni_rates.rs_nrates - 1)
-#define increase_rate(ni)	\
-	((ni)->ni_txrate++)
-#define decrease_rate(ni)	\
-	((ni)->ni_txrate--)
 #define reset_cnt(amn)		\
 	do { (amn)->amn_txcnt = (amn)->amn_retrycnt = 0; } while (0)
+
+/* 
+ * XXX In HT mode we only support MCS 0-7, for now.
+ * Beyond MCS 7, incrementing the MCS index does not imply a
+ * higher data rate, so this simple implementation will need
+ * to be enhanced.
+ */
+
+static inline int
+is_min_rate(struct ieee80211_node *ni)
+{
+#ifndef IEEE80211_NO_HT
+	if (ni->ni_flags & IEEE80211_NODE_HT)
+		return (ni->ni_txmcs == 0);
+#endif
+	return (ni->ni_txrate == 0);
+}
+
+static inline int
+is_max_rate(struct ieee80211_node *ni)
+{
+#ifndef IEEE80211_NO_HT
+	if (ni->ni_flags & IEEE80211_NODE_HT)
+		return (ni->ni_txmcs == 7); /* XXX up to MCS 7 only */
+#endif
+	return (ni->ni_txrate == ni->ni_rates.rs_nrates - 1);
+}
+
+static inline void
+increase_rate(struct ieee80211_node *ni)
+{
+#ifndef IEEE80211_NO_HT
+	if (ni->ni_flags & IEEE80211_NODE_HT)
+		ni->ni_txmcs++;
+	else
+#endif
+		ni->ni_txrate++;
+}
+
+static inline void
+decrease_rate(struct ieee80211_node *ni)
+{
+#ifndef IEEE80211_NO_HT
+	if (ni->ni_flags & IEEE80211_NODE_HT)
+		ni->ni_txmcs--;
+	else
+#endif
+		ni->ni_txrate--;
+}
 
 void
 ieee80211_amrr_node_init(const struct ieee80211_amrr *amrr,
