@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_var.h,v 1.65 2015/11/04 12:12:00 dlg Exp $	*/
+/*	$OpenBSD: ieee80211_var.h,v 1.66 2015/11/15 01:05:25 stsp Exp $	*/
 /*	$NetBSD: ieee80211_var.h,v 1.7 2004/05/06 03:07:10 dyoung Exp $	*/
 
 /*-
@@ -72,9 +72,10 @@ enum ieee80211_phymode {
 	IEEE80211_MODE_11A	= 1,	/* 5GHz, OFDM */
 	IEEE80211_MODE_11B	= 2,	/* 2GHz, CCK */
 	IEEE80211_MODE_11G	= 3,	/* 2GHz, OFDM */
-	IEEE80211_MODE_TURBO	= 4	/* 5GHz, OFDM, 2x clock */
+	IEEE80211_MODE_TURBO	= 4,	/* 5GHz, OFDM, 2x clock */
+	IEEE80211_MODE_11N	= 5,	/* 11n, 2GHz/5GHz */
 };
-#define	IEEE80211_MODE_MAX	(IEEE80211_MODE_TURBO+1)
+#define	IEEE80211_MODE_MAX	(IEEE80211_MODE_11N+1)
 
 enum ieee80211_opmode {
 	IEEE80211_M_STA		= 1,	/* infrastructure station */
@@ -114,6 +115,7 @@ struct ieee80211_channel {
 #define IEEE80211_CHAN_PASSIVE	0x0200	/* Only passive scan allowed */
 #define IEEE80211_CHAN_DYN	0x0400	/* Dynamic CCK-OFDM channel */
 #define IEEE80211_CHAN_XR	0x1000	/* Extended range OFDM channel */
+#define IEEE80211_CHAN_HT	0x2000	/* 11n/HT channel */
 
 /*
  * Useful combinations of channel characteristics.
@@ -143,6 +145,8 @@ struct ieee80211_channel {
 	(((_c)->ic_flags & IEEE80211_CHAN_T) == IEEE80211_CHAN_T)
 #define	IEEE80211_IS_CHAN_TG(_c) \
 	(((_c)->ic_flags & IEEE80211_CHAN_TG) == IEEE80211_CHAN_TG)
+#define	IEEE80211_IS_CHAN_N(_c) \
+	(((_c)->ic_flags & IEEE80211_CHAN_HT) == IEEE80211_CHAN_HT)
 
 #define	IEEE80211_IS_CHAN_2GHZ(_c) \
 	(((_c)->ic_flags & IEEE80211_CHAN_2GHZ) != 0)
@@ -313,12 +317,17 @@ struct ieee80211com {
 	u_int			ic_dtim_period;
 	u_int			ic_dtim_count;
 
+#ifndef IEEE80211_NO_HT
 	u_int32_t		ic_txbfcaps;
 	u_int16_t		ic_htcaps;
+	u_int8_t		ic_sup_mcs[howmany(80, NBBY)];
+	u_int16_t		ic_max_rxrate;	/* in Mb/s, 0 <= rate <= 1023 */
+	u_int8_t		ic_tx_mcs_set;
 	u_int16_t		ic_htxcaps;
 	u_int8_t		ic_aselcaps;
-	u_int8_t		ic_sup_mcs[16];
 	u_int8_t		ic_dialog_token;
+	int			ic_fixed_mcs;
+#endif
 
 	LIST_HEAD(, ieee80211_vap) ic_vaps;
 };

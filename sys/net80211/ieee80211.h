@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211.h,v 1.53 2015/10/10 07:51:47 stsp Exp $	*/
+/*	$OpenBSD: ieee80211.h,v 1.54 2015/11/15 01:05:25 stsp Exp $	*/
 /*	$NetBSD: ieee80211.h,v 1.6 2004/04/30 23:51:53 dyoung Exp $	*/
 
 /*-
@@ -504,6 +504,8 @@ enum {
 #define	IEEE80211_RATE_SIZE			8	/* 802.11 standard */
 #define	IEEE80211_RATE_MAXSIZE			15	/* max rates we'll handle */
 
+#define	IEEE80211_HT_NUM_MCS			77
+
 /*
  * BlockAck/BlockAckReq Control field (see 802.11-2012 8.3.1.9 Figure 8-25).
  */
@@ -576,11 +578,13 @@ enum {
  */
 #define IEEE80211_AMPDU_PARAM_LE	0x03
 #define IEEE80211_AMPDU_PARAM_SS	0x1c
+/* bits 5-7 reserved */
 
 /*
  * HT Supported MCS Set (see 802.11-2012 8.4.2.58.4).
  * This field is 16 bytes in size. Bitmasks given below
- * operate on 8 or 16 bit integer subsets of this field.
+ * operate on 8 or 16 bit integer subsets of this field
+ * for use with ieee80211com and ieee80211_node.
  */
 /* Bits 0-76: Supported Rx MCS bitmask */
 /* Bits 77-79: Reserved */
@@ -661,6 +665,7 @@ enum {
 /*
  * HT Operation element (see 802.11-2012 8.4.2.59).
  */
+/* Byte 0 contains primary channel number. */
 /* Byte 1. */
 #define IEEE80211_HTOP0_SCO_MASK	0x03
 #define IEEE80211_HTOP0_SCO_SHIFT	0
@@ -987,6 +992,16 @@ enum {
 	IEEE80211_KDE_LIFETIME	= 7,
 	IEEE80211_KDE_ERROR	= 8,
 	IEEE80211_KDE_IGTK	= 9	/* 11w */
+};
+
+/*
+ * HT protection modes (see 802.11-2012 8.4.2.59)
+ */
+enum ieee80211_htprot {
+	IEEE80211_HTPROT_NONE = 0,
+	IEEE80211_HTPROT_NONMEMBER,
+	IEEE80211_HTPROT_20MHZ,
+	IEEE80211_HTPROT_NONHT_MIXED,
 };
 
 #endif /* _NET80211_IEEE80211_H_ */

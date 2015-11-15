@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211.c,v 1.47 2015/10/17 21:30:29 stsp Exp $	*/
+/*	$OpenBSD: ieee80211.c,v 1.48 2015/11/15 01:05:25 stsp Exp $	*/
 /*	$NetBSD: ieee80211.c,v 1.19 2004/06/06 05:45:29 dyoung Exp $	*/
 
 /*-
@@ -877,6 +877,10 @@ ieee80211_rate2media(struct ieee80211com *ic, int rate,
 		/* FALLTHROUGH */
 	case IEEE80211_MODE_11G:
 		mask |= IFM_IEEE80211_11G;
+		break;
+	case IEEE80211_MODE_11N:
+		/* 11n uses MCS, not rates. */
+		panic("unexpected mode %d", mode);
 		break;
 	}
 	for (i = 0; i < nitems(rates); i++)

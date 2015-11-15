@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rsu.c,v 1.28 2015/10/25 12:11:56 mpi Exp $	*/
+/*	$OpenBSD: if_rsu.c,v 1.29 2015/11/15 01:05:25 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -1982,7 +1982,9 @@ rsu_fw_loadsection(struct rsu_softc *sc, uint8_t *buf, int len)
 int
 rsu_load_firmware(struct rsu_softc *sc)
 {
+#ifndef IEEE80211_NO_HT
 	struct ieee80211com *ic = &sc->sc_ic;
+#endif
 	struct r92s_fw_hdr *hdr;
 	struct r92s_fw_priv *dmem;
 	uint8_t *imem, *emem;
@@ -2113,7 +2115,9 @@ rsu_load_firmware(struct rsu_softc *sc)
 	dmem->rf_config = 0x12;	/* 1T2R */
 	dmem->vcs_type = R92S_VCS_TYPE_AUTO;
 	dmem->vcs_mode = R92S_VCS_MODE_RTS_CTS;
+#ifndef IEEE80211_NO_HT
 	dmem->bw40_en = (ic->ic_htcaps & IEEE80211_HTCAP_CBW20_40) != 0;
+#endif
 	dmem->turbo_mode = 1;
 	/* Load DMEM section. */
 	error = rsu_fw_loadsection(sc, (uint8_t *)dmem, sizeof(*dmem));
@@ -2254,6 +2258,7 @@ rsu_init(struct ifnet *ifp)
 		goto fail;
 	}
 
+#ifndef IEEE80211_NO_HT
 	if (ic->ic_htcaps & IEEE80211_HTCAP_CBW20_40) {
 		/* Enable 40MHz mode. */
 		error = rsu_fw_iocmd(sc,
@@ -2266,7 +2271,7 @@ rsu_init(struct ifnet *ifp)
 			goto fail;
 		}
 	}
-
+#endif
 	/* Set default channel. */
 	ic->ic_bss->ni_chan = ic->ic_ibss_chan;
 

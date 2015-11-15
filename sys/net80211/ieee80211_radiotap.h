@@ -1,4 +1,4 @@
-/* $OpenBSD: ieee80211_radiotap.h,v 1.11 2010/07/17 16:25:09 damien Exp $ */
+/* $OpenBSD: ieee80211_radiotap.h,v 1.12 2015/11/15 01:05:25 stsp Exp $ */
 /* $FreeBSD: src/sys/net80211/ieee80211_radiotap.h,v 1.3 2004/04/05 22:13:21 sam Exp $ */
 /* $NetBSD: ieee80211_radiotap.h,v 1.9 2004/06/06 04:13:28 dyoung Exp $ */
 
@@ -196,6 +196,7 @@ enum ieee80211_radiotap_type {
 #define IEEE80211_CHAN_DYN	0x0400	/* Dynamic CCK-OFDM channel */
 #define IEEE80211_CHAN_GFSK	0x0800	/* GFSK channel (FHSS PHY) */
 #define IEEE80211_CHAN_XR	0x1000	/* Extended range OFDM channel */
+#define IEEE80211_CHAN_HT	0x2000	/* 11n/HT channel */
 #endif	/* !_KERNEL */
 
 /* For IEEE80211_RADIOTAP_FLAGS */

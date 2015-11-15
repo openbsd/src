@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_ioctl.h,v 1.21 2015/01/09 20:34:21 sthen Exp $	*/
+/*	$OpenBSD: ieee80211_ioctl.h,v 1.22 2015/11/15 01:05:25 stsp Exp $	*/
 /*	$NetBSD: ieee80211_ioctl.h,v 1.7 2004/04/30 22:51:04 dyoung Exp $	*/
 
 /*-
@@ -175,6 +175,7 @@ struct ieee80211_channel {
 #define IEEE80211_CHAN_PASSIVE	0x0200	/* Only passive scan allowed */
 #define IEEE80211_CHAN_DYN	0x0400	/* Dynamic CCK-OFDM channel */
 #define IEEE80211_CHAN_XR	0x1000	/* Extended range OFDM channel */
+#define IEEE80211_CHAN_HT	0x2000	/* 11n/HT channel */
 #endif	/* !_KERNEL */
 
 struct ieee80211_chanreq_all {
