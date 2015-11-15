@@ -1,5 +1,5 @@
 /*
- *	$OpenBSD: locate.code.c,v 1.18 2015/01/16 06:40:09 deraadt Exp $
+ *	$OpenBSD: locate.code.c,v 1.19 2015/11/15 07:38:29 deraadt Exp $
  *
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -31,7 +31,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * 	$Id: locate.code.c,v 1.18 2015/01/16 06:40:09 deraadt Exp $
+ * 	$Id: locate.code.c,v 1.19 2015/11/15 07:38:29 deraadt Exp $
  */
 
 /*
@@ -119,6 +119,9 @@ main(int argc, char *argv[])
 	FILE *fp;
 	int i, j;
 
+	if (pledge("stdio rpath", NULL) == -1)
+		err(1, "pledge");
+
 	while ((ch = getopt(argc, argv, "")) != -1)
 		switch (ch) {
 		default:
@@ -132,6 +135,9 @@ main(int argc, char *argv[])
 
 	if ((fp = fopen(argv[0], "r")) == NULL)
 		err(1, "%s", argv[0]);
+
+	if (pledge("stdio", NULL) == -1)
+		err(1, "pledge");
 
 	/* First copy bigram array to stdout. */
 	if (fgets(bigrams, sizeof(bigrams), fp) == NULL)
