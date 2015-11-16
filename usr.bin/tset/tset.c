@@ -1,4 +1,4 @@
-/*	$OpenBSD: tset.c,v 1.38 2015/11/15 14:14:20 deraadt Exp $	*/
+/*	$OpenBSD: tset.c,v 1.39 2015/11/16 03:02:40 deraadt Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998-2007,2008 Free Software Foundation, Inc.              *
@@ -1135,6 +1135,9 @@ main(int argc, char **argv)
     int ch, noinit, noset, quiet, Sflag, sflag, showterm;
     const char *p;
     const char *ttype;
+
+    if (pledge("stdio rpath wpath tty", NULL) == -1)
+	err("pledge: %s", strerror(errno));
 
     obsolete(argv);
     noinit = noset = quiet = Sflag = sflag = showterm = 0;
