@@ -1,4 +1,4 @@
-/*	$OpenBSD: pvbus.c,v 1.7 2015/11/13 22:41:34 deraadt Exp $	*/
+/*	$OpenBSD: pvbus.c,v 1.8 2015/11/16 10:16:07 dlg Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -129,7 +129,8 @@ pvbus_attach(struct device *parent, struct device *self, void *aux)
 		}
 
 		for (i = 0; i < PVBUS_MAX; i++) {
-			if (memcmp(pvbus_types[i].signature, r.str,
+			if (pvbus_types[i].signature == NULL ||
+			    memcmp(pvbus_types[i].signature, r.str,
 			    CPUID_HV_SIGNATURE_STRLEN) != 0)
 				continue;
 			hv = &sc->pvbus_hv[i];
