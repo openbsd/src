@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.40 2015/11/06 16:42:30 tedu Exp $	*/
+/*	$OpenBSD: main.c,v 1.41 2015/11/16 18:37:30 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -168,6 +168,13 @@ main(int argc, char *argv[])
 	limit.rlim_cur = GETTY_TIMEOUT;
 	(void)setrlimit(RLIMIT_CPU, &limit);
 
+	ioctl(0, FIOASYNC, &off);	/* turn off async mode */
+
+	if (pledge("stdio rpath wpath fattr proc exec tty", NULL) == -1) {
+		syslog(LOG_ERR, "pledge: %m");
+		exit(1);
+	}
+
 	/*
 	 * The following is a work around for vhangup interactions
 	 * which cause great problems getting window systems started.
@@ -210,9 +217,8 @@ main(int argc, char *argv[])
 			login_tty(i);
 		}
 	}
-	ioctl(0, FIOASYNC, &off);	/* turn off async mode */
 
-	if (pledge("stdio rpath fattr proc exec tty", NULL) == -1) {
+	if (pledge("stdio rpath proc exec tty", NULL) == -1) {
 		syslog(LOG_ERR, "pledge: %m");
 		exit(1);
 	}
