@@ -1,4 +1,4 @@
-.\" $OpenBSD: pledge.2,v 1.13 2015/11/06 06:46:52 mmcc Exp $
+.\" $OpenBSD: pledge.2,v 1.14 2015/11/16 18:29:34 deraadt Exp $
 .\"
 .\" Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 6 2015 $
+.Dd $Mdocdate: November 16 2015 $
 .Dt PLEDGE 2
 .Os
 .Sh NAME
@@ -405,6 +405,13 @@ used by tty devices:
 .Dv TIOCSETAW
 and
 .Dv TIOCSETAF .
+.Pp
+If
+.Va "tty"
+is accompanied with
+.Va "rpath",
+.Xr revoke 2
+is permitted.
 .It Va "proc"
 Allows the following process relationship operations:
 .Pp

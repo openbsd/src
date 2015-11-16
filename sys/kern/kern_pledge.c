@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.110 2015/11/16 17:41:45 pascal Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.111 2015/11/16 18:29:35 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -266,6 +266,8 @@ const u_int pledge_syscalls[SYS_MAXSYSCALL] = {
 	[SYS_mkdirat] = PLEDGE_CPATH,
 
 	[SYS_chroot] = PLEDGE_ID,	/* also requires PLEDGE_PROC */
+
+	[SYS_revoke] = PLEDGE_TTY,	/* also requires PLEDGE_RPATH */
 
 	/*
 	 * Classify as RPATH|WPATH, because of path information leakage.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.241 2015/11/16 18:25:18 deraadt Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.242 2015/11/16 18:29:35 deraadt Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -2825,6 +2825,7 @@ sys_revoke(struct proc *p, void *v, register_t *retval)
 	struct nameidata nd;
 
 	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path), p);
+	nd.ni_pledge = PLEDGE_RPATH | PLEDGE_TTY;
 	if ((error = namei(&nd)) != 0)
 		return (error);
 	vp = nd.ni_vp;
