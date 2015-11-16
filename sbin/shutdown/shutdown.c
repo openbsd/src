@@ -1,4 +1,4 @@
-/*	$OpenBSD: shutdown.c,v 1.43 2015/04/23 02:13:18 deraadt Exp $	*/
+/*	$OpenBSD: shutdown.c,v 1.44 2015/11/16 18:35:31 deraadt Exp $	*/
 /*	$NetBSD: shutdown.c,v 1.9 1995/03/18 15:01:09 cgd Exp $	*/
 
 /*
@@ -107,6 +107,9 @@ main(int argc, char *argv[])
 	struct passwd *pw;
 	char *p, *endp;
 	pid_t forkpid;
+
+	if (pledge("stdio rpath wpath cpath getpw tty id proc exec", NULL) == -1)
+		err(1, "pledge");
 
 #ifndef DEBUG
 	if (geteuid())
@@ -343,6 +346,10 @@ die_you_gravy_sucking_pig_dog(void)
 	}
 	if (dofast)
 		doitfast();
+
+	if (pledge("stdio rpath wpath cpath tty id proc exec", NULL) == -1)
+		err(1, "pledge");
+
 #ifdef DEBUG
 	if (doreboot)
 		(void)printf("reboot");
@@ -361,6 +368,9 @@ die_you_gravy_sucking_pig_dog(void)
 	if (dohalt || dopower || doreboot) {
 		char *args[10];
 		char **arg, *path;
+
+		if (pledge("stdio exec", NULL) == -1)
+			err(1, "pledge");
 
 		arg = &args[0];
 		if (doreboot) {
