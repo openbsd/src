@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.210 2015/10/25 23:10:53 millert Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.211 2015/11/16 17:31:14 tedu Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -172,9 +172,7 @@ int epsvall = 0;
 int	swaitmax = SWAITMAX;
 int	swaitint = SWAITINT;
 
-#ifdef HASSETPROCTITLE
 char	proctitle[BUFSIZ];	/* initial part of title */
-#endif /* HASSETPROCTITLE */
 
 #define LOGCMD(cmd, file) \
 	if (logging > 1) \
@@ -1119,23 +1117,19 @@ pass(char *passwd)
 		free(motd);
 	if (guest) {
 		reply(230, "Guest login ok, access restrictions apply.");
-#ifdef HASSETPROCTITLE
 		snprintf(proctitle, sizeof(proctitle),
 		    "%s: anonymous/%.*s", remotehost,
 		    (int)(sizeof(proctitle) - sizeof(remotehost) -
 		    sizeof(": anonymous/")), passwd);
 		setproctitle("%s", proctitle);
-#endif /* HASSETPROCTITLE */
 		if (logging)
 			syslog(LOG_INFO, "ANONYMOUS FTP LOGIN FROM %s, %s",
 			    remotehost, passwd);
 	} else {
 		reply(230, "User %s logged in.", pw->pw_name);
-#ifdef HASSETPROCTITLE
 		snprintf(proctitle, sizeof(proctitle),
 		    "%s: %s", remotehost, pw->pw_name);
 		setproctitle("%s", proctitle);
-#endif /* HASSETPROCTITLE */
 		if (logging)
 			syslog(LOG_INFO, "FTP LOGIN FROM %s as %s",
 			    remotehost, pw->pw_name);
@@ -2175,10 +2169,8 @@ dolog(struct sockaddr *sa)
 	else
 		(void) strlcpy(remotehost, "unknown", sizeof(remotehost));
 
-#ifdef HASSETPROCTITLE
 	snprintf(proctitle, sizeof(proctitle), "%s: connected", remotehost);
 	setproctitle("%s", proctitle);
-#endif /* HASSETPROCTITLE */
 
 	if (logging) {
 		int error;

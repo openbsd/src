@@ -1,4 +1,4 @@
-/*	$OpenBSD: monitor.c,v 1.22 2015/02/06 23:21:58 millert Exp $	*/
+/*	$OpenBSD: monitor.c,v 1.23 2015/11/16 17:31:14 tedu Exp $	*/
 
 /*
  * Copyright (c) 2004 Moritz Jodeit <moritz@openbsd.org>
@@ -49,9 +49,7 @@ enum monitor_state {
 	POSTAUTH
 };
 
-#ifdef HASSETPROCTITLE
 extern char	remotehost[];
-#endif
 extern char	ttyline[20];
 extern int	debug;
 
@@ -198,9 +196,7 @@ monitor_init(void)
 		return (1);
 	}
 
-#ifdef HASSETPROCTITLE
 	setproctitle("%s: [priv pre-auth]", remotehost);
-#endif
 
 	handle_cmds();
 
@@ -312,10 +308,8 @@ handle_cmds(void)
 				/* Post-auth monitor */
 				debugmsg("monitor went into post-auth phase");
 				state = POSTAUTH;
-#ifdef HASSETPROCTITLE
 				setproctitle("%s: [priv post-auth]",
 				    remotehost);
-#endif
 				slavequit = 1;
 
 				send_data(fd_slave, &slavequit,

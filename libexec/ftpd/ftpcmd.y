@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpcmd.y,v 1.61 2015/10/25 22:13:39 tedu Exp $	*/
+/*	$OpenBSD: ftpcmd.y,v 1.62 2015/11/16 17:31:14 tedu Exp $	*/
 /*	$NetBSD: ftpcmd.y,v 1.7 1996/04/08 19:03:11 jtc Exp $	*/
 
 /*
@@ -1214,7 +1214,6 @@ yylex()
 				*cp++ = '\n';
 				*cp = '\0';
 			}
-#ifdef HASSETPROCTITLE
 			if (strncasecmp(cbuf, "PASS", 4) != 0) {
 				if ((cp = strpbrk(cbuf, "\n"))) {
 					c = *cp;
@@ -1223,7 +1222,6 @@ yylex()
 					*cp = c;
 				}
 			}
-#endif /* HASSETPROCTITLE */
 			if ((cp = strpbrk(cbuf, " \n")))
 				cpos = cp - cbuf;
 			if (cpos == 0)
