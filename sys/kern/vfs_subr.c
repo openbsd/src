@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.236 2015/10/13 09:11:48 guenther Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.237 2015/11/16 18:23:50 deraadt Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -49,6 +49,7 @@
 #include <sys/time.h>
 #include <sys/fcntl.h>
 #include <sys/kernel.h>
+#include <sys/conf.h>
 #include <sys/vnode.h>
 #include <sys/lock.h>
 #include <sys/stat.h>
@@ -500,6 +501,8 @@ getdevvp(dev_t dev, struct vnode **vpp, enum vtype type)
 		vput(vp);
 		vp = nvp;
 	}
+	if (vp->v_type == VCHR && cdevsw[major(vp->v_rdev)].d_type == D_TTY)
+		vp->v_flag |= VISTTY;
 	*vpp = vp;
 	return (0);
 }
