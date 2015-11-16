@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.31 2015/02/08 23:40:34 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.32 2015/11/16 21:20:40 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.7 1997/05/13 06:15:57 mikel Exp $	*/
 
 /*
@@ -55,6 +55,10 @@ main(int argc, char **argv)
 	char nosrc = 0;
 	char *rc;
 	extern const char version[];
+
+	if (pledge("stdio rpath wpath cpath tmppath fattr tty flock proc exec",
+	    NULL) == -1)
+		err(1, "pledge");
 
 	/*
 	 * Set up a reasonable environment.
