@@ -1,4 +1,4 @@
-/*	$OpenBSD: at.c,v 1.76 2015/11/13 21:35:34 millert Exp $	*/
+/*	$OpenBSD: at.c,v 1.77 2015/11/16 16:43:06 millert Exp $	*/
 
 /*
  *  at.c : Put file into atrun queue
@@ -444,28 +444,41 @@ list_jobs(int argc, char **argv, int count_only, int csort)
 	struct atjob **atjobs, **newatjobs, *job;
 	struct stat stbuf;
 	time_t runtimer;
+	char **jobs;
 	uid_t *uids;
 	char queue, *ep;
 	DIR *spool;
+	int job_matches, jobs_len, uids_len;
 	int dfd, i, shortformat;
 	size_t numjobs, maxjobs;
 
 	syslog(LOG_INFO, "(%s) LIST (%s)", user_name,
 	    user_uid ? user_name : "ALL");
 
+	/* Convert argv into a list of jobs and uids. */
+	jobs = NULL;
+	uids = NULL;
+	jobs_len = uids_len = 0;
+
 	if (argc) {
-		if ((uids = calloc(sizeof(uid_t), argc)) == NULL)
+		if ((jobs = reallocarray(NULL, argc, sizeof(char *))) == NULL ||
+		    (uids = reallocarray(NULL, argc, sizeof(uid_t))) == NULL)
 			fatal(NULL);
 
 		for (i = 0; i < argc; i++) {
-			if ((pw = getpwnam(argv[i])) == NULL)
+			if (strtot(argv[i], &ep, &runtimer) == 0 &&
+			    *ep == '.' && isalpha((unsigned char)*(ep + 1)) &&
+			    *(ep + 2) == '\0')
+				jobs[jobs_len++] = argv[i];
+			else if ((pw = getpwnam(argv[i])) != NULL) {
+				if (pw->pw_uid != user_uid && user_uid != 0)
+					fatalx("only the superuser may "
+					    "display other users' jobs");
+				uids[uids_len++] = pw->pw_uid;
+			} else
 				fatalx("unknown user %s", argv[i]);
-			if (pw->pw_uid != user_uid && user_uid != 0)
-				fatalx("only the superuser may display other users' jobs");
-			uids[i] = pw->pw_uid;
 		}
-	} else
-		uids = NULL;
+	}
 
 	shortformat = strcmp(__progname, "at") == 0;
 
@@ -483,7 +496,7 @@ list_jobs(int argc, char **argv, int count_only, int csort)
 	 */
 	numjobs = 0;
 	maxjobs = stbuf.st_nlink + 4;
-	atjobs = calloc(maxjobs, sizeof(struct atjob *));
+	atjobs = reallocarray(NULL, maxjobs, sizeof(struct atjob *));
 	if (atjobs == NULL)
 		fatal(NULL);
 
@@ -511,15 +524,26 @@ list_jobs(int argc, char **argv, int count_only, int csort)
 		if (atqueue && (queue != atqueue))
 			continue;
 
-		/* Check against specified user(s). */
-		if (argc) {
-			for (i = 0; i < argc; i++) {
-				if (uids[0] == stbuf.st_uid)
+		/* Check against specified jobs and/or user(s). */
+		job_matches = (argc == 0) ? 1 : 0;
+		if (!job_matches) {
+			for (i = 0; i < jobs_len; i++) {
+				if (strcmp(dirent->d_name, jobs[i]) == 0) {
+					job_matches = 1;
 					break;
+				}
 			}
-			if (i == argc)
-				continue;	/* user doesn't match */
 		}
+		if (!job_matches) {
+			for (i = 0; i < uids_len; i++) {
+				if (uids[i] == stbuf.st_uid) {
+					job_matches = 1;
+					break;
+				}
+			}
+		}
+		if (!job_matches)
+			continue;
 
 		if (count_only) {
 			numjobs++;
@@ -597,7 +621,6 @@ process_jobs(int argc, char **argv, int what)
 	time_t runtimer;
 	uid_t *uids;
 	char **jobs, *ep;
-	long l;
 	FILE *fp;
 	DIR *spool;
 	int job_matches, jobs_len, uids_len;
@@ -612,14 +635,14 @@ process_jobs(int argc, char **argv, int what)
 	uids = NULL;
 	jobs_len = uids_len = 0;
 	if (argc > 0) {
-		if ((jobs = calloc(sizeof(char *), argc)) == NULL ||
-		    (uids = calloc(sizeof(uid_t), argc)) == NULL)
+		if ((jobs = reallocarray(NULL, argc, sizeof(char *))) == NULL ||
+		    (uids = reallocarray(NULL, argc, sizeof(uid_t))) == NULL)
 			fatal(NULL);
 
 		for (i = 0; i < argc; i++) {
-			l = strtol(argv[i], &ep, 10);
-			if (*ep == '.' && isalpha((unsigned char)*(ep + 1)) &&
-			    *(ep + 2) == '\0' && l > 0 && l < INT_MAX)
+			if (strtot(argv[i], &ep, &runtimer) == 0 &&
+			    *ep == '.' && isalpha((unsigned char)*(ep + 1)) &&
+			    *(ep + 2) == '\0')
 				jobs[jobs_len++] = argv[i];
 			else if ((pw = getpwnam(argv[i])) != NULL) {
 				if (user_uid != pw->pw_uid && user_uid != 0) {
@@ -817,7 +840,7 @@ usage(void)
 	case AT:
 	case CAT:
 		(void)fprintf(stderr,
-		    "usage: at [-bm] [-f file] [-l [user ...]] [-q queue] "
+		    "usage: at [-bm] [-f file] [-l [job ...]] [-q queue] "
 		    "-t time_arg | timespec\n"
 		    "       at -c | -r job ...\n");
 		break;

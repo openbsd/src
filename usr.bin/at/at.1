@@ -1,4 +1,4 @@
-.\" $OpenBSD: at.1,v 1.52 2014/09/16 15:56:36 jmc Exp $
+.\" $OpenBSD: at.1,v 1.53 2015/11/16 16:43:06 millert Exp $
 .\"
 .\" Copyright (C) 1993, 1994  Thomas Koenig
 .\" Copyright (C) 1993  David Parsons
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 16 2014 $
+.Dd $Mdocdate: November 16 2015 $
 .Dt AT 1
 .Os
 .Sh NAME
@@ -35,7 +35,7 @@
 .Nm at
 .Op Fl bm
 .Op Fl f Ar file
-.Op Fl l Op Ar user ...
+.Op Fl l Op Ar job ...
 .Op Fl q Ar queue
 .Fl t Ar time_arg | timespec
 .Nm at
@@ -85,12 +85,11 @@ Prints the jobs listed on the command line to standard output.
 Reads the job from
 .Ar file
 rather than standard input.
-.It Fl l Op Ar user ...
+.It Fl l Op Ar job ...
 Displays the queue of jobs which are currently awaiting execution.
 If a
-.Ar user
-argument is specified, only jobs belonging to that user will
-be displayed.
+.Ar job
+argument is specified, only the specified jobs will be displayed.
 Unless the user is the superuser, only the user's own jobs will be
 displayed.
 .It Fl m
@@ -336,10 +335,7 @@ and
 .Nm batch
 utilities are compliant with the
 .St -p1003.1-2008
-specification,
-except behaviour for the
-.Fl l
-flag differs.
+specification.
 .Pp
 The
 .Nm
