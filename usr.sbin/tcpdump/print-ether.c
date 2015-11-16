@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ether.c,v 1.29 2015/01/16 06:40:21 deraadt Exp $	*/
+/*	$OpenBSD: print-ether.c,v 1.30 2015/11/16 00:16:39 mmcc Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -54,9 +54,9 @@ const u_char *snapend;
 void ether_macctl(const u_char *, u_int);
 
 void
-ether_print(register const u_char *bp, u_int length)
+ether_print(const u_char *bp, u_int length)
 {
-	register const struct ether_header *ep;
+	const struct ether_header *ep;
 
 	ep = (const struct ether_header *)bp;
 	if (qflag) {

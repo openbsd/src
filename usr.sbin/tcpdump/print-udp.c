@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-udp.c,v 1.38 2015/01/16 06:40:22 deraadt Exp $	*/
+/*	$OpenBSD: print-udp.c,v 1.39 2015/11/16 00:16:39 mmcc Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996
@@ -112,7 +112,7 @@ struct rtcp_rr {
 #define RTCP_PT_APP	204
 
 static void
-vat_print(const void *hdr, u_int len, register const struct udphdr *up)
+vat_print(const void *hdr, u_int len, const struct udphdr *up)
 {
 	/* vat/vt audio */
 	u_int ts = *(u_short *)hdr;
@@ -138,7 +138,7 @@ vat_print(const void *hdr, u_int len, register const struct udphdr *up)
 }
 
 static void
-rtp_print(const void *hdr, u_int len, register const struct udphdr *up)
+rtp_print(const void *hdr, u_int len, const struct udphdr *up)
 {
 	/* rtp v1 or v2 */
 	u_int *ip = (u_int *)hdr;
@@ -383,15 +383,15 @@ static int udp6_cksum(const struct ip6_hdr *ip6, const struct udphdr *up,
 #endif
 
 void
-udp_print(register const u_char *bp, u_int length, register const u_char *bp2)
+udp_print(const u_char *bp, u_int length, const u_char *bp2)
 {
-	register const struct udphdr *up;
-	register const struct ip *ip;
-	register const u_char *cp;
-	register const u_char *ep = bp + length;
+	const struct udphdr *up;
+	const struct ip *ip;
+	const u_char *cp;
+	const u_char *ep = bp + length;
 	u_int16_t sport, dport, ulen;
 #ifdef INET6
-	register const struct ip6_hdr *ip6;
+	const struct ip6_hdr *ip6;
 #endif
 
 	if (ep > snapend)
@@ -419,7 +419,7 @@ udp_print(register const u_char *bp, u_int length, register const u_char *bp2)
 	dport = ntohs(up->uh_dport);
 	ulen = ntohs(up->uh_ulen);
 	if (packettype) {
-		register struct rpc_msg *rp;
+		struct rpc_msg *rp;
 		enum msg_type direction;
 
 		switch (packettype) {
@@ -484,7 +484,7 @@ udp_print(register const u_char *bp, u_int length, register const u_char *bp2)
 	}
 
 	if (!qflag) {
-		register struct rpc_msg *rp;
+		struct rpc_msg *rp;
 		enum msg_type direction;
 
 		rp = (struct rpc_msg *)(up + 1);

@@ -342,7 +342,7 @@ lwres_printaddr(lwres_addr_t *ap)
 }
 
 void
-lwres_print(register const u_char *bp, u_int length)
+lwres_print(const u_char *bp, u_int length)
 {
 	const struct lwres_lwpacket *np;
 	u_int32_t v;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-dvmrp.c,v 1.8 2015/01/16 06:40:21 deraadt Exp $	*/
+/*	$OpenBSD: print-dvmrp.c,v 1.9 2015/11/16 00:16:39 mmcc Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996
@@ -76,10 +76,10 @@ static void print_graft_ack(const u_char *, const u_char *, u_int);
 static u_int32_t target_level;
 
 void
-dvmrp_print(register const u_char *bp, register u_int len)
+dvmrp_print(const u_char *bp, u_int len)
 {
-	register const u_char *ep;
-	register u_char type;
+	const u_char *ep;
+	u_char type;
 
 	ep = (const u_char *)snapend;
 	if (bp >= ep)
@@ -155,11 +155,10 @@ dvmrp_print(register const u_char *bp, register u_int len)
 }
 
 static void
-print_report(register const u_char *bp, register const u_char *ep,
-    register u_int len)
+print_report(const u_char *bp, const u_char *ep, u_int len)
 {
-	register u_int32_t mask, origin;
-	register int metric, i, width, done;
+	u_int32_t mask, origin;
+	int metric, i, width, done;
 
 	while (len > 0) {
 		if (len < 3) {
@@ -206,10 +205,9 @@ print_report(register const u_char *bp, register const u_char *ep,
 #define GET_ADDR(to) (memcpy((char *)to, (char *)bp, 4), bp += 4)
 
 static void
-print_probe(register const u_char *bp, register const u_char *ep,
-    register u_int len)
+print_probe(const u_char *bp, const u_char *ep, u_int len)
 {
-	register u_int32_t genid;
+	u_int32_t genid;
 	u_char neighbor[4];
 
 	if ((len < 4) || ((bp + 4) > ep)) {
@@ -234,13 +232,12 @@ print_probe(register const u_char *bp, register const u_char *ep,
 }
 
 static void
-print_neighbors(register const u_char *bp, register const u_char *ep,
-    register u_int len)
+print_neighbors(const u_char *bp, const u_char *ep, u_int len)
 {
 	u_char laddr[4], neighbor[4];
-	register u_char metric;
-	register u_char thresh;
-	register int ncount;
+	u_char metric;
+	u_char thresh;
+	int ncount;
 
 	while (len > 0 && bp < ep) {
 		if (len < 7 || (bp + 7) >= ep) {
@@ -263,12 +260,11 @@ print_neighbors(register const u_char *bp, register const u_char *ep,
 }
 
 static void
-print_neighbors2(register const u_char *bp, register const u_char *ep,
-    register u_int len)
+print_neighbors2(const u_char *bp, const u_char *ep, u_int len)
 {
 	u_char laddr[4], neighbor[4];
-	register u_char metric, thresh, flags;
-	register int ncount;
+	u_char metric, thresh, flags;
+	int ncount;
 
 	printf(" (v %d.%d):",
 	       (int)target_level & 0xff,
@@ -311,8 +307,7 @@ print_neighbors2(register const u_char *bp, register const u_char *ep,
 }
 
 static void
-print_prune(register const u_char *bp, register const u_char *ep,
-    register u_int len)
+print_prune(const u_char *bp, const u_char *ep, u_int len)
 {
 	union a {
 		u_char b[4];
@@ -330,8 +325,7 @@ print_prune(register const u_char *bp, register const u_char *ep,
 }
 
 static void
-print_graft(register const u_char *bp, register const u_char *ep,
-    register u_int len)
+print_graft(const u_char *bp, const u_char *ep, u_int len)
 {
 
 	if (len < 8 || (bp + 8) > ep) {
@@ -342,8 +336,7 @@ print_graft(register const u_char *bp, register const u_char *ep,
 }
 
 static void
-print_graft_ack(register const u_char *bp, register const u_char *ep,
-    register u_int len)
+print_graft_ack(const u_char *bp, const u_char *ep, u_int len)
 {
 
 	if (len < 8 || (bp + 8) > ep) {

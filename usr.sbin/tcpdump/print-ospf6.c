@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ospf6.c,v 1.8 2015/01/16 06:40:21 deraadt Exp $	*/
+/*	$OpenBSD: print-ospf6.c,v 1.9 2015/11/16 00:16:39 mmcc Exp $	*/
 
 
 /*
@@ -87,11 +87,11 @@ static int ospf6_print_lsa(const struct lsa *);
 static int ospf6_decode_v3(const struct ospf6hdr *, const u_char *);
 
 static inline void
-ospf6_print_seqage(register u_int32_t seq, register time_t us)
+ospf6_print_seqage(u_int32_t seq, time_t us)
 {
-	register time_t sec = us % 60;
-	register time_t mins = (us / 60) % 60;
-	register time_t hour = us / 3600;
+	time_t sec = us % 60;
+	time_t mins = (us / 60) % 60;
+	time_t hour = us / 3600;
 
 	printf(" S %X age ", seq);
 	if (hour)
@@ -105,9 +105,9 @@ ospf6_print_seqage(register u_int32_t seq, register time_t us)
 
 
 static inline void
-ospf6_print_bits(register const struct bits *bp, register u_char options)
+ospf6_print_bits(const struct bits *bp, u_char options)
 {
-	register char sep = ' ';
+	char sep = ' ';
 
 	do {
 		if (options & bp->bit) {
@@ -118,9 +118,8 @@ ospf6_print_bits(register const struct bits *bp, register u_char options)
 }
 
 static void
-ospf6_print_ls_type(register u_int ls_type,
-    register const rtrid_t *ls_stateid,
-    register const rtrid_t *ls_router, register const char *fmt)
+ospf6_print_ls_type(u_int ls_type, const rtrid_t *ls_stateid,
+    const rtrid_t *ls_router, const char *fmt)
 {
 	char *scope;
 
@@ -201,7 +200,7 @@ ospf6_print_ls_type(register u_int ls_type,
 }
 
 static int
-ospf6_print_lshdr(register const struct lsa_hdr *lshp)
+ospf6_print_lshdr(const struct lsa_hdr *lshp)
 {
 
 	TCHECK(lshp->ls_type);
@@ -218,7 +217,7 @@ trunc:
 }
 
 static int
-ospf6_print_lsaprefix(register const struct lsa_prefix *lsapp)
+ospf6_print_lsaprefix(const struct lsa_prefix *lsapp)
 {
 	int k;
 	struct in6_addr prefix;
@@ -246,24 +245,24 @@ trunc:
  * Print a single link state advertisement.  If truncated return 1, else 0.
  */
 static int
-ospf6_print_lsa(register const struct lsa *lsap)
+ospf6_print_lsa(const struct lsa *lsap)
 {
-	register const u_char *ls_end;
-	register const struct rlalink *rlp;
+	const u_char *ls_end;
+	const struct rlalink *rlp;
 #if 0
-	register const struct tos_metric *tosp;
+	const struct tos_metric *tosp;
 #endif
-	register const rtrid_t *ap;
+	const rtrid_t *ap;
 #if 0
-	register const struct aslametric *almp;
-	register const struct mcla *mcp;
+	const struct aslametric *almp;
+	const struct mcla *mcp;
 #endif
-	register const struct llsa *llsap;
-	register const struct lsa_prefix *lsapp;
+	const struct llsa *llsap;
+	const struct lsa_prefix *lsapp;
 #if 0
-	register const u_int32_t *lp;
+	const u_int32_t *lp;
 #endif
-	register int j, k;
+	int j, k;
 
 	if (ospf6_print_lshdr(&lsap->ls_hdr))
 		return (1);
@@ -347,7 +346,7 @@ ospf6_print_lsa(register const struct lsa *lsap)
 		TCHECK(lsap->lsa_un.un_sla.sla_tosmetric);
 		lp = lsap->lsa_un.un_sla.sla_tosmetric;
 		while ((u_char *)lp < ls_end) {
-			register u_int32_t ul;
+			u_int32_t ul;
 
 			TCHECK(*lp);
 			ul = ntohl(*lp);
@@ -366,7 +365,7 @@ ospf6_print_lsa(register const struct lsa *lsap)
 		TCHECK(lsap->lsa_un.un_sla.sla_tosmetric);
 		almp = lsap->lsa_un.un_asla.asla_metric;
 		while ((u_char *)almp < ls_end) {
-			register u_int32_t ul;
+			u_int32_t ul;
 
 			TCHECK(almp->asla_tosmetric);
 			ul = ntohl(almp->asla_tosmetric);
@@ -469,15 +468,14 @@ trunc:
 }
 
 static int
-ospf6_decode_v3(register const struct ospf6hdr *op,
-    register const u_char *dataend)
+ospf6_decode_v3(const struct ospf6hdr *op, const u_char *dataend)
 {
-	register const rtrid_t *ap;
-	register const struct lsr *lsrp;
-	register const struct lsa_hdr *lshp;
-	register const struct lsa *lsap;
-	register char sep;
-	register int i;
+	const rtrid_t *ap;
+	const struct lsr *lsrp;
+	const struct lsa_hdr *lshp;
+	const struct lsa *lsap;
+	char sep;
+	int i;
 
 	switch (op->ospf6_type) {
 
@@ -606,11 +604,11 @@ trunc:
 }
 
 void
-ospf6_print(register const u_char *bp, register u_int length)
+ospf6_print(const u_char *bp, u_int length)
 {
-	register const struct ospf6hdr *op;
-	register const u_char *dataend;
-	register const char *cp;
+	const struct ospf6hdr *op;
+	const u_char *dataend;
+	const char *cp;
 
 	op = (struct ospf6hdr *)bp;
 

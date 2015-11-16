@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-isoclns.c,v 1.12 2009/10/27 23:59:55 deraadt Exp $	*/
+/*	$OpenBSD: print-isoclns.c,v 1.13 2015/11/16 00:16:39 mmcc Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995, 1996
@@ -294,7 +294,7 @@ esis_print(const u_char *p, u_int length)
 }
 
 static int
-osi_cksum(register const u_char *p, register u_int len,
+osi_cksum(const u_char *p, u_int len,
 	  const u_char *toff, u_char *cksum, u_char *off)
 {
 	const u_char *ep;

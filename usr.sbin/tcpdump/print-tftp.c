@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-tftp.c,v 1.11 2015/01/16 06:40:22 deraadt Exp $	*/
+/*	$OpenBSD: print-tftp.c,v 1.12 2015/11/16 00:16:39 mmcc Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993, 1994, 1995, 1996, 1997
@@ -66,12 +66,12 @@ static struct tok err2str[] = {
  * Print trivial file transfer program requests
  */
 void
-tftp_print(register const u_char *bp, u_int length)
+tftp_print(const u_char *bp, u_int length)
 {
-	register const struct tftphdr *tp;
-	register const char *cp;
-	register const u_char *p;
-	register int opcode, i;
+	const struct tftphdr *tp;
+	const char *cp;
+	const u_char *p;
+	int opcode, i;
 	static char tstr[] = " [|tftp]";
 
 	tp = (const struct tftphdr *)bp;

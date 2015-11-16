@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-sl.c,v 1.18 2015/01/16 06:40:21 deraadt Exp $	*/
+/*	$OpenBSD: print-sl.c,v 1.19 2015/11/16 00:16:39 mmcc Exp $	*/
 
 /*
  * Copyright (c) 1989, 1990, 1991, 1993, 1994, 1995, 1996, 1997
@@ -68,9 +68,9 @@ static void compressed_sl_print(const u_char *, const struct ip *, u_int, int);
 void
 sl_if_print(u_char *user, const struct pcap_pkthdr *h, const u_char *p)
 {
-	register u_int caplen = h->caplen;
-	register u_int length = h->len;
-	register const struct ip *ip;
+	u_int caplen = h->caplen;
+	u_int length = h->len;
+	const struct ip *ip;
 
 	ts_print(&h->ts);
 
@@ -116,9 +116,9 @@ sl_if_print(u_char *user, const struct pcap_pkthdr *h, const u_char *p)
 void
 sl_bsdos_if_print(u_char *user, const struct pcap_pkthdr *h, const u_char *p)
 {
-	register u_int caplen = h->caplen;
-	register u_int length = h->len;
-	register const struct ip *ip;
+	u_int caplen = h->caplen;
+	u_int length = h->len;
+	const struct ip *ip;
 
 	ts_print(&h->ts);
 
@@ -152,8 +152,7 @@ sl_bsdos_if_print(u_char *user, const struct pcap_pkthdr *h, const u_char *p)
 }
 
 static void
-sliplink_print(register const u_char *p, register const struct ip *ip,
-	       register u_int length)
+sliplink_print(const u_char *p, const struct ip *ip, u_int length)
 {
 	int dir;
 	u_int hlen;
@@ -164,7 +163,7 @@ sliplink_print(register const u_char *p, register const struct ip *ip,
 
 	if (nflag) {
 		/* XXX just dump the header */
-		register int i;
+		int i;
 
 		for (i = SLX_CHDR; i < SLX_CHDR + CHDR_LEN - 1; ++i)
 			printf("%02x.", p[i]);
@@ -201,9 +200,9 @@ sliplink_print(register const u_char *p, register const struct ip *ip,
 }
 
 static const u_char *
-print_sl_change(const char *str, register const u_char *cp)
+print_sl_change(const char *str, const u_char *cp)
 {
-	register u_int i;
+	u_int i;
 
 	if ((i = *cp++) == 0) {
 		i = EXTRACT_16BITS(cp);
@@ -214,9 +213,9 @@ print_sl_change(const char *str, register const u_char *cp)
 }
 
 static const u_char *
-print_sl_winchange(register const u_char *cp)
+print_sl_winchange(const u_char *cp)
 {
-	register short i;
+	short i;
 
 	if ((i = *cp++) == 0) {
 		i = EXTRACT_16BITS(cp);
@@ -233,8 +232,8 @@ static void
 compressed_sl_print(const u_char *chdr, const struct ip *ip,
 		    u_int length, int dir)
 {
-	register const u_char *cp = chdr;
-	register u_int flags, hlen;
+	const u_char *cp = chdr;
+	u_int flags, hlen;
 
 	flags = *cp++;
 	if (flags & NEW_C) {

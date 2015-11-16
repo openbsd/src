@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ip6opts.c,v 1.4 2015/01/16 06:40:21 deraadt Exp $	*/
+/*	$OpenBSD: print-ip6opts.c,v 1.5 2015/11/16 00:16:39 mmcc Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -105,10 +105,10 @@ trunc:
 }
 
 int
-hbhopt_print(register const u_char *bp)
+hbhopt_print(const u_char *bp)
 {
     const struct ip6_hbh *dp = (struct ip6_hbh *)bp;
-    register const u_char *ep;
+    const u_char *ep;
     int hbhlen = 0;
 
     /* 'ep' points to the end of avaible data. */
@@ -128,10 +128,10 @@ hbhopt_print(register const u_char *bp)
 }
 
 int
-dstopt_print(register const u_char *bp)
+dstopt_print(const u_char *bp)
 {
     const struct ip6_dest *dp = (struct ip6_dest *)bp;
-    register const u_char *ep;
+    const u_char *ep;
     int dstoptlen = 0;
 
     /* 'ep' points to the end of avaible data. */

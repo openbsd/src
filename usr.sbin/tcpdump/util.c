@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.26 2015/09/27 05:25:01 guenther Exp $	*/
+/*	$OpenBSD: util.c,v 1.27 2015/11/16 00:16:39 mmcc Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993, 1994, 1995, 1996, 1997
@@ -51,10 +51,10 @@
  * Return true if truncated.
  */
 int
-fn_print(register const u_char *s, register const u_char *ep)
+fn_print(const u_char *s, const u_char *ep)
 {
-	register int ret;
-	register u_char c;
+	int ret;
+	u_char c;
 
 	ret = 1;			/* assume truncated */
 	while (ep == NULL || s < ep) {
@@ -83,11 +83,10 @@ fn_print(register const u_char *s, register const u_char *ep)
  * Return true if truncated.
  */
 int
-fn_printn(register const u_char *s, register u_int n,
-	  register const u_char *ep)
+fn_printn(const u_char *s, u_int n, const u_char *ep)
 {
-	register int ret;
-	register u_char c;
+	int ret;
+	u_char c;
 
 	ret = 1;			/* assume truncated */
 	while (ep == NULL || s < ep) {
@@ -114,9 +113,9 @@ fn_printn(register const u_char *s, register u_int n,
  * Print the timestamp
  */
 void
-ts_print(register const struct bpf_timeval *tvp)
+ts_print(const struct bpf_timeval *tvp)
 {
-	register int s;
+	int s;
 #define TSBUFLEN 32
 	static char buf[TSBUFLEN];
 	static struct bpf_timeval last;
@@ -187,8 +186,7 @@ relts_print(int secs)
  * Convert a token value to a string; use "fmt" if not found.
  */
 const char *
-tok2str(register const struct tok *lp, register const char *fmt,
-	register int v)
+tok2str(const struct tok *lp, const char *fmt, int v)
 {
 	static char buf[128];
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ntp.c,v 1.16 2015/01/16 06:40:21 deraadt Exp $	*/
+/*	$OpenBSD: print-ntp.c,v 1.17 2015/11/16 00:16:39 mmcc Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -54,9 +54,9 @@ static void p_ntp_delta(const struct l_fixedpt *, const struct l_fixedpt *);
  * Print ntp requests
  */
 void
-ntp_print(register const u_char *cp, u_int length)
+ntp_print(const u_char *cp, u_int length)
 {
-	register const struct ntpdata *bp;
+	const struct ntpdata *bp;
 	int mode, version, leapind;
 
 	bp = (struct ntpdata *)cp;
@@ -197,11 +197,11 @@ trunc:
 }
 
 static void
-p_sfix(register const struct s_fixedpt *sfp)
+p_sfix(const struct s_fixedpt *sfp)
 {
-	register int i;
-	register int f;
-	register float ff;
+	int i;
+	int f;
+	float ff;
 
 	i = ntohs(sfp->int_part);
 	f = ntohs(sfp->fraction);
@@ -213,12 +213,12 @@ p_sfix(register const struct s_fixedpt *sfp)
 #define	FMAXINT	(4294967296.0)	/* floating point rep. of MAXINT */
 
 static void
-p_ntp_time(register const struct l_fixedpt *lfp)
+p_ntp_time(const struct l_fixedpt *lfp)
 {
-	register int32_t i;
-	register u_int32_t uf;
-	register u_int32_t f;
-	register float ff;
+	int32_t i;
+	u_int32_t uf;
+	u_int32_t f;
+	float ff;
 
 	i = ntohl(lfp->int_part);
 	uf = ntohl(lfp->fraction);
@@ -232,14 +232,13 @@ p_ntp_time(register const struct l_fixedpt *lfp)
 
 /* Prints time difference between *lfp and *olfp */
 static void
-p_ntp_delta(register const struct l_fixedpt *olfp,
-	    register const struct l_fixedpt *lfp)
+p_ntp_delta(const struct l_fixedpt *olfp, const struct l_fixedpt *lfp)
 {
-	register int32_t i;
-	register u_int32_t uf;
-	register u_int32_t ouf;
-	register u_int32_t f;
-	register float ff;
+	int32_t i;
+	u_int32_t uf;
+	u_int32_t ouf;
+	u_int32_t f;
+	float ff;
 	int signbit;
 
 	i = ntohl(lfp->int_part) - ntohl(olfp->int_part);

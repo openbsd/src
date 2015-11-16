@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-fddi.c,v 1.16 2015/01/16 06:40:21 deraadt Exp $	*/
+/*	$OpenBSD: print-fddi.c,v 1.17 2015/11/16 00:16:39 mmcc Exp $	*/
 
 /*
  * Copyright (c) 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -198,7 +198,7 @@ print_fddi_fc(u_char fc)
 static inline void
 extract_fddi_addrs(const struct fddi_header *fddip, char *fsrc, char *fdst)
 {
-	register int i;
+	int i;
 
 	if (fddi_bitswap) {
 		/*
@@ -220,8 +220,8 @@ extract_fddi_addrs(const struct fddi_header *fddip, char *fsrc, char *fdst)
  * Print the FDDI MAC header
  */
 static inline void
-fddi_print(register const struct fddi_header *fddip, register u_int length,
-	   register const u_char *fsrc, register const u_char *fdst)
+fddi_print(const struct fddi_header *fddip, u_int length,
+	   const u_char *fsrc, const u_char *fdst)
 {
 	char *srcname, *dstname;
 
@@ -255,7 +255,7 @@ fddi_smt_print(const u_char *p, u_int length)
  */
 void
 fddi_if_print(u_char *pcap, const struct pcap_pkthdr *h,
-	      register const u_char *p)
+	      const u_char *p)
 {
 	u_int caplen = h->caplen;
 	u_int length = h->len;
@@ -338,7 +338,7 @@ out:
 #include "interface.h"
 void
 fddi_if_print(u_char *pcap, const struct pcap_pkthdr *h,
-	      register const u_char *p)
+	      const u_char *p)
 {
 
 	error("not configured for fddi");

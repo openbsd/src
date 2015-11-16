@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-timed.c,v 1.6 2015/01/16 06:40:22 deraadt Exp $	*/
+/*	$OpenBSD: print-timed.c,v 1.7 2015/11/16 00:16:39 mmcc Exp $	*/
 
 /*
  * Copyright (c) 2000 Ben Smithurst <ben@scientia.demon.co.uk>
@@ -49,7 +49,7 @@ static const char *tsptype[TSPTYPENUMBER] =
   "TEST", "SETDATE", "SETDATEREQ", "LOOP" };
 
 void
-timed_print(register const u_char *bp, u_int length)
+timed_print(const u_char *bp, u_int length)
 {
 #define endof(x) ((u_char *)&(x) + sizeof (x))
 	struct tsp *tsp = (struct tsp *)bp;

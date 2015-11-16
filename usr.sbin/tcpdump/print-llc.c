@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-llc.c,v 1.19 2015/01/16 06:40:21 deraadt Exp $	*/
+/*	$OpenBSD: print-llc.c,v 1.20 2015/11/16 00:16:39 mmcc Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995, 1996, 1997
@@ -61,11 +61,11 @@ llc_print(const u_char *p, u_int length, u_int caplen,
 	  const u_char *esrc, const u_char *edst)
 {
 	struct llc llc;
-	register u_short et;
+	u_short et;
 #if 0
 	u_short control;
 #endif
-	register int ret;
+	int ret;
 
 	if (caplen < 3) {
 		(void)printf("[|llc]");

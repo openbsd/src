@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-gtp.c,v 1.7 2015/01/16 06:40:21 deraadt Exp $ */
+/*	$OpenBSD: print-gtp.c,v 1.8 2015/11/16 00:16:39 mmcc Exp $ */
 /*
  * Copyright (c) 2009, 2010 Joel Sing <jsing@openbsd.org>
  *
@@ -57,24 +57,24 @@
 #include "interface.h"
 #include "gtp.h"
 
-void	gtp_print(register const u_char *, u_int, u_short, u_short);
-void	gtp_decode_ie(register const u_char *, u_short, int);
-void	gtp_print_tbcd(register const u_char *, u_int);
-void	gtp_print_user_address(register const u_char *, u_int);
-void	gtp_print_apn(register const u_char *, u_int);
+void	gtp_print(const u_char *, u_int, u_short, u_short);
+void	gtp_decode_ie(const u_char *, u_short, int);
+void	gtp_print_tbcd(const u_char *, u_int);
+void	gtp_print_user_address(const u_char *, u_int);
+void	gtp_print_apn(const u_char *, u_int);
 void	gtp_print_str(const char **, u_int);
 
 void	gtp_v0_print(const u_char *, u_int, u_short, u_short);
-void	gtp_v0_print_prime(register const u_char *);
-int	gtp_v0_print_tv(register const u_char *, u_int);
-int	gtp_v0_print_tlv(register const u_char *, u_int);
+void	gtp_v0_print_prime(const u_char *);
+int	gtp_v0_print_tv(const u_char *, u_int);
+int	gtp_v0_print_tlv(const u_char *, u_int);
 
 void	gtp_v1_print(const u_char *, u_int, u_short, u_short);
-void	gtp_v1_print_ctrl(register const u_char *, u_int, struct gtp_v1_hdr *);
-void	gtp_v1_print_user(register const u_char *, u_int, struct gtp_v1_hdr *);
-void	gtp_v1_print_prime(register const u_char *, struct gtp_v1_prime_hdr *);
-int	gtp_v1_print_tv(register const u_char *, u_int);
-int	gtp_v1_print_tlv(register const u_char *, u_int);
+void	gtp_v1_print_ctrl(const u_char *, u_int, struct gtp_v1_hdr *);
+void	gtp_v1_print_user(const u_char *, u_int, struct gtp_v1_hdr *);
+void	gtp_v1_print_prime(const u_char *, struct gtp_v1_prime_hdr *);
+int	gtp_v1_print_tv(const u_char *, u_int);
+int	gtp_v1_print_tlv(const u_char *, u_int);
 
 /* GTPv0 message types. */
 static struct tok gtp_v0_msgtype[] = {
@@ -291,7 +291,7 @@ static struct tok gtp_v1_cause[] = {
 static int gtp_proto = -1;
 
 void
-gtp_print(register const u_char *cp, u_int length, u_short sport, u_short dport)
+gtp_print(const u_char *cp, u_int length, u_short sport, u_short dport)
 {
 	int version;
 
@@ -318,7 +318,7 @@ trunc:
  * decoding routine.
  */
 void
-gtp_decode_ie(register const u_char *cp, u_short version, int len)
+gtp_decode_ie(const u_char *cp, u_short version, int len)
 {
 	int val, ielen, iecount = 0;
 
@@ -382,7 +382,7 @@ trunc:
  * Decode and print telephony binary coded decimal.
  */
 void
-gtp_print_tbcd(register const u_char *cp, u_int len)
+gtp_print_tbcd(const u_char *cp, u_int len)
 {
 	u_int8_t *data, bcd;
 	int i;
@@ -404,7 +404,7 @@ gtp_print_tbcd(register const u_char *cp, u_int len)
  * GSM 09.60 section 7.9.18 and 3GPP 29.060 section 7.7.27.
  */
 void
-gtp_print_user_address(register const u_char *cp, u_int len)
+gtp_print_user_address(const u_char *cp, u_int len)
 {
 	u_int8_t org, type;
 
@@ -439,7 +439,7 @@ gtp_print_user_address(register const u_char *cp, u_int len)
  * 3GPP 24.008 section 10.5.6.1 and 3GPP 23.003 section 9.1.
  */
 void
-gtp_print_apn(register const u_char *cp, u_int len)
+gtp_print_apn(const u_char *cp, u_int len)
 {
 	u_char label[100];
 	u_int8_t llen;
@@ -539,7 +539,7 @@ trunc:
 }
 
 void
-gtp_v0_print_prime(register const u_char *cp)
+gtp_v0_print_prime(const u_char *cp)
 {
 	struct gtp_v0_prime_hdr *gph = (struct gtp_v0_prime_hdr *)cp;
 	int len;
@@ -564,7 +564,7 @@ trunc:
 }
 
 int
-gtp_v0_print_tv(register const u_char *cp, u_int value)
+gtp_v0_print_tv(const u_char *cp, u_int value)
 {
 	u_int32_t *dpl;
 	u_int16_t *dps;
@@ -753,7 +753,7 @@ trunc:
 }
 
 int
-gtp_v0_print_tlv(register const u_char *cp, u_int value)
+gtp_v0_print_tlv(const u_char *cp, u_int value)
 {
 	u_int8_t data;
 	u_int16_t *lenp, *seqno, len;
@@ -980,7 +980,7 @@ trunc:
 }
 
 void
-gtp_v1_print_ctrl(register const u_char *cp, u_int hlen, struct gtp_v1_hdr *gh)
+gtp_v1_print_ctrl(const u_char *cp, u_int hlen, struct gtp_v1_hdr *gh)
 {
 	int len;
 
@@ -993,7 +993,7 @@ gtp_v1_print_ctrl(register const u_char *cp, u_int hlen, struct gtp_v1_hdr *gh)
 }
 
 void
-gtp_v1_print_user(register const u_char *cp, u_int hlen, struct gtp_v1_hdr *gh)
+gtp_v1_print_user(const u_char *cp, u_int hlen, struct gtp_v1_hdr *gh)
 {
 	int len, version;
 
@@ -1033,7 +1033,7 @@ trunc:
 }
 
 void
-gtp_v1_print_prime(register const u_char *cp, struct gtp_v1_prime_hdr *gph)
+gtp_v1_print_prime(const u_char *cp, struct gtp_v1_prime_hdr *gph)
 {
 	int len;
 	
@@ -1057,7 +1057,7 @@ trunc:
 }
 
 int
-gtp_v1_print_tv(register const u_char *cp, u_int value)
+gtp_v1_print_tv(const u_char *cp, u_int value)
 {
 	u_int32_t *dpl;
 	u_int16_t *dps;
@@ -1347,7 +1347,7 @@ trunc:
 }
 
 int
-gtp_v1_print_tlv(register const u_char *cp, u_int value)
+gtp_v1_print_tlv(const u_char *cp, u_int value)
 {
 	u_int8_t data;
 	u_int16_t *lenp, *seqno, len;

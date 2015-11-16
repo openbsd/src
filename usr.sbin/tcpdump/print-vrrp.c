@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-vrrp.c,v 1.3 2009/10/27 23:59:57 deraadt Exp $	*/
+/*	$OpenBSD: print-vrrp.c,v 1.4 2015/11/16 00:16:39 mmcc Exp $	*/
 
 /*
  * Copyright (c) 2000 William C. Fenner.
@@ -65,7 +65,7 @@
  *    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  */
 void
-vrrp_print(register const u_char *bp, register u_int len, int ttl)
+vrrp_print(const u_char *bp, u_int len, int ttl)
 {
 	int version, type, auth_type;
 	char *type_s;

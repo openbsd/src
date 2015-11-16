@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ipx.c,v 1.14 2015/01/16 06:40:21 deraadt Exp $	*/
+/*	$OpenBSD: print-ipx.c,v 1.15 2015/11/16 00:16:39 mmcc Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996
@@ -90,7 +90,7 @@ ipxaddr_string(u_int32_t net, const u_char *node)
 void
 ipx_decode(const struct ipxHdr *ipx, const u_char *datap, u_int length)
 {
-    register u_short dstSkt;
+    u_short dstSkt;
 
     dstSkt = EXTRACT_16BITS(&ipx->dstSkt);
     switch (dstSkt) {

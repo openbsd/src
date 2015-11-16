@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ipsec.c,v 1.22 2015/10/11 03:23:28 guenther Exp $	*/
+/*	$OpenBSD: print-ipsec.c,v 1.23 2015/11/16 00:16:39 mmcc Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -199,8 +199,7 @@ esp_decrypt (const u_char *bp, u_int len, const u_char *bp2)
 }
 
 void 
-esp_print (register const u_char *bp, register u_int len,
-	   register const u_char *bp2)
+esp_print (const u_char *bp, u_int len, const u_char *bp2)
 {
 	const struct ip *ip;
 	const struct esp_hdr *esp;
@@ -247,8 +246,7 @@ struct ah_hdr {
 };
 
 void
-ah_print (register const u_char *bp, register u_int len,
-	  register const u_char *bp2)
+ah_print (const u_char *bp, u_int len, const u_char *bp2)
 {
 	const struct ip *ip;
 	const struct ah_hdr *ah;
@@ -342,8 +340,7 @@ struct ipcomp_hdr {
 };
 
 void
-ipcomp_print (register const u_char *bp, register u_int len,
-	  register const u_char *bp2)
+ipcomp_print (const u_char *bp, u_int len, const u_char *bp2)
 {
 	const struct ip *ip;
 	const struct ipcomp_hdr *ipc;

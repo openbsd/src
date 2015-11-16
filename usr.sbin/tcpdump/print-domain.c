@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-domain.c,v 1.21 2015/01/16 06:40:21 deraadt Exp $	*/
+/*	$OpenBSD: print-domain.c,v 1.22 2015/11/16 00:16:39 mmcc Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -64,9 +64,9 @@ static const char *ns_resp[] = {
 
 /* skip over a domain name */
 static const u_char *
-ns_nskip(register const u_char *cp)
+ns_nskip(const u_char *cp)
 {
-	register u_char i;
+	u_char i;
 
 	if (!TTEST2(*cp, 1))
 		return (NULL);
@@ -134,7 +134,7 @@ trunc:
 static int
 labellen(const u_char *cp)
 {
-	register u_int i;
+	u_int i;
 
 	if (!TTEST2(*cp, 1))
 		return(-1);
@@ -155,11 +155,11 @@ labellen(const u_char *cp)
 }
 
 static const u_char *
-ns_nprint(register const u_char *cp, register const u_char *bp)
+ns_nprint(const u_char *cp, const u_char *bp)
 {
-	register u_int i, l;
-	register const u_char *rp = NULL;
-	register int compress = 0;
+	u_int i, l;
+	const u_char *rp = NULL;
+	int compress = 0;
 	int chars_processed;
 	int elt;
 	int data_size = snapend - bp;
@@ -239,9 +239,9 @@ ns_nprint(register const u_char *cp, register const u_char *bp)
 
 /* print a <character-string> */
 static const u_char *
-ns_cprint(register const u_char *cp)
+ns_cprint(const u_char *cp)
 {
-	register u_int i;
+	u_int i;
 
 	if (!TTEST2(*cp, 1))
 		return (NULL);
@@ -327,10 +327,10 @@ struct tok ns_class2str[] = {
 
 /* print a query */
 static const u_char *
-ns_qprint(register const u_char *cp, register const u_char *bp, int is_mdns)
+ns_qprint(const u_char *cp, const u_char *bp, int is_mdns)
 {
-	register const u_char *np = cp;
-	register u_int i, class;
+	const u_char *np = cp;
+	u_int i, class;
 
 	cp = ns_nskip(cp);
 
@@ -360,11 +360,11 @@ ns_qprint(register const u_char *cp, register const u_char *bp, int is_mdns)
 
 /* print a reply */
 static const u_char *
-ns_rprint(register const u_char *cp, register const u_char *bp, int is_mdns)
+ns_rprint(const u_char *cp, const u_char *bp, int is_mdns)
 {
-	register u_int i, class, opt_flags = 0;
-	register u_short typ, len;
-	register const u_char *rp;
+	u_int i, class, opt_flags = 0;
+	u_short typ, len;
+	const u_char *rp;
 
 	if (vflag) {
 		putchar(' ');
@@ -572,11 +572,11 @@ ns_rprint(register const u_char *cp, register const u_char *bp, int is_mdns)
 }
 
 void
-ns_print(register const u_char *bp, u_int length, int is_mdns)
+ns_print(const u_char *bp, u_int length, int is_mdns)
 {
-	register const HEADER *np;
-	register int qdcount, ancount, nscount, arcount;
-	register const u_char *cp;
+	const HEADER *np;
+	int qdcount, ancount, nscount, arcount;
+	const u_char *cp;
 	u_int16_t b2;
 
 	np = (const HEADER *)bp;

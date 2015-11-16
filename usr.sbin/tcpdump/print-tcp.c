@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-tcp.c,v 1.34 2015/11/05 11:57:31 jca Exp $	*/
+/*	$OpenBSD: print-tcp.c,v 1.35 2015/11/16 00:16:39 mmcc Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -48,7 +48,7 @@
 
 #include "nfs.h"
 
-static void print_tcp_rst_data(register const u_char *sp, u_int length);
+static void print_tcp_rst_data(const u_char *sp, u_int length);
 
 #define MAX_RST_DATA_LEN	30
 
@@ -184,20 +184,19 @@ static int tcp6_cksum(const struct ip6_hdr *ip6, const struct tcphdr *tp,
 
 
 void
-tcp_print(register const u_char *bp, register u_int length,
-	  register const u_char *bp2)
+tcp_print(const u_char *bp, u_int length, const u_char *bp2)
 {
-	register const struct tcphdr *tp;
-	register const struct ip *ip;
-	register u_char flags;
-	register int hlen;
-	register char ch;
-	register struct tcp_seq_hash *th = NULL;
-	register int rev = 0;
+	const struct tcphdr *tp;
+	const struct ip *ip;
+	u_char flags;
+	int hlen;
+	char ch;
+	struct tcp_seq_hash *th = NULL;
+	int rev = 0;
 	u_int16_t sport, dport, win, urp;
 	tcp_seq seq, ack;
 #ifdef INET6
-	register const struct ip6_hdr *ip6;
+	const struct ip6_hdr *ip6;
 #endif
 
 	tp = (struct tcphdr *)bp;
@@ -488,8 +487,8 @@ tcp_print(register const u_char *bp, register u_int length,
 	 * Handle any options.
 	 */
 	if ((hlen -= sizeof(*tp)) > 0) {
-		register const u_char *cp;
-		register int i, opt, len, datalen;
+		const u_char *cp;
+		int i, opt, len, datalen;
 
 		cp = (const u_char *)tp + sizeof(*tp);
 		putchar(' ');
@@ -700,7 +699,7 @@ trunc:
  */
 
 static void
-print_tcp_rst_data(register const u_char *sp, u_int length)
+print_tcp_rst_data(const u_char *sp, u_int length)
 {
 	int c;
 

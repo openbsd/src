@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-rip.c,v 1.15 2015/03/29 14:09:29 bluhm Exp $	*/
+/*	$OpenBSD: print-rip.c,v 1.16 2015/11/16 00:16:39 mmcc Exp $	*/
 
 /*
  * Copyright (c) 1989, 1990, 1991, 1993, 1994, 1996
@@ -70,9 +70,9 @@ rip_printblk(const u_char *cp, const u_char *ep)
 }
 
 static void
-rip_entry_print_v1(register int vers, register const struct rip_netinfo *ni)
+rip_entry_print_v1(int vers, const struct rip_netinfo *ni)
 {
-	register u_short family;
+	u_short family;
 
 	/* RFC 1058 */
 	family = EXTRACT_16BITS(&ni->rip_family);
@@ -98,10 +98,10 @@ rip_entry_print_v1(register int vers, register const struct rip_netinfo *ni)
 }
 
 static void
-rip_entry_print_v2(register int vers, register const struct rip_netinfo *ni)
+rip_entry_print_v2(int vers, const struct rip_netinfo *ni)
 {
-	register u_char *p;
-	register u_short family;
+	u_char *p;
+	u_short family;
 	char buf[RIP_AUTHLEN];
 
 	/* RFC 1723 */
@@ -153,9 +153,9 @@ rip_entry_print_v2(register int vers, register const struct rip_netinfo *ni)
 void
 rip_print(const u_char *dat, u_int length)
 {
-	register const struct rip *rp;
-	register const struct rip_netinfo *ni;
-	register int i, j, trunc;
+	const struct rip *rp;
+	const struct rip_netinfo *ni;
+	int i, j, trunc;
 
 	i = min(length, snapend - dat) - sizeof(*rp);
 	if (i < 0) {

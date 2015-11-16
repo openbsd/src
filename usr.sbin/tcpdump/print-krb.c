@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-krb.c,v 1.10 2015/01/16 06:40:21 deraadt Exp $	*/
+/*	$OpenBSD: print-krb.c,v 1.11 2015/11/16 00:16:39 mmcc Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997
@@ -39,7 +39,7 @@
 #include "interface.h"
 #include "addrtoname.h"
 
-const u_char *c_print(register const u_char *, register const u_char *);
+const u_char *c_print(const u_char *, const u_char *);
 const u_char *krb4_print_hdr(const u_char *);
 void krb4_print(const u_char *);
 void krb_print(const u_char *, u_int);
@@ -122,10 +122,10 @@ static struct tok kerr2str[] = {
 
 
 const u_char *
-c_print(register const u_char *s, register const u_char *ep)
+c_print(const u_char *s, const u_char *ep)
 {
-	register u_char c;
-	register int flag;
+	u_char c;
+	int flag;
 
 	flag = 1;
 	while (ep == NULL || s < ep) {
@@ -175,7 +175,7 @@ trunc:
 void
 krb4_print(const u_char *cp)
 {
-	register const struct krb *kp;
+	const struct krb *kp;
 	u_char type;
 	u_short len;
 
@@ -257,7 +257,7 @@ trunc:
 void
 krb_print(const u_char *dat, u_int length)
 {
-	register const struct krb *kp;
+	const struct krb *kp;
 
 	kp = (struct krb *)dat;
 

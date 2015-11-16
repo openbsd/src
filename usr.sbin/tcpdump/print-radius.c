@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-radius.c,v 1.10 2015/09/06 17:29:33 deraadt Exp $	*/
+/*	$OpenBSD: print-radius.c,v 1.11 2015/11/16 00:16:39 mmcc Exp $	*/
 
 /*
  * Copyright (c) 1997 Thomas H. Ptacek. All rights reserved.
@@ -235,7 +235,7 @@ static void r_print_hex(int code, int len, const u_char *data) {
 	fputc(']', stdout);
 }
 
-void radius_print(register const u_char *data, u_int len) {
+void radius_print(const u_char *data, u_int len) {
 	const struct radius_header *rhp;
 	const u_char *pp;
 	int first, l, ac, al;

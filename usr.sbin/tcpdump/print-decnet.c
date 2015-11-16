@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-decnet.c,v 1.16 2015/11/07 21:58:05 mmcc Exp $	*/
+/*	$OpenBSD: print-decnet.c,v 1.17 2015/11/16 00:16:39 mmcc Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995, 1996, 1997
@@ -61,12 +61,11 @@ extern char *dnet_htoa(struct dn_naddr *);
 #endif
 
 void
-decnet_print(register const u_char *ap, register u_int length,
-	     register u_int caplen)
+decnet_print(const u_char *ap, u_int length, u_int caplen)
 {
 	static union routehdr rhcopy;
-	register union routehdr *rhp = &rhcopy;
-	register int mflags;
+	union routehdr *rhp = &rhcopy;
+	int mflags;
 	int dst, src, hops;
 	u_int rhlen, nsplen, pktlen;
 	const u_char *nspp;
@@ -178,11 +177,11 @@ trunc:
 }
 
 static int
-print_decnet_ctlmsg(register const union routehdr *rhp, u_int length,
+print_decnet_ctlmsg(const union routehdr *rhp, u_int length,
     u_int caplen)
 {
 	int mflags = EXTRACT_LE_8BITS(rhp->rh_short.sh_flags);
-	register union controlmsg *cmp = (union controlmsg *)rhp;
+	union controlmsg *cmp = (union controlmsg *)rhp;
 	int src, dst, info, blksize, eco, ueco, hello, other, vers;
 	etheraddr srcea, rtea;
 	int priority;
@@ -850,7 +849,7 @@ static struct tok reason2str[] = {
 };
 
 static void
-print_reason(register int reason)
+print_reason(int reason)
 {
 	printf("%s ", tok2str(reason2str, "reason-%d", reason));
 }

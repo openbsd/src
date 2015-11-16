@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-frag6.c,v 1.7 2015/01/16 06:40:21 deraadt Exp $	*/
+/*	$OpenBSD: print-frag6.c,v 1.8 2015/11/16 00:16:39 mmcc Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1993, 1994
@@ -46,11 +46,11 @@
 #include "addrtoname.h"
 
 int
-frag6_print(register const u_char *bp, register const u_char *bp2)
+frag6_print(const u_char *bp, const u_char *bp2)
 {
-	register const struct ip6_frag *dp;
-	register const struct ip6_hdr *ip6;
-	register const u_char *ep;
+	const struct ip6_frag *dp;
+	const struct ip6_hdr *ip6;
+	const u_char *ep;
 
 #if 0
 #define TCHECK(var) if ((u_char *)&(var) >= ep - sizeof(var)) goto trunc

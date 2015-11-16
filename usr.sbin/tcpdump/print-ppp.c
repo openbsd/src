@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ppp.c,v 1.28 2015/01/16 06:40:21 deraadt Exp $	*/
+/*	$OpenBSD: print-ppp.c,v 1.29 2015/11/16 00:16:39 mmcc Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993, 1994, 1995, 1996, 1997
@@ -612,10 +612,10 @@ void
 ppp_if_print(user, h, p)
 	u_char *user;
 	const struct pcap_pkthdr *h;
-	register const u_char *p;
+	const u_char *p;
 {
-	register u_int length = h->len;
-	register u_int caplen = h->caplen;
+	u_int length = h->len;
+	u_int caplen = h->caplen;
 
 	ts_print(&h->ts);
 
@@ -677,7 +677,7 @@ void
 ppp_ether_if_print(user, h, p)
 	u_char *user;
 	const struct pcap_pkthdr *h;
-	register const u_char *p;
+	const u_char *p;
 {
 	u_int16_t pppoe_sid, pppoe_len;
 	u_int caplen = h->caplen;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-rt6.c,v 1.5 2015/01/16 06:40:21 deraadt Exp $	*/
+/*	$OpenBSD: print-rt6.c,v 1.6 2015/11/16 00:16:39 mmcc Exp $	*/
 
 
 /*
@@ -47,12 +47,12 @@
 #include "addrtoname.h"
 
 int
-rt6_print(register const u_char *bp, register const u_char *bp2)
+rt6_print(const u_char *bp, const u_char *bp2)
 {
-	register const struct ip6_rthdr *dp;
-	register const struct ip6_rthdr0 *dp0;
-	register const struct ip6_hdr *ip;
-	register const u_char *ep;
+	const struct ip6_rthdr *dp;
+	const struct ip6_rthdr0 *dp0;
+	const struct ip6_hdr *ip;
+	const u_char *ep;
 	int i, len;
 
 	dp = (struct ip6_rthdr *)bp;

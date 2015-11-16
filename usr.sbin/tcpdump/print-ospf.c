@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ospf.c,v 1.19 2015/01/16 06:40:21 deraadt Exp $	*/
+/*	$OpenBSD: print-ospf.c,v 1.20 2015/11/16 00:16:39 mmcc Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995, 1996, 1997
@@ -80,11 +80,11 @@ static int ospf_print_lsa(const struct lsa *);
 static int ospf_decode_v2(const struct ospfhdr *, const u_char *);
 
 static inline void
-ospf_print_seqage(register u_int32_t seq, register time_t us)
+ospf_print_seqage(u_int32_t seq, time_t us)
 {
-	register time_t sec = us % 60;
-	register time_t mins = (us / 60) % 60;
-	register time_t hour = us / 3600;
+	time_t sec = us % 60;
+	time_t mins = (us / 60) % 60;
+	time_t hour = us / 3600;
 
 	printf(" S %X age ", seq);
 	if (hour)
@@ -98,9 +98,9 @@ ospf_print_seqage(register u_int32_t seq, register time_t us)
 
 
 static inline void
-ospf_print_bits(register const struct bits *bp, register u_char options)
+ospf_print_bits(const struct bits *bp, u_char options)
 {
-	register char sep = ' ';
+	char sep = ' ';
 
 	do {
 		if (options & bp->bit) {
@@ -111,9 +111,8 @@ ospf_print_bits(register const struct bits *bp, register u_char options)
 }
 
 static void
-ospf_print_ls_type(register u_int ls_type,
-    register const struct in_addr *ls_stateid,
-    register const struct in_addr *ls_router, register const char *fmt)
+ospf_print_ls_type(u_int ls_type, const struct in_addr *ls_stateid,
+    const struct in_addr *ls_router, const char *fmt)
 {
 
 	switch (ls_type) {
@@ -160,7 +159,7 @@ ospf_print_ls_type(register u_int ls_type,
 }
 
 static int
-ospf_print_lshdr(register const struct lsa_hdr *lshp)
+ospf_print_lshdr(const struct lsa_hdr *lshp)
 {
 
 	TCHECK(lshp->ls_type);
@@ -183,16 +182,16 @@ trunc:
  * Print a single link state advertisement.  If truncated return 1, else 0.
  */
 static int
-ospf_print_lsa(register const struct lsa *lsap)
+ospf_print_lsa(const struct lsa *lsap)
 {
-	register const u_char *ls_end;
-	register const struct rlalink *rlp;
-	register const struct tos_metric *tosp;
-	register const struct in_addr *ap;
-	register const struct aslametric *almp;
-	register const struct mcla *mcp;
-	register const u_int32_t *lp;
-	register int j, k;
+	const u_char *ls_end;
+	const struct rlalink *rlp;
+	const struct tos_metric *tosp;
+	const struct in_addr *ap;
+	const struct aslametric *almp;
+	const struct mcla *mcp;
+	const u_int32_t *lp;
+	int j, k;
 
 	if (ospf_print_lshdr(&lsap->ls_hdr))
 		return (1);
@@ -280,7 +279,7 @@ ospf_print_lsa(register const struct lsa *lsap)
 		TCHECK(lsap->lsa_un.un_sla.sla_tosmetric);
 		lp = lsap->lsa_un.un_sla.sla_tosmetric;
 		while ((u_char *)lp < ls_end) {
-			register u_int32_t ul;
+			u_int32_t ul;
 
 			TCHECK(*lp);
 			ul = ntohl(*lp);
@@ -299,7 +298,7 @@ ospf_print_lsa(register const struct lsa *lsap)
 		TCHECK(lsap->lsa_un.un_sla.sla_tosmetric);
 		almp = lsap->lsa_un.un_asla.asla_metric;
 		while ((u_char *)almp < ls_end) {
-			register u_int32_t ul;
+			u_int32_t ul;
 
 			TCHECK(almp->asla_tosmetric);
 			ul = ntohl(almp->asla_tosmetric);
@@ -356,15 +355,14 @@ trunc:
 }
 
 static int
-ospf_decode_v2(register const struct ospfhdr *op,
-    register const u_char *dataend)
+ospf_decode_v2(const struct ospfhdr *op, const u_char *dataend)
 {
-	register const struct in_addr *ap;
-	register const struct lsr *lsrp;
-	register const struct lsa_hdr *lshp;
-	register const struct lsa *lsap;
-	register char sep;
-	register int i;
+	const struct in_addr *ap;
+	const struct lsr *lsrp;
+	const struct lsa_hdr *lshp;
+	const struct lsa *lsap;
+	char sep;
+	int i;
 
 	switch (op->ospf_type) {
 
@@ -492,13 +490,12 @@ trunc:
 }
 
 void
-ospf_print(register const u_char *bp, register u_int length,
-    register const u_char *bp2)
+ospf_print(const u_char *bp, u_int length, const u_char *bp2)
 {
-	register const struct ospfhdr *op;
-	register const struct ip *ip;
-	register const u_char *dataend;
-	register const char *cp;
+	const struct ospfhdr *op;
+	const struct ip *ip;
+	const u_char *dataend;
+	const char *cp;
 
 	op = (struct ospfhdr *)bp;
 	ip = (struct ip *)bp2;

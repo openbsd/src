@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-skip.c,v 1.5 2015/01/16 06:40:21 deraadt Exp $	*/
+/*	$OpenBSD: print-skip.c,v 1.6 2015/11/16 00:16:39 mmcc Exp $	*/
 
 /*
  * Copyright (c) 1995 Sun Microsystems, Inc.
@@ -161,8 +161,7 @@ unsigned char   old_skip_mid_sizes[MAX_ALGS] = {
                           8,    /* simplecrypt */
                 };
 
-void skip_print_old(register const u_char *bp, register int length, 
-							const u_char *bp2)
+void skip_print_old(const u_char *bp, int length, const u_char *bp2)
 {
 	struct ip *ip;
 	const u_char *end;
@@ -589,8 +588,7 @@ void skip_print_next(u_char nxt, const u_char *p, int len, const u_char *bp2)
     }
 }
 
-void skip_print(register const u_char *bp, register int length, 
-							const u_char *bp2)
+void skip_print(const u_char *bp, int length, const u_char *bp2)
 {
 	struct ip *ip;
 	const u_char *end;
@@ -753,8 +751,7 @@ void skip_print(register const u_char *bp, register int length,
 
 
 
-void ah_print(register const u_char *bp, register int length, 
-							const u_char *bp2)
+void ah_print(const u_char *bp, int length, const u_char *bp2)
 {
 	struct ip *ip;
 	const u_char *end;
@@ -845,8 +842,7 @@ void ah_print(register const u_char *bp, register int length,
 }
 
 
-void esp_print(register const u_char *bp, register int length, 
-							const u_char *bp2)
+void esp_print(const u_char *bp, int length, const u_char *bp2)
 {
 	struct ip *ip;
 	const u_char *end;

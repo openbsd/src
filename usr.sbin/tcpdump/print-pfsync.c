@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-pfsync.c,v 1.40 2015/01/16 06:40:21 deraadt Exp $	*/
+/*	$OpenBSD: print-pfsync.c,v 1.41 2015/11/16 00:16:39 mmcc Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -58,7 +58,7 @@ void	pfsync_print(struct pfsync_header *, const u_char *, int);
 
 void
 pfsync_if_print(u_char *user, const struct pcap_pkthdr *h,
-     register const u_char *p)
+     const u_char *p)
 {
 	u_int caplen = h->caplen;
 

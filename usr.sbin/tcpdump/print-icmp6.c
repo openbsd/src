@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-icmp6.c,v 1.16 2015/11/02 17:48:33 sthen Exp $	*/
+/*	$OpenBSD: print-icmp6.c,v 1.17 2015/11/16 00:16:39 mmcc Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1993, 1994
@@ -125,13 +125,13 @@ icmp6_cksum(const struct ip6_hdr *ip6, const struct icmp6_hdr *icmp6,
 void
 icmp6_print(const u_char *bp, u_int length, const u_char *bp2)
 {
-	register const struct icmp6_hdr *dp;
-	register const struct ip6_hdr *ip;
-	register const char *str;
-	register const struct ip6_hdr *oip;
-	register const struct udphdr *ouh;
-	register int hlen, dport;
-	register const u_char *ep;
+	const struct icmp6_hdr *dp;
+	const struct ip6_hdr *ip;
+	const char *str;
+	const struct ip6_hdr *oip;
+	const struct udphdr *ouh;
+	int hlen, dport;
+	const u_char *ep;
 	char buf[256];
 	int icmp6len;
 
@@ -504,22 +504,22 @@ trunc:
 }
 
 void
-icmp6_opt_print(register const u_char *bp, int resid)
+icmp6_opt_print(const u_char *bp, int resid)
 {
-	register const struct nd_opt_hdr *op;
-	register const struct nd_opt_hdr *opl;	/* why there's no struct? */
-	register const struct nd_opt_prefix_info *opp;
-	register const struct icmp6_opts_redirect *opr;
-	register const struct nd_opt_mtu *opm;
-	register const struct nd_opt_rdnss *oprd;
-	register const u_char *ep;
+	const struct nd_opt_hdr *op;
+	const struct nd_opt_hdr *opl;	/* why there's no struct? */
+	const struct nd_opt_prefix_info *opp;
+	const struct icmp6_opts_redirect *opr;
+	const struct nd_opt_mtu *opm;
+	const struct nd_opt_rdnss *oprd;
+	const u_char *ep;
 	int	i, opts_len;
 #if 0
-	register const struct ip6_hdr *ip;
-	register const char *str;
-	register const struct ip6_hdr *oip;
-	register const struct udphdr *ouh;
-	register int hlen, dport;
+	const struct ip6_hdr *ip;
+	const char *str;
+	const struct ip6_hdr *oip;
+	const struct udphdr *ouh;
+	int hlen, dport;
 	char buf[256];
 #endif
 
@@ -676,10 +676,10 @@ icmp6_opt_print(register const u_char *bp, int resid)
 }
 
 void
-mld6_print(register const u_char *bp)
+mld6_print(const u_char *bp)
 {
-	register struct mld_hdr *mp = (struct mld_hdr *)bp;
-	register const u_char *ep;
+	struct mld_hdr *mp = (struct mld_hdr *)bp;
+	const u_char *ep;
 
 	/* 'ep' points to the end of avaible data. */
 	ep = snapend;

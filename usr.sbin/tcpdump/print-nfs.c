@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-nfs.c,v 1.20 2015/10/15 02:33:25 lteo Exp $	*/
+/*	$OpenBSD: print-nfs.c,v 1.21 2015/11/16 00:16:39 mmcc Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -289,10 +289,9 @@ print_sattr3(const struct nfsv3_sattr *sa3, int verbose)
 }
 
 void
-nfsreply_print(register const u_char *bp, u_int length,
-	       register const u_char *bp2)
+nfsreply_print(const u_char *bp, u_int length, const u_char *bp2)
 {
-	register const struct rpc_msg *rp;
+	const struct rpc_msg *rp;
 	u_int32_t proc, vers;
 
 	nfserr = 0;		/* assume no error */
@@ -310,10 +309,10 @@ nfsreply_print(register const u_char *bp, u_int length,
  * If the packet was truncated, return 0.
  */
 static const u_int32_t *
-parsereq(register const struct rpc_msg *rp, register u_int length)
+parsereq(const struct rpc_msg *rp, u_int length)
 {
-	register const u_int32_t *dp;
-	register u_int len;
+	const u_int32_t *dp;
+	u_int len;
 
 	/*
 	 * find the start of the req data (if we captured it)
@@ -340,7 +339,7 @@ trunc:
  * If packet was truncated, return 0.
  */
 static const u_int32_t *
-parsefh(register const u_int32_t *dp, int v3)
+parsefh(const u_int32_t *dp, int v3)
 {
 	int len;
 
@@ -364,10 +363,10 @@ trunc:
  * If packet was truncated, return 0.
  */
 static const u_int32_t *
-parsefn(register const u_int32_t *dp)
+parsefn(const u_int32_t *dp)
 {
-	register u_int32_t len;
-	register const u_char *cp;
+	u_int32_t len;
+	const u_char *cp;
 
 	/* Bail if we don't have the string length */
 	TCHECK(*dp);
@@ -399,7 +398,7 @@ trunc:
  * If packet was truncated (or there was some other error), return 0.
  */
 static const u_int32_t *
-parsefhn(register const u_int32_t *dp, int v3)
+parsefhn(const u_int32_t *dp, int v3)
 {
 	dp = parsefh(dp, v3);
 	if (dp == NULL)
@@ -409,11 +408,10 @@ parsefhn(register const u_int32_t *dp, int v3)
 }
 
 void
-nfsreq_print(register const u_char *bp, u_int length,
-    register const u_char *bp2)
+nfsreq_print(const u_char *bp, u_int length, const u_char *bp2)
 {
-	register const struct rpc_msg *rp;
-	register const u_int32_t *dp;
+	const struct rpc_msg *rp;
+	const u_int32_t *dp;
 	nfstype type;
 	int vers;
 	int v3 = 0;
@@ -715,7 +713,7 @@ trunc:
  * additional hacking on the parser code.
  */
 static void
-nfs_printfh(register const u_int32_t *dp, const u_int len)
+nfs_printfh(const u_int32_t *dp, const u_int len)
 {
 	my_fsid fsid;
 	ino_t ino;
@@ -884,9 +882,9 @@ xid_map_find(const struct rpc_msg *rp, const u_char *bp, u_int32_t *proc,
  * If the packet was truncated, return 0.
  */
 static const u_int32_t *
-parserep(register const struct rpc_msg *rp, register u_int length)
+parserep(const struct rpc_msg *rp, u_int length)
 {
-	register const u_int32_t *dp;
+	const u_int32_t *dp;
 	u_int len;
 	enum accept_stat astat;
 
@@ -1379,8 +1377,8 @@ trunc:
 static void
 interp_reply(const struct rpc_msg *rp, u_int32_t proc, u_int32_t vers, int length)
 {
-	register const u_int32_t *dp;
-	register int v3;
+	const u_int32_t *dp;
+	int v3;
 	int er;
 
 	v3 = (vers == NFS_VER3);

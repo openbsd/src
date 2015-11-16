@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ip.c,v 1.44 2015/08/21 02:07:32 deraadt Exp $	*/
+/*	$OpenBSD: print-ip.c,v 1.45 2015/11/16 00:16:39 mmcc Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -123,9 +123,9 @@ struct tr_resp {
 #define TR_PROTO_PIM	3
 #define TR_PROTO_CBT	4
 
-static void print_mtrace(register const u_char *bp, register u_int len)
+static void print_mtrace(const u_char *bp, u_int len)
 {
-	register struct tr_query *tr = (struct tr_query *)(bp + 8);
+	struct tr_query *tr = (struct tr_query *)(bp + 8);
 
 	printf("mtrace %d: %s to %s reply-to %s", tr->tr_qid,
 		ipaddr_string(&tr->tr_src), ipaddr_string(&tr->tr_dst),
@@ -134,9 +134,9 @@ static void print_mtrace(register const u_char *bp, register u_int len)
 		printf(" with-ttl %d", tr->tr_rttl);
 }
 
-static void print_mresp(register const u_char *bp, register u_int len)
+static void print_mresp(const u_char *bp, u_int len)
 {
-	register struct tr_query *tr = (struct tr_query *)(bp + 8);
+	struct tr_query *tr = (struct tr_query *)(bp + 8);
 
 	printf("mresp %d: %s to %s reply-to %s", tr->tr_qid,
 		ipaddr_string(&tr->tr_src), ipaddr_string(&tr->tr_dst),
@@ -146,10 +146,9 @@ static void print_mresp(register const u_char *bp, register u_int len)
 }
 
 static void
-igmp_print(register const u_char *bp, register u_int len,
-	   register const u_char *bp2)
+igmp_print(const u_char *bp, u_int len, const u_char *bp2)
 {
-	register const struct ip *ip;
+	const struct ip *ip;
 
 	ip = (const struct ip *)bp2;
         (void)printf("%s > %s: ",
@@ -226,10 +225,10 @@ trunc:
  * print the recorded route in an IP RR, LSRR or SSRR option.
  */
 static void
-ip_printroute(const char *type, register const u_char *cp, u_int length)
+ip_printroute(const char *type, const u_char *cp, u_int length)
 {
-	register u_int ptr = cp[2] - 1;
-	register u_int len;
+	u_int ptr = cp[2] - 1;
+	u_int len;
 
 	printf(" %s{", type);
 	if ((length + 1) & 3)
@@ -251,9 +250,9 @@ ip_printroute(const char *type, register const u_char *cp, u_int length)
  * print IP options.
  */
 static void
-ip_optprint(register const u_char *cp, u_int length)
+ip_optprint(const u_char *cp, u_int length)
 {
-	register u_int len;
+	u_int len;
 	int tt;
 
 	for (; length > 0; cp += len, length -= len) {
@@ -317,7 +316,7 @@ trunc:
  * don't modifiy the packet.
  */
 u_short
-in_cksum(const u_short *addr, register int len, int csum)
+in_cksum(const u_short *addr, int len, int csum)
 {
 	int nleft = len;
 	const u_short *w = addr;
@@ -350,11 +349,11 @@ in_cksum(const u_short *addr, register int len, int csum)
  * print an IP datagram.
  */
 void
-ip_print(register const u_char *bp, register u_int length)
+ip_print(const u_char *bp, u_int length)
 {
-	register const struct ip *ip;
-	register u_int hlen, len, off;
-	register const u_char *cp;
+	const struct ip *ip;
+	u_int hlen, len, off;
+	const u_char *cp;
 	const u_char *pktp = packetp;
 	const u_char *send = snapend;
 
