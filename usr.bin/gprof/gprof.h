@@ -1,4 +1,4 @@
-/*	$OpenBSD: gprof.h,v 1.14 2013/10/19 13:51:40 deraadt Exp $	*/
+/*	$OpenBSD: gprof.h,v 1.15 2015/11/16 17:43:17 pascal Exp $	*/
 /*	$NetBSD: gprof.h,v 1.13 1996/04/01 21:54:06 mark Exp $	*/
 
 /*
@@ -40,6 +40,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <err.h>
+#include <unistd.h>
 
 #include MD_INCLUDE
 
