@@ -1,4 +1,4 @@
-/* $OpenBSD: rebound.c,v 1.42 2015/11/10 07:24:38 deraadt Exp $ */
+/* $OpenBSD: rebound.c,v 1.43 2015/11/16 20:56:56 tedu Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -268,6 +268,10 @@ newrequest(int ud, struct sockaddr *remoteaddr)
 	req->s = socket(remoteaddr->sa_family, SOCK_DGRAM, 0);
 	if (req->s == -1)
 		goto fail;
+
+	TAILQ_INSERT_TAIL(&reqfifo, req, fifo);
+	RB_INSERT(reqtree, &reqtree, req);
+
 	if (connect(req->s, remoteaddr, remoteaddr->sa_len) == -1) {
 		logmsg(LOG_NOTICE, "failed to connect");
 		goto fail;
@@ -275,8 +279,6 @@ newrequest(int ud, struct sockaddr *remoteaddr)
 	if (send(req->s, buf, r, 0) != r)
 		goto fail;
 
-	TAILQ_INSERT_TAIL(&reqfifo, req, fifo);
-	RB_INSERT(reqtree, &reqtree, req);
 	return req;
 
 fail:
@@ -366,6 +368,10 @@ newtcprequest(int ld, struct sockaddr *remoteaddr)
 	req->s = socket(remoteaddr->sa_family, SOCK_STREAM | SOCK_NONBLOCK, 0);
 	if (req->s == -1)
 		goto fail;
+
+	TAILQ_INSERT_TAIL(&reqfifo, req, fifo);
+	RB_INSERT(reqtree, &reqtree, req);
+
 	if (connect(req->s, remoteaddr, remoteaddr->sa_len) == -1) {
 		if (errno != EINPROGRESS)
 			goto fail;
@@ -373,8 +379,6 @@ newtcprequest(int ld, struct sockaddr *remoteaddr)
 		return tcpphasetwo(req);
 	}
 
-	TAILQ_INSERT_TAIL(&reqfifo, req, fifo);
-	RB_INSERT(reqtree, &reqtree, req);
 	return req;
 
 fail:
