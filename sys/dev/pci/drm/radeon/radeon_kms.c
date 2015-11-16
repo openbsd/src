@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_kms.c,v 1.42 2015/09/27 16:13:23 kettenis Exp $	*/
+/*	$OpenBSD: radeon_kms.c,v 1.43 2015/11/16 11:24:58 kettenis Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -1091,13 +1091,16 @@ int radeon_driver_firstopen_kms(struct drm_device *dev)
 void radeon_driver_lastclose_kms(struct drm_device *dev)
 {
 	struct radeon_device *rdev = dev->dev_private;
+	struct drm_fb_helper *fb_helper = (void *)rdev->mode_info.rfbdev;
 
 #ifdef __sparc64__
 	fbwscons_setcolormap(&rdev->sf, radeondrm_setcolor);
 #endif
-	drm_modeset_lock_all(dev);
-	drm_fb_helper_restore_fbdev_mode((void *)rdev->mode_info.rfbdev);
-	drm_modeset_unlock_all(dev);
+	if (rdev->mode_info.mode_config_initialized) {
+		drm_modeset_lock_all(dev);
+		drm_fb_helper_restore_fbdev_mode(fb_helper);
+		drm_modeset_unlock_all(dev);
+	}
 #ifdef notyet
 	vga_switcheroo_process_delayed_switch();
 #endif
