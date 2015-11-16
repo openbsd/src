@@ -1,4 +1,4 @@
-/*	$OpenBSD: utils.c,v 1.37 2015/05/03 19:44:58 guenther Exp $	*/
+/*	$OpenBSD: utils.c,v 1.38 2015/11/16 21:35:58 tedu Exp $	*/
 /*	$NetBSD: utils.c,v 1.6 1997/02/26 14:40:51 cgd Exp $	*/
 
 /*-
@@ -202,19 +202,19 @@ int
 copy_link(FTSENT *p, int exists)
 {
 	int len;
-	char link[PATH_MAX];
+	char name[PATH_MAX];
 
-	if ((len = readlink(p->fts_path, link, sizeof(link)-1)) == -1) {
+	if ((len = readlink(p->fts_path, name, sizeof(name)-1)) == -1) {
 		warn("readlink: %s", p->fts_path);
 		return (1);
 	}
-	link[len] = '\0';
+	name[len] = '\0';
 	if (exists && unlink(to.p_path)) {
 		warn("unlink: %s", to.p_path);
 		return (1);
 	}
-	if (symlink(link, to.p_path)) {
-		warn("symlink: %s", link);
+	if (symlink(name, to.p_path)) {
+		warn("symlink: %s", name);
 		return (1);
 	}
 	return (pflag ? setlink(p->fts_statp) : 0);
