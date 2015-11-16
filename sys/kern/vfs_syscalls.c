@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.240 2015/11/14 22:23:22 deraadt Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.241 2015/11/16 18:25:18 deraadt Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -2828,6 +2828,8 @@ sys_revoke(struct proc *p, void *v, register_t *retval)
 	if ((error = namei(&nd)) != 0)
 		return (error);
 	vp = nd.ni_vp;
+	if (!(vp->v_flag & VISTTY))
+		return (ENOTTY);
 	if ((error = VOP_GETATTR(vp, &vattr, p->p_ucred, p)) != 0)
 		goto out;
 	if (p->p_ucred->cr_uid != vattr.va_uid &&

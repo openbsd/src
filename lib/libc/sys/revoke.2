@@ -1,4 +1,4 @@
-.\"	$OpenBSD: revoke.2,v 1.12 2015/05/31 23:54:25 schwarze Exp $
+.\"	$OpenBSD: revoke.2,v 1.13 2015/11/16 18:25:18 deraadt Exp $
 .\"	$NetBSD: revoke.2,v 1.3 1995/10/12 15:41:11 jtc Exp $
 .\"
 .\" Copyright (c) 1993
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)revoke.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: May 31 2015 $
+.Dd $Mdocdate: November 16 2015 $
 .Dt REVOKE 2
 .Os
 .Sh NAME
@@ -47,13 +47,12 @@
 The
 .Fn revoke
 function invalidates all current open file descriptors in the system
-for the file named by
+for the tty device named by
 .Fa path .
 Subsequent operations on any such descriptors
 fail, with the exceptions that a
 .Fn read
-from a character device file which has been revoked
-returns a count of zero (end of file),
+from a tty which has been revoked returns a count of zero (end of file),
 and a
 .Fn close
 call will succeed.
@@ -64,8 +63,13 @@ is called as if all open references to the file had been closed.
 Access to a file may be revoked only by its owner or the superuser.
 The
 .Fn revoke
-function is normally used to prepare a terminal device for a new login session,
+function is used to prepare a terminal device for a new login session,
 preventing any access by a previous user of the terminal.
+The
+.Xr pty 4
+subsystem has this as an implicit operation, but hardwired
+. Xr tty 4
+require the operation.
 .Sh RETURN VALUES
 .Rv -std
 .Sh ERRORS
@@ -82,6 +86,9 @@ exceeded
 bytes.
 .It Bq Er ENOENT
 The named file or a component of the path name does not exist.
+.It Bq Er ENOTTY
+.Ar path
+is not associated with a tty special device.
 .It Bq Er EACCES
 Search permission is denied for a component of the path prefix.
 .It Bq Er ELOOP
