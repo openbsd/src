@@ -6040,11 +6040,9 @@
 ./usr/share/man/man9/RWLOCK_INITIALIZER.9
 ./usr/share/man/man9/SRPL_EMPTY_LOCKED.9
 ./usr/share/man/man9/SRPL_ENTER.9
-./usr/share/man/man9/SRPL_ENTRY_INIT.9
 ./usr/share/man/man9/SRPL_FIRST_LOCKED.9
 ./usr/share/man/man9/SRPL_FOREACH.9
 ./usr/share/man/man9/SRPL_FOREACH_LOCKED.9
-./usr/share/man/man9/SRPL_HEAD_INIT.9
 ./usr/share/man/man9/SRPL_INSERT_AFTER_LOCKED.9
 ./usr/share/man/man9/SRPL_INSERT_HEAD_LOCKED.9
 ./usr/share/man/man9/SRPL_LEAVE.9
@@ -6356,7 +6354,6 @@
 ./usr/share/man/man9/ieee80211_begin_scan.9
 ./usr/share/man/man9/ieee80211_chan2ieee.9
 ./usr/share/man/man9/ieee80211_chan2mode.9
-./usr/share/man/man9/ieee80211_compute_duration.9
 ./usr/share/man/man9/ieee80211_create_ibss.9
 ./usr/share/man/man9/ieee80211_crypto.9
 ./usr/share/man/man9/ieee80211_crypto_attach.9
