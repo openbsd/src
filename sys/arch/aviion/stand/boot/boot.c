@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.5 2014/02/24 20:15:37 miod Exp $ */
+/*	$OpenBSD: boot.c,v 1.6 2015/11/16 19:33:52 miod Exp $ */
 
 /*-
  * Copyright (c) 1995 Theo de Raadt
@@ -109,7 +109,7 @@ boot(const char *args, uint bootdev, uint bootunit, uint bootlun)
 	for (;;) {
 		if (ask != 0) {
 			printf("boot: ");
-			gets(line);
+			getln(line, sizeof line);
 			if (line[0] == '\0')
 				continue;
 

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.6 2014/11/19 20:01:35 miod Exp $
+#	$OpenBSD: Makefile,v 1.7 2015/11/16 19:33:52 miod Exp $
 
 LIB=sa
 
@@ -12,7 +12,7 @@ S=${.CURDIR}/../../../..
 SRCS=	clock.c delay.S exec.c fault.c parse_args.c setjmp.S
 
 .PATH:	${S}/lib/libsa
-SRCS+=	alloc.c memcpy.c exit.c getfile.c gets.c globals.c loadfile.c \
+SRCS+=	alloc.c memcpy.c exit.c getfile.c getln.c globals.c loadfile.c \
 	printf.c strerror.c memset.c memcmp.c strncpy.c strcmp.c strlen.c \
 	strlcpy.c strlcat.c snprintf.c strchr.c strtol.c \
 	close.c closeall.c dev.c dkcksum.c \

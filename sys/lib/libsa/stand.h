@@ -1,4 +1,4 @@
-/*	$OpenBSD: stand.h,v 1.61 2015/09/02 01:52:26 yasuoka Exp $	*/
+/*	$OpenBSD: stand.h,v 1.62 2015/11/16 19:33:52 miod Exp $	*/
 /*	$NetBSD: stand.h,v 1.18 1996/11/30 04:35:51 gwr Exp $	*/
 
 /*-
@@ -138,7 +138,7 @@ void	printf(const char *, ...);
 int	snprintf(char *, size_t, const char *, ...);
 void	vprintf(const char *, __va_list);
 void	twiddle(void);
-void	gets(char *);
+void	getln(char *, size_t);
 __dead void	panic(const char *, ...) __attribute__((noreturn));
 __dead void	_rtt(void) __attribute__((noreturn));
 #define	bzero(s,n)	((void)memset((s),0,(n)))

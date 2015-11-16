@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.4 2014/07/13 09:26:08 jasper Exp $
+#	$OpenBSD: Makefile,v 1.5 2015/11/16 19:33:52 miod Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
 
@@ -16,7 +16,7 @@ CFLAGS+= ${CEXTRAFLAGS} ${SAABI} -nostdinc -mno-abicalls -D_NO_ABICALLS \
 	-I${.OBJDIR}
 
 # stand routines
-SRCS=	alloc.c cons.c ctime.c exit.c getchar.c getfile.c gets.c globals.c \
+SRCS=	alloc.c cons.c ctime.c exit.c getchar.c getfile.c getln.c globals.c \
 	memcmp.c memcpy.c memset.c printf.c putchar.c \
 	snprintf.c strchr.c strcmp.c strerror.c strncmp.c strncpy.c strtol.c
 

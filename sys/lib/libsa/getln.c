@@ -1,4 +1,4 @@
-/*	$OpenBSD: gets.c,v 1.4 2003/08/11 06:23:09 deraadt Exp $	*/
+/*	$OpenBSD: getln.c,v 1.1 2015/11/16 19:33:52 miod Exp $	*/
 /*	$NetBSD: gets.c,v 1.5.2.1 1995/10/13 19:54:26 pk Exp $	*/
 
 /*-
@@ -35,12 +35,16 @@
 #include "stand.h"
 
 void
-gets(char *buf)
+getln(char *buf, size_t bufsiz)
 {
 	int c;
-	char *lp;
+	char *lp, *ep;
 
-	for (lp = buf;;)
+	if (bufsiz == 0)
+		return;
+	ep = buf + bufsiz - 1;
+
+	for (lp = buf; ;)
 		switch (c = getchar() & 0177) {
 		case '\n':
 		case '\r':
@@ -62,24 +66,26 @@ gets(char *buf)
 				--lp;
 			break;
 #endif
-		case 'r'&037: {
-		char *p;
+		case 'r' & 037:
+		    {
+			char *p;
 
 			putchar('\n');
 			for (p = buf; p < lp; ++p)
 				putchar(*p);
 			break;
-		}
+		    }
 #if AT_ERASE
 		case '@':
 #endif
-		case 'u'&037:
-		case 'w'&037:
+		case 'u' & 037:
+		case 'w' & 037:
 			lp = buf;
 			putchar('\n');
 			break;
 		default:
-			*lp++ = c;
+			if (lp != ep)
+				*lp++ = c;
 			putchar(c);
 		}
 	/*NOTREACHED*/

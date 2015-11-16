@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.10 2014/11/19 20:01:36 miod Exp $
+#	$OpenBSD: Makefile,v 1.11 2015/11/16 19:33:52 miod Exp $
 
 LIB=	sa
 
@@ -16,7 +16,7 @@ CFLAGS= ${CEXTRAFLAGS} ${AFLAGS} -O2 -D__INTERNAL_LIBSA_CREAD -nostdinc \
 CPPFLAGS+= -D__INTERNAL_LIBSA_CREAD
 
 # stand routines
-SRCS=	alloc.c exit.c getfile.c gets.c globals.c \
+SRCS=	alloc.c exit.c getfile.c getln.c globals.c \
 	memcmp.c memcpy.c memset.c printf.c snprintf.c strerror.c strncpy.c
 
 # io routines

@@ -1,4 +1,4 @@
-/*	$OpenBSD: getfile.c,v 1.6 2014/11/19 20:28:56 miod Exp $	*/
+/*	$OpenBSD: getfile.c,v 1.7 2015/11/16 19:33:52 miod Exp $	*/
 /*	$NetBSD: getfile.c,v 1.6 1996/10/14 04:49:21 cgd Exp $	*/
 
 /*-
@@ -45,7 +45,7 @@ getfile(const char *prompt, int mode)
 
 	do {
 		printf("%s: ", prompt);
-		gets(buf);
+		getln(buf, sizeof buf);
 		if (buf[0] == CTRL('d') && buf[1] == 0)
 			return (-1);
 	} while ((fd = open(buf, mode)) < 0);

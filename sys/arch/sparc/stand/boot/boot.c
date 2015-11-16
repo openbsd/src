@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.14 2015/05/19 20:42:11 miod Exp $	*/
+/*	$OpenBSD: boot.c,v 1.15 2015/11/16 19:33:52 miod Exp $	*/
 /*	$NetBSD: boot.c,v 1.2 1997/09/14 19:27:21 pk Exp $	*/
 
 /*-
@@ -357,11 +357,11 @@ main(int argc, char *argv[])
 	for (;;) {
 		if (prom_boothow & RB_ASKNAME) {
 			printf("device[%s]: ", prom_bootdevice);
-			gets(dbuf);
+			getln(dbuf, sizeof dbuf);
 			if (dbuf[0])
 				prom_bootdevice = dbuf;
 			printf("boot: ");
-			gets(fbuf);
+			getln(fbuf, sizeof fbuf);
 			if (fbuf[0])
 				file = fbuf;
 		}
