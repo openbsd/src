@@ -1,4 +1,4 @@
-/*	$OpenBSD: apmd.c,v 1.78 2015/11/13 12:59:25 jca Exp $	*/
+/*	$OpenBSD: apmd.c,v 1.79 2015/11/16 17:35:05 tedu Exp $	*/
 
 /*
  *  Copyright (c) 1995, 1996 John T. Kohl
@@ -277,7 +277,7 @@ handle_client(int sock_fd, int ctl_fd)
 	case SETPERF_LOW:
 		doperf = PERF_MANUAL;
 		reply.newstate = NORMAL;
-		syslog(LOG_NOTICE, "setting hw.perfpolicy to manual");
+		syslog(LOG_NOTICE, "setting hw.perfpolicy to low");
 		setperfpolicy("low");
 		break;
 	case SETPERF_HIGH:
@@ -305,7 +305,7 @@ handle_client(int sock_fd, int ctl_fd)
 	reply.perfmode = doperf;
 	reply.vno = APMD_VNO;
 	if (send(cli_fd, &reply, sizeof(reply), 0) != sizeof(reply))
-		syslog(LOG_INFO, "client reply botch");
+		syslog(LOG_INFO, "reply to client botched");
 	close(cli_fd);
 
 	return reply.newstate;
