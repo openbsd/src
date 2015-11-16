@@ -1,3 +1,4 @@
+/*	$OpenBSD: vmmvar.h,v 1.2 2015/11/16 10:08:41 mpi Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -19,8 +20,6 @@
  */
 #ifndef _MACHINE_VMMVAR_H_
 #define _MACHINE_VMMVAR_H_
-
-#include <sys/rwlock.h>
 
 #define VMM_HV_SIGNATURE 	"OpenBSDVMM58"
 
@@ -216,17 +215,9 @@ struct vm_readpage_params {
 
 #ifdef _KERNEL
 
-#include <uvm/uvm_extern.h>
-
 #define VMX_FAIL_LAUNCH_UNKNOWN 1
 #define VMX_FAIL_LAUNCH_INVALID_VMCS 2
 #define VMX_FAIL_LAUNCH_VALID_VMCS 3
-
-#ifdef VMM_DEBUG
-#define dprintf(x...)	do { if (vmm_debug) printf(x); } while(0)
-#else
-#define dprintf(x...)
-#endif /* VMM_DEBUG */
 
 enum {
 	VMM_MODE_UNKNOWN,
@@ -303,6 +294,11 @@ struct vmx_gueststate
 };
 
 /*
+ * Virtual Machine
+ */
+struct vm;
+
+/*
  * Virtual CPU
  */
 struct vcpu {
@@ -350,23 +346,6 @@ struct vcpu {
 };
 
 SLIST_HEAD(vcpu_head, vcpu);
-
-/*
- * Virtual Machine
- */
-struct vm {
-	vm_map_t		 vm_map;
-	uint32_t		 vm_id;
-	pid_t			 vm_creator_pid;
-	uint32_t		 vm_memory_size;
-	char			 vm_name[VMM_MAX_NAME_LEN];
-
-	struct vcpu_head	 vm_vcpu_list;
-	uint32_t		 vm_vcpu_ct;
-	struct rwlock		 vm_vcpu_lock;
-
-	SLIST_ENTRY(vm)		 vm_link;
-};
 
 void	vmm_dispatch_intr(vaddr_t);
 int	vmxon(uint64_t *);

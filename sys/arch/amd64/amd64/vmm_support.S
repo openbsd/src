@@ -1,3 +1,4 @@
+/*	$OpenBSD: vmm_support.S,v 1.2 2015/11/16 10:08:41 mpi Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
