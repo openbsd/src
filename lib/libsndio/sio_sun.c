@@ -1,4 +1,4 @@
-/*	$OpenBSD: sio_sun.c,v 1.19 2015/10/02 09:48:22 ratchov Exp $	*/
+/*	$OpenBSD: sio_sun.c,v 1.20 2015/11/17 16:07:42 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -331,7 +331,7 @@ sio_sun_getcap(struct sio_hdl *sh, struct sio_cap *cap)
 struct sio_hdl *
 _sio_sun_open(const char *str, unsigned int mode, int nbio)
 {
-	int fd, flags, fullduplex;
+	int fd, flags;
 	struct audio_info aui;
 	struct sio_sun_hdl *hdl;
 	struct sio_par par;
@@ -380,17 +380,6 @@ _sio_sun_open(const char *str, unsigned int mode, int nbio)
 	if (ioctl(fd, AUDIO_SETINFO, &aui) < 0) {
 		DPERROR("sio_open_sun: setinfo");
 		goto bad_close;
-	}
-	/*
-	 * If both play and record are requested then
-	 * set full duplex mode.
-	 */
-	if (mode == (SIO_PLAY | SIO_REC)) {
-		fullduplex = 1;
-		if (ioctl(fd, AUDIO_SETFD, &fullduplex) < 0) {
-			DPRINTF("sio_open_sun: %s: can't set full-duplex\n", path);
-			goto bad_close;
-		}
 	}
 	hdl->fd = fd;
 
