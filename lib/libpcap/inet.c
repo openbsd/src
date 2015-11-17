@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.22 2015/11/17 18:19:45 mmcc Exp $	*/
+/*	$OpenBSD: inet.c,v 1.23 2015/11/17 21:39:23 mmcc Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996, 1997, 1998
@@ -118,7 +118,7 @@ pcap_freealldevs(pcap_if_t *alldevs)
  */
 char *
 pcap_lookupdev(errbuf)
-	register char *errbuf;
+	char *errbuf;
 {
 #ifdef HAVE_IFADDRS_H
 	struct ifaddrs *ifap, *ifa, *mp;
@@ -158,9 +158,9 @@ pcap_lookupdev(errbuf)
 	freeifaddrs(ifap);
 	return (device);
 #else
-	register int fd, minunit, n;
-	register char *cp;
-	register struct ifreq *ifrp, *ifend, *ifnext, *mp;
+	int fd, minunit, n;
+	char *cp;
+	struct ifreq *ifrp, *ifend, *ifnext, *mp;
 	struct ifconf ifc;
 	struct ifreq ibuf[16], ifr;
 	static char device[sizeof(ifrp->ifr_name) + 1];

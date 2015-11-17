@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: scanner.l,v 1.22 2011/03/28 07:54:16 giovanni Exp $	*/
+/*	$OpenBSD: scanner.l,v 1.23 2015/11/17 21:39:23 mmcc Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -334,7 +334,7 @@ yywrap()
 /* Hex digit to integer. */
 static inline int
 xdtoi(c)
-	register int c;
+	int c;
 {
 	if (isdigit(c))
 		return c - '0';

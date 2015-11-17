@@ -1,4 +1,4 @@
-/*	$OpenBSD: optimize.c,v 1.16 2015/11/17 18:19:45 mmcc Exp $	*/
+/*	$OpenBSD: optimize.c,v 1.17 2015/11/17 21:39:23 mmcc Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1993, 1994, 1995, 1996
@@ -165,8 +165,8 @@ bpf_u_int32 *space2;
  */
 #define SET_INTERSECT(a, b, n)\
 {\
-	register bpf_u_int32 *_x = a, *_y = b;\
-	register int _n = n;\
+	bpf_u_int32 *_x = a, *_y = b;\
+	int _n = n;\
 	while (--_n >= 0) *_x++ &= *_y++;\
 }
 
@@ -175,8 +175,8 @@ bpf_u_int32 *space2;
  */
 #define SET_SUBTRACT(a, b, n)\
 {\
-	register bpf_u_int32 *_x = a, *_y = b;\
-	register int _n = n;\
+	bpf_u_int32 *_x = a, *_y = b;\
+	int _n = n;\
 	while (--_n >= 0) *_x++ &=~ *_y++;\
 }
 
@@ -185,8 +185,8 @@ bpf_u_int32 *space2;
  */
 #define SET_UNION(a, b, n)\
 {\
-	register bpf_u_int32 *_x = a, *_y = b;\
-	register int _n = n;\
+	bpf_u_int32 *_x = a, *_y = b;\
+	int _n = n;\
 	while (--_n >= 0) *_x++ |= *_y++;\
 }
 
@@ -351,7 +351,7 @@ static int
 atomuse(s)
 	struct stmt *s;
 {
-	register int c = s->code;
+	int c = s->code;
 
 	if (c == NOP)
 		return -1;
@@ -1048,10 +1048,10 @@ opt_stmt(s, val, alter)
 
 static void
 deadstmt(s, last)
-	register struct stmt *s;
-	register struct stmt *last[];
+	struct stmt *s;
+	struct stmt *last[];
 {
-	register int atom;
+	int atom;
 
 	atom = atomuse(s);
 	if (atom >= 0) {
@@ -1074,10 +1074,10 @@ deadstmt(s, last)
 
 static void
 opt_deadstores(b)
-	register struct block *b;
+	struct block *b;
 {
-	register struct slist *s;
-	register int atom;
+	struct slist *s;
+	int atom;
 	struct stmt *last[N_ATOMS];
 
 	memset((char *)last, 0, sizeof last);
@@ -1233,8 +1233,8 @@ static void
 opt_j(ep)
 	struct edge *ep;
 {
-	register int i, k;
-	register struct block *target;
+	int i, k;
+	struct block *target;
 
 	if (JT(ep->succ) == 0)
 		return;
@@ -1258,7 +1258,7 @@ opt_j(ep)
 	 */
  top:
 	for (i = 0; i < edgewords; ++i) {
-		register bpf_u_int32 x = ep->edom[i];
+		bpf_u_int32 x = ep->edom[i];
 
 		while (x != 0) {
 			k = ffs(x) - 1;
@@ -1879,7 +1879,7 @@ fail2:
 	p = space2;
 	all_edge_sets = p;
 	for (i = 0; i < n; ++i) {
-		register struct block *b = blocks[i];
+		struct block *b = blocks[i];
 
 		b->et.edom = p;
 		p += edgewords;

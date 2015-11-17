@@ -1,4 +1,4 @@
-/*	$OpenBSD: nametoaddr.c,v 1.18 2015/11/17 18:19:45 mmcc Exp $	*/
+/*	$OpenBSD: nametoaddr.c,v 1.19 2015/11/17 21:39:23 mmcc Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996
@@ -256,7 +256,7 @@ pcap_nametollc(const char *s)
 /* Hex digit to integer. */
 static __inline int
 xdtoi(c)
-	register int c;
+	int c;
 {
 	if (isdigit(c))
 		return c - '0';
@@ -313,8 +313,8 @@ __pcap_atodn(const char *s, bpf_u_int32 *addr)
 u_char *
 pcap_ether_aton(const char *s)
 {
-	register u_char *ep, *e;
-	register u_int d;
+	u_char *ep, *e;
+	u_int d;
 
 	e = ep = malloc(6);
 	if (e == NULL)
@@ -339,8 +339,8 @@ pcap_ether_aton(const char *s)
 u_char *
 pcap_ether_hostton(const char *name)
 {
-	register struct pcap_etherent *ep;
-	register u_char *ap;
+	struct pcap_etherent *ep;
+	u_char *ap;
 	static FILE *fp = NULL;
 	static init = 0;
 
@@ -372,7 +372,7 @@ pcap_ether_hostton(const char *name)
 u_char *
 pcap_ether_hostton(const char *name)
 {
-	register u_char *ap;
+	u_char *ap;
 	u_char a[6];
 
 	ap = NULL;

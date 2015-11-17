@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcap-bpf.c,v 1.30 2015/10/01 13:29:08 jsg Exp $	*/
+/*	$OpenBSD: pcap-bpf.c,v 1.31 2015/11/17 21:39:23 mmcc Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995, 1996, 1998
@@ -71,7 +71,7 @@ pcap_read(pcap_t *p, int cnt, pcap_handler callback, u_char *user)
 {
 	int cc;
 	int n = 0;
-	register u_char *bp, *ep;
+	u_char *bp, *ep;
 
  again:
 	/*
@@ -143,7 +143,7 @@ pcap_read(pcap_t *p, int cnt, pcap_handler callback, u_char *user)
 #define bhp ((struct bpf_hdr *)bp)
 	ep = bp + cc;
 	while (bp < ep) {
-		register int caplen, hdrlen;
+		int caplen, hdrlen;
 
 		/*
 		 * Has "pcap_breakloop()" been called?

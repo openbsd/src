@@ -1,4 +1,4 @@
-/*	$OpenBSD: gencode.c,v 1.42 2015/11/17 18:19:45 mmcc Exp $	*/
+/*	$OpenBSD: gencode.c,v 1.43 2015/11/17 21:39:23 mmcc Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998
@@ -220,7 +220,7 @@ freechunks()
  */
 char *
 sdup(s)
-	register const char *s;
+	const char *s;
 {
 	int n = strlen(s) + 1;
 	char *cp = newchunk(n);
@@ -410,7 +410,7 @@ static void
 merge(b0, b1)
 	struct block *b0, *b1;
 {
-	register struct block **p = &b0;
+	struct block **p = &b0;
 
 	/* Find end of list. */
 	while (*p)
@@ -549,14 +549,14 @@ gen_mcmp_nl(offset, size, v, mask)
 
 static struct block *
 gen_bcmp(offset, size, v)
-	register u_int offset, size;
-	register const u_char *v;
+	u_int offset, size;
+	const u_char *v;
 {
-	register struct block *b, *tmp;
+	struct block *b, *tmp;
 
 	b = NULL;
 	while (size >= 4) {
-		register const u_char *p = &v[size - 4];
+		const u_char *p = &v[size - 4];
 		bpf_int32 w = ((bpf_int32)p[0] << 24) |
 		    ((bpf_int32)p[1] << 16) | ((bpf_int32)p[2] << 8) | p[3];
 
@@ -567,7 +567,7 @@ gen_bcmp(offset, size, v)
 		size -= 4;
 	}
 	while (size >= 2) {
-		register const u_char *p = &v[size - 2];
+		const u_char *p = &v[size - 2];
 		bpf_int32 w = ((bpf_int32)p[0] << 8) | p[1];
 
 		tmp = gen_cmp(offset + size - 2, BPF_H, w);
@@ -821,7 +821,7 @@ gen_false()
 
 static struct block *
 gen_linktype(proto)
-	register int proto;
+	int proto;
 {
 	struct block *b0, *b1;
 
@@ -1025,8 +1025,8 @@ gen_hostop6(addr, mask, dir, proto, src_off, dst_off)
 
 static struct block *
 gen_ehostop(eaddr, dir)
-	register const u_char *eaddr;
-	register int dir;
+	const u_char *eaddr;
+	int dir;
 {
 	struct block *b0, *b1;
 
@@ -1061,8 +1061,8 @@ gen_ehostop(eaddr, dir)
  */
 static struct block *
 gen_fhostop(eaddr, dir)
-	register const u_char *eaddr;
-	register int dir;
+	const u_char *eaddr;
+	int dir;
 {
 	struct block *b0, *b1;
 
@@ -1792,10 +1792,10 @@ gen_port6(port, ip_proto, dir)
 
 static int
 lookup_proto(name, proto)
-	register const char *name;
-	register int proto;
+	const char *name;
+	int proto;
 {
-	register int v;
+	int v;
 
 	switch (proto) {
 
@@ -2244,7 +2244,7 @@ gen_proto(v, proto, dir)
 
 struct block *
 gen_scode(name, q)
-	register const char *name;
+	const char *name;
 	struct qual q;
 {
 	int proto = q.proto;
@@ -2450,11 +2450,11 @@ gen_scode(name, q)
 
 struct block *
 gen_mcode(s1, s2, masklen, q)
-	register const char *s1, *s2;
-	register int masklen;
+	const char *s1, *s2;
+	int masklen;
 	struct qual q;
 {
-	register int nlen, mlen;
+	int nlen, mlen;
 	bpf_u_int32 n, m;
 
 	nlen = __pcap_atoin(s1, &n);
@@ -2491,14 +2491,14 @@ gen_mcode(s1, s2, masklen, q)
 
 struct block *
 gen_ncode(s, v, q)
-	register const char *s;
+	const char *s;
 	bpf_u_int32 v;
 	struct qual q;
 {
 	bpf_u_int32 mask;
 	int proto = q.proto;
 	int dir = q.dir;
-	register int vlen;
+	int vlen;
 
 	if (s == NULL)
 		vlen = 32;
@@ -2577,8 +2577,8 @@ gen_ncode(s, v, q)
 #ifdef INET6
 struct block *
 gen_mcode6(s1, s2, masklen, q)
-	register const char *s1, *s2;
-	register int masklen;
+	const char *s1, *s2;
+	int masklen;
 	struct qual q;
 {
 	struct addrinfo *res;
@@ -2635,7 +2635,7 @@ gen_mcode6(s1, s2, masklen, q)
 
 struct block *
 gen_ecode(eaddr, q)
-	register const u_char *eaddr;
+	const u_char *eaddr;
 	struct qual q;
 {
 	if ((q.addr == Q_HOST || q.addr == Q_DEFAULT) && q.proto == Q_LINK) {
@@ -3072,8 +3072,8 @@ struct block *
 gen_multicast(proto)
 	int proto;
 {
-	register struct block *b0, *b1;
-	register struct slist *s;
+	struct block *b0, *b1;
+	struct slist *s;
 
 	switch (proto) {
 
@@ -3129,7 +3129,7 @@ struct block *
 gen_inbound(dir)
 	int dir;
 {
-	register struct block *b0;
+	struct block *b0;
 
 	/*
 	 * Only SLIP and old-style PPP data link types support
@@ -3296,10 +3296,10 @@ gen_p80211_type(int type, int mask)
 
 static struct block *
 gen_ahostop(eaddr, dir)
-	register const u_char *eaddr;
-	register int dir;
+	const u_char *eaddr;
+	int dir;
 {
-	register struct block *b0, *b1;
+	struct block *b0, *b1;
 
 	switch (dir) {
 	/* src comes first, different from Ethernet */
@@ -3328,7 +3328,7 @@ gen_ahostop(eaddr, dir)
 
 struct block *
 gen_acode(eaddr, q)
-	register const u_char *eaddr;
+	const u_char *eaddr;
 	struct qual q;
 {
 	if ((q.addr == Q_HOST || q.addr == Q_DEFAULT) && q.proto == Q_LINK) {
