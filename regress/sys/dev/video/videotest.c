@@ -1,4 +1,4 @@
-/*	$OpenBSD: videotest.c,v 1.4 2014/05/29 16:35:46 tedu Exp $ */
+/*	$OpenBSD: videotest.c,v 1.5 2015/11/17 07:13:55 mmcc Exp $ */
 
 /*
  * Copyright (c) 2010 Marcus Glocker <mglocker@openbsd.org>
@@ -309,14 +309,10 @@ test_capture(char *dev_name, char *dev_full, int access, int use_poll)
 		for (j = 0; j < 32; j++) {
 			/* did we reach end of sizes? */
 			if (dev_fmts[i].s[j].width == 0) {
-				if (buf != NULL) {
-					free(buf);
-					buf = NULL;
-				}
-				if (img != NULL) {
-					free(img);
-					img = NULL;
-				}
+				free(buf);
+				buf = NULL;
+				free(img);
+				img = NULL;
 				break;
 			}
 
@@ -346,14 +342,10 @@ test_capture(char *dev_name, char *dev_full, int access, int use_poll)
 			    fmt.fmt.pix.sizeimage);
 
 			/* allocate frame and image buffer */
-			if (buf != NULL) {
-				free(buf);
-				buf = NULL;
-			}
-			if (img != NULL) {
-				free(img);
-				img = NULL;
-			}
+			free(buf);
+			buf = NULL;
+			free(img);
+			img = NULL;
 
 			buf_size = fmt.fmt.pix.sizeimage;
 			buf = calloc(1, buf_size);
@@ -427,14 +419,10 @@ test_capture(char *dev_name, char *dev_full, int access, int use_poll)
 		}
 	}
 error:
-	if (buf != NULL) {
-		free(buf);
-		buf = NULL;
-	}
-	if (img != NULL) {
-		free(img);
-		img = NULL;
-	}
+	free(buf);
+	buf = NULL;
+	free(img);
+	img = NULL;
 	close(fd1);
 
 	printf("\n");
