@@ -1,4 +1,4 @@
-/* $OpenBSD: xmalloc.c,v 1.12 2015/11/05 09:48:21 nicm Exp $ */
+/* $OpenBSD: xmalloc.c,v 1.13 2015/11/17 18:25:02 tobias Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -13,6 +13,8 @@
  * called by a name other than "ssh" or "Secure Shell".
  */
 
+#include <errno.h>
+#include <limits.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -30,7 +32,8 @@ xmalloc(size_t size)
 		fatal("xmalloc: zero size");
 	ptr = malloc(size);
 	if (ptr == NULL)
-		fatal("xmalloc: out of memory (allocating %lu bytes)", (u_long) size);
+		fatal("xmalloc: allocating %zu bytes: %s",
+		    size, strerror(errno));
 	return ptr;
 }
 
@@ -41,12 +44,10 @@ xcalloc(size_t nmemb, size_t size)
 
 	if (size == 0 || nmemb == 0)
 		fatal("xcalloc: zero size");
-	if (SIZE_MAX / nmemb < size)
-		fatal("xcalloc: nmemb * size > SIZE_MAX");
 	ptr = calloc(nmemb, size);
 	if (ptr == NULL)
-		fatal("xcalloc: out of memory (allocating %lu bytes)",
-		    (u_long)(size * nmemb));
+		fatal("xcalloc: allocating %zu * %zu bytes: %s",
+		    nmemb, size, strerror(errno));
 	return ptr;
 }
 
@@ -54,28 +55,23 @@ void *
 xreallocarray(void *ptr, size_t nmemb, size_t size)
 {
 	void *new_ptr;
-	size_t new_size = nmemb * size;
 
-	if (new_size == 0)
-		fatal("xrealloc: zero size");
-	if (SIZE_MAX / nmemb < size)
-		fatal("xrealloc: nmemb * size > SIZE_MAX");
-	new_ptr = realloc(ptr, new_size);
+	if (nmemb == 0 || size == 0)
+		fatal("xreallocarray: zero size");
+	new_ptr = reallocarray(ptr, nmemb, size);
 	if (new_ptr == NULL)
-		fatal("xrealloc: out of memory (new_size %lu bytes)",
-		    (u_long) new_size);
+		fatal("xreallocarray: allocating %zu * %zu bytes: %s",
+		    nmemb, size, strerror(errno));
 	return new_ptr;
 }
 
 char *
 xstrdup(const char *str)
 {
-	size_t len;
 	char *cp;
 
-	len = strlen(str) + 1;
-	cp = xmalloc(len);
-	strlcpy(cp, str, len);
+	if ((cp = strdup(str)) == NULL)
+		fatal("xstrdup: %s", strerror(errno));
 	return cp;
 }
 
@@ -90,23 +86,26 @@ xasprintf(char **ret, const char *fmt, ...)
 	va_end(ap);
 
 	if (i < 0 || *ret == NULL)
-		fatal("xasprintf: could not allocate memory");
+		fatal("xasprintf: %s", strerror(errno));
 
-	return (i);
+	return i;
 }
 
 int
-xsnprintf(char *str, size_t size, const char *fmt, ...)
+xsnprintf(char *str, size_t len, const char *fmt, ...)
 {
 	va_list ap;
 	int i;
 
+	if (len > INT_MAX)
+		fatal("xsnprintf: len > INT_MAX");
+
 	va_start(ap, fmt);
-	i = vsnprintf(str, size, fmt, ap);
+	i = vsnprintf(str, len, fmt, ap);
 	va_end(ap);
 
-	if (i == -1 || i >= (int)size)
+	if (i < 0 || i >= (int)len)
 		fatal("xsnprintf: overflow");
 
-	return (i);
+	return i;
 }
