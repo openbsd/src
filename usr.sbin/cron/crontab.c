@@ -1,4 +1,4 @@
-/*	$OpenBSD: crontab.c,v 1.90 2015/11/14 13:09:14 millert Exp $	*/
+/*	$OpenBSD: crontab.c,v 1.91 2015/11/17 21:56:57 millert Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -561,9 +561,13 @@ editit(const char *pathname)
 	if ((pid = fork()) == -1)
 		goto fail;
 	if (pid == 0) {
-		setgid(getgid());
-		setuid(getuid());
-		execv(_PATH_BSHELL, argp);
+		/* Drop setgid and exec the command. */
+		if (setgid(user_gid) == -1) {
+			warn("unable to set gid to %u", user_gid);
+		} else {
+			execv(_PATH_BSHELL, argp);
+			warn("unable to execute %s", _PATH_BSHELL);
+		}
 		_exit(127);
 	}
 	while (waitpid(pid, &st, 0) == -1)
