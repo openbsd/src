@@ -1,4 +1,4 @@
-/*	$OpenBSD: rm.c,v 1.1 2015/11/17 17:24:26 tedu Exp $	*/
+/*	$OpenBSD: rm.c,v 1.2 2015/11/17 18:34:00 tedu Exp $	*/
 /*	$NetBSD: rm.c,v 1.19 1995/09/07 06:48:50 jtc Exp $	*/
 
 /*-
@@ -79,35 +79,10 @@ rmmain(int argc, char *argv[])
 {
 	int ch, rflag;
 
-	setlocale(LC_ALL, "");
-
 	Pflag = rflag = 0;
-	while ((ch = getopt(argc, argv, "dfiPRr")) != -1) {
-		switch(ch) {
-		case 'd':
-			dflag = 1;
-			break;
-		case 'f':
-			fflag = 1;
-			iflag = 0;
-			break;
-		case 'i':
-			fflag = 0;
-			iflag = 1;
-			break;
-		case 'P':
-			Pflag = 1;
-			break;
-		case 'R':
-		case 'r':			/* Compatibility. */
-			rflag = 1;
-			break;
-		default:
-			usage();
-		}
-	}
-	argc -= optind;
-	argv += optind;
+
+	fflag = 1;
+	rflag = 1;
 
 	if (Pflag) {
 		if (pledge("stdio rpath wpath cpath", NULL) == -1)

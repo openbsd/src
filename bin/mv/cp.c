@@ -1,4 +1,4 @@
-/*	$OpenBSD: cp.c,v 1.1 2015/11/17 17:24:26 tedu Exp $	*/
+/*	$OpenBSD: cp.c,v 1.2 2015/11/17 18:34:00 tedu Exp $	*/
 /*	$NetBSD: cp.c,v 1.14 1995/09/07 06:14:51 jtc Exp $	*/
 
 /*
@@ -113,57 +113,11 @@ cpmain(int argc, char *argv[])
 	int Hflag, Lflag, Pflag, ch, fts_options, r;
 	char *target;
 
-	(void)setlocale(LC_ALL, "");
-
 	Hflag = Lflag = Pflag = Rflag = 0;
-	while ((ch = getopt(argc, argv, "HLPRfipr")) != -1)
-		switch (ch) {
-		case 'H':
-			Hflag = 1;
-			Lflag = Pflag = 0;
-			break;
-		case 'L':
-			Lflag = 1;
-			Hflag = Pflag = 0;
-			break;
-		case 'P':
-			Pflag = 1;
-			Hflag = Lflag = 0;
-			break;
-		case 'R':
-			Rflag = 1;
-			break;
-		case 'f':
-			fflag = 1;
-			iflag = 0;
-			break;
-		case 'i':
-			iflag = isatty(STDIN_FILENO);
-			fflag = 0;
-			break;
-		case 'p':
-			pflag = 1;
-			break;
-		case 'r':
-			rflag = 1;
-			break;
-		default:
-			usage();
-			break;
-		}
-	argc -= optind;
-	argv += optind;
 
-	/*
-	 * Unfortunately, -R will use mkfifo & mknod;
-	 * -p will use fchown, fchmod, lchown, fchflags..
-	 */
-	if (Rflag == 0 && pflag == 0)
-		if (pledge("stdio rpath wpath cpath fattr", NULL) == -1)
-			err(1, "pledge");
-
-	if (argc < 2)
-		usage();
+	Rflag = 1;
+	Pflag = 1;
+	pflag = 1;
 
 	fts_options = FTS_NOCHDIR | FTS_PHYSICAL;
 	if (rflag) {
@@ -479,7 +433,7 @@ copy(char *argv[], enum op type, int fts_options)
 }
 
 
-/*	$OpenBSD: cp.c,v 1.1 2015/11/17 17:24:26 tedu Exp $	*/
+/*	$OpenBSD: cp.c,v 1.2 2015/11/17 18:34:00 tedu Exp $	*/
 /*	$NetBSD: utils.c,v 1.6 1997/02/26 14:40:51 cgd Exp $	*/
 
 /*-

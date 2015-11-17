@@ -1,4 +1,4 @@
-/*	$OpenBSD: mv.c,v 1.42 2015/11/17 17:24:26 tedu Exp $	*/
+/*	$OpenBSD: mv.c,v 1.43 2015/11/17 18:34:00 tedu Exp $	*/
 /*	$NetBSD: mv.c,v 1.9 1995/03/21 09:06:52 cgd Exp $	*/
 
 /*
@@ -347,31 +347,19 @@ err:		if (unlink(to))
 int
 mvcopy(char *from, char *to)
 {
-	char *argv[6];
+	char *argv[3];
 
-	argv[0] = "cp";
-	argv[1] = "-PRp";
-	argv[2] = "--";
-	argv[3] = from;
-	argv[4] = to;
-	argv[5] = NULL;
-
-	optind = 1;
-	optreset = 1;
-	if (cpmain(5, argv)) {
+	argv[0] = from;
+	argv[1] = to;
+	argv[2] = NULL;
+	if (cpmain(2, argv)) {
 		warn("cp failed");
 		_exit(1);
 	}
 
-	argv[0] = "rm";
-	argv[1] = "-rf";
-	argv[2] = "--";
-	argv[3] = from;
-	argv[4] = NULL;
-
-	optind = 1;
-	optreset = 1;
-	if (rmmain(4, argv)) {
+	argv[0] = from;
+	argv[1] = NULL;
+	if (rmmain(1, argv)) {
 		warn("rm failed");
 		_exit(1);
 	}
