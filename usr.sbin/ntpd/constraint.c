@@ -1,4 +1,4 @@
-/*	$OpenBSD: constraint.c,v 1.19 2015/10/12 06:50:08 reyk Exp $	*/
+/*	$OpenBSD: constraint.c,v 1.20 2015/11/17 15:34:36 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -502,6 +502,7 @@ constraint_remove(struct constraint *cstr)
 		close(cstr->fd);
 	free(cstr->addr_head.name);
 	free(cstr->addr_head.path);
+	free(cstr->addr);
 	free(cstr);
 }
 
