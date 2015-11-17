@@ -1,4 +1,4 @@
-/*	$OpenBSD: scores.c,v 1.12 2014/11/16 04:49:49 guenther Exp $	*/
+/*	$OpenBSD: scores.c,v 1.13 2015/11/17 15:27:24 tedu Exp $	*/
 /*	$NetBSD: scores.c,v 1.2 1995/04/22 07:42:38 cgd Exp $	*/
 
 /*-
@@ -49,7 +49,6 @@
 #include <err.h>
 #include <fcntl.h>
 #include <limits.h>
-#include <pwd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -57,7 +56,6 @@
 #include <term.h>
 #include <unistd.h>
 
-#include "pathnames.h"
 #include "screen.h"
 #include "scores.h"
 #include "tetris.h"
@@ -96,52 +94,42 @@ static char *thisuser(void);
 static void
 getscores(FILE **fpp)
 {
-	int sd, mint, lck, mask, i;
+	int sd, mint, mask, i;
 	char *mstr, *human;
+	char scorepath[PATH_MAX];
 	FILE *sf;
 
 	if (fpp != NULL) {
 		mint = O_RDWR | O_CREAT;
 		mstr = "r+";
 		human = "read/write";
-		lck = LOCK_EX;
+		*fpp = NULL;
 	} else {
 		mint = O_RDONLY;
 		mstr = "r";
 		human = "reading";
-		lck = LOCK_SH;
 	}
-	setegid(egid);
-	mask = umask(S_IWOTH);
-	sd = open(_PATH_SCOREFILE, mint, 0666);
-	(void)umask(mask);
-	setegid(gid);
+	if (!getenv("HOME"))
+		return;
+	snprintf(scorepath, sizeof(scorepath), "%s/%s", getenv("HOME"), ".tetris.scores");
+	sd = open(scorepath, mint, 0666);
 	if (sd < 0) {
 		if (fpp == NULL) {
 			nscores = 0;
 			return;
 		}
-		err(1, "cannot open %s for %s", _PATH_SCOREFILE, human);
+		err(1, "cannot open %s for %s", scorepath, human);
 	}
-	setegid(egid);
 	if ((sf = fdopen(sd, mstr)) == NULL)
-		err(1, "cannot fdopen %s for %s", _PATH_SCOREFILE, human);
-	setegid(gid);
-
-	/*
-	 * Grab a lock.
-	 */
-	if (flock(sd, lck))
-		warn("warning: score file %s cannot be locked",
-		    _PATH_SCOREFILE);
+		err(1, "cannot fdopen %s for %s", scorepath, human);
 
 	nscores = fread(scores, sizeof(scores[0]), MAXHISCORES, sf);
 	if (ferror(sf))
-		err(1, "error reading %s", _PATH_SCOREFILE);
+		err(1, "error reading %s", scorepath);
 	for (i = 0; i < nscores; i++)
 		if (scores[i].hs_level < MINLEVEL ||
 		    scores[i].hs_level > MAXLEVEL)
-			errx(1, "scorefile %s corrupt", _PATH_SCOREFILE);
+			errx(1, "scorefile %s corrupt", scorepath);
 
 	if (fpp)
 		*fpp = sf;
@@ -204,8 +192,8 @@ savescore(int level)
 		rewind(sf);
 		if (fwrite(scores, sizeof(*sp), nscores, sf) != nscores ||
 		    fflush(sf) == EOF)
-			warnx("error writing %s: %s\n\t-- %s",
-			    _PATH_SCOREFILE, strerror(errno),
+			warnx("error writing scorefile: %s\n\t-- %s",
+			    strerror(errno),
 			    "high scores may be damaged");
 	}
 	(void)fclose(sf);	/* releases lock */
@@ -219,18 +207,13 @@ static char *
 thisuser(void)
 {
 	const char *p;
-	struct passwd *pw;
 	static char u[sizeof(scores[0].hs_name)];
 
 	if (u[0])
 		return (u);
 	p = getlogin();
 	if (p == NULL || *p == '\0') {
-		pw = getpwuid(getuid());
-		if (pw != NULL)
-			p = pw->pw_name;
-		else
-			p = "  ???";
+		p = "  ???";
 	}
 	strlcpy(u, p, sizeof(u));
 	return (u);
@@ -315,7 +298,6 @@ checkscores(struct highscore *hs, int num)
 			 * - High score on this level.
 			 */
 			if ((pu->times < MAXSCORES &&
-			     getpwnam(sp->hs_name) != NULL &&
 			     sp->hs_time + EXPIRATION >= now) ||
 			    levelfound[sp->hs_level] == 0)
 				pu->times++;
