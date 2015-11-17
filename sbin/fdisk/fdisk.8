@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fdisk.8,v 1.87 2015/10/26 18:05:25 jmc Exp $
+.\"	$OpenBSD: fdisk.8,v 1.88 2015/11/17 17:47:49 jmc Exp $
 .\"
 .\"
 .\" Copyright (c) 1997 Tobias Weingartner
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 26 2015 $
+.Dd $Mdocdate: November 17 2015 $
 .Dt FDISK 8
 .Os
 .Sh NAME
@@ -79,6 +79,12 @@ These figures are taken from the in-core disklabel
 or values that
 .Em /boot
 has passed to the kernel.
+.Pp
+Only one of
+.Fl chs
+or
+.Fl l
+can be specified.
 .It Fl e
 Use the
 .Nm
@@ -127,6 +133,12 @@ can be specified.
 .It Fl l Ar blocks
 Specify the number of blocks in the disk, and force the MBR to be in LBA
 mode only.
+.Pp
+Only one of
+.Fl chs
+or
+.Fl l
+can be specified.
 .It Fl u
 Update MBR bootcode, preserving existing MBR partition table.
 The MBR bootcode extends from offset 0x000 to the start of the MBR partition
