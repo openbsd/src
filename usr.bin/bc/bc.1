@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bc.1,v 1.31 2015/11/15 17:39:20 mmcc Exp $
+.\"	$OpenBSD: bc.1,v 1.32 2015/11/17 05:45:35 mmcc Exp $
 .\"
 .\" Copyright (C) Caldera International Inc.  2001-2002.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\"
 .\"	@(#)bc.1	6.8 (Berkeley) 8/8/91
 .\"
-.Dd $Mdocdate: November 15 2015 $
+.Dd $Mdocdate: November 17 2015 $
 .Dt BC 1
 .Os
 .Sh NAME
@@ -394,8 +394,9 @@ The current version of the
 utility was written by
 .An Otto Moerbeek .
 .Sh BUGS
+The
 .Ql quit
-is interpreted when read, not when executed.
+statement is interpreted when read, not when executed.
 .Pp
 Some non-portable extensions, as found in the GNU version of the
 .Nm
