@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.375 2015/11/17 01:47:08 dlg Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.376 2015/11/17 12:30:42 jmatthew Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -4553,6 +4553,7 @@ bge_stop(struct bge_softc *sc)
 	timeout_del(&sc->bge_rxtimeout_jumbo);
 
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+	ifp->if_timer = 0;
 
 	/*
 	 * Tell firmware we're shutting down.
