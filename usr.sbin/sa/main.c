@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.14 2015/07/26 22:16:43 chl Exp $	*/
+/*	$OpenBSD: main.c,v 1.15 2015/11/17 17:15:33 deraadt Exp $	*/
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
  * All rights reserved.
@@ -74,6 +74,9 @@ main(int argc, char **argv)
 	int error = 0;
 	const char *errstr;
 	extern char *__progname;
+
+	if (pledge("stdio rpath wpath cpath getpw flock", NULL) == -1)
+		err(1, "pledge");
 
 	while ((ch = getopt(argc, argv, "abcdDfijkKlmnqrstuv:")) != -1)
 		switch (ch) {
