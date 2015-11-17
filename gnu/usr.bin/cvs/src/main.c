@@ -450,6 +450,9 @@ main (argc, argv)
     program_name = last_component (argv[0]);
 #endif
 
+    if (pledge("stdio rpath wpath cpath fattr getpw proc exec inet dns tty", NULL) == -1)
+	    error (1, errno, "pledge init");
+
     /*
      * Query the environment variables up-front, so that
      * they can be overridden by command line arguments
@@ -747,6 +750,12 @@ Copyright (c) 1989-2001 Brian Berliner, david d `zoo' zuhn, \n\
 
 #ifdef SERVER_SUPPORT
 	server_active = strcmp (command_name, "server") == 0;
+	if (server_active)
+	{
+	    if (pledge("stdio rpath wpath cpath fattr getpw proc exec", NULL) == -1)
+	        error (1, errno, "pledge");
+
+	}
 #endif
 
 	/* This is only used for writing into the history file.  For
@@ -930,6 +939,19 @@ Copyright (c) 1989-2001 Brian Berliner, david d `zoo' zuhn, \n\
 		    free_cvsroot_t (current_parsed_root);
 		if ((current_parsed_root = parse_cvsroot (current_root)) == NULL)
 		    error (1, 0, "Bad CVSROOT.");
+
+		if (current_parsed_root->method == pserver_method) {
+			if (strcmp(command_name, "login") == 0) {
+				if (pledge("stdio rpath wpath cpath fattr getpw inet dns tty", NULL) == -1)
+					error (1, errno, "pledge");
+			} else {
+				if (pledge("stdio rpath wpath cpath fattr getpw proc exec inet dns", NULL) == -1)
+					error (1, errno, "pledge");
+			}
+		} else {
+			if (pledge("stdio rpath wpath cpath fattr getpw proc exec", NULL) == -1)
+				error (1, errno, "pledge");
+		}
 
 		if (trace)
 		    fprintf (stderr, "%s-> main loop with CVSROOT=%s\n",
