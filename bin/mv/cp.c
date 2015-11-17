@@ -1,4 +1,4 @@
-/*	$OpenBSD: cp.c,v 1.3 2015/11/17 18:39:18 tedu Exp $	*/
+/*	$OpenBSD: cp.c,v 1.4 2015/11/17 18:53:22 tedu Exp $	*/
 /*	$NetBSD: cp.c,v 1.14 1995/09/07 06:14:51 jtc Exp $	*/
 
 /*
@@ -110,20 +110,10 @@ cpmain(int argc, char *argv[])
 {
 	struct stat to_stat, tmp_stat;
 	enum op type;
-	int Hflag, Lflag, Pflag, fts_options, r;
+	int fts_options, r;
 	char *target;
 
-	Hflag = Lflag = Pflag = 0;
-
-	Pflag = 1;
-
 	fts_options = FTS_NOCHDIR | FTS_PHYSICAL;
-		if (Hflag)
-			fts_options |= FTS_COMFOLLOW;
-		if (Lflag) {
-			fts_options &= ~FTS_PHYSICAL;
-			fts_options |= FTS_LOGICAL;
-		}
 
 	myuid = getuid();
 
@@ -176,10 +166,7 @@ cpmain(int argc, char *argv[])
 		 * the initial mkdir().
 		 */
 		if (r == -1) {
-			if (((Lflag || Hflag)))
-				stat(*argv, &tmp_stat);
-			else
-				lstat(*argv, &tmp_stat);
+			lstat(*argv, &tmp_stat);
 
 			if (S_ISDIR(tmp_stat.st_mode))
 				type = DIR_TO_DNE;
@@ -401,7 +388,7 @@ copy(char *argv[], enum op type, int fts_options)
 }
 
 
-/*	$OpenBSD: cp.c,v 1.3 2015/11/17 18:39:18 tedu Exp $	*/
+/*	$OpenBSD: cp.c,v 1.4 2015/11/17 18:53:22 tedu Exp $	*/
 /*	$NetBSD: utils.c,v 1.6 1997/02/26 14:40:51 cgd Exp $	*/
 
 /*-
