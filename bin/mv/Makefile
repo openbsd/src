@@ -1,6 +1,7 @@
-#	$OpenBSD: Makefile,v 1.3 1997/09/21 11:35:25 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.4 2015/11/17 17:24:26 tedu Exp $
 
 PROG=	mv
+SRCS=	mv.c cp.c rm.c
 
 DPADD+=	${LIBUTIL}
 LDADD+=	-lutil
