@@ -1,4 +1,4 @@
-/*	$OpenBSD: rm.c,v 1.3 2015/11/17 18:52:10 tedu Exp $	*/
+/*	$OpenBSD: rm.c,v 1.4 2015/11/17 19:09:06 tedu Exp $	*/
 /*	$NetBSD: rm.c,v 1.19 1995/09/07 06:48:50 jtc Exp $	*/
 
 /*-
@@ -56,8 +56,6 @@ static int eval, stdin_ok;
 static int	check(char *, char *, struct stat *);
 static void	checkdot(char **);
 static void	rm_file(char **);
-static int	rm_overwrite(char *, struct stat *);
-static int	pass(int, off_t, char *, size_t);
 static void	rm_tree(char **);
 
 static void __dead
@@ -201,85 +199,6 @@ rm_file(char **argv)
 			eval = 1;
 		}
 	}
-}
-
-/*
- * rm_overwrite --
- *	Overwrite the file with varying bit patterns.
- *
- * XXX
- * This is a cheap way to *really* delete files.  Note that only regular
- * files are deleted, directories (and therefore names) will remain.
- * Also, this assumes a fixed-block file system (like FFS, or a V7 or a
- * System V file system).  In a logging file system, you'll have to have
- * kernel support.
- * Returns 1 for success.
- */
-static int
-rm_overwrite(char *file, struct stat *sbp)
-{
-	struct stat sb, sb2;
-	struct statfs fsb;
-	size_t bsize;
-	int fd;
-	char *buf = NULL;
-
-	fd = -1;
-	if (sbp == NULL) {
-		if (lstat(file, &sb))
-			goto err;
-		sbp = &sb;
-	}
-	if (!S_ISREG(sbp->st_mode))
-		return (1);
-	if (sbp->st_nlink > 1) {
-		warnx("%s (inode %llu): not overwritten due to multiple links",
-		    file, (unsigned long long)sbp->st_ino);
-		return (0);
-	}
-	if ((fd = open(file, O_WRONLY|O_NONBLOCK|O_NOFOLLOW, 0)) == -1)
-		goto err;
-	if (fstat(fd, &sb2))
-		goto err;
-	if (sb2.st_dev != sbp->st_dev || sb2.st_ino != sbp->st_ino ||
-	    !S_ISREG(sb2.st_mode)) {
-		errno = EPERM;
-		goto err;
-	}
-	if (fstatfs(fd, &fsb) == -1)
-		goto err;
-	bsize = MAXIMUM(fsb.f_iosize, 1024U);
-	if ((buf = malloc(bsize)) == NULL)
-		err(1, "%s: malloc", file);
-
-	if (!pass(fd, sbp->st_size, buf, bsize))
-		goto err;
-	if (fsync(fd))
-		goto err;
-	close(fd);
-	free(buf);
-	return (1);
-
-err:
-	warn("%s", file);
-	close(fd);
-	eval = 1;
-	free(buf);
-	return (0);
-}
-
-static int
-pass(int fd, off_t len, char *buf, size_t bsize)
-{
-	size_t wlen;
-
-	for (; len > 0; len -= wlen) {
-		wlen = len < bsize ? len : bsize;
-		arc4random_buf(buf, wlen);
-		if (write(fd, buf, wlen) != wlen)
-			return (0);
-	}
-	return (1);
 }
 
 static int
