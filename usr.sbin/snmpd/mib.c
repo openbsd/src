@@ -1,4 +1,4 @@
-/*	$OpenBSD: mib.c,v 1.79 2015/10/08 08:29:21 sthen Exp $	*/
+/*	$OpenBSD: mib.c,v 1.80 2015/11/17 12:30:23 gerhard Exp $	*/
 
 /*
  * Copyright (c) 2012 Joel Knight <joel@openbsd.org>
@@ -2556,7 +2556,7 @@ mib_sensors(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 		}
 		for (j = 0; j < SENSOR_MAX_TYPES; j++) {
 			mib[3] = j;
-			for (k = 0; k < sensordev.maxnumt[j]; k++, n++) {
+			for (k = 0; k < sensordev.maxnumt[j]; k++) {
 				mib[4] = k;
 				if (sysctl(mib, 5,
 				    &sensor, &slen, NULL, 0) == -1) {
@@ -2566,8 +2566,11 @@ mib_sensors(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 						break;
 					return (-1);
 				}
+				if (sensor.flags & SENSOR_FINVALID)
+					continue;
 				if (n == idx)
 					goto found;
+				n++;
 			}
 		}
 	}
