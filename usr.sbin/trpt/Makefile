@@ -1,9 +1,7 @@
-#	$OpenBSD: Makefile,v 1.3 2002/12/12 04:24:33 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.4 2015/11/17 15:33:14 deraadt Exp $
 
 PROG=	trpt
 MAN=	trpt.8
-#BINGRP=kmem
-#BINMODE=2555
 DPADD= ${LIBKVM}
 LDADD= -lkvm
 
