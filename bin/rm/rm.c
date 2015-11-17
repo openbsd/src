@@ -1,4 +1,4 @@
-/*	$OpenBSD: rm.c,v 1.34 2015/10/13 04:30:53 daniel Exp $	*/
+/*	$OpenBSD: rm.c,v 1.35 2015/11/17 17:17:24 deraadt Exp $	*/
 /*	$NetBSD: rm.c,v 1.19 1995/09/07 06:48:50 jtc Exp $	*/
 
 /*-
@@ -103,10 +103,10 @@ main(int argc, char *argv[])
 	argv += optind;
 
 	if (Pflag) {
-		if (pledge("stdio rpath wpath cpath", NULL) == -1)
+		if (pledge("stdio rpath wpath cpath getpw", NULL) == -1)
 			err(1, "pledge");
 	} else {
-		if (pledge("stdio rpath cpath", NULL) == -1)
+		if (pledge("stdio rpath cpath getpw", NULL) == -1)
 			err(1, "pledge");
 	}
 

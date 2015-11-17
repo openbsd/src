@@ -1,4 +1,4 @@
-/*	$OpenBSD: fstat.c,v 1.83 2015/10/23 13:21:10 deraadt Exp $	*/
+/*	$OpenBSD: fstat.c,v 1.84 2015/11/17 17:17:24 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2009 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -284,7 +284,7 @@ main(int argc, char *argv[])
 				err(1, "pledge");
 		}
 	} else {
-		if (pledge("stdio rpath", NULL) == -1)
+		if (pledge("stdio rpath getpw", NULL) == -1)
 			err(1, "pledge");
 	}
 
