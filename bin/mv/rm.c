@@ -1,4 +1,4 @@
-/*	$OpenBSD: rm.c,v 1.2 2015/11/17 18:34:00 tedu Exp $	*/
+/*	$OpenBSD: rm.c,v 1.3 2015/11/17 18:52:10 tedu Exp $	*/
 /*	$NetBSD: rm.c,v 1.19 1995/09/07 06:48:50 jtc Exp $	*/
 
 /*-
@@ -51,7 +51,7 @@
 
 extern char *__progname;
 
-static int dflag, eval, fflag, iflag, Pflag, stdin_ok;
+static int eval, stdin_ok;
 
 static int	check(char *, char *, struct stat *);
 static void	checkdot(char **);
@@ -77,33 +77,15 @@ usage(void)
 int
 rmmain(int argc, char *argv[])
 {
-	int ch, rflag;
-
-	Pflag = rflag = 0;
-
-	fflag = 1;
-	rflag = 1;
-
-	if (Pflag) {
-		if (pledge("stdio rpath wpath cpath", NULL) == -1)
-			err(1, "pledge");
-	} else {
-		if (pledge("stdio rpath cpath", NULL) == -1)
-			err(1, "pledge");
-	}
-
-	if (argc < 1 && fflag == 0)
-		usage();
+	if (pledge("stdio rpath cpath", NULL) == -1)
+		err(1, "pledge");
 
 	checkdot(argv);
 
 	if (*argv) {
 		stdin_ok = isatty(STDIN_FILENO);
 
-		if (rflag)
-			rm_tree(argv);
-		else
-			rm_file(argv);
+		rm_tree(argv);
 	}
 
 	return (eval);
@@ -114,14 +96,7 @@ rm_tree(char **argv)
 {
 	FTS *fts;
 	FTSENT *p;
-	int needstat;
 	int flags;
-
-	/*
-	 * Remove a file hierarchy.  If forcing removal (-f), or interactive
-	 * (-i) or can't ask anyway (stdin_ok), don't stat the file.
-	 */
-	needstat = !fflag && !iflag && stdin_ok;
 
 	/*
 	 * If the -i option is specified, the user can skip on the pre-order
@@ -130,14 +105,13 @@ rm_tree(char **argv)
 #define	SKIPPED	1
 
 	flags = FTS_PHYSICAL;
-	if (!needstat)
-		flags |= FTS_NOSTAT;
+	flags |= FTS_NOSTAT;
 	if (!(fts = fts_open(argv, flags, NULL)))
 		err(1, NULL);
 	while ((p = fts_read(fts)) != NULL) {
 		switch (p->fts_info) {
 		case FTS_DNR:
-			if (!fflag || p->fts_errno != ENOENT) {
+			if (p->fts_errno != ENOENT) {
 				warnx("%s: %s",
 				    p->fts_path, strerror(p->fts_errno));
 				eval = 1;
@@ -150,21 +124,9 @@ rm_tree(char **argv)
 			 * FTS_NS: assume that if can't stat the file, it
 			 * can't be unlinked.
 			 */
-			if (!needstat)
-				break;
-			if (!fflag || p->fts_errno != ENOENT) {
-				warnx("%s: %s",
-				    p->fts_path, strerror(p->fts_errno));
-				eval = 1;
-			}
-			continue;
+			break;
 		case FTS_D:
 			/* Pre-order: give user chance to skip. */
-			if (!fflag && !check(p->fts_path, p->fts_accpath,
-			    p->fts_statp)) {
-				(void)fts_set(fts, p, FTS_SKIP);
-				p->fts_number = SKIPPED;
-			}
 			continue;
 		case FTS_DP:
 			/* Post-order: see if user skipped. */
@@ -172,9 +134,7 @@ rm_tree(char **argv)
 				continue;
 			break;
 		default:
-			if (!fflag &&
-			    !check(p->fts_path, p->fts_accpath, p->fts_statp))
-				continue;
+			break;
 		}
 
 		/*
@@ -186,19 +146,15 @@ rm_tree(char **argv)
 		case FTS_DP:
 		case FTS_DNR:
 			if (!rmdir(p->fts_accpath) ||
-			    (fflag && errno == ENOENT))
+			    (errno == ENOENT))
 				continue;
 			break;
 
 		case FTS_F:
 		case FTS_NSOK:
-			if (Pflag)
-				rm_overwrite(p->fts_accpath, p->fts_info ==
-				    FTS_NSOK ? NULL : p->fts_statp);
-			/* FALLTHROUGH */
 		default:
 			if (!unlink(p->fts_accpath) ||
-			    (fflag && errno == ENOENT))
+			    (errno == ENOENT))
 				continue;
 		}
 		warn("%s", p->fts_path);
@@ -223,28 +179,24 @@ rm_file(char **argv)
 	while ((f = *argv++) != NULL) {
 		/* Assume if can't stat the file, can't unlink it. */
 		if (lstat(f, &sb)) {
-			if (!fflag || errno != ENOENT) {
+			if (errno != ENOENT) {
 				warn("%s", f);
 				eval = 1;
 			}
 			continue;
 		}
 
-		if (S_ISDIR(sb.st_mode) && !dflag) {
+		if (S_ISDIR(sb.st_mode)) {
 			warnx("%s: is a directory", f);
 			eval = 1;
 			continue;
 		}
-		if (!fflag && !check(f, f, &sb))
-			continue;
-		else if (S_ISDIR(sb.st_mode))
+		if (S_ISDIR(sb.st_mode))
 			rval = rmdir(f);
 		else {
-			if (Pflag)
-				rm_overwrite(f, &sb);
 			rval = unlink(f);
 		}
-		if (rval && (!fflag || errno != ENOENT)) {
+		if (rval && (errno != ENOENT)) {
 			warn("%s", f);
 			eval = 1;
 		}
@@ -336,25 +288,20 @@ check(char *path, char *name, struct stat *sp)
 	int ch, first;
 	char modep[15];
 
-	/* Check -i first. */
-	if (iflag)
-		(void)fprintf(stderr, "remove %s? ", path);
-	else {
-		/*
-		 * If it's not a symbolic link and it's unwritable and we're
-		 * talking to a terminal, ask.  Symbolic links are excluded
-		 * because their permissions are meaningless.  Check stdin_ok
-		 * first because we may not have stat'ed the file.
-		 */
-		if (!stdin_ok || S_ISLNK(sp->st_mode) || !access(name, W_OK) ||
-		    errno != EACCES)
-			return (1);
-		strmode(sp->st_mode, modep);
-		(void)fprintf(stderr, "override %s%s%s/%s for %s? ",
-		    modep + 1, modep[9] == ' ' ? "" : " ",
-		    user_from_uid(sp->st_uid, 0),
-		    group_from_gid(sp->st_gid, 0), path);
-	}
+	/*
+	 * If it's not a symbolic link and it's unwritable and we're
+	 * talking to a terminal, ask.  Symbolic links are excluded
+	 * because their permissions are meaningless.  Check stdin_ok
+	 * first because we may not have stat'ed the file.
+	 */
+	if (!stdin_ok || S_ISLNK(sp->st_mode) || !access(name, W_OK) ||
+	    errno != EACCES)
+		return (1);
+	strmode(sp->st_mode, modep);
+	(void)fprintf(stderr, "override %s%s%s/%s for %s? ",
+	    modep + 1, modep[9] == ' ' ? "" : " ",
+	    user_from_uid(sp->st_uid, 0),
+	    group_from_gid(sp->st_gid, 0), path);
 	(void)fflush(stderr);
 
 	first = ch = getchar();
