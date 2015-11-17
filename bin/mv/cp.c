@@ -1,4 +1,4 @@
-/*	$OpenBSD: cp.c,v 1.4 2015/11/17 18:53:22 tedu Exp $	*/
+/*	$OpenBSD: cp.c,v 1.5 2015/11/17 19:11:11 tedu Exp $	*/
 /*	$NetBSD: cp.c,v 1.14 1995/09/07 06:14:51 jtc Exp $	*/
 
 /*
@@ -58,7 +58,6 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <fts.h>
-#include <locale.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -388,7 +387,7 @@ copy(char *argv[], enum op type, int fts_options)
 }
 
 
-/*	$OpenBSD: cp.c,v 1.4 2015/11/17 18:53:22 tedu Exp $	*/
+/*	$OpenBSD: cp.c,v 1.5 2015/11/17 19:11:11 tedu Exp $	*/
 /*	$NetBSD: utils.c,v 1.6 1997/02/26 14:40:51 cgd Exp $	*/
 
 /*-

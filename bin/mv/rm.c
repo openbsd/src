@@ -1,4 +1,4 @@
-/*	$OpenBSD: rm.c,v 1.4 2015/11/17 19:09:06 tedu Exp $	*/
+/*	$OpenBSD: rm.c,v 1.5 2015/11/17 19:11:11 tedu Exp $	*/
 /*	$NetBSD: rm.c,v 1.19 1995/09/07 06:48:50 jtc Exp $	*/
 
 /*-
@@ -34,7 +34,6 @@
 #include <sys/stat.h>
 #include <sys/mount.h>
 
-#include <locale.h>
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
