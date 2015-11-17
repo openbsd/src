@@ -1,0 +1,66 @@
+.\" $OpenBSD: cnmac.4,v 1.1 2015/11/17 13:25:36 visa Exp $
+.\"
+.\" Copyright (c) 2015 Visa Hankala
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.\"
+.Dd $Mdocdate: November 17 2015 $
+.Dt CNMAC 4 octeon
+.Os
+.Sh NAME
+.Nm cnmac
+.Nd Cavium OCTEON built-in Ethernet device
+.Sh SYNOPSIS
+.Cd "cnmac* at cn30xxgmx?"
+.Sh DESCRIPTION
+The
+.Nm
+driver supports built-in Ethernet ports on Cavium OCTEON CN30xx and Cavium
+OCTEON Plus CN50xx system on chips.
+Among the routers based on these chips are the following:
+.Pp
+.Bl -item -offset indent -compact
+.It
+D-Link DSR-500
+.It
+Portwell CAM-0100
+.It
+Ubiquiti Networks EdgeRouter LITE
+.It
+Ubiquiti Networks EdgeRouter PoE
+.El
+.Pp
+The
+.Nm
+driver supports TCP/UDP checksum offload on IPv4/IPv6 reception and
+transmission.
+The driver additionally supports IPv4 checksum offload on reception.
+.Sh SEE ALSO
+.Xr arp 4 ,
+.Xr ifmedia 4 ,
+.Xr intro 4 ,
+.Xr netintro 4 ,
+.Xr hostname.if 5 ,
+.Xr ifconfig 8
+.Sh HISTORY
+The
+.Nm
+driver first appeared in
+.Ox 5.4 .
+.Sh AUTHORS
+.An -nosplit
+The
+.Nm
+driver was written by
+.An Internet Initiative Japan Inc.
