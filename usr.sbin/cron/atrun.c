@@ -1,4 +1,4 @@
-/*	$OpenBSD: atrun.c,v 1.41 2015/11/15 23:24:24 millert Exp $	*/
+/*	$OpenBSD: atrun.c,v 1.42 2015/11/17 22:31:44 millert Exp $	*/
 
 /*
  * Copyright (c) 2002-2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -379,7 +379,10 @@ run_job(atjob *job, char *atfile)
 	/* mark ourselves as different to PS command watchers */
 	setproctitle("atrun %s", atfile);
 
-	pipe(output_pipe);	/* child's stdout/stderr */
+	if (pipe(output_pipe) != 0) {	/* child's stdout/stderr */
+		syslog(LOG_ERR, "(CRON) PIPE (%m)");
+		_exit(EXIT_FAILURE);
+	}
 
 	/* Fork again, child will run the job, parent will catch output. */
 	switch ((pid = fork())) {

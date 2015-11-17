@@ -1,4 +1,4 @@
-/*	$OpenBSD: do_command.c,v 1.55 2015/11/15 23:24:24 millert Exp $	*/
+/*	$OpenBSD: do_command.c,v 1.56 2015/11/17 22:31:44 millert Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -99,8 +99,10 @@ child_process(entry *e, user *u)
 
 	/* create some pipes to talk to our future child
 	 */
-	pipe(stdin_pipe);	/* child's stdin */
-	pipe(stdout_pipe);	/* child's stdout */
+	if (pipe(stdin_pipe) != 0 || pipe(stdout_pipe) != 0) {
+		syslog(LOG_ERR, "(CRON) PIPE (%m)");
+		_exit(EXIT_FAILURE);
+	}
 
 	/* since we are a forked process, we can diddle the command string
 	 * we were passed -- nobody else is going to use it again, right?
