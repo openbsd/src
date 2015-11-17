@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.113 2015/11/17 04:09:35 deraadt Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.114 2015/11/17 15:03:53 sthen Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -114,6 +114,7 @@ const u_int pledge_syscalls[SYS_MAXSYSCALL] = {
 	[SYS_mprotect] = PLEDGE_STDIO,
 	[SYS_mquery] = PLEDGE_STDIO,
 	[SYS_munmap] = PLEDGE_STDIO,
+	[SYS_break] = PLEDGE_STDIO,
 
 	[SYS_umask] = PLEDGE_STDIO,
 
