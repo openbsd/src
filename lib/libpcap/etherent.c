@@ -1,4 +1,4 @@
-/*	$OpenBSD: etherent.c,v 1.7 2004/01/27 06:58:03 tedu Exp $	*/
+/*	$OpenBSD: etherent.c,v 1.8 2015/11/17 18:19:45 mmcc Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993, 1994, 1995, 1996
@@ -24,7 +24,6 @@
 #include <sys/types.h>
 
 #include <ctype.h>
-#include <memory.h>
 #include <stdio.h>
 #include <string.h>
 

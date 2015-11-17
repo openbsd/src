@@ -1,4 +1,4 @@
-/*	$OpenBSD: gencode.c,v 1.41 2015/09/27 05:25:00 guenther Exp $	*/
+/*	$OpenBSD: gencode.c,v 1.42 2015/11/17 18:19:45 mmcc Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998
@@ -42,9 +42,9 @@ struct rtentry;
 
 #include <stdlib.h>
 #include <stddef.h>
-#include <memory.h>
 #include <setjmp.h>
 #include <stdarg.h>
+#include <string.h>
 
 #include "pcap-int.h"
 

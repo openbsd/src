@@ -1,4 +1,4 @@
-/*	$OpenBSD: optimize.c,v 1.15 2014/06/26 04:03:33 lteo Exp $	*/
+/*	$OpenBSD: optimize.c,v 1.16 2015/11/17 18:19:45 mmcc Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1993, 1994, 1995, 1996
@@ -29,7 +29,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
-#include <memory.h>
+#include <string.h>
 
 #include "pcap-int.h"
 

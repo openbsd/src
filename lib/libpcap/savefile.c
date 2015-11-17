@@ -1,4 +1,4 @@
-/*	$OpenBSD: savefile.c,v 1.13 2015/01/16 03:19:57 lteo Exp $	*/
+/*	$OpenBSD: savefile.c,v 1.14 2015/11/17 18:19:45 mmcc Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995, 1996, 1997
@@ -34,9 +34,9 @@
 #include <sys/time.h>
 
 #include <errno.h>
-#include <memory.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
 #ifdef HAVE_OS_PROTO_H

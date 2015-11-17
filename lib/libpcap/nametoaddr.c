@@ -1,4 +1,4 @@
-/*	$OpenBSD: nametoaddr.c,v 1.17 2015/10/24 06:07:43 mmcc Exp $	*/
+/*	$OpenBSD: nametoaddr.c,v 1.18 2015/11/17 18:19:45 mmcc Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996
@@ -40,9 +40,9 @@ struct rtentry;
 #include <ctype.h>
 #include <errno.h>
 #include <stdlib.h>
-#include <memory.h>
 #include <netdb.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "pcap-int.h"
 
