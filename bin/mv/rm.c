@@ -1,4 +1,4 @@
-/*	$OpenBSD: rm.c,v 1.5 2015/11/17 19:11:11 tedu Exp $	*/
+/*	$OpenBSD: rm.c,v 1.6 2015/11/17 19:39:18 tedu Exp $	*/
 /*	$NetBSD: rm.c,v 1.19 1995/09/07 06:48:50 jtc Exp $	*/
 
 /*-
@@ -74,7 +74,7 @@ usage(void)
 int
 rmmain(int argc, char *argv[])
 {
-	if (pledge("stdio rpath cpath", NULL) == -1)
+	if (pledge("stdio rpath cpath getpw", NULL) == -1)
 		err(1, "pledge");
 
 	checkdot(argv);
