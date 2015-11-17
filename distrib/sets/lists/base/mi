@@ -2308,7 +2308,6 @@
 ./usr/sbin/ldpd
 ./usr/sbin/lpc
 ./usr/sbin/lpd
-./usr/sbin/lptest
 ./usr/sbin/mailwrapper
 ./usr/sbin/makedbm
 ./usr/sbin/makemap
@@ -2342,7 +2341,6 @@
 ./usr/sbin/ospf6d
 ./usr/sbin/ospfctl
 ./usr/sbin/ospfd
-./usr/sbin/pac
 ./usr/sbin/pkg_add
 ./usr/sbin/pkg_check
 ./usr/sbin/pkg_create
@@ -2430,7 +2428,6 @@
 ./usr/sbin/yppush
 ./usr/sbin/ypserv
 ./usr/sbin/ypset
-./usr/sbin/yptest
 ./usr/sbin/ypxfr
 ./usr/sbin/ypxfr_1perday
 ./usr/sbin/ypxfr_1perhour
