@@ -1,4 +1,4 @@
-/*	$OpenBSD: getconf.c,v 1.17 2015/03/22 01:14:34 millert Exp $	*/
+/*	$OpenBSD: getconf.c,v 1.18 2015/11/17 17:29:27 jca Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -478,10 +478,14 @@ main(int argc, char *argv[])
 
 	switch (cp->type) {
 	case CONSTANT:
+		if (pledge("stdio", NULL) == -1)
+			err(1, "pledge");
 		printf("%ld\n", cp->value);
 		break;
 
 	case CONFSTR:
+		if (pledge("stdio", NULL) == -1)
+			err(1, "pledge");
 		errno = 0;
 		if ((slen = confstr(cp->value, NULL, 0)) == 0) {
 			if (errno != 0)
@@ -498,6 +502,8 @@ main(int argc, char *argv[])
 		break;
 
 	case SYSCONF:
+		if (pledge("stdio inet ps vminfo", NULL) == -1)
+			err(1, "pledge");
 		errno = 0;
 		if ((val = sysconf(cp->value)) == -1) {
 			if (errno != 0)
@@ -510,6 +516,8 @@ main(int argc, char *argv[])
 		break;
 
 	case PATHCONF:
+		if (pledge("stdio rpath", NULL) == -1)
+			err(1, "pledge");
 		errno = 0;
 		if ((val = pathconf(argv[1], cp->value)) == -1) {
 			if (errno != 0)
