@@ -1,4 +1,4 @@
-/*	$OpenBSD: showmount.c,v 1.18 2015/08/20 22:32:42 deraadt Exp $	*/
+/*	$OpenBSD: showmount.c,v 1.19 2015/11/17 15:01:28 deraadt Exp $	*/
 /*	$NetBSD: showmount.c,v 1.7 1996/05/01 18:14:10 cgd Exp $	*/
 
 /*
@@ -49,6 +49,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <vis.h>
+#include <err.h>
 
 /* Constant defs */
 #define	ALL	1
@@ -105,6 +106,9 @@ main(int argc, char *argv[])
 	char *host;
 	int ch, clnt_sock;
 
+	if (pledge("stdio rpath inet dns", NULL) == -1)
+		err(1, "pledge");
+
 	while ((ch = getopt(argc, argv, "ade3")) != -1)
 		switch (ch) {
 		case 'a':
@@ -158,6 +162,9 @@ main(int argc, char *argv[])
 	}
 	timeout.tv_sec = 30;
 	timeout.tv_usec = 0;
+
+	if (pledge("stdio rpath", NULL) == -1)
+		err(1, "pledge");
 
 	if (rpcs & DODUMP) {
 		estat = clnt_call(client, RPCMNT_DUMP, xdr_void, (char *)0,
