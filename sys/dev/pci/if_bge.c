@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.374 2015/11/14 17:54:57 mpi Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.375 2015/11/17 01:47:08 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -3980,7 +3980,7 @@ bge_cksum_pad(struct mbuf *m)
  * pointers to descriptors.
  */
 int
-bge_encap(struct bge_softc *sc, struct mbuf *m_head, int *txinc)
+bge_encap(struct bge_softc *sc, struct mbuf *m, int *txinc)
 {
 	struct bge_tx_bd	*f = NULL;
 	u_int32_t		frag, cur;
@@ -3990,20 +3990,20 @@ bge_encap(struct bge_softc *sc, struct mbuf *m_head, int *txinc)
 
 	cur = frag = (sc->bge_tx_prodidx + *txinc) % BGE_TX_RING_CNT;
 
-	if (m_head->m_pkthdr.csum_flags) {
-		if (m_head->m_pkthdr.csum_flags & M_IPV4_CSUM_OUT)
+	if (m->m_pkthdr.csum_flags) {
+		if (m->m_pkthdr.csum_flags & M_IPV4_CSUM_OUT)
 			csum_flags |= BGE_TXBDFLAG_IP_CSUM;
-		if (m_head->m_pkthdr.csum_flags & (M_TCP_CSUM_OUT |
-		    M_UDP_CSUM_OUT)) {
+		if (m->m_pkthdr.csum_flags &
+		    (M_TCP_CSUM_OUT | M_UDP_CSUM_OUT)) {
 			csum_flags |= BGE_TXBDFLAG_TCP_UDP_CSUM;
-			if (m_head->m_pkthdr.len < ETHER_MIN_NOPAD &&
-			    bge_cksum_pad(m_head) != 0)
+			if (m->m_pkthdr.len < ETHER_MIN_NOPAD &&
+			    bge_cksum_pad(m) != 0)
 				return (ENOBUFS);
 		}
 	}
 
 	if (sc->bge_flags & BGE_JUMBO_FRAME && 
-	    m_head->m_pkthdr.len > ETHER_MAX_LEN)
+	    m->m_pkthdr.len > ETHER_MAX_LEN)
 		csum_flags |= BGE_TXBDFLAG_JUMBO_FRAME;
 
 	if (!(BGE_CHIPREV(sc->bge_chipid) == BGE_CHIPREV_5700_BX))
@@ -4014,7 +4014,7 @@ bge_encap(struct bge_softc *sc, struct mbuf *m_head, int *txinc)
 	 * less than eight bytes.  If we encounter a teeny mbuf
 	 * at the end of a chain, we can pad.  Otherwise, copy.
 	 */
-	if (bge_compact_dma_runt(m_head) != 0)
+	if (bge_compact_dma_runt(m) != 0)
 		return (ENOBUFS);
 
 doit:
@@ -4025,13 +4025,13 @@ doit:
 	 * the fragment pointers. Stop when we run out
 	 * of fragments or hit the end of the mbuf chain.
 	 */
-	switch (bus_dmamap_load_mbuf(sc->bge_dmatag, dmamap, m_head,
+	switch (bus_dmamap_load_mbuf(sc->bge_dmatag, dmamap, m,
 	    BUS_DMA_NOWAIT)) {
 	case 0:
 		break;
 	case EFBIG:
-		if (m_defrag(m_head, M_DONTWAIT) == 0 &&
-		    bus_dmamap_load_mbuf(sc->bge_dmatag, dmamap, m_head,
+		if (m_defrag(m, M_DONTWAIT) == 0 &&
+		    bus_dmamap_load_mbuf(sc->bge_dmatag, dmamap, m,
 		     BUS_DMA_NOWAIT) == 0)
 			break;
 
@@ -4039,10 +4039,6 @@ doit:
 	default:
 		return (ENOBUFS);
 	}
-
-	/* Check if we have enough free send BDs. */
-	if (sc->bge_txcnt + *txinc + dmamap->dm_nsegs >= BGE_TX_RING_CNT)
-		goto fail_unload;
 
 	for (i = 0; i < dmamap->dm_nsegs; i++) {
 		f = &sc->bge_rdata->bge_tx_ring[frag];
@@ -4053,9 +4049,9 @@ doit:
 		f->bge_flags = csum_flags;
 		f->bge_vlan_tag = 0;
 #if NVLAN > 0
-		if (m_head->m_flags & M_VLANTAG) {
+		if (m->m_flags & M_VLANTAG) {
 			f->bge_flags |= BGE_TXBDFLAG_VLAN_TAG;
-			f->bge_vlan_tag = m_head->m_pkthdr.ether_vtag;
+			f->bge_vlan_tag = m->m_pkthdr.ether_vtag;
 		}
 #endif
 		cur = frag;
@@ -4072,7 +4068,7 @@ doit:
 		goto fail_unload;
 
 	sc->bge_rdata->bge_tx_ring[cur].bge_flags |= BGE_TXBDFLAG_END;
-	sc->bge_cdata.bge_tx_chain[cur] = m_head;
+	sc->bge_cdata.bge_tx_chain[cur] = m;
 	sc->bge_cdata.bge_tx_map[cur] = dmamap;
 	
 	*txinc += dmamap->dm_nsegs;
@@ -4093,7 +4089,7 @@ void
 bge_start(struct ifnet *ifp)
 {
 	struct bge_softc *sc;
-	struct mbuf *m_head;
+	struct mbuf *m;
 	int txinc;
 
 	sc = ifp->if_softc;
@@ -4105,25 +4101,29 @@ bge_start(struct ifnet *ifp)
 
 	txinc = 0;
 	while (1) {
-		IFQ_POLL(&ifp->if_snd, m_head);
-		if (m_head == NULL)
+		/* Check if we have enough free send BDs. */
+		if (sc->bge_txcnt + txinc + BGE_NTXSEG + 16 >=
+		    BGE_TX_RING_CNT) {
+			ifp->if_flags |= IFF_OACTIVE;
+			break;
+		}
+
+		IFQ_DEQUEUE(&ifp->if_snd, m);
+		if (m == NULL)
 			break;
 
-		if (bge_encap(sc, m_head, &txinc))
-			break;
-
-		/* now we are committed to transmit the packet */
-		IFQ_DEQUEUE(&ifp->if_snd, m_head);
+		if (bge_encap(sc, m, &txinc) != 0) {
+			m_freem(m);
+			continue;
+		}
 
 #if NBPFILTER > 0
 		if (ifp->if_bpf)
-			bpf_mtap_ether(ifp->if_bpf, m_head, BPF_DIRECTION_OUT);
+			bpf_mtap_ether(ifp->if_bpf, m, BPF_DIRECTION_OUT);
 #endif
 	}
 
 	if (txinc != 0) {
-		int txcnt;
-
 		/* Transmit */
 		sc->bge_tx_prodidx = (sc->bge_tx_prodidx + txinc) %
 		    BGE_TX_RING_CNT;
@@ -4132,9 +4132,7 @@ bge_start(struct ifnet *ifp)
 			bge_writembx(sc, BGE_MBX_TX_HOST_PROD0_LO,
 			    sc->bge_tx_prodidx);
 
-		txcnt = atomic_add_int_nv(&sc->bge_txcnt, txinc);
-		if (txcnt > BGE_TX_RING_CNT - 16)
-			ifp->if_flags |= IFF_OACTIVE;
+		atomic_add_int(&sc->bge_txcnt, txinc);
 
 		/*
 		 * Set a timeout in case the chip goes out to lunch.
