@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.270 2015/11/11 11:25:16 mpi Exp $	*/
+/*	$OpenBSD: route.c,v 1.271 2015/11/17 10:28:24 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -405,10 +405,14 @@ rtalloc(struct sockaddr *dst, int flags, unsigned int rtableid)
 		return (rt);
 	}
 
-	/*
-	 * Next hop entry must be UP and on the same interface.
-	 */
-	if (!ISSET(nhrt->rt_flags, RTF_UP) || nhrt->rt_ifidx != rt->rt_ifidx) {
+	/* Next hop entry must be UP... */
+	if (!ISSET(nhrt->rt_flags, RTF_UP)) {
+		rtfree(nhrt);
+		return (rt);
+	}
+
+	/* ...and on the same interface unless we have multiple gateways. */
+	if (nhrt->rt_ifidx != rt->rt_ifidx && !ISSET(rt->rt_flags, RTF_MPATH)) {
 		rtfree(nhrt);
 		return (rt);
 	}
