@@ -1,4 +1,4 @@
-/*	$OpenBSD: cp.c,v 1.2 2015/11/17 18:34:00 tedu Exp $	*/
+/*	$OpenBSD: cp.c,v 1.3 2015/11/17 18:39:18 tedu Exp $	*/
 /*	$NetBSD: cp.c,v 1.14 1995/09/07 06:14:51 jtc Exp $	*/
 
 /*
@@ -86,7 +86,7 @@ static int     setlink(struct stat *);
 extern char *__progname;
 
 static uid_t myuid;
-static int Rflag, fflag, iflag, pflag, rflag;
+static int fflag, iflag;
 static mode_t myumask;
 
 enum op { FILE_TO_FILE, FILE_TO_DIR, DIR_TO_DNE };
@@ -110,37 +110,20 @@ cpmain(int argc, char *argv[])
 {
 	struct stat to_stat, tmp_stat;
 	enum op type;
-	int Hflag, Lflag, Pflag, ch, fts_options, r;
+	int Hflag, Lflag, Pflag, fts_options, r;
 	char *target;
 
-	Hflag = Lflag = Pflag = Rflag = 0;
+	Hflag = Lflag = Pflag = 0;
 
-	Rflag = 1;
 	Pflag = 1;
-	pflag = 1;
 
 	fts_options = FTS_NOCHDIR | FTS_PHYSICAL;
-	if (rflag) {
-		if (Rflag)
-			errx(1,
-		    "the -R and -r options may not be specified together.");
-		if (Hflag || Lflag || Pflag)
-			errx(1,
-	"the -H, -L, and -P options may not be specified with the -r option.");
-		fts_options &= ~FTS_PHYSICAL;
-		fts_options |= FTS_LOGICAL;
-	}
-	if (Rflag) {
 		if (Hflag)
 			fts_options |= FTS_COMFOLLOW;
 		if (Lflag) {
 			fts_options &= ~FTS_PHYSICAL;
 			fts_options |= FTS_LOGICAL;
 		}
-	} else {
-		fts_options &= ~FTS_PHYSICAL;
-		fts_options |= FTS_LOGICAL;
-	}
 
 	myuid = getuid();
 
@@ -193,12 +176,12 @@ cpmain(int argc, char *argv[])
 		 * the initial mkdir().
 		 */
 		if (r == -1) {
-			if (rflag || (Rflag && (Lflag || Hflag)))
+			if (((Lflag || Hflag)))
 				stat(*argv, &tmp_stat);
 			else
 				lstat(*argv, &tmp_stat);
 
-			if (S_ISDIR(tmp_stat.st_mode) && (Rflag || rflag))
+			if (S_ISDIR(tmp_stat.st_mode))
 				type = DIR_TO_DNE;
 			else
 				type = FILE_TO_FILE;
@@ -347,7 +330,7 @@ copy(char *argv[], enum op type, int fts_options)
 				 * unmodified by the umask; arguably wrong,
 				 * but it's been that way forever.
 				 */
-				if (pflag && setfile(curr->fts_statp, -1))
+				if (setfile(curr->fts_statp, -1))
 					rval = 1;
 				else if (fts_dne(curr))
 					(void)chmod(to.p_path,
@@ -378,13 +361,6 @@ copy(char *argv[], enum op type, int fts_options)
 				rval = 1;
 			break;
 		case S_IFDIR:
-			if (!Rflag && !rflag) {
-				warnx("%s is a directory (not copied).",
-				    curr->fts_path);
-				(void)fts_set(ftsp, curr, FTS_SKIP);
-				rval = 1;
-				break;
-			}
 			/*
 			 * If the directory doesn't exist, create the new
 			 * one with the from file mode plus owner RWX bits,
@@ -402,19 +378,11 @@ copy(char *argv[], enum op type, int fts_options)
 			break;
 		case S_IFBLK:
 		case S_IFCHR:
-			if (Rflag) {
 				if (copy_special(curr->fts_statp, !fts_dne(curr)))
-					rval = 1;
-			} else
-				if (copy_file(curr, fts_dne(curr)))
 					rval = 1;
 			break;
 		case S_IFIFO:
-			if (Rflag) {
 				if (copy_fifo(curr->fts_statp, !fts_dne(curr)))
-					rval = 1;
-			} else
-				if (copy_file(curr, fts_dne(curr)))
 					rval = 1;
 			break;
 		case S_IFSOCK:
@@ -433,7 +401,7 @@ copy(char *argv[], enum op type, int fts_options)
 }
 
 
-/*	$OpenBSD: cp.c,v 1.2 2015/11/17 18:34:00 tedu Exp $	*/
+/*	$OpenBSD: cp.c,v 1.3 2015/11/17 18:39:18 tedu Exp $	*/
 /*	$NetBSD: utils.c,v 1.6 1997/02/26 14:40:51 cgd Exp $	*/
 
 /*-
@@ -604,25 +572,8 @@ copy_file(FTSENT *entp, int dne)
 		return (1);
 	}
 
-	if (pflag && setfile(fs, to_fd))
+	if (setfile(fs, to_fd))
 		rval = 1;
-	/*
-	 * If the source was setuid or setgid, lose the bits unless the
-	 * copy is owned by the same user and group.
-	 */
-#define	RETAINBITS \
-	(S_ISUID | S_ISGID | S_ISVTX | S_IRWXU | S_IRWXG | S_IRWXO)
-	if (!pflag && dne &&
-	    fs->st_mode & (S_ISUID | S_ISGID) && fs->st_uid == myuid) {
-		if (fstat(to_fd, &to_stat)) {
-			warn("%s", to.p_path);
-			rval = 1;
-		} else if (fs->st_gid == to_stat.st_gid &&
-		    fchmod(to_fd, fs->st_mode & RETAINBITS & ~myumask)) {
-			warn("%s", to.p_path);
-			rval = 1;
-		}
-	}
 	(void)close(from_fd);
 	if (close(to_fd)) {
 		warn("%s", to.p_path);
@@ -650,7 +601,7 @@ copy_link(FTSENT *p, int exists)
 		warn("symlink: %s", linkname);
 		return (1);
 	}
-	return (pflag ? setlink(p->fts_statp) : 0);
+	return (setlink(p->fts_statp));
 }
 
 static int
@@ -664,7 +615,7 @@ copy_fifo(struct stat *from_stat, int exists)
 		warn("mkfifo: %s", to.p_path);
 		return (1);
 	}
-	return (pflag ? setfile(from_stat, -1) : 0);
+	return (setfile(from_stat, -1));
 }
 
 static int
@@ -678,7 +629,7 @@ copy_special(struct stat *from_stat, int exists)
 		warn("mknod: %s", to.p_path);
 		return (1);
 	}
-	return (pflag ? setfile(from_stat, -1) : 0);
+	return (setfile(from_stat, -1));
 }
 
 
