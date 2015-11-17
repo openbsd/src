@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.180 2015/11/12 20:49:46 benno Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.181 2015/11/17 17:54:01 benno Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -243,9 +243,15 @@ main(int argc, char *argv[])
 	 * pledge placed here because kr_init() does a setsockopt on the
 	 * routing socket thats not allowed at all.
 	 */
+#if 0
+	/*
+	 * disabled because we do ioctls on /dev/pf and SIOCSIFGATTR
+	 * this needs some redesign of bgpd to be fixed.
+	 */
 	if (pledge("stdio rpath wpath cpath fattr unix route recvfd sendfd "
 	    "proc", NULL) == -1)
 		fatal("pledge");
+#endif
 
 	if (imsg_send_sockets(ibuf_se, ibuf_rde))
 		fatal("could not establish imsg links");
