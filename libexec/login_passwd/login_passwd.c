@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_passwd.c,v 1.12 2015/10/14 17:06:58 deraadt Exp $	*/
+/*	$OpenBSD: login_passwd.c,v 1.13 2015/11/18 19:27:46 tedu Exp $	*/
 
 /*-
  * Copyright (c) 2001 Hans Insulander <hin@openbsd.org>.
@@ -46,7 +46,7 @@ pwd_login(char *username, char *password, char *wheel, int lastchance,
 	if (password == NULL)
 		return (AUTH_FAILED);
 
-	pwd = getpwnam(username);
+	pwd = getpwnam_shadow(username);
 	if (pwd)
 		goodhash = pwd->pw_passwd;
 
