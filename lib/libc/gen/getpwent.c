@@ -1,4 +1,4 @@
-/*	$OpenBSD: getpwent.c,v 1.56 2015/09/14 16:09:13 tedu Exp $ */
+/*	$OpenBSD: getpwent.c,v 1.57 2015/11/18 16:44:46 tedu Exp $ */
 /*
  * Copyright (c) 2008 Theo de Raadt
  * Copyright (c) 1988, 1993
@@ -65,7 +65,7 @@ static int _pw_stayopen;		/* keep fd's open */
 static int _pw_flags;			/* password flags */
 
 static int __hashpw(DBT *, char *buf, size_t buflen, struct passwd *, int *);
-static int __initdb(void);
+static int __initdb(int);
 static struct passwd *_pwhashbyname(const char *name, char *buf,
 	size_t buflen, struct passwd *pw, int *);
 static struct passwd *_pwhashbyuid(uid_t uid, char *buf,
@@ -263,7 +263,7 @@ getpwent(void)
 	DBT key;
 
 	_THREAD_PRIVATE_MUTEX_LOCK(pw);
-	if (!_pw_db && !__initdb())
+	if (!_pw_db && !__initdb(0))
 		goto done;
 
 #ifdef YP
@@ -701,9 +701,9 @@ _pwhashbyuid(uid_t uid, char *buf, size_t buflen, struct passwd *pw,
 	return (NULL);
 }
 
-int
-getpwnam_r(const char *name, struct passwd *pw, char *buf, size_t buflen,
-    struct passwd **pwretp)
+static int
+getpwnam_internal(const char *name, struct passwd *pw, char *buf, size_t buflen,
+    struct passwd **pwretp, int shadow)
 {
 	struct passwd *pwret = NULL;
 	int flags = 0, *flagsp;
@@ -713,7 +713,7 @@ getpwnam_r(const char *name, struct passwd *pw, char *buf, size_t buflen,
 	_THREAD_PRIVATE_MUTEX_LOCK(pw);
 	saved_errno = errno;
 	errno = 0;
-	if (!_pw_db && !__initdb())
+	if (!_pw_db && !__initdb(shadow))
 		goto fail;
 
 	if (pw == &_pw_passwd)
@@ -744,6 +744,14 @@ fail:
 	_THREAD_PRIVATE_MUTEX_UNLOCK(pw);
 	return (my_errno);
 }
+
+int
+getpwnam_r(const char *name, struct passwd *pw, char *buf, size_t buflen,
+    struct passwd **pwretp)
+{
+	/* XXX shadow should be 0 XXX */
+	return getpwnam_internal(name, pw, buf, buflen, pwretp, 1);
+}
 DEF_WEAK(getpwnam_r);
 
 struct passwd *
@@ -762,9 +770,25 @@ getpwnam(const char *name)
 }
 DEF_WEAK(getpwnam);
 
-int
-getpwuid_r(uid_t uid, struct passwd *pw, char *buf, size_t buflen,
-    struct passwd **pwretp)
+struct passwd *
+getpwnam_shadow(const char *name)
+{
+	struct passwd *pw = NULL;
+	int my_errno;
+
+	my_errno = getpwnam_internal(name, &_pw_passwd, _pw_string,
+	    sizeof _pw_string, &pw, 1);
+	if (my_errno) {
+		pw = NULL;
+		errno = my_errno;
+	}
+	return (pw);
+}
+DEF_WEAK(getpwnam_shadow);
+
+static int
+getpwuid_internal(uid_t uid, struct passwd *pw, char *buf, size_t buflen,
+    struct passwd **pwretp, int shadow)
 {
 	struct passwd *pwret = NULL;
 	int flags = 0, *flagsp;
@@ -774,7 +798,7 @@ getpwuid_r(uid_t uid, struct passwd *pw, char *buf, size_t buflen,
 	_THREAD_PRIVATE_MUTEX_LOCK(pw);
 	saved_errno = errno;
 	errno = 0;
-	if (!_pw_db && !__initdb())
+	if (!_pw_db && !__initdb(shadow))
 		goto fail;
 
 	if (pw == &_pw_passwd)
@@ -805,6 +829,15 @@ fail:
 	_THREAD_PRIVATE_MUTEX_UNLOCK(pw);
 	return (my_errno);
 }
+
+
+int
+getpwuid_r(uid_t uid, struct passwd *pw, char *buf, size_t buflen,
+    struct passwd **pwretp)
+{
+	/* XXX shadow should be 0 XXX */
+	return getpwuid_internal(uid, pw, buf, buflen, pwretp, 1);
+}
 DEF_WEAK(getpwuid_r);
 
 struct passwd *
@@ -822,6 +855,22 @@ getpwuid(uid_t uid)
 	return (pw);
 }
 DEF_WEAK(getpwuid);
+
+struct passwd *
+getpwuid_shadow(uid_t uid)
+{
+	struct passwd *pw = NULL;
+	int my_errno;
+
+	my_errno = getpwuid_internal(uid, &_pw_passwd, _pw_string,
+	    sizeof _pw_string, &pw, 1);
+	if (my_errno) {
+		pw = NULL;
+		errno = my_errno;
+	}
+	return (pw);
+}
+DEF_WEAK(getpwuid_shadow);
 
 int
 setpassent(int stayopen)
@@ -871,7 +920,7 @@ endpwent(void)
 }
 
 static int
-__initdb(void)
+__initdb(int shadow)
 {
 	static int warned;
 	int saved_errno = errno;
@@ -880,8 +929,11 @@ __initdb(void)
 	__ypmode = YPMODE_NONE;
 	__getpwent_has_yppw = -1;
 #endif
-	if ((_pw_db = dbopen(_PATH_SMP_DB, O_RDONLY, 0, DB_HASH, NULL)) ||
-	    (_pw_db = dbopen(_PATH_MP_DB, O_RDONLY, 0, DB_HASH, NULL))) {
+	if (shadow)
+		_pw_db = dbopen(_PATH_SMP_DB, O_RDONLY, 0, DB_HASH, NULL);
+	if (!_pw_db)
+	    _pw_db = dbopen(_PATH_MP_DB, O_RDONLY, 0, DB_HASH, NULL);
+	if (_pw_db) {
 		errno = saved_errno;
 		return (1);
 	}

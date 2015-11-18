@@ -1,4 +1,4 @@
-/*	$OpenBSD: pwd.h,v 1.1 2015/09/13 15:34:22 guenther Exp $	*/
+/*	$OpenBSD: pwd.h,v 1.2 2015/11/18 16:44:46 tedu Exp $	*/
 /*
  * Copyright (c) 2015 Philip Guenther <guenther@openbsd.org>
  *
@@ -33,8 +33,10 @@ PROTO_DEPRECATED(endpwent);
 PROTO_DEPRECATED(getpwent);
 PROTO_NORMAL(getpwnam);
 PROTO_NORMAL(getpwnam_r);
+PROTO_NORMAL(getpwnam_shadow);
 PROTO_NORMAL(getpwuid);
 PROTO_NORMAL(getpwuid_r);
+PROTO_NORMAL(getpwuid_shadow);
 PROTO_NORMAL(pw_dup);
 PROTO_NORMAL(setpassent);
 PROTO_DEPRECATED(setpwent);
