@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptosoft.c,v 1.78 2015/11/13 12:21:16 mikeb Exp $	*/
+/*	$OpenBSD: cryptosoft.c,v 1.79 2015/11/18 12:23:14 mikeb Exp $	*/
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -857,6 +857,7 @@ swcr_newsession(u_int32_t *sid, struct cryptoini *cri)
 			goto authcommon;
 		case CRYPTO_SHA2_512_HMAC:
 			axf = &auth_hash_hmac_sha2_512_256;
+			goto authcommon;
 		authcommon:
 			(*swd)->sw_ictx = malloc(axf->ctxsize, M_CRYPTO_DATA,
 			    M_NOWAIT);
@@ -897,19 +898,17 @@ swcr_newsession(u_int32_t *sid, struct cryptoini *cri)
 
 		case CRYPTO_AES_128_GMAC:
 			axf = &auth_hash_gmac_aes_128;
-			goto auth4common;
-
+			goto authenccommon;
 		case CRYPTO_AES_192_GMAC:
 			axf = &auth_hash_gmac_aes_192;
-			goto auth4common;
-
+			goto authenccommon;
 		case CRYPTO_AES_256_GMAC:
 			axf = &auth_hash_gmac_aes_256;
-			goto auth4common;
-
+			goto authenccommon;
 		case CRYPTO_CHACHA20_POLY1305_MAC:
 			axf = &auth_hash_chacha20_poly1305;
-		auth4common:
+			goto authenccommon;
+		authenccommon:
 			(*swd)->sw_ictx = malloc(axf->ctxsize, M_CRYPTO_DATA,
 			    M_NOWAIT);
 			if ((*swd)->sw_ictx == NULL) {
