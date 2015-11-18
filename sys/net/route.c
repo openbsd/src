@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.271 2015/11/17 10:28:24 mpi Exp $	*/
+/*	$OpenBSD: route.c,v 1.272 2015/11/18 12:45:59 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -151,7 +151,8 @@ void	rt_timer_init(void);
 int	rtflushclone1(struct rtentry *, void *, u_int);
 void	rtflushclone(unsigned int, struct rtentry *);
 int	rt_if_remove_rtdelete(struct rtentry *, void *, u_int);
-struct rtentry *rt_match(struct sockaddr *, int, unsigned int);
+struct rtentry *rt_match(struct sockaddr *, uint32_t *, int, unsigned int);
+uint32_t	rt_hash(struct rtentry *, uint32_t *);
 
 struct	ifaddr *ifa_ifwithroute(int, struct sockaddr *, struct sockaddr *,
 		    u_int);
@@ -228,7 +229,7 @@ rtisvalid(struct rtentry *rt)
  *   error occured while adding a L2 entry.
  */
 struct rtentry *
-rt_match(struct sockaddr *dst, int flags, unsigned int tableid)
+rt_match(struct sockaddr *dst, uint32_t *src, int flags, unsigned int tableid)
 {
 	struct rtentry		*rt0, *rt = NULL;
 	struct rt_addrinfo	 info;
@@ -240,6 +241,29 @@ rt_match(struct sockaddr *dst, int flags, unsigned int tableid)
 	s = splsoftnet();
 	KERNEL_LOCK();
 	rt = rtable_match(tableid, dst);
+
+#ifndef SMALL_KERNEL
+	/* Handle multipath routing if enabled for the specified protocol. */
+	if (rt != NULL && ISSET(rt->rt_flags, RTF_MPATH) && src != NULL) {
+		switch (dst->sa_family) {
+		case AF_INET:
+			if (!ipmultipath)
+				break;
+			rt = rtable_mpath_select(rt, rt_hash(rt, src) & 0xffff);
+			break;
+#ifdef INET6
+		case AF_INET6:
+			if (!ip6_multipath)
+				break;
+			rt = rtable_mpath_select(rt, rt_hash(rt, src) & 0xffff);
+			break;
+#endif
+		default:
+			break;
+		};
+	}
+#endif /* SMALL_KERNEL */
+
 	if (rt != NULL) {
 		if ((rt->rt_flags & RTF_CLONING) && ISSET(flags, RT_RESOLVE)) {
 			rt0 = rt;
@@ -265,8 +289,9 @@ miss:
 	return (rt);
 }
 
-#ifndef SMALL_KERNEL
+struct rtentry *_rtalloc(struct sockaddr *, uint32_t *, int, unsigned int);
 
+#ifndef SMALL_KERNEL
 /*
  * Originated from bridge_hash() in if_bridge.c
  */
@@ -282,7 +307,7 @@ miss:
 	c -= a; c -= b; c ^= (b >> 15);					\
 } while (0)
 
-static uint32_t
+uint32_t
 rt_hash(struct rtentry *rt, uint32_t *src)
 {
 	struct sockaddr *dst = rt_key(rt);
@@ -338,26 +363,15 @@ rt_hash(struct rtentry *rt, uint32_t *src)
 struct rtentry *
 rtalloc_mpath(struct sockaddr *dst, uint32_t *src, unsigned int rtableid)
 {
-	struct rtentry *rt;
-
-	rt = rtalloc(dst, RT_REPORT|RT_RESOLVE, rtableid);
-
-	/* if the route does not exist or it is not multipath, don't care */
-	if (rt == NULL || !ISSET(rt->rt_flags, RTF_MPATH))
-		return (rt);
-
-	/* check if multipath routing is enabled for the specified protocol */
-	if (!(0
-	    || (ipmultipath && dst->sa_family == AF_INET)
-#ifdef INET6
-	    || (ip6_multipath && dst->sa_family == AF_INET6)
-#endif
-	    ))
-		return (rt);
-
-	return (rtable_mpath_select(rt, rt_hash(rt, src) & 0xffff));
+	return (_rtalloc(dst, src, RT_REPORT|RT_RESOLVE, rtableid));
 }
 #endif /* SMALL_KERNEL */
+
+struct rtentry *
+rtalloc(struct sockaddr *dst, int flags, unsigned int rtableid)
+{
+	return (_rtalloc(dst, NULL, flags, rtableid));
+}
 
 /*
  * Look in the routing table for the best matching entry for
@@ -367,11 +381,11 @@ rtalloc_mpath(struct sockaddr *dst, uint32_t *src, unsigned int rtableid)
  * longer valid, try to cache it.
  */
 struct rtentry *
-rtalloc(struct sockaddr *dst, int flags, unsigned int rtableid)
+_rtalloc(struct sockaddr *dst, uint32_t *src, int flags, unsigned int rtableid)
 {
 	struct rtentry *rt, *nhrt;
 
-	rt = rt_match(dst, flags, rtableid);
+	rt = rt_match(dst, src, flags, rtableid);
 
 	/* No match or route to host?  We're done. */
 	if (rt == NULL || !ISSET(rt->rt_flags, RTF_GATEWAY))
@@ -392,7 +406,7 @@ rtalloc(struct sockaddr *dst, int flags, unsigned int rtableid)
 	 * this behavior.  But it is safe since rt_checkgate() wont
 	 * allow us to us this route later on.
 	 */
-	nhrt = rt_match(rt->rt_gateway, flags | RT_RESOLVE, rtableid);
+	nhrt = rt_match(rt->rt_gateway, NULL, flags | RT_RESOLVE, rtableid);
 	if (nhrt == NULL)
 		return (rt);
 
