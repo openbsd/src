@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.187 2015/11/18 13:53:59 mpi Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.188 2015/11/18 13:58:02 mpi Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -604,18 +604,7 @@ in_arpinput(struct mbuf *m)
 				}
 			changed = 1;
 			}
-		} else if (rt->rt_ifp != ifp &&
-#if NBRIDGE > 0
-		    !SAME_BRIDGE(ifp->if_bridgeport,
-		    rt->rt_ifp->if_bridgeport) &&
-#endif
-#if NCARP > 0
-		    !(rt->rt_ifp->if_type == IFT_CARP &&
-		    rt->rt_ifp->if_carpdev == ifp) &&
-		    !(ifp->if_type == IFT_CARP &&
-		    ifp->if_carpdev == rt->rt_ifp) &&
-#endif
-		    1) {
+		} else if (!if_isconnected(ifp, rt->rt_ifidx)) {
 			inet_ntop(AF_INET, &isaddr, addr, sizeof(addr));
 			log(LOG_WARNING,
 			    "arp: attempt to add entry for %s "

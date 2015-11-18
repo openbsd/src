@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_nbr.c,v 1.99 2015/11/02 15:05:23 mpi Exp $	*/
+/*	$OpenBSD: nd6_nbr.c,v 1.100 2015/11/18 13:58:02 mpi Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -81,6 +81,8 @@ void nd6_dad_ns_output(struct dadq *, struct ifaddr *);
 void nd6_dad_ns_input(struct ifaddr *);
 void nd6_dad_duplicated(struct dadq *);
 
+int nd6_isneighbor(const struct ifnet *, const struct in6_addr *);
+
 static int dad_maxtry = 15;	/* max # of *tries* to transmit DAD packet */
 
 /*
@@ -149,7 +151,7 @@ nd6_ns_input(struct mbuf *m, int off, int icmp6len)
 		/*
 		 * Make sure the source address is from a neighbor's address.
 		 */
-		if (!in6_ifpprefix(ifp, &saddr6)) {
+		if (!nd6_isneighbor(ifp, &saddr6)) {
 			nd6log((LOG_INFO, "nd6_ns_input: "
 			    "NS packet from non-neighbor\n"));
 			goto bad;
@@ -684,7 +686,7 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 	/*
 	 * Make sure the source address is from a neighbor's address.
 	 */
-	if (!in6_ifpprefix(ifp, &saddr6)) {
+	if (!nd6_isneighbor(ifp, &saddr6)) {
 		nd6log((LOG_INFO, "nd6_na_input: "
 		    "ND packet from non-neighbor\n"));
 		goto bad;
@@ -1405,4 +1407,28 @@ nd6_dad_ns_input(struct ifaddr *ifa)
 		if (dp)
 			dp->dad_ns_icount++;
 	}
+}
+
+/*
+ * Check whether ``addr'' is a neighbor address connected to ``ifp''.
+ */
+int
+nd6_isneighbor(const struct ifnet *ifp, const struct in6_addr *addr)
+{
+	struct rtentry		*rt;
+	struct sockaddr_in6	 sin6;
+	unsigned int		 tableid = ifp->if_rdomain;
+	int rv = 0;
+
+	memset(&sin6, 0, sizeof(sin6));
+	sin6.sin6_len = sizeof(struct sockaddr_in6);
+	sin6.sin6_family = AF_INET6;
+	sin6.sin6_addr = *addr;
+	rt = rtalloc(sin6tosa(&sin6), 0, tableid);
+
+	if (rtisvalid(rt) && ISSET(rt->rt_flags, RTF_CLONING|RTF_CLONED))
+		rv = if_isconnected(ifp, rt->rt_ifidx);
+
+	rtfree(rt);
+	return (rv);
 }

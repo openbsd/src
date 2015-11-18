@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.178 2015/11/02 15:05:23 mpi Exp $	*/
+/*	$OpenBSD: in6.c,v 1.179 2015/11/18 13:58:02 mpi Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -61,7 +61,6 @@
  *	@(#)in.c	8.2 (Berkeley) 11/15/93
  */
 
-#include "bridge.h"
 #include "carp.h"
 
 #include <sys/param.h>
@@ -84,9 +83,6 @@
 
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
-#if NBRIDGE > 0
-#include <net/if_bridge.h>
-#endif
 
 #include <netinet6/in6_var.h>
 #include <netinet/ip6.h>
@@ -1448,44 +1444,6 @@ in6ifa_ifpwithaddr(struct ifnet *ifp, struct in6_addr *addr)
 	}
 
 	return (ifatoia6(ifa));
-}
-
-/*
- * Check whether an interface has a prefix by looking up the cloning route.
- */
-int
-in6_ifpprefix(const struct ifnet *ifp, const struct in6_addr *addr)
-{
-	struct sockaddr_in6 dst;
-	struct rtentry *rt;
-	u_int tableid = ifp->if_rdomain;
-
-	bzero(&dst, sizeof(dst));
-	dst.sin6_len = sizeof(struct sockaddr_in6);
-	dst.sin6_family = AF_INET6;
-	dst.sin6_addr = *addr;
-	rt = rtalloc(sin6tosa(&dst), 0, tableid);
-
-	if (rt == NULL)
-		return (0);
-	if ((rt->rt_flags & (RTF_CLONING | RTF_CLONED)) == 0 ||
-	    (rt->rt_ifp != ifp &&
-#if NBRIDGE > 0
-	    !SAME_BRIDGE(rt->rt_ifp->if_bridgeport, ifp->if_bridgeport) &&
-#endif
-#if NCARP > 0
-	    (ifp->if_type != IFT_CARP || rt->rt_ifp != ifp->if_carpdev) &&
-	    (rt->rt_ifp->if_type != IFT_CARP || rt->rt_ifp->if_carpdev != ifp)&&
-	    (ifp->if_type != IFT_CARP || rt->rt_ifp->if_type != IFT_CARP ||
-	    rt->rt_ifp->if_carpdev != ifp->if_carpdev) &&
-#endif
-	    1)) {
-		rtfree(rt);
-		return (0);
-	}
-
-	rtfree(rt);
-	return (1);
 }
 
 /*
