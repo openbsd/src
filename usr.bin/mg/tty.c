@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.35 2015/03/19 21:48:05 bcallah Exp $	*/
+/*	$OpenBSD: tty.c,v 1.36 2015/11/18 18:44:50 jasper Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -240,14 +240,14 @@ ttinsl(int row, int bot, int nchunk)
 {
 	int	i, nl;
 
-	/* Case of one line insert is special. */
+	/* One line special cases */
 	if (row == bot) {
 		ttmove(row, 0);
 		tteeol();
 		return;
 	}
+	/* Use scroll region and back index */
 	if (change_scroll_region && scroll_reverse) {
-		/* Use scroll region and back index	 */
 		nl = bot - row;
 		ttwindow(row, bot);
 		ttmove(row, 0);
@@ -255,13 +255,14 @@ ttinsl(int row, int bot, int nchunk)
 			putpad(scroll_reverse, nl);
 		ttnowindow();
 		return;
+	/* else use insert/delete line */
 	} else if (insdel) {
 		ttmove(1 + bot - nchunk, 0);
 		nl = nrow - ttrow;
 		if (parm_delete_line)
 			putpad(tgoto(parm_delete_line, 0, nchunk), nl);
 		else
-			/* For all lines in the chunk... */
+			/* For all lines in the chunk */
 			for (i = 0; i < nchunk; i++)
 				putpad(delete_line, nl);
 		ttmove(row, 0);
@@ -313,13 +314,14 @@ ttdell(int row, int bot, int nchunk)
 		if (parm_delete_line)
 			putpad(tgoto(parm_delete_line, 0, nchunk), nl);
 		else
-			/* For all lines in the chunk	 */
+			/* For all lines in the chunk */
 			for (i = 0; i < nchunk; i++)
 				putpad(delete_line, nl);
 		ttmove(1 + bot - nchunk, 0);
 
 		/* ttmove() changes ttrow */
 		nl = nrow - ttrow;
+
 		if (parm_insert_line)
 			putpad(tgoto(parm_insert_line, 0, nchunk), nl);
 		else
