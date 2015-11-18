@@ -29,7 +29,7 @@
 ./etc/firmware/zd1211b
 ./sbin/kbd
 ./sbin/wsconsctl
-./usr/lib/libc.so.84.1
+./usr/lib/libc.so.84.2
 ./usr/lib/libcrypto.so.36.1
 ./usr/lib/libcurses.so.14.0
 ./usr/lib/libedit.so.5.2
@@ -1474,6 +1474,7 @@
 ./usr/libdata/perl5/site_perl/sh-openbsd/glob.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/grp.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/histedit.ph
+./usr/libdata/perl5/site_perl/sh-openbsd/icdb.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/ieeefp.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/ifaddrs.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/imsg.ph

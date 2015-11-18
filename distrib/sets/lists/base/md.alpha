@@ -61,7 +61,7 @@
 ./sbin/kbd
 ./sbin/mount_ntfs
 ./sbin/wsconsctl
-./usr/lib/libc.so.84.1
+./usr/lib/libc.so.84.2
 ./usr/lib/libcrypto.so.36.1
 ./usr/lib/libcurses.so.14.0
 ./usr/lib/libedit.so.5.2
@@ -1560,6 +1560,7 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/glob.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/grp.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/histedit.ph
+./usr/libdata/perl5/site_perl/alpha-openbsd/icdb.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/ieeefp.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/ifaddrs.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/imsg.ph

@@ -890,6 +890,7 @@
 ./usr/include/glob.h
 ./usr/include/grp.h
 ./usr/include/histedit.h
+./usr/include/icdb.h
 ./usr/include/ifaddrs.h
 ./usr/include/imsg.h
 ./usr/include/inttypes.h

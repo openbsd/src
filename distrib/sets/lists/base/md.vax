@@ -944,6 +944,7 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/glob.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/grp.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/histedit.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/icdb.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/ifaddrs.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/imsg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/inttypes.ph
