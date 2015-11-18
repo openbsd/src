@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.186 2015/11/13 10:18:04 mpi Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.187 2015/11/18 13:53:59 mpi Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -493,7 +493,6 @@ in_arpinput(struct mbuf *m)
 {
 	struct ether_arp *ea;
 	struct ifnet *ifp;
-	struct arpcom *ac;
 	struct ether_header *eh;
 	struct llinfo_arp *la = NULL;
 	struct rtentry *rt = NULL;
@@ -502,10 +501,7 @@ in_arpinput(struct mbuf *m)
 	struct sockaddr_in sin;
 	struct in_addr isaddr, itaddr;
 	struct mbuf *mh;
-	u_int8_t *enaddr = NULL;
-#if NCARP > 0
-	uint8_t *ethshost = NULL;
-#endif
+	uint8_t enaddr[ETHER_ADDR_LEN];
 	char addr[INET_ADDRSTRLEN];
 	int op, changed = 0, target = 0;
 	unsigned int len, rdomain;
@@ -517,8 +513,6 @@ in_arpinput(struct mbuf *m)
 		m_freem(m);
 		return;
 	}
-	ac = (struct arpcom *)ifp;
-
 	ea = mtod(m, struct ether_arp *);
 	op = ntohs(ea->arp_op);
 	if ((op != ARPOP_REQUEST) && (op != ARPOP_REPLY))
@@ -540,6 +534,10 @@ in_arpinput(struct mbuf *m)
 		}
 	}
 
+	memcpy(enaddr, LLADDR(ifp->if_sadl), ETHER_ADDR_LEN);
+	if (!memcmp(ea->arp_sha, enaddr, sizeof(ea->arp_sha)))
+		goto out;	/* it's from me, ignore it. */
+
 	/* Check target against our interface addresses. */
 	sin.sin_addr = itaddr;
 	rt = rtalloc(sintosa(&sin), 0, rdomain);
@@ -548,17 +546,12 @@ in_arpinput(struct mbuf *m)
 		target = 1;
 	rtfree(rt);
 	rt = NULL;
-	
+
 #if NCARP > 0
 	if (target && op == ARPOP_REQUEST && ifp->if_type == IFT_CARP &&
-	    !carp_iamatch(ifp, &ethshost))
+	    !carp_iamatch(ifp, enaddr))
 		goto out;
 #endif
-
-	if (!enaddr)
-		enaddr = ac->ac_enaddr;
-	if (!memcmp(ea->arp_sha, enaddr, sizeof(ea->arp_sha)))
-		goto out;	/* it's from me, ignore it. */
 
 	/* Do we have an ARP cache for the sender?  Create if we are target. */
 	rt = arplookup(isaddr.s_addr, target, 0, rdomain);
@@ -670,13 +663,15 @@ out:
 	if (target) {
 		/* We are the target and already have all info for the reply */
 		memcpy(ea->arp_tha, ea->arp_sha, sizeof(ea->arp_sha));
-		memcpy(ea->arp_sha, enaddr, sizeof(ea->arp_sha));
+		memcpy(ea->arp_sha, LLADDR(ifp->if_sadl), sizeof(ea->arp_sha));
 	} else {
 		rt = arplookup(itaddr.s_addr, 0, SIN_PROXY, rdomain);
 		if (rt == NULL)
 			goto out;
+#if NCARP > 0
 		if (rt->rt_ifp->if_type == IFT_CARP && ifp->if_type != IFT_CARP)
 			goto out;
+#endif
 		memcpy(ea->arp_tha, ea->arp_sha, sizeof(ea->arp_sha));
 		sdl = satosdl(rt->rt_gateway);
 		memcpy(ea->arp_sha, LLADDR(sdl), sizeof(ea->arp_sha));
@@ -689,10 +684,6 @@ out:
 	ea->arp_pro = htons(ETHERTYPE_IP); /* let's be sure! */
 	eh = (struct ether_header *)sa.sa_data;
 	memcpy(eh->ether_dhost, ea->arp_tha, sizeof(eh->ether_dhost));
-#if NCARP > 0
-	if (ethshost)
-		enaddr = ethshost;
-#endif
 	memcpy(eh->ether_shost, enaddr, sizeof(eh->ether_shost));
 
 	eh->ether_type = htons(ETHERTYPE_ARP);

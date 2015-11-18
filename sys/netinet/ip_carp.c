@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.281 2015/11/12 05:46:45 dlg Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.282 2015/11/18 13:53:59 mpi Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -1318,23 +1318,25 @@ carp_update_lsmask(struct carp_softc *sc)
 }
 
 int
-carp_iamatch(struct ifnet *ifp, uint8_t **ether_shost)
+carp_iamatch(struct ifnet *ifp, uint8_t *enaddr)
 {
 	struct carp_softc *sc = ifp->if_softc;
-	struct carp_vhost_entry *vhe = SRPL_FIRST_LOCKED(&sc->carp_vhosts);
+	struct carp_vhost_entry *vhe;
+	struct srpl_iter i;
+	int match = 0;
 
-	KERNEL_ASSERT_LOCKED(); /* touching carp_vhosts */
-
+	vhe = SRPL_ENTER(&sc->carp_vhosts, &i); /* head */
 	if (vhe->state == MASTER) {
 		if (sc->sc_balancing == CARP_BAL_IPSTEALTH ||
 		    sc->sc_balancing == CARP_BAL_IP) {
 		    	struct arpcom *ac = (struct arpcom *)sc->sc_carpdev;
-			*ether_shost = ac->ac_enaddr;
+			memcpy(enaddr, ac->ac_enaddr, ETHER_ADDR_LEN);
 		}
-		return (1);
+		match = 1;
 	}
+	SRPL_LEAVE(&i, vhe);
 
-	return (0);
+	return (match);
 }
 
 #ifdef INET6
