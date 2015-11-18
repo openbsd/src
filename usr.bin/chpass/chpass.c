@@ -1,4 +1,4 @@
-/*	$OpenBSD: chpass.c,v 1.41 2015/01/16 06:40:06 deraadt Exp $	*/
+/*	$OpenBSD: chpass.c,v 1.42 2015/11/18 19:26:45 tedu Exp $	*/
 /*	$NetBSD: chpass.c,v 1.8 1996/05/15 21:50:43 jtc Exp $	*/
 
 /*-
@@ -119,7 +119,7 @@ main(int argc, char *argv[])
 	if (op == EDITENTRY || op == NEWSH)
 		switch(argc) {
 		case 0:
-			pw = getpwuid(uid);
+			pw = getpwuid_shadow(uid);
 #ifdef	YP
 			if (pw && !force_yp)
 				use_yp = 0;
@@ -130,7 +130,7 @@ main(int argc, char *argv[])
 				errx(1, "unknown user: uid %u", uid);
 			break;
 		case 1:
-			pw = getpwnam(*argv);
+			pw = getpwnam_shadow(*argv);
 #ifdef	YP
 			if (pw && !force_yp)
 				use_yp = 0;
@@ -154,7 +154,7 @@ main(int argc, char *argv[])
 		pw = &lpw;
 		if (!pw_scan(arg, pw, NULL))
 			exit(1);
-		opw = getpwnam(pw->pw_name);
+		opw = getpwnam_shadow(pw->pw_name);
 	}
 	if (opw == NULL && (opw = pw_dup(pw)) == NULL)
 		err(1, NULL);
