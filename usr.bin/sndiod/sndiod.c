@@ -1,4 +1,4 @@
-/*	$OpenBSD: sndiod.c,v 1.11 2015/10/02 12:21:59 ratchov Exp $	*/
+/*	$OpenBSD: sndiod.c,v 1.12 2015/11/18 08:36:20 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -381,7 +381,11 @@ main(int argc, char **argv)
 				errx(1, "%s: unit number is %s", optarg, str);
 			break;
 		case 'L':
+#ifdef USE_TCP
 			listen_new_tcp(optarg, AUCAT_PORT + unit);
+#else
+			errx(1, "-L option disabled at compilation time");
+#endif
 			break;
 		case 'm':
 			mode = opt_mode();

@@ -1,4 +1,4 @@
-/*	$OpenBSD: listen.c,v 1.2 2013/03/13 08:28:33 ratchov Exp $	*/
+/*	$OpenBSD: listen.c,v 1.3 2015/11/18 08:36:20 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -126,6 +126,7 @@ listen_new_un(char *path)
 	exit(1);	
 }
 
+#ifdef USE_TCP
 void
 listen_new_tcp(char *addr, unsigned int port)
 {
@@ -204,6 +205,7 @@ listen_new_tcp(char *addr, unsigned int port)
 	if (n == 0)
 		exit(1);
 }
+#endif
 
 int
 listen_init(struct listen *f)
