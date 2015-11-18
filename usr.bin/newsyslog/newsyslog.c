@@ -1,4 +1,4 @@
-/*	$OpenBSD: newsyslog.c,v 1.96 2015/11/17 14:51:42 benno Exp $	*/
+/*	$OpenBSD: newsyslog.c,v 1.97 2015/11/18 19:59:24 sthen Exp $	*/
 
 /*
  * Copyright (c) 1999, 2002, 2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -200,9 +200,6 @@ main(int argc, char **argv)
 	argv += optind;
 
 	if (noaction && pledge("stdio rpath", NULL) == -1)
-		err(1,"pledge");
-	else if (!monitormode && pledge("stdio rpath wpath cpath fattr proc",
-	    NULL) == -1)
 		err(1,"pledge");
 	
 	if (needroot && getuid() && geteuid())
