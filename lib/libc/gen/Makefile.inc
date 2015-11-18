@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.71 2015/10/30 03:12:33 guenther Exp $
+#	$OpenBSD: Makefile.inc,v 1.72 2015/11/18 19:33:43 tedu Exp $
 
 # gen sources
 .PATH: ${LIBCSRCDIR}/arch/${MACHINE_CPU}/gen ${LIBCSRCDIR}/gen
@@ -109,6 +109,7 @@ MLINKS+=getprogname.3 setprogname.3
 MLINKS+=getpwent.3 endpwent.3 getpwent.3 setpwent.3
 MLINKS+=getpwnam.3 getpwuid.3 getpwnam.3 getpwnam_r.3 getpwnam.3 getpwuid_r.3 \
 	getpwnam.3 setpassent.3
+MLINKS+=getpwnam.3 getpwnam_shadow.3 getpwnam.3 getpwuid_shadow.3
 MLINKS+=getttyent.3 endttyent.3 getttyent.3 getttynam.3 getttyent.3 setttyent.3
 MLINKS+=getusershell.3 endusershell.3 getusershell.3 setusershell.3
 MLINKS+=glob.3 globfree.3
