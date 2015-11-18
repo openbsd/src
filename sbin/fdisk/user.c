@@ -1,4 +1,4 @@
-/*	$OpenBSD: user.c,v 1.46 2015/11/13 02:27:17 krw Exp $	*/
+/*	$OpenBSD: user.c,v 1.47 2015/11/18 02:12:51 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -73,6 +73,13 @@ USER_edit(off_t offset, off_t reloff)
 
 	/* Parse the sucker */
 	MBR_parse(&dos_mbr, offset, reloff, &mbr);
+
+	if (editlevel == 1) {
+		memset(&gh, 0, sizeof(gh));
+		memset(&gp, 0, sizeof(gp));
+		if (MBR_protective_mbr(&mbr) == 0)
+			GPT_get_gpt();
+	}
 
 	printf("Enter 'help' for information\n");
 
