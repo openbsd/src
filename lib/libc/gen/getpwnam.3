@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getpwnam.3,v 1.9 2015/10/30 03:12:33 guenther Exp $
+.\"	$OpenBSD: getpwnam.3,v 1.10 2015/11/18 19:32:23 tedu Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: October 30 2015 $
+.Dd $Mdocdate: November 18 2015 $
 .Dt GETPWNAM 3
 .Os
 .Sh NAME
@@ -35,6 +35,8 @@
 .Nm getpwuid ,
 .Nm getpwnam_r ,
 .Nm getpwuid_r ,
+.Nm getpwnam_shadow ,
+.Nm getpwuid_shadow ,
 .Nm setpassent
 .Nd password database operations
 .Sh SYNOPSIS
@@ -47,6 +49,10 @@
 .Fn getpwnam_r "const char *login" "struct passwd *pwstore" "char *buf" "size_t bufsize" "struct passwd **result"
 .Ft int
 .Fn getpwuid_r "uid_t uid" "struct passwd *pwstore" "char *buf" "size_t bufsize" "struct passwd **result"
+.Ft struct passwd *
+.Fn getpwnam_shadow "const char *login"
+.Ft struct passwd *
+.Fn getpwuid_shadow "uid_t uid"
 .Ft int
 .Fn setpassent "int stayopen"
 .Sh DESCRIPTION
@@ -125,11 +131,17 @@ These routines have been written to
 .Dq shadow
 the password file, that is,
 allow only certain programs to have access to the encrypted password.
+The default functions will not return the true encrypted password, but
+instead only the string
+.Ql * .
 If the process which calls them has an effective UID of 0 or has the
 .Dq _shadow
-group in its group vector, the encrypted password will be returned, otherwise,
-the password field of the returned structure will point to the string
-.Ql * .
+group in its group vector, and wishes to access the encrypted password,
+it should use the
+.Fn getpwnam_shadow
+and
+.Fn getpwuid_shadow
+functions.
 .Ss YP support
 If YP is active, the functions
 .Fn getpwnam
