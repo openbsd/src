@@ -1,4 +1,4 @@
-/*	$OpenBSD: mtrace.c,v 1.33 2015/01/16 06:40:18 deraadt Exp $	*/
+/*	$OpenBSD: mtrace.c,v 1.34 2015/11/18 15:34:34 mmcc Exp $	*/
 /*	$NetBSD: mtrace.c,v 1.5 1995/12/10 10:57:15 mycroft Exp $	*/
 
 /*
@@ -53,7 +53,6 @@
 
 #include <netdb.h>
 #include <sys/time.h>
-#include <memory.h>
 #include <string.h>
 #include <poll.h>
 #include <ctype.h>
