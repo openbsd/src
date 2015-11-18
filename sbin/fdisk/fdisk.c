@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdisk.c,v 1.91 2015/11/18 02:32:56 krw Exp $	*/
+/*	$OpenBSD: fdisk.c,v 1.92 2015/11/18 15:10:43 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -41,7 +41,6 @@ static unsigned char builtin_mbr[] = {
 };
 
 u_int32_t b_arg;
-int	g_flag;
 int	y_flag;
 
 static void
@@ -66,13 +65,12 @@ usage(void)
 	exit(1);
 }
 
-
 int
 main(int argc, char *argv[])
 {
 	ssize_t len;
 	int ch, fd, error;
-	int i_flag = 0, e_flag = 0, f_flag = 0, u_flag = 0;
+	int e_flag = 0, f_flag = 0, g_flag = 0, i_flag = 0, u_flag = 0;
 	int c_arg = 0, h_arg = 0, s_arg = 0;
 	u_int32_t l_arg = 0;
 	char *query;
