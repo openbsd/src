@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.39 2015/10/19 11:25:35 reyk Exp $	*/
+/*	$OpenBSD: config.c,v 1.40 2015/11/18 16:46:30 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -657,10 +657,10 @@ config_setpolicy(struct iked *env, struct iked_policy *pol,
 		iov[c++].iov_len = sizeof(*flow);
 	}
 
-	if (env->sc_opts & IKED_OPT_NOACTION) {
-		print_policy(pol);
+	print_policy(pol);
+
+	if (env->sc_opts & IKED_OPT_NOACTION)
 		return (0);
-	}
 
 	if (proc_composev_imsg(&env->sc_ps, id, -1,
 	    IMSG_CFG_POLICY, -1, iov, iovcnt) == -1)
@@ -731,8 +731,6 @@ config_getpolicy(struct iked *env, struct imsg *imsg)
 			config_free_policy(env, env->sc_defaultcon);
 		env->sc_defaultcon = pol;
 	}
-
-	print_policy(pol);
 
 	return (0);
 }
