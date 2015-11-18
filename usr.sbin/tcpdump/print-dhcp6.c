@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-dhcp6.c,v 1.9 2015/11/16 00:16:39 mmcc Exp $	*/
+/*	$OpenBSD: print-dhcp6.c,v 1.10 2015/11/18 15:36:20 mmcc Exp $	*/
 
 /*
  * Copyright (C) 1998 and 1999 WIDE Project.
@@ -41,9 +41,6 @@ struct rtentry;
 #include <netinet/in.h>
 
 #include <ctype.h>
-#ifdef HAVE_MEMORY_H
-#include <memory.h>
-#endif
 #include <stdio.h>
 #include <string.h>
 #include <arpa/inet.h>

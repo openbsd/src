@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-arp.c,v 1.14 2015/11/15 20:35:36 mmcc Exp $	*/
+/*	$OpenBSD: print-arp.c,v 1.15 2015/11/18 15:36:20 mmcc Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -31,7 +31,6 @@ struct rtentry;
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
 
-#include <memory.h>
 #include <stdio.h>
 #include <string.h>
 

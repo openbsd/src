@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-snmp.c,v 1.19 2015/11/16 00:16:39 mmcc Exp $	*/
+/*	$OpenBSD: print-snmp.c,v 1.20 2015/11/18 15:36:20 mmcc Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993, 1994, 1995, 1996, 1997
@@ -58,9 +58,6 @@
 #include <sys/time.h>
 
 #include <ctype.h>
-#ifdef HAVE_MEMORY_H
-#include <memory.h>
-#endif
 #include <stdio.h>
 #include <string.h>
 
