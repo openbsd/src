@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.460 2015/11/13 10:00:26 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.461 2015/11/18 14:13:55 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 13 2015 $
+.Dd $Mdocdate: November 18 2015 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -3311,6 +3311,13 @@ prefixes are
 and
 .Xr dirname 3
 of the variable respectively.
+A prefix of the form
+.Ql s/foo/bar/:
+will substitute
+.Ql foo
+with
+.Ql bar
+throughout.
 .Pp
 In addition, the first line of a shell command's output may be inserted using
 .Ql #() .
