@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsirand.c,v 1.35 2015/10/11 04:37:23 deraadt Exp $	*/
+/*	$OpenBSD: fsirand.c,v 1.36 2015/11/18 15:36:32 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -107,7 +107,7 @@ fsirand(char *device)
 	struct disklabel label;
 
 	if ((devfd = opendev(device, printonly ? O_RDONLY : O_RDWR,
-	    OPENDEV_PART, &devpath)) < 0) {
+	    0, &devpath)) < 0) {
 		warn("Can't open %s", devpath);
 		return (1);
 	}
