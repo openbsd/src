@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.57 2014/12/08 21:45:20 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.58 2015/11/18 16:50:08 tedu Exp $
 
 # stdlib sources
 .PATH: ${LIBCSRCDIR}/arch/${MACHINE_CPU}/stdlib ${LIBCSRCDIR}/stdlib
@@ -12,7 +12,7 @@ SRCS+=	a64l.c abort.c atexit.c atoi.c atof.c atol.c atoll.c bsearch.c \
 	strtol.c strtoll.c strtonum.c strtoul.c strtoull.c strtoumax.c \
 	system.c tfind.c tsearch.c _rand48.c drand48.c erand48.c jrand48.c \
 	lcong48.c lrand48.c mrand48.c nrand48.c seed48.c srand48.c qabs.c \
-	qdiv.c _Exit.c
+	qdiv.c _Exit.c icdb.c
 
 .if (${MACHINE_CPU} == "i386")
 SRCS+=	abs.S div.S labs.S ldiv.S
