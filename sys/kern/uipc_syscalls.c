@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.124 2015/11/08 23:23:12 tedu Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.125 2015/11/18 08:24:22 semarie Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -80,11 +80,14 @@ sys_socket(struct proc *p, void *v, register_t *retval)
 	struct file *fp;
 	int type = SCARG(uap, type);
 	int domain = SCARG(uap, domain);
-	int fd, error;
+	int fd, error, ss = 0;
 
 	if ((type & SOCK_DNS) && !(domain == AF_INET || domain == AF_INET6))
 		return (EINVAL);
-	error = pledge_socket(p, type & SOCK_DNS);
+
+	if (ISSET(type, SOCK_DNS))
+		ss |= SS_DNS;
+	error = pledge_socket(p, domain, ss);
 	if (error)
 		return (error);
 
@@ -110,8 +113,7 @@ sys_socket(struct proc *p, void *v, register_t *retval)
 		fp->f_data = so;
 		if (type & SOCK_NONBLOCK)
 			(*fp->f_ops->fo_ioctl)(fp, FIONBIO, (caddr_t)&type, p);
-		if (type & SOCK_DNS)
-			so->so_state |= SS_DNS;
+		so->so_state |= ss;
 		FILE_SET_MATURE(fp, p);
 		*retval = fd;
 	}
@@ -158,9 +160,15 @@ sys_bind(struct proc *p, void *v, register_t *retval)
 	} */ *uap = v;
 	struct file *fp;
 	struct mbuf *nam;
+	struct socket *so;
 	int error;
 
 	if ((error = getsock(p, SCARG(uap, s), &fp)) != 0)
+		return (error);
+	so = fp->f_data;
+	error = pledge_socket(p, so->so_proto->pr_domain->dom_family,
+	    so->so_state);
+	if (error)
 		return (error);
 	error = sockargs(&nam, SCARG(uap, name), SCARG(uap, namelen),
 	    MT_SONAME);
@@ -169,7 +177,7 @@ sys_bind(struct proc *p, void *v, register_t *retval)
 		if (KTRPOINT(p, KTR_STRUCT))
 			ktrsockaddr(p, mtod(nam, caddr_t), SCARG(uap, namelen));
 #endif
-		error = sobind(fp->f_data, nam, p);
+		error = sobind(so, nam, p);
 		m_freem(nam);
 	}
 	FRELE(fp, p);
@@ -185,11 +193,17 @@ sys_listen(struct proc *p, void *v, register_t *retval)
 		syscallarg(int) backlog;
 	} */ *uap = v;
 	struct file *fp;
+	struct socket *so;
 	int error;
 
 	if ((error = getsock(p, SCARG(uap, s), &fp)) != 0)
 		return (error);
-	error = solisten(fp->f_data, SCARG(uap, backlog));
+	so = fp->f_data;
+	error = pledge_socket(p, so->so_proto->pr_domain->dom_family,
+	    so->so_state);
+	if (error)
+		return (error);
+	error = solisten(so, SCARG(uap, backlog));
 	FRELE(fp, p);
 	return (error);
 }
@@ -245,6 +259,10 @@ doaccept(struct proc *p, int sock, struct sockaddr *name, socklen_t *anamelen,
 	headfp = fp;
 	head = fp->f_data;
 
+	error = pledge_socket(p, head->so_proto->pr_domain->dom_family,
+	    head->so_state);
+	if (error)
+		goto bad;
 	if (isdnssocket((struct socket *)fp->f_data)) {
 		error = EINVAL;
 		goto bad;
@@ -370,6 +388,10 @@ sys_connect(struct proc *p, void *v, register_t *retval)
 	}
 	error = sockargs(&nam, SCARG(uap, name), SCARG(uap, namelen),
 	    MT_SONAME);
+	if (error)
+		goto bad;
+	error = pledge_socket(p, so->so_proto->pr_domain->dom_family,
+	    so->so_state);
 	if (error)
 		goto bad;
 #ifdef KTRACE
@@ -1029,6 +1051,10 @@ sys_getsockname(struct proc *p, void *v, register_t *retval)
 	if (error)
 		goto bad;
 	so = fp->f_data;
+	error = pledge_socket(p, so->so_proto->pr_domain->dom_family,
+	    so->so_state);
+	if (error)
+		goto bad;
 	m = m_getclr(M_WAIT, MT_SONAME);
 	error = (*so->so_proto->pr_usrreq)(so, PRU_SOCKADDR, 0, m, 0, p);
 	if (error)
@@ -1062,6 +1088,10 @@ sys_getpeername(struct proc *p, void *v, register_t *retval)
 	if ((error = getsock(p, SCARG(uap, fdes), &fp)) != 0)
 		return (error);
 	so = fp->f_data;
+	error = pledge_socket(p, so->so_proto->pr_domain->dom_family,
+	    so->so_state);
+	if (error)
+		return (error);
 	if ((so->so_state & SS_ISCONNECTED) == 0) {
 		FRELE(fp, p);
 		return (ENOTCONN);

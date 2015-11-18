@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.114 2015/11/17 15:03:53 sthen Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.115 2015/11/18 08:24:22 semarie Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -1317,16 +1317,32 @@ pledge_sockopt(struct proc *p, int set, int level, int optname)
 }
 
 int
-pledge_socket(struct proc *p, int dns)
+pledge_socket(struct proc *p, int domain, int state)
 {
-	if ((p->p_p->ps_flags & PS_PLEDGE) == 0)
-		return (0);
+	if (! ISSET(p->p_p->ps_flags, PS_PLEDGE))
+		return 0;
 
-	if (dns && (p->p_p->ps_pledge & PLEDGE_DNS))
-		return (0);
-	if ((p->p_p->ps_pledge & (PLEDGE_INET|PLEDGE_UNIX|PLEDGE_YPACTIVE)))
-		return (0);
-	return pledge_fail(p, EPERM, dns ? PLEDGE_DNS : PLEDGE_INET);
+	if (ISSET(state, SS_DNS)) {
+		if (ISSET(p->p_p->ps_pledge, PLEDGE_DNS))
+			return 0;
+		return pledge_fail(p, EPERM, PLEDGE_DNS);
+	}
+
+	switch (domain) {
+	case AF_INET:
+	case AF_INET6:
+		if (ISSET(p->p_p->ps_pledge, PLEDGE_INET) ||
+		    ISSET(p->p_p->ps_pledge, PLEDGE_YPACTIVE))
+			return 0;
+		return pledge_fail(p, EPERM, PLEDGE_INET);
+
+	case AF_UNIX:
+		if (ISSET(p->p_p->ps_pledge, PLEDGE_UNIX))
+			return 0;
+		return pledge_fail(p, EPERM, PLEDGE_UNIX);
+	}
+
+	return pledge_fail(p, EINVAL, PLEDGE_INET);
 }
 
 int

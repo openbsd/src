@@ -1,4 +1,4 @@
-/*	$OpenBSD: pledge.h,v 1.18 2015/11/04 21:24:23 tedu Exp $	*/
+/*	$OpenBSD: pledge.h,v 1.19 2015/11/18 08:24:22 semarie Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -106,7 +106,7 @@ int	pledge_chown(struct proc *p, uid_t, gid_t);
 int	pledge_adjtime(struct proc *p, const void *v);
 int	pledge_sendit(struct proc *p, const void *to);
 int	pledge_sockopt(struct proc *p, int set, int level, int optname);
-int	pledge_socket(struct proc *p, int dns);
+int	pledge_socket(struct proc *p, int domain, int state);
 int	pledge_ioctl(struct proc *p, long com, struct file *);
 int	pledge_flock(struct proc *p);
 int	pledge_fcntl(struct proc *p, int cmd);
