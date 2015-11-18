@@ -1,4 +1,4 @@
-/* $OpenBSD: alerts.c,v 1.4 2015/10/27 15:58:42 nicm Exp $ */
+/* $OpenBSD: alerts.c,v 1.5 2015/11/18 14:27:44 nicm Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -35,7 +35,7 @@ int	alerts_check_silence(struct session *, struct winlink *);
 void	alerts_ring_bell(struct session *);
 
 void
-alerts_timer(unused int fd, unused short events, void *arg)
+alerts_timer(__unused int fd, __unused short events, void *arg)
 {
 	struct window	*w = arg;
 
@@ -45,7 +45,7 @@ alerts_timer(unused int fd, unused short events, void *arg)
 }
 
 void
-alerts_callback(unused int fd, unused short events, unused void *arg)
+alerts_callback(__unused int fd, __unused short events, __unused void *arg)
 {
 	struct window	*w;
 	struct session	*s;

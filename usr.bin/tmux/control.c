@@ -1,4 +1,4 @@
-/* $OpenBSD: control.c,v 1.15 2015/11/14 09:41:06 nicm Exp $ */
+/* $OpenBSD: control.c,v 1.16 2015/11/18 14:27:44 nicm Exp $ */
 
 /*
  * Copyright (c) 2012 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -51,7 +51,7 @@ control_write_buffer(struct client *c, struct evbuffer *buffer)
 
 /* Control input callback. Read lines and fire commands. */
 void
-control_callback(struct client *c, int closed, unused void *data)
+control_callback(struct client *c, int closed, __unused void *data)
 {
 	char		*line, *cause;
 	struct cmd_list	*cmdlist;

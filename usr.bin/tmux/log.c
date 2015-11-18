@@ -1,4 +1,4 @@
-/* $OpenBSD: log.c,v 1.18 2015/11/18 13:06:54 nicm Exp $ */
+/* $OpenBSD: log.c,v 1.19 2015/11/18 14:27:44 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -33,7 +33,7 @@ void	 log_vwrite(const char *, va_list);
 
 /* Log callback for libevent. */
 void
-log_event_cb(unused int severity, const char *msg)
+log_event_cb(__unused int severity, const char *msg)
 {
 	log_debug("%s", msg);
 }

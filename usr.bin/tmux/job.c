@@ -1,4 +1,4 @@
-/* $OpenBSD: job.c,v 1.38 2015/10/31 08:13:58 nicm Exp $ */
+/* $OpenBSD: job.c,v 1.39 2015/11/18 14:27:44 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -150,7 +150,7 @@ job_free(struct job *job)
 
 /* Called when output buffer falls below low watermark (default is 0). */
 void
-job_write_callback(unused struct bufferevent *bufev, void *data)
+job_write_callback(__unused struct bufferevent *bufev, void *data)
 {
 	struct job	*job = data;
 	size_t		 len = EVBUFFER_LENGTH(EVBUFFER_OUTPUT(job->event));
@@ -166,7 +166,8 @@ job_write_callback(unused struct bufferevent *bufev, void *data)
 
 /* Job buffer error callback. */
 void
-job_callback(unused struct bufferevent *bufev, unused short events, void *data)
+job_callback(__unused struct bufferevent *bufev, __unused short events,
+    void *data)
 {
 	struct job	*job = data;
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: names.c,v 1.30 2015/10/27 15:58:42 nicm Exp $ */
+/* $OpenBSD: names.c,v 1.31 2015/11/18 14:27:44 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -29,7 +29,7 @@ void	name_time_callback(int, short, void *);
 int	name_time_expired(struct window *, struct timeval *);
 
 void
-name_time_callback(unused int fd, unused short events, void *arg)
+name_time_callback(__unused int fd, __unused short events, void *arg)
 {
 	struct window	*w = arg;
 

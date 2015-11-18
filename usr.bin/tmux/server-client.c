@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.169 2015/11/14 09:41:06 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.170 2015/11/18 14:27:44 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -246,7 +246,7 @@ server_client_unref(struct client *c)
 
 /* Free dead client. */
 void
-server_client_free(unused int fd, unused short events, void *arg)
+server_client_free(__unused int fd, __unused short events, void *arg)
 {
 	struct client	*c = arg;
 
@@ -818,7 +818,7 @@ server_client_reset_state(struct client *c)
 
 /* Repeat time callback. */
 void
-server_client_repeat_timer(unused int fd, unused short events, void *data)
+server_client_repeat_timer(__unused int fd, __unused short events, void *data)
 {
 	struct client	*c = data;
 
@@ -1214,7 +1214,7 @@ server_client_dispatch_shell(struct client *c)
 
 /* Event callback to push more stdout data if any left. */
 static void
-server_client_stdout_cb(unused int fd, unused short events, void *arg)
+server_client_stdout_cb(__unused int fd, __unused short events, void *arg)
 {
 	struct client	*c = arg;
 
@@ -1255,7 +1255,7 @@ server_client_push_stdout(struct client *c)
 
 /* Event callback to push more stderr data if any left. */
 static void
-server_client_stderr_cb(unused int fd, unused short events, void *arg)
+server_client_stderr_cb(__unused int fd, __unused short events, void *arg)
 {
 	struct client	*c = arg;
 

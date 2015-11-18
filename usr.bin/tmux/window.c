@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.148 2015/11/12 11:05:34 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.149 2015/11/18 14:27:44 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -916,13 +916,13 @@ window_pane_spawn(struct window_pane *wp, int argc, char **argv,
 }
 
 void
-window_pane_timer_callback(unused int fd, unused short events, void *data)
+window_pane_timer_callback(__unused int fd, __unused short events, void *data)
 {
 	window_pane_read_callback(NULL, data);
 }
 
 void
-window_pane_read_callback(unused struct bufferevent *bufev, void *data)
+window_pane_read_callback(__unused struct bufferevent *bufev, void *data)
 {
 	struct window_pane	*wp = data;
 	struct evbuffer		*evb = wp->event->input;
@@ -968,8 +968,8 @@ start_timer:
 }
 
 void
-window_pane_error_callback(unused struct bufferevent *bufev, unused short what,
-    void *data)
+window_pane_error_callback(__unused struct bufferevent *bufev,
+    __unused short what, void *data)
 {
 	struct window_pane *wp = data;
 

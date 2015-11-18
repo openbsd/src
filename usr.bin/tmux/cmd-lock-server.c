@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-lock-server.c,v 1.17 2014/10/20 22:29:25 nicm Exp $ */
+/* $OpenBSD: cmd-lock-server.c,v 1.18 2015/11/18 14:27:44 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -51,7 +51,7 @@ const struct cmd_entry cmd_lock_client_entry = {
 };
 
 enum cmd_retval
-cmd_lock_server_exec(struct cmd *self, unused struct cmd_q *cmdq)
+cmd_lock_server_exec(struct cmd *self, __unused struct cmd_q *cmdq)
 {
 	struct args	*args = self->args;
 	struct client	*c;

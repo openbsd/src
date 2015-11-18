@@ -1,4 +1,4 @@
-/* $OpenBSD: server.c,v 1.149 2015/11/15 14:32:48 nicm Exp $ */
+/* $OpenBSD: server.c,v 1.150 2015/11/18 14:27:44 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -298,7 +298,7 @@ server_update_socket(void)
 
 /* Callback for server socket. */
 void
-server_accept(int fd, short events, unused void *data)
+server_accept(int fd, short events, __unused void *data)
 {
 	struct sockaddr_storage	sa;
 	socklen_t		slen = sizeof sa;

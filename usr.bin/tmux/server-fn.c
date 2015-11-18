@@ -1,4 +1,4 @@
-/* $OpenBSD: server-fn.c,v 1.92 2015/11/14 09:41:07 nicm Exp $ */
+/* $OpenBSD: server-fn.c,v 1.93 2015/11/18 14:27:44 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -443,7 +443,7 @@ server_clear_identify(struct client *c)
 }
 
 void
-server_callback_identify(unused int fd, unused short events, void *data)
+server_callback_identify(__unused int fd, __unused short events, void *data)
 {
 	struct client	*c = data;
 

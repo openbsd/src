@@ -1,4 +1,4 @@
-/* $OpenBSD: window-choose.c,v 1.69 2015/11/12 11:09:11 nicm Exp $ */
+/* $OpenBSD: window-choose.c,v 1.70 2015/11/18 14:27:44 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -509,8 +509,8 @@ window_choose_get_item(struct window_pane *wp, key_code key,
 }
 
 void
-window_choose_key(struct window_pane *wp, unused struct client *c,
-    unused struct session *sess, key_code key, struct mouse_event *m)
+window_choose_key(struct window_pane *wp, __unused struct client *c,
+    __unused struct session *sess, key_code key, struct mouse_event *m)
 {
 	struct window_choose_mode_data	*data = wp->modedata;
 	struct screen			*s = &data->screen;

@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.581 2015/11/18 13:06:54 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.582 2015/11/18 14:27:44 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -68,9 +68,6 @@ struct tmuxproc;
 #define READ_SIZE 1024
 #define READ_BACKOFF 512
 #define READ_TIME 100
-
-/* Definition to shut gcc up about unused arguments. */
-#define unused __attribute__ ((unused))
 
 /* Attribute to make gcc check printf-like arguments. */
 #define printflike(a, b) __attribute__ ((format (printf, a, b)))

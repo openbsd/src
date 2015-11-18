@@ -1,4 +1,4 @@
-/* $OpenBSD: tty-keys.c,v 1.80 2015/11/14 11:45:43 nicm Exp $ */
+/* $OpenBSD: tty-keys.c,v 1.81 2015/11/18 14:27:44 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -635,7 +635,7 @@ discard_key:
 
 /* Key timer callback. */
 void
-tty_keys_callback(unused int fd, unused short events, void *data)
+tty_keys_callback(__unused int fd, __unused short events, void *data)
 {
 	struct tty	*tty = data;
 
