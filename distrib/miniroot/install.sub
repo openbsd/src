@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.858 2015/09/27 19:00:32 halex Exp $
+#	$OpenBSD: install.sub,v 1.859 2015/11/18 17:48:45 sthen Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -1645,7 +1645,7 @@ ask_root_sshd() {
 		n|no)	sshd_enableroot=no
 			;;
 		w|p|without-password|prohibit-password)
-			sshd_enableroot=without-password
+			sshd_enableroot=prohibit-password
 			;;
 		*)	echo "'$resp' is not a valid choice."
 			$AUTO && exit 1
