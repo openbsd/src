@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdisk.c,v 1.89 2015/11/15 01:22:39 krw Exp $	*/
+/*	$OpenBSD: fdisk.c,v 1.90 2015/11/18 01:53:12 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -161,8 +161,14 @@ main(int argc, char *argv[])
 	disk.name = argv[0];
 	DISK_open();
 
+	error = MBR_read(0, &dos_mbr);
+	if (error)
+		errx(1, "Can't read sector 0!");
+	MBR_parse(&dos_mbr, 0, 0, &initial_mbr);
+
 	/* Get the GPT if present. */
-	GPT_get_gpt();
+	if (MBR_protective_mbr(&initial_mbr) == 0)
+		GPT_get_gpt();
 
 	if (letoh64(gh.gh_sig) != GPTSIGNATURE) {
 		if (DL_GETDSIZE(&dl) > disk.size)
@@ -178,13 +184,6 @@ main(int argc, char *argv[])
 	}
 
 	/* Create initial/default MBR. */
-	if (i_flag == 0) {
-		error = MBR_read(0, &dos_mbr);
-		if (error)
-			errx(1, "Can't read sector 0!");
-		MBR_parse(&dos_mbr, 0, 0, &initial_mbr);
-	}
-
 	if (mbrfile != NULL && (fd = open(mbrfile, O_RDONLY)) == -1) {
 		warn("%s", mbrfile);
 		warnx("using builtin MBR");
