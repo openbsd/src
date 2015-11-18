@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdisk.c,v 1.90 2015/11/18 01:53:12 krw Exp $	*/
+/*	$OpenBSD: fdisk.c,v 1.91 2015/11/18 02:32:56 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -184,30 +184,25 @@ main(int argc, char *argv[])
 	}
 
 	/* Create initial/default MBR. */
-	if (mbrfile != NULL && (fd = open(mbrfile, O_RDONLY)) == -1) {
-		warn("%s", mbrfile);
-		warnx("using builtin MBR");
-		memset(&initial_mbr, 0, sizeof(initial_mbr));
-		mbrfile = NULL;
-	}
 	if (mbrfile == NULL) {
-		if (MBR_protective_mbr(&initial_mbr) != 0) {
-			memcpy(&dos_mbr, builtin_mbr, sizeof(dos_mbr));
-		}
+		memcpy(&dos_mbr, builtin_mbr, sizeof(dos_mbr));
 	} else {
-		len = read(fd, &dos_mbr, sizeof(dos_mbr));
-		if (len == -1)
-			err(1, "Unable to read MBR from '%s'", mbrfile);
-		else if (len != sizeof(dos_mbr))
-			errx(1, "Unable to read complete MBR from '%s'",
-			    mbrfile);
-		close(fd);
+		fd = open(mbrfile, O_RDONLY);
+		if (fd == -1) {
+			warn("%s", mbrfile);
+			warnx("using builtin MBR");
+			memcpy(&dos_mbr, builtin_mbr, sizeof(dos_mbr));
+		} else {
+			len = read(fd, &dos_mbr, sizeof(dos_mbr));
+			close(fd);
+			if (len == -1)
+				err(1, "Unable to read MBR from '%s'", mbrfile);
+			else if (len != sizeof(dos_mbr))
+				errx(1, "Unable to read complete MBR from '%s'",
+				    mbrfile);
+		}
 	}
-	if (f_flag || MBR_protective_mbr(&initial_mbr) != 0)  {
-		memset(&gh, 0, sizeof(gh));
-		memset(&gp, 0, sizeof(gp));
-		MBR_parse(&dos_mbr, 0, 0, &initial_mbr);
-	}
+	MBR_parse(&dos_mbr, 0, 0, &initial_mbr);
 
 	query = NULL;
 	if (i_flag) {
