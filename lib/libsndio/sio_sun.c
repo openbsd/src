@@ -1,4 +1,4 @@
-/*	$OpenBSD: sio_sun.c,v 1.20 2015/11/17 16:07:42 ratchov Exp $	*/
+/*	$OpenBSD: sio_sun.c,v 1.21 2015/11/18 09:35:59 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -58,6 +58,8 @@ static size_t sio_sun_write(struct sio_hdl *, const void *, size_t);
 static int sio_sun_nfds(struct sio_hdl *);
 static int sio_sun_pollfd(struct sio_hdl *, struct pollfd *, int);
 static int sio_sun_revents(struct sio_hdl *, struct pollfd *);
+static int sio_sun_getfd(const char *, unsigned int, int);
+static struct sio_hdl *sio_sun_fdopen(int, unsigned int, int);
 
 static struct sio_ops sio_sun_ops = {
 	sio_sun_close,
@@ -328,46 +330,51 @@ sio_sun_getcap(struct sio_hdl *sh, struct sio_cap *cap)
 #undef NRATES
 }
 
-struct sio_hdl *
-_sio_sun_open(const char *str, unsigned int mode, int nbio)
+static int
+sio_sun_getfd(const char *str, unsigned int mode, int nbio)
 {
-	int fd, flags;
-	struct audio_info aui;
-	struct sio_sun_hdl *hdl;
-	struct sio_par par;
 	char path[DEVPATH_MAX];
 	unsigned int devnum;
+	int fd, flags;
 
 	switch (*str) {
 	case '/':
 		str++;
 		break;
 	default:
-		DPRINTF("_sio_sun_open: %s: '/<devnum>' expected\n", str);
-		return NULL;
+		DPRINTF("sio_sun_getfd: %s: '/<devnum>' expected\n", str);
+		return -1;
 	}
 	str = _sndio_parsenum(str, &devnum, 255);
 	if (str == NULL || *str != '\0') {
-		DPRINTF("_sio_sun_open: can't determine device number\n");
-		return NULL;
+		DPRINTF("sio_sun_getfd: can't determine device number\n");
+		return -1;
 	}
-	hdl = malloc(sizeof(struct sio_sun_hdl));
-	if (hdl == NULL)
-		return NULL;
-	_sio_create(&hdl->sio, &sio_sun_ops, mode, nbio);
-
 	snprintf(path, sizeof(path), DEVPATH_PREFIX "%u", devnum);
 	if (mode == (SIO_PLAY | SIO_REC))
 		flags = O_RDWR;
 	else
 		flags = (mode & SIO_PLAY) ? O_WRONLY : O_RDONLY;
-
 	while ((fd = open(path, flags | O_NONBLOCK | O_CLOEXEC)) < 0) {
 		if (errno == EINTR)
 			continue;
 		DPERROR(path);
-		goto bad_free;
+		return -1;
 	}
+	return fd;
+}
+
+static struct sio_hdl *
+sio_sun_fdopen(int fd, unsigned int mode, int nbio)
+{
+	struct audio_info aui;
+	struct sio_sun_hdl *hdl;
+	struct sio_par par;
+
+	hdl = malloc(sizeof(struct sio_sun_hdl));
+	if (hdl == NULL)
+		return NULL;
+	_sio_create(&hdl->sio, &sio_sun_ops, mode, nbio);
 
 	/*
 	 * pause the device
@@ -379,7 +386,7 @@ _sio_sun_open(const char *str, unsigned int mode, int nbio)
 		aui.record.pause = 1;
 	if (ioctl(fd, AUDIO_SETINFO, &aui) < 0) {
 		DPERROR("sio_open_sun: setinfo");
-		goto bad_close;
+		goto bad_free;
 	}
 	hdl->fd = fd;
 
@@ -397,13 +404,27 @@ _sio_sun_open(const char *str, unsigned int mode, int nbio)
 	par.bits = 16;
 	par.appbufsz = 1200;
 	if (!sio_setpar(&hdl->sio, &par))
-		goto bad_close;
+		goto bad_free;
 	return (struct sio_hdl *)hdl;
- bad_close:
-	while (close(fd) < 0 && errno == EINTR)
-		; /* retry */
  bad_free:
 	free(hdl);
+	return NULL;
+}
+
+struct sio_hdl *
+_sio_sun_open(const char *str, unsigned int mode, int nbio)
+{
+	struct sio_hdl *hdl;
+	int fd;
+
+	fd = sio_sun_getfd(str, mode, nbio);
+	if (fd < 0)
+		return NULL;
+	hdl = sio_sun_fdopen(fd, mode, nbio);
+	if (hdl != NULL)
+		return hdl;
+	while (close(fd) < 0 && errno == EINTR)
+		; /* retry */
 	return NULL;
 }
 
