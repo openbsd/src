@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdisk.c,v 1.92 2015/11/18 15:10:43 krw Exp $	*/
+/*	$OpenBSD: fdisk.c,v 1.93 2015/11/18 15:31:15 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -80,6 +80,7 @@ main(int argc, char *argv[])
 	char *mbrfile = NULL;
 #endif
 	struct dos_mbr dos_mbr;
+	struct mbr mbr;
 
 	while ((ch = getopt(argc, argv, "ieguf:c:h:s:l:b:y")) != -1) {
 		const char *errstr;
@@ -162,10 +163,10 @@ main(int argc, char *argv[])
 	error = MBR_read(0, &dos_mbr);
 	if (error)
 		errx(1, "Can't read sector 0!");
-	MBR_parse(&dos_mbr, 0, 0, &initial_mbr);
+	MBR_parse(&dos_mbr, 0, 0, &mbr);
 
 	/* Get the GPT if present. */
-	if (MBR_protective_mbr(&initial_mbr) == 0)
+	if (MBR_protective_mbr(&mbr) == 0)
 		GPT_get_gpt();
 
 	if (letoh64(gh.gh_sig) != GPTSIGNATURE) {
@@ -214,7 +215,7 @@ main(int argc, char *argv[])
 			    "partition table?";
 		}
 	} else if (u_flag) {
-		MBR_pcopy(&initial_mbr);
+		memcpy(initial_mbr.part, mbr.part, sizeof(initial_mbr.part));
 		query = "Do you wish to write new MBR?";
 	}
 	if (query && ask_yn(query))

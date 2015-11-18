@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbr.c,v 1.60 2015/11/13 02:27:17 krw Exp $	*/
+/*	$OpenBSD: mbr.c,v 1.61 2015/11/18 15:31:15 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -250,28 +250,6 @@ MBR_write(off_t where, struct dos_mbr *dos_mbr)
 	free(secbuf);
 
 	return (0);
-}
-
-/*
- * Parse the MBR partition table into 'mbr', leaving the rest of 'mbr'
- * untouched.
- */
-void
-MBR_pcopy(struct mbr *mbr)
-{
-	struct dos_partition dos_parts[NDOSPART];
-	struct dos_mbr dos_mbr;
-	int i, error;
-
-	error = MBR_read(0, &dos_mbr);
-
-	if (error == -1)
-		return;
-
-	memcpy(dos_parts, dos_mbr.dmbr_parts, sizeof(dos_parts));
-
-	for (i = 0; i < NDOSPART; i++)
-		PRT_parse(&dos_parts[i], 0, 0, &mbr->part[i]);
 }
 
 /*
