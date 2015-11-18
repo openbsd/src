@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sndiod.1,v 1.6 2015/09/05 11:39:29 ratchov Exp $
+.\"	$OpenBSD: sndiod.1,v 1.7 2015/11/18 08:30:08 ratchov Exp $
 .\"
 .\" Copyright (c) 2006-2012 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 5 2015 $
+.Dd $Mdocdate: November 18 2015 $
 .Dt SNDIOD 1
 .Os
 .Sh NAME
@@ -228,6 +228,9 @@ If the option argument is
 then
 .Nm
 will accept connections from any address.
+As the communication is not secure, this
+option is only suitable for local networks where all hosts
+and users are trusted.
 .It Fl m Ar mode
 Set the sub-device mode.
 Valid modes are
