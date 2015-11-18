@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.54 2015/08/20 22:02:21 deraadt Exp $	*/
+/*	$OpenBSD: init.c,v 1.55 2015/11/18 19:25:07 tedu Exp $	*/
 /*	$NetBSD: init.c,v 1.22 1996/05/15 23:29:33 jtc Exp $	*/
 
 /*-
@@ -543,17 +543,19 @@ f_single_user(void)
 		 * it's the only tty that can be 'off' and 'secure'.
 		 */
 		typ = getttynam("console");
-		pp = getpwnam("root");
+		pp = getpwnam_shadow("root");
 		if (typ && (typ->ty_status & TTY_SECURE) == 0 && pp &&
 		    *pp->pw_passwd) {
 			write(STDERR_FILENO, banner, sizeof banner - 1);
 			for (;;) {
+				int ok = 0;
 				clear = getpass("Password:");
-				if (clear == 0 || *clear == '\0')
+				if (clear == NULL || *clear == '\0')
 					_exit(0);
-				password = crypt(clear, pp->pw_passwd);
-				memset(clear, 0, _PASSWORD_LEN);
-				if (strcmp(password, pp->pw_passwd) == 0)
+				if (crypt_checkpass(clear, pp->pw_passwd) == 0)
+					ok = 1;
+				memset(clear, 0, strlen(clear));
+				if (ok)
 					break;
 				warning("single-user login failed\n");
 			}
