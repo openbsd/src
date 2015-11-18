@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.182 2015/11/09 10:26:26 mpi Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.183 2015/11/18 14:13:52 mpi Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -750,15 +750,18 @@ report:
 				goto flush;
 			if (ifa) {
 				if (rt->rt_ifa != ifa) {
-					rt->rt_ifp->if_rtrequest(
-					    rt->rt_ifp, RTM_DELETE, rt);
+					ifp = if_get(rt->rt_ifidx);
+					KASSERT(ifp != NULL);
+					ifp->if_rtrequest(ifp, RTM_DELETE, rt);
 					ifafree(rt->rt_ifa);
-					rt->rt_ifa = ifa;
+					if_put(ifp);
+
 					ifa->ifa_refcnt++;
+					rt->rt_ifa = ifa;
 					rt->rt_ifp = ifa->ifa_ifp;
 #ifndef SMALL_KERNEL
 					/* recheck link state after ifp change*/
-					rt_if_linkstate_change(rt, rt->rt_ifp,
+					rt_if_linkstate_change(rt, ifa->ifa_ifp,
 					    tableid);
 #endif
 				}
@@ -815,13 +818,17 @@ report:
 			rtm->rtm_index = rt->rt_ifidx;
 			rtm->rtm_priority = rt->rt_priority & RTP_MASK;
 			rtm->rtm_flags = rt->rt_flags;
-			rt->rt_ifp->if_rtrequest(rt->rt_ifp, RTM_ADD, rt);
+
+			ifp = if_get(rt->rt_ifidx);
+			KASSERT(ifp != NULL);
+			ifp->if_rtrequest(ifp, RTM_ADD, rt);
+			if_put(ifp);
+
 			if (info.rti_info[RTAX_LABEL] != NULL) {
 				char *rtlabel = ((struct sockaddr_rtlabel *)
 				    info.rti_info[RTAX_LABEL])->sr_label;
 				rtlabel_unref(rt->rt_labelid);
-				rt->rt_labelid =
-				    rtlabel_name2id(rtlabel);
+				rt->rt_labelid = rtlabel_name2id(rtlabel);
 			}
 			if_group_routechange(info.rti_info[RTAX_DST],
 			    info.rti_info[RTAX_NETMASK]);

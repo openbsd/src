@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.273 2015/11/18 13:05:58 mpi Exp $	*/
+/*	$OpenBSD: route.c,v 1.274 2015/11/18 14:13:52 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -818,6 +818,7 @@ int
 rtrequest(int req, struct rt_addrinfo *info, u_int8_t prio,
     struct rtentry **ret_nrt, u_int tableid)
 {
+	struct ifnet		*ifp;
 	struct rtentry		*rt, *crt;
 	struct ifaddr		*ifa;
 	struct sockaddr		*ndst;
@@ -882,7 +883,12 @@ rtrequest(int req, struct rt_addrinfo *info, u_int8_t prio,
 		rt->rt_parent = NULL;
 
 		rt->rt_flags &= ~RTF_UP;
-		rt->rt_ifp->if_rtrequest(rt->rt_ifp, RTM_DELETE, rt);
+
+		ifp = if_get(rt->rt_ifidx);
+		KASSERT(ifp != NULL);
+		ifp->if_rtrequest(ifp, RTM_DELETE, rt);
+		if_put(ifp);
+
 		atomic_inc_int(&rttrash);
 
 		if (ret_nrt != NULL)
@@ -923,8 +929,9 @@ rtrequest(int req, struct rt_addrinfo *info, u_int8_t prio,
 		if (info->rti_ifa == NULL && (error = rt_getifa(info, tableid)))
 			return (error);
 		ifa = info->rti_ifa;
+		ifp = ifa->ifa_ifp;
 		if (prio == 0)
-			prio = ifa->ifa_ifp->if_priority + RTP_STATIC;
+			prio = ifp->if_priority + RTP_STATIC;
 
 		dlen = info->rti_info[RTAX_DST]->sa_len;
 		ndst = malloc(dlen, M_RTABLE, M_NOWAIT);
@@ -953,8 +960,8 @@ rtrequest(int req, struct rt_addrinfo *info, u_int8_t prio,
 		/* Check the link state if the table supports it. */
 		if (rtable_mpath_capable(tableid, ndst->sa_family) &&
 		    !ISSET(rt->rt_flags, RTF_LOCAL) &&
-		    (!LINK_STATE_IS_UP(ifa->ifa_ifp->if_link_state) ||
-		    !ISSET(ifa->ifa_ifp->if_flags, IFF_UP))) {
+		    (!LINK_STATE_IS_UP(ifp->if_link_state) ||
+		    !ISSET(ifp->if_flags, IFF_UP))) {
 			rt->rt_flags &= ~RTF_UP;
 			rt->rt_priority |= RTP_DOWN;
 		}
@@ -1001,7 +1008,7 @@ rtrequest(int req, struct rt_addrinfo *info, u_int8_t prio,
 
 		ifa->ifa_refcnt++;
 		rt->rt_ifa = ifa;
-		rt->rt_ifp = ifa->ifa_ifp;
+		rt->rt_ifp = ifp;
 		if (rt->rt_flags & RTF_CLONED) {
 			/*
 			 * If the ifa of the cloning route was stale, a
@@ -1010,16 +1017,21 @@ rtrequest(int req, struct rt_addrinfo *info, u_int8_t prio,
 			 * route.
 			 */
 			if ((*ret_nrt)->rt_ifa->ifa_ifp == NULL) {
-				printf("rtrequest RTM_RESOLVE: wrong ifa (%p) "
-				    "was (%p)\n", ifa, (*ret_nrt)->rt_ifa);
-				(*ret_nrt)->rt_ifp->if_rtrequest(rt->rt_ifp,
-				    RTM_DELETE, *ret_nrt);
+				struct ifnet *ifp0;
+
+				printf("%s RTM_RESOLVE: wrong ifa (%p) was (%p)"
+				    "\n", __func__, ifa, (*ret_nrt)->rt_ifa);
+
+				ifp0 = if_get((*ret_nrt)->rt_ifidx);
+				KASSERT(ifp0 != NULL);
+				ifp0->if_rtrequest(ifp0, RTM_DELETE, *ret_nrt);
 				ifafree((*ret_nrt)->rt_ifa);
-				(*ret_nrt)->rt_ifa = ifa;
-				(*ret_nrt)->rt_ifp = ifa->ifa_ifp;
+				if_put(ifp0);
+
 				ifa->ifa_refcnt++;
-				(*ret_nrt)->rt_ifp->if_rtrequest(rt->rt_ifp,
-				    RTM_ADD, *ret_nrt);
+				(*ret_nrt)->rt_ifa = ifa;
+				(*ret_nrt)->rt_ifp = ifp;
+				ifp->if_rtrequest(ifp, RTM_ADD, *ret_nrt);
 			}
 			/*
 			 * Copy both metrics and a back pointer to the cloned
@@ -1068,7 +1080,7 @@ rtrequest(int req, struct rt_addrinfo *info, u_int8_t prio,
 			pool_put(&rtentry_pool, rt);
 			return (EEXIST);
 		}
-		rt->rt_ifp->if_rtrequest(rt->rt_ifp, req, rt);
+		ifp->if_rtrequest(ifp, req, rt);
 
 		if ((rt->rt_flags & RTF_CLONING) != 0) {
 			/* clean up any cloned children */
