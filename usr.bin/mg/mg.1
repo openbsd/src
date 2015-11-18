@@ -1,7 +1,7 @@
-.\"	$OpenBSD: mg.1,v 1.94 2015/10/12 07:55:52 lum Exp $
+.\"	$OpenBSD: mg.1,v 1.95 2015/11/18 17:41:09 reyk Exp $
 .\" This file is in the public domain.
 .\"
-.Dd $Mdocdate: October 12 2015 $
+.Dd $Mdocdate: November 18 2015 $
 .Dt MG 1
 .Os
 .Sh NAME
@@ -853,9 +853,6 @@ Provide the text in region to the shell command as input.
 Shrink current window by one line.
 The window immediately below is expanded to pick up the slack.
 If only one window is present, this command has no effect.
-.It space-to-tabstop
-Insert enough spaces to reach the next tab-stop position.
-By default, tab-stops occur every 8 characters.
 .It split-window-vertically
 Split the current window.
 A window smaller than 3 lines cannot be split.
