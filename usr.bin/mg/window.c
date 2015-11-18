@@ -1,4 +1,4 @@
-/*	$OpenBSD: window.c,v 1.35 2015/10/29 20:20:49 lum Exp $	*/
+/*	$OpenBSD: window.c,v 1.36 2015/11/18 18:21:06 jasper Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -287,7 +287,7 @@ splitwind(int f, int n)
 	/* if FFOTHARG, set flags) */
 	if (f & FFOTHARG)
 		wp->w_flag = n;
-		
+
 	return (TRUE);
 }
 
