@@ -1,4 +1,4 @@
-/* $OpenBSD: options.c,v 1.14 2015/11/13 16:06:43 nicm Exp $ */
+/* $OpenBSD: options.c,v 1.15 2015/11/18 13:06:54 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -150,9 +150,9 @@ options_get_string(struct options *oo, const char *name)
 	struct options_entry	*o;
 
 	if ((o = options_find(oo, name)) == NULL)
-		log_fatalx("missing option %s", name);
+		fatalx("missing option %s", name);
 	if (o->type != OPTIONS_STRING)
-		log_fatalx("option %s not a string", name);
+		fatalx("option %s not a string", name);
 	return (o->str);
 }
 
@@ -180,9 +180,9 @@ options_get_number(struct options *oo, const char *name)
 	struct options_entry	*o;
 
 	if ((o = options_find(oo, name)) == NULL)
-		log_fatalx("missing option %s", name);
+		fatalx("missing option %s", name);
 	if (o->type != OPTIONS_NUMBER)
-		log_fatalx("option %s not a number", name);
+		fatalx("option %s not a number", name);
 	return (o->num);
 }
 
@@ -220,8 +220,8 @@ options_get_style(struct options *oo, const char *name)
 	struct options_entry	*o;
 
 	if ((o = options_find(oo, name)) == NULL)
-		log_fatalx("missing option %s", name);
+		fatalx("missing option %s", name);
 	if (o->type != OPTIONS_STYLE)
-		log_fatalx("option %s not a style", name);
+		fatalx("option %s not a style", name);
 	return (&o->style);
 }
