@@ -1,4 +1,4 @@
-/* $OpenBSD: keynote-verify.c,v 1.14 2004/06/29 11:35:56 msf Exp $ */
+/* $OpenBSD: keynote-verify.c,v 1.15 2015/11/18 16:08:39 mmcc Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -25,7 +25,6 @@
 #include <ctype.h>
 #include <fcntl.h>
 #include <getopt.h>
-#include <memory.h>
 #include <regex.h>
 #include <stdio.h>
 #include <stdlib.h>
