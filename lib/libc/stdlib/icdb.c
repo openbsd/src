@@ -1,4 +1,4 @@
-/* $OpenBSD: icdb.c,v 1.1 2015/11/18 16:46:49 tedu Exp $ */
+/* $OpenBSD: icdb.c,v 1.2 2015/11/18 17:59:56 tedu Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -77,6 +77,7 @@
  */
 struct icdbinfo {
 	uint32_t magic;		/* magic */
+	uint32_t version;	/* user specified version */
 	uint32_t nentries;	/* number of entries stored */
 	uint32_t entrysize;	/* size of each entry */
 	uint32_t indexsize;	/* number of entries in hash index */
@@ -112,7 +113,7 @@ roundup(uint32_t num)
 }
 
 struct icdb *
-icdb_new(uint32_t nentries, uint32_t entrysize,
+icdb_new(uint32_t version, uint32_t nentries, uint32_t entrysize,
     uint32_t nkeys, uint32_t *keysizes, uint32_t *keyoffsets)
 {
 	struct icdb *db;
@@ -133,6 +134,7 @@ icdb_new(uint32_t nentries, uint32_t entrysize,
 	db->info = info;
 	db->fd = -1;
 	info->magic = magic;
+	info->version = version;
 	if (nentries)
 		if ((db->entries = reallocarray(NULL, nentries, entrysize)))
 			db->allocated = nentries;
@@ -146,7 +148,7 @@ icdb_new(uint32_t nentries, uint32_t entrysize,
 }
 
 struct icdb *
-icdb_open(const char *name, int flags)
+icdb_open(const char *name, int flags, uint32_t version)
 {
 	struct icdb *db = NULL;
 	struct icdbinfo *info;
@@ -165,6 +167,8 @@ icdb_open(const char *name, int flags)
 		goto fail;
 	info = (struct icdbinfo *)ptr;
 	if (info->magic != magic)
+		goto fail;
+	if (info->version != version)
 		goto fail;
 
 	if (!(db = calloc(1, sizeof(*db))))
