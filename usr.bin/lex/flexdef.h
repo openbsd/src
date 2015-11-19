@@ -1,4 +1,4 @@
-/*	$OpenBSD: flexdef.h,v 1.13 2015/11/19 23:34:56 mmcc Exp $	*/
+/*	$OpenBSD: flexdef.h,v 1.14 2015/11/19 23:40:16 tedu Exp $	*/
 
 /* flexdef - definitions file for flex */
 
@@ -97,16 +97,7 @@ char *alloca ();
 #endif
 #include "flexint.h"
 
-/* We use gettext. So, when we write strings which should be translated, we mark them with _() */
-#ifdef ENABLE_NLS
-#ifdef HAVE_LOCALE_H
-#include <locale.h>
-#endif /* HAVE_LOCALE_H */
-#include "gettext.h"
-#define _(String) gettext (String)
-#else
 #define _(STRING) STRING
-#endif /* ENABLE_NLS */
 
 /* Always be prepared to generate an 8-bit scanner. */
 #define CSIZE 256
