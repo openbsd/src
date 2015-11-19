@@ -1,4 +1,4 @@
-/* $OpenBSD: parse_assertion.c,v 1.14 2013/11/29 19:00:51 deraadt Exp $ */
+/* $OpenBSD: parse_assertion.c,v 1.15 2015/11/19 02:35:24 mmcc Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -70,7 +70,7 @@ rec_evaluate_query(struct assertion *as)
     }
 
     for (kl = as->as_keylist;
-	 kl != (struct keylist *) NULL;
+	 kl != NULL;
 	 kl = kl->key_next)
     {
 	switch (keynote_in_action_authorizers(kl->key_key, kl->key_alg))
@@ -92,14 +92,14 @@ rec_evaluate_query(struct assertion *as)
 		break;
 
 	    case RESULT_TRUE:     /* Ok, don't bother with assertions */
-		keynote_current_assertion = (struct assertion *) NULL;
+		keynote_current_assertion = NULL;
 		continue;
 	}
 
 	for (i = 0;; i++)
 	{
 	    ast = keynote_find_assertion(kl->key_key, i, kl->key_alg);
-	    if (ast == (struct assertion *) NULL)
+	    if (ast == NULL)
 	      break;
 
 	    if (ast->as_kresult == KRESULT_IN_PROGRESS) /* Cycle detected */
@@ -122,7 +122,7 @@ rec_evaluate_query(struct assertion *as)
 
     keynote_current_assertion = as;
     s = keynote_parse_keypred(as, 0);
-    keynote_current_assertion = (struct assertion *) NULL;
+    keynote_current_assertion = NULL;
 
     if (keynote_errno == ERROR_MEMORY)
     {
@@ -179,14 +179,14 @@ keynote_fix_fields(struct assertion *ast, int sigfield)
     int i;
  
     /* Signature generation/verification handling, no need to eval Licensees */
-    if (ast != (struct assertion *) NULL)
+    if (ast != NULL)
     {
 	/* Authorizer */
 	if (keynote_evaluate_authorizer(ast, 1) != RESULT_TRUE)
 	  return -1;
 
 	/* Signature */
-	if ((sigfield) && (ast->as_signature_string_s != (char *) NULL))
+	if ((sigfield) && (ast->as_signature_string_s != NULL))
 	  if (keynote_evaluate_authorizer(ast, 0) != RESULT_TRUE)
 	    return -1;
 
@@ -195,7 +195,7 @@ keynote_fix_fields(struct assertion *ast, int sigfield)
     
     for (i = 0; i < HASHTABLESIZE; i++)
       for (as = keynote_current_session->ks_assertion_table[i];
-	   as != (struct assertion *) NULL;
+	   as != NULL;
 	   as = as->as_next)
       {
 	  if (!(as->as_internalflags & ASSERT_IFLAG_NEEDPROC) &&
@@ -207,7 +207,7 @@ keynote_fix_fields(struct assertion *ast, int sigfield)
 	  /* Parse the Signature field */
 	  if (((as->as_internalflags & ASSERT_IFLAG_WEIRDSIG) ||
 	       (as->as_internalflags & ASSERT_IFLAG_NEEDPROC)) &&
-	      (as->as_signature_string_s != (char *) NULL))
+	      (as->as_signature_string_s != NULL))
 	    if (keynote_evaluate_authorizer(as, 0) == -1)
 	    {
 		if (keynote_errno)
@@ -248,7 +248,7 @@ keynote_fix_fields(struct assertion *ast, int sigfield)
     /* Reposition if necessary */
     for (i = 0; i < HASHTABLESIZE; i++)
       for (as = keynote_current_session->ks_assertion_table[i];
-	   as != (struct assertion *) NULL;
+	   as != NULL;
 	   as = as->as_next)
 	if (((as->as_internalflags & ASSERT_IFLAG_WEIRDAUTH) &&
 	     !(as->as_internalflags & ASSERT_IFLAG_PROCESSED)) ||
@@ -282,15 +282,15 @@ keynote_evaluate_query(void)
     int i;
 
     /* Fix the authorizer/licensees/signature fields */
-    if (keynote_fix_fields((struct assertion *) NULL, 0) != RESULT_TRUE)
+    if (keynote_fix_fields(NULL, 0) != RESULT_TRUE)
       return -1;
 
     /* Find POLICY assertions and try to evaluate the query. */
     for (i = 0, prev = 0; i < HASHTABLESIZE; i++)
       for (as = keynote_current_session->ks_assertion_table[i];
-	   as != (struct assertion *) NULL;
+	   as != NULL;
 	   as = as->as_next)
-	if ((as->as_authorizer != (void *) NULL) &&      /* Paranoid */
+	if ((as->as_authorizer != NULL) &&      /* Paranoid */
             (as->as_signeralgorithm == KEYNOTE_ALGORITHM_NONE))
 	  if ((!strcmp("POLICY", as->as_authorizer)) &&
 	      (as->as_flags & ASSERT_FLAG_LOCAL))
@@ -368,24 +368,24 @@ struct assertion *
 keynote_parse_assertion(char *buf, int len, int assertion_flags)
 {
     int k, i, j, seen_field = 0, ver = 0, end_of_assertion = 0;
-    char *ks, *ke, *ts, *te = (char *) NULL;
+    char *ks, *ke, *ts, *te = NULL;
     struct assertion *as;
 
     /* Allocate memory for assertion */
-    as = (struct assertion *) calloc(1, sizeof(struct assertion));
-    if (as == (struct assertion *) NULL)
+    as = calloc(1, sizeof(struct assertion));
+    if (as == NULL)
     {
 	keynote_errno = ERROR_MEMORY;
-	return (struct assertion *) NULL;
+	return NULL;
     }
 
     /* Keep a copy of the assertion around */
     as->as_buf = strdup(buf);
-    if (as->as_buf == (char *) NULL)
+    if (as->as_buf == NULL)
     {
 	keynote_errno = ERROR_MEMORY;
 	keynote_free_assertion(as);
-	return (struct assertion *) NULL;
+	return NULL;
     }
 
     as->as_flags = assertion_flags & ~(ASSERT_FLAG_SIGGEN |
@@ -400,7 +400,7 @@ keynote_parse_assertion(char *buf, int len, int assertion_flags)
     {
 	keynote_free_assertion(as);
 	keynote_errno = ERROR_SYNTAX;
-	return (struct assertion *) NULL;
+	return NULL;
     }
 
     while (i < j)			/* Decomposition loop */
@@ -408,7 +408,7 @@ keynote_parse_assertion(char *buf, int len, int assertion_flags)
 	ks = as->as_buf + i;
 
 	/* Mark begining of assertion for signature purposes */
-	if (as->as_startofsignature == (char *) NULL)
+	if (as->as_startofsignature == NULL)
 	  as->as_startofsignature = ks;
 
 	/* This catches comments at the begining of an assertion only */
@@ -432,7 +432,7 @@ keynote_parse_assertion(char *buf, int len, int assertion_flags)
 	{
 	    keynote_free_assertion(as);
 	    keynote_errno = ERROR_SYNTAX;
-	    return (struct assertion *) NULL;
+	    return NULL;
 	}
 
 	/* ks points at begining of keyword, ke points at end */
@@ -488,14 +488,14 @@ keynote_parse_assertion(char *buf, int len, int assertion_flags)
 	{
 	    case -1:
 		keynote_free_assertion(as);
-		return (struct assertion *) NULL;
+		return NULL;
 
 	    case KEYWORD_VERSION:
 		if ((ver == 1) || (seen_field == 1))
 		{
 		    keynote_free_assertion(as);
 		    keynote_errno = ERROR_SYNTAX;
-		    return (struct assertion *) NULL;
+		    return NULL;
 		}
 
 		/* Test for version correctness */
@@ -503,34 +503,34 @@ keynote_parse_assertion(char *buf, int len, int assertion_flags)
 		if (keynote_errno != 0)
 		{
 		    keynote_free_assertion(as);
-		    return (struct assertion *) NULL;
+		    return NULL;
 		}
 
 		ver = 1;
 		break;
 
 	    case KEYWORD_LOCALINIT:
-		if (as->as_env != (struct environment *) NULL)
+		if (as->as_env != NULL)
 		{
 		    keynote_free_assertion(as);
 		    keynote_errno = ERROR_SYNTAX;
-		    return (struct assertion *) NULL;
+		    return NULL;
 		}
 
 		as->as_env = keynote_get_envlist(ts, te, 0);
 		if (keynote_errno != 0)
 		{
 		    keynote_free_assertion(as);
-		    return (struct assertion *) NULL;
+		    return NULL;
 		}
 		break;
 
 	    case KEYWORD_AUTHORIZER:
-		if (as->as_authorizer_string_s != (void *) NULL)
+		if (as->as_authorizer_string_s != NULL)
 		{
 		    keynote_free_assertion(as);
 		    keynote_errno = ERROR_SYNTAX;
-		    return (struct assertion *) NULL;
+		    return NULL;
 		}
 
 		as->as_authorizer_string_s = ts;
@@ -538,11 +538,11 @@ keynote_parse_assertion(char *buf, int len, int assertion_flags)
 		break;
 
 	    case KEYWORD_LICENSEES:
-		if (as->as_keypred_s != (char *) NULL)
+		if (as->as_keypred_s != NULL)
 		{
 		    keynote_free_assertion(as);
 		    keynote_errno = ERROR_SYNTAX;
-		    return (struct assertion *) NULL;
+		    return NULL;
 		}
 
 		as->as_keypred_s = ts;
@@ -550,11 +550,11 @@ keynote_parse_assertion(char *buf, int len, int assertion_flags)
 		break;
 
 	    case KEYWORD_CONDITIONS:
-		if (as->as_conditions_s != (char *) NULL)
+		if (as->as_conditions_s != NULL)
 		{
 		    keynote_free_assertion(as);
 		    keynote_errno = ERROR_SYNTAX;
-		    return (struct assertion *) NULL;
+		    return NULL;
 		}
 
 		as->as_conditions_s = ts;
@@ -562,11 +562,11 @@ keynote_parse_assertion(char *buf, int len, int assertion_flags)
 		break;
 
 	    case KEYWORD_SIGNATURE:
-		if (as->as_signature_string_s != (char *) NULL)
+		if (as->as_signature_string_s != NULL)
 		{
 		    keynote_free_assertion(as);
 		    keynote_errno = ERROR_SYNTAX;
-		    return (struct assertion *) NULL;
+		    return NULL;
 		}
 
 		end_of_assertion = 1;
@@ -576,11 +576,11 @@ keynote_parse_assertion(char *buf, int len, int assertion_flags)
 		break;
 
 	    case KEYWORD_COMMENT:
-		if (as->as_comment_s != (char *) NULL)
+		if (as->as_comment_s != NULL)
 		{
 		    keynote_free_assertion(as);
 		    keynote_errno = ERROR_SYNTAX;
-		    return (struct assertion *) NULL;
+		    return NULL;
 		}
 
 		as->as_comment_s = ts;
@@ -602,7 +602,7 @@ keynote_parse_assertion(char *buf, int len, int assertion_flags)
 	      {
 		  keynote_free_assertion(as);
 		  keynote_errno = ERROR_SYNTAX;
-		  return (struct assertion *) NULL;
+		  return NULL;
 	      }
 
 	    break; /* Assertion is "properly" terminated */
@@ -610,11 +610,11 @@ keynote_parse_assertion(char *buf, int len, int assertion_flags)
     }
 
     /* Check that the basic fields are there */
-    if (as->as_authorizer_string_s == (char *) NULL)
+    if (as->as_authorizer_string_s == NULL)
     {
 	keynote_free_assertion(as);
 	keynote_errno = ERROR_SYNTAX;
-	return (struct assertion *) NULL;
+	return NULL;
     }
 
     /* Signature generation/verification handling */
@@ -623,7 +623,7 @@ keynote_parse_assertion(char *buf, int len, int assertion_flags)
         if (keynote_fix_fields(as, 0) != RESULT_TRUE)
         {
 	    keynote_free_assertion(as);
-	    return (struct assertion *) NULL;
+	    return NULL;
         }
     }
     else
@@ -631,7 +631,7 @@ keynote_parse_assertion(char *buf, int len, int assertion_flags)
 	if (keynote_fix_fields(as, 1) != RESULT_TRUE)
 	{
 	    keynote_free_assertion(as);
-	    return (struct assertion *) NULL;
+	    return NULL;
 	}
 
     return as;

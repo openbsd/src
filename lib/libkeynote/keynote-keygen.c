@@ -1,4 +1,4 @@
-/* $OpenBSD: keynote-keygen.c,v 1.21 2004/06/29 11:35:56 msf Exp $ */
+/* $OpenBSD: keynote-keygen.c,v 1.22 2015/11/19 02:35:24 mmcc Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -120,8 +120,8 @@ keynote_keygen(int argc, char *argv[])
 
         fprintf(stderr, "Algorithm name [%s] should be terminated with a "
 		"colon, fixing.\n", argv[1]);
-	algname = (char *) calloc(len, sizeof(char));
-	if (algname == (char *) NULL)
+	algname = calloc(len, sizeof(char));
+	if (algname == NULL)
 	{
 	    perror("calloc()");
 	    exit(1);
@@ -176,10 +176,10 @@ keynote_keygen(int argc, char *argv[])
     {
         RAND_bytes(seed, SEED_LEN);
 
-	dsa = DSA_generate_parameters(len, seed, SEED_LEN, &counter, &h, NULL
-				      , NULL);
+	dsa = DSA_generate_parameters(len, seed, SEED_LEN,
+	    &counter, &h, NULL, NULL);
 
-	if (dsa == (DSA *) NULL)
+	if (dsa == NULL)
 	{
 	    ERR_print_errors_fp(stderr);
 	    exit(1);
@@ -195,7 +195,7 @@ keynote_keygen(int argc, char *argv[])
 	dc.dec_key = (void *) dsa;
 
 	foo = kn_encode_key(&dc, ienc, enc, KEYNOTE_PUBLIC_KEY);
-	if (foo == (char *) NULL)
+	if (foo == NULL)
 	{
 	    fprintf(stderr, "Error encoding key (errno %d)\n", keynote_errno);
 	    exit(1);
@@ -206,7 +206,7 @@ keynote_keygen(int argc, char *argv[])
 	else
 	{
 	    fp = fopen(argv[3], "w");
-	    if (fp == (FILE *) NULL)
+	    if (fp == NULL)
 	    {
 		perror(argv[3]);
 		exit(1);
@@ -220,7 +220,7 @@ keynote_keygen(int argc, char *argv[])
 	  fclose(fp);
 
 	foo = kn_encode_key(&dc, ienc, enc, KEYNOTE_PRIVATE_KEY);
-	if (foo == (char *) NULL)
+	if (foo == NULL)
 	{
 	    fprintf(stderr, "Error encoding key (errno %d)\n", keynote_errno);
 	    exit(1);
@@ -235,7 +235,7 @@ keynote_keygen(int argc, char *argv[])
 	else
 	{
 	    fp = fopen(argv[4], "w");
-	    if (fp == (FILE *) NULL)
+	    if (fp == NULL)
 	    {
 		perror(argv[4]);
 		exit(1);
@@ -243,8 +243,8 @@ keynote_keygen(int argc, char *argv[])
 	}
 
 	len = strlen(KEYNOTE_PRIVATE_KEY_PREFIX) + strlen(foo) + 1;
-	privalgname = (char *) calloc(len, sizeof(char));
-	if (privalgname == (char *) NULL)
+	privalgname = calloc(len, sizeof(char));
+	if (privalgname == NULL)
 	{
 	    perror("calloc()");
 	    exit(1);
@@ -266,7 +266,7 @@ keynote_keygen(int argc, char *argv[])
     {
 	rsa = RSA_generate_key(len, DEFAULT_PUBLIC, NULL, NULL);
 
-	if (rsa == (RSA *) NULL)
+	if (rsa == NULL)
 	{
 	    ERR_print_errors_fp(stderr);
 	    exit(1);
@@ -276,7 +276,7 @@ keynote_keygen(int argc, char *argv[])
 	dc.dec_key = (void *) rsa;
 
 	foo = kn_encode_key(&dc, ienc, enc, KEYNOTE_PUBLIC_KEY);
-	if (foo == (char *) NULL)
+	if (foo == NULL)
 	{
 	    fprintf(stderr, "Error encoding key (errno %d)\n", keynote_errno);
 	    exit(1);
@@ -287,7 +287,7 @@ keynote_keygen(int argc, char *argv[])
 	else
 	{
 	    fp = fopen(argv[3], "w");
-	    if (fp == (FILE *) NULL)
+	    if (fp == NULL)
 	    {
 		perror(argv[3]);
 		exit(1);
@@ -301,7 +301,7 @@ keynote_keygen(int argc, char *argv[])
 	  fclose(fp);
 
 	foo = kn_encode_key(&dc, ienc, enc, KEYNOTE_PRIVATE_KEY);
-	if (foo == (char *) NULL)
+	if (foo == NULL)
 	{
 	    fprintf(stderr, "Error encoding key (errno %d)\n", keynote_errno);
 	    exit(1);
@@ -316,7 +316,7 @@ keynote_keygen(int argc, char *argv[])
 	else
 	{
 	    fp = fopen(argv[4], "w");
-	    if (fp == (FILE *) NULL)
+	    if (fp == NULL)
 	    {
 		perror(argv[4]);
 		exit(1);
@@ -324,8 +324,8 @@ keynote_keygen(int argc, char *argv[])
 	}
 
 	len = strlen(KEYNOTE_PRIVATE_KEY_PREFIX) + strlen(foo) + 1;
-	privalgname = (char *) calloc(len, sizeof(char));
-	if (privalgname == (char *) NULL)
+	privalgname = calloc(len, sizeof(char));
+	if (privalgname == NULL)
 	{
 	    perror("calloc()");
 	    exit(1);

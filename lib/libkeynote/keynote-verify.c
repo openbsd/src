@@ -1,4 +1,4 @@
-/* $OpenBSD: keynote-verify.c,v 1.15 2015/11/18 16:08:39 mmcc Exp $ */
+/* $OpenBSD: keynote-verify.c,v 1.16 2015/11/19 02:35:24 mmcc Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -67,7 +67,7 @@ keynote_verify(int argc, char *argv[])
 	exit(1);
     }
 
-    if ((buf = (char *) calloc(cl, sizeof(char))) == (char *) NULL)
+    if ((buf = calloc(cl, sizeof(char))) == NULL)
     {
 	perror("calloc()");
 	exit(1);
@@ -77,7 +77,7 @@ keynote_verify(int argc, char *argv[])
     while(loopvar--) {
 #endif /* LoopTesting */
 
-    if ((retv = (char **) calloc(numretv, sizeof(char *))) == (char **) NULL)
+    if ((retv = calloc(numretv, sizeof(char *))) == NULL)
     {
 	perror("calloc()");
 	exit(1);
@@ -125,8 +125,8 @@ keynote_verify(int argc, char *argv[])
 		{
 		    free(buf);
 		    cl = sb.st_size + 1;
-		    buf = (char *) calloc(cl, sizeof(char));
-		    if (buf == (char *) NULL)
+		    buf = calloc(cl, sizeof(char));
+		    if (buf == NULL)
 		    {
 			perror("calloc()");
 			exit(1);
@@ -179,15 +179,15 @@ keynote_verify(int argc, char *argv[])
 		sn = 1;
 
 		for (numret = 0;
-		     (ptr = strchr(optarg, ',')) != (char *) NULL;
+		     (ptr = strchr(optarg, ',')) != NULL;
 		     numret++)
 		{
 		    /* Running out of memory */
 		    if (numret > numretv - 3)
 		    {
 			numretv *= 2;
-			foov = (char **) calloc(numretv, sizeof(char **));
-			if (foov == (char **) NULL)
+			foov = calloc(numretv, sizeof(char **));
+			if (foov == NULL)
 			{
 			    /* 
 			     * If this were a real program, we 'd be freeing
@@ -203,9 +203,9 @@ keynote_verify(int argc, char *argv[])
 			retv = foov;
 		    }
 
-		    retv[numret] = (char *) calloc((ptr - optarg) + 1,
+		    retv[numret] = calloc((ptr - optarg) + 1,
 						       sizeof(char));
-		    if (retv[numret] == (char *) NULL)
+		    if (retv[numret] == NULL)
 		    {
 			/* Comment from above applies here as well */
 			perror("calloc()");
@@ -218,8 +218,8 @@ keynote_verify(int argc, char *argv[])
 		}
 
 		/* Last component */
-		retv[numret] = (char *) strdup(optarg);
-		if (retv[numret] == (char *) NULL)
+		retv[numret] = strdup(optarg);
+		if (retv[numret] == NULL)
 		{
 		    perror("calloc()");
 		    exit(1);
@@ -245,8 +245,8 @@ keynote_verify(int argc, char *argv[])
 		{
 		    free(buf);
 		    cl = sb.st_size + 1;
-		    buf = (char *) calloc(cl, sizeof(char));
-		    if (buf == (char *) NULL)
+		    buf = calloc(cl, sizeof(char));
+		    if (buf == NULL)
 		    {
 			perror("calloc()");
 			exit(1);
@@ -333,8 +333,8 @@ keynote_verify(int argc, char *argv[])
 	{
 	    free(buf);
 	    cl = sb.st_size + 1;
-	    buf = (char *) calloc(cl, sizeof(char));
-	    if (buf == (char *) NULL)
+	    buf = calloc(cl, sizeof(char));
+	    if (buf == NULL)
 	    {
 		perror("calloc()");
 		exit(1);
@@ -428,7 +428,7 @@ keynote_verify(int argc, char *argv[])
     for (sn = 0; sn < numret; sn++)
       free(retv[sn]);
     free(retv);
-    retv = (char **) NULL;
+    retv = NULL;
 
     exit(0);
 }

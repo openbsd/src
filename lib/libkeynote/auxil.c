@@ -1,4 +1,4 @@
-/* $OpenBSD: auxil.c,v 1.9 2004/06/29 11:35:56 msf Exp $ */
+/* $OpenBSD: auxil.c,v 1.10 2015/11/19 02:35:24 mmcc Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -46,7 +46,7 @@ keynote_keyhash(void *key, int alg)
     DSA *dsa;
     RSA *rsa;
 
-    if (key == (void *) NULL)
+    if (key == NULL)
       return 0;
 
     switch (alg)
@@ -99,7 +99,7 @@ keynote_in_action_authorizers(void *key, int algorithm)
     if (algorithm == KEYNOTE_ALGORITHM_UNSPEC)
     {
 	kl2 = keynote_keylist_find(keynote_current_assertion->as_keylist, key);
-	if (kl2 == (struct keylist *) NULL)
+	if (kl2 == NULL)
 	  return RESULT_FALSE;   /* Shouldn't ever happen */
 
 	s = kl2->key_key;
@@ -112,7 +112,7 @@ keynote_in_action_authorizers(void *key, int algorithm)
     }
 
     for (kl = keynote_current_session->ks_action_authorizers;
-	 kl != (struct keylist *) NULL;
+	 kl != NULL;
 	 kl = kl->key_next)
       if ((kl->key_alg == alg) ||
 	  ((kl->key_alg == KEYNOTE_ALGORITHM_RSA) &&
@@ -136,14 +136,14 @@ keynote_keylist_add(struct keylist **keylist, char *key)
     struct keynote_deckey dc;
     struct keylist *kl;
     
-    if (keylist == (struct keylist **) NULL)
+    if (keylist == NULL)
     {
 	keynote_errno = ERROR_MEMORY;
 	return -1;
     }
     
-    kl = (struct keylist *) calloc(1, sizeof(struct keylist));
-    if (kl == (struct keylist *) NULL)
+    kl = calloc(1, sizeof(struct keylist));
+    if (kl == NULL)
     {
 	keynote_errno = ERROR_MEMORY;
 	return -1;
@@ -173,11 +173,11 @@ kn_remove_authorizer(int sessid, char *key)
     struct keylist *kl, *kl2;
 
     keynote_errno = 0;
-    if ((keynote_current_session == (struct keynote_session *) NULL) ||
+    if ((keynote_current_session == NULL) ||
 	(keynote_current_session->ks_id != sessid))
     {
 	keynote_current_session = keynote_find_session(sessid);
-	if (keynote_current_session == (struct keynote_session *) NULL)
+	if (keynote_current_session == NULL)
 	{
 	    keynote_errno = ERROR_NOTFOUND;
 	    return -1;
@@ -187,7 +187,7 @@ kn_remove_authorizer(int sessid, char *key)
     ks = keynote_current_session;
 
     /* If no action authorizers present */
-    if ((kl = ks->ks_action_authorizers) == (struct keylist *) NULL)
+    if ((kl = ks->ks_action_authorizers) == NULL)
     {
 	keynote_errno = ERROR_NOTFOUND;
 	return -1;
@@ -197,17 +197,17 @@ kn_remove_authorizer(int sessid, char *key)
     if (!strcmp(kl->key_stringkey, key))
     {
 	ks->ks_action_authorizers = kl->key_next;
-	kl->key_next = (struct keylist *) NULL;
+	kl->key_next = NULL;
 	keynote_keylist_free(kl);
 	return 0;
     }
 
-    for (; kl->key_next != (struct keylist *) NULL; kl = kl->key_next)
+    for (; kl->key_next != NULL; kl = kl->key_next)
       if (!strcmp(kl->key_next->key_stringkey, key))
       {
 	  kl2 = kl->key_next;
 	  kl->key_next = kl2->key_next;
-	  kl2->key_next = (struct keylist *) NULL;
+	  kl2->key_next = NULL;
 	  keynote_keylist_free(kl2);
 	  return 0;
       }
@@ -225,19 +225,19 @@ kn_add_authorizer(int sessid, char *key)
     char *stringkey;
 
     keynote_errno = 0;
-    if ((keynote_current_session == (struct keynote_session *) NULL) ||
+    if ((keynote_current_session == NULL) ||
 	(keynote_current_session->ks_id != sessid))
     {
 	keynote_current_session = keynote_find_session(sessid);
-	if (keynote_current_session == (struct keynote_session *) NULL)
+	if (keynote_current_session == NULL)
 	{
 	    keynote_errno = ERROR_NOTFOUND;
 	    return -1;
 	}
     }
 
-    stringkey = strdup((char *) key);
-    if (stringkey == (char *) NULL)
+    stringkey = strdup(key);
+    if (stringkey == NULL)
     {
 	keynote_errno = ERROR_MEMORY;
 	return -1;
@@ -259,7 +259,7 @@ kn_add_authorizer(int sessid, char *key)
 struct keylist *
 keynote_keylist_find(struct keylist *kl, char *s)
 {
-    for (; kl != (struct keylist *) NULL; kl = kl->key_next)
+    for (; kl != NULL; kl = kl->key_next)
       if (!strcmp(kl->key_stringkey, s))
 	return kl;
 
@@ -274,7 +274,7 @@ keynote_keylist_free(struct keylist *kl)
 {
     struct keylist *kl2;
 
-    while (kl != (struct keylist *) NULL)
+    while (kl != NULL)
     {
 	kl2 = kl->key_next;
 	free(kl->key_stringkey);
@@ -303,14 +303,14 @@ keynote_find_assertion(void *authorizer, int num, int algorithm)
     struct assertion *as;
     unsigned int h;
 
-    if (authorizer == (char *) NULL)
-      return (struct assertion *) NULL;
+    if (authorizer == NULL)
+      return NULL;
 
     h = keynote_keyhash(authorizer, algorithm);
     for (as = keynote_current_session->ks_assertion_table[h];
-	 as != (struct assertion *) NULL;
+	 as != NULL;
 	 as = as->as_next)
-      if ((as->as_authorizer != (void *) NULL) &&
+      if ((as->as_authorizer != NULL) &&
 	  ((as->as_signeralgorithm == algorithm) ||
 	   ((as->as_signeralgorithm == KEYNOTE_ALGORITHM_RSA) &&
 	    (algorithm == KEYNOTE_ALGORITHM_X509)) ||
@@ -321,7 +321,7 @@ keynote_find_assertion(void *authorizer, int num, int algorithm)
 	  if (num-- == 0)
 	    return as;
 
-    return (struct assertion *) NULL;
+    return NULL;
 }
 
 /*
@@ -335,7 +335,7 @@ keynote_add_htable(struct assertion *as, int which)
     char *hashname;
     unsigned int i;
 
-    if (as == (struct assertion *) NULL)
+    if (as == NULL)
     {
 	keynote_errno = ERROR_MEMORY;
 	return -1;
@@ -346,7 +346,7 @@ keynote_add_htable(struct assertion *as, int which)
     else
       hashname = as->as_authorizer;
 
-    if (hashname == (char *) NULL)
+    if (hashname == NULL)
     {
 	keynote_errno = ERROR_SYNTAX;
 	return -1;
@@ -369,11 +369,11 @@ kn_add_assertion(int sessid, char *asrt, int len, int assertion_flags)
     struct assertion *as;
 
     keynote_errno = 0;
-    if ((keynote_current_session == (struct keynote_session *) NULL) ||
+    if ((keynote_current_session == NULL) ||
 	(keynote_current_session->ks_id != sessid))
     {
 	keynote_current_session = keynote_find_session(sessid);
-	if (keynote_current_session == (struct keynote_session *) NULL)
+	if (keynote_current_session == NULL)
 	{
 	    keynote_errno = ERROR_NOTFOUND;
 	    return -1;
@@ -381,7 +381,7 @@ kn_add_assertion(int sessid, char *asrt, int len, int assertion_flags)
     }
 
     as = keynote_parse_assertion(asrt, len, assertion_flags);
-    if ((as == (struct assertion *) NULL) || (keynote_errno != 0))
+    if ((as == NULL) || (keynote_errno != 0))
     {
 	if (keynote_errno == 0)
 	  keynote_errno = ERROR_SYNTAX;
@@ -418,11 +418,11 @@ keynote_remove_assertion(int sessid, int assertid, int deleteflag)
     struct assertion *ht, *ht2;
     int i;
 
-    if ((keynote_current_session == (struct keynote_session *) NULL) ||
+    if ((keynote_current_session == NULL) ||
 	(keynote_current_session->ks_id != sessid))
     {
 	keynote_current_session = keynote_find_session(sessid);
-	if (keynote_current_session == (struct keynote_session *) NULL)
+	if (keynote_current_session == NULL)
 	{
 	    keynote_errno = ERROR_NOTFOUND;
 	    return -1;
@@ -432,7 +432,7 @@ keynote_remove_assertion(int sessid, int assertid, int deleteflag)
     for (i = 0; i < HASHTABLESIZE; i++)
     {
 	ht = keynote_current_session->ks_assertion_table[i];
-	if (ht == (struct assertion *) NULL)
+	if (ht == NULL)
 	  continue;
 
 	/* If first entry in bucket */
@@ -444,7 +444,7 @@ keynote_remove_assertion(int sessid, int assertid, int deleteflag)
 	    return 0;
 	}
 
-	for (; ht->as_next != (struct assertion *) NULL; ht = ht->as_next)
+	for (; ht->as_next != NULL; ht = ht->as_next)
 	  if (ht->as_next->as_id == assertid)  /* Got it */
 	  {
 	      ht2 = ht->as_next;
@@ -484,22 +484,22 @@ keynote_sremove_assertion(int sessid, int assertid)
 void
 keynote_free_assertion(struct assertion *as)
 {
-    if (as == (struct assertion *) NULL)
+    if (as == NULL)
       return;
 
-    if (as->as_buf != (char *) NULL)
+    if (as->as_buf != NULL)
       free(as->as_buf);
 
-    if (as->as_signature != (char *) NULL)
+    if (as->as_signature != NULL)
       free(as->as_signature);
 
-    if (as->as_env != (struct environment *) NULL)
+    if (as->as_env != NULL)
       keynote_env_cleanup(&(as->as_env), 1);
 
-    if (as->as_keylist != (struct keylist *) NULL)
+    if (as->as_keylist != NULL)
       keynote_keylist_free(as->as_keylist);
 
-    if (as->as_authorizer != (void *) NULL)
+    if (as->as_authorizer != NULL)
       keynote_free_key(as->as_authorizer, as->as_signeralgorithm);
 
     free(as);

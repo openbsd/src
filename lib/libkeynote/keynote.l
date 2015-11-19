@@ -1,5 +1,5 @@
 %{
-/* $OpenBSD: keynote.l,v 1.21 2015/02/04 20:35:51 bluhm Exp $ */
+/* $OpenBSD: keynote.l,v 1.22 2015/11/19 02:35:24 mmcc Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -41,7 +41,7 @@ struct lex_list
     void *lex_s;
 };
 
-static struct lex_list *keynote_lex_list = (struct lex_list *) NULL;
+static struct lex_list *keynote_lex_list = NULL;
 static int    keynote_max_lex_list = 32;
 static int    keynote_lex_counter = 0;
 static int    first_tok = 0;
@@ -111,13 +111,13 @@ comment		"#"[^\n]*
                                         if (keynote_exceptionflag ||
 					    keynote_donteval)
 					{
-					    knlval.string = (char *) NULL;
+					    knlval.string = NULL;
 					    return VARIABLE;
 					}
 
 					len = strlen(kntext) + 1;
 					knlval.string = calloc(len, sizeof(char));
-                                        if (knlval.string == (char *) NULL)
+                                        if (knlval.string == NULL)
 					{
 					    keynote_errno = ERROR_MEMORY;
 					    return -1;
@@ -142,13 +142,13 @@ comment		"#"[^\n]*
                                 if (keynote_exceptionflag ||
 				    keynote_donteval)
 				{
-				    knlval.string = (char *) NULL;
+				    knlval.string = NULL;
 				    return STRING;
 				}
 
 				len = strlen(kntext) + 1;
 				knlval.string = calloc(len, sizeof(char));
-                                if (knlval.string == (char *) NULL)
+                                if (knlval.string == NULL)
 				{
 				    keynote_errno = ERROR_MEMORY;
 				    return -1;
@@ -167,13 +167,13 @@ comment		"#"[^\n]*
                                 if (keynote_exceptionflag ||
 				    keynote_donteval)
 				{
-				    knlval.string = (char *) NULL;
+				    knlval.string = NULL;
 				    return STRING;
 				}
     
 				knlval.string = calloc(strlen(kntext) - 1,
 						       sizeof(char));
-                                if (knlval.string == (char *) NULL)
+                                if (knlval.string == NULL)
 				{
 				    keynote_errno = ERROR_MEMORY;
 				    return -1;
@@ -206,7 +206,7 @@ keynote_lex_zap(void)
       return;
 
     for (i = 0; i < keynote_max_lex_list; i++)
-      if (keynote_lex_list[i].lex_s != (void *) NULL)
+      if (keynote_lex_list[i].lex_s != NULL)
       {
 	  switch (keynote_lex_list[i].lex_type)
 	  {
@@ -216,7 +216,7 @@ keynote_lex_zap(void)
 	  }
 
 	  keynote_lex_counter--;
-	  keynote_lex_list[i].lex_s = (void *) NULL;
+	  keynote_lex_list[i].lex_s = NULL;
 	  keynote_lex_list[i].lex_type = 0;
       }
 }
@@ -227,14 +227,14 @@ keynote_lex_zap(void)
 static int
 keynote_lex_init(void)
 {
-    if (keynote_lex_list != (struct lex_list *) NULL)
+    if (keynote_lex_list != NULL)
       memset(keynote_lex_list, 0,
 	     keynote_max_lex_list * sizeof(struct lex_list));
     else
     {
-	keynote_lex_list = (struct lex_list *) calloc(keynote_max_lex_list,
+	keynote_lex_list = calloc(keynote_max_lex_list,
 					              sizeof(struct lex_list));
-        if (keynote_lex_list == (struct lex_list *) NULL)
+        if (keynote_lex_list == NULL)
 	{
 	    keynote_errno = ERROR_MEMORY;
 	    return -1;
@@ -254,11 +254,11 @@ keynote_lex_add(void *s, int type)
     struct lex_list *p;
     int i;
 
-    if (s == (void *) NULL)
+    if (s == NULL)
       return RESULT_TRUE;
 
     for (i = 0; i < keynote_max_lex_list; i++)
-      if (keynote_lex_list[i].lex_s == (void *) NULL)
+      if (keynote_lex_list[i].lex_s == NULL)
       {
     	  keynote_lex_list[i].lex_s = (void *) s;
 	  keynote_lex_list[i].lex_type = type;
@@ -272,7 +272,7 @@ keynote_lex_add(void *s, int type)
     p = (struct lex_list *) reallocarray(keynote_lex_list,
 					 keynote_max_lex_list,
 					 sizeof(struct lex_list));
-    if (p == (struct lex_list *) NULL)
+    if (p == NULL)
     {
 	switch (type)
 	{
@@ -455,7 +455,7 @@ keynote_evaluate_assertion(struct assertion *as)
     YY_BUFFER_STATE keynote_bs;
 
     /* Non-existent Conditions field means highest return value */
-    if (as->as_conditions_s == (char *) NULL)
+    if (as->as_conditions_s == NULL)
     {
 	as->as_result = keynote_current_session->ks_values_num - 1;
 	return RESULT_TRUE;
@@ -493,8 +493,8 @@ keynote_evaluate_assertion(struct assertion *as)
 
     keynote_used_variable = 0;
     keynote_returnvalue = 0;
-    keynote_temp_list = (struct environment *) NULL;
-    keynote_init_list = (struct environment *) NULL;
+    keynote_temp_list = NULL;
+    keynote_init_list = NULL;
 
     if (keynote_errno != 0)
       return -1;
@@ -513,7 +513,7 @@ keynote_parse_keypred(struct assertion *as, int record)
     YY_BUFFER_STATE keypred_state;
     int p = 0, err;
 
-    if (as->as_keypred_s == (char *) NULL)
+    if (as->as_keypred_s == NULL)
       return keynote_current_session->ks_values_num - 1;
 
     if (keynote_lex_init() != RESULT_TRUE)
@@ -538,7 +538,7 @@ keynote_parse_keypred(struct assertion *as, int record)
     keynote_lex_zap(); 
     keynote_cleanup_kth();
 
-    keynote_init_list = (struct environment *) NULL;
+    keynote_init_list = NULL;
     keynote_justrecord = 0;
     p = keynote_returnvalue;
     keynote_returnvalue = 0;
@@ -548,7 +548,7 @@ keynote_parse_keypred(struct assertion *as, int record)
 	if (keynote_errno != 0)
 	{
 	    keynote_keylist_free(keynote_keypred_keylist);
-	    keynote_keypred_keylist = (struct keylist *) NULL;
+	    keynote_keypred_keylist = NULL;
 	    return -1;
 	}
 	else
@@ -563,7 +563,7 @@ keynote_parse_keypred(struct assertion *as, int record)
 	    if (as->as_keylist)
               keynote_keylist_free(as->as_keylist);
 	    as->as_keylist = keynote_keypred_keylist;
-	    keynote_keypred_keylist = (struct keylist *) NULL;
+	    keynote_keypred_keylist = NULL;
 	    return RESULT_TRUE;
 	}
     }
@@ -588,10 +588,10 @@ keynote_evaluate_authorizer(struct assertion *as, int flag)
     keynote_justrecord = 1;
     keynote_used_variable = 0;
 
-    if ((flag) && (as->as_authorizer != (void *) NULL))
+    if ((flag) && (as->as_authorizer != NULL))
     {
 	keynote_free_key(as->as_authorizer, as->as_signeralgorithm);
-	as->as_authorizer = (void *) NULL;
+	as->as_authorizer = NULL;
     }
 
     if (flag)
@@ -617,10 +617,10 @@ keynote_evaluate_authorizer(struct assertion *as, int flag)
     keynote_lex_zap();
 
     keynote_justrecord = 0;
-    keynote_init_list = (struct environment *) NULL;
+    keynote_init_list = NULL;
     keynote_returnvalue = 0;
 
-    if (keynote_keypred_keylist != (struct keylist *) NULL)
+    if (keynote_keypred_keylist != NULL)
     {
 	if (flag)
 	{
@@ -638,9 +638,9 @@ keynote_evaluate_authorizer(struct assertion *as, int flag)
 	    as->as_signature = keynote_keypred_keylist->key_key;
 	}
 	
-	keynote_keypred_keylist->key_key = (char *) NULL;
+	keynote_keypred_keylist->key_key = NULL;
 	keynote_keylist_free(keynote_keypred_keylist);
-	keynote_keypred_keylist = (struct keylist *) NULL;
+	keynote_keypred_keylist = NULL;
     }
 
     keynote_used_variable = 0;
@@ -671,9 +671,9 @@ keynote_get_private_key(char *buf)
     int err;
 
     if (keynote_lex_init() != RESULT_TRUE)
-      return (char *) NULL;
+      return NULL;
 
-    keynote_privkey = (char *) NULL;
+    keynote_privkey = NULL;
     pkey = kn_scan_bytes(buf, strlen(buf));
     first_tok = PRIVATEKEY;
     err = knparse();
@@ -682,20 +682,20 @@ keynote_get_private_key(char *buf)
 
     if (err != 0)
     {
-	if (keynote_privkey != (char *) NULL)
+	if (keynote_privkey != NULL)
 	{
 	    free(keynote_privkey);
-	    keynote_privkey = (char *) NULL;
+	    keynote_privkey = NULL;
 	}
 
 	if (keynote_errno == 0)
 	  keynote_errno = ERROR_SYNTAX;
 
-	return (char *) NULL;
+	return NULL;
     }
 
     s = keynote_privkey;
-    keynote_privkey = (char *) NULL;
+    keynote_privkey = NULL;
     return s;
 }
 
@@ -705,12 +705,12 @@ keynote_get_private_key(char *buf)
 struct environment *
 keynote_get_envlist(char *buf, char *bufend, int whichfield)
 {
-    struct environment *en = (struct environment *) NULL;
+    struct environment *en = NULL;
     YY_BUFFER_STATE localinit_state;
     int err;
 
     if (keynote_lex_init() != RESULT_TRUE)
-      return (struct environment *) NULL;
+      return NULL;
 
     localinit_state = kn_scan_bytes(buf, bufend - buf);
     if (whichfield == 0)
@@ -739,7 +739,7 @@ keynote_get_envlist(char *buf, char *bufend, int whichfield)
 	else
 	  en = keynote_init_list;
 
-    	keynote_init_list = (struct environment *) NULL;
+    	keynote_init_list = NULL;
     }
 
     /* Avoid compiler (-Wall) warnings. Never reached. */

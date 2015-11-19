@@ -1,4 +1,4 @@
-/* $OpenBSD: keynote-sign.c,v 1.16 2004/06/29 11:35:56 msf Exp $ */
+/* $OpenBSD: keynote-sign.c,v 1.17 2015/11/19 02:35:24 mmcc Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -89,8 +89,8 @@ keynote_sign(int argc, char *argv[])
 	int len = strlen(argv[1 + flg]) + 2;
         fprintf(stderr, "Algorithm name [%s] should be terminated with a "
 		"colon, fixing.\n", argv[1 + flg]);
-	algname = (char *) calloc(len, sizeof(char));
-	if (algname == (char *) NULL)
+	algname = alloc(len, sizeof(char));
+	if (algname == NULL)
 	{
 	    perror("calloc()");
 	    exit(1);
@@ -123,8 +123,8 @@ keynote_sign(int argc, char *argv[])
     }
 
     buflen = sb.st_size + 1;
-    buf = (char *) calloc(buflen, sizeof(char));
-    if (buf == (char *) NULL)
+    buf = calloc(buflen, sizeof(char));
+    if (buf == NULL)
     {
 	perror("calloc()");
 	exit(1);
@@ -158,8 +158,8 @@ keynote_sign(int argc, char *argv[])
 	exit(1);
     }
 
-    buf2 = (char *) calloc(sb.st_size + 1, sizeof(char));
-    if (buf2 == (char *) NULL)
+    buf2 = calloc(sb.st_size + 1, sizeof(char));
+    if (buf2 == NULL)
     {
 	perror("calloc()");
 	exit(1);
@@ -179,7 +179,7 @@ keynote_sign(int argc, char *argv[])
     free(buf);
     free(buf2);
 
-    if (sig == (char *) NULL)
+    if (sig == NULL)
     {
 	switch (keynote_errno)
 	{
