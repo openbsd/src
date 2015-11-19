@@ -2881,6 +2881,7 @@
 ./usr/share/man/man3/SHA512Pad.3
 ./usr/share/man/man3/SHA512Transform.3
 ./usr/share/man/man3/SHA512Update.3
+./usr/share/man/man3/SIMPLEQ_CONCAT.3
 ./usr/share/man/man3/SIMPLEQ_EMPTY.3
 ./usr/share/man/man3/SIMPLEQ_ENTRY.3
 ./usr/share/man/man3/SIMPLEQ_FIRST.3
@@ -3155,6 +3156,7 @@
 ./usr/share/man/man3/SipHash24_Final.3
 ./usr/share/man/man3/SipHash24_Init.3
 ./usr/share/man/man3/SipHash24_Update.3
+./usr/share/man/man3/TAILQ_CONCAT.3
 ./usr/share/man/man3/TAILQ_EMPTY.3
 ./usr/share/man/man3/TAILQ_ENTRY.3
 ./usr/share/man/man3/TAILQ_FIRST.3
