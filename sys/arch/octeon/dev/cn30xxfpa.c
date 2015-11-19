@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxfpa.c,v 1.5 2015/07/19 00:12:54 jasper Exp $	*/
+/*	$OpenBSD: cn30xxfpa.c,v 1.6 2015/11/19 14:08:09 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -46,25 +46,13 @@
 #define	DPRINTF(x)
 #endif
 
-#define	_DMA_NSEGS	1
-#define	_DMA_BUFLEN	0x01000000
-
-/* pool descriptor */
-struct cn30xxfpa_desc {
-};
-
 struct cn30xxfpa_softc {
 	int			sc_initialized;
 
 	bus_space_tag_t		sc_regt;
 	bus_space_handle_t	sc_regh;
 
-	bus_space_tag_t		sc_opst;
-	bus_space_handle_t	sc_opsh;
-
 	bus_dma_tag_t		sc_dmat;
-
-	struct cn30xxfpa_desc	sc_descs[8];
 };
 
 void		cn30xxfpa_bootstrap(struct octeon_config *);
@@ -91,7 +79,6 @@ cn30xxfpa_bootstrap(struct octeon_config *mcp)
 	struct cn30xxfpa_softc *sc = &cn30xxfpa_softc;
 
 	sc->sc_regt = mcp->mc_iobus_bust;
-	sc->sc_opst = mcp->mc_iobus_bust;
 	sc->sc_dmat = mcp->mc_iobus_dmat;
 
 	cn30xxfpa_init(sc);
@@ -246,8 +233,6 @@ cn30xxfpa_query(int poolno)
 
 /* ---- local functions */
 
-void	cn30xxfpa_init_bus(struct cn30xxfpa_softc *);
-void	cn30xxfpa_init_bus_space(struct cn30xxfpa_softc *);
 void	cn30xxfpa_init_regs(struct cn30xxfpa_softc *);
 
 void
@@ -257,7 +242,6 @@ cn30xxfpa_init(struct cn30xxfpa_softc *sc)
 		panic("%s: already initialized", __func__);
 	sc->sc_initialized = 1;
 
-	cn30xxfpa_init_bus(sc);
 	cn30xxfpa_init_regs(sc);
 #ifdef OCTEON_ETH_DEBUG
 	cn30xxfpa_int_enable(sc, 1);
@@ -265,30 +249,14 @@ cn30xxfpa_init(struct cn30xxfpa_softc *sc)
 }
 
 void
-cn30xxfpa_init_bus(struct cn30xxfpa_softc *sc)
-{
-	cn30xxfpa_init_bus_space(sc);
-}
-
-void
-cn30xxfpa_init_bus_space(struct cn30xxfpa_softc *sc)
+cn30xxfpa_init_regs(struct cn30xxfpa_softc *sc)
 {
 	int status;
 
-	status = bus_space_map(sc->sc_regt, FPA_BASE, FPA_SIZE, 0, &sc->sc_regh);
+	status = bus_space_map(sc->sc_regt, FPA_BASE, FPA_SIZE, 0,
+	    &sc->sc_regh);
 	if (status != 0)
-		panic("can't map %s space", "register");
-
-	/* CN30XX-HM-1.0 Table 4-25 */
-	status = bus_space_map(sc->sc_opst,
-	    0x0001180028000000ULL/* XXX */, 0x0200/* XXX */, 0, &sc->sc_opsh);
-	if (status != 0)
-		panic("can't map %s space", "operations");
-}
-
-void
-cn30xxfpa_init_regs(struct cn30xxfpa_softc *sc)
-{
+		panic("%s: could not map FPA registers", __func__);
 
 	bus_space_write_8(sc->sc_regt, sc->sc_regh, FPA_CTL_STATUS_OFFSET,
 	    FPA_CTL_STATUS_ENB);
