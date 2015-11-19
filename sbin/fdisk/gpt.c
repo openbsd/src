@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpt.c,v 1.6 2015/11/15 01:22:39 krw Exp $	*/
+/*	$OpenBSD: gpt.c,v 1.7 2015/11/19 16:14:08 krw Exp $	*/
 /*
  * Copyright (c) 2015 Markus Muller <mmu@grummel.net>
  * Copyright (c) 2015 Kenneth R Westerback <krw@openbsd.org>
@@ -16,19 +16,17 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/types.h>
-#include <sys/param.h>
+#include <sys/param.h>	/* DEV_BSIZE */
 #include <sys/disklabel.h>
 #include <sys/dkio.h>
-#include <sys/fcntl.h>
 #include <sys/ioctl.h>
-#include <stdint.h>
+
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <uuid.h>
-#include <errno.h>
 
 #include "disk.h"
 #include "misc.h"

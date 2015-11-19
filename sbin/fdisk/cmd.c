@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.86 2015/11/18 17:09:26 krw Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.87 2015/11/19 16:14:08 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -16,17 +16,15 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/param.h>
 #include <sys/types.h>
-#include <sys/fcntl.h>
 #include <sys/disklabel.h>
+
 #include <err.h>
-#include <errno.h>
+#include <signal.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <signal.h>
-#include <unistd.h>
 #include <uuid.h>
 
 #include "disk.h"
@@ -512,7 +510,7 @@ Xflag(char *args, struct mbr *mbr)
 	if (flag != NULL) {
 		/* Set flag to value provided. */
 		if (letoh64(gh.gh_sig) == GPTSIGNATURE)
-			val = strtonum(flag, 0, LLONG_MAX, &errstr);
+			val = strtonum(flag, 0, INT64_MAX, &errstr);
 		else
 			val = strtonum(flag, 0, 0xff, &errstr);
 		if (errstr) {
