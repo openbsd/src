@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.c,v 1.156 2015/11/05 09:48:21 nicm Exp $	*/
+/*	$OpenBSD: cvs.c,v 1.157 2015/11/19 17:44:01 deraadt Exp $	*/
 /*
  * Copyright (c) 2006, 2007 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -34,6 +34,7 @@
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
+#include <err.h>
 
 #include "cvs.h"
 #include "remote.h"
@@ -185,6 +186,9 @@ main(int argc, char **argv)
 	struct passwd *pw;
 	struct stat st;
 	char fpath[PATH_MAX];
+
+	if (pledge("stdio rpath wpath cpath fattr proc exec", NULL) == -1)
+		err(1, "pledge");
 
 	tzset();
 
