@@ -1,4 +1,4 @@
-.\"	$OpenBSD: queue.3,v 1.62 2015/11/10 23:48:17 jmc Exp $
+.\"	$OpenBSD: queue.3,v 1.63 2015/11/19 13:38:07 millert Exp $
 .\"	$NetBSD: queue.3,v 1.4 1995/07/03 00:25:36 mycroft Exp $
 .\"
 .\" Copyright (c) 1993 The Regents of the University of California.
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)queue.3	8.1 (Berkeley) 12/13/93
 .\"
-.Dd $Mdocdate: November 10 2015 $
+.Dd $Mdocdate: November 19 2015 $
 .Dt SLIST_INIT 3
 .Os
 .Sh NAME
@@ -76,6 +76,7 @@
 .Nm SIMPLEQ_INSERT_TAIL ,
 .Nm SIMPLEQ_REMOVE_AFTER ,
 .Nm SIMPLEQ_REMOVE_HEAD ,
+.Nm SIMPLEQ_CONCAT ,
 .Nm TAILQ_ENTRY ,
 .Nm TAILQ_HEAD ,
 .Nm TAILQ_HEAD_INITIALIZER ,
@@ -94,7 +95,8 @@
 .Nm TAILQ_INSERT_HEAD ,
 .Nm TAILQ_INSERT_TAIL ,
 .Nm TAILQ_REMOVE ,
-.Nm TAILQ_REPLACE
+.Nm TAILQ_REPLACE ,
+.Nm TAILQ_CONCAT
 .Nd implementations of singly-linked lists, doubly-linked lists, simple queues, and tail queues
 .Sh SYNOPSIS
 .In sys/queue.h
@@ -170,6 +172,7 @@
 .Fn SIMPLEQ_REMOVE_AFTER "SIMPLEQ_HEAD *head" "struct TYPE *elm" "FIELDNAME"
 .Ft void
 .Fn SIMPLEQ_REMOVE_HEAD "SIMPLEQ_HEAD *head" "FIELDNAME"
+.Fn SIMPLEQ_CONCAT "SIMPLEQ_HEAD *head1" "SIMPLEQ_HEAD *head2"
 .Pp
 .Fn TAILQ_ENTRY "TYPE"
 .Fn TAILQ_HEAD "HEADNAME" "TYPE"
@@ -202,6 +205,7 @@
 .Fn TAILQ_REMOVE "TAILQ_HEAD *head" "struct TYPE *elm" "FIELDNAME"
 .Ft void
 .Fn TAILQ_REPLACE "TAILQ_HEAD *head" "struct TYPE *elm" "struct TYPE *elm2" "FIELDNAME"
+.Fn TAILQ_CONCAT "TAILQ_HEAD *head1" "TAILQ_HEAD *head2"
 .Sh DESCRIPTION
 These macros define and operate on four types of data structures:
 singly-linked lists, simple queues, lists, and tail queues.
@@ -678,6 +682,19 @@ macro removes the first element
 from the queue.
 .Pp
 The
+.Fn SIMPLEQ_CONCAT
+macro concatenates all the elements of the queue referenced by
+.Fa head2
+to the end of the queue referenced by
+.Fa head1 ,
+emptying
+.Fa head2
+in the process.
+This is more efficient than removing and inserting the individual elements
+as it does not actually traverse
+.Fa head2 .
+.Pp
+The
 .Fn SIMPLEQ_FIRST
 and
 .Fn SIMPLEQ_NEXT
@@ -815,6 +832,19 @@ macro replaces the list element
 .Fa elm
 with the new element
 .Fa elm2 .
+.Pp
+The
+.Fn TAILQ_CONCAT
+macro concatenates all the elements of the tail queue referenced by
+.Fa head2
+to the end of the tail queue referenced by
+.Fa head1 ,
+emptying
+.Fa head2
+in the process.
+This is more efficient than removing and inserting the individual elements
+as it does not actually traverse
+.Fa head2 .
 .Pp
 .Fn TAILQ_FOREACH
 and

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.27 2014/10/13 17:27:00 millert Exp $
+#	$OpenBSD: Makefile,v 1.28 2015/11/19 13:38:07 millert Exp $
 #	@(#)Makefile	8.2 (Berkeley) 12/13/93
 
 MAN=	assert.3 bitstring.3 CMSG_DATA.3 dlfcn.3 dl_iterate_phdr.3 end.3 \
@@ -35,7 +35,7 @@ MLINKS+=queue.3 SIMPLEQ_ENTRY.3 queue.3 SIMPLEQ_HEAD.3 \
 	queue.3 SIMPLEQ_FOREACH_SAFE.3 queue.3 SIMPLEQ_INIT.3 \
 	queue.3 SIMPLEQ_INSERT_HEAD.3 queue.3 SIMPLEQ_INSERT_TAIL.3 \
 	queue.3 SIMPLEQ_INSERT_AFTER.3 queue.3 SIMPLEQ_REMOVE_HEAD.3 \
-	queue.3 SIMPLEQ_REMOVE_AFTER.3
+	queue.3 SIMPLEQ_REMOVE_AFTER.3 queue.3 SIMPLEQ_CONCAT.3
 MLINKS+=queue.3 TAILQ_ENTRY.3 queue.3 TAILQ_HEAD.3 \
 	queue.3 TAILQ_HEAD_INITIALIZER.3 queue.3 TAILQ_FIRST.3 \
 	queue.3 TAILQ_NEXT.3 queue.3 TAILQ_LAST.3 \
@@ -45,7 +45,7 @@ MLINKS+=queue.3 TAILQ_ENTRY.3 queue.3 TAILQ_HEAD.3 \
 	queue.3 TAILQ_INIT.3 \
 	queue.3 TAILQ_INSERT_AFTER.3 queue.3 TAILQ_INSERT_BEFORE.3 \
 	queue.3 TAILQ_INSERT_HEAD.3 queue.3 TAILQ_INSERT_TAIL.3 \
-	queue.3 TAILQ_REMOVE.3 queue.3 TAILQ_REPLACE.3
+	queue.3 TAILQ_REMOVE.3 queue.3 TAILQ_REPLACE.3 queue.3 TAILQ_CONCAT.3
 MLINKS+=stdarg.3 varargs.3 stdarg.3 va_arg.3 stdarg.3 va_end.3
 MLINKS+=stdarg.3 va_start.3 stdarg.3 va_copy.3
 MLINKS+=dlfcn.3 dlopen.3 dlfcn.3 dlclose.3 dlfcn.3 dlsym.3 dlfcn.3 dlctl.3 \
