@@ -1,4 +1,4 @@
-/*	$OpenBSD: hotplugd.c,v 1.12 2010/01/10 13:20:41 grange Exp $	*/
+/*	$OpenBSD: hotplugd.c,v 1.13 2015/11/19 06:05:40 deraadt Exp $	*/
 /*
  * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
  *
@@ -60,6 +60,9 @@ main(int argc, char *argv[])
 	int ch;
 	struct sigaction sact;
 	struct hotplug_event he;
+
+	if (pledge("stdio rpath proc exec", NULL) == -1)
+		err(1, "pledge");
 
 	while ((ch = getopt(argc, argv, "d:")) != -1)
 		switch (ch) {
