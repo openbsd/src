@@ -1,4 +1,4 @@
-/* $OpenBSD: buf.c,v 1.5 2015/11/19 23:28:03 tedu Exp $ */
+/* $OpenBSD: buf.c,v 1.6 2015/11/19 23:36:46 tedu Exp $ */
 
 /* flex - tool to generate fast lexical analyzers */
 
@@ -78,7 +78,8 @@ buf_prints(struct Buf * buf, const char *fmt, const char *s)
 	char *t;
 	size_t tsz;
 
-	t = malloc(tsz = strlen(fmt) + strlen(s) + 1);
+	tsz = strlen(fmt) + strlen(s) + 1;
+	t = malloc(tsz);
 	if (!t)
 		flexfatal(_("Allocation of buffer to print string failed"));
 	snprintf(t, tsz, fmt, s);
@@ -100,14 +101,15 @@ buf_linedir(struct Buf * buf, const char *filename, int lineno)
 	char *dst, *t;
 	size_t tsz;
 
-	t = malloc(tsz = strlen("#line \"\"\n") +	/* constant parts */
-	    2 * strlen(filename) +	/* filename with possibly all
-					 * backslashes escaped */
+	tsz = strlen("#line \"\"\n") +	/* constant parts */
+	    2 * strlen(filename) +	/* filename with possibly all backslashes escaped */
 	    (int) (1 + log10(abs(lineno))) +	/* line number */
-	    1);			/* NUL */
+	    1;			/* NUL */
+	t = malloc(tsz);
 	if (!t)
 		flexfatal(_("Allocation of buffer for line directive failed"));
-	for (dst = t + snprintf(t, tsz, "#line %d \"", lineno), src = filename; *src; *dst++ = *src++)
+	dst = t + snprintf(t, tsz, "#line %d \"", lineno);
+	for (src = filename; *src; *dst++ = *src++)
 		if (*src == '\\')	/* escape backslashes */
 			*dst++ = '\\';
 	*dst++ = '"';
@@ -186,7 +188,8 @@ buf_m4_define(struct Buf * buf, const char *def, const char *val)
 	size_t strsz;
 
 	val = val ? val : "";
-	str = (char *) malloc(strsz = strlen(fmt) + strlen(def) + strlen(val) + 2);
+	strsz = strlen(fmt) + strlen(def) + strlen(val) + 2;
+	str = malloc(strsz);
 	if (!str)
 		flexfatal(_("Allocation of buffer for m4 def failed"));
 
@@ -207,7 +210,8 @@ buf_m4_undefine(struct Buf * buf, const char *def)
 	char *str;
 	size_t strsz;
 
-	str = malloc(strsz = strlen(fmt) + strlen(def) + 2);
+	strsz = strlen(fmt) + strlen(def) + 2;
+	str = malloc(strsz);
 	if (!str)
 		flexfatal(_("Allocation of buffer for m4 undef failed"));
 
