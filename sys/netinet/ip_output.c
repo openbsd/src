@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.306 2015/11/11 10:23:23 mpi Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.307 2015/11/19 13:40:46 mpi Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -368,7 +368,12 @@ reroute:
 			 */
 			if (ipmforwarding && ip_mrouter &&
 			    (flags & IP_FORWARDING) == 0) {
-				if (ip_mforward(m, ifp) != 0) {
+				int rv;
+
+				KERNEL_LOCK();
+				rv = ip_mforward(m, ifp);
+				KERNEL_UNLOCK();
+				if (rv != 0) {
 					m_freem(m);
 					goto done;
 				}
