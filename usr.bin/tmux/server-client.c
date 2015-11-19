@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.170 2015/11/18 14:27:44 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.171 2015/11/19 22:46:46 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -494,8 +494,16 @@ server_client_assume_paste(struct session *s)
 		return (0);
 
 	timersub(&s->activity_time, &s->last_activity_time, &tv);
-	if (tv.tv_sec == 0 && tv.tv_usec < t * 1000)
-		return (1);
+	if (tv.tv_sec == 0 && tv.tv_usec < t * 1000) {
+		log_debug("session %s pasting (flag %d)", s->name,
+		    !!(s->flags & SESSION_PASTING));
+		if (s->flags & SESSION_PASTING)
+			return (1);
+		s->flags |= SESSION_PASTING;
+		return (0);
+	}
+	log_debug("session %s not pasting", s->name);
+	s->flags &= ~SESSION_PASTING;
 	return (0);
 }
 
