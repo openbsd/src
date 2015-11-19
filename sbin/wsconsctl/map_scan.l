@@ -1,4 +1,4 @@
-/*	$OpenBSD: map_scan.l,v 1.5 2015/04/18 18:28:37 deraadt Exp $	*/
+/*	$OpenBSD: map_scan.l,v 1.6 2015/11/19 19:48:27 tedu Exp $	*/
 /*	$NetBSD: map_scan.l 1.1 1998/12/28 14:01:17 hannken Exp $ */
 
 /*-
@@ -30,6 +30,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+%option noyywrap
+
 %{
 
 #include <dev/wscons/wsksymdef.h>
@@ -38,8 +40,6 @@
 #include <err.h>
 #include "wsconsctl.h"
 #include "y.tab.h"
-
-#define yywrap()	1
 
 void
 map_scan_setinput(char *str)

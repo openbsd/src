@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: scan.l,v 1.22 2015/01/16 06:40:16 deraadt Exp $	*/
+/*	$OpenBSD: scan.l,v 1.23 2015/11/19 19:48:27 tedu Exp $	*/
 /*	$NetBSD: scan.l,v 1.13 1997/02/02 21:12:37 thorpej Exp $	*/
 
 /*
@@ -67,9 +67,9 @@ struct incl {
 static struct incl *incl;
 static int endinclude(void);
 
-#define	yywrap() 1
-
 %}
+
+%option noyywrap
 
 PATH	[A-Za-z_0-9]*[./][-A-Za-z_0-9./\$\{\}]*
 WORD	[A-Za-z_][-A-Za-z_0-9]*
