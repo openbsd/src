@@ -1,4 +1,4 @@
-/*	$OpenBSD: flexdef.h,v 1.14 2015/11/19 23:40:16 tedu Exp $	*/
+/*	$OpenBSD: flexdef.h,v 1.15 2015/11/19 23:48:06 tedu Exp $	*/
 
 /* flexdef - definitions file for flex */
 
@@ -38,21 +38,6 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-#endif
-
-/* AIX requires this to be the first thing in the file.  */
-#ifndef __GNUC__
-# if HAVE_ALLOCA_H
-#  include <alloca.h>
-# else
-#  ifdef _AIX
- #pragma alloca
-#  else
-#   ifndef alloca /* predefined by HP cc +Olibcalls */
-char *alloca ();
-#   endif
-#  endif
-# endif
 #endif
 
 #ifdef STDC_HEADERS

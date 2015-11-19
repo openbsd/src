@@ -1,26 +1,7 @@
-/*	$OpenBSD: config.h,v 1.4 2015/11/19 19:43:40 tedu Exp $	*/
+/*	$OpenBSD: config.h,v 1.5 2015/11/19 23:48:06 tedu Exp $	*/
 
 /* config.h.  Generated from conf.in by configure.  */
 /* conf.in.  Generated from configure.ac by autoheader.  */
-
-/* Define to one of `_getb67', `GETB67', `getb67' for Cray-2 and Cray-YMP
-   systems. This function is required for `alloca.c' support on those systems.
-   */
-/* #undef CRAY_STACKSEG_END */
-
-/* Define to 1 if using `alloca.c'. */
-/* #undef C_ALLOCA */
-
-/* Define to 1 if translation of program messages to the user's native
-   language is requested. */
-/* #undef ENABLE_NLS */
-
-/* Define to 1 if you have `alloca', as a function or macro. */
-#define HAVE_ALLOCA 1
-
-/* Define to 1 if you have <alloca.h> and it should be used (not on Ultrix).
-   */
-/* #undef HAVE_ALLOCA_H */
 
 /* Define to 1 if you have the MacOS X function CFLocaleCopyCurrent in the
    CoreFoundation framework. */
