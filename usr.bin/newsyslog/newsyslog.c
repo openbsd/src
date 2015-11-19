@@ -1,4 +1,4 @@
-/*	$OpenBSD: newsyslog.c,v 1.97 2015/11/18 19:59:24 sthen Exp $	*/
+/*	$OpenBSD: newsyslog.c,v 1.98 2015/11/19 08:23:48 sthen Exp $	*/
 
 /*
  * Copyright (c) 1999, 2002, 2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -191,17 +191,11 @@ main(int argc, char **argv)
 	struct pidinfo *pidlist, *pl;
 	int status, listlen;
 	char **av;
-
-	if (pledge("stdio rpath wpath cpath fattr exec proc", NULL) == -1)
-		err(1,"pledge");
 	
 	parse_args(argc, argv);
 	argc -= optind;
 	argv += optind;
 
-	if (noaction && pledge("stdio rpath", NULL) == -1)
-		err(1,"pledge");
-	
 	if (needroot && getuid() && geteuid())
 		errx(1, "You must be root.");
 
