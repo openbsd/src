@@ -1,4 +1,4 @@
-/* $OpenBSD: filter.c,v 1.2 2015/11/19 22:16:43 tedu Exp $ */
+/* $OpenBSD: filter.c,v 1.3 2015/11/19 22:25:53 tedu Exp $ */
 
 /* filter - postprocessing of flex output through filters */
 
@@ -68,9 +68,7 @@ struct filter *filter_create_ext (struct filter *chain, const char *cmd,
 
 	/* allocate argv, and populate it with the argument list. */
 	max_args = 8;
-	f->argv =
-		(const char **) flex_alloc (sizeof (char *) *
-					    (max_args + 1));
+	f->argv = flex_alloc (sizeof (char *) * (max_args + 1));
 	if (!f->argv)
 		flexerror (_("flex_alloc failed (f->argv) in filter_create_ext"));
 	f->argv[f->argc++] = cmd;
@@ -79,12 +77,8 @@ struct filter *filter_create_ext (struct filter *chain, const char *cmd,
 	while ((s = va_arg (ap, const char *)) != NULL) {
 		if (f->argc >= max_args) {
 			max_args += 8;
-			f->argv =
-				(const char **) flex_realloc (f->argv,
-							      sizeof (char
-								      *) *
-							      (max_args +
-							       1));
+			f->argv = flex_realloc (f->argv,
+			      sizeof (char *) * (max_args + 1));
 		}
 		f->argv[f->argc++] = s;
 	}
@@ -174,11 +168,11 @@ bool filter_apply_chain (struct filter * chain)
          * to sync the stream. This is a Hail Mary situation. It seems to work.
          */
 		close (pipes[1]);
-clearerr(stdin);
+		clearerr(stdin);
 		if (dup2 (pipes[0], fileno (stdin)) == -1)
 			flexfatal (_("dup2(pipes[0],0)"));
 		close (pipes[0]);
-        fseek (stdin, 0, SEEK_CUR);
+        	fseek (stdin, 0, SEEK_CUR);
 
 		/* run as a filter, either internally or by exec */
 		if (chain->filter_func) {
@@ -191,8 +185,8 @@ clearerr(stdin);
 		else {
 			execvp (chain->argv[0],
 				(char **const) (chain->argv));
-            lerrsf_fatal ( _("exec of %s failed"),
-                    chain->argv[0]);
+            		lerrsf_fatal ( _("exec of %s failed"),
+			    chain->argv[0]);
 		}
 
 		exit (1);
@@ -203,7 +197,7 @@ clearerr(stdin);
 	if (dup2 (pipes[1], fileno (stdout)) == -1)
 		flexfatal (_("dup2(pipes[1],1)"));
 	close (pipes[1]);
-    fseek (stdout, 0, SEEK_CUR);
+	fseek (stdout, 0, SEEK_CUR);
 
 	return true;
 }
@@ -269,11 +263,11 @@ int filter_tee_header (struct filter *chain)
 	 */
 
 	if (write_header) {
-        fputs (check_4_gnu_m4, to_h);
+		fputs (check_4_gnu_m4, to_h);
 		fputs ("m4_changecom`'m4_dnl\n", to_h);
 		fputs ("m4_changequote`'m4_dnl\n", to_h);
 		fputs ("m4_changequote([[,]])[[]]m4_dnl\n", to_h);
-	    fputs ("m4_define([[M4_YY_NOOP]])[[]]m4_dnl\n", to_h);
+		fputs ("m4_define([[M4_YY_NOOP]])[[]]m4_dnl\n", to_h);
 		fputs ("m4_define( [[M4_YY_IN_HEADER]],[[]])m4_dnl\n",
 		       to_h);
 		fprintf (to_h, "#ifndef %sHEADER_H\n", prefix);
@@ -285,7 +279,7 @@ int filter_tee_header (struct filter *chain)
 
 	}
 
-    fputs (check_4_gnu_m4, to_c);
+	fputs (check_4_gnu_m4, to_c);
 	fputs ("m4_changecom`'m4_dnl\n", to_c);
 	fputs ("m4_changequote`'m4_dnl\n", to_c);
 	fputs ("m4_changequote([[,]])[[]]m4_dnl\n", to_c);
@@ -374,11 +368,9 @@ int filter_fix_linedirs (struct filter *chain)
 			fname = regmatch_dup (&m[2], buf);
 
 			if (strcmp (fname,
-				outfilename ? outfilename : "<stdout>")
-					== 0
-			 || strcmp (fname,
-			 	headerfilename ? headerfilename : "<stdout>")
-					== 0) {
+			    outfilename ? outfilename : "<stdout>") == 0 ||
+			    strcmp (fname, headerfilename ? headerfilename :
+			    "<stdout>") == 0) {
 
 				char    *s1, *s2;
 				char	filename[MAXLINE];
@@ -414,9 +406,8 @@ int filter_fix_linedirs (struct filter *chain)
 		}
 
 		/* squeeze blank lines from generated code */
-		else if (in_gen
-			 && regexec (&regex_blank_line, buf, 0, NULL,
-				     0) == 0) {
+		else if (in_gen &&
+		    regexec (&regex_blank_line, buf, 0, NULL, 0) == 0) {
 			if (last_was_blank)
 				continue;
 			else
