@@ -1,4 +1,4 @@
-/*	$OpenBSD: libmain.c,v 1.8 2015/11/19 19:43:40 tedu Exp $	*/
+/*	$OpenBSD: libmain.c,v 1.9 2015/11/19 22:52:40 tedu Exp $	*/
 
 /* libmain - flex run-time support library "main" function */
 
@@ -23,13 +23,14 @@
 /*  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR */
 /*  PURPOSE. */
 
-extern int yylex ();
+extern int yylex();
 
-int     main (argc, argv)
-     int     argc;
-     char   *argv[];
+int 
+main(argc, argv)
+	int argc;
+	char *argv[];
 {
-	while (yylex () != 0) ;
+	while (yylex() != 0);
 
 	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: libyywrap.c,v 1.8 2015/11/19 19:43:40 tedu Exp $	*/
+/*	$OpenBSD: libyywrap.c,v 1.9 2015/11/19 22:52:40 tedu Exp $	*/
 
 /* libyywrap - flex run-time support library "yywrap" function */
 
@@ -23,7 +23,8 @@
 /*  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR */
 /*  PURPOSE. */
 
-int     yywrap (void)
+int 
+yywrap(void)
 {
 	return 1;
 }
