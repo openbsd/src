@@ -1,4 +1,4 @@
-/*	$OpenBSD: growfs.c,v 1.41 2015/11/19 17:30:41 mmcc Exp $	*/
+/*	$OpenBSD: growfs.c,v 1.42 2015/11/19 17:40:28 mmcc Exp $	*/
 /*
  * Copyright (c) 2000 Christoph Herrmann, Thomas-Henning von Kamptz
  * Copyright (c) 1980, 1989, 1993 The Regents of the University of California.
@@ -328,7 +328,7 @@ growfs(int fsi, int fso, unsigned int Nflag)
 	sblock.fs_ronly = 0;
 	sblock.fs_cgrotor = 0;
 	sblock.fs_state = 0;
-	memset((void *)&sblock.fs_fsmnt, 0, sizeof(sblock.fs_fsmnt));
+	memset(&sblock.fs_fsmnt, 0, sizeof(sblock.fs_fsmnt));
 	sblock.fs_flags &= FS_DOSOFTDEP;
 	if (sblock.fs_magic == FS_UFS1_MAGIC)
 		sblock.fs_ffs1_flags &= FS_DOSOFTDEP;
