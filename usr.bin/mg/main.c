@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.79 2015/11/11 15:37:34 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.80 2015/11/19 19:30:44 bentley Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -56,7 +56,7 @@ main(int argc, char **argv)
 	int	  	 nobackups = 0;
 	struct buffer	*bp = NULL;
 
-	if (pledge("stdio rpath wpath cpath fattr getpw proc exec tty", NULL) == -1)
+	if (pledge("stdio rpath wpath cpath fattr getpw tty proc exec", NULL) == -1)
 		err(1, "pledge");
 
 	while ((o = getopt(argc, argv, "nf:")) != -1)

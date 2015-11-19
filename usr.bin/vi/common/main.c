@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.28 2015/11/15 01:22:36 bentley Exp $	*/
+/*	$OpenBSD: main.c,v 1.29 2015/11/19 19:30:44 bentley Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -55,7 +55,7 @@ editor(GS *gp, int argc, char *argv[])
 	int ch, flagchk, lflag, secure, startup, readonly, rval, silent;
 	char *tag_f, *wsizearg, path[256];
 
-	if (pledge("stdio rpath wpath cpath fattr flock getpw proc exec tty", NULL) == -1) {
+	if (pledge("stdio rpath wpath cpath fattr flock getpw tty proc exec", NULL) == -1) {
 		perror("pledge");
 		goto err;
 	}
