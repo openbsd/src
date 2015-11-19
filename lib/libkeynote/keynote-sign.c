@@ -1,4 +1,4 @@
-/* $OpenBSD: keynote-sign.c,v 1.17 2015/11/19 02:35:24 mmcc Exp $ */
+/* $OpenBSD: keynote-sign.c,v 1.18 2015/11/19 07:00:58 guenther Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -89,7 +89,7 @@ keynote_sign(int argc, char *argv[])
 	int len = strlen(argv[1 + flg]) + 2;
         fprintf(stderr, "Algorithm name [%s] should be terminated with a "
 		"colon, fixing.\n", argv[1 + flg]);
-	algname = alloc(len, sizeof(char));
+	algname = calloc(len, sizeof(char));
 	if (algname == NULL)
 	{
 	    perror("calloc()");
