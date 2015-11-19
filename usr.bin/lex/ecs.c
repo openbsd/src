@@ -1,4 +1,4 @@
-/*	$OpenBSD: ecs.c,v 1.7 2015/11/19 19:43:40 tedu Exp $	*/
+/*	$OpenBSD: ecs.c,v 1.8 2015/11/19 23:34:56 mmcc Exp $	*/
 
 /* ecs - equivalence class routines */
 
@@ -102,9 +102,9 @@ int     cre8ecs (fwd, bck, num)
 /* mkeccl - update equivalence classes based on character class xtions
  *
  * synopsis
- *    Char ccls[];
+ *    u_char ccls[];
  *    int lenccl, fwd[llsiz], bck[llsiz], llsiz, NUL_mapping;
- *    void mkeccl( Char ccls[], int lenccl, int fwd[llsiz], int bck[llsiz],
+ *    void mkeccl( u_char ccls[], int lenccl, int fwd[llsiz], int bck[llsiz],
  *			int llsiz, int NUL_mapping );
  *
  * ccls contains the elements of the character class, lenccl is the
@@ -115,7 +115,7 @@ int     cre8ecs (fwd, bck, num)
  */
 
 void    mkeccl (ccls, lenccl, fwd, bck, llsiz, NUL_mapping)
-     Char    ccls[];
+     u_char    ccls[];
      int     lenccl, fwd[], bck[], llsiz, NUL_mapping;
 {
 	int     cclp, oldec, newec;

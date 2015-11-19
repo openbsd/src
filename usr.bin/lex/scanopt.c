@@ -1,4 +1,4 @@
-/* $OpenBSD: scanopt.c,v 1.2 2015/11/19 22:16:43 tedu Exp $ */
+/* $OpenBSD: scanopt.c,v 1.3 2015/11/19 23:34:56 mmcc Exp $ */
 
 /* flex - tool to generate fast lexical analyzers */
 
@@ -191,7 +191,7 @@ scanopt_t *scanopt_init (options, argc, argv, flags)
 	s->aux = (struct _aux *) malloc (s->optc * sizeof (struct _aux));
 
 	for (i = 0; i < s->optc; i++) {
-		const Char *p, *pname;
+		const u_char *p, *pname;
 		const struct optspec_t *opt;
 		struct _aux *aux;
 
@@ -202,11 +202,11 @@ scanopt_t *scanopt_init (options, argc, argv, flags)
 
 		if (opt->opt_fmt[0] == '-' && opt->opt_fmt[1] == '-') {
 			aux->flags |= IS_LONG;
-			pname = (const Char *)(opt->opt_fmt + 2);
+			pname = (const u_char *)(opt->opt_fmt + 2);
 			s->has_long = 1;
 		}
 		else {
-			pname = (const Char *)(opt->opt_fmt + 1);
+			pname = (const u_char *)(opt->opt_fmt + 1);
 			s->has_short = 1;
 		}
 		aux->printlen = strlen (opt->opt_fmt);
@@ -483,7 +483,7 @@ int     scanopt_usage (scanner, fp, usage)
 
 					while (*p && n < maxlen[1]
 					       && *p != '\n') {
-						if (isspace ((Char)(*p))
+						if (isspace ((u_char)(*p))
 						    || *p == '-') lastws =
 								p;
 						n++;

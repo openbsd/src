@@ -1,4 +1,4 @@
-/*	$OpenBSD: flexdef.h,v 1.12 2015/11/19 23:20:34 tedu Exp $	*/
+/*	$OpenBSD: flexdef.h,v 1.13 2015/11/19 23:34:56 mmcc Exp $	*/
 
 /* flexdef - definitions file for flex */
 
@@ -110,7 +110,6 @@ char *alloca ();
 
 /* Always be prepared to generate an 8-bit scanner. */
 #define CSIZE 256
-#define Char unsigned char
 
 /* Size of input alphabet - should be size of ASCII set. */
 #ifndef DEFAULT_CSIZE
@@ -635,7 +634,7 @@ extern int end_of_buffer_state;
 
 extern int lastccl, *cclmap, *ccllen, *cclng, cclreuse;
 extern int current_maxccls, current_max_ccl_tbl_size;
-extern Char *ccltbl;
+extern u_char *ccltbl;
 
 
 /* Variables for miscellaneous information:
@@ -705,10 +704,10 @@ void   *reallocate_array PROTO ((void *, int, size_t));
 	(char *) reallocate_array( (void *) array, size, sizeof( char ) )
 
 #define allocate_Character_array(size) \
-	(Char *) allocate_array( size, sizeof( Char ) )
+	(u_char *) allocate_array( size, sizeof( u_char ) )
 
 #define reallocate_Character_array(array,size) \
-	(Char *) reallocate_array( (void *) array, size, sizeof( Char ) )
+	(u_char *) reallocate_array( (void *) array, size, sizeof( u_char ) )
 
 
 /* Used to communicate between scanner and parser.  The type should really
@@ -761,7 +760,7 @@ extern void ccl2ecl PROTO ((void));
 extern int cre8ecs PROTO ((int[], int[], int));
 
 /* Update equivalence classes based on character class transitions. */
-extern void mkeccl PROTO ((Char[], int, int[], int[], int, int));
+extern void mkeccl PROTO ((u_char[], int, int[], int[], int, int));
 
 /* Create equivalence class for single character. */
 extern void mkechar PROTO ((int, int[], int[]));
@@ -840,13 +839,13 @@ extern int intcmp PROTO ((const void *, const void *));
 extern void check_char PROTO ((int c));
 
 /* Replace upper-case letter to lower-case. */
-extern Char clower PROTO ((int));
+extern u_char clower PROTO ((int));
 
 /* Returns a dynamically allocated copy of a string. */
 extern char *copy_string PROTO ((const char *));
 
 /* Returns a dynamically allocated copy of a (potentially) unsigned string. */
-extern Char *copy_unsigned_string PROTO ((Char *));
+extern u_char *copy_unsigned_string PROTO ((u_char *));
 
 /* Compare two characters for use by qsort with '\0' sorting last. */
 extern int cclcmp PROTO ((const void *, const void *));
@@ -885,7 +884,7 @@ extern void flexfatal PROTO ((const char *));
 #endif /* ! HAVE_DECL___func__ */
 
 /* Convert a hexadecimal digit string to an integer value. */
-extern int htoi PROTO ((Char[]));
+extern int htoi PROTO ((u_char[]));
 
 /* Report an error message formatted with one integer argument. */
 extern void lerrif PROTO ((const char *, int));
@@ -916,10 +915,10 @@ extern void mkdata PROTO ((int));	/* generate a data statement */
 extern int myctoi PROTO ((const char *));
 
 /* Return character corresponding to escape sequence. */
-extern Char myesc PROTO ((Char[]));
+extern u_char myesc PROTO ((u_char[]));
 
 /* Convert an octal digit string to an integer value. */
-extern int otoi PROTO ((Char[]));
+extern int otoi PROTO ((u_char[]));
 
 /* Output a (possibly-formatted) string to the generated scanner. */
 extern void out PROTO ((const char *));
@@ -1031,13 +1030,13 @@ extern int yywrap PROTO ((void));
 /* from file sym.c */
 
 /* Save the text of a character class. */
-extern void cclinstal PROTO ((Char[], int));
+extern void cclinstal PROTO ((u_char[], int));
 
 /* Lookup the number associated with character class. */
-extern int ccllookup PROTO ((Char[]));
+extern int ccllookup PROTO ((u_char[]));
 
-extern void ndinstal PROTO ((const char *, Char[]));	/* install a name definition */
-extern Char *ndlookup PROTO ((const char *));	/* lookup a name definition */
+extern void ndinstal PROTO ((const char *, u_char[]));	/* install a name definition */
+extern u_char *ndlookup PROTO ((const char *));	/* lookup a name definition */
 
 /* Increase maximum number of SC's. */
 extern void scextend PROTO ((void));

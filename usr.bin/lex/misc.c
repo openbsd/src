@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.18 2015/11/19 23:20:34 tedu Exp $	*/
+/*	$OpenBSD: misc.c,v 1.19 2015/11/19 23:34:56 mmcc Exp $	*/
 
 /* misc - miscellaneous flex routines */
 
@@ -195,7 +195,7 @@ all_lower(str)
 	char *str;
 {
 	while (*str) {
-		if (!isascii((Char) * str) || !islower((Char) * str))
+		if (!isascii((u_char) * str) || !islower((u_char) * str))
 			return 0;
 		++str;
 	}
@@ -211,7 +211,7 @@ all_upper(str)
 	char *str;
 {
 	while (*str) {
-		if (!isascii((Char) * str) || !isupper((Char) * str))
+		if (!isascii((u_char) * str) || !isupper((u_char) * str))
 			return 0;
 		++str;
 	}
@@ -252,11 +252,11 @@ check_char(c)
 
 /* clower - replace upper-case letter to lower-case */
 
-Char 
+u_char 
 clower(c)
 	int c;
 {
-	return (Char) ((isascii(c) && isupper(c)) ? tolower(c) : c);
+	return (u_char) ((isascii(c) && isupper(c)) ? tolower(c) : c);
 }
 
 
@@ -291,12 +291,12 @@ copy_string(str)
  *    returns a dynamically allocated copy of a (potentially) unsigned string
  */
 
-Char *
+u_char *
 copy_unsigned_string(str)
-	Char *str;
+	u_char *str;
 {
-	Char *c;
-	Char *copy;
+	u_char *c;
+	u_char *copy;
 
 	/* find length */
 	for (c = str; *c; ++c);
@@ -314,12 +314,12 @@ copy_unsigned_string(str)
 int 
 cclcmp(const void *a, const void *b)
 {
-	if (!*(const Char *) a)
+	if (!*(const u_char *) a)
 		return 1;
-	else if (!*(const Char *) b)
+	else if (!*(const u_char *) b)
 		return -1;
 	else
-		return *(const Char *) a - *(const Char *) b;
+		return *(const u_char *) a - *(const u_char *) b;
 }
 
 
@@ -393,7 +393,7 @@ flexfatal(msg)
 
 int 
 htoi(str)
-	Char str[];
+	u_char str[];
 {
 	unsigned int result;
 
@@ -594,11 +594,11 @@ myctoi(array)
 
 /* myesc - return character corresponding to escape sequence */
 
-Char 
+u_char 
 myesc(array)
-	Char array[];
+	u_char array[];
 {
-	Char c, esc_char;
+	u_char c, esc_char;
 
 	switch (array[1]) {
 	case 'b':
@@ -687,7 +687,7 @@ myesc(array)
 
 int 
 otoi(str)
-	Char str[];
+	u_char str[];
 {
 	unsigned int result;
 

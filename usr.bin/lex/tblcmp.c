@@ -1,4 +1,4 @@
-/*	$OpenBSD: tblcmp.c,v 1.9 2015/11/19 23:04:51 tedu Exp $	*/
+/*	$OpenBSD: tblcmp.c,v 1.10 2015/11/19 23:34:56 mmcc Exp $	*/
 
 /* tblcmp - table compression routines */
 
@@ -705,7 +705,7 @@ mktemplate(state, statenum, comstate)
 	int state[], statenum, comstate;
 {
 	int i, numdiff, tmpbase, tmp[CSIZE + 1];
-	Char transset[CSIZE + 1];
+	u_char transset[CSIZE + 1];
 	int tsptr;
 
 	++numtemps;

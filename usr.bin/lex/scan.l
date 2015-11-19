@@ -1,4 +1,4 @@
-/*	$OpenBSD: scan.l,v 1.11 2015/11/19 23:20:34 tedu Exp $	*/
+/*	$OpenBSD: scan.l,v 1.12 2015/11/19 23:34:56 mmcc Exp $	*/
 
 /* scan.l - scanner for flex input -*-C-*- */
 
@@ -137,7 +137,7 @@ M4QEND      "]]"
 
 	int doing_codeblock = false;
 	int i, brace_depth=0, brace_start_line=0;
-	Char nmdef[MAXLINE];
+	u_char nmdef[MAXLINE];
 
 
 <INITIAL>{
@@ -630,7 +630,7 @@ M4QEND      "]]"
                    * The reason it was disabled is so yacc/bison can parse
                    * ccl operations, such as ccl difference and union.
                    */
-                &&  (cclval = ccllookup( (Char *) nmstr )) != 0 )
+                &&  (cclval = ccllookup( (u_char *) nmstr )) != 0 )
 				{
 				if ( input() != ']' )
 					synerr( _( "bad character class" ) );
@@ -644,7 +644,7 @@ M4QEND      "]]"
 				/* We fudge a bit.  We know that this ccl will
 				 * soon be numbered as lastccl + 1 by cclinit.
 				 */
-				cclinstal( (Char *) nmstr, lastccl + 1 );
+				cclinstal( (u_char *) nmstr, lastccl + 1 );
 
 				/* Push back everything but the leading bracket
 				 * so the ccl can be rescanned.
@@ -664,7 +664,7 @@ M4QEND      "]]"
      * context.
      */
 	"{"{NAME}"}"[[:space:]]?	 {
-			Char *nmdefptr;
+			u_char *nmdefptr;
             int end_is_ws, end_ch;
 
             end_ch = yytext[yyleng-1];
@@ -950,7 +950,7 @@ nmstr[yyleng - 2 - end_is_ws] = '\0';  /* chop trailing brace */
 			}
 
 <SECT2,QUOTE,FIRSTCCL,CCL>{ESCSEQ}	{
-			yylval = myesc( (Char *) yytext );
+			yylval = myesc( (u_char *) yytext );
 
 			if ( YY_START == FIRSTCCL )
 				BEGIN(CCL);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sym.c,v 1.8 2015/11/19 23:20:34 tedu Exp $	*/
+/*	$OpenBSD: sym.c,v 1.9 2015/11/19 23:34:56 mmcc Exp $	*/
 
 /* sym - symbol table routines */
 
@@ -122,7 +122,7 @@ static int addsym (sym, str_def, int_def, table, table_size)
 /* cclinstal - save the text of a character class */
 
 void    cclinstal (ccltxt, cclnum)
-     Char    ccltxt[];
+     u_char    ccltxt[];
      int     cclnum;
 {
 	/* We don't bother checking the return status because we are not
@@ -140,7 +140,7 @@ void    cclinstal (ccltxt, cclnum)
  */
 
 int     ccllookup (ccltxt)
-     Char    ccltxt[];
+     u_char    ccltxt[];
 {
 	return findsym ((char *) ccltxt, ccltab, CCL_HASH_SIZE)->int_val;
 }
@@ -195,7 +195,7 @@ static int hashfunct (str, hash_size)
 
 void    ndinstal (name, definition)
      const char *name;
-     Char    definition[];
+     u_char    definition[];
 {
 
 	if (addsym (copy_string (name),
@@ -210,10 +210,10 @@ void    ndinstal (name, definition)
  * Returns a nil pointer if the name definition does not exist.
  */
 
-Char   *ndlookup (nd)
+u_char   *ndlookup (nd)
      const char *nd;
 {
-	return (Char *) findsym (nd, ndtbl, NAME_TABLE_HASH_SIZE)->str_val;
+	return (u_char *) findsym (nd, ndtbl, NAME_TABLE_HASH_SIZE)->str_val;
 }
 
 

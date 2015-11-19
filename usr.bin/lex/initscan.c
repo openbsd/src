@@ -1,4 +1,4 @@
-/*	$OpenBSD: initscan.c,v 1.16 2015/11/19 23:20:34 tedu Exp $	*/
+/*	$OpenBSD: initscan.c,v 1.17 2015/11/19 23:34:56 mmcc Exp $	*/
 
 #line 3 "scan.c"
 
@@ -2233,7 +2233,7 @@ YY_DECL
 
 	int doing_codeblock = false;
 	int i, brace_depth=0, brace_start_line=0;
-	Char nmdef[MAXLINE];
+	u_char nmdef[MAXLINE];
 
 
 #line 2239 "scan.c"
@@ -3382,7 +3382,7 @@ YY_RULE_SETUP
                    * The reason it was disabled is so yacc/bison can parse
                    * ccl operations, such as ccl difference and union.
                    */
-                &&  (cclval = ccllookup( (Char *) nmstr )) != 0 )
+                &&  (cclval = ccllookup( (u_char *) nmstr )) != 0 )
 				{
 				if ( input() != ']' )
 					synerr( _( "bad character class" ) );
@@ -3396,7 +3396,7 @@ YY_RULE_SETUP
 				/* We fudge a bit.  We know that this ccl will
 				 * soon be numbered as lastccl + 1 by cclinit.
 				 */
-				cclinstal( (Char *) nmstr, lastccl + 1 );
+				cclinstal( (u_char *) nmstr, lastccl + 1 );
 
 				/* Push back everything but the leading bracket
 				 * so the ccl can be rescanned.
@@ -3427,7 +3427,7 @@ case 157:
 YY_RULE_SETUP
 #line 663 "scan.l"
 {
-			Char *nmdefptr;
+			u_char *nmdefptr;
             int end_is_ws, end_ch;
 
             end_ch = yytext[yyleng-1];
@@ -4066,7 +4066,7 @@ case 245:
 YY_RULE_SETUP
 #line 949 "scan.l"
 {
-			yylval = myesc( (Char *) yytext );
+			yylval = myesc( (u_char *) yytext );
 
 			if ( YY_START == FIRSTCCL )
 				BEGIN(CCL);

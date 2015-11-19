@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.20 2015/11/19 23:20:34 tedu Exp $	*/
+/*	$OpenBSD: main.c,v 1.21 2015/11/19 23:34:56 mmcc Exp $	*/
 
 /* flex - tool to generate fast lexical analyzers */
 
@@ -93,7 +93,7 @@ int *accsiz, *dhash, numas;
 int numsnpairs, jambase, jamstate;
 int lastccl, *cclmap, *ccllen, *cclng, cclreuse;
 int current_maxccls, current_max_ccl_tbl_size;
-Char *ccltbl;
+u_char *ccltbl;
 char nmstr[MAXLINE];
 int sectnum, nummt, hshcol, dfaeql, numeps, eps2, num_reallocs;
 int tmpuses, totnst, peakpairs, numuniq, numdup, hshsave;
