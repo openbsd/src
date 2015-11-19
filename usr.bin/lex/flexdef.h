@@ -1,4 +1,4 @@
-/*	$OpenBSD: flexdef.h,v 1.10 2015/11/19 22:58:59 tedu Exp $	*/
+/*	$OpenBSD: flexdef.h,v 1.11 2015/11/19 23:04:51 tedu Exp $	*/
 
 /* flexdef - definitions file for flex */
 
@@ -951,10 +951,6 @@ extern void transition_struct_out PROTO ((int, int));
 
 /* Only needed when using certain broken versions of bison to build parse.c. */
 extern void *yy_flex_xmalloc PROTO ((int));
-
-/* Set a region of memory to 0. */
-extern void zero_out PROTO ((char *, size_t));
-
 
 /* from file nfa.c */
 

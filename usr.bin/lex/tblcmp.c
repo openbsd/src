@@ -1,4 +1,4 @@
-/*	$OpenBSD: tblcmp.c,v 1.8 2015/11/19 22:55:13 tedu Exp $	*/
+/*	$OpenBSD: tblcmp.c,v 1.9 2015/11/19 23:04:51 tedu Exp $	*/
 
 /* tblcmp - table compression routines */
 
@@ -310,8 +310,7 @@ expand_nxt_chk()
 	nxt = reallocate_integer_array(nxt, current_max_xpairs);
 	chk = reallocate_integer_array(chk, current_max_xpairs);
 
-	zero_out((char *) (chk + old_max),
-	    (size_t) (MAX_XPAIRS_INCREMENT * sizeof(int)));
+	memset((chk + old_max), 0, MAX_XPAIRS_INCREMENT * sizeof(int));
 }
 
 
@@ -440,9 +439,7 @@ inittbl()
 {
 	int i;
 
-	zero_out((char *) chk,
-
-	    (size_t) (current_max_xpairs * sizeof(int)));
+	memset(chk, 0, current_max_xpairs * sizeof(int));
 
 	tblend = 0;
 	firstfree = tblend + 1;
