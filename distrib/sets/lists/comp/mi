@@ -4163,8 +4163,10 @@
 ./usr/share/man/man3/getpwent.3
 ./usr/share/man/man3/getpwnam.3
 ./usr/share/man/man3/getpwnam_r.3
+./usr/share/man/man3/getpwnam_shadow.3
 ./usr/share/man/man3/getpwuid.3
 ./usr/share/man/man3/getpwuid_r.3
+./usr/share/man/man3/getpwuid_shadow.3
 ./usr/share/man/man3/getrawpartition.3
 ./usr/share/man/man3/getrpcbyname.3
 ./usr/share/man/man3/getrpcbynumber.3
