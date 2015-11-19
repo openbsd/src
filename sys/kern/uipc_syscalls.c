@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.125 2015/11/18 08:24:22 semarie Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.126 2015/11/19 05:38:26 semarie Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -169,17 +169,18 @@ sys_bind(struct proc *p, void *v, register_t *retval)
 	error = pledge_socket(p, so->so_proto->pr_domain->dom_family,
 	    so->so_state);
 	if (error)
-		return (error);
+		goto out;
 	error = sockargs(&nam, SCARG(uap, name), SCARG(uap, namelen),
 	    MT_SONAME);
-	if (error == 0) {
+	if (error)
+		goto out;
 #ifdef KTRACE
-		if (KTRPOINT(p, KTR_STRUCT))
-			ktrsockaddr(p, mtod(nam, caddr_t), SCARG(uap, namelen));
+	if (KTRPOINT(p, KTR_STRUCT))
+		ktrsockaddr(p, mtod(nam, caddr_t), SCARG(uap, namelen));
 #endif
-		error = sobind(so, nam, p);
-		m_freem(nam);
-	}
+	error = sobind(so, nam, p);
+	m_freem(nam);
+out:
 	FRELE(fp, p);
 	return (error);
 }
@@ -202,8 +203,9 @@ sys_listen(struct proc *p, void *v, register_t *retval)
 	error = pledge_socket(p, so->so_proto->pr_domain->dom_family,
 	    so->so_state);
 	if (error)
-		return (error);
+		goto out;
 	error = solisten(so, SCARG(uap, backlog));
+out:
 	FRELE(fp, p);
 	return (error);
 }
@@ -1091,10 +1093,10 @@ sys_getpeername(struct proc *p, void *v, register_t *retval)
 	error = pledge_socket(p, so->so_proto->pr_domain->dom_family,
 	    so->so_state);
 	if (error)
-		return (error);
+		goto bad;
 	if ((so->so_state & SS_ISCONNECTED) == 0) {
-		FRELE(fp, p);
-		return (ENOTCONN);
+		error = ENOTCONN;
+		goto bad;
 	}
 	error = copyin(SCARG(uap, alen), &len, sizeof (len));
 	if (error)
