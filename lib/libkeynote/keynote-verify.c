@@ -1,4 +1,4 @@
-/* $OpenBSD: keynote-verify.c,v 1.16 2015/11/19 02:35:24 mmcc Exp $ */
+/* $OpenBSD: keynote-verify.c,v 1.17 2015/11/19 05:20:19 mmcc Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -53,9 +53,6 @@ verifyusage(void)
 void
 keynote_verify(int argc, char *argv[])
 {
-#ifdef LoopTesting
-    int loopvar = 1000;
-#endif /* LoopTesting */
     int fd, i, ch, se = 0, cl = 8192, sk = 0, sl = 0, p, ac = argc;
     char *buf, **av = argv, **retv, **foov, *ptr;
     int numretv = 16, numret = 0, sn;
@@ -72,10 +69,6 @@ keynote_verify(int argc, char *argv[])
 	perror("calloc()");
 	exit(1);
     }
-
-#ifdef LoopTesting
-    while(loopvar--) {
-#endif /* LoopTesting */
 
     if ((retv = calloc(numretv, sizeof(char *))) == NULL)
     {
@@ -285,10 +278,6 @@ keynote_verify(int argc, char *argv[])
     argv += optind;
     optind = 1;
 
-#ifdef LoopTesting
-    optreset = 1;
-#endif /* LoopTesting */
-
     if (sn == 0)
     {
 	fprintf(stderr,
@@ -362,7 +351,6 @@ keynote_verify(int argc, char *argv[])
 
     p = kn_do_query(sessid, retv, numret); /* Evaluation time */
 
-#ifndef LoopTesting
     printf("Query result = ");
 
     switch (keynote_errno)
@@ -389,7 +377,6 @@ keynote_verify(int argc, char *argv[])
     }
 
     printf("%s\n", retv[p]);
-#endif /* LoopTesting */
 
     keynote_errno = 0;
 
@@ -419,10 +406,6 @@ keynote_verify(int argc, char *argv[])
     }
 
     kn_close(sessid);
-
-#ifdef LoopTesting
-    }
-#endif /* LoopTesting */
 
     /* This is a reminder that return values are not free'ed by KeyNote */
     for (sn = 0; sn < numret; sn++)
