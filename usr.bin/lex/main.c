@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.18 2015/11/19 22:52:40 tedu Exp $	*/
+/*	$OpenBSD: main.c,v 1.19 2015/11/19 22:58:59 tedu Exp $	*/
 
 /* flex - tool to generate fast lexical analyzers */
 
@@ -116,19 +116,9 @@ struct yytbl_writer tableswr;
  */
 char *program_name = "flex";
 
-#ifndef SHORT_FILE_NAMES
 static const char *outfile_template = "lex.%s.%s";
 static const char *backing_name = "lex.backup";
 static const char *tablesfile_template = "lex.%s.tables";
-#else
-static const char *outfile_template = "lex%s.%s";
-static const char *backing_name = "lex.bck";
-static const char *tablesfile_template = "lex%s.tbl";
-#endif
-
-#ifdef MS_DOS
-extern unsigned _stklen = 16384;
-#endif
 
 /* From scan.l */
 extern FILE *yyout;
@@ -1591,23 +1581,9 @@ readin()
 		/* In reentrant scanner, stdinit is handled in flex.skl. */
 		if (do_stdinit) {
 			if (reentrant) {
-				outn("#ifdef VMS");
-				outn("#ifdef __VMS_POSIX");
 				outn("#define YY_STDINIT");
-				outn("#endif");
-				outn("#else");
-				outn("#define YY_STDINIT");
-				outn("#endif");
 			}
-			outn("#ifdef VMS");
-			outn("#ifndef __VMS_POSIX");
-			outn(yy_nostdinit);
-			outn("#else");
 			outn(yy_stdinit);
-			outn("#endif");
-			outn("#else");
-			outn(yy_stdinit);
-			outn("#endif");
 		} else {
 			if (!reentrant)
 				outn(yy_nostdinit);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: flexdef.h,v 1.9 2015/11/19 19:43:40 tedu Exp $	*/
+/*	$OpenBSD: flexdef.h,v 1.10 2015/11/19 22:58:59 tedu Exp $	*/
 
 /* flexdef - definitions file for flex */
 
@@ -124,18 +124,6 @@ char *alloca ();
 #define PROTO(proto) ()
 #endif
 #endif
-
-#ifdef VMS
-#ifndef __VMS_POSIX
-#define unlink remove
-#define SHORT_FILE_NAMES
-#endif
-#endif
-
-#ifdef MS_DOS
-#define SHORT_FILE_NAMES
-#endif
-
 
 /* Maximum line length we'll have to deal with. */
 #define MAXLINE 2048
