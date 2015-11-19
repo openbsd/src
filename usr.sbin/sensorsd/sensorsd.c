@@ -1,4 +1,4 @@
-/*	$OpenBSD: sensorsd.c,v 1.57 2015/11/19 06:06:30 deraadt Exp $ */
+/*	$OpenBSD: sensorsd.c,v 1.58 2015/11/19 06:08:06 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -111,6 +111,9 @@ main(int argc, char *argv[])
 	time_t		 last_report = 0, this_check;
 	int		 ch, check_period = CHECK_PERIOD;
 	const char	*errstr;
+
+	if (pledge("stdio rpath proc exec", NULL) == -1)
+		err(1, "pledge");
 
 	while ((ch = getopt(argc, argv, "c:d")) != -1) {
 		switch (ch) {
