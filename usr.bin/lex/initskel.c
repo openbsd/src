@@ -1,4 +1,4 @@
-/* $OpenBSD: initskel.c,v 1.1 2015/11/19 19:43:40 tedu Exp $ */
+/* $OpenBSD: initskel.c,v 1.2 2015/11/19 22:16:43 tedu Exp $ */
 
 /* File created from flex.skl via mkskel.sh */
 
@@ -1374,7 +1374,6 @@ const char *skel[] = {
   "%ok-for-header",
   "#endif",
   "",
-  "/* vim:set noexpandtab cindent tabstop=8 softtabstop=0 shiftwidth=8 textwidth=0: */",
   "",
   "",
   "/* Load the DFA tables from the given stream.  */",

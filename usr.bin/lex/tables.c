@@ -1,4 +1,4 @@
-/* $OpenBSD: tables.c,v 1.1 2015/11/19 19:43:40 tedu Exp $ */
+/* $OpenBSD: tables.c,v 1.2 2015/11/19 22:16:43 tedu Exp $ */
 
 /*  tables.c - tables serialization code
  *
@@ -500,5 +500,3 @@ void yytbl_data_compress (struct yytbl_data *tbl)
 	free (tbl->td_data);
 	*tbl = newtbl;
 }
-
-/* vim:set noexpandtab cindent tabstop=8 softtabstop=0 shiftwidth=8 textwidth=0: */

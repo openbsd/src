@@ -1,4 +1,4 @@
-/* $OpenBSD: tables.h,v 1.1 2015/11/19 19:43:40 tedu Exp $ */
+/* $OpenBSD: tables.h,v 1.2 2015/11/19 22:16:43 tedu Exp $ */
 
 /*  tables.h - tables serialization code
  *
@@ -83,5 +83,3 @@ struct yytbl_data *mkftbl (void);
 /* *INDENT-ON* */
 #endif
 #endif
-
-/* vim:set expandtab cindent tabstop=4 softtabstop=4 shiftwidth=4 textwidth=0: */

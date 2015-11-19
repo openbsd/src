@@ -1,4 +1,4 @@
-/* $OpenBSD: scanflags.c,v 1.1 2015/11/19 19:43:40 tedu Exp $ */
+/* $OpenBSD: scanflags.c,v 1.2 2015/11/19 22:16:43 tedu Exp $ */
 
 /* scanflags - flags used by scanning. */
 
@@ -67,5 +67,3 @@ sf_init (void)
             (void *)sizeof(scanflags_t));
     _sf_stk[_sf_top_ix] = 0;
 }
-
-/* vim:set expandtab cindent tabstop=4 softtabstop=4 shiftwidth=4 textwidth=0: */

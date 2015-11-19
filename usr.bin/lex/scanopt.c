@@ -1,4 +1,4 @@
-/* $OpenBSD: scanopt.c,v 1.1 2015/11/19 19:43:40 tedu Exp $ */
+/* $OpenBSD: scanopt.c,v 1.2 2015/11/19 22:16:43 tedu Exp $ */
 
 /* flex - tool to generate fast lexical analyzers */
 
@@ -870,6 +870,3 @@ int     scanopt_destroy (svoid)
 	}
 	return 0;
 }
-
-
-/* vim:set tabstop=8 softtabstop=4 shiftwidth=4: */

@@ -1,4 +1,4 @@
-/* $OpenBSD: filter.c,v 1.1 2015/11/19 19:43:40 tedu Exp $ */
+/* $OpenBSD: filter.c,v 1.2 2015/11/19 22:16:43 tedu Exp $ */
 
 /* filter - postprocessing of flex output through filters */
 
@@ -442,5 +442,3 @@ int filter_fix_linedirs (struct filter *chain)
 
 	return 0;
 }
-
-/* vim:set expandtab cindent tabstop=4 softtabstop=4 shiftwidth=4 textwidth=0: */

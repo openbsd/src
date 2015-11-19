@@ -1,4 +1,4 @@
-/* $OpenBSD: tables_shared.h,v 1.1 2015/11/19 19:43:40 tedu Exp $ */
+/* $OpenBSD: tables_shared.h,v 1.2 2015/11/19 22:16:43 tedu Exp $ */
 
 #ifdef FLEX_SCANNER
 /*
@@ -142,5 +142,3 @@ yyskel_static flex_int32_t yytbl_calc_total_len (const struct yytbl_data *tbl);
 #ifdef FLEX_SCANNER
 %ok-for-header
 #endif
-
-/* vim:set noexpandtab cindent tabstop=8 softtabstop=0 shiftwidth=8 textwidth=0: */

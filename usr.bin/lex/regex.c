@@ -1,4 +1,4 @@
-/* $OpenBSD: regex.c,v 1.1 2015/11/19 19:43:40 tedu Exp $ */
+/* $OpenBSD: regex.c,v 1.2 2015/11/19 22:16:43 tedu Exp $ */
 
 /** regex - regular expression functions related to POSIX regex lib. */
 
@@ -170,5 +170,3 @@ bool regmatch_empty (regmatch_t * m)
 {
 	return (m == NULL || m->rm_so < 0 || m->rm_so == m->rm_eo);
 }
-
-/* vim:set expandtab cindent tabstop=4 softtabstop=4 shiftwidth=4 textwidth=0: */
