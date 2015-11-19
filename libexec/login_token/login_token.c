@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_token.c,v 1.13 2015/10/17 19:50:47 bluhm Exp $	*/
+/*	$OpenBSD: login_token.c,v 1.14 2015/11/19 18:37:01 millert Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Berkeley Software Design, Inc. All rights reserved.
@@ -81,8 +81,10 @@ main(int argc, char *argv[])
 	if (setrlimit(RLIMIT_CORE, &cds) < 0)
 		syslog(LOG_ERR, "couldn't set core dump size to 0: %m");
 
-	if (pledge("stdio rpath wpath cpath fattr flock getpw tty", NULL) == -1)
-		err(1, "pledge");
+	if (pledge("stdio rpath wpath cpath fattr flock getpw tty", NULL) == -1) {
+		syslog(LOG_ERR, "pledge: %m");
+		exit(1);
+	}
 
 	(void)sigprocmask(SIG_BLOCK, &blockset, NULL);
 	if (token_init(argv[0]) < 0) {
