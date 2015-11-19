@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.16 2015/11/19 19:43:40 tedu Exp $	*/
+/*	$OpenBSD: main.c,v 1.17 2015/11/19 22:35:19 tedu Exp $	*/
 
 /* flex - tool to generate fast lexical analyzers */
 
@@ -429,7 +429,7 @@ void check_options ()
 		lerrsf (_("can't open skeleton file %s"), skelname);
 
 	if (reentrant) {
-        buf_m4_define (&m4defs_buf, "M4_YY_REENTRANT", NULL);
+		buf_m4_define (&m4defs_buf, "M4_YY_REENTRANT", NULL);
 		if (yytext_is_array)
 			buf_m4_define (&m4defs_buf, "M4_YY_TEXT_IS_ARRAY", NULL);
 	}
@@ -438,9 +438,9 @@ void check_options ()
 		buf_m4_define (&m4defs_buf, "M4_YY_BISON_LVAL", NULL);
 
 	if ( bison_bridge_lloc)
-        buf_m4_define (&m4defs_buf, "<M4_YY_BISON_LLOC>", NULL);
+		buf_m4_define (&m4defs_buf, "<M4_YY_BISON_LLOC>", NULL);
 
-    buf_m4_define(&m4defs_buf, "M4_YY_PREFIX", prefix);
+	buf_m4_define(&m4defs_buf, "M4_YY_PREFIX", prefix);
 
 	if (did_outfilename)
 		line_directive_out (stdout, 0);
@@ -767,10 +767,10 @@ void flexend (exit_status)
 			putc ('s', stderr);
 		if (reentrant)
 			fputs ("--reentrant", stderr);
-        if (bison_bridge_lval)
-            fputs ("--bison-bridge", stderr);
-        if (bison_bridge_lloc)
-            fputs ("--bison-locations", stderr);
+		if (bison_bridge_lval)
+			fputs ("--bison-bridge", stderr);
+		if (bison_bridge_lloc)
+			fputs ("--bison-locations", stderr);
 		if (use_stdout)
 			putc ('t', stderr);
 		if (printstats)
@@ -1614,14 +1614,14 @@ void readin ()
 		/* In reentrant scanner, stdinit is handled in flex.skl. */
 		if (do_stdinit) {
 			if (reentrant){
-                outn ("#ifdef VMS");
-                outn ("#ifdef __VMS_POSIX");
-                outn ("#define YY_STDINIT");
-                outn ("#endif");
-                outn ("#else");
-                outn ("#define YY_STDINIT");
-                outn ("#endif");
-            }
+				outn ("#ifdef VMS");
+				outn ("#ifdef __VMS_POSIX");
+				outn ("#define YY_STDINIT");
+				outn ("#endif");
+				outn ("#else");
+				outn ("#define YY_STDINIT");
+				outn ("#endif");
+			}
 
 			outn ("#ifdef VMS");
 			outn ("#ifndef __VMS_POSIX");
@@ -1632,11 +1632,9 @@ void readin ()
 			outn ("#else");
 			outn (yy_stdinit);
 			outn ("#endif");
-		}
-
-		else {
+		} else {
 			if(!reentrant)
-                outn (yy_nostdinit);
+                		outn (yy_nostdinit);
 		}
 		OUT_END_CODE ();
 	}
