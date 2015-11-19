@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.12 2015/11/19 19:43:40 tedu Exp $
+#	$OpenBSD: Makefile,v 1.13 2015/11/19 19:45:28 tedu Exp $
 #
 # By default, flex will be configured to generate 8-bit scanners only if the
 # -8 flag is given.  If you want it to always generate 8-bit scanners, add
@@ -25,7 +25,7 @@ MAN = flex.1
 
 LINKS=  ${BINDIR}/lex ${BINDIR}/flex \
 		${BINDIR}/lex ${BINDIR}/flex++
-MLINKS= flex.1 lex.1
+MLINKS= flex.1 lex.1 flex.1 flex++.1
 
 VERSION="2.5.39"
 
