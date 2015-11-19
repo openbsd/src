@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.87 2015/11/19 16:14:08 krw Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.88 2015/11/19 18:03:45 tim Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -211,7 +211,7 @@ int
 Xedit(char *args, struct mbr *mbr)
 {
 	const char *errstr;
-	int pn, num, ret;
+	int pn, ret;
 	struct prt *pp;
 
 	if (letoh64(gh.gh_sig) == GPTSIGNATURE)
@@ -236,7 +236,7 @@ Xedit(char *args, struct mbr *mbr)
 
 	/* Change table entry */
 	if (ask_yn("Do you wish to edit in CHS mode?")) {
-		int maxcyl, maxhead, maxsect;
+		int maxcyl, maxhead, maxsect, num;
 
 		/* Shorter */
 		maxcyl = disk.cylinders - 1;
@@ -260,10 +260,15 @@ Xedit(char *args, struct mbr *mbr)
 		/* Fix up CHS values for LBA */
 		PRT_fix_CHS(pp);
 	} else {
-		pp->bs = getuint64("Partition offset", pp->bs,
-		    (u_int64_t)disk.size);
-		pp->ns = getuint64("Partition size", pp->ns,
-		    (u_int64_t)(disk.size - pp->bs));
+		u_int64_t num;
+
+#define EDIT(p, v, d)					\
+	if ((num = getuint64(p, v, (u_int64_t)d)) != v)	\
+		ret = CMD_DIRTY;			\
+	v = num;
+		EDIT("Partition offset", pp->bs, disk.size);
+		EDIT("Partition size",   pp->ns, disk.size - pp->bs);
+#undef EDIT
 		/* Fix up CHS values */
 		PRT_fix_CHS(pp);
 	}
