@@ -85,6 +85,8 @@
 #include "lesskey.h"
 #include "cmd.h"
 
+#include <err.h>
+
 struct cmdname {
 	char *cn_name;
 	int cn_action;
