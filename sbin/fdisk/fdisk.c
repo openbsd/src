@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdisk.c,v 1.93 2015/11/18 15:31:15 krw Exp $	*/
+/*	$OpenBSD: fdisk.c,v 1.94 2015/11/19 17:52:56 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -19,13 +19,14 @@
 #include <sys/types.h>
 #include <sys/fcntl.h>
 #include <sys/disklabel.h>
+
+#include <err.h>
+#include <paths.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <paths.h>
-#include <stdint.h>
-#include <err.h>
 
 #include "disk.h"
 #include "part.h"
