@@ -1,4 +1,4 @@
-/*	$OpenBSD: arptab.c,v 1.24 2015/08/03 13:39:22 mpi Exp $ */
+/*	$OpenBSD: arptab.c,v 1.25 2015/11/19 19:31:20 deraadt Exp $ */
 
 /*
  * Copyright (c) 1984, 1993
@@ -70,8 +70,8 @@ static int s = -1;
 
 int rtget(struct sockaddr_inarp **, struct sockaddr_dl **);
 
-static void
-getsocket(void)
+void
+arptab_init(void)
 {
 	s = socket(PF_ROUTE, SOCK_RAW, 0);
 	if (s < 0)
@@ -105,7 +105,6 @@ arptab_set(u_char *eaddr, u_int32_t host)
 	struct timeval now;
 	int rt;
 
-	getsocket();
 	pid = getpid();
 
 	sdl_m = blank_sdl;
@@ -121,8 +120,6 @@ arptab_set(u_char *eaddr, u_int32_t host)
 tryagain:
 	if (rtget(&sin, &sdl)) {
 		syslog(LOG_ERR,"%s: %m", inet_ntoa(sin->sin_addr));
-		close(s);
-		s = -1;
 		return (1);
 	}
 
@@ -143,15 +140,11 @@ tryagain:
 		if (doing_proxy == 0) {
 			syslog(LOG_ERR, "arptab_set: can only proxy for %s",
 			    inet_ntoa(sin->sin_addr));
-			close(s);
-			s = -1;
 			return (1);
 		}
 		if (sin_m.sin_other & SIN_PROXY) {
 			syslog(LOG_ERR,
 			    "arptab_set: proxy entry exists for non 802 device");
-			close(s);
-			s = -1;
 			return(1);
 		}
 		sin_m.sin_other = SIN_PROXY;
@@ -163,15 +156,11 @@ overwrite:
 		syslog(LOG_ERR,
 		    "arptab_set: cannot intuit interface index and type for %s",
 		    inet_ntoa(sin->sin_addr));
-		close(s);
-		s = -1;
 		return (1);
 	}
 	sdl_m.sdl_type = sdl->sdl_type;
 	sdl_m.sdl_index = sdl->sdl_index;
 	rt = rtmsg(RTM_ADD);
-	close(s);
-	s = -1;
 	return (rt);
 }
 

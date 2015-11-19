@@ -1,4 +1,4 @@
-/*	$OpenBSD: rarpd.c,v 1.66 2015/11/13 16:10:23 deraadt Exp $ */
+/*	$OpenBSD: rarpd.c,v 1.67 2015/11/19 19:31:20 deraadt Exp $ */
 /*	$NetBSD: rarpd.c,v 1.25 1998/04/23 02:48:33 mrg Exp $	*/
 
 /*
@@ -86,6 +86,7 @@ void   usage(void);
 void   rarp_process(struct if_info *, u_char *);
 void   rarp_reply(struct if_info *, struct if_addr *,
 	    struct ether_header *, u_int32_t, struct hostent *);
+void	arptab_init(void);
 int    arptab_set(u_char *, u_int32_t);
 void   error(int, const char *,...);
 void   debug(const char *,...);
@@ -369,6 +370,8 @@ rarp_loop(void)
 		error(FATAL, "BIOCGBLEN: %s", strerror(errno));
 		/* NOTREACHED */
 	}
+
+	arptab_init();
 
 	if (pledge("stdio rpath dns", NULL) == -1)
 		error(FATAL, "pledge");
