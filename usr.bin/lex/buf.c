@@ -1,4 +1,4 @@
-/* $OpenBSD: buf.c,v 1.4 2015/11/19 23:20:34 tedu Exp $ */
+/* $OpenBSD: buf.c,v 1.5 2015/11/19 23:28:03 tedu Exp $ */
 
 /* flex - tool to generate fast lexical analyzers */
 
@@ -207,7 +207,7 @@ buf_m4_undefine(struct Buf * buf, const char *def)
 	char *str;
 	size_t strsz;
 
-	str = (char *) malloc(strsz = strlen(fmt) + strlen(def) + 2);
+	str = malloc(strsz = strlen(fmt) + strlen(def) + 2);
 	if (!str)
 		flexfatal(_("Allocation of buffer for m4 undef failed"));
 
@@ -217,25 +217,24 @@ buf_m4_undefine(struct Buf * buf, const char *def)
 }
 
 /* create buf with 0 elements, each of size elem_size. */
-void 
+void
 buf_init(buf, elem_size)
 	struct Buf *buf;
 	size_t elem_size;
 {
-	buf->elts = (void *) 0;
+	buf->elts = NULL;
 	buf->nelts = 0;
 	buf->elt_size = elem_size;
 	buf->nmax = 0;
 }
 
 /* frees memory */
-void 
+void
 buf_destroy(buf)
 	struct Buf *buf;
 {
-	if (buf && buf->elts)
-		free(buf->elts);
-	buf->elts = (void *) 0;
+	free(buf->elts);
+	buf->elts = NULL;
 }
 
 

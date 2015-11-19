@@ -1,4 +1,4 @@
-/* $OpenBSD: filter.c,v 1.5 2015/11/19 23:20:34 tedu Exp $ */
+/* $OpenBSD: filter.c,v 1.6 2015/11/19 23:28:03 tedu Exp $ */
 
 /* filter - postprocessing of flex output through filters */
 
@@ -50,7 +50,7 @@ filter_create_ext(struct filter * chain, const char *cmd,
 	va_list ap;
 
 	/* allocate and initialize new filter */
-	f = (struct filter *) malloc(sizeof(struct filter));
+	f = malloc(sizeof(struct filter));
 	if (!f)
 		flexerror(_("malloc failed (f) in filter_create_ext"));
 	memset(f, 0, sizeof(*f));
@@ -103,7 +103,7 @@ filter_create_int(struct filter * chain,
 	struct filter *f;
 
 	/* allocate and initialize new filter */
-	f = (struct filter *) malloc(sizeof(struct filter));
+	f = malloc(sizeof(struct filter));
 	if (!f)
 		flexerror(_("malloc failed in filter_create_int"));
 	memset(f, 0, sizeof(*f));
@@ -293,7 +293,7 @@ filter_tee_header(struct filter * chain)
 	fprintf(to_c, "m4_define( [[M4_YY_OUTFILE_NAME]],[[%s]])m4_dnl\n",
 	    outfilename ? outfilename : "<stdout>");
 
-	buf = (char *) malloc(readsz);
+	buf = malloc(readsz);
 	if (!buf)
 		flexerror(_("malloc failed in filter_tee_header"));
 	while (fgets(buf, readsz, stdin)) {
@@ -357,7 +357,7 @@ filter_fix_linedirs(struct filter * chain)
 	if (!chain)
 		return 0;
 
-	buf = (char *) malloc(readsz);
+	buf = malloc(readsz);
 	if (!buf)
 		flexerror(_("malloc failed in filter_fix_linedirs"));
 
