@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.c,v 1.144 2015/10/14 07:58:14 reyk Exp $	*/
+/*	$OpenBSD: relayd.c,v 1.145 2015/11/19 21:32:53 mmcc Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -1494,18 +1494,13 @@ char *
 get_string(u_int8_t *ptr, size_t len)
 {
 	size_t	 i;
-	char	*str;
 
 	for (i = 0; i < len; i++)
 		if (!(isprint((unsigned char)ptr[i]) ||
 		    isspace((unsigned char)ptr[i])))
 			break;
 
-	if ((str = calloc(1, i + 1)) == NULL)
-		return (NULL);
-	memcpy(str, ptr, i);
-
-	return (str);
+	return strndup(ptr, i);
 }
 
 void *
@@ -1513,7 +1508,7 @@ get_data(u_int8_t *ptr, size_t len)
 {
 	u_int8_t	*data;
 
-	if ((data = calloc(1, len)) == NULL)
+	if ((data = malloc(len)) == NULL)
 		return (NULL);
 	memcpy(data, ptr, len);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: constraint.c,v 1.20 2015/11/17 15:34:36 deraadt Exp $	*/
+/*	$OpenBSD: constraint.c,v 1.21 2015/11/19 21:32:53 mmcc Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -979,15 +979,10 @@ char *
 get_string(u_int8_t *ptr, size_t len)
 {
 	size_t	 i;
-	char	*str;
 
 	for (i = 0; i < len; i++)
 		if (!(isprint(ptr[i]) || isspace(ptr[i])))
 			break;
 
-	if ((str = calloc(1, i + 1)) == NULL)
-		return (NULL);
-	memcpy(str, ptr, i);
-
-	return (str);
+	return strndup(ptr, i);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.27 2015/08/21 11:59:28 reyk Exp $	*/
+/*	$OpenBSD: util.c,v 1.28 2015/11/19 21:32:53 mmcc Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -636,17 +636,12 @@ char *
 get_string(uint8_t *ptr, size_t len)
 {
 	size_t	 i;
-	char	*str;
 
 	for (i = 0; i < len; i++)
 		if (!isprint(ptr[i]))
 			break;
 
-	if ((str = calloc(1, i + 1)) == NULL)
-		return (NULL);
-	memcpy(str, ptr, i);
-
-	return (str);
+	return strndup(ptr, i);
 }
 
 const char *
