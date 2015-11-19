@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.h,v 1.7 2014/11/12 16:29:04 millert Exp $	*/
+/*	$OpenBSD: common.h,v 1.8 2015/11/19 07:53:31 bentley Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -19,7 +19,6 @@
  * are far too interrelated for a clean solution.
  */
 typedef struct _cb		CB;
-typedef struct _csc		CSC;
 typedef struct _event		EVENT;
 typedef struct _excmd		EXCMD;
 typedef struct _exf		EXF;

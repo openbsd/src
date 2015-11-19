@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_subst.c,v 1.22 2015/01/16 06:40:14 deraadt Exp $	*/
+/*	$OpenBSD: ex_subst.c,v 1.23 2015/11/19 07:53:31 bentley Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -32,7 +32,6 @@
 #define	SUB_MUSTSETR	0x02		/* The 'r' flag is required. */
 
 static int re_conv(SCR *, char **, size_t *, int *);
-static int re_cscope_conv(SCR *, char **, size_t *, int *);
 static int re_sub(SCR *, char *, char **, size_t *, size_t *, regmatch_t [10]);
 static int re_tag_conv(SCR *, char **, size_t *, int *);
 static int s(SCR *, EXCMD *, char *, regex_t *, u_int);
@@ -888,7 +887,7 @@ re_compile(SCR *sp, char *ptrn, size_t plen, char **ptrnp, size_t *lenp,
 
 	/* Set RE flags. */
 	reflags = 0;
-	if (!LF_ISSET(RE_C_CSCOPE | RE_C_TAG)) {
+	if (!LF_ISSET(RE_C_TAG)) {
 		if (O_ISSET(sp, O_EXTENDED))
 			reflags |= REG_EXTENDED;
 		if (O_ISSET(sp, O_IGNORECASE))
@@ -918,17 +917,7 @@ re_compile(SCR *sp, char *ptrn, size_t plen, char **ptrnp, size_t *lenp,
 	 * later recompilation.   Free any previously saved value.
 	 */
 	if (ptrnp != NULL) {
-		if (LF_ISSET(RE_C_CSCOPE)) {
-			if (re_cscope_conv(sp, &ptrn, &plen, &replaced))
-				return (1);
-			/*
-			 * XXX
-			 * Currently, the match-any-<blank> expression used in
-			 * re_cscope_conv() requires extended RE's.  This may
-			 * not be right or safe.
-			 */
-			reflags |= REG_EXTENDED;
-		} else if (LF_ISSET(RE_C_TAG)) {
+		if (LF_ISSET(RE_C_TAG)) {
 			if (re_tag_conv(sp, &ptrn, &plen, &replaced))
 				return (1);
 		} else
@@ -1189,62 +1178,6 @@ re_tag_conv(SCR *sp, char **ptrnp, size_t *plenp, int *replacedp)
 	}
 	if (lastdollar)
 		*t++ = '$';
-
-	*ptrnp = bp;
-	*plenp = t - bp;
-	return (0);
-}
-
-/*
- * re_cscope_conv --
- *	 Convert a cscope search path into something that the POSIX
- *      1003.2 RE functions can handle.
- */
-static int
-re_cscope_conv(SCR *sp, char **ptrnp, size_t *plenp, int *replacedp)
-{
-	size_t blen, len, nspaces;
-	char *bp, *p, *t;
-
-	/*
-	 * Each space in the source line printed by cscope represents an
-	 * arbitrary sequence of spaces, tabs, and comments.
-	 */
-#define	CSCOPE_RE_SPACE		"([ \t]|/\\*([^*]|\\*/)*\\*/)*"
-	for (nspaces = 0, p = *ptrnp, len = *plenp; len > 0; ++p, --len)
-		if (*p == ' ')
-			++nspaces;
-
-	/*
-	 * Allocate plenty of space:
-	 *	the string, plus potential escaping characters;
-	 *	nspaces + 2 copies of CSCOPE_RE_SPACE;
-	 *	^, $, nul terminator characters.
-	 */
-	*replacedp = 1;
-	len = (p - *ptrnp) * 2 + (nspaces + 2) * sizeof(CSCOPE_RE_SPACE) + 3;
-	GET_SPACE_RET(sp, bp, blen, len);
-
-	p = *ptrnp;
-	t = bp;
-
-	*t++ = '^';
-	memcpy(t, CSCOPE_RE_SPACE, sizeof(CSCOPE_RE_SPACE) - 1);
-	t += sizeof(CSCOPE_RE_SPACE) - 1;
-
-	for (len = *plenp; len > 0; ++p, --len)
-		if (*p == ' ') {
-			memcpy(t, CSCOPE_RE_SPACE, sizeof(CSCOPE_RE_SPACE) - 1);
-			t += sizeof(CSCOPE_RE_SPACE) - 1;
-		} else {
-			if (strchr("\\^.[]$*+?()|{}", *p))
-				*t++ = '\\';
-			*t++ = *p;
-		}
-
-	memcpy(t, CSCOPE_RE_SPACE, sizeof(CSCOPE_RE_SPACE) - 1);
-	t += sizeof(CSCOPE_RE_SPACE) - 1;
-	*t++ = '$';
 
 	*ptrnp = bp;
 	*plenp = t - bp;

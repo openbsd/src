@@ -1,4 +1,4 @@
-/*	$OpenBSD: tag.h,v 1.6 2015/04/24 21:48:31 brynet Exp $	*/
+/*	$OpenBSD: tag.h,v 1.7 2015/11/19 07:53:31 bentley Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -12,30 +12,6 @@
  *
  *	@(#)tag.h	10.5 (Berkeley) 5/15/96
  */
-
-/*
- * Cscope connection information.  One of these is maintained per cscope
- * connection, linked from the EX_PRIVATE structure.
- */
-struct _csc {
-	LIST_ENTRY(_csc) q;	/* Linked list of cscope connections. */
-
-	char	*dname;		/* Base directory of this cscope connection. */
-	size_t	 dlen;		/* Length of base directory. */
-	pid_t	 pid;		/* PID of the connected cscope process. */
-	struct timespec	 mtim;	/* Last modification time of cscope database. */
-
-	FILE	*from_fp;	/* from cscope: FILE. */
-	int	 from_fd;	/* from cscope: file descriptor. */
-	FILE	*to_fp;		/* to cscope: FILE. */
-	int	 to_fd;		/* to cscope: file descriptor. */
-
-	char   **paths;		/* Array of search paths for this cscope. */
-	char	*pbuf;		/* Search path buffer. */
-	size_t	 pblen;		/* Search path buffer length. */
-
-	char	 buf[1];	/* Variable length buffer. */
-};
 
 /*
  * Tag file information.  One of these is maintained per tag file, linked
@@ -66,8 +42,8 @@ struct _tagf {			/* Tag files. */
  *	     | Q3 | <-- | T1 |
  *	     +----+ --> +----+
  *
- * Each Q is a TAGQ, or tag "query", which is the result of one tag or cscope
- * command.  Each Q references one or more TAG's, or tagged file locations.
+ * Each Q is a TAGQ, or tag "query", which is the result of one tag.
+ * Each Q references one or more TAG's, or tagged file locations.
  *
  * tag:		put a new Q at the head	(^])
  * tagnext:	T1 -> T2 inside Q	(^N)
@@ -102,7 +78,6 @@ struct _tagq {			/* Tag queue. */
 	char	*tag;		/* Tag string. */
 	size_t	 tlen;		/* Tag string length. */
 
-#define	TAG_CSCOPE	0x01	/* Cscope tag. */
 	u_int8_t flags;
 
 	char	 buf[1];	/* Variable length buffer. */

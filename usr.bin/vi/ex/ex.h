@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex.h,v 1.8 2013/12/01 16:47:59 krw Exp $	*/
+/*	$OpenBSD: ex.h,v 1.9 2015/11/19 07:53:31 bentley Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -161,7 +161,6 @@ struct _excmd {
 typedef struct _ex_private {
 	TAILQ_HEAD(_tqh, _tagq) tq;	/* Tag queue. */
 	TAILQ_HEAD(_tagfh, _tagf) tagfq;/* Tag file list. */
-	LIST_HEAD(_csch, _csc) cscq;    /* Cscope connection list. */
 	char	*tag_last;		/* Saved last tag string. */
 
 	CHAR_T	*lastbcomm;		/* Last bang command. */
@@ -186,7 +185,6 @@ typedef struct _ex_private {
 	char	 obp[1024];		/* Ex output buffer. */
 	size_t	 obp_len;		/* Ex output buffer length. */
 
-#define	EXP_CSCINIT	0x01		/* Cscope initialized. */
 	u_int8_t flags;
 } EX_PRIVATE;
 #define	EXP(sp)	((EX_PRIVATE *)((sp)->ex_private))

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_cmd.c,v 1.9 2014/11/20 08:50:53 bentley Exp $	*/
+/*	$OpenBSD: ex_cmd.c,v 1.10 2015/11/19 07:53:31 bentley Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -132,11 +132,6 @@ EXCMDLIST const cmds[] = {
 	    "l1",
 	    "[line [,line]] co[py] line [flags]",
 	    "copy lines elsewhere in the file"},
-/* C_CSCOPE */
-	{"cscope",      ex_cscope,      0,
-	    "!s",
-	    "cs[cope] command [args]",
-	    "create a set of tags using a cscope command"},
 /*
  * !!!
  * Adding new commands starting with 'd' may break the delete command code

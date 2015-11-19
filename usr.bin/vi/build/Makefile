@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.21 2014/11/20 08:50:53 bentley Exp $
+#	$OpenBSD: Makefile,v 1.22 2015/11/19 07:53:30 bentley Exp $
 #	@(#)Makefile.in	8.75 (Berkeley) 10/23/96
 
 PROG=	vi
@@ -18,7 +18,7 @@ CFLAGS+= -fno-tree-dominator-opts
 
 SRCS=	cl_funcs.c cl_main.c cl_read.c cl_screen.c cl_term.c \
 	cut.c delete.c ex.c ex_abbrev.c ex_append.c ex_args.c ex_argv.c \
-	ex_at.c ex_bang.c ex_cd.c ex_cmd.c ex_cscope.c ex_delete.c \
+	ex_at.c ex_bang.c ex_cd.c ex_cmd.c ex_delete.c \
 	ex_display.c ex_edit.c ex_equal.c ex_file.c ex_filter.c \
 	ex_global.c ex_init.c ex_join.c ex_map.c ex_mark.c ex_mkexrc.c \
 	ex_move.c ex_open.c ex_preserve.c ex_print.c ex_put.c \

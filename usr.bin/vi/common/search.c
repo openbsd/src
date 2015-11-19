@@ -1,4 +1,4 @@
-/*	$OpenBSD: search.c,v 1.11 2015/03/10 00:10:59 bentley Exp $	*/
+/*	$OpenBSD: search.c,v 1.12 2015/11/19 07:53:31 bentley Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -119,8 +119,7 @@ prev:			if (sp->re == NULL) {
 	if (re_compile(sp, ptrn, plen, &sp->re, &sp->re_len, &sp->re_c,
 	    RE_C_SEARCH |
 	    (LF_ISSET(SEARCH_MSG) ? 0 : RE_C_SILENT) |
-	    (LF_ISSET(SEARCH_TAG) ? RE_C_TAG : 0) |
-	    (LF_ISSET(SEARCH_CSCOPE) ? RE_C_CSCOPE : 0)))
+	    (LF_ISSET(SEARCH_TAG) ? RE_C_TAG : 0)))
 		return (1);
 
 	/* Set the search direction. */

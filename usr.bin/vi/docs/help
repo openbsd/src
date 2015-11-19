@@ -143,7 +143,6 @@ EX COMMANDS:
 	  cd: change the current directory
        chdir: change the current directory
 	copy: copy lines elsewhere in the file
-      cscope: create a set of tags using a cscope command
       delete: delete lines from the file
      display: display buffers, screens or tags
      [Ee]dit: begin editing another file

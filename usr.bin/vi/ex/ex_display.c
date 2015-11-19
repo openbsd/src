@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_display.c,v 1.9 2014/11/12 04:28:41 bentley Exp $	*/
+/*	$OpenBSD: ex_display.c,v 1.10 2015/11/19 07:53:31 bentley Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -27,9 +27,9 @@ static int	bdisplay(SCR *);
 static void	db(SCR *, CB *, CHAR_T *);
 
 /*
- * ex_display -- :display b[uffers] | c[onnections] | s[creens] | t[ags]
+ * ex_display -- :display b[uffers] | s[creens] | t[ags]
  *
- *	Display cscope connections, buffers, tags or screens.
+ *	Display buffers, tags or screens.
  *
  * PUBLIC: int ex_display(SCR *, EXCMD *);
  */
@@ -44,13 +44,6 @@ ex_display(SCR *sp, EXCMD *cmdp)
 		    memcmp(cmdp->argv[0]->bp, ARG, cmdp->argv[0]->len))
 			break;
 		return (bdisplay(sp));
-	case 'c':
-#undef	ARG
-#define	ARG	"connections"
-		if (cmdp->argv[0]->len >= sizeof(ARG) ||
-		    memcmp(cmdp->argv[0]->bp, ARG, cmdp->argv[0]->len))
-			break;
-		return (cscope_display(sp));
 	case 's':
 #undef	ARG
 #define	ARG	"screens"

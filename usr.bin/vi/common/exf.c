@@ -1,4 +1,4 @@
-/*	$OpenBSD: exf.c,v 1.37 2015/07/07 18:34:12 millert Exp $	*/
+/*	$OpenBSD: exf.c,v 1.38 2015/11/19 07:53:31 bentley Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -933,7 +933,7 @@ file_write(SCR *sp, MARK *fm, MARK *tm, char *name, int flags)
 	}
 
 	/*
-	 * There's a nasty problem with long path names.  Cscope and tags files
+	 * There's a nasty problem with long path names.  Tags files
 	 * can result in long paths and vi will request a continuation key from
 	 * the user.  Unfortunately, the user has typed ahead, and chaos will
 	 * result.  If we assume that the characters in the filenames only take

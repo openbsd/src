@@ -1,4 +1,4 @@
-/*	$OpenBSD: msg.c,v 1.22 2015/01/16 06:40:14 deraadt Exp $	*/
+/*	$OpenBSD: msg.c,v 1.23 2015/11/19 07:53:31 bentley Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -459,7 +459,7 @@ msgq_status(SCR *sp, recno_t lno, u_int flags)
 	len = p - bp;
 
 	/*
-	 * There's a nasty problem with long path names.  Cscope and tags files
+	 * There's a nasty problem with long path names.  Tags files
 	 * can result in long paths and vi will request a continuation key from
 	 * the user as soon as it starts the screen.  Unfortunately, the user
 	 * has already typed ahead, and chaos results.  If we assume that the
