@@ -1,4 +1,4 @@
-/*	$OpenBSD: growfs.c,v 1.40 2015/08/20 22:02:21 deraadt Exp $	*/
+/*	$OpenBSD: growfs.c,v 1.41 2015/11/19 17:30:41 mmcc Exp $	*/
 /*
  * Copyright (c) 2000 Christoph Herrmann, Thomas-Henning von Kamptz
  * Copyright (c) 1980, 1989, 1993 The Regents of the University of California.
@@ -189,7 +189,7 @@ growfs(int fsi, int fso, unsigned int Nflag)
 	/*
 	 * Get the cylinder summary into the memory.
 	 */
-	fscs = calloc((size_t)1, (size_t)sblock.fs_cssize);
+	fscs = calloc(1, (size_t)sblock.fs_cssize);
 	if (fscs == NULL)
 		errx(1, "calloc failed");
 	for (i = 0; i < osblock.fs_cssize; i += osblock.fs_bsize) {
