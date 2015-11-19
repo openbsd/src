@@ -1,5 +1,5 @@
 /*
- *	$OpenBSD: locate.c,v 1.30 2015/11/15 07:44:38 deraadt Exp $
+ *	$OpenBSD: locate.c,v 1.31 2015/11/19 21:46:05 mmcc Exp $
  *
  * Copyright (c) 1995 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *      $Id: locate.c,v 1.30 2015/11/15 07:44:38 deraadt Exp $
+ *      $Id: locate.c,v 1.31 2015/11/19 21:46:05 mmcc Exp $
  */
 
 /*
@@ -63,26 +63,21 @@
  * in the standard 'find'.
  */
 
+#include <sys/mman.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+
 #include <ctype.h>
 #include <err.h>
+#include <fcntl.h>
 #include <fnmatch.h>
 #include <libgen.h>
+#include <limits.h>
 #include <locale.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <limits.h>
-
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/mman.h>
-#include <fcntl.h>
-
-
-#ifdef sun
-#include <netinet/in.h> /* SunOS byteorder(3) htohl(3) */
-#endif
 
 #include "locate.h"
 #include "pathnames.h"
@@ -120,9 +115,6 @@ extern int      getwf(FILE *);
 extern u_char   *tolower_word(u_char *);
 extern int	check_bigram_char(int);
 extern char 	*patprep(char *);
-
-extern char     *optarg;
-extern int      optind;
 
 
 int
