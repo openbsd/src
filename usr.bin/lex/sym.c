@@ -1,4 +1,4 @@
-/*	$OpenBSD: sym.c,v 1.7 2015/11/19 19:43:40 tedu Exp $	*/
+/*	$OpenBSD: sym.c,v 1.8 2015/11/19 23:20:34 tedu Exp $	*/
 
 /* sym - symbol table routines */
 
@@ -96,7 +96,7 @@ static int addsym (sym, str_def, int_def, table, table_size)
 
 	/* create new entry */
 	new_entry = (struct hash_entry *)
-		flex_alloc (sizeof (struct hash_entry));
+		malloc (sizeof (struct hash_entry));
 
 	if (new_entry == NULL)
 		flexfatal (_("symbol table memory allocation failed"));

@@ -1,4 +1,4 @@
-/* $OpenBSD: buf.c,v 1.3 2015/11/19 22:52:40 tedu Exp $ */
+/* $OpenBSD: buf.c,v 1.4 2015/11/19 23:20:34 tedu Exp $ */
 
 /* flex - tool to generate fast lexical analyzers */
 
@@ -78,12 +78,12 @@ buf_prints(struct Buf * buf, const char *fmt, const char *s)
 	char *t;
 	size_t tsz;
 
-	t = flex_alloc(tsz = strlen(fmt) + strlen(s) + 1);
+	t = malloc(tsz = strlen(fmt) + strlen(s) + 1);
 	if (!t)
 		flexfatal(_("Allocation of buffer to print string failed"));
 	snprintf(t, tsz, fmt, s);
 	buf = buf_strappend(buf, t);
-	flex_free(t);
+	free(t);
 	return buf;
 }
 
@@ -100,7 +100,7 @@ buf_linedir(struct Buf * buf, const char *filename, int lineno)
 	char *dst, *t;
 	size_t tsz;
 
-	t = flex_alloc(tsz = strlen("#line \"\"\n") +	/* constant parts */
+	t = malloc(tsz = strlen("#line \"\"\n") +	/* constant parts */
 	    2 * strlen(filename) +	/* filename with possibly all
 					 * backslashes escaped */
 	    (int) (1 + log10(abs(lineno))) +	/* line number */
@@ -114,7 +114,7 @@ buf_linedir(struct Buf * buf, const char *filename, int lineno)
 	*dst++ = '\n';
 	*dst = '\0';
 	buf = buf_strappend(buf, t);
-	flex_free(t);
+	free(t);
 	return buf;
 }
 
@@ -186,7 +186,7 @@ buf_m4_define(struct Buf * buf, const char *def, const char *val)
 	size_t strsz;
 
 	val = val ? val : "";
-	str = (char *) flex_alloc(strsz = strlen(fmt) + strlen(def) + strlen(val) + 2);
+	str = (char *) malloc(strsz = strlen(fmt) + strlen(def) + strlen(val) + 2);
 	if (!str)
 		flexfatal(_("Allocation of buffer for m4 def failed"));
 
@@ -207,7 +207,7 @@ buf_m4_undefine(struct Buf * buf, const char *def)
 	char *str;
 	size_t strsz;
 
-	str = (char *) flex_alloc(strsz = strlen(fmt) + strlen(def) + 2);
+	str = (char *) malloc(strsz = strlen(fmt) + strlen(def) + 2);
 	if (!str)
 		flexfatal(_("Allocation of buffer for m4 undef failed"));
 
@@ -234,7 +234,7 @@ buf_destroy(buf)
 	struct Buf *buf;
 {
 	if (buf && buf->elts)
-		flex_free(buf->elts);
+		free(buf->elts);
 	buf->elts = (void *) 0;
 }
 

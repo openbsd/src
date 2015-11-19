@@ -1,4 +1,4 @@
-/* $OpenBSD: scanflags.c,v 1.2 2015/11/19 22:16:43 tedu Exp $ */
+/* $OpenBSD: scanflags.c,v 1.3 2015/11/19 23:20:34 tedu Exp $ */
 
 /* scanflags - flags used by scanning. */
 
@@ -42,7 +42,7 @@ void
 sf_push (void)
 {
     if (_sf_top_ix + 1 >= _sf_max)
-        _sf_stk = (scanflags_t*) flex_realloc ( (void*) _sf_stk, sizeof(scanflags_t) * (_sf_max += 32));
+        _sf_stk = (scanflags_t*) realloc ( (void*) _sf_stk, sizeof(scanflags_t) * (_sf_max += 32));
 
     // copy the top element
     _sf_stk[_sf_top_ix + 1] = _sf_stk[_sf_top_ix];
@@ -61,7 +61,7 @@ void
 sf_init (void)
 {
     assert(_sf_stk == NULL);
-    _sf_stk = (scanflags_t*) flex_alloc ( sizeof(scanflags_t) * (_sf_max = 32));
+    _sf_stk = (scanflags_t*) malloc ( sizeof(scanflags_t) * (_sf_max = 32));
     if (!_sf_stk)
         lerrsf_fatal(_("Unable to allocate %ld of stack"),
             (void *)sizeof(scanflags_t));

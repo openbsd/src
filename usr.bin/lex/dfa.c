@@ -1,4 +1,4 @@
-/*	$OpenBSD: dfa.c,v 1.7 2015/11/19 19:43:40 tedu Exp $	*/
+/*	$OpenBSD: dfa.c,v 1.8 2015/11/19 23:20:34 tedu Exp $	*/
 
 /* dfa - DFA construction routines */
 
@@ -807,8 +807,8 @@ void ntod ()
 		mkdeftbl ();
 	}
 
-	flex_free ((void *) accset);
-	flex_free ((void *) nset);
+	free ((void *) accset);
+	free ((void *) nset);
 }
 
 

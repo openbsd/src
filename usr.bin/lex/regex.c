@@ -1,4 +1,4 @@
-/* $OpenBSD: regex.c,v 1.2 2015/11/19 22:16:43 tedu Exp $ */
+/* $OpenBSD: regex.c,v 1.3 2015/11/19 23:20:34 tedu Exp $ */
 
 /** regex - regular expression functions related to POSIX regex lib. */
 
@@ -59,10 +59,10 @@ void flex_regcomp(regex_t *preg, const char *regex, int cflags)
         const int errbuf_sz = 200;
         char *errbuf, *rxerr;
 
-		errbuf = (char*)flex_alloc(errbuf_sz *sizeof(char));
+		errbuf = (char*)malloc(errbuf_sz *sizeof(char));
 		if (!errbuf)
 			flexfatal(_("Unable to allocate buffer to report regcomp"));
-		rxerr = (char*)flex_alloc(errbuf_sz *sizeof(char));
+		rxerr = (char*)malloc(errbuf_sz *sizeof(char));
 		if (!rxerr)
 			flexfatal(_("Unable to allocate buffer for regerror"));
 		regerror (err, preg, rxerr, errbuf_sz);
@@ -87,7 +87,7 @@ char   *regmatch_dup (regmatch_t * m, const char *src)
 	if (m == NULL || m->rm_so < 0)
 		return NULL;
 	len = m->rm_eo - m->rm_so;
-	str = (char *) flex_alloc ((len + 1) * sizeof (char));
+	str = (char *) malloc ((len + 1) * sizeof (char));
 	if (!str)
 		flexfatal(_("Unable to allocate a copy of the match"));
 	strncpy (str, src + m->rm_so, len);

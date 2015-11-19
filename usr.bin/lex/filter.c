@@ -1,4 +1,4 @@
-/* $OpenBSD: filter.c,v 1.4 2015/11/19 22:52:40 tedu Exp $ */
+/* $OpenBSD: filter.c,v 1.5 2015/11/19 23:20:34 tedu Exp $ */
 
 /* filter - postprocessing of flex output through filters */
 
@@ -50,9 +50,9 @@ filter_create_ext(struct filter * chain, const char *cmd,
 	va_list ap;
 
 	/* allocate and initialize new filter */
-	f = (struct filter *) flex_alloc(sizeof(struct filter));
+	f = (struct filter *) malloc(sizeof(struct filter));
 	if (!f)
-		flexerror(_("flex_alloc failed (f) in filter_create_ext"));
+		flexerror(_("malloc failed (f) in filter_create_ext"));
 	memset(f, 0, sizeof(*f));
 	f->filter_func = NULL;
 	f->extra = NULL;
@@ -67,16 +67,16 @@ filter_create_ext(struct filter * chain, const char *cmd,
 	}
 	/* allocate argv, and populate it with the argument list. */
 	max_args = 8;
-	f->argv = flex_alloc(sizeof(char *) * (max_args + 1));
+	f->argv = malloc(sizeof(char *) * (max_args + 1));
 	if (!f->argv)
-		flexerror(_("flex_alloc failed (f->argv) in filter_create_ext"));
+		flexerror(_("malloc failed (f->argv) in filter_create_ext"));
 	f->argv[f->argc++] = cmd;
 
 	va_start(ap, cmd);
 	while ((s = va_arg(ap, const char *)) != NULL) {
 		if (f->argc >= max_args) {
 			max_args += 8;
-			f->argv = flex_realloc(f->argv,
+			f->argv = realloc(f->argv,
 			    sizeof(char *) * (max_args + 1));
 		}
 		f->argv[f->argc++] = s;
@@ -103,9 +103,9 @@ filter_create_int(struct filter * chain,
 	struct filter *f;
 
 	/* allocate and initialize new filter */
-	f = (struct filter *) flex_alloc(sizeof(struct filter));
+	f = (struct filter *) malloc(sizeof(struct filter));
 	if (!f)
-		flexerror(_("flex_alloc failed in filter_create_int"));
+		flexerror(_("malloc failed in filter_create_int"));
 	memset(f, 0, sizeof(*f));
 	f->next = NULL;
 	f->argc = 0;
@@ -293,9 +293,9 @@ filter_tee_header(struct filter * chain)
 	fprintf(to_c, "m4_define( [[M4_YY_OUTFILE_NAME]],[[%s]])m4_dnl\n",
 	    outfilename ? outfilename : "<stdout>");
 
-	buf = (char *) flex_alloc(readsz);
+	buf = (char *) malloc(readsz);
 	if (!buf)
-		flexerror(_("flex_alloc failed in filter_tee_header"));
+		flexerror(_("malloc failed in filter_tee_header"));
 	while (fgets(buf, readsz, stdin)) {
 		fputs(buf, to_c);
 		if (write_header)
@@ -357,9 +357,9 @@ filter_fix_linedirs(struct filter * chain)
 	if (!chain)
 		return 0;
 
-	buf = (char *) flex_alloc(readsz);
+	buf = (char *) malloc(readsz);
 	if (!buf)
-		flexerror(_("flex_alloc failed in filter_fix_linedirs"));
+		flexerror(_("malloc failed in filter_fix_linedirs"));
 
 	while (fgets(buf, readsz, stdin)) {
 

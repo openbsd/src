@@ -1,4 +1,4 @@
-/*	$OpenBSD: gen.c,v 1.13 2015/11/19 22:52:40 tedu Exp $	*/
+/*	$OpenBSD: gen.c,v 1.14 2015/11/19 23:20:34 tedu Exp $	*/
 
 /* gen - actual generation (writing) of flex scanners */
 
@@ -1479,7 +1479,7 @@ gentabs()
 	}
 	/* End generating yy_chk */
 
-	flex_free((void *) acc_array);
+	free((void *) acc_array);
 }
 
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.17 2015/11/19 23:04:51 tedu Exp $	*/
+/*	$OpenBSD: misc.c,v 1.18 2015/11/19 23:20:34 tedu Exp $	*/
 
 /* misc - miscellaneous flex routines */
 
@@ -63,14 +63,14 @@ sko_push(bool dc)
 {
 	if (!sko_stack) {
 		sko_sz = 1;
-		sko_stack = (struct sko_state *) flex_alloc(sizeof(struct sko_state) * sko_sz);
+		sko_stack = malloc(sizeof(struct sko_state) * sko_sz);
 		if (!sko_stack)
 			flexfatal(_("allocation of sko_stack failed"));
 		sko_len = 0;
 	}
 	if (sko_len >= sko_sz) {
 		sko_sz *= 2;
-		sko_stack = (struct sko_state *) flex_realloc(sko_stack, sizeof(struct sko_state) * sko_sz);
+		sko_stack = realloc(sko_stack, sizeof(struct sko_state) * sko_sz);
 	}
 	/* initialize to zero and push */
 	sko_stack[sko_len].dc = dc;
@@ -179,7 +179,7 @@ allocate_array(size, element_size)
 	void *mem;
 	size_t num_bytes = element_size * size;
 
-	mem = flex_alloc(num_bytes);
+	mem = malloc(num_bytes);
 	if (!mem)
 		flexfatal(_
 		    ("memory allocation failed in allocate_array()"));
@@ -276,7 +276,7 @@ copy_string(str)
 
 	size = (c1 - str + 1) * sizeof(char);
 
-	copy = (char *) flex_alloc(size);
+	copy = (char *) malloc(size);
 
 	if (copy == NULL)
 		flexfatal(_("dynamic memory failure in copy_string()"));
@@ -839,7 +839,7 @@ reallocate_array(array, size, element_size)
 	void *new_array;
 	size_t num_bytes = element_size * size;
 
-	new_array = flex_realloc(array, num_bytes);
+	new_array = realloc(array, num_bytes);
 	if (!new_array)
 		flexfatal(_("attempt to increase array size failed"));
 
@@ -999,7 +999,7 @@ void *
 yy_flex_xmalloc(size)
 	int size;
 {
-	void *result = flex_alloc((size_t) size);
+	void *result = malloc((size_t) size);
 
 	if (!result)
 		flexfatal(_

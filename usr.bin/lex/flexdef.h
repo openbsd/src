@@ -1,4 +1,4 @@
-/*	$OpenBSD: flexdef.h,v 1.11 2015/11/19 23:04:51 tedu Exp $	*/
+/*	$OpenBSD: flexdef.h,v 1.12 2015/11/19 23:20:34 tedu Exp $	*/
 
 /* flexdef - definitions file for flex */
 
@@ -665,10 +665,6 @@ extern int num_backing_up, bol_needed;
 
 void   *allocate_array PROTO ((int, size_t));
 void   *reallocate_array PROTO ((void *, int, size_t));
-
-void   *flex_alloc PROTO ((size_t));
-void   *flex_realloc PROTO ((void *, size_t));
-void flex_free PROTO ((void *));
 
 #define allocate_integer_array(size) \
 	(int *) allocate_array( size, sizeof( int ) )

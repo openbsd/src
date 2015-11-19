@@ -1,4 +1,4 @@
-/*	$OpenBSD: scan.l,v 1.10 2015/11/19 19:43:40 tedu Exp $	*/
+/*	$OpenBSD: scan.l,v 1.11 2015/11/19 23:20:34 tedu Exp $	*/
 
 /* scan.l - scanner for flex input -*-C-*- */
 
@@ -233,7 +233,7 @@ M4QEND      "]]"
 	[[:digit:]]+	linenum = myctoi( yytext );
 
 	\"[^"\n]*\"	{
-			flex_free( (void *) infilename );
+			free( (void *) infilename );
 			infilename = copy_string( yytext + 1 );
 			infilename[strlen( infilename ) - 1] = '\0';
 			}
@@ -1008,25 +1008,3 @@ char *file;
 	linenum = 1;
 	}
 
-
-/* Wrapper routines for accessing the scanner's malloc routines. */
-
-void *flex_alloc( size )
-size_t size;
-	{
-	return (void *) malloc( size );
-	}
-
-void *flex_realloc( ptr, size )
-void *ptr;
-size_t size;
-	{
-	return (void *) realloc( ptr, size );
-	}
-
-void flex_free( ptr )
-void *ptr;
-	{
-	if ( ptr )
-		free( ptr );
-	}
