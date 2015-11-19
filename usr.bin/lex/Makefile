@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.13 2015/11/19 19:45:28 tedu Exp $
+#	$OpenBSD: Makefile,v 1.14 2015/11/19 23:46:55 tedu Exp $
 #
 # By default, flex will be configured to generate 8-bit scanners only if the
 # -8 flag is given.  If you want it to always generate 8-bit scanners, add
@@ -30,7 +30,7 @@ MLINKS= flex.1 lex.1 flex.1 flex++.1
 VERSION="2.5.39"
 
 # Our yacc is too old to compile parse.y; use bootstrapped parse.c instead
-parse.h parse.c: parse.y
+parse.h parse.c: parse.y initparse.c initparse.h
 	cp ${.CURDIR}/initparse.c parse.c
 	cp ${.CURDIR}/initparse.h parse.h
 
