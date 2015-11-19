@@ -1,4 +1,4 @@
-/*	$OpenBSD: locale.c,v 1.9 2015/08/14 14:31:49 stsp Exp $	*/
+/*	$OpenBSD: locale.c,v 1.10 2015/11/19 06:07:16 deraadt Exp $	*/
 /*
  * Copyright (c) 2013 Stefan Sperling <stsp@openbsd.org>
  *
@@ -20,6 +20,7 @@
 #include <string.h>
 #include <locale.h>
 #include <unistd.h>
+#include <err.h>
 
 extern char		*__progname;
 
@@ -178,6 +179,9 @@ main(int argc, char *argv[])
 	int opt, aflag = 0, mflag = 0;
 
 	setlocale(LC_ALL, "");
+
+	if (pledge("stdio rpath", NULL) == -1)
+		err(1, "pledge");
 
 	if (argc == 1) {
 		show_current_locale();
