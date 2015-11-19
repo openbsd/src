@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.8 2009/10/27 23:59:44 deraadt Exp $	*/
+/*	$OpenBSD: misc.c,v 1.9 2015/11/19 17:50:04 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #include "extern.h"
 
 void
-ierr(void)
+ierr(const char *fname)
 {
 	warn("%s", fname);
 	rval = 1;
@@ -51,4 +51,12 @@ void
 oerr(void)
 {
 	err(1, "stdout");
+}
+
+void printfname(const char *fname)
+{
+	static int first = 1;
+	(void)printf("%s==> %s <==\n", first ? "" : "\n", fname);
+	first = 0;
+	(void)fflush(stdout);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tail.c,v 1.19 2015/10/09 01:37:09 deraadt Exp $	*/
+/*	$OpenBSD: tail.c,v 1.20 2015/11/19 17:50:04 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -45,7 +45,6 @@
 #include "extern.h"
 
 int fflag, rflag, rval;
-char *fname;
 int is_stdin;
 
 static void obsolete(char **);
@@ -54,11 +53,11 @@ static void usage(void);
 int
 main(int argc, char *argv[])
 {
-	struct stat sb;
-	FILE *fp;
+	struct tailfile *tf;
 	off_t off = 0;
 	enum STYLE style;
-	int ch, first;
+	int ch;
+	int i;
 	char *p;
 
 	if (pledge("stdio rpath", NULL) == -1)
@@ -123,9 +122,6 @@ main(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 
-	if (fflag && argc > 1)
-		errx(1, "-f option only appropriate for a single file");
-
 	/*
 	 * If displaying in reverse, don't permit follow option, and convert
 	 * style values.
@@ -153,35 +149,33 @@ main(int argc, char *argv[])
 		}
 	}
 
-	if (*argv)
-		for (first = 1; (fname = *argv++);) {
-			if ((fp = fopen(fname, "r")) == NULL ||
-			    fstat(fileno(fp), &sb)) {
-				ierr();
+	if ((tf = reallocarray(NULL, argc ? argc : 1, sizeof(*tf))) == NULL)
+		err(1, "reallocarray");
+
+	if (argc) {
+		for (i = 0; (tf[i].fname = *argv++); i++) {
+			if ((tf[i].fp = fopen(tf[i].fname, "r")) == NULL ||
+			    fstat(fileno(tf[i].fp), &(tf[i].sb))) {
+				ierr(tf[i].fname);
+				i--;
 				continue;
 			}
-			if (argc > 1) {
-				(void)printf("%s==> %s <==\n",
-				    first ? "" : "\n", fname);
-				first = 0;
-				(void)fflush(stdout);
-			}
-
-			if (rflag)
-				reverse(fp, style, off, &sb);
-			else
-				forward(fp, style, off, &sb);
-			(void)fclose(fp);
 		}
+		if (rflag)
+			reverse(tf, i, style, off);
+		else
+			forward(tf, i, style, off);
+	}
 	else {
 		if (pledge("stdio", NULL) == -1)
 			err(1, "pledge");
 
-		fname = "stdin";
+		tf[0].fname = "stdin";
+		tf[0].fp = stdin;
 		is_stdin = 1;
 
-		if (fstat(fileno(stdin), &sb)) {
-			ierr();
+		if (fstat(fileno(stdin), &(tf[0].sb))) {
+			ierr(tf[0].fname);
 			exit(1);
 		}
 
@@ -189,16 +183,16 @@ main(int argc, char *argv[])
 		 * Determine if input is a pipe.  4.4BSD will set the SOCKET
 		 * bit in the st_mode field for pipes.  Fix this then.
 		 */
-		if (lseek(fileno(stdin), (off_t)0, SEEK_CUR) == -1 &&
+		if (lseek(fileno(tf[0].fp), (off_t)0, SEEK_CUR) == -1 &&
 		    errno == ESPIPE) {
 			errno = 0;
 			fflag = 0;		/* POSIX.2 requires this. */
 		}
 
 		if (rflag)
-			reverse(stdin, style, off, &sb);
+			reverse(tf, 1, style, off);
 		else
-			forward(stdin, style, off, &sb);
+			forward(tf, 1, style, off);
 	}
 	exit(rval);
 }

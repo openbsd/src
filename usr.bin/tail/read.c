@@ -1,4 +1,4 @@
-/*	$OpenBSD: read.c,v 1.16 2015/03/26 21:26:43 tobias Exp $	*/
+/*	$OpenBSD: read.c,v 1.17 2015/11/19 17:50:04 tedu Exp $	*/
 /*	$NetBSD: read.c,v 1.4 1994/11/23 07:42:07 jtc Exp $	*/
 
 /*-
@@ -59,7 +59,7 @@
  *
  */
 int
-bytes(FILE *fp, off_t off)
+bytes(struct tailfile *tf, off_t off)
 {
 	int ch;
 	size_t len, tlen;
@@ -73,15 +73,15 @@ bytes(FILE *fp, off_t off)
 	if ((sp = p = malloc(off)) == NULL)
 		err(1, NULL);
 
-	for (wrap = 0, ep = p + off; (ch = getc(fp)) != EOF;) {
+	for (wrap = 0, ep = p + off; (ch = getc(tf->fp)) != EOF;) {
 		*p = ch;
 		if (++p == ep) {
 			wrap = 1;
 			p = sp;
 		}
 	}
-	if (ferror(fp)) {
-		ierr();
+	if (ferror(tf->fp)) {
+		ierr(tf->fname);
 		free(sp);
 		return(1);
 	}
@@ -135,7 +135,7 @@ bytes(FILE *fp, off_t off)
  *
  */
 int
-lines(FILE *fp, off_t off)
+lines(struct tailfile *tf, off_t off)
 {
 	struct {
 		size_t blen;
@@ -156,7 +156,7 @@ lines(FILE *fp, off_t off)
 
 	blen = cnt = recno = wrap = 0;
 
-	while ((ch = getc(fp)) != EOF) {
+	while ((ch = getc(tf->fp)) != EOF) {
 		if (++cnt > blen) {
 			newsize = blen + 1024;
 			if ((newp = realloc(sp, newsize)) == NULL)
@@ -184,8 +184,8 @@ lines(FILE *fp, off_t off)
 			}
 		}
 	}
-	if (ferror(fp)) {
-		ierr();
+	if (ferror(tf->fp)) {
+		ierr(tf->fname);
 		rc = 1;
 		goto done;
 	}

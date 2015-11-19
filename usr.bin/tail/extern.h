@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.11 2008/11/13 18:33:03 landry Exp $	*/
+/*	$OpenBSD: extern.h,v 1.12 2015/11/19 17:50:04 tedu Exp $	*/
 /*	$NetBSD: extern.h,v 1.3 1994/11/23 07:42:00 jtc Exp $	*/
 
 /*-
@@ -36,17 +36,23 @@
 	if (write(STDOUT_FILENO, p, size) != size) \
 		oerr();
 
+struct tailfile {
+	char		*fname;
+	FILE		*fp;
+	struct stat	 sb;
+};
+
 enum STYLE { NOTSET = 0, FBYTES, FLINES, RBYTES, RLINES, REVERSE };
 
-void forward(FILE *, enum STYLE, off_t, struct stat *);
-void reverse(FILE *, enum STYLE, off_t, struct stat *);
+void forward(struct tailfile *, int, enum STYLE, off_t);
+void reverse(struct tailfile *, int, enum STYLE, off_t);
 
-int bytes(FILE *, off_t);
-int lines(FILE *, off_t);
+int bytes(struct tailfile *, off_t);
+int lines(struct tailfile *, off_t);
 
-void ierr(void);
+void ierr(const char *);
 void oerr(void);
+void printfname(const char *);
 
 extern int fflag, rflag, rval;
-extern char *fname;
 extern int is_stdin;

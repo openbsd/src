@@ -1,4 +1,4 @@
-/*	$OpenBSD: reverse.c,v 1.20 2015/07/22 16:37:04 tobias Exp $	*/
+/*	$OpenBSD: reverse.c,v 1.21 2015/11/19 17:50:04 tedu Exp $	*/
 /*	$NetBSD: reverse.c,v 1.6 1994/11/23 07:42:10 jtc Exp $	*/
 
 /*-
@@ -43,12 +43,12 @@
 #include "extern.h"
 
 static void r_buf(FILE *);
-static int r_reg(FILE *, enum STYLE, off_t, struct stat *);
+static int r_reg(struct tailfile *, enum STYLE, off_t);
 
-#define COPYCHAR(fp, ch)				\
+#define COPYCHAR(tf, ch)				\
 	do {						\
-		if ((ch = getc(fp)) == EOF) {		\
-			ierr();				\
+		if ((ch = getc(tf->fp)) == EOF) {	\
+			ierr(tf->fname);		\
 			return (0);			\
 		}					\
 		if (putchar(ch) == EOF) {		\
@@ -76,37 +76,47 @@ static int r_reg(FILE *, enum STYLE, off_t, struct stat *);
  *	NOREG	cyclically read input into a linked list of buffers
  */
 void
-reverse(FILE *fp, enum STYLE style, off_t off, struct stat *sbp)
+reverse(struct tailfile *tf, int nfiles, enum STYLE style, off_t off)
 {
+	int i;
+
 	if (style != REVERSE && off == 0)
 		return;
 
-	if (!S_ISREG(sbp->st_mode) || r_reg(fp, style, off, sbp) != 0)
-		switch(style) {
-		case FBYTES:
-		case RBYTES:
-			(void)bytes(fp, off);
-			break;
-		case FLINES:
-		case RLINES:
-			(void)lines(fp, off);
-			break;
-		case REVERSE:
-			r_buf(fp);
-			break;
+	for (i = 0; i < nfiles; i++) {
+		if (nfiles > 1)
+			printfname(tf[i].fname);
+		if (!S_ISREG(tf[i].sb.st_mode) ||
+		    r_reg(&(tf[i]), style, off) != 0) {
+			switch(style) {
+			case FBYTES:
+			case RBYTES:
+				(void)bytes(&(tf[i]), off);
+				break;
+			case FLINES:
+			case RLINES:
+				(void)lines(&(tf[i]), off);
+				break;
+			case REVERSE:
+				r_buf(tf[i].fp);
+				break;
+			default:
+				err(1, "Unsupported style");
+			}
 		}
+	}
 }
 
 /*
  * r_reg -- display a regular file in reverse order by line.
  */
 static int
-r_reg(FILE *fp, enum STYLE style, off_t off, struct stat *sbp)
+r_reg(struct tailfile *tf, enum STYLE style, off_t off)
 {
 	off_t start, pos, end;
 	int ch;
 
-	end = sbp->st_size;
+	end = tf->sb.st_size;
 	if (end == 0)
 		return (0);
 
@@ -120,29 +130,29 @@ r_reg(FILE *fp, enum STYLE style, off_t off, struct stat *sbp)
 
 	for (; pos >= start; pos--) {
 		/* A seek per char isn't a problem with a smart stdio */
-		if (fseeko(fp, pos, SEEK_SET) != 0) {
-			ierr();
+		if (fseeko(tf->fp, pos, SEEK_SET) != 0) {
+			ierr(tf->fname);
 			return (0);
 		}
-		if ((ch = getc(fp)) == '\n') {
+		if ((ch = getc(tf->fp)) == '\n') {
 			while (--end > pos) 
-				COPYCHAR(fp, ch);
+				COPYCHAR(tf, ch);
 			end++;
 			if (style == RLINES && --off == 0)
 				break;
 		}
 		else if (ch == EOF) {
-			ierr();
+			ierr(tf->fname);
 			return (0);
 		}
 	}
 	if (pos < start) {
-		if (ch != EOF && ungetc(ch, fp) == EOF) {
-			ierr();
+		if (ch != EOF && ungetc(ch, tf->fp) == EOF) {
+			ierr(tf->fname);
 			return (0);
 		}
 		while (--end >= start)
-			COPYCHAR(fp, ch);
+			COPYCHAR(tf, ch);
 	}
 	return (0);
 }
