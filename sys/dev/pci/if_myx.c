@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_myx.c,v 1.85 2015/10/25 13:04:28 mpi Exp $	*/
+/*	$OpenBSD: if_myx.c,v 1.86 2015/11/19 12:46:08 dlg Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -148,7 +148,6 @@ struct myx_softc {
 	u_int32_t		 sc_tx_count; /* shadows ms_txdonecnt */
 	u_int			 sc_tx_ring_idx;
 
-	u_int			 sc_tx_free;
 	u_int			 sc_tx_prod;
 	u_int			 sc_tx_cons;
 	struct myx_slot		*sc_tx_slots;
@@ -1035,7 +1034,6 @@ myx_up(struct myx_softc *sc)
 	}
 	sc->sc_tx_ring_idx = 0;
 	sc->sc_tx_ring_count = r / sizeof(struct myx_tx_desc);
-	sc->sc_tx_free = sc->sc_tx_ring_count - 1;
 	sc->sc_tx_nsegs = min(16, sc->sc_tx_ring_count / 4); /* magic */
 	sc->sc_tx_count = 0;
 	IFQ_SET_MAXLEN(&ifp->if_snd, sc->sc_tx_ring_count - 1);
@@ -1441,12 +1439,22 @@ myx_start(struct ifnet *ifp)
 	    IFQ_IS_EMPTY(&ifp->if_snd))
 		return;
 
-	cons = prod = sc->sc_tx_prod;
-	free = sc->sc_tx_free;
+	prod = sc->sc_tx_prod;
+	cons = sc->sc_tx_cons;
+
+	/* figure out space */
+	free = prod;
+	if (cons >= prod)
+		free += sc->sc_tx_ring_count;
+	free -= cons;
+
+	/* keep track of our usage */
+	cons = prod;
+
 	used = 0;
 
 	for (;;) {
-		if (used + sc->sc_tx_nsegs > free) {
+		if (used + sc->sc_tx_nsegs + 1 > free) {
 			SET(ifp->if_flags, IFF_OACTIVE);
 			break;
 		}
@@ -1480,8 +1488,6 @@ myx_start(struct ifnet *ifp)
 
 	if (cons == prod)
 		return;
-
-	atomic_sub_int(&sc->sc_tx_free, used);
 
 	ms = &sc->sc_tx_slots[cons];
 	idx = sc->sc_tx_ring_idx;
@@ -1705,7 +1711,6 @@ myx_txeof(struct myx_softc *sc, u_int32_t done_count)
 	} while (++sc->sc_tx_count != done_count);
 
 	sc->sc_tx_cons = cons;
-	atomic_add_int(&sc->sc_tx_free, free);
 }
 
 void
