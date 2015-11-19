@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.11 2013/06/18 17:38:46 robert Exp $
+#	$OpenBSD: Makefile,v 1.12 2015/11/19 19:43:40 tedu Exp $
 #
 # By default, flex will be configured to generate 8-bit scanners only if the
 # -8 flag is given.  If you want it to always generate 8-bit scanners, add
@@ -11,33 +11,37 @@
 #
 # To bootstrap lex, cp initscan.c to scan.c and run make.
 
-PROG=	lex
-CFLAGS+=-I. -I${.CURDIR}
-SRCS=	ccl.c dfa.c ecs.c gen.c main.c misc.c nfa.c parse.c sym.c tblcmp.c \
-	yylex.c
-OBJS+=	scan.o skel.o
-CLEANFILES+=parse.c parse.h scan.c skel.c y.tab.c y.tab.h
-LDADD=	-ll
-DPADD=	${LIBL}
+PROG=   lex
+CFLAGS+=-I. -I${.CURDIR} -DHAVE_CONFIG_H
+SRCS= buf.c ccl.c dfa.c ecs.c filter.c gen.c main.c misc.c \
+	  nfa.c options.c parse.y regex.c scan.l scanflags.c \
+	  scanopt.c skel.c sym.c tables.c tables_shared.c \
+	  tblcmp.c yylex.c
+
+CLEANFILES+=skel.c parse.h
+LDADD+=-lm
 
 MAN = flex.1
 
-LINKS=	${BINDIR}/lex ${BINDIR}/flex \
-	${BINDIR}/lex ${BINDIR}/flex++
-MLINKS=	flex.1 lex.1 flex.1 flex++.1
+LINKS=  ${BINDIR}/lex ${BINDIR}/flex \
+		${BINDIR}/lex ${BINDIR}/flex++
+MLINKS= flex.1 lex.1
 
+VERSION="2.5.39"
+
+# Our yacc is too old to compile parse.y; use bootstrapped parse.c instead
 parse.h parse.c: parse.y
-	${YACC} -d ${.ALLSRC}
-	mv y.tab.c parse.c
-	mv y.tab.h parse.h
+	cp ${.CURDIR}/initparse.c parse.c
+	cp ${.CURDIR}/initparse.h parse.h
 
-skel.c:	flex.skl mkskel.sh
-	sh ${.CURDIR}/mkskel.sh ${.CURDIR}/flex.skl > skel.c
-
-scan.c: scan.l
-	flex -t -p ${.CURDIR}/scan.l > scan.c
-
-scan.o: parse.c
+skel.c: flex.skl mkskel.sh flexint.h tables_shared.h
+	sed -e 's/m4_/m4postproc_/g' -e 's/m4preproc_/m4_/g' \
+		${.CURDIR}/flex.skl | m4 -I${.CURDIR} -P \
+		-DFLEX_MAJOR_VERSION=`echo ${VERSION} | cut -f 1 -d .` \
+		-DFLEX_MINOR_VERSION=`echo ${VERSION} | cut -f 2 -d .` \
+		-DFLEX_SUBMINOR_VERSION=`echo ${VERSION} | cut -f 3 -d .` | \
+		sed -e 's/m4postproc_/m4_/g' | \
+		sh ${.CURDIR}/mkskel.sh  > ${.TARGET}
 
 includes:
 .if !exists(${DESTDIR}/usr/include/g++)

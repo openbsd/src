@@ -1,106 +1,107 @@
-/*	$OpenBSD: parse.y,v 1.8 2003/06/04 17:34:44 millert Exp $	*/
+/*	$OpenBSD: parse.y,v 1.9 2015/11/19 19:43:40 tedu Exp $	*/
 
 /* parse.y - parser for flex input */
 
 %token CHAR NUMBER SECTEND SCDECL XSCDECL NAME PREVCCL EOF_OP
-%token OPTION_OP OPT_OUTFILE OPT_PREFIX OPT_YYCLASS
+%token OPTION_OP OPT_OUTFILE OPT_PREFIX OPT_YYCLASS OPT_HEADER OPT_EXTRA_TYPE
+%token OPT_TABLES
 
 %token CCE_ALNUM CCE_ALPHA CCE_BLANK CCE_CNTRL CCE_DIGIT CCE_GRAPH
 %token CCE_LOWER CCE_PRINT CCE_PUNCT CCE_SPACE CCE_UPPER CCE_XDIGIT
 
+%token CCE_NEG_ALNUM CCE_NEG_ALPHA CCE_NEG_BLANK CCE_NEG_CNTRL CCE_NEG_DIGIT CCE_NEG_GRAPH
+%token CCE_NEG_LOWER CCE_NEG_PRINT CCE_NEG_PUNCT CCE_NEG_SPACE CCE_NEG_UPPER CCE_NEG_XDIGIT
+
+%left CCL_OP_DIFF CCL_OP_UNION
+
+/*
+ *POSIX and AT&T lex place the
+ * precedence of the repeat operator, {}, below that of concatenation.
+ * Thus, ab{3} is ababab.  Most other POSIX utilities use an Extended
+ * Regular Expression (ERE) precedence that has the repeat operator
+ * higher than concatenation.  This causes ab{3} to yield abbb.
+ *
+ * In order to support the POSIX and AT&T precedence and the flex
+ * precedence we define two token sets for the begin and end tokens of
+ * the repeat operator, '{' and '}'.  The lexical scanner chooses
+ * which tokens to return based on whether posix_compat or lex_compat
+ * are specified. Specifying either posix_compat or lex_compat will
+ * cause flex to parse scanner files as per the AT&T and
+ * POSIX-mandated behavior.
+ */
+
+%token BEGIN_REPEAT_POSIX END_REPEAT_POSIX BEGIN_REPEAT_FLEX END_REPEAT_FLEX
+
+
 %{
-/*-
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
- *
- * This code is derived from software contributed to Berkeley by
- * Vern Paxson.
- * 
- * The United States Government has rights in this work pursuant
- * to contract no. DE-AC03-76SF00098 between the United States
- * Department of Energy and the University of California.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- *
- * Neither the name of the University nor the names of its contributors
- * may be used to endorse or promote products derived from this software
- * without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
- * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
- * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE.
- */
+/*  Copyright (c) 1990 The Regents of the University of California. */
+/*  All rights reserved. */
 
-/* $Header: /home/cvs/src/usr.bin/lex/parse.y,v 1.8 2003/06/04 17:34:44 millert Exp $ */
+/*  This code is derived from software contributed to Berkeley by */
+/*  Vern Paxson. */
 
+/*  The United States Government has rights in this work pursuant */
+/*  to contract no. DE-AC03-76SF00098 between the United States */
+/*  Department of Energy and the University of California. */
 
-/* Some versions of bison are broken in that they use alloca() but don't
- * declare it properly.  The following is the patented (just kidding!)
- * #ifdef chud to fix the problem, courtesy of Francois Pinard.
- */
-#ifdef YYBISON
-/* AIX requires this to be the first thing in the file.  What a piece.  */
-# ifdef _AIX
- #pragma alloca
-# endif
-#endif
+/*  This file is part of flex. */
+
+/*  Redistribution and use in source and binary forms, with or without */
+/*  modification, are permitted provided that the following conditions */
+/*  are met: */
+
+/*  1. Redistributions of source code must retain the above copyright */
+/*     notice, this list of conditions and the following disclaimer. */
+/*  2. Redistributions in binary form must reproduce the above copyright */
+/*     notice, this list of conditions and the following disclaimer in the */
+/*     documentation and/or other materials provided with the distribution. */
+
+/*  Neither the name of the University nor the names of its contributors */
+/*  may be used to endorse or promote products derived from this software */
+/*  without specific prior written permission. */
+
+/*  THIS SOFTWARE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR */
+/*  IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED */
+/*  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR */
+/*  PURPOSE. */
 
 #include "flexdef.h"
+#include "tables.h"
 
-/* The remainder of the alloca() cruft has to come after including flexdef.h,
- * so HAVE_ALLOCA_H is (possibly) defined.
- */
-#ifdef YYBISON
-# ifdef __GNUC__
-#  ifndef alloca
-#   define alloca __builtin_alloca
-#  endif
-# else
-#  if HAVE_ALLOCA_H
-#   include <alloca.h>
-#  else
-#   ifdef __hpux
-void *alloca ();
-#   else
-#    ifdef __TURBOC__
-#     include <malloc.h>
-#    else
-char *alloca ();
-#    endif
-#   endif
-#  endif
-# endif
-#endif
-
-/* Bletch, ^^^^ that was ugly! */
-
-
-int pat, scnum, eps, headcnt, trailcnt, anyccl, lastchar, i, rulelen;
+int pat, scnum, eps, headcnt, trailcnt, lastchar, i, rulelen;
 int trlcontxt, xcluflg, currccl, cclsorted, varlength, variable_trail_rule;
 
 int *scon_stk;
 int scon_stk_ptr;
 
 static int madeany = false;  /* whether we've made the '.' character class */
+static int ccldot, cclany;
 int previous_continued_action;	/* whether the previous rule's action was '|' */
+
+#define format_warn3(fmt, a1, a2) \
+	do{ \
+        char fw3_msg[MAXLINE];\
+        snprintf( fw3_msg, MAXLINE,(fmt), (a1), (a2) );\
+        warn( fw3_msg );\
+	}while(0)
 
 /* Expand a POSIX character class expression. */
 #define CCL_EXPR(func) \
-	{ \
+	do{ \
 	int c; \
 	for ( c = 0; c < csize; ++c ) \
 		if ( isascii(c) && func(c) ) \
 			ccladd( currccl, c ); \
-	}
+	}while(0)
+
+/* negated class */
+#define CCL_NEG_EXPR(func) \
+	do{ \
+	int c; \
+	for ( c = 0; c < csize; ++c ) \
+		if ( !func(c) ) \
+			ccladd( currccl, c ); \
+	}while(0)
 
 /* While POSIX defines isblank(), it's not ANSI C. */
 #define IS_BLANK(c) ((c) == ' ' || (c) == '\t')
@@ -130,7 +131,7 @@ goal		:  initlex sect1 sect1end sect2 initforrule
 			 */
 			default_rule = num_rules;
 
-			finish_rule( def_rule, false, 0, 0 );
+			finish_rule( def_rule, false, 0, 0, 0);
 
 			for ( i = 1; i <= lastsc; ++i )
 				scset[i] = mkbranch( scset[i], def_rule );
@@ -157,7 +158,7 @@ sect1		:  sect1 startconddecl namelist1
 		|  sect1 options
 		|
 		|  error
-			{ synerr( "unknown error processing section 1" ); }
+			{ synerr( _("unknown error processing section 1") ); }
 		;
 
 sect1end	:  SECTEND
@@ -182,7 +183,7 @@ namelist1	:  namelist1 NAME
 			{ scinstal( nmstr, xcluflg ); }
 
 		|  error
-			{ synerr( "bad start condition list" ); }
+			{ synerr( _("bad start condition list") ); }
 		;
 
 options		:  OPTION_OP optionlist
@@ -197,10 +198,16 @@ option		:  OPT_OUTFILE '=' NAME
 			outfilename = copy_string( nmstr );
 			did_outfilename = 1;
 			}
+		|  OPT_EXTRA_TYPE '=' NAME
+			{ extra_type = copy_string( nmstr ); }
 		|  OPT_PREFIX '=' NAME
 			{ prefix = copy_string( nmstr ); }
 		|  OPT_YYCLASS '=' NAME
 			{ yyclass = copy_string( nmstr ); }
+		|  OPT_HEADER '=' NAME
+			{ headerfilename = copy_string( nmstr ); }
+	    |  OPT_TABLES '=' NAME
+            { tablesext = true; tablesfilename = copy_string( nmstr ); }
 		;
 
 sect2		:  sect2 scon initforrule flexrule '\n'
@@ -227,7 +234,7 @@ flexrule	:  '^' rule
 			{
 			pat = $2;
 			finish_rule( pat, variable_trail_rule,
-				headcnt, trailcnt );
+				headcnt, trailcnt , previous_continued_action);
 
 			if ( scon_stk_ptr > 0 )
 				{
@@ -263,7 +270,7 @@ flexrule	:  '^' rule
 			{
 			pat = $1;
 			finish_rule( pat, variable_trail_rule,
-				headcnt, trailcnt );
+				headcnt, trailcnt , previous_continued_action);
 
 			if ( scon_stk_ptr > 0 )
 				{
@@ -307,7 +314,7 @@ flexrule	:  '^' rule
 			}
 
 		|  error
-			{ synerr( "unrecognized rule" ); }
+			{ synerr( _("unrecognized rule") ); }
 		;
 
 scon_stk_ptr	:
@@ -343,7 +350,7 @@ namelist2	:  namelist2 ',' sconname
 		|  sconname
 
 		|  error
-			{ synerr( "bad start condition list" ); }
+			{ synerr( _("bad start condition list") ); }
 		;
 
 sconname	:  NAME
@@ -399,6 +406,7 @@ rule		:  re2 re
 				/* Mark as variable. */
 				varlength = true;
 				headcnt = 0;
+
 				}
 
 			if ( lex_compat || (varlength && headcnt == 0) )
@@ -425,7 +433,7 @@ rule		:  re2 re
 			}
 
 		|  re2 re '$'
-			{ synerr( "trailing context used twice" ); }
+			{ synerr( _("trailing context used twice") ); }
 
 		|  re '$'
 			{
@@ -438,7 +446,7 @@ rule		:  re2 re
 
 			if ( trlcontxt )
 				{
-				synerr( "trailing context used twice" );
+				synerr( _("trailing context used twice") );
 				$$ = mkstate( SYM_EPSILON );
 				}
 
@@ -507,7 +515,7 @@ re2		:  re '/'
 			 */
 
 			if ( trlcontxt )
-				synerr( "trailing context used twice" );
+				synerr( _("trailing context used twice") );
 			else
 				trlcontxt = true;
 
@@ -536,6 +544,69 @@ series		:  series singleton
 
 		|  singleton
 			{ $$ = $1; }
+
+		|  series BEGIN_REPEAT_POSIX NUMBER ',' NUMBER END_REPEAT_POSIX
+			{
+			varlength = true;
+
+			if ( $3 > $5 || $3 < 0 )
+				{
+				synerr( _("bad iteration values") );
+				$$ = $1;
+				}
+			else
+				{
+				if ( $3 == 0 )
+					{
+					if ( $5 <= 0 )
+						{
+						synerr(
+						_("bad iteration values") );
+						$$ = $1;
+						}
+					else
+						$$ = mkopt(
+							mkrep( $1, 1, $5 ) );
+					}
+				else
+					$$ = mkrep( $1, $3, $5 );
+				}
+			}
+
+		|  series BEGIN_REPEAT_POSIX NUMBER ',' END_REPEAT_POSIX
+			{
+			varlength = true;
+
+			if ( $3 <= 0 )
+				{
+				synerr( _("iteration value must be positive") );
+				$$ = $1;
+				}
+
+			else
+				$$ = mkrep( $1, $3, INFINITE_REPEAT );
+			}
+
+		|  series BEGIN_REPEAT_POSIX NUMBER END_REPEAT_POSIX
+			{
+			/* The series could be something like "(foo)",
+			 * in which case we have no idea what its length
+			 * is, so we punt here.
+			 */
+			varlength = true;
+
+			if ( $3 <= 0 )
+				{
+				  synerr( _("iteration value must be positive")
+					  );
+				$$ = $1;
+				}
+
+			else
+				$$ = link_machines( $1,
+						copysingl( $1, $3 - 1 ) );
+			}
+
 		;
 
 singleton	:  singleton '*'
@@ -557,13 +628,13 @@ singleton	:  singleton '*'
 			$$ = mkopt( $1 );
 			}
 
-		|  singleton '{' NUMBER ',' NUMBER '}'
+		|  singleton BEGIN_REPEAT_FLEX NUMBER ',' NUMBER END_REPEAT_FLEX
 			{
 			varlength = true;
 
 			if ( $3 > $5 || $3 < 0 )
 				{
-				synerr( "bad iteration values" );
+				synerr( _("bad iteration values") );
 				$$ = $1;
 				}
 			else
@@ -573,7 +644,7 @@ singleton	:  singleton '*'
 					if ( $5 <= 0 )
 						{
 						synerr(
-						"bad iteration values" );
+						_("bad iteration values") );
 						$$ = $1;
 						}
 					else
@@ -585,21 +656,21 @@ singleton	:  singleton '*'
 				}
 			}
 
-		|  singleton '{' NUMBER ',' '}'
+		|  singleton BEGIN_REPEAT_FLEX NUMBER ',' END_REPEAT_FLEX
 			{
 			varlength = true;
 
 			if ( $3 <= 0 )
 				{
-				synerr( "iteration value must be positive" );
+				synerr( _("iteration value must be positive") );
 				$$ = $1;
 				}
 
 			else
-				$$ = mkrep( $1, $3, INFINITY );
+				$$ = mkrep( $1, $3, INFINITE_REPEAT );
 			}
 
-		|  singleton '{' NUMBER '}'
+		|  singleton BEGIN_REPEAT_FLEX NUMBER END_REPEAT_FLEX
 			{
 			/* The singleton could be something like "(foo)",
 			 * in which case we have no idea what its length
@@ -609,7 +680,7 @@ singleton	:  singleton '*'
 
 			if ( $3 <= 0 )
 				{
-				synerr( "iteration value must be positive" );
+				synerr( _("iteration value must be positive") );
 				$$ = $1;
 				}
 
@@ -623,31 +694,40 @@ singleton	:  singleton '*'
 			if ( ! madeany )
 				{
 				/* Create the '.' character class. */
-				anyccl = cclinit();
-				ccladd( anyccl, '\n' );
-				cclnegate( anyccl );
+                    ccldot = cclinit();
+                    ccladd( ccldot, '\n' );
+                    cclnegate( ccldot );
 
-				if ( useecs )
-					mkeccl( ccltbl + cclmap[anyccl],
-						ccllen[anyccl], nextecm,
-						ecgroup, csize, csize );
+                    if ( useecs )
+                        mkeccl( ccltbl + cclmap[ccldot],
+                            ccllen[ccldot], nextecm,
+                            ecgroup, csize, csize );
+
+				/* Create the (?s:'.') character class. */
+                    cclany = cclinit();
+                    cclnegate( cclany );
+
+                    if ( useecs )
+                        mkeccl( ccltbl + cclmap[cclany],
+                            ccllen[cclany], nextecm,
+                            ecgroup, csize, csize );
 
 				madeany = true;
 				}
 
 			++rulelen;
 
-			$$ = mkstate( -anyccl );
+            if (sf_dot_all())
+                $$ = mkstate( -cclany );
+            else
+                $$ = mkstate( -ccldot );
 			}
 
 		|  fullccl
 			{
-			if ( ! cclsorted )
-				/* Sort characters for fast searching.  We
-				 * use a shell sort since this list could
-				 * be large.
+				/* Sort characters for fast searching.
 				 */
-				cshell( ccltbl + cclmap[$1], ccllen[$1], true );
+				qsort( ccltbl + cclmap[$1], ccllen[$1], sizeof (*ccltbl), cclcmp );
 
 			if ( useecs )
 				mkeccl( ccltbl + cclmap[$1], ccllen[$1],
@@ -655,12 +735,18 @@ singleton	:  singleton '*'
 
 			++rulelen;
 
+			if (ccl_has_nl[$1])
+				rule_has_nl[num_rules] = true;
+
 			$$ = mkstate( -$1 );
 			}
 
 		|  PREVCCL
 			{
 			++rulelen;
+
+			if (ccl_has_nl[$1])
+				rule_has_nl[num_rules] = true;
 
 			$$ = mkstate( -$1 );
 			}
@@ -675,15 +761,25 @@ singleton	:  singleton '*'
 			{
 			++rulelen;
 
-			if ( caseins && $1 >= 'A' && $1 <= 'Z' )
-				$1 = clower( $1 );
+			if ($1 == nlch)
+				rule_has_nl[num_rules] = true;
 
-			$$ = mkstate( $1 );
+            if (sf_case_ins() && has_case($1))
+                /* create an alternation, as in (a|A) */
+                $$ = mkor (mkstate($1), mkstate(reverse_case($1)));
+            else
+                $$ = mkstate( $1 );
 			}
 		;
+fullccl:
+        fullccl CCL_OP_DIFF  braceccl  { $$ = ccl_set_diff  ($1, $3); }
+    |   fullccl CCL_OP_UNION braceccl  { $$ = ccl_set_union ($1, $3); }
+    |   braceccl
+    ;
 
-fullccl		:  '[' ccl ']'
-			{ $$ = $2; }
+braceccl: 
+
+            '[' ccl ']' { $$ = $2; }
 
 		|  '[' '^' ccl ']'
 			{
@@ -694,16 +790,35 @@ fullccl		:  '[' ccl ']'
 
 ccl		:  ccl CHAR '-' CHAR
 			{
-			if ( caseins )
-				{
-				if ( $2 >= 'A' && $2 <= 'Z' )
-					$2 = clower( $2 );
-				if ( $4 >= 'A' && $4 <= 'Z' )
-					$4 = clower( $4 );
-				}
+
+			if (sf_case_ins())
+			  {
+
+			    /* If one end of the range has case and the other
+			     * does not, or the cases are different, then we're not
+			     * sure what range the user is trying to express.
+			     * Examples: [@-z] or [S-t]
+			     */
+			    if (has_case ($2) != has_case ($4)
+				     || (has_case ($2) && (b_islower ($2) != b_islower ($4)))
+				     || (has_case ($2) && (b_isupper ($2) != b_isupper ($4))))
+			      format_warn3 (
+			      _("the character range [%c-%c] is ambiguous in a case-insensitive scanner"),
+					    $2, $4);
+
+			    /* If the range spans uppercase characters but not
+			     * lowercase (or vice-versa), then should we automatically
+			     * include lowercase characters in the range?
+			     * Example: [@-_] spans [a-z] but not [A-Z]
+			     */
+			    else if (!has_case ($2) && !has_case ($4) && !range_covers_case ($2, $4))
+			      format_warn3 (
+			      _("the character range [%c-%c] is ambiguous in a case-insensitive scanner"),
+					    $2, $4);
+			  }
 
 			if ( $2 > $4 )
-				synerr( "negative range in character class" );
+				synerr( _("negative range in character class") );
 
 			else
 				{
@@ -715,6 +830,19 @@ ccl		:  ccl CHAR '-' CHAR
 				 */
 				cclsorted = cclsorted && ($2 > lastchar);
 				lastchar = $4;
+
+                /* Do it again for upper/lowercase */
+                if (sf_case_ins() && has_case($2) && has_case($4)){
+                    $2 = reverse_case ($2);
+                    $4 = reverse_case ($4);
+                    
+                    for ( i = $2; i <= $4; ++i )
+                        ccladd( $1, i );
+
+                    cclsorted = cclsorted && ($2 > lastchar);
+                    lastchar = $4;
+                }
+
 				}
 
 			$$ = $1;
@@ -722,12 +850,19 @@ ccl		:  ccl CHAR '-' CHAR
 
 		|  ccl CHAR
 			{
-			if ( caseins && $2 >= 'A' && $2 <= 'Z' )
-				$2 = clower( $2 );
-
 			ccladd( $1, $2 );
 			cclsorted = cclsorted && ($2 > lastchar);
 			lastchar = $2;
+
+            /* Do it again for upper/lowercase */
+            if (sf_case_ins() && has_case($2)){
+                $2 = reverse_case ($2);
+                ccladd ($1, $2);
+
+                cclsorted = cclsorted && ($2 > lastchar);
+                lastchar = $2;
+            }
+
 			$$ = $1;
 			}
 
@@ -746,33 +881,65 @@ ccl		:  ccl CHAR '-' CHAR
 			}
 		;
 
-ccl_expr:	   CCE_ALNUM	{ CCL_EXPR(isalnum) }
-		|  CCE_ALPHA	{ CCL_EXPR(isalpha) }
-		|  CCE_BLANK	{ CCL_EXPR(IS_BLANK) }
-		|  CCE_CNTRL	{ CCL_EXPR(iscntrl) }
-		|  CCE_DIGIT	{ CCL_EXPR(isdigit) }
-		|  CCE_GRAPH	{ CCL_EXPR(isgraph) }
-		|  CCE_LOWER	{ CCL_EXPR(islower) }
-		|  CCE_PRINT	{ CCL_EXPR(isprint) }
-		|  CCE_PUNCT	{ CCL_EXPR(ispunct) }
-		|  CCE_SPACE	{ CCL_EXPR(isspace) }
+ccl_expr:	   
+           CCE_ALNUM	{ CCL_EXPR(isalnum); }
+		|  CCE_ALPHA	{ CCL_EXPR(isalpha); }
+		|  CCE_BLANK	{ CCL_EXPR(IS_BLANK); }
+		|  CCE_CNTRL	{ CCL_EXPR(iscntrl); }
+		|  CCE_DIGIT	{ CCL_EXPR(isdigit); }
+		|  CCE_GRAPH	{ CCL_EXPR(isgraph); }
+		|  CCE_LOWER	{ 
+                          CCL_EXPR(islower);
+                          if (sf_case_ins())
+                              CCL_EXPR(isupper);
+                        }
+		|  CCE_PRINT	{ CCL_EXPR(isprint); }
+		|  CCE_PUNCT	{ CCL_EXPR(ispunct); }
+		|  CCE_SPACE	{ CCL_EXPR(isspace); }
+		|  CCE_XDIGIT	{ CCL_EXPR(isxdigit); }
 		|  CCE_UPPER	{
-				if ( caseins )
-					CCL_EXPR(islower)
-				else
-					CCL_EXPR(isupper)
+                    CCL_EXPR(isupper);
+                    if (sf_case_ins())
+                        CCL_EXPR(islower);
 				}
-		|  CCE_XDIGIT	{ CCL_EXPR(isxdigit) }
+
+        |  CCE_NEG_ALNUM	{ CCL_NEG_EXPR(isalnum); }
+		|  CCE_NEG_ALPHA	{ CCL_NEG_EXPR(isalpha); }
+		|  CCE_NEG_BLANK	{ CCL_NEG_EXPR(IS_BLANK); }
+		|  CCE_NEG_CNTRL	{ CCL_NEG_EXPR(iscntrl); }
+		|  CCE_NEG_DIGIT	{ CCL_NEG_EXPR(isdigit); }
+		|  CCE_NEG_GRAPH	{ CCL_NEG_EXPR(isgraph); }
+		|  CCE_NEG_PRINT	{ CCL_NEG_EXPR(isprint); }
+		|  CCE_NEG_PUNCT	{ CCL_NEG_EXPR(ispunct); }
+		|  CCE_NEG_SPACE	{ CCL_NEG_EXPR(isspace); }
+		|  CCE_NEG_XDIGIT	{ CCL_NEG_EXPR(isxdigit); }
+		|  CCE_NEG_LOWER	{ 
+				if ( sf_case_ins() )
+					warn(_("[:^lower:] is ambiguous in case insensitive scanner"));
+				else
+					CCL_NEG_EXPR(islower);
+				}
+		|  CCE_NEG_UPPER	{
+				if ( sf_case_ins() )
+					warn(_("[:^upper:] ambiguous in case insensitive scanner"));
+				else
+					CCL_NEG_EXPR(isupper);
+				}
 		;
 		
 string		:  string CHAR
 			{
-			if ( caseins && $2 >= 'A' && $2 <= 'Z' )
-				$2 = clower( $2 );
+			if ( $2 == nlch )
+				rule_has_nl[num_rules] = true;
 
 			++rulelen;
 
-			$$ = link_machines( $1, mkstate( $2 ) );
+            if (sf_case_ins() && has_case($2))
+                $$ = mkor (mkstate($2), mkstate(reverse_case($2)));
+            else
+                $$ = mkstate ($2);
+
+			$$ = link_machines( $1, $$);
 			}
 
 		|
@@ -788,7 +955,7 @@ string		:  string CHAR
 
 void build_eof_action()
 	{
-	register int i;
+	int i;
 	char action_text[MAXLINE];
 
 	for ( i = 1; i <= scon_stk_ptr; ++i )
@@ -801,8 +968,11 @@ void build_eof_action()
 		else
 			{
 			sceof[scon_stk[i]] = true;
-			snprintf( action_text, sizeof action_text,
-				"case YY_STATE_EOF(%s):\n",
+
+			if (previous_continued_action /* && previous action was regular */)
+				add_action("YY_RULE_SETUP\n");
+
+			snprintf( action_text, sizeof(action_text), "case YY_STATE_EOF(%s):\n",
 				scname[scon_stk[i]] );
 			add_action( action_text );
 			}
@@ -823,11 +993,11 @@ void build_eof_action()
 /* format_synerr - write out formatted syntax error */
 
 void format_synerr( msg, arg )
-char msg[], arg[];
+const char *msg, arg[];
 	{
 	char errmsg[MAXLINE];
 
-	(void) snprintf( errmsg, sizeof errmsg, msg, arg );
+	(void) snprintf( errmsg, sizeof(errmsg), msg, arg );
 	synerr( errmsg );
 	}
 
@@ -835,7 +1005,7 @@ char msg[], arg[];
 /* synerr - report a syntax error */
 
 void synerr( str )
-char str[];
+const char *str;
 	{
 	syntaxerror = true;
 	pinpoint_message( str );
@@ -845,11 +1015,11 @@ char str[];
 /* format_warn - write out formatted warning */
 
 void format_warn( msg, arg )
-char msg[], arg[];
+const char *msg, arg[];
 	{
 	char warn_msg[MAXLINE];
 
-	(void) snprintf( warn_msg, sizeof warn_msg, msg, arg );
+	snprintf( warn_msg, sizeof(warn_msg), msg, arg );
 	warn( warn_msg );
 	}
 
@@ -857,7 +1027,7 @@ char msg[], arg[];
 /* warn - report a warning, unless -w was given */
 
 void warn( str )
-char str[];
+const char *str;
 	{
 	line_warning( str, linenum );
 	}
@@ -867,11 +1037,11 @@ char str[];
  */
 
 void format_pinpoint_message( msg, arg )
-char msg[], arg[];
+const char *msg, arg[];
 	{
 	char errmsg[MAXLINE];
 
-	(void) snprintf( errmsg, sizeof errmsg, msg, arg );
+	snprintf( errmsg, sizeof(errmsg), msg, arg );
 	pinpoint_message( errmsg );
 	}
 
@@ -879,7 +1049,7 @@ char msg[], arg[];
 /* pinpoint_message - write out a message, pinpointing its location */
 
 void pinpoint_message( str )
-char str[];
+const char *str;
 	{
 	line_pinpoint( str, linenum );
 	}
@@ -888,14 +1058,14 @@ char str[];
 /* line_warning - report a warning at a given line, unless -w was given */
 
 void line_warning( str, line )
-char str[];
+const char *str;
 int line;
 	{
 	char warning[MAXLINE];
 
 	if ( ! nowarn )
 		{
-		snprintf( warning, sizeof warning, "warning, %s", str );
+		snprintf( warning, sizeof(warning), "warning, %s", str );
 		line_pinpoint( warning, line );
 		}
 	}
@@ -904,10 +1074,10 @@ int line;
 /* line_pinpoint - write out a message, pinpointing it at the given line */
 
 void line_pinpoint( str, line )
-char str[];
+const char *str;
 int line;
 	{
-	fprintf( stderr, "\"%s\", line %d: %s\n", infilename, line, str );
+	fprintf( stderr, "%s:%d: %s\n", infilename, line, str );
 	}
 
 
@@ -916,6 +1086,6 @@ int line;
  */
 
 void yyerror( msg )
-char msg[];
+const char *msg;
 	{
 	}
