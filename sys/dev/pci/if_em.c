@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.310 2015/10/29 03:19:42 jsg Exp $ */
+/* $OpenBSD: if_em.c,v 1.311 2015/11/20 03:35:23 dlg Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -605,16 +605,17 @@ em_start(struct ifnet *ifp)
 	}
 
 	for (;;) {
-		IFQ_POLL(&ifp->if_snd, m_head);
+		m_head = ifq_deq_begin(&ifp->if_snd);
 		if (m_head == NULL)
 			break;
 
 		if (em_encap(sc, m_head)) {
+			ifq_deq_rollback(&ifp->if_snd, m_head);
 			ifp->if_flags |= IFF_OACTIVE;
 			break;
 		}
 
-		IFQ_DEQUEUE(&ifp->if_snd, m_head);
+		ifq_deq_commit(&ifp->if_snd, m_head);
 
 #if NBPFILTER > 0
 		/* Send a copy of the frame to the BPF listener */

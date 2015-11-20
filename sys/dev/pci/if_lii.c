@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lii.c,v 1.38 2015/10/25 13:04:28 mpi Exp $	*/
+/*	$OpenBSD: if_lii.c,v 1.39 2015/11/20 03:35:23 dlg Exp $	*/
 
 /*
  *  Copyright (c) 2007 The NetBSD Foundation.
@@ -798,12 +798,13 @@ lii_start(struct ifnet *ifp)
 		return;
 
 	for (;;) {
-		IFQ_POLL(&ifp->if_snd, m0);
+		m0 = ifq_deq_begin(&ifp->if_snd);
 		if (m0 == NULL)
 			break;
 
 		if (!sc->sc_free_tx_slots ||
 		    lii_free_tx_space(sc) < m0->m_pkthdr.len) {
+			ifq_deq_rollback(&ifp->if_snd, m0);
 			ifp->if_flags |= IFF_OACTIVE;
 			break;
 		}
@@ -819,7 +820,7 @@ lii_start(struct ifnet *ifp)
 
 		LII_WRITE_2(sc, LII_MB_TXD_WR_IDX, sc->sc_txd_cur/4);
 
-		IFQ_DEQUEUE(&ifp->if_snd, m0);
+		ifq_deq_commit(&ifp->if_snd, m0);
 
 #if NBPFILTER > 0
 		if (ifp->if_bpf != NULL)

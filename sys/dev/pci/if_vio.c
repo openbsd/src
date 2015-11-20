@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vio.c,v 1.34 2015/10/25 13:04:28 mpi Exp $	*/
+/*	$OpenBSD: if_vio.c,v 1.35 2015/11/20 03:35:23 dlg Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch, Alexander Fiveg.
@@ -738,12 +738,13 @@ again:
 		int slot, r;
 		struct virtio_net_hdr *hdr;
 
-		IFQ_POLL(&ifp->if_snd, m);
+		m = ifq_deq_begin(&ifp->if_snd);
 		if (m == NULL)
 			break;
 
 		r = virtio_enqueue_prep(vq, &slot);
 		if (r == EAGAIN) {
+			ifq_deq_rollback(&ifp->if_snd, m);
 			ifp->if_flags |= IFF_OACTIVE;
 			break;
 		}
@@ -780,7 +781,7 @@ again:
 		r = vio_encap(sc, slot, m);
 		if (r != 0) {
 			virtio_enqueue_abort(vq, slot);
-			IFQ_DEQUEUE(&ifp->if_snd, m);
+			ifq_deq_commit(&ifp->if_snd, m);
 			m_freem(m);
 			ifp->if_oerrors++;
 			continue;
@@ -790,11 +791,12 @@ again:
 		if (r != 0) {
 			bus_dmamap_unload(vsc->sc_dmat,
 			    sc->sc_tx_dmamaps[slot]);
+			ifq_deq_rollback(&ifp->if_snd, m);
 			sc->sc_tx_mbufs[slot] = NULL;
 			ifp->if_flags |= IFF_OACTIVE;
 			break;
 		}
-		IFQ_DEQUEUE(&ifp->if_snd, m);
+		ifq_deq_commit(&ifp->if_snd, m);
 
 		bus_dmamap_sync(vsc->sc_dmat, sc->sc_tx_dmamaps[slot], 0,
 		    sc->sc_tx_dmamaps[slot]->dm_mapsize, BUS_DMASYNC_PREWRITE);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.127 2015/11/04 00:20:35 dlg Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.128 2015/11/20 03:35:23 dlg Exp $	*/
 
 /******************************************************************************
 
@@ -378,16 +378,17 @@ ixgbe_start(struct ifnet * ifp)
 	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
 	for (;;) {
-		IFQ_POLL(&ifp->if_snd, m_head);
+		m_head = ifq_deq_begin(&ifp->if_snd);
 		if (m_head == NULL)
 			break;
 
 		if (ixgbe_encap(txr, m_head)) {
+			ifq_deq_rollback(&ifp->if_snd, m_head);
 			ifp->if_flags |= IFF_OACTIVE;
 			break;
 		}
 
-		IFQ_DEQUEUE(&ifp->if_snd, m_head);
+		ifq_deq_commit(&ifp->if_snd, m_head);
 
 #if NBPFILTER > 0
 		if (ifp->if_bpf)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cdcef.c,v 1.38 2015/10/25 12:11:56 mpi Exp $	*/
+/*	$OpenBSD: if_cdcef.c,v 1.39 2015/11/20 03:35:23 dlg Exp $	*/
 
 /*
  * Copyright (c) 2007 Dale Rahn <drahn@openbsd.org>
@@ -277,7 +277,7 @@ cdcef_start(struct ifnet *ifp)
 	if(ifp->if_flags & IFF_OACTIVE)
 		return;
 
-	IFQ_POLL(&ifp->if_snd, m_head);
+	m_head = ifq_deq_begin(&ifp->if_snd, m_head);
 	if (m_head == NULL) {
 		return;
 	}
@@ -287,17 +287,18 @@ cdcef_start(struct ifnet *ifp)
 		 * drop packet because receiver is not listening,
 		 * or if packet is larger than xmit buffer
 		 */
-		IFQ_DEQUEUE(&ifp->if_snd, m_head);
+		ifq_deq_commit(&ifp->if_snd, m_head);
 		m_freem(m_head);
 		return;
 	}
 
 	if (cdcef_encap(sc, m_head, 0)) {
+		ifq_deq_rollback(&ifp->if_snd, m_head);
 		ifp->if_flags |= IFF_OACTIVE;
 		return;
 	}
 
-	IFQ_DEQUEUE(&ifp->if_snd, m_head);
+	ifq_deq_commit(&ifp->if_snd, m_head);
 
 #if NBPFILTER > 0
 	if (ifp->if_bpf)

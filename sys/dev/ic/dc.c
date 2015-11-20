@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.145 2015/10/25 12:48:46 mpi Exp $	*/
+/*	$OpenBSD: dc.c,v 1.146 2015/11/20 03:35:22 dlg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -2618,7 +2618,7 @@ dc_start(struct ifnet *ifp)
 	idx = sc->dc_cdata.dc_tx_prod;
 
 	while(sc->dc_cdata.dc_tx_chain[idx].sd_mbuf == NULL) {
-		IFQ_POLL(&ifp->if_snd, m_head);
+		m_head = ifq_deq_begin(&ifp->if_snd);
 		if (m_head == NULL)
 			break;
 
@@ -2628,7 +2628,7 @@ dc_start(struct ifnet *ifp)
 			/* note: dc_coal breaks the poll-and-dequeue rule.
 			 * if dc_coal fails, we lose the packet.
 			 */
-			IFQ_DEQUEUE(&ifp->if_snd, m_head);
+			ifq_deq_commit(&ifp->if_snd, m_head);
 			if (dc_coal(sc, &m_head)) {
 				ifp->if_flags |= IFF_OACTIVE;
 				break;
@@ -2636,6 +2636,9 @@ dc_start(struct ifnet *ifp)
 		}
 
 		if (dc_encap(sc, m_head, &idx)) {
+			if ((sc->dc_flags & DC_TX_COALESCE) == 0)
+				ifq_deq_rollback(&ifp->if_snd, m_head);
+
 			ifp->if_flags |= IFF_OACTIVE;
 			break;
 		}
@@ -2644,7 +2647,7 @@ dc_start(struct ifnet *ifp)
 		if (sc->dc_flags & DC_TX_COALESCE) {
 			/* if mbuf is coalesced, it is already dequeued */
 		} else
-			IFQ_DEQUEUE(&ifp->if_snd, m_head);
+			ifq_deq_commit(&ifp->if_snd, m_head);
 
 		/*
 		 * If there's a BPF listener, bounce a copy of this frame

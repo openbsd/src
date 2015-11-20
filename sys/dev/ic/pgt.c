@@ -1,4 +1,4 @@
-/*	$OpenBSD: pgt.c,v 1.79 2015/10/25 12:48:46 mpi Exp $  */
+/*	$OpenBSD: pgt.c,v 1.80 2015/11/20 03:35:22 dlg Exp $  */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -2120,15 +2120,17 @@ pgt_start(struct ifnet *ifp)
 	for (; sc->sc_dirtyq_count[PGT_QUEUE_DATA_LOW_TX] <
 	    PGT_QUEUE_FULL_THRESHOLD && !IFQ_IS_EMPTY(&ifp->if_snd);) {
 		pd = TAILQ_FIRST(&sc->sc_freeq[PGT_QUEUE_DATA_LOW_TX]);
-		IFQ_POLL(&ifp->if_snd, m);
+		m = ifq_deq_begin(&ifp->if_snd);
 		if (m == NULL)
 			break;
 		if (m->m_pkthdr.len <= PGT_FRAG_SIZE) {
 			error = pgt_load_tx_desc_frag(sc,
 			    PGT_QUEUE_DATA_LOW_TX, pd);
-			if (error)
+			if (error) {
+				ifq_deq_rollback(&ifp->if_snd, m);
 				break;
-			IFQ_DEQUEUE(&ifp->if_snd, m);
+			}
+			ifq_deq_commit(&ifp->if_snd, m);
 			m_copydata(m, 0, m->m_pkthdr.len, pd->pd_mem);
 			pgt_desc_transmit(sc, PGT_QUEUE_DATA_LOW_TX,
 			    pd, m->m_pkthdr.len, 0);
@@ -2142,8 +2144,10 @@ pgt_start(struct ifnet *ifp)
 			 * even support a full two.)
 			 */
 			if (sc->sc_dirtyq_count[PGT_QUEUE_DATA_LOW_TX] + 2 >
-			    PGT_QUEUE_FULL_THRESHOLD)
+			    PGT_QUEUE_FULL_THRESHOLD) {
+				ifq_deq_rollback(&ifp->if_snd, m);
 				break;
+			}
 			pd2 = TAILQ_NEXT(pd, pd_link);
 			error = pgt_load_tx_desc_frag(sc,
 			    PGT_QUEUE_DATA_LOW_TX, pd);
@@ -2157,9 +2161,11 @@ pgt_start(struct ifnet *ifp)
 					    pd_link);
 				}
 			}
-			if (error)
+			if (error) {
+				ifq_deq_rollback(&ifp->if_snd, m);
 				break;
-			IFQ_DEQUEUE(&ifp->if_snd, m);
+			}
+			ifq_deq_commit(&ifp->if_snd, m);
 			m_copydata(m, 0, PGT_FRAG_SIZE, pd->pd_mem);
 			pgt_desc_transmit(sc, PGT_QUEUE_DATA_LOW_TX,
 			    pd, PGT_FRAG_SIZE, 1);
@@ -2168,7 +2174,7 @@ pgt_start(struct ifnet *ifp)
 			pgt_desc_transmit(sc, PGT_QUEUE_DATA_LOW_TX,
 			    pd2, m->m_pkthdr.len - PGT_FRAG_SIZE, 0);
 		} else {
-			IFQ_DEQUEUE(&ifp->if_snd, m);
+			ifq_deq_commit(&ifp->if_snd, m);
 			ifp->if_oerrors++;
 			m_freem(m);
 			m = NULL;

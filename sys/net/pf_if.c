@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_if.c,v 1.81 2015/10/30 11:33:55 mikeb Exp $ */
+/*	$OpenBSD: pf_if.c,v 1.82 2015/11/20 03:35:23 dlg Exp $ */
 
 /*
  * Copyright 2005 Henning Brauer <henning@openbsd.org>
@@ -257,11 +257,6 @@ pfi_detach_ifnet(struct ifnet *ifp)
 	pfi_update++;
 	hook_disestablish(ifp->if_addrhooks, kif->pfik_ah_cookie);
 	pfi_kif_update(kif);
-
-	if (HFSC_ENABLED(&ifp->if_snd)) {
-		pf_remove_queues(ifp);
-		pf_free_queues(pf_queues_active, ifp);
-	}
 
 	kif->pfik_ifp = NULL;
 	ifp->if_pf_kif = NULL;

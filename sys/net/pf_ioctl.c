@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.291 2015/10/13 19:32:31 sashan Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.292 2015/11/20 03:35:23 dlg Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -85,8 +85,10 @@ int			 pfclose(dev_t, int, int, struct proc *);
 int			 pfioctl(dev_t, u_long, caddr_t, int, struct proc *);
 int			 pf_begin_rules(u_int32_t *, const char *);
 int			 pf_rollback_rules(u_int32_t, char *);
-int			 pf_create_queues(void);
+int			 pf_enable_queues(void);
+void			 pf_remove_queues(void);
 int			 pf_commit_queues(void);
+void			 pf_free_queues(struct pf_queuehead *);
 int			 pf_setup_pfsync_matching(struct pf_ruleset *);
 void			 pf_hash_rule(MD5_CTX *, struct pf_rule *);
 void			 pf_hash_rule_addr(MD5_CTX *, struct pf_rule_addr *);
@@ -517,68 +519,144 @@ pf_rollback_rules(u_int32_t ticket, char *anchor)
 	/* queue defs only in the main ruleset */
 	if (anchor[0])
 		return (0);
-	return (pf_free_queues(pf_queues_inactive, NULL));
+
+	pf_free_queues(pf_queues_inactive);
+
+	return (0);
 }
 
-int
-pf_free_queues(struct pf_queuehead *where, struct ifnet *ifp)
+void
+pf_free_queues(struct pf_queuehead *where)
 {
 	struct pf_queuespec	*q, *qtmp;
 
 	TAILQ_FOREACH_SAFE(q, where, entries, qtmp) {
-		if (ifp && q->kif->pfik_ifp != ifp)
-			continue;
 		TAILQ_REMOVE(where, q, entries);
 		pfi_kif_unref(q->kif, PFI_KIF_REF_RULE);
 		pool_put(&pf_queue_pl, q);
 	}
-	return (0);
 }
 
-int
-pf_remove_queues(struct ifnet *ifp)
+void
+pf_remove_queues(void)
 {
 	struct pf_queuespec	*q;
-	int			 error = 0;
-
-	/* remove queues */
-	TAILQ_FOREACH_REVERSE(q, pf_queues_active, pf_queuehead, entries) {
-		if (ifp && q->kif->pfik_ifp != ifp)
-			continue;
-		if ((error = hfsc_delqueue(q)) != 0)
-			return (error);
-	}
+	struct ifnet		*ifp;
 
 	/* put back interfaces in normal queueing mode */	
 	TAILQ_FOREACH(q, pf_queues_active, entries) {
-		if (ifp && q->kif->pfik_ifp != ifp)
+		if (q->parent_qid != 0)
 			continue;
-		if (q->parent_qid == 0)
-			if ((error = hfsc_detach(q->kif->pfik_ifp)) != 0)
-				return (error);
+			
+		ifp = q->kif->pfik_ifp;
+		if (ifp == NULL)
+			continue;
+
+		KASSERT(HFSC_ENABLED(&ifp->if_snd));
+
+		ifq_attach(&ifp->if_snd, ifq_priq_ops, NULL);
+	}
+}
+
+struct pf_hfsc_queue {
+	struct ifnet		*ifp;
+	struct hfsc_if		*hif;
+	struct pf_hfsc_queue	*next;
+};
+
+static inline struct pf_hfsc_queue *
+pf_hfsc_ifp2q(struct pf_hfsc_queue *list, struct ifnet *ifp)
+{
+	struct pf_hfsc_queue *phq = list;
+
+	while (phq != NULL) {
+		if (phq->ifp == ifp)
+			return (phq);
+
+		phq = phq->next;
 	}
 
-	return (0);
+	return (phq);
 }
 
 int
 pf_create_queues(void)
 {
 	struct pf_queuespec	*q;
-	int			 error = 0;
+	struct ifnet		*ifp;
+	struct pf_hfsc_queue	*list = NULL, *phq;
+	int			 error;
 
-	/* find root queues and attach hfsc to these interfaces */
-	TAILQ_FOREACH(q, pf_queues_active, entries)
-		if (q->parent_qid == 0)
-			if ((error = hfsc_attach(q->kif->pfik_ifp)) != 0)
-				return (error);
+	/* find root queues and alloc hfsc for these interfaces */
+	TAILQ_FOREACH(q, pf_queues_active, entries) {
+		if (q->parent_qid != 0)
+			continue;
+
+		ifp = q->kif->pfik_ifp;
+		if (ifp == NULL)
+			continue;
+
+		phq = malloc(sizeof(*phq), M_TEMP, M_WAITOK);
+		phq->ifp = ifp;
+		phq->hif = hfsc_pf_alloc(ifp);
+
+		phq->next = list;
+		list = phq;
+	}
 
 	/* and now everything */
-	TAILQ_FOREACH(q, pf_queues_active, entries)
-		if ((error = hfsc_addqueue(q)) != 0)
-			return (error);
+	TAILQ_FOREACH(q, pf_queues_active, entries) {
+		ifp = q->kif->pfik_ifp;
+		if (ifp == NULL)
+			continue;
+
+		phq = pf_hfsc_ifp2q(list, ifp);
+		KASSERT(phq != NULL);
+
+		error = hfsc_pf_addqueue(phq->hif, q);
+		if (error != 0)
+			goto error;
+	}
+
+	/* find root queues in old list to disable them if necessary */
+	TAILQ_FOREACH(q, pf_queues_inactive, entries) {
+		if (q->parent_qid != 0)
+			continue;
+
+		ifp = q->kif->pfik_ifp;
+		if (ifp == NULL)
+			continue;
+
+		phq = pf_hfsc_ifp2q(list, ifp);
+		if (phq != NULL)
+			continue;
+
+		ifq_attach(&ifp->if_snd, ifq_priq_ops, NULL);
+	}
+
+	/* commit the new queues */
+	while (list != NULL) {
+		phq = list;
+		list = phq->next;
+
+		ifp = phq->ifp;
+
+		ifq_attach(&ifp->if_snd, ifq_hfsc_ops, phq->hif);
+		free(phq, M_TEMP, sizeof(*phq));
+	}
 
 	return (0);
+
+error:
+	while (list != NULL) {
+		phq = list;
+		list = phq->next;
+
+		hfsc_pf_free(phq->hif);
+		free(phq, M_TEMP, sizeof(*phq));
+	}
+
+	return (error);
 }
 
 int
@@ -587,16 +665,21 @@ pf_commit_queues(void)
 	struct pf_queuehead	*qswap;
 	int error;
 
-	if ((error = pf_remove_queues(NULL)) != 0)
+        /* swap */
+        qswap = pf_queues_active;
+        pf_queues_active = pf_queues_inactive;
+        pf_queues_inactive = qswap;
+
+	error = pf_create_queues();
+	if (error != 0) {
+		pf_queues_inactive = pf_queues_active;
+		pf_queues_active = qswap;
 		return (error);
+	}
 
-	/* swap */
-	qswap = pf_queues_active;
-	pf_queues_active = pf_queues_inactive;
-	pf_queues_inactive = qswap;
-	pf_free_queues(pf_queues_inactive, NULL);
+        pf_free_queues(pf_queues_inactive);
 
-	return (pf_create_queues());
+	return (0);
 }
 
 #define PF_MD5_UPD(st, elm)						\
@@ -935,7 +1018,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		else {
 			pf_status.running = 0;
 			pf_status.since = time_second;
-			pf_remove_queues(NULL);
+			pf_remove_queues();
 			DPFPRINTF(LOG_NOTICE, "pf: stopped");
 		}
 		break;
@@ -1001,7 +1084,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			break;
 		}
 		bcopy(qs, &pq->queue, sizeof(pq->queue));
-		error = hfsc_qstats(qs, pq->buf, &nbytes);
+		error = hfsc_pf_qstats(qs, pq->buf, &nbytes);
 		if (error == 0)
 			pq->nbytes = nbytes;
 		break;

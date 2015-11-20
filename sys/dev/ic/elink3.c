@@ -1,4 +1,4 @@
-/*	$OpenBSD: elink3.c,v 1.88 2015/10/25 12:48:46 mpi Exp $	*/
+/*	$OpenBSD: elink3.c,v 1.89 2015/11/20 03:35:22 dlg Exp $	*/
 /*	$NetBSD: elink3.c,v 1.32 1997/05/14 00:22:00 thorpej Exp $	*/
 
 /*
@@ -954,7 +954,7 @@ epstart(struct ifnet *ifp)
 
 startagain:
 	/* Sneak a peek at the next packet */
-	IFQ_POLL(&ifp->if_snd, m0);
+	m0 = ifq_deq_begin(&ifp->if_snd);
 	if (m0 == NULL)
 		return;
 
@@ -973,7 +973,7 @@ startagain:
 	if (len + pad > ETHER_MAX_LEN) {
 		/* packet is obviously too large: toss it */
 		++ifp->if_oerrors;
-		IFQ_DEQUEUE(&ifp->if_snd, m0);
+		ifq_deq_commit(&ifp->if_snd, m0);
 		m_freem(m0);
 		goto readcheck;
 	}
@@ -983,6 +983,7 @@ startagain:
 		bus_space_write_2(iot, ioh, EP_COMMAND,
 		    SET_TX_AVAIL_THRESH | ((len + pad + 4) >> sc->txashift));
 		/* not enough room in FIFO */
+		ifq_deq_rollback(&ifp->if_snd, m0);
 		ifp->if_flags |= IFF_OACTIVE;
 		return;
 	} else {
@@ -990,7 +991,7 @@ startagain:
 		    SET_TX_AVAIL_THRESH | EP_THRESH_DISABLE);
 	}
 
-	IFQ_DEQUEUE(&ifp->if_snd, m0);
+	ifq_deq_commit(&ifp->if_snd, m0);
 	if (m0 == NULL)
 		return;
 

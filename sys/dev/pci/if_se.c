@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_se.c,v 1.14 2015/10/25 13:04:28 mpi Exp $	*/
+/*	$OpenBSD: if_se.c,v 1.15 2015/11/20 03:35:23 dlg Exp $	*/
 
 /*-
  * Copyright (c) 2009, 2010 Christopher Zimmermann <madroach@zakweb.de>
@@ -1217,17 +1217,18 @@ se_start(struct ifnet *ifp)
 	i = cd->se_tx_prod;
 
 	while (cd->se_tx_mbuf[i] == NULL) {
-		IFQ_POLL(&ifp->if_snd, m_head);
+		m_head = ifq_deq_begin(&ifp->if_snd);
 		if (m_head == NULL)
 			break;
 
 		if (se_encap(sc, m_head, &i) != 0) {
+			ifq_deq_rollback(&ifp->if_snd, m_head);
 			ifp->if_flags |= IFF_OACTIVE;
 			break;
 		}
 
 		/* now we are committed to transmit the packet */
-		IFQ_DEQUEUE(&ifp->if_snd, m_head);
+		ifq_deq_commit(&ifp->if_snd, m_head);
 		queued++;
 
 		/*

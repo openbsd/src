@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnet.c,v 1.47 2015/10/25 13:22:09 mpi Exp $	*/
+/*	$OpenBSD: vnet.c,v 1.48 2015/11/20 03:35:22 dlg Exp $	*/
 /*
  * Copyright (c) 2009, 2015 Mark Kettenis
  *
@@ -1101,24 +1101,26 @@ vnet_start(struct ifnet *ifp)
 
 	start = prod = sc->sc_tx_prod & (sc->sc_vd->vd_nentries - 1);
 	while (sc->sc_vd->vd_desc[prod].hdr.dstate == VIO_DESC_FREE) {
-		IFQ_POLL(&ifp->if_snd, m);
+		m = ifq_deq_begin(&ifp->if_snd);
 		if (m == NULL)
 			break;
 
 		count = sc->sc_tx_prod - sc->sc_tx_cons;
 		if (count >= (sc->sc_vd->vd_nentries - 1) ||
 		    map->lm_count >= map->lm_nentries) {
+			ifq_deq_rollback(&ifp->if_snd, m);
 			ifp->if_flags |= IFF_OACTIVE;
 			break;
 		}
 
 		buf = pool_get(&sc->sc_pool, PR_NOWAIT|PR_ZERO);
 		if (buf == NULL) {
+			ifq_deq_rollback(&ifp->if_snd, m);
 			ifp->if_flags |= IFF_OACTIVE;
 			break;
 		}
 		m_copydata(m, 0, m->m_pkthdr.len, buf + VNET_ETHER_ALIGN);
-		IFQ_DEQUEUE(&ifp->if_snd, m);
+		ifq_deq_commit(&ifp->if_snd, m);
 
 #if NBPFILTER > 0
 		/*
@@ -1176,24 +1178,26 @@ vnet_start_desc(struct ifnet *ifp)
 	u_int prod, count;
 
 	for (;;) {
-		IFQ_POLL(&ifp->if_snd, m);
+		m = ifq_deq_begin(&ifp->if_snd);
 		if (m == NULL)
 			break;
 
 		count = sc->sc_tx_prod - sc->sc_tx_cons;
 		if (count >= (sc->sc_vd->vd_nentries - 1) ||
 		    map->lm_count >= map->lm_nentries) {
+			ifq_deq_rollback(&ifp->if_snd, m);
 			ifp->if_flags |= IFF_OACTIVE;
 			return;
 		}
 
 		buf = pool_get(&sc->sc_pool, PR_NOWAIT|PR_ZERO);
 		if (buf == NULL) {
+			ifq_deq_rollback(&ifp->if_snd, m);
 			ifp->if_flags |= IFF_OACTIVE;
 			return;
 		}
 		m_copydata(m, 0, m->m_pkthdr.len, buf);
-		IFQ_DEQUEUE(&ifp->if_snd, m);
+		ifq_deq_commit(&ifp->if_snd, m);
 
 #if NBPFILTER > 0
 		/*

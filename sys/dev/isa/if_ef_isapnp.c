@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ef_isapnp.c,v 1.31 2015/10/25 13:13:06 mpi Exp $	*/
+/*	$OpenBSD: if_ef_isapnp.c,v 1.32 2015/11/20 03:35:23 dlg Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -243,7 +243,7 @@ efstart(ifp)
 		return;
 
 startagain:
-	IFQ_POLL(&ifp->if_snd, m0);
+	m0 = ifq_deq_begin(&ifp->if_snd);
 	if (m0 == NULL)
 		return;
 
@@ -254,7 +254,7 @@ startagain:
 
 	if (len + pad > ETHER_MAX_LEN) {
 		ifp->if_oerrors++;
-		IFQ_DEQUEUE(&ifp->if_snd, m0);
+		ifq_deq_commit(&ifp->if_snd, m0);
 		m_freem(m0);
 		goto startagain;
 	}
@@ -262,6 +262,7 @@ startagain:
 	if (bus_space_read_2(iot, ioh, EF_W1_FREE_TX) < len + pad + 4) {
 		bus_space_write_2(iot, ioh, EP_COMMAND,
 		    SET_TX_AVAIL_THRESH | ((len + pad) >> 2));
+		ifq_deq_rollback(&ifp->if_snd, m0);
 		ifp->if_flags |= IFF_OACTIVE;
 		return;
 	} else {
@@ -277,7 +278,7 @@ startagain:
 		bpf_mtap(ifp->if_bpf, m0, BPF_DIRECTION_OUT);
 #endif
 
-	IFQ_DEQUEUE(&ifp->if_snd, m0);
+	ifq_deq_commit(&ifp->if_snd, m0);
 	if (m0 == NULL) /* XXX not needed */
 		return;
 

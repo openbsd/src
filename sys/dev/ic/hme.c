@@ -1,4 +1,4 @@
-/*	$OpenBSD: hme.c,v 1.75 2015/10/25 12:48:46 mpi Exp $	*/
+/*	$OpenBSD: hme.c,v 1.76 2015/11/20 03:35:22 dlg Exp $	*/
 /*	$NetBSD: hme.c,v 1.21 2001/07/07 15:59:37 thorpej Exp $	*/
 
 /*-
@@ -644,7 +644,7 @@ hme_start(struct ifnet *ifp)
 		return;
 
 	while (sc->sc_txd[sc->sc_tx_prod].sd_mbuf == NULL) {
-		IFQ_POLL(&ifp->if_snd, m);
+		m = ifq_deq_begin(&ifp->if_snd);
 		if (m == NULL)
 			break;
 
@@ -672,12 +672,13 @@ hme_start(struct ifnet *ifp)
 
 		if ((HME_TX_RING_SIZE - (sc->sc_tx_cnt + map->dm_nsegs)) < 5) {
 			bus_dmamap_unload(sc->sc_dmatag, map);
+			ifq_deq_rollback(&ifp->if_snd, m);
 			ifp->if_flags |= IFF_OACTIVE;
 			break;
 		}
 
 		/* We are now committed to transmitting the packet. */
-		IFQ_DEQUEUE(&ifp->if_snd, m);
+		ifq_deq_commit(&ifp->if_snd, m);
 
 #if NBPFILTER > 0
 		/*
@@ -732,7 +733,7 @@ hme_start(struct ifnet *ifp)
 	return;
 
  drop:
-	IFQ_DEQUEUE(&ifp->if_snd, m);
+	ifq_deq_commit(&ifp->if_snd, m);
 	m_freem(m);
 	ifp->if_oerrors++;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_stge.c,v 1.63 2015/11/14 17:54:57 mpi Exp $	*/
+/*	$OpenBSD: if_stge.c,v 1.64 2015/11/20 03:35:23 dlg Exp $	*/
 /*	$NetBSD: if_stge.c,v 1.27 2005/05/16 21:35:32 bouyer Exp $	*/
 
 /*-
@@ -482,7 +482,7 @@ stge_start(struct ifnet *ifp)
 		/*
 		 * Grab a packet off the queue.
 		 */
-		IFQ_POLL(&ifp->if_snd, m0);
+		m0 = ifq_deq_begin(&ifp->if_snd);
 		if (m0 == NULL)
 			break;
 
@@ -490,8 +490,10 @@ stge_start(struct ifnet *ifp)
 		 * Leave one unused descriptor at the end of the
 		 * list to prevent wrapping completely around.
 		 */
-		if (sc->sc_txpending == (STGE_NTXDESC - 1))
+		if (sc->sc_txpending == (STGE_NTXDESC - 1)) {
+			ifq_deq_rollback(&ifp->if_snd, m0);
 			break;
+		}
 
 		/*
 		 * Get the last and next available transmit descriptor.
@@ -517,17 +519,18 @@ stge_start(struct ifnet *ifp)
 				printf("%s: Tx packet consumes too many "
 				    "DMA segments (%u), dropping...\n",
 				    sc->sc_dev.dv_xname, dmamap->dm_nsegs);
-				IFQ_DEQUEUE(&ifp->if_snd, m0);
+				ifq_deq_commit(&ifp->if_snd, m0);
 				m_freem(m0);
 				continue;
 			}
 			/*
 			 * Short on resources, just stop for now.
 			 */
+			ifq_deq_rollback(&ifp->if_snd, m0);
 			break;
 		}
 
-		IFQ_DEQUEUE(&ifp->if_snd, m0);
+		ifq_deq_commit(&ifp->if_snd, m0);
 
 		/*
 		 * WE ARE NOW COMMITTED TO TRANSMITTING THE PACKET.

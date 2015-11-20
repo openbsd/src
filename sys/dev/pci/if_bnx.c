@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnx.c,v 1.115 2015/10/25 13:04:28 mpi Exp $	*/
+/*	$OpenBSD: if_bnx.c,v 1.116 2015/11/20 03:35:23 dlg Exp $	*/
 
 /*-
  * Copyright (c) 2006 Broadcom Corporation
@@ -5006,7 +5006,7 @@ bnx_start(struct ifnet *ifp)
 	 */
 	while (sc->used_tx_bd < sc->max_tx_bd) {
 		/* Check for any frames to send. */
-		IFQ_POLL(&ifp->if_snd, m_head);
+		m_head = ifq_deq_begin(&ifp->if_snd);
 		if (m_head == NULL)
 			break;
 
@@ -5016,6 +5016,7 @@ bnx_start(struct ifnet *ifp)
 		 * for the NIC to drain the chain.
 		 */
 		if (bnx_tx_encap(sc, m_head)) {
+			ifq_deq_rollback(&ifp->if_snd, m_head);
 			ifp->if_flags |= IFF_OACTIVE;
 			DBPRINT(sc, BNX_INFO_SEND, "TX chain is closed for "
 			    "business! Total tx_bd used = %d\n",
@@ -5023,7 +5024,7 @@ bnx_start(struct ifnet *ifp)
 			break;
 		}
 
-		IFQ_DEQUEUE(&ifp->if_snd, m_head);
+		ifq_deq_commit(&ifp->if_snd, m_head);
 		count++;
 
 #if NBPFILTER > 0

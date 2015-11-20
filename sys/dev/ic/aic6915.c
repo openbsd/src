@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic6915.c,v 1.18 2015/10/25 12:48:46 mpi Exp $	*/
+/*	$OpenBSD: aic6915.c,v 1.19 2015/11/20 03:35:22 dlg Exp $	*/
 /*	$NetBSD: aic6915.c,v 1.15 2005/12/24 20:27:29 perry Exp $	*/
 
 /*-
@@ -363,7 +363,7 @@ sf_start(struct ifnet *ifp)
 		/*
 		 * Grab a packet off the queue.
 		 */
-		IFQ_POLL(&ifp->if_snd, m0);
+		m0 = ifq_deq_begin(&ifp->if_snd);
 		if (m0 == NULL)
 			break;
 		m = NULL;
@@ -385,6 +385,7 @@ sf_start(struct ifnet *ifp)
 		    BUS_DMA_WRITE|BUS_DMA_NOWAIT) != 0) {
 			MGETHDR(m, M_DONTWAIT, MT_DATA);
 			if (m == NULL) {
+				ifq_deq_rollback(&ifp->if_snd, m0);
 				printf("%s: unable to allocate Tx mbuf\n",
 				    sc->sc_dev.dv_xname);
 				break;
@@ -392,6 +393,7 @@ sf_start(struct ifnet *ifp)
 			if (m0->m_pkthdr.len > MHLEN) {
 				MCLGET(m, M_DONTWAIT);
 				if ((m->m_flags & M_EXT) == 0) {
+					ifq_deq_rollback(&ifp->if_snd, m0);
 					printf("%s: unable to allocate Tx "
 					    "cluster\n", sc->sc_dev.dv_xname);
 					m_freem(m);
@@ -403,6 +405,7 @@ sf_start(struct ifnet *ifp)
 			error = bus_dmamap_load_mbuf(sc->sc_dmat, dmamap,
 			    m, BUS_DMA_WRITE|BUS_DMA_NOWAIT);
 			if (error) {
+				ifq_deq_rollback(&ifp->if_snd, m0);
 				printf("%s: unable to load Tx buffer, "
 				    "error = %d\n", sc->sc_dev.dv_xname, error);
 				m_freem(m);
@@ -413,7 +416,7 @@ sf_start(struct ifnet *ifp)
 		/*
 		 * WE ARE NOW COMMITTED TO TRANSMITTING THE PACKET.
 		 */
-		IFQ_DEQUEUE(&ifp->if_snd, m0);
+		ifq_deq_commit(&ifp->if_snd, m0);
 		if (m != NULL) {
 			m_freem(m0);
 			m0 = m;

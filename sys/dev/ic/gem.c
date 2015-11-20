@@ -1,4 +1,4 @@
-/*	$OpenBSD: gem.c,v 1.114 2015/10/25 12:48:46 mpi Exp $	*/
+/*	$OpenBSD: gem.c,v 1.115 2015/11/20 03:35:22 dlg Exp $	*/
 /*	$NetBSD: gem.c,v 1.1 2001/09/16 00:11:43 eeh Exp $ */
 
 /*
@@ -1657,7 +1657,7 @@ gem_start(struct ifnet *ifp)
 		return;
 
 	while (sc->sc_txd[sc->sc_tx_prod].sd_mbuf == NULL) {
-		IFQ_POLL(&ifp->if_snd, m);
+		m = ifq_deq_begin(&ifp->if_snd);
 		if (m == NULL)
 			break;
 
@@ -1685,12 +1685,13 @@ gem_start(struct ifnet *ifp)
 
 		if ((sc->sc_tx_cnt + map->dm_nsegs) > (GEM_NTXDESC - 2)) {
 			bus_dmamap_unload(sc->sc_dmatag, map);
+			ifq_deq_rollback(&ifp->if_snd, m);
 			ifp->if_flags |= IFF_OACTIVE;
 			break;
 		}
 
 		/* We are now committed to transmitting the packet. */
-		IFQ_DEQUEUE(&ifp->if_snd, m);
+		ifq_deq_commit(&ifp->if_snd, m);
 
 #if NBPFILTER > 0
 		/*
@@ -1736,7 +1737,7 @@ gem_start(struct ifnet *ifp)
 	return;
 
  drop:
-	IFQ_DEQUEUE(&ifp->if_snd, m);
+	ifq_deq_commit(&ifp->if_snd, m);
 	m_freem(m);
 	ifp->if_oerrors++;
 }

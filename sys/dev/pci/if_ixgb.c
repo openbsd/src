@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_ixgb.c,v 1.66 2015/10/25 13:04:28 mpi Exp $ */
+/* $OpenBSD: if_ixgb.c,v 1.67 2015/11/20 03:35:23 dlg Exp $ */
 
 #include <dev/pci/if_ixgb.h>
 
@@ -283,16 +283,17 @@ ixgb_start(struct ifnet *ifp)
 	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
 	for (;;) {
-		IFQ_POLL(&ifp->if_snd, m_head);
+		m_head = ifq_deq_begin(&ifp->if_snd);
 		if (m_head == NULL)
 			break;
 
 		if (ixgb_encap(sc, m_head)) {
+			ifq_deq_rollback(&ifp->if_snd, m_head);
 			ifp->if_flags |= IFF_OACTIVE;
 			break;
 		}
 
-		IFQ_DEQUEUE(&ifp->if_snd, m_head);
+		ifq_deq_commit(&ifp->if_snd, m_head);
 
 #if NBPFILTER > 0
 		/* Send a copy of the frame to the BPF listener */

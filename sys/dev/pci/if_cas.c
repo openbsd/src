@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cas.c,v 1.43 2015/10/25 13:04:28 mpi Exp $	*/
+/*	$OpenBSD: if_cas.c,v 1.44 2015/11/20 03:35:23 dlg Exp $	*/
 
 /*
  *
@@ -1863,7 +1863,7 @@ cas_start(struct ifnet *ifp)
 
 	bix = sc->sc_tx_prod;
 	while (sc->sc_txd[bix].sd_mbuf == NULL) {
-		IFQ_POLL(&ifp->if_snd, m);
+		m = ifq_deq_begin(&ifp->if_snd);
 		if (m == NULL)
 			break;
 
@@ -1881,11 +1881,12 @@ cas_start(struct ifnet *ifp)
 		 * or fail...
 		 */
 		if (cas_encap(sc, m, &bix)) {
+			ifq_deq_rollback(&ifp->if_snd, m);
 			ifp->if_flags |= IFF_OACTIVE;
 			break;
 		}
 
-		IFQ_DEQUEUE(&ifp->if_snd, m);
+		ifq_deq_commit(&ifp->if_snd, m);
 		ifp->if_timer = 5;
 	}
 

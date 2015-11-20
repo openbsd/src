@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_kue.c,v 1.81 2015/10/25 12:11:56 mpi Exp $ */
+/*	$OpenBSD: if_kue.c,v 1.82 2015/11/20 03:35:23 dlg Exp $ */
 /*	$NetBSD: if_kue.c,v 1.50 2002/07/16 22:00:31 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -858,16 +858,17 @@ kue_start(struct ifnet *ifp)
 	if (ifp->if_flags & IFF_OACTIVE)
 		return;
 
-	IFQ_POLL(&ifp->if_snd, m_head);
+	m_head = ifq_deq_begin(&ifp->if_snd);
 	if (m_head == NULL)
 		return;
 
 	if (kue_send(sc, m_head, 0)) {
+		ifq_deq_rollback(&ifp->if_snd, m_head);
 		ifp->if_flags |= IFF_OACTIVE;
 		return;
 	}
 
-	IFQ_DEQUEUE(&ifp->if_snd, m_head);
+	ifq_deq_commit(&ifp->if_snd, m_head);
 
 #if NBPFILTER > 0
 	/*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nxe.c,v 1.68 2015/10/25 13:04:28 mpi Exp $ */
+/*	$OpenBSD: if_nxe.c,v 1.69 2015/11/20 03:35:23 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -1322,17 +1322,18 @@ nxe_start(struct ifnet *ifp)
 	bzero(txd, sizeof(struct nxe_tx_desc));
 
 	do {
-		IFQ_POLL(&ifp->if_snd, m);
+		m = ifq_deq_begin(&ifp->if_snd);
 		if (m == NULL)
 			break;
 
 		pkt = nxe_pkt_get(sc->sc_tx_pkts);
 		if (pkt == NULL) {
+			ifq_deq_rollback(&ifp->if_snd, m);
 			SET(ifp->if_flags, IFF_OACTIVE);
 			break;
 		}
 
-		IFQ_DEQUEUE(&ifp->if_snd, m);
+		ifq_deq_commit(&ifp->if_snd, m);
 
 		dmap = pkt->pkt_dmap;
 		m = nxe_load_pkt(sc, dmap, m);

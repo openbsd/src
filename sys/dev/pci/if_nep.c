@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nep.c,v 1.20 2015/10/25 13:04:28 mpi Exp $	*/
+/*	$OpenBSD: if_nep.c,v 1.21 2015/11/20 03:35:23 dlg Exp $	*/
 /*
  * Copyright (c) 2014, 2015 Mark Kettenis
  *
@@ -1877,17 +1877,18 @@ nep_start(struct ifnet *ifp)
 
 	idx = sc->sc_tx_prod;
 	for (;;) {
-		IFQ_POLL(&ifp->if_snd, m);
+		m = ifq_deq_begin(&ifp->if_snd);
 		if (m == NULL)
 			break;
 
 		if (sc->sc_tx_cnt >= (NEP_NTXDESC - NEP_NTXSEGS)) {
+			ifq_deq_rollback(&ifp->if_snd, m);
 			ifp->if_flags |= IFF_OACTIVE;
 			break;
 		}
 
 		/* Now we are committed to transmit the packet. */
-		IFQ_DEQUEUE(&ifp->if_snd, m);
+		ifq_deq_commit(&ifp->if_snd, m);
 
 		if (nep_encap(sc, &m, &idx))
 			break;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.159 2015/10/25 12:05:40 mpi Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.160 2015/11/20 03:35:23 dlg Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -685,10 +685,11 @@ tun_dev_ioctl(struct tun_softc *tp, u_long cmd, caddr_t data, int flag,
 			tp->tun_flags &= ~TUN_ASYNC;
 		break;
 	case FIONREAD:
-		IFQ_POLL(&tp->tun_if.if_snd, m);
-		if (m != NULL)
+		m = ifq_deq_begin(&tp->tun_if.if_snd);
+		if (m != NULL) {
 			*(int *)data = m->m_pkthdr.len;
-		else
+			ifq_deq_rollback(&tp->tun_if.if_snd, m);
+		} else
 			*(int *)data = 0;
 		break;
 	case TIOCSPGRP:
@@ -809,6 +810,14 @@ tun_dev_read(struct tun_softc *tp, struct uio *uio, int ioflag)
 		}
 	} while (m0 == NULL);
 	splx(s);
+
+	if (tp->tun_flags & TUN_LAYER2) {
+#if NBPFILTER > 0
+		if (ifp->if_bpf)
+			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_OUT);
+#endif
+		ifp->if_opackets++;
+	}
 
 	while (m0 != NULL && uio->uio_resid > 0 && error == 0) {
 		len = min(uio->uio_resid, m0->m_len);
@@ -1007,7 +1016,7 @@ tun_dev_poll(struct tun_softc *tp, int events, struct proc *p)
 {
 	int			 revents, s;
 	struct ifnet		*ifp;
-	struct mbuf		*m;
+	unsigned int		 len;
 
 	ifp = &tp->tun_if;
 	revents = 0;
@@ -1015,10 +1024,9 @@ tun_dev_poll(struct tun_softc *tp, int events, struct proc *p)
 	TUNDEBUG(("%s: tunpoll\n", ifp->if_xname));
 
 	if (events & (POLLIN | POLLRDNORM)) {
-		IFQ_POLL(&ifp->if_snd, m);
-		if (m != NULL) {
-			TUNDEBUG(("%s: tunselect q=%d\n", ifp->if_xname,
-			    IFQ_LEN(ifp->if_snd)));
+		len = IFQ_LEN(&ifp->if_snd);
+		if (len > 0) {
+			TUNDEBUG(("%s: tunselect q=%d\n", ifp->if_xname, len));
 			revents |= events & (POLLIN | POLLRDNORM);
 		} else {
 			TUNDEBUG(("%s: tunpoll waiting\n", ifp->if_xname));
@@ -1114,7 +1122,7 @@ filt_tunread(struct knote *kn, long hint)
 	int			 s;
 	struct tun_softc	*tp;
 	struct ifnet		*ifp;
-	struct mbuf		*m;
+	unsigned int		 len;
 
 	if (kn->kn_status & KN_DETACHED) {
 		kn->kn_data = 0;
@@ -1125,10 +1133,10 @@ filt_tunread(struct knote *kn, long hint)
 	ifp = &tp->tun_if;
 
 	s = splnet();
-	IFQ_POLL(&ifp->if_snd, m);
-	if (m != NULL) {
+	len = IFQ_LEN(&ifp->if_snd);
+	if (len > 0) {
 		splx(s);
-		kn->kn_data = IFQ_LEN(&ifp->if_snd);
+		kn->kn_data = len;
 
 		TUNDEBUG(("%s: tunkqread q=%d\n", ifp->if_xname,
 		    IFQ_LEN(&ifp->if_snd)));
@@ -1175,21 +1183,11 @@ void
 tun_start(struct ifnet *ifp)
 {
 	struct tun_softc	*tp = ifp->if_softc;
-	struct mbuf		*m;
 
 	splassert(IPL_NET);
 
-	IFQ_POLL(&ifp->if_snd, m);
-	if (m != NULL) {
-		if (tp->tun_flags & TUN_LAYER2) {
-#if NBPFILTER > 0
-			if (ifp->if_bpf)
-				bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_OUT);
-#endif
-			ifp->if_opackets++;
-		}
+	if (IFQ_LEN(&ifp->if_snd))
 		tun_wakeup(tp);
-	}
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2560.c,v 1.74 2015/11/04 12:11:59 dlg Exp $  */
+/*	$OpenBSD: rt2560.c,v 1.75 2015/11/20 03:35:22 dlg Exp $  */
 
 /*-
  * Copyright (c) 2005, 2006
@@ -1948,15 +1948,16 @@ rt2560_start(struct ifnet *ifp)
 		} else {
 			if (ic->ic_state != IEEE80211_S_RUN)
 				break;
-			IFQ_POLL(&ifp->if_snd, m0);
+			m0 = ifq_deq_begin(&ifp->if_snd);
 			if (m0 == NULL)
 				break;
 			if (sc->txq.queued >= RT2560_TX_RING_COUNT - 1) {
+				ifq_deq_rollback(&ifp->if_snd, m0);
 				ifp->if_flags |= IFF_OACTIVE;
 				sc->sc_flags |= RT2560_DATA_OACTIVE;
 				break;
 			}
-			IFQ_DEQUEUE(&ifp->if_snd, m0);
+			ifq_deq_commit(&ifp->if_snd, m0);
 #if NBPFILTER > 0
 			if (ifp->if_bpf != NULL)
 				bpf_mtap(ifp->if_bpf, m0, BPF_DIRECTION_OUT);

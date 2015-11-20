@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ex.c,v 1.41 2015/10/25 13:13:06 mpi Exp $	*/
+/*	$OpenBSD: if_ex.c,v 1.42 2015/11/20 03:35:23 dlg Exp $	*/
 /*
  * Copyright (c) 1997, Donald A. Schmidt
  * Copyright (c) 1996, Javier Martín Rueda (jmrueda@diatel.upm.es)
@@ -389,7 +389,7 @@ ex_start(struct ifnet *ifp)
  	 * more packets left, or the card cannot accept any more yet.
  	 */
 	while (!(ifp->if_flags & IFF_OACTIVE)) {
-		IFQ_POLL(&ifp->if_snd, opkt);
+		opkt = ifq_deq_begin(&ifp->if_snd);
 		if (opkt == NULL)
 			break;
 
@@ -414,7 +414,7 @@ ex_start(struct ifnet *ifp)
 			avail = -i;
 		DODEBUG(Sent_Pkts, printf("i=%d, avail=%d\n", i, avail););
     		if (avail >= len + XMT_HEADER_LEN) {
-      			IFQ_DEQUEUE(&ifp->if_snd, opkt);
+      			ifq_deq_commit(&ifp->if_snd, opkt);
 
 #ifdef EX_PSA_INTR      
 			/*
@@ -519,6 +519,7 @@ ex_start(struct ifnet *ifp)
 			ifp->if_opackets++;
 			m_freem(opkt);
 		} else {
+			ifq_deq_rollback(&ifp->if_snd, opkt);
 			ifp->if_flags |= IFF_OACTIVE;
 			DODEBUG(Status, printf("OACTIVE start\n"););
 		}

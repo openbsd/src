@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.407 2015/11/18 13:58:02 mpi Exp $	*/
+/*	$OpenBSD: if.c,v 1.408 2015/11/20 03:35:23 dlg Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -397,9 +397,6 @@ if_attachsetup(struct ifnet *ifp)
 
 	if_addgroup(ifp, IFG_ALL);
 
-	if (ifp->if_snd.ifq_maxlen == 0)
-		IFQ_SET_MAXLEN(&ifp->if_snd, IFQ_MAXLEN);
-
 	if_attachdomain(ifp);
 #if NPF > 0
 	pfi_attach_ifnet(ifp);
@@ -510,6 +507,8 @@ if_attach_common(struct ifnet *ifp)
 	TAILQ_INIT(&ifp->if_addrlist);
 	TAILQ_INIT(&ifp->if_maddrlist);
 
+	ifq_init(&ifp->if_snd);
+
 	ifp->if_addrhooks = malloc(sizeof(*ifp->if_addrhooks),
 	    M_TEMP, M_WAITOK);
 	TAILQ_INIT(ifp->if_addrhooks);
@@ -538,7 +537,7 @@ if_start(struct ifnet *ifp)
 
 	splassert(IPL_NET);
 
-	if (ifp->if_snd.ifq_len >= min(8, ifp->if_snd.ifq_maxlen) &&
+	if (ifq_len(&ifp->if_snd) >= min(8, ifp->if_snd.ifq_maxlen) &&
 	    !ISSET(ifp->if_flags, IFF_OACTIVE)) {
 		if (ISSET(ifp->if_xflags, IFXF_TXREADY)) {
 			TAILQ_REMOVE(&iftxlist, ifp, if_txlist);
@@ -783,8 +782,6 @@ if_input_process(void *xmq)
 
 	s = splnet();
 	while ((m = ml_dequeue(&ml)) != NULL) {
-		sched_pause();
-
 		ifp = if_get(m->m_pkthdr.ph_ifidx);
 		if (ifp == NULL) {
 			m_freem(m);
@@ -942,6 +939,8 @@ if_detach(struct ifnet *ifp)
 
 	if_idxmap_remove(ifp);
 	splx(s);
+
+	ifq_destroy(&ifp->if_snd);
 }
 
 /*
@@ -2723,6 +2722,327 @@ niq_enlist(struct niqueue *niq, struct mbuf_list *ml)
 		if_congestion();
 
 	return (rv);
+}
+
+/*
+ * send queues.
+ */
+
+void		*priq_alloc(void *);
+void		 priq_free(void *);
+int		 priq_enq(struct ifqueue *, struct mbuf *);
+struct mbuf	*priq_deq_begin(struct ifqueue *, void **);
+void		 priq_deq_commit(struct ifqueue *, struct mbuf *, void *);
+void		 priq_deq_rollback(struct ifqueue *, struct mbuf *, void *);
+void		 priq_purge(struct ifqueue *, struct mbuf_list *);
+
+const struct ifq_ops priq_ops = {
+	priq_alloc,
+	priq_free,
+	priq_enq,
+	priq_deq_begin,
+	priq_deq_commit,
+	priq_deq_rollback,
+	priq_purge,
+};
+
+const struct ifq_ops * const ifq_priq_ops = &priq_ops;
+
+struct priq_list {
+	struct mbuf		*head;
+	struct mbuf		*tail;
+};
+
+struct priq {
+	struct priq_list	 pq_lists[IFQ_NQUEUES];
+};
+
+void *
+priq_alloc(void *null)
+{
+	return (malloc(sizeof(struct priq), M_DEVBUF, M_WAITOK | M_ZERO));
+}
+
+void
+priq_free(void *pq)
+{
+	free(pq, M_DEVBUF, sizeof(struct priq));
+}
+
+int
+priq_enq(struct ifqueue *ifq, struct mbuf *m)
+{
+	struct priq *pq;
+	struct priq_list *pl;
+
+	if (ifq_len(ifq) >= ifq->ifq_maxlen)
+		return (ENOBUFS);
+
+	pq = ifq->ifq_q;
+	KASSERT(m->m_pkthdr.pf.prio < IFQ_MAXPRIO);
+	pl = &pq->pq_lists[m->m_pkthdr.pf.prio];
+
+	m->m_nextpkt = NULL;
+	if (pl->tail == NULL)
+		pl->head = m;
+	else
+		pl->tail->m_nextpkt = m;
+	pl->tail = m;
+
+	return (0);
+}
+
+struct mbuf *
+priq_deq_begin(struct ifqueue *ifq, void **cookiep)
+{
+	struct priq *pq = ifq->ifq_q;
+	struct priq_list *pl;
+	unsigned int prio = nitems(pq->pq_lists);
+	struct mbuf *m;
+
+	do {
+		pl = &pq->pq_lists[--prio];
+		m = pl->head;
+		if (m != NULL) {
+			*cookiep = pl;
+			return (m);
+		}
+	} while (prio > 0);
+
+	return (NULL);
+}
+
+void
+priq_deq_commit(struct ifqueue *ifq, struct mbuf *m, void *cookie)
+{
+	struct priq_list *pl = cookie;
+
+	KASSERT(pl->head == m);
+
+	pl->head = m->m_nextpkt;
+	m->m_nextpkt = NULL;
+
+	if (pl->head == NULL)
+		pl->tail = NULL;
+}
+
+void
+priq_deq_rollback(struct ifqueue *ifq, struct mbuf *m, void *cookie)
+{
+#ifdef DIAGNOSTIC
+	struct priq_list *pl = cookie;
+
+	KASSERT(pl->head == m);
+#endif
+}
+
+void
+priq_purge(struct ifqueue *ifq, struct mbuf_list *ml)
+{
+	struct priq *pq = ifq->ifq_q;
+	struct priq_list *pl;
+	unsigned int prio = nitems(pq->pq_lists);
+	struct mbuf *m, *n;
+
+	do {
+		pl = &pq->pq_lists[--prio];
+
+		for (m = pl->head; m != NULL; m = n) {
+			n = m->m_nextpkt;
+			ml_enqueue(ml, m);
+		}
+
+		pl->head = pl->tail = NULL;
+	} while (prio > 0);
+}
+
+int
+ifq_enqueue_try(struct ifqueue *ifq, struct mbuf *m)
+{
+	int rv;
+
+	mtx_enter(&ifq->ifq_mtx);
+	rv = ifq->ifq_ops->ifqop_enq(ifq, m);
+	if (rv == 0)
+		ifq->ifq_len++;
+	else
+		ifq->ifq_drops++;
+	mtx_leave(&ifq->ifq_mtx);
+
+	return (rv);
+}
+
+int
+ifq_enq(struct ifqueue *ifq, struct mbuf *m)
+{
+	int err;
+
+	err = ifq_enqueue_try(ifq, m);
+	if (err != 0)
+		m_freem(m);
+
+	return (err);
+}
+
+struct mbuf *
+ifq_deq_begin(struct ifqueue *ifq)
+{
+	struct mbuf *m = NULL;
+	void *cookie;
+
+	mtx_enter(&ifq->ifq_mtx);
+	if (ifq->ifq_len == 0 ||
+	    (m = ifq->ifq_ops->ifqop_deq_begin(ifq, &cookie)) == NULL) {
+		mtx_leave(&ifq->ifq_mtx);
+		return (NULL);
+	}
+
+	m->m_pkthdr.ph_cookie = cookie;
+
+	return (m);
+}
+
+void
+ifq_deq_commit(struct ifqueue *ifq, struct mbuf *m)
+{
+	void *cookie;
+
+	KASSERT(m != NULL);
+	cookie = m->m_pkthdr.ph_cookie;
+
+	ifq->ifq_ops->ifqop_deq_commit(ifq, m, cookie);
+	ifq->ifq_len--;
+	mtx_leave(&ifq->ifq_mtx);
+}
+
+void
+ifq_deq_rollback(struct ifqueue *ifq, struct mbuf *m)
+{
+	void *cookie;
+
+	KASSERT(m != NULL);
+	cookie = m->m_pkthdr.ph_cookie;
+
+	ifq->ifq_ops->ifqop_deq_rollback(ifq, m, cookie);
+	mtx_leave(&ifq->ifq_mtx);
+}
+
+struct mbuf *
+ifq_deq(struct ifqueue *ifq)
+{
+	struct mbuf *m;
+
+	m = ifq_deq_begin(ifq);
+	if (m == NULL)
+		return (NULL);
+
+	ifq_deq_commit(ifq, m);
+
+	return (m);
+}
+
+unsigned int
+ifq_purge(struct ifqueue *ifq)
+{
+	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
+	unsigned int rv;
+
+	mtx_enter(&ifq->ifq_mtx);
+	ifq->ifq_ops->ifqop_purge(ifq, &ml);
+	rv = ifq->ifq_len;
+	ifq->ifq_len = 0;
+	ifq->ifq_drops += rv;
+	mtx_leave(&ifq->ifq_mtx);
+
+	KASSERT(rv == ml_len(&ml));
+
+	ml_purge(&ml);
+
+	return (rv);
+}
+
+void
+ifq_init(struct ifqueue *ifq)
+{
+	mtx_init(&ifq->ifq_mtx, IPL_NET);
+	ifq->ifq_drops = 0;
+
+	/* default to priq */
+	ifq->ifq_ops = &priq_ops;
+	ifq->ifq_q = priq_ops.ifqop_alloc(NULL);
+
+	ifq->ifq_serializer = 0;
+	ifq->ifq_len = 0;
+
+	if (ifq->ifq_maxlen == 0)
+		ifq_set_maxlen(ifq, IFQ_MAXLEN);
+}
+
+void
+ifq_attach(struct ifqueue *ifq, const struct ifq_ops *newops, void *opsarg)
+{
+	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
+	struct mbuf_list free_ml = MBUF_LIST_INITIALIZER();
+	struct mbuf *m;
+	const struct ifq_ops *oldops;
+	void *newq, *oldq;
+
+	newq = newops->ifqop_alloc(opsarg);
+
+	mtx_enter(&ifq->ifq_mtx);
+	ifq->ifq_ops->ifqop_purge(ifq, &ml);
+	ifq->ifq_len = 0;
+
+	oldops = ifq->ifq_ops;
+	oldq = ifq->ifq_q;
+
+	ifq->ifq_ops = newops;
+	ifq->ifq_q = newq;
+
+	while ((m = ml_dequeue(&ml)) != NULL) {
+		if (ifq->ifq_ops->ifqop_enq(ifq, m) != 0) {
+			ifq->ifq_drops++;
+			ml_enqueue(&free_ml, m);
+		} else
+			ifq->ifq_len++;
+	}
+	mtx_leave(&ifq->ifq_mtx);
+
+	oldops->ifqop_free(oldq);
+
+	ml_purge(&free_ml);
+}
+
+void *
+ifq_q_enter(struct ifqueue *ifq, const struct ifq_ops *ops)
+{
+	mtx_enter(&ifq->ifq_mtx);
+	if (ifq->ifq_ops == ops)
+		return (ifq->ifq_q);
+
+	mtx_leave(&ifq->ifq_mtx);
+
+	return (NULL);
+}
+
+void
+ifq_q_leave(struct ifqueue *ifq, void *q)
+{
+	KASSERT(q == ifq->ifq_q);
+	mtx_leave(&ifq->ifq_mtx);
+}
+
+void
+ifq_destroy(struct ifqueue *ifq)
+{
+	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
+
+	/* don't need to lock because this is the last use of the ifq */
+
+	ifq->ifq_ops->ifqop_purge(ifq, &ml);
+	ifq->ifq_ops->ifqop_free(ifq->ifq_q);
+
+	ml_purge(&ml);
 }
 
 __dead void

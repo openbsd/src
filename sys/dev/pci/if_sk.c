@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sk.c,v 1.179 2015/11/14 17:54:57 mpi Exp $	*/
+/*	$OpenBSD: if_sk.c,v 1.180 2015/11/20 03:35:23 dlg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -1498,7 +1498,7 @@ sk_start(struct ifnet *ifp)
 	DPRINTFN(2, ("sk_start\n"));
 
 	while (sc_if->sk_cdata.sk_tx_chain[idx].sk_mbuf == NULL) {
-		IFQ_POLL(&ifp->if_snd, m_head);
+		m_head = ifq_deq_begin(&ifp->if_snd);
 		if (m_head == NULL)
 			break;
 
@@ -1508,12 +1508,13 @@ sk_start(struct ifnet *ifp)
 		 * for the NIC to drain the ring.
 		 */
 		if (sk_encap(sc_if, m_head, &idx)) {
+			ifq_deq_rollback(&ifp->if_snd, m_head);
 			ifp->if_flags |= IFF_OACTIVE;
 			break;
 		}
 
 		/* now we are committed to transmit the packet */
-		IFQ_DEQUEUE(&ifp->if_snd, m_head);
+		ifq_deq_commit(&ifp->if_snd, m_head);
 		pkts++;
 
 		/*

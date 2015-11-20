@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_txp.c,v 1.118 2015/11/14 17:54:57 mpi Exp $	*/
+/*	$OpenBSD: if_txp.c,v 1.119 2015/11/20 03:35:23 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001
@@ -1282,7 +1282,7 @@ txp_start(struct ifnet *ifp)
 	cnt = r->r_cnt;
 
 	while (1) {
-		IFQ_POLL(&ifp->if_snd, m);
+		m = ifq_deq_begin(&ifp->if_snd);
 		if (m == NULL)
 			break;
 		mnew = NULL;
@@ -1307,7 +1307,7 @@ txp_start(struct ifnet *ifp)
 			}
 			m_copydata(m, 0, m->m_pkthdr.len, mtod(mnew, caddr_t));
 			mnew->m_pkthdr.len = mnew->m_len = m->m_pkthdr.len;
-			IFQ_DEQUEUE(&ifp->if_snd, m);
+			ifq_deq_commit(&ifp->if_snd, m);
 			m_freem(m);
 			m = mnew;
 			if (bus_dmamap_load_mbuf(sc->sc_dmat, sd->sd_map, m,
@@ -1394,7 +1394,7 @@ txp_start(struct ifnet *ifp)
 		 * the packet.
 		 */
 		if (mnew == NULL)
-			IFQ_DEQUEUE(&ifp->if_snd, m);
+			ifq_deq_commit(&ifp->if_snd, m);
 
 		ifp->if_timer = 5;
 
@@ -1436,6 +1436,7 @@ txp_start(struct ifnet *ifp)
 oactive:
 	bus_dmamap_unload(sc->sc_dmat, sd->sd_map);
 oactive1:
+	ifq_deq_rollback(&ifp->if_snd, m);
 	ifp->if_flags |= IFF_OACTIVE;
 	r->r_prod = firstprod;
 	r->r_cnt = firstcnt;

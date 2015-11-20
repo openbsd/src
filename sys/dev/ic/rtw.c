@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtw.c,v 1.92 2015/11/04 12:11:59 dlg Exp $	*/
+/*	$OpenBSD: rtw.c,v 1.93 2015/11/20 03:35:22 dlg Exp $	*/
 /*	$NetBSD: rtw.c,v 1.29 2004/12/27 19:49:16 dyoung Exp $ */
 
 /*-
@@ -2755,7 +2755,7 @@ rtw_dequeue(struct ifnet *ifp, struct rtw_txsoft_blk **tsbp,
 
 	*mp = NULL;
 
-	IFQ_POLL(&ifp->if_snd, m0);
+	m0 = ifq_deq_begin(&ifp->if_snd);
 	if (m0 == NULL) {
 		DPRINTF(sc, RTW_DEBUG_XMIT, ("%s: no frame ready\n",
 		    __func__));
@@ -2764,12 +2764,13 @@ rtw_dequeue(struct ifnet *ifp, struct rtw_txsoft_blk **tsbp,
 
 	if (rtw_txring_choose(sc, tsbp, tdbp, RTW_TXPRIMD) == -1) {
 		DPRINTF(sc, RTW_DEBUG_XMIT, ("%s: no descriptor\n", __func__));
+		ifq_deq_rollback(&ifp->if_snd, m0);
 		*if_flagsp |= IFF_OACTIVE;
 		sc->sc_if.if_timer = 1;
 		return 0;
 	}
 
-	IFQ_DEQUEUE(&ifp->if_snd, m0);
+	ifq_deq_commit(&ifp->if_snd, m0);
 	if (m0 == NULL) {
 		DPRINTF(sc, RTW_DEBUG_XMIT, ("%s: no frame/ring ready\n",
 		    __func__));

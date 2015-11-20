@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_upl.c,v 1.67 2015/06/30 13:54:42 mpi Exp $ */
+/*	$OpenBSD: if_upl.c,v 1.68 2015/11/20 03:35:23 dlg Exp $ */
 /*	$NetBSD: if_upl.c,v 1.19 2002/07/11 21:14:26 augustss Exp $	*/
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -580,16 +580,17 @@ upl_start(struct ifnet *ifp)
 	if (ifp->if_flags & IFF_OACTIVE)
 		return;
 
-	IFQ_POLL(&ifp->if_snd, m_head);
+	m_head = ifq_deq_begin(&ifp->if_snd);
 	if (m_head == NULL)
 		return;
 
 	if (upl_send(sc, m_head, 0)) {
+		ifq_deq_rollback(&ifp->if_snd, m_head);
 		ifp->if_flags |= IFF_OACTIVE;
 		return;
 	}
 
-	IFQ_DEQUEUE(&ifp->if_snd, m_head);
+	ifq_deq_commit(&ifp->if_snd, m_head);
 
 #if NBPFILTER > 0
 	/*

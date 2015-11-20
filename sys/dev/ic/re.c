@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.183 2015/11/14 17:54:57 mpi Exp $	*/
+/*	$OpenBSD: re.c,v 1.184 2015/11/20 03:35:22 dlg Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -1848,29 +1848,31 @@ re_start(struct ifnet *ifp)
 	idx = sc->rl_ldata.rl_txq_prodidx;
 
 	for (;;) {
-		IFQ_POLL(&ifp->if_snd, m);
+		m = ifq_deq_begin(&ifp->if_snd);
 		if (m == NULL)
 			break;
 
 		if (sc->rl_ldata.rl_txq[idx].txq_mbuf != NULL) {
 			KASSERT(idx == sc->rl_ldata.rl_txq_considx);
+			ifq_deq_rollback(&ifp->if_snd, m);
 			ifp->if_flags |= IFF_OACTIVE;
 			break;
 		}
 
 		error = re_encap(sc, m, &idx);
 		if (error != 0 && error != ENOBUFS) {
+			ifq_deq_rollback(&ifp->if_snd, m);
 			ifp->if_flags |= IFF_OACTIVE;
 			break;
 		} else if (error != 0) {
-			IFQ_DEQUEUE(&ifp->if_snd, m);
+			ifq_deq_commit(&ifp->if_snd, m);
 			m_freem(m);
 			ifp->if_oerrors++;
 			continue;
 		}
 
 		/* now we are committed to transmit the packet */
-		IFQ_DEQUEUE(&ifp->if_snd, m);
+		ifq_deq_commit(&ifp->if_snd, m);
 		queued++;
 
 #if NBPFILTER > 0

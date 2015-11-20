@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iec.c,v 1.16 2015/10/25 13:22:09 mpi Exp $	*/
+/*	$OpenBSD: if_iec.c,v 1.17 2015/11/20 03:35:22 dlg Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -760,12 +760,14 @@ iec_start(struct ifnet *ifp)
 
 	for (;;) {
 		/* Grab a packet off the queue. */
-		IFQ_POLL(&ifp->if_snd, m0);
+		m0 = ifq_deq_begin(&ifp->if_snd);
 		if (m0 == NULL)
 			break;
 
-		if (sc->sc_txpending == IEC_NTXDESC)
+		if (sc->sc_txpending == IEC_NTXDESC) {
+			ifq_deq_rollback(&ifp->if_snd, m0);
 			break;
+		}
 
 		/*
 		 * Get the next available transmit descriptor.
@@ -779,7 +781,7 @@ iec_start(struct ifnet *ifp)
 		DPRINTF(IEC_DEBUG_START,
 		    ("iec_start: len = %d, nexttx = %d\n", len, nexttx));
 
-		IFQ_DEQUEUE(&ifp->if_snd, m0);
+		ifq_deq_commit(&ifp->if_snd, m0);
 		if (len <= IEC_TXD_BUFSIZE) {
 			/*
 			 * If the packet is small enough,

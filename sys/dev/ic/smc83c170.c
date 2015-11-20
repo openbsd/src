@@ -1,4 +1,4 @@
-/*	$OpenBSD: smc83c170.c,v 1.23 2015/10/25 12:48:46 mpi Exp $	*/
+/*	$OpenBSD: smc83c170.c,v 1.24 2015/11/20 03:35:22 dlg Exp $	*/
 /*	$NetBSD: smc83c170.c,v 1.59 2005/02/27 00:27:02 perry Exp $	*/
 
 /*-
@@ -352,7 +352,7 @@ epic_start(struct ifnet *ifp)
 		/*
 		 * Grab a packet off the queue.
 		 */
-		IFQ_POLL(&ifp->if_snd, m0);
+		m0 = ifq_deq_begin(&ifp->if_snd);
 		if (m0 == NULL)
 			break;
 		m = NULL;
@@ -380,12 +380,15 @@ epic_start(struct ifnet *ifp)
 				bus_dmamap_unload(sc->sc_dmat, dmamap);
 
 			MGETHDR(m, M_DONTWAIT, MT_DATA);
-			if (m == NULL)
+			if (m == NULL) {
+				ifq_deq_rollback(&ifp->if_snd, m0);
 				break;
+			}
 			if (m0->m_pkthdr.len > MHLEN) {
 				MCLGET(m, M_DONTWAIT);
 				if ((m->m_flags & M_EXT) == 0) {
 					m_freem(m);
+					ifq_deq_rollback(&ifp->if_snd, m0);
 					break;
 				}
 			}
@@ -393,10 +396,12 @@ epic_start(struct ifnet *ifp)
 			m->m_pkthdr.len = m->m_len = m0->m_pkthdr.len;
 			error = bus_dmamap_load_mbuf(sc->sc_dmat, dmamap,
 			    m, BUS_DMA_WRITE|BUS_DMA_NOWAIT);
-			if (error)
+			if (error) {
+				ifq_deq_rollback(&ifp->if_snd, m0);
 				break;
+			}
 		}
-		IFQ_DEQUEUE(&ifp->if_snd, m0);
+		ifq_deq_commit(&ifp->if_snd, m0);
 		if (m != NULL) {
 			m_freem(m0);
 			m0 = m;

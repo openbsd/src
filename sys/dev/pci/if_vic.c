@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vic.c,v 1.92 2015/10/25 13:04:28 mpi Exp $	*/
+/*	$OpenBSD: if_vic.c,v 1.93 2015/11/20 03:35:23 dlg Exp $	*/
 
 /*
  * Copyright (c) 2006 Reyk Floeter <reyk@openbsd.org>
@@ -1053,12 +1053,13 @@ vic_start(struct ifnet *ifp)
 			break;
 		}
 
-		IFQ_POLL(&ifp->if_snd, m);
+		m = ifq_deq_begin(&ifp->if_snd);
 		if (m == NULL)
 			break;
 
 		idx = sc->sc_data->vd_tx_nextidx;
 		if (idx >= sc->sc_data->vd_tx_length) {
+			ifq_deq_rollback(&ifp->if_snd, m);
 			printf("%s: tx idx is corrupt\n", DEVNAME(sc));
 			ifp->if_oerrors++;
 			break;
@@ -1068,6 +1069,7 @@ vic_start(struct ifnet *ifp)
 		txb = &sc->sc_txbuf[idx];
 
 		if (txb->txb_m != NULL) {
+			ifq_deq_rollback(&ifp->if_snd, m);
 			printf("%s: tx ring is corrupt\n", DEVNAME(sc));
 			sc->sc_data->vd_tx_stopped = 1;
 			ifp->if_oerrors++;
@@ -1078,7 +1080,7 @@ vic_start(struct ifnet *ifp)
 		 * we're committed to sending it now. if we cant map it into
 		 * dma memory then we drop it.
 		 */
-		IFQ_DEQUEUE(&ifp->if_snd, m);
+		ifq_deq_commit(&ifp->if_snd, m);
 		if (vic_load_txb(sc, txb, m) != 0) {
 			m_freem(m);
 			ifp->if_oerrors++;

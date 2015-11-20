@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_malo.c,v 1.87 2015/11/11 10:07:25 mpi Exp $ */
+/*      $OpenBSD: if_malo.c,v 1.88 2015/11/20 03:35:23 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -995,7 +995,6 @@ cmalo_start(struct ifnet *ifp)
 	IFQ_DEQUEUE(&ifp->if_snd, m);
 	if (m == NULL)
 		return;
-
 
 #if NBPFILTER > 0
 	if (ifp->if_bpf)

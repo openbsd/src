@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxie.c,v 1.10 2015/10/27 15:07:56 mpi Exp $	*/
+/*	$OpenBSD: sxie.c,v 1.11 2015/11/20 03:35:22 dlg Exp $	*/
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2013 Artturi Alm
@@ -471,17 +471,19 @@ sxie_start(struct ifnet *ifp)
 	m = NULL;
 	head = NULL;
 trynext:
-	IFQ_POLL(&ifp->if_snd, m);
+	m = ifq_deq_begin(&ifp->if_snd);
 	if (m == NULL)
 		return;
 
 	if (m->m_pkthdr.len > SXIE_MAX_PKT_SIZE) {
+		ifq_deq_commit(&ifp->if_snd, m);
 		printf("sxie_start: packet too big\n");
 		m_freem(m);
 		return;
 	}
 
 	if (sc->txf_inuse > 1) {
+		ifq_deq_rollback(&ifp->if_snd, m);
 		printf("sxie_start: tx fifos in use.\n");
 		ifp->if_flags |= IFF_OACTIVE;
 		return;
@@ -505,7 +507,7 @@ trynext:
 	/* transmit to PHY from fifo */
 	SXISET4(sc, SXIE_TXCR0 + (fifo * 4), 1);
 	ifp->if_timer = 5;
-	IFQ_DEQUEUE(&ifp->if_snd, m);
+	ifq_deq_commit(&ifp->if_snd, m);
 
 #if NBPFILTER > 0
 	if (ifp->if_bpf)

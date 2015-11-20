@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lge.c,v 1.68 2015/10/25 13:04:28 mpi Exp $	*/
+/*	$OpenBSD: if_lge.c,v 1.69 2015/11/20 03:35:23 dlg Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -956,17 +956,18 @@ lge_start(struct ifnet *ifp)
 		if (CSR_READ_1(sc, LGE_TXCMDFREE_8BIT) == 0)
 			break;
 
-		IFQ_POLL(&ifp->if_snd, m_head);
+		m_head = ifq_deq_begin(&ifp->if_snd);
 		if (m_head == NULL)
 			break;
 
 		if (lge_encap(sc, m_head, &idx)) {
+			ifq_deq_rollback(&ifp->if_snd, m_head);
 			ifp->if_flags |= IFF_OACTIVE;
 			break;
 		}
 
 		/* now we are committed to transmit the packet */
-		IFQ_DEQUEUE(&ifp->if_snd, m_head);
+		ifq_deq_commit(&ifp->if_snd, m_head);
 		pkts++;
 
 #if NBPFILTER > 0

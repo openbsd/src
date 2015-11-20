@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tht.c,v 1.134 2015/10/25 13:04:28 mpi Exp $ */
+/*	$OpenBSD: if_tht.c,v 1.135 2015/11/20 03:35:23 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -1111,17 +1111,18 @@ tht_start(struct ifnet *ifp)
 	tht_fifo_pre(sc, &sc->sc_txt);
 
 	do {
-		IFQ_POLL(&ifp->if_snd, m);
+		m = ifq_deq_begin(&ifp->if_snd);
 		if (m == NULL)
 			break;
 
 		pkt = tht_pkt_get(&sc->sc_tx_list);
 		if (pkt == NULL) {
+			ifq_deq_rollback(&ifp->if_snd, m);
 			ifp->if_flags |= IFF_OACTIVE;
 			break;
 		}
 
-		IFQ_DEQUEUE(&ifp->if_snd, m);
+		ifq_deq_commit(&ifp->if_snd, m);
 		if (tht_load_pkt(sc, pkt, m) != 0) {
 			m_freem(m);
 			tht_pkt_put(&sc->sc_tx_list, pkt);

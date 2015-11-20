@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xge.c,v 1.64 2015/11/14 17:54:57 mpi Exp $	*/
+/*	$OpenBSD: if_xge.c,v 1.65 2015/11/20 03:35:23 dlg Exp $	*/
 /*	$NetBSD: if_xge.c,v 1.1 2005/09/09 10:30:27 ragge Exp $	*/
 
 /*
@@ -1068,23 +1068,26 @@ xge_start(struct ifnet *ifp)
 
 	par = lcr = 0;
 	for (;;) {
-		IFQ_POLL(&ifp->if_snd, m);
+		m = ifq_deq_begin(&ifp->if_snd);
 		if (m == NULL)
 			break;	/* out of packets */
 
-		if (sc->sc_nexttx == sc->sc_lasttx)
+		if (sc->sc_nexttx == sc->sc_lasttx) {
+			ifq_deq_rollback(&ifp->if_snd, m);
 			break;	/* No more space */
+		}
 
 		nexttx = sc->sc_nexttx;
 		dmp = sc->sc_txm[nexttx];
 
 		if ((error = bus_dmamap_load_mbuf(sc->sc_dmat, dmp, m,
 		    BUS_DMA_WRITE|BUS_DMA_NOWAIT)) != 0) {
+			ifq_deq_rollback(&ifp->if_snd, m);
 			printf("%s: bus_dmamap_load_mbuf error %d\n",
 			    XNAME, error);
 			break;
 		}
-		IFQ_DEQUEUE(&ifp->if_snd, m);
+		ifq_deq_commit(&ifp->if_snd, m);
 
 		bus_dmamap_sync(sc->sc_dmat, dmp, 0, dmp->dm_mapsize,
 		    BUS_DMASYNC_PREWRITE);

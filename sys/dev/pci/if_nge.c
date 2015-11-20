@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nge.c,v 1.87 2015/11/14 17:54:57 mpi Exp $	*/
+/*	$OpenBSD: if_nge.c,v 1.88 2015/11/20 03:35:23 dlg Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -1408,17 +1408,18 @@ nge_start(struct ifnet *ifp)
 		return;
 
 	while(sc->nge_ldata->nge_tx_list[idx].nge_mbuf == NULL) {
-		IFQ_POLL(&ifp->if_snd, m_head);
+		m_head = ifq_deq_begin(&ifp->if_snd);
 		if (m_head == NULL)
 			break;
 
 		if (nge_encap(sc, m_head, &idx)) {
+			ifq_deq_rollback(&ifp->if_snd, m_head);
 			ifp->if_flags |= IFF_OACTIVE;
 			break;
 		}
 
 		/* now we are committed to transmit the packet */
-		IFQ_DEQUEUE(&ifp->if_snd, m_head);
+		ifq_deq_commit(&ifp->if_snd, m_head);
 		pkts++;
 
 #if NBPFILTER > 0

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mec.c,v 1.31 2015/10/25 13:22:09 mpi Exp $ */
+/*	$OpenBSD: if_mec.c,v 1.32 2015/11/20 03:35:22 dlg Exp $ */
 /*	$NetBSD: if_mec_mace.c,v 1.5 2004/08/01 06:36:36 tsutsui Exp $ */
 
 /*
@@ -738,11 +738,12 @@ mec_start(struct ifnet *ifp)
 
 	for (;;) {
 		/* Grab a packet off the queue. */
-		IFQ_POLL(&ifp->if_snd, m0);
+		m0 = ifq_deq_begin(&ifp->if_snd);
 		if (m0 == NULL)
 			break;
 
 		if (sc->sc_txpending == MEC_NTXDESC) {
+			ifq_deq_rollback(&ifp->if_snd, m0);
 			break;
 		}
 
@@ -763,7 +764,7 @@ mec_start(struct ifnet *ifp)
 		DPRINTF(MEC_DEBUG_START,
 		    ("mec_start: len = %d, nexttx = %d\n", len, nexttx));
 
-		IFQ_DEQUEUE(&ifp->if_snd, m0);
+		ifq_deq_commit(&ifp->if_snd, m0);
 		if (len < ETHER_PAD_LEN) {
 			/*
 			 * I don't know if MEC chip does auto padding,

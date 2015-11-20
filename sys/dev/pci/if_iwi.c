@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwi.c,v 1.127 2015/10/25 13:04:28 mpi Exp $	*/
+/*	$OpenBSD: if_iwi.c,v 1.128 2015/11/20 03:35:23 dlg Exp $	*/
 
 /*-
  * Copyright (c) 2004-2008
@@ -1389,15 +1389,15 @@ iwi_start(struct ifnet *ifp)
 		return;
 
 	for (;;) {
-		IFQ_POLL(&ifp->if_snd, m0);
-		if (m0 == NULL)
-			break;
-
-		if (sc->txq[0].queued >= IWI_TX_RING_COUNT - 8) {
+		if (sc->txq[0].queued + IWI_MAX_NSEG + 2 >= IWI_TX_RING_COUNT) {
 			ifp->if_flags |= IFF_OACTIVE;
 			break;
 		}
+
 		IFQ_DEQUEUE(&ifp->if_snd, m0);
+		if (m0 == NULL)
+			break;
+
 #if NBPFILTER > 0
 		if (ifp->if_bpf != NULL)
 			bpf_mtap(ifp->if_bpf, m0, BPF_DIRECTION_OUT);

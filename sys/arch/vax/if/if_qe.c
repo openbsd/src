@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_qe.c,v 1.37 2015/11/14 17:26:40 mpi Exp $	*/
+/*	$OpenBSD: if_qe.c,v 1.38 2015/11/20 03:35:22 dlg Exp $	*/
 /*      $NetBSD: if_qe.c,v 1.51 2002/06/08 12:28:37 ragge Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -442,7 +442,7 @@ qestart(struct ifnet *ifp)
 			continue;
 		}
 		idx = sc->sc_nexttx;
-		IFQ_POLL(&ifp->if_snd, m);
+		m = ifq_deq_begin(&ifp->if_snd, m);
 		if (m == NULL)
 			goto out;
 		/*
@@ -457,11 +457,12 @@ qestart(struct ifnet *ifp)
 			panic("qestart");
 
 		if ((i + sc->sc_inq) >= (TXDESCS - 1)) {
+			ifq_deq_rollback(&ifp->if_snd, m);
 			ifp->if_flags |= IFF_OACTIVE;
 			goto out;
 		}
 
-		IFQ_DEQUEUE(&ifp->if_snd, m);
+		ifq_deq_commit(&ifp->if_snd, m);
 
 #if NBPFILTER > 0
 		if (ifp->if_bpf)

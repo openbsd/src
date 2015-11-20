@@ -1,4 +1,4 @@
-/*	$OpenBSD: hfsc.c,v 1.30 2015/11/09 01:06:31 dlg Exp $	*/
+/*	$OpenBSD: hfsc.c,v 1.31 2015/11/20 03:35:23 dlg Exp $	*/
 
 /*
  * Copyright (c) 2012-2013 Henning Brauer <henning@openbsd.org>
@@ -181,11 +181,11 @@ struct hfsc_class {
  */
 struct hfsc_if {
 	struct hfsc_if		*hif_next;	/* interface state list */
-	struct ifqueue		*hif_ifq;	/* backpointer to ifq */
 	struct hfsc_class	*hif_rootclass;		/* root class */
 	struct hfsc_class	*hif_defaultclass;	/* default class */
 	struct hfsc_class	**hif_class_tbl;
-	struct hfsc_class	*hif_pollcache;	/* cache for poll operation */
+
+	u_int64_t		hif_microtime;	/* time at deq_begin */
 
 	u_int	hif_allocated;			/* # of slots in hif_class_tbl */
 	u_int	hif_classes;			/* # of classes in the tree */
@@ -206,9 +206,8 @@ int			 hfsc_class_destroy(struct hfsc_if *,
 			    struct hfsc_class *);
 struct hfsc_class	*hfsc_nextclass(struct hfsc_class *);
 
-struct mbuf	*hfsc_cl_dequeue(struct hfsc_class *);
-struct mbuf	*hfsc_cl_poll(struct hfsc_class *);
-void		 hfsc_cl_purge(struct hfsc_if *, struct hfsc_class *);
+void		 hfsc_cl_purge(struct hfsc_if *, struct hfsc_class *,
+		     struct mbuf_list *);
 
 void		 hfsc_deferred(void *);
 void		 hfsc_update_cfmin(struct hfsc_class *);
@@ -256,6 +255,30 @@ struct hfsc_class	*hfsc_clh2cph(struct hfsc_if *, u_int32_t);
 
 struct pool	hfsc_class_pl, hfsc_internal_sc_pl;
 
+/*
+ * ifqueue glue.
+ */
+
+void		*hfsc_alloc(void *);
+void		 hfsc_free(void *);
+int		 hfsc_enq(struct ifqueue *, struct mbuf *);
+struct mbuf	*hfsc_deq_begin(struct ifqueue *, void **);
+void		 hfsc_deq_commit(struct ifqueue *, struct mbuf *, void *);
+void		 hfsc_deq_rollback(struct ifqueue *, struct mbuf *, void *);
+void		 hfsc_purge(struct ifqueue *, struct mbuf_list *);
+
+const struct ifq_ops hfsc_ops = {
+        hfsc_alloc,
+        hfsc_free,
+        hfsc_enq,
+        hfsc_deq_begin,
+        hfsc_deq_commit,
+        hfsc_deq_rollback,
+        hfsc_purge,
+};
+
+const struct ifq_ops * const ifq_hfsc_ops = &hfsc_ops;
+
 u_int64_t
 hfsc_microuptime(void)
 {
@@ -296,64 +319,37 @@ hfsc_initialize(void)
 {
 	pool_init(&hfsc_class_pl, sizeof(struct hfsc_class), 0, 0, PR_WAITOK,
 	    "hfscclass", NULL);
+	pool_setipl(&hfsc_class_pl, IPL_NONE);
 	pool_init(&hfsc_internal_sc_pl, sizeof(struct hfsc_internal_sc), 0, 0,
 	    PR_WAITOK, "hfscintsc", NULL);
+	pool_setipl(&hfsc_internal_sc_pl, IPL_NONE);
 }
 
-int
-hfsc_attach(struct ifnet *ifp)
+struct hfsc_if *
+hfsc_pf_alloc(struct ifnet *ifp)
 {
 	struct hfsc_if *hif;
 
-	if (ifp == NULL || ifp->if_snd.ifq_hfsc != NULL)
-		return (0);
+	KASSERT(ifp != NULL);
 
-	hif = malloc(sizeof(struct hfsc_if), M_DEVBUF, M_WAITOK | M_ZERO);
+	hif = malloc(sizeof(*hif), M_DEVBUF, M_WAITOK | M_ZERO);
 	TAILQ_INIT(&hif->hif_eligible);
 	hif->hif_class_tbl = mallocarray(HFSC_DEFAULT_CLASSES, sizeof(void *),
 	    M_DEVBUF, M_WAITOK | M_ZERO);
 	hif->hif_allocated = HFSC_DEFAULT_CLASSES;
 
-	hif->hif_ifq = &ifp->if_snd;
-	ifp->if_snd.ifq_hfsc = hif;
-
 	timeout_set(&hif->hif_defer, hfsc_deferred, ifp);
-	/* XXX HRTIMER don't schedule it yet, only when some packets wait. */
-	timeout_add(&hif->hif_defer, 1);
 
-	return (0);
+	return (hif);
 }
 
 int
-hfsc_detach(struct ifnet *ifp)
+hfsc_pf_addqueue(struct hfsc_if *hif, struct pf_queuespec *q)
 {
-	struct hfsc_if *hif;
-
-	if (ifp == NULL)
-		return (0);
-
-	hif = ifp->if_snd.ifq_hfsc;
-	timeout_del(&hif->hif_defer);
-	ifp->if_snd.ifq_hfsc = NULL;
-
-	free(hif->hif_class_tbl, M_DEVBUF, hif->hif_allocated * sizeof(void *));
-	free(hif, M_DEVBUF, sizeof(struct hfsc_if));
-
-	return (0);
-}
-
-int
-hfsc_addqueue(struct pf_queuespec *q)
-{
-	struct hfsc_if *hif;
 	struct hfsc_class *cl, *parent;
 	struct hfsc_sc rtsc, lssc, ulsc;
 
-	if (q->kif->pfik_ifp == NULL)
-		return (0);
-
-	if ((hif = q->kif->pfik_ifp->if_snd.ifq_hfsc) == NULL)
-		return (EINVAL);
+	KASSERT(hif != NULL);
 
 	if (q->parent_qid == HFSC_NULLCLASS_HANDLE &&
 	    hif->hif_rootclass == NULL)
@@ -386,61 +382,82 @@ hfsc_addqueue(struct pf_queuespec *q)
 }
 
 int
-hfsc_delqueue(struct pf_queuespec *q)
+hfsc_pf_qstats(struct pf_queuespec *q, void *ubuf, int *nbytes)
 {
-	struct hfsc_if *hif;
-	struct hfsc_class *cl;
-
-	if (q->kif->pfik_ifp == NULL)
-		return (0);
-
-	if ((hif = q->kif->pfik_ifp->if_snd.ifq_hfsc) == NULL)
-		return (EINVAL);
-
-	if ((cl = hfsc_clh2cph(hif, q->qid)) == NULL)
-		return (EINVAL);
-
-	return (hfsc_class_destroy(hif, cl));
-}
-
-int
-hfsc_qstats(struct pf_queuespec *q, void *ubuf, int *nbytes)
-{
+	struct ifnet *ifp = q->kif->pfik_ifp;
 	struct hfsc_if *hif;
 	struct hfsc_class *cl;
 	struct hfsc_class_stats stats;
 	int error = 0;
 
-	if (q->kif->pfik_ifp == NULL)
+	if (ifp == NULL)
 		return (EBADF);
-
-	if ((hif = q->kif->pfik_ifp->if_snd.ifq_hfsc) == NULL)
-		return (EBADF);
-
-	if ((cl = hfsc_clh2cph(hif, q->qid)) == NULL)
-		return (EINVAL);
 
 	if (*nbytes < sizeof(stats))
 		return (EINVAL);
 
+	hif = ifq_q_enter(&ifp->if_snd, ifq_hfsc_ops);
+	if (hif == NULL)
+		return (EBADF);
+
+	if ((cl = hfsc_clh2cph(hif, q->qid)) == NULL) {
+		ifq_q_leave(&ifp->if_snd, hif);
+		return (EINVAL);
+	}
+
 	hfsc_getclstats(&stats, cl);
+	ifq_q_leave(&ifp->if_snd, hif);
 
 	if ((error = copyout((caddr_t)&stats, ubuf, sizeof(stats))) != 0)
 		return (error);
+
 	*nbytes = sizeof(stats);
 	return (0);
 }
 
 void
-hfsc_purge(struct ifqueue *ifq)
+hfsc_pf_free(struct hfsc_if *hif)
 {
-	struct hfsc_if		*hif = ifq->ifq_hfsc;
+	hfsc_free(hif);
+}
+
+void *
+hfsc_alloc(void *q)
+{
+	struct hfsc_if *hif = q;
+	KASSERT(hif != NULL);
+
+	timeout_add(&hif->hif_defer, 1);
+	return (hif);
+}
+
+void
+hfsc_free(void *q)
+{
+	struct hfsc_if *hif = q;
+	int i;
+
+	KERNEL_ASSERT_LOCKED();
+
+	timeout_del(&hif->hif_defer);
+
+	i = hif->hif_allocated;
+	do
+		hfsc_class_destroy(hif, hif->hif_class_tbl[--i]);
+	while (i > 0);
+
+	free(hif->hif_class_tbl, M_DEVBUF, hif->hif_allocated * sizeof(void *));
+	free(hif, M_DEVBUF, sizeof(*hif));
+}
+
+void
+hfsc_purge(struct ifqueue *ifq, struct mbuf_list *ml)
+{
+	struct hfsc_if		*hif = ifq->ifq_q;
 	struct hfsc_class	*cl;
 
 	for (cl = hif->hif_rootclass; cl != NULL; cl = hfsc_nextclass(cl))
-		if (ml_len(&cl->cl_q.q) > 0)
-			hfsc_cl_purge(hif, cl);
-	hif->hif_ifq->ifq_len = 0;
+		hfsc_cl_purge(hif, cl, ml);
 }
 
 struct hfsc_class *
@@ -555,9 +572,7 @@ hfsc_class_destroy(struct hfsc_if *hif, struct hfsc_class *cl)
 		return (EBUSY);
 
 	s = splnet();
-
-	if (ml_len(&cl->cl_q.q) > 0)
-		hfsc_cl_purge(hif, cl);
+	KASSERT(ml_empty(&cl->cl_q.q));
 
 	if (cl->cl_parent != NULL) {
 		struct hfsc_class *p = cl->cl_parent->cl_children;
@@ -624,9 +639,9 @@ hfsc_nextclass(struct hfsc_class *cl)
 }
 
 int
-hfsc_enqueue(struct ifqueue *ifq, struct mbuf *m)
+hfsc_enq(struct ifqueue *ifq, struct mbuf *m)
 {
-	struct hfsc_if	*hif = ifq->ifq_hfsc;
+	struct hfsc_if *hif = ifq->ifq_q;
 	struct hfsc_class *cl;
 
 	if ((cl = hfsc_clh2cph(hif, m->m_pkthdr.pf.qid)) == NULL ||
@@ -638,12 +653,12 @@ hfsc_enqueue(struct ifqueue *ifq, struct mbuf *m)
 	}
 
 	if (ml_len(&cl->cl_q.q) >= cl->cl_q.qlimit) {
-		/* drop. mbuf needs to be freed */
+		/* drop occurred.  mbuf needs to be freed */
 		PKTCNTR_INC(&cl->cl_stats.drop_cnt, m->m_pkthdr.len);
 		return (ENOBUFS);
 	}
+
 	ml_enqueue(&cl->cl_q.q, m);
-	ifq->ifq_len++;
 	m->m_pkthdr.pf.prio = IFQ_MAXPRIO;
 
 	/* successfully queued. */
@@ -654,71 +669,68 @@ hfsc_enqueue(struct ifqueue *ifq, struct mbuf *m)
 }
 
 struct mbuf *
-hfsc_dequeue(struct ifqueue *ifq, int remove)
+hfsc_deq_begin(struct ifqueue *ifq, void **cookiep)
 {
-	struct hfsc_if *hif = ifq->ifq_hfsc;
+	struct hfsc_if *hif = ifq->ifq_q;
 	struct hfsc_class *cl, *tcl;
 	struct mbuf *m;
-	int next_len, realtime = 0;
 	u_int64_t cur_time;
-
-	if (IFQ_LEN(ifq) == 0)
-		return (NULL);
 
 	cur_time = hfsc_microuptime();
 
-	if (remove && hif->hif_pollcache != NULL) {
-		cl = hif->hif_pollcache;
-		hif->hif_pollcache = NULL;
-		/* check if the class was scheduled by real-time criteria */
-		if (cl->cl_rsc != NULL)
-			realtime = (cl->cl_e <= cur_time);
-	} else {
+	/*
+	 * if there are eligible classes, use real-time criteria.
+	 * find the class with the minimum deadline among
+	 * the eligible classes.
+	 */
+	cl = hfsc_ellist_get_mindl(hif, cur_time);
+	if (cl == NULL) {
 		/*
-		 * if there are eligible classes, use real-time criteria.
-		 * find the class with the minimum deadline among
-		 * the eligible classes.
+		 * use link-sharing criteria
+		 * get the class with the minimum vt in the hierarchy
 		 */
-		if ((cl = hfsc_ellist_get_mindl(hif, cur_time)) != NULL) {
-			realtime = 1;
-		} else {
+		cl = NULL;
+		tcl = hif->hif_rootclass;
+
+		while (tcl != NULL && tcl->cl_children != NULL) {
+			tcl = hfsc_actlist_firstfit(tcl, cur_time);
+			if (tcl == NULL)
+				continue;
+
 			/*
-			 * use link-sharing criteria
-			 * get the class with the minimum vt in the hierarchy
+			 * update parent's cl_cvtmin.
+			 * don't update if the new vt is smaller.
 			 */
-			cl = NULL;
-			tcl = hif->hif_rootclass;
+			if (tcl->cl_parent->cl_cvtmin < tcl->cl_vt)
+				tcl->cl_parent->cl_cvtmin = tcl->cl_vt;
 
-			while (tcl != NULL && tcl->cl_children != NULL) {
-				tcl = hfsc_actlist_firstfit(tcl, cur_time);
-				if (tcl == NULL)
-					continue;
-
-				/*
-				 * update parent's cl_cvtmin.
-				 * don't update if the new vt is smaller.
-				 */
-				if (tcl->cl_parent->cl_cvtmin < tcl->cl_vt)
-					tcl->cl_parent->cl_cvtmin = tcl->cl_vt;
-
-				cl = tcl;
-			}
-			/* XXX HRTIMER plan hfsc_deferred precisely here. */
-			if (cl == NULL)
-				return (NULL);
+			cl = tcl;
 		}
-
-		if (!remove) {
-			hif->hif_pollcache = cl;
-			m = hfsc_cl_poll(cl);
-			return (m);
-		}
+		/* XXX HRTIMER plan hfsc_deferred precisely here. */
+		if (cl == NULL)
+			return (NULL);
 	}
 
-	if ((m = hfsc_cl_dequeue(cl)) == NULL)
-		panic("hfsc_dequeue");
+	m = ml_dequeue(&cl->cl_q.q);
+	KASSERT(m != NULL);
 
-	ifq->ifq_len--;
+	hif->hif_microtime = cur_time;
+	*cookiep = cl;
+	return (m);
+}
+
+void
+hfsc_deq_commit(struct ifqueue *ifq, struct mbuf *m, void *cookie)
+{
+	struct hfsc_if *hif = ifq->ifq_q;
+	struct hfsc_class *cl = cookie;
+	int next_len, realtime = 0;
+	u_int64_t cur_time = hif->hif_microtime;
+
+	/* check if the class was scheduled by real-time criteria */
+	if (cl->cl_rsc != NULL)
+		realtime = (cl->cl_e <= cur_time);
+
 	PKTCNTR_INC(&cl->cl_stats.xmit_cnt, m->m_pkthdr.len);
 
 	hfsc_update_vf(cl, m->m_pkthdr.len, cur_time);
@@ -739,51 +751,49 @@ hfsc_dequeue(struct ifqueue *ifq, int remove)
 		/* the class becomes passive */
 		hfsc_set_passive(hif, cl);
 	}
+}
 
-	return (m);
+void
+hfsc_deq_rollback(struct ifqueue *ifq, struct mbuf *m, void *cookie)
+{
+	struct hfsc_class *cl = cookie;
+
+	ml_requeue(&cl->cl_q.q, m);
 }
 
 void
 hfsc_deferred(void *arg)
 {
 	struct ifnet *ifp = arg;
+	struct hfsc_if *hif;
 	int s;
 
+	KERNEL_ASSERT_LOCKED();
+	KASSERT(HFSC_ENABLED(&ifp->if_snd));
+
 	s = splnet();
-	if (HFSC_ENABLED(&ifp->if_snd) && !IFQ_IS_EMPTY(&ifp->if_snd))
+	if (!IFQ_IS_EMPTY(&ifp->if_snd))
 		if_start(ifp);
 	splx(s);
 
+	hif = ifp->if_snd.ifq_q;
+
 	/* XXX HRTIMER nearest virtual/fit time is likely less than 1/HZ. */
-	timeout_add(&ifp->if_snd.ifq_hfsc->hif_defer, 1);
-}
-
-struct mbuf *
-hfsc_cl_dequeue(struct hfsc_class *cl)
-{
-	return (ml_dequeue(&cl->cl_q.q));
-}
-
-struct mbuf *
-hfsc_cl_poll(struct hfsc_class *cl)
-{
-	/* XXX */
-	return (cl->cl_q.q.ml_head);
+	timeout_add(&hif->hif_defer, 1);
 }
 
 void
-hfsc_cl_purge(struct hfsc_if *hif, struct hfsc_class *cl)
+hfsc_cl_purge(struct hfsc_if *hif, struct hfsc_class *cl, struct mbuf_list *ml)
 {
 	struct mbuf *m;
 
 	if (ml_empty(&cl->cl_q.q))
 		return;
 
-	while ((m = hfsc_cl_dequeue(cl)) != NULL) {
+	MBUF_LIST_FOREACH(&cl->cl_q.q, m)
 		PKTCNTR_INC(&cl->cl_stats.drop_cnt, m->m_pkthdr.len);
-		m_freem(m);
-		hif->hif_ifq->ifq_len--;
-	}
+
+	ml_enlist(ml, &cl->cl_q.q);
 
 	hfsc_update_vf(cl, 0, 0);	/* remove cl from the actlist */
 	hfsc_set_passive(hif, cl);
@@ -1544,25 +1554,4 @@ hfsc_clh2cph(struct hfsc_if *hif, u_int32_t chandle)
 			return (cl);
 	return (NULL);
 }
-
-#else /* NPF > 0 */
-
-void
-hfsc_purge(struct ifqueue *q)
-{
-	panic("hfsc_purge called on hfsc-less kernel");
-}
-
-int
-hfsc_enqueue(struct ifqueue *q, struct mbuf *m)
-{
-	panic("hfsc_enqueue called on hfsc-less kernel");
-}
-
-struct mbuf *
-hfsc_dequeue(struct ifqueue *q, int i)
-{
-	panic("hfsc_enqueue called on hfsc-less kernel");
-}
-
 #endif

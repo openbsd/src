@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cdce.c,v 1.66 2015/10/25 12:11:56 mpi Exp $ */
+/*	$OpenBSD: if_cdce.c,v 1.67 2015/11/20 03:35:23 dlg Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -389,16 +389,17 @@ cdce_start(struct ifnet *ifp)
 	if (usbd_is_dying(sc->cdce_udev) || (ifp->if_flags & IFF_OACTIVE))
 		return;
 
-	IFQ_POLL(&ifp->if_snd, m_head);
+	m_head = ifq_deq_begin(&ifp->if_snd);
 	if (m_head == NULL)
 		return;
 
 	if (cdce_encap(sc, m_head, 0)) {
+		ifq_deq_rollback(&ifp->if_snd, m_head);
 		ifp->if_flags |= IFF_OACTIVE;
 		return;
 	}
 
-	IFQ_DEQUEUE(&ifp->if_snd, m_head);
+	ifq_deq_commit(&ifp->if_snd, m_head);
 
 #if NBPFILTER > 0
 	if (ifp->if_bpf)

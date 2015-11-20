@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nfe.c,v 1.113 2015/11/14 17:54:57 mpi Exp $	*/
+/*	$OpenBSD: if_nfe.c,v 1.114 2015/11/20 03:35:23 dlg Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 Damien Bergamini <damien.bergamini@free.fr>
@@ -974,17 +974,18 @@ nfe_start(struct ifnet *ifp)
 		return;
 
 	for (;;) {
-		IFQ_POLL(&ifp->if_snd, m0);
+		m0 = ifq_deq_begin(&ifp->if_snd);
 		if (m0 == NULL)
 			break;
 
 		if (nfe_encap(sc, m0) != 0) {
+			ifq_deq_rollback(&ifp->if_snd, m0);
 			ifp->if_flags |= IFF_OACTIVE;
 			break;
 		}
 
 		/* packet put in h/w queue, remove from s/w queue */
-		IFQ_DEQUEUE(&ifp->if_snd, m0);
+		ifq_deq_commit(&ifp->if_snd, m0);
 
 #if NBPFILTER > 0
 		if (ifp->if_bpf != NULL)

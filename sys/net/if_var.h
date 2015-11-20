@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_var.h,v 1.53 2015/11/18 13:58:02 mpi Exp $	*/
+/*	$OpenBSD: if_var.h,v 1.54 2015/11/20 03:35:23 dlg Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -98,17 +98,33 @@ struct if_clone {
 	{ { 0 }, name, sizeof(name) - 1, create, destroy }
 
 /*
- * Structure defining a queue for a network interface.
+ * Structure defining the send queue for a network interface.
  */
-struct	ifqueue {
-	struct {
-		struct	mbuf *head;
-		struct	mbuf *tail;
-	}			 ifq_q[IFQ_NQUEUES];
-	int			 ifq_len;
-	int			 ifq_maxlen;
-	int			 ifq_drops;
-	struct hfsc_if		*ifq_hfsc;
+
+struct ifqueue;
+
+struct ifq_ops {
+	void			*(*ifqop_alloc)(void *);
+	void			 (*ifqop_free)(void *);
+	int			 (*ifqop_enq)(struct ifqueue *, struct mbuf *);
+	struct mbuf 		*(*ifqop_deq_begin)(struct ifqueue *, void **);
+	void			 (*ifqop_deq_commit)(struct ifqueue *,
+				    struct mbuf *, void *);
+	void			 (*ifqop_deq_rollback)(struct ifqueue *,
+				    struct mbuf *, void *);
+	void	 		 (*ifqop_purge)(struct ifqueue *,
+				    struct mbuf_list *);
+};
+
+struct ifqueue {
+	struct mutex		 ifq_mtx;
+	uint64_t		 ifq_drops;
+	const struct ifq_ops	*ifq_ops;
+	void			*ifq_q;
+	unsigned int		 ifq_len;
+	unsigned int		 ifq_serializer;
+
+	unsigned int		 ifq_maxlen;
 };
 
 /*
@@ -256,121 +272,55 @@ struct ifg_list {
 };
 
 #ifdef _KERNEL
+/*
+ * Interface send queues.
+ */
+
+void		 ifq_init(struct ifqueue *);
+void		 ifq_attach(struct ifqueue *, const struct ifq_ops *, void *);
+void		 ifq_destroy(struct ifqueue *);
+int		 ifq_enq_try(struct ifqueue *, struct mbuf *);
+int		 ifq_enq(struct ifqueue *, struct mbuf *);
+struct mbuf	*ifq_deq_begin(struct ifqueue *);
+void		 ifq_deq_commit(struct ifqueue *, struct mbuf *);
+void		 ifq_deq_rollback(struct ifqueue *, struct mbuf *);
+struct mbuf	*ifq_deq(struct ifqueue *);
+unsigned int	 ifq_purge(struct ifqueue *);
+void		*ifq_q_enter(struct ifqueue *, const struct ifq_ops *);
+void		 ifq_q_leave(struct ifqueue *, void *);
+
+#define	ifq_len(_ifq)			((_ifq)->ifq_len)
+#define	ifq_empty(_ifq)			(ifq_len(_ifq) == 0)
+#define	ifq_set_maxlen(_ifq, _l)	((_ifq)->ifq_maxlen = (_l))
+
+extern const struct ifq_ops * const ifq_priq_ops;
+
 #define	IFQ_MAXLEN	256
 #define	IFNET_SLOWHZ	1		/* granularity is 1 second */
 
 /*
- * Output queues (ifp->if_snd) and internetwork datagram level (pup level 1)
- * input routines have queues of messages stored on ifqueue structures
- * (defined above).  Entries are added to and deleted from these structures
- * by these macros, which should be called with ipl raised to splnet().
+ * IFQ compat on ifq API
  */
-#define	IF_QFULL(ifq)		((ifq)->ifq_len >= (ifq)->ifq_maxlen)
-#define	IF_DROP(ifq)		((ifq)->ifq_drops++)
-#define	IF_ENQUEUE(ifq, m)						\
-do {									\
-	(m)->m_nextpkt = NULL;						\
-	if ((ifq)->ifq_q[(m)->m_pkthdr.pf.prio].tail == NULL)		\
-		(ifq)->ifq_q[(m)->m_pkthdr.pf.prio].head = m;		\
-	else								\
-		(ifq)->ifq_q[(m)->m_pkthdr.pf.prio].tail->m_nextpkt = m; \
-	(ifq)->ifq_q[(m)->m_pkthdr.pf.prio].tail = m;			\
-	(ifq)->ifq_len++;						\
-} while (/* CONSTCOND */0)
-#define	IF_PREPEND(ifq, m)						\
-do {									\
-	(m)->m_nextpkt = (ifq)->ifq_q[(m)->m_pkthdr.pf.prio].head;	\
-	if ((ifq)->ifq_q[(m)->m_pkthdr.pf.prio].tail == NULL)		\
-		(ifq)->ifq_q[(m)->m_pkthdr.pf.prio].tail = (m);		\
-	(ifq)->ifq_q[(m)->m_pkthdr.pf.prio].head = (m);			\
-	(ifq)->ifq_len++;						\
-} while (/* CONSTCOND */0)
-
-#define	IF_POLL(ifq, m)							\
-do {									\
-	int	if_dequeue_prio = IFQ_MAXPRIO;				\
-	do {								\
-		(m) = (ifq)->ifq_q[if_dequeue_prio].head;		\
-	} while (!(m) && --if_dequeue_prio >= 0); 			\
-} while (/* CONSTCOND */0)
-
-#define	IF_DEQUEUE(ifq, m)						\
-do {									\
-	int	if_dequeue_prio = IFQ_MAXPRIO;				\
-	do {								\
-		(m) = (ifq)->ifq_q[if_dequeue_prio].head;		\
-		if (m) {						\
-			if (((ifq)->ifq_q[if_dequeue_prio].head =	\
-			    (m)->m_nextpkt) == NULL)			\
-				(ifq)->ifq_q[if_dequeue_prio].tail = NULL; \
-			(m)->m_nextpkt = NULL;				\
-			(ifq)->ifq_len--;				\
-		}							\
-	} while (!(m) && --if_dequeue_prio >= 0);			\
-} while (/* CONSTCOND */0)
-
-#define	IF_PURGE(ifq)							\
-do {									\
-	struct mbuf *__m0;						\
-									\
-	for (;;) {							\
-		IF_DEQUEUE((ifq), __m0);				\
-		if (__m0 == NULL)					\
-			break;						\
-		else							\
-			m_freem(__m0);					\
-	}								\
-} while (/* CONSTCOND */0)
-#define	IF_LEN(ifq)		((ifq)->ifq_len)
-#define	IF_IS_EMPTY(ifq)	((ifq)->ifq_len == 0)
 
 #define	IFQ_ENQUEUE(ifq, m, err)					\
 do {									\
-	if (HFSC_ENABLED(ifq))						\
-		(err) = hfsc_enqueue(((struct ifqueue *)(ifq)), m);	\
-	else {								\
-		if (IF_QFULL((ifq))) {					\
-			(err) = ENOBUFS;				\
-		} else {						\
-			IF_ENQUEUE((ifq), (m));				\
-			(err) = 0;					\
-		}							\
-	}								\
-	if ((err)) {							\
-		m_freem((m));						\
-		(ifq)->ifq_drops++;					\
-	}								\
+	(err) = ifq_enq((ifq), (m));					\
 } while (/* CONSTCOND */0)
 
 #define	IFQ_DEQUEUE(ifq, m)						\
 do {									\
-	if (HFSC_ENABLED((ifq)))					\
-		(m) = hfsc_dequeue(((struct ifqueue *)(ifq)), 1);	\
-	else								\
-		IF_DEQUEUE((ifq), (m));					\
-} while (/* CONSTCOND */0)
-
-#define	IFQ_POLL(ifq, m)						\
-do {									\
-	if (HFSC_ENABLED((ifq)))					\
-		(m) = hfsc_dequeue(((struct ifqueue *)(ifq)), 0);	\
-	else								\
-		IF_POLL((ifq), (m));					\
+	(m) = ifq_deq(ifq);						\
 } while (/* CONSTCOND */0)
 
 #define	IFQ_PURGE(ifq)							\
 do {									\
-	if (HFSC_ENABLED((ifq)))					\
-		hfsc_purge(((struct ifqueue *)(ifq)));			\
-	else								\
-		IF_PURGE((ifq));					\
+	(void)ifq_purge(ifq);						\
 } while (/* CONSTCOND */0)
 
-#define	IFQ_SET_READY(ifq)	/* nothing */
-
-#define	IFQ_LEN(ifq)			IF_LEN(ifq)
-#define	IFQ_IS_EMPTY(ifq)		((ifq)->ifq_len == 0)
-#define	IFQ_SET_MAXLEN(ifq, len)	((ifq)->ifq_maxlen = (len))
+#define	IFQ_LEN(ifq)			ifq_len(ifq)
+#define	IFQ_IS_EMPTY(ifq)		ifq_empty(ifq)
+#define	IFQ_SET_MAXLEN(ifq, len)	ifq_set_maxlen(ifq, len)
+#define	IFQ_SET_READY(ifq)		do { } while (0)
 
 /* default interface priorities */
 #define IF_WIRED_DEFAULT_PRIORITY	0
@@ -405,6 +355,7 @@ extern struct ifnet_head ifnet;
 extern unsigned int lo0ifidx;
 
 void	if_start(struct ifnet *);
+int	if_enqueue_try(struct ifnet *, struct mbuf *);
 int	if_enqueue(struct ifnet *, struct mbuf *);
 void	if_input(struct ifnet *, struct mbuf_list *);
 int	if_input_local(struct ifnet *, struct mbuf *, sa_family_t);

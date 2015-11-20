@@ -1,4 +1,4 @@
-/* $OpenBSD: lemac.c,v 1.22 2015/10/25 12:48:46 mpi Exp $ */
+/* $OpenBSD: lemac.c,v 1.23 2015/11/20 03:35:22 dlg Exp $ */
 /* $NetBSD: lemac.c,v 1.20 2001/06/13 10:46:02 wiz Exp $ */
 
 /*-
@@ -641,13 +641,14 @@ lemac_ifstart(struct ifnet *ifp)
 		struct mbuf *m0;
 		int tx_pg;
 
-		IFQ_POLL(&ifp->if_snd, m);
+		m = ifq_deq_begin(&ifp->if_snd);
 		if (m == NULL)
 			break;
 
 		if ((sc->sc_csr.csr_tqc = LEMAC_INB(sc, LEMAC_REG_TQC)) >=
 		    lemac_txmax) {
 			sc->sc_cntrs.cntr_txfull++;
+			ifq_deq_rollback(&ifp->if_snd, m);
 			ifp->if_flags |= IFF_OACTIVE;
 			break;
 		}
@@ -662,11 +663,12 @@ lemac_ifstart(struct ifnet *ifp)
 		 */
 		if (tx_pg == 0 || tx_pg > sc->sc_lastpage) {
 			sc->sc_cntrs.cntr_txnospc++;
+			ifq_deq_rollback(&ifp->if_snd, m);
 			ifp->if_flags |= IFF_OACTIVE;
 			break;
 		}
 
-		IFQ_DEQUEUE(&ifp->if_snd, m);
+		ifq_deq_commit(&ifp->if_snd, m);
 
 		/*
 		 * The first four bytes of each transmit buffer are for
