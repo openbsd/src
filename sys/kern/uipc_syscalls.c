@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.126 2015/11/19 05:38:26 semarie Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.127 2015/11/20 07:15:30 deraadt Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -261,8 +261,7 @@ doaccept(struct proc *p, int sock, struct sockaddr *name, socklen_t *anamelen,
 	headfp = fp;
 	head = fp->f_data;
 
-	error = pledge_socket(p, head->so_proto->pr_domain->dom_family,
-	    head->so_state);
+	error = pledge_socket(p, -1, head->so_state);
 	if (error)
 		goto bad;
 	if (isdnssocket((struct socket *)fp->f_data)) {
