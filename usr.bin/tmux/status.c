@@ -1,4 +1,4 @@
-/* $OpenBSD: status.c,v 1.141 2015/11/18 14:27:44 nicm Exp $ */
+/* $OpenBSD: status.c,v 1.142 2015/11/20 12:01:19 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1205,19 +1205,7 @@ status_prompt_complete_list(u_int *size, const char *s)
 			list[(*size)++] = (*cmdent)->name;
 		}
 	}
-	for (oe = server_options_table; oe->name != NULL; oe++) {
-		if (strncmp(oe->name, s, strlen(s)) == 0) {
-			list = xreallocarray(list, (*size) + 1, sizeof *list);
-			list[(*size)++] = oe->name;
-		}
-	}
-	for (oe = session_options_table; oe->name != NULL; oe++) {
-		if (strncmp(oe->name, s, strlen(s)) == 0) {
-			list = xreallocarray(list, (*size) + 1, sizeof *list);
-			list[(*size)++] = oe->name;
-		}
-	}
-	for (oe = window_options_table; oe->name != NULL; oe++) {
+	for (oe = options_table; oe->name != NULL; oe++) {
 		if (strncmp(oe->name, s, strlen(s)) == 0) {
 			list = xreallocarray(list, (*size) + 1, sizeof *list);
 			list[(*size)++] = oe->name;

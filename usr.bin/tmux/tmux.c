@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.c,v 1.154 2015/11/15 14:32:48 nicm Exp $ */
+/* $OpenBSD: tmux.c,v 1.155 2015/11/20 12:01:19 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -288,14 +288,14 @@ main(int argc, char **argv)
 		environ_set(global_environ, "PWD", tmp);
 
 	global_options = options_create(NULL);
-	options_table_populate_tree(server_options_table, global_options);
+	options_table_populate_tree(OPTIONS_TABLE_SERVER, global_options);
 
 	global_s_options = options_create(NULL);
-	options_table_populate_tree(session_options_table, global_s_options);
+	options_table_populate_tree(OPTIONS_TABLE_SESSION, global_s_options);
 	options_set_string(global_s_options, "default-shell", "%s", getshell());
 
 	global_w_options = options_create(NULL);
-	options_table_populate_tree(window_options_table, global_w_options);
+	options_table_populate_tree(OPTIONS_TABLE_WINDOW, global_w_options);
 
 	/* Override keys to vi if VISUAL or EDITOR are set. */
 	if ((s = getenv("VISUAL")) != NULL || (s = getenv("EDITOR")) != NULL) {
