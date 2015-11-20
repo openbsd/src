@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.29 2015/11/19 19:30:44 bentley Exp $	*/
+/*	$OpenBSD: main.c,v 1.30 2015/11/20 04:12:19 bentley Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -222,6 +222,12 @@ editor(GS *gp, int argc, char *argv[])
 		}
 	argc -= optind;
 	argv += optind;
+
+	if (secure)
+		if (pledge("stdio rpath wpath cpath fattr flock getpw tty", NULL) == -1) {
+			perror("pledge");
+			goto err;
+		}
 
 	/*
 	 * -s option is only meaningful to ex.
