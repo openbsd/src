@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.161 2015/11/20 05:15:33 dlg Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.162 2015/11/20 05:38:10 dlg Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -435,7 +435,6 @@ tun_init(struct tun_softc *tp)
 	TUNDEBUG(("%s: tun_init\n", ifp->if_xname));
 
 	ifp->if_flags |= IFF_UP | IFF_RUNNING;
-	ifp->if_flags &= ~IFF_OACTIVE; /* we are never active */
 
 	tp->tun_flags &= ~(TUN_IASET|TUN_DSTADDR|TUN_BRDADDR);
 	TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
