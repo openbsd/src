@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.127 2015/11/20 07:15:30 deraadt Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.128 2015/11/20 23:16:00 deraadt Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -200,8 +200,7 @@ sys_listen(struct proc *p, void *v, register_t *retval)
 	if ((error = getsock(p, SCARG(uap, s), &fp)) != 0)
 		return (error);
 	so = fp->f_data;
-	error = pledge_socket(p, so->so_proto->pr_domain->dom_family,
-	    so->so_state);
+	error = pledge_socket(p, -1, so->so_state);
 	if (error)
 		goto out;
 	error = solisten(so, SCARG(uap, backlog));
@@ -1052,8 +1051,7 @@ sys_getsockname(struct proc *p, void *v, register_t *retval)
 	if (error)
 		goto bad;
 	so = fp->f_data;
-	error = pledge_socket(p, so->so_proto->pr_domain->dom_family,
-	    so->so_state);
+	error = pledge_socket(p, -1, so->so_state);
 	if (error)
 		goto bad;
 	m = m_getclr(M_WAIT, MT_SONAME);
@@ -1089,8 +1087,7 @@ sys_getpeername(struct proc *p, void *v, register_t *retval)
 	if ((error = getsock(p, SCARG(uap, fdes), &fp)) != 0)
 		return (error);
 	so = fp->f_data;
-	error = pledge_socket(p, so->so_proto->pr_domain->dom_family,
-	    so->so_state);
+	error = pledge_socket(p, -1, so->so_state);
 	if (error)
 		goto bad;
 	if ((so->so_state & SS_ISCONNECTED) == 0) {
