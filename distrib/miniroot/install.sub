@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.859 2015/11/18 17:48:45 sthen Exp $
+#	$OpenBSD: install.sub,v 1.860 2015/11/20 14:41:48 sthen Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -1125,10 +1125,6 @@ install_files() {
 	for _f in $THESETS; do
 		isin $_f $_files || continue;
 		_sets=$(addel $_f $_sets)
-		# No displays and X isn't installed ==> skip X sets.
-		[[ -z $DISPLAY && ! -d /mnt/etc/X11 ]] &&
-			isin ${_f%${VERSION}.tgz} xbase xshare xfont xserv &&
-			continue
 		isin $_f $DEFAULTSETS "site$VERSION-$(hostname -s).tgz" &&
 			_get_sets=$(addel $_f $_get_sets)
 	done
