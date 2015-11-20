@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.179 2015/10/25 09:37:08 deraadt Exp $	*/
+/*	$OpenBSD: route.c,v 1.180 2015/11/20 17:26:56 jca Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -270,7 +270,7 @@ flushroutes(int argc, char **argv)
 
 	if (uid)
 		errx(1, "must be root to alter routing table");
-	shutdown(s, 0); /* Don't want to read back our messages */
+	shutdown(s, SHUT_RD); /* Don't want to read back our messages */
 	while (--argc > 0) {
 		if (**(++argv) == '-')
 			switch (keyword(*argv + 1)) {
@@ -450,7 +450,7 @@ newroute(int argc, char **argv)
 		errx(1, "must be root to alter routing table");
 	cmd = argv[0];
 	if (*cmd != 'g')
-		shutdown(s, 0); /* Don't want to read back our messages */
+		shutdown(s, SHUT_RD); /* Don't want to read back our messages */
 	while (--argc > 0) {
 		if (**(++argv)== '-') {
 			switch (key = keyword(1 + *argv)) {
