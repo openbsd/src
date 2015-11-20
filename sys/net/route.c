@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.274 2015/11/18 14:13:52 mpi Exp $	*/
+/*	$OpenBSD: route.c,v 1.275 2015/11/20 13:12:14 jsg Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -536,7 +536,7 @@ rtredirect(struct sockaddr *dst, struct sockaddr *gateway,
 	u_int32_t		*stat = NULL;
 	struct rt_addrinfo	 info;
 	struct ifaddr		*ifa;
-	unsigned int		 ifidx;
+	unsigned int		 ifidx = 0;
 
 	splsoftassert(IPL_SOFTNET);
 
