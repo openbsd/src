@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.346 2015/11/17 09:15:21 benno Exp $ */
+/*	$OpenBSD: session.c,v 1.347 2015/11/20 23:26:08 florian Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -2660,11 +2660,9 @@ session_dispatch_imsg(struct imsgbuf *ibuf, int idx, u_int *listener_cnt)
 			if (restricted) {
 				control_shutdown(rcsock);
 				rcsock = imsg.fd;
-				control_listen(rcsock);
 			} else {
 				control_shutdown(csock);
 				csock = imsg.fd;
-				control_listen(csock);
 			}
 			break;
 		case IMSG_RECONF_DONE:

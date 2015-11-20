@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.181 2015/11/17 17:54:01 benno Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.182 2015/11/20 23:26:08 florian Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -849,6 +849,8 @@ control_setup(struct bgpd_config *conf)
 			fatal("strdup");
 		if ((fd = control_init(0, cname)) == -1)
 			fatalx("control socket setup failed");
+		if (control_listen(fd) == -1)
+			fatalx("control socket setup failed");
 		restricted = 0;
 		if (imsg_compose(ibuf_se, IMSG_RECONF_CTRL, 0, 0, fd,
 		    &restricted, sizeof(restricted)) == -1)
@@ -867,6 +869,8 @@ control_setup(struct bgpd_config *conf)
 		if ((rcname = strdup(conf->rcsock)) == NULL)
 			fatal("strdup");
 		if ((fd = control_init(1, rcname)) == -1)
+			fatalx("control socket setup failed");
+		if (control_listen(fd) == -1)
 			fatalx("control socket setup failed");
 		restricted = 1;
 		if (imsg_compose(ibuf_se, IMSG_RECONF_CTRL, 0, 0, fd,
