@@ -1,4 +1,4 @@
-.\"	$OpenBSD: uuid.3,v 1.4 2015/11/10 23:48:18 jmc Exp $
+.\"	$OpenBSD: uuid.3,v 1.5 2015/11/20 21:05:52 tim Exp $
 .\"	$NetBSD: uuid.3,v 1.7 2008/05/02 18:11:05 martin Exp $
 .\"
 .\" Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
 .\"
 .\" $FreeBSD: src/lib/libc/uuid/uuid.3,v 1.4 2003/08/08 19:12:28 marcel Exp $
 .\"
-.Dd $Mdocdate: November 10 2015 $
+.Dd $Mdocdate: November 20 2015 $
 .Dt UUID_COMPARE 3
 .Os
 .Sh NAME
@@ -177,7 +177,8 @@ and
 .Fn uuid_to_string
 functions return successful or unsuccessful completion status in the
 .Fa status
-argument.
+argument unless it is
+.Dv NULL .
 Possible values are:
 .Bl -tag -width ".Dv uuid_s_invalid_string_uuid"
 .It Dv uuid_s_ok
