@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.116 2015/11/20 07:15:30 deraadt Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.117 2015/11/20 16:06:54 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -36,6 +36,8 @@
 #include <sys/ioctl.h>
 #include <sys/termios.h>
 #include <sys/tty.h>
+#include <sys/disklabel.h>
+#include <sys/dkio.h>
 #include <sys/mtio.h>
 #include <net/bpf.h>
 #include <net/route.h>
@@ -319,6 +321,7 @@ static const struct {
 } pledgereq[] = {
 	{ "abort",		0 },	/* XXX reserve for later */
 	{ "cpath",		PLEDGE_CPATH },
+	{ "disklabel",		PLEDGE_DISKLABEL },
 	{ "dns",		PLEDGE_DNS },
 	{ "exec",		PLEDGE_EXEC },
 	{ "fattr",		PLEDGE_FATTR },
@@ -976,6 +979,13 @@ pledge_sysctl(struct proc *p, int miblen, int *mib, void *new)
 			return (0);
 	}
 
+	if ((p->p_p->ps_pledge & PLEDGE_DISKLABEL)) {
+		if (miblen == 2 &&		/* kern.rawpartition */
+		    mib[0] == CTL_KERN &&
+		    mib[1] == KERN_RAWPARTITION)
+			return (0);
+	}
+
 	if (miblen >= 3 &&			/* ntpd(8) to read sensors */
 	    mib[0] == CTL_HW && mib[1] == HW_SENSORS)
 		return (0);
@@ -1130,6 +1140,28 @@ pledge_ioctl(struct proc *p, long com, struct file *fp)
 		case SIOCGIFGROUP:
 			if ((p->p_p->ps_pledge & PLEDGE_INET) &&
 			    fp->f_type == DTYPE_SOCKET)
+				return (0);
+			break;
+		}
+	}
+
+	if ((p->p_p->ps_pledge & PLEDGE_DISKLABEL)) {
+		switch (com) {
+		case DIOCGDINFO:
+		case DIOCGPDINFO:
+		case DIOCRLDINFO:
+		case DIOCWDINFO:
+			if (fp->f_type == DTYPE_VNODE &&
+			    ((vp->v_type == VCHR &&
+			    cdevsw[major(vp->v_rdev)].d_type == D_DISK) ||
+			    (vp->v_type == VBLK &&
+			    bdevsw[major(vp->v_rdev)].d_type == D_DISK)))
+				return (0);
+			break;
+		case DIOCMAP:
+			if (fp->f_type == DTYPE_VNODE &&
+			    vp->v_type == VCHR &&
+			    cdevsw[major(vp->v_rdev)].d_ioctl == diskmapioctl)
 				return (0);
 			break;
 		}

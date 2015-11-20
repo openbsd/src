@@ -1,4 +1,4 @@
-/*	$OpenBSD: pledge.h,v 1.20 2015/11/18 13:48:02 semarie Exp $	*/
+/*	$OpenBSD: pledge.h,v 1.21 2015/11/20 16:06:54 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -48,6 +48,7 @@
 #define PLEDGE_VMINFO	0x00400000	/* vminfo listings */
 #define PLEDGE_PS	0x00800000	/* ps listings */
 #define PLEDGE_COREDUMP	0x01000000	/* generates coredump (default) */
+#define PLEDGE_DISKLABEL 0x02000000	/* disklabels */
 
 /* Following flags are set by kernel, as it learns things.
  * Not user settable. Should be moved to a seperate variable */
@@ -86,6 +87,7 @@ static struct {
 	{ PLEDGE_VMINFO,	"vminfo" },
 	{ PLEDGE_PS,		"ps" },
 	{ PLEDGE_COREDUMP,	"coredump" },
+	{ PLEDGE_DISKLABEL,	"disklabel" },
 	{ 0, NULL },
 };
 #endif
