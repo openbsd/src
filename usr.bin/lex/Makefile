@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.14 2015/11/19 23:46:55 tedu Exp $
+#	$OpenBSD: Makefile,v 1.15 2015/11/20 18:57:18 tedu Exp $
 #
 # By default, flex will be configured to generate 8-bit scanners only if the
 # -8 flag is given.  If you want it to always generate 8-bit scanners, add
@@ -18,7 +18,7 @@ SRCS= buf.c ccl.c dfa.c ecs.c filter.c gen.c main.c misc.c \
 	  scanopt.c skel.c sym.c tables.c tables_shared.c \
 	  tblcmp.c yylex.c
 
-CLEANFILES+=skel.c parse.h
+CLEANFILES+=skel.c parse.c parse.h
 LDADD+=-lm
 
 MAN = flex.1
@@ -29,10 +29,8 @@ MLINKS= flex.1 lex.1 flex.1 flex++.1
 
 VERSION="2.5.39"
 
-# Our yacc is too old to compile parse.y; use bootstrapped parse.c instead
-parse.h parse.c: parse.y initparse.c initparse.h
-	cp ${.CURDIR}/initparse.c parse.c
-	cp ${.CURDIR}/initparse.h parse.h
+parse.h parse.c: parse.y
+	yacc -d -o parse.c ${.CURDIR}/parse.y
 
 skel.c: flex.skl mkskel.sh flexint.h tables_shared.h
 	sed -e 's/m4_/m4postproc_/g' -e 's/m4preproc_/m4_/g' \
