@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.311 2015/11/20 03:35:23 dlg Exp $ */
+/* $OpenBSD: if_em.c,v 1.312 2015/11/20 13:11:16 mpi Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -918,16 +918,19 @@ em_intr(void *arg)
 	if (reg_icr & E1000_ICR_RXO)
 		sc->rx_overruns++;
 
+	KERNEL_LOCK();
+
 	/* Link status change */
 	if (reg_icr & (E1000_ICR_RXSEQ | E1000_ICR_LSC)) {
-		KERNEL_LOCK();
 		sc->hw.get_link_status = 1;
 		em_check_for_link(&sc->hw);
 		em_update_link_status(sc);
-		if (!IFQ_IS_EMPTY(&ifp->if_snd))
-			em_start(ifp);
-		KERNEL_UNLOCK();
 	}
+
+	if (ifp->if_flags & IFF_RUNNING && !IFQ_IS_EMPTY(&ifp->if_snd))
+		em_start(ifp);
+
+	KERNEL_UNLOCK();
 
 	if (refill && em_rxfill(sc)) {
 		/* Advance the Rx Queue #0 "Tail Pointer". */
@@ -1105,10 +1108,17 @@ em_encap(struct em_softc *sc, struct mbuf *m_head)
 	struct em_buffer   *tx_buffer, *tx_buffer_mapped;
 	struct em_tx_desc *current_tx_desc = NULL;
 
-	/* Check that we have least the minimal number of TX descriptors. */
-	if (sc->num_tx_desc_avail <= EM_TX_OP_THRESHOLD) {
-		sc->no_tx_desc_avail1++;
-		return (ENOBUFS);
+	/*
+	 * Force a cleanup if number of TX descriptors
+	 * available hits the threshold
+	 */
+	if (sc->num_tx_desc_avail <= EM_TX_CLEANUP_THRESHOLD) {
+		em_txeof(sc);
+		/* Now do we at least have a minimal? */
+		if (sc->num_tx_desc_avail <= EM_TX_OP_THRESHOLD) {
+			sc->no_tx_desc_avail1++;
+			return (ENOBUFS);
+		}
 	}
 
 	if (sc->hw.mac_type == em_82547) {
@@ -1210,6 +1220,12 @@ em_encap(struct em_softc *sc, struct mbuf *m_head)
 		}
 	}
 
+	sc->next_avail_tx_desc = i;
+	if (sc->pcix_82544)
+		sc->num_tx_desc_avail -= txd_used;
+	else
+		sc->num_tx_desc_avail -= map->dm_nsegs;
+
 #if NVLAN > 0
 	/* Find out if we are in VLAN mode */
 	if (m_head->m_flags & M_VLANTAG) {
@@ -1242,14 +1258,6 @@ em_encap(struct em_softc *sc, struct mbuf *m_head)
 	 */
 	tx_buffer = &sc->tx_buffer_area[first];
 	tx_buffer->next_eop = last;
-
-	membar_producer();
-
-	sc->next_avail_tx_desc = i;
-	if (sc->pcix_82544)
-		atomic_sub_int(&sc->num_tx_desc_avail, txd_used);
-	else
-		atomic_sub_int(&sc->num_tx_desc_avail, map->dm_nsegs);
 
 	/* 
 	 * Advance the Transmit Descriptor Tail (Tdt),
@@ -2380,12 +2388,10 @@ em_transmit_checksum_setup(struct em_softc *sc, struct mbuf *mp,
 	tx_buffer->m_head = NULL;
 	tx_buffer->next_eop = -1;
 
-	membar_producer();
-
 	if (++curr_txd == sc->num_tx_desc)
 		curr_txd = 0;
 
-	atomic_dec_int(&sc->num_tx_desc_avail);
+	sc->num_tx_desc_avail--;
 	sc->next_avail_tx_desc = curr_txd;
 }
 
@@ -2399,7 +2405,7 @@ em_transmit_checksum_setup(struct em_softc *sc, struct mbuf *mp,
 void
 em_txeof(struct em_softc *sc)
 {
-	int first, last, done, num_avail, free = 0;
+	int first, last, done, num_avail;
 	struct em_buffer *tx_buffer;
 	struct em_tx_desc   *tx_desc, *eop_desc;
 	struct ifnet   *ifp = &sc->interface_data.ac_if;
@@ -2407,8 +2413,9 @@ em_txeof(struct em_softc *sc)
 	if (sc->num_tx_desc_avail == sc->num_tx_desc)
 		return;
 
-	membar_consumer();
+	KERNEL_LOCK();
 
+	num_avail = sc->num_tx_desc_avail;
 	first = sc->next_tx_to_clean;
 	tx_desc = &sc->tx_desc_base[first];
 	tx_buffer = &sc->tx_buffer_area[first];
@@ -2432,7 +2439,7 @@ em_txeof(struct em_softc *sc)
 		while (first != done) {
 			tx_desc->upper.data = 0;
 			tx_desc->lower.data = 0;
-			free++;
+			num_avail++;
 
 			if (tx_buffer->m_head != NULL) {
 				ifp->if_opackets++;
@@ -2472,23 +2479,25 @@ em_txeof(struct em_softc *sc)
 
 	sc->next_tx_to_clean = first;
 
-	num_avail = atomic_add_int_nv(&sc->num_tx_desc_avail, free);
+	/*
+	 * If we have enough room, clear IFF_OACTIVE to tell the stack
+	 * that it is OK to send packets.
+	 * If there are no pending descriptors, clear the timeout. Otherwise,
+	 * if some descriptors have been freed, restart the timeout.
+	 */
+	if (num_avail > EM_TX_CLEANUP_THRESHOLD)
+		ifp->if_flags &= ~IFF_OACTIVE;
 
 	/* All clean, turn off the timer */
 	if (num_avail == sc->num_tx_desc)
 		ifp->if_timer = 0;
+	/* Some cleaned, reset the timer */
+	else if (num_avail != sc->num_tx_desc_avail)
+		ifp->if_timer = EM_TX_TIMEOUT;
 
-	/*
-	 * If we have enough room, clear IFF_OACTIVE to tell the stack
-	 * that it is OK to send packets.
-	 */
-	if (ISSET(ifp->if_flags, IFF_OACTIVE) &&
-	    num_avail > EM_TX_OP_THRESHOLD) {
-		KERNEL_LOCK();
-		CLR(ifp->if_flags, IFF_OACTIVE);
-		em_start(ifp);
-		KERNEL_UNLOCK();
-	}
+	sc->num_tx_desc_avail = num_avail;
+
+	KERNEL_UNLOCK();
 }
 
 /*********************************************************************
