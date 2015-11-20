@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.22 2015/11/20 04:04:40 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.23 2015/11/20 04:06:48 millert Exp $	*/
 
 /* flex - tool to generate fast lexical analyzers */
 
@@ -228,12 +228,8 @@ main(argc, argv)
 void 
 check_options()
 {
-<<<<<<< main.c
-	int     i;
-=======
 	int i;
 	const char *m4 = NULL;
->>>>>>> 1.20
 
 	if (lex_compat) {
 		if (C_plus_plus)
@@ -354,21 +350,6 @@ check_options()
 
 		outfile_created = 1;
 	}
-<<<<<<< main.c
-
-
-    /* Setup the filter chain. */
-    output_chain = filter_create_int(NULL, filter_tee_header, headerfilename);
-    filter_create_ext(output_chain, M4, "-P", 0);
-    filter_create_int(output_chain, filter_fix_linedirs, NULL);
-
-    /* For debugging, only run the requested number of filters. */
-    if (preproc_level > 0) {
-        filter_truncate(output_chain, preproc_level);
-        filter_apply_chain(output_chain);
-    }
-    yyout = stdout;
-=======
 	/* Setup the filter chain. */
 	output_chain = filter_create_int(NULL, filter_tee_header, headerfilename);
 	if (!(m4 = getenv("M4")))
@@ -382,7 +363,6 @@ check_options()
 		filter_apply_chain(output_chain);
 	}
 	yyout = stdout;
->>>>>>> 1.20
 
 
 	/* always generate the tablesverify flag. */
