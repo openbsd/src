@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.15 2015/10/05 17:26:22 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.16 2015/11/20 18:53:42 tedu Exp $
 
 PROG=	ntpd
 SRCS=	ntpd.c log.c ntp.c ntp_msg.c parse.y config.c \
@@ -11,7 +11,7 @@ CFLAGS+= -Wmissing-declarations
 CFLAGS+= -Wshadow -Wpointer-arith -Wcast-qual
 CFLAGS+= -Wsign-compare
 YFLAGS=
-LDADD+=	-lutil -ltls -lssl -lcrypto
+LDADD+=	-lm -lutil -ltls -lssl -lcrypto
 DPADD+= ${LIBUTIL} ${LIBCRYPTO} ${LIBSSL} ${LIBTLS}
 LINKS=	${BINDIR}/ntpd ${BINDIR}/ntpctl
 MAN=	ntpd.8 ntpd.conf.5 ntpctl.8

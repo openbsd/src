@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.7 2015/10/23 14:52:20 phessler Exp $ */
+/*	$OpenBSD: control.c,v 1.8 2015/11/20 18:53:42 tedu Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -22,6 +22,7 @@
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <errno.h>
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -32,6 +33,8 @@
 #include "ntpd.h"
 
 #define	CONTROL_BACKLOG	5
+
+#define square(x) ((x) * (x))
 
 int
 control_init(char *path)
@@ -354,21 +357,18 @@ build_show_peer(struct ctl_show_peer *cp, struct ntp_peer *p)
 		cp->delay /= validdelaycnt;
 	}
 
-	/*
-	 *  use simple average for jitter calculation, as the
-	 *  RFC5905-recommended RMS average needs the math library
-	 */
 	jittercnt = 0;
 	cp->jitter = 0.0;
 	for (shift = 0; shift < OFFSET_ARRAY_SIZE; shift++) {
 		if (p->reply[shift].delay > 0.0 && shift != best) {
-			cp->jitter += p->reply[shift].delay -
-			    p->reply[best].delay;
+			cp->jitter += square(p->reply[shift].delay -
+			    p->reply[best].delay);
 			jittercnt++;
 		}
 	}
 	if (jittercnt > 1)
 		cp->jitter /= jittercnt;
+	cp->jitter = sqrt(cp->jitter);
 
 	if (p->shift == 0)
 		shift = OFFSET_ARRAY_SIZE - 1;
