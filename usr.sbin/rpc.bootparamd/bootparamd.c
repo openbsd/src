@@ -1,4 +1,4 @@
-/*	$OpenBSD: bootparamd.c,v 1.18 2007/02/18 20:33:45 jmc Exp $	*/
+/*	$OpenBSD: bootparamd.c,v 1.19 2015/11/20 17:49:59 deraadt Exp $	*/
 
 /*
  * This code is not copyright, and is placed in the public domain.
@@ -63,7 +63,6 @@ usage(void)
 	exit(1);
 }
 
-
 /*
  * ever familiar
  */
@@ -88,7 +87,7 @@ main(int argc, char *argv[])
 				warnx("no such host: %s", optarg);
 				usage();
 			}
-			bcopy(he->h_addr, (char *) &route_addr.s_addr,
+			bcopy(he->h_addr, &route_addr.s_addr,
 			    sizeof(route_addr.s_addr));
 			break;
 		case 'f':
@@ -131,6 +130,9 @@ main(int argc, char *argv[])
 		errx(1, "unable to register BOOTPARAMPROG version %ld, udp",
 		    BOOTPARAMVERS);
 
+	if (pledge("stdio rpath dns", NULL) == -1)
+		err(1, "pledge");
+
 	svc_run();
 	errx(1, "svc_run returned");
 }
@@ -154,9 +156,9 @@ bootparamproc_whoami_1_svc(bp_whoami_arg *whoami, struct svc_req *rqstp)
 		    255 & whoami->client_address.bp_address_u.ip_addr.lh,
 		    255 & whoami->client_address.bp_address_u.ip_addr.impno);
 
-	bcopy((char *) &whoami->client_address.bp_address_u.ip_addr,
+	bcopy(&whoami->client_address.bp_address_u.ip_addr,
 	    &haddr, sizeof(haddr));
-	he = gethostbyaddr((char *) &haddr, sizeof(haddr), AF_INET);
+	he = gethostbyaddr(&haddr, sizeof(haddr), AF_INET);
 	if (!he)
 		goto failed;
 
@@ -267,7 +269,7 @@ int
 lookup_bootparam(char *client, char *client_canonical, char *id,
     char **server, char **path)
 {
-	FILE   *f = fopen(bootpfile, "r");
+	FILE   *f;
 #ifdef YP
 	static char *ypbuf = NULL;
 	static int ypbuflen = 0;
@@ -277,6 +279,7 @@ lookup_bootparam(char *client, char *client_canonical, char *id,
 	size_t  idlen = id == NULL ? 0 : strlen(id);
 	int	contin = 0, found = 0;
 
+	f = fopen(bootpfile, "r");
 	if (f == NULL)
 		return EINVAL;	/* ? */
 
