@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_var.h,v 1.54 2015/11/20 03:35:23 dlg Exp $	*/
+/*	$OpenBSD: if_var.h,v 1.55 2015/11/20 11:15:07 dlg Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -279,12 +279,12 @@ struct ifg_list {
 void		 ifq_init(struct ifqueue *);
 void		 ifq_attach(struct ifqueue *, const struct ifq_ops *, void *);
 void		 ifq_destroy(struct ifqueue *);
-int		 ifq_enq_try(struct ifqueue *, struct mbuf *);
-int		 ifq_enq(struct ifqueue *, struct mbuf *);
+int		 ifq_enqueue_try(struct ifqueue *, struct mbuf *);
+int		 ifq_enqueue(struct ifqueue *, struct mbuf *);
 struct mbuf	*ifq_deq_begin(struct ifqueue *);
 void		 ifq_deq_commit(struct ifqueue *, struct mbuf *);
 void		 ifq_deq_rollback(struct ifqueue *, struct mbuf *);
-struct mbuf	*ifq_deq(struct ifqueue *);
+struct mbuf	*ifq_dequeue(struct ifqueue *);
 unsigned int	 ifq_purge(struct ifqueue *);
 void		*ifq_q_enter(struct ifqueue *, const struct ifq_ops *);
 void		 ifq_q_leave(struct ifqueue *, void *);
@@ -304,12 +304,12 @@ extern const struct ifq_ops * const ifq_priq_ops;
 
 #define	IFQ_ENQUEUE(ifq, m, err)					\
 do {									\
-	(err) = ifq_enq((ifq), (m));					\
+	(err) = ifq_enqueue((ifq), (m));				\
 } while (/* CONSTCOND */0)
 
 #define	IFQ_DEQUEUE(ifq, m)						\
 do {									\
-	(m) = ifq_deq(ifq);						\
+	(m) = ifq_dequeue(ifq);						\
 } while (/* CONSTCOND */0)
 
 #define	IFQ_PURGE(ifq)							\

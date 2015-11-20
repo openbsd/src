@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.409 2015/11/20 10:40:00 sthen Exp $	*/
+/*	$OpenBSD: if.c,v 1.410 2015/11/20 11:15:07 dlg Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -2873,7 +2873,7 @@ ifq_enqueue_try(struct ifqueue *ifq, struct mbuf *m)
 }
 
 int
-ifq_enq(struct ifqueue *ifq, struct mbuf *m)
+ifq_enqueue(struct ifqueue *ifq, struct mbuf *m)
 {
 	int err;
 
@@ -2928,7 +2928,7 @@ ifq_deq_rollback(struct ifqueue *ifq, struct mbuf *m)
 }
 
 struct mbuf *
-ifq_deq(struct ifqueue *ifq)
+ifq_dequeue(struct ifqueue *ifq)
 {
 	struct mbuf *m;
 

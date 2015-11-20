@@ -1,4 +1,4 @@
-.\"     $OpenBSD: ifq_enq.9,v 1.2 2015/11/20 07:07:37 jmc Exp $
+.\"     $OpenBSD: ifq_enqueue.9,v 1.1 2015/11/20 11:15:07 dlg Exp $
 .\"
 .\"  Copyright (c) 2015 David Gwynne <dlg@openbsd.org>
 .\"
@@ -15,11 +15,11 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .Dd $Mdocdate: November 20 2015 $
-.Dt IFQ_ENQ 9
+.Dt IFQ_ENQUEUE 9
 .Os
 .Sh NAME
-.Nm ifq_enq ,
-.Nm ifq_deq ,
+.Nm ifq_enqueue ,
+.Nm ifq_dequeue ,
 .Nm ifq_deq_begin ,
 .Nm ifq_deq_commit ,
 .Nm ifq_deq_rollback ,
@@ -30,9 +30,9 @@
 .Sh SYNOPSIS
 .In net/if_var.h
 .Ft int
-.Fn ifq_enq "struct ifqueue *ifq" "struct mbuf *m"
+.Fn ifq_enqueue "struct ifqueue *ifq" "struct mbuf *m"
 .Ft struft mbuf *
-.Fn ifq_deq "struct ifqueue *ifq"
+.Fn ifq_dequeue "struct ifqueue *ifq"
 .Ft struft mbuf *
 .Fn ifq_deq_begin "struct ifqueue *ifq"
 .Ft void
@@ -50,7 +50,7 @@ The ifqueue API provides implementions of data structures and
 operations for the network stack to queue mbufs for a network driver
 to dequeue from its start routine for transmission.
 .Bl -tag -width Ds
-.It Fn ifq_enq "struct ifqueue *ifq" "struct mbuf *m"
+.It Fn ifq_enqueue "struct ifqueue *ifq" "struct mbuf *m"
 Enqueue mbuf
 .Fa m
 on the
@@ -59,7 +59,7 @@ interface send queue.
 If the queue rejects the packet it will be freed with
 .Xr m_freem 9
 and counted as a drop.
-.It Fn ifq_deq "struct ifqueue *ifq"
+.It Fn ifq_dequeue "struct ifqueue *ifq"
 Dequeue the next mbuf to be transmitted from the
 .Fa ifq
 interface send queue.
@@ -97,7 +97,7 @@ Note that while
 .Fn ifq_len
 may report that mbufs are on the queue, the current queue
 discipline may not make them available for dequeueing with
-.Fn ifq_deq
+.Fn ifq_dequeue
 or
 .Fn ifq_deq_begin .
 .It Fn ifq_empty "struct ifqueue *ifq"
@@ -106,8 +106,8 @@ Return if the interface send queue
 is empty.
 .El
 .Sh CONTEXT
-.Fn ifq_enq ,
-.Fn ifq_deq ,
+.Fn ifq_enqueue ,
+.Fn ifq_dequeue ,
 .Fn ifq_deq_begin ,
 .Fn ifq_deq_commit ,
 .Fn ifq_deq_rollback ,
@@ -117,10 +117,10 @@ and
 .Fn ifq_empty
 can be called during autoconf, from process context, or from interrupt context.
 .Sh RETURN VALUES
-.Fn ifq_enq
+.Fn ifq_enqueue
 returns 0 if the mbuf was successfully queued, or non-zero if mbuf was freed.
 .Pp
-.Fn ifq_deq
+.Fn ifq_dequeue
 and
 .Fn ifq_deq_begin
 return the next mbuf to be transmitted by the interface.
