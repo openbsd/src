@@ -1,4 +1,4 @@
-/*	$OpenBSD: stty.c,v 1.17 2015/10/11 15:27:19 deraadt Exp $	*/
+/*	$OpenBSD: stty.c,v 1.18 2015/11/20 15:58:28 deraadt Exp $	*/
 /*	$NetBSD: stty.c,v 1.11 1995/03/21 09:11:30 cgd Exp $	*/
 
 /*-
@@ -83,9 +83,6 @@ args:	argc -= optind;
 	if (ioctl(i.fd, TIOCGETD, &i.ldisc) < 0	)
 		err(1, "TIOCGETD");
 
-	if (pledge("stdio tty", NULL) == -1)
-		err(1, "pledge");
-
 	if (tcgetattr(i.fd, &i.t) < 0)
 		errx(1, "not a terminal");
 	if (ioctl(i.fd, TIOCGWINSZ, &i.win) < 0)
@@ -108,6 +105,10 @@ args:	argc -= optind;
 		gprint(&i.t, &i.win, i.ldisc);
 		break;
 	}
+
+	/*
+	 * Cannot pledge, because of "extproc", "ostart" and "ostop"
+	 */
 
 	for (i.set = i.wset = 0; *argv; ++argv) {
 		if (ksearch(&argv, &i))
