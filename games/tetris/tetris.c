@@ -1,4 +1,4 @@
-/*	$OpenBSD: tetris.c,v 1.25 2014/11/16 04:49:49 guenther Exp $	*/
+/*	$OpenBSD: tetris.c,v 1.26 2015/11/20 07:40:23 tb Exp $	*/
 /*	$NetBSD: tetris.c,v 1.2 1995/04/22 07:42:47 cgd Exp $	*/
 
 /*-
@@ -61,7 +61,6 @@ const struct shape *curshape;
 const struct shape *nextshape;
 long	fallrate;
 int	score;
-gid_t	gid, egid;
 char	key_msg[100];
 int	showpreview, classic;
 
@@ -157,11 +156,10 @@ main(int argc, char *argv[])
 	const char *errstr;
 	int ch, i, j;
 
-	keys = "jkl pq";
+	if (pledge("stdio rpath wpath cpath tty", NULL) == -1)
+		err(1, "pledge");
 
-	gid = getgid();
-	egid = getegid();
-	setegid(gid);
+	keys = "jkl pq";
 
 	classic = showpreview = 0;
 	while ((ch = getopt(argc, argv, "ck:l:ps")) != -1)

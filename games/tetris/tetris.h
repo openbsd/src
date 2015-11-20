@@ -1,4 +1,4 @@
-/*	$OpenBSD: tetris.h,v 1.10 2008/08/10 12:23:25 krw Exp $	*/
+/*	$OpenBSD: tetris.h,v 1.11 2015/11/20 07:40:23 tb Exp $	*/
 /*	$NetBSD: tetris.h,v 1.2 1995/04/22 07:42:48 cgd Exp $	*/
 
 /*-
@@ -167,7 +167,6 @@ extern long	fallrate;	/* less than 1 million; smaller => faster */
 #define PRE_PENALTY 0.75
 
 extern int	score;		/* the obvious thing */
-extern gid_t	gid, egid;
 
 extern char	key_msg[100];
 extern int	showpreview;
