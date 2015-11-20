@@ -1,4 +1,4 @@
-/*	$OpenBSD: growfs.c,v 1.43 2015/11/19 17:46:46 mmcc Exp $	*/
+/*	$OpenBSD: growfs.c,v 1.44 2015/11/20 17:31:20 mmcc Exp $	*/
 /*
  * Copyright (c) 2000 Christoph Herrmann, Thomas-Henning von Kamptz
  * Copyright (c) 1980, 1989, 1993 The Regents of the University of California.
@@ -1859,25 +1859,25 @@ charsperline(void)
 }
 
 /*
- * growfs(8)  is a utility which allows to increase the size of  an  existing
- * ufs filesystem. Currently this can only be done on unmounted file  system.
- * It  recognizes some command line options to specify the new desired  size,
- * and  it does some basic checkings. The old filesystem size is  determined
- * and  after some more checks like we can really access the new  last  block
+ * growfs(8) is a utility which allows to increase the size of an existing
+ * ufs filesystem. Currently this can only be done on unmounted file system.
+ * It recognizes some command line options to specify the new desired size,
+ * and it does some basic checkings. The old filesystem size is determined
+ * and after some more checks like we can really access the new last block
  * on the disk etc. we calculate the new parameters for the superblock. After
- * having  done  this we just call growfs() which will do  the  work.  Before
+ * having done this we just call growfs() which will do the work. Before
  * we finish the only thing left is to update the disklabel.
  * We still have to provide support for snapshots. Therefore we first have to
- * understand  what data structures are always replicated in the snapshot  on
- * creation,  for all other blocks we touch during our procedure, we have  to
+ * understand what data structures are always replicated in the snapshot on
+ * creation, for all other blocks we touch during our procedure, we have to
  * keep the old blocks unchanged somewhere available for the snapshots. If we
- * are lucky, then we only have to handle our blocks to be relocated in  that
+ * are lucky, then we only have to handle our blocks to be relocated in that
  * way.
- * Also  we  have to consider in what order we actually update  the  critical
+ * Also we have to consider in what order we actually update the critical
  * data structures of the filesystem to make sure, that in case of a disaster
  * fsck(8) is still able to restore any lost data.
- * The  foreseen last step then will be to provide for growing  even  mounted
- * file  systems. There we have to extend the mount() system call to  provide
+ * The foreseen last step then will be to provide for growing even mounted
+ * file systems. There we have to extend the mount() system call to provide
  * userland access to the filesystem locking facility.
  */
 int
