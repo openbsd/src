@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ed.1,v 1.66 2015/11/20 08:53:28 tb Exp $
+.\"	$OpenBSD: ed.1,v 1.67 2015/11/20 20:13:32 tb Exp $
 .\"
 .\" Copyright (c) 1993 Andrew Moore, Talke Studio.
 .\" All rights reserved.
@@ -826,17 +826,6 @@ and that
 characters
 within the text should be output preceded by a backslash;
 this implementation does not support that.
-.Pp
-The
-.St -p1003.1-2008
-specification suggests,
-but does not say explicitly,
-that the result of a user defined prompt
-.Pq Fl p
-being turned off then on again with the
-.Ic P
-command should restore the user defined prompt;
-this implementation currently restores the user defined prompt.
 .Sh HISTORY
 An
 .Nm
