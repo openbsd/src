@@ -1,4 +1,4 @@
-/*	$OpenBSD: commands.c,v 1.79 2015/11/13 17:04:48 deraadt Exp $	*/
+/*	$OpenBSD: commands.c,v 1.80 2015/11/20 12:43:37 jca Exp $	*/
 /*	$NetBSD: commands.c,v 1.14 1996/03/24 22:03:48 jtk Exp $	*/
 
 /*
@@ -1192,7 +1192,7 @@ static void
 close_connection(void)
 {
 	if (connected) {
-		(void) shutdown(net, 2);
+		(void) shutdown(net, SHUT_RDWR);
 		printf("Connection closed.\r\n");
 		(void)close(net);
 		connected = 0;
