@@ -4021,7 +4021,7 @@ EOF
   includeopt="${includeopt} -I$GSSAPI/include/kerberosV"
   # FIXME: This is ugly, but these things don't seem to be standardized.
   if test "$ac_cv_header_gssapi_h" = "yes"; then
-    LIBS="$LIBS -L$GSSAPI/lib -lgssapi -lkrb5 -lcrypto -lheimbase -lasn1 -lwind -lroken -lcom_err"
+    LIBS="$LIBS -L$GSSAPI/lib -lgssapi -lkrb5 -lcrypto"
   else
     LIBS="$LIBS -L$GSSAPI/lib -lgssapi_krb5 -lkrb5 -lcrypto -lcom_err"
   fi
@@ -4336,204 +4336,21 @@ fi
 fi
 
 
-### The auth server needs to be able to check passwords against passwd
-### file entries, so we only #define AUTH_SERVER_SUPPORT if we can
-### find the crypt function. 
-###
-### We used to test for crypt in libc first, and only add -lcrypt if
-### we couldn't find it, but that interacts badly with the cache
-### variables, the 'unset' command isn't portable, and I'm not sure
-### there's any harm in just testing for -lcrypt first.
-###
-### XXX OpenBSD has crypt in libc, but don't carry libcrypt.  However
-### XXX it used to have libcrypt which means old systems that hasn't
-### XXX explicitly removed libcrypt will establish dependencies on the
-### XXX obsolete library.
-
-if test "$enable_server" = yes; then
-for ac_func in crypt
-do
-echo $ac_n "checking for $ac_func""... $ac_c" 1>&6
-echo "configure:4358: checking for $ac_func" >&5
-if eval "test \"`echo '$''{'ac_cv_func_$ac_func'+set}'`\" = set"; then
-  echo $ac_n "(cached) $ac_c" 1>&6
-else
-  cat > conftest.$ac_ext <<EOF
-#line 4363 "configure"
-#include "confdefs.h"
-/* System header to define __stub macros and hopefully few prototypes,
-    which can conflict with char $ac_func(); below.  */
-#include <assert.h>
-/* Override any gcc2 internal prototype to avoid an error.  */
-/* We use char because int might match the return type of a gcc2
-    builtin and then its argument prototype would still apply.  */
-char $ac_func();
-
-int main() {
-
-/* The GNU C library defines this for functions which it implements
-    to always fail with ENOSYS.  Some functions are actually named
-    something starting with __ and the normal name is an alias.  */
-#if defined (__stub_$ac_func) || defined (__stub___$ac_func)
-choke me
-#else
-$ac_func();
-#endif
-
-; return 0; }
-EOF
-if { (eval echo configure:4386: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext}; then
-  rm -rf conftest*
-  eval "ac_cv_func_$ac_func=yes"
-else
-  echo "configure: failed program was:" >&5
-  cat conftest.$ac_ext >&5
-  rm -rf conftest*
-  eval "ac_cv_func_$ac_func=no"
-fi
-rm -f conftest*
-fi
-
-if eval "test \"`echo '$ac_cv_func_'$ac_func`\" = yes"; then
-  echo "$ac_t""yes" 1>&6
-    ac_tr_func=HAVE_`echo $ac_func | tr 'abcdefghijklmnopqrstuvwxyz' 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'`
-  cat >> confdefs.h <<EOF
-#define $ac_tr_func 1
-EOF
- 
-else
-  echo "$ac_t""no" 1>&6
-fi
-done
-
-if test "$ac_cv_func_crypt" = no; then
-echo $ac_n "checking for crypt in -lcrypt""... $ac_c" 1>&6
-echo "configure:4412: checking for crypt in -lcrypt" >&5
-ac_lib_var=`echo crypt'_'crypt | sed 'y%./+-%__p_%'`
-if eval "test \"`echo '$''{'ac_cv_lib_$ac_lib_var'+set}'`\" = set"; then
-  echo $ac_n "(cached) $ac_c" 1>&6
-else
-  ac_save_LIBS="$LIBS"
-LIBS="-lcrypt  $LIBS"
-cat > conftest.$ac_ext <<EOF
-#line 4420 "configure"
-#include "confdefs.h"
-/* Override any gcc2 internal prototype to avoid an error.  */
-/* We use char because int might match the return type of a gcc2
-    builtin and then its argument prototype would still apply.  */
-char crypt();
-
-int main() {
-crypt()
-; return 0; }
-EOF
-if { (eval echo configure:4431: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext}; then
-  rm -rf conftest*
-  eval "ac_cv_lib_$ac_lib_var=yes"
-else
-  echo "configure: failed program was:" >&5
-  cat conftest.$ac_ext >&5
-  rm -rf conftest*
-  eval "ac_cv_lib_$ac_lib_var=no"
-fi
-rm -f conftest*
-LIBS="$ac_save_LIBS"
-
-fi
-if eval "test \"`echo '$ac_cv_lib_'$ac_lib_var`\" = yes"; then
-  echo "$ac_t""yes" 1>&6
-    ac_tr_lib=HAVE_LIB`echo crypt | sed -e 's/[^a-zA-Z0-9_]/_/g' \
-    -e 'y/abcdefghijklmnopqrstuvwxyz/ABCDEFGHIJKLMNOPQRSTUVWXYZ/'`
-  cat >> confdefs.h <<EOF
-#define $ac_tr_lib 1
-EOF
-
-  LIBS="-lcrypt $LIBS"
-
-else
-  echo "$ac_t""no" 1>&6
-fi
-
-for ac_func in crypt
-do
-echo $ac_n "checking for $ac_func""... $ac_c" 1>&6
-echo "configure:4461: checking for $ac_func" >&5
-if eval "test \"`echo '$''{'ac_cv_func_$ac_func'+set}'`\" = set"; then
-  echo $ac_n "(cached) $ac_c" 1>&6
-else
-  cat > conftest.$ac_ext <<EOF
-#line 4466 "configure"
-#include "confdefs.h"
-/* System header to define __stub macros and hopefully few prototypes,
-    which can conflict with char $ac_func(); below.  */
-#include <assert.h>
-/* Override any gcc2 internal prototype to avoid an error.  */
-/* We use char because int might match the return type of a gcc2
-    builtin and then its argument prototype would still apply.  */
-char $ac_func();
-
-int main() {
-
-/* The GNU C library defines this for functions which it implements
-    to always fail with ENOSYS.  Some functions are actually named
-    something starting with __ and the normal name is an alias.  */
-#if defined (__stub_$ac_func) || defined (__stub___$ac_func)
-choke me
-#else
-$ac_func();
-#endif
-
-; return 0; }
-EOF
-if { (eval echo configure:4489: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext}; then
-  rm -rf conftest*
-  eval "ac_cv_func_$ac_func=yes"
-else
-  echo "configure: failed program was:" >&5
-  cat conftest.$ac_ext >&5
-  rm -rf conftest*
-  eval "ac_cv_func_$ac_func=no"
-fi
-rm -f conftest*
-fi
-
-if eval "test \"`echo '$ac_cv_func_'$ac_func`\" = yes"; then
-  echo "$ac_t""yes" 1>&6
-    ac_tr_func=HAVE_`echo $ac_func | tr 'abcdefghijklmnopqrstuvwxyz' 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'`
-  cat >> confdefs.h <<EOF
-#define $ac_tr_func 1
-EOF
- 
-else
-  echo "$ac_t""no" 1>&6
-fi
-done
-
-fi
-
-if test "$ac_cv_func_crypt" = yes; then
-  cat >> confdefs.h <<\EOF
-#define AUTH_SERVER_SUPPORT 1
-EOF
-
-fi
-fi # enable_server
-
 
 echo $ac_n "checking for cygwin32""... $ac_c" 1>&6
-echo "configure:4525: checking for cygwin32" >&5
+echo "configure:4342: checking for cygwin32" >&5
 if eval "test \"`echo '$''{'ccvs_cv_sys_cygwin32'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
   cat > conftest.$ac_ext <<EOF
-#line 4530 "configure"
+#line 4347 "configure"
 #include "confdefs.h"
 
 int main() {
 return __CYGWIN32__;
 ; return 0; }
 EOF
-if { (eval echo configure:4537: \"$ac_compile\") 1>&5; (eval $ac_compile) 2>&5; }; then
+if { (eval echo configure:4354: \"$ac_compile\") 1>&5; (eval $ac_compile) 2>&5; }; then
   rm -rf conftest*
   ccvs_cv_sys_cygwin32=yes
 else
