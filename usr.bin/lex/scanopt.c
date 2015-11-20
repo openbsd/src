@@ -1,4 +1,4 @@
-/* $OpenBSD: scanopt.c,v 1.3 2015/11/19 23:34:56 mmcc Exp $ */
+/* $OpenBSD: scanopt.c,v 1.4 2015/11/20 00:05:02 mmcc Exp $ */
 
 /* flex - tool to generate fast lexical analyzers */
 
@@ -48,7 +48,7 @@ static int STRCASECMP (a, b)
      const char *a;
      const char *b;
 {
-	while (tolower (*a++) == tolower (*b++)) ;
+	while (tolower ((u_char)*a++) == tolower ((u_char)*b++)) ;
 	return b - a;
 }
 #endif
