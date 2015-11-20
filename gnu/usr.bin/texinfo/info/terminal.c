@@ -1,5 +1,5 @@
 /* terminal.c -- how to handle the physical terminal for Info.
-   $Id: terminal.c,v 1.7 2006/07/17 16:12:36 espie Exp $
+   $Id: terminal.c,v 1.8 2015/11/20 12:14:34 jca Exp $
 
    Copyright (C) 1988, 1989, 1990, 1991, 1992, 1993, 1996, 1997, 1998,
    1999, 2001, 2002, 2004 Free Software Foundation, Inc.
@@ -742,20 +742,10 @@ terminal_prep_terminal (void)
 
 /* cf. emacs/src/sysdep.c for being sure output is on. */
 #if defined (HAVE_TERMIOS_H)
-  /* linux kernel 2.2.x needs a TCOFF followed by a TCOON to turn output
-     back on if the user presses ^S at the very beginning; just a TCOON
-     doesn't work.  --Kevin Ryde <user42@zip.com.au>, 16jun2000.  */
   tcsetattr (tty, TCSANOW, &ttybuff);
-#  ifdef TCOON
-  tcflow (tty, TCOOFF);
-  tcflow (tty, TCOON);
-#  endif
 #else
 #  if defined (HAVE_TERMIO_H)
   ioctl (tty, TCSETA, &ttybuff);
-#    ifdef TCXONC
-  ioctl (tty, TCXONC, 1);
-#    endif
 #  endif
 #endif
 
