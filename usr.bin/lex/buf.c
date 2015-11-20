@@ -1,4 +1,4 @@
-/* $OpenBSD: buf.c,v 1.6 2015/11/19 23:36:46 tedu Exp $ */
+/* $OpenBSD: buf.c,v 1.7 2015/11/20 18:54:49 tedu Exp $ */
 
 /* flex - tool to generate fast lexical analyzers */
 
@@ -136,10 +136,7 @@ buf_concat(struct Buf * dest, const struct Buf * src)
 
 /* Appends n characters in str to buf. */
 struct Buf *
-buf_strnappend(buf, str, n)
-	struct Buf *buf;
-	const char *str;
-	int n;
+buf_strnappend(struct Buf *buf, const char *str, int n)
 {
 	buf_append(buf, str, n + 1);
 
@@ -151,19 +148,14 @@ buf_strnappend(buf, str, n)
 
 /* Appends characters in str to buf. */
 struct Buf *
-buf_strappend(buf, str)
-	struct Buf *buf;
-	const char *str;
+buf_strappend(struct Buf *buf, const char *str)
 {
 	return buf_strnappend(buf, str, strlen(str));
 }
 
 /* appends "#define str def\n" */
 struct Buf *
-buf_strdefine(buf, str, def)
-	struct Buf *buf;
-	const char *str;
-	const char *def;
+buf_strdefine(struct Buf *buf, const char *str, const char *def)
 {
 	buf_strappend(buf, "#define ");
 	buf_strappend(buf, " ");
@@ -222,9 +214,7 @@ buf_m4_undefine(struct Buf * buf, const char *def)
 
 /* create buf with 0 elements, each of size elem_size. */
 void
-buf_init(buf, elem_size)
-	struct Buf *buf;
-	size_t elem_size;
+buf_init(struct Buf *buf, size_t elem_size)
 {
 	buf->elts = NULL;
 	buf->nelts = 0;
@@ -234,8 +224,7 @@ buf_init(buf, elem_size)
 
 /* frees memory */
 void
-buf_destroy(buf)
-	struct Buf *buf;
+buf_destroy(struct Buf *buf)
 {
 	free(buf->elts);
 	buf->elts = NULL;
@@ -249,10 +238,7 @@ buf_destroy(buf)
  */
 
 struct Buf *
-buf_append(buf, ptr, n_elem)
-	struct Buf *buf;
-	const void *ptr;
-	int n_elem;
+buf_append(struct Buf *buf, const void *ptr, int n_elem)
 {
 	int n_alloc = 0;
 

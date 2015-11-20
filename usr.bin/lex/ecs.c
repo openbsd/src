@@ -1,4 +1,4 @@
-/*	$OpenBSD: ecs.c,v 1.8 2015/11/19 23:34:56 mmcc Exp $	*/
+/*	$OpenBSD: ecs.c,v 1.9 2015/11/20 18:54:49 tedu Exp $	*/
 
 /* ecs - equivalence class routines */
 
@@ -38,16 +38,18 @@
 
 /* ccl2ecl - convert character classes to set of equivalence classes */
 
-void    ccl2ecl ()
+void 
+ccl2ecl(void)
 {
-	int     i, ich, newlen, cclp, ccls, cclmec;
+	int i, ich, newlen, cclp, ccls, cclmec;
 
 	for (i = 1; i <= lastccl; ++i) {
-		/* We loop through each character class, and for each character
-		 * in the class, add the character's equivalence class to the
-		 * new "character" class we are creating.  Thus when we are all
-		 * done, character classes will really consist of collections
-		 * of equivalence classes
+		/*
+		 * We loop through each character class, and for each
+		 * character in the class, add the character's equivalence
+		 * class to the new "character" class we are creating.  Thus
+		 * when we are all done, character classes will really
+		 * consist of collections of equivalence classes
 		 */
 
 		newlen = 0;
@@ -76,17 +78,17 @@ void    ccl2ecl ()
  * Returned is the number of classes.
  */
 
-int     cre8ecs (fwd, bck, num)
-     int     fwd[], bck[], num;
+int 
+cre8ecs(int *fwd, int *bck, int num)
 {
-	int     i, j, numcl;
+	int i, j, numcl;
 
 	numcl = 0;
 
-	/* Create equivalence class numbers.  From now on, ABS( bck(x) )
-	 * is the equivalence class number for object x.  If bck(x)
-	 * is positive, then x is the representative of its equivalence
-	 * class.
+	/*
+	 * Create equivalence class numbers.  From now on, ABS( bck(x) ) is
+	 * the equivalence class number for object x.  If bck(x) is positive,
+	 * then x is the representative of its equivalence class.
 	 */
 	for (i = 1; i <= num; ++i)
 		if (bck[i] == NIL) {
@@ -94,7 +96,6 @@ int     cre8ecs (fwd, bck, num)
 			for (j = fwd[i]; j != NIL; j = fwd[j])
 				bck[j] = -numcl;
 		}
-
 	return numcl;
 }
 
@@ -114,15 +115,15 @@ int     cre8ecs (fwd, bck, num)
  * NUL_mapping is the value which NUL (0) should be mapped to.
  */
 
-void    mkeccl (ccls, lenccl, fwd, bck, llsiz, NUL_mapping)
-     u_char    ccls[];
-     int     lenccl, fwd[], bck[], llsiz, NUL_mapping;
+void 
+mkeccl(u_char *ccls, int lenccl, int *fwd, int *bck, int llsiz, int NUL_mapping)
 {
-	int     cclp, oldec, newec;
-	int     cclm, i, j;
+	int cclp, oldec, newec;
+	int cclm, i, j;
 	static unsigned char cclflags[CSIZE];	/* initialized to all '\0' */
 
-	/* Note that it doesn't matter whether or not the character class is
+	/*
+	 * Note that it doesn't matter whether or not the character class is
 	 * negated.  The same results will be obtained in either case.
 	 */
 
@@ -139,7 +140,8 @@ void    mkeccl (ccls, lenccl, fwd, bck, llsiz, NUL_mapping)
 
 		j = cclp + 1;
 
-		for (i = fwd[cclm]; i != NIL && i <= llsiz; i = fwd[i]) {	/* look for the symbol in the character class */
+		for (i = fwd[cclm]; i != NIL && i <= llsiz; i = fwd[i]) {
+			/* look for the symbol in the character class */
 			for (; j < lenccl; ++j) {
 				int ccl_char;
 
@@ -152,7 +154,8 @@ void    mkeccl (ccls, lenccl, fwd, bck, llsiz, NUL_mapping)
 					break;
 
 				if (ccl_char == i && !cclflags[j]) {
-					/* We found an old companion of cclm
+					/*
+					 * We found an old companion of cclm
 					 * in the ccl.  Link it into the new
 					 * equivalence class and flag it as
 					 * having been processed.
@@ -170,8 +173,9 @@ void    mkeccl (ccls, lenccl, fwd, bck, llsiz, NUL_mapping)
 				}
 			}
 
-			/* Symbol isn't in character class.  Put it in the old
-			 * equivalence class.
+			/*
+			 * Symbol isn't in character class.  Put it in the
+			 * old equivalence class.
 			 */
 
 			bck[i] = oldec;
@@ -181,14 +185,13 @@ void    mkeccl (ccls, lenccl, fwd, bck, llsiz, NUL_mapping)
 
 			oldec = i;
 
-		      next_pt:;
+	next_pt:	;
 		}
 
 		if (bck[cclm] != NIL || oldec != bck[cclm]) {
 			bck[cclm] = NIL;
 			fwd[oldec] = NIL;
 		}
-
 		fwd[newec] = NIL;
 
 		/* Find next ccl member to process. */
@@ -203,11 +206,12 @@ void    mkeccl (ccls, lenccl, fwd, bck, llsiz, NUL_mapping)
 
 /* mkechar - create equivalence class for single character */
 
-void    mkechar (tch, fwd, bck)
-     int     tch, fwd[], bck[];
+void 
+mkechar(int tch, int *fwd, int *bck)
 {
-	/* If until now the character has been a proper subset of
-	 * an equivalence class, break it away to create a new ec
+	/*
+	 * If until now the character has been a proper subset of an
+	 * equivalence class, break it away to create a new ec
 	 */
 
 	if (fwd[tch] != NIL)
