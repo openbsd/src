@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gif.c,v 1.81 2015/10/25 11:58:11 mpi Exp $	*/
+/*	$OpenBSD: if_gif.c,v 1.82 2015/11/20 05:29:53 dlg Exp $	*/
 /*	$KAME: if_gif.c,v 1.43 2001/02/20 08:51:07 itojun Exp $	*/
 
 /*
@@ -176,7 +176,7 @@ gif_start(struct ifnet *ifp)
 			break;
 
 		/* is interface up and usable? */
-		if ((ifp->if_flags & (IFF_OACTIVE | IFF_UP)) != IFF_UP ||
+		if (!(ifp->if_flags & IFF_UP) ||
 		    sc->gif_psrc == NULL || sc->gif_pdst == NULL ||
 		    sc->gif_psrc->sa_family != sc->gif_pdst->sa_family) {
 			m_freem(m);
