@@ -1,4 +1,4 @@
-/*	$OpenBSD: key.c,v 1.15 2015/02/11 12:36:40 deraadt Exp $	*/
+/*	$OpenBSD: key.c,v 1.16 2015/11/20 15:57:39 deraadt Exp $	*/
 /*	$NetBSD: key.c,v 1.11 1995/09/07 06:57:11 jtc Exp $	*/
 
 /*-
@@ -328,13 +328,13 @@ f_tty(struct info *ip)
 void
 f_ostart(struct info *ip)
 {
-	if (ioctl (ip->fd, TIOCSTART) < 0)
+	if (ioctl(ip->fd, TIOCSTART) < 0)
 		err(1, "TIOCSTART");
 }
 
 void
 f_ostop(struct info *ip)
 {
-	if (ioctl (ip->fd, TIOCSTOP) < 0)
+	if (ioctl(ip->fd, TIOCSTOP) < 0)
 		err(1, "TIOCSTOP");
 }
