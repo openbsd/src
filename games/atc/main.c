@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.23 2014/07/13 14:01:04 tedu Exp $	*/
+/*	$OpenBSD: main.c,v 1.24 2015/11/20 16:58:37 tb Exp $	*/
 /*	$NetBSD: main.c,v 1.4 1995/04/27 21:22:25 mycroft Exp $	*/
 
 /*-
@@ -46,12 +46,13 @@
 #include "pathnames.h"
 
 int
-main(int ac, char *av[])
+main(int argc, char *argv[])
 {
+	int			ch;
 	int			f_usage = 0, f_list = 0, f_showscore = 0;
 	int			f_printpath = 0;
 	const char		*file = NULL;
-	char			*name, *ptr, *seed;
+	char			*seed;
 	struct sigaction	sa;
 	gid_t			gid;
 	struct itimerval	itv;
@@ -66,58 +67,48 @@ main(int ac, char *av[])
 	makenoise = 1;
 	seed = NULL;
 
-	name = *av++;
-	while (*av) {
-#ifndef SAVEDASH
-		if (**av == '-') 
-			++*av;
-		else
+	while ((ch = getopt(argc, argv, "f:g:lpqr:stu?")) != -1) {
+		switch (ch) {
+		case 'f':
+		case 'g':
+			file = optarg;
 			break;
-#endif
-		ptr = *av++;
-		while (*ptr) {
-			switch (*ptr) {
-			case '?':
-			case 'u':
-				f_usage++;
-				break;
-			case 'l':
-				f_list++;
-				break;
-			case 's':
-			case 't':
-				f_showscore++;
-				break;
-			case 'p':
-				f_printpath++;
-				break;
-			case 'q':
-				makenoise = 0;
-				break;
-			case 'r':
-				seed = *av;
-				av++;
-				break;
-			case 'f':
-			case 'g':
-				file = *av;
-				av++;
-				break;
-			default: 
-				warnx("unknown option '%c'", *ptr);
-				f_usage++;
-				break;
-			}
-			ptr++;
+		case 'l':
+			f_list = 1;
+			break;
+		case 'p':
+			f_printpath = 1;
+			break;
+		case 'q':
+			makenoise = 0;
+			break;
+		case 'r':
+			seed = optarg;
+			break;
+		case 's':
+		case 't':
+			f_showscore = 1;
+			break;
+		case 'u':
+		case '?':
+		default:
+			f_usage = 1;
+			break;
 		}
 	}
+	argc -= optind;
+	argv += optind;
+
+	if (argc > 0)
+		f_usage = 1;
+
 	if (seed != NULL)
 		setseed(seed);
 
 	if (f_usage)
 		fprintf(stderr, 
 		    "usage: %s [-lpqstu?] [-f game] [-g game] [-r seed]\n",
-		    name);
+		    getprogname());
 	if (f_showscore)
 		log_score(1);
 	if (f_list)
