@@ -1,4 +1,4 @@
-/* $OpenBSD: if_pppoe.c,v 1.49 2015/10/25 11:58:11 mpi Exp $ */
+/* $OpenBSD: if_pppoe.c,v 1.50 2015/11/20 12:05:34 sthen Exp $ */
 /* $NetBSD: if_pppoe.c,v 1.51 2003/11/28 08:56:48 keihan Exp $ */
 
 /*
@@ -223,8 +223,7 @@ pppoe_clone_create(struct if_clone *ifc, int unit)
 	sc->sc_sppp.pp_if.if_flags = IFF_SIMPLEX | IFF_POINTOPOINT | IFF_MULTICAST;
 	sc->sc_sppp.pp_if.if_type = IFT_PPP;
 	sc->sc_sppp.pp_if.if_hdrlen = sizeof(struct ether_header) + PPPOE_HEADERLEN;
-	sc->sc_sppp.pp_flags |= PP_KEEPALIVE |		/* use LCP keepalive */
-			        PP_NOFRAMING;		/* no serial encapsulation */
+	sc->sc_sppp.pp_flags |= PP_KEEPALIVE;		/* use LCP keepalive */
 	sc->sc_sppp.pp_framebytes = PPPOE_HEADERLEN;	/* framing added to ppp packets */
 	sc->sc_sppp.pp_if.if_ioctl = pppoe_ioctl;
 	sc->sc_sppp.pp_if.if_start = pppoe_start;
