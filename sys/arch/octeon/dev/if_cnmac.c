@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cnmac.c,v 1.31 2015/11/18 16:05:22 visa Exp $	*/
+/*	$OpenBSD: if_cnmac.c,v 1.32 2015/11/20 15:16:06 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -1016,24 +1016,8 @@ octeon_eth_start(struct ifnet *ifp)
 	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
 		goto last;
 
-	/* XXX assume that OCTEON doesn't buffer packets */
-	if (__predict_false(!cn30xxgmx_link_status(sc->sc_gmx_port))) {
-		/* dequeue and drop them */
-		while (1) {
-			IFQ_DEQUEUE(&ifp->if_snd, m);
-			if (m == NULL)
-				break;
-#if 0
-#ifdef DDB
-			m_print(m, "cd", printf);
-#endif
-			printf("%s: drop\n", sc->sc_dev.dv_xname);
-#endif
-			m_freem(m);
-			IF_DROP(&ifp->if_snd);
-		}
+	if (__predict_false(!cn30xxgmx_link_status(sc->sc_gmx_port)))
 		goto last;
-	}
 
 	for (;;) {
 		octeon_eth_send_queue_flush_fetch(sc); /* XXX */
