@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.410 2015/11/20 11:15:07 dlg Exp $	*/
+/*	$OpenBSD: if.c,v 1.411 2015/11/20 12:27:42 mpi Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -174,6 +174,7 @@ void	ifa_print_all(void);
 
 void if_ifp_dtor(void *, void *);
 void if_map_dtor(void *, void *);
+struct ifnet *if_ref(struct ifnet *);
 
 /*
  * struct if_map
