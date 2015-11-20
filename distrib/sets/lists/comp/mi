@@ -6414,6 +6414,14 @@
 ./usr/share/man/man9/if_rxr_inuse.9
 ./usr/share/man/man9/if_rxr_ioctl.9
 ./usr/share/man/man9/if_rxr_put.9
+./usr/share/man/man9/ifq_deq.9
+./usr/share/man/man9/ifq_deq_begin.9
+./usr/share/man/man9/ifq_deq_commit.9
+./usr/share/man/man9/ifq_deq_rollback.9
+./usr/share/man/man9/ifq_empty.9
+./usr/share/man/man9/ifq_enq.9
+./usr/share/man/man9/ifq_len.9
+./usr/share/man/man9/ifq_purge.9
 ./usr/share/man/man9/iic.9
 ./usr/share/man/man9/iic_acquire_bus.9
 ./usr/share/man/man9/iic_exec.9
