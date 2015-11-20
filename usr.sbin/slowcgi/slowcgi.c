@@ -1,4 +1,4 @@
-/*	$OpenBSD: slowcgi.c,v 1.47 2015/11/05 19:15:22 florian Exp $ */
+/*	$OpenBSD: slowcgi.c,v 1.48 2015/11/20 09:04:01 tb Exp $ */
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
  * Copyright (c) 2013 Florian Obser <florian@openbsd.org>
@@ -377,7 +377,7 @@ slowcgi_listen(char *path, struct passwd *pw)
 	sun.sun_family = AF_UNIX;
 	if (strlcpy(sun.sun_path, path, sizeof(sun.sun_path)) >=
 	    sizeof(sun.sun_path))
-		lerrx(1, "socket path to long");
+		lerrx(1, "socket path too long");
 
 	if (unlink(path) == -1)
 		if (errno != ENOENT)
