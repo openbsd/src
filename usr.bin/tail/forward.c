@@ -1,4 +1,4 @@
-/*	$OpenBSD: forward.c,v 1.27 2015/11/19 17:50:04 tedu Exp $	*/
+/*	$OpenBSD: forward.c,v 1.28 2015/11/20 01:15:22 tedu Exp $	*/
 /*	$NetBSD: forward.c,v 1.7 1996/02/13 16:49:10 ghudson Exp $	*/
 
 /*-
@@ -52,6 +52,16 @@ static const struct timespec *tfreopen(struct tailfile *tf);
 
 static int kq = -1;
 
+static void
+printtail(FILE *fp)
+{
+	int ch;
+
+	while (!feof(fp) && (ch = getc(fp)) != EOF)
+		if (putchar(ch) == EOF)
+			oerr();
+}
+
 /*
  * forward -- display the file, from an offset, forward.
  *
@@ -75,7 +85,7 @@ static int kq = -1;
  *	NOREG	cyclically read lines into a wrap-around array of buffers
  */
 void
-forward(struct tailfile *tf, int nfiles, enum STYLE style, off_t off)
+forward(struct tailfile *tf, int nfiles, enum STYLE style, off_t origoff)
 {
 	int ch;
 	struct tailfile *ctf, *ltf;
@@ -91,6 +101,7 @@ forward(struct tailfile *tf, int nfiles, enum STYLE style, off_t off)
 		warn("kqueue");
 
 	for (i = 0; i < nfiles; i++) {
+		off_t off = origoff;
 		if (nfiles > 1)
 			printfname(tf[i].fname);
 
@@ -125,8 +136,11 @@ forward(struct tailfile *tf, int nfiles, enum STYLE style, off_t off)
 					}
 					break;
 				}
-				if (ch == '\n' && !--off)
+				if (ch == '\n' && !--off) {
+					if (!fflag)
+						printtail(tf[i].fp);
 					break;
+				}
 			}
 			break;
 		case RBYTES:
