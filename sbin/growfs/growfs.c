@@ -1,4 +1,4 @@
-/*	$OpenBSD: growfs.c,v 1.44 2015/11/20 17:31:20 mmcc Exp $	*/
+/*	$OpenBSD: growfs.c,v 1.45 2015/11/20 17:37:08 mmcc Exp $	*/
 /*
  * Copyright (c) 2000 Christoph Herrmann, Thomas-Henning von Kamptz
  * Copyright (c) 1980, 1989, 1993 The Regents of the University of California.
@@ -120,7 +120,7 @@ static char		inobuf[MAXBSIZE];	/* inode block */
 ino_t			maxino;			/* last valid inode */
 
 /*
- * An  array of elements of type struct gfs_bpp describes all blocks  to
+ * An array of elements of type struct gfs_bpp describes all blocks to
  * be relocated in order to free the space needed for the cylinder group
  * summary for all cylinder groups located in the first cylinder group.
  */
@@ -158,13 +158,13 @@ static void	indirchk(daddr_t, daddr_t, daddr_t, daddr_t,
 static void	ffs1_sb_update(struct fs *, daddr_t);
 
 /*
- * Here  we actually start growing the filesystem. We basically  read  the
- * cylinder  summary  from the first cylinder group as we want  to  update
- * this  on  the fly during our various operations. First  we  handle  the
+ * Here we actually start growing the filesystem. We basically read the
+ * cylinder summary from the first cylinder group as we want to update
+ * this on the fly during our various operations. First we handle the
  * changes in the former last cylinder group. Afterwards we create all new
- * cylinder  groups.  Now  we handle the  cylinder  group  containing  the
- * cylinder  summary  which  might result in a  relocation  of  the  whole
- * structure.  In the end we write back the updated cylinder summary,  the
+ * cylinder groups. Now we handle the cylinder group containing the
+ * cylinder summary which might result in a relocation of the whole
+ * structure. In the end we write back the updated cylinder summary, the
  * new superblock, and slightly patched versions of the super block
  * copies.
  */
@@ -1830,7 +1830,7 @@ ginode(ino_t inumber, int fsi, int cg)
 
 /*
  * Figure out how many lines our current terminal has. For more details again
- * please  see the source of newfs(8), as this function is taken over  almost
+ * please see the source of newfs(8), as this function is taken over almost
  * unchanged.
  */
 static int
@@ -1957,8 +1957,8 @@ main(int argc, char **argv)
 		err(1, "%s: fstat()", device);
 
 	/*
-	 * Try to read a label from the disk.  Then get the partition from the
-	 * device minor number, using DISKPART().  Probably don't need to
+	 * Try to read a label from the disk. Then get the partition from the
+	 * device minor number, using DISKPART(). Probably don't need to
 	 * check against getmaxpartitions().
 	 */
 	lp = get_disklabel(fsi);
