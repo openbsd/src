@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.408 2015/11/20 03:35:23 dlg Exp $	*/
+/*	$OpenBSD: if.c,v 1.409 2015/11/20 10:40:00 sthen Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -2779,7 +2779,7 @@ priq_enq(struct ifqueue *ifq, struct mbuf *m)
 		return (ENOBUFS);
 
 	pq = ifq->ifq_q;
-	KASSERT(m->m_pkthdr.pf.prio < IFQ_MAXPRIO);
+	KASSERT(m->m_pkthdr.pf.prio <= IFQ_MAXPRIO);
 	pl = &pq->pq_lists[m->m_pkthdr.pf.prio];
 
 	m->m_nextpkt = NULL;
