@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.244 2015/11/20 06:29:56 jsg Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.245 2015/11/20 07:11:52 deraadt Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -42,6 +42,7 @@
 #include <sys/namei.h>
 #include <sys/filedesc.h>
 #include <sys/kernel.h>
+#include <sys/conf.h>
 #include <sys/sysctl.h>
 #include <sys/file.h>
 #include <sys/stat.h>
@@ -57,6 +58,7 @@
 #include <sys/disklabel.h>
 #include <sys/ktrace.h>
 #include <sys/unistd.h>
+#include <sys/specdev.h>
 
 #include <sys/syscallargs.h>
 
@@ -2829,12 +2831,11 @@ sys_revoke(struct proc *p, void *v, register_t *retval)
 	if ((error = namei(&nd)) != 0)
 		return (error);
 	vp = nd.ni_vp;
+	if (vp->v_type != VCHR || (u_int)major(vp->v_rdev) >= nchrdev ||
+	    cdevsw[major(vp->v_rdev)].d_type != D_TTY)
+		return (ENOTTY);
 	if ((error = VOP_GETATTR(vp, &vattr, p->p_ucred, p)) != 0)
 		goto out;
-	if (!(vp->v_flag & VISTTY)) {
-		error = ENOTTY;
-		goto out;
-	}
 	if (p->p_ucred->cr_uid != vattr.va_uid &&
 	    (error = suser(p, 0)))
 		goto out;
