@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.950 2015/11/12 10:07:14 mpi Exp $ */
+/*	$OpenBSD: pf.c,v 1.951 2015/11/20 10:42:51 mpi Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -36,6 +36,7 @@
  */
 
 #include "bpfilter.h"
+#include "carp.h"
 #include "pflog.h"
 #include "pfsync.h"
 #include "pflow.h"
@@ -2595,9 +2596,11 @@ pf_match_rcvif(struct mbuf *m, struct pf_rule *r)
 	if (ifp == NULL)
 		return (0);
 
+#if NCARP > 0
 	if (ifp->if_type == IFT_CARP && ifp->if_carpdev)
 		kif = (struct pfi_kif *)ifp->if_carpdev->if_pf_kif;
 	else
+#endif
 		kif = (struct pfi_kif *)ifp->if_pf_kif;
 
 	if_put(ifp);
@@ -5347,7 +5350,6 @@ pf_routable(struct pf_addr *addr, sa_family_t af, struct pfi_kif *kif,
 	struct sockaddr_in6	*dst6;
 #endif	/* INET6 */
 	struct rtentry		*rt, *rt0 = NULL;
-	struct ifnet		*ifp;
 
 	check_mpath = 0;
 	memset(&ss, 0, sizeof(ss));
@@ -5397,13 +5399,20 @@ pf_routable(struct pf_addr *addr, sa_family_t af, struct pfi_kif *kif,
 		ret = 0;
 		rt = rt0;
 		do {
-			if (rt->rt_ifp->if_type == IFT_CARP)
-				ifp = rt->rt_ifp->if_carpdev;
-			else
-				ifp = rt->rt_ifp;
-
-			if (kif->pfik_ifp == ifp)
+			if (rt->rt_ifidx == kif->pfik_ifp->if_index) {
 				ret = 1;
+#if NCARP > 0
+			} else {
+				struct ifnet	*ifp;
+
+				ifp = if_get(rt->rt_ifidx);
+				if (ifp != NULL && ifp->if_type == IFT_CARP &&
+				    ifp->if_carpdev == kif->pfik_ifp)
+					ret = 1;
+				if_put(ifp);
+#endif
+			}
+
 #ifndef SMALL_KERNEL
 			rt = rtable_mpath_next(rt);
 #else
@@ -5512,7 +5521,7 @@ pf_route(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 			goto bad;
 		}
 
-		ifp = rt->rt_ifp;
+		ifp = if_get(rt->rt_ifidx);
 
 		if (rt->rt_flags & RTF_GATEWAY)
 			dst = satosin(rt->rt_gateway);
@@ -5607,6 +5616,8 @@ pf_route(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 done:
 	if (r->rt != PF_DUPTO)
 		*m = NULL;
+	if (!r->rt)
+		if_put(ifp);
 	rtfree(rt);
 	return;
 
@@ -6312,9 +6323,11 @@ pf_test(sa_family_t af, int fwdir, struct ifnet *ifp, struct mbuf **m0)
 	if (!pf_status.running)
 		return (PF_PASS);
 
+#if NCARP > 0
 	if (ifp->if_type == IFT_CARP && ifp->if_carpdev)
 		kif = (struct pfi_kif *)ifp->if_carpdev->if_pf_kif;
 	else
+#endif
 		kif = (struct pfi_kif *)ifp->if_pf_kif;
 
 	if (kif == NULL) {
