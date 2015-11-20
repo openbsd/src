@@ -315,7 +315,7 @@ char *
 estrdup(const char *str)
 {
 	char *n;
-	
+
 	n = strdup(str);
 	if (n == NULL) {
 		error("Cannot allocate memory", NULL);
