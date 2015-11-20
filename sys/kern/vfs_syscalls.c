@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.243 2015/11/18 06:57:24 deraadt Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.244 2015/11/20 06:29:56 jsg Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -273,14 +273,14 @@ update:
 		if (error)
 			mp->mnt_flag = mntflag;
 
- 		if ((mp->mnt_flag & MNT_RDONLY) == 0) {
- 			if (mp->mnt_syncer == NULL)
- 				error = vfs_allocate_syncvnode(mp);
- 		} else {
- 			if (mp->mnt_syncer != NULL)
- 				vgone(mp->mnt_syncer);
- 			mp->mnt_syncer = NULL;
- 		}
+		if ((mp->mnt_flag & MNT_RDONLY) == 0) {
+			if (mp->mnt_syncer == NULL)
+				error = vfs_allocate_syncvnode(mp);
+		} else {
+			if (mp->mnt_syncer != NULL)
+				vgone(mp->mnt_syncer);
+			mp->mnt_syncer = NULL;
+		}
 
 		vfs_unbusy(mp);
 		return (error);
