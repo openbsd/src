@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.189 2015/11/20 10:50:08 mpi Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.190 2015/11/20 10:51:30 mpi Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -40,8 +40,6 @@
 
 #include "carp.h"
 
-#include "bridge.h"
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mbuf.h>
@@ -64,9 +62,6 @@
 #include <netinet/if_ether.h>
 #if NCARP > 0
 #include <netinet/ip_carp.h>
-#endif
-#if NBRIDGE > 0
-#include <net/if_bridge.h>
 #endif
 
 /*
