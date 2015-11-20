@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.c,v 1.123 2015/11/12 10:07:14 mpi Exp $	*/
+/*	$OpenBSD: if_trunk.c,v 1.124 2015/11/20 05:33:54 dlg Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -1025,7 +1025,6 @@ trunk_init(struct ifnet *ifp)
 	s = splnet();
 
 	ifp->if_flags |= IFF_RUNNING;
-	ifp->if_flags &= ~IFF_OACTIVE;
 
 	if (tr->tr_init != NULL)
 		(*tr->tr_init)(tr);
@@ -1041,7 +1040,7 @@ trunk_stop(struct ifnet *ifp)
 
 	s = splnet();
 
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+	ifp->if_flags &= ~IFF_RUNNING;
 
 	if (tr->tr_stop != NULL)
 		(*tr->tr_stop)(tr);
