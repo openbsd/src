@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.188 2015/11/18 13:58:02 mpi Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.189 2015/11/20 10:50:08 mpi Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -621,7 +621,7 @@ in_arpinput(struct mbuf *m)
 		rt->rt_flags &= ~RTF_REJECT;
 		/* Notify userland that an ARP resolution has been done. */
 		if (la->la_asked || changed)
-			rt_sendmsg(rt, RTM_RESOLVE, rt->rt_ifp->if_rdomain);
+			rt_sendmsg(rt, RTM_RESOLVE, ifp->if_rdomain);
 		la->la_asked = 0;
 		while ((len = ml_len(&la->la_ml)) != 0) {
 			mh = ml_dequeue(&la->la_ml);
@@ -680,7 +680,6 @@ out:
 	sa.sa_len = sizeof(sa);
 	ifp->if_output(ifp, m, &sa, NULL);
 	if_put(ifp);
-	return;
 }
 
 /*
@@ -691,13 +690,16 @@ arptfree(struct rtentry *rt)
 {
 	struct llinfo_arp *la = (struct llinfo_arp *)rt->rt_llinfo;
 	struct sockaddr_dl *sdl = satosdl(rt->rt_gateway);
+	struct ifnet *ifp;
 
+	ifp = if_get(rt->rt_ifidx);
 	if ((sdl != NULL) && (sdl->sdl_family == AF_LINK)) {
 		sdl->sdl_alen = 0;
 		la->la_asked = 0;
 	}
 
-	rtdeletemsg(rt, rt->rt_ifp->if_rdomain);
+	rtdeletemsg(rt, ifp->if_rdomain);
+	if_put(ifp);
 }
 
 /*
@@ -742,8 +744,10 @@ arpproxy(struct in_addr in, unsigned int rtableid)
 	int found = 0;
 
 	rt = arplookup(in.s_addr, 0, SIN_PROXY, rtableid);
-	if (rt == NULL)
+	if (!rtisvalid(rt)) {
+		rtfree(rt);
 		return (0);
+	}
 
 	/* Check that arp information are correct. */
 	sdl = satosdl(rt->rt_gateway);
@@ -752,10 +756,16 @@ arpproxy(struct in_addr in, unsigned int rtableid)
 		return (0);
 	}
 
-	ifp = rt->rt_ifp;
+	ifp = if_get(rt->rt_ifidx);
+	if (ifp == NULL) {
+		rtfree(rt);
+		return (0);
+	}
+
 	if (!memcmp(LLADDR(sdl), LLADDR(ifp->if_sadl), sdl->sdl_alen))
 		found = 1;
 
+	if_put(ifp);
 	rtfree(rt);
 	return (found);
 }
