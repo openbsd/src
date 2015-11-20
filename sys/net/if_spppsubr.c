@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.146 2015/11/11 01:49:17 dlg Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.147 2015/11/20 11:53:36 dlg Exp $	*/
 /*
  * Synchronous PPP link level subroutines.
  *
@@ -997,14 +997,15 @@ sppp_cp_send(struct sppp *sp, u_short proto, u_char type,
 			sppp_print_bytes ((u_char*) (lh+1), len);
 		addlog(">\n");
 	}
+
+	len = m->m_pkthdr.len + sp->pp_framebytes;
 	if (mq_enqueue(&sp->pp_cpq, m) != 0) {
-		++ifp->if_oerrors;
-		m = NULL;
+		ifp->if_oerrors++;
+		return;
 	}
-	if (!(ifp->if_flags & IFF_OACTIVE))
-		(*ifp->if_start) (ifp);
-	if (m != NULL)
-		ifp->if_obytes += m->m_pkthdr.len + sp->pp_framebytes;
+
+	ifp->if_obytes += len;
+	if_start(ifp);
 }
 
 /*
@@ -4101,14 +4102,15 @@ sppp_auth_send(const struct cp *cp, struct sppp *sp,
 			sppp_print_bytes((u_char*) (lh+1), len);
 		addlog(">\n");
 	}
+
+	len = m->m_pkthdr.len + sp->pp_framebytes;
 	if (mq_enqueue(&sp->pp_cpq, m) != 0) {
-		++ifp->if_oerrors;
-		m = NULL;
+		ifp->if_oerrors++;
+		return;
 	}
-	if (! (ifp->if_flags & IFF_OACTIVE))
-		(*ifp->if_start) (ifp);
-	if (m != NULL)
-		ifp->if_obytes += m->m_pkthdr.len + sp->pp_framebytes;
+
+	ifp->if_obytes += len;
+	if_start(ifp);
 }
 
 /*
