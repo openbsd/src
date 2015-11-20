@@ -1,4 +1,4 @@
-/*	$OpenBSD: string.h,v 1.29 2014/08/10 02:49:24 guenther Exp $	*/
+/*	$OpenBSD: string.h,v 1.30 2015/11/20 23:40:32 millert Exp $	*/
 /*	$NetBSD: string.h,v 1.6 1994/10/26 00:56:30 cgd Exp $	*/
 
 /*-
@@ -37,6 +37,14 @@
 
 #include <sys/cdefs.h>
 #include <machine/_types.h>
+
+/*
+ * POSIX mandates that certain string functions not present in ISO C
+ * be prototyped in strings.h.  Historically, we've included them here.
+ */
+#if __BSD_VISIBLE
+#include <strings.h>
+#endif
 
 #ifndef	_SIZE_T_DEFINED_
 #define	_SIZE_T_DEFINED_
@@ -89,20 +97,6 @@ size_t	 strxfrm(char *__restrict, const char *__restrict, size_t)
 #if __XPG_VISIBLE
 void	*memccpy(void *__restrict, const void *__restrict, int, size_t)
 		__attribute__ ((__bounded__(__buffer__,1,4)));
-#endif
-
-#if __XPG_VISIBLE >= 420
-int	 bcmp(const void *, const void *, size_t);
-void	 bcopy(const void *, void *, size_t)
-		__attribute__ ((__bounded__(__buffer__,1,3)))
-		__attribute__ ((__bounded__(__buffer__,2,3)));
-void	 bzero(void *, size_t)
-		__attribute__ ((__bounded__(__buffer__,1,2)));
-int	 ffs(int);
-char	*index(const char *, int);
-char	*rindex(const char *, int);
-int	 strcasecmp(const char *, const char *);
-int	 strncasecmp(const char *, const char *, size_t);
 #endif
 
 #if __POSIX_VISIBLE >= 200112
