@@ -1,4 +1,4 @@
-/* $OpenBSD: utf8.c,v 1.24 2015/11/14 12:03:23 nicm Exp $ */
+/* $OpenBSD: utf8.c,v 1.25 2015/11/20 22:02:54 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -355,6 +355,7 @@ utf8_set(struct utf8_data *ud, u_char ch)
 	u_int	i;
 
 	*ud->data = ch;
+	ud->have = 1;
 	ud->size = 1;
 
 	ud->width = 1;

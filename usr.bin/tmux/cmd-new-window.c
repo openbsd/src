@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-new-window.c,v 1.51 2015/10/31 14:51:15 nicm Exp $ */
+/* $OpenBSD: cmd-new-window.c,v 1.52 2015/11/20 22:02:54 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -97,7 +97,7 @@ cmd_new_window_exec(struct cmd *self, struct cmd_q *cmdq)
 		ft = format_create();
 		format_defaults(ft, cmd_find_client(cmdq, NULL, 1), s, NULL,
 		    NULL);
-		cwd = format_expand(ft, args_get(args, 'c'));
+		cwd = to_free = format_expand(ft, args_get(args, 'c'));
 		format_free(ft);
 	} else if (cmdq->client != NULL && cmdq->client->session == NULL)
 		cwd = cmdq->client->cwd;

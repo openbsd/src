@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-if-shell.c,v 1.34 2015/10/31 08:13:58 nicm Exp $ */
+/* $OpenBSD: cmd-if-shell.c,v 1.35 2015/11/20 22:02:54 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Tiago Cunha <me@tiagocunha.org>
@@ -97,6 +97,7 @@ cmd_if_shell_exec(struct cmd *self, struct cmd_q *cmdq)
 			cmd = args->argv[1];
 		else if (args->argc == 3)
 			cmd = args->argv[2];
+		free(shellcmd);
 		if (cmd == NULL)
 			return (CMD_RETURN_NORMAL);
 		if (cmd_string_parse(cmd, &cmdlist, NULL, 0, &cause) != 0) {
