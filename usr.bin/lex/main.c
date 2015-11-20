@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.23 2015/11/20 04:06:48 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.24 2015/11/20 04:07:43 millert Exp $	*/
 
 /* flex - tool to generate fast lexical analyzers */
 
@@ -229,7 +229,6 @@ void
 check_options()
 {
 	int i;
-	const char *m4 = NULL;
 
 	if (lex_compat) {
 		if (C_plus_plus)
@@ -352,9 +351,7 @@ check_options()
 	}
 	/* Setup the filter chain. */
 	output_chain = filter_create_int(NULL, filter_tee_header, headerfilename);
-	if (!(m4 = getenv("M4")))
-		m4 = M4;
-	filter_create_ext(output_chain, m4, "-P", 0);
+	filter_create_ext(output_chain, M4, "-P", 0);
 	filter_create_int(output_chain, filter_fix_linedirs, NULL);
 
 	/* For debugging, only run the requested number of filters. */
