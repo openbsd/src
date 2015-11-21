@@ -301,6 +301,12 @@ restart_child_servers(struct nsd *nsd, region_type* region, netio_type* netio,
 				/* the child need not be able to access the
 				 * nsd.db file */
 				namedb_close_udb(nsd->db);
+
+				if (pledge("stdio rpath inet", NULL) == -1) {
+					log_msg(LOG_ERR, "pledge");
+					exit(1);
+				}
+
 				nsd->pid = 0;
 				nsd->child_count = 0;
 				nsd->server_kind = nsd->children[i].kind;
