@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.5 2015/11/21 11:08:58 mpi Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.6 2015/11/21 11:16:30 mpi Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -82,8 +82,8 @@ struct vmm_softc {
 	int			mode;
 
 	struct rwlock		vm_lock;
-	size_t			vm_ct;
-	size_t			vm_idx;
+	size_t			vm_ct;		/* number of in-memory VMs */
+	size_t			vm_idx;		/* next unique VM index */
 };
 
 int vmm_probe(struct device *, void *, void *);
@@ -313,7 +313,10 @@ vmmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 			vmm_stop();
 		break;
 	case VMM_IOC_STOP:
-		ret = vmm_stop();
+		if (vmm_softc->vm_ct > 0)
+			ret = EAGAIN;
+		else
+			ret = vmm_stop();
 		break;
 	case VMM_IOC_CREATE:
 		ret = vm_create((struct vm_create_params *)data, p);
@@ -552,17 +555,14 @@ vm_writepage(struct vm_writepage_params *vwp)
 int
 vmm_start(void)
 {
-	struct cpu_info *self;
+	struct cpu_info *self = curcpu();
 	int ret = 0;
 
 #ifdef MULTIPROCESSOR
 	struct cpu_info *ci;
 	CPU_INFO_ITERATOR cii;
 	int i;
-#endif /* MULTIPROCESSOR */
 
-	self = curcpu();
-#ifdef MULTIPROCESSOR
 	/* Broadcast start VMM IPI */
 	x86_broadcast_ipi(X86_IPI_START_VMM);
 
@@ -596,8 +596,6 @@ vmm_start(void)
  * vmm_stop
  *
  * Stops VMM mode on the system
- *
- * XXX should restrict this function to not stop VMM mode while VMs are running
  */
 int
 vmm_stop(void)
