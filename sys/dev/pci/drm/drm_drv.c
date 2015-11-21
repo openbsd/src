@@ -1,4 +1,4 @@
-/* $OpenBSD: drm_drv.c,v 1.138 2015/09/26 19:52:16 kettenis Exp $ */
+/* $OpenBSD: drm_drv.c,v 1.139 2015/11/21 15:23:44 kettenis Exp $ */
 /*-
  * Copyright 2007-2009 Owain G. Ainsworth <oga@openbsd.org>
  * Copyright © 2008 Intel Corporation
@@ -280,7 +280,6 @@ drm_attach_pci(struct drm_driver_info *driver, struct pci_attach_args *pa,
 	arg.driver = driver;
 	arg.dmat = pa->pa_dmat;
 	arg.bst = pa->pa_memt;
-	arg.irq = pa->pa_intrline;
 	arg.is_agp = is_agp;
 	arg.console = console;
 
@@ -372,7 +371,6 @@ drm_attach(struct device *parent, struct device *self, void *aux)
 
 	dev->dmat = da->dmat;
 	dev->bst = da->bst;
-	dev->irq = da->irq;
 	dev->unique = da->busid;
 	dev->unique_len = da->busid_len;
 	dev->pdev = &dev->drm_pci;

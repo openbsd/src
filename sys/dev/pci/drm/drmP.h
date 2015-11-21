@@ -1,4 +1,4 @@
-/* $OpenBSD: drmP.h,v 1.198 2015/09/26 19:52:16 kettenis Exp $ */
+/* $OpenBSD: drmP.h,v 1.199 2015/11/21 15:23:44 kettenis Exp $ */
 /* drmP.h -- Private header for Direct Rendering Manager -*- linux-c -*-
  * Created: Mon Jan  4 10:05:05 1999 by faith@precisioninsight.com
  */
@@ -644,7 +644,6 @@ struct drm_device {
 	struct drm_device_dma  *dma;		/* Optional pointer for DMA support */
 
 				/* Context support */
-	int		  irq;		/* Interrupt used by board	   */
 	int		  irq_enabled;	/* True if the irq handler is enabled */
 
 	/** \name VBLANK IRQ support */
@@ -707,7 +706,6 @@ struct drm_attach_args {
 	bus_space_tag_t			 bst;
 	size_t				 busid_len;
 	int				 is_agp;
-	u_int8_t			 irq;
 	u_int16_t			 pci_vendor;
 	u_int16_t			 pci_device;
 	u_int16_t			 pci_subvendor;
@@ -904,7 +902,7 @@ static __inline__ int drm_core_check_feature(struct drm_device *dev,
 
 static inline int drm_dev_to_irq(struct drm_device *dev)
 {
-	return dev->irq;
+	return -1;
 }
 
 #define DRM_PCIE_SPEED_25 1
