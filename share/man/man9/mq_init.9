@@ -1,4 +1,4 @@
-.\"     $OpenBSD: mq_init.9,v 1.5 2015/11/02 09:21:48 dlg Exp $
+.\"     $OpenBSD: mq_init.9,v 1.6 2015/11/21 11:46:24 mpi Exp $
 .\"
 .\"  Copyright (c) 2015 David Gwynne <dlg@openbsd.org>
 .\"
@@ -14,14 +14,13 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 2 2015 $
+.Dd $Mdocdate: November 21 2015 $
 .Dt MQ_INIT 9
 .Os
 .Sh NAME
 .Nm mq_init ,
 .Nm mq_enqueue ,
 .Nm mq_dequeue ,
-.Nm mq_requeue ,
 .Nm mq_enlist ,
 .Nm mq_delist ,
 .Nm mq_dechain ,
@@ -40,8 +39,6 @@
 .Fn mq_enqueue "struct mbuf_queue *mq" "struct mbuf *m"
 .Ft struct mbuf *
 .Fn mq_dequeue "struct mbuf_queue *mq"
-.Ft int
-.Fn mq_requeue "struct mbuf_queue *mq" "struct mbuf *m"
 .Ft int
 .Fn mq_enlist "struct mbuf_queue *mq" "struct mbuf_list *ml"
 .Ft void
@@ -119,14 +116,6 @@ mbuf queue.
 Dequeue an mbuf from the front of the
 .Fa mq
 mbuf queue.
-.It Fn mq_requeue "struct mbuf_queue *mq" "struct mbuf *m"
-Enqueue mbuf
-.Fa m
-at the head of the
-.Fa mq
-mbuf queue.
-Note, this operation will succeed even if it will cause the queue to exceed its
-maximum length.
 .It Fn mq_enlist "struct mbuf_queue *mq" "struct mbuf_list *ml"
 Enqueue all the mbufs on the
 .Fa ml
@@ -194,7 +183,6 @@ already exist on the queue.
 .Fn mq_init ,
 .Fn mq_enqueue ,
 .Fn mq_dequeue ,
-.Fn mq_requeue ,
 .Fn mq_enlist ,
 .Fn mq_delist ,
 .Fn mq_dechain ,
@@ -236,10 +224,6 @@ returns a non-zero value if the queue is empty, otherwise 0.
 .Fn mq_enqueue
 returns 0 if the mbuf was successfully queued, or non-zero if the
 mbuf was freed because it would cause the queue to exceed its maximum
-length.
-.Pp
-.Fn mq_requeue
-returns non-zero if the mbuf queue is now full, otherwise 0.
 length.
 .Pp
 .Fn mq_enlist

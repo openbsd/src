@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.258 2015/11/21 00:32:46 dlg Exp $
+#	$OpenBSD: Makefile,v 1.259 2015/11/21 11:46:24 mpi Exp $
 #	$NetBSD: Makefile,v 1.4 1996/01/09 03:23:01 thorpej Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
@@ -269,7 +269,7 @@ MLINKS+=microtime.9 getmicrotime.9 microtime.9 microuptime.9 \
 	microtime.9 getnanotime.9 microtime.9 nanouptime.9 \
 	microtime.9 getnanouptime.9 microtime.9 bintime.9 \
 	microtime.9 binuptime.9
-MLINKS+=ml_init.9 ml_enqueue.9 ml_init.9 ml_dequeue.9 ml_init.9 ml_requeue.9 \
+MLINKS+=ml_init.9 ml_enqueue.9 ml_init.9 ml_dequeue.9 \
 	ml_init.9 ml_enlist.9 ml_init.9 ml_dechain.9 \
 	ml_init.9 ml_filter.9 ml_init.9 ml_len.9 ml_init.9 ml_empty.9 \
 	ml_init.9 ml_purge.9 \
@@ -280,7 +280,7 @@ MLINKS+=mutex.9 mtx_init.9 mutex.9 mtx_enter.9 mutex.9 mtx_leave.9 \
 	mutex.9 MUTEX_ASSERT_LOCKED.9 mutex.9 MUTEX_ASSERT_UNLOCKED.9 \
 	mutex.9 MUTEX_INITIALIZER.9
 MLINKS+=mutex.9 mtx_enter_try.9
-MLINKS+=mq_init.9 mq_enqueue.9 mq_init.9 mq_dequeue.9 mq_init.9 mq_requeue.9 \
+MLINKS+=mq_init.9 mq_enqueue.9 mq_init.9 mq_dequeue.9 \
 	mq_init.9 mq_enlist.9 mq_init.9 mq_delist.9 \
 	mq_init.9 mq_dechain.9 mq_init.9 mq_filter.9 mq_init.9 mq_purge.9 \
 	mq_init.9 mq_len.9 mq_init.9 mq_empty.9 mq_init.9 mq_drops.9 \
