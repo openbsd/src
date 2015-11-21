@@ -1,4 +1,4 @@
-/*	$OpenBSD: forward.c,v 1.28 2015/11/20 01:15:22 tedu Exp $	*/
+/*	$OpenBSD: forward.c,v 1.29 2015/11/21 13:58:56 tedu Exp $	*/
 /*	$NetBSD: forward.c,v 1.7 1996/02/13 16:49:10 ghudson Exp $	*/
 
 /*-
@@ -47,20 +47,11 @@
 #include "extern.h"
 
 static int rlines(struct tailfile *, off_t);
+static inline void tfprint(FILE *fp);
 static int tfqueue(struct tailfile *tf);
 static const struct timespec *tfreopen(struct tailfile *tf);
 
 static int kq = -1;
-
-static void
-printtail(FILE *fp)
-{
-	int ch;
-
-	while (!feof(fp) && (ch = getc(fp)) != EOF)
-		if (putchar(ch) == EOF)
-			oerr();
-}
 
 /*
  * forward -- display the file, from an offset, forward.
@@ -97,7 +88,7 @@ forward(struct tailfile *tf, int nfiles, enum STYLE style, off_t origoff)
 	if (nfiles < 1)
 		return;
 
-	if ((kq = kqueue()) < 0)
+	if (fflag && (kq = kqueue()) < 0)
 		warn("kqueue");
 
 	for (i = 0; i < nfiles; i++) {
@@ -136,11 +127,8 @@ forward(struct tailfile *tf, int nfiles, enum STYLE style, off_t origoff)
 					}
 					break;
 				}
-				if (ch == '\n' && !--off) {
-					if (!fflag)
-						printtail(tf[i].fp);
+				if (ch == '\n' && !--off)
 					break;
-				}
 			}
 			break;
 		case RBYTES:
@@ -188,7 +176,8 @@ forward(struct tailfile *tf, int nfiles, enum STYLE style, off_t origoff)
 			err(1, "Unsupported style");
 		}
 
-		if (tfqueue(&(tf[i])) == -1)
+		tfprint(tf[i].fp);
+		if (fflag && tfqueue(&(tf[i])) == -1)
 			warn("Unable to follow %s", tf[i].fname);
 
 	}
@@ -214,11 +203,7 @@ forward(struct tailfile *tf, int nfiles, enum STYLE style, off_t origoff)
 					ltf = ctf;
 				}
 				clearerr(ctf->fp);
-				while (!feof(ctf->fp) &&
-				    (ch = getc(ctf->fp)) != EOF) {
-					if (putchar(ch) == EOF)
-						oerr();
-				}
+				tfprint(ctf->fp);
 				if (ferror(ctf->fp)) {
 					ierr(ctf->fname);
 					fclose(ctf->fp);
@@ -299,6 +284,16 @@ rlines(struct tailfile *tf, off_t off)
 	}
 
 	return (0);
+}
+
+static inline void
+tfprint(FILE *fp)
+{
+	int ch;
+
+	while (!feof(fp) && (ch = getc(fp)) != EOF)
+		if (putchar(ch) == EOF)
+			oerr();
 }
 
 static int
