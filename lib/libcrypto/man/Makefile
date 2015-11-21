@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.29 2015/11/12 00:55:49 schwarze Exp $
+# $OpenBSD: Makefile,v 1.30 2015/11/21 14:20:07 schwarze Exp $
 
 .include <bsd.own.mk>		# for NOMAN
 
@@ -53,22 +53,6 @@ MAN=	\
 	BN_swap.3 \
 	BN_zero.3 \
 	BUF_MEM_new.3 \
-	CMS_add0_cert.3 \
-	CMS_add1_recipient_cert.3 \
-	CMS_add1_signer.3 \
-	CMS_compress.3 \
-	CMS_decrypt.3 \
-	CMS_encrypt.3 \
-	CMS_final.3 \
-	CMS_get0_RecipientInfos.3 \
-	CMS_get0_SignerInfos.3 \
-	CMS_get0_type.3 \
-	CMS_get1_ReceiptRequest.3 \
-	CMS_sign.3 \
-	CMS_sign_receipt.3 \
-	CMS_uncompress.3 \
-	CMS_verify.3 \
-	CMS_verify_receipt.3 \
 	CONF_modules_free.3 \
 	CONF_modules_load_file.3 \
 	CRYPTO_set_ex_data.3 \
@@ -217,7 +201,23 @@ GENMAN= \
 
 MAN+=	${GENMAN}
 
-#MAM+=	PEM_write_bio_CMS_stream.3 \
+#MAN+=	CMS_add0_cert.3 \
+#	CMS_add1_recipient_cert.3 \
+#	CMS_add1_signer.3 \
+#	CMS_compress.3 \
+#	CMS_decrypt.3 \
+#	CMS_encrypt.3 \
+#	CMS_final.3 \
+#	CMS_get0_RecipientInfos.3 \
+#	CMS_get0_SignerInfos.3 \
+#	CMS_get0_type.3 \
+#	CMS_get1_ReceiptRequest.3 \
+#	CMS_sign.3 \
+#	CMS_sign_receipt.3 \
+#	CMS_uncompress.3 \
+#	CMS_verify.3 \
+#	CMS_verify_receipt.3 \
+#	PEM_write_bio_CMS_stream.3 \
 #	SMIME_read_CMS.3 \
 #	SMIME_write_CMS.3 \
 #	i2d_CMS_bio_stream.3 \
