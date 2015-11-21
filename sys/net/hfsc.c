@@ -1,4 +1,4 @@
-/*	$OpenBSD: hfsc.c,v 1.31 2015/11/20 03:35:23 dlg Exp $	*/
+/*	$OpenBSD: hfsc.c,v 1.32 2015/11/21 01:08:49 dlg Exp $	*/
 
 /*
  * Copyright (c) 2012-2013 Henning Brauer <henning@openbsd.org>
@@ -264,7 +264,6 @@ void		 hfsc_free(void *);
 int		 hfsc_enq(struct ifqueue *, struct mbuf *);
 struct mbuf	*hfsc_deq_begin(struct ifqueue *, void **);
 void		 hfsc_deq_commit(struct ifqueue *, struct mbuf *, void *);
-void		 hfsc_deq_rollback(struct ifqueue *, struct mbuf *, void *);
 void		 hfsc_purge(struct ifqueue *, struct mbuf_list *);
 
 const struct ifq_ops hfsc_ops = {
@@ -273,7 +272,6 @@ const struct ifq_ops hfsc_ops = {
         hfsc_enq,
         hfsc_deq_begin,
         hfsc_deq_commit,
-        hfsc_deq_rollback,
         hfsc_purge,
 };
 
@@ -711,7 +709,7 @@ hfsc_deq_begin(struct ifqueue *ifq, void **cookiep)
 			return (NULL);
 	}
 
-	m = ml_dequeue(&cl->cl_q.q);
+	m = MBUF_LIST_FIRST(&cl->cl_q.q);
 	KASSERT(m != NULL);
 
 	hif->hif_microtime = cur_time;
@@ -724,12 +722,16 @@ hfsc_deq_commit(struct ifqueue *ifq, struct mbuf *m, void *cookie)
 {
 	struct hfsc_if *hif = ifq->ifq_q;
 	struct hfsc_class *cl = cookie;
+	struct mbuf *m0;
 	int next_len, realtime = 0;
 	u_int64_t cur_time = hif->hif_microtime;
 
 	/* check if the class was scheduled by real-time criteria */
 	if (cl->cl_rsc != NULL)
 		realtime = (cl->cl_e <= cur_time);
+
+	m0 = ml_dequeue(&cl->cl_q.q);
+	KASSERT(m == m0);
 
 	PKTCNTR_INC(&cl->cl_stats.xmit_cnt, m->m_pkthdr.len);
 
@@ -740,7 +742,8 @@ hfsc_deq_commit(struct ifqueue *ifq, struct mbuf *m, void *cookie)
 	if (ml_len(&cl->cl_q.q) > 0) {
 		if (cl->cl_rsc != NULL) {
 			/* update ed */
-			next_len = cl->cl_q.q.ml_head->m_pkthdr.len;
+			m0 = MBUF_LIST_FIRST(&cl->cl_q.q);
+			next_len = m0->m_pkthdr.len;
 
 			if (realtime)
 				hfsc_update_ed(hif, cl, next_len);
@@ -751,14 +754,6 @@ hfsc_deq_commit(struct ifqueue *ifq, struct mbuf *m, void *cookie)
 		/* the class becomes passive */
 		hfsc_set_passive(hif, cl);
 	}
-}
-
-void
-hfsc_deq_rollback(struct ifqueue *ifq, struct mbuf *m, void *cookie)
-{
-	struct hfsc_class *cl = cookie;
-
-	ml_requeue(&cl->cl_q.q, m);
 }
 
 void
