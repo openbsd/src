@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.c,v 1.124 2015/11/20 05:33:54 dlg Exp $	*/
+/*	$OpenBSD: if_trunk.c,v 1.125 2015/11/21 11:02:23 dlg Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -294,10 +294,6 @@ trunk_port_create(struct trunk_softc *tr, struct ifnet *ifp)
 	/* Limit the maximal number of trunk ports */
 	if (tr->tr_count >= TRUNK_MAX_PORTS)
 		return (ENOSPC);
-
-	/* New trunk port has to be in an idle state */
-	if (ifp->if_flags & IFF_OACTIVE)
-		return (EBUSY);
 
 	/* Check if port has already been associated to a trunk */
 	if (trunk_port_get(NULL, ifp) != NULL)
