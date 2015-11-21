@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.603 2015/11/14 08:51:31 jmc Exp $
+#	$OpenBSD: Makefile,v 1.604 2015/11/21 07:46:03 jmc Exp $
 
 MAN=	aac.4 ac97.4 acphy.4 \
 	acpi.4 acpiac.4 acpiasus.4 acpibat.4 acpibtn.4 acpicpu.4 acpidock.4 \
@@ -75,14 +75,12 @@ MAN=	aac.4 ac97.4 acphy.4 \
 	wi.4 wpi.4 wscons.4 wsdisplay.4 wskbd.4 wsmouse.4 wsmux.4 \
 	xe.4 xf86.4 xge.4 xhci.4 xl.4 xmphy.4 yds.4 ym.4 zero.4 zyd.4
 
-MLINKS+=adv.4 advansys.4 adv.4 adw.4
+MLINKS+=adv.4 adw.4
 MLINKS+=audio.4 mixer.4
 MLINKS+=cardbus.4 cbb.4
 MLINKS+=drm.4 inteldrm.4 drm.4 radeondrm.4
 MLINKS+=fd.4 stderr.4 fd.4 stdin.4 fd.4 stdout.4
 MLINKS+=isa.4 isadma.4
-MLINKS+=isapnp.4 pnp.4
-MLINKS+=netintro.4 networking.4
 MLINKS+=pcmcia.4 pcic.4
 MLINKS+=pty.4 ptm.4
 MLINKS+=random.4 arandom.4
