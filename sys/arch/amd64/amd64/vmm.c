@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.3 2015/11/16 10:08:41 mpi Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.4 2015/11/21 11:03:14 mpi Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -179,21 +179,21 @@ vmm_probe(struct device *parent, void *match, void *aux)
 	struct cpu_info *ci;
 	CPU_INFO_ITERATOR cii;
 	const char **busname = (const char **)aux;
-	boolean_t found_vmx, found_svm;
+	int found_vmx, found_svm;
 
 	/* Check if this probe is for us */
 	if (strcmp(*busname, vmm_cd.cd_name) != 0)
 		return (0);
 
-	found_vmx = FALSE;
-	found_svm = FALSE;
+	found_vmx = 0;
+	found_svm = 0;
 
 	/* Check if we have at least one CPU with either VMX or SVM */
 	CPU_INFO_FOREACH(cii, ci) {
 		if (ci->ci_vmm_flags & CI_VMM_VMX)
-			found_vmx = TRUE;
+			found_vmx = 1;
 		if (ci->ci_vmm_flags & CI_VMM_SVM)
-			found_svm = TRUE;
+			found_svm = 1;
 	}
 
 	/* Don't support both SVM and VMX at the same time */
