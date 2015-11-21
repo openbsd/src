@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cnmac.c,v 1.32 2015/11/20 15:16:06 visa Exp $	*/
+/*	$OpenBSD: if_cnmac.c,v 1.33 2015/11/21 05:11:32 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -47,7 +47,6 @@
 #include <sys/queue.h>
 #include <sys/conf.h>
 #include <sys/stdint.h> /* uintptr_t */
-#include <sys/sysctl.h>
 #include <sys/syslog.h>
 #include <sys/endian.h>
 #ifdef MBUF_TIMESTAMP
@@ -193,13 +192,8 @@ void	octeon_eth_recv_intr(void *, uint64_t *);
 struct	octeon_eth_softc *octeon_eth_gsc[GMX_PORT_NUNITS];
 void	*octeon_eth_pow_recv_ih;
 
-/* sysctl'able parameters */
+/* device parameters */
 int	octeon_eth_param_pko_cmd_w0_n2 = 1;
-int	octeon_eth_param_pip_dyn_rs = 1;
-int	octeon_eth_param_redir = 0;
-int	octeon_eth_param_pktbuf = 0;
-int	octeon_eth_param_rate = 0;
-int	octeon_eth_param_intr = 0;
 
 const struct cfattach cnmac_ca =
     { sizeof(struct octeon_eth_softc), octeon_eth_match, octeon_eth_attach };
