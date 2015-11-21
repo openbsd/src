@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.28 2015/11/19 21:32:53 mmcc Exp $	*/
+/*	$OpenBSD: util.c,v 1.29 2015/11/21 12:59:24 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -34,6 +34,10 @@
 
 #include "iked.h"
 #include "ikev2.h"
+
+/* log.c */
+extern int	 debug;
+extern int	 verbose;
 
 void
 socket_set_blockmode(int fd, enum blockmodes bm)
@@ -712,4 +716,28 @@ string2unicode(const char *ascii, size_t *outlen)
 	*outlen = len * 2;
 
 	return (uc);
+}
+
+void
+print_debug(const char *emsg, ...)
+{
+	va_list	 ap;
+
+	if (debug && verbose > 2) {
+		va_start(ap, emsg);
+		vfprintf(stderr, emsg, ap);
+		va_end(ap);
+	}
+}
+
+void
+print_verbose(const char *emsg, ...)
+{
+	va_list	 ap;
+
+	if (verbose) {
+		va_start(ap, emsg);
+		vfprintf(stderr, emsg, ap);
+		va_end(ap);
+	}
 }
