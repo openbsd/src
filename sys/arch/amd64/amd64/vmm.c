@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.4 2015/11/21 11:03:14 mpi Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.5 2015/11/21 11:08:58 mpi Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -309,6 +309,8 @@ vmmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	switch(cmd) {
 	case VMM_IOC_START:
 		ret = vmm_start();
+		if (ret)
+			vmm_stop();
 		break;
 	case VMM_IOC_STOP:
 		ret = vmm_stop();
@@ -600,17 +602,14 @@ vmm_start(void)
 int
 vmm_stop(void)
 {
-	struct cpu_info *self;
+	struct cpu_info *self = curcpu();
 	int ret = 0;
 
 #ifdef MULTIPROCESSOR
 	struct cpu_info *ci;
 	CPU_INFO_ITERATOR cii;
 	int i;
-#endif /* MULTIPROCESSOR */
 
-	self = curcpu();
-#ifdef MULTIPROCESSOR
 	/* Stop VMM on other CPUs */
 	x86_broadcast_ipi(X86_IPI_STOP_VMM);
 
@@ -759,6 +758,9 @@ vm_create(struct vm_create_params *vcp, struct proc *p)
 	struct vm *vm;
 	struct vcpu *vcpu;
 
+	if (!(curcpu()->ci_flags & CPUF_VMM))
+		return (EINVAL);
+
 	vm = pool_get(&vm_pool, PR_WAITOK | PR_ZERO);
 	SLIST_INIT(&vm->vm_vcpu_list);
 	rw_init(&vm->vm_vcpu_lock, "vcpulock");
@@ -771,7 +773,7 @@ vm_create(struct vm_create_params *vcp, struct proc *p)
 		printf("failed to init arch-specific features for vm 0x%p\n",
 		    vm);
 		vm_teardown(vm);
-		return ENOMEM;
+		return (ENOMEM);
 	}
 
 	rw_enter_write(&vmm_softc->vm_lock);
