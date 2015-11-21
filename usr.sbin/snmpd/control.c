@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.33 2015/10/19 09:32:51 reyk Exp $	*/
+/*	$OpenBSD: control.c,v 1.34 2015/11/21 13:09:47 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -207,7 +207,7 @@ control_close(struct ctl_conn *c, const char *msg, struct imsg *imsg)
 	struct control_sock *cs = c->cs;
 
 	if (imsg) {
-		log_debug("%s: fd %d: %s, imsg %d datalen %u", __func__,
+		log_debug("%s: fd %d: %s, imsg %d datalen %zu", __func__,
 		    c->iev.ibuf.fd, msg, imsg->hdr.type, IMSG_DATA_SIZE(imsg));
 		imsg_free(imsg);
 	} else
