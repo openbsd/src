@@ -1152,7 +1152,6 @@
 ./usr/share/man/man4/adt.4
 ./usr/share/man/man4/adtfsm.4
 ./usr/share/man/man4/adv.4
-./usr/share/man/man4/advansys.4
 ./usr/share/man/man4/adw.4
 ./usr/share/man/man4/age.4
 ./usr/share/man/man4/agp.4
@@ -1604,7 +1603,6 @@
 ./usr/share/man/man4/neo.4
 ./usr/share/man/man4/nep.4
 ./usr/share/man/man4/netintro.4
-./usr/share/man/man4/networking.4
 ./usr/share/man/man4/nfe.4
 ./usr/share/man/man4/nge.4
 ./usr/share/man/man4/nmea.4
@@ -1657,7 +1655,6 @@
 ./usr/share/man/man4/pim.4
 ./usr/share/man/man4/pipex.4
 ./usr/share/man/man4/pms.4
-./usr/share/man/man4/pnp.4
 ./usr/share/man/man4/ppb.4
 ./usr/share/man/man4/ppp.4
 ./usr/share/man/man4/pppoe.4
