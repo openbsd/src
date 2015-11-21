@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpd.h,v 1.62 2015/10/08 08:17:30 sthen Exp $	*/
+/*	$OpenBSD: snmpd.h,v 1.63 2015/11/21 13:06:22 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -587,20 +587,22 @@ struct snmpd	*parse_config(const char *, u_int);
 int		 cmdline_symset(char *);
 
 /* log.c */
-void		 log_init(int);
-void		 log_verbose(int);
-void		 log_warn(const char *, ...);
-void		 log_warnx(const char *, ...);
-void		 log_info(const char *, ...);
-void		 log_debug(const char *, ...);
-void		 print_debug(const char *, ...);
-void		 print_verbose(const char *, ...);
-__dead void	 fatal(const char *);
-__dead void	 fatalx(const char *);
-void		 logit(int, const char *, ...);
-void		 vlog(int, const char *, va_list);
-const char	*log_in6addr(const struct in6_addr *);
-const char	*print_host(struct sockaddr_storage *, char *, size_t);
+void	log_init(int);
+void	log_verbose(int);
+void	log_warn(const char *, ...)
+	    __attribute__((__format__ (printf, 1, 2)));
+void	log_warnx(const char *, ...)
+	    __attribute__((__format__ (printf, 1, 2)));
+void	log_info(const char *, ...)
+	    __attribute__((__format__ (printf, 1, 2)));
+void	log_debug(const char *, ...)
+	    __attribute__((__format__ (printf, 1, 2)));
+void	logit(int, const char *, ...)
+	    __attribute__((__format__ (printf, 2, 3)));
+void	vlog(int, const char *, va_list)
+	    __attribute__((__format__ (printf, 2, 0)));
+__dead void fatal(const char *);
+__dead void fatalx(const char *);
 
 /* kroute.c */
 void		 kr_init(void);
@@ -756,5 +758,9 @@ struct trapcmd *
 /* util.c */
 int	 varbind_convert(struct agentx_pdu *, struct agentx_varbind_hdr *,
 	    struct ber_element **, struct ber_element **);
+void	 print_debug(const char *, ...);
+void	 print_verbose(const char *, ...);
+const char *log_in6addr(const struct in6_addr *);
+const char *print_host(struct sockaddr_storage *, char *, size_t);
 
 #endif /* SNMPD_H */

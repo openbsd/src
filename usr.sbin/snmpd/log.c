@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.8 2015/02/08 23:28:48 tedu Exp $	*/
+/*	$OpenBSD: log.c,v 1.9 2015/11/21 13:06:22 reyk Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -16,35 +16,33 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/types.h>
-#include <sys/queue.h>
-#include <sys/socket.h>
-#include <sys/tree.h>
-
-#include <netinet/in.h>
-#include <netinet/ip.h>
-#include <net/if.h>
-
-#include <arpa/inet.h>
-
-#include <errno.h>
-#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdarg.h>
 #include <string.h>
 #include <syslog.h>
-#include <event.h>
-#include <netdb.h>
-
-#include <openssl/ssl.h>
-
-#include "snmpd.h"
+#include <errno.h>
+#include <time.h>
 
 int	 debug;
 int	 verbose;
 
-void	 vlog(int, const char *, va_list);
-void	 logit(int, const char *, ...);
+void	log_init(int);
+void	log_verbose(int);
+void	log_warn(const char *, ...)
+	    __attribute__((__format__ (printf, 1, 2)));
+void	log_warnx(const char *, ...)
+	    __attribute__((__format__ (printf, 1, 2)));
+void	log_info(const char *, ...)
+	    __attribute__((__format__ (printf, 1, 2)));
+void	log_debug(const char *, ...)
+	    __attribute__((__format__ (printf, 1, 2)));
+void	logit(int, const char *, ...)
+	    __attribute__((__format__ (printf, 2, 3)));
+void	vlog(int, const char *, va_list)
+	    __attribute__((__format__ (printf, 2, 0)));
+__dead void fatal(const char *);
+__dead void fatalx(const char *);
 
 void
 log_init(int n_debug)
@@ -153,41 +151,16 @@ log_debug(const char *emsg, ...)
 }
 
 void
-print_debug(const char *emsg, ...)
-{
-	va_list	 ap;
-
-	if (debug && verbose > 2) {
-		va_start(ap, emsg);
-		vfprintf(stderr, emsg, ap);
-		va_end(ap);
-	}
-}
-
-void
-print_verbose(const char *emsg, ...)
-{
-	va_list	 ap;
-
-	if (verbose) {
-		va_start(ap, emsg);
-		vfprintf(stderr, emsg, ap);
-		va_end(ap);
-	}
-}
-
-void
 fatal(const char *emsg)
 {
 	if (emsg == NULL)
 		logit(LOG_CRIT, "fatal: %s", strerror(errno));
-	else {
+	else
 		if (errno)
 			logit(LOG_CRIT, "fatal: %s: %s",
 			    emsg, strerror(errno));
 		else
 			logit(LOG_CRIT, "fatal: %s", emsg);
-	}
 
 	exit(1);
 }
@@ -197,40 +170,4 @@ fatalx(const char *emsg)
 {
 	errno = 0;
 	fatal(emsg);
-}
-
-const char *
-log_in6addr(const struct in6_addr *addr)
-{
-	static char		buf[NI_MAXHOST];
-	struct sockaddr_in6	sa_in6;
-	u_int16_t		tmp16;
-
-	bzero(&sa_in6, sizeof(sa_in6));
-	sa_in6.sin6_len = sizeof(sa_in6);
-	sa_in6.sin6_family = AF_INET6;
-	memcpy(&sa_in6.sin6_addr, addr, sizeof(sa_in6.sin6_addr));
-
-	/* XXX thanks, KAME, for this ugliness... adopted from route/show.c */
-	if (IN6_IS_ADDR_LINKLOCAL(&sa_in6.sin6_addr) ||
-	    IN6_IS_ADDR_MC_LINKLOCAL(&sa_in6.sin6_addr)) {
-		memcpy(&tmp16, &sa_in6.sin6_addr.s6_addr[2], sizeof(tmp16));
-		sa_in6.sin6_scope_id = ntohs(tmp16);
-		sa_in6.sin6_addr.s6_addr[2] = 0;
-		sa_in6.sin6_addr.s6_addr[3] = 0;
-	}
-
-	return (print_host((struct sockaddr_storage *)&sa_in6, buf,
-	    NI_MAXHOST));
-}
-
-const char *
-print_host(struct sockaddr_storage *ss, char *buf, size_t len)
-{
-	if (getnameinfo((struct sockaddr *)ss, ss->ss_len,
-	    buf, len, NULL, 0, NI_NUMERICHOST) != 0) {
-		buf[0] = '\0';
-		return (NULL);
-	}
-	return (buf);
 }

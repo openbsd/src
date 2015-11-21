@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.4 2015/07/20 22:51:11 blambert Exp $	*/
+/*	$OpenBSD: util.c,v 1.5 2015/11/21 13:06:22 reyk Exp $	*/
 /*
  * Copyright (c) 2014 Bret Stephen Lambert <blambert@openbsd.org>
  *
@@ -21,11 +21,18 @@
 
 #include <net/if.h>
 
+#include <stdio.h>
+#include <string.h>
+#include <netdb.h>
 #include <event.h>
 
 #include "ber.h"
 #include "snmp.h"
 #include "snmpd.h"
+
+/* log.c */
+extern int	 debug;
+extern int	 verbose;
 
 /*
  * Convert variable bindings from AgentX to SNMP dialect.
@@ -147,4 +154,64 @@ varbind_convert(struct agentx_pdu *pdu, struct agentx_varbind_hdr *vbhdr,
 	}
  done:
 	return (ret);
+}
+
+void
+print_debug(const char *emsg, ...)
+{
+	va_list	 ap;
+
+	if (debug && verbose > 2) {
+		va_start(ap, emsg);
+		vfprintf(stderr, emsg, ap);
+		va_end(ap);
+	}
+}
+
+void
+print_verbose(const char *emsg, ...)
+{
+	va_list	 ap;
+
+	if (verbose) {
+		va_start(ap, emsg);
+		vfprintf(stderr, emsg, ap);
+		va_end(ap);
+	}
+}
+
+const char *
+log_in6addr(const struct in6_addr *addr)
+{
+	static char		buf[NI_MAXHOST];
+	struct sockaddr_in6	sa_in6;
+	u_int16_t		tmp16;
+
+	bzero(&sa_in6, sizeof(sa_in6));
+	sa_in6.sin6_len = sizeof(sa_in6);
+	sa_in6.sin6_family = AF_INET6;
+	memcpy(&sa_in6.sin6_addr, addr, sizeof(sa_in6.sin6_addr));
+
+	/* XXX thanks, KAME, for this ugliness... adopted from route/show.c */
+	if (IN6_IS_ADDR_LINKLOCAL(&sa_in6.sin6_addr) ||
+	    IN6_IS_ADDR_MC_LINKLOCAL(&sa_in6.sin6_addr)) {
+		memcpy(&tmp16, &sa_in6.sin6_addr.s6_addr[2], sizeof(tmp16));
+		sa_in6.sin6_scope_id = ntohs(tmp16);
+		sa_in6.sin6_addr.s6_addr[2] = 0;
+		sa_in6.sin6_addr.s6_addr[3] = 0;
+	}
+
+	return (print_host((struct sockaddr_storage *)&sa_in6, buf,
+	    NI_MAXHOST));
+}
+
+const char *
+print_host(struct sockaddr_storage *ss, char *buf, size_t len)
+{
+	if (getnameinfo((struct sockaddr *)ss, ss->ss_len,
+	    buf, len, NULL, 0, NI_NUMERICHOST) != 0) {
+		buf[0] = '\0';
+		return (NULL);
+	}
+	return (buf);
 }
