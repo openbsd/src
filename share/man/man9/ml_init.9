@@ -1,4 +1,4 @@
-.\"     $OpenBSD: ml_init.9,v 1.8 2015/11/02 09:21:48 dlg Exp $
+.\"     $OpenBSD: ml_init.9,v 1.9 2015/11/21 00:32:46 dlg Exp $
 .\"
 .\"  Copyright (c) 2015 David Gwynne <dlg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 2 2015 $
+.Dd $Mdocdate: November 21 2015 $
 .Dt ML_INIT 9
 .Os
 .Sh NAME
@@ -27,6 +27,8 @@
 .Nm ml_len ,
 .Nm ml_empty ,
 .Nm MBUF_LIST_INITIALIZER ,
+.Nm MBUF_LIST_FIRST ,
+.Nm MBUF_LIST_NEXT ,
 .Nm MBUF_LIST_FOREACH
 .Nd mbuf list API
 .Sh SYNOPSIS
@@ -57,6 +59,10 @@
 .Fn ml_purge "struct mbuf_list *ml"
 .Ft struct mbuf_list
 .Fn MBUF_LIST_INITIALIZER
+.Ft struct mbuf *
+.Fn MBUF_LIST_FIRST "struct mbuf_list *ml"
+.Ft struct mbuf *
+.Fn MBUF_LIST_NEXT "struct mbuf *m"
 .Fn MBUF_LIST_FOREACH "struct mbuf_list *ml" "VARNAME"
 .Sh DESCRIPTION
 The mbuf list API provides implementations of data structures and operations
@@ -138,6 +144,13 @@ mbuf list is empty.
 Free all the mbufs on the
 .Fa ml
 mbuf list.
+.It Fn MBUF_LIST_FIRST "struct mbuf_list *ml"
+Access the first mbuf in the
+.Fa ml
+mbuf list for traversal.
+.It Fn MBUF_LIST_NEXT "struct mbuf *m"
+Access the next mbuf in the mbuf list after
+.Fa m .
 .It Fn MBUF_LIST_FOREACH "struct mbuf_list *ml" "VARNAME"
 A convenience macro that can be used to iterate over the contents of the
 .Fa ml
@@ -158,6 +171,8 @@ Note that it is unsafe to modify the list while iterating over it.
 .Fn ml_empty ,
 .Fn ml_purge ,
 .Fn MBUF_LIST_INITIALIZER ,
+.Fn MBUF_LIST_FIRST ,
+.Fn MBUF_LIST_NEXT ,
 and
 .Fn MBUF_LIST_FOREACH
 can be called during autoconf, from process context, or from interrupt context.
@@ -190,5 +205,15 @@ return a non-zero value if the list is empty, otherwise 0.
 .Pp
 .Fn ml_purge
 returns the number of mbufs that were freed.
+.Pp
+.Fn MBUF_LIST_FIRST
+returns the first mbuf in the mbuf list, or
+.Dv NULL
+if the list is empty.
+.Pp
+.Fn MBUF_LIST_NEXT
+returns the next mbuf in the mbuf list, or
+.Dv NULL
+if the end of the list has been reached.
 .Sh SEE ALSO
 .Xr mbuf 9

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.257 2015/11/20 19:05:02 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.258 2015/11/21 00:32:46 dlg Exp $
 #	$NetBSD: Makefile,v 1.4 1996/01/09 03:23:01 thorpej Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
@@ -273,7 +273,8 @@ MLINKS+=ml_init.9 ml_enqueue.9 ml_init.9 ml_dequeue.9 ml_init.9 ml_requeue.9 \
 	ml_init.9 ml_enlist.9 ml_init.9 ml_dechain.9 \
 	ml_init.9 ml_filter.9 ml_init.9 ml_len.9 ml_init.9 ml_empty.9 \
 	ml_init.9 ml_purge.9 \
-	ml_init.9 MBUF_LIST_INITIALIZER.9 ml_init.9 MBUF_LIST_FOREACH.9
+	ml_init.9 MBUF_LIST_INITIALIZER.9 ml_init.9 MBUF_LIST_FIRST.9 \
+	ml_init.9 MBUF_LIST_NEXT.9 ml_init.9 MBUF_LIST_FOREACH.9
 MLINKS+=mountroothook_establish.9 mountroothook_disestablish.9
 MLINKS+=mutex.9 mtx_init.9 mutex.9 mtx_enter.9 mutex.9 mtx_leave.9 \
 	mutex.9 MUTEX_ASSERT_LOCKED.9 mutex.9 MUTEX_ASSERT_UNLOCKED.9 \

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.203 2015/11/20 03:35:23 dlg Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.204 2015/11/21 00:32:46 dlg Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -504,8 +504,13 @@ unsigned int		ml_purge(struct mbuf_list *);
 #define	ml_len(_ml)		((_ml)->ml_len)
 #define	ml_empty(_ml)		((_ml)->ml_len == 0)
 
-#define MBUF_LIST_FOREACH(_ml, _m) \
-	for ((_m) = (_ml)->ml_head; (_m) != NULL; (_m) = (_m)->m_nextpkt)
+#define MBUF_LIST_FIRST(_ml)	((_ml)->ml_head)
+#define MBUF_LIST_NEXT(_m)	((_m)->m_nextpkt)
+
+#define MBUF_LIST_FOREACH(_ml, _m)					\
+	for ((_m) = MBUF_LIST_FIRST(_ml);				\
+	    (_m) != NULL;						\
+	    (_m) = MBUF_LIST_NEXT(_m))
 
 /*
  * mbuf queues
