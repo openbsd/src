@@ -177,7 +177,7 @@ static int
 prev_pattern(struct pattern_info *info)
 {
 	if ((info->search_type & SRCH_NO_REGEX) == 0)
-		return (!is_null_pattern(info->compiled));
+		return (info->compiled != NULL);
 	return (info->text != NULL);
 }
 

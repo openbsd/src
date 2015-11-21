@@ -74,15 +74,6 @@ uncompile_pattern(regex_t **pattern)
 }
 
 /*
- * Is a compiled pattern null?
- */
-int
-is_null_pattern(void *pattern)
-{
-	return (pattern == NULL);
-}
-
-/*
  * Simple pattern matching function.
  * It supports no metacharacters like *, etc.
  */

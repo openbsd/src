@@ -239,7 +239,6 @@ extern	void ierror(const char *, PARG *);
 extern	int query(const char *, PARG *);
 extern	int compile_pattern(char *, int, regex_t **);
 extern	void uncompile_pattern(regex_t **);
-extern	int is_null_pattern(void *);
 extern	int match_pattern(void *, char *, char *, int, char **, char **,
     int, int);
 extern	off_t position(int);
