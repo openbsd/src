@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.951 2015/11/20 10:42:51 mpi Exp $ */
+/*	$OpenBSD: pf.c,v 1.952 2015/11/21 11:29:40 mpi Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2600,7 +2600,7 @@ pf_match_rcvif(struct mbuf *m, struct pf_rule *r)
 	if (ifp->if_type == IFT_CARP && ifp->if_carpdev)
 		kif = (struct pfi_kif *)ifp->if_carpdev->if_pf_kif;
 	else
-#endif
+#endif /* NCARP */
 		kif = (struct pfi_kif *)ifp->if_pf_kif;
 
 	if_put(ifp);
@@ -5410,14 +5410,14 @@ pf_routable(struct pf_addr *addr, sa_family_t af, struct pfi_kif *kif,
 				    ifp->if_carpdev == kif->pfik_ifp)
 					ret = 1;
 				if_put(ifp);
-#endif
+#endif /* NCARP */
 			}
 
 #ifndef SMALL_KERNEL
 			rt = rtable_mpath_next(rt);
 #else
 			rt = NULL;
-#endif
+#endif /* SMALL_KERNEL */
 		} while (check_mpath == 1 && rt != NULL && ret == 0);
 	} else
 		ret = 0;
@@ -6327,7 +6327,7 @@ pf_test(sa_family_t af, int fwdir, struct ifnet *ifp, struct mbuf **m0)
 	if (ifp->if_type == IFT_CARP && ifp->if_carpdev)
 		kif = (struct pfi_kif *)ifp->if_carpdev->if_pf_kif;
 	else
-#endif
+#endif /* NCARP */
 		kif = (struct pfi_kif *)ifp->if_pf_kif;
 
 	if (kif == NULL) {
