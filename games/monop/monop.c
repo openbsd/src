@@ -1,4 +1,4 @@
-/*	$OpenBSD: monop.c,v 1.13 2015/08/22 14:47:41 deraadt Exp $	*/
+/*	$OpenBSD: monop.c,v 1.14 2015/11/21 03:20:30 deraadt Exp $	*/
 /*	$NetBSD: monop.c,v 1.3 1995/03/23 08:34:52 cgd Exp $	*/
 
 /*
@@ -48,8 +48,12 @@ main(ac, av)
 	char	*av[];
 {
 	num_luck = sizeof lucky_mes / sizeof (char *);
+
+	if (pledge("stdio rpath wpath cpath", NULL) == -1)
+		err(1, "pledge");
+
 	init_decks();
-		init_monops();
+	init_monops();
 	if (ac > 1) {
 		if (!rest_f(av[1]))
 			restore();
