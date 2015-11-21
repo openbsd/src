@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.128 2015/11/20 23:16:00 deraadt Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.129 2015/11/21 08:02:43 semarie Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -200,11 +200,7 @@ sys_listen(struct proc *p, void *v, register_t *retval)
 	if ((error = getsock(p, SCARG(uap, s), &fp)) != 0)
 		return (error);
 	so = fp->f_data;
-	error = pledge_socket(p, -1, so->so_state);
-	if (error)
-		goto out;
 	error = solisten(so, SCARG(uap, backlog));
-out:
 	FRELE(fp, p);
 	return (error);
 }
@@ -260,9 +256,6 @@ doaccept(struct proc *p, int sock, struct sockaddr *name, socklen_t *anamelen,
 	headfp = fp;
 	head = fp->f_data;
 
-	error = pledge_socket(p, -1, head->so_state);
-	if (error)
-		goto bad;
 	if (isdnssocket((struct socket *)fp->f_data)) {
 		error = EINVAL;
 		goto bad;
