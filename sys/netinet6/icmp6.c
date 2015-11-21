@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.177 2015/11/03 21:39:34 chl Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.178 2015/11/21 11:23:07 mpi Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -1018,16 +1018,19 @@ icmp6_mtudisc_update(struct ip6ctlparam *ip6cp, int validated)
 
 	rt = icmp6_mtudisc_clone(sin6tosa(&sin6), m->m_pkthdr.ph_rtableid);
 
-	if (rt && (rt->rt_flags & RTF_HOST) &&
+	if (rt != NULL && ISSET(rt->rt_flags, RTF_HOST) &&
 	    !(rt->rt_rmx.rmx_locks & RTV_MTU) &&
 	    (rt->rt_rmx.rmx_mtu > mtu || rt->rt_rmx.rmx_mtu == 0)) {
-		if (mtu < rt->rt_ifp->if_mtu) {
+	    	struct ifnet *ifp;
+
+	    	ifp = if_get(rt->rt_ifidx);
+		if (ifp != NULL && mtu < ifp->if_mtu) {
 			icmp6stat.icp6s_pmtuchg++;
 			rt->rt_rmx.rmx_mtu = mtu;
 		}
+		if_put(ifp);
 	}
-	if (rt)
-		rtfree(rt);
+	rtfree(rt);
 
 	/*
 	 * Notify protocols that the MTU for this destination
@@ -1549,7 +1552,7 @@ icmp6_redirect_input(struct mbuf *m, int off)
 void
 icmp6_redirect_output(struct mbuf *m0, struct rtentry *rt)
 {
-	struct ifnet *ifp;	/* my outgoing interface */
+	struct ifnet *ifp = NULL;
 	struct in6_addr *ifp_ll6;
 	struct in6_addr *nexthop;
 	struct ip6_hdr *sip6;	/* m0 as struct ip6_hdr */
@@ -1569,7 +1572,10 @@ icmp6_redirect_output(struct mbuf *m0, struct rtentry *rt)
 	/* sanity check */
 	if (m0 == NULL || !rtisvalid(rt))
 		goto fail;
-	ifp = rt->rt_ifp;
+
+	ifp = if_get(rt->rt_ifidx);
+	if (ifp == NULL)
+		goto fail;
 
 	/*
 	 * Address check:
@@ -1795,9 +1801,11 @@ noredhdropt:
 
 	icmp6stat.icp6s_outhist[ND_REDIRECT]++;
 
+	if_put(ifp);
 	return;
 
 fail:
+	if_put(ifp);
 	m_freem(m);
 	m_freem(m0);
 }
