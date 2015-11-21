@@ -1,4 +1,4 @@
-.\"	$OpenBSD: le.4,v 1.27 2010/07/10 19:38:39 miod Exp $
+.\"	$OpenBSD: le.4,v 1.28 2015/11/21 08:04:20 jmc Exp $
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -33,11 +33,13 @@
 .\"	from: Header: le.4,v 1.2 92/10/13 05:31:33 leres Exp
 .\"	from: @(#)le.4	8.1 (Berkeley) 6/9/93
 .\"
-.Dd $Mdocdate: July 10 2010 $
+.Dd $Mdocdate: November 21 2015 $
 .Dt LE 4 sparc
 .Os
 .Sh NAME
-.Nm le
+.Nm le ,
+.Nm lebuffer ,
+.Nm ledma
 .Nd AMD LANCE Ethernet device
 .Sh SYNOPSIS
 .Cd "le0 at sbus0                            " Pq "sun4c and sun4e onboard"

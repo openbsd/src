@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pty.4,v 1.20 2012/04/26 17:00:05 matthew Exp $
+.\"	$OpenBSD: pty.4,v 1.21 2015/11/21 08:04:20 jmc Exp $
 .\"	$NetBSD: pty.4,v 1.4 1998/03/21 03:14:30 fair Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,11 +30,12 @@
 .\"
 .\"     @(#)pty.4	8.2 (Berkeley) 11/30/93
 .\"
-.Dd $Mdocdate: April 26 2012 $
+.Dd $Mdocdate: November 21 2015 $
 .Dt PTY 4
 .Os
 .Sh NAME
-.Nm pty
+.Nm pty ,
+.Nm ptm
 .Nd pseudo terminal driver
 .Sh SYNOPSIS
 .Cd "pseudo-device pty" Op Ar count

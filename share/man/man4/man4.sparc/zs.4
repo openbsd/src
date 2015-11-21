@@ -1,14 +1,17 @@
-.\"	$OpenBSD: zs.4,v 1.25 2013/04/21 14:45:51 sebastia Exp $
+.\"	$OpenBSD: zs.4,v 1.26 2015/11/21 08:04:20 jmc Exp $
 .\"
 .\" Copyright (c) 1998, 2002 The OpenBSD Project
 .\" All rights reserved.
 .\"
 .\"
-.Dd $Mdocdate: April 21 2013 $
+.Dd $Mdocdate: November 21 2015 $
 .Dt ZS 4 sparc
 .Os
 .Sh NAME
-.Nm zs
+.Nm zs ,
+.Nm zstty ,
+.Nm zskbd ,
+.Nm zsms
 .Nd Zilog 8530 (ZSCC) serial communications driver
 .Sh SYNOPSIS
 .Cd "zs0 at mainbus0                      " Pq "sun4c and sun4e"
