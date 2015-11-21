@@ -1,4 +1,4 @@
-/*	$OpenBSD: calendar.c,v 1.33 2015/11/16 17:49:35 pascal Exp $	*/
+/*	$OpenBSD: calendar.c,v 1.34 2015/11/21 12:50:58 semarie Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -119,7 +119,7 @@ main(int argc, char *argv[])
 		usage();
 
 	if (doall) {
-		if (pledge("stdio rpath tmppath fattr id proc exec", NULL)
+		if (pledge("stdio rpath tmppath fattr getpw id proc exec", NULL)
 		    == -1)
 			err(1, "pledge");
 	} else {
