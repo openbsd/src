@@ -2086,7 +2086,6 @@
 ./usr/libexec/auth/login_reject
 ./usr/libexec/auth/login_skey
 ./usr/libexec/auth/login_snk
-./usr/libexec/auth/login_tis
 ./usr/libexec/auth/login_token
 ./usr/libexec/auth/login_yubikey
 ./usr/libexec/comsat

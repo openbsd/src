@@ -6020,8 +6020,10 @@
 ./usr/share/man/man9/KDASSERTMSG.9
 ./usr/share/man/man9/KNOTE.9
 ./usr/share/man/man9/KTRPOINT.9
+./usr/share/man/man9/MBUF_LIST_FIRST.9
 ./usr/share/man/man9/MBUF_LIST_FOREACH.9
 ./usr/share/man/man9/MBUF_LIST_INITIALIZER.9
+./usr/share/man/man9/MBUF_LIST_NEXT.9
 ./usr/share/man/man9/MBUF_QUEUE_INITIALIZER.9
 ./usr/share/man/man9/MCLGET.9
 ./usr/share/man/man9/MCLGETI.9
