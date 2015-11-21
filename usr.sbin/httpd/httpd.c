@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.c,v 1.47 2015/11/19 21:32:53 mmcc Exp $	*/
+/*	$OpenBSD: httpd.c,v 1.48 2015/11/21 12:40:59 reyk Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -33,6 +33,7 @@
 #include <string.h>
 #include <signal.h>
 #include <getopt.h>
+#include <netdb.h>
 #include <fnmatch.h>
 #include <err.h>
 #include <errno.h>
@@ -1295,4 +1296,79 @@ void
 auth_free(struct serverauth *serverauth, struct auth *auth)
 {
 	TAILQ_REMOVE(serverauth, auth, auth_entry);
+}
+
+
+const char *
+print_host(struct sockaddr_storage *ss, char *buf, size_t len)
+{
+	if (getnameinfo((struct sockaddr *)ss, ss->ss_len,
+	    buf, len, NULL, 0, NI_NUMERICHOST) != 0) {
+		buf[0] = '\0';
+		return (NULL);
+	}
+	return (buf);
+}
+
+const char *
+print_time(struct timeval *a, struct timeval *b, char *buf, size_t len)
+{
+	struct timeval		tv;
+	unsigned long		h, sec, min;
+
+	timerclear(&tv);
+	timersub(a, b, &tv);
+	sec = tv.tv_sec % 60;
+	min = tv.tv_sec / 60 % 60;
+	h = tv.tv_sec / 60 / 60;
+
+	snprintf(buf, len, "%.2lu:%.2lu:%.2lu", h, min, sec);
+	return (buf);
+}
+
+const char *
+printb_flags(const uint32_t v, const char *bits)
+{
+	static char	 buf[2][BUFSIZ];
+	static int	 idx = 0;
+	int		 i, any = 0;
+	char		 c, *p, *r;
+
+	p = r = buf[++idx % 2];
+	memset(p, 0, BUFSIZ);
+
+	if (bits) {
+		bits++;
+		while ((i = *bits++)) {
+			if (v & (1 << (i - 1))) {
+				if (any) {
+					*p++ = ',';
+					*p++ = ' ';
+				}
+				any = 1;
+				for (; (c = *bits) > 32; bits++) {
+					if (c == '_')
+						*p++ = ' ';
+					else
+						*p++ =
+						    tolower((unsigned char)c);
+				}
+			} else
+				for (; *bits > 32; bits++)
+					;
+		}
+	}
+
+	return (r);
+}
+
+void
+getmonotime(struct timeval *tv)
+{
+	struct timespec	 ts;
+
+	if (clock_gettime(CLOCK_MONOTONIC, &ts))
+		fatal("clock_gettime");
+
+	TIMESPEC_TO_TIMEVAL(tv, &ts);
 }
