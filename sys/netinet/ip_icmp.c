@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.145 2015/10/30 09:39:42 bluhm Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.146 2015/11/21 11:26:59 mpi Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -981,11 +981,18 @@ void
 icmp_mtudisc(struct icmp *icp, u_int rtableid)
 {
 	struct rtentry *rt;
+	struct ifnet *ifp;
 	u_long mtu = ntohs(icp->icmp_nextmtu);  /* Why a long?  IPv6 */
 
 	rt = icmp_mtudisc_clone(icp->icmp_ip.ip_dst, rtableid);
 	if (rt == NULL)
 		return;
+
+	ifp = if_get(rt->rt_ifidx);
+	if (ifp == NULL) {
+		rtfree(rt);
+		return;
+	}
 
 	if (mtu == 0) {
 		int i = 0;
@@ -1002,7 +1009,7 @@ icmp_mtudisc(struct icmp *icp, u_int rtableid)
 			/* If no route mtu, default to the interface mtu */
 
 			if (mtu == 0)
-				mtu = rt->rt_ifp->if_mtu;
+				mtu = ifp->if_mtu;
 		}
 
 		for (i = 0; i < nitems(mtu_table); i++)
@@ -1019,15 +1026,14 @@ icmp_mtudisc(struct icmp *icp, u_int rtableid)
 	 *	  on a route.  We should be using a separate flag
 	 *	  for the kernel to indicate this.
 	 */
-
 	if ((rt->rt_rmx.rmx_locks & RTV_MTU) == 0) {
-		if (mtu < 296 || mtu > rt->rt_ifp->if_mtu)
+		if (mtu < 296 || mtu > ifp->if_mtu)
 			rt->rt_rmx.rmx_locks |= RTV_MTU;
-		else if (rt->rt_rmx.rmx_mtu > mtu ||
-		    rt->rt_rmx.rmx_mtu == 0)
+		else if (rt->rt_rmx.rmx_mtu > mtu || rt->rt_rmx.rmx_mtu == 0)
 			rt->rt_rmx.rmx_mtu = mtu;
 	}
 
+	if_put(ifp);
 	rtfree(rt);
 }
 
