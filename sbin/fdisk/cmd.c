@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.89 2015/11/21 02:12:09 krw Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.90 2015/11/21 16:45:41 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -187,10 +187,10 @@ Xgedit(char *args)
 		goto done;
 	}
 
-	bs = getuint64("Partition offset", letoh64(gh.gh_lba_start),
-	    letoh64(gh.gh_lba_end));
-	ns = getuint64("Partition size", letoh64(gh.gh_lba_end) - bs + 1,
-	    letoh64(gh.gh_lba_end) - bs + 1);
+	bs = getuint64("Partition offset", letoh64(gg->gp_lba_start),
+	    letoh64(gh.gh_lba_start), letoh64(gh.gh_lba_end));
+	ns = getuint64("Partition size", letoh64(gg->gp_lba_end) - bs + 1,
+	    0, letoh64(gh.gh_lba_end) - bs + 1);
 
 	gg->gp_lba_start = htole64(bs);
 	gg->gp_lba_end = htole64(bs + ns - 1);
@@ -267,9 +267,8 @@ Xedit(char *args, struct mbr *mbr)
 		/* Fix up CHS values for LBA */
 		PRT_fix_CHS(pp);
 	} else {
-		pp->bs = getuint64("Partition offset", pp->bs,
-		    disk.size);
-		pp->ns = getuint64("Partition size",   pp->ns,
+		pp->bs = getuint64("Partition offset", pp->bs, 0, disk.size);
+		pp->ns = getuint64("Partition size",   pp->ns, 0,
 		    disk.size - pp->bs);
 
 		/* Fix up CHS values */
