@@ -1,4 +1,4 @@
-/*	$OpenBSD: sio_aucat.c,v 1.18 2014/03/07 10:17:18 ratchov Exp $	*/
+/*	$OpenBSD: sio_aucat.c,v 1.19 2015/11/22 12:01:23 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -155,7 +155,7 @@ _sio_aucat_open(const char *str, unsigned int mode, int nbio)
 	hdl = malloc(sizeof(struct sio_aucat_hdl));
 	if (hdl == NULL)
 		return NULL;
-	if (!_aucat_open(&hdl->aucat, str, mode, 0)) {
+	if (!_aucat_open(&hdl->aucat, str, mode)) {
 		free(hdl);
 		return NULL;
 	}

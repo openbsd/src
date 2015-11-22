@@ -1,4 +1,4 @@
-/*	$OpenBSD: mio_rmidi.c,v 1.19 2015/10/02 09:48:22 ratchov Exp $	*/
+/*	$OpenBSD: mio_rmidi.c,v 1.20 2015/11/22 12:01:23 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -56,46 +56,73 @@ static struct mio_ops mio_rmidi_ops = {
 	mio_rmidi_revents
 };
 
-struct mio_hdl *
-_mio_rmidi_open(const char *str, unsigned int mode, int nbio)
+static int
+mio_rmidi_getfd(const char *str, unsigned int mode, int nbio)
 {
-	int fd, flags;
-	struct mio_rmidi_hdl *hdl;
+	const char *p;
 	char path[DEVPATH_MAX];
 	unsigned int devnum;
+	int fd, flags;
 
-	switch (*str) {
+	p = _sndio_parsetype(str, "rmidi");
+	if (p == NULL) {
+		DPRINTF("mio_rmidi_getfd: %s: \"rsnd\" expected\n", str);
+		return -1;
+	}
+	switch (*p) {
 	case '/':
-		str++;
+		p++;
 		break;
 	default:
-		DPRINTF("_mio_rmidi_open: %s: '/<devnum>' expected\n", str);
-		return NULL;
+		DPRINTF("mio_rmidi_getfd: %s: '/' expected\n", str);
+		return -1;
 	}
-	str = _sndio_parsenum(str, &devnum, 255);
-	if (str == NULL || *str != '\0') {
-		DPRINTF("_mio_rmidi_open: can't determine device number\n");
-		return NULL;
+	p = _sndio_parsenum(p, &devnum, 255);
+	if (p == NULL || *p != '\0') {
+		DPRINTF("mio_rmidi_getfd: %s: number expected after '/'\n", str);
+		return -1;
 	}
-	hdl = malloc(sizeof(struct mio_rmidi_hdl));
-	if (hdl == NULL)
-		return NULL;
-	_mio_create(&hdl->mio, &mio_rmidi_ops, mode, nbio);
 	snprintf(path, sizeof(path), DEVPATH_PREFIX "%u", devnum);
-	if (mode == (MIO_OUT | MIO_IN))
+	if (mode == (SIO_PLAY | SIO_REC))
 		flags = O_RDWR;
 	else
-		flags = (mode & MIO_OUT) ? O_WRONLY : O_RDONLY;
+		flags = (mode & SIO_PLAY) ? O_WRONLY : O_RDONLY;
 	while ((fd = open(path, flags | O_NONBLOCK | O_CLOEXEC)) < 0) {
 		if (errno == EINTR)
 			continue;
 		DPERROR(path);
-		goto bad_free;
+		return -1;
 	}
+	return fd;
+}
+
+static struct mio_hdl *
+mio_rmidi_fdopen(int fd, unsigned int mode, int nbio)
+{
+	struct mio_rmidi_hdl *hdl;
+
+	hdl = malloc(sizeof(struct mio_rmidi_hdl));
+	if (hdl == NULL)
+		return NULL;
+	_mio_create(&hdl->mio, &mio_rmidi_ops, mode, nbio);
 	hdl->fd = fd;
 	return (struct mio_hdl *)hdl;
- bad_free:
-	free(hdl);
+}
+
+struct mio_hdl *
+_mio_rmidi_open(const char *str, unsigned int mode, int nbio)
+{
+	struct mio_hdl *hdl;
+	int fd;
+
+	fd = mio_rmidi_getfd(str, mode, nbio);
+	if (fd < 0)
+		return NULL;
+	hdl = mio_rmidi_fdopen(fd, mode, nbio);
+	if (hdl != NULL)
+		return hdl;
+	while (close(fd) < 0 && errno == EINTR)
+		; /* retry */
 	return NULL;
 }
 

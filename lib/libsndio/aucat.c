@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.68 2015/10/05 07:18:03 ratchov Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.69 2015/11/22 12:01:23 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -421,15 +421,24 @@ parsestr(const char *str, char *rstr, unsigned int max)
 }
 
 int
-_aucat_open(struct aucat *hdl, const char *str, unsigned int mode,
-    unsigned int type)
+_aucat_open(struct aucat *hdl, const char *str, unsigned int mode)
 {
 	extern char *__progname;
 	int eof;
 	char host[NI_MAXHOST], opt[AMSG_OPTMAX];
-	const char *p = str;
-	unsigned int unit, devnum;
+	const char *p;
+	unsigned int unit, devnum, type;
 
+	if ((p = _sndio_parsetype(str, "snd")) != NULL)
+		type = 0;
+ 	else if ((p = _sndio_parsetype(str, "midithru")) != NULL)
+		type = 1;
+ 	else if ((p = _sndio_parsetype(str, "midi")) != NULL)
+		type = 2;
+	else {
+		DPRINTF("%s: unsupported device type\n", str);
+		return -1;
+	}
 	if (*p == '@') {
 		p = parsestr(++p, host, NI_MAXHOST);
 		if (p == NULL)
@@ -442,7 +451,7 @@ _aucat_open(struct aucat *hdl, const char *str, unsigned int mode,
 			return 0;
 	} else
 		unit = 0;
-	if (*p != '/' && *p != ':') {
+	if (*p != '/') {
 		DPRINTF("%s: '/' expected\n", str);
 		return 0;
 	}

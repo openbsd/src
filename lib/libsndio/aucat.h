@@ -21,7 +21,7 @@ int _aucat_rmsg(struct aucat *, int *);
 int _aucat_wmsg(struct aucat *, int *);
 size_t _aucat_rdata(struct aucat *, void *, size_t, int *);
 size_t _aucat_wdata(struct aucat *, const void *, size_t, unsigned, int *);
-int _aucat_open(struct aucat *, const char *, unsigned, unsigned);
+int _aucat_open(struct aucat *, const char *, unsigned);
 void _aucat_close(struct aucat *, int);
 int _aucat_pollfd(struct aucat *, struct pollfd *, int);
 int _aucat_revents(struct aucat *, struct pollfd *);

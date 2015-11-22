@@ -1,4 +1,4 @@
-/*	$OpenBSD: sio.c,v 1.19 2015/01/16 16:48:52 deraadt Exp $	*/
+/*	$OpenBSD: sio.c,v 1.20 2015/11/22 12:01:23 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -44,7 +44,6 @@ sio_open(const char *str, unsigned int mode, int nbio)
 {
 	static char devany[] = SIO_DEVANY;
 	struct sio_hdl *hdl;
-	const char *p;
 
 #ifdef DEBUG
 	_sndio_debug_init();
@@ -59,18 +58,15 @@ sio_open(const char *str, unsigned int mode, int nbio)
 			str = devany;
 	}
 	if (strcmp(str, devany) == 0) {
-		hdl = _sio_aucat_open("/0", mode, nbio);
+		hdl = _sio_aucat_open("snd/0", mode, nbio);
 		if (hdl != NULL)
 			return hdl;
-		return _sio_sun_open("/0", mode, nbio);
+		return _sio_sun_open("rsnd/0", mode, nbio);
 	}
-	if ((p = _sndio_parsetype(str, "snd")) != NULL ||
-	    (p = _sndio_parsetype(str, "aucat")) != NULL)
-		return _sio_aucat_open(p, mode, nbio);
-	if ((p = _sndio_parsetype(str, "rsnd")) != NULL ||
-	    (p = _sndio_parsetype(str, "sun")) != NULL) {
-		return _sio_sun_open(p, mode, nbio);
-	}
+	if (_sndio_parsetype(str, "snd"))
+		return _sio_aucat_open(str, mode, nbio);
+	if (_sndio_parsetype(str, "rsnd"))
+		return _sio_sun_open(str, mode, nbio);
 	DPRINTF("sio_open: %s: unknown device type\n", str);
 	return NULL;
 }
