@@ -74,7 +74,7 @@ static unsigned int lineno_stack[MAX_INCLUDE_DEPTH];
 static unsigned int include_stack_ptr = 0;
 static int vers_node_nesting = 0;
 
-static void yy_input (char *, int *, int);
+static void yy_input (char *, yy_size_t *, yy_size_t);
 static void comment (void);
 static void lex_warn_invalid (char *where, char *what);
 
@@ -603,7 +603,7 @@ ldlex_popstate (void)
    either the number of characters read, or 0 to indicate EOF.  */
 
 static void
-yy_input (char *buf, int *result, int max_size)
+yy_input (char *buf, yy_size_t *result, yy_size_t max_size)
 {
   *result = 0;
   if (YY_CURRENT_BUFFER->yy_input_file)
