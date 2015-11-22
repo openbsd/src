@@ -1,4 +1,4 @@
-/*	$OpenBSD: midi.c,v 1.10 2013/09/28 18:49:32 ratchov Exp $	*/
+/*	$OpenBSD: midi.c,v 1.11 2015/11/22 16:42:22 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -433,7 +433,7 @@ port_new(char *path, unsigned int mode, int hold)
 	c->state = PORT_CFG;
 	c->hold = hold;
 	c->midi = midi_new(&port_midiops, c, mode);
-	midi_portnum++;
+	c->num = midi_portnum++;
 	for (pc = &port_list; *pc != NULL; pc = &(*pc)->next)
 		; /* nothing */
 	c->next = NULL;
