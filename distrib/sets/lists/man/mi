@@ -2129,6 +2129,7 @@
 ./usr/share/man/man5/aliases.5
 ./usr/share/man/man5/amd64
 ./usr/share/man/man5/amd64/boot.conf.5
+./usr/share/man/man5/amd64/vmm.conf.5
 ./usr/share/man/man5/ar.5
 ./usr/share/man/man5/armish
 ./usr/share/man/man5/armish/boot.conf.5
@@ -2323,6 +2324,8 @@
 ./usr/share/man/man8/amd64/gpioctl.8
 ./usr/share/man/man8/amd64/memconfig.8
 ./usr/share/man/man8/amd64/pxeboot.8
+./usr/share/man/man8/amd64/vmd.8
+./usr/share/man/man8/amd64/vmmctl.8
 ./usr/share/man/man8/amd64/wsmoused.8
 ./usr/share/man/man8/amd64/zzz.8
 ./usr/share/man/man8/amq.8
