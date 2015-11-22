@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.118 2015/11/20 20:59:52 deraadt Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.119 2015/11/22 18:48:16 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -656,6 +656,8 @@ pledge_namei(struct proc *p, struct nameidata *ni, char *origpath)
 			if (strcmp(path, "/etc/pwd.db") == 0)
 				return (0);
 			if (strcmp(path, "/etc/group") == 0)
+				return (0);
+			if (strcmp(path, "/etc/netid") == 0)
 				return (0);
 		}
 
