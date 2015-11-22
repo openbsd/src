@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1776 2015/11/22 20:43:54 kettenis Exp 
+ *	OpenBSD: pcidevs,v 1.1777 2015/11/22 21:13:05 kettenis Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -3318,6 +3318,7 @@
 #define	PCI_PRODUCT_INTEL_82580_FIBER	0x150f		/* 82580 */
 #define	PCI_PRODUCT_INTEL_82580_SERDES	0x1510		/* 82580 */
 #define	PCI_PRODUCT_INTEL_82580_SGMII	0x1511		/* 82580 */
+#define	PCI_PRODUCT_INTEL_82524EF	0x1513		/* 82524EF Thunderbolt */
 #define	PCI_PRODUCT_INTEL_82580_COPPER_DUAL	0x1516		/* 82580 */
 #define	PCI_PRODUCT_INTEL_82599_KX4_MEZZ	0x1514		/* 82599 */
 #define	PCI_PRODUCT_INTEL_82599_KR	0x1517		/* 82599 */
