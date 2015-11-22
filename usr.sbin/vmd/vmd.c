@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.2 2015/11/22 21:51:32 reyk Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.3 2015/11/22 22:29:48 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -63,9 +63,6 @@
 #define NR_BACKLOG 5
 
 #define MAX_TAP 256
-
-/* "/dev/tapXXX" */
-#define MAX_TAPLEN 12
 
 /*
  * Emulated 8250 UART
@@ -438,10 +435,10 @@ int
 opentap(void)
 {
 	int i, fd;
-	char path[MAX_TAPLEN];
+	char path[PATH_MAX];
 	
 	for (i = 0; i < MAX_TAP; i++) {
-		snprintf(path, MAX_TAPLEN - 1, "/dev/tap%d", i);
+		snprintf(path, PATH_MAX, "/dev/tap%d", i);
 		fd = open(path, O_RDWR | O_NONBLOCK);
 		if (fd != -1)
 			return (fd);
