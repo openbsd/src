@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ksh.1,v 1.169 2015/11/22 01:23:39 mmcc Exp $
+.\"	$OpenBSD: ksh.1,v 1.170 2015/11/22 01:29:57 mmcc Exp $
 .\"
 .\"	Public Domain
 .\"
@@ -259,7 +259,7 @@ or in groups using double
 or single
 .Pq Sq '
 quotes.
-Note that the following characters are also treated specially by the
+The following characters are also treated specially by the
 shell and must be quoted if they are to represent themselves:
 .Ql \e ,
 .Ql \&" ,
@@ -340,11 +340,14 @@ or an external command
 parameter; see
 .Sx Command execution
 below).
-Note that all command constructs have an exit status: for external commands,
+.Pp
+All command constructs have an exit status.
+For external commands,
 this is related to the status returned by
 .Xr wait 2
 (if the command could not be found, the exit status is 127; if it could not
-be executed, the exit status is 126); the exit status of other command
+be executed, the exit status is 126).
+The exit status of other command
 constructs (built-in commands, functions, compound-commands, pipelines, lists,
 etc.) are all well-defined and are described where the construct is
 described.
@@ -396,7 +399,7 @@ have equal precedence which is higher than that of
 and
 .Ql \&; ,
 which also have equal precedence.
-Note that the
+The
 .Ql &&
 and
 .Ql ||
@@ -430,7 +433,7 @@ operator starts a co-process which is a special kind of asynchronous process
 (see
 .Sx Co-processes
 below).
-Note that a command must follow the
+A command must follow the
 .Ql &&
 and
 .Ql ||
