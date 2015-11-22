@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ksh.1,v 1.168 2015/11/22 00:24:49 mmcc Exp $
+.\"	$OpenBSD: ksh.1,v 1.169 2015/11/22 01:23:39 mmcc Exp $
 .\"
 .\"	Public Domain
 .\"
@@ -1425,7 +1425,7 @@ isn't set, no history file is used.
 This is different from the original Korn shell, which uses
 .Pa $HOME/.sh_history ;
 in the future,
-.Nm pdksh
+.Nm ksh
 may also use a default history file.
 .It Ev HISTSIZE
 The number of commands normally stored for history.
@@ -1963,17 +1963,12 @@ matches no strings; the pattern
 matches all strings (think about it).
 .El
 .Pp
-Note that
-.Nm pdksh
-currently never matches
+Unlike most shells,
+.Nm ksh
+never matches
 .Sq \&.
 and
-.Sq .. ,
-but the original
-.Nm ksh ,
-Bourne
-.Nm sh ,
-and bash do, so this may have to change (too bad).
+.Sq .. .
 .Pp
 Note that none of the above pattern elements match either a period
 .Pq Sq \&.
@@ -3532,7 +3527,7 @@ If used outside of a function or
 script, it has the same effect as
 .Ic exit .
 Note that
-.Nm pdksh
+.Nm ksh
 treats both profile and
 .Ev ENV
 files as
@@ -3768,7 +3763,7 @@ In the original Korn shell, unless
 was set, the vi command-line mode would let the
 .Xr tty 4
 driver do the work until ESC (^[) was entered.
-.Nm pdksh
+.Nm ksh
 is always in viraw mode.
 .El
 .Pp
