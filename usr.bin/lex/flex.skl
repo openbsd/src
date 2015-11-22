@@ -1,4 +1,4 @@
-/*	$OpenBSD: flex.skl,v 1.14 2015/11/21 13:25:12 tedu Exp $	*/
+/*	$OpenBSD: flex.skl,v 1.15 2015/11/22 19:55:22 tedu Exp $	*/
 
 %# -*-C-*- vi: set ft=c:
 %# This file is processed in several stages.
@@ -467,7 +467,7 @@ typedef struct yy_buffer_state *YY_BUFFER_STATE;
 
 #ifndef YY_TYPEDEF_YY_SIZE_T
 #define YY_TYPEDEF_YY_SIZE_T
-typedef unsigned int yy_size_t;
+typedef size_t yy_size_t;
 #endif
 
 %if-not-reentrant
