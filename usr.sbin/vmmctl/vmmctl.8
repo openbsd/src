@@ -1,0 +1,125 @@
+.\"
+.\"Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
+.\"
+.\"Permission to use, copy, modify, and distribute this software for any
+.\"purpose with or without fee is hereby granted, provided that the above
+.\"copyright notice and this permission notice appear in all copies.
+.\"
+.\"THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\"WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\"MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\"ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\"WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\"ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\"OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.Dd $Mdocdate: November 22 2015 $
+.Dt VMMCTL 8
+.Os
+.Sh NAME
+.Nm vmmctl
+.Nd control VMM subsystem
+.Sh SYNOPSIS
+.Nm 
+.Op Fl de
+.Nm
+.Op Fl C
+.Op Fl i Ar imagefile path
+.Op Fl s Ar size in MB
+.Nm
+.Op Fl S
+.Op Fl m Ar memory size
+.Op Fl n Ar nr nics
+.Op Fl b Ar diskfile
+.Op Fl k Ar kernel
+.Nm
+.Op Fl T
+.Op id
+.Nm
+.Op Fl I
+.Op id
+.Sh DESCRIPTION
+The
+.Nm
+utility is used to control the virtual machine monitor (VMM) subsystem.
+A VMM manages virtual machines (VMs) on a
+.Ar host .
+The VMM subsystem is responsible for creating, destroying, and executing
+VMs.
+
+.Sh VMM OPERATIONS
+The options are as follows:
+.Bl -tag -width Dsssigfile
+.It Fl d
+Disable the VMM subsystem. Virtual machines running on the host should be
+terminated first.
+.It Fl e
+Enable the VMM subsystem. The VMM subsystem must be enabled before VMs
+can be managed on the host.
+.El
+.Pp
+Generally, the 
+.Nm
+utility is run with -e option during system startup to enable the VMM
+subsystem on boot. This can be automated via the
+.Xr rc 8
+and
+.Xr rc.conf 8
+facilities used during system startup.
+.Sh VM OPERATIONS
+The options are as follows:
+.Bl -tag -width Dsssignature
+.It Fl C
+Creates a VM disk image file with the specified pathname and size in MB.
+.It Fl S
+Starts a VM defined by the specified parameters.
+.It Fl m
+Memory size (in MB) of the VM
+.It Fl n
+Number of network interfaces to add to the VM
+.It Fl b
+Disk image file (may be specified multiple times to add multiple disk images).
+.It Fl k
+Kernel to load when booting the VM
+.It Fl T
+Terminates (stops) a VM defined by the specified VM ID.
+.It Fl I
+Lists VMs running on the host, optionally listing just the selected VM ID.
+.El
+
+.Bl -tag -width Dsssignature
+.Sh EXIT STATUS
+.Ex -std vmmctl
+.Nm
+may fail due to one of the following reasons:
+.Pp
+.Bl -bullet -compact
+.It
+The VMM subsystem could not be enabled or disabled as requested
+.It
+A requested VM-based operation could not be completed
+.El
+.Sh EXAMPLES
+Enable the VMM subsystem
+.Dl $ vmmctl -e
+.Pp
+Disable the VMM subsystem
+.Dl $ vmmctl -d
+.Pp
+Create a new VM with 512MB memory, 1 network interface, one disk image
+('disk.img') and boot from kernel '/bsd'.
+.Dl $ vmmctl -S -m 512 -n 1 -b disk.img -k /bsd
+.Pp
+Terminate VM number 1
+.Dl $ vmmctl -T1
+.Pp
+.Sh SEE ALSO
+.Xr vmm 4 ,
+.Xr vmd 8 ,
+.Xr rc.conf 8
+.Sh HISTORY
+The
+.Nm
+command first appeared in
+.Ox 5.9 .
+.Sh AUTHORS
+.An Mike Larkin Aq Mt mlarkin@openbsd.org
