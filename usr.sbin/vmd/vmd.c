@@ -1,3 +1,5 @@
+/*	$OpenBSD: vmd.c,v 1.2 2015/11/22 21:51:32 reyk Exp $	*/
+
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
  *
