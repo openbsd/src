@@ -2,7 +2,7 @@
 .if ${MACHINE} == "amd64"
 
 PROG=	vmmctl
-SRCS=	vmmctl.c
+SRCS=	vmmctl.c parser.c main.c parse.y
 CFLAGS+= -Wall
 CFLAGS+= -Wstrict-prototypes -Wmissing-prototypes
 CFLAGS+= -Wmissing-declarations
@@ -18,7 +18,7 @@ NOPROG= yes
 
 .endif
 
-MAN= vmmctl.8
+MAN= vmmctl.8 vmm.conf.5
 MANSUBDIR=${MACHINE}
 
 .include <bsd.prog.mk>

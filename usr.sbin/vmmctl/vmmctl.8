@@ -19,24 +19,10 @@
 .Nm vmmctl
 .Nd control VMM subsystem
 .Sh SYNOPSIS
-.Nm 
-.Op Fl de
 .Nm
-.Op Fl C
-.Op Fl i Ar imagefile path
-.Op Fl s Ar size in MB
-.Nm
-.Op Fl S
-.Op Fl m Ar memory size
-.Op Fl n Ar nr nics
-.Op Fl b Ar diskfile
-.Op Fl k Ar kernel
-.Nm
-.Op Fl T
-.Op id
-.Nm
-.Op Fl I
-.Op id
+.Op Fl s Ar socket
+.Ar command
+.Op Ar arg ...
 .Sh DESCRIPTION
 The
 .Nm
@@ -45,48 +31,60 @@ A VMM manages virtual machines (VMs) on a
 .Ar host .
 The VMM subsystem is responsible for creating, destroying, and executing
 VMs.
-
 .Sh VMM OPERATIONS
 The options are as follows:
-.Bl -tag -width Dsssigfile
-.It Fl d
-Disable the VMM subsystem. Virtual machines running on the host should be
-terminated first.
-.It Fl e
+.Bl -tag -width Ds
+.It Cm enable
 Enable the VMM subsystem. The VMM subsystem must be enabled before VMs
 can be managed on the host.
+.It Cm disable
+Disable the VMM subsystem. Virtual machines running on the host should be
+terminated first.
+.It Cm load Op Ar path
+Load the
+.Xr vmm.conf 5
+configuration file from
+.Pa /etc/vmm.conf
+or the specified
+.Ar path.
 .El
 .Pp
-Generally, the 
+Generally, the
 .Nm
-utility is run with -e option during system startup to enable the VMM
-subsystem on boot. This can be automated via the
+utility is run with
+.Cm enable
+option during system startup to enable the VMM subsystem on boot.
+This can be automated via the
 .Xr rc 8
 and
 .Xr rc.conf 8
 facilities used during system startup.
 .Sh VM OPERATIONS
 The options are as follows:
-.Bl -tag -width Dsssignature
-.It Fl C
+.Bl -tag -width Ds
+.It Cm create Ar path Cm size Ar number
 Creates a VM disk image file with the specified pathname and size in MB.
-.It Fl S
-Starts a VM defined by the specified parameters.
-.It Fl m
-Memory size (in MB) of the VM
-.It Fl n
-Number of network interfaces to add to the VM
-.It Fl b
+.It Cm start Ar name Op Ar parameters
+Starts a VM defined by the specified name and parameters:
+.Bl -tag -width "memory size"
+.It Cm disk Ar path
 Disk image file (may be specified multiple times to add multiple disk images).
-.It Fl k
-Kernel to load when booting the VM
-.It Fl T
-Terminates (stops) a VM defined by the specified VM ID.
-.It Fl I
-Lists VMs running on the host, optionally listing just the selected VM ID.
+.It Cm kernel Ar path
+Kernel to load when booting the VM.
+.It Cm memory Ar size
+Memory size of the VM, in bytes.
+Optionally, the units 'K', 'M', or 'G', for kilo-, mega-, and gigabytes
+can be used.
+.It Cm interfaces Ar count
+Number of network interfaces to add to the VM.
 .El
-
-.Bl -tag -width Dsssignature
+.It Cm terminate Ar id
+Terminates (stops) a VM defined by the specified VM
+.Ar id .
+.It Cm show info Op Ar id
+Lists VMs running on the host, optionally listing just the selected VM
+.Ar id .
+.El
 .Sh EXIT STATUS
 .Ex -std vmmctl
 .Nm
@@ -94,26 +92,39 @@ may fail due to one of the following reasons:
 .Pp
 .Bl -bullet -compact
 .It
-The VMM subsystem could not be enabled or disabled as requested
+The VMM subsystem could not be enabled or disabled as requested.
 .It
-A requested VM-based operation could not be completed
+A requested VM-based operation could not be completed.
 .El
 .Sh EXAMPLES
-Enable the VMM subsystem
-.Dl $ vmmctl -e
+Enable the VMM subsystem:
+.Dl $ vmmctl enable
 .Pp
-Disable the VMM subsystem
-.Dl $ vmmctl -d
+Disable the VMM subsystem:
+.Dl $ vmmctl disable
+.Pp
+Create a new disk image ('disk.img') of 4 gigabyte size:
+.Dl $ vmmctl create disk.img size 4G
 .Pp
 Create a new VM with 512MB memory, 1 network interface, one disk image
-('disk.img') and boot from kernel '/bsd'.
-.Dl $ vmmctl -S -m 512 -n 1 -b disk.img -k /bsd
+('disk.img') and boot from kernel '/bsd':
+.Dl $ vmmctl start "myvm" memory 512M interfaces 1 disk disk.img kernel /bsd
 .Pp
 Terminate VM number 1
-.Dl $ vmmctl -T1
+.Dl $ vmmctl terminate 1
 .Pp
+.Sh FILES
+.Bl -tag -width "/etc/var/run/vmd.sockXX" -compact
+.It Pa /etc/vmm.conf
+Default configuration file.
+.It Pa /var/run/vmd.sock
+.Ux Ns -domain
+socket used for communication with
+.Xr vmd 8 .
+.El
 .Sh SEE ALSO
 .Xr vmm 4 ,
+.Xr vmm.conf 5 ,
 .Xr vmd 8 ,
 .Xr rc.conf 8
 .Sh HISTORY
@@ -123,3 +134,5 @@ command first appeared in
 .Ox 5.9 .
 .Sh AUTHORS
 .An Mike Larkin Aq Mt mlarkin@openbsd.org
+and
+.An Reyk Floeter Aq Mt reyk@openbsd.org .

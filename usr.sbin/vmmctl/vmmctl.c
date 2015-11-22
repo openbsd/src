@@ -38,365 +38,10 @@
 #include <unistd.h>
 
 #include "vmd.h"
+#include "parser.h"
 
-__dead void usage(void);
-int main(int, char **);
-int create_imagefile(char *, long);
-void enable_vmm(void);
-int enable_vmm_complete(struct imsg *, int *);
-void disable_vmm(void);
-int disable_vmm_complete(struct imsg *, int *);
-int start_vm(int, int, int, char **, char *);
-int start_vm_complete(struct imsg *, int *);
-void terminate_vm(uint32_t);
-int terminate_vm_complete(struct imsg *, int *);
-void get_info_vm(void);
-int add_info(struct imsg *, int *);
-void print_vm_info(struct vm_info_result *, size_t);
-
-#define CMD_ENABLE	0x1
-#define CMD_DISABLE	0x2
-#define CMD_CREATE	0x4
-#define CMD_START	0x8
-#define CMD_TERMINATE	0x10
-#define CMD_INFO	0x20
-
-struct imsgbuf *ibuf;
 extern char *__progname;
 uint32_t info_id;
-
-/*
- * usage
- *
- * print program usage. does not return
- */
-__dead void
-usage(void)
-{
-	fprintf(stderr, "usage: %s [-de]\n"
-	    "       %s [-C] [-i imagefile path] [-s size in MB]\n"
-	    "       %s [-S] [-m memory size][-n nr nics][-b diskfile]"
-	    "[-k kernel]\n"
-	    "       %s [-T[id]]\n"
-	    "       %s [-I[id]]\n",
-	    __progname, __progname, __progname, __progname,
-	    __progname);
-	exit(1);
-}
-
-int
-main(int argc, char **argv)
-{
-	int ch, command, ret, fd, processed, n, memsize, nnics, ndisks, i;
-	const char *errstr;
-	char *imgfile, *sockname;
-	char *disks[VMM_MAX_DISKS_PER_VM];
-	char *kernel;
-	long imgsize;
-	struct sockaddr_un sun;
-	struct imsg imsg;
-	uint32_t terminate_id;
-
-	command = 0;
-	imgfile = NULL;
-	imgsize = 0;
-	info_id = 0;
-	terminate_id = 0;
-	memsize = 0;
-	nnics = 0;
-	ndisks = 0;
-	kernel = NULL;
-
-	for (i = 0 ; i < VMM_MAX_DISKS_PER_VM; i++) {
-		disks[i] = malloc(VMM_MAX_PATH_DISK);
-		if (disks[i] == NULL) {
-			fprintf(stderr, "memory allocation error\n");
-			exit(1);
-		}
-
-		bzero(disks[i], VMM_MAX_PATH_DISK);
-	}
-
-
-	while ((ch = getopt(argc, argv, "CST::I::dei:s:m:n:b:k:")) != -1) {
-		switch(ch) {
-		case 'C':
-			/* Create imagefile command */
-			if (command)
-				usage();
-
-			command = CMD_CREATE;
-			break;
-		case 'S':
-			/* Start command */
-			if (command)
-				usage();
-
-			command = CMD_START;
-			break;
-		case 'T':
-			/* Terminate command */
-			if (command)
-				usage();
-
-			command = CMD_TERMINATE;
-			if (optarg != NULL) {
-				terminate_id = strtonum(optarg, 1, UINT_MAX,
-				    &errstr);
-				if (errstr) {
-					fprintf(stderr,
-					    "%s: invalid VM ID (%s) specified: "
-					    "%s\n", __progname, optarg, errstr);
-					usage();
-				}
-			} else {
-				fprintf(stderr, "%s: missing VM ID parameter\n",
-				    __progname);
-				usage();
-			}
-
-			if (terminate_id == 0) {
-				fprintf(stderr, "%s: invalid vm ID supplied\n",
-				    __progname);
-				usage();
-			}
-			break;
-		case 'I':
-			/* Info command */
-			if (command)
-				usage();
-
-			command = CMD_INFO;
-			if (optarg != NULL) {
-				info_id = strtonum(optarg, 1, UINT_MAX,
-				    &errstr);
-				if (errstr) {
-					fprintf(stderr,
-					    "%s: invalid VM ID (%s) specified: "
-					    "%s\n", __progname, optarg, errstr);
-					usage();
-				}
-			}
-			break;
-		case 'd':
-			/* Disable VMM mode */
-			if (command)
-				usage();
-
-			command = CMD_DISABLE;
-			break;
-		case 'e':
-			/* Enable VMM mode */
-			if (command)
-				usage();
-
-			command = CMD_ENABLE;
-			break;
-		case 'i':
-			/* Imagefile name parameter */
-			if (imgfile)
-				usage();
-
-			imgfile = strdup(optarg);
-			break;
-		case 's':
-			/* Imagefile size parameter */
-			if (imgsize != 0)
-				usage();
-
-                        imgsize = strtonum(optarg, 1, LONG_MAX, &errstr);
-                        if (errstr) {
-                                fprintf(stderr,
-				    "%s: invalid image size (%s) specified: "
-				    "%s\n", __progname, optarg, errstr);
-                                usage();
-                        }
-                        break;
-		case 'm':
-			/* VM memory parameter */
-			if (memsize !=0)
-				usage();
-
-			memsize = strtonum(optarg, 1, VMM_MAX_VM_MEM_SIZE,
-			    &errstr);
-
-			if (errstr) {
-				fprintf(stderr," %s: invalid memory size (%s) "
-				    "specified: %s\n", __progname, optarg,
-				    errstr);
-			}
-			break;
-		case 'n':
-			/* VM num nics parameter */
-			if (nnics !=0)
-				usage();
-
-			nnics = strtonum(optarg, 1, VMM_MAX_VM_MEM_SIZE,
-			    &errstr);
-
-			if (errstr) {
-				fprintf(stderr," %s: invalid number of nics "
-				    " (%s) specified: %s\n", __progname,
-				    optarg, errstr);
-			}
-			break;
-		case 'b':
-			/* VM disk parameter */
-			if (ndisks < VMM_MAX_DISKS_PER_VM) {
-				strlcpy(disks[ndisks], optarg,
-				    VMM_MAX_PATH_DISK);
-				ndisks++;
-			} else {
-				fprintf(stderr, "%s: maximum number of disks "
-				    "reached, ignoring disk %s\n", __progname,
-				    optarg);
-			}
-			break;
-		case 'k':
-			/* VM kernel parameter */
-			if (kernel != NULL)
-				usage();
-
-			kernel = malloc(VMM_MAX_KERNEL_PATH);
-			if (kernel == NULL) {
-				fprintf(stderr, "memory allocation error\n");
-				exit(1);
-			}
-
-			strlcpy(kernel, optarg, VMM_MAX_KERNEL_PATH);
-			break;
-		default:
-			usage();
-		}
-	}
-
-	if (!command)
-		usage();
-
-	/* Set up comms via imsg with vmd, unless CMD_CREATE (imgfile) */
-	if (command != CMD_CREATE) {
-		sockname = SOCKET_NAME;
-		if ((fd = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
-			err(1, "socket init failed");
-
-		bzero(&sun, sizeof(sun));
-		sun.sun_family = AF_UNIX;
-		if (strlcpy(sun.sun_path, sockname, sizeof(sun.sun_path)) >=
-		    sizeof(sun.sun_path))
-			errx(1, "socket name too long");
-
-		if (connect(fd, (struct sockaddr *)&sun, sizeof(sun)) == -1)
-			err(1, "connect failed to vmd control socket");
-
-		if ((ibuf = malloc(sizeof(struct imsgbuf))) == NULL)
-			err(1, NULL);
-		imsg_init(ibuf, fd);
-	}
-
-	if (command == CMD_DISABLE)
-		disable_vmm();
-	
-	if (command == CMD_ENABLE)
-		enable_vmm();
-
-	if (command == CMD_CREATE) {
-		if (imgfile == NULL) {
-			fprintf(stderr, "%s: missing -i (imagefile path) "
-			    "argument\n", __progname);
-			exit(1);
-		}
-
-		if (imgsize <= 0) {
-			fprintf(stderr, "%s: missing/invalid -s (imgfile size) "
-			    "argument\n", __progname);
-			exit(1);
-		}
-
-		ret = create_imagefile(imgfile, imgsize);
-		if (ret) {
-			fprintf(stderr, "%s: create imagefile operation failed "
-			    "(%s)\n", __progname, strerror(ret));
-			exit(ret);
-		} else {
-			fprintf(stdout, "%s: imagefile created\n", __progname);
-			exit(0);
-		}
-	}
-
-	if (command == CMD_START) {
-		if (memsize == 0) {
-			fprintf(stderr, "%s: missing -m (memory size) "
-			    "argument\n", __progname);
-			exit(1);
-		}
-
-		ret = start_vm(memsize, nnics, ndisks, disks, kernel);
-		if (ret) {
-			fprintf(stderr, "%s: start VM operation failed "
-			    "(%s)\n", __progname, strerror(ret));
-			exit(ret);
-		}
-	}
-
-	if (command == CMD_TERMINATE)
-		terminate_vm(terminate_id);
-
-	if (command == CMD_INFO)
-		get_info_vm();
-
-	/* Send request message */
-	while (ibuf->w.queued)
-		if (msgbuf_write(&ibuf->w) <= 0 && errno != EAGAIN)
-			err(1, "write error");
-
-	/*
-	 * We expect vmd to send us one reply message, and that the reply
-	 * message we receive will be of the proper _REPLY type.
-	 *
-	 * The exception to this is the -I (get info) option, where vmd
-	 * may send us arbitrary number of _REPLY messages followed by
-	 * and _END message to indicate no more messages are forthcoming.
-	 */
-	processed = 0;
-	while (!processed) {
-		if ((n = imsg_read(ibuf)) == -1)
-			err(1, "imsg_read error");
-		if (n == 0)
-			errx(1, "pipe closed");
-
-		while (!processed) {
-			if ((n = imsg_get(ibuf, &imsg)) == -1)
-				err(1, "imsg_get error");
-			if (n == 0)
-				break;
-
-			switch (command) {
-				case CMD_DISABLE:
-					processed = disable_vmm_complete(&imsg,
-					    &ret);
-					break;
-				case CMD_ENABLE:
-					processed = enable_vmm_complete(&imsg,
-					    &ret);
-					break;
-				case CMD_START:
-					processed = start_vm_complete(&imsg,
-					    &ret);
-					break;
-				case CMD_TERMINATE:
-					processed = terminate_vm_complete(&imsg,
-					    &ret);
-					break;
-				case CMD_INFO:
-					processed = add_info(&imsg, &ret);
-					break;
-			}
-			imsg_free(&imsg);
-		}
-	}
-
-	return (ret);
-}
 
 /*
  * enable_vmm
@@ -518,6 +163,7 @@ disable_vmm_complete(struct imsg *imsg, int *ret)
  * Request vmd to start the VM defined by the supplied parameters
  *
  * Parameters:
+ *  name: optional name of the VM
  *  memsize: memory size (MB) of the VM to create
  *  nnics: number of vionet network interfaces to create
  *  ndisks: number of disk images
@@ -529,7 +175,8 @@ disable_vmm_complete(struct imsg *imsg, int *ret)
  *  ENOMEM if a memory allocation failure occurred.
  */
 int
-start_vm(int memsize, int nnics, int ndisks, char **disks, char *kernel)
+start_vm(const char *name, int memsize, int nnics, int ndisks, char **disks,
+    char *kernel)
 {
 	struct vm_create_params *vcp;
 	int i;
@@ -547,7 +194,9 @@ start_vm(int memsize, int nnics, int ndisks, char **disks, char *kernel)
 	for (i = 0 ; i < ndisks; i++)
 		strlcpy(vcp->vcp_disks[i], disks[i], VMM_MAX_PATH_DISK);
 
-	strlcpy(vcp->vcp_kernel, kernel, VMM_MAX_KERNEL_PATH);		
+	if (name != NULL)
+		strlcpy(vcp->vcp_name, name, VMM_MAX_NAME_LEN);
+	strlcpy(vcp->vcp_kernel, kernel, VMM_MAX_KERNEL_PATH);
 	vcp->vcp_nnics = nnics;
 
 	imsg_compose(ibuf, IMSG_VMDOP_START_VM_REQUEST, 0, 0, -1,
@@ -673,8 +322,9 @@ terminate_vm_complete(struct imsg *imsg, int *ret)
  * Request a list of running VMs from vmd
  */
 void
-get_info_vm(void)
+get_info_vm(uint32_t id)
 {
+	info_id = id;
 	imsg_compose(ibuf, IMSG_VMDOP_GET_INFO_VM_REQUEST, 0, 0, -1, NULL, 0);
 }
 
