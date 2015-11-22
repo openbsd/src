@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_gem.c,v 1.7 2015/04/18 14:47:35 jsg Exp $	*/
+/*	$OpenBSD: radeon_gem.c,v 1.8 2015/11/22 15:35:49 kettenis Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -29,13 +29,6 @@
 #include <dev/pci/drm/drmP.h>
 #include <dev/pci/drm/radeon_drm.h>
 #include "radeon.h"
-
-int radeon_gem_object_init(struct drm_gem_object *obj)
-{
-	BUG();
-
-	return 0;
-}
 
 void radeon_gem_object_free(struct drm_gem_object *gobj)
 {

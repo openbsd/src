@@ -1,4 +1,4 @@
-/* $OpenBSD: drmP.h,v 1.199 2015/11/21 15:23:44 kettenis Exp $ */
+/* $OpenBSD: drmP.h,v 1.200 2015/11/22 15:35:49 kettenis Exp $ */
 /* drmP.h -- Private header for Direct Rendering Manager -*- linux-c -*-
  * Created: Mon Jan  4 10:05:05 1999 by faith@precisioninsight.com
  */
@@ -521,7 +521,6 @@ struct drm_driver_info {
 	 *
 	 * Returns 0 on success.
 	 */
-	int (*gem_init_object) (struct drm_gem_object *obj);
 	void (*gem_free_object) (struct drm_gem_object *obj);
 	int (*gem_open_object) (struct drm_gem_object *, struct drm_file *);
 	void (*gem_close_object) (struct drm_gem_object *, struct drm_file *);
@@ -844,8 +843,6 @@ drm_sysfs_hotplug_event(struct drm_device *dev)
 
 /* Graphics Execution Manager library functions (drm_gem.c) */
 void drm_gem_object_release(struct drm_gem_object *obj);
-struct drm_gem_object *drm_gem_object_alloc(struct drm_device *dev,
-					    size_t size);
 int drm_gem_object_init(struct drm_device *dev,
 			struct drm_gem_object *obj, size_t size);
 

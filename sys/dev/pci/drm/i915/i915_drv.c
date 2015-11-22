@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.c,v 1.97 2015/11/01 03:42:56 jsg Exp $ */
+/* $OpenBSD: i915_drv.c,v 1.98 2015/11/22 15:35:49 kettenis Exp $ */
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -459,7 +459,6 @@ static struct drm_driver_info inteldrm_driver = {
 	.preclose = i915_driver_preclose,
 	.postclose = i915_driver_postclose,
 
-//	.gem_init_object	= i915_gem_init_object,
 	.gem_free_object	= i915_gem_free_object,
 	.gem_fault		= i915_gem_fault,
 	.gem_size		= sizeof(struct drm_i915_gem_object),

@@ -1,4 +1,4 @@
-/* $OpenBSD: drm_drv.c,v 1.139 2015/11/21 15:23:44 kettenis Exp $ */
+/* $OpenBSD: drm_drv.c,v 1.140 2015/11/22 15:35:49 kettenis Exp $ */
 /*-
  * Copyright 2007-2009 Owain G. Ainsworth <oga@openbsd.org>
  * Copyright © 2008 Intel Corporation
@@ -1467,34 +1467,6 @@ drm_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr, vm_page_t *pps,
  * Code to support memory managers based on the GEM (Graphics
  * Execution Manager) api.
  */
-struct drm_gem_object *
-drm_gem_object_alloc(struct drm_device *dev, size_t size)
-{
-	struct drm_gem_object	*obj;
-
-	KASSERT((size & (PAGE_SIZE -1)) == 0);
-
-	if ((obj = pool_get(&dev->objpl, PR_WAITOK | PR_ZERO)) == NULL)
-		return (NULL);
-
-	obj->dev = dev;
-
-	/* uao create can't fail in the 0 case, it just sleeps */
-	obj->uao = uao_create(size, 0);
-	obj->size = size;
-	uvm_objinit(&obj->uobj, &drm_pgops, 1);
-
-	if (dev->driver->gem_init_object != NULL &&
-	    dev->driver->gem_init_object(obj) != 0) {
-		uao_detach(obj->uao);
-		pool_put(&dev->objpl, obj);
-		return (NULL);
-	}
-	atomic_inc(&dev->obj_count);
-	atomic_add(obj->size, &dev->obj_memory);
-	return (obj);
-}
-
 int
 drm_gem_object_init(struct drm_device *dev, struct drm_gem_object *obj, size_t size)
 {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_kms.c,v 1.43 2015/11/16 11:24:58 kettenis Exp $	*/
+/*	$OpenBSD: radeon_kms.c,v 1.44 2015/11/22 15:35:49 kettenis Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -54,7 +54,6 @@ void	radeon_driver_irq_preinstall_kms(struct drm_device *);
 int	radeon_driver_irq_postinstall_kms(struct drm_device *);
 void	radeon_driver_irq_uninstall_kms(struct drm_device *d);
 
-int	radeon_gem_object_init(struct drm_gem_object *);
 void	radeon_gem_object_free(struct drm_gem_object *);
 int	radeon_gem_object_open(struct drm_gem_object *, struct drm_file *);
 void	radeon_gem_object_close(struct drm_gem_object *, struct drm_file *);
@@ -231,7 +230,6 @@ static struct drm_driver_info kms_driver = {
 	.irq_postinstall = radeon_driver_irq_postinstall_kms,
 	.irq_uninstall = radeon_driver_irq_uninstall_kms,
 	.ioctls = radeon_ioctls_kms,
-	.gem_init_object = radeon_gem_object_init,
 	.gem_free_object = radeon_gem_object_free,
 	.gem_open_object = radeon_gem_object_open,
 	.gem_close_object = radeon_gem_object_close,
