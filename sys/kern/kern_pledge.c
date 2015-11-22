@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.119 2015/11/22 18:48:16 deraadt Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.120 2015/11/22 18:50:45 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -55,6 +55,9 @@
 #include <sys/syscall.h>
 #include <sys/syscallargs.h>
 #include <sys/systm.h>
+
+#include <dev/biovar.h>
+
 #define PLEDGENAMES
 #include <sys/pledge.h>
 
@@ -987,6 +990,12 @@ pledge_sysctl(struct proc *p, int miblen, int *mib, void *new)
 		    mib[0] == CTL_KERN &&
 		    mib[1] == KERN_RAWPARTITION)
 			return (0);
+#ifdef CPU_CHR2BLK
+		if (miblen == 3 &&		/* machdep.chr2blk */
+		    mib[0] == CTL_MACHDEP &&
+		    mib[1] == CPU_CHR2BLK)
+			return (0);
+#endif /* CPU_CHR2BLK */
 	}
 
 	if (miblen >= 3 &&			/* ntpd(8) to read sensors */
@@ -1154,6 +1163,8 @@ pledge_ioctl(struct proc *p, long com, struct file *fp)
 		case DIOCGPDINFO:
 		case DIOCRLDINFO:
 		case DIOCWDINFO:
+		case BIOCINQ:
+		case BIOCVOL:
 			if (fp->f_type == DTYPE_VNODE &&
 			    ((vp->v_type == VCHR &&
 			    cdevsw[major(vp->v_rdev)].d_type == D_DISK) ||
