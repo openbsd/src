@@ -1,4 +1,4 @@
-/*	$OpenBSD: sndiod.c,v 1.12 2015/11/18 08:36:20 ratchov Exp $	*/
+/*	$OpenBSD: sndiod.c,v 1.13 2015/11/22 16:52:06 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -333,7 +333,7 @@ main(int argc, char **argv)
 {
 	int c, background, unit;
 	int pmin, pmax, rmin, rmax;
-	char base[SOCKPATH_MAX], path[SOCKPATH_MAX];
+	char base[SOCKPATH_MAX], path[SOCKPATH_MAX], *tcpaddr;
 	unsigned int mode, dup, mmc, vol;
 	unsigned int hold, autovol, bufsz, round, rate;
 	const char *str;
@@ -363,6 +363,7 @@ main(int argc, char **argv)
 	rmax = 1;
 	aparams_init(&par);
 	mode = MODE_PLAY | MODE_REC;
+	tcpaddr = NULL;
 
 	setsig();
 	filelist_init();
@@ -381,11 +382,7 @@ main(int argc, char **argv)
 				errx(1, "%s: unit number is %s", optarg, str);
 			break;
 		case 'L':
-#ifdef USE_TCP
-			listen_new_tcp(optarg, AUCAT_PORT + unit);
-#else
-			errx(1, "-L option disabled at compilation time");
-#endif
+			tcpaddr = optarg;
 			break;
 		case 'm':
 			mode = opt_mode();
@@ -472,6 +469,13 @@ main(int argc, char **argv)
 	getbasepath(base, sizeof(base));
 	snprintf(path, SOCKPATH_MAX, "%s/" SOCKPATH_FILE "%u", base, unit);
 	listen_new_un(path);
+	if (tcpaddr) {
+#ifdef USE_TCP
+		listen_new_tcp(optarg, AUCAT_PORT + unit);
+#else
+		errx(1, "-L option disabled at compilation time");
+#endif
+	}
 	if (geteuid() == 0)
 		privdrop();
 	midi_init();
