@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.h,v 1.92 2015/09/27 17:31:50 stsp Exp $ */
+/*	$OpenBSD: ospfd.h,v 1.93 2015/11/22 13:09:10 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -104,6 +104,7 @@ enum imsg_type {
 	IMSG_NEIGHBOR_CAPA,
 	IMSG_NETWORK_ADD,
 	IMSG_NETWORK_DEL,
+	IMSG_AREA_CHANGE,
 	IMSG_DD,
 	IMSG_DD_END,
 	IMSG_DD_BADLSA,
@@ -499,6 +500,7 @@ struct ctl_rt {
 	enum dst_type		 d_type;
 	u_int8_t		 flags;
 	u_int8_t		 prefixlen;
+	u_int8_t		 connected;
 };
 
 struct ctl_sum {
@@ -530,7 +532,7 @@ struct demote_msg {
 struct area	*area_new(void);
 int		 area_del(struct area *);
 struct area	*area_find(struct ospfd_conf *, struct in_addr);
-void		 area_track(struct area *, int);
+void		 area_track(struct area *);
 int		 area_border_router(struct ospfd_conf *);
 u_int8_t	 area_ospf_options(struct area *);
 

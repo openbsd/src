@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_spf.c,v 1.75 2012/09/18 18:58:56 bluhm Exp $ */
+/*	$OpenBSD: rde_spf.c,v 1.76 2015/11/22 13:09:10 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -22,6 +22,7 @@
 #include <arpa/inet.h>
 #include <err.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "ospfd.h"
 #include "ospf.h"
@@ -64,13 +65,18 @@ spf_calc(struct area *area)
 
 	/* initialize SPF tree */
 	if ((v = spf_root = lsa_find_area(area, LSA_TYPE_ROUTER,
-	    rde_router_id(), rde_router_id())) == NULL)
+	    rde_router_id(), rde_router_id())) == NULL) {
 		/* empty area because no interface is active */
 		return;
+	}
 
 	area->transit = 0;
 	spf_root->cost = 0;
 	w = NULL;
+
+	/* make sure the spf root has a nexthop */
+	vertex_nexthop_clear(spf_root);
+	vertex_nexthop_add(spf_root, spf_root, 0);
 
 	/* calculate SPF tree */
 	do {
@@ -159,8 +165,7 @@ spf_calc(struct area *area)
 	} while (v != NULL);
 
 	/* spf_dump(area); */
-	log_debug("spf_calc: area %s calculated",
-	    inet_ntoa(area->id));
+	log_debug("spf_calc: area %s calculated", inet_ntoa(area->id));
 
 	area->num_spf_calc++;
 	start_spf_timer();
@@ -182,7 +187,7 @@ rt_calc(struct vertex *v, struct area *area, struct ospfd_conf *conf)
 	switch (v->type) {
 	case LSA_TYPE_ROUTER:
 		/* stub networks */
-		if (v->cost >= LS_INFINITY || TAILQ_EMPTY(&v->nexthop))
+		if (v->cost >= LS_INFINITY)
 			return;
 
 		for (i = 0; i < lsa_num_links(v); i++) {
@@ -211,7 +216,7 @@ rt_calc(struct vertex *v, struct area *area, struct ospfd_conf *conf)
 		    adv_rtr, PT_INTRA_AREA, DT_RTR, v->lsa->data.rtr.flags, 0);
 		break;
 	case LSA_TYPE_NETWORK:
-		if (v->cost >= LS_INFINITY || TAILQ_EMPTY(&v->nexthop))
+		if (v->cost >= LS_INFINITY)
 			return;
 
 		addr.s_addr = htonl(v->ls_id) & v->lsa->data.net.mask;
@@ -245,7 +250,7 @@ rt_calc(struct vertex *v, struct area *area, struct ospfd_conf *conf)
 		v->cost = w->cost +
 		    (ntohl(v->lsa->data.sum.metric) & LSA_METRIC_MASK);
 
-		if (v->cost >= LS_INFINITY || TAILQ_EMPTY(&v->nexthop))
+		if (v->cost >= LS_INFINITY)
 			return;
 
 		adv_rtr.s_addr = htonl(v->adv_rtr);
@@ -751,7 +756,7 @@ rt_nexthop_add(struct rt_node *r, struct v_nexthead *vnh, u_int8_t type,
 
 			rn->adv_rtr.s_addr = adv_rtr.s_addr;
 			rn->connected = (type == LSA_TYPE_NETWORK &&
-			    vn->prev == spf_root);
+			    vn->prev == spf_root) || (vn->nexthop.s_addr == 0);
 			rn->invalid = 0;
 
 			r->invalid = 0;
@@ -768,7 +773,7 @@ rt_nexthop_add(struct rt_node *r, struct v_nexthead *vnh, u_int8_t type,
 		rn->adv_rtr.s_addr = adv_rtr.s_addr;
 		rn->uptime = now.tv_sec;
 		rn->connected = (type == LSA_TYPE_NETWORK &&
-		    vn->prev == spf_root);
+		    vn->prev == spf_root) || (vn->nexthop.s_addr == 0);
 		rn->invalid = 0;
 
 		r->invalid = 0;
@@ -823,20 +828,23 @@ rt_dump(struct in_addr area, pid_t pid, u_int8_t r_type)
 			fatalx("rt_dump: invalid RIB type");
 		}
 
+		bzero(&rtctl, sizeof(rtctl));
+		rtctl.prefix.s_addr = r->prefix.s_addr;
+		rtctl.area.s_addr = r->area.s_addr;
+		rtctl.cost = r->cost;
+		rtctl.cost2 = r->cost2;
+		rtctl.p_type = r->p_type;
+		rtctl.d_type = r->d_type;
+		rtctl.flags = r->flags;
+		rtctl.prefixlen = r->prefixlen;
+
 		TAILQ_FOREACH(rn, &r->nexthop, entry) {
 			if (rn->invalid)
 				continue;
 
-			rtctl.prefix.s_addr = r->prefix.s_addr;
+			rtctl.connected = rn->connected;
 			rtctl.nexthop.s_addr = rn->nexthop.s_addr;
-			rtctl.area.s_addr = r->area.s_addr;
 			rtctl.adv_rtr.s_addr = rn->adv_rtr.s_addr;
-			rtctl.cost = r->cost;
-			rtctl.cost2 = r->cost2;
-			rtctl.p_type = r->p_type;
-			rtctl.d_type = r->d_type;
-			rtctl.flags = r->flags;
-			rtctl.prefixlen = r->prefixlen;
 			rtctl.uptime = now.tv_sec - rn->uptime;
 
 			rde_imsg_compose_ospfe(IMSG_CTL_SHOW_RIB, 0, pid,
@@ -854,9 +862,6 @@ rt_update(struct in_addr prefix, u_int8_t prefixlen, struct v_nexthead *vnh,
 	struct rt_node		*rte;
 	struct rt_nexthop	*rn;
 	int			 better = 0, equal = 0;
-
-	if (vnh == NULL || TAILQ_EMPTY(vnh))	/* XXX remove */
-		fatalx("rt_update: invalid nexthop");
 
 	if ((rte = rt_find(prefix.s_addr, prefixlen, d_type)) == NULL) {
 		if ((rte = calloc(1, sizeof(struct rt_node))) == NULL)
