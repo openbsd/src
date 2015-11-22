@@ -1,4 +1,4 @@
-/* $OpenBSD: options-table.c,v 1.67 2015/11/20 12:01:19 nicm Exp $ */
+/* $OpenBSD: options-table.c,v 1.68 2015/11/22 18:28:01 tim Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -198,7 +198,7 @@ const struct options_table_entry options_table[] = {
 	{ .name = "display-time",
 	  .type = OPTIONS_TABLE_NUMBER,
 	  .scope = OPTIONS_TABLE_SESSION,
-	  .minimum = 1,
+	  .minimum = 0,
 	  .maximum = INT_MAX,
 	  .default_num = 750
 	},
