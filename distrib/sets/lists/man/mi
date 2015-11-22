@@ -2493,7 +2493,6 @@
 ./usr/share/man/man8/makemap.8
 ./usr/share/man/man8/makewhatis.8
 ./usr/share/man/man8/map-mbone.8
-./usr/share/man/man8/mfs.8
 ./usr/share/man/man8/mkalias.8
 ./usr/share/man/man8/mkhybrid.8
 ./usr/share/man/man8/mknetid.8
@@ -2535,7 +2534,6 @@
 ./usr/share/man/man8/nsd-checkzone.8
 ./usr/share/man/man8/nsd-control.8
 ./usr/share/man/man8/nsd.8
-./usr/share/man/man8/ntalkd.8
 ./usr/share/man/man8/ntpctl.8
 ./usr/share/man/man8/ntpd.8
 ./usr/share/man/man8/octeon
@@ -2684,7 +2682,6 @@
 ./usr/share/man/man8/unbound-checkconf.8
 ./usr/share/man/man8/unbound-control.8
 ./usr/share/man/man8/unbound.8
-./usr/share/man/man8/updatedb.8
 ./usr/share/man/man8/usbdevs.8
 ./usr/share/man/man8/vax
 ./usr/share/man/man8/vax/MAKEDEV.8
@@ -2701,7 +2698,6 @@
 ./usr/share/man/man8/ypbind.8
 ./usr/share/man/man8/ypinit.8
 ./usr/share/man/man8/ypldap.8
-./usr/share/man/man8/yppasswdd.8
 ./usr/share/man/man8/yppoll.8
 ./usr/share/man/man8/yppush.8
 ./usr/share/man/man8/ypserv.8
