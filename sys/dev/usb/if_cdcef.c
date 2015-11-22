@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cdcef.c,v 1.39 2015/11/20 03:35:23 dlg Exp $	*/
+/*	$OpenBSD: if_cdcef.c,v 1.40 2015/11/22 23:56:10 dlg Exp $	*/
 
 /*
  * Copyright (c) 2007 Dale Rahn <drahn@openbsd.org>
@@ -277,7 +277,7 @@ cdcef_start(struct ifnet *ifp)
 	if(ifp->if_flags & IFF_OACTIVE)
 		return;
 
-	m_head = ifq_deq_begin(&ifp->if_snd, m_head);
+	m_head = ifq_deq_begin(&ifp->if_snd);
 	if (m_head == NULL) {
 		return;
 	}
