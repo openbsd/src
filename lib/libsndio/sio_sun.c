@@ -1,4 +1,4 @@
-/*	$OpenBSD: sio_sun.c,v 1.22 2015/11/22 12:01:23 ratchov Exp $	*/
+/*	$OpenBSD: sio_sun.c,v 1.23 2015/11/22 12:10:26 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -58,8 +58,6 @@ static size_t sio_sun_write(struct sio_hdl *, const void *, size_t);
 static int sio_sun_nfds(struct sio_hdl *);
 static int sio_sun_pollfd(struct sio_hdl *, struct pollfd *, int);
 static int sio_sun_revents(struct sio_hdl *, struct pollfd *);
-static int sio_sun_getfd(const char *, unsigned int, int);
-static struct sio_hdl *sio_sun_fdopen(int, unsigned int, int);
 
 static struct sio_ops sio_sun_ops = {
 	sio_sun_close,
