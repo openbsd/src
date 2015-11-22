@@ -1,17 +1,19 @@
+.\"	$OpenBSD: vmmctl.8,v 1.3 2015/11/22 21:24:48 jmc Exp $
 .\"
-.\"Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
+.\" Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
 .\"
-.\"Permission to use, copy, modify, and distribute this software for any
-.\"purpose with or without fee is hereby granted, provided that the above
-.\"copyright notice and this permission notice appear in all copies.
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
 .\"
-.\"THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-.\"WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
-.\"MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-.\"ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-.\"WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
-.\"ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-.\"OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
 .Dd $Mdocdate: November 22 2015 $
 .Dt VMMCTL 8
 .Os
@@ -35,18 +37,18 @@ VMs.
 The options are as follows:
 .Bl -tag -width Ds
 .It Cm enable
-Enable the VMM subsystem. The VMM subsystem must be enabled before VMs
-can be managed on the host.
+Enable the VMM subsystem.
+The VMM subsystem must be enabled before VMs can be managed on the host.
 .It Cm disable
-Disable the VMM subsystem. Virtual machines running on the host should be
-terminated first.
+Disable the VMM subsystem.
+Virtual machines running on the host should be terminated first.
 .It Cm load Op Ar path
 Load the
 .Xr vmm.conf 5
 configuration file from
 .Pa /etc/vmm.conf
 or the specified
-.Ar path.
+.Ar path .
 .El
 .Pp
 Generally, the
@@ -85,6 +87,15 @@ Terminates (stops) a VM defined by the specified VM
 Lists VMs running on the host, optionally listing just the selected VM
 .Ar id .
 .El
+.Sh FILES
+.Bl -tag -width "/etc/var/run/vmd.sockXX" -compact
+.It Pa /etc/vmm.conf
+Default configuration file.
+.It Pa /var/run/vmd.sock
+.Ux Ns -domain
+socket used for communication with
+.Xr vmd 8 .
+.El
 .Sh EXIT STATUS
 .Ex -std vmmctl
 .Nm
@@ -106,27 +117,20 @@ Disable the VMM subsystem:
 Create a new disk image ('disk.img') of 4 gigabyte size:
 .Dl $ vmmctl create disk.img size 4G
 .Pp
-Create a new VM with 512MB memory, 1 network interface, one disk image
+Create a new VM with 512MB memory, one network interface, one disk image
 ('disk.img') and boot from kernel '/bsd':
-.Dl $ vmmctl start "myvm" memory 512M interfaces 1 disk disk.img kernel /bsd
+.Bd -literal -offset indent
+$ vmmctl start "myvm" memory 512M interfaces 1 disk disk.img \e
+	kernel /bsd
+.Ed
 .Pp
-Terminate VM number 1
+Terminate VM number 1:
 .Dl $ vmmctl terminate 1
-.Pp
-.Sh FILES
-.Bl -tag -width "/etc/var/run/vmd.sockXX" -compact
-.It Pa /etc/vmm.conf
-Default configuration file.
-.It Pa /var/run/vmd.sock
-.Ux Ns -domain
-socket used for communication with
-.Xr vmd 8 .
-.El
 .Sh SEE ALSO
 .Xr vmm 4 ,
 .Xr vmm.conf 5 ,
-.Xr vmd 8 ,
-.Xr rc.conf 8
+.Xr rc.conf 8 ,
+.Xr vmd 8
 .Sh HISTORY
 The
 .Nm

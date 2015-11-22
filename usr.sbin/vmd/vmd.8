@@ -1,17 +1,19 @@
+.\"	$OpenBSD: vmd.8,v 1.2 2015/11/22 21:24:48 jmc Exp $
 .\"
-.\"Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
+.\" Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
 .\"
-.\"Permission to use, copy, modify, and distribute this software for any
-.\"purpose with or without fee is hereby granted, provided that the above
-.\"copyright notice and this permission notice appear in all copies.
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
 .\"
-.\"THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-.\"WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
-.\"MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-.\"ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-.\"WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
-.\"ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-.\"OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
 .Dd $Mdocdate: November 22 2015 $
 .Dt VMD 8
 .Os
@@ -29,7 +31,7 @@ host.
 is typically started at boot time and is controlled via
 .Xr vmmctl 8 .
 .Pp
-.Nm 
+.Nm
 can be enabled during system boot by setting the following in
 .Pa /etc/rc.conf.local :
 .Pp
@@ -40,7 +42,8 @@ interfaces with the virtual machine monitor (VMM) built into the kernel.
 One instance of
 .Nm
 will be spawned for each VM running on the host, plus an extra instance
-for control operations. Each child
+for control operations.
+Each child
 .Nm
 will in turn create one or more VCPU (virtual CPU) threads responsible for
 driving the VM's operations using
@@ -49,14 +52,13 @@ driving the VM's operations using
 .Nm
 is also responsible for proxying various other commands/requests from
 .Xr vmmctl 8 ,
-such as stopping VMs, and retrieving information from 
-.Xr vmm 4 
+such as stopping VMs, and retrieving information from
+.Xr vmm 4
 about running VMs.
-.Pp
 .Sh SEE ALSO
 .Xr vmm 4 ,
-.Xr vmmctl 8 ,
 .Xr rc.conf 8 ,
+.Xr vmmctl 8
 .Sh HISTORY
 The
 .Nm
