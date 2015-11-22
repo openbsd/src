@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.c,v 1.28 2015/10/22 15:55:18 reyk Exp $	*/
+/*	$OpenBSD: iked.c,v 1.29 2015/11/22 13:27:13 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -27,6 +27,7 @@
 #include <string.h>
 #include <getopt.h>
 #include <signal.h>
+#include <syslog.h>
 #include <errno.h>
 #include <err.h>
 #include <pwd.h>
@@ -69,7 +70,7 @@ main(int argc, char *argv[])
 	struct iked	*env = NULL;
 	struct privsep	*ps;
 
-	log_init(1);
+	log_init(1, LOG_DAEMON);
 
 	while ((c = getopt(argc, argv, "6dD:nf:vSTt")) != -1) {
 		switch (c) {
@@ -138,7 +139,7 @@ main(int argc, char *argv[])
 	/* Configure the control socket */
 	ps->ps_csock.cs_name = IKED_SOCKET;
 
-	log_init(debug);
+	log_init(debug, LOG_DAEMON);
 	log_verbose(verbose);
 
 	if (!debug && daemon(0, 0) == -1)
@@ -150,6 +151,7 @@ main(int argc, char *argv[])
 	proc_init(ps, procs, nitems(procs));
 
 	setproctitle("parent");
+	log_procinit("parent");
 
 	event_init();
 

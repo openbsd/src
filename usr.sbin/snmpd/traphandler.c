@@ -1,4 +1,4 @@
-/*	$OpenBSD: traphandler.c,v 1.2 2015/01/16 00:05:13 deraadt Exp $	*/
+/*	$OpenBSD: traphandler.c,v 1.3 2015/11/22 13:27:13 reyk Exp $	*/
 /*
  * Copyright (c) 2014 Bret Stephen Lambert <blambert@openbsd.org>
  *
@@ -35,6 +35,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <syslog.h>
 #include <unistd.h>
 #include <pwd.h>
 
@@ -295,7 +296,9 @@ traphandler_fork_handler(struct privsep_proc *p, struct imsg *imsg)
 		fatal("traphandler_fork_handler: cannot drop privileges");
 
 	closefrom(STDERR_FILENO + 1);
-	log_init(debug);
+
+	log_init(debug, LOG_DAEMON);
+	log_procinit(p->p_title);
 
 	n = IMSG_DATA_SIZE(imsg);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.c,v 1.145 2015/11/19 21:32:53 mmcc Exp $	*/
+/*	$OpenBSD: relayd.c,v 1.146 2015/11/22 13:27:13 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -33,6 +33,7 @@
 #include <fcntl.h>
 #include <getopt.h>
 #include <fnmatch.h>
+#include <syslog.h>
 #include <err.h>
 #include <errno.h>
 #include <event.h>
@@ -191,7 +192,8 @@ main(int argc, char *argv[])
 		}
 	}
 
-	log_init(debug ? debug : 1);	/* log to stderr until daemonized */
+	/* log to stderr until daemonized */
+	log_init(debug ? debug : 1, LOG_DAEMON);
 
 	argc -= optind;
 	if (argc > 0)
@@ -225,7 +227,7 @@ main(int argc, char *argv[])
 	/* Configure the control socket */
 	ps->ps_csock.cs_name = RELAYD_SOCKET;
 
-	log_init(debug);
+	log_init(debug, LOG_DAEMON);
 	log_verbose(verbose);
 
 	if (!debug && daemon(1, 0) == -1)
@@ -243,6 +245,7 @@ main(int argc, char *argv[])
 	proc_init(ps, procs, nitems(procs));
 
 	setproctitle("parent");
+	log_procinit("parent");
 
 	event_init();
 

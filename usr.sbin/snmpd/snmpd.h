@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpd.h,v 1.63 2015/11/21 13:06:22 reyk Exp $	*/
+/*	$OpenBSD: snmpd.h,v 1.64 2015/11/22 13:27:13 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -20,16 +20,21 @@
 #ifndef SNMPD_H
 #define SNMPD_H
 
+#include <net/if.h>
+#include <net/if_dl.h>
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
-#include <net/if_dl.h>
+#include <netinet/in.h>
+#include <netinet/ip.h>
+#include <arpa/inet.h>
 #include <net/pfvar.h>
 #include <net/route.h>
 
-#include "ber.h"
-#include <snmp.h>
-
+#include <stdio.h>
 #include <imsg.h>
+
+#include "ber.h"
+#include "snmp.h"
 
 /*
  * common definitions for snmpd
@@ -587,7 +592,8 @@ struct snmpd	*parse_config(const char *, u_int);
 int		 cmdline_symset(char *);
 
 /* log.c */
-void	log_init(int);
+void	log_init(int, int);
+void	log_procinit(const char *);
 void	log_verbose(int);
 void	log_warn(const char *, ...)
 	    __attribute__((__format__ (printf, 1, 2)));
@@ -601,8 +607,10 @@ void	logit(int, const char *, ...)
 	    __attribute__((__format__ (printf, 2, 3)));
 void	vlog(int, const char *, va_list)
 	    __attribute__((__format__ (printf, 2, 0)));
-__dead void fatal(const char *);
-__dead void fatalx(const char *);
+__dead void fatal(const char *, ...)
+	    __attribute__((__format__ (printf, 1, 2)));
+__dead void fatalx(const char *, ...)
+	    __attribute__((__format__ (printf, 1, 2)));
 
 /* kroute.c */
 void		 kr_init(void);

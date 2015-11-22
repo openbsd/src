@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.8 2015/11/21 13:46:29 reyk Exp $	*/
+/*	$OpenBSD: log.c,v 1.9 2015/11/22 13:27:13 reyk Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -24,10 +24,12 @@
 #include <errno.h>
 #include <time.h>
 
-int	 debug;
-int	 verbose;
+int		 debug;
+int		 verbose;
+const char	*log_procname;
 
-void	log_init(int);
+void	log_init(int, int);
+void	log_procinit(const char *);
 void	log_verbose(int);
 void	log_warn(const char *, ...)
 	    __attribute__((__format__ (printf, 1, 2)));
@@ -41,21 +43,31 @@ void	logit(int, const char *, ...)
 	    __attribute__((__format__ (printf, 2, 3)));
 void	vlog(int, const char *, va_list)
 	    __attribute__((__format__ (printf, 2, 0)));
-__dead void fatal(const char *);
-__dead void fatalx(const char *);
+__dead void fatal(const char *, ...)
+	    __attribute__((__format__ (printf, 1, 2)));
+__dead void fatalx(const char *, ...)
+	    __attribute__((__format__ (printf, 1, 2)));
 
 void
-log_init(int n_debug)
+log_init(int n_debug, int facility)
 {
 	extern char	*__progname;
 
 	debug = n_debug;
 	verbose = n_debug;
+	log_procinit(__progname);
 
 	if (!debug)
-		openlog(__progname, LOG_PID | LOG_NDELAY, LOG_DAEMON);
+		openlog(__progname, LOG_PID | LOG_NDELAY, facility);
 
 	tzset();
+}
+
+void
+log_procinit(const char *procname)
+{
+	if (procname != NULL)
+		log_procname = procname;
 }
 
 void
@@ -150,24 +162,45 @@ log_debug(const char *emsg, ...)
 	}
 }
 
-void
-fatal(const char *emsg)
+static void
+vfatal(const char *emsg, va_list ap)
 {
-	if (emsg == NULL)
-		logit(LOG_CRIT, "fatal: %s", strerror(errno));
-	else
-		if (errno)
-			logit(LOG_CRIT, "fatal: %s: %s",
-			    emsg, strerror(errno));
-		else
-			logit(LOG_CRIT, "fatal: %s", emsg);
+	static char	s[BUFSIZ];
+	const char	*sep;
 
+	if (emsg != NULL) {
+		(void)vsnprintf(s, sizeof(s), emsg, ap);
+		sep = ": ";
+	} else {
+		s[0] = '\0';
+		sep = "";
+	}
+	if (errno)
+		logit(LOG_CRIT, "fatal in %s: %s%s%s",
+		    log_procname, s, sep, strerror(errno));
+	else
+		logit(LOG_CRIT, "fatal in %s%s%s", log_procname, sep, s);
+}
+
+void
+fatal(const char *emsg, ...)
+{
+	va_list	ap;
+
+	va_start(ap, emsg);
+	vfatal(emsg, ap);
+	va_end(ap);
 	exit(1);
 }
 
 void
-fatalx(const char *emsg)
+fatalx(const char *emsg, ...)
 {
+	va_list	ap;
+
 	errno = 0;
-	fatal(emsg);
+	va_start(ap, emsg);
+	vfatal(emsg, ap);
+	va_end(ap);
+	exit(1);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.c,v 1.48 2015/11/21 12:40:59 reyk Exp $	*/
+/*	$OpenBSD: httpd.c,v 1.49 2015/11/22 13:27:13 reyk Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -38,6 +38,7 @@
 #include <err.h>
 #include <errno.h>
 #include <event.h>
+#include <syslog.h>
 #include <unistd.h>
 #include <ctype.h>
 #include <pwd.h>
@@ -190,7 +191,8 @@ main(int argc, char *argv[])
 		}
 	}
 
-	log_init(debug ? debug : 1);	/* log to stderr until daemonized */
+	/* log to stderr until daemonized */
+	log_init(debug ? debug : 1, LOG_DAEMON);
 
 	argc -= optind;
 	if (argc > 0)
@@ -219,7 +221,7 @@ main(int argc, char *argv[])
 	/* Configure the control socket */
 	ps->ps_csock.cs_name = NULL;
 
-	log_init(debug);
+	log_init(debug, LOG_DAEMON);
 	log_verbose(verbose);
 
 	if (!debug && daemon(1, 0) == -1)
@@ -247,6 +249,7 @@ main(int argc, char *argv[])
 	proc_init(ps, procs, nitems(procs));
 
 	setproctitle("parent");
+	log_procinit("parent");
 
 	if (pledge("stdio rpath wpath cpath inet proc ioctl sendfd",
 	    NULL) == -1)

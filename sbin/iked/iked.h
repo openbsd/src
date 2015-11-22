@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.92 2015/11/21 12:59:24 reyk Exp $	*/
+/*	$OpenBSD: iked.h,v 1.93 2015/11/22 13:27:13 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -942,7 +942,8 @@ void	*ibuf_advance(struct ibuf *, size_t);
 void	 ibuf_zero(struct ibuf *);
 
 /* log.c */
-void	log_init(int);
+void	log_init(int, int);
+void	log_procinit(const char *);
 void	log_verbose(int);
 void	log_warn(const char *, ...)
 	    __attribute__((__format__ (printf, 1, 2)));
@@ -956,8 +957,10 @@ void	logit(int, const char *, ...)
 	    __attribute__((__format__ (printf, 2, 3)));
 void	vlog(int, const char *, va_list)
 	    __attribute__((__format__ (printf, 2, 0)));
-__dead void fatal(const char *);
-__dead void fatalx(const char *);
+__dead void fatal(const char *, ...)
+	    __attribute__((__format__ (printf, 1, 2)));
+__dead void fatalx(const char *, ...)
+	    __attribute__((__format__ (printf, 1, 2)));
 
 /* ocsp.c */
 int	 ocsp_connect(struct iked *env);

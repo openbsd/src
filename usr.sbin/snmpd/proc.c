@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.c,v 1.14 2015/10/14 14:51:57 reyk Exp $	*/
+/*	$OpenBSD: proc.c,v 1.15 2015/11/22 13:27:13 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -21,12 +21,6 @@
 #include <sys/queue.h>
 #include <sys/socket.h>
 #include <sys/wait.h>
-#include <sys/tree.h>
-
-#include <net/if.h>
-#include <netinet/in.h>
-#include <netinet/ip.h>
-#include <arpa/inet.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -36,6 +30,7 @@
 #include <signal.h>
 #include <pwd.h>
 #include <event.h>
+#include <imsg.h>
 
 #include "snmpd.h"
 
@@ -351,6 +346,8 @@ proc_run(struct privsep *ps, struct privsep_proc *p,
 	case -1:
 		fatal("proc_run: cannot fork");
 	case 0:
+		log_procinit(p->p_title);
+
 		/* Set the process group of the current process */
 		setpgid(0, 0);
 		break;
@@ -362,10 +359,10 @@ proc_run(struct privsep *ps, struct privsep_proc *p,
 
 	if (p->p_id == PROC_CONTROL && ps->ps_instance == 0) {
 		if (control_init(ps, &ps->ps_csock) == -1)
-			fatalx(p->p_title);
+			fatalx(__func__);
 		TAILQ_FOREACH(rcs, &ps->ps_rcsocks, cs_entry)
 			if (control_init(ps, rcs) == -1)
-				fatalx(p->p_title);
+				fatalx(__func__);
 	}
 
 	/* Change root directory */
@@ -422,10 +419,10 @@ proc_run(struct privsep *ps, struct privsep_proc *p,
 	if (p->p_id == PROC_CONTROL && ps->ps_instance == 0) {
 		TAILQ_INIT(&ctl_conns);
 		if (control_listen(&ps->ps_csock) == -1)
-			fatalx(p->p_title);
+			fatalx(__func__);
 		TAILQ_FOREACH(rcs, &ps->ps_rcsocks, cs_entry)
 			if (control_listen(rcs) == -1)
-				fatalx(p->p_title);
+				fatalx(__func__);
 	}
 
 	if (init != NULL)
@@ -455,7 +452,7 @@ proc_dispatch(int fd, short event, void *arg)
 
 	if (event & EV_READ) {
 		if ((n = imsg_read(ibuf)) == -1)
-			fatal(title);
+			fatal(__func__);
 		if (n == 0) {
 			/* this pipe is dead, so remove the event handler */
 			event_del(&iev->ev);
@@ -466,12 +463,12 @@ proc_dispatch(int fd, short event, void *arg)
 
 	if (event & EV_WRITE) {
 		if (msgbuf_write(&ibuf->w) <= 0 && errno != EAGAIN)
-			fatal(title);
+			fatal(__func__);
 	}
 
 	for (;;) {
 		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			fatal(title);
+			fatal(__func__);
 		if (n == 0)
 			break;
 
@@ -503,7 +500,7 @@ proc_dispatch(int fd, short event, void *arg)
 			log_warnx("%s: %s %d got invalid imsg %d from %s %d",
 			    __func__, title, ps->ps_instance + 1,
 			    imsg.hdr.type, p->p_title, p->p_instance);
-			fatalx(title);
+			fatalx(__func__);
 		}
 		imsg_free(&imsg);
 	}
