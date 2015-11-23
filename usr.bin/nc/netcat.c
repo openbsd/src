@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.143 2015/11/13 18:13:13 deraadt Exp $ */
+/* $OpenBSD: netcat.c,v 1.144 2015/11/23 01:23:56 bcook Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  * Copyright (c) 2015 Bob Beck.  All rights reserved.
@@ -643,7 +643,7 @@ main(int argc, char *argv[])
 int
 unix_bind(char *path, int flags)
 {
-	struct sockaddr_un sun;
+	struct sockaddr_un s_un;
 	int s;
 
 	/* Create unix domain socket. */
@@ -651,17 +651,17 @@ unix_bind(char *path, int flags)
 	    0)) < 0)
 		return (-1);
 
-	memset(&sun, 0, sizeof(struct sockaddr_un));
-	sun.sun_family = AF_UNIX;
+	memset(&s_un, 0, sizeof(struct sockaddr_un));
+	s_un.sun_family = AF_UNIX;
 
-	if (strlcpy(sun.sun_path, path, sizeof(sun.sun_path)) >=
-	    sizeof(sun.sun_path)) {
+	if (strlcpy(s_un.sun_path, path, sizeof(s_un.sun_path)) >=
+	    sizeof(s_un.sun_path)) {
 		close(s);
 		errno = ENAMETOOLONG;
 		return (-1);
 	}
 
-	if (bind(s, (struct sockaddr *)&sun, sizeof(sun)) < 0) {
+	if (bind(s, (struct sockaddr *)&s_un, sizeof(s_un)) < 0) {
 		close(s);
 		return (-1);
 	}
@@ -737,7 +737,7 @@ tls_setup_server(struct tls *tls_ctx, int connfd, char *host)
 int
 unix_connect(char *path)
 {
-	struct sockaddr_un sun;
+	struct sockaddr_un s_un;
 	int s;
 
 	if (uflag) {
@@ -748,16 +748,16 @@ unix_connect(char *path)
 			return (-1);
 	}
 
-	memset(&sun, 0, sizeof(struct sockaddr_un));
-	sun.sun_family = AF_UNIX;
+	memset(&s_un, 0, sizeof(struct sockaddr_un));
+	s_un.sun_family = AF_UNIX;
 
-	if (strlcpy(sun.sun_path, path, sizeof(sun.sun_path)) >=
-	    sizeof(sun.sun_path)) {
+	if (strlcpy(s_un.sun_path, path, sizeof(s_un.sun_path)) >=
+	    sizeof(s_un.sun_path)) {
 		close(s);
 		errno = ENAMETOOLONG;
 		return (-1);
 	}
-	if (connect(s, (struct sockaddr *)&sun, sizeof(sun)) < 0) {
+	if (connect(s, (struct sockaddr *)&s_un, sizeof(s_un)) < 0) {
 		close(s);
 		return (-1);
 	}
