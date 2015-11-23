@@ -1,4 +1,4 @@
-/*	$OpenBSD: ber.c,v 1.7 2015/11/05 12:35:58 jung Exp $ */
+/*	$OpenBSD: ber.c,v 1.8 2015/11/23 13:22:37 gilles Exp $ */
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@vantronix.net>
@@ -25,7 +25,7 @@
 #include <stdlib.h>
 #include <err.h>	/* XXX for debug output */
 #include <stdio.h>	/* XXX for debug output */
-#include <strings.h>
+#include <string.h>
 #include <unistd.h>
 #include <stdarg.h>
 
