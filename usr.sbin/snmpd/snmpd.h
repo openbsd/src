@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpd.h,v 1.64 2015/11/22 13:27:13 reyk Exp $	*/
+/*	$OpenBSD: snmpd.h,v 1.65 2015/11/23 19:31:52 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -171,11 +171,6 @@ struct privsep_proc {
 	struct privsep		*p_ps;
 	void 			*p_env;
 	u_int			 p_instance;
-};
-
-enum blockmodes {
-	BM_NORMAL,
-	BM_NONBLOCK
 };
 
 /*
@@ -584,8 +579,6 @@ extern	struct trapcmd_tree trapcmd_tree;
 int		 control_init(struct privsep *, struct control_sock *);
 int		 control_listen(struct control_sock *);
 void		 control_cleanup(struct control_sock *);
-
-void		 socket_set_blockmode(int, enum blockmodes);
 
 /* parse.y */
 struct snmpd	*parse_config(const char *, u_int);

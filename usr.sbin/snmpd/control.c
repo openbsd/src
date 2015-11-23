@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.34 2015/11/21 13:09:47 reyk Exp $	*/
+/*	$OpenBSD: control.c,v 1.35 2015/11/23 19:31:52 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -60,7 +60,7 @@ control_init(struct privsep *ps, struct control_sock *cs)
 	if (cs->cs_name == NULL)
 		return (0);
 
-	if ((fd = socket(AF_UNIX, SOCK_STREAM, 0)) == -1) {
+	if ((fd = socket(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK, 0)) == -1) {
 		log_warn("%s: socket", __func__);
 		return (-1);
 	}
@@ -103,7 +103,6 @@ control_init(struct privsep *ps, struct control_sock *cs)
 		return (-1);
 	}
 
-	socket_set_blockmode(fd, BM_NONBLOCK);
 	cs->cs_fd = fd;
 	cs->cs_env = env;
 
@@ -153,8 +152,8 @@ control_accept(int listenfd, short event, void *arg)
 		return;
 
 	len = sizeof(sun);
-	if ((connfd = accept(listenfd,
-	    (struct sockaddr *)&sun, &len)) == -1) {
+	if ((connfd = accept4(listenfd,
+	    (struct sockaddr *)&sun, &len, SOCK_NONBLOCK)) == -1) {
 		/*
 		 * Pause accept if we are out of file descriptors, or
 		 * libevent will haunt us here too.
@@ -169,8 +168,6 @@ control_accept(int listenfd, short event, void *arg)
 			log_warn("%s: accept", __func__);
 		return;
 	}
-
-	socket_set_blockmode(connfd, BM_NONBLOCK);
 
 	if ((c = calloc(1, sizeof(struct ctl_conn))) == NULL) {
 		close(connfd);
