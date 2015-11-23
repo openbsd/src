@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.275 2015/11/20 13:12:14 jsg Exp $	*/
+/*	$OpenBSD: route.c,v 1.276 2015/11/23 10:52:43 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -113,6 +113,7 @@
 #include <sys/kernel.h>
 #include <sys/queue.h>
 #include <sys/pool.h>
+#include <sys/atomic.h>
 
 #include <net/if.h>
 #include <net/if_var.h>
