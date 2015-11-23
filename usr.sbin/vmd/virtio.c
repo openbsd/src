@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.2 2015/11/22 21:51:32 reyk Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.3 2015/11/23 13:04:49 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -65,10 +65,10 @@ vioblk_cmd_name(uint32_t type)
 static void
 dump_descriptor_chain(struct vring_desc *desc, int16_t dxx)
 {
-	fprintf(stderr, "descriptor chain @ %d\n\r", dxx);
+	log_debug("descriptor chain @ %d", dxx);
 	do {
-		fprintf(stderr, "desc @%d addr/len/flags/next = 0x%llx / 0x%x "
-		    "/ 0x%x / 0x%x\n\r",
+		log_debug("desc @%d addr/len/flags/next = 0x%llx / 0x%x "
+		    "/ 0x%x / 0x%x",
 		    dxx,
 		    desc[dxx].addr,
 		    desc[dxx].len,
@@ -77,8 +77,8 @@ dump_descriptor_chain(struct vring_desc *desc, int16_t dxx)
 		dxx = desc[dxx].next;
 	} while (desc[dxx].flags & VRING_DESC_F_NEXT);
 
-	fprintf(stderr, "desc @%d addr/len/flags/next = 0x%llx / 0x%x / 0x%x "
-	    "/ 0x%x\n\r",
+	log_debug("desc @%d addr/len/flags/next = 0x%llx / 0x%x / 0x%x "
+	    "/ 0x%x",
 	    dxx,
 	    desc[dxx].addr,
 	    desc[dxx].len,
@@ -181,7 +181,7 @@ viornd_notifyq(void)
 
 	buf = malloc(vr_sz);
 	if (buf == NULL) {
-		fprintf(stderr, "malloc error getting viornd ring\n\r");
+		log_warn("malloc error getting viornd ring");
 		return (0);
 	}
 
@@ -207,8 +207,8 @@ viornd_notifyq(void)
 		arc4random_buf(rnd_data, desc[avail->ring[avail->idx]].len);
 		if (write_page((uint32_t)(desc[avail->ring[avail->idx]].addr),
 		    rnd_data, desc[avail->ring[avail->idx]].len, 0)) {
-			fprintf(stderr, "viornd: can't write random data @ "
-			    "0x%llx\n\r",
+			log_warnx("viornd: can't write random data @ "
+			    "0x%llx",
 			    desc[avail->ring[avail->idx]].addr);
 		} else {
 			/* ret == 1 -> interrupt needed */
@@ -221,8 +221,7 @@ viornd_notifyq(void)
 			used->idx++;
 
 			if (push_virtio_ring(buf, q_gpa, vr_sz)) {
-				fprintf(stderr, "viornd: error writing vio "
-				    "ring\n\r");
+				log_warnx("viornd: error writing vio ring");
 			}
 			
 		}
@@ -245,7 +244,7 @@ virtio_rnd_io(int dir, uint16_t reg, uint32_t *data, uint8_t *intr,
 		case VIRTIO_CONFIG_DEVICE_FEATURES:
 		case VIRTIO_CONFIG_QUEUE_SIZE:
 		case VIRTIO_CONFIG_ISR_STATUS:
-			fprintf(stderr, "%s: illegal write %x to %s\n\r",
+			log_warnx("%s: illegal write %x to %s",
 			    __progname, *data, virtio_reg_name(reg));
 			break;
 		case VIRTIO_CONFIG_GUEST_FEATURES:
@@ -327,23 +326,20 @@ vioblk_do_read(struct vioblk_dev *dev, off_t sector, ssize_t sz)
 	char *buf;
 
 	buf = malloc(sz);
-
 	if (buf == NULL) {
-		fprintf(stderr, "malloc errror vioblk read\n\r");
+		log_warn("malloc errror vioblk read");
 		return (NULL);
 	}
 
 	if (lseek(dev->fd, sector * VIRTIO_BLK_SECTOR_SIZE,
 	    SEEK_SET) == -1) {
-		fprintf(stderr, "seek error in vioblk read: %d\n\r",
-		    errno);
+		log_warn("seek error in vioblk read");
 		free(buf);
 		return (NULL);
 	}
  
 	if (read(dev->fd, buf, sz) != sz) {
-		fprintf(stderr, "vioblk read error: %d\n\r",
-		    errno);
+		log_warn("vioblk read error");
 		free(buf);
 		return (NULL);
 	}
@@ -356,14 +352,12 @@ vioblk_do_write(struct vioblk_dev *dev, off_t sector, char *buf, ssize_t sz)
 {
 	if (lseek(dev->fd, sector * VIRTIO_BLK_SECTOR_SIZE,
 	    SEEK_SET) == -1) {
-		fprintf(stderr, "seek error in vioblk write: %d\n\r",
-		    errno);
+		log_warn("seek error in vioblk write");
 		return (1);
 	}
 
 	if (write(dev->fd, buf, sz) != sz) {
-		fprintf(stderr, "vioblk write error: %d\n\r",
-		    errno);
+		log_warn("vioblk write error");
 		free(buf);
 		return (1);
 	}
@@ -403,7 +397,7 @@ vioblk_notifyq(struct vioblk_dev *dev)
 
 	vr = malloc(vr_sz);
 	if (vr == NULL) {
-		fprintf(stderr, "malloc error getting vioblk ring\n\r");
+		log_warn("malloc error getting vioblk ring");
 		return (0);
 	}
 
@@ -411,7 +405,7 @@ vioblk_notifyq(struct vioblk_dev *dev)
 
 	for (i = 0; i < vr_sz; i += VIRTIO_PAGE_SIZE) {
 		if (read_page((uint32_t)q_gpa + i, vr + i, PAGE_SIZE, 0)) {
-			fprintf(stderr, "error reading gpa 0x%x\n\r",
+			log_warnx("error reading gpa 0x%x",
 			    (uint32_t)q_gpa + i);
 			free(vr);
 			return (0);
@@ -429,7 +423,7 @@ vioblk_notifyq(struct vioblk_dev *dev)
 	idx = dev->vq[dev->cfg.queue_notify].last_avail & VIOBLK_QUEUE_MASK;
 
 	if ((avail->idx & VIOBLK_QUEUE_MASK) == idx) {
-		fprintf(stderr, "vioblk queue notify - nothing to do?\n\r");
+		log_warnx("vioblk queue notify - nothing to do?");
 		free(vr);
 		return (0);
 	}
@@ -438,15 +432,15 @@ vioblk_notifyq(struct vioblk_dev *dev)
 	cmd_desc = &desc[cmd_desc_idx];
 
 	if ((cmd_desc->flags & VRING_DESC_F_NEXT) == 0) {
-		fprintf(stderr, "unchained vioblk cmd descriptor received "
-		    "(idx %d)\n\r", cmd_desc_idx);
+		log_warnx("unchained vioblk cmd descriptor received "
+		    "(idx %d)", cmd_desc_idx);
 		free(vr);
 		return (0);
 	}
 
 	/* Read command from descriptor ring */
 	if (read_page((uint32_t)cmd_desc->addr, &cmd, cmd_desc->len, 0)) {
-		fprintf(stderr, "vioblk: command read_page error @ 0x%llx\n\r",
+		log_warnx("vioblk: command read_page error @ 0x%llx",
 		    cmd_desc->addr);
 		free(vr);
 		return (0);
@@ -459,8 +453,8 @@ vioblk_notifyq(struct vioblk_dev *dev)
 		secdata_desc = &desc[secdata_desc_idx];
 
 		if ((secdata_desc->flags & VRING_DESC_F_NEXT) == 0) {
-			fprintf(stderr, "unchained vioblk data descriptor "
-			    "received (idx %d)\n\r", cmd_desc_idx);
+			log_warnx("unchained vioblk data descriptor "
+			    "received (idx %d)", cmd_desc_idx);
 			free(vr);
 			return (0);
 		}
@@ -475,8 +469,8 @@ vioblk_notifyq(struct vioblk_dev *dev)
 			secdata = vioblk_do_read(dev, cmd.sector + secbias,
 			    (ssize_t)secdata_desc->len);
 			if (secdata == NULL) {
-				fprintf(stderr, "vioblk: block read error, "
-				    "sector %lld\n\r", cmd.sector);
+				log_warnx("vioblk: block read error, "
+				    "sector %lld", cmd.sector);
 				free(vr);
 				return (0);
 			}
@@ -490,8 +484,8 @@ vioblk_notifyq(struct vioblk_dev *dev)
 
 				if (write_page((uint32_t)secdata_desc->addr + j,
 				    secdata + j, len, 0)) {
-					fprintf(stderr, "can't write sector "
-					    "data to gpa @ 0x%llx\n\r",
+					log_warnx("can't write sector "
+					    "data to gpa @ 0x%llx",
 					    secdata_desc->addr);
 					dump_descriptor_chain(desc, cmd_desc_idx);
 					free(vr);
@@ -516,8 +510,8 @@ vioblk_notifyq(struct vioblk_dev *dev)
 		ds = VIRTIO_BLK_S_OK;
 		if (write_page((uint32_t)ds_desc->addr,
 		    &ds, ds_desc->len, 0)) {
-			fprintf(stderr, "can't write device status data @ "
-			    "0x%llx\n\r", ds_desc->addr);
+			log_warnx("can't write device status data @ "
+			    "0x%llx", ds_desc->addr);
 			dump_descriptor_chain(desc, cmd_desc_idx);
 			free(vr);
 			return (0);
@@ -534,7 +528,7 @@ vioblk_notifyq(struct vioblk_dev *dev)
 		    VIOBLK_QUEUE_MASK;
 
 		if (push_virtio_ring(vr, q_gpa, vr_sz)) {
-			fprintf(stderr, "vioblk: error writing vio ring\n\r");
+			log_warnx("vioblk: error writing vio ring");
 		}
 		break;
 	case VIRTIO_BLK_T_OUT:
@@ -542,15 +536,15 @@ vioblk_notifyq(struct vioblk_dev *dev)
 		secdata_desc = &desc[secdata_desc_idx];
 
 		if ((secdata_desc->flags & VRING_DESC_F_NEXT) == 0) {
-			fprintf(stderr, "wr vioblk: unchained vioblk data "
-			   "descriptor received (idx %d)\n\r", cmd_desc_idx);
+			log_warnx("wr vioblk: unchained vioblk data "
+			   "descriptor received (idx %d)", cmd_desc_idx);
 			free(vr);
 			return (0);
 		}
 
 		secdata = malloc(MAXPHYS);
 		if (secdata == NULL) {
-			fprintf(stderr, "wr vioblk: malloc error, len %d\n\r",
+			log_warn("wr vioblk: malloc error, len %d",
 			    secdata_desc->len);
 			free(vr);
 			return (0);
@@ -566,8 +560,8 @@ vioblk_notifyq(struct vioblk_dev *dev)
 					len = secdata_desc->len - j;
 				if (read_page((uint32_t)secdata_desc->addr + j,
 				    secdata + j, len, 0)) {
-					fprintf(stderr, "wr vioblk: can't read "
-					    "sector data @ 0x%llx\n\r",
+					log_warnx("wr vioblk: can't read "
+					    "sector data @ 0x%llx",
 					    secdata_desc->addr);
 					dump_descriptor_chain(desc,
 					     cmd_desc_idx);
@@ -581,8 +575,7 @@ vioblk_notifyq(struct vioblk_dev *dev)
 
 			if (vioblk_do_write(dev, cmd.sector + secbias,
 			    secdata, (ssize_t)secdata_desc->len)) {
-				fprintf(stderr, "wr vioblk: disk write "
-				    "error\n\r");
+				log_warnx("wr vioblk: disk write error");
 				free(vr);
 				free(secdata);
 				return (0);
@@ -603,8 +596,8 @@ vioblk_notifyq(struct vioblk_dev *dev)
 		ds = VIRTIO_BLK_S_OK;
 		if (write_page((uint32_t)ds_desc->addr,
 		    &ds, ds_desc->len, 0)) {
-			fprintf(stderr, "wr vioblk: can't write device status "
-			    "data @ 0x%llx\n\r", ds_desc->addr);
+			log_warnx("wr vioblk: can't write device status "
+			    "data @ 0x%llx", ds_desc->addr);
 			dump_descriptor_chain(desc, cmd_desc_idx);
 			free(vr);
 			return (0);
@@ -619,7 +612,7 @@ vioblk_notifyq(struct vioblk_dev *dev)
 		dev->vq[dev->cfg.queue_notify].last_avail = avail->idx &
 		    VIOBLK_QUEUE_MASK;
 		if (push_virtio_ring(vr, q_gpa, vr_sz))
-			fprintf(stderr, "wr vioblk: error writing vio ring\n\r");
+			log_warnx("wr vioblk: error writing vio ring");
 		break;
 	case VIRTIO_BLK_T_FLUSH:
 	case VIRTIO_BLK_T_FLUSH_OUT:
@@ -629,8 +622,8 @@ vioblk_notifyq(struct vioblk_dev *dev)
 		ds = VIRTIO_BLK_S_OK;
 		if (write_page((uint32_t)ds_desc->addr,
 		    &ds, ds_desc->len, 0)) {
-			fprintf(stderr, "fl vioblk: can't write device status "
-			    "data @ 0x%llx\n\r", ds_desc->addr);
+			log_warnx("fl vioblk: can't write device status "
+			    "data @ 0x%llx", ds_desc->addr);
 			dump_descriptor_chain(desc, cmd_desc_idx);
 			free(vr);
 			return (0);
@@ -645,7 +638,7 @@ vioblk_notifyq(struct vioblk_dev *dev)
 		dev->vq[dev->cfg.queue_notify].last_avail = avail->idx &
 		    VIOBLK_QUEUE_MASK;
 		if (push_virtio_ring(vr, q_gpa, vr_sz)) {
-			fprintf(stderr, "fl vioblk: error writing vio ring\n\r");
+			log_warnx("fl vioblk: error writing vio ring");
 		}
 		break;
 	}
@@ -668,7 +661,7 @@ virtio_blk_io(int dir, uint16_t reg, uint32_t *data, uint8_t *intr,
 		case VIRTIO_CONFIG_DEVICE_FEATURES:
 		case VIRTIO_CONFIG_QUEUE_SIZE:
 		case VIRTIO_CONFIG_ISR_STATUS:
-			fprintf(stderr, "%s: illegal write %x to %s\n\r",
+			log_warnx("%s: illegal write %x to %s",
 			    __progname, *data, virtio_reg_name(reg));
 			break;
 		case VIRTIO_CONFIG_GUEST_FEATURES:
@@ -743,7 +736,7 @@ virtio_net_io(int dir, uint16_t reg, uint32_t *data, uint8_t *intr,
 		case VIRTIO_CONFIG_DEVICE_FEATURES:
 		case VIRTIO_CONFIG_QUEUE_SIZE:
 		case VIRTIO_CONFIG_ISR_STATUS:
-			fprintf(stderr, "%s: illegal write %x to %s\n\r",
+			log_warnx("%s: illegal write %x to %s",
 			    __progname, *data, virtio_reg_name(reg));
 			break;
 		case VIRTIO_CONFIG_GUEST_FEATURES:
@@ -850,7 +843,7 @@ vionet_enq_rx(struct vionet_dev *dev, char *pkt, ssize_t sz, int *spc)
 
 	vr = malloc(vr_sz);
 	if (vr == NULL) {
-		fprintf(stderr, "rx enq :malloc error getting vionet ring\n\r");
+		log_warn("rx enq: malloc error getting vionet ring");
 		return (0);
 	}
 
@@ -858,7 +851,7 @@ vionet_enq_rx(struct vionet_dev *dev, char *pkt, ssize_t sz, int *spc)
 
 	for (i = 0; i < vr_sz; i += VIRTIO_PAGE_SIZE) {
 		if (read_page((uint32_t)q_gpa + i, vr + i, PAGE_SIZE, 0)) {
-			fprintf(stderr, "rx enq: error reading gpa 0x%x\n\r",
+			log_warnx("rx enq: error reading gpa 0x%x",
 			    (uint32_t)q_gpa + i);
 			free(vr);
 			return (0);
@@ -875,8 +868,7 @@ vionet_enq_rx(struct vionet_dev *dev, char *pkt, ssize_t sz, int *spc)
 	idx = dev->vq[0].last_avail & VIONET_QUEUE_MASK;
 
 	if ((avail->idx & VIONET_QUEUE_MASK) == idx) {
-		fprintf(stderr, "vionet queue notify - no space, dropping "
-		    "packet\n\r");
+		log_warnx("vionet queue notify - no space, dropping packet");
 		free(vr);
 		return (0);
 	}
@@ -889,7 +881,7 @@ vionet_enq_rx(struct vionet_dev *dev, char *pkt, ssize_t sz, int *spc)
 
 	/* must be not readable */
 	if ((pkt_desc->flags & VRING_DESC_F_WRITE) == 0) {
-		fprintf(stderr, "unexpected readable rx descriptor %d\n\r",
+		log_warnx("unexpected readable rx descriptor %d",
 		    pkt_desc_idx);
 		free(vr);
 		return (0);
@@ -897,8 +889,8 @@ vionet_enq_rx(struct vionet_dev *dev, char *pkt, ssize_t sz, int *spc)
 
 	/* Write packet to descriptor ring */
 	if (write_page((uint32_t)pkt_desc->addr, pkt, sz, 0)) {
-		fprintf(stderr, "vionet: rx enq packet write_page error @ "
-		    "0x%llx\n\r", pkt_desc->addr);
+		log_warnx("vionet: rx enq packet write_page error @ "
+		    "0x%llx", pkt_desc->addr);
 		free(vr);
 		return (0);
 	}
@@ -911,7 +903,7 @@ vionet_enq_rx(struct vionet_dev *dev, char *pkt, ssize_t sz, int *spc)
 	dev->vq[0].last_avail = (dev->vq[0].last_avail + 1);
 	*spc = avail->idx - dev->vq[0].last_avail;
 	if (push_virtio_ring(vr, q_gpa, vr_sz)) {
-		fprintf(stderr, "vionet: error writing vio ring\n\r");
+		log_warnx("vionet: error writing vio ring");
 	}
 
 	free(vr);
@@ -947,8 +939,7 @@ vionet_process_rx(void)
 					num_enq += vionet_enq_rx(&vionet[i],
 					    buf, sz, &spc);
 				} else if (sz == 0) {
-					fprintf(stderr, "process_rx: no data"
-					    "\n\r");
+					log_debug("process_rx: no data");
 					hasdata = 0;
 				}
 			}
@@ -981,7 +972,7 @@ vionet_notify_rx(struct vionet_dev *dev)
 
 	vr = malloc(vr_sz);
 	if (vr == NULL) {
-		fprintf(stderr, "malloc error getting vionet ring\n\r");
+		log_warn("malloc error getting vionet ring");
 		return;
 	}
 
@@ -989,7 +980,7 @@ vionet_notify_rx(struct vionet_dev *dev)
 
 	for (i = 0; i < vr_sz; i += VIRTIO_PAGE_SIZE) {
 		if (read_page((uint32_t)q_gpa + i, vr + i, PAGE_SIZE, 0)) {
-			fprintf(stderr, "error reading gpa 0x%x\n\r",
+			log_warnx("error reading gpa 0x%x",
 			    (uint32_t)q_gpa + i);
 			free(vr);
 			return;
@@ -1045,7 +1036,7 @@ vionet_notifyq(struct vionet_dev *dev)
 
 	vr = malloc(vr_sz);
 	if (vr == NULL) {
-		fprintf(stderr, "malloc error getting vionet ring\n\r");
+		log_warn("malloc error getting vionet ring");
 		return (0);
 	}
 
@@ -1053,7 +1044,7 @@ vionet_notifyq(struct vionet_dev *dev)
 
 	for (i = 0; i < vr_sz; i += VIRTIO_PAGE_SIZE) {
 		if (read_page((uint32_t)q_gpa + i, vr + i, PAGE_SIZE, 0)) {
-			fprintf(stderr, "error reading gpa 0x%x\n\r",
+			log_warnx("error reading gpa 0x%x",
 			    (uint32_t)q_gpa + i);
 			free(vr);
 			return (0);
@@ -1072,7 +1063,7 @@ vionet_notifyq(struct vionet_dev *dev)
 	idx = dev->vq[dev->cfg.queue_notify].last_avail & VIONET_QUEUE_MASK;
 
 	if ((avail->idx & VIONET_QUEUE_MASK) == idx) {
-		fprintf(stderr, "vionet tx queue notify - nothing to do?\n\r");
+		log_warnx("vionet tx queue notify - nothing to do?");
 		free(vr);
 		return (0);
 	}
@@ -1101,7 +1092,7 @@ vionet_notifyq(struct vionet_dev *dev)
 		 */
 		pkt = malloc(pktsz);
 		if (pkt == NULL) {
-			fprintf(stderr, "malloc error alloc packet buf\n\r");
+			log_warn("malloc error alloc packet buf");
 			free(vr);
 			return (0);
 		}
@@ -1113,8 +1104,8 @@ vionet_notifyq(struct vionet_dev *dev)
 		while (pkt_desc->flags & VRING_DESC_F_NEXT) {
 			/* must be not writable */
 			if (pkt_desc->flags & VRING_DESC_F_WRITE) {
-				fprintf(stderr, "unexpceted writable tx desc "
-				    "%d\n\r", pkt_desc_idx);
+				log_warnx("unexpceted writable tx desc "
+				    "%d", pkt_desc_idx);
 				free(vr);
 				return (0);
 			}
@@ -1122,8 +1113,8 @@ vionet_notifyq(struct vionet_dev *dev)
 			/* Read packet from descriptor ring */
 			if (read_page((uint32_t)pkt_desc->addr, pkt + ofs,
 			    pkt_desc->len, 0)) {
-				fprintf(stderr, "vionet: packet read_page error "
-				    "@ 0x%llx\n\r", pkt_desc->addr);
+				log_warnx("vionet: packet read_page error "
+				    "@ 0x%llx", pkt_desc->addr);
 				free(pkt);
 				free(vr);
 				return (0);
@@ -1136,8 +1127,8 @@ vionet_notifyq(struct vionet_dev *dev)
 
 		/* Now handle tail descriptor - must be not writable */
 		if (pkt_desc->flags & VRING_DESC_F_WRITE) {
-			fprintf(stderr, "unexpceted writable tx descriptor %d"
-			    "\n\r", pkt_desc_idx);
+			log_warnx("unexpceted writable tx descriptor %d",
+			    pkt_desc_idx);
 			free(vr);
 			return (0);
 		}
@@ -1145,8 +1136,8 @@ vionet_notifyq(struct vionet_dev *dev)
 		/* Read packet from descriptor ring */
 		if (read_page((uint32_t)pkt_desc->addr, pkt + ofs,
 		    pkt_desc->len, 0)) {
-			fprintf(stderr, "vionet: packet read_page error @ "
-			    "0x%llx\n\r", pkt_desc->addr);
+			log_warnx("vionet: packet read_page error @ "
+			    "0x%llx", pkt_desc->addr);
 			free(pkt);
 			free(vr);
 			return (0);
@@ -1154,8 +1145,8 @@ vionet_notifyq(struct vionet_dev *dev)
 
 		/* XXX signed vs unsigned here, funky cast */
 		if (write(dev->fd, pkt, pktsz) != (int)pktsz) {
-			fprintf(stderr, "vionet: tx failed writing to tap: "
-			    "%d\n\r", errno);
+			log_warnx("vionet: tx failed writing to tap: "
+			    "%d", errno);
 			free(pkt);
 			free(vr);
 			return (0);
@@ -1176,7 +1167,7 @@ vionet_notifyq(struct vionet_dev *dev)
 	}
 
 	if (push_virtio_ring(vr, q_gpa, vr_sz)) {
-		fprintf(stderr, "vionet: tx error writing vio ring\n\r");
+		log_warnx("vionet: tx error writing vio ring");
 	}
 
 	free(vr);
@@ -1198,13 +1189,13 @@ virtio_init(struct vm_create_params *vcp, int *child_disks, int *child_taps)
 	    PCI_SUBCLASS_SYSTEM_MISC,
 	    PCI_VENDOR_OPENBSD,
 	    PCI_PRODUCT_VIRTIO_ENTROPY, 1, NULL)) {
-		fprintf(stderr, "%s: can't add PCI virtio rng device\n",
+		log_warnx("%s: can't add PCI virtio rng device",
 		    __progname);
 		return;
 	}
 
 	if (pci_add_bar(id, PCI_MAPREG_TYPE_IO, virtio_rnd_io, NULL)) {
-		fprintf(stderr, "%s: can't add bar for virtio rng device\n",
+		log_warnx("%s: can't add bar for virtio rng device",
 		    __progname);
 		return;
 	}
@@ -1220,7 +1211,7 @@ virtio_init(struct vm_create_params *vcp, int *child_disks, int *child_taps)
 
 	vioblk = malloc(sizeof(struct vioblk_dev) * vcp->vcp_ndisks);
 	if (vioblk == NULL) {
-		fprintf(stderr, "%s: malloc failure allocating vioblks\n",
+		log_warn("%s: malloc failure allocating vioblks",
 		    __progname);
 		return;
 	}
@@ -1237,14 +1228,14 @@ virtio_init(struct vm_create_params *vcp, int *child_disks, int *child_taps)
 		    PCI_SUBCLASS_MASS_STORAGE_SCSI,
 		    PCI_VENDOR_OPENBSD,
 		    PCI_PRODUCT_VIRTIO_BLOCK, 1, NULL)) {
-			fprintf(stderr, "%s: can't add PCI virtio block "
-			    "device\n", __progname);
+			log_warnx("%s: can't add PCI virtio block "
+			    "device", __progname);
 			return;
 		}
 		if (pci_add_bar(id, PCI_MAPREG_TYPE_IO, virtio_blk_io,
 		    &vioblk[i])) {
-			fprintf(stderr, "%s: can't add bar for virtio block "
-			    "device\n", __progname);
+			log_warnx("%s: can't add bar for virtio block "
+			    "device", __progname);
 			return;
 		}
 		vioblk[i].vq[0].qs = VIOBLK_QUEUE_SIZE;
@@ -1260,7 +1251,7 @@ virtio_init(struct vm_create_params *vcp, int *child_disks, int *child_taps)
 
 	vionet = malloc(sizeof(struct vionet_dev) * vcp->vcp_nnics);
 	if (vionet == NULL) {
-		fprintf(stderr, "%s: malloc failure allocating vionets\n",
+		log_warn("%s: malloc failure allocating vionets",
 		    __progname);
 		return;
 	}
@@ -1275,15 +1266,15 @@ virtio_init(struct vm_create_params *vcp, int *child_disks, int *child_taps)
 		    PCI_SUBCLASS_SYSTEM_MISC,
 		    PCI_VENDOR_OPENBSD,
 		    PCI_PRODUCT_VIRTIO_NETWORK, 1, NULL)) {
-			fprintf(stderr, "%s: can't add PCI virtio net device\n",
+			log_warnx("%s: can't add PCI virtio net device",
 			    __progname);
 			return;
 		}
 
 		if (pci_add_bar(id, PCI_MAPREG_TYPE_IO, virtio_net_io,
 		    &vionet[i])) {
-			fprintf(stderr, "%s: can't add bar for virtio net "
-			    "device\n", __progname);
+			log_warnx("%s: can't add bar for virtio net "
+			    "device", __progname);
 			return;
 		}
 

@@ -1,5 +1,5 @@
 /* $NetBSD: loadfile.c,v 1.10 2000/12/03 02:53:04 tsutsui Exp $ */
-/* $OpenBSD: loadfile_elf.c,v 1.1 2015/11/22 20:20:32 mlarkin Exp $ */
+/* $OpenBSD: loadfile_elf.c,v 1.2 2015/11/23 13:04:49 reyk Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -382,8 +382,7 @@ mread(int fd, uint32_t addr, size_t sz)
 			ct = sz;
 
 		if (read(fd, buf, ct) != ct) {
-			fprintf(stderr, "%s: error %d in mread (%s)\n\r",
-			    __progname, errno, strerror(errno));
+			log_warn("%s: error %d in mread", __progname, errno);
 			return (0);
 		}
 		rd += ct;
@@ -407,8 +406,7 @@ mread(int fd, uint32_t addr, size_t sz)
 			ct = PAGE_SIZE;
 
 		if (read(fd, buf, ct) != ct) {
-			fprintf(stderr, "%s: error %d in mread (%s)\n\r",
-			    __progname, errno, strerror(errno));
+			log_warn("%s: error %d in mread", __progname, errno);
 			return (0);
 		}
 		rd += ct;
@@ -534,8 +532,7 @@ mbzero(uint32_t addr, int sz)
 static void
 mbcopy(char *src, char *dst, int sz)
 {
-	fprintf(stderr, "warning: bcopy during ELF kernel load not "
-	    "supported\n\r");
+	log_warnx("warning: bcopy during ELF kernel load not supported");
 }
 
 /*

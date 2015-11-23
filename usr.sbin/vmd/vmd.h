@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.h,v 1.2 2015/11/22 21:51:32 reyk Exp $	*/
+/*	$OpenBSD: vmd.h,v 1.3 2015/11/23 13:04:49 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -16,6 +16,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <stdarg.h>
+
 #ifndef __VMD_H__
 #define __VMD_H__
 
@@ -27,7 +29,7 @@
 /* #define VMD_DEBUG */
 
 #ifdef VMD_DEBUG
-#define dprintf(x...)   do { fprintf(stderr, x); } while(0)
+#define dprintf(x...)   do { log_debug(x); } while(0)
 #else
 #define dprintf(x...)
 #endif /* VMM_DEBUG */
@@ -50,5 +52,26 @@ enum imsg_type {
 
 int write_page(uint32_t dst, void *buf, uint32_t, int);
 int read_page(uint32_t dst, void *buf, uint32_t, int);
+
+/* log.c */
+void	log_init(int, int);
+void	log_procinit(const char *);
+void	log_verbose(int);
+void	log_warn(const char *, ...)
+	    __attribute__((__format__ (printf, 1, 2)));
+void	log_warnx(const char *, ...)
+	    __attribute__((__format__ (printf, 1, 2)));
+void	log_info(const char *, ...)
+	    __attribute__((__format__ (printf, 1, 2)));
+void	log_debug(const char *, ...)
+	    __attribute__((__format__ (printf, 1, 2)));
+void	logit(int, const char *, ...)
+	    __attribute__((__format__ (printf, 2, 3)));
+void	vlog(int, const char *, va_list)
+	    __attribute__((__format__ (printf, 2, 0)));
+__dead void fatal(const char *, ...)
+	    __attribute__((__format__ (printf, 1, 2)));
+__dead void fatalx(const char *, ...)
+	    __attribute__((__format__ (printf, 1, 2)));
 
 #endif /* __VMD_H__ */

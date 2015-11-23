@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.3 2015/11/22 22:29:48 deraadt Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.4 2015/11/23 13:04:49 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -39,7 +39,6 @@
 #include <machine/param.h>
 #include <machine/vmmvar.h>
 
-#include <err.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <imsg.h>
@@ -51,6 +50,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <syslog.h>
 #include <termios.h>
 #include <unistd.h>
 #include <util.h>
@@ -112,6 +112,8 @@ struct ns8250_regs {
 struct i8253_counter i8253_counter[3];
 struct ns8250_regs com1_regs;
 
+__dead void usage(void);
+
 void sighdlr(int);
 int main(int, char **);
 int control_run(void);
@@ -171,15 +173,39 @@ sighdlr(int sig)
 	}
 }
 
+__dead void
+usage(void)
+{
+	extern char *__progname;
+	fprintf(stderr, "usage: %s [-dv]", __progname);
+	exit(1);
+}
+
 int
 main(int argc, char **argv)
 {
-	int res;
+	int debug = 0, verbose = 0, c, res;
+
+	while ((c = getopt(argc, argv, "dv")) != -1) {
+		switch (c) {
+		case 'd':
+			debug = 2;
+			break;
+		case 'v':
+			verbose++;
+			break;
+		default:
+			usage();
+		}
+	}
+
+	/* log to stderr until daemonized */
+	log_init(debug ? debug : 1, LOG_DAEMON);
 
 	/* Open /dev/vmm */
 	vmm_fd = open(VMM_NODE, O_RDONLY);
 	if (vmm_fd == -1)
-		errx(1, "can't open vmm device node %s", VMM_NODE);
+		fatal("can't open vmm device node %s", VMM_NODE);
 
 	setproctitle("control");
 
@@ -189,13 +215,17 @@ main(int argc, char **argv)
 	signal(SIGINT, sighdlr);
 	signal(SIGCHLD, sighdlr);
 
-	if (daemon(0, 1) == -1)
-		errx(1, "can't daemonize\n");
+	log_init(debug, LOG_DAEMON);
+	log_verbose(verbose);
+	log_procinit("control");
+
+	if (!debug && daemon(1, 0) == -1)
+		fatal("can't daemonize");
 
 	res = control_run();
 
 	if (res == -1)
-		errx(1, "control socket error\n");
+		fatalx("control socket error");
 
 	return (0);
 }
@@ -225,7 +255,7 @@ control_run(void)
 	/* Establish and start listening on control socket */
 	socketpath = SOCKET_NAME;
 	if ((fd = socket(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC, 0)) == -1) {
-		fprintf(stderr, "%s: socket error\n", __progname);
+		log_warn("%s: socket error", __progname);
 		return (-1);
 	}
 
@@ -233,14 +263,14 @@ control_run(void)
 	sun.sun_family = AF_UNIX;
 	if (strlcpy(sun.sun_path, socketpath, sizeof(sun.sun_path)) >=
 	    sizeof(sun.sun_path)) {
-		fprintf(stderr, "%s: socket name too long\n", __progname);
+		log_warnx("%s: socket name too long", __progname);
 		close(fd);
 		return (-1);
 	}
 
 	if (unlink(socketpath) == -1)
 		if (errno != ENOENT) {
-			fprintf(stderr, "%s: unlink of %s failed\n",
+			log_warn("%s: unlink of %s failed",
 			    __progname, socketpath);
 			close(fd);
 			return (-1);
@@ -250,7 +280,7 @@ control_run(void)
 	mode = S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP;
 
 	if (bind(fd, (struct sockaddr *)&sun, sizeof(sun)) == -1) {
-		fprintf(stderr, "%s: control_init: bind of %s failed\n",
+		log_warn("%s: control_init: bind of %s failed",
 		    __progname, socketpath);
 		close(fd);
 		umask(old_umask);
@@ -260,7 +290,7 @@ control_run(void)
 	umask(old_umask);
 
 	if (chmod(socketpath, mode) == -1) {
-		fprintf(stderr, "%s: control_init: chmod of %s failed\n",
+		log_warn("%s: control_init: chmod of %s failed",
 		    __progname, socketpath);
 		close(fd);
 		unlink(socketpath);
@@ -268,14 +298,14 @@ control_run(void)
 	}
 
 	if ((ibuf = malloc(sizeof(struct imsgbuf))) == NULL) {
-		fprintf(stderr, "%s: out of memory\n", __progname);
+		log_warn("%s: out of memory", __progname);
 		close(fd);
 		unlink(socketpath);
 		return (-1);
 	}
 
 	if (listen(fd, NR_BACKLOG) == -1) {
-		fprintf(stderr, "%s: listen failed\n", __progname);
+		log_warn("%s: listen failed", __progname);
 		close(fd);
 		unlink(socketpath);
 		return (-1);
@@ -284,7 +314,7 @@ control_run(void)
 	while (!quit) {
 		if ((connfd = accept4(fd, (struct sockaddr *)&c_sun, &len,
 		    SOCK_CLOEXEC)) == -1) {
-			fprintf(stderr, "%s: accept4 error\n", __progname);
+			log_warn("%s: accept4 error", __progname);
 			close(fd);
 			unlink(socketpath);
 			return (-1);
@@ -292,7 +322,7 @@ control_run(void)
 			
 		imsg_init(ibuf, connfd);
 		if ((n = imsg_read(ibuf)) == -1 || n == 0) {
-			fprintf(stderr, "%s: imsg_read error, n=%d\n",
+			log_warnx("%s: imsg_read error, n=%d",
 			    __progname, n);
 			continue;
 		}
@@ -341,9 +371,8 @@ control_run(void)
 			while (ibuf->w.queued)
 				if (msgbuf_write(&ibuf->w) <= 0 && errno !=
 				    EAGAIN) {
-					fprintf(stderr, "%s: msgbuf_write "
-					    "error %d\n", __progname,
-					    errno);
+					log_warn("%s: msgbuf_write error",
+					    __progname);
 					close(fd);
 					close(connfd);
 					unlink(socketpath);
@@ -505,8 +534,8 @@ start_vm(struct imsg *imsg)
 		child_disks[i] = open(vcp->vcp_disks[i], O_RDWR);
 		if (child_disks[i] == -1) {
 			ret = errno;
-			fprintf(stderr, "%s: can't open %s (%d)\n", __progname,
-			    vcp->vcp_disks[i], errno);
+			log_warn("%s: can't open %s", __progname,
+			    vcp->vcp_disks[i]);
 			goto err;
 		}
 	}
@@ -514,8 +543,8 @@ start_vm(struct imsg *imsg)
 	bzero(&sb, sizeof(sb));
 	if (stat(vcp->vcp_kernel, &sb) == -1) {
 		ret = errno;
-		fprintf(stderr, "%s: can't stat kernel image %s (%d)\n",
-		    __progname, vcp->vcp_kernel, errno);
+		log_warn("%s: can't stat kernel image %s",
+		    __progname, vcp->vcp_kernel);
 		goto err;
 	}
 
@@ -525,22 +554,20 @@ start_vm(struct imsg *imsg)
 	kernel_fd = open(vcp->vcp_kernel, O_RDONLY);
 	if (kernel_fd == -1) {
 		ret = errno;
-		fprintf(stderr, "%s: can't open kernel image %s (%d)\n",
-		    __progname, vcp->vcp_kernel, errno);
+		log_warn("%s: can't open kernel image %s",
+		    __progname, vcp->vcp_kernel);
 		goto err;	
 	}
 
 	if (openpty(&ttym_fd, &ttys_fd, ptyn, NULL, NULL) == -1) {
 		ret = errno;
-		fprintf(stderr, "%s: openpty failed: %d\n",
-		    __progname, errno);
+		log_warn("%s: openpty failed", __progname);
 		goto err;
 	}
 
 	if (close(ttys_fd)) {
 		ret = errno;
-		fprintf(stderr, "%s: close tty failed: %d\n",
-		    __progname, errno);
+		log_warn("%s: close tty failed", __progname);
 		goto err;
 	}
 
@@ -549,8 +576,8 @@ start_vm(struct imsg *imsg)
 		child_taps[i] = opentap();
 		if (child_taps[i] == -1) {
 			ret = errno;
-			fprintf(stderr, "%s: can't open tap for nic %zd (%d)\n",
-			    __progname, i, errno);
+			log_warn("%s: can't open tap for nic %zd",
+			    __progname, i);
 			goto err;
 		}
 	}
@@ -579,31 +606,28 @@ start_vm(struct imsg *imsg)
 	}	
 	else {
 		/* Child */
-		fprintf(stderr, "%s: vm console: %s\n", __progname, ptyn);
-		ret = vmm_create_vm(vcp);
 		setproctitle(vcp->vcp_name);
+		log_procinit(vcp->vcp_name);
+
+		log_info("%s: vm console: %s", __progname, ptyn);
+		ret = vmm_create_vm(vcp);
 		if (ret) {
-			fprintf(stderr, "%s: create vmm ioctl failed - "
-			    "exiting (%d)\n", __progname, ret);
-			_exit(1);
+			errno = ret;
+			fatal("create vmm ioctl failed - exiting");
 		}
 
 		/* Load kernel image */
 		ret = loadelf_main(kernel_fd, vcp->vcp_id, vcp->vcp_memory_size);
 		if (ret) {
-			fprintf(stderr, "%s: failed to load kernel - "
-			    "exiting (%d)\n", __progname, ret);
-			_exit(1);
+			errno = ret;
+			fatal("failed to load kernel - exiting");
 		}
 
 		close(kernel_fd);
 
 		con_fd = ttym_fd;
-		if (fcntl(con_fd, F_SETFL, O_NONBLOCK) == -1) {
-			fprintf(stderr, "%s: failed to set nonblocking mode "
-			    "on console\n", __progname);
-			_exit(1);
-		}
+		if (fcntl(con_fd, F_SETFL, O_NONBLOCK) == -1)		
+			fatal("failed to set nonblocking mode on console");
 
 		/* Execute the vcpu run loop(s) for this VM */
 		ret = run_vm(child_disks, child_taps, vcp);
@@ -721,7 +745,7 @@ start_client_vmd(void)
 
 	pw = getpwnam(VMD_USER);
 	if (pw == NULL) {
-		fprintf(stderr, "%s: no such user %s\n", __progname, VMD_USER);
+		log_warnx("%s: no such user %s", __progname, VMD_USER);
 		return (-1);
 	}
 
@@ -732,16 +756,16 @@ start_client_vmd(void)
 	if (!child_pid) {
 		/* Child */
 		if (chroot(pw->pw_dir) != 0)
-			err(1, "unable to chroot");
+			fatal("unable to chroot");
 		if (chdir("/") != 0)
-			err(1, "unable to chdir");
+			fatal("unable to chdir");
 
 		if (setgroups(1, &pw->pw_gid) == -1)
-			err(1, "setgroups() failed");
+			fatal("setgroups() failed");
 		if (setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) == -1)
-			err(1, "setresgid() failed");
+			fatal("setresgid() failed");
 		if (setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid) == -1)
-			err(1, "setresuid() failed");
+			fatal("setresuid() failed");
 
 		return (0);
 	}
@@ -846,7 +870,7 @@ run_vm(int *child_disks, int *child_taps, struct vm_create_params *vcp)
 	tid = malloc(sizeof(pthread_t) * vcp->vcp_ncpus);
 	vrp = malloc(sizeof(struct vm_run_params *) * vcp->vcp_ncpus);
 	if (tid == NULL || vrp == NULL) {
-		fprintf(stderr, "%s: memory allocation error - exiting.\n",
+		log_warn("%s: memory allocation error - exiting.",
 		    __progname);
 		return (ENOMEM);
 	}
@@ -862,15 +886,15 @@ run_vm(int *child_disks, int *child_taps, struct vm_create_params *vcp)
 	for (i = 0 ; i < vcp->vcp_ncpus; i++) {
 		vrp[i] = malloc(sizeof(struct vm_run_params));
 		if (vrp[i] == NULL) {
-			fprintf(stderr, "%s: memory allocation error - "
-			    "exiting.\n", __progname);
+			log_warn("%s: memory allocation error - "
+			    "exiting.", __progname);
 			/* caller will exit, so skip free'ing */
 			return (ENOMEM);
 		}
 		vrp[i]->vrp_exit = malloc(sizeof(union vm_exit));
 		if (vrp[i]->vrp_exit == NULL) {
-			fprintf(stderr, "%s: memory allocation error - "
-			    "exiting.\n", __progname);
+			log_warn("%s: memory allocation error - "
+			    "exiting.", __progname);
 			/* caller will exit, so skip free'ing */
 			return (ENOMEM);
 		}
@@ -888,14 +912,14 @@ run_vm(int *child_disks, int *child_taps, struct vm_create_params *vcp)
 	/* Wait for all the threads to exit */
 	for (i = 0; i < vcp->vcp_ncpus; i++) {
 		if (pthread_join(tid[i], &exit_status)) {
-			fprintf(stderr, "%s: failed to join thread %zd - "
-			    "exiting\n", __progname, i);
+			log_warn("%s: failed to join thread %zd - "
+			    "exiting", __progname, i);
 			return (EIO);
 		}
 
 		if (exit_status != NULL) {
-			fprintf(stderr, "%s: vm %d vcpu run thread %zd exited "
-			    "abnormally\n", __progname, vcp->vcp_id, i);
+			log_warnx("%s: vm %d vcpu run thread %zd exited "
+			    "abnormally", __progname, vcp->vcp_id, i);
 			ret = EIO;
 		}
 	}
@@ -975,8 +999,8 @@ vcpu_exit_i8253(union vm_exit *vei)
 			    (TIMER_SEL0 | TIMER_SEL1 | TIMER_SEL2);
 			sel = sel >> 6;
 			if (sel > 2) {
-				fprintf(stderr, "%s: i8253 PIT: invalid "
-				    "timer selected (%d)\n",
+				log_warnx("%s: i8253 PIT: invalid "
+				    "timer selected (%d)",
 				    __progname, sel);
 				return;
 			}
@@ -990,8 +1014,8 @@ vcpu_exit_i8253(union vm_exit *vei)
 				 * XXX this seems to be used on occasion, needs
 				 * to be implemented
 				 */
-				fprintf(stderr, "%s: i8253 PIT: 16 bit "
-				    "counter I/O not supported\n",
+				log_warnx("%s: i8253 PIT: 16 bit "
+				    "counter I/O not supported",
 				    __progname);
 				    return;
 			}
@@ -1028,13 +1052,13 @@ vcpu_exit_i8253(union vm_exit *vei)
 				return;
 			}
 
-			fprintf(stderr, "%s: i8253 PIT: unsupported rw mode "
-			    "%d\n", __progname, rw);
+			log_warnx("%s: i8253 PIT: unsupported rw mode "
+			    "%d", __progname, rw);
 			return;
 		} else {
 			/* XXX should this return 0xff? */
-			fprintf(stderr, "%s: i8253 PIT: read from control "
-			    "port unsupported\n", __progname);
+			log_warnx("%s: i8253 PIT: read from control "
+			    "port unsupported", __progname);
 		}
 	} else {
 		sel = vei->vei.vei_port - (TIMER_CNTR0 + TIMER_BASE);
@@ -1108,7 +1132,7 @@ vcpu_process_com_data(union vm_exit *vei)
 		} else {
 			/* XXX should this be com1_regs.data or 0xff? */
 			vei->vei.vei_data = com1_regs.data;
-			fprintf(stderr, "guest reading com1 when not ready\n");
+			log_warnx("guest reading com1 when not ready");
 		}
 
 		/* Reading the data register always clears RXRDY from IIR */
@@ -1242,7 +1266,7 @@ vcpu_process_com_lsr(union vm_exit *vei)
 	 * continue.
 	 */
 	if (vei->vei.vei_dir == 0) {
-		fprintf(stderr, "%s: LSR UART write 0x%x unsupported\n",
+		log_warnx("%s: LSR UART write 0x%x unsupported",
 		    __progname, vei->vei.vei_data);
 	} else {
 		/*
@@ -1274,7 +1298,7 @@ vcpu_process_com_msr(union vm_exit *vei)
 	 * continue.
 	 */
 	if (vei->vei.vei_dir == 0) {
-		fprintf(stderr, "%s: MSR UART write 0x%x unsupported\n",
+		log_warnx("%s: MSR UART write 0x%x unsupported",
 		    __progname, vei->vei.vei_data);
 	} else {
 		/*
@@ -1425,7 +1449,7 @@ vcpu_exit_pci(struct vm_run_params *vrp)
 		intr = pci_handle_io(vrp);
 		break;		
 	default:
-		fprintf(stderr, "%s: unknown PCI register 0x%llx\n",
+		log_warnx("%s: unknown PCI register 0x%llx",
 		    __progname, (uint64_t)vei->vei.vei_port);
 		break;
 	}
@@ -1512,7 +1536,7 @@ vcpu_exit(struct vm_run_params *vrp)
 		 */
 		break;
 	default:
-		fprintf(stderr, "%s: unknown exit reason %d\n",
+		log_warnx("%s: unknown exit reason %d",
 		    __progname, vrp->vrp_exit_reason);
 		return (1);
 	}
@@ -1581,7 +1605,6 @@ vcpu_exit(struct vm_run_params *vrp)
 int
 write_page(uint32_t dst, void *buf, uint32_t len, int do_mask)
 {
-	int ret;
 	struct vm_writepage_params vwp;
 
 	/*
@@ -1596,9 +1619,8 @@ write_page(uint32_t dst, void *buf, uint32_t len, int do_mask)
 	vwp.vwp_vm_id = vm_id;
 	vwp.vwp_len = len;
 	if (ioctl(vmm_fd, VMM_IOC_WRITEPAGE, &vwp) < 0) {
-		ret = errno;
-		fprintf(stderr, "writepage ioctl failed: %d\n", ret);
-		return (ret);
+		log_warn("writepage ioctl failed");
+		return (errno);
 	}
 	return (0);
 }
@@ -1624,7 +1646,6 @@ write_page(uint32_t dst, void *buf, uint32_t len, int do_mask)
 int
 read_page(uint32_t src, void *buf, uint32_t len, int do_mask)
 {
-	int ret;
 	struct vm_readpage_params vrp;
 
 	/*
@@ -1639,9 +1660,8 @@ read_page(uint32_t src, void *buf, uint32_t len, int do_mask)
 	vrp.vrp_vm_id = vm_id;
 	vrp.vrp_len = len;
 	if (ioctl(vmm_fd, VMM_IOC_READPAGE, &vrp) < 0) {
-		ret = errno;
-		fprintf(stderr, "readpage ioctl failed: %d\n", ret);
-		return (ret);
+		log_warn("readpage ioctl failed");
+		return (errno);
 	}
 	return (0);
 }

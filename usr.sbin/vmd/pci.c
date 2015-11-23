@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.c,v 1.2 2015/11/22 21:51:32 reyk Exp $	*/
+/*	$OpenBSD: pci.c,v 1.3 2015/11/23 13:04:49 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -89,7 +89,7 @@ pci_add_bar(uint8_t id, uint32_t type, void *barfn, void *cookie)
 		pci.pci_next_io_bar += VMM_PCI_IO_BAR_SIZE;
 		pci.pci_devices[id].pd_barfunc[bar_ct] = barfn;
 		pci.pci_devices[id].pd_bar_cookie[bar_ct] = cookie;
-		dprintf("%s: adding pci bar cookie for dev %d bar %d = %p\n\r",
+		dprintf("%s: adding pci bar cookie for dev %d bar %d = %p",
 		    __progname, id, bar_ct, cookie);
 		pci.pci_devices[id].pd_bartype[bar_ct] = PCI_BAR_TYPE_IO;
 		pci.pci_devices[id].pd_barsize[bar_ct] = VMM_PCI_IO_BAR_SIZE;
@@ -150,7 +150,7 @@ pci_add_device(uint8_t *id, uint16_t vid, uint16_t pid, uint8_t class,
 		    pci_pic_irqs[pci.pci_next_pic_irq];
 		pci.pci_devices[*id].pd_int = 1;
 		pci.pci_next_pic_irq++;
-		dprintf("assigned irq %d to pci dev %d\n\r",
+		dprintf("assigned irq %d to pci dev %d",
 		    pci.pci_devices[*id].pd_irq, *id);
 	}
 
@@ -177,8 +177,7 @@ pci_init(void)
 	if (pci_add_device(&id, PCI_VENDOR_OPENBSD, PCI_PRODUCT_OPENBSD_PCHB,
 	    PCI_CLASS_BRIDGE, PCI_SUBCLASS_BRIDGE_HOST,
 	    PCI_VENDOR_OPENBSD, 0, 0, NULL)) {
-		fprintf(stderr, "%s: can't add PCI host bridge\n",
-		    __progname);
+		log_warnx("%s: can't add PCI host bridge", __progname);
 		return;
 	}
 }
@@ -238,11 +237,11 @@ pci_handle_io(struct vm_run_params *vrp)
 		    PCI_MAPREG_IO_ADDR(pci.pci_devices[l].pd_bar[k]),
 		    &vei->vei.vei_data, &intr,
 		    pci.pci_devices[l].pd_bar_cookie[k])) {
-			fprintf(stderr, "%s: pci i/o access function failed\n",
+			log_warnx("%s: pci i/o access function failed",
 			    __progname);
 		}
 	} else {
-		fprintf(stderr, "%s: no pci i/o function for reg 0x%llx\n",
+		log_warnx("%s: no pci i/o function for reg 0x%llx",
 		    __progname, (uint64_t)reg);
 	}
 
@@ -266,8 +265,8 @@ pci_handle_data_reg(struct vm_run_params *vrp)
 		/* if read, return FFs */
 		if (vei->vei.vei_dir == 1)
 			vei->vei.vei_data = 0xffffffff;
-		fprintf(stderr, "invalid address register during pci read: "
-		    "0x%llx\r\n", (uint64_t)pci.pci_addr_reg);
+		log_warnx("invalid address register during pci read: "
+		    "0x%llx", (uint64_t)pci.pci_addr_reg);
 		return;
 	}
 
@@ -280,8 +279,8 @@ pci_handle_data_reg(struct vm_run_params *vrp)
 	if (csfunc != NULL) {
 		ret = csfunc(vei->vei.vei_dir, (o / 4), &vei->vei.vei_data);
 		if (ret)
-			fprintf(stderr, "cfg space access function failed for "
-			    "pci device %d\n", d);
+			log_warnx("cfg space access function failed for "
+			    "pci device %d", d);
 		return;
 	}
 
