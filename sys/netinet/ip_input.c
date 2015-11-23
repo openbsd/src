@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.261 2015/11/14 15:40:40 mpi Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.262 2015/11/23 15:54:45 mpi Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -1516,8 +1516,14 @@ ip_forward(struct mbuf *m, struct ifnet *ifp, int srcrt)
 
 			if (rt->rt_rmx.rmx_mtu)
 				destmtu = rt->rt_rmx.rmx_mtu;
-			else
-				destmtu = ipforward_rt.ro_rt->rt_ifp->if_mtu;
+			else {
+				struct ifnet *destifp;
+
+				destifp = if_get(rt->rt_ifidx);
+				if (destifp != NULL)
+					destmtu = destifp->if_mtu;
+				if_put(destifp);
+			}
 		}
 #endif /*IPSEC*/
 		ipstat.ips_cantfrag++;
