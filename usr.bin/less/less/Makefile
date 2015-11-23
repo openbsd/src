@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.5 2015/11/05 22:08:44 nicm Exp $
+#	$OpenBSD: Makefile,v 1.6 2015/11/23 09:24:48 nicm Exp $
 
 .PATH:	${.CURDIR}/..
 
@@ -20,8 +20,6 @@ BINDIR=	/usr/bin
 HELPDIR=${SHAREDIR}/misc
 
 CFLAGS+=-I${.CURDIR}/.. -DSYSDIR=\"/etc\" -DHELPDIR=\"${HELPDIR}\"
-
-CDIAGFLAGS+=-Wall -W
 
 beforeinstall:
 	${INSTALL} ${INSTALL_COPY} -o ${SHAREOWN} -g ${SHAREGRP} \

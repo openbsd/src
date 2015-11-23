@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 2015/11/05 22:08:44 nicm Exp $
+#	$OpenBSD: Makefile,v 1.3 2015/11/23 09:24:48 nicm Exp $
 
 .PATH:	${.CURDIR}/..
 
@@ -9,7 +9,5 @@ MAN=	lesskey.1
 BINDIR=	/usr/bin
 
 CFLAGS+=-I${.CURDIR}/..
-
-CDIAGFLAGS+=-Wall -W
 
 .include <bsd.prog.mk>
