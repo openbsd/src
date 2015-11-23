@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kern.9,v 1.21 2014/12/09 14:41:00 jmc Exp $
+.\"	$OpenBSD: kern.9,v 1.22 2015/11/23 17:53:57 jmc Exp $
 .\"
 .\" Copyright (c) 2002, 2003 CubeSoft Communications, Inc.
 .\" <http://www.csoft.org>
@@ -24,11 +24,42 @@
 .\" IN ANY WAY OUT OF THE USE OF THIS SOFTWARE EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 9 2014 $
-.Dt KERN 9
+.Dd $Mdocdate: November 23 2015 $
+.Dt KASSERT 9
 .Os
 .Sh NAME
-.Nm kern
+.Nm imax ,
+.Nm imin ,
+.Nm lmax ,
+.Nm lmin ,
+.Nm max ,
+.Nm min ,
+.Nm ulmax ,
+.Nm ulmin ,
+.Nm abs ,
+.Nm assert ,
+.Nm KASSERT ,
+.Nm KDASSERT ,
+.Nm KASSERTMSG ,
+.Nm KDASSERTMSG ,
+.Nm skpc ,
+.Nm scanc ,
+.Nm bcmp ,
+.Nm timingsafe_bcmp ,
+.Nm memchr ,
+.Nm memcmp ,
+.Nm ffs ,
+.Nm fls ,
+.Nm flsl ,
+.Nm strlen ,
+.Nm strnlen ,
+.Nm strncpy ,
+.Nm strlcpy ,
+.Nm strlcat ,
+.Nm strcmp ,
+.Nm strncmp ,
+.Nm strncasecmp ,
+.Nm getsn
 .Nd kernel library routines
 .Sh SYNOPSIS
 .In lib/libkern/libkern.h
@@ -205,10 +236,10 @@ and
 .nr nS 1
 .Ft size_t
 .Fn strlen "const char *s"
-.Ft char *
-.Fn strncpy "char *dst" "const char *src" "size_t len"
 .Ft size_t
 .Fn strnlen "const char *s" "size_t maxlen"
+.Ft char *
+.Fn strncpy "char *dst" "const char *src" "size_t len"
 .Ft size_t
 .Fn strlcpy "char *dst" "const char *src" "size_t size"
 .Ft size_t

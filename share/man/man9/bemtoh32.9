@@ -1,4 +1,4 @@
-.\" $OpenBSD: bemtoh32.9,v 1.5 2014/10/22 23:56:47 dlg Exp $
+.\" $OpenBSD: bemtoh32.9,v 1.6 2015/11/23 17:53:57 jmc Exp $
 .\"
 .\" Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
 .\" All rights reserved.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 22 2014 $
+.Dd $Mdocdate: November 23 2015 $
 .Dt BEMTOH32 9
 .Os
 .Sh NAME
@@ -28,9 +28,9 @@
 .Nm htobem16 ,
 .Nm htobem32 ,
 .Nm htobem64 ,
-.Nm htobem16 ,
-.Nm htobem32 ,
-.Nm htobem64
+.Nm htolem16 ,
+.Nm htolem32 ,
+.Nm htolem64
 .Nd byte swapping memory load and store operations
 .Sh SYNOPSIS
 .In sys/types.h
