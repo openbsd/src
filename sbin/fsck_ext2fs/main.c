@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.24 2015/11/23 19:19:30 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.25 2015/11/23 23:01:20 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.1 1997/06/11 11:21:50 bouyer Exp $	*/
 
 /*
@@ -158,8 +158,9 @@ checkfilesys(char *filesys, char *mntpt, long auxdata, int child)
 	if (debug && preen)
 		pwarn("starting\n");
 
-	if (pledge("stdio rpath wpath getpw disklabel", NULL) == -1)
-		err(1, "pledge");
+	if (!hotroot())
+		if (pledge("stdio rpath wpath getpw disklabel", NULL) == -1)
+			err(1, "pledge");
 
 	switch (setup(filesys)) {
 	case 0:
