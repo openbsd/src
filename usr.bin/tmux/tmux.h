@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.585 2015/11/23 20:53:09 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.586 2015/11/23 23:47:57 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -599,7 +599,7 @@ struct mode_key_table {
 #define MODE_MOUSE_STANDARD 0x20
 #define MODE_MOUSE_BUTTON 0x40
 #define MODE_BLINKING 0x80
-/* 0x100 unused */
+#define MODE_MOUSE_UTF8 0x100
 #define MODE_MOUSE_SGR 0x200
 #define MODE_BRACKETPASTE 0x400
 #define MODE_FOCUSON 0x800

@@ -1,4 +1,4 @@
-/* $OpenBSD: input.c,v 1.95 2015/11/23 20:53:09 nicm Exp $ */
+/* $OpenBSD: input.c,v 1.96 2015/11/23 23:47:57 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1461,6 +1461,9 @@ input_csi_dispatch_rm_private(struct input_ctx *ictx)
 		case 1004:
 			screen_write_mode_clear(&ictx->ctx, MODE_FOCUSON);
 			break;
+		case 1005:
+			screen_write_mode_clear(&ictx->ctx, MODE_MOUSE_UTF8);
+			break;
 		case 1006:
 			screen_write_mode_clear(&ictx->ctx, MODE_MOUSE_SGR);
 			break;
@@ -1540,6 +1543,9 @@ input_csi_dispatch_sm_private(struct input_ctx *ictx)
 				break;
 			screen_write_mode_set(&ictx->ctx, MODE_FOCUSON);
 			wp->flags |= PANE_FOCUSPUSH; /* force update */
+			break;
+		case 1005:
+			screen_write_mode_set(&ictx->ctx, MODE_MOUSE_UTF8);
 			break;
 		case 1006:
 			screen_write_mode_set(&ictx->ctx, MODE_MOUSE_SGR);
