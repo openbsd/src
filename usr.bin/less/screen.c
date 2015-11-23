@@ -17,6 +17,7 @@
 #include "less.h"
 #include "cmd.h"
 
+#include <sys/ioctl.h>
 #include <termios.h>
 #include <term.h>
 
