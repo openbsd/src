@@ -19,6 +19,5 @@ NOPROG= yes
 .endif
 
 MAN= vmd.8
-MANSUBDIR=${MACHINE}
 
 .include <bsd.prog.mk>

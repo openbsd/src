@@ -19,6 +19,5 @@ NOPROG= yes
 .endif
 
 MAN= vmmctl.8 vmm.conf.5
-MANSUBDIR=${MACHINE}
 
 .include <bsd.prog.mk>
