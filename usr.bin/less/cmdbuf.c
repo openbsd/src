@@ -170,11 +170,11 @@ cmd_step_common(char *p, LWCHAR ch, int len, int *pwidth, int *bswidth)
 	if (len == 1) {
 		pr = prchar((int)ch);
 		if (pwidth != NULL || bswidth != NULL) {
-			int len = strlen(pr);
+			int prlen = strlen(pr);
 			if (pwidth != NULL)
-				*pwidth = len;
+				*pwidth = prlen;
 			if (bswidth != NULL)
-				*bswidth = len;
+				*bswidth = prlen;
 		}
 	} else {
 		pr = prutfchar(ch);
@@ -185,11 +185,11 @@ cmd_step_common(char *p, LWCHAR ch, int len, int *pwidth, int *bswidth)
 				if (bswidth != NULL)
 					*bswidth = 0;
 			} else if (is_ubin_char(ch)) {
-				int len = strlen(pr);
+				int prlen = strlen(pr);
 				if (pwidth != NULL)
-					*pwidth = len;
+					*pwidth = prlen;
 				if (bswidth != NULL)
-					*bswidth = len;
+					*bswidth = prlen;
 			} else {
 				LWCHAR prev_ch = step_char(&p, -1, cmdbuf);
 				if (is_combining_char(prev_ch, ch)) {
