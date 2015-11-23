@@ -24,8 +24,8 @@
 static struct loption *pendopt;
 int plusoption = FALSE;
 
-static char *optstring();
-static int flip_triple();
+static char *optstring(char *, char **, char *, char *);
+static int flip_triple(int, int);
 
 extern int screen_trashed;
 extern int less_is_more;

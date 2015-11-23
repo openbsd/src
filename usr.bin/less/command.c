@@ -69,7 +69,7 @@ struct ungot {
 static struct ungot *ungot = NULL;
 static int unget_end = 0;
 
-static void multi_search();
+static void multi_search(char *, int);
 
 /*
  * Move the cursor to start of prompt line before executing a command.
