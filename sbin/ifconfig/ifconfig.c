@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.304 2015/10/24 10:52:05 reyk Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.305 2015/11/23 10:33:23 mpi Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -789,7 +789,6 @@ nextarg:
 		 * it is not specified.
 		 */
 		setifprefixlen("64", 0);
-		/* in6_getprefix("64", MASK) if MASK is available here... */
 	}
 
 	if (clearaddr) {
@@ -1138,11 +1137,14 @@ setifaddr(const char *addr, int param)
 	 * and the flags may change when the address is set.
 	 */
 	setaddr++;
-	if (doalias >= 0)
+	if (doalias >= 0) {
 		newaddr = 1;
-	if (doalias == 0)
+		afp->af_getaddr(addr, ADDR);
+	}
+	if (doalias == 0) {
 		clearaddr = 1;
-	afp->af_getaddr(addr, (doalias >= 0 ? ADDR : RIDADDR));
+		afp->af_getaddr(addr, RIDADDR);
+	}
 }
 
 #ifndef SMALL
