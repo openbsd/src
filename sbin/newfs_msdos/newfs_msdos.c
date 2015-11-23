@@ -1,4 +1,4 @@
-/*	$OpenBSD: newfs_msdos.c,v 1.26 2015/04/18 18:28:37 deraadt Exp $	*/
+/*	$OpenBSD: newfs_msdos.c,v 1.27 2015/11/23 19:19:30 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1998 Robert Nordier
@@ -250,6 +250,9 @@ main(int argc, char *argv[])
     time_t now;
     u_int fat, bss, rds, cls, dir, lsn, x, x1, x2;
     int ch, fd, fd1;
+
+    if (pledge("stdio rpath wpath disklabel", NULL) == -1)
+	err(1, "pledge");
 
     while ((ch = getopt(argc, argv, opts)) != -1)
 	switch (ch) {

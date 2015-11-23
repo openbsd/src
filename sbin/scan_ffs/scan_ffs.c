@@ -1,4 +1,4 @@
-/*	$OpenBSD: scan_ffs.c,v 1.20 2015/10/11 04:33:17 deraadt Exp $	*/
+/*	$OpenBSD: scan_ffs.c,v 1.21 2015/11/23 19:19:30 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist, Tobias Weingartner
@@ -137,6 +137,9 @@ main(int argc, char *argv[])
 	int ch, fd, flags = 0;
 	daddr_t beg = 0, end = -1;
 	const char *errstr;
+
+	if (pledge("stdio rpath disklabel", NULL) == -1)
+		err(1, "pledge");
 
 	while ((ch = getopt(argc, argv, "lsvb:e:")) != -1)
 		switch(ch) {

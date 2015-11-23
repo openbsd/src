@@ -1,4 +1,4 @@
-/*	$OpenBSD: newfs.c,v 1.101 2015/11/10 07:38:19 deraadt Exp $	*/
+/*	$OpenBSD: newfs.c,v 1.102 2015/11/23 19:19:30 deraadt Exp $	*/
 /*	$NetBSD: newfs.c,v 1.20 1996/05/16 07:13:03 thorpej Exp $	*/
 
 /*
@@ -88,6 +88,7 @@ void	fatal(const char *fmt, ...)
 	    __attribute__((__nonnull__ (1)));
 __dead void	usage(void);
 void	mkfs(struct partition *, char *, int, int, mode_t, uid_t, gid_t);
+void	getphysmem(void);
 void	rewritelabel(char *, int, struct disklabel *);
 u_short	dkcksum(struct disklabel *);
 
@@ -147,6 +148,18 @@ static void copy(char *, char *, struct mfs_args *);
 static int gettmpmnt(char *, size_t);
 #endif
 
+int64_t physmem;
+
+void
+getphysmem(void)
+{
+	int mib[] = { CTL_HW, HW_PHYSMEM64 };
+	size_t len = sizeof(physmem);
+	
+	if (sysctl(mib, 2, &physmem, &len, NULL, 0) != 0)
+		err(1, "can't get physmem");
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -182,6 +195,7 @@ main(int argc, char *argv[])
 	if (strstr(__progname, "mfs"))
 		mfs = Nflag = quiet = 1;
 
+	getphysmem();
 	maxpartitions = getmaxpartitions();
 	if (maxpartitions > 26)
 		fatal("insane maxpartitions value %d", maxpartitions);
@@ -416,6 +430,8 @@ main(int argc, char *argv[])
 			fatal("%s: can't figure out file system partition",
 			    argv[0]);
 		lp = getdisklabel(special, fsi);
+		if (pledge("stdio disklabel tty", NULL) == -1)
+			err(1, "pledge");
 		if (isdigit((unsigned char)*cp))
 			pp = &lp->d_partitions[0];
 		else

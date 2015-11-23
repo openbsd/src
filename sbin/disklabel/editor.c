@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.298 2015/10/17 13:27:08 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.299 2015/11/23 19:19:29 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -155,7 +155,6 @@ void	set_geometry(struct disklabel *, struct disklabel *, struct disklabel *,
 void	zero_partitions(struct disklabel *);
 u_int64_t max_partition_size(struct disklabel *, int);
 void	display_edit(struct disklabel *, char, u_int64_t);
-int64_t	getphysmem(void);
 void	psize(u_int64_t sz, char unit, struct disklabel *lp);
 char	*get_token(char **, size_t *);
 int	apply_unit(double, u_char, u_int64_t *);
@@ -516,18 +515,6 @@ done:
 	return(error);
 }
 
-int64_t
-getphysmem(void)
-{
-	int64_t physmem;
-	size_t sz = sizeof(physmem);
-	int mib[] = { CTL_HW, HW_PHYSMEM64 };
-
-	if (sysctl(mib, 2, &physmem, &sz, NULL, (size_t)0) == -1)
-		errx(4, "can't get mem size");
-	return physmem;
-}
-
 /*
  * Allocate all disk space according to standard recommendations for a
  * root disk.
@@ -543,7 +530,7 @@ editor_allocspace(struct disklabel *lp_org)
 	u_int64_t chunkstart, chunksize, cylsecs, secs, totsecs, xtrasecs;
 	char **partmp;
 	int i, j, lastalloc, index = 0, fragsize, partno;
-	int64_t physmem;
+	extern int64_t physmem;
 
 	/* How big is the OpenBSD portion of the disk?  */
 	find_bounds(lp_org);
@@ -564,8 +551,6 @@ editor_allocspace(struct disklabel *lp_org)
 		}
 	}
 
-	physmem = getphysmem() / DEV_BSIZE;	/* Blocks not sectors here! */
-
 	cylsecs = lp_org->d_secpercyl;
 again:
 	lp = &label;
@@ -584,12 +569,12 @@ again:
 
 	/* bump max swap based on phys mem, little physmem gets 2x swap */
 	if (index == 0 && alloc_table == alloc_table_default) {
-		if (physmem < MEG(256))
-			alloc[1].minsz = alloc[1].maxsz = 2 * physmem;
+		if (physmem / DEV_BSIZE < MEG(256))
+			alloc[1].minsz = alloc[1].maxsz = 2 * (physmem / DEV_BSIZE);
 		else
-			alloc[1].maxsz += physmem;
+			alloc[1].maxsz += (physmem / DEV_BSIZE);
 		/* bump max /var to make room for 2 crash dumps */
-		alloc[3].maxsz += 2 * physmem;
+		alloc[3].maxsz += 2 * (physmem / DEV_BSIZE);
 	}
 
 	xtrasecs = totsecs = editor_countfree(lp);

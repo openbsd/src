@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkfs.c,v 1.93 2015/10/11 00:20:29 guenther Exp $	*/
+/*	$OpenBSD: mkfs.c,v 1.94 2015/11/23 19:19:30 deraadt Exp $	*/
 /*	$NetBSD: mkfs.c,v 1.25 1995/06/18 21:35:38 cgd Exp $	*/
 
 /*
@@ -1181,19 +1181,13 @@ static void
 checksz(void)
 {
 	unsigned long long allocate, maxino, maxfsblock, ndir, bound;
-	int mib[2];
+	extern int64_t physmem;
 	struct rlimit datasz;
-	size_t len;
 
-	mib[0] = CTL_HW;
-	mib[1] = HW_PHYSMEM64;
-	len = sizeof(bound);
-	
-	if (sysctl(mib, 2, &bound, &len, NULL, 0) != 0)
-		err(1, "can't get physmem");
 	if (getrlimit(RLIMIT_DATA, &datasz) != 0)
 		err(1, "can't get rlimit");
-	bound = MINIMUM(datasz.rlim_max, bound);
+
+	bound = MINIMUM(datasz.rlim_max, physmem);
 
 	allocate = 0;
 	maxino = sblock.fs_ncg * (unsigned long long)sblock.fs_ipg;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.21 2015/10/14 14:33:45 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.22 2015/11/23 19:19:30 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.8 1996/10/17 20:29:53 cgd Exp $	*/
 
 /*
@@ -34,6 +34,7 @@
 #include <unistd.h>
 #include <errno.h>
 #include <stdarg.h>
+#include <err.h>
 
 #include "ext.h"
 
@@ -55,6 +56,9 @@ int
 main(int argc, char *argv[])
 {
 	int ch;
+
+	if (pledge("stdio rpath wpath disklabel", NULL) == -1)
+		err(1, "pledge");
 
 	while ((ch = getopt(argc, argv, "pynf")) != -1) {
 		switch (ch) {

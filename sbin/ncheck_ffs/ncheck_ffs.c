@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncheck_ffs.c,v 1.51 2015/10/11 19:00:40 doug Exp $	*/
+/*	$OpenBSD: ncheck_ffs.c,v 1.52 2015/11/23 19:19:30 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 SigmaSoft, Th. Lockert <tholo@sigmasoft.com>
@@ -509,6 +509,9 @@ main(int argc, char *argv[])
 	ssize_t n;
 	char *ep;
 	int c, i;
+
+	if (pledge("stdio rpath disklabel", NULL) == -1)
+		err(1, "pledge");
 
 	while ((c = getopt(argc, argv, "af:i:ms")) != -1)
 		switch (c) {

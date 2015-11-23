@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsck.c,v 1.37 2015/05/29 15:57:36 deraadt Exp $	*/
+/*	$OpenBSD: fsck.c,v 1.38 2015/11/23 19:19:29 deraadt Exp $	*/
 /*	$NetBSD: fsck.c,v 1.7 1996/10/03 20:06:30 christos Exp $	*/
 
 /*
@@ -105,6 +105,9 @@ main(int argc, char *argv[])
 			warn("Can't set resource limit to max data size");
 	} else
 		warn("Can't get resource limit for data size");
+
+	if (pledge("stdio rpath wpath disklabel proc exec", NULL) == -1)
+		err(1, "pledge");
 
 	globopt[0] = '-';
 	globopt[2] = '\0';

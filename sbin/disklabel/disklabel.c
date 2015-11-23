@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.211 2015/10/17 13:27:08 krw Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.212 2015/11/23 19:19:29 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -33,6 +33,7 @@
  */
 
 #include <sys/param.h>	/* DEV_BSIZE */
+#include <sys/sysctl.h>
 #include <sys/ioctl.h>
 #include <sys/dkio.h>
 #include <sys/stat.h>
@@ -100,12 +101,26 @@ int	cmplabel(struct disklabel *, struct disklabel *);
 void	usage(void);
 u_int64_t getnum(char *, u_int64_t, u_int64_t, const char **);
 
+int64_t physmem;
+
+void
+getphysmem(void)
+{
+	size_t sz = sizeof(physmem);
+	int mib[] = { CTL_HW, HW_PHYSMEM64 };
+
+	if (sysctl(mib, 2, &physmem, &sz, NULL, (size_t)0) == -1)
+		errx(4, "can't get mem size");
+}
+
 int
 main(int argc, char *argv[])
 {
 	int ch, f, error = 0;
 	FILE *t;
 	char *autotable = NULL;
+
+	getphysmem();
 
 	while ((ch = getopt(argc, argv, "AEf:F:hRcdenp:tT:vw")) != -1)
 		switch (ch) {
@@ -175,6 +190,18 @@ main(int argc, char *argv[])
 	}
 	argc -= optind;
 	argv += optind;
+
+	if (op == EDIT) {
+		if (pledge("stdio rpath wpath cpath disklabel proc exec", NULL) == -1)
+			err(1, "pledge");
+	} else if (op == EDITOR) {
+		/* "proc exec" for man page in editor */
+		if (pledge("stdio rpath wpath disklabel proc exec", NULL) == -1)
+			err(1, "pledge");
+	} else {
+		if (pledge("stdio rpath wpath disklabel", NULL) == -1)
+			err(1, "pledge");
+	}	
 
 	if (op == UNSPEC)
 		op = READ;
