@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.120 2015/11/22 18:50:45 deraadt Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.121 2015/11/23 07:23:24 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -36,6 +36,7 @@
 #include <sys/ioctl.h>
 #include <sys/termios.h>
 #include <sys/tty.h>
+#include <sys/device.h>
 #include <sys/disklabel.h>
 #include <sys/dkio.h>
 #include <sys/mtio.h>
