@@ -1,4 +1,4 @@
-/*	$OpenBSD: zs.c,v 1.24 2015/05/07 02:17:16 jsg Exp $	*/
+/*	$OpenBSD: zs.c,v 1.25 2015/11/23 10:30:02 mpi Exp $	*/
 /*	$NetBSD: zs.c,v 1.17 2001/06/19 13:42:15 wiz Exp $	*/
 
 /*
@@ -74,7 +74,7 @@
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
 
-#include "zsc.h"	/* get the # of zs chips defined */
+#include "zs.h"
 
 /*
  * Some warts needed by z8530tty.c -
@@ -89,9 +89,9 @@ struct zsdevice {
 };
 
 /* Flags from cninit() */
-static int zs_hwflags[NZSC][2];
+static int zs_hwflags[NZS][2];
 /* Default speed for each channel */
-static int zs_defspeed[NZSC][2] = {
+static int zs_defspeed[NZS][2] = {
 	{ 38400,	/* tty00 */
 	  38400 },	/* tty01 */
 };
@@ -139,21 +139,21 @@ static u_char zs_init_reg[16] = {
  * Autoconfig
  ****************************************************************/
 
-struct cfdriver zsc_cd = {
-	NULL, "zsc", DV_TTY
+struct cfdriver zs_cd = {
+	NULL, "zs", DV_TTY
 };
 
 /* Definition of the driver for autoconfig. */
-int	zsc_match(struct device *, void *, void *);
-void	zsc_attach(struct device *, struct device *, void *);
-int	zsc_print(void *, const char *name);
+int	zs_match(struct device *, void *, void *);
+void	zs_attach(struct device *, struct device *, void *);
+int	zs_print(void *, const char *name);
 
 /* Power management hooks */
 int  zs_enable (struct zs_chanstate *);
 void zs_disable (struct zs_chanstate *);
 
-struct cfattach zsc_ca = {
-	sizeof(struct zsc_softc), zsc_match, zsc_attach
+struct cfattach zs_ca = {
+	sizeof(struct zsc_softc), zs_match, zs_attach
 };
 
 int zshard(void *);
@@ -166,7 +166,7 @@ int zs_txdma_int(void *);
  * Is the zs chip present?
  */
 int
-zsc_match(struct device *parent, void *match, void *aux)
+zs_match(struct device *parent, void *match, void *aux)
 {
 	struct confargs *ca = aux;
 	struct cfdata *cf = match;
@@ -190,7 +190,7 @@ zsc_match(struct device *parent, void *match, void *aux)
  * not set up the keyboard as ttya, etc.
  */
 void
-zsc_attach(struct device *parent, struct device *self, void *aux)
+zs_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct zsc_softc *zsc = (void *)self;
 	struct confargs *ca = aux;
@@ -199,12 +199,12 @@ zsc_attach(struct device *parent, struct device *self, void *aux)
 	struct xzs_chanstate *xcs;
 	struct zs_chanstate *cs;
 	struct zsdevice *zsd;
-	int zsc_unit, channel;
+	int zs_unit, channel;
 	int s;
 	int node, intr[3][3];
 	u_int regs[16];
 
-	zsc_unit = zsc->zsc_dev.dv_unit;
+	zs_unit = zsc->zsc_dev.dv_unit;
 
 	zsd = mapiodev(ca->ca_baseaddr + ca->ca_reg[0], ca->ca_reg[1]);
 	node = OF_child(ca->ca_node);	/* ch-a */
@@ -242,7 +242,7 @@ zsc_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	for (channel = 0; channel < 2; channel++) {
 		zsc_args.channel = channel;
-		zsc_args.hwflags = zs_hwflags[zsc_unit][channel];
+		zsc_args.hwflags = zs_hwflags[zs_unit][channel];
 		xcs = &zsc->xzsc_xcs_store[channel];
 		cs  = &xcs->xzs_cs;
 		zsc->zsc_cs[channel] = cs;
@@ -266,7 +266,7 @@ zsc_attach(struct device *parent, struct device *self, void *aux)
 			cs->cs_defspeed = zs_get_speed(cs);
 		else
 			cs->cs_defspeed =
-			    zs_defspeed[zsc_unit][channel];
+			    zs_defspeed[zs_unit][channel];
 		cs->cs_defcflag = zs_def_cflag;
 
 		/* Make these correspond to cs_defcflag (-crtscts) */
@@ -329,7 +329,7 @@ zsc_attach(struct device *parent, struct device *self, void *aux)
 		 * Look for a child driver for this channel.
 		 * The child attach will setup the hardware.
 		 */
-		if (!config_found(self, (void *)&zsc_args, zsc_print)) {
+		if (!config_found(self, (void *)&zsc_args, zs_print)) {
 			/* No sub-driver.  Just reset it. */
 			u_char reset = (channel == 0) ?
 				ZSWR9_A_RESET : ZSWR9_B_RESET;
@@ -372,7 +372,7 @@ zsc_attach(struct device *parent, struct device *self, void *aux)
 }
 
 int
-zsc_print(void *aux, const char *name)
+zs_print(void *aux, const char *name)
 {
 	struct zsc_attach_args *args = aux;
 
@@ -425,14 +425,14 @@ zshard(void *arg)
 	int unit, rval;
 
 	rval = 0;
-	for (unit = 0; unit < zsc_cd.cd_ndevs; unit++) {
-		zsc = zsc_cd.cd_devs[unit];
+	for (unit = 0; unit < zs_cd.cd_ndevs; unit++) {
+		zsc = zs_cd.cd_devs[unit];
 		if (zsc == NULL)
 			continue;
 		rval |= zsc_intr_hard(zsc);
 		if (zsc->zsc_cs[0]->cs_softreq)
 		{
-			/* zsc_req_softint(zsc); */
+			/* zs_req_softint(zsc); */
 			/* We are at splzs here, so no need to lock. */
 			if (zssoftpending == 0) {
 				zssoftpending = 1;
@@ -463,8 +463,8 @@ zssoft(arg)
 	 */
 	zssoftpending = 0;
 
-	for (unit = 0; unit < zsc_cd.cd_ndevs; ++unit) {
-		zsc = zsc_cd.cd_devs[unit];
+	for (unit = 0; unit < zs_cd.cd_ndevs; ++unit) {
+		zsc = zs_cd.cd_devs[unit];
 		if (zsc == NULL)
 			continue;
 		(void) zsc_intr_soft(zsc);
@@ -482,7 +482,7 @@ zs_txdma_int(arg)
 	int unit = 0;			/* XXX */
 	extern int zstty_txdma_int();
 
-	zsc = zsc_cd.cd_devs[unit];
+	zsc = zs_cd.cd_devs[unit];
 	if (zsc == NULL)
 		panic("zs_txdma_int");
 
@@ -508,7 +508,7 @@ zs_dma_setup(cs, pa, len)
 	dbdma_command_t *cmdp;
 	int ch = cs->cs_channel;
 
-	zsc = zsc_cd.cd_devs[ch];
+	zsc = zs_cd.cd_devs[ch];
 	cmdp = zsc->zsc_txdmacmd[ch];
 
 	DBDMA_BUILD(cmdp, DBDMA_CMD_OUT_LAST, 0, len, kvtop(pa),

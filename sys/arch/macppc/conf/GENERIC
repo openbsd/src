@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.252 2015/08/30 09:49:41 mpi Exp $g
+#	$OpenBSD: GENERIC,v 1.253 2015/11/23 10:30:02 mpi Exp $g
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -158,8 +158,8 @@ wskbd*		at akbd? mux 1
 ams*		at adb?		# ADB mouse
 wsmouse*	at ams?	mux 0
 abtn*		at adb?		# ADB button?
-zsc*		at macobio?
-zstty*		at zsc?
+zs*		at macobio?
+zstty*		at zs?
 
 awacs*		at macobio?	# Apple audio device
 kiic*		at macobio?	# Keywest I2C
