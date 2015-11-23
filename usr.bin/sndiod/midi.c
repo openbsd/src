@@ -1,4 +1,4 @@
-/*	$OpenBSD: midi.c,v 1.12 2015/11/23 09:48:25 ratchov Exp $	*/
+/*	$OpenBSD: midi.c,v 1.13 2015/11/23 18:16:41 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -375,13 +375,11 @@ midi_out(struct midi *oep, unsigned char *idata, int icount)
 	}
 }
 
-#ifdef DEBUG
 void
 port_log(struct port *p)
 {
 	midi_log(p->midi);
 }
-#endif
 
 void
 port_imsg(void *arg, unsigned char *msg, int size)
