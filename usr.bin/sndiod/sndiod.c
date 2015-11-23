@@ -1,4 +1,4 @@
-/*	$OpenBSD: sndiod.c,v 1.14 2015/11/23 12:01:04 ratchov Exp $	*/
+/*	$OpenBSD: sndiod.c,v 1.15 2015/11/23 12:33:20 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -370,7 +370,7 @@ main(int argc, char **argv)
 	setsig();
 	filelist_init();
 
-	while ((c = getopt(argc, argv, "a:b:c:C:de:f:j:L:m:Mq:r:s:t:U:v:w:x:z:")) != -1) {
+	while ((c = getopt(argc, argv, "a:b:c:C:de:f:j:L:m:q:r:s:t:U:v:w:x:z:")) != -1) {
 		switch (c) {
 		case 'd':
 			log_level++;
@@ -445,9 +445,6 @@ main(int argc, char **argv)
 			break;
 		case 'f':
 			mkdev(optarg, &par, 0, bufsz, round, rate, hold, autovol);
-			break;
-		case 'M':
-			/* XXX: for compatibility with aucat, remove this */
 			break;
 		default:
 			fputs(usagestr, stderr);
