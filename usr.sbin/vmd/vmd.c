@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.4 2015/11/23 13:04:49 reyk Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.5 2015/11/23 20:18:33 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -177,7 +177,7 @@ __dead void
 usage(void)
 {
 	extern char *__progname;
-	fprintf(stderr, "usage: %s [-dv]", __progname);
+	fprintf(stderr, "usage: %s [-dv]\n", __progname);
 	exit(1);
 }
 
