@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.18 2015/09/05 11:19:20 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.19 2015/11/23 10:02:42 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -1223,7 +1223,7 @@ dev_bynum(int num)
 	struct dev *d;
 
 	for (d = dev_list; d != NULL; d = d->next) {
-		if (num-- == 0)
+		if (d->num == num)
 			return d;
 	}
 	return NULL;
