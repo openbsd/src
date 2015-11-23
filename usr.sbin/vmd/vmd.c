@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.5 2015/11/23 20:18:33 reyk Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.6 2015/11/23 21:07:29 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -53,6 +53,7 @@
 #include <syslog.h>
 #include <termios.h>
 #include <unistd.h>
+#include <poll.h>
 #include <util.h>
 
 #include "vmd.h"
@@ -161,6 +162,8 @@ extern char *__progname;
 void
 sighdlr(int sig)
 {
+	pid_t pid;
+
 	switch (sig) {
 	case SIGTERM:
 	case SIGINT:
@@ -168,7 +171,9 @@ sighdlr(int sig)
 		quit = 1;
 		break;
 	case SIGCHLD:
-		while (waitpid(WAIT_ANY, 0, WNOHANG) > 0) {}
+		do {
+			pid = waitpid(WAIT_ANY, NULL, WNOHANG);
+		} while(pid != -1 || (pid != -1 && errno == EINTR));
 		break;
 	}
 }
@@ -246,11 +251,12 @@ control_run(void)
 {
 	struct sockaddr_un sun, c_sun;
 	socklen_t len;
-	int fd, connfd, n, res;
+	int fd, connfd, n, res, nfd;
 	mode_t mode, old_umask;
 	char *socketpath;
 	struct imsgbuf *ibuf;
 	struct imsg imsg;
+	struct pollfd pfd[1];
 
 	/* Establish and start listening on control socket */
 	socketpath = SOCKET_NAME;
@@ -312,6 +318,22 @@ control_run(void)
 	}
 
 	while (!quit) {
+		pfd[0].fd = fd;
+		pfd[0].events = POLLIN;
+
+		nfd = poll(pfd, 1, INFTIM);
+		if (nfd == -1) {
+			if (errno == EINTR)
+				continue;
+			fatal("poll");
+		}
+		if (nfd == 0)
+			continue;
+		if ((pfd[0].revents & (POLLERR|POLLNVAL)))
+			fatalx("bad fd %d", fd);
+		if ((pfd[0].revents & (POLLIN|POLLHUP)) == 0)
+			fatalx("bad fd %d events", fd);
+
 		if ((connfd = accept4(fd, (struct sockaddr *)&c_sun, &len,
 		    SOCK_CLOEXEC)) == -1) {
 			log_warn("%s: accept4 error", __progname);
