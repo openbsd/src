@@ -1,4 +1,4 @@
-/*	$OpenBSD: identcpu.c,v 1.66 2015/11/13 07:52:20 mlarkin Exp $	*/
+/*	$OpenBSD: identcpu.c,v 1.67 2015/11/23 22:57:12 deraadt Exp $	*/
 /*	$NetBSD: identcpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*
@@ -48,9 +48,9 @@
 void	replacesmap(void);
 u_int64_t cpu_tsc_freq(struct cpu_info *);
 u_int64_t cpu_tsc_freq_ctr(struct cpu_info *);
-#ifdef VMM
+#if NVMM > 0
 void	cpu_check_vmm_cap(struct cpu_info *);
-#endif /* VMM */
+#endif /* NVMM > 0 */
 
 /* sysctl wants this. */
 char cpu_model[48];
@@ -628,9 +628,9 @@ identifycpu(struct cpu_info *ci)
 	}
 
 	cpu_topology(ci);
-#ifdef VMM
+#if NVMM > 0
 	cpu_check_vmm_cap(ci);
-#endif /* VMM */
+#endif /* NVMM > 0 */
 }
 
 #ifndef SMALL_KERNEL
@@ -754,7 +754,7 @@ no_topology:
 	ci->ci_pkg_id  = 0;
 }
 
-#ifdef VMM
+#if NVMM > 0
 /*
  * cpu_check_vmm_cap
  *
@@ -845,4 +845,4 @@ cpu_check_vmm_cap(struct cpu_info *ci)
 			ci->ci_vmm_flags |= CI_VMM_RVI;
 	}
 }
-#endif /* VMM */
+#endif /* NVMM > 0 */

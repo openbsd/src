@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.34 2015/11/13 07:52:20 mlarkin Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.35 2015/11/23 22:57:12 deraadt Exp $	*/
 /*	$NetBSD: mainbus.c,v 1.1 2003/04/26 18:39:29 fvdl Exp $	*/
 
 /*
@@ -240,10 +240,10 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 		config_found(self, &mba_iba, mainbus_print);
 #endif
 
-#ifdef VMM
+#if NVMM > 0
 	mba.mba_busname = "vmm";
 	config_found(self, &mba.mba_busname, mainbus_print);
-#endif /* VMM */
+#endif /* NVMM > 0 */
 
 #if NEFIFB > 0
 	if (bios_efiinfo != NULL) {

@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.400 2015/11/13 07:52:20 mlarkin Exp $
+#	$OpenBSD: GENERIC,v 1.401 2015/11/23 22:57:12 deraadt Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -24,7 +24,6 @@ option		MTRR		# CPU memory range attributes control
 
 option		NTFS		# NTFS support
 option		HIBERNATE	# Hibernate support
-#option		VMM		# VMM support
 
 config		bsd	swap generic
 

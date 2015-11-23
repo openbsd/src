@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.98 2015/11/13 07:52:20 mlarkin Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.99 2015/11/23 22:57:12 deraadt Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 2003/04/26 18:39:39 fvdl Exp $	*/
 
 /*-
@@ -54,7 +54,6 @@
 
 #ifdef _KERNEL
 
-#ifdef VMM
 /* VMXON region (Intel) */
 struct vmxon_region {
         uint32_t        vr_revision;
@@ -82,7 +81,6 @@ union vmm_cpu_cap {
 	struct vmx vcc_vmx;
 	struct svm vcc_svm;
 };
-#endif /* VMM */
 
 struct x86_64_tss;
 struct cpu_info {
@@ -177,7 +175,6 @@ struct cpu_info {
 #ifdef GPROF
 	struct gmonparam	*ci_gmon;
 #endif
-#ifdef VMM
 	u_int32_t	ci_vmm_flags;
 #define	CI_VMM_VMX	(1 << 0)
 #define	CI_VMM_SVM	(1 << 1)
@@ -186,7 +183,6 @@ struct cpu_info {
 	union		vmm_cpu_cap ci_vmm_cap;
 	paddr_t		ci_vmxon_region_pa;
 	struct vmxon_region *ci_vmxon_region;
-#endif /* VMM */
 };
 
 #define CPUF_BSP	0x0001		/* CPU is the original BSP */

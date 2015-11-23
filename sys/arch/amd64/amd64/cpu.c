@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.90 2015/11/16 10:08:41 mpi Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.91 2015/11/23 22:57:12 deraadt Exp $	*/
 /* $NetBSD: cpu.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $ */
 
 /*-
@@ -115,9 +115,9 @@ int     cpu_match(struct device *, void *, void *);
 void    cpu_attach(struct device *, struct device *, void *);
 int     cpu_activate(struct device *, int);
 void	patinit(struct cpu_info *ci);
-#ifdef VMM
+#if NVMM > 0
 void	cpu_init_vmm(struct cpu_info *ci);
-#endif /* VMM */
+#endif /* NVMM > 0 */
 
 struct cpu_softc {
 	struct device sc_dev;		/* device tree glue */
@@ -467,9 +467,9 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 		    sc->sc_dev.dv_xname, pcb, pcb->pcb_rsp);
 	}
 #endif
-#ifdef VMM
+#if NVMM > 0
 	cpu_init_vmm(ci);
-#endif /* VMM */
+#endif /* NVMM > 0 */
 }
 
 /*
@@ -522,7 +522,7 @@ cpu_init(struct cpu_info *ci)
 #endif
 }
 
-#ifdef VMM
+#if NVMM > 0
 /*
  * cpu_init_vmm
  *
@@ -545,7 +545,7 @@ cpu_init_vmm(struct cpu_info *ci)
 			panic("Can't locate VMXON region in phys mem\n");
 	}
 }
-#endif /* VMM */
+#endif /* NVMM > 0 */
 
 #ifdef MULTIPROCESSOR
 void

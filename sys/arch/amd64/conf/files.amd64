@@ -1,4 +1,4 @@
-#	$OpenBSD: files.amd64,v 1.83 2015/11/13 07:52:20 mlarkin Exp $
+#	$OpenBSD: files.amd64,v 1.84 2015/11/23 22:57:12 deraadt Exp $
 
 maxpartitions 16
 maxusers 2 16 128
@@ -231,8 +231,8 @@ file	arch/amd64/amd64/acpi_wakecode.S	acpi & !small_kernel
 #
 device vmm {}
 attach vmm at mainbus
-file	arch/amd64/amd64/vmm.c			vmm & !small_kernel  needs-flag
-file	arch/amd64/amd64/vmm_support.S		vmm & !small_kernel
+file	arch/amd64/amd64/vmm.c			vmm		needs-flag
+file	arch/amd64/amd64/vmm_support.S		vmm
 
 #
 # Machine-independent SD/MMC drivers
