@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.296 2015/11/22 09:40:07 reyk Exp $ */
+/* $OpenBSD: acpi.c,v 1.297 2015/11/23 00:10:53 reyk Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -2924,7 +2924,7 @@ acpiioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		pi->battery_life = remaining / bats;
 		if (pi->battery_life > 50)
 			pi->battery_state = APM_BATT_HIGH;
-		else if (pi->battery_life > 10)
+		else if (pi->battery_life > 25)
 			pi->battery_state = APM_BATT_LOW;
 		else
 			pi->battery_state = APM_BATT_CRITICAL;
