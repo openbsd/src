@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_srp.c,v 1.6 2015/09/11 20:21:01 dlg Exp $ */
+/*	$OpenBSD: kern_srp.c,v 1.7 2015/11/23 10:56:19 mpi Exp $ */
 
 /*
  * Copyright (c) 2014 Jonathan Matthew <jmatthew@openbsd.org>
@@ -21,6 +21,7 @@
 #include <sys/systm.h>
 #include <sys/timeout.h>
 #include <sys/srp.h>
+#include <sys/atomic.h>
 
 void	srp_v_gc_start(struct srp_gc *, struct srp *, void *);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: refcnt.h,v 1.2 2015/09/13 09:05:33 dlg Exp $ */
+/*	$OpenBSD: refcnt.h,v 1.3 2015/11/23 10:56:20 mpi Exp $ */
 
 /*
  * Copyright (c) 2015 David Gwynne <dlg@openbsd.org>
@@ -27,12 +27,9 @@ struct refcnt {
 
 #define REFCNT_INITIALIZER()	{ .refs = 1 }
 
-#include <sys/atomic.h>
-
-#define refcnt_init(_r)		do { (_r)->refs = 1; } while (0)
-#define refcnt_take(_r)		atomic_inc_int(&(_r)->refs)
-#define refcnt_rele(_r)		(atomic_dec_int_nv(&(_r)->refs) == 0)
-
+void	refcnt_init(struct refcnt *);
+void	refcnt_take(struct refcnt *);
+int	refcnt_rele(struct refcnt *);
 void	refcnt_rele_wake(struct refcnt *);
 void	refcnt_finalize(struct refcnt *, const char *);
 
