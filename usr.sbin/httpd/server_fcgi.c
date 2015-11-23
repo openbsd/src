@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_fcgi.c,v 1.66 2015/10/08 09:40:32 jsg Exp $	*/
+/*	$OpenBSD: server_fcgi.c,v 1.67 2015/11/23 20:56:15 reyk Exp $	*/
 
 /*
  * Copyright (c) 2014 Florian Obser <florian@openbsd.org>
@@ -122,7 +122,8 @@ server_fcgi(struct httpd *env, struct client *clt)
 		struct sockaddr_un	 sun;
 		size_t			 len;
 
-		if ((fd = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
+		if ((fd = socket(AF_UNIX,
+		    SOCK_STREAM | SOCK_NONBLOCK, 0)) == -1)
 			goto fail;
 
 		memset(&sun, 0, sizeof(sun));
@@ -138,8 +139,6 @@ server_fcgi(struct httpd *env, struct client *clt)
 		if (connect(fd, (struct sockaddr *)&sun, sizeof(sun)) == -1)
 			goto fail;
 	}
-
-	socket_set_blockmode(fd, BM_NONBLOCK);
 
 	memset(hbuf, 0, sizeof(hbuf));
 	clt->clt_fcgi_state = FCGI_READ_HEADER;

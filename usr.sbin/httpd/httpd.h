@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.h,v 1.100 2015/11/22 13:27:13 reyk Exp $	*/
+/*	$OpenBSD: httpd.h,v 1.101 2015/11/23 20:56:14 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -163,11 +163,6 @@ struct {
 	struct event	 ev;
 	int		 fd;
 } control_state;
-
-enum blockmodes {
-	BM_NORMAL,
-	BM_NONBLOCK
-};
 
 struct imsgev {
 	struct imsgbuf		 ibuf;
@@ -524,7 +519,6 @@ void	 control_dispatch_imsg(int, short, void *);
 void	 control_imsg_forward(struct imsg *);
 struct ctl_conn	*
 	 control_connbyfd(int);
-void	 socket_set_blockmode(int, enum blockmodes);
 
 extern  struct ctl_connlist ctl_conns;
 

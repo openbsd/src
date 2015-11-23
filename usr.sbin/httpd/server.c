@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.81 2015/11/05 18:00:43 florian Exp $	*/
+/*	$OpenBSD: server.c,v 1.82 2015/11/23 20:56:14 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -441,7 +441,8 @@ server_socket(struct sockaddr_storage *ss, in_port_t port,
 	if (server_socket_af(ss, port) == -1)
 		goto bad;
 
-	s = fd == -1 ? socket(ss->ss_family, SOCK_STREAM, IPPROTO_TCP) : fd;
+	s = fd == -1 ? socket(ss->ss_family, SOCK_STREAM | SOCK_NONBLOCK,
+	    IPPROTO_TCP) : fd;
 	if (s == -1)
 		goto bad;
 
@@ -457,8 +458,6 @@ server_socket(struct sockaddr_storage *ss, in_port_t port,
 		    sizeof(int)) == -1)
 			goto bad;
 	}
-	if (fcntl(s, F_SETFL, O_NONBLOCK) == -1)
-		goto bad;
 	if (srv_conf->tcpflags & TCPFLAG_BUFSIZ) {
 		val = srv_conf->tcpbufsiz;
 		if (setsockopt(s, SOL_SOCKET, SO_RCVBUF,
@@ -857,9 +856,6 @@ server_accept(int fd, short event, void *arg)
 		return;
 	}
 	if (server_clients >= SERVER_MAX_CLIENTS)
-		goto err;
-
-	if (fcntl(s, F_SETFL, O_NONBLOCK) == -1)
 		goto err;
 
 	if ((clt = calloc(1, sizeof(*clt))) == NULL)

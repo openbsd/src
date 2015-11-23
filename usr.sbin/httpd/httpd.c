@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.c,v 1.49 2015/11/22 13:27:13 reyk Exp $	*/
+/*	$OpenBSD: httpd.c,v 1.50 2015/11/23 20:56:14 reyk Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -963,7 +963,7 @@ accept_reserve(int sockfd, struct sockaddr *addr, socklen_t *addrlen,
 		return (-1);
 	}
 
-	if ((ret = accept(sockfd, addr, addrlen)) > -1) {
+	if ((ret = accept4(sockfd, addr, addrlen, SOCK_NONBLOCK)) > -1) {
 		(*counter)++;
 		DPRINTF("%s: inflight incremented, now %d",__func__, *counter);
 	}
