@@ -1,4 +1,4 @@
-/*	$OpenBSD: debug.c,v 1.11 2015/01/16 06:39:58 deraadt Exp $	*/
+/*	$OpenBSD: debug.c,v 1.12 2015/11/23 15:38:52 mmcc Exp $	*/
 /*
  * Copyright (c) 2000 Christoph Herrmann, Thomas-Henning von Kamptz
  * Copyright (c) 1980, 1989, 1993 The Regents of the University of California.
@@ -41,8 +41,6 @@
  *
  */
 
-/* ********************************************************** INCLUDES ***** */
-
 #include <limits.h>
 #include <stdio.h>
 #include <string.h>
@@ -57,7 +55,6 @@
 
 #ifdef FS_DEBUG
 
-/* *********************************************************** GLOBALS ***** */
 static FILE	*dbg_log;
 static unsigned int	indent;
 
@@ -65,7 +62,6 @@ static unsigned int	indent;
  * prototypes not done here, as they come with debug.h
  */
 
-/* ********************************************************** dbg_open ***** */
 /*
  * Open the filehandle where all debug output has to go.
  */
@@ -81,7 +77,6 @@ dbg_open(const char *fn)
 	return;
 }
 
-/* ********************************************************* dbg_close ***** */
 /*
  * Close the filehandle where all debug output went to.
  */
@@ -98,7 +93,6 @@ dbg_close(void)
 	return;
 }
 
-/* ****************************************************** dbg_dump_hex ***** */
 /*
  * Dump out a full file system block in hex.
  */
@@ -127,7 +121,6 @@ dbg_dump_hex(struct fs *sb, const char *comment, unsigned char *mem)
 	return;
 }
 
-/* ******************************************************* dbg_dump_fs ***** */
 /*
  * Dump the superblock.
  */
@@ -361,7 +354,6 @@ dbg_dump_fs(struct fs *sb, const char *comment)
 	return;
 }
 
-/* ******************************************************* dbg_dump_cg ***** */
 /*
  * Dump a cylinder group.
  */
@@ -417,7 +409,6 @@ dbg_dump_cg(const char *comment, struct cg *cgr)
 	return;
 }
 
-/* ***************************************************** dbg_dump_csum ***** */
 /*
  * Dump a cylinder summary.
  */
@@ -443,7 +434,6 @@ dbg_dump_csum(const char *comment, struct csum *cs)
 	return;
 }
 
-/* ************************************************ dbg_dump_csum_total ***** */
 /*
  * Dump a cylinder summary.
  */
@@ -481,7 +471,6 @@ dbg_dump_csum_total(const char *comment, struct csum_total *cs)
 
 	return;
 }
-/* **************************************************** dbg_dump_inmap ***** */
 /*
  * Dump the inode allocation map in one cylinder group.
  */
@@ -525,7 +514,6 @@ dbg_dump_inmap(struct fs *sb, const char *comment, struct cg *cgr)
 }
 
 
-/* **************************************************** dbg_dump_frmap ***** */
 /*
  * Dump the fragment allocation map in one cylinder group.
  */
@@ -571,7 +559,6 @@ dbg_dump_frmap(struct fs *sb, const char *comment, struct cg *cgr)
 	return;
 }
 
-/* **************************************************** dbg_dump_clmap ***** */
 /*
  * Dump the cluster allocation map in one cylinder group.
  */
@@ -617,7 +604,6 @@ dbg_dump_clmap(struct fs *sb, const char *comment, struct cg *cgr)
 	return;
 }
 
-/* **************************************************** dbg_dump_clsum ***** */
 /*
  * Dump the cluster availability summary of one cylinder group.
  */
@@ -653,7 +639,6 @@ dbg_dump_clsum(struct fs *sb, const char *comment, struct cg *cgr)
  * will leave it disabled for now; it should probably be re-enabled
  * specifically for UFS1.
  */
-/* **************************************************** dbg_dump_sptbl ***** */
 /*
  * Dump the block summary, and the rotational layout table.
  */
@@ -690,7 +675,6 @@ dbg_dump_sptbl(struct fs *sb, const char *comment, struct cg *cgr)
 }
 #endif
 
-/* ****************************************************** dbg_dump_ino ***** */
 /*
  * Dump an UFS1 inode structure.
  */
@@ -757,7 +741,6 @@ dbg_dump_ino(struct fs *sb, const char *comment, struct ufs1_dinode *ino)
 	return;
 }
 
-/* ************************************************** dbg_dump_ufs2_ino ***** */
 /*
  * Dump a UFS2 inode structure.
  */
@@ -829,7 +812,6 @@ dbg_dump_ufs2_ino(struct fs *sb, const char *comment, struct ufs2_dinode *ino)
 	return;
 }
 
-/* ***************************************************** dbg_dump_iblk ***** */
 /*
  * Dump an indirect block. The iteration to dump a full file has to be
  * written around.
