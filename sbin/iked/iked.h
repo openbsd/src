@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.93 2015/11/22 13:27:13 reyk Exp $	*/
+/*	$OpenBSD: iked.h,v 1.94 2015/11/23 19:28:34 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -881,7 +881,6 @@ struct imsgev *
 	 proc_iev(struct privsep *, enum privsep_procid, int);
 
 /* util.c */
-void	 socket_set_blockmode(int, enum blockmodes);
 int	 socket_af(struct sockaddr *, in_port_t);
 in_port_t
 	 socket_getport(struct sockaddr *);

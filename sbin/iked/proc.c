@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.c,v 1.25 2015/11/22 13:27:13 reyk Exp $	*/
+/*	$OpenBSD: proc.c,v 1.26 2015/11/23 19:28:34 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -178,12 +178,10 @@ proc_open(struct privsep *ps, struct privsep_proc *p,
 				if (pa->pp_pipes[procs[proc].p_id][j] != -1)
 					continue;
 
-				if (socketpair(AF_UNIX, SOCK_STREAM,
+				if (socketpair(AF_UNIX,
+				    SOCK_STREAM | SOCK_NONBLOCK,
 				    PF_UNSPEC, fds) == -1)
 					fatal("socketpair");
-
-				socket_set_blockmode(fds[0], BM_NONBLOCK);
-				socket_set_blockmode(fds[1], BM_NONBLOCK);
 
 				pa->pp_pipes[procs[proc].p_id][j] = fds[0];
 				pb->pp_pipes[src][i] = fds[1];

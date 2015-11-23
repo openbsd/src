@@ -1,4 +1,4 @@
-/*	$OpenBSD: ocsp.c,v 1.6 2015/08/21 11:59:27 reyk Exp $ */
+/*	$OpenBSD: ocsp.c,v 1.7 2015/11/23 19:28:34 reyk Exp $ */
 
 /*
  * Copyright (c) 2014 Markus Friedl
@@ -88,7 +88,7 @@ ocsp_connect(struct iked *env)
 		goto done;
 	}
 
-	if ((fd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+	if ((fd = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0)) < 0) {
 		log_debug("%s: socket failed", __func__);
 		goto done;
 	}
@@ -122,7 +122,6 @@ ocsp_connect(struct iked *env)
 	path = NULL;
 
 	log_debug("%s: connect(%s, %s)", __func__, host, port);
-	socket_set_blockmode(fd, BM_NONBLOCK);
 	if (connect(fd, res->ai_addr, res->ai_addrlen) == -1) {
 		/* register callback for ansync connect */
 		if (errno == EINPROGRESS) {

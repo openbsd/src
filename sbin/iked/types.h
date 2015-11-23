@@ -1,4 +1,4 @@
-/*	$OpenBSD: types.h,v 1.23 2015/10/22 15:55:18 reyk Exp $	*/
+/*	$OpenBSD: types.h,v 1.24 2015/11/23 19:28:34 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -117,11 +117,6 @@ enum privsep_procid {
 	PROC_CERT,
 	PROC_IKEV2,
 	PROC_MAX
-};
-
-enum blockmodes {
-	BM_NORMAL,
-	BM_NONBLOCK
 };
 
 enum flushmode {

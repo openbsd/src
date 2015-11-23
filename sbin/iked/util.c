@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.29 2015/11/21 12:59:24 reyk Exp $	*/
+/*	$OpenBSD: util.c,v 1.30 2015/11/23 19:28:34 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -38,23 +38,6 @@
 /* log.c */
 extern int	 debug;
 extern int	 verbose;
-
-void
-socket_set_blockmode(int fd, enum blockmodes bm)
-{
-	int	flags;
-
-	if ((flags = fcntl(fd, F_GETFL, 0)) == -1)
-		fatal("fcntl F_GETFL");
-
-	if (bm == BM_NONBLOCK)
-		flags |= O_NONBLOCK;
-	else
-		flags &= ~O_NONBLOCK;
-
-	if ((flags = fcntl(fd, F_SETFL, flags)) == -1)
-		fatal("fcntl F_SETFL");
-}
 
 int
 socket_af(struct sockaddr *sa, in_port_t port)
@@ -187,7 +170,8 @@ udp_bind(struct sockaddr *sa, in_port_t port)
 		return (-1);
 	}
 
-	if ((s = socket(sa->sa_family, SOCK_DGRAM, IPPROTO_UDP)) == -1) {
+	if ((s = socket(sa->sa_family,
+	    SOCK_DGRAM | SOCK_NONBLOCK, IPPROTO_UDP)) == -1) {
 		log_warn("%s: failed to get UDP socket", __func__);
 		return (-1);
 	}
