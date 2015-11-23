@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr.c,v 1.48 2015/10/28 21:38:45 eric Exp $	*/
+/*	$OpenBSD: asr.c,v 1.49 2015/11/23 18:04:53 deraadt Exp $	*/
 /*
  * Copyright (c) 2010-2012 Eric Faurot <eric@openbsd.org>
  *
@@ -560,9 +560,9 @@ pass0(char **tok, int n, struct asr_ctx *ac)
 					return;
 		ac->ac_dbcount = 0;
 		for (i = 1; i < n && ac->ac_dbcount < ASR_MAXDB; i++) {
-			if (!strcmp(tok[i], "yp"))
-				ac->ac_db[ac->ac_dbcount++] = ASR_DB_YP;
-			else if (!strcmp(tok[i], "bind"))
+			if (!strcmp(tok[i], "yp")) {
+				/* silently deprecated */
+			} else if (!strcmp(tok[i], "bind"))
 				ac->ac_db[ac->ac_dbcount++] = ASR_DB_DNS;
 			else if (!strcmp(tok[i], "file"))
 				ac->ac_db[ac->ac_dbcount++] = ASR_DB_FILE;

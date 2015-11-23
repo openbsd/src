@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr_private.h,v 1.36 2015/10/28 21:38:45 eric Exp $	*/
+/*	$OpenBSD: asr_private.h,v 1.37 2015/11/23 18:04:54 deraadt Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -119,7 +119,6 @@ enum async_type {
 
 #define	ASR_DB_FILE	'f'
 #define	ASR_DB_DNS	'b'
-#define	ASR_DB_YP	'y'
 
 struct asr_ctx {
 	int		 ac_refcount;

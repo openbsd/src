@@ -1,4 +1,4 @@
-.\"	$OpenBSD: resolv.conf.5,v 1.47 2015/10/28 11:52:26 deraadt Exp $
+.\"	$OpenBSD: resolv.conf.5,v 1.48 2015/11/23 18:04:53 deraadt Exp $
 .\"	$NetBSD: resolv.conf.5,v 1.7 1996/03/06 18:22:16 scottr Exp $
 .\"
 .\" Copyright (c) 1986, 1991 The Regents of the University of California.
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)resolver.5	5.12 (Berkeley) 5/10/91
 .\"
-.Dd $Mdocdate: October 28 2015 $
+.Dd $Mdocdate: November 23 2015 $
 .Dt RESOLV.CONF 5
 .Os
 .Sh NAME
@@ -154,10 +154,6 @@ Query a domain name server.
 .It Cm file
 Search for entries in
 .Pa /etc/hosts .
-.It Cm yp
-Talk to the YP system if
-.Xr ypbind 8
-is running.
 .El
 .Pp
 If the

@@ -1,4 +1,4 @@
-/*	$OpenBSD: gethostnamadr_async.c,v 1.40 2015/09/20 14:19:21 eric Exp $	*/
+/*	$OpenBSD: gethostnamadr_async.c,v 1.41 2015/11/23 18:04:54 deraadt Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -31,13 +31,6 @@
 #include <unistd.h>
 #include <limits.h>
 
-#ifdef YP
-#include <rpc/rpc.h>
-#include <rpcsvc/yp.h>
-#include <rpcsvc/ypclnt.h>
-#include "ypinternal.h"
-#endif
-
 #include "asr_private.h"
 
 #define MAXALIASES	35
@@ -60,10 +53,6 @@ static struct hostent_ext *hostent_from_addr(int, const char *, const char *);
 static struct hostent_ext *hostent_file_match(FILE *, int, int, const char *,
     int);
 static struct hostent_ext *hostent_from_packet(int, int, char *, size_t);
-#ifdef YP
-static struct hostent_ext *_yp_gethostnamadr(int, const void *);
-static struct hostent_ext *hostent_from_yp(int, char *);
-#endif
 
 struct asr_query *
 gethostbyname_async(const char *name, void *asr)
@@ -283,34 +272,6 @@ gethostnamadr_async_run(struct asr_query *as, struct asr_result *ar)
 			ar->ar_h_errno = NETDB_SUCCESS;
 			async_set_state(as, ASR_STATE_HALT);
 			break;
-#ifdef YP
-		case ASR_DB_YP:
-			/* IPv4 only */
-			if (as->as.hostnamadr.family != AF_INET)
-				break;
-			if (as->as_type == ASR_GETHOSTBYNAME) {
-				data = _asr_hostalias(as->as_ctx,
-				    as->as.hostnamadr.name, name, sizeof(name));
-				if (data == NULL)
-					data = as->as.hostnamadr.name;
-			}
-			else
-				data = as->as.hostnamadr.addr;
-			h = _yp_gethostnamadr(as->as_type, data);
-			if (h == NULL) {
-				if (errno) {
-					ar->ar_errno = errno;
-					ar->ar_h_errno = NETDB_INTERNAL;
-					async_set_state(as, ASR_STATE_HALT);
-				}
-				/* otherwise not found */
-				break;
-			}
-			ar->ar_hostent = &h->h;
-			ar->ar_h_errno = NETDB_SUCCESS;
-			async_set_state(as, ASR_STATE_HALT);
-			break;
-#endif
 		}
 		break;
 
@@ -650,95 +611,3 @@ hostent_add_addr(struct hostent_ext *h, const void *addr, size_t size)
 	h->pos += size;
 	return (0);
 }
-
-#ifdef YP
-static struct hostent_ext *
-_yp_gethostnamadr(int type, const void *data)
-{
-	static char		*domain = NULL;
-	struct hostent_ext	*h = NULL;
-	const char		*name;
-	char			 buf[HOST_NAME_MAX+1];
-	char			*res = NULL;
-	int			 r, len;
-
-	if (!domain && _yp_check(&domain) == 0) {
-		errno = 0; /* ignore yp_bind errors */
-		return (NULL);
-	}
-
-	if (type == ASR_GETHOSTBYNAME) {
-		name = data;
-		len = strlen(name);
-		r = yp_match(domain, "hosts.byname", name, len, &res, &len);
-	}
-	else {
-		if (inet_ntop(AF_INET, data, buf, sizeof buf) == NULL)
-			return (NULL);
-		len = strlen(buf);
-		r = yp_match(domain, "hosts.byaddr", buf, len, &res, &len);
-	}
-	if (r == 0) {
-		h = hostent_from_yp(AF_INET, res);
-	} else {
-		errno = 0; /* ignore error if not found */
-	}
-	if (res)
-		free(res);
-	return (h);
-}
-
-static int
-strsplit(char *line, char **tokens, int ntokens)
-{
-	int	ntok;
-	char	*cp, **tp;
-
-	for (cp = line, tp = tokens, ntok = 0;
-	    ntok < ntokens && (*tp = strsep(&cp, " \t")) != NULL; )
-		if (**tp != '\0') {
-			tp++;
-			ntok++;
-		}
-
-	return (ntok);
-}
-
-static struct hostent_ext *
-hostent_from_yp(int family, char *line)
-{
-	struct hostent_ext	*h;
-	char			*next, *tokens[10], addr[IN6ADDRSZ];
-	int			 i, ntok;
-
-	if ((h = hostent_alloc(family)) == NULL)
-		return (NULL);
-
-	for (next = line; line; line = next) {
-		if ((next = strchr(line, '\n'))) {
-			*next = '\0';
-			next += 1;
-		}
-		ntok = strsplit(line, tokens, 10);
-		if (ntok < 2)
-			continue;
-		if (inet_pton(family, tokens[0], addr) == 1)
-			hostent_add_addr(h, addr, family == AF_INET ?
-			    INADDRSZ : IN6ADDRSZ);
-		i = 2;
-		if (h->h.h_name == NULL)
-			hostent_set_cname(h, tokens[1], 0);
-		else if (strcmp(h->h.h_name, tokens[1]))
-			i = 1;
-		for (; i < ntok; i++)
-			hostent_add_alias(h, tokens[i], 0);
-	}
-
-	if (h->h.h_name == NULL) {
-		free(h);
-		return (NULL);
-	}
-
-	return (h);
-}
-#endif
