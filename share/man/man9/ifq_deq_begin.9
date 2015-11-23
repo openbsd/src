@@ -1,4 +1,4 @@
-.\"     $OpenBSD: ifq_deq_begin.9,v 1.1 2015/11/23 10:45:26 mpi Exp $
+.\"     $OpenBSD: ifq_deq_begin.9,v 1.2 2015/11/23 11:07:58 jmc Exp $
 .\"
 .\"  Copyright (c) 2015 David Gwynne <dlg@openbsd.org>
 .\"
@@ -21,7 +21,7 @@
 .Nm ifq_deq_begin ,
 .Nm ifq_deq_commit ,
 .Nm ifq_deq_rollback
-.Nd dequeue a mbuf from an interface sending queue
+.Nd dequeue an mbuf from an interface sending queue
 .Sh SYNOPSIS
 .In net/if_var.h
 .Ft struft mbuf *
@@ -31,10 +31,9 @@
 .Ft void
 .Fn ifq_deq_rollback "struct ifqueue *ifq" "struct mbuf *m"
 .Sh DESCRIPTION
-The  
-.Fn ifq_deq_begin
+The ifq_deq_*
 set of functions provides a non-atomic alternative to
-.Fn ifq_dequeue . 
+.Fn ifq_dequeue .
 .Bl -tag -width Ds
 .It Fn ifq_deq_begin "struct ifqueue *ifq"
 Get a reference to the next mbuf to be transmitted from the
@@ -66,7 +65,7 @@ and
 can be called during autoconf, from process context, or from interrupt context.
 .Sh RETURN VALUES
 .Fn ifq_deq_begin
-return the next mbuf to be transmitted by the interface.
+returns the next mbuf to be transmitted by the interface.
 If no packet is available for transmission,
 .Dv NULL
 is returned.
