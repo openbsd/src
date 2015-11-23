@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.c,v 1.22 2015/11/22 13:27:13 reyk Exp $	*/
+/*	$OpenBSD: proc.c,v 1.23 2015/11/23 16:41:36 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -41,6 +41,7 @@ int	 proc_ispeer(struct privsep_proc *, unsigned int, enum privsep_procid);
 void	 proc_shutdown(struct privsep_proc *);
 void	 proc_sig_handler(int, short, void *);
 void	 proc_range(struct privsep *, enum privsep_procid, int *, int *);
+int	 proc_dispatch_null(int, struct privsep_proc *, struct imsg *);
 
 int
 proc_ispeer(struct privsep_proc *procs, unsigned int nproc,
@@ -160,6 +161,8 @@ proc_open(struct privsep *ps, struct privsep_proc *p,
 	for (proc = 0; proc < nproc; proc++) {
 		procs[proc].p_ps = ps;
 		procs[proc].p_env = ps->ps_env;
+		if (procs[proc].p_cb == NULL)
+			procs[proc].p_cb = proc_dispatch_null;
 
 		for (i = 0; i < ps->ps_instances[src]; i++) {
 			for (j = 0; j < ps->ps_instances[procs[proc].p_id];
@@ -328,7 +331,7 @@ proc_sig_handler(int sig, short event, void *arg)
 pid_t
 proc_run(struct privsep *ps, struct privsep_proc *p,
     struct privsep_proc *procs, unsigned int nproc,
-    void (*init)(struct privsep *, struct privsep_proc *, void *), void *arg)
+    void (*run)(struct privsep *, struct privsep_proc *, void *), void *arg)
 {
 	pid_t			 pid;
 	struct passwd		*pw;
@@ -425,8 +428,8 @@ proc_run(struct privsep *ps, struct privsep_proc *p,
 				fatalx(__func__);
 	}
 
-	if (init != NULL)
-		init(ps, p, arg);
+	if (run != NULL)
+		run(ps, p, arg);
 
 	event_dispatch();
 
@@ -505,6 +508,12 @@ proc_dispatch(int fd, short event, void *arg)
 		imsg_free(&imsg);
 	}
 	imsg_event_add(iev);
+}
+
+int
+proc_dispatch_null(int fd, struct privsep_proc *p, struct imsg *imsg)
+{
+	return (-1);
 }
 
 /*
