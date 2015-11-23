@@ -38,6 +38,7 @@ extern	int is_at_equiv(int, int);
 extern	int apply_at_specials(int);
 extern	void putbs(void);
 extern	void match_brac(int, int, int, int);
+extern	int ch_get(void);
 extern	void ch_ungetchar(int);
 extern	void end_logfile(void);
 extern	void sync_logfile(void);
