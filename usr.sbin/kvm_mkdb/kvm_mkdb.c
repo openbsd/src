@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_mkdb.c,v 1.26 2015/11/08 17:48:48 millert Exp $	*/
+/*	$OpenBSD: kvm_mkdb.c,v 1.27 2015/11/23 21:06:14 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -70,7 +70,7 @@ main(int argc, char *argv[])
 	char *nlistpath, *nlistname;
 	char dbdir[PATH_MAX];
 
-	if (pledge("stdio rpath wpath cpath fattr flock id", NULL) == -1)
+	if (pledge("stdio rpath wpath cpath fattr getpw flock id", NULL) == -1)
 		err(1, "pledge");
 
 	/* Try to use the kmem group to be able to fchown() in kvm_mkdb(). */
