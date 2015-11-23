@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_de.c,v 1.127 2015/11/20 03:35:23 dlg Exp $	*/
+/*	$OpenBSD: if_de.c,v 1.128 2015/11/23 23:34:42 dlg Exp $	*/
 /*	$NetBSD: if_de.c,v 1.58 1998/01/12 09:39:58 thorpej Exp $	*/
 
 /*-
@@ -3259,9 +3259,6 @@ tulip_rx_intr(tulip_softc_t * const sc)
 		TULIP_RXMAP_POSTSYNC(sc, map);
 		bus_dmamap_unload(sc->tulip_dmatag, map);
 		tulip_free_rxmap(sc, map);
-#if defined(DIAGNOSTIC)
-		TULIP_SETCTX(me, NULL);
-#endif
 		me->m_len = TULIP_RX_BUFLEN;
 		last_offset += TULIP_RX_BUFLEN;
 		me->m_next = ml_dequeue(&sc->tulip_rxq);
@@ -3282,9 +3279,6 @@ tulip_rx_intr(tulip_softc_t * const sc)
 			    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 	    bus_dmamap_unload(sc->tulip_dmatag, map);
 	    tulip_free_rxmap(sc, map);
-#if defined(DIAGNOSTIC)
-	    TULIP_SETCTX(me, NULL);
-#endif
 	    sc->tulip_flags |= TULIP_RXACT;
 	    accept = 1;
 	} else {
@@ -3320,9 +3314,6 @@ tulip_rx_intr(tulip_softc_t * const sc)
 	    map = TULIP_GETCTX(me, bus_dmamap_t);
 	    bus_dmamap_unload(sc->tulip_dmatag, map);
 	    tulip_free_rxmap(sc, map);
-#if defined(DIAGNOSTIC)
-	    TULIP_SETCTX(me, NULL);
-#endif
 	}
 #if defined(TULIP_DEBUG)
 	cnt++;
@@ -3914,8 +3905,6 @@ tulip_txput(tulip_softc_t * const sc, struct mbuf *m, int notonqueue)
 	    nextout = ri->ri_first;
     }
     TULIP_TXMAP_PRESYNC(sc, map);
-    TULIP_SETCTX(m, map);
-    map = NULL;
 
     /*
      * The descriptors have been filled in.  Now get ready
@@ -3923,6 +3912,9 @@ tulip_txput(tulip_softc_t * const sc, struct mbuf *m, int notonqueue)
      */
     if (!notonqueue)
 	ifq_deq_commit(&ifp->if_snd, m);
+
+    TULIP_SETCTX(m, map);
+    map = NULL;
 
     ml_enqueue(&sc->tulip_txq, m);
     m = NULL;
