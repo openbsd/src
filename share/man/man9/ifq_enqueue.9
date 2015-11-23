@@ -1,4 +1,4 @@
-.\"     $OpenBSD: ifq_enqueue.9,v 1.1 2015/11/20 11:15:07 dlg Exp $
+.\"     $OpenBSD: ifq_enqueue.9,v 1.2 2015/11/23 10:45:26 mpi Exp $
 .\"
 .\"  Copyright (c) 2015 David Gwynne <dlg@openbsd.org>
 .\"
@@ -14,15 +14,12 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 20 2015 $
+.Dd $Mdocdate: November 23 2015 $
 .Dt IFQ_ENQUEUE 9
 .Os
 .Sh NAME
 .Nm ifq_enqueue ,
 .Nm ifq_dequeue ,
-.Nm ifq_deq_begin ,
-.Nm ifq_deq_commit ,
-.Nm ifq_deq_rollback ,
 .Nm ifq_purge ,
 .Nm ifq_len ,
 .Nm ifq_empty
@@ -33,12 +30,6 @@
 .Fn ifq_enqueue "struct ifqueue *ifq" "struct mbuf *m"
 .Ft struft mbuf *
 .Fn ifq_dequeue "struct ifqueue *ifq"
-.Ft struft mbuf *
-.Fn ifq_deq_begin "struct ifqueue *ifq"
-.Ft void
-.Fn ifq_deq_commit "struct ifqueue *ifq" "struct mbuf *m"
-.Ft void
-.Fn ifq_deq_rollback "struct ifqueue *ifq" "struct mbuf *m"
 .Ft unsigned int
 .Fn ifq_purge "struct ifqueue *ifq"
 .Ft unsigned int
@@ -63,29 +54,6 @@ and counted as a drop.
 Dequeue the next mbuf to be transmitted from the
 .Fa ifq
 interface send queue.
-.It Fn ifq_deq_begin "struct ifqueue *ifq"
-Get a reference to the next mbuf to be transmitted from the
-.Fa ifq
-interface send queue.
-If an mbuf is to be transmitted, also acquire a lock on the send queue
-to exclude modification or freeing of the referenced mbuf.
-The mbuf must not be freed, or have its length (m_pkthdr.len) or
-cookie (m_pkthdr.ph_cookie) modified until it has been dequeued
-completely with
-.Fn ifq_deq_commit .
-.It Fn ifq_deq_commit "struct ifqueue *ifq" "struct mbuf *m"
-Dequeue the mbuf
-.Fa m
-that was referenced by a previous call to
-.Fn ifq_deq_begin
-and release the lock on
-.Fa ifq .
-.It Fn ifq_deq_rollback "struct ifqueue *ifq" "struct mbuf *m"
-Release the lock on the interface send queue
-.Fa ifq
-that was acquired while a reference to
-.Fa m
-was being held.
 .It Fn ifq_purge "struct ifqueue *ifq"
 Free all the mbufs on the interface send queue
 .Fa ifq .
@@ -108,9 +76,6 @@ is empty.
 .Sh CONTEXT
 .Fn ifq_enqueue ,
 .Fn ifq_dequeue ,
-.Fn ifq_deq_begin ,
-.Fn ifq_deq_commit ,
-.Fn ifq_deq_rollback ,
 .Fn ifq_purge ,
 .Fn ifq_len ,
 and
@@ -121,8 +86,6 @@ can be called during autoconf, from process context, or from interrupt context.
 returns 0 if the mbuf was successfully queued, or non-zero if mbuf was freed.
 .Pp
 .Fn ifq_dequeue
-and
-.Fn ifq_deq_begin
 return the next mbuf to be transmitted by the interface.
 If no packet is available for transmission,
 .Dv NULL
@@ -137,4 +100,5 @@ returns the number of mbufs on the queue.
 .Fn ifq_empty
 returns a non-zero value if the queue is empty, otherwise 0.
 .Sh SEE ALSO
+.Xr ifq_deq_begin 9 ,
 .Xr m_freem 9
