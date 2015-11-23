@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.114 2015/09/13 14:43:42 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.115 2015/11/23 21:37:27 deraadt Exp $
 
 machine		macppc powerpc
 maxusers	4
@@ -125,8 +125,8 @@ macgpio*	at macobio?		# GPIO, PMU interrupt router.
 macgpio*	at macgpio?		# GPIO, PMU interrupt router.
 akbd*		at adb?			# ADB keyboard
 wskbd*		at akbd? mux 1
-zsc*		at macobio?
-zstty*		at zsc?
+zs*		at macobio?
+zstty*		at zs?
 
 mediabay*	at macobio?
 wdc*		at mediabay?
