@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.148 2015/11/20 12:05:34 sthen Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.149 2015/11/23 14:41:05 sthen Exp $	*/
 /*
  * Synchronous PPP link level subroutines.
  *
@@ -903,6 +903,7 @@ sppp_cp_send(struct sppp *sp, u_short proto, u_char type,
 	     u_char ident, u_short len, void *data)
 {
 	STDDCL;
+	int s;
 	struct lcp_header *lh;
 	struct mbuf *m;
 
@@ -940,7 +941,9 @@ sppp_cp_send(struct sppp *sp, u_short proto, u_char type,
 	}
 
 	ifp->if_obytes += len;
+	s = splnet();
 	if_start(ifp);
+	splx(s);
 }
 
 /*
@@ -3979,7 +3982,7 @@ sppp_auth_send(const struct cp *cp, struct sppp *sp,
 	struct lcp_header *lh;
 	struct mbuf *m;
 	u_char *p;
-	int len;
+	int len, s;
 	unsigned int mlen;
 	const char *msg;
 	va_list ap;
@@ -4033,7 +4036,9 @@ sppp_auth_send(const struct cp *cp, struct sppp *sp,
 	}
 
 	ifp->if_obytes += len;
+	s = splnet();
 	if_start(ifp);
+	splx(s);
 }
 
 /*
