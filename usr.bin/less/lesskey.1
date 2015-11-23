@@ -1,4 +1,4 @@
-.\"	$OpenBSD: lesskey.1,v 1.14 2015/11/23 12:02:09 tb Exp $
+.\"	$OpenBSD: lesskey.1,v 1.15 2015/11/23 12:56:13 tb Exp $
 .\"
 .\" Copyright (C) 2000-2012  Mark Nudelman
 .\"
@@ -410,13 +410,10 @@ Although the lesskey file can be used to override variables set in the
 environment, the main purpose of assigning variables in the lesskey file
 is simply to have all less configuration information stored in one file.
 .Pp
-The following input file sets the -i option whenever less is run,
-and specifies the character set to be
-.Qq latin1 :
+The following input file sets the -i option whenever less is run:
 .Bd -literal -offset indent
 #env
 LESS = -i
-LESSCHARSET = latin1
 .Ed
 .Sh ENVIRONMENT
 .Bl -tag -width LESSKEY_SYSTEM -compact

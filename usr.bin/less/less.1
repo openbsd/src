@@ -1,4 +1,4 @@
-.\"	$OpenBSD: less.1,v 1.50 2015/11/15 21:05:56 nicm Exp $
+.\"	$OpenBSD: less.1,v 1.51 2015/11/23 12:56:13 tb Exp $
 .\"
 .\" Copyright (C) 1984-2012  Mark Nudelman
 .\"
@@ -23,7 +23,7 @@
 .\" OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 .\" IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 15 2015 $
+.Dd $Mdocdate: November 23 2015 $
 .Dt LESS 1
 .Os
 .Sh NAME
@@ -1424,67 +1424,9 @@ in text files.
 .Pp
 A "character set" is simply a description of which characters are to
 be considered normal, control, and binary.
-The
-.Ev LESSCHARSET
-environment variable may be used to select a character set.
-Possible values for
-.Ev LESSCHARSET
-are:
-.Bl -tag -width "IBM-1047"
-.It ascii
-BS, TAB, NL, CR, and formfeed are control characters,
-all chars with values between 32 and 126 are normal,
-and all others are binary.
-.It iso8859
-Selects an ISO 8859 character set.
-This is the same as ASCII, except characters between 160 and 255 are
-treated as normal characters.
-.It latin1
-Same as iso8859.
-.It latin9
-Same as iso8859.
-.It dos
-Selects a character set appropriate for MS-DOS.
-.It ebcdic
-Selects an EBCDIC character set.
-.It IBM-1047
-Selects an EBCDIC character set used by OS/390
-.Ux
-Services.
-This is the EBCDIC analogue of latin1.
-You get similar results by setting either LESSCHARSET=IBM-1047 or
-LC_CTYPE=en_US in your environment.
-.It koi8-r
-Selects a Russian character set.
-.It next
-Selects a character set appropriate for NeXT computers.
-.It utf-8
-Selects the UTF-8 encoding of the ISO 10646 character set.
-UTF-8 is special in that it supports multi-byte characters in the input file.
-It is the only character set that supports multi-byte characters.
-.It windows
-Selects a character set appropriate for Microsoft Windows (cp 1251).
-.El
-.Pp
-If neither LESSCHARSET is not set,
-but any of the strings "UTF-8", "UTF8", "utf-8" or "utf8" is found in the
-.Ev LC_ALL , LC_CTYPE
-or
-.Ev LANG
-environment variables, then the default character set is utf-8.
-.Pp
-If that string is not found, but your system supports the
-setlocale interface,
 .Nm
-will use setlocale to determine the character set.
-setlocale is controlled by setting the
-.Ev LANG
-or
-.Ev LC_CTYPE
-environment variables.
-.Pp
-Finally, if the
-setlocale interface is also not available, the default character set is latin1.
+will determine the character set to use from the environment (see
+.Xr locale 1 ) .
 .Pp
 Control and binary characters are displayed in standout (reverse video).
 Each such character is displayed in caret notation if possible
@@ -1893,8 +1835,6 @@ end character in an ANSI color escape sequence
 (default "0123456789;[?!"'#%()*+\ ").
 .It Ev LESSBINFMT
 Format for displaying non-printable, non-control characters.
-.It Ev LESSCHARSET
-Selects a predefined character set.
 .It Ev LESSCLOSE
 Command line to invoke the (optional) input-postprocessor.
 .It Ev LESSEDIT
