@@ -60,6 +60,6 @@ struct loption {
 	int otype;		/* Type of the option */
 	int odefault;		/* Default value */
 	int *ovar;		/* Pointer to the associated variable */
-	void (*ofunc)();	/* Pointer to special handling function */
+	void (*ofunc)(int, char *); /* Pointer to special handling function */
 	char *odesc[3];		/* Description of each value */
 };
