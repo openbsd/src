@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.c,v 1.60 2015/01/16 06:39:59 deraadt Exp $	*/
+/*	$OpenBSD: mount.c,v 1.61 2015/11/23 23:26:59 deraadt Exp $	*/
 /*	$NetBSD: mount.c,v 1.24 1995/11/18 03:34:29 cgd Exp $	*/
 
 /*
@@ -107,6 +107,9 @@ main(int argc, char * const argv[])
 	pid_t pid;
 	int all, ch, forceall, i, mntsize, rval, new;
 	char *options, mntpath[PATH_MAX];
+
+	if (pledge("stdio rpath disklabel proc exec", NULL) == -1)
+		err(1, "pledge");
 
 	all = forceall = 0;
 	options = NULL;
