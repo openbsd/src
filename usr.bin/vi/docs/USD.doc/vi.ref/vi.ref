@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vi.ref,v 1.11 2014/11/20 08:50:53 bentley Exp $
+.\"	$OpenBSD: vi.ref,v 1.12 2015/11/23 09:03:01 bentley Exp $
 .\"
 .\" Copyright (c) 1994
 .\"     The Regents of the University of California.  All rights reserved.
@@ -719,7 +719,7 @@ swapping it with the current screen.
 If the last foregrounded screen in the window is exited,
 and there are backgrounded screens,
 the first screen on the list of backgrounded screens takes over the window.
-.SH 1 "Tags, Tag Stacks, and Cscope"
+.SH 1 "Tags and Tag Stacks"
 .pp
 .CO Nvi
 supports the historic
@@ -801,22 +801,6 @@ More sophisticated source code tools often provide multiple locations
 per tag, e.g.,
 a list of the places from which a function is called or a string
 definition is used.
-An example of this functionality is the System V source code tool,
-.CO cscope .
-.sp
-.CO Cscope
-creates a database of information on source code files,
-and supports a query language for that information as described in the
-.XR cscope 1
-manual page.
-.CO Nvi
-contains an interface to the
-.CO cscope
-query language which permits you to query
-.CO cscope
-and then sequentially step through the locations in the sources files which
-.CO cscope
-returns.
 There are two
 .CO nvi
 commands which support this ability to step through multiple locations.
@@ -841,10 +825,9 @@ command discussion in the
 commands section of this manual for more information.)
 At any time during this sequential walk,
 you may use the
-.CO <control-]> ,
-.CO tag
+.CO <control-]>
 or
-.CO cscope
+.CO tag
 commands to move to a new tag context, and then use the
 .CO <control-T>
 or
@@ -867,158 +850,6 @@ If you wish to extend your
 implementation or other tool with which you build tags files,
 this extension should be simple and will require no changes to
 .CO nvi .
-.pp
-The
-.CO nvi
-and
-.CO cscope
-interface is based on the new
-.CO ex
-command
-.CO cscope ,
-which has five subcommands:
-.CO add ,
-.CO find ,
-.CO help ,
-.CO kill
-and
-.CO reset .
-The subcommand
-.CO find
-itself has eight subcommands:
-.CO \&c ,
-.CO \&d ,
-.CO \&e ,
-.CO \&f ,
-.CO \&g ,
-.CO \&i ,
-.CO \&s
-and
-.CO \&t .
-.pp
-.IP "cs[cope] a[dd] file"
-The
-.CO add
-command attaches to the specified
-.CO cscope
-database.
-The file name is expanded using the standard filename expansions.
-If
-.CO file
-is a directory, the file
-.QQ cscope.out
-in that directory is used as the database.
-.pp
-After
-.CO nvi
-attaches to a new database,
-all subsequent
-.CO cscope
-queries will be asked of that database.
-The result of any single query is the collection of response to the query
-from all of the attached databases.
-.sp
-If the
-.QQ CSCOPE_DIRS
-environmental variable is set when
-.CO nvi
-is run,
-it is expected to be a <colon> or <blank>-separated list of
-.CO cscope
-databases or directories containing
-.CO cscope
-databases, to which the user wishes to attach.
-.IP ":cs[cope] f[ind] c|d|e|f|g|i|s|t buffer|pattern"
-The
-.CO find
-command is the
-.CO cscope
-query command for
-.CO nvi .
-For this command,
-.CO nvi
-queries all attached
-.CO cscope
-databases for the pattern.
-If the pattern is a double-quote character followed by a valid buffer
-name (e.g.,
-.LI """<character>" ),
-then the contents of the named buffer are used as the pattern.
-Otherwise, the pattern is a Regular Expression.
-.sp
-The
-.CO find
-command pushes the current location onto the tags stack,
-and switches to the first location resulting from the query,
-if the query returned at least one result.
-.sp
-File names returned by the
-.CO cscope
-query, if not absolute paths, are searched for relative to the directory
-where the
-.CO cscope
-database is located.
-In addition, if the file
-.QQ cscope.tpath
-appears in the same directory as the
-.CO cscope
-database,
-it is expected to contain a colon-separated list of directory names
-where files referenced by its associated
-.CO cscope
-database may be found.
-.sp
-The
-.CO find
-subcommand is one of the following:
-.SS
-.SP \&c
-Find callers of the name.
-.SP \&d
-Find all function calls made from name.
-.SP \&e
-Find pattern.
-.SP \&f
-Find files with name as substring.
-.SP \&g
-Find definition of name.
-.SP \&i
-Find files #including name.
-.SP \&s
-Find all uses of name.
-.SP \&t
-Find assignments to name.
-.SE
-.IP ":cs[cope] h[elp] [command]"
-List the
-.CO cscope
-commands,
-or optionally list usage help for any single
-.CO cscope
-command.
-.IP ":display c[onnections]"
-Display the list of
-.CO cscope
-databases to which
-.CO nvi
-is currently connected.
-.IP ":cs[cope] k[ill] #"
-Disconnect from a specific
-.CO cscope
-database.
-The connection number is the one displayed by the
-.CO ex
-.CO "display connections"
-command.
-.IP ":cs[cope] r[eset]"
-Disconnect from all attached
-.CO cscope
-databases.
-.pp
-Cscope was originally part of the official AT&T Unix distribution.
-In April 2000 the code for Cscope was open sourced under the BSD license.
-Information on downloading this code, and on Cscope itself,
-can be obtained from http://cscope.sourceforge.net/.
 .SH 1 "Regular Expressions and Replacement Strings"
 .pp
 Regular expressions are used in line addresses,

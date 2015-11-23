@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ex.cmd.roff,v 1.6 2004/01/15 11:11:12 jmc Exp $
+.\"	$OpenBSD: ex.cmd.roff,v 1.7 2015/11/23 09:03:01 bentley Exp $
 .\"
 .\" Copyright (c) 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -593,13 +593,6 @@ Unchanged.
 .SP Options:
 None.
 .SE
-.KY cscope
-.IP "cs[cope] command [args]"
-Execute a
-.CO cscope
-command.
-For more information, see the section of the reference manual entitled
-.QB "Tags, Tag Stacks, and Cscope" .
 .KY delete
 .IP "[range] d[elete] [buffer] [count] [flags]"
 Delete the lines from the file.
@@ -627,9 +620,7 @@ None.
 .SE
 .KY display
 .IP "di[splay] b[uffers] | c[onnections] | s[creens] | t[ags]"
-Display buffers,
-.CO cscope
-connections, screens or tags.
+Display buffers, screens or tags.
 The
 .CO display
 command takes one of three additional arguments, which are as follows:
@@ -637,10 +628,6 @@ command takes one of three additional arguments, which are as follows:
 .SP b[uffers]
 Display all buffers (including named, unnamed, and numeric)
 that contain text.
-.SP c[onnections]
-Display the source directories for all attached
-.CO cscope
-databases.
 .SP s[creens]
 Display the file names of all background screens.
 .SP t[ags]
