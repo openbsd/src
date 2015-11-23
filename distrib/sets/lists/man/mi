@@ -2129,7 +2129,6 @@
 ./usr/share/man/man5/aliases.5
 ./usr/share/man/man5/amd64
 ./usr/share/man/man5/amd64/boot.conf.5
-./usr/share/man/man5/amd64/vmm.conf.5
 ./usr/share/man/man5/ar.5
 ./usr/share/man/man5/armish
 ./usr/share/man/man5/armish/boot.conf.5
@@ -2264,6 +2263,7 @@
 ./usr/share/man/man5/usermgmt.conf.5
 ./usr/share/man/man5/utmp.5
 ./usr/share/man/man5/uuencode.5
+./usr/share/man/man5/vmm.conf.5
 ./usr/share/man/man5/wsconsctl.conf.5
 ./usr/share/man/man5/wtmp.5
 ./usr/share/man/man5/ypldap.conf.5
@@ -2324,8 +2324,6 @@
 ./usr/share/man/man8/amd64/gpioctl.8
 ./usr/share/man/man8/amd64/memconfig.8
 ./usr/share/man/man8/amd64/pxeboot.8
-./usr/share/man/man8/amd64/vmd.8
-./usr/share/man/man8/amd64/vmmctl.8
 ./usr/share/man/man8/amd64/wsmoused.8
 ./usr/share/man/man8/amd64/zzz.8
 ./usr/share/man/man8/amq.8
@@ -2690,6 +2688,8 @@
 ./usr/share/man/man8/vax/MAKEDEV.8
 ./usr/share/man/man8/vax/boot_vax.8
 ./usr/share/man/man8/vipw.8
+./usr/share/man/man8/vmd.8
+./usr/share/man/man8/vmmctl.8
 ./usr/share/man/man8/vmstat.8
 ./usr/share/man/man8/vnconfig.8
 ./usr/share/man/man8/watchdogd.8
