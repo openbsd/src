@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.484 2015/11/05 09:14:31 sunil Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.485 2015/11/23 21:50:12 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -146,6 +146,7 @@ union lookup {
 	struct userinfo		 userinfo;
 	struct mailaddr		 mailaddr;
 	struct addrname		 addrname;
+	struct maddrmap		*maddrmap;
 };
 
 /*

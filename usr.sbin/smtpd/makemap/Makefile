@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.25 2015/10/06 00:30:30 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.26 2015/11/23 21:50:12 gilles Exp $
 
 .PATH:		${.CURDIR}/..
 
@@ -19,7 +19,7 @@ CFLAGS+=	-Wsign-compare
 CFLAGS+=	-DNO_IO
 
 SRCS=	aliases.c dict.c expand.c limit.c log.c makemap.c parse.y \
-	table.c to.c tree.c util.c
+	mailaddr.c table.c to.c tree.c util.c
 
 SRCS+=	table_static.c
 SRCS+=	table_db.c
