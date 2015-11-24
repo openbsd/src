@@ -165,7 +165,6 @@
 ./usr/share/man/man6/wump.6
 ./var/games/atc_score
 ./var/games/battlestar.log
-./var/games/cfscores
 ./var/games/hackdir
 ./var/games/hackdir/data
 ./var/games/hackdir/help
