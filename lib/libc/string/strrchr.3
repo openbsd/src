@@ -1,4 +1,4 @@
-.\"	$OpenBSD: strrchr.3,v 1.10 2013/06/05 03:39:23 tedu Exp $
+.\"	$OpenBSD: strrchr.3,v 1.11 2015/11/24 09:14:35 daniel Exp $
 .\"
 .\" Copyright (c) 1990, 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -31,7 +31,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 5 2013 $
+.Dd $Mdocdate: November 24 2015 $
 .Dt STRRCHR 3
 .Os
 .Sh NAME
@@ -42,6 +42,7 @@
 .In string.h
 .Ft char *
 .Fn strrchr "const char *s" "int c"
+.In strings.h
 .Ft char *
 .Fn rindex "const char *s" "int c"
 .Sh DESCRIPTION
