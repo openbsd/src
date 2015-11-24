@@ -1,4 +1,4 @@
-/*	$OpenBSD: trunklacp.c,v 1.27 2015/11/24 13:37:16 mpi Exp $ */
+/*	$OpenBSD: trunklacp.c,v 1.28 2015/11/24 15:17:26 mpi Exp $ */
 /*	$NetBSD: ieee8023ad_lacp.c,v 1.3 2005/12/11 12:24:54 christos Exp $ */
 /*	$FreeBSD:ieee8023ad_lacp.c,v 1.15 2008/03/16 19:25:30 thompsa Exp $ */
 
@@ -45,14 +45,13 @@
 #include <crypto/siphash.h>
 
 #include <net/if.h>
-#include <net/ethertypes.h>
 #include <net/if_media.h>
 
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
 
-#include "if_trunk.h"
-#include "trunklacp.h"
+#include <net/if_trunk.h>
+#include <net/trunklacp.h>
 
 #include "bpfilter.h"
 #if NBPFILTER > 0
