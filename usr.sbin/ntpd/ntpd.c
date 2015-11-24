@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.c,v 1.98 2015/10/23 16:39:13 deraadt Exp $ */
+/*	$OpenBSD: ntpd.c,v 1.99 2015/11/24 01:03:25 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -41,7 +41,7 @@ void		sighdlr(int);
 __dead void	usage(void);
 int		main(int, char *[]);
 int		check_child(pid_t, const char *);
-int		dispatch_imsg(struct ntpd_conf *);
+int		dispatch_imsg(struct ntpd_conf *, const char *, uid_t, gid_t);
 int		dispatch_imsg_ctl(struct ntpd_conf *);
 void		reset_adjtime(void);
 int		ntpd_adjtime(double);
@@ -113,10 +113,13 @@ main(int argc, char *argv[])
 	const char		*conffile;
 	int			 fd_ctl, ch, nfds, i, j;
 	int			 pipe_chld[2];
-	struct passwd		*pw;
 	extern char		*__progname;
 	u_int			 pfd_elms = 0, new_cnt;
 	struct constraint	*cstr;
+	struct passwd		*pw;
+	const char		*pw_dir;
+	uid_t			pw_uid;
+	gid_t			pw_gid;
 	void			*newp;
 
 	if (strcmp(__progname, "ntpctl") == 0) {
@@ -175,6 +178,10 @@ main(int argc, char *argv[])
 
 	if ((pw = getpwnam(NTPD_USER)) == NULL)
 		errx(1, "unknown user %s", NTPD_USER);
+
+	pw_dir = strdup(pw->pw_dir);
+	pw_uid = pw->pw_uid;
+	pw_gid = pw->pw_gid;
 
 	if (setpriority(PRIO_PROCESS, 0, -20) == -1)
 		warn("can't set priority");
@@ -275,7 +282,7 @@ main(int argc, char *argv[])
 
 		if (nfds > 0 && pfd[PFD_PIPE].revents & POLLIN) {
 			nfds--;
-			if (dispatch_imsg(&lconf) == -1)
+			if (dispatch_imsg(&lconf, pw_dir, pw_uid, pw_gid) == -1)
 				quit = 1;
 		}
 
@@ -343,7 +350,8 @@ check_child(pid_t chld_pid, const char *pname)
 }
 
 int
-dispatch_imsg(struct ntpd_conf *lconf)
+dispatch_imsg(struct ntpd_conf *lconf, const char *pw_dir,
+    uid_t pw_uid, gid_t pw_gid)
 {
 	struct imsg		 imsg;
 	int			 n;
@@ -396,7 +404,8 @@ dispatch_imsg(struct ntpd_conf *lconf)
 			break;
 		case IMSG_CONSTRAINT_QUERY:
 			priv_constraint_msg(imsg.hdr.peerid,
-			    imsg.data, imsg.hdr.len - IMSG_HEADER_SIZE);
+			    imsg.data, imsg.hdr.len - IMSG_HEADER_SIZE,
+			    pw_dir, pw_uid, pw_gid);
 			break;
 		default:
 			break;

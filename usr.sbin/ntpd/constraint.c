@@ -1,4 +1,4 @@
-/*	$OpenBSD: constraint.c,v 1.21 2015/11/19 21:32:53 mmcc Exp $	*/
+/*	$OpenBSD: constraint.c,v 1.22 2015/11/24 01:03:25 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -58,7 +58,7 @@ int	 constraint_cmp(const void *, const void *);
 
 void	 priv_constraint_close(int, int);
 void	 priv_constraint_child(struct constraint *, struct ntp_addr_msg *,
-	    u_int8_t *, int[2]);
+	    u_int8_t *, int[2], const char *, uid_t, gid_t);
 
 struct httpsdate *
 	 httpsdate_init(const char *, const char *, const char *,
@@ -207,7 +207,8 @@ constraint_query(struct constraint *cstr)
 }
 
 void
-priv_constraint_msg(u_int32_t id, u_int8_t *data, size_t len)
+priv_constraint_msg(u_int32_t id, u_int8_t *data, size_t len,
+    const char *pw_dir, uid_t pw_uid, gid_t pw_gid)
 {
 	struct ntp_addr_msg	 am;
 	struct ntp_addr		*h;
@@ -257,7 +258,8 @@ priv_constraint_msg(u_int32_t id, u_int8_t *data, size_t len)
 		close(pipes[1]);
 		return;
 	case 0:
-		priv_constraint_child(cstr, &am, data + sizeof(am), pipes);
+		priv_constraint_child(cstr, &am, data + sizeof(am), pipes,
+		    pw_dir, pw_uid, pw_gid);
 
 		_exit(0);
 		/* NOTREACHED */
@@ -273,12 +275,11 @@ priv_constraint_msg(u_int32_t id, u_int8_t *data, size_t len)
 
 void
 priv_constraint_child(struct constraint *cstr, struct ntp_addr_msg *am,
-    u_int8_t *data, int pipes[2])
+    u_int8_t *data, int pipes[2], const char *pw_dir, uid_t pw_uid, gid_t pw_gid)
 {
 	static char		 hname[NI_MAXHOST];
 	struct timeval		 rectv, xmttv;
 	struct sigaction	 sa;
-	struct passwd		*pw;
 	void			*ctx;
 	struct iovec		 iov[2];
 	int			 i;
@@ -293,18 +294,14 @@ priv_constraint_child(struct constraint *cstr, struct ntp_addr_msg *am,
 	    &conf->ca_len, NULL)) == NULL)
 		log_warnx("constraint certificate verification turned off");
 
-	/* Drop privileges */
-	if ((pw = getpwnam(NTPD_USER)) == NULL)
-		fatalx("unknown user %s", NTPD_USER);
-
-	if (chroot(pw->pw_dir) == -1)
+	if (chroot(pw_dir) == -1)
 		fatal("chroot");
 	if (chdir("/") == -1)
 		fatal("chdir(\"/\")");
 
-	if (setgroups(1, &pw->pw_gid) ||
-	    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||
-	    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
+	if (setgroups(1, &pw_gid) ||
+	    setresgid(pw_gid, pw_gid, pw_gid) ||
+	    setresuid(pw_uid, pw_uid, pw_uid))
 		fatal("can't drop privileges");
 
 	/* Reset all signal handlers */

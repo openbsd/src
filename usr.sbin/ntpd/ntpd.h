@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.h,v 1.124 2015/10/30 17:59:56 naddy Exp $ */
+/*	$OpenBSD: ntpd.h,v 1.125 2015/11/24 01:03:25 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -355,7 +355,8 @@ int	 constraint_check(double);
 void	 constraint_msg_dns(u_int32_t, u_int8_t *, size_t);
 void	 constraint_msg_result(u_int32_t, u_int8_t *, size_t);
 void	 constraint_msg_close(u_int32_t, u_int8_t *, size_t);
-void	 priv_constraint_msg(u_int32_t, u_int8_t *, size_t);
+void	 priv_constraint_msg(u_int32_t, u_int8_t *, size_t,
+	    const char *, uid_t, gid_t);
 int	 priv_constraint_dispatch(struct pollfd *);
 void	 priv_constraint_check_child(pid_t, int);
 char	*get_string(u_int8_t *, size_t);
