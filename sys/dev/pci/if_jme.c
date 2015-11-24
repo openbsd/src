@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_jme.c,v 1.43 2015/11/09 00:29:06 dlg Exp $	*/
+/*	$OpenBSD: if_jme.c,v 1.44 2015/11/24 12:32:53 mpi Exp $	*/
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
@@ -53,7 +53,6 @@
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
 
-#include <net/if_types.h>
 #include <net/if_vlan_var.h>
 
 #if NBPFILTER > 0

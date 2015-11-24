@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_output.c,v 1.100 2015/11/15 01:05:25 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_output.c,v 1.101 2015/11/24 12:32:53 mpi Exp $	*/
 /*	$NetBSD: ieee80211_output.c,v 1.13 2004/05/31 11:02:55 dyoung Exp $	*/
 
 /*-
@@ -57,7 +57,6 @@
 #endif
 
 #if NVLAN > 0
-#include <net/if_types.h>
 #include <net/if_vlan_var.h>
 #endif
 
