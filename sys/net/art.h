@@ -1,4 +1,4 @@
-/* $OpenBSD: art.h,v 1.5 2015/11/06 17:44:45 mpi Exp $ */
+/* $OpenBSD: art.h,v 1.6 2015/11/24 12:06:30 mpi Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -51,6 +51,7 @@ struct art_node {
 
 void		 art_init(void);
 struct art_root	*art_alloc(unsigned int, int);
+void		 art_free(struct art_root *);
 struct art_node *art_insert(struct art_root *, struct art_node *, uint8_t *,
 		     int);
 struct art_node *art_delete(struct art_root *, struct art_node *, uint8_t *,

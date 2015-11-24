@@ -1,4 +1,4 @@
-/*	$OpenBSD: art.c,v 1.8 2015/11/12 14:29:04 mpi Exp $ */
+/*	$OpenBSD: art.c,v 1.9 2015/11/24 12:06:30 mpi Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -83,10 +83,17 @@ int			 art_table_free(struct art_root *, struct art_table *);
 int			 art_table_walk(struct art_root *, struct art_table *,
 			     int (*f)(struct art_node *, void *), void *);
 
-int			at_init = 0;
-struct pool		at_pool;
-struct pool		at_heap_8_pool;
-struct pool		at_heap_16_pool;
+struct pool		at_pool, at_heap_8_pool, at_heap_16_pool;
+
+void
+art_init(void)
+{
+	pool_init(&at_pool, sizeof(struct art_table), 0, 0, 0, "art_table",
+	    NULL);
+	pool_init(&at_heap_8_pool, AT_HEAPSIZE(8), 0, 0, 0, "art_heap8", NULL);
+	pool_init(&at_heap_16_pool, AT_HEAPSIZE(16), 0, 0, 0, "art_heap16",
+	    NULL);
+}
 
 /*
  * Per routing table initialization API function.
@@ -96,16 +103,6 @@ art_alloc(unsigned int rtableid, int off)
 {
 	struct art_root		*ar;
 	int			 i;
-
-	if (!at_init) {
-		at_init = 1;
-		pool_init(&at_pool, sizeof(struct art_table), 0, 0, 0,
-		    "art_table", NULL);
-		pool_init(&at_heap_8_pool, AT_HEAPSIZE(8), 0, 0, 0,
-		    "art_heap8", NULL);
-		pool_init(&at_heap_16_pool, AT_HEAPSIZE(16), 0, 0, 0,
-		    "art_heap16", NULL);
-	}
 
 	ar = malloc(sizeof(*ar), M_RTABLE, M_NOWAIT|M_ZERO);
 	if (ar == NULL)
@@ -130,7 +127,7 @@ art_alloc(unsigned int rtableid, int off)
 #endif /* INET6 */
 	default:
 		printf("%s: unknown offset %d\n", __func__, off);
-		free(ar, M_RTABLE, sizeof(*ar));
+		art_free(ar);
 		return (NULL);
 	}
 
@@ -138,6 +135,13 @@ art_alloc(unsigned int rtableid, int off)
 	ar->ar_rtableid = rtableid;
 
 	return (ar);
+}
+
+void
+art_free(struct art_root *ar)
+{
+	KASSERT(ar->ar_root == NULL);
+	free(ar, M_RTABLE, sizeof(*ar));
 }
 
 /*
