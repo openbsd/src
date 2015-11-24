@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_pae_output.c,v 1.24 2015/10/12 13:17:58 dlg Exp $	*/
+/*	$OpenBSD: ieee80211_pae_output.c,v 1.25 2015/11/24 13:45:06 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2007,2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -34,7 +34,6 @@
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_media.h>
-#include <net/if_arp.h>
 #include <net/if_llc.h>
 
 #include <netinet/in.h>

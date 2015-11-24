@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rum.c,v 1.115 2015/11/24 13:33:18 mpi Exp $	*/
+/*	$OpenBSD: if_rum.c,v 1.116 2015/11/24 13:45:06 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2005-2007 Damien Bergamini <damien.bergamini@free.fr>
@@ -41,7 +41,6 @@
 #include <net/bpf.h>
 #endif
 #include <net/if.h>
-#include <net/if_arp.h>
 #include <net/if_dl.h>
 #include <net/if_media.h>
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_crypto_tkip.c,v 1.24 2015/07/15 22:16:42 deraadt Exp $	*/
+/*	$OpenBSD: ieee80211_crypto_tkip.c,v 1.25 2015/11/24 13:45:06 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -33,7 +33,6 @@
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_media.h>
-#include <net/if_arp.h>
 
 #include <netinet/in.h>
 #include <netinet/if_ether.h>

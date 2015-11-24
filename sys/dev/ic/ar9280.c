@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar9280.c,v 1.22 2015/11/24 13:33:17 mpi Exp $	*/
+/*	$OpenBSD: ar9280.c,v 1.23 2015/11/24 13:45:06 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -44,7 +44,6 @@
 #include <net/bpf.h>
 #endif
 #include <net/if.h>
-#include <net/if_arp.h>
 #include <net/if_dl.h>
 #include <net/if_media.h>
 

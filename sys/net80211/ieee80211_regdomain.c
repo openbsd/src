@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_regdomain.c,v 1.9 2014/12/23 03:24:08 tedu Exp $	*/
+/*	$OpenBSD: ieee80211_regdomain.c,v 1.10 2015/11/24 13:45:06 mpi Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@openbsd.org>
@@ -32,7 +32,6 @@
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_media.h>
-#include <net/if_arp.h>
 #include <net/if_llc.h>
 
 #include <netinet/in.h>

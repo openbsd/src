@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.91 2015/11/15 11:14:17 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.92 2015/11/24 13:45:06 mpi Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -47,7 +47,6 @@
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_media.h>
-#include <net/if_arp.h>
 
 #include <netinet/in.h>
 #include <netinet/if_ether.h>

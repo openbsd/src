@@ -1,4 +1,4 @@
-/*	$OpenBSD: acx100.c,v 1.25 2014/12/22 02:28:51 tedu Exp $ */
+/*	$OpenBSD: acx100.c,v 1.26 2015/11/24 13:45:06 mpi Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -62,7 +62,6 @@
 #include <machine/bus.h>
 
 #include <net/if.h>
-#include <net/if_arp.h>
 #include <net/if_media.h>
 
 #include <netinet/in.h>
