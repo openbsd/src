@@ -1,4 +1,4 @@
-/*	$OpenBSD: lockspool.c,v 1.17 2015/10/13 15:14:26 deraadt Exp $	*/
+/*	$OpenBSD: lockspool.c,v 1.18 2015/11/24 00:19:29 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1998 Theo de Raadt <deraadt@theos.com>
@@ -52,7 +52,7 @@ main(int argc, char *argv[])
 	char *from, c;
 	int holdfd;
 
-	if (pledge("stdio rpath wpath cpath fattr", NULL) == -1)
+	if (pledge("stdio rpath wpath getpw cpath fattr", NULL) == -1)
 		err(1, "pledge");
 
 	openlog(__progname, LOG_PERROR, LOG_MAIL);
