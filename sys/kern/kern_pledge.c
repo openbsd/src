@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.122 2015/11/23 21:32:29 deraadt Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.123 2015/11/24 23:59:22 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -80,6 +80,7 @@ const u_int pledge_syscalls[SYS_MAXSYSCALL] = {
 	[SYS___get_tcb] = PLEDGE_ALWAYS,
 	[SYS_pledge] = PLEDGE_ALWAYS,
 	[SYS_sendsyslog] = PLEDGE_ALWAYS,	/* stack protector reporting */
+	[SYS_sendsyslog2] = PLEDGE_ALWAYS,	/* stack protector reporting */
 	[SYS_thrkill] = PLEDGE_ALWAYS,		/* raise, abort, stack pro */
 
 	/* "getting" information about self is considered safe */
@@ -637,6 +638,15 @@ pledge_namei(struct proc *p, struct nameidata *ni, char *origpath)
 		if ((ni->ni_pledge == PLEDGE_RPATH) &&
 		    strcmp(path, "/etc/localtime") == 0)
 			return (0);
+
+		/* when avoiding YP mode, getpw* functions touch this */
+		if (ni->ni_pledge == PLEDGE_RPATH &&
+		    strcmp(path, "/var/run/ypbind.lock") == 0) {
+			if (p->p_p->ps_pledge & PLEDGE_GETPW)
+				return (0);
+			else
+				return (pledge_fail(p, error, PLEDGE_GETPW));
+		}
 		break;
 	case SYS_open:
 		/* daemon(3) or other such functions */

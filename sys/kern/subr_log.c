@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_log.c,v 1.32 2015/09/11 12:33:36 bluhm Exp $	*/
+/*	$OpenBSD: subr_log.c,v 1.33 2015/11/24 23:59:22 deraadt Exp $	*/
 /*	$NetBSD: subr_log.c,v 1.11 1996/03/30 22:24:44 christos Exp $	*/
 
 /*
@@ -43,6 +43,7 @@
 #include <sys/ioctl.h>
 #include <sys/msgbuf.h>
 #include <sys/file.h>
+#include <sys/tty.h>
 #include <sys/signalvar.h>
 #include <sys/syslog.h>
 #include <sys/poll.h>
@@ -83,7 +84,7 @@ int filt_logread(struct knote *kn, long hint);
 struct filterops logread_filtops =
 	{ 1, NULL, filt_logrdetach, filt_logread};
 
-int dosendsyslog(struct proc *, const char *, size_t, enum uio_seg);
+int dosendsyslog(struct proc *, const char *, size_t, int, enum uio_seg);
 
 void
 initmsgbuf(caddr_t buf, size_t bufsize)
@@ -356,6 +357,22 @@ sys_sendsyslog(struct proc *p, void *v, register_t *retval)
 		syscallarg(const void *) buf;
 		syscallarg(size_t) nbyte;
 	} */ *uap = v;
+	struct sys_sendsyslog2_args oap;
+
+	SCARG(&oap, buf) = SCARG(uap, buf);
+	SCARG(&oap, nbyte) = SCARG(uap, nbyte);
+	SCARG(&oap, flags) = 0;
+	return sys_sendsyslog2(p, &oap, retval);
+}
+
+int
+sys_sendsyslog2(struct proc *p, void *v, register_t *retval)
+{
+	struct sys_sendsyslog2_args /* {
+		syscallarg(const void *) buf;
+		syscallarg(size_t) nbyte;
+		syscallarg(int) flags;
+	} */ *uap = v;
 	int error;
 #ifndef SMALL_KERNEL
 	static int dropped_count, orig_error;
@@ -368,7 +385,7 @@ sys_sendsyslog(struct proc *p, void *v, register_t *retval)
 		    LOG_KERN|LOG_WARNING, dropped_count,
 		    dropped_count == 1 ? "" : "s", orig_error);
 		error = dosendsyslog(p, buf, MIN((size_t)len, sizeof(buf) - 1),
-		    UIO_SYSSPACE);
+		    SCARG(uap, flags), UIO_SYSSPACE);
 		if (error) {
 			dropped_count++;
 			return (error);
@@ -377,9 +394,9 @@ sys_sendsyslog(struct proc *p, void *v, register_t *retval)
 	}
 #endif
 	error = dosendsyslog(p, SCARG(uap, buf), SCARG(uap, nbyte),
-	    UIO_USERSPACE);
+	    SCARG(uap, flags), UIO_USERSPACE);
 #ifndef SMALL_KERNEL
-	if (error) {
+	if (error && error != ENOTCONN) {
 		dropped_count++;
 		orig_error = error;
 	}
@@ -388,20 +405,36 @@ sys_sendsyslog(struct proc *p, void *v, register_t *retval)
 }
 
 int
-dosendsyslog(struct proc *p, const char *buf, size_t nbyte, enum uio_seg sflg)
+dosendsyslog(struct proc *p, const char *buf, size_t nbyte, int flags,
+    enum uio_seg sflg)
 {
 #ifdef KTRACE
 	struct iovec *ktriov = NULL;
 	int iovlen;
 #endif
+	extern struct tty *constty;
 	struct iovec aiov;
 	struct uio auio;
 	struct file *f;
 	size_t len;
 	int error;
 
-	if (syslogf == NULL)
+	if (syslogf == NULL) {
+		if (constty && (flags & LOG_CONS)) {
+			int i;
+
+			/* Skip syslog prefix */
+			if (nbyte >= 4 && buf[0] == '<' &&
+			    buf[3] == '>') {
+				buf += 4;
+				nbyte -= 4;
+			}
+			for (i = 0; i < nbyte; i++)
+				tputchar(buf[i], constty);
+			tputchar('\n', constty);
+		}
 		return (ENOTCONN);
+	}
 	f = syslogf;
 	FREF(f);
 
