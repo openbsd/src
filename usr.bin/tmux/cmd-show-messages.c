@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-show-messages.c,v 1.14 2015/11/24 21:19:46 nicm Exp $ */
+/* $OpenBSD: cmd-show-messages.c,v 1.15 2015/11/24 21:23:44 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -62,6 +62,8 @@ cmd_show_messages_server(struct cmd_q *cmdq)
 	cmdq_print(cmdq, "started %s", tim);
 	cmdq_print(cmdq, "socket path %s", socket_path);
 	cmdq_print(cmdq, "protocol version %d", PROTOCOL_VERSION);
+	cmdq_print(cmdq, "libevent %s (%s)", event_get_version(),
+	    event_get_method());
 
 	return (1);
 }
