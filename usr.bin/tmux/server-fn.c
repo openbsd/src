@@ -1,4 +1,4 @@
-/* $OpenBSD: server-fn.c,v 1.93 2015/11/18 14:27:44 nicm Exp $ */
+/* $OpenBSD: server-fn.c,v 1.94 2015/11/24 23:46:15 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -34,20 +34,19 @@ void		server_callback_identify(int, short, void *);
 void
 server_fill_environ(struct session *s, struct environ *env)
 {
-	char	var[PATH_MAX], *term;
-	u_int	idx;
-	long	pid;
+	char	*term;
+	u_int	 idx;
+	long	 pid;
 
 	if (s != NULL) {
 		term = options_get_string(global_options, "default-terminal");
-		environ_set(env, "TERM", term);
+		environ_set(env, "TERM", "%s", term);
 
 		idx = s->id;
 	} else
 		idx = (u_int)-1;
 	pid = getpid();
-	xsnprintf(var, sizeof var, "%s,%ld,%u", socket_path, pid, idx);
-	environ_set(env, "TMUX", var);
+	environ_set(env, "TMUX", "%s,%ld,%u", socket_path, pid, idx);
 }
 
 void

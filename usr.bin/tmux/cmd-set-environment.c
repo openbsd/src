@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-set-environment.c,v 1.11 2015/10/28 09:51:55 nicm Exp $ */
+/* $OpenBSD: cmd-set-environment.c,v 1.12 2015/11/24 23:46:15 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -79,13 +79,13 @@ cmd_set_environment_exec(struct cmd *self, struct cmd_q *cmdq)
 			cmdq_error(cmdq, "can't specify a value with -r");
 			return (CMD_RETURN_ERROR);
 		}
-		environ_set(env, name, NULL);
+		environ_clear(env, name);
 	} else {
 		if (value == NULL) {
 			cmdq_error(cmdq, "no value specified");
 			return (CMD_RETURN_ERROR);
 		}
-		environ_set(env, name, value);
+		environ_set(env, name, "%s", value);
 	}
 
 	return (CMD_RETURN_NORMAL);
