@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxp.c,v 1.125 2015/11/24 13:33:17 mpi Exp $	*/
+/*	$OpenBSD: fxp.c,v 1.126 2015/11/24 15:43:15 mpi Exp $	*/
 /*	$NetBSD: if_fxp.c,v 1.2 1997/06/05 02:01:55 thorpej Exp $	*/
 
 /*
@@ -52,7 +52,6 @@
 #include <net/if_media.h>
 
 #include <netinet/in.h>
-#include <netinet/ip.h>
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
