@@ -1,4 +1,4 @@
-/*	$OpenBSD: cfscores.c,v 1.16 2015/11/24 02:51:50 tedu Exp $	*/
+/*	$OpenBSD: cfscores.c,v 1.17 2015/11/24 02:53:39 tedu Exp $	*/
 /*	$NetBSD: cfscores.c,v 1.3 1995/03/21 15:08:37 cgd Exp $	*/
 
 /*
@@ -65,7 +65,7 @@ main(int argc, char *argv[])
 	if (!getenv("HOME"))
 		return;
 	snprintf(scorepath, sizeof(scorepath), "%s/%s", getenv("HOME"),
-			"cfscores");
+	    ".cfscores");
 	dbfd = open(scorepath, O_RDONLY);
 	if (dbfd < 0)
 		err(2, "%s", scorepath);

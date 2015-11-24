@@ -1,4 +1,4 @@
-/*	$OpenBSD: canfield.c,v 1.16 2015/11/24 02:51:50 tedu Exp $	*/
+/*	$OpenBSD: canfield.c,v 1.17 2015/11/24 02:53:39 tedu Exp $	*/
 /*	$NetBSD: canfield.c,v 1.7 1995/05/13 07:28:35 jtc Exp $	*/
 
 /*
@@ -1631,7 +1631,7 @@ initall(void)
 	if (!getenv("HOME"))
 		return;
 	snprintf(scorepath, sizeof(scorepath), "%s/%s", getenv("HOME"),
-		"cfscores");
+	    ".cfscores");
 	dbfd = open(scorepath, O_RDWR | O_CREAT, 0644);
 	if (dbfd < 0)
 		return;
