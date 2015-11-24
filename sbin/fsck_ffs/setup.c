@@ -1,4 +1,4 @@
-/*	$OpenBSD: setup.c,v 1.59 2015/10/15 15:11:10 semarie Exp $	*/
+/*	$OpenBSD: setup.c,v 1.60 2015/11/24 21:42:54 deraadt Exp $	*/
 /*	$NetBSD: setup.c,v 1.27 1996/09/27 22:45:19 christos Exp $	*/
 
 /*
@@ -101,6 +101,10 @@ setup(char *dev)
 		blockcheck(unrawname(realdev));
 		strlcpy(rdevname, realdev, sizeof(rdevname));
 		setcdevname(rdevname, dev, preen);
+
+		if (!hotroot())
+			if (pledge("stdio rpath wpath getpw disklabel", NULL) == -1)
+				err(1, "pledge");
 	}
 	if (fstat(fsreadfd, &statb) < 0) {
 		printf("Can't stat %s: %s\n", realdev, strerror(errno));
