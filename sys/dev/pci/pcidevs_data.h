@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1778 2015/11/24 07:47:49 daniel Exp 
+ *	OpenBSD: pcidevs,v 1.1779 2015/11/24 21:28:04 kettenis Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -5904,6 +5904,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "BCM43224",
 	},
 	{
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM15700A2,
+	    "BCM15700A2",
+	},
+	{
 	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5752,
 	    "BCM5752",
 	},
@@ -6454,6 +6458,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM43227,
 	    "BCM43227",
+	},
+	{
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM4360,
+	    "BCM4360",
 	},
 	{
 	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM4401,
@@ -10882,6 +10890,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I217_V,
 	    "I217-V",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_DSL3510,
+	    "DSL3510 Thunderbolt",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82599_SFP_SF2,
