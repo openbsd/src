@@ -1,4 +1,4 @@
-/*	$OpenBSD: qe.c,v 1.34 2015/11/24 13:33:18 mpi Exp $	*/
+/*	$OpenBSD: qe.c,v 1.35 2015/11/24 17:11:40 mpi Exp $	*/
 /*	$NetBSD: qe.c,v 1.16 2001/03/30 17:30:18 christos Exp $	*/
 
 /*-
@@ -80,7 +80,6 @@
 #include <sys/malloc.h>
 
 #include <net/if.h>
-#include <net/if_dl.h>
 #include <net/netisr.h>
 #include <net/if_media.h>
 

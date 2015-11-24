@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sf_pci.c,v 1.13 2015/11/24 13:33:17 mpi Exp $	*/
+/*	$OpenBSD: if_sf_pci.c,v 1.14 2015/11/24 17:11:39 mpi Exp $	*/
 /*	$NetBSD: if_sf_pci.c,v 1.10 2006/06/17 23:34:27 christos Exp $	*/
 
 /*-
@@ -46,7 +46,6 @@
 #include <sys/device.h>
 
 #include <net/if.h>
-#include <net/if_dl.h>
 
 #include <netinet/in.h>
 #include <netinet/if_ether.h>

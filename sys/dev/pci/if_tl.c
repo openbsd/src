@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tl.c,v 1.66 2015/10/25 13:04:28 mpi Exp $	*/
+/*	$OpenBSD: if_tl.c,v 1.67 2015/11/24 17:11:39 mpi Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -197,7 +197,6 @@
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
 
-#include <net/if_dl.h>
 #include <net/if_media.h>
 
 #if NBPFILTER > 0

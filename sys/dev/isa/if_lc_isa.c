@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lc_isa.c,v 1.11 2014/08/11 12:45:45 mpi Exp $ */
+/*	$OpenBSD: if_lc_isa.c,v 1.12 2015/11/24 17:11:39 mpi Exp $ */
 /*	$NetBSD: if_lc_isa.c,v 1.10 2001/06/13 10:46:03 wiz Exp $ */
 
 /*-
@@ -47,7 +47,6 @@
 #include <sys/queue.h>
 
 #include <net/if.h>
-#include <net/if_dl.h>
 #include <net/if_media.h>
 
 #include <netinet/in.h>

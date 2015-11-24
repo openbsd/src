@@ -1,4 +1,4 @@
-/*	$OpenBSD: sgec.c,v 1.32 2015/11/14 17:26:40 mpi Exp $	*/
+/*	$OpenBSD: sgec.c,v 1.33 2015/11/24 17:11:38 mpi Exp $	*/
 /*      $NetBSD: sgec.c,v 1.5 2000/06/04 02:14:14 matt Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -55,7 +55,6 @@
 #include <sys/sockio.h>
 
 #include <net/if.h>
-#include <net/if_dl.h>
 #include <net/if_media.h>
 
 #include <netinet/in.h>

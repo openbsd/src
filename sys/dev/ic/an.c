@@ -1,4 +1,4 @@
-/*	$OpenBSD: an.c,v 1.68 2015/11/24 13:33:17 mpi Exp $	*/
+/*	$OpenBSD: an.c,v 1.69 2015/11/24 17:11:39 mpi Exp $	*/
 /*	$NetBSD: an.c,v 1.34 2005/06/20 02:49:18 atatat Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -94,7 +94,6 @@
 #include <machine/bus.h>
 
 #include <net/if.h>
-#include <net/if_dl.h>
 #include <net/if_llc.h>
 #include <net/if_media.h>
 

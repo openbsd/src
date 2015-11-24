@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ti_sbus.c,v 1.3 2014/07/22 10:35:35 mpi Exp $	*/
+/*	$OpenBSD: if_ti_sbus.c,v 1.4 2015/11/24 17:11:38 mpi Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
  *
@@ -20,7 +20,6 @@
 #include <sys/socket.h>
 
 #include <net/if.h>
-#include <net/if_dl.h>
 #include <net/if_media.h>
 
 #include <netinet/in.h>

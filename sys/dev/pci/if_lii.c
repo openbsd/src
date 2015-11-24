@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lii.c,v 1.40 2015/11/24 13:33:17 mpi Exp $	*/
+/*	$OpenBSD: if_lii.c,v 1.41 2015/11/24 17:11:39 mpi Exp $	*/
 
 /*
  *  Copyright (c) 2007 The NetBSD Foundation.
@@ -45,7 +45,6 @@
 #include <machine/bus.h>
 
 #include <net/if.h>
-#include <net/if_dl.h>
 #include <net/if_media.h>
 
 #if NBPFILTER > 0

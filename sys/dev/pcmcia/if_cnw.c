@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cnw.c,v 1.33 2015/10/25 13:13:06 mpi Exp $	*/
+/*	$OpenBSD: if_cnw.c,v 1.34 2015/11/24 17:11:40 mpi Exp $	*/
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -65,7 +65,6 @@
 #include <dev/pcmcia/pcmciadevs.h>
 
 #include <net/if.h>
-#include <net/if_dl.h>
 
 #include <netinet/in.h>
 #include <netinet/if_ether.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: gem.c,v 1.115 2015/11/20 03:35:22 dlg Exp $	*/
+/*	$OpenBSD: gem.c,v 1.116 2015/11/24 17:11:39 mpi Exp $	*/
 /*	$NetBSD: gem.c,v 1.1 2001/09/16 00:11:43 eeh Exp $ */
 
 /*
@@ -50,7 +50,6 @@
 #include <sys/endian.h>
 
 #include <net/if.h>
-#include <net/if_dl.h>
 #include <net/if_media.h>
 
 #include <netinet/in.h>

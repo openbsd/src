@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ze_vxtbus.c,v 1.3 2008/08/22 17:09:08 deraadt Exp $	*/
+/*	$OpenBSD: if_ze_vxtbus.c,v 1.4 2015/11/24 17:11:39 mpi Exp $	*/
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -35,7 +35,6 @@
 #include <sys/socket.h>
 
 #include <net/if.h>
-#include <net/if_dl.h>
 #include <net/if_media.h>
 
 #include <netinet/in.h>

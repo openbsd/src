@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.185 2015/11/24 15:43:15 mpi Exp $	*/
+/*	$OpenBSD: re.c,v 1.186 2015/11/24 17:11:39 mpi Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -124,7 +124,6 @@
 #include <machine/bus.h>
 
 #include <net/if.h>
-#include <net/if_dl.h>
 #include <net/if_media.h>
 
 #include <netinet/in.h>

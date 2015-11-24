@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_smsc.c,v 1.23 2015/11/24 15:25:20 mpi Exp $	*/
+/*	$OpenBSD: if_smsc.c,v 1.24 2015/11/24 17:11:40 mpi Exp $	*/
 /* $FreeBSD: src/sys/dev/usb/net/if_smsc.c,v 1.1 2012/08/15 04:03:55 gonzo Exp $ */
 /*-
  * Copyright (c) 2012
@@ -73,7 +73,6 @@
 #include <machine/bus.h>
 
 #include <net/if.h>
-#include <net/if_dl.h>
 #include <net/if_media.h>
 
 #if NBPFILTER > 0

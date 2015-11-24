@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iec.c,v 1.18 2015/11/24 13:33:18 mpi Exp $	*/
+/*	$OpenBSD: if_iec.c,v 1.19 2015/11/24 17:11:38 mpi Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -94,7 +94,6 @@
 #include <sys/errno.h>
 
 #include <net/if.h>
-#include <net/if_dl.h>
 #include <net/if_media.h>
 
 #if NBPFILTER > 0

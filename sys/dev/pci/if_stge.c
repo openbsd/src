@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_stge.c,v 1.64 2015/11/20 03:35:23 dlg Exp $	*/
+/*	$OpenBSD: if_stge.c,v 1.65 2015/11/24 17:11:39 mpi Exp $	*/
 /*	$NetBSD: if_stge.c,v 1.27 2005/05/16 21:35:32 bouyer Exp $	*/
 
 /*-
@@ -51,7 +51,6 @@
 #include <sys/queue.h>
 
 #include <net/if.h>
-#include <net/if_dl.h>
 
 #include <netinet/in.h>
 #include <netinet/if_ether.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cas.c,v 1.44 2015/11/20 03:35:23 dlg Exp $	*/
+/*	$OpenBSD: if_cas.c,v 1.45 2015/11/24 17:11:39 mpi Exp $	*/
 
 /*
  *
@@ -58,7 +58,6 @@
 #include <sys/endian.h>
 
 #include <net/if.h>
-#include <net/if_dl.h>
 #include <net/if_media.h>
 
 #include <netinet/in.h>

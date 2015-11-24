@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axe.c,v 1.134 2015/11/20 03:35:23 dlg Exp $	*/
+/*	$OpenBSD: if_axe.c,v 1.135 2015/11/24 17:11:40 mpi Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Jonathan Gray <jsg@openbsd.org>
@@ -102,7 +102,6 @@
 #include <machine/bus.h>
 
 #include <net/if.h>
-#include <net/if_dl.h>
 #include <net/if_media.h>
 
 #if NBPFILTER > 0

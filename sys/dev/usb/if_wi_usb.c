@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_usb.c,v 1.67 2015/11/24 13:33:18 mpi Exp $ */
+/*	$OpenBSD: if_wi_usb.c,v 1.68 2015/11/24 17:11:40 mpi Exp $ */
 
 /*
  * Copyright (c) 2003 Dale Rahn. All rights reserved.
@@ -42,7 +42,6 @@
 #include <sys/tree.h>
 
 #include <net/if.h>
-#include <net/if_dl.h>
 #include <net/if_media.h>
 
 #include <netinet/in.h>

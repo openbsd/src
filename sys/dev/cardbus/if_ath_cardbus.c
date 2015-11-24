@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_ath_cardbus.c,v 1.18 2014/12/22 02:28:51 tedu Exp $   */
+/*      $OpenBSD: if_ath_cardbus.c,v 1.19 2015/11/24 17:11:39 mpi Exp $   */
 /*	$NetBSD: if_ath_cardbus.c,v 1.4 2004/08/02 19:14:28 mycroft Exp $ */
 
 /*
@@ -51,7 +51,6 @@
 #include <sys/endian.h>
  
 #include <net/if.h>
-#include <net/if_dl.h>
 #include <net/if_media.h>
 
 #include <netinet/in.h> 

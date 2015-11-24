@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_an_isapnp.c,v 1.9 2006/03/10 00:27:55 jsg Exp $	*/
+/*	$OpenBSD: if_an_isapnp.c,v 1.10 2015/11/24 17:11:39 mpi Exp $	*/
 
 /*
  * Copyright (c) 2003 Michael Shalayeff
@@ -34,7 +34,6 @@
 #include <sys/tree.h>
 
 #include <net/if.h>
-#include <net/if_dl.h>
 #include <net/if_media.h>
 
 #include <netinet/in.h>

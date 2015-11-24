@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.377 2015/11/23 10:52:43 mpi Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.378 2015/11/24 17:11:39 mpi Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -87,7 +87,6 @@
 #include <sys/atomic.h>
 
 #include <net/if.h>
-#include <net/if_dl.h>
 #include <net/if_media.h>
 
 #include <netinet/in.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_qe.c,v 1.38 2015/11/20 03:35:22 dlg Exp $	*/
+/*	$OpenBSD: if_qe.c,v 1.39 2015/11/24 17:11:38 mpi Exp $	*/
 /*      $NetBSD: if_qe.c,v 1.51 2002/06/08 12:28:37 ragge Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -48,7 +48,6 @@
 #include <sys/sockio.h>
 
 #include <net/if.h>
-#include <net/if_dl.h>
 
 #include <netinet/in.h>
 #include <netinet/if_ether.h>

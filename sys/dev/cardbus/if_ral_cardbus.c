@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ral_cardbus.c,v 1.21 2013/12/06 21:03:02 deraadt Exp $  */
+/*	$OpenBSD: if_ral_cardbus.c,v 1.22 2015/11/24 17:11:39 mpi Exp $  */
 
 /*-
  * Copyright (c) 2005-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -36,7 +36,6 @@
 #include <machine/intr.h>
 
 #include <net/if.h>
-#include <net/if_dl.h>
 #include <net/if_media.h>
 
 #include <netinet/in.h>

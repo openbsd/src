@@ -1,4 +1,4 @@
-/*	$OpenBSD: pgt.c,v 1.82 2015/11/24 13:45:06 mpi Exp $  */
+/*	$OpenBSD: pgt.c,v 1.83 2015/11/24 17:11:39 mpi Exp $  */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -63,7 +63,6 @@
 #include <machine/intr.h>
 
 #include <net/if.h>
-#include <net/if_dl.h>
 #include <net/if_llc.h>
 #include <net/if_media.h>
 

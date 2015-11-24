@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ep_eisa.c,v 1.25 2015/11/24 13:33:17 mpi Exp $	*/
+/*	$OpenBSD: if_ep_eisa.c,v 1.26 2015/11/24 17:11:39 mpi Exp $	*/
 /*	$NetBSD: if_ep_eisa.c,v 1.13 1997/04/18 00:50:33 cgd Exp $	*/
 
 /*
@@ -46,8 +46,6 @@
 #include <sys/device.h>
 
 #include <net/if.h>
-#include <net/if_dl.h>
-#include <net/netisr.h>
 #include <net/if_media.h>
 
 #include <netinet/in.h>

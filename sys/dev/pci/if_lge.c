@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lge.c,v 1.69 2015/11/20 03:35:23 dlg Exp $	*/
+/*	$OpenBSD: if_lge.c,v 1.70 2015/11/24 17:11:39 mpi Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -86,7 +86,6 @@
 #include <sys/socket.h>
 
 #include <net/if.h>
-#include <net/if_dl.h>
 #include <net/if_media.h>
 
 #include <netinet/in.h>

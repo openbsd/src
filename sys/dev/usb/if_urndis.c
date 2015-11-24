@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urndis.c,v 1.57 2015/11/20 03:35:23 dlg Exp $ */
+/*	$OpenBSD: if_urndis.c,v 1.58 2015/11/24 17:11:40 mpi Exp $ */
 
 /*
  * Copyright (c) 2010 Jonathan Armani <armani@openbsd.org>
@@ -34,7 +34,6 @@
 #include <machine/bus.h>
 
 #include <net/if.h>
-#include <net/if_dl.h>
 #include <net/if_media.h>
 
 #if NBPFILTER > 0

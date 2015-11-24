@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_an_pci.c,v 1.18 2011/04/03 15:36:02 jasper Exp $	*/
+/*	$OpenBSD: if_an_pci.c,v 1.19 2015/11/24 17:11:39 mpi Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -62,7 +62,6 @@
 #include <sys/tree.h>
 
 #include <net/if.h>
-#include <net/if_dl.h>
 #include <net/if_media.h>
 
 #include <netinet/in.h>

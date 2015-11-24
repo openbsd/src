@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sm_isa.c,v 1.13 2014/12/03 20:09:32 krw Exp $	*/
+/*	$OpenBSD: if_sm_isa.c,v 1.14 2015/11/24 17:11:39 mpi Exp $	*/
 /*	$NetBSD: if_sm_isa.c,v 1.4 1998/07/05 06:49:14 jonathan Exp $	*/
 
 /*-
@@ -45,7 +45,6 @@
 #include <sys/device.h>
 
 #include <net/if.h>
-#include <net/if_dl.h>
 #include <net/if_media.h>
 
 #include <netinet/in.h>

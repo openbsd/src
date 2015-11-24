@@ -1,4 +1,4 @@
-/* $OpenBSD: imxenet.c,v 1.18 2015/11/20 03:35:22 dlg Exp $ */
+/* $OpenBSD: imxenet.c,v 1.19 2015/11/24 17:11:38 mpi Exp $ */
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -31,7 +31,6 @@
 #include "bpfilter.h"
 
 #include <net/if.h>
-#include <net/if_dl.h>
 #include <net/if_media.h>
 #if NBPFILTER > 0
 #include <net/bpf.h>

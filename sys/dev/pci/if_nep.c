@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nep.c,v 1.22 2015/11/22 00:42:24 jsg Exp $	*/
+/*	$OpenBSD: if_nep.c,v 1.23 2015/11/24 17:11:39 mpi Exp $	*/
 /*
  * Copyright (c) 2014, 2015 Mark Kettenis
  *
@@ -27,7 +27,6 @@
 #include <sys/socket.h>
 
 #include <net/if.h>
-#include <net/if_dl.h>
 #include <net/if_media.h>
 
 #include <netinet/in.h>

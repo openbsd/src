@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_re_cardbus.c,v 1.27 2015/03/14 03:38:47 jsg Exp $	*/
+/*	$OpenBSD: if_re_cardbus.c,v 1.28 2015/11/24 17:11:39 mpi Exp $	*/
 
 /*
  * Copyright (c) 2005 Peter Valchev <pvalchev@openbsd.org>
@@ -32,7 +32,6 @@
 #include <sys/socket.h>
 
 #include <net/if.h>
-#include <net/if_dl.h>
 #include <net/if_media.h>
 
 #include <netinet/in.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mc.c,v 1.24 2015/11/14 17:26:40 mpi Exp $	*/
+/*	$OpenBSD: if_mc.c,v 1.25 2015/11/24 17:11:38 mpi Exp $	*/
 /*	$NetBSD: if_mc.c,v 1.9.16.1 2006/06/21 14:53:13 yamt Exp $	*/
 
 /*-
@@ -47,7 +47,6 @@
 #include <sys/timeout.h>
 
 #include <net/if.h>
-#include <net/if_dl.h>
 #include <net/if_media.h>
 
 #include <netinet/in.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mos.c,v 1.33 2015/11/20 03:35:23 dlg Exp $	*/
+/*	$OpenBSD: if_mos.c,v 1.34 2015/11/24 17:11:40 mpi Exp $	*/
 
 /*
  * Copyright (c) 2008 Johann Christian Rode <jcrode@gmx.net>
@@ -85,7 +85,6 @@
 #include <machine/bus.h>
 
 #include <net/if.h>
-#include <net/if_dl.h>
 #include <net/if_media.h>
 
 #if NBPFILTER > 0

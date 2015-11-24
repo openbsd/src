@@ -1,4 +1,4 @@
-/*	$OpenBSD: qe.c,v 1.45 2015/11/24 13:33:18 mpi Exp $	*/
+/*	$OpenBSD: qe.c,v 1.46 2015/11/24 17:11:38 mpi Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 Jason L. Wright.
@@ -46,7 +46,6 @@
 #include <sys/malloc.h>
 
 #include <net/if.h>
-#include <net/if_dl.h>
 #include <net/if_media.h>
 #include <net/netisr.h>
 

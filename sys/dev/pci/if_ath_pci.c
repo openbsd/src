@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_ath_pci.c,v 1.25 2015/11/24 13:45:06 mpi Exp $   */
+/*      $OpenBSD: if_ath_pci.c,v 1.26 2015/11/24 17:11:39 mpi Exp $   */
 /*	$NetBSD: if_ath_pci.c,v 1.7 2004/06/30 05:58:17 mycroft Exp $	*/
 
 /*-
@@ -52,7 +52,6 @@
 #include <machine/bus.h>
 
 #include <net/if.h>
-#include <net/if_dl.h>
 #include <net/if_media.h>
 #include <netinet/in.h>
 #include <netinet/if_ether.h>

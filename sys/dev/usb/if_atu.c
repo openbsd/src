@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atu.c,v 1.114 2015/11/04 12:12:00 dlg Exp $ */
+/*	$OpenBSD: if_atu.c,v 1.115 2015/11/24 17:11:40 mpi Exp $ */
 /*
  * Copyright (c) 2003, 2004
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -71,7 +71,6 @@
 #endif
 
 #include <net/if.h>
-#include <net/if_dl.h>
 #include <net/if_media.h>
 
 #include <netinet/in.h>

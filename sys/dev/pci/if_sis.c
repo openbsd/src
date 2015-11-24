@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sis.c,v 1.130 2015/11/24 13:33:17 mpi Exp $ */
+/*	$OpenBSD: if_sis.c,v 1.131 2015/11/24 17:11:39 mpi Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -72,7 +72,6 @@
 #include <sys/timeout.h>
 
 #include <net/if.h>
-#include <net/if_dl.h>
 
 #include <netinet/in.h>
 #include <netinet/if_ether.h>

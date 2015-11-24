@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_aue.c,v 1.102 2015/11/20 03:35:23 dlg Exp $ */
+/*	$OpenBSD: if_aue.c,v 1.103 2015/11/24 17:11:40 mpi Exp $ */
 /*	$NetBSD: if_aue.c,v 1.82 2003/03/05 17:37:36 shiba Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -90,7 +90,6 @@
 #include <sys/device.h>
 
 #include <net/if.h>
-#include <net/if_dl.h>
 #include <net/if_media.h>
 
 #if NBPFILTER > 0

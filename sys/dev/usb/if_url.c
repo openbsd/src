@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_url.c,v 1.77 2015/11/20 03:35:23 dlg Exp $ */
+/*	$OpenBSD: if_url.c,v 1.78 2015/11/24 17:11:40 mpi Exp $ */
 /*	$NetBSD: if_url.c,v 1.6 2002/09/29 10:19:21 martin Exp $	*/
 /*
  * Copyright (c) 2001, 2002
@@ -54,7 +54,6 @@
 #include <sys/device.h>
 
 #include <net/if.h>
-#include <net/if_dl.h>
 #include <net/if_media.h>
 
 #if NBPFILTER > 0

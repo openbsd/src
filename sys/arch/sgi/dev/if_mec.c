@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mec.c,v 1.33 2015/11/24 13:33:18 mpi Exp $ */
+/*	$OpenBSD: if_mec.c,v 1.34 2015/11/24 17:11:38 mpi Exp $ */
 /*	$NetBSD: if_mec_mace.c,v 1.5 2004/08/01 06:36:36 tsutsui Exp $ */
 
 /*
@@ -78,7 +78,6 @@
 #include <sys/errno.h>
 
 #include <net/if.h>
-#include <net/if_dl.h>
 #include <net/if_media.h>
 
 #if NBPFILTER > 0

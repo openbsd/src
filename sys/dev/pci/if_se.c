@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_se.c,v 1.16 2015/11/24 13:33:17 mpi Exp $	*/
+/*	$OpenBSD: if_se.c,v 1.17 2015/11/24 17:11:39 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2009, 2010 Christopher Zimmermann <madroach@zakweb.de>
@@ -64,7 +64,6 @@
 #include <sys/timeout.h>
 
 #include <net/if.h>
-#include <net/if_dl.h>
 #include <net/if_media.h>
 
 #include <netinet/in.h>

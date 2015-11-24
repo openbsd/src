@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sq.c,v 1.21 2015/11/24 13:33:18 mpi Exp $	*/
+/*	$OpenBSD: if_sq.c,v 1.22 2015/11/24 17:11:38 mpi Exp $	*/
 /*	$NetBSD: if_sq.c,v 1.42 2011/07/01 18:53:47 dyoung Exp $	*/
 
 /*
@@ -50,7 +50,6 @@
 #include <uvm/uvm_extern.h>
 
 #include <net/if.h>
-#include <net/if_dl.h>
 #include <net/if_media.h>
 
 #if NBPFILTER > 0

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_obio.c,v 1.18 2014/12/22 02:26:53 tedu Exp $	*/
+/*	$OpenBSD: if_wi_obio.c,v 1.19 2015/11/24 17:11:38 mpi Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -53,7 +53,6 @@
 #include <sys/tree.h>
 
 #include <net/if.h>
-#include <net/if_dl.h>
 #include <net/if_media.h>
 
 #include <netinet/in.h>

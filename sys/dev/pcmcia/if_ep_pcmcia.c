@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ep_pcmcia.c,v 1.46 2015/11/24 13:33:18 mpi Exp $	*/
+/*	$OpenBSD: if_ep_pcmcia.c,v 1.47 2015/11/24 17:11:40 mpi Exp $	*/
 /*	$NetBSD: if_ep_pcmcia.c,v 1.16 1998/08/17 23:20:40 thorpej Exp $  */
 
 /*-
@@ -74,7 +74,6 @@
 #include <sys/device.h>
 
 #include <net/if.h>
-#include <net/if_dl.h>
 #include <net/netisr.h>
 #include <net/if_media.h>
 

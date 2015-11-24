@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnet.c,v 1.49 2015/11/24 13:33:18 mpi Exp $	*/
+/*	$OpenBSD: vnet.c,v 1.50 2015/11/24 17:11:38 mpi Exp $	*/
 /*
  * Copyright (c) 2009, 2015 Mark Kettenis
  *
@@ -33,7 +33,6 @@
 #include <machine/openfirm.h>
 
 #include <net/if.h>
-#include <net/if_dl.h>
 #include <net/if_media.h>
 
 #include <netinet/in.h>
