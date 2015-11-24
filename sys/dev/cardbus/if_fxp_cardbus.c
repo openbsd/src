@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fxp_cardbus.c,v 1.34 2014/12/19 22:44:58 guenther Exp $ */
+/*	$OpenBSD: if_fxp_cardbus.c,v 1.35 2015/11/24 13:33:17 mpi Exp $ */
 /*	$NetBSD: if_fxp_cardbus.c,v 1.12 2000/05/08 18:23:36 thorpej Exp $	*/
 
 /*
@@ -50,7 +50,6 @@
 
 #include <net/if.h>
 #include <net/if_dl.h>
-#include <net/if_types.h>
 #include <net/if_media.h>
 
 #if NBPFILTER > 0

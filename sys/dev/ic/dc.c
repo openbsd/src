@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.146 2015/11/20 03:35:22 dlg Exp $	*/
+/*	$OpenBSD: dc.c,v 1.147 2015/11/24 13:33:17 mpi Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -104,7 +104,6 @@
 #include <sys/timeout.h>
 
 #include <net/if.h>
-#include <net/if_types.h>
 
 #include <netinet/in.h>
 #include <netinet/if_ether.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2661.c,v 1.86 2015/11/20 12:41:29 mpi Exp $	*/
+/*	$OpenBSD: rt2661.c,v 1.87 2015/11/24 13:33:17 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -46,7 +46,6 @@
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_media.h>
-#include <net/if_types.h>
 
 #include <netinet/in.h>
 #include <netinet/if_ether.h>

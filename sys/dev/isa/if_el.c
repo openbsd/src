@@ -1,4 +1,4 @@
-/*    $OpenBSD: if_el.c,v 1.28 2015/10/25 13:13:06 mpi Exp $       */
+/*    $OpenBSD: if_el.c,v 1.29 2015/11/24 13:33:17 mpi Exp $       */
 /*	$NetBSD: if_el.c,v 1.39 1996/05/12 23:52:32 mycroft Exp $	*/
 
 /*
@@ -32,7 +32,6 @@
 
 #include <net/if.h>
 #include <net/if_dl.h>
-#include <net/if_types.h>
 
 #include <netinet/in.h>
 #include <netinet/if_ether.h>

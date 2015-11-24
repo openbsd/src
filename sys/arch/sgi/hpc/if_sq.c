@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sq.c,v 1.20 2015/11/21 00:59:25 dlg Exp $	*/
+/*	$OpenBSD: if_sq.c,v 1.21 2015/11/24 13:33:18 mpi Exp $	*/
 /*	$NetBSD: if_sq.c,v 1.42 2011/07/01 18:53:47 dyoung Exp $	*/
 
 /*
@@ -52,7 +52,6 @@
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_media.h>
-#include <net/if_types.h>
 
 #if NBPFILTER > 0
 #include <net/bpf.h>

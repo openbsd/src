@@ -1,4 +1,4 @@
-/*	$OpenBSD: qe.c,v 1.33 2015/11/11 10:07:25 mpi Exp $	*/
+/*	$OpenBSD: qe.c,v 1.34 2015/11/24 13:33:18 mpi Exp $	*/
 /*	$NetBSD: qe.c,v 1.16 2001/03/30 17:30:18 christos Exp $	*/
 
 /*-
@@ -81,7 +81,6 @@
 
 #include <net/if.h>
 #include <net/if_dl.h>
-#include <net/if_types.h>
 #include <net/netisr.h>
 #include <net/if_media.h>
 

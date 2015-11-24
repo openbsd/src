@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sk.c,v 1.180 2015/11/20 03:35:23 dlg Exp $	*/
+/*	$OpenBSD: if_sk.c,v 1.181 2015/11/24 13:33:17 mpi Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -101,7 +101,6 @@
 
 #include <net/if.h>
 #include <net/if_dl.h>
-#include <net/if_types.h>
 
 #include <netinet/in.h>
 #include <netinet/if_ether.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: xl.c,v 1.127 2015/10/25 12:48:46 mpi Exp $	*/
+/*	$OpenBSD: xl.c,v 1.128 2015/11/24 13:33:17 mpi Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -115,7 +115,6 @@
 
 #include <net/if.h>
 #include <net/if_dl.h>
-#include <net/if_types.h>
 #include <net/if_media.h>
 
 #include <netinet/in.h>

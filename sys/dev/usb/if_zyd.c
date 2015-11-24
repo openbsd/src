@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_zyd.c,v 1.110 2015/11/04 12:12:00 dlg Exp $	*/
+/*	$OpenBSD: if_zyd.c,v 1.111 2015/11/24 13:33:18 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -42,7 +42,6 @@
 #include <net/if_arp.h>
 #include <net/if_dl.h>
 #include <net/if_media.h>
-#include <net/if_types.h>
 
 #include <netinet/in.h>
 #include <netinet/if_ether.h>

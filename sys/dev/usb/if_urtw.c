@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urtw.c,v 1.57 2015/11/13 10:36:29 mpi Exp $	*/
+/*	$OpenBSD: if_urtw.c,v 1.58 2015/11/24 13:33:18 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2009 Martynas Venckus <martynas@openbsd.org>
@@ -38,7 +38,6 @@
 #include <net/if_arp.h>
 #include <net/if_dl.h>
 #include <net/if_media.h>
-#include <net/if_types.h>
 
 #include <netinet/in.h>
 #include <netinet/if_ether.h>

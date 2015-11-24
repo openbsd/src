@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_otus.c,v 1.48 2015/11/04 12:12:00 dlg Exp $	*/
+/*	$OpenBSD: if_otus.c,v 1.49 2015/11/24 13:33:18 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -42,7 +42,6 @@
 #include <net/if_arp.h>
 #include <net/if_dl.h>
 #include <net/if_media.h>
-#include <net/if_types.h>
 
 #include <netinet/in.h>
 #include <netinet/if_ether.h>

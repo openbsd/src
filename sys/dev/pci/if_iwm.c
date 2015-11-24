@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.63 2015/11/04 12:11:59 dlg Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.64 2015/11/24 13:33:17 mpi Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -132,7 +132,6 @@
 #include <net/if_arp.h>
 #include <net/if_dl.h>
 #include <net/if_media.h>
-#include <net/if_types.h>
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>

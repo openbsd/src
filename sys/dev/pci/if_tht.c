@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tht.c,v 1.135 2015/11/20 03:35:23 dlg Exp $ */
+/*	$OpenBSD: if_tht.c,v 1.136 2015/11/24 13:33:17 mpi Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -47,7 +47,6 @@
 
 #include <net/if.h>
 #include <net/if_media.h>
-#include <net/if_types.h>
 
 #if NBPFILTER > 0
 #include <net/bpf.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_epic_pci.c,v 1.14 2014/12/22 02:28:52 tedu Exp $	*/
+/*	$OpenBSD: if_epic_pci.c,v 1.15 2015/11/24 13:33:17 mpi Exp $	*/
 /*	$NetBSD: if_epic_pci.c,v 1.28 2005/02/27 00:27:32 perry Exp $	*/
 
 /*-
@@ -48,7 +48,6 @@
 
 #include <net/if.h>
 #include <net/if_dl.h>
-#include <net/if_types.h>
 
 #include <netinet/in.h>
 #include <netinet/if_ether.h>

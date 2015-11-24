@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ep_isapnp.c,v 1.14 2014/08/11 12:45:45 mpi Exp $	*/
+/*	$OpenBSD: if_ep_isapnp.c,v 1.15 2015/11/24 13:33:17 mpi Exp $	*/
 /*	$NetBSD: if_ep_isapnp.c,v 1.5 1996/05/12 23:52:36 mycroft Exp $	*/
 
 /*
@@ -52,7 +52,6 @@
 
 #include <net/if.h>
 #include <net/if_dl.h>
-#include <net/if_types.h>
 #include <net/netisr.h>
 #include <net/if_media.h>
 

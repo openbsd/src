@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ipw.c,v 1.111 2015/11/20 03:35:23 dlg Exp $	*/
+/*	$OpenBSD: if_ipw.c,v 1.112 2015/11/24 13:33:17 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2004-2008
@@ -48,7 +48,6 @@
 #include <net/if_arp.h>
 #include <net/if_dl.h>
 #include <net/if_media.h>
-#include <net/if_types.h>
 
 #include <netinet/in.h>
 #include <netinet/if_ether.h>

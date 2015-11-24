@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5416.c,v 1.15 2014/12/19 22:44:58 guenther Exp $	*/
+/*	$OpenBSD: ar5416.c,v 1.16 2015/11/24 13:33:17 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -47,7 +47,6 @@
 #include <net/if_arp.h>
 #include <net/if_dl.h>
 #include <net/if_media.h>
-#include <net/if_types.h>
 
 #include <netinet/in.h>
 #include <netinet/if_ether.h>

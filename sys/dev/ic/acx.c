@@ -1,4 +1,4 @@
-/*	$OpenBSD: acx.c,v 1.114 2015/11/04 12:11:59 dlg Exp $ */
+/*	$OpenBSD: acx.c,v 1.115 2015/11/24 13:33:17 mpi Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -106,7 +106,6 @@
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_media.h>
-#include <net/if_types.h>
 
 #if NBPFILTER > 0
 #include <net/bpf.h>

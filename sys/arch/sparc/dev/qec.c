@@ -1,4 +1,4 @@
-/*	$OpenBSD: qec.c,v 1.24 2015/03/30 20:30:22 miod Exp $	*/
+/*	$OpenBSD: qec.c,v 1.25 2015/11/24 13:33:18 mpi Exp $	*/
 
 /*
  * Copyright (c) 1998 Theo de Raadt and Jason L. Wright.
@@ -40,7 +40,6 @@
 
 #include <net/if.h>
 #include <net/if_dl.h>
-#include <net/if_types.h>
 #include <net/netisr.h>
 #include <net/if_media.h>
 

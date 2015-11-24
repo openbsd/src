@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rsu.c,v 1.29 2015/11/15 01:05:25 stsp Exp $	*/
+/*	$OpenBSD: if_rsu.c,v 1.30 2015/11/24 13:33:18 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -42,7 +42,6 @@
 #include <net/if_arp.h>
 #include <net/if_dl.h>
 #include <net/if_media.h>
-#include <net/if_types.h>
 
 #include <netinet/in.h>
 #include <netinet/if_ether.h>

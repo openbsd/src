@@ -1,4 +1,4 @@
-/*	$OpenBSD: ti.c,v 1.20 2015/11/20 03:35:22 dlg Exp $	*/
+/*	$OpenBSD: ti.c,v 1.21 2015/11/24 13:33:17 mpi Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -85,7 +85,6 @@
 #include <sys/queue.h>
 
 #include <net/if.h>
-#include <net/if_types.h>
 
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
