@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.h,v 1.63 2015/11/13 10:18:04 mpi Exp $	*/
+/*	$OpenBSD: if_ether.h,v 1.64 2015/11/24 15:27:46 mpi Exp $	*/
 /*	$NetBSD: if_ether.h,v 1.22 1996/05/11 13:00:00 mycroft Exp $	*/
 
 /*
@@ -88,6 +88,44 @@ struct	ether_header {
 #define	ETHER_CRC_POLY_LE	0xedb88320
 #define	ETHER_CRC_POLY_BE	0x04c11db6
 
+/*
+ * Ethernet Address Resolution Protocol.
+ *
+ * See RFC 826 for protocol description.  Structure below is adapted
+ * to resolving internet addresses.  Field names used correspond to
+ * RFC 826.
+ */
+struct	ether_arp {
+	struct	 arphdr ea_hdr;			/* fixed-size header */
+	u_int8_t arp_sha[ETHER_ADDR_LEN];	/* sender hardware address */
+	u_int8_t arp_spa[4];			/* sender protocol address */
+	u_int8_t arp_tha[ETHER_ADDR_LEN];	/* target hardware address */
+	u_int8_t arp_tpa[4];			/* target protocol address */
+};
+#define	arp_hrd	ea_hdr.ar_hrd
+#define	arp_pro	ea_hdr.ar_pro
+#define	arp_hln	ea_hdr.ar_hln
+#define	arp_pln	ea_hdr.ar_pln
+#define	arp_op	ea_hdr.ar_op
+
+struct sockaddr_inarp {
+	u_int8_t  sin_len;
+	u_int8_t  sin_family;
+	u_int16_t sin_port;
+	struct	  in_addr sin_addr;
+	struct	  in_addr sin_srcaddr;
+	u_int16_t sin_tos;
+	u_int16_t sin_other;
+#define SIN_PROXY 1
+};
+
+/*
+ * IP and ethernet specific routing flags
+ */
+#define	RTF_USETRAILERS	  RTF_PROTO1	/* use trailers */
+#define	RTF_ANNOUNCE	  RTF_PROTO2	/* announce new arp entry */
+#define	RTF_PERMANENT_ARP RTF_PROTO3    /* only manual overwrite of entry */
+
 #ifdef _KERNEL
 /*
  * Macro to map an IP multicast address to an Ethernet multicast address.
@@ -123,31 +161,6 @@ do {									\
 	(enaddr)[5] = ((u_int8_t *)ip6addr)[15];			\
 } while (/* CONSTCOND */ 0)
 
-void	ether_fakeaddr(struct ifnet *);
-#endif
-
-/*
- * Ethernet Address Resolution Protocol.
- *
- * See RFC 826 for protocol description.  Structure below is adapted
- * to resolving internet addresses.  Field names used correspond to
- * RFC 826.
- */
-struct	ether_arp {
-	struct	 arphdr ea_hdr;			/* fixed-size header */
-	u_int8_t arp_sha[ETHER_ADDR_LEN];	/* sender hardware address */
-	u_int8_t arp_spa[4];			/* sender protocol address */
-	u_int8_t arp_tha[ETHER_ADDR_LEN];	/* target hardware address */
-	u_int8_t arp_tpa[4];			/* target protocol address */
-};
-#define	arp_hrd	ea_hdr.ar_hrd
-#define	arp_pro	ea_hdr.ar_pro
-#define	arp_hln	ea_hdr.ar_hln
-#define	arp_pln	ea_hdr.ar_pln
-#define	arp_op	ea_hdr.ar_op
-
-#ifdef _KERNEL
-
 #include <net/if_var.h>	/* for "struct ifnet" */
 
 /*
@@ -164,27 +177,7 @@ struct	arpcom {
 	int	 ac_multirangecnt;		/* number of mcast ranges */
 
 };
-#endif
 
-struct sockaddr_inarp {
-	u_int8_t  sin_len;
-	u_int8_t  sin_family;
-	u_int16_t sin_port;
-	struct	  in_addr sin_addr;
-	struct	  in_addr sin_srcaddr;
-	u_int16_t sin_tos;
-	u_int16_t sin_other;
-#define SIN_PROXY 1
-};
-
-/*
- * IP and ethernet specific routing flags
- */
-#define	RTF_USETRAILERS	  RTF_PROTO1	/* use trailers */
-#define	RTF_ANNOUNCE	  RTF_PROTO2	/* announce new arp entry */
-#define	RTF_PERMANENT_ARP RTF_PROTO3    /* only manual overwrite of entry */
-
-#ifdef	_KERNEL
 extern u_int8_t etherbroadcastaddr[ETHER_ADDR_LEN];
 extern u_int8_t etheranyaddr[ETHER_ADDR_LEN];
 extern u_int8_t ether_ipmulticast_min[ETHER_ADDR_LEN];
@@ -194,10 +187,11 @@ extern struct niqueue rarpintrq;
 
 void	arpwhohas(struct arpcom *, struct in_addr *);
 void	arpintr(void);
-int	arpresolve(struct ifnet *,
-	    struct rtentry *, struct mbuf *, struct sockaddr *, u_char *);
+int	arpresolve(struct ifnet *, struct rtentry *, struct mbuf *,
+	    struct sockaddr *, u_char *);
 void	arp_rtrequest(struct ifnet *, int, struct rtentry *);
 
+void	ether_fakeaddr(struct ifnet *);
 int	ether_addmulti(struct ifreq *, struct arpcom *);
 int	ether_delmulti(struct ifreq *, struct arpcom *);
 int	ether_multiaddr(struct sockaddr *, u_int8_t[], u_int8_t[]);
@@ -284,7 +278,7 @@ u_int32_t ether_crc32_be_update(u_int32_t crc, const u_int8_t *, size_t);
 u_int32_t ether_crc32_le(const u_int8_t *, size_t);
 u_int32_t ether_crc32_be(const u_int8_t *, size_t);
 
-#else
+#else /* _KERNEL */
 
 __BEGIN_DECLS
 char *ether_ntoa(struct ether_addr *);
