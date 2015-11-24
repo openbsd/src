@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mbuf_tags.9,v 1.36 2015/06/25 09:25:09 mpi Exp $
+.\"	$OpenBSD: mbuf_tags.9,v 1.37 2015/11/24 19:58:48 jmc Exp $
 .\"
 .\" The author of this man page is Angelos D. Keromytis (angelos@cis.upenn.edu)
 .\"
@@ -15,11 +15,20 @@
 .\" MERCHANTABILITY OF THIS SOFTWARE OR ITS FITNESS FOR ANY PARTICULAR
 .\" PURPOSE.
 .\"
-.Dd $Mdocdate: June 25 2015 $
-.Dt MBUF_TAGS 9
+.Dd $Mdocdate: November 24 2015 $
+.Dt M_TAG_GET 9
 .Os
 .Sh NAME
-.Nm mbuf_tags
+.Nm m_tag_get ,
+.Nm m_tag_find ,
+.Nm m_tag_prepend ,
+.Nm m_tag_delete ,
+.Nm m_tag_copy ,
+.Nm m_tag_delete_chain ,
+.Nm m_tag_init ,
+.Nm m_tag_copy_chain ,
+.Nm m_tag_first ,
+.Nm m_tag_next
 .Nd a framework for generic packet attributes
 .Sh SYNOPSIS
 .In sys/mbuf.h
