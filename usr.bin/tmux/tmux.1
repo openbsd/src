@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.464 2015/11/24 21:50:06 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.465 2015/11/24 21:52:06 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
 .\"
@@ -891,7 +891,7 @@ is specified, only update the client's status bar.
 Rename the session to
 .Ar new-name .
 .It Xo Ic show-messages
-.Op Fl IJT
+.Op Fl JT
 .Op Fl t Ar target-client
 .Xc
 .D1 (alias: Ic showmsgs )
@@ -904,11 +904,10 @@ With
 .Fl t ,
 display the log for
 .Ar target-client .
-.Fl I ,
 .Fl J
 and
 .Fl T
-show debugging information about the running server, jobs and terminals.
+show debugging information about jobs and terminals.
 .It Ic source-file Ar path
 .D1 (alias: Ic source )
 Execute commands from
@@ -3414,6 +3413,7 @@ The following variables are available, where appropriate:
 .It Li "session_name" Ta "#S" Ta "Name of session"
 .It Li "session_width" Ta "" Ta "Width of session"
 .It Li "session_windows" Ta "" Ta "Number of windows in session"
+.It Li "start_time" Ta "" Ta "Server start time"
 .It Li "window_activity" Ta "" Ta "Integer time of window last activity"
 .It Li "window_active" Ta "" Ta "1 if window active"
 .It Li "window_bell_flag" Ta "" Ta "1 if window has bell"

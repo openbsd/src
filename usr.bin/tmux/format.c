@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.99 2015/11/18 14:27:44 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.100 2015/11/24 21:52:06 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -488,6 +488,8 @@ format_create_flags(int flags)
 	format_add_cb(ft, "host", format_cb_host);
 	format_add_cb(ft, "host_short", format_cb_host_short);
 	format_add_cb(ft, "pid", format_cb_pid);
+	format_add(ft, "socket_path", "%s", socket_path);
+	format_add_tv(ft, "start_time", &start_time);
 
 	return (ft);
 }

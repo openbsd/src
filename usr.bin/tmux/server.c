@@ -1,4 +1,4 @@
-/* $OpenBSD: server.c,v 1.152 2015/11/24 21:19:46 nicm Exp $ */
+/* $OpenBSD: server.c,v 1.153 2015/11/24 21:52:06 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -187,7 +187,7 @@ server_start(struct event_base *base, int lockfd, char *lockfile)
 	mode_key_init_trees();
 	key_bindings_init();
 
-	start_time = time(NULL);
+	gettimeofday(&start_time, NULL);
 
 	server_fd = server_create_socket();
 	if (server_fd == -1)

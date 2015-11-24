@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.c,v 1.157 2015/11/24 21:19:46 nicm Exp $ */
+/* $OpenBSD: tmux.c,v 1.158 2015/11/24 21:52:06 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -44,7 +44,7 @@ struct options	*global_w_options;	/* window options */
 struct environ	*global_environ;
 
 char		*shell_cmd;
-time_t		 start_time;
+struct timeval	 start_time;
 char		 socket_path[PATH_MAX];
 
 __dead void	 usage(void);
