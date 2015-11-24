@@ -1,4 +1,4 @@
-/*	$OpenBSD: glob.c,v 1.44 2015/09/14 16:09:13 tedu Exp $ */
+/*	$OpenBSD: glob.c,v 1.45 2015/11/24 22:03:33 millert Exp $ */
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -354,8 +354,8 @@ globexp2(const Char *ptr, const Char *pattern, glob_t *pglob,
 static const Char *
 globtilde(const Char *pattern, Char *patbuf, size_t patbuf_len, glob_t *pglob)
 {
-	struct passwd *pwd;
-	char *h;
+	struct passwd pwstore, *pwd = NULL;
+	char *h, pwbuf[_PW_BUF_LEN];
 	const Char *p;
 	Char *b, *eb;
 
@@ -381,7 +381,9 @@ globtilde(const Char *pattern, Char *patbuf, size_t patbuf_len, glob_t *pglob)
 		 * first and then trying the password file
 		 */
 		if (issetugid() != 0 || (h = getenv("HOME")) == NULL) {
-			if ((pwd = getpwuid(getuid())) == NULL)
+			getpwuid_r(getuid(), &pwstore, pwbuf, sizeof(pwbuf),
+			    &pwd);
+			if (pwd == NULL)
 				return pattern;
 			else
 				h = pwd->pw_dir;
@@ -390,7 +392,9 @@ globtilde(const Char *pattern, Char *patbuf, size_t patbuf_len, glob_t *pglob)
 		/*
 		 * Expand a ~user
 		 */
-		if ((pwd = getpwnam((char*) patbuf)) == NULL)
+		getpwnam_r((char *)patbuf, &pwstore, pwbuf, sizeof(pwbuf),
+		    &pwd);
+		if (pwd == NULL)
 			return pattern;
 		else
 			h = pwd->pw_dir;

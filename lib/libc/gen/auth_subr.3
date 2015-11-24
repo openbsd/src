@@ -1,4 +1,4 @@
-.\"	$OpenBSD: auth_subr.3,v 1.22 2015/11/10 23:48:18 jmc Exp $
+.\"	$OpenBSD: auth_subr.3,v 1.23 2015/11/24 22:03:33 millert Exp $
 .\"
 .\" Copyright (c) 1997 Berkeley Software Design, Inc. All rights reserved.
 .\"
@@ -31,7 +31,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	BSDI $From: auth_subr.3,v 2.5 2000/03/30 19:11:27 polk Exp $
-.Dd $Mdocdate: November 10 2015 $
+.Dd $Mdocdate: November 24 2015 $
 .Dt AUTH_OPEN 3
 .Os
 .Sh NAME
@@ -540,22 +540,3 @@ or 0.
 .Xr login_cap 3 ,
 .Xr pw_dup 3 ,
 .Xr login.conf 5
-.Sh CAVEATS
-The
-.Fn auth_check_change
-and
-.Fn auth_check_expire
-functions call
-.Fn getpwnam
-or
-.Fn getpwuid ,
-overwriting the static storage used by the
-.Xr getpwent 3
-family of routines.
-The calling program must either make a local copy of the passwd struct
-pointer via the
-.Xr pw_dup 3
-function or use the
-.Xr auth_setpwd 3
-function to copy the passwd struct into
-.Fa as .

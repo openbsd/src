@@ -1,4 +1,4 @@
-/*	$OpenBSD: getpwent.c,v 1.57 2015/11/18 16:44:46 tedu Exp $ */
+/*	$OpenBSD: getpwent.c,v 1.58 2015/11/24 22:03:33 millert Exp $ */
 /*
  * Copyright (c) 2008 Theo de Raadt
  * Copyright (c) 1988, 1993
@@ -768,7 +768,6 @@ getpwnam(const char *name)
 	}
 	return (pw);
 }
-DEF_WEAK(getpwnam);
 
 struct passwd *
 getpwnam_shadow(const char *name)
@@ -854,7 +853,6 @@ getpwuid(uid_t uid)
 	}
 	return (pw);
 }
-DEF_WEAK(getpwuid);
 
 struct passwd *
 getpwuid_shadow(uid_t uid)

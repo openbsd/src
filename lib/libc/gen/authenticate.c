@@ -1,4 +1,4 @@
-/*	$OpenBSD: authenticate.c,v 1.24 2015/09/14 16:09:13 tedu Exp $	*/
+/*	$OpenBSD: authenticate.c,v 1.25 2015/11/24 22:03:33 millert Exp $	*/
 
 /*-
  * Copyright (c) 1997 Berkeley Software Design, Inc. All rights reserved.
@@ -177,8 +177,8 @@ int
 auth_approval(auth_session_t *as, login_cap_t *lc, char *name, char *type)
 {
 	int close_on_exit, close_lc_on_exit, len;
-	struct passwd *pwd;
-	char *approve, *s, path[PATH_MAX];
+	struct passwd pwstore, *pwd;
+	char *approve, *s, path[PATH_MAX], pwbuf[_PW_BUF_LEN];
 
 	pwd = NULL;
 	close_on_exit = as == NULL;
@@ -191,10 +191,12 @@ auth_approval(auth_session_t *as, login_cap_t *lc, char *name, char *type)
 		pwd = auth_getpwd(as);
 
 	if (pwd == NULL) {
-		if (name != NULL)
-			pwd = getpwnam(name);
-		else {
-			if ((pwd = getpwuid(getuid())) == NULL) {
+		if (name != NULL) {
+			getpwnam_r(name, &pwstore, pwbuf, sizeof(pwbuf), &pwd);
+		} else {
+			getpwuid_r(getuid(), &pwstore, pwbuf, sizeof(pwbuf),
+			    &pwd);
+			if (pwd == NULL) {
 				syslog(LOG_ERR, "no such user id %u", getuid());
 				warnx("cannot approve who we don't recognize");
 				return (0);
@@ -216,7 +218,7 @@ auth_approval(auth_session_t *as, login_cap_t *lc, char *name, char *type)
 		if (pwd == NULL && (approve = strchr(name, '.')) != NULL) {
 			strlcpy(path, name, sizeof path);
 			path[approve-name] = '\0';
-			pwd = getpwnam(name);
+			getpwnam_r(name, &pwstore, pwbuf, sizeof(pwbuf), &pwd);
 		}
 		lc = login_getclass(pwd ? pwd->pw_class : NULL);
 		if (lc == NULL) {
@@ -307,9 +309,10 @@ auth_session_t *
 auth_usercheck(char *name, char *style, char *type, char *password)
 {
 	char namebuf[LOGIN_NAME_MAX + 1 + NAME_MAX + 1];
+	char pwbuf[_PW_BUF_LEN];
 	auth_session_t *as;
 	login_cap_t *lc;
-	struct passwd *pwd;
+	struct passwd pwstore, *pwd = NULL;
 	char *slash;
 
 	if (strlcpy(namebuf, name, sizeof(namebuf)) >= sizeof(namebuf))
@@ -327,10 +330,11 @@ auth_usercheck(char *name, char *style, char *type, char *password)
 	 * the class so it is okay if we strip a /root instance
 	 * The actual login script will pay attention to the instance.
 	 */
-	if ((pwd = getpwnam(name)) == NULL) {
+	getpwnam_r(name, &pwstore, pwbuf, sizeof(pwbuf), &pwd);
+	if (pwd == NULL) {
 		if ((slash = strchr(name, '/')) != NULL) {
 			*slash = '\0';
-			pwd = getpwnam(name);
+			getpwnam_r(name, &pwstore, pwbuf, sizeof(pwbuf), &pwd);
 			*slash = '/';
 		}
 	}
@@ -376,8 +380,8 @@ auth_userchallenge(char *name, char *style, char *type, char **challengep)
 	char namebuf[LOGIN_NAME_MAX + 1 + NAME_MAX + 1];
 	auth_session_t *as;
 	login_cap_t *lc;
-	struct passwd *pwd;
-	char *slash;
+	struct passwd pwstore, *pwd = NULL;
+	char *slash, pwbuf[_PW_BUF_LEN];
 
 	if (strlen(name) >= sizeof(namebuf))
 		return (NULL);
@@ -395,10 +399,11 @@ auth_userchallenge(char *name, char *style, char *type, char **challengep)
 	 * the class so it is okay if we strip a /root instance
 	 * The actual login script will pay attention to the instance.
 	 */
-	if ((pwd = getpwnam(name)) == NULL) {
+	getpwnam_r(name, &pwstore, pwbuf, sizeof(pwbuf), &pwd);
+	if (pwd == NULL) {
 		if ((slash = strchr(name, '/')) != NULL) {
 			*slash = '\0';
-			pwd = getpwnam(name);
+			getpwnam_r(name, &pwstore, pwbuf, sizeof(pwbuf), &pwd);
 			*slash = '/';
 		}
 	}

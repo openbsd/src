@@ -1,4 +1,4 @@
-/*	$OpenBSD: pwd.h,v 1.2 2015/11/18 16:44:46 tedu Exp $	*/
+/*	$OpenBSD: pwd.h,v 1.3 2015/11/24 22:03:33 millert Exp $	*/
 /*
  * Copyright (c) 2015 Philip Guenther <guenther@openbsd.org>
  *
@@ -31,10 +31,10 @@ PROTO_DEPRECATED(bcrypt_gensalt);
 PROTO_NORMAL(bcrypt_newhash);
 PROTO_DEPRECATED(endpwent);
 PROTO_DEPRECATED(getpwent);
-PROTO_NORMAL(getpwnam);
+PROTO_DEPRECATED(getpwnam);
 PROTO_NORMAL(getpwnam_r);
 PROTO_NORMAL(getpwnam_shadow);
-PROTO_NORMAL(getpwuid);
+PROTO_DEPRECATED(getpwuid);
 PROTO_NORMAL(getpwuid_r);
 PROTO_NORMAL(getpwuid_shadow);
 PROTO_NORMAL(pw_dup);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: getgrent.c,v 1.44 2015/09/14 16:09:13 tedu Exp $ */
+/*	$OpenBSD: getgrent.c,v 1.45 2015/11/24 22:03:33 millert Exp $ */
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -170,7 +170,6 @@ getgrgid(gid_t gid)
 
 	return getgrgid_gs(gid, p_gr, gs);
 }
-DEF_WEAK(getgrgid);
 
 int
 getgrgid_r(gid_t gid, struct group *grp, char *buffer, size_t bufsize,
@@ -191,6 +190,7 @@ getgrgid_r(gid_t gid, struct group *grp, char *buffer, size_t bufsize,
 	errno = errnosave;
 	return ret;
 }
+DEF_WEAK(getgrgid_r);
 
 static int
 start_gr(void)

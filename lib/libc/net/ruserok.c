@@ -111,11 +111,11 @@ iruserok_sa(const void *raddr, int rlen, int superuser, const char *ruser,
 	struct sockaddr *sa;
 	char *cp;
 	struct stat sbuf;
-	struct passwd *pwd;
+	struct passwd pwstore, *pwd;
 	FILE *hostf;
 	uid_t uid;
 	int first;
-	char pbuf[PATH_MAX];
+	char pbuf[PATH_MAX], pwbuf[_PW_BUF_LEN];
 
 	sa = (struct sockaddr *)raddr;
 	first = 1;
@@ -132,7 +132,9 @@ again:
 		int len;
 
 		first = 0;
-		if ((pwd = getpwnam(luser)) == NULL)
+		pwd = NULL;
+		getpwnam_r(luser, &pwstore, pwbuf, sizeof(pwbuf), &pwd);
+		if (pwd == NULL)
 			return (-1);
 		len = snprintf(pbuf, sizeof pbuf, "%s/.rhosts", pwd->pw_dir);
 		if (len < 0 || len >= sizeof pbuf)

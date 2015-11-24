@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcmdsh.c,v 1.17 2015/11/01 03:45:29 guenther Exp $	*/ 
+/*	$OpenBSD: rcmdsh.c,v 1.18 2015/11/24 22:03:33 millert Exp $	*/ 
 
 /*
  * Copyright (c) 2001, MagniComp
@@ -58,15 +58,16 @@ rcmdsh(char **ahost, int rport, const char *locuser, const char *remuser,
 	struct hostent *hp;
 	int sp[2];
 	pid_t cpid;
-	char *p;
-	struct passwd *pw;
+	char *p, pwbuf[_PW_BUF_LEN];
+	struct passwd pwstore, *pw = NULL;
 
 	/* What rsh/shell to use. */
 	if (rshprog == NULL)
 		rshprog = _PATH_RSH;
 
 	/* locuser must exist on this host. */
-	if ((pw = getpwnam(locuser)) == NULL) {
+	getpwnam_r(locuser, &pwstore, pwbuf, sizeof(pwbuf), &pw);
+	if (pw == NULL) {
 		(void) fprintf(stderr, "rcmdsh: unknown user: %s\n", locuser);
 		return(-1);
 	}

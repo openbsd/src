@@ -1,4 +1,4 @@
-.\"	$OpenBSD: authenticate.3,v 1.16 2015/11/10 23:48:18 jmc Exp $
+.\"	$OpenBSD: authenticate.3,v 1.17 2015/11/24 22:03:33 millert Exp $
 .\"
 .\" Copyright (c) 1997 Berkeley Software Design, Inc. All rights reserved.
 .\"
@@ -31,7 +31,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	BSDI $From: authenticate.3,v 2.7 1998/09/03 20:27:20 prb Exp $
-.Dd $Mdocdate: November 10 2015 $
+.Dd $Mdocdate: November 24 2015 $
 .Dt AUTH_APPROVAL 3
 .Os
 .Sh NAME
@@ -306,33 +306,3 @@ is returned if no memory was available for the new copy of the string.
 .Xr auth_subr 3 ,
 .Xr getpwent 3 ,
 .Xr pw_dup 3
-.Sh CAVEATS
-The
-.Fn auth_approval ,
-.Fn auth_usercheck ,
-.Fn auth_userokay ,
-and
-.Fn auth_userchallenge
-functions call
-.Xr getpwnam 3
-or
-.Xr getpwuid 3 ,
-overwriting the static storage used by the
-.Xr getpwent 3
-family of routines.
-The calling program must either make a local copy of the passwd struct
-pointer via the
-.Xr pw_dup 3
-function or, for
-.Fn auth_approval
-and
-.Fn auth_usercheck
-only, use the
-.Xr auth_setpwd 3
-function to copy the passwd struct into a
-.Bx
-Authentication session structure
-which can then be passed to
-.Fn auth_approval
-or
-.Fn auth_usercheck .

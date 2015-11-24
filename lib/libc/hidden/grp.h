@@ -1,4 +1,4 @@
-/*	$OpenBSD: grp.h,v 1.1 2015/09/13 12:20:12 guenther Exp $	*/
+/*	$OpenBSD: grp.h,v 1.2 2015/11/24 22:03:33 millert Exp $	*/
 /*
  * Copyright (c) 2015 Philip Guenther <guenther@openbsd.org>
  *
@@ -26,8 +26,8 @@ __END_HIDDEN_DECLS
 
 PROTO_NORMAL(endgrent);
 PROTO_DEPRECATED(getgrent);
-PROTO_NORMAL(getgrgid);
-PROTO_DEPRECATED(getgrgid_r);
+PROTO_DEPRECATED(getgrgid);
+PROTO_NORMAL(getgrgid_r);
 PROTO_DEPRECATED(getgrnam);
 PROTO_DEPRECATED(getgrnam_r);
 PROTO_DEPRECATED(group_from_gid);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pwcache.c,v 1.11 2015/11/17 17:49:09 tedu Exp $ */
+/*	$OpenBSD: pwcache.c,v 1.12 2015/11/24 22:03:33 millert Exp $ */
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -48,8 +48,8 @@ user_from_uid(uid_t uid, int nouser)
 		short	noname;
 		char	name[_PW_NAME_LEN + 1];
 	} c_uid[NLINES * NCACHE];
-	static char nbuf[15];		/* 32 bits == 10 digits */
-	struct passwd *pw;
+	char pwbuf[_PW_BUF_LEN];
+	struct passwd pwstore, *pw;
 	struct ncache *cp;
 	unsigned int i;
 
@@ -58,7 +58,9 @@ user_from_uid(uid_t uid, int nouser)
 		if (!*cp->name) {
 fillit:
 			cp->uid = uid;
-			if ((pw = getpwuid(uid)) == NULL) {
+			pw = NULL;
+			getpwuid_r(uid, &pwstore, pwbuf, sizeof(pwbuf), &pw);
+			if (pw == NULL) {
 				snprintf(cp->name, sizeof(cp->name), "%u", uid);
 				cp->noname = 1;
 			} else {
@@ -91,8 +93,8 @@ group_from_gid(gid_t gid, int nogroup)
 		short 	noname;
 		char	name[_PW_NAME_LEN + 1];
 	} c_gid[NLINES * NCACHE];
-	static char nbuf[15];		/* 32 bits == 10 digits */
-	struct group *gr;
+	char grbuf[_PW_BUF_LEN];
+	struct group grstore, *gr;
 	struct ncache *cp;
 	unsigned int i;
 
@@ -101,7 +103,9 @@ group_from_gid(gid_t gid, int nogroup)
 		if (!*cp->name) {
 fillit:
 			cp->gid = gid;
-			if ((gr = getgrgid(gid)) == NULL) {
+			gr = NULL;
+			getgrgid_r(gid, &grstore, grbuf, sizeof(grbuf), &gr);
+			if (gr == NULL) {
 				snprintf(cp->name, sizeof(cp->name), "%u", gid);
 				cp->noname = 1;
 			} else {
