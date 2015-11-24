@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.589 2015/11/24 21:52:06 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.590 2015/11/24 22:27:22 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1433,7 +1433,7 @@ extern struct options *global_w_options;
 extern struct environ *global_environ;
 extern char		*shell_cmd;
 extern struct timeval	 start_time;
-extern char		 socket_path[PATH_MAX];
+extern const char	*socket_path;
 const char	*getshell(void);
 int		 checkshell(const char *);
 int		 areshell(const char *);
