@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.463 2015/11/24 20:40:51 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.464 2015/11/24 21:50:06 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
 .\"
@@ -740,7 +740,7 @@ Kill the
 .Nm
 server and clients and destroy all sessions.
 .It Xo Ic kill-session
-.Op Fl a
+.Op Fl aC
 .Op Fl t Ar target-session
 .Xc
 Destroy the given session, closing any windows linked to it and no other
@@ -748,6 +748,10 @@ sessions, and detaching all clients attached to it.
 If
 .Fl a
 is given, all sessions but the specified one is killed.
+The
+.Fl C
+clears alerts (bell, activity, or silence) in all windows linked to the
+session.
 .It Xo Ic list-clients
 .Op Fl F Ar format
 .Op Fl t Ar target-session
