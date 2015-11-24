@@ -1,4 +1,3 @@
-#	$OpenBSD: Makefile.inc,v 1.5 2002/05/23 18:42:59 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.6 2015/11/24 03:10:09 deraadt Exp $
 
-BINGRP?=	games
 BINDIR?=	/usr/games

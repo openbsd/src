@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.8 2002/05/31 03:46:35 pjanzen Exp $
+#	$OpenBSD: Makefile,v 1.9 2015/11/24 03:10:10 deraadt Exp $
 
 PROG=	battlestar
 SRCS=	battlestar.c com1.c com2.c com3.c com4.c com5.c com6.c com7.c \
@@ -7,8 +7,6 @@ SRCS=	battlestar.c com1.c com2.c com3.c com4.c com5.c com6.c com7.c \
 MAN=	battlestar.6
 DPADD=	${LIBCURSES}
 LDADD=	-lcurses
-BINGRP=	games
-BINMODE=2555
 
 beforeinstall: 
 	@if [ ! -f ${DESTDIR}/var/games/battlestar.log ]; then \
