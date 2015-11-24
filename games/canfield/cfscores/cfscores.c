@@ -1,4 +1,4 @@
-/*	$OpenBSD: cfscores.c,v 1.17 2015/11/24 02:53:39 tedu Exp $	*/
+/*	$OpenBSD: cfscores.c,v 1.18 2015/11/24 16:54:22 tedu Exp $	*/
 /*	$NetBSD: cfscores.c,v 1.3 1995/03/21 15:08:37 cgd Exp $	*/
 
 /*
@@ -89,11 +89,6 @@ printuser(const struct passwd *pw, int printfail)
 
 	if (pw->pw_uid < 0) {
 		printf("Bad uid %u\n", pw->pw_uid);
-		return;
-	}
-	i = lseek(dbfd, sizeof(struct betinfo), SEEK_SET);
-	if (i < 0) {
-		warn("lseek %s", scorepath);
 		return;
 	}
 	i = read(dbfd, (char *)&total, sizeof(total));

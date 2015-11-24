@@ -1,4 +1,4 @@
-/*	$OpenBSD: canfield.c,v 1.17 2015/11/24 02:53:39 tedu Exp $	*/
+/*	$OpenBSD: canfield.c,v 1.18 2015/11/24 16:54:22 tedu Exp $	*/
 /*	$NetBSD: canfield.c,v 1.7 1995/05/13 07:28:35 jtc Exp $	*/
 
 /*
@@ -1377,7 +1377,7 @@ suspend(void)
 	move(21, 0);
 	refresh();
 	if (dbfd != -1) {
-		lseek(dbfd, sizeof(struct betinfo), SEEK_SET);
+		lseek(dbfd, 0, SEEK_SET);
 		write(dbfd, (char *)&total, sizeof(total));
 	}
 	kill(getpid(), SIGTSTP);
@@ -1635,12 +1635,6 @@ initall(void)
 	dbfd = open(scorepath, O_RDWR | O_CREAT, 0644);
 	if (dbfd < 0)
 		return;
-	i = lseek(dbfd, sizeof(struct betinfo), SEEK_SET);
-	if (i < 0) {
-		close(dbfd);
-		dbfd = -1;
-		return;
-	}
 	i = read(dbfd, (char *)&total, sizeof(total));
 	if (i < 0) {
 		close(dbfd);
@@ -1698,7 +1692,7 @@ cleanup(int dummy)
 	status = NOBOX;
 	updatebettinginfo();
 	if (dbfd != -1) {
-		lseek(dbfd, sizeof(struct betinfo), SEEK_SET);
+		lseek(dbfd, 0, SEEK_SET);
 		write(dbfd, (char *)&total, sizeof(total));
 		close(dbfd);
 	}
