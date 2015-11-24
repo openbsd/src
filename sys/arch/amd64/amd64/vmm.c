@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.6 2015/11/21 11:16:30 mpi Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.7 2015/11/24 09:07:09 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -2666,6 +2666,8 @@ vmx_handle_exit(struct vcpu *vcpu, int *result)
 	switch (exit_reason) {
 	case VMX_EXIT_EPT_VIOLATION:
 		*result = vmx_handle_np_fault(vcpu);
+		if (*result)
+			handled = 0;
 		break;
 	case VMX_EXIT_CPUID:
 		*result = vmx_handle_cpuid(vcpu);
@@ -2881,7 +2883,7 @@ vmx_handle_np_fault(struct vcpu *vcpu)
 	default:
 		printf("unknown memory type %d for GPA 0x%llx\n",
 		    gpa_memtype, gpa);
-		break;
+		return (EINVAL);
 	}
 
 	return (ret);
