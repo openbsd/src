@@ -1,4 +1,4 @@
-/*	$OpenBSD: art.c,v 1.9 2015/11/24 12:06:30 mpi Exp $ */
+/*	$OpenBSD: art.c,v 1.10 2015/11/24 12:48:20 dlg Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -353,6 +353,9 @@ art_insert(struct art_root *ar, struct art_node *an, uint8_t *addr, int plen)
 
 	/* Default route */
 	if (plen == 0) {
+		if (at->at_default != NULL)
+			return (at->at_default);
+
 		art_table_ref(ar, at);
 		at->at_default = an;
 		return (an);
