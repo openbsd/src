@@ -1,4 +1,4 @@
-/*	$OpenBSD: sndiod.c,v 1.15 2015/11/23 12:33:20 ratchov Exp $	*/
+/*	$OpenBSD: sndiod.c,v 1.16 2015/11/24 12:14:08 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -377,8 +377,6 @@ main(int argc, char **argv)
 			background = 0;
 			break;
 		case 'U':
-			if (listen_list)
-				errx(1, "-U must come before -L");
 			unit = strtonum(optarg, 0, 15, &str);
 			if (str)
 				errx(1, "%s: unit number is %s", optarg, str);
@@ -470,7 +468,7 @@ main(int argc, char **argv)
 	listen_new_un(path);
 	if (tcpaddr) {
 #ifdef USE_TCP
-		listen_new_tcp(optarg, AUCAT_PORT + unit);
+		listen_new_tcp(tcpaddr, AUCAT_PORT + unit);
 #else
 		errx(1, "-L option disabled at compilation time");
 #endif
