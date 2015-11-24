@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.1 2015/11/22 20:55:18 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.2 2015/11/24 10:17:15 espie Exp $	*/
 
 /*
  * Copyright (c) 2007-2015 Reyk Floeter <reyk@openbsd.org>
@@ -647,7 +647,7 @@ cmdline_symset(char *s)
 	if ((val = strrchr(s, '=')) == NULL)
 		return (-1);
 
-	len = strlen(s) - strlen(val) + 1;
+	len = (val - s) + 1;
 	if ((sym = malloc(len)) == NULL)
 		errx(1, "cmdline_symset: malloc");
 
