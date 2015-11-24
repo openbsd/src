@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_lb.c,v 1.51 2015/10/15 19:48:44 bluhm Exp $ */
+/*	$OpenBSD: pf_lb.c,v 1.52 2015/11/24 13:37:16 mpi Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -56,7 +56,6 @@
 #include <crypto/siphash.h>
 
 #include <net/if.h>
-#include <net/if_types.h>
 #include <net/bpf.h>
 #include <net/route.h>
 

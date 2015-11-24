@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_rtr.c,v 1.133 2015/11/02 13:54:46 sthen Exp $	*/
+/*	$OpenBSD: nd6_rtr.c,v 1.134 2015/11/24 13:37:16 mpi Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.97 2001/02/07 11:09:13 itojun Exp $	*/
 
 /*
@@ -47,7 +47,6 @@
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_var.h>
-#include <net/if_types.h>
 #include <net/route.h>
 #include <net/rtable.h>
 

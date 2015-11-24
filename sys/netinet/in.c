@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.c,v 1.123 2015/09/12 20:50:17 mpi Exp $	*/
+/*	$OpenBSD: in.c,v 1.124 2015/11/24 13:37:16 mpi Exp $	*/
 /*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
 
 /*
@@ -70,11 +70,6 @@
 #include <net/if.h>
 #include <net/if_var.h>
 #include <net/route.h>
-
-#include "carp.h"
-#if NCARP > 0
-#include <net/if_types.h>
-#endif
 
 #include <netinet/in.h>
 #include <netinet/in_var.h>

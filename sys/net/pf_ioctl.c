@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.293 2015/11/23 15:53:35 mpi Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.294 2015/11/24 13:37:16 mpi Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -57,7 +57,6 @@
 
 #include <net/if.h>
 #include <net/if_var.h>
-#include <net/if_types.h>
 #include <net/route.h>
 #include <net/hfsc.h>
 

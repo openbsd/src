@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppp_tty.c,v 1.38 2015/09/13 17:53:44 mpi Exp $	*/
+/*	$OpenBSD: ppp_tty.c,v 1.39 2015/11/24 13:37:16 mpi Exp $	*/
 /*	$NetBSD: ppp_tty.c,v 1.12 1997/03/24 21:23:10 christos Exp $	*/
 
 /*
@@ -115,7 +115,6 @@
 
 #include <net/if.h>
 #include <net/if_var.h>
-#include <net/if_types.h>
 
 #ifdef VJC
 #include <netinet/in.h>
