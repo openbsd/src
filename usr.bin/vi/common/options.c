@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.18 2014/11/14 20:27:03 tedu Exp $	*/
+/*	$OpenBSD: options.c,v 1.19 2015/11/24 10:28:14 bentley Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -347,6 +347,7 @@ opts_init(SCR *sp, int *oargs)
 	    "directory=%s", (s = getenv("TMPDIR")) == NULL ? _PATH_TMP : s);
 	OI(O_TMP_DIRECTORY, b1);
 	OI(O_ESCAPETIME, "escapetime=1");
+	OI(O_FILEC, "filec=\t");
 	OI(O_KEYTIME, "keytime=6");
 	OI(O_MATCHTIME, "matchtime=7");
 	(void)snprintf(b1, sizeof(b1), "msgcat=%s", _PATH_MSGCAT);
