@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.586 2015/11/23 23:47:57 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.587 2015/11/24 09:34:55 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1394,6 +1394,7 @@ enum options_table_type {
 	OPTIONS_TABLE_STYLE
 };
 enum options_table_scope {
+	OPTIONS_TABLE_NONE,
 	OPTIONS_TABLE_SERVER,
 	OPTIONS_TABLE_SESSION,
 	OPTIONS_TABLE_WINDOW,

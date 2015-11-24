@@ -1,4 +1,4 @@
-/* $OpenBSD: options-table.c,v 1.68 2015/11/22 18:28:01 tim Exp $ */
+/* $OpenBSD: options-table.c,v 1.69 2015/11/24 09:34:55 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -892,6 +892,8 @@ options_table_populate_tree(enum options_table_scope scope, struct options *oo)
 	const struct options_table_entry	*oe;
 
 	for (oe = options_table; oe->name != NULL; oe++) {
+		if (oe->scope == OPTIONS_TABLE_NONE)
+			fatalx("no scope for %s", oe->name);
 		if (oe->scope != scope)
 			continue;
 		switch (oe->type) {
