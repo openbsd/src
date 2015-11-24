@@ -1,4 +1,4 @@
-/*	$OpenBSD: table_db.c,v 1.8 2015/01/20 17:37:54 deraadt Exp $	*/
+/*	$OpenBSD: table_db.c,v 1.9 2015/11/24 07:40:26 gilles Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@poolp.org>
@@ -52,7 +52,7 @@ static char *table_db_get_entry_match(void *, const char *, size_t *,
     int(*)(const char *, const char *));
 
 struct table_backend table_backend_db = {
-	K_ALIAS|K_CREDENTIALS|K_DOMAIN|K_NETADDR|K_USERINFO|K_SOURCE|K_MAILADDR|K_ADDRNAME,
+	K_ALIAS|K_CREDENTIALS|K_DOMAIN|K_NETADDR|K_USERINFO|K_SOURCE|K_MAILADDR|K_ADDRNAME|K_MAILADDRMAP,
 	table_db_config,
 	table_db_open,
 	table_db_update,
