@@ -1,4 +1,4 @@
-.\"	$OpenBSD: canfield.6,v 1.9 2014/09/26 21:41:56 schwarze Exp $
+.\"	$OpenBSD: canfield.6,v 1.10 2015/11/24 02:51:50 tedu Exp $
 .\"	$NetBSD: canfield.6,v 1.4 1995/03/21 15:08:30 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)canfield.6	8.1 (Berkeley) 5/31/93
 .\"
-.Dd $Mdocdate: September 26 2014 $
+.Dd $Mdocdate: November 24 2015 $
 .Dt CANFIELD 6
 .Os
 .Sh NAME
@@ -40,8 +40,6 @@
 .Sh SYNOPSIS
 .Nm canfield
 .Nm cfscores
-.Op Fl a
-.Op Ar username
 .Sh DESCRIPTION
 If you have never played solitaire before, it is recommended
 that you consult a solitaire instruction book.
@@ -101,23 +99,14 @@ that became visible since it was last turned on.
 Thus the maximum cost of information is $34.
 Playing time is charged at a rate of $1 per minute.
 .Pp
-With no arguments, the program
+The program
 .Nm cfscores
 prints out the current status of your canfield account.
-If a
-.Ar username
-is specified,
-it prints out the status of that user's canfield account.
-If the
-.Fl a
-flag is specified,
-it prints out the canfield accounts for all users that have
-played the game since the database was set up.
 .Sh FILES
 .Bl -tag -width /usr/games/cfscores -compact
 .It Pa /usr/games/cfscores
 the score database printer
-.It Pa /var/games/cfscores
+.It Pa $HOME/cfscores
 the database of scores
 .El
 .Sh AUTHORS

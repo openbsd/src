@@ -1,4 +1,4 @@
-/*	$OpenBSD: cfscores.c,v 1.15 2009/10/27 23:59:24 deraadt Exp $	*/
+/*	$OpenBSD: cfscores.c,v 1.16 2015/11/24 02:51:50 tedu Exp $	*/
 /*	$NetBSD: cfscores.c,v 1.3 1995/03/21 15:08:37 cgd Exp $	*/
 
 /*
@@ -33,12 +33,12 @@
 #include <sys/types.h>
 #include <err.h>
 #include <fcntl.h>
+#include <limits.h>
 #include <pwd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include "pathnames.h"
 
 struct betinfo {
 	long	hand;		/* cost of dealing hand */
@@ -52,6 +52,7 @@ struct betinfo {
 };
 
 int dbfd;
+char scorepath[PATH_MAX];
 
 void	printuser(const struct passwd *, int);
 
@@ -60,41 +61,19 @@ main(int argc, char *argv[])
 {
 	struct passwd *pw;
 	uid_t uid;
-	gid_t gid;
-
-	if (argc > 2) {
-		fprintf(stderr, "usage: cfscores [-a] [username]\n");
-		exit(1);
-	}
-	dbfd = open(_PATH_SCORE, O_RDONLY);
+	
+	if (!getenv("HOME"))
+		return;
+	snprintf(scorepath, sizeof(scorepath), "%s/%s", getenv("HOME"),
+			"cfscores");
+	dbfd = open(scorepath, O_RDONLY);
 	if (dbfd < 0)
-		err(2, "%s", _PATH_SCORE);
-
-	/* revoke privs */
-	gid = getgid();
-	setresgid(gid, gid, gid);
+		err(2, "%s", scorepath);
 
 	setpwent();
-	if (argc == 1) {
-		uid = getuid();
-		pw = getpwuid(uid);
-		if (pw == 0) {
-			printf("You are not listed in the password file?!?\n");
-			exit(2);
-		}
-		printuser(pw, 1);
-		exit(0);
-	}
-	if (strcmp(argv[1], "-a") == 0) {
-		while ((pw = getpwent()) != 0)
-			printuser(pw, 0);
-		exit(0);
-	}
-	pw = getpwnam(argv[1]);
-	if (pw == 0) {
-		printf("User %s unknown\n", argv[1]);
-		exit(3);
-	}
+	uid = getuid();
+	pw = getpwuid(uid);
+
 	printuser(pw, 1);
 	exit(0);
 }
@@ -112,14 +91,14 @@ printuser(const struct passwd *pw, int printfail)
 		printf("Bad uid %u\n", pw->pw_uid);
 		return;
 	}
-	i = lseek(dbfd, pw->pw_uid * sizeof(struct betinfo), SEEK_SET);
+	i = lseek(dbfd, sizeof(struct betinfo), SEEK_SET);
 	if (i < 0) {
-		warn("lseek %s", _PATH_SCORE);
+		warn("lseek %s", scorepath);
 		return;
 	}
 	i = read(dbfd, (char *)&total, sizeof(total));
 	if (i < 0) {
-		warn("lseek %s", _PATH_SCORE);
+		warn("lseek %s", scorepath);
 		return;
 	}
 	if (i == 0 || total.hand == 0) {

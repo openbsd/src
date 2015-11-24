@@ -1,4 +1,4 @@
-/*	$OpenBSD: canfield.c,v 1.15 2015/11/05 23:16:44 tedu Exp $	*/
+/*	$OpenBSD: canfield.c,v 1.16 2015/11/24 02:51:50 tedu Exp $	*/
 /*	$NetBSD: canfield.c,v 1.7 1995/05/13 07:28:35 jtc Exp $	*/
 
 /*
@@ -46,14 +46,13 @@
 #include <ctype.h>
 #include <curses.h>
 #include <fcntl.h>
+#include <limits.h>
 #include <signal.h>
 #include <stdlib.h>
 #include <string.h>
 #include <termios.h>
 #include <time.h>
 #include <unistd.h>
-
-#include "pathnames.h"
 
 #define	decksize	52
 #define	originrow	0
@@ -154,7 +153,6 @@ bool mtfdone, Cflag = FALSE;
 #define	BETTINGBOX	2
 #define	NOBOX		3
 int status = INSTRUCTIONBOX;
-int uid;
 
 /*
  * Basic betting costs
@@ -1379,7 +1377,7 @@ suspend(void)
 	move(21, 0);
 	refresh();
 	if (dbfd != -1) {
-		lseek(dbfd, uid * sizeof(struct betinfo), SEEK_SET);
+		lseek(dbfd, sizeof(struct betinfo), SEEK_SET);
 		write(dbfd, (char *)&total, sizeof(total));
 	}
 	kill(getpid(), SIGTSTP);
@@ -1626,17 +1624,18 @@ void
 initall(void)
 {
 	int i;
+	char scorepath[PATH_MAX];
 
 	time(&acctstart);
 	initdeck(deck);
-	uid = getuid();
-	if (uid < 0)
-		uid = 0;
-	dbfd = open(_PATH_SCORE, O_RDWR);
-	setegid(getgid());
+	if (!getenv("HOME"))
+		return;
+	snprintf(scorepath, sizeof(scorepath), "%s/%s", getenv("HOME"),
+		"cfscores");
+	dbfd = open(scorepath, O_RDWR | O_CREAT, 0644);
 	if (dbfd < 0)
 		return;
-	i = lseek(dbfd, uid * sizeof(struct betinfo), SEEK_SET);
+	i = lseek(dbfd, sizeof(struct betinfo), SEEK_SET);
 	if (i < 0) {
 		close(dbfd);
 		dbfd = -1;
@@ -1699,7 +1698,7 @@ cleanup(int dummy)
 	status = NOBOX;
 	updatebettinginfo();
 	if (dbfd != -1) {
-		lseek(dbfd, uid * sizeof(struct betinfo), SEEK_SET);
+		lseek(dbfd, sizeof(struct betinfo), SEEK_SET);
 		write(dbfd, (char *)&total, sizeof(total));
 		close(dbfd);
 	}
@@ -1743,10 +1742,6 @@ main(int argc, char *argv[])
 	raw();
 	noecho();
 	initall();
-
-	/* revoke privs */
-	gid = getgid();
-	setresgid(gid, gid, gid);
 
 	instruct();
 	makeboard();
