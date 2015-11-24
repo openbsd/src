@@ -1,4 +1,4 @@
-;	$OpenBSD: syscalls.master,v 1.165 2015/11/10 04:30:59 guenther Exp $
+;	$OpenBSD: syscalls.master,v 1.166 2015/11/24 23:47:17 deraadt Exp $
 ;	$NetBSD: syscalls.master,v 1.32 1996/04/23 10:24:21 mycroft Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -233,7 +233,8 @@
 			    fd_set *ex, const struct timespec *ts, \
 			    const sigset_t *mask); }
 111	STD		{ int sys_sigsuspend(int mask); }
-112	OBSOL		osigstack
+112	STD		{ int sys_sendsyslog2(const void *buf, size_t nbyte, \
+			    int flags); }
 113	OBSOL		orecvmsg
 114	OBSOL		osendmsg
 115	OBSOL		vtrace
