@@ -1,4 +1,4 @@
-/* $OpenBSD: proc.c,v 1.4 2015/11/18 14:27:44 nicm Exp $ */
+/* $OpenBSD: proc.c,v 1.5 2015/11/24 21:19:46 nicm Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -188,7 +188,7 @@ proc_start(const char *name, struct event_base *base, int forkflag,
 			fatalx("event_reinit failed");
 	}
 
-	logfile(name);
+	log_open(name);
 	setproctitle("%s (%s)", name, socket_path);
 
 	log_debug("%s started (%ld): socket %s, protocol %d", name,
