@@ -25,9 +25,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: getopt.3,v 1.44 2014/01/21 03:15:45 schwarze Exp $
+.\"	$OpenBSD: getopt.3,v 1.45 2015/11/24 09:03:16 bentley Exp $
 .\"
-.Dd $Mdocdate: January 21 2014 $
+.Dd $Mdocdate: November 24 2015 $
 .Dt GETOPT 3
 .Os
 .Sh NAME
@@ -224,14 +224,14 @@ function implements a superset of the functionality specified by
 .St -p1003.1 .
 .Pp
 The following extensions are supported:
-.Bl -tag -width "xxx"
-.It Li o
+.Bl -bullet
+.It
 The
 .Va optreset
 variable was added to make it possible to call the
 .Fn getopt
 function multiple times.
-.It Li o
+.It
 If the
 .Va optind
 variable is set to 0,
@@ -245,7 +245,7 @@ This is for compatibility with
 New code should use
 .Va optreset
 instead.
-.It Li o
+.It
 If the first character of
 .Fa optstring
 is a plus sign
@@ -254,7 +254,7 @@ it will be ignored.
 This is for compatibility with
 .Tn GNU
 .Fn getopt .
-.It Li o
+.It
 If the first character of
 .Fa optstring
 is a dash
@@ -264,7 +264,7 @@ non-options will be returned as arguments to the option character
 This is for compatibility with
 .Tn GNU
 .Fn getopt .
-.It Li o
+.It
 A single dash
 .Pq Ql -
 may be specified as a character in
