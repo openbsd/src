@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.355 2015/10/18 20:24:10 uaa Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.356 2015/11/24 11:24:21 mpi Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -7928,7 +7928,7 @@ svwsata_drv_probe(struct channel_softc *chp)
 	scontrol &= ~SControl_DET_INIT;
 	bus_space_write_4(ss->ba5_st, ss->ba5_sh,
 	    (channel << 8) + SVWSATA_SCONTROL, scontrol);
-	delay(50 * 1000);
+	delay(100 * 1000);
 
 	sstatus = bus_space_read_4(ss->ba5_st, ss->ba5_sh,
 	    (channel << 8) + SVWSATA_SSTATUS);
