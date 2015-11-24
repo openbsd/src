@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_et.c,v 1.31 2015/11/14 17:54:57 mpi Exp $	*/
+/*	$OpenBSD: if_et.c,v 1.32 2015/11/24 15:25:20 mpi Exp $	*/
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
  * 
@@ -36,7 +36,6 @@
  */
 
 #include "bpfilter.h"
-#include "vlan.h"
 
 #include <sys/param.h>
 #include <sys/endian.h>
