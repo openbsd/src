@@ -360,19 +360,11 @@ add_info(struct imsg *imsg, int *ret)
 	static struct vm_info_result *vir = NULL;
 
 	if (imsg->hdr.type == IMSG_VMDOP_GET_INFO_VM_DATA) {
-		if (ct == 0) {
-			vir = malloc(sizeof(struct vm_info_result));
-			if (vir == NULL) {
-				*ret = ENOMEM;
-				return (1);
-			}
-		} else {
-			vir = reallocarray(vir, ct + 1,
-			    sizeof(struct vm_info_result));
-			if (vir == NULL) {
-				*ret = ENOMEM;
-				return (1);
-			}
+		vir = reallocarray(vir, ct + 1,
+		    sizeof(struct vm_info_result));
+		if (vir == NULL) {
+			*ret = ENOMEM;
+			return (1);
 		}
 		bcopy(imsg->data, &vir[ct], sizeof(struct vm_info_result));
 		ct++;
