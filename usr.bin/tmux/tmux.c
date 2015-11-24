@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.c,v 1.158 2015/11/24 21:52:06 nicm Exp $ */
+/* $OpenBSD: tmux.c,v 1.159 2015/11/24 22:09:53 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -33,10 +33,6 @@
 #include <unistd.h>
 
 #include "tmux.h"
-
-#ifdef DEBUG
-extern char	*malloc_options;
-#endif
 
 struct options	*global_options;	/* server options */
 struct options	*global_s_options;	/* session options */
@@ -181,10 +177,6 @@ main(int argc, char **argv)
 	char		*path, *label, **var, tmp[PATH_MAX];
 	const char	*s;
 	int		 opt, flags, keys;
-
-#ifdef DEBUG
-	malloc_options = (char *) "AFGJPX";
-#endif
 
 	setlocale(LC_TIME, "");
 	tzset();
