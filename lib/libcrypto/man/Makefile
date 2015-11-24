@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.30 2015/11/21 14:20:07 schwarze Exp $
+# $OpenBSD: Makefile,v 1.31 2015/11/24 19:36:35 schwarze Exp $
 
 .include <bsd.own.mk>		# for NOMAN
 
@@ -59,12 +59,12 @@ MAN=	\
 	CRYPTO_set_locking_callback.3 \
 	ECDSA_SIG_new.3 \
 	EVP_AEAD_CTX_init.3 \
+	UI_new.3 \
 	bn_dump.3 \
 	crypto.3 \
 	d2i_PKCS8PrivateKey_bio.3 \
 	des_read_pw.3 \
 	lh_new.3 \
-	ui_new.3 \
 
 GENMAN= \
 	DES_set_key.3 \
@@ -999,6 +999,29 @@ MLINKS+=\
 	X509_VERIFY_PARAM_set_flags.3 X509_VERIFY_PARAM_set_purpose.3 \
 	X509_VERIFY_PARAM_set_flags.3 X509_VERIFY_PARAM_set_time.3 \
 	X509_VERIFY_PARAM_set_flags.3 X509_VERIFY_PARAM_set_trust.3 \
+	UI_new.3 UI_OpenSSL.3 \
+	UI_new.3 UI_add_error_string.3 \
+	UI_new.3 UI_add_info_string.3 \
+	UI_new.3 UI_add_input_boolean.3 \
+	UI_new.3 UI_add_input_string.3 \
+	UI_new.3 UI_add_user_data.3 \
+	UI_new.3 UI_add_verify_string.3 \
+	UI_new.3 UI_construct_prompt.3 \
+	UI_new.3 UI_ctrl.3 \
+	UI_new.3 UI_dup_error_string.3 \
+	UI_new.3 UI_dup_info_string.3 \
+	UI_new.3 UI_dup_input_boolean.3 \
+	UI_new.3 UI_dup_input_string.3 \
+	UI_new.3 UI_dup_verify_string.3 \
+	UI_new.3 UI_free.3 \
+	UI_new.3 UI_get0_result.3 \
+	UI_new.3 UI_get0_user_data.3 \
+	UI_new.3 UI_get_default_method.3 \
+	UI_new.3 UI_get_method.3 \
+	UI_new.3 UI_new_method.3 \
+	UI_new.3 UI_process.3 \
+	UI_new.3 UI_set_default_method.3 \
+	UI_new.3 UI_set_method.3 \
 	bn_dump.3 bn_add_words.3 \
 	bn_dump.3 bn_check_top.3 \
 	bn_dump.3 bn_cmp_words.3 \
@@ -1100,29 +1123,6 @@ MLINKS+=\
 	lh_stats.3 lh_node_usage_stats.3 \
 	lh_stats.3 lh_node_usage_stats_bio.3 \
 	lh_stats.3 lh_stats_bio.3 \
-	ui_new.3 UI_OpenSSL.3 \
-	ui_new.3 UI_add_error_string.3 \
-	ui_new.3 UI_add_info_string.3 \
-	ui_new.3 UI_add_input_boolean.3 \
-	ui_new.3 UI_add_input_string.3 \
-	ui_new.3 UI_add_user_data.3 \
-	ui_new.3 UI_add_verify_string.3 \
-	ui_new.3 UI_construct_prompt.3 \
-	ui_new.3 UI_ctrl.3 \
-	ui_new.3 UI_dup_error_string.3 \
-	ui_new.3 UI_dup_info_string.3 \
-	ui_new.3 UI_dup_input_boolean.3 \
-	ui_new.3 UI_dup_input_string.3 \
-	ui_new.3 UI_dup_verify_string.3 \
-	ui_new.3 UI_free.3 \
-	ui_new.3 UI_get0_result.3 \
-	ui_new.3 UI_get0_user_data.3 \
-	ui_new.3 UI_get_default_method.3 \
-	ui_new.3 UI_get_method.3 \
-	ui_new.3 UI_new_method.3 \
-	ui_new.3 UI_process.3 \
-	ui_new.3 UI_set_default_method.3 \
-	ui_new.3 UI_set_method.3
 
 .include <bsd.man.mk>
 .else
