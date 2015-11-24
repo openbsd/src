@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdhc_pci.c,v 1.18 2015/11/21 14:36:08 kettenis Exp $	*/
+/*	$OpenBSD: sdhc_pci.c,v 1.19 2015/11/24 19:38:01 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -164,7 +164,7 @@ sdhc_pci_attach(struct device *parent, struct device *self, void *aux)
 	for (reg = SDHC_PCI_BAR_START + SDHC_PCI_FIRST_BAR(slotinfo) * 4;
 	     reg < SDHC_PCI_BAR_END && nslots > 0;
 	     reg += 4, nslots--) {
-		if (pci_mapreg_probe(pa->pa_pc, pa->pa_tag, reg, &type) != 0)
+		if (!pci_mapreg_probe(pa->pa_pc, pa->pa_tag, reg, &type))
 			break;
 
 		if (type == PCI_MAPREG_TYPE_IO || pci_mapreg_map(pa, reg,
