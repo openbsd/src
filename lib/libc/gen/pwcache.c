@@ -1,4 +1,4 @@
-/*	$OpenBSD: pwcache.c,v 1.12 2015/11/24 22:03:33 millert Exp $ */
+/*	$OpenBSD: pwcache.c,v 1.13 2015/11/25 23:16:01 jcs Exp $ */
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -93,7 +93,7 @@ group_from_gid(gid_t gid, int nogroup)
 		short 	noname;
 		char	name[_PW_NAME_LEN + 1];
 	} c_gid[NLINES * NCACHE];
-	char grbuf[_PW_BUF_LEN];
+	char grbuf[_GR_BUF_LEN];
 	struct group grstore, *gr;
 	struct ncache *cp;
 	unsigned int i;
