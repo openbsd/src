@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82596.c,v 1.48 2015/11/25 03:09:58 dlg Exp $	*/
+/*	$OpenBSD: i82596.c,v 1.49 2015/11/25 11:12:53 mpi Exp $	*/
 /*	$NetBSD: i82586.c,v 1.18 1998/08/15 04:42:42 mycroft Exp $	*/
 
 /*-
@@ -1353,7 +1353,7 @@ i82596_reset(sc, hard)
 
 	/* Clear OACTIVE in case we're called from watchdog (frozen xmit). */
 	sc->sc_arpcom.ac_if.if_timer = 0;
-	ifq_clr_oactive(sc->sc_arpcom.ac_if.if_snd);
+	ifq_clr_oactive(&sc->sc_arpcom.ac_if.if_snd);
 
 	/*
 	 * Stop i82596 dead in its tracks.

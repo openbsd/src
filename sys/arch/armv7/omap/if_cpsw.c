@@ -1,4 +1,4 @@
-/* $OpenBSD: if_cpsw.c,v 1.30 2015/11/25 03:09:57 dlg Exp $ */
+/* $OpenBSD: if_cpsw.c,v 1.31 2015/11/25 11:12:53 mpi Exp $ */
 /*	$NetBSD: if_cpsw.c,v 1.3 2013/04/17 14:36:34 bouyer Exp $	*/
 
 /*
@@ -935,7 +935,7 @@ cpsw_stop(struct ifnet *ifp)
 		rdp->tx_mb[i] = NULL;
 	}
 
-	ifp->if_flags &= ~IFF_RUNNING);
+	ifp->if_flags &= ~IFF_RUNNING;
 	ifp->if_timer = 0;
 	ifq_clr_oactive(&ifp->if_snd);
 
