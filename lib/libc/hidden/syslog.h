@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslog.h,v 1.2 2015/10/31 02:57:16 deraadt Exp $	*/
+/*	$OpenBSD: syslog.h,v 1.3 2015/11/25 00:01:21 deraadt Exp $	*/
 /*
  * Copyright (c) 2015 Philip Guenther <guenther@openbsd.org>
  *
@@ -22,6 +22,9 @@
 
 int	sendsyslog(const char *, __size_t);
 PROTO_NORMAL(sendsyslog);
+
+int	sendsyslog2(const char *, __size_t, int);
+PROTO_NORMAL(sendsyslog2);
 
 __BEGIN_HIDDEN_DECLS
 void	__vsyslog_r(int, struct syslog_data *, int,

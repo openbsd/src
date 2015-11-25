@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslog_r.c,v 1.10 2015/10/31 02:57:16 deraadt Exp $ */
+/*	$OpenBSD: syslog_r.c,v 1.11 2015/11/25 00:01:21 deraadt Exp $ */
 /*
  * Copyright (c) 1983, 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -195,24 +195,7 @@ __vsyslog_r(int pri, struct syslog_data *data,
 	 * If the sendsyslog() fails, it means that syslogd
 	 * is not running.
 	 */
-	error = sendsyslog(tbuf, cnt);
-
-	/*
-	 * Output the message to the console; try not to block
-	 * as a blocking console should not stop other processes.
-	 * Make sure the error reported is the one from the syslogd failure.
-	 */
-	if (error == -1 && (data->log_stat & LOG_CONS) &&
-	    (fd = open(_PATH_CONSOLE, O_WRONLY|O_NONBLOCK, 0)) >= 0) {
-		struct iovec iov[2];
-		
-		iov[0].iov_base = conp;
-		iov[0].iov_len = cnt > conp - tbuf ? cnt - (conp - tbuf) : 0;
-		iov[1].iov_base = "\r\n";
-		iov[1].iov_len = 2;
-		(void)writev(fd, iov, 2);
-		(void)close(fd);
-	}
+	error = sendsyslog2(tbuf, cnt, data->log_stat & LOG_CONS);
 }
 
 void
