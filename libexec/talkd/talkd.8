@@ -1,4 +1,4 @@
-.\"	$OpenBSD: talkd.8,v 1.8 2015/01/15 19:06:32 schwarze Exp $
+.\"	$OpenBSD: talkd.8,v 1.9 2015/11/25 11:21:34 jmc Exp $
 .\"
 .\" Copyright (c) 1983, 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -28,18 +28,18 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)talkd.8	6.5 (Berkeley) 3/16/91
-.\"	$Id: talkd.8,v 1.8 2015/01/15 19:06:32 schwarze Exp $
+.\"	$Id: talkd.8,v 1.9 2015/11/25 11:21:34 jmc Exp $
 .\"
-.Dd $Mdocdate: January 15 2015 $
-.Dt TALKD 8
+.Dd $Mdocdate: November 25 2015 $
+.Dt NTALKD 8
 .Os
 .Sh NAME
-.Nm talkd
+.Nm ntalkd
 .Nd remote user communication server
 .Sh SYNOPSIS
-.Nm talkd
+.Nm ntalkd
 .Sh DESCRIPTION
-.Nm Talkd
+.Nm
 is the server that notifies a user that someone else wants to
 initiate a conversation.
 It acts as a repository of invitations, responding to requests
@@ -69,4 +69,6 @@ stream connection through which the conversation takes place.
 The
 .Nm
 command appeared in
-.Bx 4.3 .
+.Bx 4.3 ,
+as
+.Nm talkd .
