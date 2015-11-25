@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nxe.c,v 1.70 2015/11/24 13:33:17 mpi Exp $ */
+/*	$OpenBSD: if_nxe.c,v 1.71 2015/11/25 03:09:59 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -1170,7 +1170,7 @@ nxe_up(struct nxe_softc *sc)
 	nxe_crb_set(sc, 1);
 
 	SET(ifp->if_flags, IFF_RUNNING);
-	CLR(ifp->if_flags, IFF_OACTIVE);
+	ifq_clr_oactive(&ifp->if_snd);
 
 	/* enable interrupts */
 	intr_scheme = nxe_crb_read(sc, NXE_1_SW_NIC_CAP_FW);
@@ -1270,7 +1270,8 @@ nxe_down(struct nxe_softc *sc)
 	struct ifnet			*ifp = &sc->sc_ac.ac_if;
 	int				i;
 
-	CLR(ifp->if_flags, IFF_RUNNING | IFF_OACTIVE | IFF_ALLMULTI);
+	CLR(ifp->if_flags, IFF_RUNNING | IFF_ALLMULTI);
+	ifq_clr_oactive(&ifp->if_snd);
 
 	/* XXX turn the chip off */
 
@@ -1307,12 +1308,12 @@ nxe_start(struct ifnet *ifp)
 	int				nsegs;
 
 	if (!ISSET(ifp->if_flags, IFF_RUNNING) ||
-	    ISSET(ifp->if_flags, IFF_OACTIVE) ||
+	    ifq_is_oactive(&ifp->if_snd) ||
 	    IFQ_IS_EMPTY(&ifp->if_snd))
 		return;
 
 	if (nxe_ring_writeable(nr, sc->sc_cmd_consumer_cur) < NXE_TXD_DESCS) {
-		SET(ifp->if_flags, IFF_OACTIVE);
+		ifq_set_oactive(&ifp->if_snd);
 		return;
 	}
 
@@ -1328,7 +1329,7 @@ nxe_start(struct ifnet *ifp)
 		pkt = nxe_pkt_get(sc->sc_tx_pkts);
 		if (pkt == NULL) {
 			ifq_deq_rollback(&ifp->if_snd, m);
-			SET(ifp->if_flags, IFF_OACTIVE);
+			ifq_set_oactive(&ifp->if_snd);
 			break;
 		}
 
@@ -1436,7 +1437,7 @@ nxe_complete(struct nxe_softc *sc)
 
 	if (rv == 1) {
 		sc->sc_cmd_consumer_cur = cur_cons;
-		CLR(sc->sc_ac.ac_if.if_flags, IFF_OACTIVE);
+		ifq_clr_oactive(&sc->sc_ac.ac_if.if_snd);
 	}
 
 	return (rv);

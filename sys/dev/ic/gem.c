@@ -1,4 +1,4 @@
-/*	$OpenBSD: gem.c,v 1.116 2015/11/24 17:11:39 mpi Exp $	*/
+/*	$OpenBSD: gem.c,v 1.117 2015/11/25 03:09:58 dlg Exp $	*/
 /*	$NetBSD: gem.c,v 1.1 2001/09/16 00:11:43 eeh Exp $ */
 
 /*
@@ -528,7 +528,8 @@ gem_stop(struct ifnet *ifp, int softonly)
 	/*
 	 * Mark the interface down and cancel the watchdog timer.
 	 */
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+	ifp->if_flags &= ~IFF_RUNNING;
+	ifq_clr_oactive(&ifp->if_snd);
 	ifp->if_timer = 0;
 
 	if (!softonly) {
@@ -835,7 +836,7 @@ gem_init(struct ifnet *ifp)
 	timeout_add_sec(&sc->sc_tick_ch, 1);
 
 	ifp->if_flags |= IFF_RUNNING;
-	ifp->if_flags &= ~IFF_OACTIVE;
+	ifq_clr_oactive(&ifp->if_snd);
 
 	splx(s);
 
@@ -1633,7 +1634,7 @@ gem_tint(struct gem_softc *sc, u_int32_t status)
 	sc->sc_tx_cons = cons;
 
 	if (sc->sc_tx_cnt < GEM_NTXDESC - 2)
-		ifp->if_flags &= ~IFF_OACTIVE;
+		ifq_clr_oactive(&ifp->if_snd);
 	if (sc->sc_tx_cnt == 0)
 		ifp->if_timer = 0;
 
@@ -1652,7 +1653,7 @@ gem_start(struct ifnet *ifp)
 	u_int32_t cur, frag, i;
 	int error;
 
-	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
+	if (!(ifp->if_flags & IFF_RUNNING) || ifq_is_oactive(&ifp->if_snd))
 		return;
 
 	while (sc->sc_txd[sc->sc_tx_prod].sd_mbuf == NULL) {
@@ -1685,7 +1686,7 @@ gem_start(struct ifnet *ifp)
 		if ((sc->sc_tx_cnt + map->dm_nsegs) > (GEM_NTXDESC - 2)) {
 			bus_dmamap_unload(sc->sc_dmatag, map);
 			ifq_deq_rollback(&ifp->if_snd, m);
-			ifp->if_flags |= IFF_OACTIVE;
+			ifq_set_oactive(&ifp->if_snd);
 			break;
 		}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rtwn.c,v 1.10 2015/11/24 13:45:06 mpi Exp $	*/
+/*	$OpenBSD: if_rtwn.c,v 1.11 2015/11/25 03:09:59 dlg Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -1847,7 +1847,7 @@ rtwn_tx_done(struct rtwn_softc *sc, int qid)
 		sc->qfullmsk &= ~(1 << qid);
 	
 	if (sc->qfullmsk == 0) {
-		ifp->if_flags &= (~IFF_OACTIVE);
+		ifq_clr_oactive(&ifp->if_snd);
 		(*ifp->if_start)(ifp);
 	}
 }
@@ -1860,12 +1860,12 @@ rtwn_start(struct ifnet *ifp)
 	struct ieee80211_node *ni;
 	struct mbuf *m;
 
-	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
+	if (!(ifp->if_flags & IFF_RUNNING) || ifq_is_oactive(&ifp->if_snd))
 		return;
 
 	for (;;) {
 		if (sc->qfullmsk != 0) {
-			ifp->if_flags |= IFF_OACTIVE;
+			ifq_set_oactive(&ifp->if_snd);
 			break;
 		}
 		/* Send pending management frames first. */
@@ -3409,7 +3409,7 @@ rtwn_init(struct ifnet *ifp)
 	rtwn_write_4(sc, R92C_HIMR, RTWN_INT_ENABLE);
 
 	/* We're ready to go. */
-	ifp->if_flags &= ~IFF_OACTIVE;
+	ifq_clr_oactive(&ifp->if_snd);
 	ifp->if_flags |= IFF_RUNNING;
 
 #ifdef notyet
@@ -3461,7 +3461,8 @@ rtwn_stop(struct ifnet *ifp)
 
 	sc->sc_tx_timer = 0;
 	ifp->if_timer = 0;
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+	ifp->if_flags &= ~IFF_RUNNING;
+	ifq_clr_oactive(&ifp->if_snd);
 
 	s = splnet();
 	ieee80211_new_state(ic, IEEE80211_S_INIT, -1);

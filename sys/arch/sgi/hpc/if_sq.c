@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sq.c,v 1.22 2015/11/24 17:11:38 mpi Exp $	*/
+/*	$OpenBSD: if_sq.c,v 1.23 2015/11/25 03:09:58 dlg Exp $	*/
 /*	$NetBSD: if_sq.c,v 1.42 2011/07/01 18:53:47 dyoung Exp $	*/
 
 /*
@@ -548,7 +548,7 @@ sq_init(struct ifnet *ifp)
 		sq_hpc_write(sc, HPC1_ENET_INTDELAY, HPC1_ENET_INTDELAY_OFF);
 
 	ifp->if_flags |= IFF_RUNNING;
-	ifp->if_flags &= ~IFF_OACTIVE;
+	ifq_clr_oactive(&ifp->if_snd);
 	sq_start(ifp);
 
 	return 0;
@@ -650,7 +650,7 @@ sq_start(struct ifnet *ifp)
 	uint32_t status;
 	int err, len, totlen, nexttx, firsttx, lasttx = -1, ofree, seg;
 
-	if ((ifp->if_flags & (IFF_RUNNING|IFF_OACTIVE)) != IFF_RUNNING)
+	if (!(ifp->if_flags & IFF_RUNNING) || ifq_is_oactive(&ifp->if_snd))
 		return;
 
 	/*
@@ -746,7 +746,7 @@ sq_start(struct ifnet *ifp)
 			 * XXX We could allocate an mbuf and copy, but
 			 * XXX it is worth it?
 			 */
-			ifp->if_flags |= IFF_OACTIVE;
+			ifq_set_oactive(&ifp->if_snd);
 			bus_dmamap_unload(sc->sc_dmat, dmamap);
 			if (m != NULL)
 				m_freem(m);
@@ -846,7 +846,7 @@ sq_start(struct ifnet *ifp)
 
 	/* All transmit descriptors used up, let upper layers know */
 	if (sc->sc_nfreetx == 0)
-		ifp->if_flags |= IFF_OACTIVE;
+		ifq_set_oactive(&ifp->if_snd);
 
 	if (sc->sc_nfreetx != ofree) {
 		SQ_DPRINTF(("%s: %d packets enqueued, first %d, INTR on %d\n",
@@ -948,7 +948,8 @@ sq_stop(struct ifnet *ifp)
 	int i;
 
 	ifp->if_timer = 0;
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+	ifp->if_flags &= ~IFF_RUNNING;
+	ifq_clr_oactive(&ifp->if_snd);
 
 	for (i = 0; i < SQ_NTXDESC; i++) {
 		if (sc->sc_txmbuf[i] != NULL) {
@@ -1265,7 +1266,7 @@ sq_txintr(struct sq_softc *sc)
 
 	/* If we have buffers free, let upper layers know */
 	if (sc->sc_nfreetx > 0)
-		ifp->if_flags &= ~IFF_OACTIVE;
+		ifq_clr_oactive(&ifp->if_snd);
 
 	/* If all packets have left the coop, cancel watchdog */
 	if (sc->sc_nfreetx == SQ_NTXDESC)

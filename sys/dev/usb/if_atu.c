@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atu.c,v 1.115 2015/11/24 17:11:40 mpi Exp $ */
+/*	$OpenBSD: if_atu.c,v 1.116 2015/11/25 03:09:59 dlg Exp $ */
 /*
  * Copyright (c) 2003, 2004
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -1797,7 +1797,7 @@ atu_txeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	sc->atu_cdata.atu_tx_inuse--;
 	if (sc->atu_cdata.atu_tx_inuse == 0)
 		ifp->if_timer = 0;
-	ifp->if_flags &= ~IFF_OACTIVE;
+	ifq_clr_oactive(&ifp->if_snd);
 	splx(s);
 
 	atu_start(ifp);
@@ -1915,8 +1915,8 @@ atu_start(struct ifnet *ifp)
 		return;
 	}
 
-	if (ifp->if_flags & IFF_OACTIVE) {
-		DPRINTFN(30, ("%s: atu_start: IFF_OACTIVE\n",
+	if (ifq_is_oactive(&ifp->if_snd)) {
+		DPRINTFN(30, ("%s: atu_start: oactive\n",
 		    sc->atu_dev.dv_xname));
 		return;
 	}
@@ -1929,13 +1929,13 @@ atu_start(struct ifnet *ifp)
 			SLIST_REMOVE_HEAD(&cd->atu_tx_free, atu_list);
 			cd->atu_tx_inuse++;
 			if (cd->atu_tx_inuse == ATU_TX_LIST_CNT)
-				ifp->if_flags |= IFF_OACTIVE;
+				ifq_set_oactive(&ifp->if_snd);
 		}
 		splx(s);
 		if (c == NULL) {
 			DPRINTFN(10, ("%s: out of tx xfers\n",
 			    sc->atu_dev.dv_xname));
-			ifp->if_flags |= IFF_OACTIVE;
+			ifq_set_oactive(&ifp->if_snd);
 			break;
 		}
 
@@ -2092,7 +2092,7 @@ atu_init(struct ifnet *ifp)
 	*/
 
 	ifp->if_flags |= IFF_RUNNING;
-	ifp->if_flags &= ~IFF_OACTIVE;
+	ifq_clr_oactive(&ifp->if_snd);
 	splx(s);
 
 	/* XXX the following HAS to be replaced */
@@ -2248,7 +2248,8 @@ atu_stop(struct ifnet *ifp, int disable)
 	int s;
 
 	s = splnet();
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+	ifp->if_flags &= ~IFF_RUNNING;
+	ifq_clr_oactive(&ifp->if_snd);
 	ifp->if_timer = 0;
 
 	/* Stop transfers. */

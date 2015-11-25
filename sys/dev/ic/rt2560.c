@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2560.c,v 1.77 2015/11/24 13:33:17 mpi Exp $  */
+/*	$OpenBSD: rt2560.c,v 1.78 2015/11/25 03:09:58 dlg Exp $  */
 
 /*-
  * Copyright (c) 2005, 2006
@@ -991,7 +991,7 @@ rt2560_tx_intr(struct rt2560_softc *sc)
 	if (sc->txq.queued < RT2560_TX_RING_COUNT - 1) {
 		sc->sc_flags &= ~RT2560_DATA_OACTIVE;
 		if (!(sc->sc_flags & (RT2560_DATA_OACTIVE|RT2560_PRIO_OACTIVE)))
-			ifp->if_flags &= ~IFF_OACTIVE;
+			ifq_clr_oactive(&ifp->if_snd);
 		rt2560_start(ifp);
 	}
 }
@@ -1062,7 +1062,7 @@ rt2560_prio_intr(struct rt2560_softc *sc)
 	if (sc->prioq.queued < RT2560_PRIO_RING_COUNT) {
 		sc->sc_flags &= ~RT2560_PRIO_OACTIVE;
 		if (!(sc->sc_flags & (RT2560_DATA_OACTIVE|RT2560_PRIO_OACTIVE)))
-			ifp->if_flags &= ~IFF_OACTIVE;
+			ifq_clr_oactive(&ifp->if_snd);
 		rt2560_start(ifp);
 	}
 }
@@ -1923,13 +1923,13 @@ rt2560_start(struct ifnet *ifp)
 	 * net80211 may still try to send management frames even if the
 	 * IFF_RUNNING flag is not set...
 	 */
-	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
+	if (!(ifp->if_flags & IFF_RUNNING) || ifq_is_oactive(&ifp->if_snd))
 		return;
 
 	for (;;) {
 		if (mq_len(&ic->ic_mgtq) > 0) {
 			if (sc->prioq.queued >= RT2560_PRIO_RING_COUNT) {
-				ifp->if_flags |= IFF_OACTIVE;
+				ifq_set_oactive(&ifp->if_snd);
 				sc->sc_flags |= RT2560_PRIO_OACTIVE;
 				break;
 			}
@@ -1948,7 +1948,7 @@ rt2560_start(struct ifnet *ifp)
 		} else {
 			if (sc->txq.queued >= RT2560_TX_RING_COUNT - 1) {
 				ifq_deq_rollback(&ifp->if_snd, m0);
-				ifp->if_flags |= IFF_OACTIVE;
+				ifq_set_oactive(&ifp->if_snd);
 				sc->sc_flags |= RT2560_DATA_OACTIVE;
 				break;
 			}
@@ -2676,8 +2676,8 @@ rt2560_init(struct ifnet *ifp)
 	/* enable interrupts */
 	RAL_WRITE(sc, RT2560_CSR8, RT2560_INTR_MASK);
 
-	ifp->if_flags &= ~IFF_OACTIVE;
 	ifp->if_flags |= IFF_RUNNING;
+	ifq_clr_oactive(&ifp->if_snd);
 
 	if (ic->ic_opmode == IEEE80211_M_MONITOR)
 		ieee80211_new_state(ic, IEEE80211_S_RUN, -1);
@@ -2696,7 +2696,8 @@ rt2560_stop(struct ifnet *ifp, int disable)
 	sc->sc_tx_timer = 0;
 	sc->sc_flags &= ~(RT2560_PRIO_OACTIVE|RT2560_DATA_OACTIVE);
 	ifp->if_timer = 0;
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+	ifp->if_flags &= ~IFF_RUNNING;
+	ifq_clr_oactive(&ifp->if_snd);
 
 	ieee80211_new_state(ic, IEEE80211_S_INIT, -1);	/* free all nodes */
 

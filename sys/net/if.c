@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.412 2015/11/21 01:08:49 dlg Exp $	*/
+/*	$OpenBSD: if.c,v 1.413 2015/11/25 03:10:00 dlg Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -539,7 +539,7 @@ if_start(struct ifnet *ifp)
 	splassert(IPL_NET);
 
 	if (ifq_len(&ifp->if_snd) >= min(8, ifp->if_snd.ifq_maxlen) &&
-	    !ISSET(ifp->if_flags, IFF_OACTIVE)) {
+	    !ifq_is_oactive(&ifp->if_snd)) {
 		if (ISSET(ifp->if_xflags, IFXF_TXREADY)) {
 			TAILQ_REMOVE(&iftxlist, ifp, if_txlist);
 			CLR(ifp->if_xflags, IFXF_TXREADY);
@@ -866,8 +866,9 @@ if_detach(struct ifnet *ifp)
 	/* Undo pseudo-driver changes. */
 	if_deactivate(ifp);
 
+	ifq_clr_oactive(&ifp->if_snd);
+
 	s = splnet();
-	ifp->if_flags &= ~IFF_OACTIVE;
 	ifp->if_start = if_detached_start;
 	ifp->if_ioctl = if_detached_ioctl;
 	ifp->if_watchdog = NULL;
@@ -1634,6 +1635,8 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 
 	case SIOCGIFFLAGS:
 		ifr->ifr_flags = ifp->if_flags;
+		if (ifq_is_oactive(&ifp->if_snd))
+			ifr->ifr_flags |= IFF_OACTIVE;
 		break;
 
 	case SIOCGIFXFLAGS:

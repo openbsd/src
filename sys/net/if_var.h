@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_var.h,v 1.57 2015/11/23 15:53:35 mpi Exp $	*/
+/*	$OpenBSD: if_var.h,v 1.58 2015/11/25 03:10:00 dlg Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -118,6 +118,7 @@ struct ifqueue {
 	void			*ifq_q;
 	unsigned int		 ifq_len;
 	unsigned int		 ifq_serializer;
+	unsigned int		 ifq_oactive;
 
 	unsigned int		 ifq_maxlen;
 };
@@ -287,6 +288,24 @@ void		 ifq_q_leave(struct ifqueue *, void *);
 #define	ifq_len(_ifq)			((_ifq)->ifq_len)
 #define	ifq_empty(_ifq)			(ifq_len(_ifq) == 0)
 #define	ifq_set_maxlen(_ifq, _l)	((_ifq)->ifq_maxlen = (_l))
+
+static inline void
+ifq_set_oactive(struct ifqueue *ifq)
+{
+	ifq->ifq_oactive = 1;
+}
+
+static inline void
+ifq_clr_oactive(struct ifqueue *ifq)
+{
+	ifq->ifq_oactive = 0;
+}
+
+static inline unsigned int
+ifq_is_oactive(struct ifqueue *ifq)
+{
+	return (ifq->ifq_oactive);
+}
 
 extern const struct ifq_ops * const ifq_priq_ops;
 

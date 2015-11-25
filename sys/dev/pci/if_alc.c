@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_alc.c,v 1.36 2015/11/09 00:29:06 dlg Exp $	*/
+/*	$OpenBSD: if_alc.c,v 1.37 2015/11/25 03:09:59 dlg Exp $	*/
 /*-
  * Copyright (c) 2009, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
@@ -1359,7 +1359,7 @@ alc_start(struct ifnet *ifp)
 	if (sc->alc_cdata.alc_tx_cnt >= ALC_TX_DESC_HIWAT)
 		alc_txeof(sc);
 
-	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
+	if (!(ifp->if_flags & IFF_RUNNING) || ifq_is_oactive(&ifp->if_snd))
 		return;
 	if ((sc->alc_flags & ALC_FLAG_LINK) == 0)
 		return;
@@ -1369,7 +1369,7 @@ alc_start(struct ifnet *ifp)
 	for (;;) {
 		if (sc->alc_cdata.alc_tx_cnt + ALC_MAXTXSEGS >=
 		    ALC_TX_RING_CNT - 3) {
-			ifp->if_flags |= IFF_OACTIVE;
+			ifq_set_oactive(&ifp->if_snd);
 			break;
 		}
 
@@ -1739,7 +1739,7 @@ alc_txeof(struct alc_softc *sc)
 		if (sc->alc_cdata.alc_tx_cnt <= 0)
 			break;
 		prog++;
-		ifp->if_flags &= ~IFF_OACTIVE;
+		ifq_clr_oactive(&ifp->if_snd);
 		sc->alc_cdata.alc_tx_cnt--;
 		txd = &sc->alc_cdata.alc_txdesc[cons];
 		if (txd->tx_m != NULL) {
@@ -2335,7 +2335,7 @@ alc_init(struct ifnet *ifp)
 	timeout_add_sec(&sc->alc_tick_ch, 1);
 
 	ifp->if_flags |= IFF_RUNNING;
-	ifp->if_flags &= ~IFF_OACTIVE;
+	ifq_clr_oactive(&ifp->if_snd);
 
 	return (0);
 }
@@ -2352,7 +2352,8 @@ alc_stop(struct alc_softc *sc)
 	/*
 	 * Mark the interface down and cancel the watchdog timer.
 	 */
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+	ifp->if_flags &= ~IFF_RUNNING;
+	ifq_clr_oactive(&ifp->if_snd);
 	ifp->if_timer = 0;
 
 	timeout_del(&sc->alc_tick_ch);

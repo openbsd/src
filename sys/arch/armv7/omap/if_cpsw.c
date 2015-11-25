@@ -1,4 +1,4 @@
-/* $OpenBSD: if_cpsw.c,v 1.29 2015/11/12 10:23:08 dlg Exp $ */
+/* $OpenBSD: if_cpsw.c,v 1.30 2015/11/25 03:09:57 dlg Exp $ */
 /*	$NetBSD: if_cpsw.c,v 1.3 2013/04/17 14:36:34 bouyer Exp $	*/
 
 /*
@@ -450,7 +450,7 @@ cpsw_start(struct ifnet *ifp)
 	u_int mlen;
 
 	if (!ISSET(ifp->if_flags, IFF_RUNNING) ||
-	    ISSET(ifp->if_flags, IFF_OACTIVE) ||
+	    ifq_is_oactive(&ifp->if_snd) ||
 	    IFQ_IS_EMPTY(&ifp->if_snd))
 		return;
 
@@ -461,7 +461,7 @@ cpsw_start(struct ifnet *ifp)
 
 	for (;;) {
 		if (txfree <= CPSW_TXFRAGS) {
-			SET(ifp->if_flags, IFF_OACTIVE);
+			ifq_set_oactive(&ifp->if_snd);
 			break;
 		}
 
@@ -867,7 +867,7 @@ cpsw_init(struct ifnet *ifp)
 	sc->sc_txeoq = true;
 
 	ifp->if_flags |= IFF_RUNNING;
-	ifp->if_flags &= ~IFF_OACTIVE;
+	ifq_clr_oactive(&ifp->if_snd);
 
 	timeout_add_sec(&sc->sc_tick, 1);
 
@@ -935,8 +935,9 @@ cpsw_stop(struct ifnet *ifp)
 		rdp->tx_mb[i] = NULL;
 	}
 
-	ifp->if_flags &= ~(IFF_RUNNING|IFF_OACTIVE);
+	ifp->if_flags &= ~IFF_RUNNING);
 	ifp->if_timer = 0;
+	ifq_clr_oactive(&ifp->if_snd);
 
 	/* XXX Not sure what this is doing calling disable here
 	    where is disable set?
@@ -1122,7 +1123,7 @@ cpsw_txintr(void *arg)
 
 		handled = true;
 
-		ifp->if_flags &= ~IFF_OACTIVE;
+		ifq_clr_oactive(&ifp->if_snd);
 
 next:
 		if ((bd.flags & (CPDMA_BD_EOP|CPDMA_BD_EOQ)) ==

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ale.c,v 1.41 2015/11/09 00:29:06 dlg Exp $	*/
+/*	$OpenBSD: if_ale.c,v 1.42 2015/11/25 03:09:59 dlg Exp $	*/
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
@@ -986,7 +986,7 @@ ale_start(struct ifnet *ifp)
 	if (sc->ale_cdata.ale_tx_cnt >= ALE_TX_DESC_HIWAT)
 		ale_txeof(sc);
 
-	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
+	if (!(ifp->if_flags & IFF_RUNNING) || ifq_is_oactive(&ifp->if_snd))
 		return;
 	if ((sc->ale_flags & ALE_FLAG_LINK) == 0)
 		return;
@@ -998,7 +998,7 @@ ale_start(struct ifnet *ifp)
 		/* Check descriptor overrun. */
 		if (sc->ale_cdata.ale_tx_cnt + ALE_MAXTXSEGS >=
 		    ALE_TX_RING_CNT - 2) {
-			ifp->if_flags |= IFF_OACTIVE;
+			ifq_set_oactive(&ifp->if_snd);
 			break;
 		}
 
@@ -1320,7 +1320,7 @@ ale_txeof(struct ale_softc *sc)
 		if (sc->ale_cdata.ale_tx_cnt <= 0)
 			break;
 		prog++;
-		ifp->if_flags &= ~IFF_OACTIVE;
+		ifq_clr_oactive(&ifp->if_snd);
 		sc->ale_cdata.ale_tx_cnt--;
 		txd = &sc->ale_cdata.ale_txdesc[cons];
 		if (txd->tx_m != NULL) {
@@ -1826,7 +1826,7 @@ ale_init(struct ifnet *ifp)
 	timeout_add_sec(&sc->ale_tick_ch, 1);
 
 	ifp->if_flags |= IFF_RUNNING;
-	ifp->if_flags &= ~IFF_OACTIVE;
+	ifq_clr_oactive(&ifp->if_snd);
 
 	return 0;
 }
@@ -1842,7 +1842,8 @@ ale_stop(struct ale_softc *sc)
 	/*
 	 * Mark the interface down and cancel the watchdog timer.
 	 */
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+	ifp->if_flags &= ~IFF_RUNNING;
+	ifq_clr_oactive(&ifp->if_snd);
 	ifp->if_timer = 0;
 
 	timeout_del(&sc->ale_tick_ch);

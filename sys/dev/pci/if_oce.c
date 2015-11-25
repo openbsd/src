@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_oce.c,v 1.89 2015/11/14 17:54:57 mpi Exp $	*/
+/*	$OpenBSD: if_oce.c,v 1.90 2015/11/25 03:09:59 dlg Exp $	*/
 
 /*
  * Copyright (c) 2012 Mike Belopuhov
@@ -1108,7 +1108,7 @@ oce_init(void *arg)
 		oce_link_status(sc);
 
 	ifp->if_flags |= IFF_RUNNING;
-	ifp->if_flags &= ~IFF_OACTIVE;
+	ifq_clr_oactive(&ifp->if_snd);
 
 	timeout_add_sec(&sc->sc_tick, 1);
 
@@ -1132,7 +1132,8 @@ oce_stop(struct oce_softc *sc)
 	timeout_del(&sc->sc_tick);
 	timeout_del(&sc->sc_rxrefill);
 
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+	ifp->if_flags &= ~IFF_RUNNING;
+	ifq_clr_oactive(&ifp->if_snd);
 
 	/* Stop intrs and finish any bottom halves pending */
 	oce_intr_disable(sc);
@@ -1175,7 +1176,7 @@ oce_start(struct ifnet *ifp)
 	struct mbuf *m;
 	int pkts = 0;
 
-	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
+	if (!(ifp->if_flags & IFF_RUNNING) || ifq_is_oactive(&ifp->if_snd))
 		return;
 
 	for (;;) {
@@ -1184,7 +1185,7 @@ oce_start(struct ifnet *ifp)
 			break;
 
 		if (oce_encap(sc, &m, 0)) {
-			ifp->if_flags |= IFF_OACTIVE;
+			ifq_set_oactive(&ifp->if_snd);
 			break;
 		}
 
@@ -1448,9 +1449,9 @@ oce_intr_wq(void *arg)
 	}
 	oce_dma_sync(&cq->ring->dma, BUS_DMASYNC_PREWRITE);
 
-	if (ifp->if_flags & IFF_OACTIVE) {
+	if (ifq_is_oactive(&ifp->if_snd)) {
 		if (wq->ring->nused < (wq->ring->nitems / 2)) {
-			ifp->if_flags &= ~IFF_OACTIVE;
+			ifq_clr_oactive(&ifp->if_snd);
 			oce_start(ifp);
 		}
 	}

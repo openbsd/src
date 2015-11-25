@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_uath.c,v 1.74 2015/11/24 13:45:07 mpi Exp $	*/
+/*	$OpenBSD: if_uath.c,v 1.75 2015/11/25 03:10:00 dlg Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -1347,7 +1347,7 @@ uath_data_txeof(struct usbd_xfer *xfer, void *priv,
 	ifp->if_opackets++;
 
 	sc->sc_tx_timer = 0;
-	ifp->if_flags &= ~IFF_OACTIVE;
+	ifq_clr_oactive(&ifp->if_snd);
 	uath_start(ifp);
 
 	splx(s);
@@ -1471,12 +1471,12 @@ uath_start(struct ifnet *ifp)
 	 * net80211 may still try to send management frames even if the
 	 * IFF_RUNNING flag is not set...
 	 */
-	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
+	if (!(ifp->if_flags & IFF_RUNNING) && ifq_is_oactive(&ifp->if_snd))
 		return;
 
 	for (;;) {
 		if (sc->tx_queued >= UATH_TX_DATA_LIST_COUNT) {
-			ifp->if_flags |= IFF_OACTIVE;
+			ifq_set_oactive(&ifp->if_snd);
 			break;
 		}
 
@@ -1934,8 +1934,8 @@ uath_init(struct ifnet *ifp)
 	cmd31.magic2 = htobe32(0xffffffff);
 	(void)uath_cmd_write(sc, UATH_CMD_31, &cmd31, sizeof cmd31, 0);
 
-	ifp->if_flags &= ~IFF_OACTIVE;
 	ifp->if_flags |= IFF_RUNNING;
+	ifq_clr_oactive(&ifp->if_snd);
 
 	if (ic->ic_opmode == IEEE80211_M_MONITOR)
 		ieee80211_new_state(ic, IEEE80211_S_RUN, -1);
@@ -1960,7 +1960,8 @@ uath_stop(struct ifnet *ifp, int disable)
 
 	sc->sc_tx_timer = 0;
 	ifp->if_timer = 0;
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+	ifp->if_flags &= ~IFF_RUNNING;
+	ifq_clr_oactive(&ifp->if_snd);
 
 	ieee80211_new_state(ic, IEEE80211_S_INIT, -1);	/* free all nodes */
 

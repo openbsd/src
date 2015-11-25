@@ -1,4 +1,4 @@
-/*	$OpenBSD: hme.c,v 1.75 2015/11/24 17:11:38 mpi Exp $	*/
+/*	$OpenBSD: hme.c,v 1.76 2015/11/25 03:09:58 dlg Exp $	*/
 
 /*
  * Copyright (c) 1998 Jason L. Wright (jason@thought.net)
@@ -272,7 +272,7 @@ hmestart(ifp)
 	struct mbuf *m;
 	int bix, len;
 
-	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
+	if (!(ifp->if_flags & IFF_RUNNING) || ifq_is_oactive(&ifp->if_snd))
 		return;
 
 	bix = sc->sc_last_td;
@@ -307,7 +307,7 @@ hmestart(ifp)
 			bix = 0;
 
 		if (++sc->sc_no_td == HME_TX_RING_SIZE) {
-			ifp->if_flags |= IFF_OACTIVE;
+			ifq_set_oactive(&ifp->if_snd);
 			break;
 		}
 	}
@@ -329,7 +329,8 @@ hmestop(sc)
 	/*
 	 * Mark the interface down and cancel the watchdog timer.
 	 */
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+	ifp->if_flags &= ~IFF_RUNNING;
+	ifq_clr_oactive(&ifp->if_snd);
 	ifp->if_timer = 0;
 
 	mii_down(&sc->sc_mii);
@@ -571,7 +572,7 @@ hmeinit(sc)
 	timeout_add_sec(&sc->sc_tick, 1);
 
 	ifp->if_flags |= IFF_RUNNING;
-	ifp->if_flags &= ~IFF_OACTIVE;
+	ifq_clr_oactive(&ifp->if_snd);
 }
 
 void
@@ -669,7 +670,7 @@ hme_tint(sc)
 		if (txd.tx_flags & HME_TXD_OWN)
 			break;
 
-		ifp->if_flags &= ~IFF_OACTIVE;
+		ifq_clr_oactive(&ifp->if_snd);
 		ifp->if_opackets++;
 
 		if (++bix == HME_TX_RING_SIZE)

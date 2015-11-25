@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_se.c,v 1.17 2015/11/24 17:11:39 mpi Exp $	*/
+/*	$OpenBSD: if_se.c,v 1.18 2015/11/25 03:09:59 dlg Exp $	*/
 
 /*-
  * Copyright (c) 2009, 2010 Christopher Zimmermann <madroach@zakweb.de>
@@ -995,7 +995,7 @@ se_txeof(struct se_softc *sc)
 		if ((txstat & TDC_OWN) != 0)
 			break;
 
-		ifp->if_flags &= ~IFF_OACTIVE;
+		ifq_clr_oactive(&ifp->if_snd);
 
 		if (SE_TX_ERROR(txstat) != 0) {
 			if (ifp->if_flags & IFF_DEBUG)
@@ -1203,7 +1203,7 @@ se_start(struct ifnet *ifp)
 	uint i, queued = 0;
 
 	if ((sc->sc_flags & SE_FLAG_LINK) == 0 ||
-	    (ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING) {
+	    !(ifp->if_flags & IFF_RUNNING) || ifq_is_oactive(&ifp->if_snd)) {
 #ifdef SE_DEBUG
 		if (ifp->if_flags & IFF_DEBUG)
 			printf("%s: can't tx, flags 0x%x 0x%04x\n",
@@ -1221,7 +1221,7 @@ se_start(struct ifnet *ifp)
 
 		if (se_encap(sc, m_head, &i) != 0) {
 			ifq_deq_rollback(&ifp->if_snd, m_head);
-			ifp->if_flags |= IFF_OACTIVE;
+			ifq_set_oactive(&ifp->if_snd);
 			break;
 		}
 
@@ -1305,7 +1305,7 @@ se_init(struct ifnet *ifp)
 	CSR_WRITE_4(sc, RX_CTL, 0x1a00 | 0x000c | RX_CTL_POLL | RX_CTL_ENB);
 
 	ifp->if_flags |= IFF_RUNNING;
-	ifp->if_flags &= ~IFF_OACTIVE;
+	ifq_clr_oactive(&ifp->if_snd);
 
 	sc->sc_flags &= ~SE_FLAG_LINK;
 	mii_mediachg(&sc->sc_mii);
@@ -1419,7 +1419,8 @@ se_stop(struct se_softc *sc)
 	struct ifnet *ifp = &sc->sc_ac.ac_if;
 
 	ifp->if_timer = 0;
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+	ifp->if_flags &= ~IFF_RUNNING;
+	ifq_clr_oactive(&ifp->if_snd);
 	timeout_del(&sc->sc_tick_tmo);
 	mii_down(&sc->sc_mii);
 

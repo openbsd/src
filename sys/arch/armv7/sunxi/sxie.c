@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxie.c,v 1.12 2015/11/24 17:11:38 mpi Exp $	*/
+/*	$OpenBSD: sxie.c,v 1.13 2015/11/25 03:09:58 dlg Exp $	*/
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2013 Artturi Alm
@@ -396,7 +396,7 @@ sxie_init(struct sxie_softc *sc)
 
 	/* Indicate we are up and running. */
 	ifp->if_flags |= IFF_RUNNING;
-	ifp->if_flags &= ~IFF_OACTIVE;
+	ifq_clr_oactive(&ifp->if_snd);
 
 	SXISET4(sc, SXIE_INTCR, SXIE_INTR_ENABLE);
 
@@ -426,7 +426,7 @@ sxie_intr(void *arg)
 	pending &= 3;
 
 	if (pending) {
-		ifp->if_flags &= ~IFF_OACTIVE;
+		ifq_clr_oactive(&ifp->if_snd);
 		sc->txf_inuse--;
 		ifp->if_opackets++;
 		if (pending == 3) { /* 2 packets got sent */
@@ -461,9 +461,9 @@ sxie_start(struct ifnet *ifp)
 	uint32_t txbuf[SXIE_MAX_PKT_SIZE / sizeof(uint32_t)]; /* XXX !!! */
 
 	if (sc->txf_inuse > 1)
-		ifp->if_flags |= IFF_OACTIVE;
+		ifq_set_oactive(&ifp->if_snd);
 
-	if ((ifp->if_flags & (IFF_OACTIVE | IFF_RUNNING)) != IFF_RUNNING)
+	if (!(ifp->if_flags & IFF_RUNNING) || ifq_is_oactive(&ifp->if_snd))
 		return;
 
 	td = (uint8_t *)&txbuf[0];
@@ -484,7 +484,7 @@ trynext:
 	if (sc->txf_inuse > 1) {
 		ifq_deq_rollback(&ifp->if_snd, m);
 		printf("sxie_start: tx fifos in use.\n");
-		ifp->if_flags |= IFF_OACTIVE;
+		ifq_set_oactive(&ifp->if_snd);
 		return;
 	}
 
@@ -524,8 +524,9 @@ sxie_stop(struct sxie_softc *sc)
 
 	sxie_reset(sc);
 
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+	ifp->if_flags &= ~IFF_RUNNING;
 	ifp->if_timer = 0;
+	ifq_clr_oactive(&ifp->if_snd);
 }
 
 void

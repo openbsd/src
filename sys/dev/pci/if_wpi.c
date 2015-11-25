@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpi.c,v 1.131 2015/11/24 13:33:17 mpi Exp $	*/
+/*	$OpenBSD: if_wpi.c,v 1.132 2015/11/25 03:09:59 dlg Exp $	*/
 
 /*-
  * Copyright (c) 2006-2008
@@ -1372,8 +1372,8 @@ wpi_tx_done(struct wpi_softc *sc, struct wpi_rx_desc *desc)
 	sc->sc_tx_timer = 0;
 	if (--ring->queued < WPI_TX_RING_LOMARK) {
 		sc->qfullmsk &= ~(1 << ring->qid);
-		if (sc->qfullmsk == 0 && (ifp->if_flags & IFF_OACTIVE)) {
-			ifp->if_flags &= ~IFF_OACTIVE;
+		if (sc->qfullmsk == 0 && ifq_is_oactive(&ifp->if_snd)) {
+			ifq_clr_oactive(&ifp->if_snd);
 			(*ifp->if_start)(ifp);
 		}
 	}
@@ -1895,12 +1895,12 @@ wpi_start(struct ifnet *ifp)
 	struct ieee80211_node *ni;
 	struct mbuf *m;
 
-	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
+	if (!(ifp->if_flags & IFF_RUNNING) || ifq_is_oactive(&ifp->if_snd))
 		return;
 
 	for (;;) {
 		if (sc->qfullmsk != 0) {
-			ifp->if_flags |= IFF_OACTIVE;
+			ifq_set_oactive(&ifp->if_snd);
 			break;
 		}
 		/* Send pending management frames first. */
@@ -3309,7 +3309,7 @@ wpi_init(struct ifnet *ifp)
 		goto fail;
 	}
 
-	ifp->if_flags &= ~IFF_OACTIVE;
+	ifq_clr_oactive(&ifp->if_snd);
 	ifp->if_flags |= IFF_RUNNING;
 
 	if (ic->ic_opmode != IEEE80211_M_MONITOR)
@@ -3330,7 +3330,8 @@ wpi_stop(struct ifnet *ifp, int disable)
 	struct ieee80211com *ic = &sc->sc_ic;
 
 	ifp->if_timer = sc->sc_tx_timer = 0;
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+	ifp->if_flags &= ~IFF_RUNNING;
+	ifq_clr_oactive(&ifp->if_snd);
 
 	/* In case we were scanning, release the scan "lock". */
 	ic->ic_scan_lock = IEEE80211_SCAN_UNLOCKED;

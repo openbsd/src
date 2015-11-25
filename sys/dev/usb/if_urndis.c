@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urndis.c,v 1.58 2015/11/24 17:11:40 mpi Exp $ */
+/*	$OpenBSD: if_urndis.c,v 1.59 2015/11/25 03:10:00 dlg Exp $ */
 
 /*
  * Copyright (c) 2010 Jonathan Armani <armani@openbsd.org>
@@ -1079,7 +1079,7 @@ urndis_init(struct urndis_softc *sc)
 	}
 
 	ifp->if_flags |= IFF_RUNNING;
-	ifp->if_flags &= ~IFF_OACTIVE;
+	ifq_clr_oactive(&ifp->if_snd);
 
 	splx(s);
 }
@@ -1093,7 +1093,8 @@ urndis_stop(struct urndis_softc *sc)
 
 	ifp = GET_IFP(sc);
 	ifp->if_timer = 0;
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+	ifp->if_flags &= ~IFF_RUNNING;
+	ifq_clr_oactive(&ifp->if_snd);
 
 	if (sc->sc_bulkin_pipe != NULL) {
 		usbd_abort_pipe(sc->sc_bulkin_pipe);
@@ -1144,7 +1145,7 @@ urndis_start(struct ifnet *ifp)
 
 	sc = ifp->if_softc;
 
-	if (usbd_is_dying(sc->sc_udev) || (ifp->if_flags & IFF_OACTIVE))
+	if (usbd_is_dying(sc->sc_udev) || ifq_is_oactive(&ifp->if_snd))
 		return;
 
 	m_head = ifq_deq_begin(&ifp->if_snd);
@@ -1153,7 +1154,7 @@ urndis_start(struct ifnet *ifp)
 
 	if (urndis_encap(sc, m_head, 0)) {
 		ifq_deq_rollback(&ifp->if_snd, m_head);
-		ifp->if_flags |= IFF_OACTIVE;
+		ifq_set_oactive(&ifp->if_snd);
 		return;
 	}
 	ifq_deq_commit(&ifp->if_snd, m_head);
@@ -1167,7 +1168,7 @@ urndis_start(struct ifnet *ifp)
 		bpf_mtap(ifp->if_bpf, m_head, BPF_DIRECTION_OUT);
 #endif
 
-	ifp->if_flags |= IFF_OACTIVE;
+	ifq_set_oactive(&ifp->if_snd);
 
 	/*
 	 * Set a timeout in case the chip goes out to lunch.
@@ -1242,7 +1243,7 @@ urndis_txeof(struct usbd_xfer *xfer,
 	s = splnet();
 
 	ifp->if_timer = 0;
-	ifp->if_flags &= ~IFF_OACTIVE;
+	ifq_clr_oactive(&ifp->if_snd);
 
 	if (status != USBD_NORMAL_COMPLETION) {
 		if (status == USBD_NOT_STARTED || status == USBD_CANCELLED) {

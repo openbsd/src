@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axe.c,v 1.135 2015/11/24 17:11:40 mpi Exp $	*/
+/*	$OpenBSD: if_axe.c,v 1.136 2015/11/25 03:10:00 dlg Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Jonathan Gray <jsg@openbsd.org>
@@ -1123,7 +1123,7 @@ axe_txeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	}
 
 	ifp->if_timer = 0;
-	ifp->if_flags &= ~IFF_OACTIVE;
+	ifq_clr_oactive(&ifp->if_snd);
 
 	m_freem(c->axe_mbuf);
 	c->axe_mbuf = NULL;
@@ -1249,7 +1249,7 @@ axe_start(struct ifnet *ifp)
 	if (!sc->axe_link)
 		return;
 
-	if (ifp->if_flags & IFF_OACTIVE)
+	if (ifq_is_oactive(&ifp->if_snd))
 		return;
 
 	m_head = ifq_deq_begin(&ifp->if_snd);
@@ -1258,7 +1258,7 @@ axe_start(struct ifnet *ifp)
 
 	if (axe_encap(sc, m_head, 0)) {
 		ifq_deq_rollback(&ifp->if_snd, m_head);
-		ifp->if_flags |= IFF_OACTIVE;
+		ifq_set_oactive(&ifp->if_snd);
 		return;
 	}
 	ifq_deq_commit(&ifp->if_snd, m_head);
@@ -1272,7 +1272,7 @@ axe_start(struct ifnet *ifp)
 		bpf_mtap(ifp->if_bpf, m_head, BPF_DIRECTION_OUT);
 #endif
 
-	ifp->if_flags |= IFF_OACTIVE;
+	ifq_set_oactive(&ifp->if_snd);
 
 	/*
 	 * Set a timeout in case the chip goes out to lunch.
@@ -1379,7 +1379,7 @@ axe_init(void *xsc)
 
 	sc->axe_link = 0;
 	ifp->if_flags |= IFF_RUNNING;
-	ifp->if_flags &= ~IFF_OACTIVE;
+	ifq_clr_oactive(&ifp->if_snd);
 
 	splx(s);
 
@@ -1472,7 +1472,8 @@ axe_stop(struct axe_softc *sc)
 
 	ifp = &sc->arpcom.ac_if;
 	ifp->if_timer = 0;
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+	ifp->if_flags &= ~IFF_RUNNING;
+	ifq_clr_oactive(&ifp->if_snd);
 
 	timeout_del(&sc->axe_stat_ch);
 

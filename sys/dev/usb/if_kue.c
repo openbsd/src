@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_kue.c,v 1.82 2015/11/20 03:35:23 dlg Exp $ */
+/*	$OpenBSD: if_kue.c,v 1.83 2015/11/25 03:10:00 dlg Exp $ */
 /*	$NetBSD: if_kue.c,v 1.50 2002/07/16 22:00:31 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -773,7 +773,7 @@ kue_txeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 		    __func__, status));
 
 	ifp->if_timer = 0;
-	ifp->if_flags &= ~IFF_OACTIVE;
+	ifq_clr_oactive(&ifp->if_snd);
 
 	if (status != USBD_NORMAL_COMPLETION) {
 		if (status == USBD_NOT_STARTED || status == USBD_CANCELLED) {
@@ -855,7 +855,7 @@ kue_start(struct ifnet *ifp)
 	if (usbd_is_dying(sc->kue_udev))
 		return;
 
-	if (ifp->if_flags & IFF_OACTIVE)
+	if (ifq_is_oactive(&ifp->if_snd))
 		return;
 
 	m_head = ifq_deq_begin(&ifp->if_snd);
@@ -864,7 +864,7 @@ kue_start(struct ifnet *ifp)
 
 	if (kue_send(sc, m_head, 0)) {
 		ifq_deq_rollback(&ifp->if_snd, m_head);
-		ifp->if_flags |= IFF_OACTIVE;
+		ifq_set_oactive(&ifp->if_snd);
 		return;
 	}
 
@@ -879,7 +879,7 @@ kue_start(struct ifnet *ifp)
 		bpf_mtap(ifp->if_bpf, m_head, BPF_DIRECTION_OUT);
 #endif
 
-	ifp->if_flags |= IFF_OACTIVE;
+	ifq_set_oactive(&ifp->if_snd);
 
 	/*
 	 * Set a timeout in case the chip goes out to lunch.
@@ -949,7 +949,7 @@ kue_init(void *xsc)
 	}
 
 	ifp->if_flags |= IFF_RUNNING;
-	ifp->if_flags &= ~IFF_OACTIVE;
+	ifq_clr_oactive(&ifp->if_snd);
 
 	splx(s);
 }
@@ -1100,7 +1100,8 @@ kue_stop(struct kue_softc *sc)
 
 	ifp = GET_IFP(sc);
 	ifp->if_timer = 0;
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+	ifp->if_flags &= ~IFF_RUNNING;
+	ifq_clr_oactive(&ifp->if_snd);
 
 	/* Stop transfers. */
 	if (sc->kue_ep[KUE_ENDPT_RX] != NULL) {

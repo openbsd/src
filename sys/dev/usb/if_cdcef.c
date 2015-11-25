@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cdcef.c,v 1.40 2015/11/22 23:56:10 dlg Exp $	*/
+/*	$OpenBSD: if_cdcef.c,v 1.41 2015/11/25 03:10:00 dlg Exp $	*/
 
 /*
  * Copyright (c) 2007 Dale Rahn <drahn@openbsd.org>
@@ -274,7 +274,7 @@ cdcef_start(struct ifnet *ifp)
 	struct cdcef_softc	*sc = ifp->if_softc;
 	struct mbuf		*m_head = NULL;
 
-	if(ifp->if_flags & IFF_OACTIVE)
+	if (ifq_is_oactive(&ifp->if_snd))
 		return;
 
 	m_head = ifq_deq_begin(&ifp->if_snd);
@@ -294,7 +294,7 @@ cdcef_start(struct ifnet *ifp)
 
 	if (cdcef_encap(sc, m_head, 0)) {
 		ifq_deq_rollback(&ifp->if_snd, m_head);
-		ifp->if_flags |= IFF_OACTIVE;
+		ifq_set_oactive(&ifp->if_snd);
 		return;
 	}
 
@@ -305,7 +305,7 @@ cdcef_start(struct ifnet *ifp)
 		bpf_mtap(ifp->if_bpf, m_head, BPF_DIRECTION_OUT);
 #endif
 					
-	ifp->if_flags |= IFF_OACTIVE;
+	ifq_set_oactive(&ifp->if_snd);
 
 	ifp->if_timer = 6;
 }
@@ -325,7 +325,7 @@ cdcef_txeof(struct usbf_xfer *xfer, void *priv,
 #endif
 
 	ifp->if_timer = 0;
-	ifp->if_flags &= ~IFF_OACTIVE;
+	ifq_clr_oactive(&ifp->if_snd);
 
 	if (sc->sc_xmit_mbuf != NULL) {
 		m_freem(sc->sc_xmit_mbuf);
@@ -504,7 +504,7 @@ cdcef_watchdog(struct ifnet *ifp)
 
 	s = splusb();
 	ifp->if_timer = 0;
-	ifp->if_flags &= ~IFF_OACTIVE;
+	ifq_clr_oactive(&ifp->if_snd);
 
 	/* cancel receive pipe? */
 	usbf_abort_pipe(sc->sc_pipe_in); /* in is tx pipe */
@@ -520,7 +520,7 @@ cdcef_init(struct cdcef_softc *sc)
 	s = splnet();
 
 	ifp->if_flags |= IFF_RUNNING;
-	ifp->if_flags &= ~IFF_OACTIVE;
+	ifq_clr_oactive(&ifp->if_snd);
 
 	splx(s);
 }
@@ -555,7 +555,8 @@ cdcef_stop(struct cdcef_softc *sc)
 	struct ifnet    *ifp = GET_IFP(sc);
 
 	ifp->if_timer = 0;
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+	ifp->if_flags &= ~IFF_RUNNING;
+	ifq_clr_oactive(&ifp->if_snd);
 
 	/* cancel receive pipe? */
 

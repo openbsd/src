@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_jme.c,v 1.44 2015/11/24 12:32:53 mpi Exp $	*/
+/*	$OpenBSD: if_jme.c,v 1.45 2015/11/25 03:09:59 dlg Exp $	*/
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
@@ -250,7 +250,8 @@ jme_miibus_statchg(struct device *dev)
 	CSR_WRITE_4(sc, JME_INTR_MASK_CLR, JME_INTRS);
 
 	/* Stop driver */
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+	ifp->if_flags &= ~IFF_RUNNING;
+	ifq_clr_oactive(&ifp->if_snd);
 	ifp->if_timer = 0;
 	timeout_del(&sc->jme_tick_ch);
 
@@ -313,7 +314,7 @@ jme_miibus_statchg(struct device *dev)
 	}
 
 	ifp->if_flags |= IFF_RUNNING;
-	ifp->if_flags &= ~IFF_OACTIVE;
+	ifq_clr_oactive(&ifp->if_snd);
 	timeout_add_sec(&sc->jme_tick_ch, 1);
 
 	/* Reenable interrupts. */
@@ -1205,7 +1206,7 @@ jme_start(struct ifnet *ifp)
 	if (sc->jme_cdata.jme_tx_cnt >= JME_TX_DESC_HIWAT)
 		jme_txeof(sc);
 
-	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
+	if (!(ifp->if_flags & IFF_RUNNING) || ifq_is_oactive(&ifp->if_snd))
 		return;
 	if ((sc->jme_flags & JME_FLAG_LINK) == 0)
 		return;  
@@ -1219,7 +1220,7 @@ jme_start(struct ifnet *ifp)
 		 */
 		if (sc->jme_cdata.jme_tx_cnt + JME_TXD_RSVD >
 		    JME_TX_RING_CNT - JME_TXD_RSVD) {
-			ifp->if_flags |= IFF_OACTIVE;
+			ifq_set_oactive(&ifp->if_snd);
 			break;
 		}
 
@@ -1565,7 +1566,7 @@ jme_txeof(struct jme_softc *sc)
 
 	if (sc->jme_cdata.jme_tx_cnt + JME_TXD_RSVD <=
 	    JME_TX_RING_CNT - JME_TXD_RSVD)
-		ifp->if_flags &= ~IFF_OACTIVE;
+		ifq_clr_oactive(&ifp->if_snd);
 
 	bus_dmamap_sync(sc->sc_dmat, sc->jme_cdata.jme_tx_ring_map, 0,
 	    sc->jme_cdata.jme_tx_ring_map->dm_mapsize, BUS_DMASYNC_PREWRITE);
@@ -2004,7 +2005,7 @@ jme_init(struct ifnet *ifp)
 	timeout_add_sec(&sc->jme_tick_ch, 1);
 
 	ifp->if_flags |= IFF_RUNNING;
-	ifp->if_flags &= ~IFF_OACTIVE;
+	ifq_clr_oactive(&ifp->if_snd);
 
 	return (0);
 }
@@ -2020,7 +2021,8 @@ jme_stop(struct jme_softc *sc)
 	/*
 	 * Mark the interface down and cancel the watchdog timer.
 	 */
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+	ifp->if_flags &= ~IFF_RUNNING;
+	ifq_clr_oactive(&ifp->if_snd);
 	ifp->if_timer = 0;
 
 	timeout_del(&sc->jme_tick_ch);

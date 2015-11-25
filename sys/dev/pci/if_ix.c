@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.128 2015/11/20 03:35:23 dlg Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.129 2015/11/25 03:09:59 dlg Exp $	*/
 
 /******************************************************************************
 
@@ -368,7 +368,7 @@ ixgbe_start(struct ifnet * ifp)
 	struct mbuf  		*m_head;
 	int			 post = 0;
 
-	if ((ifp->if_flags & (IFF_RUNNING|IFF_OACTIVE)) != IFF_RUNNING)
+	if (!(ifp->if_flags & IFF_RUNNING) || ifq_is_oactive(&ifp->if_snd))
 		return;
 	if (!sc->link_up)
 		return;
@@ -384,7 +384,7 @@ ixgbe_start(struct ifnet * ifp)
 
 		if (ixgbe_encap(txr, m_head)) {
 			ifq_deq_rollback(&ifp->if_snd, m_head);
-			ifp->if_flags |= IFF_OACTIVE;
+			ifq_set_oactive(&ifp->if_snd);
 			break;
 		}
 
@@ -801,7 +801,7 @@ ixgbe_init(void *arg)
 
 	/* Now inform the stack we're ready */
 	ifp->if_flags |= IFF_RUNNING;
-	ifp->if_flags &= ~IFF_OACTIVE;
+	ifq_clr_oactive(&ifp->if_snd);
 
 	splx(s);
 }
@@ -874,7 +874,7 @@ ixgbe_intr(void *arg)
 		ixgbe_rxeof(que);
 		refill = 1;
 
-		if (ISSET(ifp->if_flags, IFF_OACTIVE))
+		if (ifq_is_oactive(&ifp->if_snd))
 			was_active = 1;
 		ixgbe_txeof(txr);
 	}
@@ -1302,7 +1302,8 @@ ixgbe_stop(void *arg)
 	struct ifnet   *ifp = &sc->arpcom.ac_if;
 
 	/* Tell the stack that the interface is no longer active */
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+	ifp->if_flags &= ~IFF_RUNNING;
+	ifq_clr_oactive(&ifp->if_snd);
 
 	INIT_DEBUGOUT("ixgbe_stop: begin\n");
 	ixgbe_disable_intr(sc);
@@ -2442,7 +2443,7 @@ ixgbe_txeof(struct tx_ring *txr)
 	 * restart the timeout.
 	 */
 	if (txr->tx_avail > IXGBE_TX_CLEANUP_THRESHOLD) {
-		ifp->if_flags &= ~IFF_OACTIVE;
+		ifq_clr_oactive(&ifp->if_snd);
 
 		/* If all are clean turn off the timer */
 		if (txr->tx_avail == sc->num_tx_desc) {

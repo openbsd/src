@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_et.c,v 1.32 2015/11/24 15:25:20 mpi Exp $	*/
+/*	$OpenBSD: if_et.c,v 1.33 2015/11/25 03:09:59 dlg Exp $	*/
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
  * 
@@ -470,7 +470,8 @@ et_stop(struct et_softc *sc)
 	sc->sc_tx_intr = 0;
 
 	ifp->if_timer = 0;
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+	ifp->if_flags &= ~IFF_RUNNING;
+	ifq_clr_oactive(&ifp->if_snd);
 }
 
 int
@@ -991,7 +992,7 @@ et_init(struct ifnet *ifp)
 	CSR_WRITE_4(sc, ET_TIMER, sc->sc_timer);
 
 	ifp->if_flags |= IFF_RUNNING;
-	ifp->if_flags &= ~IFF_OACTIVE;
+	ifq_clr_oactive(&ifp->if_snd);
 back:
 	if (error)
 		et_stop(sc);
@@ -1066,7 +1067,7 @@ et_start(struct ifnet *ifp)
 	int trans;
 	struct mbuf *m;
 
-	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
+	if (!(ifp->if_flags & IFF_RUNNING) || ifq_is_oactive(&ifp->if_snd))
 		return;
 
 	trans = 0;
@@ -1076,13 +1077,13 @@ et_start(struct ifnet *ifp)
 			break;
 
 		if ((tbd->tbd_used + ET_NSEG_SPARE) > ET_TX_NDESC) {
-			ifp->if_flags |= IFF_OACTIVE;
+			ifq_set_oactive(&ifp->if_snd);
 			break;
 		}
 
 		if (et_encap(sc, &m)) {
 			ifp->if_oerrors++;
-			ifp->if_flags |= IFF_OACTIVE;
+			ifq_set_oactive(&ifp->if_snd);
 			break;
 		}
 
@@ -1929,7 +1930,7 @@ et_txeof(struct et_softc *sc)
 		ifp->if_timer = 0;
 	}
 	if (tbd->tbd_used + ET_NSEG_SPARE <= ET_TX_NDESC)
-		ifp->if_flags &= ~IFF_OACTIVE;
+		ifq_clr_oactive(&ifp->if_snd);
 
 	et_start(ifp);
 }

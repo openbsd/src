@@ -1,4 +1,4 @@
-/*	$OpenBSD: am7990.c,v 1.51 2015/05/13 10:42:46 jsg Exp $	*/
+/*	$OpenBSD: am7990.c,v 1.52 2015/11/25 03:09:58 dlg Exp $	*/
 /*	$NetBSD: am7990.c,v 1.74 2012/02/02 19:43:02 tls Exp $	*/
 
 /*-
@@ -318,7 +318,7 @@ am7990_tint(struct lance_softc *sc)
 		if (tmd.tmd1_bits & LE_T1_OWN)
 			break;
 
-		ifp->if_flags &= ~IFF_OACTIVE;
+		ifq_clr_oactive(&ifp->if_snd);
 
 		if (tmd.tmd1_bits & LE_T1_ERR) {
 			if (tmd.tmd3 & LE_T3_BUFF)
@@ -469,7 +469,7 @@ am7990_start(struct ifnet *ifp)
 	int rp;
 	int len;
 
-	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
+	if (!(ifp->if_flags & IFF_RUNNING) || ifq_is_oactive(&ifp->if_snd))
 		return;
 
 	bix = sc->sc_last_td;
@@ -479,7 +479,7 @@ am7990_start(struct ifnet *ifp)
 		(*sc->sc_copyfromdesc)(sc, &tmd, rp, sizeof(tmd));
 
 		if (tmd.tmd1_bits & LE_T1_OWN) {
-			ifp->if_flags |= IFF_OACTIVE;
+			ifq_set_oactive(&ifp->if_snd);
 			printf("missing buffer, no_td = %d, last_td = %d\n",
 			    sc->sc_no_td, sc->sc_last_td);
 		}
@@ -529,7 +529,7 @@ am7990_start(struct ifnet *ifp)
 			bix = 0;
 
 		if (++sc->sc_no_td == sc->sc_ntbuf) {
-			ifp->if_flags |= IFF_OACTIVE;
+			ifq_set_oactive(&ifp->if_snd);
 			break;
 		}
 

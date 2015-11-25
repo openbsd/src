@@ -1,4 +1,4 @@
-/*	$OpenBSD: an.c,v 1.69 2015/11/24 17:11:39 mpi Exp $	*/
+/*	$OpenBSD: an.c,v 1.70 2015/11/25 03:09:58 dlg Exp $	*/
 /*	$NetBSD: an.c,v 1.34 2005/06/20 02:49:18 atatat Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -488,7 +488,7 @@ an_txeof(struct an_softc *sc, u_int16_t status)
 	int cur, id;
 
 	sc->sc_tx_timer = 0;
-	ifp->if_flags &= ~IFF_OACTIVE;
+	ifq_clr_oactive(&ifp->if_snd);
 
 	id = CSR_READ_2(sc, AN_TX_CMP_FID);
 	CSR_WRITE_2(sc, AN_EVENT_ACK, status & (AN_EV_TX | AN_EV_TX_EXC));
@@ -563,7 +563,7 @@ an_intr(void *arg)
 		if (status & AN_EV_LINKSTAT)
 			an_linkstat_intr(sc);
 
-		if ((ifp->if_flags & IFF_OACTIVE) == 0 &&
+		if (ifq_is_oactive(&ifp->if_snd) == 0 &&
 		    sc->sc_ic.ic_state == IEEE80211_S_RUN &&
 		    !IFQ_IS_EMPTY(&ifp->if_snd))
 			an_start(ifp);
@@ -1060,7 +1060,7 @@ an_init(struct ifnet *ifp)
 		an_cmd(sc, AN_CMD_SET_MODE, 0xffff);
 
 	ifp->if_flags |= IFF_RUNNING;
-	ifp->if_flags &= ~IFF_OACTIVE;
+	ifq_clr_oactive(&ifp->if_snd);
 	ic->ic_state = IEEE80211_S_INIT;
 	if (ic->ic_opmode == IEEE80211_M_MONITOR)
 		ieee80211_new_state(ic, IEEE80211_S_RUN, -1);
@@ -1104,7 +1104,7 @@ an_start(struct ifnet *ifp)
 			ifq_deq_rollback(&ifp->if_snd, m);
 			DPRINTF2(("an_start: %x/%d busy\n",
 			    sc->sc_txd[cur].d_fid, cur));
-			ifp->if_flags |= IFF_OACTIVE;
+			ifq_set_oactive(&ifp->if_snd);
 			break;
 		}
 		ifq_deq_commit(&ifp->if_snd, m);
@@ -1242,7 +1242,8 @@ an_stop(struct ifnet *ifp, int disable)
 
 	sc->sc_tx_timer = 0;
 	ifp->if_timer = 0;
-	ifp->if_flags &= ~(IFF_RUNNING|IFF_OACTIVE);
+	ifp->if_flags &= ~IFF_RUNNING;
+	ifq_clr_oactive(&ifp->if_snd);
 
 	if (disable) {
 		if (sc->sc_disable)

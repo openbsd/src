@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_msk.c,v 1.121 2015/11/24 17:11:39 mpi Exp $	*/
+/*	$OpenBSD: if_msk.c,v 1.122 2015/11/25 03:09:59 dlg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -1553,7 +1553,7 @@ msk_start(struct ifnet *ifp)
 		 */
 		if (msk_encap(sc_if, m_head, &idx)) {
 			ifq_deq_rollback(&ifp->if_snd, m_head);
-			ifp->if_flags |= IFF_OACTIVE;
+			ifq_set_oactive(&ifp->if_snd);
 			break;
 		}
 
@@ -1720,7 +1720,7 @@ msk_txeof(struct sk_if_softc *sc_if)
 	ifp->if_timer = sc_if->sk_cdata.sk_tx_cnt > 0 ? 5 : 0;
 
 	if (sc_if->sk_cdata.sk_tx_cnt < MSK_TX_RING_CNT - 2)
-		ifp->if_flags &= ~IFF_OACTIVE;
+		ifq_clr_oactive(&ifp->if_snd);
 
 	sc_if->sk_cdata.sk_tx_cons = idx;
 }
@@ -2089,7 +2089,7 @@ msk_init(void *xsc_if)
 	CSR_WRITE_4(sc, SK_IMR, sc->sk_intrmask);
 
 	ifp->if_flags |= IFF_RUNNING;
-	ifp->if_flags &= ~IFF_OACTIVE;
+	ifq_clr_oactive(&ifp->if_snd);
 
 	timeout_add_sec(&sc_if->sk_tick_ch, 1);
 
@@ -2108,7 +2108,8 @@ msk_stop(struct sk_if_softc *sc_if, int softonly)
 
 	timeout_del(&sc_if->sk_tick_ch);
 
-	ifp->if_flags &= ~(IFF_RUNNING|IFF_OACTIVE);
+	ifp->if_flags &= ~IFF_RUNNING;
+	ifq_clr_oactive(&ifp->if_snd);
 
 	/* Stop transfer of Tx descriptors */
 

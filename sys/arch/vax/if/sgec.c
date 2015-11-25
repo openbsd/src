@@ -1,4 +1,4 @@
-/*	$OpenBSD: sgec.c,v 1.33 2015/11/24 17:11:38 mpi Exp $	*/
+/*	$OpenBSD: sgec.c,v 1.34 2015/11/25 03:09:58 dlg Exp $	*/
 /*      $NetBSD: sgec.c,v 1.5 2000/06/04 02:14:14 matt Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -317,7 +317,7 @@ zeinit(sc)
 	    ZE_NICSR6_SR | ZE_NICSR6_DC);
 
 	ifp->if_flags |= IFF_RUNNING;
-	ifp->if_flags &= ~IFF_OACTIVE;
+	ifq_clr_oactive(&ifp->if_snd);
 
 	/*
 	 * Send a setup frame.
@@ -397,7 +397,7 @@ zestart(ifp)
 			panic("zestart"); /* XXX */
 
 		if ((i + sc->sc_inq) >= (TXDESCS - 1)) {
-			ifp->if_flags |= IFF_OACTIVE;
+			ifq_set_oactive(&ifp->if_snd);
 			goto out;
 		}
 		IFQ_DEQUEUE(&sc->sc_if.if_snd, m);
@@ -450,7 +450,7 @@ zestart(ifp)
 		sc->sc_nexttx = idx;
 	}
 	if (sc->sc_inq == (TXDESCS - 1))
-		ifp->if_flags |= IFF_OACTIVE;
+		ifq_set_oactive(&ifp->if_snd);
 
 out:	if (old_inq < sc->sc_inq)
 		ifp->if_timer = 5; /* If transmit logic dies */
@@ -566,7 +566,7 @@ sgec_txintr(struct ze_softc *sc)
 
 	if (sc->sc_inq == 0)
 		ifp->if_timer = 0;
-	ifp->if_flags &= ~IFF_OACTIVE;
+	ifq_clr_oactive(&ifp->if_snd);
 	zestart(ifp); /* Put in more in queue */
 }
 

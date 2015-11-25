@@ -1,4 +1,4 @@
-/*	$OpenBSD: mtd8xx.c,v 1.28 2015/10/25 12:48:46 mpi Exp $	*/
+/*	$OpenBSD: mtd8xx.c,v 1.29 2015/11/25 03:09:58 dlg Exp $	*/
 
 /*
  * Copyright (c) 2003 Oleg Safiullin <form@pdp11.org.ru>
@@ -676,7 +676,7 @@ mtd_init(struct ifnet *ifp)
 	CSR_WRITE_4(MTD_RXPDR, 0xffffffff);
 
 	ifp->if_flags |= IFF_RUNNING;
-	ifp->if_flags &= ~IFF_OACTIVE;
+	ifq_clr_oactive(&ifp->if_snd);
 	splx(s);
 }
 
@@ -695,7 +695,7 @@ mtd_start(struct ifnet *ifp)
 	int idx;
 
 	if (sc->mtd_cdata.mtd_tx_cnt) {
-		ifp->if_flags |= IFF_OACTIVE;
+		ifq_set_oactive(&ifp->if_snd);
 		return;
 	}
 
@@ -706,7 +706,7 @@ mtd_start(struct ifnet *ifp)
 			break;
 
 		if (mtd_encap(sc, m_head, &idx)) {
-			ifp->if_flags |= IFF_OACTIVE;
+			ifq_set_oactive(&ifp->if_snd);
 			break;
 		}
 
@@ -741,7 +741,8 @@ mtd_stop(struct ifnet *ifp)
 	int i;
 
 	ifp->if_timer = 0;
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+	ifp->if_flags &= ~IFF_RUNNING;
+	ifq_clr_oactive(&ifp->if_snd);
 
 	CSR_CLRBIT(MTD_TCRRCR, (RCR_RE | TCR_TE));
 	CSR_WRITE_4(MTD_IMR, 0);
@@ -1048,7 +1049,7 @@ mtd_txeof(struct mtd_softc *sc)
 	}
 
 	if (cur_tx != NULL) {
-		ifp->if_flags &= ~IFF_OACTIVE;
+		ifq_clr_oactive(&ifp->if_snd);
 		sc->mtd_cdata.mtd_tx_cons = idx;
 	} else
 		if (sc->mtd_ldata->mtd_tx_list[idx].td_tsw ==

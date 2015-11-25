@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_eg.c,v 1.42 2015/11/24 17:11:39 mpi Exp $	*/
+/*	$OpenBSD: if_eg.c,v 1.43 2015/11/25 03:09:59 dlg Exp $	*/
 /*	$NetBSD: if_eg.c,v 1.26 1996/05/12 23:52:27 mycroft Exp $	*/
 
 /*
@@ -474,7 +474,7 @@ eginit(register struct eg_softc *sc)
 
 	/* Interface is now `running', with no output active. */
 	ifp->if_flags |= IFF_RUNNING;
-	ifp->if_flags &= ~IFF_OACTIVE;
+	ifq_clr_oactive(&ifp->if_snd);
 
 	/* Attempt to start output, if any. */
 	egstart(ifp);
@@ -513,7 +513,7 @@ egstart(struct ifnet *ifp)
 	u_int i;
 
 	/* Don't transmit if interface is busy or not running */
-	if ((ifp->if_flags & (IFF_RUNNING|IFF_OACTIVE)) != IFF_RUNNING)
+	if (!(ifp->if_flags & IFF_RUNNING) || ifq_is_oactive(&ifp->if_snd))
 		return;
 
 loop:
@@ -522,7 +522,7 @@ loop:
 	if (m0 == NULL)
 		return;
 	
-	ifp->if_flags |= IFF_OACTIVE;
+	ifq_set_oactive(&ifp->if_snd);
 
 	/* We need to use m->m_pkthdr.len, so require the header */
 	if ((m0->m_flags & M_PKTHDR) == 0)
@@ -545,7 +545,7 @@ loop:
 	if (egwritePCB(sc) != 0) {
 		DPRINTF(("egwritePCB in egstart failed\n"));
 		ifp->if_oerrors++;
-		ifp->if_flags &= ~IFF_OACTIVE;
+		ifq_clr_oactive(&ifp->if_snd);
 		m_freem(m0);
 		goto loop;
 	}
@@ -631,7 +631,7 @@ egintr(void *arg)
 				sc->sc_arpcom.ac_if.if_opackets++;
 			sc->sc_arpcom.ac_if.if_collisions +=
 			    sc->eg_pcb[8] & 0xf;
-			sc->sc_arpcom.ac_if.if_flags &= ~IFF_OACTIVE;
+			ifq_clr_oactive(&sc->sc_arpcom.ac_if.if_snd);
 			egstart(&sc->sc_arpcom.ac_if);
 			break;
 

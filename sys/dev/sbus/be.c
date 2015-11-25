@@ -1,4 +1,4 @@
-/*	$OpenBSD: be.c,v 1.37 2015/11/24 17:11:40 mpi Exp $	*/
+/*	$OpenBSD: be.c,v 1.38 2015/11/25 03:09:59 dlg Exp $	*/
 /*	$NetBSD: be.c,v 1.26 2001/03/20 15:39:20 pk Exp $	*/
 
 /*-
@@ -570,7 +570,7 @@ bestart(struct ifnet *ifp)
 	unsigned int bix, len;
 	unsigned int ntbuf = sc->sc_rb.rb_ntbuf;
 
-	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
+	if (!(ifp->if_flags & IFF_RUNNING) || ifq_is_oactive(&ifp->if_snd))
 		return;
 
 	bix = sc->sc_rb.rb_tdhead;
@@ -606,7 +606,7 @@ bestart(struct ifnet *ifp)
 			bix = 0;
 
 		if (++sc->sc_rb.rb_td_nbusy == ntbuf) {
-			ifp->if_flags |= IFF_OACTIVE;
+			ifq_set_oactive(&ifp->if_snd);
 			break;
 		}
 	}
@@ -851,7 +851,7 @@ betint(struct be_softc *sc)
 		if (txflags & QEC_XD_OWN)
 			break;
 
-		ifp->if_flags &= ~IFF_OACTIVE;
+		ifq_clr_oactive(&ifp->if_snd);
 		ifp->if_opackets++;
 
 		if (++bix == QEC_XD_RING_MAXSIZE)
@@ -1060,7 +1060,7 @@ beinit(struct be_softc *sc)
 	bus_space_write_4(t, br, BE_BRI_RXCFG, v);
 
 	ifp->if_flags |= IFF_RUNNING;
-	ifp->if_flags &= ~IFF_OACTIVE;
+	ifq_clr_oactive(&ifp->if_snd);
 
 	be_ifmedia_upd(ifp);
 	timeout_add_sec(&sc->sc_tick_ch, 1);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_athn_usb.c,v 1.40 2015/11/24 13:45:06 mpi Exp $	*/
+/*	$OpenBSD: if_athn_usb.c,v 1.41 2015/11/25 03:09:59 dlg Exp $	*/
 
 /*-
  * Copyright (c) 2011 Damien Bergamini <damien.bergamini@free.fr>
@@ -1923,8 +1923,8 @@ athn_usb_txeof(struct usbd_xfer *xfer, void *priv,
 	ifp->if_opackets++;
 
 	/* We just released a Tx buffer, notify Tx. */
-	if (ifp->if_flags & IFF_OACTIVE) {
-		ifp->if_flags &= ~IFF_OACTIVE;
+	if (ifq_is_oactive(&ifp->if_snd)) {
+		ifq_clr_oactive(&ifp->if_snd);
 		ifp->if_start(ifp);
 	}
 	splx(s);
@@ -2054,12 +2054,12 @@ athn_usb_start(struct ifnet *ifp)
 	struct ieee80211_node *ni;
 	struct mbuf *m;
 
-	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
+	if (!(ifp->if_flags & IFF_RUNNING) || ifq_is_oactive(&ifp->if_snd))
 		return;
 
 	for (;;) {
 		if (TAILQ_EMPTY(&usc->tx_free_list)) {
-			ifp->if_flags |= IFF_OACTIVE;
+			ifq_set_oactive(&ifp->if_snd);
 			break;
 		}
 		/* Send pending management frames first. */
@@ -2322,8 +2322,8 @@ athn_usb_init(struct ifnet *ifp)
 			goto fail;
 	}
 	/* We're ready to go. */
-	ifp->if_flags &= ~IFF_OACTIVE;
 	ifp->if_flags |= IFF_RUNNING;
+	ifq_clr_oactive(&ifp->if_snd);
 
 #ifdef notyet
 	if (ic->ic_flags & IEEE80211_F_WEPON) {
@@ -2355,7 +2355,8 @@ athn_usb_stop(struct ifnet *ifp)
 
 	sc->sc_tx_timer = 0;
 	ifp->if_timer = 0;
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+	ifp->if_flags &= ~IFF_RUNNING;
+	ifq_clr_oactive(&ifp->if_snd);
 
 	s = splusb();
 	ieee80211_new_state(ic, IEEE80211_S_INIT, -1);

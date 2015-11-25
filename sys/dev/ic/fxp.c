@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxp.c,v 1.126 2015/11/24 15:43:15 mpi Exp $	*/
+/*	$OpenBSD: fxp.c,v 1.127 2015/11/25 03:09:58 dlg Exp $	*/
 /*	$NetBSD: if_fxp.c,v 1.2 1997/06/05 02:01:55 thorpej Exp $	*/
 
 /*
@@ -676,12 +676,12 @@ fxp_start(struct ifnet *ifp)
 	struct mbuf *m0, *m = NULL;
 	int cnt = sc->sc_cbt_cnt, seg;
 
-	if ((ifp->if_flags & (IFF_OACTIVE | IFF_RUNNING)) != IFF_RUNNING)
+	if (!(ifp->if_flags & IFF_RUNNING) || ifq_is_oactive(&ifp->if_snd))
 		return;
 
 	while (1) {
 		if (cnt >= (FXP_NTXCB - 2)) {
-			ifp->if_flags |= IFF_OACTIVE;
+			ifq_set_oactive(&ifp->if_snd);
 			break;
 		}
 
@@ -846,7 +846,7 @@ fxp_intr(void *arg)
 			sc->sc_cbt_cnt = txcnt;
 			/* Did we transmit any packets? */
 			if (sc->sc_cbt_cons != txs)
-				ifp->if_flags &= ~IFF_OACTIVE;
+				ifq_clr_oactive(&ifp->if_snd);
 			ifp->if_timer = sc->sc_cbt_cnt ? 5 : 0;
 			sc->sc_cbt_cons = txs;
 
@@ -1074,7 +1074,8 @@ fxp_stop(struct fxp_softc *sc, int drain, int softonly)
 	 * between panics, and the watchdog timer)
 	 */
 	ifp->if_timer = 0;
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+	ifp->if_flags &= ~IFF_RUNNING;
+	ifq_clr_oactive(&ifp->if_snd);
 
 	if (!softonly)
 		mii_down(&sc->sc_mii);
@@ -1426,7 +1427,7 @@ fxp_init(void *xsc)
 	mii_mediachg(&sc->sc_mii);
 
 	ifp->if_flags |= IFF_RUNNING;
-	ifp->if_flags &= ~IFF_OACTIVE;
+	ifq_clr_oactive(&ifp->if_snd);
 
 	/*
 	 * Request a software generated interrupt that will be used to 

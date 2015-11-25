@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vr.c,v 1.147 2015/11/24 17:11:39 mpi Exp $	*/
+/*	$OpenBSD: if_vr.c,v 1.148 2015/11/25 03:09:59 dlg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -1044,7 +1044,7 @@ vr_txeof(struct vr_softc *sc)
 
 		m_freem(cur_tx->vr_mbuf);
 		cur_tx->vr_mbuf = NULL;
-		ifp->if_flags &= ~IFF_OACTIVE;
+		ifq_clr_oactive(&ifp->if_snd);
 
 next:
 		cur_tx = cur_tx->vr_nextdesc;
@@ -1309,7 +1309,7 @@ vr_start(struct ifnet *ifp)
 
 	sc = ifp->if_softc;
 
-	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
+	if (!(ifp->if_flags & IFF_RUNNING) || ifq_is_oactive(&ifp->if_snd))
 		return;
 
 	if (sc->vr_link == 0)
@@ -1319,7 +1319,7 @@ vr_start(struct ifnet *ifp)
 	for (;;) {
 		if (sc->vr_cdata.vr_tx_cnt + VR_MAXFRAGS >=
 		    VR_TX_LIST_CNT - 1) {
-			ifp->if_flags |= IFF_OACTIVE;
+			ifq_set_oactive(&ifp->if_snd);
 			break;
 		}
 
@@ -1480,7 +1480,7 @@ vr_init(void *xsc)
 	mii_mediachg(mii);
 
 	ifp->if_flags |= IFF_RUNNING;
-	ifp->if_flags &= ~IFF_OACTIVE;
+	ifq_clr_oactive(&ifp->if_snd);
 
 	if (!timeout_pending(&sc->sc_to))
 		timeout_add_sec(&sc->sc_to, 1);
@@ -1608,7 +1608,8 @@ vr_stop(struct vr_softc *sc)
 
 	timeout_del(&sc->sc_to);
 
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+	ifp->if_flags &= ~IFF_RUNNING;
+	ifq_clr_oactive(&ifp->if_snd);
 
 	VR_SETBIT16(sc, VR_COMMAND, VR_CMD_STOP);
 	VR_CLRBIT16(sc, VR_COMMAND, (VR_CMD_RX_ON|VR_CMD_TX_ON));

@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_ixgb.c,v 1.67 2015/11/20 03:35:23 dlg Exp $ */
+/* $OpenBSD: if_ixgb.c,v 1.68 2015/11/25 03:09:59 dlg Exp $ */
 
 #include <dev/pci/if_ixgb.h>
 
@@ -272,7 +272,7 @@ ixgb_start(struct ifnet *ifp)
 	struct ixgb_softc *sc = ifp->if_softc;
 	int		post = 0;
 
-	if ((ifp->if_flags & (IFF_OACTIVE | IFF_RUNNING)) != IFF_RUNNING)
+	if (!(ifp->if_flags & IFF_RUNNING) || ifq_is_oactive(&ifp->if_snd))
 		return;
 
 	if (!sc->link_active)
@@ -289,7 +289,7 @@ ixgb_start(struct ifnet *ifp)
 
 		if (ixgb_encap(sc, m_head)) {
 			ifq_deq_rollback(&ifp->if_snd, m_head);
-			ifp->if_flags |= IFF_OACTIVE;
+			ifq_set_oactive(&ifp->if_snd);
 			break;
 		}
 
@@ -486,7 +486,7 @@ ixgb_init(void *arg)
 	ixgb_set_promisc(sc);
 
 	ifp->if_flags |= IFF_RUNNING;
-	ifp->if_flags &= ~IFF_OACTIVE;
+	ifq_clr_oactive(&ifp->if_snd);
 
 	/* Enable jumbo frames */
 	IXGB_WRITE_REG(&sc->hw, MFRMS,
@@ -849,7 +849,8 @@ ixgb_stop(void *arg)
 	timeout_del(&sc->timer_handle);
 
 	/* Tell the stack that the interface is no longer active */
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+	ifp->if_flags &= ~IFF_RUNNING;
+	ifq_clr_oactive(&ifp->if_snd);
 
 	ixgb_free_transmit_structures(sc);
 	ixgb_free_receive_structures(sc);
@@ -1414,7 +1415,7 @@ ixgb_txeof(struct ixgb_softc *sc)
 	 * restart the timeout.
 	 */
 	if (num_avail > IXGB_TX_CLEANUP_THRESHOLD)
-		ifp->if_flags &= ~IFF_OACTIVE;
+		ifq_clr_oactive(&ifp->if_snd);
 
 	/* All clean, turn off the timer */
 	if (num_avail == sc->num_tx_desc)

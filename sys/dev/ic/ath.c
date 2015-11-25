@@ -1,4 +1,4 @@
-/*      $OpenBSD: ath.c,v 1.107 2015/11/04 12:11:59 dlg Exp $  */
+/*      $OpenBSD: ath.c,v 1.108 2015/11/25 03:09:58 dlg Exp $  */
 /*	$NetBSD: ath.c,v 1.37 2004/08/18 21:59:39 dyoung Exp $	*/
 
 /*-
@@ -834,7 +834,7 @@ ath_start(struct ifnet *ifp)
 	struct ieee80211_frame *wh;
 	int s;
 
-	if ((ifp->if_flags & (IFF_RUNNING|IFF_OACTIVE)) != IFF_RUNNING ||
+	if (!(ifp->if_flags & IFF_RUNNING) || ifq_is_oactive(&ifp->if_snd) ||
 	    sc->sc_invalid)
 		return;
 	for (;;) {
@@ -850,7 +850,7 @@ ath_start(struct ifnet *ifp)
 			DPRINTF(ATH_DEBUG_ANY, ("%s: out of xmit buffers\n",
 			    __func__));
 			sc->sc_stats.ast_tx_qstop++;
-			ifp->if_flags |= IFF_OACTIVE;
+			ifq_set_oactive(&ifp->if_snd);
 			break;
 		}
 		/*
@@ -2507,7 +2507,7 @@ ath_tx_proc(void *arg, int npending)
 		TAILQ_INSERT_TAIL(&sc->sc_txbuf, bf, bf_list);
 		splx(s);
 	}
-	ifp->if_flags &= ~IFF_OACTIVE;
+	ifq_clr_oactive(&ifp->if_snd);
 	sc->sc_tx_timer = 0;
 
 	ath_start(ifp);
@@ -2572,7 +2572,7 @@ ath_draintxq(struct ath_softc *sc)
 		TAILQ_INSERT_TAIL(&sc->sc_txbuf, bf, bf_list);
 		splx(s);
 	}
-	ifp->if_flags &= ~IFF_OACTIVE;
+	ifq_clr_oactive(&ifp->if_snd);
 	sc->sc_tx_timer = 0;
 }
 

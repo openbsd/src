@@ -1,4 +1,4 @@
-/*	$OpenBSD: be.c,v 1.56 2015/11/24 17:11:38 mpi Exp $	*/
+/*	$OpenBSD: be.c,v 1.57 2015/11/25 03:09:58 dlg Exp $	*/
 
 /*
  * Copyright (c) 1998 Theo de Raadt and Jason L. Wright.
@@ -251,7 +251,7 @@ bestart(ifp)
 		be_tx_harvest(sc);
 	}
 
-	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
+	if (!(ifp->if_flags & IFF_RUNNING) || ifq_is_oactive(&ifp->if_snd))
 		return;
 
 	bix = sc->sc_last_td;
@@ -288,7 +288,7 @@ bestart(ifp)
 			bix = 0;
 
 		if (++cnt == BE_TX_RING_SIZE) {
-			ifp->if_flags |= IFF_OACTIVE;
+			ifq_set_oactive(&ifp->if_snd);
 			break;
 		}
 	}
@@ -469,7 +469,7 @@ be_tx_harvest(sc)
 	if (sc->sc_no_td != cnt) {
 		sc->sc_first_td = bix;
 		sc->sc_no_td = cnt;
-		ifp->if_flags &= ~IFF_OACTIVE;
+		ifq_clr_oactive(&ifp->if_snd);
 	}
 
 	if (sc->sc_no_td < BE_TX_LOW_WATER) {
@@ -714,7 +714,7 @@ beinit(sc)
 	br->rx_cfg |= BE_BR_RXCFG_ENABLE;
 
 	ifp->if_flags |= IFF_RUNNING;
-	ifp->if_flags &= ~IFF_OACTIVE;
+	ifq_clr_oactive(&ifp->if_snd);
 	splx(s);
 
 	timeout_add_sec(&sc->sc_tick, 1);

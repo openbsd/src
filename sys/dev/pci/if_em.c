@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.312 2015/11/20 13:11:16 mpi Exp $ */
+/* $OpenBSD: if_em.c,v 1.313 2015/11/25 03:09:59 dlg Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -592,7 +592,7 @@ em_start(struct ifnet *ifp)
 	struct em_softc *sc = ifp->if_softc;
 	int		post = 0;
 
-	if ((ifp->if_flags & (IFF_OACTIVE | IFF_RUNNING)) != IFF_RUNNING)
+	if (!(ifp->if_flags & IFF_RUNNING) || ifq_is_oactive(&ifp->if_snd))
 		return;
 
 	if (!sc->link_active)
@@ -611,7 +611,7 @@ em_start(struct ifnet *ifp)
 
 		if (em_encap(sc, m_head)) {
 			ifq_deq_rollback(&ifp->if_snd, m_head);
-			ifp->if_flags |= IFF_OACTIVE;
+			ifq_set_oactive(&ifp->if_snd);
 			break;
 		}
 
@@ -878,7 +878,7 @@ em_init(void *arg)
 	em_iff(sc);
 
 	ifp->if_flags |= IFF_RUNNING;
-	ifp->if_flags &= ~IFF_OACTIVE;
+	ifq_clr_oactive(&ifp->if_snd);
 
 	timeout_add_sec(&sc->timer_handle, 1);
 	em_clear_hw_cntrs(&sc->hw);
@@ -1557,7 +1557,8 @@ em_stop(void *arg, int softonly)
 	struct ifnet   *ifp = &sc->interface_data.ac_if;
 
 	/* Tell the stack that the interface is no longer active */
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+	ifp->if_flags &= ~IFF_RUNNING;
+	ifq_clr_oactive(&ifp->if_snd);
 	ifp->if_timer = 0;
 
 	INIT_DEBUGOUT("em_stop: begin");
@@ -2486,7 +2487,7 @@ em_txeof(struct em_softc *sc)
 	 * if some descriptors have been freed, restart the timeout.
 	 */
 	if (num_avail > EM_TX_CLEANUP_THRESHOLD)
-		ifp->if_flags &= ~IFF_OACTIVE;
+		ifq_clr_oactive(&ifp->if_snd);
 
 	/* All clean, turn off the timer */
 	if (num_avail == sc->num_tx_desc)

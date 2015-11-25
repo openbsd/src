@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bm.c,v 1.37 2015/11/14 17:26:40 mpi Exp $	*/
+/*	$OpenBSD: if_bm.c,v 1.38 2015/11/25 03:09:58 dlg Exp $	*/
 /*	$NetBSD: if_bm.c,v 1.1 1999/01/01 01:27:52 tsubai Exp $	*/
 
 /*-
@@ -421,7 +421,7 @@ bmac_init(struct bmac_softc *sc)
 	bmac_write_reg(sc, INTDISABLE, NormalIntEvents);
 
 	ifp->if_flags |= IFF_RUNNING;
-	ifp->if_flags &= ~IFF_OACTIVE;
+	ifq_clr_oactive(&ifp->if_snd);
 	ifp->if_timer = 0;
 
 	data = sc->sc_txbuf;
@@ -483,7 +483,7 @@ bmac_intr(void *v)
 #endif
 
 	if (stat & IntFrameSent) {
-		ifp->if_flags &= ~IFF_OACTIVE;
+		ifq_clr_oactive(&ifp->if_snd);
 		ifp->if_timer = 0;
 		ifp->if_opackets++;
 		bmac_start(ifp);
@@ -610,11 +610,11 @@ bmac_start(struct ifnet *ifp)
 	struct mbuf *m;
 	int tlen;
 
-	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
+	if (!(ifp->if_flags & IFF_RUNNING) || ifq_is_oactive(&ifp->if_snd))
 		return;
 
 	while (1) {
-		if (ifp->if_flags & IFF_OACTIVE)
+		if (ifq_is_oactive(&ifp->if_snd))
 			return;
 
 		IFQ_DEQUEUE(&ifp->if_snd, m);
@@ -629,7 +629,7 @@ bmac_start(struct ifnet *ifp)
 			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_OUT);
 #endif
 
-		ifp->if_flags |= IFF_OACTIVE;
+		ifq_set_oactive(&ifp->if_snd);
 		tlen = bmac_put(sc, sc->sc_txbuf, m);
 
 		/* 5 seconds to watch for failing to transmit */

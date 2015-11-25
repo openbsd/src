@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_qe.c,v 1.39 2015/11/24 17:11:38 mpi Exp $	*/
+/*	$OpenBSD: if_qe.c,v 1.40 2015/11/25 03:09:58 dlg Exp $	*/
 /*      $NetBSD: if_qe.c,v 1.51 2002/06/08 12:28:37 ragge Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -407,7 +407,7 @@ qeinit(struct qe_softc *sc)
 	    HIWORD(sc->sc_pqedata->qc_recv));
 
 	ifp->if_flags |= IFF_RUNNING;
-	ifp->if_flags &= ~IFF_OACTIVE;
+	ifq_clr_oactive(&ifp->if_snd);
 
 	/*
 	 * Send a setup frame.
@@ -457,7 +457,7 @@ qestart(struct ifnet *ifp)
 
 		if ((i + sc->sc_inq) >= (TXDESCS - 1)) {
 			ifq_deq_rollback(&ifp->if_snd, m);
-			ifp->if_flags |= IFF_OACTIVE;
+			ifq_set_oactive(&ifp->if_snd);
 			goto out;
 		}
 
@@ -525,7 +525,7 @@ qestart(struct ifnet *ifp)
 		sc->sc_nexttx = idx;
 	}
 	if (sc->sc_inq == (TXDESCS - 1))
-		ifp->if_flags |= IFF_OACTIVE;
+		ifq_set_oactive(&ifp->if_snd);
 
 out:	if (sc->sc_inq)
 		ifp->if_timer = 5; /* If transmit logic dies */
@@ -602,7 +602,7 @@ qeintr(void *arg)
 			}
 		}
 		ifp->if_timer = 0;
-		ifp->if_flags &= ~IFF_OACTIVE;
+		ifq_clr_oactive(&ifp->if_snd);
 		qestart(ifp); /* Put in more in queue */
 	}
 	/*

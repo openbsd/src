@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.378 2015/11/24 17:11:39 mpi Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.379 2015/11/25 03:09:59 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -3628,7 +3628,7 @@ bge_txeof(struct bge_softc *sc)
 	txcnt = atomic_sub_int_nv(&sc->bge_txcnt, freed);
 
 	if (txcnt < BGE_TX_RING_CNT - 16)
-		ifp->if_flags &= ~IFF_OACTIVE;
+		ifq_clr_oactive(&ifp->if_snd);
 	if (txcnt == 0)
 		ifp->if_timer = 0;
 
@@ -4094,7 +4094,7 @@ bge_start(struct ifnet *ifp)
 
 	sc = ifp->if_softc;
 
-	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
+	if (!(ifp->if_flags & IFF_RUNNING) || ifq_is_oactive(&ifp->if_snd))
 		return;
 	if (!BGE_STS_BIT(sc, BGE_STS_LINK))
 		return;
@@ -4104,7 +4104,7 @@ bge_start(struct ifnet *ifp)
 		/* Check if we have enough free send BDs. */
 		if (sc->bge_txcnt + txinc + BGE_NTXSEG + 16 >=
 		    BGE_TX_RING_CNT) {
-			ifp->if_flags |= IFF_OACTIVE;
+			ifq_set_oactive(&ifp->if_snd);
 			break;
 		}
 
@@ -4280,7 +4280,7 @@ bge_init(void *xsc)
 	bge_ifmedia_upd(ifp);
 
 	ifp->if_flags |= IFF_RUNNING;
-	ifp->if_flags &= ~IFF_OACTIVE;
+	ifq_clr_oactive(&ifp->if_snd);
 
 	splx(s);
 
@@ -4552,7 +4552,8 @@ bge_stop(struct bge_softc *sc)
 	timeout_del(&sc->bge_rxtimeout);
 	timeout_del(&sc->bge_rxtimeout_jumbo);
 
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+	ifp->if_flags &= ~IFF_RUNNING;
+	ifq_clr_oactive(&ifp->if_snd);
 	ifp->if_timer = 0;
 
 	/*

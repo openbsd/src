@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.164 2015/10/25 12:48:46 mpi Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.165 2015/11/25 03:09:58 dlg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -833,7 +833,7 @@ wi_txeof(struct wi_softc *sc, int status)
 	ifp = &sc->sc_ic.ic_if;
 
 	ifp->if_timer = 0;
-	ifp->if_flags &= ~IFF_OACTIVE;
+	ifq_clr_oactive(&ifp->if_snd);
 
 	if (status & WI_EV_TX_EXC)
 		ifp->if_oerrors++;
@@ -856,7 +856,7 @@ wi_inquire(void *xsc)
 	timeout_add_sec(&sc->sc_timo, 60);
 
 	/* Don't do this while we're transmitting */
-	if (ifp->if_flags & IFF_OACTIVE)
+	if (ifq_is_oactive(&ifp->if_snd))
 		return;
 
 	s = splnet();
@@ -2199,7 +2199,7 @@ wi_init_io(struct wi_softc *sc)
 	splx(s);
 
 	ifp->if_flags |= IFF_RUNNING;
-	ifp->if_flags &= ~IFF_OACTIVE;
+	ifq_clr_oactive(&ifp->if_snd);
 
 	timeout_add_sec(&sc->sc_timo, 60);
 
@@ -2329,7 +2329,7 @@ wi_start(struct ifnet *ifp)
 	if (!(sc->wi_flags & WI_FLAGS_ATTACHED))
 		return;
 
-	if (ifp->if_flags & IFF_OACTIVE)
+	if (ifq_is_oactive(&ifp->if_snd))
 		return;
 
 nextpkt:
@@ -2463,7 +2463,7 @@ nextpkt:
 
 	m_freem(m0);
 
-	ifp->if_flags |= IFF_OACTIVE;
+	ifq_set_oactive(&ifp->if_snd);
 
 	/*
 	 * Set a timeout in case the chip goes out to lunch.
@@ -2538,7 +2538,8 @@ wi_stop(struct wi_softc *sc)
 	wi_intr_enable(sc, 0);
 	wi_cmd(sc, WI_CMD_DISABLE|sc->wi_portnum, 0, 0, 0);
 
-	ifp->if_flags &= ~(IFF_RUNNING|IFF_OACTIVE);
+	ifp->if_flags &= ~IFF_RUNNING;
+	ifq_clr_oactive(&ifp->if_snd);
 	ifp->if_timer = 0;
 
 	return;

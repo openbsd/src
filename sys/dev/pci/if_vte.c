@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vte.c,v 1.16 2015/11/24 15:25:20 mpi Exp $	*/
+/*	$OpenBSD: if_vte.c,v 1.17 2015/11/25 03:09:59 dlg Exp $	*/
 /*-
  * Copyright (c) 2010, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
@@ -657,13 +657,13 @@ vte_start(struct ifnet *ifp)
 	struct mbuf *m_head;
 	int enq = 0;
 
-	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
+	if (!(ifp->if_flags & IFF_RUNNING) || ifq_is_oactive(&ifp->if_snd))
 		return;
 
 	for (;;) {
 		/* Reserve one free TX descriptor. */
 		if (sc->vte_cdata.vte_tx_cnt >= VTE_TX_RING_CNT - 1) {
-			ifp->if_flags |= IFF_OACTIVE;
+			ifq_set_oactive(&ifp->if_snd);
 			break;
 		}
 		IFQ_DEQUEUE(&ifp->if_snd, m_head);
@@ -921,7 +921,7 @@ vte_txeof(struct vte_softc *sc)
 	}
 
 	if (prog > 0) {
-		ifp->if_flags &= ~IFF_OACTIVE;
+		ifq_clr_oactive(&ifp->if_snd);
 		sc->vte_cdata.vte_tx_cons = cons;
 		/*
 		 * Unarm watchdog timer only when there is no pending
@@ -1227,7 +1227,7 @@ vte_init(struct ifnet *ifp)
 	timeout_add_sec(&sc->vte_tick_ch, 1);
 
 	ifp->if_flags |= IFF_RUNNING;
-	ifp->if_flags &= ~IFF_OACTIVE;
+	ifq_clr_oactive(&ifp->if_snd);
 
 	return (0);
 }
@@ -1243,7 +1243,8 @@ vte_stop(struct vte_softc *sc)
 	/*
 	 * Mark the interface down and cancel the watchdog timer.
 	 */
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+	ifp->if_flags &= ~IFF_RUNNING;
+	ifq_clr_oactive(&ifp->if_snd);
 	ifp->if_timer = 0;
 	sc->vte_flags &= ~VTE_FLAG_LINK;
 	timeout_del(&sc->vte_tick_ch);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82596.c,v 1.47 2015/11/24 17:11:39 mpi Exp $	*/
+/*	$OpenBSD: i82596.c,v 1.48 2015/11/25 03:09:58 dlg Exp $	*/
 /*	$NetBSD: i82586.c,v 1.18 1998/08/15 04:42:42 mycroft Exp $	*/
 
 /*-
@@ -724,7 +724,7 @@ i82596_tint(sc, scbstatus)
 	register int off, status;
 
 	ifp->if_timer = 0;
-	ifp->if_flags &= ~IFF_OACTIVE;
+	ifq_clr_oactive(&ifp->if_snd);
 
 #ifdef I82596_DEBUG
 	if (sc->xmit_busy <= 0) {
@@ -1214,12 +1214,12 @@ i82596_start(ifp)
 		printf("i82596_start(%p)\n", ifp);
 #endif
 
-	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
+	if (!(ifp->if_flags & IFF_RUNNING) || ifq_is_oactive(&ifp->if_snd))
 		return;
 
 	for (;;) {
 		if (sc->xmit_busy == NTXBUF) {
-			ifp->if_flags |= IFF_OACTIVE;
+			ifq_set_oactive(&ifp->if_snd);
 			break;
 		}
 
@@ -1353,7 +1353,7 @@ i82596_reset(sc, hard)
 
 	/* Clear OACTIVE in case we're called from watchdog (frozen xmit). */
 	sc->sc_arpcom.ac_if.if_timer = 0;
-	sc->sc_arpcom.ac_if.if_flags &= ~IFF_OACTIVE;
+	ifq_clr_oactive(sc->sc_arpcom.ac_if.if_snd);
 
 	/*
 	 * Stop i82596 dead in its tracks.
@@ -1783,7 +1783,7 @@ i82596_init(sc)
 		(sc->hwinit)(sc);
 
 	ifp->if_flags |= IFF_RUNNING;
-	ifp->if_flags &= ~IFF_OACTIVE;
+	ifq_clr_oactive(&ifp->if_snd);
 
 	if (NTXBUF < 2)
 		sc->do_xmitnopchain = 0;

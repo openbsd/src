@@ -1,4 +1,4 @@
-/* $OpenBSD: if_bce.c,v 1.49 2015/11/24 17:11:39 mpi Exp $ */
+/* $OpenBSD: if_bce.c,v 1.50 2015/11/25 03:09:59 dlg Exp $ */
 /* $NetBSD: if_bce.c,v 1.3 2003/09/29 01:53:02 mrg Exp $	 */
 
 /*
@@ -517,7 +517,7 @@ bce_start(struct ifnet *ifp)
 	 * do not start another if currently transmitting, and more
 	 * descriptors(tx slots) are needed for next packet.
 	 */
-	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
+	if (!(ifp->if_flags & IFF_RUNNING) || ifq_is_oactive(&ifp->if_snd))
 		return;
 
 	/* determine number of descriptors available */
@@ -587,7 +587,7 @@ bce_start(struct ifnet *ifp)
 	}
 	if (txsfree == 0) {
 		/* No more slots left; notify upper layer. */
-		ifp->if_flags |= IFF_OACTIVE;
+		ifq_set_oactive(&ifp->if_snd);
 	}
 	if (newpkts) {
 		/* Set a watchdog timer in case the chip flakes out. */
@@ -757,7 +757,7 @@ bce_txintr(struct bce_softc *sc)
 	int curr;
 	int i;
 
-	ifp->if_flags &= ~IFF_OACTIVE;
+	ifq_clr_oactive(&ifp->if_snd);
 
 	/*
 	 * Go through the Tx list and free mbufs for those
@@ -900,7 +900,7 @@ bce_init(struct ifnet *ifp)
 
 	/* mark as running, and no outputs active */
 	ifp->if_flags |= IFF_RUNNING;
-	ifp->if_flags &= ~IFF_OACTIVE;
+	ifq_clr_oactive(&ifp->if_snd);
 
 	return 0;
 }
@@ -968,7 +968,8 @@ bce_stop(struct ifnet *ifp)
 	timeout_del(&sc->bce_timeout);
 
 	/* Mark the interface down and cancel the watchdog timer. */
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+	ifp->if_flags &= ~IFF_RUNNING;
+	ifq_clr_oactive(&ifp->if_snd);
 	ifp->if_timer = 0;
 
 	/* Down the MII. */

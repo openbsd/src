@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_myx.c,v 1.87 2015/11/24 10:04:34 dlg Exp $	*/
+/*	$OpenBSD: if_myx.c,v 1.88 2015/11/25 03:09:59 dlg Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -1205,7 +1205,7 @@ myx_up(struct myx_softc *sc)
 		goto empty_rx_ring_big;
 	}
 
-	CLR(ifp->if_flags, IFF_OACTIVE);
+	ifq_clr_oactive(&ifp->if_snd);
 	SET(ifp->if_flags, IFF_RUNNING);
 	myx_iff(sc);
 	myx_start(ifp);
@@ -1361,7 +1361,8 @@ myx_down(struct myx_softc *sc)
 		printf("%s: failed to reset the device\n", DEVNAME(sc));
 	}
 
-	CLR(ifp->if_flags, IFF_RUNNING | IFF_OACTIVE);
+	CLR(ifp->if_flags, IFF_RUNNING);
+	ifq_clr_oactive(&ifp->if_snd);
 
 	for (ring = 0; ring < 2; ring++) {
 		struct myx_rx_ring *mrr = &sc->sc_rx_ring[ring];
@@ -1437,7 +1438,7 @@ myx_start(struct ifnet *ifp)
 	u_int8_t			flags;
 
 	if (!ISSET(ifp->if_flags, IFF_RUNNING) ||
-	    ISSET(ifp->if_flags, IFF_OACTIVE) ||
+	    ifq_is_oactive(&ifp->if_snd) ||
 	    IFQ_IS_EMPTY(&ifp->if_snd))
 		return;
 
@@ -1455,7 +1456,7 @@ myx_start(struct ifnet *ifp)
 
 	for (;;) {
 		if (used + sc->sc_tx_nsegs + 1 > free) {
-			SET(ifp->if_flags, IFF_OACTIVE);
+			ifq_set_oactive(&ifp->if_snd);
 			break;
 		}
 
@@ -1638,7 +1639,7 @@ myx_intr(void *arg)
 	bus_space_write_raw_region_4(sc->sc_memt, sc->sc_memh,
 	    sc->sc_irqclaimoff + sizeof(data), &data, sizeof(data));
 
-	start = ISSET(ifp->if_flags, IFF_OACTIVE);
+	start = ifq_is_oactive(&ifp->if_snd);
 
 	if (sts->ms_statusupdated) {
 		if (state == MYX_S_DOWN &&
@@ -1662,7 +1663,7 @@ myx_intr(void *arg)
 
 	if (start) {
 		KERNEL_LOCK();
-		CLR(ifp->if_flags, IFF_OACTIVE);
+		ifq_clr_oactive(&ifp->if_snd);
 		myx_start(ifp);
 		KERNEL_UNLOCK();
 	}

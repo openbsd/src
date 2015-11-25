@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tsec.c,v 1.41 2015/11/24 13:33:18 mpi Exp $	*/
+/*	$OpenBSD: if_tsec.c,v 1.42 2015/11/25 03:09:58 dlg Exp $	*/
 
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -517,7 +517,7 @@ tsec_start(struct ifnet *ifp)
 
 	if (!(ifp->if_flags & IFF_RUNNING))
 		return;
-	if (ifp->if_flags & IFF_OACTIVE)
+	if (ifq_is_oactive(&ifp->if_snd))
 		return;
 	if (IFQ_IS_EMPTY(&ifp->if_snd))
 		return;
@@ -533,7 +533,7 @@ tsec_start(struct ifnet *ifp)
 		error = tsec_encap(sc, m, &idx);
 		if (error == ENOBUFS) {
 			ifq_deq_rollback(&ifp->if_snd, m);
-			ifp->if_flags |= IFF_OACTIVE;
+			ifq_set_oactive(&ifp->if_snd);
 			break;
 		} 
 		if (error == EFBIG) {
@@ -828,7 +828,7 @@ tsec_tx_proc(struct tsec_softc *sc)
 			ifp->if_opackets++;
 		}
 
-		ifp->if_flags &= ~IFF_OACTIVE;
+		ifq_clr_oactive(&ifp->if_snd);
 
 		sc->sc_tx_cnt--;
 
@@ -1031,7 +1031,7 @@ tsec_up(struct tsec_softc *sc)
 	tsec_iff(sc);
 
 	ifp->if_flags |= IFF_RUNNING;
-	ifp->if_flags &= ~IFF_OACTIVE;
+	ifq_clr_oactive(&ifp->if_snd);
 
 	tsec_write(sc, TSEC_IMASK, TSEC_IMASK_TXEEN |
 	    TSEC_IMASK_TXBEN | TSEC_IMASK_TXFEN |
@@ -1050,7 +1050,8 @@ tsec_down(struct tsec_softc *sc)
 
 	timeout_del(&sc->sc_tick);
 
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+	ifp->if_flags &= ~IFF_RUNNING;
+	ifq_clr_oactive(&ifp->if_snd);
 	ifp->if_timer = 0;
 
 	tsec_stop_dma(sc);

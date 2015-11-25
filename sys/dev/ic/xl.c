@@ -1,4 +1,4 @@
-/*	$OpenBSD: xl.c,v 1.129 2015/11/24 17:11:39 mpi Exp $	*/
+/*	$OpenBSD: xl.c,v 1.130 2015/11/25 03:09:58 dlg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1289,7 +1289,7 @@ xl_txeof(struct xl_softc *sc)
 	}
 
 	if (sc->xl_cdata.xl_tx_head == NULL) {
-		ifp->if_flags &= ~IFF_OACTIVE;
+		ifq_clr_oactive(&ifp->if_snd);
 		/* Clear the timeout timer. */
 		ifp->if_timer = 0;
 		sc->xl_cdata.xl_tx_tail = NULL;
@@ -1343,7 +1343,7 @@ xl_txeof_90xB(struct xl_softc *sc)
 	sc->xl_cdata.xl_tx_cons = idx;
 
 	if (cur_tx != NULL)
-		ifp->if_flags &= ~IFF_OACTIVE;
+		ifq_clr_oactive(&ifp->if_snd);
 	if (sc->xl_cdata.xl_tx_cnt == 0)
 		ifp->if_timer = 0;
 }
@@ -1658,7 +1658,7 @@ xl_start(struct ifnet *ifp)
 		xl_txeoc(sc);
 		xl_txeof(sc);
 		if (sc->xl_cdata.xl_tx_free == NULL) {
-			ifp->if_flags |= IFF_OACTIVE;
+			ifq_set_oactive(&ifp->if_snd);
 			return;
 		}
 	}
@@ -1782,7 +1782,7 @@ xl_start_90xB(struct ifnet *ifp)
 
 	sc = ifp->if_softc;
 
-	if (ifp->if_flags & IFF_OACTIVE)
+	if (ifq_is_oactive(&ifp->if_snd))
 		return;
 
 	idx = sc->xl_cdata.xl_tx_prod;
@@ -1791,7 +1791,7 @@ xl_start_90xB(struct ifnet *ifp)
 	while (sc->xl_cdata.xl_tx_chain[idx].xl_mbuf == NULL) {
 
 		if ((XL_TX_LIST_CNT - sc->xl_cdata.xl_tx_cnt) < 3) {
-			ifp->if_flags |= IFF_OACTIVE;
+			ifq_set_oactive(&ifp->if_snd);
 			break;
 		}
 
@@ -2035,7 +2035,7 @@ xl_init(void *xsc)
 	XL_SEL_WIN(7);
 
 	ifp->if_flags |= IFF_RUNNING;
-	ifp->if_flags &= ~IFF_OACTIVE;
+	ifq_clr_oactive(&ifp->if_snd);
 
 	splx(s);
 
@@ -2296,7 +2296,8 @@ xl_stop(struct xl_softc *sc)
 
 	ifp = &sc->sc_arpcom.ac_if;
 
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+	ifp->if_flags &= ~IFF_RUNNING;
+	ifq_clr_oactive(&ifp->if_snd);
 	ifp->if_timer = 0;
 
 	CSR_WRITE_2(sc, XL_COMMAND, XL_CMD_RX_DISABLE);

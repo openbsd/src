@@ -1,4 +1,4 @@
-/*	$OpenBSD: elink3.c,v 1.90 2015/11/24 13:33:17 mpi Exp $	*/
+/*	$OpenBSD: elink3.c,v 1.91 2015/11/25 03:09:58 dlg Exp $	*/
 /*	$NetBSD: elink3.c,v 1.32 1997/05/14 00:22:00 thorpej Exp $	*/
 
 /*
@@ -661,7 +661,7 @@ epinit(struct ep_softc *sc)
 
 	/* Interface is now `running', with no output active. */
 	ifp->if_flags |= IFF_RUNNING;
-	ifp->if_flags &= ~IFF_OACTIVE;
+	ifq_clr_oactive(&ifp->if_snd);
 
 	/* Attempt to start output, if any. */
 	epstart(ifp);
@@ -948,7 +948,7 @@ epstart(struct ifnet *ifp)
 	int sh, len, pad, txreg;
 
 	/* Don't transmit if interface is busy or not running */
-	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
+	if (!(ifp->if_flags & IFF_RUNNING) || ifq_is_oactive(&ifp->if_snd))
 		return;
 
 startagain:
@@ -983,7 +983,7 @@ startagain:
 		    SET_TX_AVAIL_THRESH | ((len + pad + 4) >> sc->txashift));
 		/* not enough room in FIFO */
 		ifq_deq_rollback(&ifp->if_snd, m0);
-		ifp->if_flags |= IFF_OACTIVE;
+		ifq_set_oactive(&ifp->if_snd);
 		return;
 	} else {
 		bus_space_write_2(iot, ioh, EP_COMMAND,
@@ -1182,7 +1182,7 @@ eptxstat(struct ep_softc *sc)
 		} else if (i & TXS_MAX_COLLISION) {
 			++sc->sc_arpcom.ac_if.if_collisions;
 			bus_space_write_2(iot, ioh, EP_COMMAND, TX_ENABLE);
-			sc->sc_arpcom.ac_if.if_flags &= ~IFF_OACTIVE;
+			ifq_clr_oactive(&sc->sc_arpcom.ac_if.if_snd);
 		} else
 			sc->tx_succ_ok = (sc->tx_succ_ok+1) & 127;
 	}
@@ -1220,7 +1220,7 @@ epintr(void *arg)
 		if (status & S_RX_COMPLETE)
 			epread(sc);
 		if (status & S_TX_AVAIL) {
-			ifp->if_flags &= ~IFF_OACTIVE;
+			ifq_clr_oactive(&ifp->if_snd);
 			epstart(ifp);
 		}
 		if (status & S_CARD_FAILURE) {
@@ -1490,7 +1490,8 @@ epstop(struct ep_softc *sc)
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+	ifp->if_flags &= ~IFF_RUNNING;
+	ifq_clr_oactive(&ifp->if_snd);
 
 	if (sc->ep_flags & EP_FLAGS_MII) {
 		mii_down(&sc->sc_mii);

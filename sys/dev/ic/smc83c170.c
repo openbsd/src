@@ -1,4 +1,4 @@
-/*	$OpenBSD: smc83c170.c,v 1.24 2015/11/20 03:35:22 dlg Exp $	*/
+/*	$OpenBSD: smc83c170.c,v 1.25 2015/11/25 03:09:58 dlg Exp $	*/
 /*	$NetBSD: smc83c170.c,v 1.59 2005/02/27 00:27:02 perry Exp $	*/
 
 /*-
@@ -468,7 +468,7 @@ epic_start(struct ifnet *ifp)
 
 	if (sc->sc_txpending == EPIC_NTXDESC) {
 		/* No more slots left; notify upper layer. */
-		ifp->if_flags |= IFF_OACTIVE;
+		ifq_set_oactive(&ifp->if_snd);
 	}
 
 	if (sc->sc_txpending != opending) {
@@ -729,7 +729,7 @@ epic_intr(void *arg)
 	 * Check for transmission complete interrupts.
 	 */
 	if (intstat & (INTSTAT_TXC | INTSTAT_TXU)) {
-		ifp->if_flags &= ~IFF_OACTIVE;
+		ifq_clr_oactive(&ifp->if_snd);
 		for (i = sc->sc_txdirty; sc->sc_txpending != 0;
 		     i = EPIC_NEXTTX(i), sc->sc_txpending--) {
 			txd = EPIC_CDTX(sc, i);
@@ -1014,7 +1014,7 @@ epic_init(struct ifnet *ifp)
 	 * ...all done!
 	 */
 	ifp->if_flags |= IFF_RUNNING;
-	ifp->if_flags &= ~IFF_OACTIVE;
+	ifq_clr_oactive(&ifp->if_snd);
 
 	/*
 	 * Start the one second clock.
@@ -1072,7 +1072,8 @@ epic_stop(struct ifnet *ifp, int disable)
 	/*
 	 * Mark the interface down and cancel the watchdog timer.
 	 */
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+	ifp->if_flags &= ~IFF_RUNNING;
+	ifq_clr_oactive(&ifp->if_snd);
 	ifp->if_timer = 0;
 
 	/* Down the MII. */

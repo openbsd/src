@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.186 2015/11/24 17:11:39 mpi Exp $	*/
+/*	$OpenBSD: re.c,v 1.187 2015/11/25 03:09:58 dlg Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -1489,7 +1489,7 @@ re_txeof(struct rl_softc *sc)
 
 	sc->rl_ldata.rl_txq_considx = idx;
 
-	ifp->if_flags &= ~IFF_OACTIVE;
+	ifq_clr_oactive(&ifp->if_snd);
 
 	/*
 	 * Some chips will ignore a second TX request issued while an
@@ -1836,7 +1836,7 @@ re_start(struct ifnet *ifp)
 	struct mbuf	*m;
 	int		idx, queued = 0, error;
 
-	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
+	if (!(ifp->if_flags & IFF_RUNNING) || ifq_is_oactive(&ifp->if_snd))
 		return;
 	if ((sc->rl_flags & RL_FLAG_LINK) == 0)
 		return;
@@ -1853,14 +1853,14 @@ re_start(struct ifnet *ifp)
 		if (sc->rl_ldata.rl_txq[idx].txq_mbuf != NULL) {
 			KASSERT(idx == sc->rl_ldata.rl_txq_considx);
 			ifq_deq_rollback(&ifp->if_snd, m);
-			ifp->if_flags |= IFF_OACTIVE;
+			ifq_set_oactive(&ifp->if_snd);
 			break;
 		}
 
 		error = re_encap(sc, m, &idx);
 		if (error != 0 && error != ENOBUFS) {
 			ifq_deq_rollback(&ifp->if_snd, m);
-			ifp->if_flags |= IFF_OACTIVE;
+			ifq_set_oactive(&ifp->if_snd);
 			break;
 		} else if (error != 0) {
 			ifq_deq_commit(&ifp->if_snd, m);
@@ -2022,7 +2022,7 @@ re_init(struct ifnet *ifp)
 	    RL_CFG1_DRVLOAD);
 
 	ifp->if_flags |= IFF_RUNNING;
-	ifp->if_flags &= ~IFF_OACTIVE;
+	ifq_clr_oactive(&ifp->if_snd);
 
 	splx(s);
 
@@ -2145,7 +2145,8 @@ re_stop(struct ifnet *ifp)
 	sc->rl_flags &= ~(RL_FLAG_LINK|RL_FLAG_TIMERINTR);
 
 	timeout_del(&sc->timer_handle);
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+	ifp->if_flags &= ~IFF_RUNNING;
+	ifq_clr_oactive(&ifp->if_snd);
 
 	mii_down(&sc->sc_mii);
 

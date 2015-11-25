@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_de.c,v 1.33 2015/11/24 17:11:38 mpi Exp $	*/
+/*	$OpenBSD: if_de.c,v 1.34 2015/11/25 03:09:58 dlg Exp $	*/
 /*	$NetBSD: if_de.c,v 1.27 1997/04/19 15:02:29 ragge Exp $	*/
 
 /*
@@ -222,7 +222,8 @@ dereset(unit)
 	volatile struct dedevice *addr = sc->ds_vaddr;
 
 	printf(" de%d", unit);
-	sc->ds_if.if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+	sc->ds_if.if_flags &= ~IFF_RUNNING;
+	ifq_clr_oactive(&sc->ds_if.if_snd);
 	sc->ds_flags &= ~DSF_RUNNING;
 	addr->pcsr0 = PCSR0_RSET;
 	(void)dewait(sc, "reset");
@@ -347,7 +348,7 @@ destart(ifp)
 	 * the code is not reentrant and we have
 	 * multiple transmission buffers.
 	 */
-	if (ds->ds_if.if_flags & IFF_OACTIVE)
+	if (ifq_is_oactive(&ds->ds_if.if_snd))
 		return;
 	for (nxmit = ds->ds_nxmit; nxmit < NXMT; nxmit++) {
 		IFQ_DEQUEUE(&ds->ds_if.if_snd, m);
@@ -401,7 +402,7 @@ deintr(unit)
 	addr->pchigh = csr0 >> 8;
 
 
-	ds->ds_if.if_flags |= IFF_OACTIVE;	/* prevent entering destart */
+	ifq_set_oactive(&ds->ds_if.if_snd); /* prevent entering destart */
 	/*
 	 * if receive, put receive buffer on mbuf
 	 * and hang the request again
@@ -452,7 +453,7 @@ deintr(unit)
 		if (ds->ds_xindex == NXMT)
 			ds->ds_xindex = 0;
 	}
-	ds->ds_if.if_flags &= ~IFF_OACTIVE;
+	ifq_clr_oactive(&ds->ds_if.if_snd);
 	destart(&ds->ds_if);
 
 	if (csr0 & PCSR0_RCBI) {
@@ -579,7 +580,7 @@ deioctl(ifp, cmd, data)
 			DELAY(5000);
 			ds->ds_vaddr->pclow = PCSR0_RSET;
 			ds->ds_flags &= ~DSF_RUNNING;
-			ds->ds_if.if_flags &= ~IFF_OACTIVE;
+			ifq_clr_oactive(&ds->ds_if.if_snd);
 		} else if (ifp->if_flags & IFF_UP &&
 		    (ds->ds_flags & DSF_RUNNING) == 0)
 			deinit(ds);

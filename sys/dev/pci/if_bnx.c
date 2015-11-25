@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnx.c,v 1.116 2015/11/20 03:35:23 dlg Exp $	*/
+/*	$OpenBSD: if_bnx.c,v 1.117 2015/11/25 03:09:59 dlg Exp $	*/
 
 /*-
  * Copyright (c) 2006 Broadcom Corporation
@@ -3256,7 +3256,8 @@ bnx_stop(struct bnx_softc *sc)
 	timeout_del(&sc->bnx_timeout);
 	timeout_del(&sc->bnx_rxrefill);
 
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+	ifp->if_flags &= ~IFF_RUNNING;
+	ifq_clr_oactive(&ifp->if_snd);
 
 	/* Disable the transmit/receive blocks. */
 	REG_WR(sc, BNX_MISC_ENABLE_CLR_BITS, 0x5ffffff);
@@ -4634,11 +4635,11 @@ bnx_tx_intr(struct bnx_softc *sc)
 
 	/* Clear the tx hardware queue full flag. */
 	if (sc->used_tx_bd < sc->max_tx_bd) {
-		DBRUNIF((ifp->if_flags & IFF_OACTIVE),
-		    printf("%s: Open TX chain! %d/%d (used/total)\n",
-			sc->bnx_dev.dv_xname, sc->used_tx_bd,
-			sc->max_tx_bd));
-		ifp->if_flags &= ~IFF_OACTIVE;
+		DBRUNIF(ifq_is_oactive(&ifp->if_snd),
+			printf("%s: Open TX chain! %d/%d (used/total)\n",
+			       sc->bnx_dev.dv_xname, sc->used_tx_bd,
+			       sc->max_tx_bd));
+		ifq_clr_oactive(&ifp->if_snd);
 	}
 
 	sc->tx_cons = sw_tx_cons;
@@ -4768,7 +4769,7 @@ bnx_init(void *xsc)
 	bnx_ifmedia_upd(ifp);
 
 	ifp->if_flags |= IFF_RUNNING;
-	ifp->if_flags &= ~IFF_OACTIVE;
+	ifq_clr_oactive(&ifp->if_snd);
 
 	timeout_add_sec(&sc->bnx_timeout, 1);
 
@@ -5017,7 +5018,7 @@ bnx_start(struct ifnet *ifp)
 		 */
 		if (bnx_tx_encap(sc, m_head)) {
 			ifq_deq_rollback(&ifp->if_snd, m_head);
-			ifp->if_flags |= IFF_OACTIVE;
+			ifq_set_oactive(&ifp->if_snd);
 			DBPRINT(sc, BNX_INFO_SEND, "TX chain is closed for "
 			    "business! Total tx_bd used = %d\n",
 			    sc->used_tx_bd);

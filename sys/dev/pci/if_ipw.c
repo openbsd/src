@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ipw.c,v 1.113 2015/11/24 13:45:06 mpi Exp $	*/
+/*	$OpenBSD: if_ipw.c,v 1.114 2015/11/25 03:09:59 dlg Exp $	*/
 
 /*-
  * Copyright (c) 2004-2008
@@ -1033,7 +1033,7 @@ ipw_tx_intr(struct ipw_softc *sc)
 	sc->txold = (r == 0) ? IPW_NTBD - 1 : r - 1;
 
 	/* call start() since some buffer descriptors have been released */
-	ifp->if_flags &= ~IFF_OACTIVE;
+	ifq_clr_oactive(&ifp->if_snd);
 	(*ifp->if_start)(ifp);
 }
 
@@ -1298,7 +1298,7 @@ ipw_start(struct ifnet *ifp)
 
 	for (;;) {
 		if (sc->txfree < 1 + IPW_MAX_NSEG) {
-			ifp->if_flags |= IFF_OACTIVE;
+			ifq_set_oactive(&ifp->if_snd);
 			break;
 		}
 
@@ -2021,7 +2021,7 @@ ipw_init(struct ifnet *ifp)
 		goto fail1;
 	}
 
-	ifp->if_flags &= ~IFF_OACTIVE;
+	ifq_clr_oactive(&ifp->if_snd);
 	ifp->if_flags |= IFF_RUNNING;
 
 	if (ic->ic_opmode != IEEE80211_M_MONITOR)
@@ -2048,7 +2048,8 @@ ipw_stop(struct ifnet *ifp, int disable)
 	CSR_WRITE_4(sc, IPW_CSR_RST, IPW_RST_SW_RESET);
 
 	ifp->if_timer = 0;
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+	ifp->if_flags &= ~IFF_RUNNING;
+	ifq_clr_oactive(&ifp->if_snd);
 
 	/*
 	 * Release tx buffers.

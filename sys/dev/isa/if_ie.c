@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ie.c,v 1.46 2015/11/24 17:11:39 mpi Exp $	*/
+/*	$OpenBSD: if_ie.c,v 1.47 2015/11/25 03:09:59 dlg Exp $	*/
 /*	$NetBSD: if_ie.c,v 1.51 1996/05/12 23:52:48 mycroft Exp $	*/
 
 /*-
@@ -935,7 +935,7 @@ ietint(sc)
 	int status;
 
 	ifp->if_timer = 0;
-	ifp->if_flags &= ~IFF_OACTIVE;
+	ifq_clr_oactive(&ifp->if_snd);
 
 	status = sc->xmit_cmds[sc->xctail]->ie_xmit_status;
 
@@ -1357,12 +1357,12 @@ iestart(ifp)
 	u_char *buffer;
 	u_short len;
 
-	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
+	if (!(ifp->if_flags & IFF_RUNNING) || ifq_is_oactive(&ifp->if_snd))
 		return;
 
 	for (;;) {
 		if (sc->xmit_busy == NTXBUF) {
-			ifp->if_flags |= IFF_OACTIVE;
+			ifq_set_oactive(&ifp->if_snd);
 			break;
 		}
 
@@ -1979,7 +1979,7 @@ ieinit(sc)
 	iememinit(ptr, sc);
 
 	sc->sc_arpcom.ac_if.if_flags |= IFF_RUNNING;
-	sc->sc_arpcom.ac_if.if_flags &= ~IFF_OACTIVE;
+	ifq_clr_oactive(&sc->sc_arpcom.ac_if.if_snd);
 
 	sc->scb->ie_recv_list = MK_16(MEM, sc->rframes[0]);
 	command_and_wait(sc, IE_RU_START, 0, 0);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: atw.c,v 1.90 2015/11/04 12:11:59 dlg Exp $	*/
+/*	$OpenBSD: atw.c,v 1.91 2015/11/25 03:09:58 dlg Exp $	*/
 /*	$NetBSD: atw.c,v 1.69 2004/07/23 07:07:55 dyoung Exp $	*/
 
 /*-
@@ -1433,7 +1433,7 @@ atw_init(struct ifnet *ifp)
 	 * Note that the interface is now running.
 	 */
 	ifp->if_flags |= IFF_RUNNING;
-	ifp->if_flags &= ~IFF_OACTIVE;
+	ifq_clr_oactive(&ifp->if_snd);
 
 	/* send no beacons, yet. */
 	atw_start_beacon(sc, 0);
@@ -1444,7 +1444,8 @@ atw_init(struct ifnet *ifp)
 		error = ieee80211_new_state(ic, IEEE80211_S_SCAN, -1);
  out:
 	if (error) {
-		ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+		ifp->if_flags &= ~IFF_RUNNING;
+		ifq_clr_oactive(&ifp->if_snd);
 		ifp->if_timer = 0;
 		printf("%s: interface not running\n", sc->sc_dev.dv_xname);
 	}
@@ -2644,7 +2645,8 @@ atw_stop(struct ifnet *ifp, int disable)
 	/*
 	 * Mark the interface down and cancel the watchdog timer.
 	*/
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+	ifp->if_flags &= ~IFF_RUNNING;
+	ifq_clr_oactive(&ifp->if_snd);
 	ifp->if_timer = 0;
 
 	/* Disable interrupts. */
@@ -3215,7 +3217,7 @@ atw_txintr(struct atw_softc *sc)
 	DPRINTF3(sc, ("%s: atw_txintr: sc_flags 0x%08x\n",
 	    sc->sc_dev.dv_xname, sc->sc_flags));
 
-	ifp->if_flags &= ~IFF_OACTIVE;
+	ifq_clr_oactive(&ifp->if_snd);
 
 	/*
 	 * Go through our Tx list and free mbufs for those
@@ -3571,7 +3573,7 @@ atw_start(struct ifnet *ifp)
 	DPRINTF2(sc, ("%s: atw_start: sc_flags 0x%08x, if_flags 0x%08x\n",
 	    sc->sc_dev.dv_xname, sc->sc_flags, ifp->if_flags));
 
-	if ((ifp->if_flags & (IFF_RUNNING|IFF_OACTIVE)) != IFF_RUNNING)
+	if (!(ifp->if_flags & IFF_RUNNING) || ifq_is_oactive(&ifp->if_snd))
 		return;
 
 	/*
@@ -3833,7 +3835,7 @@ atw_start(struct ifnet *ifp)
 			 * XXX We could allocate an mbuf and copy, but
 			 * XXX it is worth it?
 			 */
-			ifp->if_flags |= IFF_OACTIVE;
+			ifq_set_oactive(&ifp->if_snd);
 			bus_dmamap_unload(sc->sc_dmat, dmamap);
 			m_freem(m0);
 			break;
@@ -3933,7 +3935,7 @@ atw_start(struct ifnet *ifp)
 
 	if (txs == NULL || sc->sc_txfree == 0) {
 		/* No more slots left; notify upper layer. */
-		ifp->if_flags |= IFF_OACTIVE;
+		ifq_set_oactive(&ifp->if_snd);
 	}
 
 	if (sc->sc_txfree != ofree) {

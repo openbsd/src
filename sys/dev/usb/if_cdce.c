@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cdce.c,v 1.67 2015/11/20 03:35:23 dlg Exp $ */
+/*	$OpenBSD: if_cdce.c,v 1.68 2015/11/25 03:10:00 dlg Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -386,7 +386,7 @@ cdce_start(struct ifnet *ifp)
 	struct cdce_softc	*sc = ifp->if_softc;
 	struct mbuf		*m_head = NULL;
 
-	if (usbd_is_dying(sc->cdce_udev) || (ifp->if_flags & IFF_OACTIVE))
+	if (usbd_is_dying(sc->cdce_udev) || ifq_is_oactive(&ifp->if_snd))
 		return;
 
 	m_head = ifq_deq_begin(&ifp->if_snd);
@@ -395,7 +395,7 @@ cdce_start(struct ifnet *ifp)
 
 	if (cdce_encap(sc, m_head, 0)) {
 		ifq_deq_rollback(&ifp->if_snd, m_head);
-		ifp->if_flags |= IFF_OACTIVE;
+		ifq_set_oactive(&ifp->if_snd);
 		return;
 	}
 
@@ -406,7 +406,7 @@ cdce_start(struct ifnet *ifp)
 		bpf_mtap(ifp->if_bpf, m_head, BPF_DIRECTION_OUT);
 #endif
 
-	ifp->if_flags |= IFF_OACTIVE;
+	ifq_set_oactive(&ifp->if_snd);
 
 	ifp->if_timer = 6;
 }
@@ -453,7 +453,8 @@ cdce_stop(struct cdce_softc *sc)
 	int		 i;
 
 	ifp->if_timer = 0;
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+	ifp->if_flags &= ~IFF_RUNNING;
+	ifq_clr_oactive(&ifp->if_snd);
 
 	if (sc->cdce_bulkin_pipe != NULL) {
 		usbd_abort_pipe(sc->cdce_bulkin_pipe);
@@ -626,7 +627,7 @@ cdce_init(void *xsc)
 	}
 
 	ifp->if_flags |= IFF_RUNNING;
-	ifp->if_flags &= ~IFF_OACTIVE;
+	ifq_clr_oactive(&ifp->if_snd);
 
 	splx(s);
 }
@@ -800,7 +801,7 @@ cdce_txeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	s = splnet();
 
 	ifp->if_timer = 0;
-	ifp->if_flags &= ~IFF_OACTIVE;
+	ifq_clr_oactive(&ifp->if_snd);
 
 	if (status != USBD_NORMAL_COMPLETION) {
 		if (status == USBD_NOT_STARTED || status == USBD_CANCELLED) {

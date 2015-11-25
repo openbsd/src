@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urtw.c,v 1.59 2015/11/24 13:45:07 mpi Exp $	*/
+/*	$OpenBSD: if_urtw.c,v 1.60 2015/11/25 03:10:00 dlg Exp $	*/
 
 /*-
  * Copyright (c) 2009 Martynas Venckus <martynas@openbsd.org>
@@ -2297,7 +2297,7 @@ urtw_init(struct ifnet *ifp)
 	if (error != 0)
 		goto fail;
 
-	ifp->if_flags &= ~IFF_OACTIVE;
+	ifq_clr_oactive(&ifp->if_snd);
 	ifp->if_flags |= IFF_RUNNING;
 
 	ifp->if_timer = 1;
@@ -2423,13 +2423,13 @@ urtw_start(struct ifnet *ifp)
 	 * net80211 may still try to send management frames even if the
 	 * IFF_RUNNING flag is not set...
 	 */
-	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
+	if (!(ifp->if_flags & IFF_RUNNING) || ifq_is_oactive(&ifp->if_snd))
 		return;
 
 	for (;;) {
 		if (sc->sc_tx_low_queued >= URTW_TX_DATA_LIST_COUNT ||
 		    sc->sc_tx_normal_queued >= URTW_TX_DATA_LIST_COUNT) {
-			ifp->if_flags |= IFF_OACTIVE;
+			ifq_set_oactive(&ifp->if_snd);
 			break;
 		}
 
@@ -2524,7 +2524,7 @@ urtw_txeof_low(struct usbd_xfer *xfer, void *priv,
 	ifp->if_opackets++;
 
 	sc->sc_tx_low_queued--;
-	ifp->if_flags &= ~IFF_OACTIVE;
+	ifq_clr_oactive(&ifp->if_snd);
 	urtw_start(ifp);
 
 	splx(s);
@@ -2563,7 +2563,7 @@ urtw_txeof_normal(struct usbd_xfer *xfer, void *priv,
 	ifp->if_opackets++;
 
 	sc->sc_tx_normal_queued--;
-	ifp->if_flags &= ~IFF_OACTIVE;
+	ifq_clr_oactive(&ifp->if_snd);
 	urtw_start(ifp);
 
 	splx(s);
@@ -3006,7 +3006,8 @@ urtw_stop(struct ifnet *ifp, int disable)
 	uint8_t data;
 	usbd_status error;
 
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+	ifp->if_flags &= ~IFF_RUNNING;
+	ifq_clr_oactive(&ifp->if_snd);
 
 	ieee80211_new_state(ic, IEEE80211_S_INIT, -1);
 
@@ -3701,8 +3702,8 @@ urtw_8187b_init(struct ifnet *ifp)
 	if (error != 0)
 		goto fail;
 
-	ifp->if_flags &= ~IFF_OACTIVE;
 	ifp->if_flags |= IFF_RUNNING;
+	ifq_clr_oactive(&ifp->if_snd);
 
 	ifp->if_timer = 1;
 

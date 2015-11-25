@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xe.c,v 1.55 2015/11/24 13:33:18 mpi Exp $	*/
+/*	$OpenBSD: if_xe.c,v 1.56 2015/11/25 03:09:59 dlg Exp $	*/
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist, Brandon Creighton, Job de Haas
@@ -1064,7 +1064,7 @@ xe_init(sc)
 	mii_mediachg(&sc->sc_mii);
 
 	ifp->if_flags |= IFF_RUNNING;
-	ifp->if_flags &= ~IFF_OACTIVE;
+	ifq_clr_oactive(&ifp->if_snd);
 	splx(s);
 }
 
@@ -1085,7 +1085,7 @@ xe_start(ifp)
 	u_int16_t space;
 
 	/* Don't transmit if interface is busy or not running. */
-	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
+	if (!(ifp->if_flags & IFF_RUNNING) || ifq_is_oactive(&ifp->if_snd))
 		return;
 
 	/* Peek at the next packet. */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hme.c,v 1.77 2015/11/24 15:25:20 mpi Exp $	*/
+/*	$OpenBSD: hme.c,v 1.78 2015/11/25 03:09:58 dlg Exp $	*/
 /*	$NetBSD: hme.c,v 1.21 2001/07/07 15:59:37 thorpej Exp $	*/
 
 /*-
@@ -382,7 +382,8 @@ hme_stop(struct hme_softc *sc, int softonly)
 	/*
 	 * Mark the interface down and cancel the watchdog timer.
 	 */
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+	ifp->if_flags &= ~IFF_RUNNING;
+	ifq_clr_oactive(&ifp->if_snd);
 	ifp->if_timer = 0;
 
 	if (!softonly) {
@@ -623,7 +624,7 @@ hme_init(struct hme_softc *sc)
 	timeout_add_sec(&sc->sc_tick_ch, 1);
 
 	ifp->if_flags |= IFF_RUNNING;
-	ifp->if_flags &= ~IFF_OACTIVE;
+	ifq_clr_oactive(&ifp->if_snd);
 
 	hme_start(ifp);
 }
@@ -639,7 +640,7 @@ hme_start(struct ifnet *ifp)
 	u_int32_t frag, cur, i;
 	int error;
 
-	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
+	if (!(ifp->if_flags & IFF_RUNNING) || ifq_is_oactive(&ifp->if_snd))
 		return;
 
 	while (sc->sc_txd[sc->sc_tx_prod].sd_mbuf == NULL) {
@@ -672,7 +673,7 @@ hme_start(struct ifnet *ifp)
 		if ((HME_TX_RING_SIZE - (sc->sc_tx_cnt + map->dm_nsegs)) < 5) {
 			bus_dmamap_unload(sc->sc_dmatag, map);
 			ifq_deq_rollback(&ifp->if_snd, m);
-			ifp->if_flags |= IFF_OACTIVE;
+			ifq_set_oactive(&ifp->if_snd);
 			break;
 		}
 
@@ -761,7 +762,7 @@ hme_tint(struct hme_softc *sc)
 		if (txflags & HME_XD_OWN)
 			break;
 
-		ifp->if_flags &= ~IFF_OACTIVE;
+		ifq_clr_oactive(&ifp->if_snd);
 		if (txflags & HME_XD_EOP)
 			ifp->if_opackets++;
 

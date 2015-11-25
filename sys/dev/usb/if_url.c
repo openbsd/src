@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_url.c,v 1.78 2015/11/24 17:11:40 mpi Exp $ */
+/*	$OpenBSD: if_url.c,v 1.79 2015/11/25 03:10:00 dlg Exp $ */
 /*	$NetBSD: if_url.c,v 1.6 2002/09/29 10:19:21 martin Exp $	*/
 /*
  * Copyright (c) 2001, 2002
@@ -522,7 +522,7 @@ url_init(struct ifnet *ifp)
 	}
 
 	ifp->if_flags |= IFF_RUNNING;
-	ifp->if_flags &= ~IFF_OACTIVE;
+	ifq_clr_oactive(&ifp->if_snd);
 
 	splx(s);
 
@@ -787,7 +787,7 @@ url_start(struct ifnet *ifp)
 	if (!sc->sc_link)
 		return;
 
-	if (ifp->if_flags & IFF_OACTIVE)
+	if (ifq_is_oactive(&ifp->if_snd))
 		return;
 
 	m_head = ifq_deq_begin(&ifp->if_snd);
@@ -796,7 +796,7 @@ url_start(struct ifnet *ifp)
 
 	if (url_send(sc, m_head, 0)) {
 		ifq_deq_rollback(&ifp->if_snd, m_head);
-		ifp->if_flags |= IFF_OACTIVE;
+		ifq_set_oactive(&ifp->if_snd);
 		return;
 	}
 
@@ -807,7 +807,7 @@ url_start(struct ifnet *ifp)
 		bpf_mtap(ifp->if_bpf, m_head, BPF_DIRECTION_OUT);
 #endif
 
-	ifp->if_flags |= IFF_OACTIVE;
+	ifq_set_oactive(&ifp->if_snd);
 
 	/* Set a timeout in case the chip goes out to lunch. */
 	ifp->if_timer = 5;
@@ -874,7 +874,7 @@ url_txeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	DPRINTF(("%s: %s: enter\n", sc->sc_dev.dv_xname, __func__));
 
 	ifp->if_timer = 0;
-	ifp->if_flags &= ~IFF_OACTIVE;
+	ifq_clr_oactive(&ifp->if_snd);
 
 	if (status != USBD_NORMAL_COMPLETION) {
 		if (status == USBD_NOT_STARTED || status == USBD_CANCELLED) {
@@ -1088,7 +1088,8 @@ url_stop(struct ifnet *ifp, int disable)
 	DPRINTF(("%s: %s: enter\n", sc->sc_dev.dv_xname, __func__));
 
 	ifp->if_timer = 0;
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+	ifp->if_flags &= ~IFF_RUNNING;
+	ifq_clr_oactive(&ifp->if_snd);
 
 	url_reset(sc);
 

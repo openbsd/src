@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iec.c,v 1.19 2015/11/24 17:11:38 mpi Exp $	*/
+/*	$OpenBSD: if_iec.c,v 1.20 2015/11/25 03:09:58 dlg Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -682,7 +682,7 @@ iec_init(struct ifnet *ifp)
 	timeout_add_sec(&sc->sc_tick, 1);
 
 	ifp->if_flags |= IFF_RUNNING;
-	ifp->if_flags &= ~IFF_OACTIVE;
+	ifq_clr_oactive(&ifp->if_snd);
 
 	iec_start(ifp);
 
@@ -744,7 +744,7 @@ iec_start(struct ifnet *ifp)
 	int error, firstdirty, nexttx, opending;
 	int len;
 
-	if ((ifp->if_flags & (IFF_RUNNING|IFF_OACTIVE)) != IFF_RUNNING)
+	if (!(ifp->if_flags & IFF_RUNNING) || ifq_is_oactive(&ifp->if_snd))
 		return;
 
 	/*
@@ -954,7 +954,7 @@ iec_start(struct ifnet *ifp)
 
 	if (sc->sc_txpending == IEC_NTXDESC) {
 		/* No more slots; notify upper layer. */
-		ifp->if_flags |= IFF_OACTIVE;
+		ifq_set_oactive(&ifp->if_snd);
 	}
 
 	if (sc->sc_txpending != opending) {
@@ -989,7 +989,8 @@ iec_stop(struct ifnet *ifp)
 	DPRINTF(IEC_DEBUG_STOP, ("iec_stop\n"));
 
 	ifp->if_timer = 0;
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+	ifp->if_flags &= ~IFF_RUNNING;
+	ifq_clr_oactive(&ifp->if_snd);
 
 	timeout_del(&sc->sc_tick);
 	mii_down(&sc->sc_mii);
@@ -1323,7 +1324,7 @@ iec_txintr(struct iec_softc *sc, uint32_t stat)
 	uint32_t tcir;
 	int i, once, last;
 
-	ifp->if_flags &= ~IFF_OACTIVE;
+	ifq_clr_oactive(&ifp->if_snd);
 
 	tcir = bus_space_read_4(st, sh, IOC3_ENET_TCIR) & ~IOC3_ENET_TCIR_IDLE;
 	last = (tcir / IEC_TXDESCSIZE) % IEC_NTXDESC_MAX;

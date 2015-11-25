@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2860.c,v 1.84 2015/11/24 13:33:17 mpi Exp $	*/
+/*	$OpenBSD: rt2860.c,v 1.85 2015/11/25 03:09:58 dlg Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -1180,7 +1180,7 @@ rt2860_tx_intr(struct rt2860_softc *sc, int qid)
 	sc->sc_tx_timer = 0;
 	if (ring->queued < RT2860_TX_RING_COUNT)
 		sc->qfullmsk &= ~(1 << qid);
-	ifp->if_flags &= ~IFF_OACTIVE;
+	ifq_clr_oactive(&ifp->if_snd);
 	rt2860_start(ifp);
 }
 
@@ -1738,12 +1738,12 @@ rt2860_start(struct ifnet *ifp)
 	struct ieee80211_node *ni;
 	struct mbuf *m;
 
-	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
+	if (!(ifp->if_flags & IFF_RUNNING) || ifq_is_oactive(&ifp->if_snd))
 		return;
 
 	for (;;) {
 		if (SLIST_EMPTY(&sc->data_pool) || sc->qfullmsk != 0) {
-			ifp->if_flags |= IFF_OACTIVE;
+			ifq_set_oactive(&ifp->if_snd);
 			break;
 		}
 		/* send pending management frames first */
@@ -3588,8 +3588,8 @@ rt2860_init(struct ifnet *ifp)
 	if (sc->sc_flags & RT2860_ADVANCED_PS)
 		rt2860_mcu_cmd(sc, RT2860_MCU_CMD_PSLEVEL, sc->pslevel, 0);
 
-	ifp->if_flags &= ~IFF_OACTIVE;
 	ifp->if_flags |= IFF_RUNNING;
+	ifq_clr_oactive(&ifp->if_snd);
 
 	if (ic->ic_flags & IEEE80211_F_WEPON) {
 		/* install WEP keys */
@@ -3618,7 +3618,8 @@ rt2860_stop(struct ifnet *ifp, int disable)
 
 	sc->sc_tx_timer = 0;
 	ifp->if_timer = 0;
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+	ifp->if_flags &= ~IFF_RUNNING;
+	ifq_clr_oactive(&ifp->if_snd);
 
 	ieee80211_new_state(ic, IEEE80211_S_INIT, -1);	/* free all nodes */
 

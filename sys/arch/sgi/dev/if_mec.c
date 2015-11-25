@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mec.c,v 1.34 2015/11/24 17:11:38 mpi Exp $ */
+/*	$OpenBSD: if_mec.c,v 1.35 2015/11/25 03:09:58 dlg Exp $ */
 /*	$NetBSD: if_mec_mace.c,v 1.5 2004/08/01 06:36:36 tsutsui Exp $ */
 
 /*
@@ -668,7 +668,7 @@ mec_init(struct ifnet *ifp)
 	timeout_add_sec(&sc->sc_tick_ch, 1);
 
 	ifp->if_flags |= IFF_RUNNING;
-	ifp->if_flags &= ~IFF_OACTIVE;
+	ifq_clr_oactive(&ifp->if_snd);
 	mec_start(ifp);
 
 	mii_mediachg(&sc->sc_mii);
@@ -722,7 +722,7 @@ mec_start(struct ifnet *ifp)
 	int error, firsttx, nexttx, opending;
 	int len, bufoff, buflen, unaligned, txdlen;
 
-	if ((ifp->if_flags & (IFF_RUNNING|IFF_OACTIVE)) != IFF_RUNNING)
+	if (!(ifp->if_flags & IFF_RUNNING) || ifq_is_oactive(&ifp->if_snd))
 		return;
 
 	/*
@@ -960,7 +960,7 @@ mec_start(struct ifnet *ifp)
 
 	if (sc->sc_txpending == MEC_NTXDESC) {
 		/* No more slots; notify upper layer. */
-		ifp->if_flags |= IFF_OACTIVE;
+		ifq_set_oactive(&ifp->if_snd);
 	}
 
 	if (sc->sc_txpending != opending) {
@@ -1001,7 +1001,8 @@ mec_stop(struct ifnet *ifp)
 	DPRINTF(MEC_DEBUG_STOP, ("mec_stop\n"));
 
 	ifp->if_timer = 0;
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+	ifp->if_flags &= ~IFF_RUNNING;
+	ifq_clr_oactive(&ifp->if_snd);
 
 	timeout_del(&sc->sc_tick_ch);
 	mii_down(&sc->sc_mii);
@@ -1328,7 +1329,7 @@ mec_txintr(struct mec_softc *sc, uint32_t stat)
 	int i, last;
 	u_int col;
 
-	ifp->if_flags &= ~IFF_OACTIVE;
+	ifq_clr_oactive(&ifp->if_snd);
 
 	DPRINTF(MEC_DEBUG_TXINTR, ("mec_txintr: called\n"));
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lance.c,v 1.9 2015/10/25 12:48:46 mpi Exp $	*/
+/*	$OpenBSD: lance.c,v 1.10 2015/11/25 03:09:58 dlg Exp $	*/
 /*	$NetBSD: lance.c,v 1.46 2012/02/02 19:43:03 tls Exp $	*/
 
 /*-
@@ -309,7 +309,7 @@ lance_init(struct lance_softc *sc)
 		/* Start the LANCE. */
 		(*sc->sc_wrcsr)(sc, LE_CSR0, LE_C0_INEA | LE_C0_STRT);
 		ifp->if_flags |= IFF_RUNNING;
-		ifp->if_flags &= ~IFF_OACTIVE;
+		ifq_clr_oactive(&ifp->if_snd);
 		ifp->if_timer = 0;
 		(*sc->sc_start)(ifp);
 	} else

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vmx.c,v 1.39 2015/11/24 15:25:20 mpi Exp $	*/
+/*	$OpenBSD: if_vmx.c,v 1.40 2015/11/25 03:09:59 dlg Exp $	*/
 
 /*
  * Copyright (c) 2013 Tsubai Masanari
@@ -692,9 +692,9 @@ vmxnet3_txintr(struct vmxnet3_softc *sc, struct vmxnet3_txqueue *tq)
 	if (atomic_add_int_nv(&ring->free, free) == NTXDESC)
 		ifp->if_timer = 0;
 
-	if (ISSET(ifp->if_flags, IFF_OACTIVE)) {
+	if (ifq_is_oactive(&ifp->if_snd)) {
 		KERNEL_LOCK();
-		CLR(ifp->if_flags, IFF_OACTIVE);
+		ifq_clr_oactive(&ifp->if_snd);
 		vmxnet3_start(ifp);
 		KERNEL_UNLOCK();
 	}
@@ -923,7 +923,8 @@ vmxnet3_stop(struct ifnet *ifp)
 	struct vmxnet3_softc *sc = ifp->if_softc;
 	int queue;
 
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+	ifp->if_flags &= ~IFF_RUNNING;
+	ifq_clr_oactive(&ifp->if_snd);
 	ifp->if_timer = 0;
 
 	vmxnet3_disable_all_intrs(sc);
@@ -985,7 +986,7 @@ vmxnet3_init(struct vmxnet3_softc *sc)
 	vmxnet3_link_state(sc);
 
 	ifp->if_flags |= IFF_RUNNING;
-	ifp->if_flags &= ~IFF_OACTIVE;
+	ifq_clr_oactive(&ifp->if_snd);
 
 	return 0;
 }
@@ -1048,7 +1049,7 @@ vmxnet3_start(struct ifnet *ifp)
 	u_int free, used;
 	int n;
 
-	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
+	if (!(ifp->if_flags & IFF_RUNNING) || ifq_is_oactive(&ifp->if_snd))
 		return;
 
 	free = ring->free;
@@ -1056,7 +1057,7 @@ vmxnet3_start(struct ifnet *ifp)
 
 	for (;;) {
 		if (used + NTXSEGS > free) {
-			ifp->if_flags |= IFF_OACTIVE;
+			ifq_set_oactive(&ifp->if_snd);
 			break;
 		}
 

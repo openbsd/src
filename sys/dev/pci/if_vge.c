@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vge.c,v 1.68 2015/11/24 17:11:39 mpi Exp $	*/
+/*	$OpenBSD: if_vge.c,v 1.69 2015/11/25 03:09:59 dlg Exp $	*/
 /*	$FreeBSD: if_vge.c,v 1.3 2004/09/11 22:13:25 wpaul Exp $	*/
 /*
  * Copyright (c) 2004
@@ -1193,7 +1193,7 @@ vge_txeof(struct vge_softc *sc)
 
 	if (idx != sc->vge_ldata.vge_tx_considx) {
 		sc->vge_ldata.vge_tx_considx = idx;
-		ifp->if_flags &= ~IFF_OACTIVE;
+		ifq_clr_oactive(&ifp->if_snd);
 		ifp->if_timer = 0;
 	}
 
@@ -1412,7 +1412,7 @@ vge_start(struct ifnet *ifp)
 
 	sc = ifp->if_softc;
 
-	if (!sc->vge_link || ifp->if_flags & IFF_OACTIVE)
+	if (!sc->vge_link || ifq_is_oactive(&ifp->if_snd))
 		return;
 
 	if (IFQ_IS_EMPTY(&ifp->if_snd))
@@ -1426,7 +1426,7 @@ vge_start(struct ifnet *ifp)
 
 	for (;;) {
 		if (sc->vge_ldata.vge_tx_mbuf[idx] != NULL) {
-			ifp->if_flags |= IFF_OACTIVE;
+			ifq_set_oactive(&ifp->if_snd);
 			break;
 		}
 
@@ -1639,7 +1639,7 @@ vge_init(struct ifnet *ifp)
 	mii_mediachg(&sc->sc_mii);
 
 	ifp->if_flags |= IFF_RUNNING;
-	ifp->if_flags &= ~IFF_OACTIVE;
+	ifq_clr_oactive(&ifp->if_snd);
 
 	sc->vge_link = 0;
 
@@ -1809,7 +1809,8 @@ vge_stop(struct vge_softc *sc)
 
 	timeout_del(&sc->timer_handle);
 
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+	ifp->if_flags &= ~IFF_RUNNING;
+	ifq_clr_oactive(&ifp->if_snd);
 
 	CSR_WRITE_1(sc, VGE_CRC3, VGE_CR3_INT_GMSK);
 	CSR_WRITE_1(sc, VGE_CRS0, VGE_CR0_STOP);

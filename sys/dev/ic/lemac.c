@@ -1,4 +1,4 @@
-/* $OpenBSD: lemac.c,v 1.25 2015/11/24 17:11:39 mpi Exp $ */
+/* $OpenBSD: lemac.c,v 1.26 2015/11/25 03:09:58 dlg Exp $ */
 /* $NetBSD: lemac.c,v 1.20 2001/06/13 10:46:02 wiz Exp $ */
 
 /*-
@@ -166,7 +166,7 @@ lemac_tne_intr(struct lemac_softc *sc)
 				sc->sc_if.if_collisions++;
 		}
 	}
-	sc->sc_if.if_flags &= ~IFF_OACTIVE;
+	ifq_clr_oactive(&sc->sc_if.if_snd);
 	lemac_ifstart(&sc->sc_if);
 }
 
@@ -189,7 +189,7 @@ lemac_txd_intr(struct lemac_softc *sc, unsigned cs_value)
 
 	/* Turn back on transmitter if disabled */
 	LEMAC_OUTB(sc, LEMAC_REG_CS, cs_value & ~LEMAC_CS_TXD);
-	sc->sc_if.if_flags &= ~IFF_OACTIVE;
+	ifq_clr_oactive(&sc->sc_if.if_snd);
 }
 
 int
@@ -504,7 +504,7 @@ lemac_reset(struct lemac_softc *const sc)
 	 * Initialize board..
 	 */
 	sc->sc_flags &= ~LEMAC_LINKUP;
-	sc->sc_if.if_flags &= ~IFF_OACTIVE;
+	ifq_clr_oactive(&sc->sc_if.if_snd);
 	LEMAC_INTR_DISABLE(sc);
 
 	LEMAC_OUTB(sc, LEMAC_REG_IOP, LEMAC_IOP_EEINIT);
@@ -647,7 +647,7 @@ lemac_ifstart(struct ifnet *ifp)
 		    lemac_txmax) {
 			sc->sc_cntrs.cntr_txfull++;
 			ifq_deq_rollback(&ifp->if_snd, m);
-			ifp->if_flags |= IFF_OACTIVE;
+			ifq_set_oactive(&ifp->if_snd);
 			break;
 		}
 
@@ -662,7 +662,7 @@ lemac_ifstart(struct ifnet *ifp)
 		if (tx_pg == 0 || tx_pg > sc->sc_lastpage) {
 			sc->sc_cntrs.cntr_txnospc++;
 			ifq_deq_rollback(&ifp->if_snd, m);
-			ifp->if_flags |= IFF_OACTIVE;
+			ifq_set_oactive(&ifp->if_snd);
 			break;
 		}
 

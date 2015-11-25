@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nep.c,v 1.23 2015/11/24 17:11:39 mpi Exp $	*/
+/*	$OpenBSD: if_nep.c,v 1.24 2015/11/25 03:09:59 dlg Exp $	*/
 /*
  * Copyright (c) 2014, 2015 Mark Kettenis
  *
@@ -1091,7 +1091,7 @@ nep_tx_proc(struct nep_softc *sc)
 			count--;
 		}
 
-		ifp->if_flags &= ~IFF_OACTIVE;
+		ifq_clr_oactive(&ifp->if_snd);
 
 		sc->sc_tx_cnt--;
 		sc->sc_tx_cons++;
@@ -1648,7 +1648,7 @@ nep_up(struct nep_softc *sc)
 	nep_write(sc, RXDMA_CFIG1(sc->sc_port), val);
 
 	ifp->if_flags |= IFF_RUNNING;
-	ifp->if_flags &= ~IFF_OACTIVE;
+	ifq_clr_oactive(&ifp->if_snd);
 	ifp->if_timer = 0;
 
 	/* Enable interrupts. */
@@ -1685,7 +1685,8 @@ nep_down(struct nep_softc *sc)
 	nep_write(sc, LD_IM0(LDN_RXDMA(sc->sc_port)), 1);
 	nep_write(sc, LD_IM0(LDN_TXDMA(sc->sc_port)), 1);
 
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+	ifp->if_flags &= ~IFF_RUNNING;
+	ifq_clr_oactive(&ifp->if_snd);
 	ifp->if_timer = 0;
 
 	nep_disable_rx_mac(sc);
@@ -1869,7 +1870,7 @@ nep_start(struct ifnet *ifp)
 
 	if (!(ifp->if_flags & IFF_RUNNING))
 		return;
-	if (ifp->if_flags & IFF_OACTIVE)
+	if (ifq_is_oactive(&ifp->if_snd))
 		return;
 	if (IFQ_IS_EMPTY(&ifp->if_snd))
 		return;
@@ -1882,7 +1883,7 @@ nep_start(struct ifnet *ifp)
 
 		if (sc->sc_tx_cnt >= (NEP_NTXDESC - NEP_NTXSEGS)) {
 			ifq_deq_rollback(&ifp->if_snd, m);
-			ifp->if_flags |= IFF_OACTIVE;
+			ifq_set_oactive(&ifp->if_snd);
 			break;
 		}
 

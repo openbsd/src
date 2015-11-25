@@ -1,4 +1,4 @@
-/* $OpenBSD: imxenet.c,v 1.19 2015/11/24 17:11:38 mpi Exp $ */
+/* $OpenBSD: imxenet.c,v 1.20 2015/11/25 03:09:57 dlg Exp $ */
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -697,7 +697,7 @@ imxenet_init(struct imxenet_softc *sc)
 
 	/* Indicate we are up and running. */
 	ifp->if_flags |= IFF_RUNNING;
-	ifp->if_flags &= ~IFF_OACTIVE;
+	ifq_clr_oactive(&ifp->if_snd);
 
 	/* enable interrupts for tx/rx */
 	HWRITE4(sc, ENET_EIMR, ENET_EIR_TXF | ENET_EIR_RXF);
@@ -714,8 +714,9 @@ imxenet_stop(struct imxenet_softc *sc)
 	/*
 	 * Mark the interface down and cancel the watchdog timer.
 	 */
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+	ifp->if_flags &= ~IFF_RUNNING;
 	ifp->if_timer = 0;
+	ifq_clr_oactive(&ifp->if_snd);
 
 	/* reset the controller */
 	HSET4(sc, ENET_ECR, ENET_ECR_RESET);
@@ -811,7 +812,7 @@ imxenet_start(struct ifnet *ifp)
 	struct imxenet_softc *sc = ifp->if_softc;
 	struct mbuf *m_head = NULL;
 
-	if ((ifp->if_flags & (IFF_OACTIVE | IFF_RUNNING)) != IFF_RUNNING)
+	if (ifq_is_oactive(&ifp->if_snd) || !(ifp->if_flags & IFF_RUNNING))
 		return;
 
 	for (;;) {
@@ -821,7 +822,7 @@ imxenet_start(struct ifnet *ifp)
 
 		if (imxenet_encap(sc, m_head)) {
 			ifq_deq_rollback(&ifp->if_snd, m_head);
-			ifp->if_flags |= IFF_OACTIVE;
+			ifq_set_oactive(&ifp->if_snd);
 			break;
 		}
 

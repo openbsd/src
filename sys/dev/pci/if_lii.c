@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lii.c,v 1.41 2015/11/24 17:11:39 mpi Exp $	*/
+/*	$OpenBSD: if_lii.c,v 1.42 2015/11/25 03:09:59 dlg Exp $	*/
 
 /*
  *  Copyright (c) 2007 The NetBSD Foundation.
@@ -728,7 +728,7 @@ lii_init(struct ifnet *ifp)
 	timeout_add_sec(&sc->sc_tick, 1);
 
 	ifp->if_flags |= IFF_RUNNING;
-	ifp->if_flags &= ~IFF_OACTIVE;
+	ifq_clr_oactive(&ifp->if_snd);
 
 out:
 	return error;
@@ -792,7 +792,7 @@ lii_start(struct ifnet *ifp)
 
 	DPRINTF(("lii_start\n"));
 
-	if ((ifp->if_flags & (IFF_RUNNING|IFF_OACTIVE)) != IFF_RUNNING)
+	if (!(ifp->if_flags & IFF_RUNNING) || ifq_is_oactive(&ifp->if_snd))
 		return;
 
 	for (;;) {
@@ -803,7 +803,7 @@ lii_start(struct ifnet *ifp)
 		if (!sc->sc_free_tx_slots ||
 		    lii_free_tx_space(sc) < m0->m_pkthdr.len) {
 			ifq_deq_rollback(&ifp->if_snd, m0);
-			ifp->if_flags |= IFF_OACTIVE;
+			ifq_set_oactive(&ifp->if_snd);
 			break;
 		}
 
@@ -836,7 +836,8 @@ lii_stop(struct ifnet *ifp)
 	timeout_del(&sc->sc_tick);
 
 	ifp->if_timer = 0;
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+	ifp->if_flags &= ~IFF_RUNNING;
+	ifq_clr_oactive(&ifp->if_snd);
 
 	mii_down(&sc->sc_mii);
 
@@ -980,7 +981,7 @@ lii_txintr(struct lii_softc *sc)
 			++ifp->if_opackets;
 		else
 			++ifp->if_oerrors;
-		ifp->if_flags &= ~IFF_OACTIVE;
+		ifq_clr_oactive(&ifp->if_snd);
 	}
 
 	if (sc->sc_free_tx_slots)

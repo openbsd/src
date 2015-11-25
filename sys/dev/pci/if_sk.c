@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sk.c,v 1.182 2015/11/24 17:11:39 mpi Exp $	*/
+/*	$OpenBSD: if_sk.c,v 1.183 2015/11/25 03:09:59 dlg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -1507,7 +1507,7 @@ sk_start(struct ifnet *ifp)
 		 */
 		if (sk_encap(sc_if, m_head, &idx)) {
 			ifq_deq_rollback(&ifp->if_snd, m_head);
-			ifp->if_flags |= IFF_OACTIVE;
+			ifq_set_oactive(&ifp->if_snd);
 			break;
 		}
 
@@ -1695,7 +1695,7 @@ sk_txeof(struct sk_if_softc *sc_if)
 	ifp->if_timer = sc_if->sk_cdata.sk_tx_cnt > 0 ? 5 : 0;
 
 	if (sc_if->sk_cdata.sk_tx_cnt < SK_TX_RING_CNT - 2)
-		ifp->if_flags &= ~IFF_OACTIVE;
+		ifq_clr_oactive(&ifp->if_snd);
 
 	sc_if->sk_cdata.sk_tx_cons = idx;
 }
@@ -2396,7 +2396,7 @@ sk_init(void *xsc_if)
 	CSR_WRITE_4(sc, sc_if->sk_tx_bmu, SK_TXBMU_TX_START);
 
 	ifp->if_flags |= IFF_RUNNING;
-	ifp->if_flags &= ~IFF_OACTIVE;
+	ifq_clr_oactive(&ifp->if_snd);
 
 	if (SK_IS_YUKON(sc))
 		timeout_add_sec(&sc_if->sk_tick_ch, 1);
@@ -2418,7 +2418,8 @@ sk_stop(struct sk_if_softc *sc_if, int softonly)
 
 	timeout_del(&sc_if->sk_tick_ch);
 
-	ifp->if_flags &= ~(IFF_RUNNING|IFF_OACTIVE);
+	ifp->if_flags &= ~IFF_RUNNING;
+	ifq_clr_oactive(&ifp->if_snd);
 
 	if (!softonly) {
 		/* stop Tx descriptor polling timer */

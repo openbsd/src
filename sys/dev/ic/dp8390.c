@@ -1,4 +1,4 @@
-/*	$OpenBSD: dp8390.c,v 1.57 2015/11/24 13:33:17 mpi Exp $	*/
+/*	$OpenBSD: dp8390.c,v 1.58 2015/11/25 03:09:58 dlg Exp $	*/
 /*	$NetBSD: dp8390.c,v 1.13 1998/07/05 06:49:11 jonathan Exp $	*/
 
 /*
@@ -356,7 +356,7 @@ dp8390_init(struct dp8390_softc *sc)
 
 	/* Set 'running' flag, and clear output active flag. */
 	ifp->if_flags |= IFF_RUNNING;
-	ifp->if_flags &= ~IFF_OACTIVE;
+	ifq_clr_oactive(&ifp->if_snd);
 
 	/* ...and attempt to start output. */
 	dp8390_start(ifp);
@@ -428,14 +428,14 @@ dp8390_start(struct ifnet *ifp)
 	int buffer;
 	int len;
 
-	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
+	if (!(ifp->if_flags & IFF_RUNNING) || ifq_is_oactive(&ifp->if_snd))
 		return;
 
 outloop:
 	/* See if there is room to put another packet in the buffer. */
 	if (sc->txb_inuse == sc->txb_cnt) {
 		/* No room.  Indicate this to the outside world and exit. */
-		ifp->if_flags |= IFF_OACTIVE;
+		ifq_set_oactive(&ifp->if_snd);
 		return;
 	}
 	IFQ_DEQUEUE(&ifp->if_snd, m0);
@@ -703,7 +703,7 @@ dp8390_intr(void *arg)
 
 			/* Clear watchdog timer. */
 			ifp->if_timer = 0;
-			ifp->if_flags &= ~IFF_OACTIVE;
+			ifq_clr_oactive(&ifp->if_snd);
 
 			/*
 			 * Add in total number of collisions on last

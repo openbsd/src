@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vic.c,v 1.94 2015/11/24 13:33:17 mpi Exp $	*/
+/*	$OpenBSD: if_vic.c,v 1.95 2015/11/25 03:09:59 dlg Exp $	*/
 
 /*
  * Copyright (c) 2006 Reyk Floeter <reyk@openbsd.org>
@@ -910,7 +910,7 @@ vic_tx_proc(struct vic_softc *sc)
 
 		m_freem(txb->txb_m);
 		txb->txb_m = NULL;
-		ifp->if_flags &= ~IFF_OACTIVE;
+		ifq_clr_oactive(&ifp->if_snd);
 
 		sc->sc_txpending--;
 		sc->sc_data->vd_tx_stopped = 0;
@@ -1035,7 +1035,7 @@ vic_start(struct ifnet *ifp)
 	if (!(ifp->if_flags & IFF_RUNNING))
 		return;
 
-	if (ifp->if_flags & IFF_OACTIVE)
+	if (ifq_is_oactive(&ifp->if_snd))
 		return;
 
 	if (IFQ_IS_EMPTY(&ifp->if_snd))
@@ -1048,7 +1048,7 @@ vic_start(struct ifnet *ifp)
 
 	for (;;) {
 		if (VIC_TXURN(sc)) {
-			ifp->if_flags |= IFF_OACTIVE;
+			ifq_set_oactive(&ifp->if_snd);
 			break;
 		}
 
@@ -1267,7 +1267,7 @@ vic_init(struct ifnet *ifp)
 	vic_write(sc, VIC_DATA_LENGTH, sc->sc_dma_size);
 
 	ifp->if_flags |= IFF_RUNNING;
-	ifp->if_flags &= ~IFF_OACTIVE;
+	ifq_clr_oactive(&ifp->if_snd);
 
 	vic_iff(sc);
 	vic_write(sc, VIC_CMD, VIC_CMD_INTR_ENABLE);
@@ -1287,7 +1287,8 @@ vic_stop(struct ifnet *ifp)
 
 	timeout_del(&sc->sc_tick);
 
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+	ifp->if_flags &= ~IFF_RUNNING;
+	ifq_clr_oactive(&ifp->if_snd);
 
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_dma_map, 0, sc->sc_dma_size,
 	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);

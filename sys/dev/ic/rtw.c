@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtw.c,v 1.93 2015/11/20 03:35:22 dlg Exp $	*/
+/*	$OpenBSD: rtw.c,v 1.94 2015/11/25 03:09:58 dlg Exp $	*/
 /*	$NetBSD: rtw.c,v 1.29 2004/12/27 19:49:16 dyoung Exp $ */
 
 /*-
@@ -187,7 +187,7 @@ int	 rtw_txring_choose(struct rtw_softc *, struct rtw_txsoft_blk **,
 u_int	 rtw_txring_next(struct rtw_regs *, struct rtw_txdesc_blk *);
 struct mbuf *rtw_80211_dequeue(struct rtw_softc *, struct mbuf_queue *, int,
 	    struct rtw_txsoft_blk **, struct rtw_txdesc_blk **,
-	    struct ieee80211_node **, short *);
+	    struct ieee80211_node **);
 uint64_t rtw_tsf_extend(struct rtw_regs *, u_int32_t);
 #ifndef IEEE80211_STA_ONLY
 void	 rtw_ibss_merge(struct rtw_softc *, struct ieee80211_node *,
@@ -1375,18 +1375,18 @@ rtw_collect_txpkt(struct rtw_softc *sc, struct rtw_txdesc_blk *tdb,
 void
 rtw_reset_oactive(struct rtw_softc *sc)
 {
-	short oflags;
+	int oactive;
 	int pri;
 	struct rtw_txsoft_blk *tsb;
 	struct rtw_txdesc_blk *tdb;
-	oflags = sc->sc_if.if_flags;
+	oactive = ifq_is_oactive(&sc->sc_if.if_snd);
 	for (pri = 0; pri < RTW_NTXPRI; pri++) {
 		tsb = &sc->sc_txsoft_blk[pri];
 		tdb = &sc->sc_txdesc_blk[pri];
 		if (!SIMPLEQ_EMPTY(&tsb->tsb_freeq) && tdb->tdb_nfree > 0)
-			sc->sc_if.if_flags &= ~IFF_OACTIVE;
+			ifq_set_oactive(&sc->sc_if.if_snd);
 	}
-	if (oflags != sc->sc_if.if_flags) {
+	if (oactive != ifq_is_oactive(&sc->sc_if.if_snd)) {
 		DPRINTF(sc, RTW_DEBUG_OACTIVE,
 		    ("%s: reset OACTIVE\n", __func__));
 	}
@@ -1903,7 +1903,8 @@ rtw_stop(struct ifnet *ifp, int disable)
 		rtw_disable(sc);
 
 	/* Mark the interface as not running.  Cancel the watchdog timer. */
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+	ifp->if_flags &= ~IFF_RUNNING;
+	ifq_clr_oactive(&ifp->if_snd);
 	ifp->if_timer = 0;
 
 	return;
@@ -2680,7 +2681,7 @@ rtw_txring_choose(struct rtw_softc *sc, struct rtw_txsoft_blk **tsbp,
 struct mbuf *
 rtw_80211_dequeue(struct rtw_softc *sc, struct mbuf_queue *ifq, int pri,
     struct rtw_txsoft_blk **tsbp, struct rtw_txdesc_blk **tdbp,
-    struct ieee80211_node **nip, short *if_flagsp)
+    struct ieee80211_node **nip)
 {
 	struct mbuf *m;
 
@@ -2689,7 +2690,7 @@ rtw_80211_dequeue(struct rtw_softc *sc, struct mbuf_queue *ifq, int pri,
 	if (rtw_txring_choose(sc, tsbp, tdbp, pri) == -1) {
 		DPRINTF(sc, RTW_DEBUG_XMIT_RSRC, ("%s: no ring %d descriptor\n",
 		    __func__, pri));
-		*if_flagsp |= IFF_OACTIVE;
+		ifq_set_oactive(&sc->sc_if.if_snd);
 		sc->sc_if.if_timer = 1;
 		return NULL;
 	}
@@ -2711,7 +2712,6 @@ rtw_dequeue(struct ifnet *ifp, struct rtw_txsoft_blk **tsbp,
 	struct ieee80211_key *k;
 	struct mbuf *m0;
 	struct rtw_softc *sc;
-	short *if_flagsp;
 
 	sc = (struct rtw_softc *)ifp->if_softc;
 	ic = &sc->sc_ic;
@@ -2719,18 +2719,16 @@ rtw_dequeue(struct ifnet *ifp, struct rtw_txsoft_blk **tsbp,
 	DPRINTF(sc, RTW_DEBUG_XMIT,
 	    ("%s: enter %s\n", sc->sc_dev.dv_xname, __func__));
 
-	if_flagsp = &ifp->if_flags;
-
 	if (ic->ic_state == IEEE80211_S_RUN &&
 	    (*mp = rtw_80211_dequeue(sc, &sc->sc_beaconq, RTW_TXPRIBCN, tsbp,
-	    tdbp, nip, if_flagsp)) != NULL) {
+	    tdbp, nip)) != NULL) {
 		DPRINTF(sc, RTW_DEBUG_XMIT, ("%s: dequeue beacon frame\n",
 		    __func__));
 		return 0;
 	}
 
 	if ((*mp = rtw_80211_dequeue(sc, &ic->ic_mgtq, RTW_TXPRIMD, tsbp,
-	    tdbp, nip, if_flagsp)) != NULL) {
+	    tdbp, nip)) != NULL) {
 		DPRINTF(sc, RTW_DEBUG_XMIT, ("%s: dequeue mgt frame\n",
 		    __func__));
 		return 0;
@@ -2742,7 +2740,7 @@ rtw_dequeue(struct ifnet *ifp, struct rtw_txsoft_blk **tsbp,
 	}
 
 	if ((*mp = rtw_80211_dequeue(sc, &ic->ic_pwrsaveq, RTW_TXPRIHI,
-	    tsbp, tdbp, nip, if_flagsp)) != NULL) {
+	    tsbp, tdbp, nip)) != NULL) {
 		DPRINTF(sc, RTW_DEBUG_XMIT, ("%s: dequeue pwrsave frame\n",
 		    __func__));
 		return 0;
@@ -2765,7 +2763,7 @@ rtw_dequeue(struct ifnet *ifp, struct rtw_txsoft_blk **tsbp,
 	if (rtw_txring_choose(sc, tsbp, tdbp, RTW_TXPRIMD) == -1) {
 		DPRINTF(sc, RTW_DEBUG_XMIT, ("%s: no descriptor\n", __func__));
 		ifq_deq_rollback(&ifp->if_snd, m0);
-		*if_flagsp |= IFF_OACTIVE;
+		ifq_set_oactive(&ifp->if_snd);
 		sc->sc_if.if_timer = 1;
 		return 0;
 	}
@@ -3081,7 +3079,7 @@ rtw_start(struct ifnet *ifp)
 	DPRINTF(sc, RTW_DEBUG_XMIT,
 	    ("%s: enter %s\n", sc->sc_dev.dv_xname, __func__));
 
-	if ((ifp->if_flags & (IFF_RUNNING|IFF_OACTIVE)) != IFF_RUNNING)
+	if (!(ifp->if_flags & IFF_RUNNING) || ifq_is_oactive(&ifp->if_snd))
 		goto out;
 
 	/* XXX do real rate control */
