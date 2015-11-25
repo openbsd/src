@@ -1,4 +1,4 @@
-/* $OpenBSD: icdb.c,v 1.2 2015/11/18 17:59:56 tedu Exp $ */
+/* $OpenBSD: icdb.c,v 1.3 2015/11/25 15:49:50 guenther Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -146,6 +146,7 @@ icdb_new(uint32_t version, uint32_t nentries, uint32_t entrysize,
 	}
 	return db;
 }
+DEF_WEAK(icdb_new);
 
 struct icdb *
 icdb_open(const char *name, int flags, uint32_t version)
@@ -195,6 +196,7 @@ fail:
 	free(db);
 	return NULL;
 }
+DEF_WEAK(icdb_open);
 
 int
 icdb_get(struct icdb *db, void *entry, uint32_t idx)
@@ -204,6 +206,7 @@ icdb_get(struct icdb *db, void *entry, uint32_t idx)
 	memcpy(entry, (uint8_t *)db->entries + idx * entrysize, entrysize);
 	return 0;
 }
+DEF_WEAK(icdb_get);
 
 int
 icdb_lookup(struct icdb *db, int keynum, const void *key, void *entry, uint32_t *idxp)
@@ -235,18 +238,21 @@ icdb_lookup(struct icdb *db, int keynum, const void *key, void *entry, uint32_t 
 	}
 	return 1;
 }
+DEF_WEAK(icdb_lookup);
 
 int
 icdb_nentries(struct icdb *db)
 {
 	return db->info->nentries;
 }
+DEF_WEAK(icdb_nentries);
 
 const void *
 icdb_entries(struct icdb *db)
 {
 	return db->entries;
 }
+DEF_WEAK(icdb_entries);
 
 int
 icdb_update(struct icdb *db, const void *entry, int offset)
@@ -267,6 +273,7 @@ icdb_update(struct icdb *db, const void *entry, int offset)
 		msync(db->entries + offset * entrysize, entrysize, MS_SYNC);
 	return 0;
 }
+DEF_WEAK(icdb_update);
 
 int
 icdb_add(struct icdb *db, const void *entry)
@@ -287,6 +294,7 @@ icdb_add(struct icdb *db, const void *entry)
 	info->nentries++;
 	return 0;
 }
+DEF_WEAK(icdb_add);
 
 int
 icdb_rehash(struct icdb *db)
@@ -323,6 +331,7 @@ icdb_rehash(struct icdb *db)
 	}
 	return 0;
 }
+DEF_WEAK(icdb_rehash);
 
 int
 icdb_save(struct icdb *db, int fd)
@@ -351,6 +360,7 @@ icdb_save(struct icdb *db, int fd)
 		return -1;
 	return 0;
 }
+DEF_WEAK(icdb_save);
 
 int
 icdb_close(struct icdb *db)
@@ -369,3 +379,4 @@ icdb_close(struct icdb *db)
 	free(db);
 	return 0;
 }
+DEF_WEAK(icdb_close);
