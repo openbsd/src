@@ -5715,7 +5715,7 @@
 ./usr/share/man/man3/tzset.3
 ./usr/share/man/man3/tzsetwall.3
 ./usr/share/man/man3/ualarm.3
-./usr/share/man/man3/ui_new.3
+./usr/share/man/man3/UI_new.3
 ./usr/share/man/man3/uname.3
 ./usr/share/man/man3/uncompress.3
 ./usr/share/man/man3/unctrl.3
@@ -6270,7 +6270,6 @@
 ./usr/share/man/man9/crypto_newsession.9
 ./usr/share/man/man9/crypto_register.9
 ./usr/share/man/man9/crypto_unregister.9
-./usr/share/man/man9/ctlname.9
 ./usr/share/man/man9/db_printf.9
 ./usr/share/man/man9/db_vprintf.9
 ./usr/share/man/man9/delay.9
