@@ -3185,6 +3185,7 @@
 ./usr/share/man/man3/UI_get0_user_data.3
 ./usr/share/man/man3/UI_get_default_method.3
 ./usr/share/man/man3/UI_get_method.3
+./usr/share/man/man3/UI_new.3
 ./usr/share/man/man3/UI_new_method.3
 ./usr/share/man/man3/UI_process.3
 ./usr/share/man/man3/UI_set_default_method.3
@@ -5715,7 +5716,6 @@
 ./usr/share/man/man3/tzset.3
 ./usr/share/man/man3/tzsetwall.3
 ./usr/share/man/man3/ualarm.3
-./usr/share/man/man3/UI_new.3
 ./usr/share/man/man3/uname.3
 ./usr/share/man/man3/uncompress.3
 ./usr/share/man/man3/unctrl.3
@@ -6398,14 +6398,17 @@
 ./usr/share/man/man9/if_rxr_inuse.9
 ./usr/share/man/man9/if_rxr_ioctl.9
 ./usr/share/man/man9/if_rxr_put.9
+./usr/share/man/man9/ifq_clr_oactive.9
 ./usr/share/man/man9/ifq_deq_begin.9
 ./usr/share/man/man9/ifq_deq_commit.9
 ./usr/share/man/man9/ifq_deq_rollback.9
 ./usr/share/man/man9/ifq_dequeue.9
 ./usr/share/man/man9/ifq_empty.9
 ./usr/share/man/man9/ifq_enqueue.9
+./usr/share/man/man9/ifq_is_oactive.9
 ./usr/share/man/man9/ifq_len.9
 ./usr/share/man/man9/ifq_purge.9
+./usr/share/man/man9/ifq_set_oactive.9
 ./usr/share/man/man9/iic.9
 ./usr/share/man/man9/iic_acquire_bus.9
 ./usr/share/man/man9/iic_exec.9
@@ -6797,6 +6800,8 @@
 ./usr/share/man/man9/uvm_setpagesize.9
 ./usr/share/man/man9/uvm_swap_init.9
 ./usr/share/man/man9/uvm_sysctl.9
+./usr/share/man/man9/uvm_uarea_alloc.9
+./usr/share/man/man9/uvm_uarea_free.9
 ./usr/share/man/man9/uvm_vnp_setsize.9
 ./usr/share/man/man9/uvm_vnp_sync.9
 ./usr/share/man/man9/uvm_vnp_terminate.9
