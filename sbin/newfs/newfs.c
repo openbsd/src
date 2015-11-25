@@ -1,4 +1,4 @@
-/*	$OpenBSD: newfs.c,v 1.102 2015/11/23 19:19:30 deraadt Exp $	*/
+/*	$OpenBSD: newfs.c,v 1.103 2015/11/25 19:45:21 kettenis Exp $	*/
 /*	$NetBSD: newfs.c,v 1.20 1996/05/16 07:13:03 thorpej Exp $	*/
 
 /*
@@ -430,8 +430,10 @@ main(int argc, char *argv[])
 			fatal("%s: can't figure out file system partition",
 			    argv[0]);
 		lp = getdisklabel(special, fsi);
-		if (pledge("stdio disklabel tty", NULL) == -1)
-			err(1, "pledge");
+		if (!mfs) {
+			if (pledge("stdio disklabel tty", NULL) == -1)
+				err(1, "pledge");
+		}
 		if (isdigit((unsigned char)*cp))
 			pp = &lp->d_partitions[0];
 		else
