@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.123 2015/11/24 23:59:22 deraadt Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.124 2015/11/25 15:53:01 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -1000,6 +1000,10 @@ pledge_sysctl(struct proc *p, int miblen, int *mib, void *new)
 		if (miblen == 2 &&		/* kern.rawpartition */
 		    mib[0] == CTL_KERN &&
 		    mib[1] == KERN_RAWPARTITION)
+			return (0);
+		if (miblen == 2 &&		/* kern.maxpartitions */
+		    mib[0] == CTL_KERN &&
+		    mib[1] == KERN_MAXPARTITIONS)
 			return (0);
 #ifdef CPU_CHR2BLK
 		if (miblen == 3 &&		/* machdep.chr2blk */
