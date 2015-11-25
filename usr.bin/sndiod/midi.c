@@ -1,4 +1,4 @@
-/*	$OpenBSD: midi.c,v 1.13 2015/11/23 18:16:41 ratchov Exp $	*/
+/*	$OpenBSD: midi.c,v 1.14 2015/11/25 18:47:12 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -427,7 +427,7 @@ port_new(char *path, unsigned int mode, int hold)
 	struct port *c;
 
 	c = xmalloc(sizeof(struct port));
-	c->path = path;
+	c->path = xstrdup(path);
 	c->state = PORT_CFG;
 	c->hold = hold;
 	c->midi = midi_new(&port_midiops, c, mode);
@@ -457,6 +457,7 @@ port_del(struct port *c)
 #endif
 	}
 	*p = c->next;
+	xfree(c->path);
 	xfree(c);
 }
 

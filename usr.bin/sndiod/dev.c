@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.20 2015/11/23 12:24:21 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.21 2015/11/25 18:47:12 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -976,6 +976,7 @@ dev_new(char *path, struct aparams *par,
 		return NULL;
 	}
 	d = xmalloc(sizeof(struct dev));
+	d->path = xstrdup(path);
 	d->num = dev_sndnum++;
 
 	/*
@@ -1258,6 +1259,7 @@ dev_del(struct dev *d)
 	}
 	midi_del(d->midi);
 	*p = d->next;
+	xfree(d->path);
 	xfree(d);
 }
 
