@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.90 2015/11/21 16:45:41 krw Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.91 2015/11/25 19:32:35 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -190,7 +190,7 @@ Xgedit(char *args)
 	bs = getuint64("Partition offset", letoh64(gg->gp_lba_start),
 	    letoh64(gh.gh_lba_start), letoh64(gh.gh_lba_end));
 	ns = getuint64("Partition size", letoh64(gg->gp_lba_end) - bs + 1,
-	    0, letoh64(gh.gh_lba_end) - bs + 1);
+	    1, letoh64(gh.gh_lba_end) - bs + 1);
 
 	gg->gp_lba_start = htole64(bs);
 	gg->gp_lba_end = htole64(bs + ns - 1);
@@ -255,12 +255,13 @@ Xedit(char *args, struct mbr *mbr)
 		pp->ssect = ask_num("BIOS Starting sector",  pp->ssect, 1,
 		    disk.sectors);
 
-		pp->ecyl = ask_num("BIOS Ending cylinder",   pp->ecyl,  0,
-		    disk.cylinders - 1);
-		pp->ehead = ask_num("BIOS Ending head",      pp->ehead, 0,
-		    disk.heads - 1);
-		pp->esect = ask_num("BIOS Ending sector",    pp->esect, 1,
-		    disk.sectors);
+		pp->ecyl = ask_num("BIOS Ending cylinder",   pp->ecyl,
+		    pp->scyl, disk.cylinders - 1);
+		pp->ehead = ask_num("BIOS Ending head",      pp->ehead,
+		    (pp->scyl == pp->ecyl) ? pp->shead : 0, disk.heads - 1);
+		pp->esect = ask_num("BIOS Ending sector",    pp->esect,
+		    (pp->scyl == pp->ecyl && pp->shead == pp->ehead) ? pp->ssect
+		    : 1, disk.sectors);
 
 		/* Fix up off/size values */
 		PRT_fix_BN(pp, pn);
@@ -268,7 +269,7 @@ Xedit(char *args, struct mbr *mbr)
 		PRT_fix_CHS(pp);
 	} else {
 		pp->bs = getuint64("Partition offset", pp->bs, 0, disk.size);
-		pp->ns = getuint64("Partition size",   pp->ns, 0,
+		pp->ns = getuint64("Partition size",   pp->ns, 1,
 		    disk.size - pp->bs);
 
 		/* Fix up CHS values */
