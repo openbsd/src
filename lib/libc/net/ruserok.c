@@ -436,8 +436,6 @@ __gethostloop(struct sockaddr *raddr, socklen_t salen)
 	 * either the DNS adminstrator has made a configuration
 	 * mistake, or someone has attempted to spoof us
 	 */
-	syslog(LOG_NOTICE, "rcmd: address %s not listed for host %s",
-	    h1, res->ai_canonname ? res->ai_canonname : remotehost);
 	freeaddrinfo(res);
 	return (NULL);
 }
