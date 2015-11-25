@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ef_isapnp.c,v 1.35 2015/11/25 03:09:59 dlg Exp $	*/
+/*	$OpenBSD: if_ef_isapnp.c,v 1.36 2015/11/25 11:20:38 mpi Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -42,7 +42,6 @@
 #include <sys/timeout.h>
 
 #include <net/if.h>
-#include <net/netisr.h>
 #include <net/if_media.h>
 
 #include <netinet/in.h>

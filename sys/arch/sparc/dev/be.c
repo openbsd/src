@@ -1,4 +1,4 @@
-/*	$OpenBSD: be.c,v 1.57 2015/11/25 03:09:58 dlg Exp $	*/
+/*	$OpenBSD: be.c,v 1.58 2015/11/25 11:20:38 mpi Exp $	*/
 
 /*
  * Copyright (c) 1998 Theo de Raadt and Jason L. Wright.
@@ -38,7 +38,6 @@
 #include <sys/timeout.h>
 
 #include <net/if.h>
-#include <net/netisr.h>
 #include <net/if_media.h>
 
 #include <netinet/in.h>

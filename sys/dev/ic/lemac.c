@@ -1,4 +1,4 @@
-/* $OpenBSD: lemac.c,v 1.26 2015/11/25 03:09:58 dlg Exp $ */
+/* $OpenBSD: lemac.c,v 1.27 2015/11/25 11:20:38 mpi Exp $ */
 /* $NetBSD: lemac.c,v 1.20 2001/06/13 10:46:02 wiz Exp $ */
 
 /*-
@@ -45,7 +45,6 @@
 #include <sys/device.h>
 
 #include <net/if.h>
-#include <net/route.h>
 #include <net/if_media.h>
 
 #include <netinet/in.h>

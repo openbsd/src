@@ -1,4 +1,4 @@
-/*	$OpenBSD: qe.c,v 1.47 2015/11/25 03:09:58 dlg Exp $	*/
+/*	$OpenBSD: qe.c,v 1.48 2015/11/25 11:20:38 mpi Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 Jason L. Wright.
@@ -47,7 +47,6 @@
 
 #include <net/if.h>
 #include <net/if_media.h>
-#include <net/netisr.h>
 
 #include <netinet/in.h>
 #include <netinet/if_ether.h>

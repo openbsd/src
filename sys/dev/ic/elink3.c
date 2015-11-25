@@ -1,4 +1,4 @@
-/*	$OpenBSD: elink3.c,v 1.91 2015/11/25 03:09:58 dlg Exp $	*/
+/*	$OpenBSD: elink3.c,v 1.92 2015/11/25 11:20:38 mpi Exp $	*/
 /*	$NetBSD: elink3.c,v 1.32 1997/05/14 00:22:00 thorpej Exp $	*/
 
 /*
@@ -46,7 +46,6 @@
 #include <sys/device.h>
 
 #include <net/if.h>
-#include <net/netisr.h>
 #include <net/if_media.h>
 
 #include <netinet/in.h>

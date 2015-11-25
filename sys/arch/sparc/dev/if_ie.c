@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ie.c,v 1.59 2015/11/25 03:09:58 dlg Exp $	*/
+/*	$OpenBSD: if_ie.c,v 1.60 2015/11/25 11:20:38 mpi Exp $	*/
 /*	$NetBSD: if_ie.c,v 1.33 1997/07/29 17:55:38 fair Exp $	*/
 
 /*-
@@ -113,8 +113,6 @@ Mode of operation:
 #include <sys/timeout.h>
 
 #include <net/if.h>
-#include <net/netisr.h>
-#include <net/route.h>
 
 #if NBPFILTER > 0
 #include <net/bpf.h>

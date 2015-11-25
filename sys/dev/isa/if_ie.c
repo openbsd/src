@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ie.c,v 1.47 2015/11/25 03:09:59 dlg Exp $	*/
+/*	$OpenBSD: if_ie.c,v 1.48 2015/11/25 11:20:38 mpi Exp $	*/
 /*	$NetBSD: if_ie.c,v 1.51 1996/05/12 23:52:48 mycroft Exp $	*/
 
 /*-
@@ -121,8 +121,6 @@ iomem, and to make 16-pointers, we subtract sc_maddr and and with 0xffff.
 #include <sys/timeout.h>
 
 #include <net/if.h>
-#include <net/netisr.h>
-#include <net/route.h>
 
 #if NBPFILTER > 0
 #include <net/bpf.h>

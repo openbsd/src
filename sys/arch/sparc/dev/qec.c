@@ -1,4 +1,4 @@
-/*	$OpenBSD: qec.c,v 1.26 2015/11/24 17:11:38 mpi Exp $	*/
+/*	$OpenBSD: qec.c,v 1.27 2015/11/25 11:20:38 mpi Exp $	*/
 
 /*
  * Copyright (c) 1998 Theo de Raadt and Jason L. Wright.
@@ -39,7 +39,6 @@
 #include <sys/socket.h>
 
 #include <net/if.h>
-#include <net/netisr.h>
 #include <net/if_media.h>
 
 #include <netinet/in.h>

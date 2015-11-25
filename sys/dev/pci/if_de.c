@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_de.c,v 1.131 2015/11/25 03:09:59 dlg Exp $	*/
+/*	$OpenBSD: if_de.c,v 1.132 2015/11/25 11:20:38 mpi Exp $	*/
 /*	$NetBSD: if_de.c,v 1.58 1998/01/12 09:39:58 thorpej Exp $	*/
 
 /*-
@@ -53,7 +53,6 @@
 
 #include <net/if.h>
 #include <net/if_media.h>
-#include <net/netisr.h>
 
 #include "bpfilter.h"
 #if NBPFILTER > 0

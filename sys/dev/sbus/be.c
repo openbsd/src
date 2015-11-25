@@ -1,4 +1,4 @@
-/*	$OpenBSD: be.c,v 1.38 2015/11/25 03:09:59 dlg Exp $	*/
+/*	$OpenBSD: be.c,v 1.39 2015/11/25 11:20:38 mpi Exp $	*/
 /*	$NetBSD: be.c,v 1.26 2001/03/20 15:39:20 pk Exp $	*/
 
 /*-
@@ -70,7 +70,6 @@
 #include <sys/malloc.h>
 
 #include <net/if.h>
-#include <net/netisr.h>
 #include <net/if_media.h>
 
 #include <netinet/in.h>
