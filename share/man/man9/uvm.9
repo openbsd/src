@@ -1,4 +1,4 @@
-.\"	$OpenBSD: uvm.9,v 1.63 2015/11/23 17:53:57 jmc Exp $
+.\"	$OpenBSD: uvm.9,v 1.64 2015/11/25 16:20:36 jmc Exp $
 .\"	$NetBSD: uvm.9,v 1.14 2000/06/29 06:08:44 mrg Exp $
 .\"
 .\" Copyright (c) 1998 Matthew R. Green
@@ -30,7 +30,7 @@
 .\" XXX this manual sets nS to 1 or 0 in the description, to obtain
 .\" synopsis-like function prototypes.  any better way?
 .\"
-.Dd $Mdocdate: November 23 2015 $
+.Dd $Mdocdate: November 25 2015 $
 .Dt UVM_INIT 9
 .Os
 .Sh NAME
@@ -49,6 +49,8 @@
 .Nm uvmspace_fork ,
 .Nm uvmspace_free ,
 .Nm uvmspace_share ,
+.Nm uvm_uarea_alloc ,
+.Nm uvm_uarea_free ,
 .Nm UVM_MAPFLAG ,
 .Nm uvm_fault ,
 .Nm uvn_attach ,
