@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cnmac.c,v 1.35 2015/11/25 03:09:58 dlg Exp $	*/
+/*	$OpenBSD: if_cnmac.c,v 1.36 2015/11/25 14:00:27 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -782,8 +782,6 @@ octeon_eth_send_makecmd_w1(int size, paddr_t addr)
 		size, addr);			/* size, addr */
 }
 
-/* TODO: use bus_dma(9) */
-
 #define KVTOPHYS(addr)	if_cnmac_kvtophys((vaddr_t)(addr))
 paddr_t if_cnmac_kvtophys(vaddr_t);
 
@@ -797,8 +795,7 @@ if_cnmac_kvtophys(vaddr_t kva)
 	else if (kva >= CKSEG1_BASE && kva < CKSEG1_BASE + CKSEG_SIZE)
 		return CKSEG1_TO_PHYS(kva);
 
-	printf("kva %lx is not able to convert physical address\n", kva);
-	panic("if_cnmac_kvtophys");
+	panic("%s: non-direct mapped address %p", __func__, (void *)kva);
 }
 
 int
@@ -807,48 +804,17 @@ octeon_eth_send_makecmd_gbuf(struct octeon_eth_softc *sc, struct mbuf *m0,
 {
 	struct mbuf *m;
 	int segs = 0;
-	uint32_t laddr, rlen, nlen;
 
 	for (m = m0; m != NULL; m = m->m_next) {
-
 		if (__predict_false(m->m_len == 0))
 			continue;
 
-#if 0	
-		OCTEON_ETH_KASSERT(((uint32_t)m->m_data & (PAGE_SIZE - 1))
-		   == (kvtophys((vaddr_t)m->m_data) & (PAGE_SIZE - 1)));
-#endif
-
-		/*
-		 * aligned 4k
-		 */
-		laddr = (uintptr_t)m->m_data & (PAGE_SIZE - 1);
-
-		if (laddr + m->m_len > PAGE_SIZE) {
-			/* XXX */
-			rlen = PAGE_SIZE - laddr;
-			nlen = m->m_len - rlen;
-			*(gbuf + segs) = octeon_eth_send_makecmd_w1(rlen,
-			    KVTOPHYS(m->m_data));
-			segs++;
-			if (segs > 63) {
-				return 1;
-			}
-			/* XXX */
-		} else {
-			rlen = 0;
-			nlen = m->m_len;
-		}
-
-		*(gbuf + segs) = octeon_eth_send_makecmd_w1(nlen,
-		    KVTOPHYS((caddr_t)m->m_data + rlen));
-		segs++;
-		if (segs > 63) {
+		if (segs >= OCTEON_POOL_SIZE_SG / sizeof(uint64_t))
 			return 1;
-		}
+		gbuf[segs] = octeon_eth_send_makecmd_w1(m->m_len,
+		    KVTOPHYS(m->m_data));
+		segs++;
 	}
-
-	OCTEON_ETH_KASSERT(m == NULL);
 
 	*rsegs = segs;
 
