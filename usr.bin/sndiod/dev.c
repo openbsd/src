@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.21 2015/11/25 18:47:12 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.22 2015/11/25 18:51:08 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -988,7 +988,6 @@ dev_new(char *path, struct aparams *par,
 	 */
 	d->midi = midi_new(&dev_midiops, d, MODE_MIDIIN | MODE_MIDIOUT);
 	midi_tag(d->midi, d->num);
-	d->path = path;
 	d->reqpar = *par;
 	d->reqmode = mode;
 	d->reqpchan = d->reqrchan = 0;
