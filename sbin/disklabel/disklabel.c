@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.213 2015/11/24 01:17:03 krw Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.214 2015/11/25 17:17:38 krw Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -191,7 +191,7 @@ main(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 
-	if (op == EDIT || op == EDITOR) {
+	if (op == EDIT || op == EDITOR || aflag) {
 		if (pledge("stdio rpath wpath cpath disklabel proc exec", NULL) == -1)
 			err(1, "pledge");
 	} else {
