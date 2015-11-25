@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.15 2015/11/24 03:10:09 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.16 2015/11/25 23:18:11 deraadt Exp $
 
 PROG=	atc
 CFLAGS+=-I${.CURDIR} -I.
@@ -23,11 +23,5 @@ beforeinstall:
 	(cd ${.CURDIR}/games; ${INSTALL} ${INSTALL_COPY} \
 	    -o ${BINOWN} -g ${BINGRP} \
 	    -m 444 ${GAMES} ${DESTDIR}/usr/share/games/atc)
-	@if [ ! -f ${DESTDIR}/var/games/atc_score ]; then \
-	    ${INSTALL} ${INSTALL_COPY} -o ${BINOWN} -g ${BINGRP} -m 664 \
-		/dev/null ${DESTDIR}/var/games/atc_score ; \
-	else \
-                true ; \
-        fi
 
 .include <bsd.prog.mk>
