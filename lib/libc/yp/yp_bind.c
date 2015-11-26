@@ -1,4 +1,4 @@
-/*	$OpenBSD: yp_bind.c,v 1.25 2015/09/14 12:09:35 guenther Exp $ */
+/*	$OpenBSD: yp_bind.c,v 1.26 2015/11/26 07:26:50 deraadt Exp $ */
 /*
  * Copyright (c) 1992, 1993, 1996 Theo de Raadt <deraadt@theos.com>
  * All rights reserved.
@@ -61,7 +61,6 @@ _yp_dobind(const char *dom, struct dom_binding **ypdb)
 	pid_t		gpid;
 	CLIENT         *client;
 	int             new = 0, r;
-	int             count = 0;
 	u_short		port;
 
 	/*
@@ -191,19 +190,6 @@ trynet:
 		r = clnt_call(client, YPBINDPROC_DOMAIN, xdr_domainname,
 		    &dom, xdr_ypbind_resp, &ypbr, tv);
 		if (r != RPC_SUCCESS) {
-			if (new == 0 || count) {
-				int fd;
-
-				fd = open(_PATH_TTY,
-				    O_WRONLY | O_NONBLOCK | O_NOCTTY);
-				if (fd != -1) {
-					dprintf(fd,
-			"YP server for domain %s not responding, still trying\n",
-					    dom);
-					close(fd);
-				}
-			}
-			count++;
 			clnt_destroy(client);
 			ysd->dom_vers = -1;
 			goto again;
