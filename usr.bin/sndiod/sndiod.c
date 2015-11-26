@@ -1,4 +1,4 @@
-/*	$OpenBSD: sndiod.c,v 1.16 2015/11/24 12:14:08 ratchov Exp $	*/
+/*	$OpenBSD: sndiod.c,v 1.17 2015/11/26 12:35:37 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -94,7 +94,6 @@ unsigned int opt_mode(void);
 void getbasepath(char *, size_t);
 void setsig(void);
 void unsetsig(void);
-void privdrop(void);
 struct dev *mkdev(char *, struct aparams *,
     int, int, int, int, int, int);
 struct opt *mkopt(char *, struct dev *,
@@ -277,21 +276,6 @@ getbasepath(char *base, size_t size)
 		errx(1, "%s has wrong permissions", base);
 }
 
-void
-privdrop(void)
-{
-	struct passwd *pw;
-
-	if ((pw = getpwnam(SNDIO_USER)) == NULL)
-		errx(1, "unknown user %s", SNDIO_USER);
-	if (setpriority(PRIO_PROCESS, 0, SNDIO_PRIO) < 0)
-		err(1, "setpriority");
-	if (setgroups(1, &pw->pw_gid) ||
-	    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||
-	    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
-		err(1, "cannot drop privileges");
-}
-
 struct dev *
 mkdev(char *path, struct aparams *par,
     int mode, int bufsz, int round, int rate, int hold, int autovol)
@@ -343,6 +327,7 @@ main(int argc, char **argv)
 	struct dev *d;
 	struct port *p;
 	struct listen *l;
+	struct passwd *pw;
 
 	atexit(log_flush);
 
@@ -366,9 +351,6 @@ main(int argc, char **argv)
 	aparams_init(&par);
 	mode = MODE_PLAY | MODE_REC;
 	tcpaddr = NULL;
-
-	setsig();
-	filelist_init();
 
 	while ((c = getopt(argc, argv, "a:b:c:C:de:f:j:L:m:q:r:s:t:U:v:w:x:z:")) != -1) {
 		switch (c) {
@@ -463,6 +445,10 @@ main(int argc, char **argv)
 		mkopt("default", d, pmin, pmax, rmin, rmax,
 		    mode, vol, mmc, dup);
 	}
+
+	setsig();
+	filelist_init();
+
 	getbasepath(base, sizeof(base));
 	snprintf(path, SOCKPATH_MAX, "%s/" SOCKPATH_FILE "%u", base, unit);
 	listen_new_un(path);
@@ -473,8 +459,16 @@ main(int argc, char **argv)
 		errx(1, "-L option disabled at compilation time");
 #endif
 	}
-	if (geteuid() == 0)
-		privdrop();
+	if (geteuid() == 0) {
+		if ((pw = getpwnam(SNDIO_USER)) == NULL)
+			errx(1, "unknown user %s", SNDIO_USER);
+		if (setpriority(PRIO_PROCESS, 0, SNDIO_PRIO) < 0)
+			err(1, "setpriority");
+		if (setgroups(1, &pw->pw_gid) ||
+		    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||
+		    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
+			err(1, "cannot drop privileges");
+	}
 	midi_init();
 	for (p = port_list; p != NULL; p = p->next) {
 		if (!port_init(p))
@@ -494,10 +488,6 @@ main(int argc, char **argv)
 		if (daemon(0, 0) < 0)
 			err(1, "daemon");
 	}
-
-	/*
-	 * Loop, start audio.
-	 */
 	for (;;) {
 		if (quit_flag)
 			break;
@@ -521,8 +511,8 @@ main(int argc, char **argv)
 		dev_del(dev_list);
 	while (port_list)
 		port_del(port_list);
-	filelist_done();
 	rmdir(base);
+	filelist_done();
 	unsetsig();
 	return 0;
 }
