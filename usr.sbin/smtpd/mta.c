@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.192 2015/10/14 22:01:43 gilles Exp $	*/
+/*	$OpenBSD: mta.c,v 1.193 2015/11/26 08:51:22 tim Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -1246,13 +1246,13 @@ mta_route_disable(struct mta_route *route, int penalty, int reason)
 	log_info("smtp-out: Disabling route %s for %llus",
 	    mta_route_to_text(route), delay);
 
-	if (route->flags & ROUTE_DISABLED) {
+	if (route->flags & ROUTE_DISABLED)
 		runq_cancel(runq_route, NULL, route);
-		mta_route_unref(route); /* from last call to here */
-	}
+	else
+		mta_route_ref(route);
+
 	route->flags |= reason & ROUTE_DISABLED;
 	runq_schedule(runq_route, time(NULL) + delay, NULL, route);
-	mta_route_ref(route);
 }
 
 static void
