@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.2 2015/11/24 10:17:15 espie Exp $	*/
+/*	$OpenBSD: parse.y,v 1.3 2015/11/26 08:34:25 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007-2015 Reyk Floeter <reyk@openbsd.org>
@@ -89,7 +89,7 @@ typedef struct {
 
 %token	INCLUDE ERROR
 %token	DISK NIFS PATH SIZE VMID
-%token	ENABLE DISABLE VM VMM KERNEL MEMORY
+%token	ENABLE DISABLE VM KERNEL MEMORY
 %token	<v.string>	STRING
 %token  <v.number>	NUMBER
 %type	<v.number>	disable
@@ -127,13 +127,7 @@ varset		: STRING '=' STRING		{
 		}
 		;
 
-main		: VMM disable			{
-			memset(&res, 0, sizeof(res));
-			res.action = $2 ? CMD_DISABLE : CMD_ENABLE;
-			if (vmmaction(&res) != 0)
-				errx(1, "vmmaction");
-		}
-		| VM STRING			{
+main		: VM STRING			{
 			memset(&res, 0, sizeof(res));
 			res.name = $2;
 		} '{' optnl vm_opts_l '}'	{
@@ -256,8 +250,7 @@ lookup(char *s)
 		{ "kernel",		KERNEL },
 		{ "memory",		MEMORY },
 		{ "size",		SIZE },
-		{ "vm",			VM },
-		{ "vmm",		VMM }
+		{ "vm",			VM }
 	};
 	const struct keywords	*p;
 
