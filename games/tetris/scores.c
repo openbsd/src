@@ -1,4 +1,4 @@
-/*	$OpenBSD: scores.c,v 1.14 2015/11/26 13:24:30 tb Exp $	*/
+/*	$OpenBSD: scores.c,v 1.15 2015/11/26 14:43:18 tb Exp $	*/
 /*	$NetBSD: scores.c,v 1.2 1995/04/22 07:42:38 cgd Exp $	*/
 
 /*-
@@ -116,7 +116,7 @@ getscores(FILE **fpp)
 
 	ret = snprintf(scorepath, sizeof(scorepath), "%s/%s", home, ".tetris.scores");
 	if (ret < 0 || ret >= PATH_MAX)
-		errc(1, ENAMETOOLONG, "%s/%s", home, ".snake.scores");
+		errc(1, ENAMETOOLONG, "%s/%s", home, ".tetris.scores");
 
 	sd = open(scorepath, mint, 0666);
 	if (sd < 0) {
