@@ -1,4 +1,4 @@
-/*	$OpenBSD: mansearch.c,v 1.47 2015/10/13 15:50:15 schwarze Exp $ */
+/*	$OpenBSD: mansearch.c,v 1.48 2015/11/26 07:41:38 schwarze Exp $ */
 /*
  * Copyright (c) 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -48,17 +48,17 @@ extern const char *const mansearch_keynames[];
 #define	SQL_BIND_TEXT(_db, _s, _i, _v) \
 	do { if (SQLITE_OK != sqlite3_bind_text \
 		((_s), (_i)++, (_v), -1, SQLITE_STATIC)) \
-		warnx("%s", sqlite3_errmsg((_db))); \
+		errx((int)MANDOCLEVEL_SYSERR, "%s", sqlite3_errmsg((_db))); \
 	} while (0)
 #define	SQL_BIND_INT64(_db, _s, _i, _v) \
 	do { if (SQLITE_OK != sqlite3_bind_int64 \
 		((_s), (_i)++, (_v))) \
-		warnx("%s", sqlite3_errmsg((_db))); \
+		errx((int)MANDOCLEVEL_SYSERR, "%s", sqlite3_errmsg((_db))); \
 	} while (0)
 #define	SQL_BIND_BLOB(_db, _s, _i, _v) \
 	do { if (SQLITE_OK != sqlite3_bind_blob \
 		((_s), (_i)++, (&_v), sizeof(_v), SQLITE_STATIC)) \
-		warnx("%s", sqlite3_errmsg((_db))); \
+		errx((int)MANDOCLEVEL_SYSERR, "%s", sqlite3_errmsg((_db))); \
 	} while (0)
 
 struct	expr {
@@ -256,7 +256,8 @@ mansearch(const struct mansearch *search,
 		j = 1;
 		c = sqlite3_prepare_v2(db, sql, -1, &s, NULL);
 		if (SQLITE_OK != c)
-			warnx("%s", sqlite3_errmsg(db));
+			errx((int)MANDOCLEVEL_SYSERR,
+			    "%s", sqlite3_errmsg(db));
 
 		for (ep = e; NULL != ep; ep = ep->next) {
 			if (NULL == ep->substr) {
@@ -306,14 +307,16 @@ mansearch(const struct mansearch *search,
 		    "WHERE pageid=? ORDER BY sec, arch, name",
 		    -1, &s, NULL);
 		if (SQLITE_OK != c)
-			warnx("%s", sqlite3_errmsg(db));
+			errx((int)MANDOCLEVEL_SYSERR,
+			    "%s", sqlite3_errmsg(db));
 
 		c = sqlite3_prepare_v2(db,
 		    "SELECT bits, key, pageid FROM keys "
 		    "WHERE pageid=? AND bits & ?",
 		    -1, &s2, NULL);
 		if (SQLITE_OK != c)
-			warnx("%s", sqlite3_errmsg(db));
+			errx((int)MANDOCLEVEL_SYSERR,
+			    "%s", sqlite3_errmsg(db));
 
 		for (mp = ohash_first(&htab, &idx);
 				NULL != mp;
