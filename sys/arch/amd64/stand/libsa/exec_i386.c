@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_i386.c,v 1.15 2015/10/05 22:59:39 yasuoka Exp $	*/
+/*	$OpenBSD: exec_i386.c,v 1.16 2015/11/26 10:52:40 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Michael Shalayeff
@@ -141,7 +141,7 @@ run_loadfile(u_long *marks, int howto)
 #else
 	/*
 	 * Move the loaded kernel image to the usual place after calling
-	 * ExitBootServervice()
+	 * ExitBootServices().
 	 */
 	delta = DEFAULT_KERNEL_ADDRESS - efi_loadaddr;
 	efi_cleanup();
