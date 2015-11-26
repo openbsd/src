@@ -1,4 +1,4 @@
-/* $OpenBSD: newfs_ext2fs.c,v 1.18 2015/11/23 19:19:30 deraadt Exp $ */
+/* $OpenBSD: newfs_ext2fs.c,v 1.19 2015/11/26 06:45:08 deraadt Exp $ */
 /*	$NetBSD: newfs_ext2fs.c,v 1.8 2009/03/02 10:38:13 tsutsui Exp $	*/
 
 /*
@@ -122,7 +122,7 @@ main(int argc, char *argv[])
 	struct partition *pp = NULL;
 	struct disklabel *lp;
 
-	if (pledge("stdio rpath wpath disklabel", NULL) == -1)
+	if (pledge("stdio rpath wpath tty disklabel", NULL) == -1)
 		err(1, "pledge");
 
 	cp = NULL;
