@@ -211,7 +211,8 @@ code for @value{TARGET} architectures.
 Here is a brief summary of how to invoke @command{@value{AS}}.  For details,
 @pxref{Invoking,,Command-Line Options}.
 
-@c man title AS the portable GNU assembler.
+@set as
+@c man title as the portable GNU assembler
 
 @ignore
 @c man begin SEEALSO
