@@ -1,4 +1,4 @@
-.\"	$OpenBSD: srpl_rc_init.9,v 1.7 2015/11/26 12:17:19 mpi Exp $
+.\"	$OpenBSD: srpl_rc_init.9,v 1.8 2015/11/26 13:08:18 jmc Exp $
 .\"
 .\" Copyright (c) 2015 David Gwynne <dlg@openbsd.org>
 .\"
@@ -184,8 +184,8 @@ creates a loop for traversing the elements in the SRP list
 .Pp
 .Fn SRPL_FOREACH_SAFE_LOCKED
 creates a loop for traversing the elements in the SRP list
-.Fa sl
-permitting to remove
+.Fa sl ,
+permitting it to remove
 .Fa VARNAME
 as well as freeing it from within the loop safely without interfering with the
 traversal.
