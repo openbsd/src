@@ -1,4 +1,4 @@
-/* $OpenBSD: mke2fs.c,v 1.13 2015/01/16 06:40:00 deraadt Exp $ */
+/* $OpenBSD: mke2fs.c,v 1.14 2015/11/26 06:59:12 deraadt Exp $ */
 /*	$NetBSD: mke2fs.c,v 1.13 2009/10/19 18:41:08 bouyer Exp $	*/
 
 /*-
@@ -176,6 +176,8 @@ static uint8_t buf[MAXBSIZE];	/* for initcg() and makedir() ops */
 
 static int fsi, fso;
 
+extern int max_cols;
+
 void
 mke2fs(const char *fsys, int fi, int fo)
 {
@@ -185,8 +187,7 @@ mke2fs(const char *fsys, int fi, int fo)
 	uint blocks_gd, blocks_per_cg, inodes_per_cg, iblocks_per_cg;
 	uint minblocks_per_cg, blocks_lastcg;
 	uint ncg, cylno, sboff;
-	int i, len, col, delta, fld_width, max_cols;
-	struct winsize winsize;
+	int i, len, col, delta, fld_width;
 
 	gettimeofday(&tv, NULL);
 	fsi = fi;
@@ -577,11 +578,6 @@ mke2fs(const char *fsys, int fi, int fo)
 	/* If we are printing more than one line of numbers, line up columns */
 	fld_width = verbosity < 4 ? 1 : snprintf(NULL, 0, "%" PRIu64,
 	    (uint64_t)cgbase(&sblock, ncg - 1));
-	/* Get terminal width */
-	if (ioctl(fileno(stdout), TIOCGWINSZ, &winsize) == 0)
-		max_cols = winsize.ws_col;
-	else
-		max_cols = 80;
 	if (Nflag && verbosity == 3)
 		/* Leave space to add " ..." after one row of numbers */
 		max_cols -= 4;

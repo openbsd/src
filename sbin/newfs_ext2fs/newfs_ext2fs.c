@@ -1,4 +1,4 @@
-/* $OpenBSD: newfs_ext2fs.c,v 1.19 2015/11/26 06:45:08 deraadt Exp $ */
+/* $OpenBSD: newfs_ext2fs.c,v 1.20 2015/11/26 06:59:12 deraadt Exp $ */
 /*	$NetBSD: newfs_ext2fs.c,v 1.8 2009/03/02 10:38:13 tsutsui Exp $	*/
 
 /*
@@ -101,6 +101,7 @@ uint	bsize = 0;		/* block size */
 uint	minfree = MINFREE;	/* free space threshold */
 uint	density;		/* number of bytes per inode */
 uint	num_inodes;		/* number of inodes (overrides density) */
+int	max_cols;
 char	*volname = NULL;	/* volume name */
 
 static char *disktype = NULL;
@@ -121,6 +122,13 @@ main(int argc, char *argv[])
 	uint blocks;			/* number of blocks */
 	struct partition *pp = NULL;
 	struct disklabel *lp;
+	struct winsize winsize;
+
+	/* Get terminal width */
+	if (ioctl(fileno(stdout), TIOCGWINSZ, &winsize) == 0)
+		max_cols = winsize.ws_col;
+	else
+		max_cols = 80;
 
 	if (pledge("stdio rpath wpath tty disklabel", NULL) == -1)
 		err(1, "pledge");
