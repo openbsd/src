@@ -163,8 +163,6 @@
 ./usr/share/man/man6/worm.6
 ./usr/share/man/man6/worms.6
 ./usr/share/man/man6/wump.6
-./var/games/atc_score
-./var/games/battlestar.log
 ./var/games/hackdir
 ./var/games/hackdir/data
 ./var/games/hackdir/help
@@ -183,4 +181,3 @@
 ./var/games/phantasia/void
 ./var/games/robots_roll
 ./var/games/save
-./var/games/snakerawscores
