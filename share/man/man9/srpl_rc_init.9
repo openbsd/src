@@ -1,4 +1,4 @@
-.\"	$OpenBSD: srpl_rc_init.9,v 1.6 2015/09/18 17:09:11 jmc Exp $
+.\"	$OpenBSD: srpl_rc_init.9,v 1.7 2015/11/26 12:17:19 mpi Exp $
 .\"
 .\" Copyright (c) 2015 David Gwynne <dlg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 18 2015 $
+.Dd $Mdocdate: November 26 2015 $
 .Dt SRPL_RC_INIT 9
 .Os
 .Sh NAME
@@ -28,6 +28,7 @@
 .Nm SRPL_FIRST_LOCKED ,
 .Nm SRPL_NEXT_LOCKED ,
 .Nm SRPL_FOREACH_LOCKED ,
+.Nm SRPL_FOREACH_SAFE_LOCKED ,
 .Nm SRPL_INSERT_HEAD_LOCKED ,
 .Nm SRPL_INSERT_AFTER_LOCKED ,
 .Nm SRPL_REMOVE_LOCKED ,
@@ -64,6 +65,7 @@
 .Ft void *
 .Fn "SRPL_NEXT_LOCKED" "struct TYPE *listelm" "FIELDNAME"
 .Fn "SRPL_FOREACH_LOCKED" "VARNAME" "struct srpl *sl" "FIELDNAME"
+.Fn "SRPL_FOREACH_SAFE_LOCKED" "VARNAME" "struct srpl *sl" "FIELDNAME" "TEMP_VARNAME"
 .Fo "SRPL_INSERT_HEAD_LOCKED"
 .Fa "struct srpl_rc *rc"
 .Fa "struct srpl *sl"
@@ -179,6 +181,14 @@ accesses the next element in the SRP list after
 .Fn SRPL_FOREACH_LOCKED
 creates a loop for traversing the elements in the SRP list
 .Fa sl .
+.Pp
+.Fn SRPL_FOREACH_SAFE_LOCKED
+creates a loop for traversing the elements in the SRP list
+.Fa sl
+permitting to remove
+.Fa VARNAME
+as well as freeing it from within the loop safely without interfering with the
+traversal.
 .Pp
 .Fn SRPL_INSERT_HEAD_LOCKED
 inserts

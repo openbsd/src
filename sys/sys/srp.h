@@ -1,4 +1,4 @@
-/*	$OpenBSD: srp.h,v 1.5 2015/09/18 08:30:23 dlg Exp $ */
+/*	$OpenBSD: srp.h,v 1.6 2015/11/26 12:17:19 mpi Exp $ */
 
 /*
  * Copyright (c) 2014 Jonathan Matthew <jmatthew@openbsd.org>
@@ -136,6 +136,11 @@ _srpl_next(struct srpl_iter *si, void *elm, struct srp *nref)
 	for ((_c) = SRPL_FIRST_LOCKED(_sl);				\
 	    (_c) != NULL;						\
 	    (_c) = SRPL_NEXT_LOCKED((_c), _ENTRY))
+
+#define SRPL_FOREACH_SAFE_LOCKED(_c, _sl, _ENTRY, _tc)			\
+	for ((_c) = SRPL_FIRST_LOCKED(_sl);				\
+	    (_c) && ((_tc) = SRPL_NEXT_LOCKED(_c, _ENTRY), 1);		\
+	    (_c) = (_tc))
 
 #define SRPL_INSERT_HEAD_LOCKED(_rc, _sl, _e, _ENTRY) do {		\
 	void *head;							\
