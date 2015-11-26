@@ -1,4 +1,4 @@
-/*	$OpenBSD: cfscores.c,v 1.18 2015/11/24 16:54:22 tedu Exp $	*/
+/*	$OpenBSD: cfscores.c,v 1.19 2015/11/26 13:28:22 tb Exp $	*/
 /*	$NetBSD: cfscores.c,v 1.3 1995/03/21 15:08:37 cgd Exp $	*/
 
 /*
@@ -31,10 +31,10 @@
  */
 
 #include <sys/types.h>
+#include <errno.h>
 #include <err.h>
 #include <fcntl.h>
 #include <limits.h>
-#include <pwd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -54,27 +54,28 @@ struct betinfo {
 int dbfd;
 char scorepath[PATH_MAX];
 
-void	printuser(const struct passwd *, int);
+void	printuser(void);
 
 int
 main(int argc, char *argv[])
 {
-	struct passwd *pw;
-	uid_t uid;
+	char *home, *name;
+	int ret;
 	
-	if (!getenv("HOME"))
-		return;
-	snprintf(scorepath, sizeof(scorepath), "%s/%s", getenv("HOME"),
+	home = getenv("HOME");
+	if (home == NULL || *home == '\0')
+		err(1, "getenv");
+
+	ret = snprintf(scorepath, sizeof(scorepath), "%s/%s", home,
 	    ".cfscores");
+	if (ret < 0 || ret >= PATH_MAX)
+		errc(1, ENAMETOOLONG, "%s/%s", home, ".cfscores");
+
 	dbfd = open(scorepath, O_RDONLY);
 	if (dbfd < 0)
 		err(2, "%s", scorepath);
 
-	setpwent();
-	uid = getuid();
-	pw = getpwuid(uid);
-
-	printuser(pw, 1);
+	printuser();
 	exit(0);
 }
 
@@ -82,46 +83,46 @@ main(int argc, char *argv[])
  * print out info for specified password entry
  */
 void
-printuser(const struct passwd *pw, int printfail)
+printuser(void)
 {
 	struct betinfo total;
+	const char *name;
 	int i;
 
-	if (pw->pw_uid < 0) {
-		printf("Bad uid %u\n", pw->pw_uid);
-		return;
-	}
+	name = getlogin();
+	if (name == NULL || *name == '\0')
+		name = " ??? ";
+
 	i = read(dbfd, (char *)&total, sizeof(total));
 	if (i < 0) {
 		warn("lseek %s", scorepath);
 		return;
 	}
 	if (i == 0 || total.hand == 0) {
-		if (printfail)
-			printf("%s has never played canfield.\n", pw->pw_name);
+		printf("%s has never played canfield.\n", name);
 		return;
 	}
-	i = strlen(pw->pw_name);
+	i = strlen(name);
 	printf("*----------------------*\n");
 	if (total.worth >= 0) {
 		if (i <= 8)
-			printf("* Winnings for %-8s*\n", pw->pw_name);
+			printf("* Winnings for %-8s*\n", name);
 		else {
 			printf("*     Winnings for     *\n");
 			if (i <= 20)
-				printf("* %20s *\n", pw->pw_name);
+				printf("* %20s *\n", name);
 			else
-				printf("%s\n", pw->pw_name);
+				printf("%s\n", name);
 		}
 	} else {
 		if (i <= 10)
-			printf("* Losses for %-10s*\n", pw->pw_name);
+			printf("* Losses for %-10s*\n", name);
 		else {
 			printf("*      Losses for      *\n");
 			if (i <= 20)
-				printf("* %20s *\n", pw->pw_name);
+				printf("* %20s *\n", name);
 			else
-				printf("%s\n", pw->pw_name);
+				printf("%s\n", name);
 		}
 	}
 	printf("*======================*\n");

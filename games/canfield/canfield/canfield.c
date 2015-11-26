@@ -1,4 +1,4 @@
-/*	$OpenBSD: canfield.c,v 1.19 2015/11/25 16:19:05 tb Exp $	*/
+/*	$OpenBSD: canfield.c,v 1.20 2015/11/26 13:28:22 tb Exp $	*/
 /*	$NetBSD: canfield.c,v 1.7 1995/05/13 07:28:35 jtc Exp $	*/
 
 /*
@@ -45,6 +45,8 @@
 
 #include <ctype.h>
 #include <curses.h>
+#include <errno.h>
+#include <err.h>
 #include <fcntl.h>
 #include <limits.h>
 #include <signal.h>
@@ -1623,15 +1625,22 @@ instruct(void)
 void
 initall(void)
 {
-	int i;
+	int i, ret;
 	char scorepath[PATH_MAX];
+	char *home;
 
 	time(&acctstart);
 	initdeck(deck);
-	if (!getenv("HOME"))
-		return;
-	snprintf(scorepath, sizeof(scorepath), "%s/%s", getenv("HOME"),
+
+	home = getenv("HOME");
+	if (home == NULL || *home == '\0')
+		err(1, "getenv");
+
+	ret = snprintf(scorepath, sizeof(scorepath), "%s/%s", home,
 	    ".cfscores");
+	if (ret < 0 || ret >= PATH_MAX)
+		errc(1, ENAMETOOLONG, "%s/%s", home, ".cfscores");
+
 	dbfd = open(scorepath, O_RDWR | O_CREAT, 0644);
 	if (dbfd < 0)
 		return;
