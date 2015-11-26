@@ -1,4 +1,4 @@
-/*	$OpenBSD: check_expire.c,v 1.11 2015/03/15 00:41:27 millert Exp $	*/
+/*	$OpenBSD: check_expire.c,v 1.12 2015/11/26 23:32:52 millert Exp $	*/
 
 /*
  * Copyright (c) 1997 Berkeley Software Design, Inc. All rights reserved.
@@ -43,7 +43,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <syslog.h>
 #include <time.h>
 #include <login_cap.h>
 #include <bsd_auth.h>
@@ -64,11 +63,15 @@ login_check_expire(FILE *back, struct passwd *pwd, char *class, int lastchance)
 	char *p;
 
 	if ((as = auth_open()) == NULL) {
-		syslog(LOG_ERR, "failed to create auth session");
+		fprintf(back, BI_VALUE
+		    " errormsg Unable to create auth session\n");
+		fprintf(back, BI_REJECT "\n");
 		return (1);
 	}
 	if (auth_setpwd(as, pwd) < 0) {
-		syslog(LOG_ERR, "failed to set pwd entry in auth session");
+		fprintf(back, BI_VALUE
+		    " errormsg Unable to set pwd entry in auth session\n");
+		fprintf(back, BI_REJECT "\n");
 		return (1);
 	}
 
@@ -88,16 +91,10 @@ login_check_expire(FILE *back, struct passwd *pwd, char *class, int lastchance)
 			dead = login_getcaptime(lc, "password-dead", 0, 0);
 			warn = login_getcaptime(lc, "password-warn",
 			    TWOWEEKS, TWOWEEKS);
-			if (dead < 0) {
-				syslog(LOG_ERR, "class %s password-dead is %qd",
-					lc->lc_class, dead);
+			if (dead < 0)
 				dead = 0;
-			}
-			if (warn < 0) {
-				syslog(LOG_ERR, "class %s password-warn is %qd",
-					lc->lc_class, warn);
+			if (warn < 0)
 				warn = 0;
-			}
 		}
 		login_close(lc);
 
@@ -109,7 +106,6 @@ login_check_expire(FILE *back, struct passwd *pwd, char *class, int lastchance)
 		 * get in.
 		 */
 		if (expire < -dead) {
-			syslog(LOG_WARNING, "%s: dead password", pwd->pw_name);
 			fprintf(back, BI_VALUE
 			    " errormsg Your password has expired\n");
 			fprintf(back, BI_REJECT "\n");
@@ -134,13 +130,16 @@ login_check_expire(FILE *back, struct passwd *pwd, char *class, int lastchance)
 				    strlen(npwd->pw_passwd));
 				free(npwd);
 				if (p != NULL) {
-					fprintf(back, BI_VALUE " errormsg %s",
-					    auth_mkvalue(p));
+					char *errval = auth_mkvalue(p);
+					if (errval != NULL) {
+						fprintf(back, BI_VALUE
+						    " errormsg %s", errval);
+						free(errval);
+					}
 					fprintf(back, BI_REJECT "\n");
 					return (1);
 				}
 			}
-			syslog(LOG_WARNING, "%s: expired password", pwd->pw_name);
 			fprintf(back, BI_VALUE
 			    " errormsg Your password has expired\n");
 			fprintf(back, BI_PWEXPIRED "\n");
