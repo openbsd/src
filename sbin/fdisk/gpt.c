@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpt.c,v 1.7 2015/11/19 16:14:08 krw Exp $	*/
+/*	$OpenBSD: gpt.c,v 1.8 2015/11/26 08:15:07 tim Exp $	*/
 /*
  * Copyright (c) 2015 Markus Muller <mmu@grummel.net>
  * Copyright (c) 2015 Kenneth R Westerback <krw@openbsd.org>
@@ -290,7 +290,7 @@ GPT_print_part(int n, char *units)
 	printf("%12.0f%s\n", size, unit_types[u].abbr);
 
 	uuid_dec_le(&partn->gp_type, &guid);
-	printf("      %-36s %-36s\n", PRT_uuid_to_type(&guid),
+	printf("      %-36s %-36s\n", PRT_uuid_to_typename(&guid),
 	    utf16le_to_string(partn->gp_name));
 }
 

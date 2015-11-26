@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.h,v 1.20 2015/10/26 15:08:26 krw Exp $	*/
+/*	$OpenBSD: part.h,v 1.21 2015/11/26 08:15:07 tim Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -34,7 +34,8 @@ void PRT_parse(struct dos_partition *, off_t, off_t,
     struct prt *);
 void PRT_make(struct prt *, off_t, off_t, struct dos_partition *);
 void PRT_print(int, struct prt *, char *);
-char *PRT_uuid_to_type(struct uuid *);
+char *PRT_uuid_to_typename(struct uuid *);
+int PRT_uuid_to_type(struct uuid *);
 struct uuid *PRT_type_to_uuid(int);
 
 /* This does CHS -> bs/ns */

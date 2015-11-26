@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.60 2015/11/26 08:10:42 tim Exp $	*/
+/*	$OpenBSD: misc.c,v 1.61 2015/11/26 08:15:07 tim Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -151,7 +151,7 @@ ask_pid(int dflt, struct uuid *guid)
 			continue;
 		}
 
-		if (guid) {
+		if (guid && strlen(lbuf) == UUID_STR_LEN) {
 			uuid_from_string(lbuf, guid, &status);
 			if (status == uuid_s_ok)
 				return (0x100);

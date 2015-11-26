@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.91 2015/11/25 19:32:35 krw Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.92 2015/11/26 08:15:07 tim Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -303,7 +303,8 @@ Xgsetpid(char *args)
 	GPT_print_part(pn, "s");
 
 	/* Ask for partition type or GUID. */
-	num = ask_pid(0, &guid);
+	uuid_dec_le(&gg->gp_type, &guid);
+	num = ask_pid(PRT_uuid_to_type(&guid), &guid);
 	if (num <= 0xff)
 		guid = *(PRT_type_to_uuid(num));
 	uuid_enc_le(&gg->gp_type, &guid);

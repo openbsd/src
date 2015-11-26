@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.74 2015/11/19 16:14:08 krw Exp $	*/
+/*	$OpenBSD: part.c,v 1.75 2015/11/26 08:15:07 tim Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -376,7 +376,7 @@ PRT_fix_CHS(struct prt *part)
 }
 
 char *
-PRT_uuid_to_type(struct uuid *uuid)
+PRT_uuid_to_typename(struct uuid *uuid)
 {
 	static char partition_type[37];	/* Room for a GUID if needed. */
 	char *uuidstr = NULL;
@@ -406,6 +406,32 @@ done:
 	free(uuidstr);
 
 	return (partition_type);
+}
+
+int
+PRT_uuid_to_type(struct uuid *uuid)
+{
+	char *uuidstr;
+	int entries, i, status, type;
+
+	type = 0;
+
+	uuid_to_string(uuid, &uuidstr, &status);
+	if (status != uuid_s_ok)
+		goto done;
+
+	entries = sizeof(part_types) / sizeof(struct part_type);
+	for (i = 0; i < entries; i++) {
+		if (memcmp(part_types[i].guid, uuidstr,
+		    sizeof(part_types[i].guid)) == 0) {
+			type = part_types[i].type;
+			break;
+		}
+	}
+
+done:
+	free(uuidstr);
+	return (type);
 }
 
 struct uuid *
