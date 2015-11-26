@@ -1,4 +1,4 @@
-.\"	$OpenBSD: port-modules.5,v 1.197 2015/10/05 10:25:59 sobrado Exp $
+.\"	$OpenBSD: port-modules.5,v 1.198 2015/11/26 20:27:46 jasper Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: October 5 2015 $
+.Dd $Mdocdate: November 26 2015 $
 .Dt PORT-MODULES 5
 .Os
 .Sh NAME
@@ -1133,6 +1133,10 @@ to Yes.
 All ports that generate egg-info files should set
 .Ev MODPY_EGG_VERSION
 to the version string used by the port's setup.py setup() function.
+Arguments can be passed to setup.py during
+.Cm configure
+with
+.Ev MODPY_SETUP_ARGS .
 Extra arguments to the build and install commands can be passed via
 .Ev MODPY_DISTUTILS_BUILDARGS
 and
