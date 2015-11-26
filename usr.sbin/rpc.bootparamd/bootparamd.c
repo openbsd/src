@@ -1,4 +1,4 @@
-/*	$OpenBSD: bootparamd.c,v 1.19 2015/11/20 17:49:59 deraadt Exp $	*/
+/*	$OpenBSD: bootparamd.c,v 1.20 2015/11/26 19:00:40 deraadt Exp $	*/
 
 /*
  * This code is not copyright, and is placed in the public domain.
@@ -6,7 +6,6 @@
  * suggestions + bug fixes to Klas Heggemann <klas@nada.kth.se>
  *
  * Various small changes by Theo de Raadt <deraadt@fsa.ca>
- * Parser rewritten (adding YP support) by Roland McGrath <roland@frob.com>
  */
 
 #include <sys/types.h>
@@ -270,10 +269,6 @@ lookup_bootparam(char *client, char *client_canonical, char *id,
     char **server, char **path)
 {
 	FILE   *f;
-#ifdef YP
-	static char *ypbuf = NULL;
-	static int ypbuflen = 0;
-#endif
 	static char buf[BUFSIZ];
 	char   *bp, *word = NULL;
 	size_t  idlen = id == NULL ? 0 : strlen(id);
@@ -301,21 +296,6 @@ lookup_bootparam(char *client, char *client_canonical, char *id,
 				continue;
 			if ((word = strsep(&bp, " \t\n")) == NULL)
 				continue;
-#ifdef YP
-			/* A + in the file means try YP now */
-			if (!strcmp(word, "+")) {
-				char   *ypdom;
-
-				if (yp_get_default_domain(&ypdom) ||
-				    yp_match(ypdom, "bootparams", client,
-					strlen(client), &ypbuf, &ypbuflen))
-					continue;
-				bp = ypbuf;
-				word = client;
-				contin *= -1;
-				break;
-			}
-#endif
 			/* See if this line's client is the one we are
 			 * looking for */
 			if (strcasecmp(word, client) != 0) {
