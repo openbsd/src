@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_radius.c,v 1.7 2013/11/27 21:25:25 deraadt Exp $	*/
+/*	$OpenBSD: login_radius.c,v 1.8 2015/11/26 19:59:18 yasuoka Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 Berkeley Software Design, Inc. All rights reserved.
@@ -91,6 +91,10 @@ main(int argc, char **argv)
 	int c, n;
 	extern char *__progname;
 
+	if (pledge("stdio rpath wpath inet dns tty", NULL) == -1) {
+		syslog(LOG_AUTH|LOG_ERR, "pledge: %m");
+		exit(1);
+	}
 	back = NULL;
 	password = class = service = NULL;
 
