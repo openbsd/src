@@ -1,4 +1,4 @@
-/*	$OpenBSD: i386_installboot.c,v 1.16 2015/11/03 11:38:41 jsg Exp $	*/
+/*	$OpenBSD: i386_installboot.c,v 1.17 2015/11/26 19:03:10 deraadt Exp $	*/
 /*	$NetBSD: installboot.c,v 1.5 1995/11/17 23:23:50 gwr Exp $ */
 
 /*
@@ -180,8 +180,7 @@ write_bootblocks(int devfd, char *dev, struct disklabel *dl)
 	pbr_set_symbols(stage1, blkstore, pbr_symbols);
 
 	if (!nowrite) {
-		/* Sync filesystems (to clean in-memory superblock?). */
-		sync(); sleep(1);
+		fsync(devfd); sleep(1);
 	}
 
 	/*
@@ -638,8 +637,7 @@ getbootparams(char *boot, int devfd, struct disklabel *dl)
 	 * to be able to load it later.
 	 */
 
-	/* Make sure the (probably new) boot file is on disk. */
-	sync(); sleep(1);
+	fsync(devfd); sleep(1);
 
 	if ((fd = open(boot, O_RDONLY)) < 0)
 		err(1, "open: %s", boot);

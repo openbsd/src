@@ -1,4 +1,4 @@
-/*	$OpenBSD: sparc64_installboot.c,v 1.4 2015/10/08 14:50:38 krw Exp $	*/
+/*	$OpenBSD: sparc64_installboot.c,v 1.5 2015/11/26 19:03:10 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2012, 2013 Joel Sing <jsing@openbsd.org>
@@ -92,8 +92,7 @@ md_loadboot(void)
 void
 md_installboot(int devfd, char *dev)
 {
-	/* XXX - is this necessary? */
-	sync();
+	fsync(devfd);
 
 	bootldr = fileprefix(root, bootldr);
 	if (bootldr == NULL)
