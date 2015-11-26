@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.8 2015/11/26 08:26:48 reyk Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.9 2015/11/26 08:32:09 jsg Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -985,6 +985,7 @@ vcpu_init_vmx(struct vcpu *vcpu)
 	struct vmx_msr_store *msr_store;
 
 	ret = 0;
+	pat_default = 0;
 
 	/* Allocate VMCS VA */
 	vcpu->vc_control_va = (vaddr_t)km_alloc(PAGE_SIZE, &kv_page, &kp_zero,
