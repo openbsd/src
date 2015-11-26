@@ -1,4 +1,4 @@
-/*	$OpenBSD: chpass.c,v 1.42 2015/11/18 19:26:45 tedu Exp $	*/
+/*	$OpenBSD: chpass.c,v 1.43 2015/11/26 19:01:47 deraadt Exp $	*/
 /*	$NetBSD: chpass.c,v 1.8 1996/05/15 21:50:43 jtc Exp $	*/
 
 /*-
@@ -53,10 +53,6 @@ extern char *__progname;
 
 enum { NEWSH, LOADENTRY, EDITENTRY } op;
 uid_t uid;
-#ifdef	YP
-int	use_yp;
-int	force_yp = 0;
-#endif
 
 void	baduser(void);
 void	kbintr(int);
@@ -70,9 +66,6 @@ main(int argc, char *argv[])
 	char *tz, *arg = NULL;
 	sigset_t fullset;
 
-#ifdef	YP
-	use_yp = _yp_check(NULL);
-#endif
 	/* We need to use the system timezone for date conversions. */
 	if ((tz = getenv("TZ")) != NULL) {
 	    unsetenv("TZ");
@@ -81,7 +74,7 @@ main(int argc, char *argv[])
 	}
 
 	op = EDITENTRY;
-	while ((ch = getopt(argc, argv, "a:s:ly")) != -1)
+	while ((ch = getopt(argc, argv, "a:s:")) != -1)
 		switch(ch) {
 		case 'a':
 			op = LOADENTRY;
@@ -91,18 +84,6 @@ main(int argc, char *argv[])
 			op = NEWSH;
 			arg = optarg;
 			break;
-#ifdef	YP
-		case 'l':
-			use_yp = 0;
-			break;
-		case 'y':
-			if (!use_yp) {
-				warnx("YP not in use.");
-				usage();
-			}
-			force_yp = 1;
-			break;
-#endif
 		case '?':
 		default:
 			usage();
@@ -110,33 +91,17 @@ main(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 
-#ifdef	YP
-	if (op == LOADENTRY && use_yp)
-		errx(1, "cannot load using YP, use -l to load local.");
-#endif
 	uid = getuid();
 
 	if (op == EDITENTRY || op == NEWSH)
 		switch(argc) {
 		case 0:
 			pw = getpwuid_shadow(uid);
-#ifdef	YP
-			if (pw && !force_yp)
-				use_yp = 0;
-			else if (use_yp)
-				pw = ypgetpwuid(uid);
-#endif	/* YP */
 			if (!pw)
 				errx(1, "unknown user: uid %u", uid);
 			break;
 		case 1:
 			pw = getpwnam_shadow(*argv);
-#ifdef	YP
-			if (pw && !force_yp)
-				use_yp = 0;
-			else if (use_yp)
-				pw = ypgetpwnam(*argv);
-#endif	/* YP */
 			if (!pw)
 				errx(1, "unknown user: %s", *argv);
 			if (uid && uid != pw->pw_uid)
@@ -170,6 +135,11 @@ main(int argc, char *argv[])
 		if (dfd == -1)
 			pw_error(tempname, 1, 1);
 		display(tempname, dfd, pw);
+
+		if (pledge("stdio rpath wpath cpath id proc exec",
+		    NULL) == -1)
+			err(1, "pledge");
+
 		edit_status = edit(tempname, pw);
 		close(dfd);
 		unlink(tempname);
@@ -188,6 +158,10 @@ main(int argc, char *argv[])
 	}
 
 	if (op == NEWSH) {
+		if (pledge("stdio rpath wpath cpath id proc exec",
+		    NULL) == -1)
+			err(1, "pledge");
+
 		/* protect p_shell -- it thinks NULL is /bin/sh */
 		if (!arg[0])
 			usage();
@@ -200,6 +174,9 @@ main(int argc, char *argv[])
 	sigfillset(&fullset);
 	sigdelset(&fullset, SIGINT);
 	sigprocmask(SIG_BLOCK, &fullset, NULL);
+
+	if (pledge("stdio rpath wpath cpath proc exec", NULL) == -1)
+		err(1, "pledge");
 
 	/* Get the passwd lock file and open the passwd file for reading. */
 	pw_init();
@@ -219,28 +196,15 @@ main(int argc, char *argv[])
 	if (pfd == -1)
 		pw_error(_PATH_MASTERPASSWD, 1, 1);
 
-#ifdef	YP
-	if (use_yp) {
-		if (pw_yp(pw, uid))
-			pw_error(NULL, 0, 1);
-		else {
-			pw_abort();
-			exit(0);
-		}
-	} else
-#endif	/* YP */
-	{
-		/* Copy the passwd file to the lock file, updating pw. */
-		pw_copy(pfd, tfd, pw, opw);
+	/* Copy the passwd file to the lock file, updating pw. */
+	pw_copy(pfd, tfd, pw, opw);
 
-		/* If username changed we need to rebuild the entire db. */
-		arg = !strcmp(opw->pw_name, pw->pw_name) ? pw->pw_name : NULL;
+	/* If username changed we need to rebuild the entire db. */
+	arg = !strcmp(opw->pw_name, pw->pw_name) ? pw->pw_name : NULL;
 
-		/* Now finish the passwd file update. */
-		if (pw_mkdb(arg, 0) == -1)
-			pw_error(NULL, 0, 1);
-	}
-
+	/* Now finish the passwd file update. */
+	if (pw_mkdb(arg, 0) == -1)
+		pw_error(NULL, 0, 1);
 	exit(0);
 }
 
@@ -276,15 +240,7 @@ void
 usage(void)
 {
 
-#ifdef	YP
-	(void)fprintf(stderr,
-	    "usage: %s [-l%s] [-s newshell] [user]\n",
-	    __progname, use_yp ? "y" : "");
-	(void)fprintf(stderr,
-	    "       %s [-l] -a list\n", __progname);
-#else
 	(void)fprintf(stderr, "usage: %s [-s newshell] [user]\n", __progname);
 	(void)fprintf(stderr, "       %s -a list\n", __progname);
-#endif
 	exit(1);
 }

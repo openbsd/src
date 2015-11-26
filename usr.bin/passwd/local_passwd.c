@@ -1,4 +1,4 @@
-/*	$OpenBSD: local_passwd.c,v 1.45 2015/10/25 08:39:26 ajacoutot Exp $	*/
+/*	$OpenBSD: local_passwd.c,v 1.46 2015/11/26 19:01:47 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -66,13 +66,13 @@ local_passwd(char *uname, int authenticated)
 	int pwflags = _PASSWORD_OMITV7;
 
 	if (!(pw = getpwnam(uname))) {
-#ifdef YP
-		extern int use_yp;
-		if (!use_yp)
-#endif
 		warnx("unknown user %s.", uname);
 		return(1);
 	}
+
+	if (pledge("stdio rpath wpath cpath getpw tty id proc exec", NULL) == -1)
+		err(1, "pledge");
+
 	if ((opw = pw_dup(pw)) == NULL) {
 		warn(NULL);
 		return(1);
@@ -92,6 +92,9 @@ local_passwd(char *uname, int authenticated)
 
 	/* Get the new password. */
 	pw->pw_passwd = getnewpasswd(pw, lc, authenticated);
+
+	if (pledge("stdio rpath wpath cpath getpw id proc exec", NULL) == -1)
+		err(1, "pledge");
 
 	/* Reset password change time based on login.conf. */
 	period = (time_t)login_getcaptime(lc, "passwordtime",
@@ -114,6 +117,9 @@ local_passwd(char *uname, int authenticated)
 	sigfillset(&fullset);
 	sigdelset(&fullset, SIGINT);
 	sigprocmask(SIG_BLOCK, &fullset, NULL);
+
+	if (pledge("stdio rpath wpath cpath proc exec", NULL) == -1)
+		err(1, "pledge");
 
 	/* Get a lock on the passwd file and open it. */
 	pw_init();
@@ -155,7 +161,7 @@ getnewpasswd(struct passwd *pw, login_cap_t *lc, int authenticated)
 	savequit = signal(SIGQUIT, kbintr);
 
 	if (!authenticated) {
-		(void)printf("Changing local password for %s.\n", pw->pw_name);
+		(void)printf("Changing password for %s.\n", pw->pw_name);
 		if (uid != 0 && pw->pw_passwd[0] != '\0') {
 			p = getpass("Old password:");
 			if (p == NULL || *p == '\0') {

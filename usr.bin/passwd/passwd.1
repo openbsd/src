@@ -1,4 +1,4 @@
-.\"	$OpenBSD: passwd.1,v 1.43 2015/07/27 17:28:39 sobrado Exp $
+.\"	$OpenBSD: passwd.1,v 1.44 2015/11/26 19:01:47 deraadt Exp $
 .\"
 .\" Copyright (c) 1990 The Regents of the University of California.
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)passwd.1	6.11 (Berkeley) 7/24/91
 .\"
-.Dd $Mdocdate: July 27 2015 $
+.Dd $Mdocdate: November 26 2015 $
 .Dt PASSWD 1
 .Os
 .Sh NAME
@@ -37,11 +37,10 @@
 .Nd modify a user's password
 .Sh SYNOPSIS
 .Nm passwd
-.Op Fl l | y
 .Op Ar user
 .Sh DESCRIPTION
 .Nm
-changes the user's local or YP password.
+changes the user's password.
 If no
 .Ar user
 is specified, the user's login name is used (see
@@ -63,24 +62,6 @@ checking program via the
 .Dq passwordcheck
 variable in
 .Xr login.conf 5 .
-.Pp
-The options are as follows:
-.Bl -tag -width Ds
-.It Fl l
-Causes the password to be updated only in the local password file.
-When changing only the local password,
-.Xr pwd_mkdb 8
-is used to update the password databases.
-.It Fl y
-Forces the YP password database entry to be changed, even if
-the user has an entry in the local database.
-The
-.Xr rpc.yppasswdd 8
-daemon should be running on the YP master server.
-.El
-.Pp
-If no flags are specified and the password is not in the local password
-database, then an attempt is made to use the YP database.
 .Pp
 The superuser is not required to provide a user's current password
 if only the local password is modified.

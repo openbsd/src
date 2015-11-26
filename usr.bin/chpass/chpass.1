@@ -1,4 +1,4 @@
-.\"	$OpenBSD: chpass.1,v 1.40 2014/11/15 14:41:01 bentley Exp $
+.\"	$OpenBSD: chpass.1,v 1.41 2015/11/26 19:01:47 deraadt Exp $
 .\"	$NetBSD: chpass.1,v 1.7 1996/05/15 21:50:40 jtc Exp $
 .\"
 .\" Copyright (c) 1988, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)chpass.1	8.2 (Berkeley) 12/30/93
 .\"
-.Dd $Mdocdate: November 15 2014 $
+.Dd $Mdocdate: November 26 2015 $
 .Dt CHPASS 1
 .Os
 .Sh NAME
@@ -40,11 +40,9 @@
 .Nd add or change user database information
 .Sh SYNOPSIS
 .Nm chpass
-.Op Fl ly
 .Op Fl s Ar newshell
 .Op Ar user
 .Nm chpass
-.Op Fl l
 .Fl a Ar list
 .Sh DESCRIPTION
 .Nm chpass
@@ -55,9 +53,6 @@ or, by default, the current user.
 The information is formatted and supplied to an editor for changes.
 .Pp
 Only the information that the user is allowed to change is displayed.
-.Pp
-If YP is enabled change requests are first tried in the local database,
-and then in the YP database, if there was no entry to change locally.
 .Pp
 .Nm chfn
 and
@@ -76,19 +71,9 @@ This argument must be a colon
 .Pq Sq \&:
 separated list of all the
 user database fields, although they may be empty.
-This operation is not supported in YP environments; only local additions
-can be performed which requires the
-.Fl l
-flag to be specified.
-.It Fl l
-In environments where YP is enabled, always alter local information as
-opposed to information in YP.
 .It Fl s Ar newshell
 Attempts to change the user's shell to
 .Ar newshell .
-.It Fl y
-In environments where YP is enabled, always change the YP entry, even if this
-is a modification request and there is a local entry for the specified user.
 .El
 .Pp
 Possible display items are as follows:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: passwd.c,v 1.26 2014/05/19 15:05:13 tedu Exp $	*/
+/*	$OpenBSD: passwd.c,v 1.27 2015/11/26 19:01:47 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -34,26 +34,8 @@
 #include <string.h>
 #include <unistd.h>
 #include <err.h>
-#include <rpcsvc/ypclnt.h>
-
-/*
- * Note on configuration:
- *      Generally one would not use both Kerberos and YP
- *      to maintain passwords.
- *
- */
-
-int use_kerberos;
-int use_yp;
-
-#ifdef YP
-int force_yp;
-#endif
 
 extern int local_passwd(char *, int);
-extern int yp_passwd(char *);
-extern int krb5_passwd(int, char **);
-extern int _yp_check(char **);
 void usage(int retval);
 
 int
@@ -62,40 +44,10 @@ main(int argc, char **argv)
 	extern int optind;
 	char *username;
 	int ch;
-#ifdef	YP
-	int status = 0;
-#endif
-#ifdef	YP
-	use_yp = _yp_check(NULL);
-	if (use_yp) {
-		char *dom;
-
-		yp_get_default_domain(&dom);
-		yp_unbind(dom);
-	}
-#endif
 
 	/* Process args and options */
-	while ((ch = getopt(argc, argv, "ly")) != -1)
+	while ((ch = getopt(argc, argv, "")) != -1)
 		switch (ch) {
-		case 'l':		/* change local password file */
-			use_kerberos = 0;
-			use_yp = 0;
-			break;
-		case 'y':		/* change YP password */
-#ifdef	YP
-			if (!use_yp) {
-				fprintf(stderr, "passwd: YP not in use.\n");
-				exit(1);
-			}
-			use_kerberos = 0;
-			use_yp = 1;
-			force_yp = 1;
-			break;
-#else
-			fprintf(stderr, "passwd: YP not compiled in\n");
-			exit(1);
-#endif
 		default:
 			usage(1);
 		}
@@ -119,18 +71,12 @@ main(int argc, char **argv)
 		usage(1);
 	}
 
-#ifdef	YP
-	if (force_yp || ((status = local_passwd(username, 0)) && use_yp))
-		exit(yp_passwd(username));
-	exit(status);
-#else
 	exit(local_passwd(username, 0));
-#endif
 }
 
 void
 usage(int retval)
 {
-	fprintf(stderr, "usage: passwd [-l | -y] [user]\n");
+	fprintf(stderr, "usage: passwd [user]\n");
 	exit(retval);
 }
