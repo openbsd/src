@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vmmctl.8,v 1.5 2015/11/23 13:40:28 reyk Exp $
+.\"	$OpenBSD: vmmctl.8,v 1.6 2015/11/26 08:26:48 reyk Exp $
 .\"
 .\" Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 23 2015 $
+.Dd $Mdocdate: November 26 2015 $
 .Dt VMMCTL 8
 .Os
 .Sh NAME
@@ -33,34 +33,6 @@ A VMM manages virtual machines (VMs) on a
 .Ar host .
 The VMM subsystem is responsible for creating, destroying, and executing
 VMs.
-.Sh VMM OPERATIONS
-The options are as follows:
-.Bl -tag -width Ds
-.It Cm enable
-Enable the VMM subsystem.
-The VMM subsystem must be enabled before VMs can be managed on the host.
-.It Cm disable
-Disable the VMM subsystem.
-Virtual machines running on the host should be terminated first.
-.It Cm load Op Ar path
-Load the
-.Xr vmm.conf 5
-configuration file from
-.Pa /etc/vmm.conf
-or the specified
-.Ar path .
-.El
-.Pp
-Generally, the
-.Nm
-utility is run with
-.Cm enable
-option during system startup to enable the VMM subsystem on boot.
-This can be automated via the
-.Xr rc 8
-and
-.Xr rc.conf 8
-facilities used during system startup.
 .Sh VM OPERATIONS
 The options are as follows:
 .Bl -tag -width Ds
@@ -108,12 +80,6 @@ The VMM subsystem could not be enabled or disabled as requested.
 A requested VM-based operation could not be completed.
 .El
 .Sh EXAMPLES
-Enable the VMM subsystem:
-.Dl $ vmmctl enable
-.Pp
-Disable the VMM subsystem:
-.Dl $ vmmctl disable
-.Pp
 Create a new disk image ('disk.img') of 4 gigabyte size:
 .Dl $ vmmctl create disk.img size 4G
 .Pp

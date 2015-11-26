@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.7 2015/11/25 22:44:21 tedu Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.8 2015/11/26 08:26:48 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -118,8 +118,6 @@ __dead void usage(void);
 void sighdlr(int);
 int main(int, char **);
 int control_run(void);
-int disable_vmm(void);
-int enable_vmm(void);
 int start_vm(struct imsg *);
 int terminate_vm(struct imsg *);
 int get_info_vm(struct imsgbuf *);
@@ -358,18 +356,6 @@ control_run(void)
 
 			/* Process incoming message (from vmmctl(8)) */
 			switch (imsg.hdr.type) {
-			case IMSG_VMDOP_DISABLE_VMM_REQUEST:
-				res = disable_vmm();
-				imsg_compose(ibuf,
-				    IMSG_VMDOP_DISABLE_VMM_RESPONSE, 0, 0, -1,
-				    &res, sizeof(res));
-				break;
-			case IMSG_VMDOP_ENABLE_VMM_REQUEST:
-				res = enable_vmm();
-				imsg_compose(ibuf,
-				    IMSG_VMDOP_ENABLE_VMM_RESPONSE, 0, 0, -1,
-				    &res, sizeof(res));
-				break;
 			case IMSG_VMDOP_START_VM_REQUEST:
 				res = start_vm(&imsg);
 				imsg_compose(ibuf,
@@ -406,42 +392,6 @@ control_run(void)
 	}
 
 	signal(SIGCHLD, SIG_IGN);
-
-	return (0);
-}
-
-/*
- * disable_vmm
- *
- * Disables VMM mode on all CPUs
- *
- * Return values:
- *  0: success
- *  !0 : ioctl to vmm(4) failed
- */
-int
-disable_vmm(void)
-{
-	if (ioctl(vmm_fd, VMM_IOC_STOP, NULL) < 0)
-		return (errno);
-
-	return (0);
-}
-
-/*
- * enable_vmm
- *
- * Enables VMM mode on all CPUs
- *
- * Return values:
- *  0: success
- *  !0 : ioctl to vmm(4) failed
- */
-int
-enable_vmm(void)
-{
-	if (ioctl(vmm_fd, VMM_IOC_START, NULL) < 0)
-		return (errno);
 
 	return (0);
 }

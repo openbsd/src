@@ -1,4 +1,4 @@
-.\" $OpenBSD: vmm.conf.5,v 1.5 2015/11/23 21:36:20 jmc Exp $
+.\" $OpenBSD: vmm.conf.5,v 1.6 2015/11/26 08:26:48 reyk Exp $
 .\"
 .\" Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
 .\" Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 23 2015 $
+.Dd $Mdocdate: November 26 2015 $
 .Dt VMM.CONF 5
 .Os
 .Sh NAME
@@ -36,10 +36,6 @@ is divided into three main sections:
 .It Sy Macros
 User-defined variables may be defined and used later, simplifying the
 configuration file.
-.It Sy VMM Configuration
-Global settings for the
-.Xr vmm 4
-subsystem.
 .It Sy VM Configuration
 Configuration for each individual virtual machine.
 .El
@@ -81,27 +77,6 @@ vm "vm1.example.com" {
 	kernel $ramdisk
 }
 .Ed
-.Sh VMM CONFIGURATION
-The options are as follows:
-.Bl -tag -width Ds
-.It Cm vmm disable
-Disable the VMM subsystem.
-Virtual machines running on the host should be terminated first.
-.It Cm vmm enable
-Enable the VMM subsystem.
-The VMM subsystem must be enabled before VMs can be managed on the host.
-.El
-.Pp
-Generally, the
-.Nm
-utility is run with
-.Cm enable
-option during system startup to enable the VMM subsystem on boot.
-This can be automated via the
-.Xr rc 8
-and
-.Xr rc.conf 8
-facilities used during system startup.
 .Sh VM CONFIGURATION
 Each
 .Ic vm
@@ -135,11 +110,6 @@ can be used.
 Number of network interfaces to add to the VM.
 .El
 .Sh EXAMPLES
-Enable the VMM subsystem:
-.Bd -literal -offset indent
-vmm enable
-.Ed
-.Pp
 Create a new VM with 512MB memory, 1 network interface, one disk image
 ('disk.img') and boot from kernel '/bsd':
 .Bd -literal -offset indent

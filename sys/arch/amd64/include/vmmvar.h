@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmmvar.h,v 1.2 2015/11/16 10:08:41 mpi Exp $	*/
+/*	$OpenBSD: vmmvar.h,v 1.3 2015/11/26 08:26:48 reyk Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -204,14 +204,12 @@ struct vm_readpage_params {
 };
 
 /* IOCTL definitions */
-#define VMM_IOC_START _IO('V', 1)	/* Start virtualization */
-#define VMM_IOC_STOP _IO('V', 2)	/* Stop virtualization */
-#define VMM_IOC_CREATE _IOWR('V', 3, struct vm_create_params) /* Create VM */
-#define VMM_IOC_RUN _IOWR('V', 4, struct vm_run_params) /* Run VCPU */
-#define VMM_IOC_INFO _IOWR('V', 5, struct vm_info_params) /* Get VM Info */
-#define VMM_IOC_TERM _IOW('V', 6, struct vm_terminate_params) /* Terminate VM */
-#define VMM_IOC_WRITEPAGE _IOW('V', 7, struct vm_writepage_params) /* Wr Pg */
-#define VMM_IOC_READPAGE _IOW('V', 8, struct vm_readpage_params) /* Rd Pg */
+#define VMM_IOC_CREATE _IOWR('V', 1, struct vm_create_params) /* Create VM */
+#define VMM_IOC_RUN _IOWR('V', 2, struct vm_run_params) /* Run VCPU */
+#define VMM_IOC_INFO _IOWR('V', 3, struct vm_info_params) /* Get VM Info */
+#define VMM_IOC_TERM _IOW('V', 4, struct vm_terminate_params) /* Terminate VM */
+#define VMM_IOC_WRITEPAGE _IOW('V', 5, struct vm_writepage_params) /* Wr Pg */
+#define VMM_IOC_READPAGE _IOW('V', 6, struct vm_readpage_params) /* Rd Pg */
 
 #ifdef _KERNEL
 

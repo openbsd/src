@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.2 2015/11/26 07:44:28 reyk Exp $	*/
+/*	$OpenBSD: main.c,v 1.3 2015/11/26 08:26:48 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -147,12 +147,6 @@ vmmaction(struct parse_result *res)
 	imsg_init(ibuf, ctl_sock);
 
 	switch (res->action) {
-	case CMD_ENABLE:
-		enable_vmm();
-		break;
-	case CMD_DISABLE:
-		disable_vmm();
-		break;
 	case CMD_START:
 		/* XXX validation should be done in start_vm() */
 		if (res->size < 1)
@@ -201,12 +195,6 @@ vmmaction(struct parse_result *res)
 
 			ret = 0;
 			switch (res->action) {
-			case CMD_DISABLE:
-				done = disable_vmm_complete(&imsg, &ret);
-				break;
-			case CMD_ENABLE:
-				done = enable_vmm_complete(&imsg, &ret);
-				break;
 			case CMD_START:
 				done = start_vm_complete(&imsg, &ret);
 				break;

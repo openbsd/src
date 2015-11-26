@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.7 2015/11/24 09:07:09 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.8 2015/11/26 08:26:48 reyk Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -307,19 +307,14 @@ vmmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		return (ENOTTY);
 
 	switch(cmd) {
-	case VMM_IOC_START:
-		ret = vmm_start();
-		if (ret)
-			vmm_stop();
-		break;
-	case VMM_IOC_STOP:
-		if (vmm_softc->vm_ct > 0)
-			ret = EAGAIN;
-		else
-			ret = vmm_stop();
-		break;
 	case VMM_IOC_CREATE:
+		if ((ret = vmm_start()) != 0) {
+			vmm_stop();
+			break;
+		}
 		ret = vm_create((struct vm_create_params *)data, p);
+		if (vmm_softc->vm_ct < 1)
+			vmm_stop();
 		break;
 	case VMM_IOC_RUN:
 		ret = vm_run((struct vm_run_params *)data);
@@ -329,6 +324,8 @@ vmmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		break;
 	case VMM_IOC_TERM:
 		ret = vm_terminate((struct vm_terminate_params *)data);
+		if (vmm_softc->vm_ct < 1)
+			vmm_stop();
 		break;
 	case VMM_IOC_WRITEPAGE:
 		ret = vm_writepage((struct vm_writepage_params *)data);
@@ -557,12 +554,17 @@ vmm_start(void)
 {
 	struct cpu_info *self = curcpu();
 	int ret = 0;
-
 #ifdef MULTIPROCESSOR
 	struct cpu_info *ci;
 	CPU_INFO_ITERATOR cii;
 	int i;
+#endif
 
+	/* VMM is already running */
+	if (self->ci_flags & CPUF_VMM)
+		return (0);
+
+#ifdef MULTIPROCESSOR
 	/* Broadcast start VMM IPI */
 	x86_broadcast_ipi(X86_IPI_START_VMM);
 
@@ -602,12 +604,17 @@ vmm_stop(void)
 {
 	struct cpu_info *self = curcpu();
 	int ret = 0;
-
 #ifdef MULTIPROCESSOR
 	struct cpu_info *ci;
 	CPU_INFO_ITERATOR cii;
 	int i;
+#endif
 
+	/* VMM is not running */
+	if (!(self->ci_flags & CPUF_VMM))
+		return (0);
+
+#ifdef MULTIPROCESSOR
 	/* Stop VMM on other CPUs */
 	x86_broadcast_ipi(X86_IPI_STOP_VMM);
 

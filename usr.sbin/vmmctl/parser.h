@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.h,v 1.1 2015/11/22 20:55:18 reyk Exp $	*/
+/*	$OpenBSD: parser.h,v 1.2 2015/11/26 08:26:48 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -27,8 +27,6 @@
 enum actions {
 	NONE,
 	CMD_CREATE,
-	CMD_ENABLE,
-	CMD_DISABLE,
 	CMD_START,
 	CMD_TERMINATE,
 	CMD_INFO,
@@ -68,10 +66,6 @@ int	 cmdline_symset(char *);
 int	 create_imagefile(char *, long);
 int	 start_vm(const char *, int, int, int, char **, char *);
 int	 start_vm_complete(struct imsg *, int *);
-void	 enable_vmm(void);
-int	 enable_vmm_complete(struct imsg *, int *);
-void	 disable_vmm(void);
-int	 disable_vmm_complete(struct imsg *, int *);
 void	 terminate_vm(uint32_t);
 int	 terminate_vm_complete(struct imsg *, int *);
 void	 get_info_vm(uint32_t);

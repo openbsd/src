@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.1 2015/11/22 20:55:18 reyk Exp $	*/
+/*	$OpenBSD: parser.c,v 1.2 2015/11/26 08:26:48 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010-2015 Reyk Floeter <reyk@openbsd.org>
@@ -67,9 +67,7 @@ static const struct token t_id[];
 static const struct token t_opt_path[];
 
 static const struct token t_main[] = {
-	{ KEYWORD,	"enable",	CMD_ENABLE,	NULL },
 	{ KEYWORD,	"create",	CMD_CREATE,	t_create },
-	{ KEYWORD,	"disable",	CMD_DISABLE,	NULL },
 	{ KEYWORD,	"load",		CMD_LOAD,	t_opt_path },
 	{ KEYWORD,	"show",		NONE,		t_show },
 	{ KEYWORD,	"start",	CMD_START,	t_start_name },
