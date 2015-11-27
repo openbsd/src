@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.469 2015/11/10 20:34:58 tim Exp $
+#	$OpenBSD: rc,v 1.470 2015/11/27 03:53:28 deraadt Exp $
 
 # System startup script run by init on autoboot or after single-user.
 # Output and error are redirected to console by init, and the console is the
@@ -365,7 +365,7 @@ echo -n 'starting RPC daemons:'
 start_daemon portmap ypldap
 rm -f /var/run/ypbind.lock
 if [[ -n $(domainname) ]]; then
-	start_daemon ypserv ypbind yppasswdd
+	start_daemon ypserv ypbind
 fi
 start_daemon mountd nfsd lockd statd amd
 echo '.'
