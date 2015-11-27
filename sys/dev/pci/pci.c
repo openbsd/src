@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.c,v 1.110 2015/09/10 10:36:48 deraadt Exp $	*/
+/*	$OpenBSD: pci.c,v 1.111 2015/11/27 15:28:22 kettenis Exp $	*/
 /*	$NetBSD: pci.c,v 1.31 1997/06/06 23:48:04 thorpej Exp $	*/
 
 /*
@@ -981,7 +981,7 @@ pci_reserve_resources(struct pci_attach_args *pa)
 	bir = pci_conf_read(pc, tag, PPB_REG_BUSINFO);
 	sec = PPB_BUSINFO_SECONDARY(bir);
 	sub = PPB_BUSINFO_SUBORDINATE(bir);
-	if (pa->pa_busex && sub >= sec) {
+	if (pa->pa_busex && sub >= sec && sub > 0) {
 		if (extent_alloc_region(pa->pa_busex, sec, sub - sec + 1,
 		    EX_NOWAIT)) {
 			printf("%d:%d:%d: bridge bus conflict %d-%d\n",
