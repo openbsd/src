@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.95 2015/11/25 21:13:28 kettenis Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.96 2015/11/27 15:34:01 kettenis Exp $	*/
 /*	$NetBSD: pmap.c,v 1.107 2001/08/31 16:47:41 eeh Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 /*
@@ -1783,6 +1783,8 @@ pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	KDASSERT(pm != pmap_kernel() || va < kdata || va > ekdata);
 
 	npv = pool_get(&pv_pool, PR_NOWAIT);
+	if (npv == NULL && (flags & PMAP_CANFAIL))
+		return (ENOMEM);
 
 	/*
 	 * XXXX If a mapping at this address already exists, remove it.
