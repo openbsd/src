@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd.c,v 1.105 2015/09/01 09:48:34 nicm Exp $ */
+/* $OpenBSD: cmd.c,v 1.106 2015/11/27 15:06:43 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -384,21 +384,19 @@ usage:
 	return (NULL);
 }
 
-size_t
-cmd_print(struct cmd *cmd, char *buf, size_t len)
+char *
+cmd_print(struct cmd *cmd)
 {
-	size_t	off, used;
+	char	*out, *s;
 
-	off = xsnprintf(buf, len, "%s ", cmd->entry->name);
-	if (off + 1 < len) {
-		used = args_print(cmd->args, buf + off, len - off - 1);
-		if (used == 0)
-			off--;
-		else
-			off += used;
-		buf[off] = '\0';
-	}
-	return (off);
+	s = args_print(cmd->args);
+	if (*s != '\0')
+		xasprintf(&out, "%s %s", cmd->entry->name, s);
+	else
+		out = xstrdup(cmd->entry->name);
+	free(s);
+
+	return (out);
 }
 
 /* Adjust current mouse position for a pane. */
