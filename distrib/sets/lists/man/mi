@@ -2595,7 +2595,6 @@
 ./usr/share/man/man8/rpc.rusersd.8
 ./usr/share/man/man8/rpc.rwalld.8
 ./usr/share/man/man8/rpc.statd.8
-./usr/share/man/man8/rpc.yppasswdd.8
 ./usr/share/man/man8/rpcinfo.8
 ./usr/share/man/man8/rquotad.8
 ./usr/share/man/man8/rrestore.8

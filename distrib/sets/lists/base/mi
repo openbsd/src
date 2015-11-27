@@ -199,7 +199,6 @@
 ./etc/rc.d/xdm
 ./etc/rc.d/ypbind
 ./etc/rc.d/ypldap
-./etc/rc.d/yppasswdd
 ./etc/rc.d/ypserv
 ./etc/rmt
 ./etc/rpc
