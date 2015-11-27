@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_df.c,v 1.16 2015/01/20 18:22:20 deraadt Exp $	*/
+/*	$OpenBSD: ffs_df.c,v 1.17 2015/11/27 13:49:41 millert Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993, 1994
@@ -91,8 +91,8 @@ ffs_df(int rfd, char *file, struct statfs *sfsp)
 	sfsp->f_fsid.val[1] = 0;
 	if ((mntpt = getmntpt(file)) == 0)
 		mntpt = "";
-	memmove(&sfsp->f_mntonname[0], mntpt, MNAMELEN);
-	memmove(&sfsp->f_mntfromname[0], file, MNAMELEN);
-	strlcpy(sfsp->f_fstypename, MOUNT_FFS, MFSNAMELEN);
+	strlcpy(sfsp->f_mntonname, mntpt, sizeof(sfsp->f_mntonname));
+	strlcpy(sfsp->f_mntfromname, file, sizeof(sfsp->f_mntfromname));
+	strlcpy(sfsp->f_fstypename, MOUNT_EXT2FS, sizeof(sfsp->f_fstypename));
 	return (0);
 }
