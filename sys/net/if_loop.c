@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_loop.c,v 1.73 2015/11/11 10:23:23 mpi Exp $	*/
+/*	$OpenBSD: if_loop.c,v 1.74 2015/11/27 15:00:12 mpi Exp $	*/
 /*	$NetBSD: if_loop.c,v 1.15 1996/05/07 02:40:33 thorpej Exp $	*/
 
 /*
@@ -138,6 +138,12 @@
 #endif
 
 #define	LOMTU	32768
+
+int	loioctl(struct ifnet *, u_long, caddr_t);
+void	loopattach(int);
+void	lortrequest(struct ifnet *, int, struct rtentry *);
+int	looutput(struct ifnet *,
+	    struct mbuf *, struct sockaddr *, struct rtentry *);
 
 int	loop_clone_create(struct if_clone *, int);
 int	loop_clone_destroy(struct ifnet *);
