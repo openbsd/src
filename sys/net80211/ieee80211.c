@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211.c,v 1.50 2015/11/15 12:34:07 stsp Exp $	*/
+/*	$OpenBSD: ieee80211.c,v 1.51 2015/11/27 04:03:45 jsg Exp $	*/
 /*	$NetBSD: ieee80211.c,v 1.19 2004/06/06 05:45:29 dyoung Exp $	*/
 
 /*-
@@ -467,7 +467,7 @@ ieee80211_media_change(struct ifnet *ifp)
 #ifndef IEEE80211_NO_HT
 		if ((ic->ic_modecaps & (1 << IEEE80211_MODE_11N)) == 0)
 			return EINVAL;
-		if (newphymode != IEEE80211_MODE_AUTO ||
+		if (newphymode != IEEE80211_MODE_AUTO &&
 		    newphymode != IEEE80211_MODE_11N)
 			return EINVAL;
 		i = ieee80211_media2mcs(ime->ifm_media);
