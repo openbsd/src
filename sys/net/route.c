@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.276 2015/11/23 10:52:43 mpi Exp $	*/
+/*	$OpenBSD: route.c,v 1.277 2015/11/27 11:52:44 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -140,7 +140,7 @@
 /* Give some jitter to hash, to avoid synchronization between routers. */
 static uint32_t		rt_hashjitter;
 
-extern unsigned int	rtables_id_max;
+extern unsigned int	rtmap_limit;
 
 struct rtstat		rtstat;
 int			rttrash;	/* routes not in table but not freed */
@@ -1662,7 +1662,7 @@ rt_if_remove(struct ifnet *ifp)
 	int			 i;
 	u_int			 tid;
 
-	for (tid = 0; tid <= rtables_id_max; tid++) {
+	for (tid = 0; tid < rtmap_limit; tid++) {
 		/* skip rtables that are not in the rdomain of the ifp */
 		if (rtable_l2(tid) != ifp->if_rdomain)
 			continue;
@@ -1702,7 +1702,7 @@ rt_if_track(struct ifnet *ifp)
 	int i;
 	u_int tid;
 
-	for (tid = 0; tid <= rtables_id_max; tid++) {
+	for (tid = 0; tid < rtmap_limit; tid++) {
 		/* skip rtables that are not in the rdomain of the ifp */
 		if (rtable_l2(tid) != ifp->if_rdomain)
 			continue;

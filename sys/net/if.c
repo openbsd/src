@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.413 2015/11/25 03:10:00 dlg Exp $	*/
+/*	$OpenBSD: if.c,v 1.414 2015/11/27 11:52:44 mpi Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -378,7 +378,7 @@ if_map_dtor(void *null, void *m)
 	unsigned int i;
 
 	/*
-	 * dont need the kernel lock to use update_locked since this is
+	 * dont need to serialize the use of update_locked since this is
 	 * the last reference to this map. there's nothing to race against.
 	 */
 	for (i = 0; i < if_map->limit; i++)

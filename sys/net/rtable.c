@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtable.c,v 1.25 2015/11/24 12:06:30 mpi Exp $ */
+/*	$OpenBSD: rtable.c,v 1.26 2015/11/27 11:52:44 mpi Exp $ */
 
 /*
  * Copyright (c) 2014-2015 Martin Pieuchot
@@ -31,23 +31,111 @@
 #include <net/rtable.h>
 #include <net/route.h>
 
+/*
+ * Per AF array.
+ *
+ *	afmap		    rtmap/dommp
+ *   -----------          ---------     -----
+ *   |   0     |--------> | 0 | 0 | ... | 0 |	Array mapping rtableid (=index)
+ *   -----------          ---------     -----   to rdomain (=value).
+ *   | AF_INET |.
+ *   ----------- `.       .---------.     .---------.
+ *       ...	   `----> | rtable0 | ... | rtableN |	Array of pointers for
+ *   -----------          '---------'     '---------'	IPv4 routing tables
+ *   | AF_MPLS |            			 	indexed by ``rtableid''.
+ *   -----------
+ */
+struct srp	  *afmap;
 uint8_t		   af2idx[AF_MAX+1];	/* To only allocate supported AF */
 uint8_t		   af2idx_max;
 
-union rtmap {
-	void		**tbl;
-	unsigned int	 *dom;
+/* Array of routing table pointers. */
+struct rtmap {
+	unsigned int	   limit;
+	void		 **tbl;
 };
 
-union rtmap	  *rtmap;		/* Array of per domain routing table */
-unsigned int	   rtables_id_max;
+/* Array of rtableid -> rdomain mapping. */
+struct dommp {
+	unsigned int	   limit;
+	unsigned int	  *dom;
+};
+
+unsigned int	   rtmap_limit = 0;
+
+void		   rtmap_init(void);
+void		   rtmap_grow(unsigned int, sa_family_t);
+void		   rtmap_dtor(void *, void *);
+
+struct srp_gc	   rtmap_gc = SRP_GC_INITIALIZER(rtmap_dtor, NULL);
 
 void		   rtable_init_backend(unsigned int);
 void		  *rtable_alloc(unsigned int, sa_family_t, unsigned int);
-void		   rtable_free(unsigned int);
-void		   rtable_grow(unsigned int, sa_family_t);
+void		   rtable_free(unsigned int, sa_family_t);
 void		  *rtable_get(unsigned int, sa_family_t);
 void		   rtable_put(void *);
+
+void
+rtmap_init(void)
+{
+	struct domain	*dp;
+	int		 i;
+
+	/* Start with a single table for every domain that requires it. */
+	for (i = 0; (dp = domains[i]) != NULL; i++) {
+		if (dp->dom_rtoffset == 0)
+			continue;
+
+		rtmap_grow(1, dp->dom_family);
+	}
+
+	/* Initialize the rtableid->rdomain mapping table. */
+	rtmap_grow(1, 0);
+
+	rtmap_limit = 1;
+}
+
+/*
+ * Grow the size of the array of routing table for AF ``af'' to ``nlimit''.
+ */
+void
+rtmap_grow(unsigned int nlimit, sa_family_t af)
+{
+	struct rtmap	*map, *nmap;
+	int		 i;
+
+	KERNEL_ASSERT_LOCKED();
+
+	KASSERT(nlimit > rtmap_limit);
+
+	nmap = malloc(sizeof(*nmap), M_RTABLE, M_WAITOK);
+	nmap->limit = nlimit;
+	nmap->tbl = mallocarray(nlimit, sizeof(*nmap[0].tbl), M_RTABLE,
+	    M_WAITOK|M_ZERO);
+
+	map = srp_get_locked(&afmap[af2idx[af]]);
+	if (map != NULL) {
+		KASSERT(map->limit == rtmap_limit);
+
+		for (i = 0; i < map->limit; i++)
+			nmap->tbl[i] = map->tbl[i];
+	}
+
+	srp_update_locked(&rtmap_gc, &afmap[af2idx[af]], nmap);
+}
+
+void
+rtmap_dtor(void *null, void *xmap)
+{
+	struct rtmap	*map = xmap;
+
+	/*
+	 * doesnt need to be serialized since this is the last reference
+	 * to this map. there's nothing to race against.
+	 */
+	free(map->tbl, M_RTABLE, map->limit * sizeof(*map[0].tbl));
+	free(map, M_RTABLE, sizeof(*map));
+}
 
 void
 rtable_init(void)
@@ -65,58 +153,38 @@ rtable_init(void)
 	 * table backend needs it.
 	 */
 	for (i = 0; (dp = domains[i]) != NULL; i++) {
-		if (dp->dom_rtoffset)
-			af2idx[dp->dom_family] = af2idx_max++;
+		if (dp->dom_rtoffset == 0)
+			continue;
+
+		af2idx[dp->dom_family] = af2idx_max++;
 		if (dp->dom_rtkeylen > keylen)
 			keylen = dp->dom_rtkeylen;
 
 	}
-
-	rtables_id_max = 0;
-	rtmap = mallocarray(af2idx_max + 1, sizeof(*rtmap), M_RTABLE, M_WAITOK);
-
-	/* Start with a single table for every domain that requires it. */
-	for (i = 0; i < af2idx_max + 1; i++) {
-		rtmap[i].tbl = mallocarray(1, sizeof(rtmap[0].tbl),
-		    M_RTABLE, M_WAITOK|M_ZERO);
-	}
-
 	rtable_init_backend(keylen);
-}
 
-void
-rtable_grow(unsigned int id, sa_family_t af)
-{
-	void		**tbl, **ntbl;
-	int		  i;
+	/*
+	 * Allocate AF-to-id table now that we now how many AFs this
+	 * kernel supports.
+	 */
+	afmap = mallocarray(af2idx_max + 1, sizeof(*afmap), M_RTABLE,
+	    M_WAITOK|M_ZERO);
 
-	KASSERT(id > rtables_id_max);
-
-	KERNEL_ASSERT_LOCKED();
-
-	tbl = rtmap[af2idx[af]].tbl;
-	ntbl = mallocarray(id + 1, sizeof(rtmap[0].tbl), M_RTABLE, M_WAITOK);
-
-	for (i = 0; i < rtables_id_max + 1; i++)
-		ntbl[i] = tbl[i];
-
-	while (i < id + 1) {
-		ntbl[i] = NULL;
-		i++;
-	}
-
-	rtmap[af2idx[af]].tbl = ntbl;
-	free(tbl, M_RTABLE, (rtables_id_max + 1) * sizeof(rtmap[0].tbl));
+	rtmap_init();
 }
 
 int
 rtable_add(unsigned int id)
 {
-	struct domain	 *dp;
-	void		 *rtbl;
-	sa_family_t	  af;
-	unsigned int	  off;
-	int		  i;
+	struct domain	*dp;
+	void		*tbl;
+	struct rtmap	*map;
+	struct dommp	*dmm;
+	sa_family_t	 af;
+	unsigned int	 off;
+	int		 i;
+
+	KERNEL_ASSERT_LOCKED();
 
 	if (id > RT_TABLEID_MAX)
 		return (EINVAL);
@@ -131,25 +199,26 @@ rtable_add(unsigned int id)
 		af = dp->dom_family;
 		off = dp->dom_rtoffset;
 
-		if (id > rtables_id_max)
-			rtable_grow(id, af);
+		if (id >= rtmap_limit)
+			rtmap_grow(id + 1, af);
 
-		rtbl = rtable_alloc(id, af, off);
-		if (rtbl == NULL)
+		tbl = rtable_alloc(id, af, off);
+		if (tbl == NULL)
 			return (ENOMEM);
 
-		rtmap[af2idx[af]].tbl[id] = rtbl;
+		map = srp_get_locked(&afmap[af2idx[af]]);
+		map->tbl[id] = tbl;
 	}
 
 	/* Reflect possible growth. */
-	if (id > rtables_id_max) {
-		rtable_grow(id, 0);
-		rtables_id_max = id;
+	if (id >= rtmap_limit) {
+		rtmap_grow(id + 1, 0);
+		rtmap_limit = id + 1;
 	}
 
 	/* Use main rtable/rdomain by default. */
-	rtmap[0].dom[id] = 0;
-
+	dmm = srp_get_locked(&afmap[0]);
+	dmm->dom[id] = 0;
 
 	return (0);
 }
@@ -157,39 +226,32 @@ rtable_add(unsigned int id)
 void
 rtable_del(unsigned int id)
 {
-	struct domain	 *dp;
-	sa_family_t	  af;
-	int		  i;
-
-	if (id > rtables_id_max || !rtable_exists(id))
-		return;
+	struct domain	*dp;
+	int		 i;
 
 	for (i = 0; (dp = domains[i]) != NULL; i++) {
 		if (dp->dom_rtoffset == 0)
 			continue;
 
-		af = dp->dom_family;
-
-		rtable_free(id);
-		rtmap[af2idx[af]].tbl[id] = NULL;
+		rtable_free(id, dp->dom_family);
 	}
 }
 
 void *
 rtable_get(unsigned int rtableid, sa_family_t af)
 {
-	if (af >= nitems(af2idx) || rtableid > rtables_id_max)
+	struct rtmap	*map;
+	void		*tbl = NULL;
+
+	if (af >= nitems(af2idx) || af2idx[af] == 0)
 		return (NULL);
 
-	if (af2idx[af] == 0 || rtmap[af2idx[af]].tbl == NULL)
-		return (NULL);
+	map = srp_enter(&afmap[af2idx[af]]);
+	if (rtableid < map->limit)
+		tbl = map->tbl[rtableid];
+	srp_leave(&afmap[af2idx[af]], map);
 
-	return (rtmap[af2idx[af]].tbl[rtableid]);
-}
-
-void
-rtable_put(void *tbl)
-{
+	return (tbl);
 }
 
 int
@@ -198,9 +260,6 @@ rtable_exists(unsigned int rtableid)
 	struct domain	*dp;
 	void		*tbl;
 	int		 i, exist = 0;
-
-	if (rtableid > rtables_id_max)
-		return (0);
 
 	for (i = 0; (dp = domains[i]) != NULL; i++) {
 		if (dp->dom_rtoffset == 0)
@@ -221,19 +280,29 @@ rtable_exists(unsigned int rtableid)
 unsigned int
 rtable_l2(unsigned int rtableid)
 {
-	if (rtableid > rtables_id_max)
-		return (0);
+	struct dommp	*dmm;
+	unsigned int	 rdomain = 0;
 
-	return (rtmap[0].dom[rtableid]);
+	dmm = srp_enter(&afmap[0]);
+	if (rtableid < dmm->limit)
+		rdomain = dmm->dom[rtableid];
+	srp_leave(&afmap[0], dmm);
+
+	return (rdomain);
 }
 
 void
-rtable_l2set(unsigned int rtableid, unsigned int parent)
+rtable_l2set(unsigned int rtableid, unsigned int rdomain)
 {
-	if (!rtable_exists(rtableid) || !rtable_exists(parent))
+	struct dommp	*dmm;
+
+	KERNEL_ASSERT_LOCKED();
+
+	if (!rtable_exists(rtableid) || !rtable_exists(rdomain))
 		return;
 
-	rtmap[0].dom[rtableid] = parent;
+	dmm = srp_get_locked(&afmap[0]);
+	dmm->dom[rtableid] = rdomain;
 }
 
 #ifndef ART
@@ -259,7 +328,12 @@ rtable_alloc(unsigned int rtableid, sa_family_t af, unsigned int off)
 }
 
 void
-rtable_free(unsigned int rtableid)
+rtable_free(unsigned int rtableid, sa_family_t af)
+{
+}
+
+void
+rtable_put(void *tbl)
 {
 }
 
@@ -489,7 +563,22 @@ rtable_alloc(unsigned int rtableid, sa_family_t af, unsigned int off)
 }
 
 void
-rtable_free(unsigned int rtableid)
+rtable_free(unsigned int rtableid, sa_family_t af)
+{
+	struct art_root			*ar = NULL;
+	struct rtmap 			*map;
+
+	KERNEL_ASSERT_LOCKED();
+
+	map = srp_get_locked(&afmap[af2idx[af]]);
+	if (rtableid < map->limit) {
+		ar = map->tbl[rtableid];
+		KASSERT(ar->ar_root == NULL);
+	}
+}
+
+void
+rtable_put(void *tbl)
 {
 }
 
