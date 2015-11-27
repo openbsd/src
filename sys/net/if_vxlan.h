@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vxlan.h,v 1.7 2015/10/23 01:19:04 dlg Exp $	*/
+/*	$OpenBSD: if_vxlan.h,v 1.8 2015/11/27 16:17:52 mpi Exp $	*/
 
 /*
  * Copyright (c) 2013 Reyk Floeter <reyk@openbsd.org>
@@ -40,25 +40,6 @@ struct vxlanudpiphdr {
 } __packed;
 
 #ifdef _KERNEL
-struct vxlan_softc {
-	struct arpcom		 sc_ac;
-	struct ifmedia		 sc_media;
-
-	struct ip_moptions	 sc_imo;
-	void			*sc_ahcookie;
-	void			*sc_lhcookie;
-	void			*sc_dhcookie;
-
-	struct sockaddr_storage	 sc_src;
-	struct sockaddr_storage	 sc_dst;
-	in_port_t		 sc_dstport;
-	u_int			 sc_rdomain;
-	int			 sc_vnetid;
-	u_int8_t		 sc_ttl;
-
-	LIST_ENTRY(vxlan_softc)	 sc_entry;
-};
-
 extern int vxlan_enable;
 
 int		 vxlan_lookup(struct mbuf *, struct udphdr *, int,

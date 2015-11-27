@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vxlan.c,v 1.33 2015/10/25 12:05:40 mpi Exp $	*/
+/*	$OpenBSD: if_vxlan.c,v 1.34 2015/11/27 16:17:52 mpi Exp $	*/
 
 /*
  * Copyright (c) 2013 Reyk Floeter <reyk@openbsd.org>
@@ -56,6 +56,25 @@
 #endif
 
 #include <net/if_vxlan.h>
+
+struct vxlan_softc {
+	struct arpcom		 sc_ac;
+	struct ifmedia		 sc_media;
+
+	struct ip_moptions	 sc_imo;
+	void			*sc_ahcookie;
+	void			*sc_lhcookie;
+	void			*sc_dhcookie;
+
+	struct sockaddr_storage	 sc_src;
+	struct sockaddr_storage	 sc_dst;
+	in_port_t		 sc_dstport;
+	u_int			 sc_rdomain;
+	int			 sc_vnetid;
+	u_int8_t		 sc_ttl;
+
+	LIST_ENTRY(vxlan_softc)	 sc_entry;
+};
 
 void	 vxlanattach(int);
 int	 vxlanioctl(struct ifnet *, u_long, caddr_t);
