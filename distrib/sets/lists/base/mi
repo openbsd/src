@@ -2375,7 +2375,6 @@
 ./usr/sbin/rpc.bootparamd
 ./usr/sbin/rpc.lockd
 ./usr/sbin/rpc.statd
-./usr/sbin/rpc.yppasswdd
 ./usr/sbin/rtadvd
 ./usr/sbin/sa
 ./usr/sbin/sasyncd
