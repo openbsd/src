@@ -1,4 +1,4 @@
-/*	$OpenBSD: growfs.c,v 1.46 2015/11/23 18:35:18 mmcc Exp $	*/
+/*	$OpenBSD: growfs.c,v 1.47 2015/11/27 17:27:01 deraadt Exp $	*/
 /*
  * Copyright (c) 2000 Christoph Herrmann, Thomas-Henning von Kamptz
  * Copyright (c) 1980, 1989, 1993 The Regents of the University of California.
@@ -109,7 +109,7 @@ union dinode {
 	else \
 		(dp)->dp2.field = (val); \
 	} while (0)
-static daddr_t 	inoblk;			/* inode block address */
+static daddr_t		inoblk;			/* inode block address */
 static char		inobuf[MAXBSIZE];	/* inode block */
 ino_t			maxino;			/* last valid inode */
 
@@ -433,7 +433,7 @@ initcg(int cylno, time_t utime, int fso, unsigned int Nflag)
 		}
 	}
 	for (d = dupper; d + sblock.fs_frag <= acg.cg_ndblk;
-	     d += sblock.fs_frag) {
+	    d += sblock.fs_frag) {
 		blkno = d / sblock.fs_frag;
 		setblock(&sblock, cg_blksfree(&acg), blkno);
 		if (sblock.fs_contigsumsize > 0)
@@ -499,7 +499,7 @@ initcg(int cylno, time_t utime, int fso, unsigned int Nflag)
 		} else {
 			dp2->di_gen = arc4random();
 			dp2++;
-		}  
+		}
 	}
 	wtfs(fsbtodb(&sblock, cgsblock(&sblock, cylno)), iobufsize,
 	    iobuf, fso, Nflag);
@@ -507,7 +507,7 @@ initcg(int cylno, time_t utime, int fso, unsigned int Nflag)
 	/* Initialize inodes for FFS1. */
 	if (sblock.fs_magic == FS_UFS1_MAGIC) {
 		for (i = 2 * sblock.fs_frag; i < sblock.fs_ipg / INOPF(&sblock);
-		     i += sblock.fs_frag) {
+		    i += sblock.fs_frag) {
 			dp1 = (struct ufs1_dinode *)&iobuf[start];
 			for (j = 0; j < INOPB(&sblock); j++) {
 				dp1->di_gen = arc4random();
@@ -1118,7 +1118,7 @@ updcsloc(time_t utime, int fsi, int fso, unsigned int Nflag)
 	/*
 	 * Allocate the space for the array of blocks to be relocated.
 	 */
- 	bp = calloc(((dupper-odupper) / sblock.fs_frag + 2),
+	bp = calloc(((dupper-odupper) / sblock.fs_frag + 2),
 	    sizeof(struct gfs_bpp));
 	if (bp == NULL)
 		errx(1, "calloc failed");
@@ -1712,7 +1712,7 @@ main(int argc, char **argv)
 	struct stat	st;
 	struct disklabel	*lp;
 	struct partition	*pp;
-	int	i,fsi,fso;
+	int	i, fsi, fso;
 	char	reply[5];
 	const char *errstr;
 #ifdef FSMAXSNAP
@@ -1941,7 +1941,7 @@ main(int argc, char **argv)
 	 */
 	pp->p_fragblock =
 	    DISKLABELV1_FFS_FRAGBLOCK(sblock.fs_fsize, sblock.fs_frag);
-        pp->p_cpg = sblock.fs_fpg;
+	pp->p_cpg = sblock.fs_fpg;
 
 	return_disklabel(fso, lp, Nflag);
 
