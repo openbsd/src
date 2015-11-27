@@ -1,4 +1,4 @@
-/* $OpenBSD: parse.y,v 1.12 2015/09/01 16:20:55 mikeb Exp $ */
+/* $OpenBSD: parse.y,v 1.13 2015/11/27 21:10:17 tedu Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -284,8 +284,10 @@ repeat:
 			}
 		}
 		*p++ = c;
-		if (p == ebuf)
+		if (p == ebuf) {
 			yyerror("too long line");
+			p = buf;
+		}
 		escape = 0;
 	}
 
