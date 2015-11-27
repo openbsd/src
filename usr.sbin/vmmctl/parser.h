@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.h,v 1.2 2015/11/26 08:26:48 reyk Exp $	*/
+/*	$OpenBSD: parser.h,v 1.3 2015/11/27 09:11:39 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -27,22 +27,33 @@
 enum actions {
 	NONE,
 	CMD_CREATE,
+	CMD_LOAD,
 	CMD_START,
-	CMD_TERMINATE,
-	CMD_INFO,
-	CMD_LOAD
+	CMD_STATUS,
+	CMD_STOP,
 };
 
+struct ctl_command;
+
 struct parse_result {
-	enum actions	 action;
-	uint32_t	 id;
-	char		*name;
-	char		*path;
-	size_t		 size;
-	size_t		 nifs;
-	size_t		 ndisks;
-	char		**disks;
-	int		 disable;
+	enum actions		 action;
+	uint32_t		 id;
+	char			*name;
+	char			*path;
+	long long		 size;
+	size_t			 nifs;
+	size_t			 ndisks;
+	char			**disks;
+	int			 disable;
+	struct ctl_command	*ctl;
+};
+
+struct ctl_command {
+	const char		*name;
+	enum actions		 action;
+	int			(*main)(struct parse_result *, int, char *[]);
+	const char		*usage;
+	int			 has_pledge;
 };
 
 struct imsgbuf	*ibuf;
@@ -53,17 +64,15 @@ int	 parse_ifs(struct parse_result *, char *, int);
 int	 parse_size(struct parse_result *, char *, long long);
 int	 parse_disk(struct parse_result *, char *);
 int	 parse_vmid(struct parse_result *, char *, uint32_t);
-
-/* parser.c */
-struct parse_result *
-	 parse(int, char *[]);
+void	 parse_free(struct parse_result *);
+int	 parse(int, char *[]);
 
 /* parse.y */
 int	 parse_config(const char *);
 int	 cmdline_symset(char *);
 
 /* vmmctl.c */
-int	 create_imagefile(char *, long);
+int	 create_imagefile(const char *, long);
 int	 start_vm(const char *, int, int, int, char **, char *);
 int	 start_vm_complete(struct imsg *, int *);
 void	 terminate_vm(uint32_t);

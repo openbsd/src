@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vmmctl.8,v 1.6 2015/11/26 08:26:48 reyk Exp $
+.\"	$OpenBSD: vmmctl.8,v 1.7 2015/11/27 09:11:39 reyk Exp $
 .\"
 .\" Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 26 2015 $
+.Dd $Mdocdate: November 27 2015 $
 .Dt VMMCTL 8
 .Os
 .Sh NAME
@@ -33,30 +33,41 @@ A VMM manages virtual machines (VMs) on a
 .Ar host .
 The VMM subsystem is responsible for creating, destroying, and executing
 VMs.
-.Sh VM OPERATIONS
+.Pp
+Within the commands,
+the
+.Ar bytes
+argument can be specified with a human-readable scale,
+using the format described in
+.Xr scan_scaled 3 .
+.Sh VM COMMANDS
 The options are as follows:
 .Bl -tag -width Ds
-.It Cm create Ar path Cm size Ar number
-Creates a VM disk image file with the specified pathname and size in MB.
-.It Cm start Ar name Op Ar parameters
+.It Cm create Ar path Fl s Ar bytes
+Creates a VM disk image file with the specified pathname and size,
+rounded to megabytes.
+.It Xo Cm start Ar name
+.Fl k Ar path
+.Fl m Ar bytes
+.Op Fl d Ar path
+.Op Fl i Ar count
+.Xc
 Starts a VM defined by the specified name and parameters:
 .Bl -tag -width "memory size"
-.It Cm disk Ar path
+.It Fl d Ar path
 Disk image file (may be specified multiple times to add multiple disk images).
-.It Cm kernel Ar path
+.It Fl k Ar path
 Kernel to load when booting the VM.
-.It Cm memory Ar size
+.It Fl m Ar bytes
 Memory size of the VM, in bytes, rounded to megabytes.
-Optionally, the units 'K', 'M', or 'G', for kilo-, mega-, and gigabytes
-can be used.
-.It Cm interfaces Ar count
+.It Fl i Ar count
 Number of network interfaces to add to the VM.
 .El
-.It Cm terminate Ar id
-Terminates (stops) a VM defined by the specified VM
-.Ar id .
-.It Cm show info Op Ar id
+.It Cm status Op Ar id
 Lists VMs running on the host, optionally listing just the selected VM
+.Ar id .
+.It Cm stop Ar id
+Stops (terminates) a VM defined by the specified VM
 .Ar id .
 .El
 .Sh FILES
@@ -80,18 +91,17 @@ The VMM subsystem could not be enabled or disabled as requested.
 A requested VM-based operation could not be completed.
 .El
 .Sh EXAMPLES
-Create a new disk image ('disk.img') of 4 gigabyte size:
-.Dl $ vmmctl create disk.img size 4G
+Create a 4.5 Gigabyte disk image, disk.img:
+.Dl $ vmmctl create disk.img -s 4.5G
 .Pp
 Create a new VM with 512MB memory, one network interface, one disk image
 ('disk.img') and boot from kernel '/bsd':
 .Bd -literal -offset indent
-$ vmmctl start "myvm" memory 512M interfaces 1 disk disk.img \e
-	kernel /bsd
+$ vmmctl start "myvm" -m 512M -i 1 -d disk.img -k /bsd
 .Ed
 .Pp
 Terminate VM number 1:
-.Dl $ vmmctl terminate 1
+.Dl $ vmmctl stop 1
 .Sh SEE ALSO
 .Xr vmm 4 ,
 .Xr vmm.conf 5 ,

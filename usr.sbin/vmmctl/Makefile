@@ -2,7 +2,7 @@
 .if ${MACHINE} == "amd64"
 
 PROG=	vmmctl
-SRCS=	vmmctl.c parser.c main.c parse.y
+SRCS=	vmmctl.c main.c parse.y
 CFLAGS+= -Wall
 CFLAGS+= -Wstrict-prototypes -Wmissing-prototypes
 CFLAGS+= -Wmissing-declarations

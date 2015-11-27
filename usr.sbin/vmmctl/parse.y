@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.3 2015/11/26 08:34:25 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.4 2015/11/27 09:11:39 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007-2015 Reyk Floeter <reyk@openbsd.org>
@@ -132,13 +132,13 @@ main		: VM STRING			{
 			res.name = $2;
 		} '{' optnl vm_opts_l '}'	{
 			if (res.disable) {
-				yyerror("vm \"%s\" disabled", res.name);
-				YYACCEPT;
+				warnx("%s:%d: vm \"%s\" disabled",
+				    file->name, yylval.lineno, res.name);
+			} else {
+				res.action = CMD_START;
+				if (vmmaction(&res) != 0)
+					errx(1, "vmmaction");
 			}
-
-			res.action = CMD_START;
-			if (vmmaction(&res) != 0)
-				errx(1, "vmmaction");
 		}
 		;
 

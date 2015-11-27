@@ -1,4 +1,4 @@
-.\" $OpenBSD: vmm.conf.5,v 1.6 2015/11/26 08:26:48 reyk Exp $
+.\" $OpenBSD: vmm.conf.5,v 1.7 2015/11/27 09:11:39 reyk Exp $
 .\"
 .\" Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
 .\" Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 26 2015 $
+.Dd $Mdocdate: November 27 2015 $
 .Dt VMM.CONF 5
 .Os
 .Sh NAME
@@ -41,7 +41,13 @@ Configuration for each individual virtual machine.
 .El
 .Pp
 Within the sections,
-the current line can be extended over multiple lines using a backslash
+the
+.Ar bytes
+argument can be specified with a human-readable scale,
+using the format described in
+.Xr scan_scaled 3 .
+.Pp
+The current line can be extended over multiple lines using a backslash
 .Pq Sq \e .
 Comments can be put anywhere in the file using a hash mark
 .Pq Sq # ,
@@ -102,10 +108,8 @@ Do not start this VM.
 Disk image file (may be specified multiple times to add multiple disk images).
 .It Cm kernel Ar path
 Kernel to load when booting the VM.
-.It Cm memory Ar size
+.It Cm memory Ar bytes
 Memory size of the VM, in bytes, rounded to megabytes.
-Optionally, the units 'K', 'M', or 'G', for kilo-, mega-, and gigabytes
-can be used.
 .It Cm interfaces Ar count
 Number of network interfaces to add to the VM.
 .El

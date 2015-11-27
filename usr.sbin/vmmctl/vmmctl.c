@@ -323,7 +323,7 @@ print_vm_info(struct vm_info_result *list, size_t ct)
  *  Exxxx : Various other Exxxx errno codes due to other I/O errors
  */
 int
-create_imagefile(char *imgfile_path, long imgsize)
+create_imagefile(const char *imgfile_path, long imgsize)
 {
 	int fd, ret;
 	struct stat sb;
