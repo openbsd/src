@@ -1,4 +1,4 @@
-/* $OpenBSD: newfs_ext2fs.c,v 1.20 2015/11/26 06:59:12 deraadt Exp $ */
+/* $OpenBSD: newfs_ext2fs.c,v 1.21 2015/11/28 06:12:09 deraadt Exp $ */
 /*	$NetBSD: newfs_ext2fs.c,v 1.8 2009/03/02 10:38:13 tsutsui Exp $	*/
 
 /*
@@ -130,7 +130,7 @@ main(int argc, char *argv[])
 	else
 		max_cols = 80;
 
-	if (pledge("stdio rpath wpath tty disklabel", NULL) == -1)
+	if (pledge("stdio rpath wpath disklabel", NULL) == -1)
 		err(1, "pledge");
 
 	cp = NULL;
