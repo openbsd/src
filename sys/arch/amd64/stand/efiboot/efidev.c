@@ -1,4 +1,4 @@
-/*	$OpenBSD: efidev.c,v 1.9 2015/11/28 13:50:11 yasuoka Exp $	*/
+/*	$OpenBSD: efidev.c,v 1.10 2015/11/28 22:53:38 krw Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -63,6 +63,7 @@ static EFI_STATUS
 static int	 efid_diskio(int, struct diskinfo *, u_int, int, void *);
 static u_int	 findopenbsd(efi_diskinfo_t, const char **);
 static uint64_t	 findopenbsd_gpt(efi_diskinfo_t, const char **);
+static int	 gpt_chk_mbr(struct dos_partition *, efi_diskinfo_t);
 
 void
 efid_init(struct diskinfo *dip, void *handle)
@@ -160,6 +161,45 @@ efid_diskio(int rw, struct diskinfo *dip, u_int off, int nsect, void *buf)
 }
 
 /*
+ * Returns 0 if the MBR with the provided partition array is a GPT protective
+ * MBR, and returns 1 otherwise. A GPT protective MBR would have one and only
+ * one MBR partition, an EFI partition that either covers the whole disk or as
+ * much of it as is possible with a 32bit size field.
+ *
+ * Taken from kern/subr_disk.c.
+ *
+ * NOTE: MS always uses a size of UINT32_MAX for the EFI partition!**
+ */
+int
+gpt_chk_mbr(struct dos_partition *dp, efi_diskinfo_t ed)
+{
+	struct dos_partition *dp2;
+	EFI_LBA dsize;
+	int efi, found, i;
+	u_int32_t psize;
+
+	found = efi = 0;
+	for (dp2=dp, i=0; i < NDOSPART; i++, dp2++) {
+		if (dp2->dp_typ == DOSPTYP_UNUSED)
+			continue;
+		found++;
+		if (dp2->dp_typ != DOSPTYP_EFI)
+			continue;
+		dsize = ed->blkio->Media->LastBlock + 1;
+		psize = letoh32(dp2->dp_size);
+		if (psize == (dsize - 1) ||
+		    psize == UINT32_MAX) {
+			if (letoh32(dp2->dp_start) == 1)
+				efi++;
+		}
+	}
+	if (found == 1 && efi == 1)
+		return (0);
+
+	return (1);
+}
+
+/*
  * Try to read the bsd label on the given BIOS device.
  */
 static u_int
@@ -168,9 +208,10 @@ findopenbsd(efi_diskinfo_t ed, const char **err)
 	EFI_STATUS status;
 	struct dos_mbr mbr;
 	struct dos_partition *dp;
+	uint64_t gptoff;
 	u_int mbroff = DOSBBSECTOR;
 	u_int mbr_eoff = DOSBBSECTOR;	/* Offset of MBR extended partition. */
-	int i, maxebr = DOS_MAXEBR, nextebr, gpt = 0, npart = 0;
+	int i, maxebr = DOS_MAXEBR, nextebr;
 
 again:
 	if (!maxebr--) {
@@ -192,13 +233,24 @@ again:
 		return (-1);
 	}
 
+	/* check for GPT protective MBR. */
+	if (mbroff == DOSBBSECTOR && gpt_chk_mbr(mbr.dmbr_parts, ed) == 0) {
+		gptoff = findopenbsd_gpt(ed, err);
+		if (gptoff > UINT_MAX || EFI_SECTOBLK(ed, gptoff) > UINT_MAX) {
+			*err = "Paritition LBA > 2**32";
+			return (-1);
+		}
+		if (gptoff == -1)
+			return (-1);
+		return EFI_SECTOBLK(ed, gptoff);
+	}
+
 	/* Search for OpenBSD partition */
 	nextebr = 0;
 	for (i = 0; i < NDOSPART; i++) {
 		dp = &mbr.dmbr_parts[i];
-		if (!dp->dp_size || dp->dp_typ == DOSPTYP_UNUSED)
+		if (!dp->dp_size)
 			continue;
-		npart++;
 #ifdef BIOS_DEBUG
 		if (debug)
 			printf("found partition %u: "
@@ -225,24 +277,11 @@ again:
 			if (mbr_eoff == DOSBBSECTOR)
 				mbr_eoff = dp->dp_start;
 		}
-
-		if (dp->dp_typ == DOSPTYP_EFI)
-			gpt++;
 	}
 
 	if (nextebr && nextebr != (u_int)-1) {
 		mbroff = nextebr;
 		goto again;
-	}
-	if (gpt == 1 && npart == 1) {
-		uint64_t gptoff = findopenbsd_gpt(ed, err);
-		if (gptoff > UINT_MAX || EFI_SECTOBLK(ed, gptoff) > UINT_MAX) {
-			*err = "Paritition LBA > 2**32";
-			return (-1);
-		}
-		if (gptoff == -1)
-			return (-1);
-		return EFI_SECTOBLK(ed, gptoff);
 	}
 
 	return (-1);
