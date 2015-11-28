@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.216 2015/10/18 04:45:21 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.217 2015/11/28 02:42:22 deraadt Exp $
 #
 # Copyright (c) 2008-2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
@@ -365,7 +365,7 @@ sm_add_user_grp() {
 		if [[ ${_u} != root ]]; then
 			if ! grep -Eq "^${_u}:" /etc/master.passwd; then
 				echo "===> Adding the ${_u} user"
-				chpass -la "${_l}"
+				chpass -a "${_l}"
 			fi
 		fi
 	done <${_pw}
