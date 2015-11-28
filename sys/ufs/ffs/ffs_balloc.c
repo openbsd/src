@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_balloc.c,v 1.43 2015/03/14 03:38:52 jsg Exp $	*/
+/*	$OpenBSD: ffs_balloc.c,v 1.44 2015/11/28 21:52:02 beck Exp $	*/
 /*	$NetBSD: ffs_balloc.c,v 1.3 1996/02/09 22:22:21 christos Exp $	*/
 
 /*
@@ -165,7 +165,7 @@ ffs1_balloc(struct inode *ip, off_t startoffset, int size, struct ucred *cred,
 						brelse(*bpp);
 						return (error);
 					}
-					(*bpp)->b_bcount = osize;
+					buf_adjcnt((*bpp), osize);
 				}
 				return (0);
 			} else {
@@ -535,7 +535,7 @@ ffs2_balloc(struct inode *ip, off_t off, int size, struct ucred *cred,
 						brelse(*bpp);
 						return (error);
 					}
-					(*bpp)->b_bcount = osize;
+					buf_adjcnt((*bpp), osize);
 				}
 
 				return (0);

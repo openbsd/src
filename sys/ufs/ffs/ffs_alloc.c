@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_alloc.c,v 1.105 2015/09/27 05:25:00 guenther Exp $	*/
+/*	$OpenBSD: ffs_alloc.c,v 1.106 2015/11/28 21:52:02 beck Exp $	*/
 /*	$NetBSD: ffs_alloc.c,v 1.11 1996/05/11 18:27:09 mycroft Exp $	*/
 
 /*
@@ -218,7 +218,7 @@ ffs_realloccg(struct inode *ip, daddr_t lbprev, daddr_t bpref, int osize,
 	if (bpp != NULL) {
 		if ((error = bread(ITOV(ip), lbprev, fs->fs_bsize, &bp)) != 0)
 			goto error;
-		bp->b_bcount = osize;
+		buf_adjcnt(bp, osize);
 	}
 
 	if ((error = ufs_quota_alloc_blocks(ip, btodb(nsize - osize), cred))
@@ -241,7 +241,7 @@ ffs_realloccg(struct inode *ip, daddr_t lbprev, daddr_t bpref, int osize,
 			if (nsize > bp->b_bufsize)
 				panic("ffs_realloccg: small buf");
 #endif
-			bp->b_bcount = nsize;
+			buf_adjcnt(bp, nsize);
 			bp->b_flags |= B_DONE;
 			memset(bp->b_data + osize, 0, nsize - osize);
 			*bpp = bp;
@@ -313,7 +313,7 @@ ffs_realloccg(struct inode *ip, daddr_t lbprev, daddr_t bpref, int osize,
 		if (nsize > bp->b_bufsize)
 			panic("ffs_realloccg: small buf 2");
 #endif
-		bp->b_bcount = nsize;
+		buf_adjcnt(bp, nsize);
 		bp->b_flags |= B_DONE;
 		memset(bp->b_data + osize, 0, nsize - osize);
 		*bpp = bp;

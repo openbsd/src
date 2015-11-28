@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_bio.c,v 1.170 2015/07/19 16:21:11 beck Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.171 2015/11/28 21:52:02 beck Exp $	*/
 /*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
 
 /*
@@ -1205,6 +1205,13 @@ bcstats_print(
 	    bcstats.pendingreads, bcstats.pendingwrites);
 }
 #endif
+
+void
+buf_adjcnt(struct buf *bp, long ncount)
+{
+	KASSERT(ncount <= bp->b_bufsize);
+	bp->b_bcount = ncount;
+}
 
 /* bufcache freelist code below */
 /*
