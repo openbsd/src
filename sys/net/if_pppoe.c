@@ -1,4 +1,4 @@
-/* $OpenBSD: if_pppoe.c,v 1.50 2015/11/20 12:05:34 sthen Exp $ */
+/* $OpenBSD: if_pppoe.c,v 1.51 2015/11/28 19:10:26 reyk Exp $ */
 /* $NetBSD: if_pppoe.c,v 1.51 2003/11/28 08:56:48 keihan Exp $ */
 
 /*
@@ -122,7 +122,7 @@ struct pppoetag {
 struct pppoe_softc {
 	struct sppp sc_sppp;		/* contains a struct ifnet as first element */
 	LIST_ENTRY(pppoe_softc) sc_list;
-	struct ifnet *sc_eth_if;	/* ethernet interface we are using */
+	unsigned int sc_eth_ifidx;
 
 	int sc_state;			/* discovery phase or session connected */
 	struct ether_addr sc_dest;	/* hardware address of concentrator */
@@ -175,7 +175,7 @@ static int pppoe_send_padr(struct pppoe_softc *);
 static int pppoe_send_pado(struct pppoe_softc *);
 static int pppoe_send_pads(struct pppoe_softc *);
 #endif
-static int pppoe_send_padt(struct ifnet *, u_int, const u_int8_t *);
+static int pppoe_send_padt(unsigned int, u_int, const u_int8_t *);
 
 /* raw output */
 static int pppoe_output(struct pppoe_softc *, struct mbuf *);
@@ -305,7 +305,7 @@ pppoe_find_softc_by_session(u_int session, u_int ifidx)
 	LIST_FOREACH(sc, &pppoe_softc_list, sc_list) {
 		if (sc->sc_state == PPPOE_STATE_SESSION
 		    && sc->sc_session == session
-		    && sc->sc_eth_if->if_index == ifidx) {
+		    && sc->sc_eth_ifidx == ifidx) {
 			return (sc);
 		}
 	}
@@ -344,7 +344,7 @@ pppoe_find_softc_by_hunique(u_int8_t *token, size_t len, u_int ifidx)
 			sc->sc_sppp.pp_if.if_xname, sc->sc_state);
 		return (NULL);
 	}
-	if (sc->sc_eth_if->if_index != ifidx) {
+	if (sc->sc_eth_ifidx != ifidx) {
 		printf("%s: wrong interface, not accepting host unique\n",
 			sc->sc_sppp.pp_if.if_xname);
 		return (NULL);
@@ -803,7 +803,7 @@ pppoe_data_input(struct mbuf *m)
 #ifdef PPPOE_TERM_UNKNOWN_SESSIONS
 		printf("pppoe (data): input for unknown session 0x%x, sending PADT\n",
 		    session);
-		pppoe_send_padt(m->m_pkthdr.rcvif, session, shost);
+		pppoe_send_padt(m->m_pkthdr.ph_ifidx, session, shost);
 #endif
 		goto drop;
 	}
@@ -853,15 +853,18 @@ pppoe_output(struct pppoe_softc *sc, struct mbuf *m)
 {
 	struct sockaddr dst;
 	struct ether_header *eh;
+	struct ifnet *eth_if;
 	u_int16_t etype;
+	int ret;
 
-	if (sc->sc_eth_if == NULL) {
+	if ((eth_if = if_get(sc->sc_eth_ifidx)) == NULL) {
 		m_freem(m);
 		return (EIO);
 	}
-	
-	if ((sc->sc_eth_if->if_flags & (IFF_UP|IFF_RUNNING))
+
+	if ((eth_if->if_flags & (IFF_UP|IFF_RUNNING))
 	    != (IFF_UP|IFF_RUNNING)) {
+		if_put(eth_if);
 		m_freem(m);
 		return (ENETDOWN);
 	}
@@ -880,10 +883,13 @@ pppoe_output(struct pppoe_softc *sc, struct mbuf *m)
 
 	m->m_flags &= ~(M_BCAST|M_MCAST);
 	/* encapsulated packet is forced into rdomain of physical interface */
-	m->m_pkthdr.ph_rtableid = sc->sc_eth_if->if_rdomain;
+	m->m_pkthdr.ph_rtableid = eth_if->if_rdomain;
 
 	sc->sc_sppp.pp_if.if_opackets++;
-	return sc->sc_eth_if->if_output(sc->sc_eth_if, m, &dst, NULL);
+	ret = eth_if->if_output(eth_if, m, &dst, NULL);
+	if_put(eth_if);
+
+	return (ret);
 }
 
 /* The ioctl routine. */
@@ -892,6 +898,7 @@ pppoe_ioctl(struct ifnet *ifp, unsigned long cmd, caddr_t data)
 {
 	struct proc *p = curproc;	/* XXX */
 	struct pppoe_softc *sc = (struct pppoe_softc *)ifp;
+	struct ifnet *eth_if;
 	int error = 0;
 
 	switch (cmd) {
@@ -907,7 +914,7 @@ pppoe_ioctl(struct ifnet *ifp, unsigned long cmd, caddr_t data)
 
 			eth_if = ifunit(parms->eth_ifname);
 			if (eth_if == NULL || eth_if->if_type != IFT_ETHER) {
-				sc->sc_eth_if = NULL;
+				sc->sc_eth_ifidx = 0;
 				return (ENXIO);
 			}
 
@@ -916,7 +923,7 @@ pppoe_ioctl(struct ifnet *ifp, unsigned long cmd, caddr_t data)
 				sc->sc_sppp.pp_if.if_mtu = eth_if->if_mtu -
 				    PPPOE_OVERHEAD;
 			}
-			sc->sc_eth_if = eth_if;
+			sc->sc_eth_ifidx = eth_if->if_index;
 		}
 
 		if (sc->sc_concentrator_name)
@@ -951,10 +958,11 @@ pppoe_ioctl(struct ifnet *ifp, unsigned long cmd, caddr_t data)
 	{
 		struct pppoediscparms *parms = (struct pppoediscparms *)data;
 
-		if (sc->sc_eth_if)
-			strlcpy(parms->eth_ifname, sc->sc_eth_if->if_xname,
+		if ((eth_if = if_get(sc->sc_eth_ifidx)) != NULL) {
+			strlcpy(parms->eth_ifname, eth_if->if_xname,
 			    IFNAMSIZ);
-		else
+			if_put(eth_if);
+		} else
 			parms->eth_ifname[0] = '\0';
 
 		if (sc->sc_concentrator_name)
@@ -1008,10 +1016,17 @@ pppoe_ioctl(struct ifnet *ifp, unsigned long cmd, caddr_t data)
 	{
 		struct ifreq *ifr = (struct ifreq *)data;
 
+		eth_if = if_get(sc->sc_eth_ifidx);
+
 		if (ifr->ifr_mtu > MIN(PPPOE_MAXMTU,
-		    (sc->sc_eth_if == NULL ? PPPOE_MAXMTU :
-		    (sc->sc_eth_if->if_mtu - PPPOE_OVERHEAD))))
-			return (EINVAL);
+		    (eth_if == NULL ? PPPOE_MAXMTU :
+		    (eth_if->if_mtu - PPPOE_OVERHEAD))))
+			error = EINVAL;
+		else
+			error = 0;
+
+		if_put(eth_if);
+
 		return (sppp_ioctl(ifp, cmd, data));
 	}
 	default:
@@ -1238,7 +1253,8 @@ pppoe_disconnect(struct pppoe_softc *sc)
 	else {
 		PPPOEDEBUG(("%s: disconnecting\n",
 		    sc->sc_sppp.pp_if.if_xname));
-		err = pppoe_send_padt(sc->sc_eth_if, sc->sc_session, (const u_int8_t *)&sc->sc_dest);
+		err = pppoe_send_padt(sc->sc_eth_ifidx,
+		    sc->sc_session, (const u_int8_t *)&sc->sc_dest);
 	}
 
 	/* cleanup softc */
@@ -1359,16 +1375,23 @@ pppoe_send_padr(struct pppoe_softc *sc)
 
 /* Send a PADT packet. */
 static int
-pppoe_send_padt(struct ifnet *outgoing_if, u_int session, const u_int8_t *dest)
+pppoe_send_padt(unsigned int ifidx, u_int session, const u_int8_t *dest)
 {
 	struct ether_header *eh;
 	struct sockaddr dst;
+	struct ifnet *eth_if;
 	struct mbuf *m0;
 	u_int8_t *p;
+	int ret;
+
+	if ((eth_if = if_get(ifidx)) == NULL)
+		return (EINVAL);
 
 	m0 = pppoe_get_mbuf(PPPOE_HEADERLEN);
-	if (m0 == NULL)
+	if (m0 == NULL) {
+		if_put(eth_if);
 		return (ENOBUFS);
+	}
 
 	p = mtod(m0, u_int8_t *);
 	PPPOE_ADD_HEADER(p, PPPOE_CODE_PADT, session, 0);
@@ -1381,9 +1404,12 @@ pppoe_send_padt(struct ifnet *outgoing_if, u_int session, const u_int8_t *dest)
 
 	m0->m_flags &= ~(M_BCAST|M_MCAST);
 	/* encapsulated packet is forced into rdomain of physical interface */
-	m0->m_pkthdr.ph_rtableid = outgoing_if->if_rdomain;
+	m0->m_pkthdr.ph_rtableid = eth_if->if_rdomain;
 
-	return outgoing_if->if_output(outgoing_if, m0, &dst, NULL);
+	ret = eth_if->if_output(eth_if, m0, &dst, NULL);
+	if_put(eth_if);
+
+	return (ret);
 }
 
 #ifdef PPPOE_SERVER
