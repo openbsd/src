@@ -1,4 +1,4 @@
-.\" $OpenBSD: relayctl.8,v 1.31 2015/07/24 15:25:08 jmc Exp $
+.\" $OpenBSD: relayctl.8,v 1.32 2015/11/28 01:22:44 gsoares Exp $
 .\"
 .\" Copyright (c) 2007 - 2013 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 24 2015 $
+.Dd $Mdocdate: November 28 2015 $
 .Dt RELAYCTL 8
 .Os
 .Sh NAME
@@ -42,6 +42,10 @@ Enable the host.
 Start checking its health again.
 .It Cm load Ar filename
 Reload the configuration from the specified file.
+.It Cm log brief
+Disable verbose debug logging.
+.It Cm log verbose
+Enable verbose debug logging.
 .It Cm monitor
 Continuously report any changes in the host checking engine and the
 .Xr pf 4
