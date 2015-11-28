@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gem_sbus.c,v 1.9 2015/11/24 17:11:40 mpi Exp $	*/
+/*	$OpenBSD: if_gem_sbus.c,v 1.10 2015/11/28 09:42:10 jmatthew Exp $	*/
 /*	$NetBSD: if_gem_sbus.c,v 1.1 2006/11/24 13:23:32 martin Exp $	*/
 
 /*-
@@ -140,8 +140,8 @@ gemattach_sbus(struct device *parent, struct device *self, void *aux)
 	    GEM_SBUS_CFG_BSIZE128|GEM_SBUS_CFG_PARITY|GEM_SBUS_CFG_BMODE64);
 
 	/* Establish interrupt handler */
-	bus_intr_establish(sa->sa_bustag, sa->sa_pri, IPL_NET, 0, gem_intr,
-	    sc, self->dv_xname);
+	sc->sc_ih = bus_intr_establish(sa->sa_bustag, sa->sa_pri, IPL_NET, 0,
+	    gem_intr, sc, self->dv_xname);
 
 	gem_config(sc);
 }

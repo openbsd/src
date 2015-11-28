@@ -1,4 +1,4 @@
-/*	$OpenBSD: gemvar.h,v 1.30 2015/09/10 12:49:55 stsp Exp $	*/
+/*	$OpenBSD: gemvar.h,v 1.31 2015/11/28 09:42:10 jmatthew Exp $	*/
 /*	$NetBSD: gemvar.h,v 1.1 2001/09/16 00:11:43 eeh Exp $ */
 
 /*
@@ -124,6 +124,7 @@ struct gem_softc {
 	struct mii_data	sc_mii;		/* MII media control */
 #define sc_media	sc_mii.mii_media/* shorthand */
 	struct timeout	sc_tick_ch;	/* tick callout */
+	void		*sc_ih;		/* interrupt handler */
 
 	/* The following bus handles are to be provided by the bus front-end */
 	bus_space_tag_t	sc_bustag;	/* bus tag */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gem_pci.c,v 1.38 2015/11/24 17:11:39 mpi Exp $	*/
+/*	$OpenBSD: if_gem_pci.c,v 1.39 2015/11/28 09:42:10 jmatthew Exp $	*/
 /*	$NetBSD: if_gem_pci.c,v 1.1 2001/09/16 00:11:42 eeh Exp $ */
 
 /*
@@ -71,7 +71,6 @@ struct gem_pci_softc {
 	bus_space_tag_t		gsc_memt;
 	bus_space_handle_t	gsc_memh;
 	bus_size_t		gsc_memsize;
-	void			*gsc_ih;
 	pci_chipset_tag_t	gsc_pc;
 };
 
@@ -275,9 +274,9 @@ gem_attach_pci(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 	intrstr = pci_intr_string(pa->pa_pc, ih);
-	gsc->gsc_ih = pci_intr_establish(pa->pa_pc,
-	    ih, IPL_NET, gem_intr, sc, self->dv_xname);
-	if (gsc->gsc_ih == NULL) {
+	sc->sc_ih = pci_intr_establish(pa->pa_pc,
+	    ih, IPL_NET | IPL_MPSAFE, gem_intr, sc, self->dv_xname);
+	if (sc->sc_ih == NULL) {
 		printf(": couldn't establish interrupt");
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
@@ -304,7 +303,7 @@ gem_detach_pci(struct device *self, int flags)
 	timeout_del(&sc->sc_rx_watchdog);
 
 	gem_unconfig(sc);
-	pci_intr_disestablish(gsc->gsc_pc, gsc->gsc_ih);
+	pci_intr_disestablish(gsc->gsc_pc, sc->sc_ih);
 	bus_space_unmap(gsc->gsc_memt, gsc->gsc_memh, gsc->gsc_memsize);
 
 	return (0);

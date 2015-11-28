@@ -1,4 +1,4 @@
-/*	$OpenBSD: gem.c,v 1.117 2015/11/25 03:09:58 dlg Exp $	*/
+/*	$OpenBSD: gem.c,v 1.118 2015/11/28 09:42:10 jmatthew Exp $	*/
 /*	$NetBSD: gem.c,v 1.1 2001/09/16 00:11:43 eeh Exp $ */
 
 /*
@@ -48,6 +48,7 @@
 #include <sys/errno.h>
 #include <sys/device.h>
 #include <sys/endian.h>
+#include <sys/atomic.h>
 
 #include <net/if.h>
 #include <net/if_media.h>
@@ -95,6 +96,8 @@ void		gem_rx_watchdog(void *);
 void		gem_rxdrain(struct gem_softc *);
 void		gem_fill_rx_ring(struct gem_softc *);
 int		gem_add_rxbuf(struct gem_softc *, int idx);
+int		gem_load_mbuf(struct gem_softc *, struct gem_sxd *,
+		    struct mbuf *);
 void		gem_iff(struct gem_softc *);
 
 /* MII methods & callbacks */
@@ -539,6 +542,10 @@ gem_stop(struct ifnet *ifp, int softonly)
 		gem_reset_tx(sc);
 	}
 
+	intr_barrier(sc->sc_ih);
+
+	KASSERT((ifp->if_flags & IFF_RUNNING) == 0);
+
 	/*
 	 * Release any queued transmit buffers.
 	 */
@@ -949,6 +956,9 @@ gem_rint(struct gem_softc *sc)
 	u_int64_t rxstat;
 	int i, len;
 
+	if (if_rxr_inuse(&sc->sc_rx_ring) == 0)
+		return (0);
+
 	for (i = sc->sc_rx_cons; if_rxr_inuse(&sc->sc_rx_ring) > 0;
 	    i = GEM_NEXTRX(i)) {
 		rxs = &sc->sc_rxsoft[i];
@@ -1134,8 +1144,11 @@ gem_intr(void *v)
 			printf("%s: MAC tx fault, status %x\n",
 			    sc->sc_dev.dv_xname, txstat);
 #endif
-		if (txstat & (GEM_MAC_TX_UNDERRUN | GEM_MAC_TX_PKT_TOO_LONG))
+		if (txstat & (GEM_MAC_TX_UNDERRUN | GEM_MAC_TX_PKT_TOO_LONG)) {
+			KERNEL_LOCK();
 			gem_init(ifp);
+			KERNEL_UNLOCK();
+		}
 	}
 	if (status & GEM_INTR_RX_MAC) {
 		int rxstat = bus_space_read_4(t, seb, GEM_MAC_RX_STATUS);
@@ -1614,6 +1627,7 @@ gem_tint(struct gem_softc *sc, u_int32_t status)
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	struct gem_sxd *sd;
 	u_int32_t cons, hwcons;
+	u_int32_t used, free = 0;
 
 	hwcons = status >> 19;
 	cons = sc->sc_tx_cons;
@@ -1627,77 +1641,92 @@ gem_tint(struct gem_softc *sc, u_int32_t status)
 			sd->sd_mbuf = NULL;
 			ifp->if_opackets++;
 		}
-		sc->sc_tx_cnt--;
+		free++;
 		if (++cons == GEM_NTXDESC)
 			cons = 0;
 	}
-	sc->sc_tx_cons = cons;
 
-	if (sc->sc_tx_cnt < GEM_NTXDESC - 2)
-		ifq_clr_oactive(&ifp->if_snd);
-	if (sc->sc_tx_cnt == 0)
+	sc->sc_tx_cons = cons;
+	used = atomic_sub_int_nv(&sc->sc_tx_cnt, free);
+
+	if (used == 0)
 		ifp->if_timer = 0;
 
-	gem_start(ifp);
+	if (ifq_is_oactive(&ifp->if_snd) && (used + GEM_NTXSEGS <
+	    GEM_NTXDESC - 2)) {
+		ifq_clr_oactive(&ifp->if_snd);
+
+		KERNEL_LOCK();
+		gem_start(ifp);
+		KERNEL_UNLOCK();
+	}
 
 	return (1);
+}
+
+int
+gem_load_mbuf(struct gem_softc *sc, struct gem_sxd *sd, struct mbuf *m)
+{
+	int error;
+
+	error = bus_dmamap_load_mbuf(sc->sc_dmatag, sd->sd_map, m,
+	    BUS_DMA_NOWAIT);
+	switch (error) {
+	case 0:
+		break;
+
+	case EFBIG: /* mbuf chain is too fragmented */
+		if (m_defrag(m, M_DONTWAIT) == 0 &&
+		    bus_dmamap_load_mbuf(sc->sc_dmatag, sd->sd_map, m,
+		    BUS_DMA_NOWAIT) == 0)
+		    	break;
+		/* FALLTHROUGH */
+	default:
+		return (1);
+	}
+
+	return (0);
 }
 
 void
 gem_start(struct ifnet *ifp)
 {
 	struct gem_softc *sc = ifp->if_softc;
+	struct gem_sxd *sd;
 	struct mbuf *m;
 	u_int64_t flags;
 	bus_dmamap_t map;
-	u_int32_t cur, frag, i;
-	int error;
+	u_int32_t prod, first, last, i;
+	unsigned int used, new;
 
 	if (!(ifp->if_flags & IFF_RUNNING) || ifq_is_oactive(&ifp->if_snd))
 		return;
 
-	while (sc->sc_txd[sc->sc_tx_prod].sd_mbuf == NULL) {
-		m = ifq_deq_begin(&ifp->if_snd);
-		if (m == NULL)
-			break;
+	prod = sc->sc_tx_prod;
+	used = sc->sc_tx_cnt;
+	new = 0;
 
-		/*
-		 * Encapsulate this packet and start it going...
-		 * or fail...
-		 */
-
-		cur = frag = sc->sc_tx_prod;
-		map = sc->sc_txd[cur].sd_map;
-
-		error = bus_dmamap_load_mbuf(sc->sc_dmatag, map, m,
-		    BUS_DMA_NOWAIT);
-		if (error != 0 && error != EFBIG)
-			goto drop;
-		if (error != 0) {
-			/* Too many fragments, linearize. */
-			if (m_defrag(m, M_DONTWAIT))
-				goto drop;
-			error = bus_dmamap_load_mbuf(sc->sc_dmatag, map, m,
-			    BUS_DMA_NOWAIT);
-			if (error != 0)
-				goto drop;
-		}
-
-		if ((sc->sc_tx_cnt + map->dm_nsegs) > (GEM_NTXDESC - 2)) {
-			bus_dmamap_unload(sc->sc_dmatag, map);
-			ifq_deq_rollback(&ifp->if_snd, m);
+	for (;;) {
+		if (used + new + GEM_NTXSEGS > (GEM_NTXDESC - 2)) {
 			ifq_set_oactive(&ifp->if_snd);
 			break;
 		}
 
-		/* We are now committed to transmitting the packet. */
-		ifq_deq_commit(&ifp->if_snd, m);
+		IFQ_DEQUEUE(&ifp->if_snd, m);
+		if (m == NULL)
+			break;
+
+		first = prod;
+		sd = &sc->sc_txd[prod];
+		map = sd->sd_map;
+
+		if (gem_load_mbuf(sc, sd, m)) {
+			m_freem(m);
+			ifp->if_oerrors++;
+			continue;
+		}
 
 #if NBPFILTER > 0
-		/*
-		 * If BPF is listening on this interface, let it see the
-		 * packet before we commit it to the wire.
-		 */
 		if (ifp->if_bpf)
 			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_OUT);
 #endif
@@ -1706,38 +1735,41 @@ gem_start(struct ifnet *ifp)
 		    BUS_DMASYNC_PREWRITE);
 
 		for (i = 0; i < map->dm_nsegs; i++) {
-			GEM_DMA_WRITE(sc, &sc->sc_txdescs[frag].gd_addr,
+			GEM_DMA_WRITE(sc, &sc->sc_txdescs[prod].gd_addr,
 			    map->dm_segs[i].ds_addr);
 			flags = map->dm_segs[i].ds_len & GEM_TD_BUFSIZE;
 			if (i == 0)
 				flags |= GEM_TD_START_OF_PACKET;
 			if (i == (map->dm_nsegs - 1))
 				flags |= GEM_TD_END_OF_PACKET;
-			GEM_DMA_WRITE(sc, &sc->sc_txdescs[frag].gd_flags,
+			GEM_DMA_WRITE(sc, &sc->sc_txdescs[prod].gd_flags,
 			    flags);
 			bus_dmamap_sync(sc->sc_dmatag, sc->sc_cddmamap,
-			    GEM_CDTXOFF(frag), sizeof(struct gem_desc),
+			    GEM_CDTXOFF(prod), sizeof(struct gem_desc),
 			    BUS_DMASYNC_PREWRITE);
-			cur = frag;
-			if (++frag == GEM_NTXDESC)
-				frag = 0;
+
+			last = prod;
+			if (++prod == GEM_NTXDESC)
+				prod = 0;
 		}
 
-		sc->sc_tx_cnt += map->dm_nsegs;
-		sc->sc_txd[sc->sc_tx_prod].sd_map = sc->sc_txd[cur].sd_map;
-		sc->sc_txd[cur].sd_map = map;
-		sc->sc_txd[cur].sd_mbuf = m;
-
-		bus_space_write_4(sc->sc_bustag, sc->sc_h1, GEM_TX_KICK, frag);
-		sc->sc_tx_prod = frag;
-
-		ifp->if_timer = 5;
+		new += map->dm_nsegs;
+		sc->sc_txd[last].sd_mbuf = m;
+		sc->sc_txd[first].sd_map = sc->sc_txd[last].sd_map;
+		sc->sc_txd[last].sd_map = map;
 	}
 
-	return;
+	if (new == 0)
+		return;
 
- drop:
-	ifq_deq_commit(&ifp->if_snd, m);
-	m_freem(m);
-	ifp->if_oerrors++;
+	atomic_add_int(&sc->sc_tx_cnt, new);
+
+	/* Commit. */
+	sc->sc_tx_prod = prod;
+
+	/* Transmit. */
+	bus_space_write_4(sc->sc_bustag, sc->sc_h1, GEM_TX_KICK, prod);
+
+	/* Set timeout in case hardware has problems transmitting. */
+	ifp->if_timer = 5;
 }
