@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.198 2015/07/28 10:24:26 reyk Exp $	*/
+/*	$OpenBSD: relay.c,v 1.199 2015/11/28 09:52:07 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -525,7 +525,8 @@ relay_socket(struct sockaddr_storage *ss, in_port_t port,
 	if (relay_socket_af(ss, port) == -1)
 		goto bad;
 
-	s = fd == -1 ? socket(ss->ss_family, SOCK_STREAM, IPPROTO_TCP) : fd;
+	s = fd == -1 ? socket(ss->ss_family,
+	    SOCK_STREAM | SOCK_NONBLOCK, IPPROTO_TCP) : fd;
 	if (s == -1)
 		goto bad;
 
@@ -541,8 +542,6 @@ relay_socket(struct sockaddr_storage *ss, in_port_t port,
 			sizeof(int)) == -1)
 			goto bad;
 	}
-	if (fcntl(s, F_SETFL, O_NONBLOCK) == -1)
-		goto bad;
 	if (proto->tcpflags & TCPFLAG_BUFSIZ) {
 		val = proto->tcpbufsiz;
 		if (setsockopt(s, SOL_SOCKET, SO_RCVBUF,
@@ -1055,9 +1054,6 @@ relay_accept(int fd, short event, void *arg)
 	}
 	if (relay_sessions >= RELAY_MAX_SESSIONS ||
 	    rlay->rl_conf.flags & F_DISABLE)
-		goto err;
-
-	if (fcntl(s, F_SETFL, O_NONBLOCK) == -1)
 		goto err;
 
 	if ((con = calloc(1, sizeof(*con))) == NULL)

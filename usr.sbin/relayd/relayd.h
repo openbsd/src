@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.217 2015/11/22 13:27:13 reyk Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.218 2015/11/28 09:52:07 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -874,11 +874,6 @@ struct {
 	int		 fd;
 } control_state;
 
-enum blockmodes {
-	BM_NORMAL,
-	BM_NONBLOCK
-};
-
 struct imsgev {
 	struct imsgbuf		 ibuf;
 	void			(*handler)(int, short, void *);
@@ -1094,7 +1089,6 @@ void	 control_dispatch_imsg(int, short, void *);
 void	 control_imsg_forward(struct imsg *);
 struct ctl_conn	*
 	 control_connbyfd(int);
-void	 socket_set_blockmode(int, enum blockmodes);
 
 extern  struct ctl_connlist ctl_conns;
 

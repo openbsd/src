@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay_udp.c,v 1.39 2015/01/22 17:42:09 reyk Exp $	*/
+/*	$OpenBSD: relay_udp.c,v 1.40 2015/11/28 09:52:07 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2013 Reyk Floeter <reyk@openbsd.org>
@@ -116,14 +116,13 @@ relay_udp_socket(struct sockaddr_storage *ss, in_port_t port,
 	if (relay_socket_af(ss, port) == -1)
 		goto bad;
 
-	if ((s = socket(ss->ss_family, SOCK_DGRAM, IPPROTO_UDP)) == -1)
+	if ((s = socket(ss->ss_family, SOCK_DGRAM | SOCK_NONBLOCK,
+	    IPPROTO_UDP)) == -1)
 		goto bad;
 
 	/*
 	 * Socket options
 	 */
-	if (fcntl(s, F_SETFL, O_NONBLOCK) == -1)
-		goto bad;
 	if (proto->tcpflags & TCPFLAG_BUFSIZ) {
 		val = proto->tcpbufsiz;
 		if (setsockopt(s, SOL_SOCKET, SO_RCVBUF,
