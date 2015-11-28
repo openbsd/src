@@ -1,4 +1,4 @@
-/*	$OpenBSD: growfs.c,v 1.47 2015/11/27 17:27:01 deraadt Exp $	*/
+/*	$OpenBSD: growfs.c,v 1.48 2015/11/28 19:59:15 deraadt Exp $	*/
 /*
  * Copyright (c) 2000 Christoph Herrmann, Thomas-Henning von Kamptz
  * Copyright (c) 1980, 1989, 1993 The Regents of the University of California.
@@ -151,6 +151,8 @@ static void	indirchk(daddr_t, daddr_t, daddr_t, daddr_t,
 		    struct gfs_bpp *, int, int, unsigned int);
 static void	ffs1_sb_update(struct fs *, daddr_t);
 
+int	colwidth;
+
 /*
  * Here we actually start growing the filesystem. We basically read the
  * cylinder summary from the first cylinder group as we want to update
@@ -168,7 +170,6 @@ growfs(int fsi, int fso, unsigned int Nflag)
 	int	i;
 	int	cylno, j;
 	time_t	utime;
-	int	width;
 	char	tmpbuf[100];
 
 	time(&utime);
@@ -212,7 +213,6 @@ growfs(int fsi, int fso, unsigned int Nflag)
 	if (!quiet)
 		printf("super-block backups (for fsck -b #) at:\n");
 	i = 0;
-	width = charsperline();
 
 	/*
 	 * Iterate for only the new cylinder groups.
@@ -226,7 +226,7 @@ growfs(int fsi, int fso, unsigned int Nflag)
 		    cylno < (sblock.fs_ncg - 1) ? "," : "");
 		if (j >= sizeof(tmpbuf))
 			j = sizeof(tmpbuf) - 1;
-		if (j == -1 || i + j >= width) {
+		if (j == -1 || i + j >= colwidth) {
 			printf("\n");
 			i = 0;
 		}
@@ -1749,6 +1749,8 @@ main(int argc, char **argv)
 	if (argc != 1)
 		usage();
 
+	colwidth = charsperline();
+
 	/*
 	 * Rather than guessing, use opendev() to get the device
 	 * name, which we open for reading.
@@ -1766,6 +1768,9 @@ main(int argc, char **argv)
 		if (fso < 0)
 			err(1, "%s", device);
 	}
+
+	if (pledge("stdio disklabel", NULL) == -1)
+		err(1, "pledge");
 
 	/*
 	 * Now we have a file descriptor for our device, fstat() it to
