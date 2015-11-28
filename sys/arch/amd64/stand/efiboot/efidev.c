@@ -1,4 +1,4 @@
-/*	$OpenBSD: efidev.c,v 1.8 2015/11/09 01:07:56 krw Exp $	*/
+/*	$OpenBSD: efidev.c,v 1.9 2015/11/28 13:50:11 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -170,7 +170,7 @@ findopenbsd(efi_diskinfo_t ed, const char **err)
 	struct dos_partition *dp;
 	u_int mbroff = DOSBBSECTOR;
 	u_int mbr_eoff = DOSBBSECTOR;	/* Offset of MBR extended partition. */
-	int i, maxebr = DOS_MAXEBR, nextebr;
+	int i, maxebr = DOS_MAXEBR, nextebr, gpt = 0, npart = 0;
 
 again:
 	if (!maxebr--) {
@@ -196,8 +196,9 @@ again:
 	nextebr = 0;
 	for (i = 0; i < NDOSPART; i++) {
 		dp = &mbr.dmbr_parts[i];
-		if (!dp->dp_size)
+		if (!dp->dp_size || dp->dp_typ == DOSPTYP_UNUSED)
 			continue;
+		npart++;
 #ifdef BIOS_DEBUG
 		if (debug)
 			printf("found partition %u: "
@@ -225,20 +226,23 @@ again:
 				mbr_eoff = dp->dp_start;
 		}
 
-		if (dp->dp_typ == DOSPTYP_EFI) {
-			uint64_t gptoff = findopenbsd_gpt(ed, err);
-			if (gptoff > UINT_MAX ||
-			    EFI_SECTOBLK(ed, gptoff) > UINT_MAX) {
-				*err = "Paritition LBA > 2**32";
-				return (-1);
-			}
-			return EFI_SECTOBLK(ed, gptoff);
-		}
+		if (dp->dp_typ == DOSPTYP_EFI)
+			gpt++;
 	}
 
 	if (nextebr && nextebr != (u_int)-1) {
 		mbroff = nextebr;
 		goto again;
+	}
+	if (gpt == 1 && npart == 1) {
+		uint64_t gptoff = findopenbsd_gpt(ed, err);
+		if (gptoff > UINT_MAX || EFI_SECTOBLK(ed, gptoff) > UINT_MAX) {
+			*err = "Paritition LBA > 2**32";
+			return (-1);
+		}
+		if (gptoff == -1)
+			return (-1);
+		return EFI_SECTOBLK(ed, gptoff);
 	}
 
 	return (-1);
