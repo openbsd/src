@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.148 2015/11/25 03:09:58 dlg Exp $	*/
+/*	$OpenBSD: dc.c,v 1.149 2015/11/28 22:57:43 dlg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -125,8 +125,7 @@
 int dc_intr(void *);
 struct dc_type *dc_devtype(void *);
 int dc_newbuf(struct dc_softc *, int, struct mbuf *);
-int dc_encap(struct dc_softc *, struct mbuf *, u_int32_t *);
-int dc_coal(struct dc_softc *, struct mbuf **);
+int dc_encap(struct dc_softc *, bus_dmamap_t, struct mbuf *, u_int32_t *);
 
 void dc_pnic_rx_bug_war(struct dc_softc *, int);
 int dc_rx_resync(struct dc_softc *);
@@ -1658,17 +1657,19 @@ hasmac:
 	    BUS_DMA_NOWAIT, &sc->sc_rx_sparemap) != 0) {
 		printf(": can't create rx spare map\n");
 		return;
-	}
+	}	
 
 	for (i = 0; i < DC_TX_LIST_CNT; i++) {
 		if (bus_dmamap_create(sc->sc_dmat, MCLBYTES,
-		    DC_TX_LIST_CNT - 5, MCLBYTES, 0, BUS_DMA_NOWAIT,
+		    (sc->dc_flags & DC_TX_COALESCE) ? 1 : DC_TX_LIST_CNT - 5,
+		    MCLBYTES, 0, BUS_DMA_NOWAIT,
 		    &sc->dc_cdata.dc_tx_chain[i].sd_map) != 0) {
 			printf(": can't create tx map\n");
 			return;
 		}
 	}
-	if (bus_dmamap_create(sc->sc_dmat, MCLBYTES, DC_TX_LIST_CNT - 5,
+	if (bus_dmamap_create(sc->sc_dmat, MCLBYTES,
+	    (sc->dc_flags & DC_TX_COALESCE) ? 1 : DC_TX_LIST_CNT - 5,
 	    MCLBYTES, 0, BUS_DMA_NOWAIT, &sc->sc_tx_sparemap) != 0) {
 		printf(": can't create tx spare map\n");
 		return;
@@ -2488,39 +2489,14 @@ dc_intr(void *arg)
  * pointers to the fragment pointers.
  */
 int
-dc_encap(struct dc_softc *sc, struct mbuf *m_head, u_int32_t *txidx)
+dc_encap(struct dc_softc *sc, bus_dmamap_t map, struct mbuf *m, u_int32_t *idx)
 {
 	struct dc_desc *f = NULL;
 	int frag, cur, cnt = 0, i;
-	bus_dmamap_t map;
 
-	/*
- 	 * Start packing the mbufs in this chain into
-	 * the fragment pointers. Stop when we run out
- 	 * of fragments or hit the end of the mbuf chain.
-	 */
-	map = sc->sc_tx_sparemap;
-
-	if (bus_dmamap_load_mbuf(sc->sc_dmat, map,
-	    m_head, BUS_DMA_NOWAIT) != 0)
-		return (ENOBUFS);
-
-	cur = frag = *txidx;
+	cur = frag = *idx;
 
 	for (i = 0; i < map->dm_nsegs; i++) {
-		if (sc->dc_flags & DC_TX_ADMTEK_WAR) {
-			if (*txidx != sc->dc_cdata.dc_tx_prod &&
-			    frag == (DC_TX_LIST_CNT - 1)) {
-				bus_dmamap_unload(sc->sc_dmat, map);
-				return (ENOBUFS);
-			}
-		}
-		if ((DC_TX_LIST_CNT -
-		    (sc->dc_cdata.dc_tx_cnt + cnt)) < 5) {
-			bus_dmamap_unload(sc->sc_dmat, map);
-			return (ENOBUFS);
-		}
-
 		f = &sc->dc_ldata->dc_tx_list[frag];
 		f->dc_ctl = htole32(DC_TXCTL_TLINK | map->dm_segs[i].ds_len);
 		if (cnt == 0) {
@@ -2535,12 +2511,12 @@ dc_encap(struct dc_softc *sc, struct mbuf *m_head, u_int32_t *txidx)
 	}
 
 	sc->dc_cdata.dc_tx_cnt += cnt;
-	sc->dc_cdata.dc_tx_chain[cur].sd_mbuf = m_head;
+	sc->dc_cdata.dc_tx_chain[cur].sd_mbuf = m;
 	sc->sc_tx_sparemap = sc->dc_cdata.dc_tx_chain[cur].sd_map;
 	sc->dc_cdata.dc_tx_chain[cur].sd_map = map;
 	sc->dc_ldata->dc_tx_list[cur].dc_ctl |= htole32(DC_TXCTL_LASTFRAG);
 	if (sc->dc_flags & DC_TX_INTR_FIRSTFRAG)
-		sc->dc_ldata->dc_tx_list[*txidx].dc_ctl |=
+		sc->dc_ldata->dc_tx_list[*idx].dc_ctl |=
 		    htole32(DC_TXCTL_FINT);
 	if (sc->dc_flags & DC_TX_INTR_ALWAYS)
 		sc->dc_ldata->dc_tx_list[cur].dc_ctl |=
@@ -2551,43 +2527,9 @@ dc_encap(struct dc_softc *sc, struct mbuf *m_head, u_int32_t *txidx)
 	bus_dmamap_sync(sc->sc_dmat, map, 0, map->dm_mapsize,
 	    BUS_DMASYNC_PREWRITE);
 
-	sc->dc_ldata->dc_tx_list[*txidx].dc_status = htole32(DC_TXSTAT_OWN);
+	sc->dc_ldata->dc_tx_list[*idx].dc_status = htole32(DC_TXSTAT_OWN);
 
-	bus_dmamap_sync(sc->sc_dmat, sc->sc_listmap,
-	    offsetof(struct dc_list_data, dc_tx_list[*txidx]),
-	    sizeof(struct dc_desc) * cnt,
-	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
-
-	*txidx = frag;
-
-	return (0);
-}
-
-/*
- * Coalesce an mbuf chain into a single mbuf cluster buffer.
- * Needed for some really badly behaved chips that just can't
- * do scatter/gather correctly.
- */
-int
-dc_coal(struct dc_softc *sc, struct mbuf **m_head)
-{
-	struct mbuf		*m_new, *m;
-
-	m = *m_head;
-	MGETHDR(m_new, M_DONTWAIT, MT_DATA);
-	if (m_new == NULL)
-		return (ENOBUFS);
-	if (m->m_pkthdr.len > MHLEN) {
-		MCLGET(m_new, M_DONTWAIT);
-		if (!(m_new->m_flags & M_EXT)) {
-			m_freem(m_new);
-			return (ENOBUFS);
-		}
-	}
-	m_copydata(m, 0, m->m_pkthdr.len, mtod(m_new, caddr_t));
-	m_new->m_pkthdr.len = m_new->m_len = m->m_pkthdr.len;
-	m_freem(m);
-	*m_head = m_new;
+	*idx = frag;
 
 	return (0);
 }
@@ -2599,14 +2541,28 @@ dc_coal(struct dc_softc *sc, struct mbuf **m_head)
  * physical addresses.
  */
 
+static inline int
+dc_fits(struct dc_softc *sc, int idx, bus_dmamap_t map)
+{
+	if (sc->dc_flags & DC_TX_ADMTEK_WAR) {
+		if (sc->dc_cdata.dc_tx_prod != idx &&
+		    idx + map->dm_nsegs >= DC_TX_LIST_CNT)
+			return (0);
+	}
+
+	if (sc->dc_cdata.dc_tx_cnt + map->dm_nsegs + 5 > DC_TX_LIST_CNT)
+		return (0);
+
+	return (1);
+}
+
 void
 dc_start(struct ifnet *ifp)
 {
-	struct dc_softc *sc;
-	struct mbuf *m_head = NULL;
+	struct dc_softc *sc = ifp->if_softc;
+	bus_dmamap_t map;
+	struct mbuf *m;
 	int idx;
-
-	sc = ifp->if_softc;
 
 	if (!sc->dc_link && IFQ_LEN(&ifp->if_snd) < 10)
 		return;
@@ -2616,37 +2572,50 @@ dc_start(struct ifnet *ifp)
 
 	idx = sc->dc_cdata.dc_tx_prod;
 
-	while(sc->dc_cdata.dc_tx_chain[idx].sd_mbuf == NULL) {
-		m_head = ifq_deq_begin(&ifp->if_snd);
-		if (m_head == NULL)
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_listmap,
+	    offsetof(struct dc_list_data, dc_tx_list),
+	    sizeof(struct dc_desc) * DC_TX_LIST_CNT,
+	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
+
+	for (;;) {
+		m = ifq_deq_begin(&ifp->if_snd);
+		if (m == NULL)
 			break;
 
-		if (sc->dc_flags & DC_TX_COALESCE &&
-		    (m_head->m_next != NULL ||
-			sc->dc_flags & DC_TX_ALIGN)) {
-			/* note: dc_coal breaks the poll-and-dequeue rule.
-			 * if dc_coal fails, we lose the packet.
-			 */
-			ifq_deq_commit(&ifp->if_snd, m_head);
-			if (dc_coal(sc, &m_head)) {
-				ifq_set_oactive(&ifp->if_snd);
+		map = sc->sc_tx_sparemap;
+		switch (bus_dmamap_load_mbuf(sc->sc_dmat, map, m,
+		    BUS_DMA_NOWAIT)) {
+		case 0:
+			break;
+		case EFBIG:
+			if (m_defrag(m, M_DONTWAIT) == 0 &&
+			    bus_dmamap_load_mbuf(sc->sc_dmat, map, m,
+			     BUS_DMA_NOWAIT) == 0)
 				break;
-			}
+
+			/* FALLTHROUGH */
+		default:
+			ifq_deq_commit(&ifp->if_snd, m);
+			m_freem(m);
+			ifp->if_oerrors++;
+			continue;
 		}
 
-		if (dc_encap(sc, m_head, &idx)) {
-			if ((sc->dc_flags & DC_TX_COALESCE) == 0)
-				ifq_deq_rollback(&ifp->if_snd, m_head);
-
+		if (!dc_fits(sc, idx, map)) {
+			bus_dmamap_unload(sc->sc_dmat, map);
+			ifq_deq_rollback(&ifp->if_snd, m);
 			ifq_set_oactive(&ifp->if_snd);
 			break;
 		}
 
 		/* now we are committed to transmit the packet */
-		if (sc->dc_flags & DC_TX_COALESCE) {
-			/* if mbuf is coalesced, it is already dequeued */
-		} else
-			ifq_deq_commit(&ifp->if_snd, m_head);
+		ifq_deq_commit(&ifp->if_snd, m);
+
+		if (dc_encap(sc, map, m, &idx) != 0) {
+			m_freem(m);
+			ifp->if_oerrors++;
+			continue;
+		}
 
 		/*
 		 * If there's a BPF listener, bounce a copy of this frame
@@ -2654,13 +2623,20 @@ dc_start(struct ifnet *ifp)
 		 */
 #if NBPFILTER > 0
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m_head, BPF_DIRECTION_OUT);
+			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_OUT);
 #endif
+
 		if (sc->dc_flags & DC_TX_ONE) {
 			ifq_set_oactive(&ifp->if_snd);
 			break;
 		}
 	}
+
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_listmap,
+	    offsetof(struct dc_list_data, dc_tx_list),
+	    sizeof(struct dc_desc) * DC_TX_LIST_CNT,
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+
 	if (idx == sc->dc_cdata.dc_tx_prod)
 		return;
 
