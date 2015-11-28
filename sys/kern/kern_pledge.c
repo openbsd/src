@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.125 2015/11/27 18:54:47 jca Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.126 2015/11/28 18:10:12 benno Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -1339,6 +1339,7 @@ pledge_sockopt(struct proc *p, int set, int level, int optname)
 		case IP_TOS:
 		case IP_TTL:
 		case IP_MINTTL:
+		case IP_IPDEFTTL:
 		case IP_PORTRANGE:
 		case IP_RECVDSTADDR:
 		case IP_RECVDSTPORT:
