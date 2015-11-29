@@ -1,4 +1,4 @@
-/*	$OpenBSD: skeyinit.c,v 1.63 2015/11/29 03:08:10 millert Exp $	*/
+/*	$OpenBSD: skeyinit.c,v 1.64 2015/11/29 03:08:43 millert Exp $	*/
 
 /* OpenBSD S/Key (skeyinit.c)
  *
@@ -271,7 +271,7 @@ main(int argc, char **argv)
 	if (fchown(fileno(skey.keyfile), pp->pw_uid, -1) != 0 ||
 	    fchmod(fileno(skey.keyfile), S_IRUSR | S_IWUSR) != 0)
 		err(1, "can't set owner/mode for %s", pp->pw_name);
-	if (n == 0)
+	if (defaultsetup && n == 0)
 		n = 100;
 
 	/* Set hash type if asked to */
@@ -308,23 +308,27 @@ secure_mode(int *count, char *key, char *seed, size_t seedlen,
 {
 	char *p, newseed[SKEY_MAX_SEED_LEN + 2];
 	const char *errstr;
-	int i, n;
+	int i, n = *count;
 
 	(void)puts("You need the 6 words generated from the \"skey\" command.");
-	for (i = 0; ; i++) {
-		if (i >= 2)
-			exit(1);
+	if (n == 0) {
+		for (i = 0; ; i++) {
+			if (i >= 2)
+				exit(1);
 
-		(void)printf("Enter sequence count from 1 to %d: ",
-		    SKEY_MAX_SEQ);
-		(void)fgets(buf, bufsiz, stdin);
-		clearerr(stdin);
-		rip(buf);
-		n = strtonum(buf, 1, SKEY_MAX_SEQ-1, &errstr);
-		if (!errstr)
-			break;	/* Valid range */
-		fprintf(stderr, "ERROR: Count must be between 1 and %d\n",
-		    SKEY_MAX_SEQ - 1);
+			(void)printf("Enter sequence count from 1 to %d: ",
+			    SKEY_MAX_SEQ);
+			(void)fgets(buf, bufsiz, stdin);
+			clearerr(stdin);
+			rip(buf);
+			n = strtonum(buf, 1, SKEY_MAX_SEQ-1, &errstr);
+			if (!errstr)
+				break;	/* Valid range */
+			fprintf(stderr,
+			    "ERROR: Count must be between 1 and %d\n",
+			    SKEY_MAX_SEQ - 1);
+		}
+		*count= n;
 	}
 
 	for (i = 0; ; i++) {
@@ -382,7 +386,6 @@ secure_mode(int *count, char *key, char *seed, size_t seedlen,
 		(void)fputs("ERROR: Invalid format - try again with the 6 words.\n",
 		    stderr);
 	}
-	*count= n;
 }
 
 void
