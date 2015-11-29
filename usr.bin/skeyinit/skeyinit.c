@@ -1,4 +1,4 @@
-/*	$OpenBSD: skeyinit.c,v 1.65 2015/11/29 03:09:31 millert Exp $	*/
+/*	$OpenBSD: skeyinit.c,v 1.66 2015/11/29 14:44:20 millert Exp $	*/
 
 /* OpenBSD S/Key (skeyinit.c)
  *
@@ -76,9 +76,6 @@ main(int argc, char **argv)
 	if ((pp = getpwuid(getuid())) == NULL)
 		err(1, "no user with uid %u", getuid());
 	(void)strlcpy(me, pp->pw_name, sizeof me);
-
-	if ((pp = getpwnam(me)) == NULL)
-		err(1, "Who are you?");
 
 	for (i = 1; i < argc && argv[i][0] == '-' && strcmp(argv[i], "--");) {
 		if (argv[i][2] == '\0') {
