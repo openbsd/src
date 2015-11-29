@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.24 2015/11/20 16:58:37 tb Exp $	*/
+/*	$OpenBSD: main.c,v 1.25 2015/11/29 15:23:38 tb Exp $	*/
 /*	$NetBSD: main.c,v 1.4 1995/04/27 21:22:25 mycroft Exp $	*/
 
 /*-
@@ -54,14 +54,11 @@ main(int argc, char *argv[])
 	const char		*file = NULL;
 	char			*seed;
 	struct sigaction	sa;
-	gid_t			gid;
 	struct itimerval	itv;
 
+	if (pledge("stdio rpath wpath cpath flock tty", NULL) == -1)
+		err(1, "pledge");
 	open_score_file();
-
-	/* revoke privs */
-	gid = getgid();
-	setresgid(gid, gid, gid);
 
 	start_time = time(0);
 	makenoise = 1;
