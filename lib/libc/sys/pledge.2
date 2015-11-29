@@ -1,4 +1,4 @@
-.\" $OpenBSD: pledge.2,v 1.16 2015/11/18 05:22:04 deraadt Exp $
+.\" $OpenBSD: pledge.2,v 1.17 2015/11/29 01:15:48 benno Exp $
 .\"
 .\" Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 18 2015 $
+.Dd $Mdocdate: November 29 2015 $
 .Dt PLEDGE 2
 .Os
 .Sh NAME
@@ -473,6 +473,24 @@ process:
 .Xr setrlimit 2 ,
 .Xr getpriority 2 ,
 .Xr setpriority 2 .
+.It Va "pf"
+Allows a subset of
+.Xr ioctl 2
+operations on the
+.Xr pf 4
+device:
+.Pp
+.Dv DIOCADDRULE ,
+.Dv DIOCGETSTATUS ,
+.Dv DIOCNATLOOK ,
+.Dv DIOCRADDTABLES ,
+.Dv DIOCRCLRADDRS ,
+.Dv DIOCRCLRTABLES ,
+.Dv DIOCRCLRTSTATS ,
+.Dv DIOCRGETTSTATS ,
+.Dv DIOCRSETADDRS ,
+.Dv DIOCXBEGIN ,
+.Dv DIOCXCOMMIT .
 .El
 .Pp
 A whitelist of permitted paths may be provided in
