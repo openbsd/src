@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhub.c,v 1.86 2015/06/29 18:27:40 mpi Exp $ */
+/*	$OpenBSD: uhub.c,v 1.87 2015/11/29 16:16:35 kettenis Exp $ */
 /*	$NetBSD: uhub.c,v 1.64 2003/02/08 03:32:51 ichiro Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
@@ -417,6 +417,12 @@ uhub_explore(struct usbd_device *dev)
 					       "port %d\n",
 					       sc->sc_dev.dv_xname, port);
 			}
+		}
+
+		if (change & UPS_C_PORT_RESET) {
+			usbd_clear_port_feature(sc->sc_hub, port,
+			    UHF_C_PORT_RESET);
+			change |= UPS_C_CONNECT_STATUS;
 		}
 
 		if (change & UPS_C_CONNECT_STATUS) {
