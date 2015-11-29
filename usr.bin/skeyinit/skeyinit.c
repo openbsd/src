@@ -1,4 +1,4 @@
-/*	$OpenBSD: skeyinit.c,v 1.62 2015/11/20 20:57:48 deraadt Exp $	*/
+/*	$OpenBSD: skeyinit.c,v 1.63 2015/11/29 03:08:10 millert Exp $	*/
 
 /* OpenBSD S/Key (skeyinit.c)
  *
@@ -319,6 +319,7 @@ secure_mode(int *count, char *key, char *seed, size_t seedlen,
 		    SKEY_MAX_SEQ);
 		(void)fgets(buf, bufsiz, stdin);
 		clearerr(stdin);
+		rip(buf);
 		n = strtonum(buf, 1, SKEY_MAX_SEQ-1, &errstr);
 		if (!errstr)
 			break;	/* Valid range */
