@@ -1,4 +1,4 @@
-/*	$OpenBSD: skeyinit.c,v 1.66 2015/11/29 14:44:20 millert Exp $	*/
+/*	$OpenBSD: skeyinit.c,v 1.67 2015/11/29 14:51:35 millert Exp $	*/
 
 /* OpenBSD S/Key (skeyinit.c)
  *
@@ -55,7 +55,7 @@ main(int argc, char **argv)
 	struct skey skey;
 	struct passwd *pp;
 
-	if (pledge("stdio rpath wpath cpath fattr flock tty proc exec", NULL) == -1)
+	if (pledge("stdio rpath wpath cpath fattr flock tty proc exec getpw", NULL) == -1)
 		err(1, "pledge");
 
 	n = rmkey = hexmode = enable = 0;
@@ -184,6 +184,9 @@ main(int argc, char **argv)
 		if (!auth_userokay(pp->pw_name, auth_type, NULL, NULL))
 			errx(1, "Password incorrect");
 	}
+
+	if (pledge("stdio rpath wpath cpath fattr flock tty", NULL) == -1)
+		err(1, "pledge");
 
 	/*
 	 * Lookup and lock the record we are about to modify.
