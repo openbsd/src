@@ -1,4 +1,4 @@
-/*	$OpenBSD: installboot.c,v 1.10 2015/11/26 19:03:10 deraadt Exp $	*/
+/*	$OpenBSD: installboot.c,v 1.11 2015/11/29 00:14:07 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2012, 2013 Joel Sing <jsing@openbsd.org>
@@ -50,9 +50,6 @@ main(int argc, char **argv)
 {
 	char *dev, *realdev;
 	int devfd, opt;
-
-	if (pledge("stdio rpath wpath cpath fattr disklabel", NULL) == -1)
-		err(1, "pledge");
 
 	md_init();
 
