@@ -1,4 +1,4 @@
-.\"	$OpenBSD: battlestar.6,v 1.18 2015/11/29 15:31:06 tb Exp $
+.\"	$OpenBSD: battlestar.6,v 1.19 2015/11/29 16:05:38 jmc Exp $
 .\"	$NetBSD: battlestar.6,v 1.4 1995/03/21 15:06:42 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1993
@@ -151,14 +151,14 @@ stand for Right, Left, Ahead, and Back.
 Directions printed in room descriptions are
 always printed in R, L, A, & B relative directions.
 .Sh ENVIRONMENT
-.Bl -tag -width Ds
+.Bl -tag -width $HOME/.battlestar.scores
 .It Ev LOGNAME
 Name to be recorded in high score file.
 .El
 .Sh FILES
 .Bl -tag -width $HOME/.battlestar.scores
 .It Pa $HOME/.battlestar.scores
-high score file
+High score file.
 .El
 .Sh HISTORY
 I wrote Battlestar in 1979 in order to experiment with the niceties of
