@@ -1,4 +1,4 @@
-/* $OpenBSD: xhci.c,v 1.64 2015/11/02 14:53:10 mpi Exp $ */
+/* $OpenBSD: xhci.c,v 1.65 2015/11/29 16:30:48 kettenis Exp $ */
 
 /*
  * Copyright (c) 2014-2015 Martin Pieuchot
@@ -2194,6 +2194,9 @@ xhci_root_ctrl_start(struct usbd_xfer *xfer)
 		case UHF_C_PORT_RESET:
 			XOWRITE4(sc, port, v | XHCI_PS_PRC);
 			break;
+		case UHF_C_BH_PORT_RESET:
+			XOWRITE4(sc, port, v | XHCI_PS_WRC);
+			break;
 		default:
 			err = USBD_IOERROR;
 			goto ret;
@@ -2277,6 +2280,7 @@ xhci_root_ctrl_start(struct usbd_xfer *xfer)
 		if (v & XHCI_PS_PEC)    i |= UPS_C_PORT_ENABLED;
 		if (v & XHCI_PS_OCC)    i |= UPS_C_OVERCURRENT_INDICATOR;
 		if (v & XHCI_PS_PRC)	i |= UPS_C_PORT_RESET;
+		if (v & XHCI_PS_WRC)	i |= UPS_C_BH_PORT_RESET;
 		if (v & XHCI_PS_PLC)	i |= UPS_C_PORT_LINK_STATE;
 		if (v & XHCI_PS_CEC)	i |= UPS_C_PORT_CONFIG_ERROR;
 		USETW(ps.wPortChange, i);
@@ -2332,6 +2336,9 @@ xhci_root_ctrl_start(struct usbd_xfer *xfer)
 			break;
 		case UHF_C_PORT_RESET:
 			XOWRITE4(sc, port, v | XHCI_PS_PRC);
+			break;
+		case UHF_C_BH_PORT_RESET:
+			XOWRITE4(sc, port, v | XHCI_PS_WRC);
 			break;
 		default:
 			err = USBD_IOERROR;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhub.c,v 1.87 2015/11/29 16:16:35 kettenis Exp $ */
+/*	$OpenBSD: uhub.c,v 1.88 2015/11/29 16:30:48 kettenis Exp $ */
 /*	$NetBSD: uhub.c,v 1.64 2003/02/08 03:32:51 ichiro Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
@@ -423,6 +423,12 @@ uhub_explore(struct usbd_device *dev)
 			usbd_clear_port_feature(sc->sc_hub, port,
 			    UHF_C_PORT_RESET);
 			change |= UPS_C_CONNECT_STATUS;
+		}
+
+		if (change & UPS_C_BH_PORT_RESET &&
+		    sc->sc_hub->speed == USB_SPEED_SUPER) {
+			usbd_clear_port_feature(sc->sc_hub, port,
+			    UHF_C_BH_PORT_RESET);
 		}
 
 		if (change & UPS_C_CONNECT_STATUS) {
