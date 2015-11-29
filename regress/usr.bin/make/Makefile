@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.39 2015/11/08 10:47:22 espie Exp $
+# $OpenBSD: Makefile,v 1.40 2015/11/29 09:21:01 espie Exp $
 
 # We don't pass t7, t13, t14, t17, t19, t20 t21 t26
 # and t16 yields piss poor performance
@@ -173,6 +173,7 @@ t42:
 
 t43:
 	cd ${.CURDIR} && env -i PATH=${PATH} MALLOC_OPTIONS=${MALLOC_OPTIONS} ${MAKE} -r -j2 -f mk39 b 2>&1 | diff - t43.out
+	cd ${.CURDIR} && env -i PATH=${PATH} MALLOC_OPTIONS=${MALLOC_OPTIONS} ${MAKE} -r -j2 -f mk39 a 2>&1 | diff - t43.out
 
 
 t1.out:
