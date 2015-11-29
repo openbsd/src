@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.113 2015/11/06 18:41:02 espie Exp $	*/
+/*	$OpenBSD: parse.c,v 1.114 2015/11/29 09:17:12 espie Exp $	*/
 /*	$NetBSD: parse.c,v 1.29 1997/03/10 21:20:04 christos Exp $	*/
 
 /*
@@ -100,6 +100,8 @@
  * set as persistent arrays for performance reasons.
  */
 static struct growableArray gsources, gtargets;
+static struct ohash htargets;
+static bool htargets_setup = false;
 #define SOURCES_SIZE	128
 #define TARGETS_SIZE	32
 
@@ -166,6 +168,9 @@ static void create_special_nodes(void);
 static bool found_delimiter(const char *);
 static unsigned int handle_special_targets(Lst);
 static void dump_targets(void);
+static void dedup_targets(struct growableArray *);
+static void build_target_group(struct growableArray *, struct ohash *t);
+static void reset_target_hash(void);
 
 
 #define P(k) k, sizeof(k), K_##k
@@ -811,7 +816,6 @@ ParseDoDependency(const char *line)	/* the line to parse */
 			 	* a list of .PATH targets */
 	unsigned int tOp;		/* operator from special target */
 
-
 	waiting = 0;
 	Lst_Init(&paths);
 
@@ -826,6 +830,7 @@ ParseDoDependency(const char *line)	/* the line to parse */
 		return;
 
 	Array_FindP(&gtargets, ParseDoOp, op);
+	dedup_targets(&gtargets);
 
 	line = cp;
 
@@ -1381,12 +1386,9 @@ handle_bsd_command(Buffer linebuf, Buffer copy, const char *line)
 	return false;
 }
 
-/***
- *** handle a group of commands
- ***/
-
-static void
-register_for_groupling(GNode *gn, struct ohash *temp)
+/* postprocess group of targets prior to linking stuff with them */
+bool 
+register_target(GNode *gn, struct ohash *t)
 {
 	unsigned int slot;
 	uint32_t hv;
@@ -1395,15 +1397,18 @@ register_for_groupling(GNode *gn, struct ohash *temp)
 
 	hv = ohash_interval(gn->name, &ename);
 
-	slot = ohash_lookup_interval(temp, gn->name, ename, hv);
-	gn2 = ohash_find(temp, slot);
+	slot = ohash_lookup_interval(t, gn->name, ename, hv);
+	gn2 = ohash_find(t, slot);
 
-	if (gn2 == NULL)
-		ohash_insert(temp, slot, gn);
+	if (gn2 == NULL) {
+		ohash_insert(t, slot, gn);
+		return true;
+	} else
+		return false;
 }
 
 static void
-build_target_group(struct growableArray *targets)
+build_target_group(struct growableArray *targets, struct ohash *t)
 {
 	LstNode ln;
 	bool seen_target = false;
@@ -1412,9 +1417,12 @@ build_target_group(struct growableArray *targets)
 	/* may be 0 if wildcard expansion resulted in zero match */
 	if (targets->n <= 1)
 		return;
+
+	/* Perform checks to see if we must tie targets together */
 	/* XXX */
 	if (targets->a[0]->type & OP_TRANSFORM)
 		return;
+
 	for (ln = Lst_First(&targets->a[0]->commands); ln != NULL; 
 	    ln = Lst_Adv(ln)) {
 	    	struct command *cmd = Lst_Datum(ln);
@@ -1434,39 +1442,71 @@ build_target_group(struct growableArray *targets)
 	if (seen_target)
 		return;
 
-	/* target list MAY hold duplicates AND targets may already participate
-	 * in groupling lists, so rebuild the circular list "from scratch"
-	 */
-
-	struct ohash t;
 	GNode *gn, *gn2;
-
-	ohash_init(&t, 5, &gnode_info);
+	/* targets may already participate in groupling lists, 
+	 * so rebuild the circular list "from scratch"
+	 */
 
 	for (i = 0; i < targets->n; i++) {
 		gn = targets->a[i];
-		register_for_groupling(gn, &t);
 		for (gn2 = gn->groupling; gn2 != gn; gn2 = gn2->groupling) {	
 			if (!gn2)
 				break;
-		    	register_for_groupling(gn2, &t);
+		    	register_target(gn2, t);
 		}
 	}
 
-	for (gn = ohash_first(&t, &i); gn != NULL; gn = ohash_next(&t, &i)) {
+	for (gn = ohash_first(t, &i); gn != NULL; gn = ohash_next(t, &i)) {
 		gn->groupling = gn2;
 		gn2 = gn;
 	}
-	gn = ohash_first(&t, &i);
+	gn = ohash_first(t, &i);
 	gn->groupling = gn2;
-
-	ohash_delete(&t);
 }
+
+static void
+reset_target_hash()
+{
+	if (htargets_setup)
+		ohash_delete(&htargets);
+	ohash_init(&htargets, 5, &gnode_info);
+	htargets_setup = true;
+}
+
+void
+Parse_End()
+{
+	if (htargets_setup)
+		ohash_delete(&htargets);
+}
+
+static void
+dedup_targets(struct growableArray *targets)
+{
+	unsigned int i, j;
+
+	if (targets->n <= 1)
+		return;
+
+	reset_target_hash();
+	/* first let's de-dup the list */
+	for (i = 0, j = 0; i < targets->n; i++) {
+		GNode *gn = targets->a[i];
+		if (register_target(gn, &htargets))
+			targets->a[j++] = targets->a[i];
+	}
+	targets->n = j;
+}
+
+
+/***
+ *** handle a group of commands
+ ***/
 
 static void
 finish_commands(struct growableArray *targets)
 {
-	build_target_group(targets);
+	build_target_group(targets, &htargets);
 	Array_Every(targets, ParseHasCommands);
 }
 
@@ -1596,7 +1636,6 @@ Parse_File(const char *filename, FILE *stream)
 				    	if (commands_seen)
 						finish_commands(&gtargets);
 					commands_seen = false;
-					Array_Reset(&gtargets);
 					if (Parse_As_Var_Assignment(stripped))
 						expectingCommands = false;
 					else {

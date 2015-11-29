@@ -1,6 +1,6 @@
 #ifndef PARSE_H
 #define PARSE_H
-/*	$OpenBSD: parse.h,v 1.6 2012/10/02 10:29:31 espie Exp $ */
+/*	$OpenBSD: parse.h,v 1.7 2015/11/29 09:17:12 espie Exp $ */
 /*
  * Copyright (c) 2001 Marc Espie.
  *
@@ -31,6 +31,7 @@
  */
 
 extern void Parse_Init(void);
+extern void Parse_End(void);
 extern Lst	systemIncludePath;
 extern Lst	userIncludePath;
 
