@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: rcctl.sh,v 1.85 2015/11/01 10:59:23 ajacoutot Exp $
+# $OpenBSD: rcctl.sh,v 1.86 2015/11/29 15:58:59 ajacoutot Exp $
 #
 # Copyright (c) 2014, 2015 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -157,7 +157,7 @@ svc_is_meta()
 	local _svc=$1
 	[ -n "${_svc}" ] || return
 
-	[ -r "/etc/rc.d/${_svc}" ] && grep -q "^_pkg_scripts=" /etc/rc.d/${_svc}
+	[ -r "/etc/rc.d/${_svc}" ] && ! grep -qw "^rc_cmd" /etc/rc.d/${_svc}
 }
 
 svc_is_special()
@@ -233,30 +233,32 @@ svc_get()
 			fi
 		fi
 
-		# these are expensive, make sure they are explicitely requested
-		if [ -z "${_var}" -o "${_var}" = "class" ]; then
-			getcap -f /etc/login.conf ${_svc} 1>/dev/null 2>&1 && \
-				daemon_class=${_svc}
-			[ -z "${daemon_class}" ] && \
-				daemon_class="$(svc_getdef ${_svc} class)"
-		fi
-		if [[ -z ${_var} || ${_var} == @(flags|status) ]]; then
-			[ -z "${daemon_flags}" ] && \
-				daemon_flags="$(eval echo \"\${${_svc}_flags}\")"
-			[ -z "${daemon_flags}" ] && \
-				daemon_flags="$(svc_getdef ${_svc} flags)"
-		fi
-		if [ -z "${_var}" -o "${_var}" = "timeout" ]; then
-			[ -z "${daemon_timeout}" ] && \
-				daemon_timeout="$(eval echo \"\${${_svc}_timeout}\")"
-			[ -z "${daemon_timeout}" ] && \
-				daemon_timeout="$(svc_getdef ${_svc} timeout)"
-		fi
-		if [ -z "${_var}" -o "${_var}" = "user" ]; then
-			[ -z "${daemon_user}" ] && \
-				daemon_user="$(eval echo \"\${${_svc}_user}\")"
-			[ -z "${daemon_user}" ] && \
-				daemon_user="$(svc_getdef ${_svc} user)"
+		if ! svc_is_meta ${_svc}; then
+			# these are expensive, make sure they are explicitely requested
+			if [ -z "${_var}" -o "${_var}" = "class" ]; then
+				getcap -f /etc/login.conf ${_svc} 1>/dev/null 2>&1 && \
+					daemon_class=${_svc}
+				[ -z "${daemon_class}" ] && \
+					daemon_class="$(svc_getdef ${_svc} class)"
+			fi
+			if [[ -z ${_var} || ${_var} == @(flags|status) ]]; then
+				[ -z "${daemon_flags}" ] && \
+					daemon_flags="$(eval echo \"\${${_svc}_flags}\")"
+				[ -z "${daemon_flags}" ] && \
+					daemon_flags="$(svc_getdef ${_svc} flags)"
+			fi
+			if [ -z "${_var}" -o "${_var}" = "timeout" ]; then
+				[ -z "${daemon_timeout}" ] && \
+					daemon_timeout="$(eval echo \"\${${_svc}_timeout}\")"
+				[ -z "${daemon_timeout}" ] && \
+					daemon_timeout="$(svc_getdef ${_svc} timeout)"
+			fi
+			if [ -z "${_var}" -o "${_var}" = "user" ]; then
+				[ -z "${daemon_user}" ] && \
+					daemon_user="$(eval echo \"\${${_svc}_user}\")"
+				[ -z "${daemon_user}" ] && \
+					daemon_user="$(svc_getdef ${_svc} user)"
+			fi
 		fi
 	fi
 
@@ -267,6 +269,7 @@ svc_get()
 		eval _val=\${daemon_${_var}}
 		[ -z "${_val}" ] || print -r -- "${_val}"
 	else
+		svc_is_meta ${_svc} && return ${_status}
 		if svc_is_special ${_svc}; then
 			echo "${_svc}=${daemon_flags}"
 		else
@@ -297,7 +300,6 @@ svc_getdef()
 		if ! svc_is_base ${_svc}; then
 			_status=1 # all pkg_scripts are off by default
 		else
-			
 			# abuse /etc/rc.conf behavior of only setting flags
 			# to empty or "NO" to get our default status;
 			# we'll get our default flags from the rc.d script
@@ -306,12 +308,14 @@ svc_getdef()
 			[ "$(eval echo \${${_svc}_flags})" = "NO" ] && _status=1
 		fi
 
-		rc_cmd() { }
-		. /etc/rc.d/${_svc} >/dev/null 2>&1
+		if ! svc_is_meta ${_svc}; then
+			rc_cmd() { }
+			. /etc/rc.d/${_svc} >/dev/null 2>&1
 
-		daemon_class=daemon
-		[ -z "${daemon_timeout}" ] && daemon_timeout=30
-		[ -z "${daemon_user}" ] && daemon_user=root
+			daemon_class=daemon
+			[ -z "${daemon_timeout}" ] && daemon_timeout=30
+			[ -z "${daemon_user}" ] && daemon_user=root
+		fi
 	fi
 
 	if [ -n "${_var}" ]; then
@@ -319,6 +323,7 @@ svc_getdef()
 		eval _val=\${daemon_${_var}}
 		[ -z "${_val}" ] || print -r -- "${_val}"
 	else
+		svc_is_meta ${_svc} && return ${_status}
 		if svc_is_special ${_svc}; then
 			echo "${_svc}=${daemon_flags}"
 		else
@@ -465,10 +470,12 @@ case ${action} in
 		[ -z "${svc}" ] && usage
 		svc_is_avail ${svc} || \
 			rcctl_err "service ${svc} does not exist" 2
-		svc_is_meta ${svc} && \
-			rcctl_err "/etc/rc.d/${svc} is a meta script, cannot \"${action} ${var}\""
 		if [ -n "${var}" ]; then
 			[[ ${var} != @(class|flags|status|timeout|user) ]] && usage
+			if svc_is_meta ${svc}; then
+				[ "${var}" != "status" ] && \
+					rcctl_err "/etc/rc.d/${svc} is a meta script, cannot \"${action} ${var}\""
+			fi
 			if svc_is_special ${svc}; then
 				[[ ${var} == @(class|timeout|user) ]] && \
 					rcctl_err "\"${svc}\" is a special variable, cannot \"${action} ${var}\""
@@ -483,9 +490,9 @@ case ${action} in
 		[ -z "${svc}" ] && usage
 		svc_is_avail ${svc} || \
 			rcctl_err "service ${svc} does not exist" 2
-		svc_is_meta ${svc} && \
-			rcctl_err "/etc/rc.d/${svc} is a meta script, cannot \"${action} ${var}\""
 		[[ ${var} != @(class|flags|status|timeout|user) ]] && usage
+		svc_is_meta ${svc} && [ "${var}" != "status" ] && \
+			rcctl_err "/etc/rc.d/${svc} is a meta script, cannot \"${action} ${var}\""
 		[[ ${var} = flags && ${args} = NO ]] && \
 			rcctl_err "\"flags NO\" contradicts \"${action}\""
 		if svc_is_special ${svc}; then
