@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.142 2015/11/29 12:32:10 florian Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.143 2015/11/29 22:41:20 florian Exp $	*/
 /*	$KAME: ping6.c,v 1.163 2002/10/25 02:19:06 itojun Exp $	*/
 
 /*
@@ -137,7 +137,7 @@ struct payload {
 #define	F_QUIET		0x0010
 #define	F_SO_DEBUG	0x0040
 #define	F_VERBOSE	0x0100
-#define F_SRCADDR	0x4000
+/*			0x4000 */
 #define F_HOSTNAME	0x10000
 #define F_AUD_RECV	0x200000
 #define F_AUD_MISS	0x400000
@@ -159,7 +159,7 @@ int mx_dup_ck = MAX_DUP_CHK;
 char rcvd_tbl[MAX_DUP_CHK / 8];
 
 struct sockaddr_in6 dst;	/* who to ping6 */
-struct sockaddr_in6 src;	/* src addr of this packet */
+
 int datalen = DEFDATALEN;
 int s;				/* socket file descriptor */
 u_char outpack[MAXPACKETLEN];
@@ -220,12 +220,13 @@ main(int argc, char *argv[])
 {
 	struct addrinfo *res0;
 	struct itimerval itimer;
-	struct sockaddr_in6 from;
+	struct sockaddr_in6 from, from6;
 	struct addrinfo hints;
 	int ch, i, maxsize, packlen, preload, optval, error;
 	socklen_t maxsizelen;
 	u_char *datap, *packet;
 	char *e, *target;
+	char *source = NULL;
 	const char *errstr;
 	struct cmsghdr *scmsg = NULL;
 	struct in6_pktinfo *pktinfo = NULL;
@@ -278,23 +279,8 @@ main(int argc, char *argv[])
 				errx(1, "hoplimit is %s: %s", errstr, optarg);
 			break;
 		case 'I':
-			memset(&hints, 0, sizeof(struct addrinfo));
-			hints.ai_flags = AI_NUMERICHOST; /* allow hostname? */
-			hints.ai_family = AF_INET6;
-			hints.ai_socktype = SOCK_RAW;
-			hints.ai_protocol = IPPROTO_ICMPV6;
-
-			error = getaddrinfo(optarg, NULL, &hints, &res0);
-			if (error)
-				errx(1, "invalid source address: %s",
-				     gai_strerror(error));
-
-			if (res0->ai_family != AF_INET6 || res0->ai_addrlen !=
-			    sizeof(src))
-				errx(1, "invalid source address");
-			memcpy(&src, res0->ai_addr, sizeof(src));
-			freeaddrinfo(res0);
-			options |= F_SRCADDR;
+		case 'S':	/* deprecated */
+			source = optarg;
 			break;
 		case 'i':		/* wait between sending packets */
 			intval = strtod(optarg, &e);
@@ -408,9 +394,25 @@ main(int argc, char *argv[])
 	freeaddrinfo(res0);
 
 	/* set the source address if specified. */
-	if ((options & F_SRCADDR) &&
-	    bind(s, (struct sockaddr *)&src, sizeof(src)) != 0) {
-		err(1, "bind");
+	if (source) {
+		memset(&hints, 0, sizeof(struct addrinfo));
+		hints.ai_flags = AI_NUMERICHOST; /* allow hostname? */
+		hints.ai_family = AF_INET6;
+		hints.ai_socktype = SOCK_RAW;
+		hints.ai_protocol = IPPROTO_ICMPV6;
+
+		error = getaddrinfo(source, NULL, &hints, &res0);
+		if (error)
+			errx(1, "invalid source address: %s", 
+			     gai_strerror(error));
+
+		if (res0->ai_family != AF_INET6 || res0->ai_addrlen !=
+		    sizeof(from6))
+			errx(1, "invalid source address");
+		memcpy(&from6, res0->ai_addr, sizeof(from6));
+		freeaddrinfo(res0);
+		if (bind(s, (struct sockaddr *)&from6, sizeof(from6)) != 0)
+			err(1, "bind");
 	}
 
 	/*
@@ -535,21 +537,21 @@ main(int argc, char *argv[])
 		*(int *)(CMSG_DATA(scmsg)) = hoplimit;
 	}
 
-	if (!(options & F_SRCADDR) && options & F_VERBOSE) {
+	if (!source && options & F_VERBOSE) {
 		/*
 		 * get the source address. XXX since we revoked the root
 		 * privilege, we cannot use a raw socket for this.
 		 */
 		int dummy;
-		socklen_t len = sizeof(src);
+		socklen_t len = sizeof(from6);
 
 		if ((dummy = socket(AF_INET6, SOCK_DGRAM, 0)) < 0)
 			err(1, "UDP socket");
 
-		src.sin6_family = AF_INET6;
-		src.sin6_addr = dst.sin6_addr;
-		src.sin6_port = ntohs(DUMMY_PORT);
-		src.sin6_scope_id = dst.sin6_scope_id;
+		from6.sin6_family = AF_INET6;
+		from6.sin6_addr = dst.sin6_addr;
+		from6.sin6_port = ntohs(DUMMY_PORT);
+		from6.sin6_scope_id = dst.sin6_scope_id;
 
 		if (pktinfo &&
 		    setsockopt(dummy, IPPROTO_IPV6, IPV6_PKTINFO,
@@ -571,10 +573,10 @@ main(int argc, char *argv[])
 		    sizeof(rtableid)) < 0)
 			err(1, "setsockopt(SO_RTABLE)");
 
-		if (connect(dummy, (struct sockaddr *)&src, len) < 0)
+		if (connect(dummy, (struct sockaddr *)&from6, len) < 0)
 			err(1, "UDP connect");
 
-		if (getsockname(dummy, (struct sockaddr *)&src, &len) < 0)
+		if (getsockname(dummy, (struct sockaddr *)&from6, &len) < 0)
 			err(1, "getsockname");
 
 		close(dummy);
@@ -601,8 +603,8 @@ main(int argc, char *argv[])
 
 	printf("PING6 %s (", hostname);
 	if (options & F_VERBOSE)
-		printf("%s --> ", pr_addr((struct sockaddr *)&src,
-		    sizeof(src)));
+		printf("%s --> ", pr_addr((struct sockaddr *)&from6,
+		    sizeof(from6)));
 	printf("%s): %d data bytes\n", pr_addr((struct sockaddr *)&dst,
 	    sizeof(dst)), datalen);
 

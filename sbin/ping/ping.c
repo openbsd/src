@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.135 2015/11/29 12:32:10 florian Exp $	*/
+/*	$OpenBSD: ping.c,v 1.136 2015/11/29 22:41:20 florian Exp $	*/
 /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
@@ -110,7 +110,7 @@ int options;
 #define	F_SO_DEBUG	0x0040
 /*			0x0080 */
 #define	F_VERBOSE	0x0100
-#define	F_SADDR		0x0200
+/*			0x0200 */
 #define	F_HDRINCL	0x0400
 #define	F_TTL		0x0800
 #define	F_AUD_RECV	0x2000
@@ -132,7 +132,6 @@ int mx_dup_ck = MAX_DUP_CHK;
 char rcvd_tbl[MAX_DUP_CHK / 8];
 
 struct sockaddr_in whereto;	/* who to ping */
-struct sockaddr_in whence;		/* Which interface we come from */
 unsigned int datalen = DEFDATALEN;
 int s;				/* socket file descriptor */
 u_char outpackhdr[IP_MAXPACKET]; /* Max packet size = 65535 */
@@ -186,11 +185,13 @@ int
 main(int argc, char *argv[])
 {
 	struct hostent *hp;
+	struct addrinfo hints, *res;
+	struct sockaddr_in  from4;
 	struct sockaddr_in *to;
-	struct in_addr saddr;
 	int ch, i, optval = 1, packlen, preload, maxsize, df = 0, tos = 0;
+	int error;
 	u_char *datap, *packet, ttl = MAXTTL, loop = 1;
-	char *target, hnamebuf[HOST_NAME_MAX+1];
+	char *target, hnamebuf[HOST_NAME_MAX+1], *source = NULL;
 	char rspace[3 + 4 * NROUTES + 1];	/* record route space */
 	socklen_t maxsizelen;
 	const char *errstr;
@@ -238,13 +239,7 @@ main(int argc, char *argv[])
 			break;
 		case 'I':
 		case 'S':	/* deprecated */
-			if (inet_aton(optarg, &saddr) == 0) {
-				if ((hp = gethostbyname(optarg)) == NULL)
-					errx(1, "bad interface address: %s",
-					    optarg);
-				memcpy(&saddr, hp->h_addr, sizeof(saddr));
-			}
-			options |= F_SADDR;
+			source = optarg;
 			break;
 		case 'i':		/* wait between sending packets */
 			interval = strtod(optarg, NULL);
@@ -360,16 +355,27 @@ main(int argc, char *argv[])
 		hostname = hnamebuf;
 	}
 
-	if (options & F_SADDR) {
+	if (source) {
 		if (IN_MULTICAST(ntohl(to->sin_addr.s_addr)))
 			moptions |= MULTICAST_IF;
 		else {
-			memset(&whence, 0, sizeof(whence));
-			whence.sin_len = sizeof(whence);
-			whence.sin_family = AF_INET;
-			memcpy(&whence.sin_addr.s_addr, &saddr, sizeof(saddr));
-			if (bind(s, (struct sockaddr *)&whence,
-			    sizeof(whence)) < 0)
+			memset(&from4, 0, sizeof(from4));
+			from4.sin_family = AF_INET;
+			if (inet_aton(source, &from4.sin_addr) == 0) {
+				memset(&hints, 0, sizeof(hints));
+				hints.ai_family = AF_INET;
+				hints.ai_socktype = SOCK_DGRAM;	/*dummy*/
+				if ((error = getaddrinfo(source, NULL, &hints,
+				    &res)))
+					errx(1, "%s: %s", source,
+					    gai_strerror(error));
+				if (res->ai_addrlen != sizeof(from4))
+					errx(1, "size of sockaddr mismatch");
+				memcpy(&from4, res->ai_addr, res->ai_addrlen);
+				freeaddrinfo(res);
+			}
+			if (bind(s, (struct sockaddr *)&from4, sizeof(from4))
+			    < 0)
 				err(1, "bind");
 		}
 	}
@@ -426,8 +432,8 @@ main(int argc, char *argv[])
 		ip->ip_off = htons(df ? IP_DF : 0);
 		ip->ip_ttl = ttl;
 		ip->ip_p = IPPROTO_ICMP;
-		if (options & F_SADDR)
-			ip->ip_src = saddr;
+		if (source)
+			ip->ip_src = from4.sin_addr;
 		else
 			ip->ip_src.s_addr = INADDR_ANY;
 		ip->ip_dst = to->sin_addr;
@@ -457,8 +463,8 @@ main(int argc, char *argv[])
 	    sizeof(ttl)) < 0)
 		err(1, "setsockopt IP_MULTICAST_TTL");
 	if ((moptions & MULTICAST_IF) &&
-	    setsockopt(s, IPPROTO_IP, IP_MULTICAST_IF, &saddr,
-	    sizeof(saddr)) < 0)
+	    setsockopt(s, IPPROTO_IP, IP_MULTICAST_IF, &from4.sin_addr,
+	    sizeof(from4.sin_addr)) < 0)
 		err(1, "setsockopt IP_MULTICAST_IF");
 
 	/*
