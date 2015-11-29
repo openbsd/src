@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-#	$OpenBSD: gen_ctype_utf8.pl,v 1.2 2015/10/31 20:45:47 afresh1 Exp $	#
+#	$OpenBSD: gen_ctype_utf8.pl,v 1.3 2015/11/29 19:05:21 afresh1 Exp $	#
 use 5.022;
 use warnings;
 
@@ -47,7 +47,7 @@ my @maps = qw(
 
 my ( $blocks_ranges_ref, $blocks_maps_ref ) = prop_invmap("Block");
 
-print "/*\t\$" . 'OpenBSD' . "\$	*/\n";
+print "/*\t\$" . 'OpenBSD' . "\$\t*/\n";
 print <<'EOL';
 
 /*
@@ -399,6 +399,9 @@ sub codepoint_columns
 {
 	my ( $code, $charinfo ) = @_;
 	return undef unless defined $code;
+
+	# Several fonts provide glyphs in this range
+	return 1 if $code >= 0xe000 and $code <= 0xf8ff;
 
 	return 0 if $charinfo->{category} eq 'Mn';
 	return 0 if $charinfo->{category} eq 'Me';
