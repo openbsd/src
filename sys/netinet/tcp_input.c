@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.309 2015/11/20 10:45:29 mpi Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.310 2015/11/29 15:09:32 mpi Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -2988,6 +2988,10 @@ tcp_mss(struct tcpcb *tp, int offer)
 	if (rt == NULL)
 		goto out;
 
+	ifp = if_get(rt->rt_ifidx);
+	if (ifp == NULL)
+		goto out;
+
 	switch (tp->pf) {
 #ifdef INET6
 	case AF_INET6:
@@ -3002,7 +3006,6 @@ tcp_mss(struct tcpcb *tp, int offer)
 		goto out;
 	}
 
-	ifp = if_get(rt->rt_ifidx);
 	/*
 	 * if there's an mtu associated with the route and we support
 	 * path MTU discovery for the underlying protocol family, use it.
@@ -3024,13 +3027,6 @@ tcp_mss(struct tcpcb *tp, int offer)
 			mss = rt->rt_rmx.rmx_mtu - iphlen -
 			    sizeof(struct tcphdr);
 		}
-	} else if (ifp == NULL) {
-		/*
-		 * ifp may be null and rmx_mtu may be zero in certain
-		 * v6 cases (e.g., if ND wasn't able to resolve the
-		 * destination host.
-		 */
-		goto out;
 	} else if (ifp->if_flags & IFF_LOOPBACK) {
 		mss = ifp->if_mtu - iphlen - sizeof(struct tcphdr);
 	} else if (tp->pf == AF_INET) {
