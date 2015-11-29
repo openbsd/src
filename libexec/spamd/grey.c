@@ -1,4 +1,4 @@
-/*	$OpenBSD: grey.c,v 1.59 2015/05/18 16:04:21 reyk Exp $	*/
+/*	$OpenBSD: grey.c,v 1.60 2015/11/29 06:51:20 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2004-2006 Bob Beck.  All rights reserved.
@@ -162,8 +162,11 @@ configure_pf(char **addrs, int count)
 
 	if (debug)
 		fprintf(stderr, "configure_pf - device on fd %d\n", pfdev);
+
+	/* Because /dev/fd/ only contains device nodes for 0-63 */
 	if (pfdev < 1 || pfdev > 63)
 		return(-1);
+
 	if (asprintf(&fdpath, "/dev/fd/%d", pfdev) == -1)
 		return(-1);
 	pargv[2] = fdpath;
