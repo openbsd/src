@@ -1,4 +1,4 @@
-.\"	$OpenBSD: Makefile.yp.8,v 1.6 2010/01/20 23:20:28 schwarze Exp $
+.\"	$OpenBSD: Makefile.yp.8,v 1.7 2015/11/29 15:20:46 rpe Exp $
 .\"
 .\" Copyright (c) 2008 Ingo Schwarze <schwarze@usta.de>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 20 2010 $
+.Dd $Mdocdate: November 29 2015 $
 .Dt MAKEFILE.YP 8
 .Os
 .Sh NAME
@@ -187,9 +187,6 @@ maps from
 .Xr hosts 5
 for use by
 .Xr gethostbyname 3 .
-Requires the
-.Xr stdhosts 8
-utility.
 .Pp
 To get
 .Xr ypserv 8
@@ -206,9 +203,6 @@ maps from
 .Xr ethers 5
 for use by
 .Xr ethers 3 .
-Requires the
-.Xr stdethers 8
-utility.
 .It Ic networks
 Generates the
 .Pa networks.byname

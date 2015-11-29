@@ -2389,8 +2389,6 @@
 ./usr/sbin/snmpd
 ./usr/sbin/spamdb
 ./usr/sbin/sshd
-./usr/sbin/stdethers
-./usr/sbin/stdhosts
 ./usr/sbin/sysctl
 ./usr/sbin/syslogc
 ./usr/sbin/syslogd

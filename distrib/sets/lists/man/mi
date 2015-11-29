@@ -2654,8 +2654,6 @@
 ./usr/share/man/man8/sshd.8
 ./usr/share/man/man8/ssl.8
 ./usr/share/man/man8/starttls.8
-./usr/share/man/man8/stdethers.8
-./usr/share/man/man8/stdhosts.8
 ./usr/share/man/man8/sticky.8
 ./usr/share/man/man8/swapctl.8
 ./usr/share/man/man8/swapon.8

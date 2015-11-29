@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.yp,v 1.16 2010/01/20 23:20:28 schwarze Exp $
+#	$OpenBSD: Makefile.yp,v 1.17 2015/11/29 15:20:46 rpe Exp $
 
 # ----------------------------------------------------------------------
 # User-configurable settings; see Makefile.yp(8) for details.
@@ -46,8 +46,6 @@ REVNETGROUP=/usr/sbin/revnetgroup
 RM=/bin/rm
 SED=/usr/bin/sed
 SENDMAIL=/usr/sbin/sendmail
-STDETHERS=/usr/sbin/stdethers
-STDHOSTS=/usr/sbin/stdhosts
 TOUCH=/usr/bin/touch
 YPPUSH=/usr/sbin/yppush
 
@@ -133,11 +131,13 @@ group.time: $(DIR)/group
 
 hosts.time: $(DIR)/hosts
 	-@if [ -f $(DIR)/hosts ]; then \
-		$(STDHOSTS) $(>) | $(SED) -e s/#.*$$// | \
-		$(AWK) '{for (i = 2; i <= NF; i++) print $$i, $$0 }' | \
+		$(SED) -E -e 's/[[:blank:]]*#.*$$//' -e '/^$$/d' $(>) | \
+		$(AWK) 'BEGIN { OFS="\t" } \
+		{ if (length() > 1024) next; for (i=2; i <= NF; i++) print $$i,$$0 }' | \
 		$(MAKEDBM) $(USEDNS) - hosts.byname; \
-		$(STDHOSTS) $(>) | \
-		$(AWK) 'BEGIN { OFS="\t"; } { print $$1, $$0 }' | \
+		$(SED) -E -e 's/[[:blank:]]*#.*$$//' -e '/^$$/d' $(>) | \
+		$(AWK) 'BEGIN { OFS="\t" } \
+		{ if (length() > 1024) next; print $$1,$$0 }' | \
 		$(MAKEDBM) $(USEDNS) - hosts.byaddr; \
 		$(TOUCH) $(@); \
 		$(ECHO) "updated hosts"; \
@@ -154,11 +154,13 @@ hosts.time: $(DIR)/hosts
 
 ethers.time: $(DIR)/ethers
 	-@if [ -f $(DIR)/ethers ]; then \
-		$(STDETHERS) $(>) | $(SED) -e s/#.*$$// | \
-		$(AWK) 'BEGIN { FS="\t"; OFS="\t"; } { print $$1, $$0 }' | \
+		$(SED) -E -e 's/[[:blank:]]*#.*$$//' -e '/^$$/d' $(>) | \
+		$(SED) -E -n '/^([[:xdigit:]]{1,2}:){5}[[:xdigit:]]{1,2}[[:blank:]]/p' | \
+		$(AWK) 'BEGIN { OFS="\t" } { if (length() > 1024) next; print $$1,$$0 }' | \
 		$(MAKEDBM) - ethers.byaddr; \
-		$(STDETHERS) $(>) | \
-		$(AWK) 'BEGIN { FS="\t"; OFS="\t"; } { print $$2, $$0 }' | \
+		$(SED) -E -e 's/[[:blank:]]*#.*$$//' -e '/^$$/d' $(>) | \
+		$(SED) -E -n '/^([[:xdigit:]]{1,2}:){5}[[:xdigit:]]{1,2}[[:blank:]]/p' | \
+		$(AWK) 'BEGIN { OFS="\t" } { if (length() > 1024) next; print $$2,$$0 }' | \
 		$(MAKEDBM) - ethers.byname; \
 		$(TOUCH) $(@); \
 		$(ECHO) "updated ethers"; \
