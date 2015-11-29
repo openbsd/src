@@ -1,4 +1,4 @@
-/*	$OpenBSD: skeyinit.c,v 1.67 2015/11/29 14:51:35 millert Exp $	*/
+/*	$OpenBSD: skeyinit.c,v 1.68 2015/11/29 19:10:44 deraadt Exp $	*/
 
 /* OpenBSD S/Key (skeyinit.c)
  *
@@ -55,7 +55,8 @@ main(int argc, char **argv)
 	struct skey skey;
 	struct passwd *pp;
 
-	if (pledge("stdio rpath wpath cpath fattr flock tty proc exec getpw", NULL) == -1)
+	if (pledge("stdio rpath wpath cpath fattr flock tty proc exec getpw",
+	    NULL) == -1)
 		err(1, "pledge");
 
 	n = rmkey = hexmode = enable = 0;
