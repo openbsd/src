@@ -1,4 +1,4 @@
-/*	$OpenBSD: efidev.c,v 1.10 2015/11/28 22:53:38 krw Exp $	*/
+/*	$OpenBSD: efidev.c,v 1.11 2015/11/29 15:35:41 krw Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -668,7 +668,8 @@ efi_dump_diskinfo(void)
 		bdi = &dip->bios_info;
 		ed = dip->efi_info;
 
-		siz = ed->blkio->Media->LastBlock * ed->blkio->Media->BlockSize;
+		siz = (ed->blkio->Media->LastBlock + 1) *
+		    ed->blkio->Media->BlockSize;
 		siz /= 1024 * 1024;
 		if (siz < 10000)
 			sizu = "MB";
@@ -676,7 +677,7 @@ efi_dump_diskinfo(void)
 			siz /= 1024;
 			sizu = "GB";
 		}
-		
+
 		printf("hd%d\t%u\t%u\t%u%s\t0x%x\t0x%x\t%s\n",
 		    (bdi->bios_number & 0x7f),
 		    ed->blkio->Media->BlockSize,
