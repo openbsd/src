@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtable.c,v 1.27 2015/11/27 12:13:22 mpi Exp $ */
+/*	$OpenBSD: rtable.c,v 1.28 2015/11/29 16:02:18 mpi Exp $ */
 
 /*
  * Copyright (c) 2014-2015 Martin Pieuchot
@@ -497,10 +497,15 @@ rtable_mpath_next(struct rtentry *rt)
 
 #else /* ART */
 
-struct pool		an_pool;	/* pool for ART node structures */
+struct pool		 an_pool;	/* pool for ART node structures */
 
 static inline int	 satoplen(struct art_root *, struct sockaddr *);
 static inline uint8_t	*satoaddr(struct art_root *, struct sockaddr *);
+
+void	rtentry_ref(void *, void *);
+void	rtentry_unref(void *, void *);
+
+struct srpl_rc rt_rc = SRPL_RC_INITIALIZER(rtentry_ref, rtentry_unref, NULL);
 
 void
 rtable_init_backend(unsigned int keylen)
@@ -522,6 +527,7 @@ rtable_lookup(unsigned int rtableid, struct sockaddr *dst,
 	struct art_root			*ar;
 	struct art_node			*an;
 	struct rtentry			*rt;
+	struct srpl_iter		 i;
 	uint8_t				*addr;
 	int				 plen;
 
@@ -549,9 +555,9 @@ rtable_lookup(unsigned int rtableid, struct sockaddr *dst,
 	}
 
 #ifdef SMALL_KERNEL
-	rt = SLIST_FIRST(&an->an_rtlist);
+	rt = SRPL_ENTER(&an->an_rtlist, &i);
 #else
-	SLIST_FOREACH(rt, &an->an_rtlist, rt_next) {
+	SRPL_FOREACH(rt, &an->an_rtlist, &i, rt_next) {
 		if (prio != RTP_ANY &&
 		    (rt->rt_priority & RTP_MASK) != (prio & RTP_MASK))
 			continue;
@@ -563,11 +569,14 @@ rtable_lookup(unsigned int rtableid, struct sockaddr *dst,
 		    memcmp(rt->rt_gateway, gateway, gateway->sa_len) == 0)
 			break;
 	}
-	if (rt == NULL)
+	if (rt == NULL) {
+		SRPL_LEAVE(&i, rt);
 		return (NULL);
+	}
 #endif /* SMALL_KERNEL */
 
 	rtref(rt);
+	SRPL_LEAVE(&i, rt);
 
 	return (rt);
 }
@@ -578,6 +587,7 @@ rtable_match(unsigned int rtableid, struct sockaddr *dst)
 	struct art_root			*ar;
 	struct art_node			*an;
 	struct rtentry			*rt;
+	struct srpl_iter		 i;
 	uint8_t				*addr;
 
 	ar = rtable_get(rtableid, dst->sa_family);
@@ -589,8 +599,9 @@ rtable_match(unsigned int rtableid, struct sockaddr *dst)
 	if (an == NULL)
 		return (NULL);
 
-	rt = SLIST_FIRST(&an->an_rtlist);
+	rt = SRPL_ENTER(&an->an_rtlist, &i);
 	rtref(rt);
+	SRPL_LEAVE(&i, rt);
 
 	return (rt);
 }
@@ -607,6 +618,8 @@ rtable_insert(unsigned int rtableid, struct sockaddr *dst,
 	struct art_node			*an, *prev;
 	uint8_t				*addr;
 	int				 plen;
+
+	KERNEL_ASSERT_LOCKED();
 
 	ar = rtable_get(rtableid, dst->sa_family);
 	if (ar == NULL)
@@ -625,7 +638,7 @@ rtable_insert(unsigned int rtableid, struct sockaddr *dst,
 	    	struct rtentry	*mrt;
 		int		 mpathok = ISSET(rt->rt_flags, RTF_MPATH);
 
-		SLIST_FOREACH(mrt, &an->an_rtlist, rt_next) {
+		SRPL_FOREACH_LOCKED(mrt, &an->an_rtlist, rt_next) {
 			if (prio != RTP_ANY &&
 			    (mrt->rt_priority & RTP_MASK) != (prio & RTP_MASK))
 				continue;
@@ -660,6 +673,7 @@ rtable_insert(unsigned int rtableid, struct sockaddr *dst,
 
 	an->an_dst = dst;
 	an->an_plen = plen;
+	SRPL_INIT(&an->an_rtlist);
 
 	prev = art_insert(ar, an, addr, plen);
 	if (prev == NULL) {
@@ -676,7 +690,7 @@ rtable_insert(unsigned int rtableid, struct sockaddr *dst,
 #ifndef SMALL_KERNEL
 		an = prev;
 
-		mrt = SLIST_FIRST(&an->an_rtlist);
+		mrt = SRPL_FIRST_LOCKED(&an->an_rtlist);
 		KASSERT(mrt != NULL);
 		KASSERT((rt->rt_flags & RTF_MPATH) || mrt->rt_priority != prio);
 
@@ -690,7 +704,7 @@ rtable_insert(unsigned int rtableid, struct sockaddr *dst,
 			 * the same gateway.
 			 */
 			rt->rt_flags &= ~RTF_MPATH;
-			SLIST_FOREACH(mrt, &an->an_rtlist, rt_next) {
+			SRPL_FOREACH_LOCKED(mrt, &an->an_rtlist, rt_next) {
 				if (mrt->rt_priority == prio) {
 					mrt->rt_flags |= RTF_MPATH;
 					rt->rt_flags |= RTF_MPATH;
@@ -705,7 +719,7 @@ rtable_insert(unsigned int rtableid, struct sockaddr *dst,
 	rt->rt_node = an;
 	rt->rt_dest = dst;
 	rtref(rt);
-	SLIST_INSERT_HEAD(&an->an_rtlist, rt, rt_next);
+	SRPL_INSERT_HEAD_LOCKED(&rt_rc, &an->an_rtlist, rt, rt_next);
 
 #ifndef SMALL_KERNEL
 	/* Put newly inserted entry at the right place. */
@@ -727,22 +741,25 @@ rtable_delete(unsigned int rtableid, struct sockaddr *dst,
 	struct rtentry			*mrt;
 	int				 npaths = 0;
 
+	KERNEL_ASSERT_LOCKED();
+
 	/*
 	 * If other multipath route entries are still attached to
 	 * this ART node we only have to unlink it.
 	 */
-	SLIST_FOREACH(mrt, &an->an_rtlist, rt_next)
+	SRPL_FOREACH_LOCKED(mrt, &an->an_rtlist, rt_next)
 		npaths++;
 
 	if (npaths > 1) {
 		free(rt->rt_mask, M_RTABLE, 0);
 		rt->rt_mask = NULL;
 		rt->rt_node = NULL;
-		SLIST_REMOVE(&an->an_rtlist, rt, rtentry, rt_next);
-		KASSERT(rt->rt_refcnt >= 1);
+		KASSERT(rt->rt_refcnt >= 2);
+		SRPL_REMOVE_LOCKED(&rt_rc, &an->an_rtlist, rt, rtentry,
+		    rt_next);
 		rtfree(rt);
 
-		mrt = SLIST_FIRST(&an->an_rtlist);
+		mrt = SRPL_FIRST_LOCKED(&an->an_rtlist);
 		an->an_dst = mrt->rt_dest;
 		if (npaths == 2)
 			mrt->rt_flags &= ~RTF_MPATH;
@@ -774,8 +791,8 @@ rtable_delete(unsigned int rtableid, struct sockaddr *dst,
 	free(rt->rt_mask, M_RTABLE, 0);
 	rt->rt_node = NULL;
 	rt->rt_mask = NULL;
-	SLIST_REMOVE(&an->an_rtlist, rt, rtentry, rt_next);
-	KASSERT(rt->rt_refcnt >= 1);
+	KASSERT(rt->rt_refcnt >= 2);
+	SRPL_REMOVE_LOCKED(&rt_rc, &an->an_rtlist, rt, rtentry, rt_next);
 	rtfree(rt);
 
 	pool_put(&an_pool, an);
@@ -798,7 +815,9 @@ rtable_walk_helper(struct art_node *an, void *xrwc)
 	struct rtentry			*rt, *nrt;
 	int				 error = 0;
 
-	SLIST_FOREACH_SAFE(rt, &an->an_rtlist, rt_next, nrt) {
+	KERNEL_ASSERT_LOCKED();
+
+	SRPL_FOREACH_SAFE_LOCKED(rt, &an->an_rtlist, rt_next, nrt) {
 		if ((error = (*rwc->rwc_func)(rt, rwc->rwc_arg, rwc->rwc_rid)))
 			break;
 	}
@@ -837,22 +856,24 @@ rtable_mpath_select(struct rtentry *rt, uint32_t hash)
 {
 	struct art_node			*an = rt->rt_node;
 	struct rtentry			*mrt;
+	struct srpl_iter		 i;
 	int				 npaths, threshold;
 
 	npaths = 0;
-	SLIST_FOREACH(mrt, &an->an_rtlist, rt_next) {
+	SRPL_FOREACH(mrt, &an->an_rtlist, &i, rt_next) {
 		/* Only count nexthops with the same priority. */
 		if (mrt->rt_priority == rt->rt_priority)
 			npaths++;
 	}
+	SRPL_LEAVE(&i, mrt);
 
 	threshold = (0xffff / npaths) + 1;
 
-	mrt = SLIST_FIRST(&an->an_rtlist);
+	mrt = SRPL_ENTER(&an->an_rtlist, &i);
 	while (hash > threshold && mrt != NULL) {
 		if (mrt->rt_priority == rt->rt_priority)
 			hash -= threshold;
-		mrt = SLIST_NEXT(mrt, rt_next);
+		mrt = SRPL_NEXT(&i, mrt, rt_next);
 	}
 
 	if (mrt != NULL) {
@@ -860,6 +881,7 @@ rtable_mpath_select(struct rtentry *rt, uint32_t hash)
 		rtfree(rt);
 		rt = mrt;
 	}
+	SRPL_LEAVE(&i, mrt);
 
 	return (rt);
 }
@@ -870,38 +892,57 @@ rtable_mpath_reprio(struct rtentry *rt, uint8_t prio)
 	struct art_node			*an = rt->rt_node;
 	struct rtentry			*mrt, *prt;
 
-	SLIST_REMOVE(&an->an_rtlist, rt, rtentry, rt_next);
+	KERNEL_ASSERT_LOCKED();
+
+	SRPL_REMOVE_LOCKED(&rt_rc, &an->an_rtlist, rt, rtentry, rt_next);
 	rt->rt_priority = prio;
 
-	if ((mrt = SLIST_FIRST(&an->an_rtlist)) != NULL) {
+	if ((mrt = SRPL_FIRST_LOCKED(&an->an_rtlist)) != NULL) {
 		/*
 		 * Select the order of the MPATH routes.
 		 */
-		while (SLIST_NEXT(mrt, rt_next) != NULL) {
+		while (SRPL_NEXT_LOCKED(mrt, rt_next) != NULL) {
 			if (mrt->rt_priority > prio)
 				break;
 		    	prt = mrt;
-			mrt = SLIST_NEXT(mrt, rt_next);
+			mrt = SRPL_NEXT_LOCKED(mrt, rt_next);
 		}
 
 		if (mrt->rt_priority > prio) {
 			/* prt -> rt -> mrt */
-			SLIST_INSERT_AFTER(prt, rt, rt_next);
+			SRPL_INSERT_AFTER_LOCKED(&rt_rc, prt, rt, rt_next);
 		} else {
 			/* prt -> mrt -> rt */
-			SLIST_INSERT_AFTER(mrt, rt, rt_next);
+			SRPL_INSERT_AFTER_LOCKED(&rt_rc, mrt, rt, rt_next);
 		}
 	} else {
-		SLIST_INSERT_HEAD(&an->an_rtlist, rt, rt_next);
+		SRPL_INSERT_HEAD_LOCKED(&rt_rc, &an->an_rtlist, rt, rt_next);
 	}
 }
 
 struct rtentry *
 rtable_mpath_next(struct rtentry *rt)
 {
-	return (SLIST_NEXT(rt, rt_next));
+	KERNEL_ASSERT_LOCKED();
+	return (SRPL_NEXT_LOCKED(rt, rt_next));
 }
 #endif /* SMALL_KERNEL */
+
+void
+rtentry_ref(void *null, void *xrt)
+{
+	struct rtentry *rt = xrt;
+
+	rtref(rt);
+}
+
+void
+rtentry_unref(void *null, void *xrt)
+{
+	struct rtentry *rt = xrt;
+
+	rtfree(rt);
+}
 
 /*
  * Return a pointer to the address (key).  This is an heritage from the
