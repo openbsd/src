@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.141 2015/11/10 18:36:33 florian Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.142 2015/11/29 12:32:10 florian Exp $	*/
 /*	$KAME: ping6.c,v 1.163 2002/10/25 02:19:06 itojun Exp $	*/
 
 /*
@@ -1263,7 +1263,7 @@ summary(int signo)
 		/* Only display average to microseconds */
 		double num = nreceived + nrepeats;
 		double avg = tsum / num;
-		double dev = sqrt(tsumsq / num - avg * avg);
+		double dev = sqrt(fmax(0, tsumsq / num - avg * avg));
 		snprintf(buft, sizeof(buft),
 		    "round-trip min/avg/max/std-dev = %.3f/%.3f/%.3f/%.3f ms\n",
 		    tmin, avg, tmax, dev);
