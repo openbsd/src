@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.20 2015/08/26 00:29:24 rzalamena Exp $	*/
+/*	$OpenBSD: main.c,v 1.21 2015/11/29 15:13:19 tb Exp $	*/
 /*	$NetBSD: main.c,v 1.5 1995/04/22 10:08:54 cgd Exp $	*/
 
 /*
@@ -43,22 +43,31 @@ int
 main(int ac, char *av[])
 {
 	bool		show_only;
-	extern char	*Scorefile;
+	extern char	Scorefile[PATH_MAX];
 	int		score_wfd;     /* high score writable file descriptor */
 	int		score_err = 0; /* hold errno from score file open */
 	int		ch;
+	int		ret;
 	extern int	optind;
-	gid_t		gid;
+	char		*home;
 #ifdef FANCY
 	char		*sp;
 #endif
 
-	if ((score_wfd = open(Scorefile, O_RDWR)) < 0)
-		score_err = errno;
+	if (pledge("stdio rpath wpath cpath getpw tty", NULL) == -1)
+		err(1, "pledge");
 
-	/* revoke privs */
-	gid = getgid();
-	setresgid(gid, gid, gid);
+	home = getenv("HOME");
+	if (home == NULL || *home == '\0')
+		err(1, "getenv");
+
+	ret = snprintf(Scorefile, sizeof(Scorefile), "%s/%s", home,
+	    ".robots.scores");
+	if (ret < 0 || ret >= PATH_MAX)
+		errc(1, ENAMETOOLONG, "%s/%s", home, ".robots.scores");
+
+	if ((score_wfd = open(Scorefile, O_RDWR | O_CREAT, 0666)) < 0)
+		score_err = errno;
 
 	show_only = FALSE;
 	while ((ch = getopt(ac, av, "srajt")) != -1)
@@ -90,11 +99,13 @@ main(int ac, char *av[])
 	if (ac > 1)
 		usage();
 	if (ac == 1) {
-		Scorefile = av[0];
+		if (strlcpy(Scorefile, av[0], sizeof(Scorefile)) >=
+		    sizeof(Scorefile))
+			errc(1, ENAMETOOLONG, "%s", av[0]);
 		if (score_wfd >= 0)
 			close(score_wfd);
 		/* This file requires no special privileges. */
-		if ((score_wfd = open(Scorefile, O_RDWR)) < 0)
+		if ((score_wfd = open(Scorefile, O_RDWR | O_CREAT, 0666)) < 0)
 			score_err = errno;
 #ifdef	FANCY
 		sp = strrchr(Scorefile, '/');

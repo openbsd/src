@@ -1,4 +1,4 @@
-.\"	$OpenBSD: robots.6,v 1.13 2014/09/08 01:27:54 schwarze Exp $
+.\"	$OpenBSD: robots.6,v 1.14 2015/11/29 15:13:19 tb Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)robots.6	8.1 (Berkeley) 5/31/93
 .\"
-.Dd $Mdocdate: September 8 2014 $
+.Dd $Mdocdate: November 29 2015 $
 .Dt ROBOTS 6
 .Os
 .Sh NAME
@@ -137,8 +137,8 @@ This is a little disconcerting until you get used to it, and then it is
 very nice.
 .El
 .Sh FILES
-.Bl -tag -width /var/games/robots_roll -compact
-.It Pa /var/games/robots_roll
+.Bl -tag -width $HOME/.robots.scores -compact
+.It Pa $HOME/.robots.scores
 the score file
 .El
 .Sh AUTHORS
