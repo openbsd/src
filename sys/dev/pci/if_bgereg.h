@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bgereg.h,v 1.129 2015/11/10 20:20:34 miod Exp $	*/
+/*	$OpenBSD: if_bgereg.h,v 1.130 2015/11/29 20:19:35 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -2839,8 +2839,10 @@ struct bge_softc {
 	struct arpcom		arpcom;		/* interface info */
 	bus_space_handle_t	bge_bhandle;
 	bus_space_tag_t		bge_btag;
+	bus_size_t		bge_bsize;
 	bus_space_handle_t	bge_apehandle;
 	bus_space_tag_t		bge_apetag;
+	bus_size_t		bge_apesize;
 	void			*bge_intrhand;
 	struct pci_attach_args	bge_pa;
 	struct mii_data		bge_mii;
@@ -2902,6 +2904,8 @@ struct bge_softc {
 	struct bge_ring_data	*bge_rdata;	/* rings */
 	struct bge_chain_data	bge_cdata;	/* mbufs */
 	bus_dmamap_t		bge_ring_map;
+	bus_dma_segment_t	bge_ring_seg;
+	int			bge_ring_nseg;
 	u_int16_t		bge_tx_saved_considx;
 	u_int16_t		bge_rx_saved_considx;
 	u_int16_t		bge_ev_saved_considx;

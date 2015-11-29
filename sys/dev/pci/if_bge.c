@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.379 2015/11/25 03:09:59 dlg Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.380 2015/11/29 20:19:35 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -118,10 +118,12 @@ const struct bge_revision * bge_lookup_rev(u_int32_t);
 int bge_can_use_msi(struct bge_softc *);
 int bge_probe(struct device *, void *, void *);
 void bge_attach(struct device *, struct device *, void *);
+int bge_detach(struct device *, int);
 int bge_activate(struct device *, int);
 
 struct cfattach bge_ca = {
-	sizeof(struct bge_softc), bge_probe, bge_attach, NULL, bge_activate
+	sizeof(struct bge_softc), bge_probe, bge_attach, bge_detach,
+	bge_activate
 };
 
 struct cfdriver bge_cd = {
@@ -145,7 +147,7 @@ int bge_ioctl(struct ifnet *, u_long, caddr_t);
 int bge_rxrinfo(struct bge_softc *, struct if_rxrinfo *);
 void bge_init(void *);
 void bge_stop_block(struct bge_softc *, bus_size_t, u_int32_t);
-void bge_stop(struct bge_softc *);
+void bge_stop(struct bge_softc *, int);
 void bge_watchdog(struct ifnet *);
 int bge_ifmedia_upd(struct ifnet *);
 void bge_ifmedia_sts(struct ifnet *, struct ifmediareq *);
@@ -2536,9 +2538,7 @@ bge_attach(struct device *parent, struct device *self, void *aux)
 	pcireg_t		pm_ctl, memtype, subid, reg;
 	pci_intr_handle_t	ih;
 	const char		*intrstr = NULL;
-	bus_size_t		size, apesize;
-	bus_dma_segment_t	seg;
-	int			rseg, gotenaddr = 0;
+	int			gotenaddr = 0;
 	u_int32_t		hwcfg = 0;
 	u_int32_t		mac_addr = 0;
 	u_int32_t		misccfg;
@@ -2560,7 +2560,7 @@ bge_attach(struct device *parent, struct device *self, void *aux)
 	DPRINTFN(5, ("pci_mapreg_map\n"));
 	memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, BGE_PCI_BAR0);
 	if (pci_mapreg_map(pa, BGE_PCI_BAR0, memtype, 0, &sc->bge_btag,
-	    &sc->bge_bhandle, NULL, &size, 0)) {
+	    &sc->bge_bhandle, NULL, &sc->bge_bsize, 0)) {
 		printf(": can't find mem space\n");
 		return;
 	}
@@ -2827,7 +2827,8 @@ bge_attach(struct device *parent, struct device *self, void *aux)
 	if ((sc->bge_flags & BGE_APE) != 0) {
 		memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, BGE_PCI_BAR2);
 		if (pci_mapreg_map(pa, BGE_PCI_BAR2, memtype, 0,
-		    &sc->bge_apetag, &sc->bge_apehandle, NULL, &apesize, 0)) {
+		    &sc->bge_apetag, &sc->bge_apehandle, NULL,
+		    &sc->bge_apesize, 0)) {
 			printf(": couldn't map BAR2 memory\n");
 			goto fail_1;
 		}
@@ -2944,14 +2945,15 @@ bge_attach(struct device *parent, struct device *self, void *aux)
 	sc->bge_dmatag = pa->pa_dmat;
 	DPRINTFN(5, ("bus_dmamem_alloc\n"));
 	if (bus_dmamem_alloc(sc->bge_dmatag, sizeof(struct bge_ring_data),
-			     PAGE_SIZE, 0, &seg, 1, &rseg, BUS_DMA_NOWAIT)) {
+	    PAGE_SIZE, 0, &sc->bge_ring_seg, 1, &sc->bge_ring_nseg,
+	    BUS_DMA_NOWAIT)) {
 		printf(": can't alloc rx buffers\n");
 		goto fail_2;
 	}
 	DPRINTFN(5, ("bus_dmamem_map\n"));
-	if (bus_dmamem_map(sc->bge_dmatag, &seg, rseg,
-			   sizeof(struct bge_ring_data), &kva,
-			   BUS_DMA_NOWAIT)) {
+	if (bus_dmamem_map(sc->bge_dmatag, &sc->bge_ring_seg,
+	    sc->bge_ring_nseg, sizeof(struct bge_ring_data), &kva,
+	    BUS_DMA_NOWAIT)) {
 		printf(": can't map dma buffers (%lu bytes)\n",
 		    sizeof(struct bge_ring_data));
 		goto fail_3;
@@ -3134,18 +3136,54 @@ fail_5:
 	bus_dmamap_destroy(sc->bge_dmatag, sc->bge_ring_map);
 
 fail_4:
-	bus_dmamem_unmap(sc->bge_dmatag, kva,
+	bus_dmamem_unmap(sc->bge_dmatag, (caddr_t)sc->bge_rdata,
 	    sizeof(struct bge_ring_data));
 
 fail_3:
-	bus_dmamem_free(sc->bge_dmatag, &seg, rseg);
+	bus_dmamem_free(sc->bge_dmatag, &sc->bge_ring_seg, sc->bge_ring_nseg);
 
 fail_2:
 	if ((sc->bge_flags & BGE_APE) != 0)
-		bus_space_unmap(sc->bge_apetag, sc->bge_apehandle, apesize);
+		bus_space_unmap(sc->bge_apetag, sc->bge_apehandle,
+		    sc->bge_apesize);
 
 fail_1:
-	bus_space_unmap(sc->bge_btag, sc->bge_bhandle, size);
+	bus_space_unmap(sc->bge_btag, sc->bge_bhandle, sc->bge_bsize);
+}
+
+int
+bge_detach(struct device *self, int flags)
+{
+	struct bge_softc *sc = (struct bge_softc *)self;
+	struct ifnet *ifp = &sc->arpcom.ac_if;
+
+	if (sc->bge_intrhand)
+		pci_intr_disestablish(sc->bge_pa.pa_pc, sc->bge_intrhand);
+
+	bge_stop(sc, 1);
+
+	/* Detach any PHYs we might have. */
+	if (LIST_FIRST(&sc->bge_mii.mii_phys) != NULL)
+		mii_detach(&sc->bge_mii, MII_PHY_ANY, MII_OFFSET_ANY);
+
+	/* Delete any remaining media. */
+	ifmedia_delete_instance(&sc->bge_mii.mii_media, IFM_INST_ANY);
+
+	ether_ifdetach(ifp);
+	if_detach(ifp);
+
+	bus_dmamap_unload(sc->bge_dmatag, sc->bge_ring_map);
+	bus_dmamap_destroy(sc->bge_dmatag, sc->bge_ring_map);
+	bus_dmamem_unmap(sc->bge_dmatag, (caddr_t)sc->bge_rdata,
+	    sizeof(struct bge_ring_data));
+	bus_dmamem_free(sc->bge_dmatag, &sc->bge_ring_seg, sc->bge_ring_nseg);
+
+	if ((sc->bge_flags & BGE_APE) != 0)
+		bus_space_unmap(sc->bge_apetag, sc->bge_apehandle,
+		    sc->bge_apesize);
+
+	bus_space_unmap(sc->bge_btag, sc->bge_bhandle, sc->bge_bsize);
+	return (0);
 }
 
 int
@@ -3159,7 +3197,7 @@ bge_activate(struct device *self, int act)
 	case DVACT_SUSPEND:
 		rv = config_activate_children(self, act);
 		if (ifp->if_flags & IFF_RUNNING)
-			bge_stop(sc);
+			bge_stop(sc, 0);
 		break;
 	case DVACT_RESUME:
 		if (ifp->if_flags & IFF_UP)
@@ -4155,7 +4193,7 @@ bge_init(void *xsc)
 	ifp = &sc->arpcom.ac_if;
 
 	/* Cancel pending I/O and flush buffers. */
-	bge_stop(sc);
+	bge_stop(sc, 0);
 	bge_sig_pre_reset(sc, BGE_RESET_START);
 	bge_reset(sc);
 	bge_sig_legacy(sc, BGE_RESET_START);
@@ -4424,7 +4462,7 @@ bge_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 				bge_init(sc);
 		} else {
 			if (ifp->if_flags & IFF_RUNNING)
-				bge_stop(sc);
+				bge_stop(sc, 0);
 		}
 		break;
 
@@ -4541,7 +4579,7 @@ bge_stop_block(struct bge_softc *sc, bus_size_t reg, u_int32_t bit)
  * RX and TX lists.
  */
 void
-bge_stop(struct bge_softc *sc)
+bge_stop(struct bge_softc *sc, int softonly)
 {
 	struct ifnet *ifp = &sc->arpcom.ac_if;
 	struct ifmedia_entry *ifm;
@@ -4556,62 +4594,63 @@ bge_stop(struct bge_softc *sc)
 	ifq_clr_oactive(&ifp->if_snd);
 	ifp->if_timer = 0;
 
-	/*
-	 * Tell firmware we're shutting down.
-	 */
-	/* bge_stop_fw(sc); */
-	bge_sig_pre_reset(sc, BGE_RESET_SHUTDOWN);
+	if (!softonly) {
+		/*
+		 * Tell firmware we're shutting down.
+		 */
+		/* bge_stop_fw(sc); */
+		bge_sig_pre_reset(sc, BGE_RESET_SHUTDOWN);
 
+		/*
+		 * Disable all of the receiver blocks
+		 */
+		bge_stop_block(sc, BGE_RX_MODE, BGE_RXMODE_ENABLE);
+		bge_stop_block(sc, BGE_RBDI_MODE, BGE_RBDIMODE_ENABLE);
+		bge_stop_block(sc, BGE_RXLP_MODE, BGE_RXLPMODE_ENABLE);
+		if (BGE_IS_5700_FAMILY(sc))
+			bge_stop_block(sc, BGE_RXLS_MODE, BGE_RXLSMODE_ENABLE);
+		bge_stop_block(sc, BGE_RDBDI_MODE, BGE_RBDIMODE_ENABLE);
+		bge_stop_block(sc, BGE_RDC_MODE, BGE_RDCMODE_ENABLE);
+		bge_stop_block(sc, BGE_RBDC_MODE, BGE_RBDCMODE_ENABLE);
 
-	/*
-	 * Disable all of the receiver blocks
-	 */
-	bge_stop_block(sc, BGE_RX_MODE, BGE_RXMODE_ENABLE);
-	bge_stop_block(sc, BGE_RBDI_MODE, BGE_RBDIMODE_ENABLE);
-	bge_stop_block(sc, BGE_RXLP_MODE, BGE_RXLPMODE_ENABLE);
-	if (BGE_IS_5700_FAMILY(sc))
-		bge_stop_block(sc, BGE_RXLS_MODE, BGE_RXLSMODE_ENABLE);
-	bge_stop_block(sc, BGE_RDBDI_MODE, BGE_RBDIMODE_ENABLE);
-	bge_stop_block(sc, BGE_RDC_MODE, BGE_RDCMODE_ENABLE);
-	bge_stop_block(sc, BGE_RBDC_MODE, BGE_RBDCMODE_ENABLE);
+		/*
+		 * Disable all of the transmit blocks
+		 */
+		bge_stop_block(sc, BGE_SRS_MODE, BGE_SRSMODE_ENABLE);
+		bge_stop_block(sc, BGE_SBDI_MODE, BGE_SBDIMODE_ENABLE);
+		bge_stop_block(sc, BGE_SDI_MODE, BGE_SDIMODE_ENABLE);
+		bge_stop_block(sc, BGE_RDMA_MODE, BGE_RDMAMODE_ENABLE);
+		bge_stop_block(sc, BGE_SDC_MODE, BGE_SDCMODE_ENABLE);
+		if (BGE_IS_5700_FAMILY(sc))
+			bge_stop_block(sc, BGE_DMAC_MODE, BGE_DMACMODE_ENABLE);
+		bge_stop_block(sc, BGE_SBDC_MODE, BGE_SBDCMODE_ENABLE);
 
-	/*
-	 * Disable all of the transmit blocks
-	 */
-	bge_stop_block(sc, BGE_SRS_MODE, BGE_SRSMODE_ENABLE);
-	bge_stop_block(sc, BGE_SBDI_MODE, BGE_SBDIMODE_ENABLE);
-	bge_stop_block(sc, BGE_SDI_MODE, BGE_SDIMODE_ENABLE);
-	bge_stop_block(sc, BGE_RDMA_MODE, BGE_RDMAMODE_ENABLE);
-	bge_stop_block(sc, BGE_SDC_MODE, BGE_SDCMODE_ENABLE);
-	if (BGE_IS_5700_FAMILY(sc))
-		bge_stop_block(sc, BGE_DMAC_MODE, BGE_DMACMODE_ENABLE);
-	bge_stop_block(sc, BGE_SBDC_MODE, BGE_SBDCMODE_ENABLE);
+		/*
+		 * Shut down all of the memory managers and related
+		 * state machines.
+		 */
+		bge_stop_block(sc, BGE_HCC_MODE, BGE_HCCMODE_ENABLE);
+		bge_stop_block(sc, BGE_WDMA_MODE, BGE_WDMAMODE_ENABLE);
+		if (BGE_IS_5700_FAMILY(sc))
+			bge_stop_block(sc, BGE_MBCF_MODE, BGE_MBCFMODE_ENABLE);
 
-	/*
-	 * Shut down all of the memory managers and related
-	 * state machines.
-	 */
-	bge_stop_block(sc, BGE_HCC_MODE, BGE_HCCMODE_ENABLE);
-	bge_stop_block(sc, BGE_WDMA_MODE, BGE_WDMAMODE_ENABLE);
-	if (BGE_IS_5700_FAMILY(sc))
-		bge_stop_block(sc, BGE_MBCF_MODE, BGE_MBCFMODE_ENABLE);
+		CSR_WRITE_4(sc, BGE_FTQ_RESET, 0xFFFFFFFF);
+		CSR_WRITE_4(sc, BGE_FTQ_RESET, 0);
 
-	CSR_WRITE_4(sc, BGE_FTQ_RESET, 0xFFFFFFFF);
-	CSR_WRITE_4(sc, BGE_FTQ_RESET, 0);
+		if (!BGE_IS_5705_PLUS(sc)) {
+			bge_stop_block(sc, BGE_BMAN_MODE, BGE_BMANMODE_ENABLE);
+			bge_stop_block(sc, BGE_MARB_MODE, BGE_MARBMODE_ENABLE);
+		}
 
-	if (!BGE_IS_5705_PLUS(sc)) {
-		bge_stop_block(sc, BGE_BMAN_MODE, BGE_BMANMODE_ENABLE);
-		bge_stop_block(sc, BGE_MARB_MODE, BGE_MARBMODE_ENABLE);
+		bge_reset(sc);
+		bge_sig_legacy(sc, BGE_RESET_SHUTDOWN);
+		bge_sig_post_reset(sc, BGE_RESET_SHUTDOWN);
+
+		/*
+		 * Tell firmware we're shutting down.
+		 */
+		BGE_CLRBIT(sc, BGE_MODE_CTL, BGE_MODECTL_STACKUP);
 	}
-
-	bge_reset(sc);
-	bge_sig_legacy(sc, BGE_RESET_SHUTDOWN);
-	bge_sig_post_reset(sc, BGE_RESET_SHUTDOWN);
-
-	/*
-	 * Tell firmware we're shutting down.
-	 */
-	BGE_CLRBIT(sc, BGE_MODE_CTL, BGE_MODECTL_STACKUP);
 
 	intr_barrier(sc->bge_intrhand);
 
@@ -4644,8 +4683,10 @@ bge_stop(struct bge_softc *sc)
 
 	sc->bge_tx_saved_considx = BGE_TXCONS_UNSET;
 
-	/* Clear MAC's link state (PHY may still have link UP). */
-	BGE_STS_CLRBIT(sc, BGE_STS_LINK);
+	if (!softonly) {
+		/* Clear MAC's link state (PHY may still have link UP). */
+		BGE_STS_CLRBIT(sc, BGE_STS_LINK);
+	}
 }
 
 void
