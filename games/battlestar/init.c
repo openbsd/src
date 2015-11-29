@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.14 2013/08/29 20:22:10 naddy Exp $	*/
+/*	$OpenBSD: init.c,v 1.15 2015/11/29 15:31:06 tb Exp $	*/
 /*	$NetBSD: init.c,v 1.4 1995/03/21 15:07:35 cgd Exp $	*/
 
 /*
@@ -72,13 +72,17 @@ initialize(const char *filename)
 static const char *
 getutmp(void)
 {
-	struct passwd *ptr;
+	const char	*name;
 
-	ptr = getpwuid(getuid());
-	if (ptr == NULL)
-		return(NULL);
-	else
-		return(strdup(ptr->pw_name));
+	name = getenv("LOGNAME");
+	if (name == NULL || *name == 0)
+		name = getenv("USER");
+	if (name == NULL || *name == 0)
+		name = getlogin();
+	if (name == NULL || *name == 0)
+		name = " ??? ";
+
+	return(strdup(name));
 }
 
 /* Hereditary wizards.  A configuration file might make more sense. */

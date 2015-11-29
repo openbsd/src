@@ -1,4 +1,4 @@
-/*	$OpenBSD: com6.c,v 1.19 2009/10/27 23:59:23 deraadt Exp $	*/
+/*	$OpenBSD: com6.c,v 1.20 2015/11/29 15:31:06 tb Exp $	*/
 /*	$NetBSD: com6.c,v 1.5 1995/04/27 21:30:23 mycroft Exp $	*/
 
 /*
@@ -92,8 +92,19 @@ static FILE *score_fp;
 void
 open_score_file(void)
 {
-	if ((score_fp = fopen(_PATH_SCORE, "a")) == NULL)
-		warn("can't append to high scores file (%s)", _PATH_SCORE);
+	const char	 scorefile[PATH_MAX];
+	const char	*home;
+	int		 ret;
+
+	home = getenv("HOME");
+	if (home == NULL || *home == '\0')
+		err(1, "getenv");
+	ret = snprintf(scorefile, sizeof(scorefile), "%s/%s", home,
+	    ".battlestar.scores");
+	if (ret < 0 || ret >= PATH_MAX)
+		errc(1, ENAMETOOLONG, "%s/%s", home, ".battlestar.scores");
+	if ((score_fp = fopen(scorefile, "a")) == NULL)
+		warn("can't append to high scores file (%s)", scorefile);
 }
 
 void

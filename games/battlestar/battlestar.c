@@ -1,4 +1,4 @@
-/*	$OpenBSD: battlestar.c,v 1.16 2009/10/27 23:59:23 deraadt Exp $	*/
+/*	$OpenBSD: battlestar.c,v 1.17 2015/11/29 15:31:06 tb Exp $	*/
 /*	$NetBSD: battlestar.c,v 1.3 1995/03/21 15:06:47 cgd Exp $	*/
 
 /*
@@ -47,13 +47,13 @@ main(int argc, char *argv[])
 {
 	char    mainbuf[LINELENGTH];
 	char   *next;
-	gid_t	gid;
+
+	if (pledge("stdio rpath wpath cpath", NULL) == -1)
+		err(1, "pledge");
 
 	open_score_file();
 
 	/* revoke privs */
-	gid = getgid();
-	setresgid(gid, gid, gid);
 
 	if (argc < 2)
 		initialize(NULL);
