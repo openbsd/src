@@ -1,4 +1,4 @@
-/*	$OpenBSD: snake.c,v 1.17 2015/11/27 09:37:56 tb Exp $	*/
+/*	$OpenBSD: snake.c,v 1.18 2015/11/29 14:31:01 tb Exp $	*/
 /*	$NetBSD: snake.c,v 1.8 1995/04/29 00:06:41 mycroft Exp $	*/
 
 /*
@@ -985,7 +985,7 @@ int
 readscores(int create)
 {
 	const char	*home;
-	const char	*user;
+	const char	*name;
 	const char	*modstr;
 	int		 modint;
 	int		 ret;
@@ -1019,13 +1019,17 @@ readscores(int create)
 	if (ferror(sf))
 		err(1, "error reading %s", scorepath);
 
-	user = getenv("USER");
-	if (user == NULL || *user == '\0')
-		user = "???";
+	name = getenv("LOGNAME");
+	if (name == NULL || *name == '\0')
+		name = getenv("USER");
+	if (name == NULL || *name == '\0')
+		name = getlogin();
+	if (name == NULL || *name == '\0')
+		name = "  ???";
 
 	if (nscores > TOPN)
 		nscores = TOPN;
-	strlcpy(scores[nscores].name, user, sizeof(scores[nscores].name));
+	strlcpy(scores[nscores].name, name, sizeof(scores[nscores].name));
 	scores[nscores].score = 0;
 
 	return 1;

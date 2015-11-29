@@ -1,4 +1,4 @@
-/*	$OpenBSD: scores.c,v 1.15 2015/11/26 14:43:18 tb Exp $	*/
+/*	$OpenBSD: scores.c,v 1.16 2015/11/29 14:31:02 tb Exp $	*/
 /*	$NetBSD: scores.c,v 1.2 1995/04/22 07:42:38 cgd Exp $	*/
 
 /*-
@@ -217,10 +217,13 @@ thisuser(void)
 
 	if (u[0])
 		return (u);
-	p = getlogin();
-	if (p == NULL || *p == '\0') {
+	p = getenv("LOGNAME");
+	if (p == NULL || *p == '\0')
+		p = getenv("USER");
+	if (p == NULL || *p == '\0')
+		p = getlogin();
+	if (p == NULL || *p == '\0')
 		p = "  ???";
-	}
 	strlcpy(u, p, sizeof(u));
 	return (u);
 }
