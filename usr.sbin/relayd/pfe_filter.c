@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfe_filter.c,v 1.58 2015/01/22 17:42:09 reyk Exp $	*/
+/*	$OpenBSD: pfe_filter.c,v 1.59 2015/11/29 01:20:33 benno Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -438,7 +438,8 @@ sync_ruleset(struct relayd *env, struct rdr *rdr, int enable)
 		rio.rule.dst.port[0] = address->port.val[0];
 		rio.rule.dst.port[1] = address->port.val[1];
 		rio.rule.rtableid = -1; /* stay in the main routing table */
-		rio.rule.onrdomain = getrtable();
+		rio.rule.onrdomain = env->sc_rtable;
+		DPRINTF("%s rtable %d",__func__,env->sc_rtable);
 
 		if (rio.rule.proto == IPPROTO_TCP)
 			rio.rule.timeout[PFTM_TCP_ESTABLISHED] =

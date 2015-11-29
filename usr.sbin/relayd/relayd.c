@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.c,v 1.147 2015/11/28 09:52:07 reyk Exp $	*/
+/*	$OpenBSD: relayd.c,v 1.148 2015/11/29 01:20:33 benno Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -211,6 +211,7 @@ main(int argc, char *argv[])
 	env->sc_opts = opts;
 	TAILQ_INIT(&env->sc_hosts);
 	TAILQ_INIT(&env->sc_sessions);
+	env->sc_rtable = getrtable();
 
 	if (parse_config(env->sc_conffile, env) == -1)
 		exit(1);

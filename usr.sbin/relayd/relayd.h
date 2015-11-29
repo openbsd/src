@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.218 2015/11/28 09:52:07 reyk Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.219 2015/11/29 01:20:33 benno Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -1052,6 +1052,7 @@ struct relayd {
 	u_int16_t		 sc_prefork_relay;
 	char			 sc_demote_group[IFNAMSIZ];
 	u_int16_t		 sc_id;
+	int			 sc_rtable;
 
 	struct event		 sc_statev;
 	struct timeval		 sc_statinterval;
