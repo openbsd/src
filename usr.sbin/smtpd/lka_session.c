@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_session.c,v 1.76 2015/11/30 12:26:55 sunil Exp $	*/
+/*	$OpenBSD: lka_session.c,v 1.77 2015/11/30 12:57:05 gilles Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@poolp.org>
@@ -768,8 +768,10 @@ lka_expand_format(char *buf, size_t len, const struct envelope *ep,
 	char		token[MAXTOKENLEN];
 	size_t		ret, tmpret;
 
-	if (len < sizeof tmpbuf)
-		fatalx("lka_expand_format: tmp buffer < rule buffer");
+	if (len < sizeof tmpbuf) {
+		log_warnx("lka_expand_format: tmp buffer < rule buffer");
+		return 0;
+	}
 
 	memset(tmpbuf, 0, sizeof tmpbuf);
 	pbuf = buf;
