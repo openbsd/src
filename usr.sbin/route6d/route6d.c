@@ -1,4 +1,4 @@
-/*	$OpenBSD: route6d.c,v 1.82 2015/11/30 21:58:23 jca Exp $	*/
+/*	$OpenBSD: route6d.c,v 1.83 2015/11/30 22:02:09 jca Exp $	*/
 /*	$KAME: route6d.c,v 1.111 2006/10/25 06:38:13 jinmei Exp $	*/
 
 /*
@@ -30,37 +30,35 @@
  * SUCH DAMAGE.
  */
 
-#include <stdio.h>
-
-#include <time.h>
-#include <unistd.h>
-#include <stdlib.h>
-#include <string.h>
-#include <signal.h>
-#include <stdarg.h>
-#include <syslog.h>
-#include <stddef.h>
-#include <stdint.h>
-#include <errno.h>
-#include <util.h>
-#include <poll.h>
-
 #include <sys/types.h>
-#include <sys/file.h>
-#include <sys/socket.h>
 #include <sys/ioctl.h>
+#include <sys/socket.h>
 #include <sys/sysctl.h>
 #include <sys/uio.h>
+
 #include <net/if.h>
 #include <net/route.h>
 #include <netinet/in.h>
-#include <netinet6/in6_var.h>
 #include <netinet/ip6.h>
 #include <netinet/udp.h>
-#include <netdb.h>
-#include <ifaddrs.h>
+#include <netinet6/in6_var.h>
 
 #include <arpa/inet.h>
+#include <errno.h>
+#include <ifaddrs.h>
+#include <netdb.h>
+#include <poll.h>
+#include <signal.h>
+#include <stdarg.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <syslog.h>
+#include <time.h>
+#include <unistd.h>
+#include <util.h>
 
 #include "route6d.h"
 
