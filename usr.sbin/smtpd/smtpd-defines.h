@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd-defines.h,v 1.5 2015/10/09 14:37:38 gilles Exp $	*/
+/*	$OpenBSD: smtpd-defines.h,v 1.6 2015/11/30 14:39:21 gilles Exp $	*/
 
 /*
  * Copyright (c) 2013 Gilles Chehade <gilles@poolp.org>
@@ -20,8 +20,16 @@
 #define nitems(_a) (sizeof((_a)) / sizeof((_a)[0]))
 #endif
 
+#define	SMTPD_TABLENAME_SIZE	 (64 + 1)
+#define	SMTPD_TAG_SIZE		 (32 + 1)
+
+/* buffer sizes for email address components */
 #define SMTPD_MAXLOCALPARTSIZE	 (255 + 1)
 #define SMTPD_MAXDOMAINPARTSIZE	 (255 + 1)
+#define	SMTPD_MAXMAILADDRSIZE	 (255 + 1)
+
+/* buffer size for virtual username (can be email addresses) */
+#define	SMTPD_VUSERNAME_SIZE	 (255 + 1)
 
 #define SMTPD_USER		"_smtpd"
 #define PATH_CHROOT		"/var/empty"
