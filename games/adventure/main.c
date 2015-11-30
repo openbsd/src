@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.20 2014/11/16 04:49:48 guenther Exp $	*/
+/*	$OpenBSD: main.c,v 1.21 2015/11/30 08:14:48 tb Exp $	*/
 /*	$NetBSD: main.c,v 1.5 1996/05/21 21:53:09 mrg Exp $	*/
 
 /*-
@@ -52,6 +52,9 @@ main(int argc, char *argv[])
 	int     rval, ll;
 	struct text *kk;
 
+	if (pledge("stdio rpath wpath cpath", NULL) == -1)
+		err(1, "pledge");
+	
 	init();		/* Initialize everything */
 	signal(SIGINT, trapdel);
 
