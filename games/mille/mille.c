@@ -1,4 +1,4 @@
-/*	$OpenBSD: mille.c,v 1.21 2015/11/04 21:22:10 tedu Exp $	*/
+/*	$OpenBSD: mille.c,v 1.22 2015/11/30 08:49:06 tb Exp $	*/
 /*	$NetBSD: mille.c,v 1.4 1995/03/24 05:01:48 cgd Exp $	*/
 
 /*
@@ -44,6 +44,9 @@ main(ac, av)
 {
 	bool	restore;
 	extern char *__progname;
+
+	if (pledge("stdio rpath wpath cpath tty", NULL) == -1)
+		err(1, "pledge");
 
 #ifdef DEBUG
 	if (strcmp(av[0], "a.out") == 0) {
