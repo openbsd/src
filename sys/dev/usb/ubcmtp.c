@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubcmtp.c,v 1.9 2015/06/17 20:39:47 jcs Exp $ */
+/*	$OpenBSD: ubcmtp.c,v 1.10 2015/11/30 09:30:48 kettenis Exp $ */
 
 /*
  * Copyright (c) 2013-2014, joshua stein <jcs@openbsd.org>
@@ -65,6 +65,9 @@
 #define UBCMTP_WELLSPRING_MODE_RAW	0x01
 #define UBCMTP_WELLSPRING_MODE_HID	0x08
 #define UBCMTP_WELLSPRING_MODE_LEN	8
+#define UBCMTP_WELLSPRING9_MODE_RAW	0x01
+#define UBCMTP_WELLSPRING9_MODE_HID	0x00
+#define UBCMTP_WELLSPRING9_MODE_LEN	2
 
 struct ubcmtp_button {
 	uint8_t		unused;
@@ -84,7 +87,8 @@ struct ubcmtp_finger {
 	uint16_t	orientation;
 	uint16_t	touch_major;
 	uint16_t	touch_minor;
-	uint16_t	unused[3];
+	uint16_t	unused[2];
+	uint16_t	pressure;
 	uint16_t	multi;
 } __packed __attribute((aligned(2)));
 
@@ -108,6 +112,12 @@ struct ubcmtp_finger {
 #define UBCMTP_TYPE3_TPLEN	UBCMTP_TYPE3_TPOFF + UBCMTP_ALL_FINGER_SIZE
 #define UBCMTP_TYPE3_TPIFACE	2
 #define UBCMTP_TYPE3_BTOFF	23
+
+#define UBCMTP_TYPE4		4
+#define UBCMTP_TYPE4_TPOFF	(24 * sizeof(uint16_t))
+#define UBCMTP_TYPE4_TPLEN	UBCMTP_TYPE4_TPOFF + UBCMTP_ALL_FINGER_SIZE
+#define UBCMTP_TYPE4_TPIFACE	2
+#define UBCMTP_TYPE4_BTOFF	31
 
 #define UBCMTP_FINGER_ORIENT	16384
 #define UBCMTP_SN_PRESSURE	45
@@ -291,6 +301,19 @@ static struct ubcmtp_dev ubcmtp_devices[] = {
 		{ UBCMTP_SN_COORD, -150, 6600 },
 		{ UBCMTP_SN_ORIENT, -UBCMTP_FINGER_ORIENT, UBCMTP_FINGER_ORIENT },
 	},
+	{
+		USB_VENDOR_APPLE,
+		/* MacbookPro12,1 */
+		USB_PRODUCT_APPLE_WELLSPRING9_ANSI,
+		USB_PRODUCT_APPLE_WELLSPRING9_ISO,
+		USB_PRODUCT_APPLE_WELLSPRING9_JIS,
+		UBCMTP_TYPE4,
+		{ UBCMTP_SN_PRESSURE, 0, 300 },
+		{ UBCMTP_SN_WIDTH, 0, 2048 },
+		{ UBCMTP_SN_COORD, -4828, 5345 },
+		{ UBCMTP_SN_COORD, -203, 6803 },
+		{ UBCMTP_SN_ORIENT, -UBCMTP_FINGER_ORIENT, UBCMTP_FINGER_ORIENT },
+	},
 };
 
 /* coordinates for each tracked finger */
@@ -454,6 +477,12 @@ ubcmtp_attach(struct device *parent, struct device *self, void *aux)
 		sc->tp_offset = UBCMTP_TYPE3_TPOFF;
 		sc->tp_ifacenum = UBCMTP_TYPE3_TPIFACE;
 		break;
+
+	case UBCMTP_TYPE4:
+		sc->tp_maxlen = UBCMTP_TYPE4_TPLEN;
+		sc->tp_offset = UBCMTP_TYPE4_TPOFF;
+		sc->tp_ifacenum = UBCMTP_TYPE4_TPIFACE;
+		break;
 	}
 
 	a.accessops = &ubcmtp_accessops;
@@ -603,14 +632,20 @@ ubcmtp_raw_mode(struct ubcmtp_softc *sc, int enable)
 	uint8_t buf[8];
 
 	/* type 3 has no raw mode */
-	if (sc->dev_type->type >= UBCMTP_TYPE3)
+	if (sc->dev_type->type == UBCMTP_TYPE3)
 		return (0);
 
 	r.bRequest = UR_GET_REPORT;
 	r.bmRequestType = UT_READ_CLASS_INTERFACE;
-	USETW2(r.wValue, UHID_FEATURE_REPORT, 0);
-	USETW(r.wIndex, 0);
-	USETW(r.wLength, UBCMTP_WELLSPRING_MODE_LEN);
+	if (sc->dev_type->type < UBCMTP_TYPE4) {
+		USETW2(r.wValue, UHID_FEATURE_REPORT, 0);
+		USETW(r.wIndex, 0);
+		USETW(r.wLength, UBCMTP_WELLSPRING_MODE_LEN);
+	} else {
+		USETW2(r.wValue, UHID_FEATURE_REPORT, 2);
+		USETW(r.wIndex, 2);
+		USETW(r.wLength, UBCMTP_WELLSPRING9_MODE_LEN);
+	}
 
 	err = usbd_do_request(sc->sc_udev, &r, buf);
 	if (err != USBD_NORMAL_COMPLETION) {
@@ -619,15 +654,25 @@ ubcmtp_raw_mode(struct ubcmtp_softc *sc, int enable)
 		return (err);
 	}
 
-	/* toggle first byte and write everything back */
-	buf[0] = (enable ? UBCMTP_WELLSPRING_MODE_RAW :
-	    UBCMTP_WELLSPRING_MODE_HID);
+	/* toggle magic byte and write everything back */
+	if (sc->dev_type->type < UBCMTP_TYPE4)
+		buf[0] = (enable ? UBCMTP_WELLSPRING_MODE_RAW :
+		    UBCMTP_WELLSPRING_MODE_HID);
+	else
+		buf[1] = (enable ? UBCMTP_WELLSPRING9_MODE_RAW :
+		    UBCMTP_WELLSPRING9_MODE_HID);
 
 	r.bRequest = UR_SET_REPORT;
 	r.bmRequestType = UT_WRITE_CLASS_INTERFACE;
-	USETW2(r.wValue, UHID_FEATURE_REPORT, 0);
-	USETW(r.wIndex, 0);
-	USETW(r.wLength, UBCMTP_WELLSPRING_MODE_LEN);
+	if (sc->dev_type->type < UBCMTP_TYPE4) {
+		USETW2(r.wValue, UHID_FEATURE_REPORT, 0);
+		USETW(r.wIndex, 0);
+		USETW(r.wLength, UBCMTP_WELLSPRING_MODE_LEN);
+	} else {
+		USETW2(r.wValue, UHID_FEATURE_REPORT, 2);
+		USETW(r.wIndex, 2);
+		USETW(r.wLength, UBCMTP_WELLSPRING9_MODE_LEN);
+	}
 
 	err = usbd_do_request(sc->sc_udev, &r, buf);
 	if (err != USBD_NORMAL_COMPLETION) {
@@ -796,11 +841,14 @@ ubcmtp_tp_intr(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	}
 
 	if (sc->dev_type->type == UBCMTP_TYPE2 ||
-	    sc->dev_type->type == UBCMTP_TYPE3) {
+	    sc->dev_type->type == UBCMTP_TYPE3 ||
+	    sc->dev_type->type == UBCMTP_TYPE4) {
 		if (sc->dev_type->type == UBCMTP_TYPE2)
 			t = !!((int16_t)letoh16(sc->tp_pkt[UBCMTP_TYPE2_BTOFF]));
 		else if (sc->dev_type->type == UBCMTP_TYPE3)
 			t = !!((int16_t)letoh16(sc->tp_pkt[UBCMTP_TYPE3_BTOFF]));
+		else if (sc->dev_type->type == UBCMTP_TYPE4)
+			t = !!((int16_t)letoh16(sc->tp_pkt[UBCMTP_TYPE4_BTOFF]));
 
 		if (sc->btn != t) {
 			sc->btn = t;
