@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.179 2015/11/30 12:49:35 gilles Exp $	*/
+/*	$OpenBSD: lka.c,v 1.180 2015/11/30 14:05:34 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -55,6 +55,7 @@ static int lka_credentials(const char *, const char *, char *, size_t);
 static int lka_userinfo(const char *, const char *, struct userinfo *);
 static int lka_addrname(const char *, const struct sockaddr *,
     struct addrname *);
+static int lka_mailaddrmap(const char *, const char *, const struct mailaddr *);
 static int lka_X509_verify(struct ca_vrfy_req_msg *, const char *, const char *);
 
 static void
@@ -654,6 +655,44 @@ lka_addrname(const char *tablename, const struct sockaddr *sa,
 		*res = lk.addrname;
 		return (LKA_OK);
 	}
+}
+
+static int
+lka_mailaddrmap(const char *tablename, const char *username, const struct mailaddr *maddr)
+{
+	struct table	       *table;
+	struct maddrnode       *mn;
+	union lookup		lk;
+	int			found;
+
+	log_debug("debug: lka: mailaddrmap %s:%s", tablename, username);
+	table = table_find(tablename, NULL);
+	if (table == NULL) {
+		log_warnx("warn: cannot find mailaddrmap table %s", tablename);
+		return (LKA_TEMPFAIL);
+	}
+
+	switch (table_lookup(table, NULL, username, K_MAILADDRMAP, &lk)) {
+	case -1:
+		log_warnx("warn: failure during mailaddrmap lookup %s:%s",
+		    tablename, username);
+		return (LKA_TEMPFAIL);
+	case 0:
+		return (LKA_PERMFAIL);
+	default:
+		found = 0;
+		TAILQ_FOREACH(mn, &lk.maddrmap->queue, entries) {
+			if (! mailaddr_match(maddr, &mn->mailaddr))
+				continue;
+			found = 1;
+			break;
+		}
+		maddrmap_free(lk.maddrmap);
+		if (found)
+			return (LKA_OK);
+		return (LKA_PERMFAIL);
+	}
+	return (LKA_OK);
 }
 
 static int
