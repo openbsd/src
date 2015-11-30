@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.487 2015/11/30 12:49:35 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.488 2015/11/30 14:13:03 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -58,7 +58,8 @@
 #define PATH_PURGE		"/purge"
 #define PATH_TEMPORARY		"/temporary"
 
-#define	PATH_LIBEXEC		"/usr/libexec/smtpd"
+#define	PATH_LIBEXEC_DEPRECATED	"/usr/libexec/smtpd"
+#define	PATH_LIBEXEC		"/usr/local/libexec/smtpd:/usr/libexec/smtpd"
 
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.157 2015/11/30 12:26:55 sunil Exp $	*/
+/*	$OpenBSD: parse.y,v 1.158 2015/11/30 14:13:03 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -2322,7 +2322,7 @@ create_filter_proc(char *name, char *prog)
 		return (NULL);
 	}
 
-	if (asprintf(&path, "%s/filter-%s", PATH_LIBEXEC, prog) == -1) {
+	if (asprintf(&path, "%s/filter-%s", PATH_LIBEXEC_DEPRECATED, prog) == -1) {
 		yyerror("filter \"%s\" asprintf failed", name);
 		return (0);
 	}
