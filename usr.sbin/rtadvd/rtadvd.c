@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtadvd.c,v 1.58 2015/10/25 22:11:34 jca Exp $	*/
+/*	$OpenBSD: rtadvd.c,v 1.59 2015/11/30 20:52:28 jca Exp $	*/
 /*	$KAME: rtadvd.c,v 1.66 2002/05/29 14:18:36 itojun Exp $	*/
 
 /*
@@ -58,7 +58,6 @@
 #include <pwd.h>
 
 #include "rtadvd.h"
-#include "rrenum.h"
 #include "advcap.h"
 #include "timer.h"
 #include "if.h"
@@ -78,11 +77,8 @@ struct iovec rcviov[2];
 struct iovec sndiov[2];
 struct sockaddr_in6 from;
 struct sockaddr_in6 sin6_allnodes = {sizeof(sin6_allnodes), AF_INET6};
-struct in6_addr in6a_site_allrouters;
-static char *mcastif;
 int sock;
 int rtsock = -1;
-int accept_rr = 0;
 int dflag = 0, sflag = 0;
 int log_perror = 0;
 
@@ -166,7 +162,7 @@ main(int argc, char *argv[])
 	closefrom(3);
 
 	/* get command line options and arguments */
-#define OPTIONS "c:dM:Rs"
+#define OPTIONS "c:ds"
 	while ((ch = getopt(argc, argv, OPTIONS)) != -1) {
 #undef OPTIONS
 		switch (ch) {
@@ -175,15 +171,6 @@ main(int argc, char *argv[])
 			break;
 		case 'd':
 			dflag = 1;
-			break;
-		case 'M':
-			mcastif = optarg;
-			break;
-		case 'R':
-			fprintf(stderr, "rtadvd: "
-				"the -R option is currently ignored.\n");
-			/* accept_rr = 1; */
-			/* run anyway... */
 			break;
 		case 's':
 			sflag = 1;
@@ -194,7 +181,7 @@ main(int argc, char *argv[])
 	argv += optind;
 	if (argc == 0) {
 		fprintf(stderr,
-			"usage: rtadvd [-dMRs] [-c configfile] "
+			"usage: rtadvd [-ds] [-c configfile] "
 			"interface ...\n");
 		exit(1);
 	}
@@ -630,15 +617,6 @@ rtadvd_input(void)
 			return;
 		}
 		ra_input(i, (struct nd_router_advert *)icp, pi, &from);
-		break;
-	case ICMP6_ROUTER_RENUMBERING:
-		if (accept_rr == 0) {
-			log_warnx("received a router renumbering "
-			    "message, but not allowed to be accepted");
-			break;
-		}
-		rr_input(i, (struct icmp6_router_renum *)icp, pi, &from,
-			 &dst);
 		break;
 	default:
 		/*
@@ -1221,11 +1199,9 @@ sock_open(void)
 	ICMP6_FILTER_SETBLOCKALL(&filt);
 	ICMP6_FILTER_SETPASS(ND_ROUTER_SOLICIT, &filt);
 	ICMP6_FILTER_SETPASS(ND_ROUTER_ADVERT, &filt);
-	if (accept_rr)
-		ICMP6_FILTER_SETPASS(ICMP6_ROUTER_RENUMBERING, &filt);
 	if (setsockopt(sock, IPPROTO_ICMPV6, ICMP6_FILTER, &filt, sizeof(filt))
 	    < 0)
-		fatal("IICMP6_FILTER");
+		fatal("ICMP6_FILTER");
 
 	/*
 	 * join all routers multicast address on each advertising interface.
@@ -1244,31 +1220,6 @@ sock_open(void)
 
 	ra = SLIST_FIRST(&ralist);
 
-	/*
-	 * When attending router renumbering, join all-routers site-local
-	 * multicast group. 
-	 */
-	if (accept_rr) {
-		if (inet_pton(AF_INET6, ALLROUTERS_SITE,
-		    &in6a_site_allrouters) != 1)
-			fatal("inet_pton failed(library bug?)");
-		mreq.ipv6mr_multiaddr = in6a_site_allrouters;
-		if (mcastif) {
-			if ((mreq.ipv6mr_interface = if_nametoindex(mcastif))
-			    == 0) {
-				log_warn("invalid interface: %s", mcastif);
-				exit(1);
-			}
-		} else
-			mreq.ipv6mr_interface = ra->ifindex;
-		if (setsockopt(sock, IPPROTO_IPV6, IPV6_JOIN_GROUP, &mreq,
-		    sizeof(mreq)) < 0) {
-			log_warn("IPV6_JOIN_GROUP(site) on %s", mcastif ?
-			    mcastif : ra->ifname);
-			exit(1);
-		}
-	}
-	
 	/* initialize msghdr for receiving packets */
 	rcviov[0].iov_base = (caddr_t)answer;
 	rcviov[0].iov_len = sizeof(answer);
