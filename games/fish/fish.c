@@ -1,4 +1,4 @@
-/*	$OpenBSD: fish.c,v 1.17 2015/02/18 23:20:45 tedu Exp $	*/
+/*	$OpenBSD: fish.c,v 1.18 2015/11/30 08:42:03 tb Exp $	*/
 /*	$NetBSD: fish.c,v 1.3 1995/03/23 08:28:18 cgd Exp $	*/
 
 /*-
@@ -87,6 +87,9 @@ main(int argc, char *argv[])
 {
 	int ch, move;
 
+	if (pledge("stdio rpath proc exec", NULL) == -1)
+		err(1, "pledge");
+
 	while ((ch = getopt(argc, argv, "ph")) != -1)
 		switch(ch) {
 		case 'p':
@@ -99,6 +102,10 @@ main(int argc, char *argv[])
 		}
 
 	instructions();
+
+	if (pledge("stdio", NULL) == -1)
+		err(1, "pledge");
+
 	init();
 
 	if (nrandom(2) == 1) {
