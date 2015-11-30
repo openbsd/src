@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_session.c,v 1.74 2015/11/30 10:56:25 gilles Exp $	*/
+/*	$OpenBSD: lka_session.c,v 1.75 2015/11/30 11:14:01 gilles Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@poolp.org>
@@ -68,7 +68,6 @@ static void lka_submit(struct lka_session *, struct rule *,
 static void lka_resume(struct lka_session *);
 static size_t lka_expand_format(char *, size_t, const struct envelope *,
     const struct userinfo *);
-static void mailaddr_to_username(const struct mailaddr *, char *, size_t);
 
 static int mod_lowercase(char *, size_t);
 static int mod_uppercase(char *, size_t);
@@ -322,9 +321,8 @@ lka_expand(struct lka_session *lks, struct rule *rule, struct expandnode *xn)
 			 * we eventually strip the '+'-part before lookup.
 			 */
 			maddr = xn->u.mailaddr;
-			mailaddr_to_username(&xn->u.mailaddr, maddr.user,
+			xlowercase(maddr.user, xn->u.mailaddr.user,
 			    sizeof maddr.user);
-
 			r = aliases_virtual_get(&lks->expand, &maddr);
 			if (r == -1) {
 				lks->error = LKA_TEMPFAIL;
@@ -343,8 +341,8 @@ lka_expand(struct lka_session *lks, struct rule *rule, struct expandnode *xn)
 			lks->expand.alias = 1;
 			memset(&node, 0, sizeof node);
 			node.type = EXPAND_USERNAME;
-			mailaddr_to_username(&xn->u.mailaddr, node.u.user,
-				sizeof node.u.user);
+			xlowercase(node.u.user, xn->u.mailaddr.user,
+			    sizeof node.u.user);
 			node.mapping = rule->r_mapping;
 			node.userbase = rule->r_userbase;
 			expand_insert(&lks->expand, &node);
@@ -839,12 +837,6 @@ lka_expand_format(char *buf, size_t len, const struct envelope *ep,
 		return 0;
 
 	return ret;
-}
-
-static void
-mailaddr_to_username(const struct mailaddr *maddr, char *dst, size_t len)
-{
-	xlowercase(dst, maddr->user, len);
 }
 
 static int 
