@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtadvd.c,v 1.59 2015/11/30 20:52:28 jca Exp $	*/
+/*	$OpenBSD: rtadvd.c,v 1.60 2015/11/30 20:58:08 jca Exp $	*/
 /*	$KAME: rtadvd.c,v 1.66 2002/05/29 14:18:36 itojun Exp $	*/
 
 /*
@@ -348,7 +348,7 @@ rtmsg_input(void)
 	for (next = msg; next < lim; next += len) {
 		int oldifflags;
 
-		next = get_next_msg(next, lim, 0, &len,
+		next = get_next_msg(next, lim, &len,
 				    RTADV_TYPE2BITMASK(RTM_ADD) |
 				    RTADV_TYPE2BITMASK(RTM_DELETE) |
 				    RTADV_TYPE2BITMASK(RTM_NEWADDR) |
