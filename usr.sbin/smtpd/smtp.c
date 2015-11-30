@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp.c,v 1.143 2015/01/20 17:37:54 deraadt Exp $	*/
+/*	$OpenBSD: smtp.c,v 1.144 2015/11/30 12:49:35 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -62,8 +62,8 @@ smtp_imsg(struct mproc *p, struct imsg *imsg)
 		case IMSG_SMTP_EXPAND_RCPT:
 		case IMSG_SMTP_LOOKUP_HELO:
 		case IMSG_SMTP_AUTHENTICATE:
-		case IMSG_SMTP_SSL_INIT:
-		case IMSG_SMTP_SSL_VERIFY:
+		case IMSG_SMTP_TLS_INIT:
+		case IMSG_SMTP_TLS_VERIFY:
 			smtp_session_imsg(p, imsg);
 			return;
 		}

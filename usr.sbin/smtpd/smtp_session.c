@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.239 2015/11/05 08:55:09 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.240 2015/11/30 12:49:35 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -806,7 +806,7 @@ smtp_session_imsg(struct mproc *p, struct imsg *imsg)
 		io_reload(&s->io);
 		return;
 
-	case IMSG_SMTP_SSL_INIT:
+	case IMSG_SMTP_TLS_INIT:
 		resp_ca_cert = imsg->data;
 		s = tree_xpop(&wait_ssl_init, resp_ca_cert->reqid);
 
@@ -838,7 +838,7 @@ smtp_session_imsg(struct mproc *p, struct imsg *imsg)
 		free(resp_ca_cert);
 		return;
 
-	case IMSG_SMTP_SSL_VERIFY:
+	case IMSG_SMTP_TLS_VERIFY:
 		resp_ca_vrfy = imsg->data;
 		s = tree_xpop(&wait_ssl_verify, resp_ca_vrfy->reqid);
 
@@ -893,7 +893,7 @@ smtp_mfa_response(struct smtp_session *s, int msg, int status, uint32_t code,
 			else
 				(void)strlcpy(req_ca_cert.name, s->smtpname,
 				    sizeof req_ca_cert.name);
-			m_compose(p_lka, IMSG_SMTP_SSL_INIT, 0, 0, -1,
+			m_compose(p_lka, IMSG_SMTP_TLS_INIT, 0, 0, -1,
 			    &req_ca_cert, sizeof(req_ca_cert));
 			tree_xset(&wait_ssl_init, s->id, s);
 			return;
@@ -1136,7 +1136,7 @@ smtp_io(struct io *io, int evt)
 			else
 				(void)strlcpy(req_ca_cert.name, s->smtpname,
 				    sizeof req_ca_cert.name);
-			m_compose(p_lka, IMSG_SMTP_SSL_INIT, 0, 0, -1,
+			m_compose(p_lka, IMSG_SMTP_TLS_INIT, 0, 0, -1,
 			    &req_ca_cert, sizeof(req_ca_cert));
 			tree_xset(&wait_ssl_init, s->id, s);
 			break;
@@ -2131,7 +2131,7 @@ smtp_verify_certificate(struct smtp_session *s)
 	iov[0].iov_len = sizeof(req_ca_vrfy);
 	iov[1].iov_base = cert_der[0];
 	iov[1].iov_len = cert_len[0];
-	m_composev(p_lka, IMSG_SMTP_SSL_VERIFY_CERT, 0, 0, -1,
+	m_composev(p_lka, IMSG_SMTP_TLS_VERIFY_CERT, 0, 0, -1,
 	    iov, nitems(iov));
 
 	memset(&req_ca_vrfy, 0, sizeof req_ca_vrfy);
@@ -2142,14 +2142,14 @@ smtp_verify_certificate(struct smtp_session *s)
 		req_ca_vrfy.cert_len = cert_len[i+1];
 		iov[1].iov_base = cert_der[i+1];
 		iov[1].iov_len  = cert_len[i+1];
-		m_composev(p_lka, IMSG_SMTP_SSL_VERIFY_CHAIN, 0, 0, -1,
+		m_composev(p_lka, IMSG_SMTP_TLS_VERIFY_CHAIN, 0, 0, -1,
 		    iov, nitems(iov));
 	}
 
 	/* Tell lookup process that it can start verifying, we're done */
 	memset(&req_ca_vrfy, 0, sizeof req_ca_vrfy);
 	req_ca_vrfy.reqid = s->id;
-	m_compose(p_lka, IMSG_SMTP_SSL_VERIFY, 0, 0, -1,
+	m_compose(p_lka, IMSG_SMTP_TLS_VERIFY, 0, 0, -1,
 	    &req_ca_vrfy, sizeof req_ca_vrfy);
 
 	res = 1;

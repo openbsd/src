@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta_session.c,v 1.74 2015/10/14 22:01:43 gilles Exp $	*/
+/*	$OpenBSD: mta_session.c,v 1.75 2015/11/30 12:49:35 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -310,7 +310,7 @@ mta_session_imsg(struct mproc *p, struct imsg *imsg)
 		waitq_run(&h->ptrname, h->ptrname);
 		return;
 
-	case IMSG_MTA_SSL_INIT:
+	case IMSG_MTA_TLS_INIT:
 		resp_ca_cert = imsg->data;
 		s = mta_tree_pop(&wait_ssl_init, resp_ca_cert->reqid);
 		if (s == NULL)
@@ -350,7 +350,7 @@ mta_session_imsg(struct mproc *p, struct imsg *imsg)
 		free(resp_ca_cert);
 		return;
 
-	case IMSG_MTA_SSL_VERIFY:
+	case IMSG_MTA_TLS_VERIFY:
 		resp_ca_vrfy = imsg->data;
 		s = mta_tree_pop(&wait_ssl_verify, resp_ca_vrfy->reqid);
 		if (s == NULL)
@@ -1512,7 +1512,7 @@ mta_start_tls(struct mta_session *s)
 
 	req_ca_cert.reqid = s->id;
 	(void)strlcpy(req_ca_cert.name, certname, sizeof req_ca_cert.name);
-	m_compose(p_lka, IMSG_MTA_SSL_INIT, 0, 0, -1,
+	m_compose(p_lka, IMSG_MTA_TLS_INIT, 0, 0, -1,
 	    &req_ca_cert, sizeof(req_ca_cert));
 	tree_xset(&wait_ssl_init, s->id, s);
 	s->flags |= MTA_WAIT;
@@ -1607,7 +1607,7 @@ mta_verify_certificate(struct mta_session *s)
 	iov[0].iov_len = sizeof(req_ca_vrfy);
 	iov[1].iov_base = cert_der[0];
 	iov[1].iov_len = cert_len[0];
-	m_composev(p_lka, IMSG_MTA_SSL_VERIFY_CERT, 0, 0, -1,
+	m_composev(p_lka, IMSG_MTA_TLS_VERIFY_CERT, 0, 0, -1,
 	    iov, nitems(iov));
 
 	memset(&req_ca_vrfy, 0, sizeof req_ca_vrfy);
@@ -1618,14 +1618,14 @@ mta_verify_certificate(struct mta_session *s)
 		req_ca_vrfy.cert_len = cert_len[i+1];
 		iov[1].iov_base = cert_der[i+1];
 		iov[1].iov_len  = cert_len[i+1];
-		m_composev(p_lka, IMSG_MTA_SSL_VERIFY_CHAIN, 0, 0, -1,
+		m_composev(p_lka, IMSG_MTA_TLS_VERIFY_CHAIN, 0, 0, -1,
 		    iov, nitems(iov));
 	}
 
 	/* Tell lookup process that it can start verifying, we're done */
 	memset(&req_ca_vrfy, 0, sizeof req_ca_vrfy);
 	req_ca_vrfy.reqid = s->id;
-	m_compose(p_lka, IMSG_MTA_SSL_VERIFY, 0, 0, -1,
+	m_compose(p_lka, IMSG_MTA_TLS_VERIFY, 0, 0, -1,
 	    &req_ca_vrfy, sizeof req_ca_vrfy);
 
 	res = 1;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pony.c,v 1.8 2015/10/14 19:39:16 gilles Exp $	*/
+/*	$OpenBSD: pony.c,v 1.9 2015/11/30 12:49:35 gilles Exp $	*/
 
 /*
  * Copyright (c) 2014 Gilles Chehade <gilles@poolp.org>
@@ -77,8 +77,8 @@ pony_imsg(struct mproc *p, struct imsg *imsg)
 	case IMSG_SMTP_EXPAND_RCPT:
 	case IMSG_SMTP_LOOKUP_HELO:
 	case IMSG_SMTP_AUTHENTICATE:
-	case IMSG_SMTP_SSL_INIT:
-	case IMSG_SMTP_SSL_VERIFY:
+	case IMSG_SMTP_TLS_INIT:
+	case IMSG_SMTP_TLS_VERIFY:
 	case IMSG_SMTP_MESSAGE_COMMIT:
 	case IMSG_SMTP_MESSAGE_CREATE:
 	case IMSG_SMTP_MESSAGE_OPEN:
@@ -101,8 +101,8 @@ pony_imsg(struct mproc *p, struct imsg *imsg)
 	case IMSG_MTA_DNS_HOST_END:
 	case IMSG_MTA_DNS_MX_PREFERENCE:
 	case IMSG_MTA_DNS_PTR:
-	case IMSG_MTA_SSL_INIT:
-	case IMSG_MTA_SSL_VERIFY:
+	case IMSG_MTA_TLS_INIT:
+	case IMSG_MTA_TLS_VERIFY:
 	case IMSG_CTL_RESUME_ROUTE:
 	case IMSG_CTL_MTA_SHOW_HOSTS:
 	case IMSG_CTL_MTA_SHOW_RELAYS:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.193 2015/11/26 08:51:22 tim Exp $	*/
+/*	$OpenBSD: mta.c,v 1.194 2015/11/30 12:49:35 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -383,11 +383,11 @@ mta_imsg(struct mproc *p, struct imsg *imsg)
 			mta_session_imsg(p, imsg);
 			return;
 
-		case IMSG_MTA_SSL_INIT:
+		case IMSG_MTA_TLS_INIT:
 			mta_session_imsg(p, imsg);
 			return;
 
-		case IMSG_MTA_SSL_VERIFY:
+		case IMSG_MTA_TLS_VERIFY:
 			mta_session_imsg(p, imsg);
 			return;
 		}
