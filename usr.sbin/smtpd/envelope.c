@@ -1,4 +1,4 @@
-/*	$OpenBSD: envelope.c,v 1.33 2015/11/30 12:26:55 sunil Exp $	*/
+/*	$OpenBSD: envelope.c,v 1.34 2015/11/30 14:32:00 gilles Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -220,6 +220,7 @@ envelope_dump_buffer(const struct envelope *ep, char *dest, size_t len)
 		envelope_ascii_dump(ep, &dest, &len, "mta-relay");
 		envelope_ascii_dump(ep, &dest, &len, "mta-relay-auth");
 		envelope_ascii_dump(ep, &dest, &len, "mta-relay-cert");
+		envelope_ascii_dump(ep, &dest, &len, "mta-relay-ca");
 		envelope_ascii_dump(ep, &dest, &len, "mta-relay-flags");
 		envelope_ascii_dump(ep, &dest, &len, "mta-relay-heloname");
 		envelope_ascii_dump(ep, &dest, &len, "mta-relay-helotable");
@@ -509,6 +510,10 @@ ascii_load_field(const char *field, struct envelope *ep, char *buf)
 	if (strcasecmp("mta-relay-cert", field) == 0)
 		return ascii_load_string(ep->agent.mta.relay.pki_name, buf,
 		    sizeof ep->agent.mta.relay.pki_name);
+
+	if (strcasecmp("mta-relay-ca", field) == 0)
+		return ascii_load_string(ep->agent.mta.relay.ca_name, buf,
+		    sizeof ep->agent.mta.relay.ca_name);
 
 	if (strcasecmp("mta-relay-flags", field) == 0)
 		return ascii_load_mta_relay_flags(&ep->agent.mta.relay.flags, buf);
@@ -837,6 +842,10 @@ ascii_dump_field(const char *field, const struct envelope *ep,
 
 	if (strcasecmp(field, "mta-relay-cert") == 0)
 		return ascii_dump_string(ep->agent.mta.relay.pki_name,
+		    buf, len);
+
+	if (strcasecmp(field, "mta-relay-ca") == 0)
+		return ascii_dump_string(ep->agent.mta.relay.ca_name,
 		    buf, len);
 
 	if (strcasecmp(field, "mta-relay-flags") == 0)
