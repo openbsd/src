@@ -1,4 +1,4 @@
-/*	$OpenBSD: move.c,v 1.12 2015/08/22 14:47:41 deraadt Exp $	*/
+/*	$OpenBSD: move.c,v 1.13 2015/11/30 08:19:25 tb Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -62,8 +62,7 @@ static void pickmove(void);
 
 
 void
-domove(okay)
-	int     okay;		/* zero if first move */
+domove(int okay)
 {
 	int     i;		/* index */
 	int     l = 0;		/* last man */
@@ -137,9 +136,7 @@ domove(okay)
 }
 
 void
-trymove(mvnum, swapped)
-	int     mvnum;		/* number of move (rel zero) */
-	int     swapped;	/* see if swapped also tested */
+trymove(int mvnum, int swapped)
 {
 	int     pos;		/* position on board */
 	int     rval;		/* value of roll */
@@ -189,7 +186,7 @@ trymove(mvnum, swapped)
 }
 
 static struct BOARD *
-bsave()
+bsave(void)
 {
 	int     i;		/* index */
 	struct BOARD *now;	/* current position */
@@ -211,8 +208,7 @@ bsave()
 }
 
 static void
-binsert(new)
-	struct BOARD *new;	/* item to insert */
+binsert(struct BOARD *new)
 {
 	struct BOARD *p = checkq;	/* queue pointer */
 	int     result;		/* comparison result */
@@ -253,9 +249,7 @@ binsert(new)
 }
 
 static int
-bcomp(a, b)
-	struct BOARD *a;
-	struct BOARD *b;
+bcomp(struct BOARD *a, struct BOARD *b)
 {
 	int    *aloc = a->b_board;	/* pointer to board a */
 	int    *bloc = b->b_board;	/* pointer to board b */
@@ -271,9 +265,7 @@ bcomp(a, b)
 }
 
 static void
-mvcheck(incumbent, candidate)
-	struct BOARD *incumbent;
-	struct BOARD *candidate;
+mvcheck(struct BOARD *incumbent, struct BOARD *candidate)
 {
 	int     i, result;
 
@@ -293,15 +285,14 @@ mvcheck(incumbent, candidate)
 }
 
 static void
-makefree(dead)
-	struct BOARD *dead;	/* dead position */
+makefree(struct BOARD *dead)
 {
 	dead->b_next = freeq;	/* add to freeq */
 	freeq = dead;
 }
 
 static struct BOARD *
-nextfree()
+nextfree(void)
 {
 	struct BOARD *new;
 
@@ -321,7 +312,7 @@ nextfree()
 }
 
 static void
-pickmove()
+pickmove(void)
 {
 	/* current game position */
 	struct BOARD *now = bsave();
@@ -345,8 +336,7 @@ pickmove()
 }
 
 static void
-boardcopy(s)
-	struct BOARD *s;	/* game situation */
+boardcopy(struct BOARD *s)
 {
 	int     i;		/* index */
 
@@ -363,7 +353,7 @@ boardcopy(s)
 }
 
 static void
-movcmp()
+movcmp(void)
 {
 	int i;
 	float f;

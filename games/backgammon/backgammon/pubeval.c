@@ -1,4 +1,4 @@
-/*	$OpenBSD: pubeval.c,v 1.2 2009/10/28 23:22:45 schwarze Exp $	*/
+/*	$OpenBSD: pubeval.c,v 1.3 2015/11/30 08:19:25 tb Exp $	*/
 /* Public domain, Gerry Tesauro. */
 
 /* Backgammon move-selection evaluation function for benchmark comparisons.
@@ -102,7 +102,7 @@ pubeval(int race)
 
 /* sets input vector x[] given board position pos[] */
 void
-setx()
+setx(void)
 {
 	int i, j, jm1, n;
 

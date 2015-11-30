@@ -1,4 +1,4 @@
-/*	$OpenBSD: board.c,v 1.9 2014/04/25 20:23:37 schwarze Exp $	*/
+/*	$OpenBSD: board.c,v 1.10 2015/11/30 08:19:25 tb Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -32,7 +32,7 @@
 #include "back.h"
 
 void
-wrboard()
+wrboard(void)
 {
 	clear();
 	fboard();

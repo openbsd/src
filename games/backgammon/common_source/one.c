@@ -1,4 +1,4 @@
-/*	$OpenBSD: one.c,v 1.6 2015/07/20 23:04:17 schwarze Exp $	*/
+/*	$OpenBSD: one.c,v 1.7 2015/11/30 08:19:25 tb Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -32,8 +32,7 @@
 #include "back.h"
 
 int
-makmove(i)
-	int     i;
+makmove(int i)
 {
 	int     n, d;
 	int     max;
@@ -83,8 +82,7 @@ makmove(i)
 }
 
 void
-moverr(i)
-	int     i;
+moverr(int i)
 {
 	int     j;
 
@@ -99,8 +97,7 @@ moverr(i)
 }
 
 int
-checkd(d)
-	int     d;
+checkd(int d)
 {
 	if (d0 != d)
 		swap;
@@ -108,7 +105,7 @@ checkd(d)
 }
 
 int
-last()
+last(void)
 {
 	int     i;
 
@@ -119,8 +116,7 @@ last()
 }
 
 void
-movback(i)
-	int     i;
+movback(int i)
 {
 	int     j;
 
@@ -129,8 +125,7 @@ movback(i)
 }
 
 void
-backone(i)
-	int     i;
+backone(int i)
 {
 	board[p[i]] += cturn;
 	if (g[i] != home) {

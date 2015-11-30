@@ -1,4 +1,4 @@
-/*	$OpenBSD: text.c,v 1.8 2009/10/27 23:59:23 deraadt Exp $	*/
+/*	$OpenBSD: text.c,v 1.9 2015/11/30 08:19:25 tb Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -93,8 +93,7 @@ const char *const instruct[] = {
 	0};
 
 int
-text(t)
-	const char *const *t;
+text(const char *const *t)
 {
 	int     i;
 	const char   *s, *a;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: odds.c,v 1.5 2009/10/27 23:59:23 deraadt Exp $	*/
+/*	$OpenBSD: odds.c,v 1.6 2015/11/30 08:19:25 tb Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -32,8 +32,7 @@
 #include "back.h"
 
 void
-odds(r1, r2, val)
-	int     r1, r2, val;
+odds(int r1, int r2, int val)
 {
 	int     i, j;
 
@@ -69,8 +68,7 @@ count()
 }
 
 int
-canhit(i, c)
-	int     i, c;
+canhit(int i, int c)
 {
 	int     j, k, b;
 	int     a, diff, place, addon, menstuck;

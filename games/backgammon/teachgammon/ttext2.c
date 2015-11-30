@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttext2.c,v 1.7 2009/10/27 23:59:23 deraadt Exp $	*/
+/*	$OpenBSD: ttext2.c,v 1.8 2015/11/30 08:19:25 tb Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -114,8 +114,7 @@ const char   *const lastch[] = {
 	0};
 
 int
-text(txt)
-	const char  *const *txt;
+text(const char  *const *txt)
 {
 	const char  *const *begin;
 	const char   *a;

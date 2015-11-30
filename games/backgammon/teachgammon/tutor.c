@@ -1,4 +1,4 @@
-/*	$OpenBSD: tutor.c,v 1.6 2009/10/27 23:59:23 deraadt Exp $	*/
+/*	$OpenBSD: tutor.c,v 1.7 2015/11/30 08:19:25 tb Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -35,7 +35,7 @@
 static const char better[] = "That is a legal move, but there is a better one.\n";
 
 void
-tutor()
+tutor(void)
 {
 	int     i, j, k;
 	int     wrongans;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.18 2015/06/26 19:18:03 otto Exp $	*/
+/*	$OpenBSD: main.c,v 1.19 2015/11/30 08:19:25 tb Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -81,12 +81,13 @@ static const char again[] = ".\nWould you like to play again?";
 static const char svpromt[] = "Would you like to save this game?";
 
 int
-main (argc,argv)
-	int     argc;
-	char  **argv;
+main (int argc, char **argv)
 {
 	int     i,l;		/* non-descript indices */
 	char    c;		/* non-descript character storage */
+
+	if (pledge("stdio rpath tty", NULL) == -1)
+		err(1, "pledge");
 
 	signal(SIGINT, getout);	/* trap interrupts */
 

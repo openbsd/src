@@ -1,4 +1,4 @@
-/*	$OpenBSD: allow.c,v 1.5 2009/10/27 23:59:23 deraadt Exp $	*/
+/*	$OpenBSD: allow.c,v 1.6 2015/11/30 08:19:25 tb Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -32,7 +32,7 @@
 #include "back.h"
 
 int
-movallow()
+movallow(void)
 {
 	int     i, m, iold, r;
 

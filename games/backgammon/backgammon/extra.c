@@ -1,4 +1,4 @@
-/*	$OpenBSD: extra.c,v 1.7 2015/05/20 20:26:00 millert Exp $	*/
+/*	$OpenBSD: extra.c,v 1.8 2015/11/30 08:19:25 tb Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
  */
 
 void
-dble()
+dble(void)
 {
 	int     resp;		/* response to y/n */
 
@@ -96,7 +96,7 @@ dble()
  */
 
 int
-dblgood()
+dblgood(void)
 {
 	int     n;		/* accumulated judgment */
 	int     OFFC = *offptr;	/* no. of computer's men off */
@@ -171,8 +171,7 @@ dblgood()
 }
 
 int
-freemen(b)
-	int     b;
+freemen(int b)
 {
 	int     i, inc, lim;
 
@@ -190,8 +189,7 @@ freemen(b)
 }
 
 int
-trapped(n, inc)
-	int     n, inc;
+trapped(int n, int inc)
 {
 	int     i, j, k;
 	int     c, l, ct;
@@ -217,7 +215,7 @@ trapped(n, inc)
 }
 
 int
-eval()
+eval(void)
 {
 	int     i, j;
 

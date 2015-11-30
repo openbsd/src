@@ -1,4 +1,4 @@
-/*	$OpenBSD: fancy.c,v 1.12 2009/10/27 23:59:23 deraadt Exp $	*/
+/*	$OpenBSD: fancy.c,v 1.13 2015/11/30 08:19:25 tb Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -36,7 +36,7 @@ int     oldb[] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 int     oldr, oldw;
 
 void
-fboard()
+fboard(void)
 {
 	int     i, j, k, l;
 
@@ -118,11 +118,7 @@ fboard()
  * differently.
  */
 void
-bsect(b, rpos, cpos, cnext)
-	int     b;		/* contents of position */
-	int     rpos;		/* row of position */
-	int     cpos;		/* column of position */
-	int     cnext;		/* direction of position */
+bsect(int b, int rpos, int cpos, int cnext)
 {
 	int     j;		/* index */
 	int     n;		/* number of men on position */
@@ -176,7 +172,7 @@ bsect(b, rpos, cpos, cnext)
 }
 
 void
-moveplayers()
+moveplayers(void)
 {
 	int i, r, c;
 
@@ -225,8 +221,7 @@ moveplayers()
 	
 
 void
-fixpos(old, new, r, c, inc)
-	int     old, new, r, c, inc;
+fixpos(int old, int new, int r, int c, int inc)
 {
 	int     o, n, nv;
 	int     ov, nc;
@@ -296,8 +291,7 @@ fixpos(old, new, r, c, inc)
 }
 
 void
-fixcol(r, c, l, ch, inc)
-	int     r, c, l, ch, inc;
+fixcol(int r, int c, int l, int ch, int inc)
 {
 	int     i;
 
@@ -310,7 +304,7 @@ fixcol(r, c, l, ch, inc)
 
 
 void
-initcurses()
+initcurses(void)
 {
 	initscr();
 	cbreak();

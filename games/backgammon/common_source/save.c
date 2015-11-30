@@ -1,4 +1,4 @@
-/*	$OpenBSD: save.c,v 1.13 2015/11/11 01:12:10 deraadt Exp $	*/
+/*	$OpenBSD: save.c,v 1.14 2015/11/30 08:19:25 tb Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -46,8 +46,7 @@ static const char rec[] = "\" to recover your game.\n\n";
 static const char cantrec[] = "Can't recover file:  ";
 
 void
-save(n)
-	int     n;
+save(int n)
 {
 	int     fdesc;
 	char   *fs;
@@ -131,8 +130,7 @@ save(n)
 }
 
 void
-recover(s)
-	const char   *s;
+recover(const char *s)
 {
 	int     fdesc;
 
@@ -155,8 +153,7 @@ recover(s)
 }
 
 void
-norec(s)
-	const char   *s;
+norec(const char *s)
 {
 	const char   *c;
 

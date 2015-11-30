@@ -1,4 +1,4 @@
-/*	$OpenBSD: teach.c,v 1.14 2009/10/27 23:59:23 deraadt Exp $	*/
+/*	$OpenBSD: teach.c,v 1.15 2015/11/30 08:19:25 tb Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -30,6 +30,8 @@
  */
 
 #include <err.h>
+#include <unistd.h>
+
 #include "back.h"
 #include "tutor.h"
 
@@ -47,11 +49,12 @@ const char   *const contin[] = {
 };
 
 int
-main(argc, argv)
-	int     argc;
-	char   *argv[];
+main(int argc, char *argv[])
 {
 	int     i;
+
+	if (pledge("stdio rpath tty exec", NULL) == -1)
+		err(1, "pledge");
 
 	signal(SIGINT, getout);
 	initcurses();
@@ -111,7 +114,7 @@ main(argc, argv)
 }
 
 void
-leave()
+leave(void)
 {
 	clear();
 	endwin();
