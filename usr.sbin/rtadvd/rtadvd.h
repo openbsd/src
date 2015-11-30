@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtadvd.h,v 1.17 2014/01/07 14:58:40 gsoares Exp $	*/
+/*	$OpenBSD: rtadvd.h,v 1.18 2015/11/30 21:04:15 jca Exp $	*/
 /*	$KAME: rtadvd.h,v 1.20 2002/05/29 10:13:10 itojun Exp $	*/
 
 /*
@@ -47,16 +47,12 @@
 #define DEF_ADVVALIDLIFETIME 2592000
 #define DEF_ADVPREFERREDLIFETIME 604800
 
-/*XXX int-to-double comparison for INTERVAL items */
-#define mobileip6 0
-
+/* XXX int-to-double comparison for INTERVAL items */
 #define MAXROUTERLIFETIME 9000
-#define MIN_MAXINTERVAL (mobileip6 ? 1.5 : 4.0)
+#define MIN_MAXINTERVAL 4.0
 #define MAX_MAXINTERVAL 1800
-#define MIN_MININTERVAL	(mobileip6 ? 0.05 : 3.0)
+#define MIN_MININTERVAL	3.0
 #define MAXREACHABLETIME 3600000
-
-#undef miobileip6
 
 #define MAX_INITIAL_RTR_ADVERT_INTERVAL  16
 #define MAX_INITIAL_RTR_ADVERTISEMENTS    3
