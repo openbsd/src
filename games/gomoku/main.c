@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.28 2015/11/04 21:22:10 tedu Exp $	*/
+/*	$OpenBSD: main.c,v 1.29 2015/11/30 08:44:51 tb Exp $	*/
 /*
  * Copyright (c) 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -80,6 +80,9 @@ main(argc, argv)
 		"%3d        %-6s"
 	};
 	char *tmpname;
+
+	if (pledge("stdio rpath wpath cpath tty", NULL) == -1)
+		err(1, "pledge");
 
 	prog = strrchr(argv[0], '/');
 	if (prog)
