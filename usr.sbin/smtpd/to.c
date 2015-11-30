@@ -1,4 +1,4 @@
-/*	$OpenBSD: to.c,v 1.21 2015/10/28 07:25:30 gilles Exp $	*/
+/*	$OpenBSD: to.c,v 1.22 2015/11/30 12:53:08 gilles Exp $	*/
 
 /*
  * Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -33,7 +33,6 @@
 #include <errno.h>
 #include <event.h>
 #include <fcntl.h>
-#include <fts.h>
 #include <imsg.h>
 #include <limits.h>
 #include <inttypes.h>
@@ -338,14 +337,15 @@ text_to_relayhost(struct relayhost *relay, const char *s)
 		{ "tls+auth://",	F_STARTTLS|F_AUTH		},
 		{ "secure://",		F_SMTPS|F_STARTTLS		},
 		{ "secure+auth://",	F_SMTPS|F_STARTTLS|F_AUTH	},
-		{ "backup://",		F_BACKUP       			}
+		{ "backup://",		F_BACKUP       			},
+		{ "tls+backup://",	F_BACKUP|F_STARTTLS    		}
 	};
 	const char     *errstr = NULL;
 	char	       *p, *q;
 	char		buffer[1024];
-	char	       *sep;
+	char	       *beg, *end;
 	size_t		i;
-	int		len;
+	size_t		len;
 
 	memset(buffer, 0, sizeof buffer);
 	if (strlcpy(buffer, s, sizeof buffer) >= sizeof buffer)
@@ -374,40 +374,53 @@ text_to_relayhost(struct relayhost *relay, const char *s)
 	if (relay->flags & F_LMTP)
 		relay->port = 0;
 
-	if ((sep = strrchr(p, ':')) != NULL) {
-		*sep = 0;
-		relay->port = strtonum(sep+1, 1, 0xffff, &errstr);
-		if (errstr)
-			return 0;
-		len = sep - p;
-	}
-	else
-		len = strlen(p);
-
-	if ((relay->flags & F_LMTP) && (relay->port == 0))
-		return 0;
-
-	relay->hostname[len] = 0;
-
-	q = strchr(p, '@');
-	if (q == NULL && relay->flags & F_AUTH)
-		return 0;
-	if (q && !(relay->flags & F_AUTH))
-		return 0;
-
-	if (q == NULL) {
-		if (strlcpy(relay->hostname, p, sizeof (relay->hostname))
-		    >= sizeof (relay->hostname))
-			return 0;
-	} else {
+	/* first, we extract the label if any */
+	if ((q = strchr(p, '@')) != NULL) {
 		*q = 0;
 		if (strlcpy(relay->authlabel, p, sizeof (relay->authlabel))
 		    >= sizeof (relay->authlabel))
 			return 0;
-		if (strlcpy(relay->hostname, q + 1, sizeof (relay->hostname))
-		    >= sizeof (relay->hostname))
+		p = q + 1;
+	}
+
+	/* then, we extract the mail exchanger */
+	beg = end = p;
+	if (*beg == '[') {
+		if ((end = strchr(beg, ']')) == NULL)
+			return 0;
+		/* skip ']', it has to be included in the relay hostname */
+		++end;
+		len = end - beg;
+	}
+	else {
+		for (end = beg; *end; ++end)
+			if (! isalnum((unsigned char)*end) &&
+			    *end != '_' && *end != '.' && *end != '-')
+				break;
+		len = end - beg;
+	}
+	if (len >= sizeof relay->hostname)
+		return 0;
+	for (i = 0; i < len; ++i)
+		relay->hostname[i] = beg[i];
+	relay->hostname[i] = 0;
+
+	/* finally, we extract the port */
+	p = beg + len;
+	if (*p == ':') {
+		relay->port = strtonum(p+1, 1, 0xffff, &errstr);
+		if (errstr)
 			return 0;
 	}
+
+	if (! valid_domainpart(relay->hostname))
+		return 0;
+	if ((relay->flags & F_LMTP) && (relay->port == 0))
+		return 0;
+	if (relay->authlabel[0] == '\0' && relay->flags & F_AUTH)
+		return 0;
+	if (relay->authlabel[0] != '\0' && !(relay->flags & F_AUTH))
+		return 0;
 	return 1;
 }
 
@@ -437,6 +450,9 @@ relayhost_to_text(const struct relayhost *relay)
 		break;
 	case F_SMTPS:
 		(void)strlcat(buf, "smtps://", sizeof buf);
+		break;
+	case F_BACKUP|F_STARTTLS:
+		(void)strlcat(buf, "tls+backup://", sizeof buf);
 		break;
 	case F_BACKUP:
 		(void)strlcat(buf, "backup://", sizeof buf);
@@ -706,8 +722,6 @@ expandnode_to_text(struct expandnode *expandnode)
 	return NULL;
 }
 
-
-/******/
 static int
 alias_is_maildir(struct expandnode *alias, const char *line, size_t len)
 {
@@ -718,12 +732,13 @@ alias_is_maildir(struct expandnode *alias, const char *line, size_t len)
 	memset(alias, 0, sizeof *alias);
 	alias->type = EXPAND_MAILDIR;
 	if (strlcpy(alias->u.buffer, line,
-		sizeof(alias->u.buffer)) >= sizeof(alias->u.buffer))
+	    sizeof(alias->u.buffer)) >= sizeof(alias->u.buffer))
 		return (0);
 
 	return (1);
 }
 
+/******/
 static int
 alias_is_filter(struct expandnode *alias, const char *line, size_t len)
 {
@@ -760,7 +775,7 @@ alias_is_username(struct expandnode *alias, const char *line, size_t len)
 
 	while (*line) {
 		if (!isalnum((unsigned char)*line) &&
-		    *line != '_' && *line != '.' && *line != '-')
+		    *line != '_' && *line != '.' && *line != '-' && *line != '+')
 			return 0;
 		++line;
 	}
