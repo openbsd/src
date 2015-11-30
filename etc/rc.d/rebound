@@ -1,0 +1,9 @@
+#!/bin/sh
+#
+# $OpenBSD: rebound,v 1.1 2015/11/30 23:35:30 jturner Exp $
+
+daemon="/usr/sbin/rebound"
+
+. /etc/rc.d/rc.subr
+
+rc_cmd $1
