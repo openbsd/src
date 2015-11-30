@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd-api.h,v 1.26 2015/11/30 14:47:39 gilles Exp $	*/
+/*	$OpenBSD: smtpd-api.h,v 1.27 2015/11/30 14:49:54 gilles Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -327,7 +327,7 @@ void filter_api_setugid(uid_t, gid_t);
 void filter_api_set_chroot(const char *);
 void filter_api_no_chroot(void);
 void filter_api_set_udata(uint64_t, void *);
-void filter_api_get_udata(uint64_t);
+void *filter_api_get_udata(uint64_t);
 
 void filter_api_loop(void);
 int filter_api_accept(uint64_t);
