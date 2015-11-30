@@ -1,4 +1,4 @@
-/*	$OpenBSD: bog.c,v 1.25 2015/10/24 17:23:14 mmcc Exp $	*/
+/*	$OpenBSD: bog.c,v 1.26 2015/11/30 08:27:46 tb Exp $	*/
 /*	$NetBSD: bog.c,v 1.5 1995/04/24 12:22:32 cgd Exp $	*/
 
 /*-
@@ -89,6 +89,9 @@ main(int argc, char *argv[])
 {
 	int ch, done;
 	char *bspec, *p;
+
+	if (pledge("stdio rpath tty", NULL) == -1)
+		err(1, "pledge");
 
 	batch = debug = reuse = selfuse;
 	bspec = NULL;
