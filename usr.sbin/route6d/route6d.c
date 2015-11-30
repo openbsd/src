@@ -1,4 +1,4 @@
-/*	$OpenBSD: route6d.c,v 1.81 2015/10/26 00:37:44 jca Exp $	*/
+/*	$OpenBSD: route6d.c,v 1.82 2015/11/30 21:58:23 jca Exp $	*/
 /*	$KAME: route6d.c,v 1.111 2006/10/25 06:38:13 jinmei Exp $	*/
 
 /*
@@ -414,7 +414,7 @@ main(int argc, char *argv[])
 		{
 		case -1:
 			if (errno != EINTR) {
-				fatal("select");
+				fatal("poll");
 				/*NOTREACHED*/
 			}
 			continue;
