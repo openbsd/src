@@ -1,4 +1,4 @@
-/* $OpenBSD: main.c,v 1.8 2015/11/15 23:14:21 deraadt Exp $ */
+/* $OpenBSD: main.c,v 1.9 2015/11/30 22:22:27 deraadt Exp $ */
 /* $NetBSD: main.c,v 1.3 2002/07/09 10:34:16 tron Exp $ */
 
 /*
@@ -79,10 +79,6 @@ main(int argc, char **argv)
 	cmd_t	*cmdp;
 	int	matched;
 	int	i;
-
-	if (pledge("stdio rpath wpath cpath fattr getpw flock id proc exec",
-	    NULL) == -1)
-		err(1, "pledge");
 
 	for (cmdp = cmds ; cmdp->c_wc > 0 ; cmdp++) {
 		for (matched = i = 0 ; i < cmdp->c_wc && i < MaxCmdWords ; i++) {
