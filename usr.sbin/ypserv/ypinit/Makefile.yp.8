@@ -1,4 +1,4 @@
-.\"	$OpenBSD: Makefile.yp.8,v 1.7 2015/11/29 15:20:46 rpe Exp $
+.\"	$OpenBSD: Makefile.yp.8,v 1.8 2015/11/30 17:03:05 jmc Exp $
 .\"
 .\" Copyright (c) 2008 Ingo Schwarze <schwarze@usta.de>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 29 2015 $
+.Dd $Mdocdate: November 30 2015 $
 .Dt MAKEFILE.YP 8
 .Os
 .Sh NAME
@@ -67,9 +67,8 @@ To regenerate all maps for one single domain, run
 in the respective domain subdirectory.
 The
 .Xr makedbm 8
-utility will be used to create the maps in
-.Xr db 3
-format, and they will be stored inside the appropriate domain subdirectory.
+utility will be used to create the maps in Berkeley DB format,
+and they will be stored inside the appropriate domain subdirectory.
 .Pp
 Whenever a YP map has been updated, it is automatically distributed to all
 slave servers in the respective domain using the
@@ -279,7 +278,7 @@ Cookies controlling the operation of
 .El
 .Sh SEE ALSO
 .Xr make 1 ,
-.Xr db 3 ,
+.Xr dbopen 3 ,
 .Xr makedbm 8 ,
 .Xr yp 8 ,
 .Xr ypinit 8 ,

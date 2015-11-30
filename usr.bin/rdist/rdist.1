@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rdist.1,v 1.46 2015/07/27 17:28:39 sobrado Exp $
+.\"	$OpenBSD: rdist.1,v 1.47 2015/11/30 17:03:05 jmc Exp $
 .\"
 .\" Copyright (c) 1983 Regents of the University of California.
 .\" All rights reserved.
@@ -30,7 +30,7 @@
 .\"	$From: rdist.man,v 6.34 1996/01/29 22:37:19 mcooper Exp $
 .\"	@(#)rdist.1	6.6 (Berkeley) 5/13/86
 .\"
-.Dd $Mdocdate: July 27 2015 $
+.Dd $Mdocdate: November 30 2015 $
 .Dt RDIST 1
 .Os
 .Sh NAME
@@ -345,7 +345,7 @@ to
 .It Ic sparse
 Enable checking for sparse files.
 One of the most common types of sparse files are those produced by
-.Xr db 3 .
+.Xr dbopen 3 .
 This option adds some additional processing overhead so it should
 only be enabled for targets likely to contain sparse files.
 .It Ic updateperm

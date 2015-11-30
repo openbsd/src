@@ -1,4 +1,4 @@
-.\" $OpenBSD: dbm.3,v 1.14 2015/11/10 23:48:17 jmc Exp $
+.\" $OpenBSD: dbm.3,v 1.15 2015/11/30 17:03:05 jmc Exp $
 .\"
 .\" Copyright (c) 1999 Todd C. Miller <Todd.Miller@courtesan.com>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 10 2015 $
+.Dd $Mdocdate: November 30 2015 $
 .Dt DBMINIT 3
 .Os
 .Sh NAME
@@ -45,7 +45,7 @@
 .Sh DESCRIPTION
 These functions provide a dbm-compatible interface to the
 database access methods described in
-.Xr db 3 .
+.Xr dbopen 3 .
 Each unique record in the database is a key/content pair,
 the components of which may be any arbitrary binary data.
 The key and the content data are described by the
@@ -135,7 +135,7 @@ indicate errors by setting the
 field to
 .Dv NULL .
 .Sh SEE ALSO
-.Xr db 3 ,
+.Xr dbopen 3 ,
 .Xr hash 3 ,
 .Xr ndbm 3
 .Sh HISTORY
@@ -152,8 +152,8 @@ first appeared in
 .Sh BUGS
 Because the
 .Nm dbm
-routines are implemented on top of
-.Xr db 3 ,
+routines are implemented on top of those described in
+.Xr dbopen 3 ,
 only a single file,
 .Pa file.pag ,
 is used to actually store the database.

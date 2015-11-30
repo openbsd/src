@@ -1,4 +1,4 @@
-.\"	$OpenBSD: table.5,v 1.4 2014/02/04 16:32:36 eric Exp $
+.\"	$OpenBSD: table.5,v 1.5 2015/11/30 17:03:05 jmc Exp $
 .\"
 .\" Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
 .\" Copyright (c) 2013 Gilles Chehade <gilles@poolp.org>
@@ -16,7 +16,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: February 4 2014 $
+.Dd $Mdocdate: November 30 2015 $
 .Dt TABLE 5
 .Os
 .Sh NAME
@@ -56,17 +56,13 @@ key2	value2
 key3	value3
 .Ed
 .Pp
-A file table can be converted to a
-.Xr db 3
-database using the
+A file table can be converted to a Berkeley database using the
 .Xr makemap 8
 utility with no syntax change.
 .Pp
 Tables using a
 .Ql file
-or
-.Xr db 3
-backend will be referenced as follows:
+or Berkeley DB backend will be referenced as follows:
 .Bd -literal -offset indent
 table name file:/path/to/file
 table name db:/path/to/file.db
@@ -114,7 +110,7 @@ For
 .Ql static ,
 .Ql file
 and
-.Xr db 3
+.Xr dbopen 3
 backends, a wildcard may be used so the domain table may contain:
 .Bd -literal -offset indent
 example.org

@@ -1,6 +1,6 @@
 .\" David Leonard, 1998. Placed in the public domain.
-.\" $OpenBSD: ndbm.3,v 1.18 2015/11/10 23:48:17 jmc Exp $
-.Dd $Mdocdate: November 10 2015 $
+.\" $OpenBSD: ndbm.3,v 1.19 2015/11/30 17:03:05 jmc Exp $
+.Dd $Mdocdate: November 30 2015 $
 .Dt DBM_OPEN 3
 .Os
 .Sh NAME
@@ -46,7 +46,7 @@
 .Sh DESCRIPTION
 These functions provide a ndbm-compatible interface to the
 database access methods described in
-.Xr db 3 .
+.Xr dbopen 3 .
 Each unique record in the database is a key/content pair,
 the components of which may be any arbitrary binary data.
 The key and the content data are described by the
@@ -202,9 +202,9 @@ and a record with the specified key already exists.
 If an error occurs, the error can be retrieved with
 .Fn dbm_error
 and corresponds to those errors described in
-.Xr db 3 .
+.Xr dbopen 3 .
 .Sh SEE ALSO
 .Xr open 2 ,
-.Xr db 3 ,
 .Xr dbm 3 ,
+.Xr dbopen 3 ,
 .Xr hash 3

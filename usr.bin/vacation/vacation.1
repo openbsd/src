@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vacation.1,v 1.22 2014/11/15 14:54:12 bentley Exp $
+.\"	$OpenBSD: vacation.1,v 1.23 2015/11/30 17:03:05 jmc Exp $
 .\"	$NetBSD: vacation.1,v 1.5 1995/08/31 21:57:08 jtc Exp $
 .\"
 .\" Copyright (c) 1985, 1987, 1990, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)vacation.1	8.2 (Berkeley) 4/28/95
 .\"
-.Dd $Mdocdate: November 15 2014 $
+.Dd $Mdocdate: November 30 2015 $
 .Dt VACATION 1
 .Os
 .Sh NAME
@@ -132,8 +132,7 @@ line (with any value) is included in the mail headers.
 .El
 .Pp
 The people who have sent you messages are maintained as a
-.Xr db 3
-database in the file
+Berkeley DB database in the file
 .Pa .vacation.db
 in your home directory.
 .Pp
@@ -190,6 +189,7 @@ database file
 message to send
 .El
 .Sh SEE ALSO
+.Xr dbopen 3 ,
 .Xr syslog 3 ,
 .Xr smtpd 8
 .Sh HISTORY

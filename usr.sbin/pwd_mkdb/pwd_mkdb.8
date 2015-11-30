@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pwd_mkdb.8,v 1.23 2014/01/20 05:07:48 schwarze Exp $
+.\"	$OpenBSD: pwd_mkdb.8,v 1.24 2015/11/30 17:03:05 jmc Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)pwd_mkdb.8	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: January 20 2014 $
+.Dd $Mdocdate: November 30 2015 $
 .Dt PWD_MKDB 8
 .Os
 .Sh NAME
@@ -44,9 +44,7 @@
 .Ar file
 .Sh DESCRIPTION
 .Nm
-creates
-.Xr db 3
-style secure and insecure databases for the specified file.
+creates a pair of Berkeley databases for the specified file.
 These databases are then installed into
 .Pa /etc/spwd.db
 and
@@ -140,7 +138,7 @@ temporary file
 .Sh SEE ALSO
 .Xr chpass 1 ,
 .Xr passwd 1 ,
-.Xr db 3 ,
+.Xr dbopen 3 ,
 .Xr getpwent 3 ,
 .Xr passwd 5 ,
 .Xr vipw 8
