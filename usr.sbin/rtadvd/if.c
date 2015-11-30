@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.30 2015/11/03 15:59:31 mpi Exp $	*/
+/*	$OpenBSD: if.c,v 1.31 2015/11/30 12:44:36 jca Exp $	*/
 /*	$KAME: if.c,v 1.17 2001/01/21 15:27:30 itojun Exp $	*/
 
 /*
@@ -256,7 +256,7 @@ get_next_msg(char *buf, char *lim, int ifindex, size_t *lenp, int filter)
 				continue;
 
 			if ((gw = rti_info[RTAX_GATEWAY]) == NULL ||
-			    gw->sa_family != AF_LINK)
+			    gw->sa_family != AF_INET6)
 				continue;
 			if (ifindex && SDL(gw)->sdl_index != ifindex)
 				continue;
@@ -319,12 +319,8 @@ int
 get_rtm_ifindex(char *buf)
 {
 	struct rt_msghdr *rtm = (struct rt_msghdr *)buf;
-	struct sockaddr *sa, *rti_info[RTAX_MAX];
 
-	sa = (struct sockaddr *)(buf + rtm->rtm_hdrlen);
-	get_rtaddrs(rtm->rtm_addrs, sa, rti_info);
-
-	return(((struct sockaddr_dl *)rti_info[RTAX_GATEWAY])->sdl_index);
+	return rtm->rtm_index;
 }
 
 int
