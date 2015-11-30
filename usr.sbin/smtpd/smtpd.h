@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.485 2015/11/23 21:50:12 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.486 2015/11/30 12:26:55 sunil Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -398,6 +398,7 @@ struct rule {
 	struct table		       *r_userbase;
 	time_t				r_qexpire;
 	uint8_t				r_forwardonly;
+	char				r_delivery_user[LINE_MAX];
 };
 
 struct delivery_mda {
@@ -405,6 +406,7 @@ struct delivery_mda {
 	char			usertable[PATH_MAX];
 	char			username[LOGIN_NAME_MAX];
 	char			buffer[EXPAND_BUFFER];
+	char			delivery_user[LINE_MAX];
 };
 
 struct delivery_mta {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mda.c,v 1.112 2015/10/27 21:20:11 jung Exp $	*/
+/*	$OpenBSD: mda.c,v 1.113 2015/11/30 12:26:55 sunil Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -345,7 +345,7 @@ mda_imsg(struct mproc *p, struct imsg *imsg)
 			case A_LMTP:
 				deliver.mode = A_LMTP;
 				deliver.userinfo = *userinfo;
-				(void)strlcpy(deliver.user, userinfo->username,
+				(void)strlcpy(deliver.user, e->user,
 				    sizeof(deliver.user));
 				(void)strlcpy(deliver.from, e->sender,
 				    sizeof(deliver.from));
@@ -830,13 +830,20 @@ mda_user(const struct envelope *evp)
 	m_create(p_lka, IMSG_MDA_LOOKUP_USERINFO, 0, 0, -1);
 	m_add_id(p_lka, u->id);
 	m_add_string(p_lka, evp->agent.mda.usertable);
-	m_add_string(p_lka, evp->agent.mda.username);
+	if (evp->agent.mda.delivery_user[0])
+		m_add_string(p_lka, evp->agent.mda.delivery_user);
+	else
+		m_add_string(p_lka, evp->agent.mda.username);
 	m_close(p_lka);
 	u->flags |= USER_WAITINFO;
 
 	stat_increment("mda.user", 1);
 
-	log_debug("mda: new user %llx for \"%s\"", u->id, mda_user_to_text(u));
+	if (evp->agent.mda.delivery_user[0])
+		log_debug("mda: new user %016" PRIx64 " for \"%s\" delivering as \"%s\"",
+		    u->id, mda_user_to_text(u), evp->agent.mda.delivery_user);
+	else
+		log_debug("mda: new user %016" PRIx64 " for \"%s\"", u->id, mda_user_to_text(u));
 
 	return (u);
 }

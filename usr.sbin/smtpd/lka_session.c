@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_session.c,v 1.75 2015/11/30 11:14:01 gilles Exp $	*/
+/*	$OpenBSD: lka_session.c,v 1.76 2015/11/30 12:26:55 sunil Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@poolp.org>
@@ -544,6 +544,8 @@ lka_submit(struct lka_session *lks, struct rule *rule, struct expandnode *xn)
 		    sizeof ep->agent.mda.usertable);
 		(void)strlcpy(ep->agent.mda.username, lk.userinfo.username,
 		    sizeof ep->agent.mda.username);
+		strlcpy(ep->agent.mda.delivery_user, rule->r_delivery_user,
+		    sizeof ep->agent.mda.delivery_user);
 
 		if (xn->type == EXPAND_FILENAME) {
 			ep->agent.mda.method = A_FILENAME;
