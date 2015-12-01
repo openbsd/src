@@ -1,2 +1,2 @@
-mandoc: late.in:3:2: WARNING: missing manual title, using UNTITLED: Sh NAME
-mandoc: late.in:8:2: WARNING: skipping late title macro: Dt DT-LATE 1
+mandoc: late.in:8:2: WARNING: skipping late title macro: Dt
+mandoc: late.in: WARNING: missing manual title, using UNTITLED: EOF

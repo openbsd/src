@@ -1,3 +1,3 @@
 mandoc: bareIt.in:9:2: ERROR: skipping item outside list: It argument
-mandoc: bareIt.in:9:2: WARNING: skipping paragraph macro: br before Bl
 mandoc: bareIt.in:14:2: ERROR: skipping item outside list: It argument
+mandoc: bareIt.in:9:2: WARNING: skipping paragraph macro: br before Bl

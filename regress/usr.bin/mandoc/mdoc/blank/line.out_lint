@@ -1,4 +1,12 @@
 mandoc: line.in:15:1: WARNING: blank line in fill mode, using .sp
+mandoc: line.in:48:1: WARNING: blank line in fill mode, using .sp
+mandoc: line.in:50:1: WARNING: blank line in fill mode, using .sp
+mandoc: line.in:54:1: WARNING: blank line in fill mode, using .sp
+mandoc: line.in:56:1: WARNING: blank line in fill mode, using .sp
+mandoc: line.in:60:1: WARNING: blank line in fill mode, using .sp
+mandoc: line.in:62:1: WARNING: blank line in fill mode, using .sp
+mandoc: line.in:65:1: WARNING: blank line in fill mode, using .sp
+mandoc: line.in:66:1: WARNING: blank line in fill mode, using .sp
 mandoc: line.in:18:2: WARNING: skipping paragraph macro: br after br
 mandoc: line.in:20:2: WARNING: skipping paragraph macro: br before Pp
 mandoc: line.in:24:2: WARNING: skipping paragraph macro: br after Pp
@@ -6,16 +14,8 @@ mandoc: line.in:26:2: WARNING: skipping paragraph macro: Pp before Pp
 mandoc: line.in:33:2: WARNING: skipping paragraph macro: br after sp
 mandoc: line.in:36:2: WARNING: skipping paragraph macro: sp after Pp
 mandoc: line.in:39:2: WARNING: skipping paragraph macro: sp after Pp
-mandoc: line.in:48:1: WARNING: blank line in fill mode, using .sp
-mandoc: line.in:50:1: WARNING: blank line in fill mode, using .sp
 mandoc: line.in:51:2: WARNING: skipping paragraph macro: br after sp
-mandoc: line.in:54:1: WARNING: blank line in fill mode, using .sp
 mandoc: line.in:54:1: WARNING: skipping paragraph macro: sp after Pp
-mandoc: line.in:56:1: WARNING: blank line in fill mode, using .sp
-mandoc: line.in:60:1: WARNING: blank line in fill mode, using .sp
-mandoc: line.in:62:1: WARNING: blank line in fill mode, using .sp
-mandoc: line.in:65:1: WARNING: blank line in fill mode, using .sp
-mandoc: line.in:66:1: WARNING: blank line in fill mode, using .sp
 mandoc: line.in:81:2: WARNING: skipping paragraph macro: sp after Sh
 mandoc: line.in:83:2: WARNING: skipping paragraph macro: Pp at the end of Sh
 mandoc: line.in:85:2: WARNING: skipping paragraph macro: Pp after Sh

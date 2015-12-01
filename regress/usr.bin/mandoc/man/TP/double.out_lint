@@ -1,5 +1,5 @@
-mandoc: double.in:20:2: WARNING: skipping paragraph macro: PP empty
 mandoc: double.in:21:2: WARNING: line scope broken: TP breaks TP
 mandoc: double.in:30:2: WARNING: line scope broken: PP breaks B
-mandoc: double.in:31:2: WARNING: skipping paragraph macro: PP empty
 mandoc: double.in:32:2: WARNING: line scope broken: TP breaks TP
+mandoc: double.in:20:2: WARNING: skipping paragraph macro: PP empty
+mandoc: double.in:31:2: WARNING: skipping paragraph macro: PP empty

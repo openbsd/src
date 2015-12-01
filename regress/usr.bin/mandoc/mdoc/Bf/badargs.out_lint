@@ -1,3 +1,3 @@
+mandoc: badargs.in:17:2: ERROR: skipping all arguments: Ef tail argument
 mandoc: badargs.in:11:2: WARNING: missing font type, using \fR: Bf
 mandoc: badargs.in:15:5: WARNING: unknown font type, using \fR: Bf badarg
-mandoc: badargs.in:17:2: ERROR: skipping all arguments: Ef tail argument
