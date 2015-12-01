@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtadvd.c,v 1.60 2015/11/30 20:58:08 jca Exp $	*/
+/*	$OpenBSD: rtadvd.c,v 1.61 2015/12/01 12:11:31 jca Exp $	*/
 /*	$KAME: rtadvd.c,v 1.66 2002/05/29 14:18:36 itojun Exp $	*/
 
 /*
@@ -348,12 +348,8 @@ rtmsg_input(void)
 	for (next = msg; next < lim; next += len) {
 		int oldifflags;
 
-		next = get_next_msg(next, lim, &len,
-				    RTADV_TYPE2BITMASK(RTM_ADD) |
-				    RTADV_TYPE2BITMASK(RTM_DELETE) |
-				    RTADV_TYPE2BITMASK(RTM_NEWADDR) |
-				    RTADV_TYPE2BITMASK(RTM_DELADDR) |
-				    RTADV_TYPE2BITMASK(RTM_IFINFO));
+		next = get_next_msg(next, lim, &len);
+
 		if (len == 0)
 			break;
 		type = rtmsg_type(next);
@@ -1244,8 +1240,21 @@ sock_open(void)
 static void
 rtsock_open(void)
 {
+	unsigned int rtfilter;
+
 	if ((rtsock = socket(PF_ROUTE, SOCK_RAW, 0)) < 0)
 		fatal("socket");
+
+	rtfilter =
+	    ROUTE_FILTER(RTM_ADD) |
+	    ROUTE_FILTER(RTM_DELETE) |
+	    ROUTE_FILTER(RTM_NEWADDR) |
+	    ROUTE_FILTER(RTM_DELADDR) |
+	    ROUTE_FILTER(RTM_IFINFO);
+
+	if (setsockopt(rtsock, PF_ROUTE, ROUTE_MSGFILTER,
+	    &rtfilter, sizeof(rtfilter)) == -1)
+		fatal("setsockopt(ROUTE_MSGFILTER)");
 }
 
 struct rainfo *

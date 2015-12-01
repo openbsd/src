@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.33 2015/12/01 12:09:36 jca Exp $	*/
+/*	$OpenBSD: if.c,v 1.34 2015/12/01 12:11:31 jca Exp $	*/
 /*	$KAME: if.c,v 1.17 2001/01/21 15:27:30 itojun Exp $	*/
 
 /*
@@ -212,10 +212,9 @@ lladdropt_fill(struct sockaddr_dl *sdl, struct nd_opt_hdr *ndopt)
 	return;
 }
 
-#define FILTER_MATCH(type, filter) ((0x1 << type) & filter)
 #define SIN6(s) ((struct sockaddr_in6 *)(s))
 char *
-get_next_msg(char *buf, char *lim, size_t *lenp, int filter)
+get_next_msg(char *buf, char *lim, size_t *lenp)
 {
 	struct rt_msghdr *rtm;
 	struct ifa_msghdr *ifam;
@@ -232,8 +231,6 @@ get_next_msg(char *buf, char *lim, size_t *lenp, int filter)
 			break;
 		}
 		if (rtm->rtm_version != RTM_VERSION)
-			continue;
-		if (FILTER_MATCH(rtm->rtm_type, filter) == 0)
 			continue;
 
 		switch (rtm->rtm_type) {
@@ -291,7 +288,6 @@ get_next_msg(char *buf, char *lim, size_t *lenp, int filter)
 
 	return (char *)rtm;
 }
-#undef FILTER_MATCH
 
 struct in6_addr *
 get_addr(char *buf)
