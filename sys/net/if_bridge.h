@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.h,v 1.47 2015/11/28 15:21:45 yasuoka Exp $	*/
+/*	$OpenBSD: if_bridge.h,v 1.48 2015/12/01 18:28:29 goda Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -433,6 +433,7 @@ struct bridge_softc {
 };
 
 extern const u_int8_t bstp_etheraddr[];
+struct llc;
 
 void	bridge_ifdetach(struct ifnet *);
 int	bridge_output(struct ifnet *, struct mbuf *, struct sockaddr *,
@@ -443,6 +444,7 @@ void	bridge_rtagenode(struct ifnet *, int);
 struct sockaddr *bridge_tunnel(struct mbuf *);
 struct sockaddr *bridge_tunneltag(struct mbuf *, int);
 void	bridge_tunneluntag(struct mbuf *);
+void	bridge_copyaddr(struct sockaddr *, struct sockaddr *);
 
 struct bstp_state *bstp_create(struct ifnet *);
 void	bstp_destroy(struct bstp_state *);
@@ -456,5 +458,20 @@ struct mbuf *bstp_input(struct bstp_state *, struct bstp_port *,
 void	bstp_ifstate(void *);
 u_int8_t bstp_getstate(struct bstp_state *, struct bstp_port *);
 void	bstp_ifsflags(struct bstp_port *, u_int);
+void	bridge_send_icmp_err(struct bridge_softc *, struct ifnet *,
+    struct ether_header *, struct mbuf *, int, struct llc *, int, int, int);
+
+int	bridgectl_ioctl(struct ifnet *, u_long, caddr_t);
+struct ifnet *bridge_rtupdate(struct bridge_softc *,
+    struct ether_addr *, struct ifnet *ifp, int, u_int8_t, struct mbuf *);
+struct bridge_rtnode *bridge_rtlookup(struct bridge_softc *,
+    struct ether_addr *);
+void	bridge_rtflush(struct bridge_softc *, int);
+void	bridge_timer(void *);
+
+u_int8_t bridge_filterrule(struct brl_head *, struct ether_header *,
+    struct mbuf *);
+void	bridge_flushrule(struct bridge_iflist *);
+
 #endif /* _KERNEL */
 #endif /* _NET_IF_BRIDGE_H_ */

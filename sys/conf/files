@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.607 2015/11/06 18:07:57 mpi Exp $
+#	$OpenBSD: files,v 1.608 2015/12/01 18:28:29 goda Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -769,6 +769,7 @@ file net/bsd-comp.c			ppp_bsdcomp
 file net/ppp-deflate.c			ppp_deflate
 file net/if_tun.c			tun			needs-count
 file net/if_bridge.c			bridge			needs-count
+file net/bridgectl.c			bridge
 file net/bridgestp.c			bridge
 file net/if_vlan.c			vlan			needs-count
 file net/pipex.c			pipex
