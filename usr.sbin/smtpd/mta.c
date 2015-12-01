@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.194 2015/11/30 12:49:35 gilles Exp $	*/
+/*	$OpenBSD: mta.c,v 1.195 2015/12/01 10:41:35 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -51,8 +51,8 @@
 #define DELAY_CHECK_LIMIT	5
 
 #define	DELAY_QUADRATIC		1
-#define DELAY_ROUTE_BASE	200
-#define DELAY_ROUTE_MAX		(3600 * 4)
+#define DELAY_ROUTE_BASE	15
+#define DELAY_ROUTE_MAX		3600
 
 #define RELAY_ONHOLD		0x01
 #define RELAY_HOLDQ		0x02
@@ -232,6 +232,7 @@ mta_imsg(struct mproc *p, struct imsg *imsg)
 				return;
 			}
 
+			task = NULL;
 			TAILQ_FOREACH(task, &relay->tasks, entry)
 				if (task->msgid == evpid_to_msgid(evp.id))
 					break;
@@ -413,7 +414,7 @@ mta_imsg(struct mproc *p, struct imsg *imsg)
 
 	if (p->proc == PROC_CONTROL) {
 		switch (imsg->hdr.type) {
-			
+
 		case IMSG_CTL_RESUME_ROUTE:
 			u64 = *((uint64_t *)imsg->data);
 			if (u64)
@@ -667,7 +668,7 @@ mta_route_collect(struct mta_relay *relay, struct mta_route *route)
 
 	/* First connection failed */
 	if (route->flags & ROUTE_NEW)
-		mta_route_disable(route, 2, ROUTE_DISABLED_NET);
+		mta_route_disable(route, 1, ROUTE_DISABLED_NET);
 
 	c = mta_connector(relay, route->src);
 	c->nconn -= 1;
