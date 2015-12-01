@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.490 2015/12/01 09:33:17 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.491 2015/12/01 09:39:07 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -279,6 +279,7 @@ enum imsg_type {
 	IMSG_SMTP_MESSAGE_CREATE,
 	IMSG_SMTP_MESSAGE_ROLLBACK,
 	IMSG_SMTP_MESSAGE_OPEN,
+	IMSG_SMTP_CHECK_SENDER,
 	IMSG_SMTP_EXPAND_RCPT,
 	IMSG_SMTP_LOOKUP_HELO,
 	IMSG_SMTP_TLS_INIT,
