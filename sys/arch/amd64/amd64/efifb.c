@@ -1,4 +1,4 @@
-/*	$OpenBSD: efifb.c,v 1.7 2015/10/30 11:21:01 kettenis Exp $	*/
+/*	$OpenBSD: efifb.c,v 1.8 2015/12/01 18:42:56 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -188,23 +188,31 @@ efifb_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 	case WSDISPLAYIO_SMODE:
 		break;
 	case WSDISPLAYIO_GETSUPPORTEDDEPTH:
-		/* can't change the depth */
-		if (ri->ri_depth == 32)
+		switch (ri->ri_depth) {
+		case 32:
 			*(u_int *)data = WSDISPLAYIO_DEPTH_24_32;
-		else if (ri->ri_depth == 24)
+			break;
+		case 24:
 			*(u_int *)data = WSDISPLAYIO_DEPTH_24_24;
-		else if (ri->ri_depth == 16)
+			break;
+		case 16:
 			*(u_int *)data = WSDISPLAYIO_DEPTH_16;
-		else if (ri->ri_depth == 15)
+			break;
+		case 15:
 			*(u_int *)data = WSDISPLAYIO_DEPTH_15;
-		else if (ri->ri_depth == 8)
+			break;
+		case 8:
 			*(u_int *)data = WSDISPLAYIO_DEPTH_8;
-		else if (ri->ri_depth == 4)
+			break;
+		case 4:
 			*(u_int *)data = WSDISPLAYIO_DEPTH_4;
-		else if (ri->ri_depth == 1)
+			break;
+		case 1:
 			*(u_int *)data = WSDISPLAYIO_DEPTH_1;
-		else
+			break;
+		default:
 			return (-1);
+		}
 		break;
 	default:
 		return (-1);
