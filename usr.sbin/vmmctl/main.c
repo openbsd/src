@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.4 2015/11/27 09:11:39 reyk Exp $	*/
+/*	$OpenBSD: main.c,v 1.5 2015/12/01 20:52:44 halex Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -120,6 +120,7 @@ parse(int argc, char *argv[])
 	int			 i;
 
 	memset(&res, 0, sizeof(res));
+	res.nifs = -1;
 
 	for (i = 0; ctl_commands[i].name != NULL; i++) {
 		if (strncmp(ctl_commands[i].name,
@@ -193,6 +194,10 @@ vmmaction(struct parse_result *res)
 			errx(1, "too many disks");
 		else if (res->ndisks == 0)
 			warnx("starting without disks");
+		if (res->nifs == -1)
+			res->nifs = 0;
+		if (res->nifs == 0)
+			warnx("starting without network interfaces");
 
 		ret = start_vm(res->name, res->size, res->nifs,
 		    res->ndisks, res->disks, res->path);
@@ -447,7 +452,7 @@ ctl_start(struct parse_result *res, int argc, char *argv[])
 				errx(1, "invalid memory size: %s", optarg);
 			break;
 		case 'i':
-			if (res->size)
+			if (res->nifs != -1)
 				errx(1, "interfaces specified multiple times");
 			if (parse_ifs(res, optarg, 0) != 0)
 				errx(1, "invalid interface count: %s", optarg);
