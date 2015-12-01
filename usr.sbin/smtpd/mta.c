@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.195 2015/12/01 10:41:35 gilles Exp $	*/
+/*	$OpenBSD: mta.c,v 1.196 2015/12/01 10:48:21 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -1443,7 +1443,7 @@ mta_find_route(struct mta_connector *c, time_t now, int *limits,
 	TAILQ_FOREACH(mx, &c->relay->domain->mxs, entry) {
 		/*
 		 * New preference level
-		 */		
+		 */
 		if (mx->preference > level) {
 #ifndef IGNORE_MX_PREFERENCE
 			/*
