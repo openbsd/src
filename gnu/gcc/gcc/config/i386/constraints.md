@@ -150,3 +150,7 @@
    to fit that range (for immediate operands in zero-extending x86-64
    instructions)."
   (match_operand 0 "x86_64_zext_immediate_operand"))
+
+(define_memory_constraint "W"
+  "CMPXCHG8B memory reference."
+  (match_test "cmpxchg8b_mem_constraint (op)"))

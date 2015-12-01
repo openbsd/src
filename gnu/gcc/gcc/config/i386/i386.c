@@ -4719,6 +4719,34 @@ standard_sse_constant_opcode (rtx insn, rtx x)
   gcc_unreachable ();
 }
 
+int
+cmpxchg8b_mem_constraint (rtx op)
+{
+  struct ix86_address parts;
+
+  if (TARGET_64BIT || !flag_pic)
+    return 1;
+
+  if (GET_CODE (op) != MEM)
+    return 0;
+  if (!ix86_decompose_address (XEXP (op, 0), &parts))
+    return 0;
+
+  if (parts.base && GET_CODE (parts.base) == SUBREG)
+    parts.base = SUBREG_REG (parts.base);
+  if (parts.index && GET_CODE (parts.index) == SUBREG)
+    parts.index = SUBREG_REG (parts.index);
+
+  if (parts.base && REG_P (parts.base)
+      && REGNO_REG_CLASS (REGNO (parts.base)) == BREG)
+    return 0;
+  if (parts.index && REG_P (parts.index)
+      && REGNO_REG_CLASS (REGNO (parts.index)) == BREG)
+    return 0;
+
+  return 1;
+}
+
 /* Returns 1 if OP contains a symbol reference */
 
 int

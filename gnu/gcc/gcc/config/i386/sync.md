@@ -109,7 +109,7 @@
 ;; are just esi and edi.
 (define_insn "*sync_double_compare_and_swapdi_pic"
   [(set (match_operand:DI 0 "register_operand" "=A")
-	(match_operand:DI 1 "memory_operand" "+m"))
+	(match_operand:DI 1 "memory_operand" "+W"))
    (set (match_dup 1)
 	(unspec_volatile:DI
 	  [(match_dup 1)
@@ -202,7 +202,7 @@
 ;; operand 3.
 (define_insn "*sync_double_compare_and_swap_ccdi_pic"
   [(set (match_operand:DI 0 "register_operand" "=A")
-	(match_operand:DI 1 "memory_operand" "+m"))
+	(match_operand:DI 1 "memory_operand" "+W"))
    (set (match_dup 1)
 	(unspec_volatile:DI
 	  [(match_dup 1)
