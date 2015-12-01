@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.19 2015/11/30 08:19:25 tb Exp $	*/
+/*	$OpenBSD: main.c,v 1.20 2015/12/01 00:31:46 tb Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -86,7 +86,7 @@ main (int argc, char **argv)
 	int     i,l;		/* non-descript indices */
 	char    c;		/* non-descript character storage */
 
-	if (pledge("stdio rpath tty", NULL) == -1)
+	if (pledge("stdio rpath tty exec", NULL) == -1)
 		err(1, "pledge");
 
 	signal(SIGINT, getout);	/* trap interrupts */
@@ -131,6 +131,10 @@ main (int argc, char **argv)
 				}
 			}
 		}
+
+		if (pledge("stdio rpath tty", NULL) == -1)
+			err(1, "pledge");
+
 		init();		/* initialize board */
 
 		if (pnum == 2) {/* ask for color(s) */
