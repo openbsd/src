@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.172 2015/11/06 11:20:56 mpi Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.173 2015/12/01 12:22:18 mpi Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -937,13 +937,6 @@ nd6_rtrequest(struct ifnet *ifp, int req, struct rtentry *rt)
 
 	switch (req) {
 	case RTM_ADD:
-		/*
-		 * There is no backward compatibility :)
-		 *
-		 * if ((rt->rt_flags & RTF_HOST) == 0 &&
-		 *     SIN(rt_mask(rt))->sin_addr.s_addr != 0xffffffff)
-		 *	   rt->rt_flags |= RTF_CLONING;
-		 */
 		if ((rt->rt_flags & RTF_CLONING) ||
 		    ((rt->rt_flags & (RTF_LLINFO | RTF_LOCAL)) && ln == NULL)) {
 			if (ln != NULL)

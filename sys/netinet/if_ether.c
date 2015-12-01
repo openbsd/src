@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.190 2015/11/20 10:51:30 mpi Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.191 2015/12/01 12:22:18 mpi Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -161,14 +161,6 @@ arp_rtrequest(struct ifnet *ifp, int req, struct rtentry *rt)
 	switch (req) {
 
 	case RTM_ADD:
-		/*
-		 * XXX: If this is a manually added route to interface
-		 * such as older version of routed or gated might provide,
-		 * restore cloning bit.
-		 */
-		if ((rt->rt_flags & RTF_HOST) == 0 && rt_mask(rt) &&
-		    satosin(rt_mask(rt))->sin_addr.s_addr != 0xffffffff)
-			rt->rt_flags |= RTF_CLONING;
 		if (rt->rt_flags & RTF_CLONING ||
 		    ((rt->rt_flags & (RTF_LLINFO | RTF_LOCAL)) && !la)) {
 			/*
