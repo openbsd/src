@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdisk.c,v 1.95 2015/11/24 01:01:56 deraadt Exp $	*/
+/*	$OpenBSD: fdisk.c,v 1.96 2015/12/01 06:25:43 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -210,6 +210,7 @@ main(int argc, char *argv[])
 
 	query = NULL;
 	if (i_flag) {
+		reinited = 1;
 		if (g_flag) {
 			MBR_init_GPT(&initial_mbr);
 			GPT_init();

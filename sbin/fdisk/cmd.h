@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.h,v 1.18 2015/10/26 15:08:26 krw Exp $	*/
+/*	$OpenBSD: cmd.h,v 1.19 2015/12/01 06:25:43 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -32,6 +32,8 @@ struct cmd {
 	char *help;
 };
 extern struct cmd cmd_table[];
+
+extern int reinited;
 
 int Xreinit(char *, struct mbr *);
 int Xdisk(char *, struct mbr *);
