@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppb.c,v 1.64 2015/10/19 19:24:54 kettenis Exp $	*/
+/*	$OpenBSD: ppb.c,v 1.65 2015/12/01 21:02:04 kettenis Exp $	*/
 /*	$NetBSD: ppb.c,v 1.16 1997/06/06 23:48:05 thorpej Exp $	*/
 
 /*
@@ -66,6 +66,7 @@ struct ppb_softc {
 	pcitag_t sc_tag;		/* ...and tag. */
 	pci_intr_handle_t sc_ih[4];
 	void *sc_intrhand;
+	struct extent *sc_busex;
 	struct extent *sc_ioex;
 	struct extent *sc_memex;
 	struct extent *sc_pmemex;
@@ -106,6 +107,8 @@ struct cfdriver ppb_cd = {
 	NULL, "ppb", DV_DULL
 };
 
+void	ppb_alloc_busrange(struct ppb_softc *, struct pci_attach_args *,
+	    pcireg_t *);
 void	ppb_alloc_resources(struct ppb_softc *, struct pci_attach_args *);
 int	ppb_intr(void *);
 void	ppb_hotplug_insert(void *);
@@ -151,6 +154,7 @@ ppbattach(struct device *parent, struct device *self, void *aux)
 	pci_intr_handle_t ih;
 	pcireg_t busdata, reg, blr;
 	char *name;
+	int sec, sub;
 	int pin;
 
 	sc->sc_pc = pc;
@@ -158,6 +162,16 @@ ppbattach(struct device *parent, struct device *self, void *aux)
 
 	busdata = pci_conf_read(pc, pa->pa_tag, PPB_REG_BUSINFO);
 
+	/*
+	 * When the bus number isn't configured, try to allocate one
+	 * ourselves.
+	 */
+	if (busdata  == 0 && pa->pa_busex)
+		ppb_alloc_busrange(sc, pa, &busdata);
+
+	/*
+	 * When the bus number still isn't set correctly, give up.
+	 */
 	if (PPB_BUSINFO_SECONDARY(busdata) == 0) {
 		printf(": not configured by system firmware\n");
 		return;
@@ -174,6 +188,19 @@ ppbattach(struct device *parent, struct device *self, void *aux)
 		panic("ppbattach: bus in tag (%d) != bus in reg (%d)",
 		    pa->pa_bus, PPB_BUSINFO_PRIMARY(busdata));
 #endif
+
+	sec = PPB_BUSINFO_SECONDARY(busdata);
+	sub = PPB_BUSINFO_SUBORDINATE(busdata);
+	if (sub > sec) {
+		name = malloc(PPB_EXNAMLEN, M_DEVBUF, M_NOWAIT);
+		if (name) {
+			snprintf(name, PPB_EXNAMLEN, "%s pcibus", sc->sc_dev.dv_xname);
+			sc->sc_busex = extent_create(name, 0, 0xff,
+			    M_DEVBUF, NULL, 0, EX_NOWAIT | EX_FILLED);
+			extent_free(sc->sc_busex, sec + 1,
+			    sub - sec, EX_NOWAIT);
+		}
+	}
 
 	/* Check for PCI Express capabilities and setup hotplug support. */
 	if (pci_get_capability(pc, pa->pa_tag, PCI_CAP_PCIEXPRESS,
@@ -313,6 +340,7 @@ ppbattach(struct device *parent, struct device *self, void *aux)
 	pba.pba_dmat = pa->pa_dmat;
 	pba.pba_pc = pc;
 	pba.pba_flags = pa->pa_flags & ~PCI_FLAGS_MRM_OKAY;
+	pba.pba_busex = sc->sc_busex;
 	pba.pba_ioex = sc->sc_ioex;
 	pba.pba_memex = sc->sc_memex;
 	pba.pba_pmemex = sc->sc_pmemex;
@@ -337,6 +365,12 @@ ppbdetach(struct device *self, int flags)
 		pci_intr_disestablish(sc->sc_pc, sc->sc_intrhand);
 
 	rv = config_detach_children(self, flags);
+
+	if (sc->sc_busex) {
+		name = sc->sc_busex->ex_name;
+		extent_destroy(sc->sc_busex);
+		free(name, M_DEVBUF, PPB_EXNAMLEN);
+	}
 
 	if (sc->sc_ioex) {
 		name = sc->sc_ioex->ex_name;
@@ -485,6 +519,25 @@ ppbactivate(struct device *self, int act)
 }
 
 void
+ppb_alloc_busrange(struct ppb_softc *sc, struct pci_attach_args *pa,
+    pcireg_t *busdata)
+{
+	pci_chipset_tag_t pc = sc->sc_pc;
+	u_long busnum, busrange;
+
+	for (busrange = 16; busrange > 0; busrange >>= 1) {
+		if (extent_alloc(pa->pa_busex, busrange, 1, 0, 0, 
+		    EX_NOWAIT, &busnum))
+			continue;
+		*busdata |= pa->pa_bus;
+		*busdata |= (busnum << 8);
+		*busdata |= ((busnum + busrange - 1) << 16);
+		pci_conf_write(pc, pa->pa_tag, PPB_REG_BUSINFO, *busdata);
+		return;
+	}
+}
+
+void
 ppb_alloc_resources(struct ppb_softc *sc, struct pci_attach_args *pa)
 {
 	pci_chipset_tag_t pc = sc->sc_pc;
@@ -530,11 +583,15 @@ ppb_alloc_resources(struct ppb_softc *sc, struct pci_attach_args *pa)
 			reg_start = PCI_MAPREG_START;
 			reg_end = PCI_MAPREG_PPB_END;
 			reg_rom = 0;	/* 0x38 */
+			io_count++;
+			mem_count++;
 			break;
 		case 2:	/* PCI-Cardbus bridge */
 			reg_start = PCI_MAPREG_START;
 			reg_end = PCI_MAPREG_PCB_END;
 			reg_rom = 0;
+			io_count++;
+			mem_count++;
 			break;
 		default:
 			return;
@@ -632,6 +689,9 @@ ppb_alloc_resources(struct ppb_softc *sc, struct pci_attach_args *pa)
 			}
 		}
 	}
+
+	/* Enable bus master. */
+	csr |= PCI_COMMAND_MASTER_ENABLE;
 
 	pci_conf_write(pc, sc->sc_tag, PCI_COMMAND_STATUS_REG, csr);
 }
