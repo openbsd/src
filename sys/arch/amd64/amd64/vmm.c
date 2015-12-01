@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.11 2015/12/01 10:12:15 mpi Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.12 2015/12/01 10:14:05 mpi Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -305,7 +305,7 @@ vmmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	if (vmm_softc->mode == VMM_MODE_UNKNOWN)
 		return (ENOTTY);
 
-	switch(cmd) {
+	switch (cmd) {
 	case VMM_IOC_CREATE:
 		if ((ret = vmm_start()) != 0) {
 			vmm_stop();
@@ -914,7 +914,7 @@ vm_impl_init(struct vm *vm)
 		return vm_impl_init_vmx(vm);
 	else if	(vmm_softc->mode == VMM_MODE_SVM ||
 		 vmm_softc->mode == VMM_MODE_RVI)
-			return vm_impl_init_svm(vm);
+		return vm_impl_init_svm(vm);
 	else
 		panic("unknown vmm mode\n");
 }
@@ -954,7 +954,7 @@ vm_impl_deinit(struct vm *vm)
 		vm_impl_deinit_vmx(vm);
 	else if	(vmm_softc->mode == VMM_MODE_SVM ||
 		 vmm_softc->mode == VMM_MODE_RVI)
-			vm_impl_deinit_svm(vm);
+		vm_impl_deinit_svm(vm);
 	else
 		panic("unknown vmm mode\n");
 }
@@ -1843,15 +1843,13 @@ vcpu_init(struct vcpu *vcpu)
 		if (ret)
 			free((void *)vcpu->vc_hsa_stack_va, M_DEVBUF,
 			    PAGE_SIZE);
-	}
-	else if	(vmm_softc->mode == VMM_MODE_SVM ||
+	} else if (vmm_softc->mode == VMM_MODE_SVM ||
 		 vmm_softc->mode == VMM_MODE_RVI) {
-			ret = vcpu_init_svm(vcpu);
-			if (ret)
-				free((void *)vcpu->vc_hsa_stack_va, M_DEVBUF,
-				    PAGE_SIZE);
-	}
-	else
+		ret = vcpu_init_svm(vcpu);
+		if (ret)
+			free((void *)vcpu->vc_hsa_stack_va, M_DEVBUF,
+			    PAGE_SIZE);
+	} else
 		panic("unknown vmm mode\n");
 
 	return (ret);
@@ -1905,7 +1903,7 @@ vcpu_deinit(struct vcpu *vcpu)
 		vcpu_deinit_vmx(vcpu);
 	else if	(vmm_softc->mode == VMM_MODE_SVM ||
 		 vmm_softc->mode == VMM_MODE_RVI)
-			vcpu_deinit_svm(vcpu);
+		vcpu_deinit_svm(vcpu);
 	else
 		panic("unknown vmm mode\n");
 }
@@ -2360,11 +2358,11 @@ vm_run(struct vm_run_params *vrp)
 	/* Run the VCPU specified in vrp */
 	if (found_vcpu->vc_virt_mode == VMM_MODE_VMX ||
 	    found_vcpu->vc_virt_mode == VMM_MODE_EPT) {
-		ret = vcpu_run_vmx(found_vcpu, vrp->vrp_continue, &vrp->vrp_injint);
+		ret = vcpu_run_vmx(found_vcpu, vrp->vrp_continue,
+		    &vrp->vrp_injint);
 	} else if (found_vcpu->vc_virt_mode == VMM_MODE_SVM ||
 		   found_vcpu->vc_virt_mode == VMM_MODE_RVI) {
-			ret = vcpu_run_svm(found_vcpu,
-			    vrp->vrp_continue);
+		ret = vcpu_run_svm(found_vcpu, vrp->vrp_continue);
 	}
 
 	/* If we are exiting, populate exit data so vmd can help */
@@ -2883,7 +2881,7 @@ vmx_handle_np_fault(struct vcpu *vcpu)
 	}
 
 	gpa_memtype = vmm_get_guest_memtype(vcpu->vc_parent, gpa);
-	switch(gpa_memtype) {
+	switch (gpa_memtype) {
 	case VMM_MEM_TYPE_REGULAR:
 		ret = vmx_fault_page(vcpu, gpa);
 		break;
@@ -2947,7 +2945,7 @@ vmx_handle_inout(struct vcpu *vcpu)
 	 *
 	 * XXX handle not eax target
 	 */
-	switch(vcpu->vc_exit.vei.vei_port) {
+	switch (vcpu->vc_exit.vei.vei_port) {
 	case 0x40 ... 0x43:
 	case 0x3f8 ... 0x3ff:
 	case 0xcf8:
@@ -3247,7 +3245,7 @@ vmx_fix_ept_pte(struct pmap *pmap, vaddr_t addr)
 	level = pmap_fix_ept(pmap, addr, &offs);
 	KASSERT(level == 0);
 
-	return (0);	
+	return (0);
 }
 
 /*
@@ -3258,7 +3256,7 @@ vmx_fix_ept_pte(struct pmap *pmap, vaddr_t addr)
 const char *
 vmx_exit_reason_decode(uint32_t code)
 {
-	switch(code) {
+	switch (code) {
 	case VMX_EXIT_NMI: return "NMI";
 	case VMX_EXIT_EXTINT: return "external interrupt";
 	case VMX_EXIT_TRIPLE_FAULT: return "triple fault";
@@ -3329,7 +3327,7 @@ vmx_exit_reason_decode(uint32_t code)
 const char *
 vmx_instruction_error_decode(uint32_t code)
 {
-	switch(code) {
+	switch (code) {
 	case 1: return "VMCALL: unsupported in VMX root";
 	case 2: return "VMCLEAR: invalid paddr";
 	case 3: return "VMCLEAR: VMXON pointer";
