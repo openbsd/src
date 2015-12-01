@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.32 2015/11/30 20:58:08 jca Exp $	*/
+/*	$OpenBSD: if.c,v 1.33 2015/12/01 12:09:36 jca Exp $	*/
 /*	$KAME: if.c,v 1.17 2001/01/21 15:27:30 itojun Exp $	*/
 
 /*
@@ -237,7 +237,6 @@ get_next_msg(char *buf, char *lim, size_t *lenp, int filter)
 			continue;
 
 		switch (rtm->rtm_type) {
-		case RTM_GET:
 		case RTM_ADD:
 		case RTM_DELETE:
 			if (rtm->rtm_tableid != 0)
