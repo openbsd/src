@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.308 2015/11/26 10:36:20 mpi Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.309 2015/12/01 00:49:12 mmcc Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -1042,7 +1042,7 @@ ip_ctloutput(int op, struct socket *so, int level, int optname,
 			rtid = *mtod(m, u_int *);
 			if (inp->inp_rtableid == rtid)
 				break;
-			/* needs priviledges to switch when already set */
+			/* needs privileges to switch when already set */
 			if (p->p_p->ps_rtableid != rtid &&
 			    p->p_p->ps_rtableid != 0 &&
 			    (error = suser(p, 0)) != 0)
