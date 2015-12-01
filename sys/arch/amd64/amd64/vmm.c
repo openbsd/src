@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.13 2015/12/01 10:18:35 mpi Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.14 2015/12/01 12:01:38 mpi Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -368,21 +368,17 @@ vm_readpage(struct vm_readpage_params *vrp)
 	struct vm *vm;
 	paddr_t host_pa;
 	void *kva;
-	int found;
 	vaddr_t vr_page;
 
 	/* Find the desired VM */
 	rw_enter_read(&vmm_softc->vm_lock);
-	found = 0;
 	SLIST_FOREACH(vm, &vmm_softc->vm_list, vm_link) {
-		if (vm->vm_id == vrp->vrp_vm_id) {
-			found = 1;
+		if (vm->vm_id == vrp->vrp_vm_id)
 			break;
-		}
 	}
 
 	/* Not found? exit. */
-	if (!found) {
+	if (vm == NULL) {
 		rw_exit_read(&vmm_softc->vm_lock);
 		return (ENOENT);
 	}
@@ -450,21 +446,18 @@ vm_writepage(struct vm_writepage_params *vwp)
 	struct vm *vm;
 	paddr_t host_pa;
 	void *kva;
-	int found, ret;
+	int ret;
 	vaddr_t vw_page, dst;
 
 	/* Find the desired VM */
 	rw_enter_read(&vmm_softc->vm_lock);
-	found = 0;
 	SLIST_FOREACH(vm, &vmm_softc->vm_list, vm_link) {
-		if (vm->vm_id == vwp->vwp_vm_id) {
-			found = 1;
+		if (vm->vm_id == vwp->vwp_vm_id)
 			break;
-		}
 	}
 
 	/* Not found? exit. */
-	if (!found) {
+	if (vm == NULL) {
 		rw_exit_read(&vmm_softc->vm_lock);
 		return (ENOENT);
 	}
@@ -473,8 +466,7 @@ vm_writepage(struct vm_writepage_params *vwp)
 	vw_page = vwp->vwp_paddr & ~PAGE_MASK;
 
 	/* If not regular memory, exit. */
-	if (vmm_get_guest_memtype(vm, vw_page) !=
-	    VMM_MEM_TYPE_REGULAR) {
+	if (vmm_get_guest_memtype(vm, vw_page) != VMM_MEM_TYPE_REGULAR) {
 		rw_exit_read(&vmm_softc->vm_lock);
 		return (EINVAL);
 	}
@@ -2250,40 +2242,36 @@ vm_get_info(struct vm_info_params *vip)
 int
 vm_terminate(struct vm_terminate_params *vtp)
 {
-	struct vm *vm, *found_vm;
+	struct vm *vm;
 	struct vcpu *vcpu;
-
-	found_vm = NULL;
 
 	/*
 	 * Find desired VM
 	 */
 	rw_enter_read(&vmm_softc->vm_lock);
-
 	SLIST_FOREACH(vm, &vmm_softc->vm_list, vm_link) {
 		if (vm->vm_id == vtp->vtp_vm_id)
-			found_vm = vm;
+			break;
 	}
 
-	if (found_vm) {
-		rw_enter_read(&found_vm->vm_vcpu_lock);
-		SLIST_FOREACH(vcpu, &found_vm->vm_vcpu_list, vc_vcpu_link) {
+	if (vm != NULL) {
+		rw_enter_read(&vm->vm_vcpu_lock);
+		SLIST_FOREACH(vcpu, &vm->vm_vcpu_list, vc_vcpu_link) {
 			vcpu->vc_state = VCPU_STATE_REQSTOP;
 		}
-		rw_exit_read(&found_vm->vm_vcpu_lock);
+		rw_exit_read(&vm->vm_vcpu_lock);
 	}
-
 	rw_exit_read(&vmm_softc->vm_lock);
 
-	if (!found_vm)
+	if (vm == NULL)
 		return (ENOENT);
 
 	/* XXX possible race here two threads terminating the same vm? */
 	rw_enter_write(&vmm_softc->vm_lock);
 	vmm_softc->vm_ct--;
-	SLIST_REMOVE(&vmm_softc->vm_list, found_vm, vm, vm_link);
+	SLIST_REMOVE(&vmm_softc->vm_list, vm, vm, vm_link);
 	rw_exit_write(&vmm_softc->vm_lock);
-	vm_teardown(found_vm);
+	vm_teardown(vm);
 
 	return (0);
 }
@@ -2296,13 +2284,9 @@ vm_terminate(struct vm_terminate_params *vtp)
 int
 vm_run(struct vm_run_params *vrp)
 {
-	struct vm *vm, *found_vm;
-	struct vcpu *vcpu, *found_vcpu;
-	int ret;
-
-	found_vm = NULL;
-	found_vcpu = NULL;
-	ret = 0;
+	struct vm *vm;
+	struct vcpu *vcpu;
+	int ret = 0;
 
 	/*
 	 * Find desired VM
@@ -2311,30 +2295,30 @@ vm_run(struct vm_run_params *vrp)
 
 	SLIST_FOREACH(vm, &vmm_softc->vm_list, vm_link) {
 		if (vm->vm_id == vrp->vrp_vm_id)
-			found_vm = vm;
+			break;
 	}
 
-	if (found_vm) {
-		rw_enter_read(&found_vm->vm_vcpu_lock);
-		SLIST_FOREACH(vcpu, &found_vm->vm_vcpu_list, vc_vcpu_link) {
-			if (vcpu->vc_id == vrp->vrp_vcpu_id) {
-				found_vcpu = vcpu;
-				if (found_vcpu->vc_state != VCPU_STATE_STOPPED)
-					ret = EBUSY;
-				else
-					found_vcpu->vc_state =
-					    VCPU_STATE_RUNNING;
-			}
+	if (vm != NULL) {
+		rw_enter_read(&vm->vm_vcpu_lock);
+		SLIST_FOREACH(vcpu, &vm->vm_vcpu_list, vc_vcpu_link) {
+			if (vcpu->vc_id == vrp->vrp_vcpu_id)
+				break;
 		}
-		rw_exit_read(&found_vm->vm_vcpu_lock);
 
-		if (!found_vcpu)
+		if (vcpu != NULL) {
+			if (vcpu->vc_state != VCPU_STATE_STOPPED)
+				ret = EBUSY;
+			else
+				vcpu->vc_state = VCPU_STATE_RUNNING;
+		}
+		rw_exit_read(&vm->vm_vcpu_lock);
+
+		if (vcpu == NULL)
 			ret = ENOENT;
 	}
-
 	rw_exit_read(&vmm_softc->vm_lock);
 
-	if (!found_vm)
+	if (vm == NULL)
 		ret = ENOENT;
 
 	if (ret)
@@ -2345,29 +2329,27 @@ vm_run(struct vm_run_params *vrp)
 	 * If so (vrp_continue == 1), copy in the exit data from vmd.
 	 */
 	if (vrp->vrp_continue) {
-		if (copyin(vrp->vrp_exit, &found_vcpu->vc_exit,
+		if (copyin(vrp->vrp_exit, &vcpu->vc_exit,
 		    sizeof(union vm_exit)) == EFAULT) {
 			return (EFAULT);
 		}
 	}
 
 	/* Run the VCPU specified in vrp */
-	if (found_vcpu->vc_virt_mode == VMM_MODE_VMX ||
-	    found_vcpu->vc_virt_mode == VMM_MODE_EPT) {
-		ret = vcpu_run_vmx(found_vcpu, vrp->vrp_continue,
-		    &vrp->vrp_injint);
-	} else if (found_vcpu->vc_virt_mode == VMM_MODE_SVM ||
-		   found_vcpu->vc_virt_mode == VMM_MODE_RVI) {
-		ret = vcpu_run_svm(found_vcpu, vrp->vrp_continue);
+	if (vcpu->vc_virt_mode == VMM_MODE_VMX ||
+	    vcpu->vc_virt_mode == VMM_MODE_EPT) {
+		ret = vcpu_run_vmx(vcpu, vrp->vrp_continue, &vrp->vrp_injint);
+	} else if (vcpu->vc_virt_mode == VMM_MODE_SVM ||
+		   vcpu->vc_virt_mode == VMM_MODE_RVI) {
+		ret = vcpu_run_svm(vcpu, vrp->vrp_continue);
 	}
 
 	/* If we are exiting, populate exit data so vmd can help */
 	if (ret == EAGAIN) {
-		vrp->vrp_exit_reason =
-		    found_vcpu->vc_gueststate.vg_exit_reason;
+		vrp->vrp_exit_reason = vcpu->vc_gueststate.vg_exit_reason;
 
-		if (copyout(&found_vcpu->vc_exit,
-		    vrp->vrp_exit, sizeof(union vm_exit)) == EFAULT) {
+		if (copyout(&vcpu->vc_exit, vrp->vrp_exit,
+		    sizeof(union vm_exit)) == EFAULT) {
 			ret = EFAULT;
 		} else
 			ret = 0;
