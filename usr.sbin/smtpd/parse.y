@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.160 2015/12/01 10:57:24 gilles Exp $	*/
+/*	$OpenBSD: parse.y,v 1.161 2015/12/01 15:43:01 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -103,17 +103,17 @@ static struct pki	*pki;
 static struct ca	*sca;
 
 enum listen_options {
-	LO_FAMILY	= 0x01,
-	LO_PORT		= 0x02,
-	LO_SSL		= 0x04,
-	LO_FILTER      	= 0x08,
-	LO_PKI      	= 0x10,
-	LO_AUTH      	= 0x20,
-	LO_TAG      	= 0x40,
-	LO_HOSTNAME   	= 0x80,
-	LO_HOSTNAMES   	= 0x100,
-	LO_MASKSOURCE  	= 0x200,
-	LO_NODSN	= 0x400,
+	LO_FAMILY	= 0x000001,
+	LO_PORT		= 0x000002,
+	LO_SSL		= 0x000004,
+	LO_FILTER      	= 0x000008,
+	LO_PKI      	= 0x000010,
+	LO_AUTH      	= 0x000020,
+	LO_TAG      	= 0x000040,
+	LO_HOSTNAME   	= 0x000080,
+	LO_HOSTNAMES   	= 0x000100,
+	LO_MASKSOURCE  	= 0x000200,
+	LO_NODSN	= 0x000400,
 	LO_CA		= 0x010000
 };
 
