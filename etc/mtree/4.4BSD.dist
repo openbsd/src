@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.275 2015/11/05 23:38:07 bluhm Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.276 2015/12/01 08:10:38 deraadt Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 
@@ -503,8 +503,6 @@ usr
                 ..
                 armv7
                 ..
-                aviion
-                ..
                 hppa
                 ..
                 i386
@@ -570,8 +568,6 @@ usr
                 armish
                 ..
                 armv7
-                ..
-                aviion
                 ..
                 hppa
                 ..
