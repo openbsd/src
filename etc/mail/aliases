@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: aliases,v 1.53 2015/11/09 00:18:37 mlarkin Exp $
+#	$OpenBSD: aliases,v 1.54 2015/12/01 07:31:29 deraadt Exp $
 #
 #  Aliases in this file will NOT be expanded in the header from
 #  Mail, but WILL be visible over networks or from /usr/libexec/mail.local.
@@ -69,7 +69,9 @@ _x11:   /dev/null
 _ypldap: /dev/null
 bin:	/dev/null
 nobody:	/dev/null
-proxy:  /dev/null
+proxy:  /dev/null		# remove in 6.0
+_tftp_proxy: /dev/null
+_ftp_proxy: /dev/null
 sshd:   /dev/null
 
 # Well-known aliases -- these should be filled in!

@@ -18,7 +18,7 @@ _spamd:*:62:62::0:0:Spam Daemon:/var/empty:/sbin/nologin
 uucp:*:66:1::0:0:UNIX-to-UNIX Copy:/var/spool/uucppublic:/sbin/nologin
 www:*:67:67::0:0:HTTP Server:/var/www:/sbin/nologin
 _isakmpd:*:68:68::0:0:isakmpd privsep:/var/empty:/sbin/nologin
-proxy:*:71:71::0:0:Proxy Services:/nonexistent:/sbin/nologin
+proxy:*:71:71::0:0:Old proxy daemon (remove in 6.0):/nonexistent:/sbin/nologin
 _syslogd:*:73:73::0:0:Syslog Daemon:/var/empty:/sbin/nologin
 _pflogd:*:74:74::0:0:pflogd privsep:/var/empty:/sbin/nologin
 _bgpd:*:75:75::0:0:BGP Daemon:/var/empty:/sbin/nologin
@@ -52,4 +52,6 @@ _file:*:104:104::0:0:file privsep:/var/empty:/sbin/nologin
 _radiusd:*:105:105::0:0:RADIUS Daemon:/var/empty:/sbin/nologin
 _eigrpd:*:106:106::0:0:EIGRP Daemon:/var/empty:/sbin/nologin
 _vmd:*:107:107::0:0:VM Daemon:/var/empty:/sbin/nologin
+_tftp_proxy:*:108:108::0:0:tftp proxy daemon:/nonexistent:/sbin/nologin
+_ftp_proxy:*:109:109::0:0:ftp proxy daemon:/nonexistent:/sbin/nologin
 nobody:*:32767:32767::0:0:Unprivileged user:/nonexistent:/sbin/nologin
