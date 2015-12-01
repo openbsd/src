@@ -1,4 +1,4 @@
-/*	$OpenBSD: pony.c,v 1.9 2015/11/30 12:49:35 gilles Exp $	*/
+/*	$OpenBSD: pony.c,v 1.10 2015/12/01 09:44:54 gilles Exp $	*/
 
 /*
  * Copyright (c) 2014 Gilles Chehade <gilles@poolp.org>
@@ -74,6 +74,7 @@ pony_imsg(struct mproc *p, struct imsg *imsg)
 
 	/* smtp imsg */
 	case IMSG_SMTP_DNS_PTR:
+	case IMSG_SMTP_CHECK_SENDER:
 	case IMSG_SMTP_EXPAND_RCPT:
 	case IMSG_SMTP_LOOKUP_HELO:
 	case IMSG_SMTP_AUTHENTICATE:
