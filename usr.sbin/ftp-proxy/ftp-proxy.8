@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ftp-proxy.8,v 1.20 2015/01/09 11:19:12 stsp Exp $
+.\"	$OpenBSD: ftp-proxy.8,v 1.21 2015/12/01 07:32:37 deraadt Exp $
 .\"
 .\" Copyright (c) 2004, 2005 Camiel Dobbelaar, <cd@sentia.nl>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 9 2015 $
+.Dd $Mdocdate: December 1 2015 $
 .Dt FTP-PROXY 8
 .Os
 .Sh NAME
@@ -82,7 +82,7 @@ pass out from $client to $server port $port nat-to $proxy
 .Ed
 .Pp
 .Nm
-chroots to "/var/empty" and changes to user "proxy" to drop privileges.
+chroots to "/var/empty" and changes to user "_ftp-proxy" to drop privileges.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
