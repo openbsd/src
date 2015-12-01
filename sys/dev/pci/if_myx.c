@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_myx.c,v 1.88 2015/11/25 03:09:59 dlg Exp $	*/
+/*	$OpenBSD: if_myx.c,v 1.89 2015/12/01 12:37:12 dlg Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -34,7 +34,6 @@
 #include <sys/device.h>
 #include <sys/proc.h>
 #include <sys/queue.h>
-#include <sys/atomic.h>
 
 #include <machine/bus.h>
 #include <machine/intr.h>
@@ -1865,23 +1864,6 @@ destroy:
 	}
 	free(mrr->mrr_slots, M_DEVBUF, sizeof(*ms) * sc->sc_rx_ring_count);
 	return (rv);
-}
-
-static inline int
-myx_rx_ring_enter(struct myx_rx_ring *mrr)
-{
-	return (atomic_inc_int_nv(&mrr->mrr_running) == 1);
-}
-
-static inline int
-myx_rx_ring_leave(struct myx_rx_ring *mrr)
-{
-	if (atomic_cas_uint(&mrr->mrr_running, 1, 0) == 1)
-		return (1);
-
-	mrr->mrr_running = 1;
-
-	return (0);
 }
 
 int
