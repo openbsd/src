@@ -1,4 +1,4 @@
-/*	$OpenBSD: i386_installboot.c,v 1.19 2015/12/01 06:39:52 krw Exp $	*/
+/*	$OpenBSD: i386_installboot.c,v 1.20 2015/12/01 19:10:16 krw Exp $	*/
 /*	$NetBSD: installboot.c,v 1.5 1995/11/17 23:23:50 gwr Exp $ */
 
 /*
@@ -61,6 +61,7 @@
 #include <nlist.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <stdint.h>
 #include <string.h>
 #include <unistd.h>
 #include <util.h>
@@ -446,11 +447,49 @@ again:
 	return ((u_int)-1);
 }
 
+/*
+ * Returns 0 if the MBR with the provided partition array is a GPT protective
+ * MBR, and returns 1 otherwise. A GPT protective MBR would have one and only
+ * one MBR partition, an EFI partition that either covers the whole disk or as
+ * much of it as is possible with a 32bit size field.
+ *
+ * NOTE: MS always uses a size of UINT32_MAX for the EFI partition!**
+ */
+int
+gpt_chk_mbr(struct dos_partition *dp, struct disklabel *lp)
+{
+	struct dos_partition *dp2;
+	u_int64_t dsize;
+	int efi, found, i;
+	u_int32_t psize;
+
+	found = efi = 0;
+	for (dp2=dp, i=0; i < NDOSPART; i++, dp2++) {
+		if (dp2->dp_typ == DOSPTYP_UNUSED)
+			continue;
+		found++;
+		if (dp2->dp_typ != DOSPTYP_EFI)
+			continue;
+		dsize = DL_GETDSIZE(lp);
+		psize = letoh32(dp2->dp_size);
+		if (psize == (dsize - 1) ||
+		    psize == UINT32_MAX) {
+			if (letoh32(dp2->dp_start) == 1)
+				efi++;
+		}
+	}
+	if (found == 1 && efi == 1)
+		return (0);
+
+	return (EINVAL);
+}
+
 int
 findgptefisys(int devfd, struct disklabel *dl)
 {
 	struct gpt_partition	 gp[NGPTPARTITIONS];
 	struct gpt_header	 gh;
+	struct dos_partition	 dp[NDOSPART];
 	struct uuid		 efisys_uuid;
 	const char		 efisys_uuid_code[] = GPT_UUID_EFI_SYSTEM;
 	off_t			 off;
@@ -466,6 +505,18 @@ findgptefisys(int devfd, struct disklabel *dl)
 
 	if ((secbuf = malloc(dl->d_secsize)) == NULL)
 		err(1, NULL);
+
+	/* Check that there is a protective MBR. */
+	len = pread(devfd, secbuf, dl->d_secsize, 0);
+	if (len != dl->d_secsize)
+		err(4, "can't read mbr");
+	memcpy(dp, &secbuf[DOSPARTOFF], sizeof(dp));
+	if (gpt_chk_mbr(dp, dl)) {
+		free(secbuf);
+		return (-1);
+	}
+
+	/* Check GPT Header. */
 	off = dl->d_secsize;	/* Read header from sector 1. */
 	len = pread(devfd, secbuf, dl->d_secsize, off);
 	if (len != dl->d_secsize)
