@@ -1,4 +1,4 @@
-.\" $OpenBSD: pledge.2,v 1.17 2015/11/29 01:15:48 benno Exp $
+.\" $OpenBSD: pledge.2,v 1.18 2015/12/01 15:14:24 millert Exp $
 .\"
 .\" Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 29 2015 $
+.Dd $Mdocdate: December 1 2015 $
 .Dt PLEDGE 2
 .Os
 .Sh NAME
@@ -391,9 +391,14 @@ and
 are allowed.
 A few other operations are allowed, but not listed here.
 .It Va "tty"
-This opens up a variety of
+In addition to allowing read-write operations on
+.Pa /dev/tty ,
+this opens up a variety of
 .Xr ioctl 2
-used by tty devices:
+requests used by tty devices.
+The following
+.Xr ioctl 2
+requests are permitted:
 .Dv TIOCSPGRP ,
 .Dv TIOCGETA ,
 .Dv TIOCGPGRP ,
