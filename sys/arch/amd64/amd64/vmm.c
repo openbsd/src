@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.14 2015/12/01 12:01:38 mpi Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.15 2015/12/01 12:03:55 mpi Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -472,9 +472,8 @@ vm_writepage(struct vm_writepage_params *vwp)
 	}
 
 	/* Allocate temporary region to copyin into */
-	pagedata = malloc(PAGE_SIZE, M_DEVBUF, M_WAITOK | M_ZERO);
-
-	if (!pagedata) {
+	pagedata = malloc(PAGE_SIZE, M_DEVBUF, M_NOWAIT|M_ZERO);
+	if (pagedata == NULL) {
 		rw_exit_read(&vmm_softc->vm_lock);
 		return (ENOMEM);
 	}
@@ -505,11 +504,11 @@ vm_writepage(struct vm_writepage_params *vwp)
 
 	/* Allocate kva for guest page */
 	kva = km_alloc(PAGE_SIZE, &kv_any, &kp_none, &kd_nowait);
-	if (!kva) {
+	if (kva == NULL) {
 		DPRINTF("vm_writepage: can't alloc kva\n");
 		free(pagedata, M_DEVBUF, PAGE_SIZE);
 		rw_exit_read(&vmm_softc->vm_lock);
-		return (EFAULT);
+		return (ENOMEM);
 	}
 
 	/* Enter mapping and copy data */
