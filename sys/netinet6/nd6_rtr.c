@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_rtr.c,v 1.134 2015/11/24 13:37:16 mpi Exp $	*/
+/*	$OpenBSD: nd6_rtr.c,v 1.135 2015/12/01 21:29:10 mpi Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.97 2001/02/07 11:09:13 itojun Exp $	*/
 
 /*
@@ -1697,15 +1697,11 @@ pfxlist_onlink_check(void)
 int
 nd6_prefix_onlink(struct nd_prefix *pr)
 {
-	struct rt_addrinfo info;
-	struct ifaddr *ifa;
 	struct ifnet *ifp = pr->ndpr_ifp;
-	struct sockaddr_in6 mask6;
+	struct ifaddr *ifa;
 	struct nd_prefix *opr;
-	struct rtentry *rt;
 	char addr[INET6_ADDRSTRLEN];
-	u_long rtflags = 0;
-	int error;
+	int error, rtflags = 0;
 
 	/* sanity check */
 	if ((pr->ndpr_stateflags & NDPRF_ONLINK) != 0)
@@ -1731,18 +1727,11 @@ nd6_prefix_onlink(struct nd_prefix *pr)
 			return (0);
 	}
 
-	/*
-	 * We prefer link-local addresses as the associated interface address.
-	 */
-	/* search for a link-local addr */
-	ifa = &in6ifa_ifpforlinklocal(ifp,
-	    IN6_IFF_NOTREADY | IN6_IFF_ANYCAST)->ia_ifa;
-	if (ifa == NULL) {
-		TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
-			if (ifa->ifa_addr->sa_family == AF_INET6)
-				break;
-		}
-		/* should we care about ia6_flags? */
+	TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
+		if (ifa->ifa_addr->sa_family != AF_INET6)
+			continue;
+		if (ifatoia6(ifa)->ia6_ndpr == pr)
+			break;
 	}
 	if (ifa == NULL) {
 		/*
@@ -1760,25 +1749,12 @@ nd6_prefix_onlink(struct nd_prefix *pr)
 		return (0);
 	}
 
-	bzero(&mask6, sizeof(mask6));
-	mask6.sin6_len = sizeof(mask6);
-	mask6.sin6_addr = pr->ndpr_mask;
-
 	if (nd6_need_cache(ifp))
 		rtflags = RTF_CLONING | RTF_CONNECTED;
 
-	bzero(&info, sizeof(info));
-	info.rti_flags = rtflags;
-	info.rti_info[RTAX_DST] = sin6tosa(&pr->ndpr_prefix);
-	info.rti_info[RTAX_GATEWAY] = ifa->ifa_addr;
-	info.rti_info[RTAX_NETMASK] = sin6tosa(&mask6);
-
-	error = rtrequest(RTM_ADD, &info, RTP_CONNECTED, &rt, ifp->if_rdomain);
-	if (error == 0) {
+	error = rt_ifa_add(ifa, rtflags, sin6tosa(&pr->ndpr_prefix));
+	if (error == 0)
 		pr->ndpr_stateflags |= NDPRF_ONLINK;
-		rt_sendmsg(rt, RTM_ADD, ifp->if_rdomain);
-		rtfree(rt);
-	}
 
 	return (error);
 }
@@ -1786,13 +1762,11 @@ nd6_prefix_onlink(struct nd_prefix *pr)
 int
 nd6_prefix_offlink(struct nd_prefix *pr)
 {
-	struct rt_addrinfo info;
 	struct ifnet *ifp = pr->ndpr_ifp;
+	struct ifaddr *ifa;
 	struct nd_prefix *opr;
-	struct sockaddr_in6 sa6, mask6;
-	struct rtentry *rt;
 	char addr[INET6_ADDRSTRLEN];
-	int error;
+	int error, rtflags = 0;
 
 	/* sanity check */
 	if ((pr->ndpr_stateflags & NDPRF_ONLINK) == 0) {
@@ -1804,26 +1778,21 @@ nd6_prefix_offlink(struct nd_prefix *pr)
 		return (EEXIST);
 	}
 
-	bzero(&sa6, sizeof(sa6));
-	sa6.sin6_family = AF_INET6;
-	sa6.sin6_len = sizeof(sa6);
-	bcopy(&pr->ndpr_prefix.sin6_addr, &sa6.sin6_addr,
-	    sizeof(struct in6_addr));
-	bzero(&mask6, sizeof(mask6));
-	mask6.sin6_family = AF_INET6;
-	mask6.sin6_len = sizeof(sa6);
-	bcopy(&pr->ndpr_mask, &mask6.sin6_addr, sizeof(struct in6_addr));
-	bzero(&info, sizeof(info));
-	info.rti_info[RTAX_DST] = sin6tosa(&sa6);
-	info.rti_info[RTAX_NETMASK] = sin6tosa(&mask6);
+	TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
+		if (ifa->ifa_addr->sa_family != AF_INET6)
+			continue;
+		if (ifatoia6(ifa)->ia6_ndpr == pr)
+			break;
+	}
+	if (ifa == NULL)
+		return (EINVAL);
 
-	error = rtrequest(RTM_DELETE, &info, RTP_CONNECTED, &rt,
-	    ifp->if_rdomain);
+	if (nd6_need_cache(ifp))
+		rtflags = RTF_CLONING | RTF_CONNECTED;
+
+	error = rt_ifa_del(ifa, rtflags, sin6tosa(&pr->ndpr_prefix));
 	if (error == 0) {
 		pr->ndpr_stateflags &= ~NDPRF_ONLINK;
-
-		rt_sendmsg(rt, RTM_DELETE, ifp->if_rdomain);
-		rtfree(rt);
 
 		/*
 		 * There might be the same prefix on another interface,
@@ -1864,13 +1833,6 @@ nd6_prefix_offlink(struct nd_prefix *pr)
 				}
 			}
 		}
-	} else {
-		/* XXX: can we still set the NDPRF_ONLINK flag? */
-		nd6log((LOG_ERR,
-		    "nd6_prefix_offlink: failed to delete route: "
-		    "%s/%d on %s (errno = %d)\n",
-		    inet_ntop(AF_INET6,	&sa6.sin6_addr, addr, sizeof(addr)),
-		    pr->ndpr_plen, ifp->if_xname, error));
 	}
 
 	return (error);
