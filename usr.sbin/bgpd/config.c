@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.61 2015/07/16 18:26:04 claudio Exp $ */
+/*	$OpenBSD: config.c,v 1.62 2015/12/01 11:58:31 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -37,6 +37,8 @@
 u_int32_t	get_bgpid(void);
 int		host_v4(const char *, struct bgpd_addr *, u_int8_t *);
 int		host_v6(const char *, struct bgpd_addr *);
+void		free_networks(struct network_head *);
+void		free_rdomains(struct rdomain_head *);
 
 struct bgpd_config *
 new_config(void)
@@ -73,32 +75,39 @@ new_config(void)
 }
 
 void
-free_config(struct bgpd_config *conf)
+free_networks(struct network_head *networks)
 {
-	struct rdomain		*rd;
 	struct network		*n;
-	struct listen_addr	*la;
-	struct mrt		*m;
 
-	while ((rd = SIMPLEQ_FIRST(&conf->rdomains)) != NULL) {
-		SIMPLEQ_REMOVE_HEAD(&conf->rdomains, entry);
-		filterset_free(&rd->export);
-		filterset_free(&rd->import);
-
-		while ((n = TAILQ_FIRST(&rd->net_l)) != NULL) {
-			TAILQ_REMOVE(&rd->net_l, n, entry);
-			filterset_free(&n->net.attrset);
-			free(n);
-		}
-		free(rd);
-	}
-
-	while ((n = TAILQ_FIRST(&conf->networks)) != NULL) {
-		TAILQ_REMOVE(&conf->networks, n, entry);
+	while ((n = TAILQ_FIRST(networks)) != NULL) {
+		TAILQ_REMOVE(networks, n, entry);
 		filterset_free(&n->net.attrset);
 		free(n);
 	}
+}
 
+void
+free_rdomains(struct rdomain_head *rdomains)
+{
+	struct rdomain		*rd;
+
+	while ((rd = SIMPLEQ_FIRST(rdomains)) != NULL) {
+		SIMPLEQ_REMOVE_HEAD(rdomains, entry);
+		filterset_free(&rd->export);
+		filterset_free(&rd->import);
+		free_networks(&rd->net_l);
+		free(rd);
+	}
+}
+
+void
+free_config(struct bgpd_config *conf)
+{
+	struct listen_addr	*la;
+	struct mrt		*m;
+
+	free_rdomains(&conf->rdomains);
+	free_networks(&conf->networks);
 	filterlist_free(conf->filters);
 
 	while ((la = TAILQ_FIRST(conf->listen_addrs)) != NULL) {
@@ -125,20 +134,18 @@ merge_config(struct bgpd_config *xconf, struct bgpd_config *conf,
 {
 	struct listen_addr	*nla, *ola, *next;
 	struct network		*n;
+	struct rdomain		*rd;
 
 	/*
 	 * merge the freshly parsed conf into the running xconf
 	 */
-
 	if (!conf->as) {
 		log_warnx("configuration error: AS not given");
 		return (1);
 	}
 
-
 	if ((conf->flags & BGPD_FLAG_REFLECTOR) && conf->clusterid == 0)
 		conf->clusterid = conf->bgpid;
-
 
 
 	/* adjust FIB priority if changed */
@@ -176,14 +183,17 @@ merge_config(struct bgpd_config *xconf, struct bgpd_config *conf,
 	conf->filters = NULL;
 
 	/* switch the network statements, but first remove the old ones */
-	while ((n = TAILQ_FIRST(&xconf->networks)) != NULL) {
-		TAILQ_REMOVE(&xconf->networks, n, entry);
-		filterset_free(&n->net.attrset);
-		free(n);
-	}
+	free_networks(&xconf->networks);
 	while ((n = TAILQ_FIRST(&conf->networks)) != NULL) {
 		TAILQ_REMOVE(&conf->networks, n, entry);
 		TAILQ_INSERT_TAIL(&xconf->networks, n, entry);
+	}
+
+	/* switch the rdomain configs, first remove the old ones */
+	free_rdomains(&xconf->rdomains);
+	while ((rd = SIMPLEQ_FIRST(&conf->rdomains)) != NULL) {
+		SIMPLEQ_REMOVE_HEAD(&conf->rdomains, entry);
+		SIMPLEQ_INSERT_TAIL(&xconf->rdomains, rd, entry);
 	}
 
 	/*
