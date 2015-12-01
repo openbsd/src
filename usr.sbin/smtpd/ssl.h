@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl.h,v 1.12 2015/10/21 16:45:13 jsing Exp $	*/
+/*	$OpenBSD: ssl.h,v 1.13 2015/12/01 09:33:17 gilles Exp $	*/
 /*
  * Copyright (c) 2013 Gilles Chehade <gilles@poolp.org>
  *
@@ -39,6 +39,15 @@ struct pki {
 	char			*pki_dhparams;
 	off_t			 pki_dhparams_len;
 };
+
+struct ca {
+	char                     ca_name[HOST_NAME_MAX+1];
+
+	char                    *ca_cert_file;
+	char                    *ca_cert;
+	off_t                    ca_cert_len;
+};
+
 
 /* ssl.c */
 void		ssl_init(void);

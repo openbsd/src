@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.489 2015/11/30 14:27:25 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.490 2015/12/01 09:33:17 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -604,7 +604,8 @@ struct smtpd {
 	TAILQ_HEAD(listenerlist, listener)	*sc_listeners;
 
 	TAILQ_HEAD(rulelist, rule)		*sc_rules;
-	
+
+	struct dict			       *sc_ca_dict;
 	struct dict			       *sc_pki_dict;
 	struct dict			       *sc_ssl_dict;
 
