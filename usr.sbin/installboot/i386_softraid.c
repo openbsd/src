@@ -1,4 +1,4 @@
-/*	$OpenBSD: i386_softraid.c,v 1.8 2015/10/28 20:32:41 stsp Exp $	*/
+/*	$OpenBSD: i386_softraid.c,v 1.9 2015/12/01 06:39:52 krw Exp $	*/
 /*
  * Copyright (c) 2012 Joel Sing <jsing@openbsd.org>
  *
@@ -16,7 +16,6 @@
  */
 
 #include <sys/param.h>	/* DEV_BSIZE */
-#include <sys/types.h>
 #include <sys/disklabel.h>
 #include <sys/dkio.h>
 #include <sys/ioctl.h>
