@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcidump.c,v 1.38 2015/11/21 17:52:10 kettenis Exp $	*/
+/*	$OpenBSD: pcidump.c,v 1.39 2015/12/01 19:10:09 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 David Gwynne <loki@animata.net>
@@ -293,7 +293,12 @@ dump_pci_powerstate(int bus, int dev, int func, uint8_t ptr)
 	if (pci_read(bus, dev, func, ptr + PCI_PMCSR, &pmcsr) != 0)
 		return;
 
-	printf("\t	State: D%d\n", pmcsr & PCI_PMCSR_STATE_MASK);
+	printf("\t	State: D%d", pmcsr & PCI_PMCSR_STATE_MASK);
+	if (pmcsr & PCI_PMCSR_PME_EN)
+		printf(" PME# enabled");
+	if (pmcsr & PCI_PMCSR_PME_STATUS)
+		printf(" PME# asserted");
+	printf("\n");
 }
 
 void
