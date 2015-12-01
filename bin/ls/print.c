@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.34 2015/03/15 00:41:27 millert Exp $	*/
+/*	$OpenBSD: print.c,v 1.35 2015/12/01 18:36:13 schwarze Exp $	*/
 /*	$NetBSD: print.c,v 1.15 1996/12/11 03:25:39 thorpej Exp $	*/
 
 /*
@@ -122,7 +122,7 @@ printlong(DISPLAY *dp)
 			printtime(sp->st_ctime);
 		else
 			printtime(sp->st_mtime);
-		(void)putname(p->fts_name);
+		(void)mbsprint(p->fts_name, 1);
 		if (f_type || (f_typedir && S_ISDIR(sp->st_mode)))
 			(void)printtype(sp->st_mode);
 		if (S_ISLNK(sp->st_mode))
@@ -231,7 +231,7 @@ printaname(FTSENT *p, u_long inodefield, u_long sizefield)
 	if (f_size)
 		chcnt += printf("%*qd ",
 		    (int)sizefield, howmany(sp->st_blocks, blocksize));
-	chcnt += putname(p->fts_name);
+	chcnt += mbsprint(p->fts_name, 1);
 	if (f_type || (f_typedir && S_ISDIR(sp->st_mode)))
 		chcnt += printtype(sp->st_mode);
 	return (chcnt);
@@ -310,7 +310,8 @@ printstream(DISPLAY *dp)
 			continue;
 		if (col > 0) {
 			(void)putchar(','), col++;
-			if (col + 1 + extwidth + p->fts_namelen >= termwidth)
+			if (col + 1 + extwidth + mbsprint(p->fts_name, 0) >=
+			    termwidth)
 				(void)putchar('\n'), col = 0;
 			else
 				(void)putchar(' '), col++;
@@ -361,7 +362,7 @@ printlink(FTSENT *p)
 	}
 	path[lnklen] = '\0';
 	(void)printf(" -> ");
-	(void)putname(path);
+	(void)mbsprint(path, 1);
 }
 
 static void

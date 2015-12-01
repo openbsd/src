@@ -1,4 +1,4 @@
-/*	$OpenBSD: ls.c,v 1.43 2015/10/09 01:37:06 deraadt Exp $	*/
+/*	$OpenBSD: ls.c,v 1.44 2015/12/01 18:36:13 schwarze Exp $	*/
 /*	$NetBSD: ls.c,v 1.18 1996/07/09 09:16:29 mycroft Exp $	*/
 
 /*
@@ -48,6 +48,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <limits.h>
+#include <locale.h>
 #include <util.h>
 
 #include "ls.h"
@@ -102,6 +103,10 @@ ls_main(int argc, char *argv[])
 	int ch, fts_options, notused;
 	int kflag = 0, width = 0;
 	char *p;
+
+#ifndef SMALL
+	setlocale(LC_CTYPE, "");
+#endif
 
 	/* Terminal defaults to -Cq, non-terminal defaults to -1. */
 	if (isatty(STDOUT_FILENO)) {
@@ -428,6 +433,7 @@ display(FTSENT *p, FTSENT *list)
 	ino_t maxinode;
 	int bcfile, flen, glen, ulen, maxflags, maxgroup, maxuser;
 	int entries, needstats;
+	int width;
 	char *user, *group, buf[21];	/* 64 bits == 20 digits */
 	char nuser[12], ngroup[12];
 	char *flags = NULL;
@@ -474,8 +480,8 @@ display(FTSENT *p, FTSENT *list)
 				continue;
 			}
 		}
-		if (cur->fts_namelen > maxlen)
-			maxlen = cur->fts_namelen;
+		if ((width = mbsprint(cur->fts_name, 0)) > maxlen)
+			maxlen = width;
 		if (needstats) {
 			sp = cur->fts_statp;
 			if (sp->st_blocks > maxblock)

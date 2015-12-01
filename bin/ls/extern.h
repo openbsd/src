@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.9 2003/06/02 23:32:08 millert Exp $	*/
+/*	$OpenBSD: extern.h,v 1.10 2015/12/01 18:36:13 schwarze Exp $	*/
 /*	$NetBSD: extern.h,v 1.5 1995/03/21 09:06:24 cgd Exp $	*/
 
 /*-
@@ -45,7 +45,7 @@ int	 revstatcmp(const FTSENT *, const FTSENT *);
 int	 sizecmp(const FTSENT *, const FTSENT *);
 int	 revsizecmp(const FTSENT *, const FTSENT *);
 
-int	 putname(char *);
+int	 mbsprint(const char *, int);
 void	 printcol(DISPLAY *);
 void	 printacol(DISPLAY *);
 void	 printlong(DISPLAY *);
