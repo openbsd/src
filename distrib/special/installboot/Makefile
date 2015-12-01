@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.3 2014/03/18 22:36:28 miod Exp $
+#	$OpenBSD: Makefile,v 1.4 2015/12/01 07:50:07 deraadt Exp $
 
 .PATH: ${.CURDIR}/../../../usr.sbin/installboot
 
@@ -25,10 +25,6 @@ SRCS += stubs.c
 .endif
 
 .if ${MACHINE} == "armv7"
-SRCS += stubs.c
-.endif
-
-.if ${MACHINE} == "aviion"
 SRCS += stubs.c
 .endif
 

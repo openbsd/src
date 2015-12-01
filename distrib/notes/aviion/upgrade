@@ -1,2 +1,0 @@
-dnl	$OpenBSD: upgrade,v 1.4 2013/10/15 13:28:07 miod Exp $
-OpenBSDUpgrade({:-bsd.rd-:})

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.88 2014/03/18 22:36:31 miod Exp $
+#	$OpenBSD: Makefile,v 1.89 2015/12/01 07:50:05 deraadt Exp $
 #	$NetBSD: Makefile,v 1.13 1996/03/28 21:36:40 mark Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/5/93
 
@@ -13,7 +13,7 @@ MLINKS+=daily.8 weekly.8 daily.8 monthly.8
 MLINKS+=rc.8 rc.firsttime.8 rc.8 rc.local.8 rc.8 rc.securelevel.8
 MLINKS+=rc.conf.8 rc.conf.local.8
 
-SUBDIR=	man8.alpha man8.amd64 man8.armish man8.armv7 man8.aviion \
+SUBDIR=	man8.alpha man8.amd64 man8.armish man8.armv7 \
 	man8.hppa man8.hppa64 man8.i386 man8.landisk \
 	man8.loongson man8.luna88k man8.macppc \
 	man8.octeon man8.sgi man8.socppc man8.sparc man8.sparc64 man8.vax \

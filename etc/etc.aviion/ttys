@@ -1,9 +1,0 @@
-#
-#	$OpenBSD: ttys,v 1.2 2008/01/09 17:39:42 miod Exp $
-#
-# name	getty				type	status		comments
-#
-console	"/usr/libexec/getty std.9600"	vt220	on   secure
-# on-board serial ports (ttyb is the mouse port)
-ttya	"/usr/libexec/getty std.9600"	unknown	off  secure	# console
-ttyc	"/usr/libexec/getty std.9600"	unknown	off

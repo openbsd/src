@@ -1,8 +1,8 @@
-.\"	$OpenBSD: ptrace.2,v 1.34 2015/09/24 23:09:16 tedu Exp $
+.\"	$OpenBSD: ptrace.2,v 1.35 2015/12/01 07:50:03 deraadt Exp $
 .\"	$NetBSD: ptrace.2,v 1.3 1996/02/23 01:39:41 jtc Exp $
 .\"
 .\" This file is in the public domain.
-.Dd $Mdocdate: September 24 2015 $
+.Dd $Mdocdate: December 1 2015 $
 .Dt PTRACE 2
 .Os
 .Sh NAME
@@ -432,7 +432,7 @@ one instruction
 .\" m88k - vax (no general fp registers)
 .\" mips64 (fp registers in the main reg structure)
 .It Xo Dv PT_GETFPREGS
-.No (not available on aviion, luna88k, sgi and vax)
+.No (not available on luna88k, sgi and vax)
 .Xc
 This request reads the traced process' floating-point registers into
 the
@@ -442,7 +442,7 @@ the
 pointed to by
 .Fa addr .
 .It Xo Dv PT_SETFPREGS
-.No (not available on aviion, luna88k, sgi and vax)
+.No (not available on luna88k, sgi and vax)
 .Xc
 This request is the converse of
 .Dv PT_GETFPREGS ;
@@ -564,7 +564,7 @@ The
 system call first appeared in
 .At v6 .
 .Sh BUGS
-On several RISC architectures (such as aviion, luna88k, sparc and sparc64),
+On several RISC architectures (such as luna88k, sparc and sparc64),
 the PC is set to the provided PC value for
 .Dv PT_CONTINUE
 and similar calls, and the remainder of the execution pipeline registers

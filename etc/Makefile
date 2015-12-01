@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.415 2015/11/30 23:35:29 jturner Exp $
+#	$OpenBSD: Makefile,v 1.416 2015/12/01 07:50:03 deraadt Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	Canada/Mountain
@@ -40,10 +40,7 @@ MUTABLE=changelist csh.cshrc csh.login csh.logout daily \
 EXAMPLES=chio.conf dhclient.conf dhcpd.conf exports \
 	httpd.conf ifstated.conf inetd.conf \
 	man.conf mixerctl.conf mrouted.conf \
-	ntpd.conf printcap rbootd.conf remote sensorsd.conf
-.if ${MACHINE} != "aviion" 
-EXAMPLES+= wsconsctl.conf
-.endif
+	ntpd.conf printcap rbootd.conf remote sensorsd.conf wsconsctl.conf
 
 # -rw-------
 EXAMPLES_600=bgpd.conf dvmrpd.conf eigrpd.conf hostapd.conf iked.conf \
@@ -273,7 +270,7 @@ distrib:
 	release allarchs kernels release-sets m4 install-mtree \
 	bootblocks ${ALL_KERNELS}
 
-SUBDIR+= etc.alpha etc.amd64 etc.armish etc.armv7 etc.aviion
+SUBDIR+= etc.alpha etc.amd64 etc.armish etc.armv7
 SUBDIR+= etc.hppa etc.hppa64 etc.i386 etc.landisk etc.loongson etc.luna88k
 SUBDIR+= etc.macppc etc.octeon
 SUBDIR+= etc.sgi etc.socppc etc.sparc etc.sparc64 etc.vax etc.zaurus
