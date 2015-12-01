@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.12 2015/12/01 10:14:05 mpi Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.13 2015/12/01 10:18:35 mpi Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -1828,29 +1828,25 @@ vcpu_init_svm(struct vcpu *vcpu)
 int
 vcpu_init(struct vcpu *vcpu)
 {
-	int ret;
+	int ret = 0;
 
-	ret = 0;
-	vcpu->vc_hsa_stack_va = (vaddr_t)malloc(PAGE_SIZE,
-		M_DEVBUF, M_WAITOK | M_ZERO);
+	vcpu->vc_hsa_stack_va = (vaddr_t)malloc(PAGE_SIZE, M_DEVBUF,
+	    M_NOWAIT|M_ZERO);
 	if (!vcpu->vc_hsa_stack_va)
 		return (ENOMEM);
 
 	vcpu->vc_virt_mode = vmm_softc->mode;
 	if (vmm_softc->mode == VMM_MODE_VMX ||
-	    vmm_softc->mode == VMM_MODE_EPT) {
+	    vmm_softc->mode == VMM_MODE_EPT)
 		ret = vcpu_init_vmx(vcpu);
-		if (ret)
-			free((void *)vcpu->vc_hsa_stack_va, M_DEVBUF,
-			    PAGE_SIZE);
-	} else if (vmm_softc->mode == VMM_MODE_SVM ||
-		 vmm_softc->mode == VMM_MODE_RVI) {
+	else if (vmm_softc->mode == VMM_MODE_SVM ||
+		 vmm_softc->mode == VMM_MODE_RVI)
 		ret = vcpu_init_svm(vcpu);
-		if (ret)
-			free((void *)vcpu->vc_hsa_stack_va, M_DEVBUF,
-			    PAGE_SIZE);
-	} else
+	else
 		panic("unknown vmm mode\n");
+
+	if (ret)
+		free((void *)vcpu->vc_hsa_stack_va, M_DEVBUF, PAGE_SIZE);
 
 	return (ret);
 }
