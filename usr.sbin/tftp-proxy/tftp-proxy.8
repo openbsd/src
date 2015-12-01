@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tftp-proxy.8,v 1.5 2013/12/23 13:07:47 florian Exp $
+.\"	$OpenBSD: tftp-proxy.8,v 1.6 2015/12/01 07:32:20 deraadt Exp $
 .\"
 .\" Copyright (c) 2005 joshua stein <jcs@openbsd.org>
 .\"
@@ -25,7 +25,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 23 2013 $
+.Dd $Mdocdate: December 1 2015 $
 .Dt TFTP-PROXY 8
 .Os
 .Sh NAME
@@ -136,10 +136,3 @@ pass out quick on $ext_if inet proto udp from $lan to port tftp \e
 .Xr ftp-proxy 8 ,
 .Xr syslogd 8 ,
 .Xr tftpd 8
-.Sh CAVEATS
-.Nm
-chroots to
-.Pa /var/empty
-and changes to user
-.Dq proxy
-to drop privileges.

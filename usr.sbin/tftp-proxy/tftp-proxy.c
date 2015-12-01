@@ -1,4 +1,4 @@
-/* $OpenBSD: tftp-proxy.c,v 1.15 2015/11/14 04:02:32 deraadt Exp $
+/* $OpenBSD: tftp-proxy.c,v 1.16 2015/12/01 07:32:20 deraadt Exp $
  *
  * Copyright (c) 2005 DLS Internet Services
  * Copyright (c) 2004, 2005 Camiel Dobbelaar, <cd@sentia.nl>
@@ -52,7 +52,7 @@
 #include "filter.h"
 
 #define CHROOT_DIR	"/var/empty"
-#define NOPRIV_USER	"proxy"
+#define NOPRIV_USER	"_tftp_proxy"
 
 #define DEFTRANSWAIT	2
 #define NTOP_BUFS	4
