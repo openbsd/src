@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.13 2014/03/18 22:36:37 miod Exp $
+#	$OpenBSD: Makefile,v 1.14 2015/12/01 15:33:17 deraadt Exp $
 
 PROG=		installboot
 SRCS=		installboot.c util.c
@@ -26,10 +26,6 @@ SRCS += stubs.c
 .endif
 
 .if ${MACHINE} == "armv7"
-SRCS += stubs.c
-.endif
-
-.if ${MACHINE} == "aviion"
 SRCS += stubs.c
 .endif
 
