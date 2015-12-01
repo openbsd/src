@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.9 2015/11/26 08:32:09 jsg Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.10 2015/12/01 10:08:10 mpi Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -899,7 +899,7 @@ int
 vm_impl_init_svm(struct vm *vm)
 {
 	/* XXX removed due to rot */
-	return (0);
+	return (-1);
 }
 
 /*
