@@ -1,4 +1,4 @@
-/*	$OpenBSD: getgrouplist.c,v 1.26 2015/09/12 14:56:50 guenther Exp $ */
+/*	$OpenBSD: getgrouplist.c,v 1.27 2015/12/01 15:08:25 deraadt Exp $ */
 /*
  * Copyright (c) 2008 Ingo Schwarze <schwarze@usta.de>
  * Copyright (c) 1991, 1993
@@ -157,6 +157,13 @@ getgrouplist(const char *uname, gid_t agroup, gid_t *groups, int *grpcnt)
 		return (-1);
 	}
 	groups[ngroups++] = agroup;
+
+#ifdef YP
+	/*
+	 * Hint to the kernel that a passwd database operation is happening.
+	 */
+	(void)access("/var/run/ypbind.lock", R_OK);
+#endif
 
 	/*
 	 * Scan the group file to find additional groups.

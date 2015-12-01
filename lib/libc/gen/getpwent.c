@@ -1,4 +1,4 @@
-/*	$OpenBSD: getpwent.c,v 1.58 2015/11/24 22:03:33 millert Exp $ */
+/*	$OpenBSD: getpwent.c,v 1.59 2015/12/01 15:08:25 deraadt Exp $ */
 /*
  * Copyright (c) 2008 Theo de Raadt
  * Copyright (c) 1988, 1993
@@ -924,6 +924,11 @@ __initdb(int shadow)
 	int saved_errno = errno;
 
 #ifdef YP
+	/*
+	 * Hint to the kernel that a passwd database operation is happening.
+	 */
+	(void)access("/var/run/ypbind.lock", R_OK);
+
 	__ypmode = YPMODE_NONE;
 	__getpwent_has_yppw = -1;
 #endif
@@ -937,7 +942,6 @@ __initdb(int shadow)
 	}
 	if (!warned) {
 		saved_errno = errno;
-		syslog(LOG_ERR, "%s: %m", _PATH_MP_DB);
 		errno = saved_errno;
 		warned = 1;
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: getgrent.c,v 1.45 2015/11/24 22:03:33 millert Exp $ */
+/*	$OpenBSD: getgrent.c,v 1.46 2015/12/01 15:08:25 deraadt Exp $ */
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -34,6 +34,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <limits.h>
+#include <unistd.h>
 #include <grp.h>
 #include <errno.h>
 #ifdef YP
@@ -207,6 +208,14 @@ start_gr(void)
 #endif
 		return(1);
 	}
+
+#ifdef YP
+	/*
+	 * Hint to the kernel that a passwd database operation is happening.
+	 */
+	(void)access("/var/run/ypbind.lock", R_OK);
+#endif
+
 	return((_gr_fp = fopen(_PATH_GROUP, "re")) ? 1 : 0);
 }
 
