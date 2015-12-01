@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.277 2015/11/27 11:52:44 mpi Exp $	*/
+/*	$OpenBSD: route.c,v 1.278 2015/12/01 21:26:43 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -529,8 +529,7 @@ ifafree(struct ifaddr *ifa)
  */
 void
 rtredirect(struct sockaddr *dst, struct sockaddr *gateway,
-    struct sockaddr *netmask, int flags, struct sockaddr *src,
-    struct rtentry **rtp, u_int rdomain)
+    struct sockaddr *src, struct rtentry **rtp, unsigned int rdomain)
 {
 	struct rtentry		*rt;
 	int			 error = 0;
@@ -538,6 +537,7 @@ rtredirect(struct sockaddr *dst, struct sockaddr *gateway,
 	struct rt_addrinfo	 info;
 	struct ifaddr		*ifa;
 	unsigned int		 ifidx = 0;
+	int 			 flags = RTF_GATEWAY|RTF_HOST;
 
 	splsoftassert(IPL_SOFTNET);
 
@@ -557,8 +557,7 @@ rtredirect(struct sockaddr *dst, struct sockaddr *gateway,
 #define	equal(a1, a2) \
 	((a1)->sa_len == (a2)->sa_len && \
 	 bcmp((caddr_t)(a1), (caddr_t)(a2), (a1)->sa_len) == 0)
-	if (!(flags & RTF_DONE) && rt &&
-	     (!equal(src, rt->rt_gateway) || rt->rt_ifa != ifa))
+	if (rt != NULL && (!equal(src, rt->rt_gateway) || rt->rt_ifa != ifa))
 		error = EINVAL;
 	else if (ifa_ifwithaddr(gateway, rdomain) != NULL)
 		error = EHOSTUNREACH;
@@ -574,21 +573,20 @@ rtredirect(struct sockaddr *dst, struct sockaddr *gateway,
 		goto create;
 	/*
 	 * Don't listen to the redirect if it's
-	 * for a route to an interface. 
+	 * for a route to an interface.
 	 */
-	if (rt->rt_flags & RTF_GATEWAY) {
-		if (((rt->rt_flags & RTF_HOST) == 0) && (flags & RTF_HOST)) {
+	if (ISSET(rt->rt_flags, RTF_GATEWAY)) {
+		if (!ISSET(rt->rt_flags, RTF_HOST)) {
 			/*
 			 * Changing from route to net => route to host.
 			 * Create new route, rather than smashing route to net.
 			 */
 create:
 			rtfree(rt);
-			flags |= RTF_GATEWAY | RTF_DYNAMIC;
+			flags |= RTF_DYNAMIC;
 			bzero(&info, sizeof(info));
 			info.rti_info[RTAX_DST] = dst;
 			info.rti_info[RTAX_GATEWAY] = gateway;
-			info.rti_info[RTAX_NETMASK] = netmask;
 			info.rti_ifa = ifa;
 			info.rti_flags = flags;
 			rt = NULL;
@@ -624,7 +622,6 @@ out:
 	bzero((caddr_t)&info, sizeof(info));
 	info.rti_info[RTAX_DST] = dst;
 	info.rti_info[RTAX_GATEWAY] = gateway;
-	info.rti_info[RTAX_NETMASK] = netmask;
 	info.rti_info[RTAX_AUTHOR] = src;
 	rt_missmsg(RTM_REDIRECT, &info, flags, ifidx, error, rdomain);
 }

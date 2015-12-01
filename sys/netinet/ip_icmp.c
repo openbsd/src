@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.146 2015/11/21 11:26:59 mpi Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.147 2015/12/01 21:26:43 mpi Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -652,9 +652,8 @@ reflect:
 		    &ip->ip_dst.s_addr))
 			goto freeit;
 #endif
-		rtredirect(sintosa(&sdst), sintosa(&sgw), NULL,
-		    RTF_GATEWAY | RTF_HOST, sintosa(&ssrc),
-		    &newrt, m->m_pkthdr.ph_rtableid);
+		rtredirect(sintosa(&sdst), sintosa(&sgw),
+		    sintosa(&ssrc), &newrt, m->m_pkthdr.ph_rtableid);
 		if (newrt != NULL && icmp_redirtimeout != 0) {
 			(void)rt_timer_add(newrt, icmp_redirect_timeout,
 			    icmp_redirect_timeout_q, m->m_pkthdr.ph_rtableid);

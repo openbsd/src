@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.178 2015/11/21 11:23:07 mpi Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.179 2015/12/01 21:26:43 mpi Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -1517,8 +1517,7 @@ icmp6_redirect_input(struct mbuf *m, int off)
 		bcopy(&redtgt6, &sgw.sin6_addr, sizeof(struct in6_addr));
 		bcopy(&reddst6, &sdst.sin6_addr, sizeof(struct in6_addr));
 		bcopy(&src6, &ssrc.sin6_addr, sizeof(struct in6_addr));
-		rtredirect(sin6tosa(&sdst), sin6tosa(&sgw), NULL,
-		    RTF_GATEWAY | RTF_HOST, sin6tosa(&ssrc),
+		rtredirect(sin6tosa(&sdst), sin6tosa(&sgw), sin6tosa(&ssrc),
 		    &newrt, m->m_pkthdr.ph_rtableid);
 
 		if (newrt) {
