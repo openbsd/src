@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.256 2015/11/30 14:13:03 gilles Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.257 2015/12/01 20:04:38 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -689,7 +689,7 @@ main(int argc, char *argv[])
 	if (pledge("stdio rpath wpath cpath fattr flock tmppath "
 	    "getpw sendfd proc exec id inet unix", NULL) == -1)
 		err(1, "pledge");
-	
+
 	if (event_dispatch() < 0)
 		fatal("smtpd: event_dispatch");
 
