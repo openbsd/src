@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.10 2015/12/01 10:08:10 mpi Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.11 2015/12/01 10:12:15 mpi Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -213,11 +213,10 @@ vmm_probe(struct device *parent, void *match, void *aux)
 void
 vmm_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct vmm_softc *sc;
+	struct vmm_softc *sc = (struct vmm_softc *)self;
 	struct cpu_info *ci;
 	CPU_INFO_ITERATOR cii;
 
-	sc = (struct vmm_softc *)self;
 	sc->nr_vmx_cpus = 0;
 	sc->nr_svm_cpus = 0;
 	sc->nr_rvi_cpus = 0;
@@ -240,14 +239,14 @@ vmm_attach(struct device *parent, struct device *self, void *aux)
 	SLIST_INIT(&sc->vm_list);
 	rw_init(&sc->vm_lock, "vmlistlock");
 
-	printf(": initialized\n");
-
 	if (sc->nr_vmx_cpus)
-		printf("%s: %u VMX capable CPU(s), %u are EPT capable\n",
-			DEVNAME(sc), sc->nr_vmx_cpus, sc->nr_ept_cpus);
-	if (sc->nr_svm_cpus)
-		printf("%s: %u SVM capable CPU(s), %u are RVI capable\n",
-			DEVNAME(sc), sc->nr_svm_cpus, sc->nr_rvi_cpus);
+		printf(": %u VMX capable CPU%s, %u %s EPT capable\n",
+		    sc->nr_vmx_cpus, (sc->nr_vmx_cpus > 1) ? "s" : "",
+		    sc->nr_ept_cpus, (sc->nr_ept_cpus > 1) ? "are" : "is");
+	else if (sc->nr_svm_cpus)
+		printf(": %u SVM capable CPU%s, %u %s RVI capable\n",
+		    sc->nr_svm_cpus, (sc->nr_svm_cpus > 1) ? "s" : "",
+		    sc->nr_rvi_cpus, (sc->nr_rvi_cpus > 1) ? "are" : "is");
 
 	pool_init(&vm_pool, sizeof(struct vm), 0, 0, PR_WAITOK, "vmpool",
 	    NULL);
