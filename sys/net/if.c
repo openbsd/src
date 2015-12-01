@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.414 2015/11/27 11:52:44 mpi Exp $	*/
+/*	$OpenBSD: if.c,v 1.415 2015/12/01 16:57:34 vgross Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -1166,6 +1166,7 @@ ifa_ifwithaddr(struct sockaddr *addr, u_int rtableid)
 	struct ifaddr *ifa;
 	u_int rdomain;
 
+	KERNEL_ASSERT_LOCKED();
 	rdomain = rtable_l2(rtableid);
 	TAILQ_FOREACH(ifp, &ifnet, if_list) {
 		if (ifp->if_rdomain != rdomain)
@@ -1199,6 +1200,7 @@ ifa_ifwithdstaddr(struct sockaddr *addr, u_int rdomain)
 	struct ifnet *ifp;
 	struct ifaddr *ifa;
 
+	KERNEL_ASSERT_LOCKED();
 	rdomain = rtable_l2(rdomain);
 	TAILQ_FOREACH(ifp, &ifnet, if_list) {
 		if (ifp->if_rdomain != rdomain)
@@ -1227,6 +1229,7 @@ ifa_ifwithnet(struct sockaddr *sa, u_int rtableid)
 	char *cplim, *addr_data = sa->sa_data;
 	u_int rdomain;
 
+	KERNEL_ASSERT_LOCKED();
 	rdomain = rtable_l2(rtableid);
 	TAILQ_FOREACH(ifp, &ifnet, if_list) {
 		if (ifp->if_rdomain != rdomain)
