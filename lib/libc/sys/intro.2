@@ -1,4 +1,4 @@
-.\"	$OpenBSD: intro.2,v 1.61 2015/11/07 22:57:52 jmc Exp $
+.\"	$OpenBSD: intro.2,v 1.62 2015/12/01 01:34:16 mmcc Exp $
 .\"	$NetBSD: intro.2,v 1.6 1995/02/27 12:33:41 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1983, 1986, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)intro.2	8.3 (Berkeley) 12/11/93
 .\"
-.Dd $Mdocdate: November 7 2015 $
+.Dd $Mdocdate: December 1 2015 $
 .Dt INTRO 2
 .Os
 .Sh NAME
@@ -449,6 +449,8 @@ This is the process ID of the group leader.
 This grouping permits the signaling of related processes (see
 .Xr termios 4 )
 and the job control mechanisms of
+.Xr ksh 1
+and
 .Xr csh 1 .
 .It Session
 A session is a set of one or more process groups.
@@ -475,7 +477,8 @@ the terminal process group ID to the ID of the process group.
 This facility is used
 to arbitrate between multiple jobs contending for the same terminal;
 (see
-.Xr csh 1
+.Xr ksh 1 ,
+.Xr csh 1 ,
 and
 .Xr tty 4 ) .
 .It Orphaned Process Group
