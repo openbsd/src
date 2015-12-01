@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.240 2015/11/30 12:49:35 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.241 2015/12/01 18:22:30 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -655,6 +655,14 @@ smtp_session_imsg(struct mproc *p, struct imsg *imsg)
 			    (s->flags & SF_VERIFIED) ? "YES" : (x ? "FAIL" : "NO"));
 			if (x)
 				X509_free(x);
+
+			if (s->listener->flags & F_RECEIVEDAUTH) {
+				smtp_message_printf(s,
+				    " auth=%s", s->username[0] ? "yes" : "no");
+				if (s->username[0])
+					smtp_message_printf(s,
+					    " user=%s", s->username);
+			}
 		}
 
 		if (s->rcptcount == 1) {

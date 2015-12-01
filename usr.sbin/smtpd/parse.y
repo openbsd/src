@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.161 2015/12/01 15:43:01 gilles Exp $	*/
+/*	$OpenBSD: parse.y,v 1.162 2015/12/01 18:22:30 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -114,6 +114,7 @@ enum listen_options {
 	LO_HOSTNAMES   	= 0x000100,
 	LO_MASKSOURCE  	= 0x000200,
 	LO_NODSN	= 0x000400,
+	LO_RECEIVEDAUTH = 0x001000,
 	LO_CA		= 0x010000
 };
 
@@ -171,6 +172,7 @@ typedef struct {
 %token	ACCEPT REJECT INCLUDE ERROR MDA FROM FOR SOURCE MTA PKI SCHEDULER
 %token	ARROW AUTH TLS LOCAL VIRTUAL TAG TAGGED ALIAS FILTER KEY CA DHPARAMS
 %token	AUTH_OPTIONAL TLS_REQUIRE USERBASE SENDER MASK_SOURCE VERIFY FORWARDONLY RECIPIENT
+%token	RECEIVEDAUTH
 %token	<v.string>	STRING
 %token  <v.number>	NUMBER
 %type	<v.table>	table
@@ -580,6 +582,14 @@ opt_listen     	: INET4			{
 			}
 			listen_opts.options |= LO_MASKSOURCE;
 			listen_opts.flags |= F_MASK_SOURCE;
+		}
+		| RECEIVEDAUTH	{
+			if (listen_opts.options & LO_RECEIVEDAUTH) {
+				yyerror("received-auth already specified");
+				YYERROR;
+			}
+			listen_opts.options |= LO_RECEIVEDAUTH;
+			listen_opts.flags |= F_RECEIVEDAUTH;
 		}
 		| NODSN	{
 			if (listen_opts.options & LO_NODSN) {
@@ -1387,6 +1397,7 @@ lookup(char *s)
 		{ "port",		PORT },
 		{ "queue",		QUEUE },
 		{ "rcpt-to",		RCPTTO },
+		{ "received-auth",     	RECEIVEDAUTH },
 		{ "recipient",		RECIPIENT },
 		{ "reject",		REJECT },
 		{ "relay",		RELAY },

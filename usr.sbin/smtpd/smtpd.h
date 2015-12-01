@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.491 2015/12/01 09:39:07 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.492 2015/12/01 18:22:30 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -82,6 +82,7 @@
 #define	F_MASK_SOURCE		0x100
 #define	F_TLS_VERIFY		0x200
 #define	F_EXT_DSN		0x400
+#define	F_RECEIVEDAUTH		0x800
 
 /* must match F_* for mta */
 #define RELAY_STARTTLS		0x01

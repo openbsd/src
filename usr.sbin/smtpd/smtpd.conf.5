@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.131 2015/11/30 12:26:55 sunil Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.132 2015/12/01 18:22:30 gilles Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -17,7 +17,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: November 30 2015 $
+.Dd $Mdocdate: December 1 2015 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -610,6 +610,7 @@ Changing the default value might degrade performances.
 .Op Ic hostname Ar hostname
 .Op Ic hostnames No < Ns Ar names Ns >
 .Op Ic mask-source
+.Op Ic received-auth
 .Op Ic no-dsn
 .Ek
 .Xc
@@ -712,6 +713,12 @@ parameter is used, then the listener will skip the
 part when prepending the
 .Dq Received
 header.
+.Pp
+If the
+.Ic received-auth
+parameter is used,
+.Dq Received
+header will display if session was authenticated and by which local user.
 .Pp
 If the
 .Ic no-dsn
