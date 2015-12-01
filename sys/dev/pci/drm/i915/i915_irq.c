@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_irq.c,v 1.29 2015/09/23 23:12:12 kettenis Exp $	*/
+/*	$OpenBSD: i915_irq.c,v 1.30 2015/12/01 20:41:32 kettenis Exp $	*/
 /* i915_irq.c -- IRQ support for the I915 -*- linux-c -*-
  */
 /*
@@ -3019,6 +3019,10 @@ static void gen8_de_irq_postinstall(struct drm_i915_private *dev_priv)
 	I915_WRITE(GEN8_DE_PORT_IMR, ~GEN8_AUX_CHANNEL_A);
 	I915_WRITE(GEN8_DE_PORT_IER, GEN8_AUX_CHANNEL_A);
 	POSTING_READ(GEN8_DE_PORT_IER);
+
+	I915_WRITE(GEN8_DE_MISC_IMR, ~GEN8_DE_MISC_GSE);
+	I915_WRITE(GEN8_DE_MISC_IER, GEN8_DE_MISC_GSE);
+	POSTING_READ(GEN8_DE_MISC_IER);
 }
 
 static int gen8_irq_postinstall(struct drm_device *dev)
