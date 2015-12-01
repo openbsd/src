@@ -176,6 +176,7 @@
 ./etc/rc.d/rarpd
 ./etc/rc.d/rbootd
 ./etc/rc.d/rc.subr
+./etc/rc.d/rebound
 ./etc/rc.d/relayd
 ./etc/rc.d/ripd
 ./etc/rc.d/route6d
