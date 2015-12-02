@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.h,v 1.5 2015/12/02 22:19:11 reyk Exp $	*/
+/*	$OpenBSD: vmd.h,v 1.6 2015/12/02 23:33:43 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -32,6 +32,7 @@
 #define SOCKET_NAME		"/var/run/vmd.sock"
 #define VMM_NODE		"/dev/vmm"
 #define VM_NAME_MAX		64
+#define VM_TTYNAME_MAX		32
 #define MAX_TAP			256
 #define NR_BACKLOG		5
 
@@ -60,13 +61,18 @@ enum imsg_type {
 	IMSG_VMDOP_GET_INFO_VM_END_DATA
 };
 
+struct vmop_start_result {
+	int	 vmr_result;
+	char	 vmr_ttyname[VM_TTYNAME_MAX];
+};
+
 struct vmd_vm {
 	struct vm_create_params	vm_params;
 	uint32_t		vm_vmid;
 	int			vm_kernel;
 	int			vm_disks[VMM_MAX_DISKS_PER_VM];
 	int			vm_ifs[VMM_MAX_NICS_PER_VM];
-	char			vm_ttyname[32];
+	char			vm_ttyname[VM_TTYNAME_MAX];
 	int			vm_tty;
 	uint32_t		vm_peerid;
 	TAILQ_ENTRY(vmd_vm)	vm_entry;

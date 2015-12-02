@@ -115,17 +115,19 @@ start_vm(const char *name, int memsize, int nnics, int ndisks, char **disks,
 int
 start_vm_complete(struct imsg *imsg, int *ret)
 {
+	struct vmop_start_result *vmr;
 	int res;
 
 	if (imsg->hdr.type == IMSG_VMDOP_START_VM_RESPONSE) {
-		res = *(int *)imsg->data;
+		vmr = (struct vmop_start_result *)imsg->data;
+		res = vmr->vmr_result;
 		if (res) {
 			fprintf(stderr, "%s: start VM command failed (%d) - "
 			    "%s\n", __progname, res, strerror(res));
 			*ret = EIO;	
 		} else {
-			fprintf(stdout, "%s: start VM command successful\n",
-			    __progname);
+			fprintf(stdout, "%s: start VM command successful, "
+			    "tty %s\n", __progname, vmr->vmr_ttyname);
 			*ret = 0;
 		}
 	} else {

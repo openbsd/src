@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.10 2015/12/02 22:19:11 reyk Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.11 2015/12/02 23:33:43 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -23,6 +23,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <errno.h>
 #include <event.h>
 #include <fcntl.h>
@@ -84,17 +85,24 @@ vmd_dispatch_control(int fd, struct privsep_proc *p, struct imsg *imsg)
 int
 vmd_dispatch_vmm(int fd, struct privsep_proc *p, struct imsg *imsg)
 {
-	struct privsep	*ps = p->p_ps;
-	int		 res = 0;
-	struct vmd_vm	*vm;
+	struct vmop_start_result vmr;
+	struct privsep		*ps = p->p_ps;
+	int			 res = 0;
+	struct vmd_vm		*vm;
 
 	switch (imsg->hdr.type) {
 	case IMSG_VMDOP_START_VM_RESPONSE:
 		IMSG_SIZE_CHECK(imsg, &res);
+		memcpy(&res, imsg->data, sizeof(res));
 		if ((vm = vm_getbyvmid(imsg->hdr.peerid)) == NULL)
 			fatalx("%s: invalid vm response", __func__);
-		imsg->hdr.peerid = vm->vm_peerid;
-		proc_forward_imsg(ps, imsg, PROC_CONTROL, -1);
+		vmr.vmr_result = res;
+		strlcpy(vmr.vmr_ttyname, vm->vm_ttyname,
+		    sizeof(vmr.vmr_ttyname));
+		if (proc_compose_imsg(ps, PROC_CONTROL, -1,
+		    IMSG_VMDOP_START_VM_RESPONSE,
+		    vm->vm_peerid, -1, &vmr, sizeof(vmr)) == -1)
+			return (-1);
 		break;
 	case IMSG_VMDOP_TERMINATE_VM_RESPONSE:
 		IMSG_SIZE_CHECK(imsg, &res);
