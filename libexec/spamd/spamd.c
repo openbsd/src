@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd.c,v 1.130 2015/09/10 13:56:12 beck Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.131 2015/12/02 19:03:17 henning Exp $	*/
 
 /*
  * Copyright (c) 2015 Henning Brauer <henning@openbsd.org>
@@ -1129,7 +1129,8 @@ handlew(struct con *cp, int one)
 				goto handled;
 			} else if (n < 0) {
 				if (debug > 0)
-					warn("tls_read unexpected POLLIN/POLLOUT");
+					warn("tls_write unexpected "
+					    "POLLIN/POLLOUT");
 				closecon(cp);
 				goto handled;
 			}
@@ -1152,7 +1153,7 @@ handlew(struct con *cp, int one)
 			closecon(cp);
 		} else if (n < 0) {
 			if (debug > 0)
-				warn("tls_read unexpected POLLIN/POLLOUT");
+				warn("tls_write unexpected POLLIN/POLLOUT");
 			closecon(cp);
 		} else {
 			cp->op += n;
