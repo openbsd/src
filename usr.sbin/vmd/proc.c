@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.c,v 1.1 2015/12/02 09:14:25 reyk Exp $	*/
+/*	$OpenBSD: proc.c,v 1.2 2015/12/02 09:39:41 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -576,14 +576,14 @@ proc_range(struct privsep *ps, enum privsep_procid id, int *n, int *m)
 
 int
 proc_compose_imsg(struct privsep *ps, enum privsep_procid id, int n,
-    uint16_t type, int fd, void *data, uint16_t datalen)
+    uint16_t type, uint32_t peerid, int fd, void *data, uint16_t datalen)
 {
 	int	 m;
 
 	proc_range(ps, id, &n, &m);
 	for (; n < m; n++) {
 		if (imsg_compose_event(&ps->ps_ievs[id][n],
-		    type, -1, 0, fd, data, datalen) == -1)
+		    type, peerid, 0, fd, data, datalen) == -1)
 			return (-1);
 	}
 
@@ -592,14 +592,14 @@ proc_compose_imsg(struct privsep *ps, enum privsep_procid id, int n,
 
 int
 proc_composev_imsg(struct privsep *ps, enum privsep_procid id, int n,
-    uint16_t type, int fd, const struct iovec *iov, int iovcnt)
+    uint16_t type, uint32_t peerid, int fd, const struct iovec *iov, int iovcnt)
 {
 	int	 m;
 
 	proc_range(ps, id, &n, &m);
 	for (; n < m; n++)
 		if (imsg_composev_event(&ps->ps_ievs[id][n],
-		    type, -1, 0, fd, iov, iovcnt) == -1)
+		    type, peerid, 0, fd, iov, iovcnt) == -1)
 			return (-1);
 
 	return (0);
@@ -610,7 +610,7 @@ proc_forward_imsg(struct privsep *ps, struct imsg *imsg,
     enum privsep_procid id, int n)
 {
 	return (proc_compose_imsg(ps, id, n, imsg->hdr.type,
-	    imsg->fd, imsg->data, IMSG_DATA_SIZE(imsg)));
+	    imsg->hdr.peerid, imsg->fd, imsg->data, IMSG_DATA_SIZE(imsg)));
 }
 
 struct imsgbuf *
