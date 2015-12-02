@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.188 2015/10/30 09:39:42 bluhm Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.189 2015/12/02 16:00:42 sashan Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -507,17 +507,8 @@ in_pcbdetach(struct inpcb *inp)
 		ip_freemoptions(inp->inp_moptions);
 #if NPF > 0
 	if (inp->inp_pf_sk) {
-		struct pf_state_key	*sk;
-		struct pf_state_item	*si;
-
-		sk = inp->inp_pf_sk;
-		TAILQ_FOREACH(si, &sk->states, entry)
-			if (sk == si->s->key[PF_SK_STACK] && si->s->rule.ptr &&
-			    si->s->rule.ptr->divert.port) {
-				pf_unlink_state(si->s);
-				break;
-			}
-		/* pf_unlink_state() may have detached the state */
+		pf_unlink_divert_state(inp->inp_pf_sk);
+		/* pf_unlink_divert_state() may have detached the state */
 		if (inp->inp_pf_sk)
 			inp->inp_pf_sk->inp = NULL;
 	}

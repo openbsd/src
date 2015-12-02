@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.953 2015/12/02 13:29:25 claudio Exp $ */
+/*	$OpenBSD: pf.c,v 1.954 2015/12/02 16:00:42 sashan Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1277,6 +1277,20 @@ pf_unlink_state(struct pf_state *cur)
 	cur->timeout = PFTM_UNLINKED;
 	pf_src_tree_remove_state(cur);
 	pf_detach_state(cur);
+}
+
+void
+pf_unlink_divert_state(struct pf_state_key *sk)
+{
+	struct pf_state_item	*si;
+
+	TAILQ_FOREACH(si, &sk->states, entry) {
+		if (sk == si->s->key[PF_SK_STACK] && si->s->rule.ptr &&
+		    si->s->rule.ptr->divert.port) {
+			pf_unlink_state(si->s);
+			break;
+		}
+	}
 }
 
 /* callers should be at splsoftnet and hold the
