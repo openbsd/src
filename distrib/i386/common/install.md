@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.66 2015/11/09 20:54:12 rpe Exp $
+#	$OpenBSD: install.md,v 1.67 2015/12/02 21:17:17 krw Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -81,7 +81,9 @@ __EOT
 			fdisk -e ${_disk}
 			fdisk $_disk | grep -q ' A6 ' && return
 			echo No OpenBSD partition in MBR, try again. ;;
-		o*|O*)	return ;;
+		o*|O*)
+			[[ $_d == OpenBSD ]] || continue
+			return ;;
 		esac
 	done
 }

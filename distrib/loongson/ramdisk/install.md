@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.21 2015/11/09 20:54:12 rpe Exp $
+#	$OpenBSD: install.md,v 1.22 2015/12/02 21:17:17 krw Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -127,7 +127,9 @@ __EOT
 				{ echo "\nNo OpenBSD (id A6) partition!\n"; continue; }
 			disklabel $_disk 2>/dev/null | grep -q "^  i:" || disklabel -w -d $_disk
 			break ;;
-		o*|O*)	break ;;
+		o*|O*)
+			[[ $_d == OpenBSD ]] || continue
+			break ;;
 		esac
 	done
 

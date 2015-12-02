@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.46 2015/12/02 17:46:03 krw Exp $
+#	$OpenBSD: install.md,v 1.47 2015/12/02 21:17:16 krw Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -132,6 +132,7 @@ __EOT
 			fi
 			echo "try again." ;;
 		o*|O*)
+			[[ $_d == OpenBSD ]] || continue
 			_d=$(fdisk $_disk | grep "First usable LBA:")
 			_q=$(fdisk $_disk | grep "^      EFI Sys ")
 			if [[ -n $_d && -z $_q ]]; then
