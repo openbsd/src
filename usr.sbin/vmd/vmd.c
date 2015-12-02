@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.9 2015/12/02 09:14:25 reyk Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.10 2015/12/02 22:19:11 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -41,12 +41,77 @@ int	 vmd_configure(void);
 void	 vmd_sighdlr(int sig, short event, void *arg);
 void	 vmd_shutdown(void);
 int	 vmd_control_run(void);
+int	 vmd_dispatch_control(int, struct privsep_proc *, struct imsg *);
+int	 vmd_dispatch_vmm(int, struct privsep_proc *, struct imsg *);
 
 struct vmd	*env;
 
 static struct privsep_proc procs[] = {
-	{ "control",	PROC_CONTROL,	vmm_dispatch_control, control },
+	{ "control",	PROC_CONTROL,	vmd_dispatch_control, control },
+	{ "vmm",	PROC_VMM,	vmd_dispatch_vmm, vmm },
 };
+
+int
+vmd_dispatch_control(int fd, struct privsep_proc *p, struct imsg *imsg)
+{
+	struct privsep	*ps = p->p_ps;
+	int		 res = 0, cmd = 0;
+
+	switch (imsg->hdr.type) {
+	case IMSG_VMDOP_START_VM_REQUEST:
+		res = config_getvm(ps, imsg);
+		if (res == -1) {
+			res = EINVAL;
+			cmd = IMSG_VMDOP_START_VM_RESPONSE;
+		}
+		break;
+	case IMSG_VMDOP_TERMINATE_VM_REQUEST:
+	case IMSG_VMDOP_GET_INFO_VM_REQUEST:
+		proc_forward_imsg(ps, imsg, PROC_VMM, -1);
+		break;
+	default:
+		return (-1);
+	}
+
+	if (cmd &&
+	    proc_compose_imsg(ps, PROC_CONTROL, -1, cmd, imsg->hdr.peerid, -1,
+	    &res, sizeof(res)) == -1)
+		return (-1);
+
+	return (0);
+}
+
+int
+vmd_dispatch_vmm(int fd, struct privsep_proc *p, struct imsg *imsg)
+{
+	struct privsep	*ps = p->p_ps;
+	int		 res = 0;
+	struct vmd_vm	*vm;
+
+	switch (imsg->hdr.type) {
+	case IMSG_VMDOP_START_VM_RESPONSE:
+		IMSG_SIZE_CHECK(imsg, &res);
+		if ((vm = vm_getbyvmid(imsg->hdr.peerid)) == NULL)
+			fatalx("%s: invalid vm response", __func__);
+		imsg->hdr.peerid = vm->vm_peerid;
+		proc_forward_imsg(ps, imsg, PROC_CONTROL, -1);
+		break;
+	case IMSG_VMDOP_TERMINATE_VM_RESPONSE:
+		IMSG_SIZE_CHECK(imsg, &res);
+		proc_forward_imsg(ps, imsg, PROC_CONTROL, -1);
+		break;
+		break;
+	case IMSG_VMDOP_GET_INFO_VM_DATA:
+	case IMSG_VMDOP_GET_INFO_VM_END_DATA:
+		IMSG_SIZE_CHECK(imsg, &res);
+		proc_forward_imsg(ps, imsg, PROC_CONTROL, -1);
+		break;
+	default:
+		return (-1);
+	}
+
+	return (0);
+}
 
 void
 vmd_sighdlr(int sig, short event, void *arg)
@@ -56,6 +121,9 @@ vmd_sighdlr(int sig, short event, void *arg)
 	pid_t		 pid;
 	char		*cause;
 	const char	*title = "vm";
+
+	if (privsep_process != PROC_PARENT)
+		return;
 
 	switch (sig) {
 	case SIGHUP:
@@ -155,17 +223,18 @@ main(int argc, char **argv)
 	if (geteuid())
 		fatalx("need root privileges");
 
-	SLIST_INIT(&env->vmd_vmstate);
-
 	ps = &env->vmd_ps;
 	ps->ps_env = env;
-	TAILQ_INIT(&ps->ps_rcsocks);
 
-	if ((ps->ps_pw =  getpwnam(VMD_USER)) == NULL)
+	if (config_init(env) == -1)
+		fatal("failed to initialize configuration");
+
+	if ((ps->ps_pw = getpwnam(VMD_USER)) == NULL)
 		fatal("unknown user %s", VMD_USER);
 
 	/* Configure the control socket */
 	ps->ps_csock.cs_name = SOCKET_NAME;
+	TAILQ_INIT(&ps->ps_rcsocks);
 
 	/* Open /dev/vmm */
 	env->vmd_fd = open(VMM_NODE, O_RDWR);
@@ -178,11 +247,11 @@ main(int argc, char **argv)
 	if (!env->vmd_debug && daemon(0, 0) == -1)
 		fatal("can't daemonize");
 
-	ps->ps_ninstances = 1;
-	proc_init(ps, procs, nitems(procs));
-
 	setproctitle("parent");
 	log_procinit("parent");
+
+	ps->ps_ninstances = 1;
+	proc_init(ps, procs, nitems(procs));
 
 	event_init();
 
@@ -228,6 +297,18 @@ vmd_configure(void)
 		exit(0);
 	}
 
+	/*
+	 * pledge in the parent process:
+	 * stdio - for malloc and basic I/O including events.
+	 * rpath - for reload to open and read the configuration files.
+	 * wpath - for opening disk images and tap devices.
+	 * tty - for openpty.
+	 * proc - run kill to terminate its children safely.
+	 * sendfd - for disks, interfaces and other fds.
+	 */
+	if (pledge("stdio rpath wpath proc tty sendfd", NULL) == -1)
+		fatal("pledge");
+
 	return (0);
 }
 
@@ -239,4 +320,43 @@ vmd_shutdown(void)
 
 	log_warnx("parent terminating");
 	exit(0);
+}
+
+struct vmd_vm *
+vm_getbyvmid(uint32_t vmid)
+{
+	struct vmd_vm	*vm;
+
+	TAILQ_FOREACH(vm, env->vmd_vms, vm_entry) {
+		if (vm->vm_vmid == vmid)
+			return (vm);
+	}
+
+	return (NULL);
+}
+
+void
+vm_remove(struct vmd_vm *vm)
+{
+	unsigned int	 i;
+
+	if (vm == NULL)
+		return;
+
+	TAILQ_REMOVE(env->vmd_vms, vm, vm_entry);
+
+	for (i = 0; i < VMM_MAX_DISKS_PER_VM; i++) {
+		if (vm->vm_disks[i] != -1)
+			close(vm->vm_disks[i]);
+	}
+	for (i = 0; i < VMM_MAX_NICS_PER_VM; i++) {
+		if (vm->vm_ifs[i] != -1)
+			close(vm->vm_ifs[i]);
+	}
+	if (vm->vm_kernel != -1)
+		close(vm->vm_kernel);
+	if (vm->vm_tty != -1)
+		close(vm->vm_tty);
+
+	free(vm);
 }

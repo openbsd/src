@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.1 2015/12/02 09:14:25 reyk Exp $	*/
+/*	$OpenBSD: control.c,v 1.2 2015/12/02 22:19:11 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010-2015 Reyk Floeter <reyk@openbsd.org>
@@ -335,8 +335,8 @@ control_dispatch_imsg(int fd, short event, void *arg)
 		case IMSG_VMDOP_GET_INFO_VM_REQUEST:
 			imsg.hdr.peerid = fd;
 
-			if (imsg_compose_event(&ps->ps_ievs[PROC_PARENT][0],
-			    imsg.hdr.type, imsg.hdr.peerid, 0, -1,
+			if (proc_compose_imsg(ps, PROC_PARENT, -1,
+			    imsg.hdr.type, imsg.hdr.peerid, -1,
 			    imsg.data, IMSG_DATA_SIZE(&imsg)) == -1) {
 				control_close(fd, cs);
 				return;

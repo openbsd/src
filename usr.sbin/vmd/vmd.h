@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.h,v 1.4 2015/12/02 09:14:25 reyk Exp $	*/
+/*	$OpenBSD: vmd.h,v 1.5 2015/12/02 22:19:11 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -19,18 +19,21 @@
 #include <sys/types.h>
 #include <sys/queue.h>
 
+#include <machine/vmmvar.h>
+
+#include <limits.h>
+
 #include "proc.h"
 
-#ifndef __VMD_H__
-#define __VMD_H__
+#ifndef VMD_H
+#define VMD_H
 
 #define VMD_USER		"_vmd"
 #define SOCKET_NAME		"/var/run/vmd.sock"
 #define VMM_NODE		"/dev/vmm"
-#define VM_NAME_MAX		256
+#define VM_NAME_MAX		64
 #define MAX_TAP			256
 #define NR_BACKLOG		5
-
 
 /* #define VMD_DEBUG */
 
@@ -46,6 +49,9 @@ enum imsg_type {
 	IMSG_VMDOP_ENABLE_VMM_REQUEST,
 	IMSG_VMDOP_ENABLE_VMM_RESPONSE,
         IMSG_VMDOP_START_VM_REQUEST,
+        IMSG_VMDOP_START_VM_DISK,
+        IMSG_VMDOP_START_VM_IF,
+        IMSG_VMDOP_START_VM_END,
 	IMSG_VMDOP_START_VM_RESPONSE,
         IMSG_VMDOP_TERMINATE_VM_REQUEST,
 	IMSG_VMDOP_TERMINATE_VM_RESPONSE,
@@ -54,7 +60,18 @@ enum imsg_type {
 	IMSG_VMDOP_GET_INFO_VM_END_DATA
 };
 
-SLIST_HEAD(vmstate_head, vmstate);
+struct vmd_vm {
+	struct vm_create_params	vm_params;
+	uint32_t		vm_vmid;
+	int			vm_kernel;
+	int			vm_disks[VMM_MAX_DISKS_PER_VM];
+	int			vm_ifs[VMM_MAX_NICS_PER_VM];
+	char			vm_ttyname[32];
+	int			vm_tty;
+	uint32_t		vm_peerid;
+	TAILQ_ENTRY(vmd_vm)	vm_entry;
+};
+TAILQ_HEAD(vmlist, vmd_vm);
 
 struct vmd {
 	struct privsep		 vmd_ps;
@@ -63,13 +80,29 @@ struct vmd {
 	int			 vmd_debug;
 	int			 vmd_verbose;
 	int			 vmd_noaction;
+	int			 vmd_vmcount;
 
-	struct vmstate_head	 vmd_vmstate;
+	uint32_t		 vmd_nvm;
+	struct vmlist		*vmd_vms;
 };
 
-/* vmm.c */
-int vmm_dispatch_control(int, struct privsep_proc *, struct imsg *);
-int write_page(uint32_t dst, void *buf, uint32_t, int);
-int read_page(uint32_t dst, void *buf, uint32_t, int);
+/* vmd.c */
+struct vmd_vm *vm_getbyvmid(uint32_t);
+void	 vm_remove(struct vmd_vm *);
 
-#endif /* __VMD_H__ */
+/* vmm.c */
+pid_t	 vmm(struct privsep *, struct privsep_proc *);
+int	 write_page(uint32_t dst, void *buf, uint32_t, int);
+int	 read_page(uint32_t dst, void *buf, uint32_t, int);
+int	 opentap(void);
+
+/* control.c */
+int	 config_init(struct vmd *);
+void	 config_purge(struct vmd *, u_int);
+int	 config_setreset(struct vmd *, unsigned int);
+int	 config_getreset(struct vmd *, struct imsg *);
+int	 config_getvm(struct privsep *, struct imsg *);
+int	 config_getdisk(struct privsep *, struct imsg *);
+int	 config_getif(struct privsep *, struct imsg *);
+
+#endif /* VMD_H */

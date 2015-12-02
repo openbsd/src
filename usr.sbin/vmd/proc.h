@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.3 2015/12/02 13:43:36 reyk Exp $	*/
+/*	$OpenBSD: proc.h,v 1.4 2015/12/02 22:19:11 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010-2015 Reyk Floeter <reyk@openbsd.org>
@@ -32,6 +32,7 @@ enum {
 	IMSG_CTL_VERBOSE,
 	IMSG_CTL_END,
 	IMSG_CTL_NOTIFY,
+	IMSG_CTL_RESET,
 	IMSG_PROC_MAX
 };
 
@@ -84,8 +85,13 @@ extern  struct ctl_connlist ctl_conns;
 enum privsep_procid {
 	PROC_PARENT	= 0,
 	PROC_CONTROL,
+	PROC_VMM,
 	PROC_MAX,
 } privsep_process;
+
+#define CONFIG_RELOAD		0x00
+#define CONFIG_VMS		0x01
+#define CONFIG_ALL		0xff
 
 struct privsep_pipes {
 	int				*pp_pipes[PROC_MAX];
@@ -98,6 +104,8 @@ struct privsep {
 	struct imsgev			*ps_ievs[PROC_MAX];
 	const char			*ps_title[PROC_MAX];
 	pid_t				 ps_pid[PROC_MAX];
+	u_int8_t			 ps_what[PROC_MAX];
+
 	struct passwd			*ps_pw;
 	int				 ps_noaction;
 

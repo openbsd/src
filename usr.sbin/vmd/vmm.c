@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.3 2015/12/02 13:43:36 reyk Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.4 2015/12/02 22:19:11 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -129,20 +129,65 @@ void vcpu_process_com_iir(union vm_exit *);
 void vcpu_process_com_msr(union vm_exit *);
 void vcpu_process_com_scr(union vm_exit *);
 
+int vmm_dispatch_parent(int, struct privsep_proc *, struct imsg *);
+void vmm_run(struct privsep *, struct privsep_proc *, void *);
+
 int con_fd, vm_id;
 
 extern struct vmd *env;
 
 extern char *__progname;
 
+static struct privsep_proc procs[] = {
+	{ "parent",	PROC_PARENT,	vmm_dispatch_parent  },
+};
+
+pid_t
+vmm(struct privsep *ps, struct privsep_proc *p)
+{
+	return (proc_run(ps, p, procs, nitems(procs), vmm_run, NULL));
+}
+
+void
+vmm_run(struct privsep *ps, struct privsep_proc *p, void *arg)
+{
+	if (config_init(ps->ps_env) == -1)
+		fatal("failed to initialize configuration");
+
+#if 0
+	/*
+	 * pledge in the vmm process:
+ 	 * stdio - for malloc and basic I/O including events.
+	 * XXX vmm - for the vmm ioctls and operations
+	 */
+	if (pledge("stdio vmm", NULL) == -1)
+		fatal("pledge");
+#endif
+}
+
 int
-vmm_dispatch_control(int fd, struct privsep_proc *p, struct imsg *imsg)
+vmm_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 {
 	struct privsep	*ps = p->p_ps;
 	int		 res = 0, cmd = 0;
 
 	switch (imsg->hdr.type) {
 	case IMSG_VMDOP_START_VM_REQUEST:
+		res = config_getvm(ps, imsg);
+		if (res != 0)
+			cmd = IMSG_VMDOP_START_VM_RESPONSE;
+		break;
+	case IMSG_VMDOP_START_VM_DISK:
+		res = config_getdisk(ps, imsg);
+		if (res != 0)
+			cmd = IMSG_VMDOP_START_VM_RESPONSE;
+		break;
+	case IMSG_VMDOP_START_VM_IF:
+		res = config_getif(ps, imsg);
+		if (res != 0)
+			cmd = IMSG_VMDOP_START_VM_RESPONSE;
+		break;
+	case IMSG_VMDOP_START_VM_END:
 		res = start_vm(imsg);
 		cmd = IMSG_VMDOP_START_VM_RESPONSE;
 		break;
@@ -159,7 +204,7 @@ vmm_dispatch_control(int fd, struct privsep_proc *p, struct imsg *imsg)
 	}
 
 	if (cmd &&
-	    proc_compose_imsg(ps, PROC_CONTROL, -1, cmd, imsg->hdr.peerid, -1,
+	    proc_compose_imsg(ps, PROC_PARENT, -1, cmd, imsg->hdr.peerid, -1,
 	    &res, sizeof(res)) == -1)
 		return (-1);
 
@@ -244,84 +289,20 @@ opentap(void)
 int
 start_vm(struct imsg *imsg)
 {
-	struct vm_create_params *vcp;
-	size_t i;
-	off_t kernel_size;
-	struct stat sb;
-	int child_disks[VMM_MAX_DISKS_PER_VM], kernel_fd, ret, ttym_fd;
-	int child_taps[VMM_MAX_NICS_PER_VM];
-	int ttys_fd;
-	char ptyn[32];
+	struct vm_create_params	*vcp;
+	struct vmd_vm		*vm;
+	size_t			 i;
+	int			 ret = EINVAL;
 
-	vcp = (struct vm_create_params *)imsg->data;
-
-	for (i = 0 ; i < VMM_MAX_DISKS_PER_VM; i++)
-		child_disks[i] = -1;
-	for (i = 0 ; i < VMM_MAX_NICS_PER_VM; i++)
-		child_taps[i] = -1;
-
-	/*
-	 * XXX kernel_fd can't be global (possible race if multiple VMs
-	 * being created at the same time). Probably need to move this
-	 * into the child before dropping privs, or just make it local
-	 * to this function?
-	 */
-	kernel_fd = -1;
-
-	ttym_fd = -1;
-	ttys_fd = -1;
-
-	/* Open disk images for child */
-	for (i = 0 ; i < vcp->vcp_ndisks; i++) {
-		child_disks[i] = open(vcp->vcp_disks[i], O_RDWR);
-		if (child_disks[i] == -1) {
-			ret = errno;
-			log_warn("%s: can't open %s", __progname,
-			    vcp->vcp_disks[i]);
-			goto err;
-		}
+	if ((vm = vm_getbyvmid(imsg->hdr.peerid)) == NULL) {
+		log_warn("%s: can't find vm", __func__);
+		return (-1);
 	}
+	vcp = &vm->vm_params;
 
-	bzero(&sb, sizeof(sb));
-	if (stat(vcp->vcp_kernel, &sb) == -1) {
-		ret = errno;
-		log_warn("%s: can't stat kernel image %s",
-		    __progname, vcp->vcp_kernel);
+	if ((vm->vm_tty = imsg->fd) == -1) {
+		log_warn("%s: can't get tty", __func__);
 		goto err;
-	}
-
-	kernel_size = sb.st_size;
-
-	/* Open kernel image */
-	kernel_fd = open(vcp->vcp_kernel, O_RDONLY);
-	if (kernel_fd == -1) {
-		ret = errno;
-		log_warn("%s: can't open kernel image %s",
-		    __progname, vcp->vcp_kernel);
-		goto err;	
-	}
-
-	if (openpty(&ttym_fd, &ttys_fd, ptyn, NULL, NULL) == -1) {
-		ret = errno;
-		log_warn("%s: openpty failed", __progname);
-		goto err;
-	}
-
-	if (close(ttys_fd)) {
-		ret = errno;
-		log_warn("%s: close tty failed", __progname);
-		goto err;
-	}
-
-	/* Open tap devices for child */
-	for (i = 0 ; i < vcp->vcp_nnics; i++) {
-		child_taps[i] = opentap();
-		if (child_taps[i] == -1) {
-			ret = errno;
-			log_warn("%s: can't open tap for nic %zd",
-			    __progname, i);
-			goto err;
-		}
 	}
 
 	/* Start child vmd for this VM (fork, chroot, drop privs) */
@@ -329,29 +310,35 @@ start_vm(struct imsg *imsg)
 
 	/* Start child failed? - cleanup and leave */
 	if (ret == -1) {
+		log_warn("%s: start child failed", __func__);
 		ret = EIO;
 		goto err;
 	}
 
 	if (ret > 0) {
 		/* Parent */
-		for (i = 0 ; i < vcp->vcp_ndisks; i++)
-			close(child_disks[i]);
+		for (i = 0 ; i < vcp->vcp_ndisks; i++) {
+			close(vm->vm_disks[i]);
+			vm->vm_disks[i] = -1;
+		}
 
-		for (i = 0 ; i < vcp->vcp_nnics; i++)
-			close(child_taps[i]);
+		for (i = 0 ; i < vcp->vcp_nnics; i++) {
+			close(vm->vm_ifs[i]);
+			vm->vm_ifs[i] = -1;
+		}
 
-		close(kernel_fd);
-		close(ttym_fd);
+		close(vm->vm_kernel);
+		vm->vm_kernel = -1;
+
+		close(vm->vm_tty);
+		vm->vm_tty = -1;
 
 		return (0);
-	}	
-	else {
+	} else {
 		/* Child */
 		setproctitle(vcp->vcp_name);
 		log_procinit(vcp->vcp_name);
 
-		log_info("%s: vm console: %s", __progname, ptyn);
 		ret = vmm_create_vm(vcp);
 		if (ret) {
 			errno = ret;
@@ -359,39 +346,29 @@ start_vm(struct imsg *imsg)
 		}
 
 		/* Load kernel image */
-		ret = loadelf_main(kernel_fd, vcp->vcp_id, vcp->vcp_memory_size);
+		ret = loadelf_main(vm->vm_kernel,
+		    vcp->vcp_id, vcp->vcp_memory_size);
 		if (ret) {
 			errno = ret;
 			fatal("failed to load kernel - exiting");
 		}
 
-		close(kernel_fd);
+		close(vm->vm_kernel);
 
-		con_fd = ttym_fd;
+		con_fd = vm->vm_tty;
 		if (fcntl(con_fd, F_SETFL, O_NONBLOCK) == -1)		
 			fatal("failed to set nonblocking mode on console");
 
 		/* Execute the vcpu run loop(s) for this VM */
-		ret = run_vm(child_disks, child_taps, vcp);
+		ret = run_vm(vm->vm_disks, vm->vm_ifs, vcp);
+
 		_exit(ret != 0);
 	}
 	
-	return (ret);
+	return (0);
 
-err:
-	for (i = 0 ; i < vcp->vcp_ndisks; i++)
-		if (child_disks[i] != -1) 
-			close(child_disks[i]);
-
-	for (i = 0 ; i < vcp->vcp_nnics; i++)
-		if (child_taps[i] != -1)
-			close(child_taps[i]);
-
-	if (kernel_fd != -1)
-		close(kernel_fd);
-
-	if (ttym_fd != -1)
-		close(ttym_fd);
+ err:
+	vm_remove(vm);
 
 	return (ret);
 }
@@ -452,10 +429,10 @@ get_info_vm(struct privsep *ps, struct imsg *imsg)
 		return (ret);
 	}
 
-	/* Return info to vmmctl(4) */
+	/* Return info */
 	ct = vip.vip_size / sizeof(struct vm_info_result);
 	for (i = 0; i < ct; i++) {
-		if (proc_compose_imsg(ps, PROC_CONTROL, -1,
+		if (proc_compose_imsg(ps, PROC_PARENT, -1,
 		    IMSG_VMDOP_GET_INFO_VM_DATA, imsg->hdr.peerid, -1,
 		    &info[i], sizeof(struct vm_info_result)) == -1)
 			return (EIO);
@@ -482,32 +459,13 @@ int
 start_client_vmd(void)
 {
 	int child_pid;
-	struct passwd *pw;
-
-	pw = getpwnam(VMD_USER);
-	if (pw == NULL) {
-		log_warnx("%s: no such user %s", __progname, VMD_USER);
-		return (-1);
-	}
 
 	child_pid = fork();
 	if (child_pid < 0)
 		return (-1);
 
 	if (!child_pid) {
-		/* Child */
-		if (chroot(pw->pw_dir) != 0)
-			fatal("unable to chroot");
-		if (chdir("/") != 0)
-			fatal("unable to chdir");
-
-		if (setgroups(1, &pw->pw_gid) == -1)
-			fatal("setgroups() failed");
-		if (setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) == -1)
-			fatal("setresgid() failed");
-		if (setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid) == -1)
-			fatal("setresuid() failed");
-
+		/* child, already running without privileges */
 		return (0);
 	}
 
