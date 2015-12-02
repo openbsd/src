@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.5 2015/12/01 20:52:44 halex Exp $	*/
+/*	$OpenBSD: parse.y,v 1.6 2015/12/02 09:20:41 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007-2015 Reyk Floeter <reyk@openbsd.org>
@@ -130,6 +130,7 @@ varset		: STRING '=' STRING		{
 main		: VM STRING			{
 			memset(&res, 0, sizeof(res));
 			res.name = $2;
+			res.nifs = -1;
 		} '{' optnl vm_opts_l '}'	{
 			if (res.disable) {
 				warnx("%s:%d: vm \"%s\" disabled",
