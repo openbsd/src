@@ -1,4 +1,4 @@
-/* $OpenBSD: broadcast_bind.c,v 1.1 2015/10/27 16:05:54 vgross Exp $ */
+/* $OpenBSD: broadcast_bind.c,v 1.2 2015/12/02 20:45:00 mpi Exp $ */
 
 /*
  * Copyright (c) 2015 Vincent Gross <vgross@openbsd.org>
@@ -30,15 +30,14 @@
 #include <netinet/in.h>
 
 
-int test_result = EXIT_SUCCESS;
-
-void
-test_bind(char *paddr, struct in_addr *addr, u_int16_t port, int type, int expected_errno)
+int
+test_bind(char *paddr, struct in_addr *addr, u_int16_t port, int type,
+    int expected_errno)
 {
 	int s, rc;
 	struct sockaddr_in sin;
 
-	bzero(&sin, sizeof(sin));
+	memset(&sin, 0, sizeof(sin));
 	sin.sin_family = AF_INET;
 	sin.sin_len = sizeof(sin);
 	sin.sin_port = htons(port);
@@ -47,21 +46,21 @@ test_bind(char *paddr, struct in_addr *addr, u_int16_t port, int type, int expec
 	s = socket(PF_INET, type, 0);
 	if (s < 0) {
 		warn("socket(PF_INET, %d, 0)", type);
-		test_result = EXIT_FAILURE;
-		return;
+		return (1);
 	}
 
 	rc = bind(s, (struct sockaddr *)&sin, sin.sin_len);
 	if ((rc == 0 && expected_errno == 0) ||
 	    (rc != 0 && expected_errno == errno)) {
 		close(s);
-		return;
+		return (0);
 	}
-		
-	warn("bind(%s,%d) (type %d) expected %d, got %d", paddr, port, type, expected_errno, errno);
-	test_result = EXIT_FAILURE;
+
+	warn("bind(%s,%d) (type %d) expected %d, got %d", paddr, port, type,
+	    expected_errno, errno);
 	close(s);
-	return;
+
+	return (1);
 }
 
 int
@@ -72,42 +71,39 @@ main(int argc, char *argv[])
 	int port = 30000;
 
 	if (argc != 4)
-		errx(EXIT_FAILURE, "needs 2 arguments: <unicast> <error> <broadcast>");
+		errx(1, "needs 2 arguments: <unicast> <error> <broadcast>");
 
 	rc = inet_pton(AF_INET, argv[1], &uc_addr);
 	if (rc != 1) {
 		if (rc)
-			err(EXIT_FAILURE, "inet_pton(unicast)");
+			err(1, "inet_pton(unicast)");
 		else
-			errx(EXIT_FAILURE, "inet_pton(unicast): error parsing %s",
+			errx(1, "inet_pton(unicast): error parsing %s",
 			    argv[1]);
 	}
 	rc = inet_pton(AF_INET, argv[2], &err_addr);
 	if (rc != 1) {
 		if (rc)
-			err(EXIT_FAILURE, "inet_pton(error)");
+			err(1, "inet_pton(error)");
 		else
-			errx(EXIT_FAILURE, "inet_pton(error): error parsing %s",
-			    argv[2]);
+			errx(1, "inet_pton(error): error parsing %s", argv[2]);
 	}
 	rc = inet_pton(AF_INET, argv[3], &bc_addr);
 	if (rc != 1) {
 		if (rc)
-			err(EXIT_FAILURE, "inet_pton(broadcast)");
+			err(1, "inet_pton(broadcast)");
 		else
-			errx(EXIT_FAILURE, "inet_pton(broadcast): error parsing %s",
+			errx(1, "inet_pton(broadcast): error parsing %s",
 			    argv[3]);
 	}
 
-	test_result = EXIT_SUCCESS;
+	rc = 0;
+	rc |= test_bind(argv[1], &uc_addr, port, SOCK_STREAM, 0);
+	rc |= test_bind(argv[2], &err_addr, port, SOCK_STREAM, EADDRNOTAVAIL);
+	rc |= test_bind(argv[3], &bc_addr, port, SOCK_STREAM, EADDRNOTAVAIL);
 
-	test_bind(argv[1], &uc_addr, port, SOCK_STREAM, 0);
-	test_bind(argv[2], &err_addr, port, SOCK_STREAM, EADDRNOTAVAIL);
-	test_bind(argv[3], &bc_addr, port, SOCK_STREAM, EADDRNOTAVAIL);
+	rc |= test_bind(argv[2], &err_addr, port, SOCK_STREAM, EADDRNOTAVAIL);
+	rc |= test_bind(argv[3], &bc_addr, port, SOCK_DGRAM, 0);
 
-	test_bind(argv[1], &uc_addr, port, SOCK_DGRAM, 0);
-	test_bind(argv[2], &err_addr, port, SOCK_STREAM, EADDRNOTAVAIL);
-	test_bind(argv[3], &bc_addr, port, SOCK_DGRAM, 0);
-
-	return test_result;
+	return (rc);
 }
