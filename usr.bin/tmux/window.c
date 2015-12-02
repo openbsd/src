@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.150 2015/11/24 23:46:16 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.151 2015/12/02 23:09:22 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -579,6 +579,8 @@ window_lost_pane(struct window *w, struct window_pane *wp)
 			if (w->active == NULL)
 				w->active = TAILQ_NEXT(wp, entry);
 		}
+		if (w->active != NULL)
+			w->active->flags |= PANE_CHANGED;
 	} else if (wp == w->last)
 		w->last = NULL;
 }
