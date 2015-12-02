@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxp.c,v 1.127 2015/11/25 03:09:58 dlg Exp $	*/
+/*	$OpenBSD: fxp.c,v 1.128 2015/12/02 08:28:02 claudio Exp $	*/
 /*	$NetBSD: if_fxp.c,v 1.2 1997/06/05 02:01:55 thorpej Exp $	*/
 
 /*
@@ -673,8 +673,8 @@ fxp_start(struct ifnet *ifp)
 	struct fxp_softc *sc = ifp->if_softc;
 	struct fxp_txsw *txs = sc->sc_cbt_prod;
 	struct fxp_cb_tx *txc;
-	struct mbuf *m0, *m = NULL;
-	int cnt = sc->sc_cbt_cnt, seg;
+	struct mbuf *m0;
+	int cnt = sc->sc_cbt_cnt, seg, error;
 
 	if (!(ifp->if_flags & IFF_RUNNING) || ifq_is_oactive(&ifp->if_snd))
 		return;
@@ -691,38 +691,22 @@ fxp_start(struct ifnet *ifp)
 		if (m0 == NULL)
 			break;
 
-		if (bus_dmamap_load_mbuf(sc->sc_dmat, txs->tx_map,
-		    m0, BUS_DMA_NOWAIT) != 0) {
-			MGETHDR(m, M_DONTWAIT, MT_DATA);
-			if (m == NULL) {
+		error = bus_dmamap_load_mbuf(sc->sc_dmat, txs->tx_map,
+		    m0, BUS_DMA_NOWAIT);
+		if (error == EFBIG) {
+			if (m_defrag(m0, M_DONTWAIT)) {
 				ifq_deq_rollback(&ifp->if_snd, m0);
 				break;
 			}
-			if (m0->m_pkthdr.len > MHLEN) {
-				MCLGET(m, M_DONTWAIT);
-				if (!(m->m_flags & M_EXT)) {
-					m_freem(m);
-					ifq_deq_rollback(&ifp->if_snd, m0);
-					break;
-				}
-			}
-			m_copydata(m0, 0, m0->m_pkthdr.len, mtod(m, caddr_t));
-			m->m_pkthdr.len = m->m_len = m0->m_pkthdr.len;
-			if (bus_dmamap_load_mbuf(sc->sc_dmat, txs->tx_map,
-			    m, BUS_DMA_NOWAIT) != 0) {
-				m_freem(m);
-				ifq_deq_rollback(&ifp->if_snd, m0);
-				break;
-			}
+			error = bus_dmamap_load_mbuf(sc->sc_dmat, txs->tx_map,
+			    m0, BUS_DMA_NOWAIT);
+		}
+		if (error != 0) {
+			ifq_deq_rollback(&ifp->if_snd, m0);
+			break;
 		}
 
 		ifq_deq_commit(&ifp->if_snd, m0);
-		if (m != NULL) {
-			m_freem(m0);
-			m0 = m;
-			m = NULL;
-		}
-
 		txs->tx_mbuf = m0;
 
 #if NBPFILTER > 0
