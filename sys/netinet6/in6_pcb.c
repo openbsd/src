@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_pcb.c,v 1.82 2015/10/24 16:08:48 mpi Exp $	*/
+/*	$OpenBSD: in6_pcb.c,v 1.83 2015/12/02 22:13:44 vgross Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -276,83 +276,11 @@ in6_pcbbind(struct inpcb *inp, struct mbuf *nam, struct proc *p)
 		inp->inp_laddr6 = sin6->sin6_addr;
 	}
 
-	if (lport == 0) {
-		error = in6_pcbsetport(&inp->inp_laddr6, inp, p);
-		if (error != 0)
-			return error;
-	} else {
-		inp->inp_lport = lport;
-		in_pcbrehash(inp);
-	}
-
-	return 0;
-}
-
-int
-in6_pcbsetport(struct in6_addr *laddr, struct inpcb *inp, struct proc *p)
-{
-	struct socket *so = inp->inp_socket;
-	struct inpcbtable *table = inp->inp_table;
-	u_int16_t bound_a, bound_b, first, last;
-	u_int16_t lastport = 0;
-	u_int16_t lport = 0;
-	int count;
-	int wild = INPLOOKUP_IPV6;
-	int error;
-
-	/* XXX we no longer support IPv4 mapped address, so no tweaks here */
-
-	if ((so->so_options & (SO_REUSEADDR|SO_REUSEPORT)) == 0 &&
-	    ((so->so_proto->pr_flags & PR_CONNREQUIRED) == 0 ||
-	     (so->so_options & SO_ACCEPTCONN) == 0))
-		wild |= INPLOOKUP_WILDCARD;
-
-	if (inp->inp_flags & INP_HIGHPORT) {
-		bound_a = ipport_hifirstauto;	/* sysctl */
-		bound_b = ipport_hilastauto;
-	} else if (inp->inp_flags & INP_LOWPORT) {
-		if ((error = suser(p, 0)))
-			return (EACCES);
-		bound_a = IPPORT_RESERVED-1; /* 1023 */
-		bound_b = 600;		   /* not IPPORT_RESERVED/2 */
-	} else {
-		bound_a = ipport_firstauto;	/* sysctl */
-		bound_b = ipport_lastauto;
-	}
-	if (bound_a < bound_b) {
-		first = bound_a;
-		last  = bound_b;
-	} else {
-		first = bound_b;
-		last  = bound_a;
-	}
-
-	/*
-	 * Simple check to ensure all ports are not used up causing
-	 * a deadlock here.
-	 */
-
-	count = last - first;
-	lastport = first + arc4random_uniform(count);
-
-	do {
-		if (count-- < 0)	/* completely used? */
-			return (EADDRNOTAVAIL);
-		++lastport;
-		if (lastport < first || lastport > last)
-			lastport = first;
-		lport = htons(lastport);
-	} while (in_baddynamic(lastport, so->so_proto->pr_protocol) ||
-	    in_pcblookup(table, &zeroin6_addr, 0,
-	    &inp->inp_laddr6, lport, wild, inp->inp_rtableid));
-
+	if (lport == 0)
+		if ((error = in_pcbpickport(&lport, wild, inp, p)))
+			return (error);
 	inp->inp_lport = lport;
 	in_pcbrehash(inp);
-
-#if 0
-	inp->inp_flowinfo = 0;	/* XXX */
-#endif
-
 	return 0;
 }
 

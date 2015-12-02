@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.189 2015/12/02 16:00:42 sashan Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.190 2015/12/02 22:13:44 vgross Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -105,6 +105,11 @@
 #endif /* IPSEC */
 
 struct	in_addr zeroin_addr;
+
+union {
+	struct in_addr	za_in;
+	struct in6_addr	za_in6;
+} zeroin46_addr;
 
 /*
  * These configure the range of local port addresses assigned to
@@ -281,7 +286,6 @@ in_pcbbind(struct inpcb *inp, struct mbuf *nam, struct proc *p)
 	struct socket *so = inp->inp_socket;
 	struct inpcbtable *table = inp->inp_table;
 	struct sockaddr_in *sin;
-	u_int16_t lastport = 0;
 	u_int16_t lport = 0;
 	int wild = 0, reuseport = (so->so_options & SO_REUSEPORT);
 	int error;
@@ -359,51 +363,68 @@ in_pcbbind(struct inpcb *inp, struct mbuf *nam, struct proc *p)
 		}
 		inp->inp_laddr = sin->sin_addr;
 	}
-	if (lport == 0) {
-		u_int16_t bound_a, bound_b, first, last;
-		int count;
 
-		if (inp->inp_flags & INP_HIGHPORT) {
-			bound_a = ipport_hifirstauto;	/* sysctl */
-			bound_b = ipport_hilastauto;
-		} else if (inp->inp_flags & INP_LOWPORT) {
-			if ((error = suser(p, 0)))
-				return (EACCES);
-			bound_a = IPPORT_RESERVED-1; /* 1023 */
-			bound_b = 600;		   /* not IPPORT_RESERVED/2 */
-		} else {
-			bound_a = ipport_firstauto;	/* sysctl */
-			bound_b = ipport_lastauto;
-		}
-		if (bound_a < bound_b) {
-			first = bound_a;
-			last  = bound_b;
-		} else {
-			first = bound_b;
-			last  = bound_a;
-		}
-
-		/*
-		 * Simple check to ensure all ports are not used up causing
-		 * a deadlock here.
-		 */
-
-		count = last - first;
-		lastport = first + arc4random_uniform(count);
-
-		do {
-			if (count-- < 0)	/* completely used? */
-				return (EADDRNOTAVAIL);
-			++lastport;
-			if (lastport < first || lastport > last)
-				lastport = first;
-			lport = htons(lastport);
-		} while (in_baddynamic(lastport, so->so_proto->pr_protocol) ||
-		    in_pcblookup(table, &zeroin_addr, 0,
-		    &inp->inp_laddr, lport, wild, inp->inp_rtableid));
-	}
+	if (lport == 0)
+		if ((error = in_pcbpickport(&lport, wild, inp, p)))
+			return (error);
 	inp->inp_lport = lport;
 	in_pcbrehash(inp);
+	return (0);
+}
+
+int
+in_pcbpickport(u_int16_t *lport, int wild, struct inpcb *inp, struct proc *p)
+{
+	struct socket *so = inp->inp_socket;
+	struct inpcbtable *table = inp->inp_table;
+	u_int16_t first, last, lower, higher, candidate, localport;
+	void *laddr;
+	int count;
+
+	if (inp->inp_flags & INP_HIGHPORT) {
+		first = ipport_hifirstauto;	/* sysctl */
+		last = ipport_hilastauto;
+	} else if (inp->inp_flags & INP_LOWPORT) {
+		if (suser(p, 0))
+			return (EACCES);
+		first = IPPORT_RESERVED-1; /* 1023 */
+		last = 600;		   /* not IPPORT_RESERVED/2 */
+	} else {
+		first = ipport_firstauto;	/* sysctl */
+		last = ipport_lastauto;
+	}
+	if (first < last) {
+		lower = first;
+		higher = last;
+	} else {
+		lower = last;
+		higher = first;
+	}
+
+	/*
+	 * Simple check to ensure all ports are not used up causing
+	 * a deadlock here.
+	 */
+
+	count = higher - lower;
+	candidate = lower + arc4random_uniform(count);
+	if (sotopf(so) == PF_INET6)
+		laddr = &inp->inp_laddr6;
+	else
+		laddr = &inp->inp_laddr;
+
+	do {
+		if (count-- < 0) 	/* completely used? */
+			return (EADDRNOTAVAIL);
+		++candidate;
+		if (candidate < lower || candidate > higher)
+			candidate = lower;
+		localport = htons(candidate);
+	} while (in_baddynamic(localport, so->so_proto->pr_protocol) ||
+	    in_pcblookup(table, &zeroin46_addr, 0,
+	    laddr, localport, wild, inp->inp_rtableid));
+	*lport = localport;
+
 	return (0);
 }
 
