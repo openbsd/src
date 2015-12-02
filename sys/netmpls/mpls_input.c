@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpls_input.c,v 1.52 2015/12/02 08:47:00 claudio Exp $	*/
+/*	$OpenBSD: mpls_input.c,v 1.53 2015/12/02 13:45:07 claudio Exp $	*/
 
 /*
  * Copyright (c) 2008 Claudio Jeker <claudio@openbsd.org>
@@ -156,7 +156,7 @@ do_v6:
 		}
 	}
 
-	rt = rtalloc(smplstosa(smpls), RT_REPORT|RT_RESOLVE, 0);
+	rt = rtalloc(smplstosa(smpls), RT_RESOLVE, 0);
 	if (rt == NULL) {
 		/* no entry for this label */
 #ifdef MPLS_DEBUG
@@ -372,7 +372,7 @@ mpls_do_error(struct mbuf *m, int type, int code, int destmtu)
 		smpls->smpls_len = sizeof(*smpls);
 		smpls->smpls_label = shim->shim_label & MPLS_LABEL_MASK;
 
-		rt = rtalloc(smplstosa(smpls), RT_REPORT|RT_RESOLVE, 0);
+		rt = rtalloc(smplstosa(smpls), RT_RESOLVE, 0);
 		if (rt == NULL) {
 			/* no entry for this label */
 			m_freem(m);
