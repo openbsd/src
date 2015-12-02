@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.200 2015/12/02 13:41:27 reyk Exp $	*/
+/*	$OpenBSD: relay.c,v 1.201 2015/12/02 22:12:29 benno Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -1215,6 +1215,8 @@ relay_from_table(struct rsession *con)
 	struct relay_table	*rlt = NULL;
 	struct table		*table = NULL;
 	int			 idx = -1;
+	int			 cnt = 0;
+	int			 maxtries;
 	u_int64_t		 p = 0;
 
 	/* the table is already selected */
@@ -1270,18 +1272,37 @@ relay_from_table(struct rsession *con)
 		/* NOTREACHED */
 	}
 	if (idx == -1) {
+		/* handle all hashing algorithms */
 		p = SipHash24_End(&con->se_siphashctx);
 
 		/* Reset hash context */
 		SipHash24_Init(&con->se_siphashctx,
 		    &rlay->rl_conf.hashkey.siphashkey);
 
-		if ((idx = p % rlt->rlt_nhosts) >= RELAY_MAXHOSTS)
-			return (-1);
+		maxtries = (rlt->rlt_nhosts < RELAY_MAX_HASH_RETRIES ?
+		    rlt->rlt_nhosts : RELAY_MAX_HASH_RETRIES);
+		for (cnt = 0; cnt < maxtries; cnt++) {
+			if ((idx = p % rlt->rlt_nhosts) >= RELAY_MAXHOSTS)
+				return (-1);
+
+			host = rlt->rlt_host[idx];
+
+			DPRINTF("%s: session %d: table %s host %s, "
+			    "p 0x%016llx, idx %d, cnt %d, max %d",
+			    __func__, con->se_id, table->conf.name,
+			    host->conf.name, p, idx, cnt, maxtries);
+
+			if (!table->conf.check || host->up == HOST_UP)
+				goto found;
+			p = p >> 1;
+		}
+	} else {
+		/* handle all non-hashing algorithms */
+		host = rlt->rlt_host[idx];
+		DPRINTF("%s: session %d: table %s host %s, p 0x%016llx, idx %d",
+		    __func__, con->se_id, table->conf.name, host->conf.name, p, idx);
 	}
-	host = rlt->rlt_host[idx];
-	DPRINTF("%s: session %d: table %s host %s, p 0x%016llx, idx %d",
-	    __func__, con->se_id, table->conf.name, host->conf.name, p, idx);
+
 	while (host != NULL) {
 		DPRINTF("%s: session %d: host %s", __func__,
 		    con->se_id, host->conf.name);
