@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_var.h,v 1.59 2015/11/27 15:00:12 mpi Exp $	*/
+/*	$OpenBSD: if_var.h,v 1.60 2015/12/02 08:03:00 mpi Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -68,15 +68,10 @@
 
 #include <sys/time.h>
 
-struct proc;
 struct rtentry;
-struct socket;
 struct timeout;
-struct ether_header;
 struct arpcom;
-struct rt_addrinfo;
 struct ifnet;
-struct hfsc_if;
 struct task;
 
 /*
