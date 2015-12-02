@@ -1,4 +1,4 @@
-/* $OpenBSD: mpls_output.c,v 1.25 2015/09/23 08:49:46 mpi Exp $ */
+/* $OpenBSD: mpls_output.c,v 1.26 2015/12/02 08:47:00 claudio Exp $ */
 
 /*
  * Copyright (c) 2008 Claudio Jeker <claudio@openbsd.org>
@@ -43,24 +43,22 @@ void		mpls_do_cksum(struct mbuf *);
 u_int8_t	mpls_getttl(struct mbuf *, sa_family_t);
 
 int
-mpls_output(struct ifnet *ifp0, struct mbuf *m, struct sockaddr *dst,
-    struct rtentry *rt0)
+mpls_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
+    struct rtentry *rt)
 {
-	struct ifnet		*ifp = ifp0;
 	struct sockaddr_mpls	*smpls;
 	struct sockaddr_mpls	 sa_mpls;
 	struct shim_hdr		*shim;
-	struct rtentry		*rt;
 	struct rt_mpls		*rt_mpls;
-	int			 i, error;
+	int			 error;
 	u_int8_t		 ttl;
 
-	if (rt0 == NULL || (dst->sa_family != AF_INET &&
+	if (rt == NULL || (dst->sa_family != AF_INET &&
 	    dst->sa_family != AF_INET6 && dst->sa_family != AF_MPLS)) {
 		if (!ISSET(ifp->if_xflags, IFXF_MPLS))
-			return (ifp->if_output(ifp, m, dst, rt0));
+			return (ifp->if_output(ifp, m, dst, rt));
 		else
-			return (ifp->if_ll_output(ifp, m, dst, rt0));
+			return (ifp->if_ll_output(ifp, m, dst, rt));
 	}
 
 	/* need to calculate checksums now if necessary */
@@ -74,66 +72,46 @@ mpls_output(struct ifnet *ifp0, struct mbuf *m, struct sockaddr *dst,
 
 	ttl = mpls_getttl(m, dst->sa_family);
 
-	rt = rt0;
-	for (i = 0; i < mpls_inkloop; i++) {
-		rt_mpls = (struct rt_mpls *)rt->rt_llinfo;
-		if (rt_mpls == NULL || (rt->rt_flags & RTF_MPLS) == 0) {
-			/* no MPLS information for this entry */
-			if (!ISSET(ifp->if_xflags, IFXF_MPLS)) {
+	rt_mpls = (struct rt_mpls *)rt->rt_llinfo;
+	if (rt_mpls == NULL || (rt->rt_flags & RTF_MPLS) == 0) {
+		/* no MPLS information for this entry */
+		if (!ISSET(ifp->if_xflags, IFXF_MPLS)) {
 #ifdef MPLS_DEBUG
-				printf("MPLS_DEBUG: interface not mpls enabled\n");
+			printf("MPLS_DEBUG: interface not mpls enabled\n");
 #endif
-				error = ENETUNREACH;
-				goto bad;
-			}
-
-			return (ifp->if_ll_output(ifp0, m, dst, rt0));
-		}
-
-		switch (rt_mpls->mpls_operation) {
-		case MPLS_OP_PUSH:
-			m = mpls_shim_push(m, rt_mpls);
-			break;
-		case MPLS_OP_POP:
-			m = mpls_shim_pop(m);
-			break;
-		case MPLS_OP_SWAP:
-			m = mpls_shim_swap(m, rt_mpls);
-			break;
-		default:
-			error = EINVAL;
+			error = ENETUNREACH;
 			goto bad;
 		}
 
-		if (m == NULL) {
-			error = ENOBUFS;
-			goto bad;
-		}
-
-		/* refetch label */
-		shim = mtod(m, struct shim_hdr *);
-		/* mark first label with BOS flag */
-		if (rt0 == rt && dst->sa_family != AF_MPLS)
-			shim->shim_label |= MPLS_BOS_MASK;
-
-		ifp = rt->rt_ifp;
-		if (ifp != NULL)
-			break;
-
-		smpls->smpls_label = shim->shim_label & MPLS_LABEL_MASK;
-		if (rt != rt0)
-			rtfree(rt);
-		rt = rtalloc(smplstosa(smpls), RT_REPORT|RT_RESOLVE, 0);
-		if (rt == NULL) {
-			/* no entry for this label */
-#ifdef MPLS_DEBUG
-			printf("MPLS_DEBUG: label %d not found\n",
-			    MPLS_LABEL_GET(shim->shim_label));
-#endif
-			error = EHOSTUNREACH;
-			goto bad;
-		}
+		return (ifp->if_ll_output(ifp, m, dst, rt));
 	}
+
+	/* to be honest here only the push operation makes sense */
+	switch (rt_mpls->mpls_operation) {
+	case MPLS_OP_PUSH:
+		m = mpls_shim_push(m, rt_mpls);
+		break;
+	case MPLS_OP_POP:
+		m = mpls_shim_pop(m);
+		break;
+	case MPLS_OP_SWAP:
+		m = mpls_shim_swap(m, rt_mpls);
+		break;
+	default:
+		error = EINVAL;
+		goto bad;
+	}
+
+	if (m == NULL) {
+		error = ENOBUFS;
+		goto bad;
+	}
+
+	/* refetch label */
+	shim = mtod(m, struct shim_hdr *);
+	/* mark first label with BOS flag */
+	if (dst->sa_family != AF_MPLS)
+		shim->shim_label |= MPLS_BOS_MASK;
 
 	/* write back TTL */
 	shim->shim_label &= ~MPLS_TTL_MASK;
@@ -159,8 +137,6 @@ mpls_output(struct ifnet *ifp0, struct mbuf *m, struct sockaddr *dst,
 
 	smpls->smpls_label = shim->shim_label & MPLS_LABEL_MASK;
 	error = ifp->if_ll_output(ifp, m, smplstosa(smpls), rt);
-	if (rt != rt0)
-		rtfree(rt);
 	return (error);
 bad:
 	m_freem(m);
