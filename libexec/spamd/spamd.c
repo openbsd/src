@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd.c,v 1.132 2015/12/02 20:58:43 henning Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.133 2015/12/02 21:10:17 henning Exp $	*/
 
 /*
  * Copyright (c) 2015 Henning Brauer <henning@openbsd.org>
@@ -831,7 +831,8 @@ nextstate(struct con *cp)
 				snprintf(cp->obuf, cp->osize,
 				    "501 helo requires domain name.\r\n");
 			} else {
-				if (tlsctx != NULL && cp->blacklists == NULL &&
+				if (cp->cctx == NULL && tlsctx != NULL &&
+				    cp->blacklists == NULL &&
 				    match(cp->ibuf, "EHLO")) {
 					snprintf(cp->obuf, cp->osize,
 					    "250 STARTTLS\r\n");
