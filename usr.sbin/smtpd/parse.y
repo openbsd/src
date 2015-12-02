@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.162 2015/12/01 18:22:30 gilles Exp $	*/
+/*	$OpenBSD: parse.y,v 1.163 2015/12/02 09:06:36 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -543,7 +543,7 @@ opt_listen     	: INET4			{
 			}
 			listen_opts.options |= LO_TAG;
 
-       			if (strlen($2) >= MAX_TAG_SIZE) {
+			if (strlen($2) >= MAX_TAG_SIZE) {
        				yyerror("tag name too long");
 				free($2);
 				YYERROR;
@@ -2044,7 +2044,7 @@ config_listener(struct listener *h,  struct listen_opts *lo)
 			log_warnx("ca name not found: %s", lo->ca);
 			fatalx(NULL);
 		}
-	}	
+	}
 	if (lo->tag != NULL)
 		(void)strlcpy(h->tag, lo->tag, sizeof(h->tag));
 
