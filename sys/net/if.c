@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.416 2015/12/02 08:47:00 claudio Exp $	*/
+/*	$OpenBSD: if.c,v 1.417 2015/12/02 16:35:52 bluhm Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -869,6 +869,9 @@ if_detach(struct ifnet *ifp)
 	ifq_clr_oactive(&ifp->if_snd);
 
 	s = splnet();
+	/* Other CPUs must not have a reference before we start destroying. */
+	if_idxmap_remove(ifp);
+
 	ifp->if_start = if_detached_start;
 	ifp->if_ioctl = if_detached_ioctl;
 	ifp->if_watchdog = NULL;
@@ -938,8 +941,6 @@ if_detach(struct ifnet *ifp)
 
 	/* Announce that the interface is gone. */
 	rt_ifannouncemsg(ifp, IFAN_DEPARTURE);
-
-	if_idxmap_remove(ifp);
 	splx(s);
 
 	ifq_destroy(&ifp->if_snd);
