@@ -1,4 +1,4 @@
-/*	$OpenBSD: snake.c,v 1.19 2015/12/02 18:46:13 tb Exp $	*/
+/*	$OpenBSD: snake.c,v 1.20 2015/12/02 18:52:23 tb Exp $	*/
 /*	$NetBSD: snake.c,v 1.8 1995/04/29 00:06:41 mycroft Exp $	*/
 
 /*
@@ -154,8 +154,7 @@ main(int argc, char *argv[])
 	if (home == NULL || *home == '\0')
 		err(1, "getenv");
 
-	snprintf(logpath, sizeof(logpath), "%s/%s", home,
-	    ".snake.log");
+	snprintf(logpath, sizeof(logpath), "%s/%s", home, ".snake.log");
 	logfile = fopen(logpath, "a");
 #endif
 
