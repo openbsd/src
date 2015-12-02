@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.45 2015/11/09 20:54:12 rpe Exp $
+#	$OpenBSD: install.md,v 1.46 2015/12/02 17:46:03 krw Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -55,20 +55,26 @@ md_prep_fdisk() {
 
 	while :; do
 		_d=whole
+		_q="Use (W)hole disk MBR, whole disk (G)PT"
 
-		[[ $MDEFI == y && $_disk == $ROOTDISK ]] &&
-			_q=", whole disk (G)PT"
+		[[ $MDEFI == y ]] && _d=gpt
 
 		if fdisk $_disk | grep -q 'Signature: 0xAA55'; then
 			fdisk $_disk
 			if fdisk $_disk | grep -q '^..: A6 '; then
-				_q="$_q, use the (O)penBSD area"
+				_d=OpenBSD
+			fi
+		elif fdisk $_disk | grep -q "First usable LBA:"; then
+			fdisk $_disk
+			if fdisk $_disk | grep -q "^      OpenBSD "; then
 				_d=OpenBSD
 			fi
 		else
-			echo "MBR has invalid signature; not showing it."
+			echo "No valid MBR or GPT."
 		fi
-		ask "Use (W)hole disk MBR$_q or (E)dit the MBR?" "$_d"
+		[[ $_d == OpenBSD ]] && _q="$_q, (O)penBSD area"
+
+		ask "$_q or (E)dit?" "$_d"
 		case $resp in
 		w*|W*)
 			echo -n "Setting OpenBSD MBR partition to whole $_disk..."
@@ -76,31 +82,63 @@ md_prep_fdisk() {
 			echo "done."
 			return ;;
 		g*|G*)
-			if [[ $MDEFI != y || $_disk != $ROOTDISK ]]; then
-				echo "'$resp' is not a valid choice."
-				$AUTO && exit 1
-				continue
+			if [[ $MDEFI != y ]]; then
+				ask_yn "An EFI/GPT disk may not boot. Proceed?"
+				[[ $resp == n ]] && continue
 			fi
 
 			echo -n "Setting OpenBSD GPT partition to whole $_disk..."
-			fdisk -i -g -b 960 -y $_disk >/dev/null
+			fdisk -iy -g -b 960 $_disk >/dev/null
 			echo "done."
 			return ;;
 		e*|E*)
-			# Manually configure the MBR.
-			cat <<__EOT
+			if fdisk $_disk | grep -q "First usable LBA:"; then
+				# Manually configure the GPT.
+				cat <<__EOT
+
+You will now create two GPT partitions. The first must have an id
+of 'EF' and be large enough to contain the OpenBSD boot programs,
+at least 960 blocks. The second must have an id of 'A6' and will
+contain your OpenBSD data. Neither may overlap other partitions.
+Inside the fdisk command, the 'manual' command describes the fdisk
+commands in detail.
+
+$(fdisk $_disk)
+__EOT
+				fdisk -e $_disk
+				_d=$(fdisk $_disk | grep "^      OpenBSD ")
+				_q=$(fdisk $_disk | grep "^      EFI Sys ")
+				if [[ -z $_d ]]; then
+					echo -n "No OpenBSD partition in GPT,"
+				elif [[ -z $_q ]]; then
+					echo -n "No EFI Sys partition in GPT,"
+				else
+					return
+				fi
+			else
+				# Manually configure the MBR.
+				cat <<__EOT
 
 You will now create a single MBR partition to contain your OpenBSD data. This
 partition must have an id of 'A6'; must *NOT* overlap other partitions; and
 must be marked as the only active partition.  Inside the fdisk command, the
 'manual' command describes all the fdisk commands in detail.
 
-$(fdisk ${_disk})
+$(fdisk $_disk)
 __EOT
-			fdisk -e ${_disk}
-			fdisk $_disk | grep -q ' A6 ' && return
-			echo No OpenBSD partition in MBR, try again. ;;
-		o*|O*)	return ;;
+				fdisk -e $_disk
+				fdisk $_disk | grep -q ' A6 ' && return
+				echo -n "No OpenBSD partition in MBR,"
+			fi
+			echo "try again." ;;
+		o*|O*)
+			_d=$(fdisk $_disk | grep "First usable LBA:")
+			_q=$(fdisk $_disk | grep "^      EFI Sys ")
+			if [[ -n $_d && -z $_q ]]; then
+				echo "No EFI Sys partition in GPT, try again."
+				continue
+			fi
+			return ;;
 		esac
 	done
 }
