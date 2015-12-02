@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.10 2009/10/27 23:59:23 deraadt Exp $	*/
+/*	$OpenBSD: init.c,v 1.11 2015/12/02 20:05:01 tb Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -48,7 +48,6 @@ int     pnum = 2;		/* color of player:
 						 1 = red
 						 0 = both
 						 2 = not yet init'ed */
-int     acnt = 0;		/* length of args */
 int     aflag = 1;		/* flag to ask for rules or instructions */
 int     cflag = 0;		/* case conversion flag */
 int     hflag = 1;		/* flag for cleaning screen */
@@ -68,7 +67,6 @@ int	*inopp;
 int	*inptr;
 int	*offopp;
 int	*offptr;
-char	args[100];
 int	bar;
 int	begscr;
 int	board[26];

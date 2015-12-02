@@ -1,4 +1,4 @@
-.\"	$OpenBSD: backgammon.6,v 1.20 2014/04/25 20:33:05 schwarze Exp $
+.\"	$OpenBSD: backgammon.6,v 1.21 2015/12/02 20:05:01 tb Exp $
 .\"
 .\" Copyright (c) 1980, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)backgammon.6	8.1 (Berkeley) 5/31/93
 .\"
-.Dd $Mdocdate: April 25 2014 $
+.Dd $Mdocdate: December 2 2015 $
 .Dt BACKGAMMON 6
 .Os
 .Sh NAME
@@ -60,26 +60,26 @@ obtained by answering
 .Sq y
 when it asks if you want instructions.
 .Pp
-The possible arguments for backgammon
-(most are unnecessary but some are very convenient)
-consist of:
+The possible arguments for
+.Nm
+are described below.
+In each case
+.Fl n
+is implied.
 .Bl -tag -width indent
 .It Fl b
-Two players, red and white (implies
-.Fl n ) .
+Two players, red and white.
 .It Fl d
 Play without doubling.
 .It Fl n
 Don't ask for rules or instructions.
 .It Fl r
-Player is red (implies
-.Fl n ) .
+Player is red.
 .It Fl s Ar file
 Recover previously saved game from
 .Ar file .
 .It Fl w
-Player is white (implies
-.Fl n ) .
+Player is white.
 .El
 .Sh QUICK REFERENCE
 When the program prompts by typing only your color,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: subs.c,v 1.21 2015/11/30 08:19:25 tb Exp $	*/
+/*	$OpenBSD: subs.c,v 1.22 2015/12/02 20:05:01 tb Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -197,7 +197,6 @@ getarg(int argc, char **argv)
 			if (rflag)
 				break;
 			aflag = 0;
-			args[acnt++] = 'n';
 			break;
 
 		case 'b':	/* player is both red and white */
@@ -205,7 +204,6 @@ getarg(int argc, char **argv)
 				break;
 			pnum = 0;
 			aflag = 0;
-			args[acnt++] = 'b';
 			break;
 
 		case 'r':	/* player is red */
@@ -213,7 +211,6 @@ getarg(int argc, char **argv)
 				break;
 			pnum = -1;
 			aflag = 0;
-			args[acnt++] = 'r';
 			break;
 
 		case 'w':	/* player is white */
@@ -221,7 +218,6 @@ getarg(int argc, char **argv)
 				break;
 			pnum = 1;
 			aflag = 0;
-			args[acnt++] = 'w';
 			break;
 
 		case 's':	/* restore saved game */
@@ -230,6 +226,7 @@ getarg(int argc, char **argv)
 
 		case 'd':	/* disable doubling */
 			dflag = 0;
+			aflag = 0;
 			break;
 
 		default:	/* print cmdline options */

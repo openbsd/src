@@ -1,4 +1,4 @@
-/*	$OpenBSD: back.h,v 1.13 2014/04/25 20:23:37 schwarze Exp $	*/
+/*	$OpenBSD: back.h,v 1.14 2015/12/02 20:05:01 tb Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -75,8 +75,6 @@ extern	int	pnum;		/* color of player:
 					 1 = red
 					 0 = both
 					 2 = not yet init'ed */
-extern	char	args[100];	/* args passed to teachgammon and back */
-extern	int	acnt;		/* length of args */
 extern	int	aflag;		/* flag to ask for rules or instructions */
 extern	int	cflag;		/* case conversion flag */
 extern	int	hflag;		/* flag for cleaning screen */

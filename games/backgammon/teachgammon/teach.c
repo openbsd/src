@@ -1,4 +1,4 @@
-/*	$OpenBSD: teach.c,v 1.15 2015/11/30 08:19:25 tb Exp $	*/
+/*	$OpenBSD: teach.c,v 1.16 2015/12/02 20:05:01 tb Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -118,6 +118,6 @@ leave(void)
 {
 	clear();
 	endwin();
-	execl(EXEC, "backgammon", "-n", args, (char *)NULL);
+	execl(EXEC, "backgammon", "-n", (char *)NULL);
 	errx(1, "help! Backgammon program is missing!!");
 }

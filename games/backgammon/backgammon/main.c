@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.21 2015/12/01 07:43:30 tb Exp $	*/
+/*	$OpenBSD: main.c,v 1.22 2015/12/02 20:05:01 tb Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -103,7 +103,6 @@ main (int argc, char **argv)
 	begscr = 0;
 
 	getarg(argc, argv);
-	args[acnt] = '\0';
 
 	initcurses();
 
@@ -123,7 +122,7 @@ main (int argc, char **argv)
 			addstr(rules);
 			if (yorn(0)) {
 				endwin();
-				execl(TEACH, "teachgammon", args, (char *)NULL);
+				execl(TEACH, "teachgammon", (char *)NULL);
 
 				err(1, "%s", noteach);
 			} else {/* if not rules, then instructions */
