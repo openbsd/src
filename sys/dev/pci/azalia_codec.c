@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia_codec.c,v 1.170 2015/08/24 04:50:40 jsg Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.171 2015/12/02 03:11:32 jsg Exp $	*/
 /*	$NetBSD: azalia_codec.c,v 1.8 2006/05/10 11:17:27 kent Exp $	*/
 
 /*-
@@ -228,6 +228,9 @@ azalia_codec_init_vtbl(codec_t *this)
 		break;
 	case 0x111d7603:
 		this->name = "IDT 92HD75B3/4";
+		if ((this->subid & 0x0000ffff) == 0x0000103c) {	/* HP */
+			this->qrks |= AZ_QRK_GPIO_UNMUTE_0;
+		}
 		break;
 	case 0x111d7604:
 		this->name = "IDT 92HD83C1X";
