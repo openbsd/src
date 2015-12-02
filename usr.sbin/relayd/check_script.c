@@ -1,4 +1,4 @@
-/*	$OpenBSD: check_script.c,v 1.18 2015/01/22 17:42:09 reyk Exp $	*/
+/*	$OpenBSD: check_script.c,v 1.19 2015/12/02 13:41:27 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -52,8 +52,7 @@ check_script(struct relayd *env, struct host *host)
 		fatalx("invalid script path");
 	memcpy(&scr.timeout, &table->conf.timeout, sizeof(scr.timeout));
 
-	proc_compose_imsg(env->sc_ps, PROC_PARENT, 0, IMSG_SCRIPT,
-	    -1, &scr, sizeof(scr));
+	proc_compose(env->sc_ps, PROC_PARENT, IMSG_SCRIPT, &scr, sizeof(scr));
 }
 
 void

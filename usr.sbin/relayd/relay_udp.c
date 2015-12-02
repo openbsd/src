@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay_udp.c,v 1.40 2015/11/28 09:52:07 reyk Exp $	*/
+/*	$OpenBSD: relay_udp.c,v 1.41 2015/12/02 13:41:27 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2013 Reyk Floeter <reyk@openbsd.org>
@@ -303,8 +303,8 @@ relay_udp_server(int fd, short sig, void *arg)
 		cnl->proto = IPPROTO_UDP;
 		bcopy(&con->se_in.ss, &cnl->src, sizeof(cnl->src));
 		bcopy(&rlay->rl_conf.ss, &cnl->dst, sizeof(cnl->dst));
-		proc_compose_imsg(env->sc_ps, PROC_PFE, -1,
-		    IMSG_NATLOOK, -1, cnl, sizeof(*cnl));
+		proc_compose(env->sc_ps, PROC_PFE,
+		    IMSG_NATLOOK, cnl, sizeof(*cnl));
 
 		/* Schedule timeout */
 		evtimer_set(&con->se_ev, relay_natlook, con);

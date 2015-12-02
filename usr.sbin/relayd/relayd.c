@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.c,v 1.148 2015/11/29 01:20:33 benno Exp $	*/
+/*	$OpenBSD: relayd.c,v 1.149 2015/12/02 13:41:27 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -345,8 +345,8 @@ parent_configure(struct relayd *env)
 		} else
 			s = -1;
 
-		proc_compose_imsg(env->sc_ps, id, -1, IMSG_CFG_DONE, s,
-		    &cf, sizeof(cf));
+		proc_compose_imsg(env->sc_ps, id, -1, IMSG_CFG_DONE, -1,
+		    s, &cf, sizeof(cf));
 	}
 
 	ret = 0;
@@ -405,8 +405,7 @@ parent_configure_done(struct relayd *env)
 			if (id == privsep_process)
 				continue;
 
-			proc_compose_imsg(env->sc_ps, id, -1, IMSG_CTL_START,
-			    -1, NULL, 0);
+			proc_compose(env->sc_ps, id, IMSG_CTL_START, NULL, 0);
 		}
 	}
 }
@@ -489,8 +488,7 @@ parent_dispatch_hce(int fd, struct privsep_proc *p, struct imsg *imsg)
 		IMSG_SIZE_CHECK(imsg, &scr);
 		bcopy(imsg->data, &scr, sizeof(scr));
 		scr.retval = script_exec(env, &scr);
-		proc_compose_imsg(ps, PROC_HCE, -1, IMSG_SCRIPT,
-		    -1, &scr, sizeof(scr));
+		proc_compose(ps, PROC_HCE, IMSG_SCRIPT, &scr, sizeof(scr));
 		break;
 	case IMSG_CFG_DONE:
 		parent_configure_done(env);
@@ -528,7 +526,7 @@ parent_dispatch_relay(int fd, struct privsep_proc *p, struct imsg *imsg)
 		}
 		s = bindany(&bnd);
 		proc_compose_imsg(ps, PROC_RELAY, bnd.bnd_proc,
-		    IMSG_BINDANY, s, &bnd.bnd_id, sizeof(bnd.bnd_id));
+		    IMSG_BINDANY, -1, s, &bnd.bnd_id, sizeof(bnd.bnd_id));
 		break;
 	case IMSG_CFG_DONE:
 		parent_configure_done(env);

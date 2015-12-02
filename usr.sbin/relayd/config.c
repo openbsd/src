@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.25 2015/05/02 13:15:24 claudio Exp $	*/
+/*	$OpenBSD: config.c,v 1.26 2015/12/02 13:41:27 reyk Exp $	*/
 
 /*
  * Copyright (c) 2011 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -220,8 +220,7 @@ config_setreset(struct relayd *env, u_int reset)
 		if ((reset & ps->ps_what[id]) == 0 ||
 		    id == privsep_process)
 			continue;
-		proc_compose_imsg(ps, id, -1, IMSG_CTL_RESET, -1,
-		    &reset, sizeof(reset));
+		proc_compose(ps, id, IMSG_CTL_RESET, &reset, sizeof(reset));
 	}
 
 	return (0);
@@ -279,8 +278,7 @@ config_getcfg(struct relayd *env, struct imsg *imsg)
 	}
 
 	if (privsep_process != PROC_PARENT)
-		proc_compose_imsg(env->sc_ps, PROC_PARENT, -1,
-		    IMSG_CFG_DONE, -1, NULL, 0);
+		proc_compose(env->sc_ps, PROC_PARENT, IMSG_CFG_DONE, NULL, 0);
 
 	return (0);
 }
@@ -313,10 +311,10 @@ config_settable(struct relayd *env, struct table *tb)
 			iov[c++].iov_len = strlen(tb->sendbuf);
 		}
 
-		proc_composev_imsg(ps, id, -1, IMSG_CFG_TABLE, -1, iov, c);
+		proc_composev(ps, id, IMSG_CFG_TABLE, iov, c);
 
 		TAILQ_FOREACH(host, &tb->hosts, entry) {
-			proc_compose_imsg(ps, id, -1, IMSG_CFG_HOST, -1,
+			proc_compose(ps, id, IMSG_CFG_HOST,
 			    &host->conf, sizeof(host->conf));
 		}
 	}
@@ -415,12 +413,12 @@ config_setrdr(struct relayd *env, struct rdr *rdr)
 		DPRINTF("%s: sending rdr %s to %s", __func__,
 		    rdr->conf.name, ps->ps_title[id]);
 
-		proc_compose_imsg(ps, id, -1, IMSG_CFG_RDR, -1,
+		proc_compose(ps, id, IMSG_CFG_RDR,
 		    &rdr->conf, sizeof(rdr->conf));
 
 		TAILQ_FOREACH(virt, &rdr->virts, entry) {
 			virt->rdrid = rdr->conf.id;
-			proc_compose_imsg(ps, id, -1, IMSG_CFG_VIRT, -1,
+			proc_compose(ps, id, IMSG_CFG_VIRT,
 			    virt, sizeof(*virt));
 		}
 	}
@@ -503,11 +501,11 @@ config_setrt(struct relayd *env, struct router *rt)
 		DPRINTF("%s: sending router %s to %s tbl %d", __func__,
 		    rt->rt_conf.name, ps->ps_title[id], rt->rt_conf.gwtable);
 
-		proc_compose_imsg(ps, id, -1, IMSG_CFG_ROUTER, -1,
+		proc_compose(ps, id, IMSG_CFG_ROUTER,
 		    &rt->rt_conf, sizeof(rt->rt_conf));
 
 		TAILQ_FOREACH(nr, &rt->rt_netroutes, nr_entry) {
-			proc_compose_imsg(ps, id, -1, IMSG_CFG_ROUTE, -1,
+			proc_compose(ps, id, IMSG_CFG_ROUTE,
 			    &nr->nr_conf, sizeof(nr->nr_conf));
 		}
 	}
@@ -608,7 +606,7 @@ config_setproto(struct relayd *env, struct protocol *proto)
 			iov[c++].iov_len = strlen(proto->style);
 		}
 
-		proc_composev_imsg(ps, id, -1, IMSG_CFG_PROTO, -1, iov, c);
+		proc_composev(ps, id, IMSG_CFG_PROTO, iov, c);
 	}
 
 	return (0);
@@ -659,8 +657,7 @@ config_setrule(struct relayd *env, struct protocol *proto)
 					rule->rule_ctl.kvlen[i].value = -1;
 			}
 
-			proc_composev_imsg(ps, id, -1,
-			    IMSG_CFG_RULE, -1, iov, c);
+			proc_composev(ps, id, IMSG_CFG_RULE, iov, c);
 		}
 	}
 
@@ -837,11 +834,10 @@ config_setrelay(struct relayd *env, struct relay *rlay)
 				if ((fd = dup(rlay->rl_s)) == -1)
 					return (-1);
 				proc_composev_imsg(ps, id, n,
-				    IMSG_CFG_RELAY, fd, iov, c);
+				    IMSG_CFG_RELAY, -1, fd, iov, c);
 			}
 		} else {
-			proc_composev_imsg(ps, id, -1, IMSG_CFG_RELAY, -1,
-			    iov, c);
+			proc_composev(ps, id, IMSG_CFG_RELAY, iov, c);
 		}
 
 		if ((what & CONFIG_TABLES) == 0)
@@ -858,8 +854,7 @@ config_setrelay(struct relayd *env, struct relay *rlay)
 			iov[c].iov_base = &crt;
 			iov[c++].iov_len = sizeof(crt);
 
-			proc_composev_imsg(ps, id, -1,
-			    IMSG_CFG_RELAY_TABLE, -1, iov, c);
+			proc_composev(ps, id, IMSG_CFG_RELAY_TABLE, iov, c);
 		}
 	}
 

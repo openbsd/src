@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.199 2015/11/28 09:52:07 reyk Exp $	*/
+/*	$OpenBSD: relay.c,v 1.200 2015/12/02 13:41:27 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -340,14 +340,13 @@ relay_init(struct privsep *ps, struct privsep_proc *p, void *arg)
 void
 relay_session_publish(struct rsession *s)
 {
-	proc_compose_imsg(env->sc_ps, PROC_PFE, -1, IMSG_SESS_PUBLISH, -1,
-	    s, sizeof(*s));
+	proc_compose(env->sc_ps, PROC_PFE, IMSG_SESS_PUBLISH, s, sizeof(*s));
 }
 
 void
 relay_session_unpublish(struct rsession *s)
 {
-	proc_compose_imsg(env->sc_ps, PROC_PFE, -1, IMSG_SESS_UNPUBLISH, -1,
+	proc_compose(env->sc_ps, PROC_PFE, IMSG_SESS_UNPUBLISH,
 	    &s->se_id, sizeof(s->se_id));
 }
 
@@ -396,7 +395,7 @@ relay_statistics(int fd, short events, void *arg)
 
 		crs.id = rlay->rl_conf.id;
 		crs.proc = proc_id;
-		proc_compose_imsg(env->sc_ps, PROC_PFE, -1, IMSG_STATISTICS, -1,
+		proc_compose(env->sc_ps, PROC_PFE, IMSG_STATISTICS,
 		    &crs, sizeof(crs));
 
 		for (con = SPLAY_ROOT(&rlay->rl_sessions);
@@ -1153,7 +1152,7 @@ relay_accept(int fd, short event, void *arg)
 			return;
 		}
 
-		proc_compose_imsg(env->sc_ps, PROC_PFE, -1, IMSG_NATLOOK, -1,
+		proc_compose(env->sc_ps, PROC_PFE, IMSG_NATLOOK,
 		    cnl, sizeof(*cnl));
 
 		/* Schedule timeout */
@@ -1390,8 +1389,8 @@ relay_bindanyreq(struct rsession *con, in_port_t port, int proto)
 	bnd.bnd_port = port;
 	bnd.bnd_proto = proto;
 	bcopy(&con->se_in.ss, &bnd.bnd_ss, sizeof(bnd.bnd_ss));
-	proc_compose_imsg(env->sc_ps, PROC_PARENT, -1, IMSG_BINDANY,
-	    -1, &bnd, sizeof(bnd));
+	proc_compose(env->sc_ps, PROC_PARENT, IMSG_BINDANY,
+	    &bnd, sizeof(bnd));
 
 	/* Schedule timeout */
 	evtimer_set(&con->se_ev, relay_bindany, con);
@@ -1835,13 +1834,12 @@ relay_dispatch_pfe(int fd, struct privsep_proc *p, struct imsg *imsg)
 			    &rlay->rl_sessions) {
 				memcpy(&se, con, sizeof(se));
 				se.se_cid = cid;
-				proc_compose_imsg(env->sc_ps, p->p_id, -1,
-				    IMSG_CTL_SESSION,
-				    -1, &se, sizeof(se));
+				proc_compose(env->sc_ps, p->p_id,
+				    IMSG_CTL_SESSION, &se, sizeof(se));
 			}
 		}
-		proc_compose_imsg(env->sc_ps, p->p_id, -1, IMSG_CTL_END,
-		    -1, &cid, sizeof(cid));
+		proc_compose(env->sc_ps, p->p_id, IMSG_CTL_END,
+		    &cid, sizeof(cid));
 		break;
 	default:
 		return (-1);
