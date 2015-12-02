@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.278 2015/12/01 21:26:43 mpi Exp $	*/
+/*	$OpenBSD: route.c,v 1.279 2015/12/02 09:17:47 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -153,7 +153,6 @@ int	rtflushclone1(struct rtentry *, void *, u_int);
 void	rtflushclone(unsigned int, struct rtentry *);
 int	rt_if_remove_rtdelete(struct rtentry *, void *, u_int);
 struct rtentry *rt_match(struct sockaddr *, uint32_t *, int, unsigned int);
-uint32_t	rt_hash(struct rtentry *, uint32_t *);
 
 struct	ifaddr *ifa_ifwithroute(int, struct sockaddr *, struct sockaddr *,
 		    u_int);
@@ -241,30 +240,7 @@ rt_match(struct sockaddr *dst, uint32_t *src, int flags, unsigned int tableid)
 
 	s = splsoftnet();
 	KERNEL_LOCK();
-	rt = rtable_match(tableid, dst);
-
-#ifndef SMALL_KERNEL
-	/* Handle multipath routing if enabled for the specified protocol. */
-	if (rt != NULL && ISSET(rt->rt_flags, RTF_MPATH) && src != NULL) {
-		switch (dst->sa_family) {
-		case AF_INET:
-			if (!ipmultipath)
-				break;
-			rt = rtable_mpath_select(rt, rt_hash(rt, src) & 0xffff);
-			break;
-#ifdef INET6
-		case AF_INET6:
-			if (!ip6_multipath)
-				break;
-			rt = rtable_mpath_select(rt, rt_hash(rt, src) & 0xffff);
-			break;
-#endif
-		default:
-			break;
-		};
-	}
-#endif /* SMALL_KERNEL */
-
+	rt = rtable_match(tableid, dst, src);
 	if (rt != NULL) {
 		if ((rt->rt_flags & RTF_CLONING) && ISSET(flags, RT_RESOLVE)) {
 			rt0 = rt;
@@ -308,11 +284,14 @@ struct rtentry *_rtalloc(struct sockaddr *, uint32_t *, int, unsigned int);
 	c -= a; c -= b; c ^= (b >> 15);					\
 } while (0)
 
-uint32_t
+int
 rt_hash(struct rtentry *rt, uint32_t *src)
 {
 	struct sockaddr *dst = rt_key(rt);
 	uint32_t a, b, c;
+
+	if (src == NULL || !rtisvalid(rt) || !ISSET(rt->rt_flags, RTF_MPATH))
+		return (-1);
 
 	a = b = 0x9e3779b9;
 	c = rt_hashjitter;
@@ -321,6 +300,9 @@ rt_hash(struct rtentry *rt, uint32_t *src)
 	case AF_INET:
 	    {
 		struct sockaddr_in *sin;
+
+		if (!ipmultipath)
+			return (-1);
 
 		sin = satosin(dst);
 		a += sin->sin_addr.s_addr;
@@ -332,6 +314,9 @@ rt_hash(struct rtentry *rt, uint32_t *src)
 	case AF_INET6:
 	    {
 		struct sockaddr_in6 *sin6;
+
+		if (!ip6_multipath)
+			return (-1);
 
 		sin6 = satosin6(dst);
 		a += sin6->sin6_addr.s6_addr32[0];
@@ -355,7 +340,7 @@ rt_hash(struct rtentry *rt, uint32_t *src)
 #endif /* INET6 */
 	}
 
-	return (c);
+	return (c & 0xffff);
 }
 
 /*
