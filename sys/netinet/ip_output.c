@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.310 2015/12/02 13:29:26 claudio Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.311 2015/12/02 20:50:20 markus Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -78,6 +78,13 @@ static __inline u_int16_t __attribute__((__unused__))
     in_cksum_phdr(u_int32_t, u_int32_t, u_int32_t);
 void in_delayed_cksum(struct mbuf *);
 
+struct tdb *
+ip_output_ipsec_lookup(struct mbuf *m, int hlen, int *error, struct inpcb *inp,
+    int ipsecflowinfo);
+int
+ip_output_ipsec_send(struct tdb *tdb, struct mbuf *m, struct ifnet *ifp,
+    struct route *ro);
+
 /*
  * IP output.  The packet in mbuf chain m contains a skeletal IP
  * header (with len, off, ttl, proto, tos, src, dst).
@@ -96,20 +103,8 @@ ip_output(struct mbuf *m0, struct mbuf *opt, struct route *ro, int flags,
 	struct route iproute;
 	struct sockaddr_in *dst;
 	struct in_ifaddr *ia;
-	u_int8_t sproto = 0;
+	struct tdb *tdb = NULL;
 	u_long mtu;
-#ifdef IPSEC
-	u_int32_t icmp_mtu = 0;
-	union sockaddr_union sdst;
-	u_int32_t sspi;
-	struct m_tag *mtag;
-	struct tdb_ident *tdbi;
-
-	struct tdb *tdb;
-#if NPF > 0
-	struct ifnet *encif;
-#endif
-#endif /* IPSEC */
 
 #ifdef IPSEC
 	if (inp && (inp->inp_flags & INP_IPV6) != 0)
@@ -217,70 +212,30 @@ reroute:
 		ip->ip_src = ia->ia_addr.sin_addr;
 
 #ifdef IPSEC
-	if (!ipsec_in_use && inp == NULL)
-		goto done_spd;
-
-	/* Do we have any pending SAs to apply ? */
-	tdb = ipsp_spd_lookup(m, AF_INET, hlen, &error,
-	    IPSP_DIRECTION_OUT, NULL, inp, ipsecflowinfo);
-
-	if (tdb == NULL) {
-		if (error == 0) {
-			/*
-			 * No IPsec processing required, we'll just send the
-			 * packet out.
-			 */
-			sproto = 0;
-
-			/* Fall through to routing/multicast handling */
-		} else {
-			/*
-			 * -EINVAL is used to indicate that the packet should
-			 * be silently dropped, typically because we've asked
-			 * key management for an SA.
-			 */
-			if (error == -EINVAL) /* Should silently drop packet */
-			  error = 0;
-
+	if (ipsec_in_use || inp != NULL) {
+		/* Do we have any pending SAs to apply ? */
+		tdb = ip_output_ipsec_lookup(m, hlen, &error, inp,
+		    ipsecflowinfo);
+		if (error != 0) {
+			/* Should silently drop packet */
+			if (error == -EINVAL)
+				error = 0;
 			m_freem(m);
 			goto done;
 		}
-	} else {
-		/* Loop detection */
-		for (mtag = m_tag_first(m); mtag != NULL;
-		    mtag = m_tag_next(m, mtag)) {
-			if (mtag->m_tag_id != PACKET_TAG_IPSEC_OUT_DONE)
-				continue;
-			tdbi = (struct tdb_ident *)(mtag + 1);
-			if (tdbi->spi == tdb->tdb_spi &&
-			    tdbi->proto == tdb->tdb_sproto &&
-			    tdbi->rdomain == tdb->tdb_rdomain &&
-			    !memcmp(&tdbi->dst, &tdb->tdb_dst,
-			    sizeof(union sockaddr_union))) {
-				sproto = 0; /* mark as no-IPsec-needed */
-				goto done_spd;
+		if (tdb != NULL) {
+			/*
+			 * If it needs TCP/UDP hardware-checksumming, do the
+			 * computation now.
+			 */
+			in_proto_cksum_out(m, NULL);
+
+			/* If it's not a multicast packet, try to fast-path */
+			if (!IN_MULTICAST(ip->ip_dst.s_addr)) {
+				goto sendit;
 			}
 		}
-
-		/* We need to do IPsec */
-		bcopy(&tdb->tdb_dst, &sdst, sizeof(sdst));
-		sspi = tdb->tdb_spi;
-		sproto = tdb->tdb_sproto;
-
-		/*
-		 * If it needs TCP/UDP hardware-checksumming, do the
-		 * computation now.
-		 */
-		in_proto_cksum_out(m, NULL);
-
-		/* If it's not a multicast packet, try to fast-path */
-		if (!IN_MULTICAST(ip->ip_dst.s_addr)) {
-			goto sendit;
-		}
 	}
-
-	/* Fall through to the routing/multicast handling code */
- done_spd:
 #endif /* IPSEC */
 
 	if (IN_MULTICAST(ip->ip_dst.s_addr) ||
@@ -323,7 +278,7 @@ reroute:
 		if ((((m->m_flags & M_MCAST) &&
 		      (ifp->if_flags & IFF_MULTICAST) == 0) ||
 		     ((m->m_flags & M_BCAST) &&
-		      (ifp->if_flags & IFF_BROADCAST) == 0)) && (sproto == 0)) {
+		      (ifp->if_flags & IFF_BROADCAST) == 0)) && (tdb == NULL)) {
 			ipstat.ips_noroute++;
 			error = ENETUNREACH;
 			goto bad;
@@ -401,7 +356,7 @@ reroute:
 	 * such a packet; if the packet is going in an IPsec tunnel, skip
 	 * this check.
 	 */
-	if ((sproto == 0) && ((dst->sin_addr.s_addr == INADDR_BROADCAST) ||
+	if ((tdb == NULL) && ((dst->sin_addr.s_addr == INADDR_BROADCAST) ||
 	    (ro && ro->ro_rt && ISSET(ro->ro_rt->rt_flags, RTF_BROADCAST)))) {
 		if ((ifp->if_flags & IFF_BROADCAST) == 0) {
 			error = EADDRNOTAVAIL;
@@ -434,93 +389,10 @@ sendit:
 	/*
 	 * Check if the packet needs encapsulation.
 	 */
-	if (sproto != 0) {
-		tdb = gettdb(rtable_l2(m->m_pkthdr.ph_rtableid),
-		    sspi, &sdst, sproto);
-		if (tdb == NULL) {
-			DPRINTF(("ip_output: unknown TDB"));
-			error = EHOSTUNREACH;
-			m_freem(m);
-			goto done;
-		}
-
-		/*
-		 * Packet filter
-		 */
-#if NPF > 0
-		if ((encif = enc_getif(tdb->tdb_rdomain,
-		    tdb->tdb_tap)) == NULL ||
-		    pf_test(AF_INET, PF_OUT, encif, &m) != PF_PASS) {
-			error = EACCES;
-			m_freem(m);
-			goto done;
-		}
-		if (m == NULL) {
-			goto done;
-		}
-		ip = mtod(m, struct ip *);
-		hlen = ip->ip_hl << 2;
-		/*
-		 * PF_TAG_REROUTE handling or not...
-		 * Packet is entering IPsec so the routing is
-		 * already overruled by the IPsec policy.
-		 * Until now the change was not reconsidered.
-		 * What's the behaviour?
-		 */
-		in_proto_cksum_out(m, encif);
-#endif
-
-		/* Check if we are allowed to fragment */
-		if (ip_mtudisc && (ip->ip_off & htons(IP_DF)) && tdb->tdb_mtu &&
-		    ntohs(ip->ip_len) > tdb->tdb_mtu &&
-		    tdb->tdb_mtutimeout > time_second) {
-			struct rtentry *rt = NULL;
-			int rt_mtucloned = 0;
-			int transportmode = 0;
-
-			transportmode = (tdb->tdb_dst.sa.sa_family == AF_INET) &&
-			    (tdb->tdb_dst.sin.sin_addr.s_addr ==
-			    ip->ip_dst.s_addr);
-			icmp_mtu = tdb->tdb_mtu;
-
-			/* Find a host route to store the mtu in */
-			if (ro != NULL)
-				rt = ro->ro_rt;
-			/* but don't add a PMTU route for transport mode SAs */
-			if (transportmode)
-				rt = NULL;
-			else if (rt == NULL || (rt->rt_flags & RTF_HOST) == 0) {
-				rt = icmp_mtudisc_clone(ip->ip_dst,
-				    m->m_pkthdr.ph_rtableid);
-				rt_mtucloned = 1;
-			}
-			DPRINTF(("ip_output: spi %08x mtu %d rt %p cloned %d\n",
-			    ntohl(tdb->tdb_spi), icmp_mtu, rt, rt_mtucloned));
-			if (rt != NULL) {
-				rt->rt_rmx.rmx_mtu = icmp_mtu;
-				if (ro && ro->ro_rt != NULL) {
-					rtfree(ro->ro_rt);
-					ro->ro_rt = rtalloc(&ro->ro_dst,
-					    RT_RESOLVE,
-					    m->m_pkthdr.ph_rtableid);
-				}
-				if (rt_mtucloned)
-					rtfree(rt);
-			}
-			error = EMSGSIZE;
-			goto bad;
-		}
-
-		/*
-		 * Clear these -- they'll be set in the recursive invocation
-		 * as needed.
-		 */
-		m->m_flags &= ~(M_MCAST | M_BCAST);
-
+	if (tdb != NULL) {
 		/* Callee frees mbuf */
-		error = ipsp_process_packet(m, tdb, AF_INET, 0);
-		if_put(ifp);
-		return error;  /* Nothing more to be done */
+		error = ip_output_ipsec_send(tdb, m, ifp, ro);
+		goto done;
 	}
 #endif /* IPSEC */
 
@@ -583,7 +455,8 @@ sendit:
 	 */
 	if (ip->ip_off & htons(IP_DF)) {
 #ifdef IPSEC
-		icmp_mtu = ifp->if_mtu;
+		if (ip_mtudisc)
+			ipsec_adjust_mtu(m, ifp->if_mtu);
 #endif
 		error = EMSGSIZE;
 		/*
@@ -627,13 +500,121 @@ done:
 	if_put(ifp);
 	return (error);
 bad:
-#ifdef IPSEC
-	if (error == EMSGSIZE && ip_mtudisc && icmp_mtu != 0 && m != NULL)
-		ipsec_adjust_mtu(m, icmp_mtu);
-#endif
 	m_freem(m0);
 	goto done;
 }
+
+#ifdef IPSEC
+struct tdb *
+ip_output_ipsec_lookup(struct mbuf *m, int hlen, int *error, struct inpcb *inp,
+    int ipsecflowinfo)
+{
+	struct m_tag *mtag;
+	struct tdb_ident *tdbi;
+	struct tdb *tdb;
+
+	/* Do we have any pending SAs to apply ? */
+	tdb = ipsp_spd_lookup(m, AF_INET, hlen, error, IPSP_DIRECTION_OUT,
+	    NULL, inp, ipsecflowinfo);
+	if (tdb == NULL)
+		return NULL;
+	/* Loop detection */
+	for (mtag = m_tag_first(m); mtag != NULL; mtag = m_tag_next(m, mtag)) {
+		if (mtag->m_tag_id != PACKET_TAG_IPSEC_OUT_DONE)
+			continue;
+		tdbi = (struct tdb_ident *)(mtag + 1);
+		if (tdbi->spi == tdb->tdb_spi &&
+		    tdbi->proto == tdb->tdb_sproto &&
+		    tdbi->rdomain == tdb->tdb_rdomain &&
+		    !memcmp(&tdbi->dst, &tdb->tdb_dst,
+		    sizeof(union sockaddr_union))) {
+			/* no IPsec needed */
+			return NULL;
+		}
+	}
+	return tdb;
+}
+
+int
+ip_output_ipsec_send(struct tdb *tdb, struct mbuf *m, struct ifnet *ifp,
+    struct route *ro)
+{
+#if NPF > 0
+	struct ifnet *encif;
+#endif
+	struct ip *ip;
+
+#if NPF > 0
+	/*
+	 * Packet filter
+	 */
+	if ((encif = enc_getif(tdb->tdb_rdomain, tdb->tdb_tap)) == NULL ||
+	    pf_test(AF_INET, PF_OUT, encif, &m) != PF_PASS) {
+		m_freem(m);
+		return EACCES;
+	}
+	if (m == NULL)
+		return 0;
+	/*
+	 * PF_TAG_REROUTE handling or not...
+	 * Packet is entering IPsec so the routing is
+	 * already overruled by the IPsec policy.
+	 * Until now the change was not reconsidered.
+	 * What's the behaviour?
+	 */
+	in_proto_cksum_out(m, encif);
+#endif
+
+	/* Check if we are allowed to fragment */
+	ip = mtod(m, struct ip *);
+	if (ip_mtudisc && (ip->ip_off & htons(IP_DF)) && tdb->tdb_mtu &&
+	    ntohs(ip->ip_len) > tdb->tdb_mtu &&
+	    tdb->tdb_mtutimeout > time_second) {
+		struct rtentry *rt = NULL;
+		int rt_mtucloned = 0;
+		int transportmode = 0;
+
+		transportmode = (tdb->tdb_dst.sa.sa_family == AF_INET) &&
+		    (tdb->tdb_dst.sin.sin_addr.s_addr == ip->ip_dst.s_addr);
+
+		/* Find a host route to store the mtu in */
+		if (ro != NULL)
+			rt = ro->ro_rt;
+		/* but don't add a PMTU route for transport mode SAs */
+		if (transportmode)
+			rt = NULL;
+		else if (rt == NULL || (rt->rt_flags & RTF_HOST) == 0) {
+			rt = icmp_mtudisc_clone(ip->ip_dst,
+			    m->m_pkthdr.ph_rtableid);
+			rt_mtucloned = 1;
+		}
+		DPRINTF(("%s: spi %08x mtu %d rt %p cloned %d\n", __func__,
+		    ntohl(tdb->tdb_spi), tdb->tdb_mtu, rt, rt_mtucloned));
+		if (rt != NULL) {
+			rt->rt_rmx.rmx_mtu = tdb->tdb_mtu;
+			if (ro && ro->ro_rt != NULL) {
+				rtfree(ro->ro_rt);
+				ro->ro_rt = rtalloc(&ro->ro_dst, RT_RESOLVE,
+				    m->m_pkthdr.ph_rtableid);
+			}
+			if (rt_mtucloned)
+				rtfree(rt);
+		}
+		ipsec_adjust_mtu(m, tdb->tdb_mtu);
+		m_freem(m);
+		return EMSGSIZE;
+	}
+
+	/*
+	 * Clear these -- they'll be set in the recursive invocation
+	 * as needed.
+	 */
+	m->m_flags &= ~(M_MCAST | M_BCAST);
+
+	/* Callee frees mbuf */
+	return ipsp_process_packet(m, tdb, AF_INET, 0);
+}
+#endif /* IPSEC */
 
 int
 ip_fragment(struct mbuf *m, struct ifnet *ifp, u_long mtu)
