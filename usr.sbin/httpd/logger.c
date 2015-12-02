@@ -1,4 +1,4 @@
-/*	$OpenBSD: logger.c,v 1.14 2015/11/05 18:00:43 florian Exp $	*/
+/*	$OpenBSD: logger.c,v 1.15 2015/12/02 15:13:00 reyk Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -121,7 +121,7 @@ logger_open_file(const char *name)
 	iov[1].iov_base = log->log_name;
 	iov[1].iov_len = strlen(log->log_name) + 1;
 
-	if (proc_composev_imsg(env->sc_ps, PROC_PARENT, -1, IMSG_LOG_OPEN, -1,
+	if (proc_composev(env->sc_ps, PROC_PARENT, IMSG_LOG_OPEN,
 	    iov, 2) != 0) {
 		log_warn("%s: failed to compose IMSG_LOG_OPEN imsg", __func__);
 		goto err;
@@ -191,7 +191,7 @@ logger_open_priv(struct imsg *imsg)
 		return (-1);
 	}
 
-	proc_compose_imsg(env->sc_ps, PROC_LOGGER, -1, IMSG_LOG_OPEN, fd,
+	proc_compose_imsg(env->sc_ps, PROC_LOGGER, -1, IMSG_LOG_OPEN, -1, fd,
 	    &id, sizeof(id));
 
 	DPRINTF("%s: opened log file %s, fd %d", __func__, path, fd);

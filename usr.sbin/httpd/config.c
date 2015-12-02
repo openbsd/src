@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.43 2015/08/20 13:00:23 reyk Exp $	*/
+/*	$OpenBSD: config.c,v 1.44 2015/12/02 15:13:00 reyk Exp $	*/
 
 /*
  * Copyright (c) 2011 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -113,7 +113,7 @@ config_setreset(struct httpd *env, unsigned int reset)
 		if ((reset & ps->ps_what[id]) == 0 ||
 		    id == privsep_process)
 			continue;
-		proc_compose_imsg(ps, id, -1, IMSG_CTL_RESET, -1,
+		proc_compose(ps, id, IMSG_CTL_RESET,
 		    &reset, sizeof(reset));
 	}
 
@@ -151,8 +151,8 @@ config_getcfg(struct httpd *env, struct imsg *imsg)
 	what = ps->ps_what[privsep_process];
 
 	if (privsep_process != PROC_PARENT)
-		proc_compose_imsg(env->sc_ps, PROC_PARENT, -1,
-		    IMSG_CFG_DONE, -1, NULL, 0);
+		proc_compose(env->sc_ps, PROC_PARENT,
+		    IMSG_CFG_DONE, NULL, 0);
 
 	return (0);
 }
@@ -205,7 +205,7 @@ config_setserver(struct httpd *env, struct server *srv)
 				else if ((fd = dup(srv->srv_s)) == -1)
 					return (-1);
 				if (proc_composev_imsg(ps, id, n,
-				    IMSG_CFG_SERVER, fd, iov, c) != 0) {
+				    IMSG_CFG_SERVER, -1, fd, iov, c) != 0) {
 					log_warn("%s: failed to compose "
 					    "IMSG_CFG_SERVER imsg for `%s'",
 					    __func__, srv->srv_conf.name);
@@ -216,7 +216,7 @@ config_setserver(struct httpd *env, struct server *srv)
 			/* Configure TLS if necessary. */
 			config_settls(env, srv);
 		} else {
-			if (proc_composev_imsg(ps, id, -1, IMSG_CFG_SERVER, -1,
+			if (proc_composev(ps, id, IMSG_CFG_SERVER,
 			    iov, c) != 0) {
 				log_warn("%s: failed to compose "
 				    "IMSG_CFG_SERVER imsg for `%s'",
@@ -259,8 +259,7 @@ config_settls(struct httpd *env, struct server *srv)
 		iov[c].iov_base = srv->srv_conf.tls_cert;
 		iov[c++].iov_len = srv->srv_conf.tls_cert_len;
 
-		if (proc_composev_imsg(ps, PROC_SERVER, -1, IMSG_CFG_TLS, -1,
-		    iov, c) != 0) {
+		if (proc_composev(ps, PROC_SERVER, IMSG_CFG_TLS, iov, c) != 0) {
 			log_warn("%s: failed to compose IMSG_CFG_TLS imsg for "
 			    "`%s'", __func__, srv->srv_conf.name);
 			return (-1);
@@ -284,8 +283,7 @@ config_settls(struct httpd *env, struct server *srv)
 		iov[c].iov_base = srv->srv_conf.tls_key;
 		iov[c++].iov_len = srv->srv_conf.tls_key_len;
 
-		if (proc_composev_imsg(ps, PROC_SERVER, -1, IMSG_CFG_TLS, -1,
-		    iov, c) != 0) {
+		if (proc_composev(ps, PROC_SERVER, IMSG_CFG_TLS, iov, c) != 0) {
 			log_warn("%s: failed to compose IMSG_CFG_TLS imsg for "
 			    "`%s'", __func__, srv->srv_conf.name);
 			return (-1);
@@ -628,8 +626,7 @@ config_setmedia(struct httpd *env, struct media_type *media)
 		DPRINTF("%s: sending media \"%s\" to %s", __func__,
 		    media->media_name, ps->ps_title[id]);
 
-		proc_compose_imsg(ps, id, -1, IMSG_CFG_MEDIA, -1,
-		    media, sizeof(*media));
+		proc_compose(ps, id, IMSG_CFG_MEDIA, media, sizeof(*media));
 	}
 
 	return (0);
@@ -676,8 +673,7 @@ config_setauth(struct httpd *env, struct auth *auth)
 		DPRINTF("%s: sending auth \"%s[%u]\" to %s", __func__,
 		    auth->auth_htpasswd, auth->auth_id, ps->ps_title[id]);
 
-		proc_compose_imsg(ps, id, -1, IMSG_CFG_AUTH, -1,
-		    auth, sizeof(*auth));
+		proc_compose(ps, id, IMSG_CFG_AUTH, auth, sizeof(*auth));
 	}
 
 	return (0);
