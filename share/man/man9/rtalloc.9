@@ -1,4 +1,4 @@
-.\" $OpenBSD: rtalloc.9,v 1.9 2015/10/30 09:48:03 bluhm Exp $
+.\" $OpenBSD: rtalloc.9,v 1.10 2015/12/02 13:30:01 claudio Exp $
 .\"
 .\" Copyright (c) 2014-2015 Martin Pieuchot
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 30 2015 $
+.Dd $Mdocdate: December 2 2015 $
 .Dt RTALLOC 9
 .Os
 .Sh NAME
@@ -49,8 +49,6 @@ The following
 .Fa flags
 can be specified:
 .Bl -tag -width RT_RESOLVE -offset indent
-.It Dv RT_REPORT
-Notify the routing sockets if the lookup fails.
 .It Dv RT_RESOLVE
 Allocate and return a cloned entry for
 .Fa dst
@@ -62,8 +60,6 @@ The
 function does the same as
 .Fn rtalloc
 with the
-.Dv RT_REPORT
-and
 .Dv RT_RESOLVE
 .Fa flags ,
 but selects a multipath routing entry corresponding to
