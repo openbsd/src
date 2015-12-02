@@ -1,4 +1,4 @@
-/*	$OpenBSD: snake.c,v 1.18 2015/11/29 14:31:01 tb Exp $	*/
+/*	$OpenBSD: snake.c,v 1.19 2015/12/02 18:46:13 tb Exp $	*/
 /*	$NetBSD: snake.c,v 1.8 1995/04/29 00:06:41 mycroft Exp $	*/
 
 /*
@@ -141,14 +141,20 @@ int	wantstop;
 int
 main(int argc, char *argv[])
 {
-	struct   sigaction sa;
-	int	 ch, i;
+	struct	sigaction sa;
+	int	ch, i;
 
 	if (pledge("stdio rpath wpath cpath tty", NULL) == -1)
 		err(1, "pledge");
 
 #ifdef LOGGING
-	snprintf(logpath, sizeof(logpath), "%s/%s", getenv("HOME"),
+	const char	*home;
+
+	home = getenv("HOME");
+	if (home == NULL || *home == '\0')
+		err(1, "getenv");
+
+	snprintf(logpath, sizeof(logpath), "%s/%s", home,
 	    ".snake.log");
 	logfile = fopen(logpath, "a");
 #endif
