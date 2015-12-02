@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.69 2015/12/02 14:52:51 visa Exp $ */
+/*	$OpenBSD: machdep.c,v 1.70 2015/12/02 14:56:15 visa Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -183,7 +183,6 @@ octeon_memory_init(struct boot_info *boot_info)
 	/* DR1 */
 	i = 1;
 	if (physmem > atop(256 << 20)) {
-#ifdef MIPS_PTE64
 		mem_layout[i].mem_first_page = atop(0x410000000ULL);
 		if (physmem > atop(512 << 20))
 			mem_layout[i].mem_last_page = atop(0x420000000ULL);
@@ -191,7 +190,6 @@ octeon_memory_init(struct boot_info *boot_info)
 			mem_layout[i].mem_last_page =
 			    atop(0x410000000ULL) + physmem - atop(256 << 20);
 		i++;
-#endif
 	}
 
 	/* DR2 */
