@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.2 2015/12/02 09:39:41 reyk Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.3 2015/12/02 13:43:36 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -159,8 +159,8 @@ vmm_dispatch_control(int fd, struct privsep_proc *p, struct imsg *imsg)
 	}
 
 	if (cmd &&
-	    proc_compose_imsg(ps, PROC_CONTROL, cmd, imsg->hdr.peerid,
-	    0, -1, &res, sizeof(res)) == -1)
+	    proc_compose_imsg(ps, PROC_CONTROL, -1, cmd, imsg->hdr.peerid, -1,
+	    &res, sizeof(res)) == -1)
 		return (-1);
 
 	return (0);
@@ -455,9 +455,9 @@ get_info_vm(struct privsep *ps, struct imsg *imsg)
 	/* Return info to vmmctl(4) */
 	ct = vip.vip_size / sizeof(struct vm_info_result);
 	for (i = 0; i < ct; i++) {
-		if (proc_compose_imsg(ps, PROC_CONTROL,
-		    IMSG_VMDOP_GET_INFO_VM_DATA, imsg->hdr.peerid, 0,
-		    -1, &info[i], sizeof(struct vm_info_result)) == -1)
+		if (proc_compose_imsg(ps, PROC_CONTROL, -1,
+		    IMSG_VMDOP_GET_INFO_VM_DATA, imsg->hdr.peerid, -1,
+		    &info[i], sizeof(struct vm_info_result)) == -1)
 			return (EIO);
 	}
 	free(info);

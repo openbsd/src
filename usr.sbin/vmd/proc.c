@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.c,v 1.2 2015/12/02 09:39:41 reyk Exp $	*/
+/*	$OpenBSD: proc.c,v 1.3 2015/12/02 13:43:36 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -32,7 +32,7 @@
 #include <event.h>
 #include <imsg.h>
 
-#include "proc.h"
+#include "vmd.h"
 
 void	 proc_open(struct privsep *, struct privsep_proc *,
 	    struct privsep_proc *, size_t);
@@ -591,6 +591,13 @@ proc_compose_imsg(struct privsep *ps, enum privsep_procid id, int n,
 }
 
 int
+proc_compose(struct privsep *ps, enum privsep_procid id,
+    uint16_t type, void *data, uint16_t datalen)
+{
+	return (proc_compose_imsg(ps, id, -1, type, -1, -1, data, datalen));
+}
+
+int
 proc_composev_imsg(struct privsep *ps, enum privsep_procid id, int n,
     uint16_t type, uint32_t peerid, int fd, const struct iovec *iov, int iovcnt)
 {
@@ -603,6 +610,13 @@ proc_composev_imsg(struct privsep *ps, enum privsep_procid id, int n,
 			return (-1);
 
 	return (0);
+}
+
+int
+proc_composev(struct privsep *ps, enum privsep_procid id,
+    uint16_t type, const struct iovec *iov, int iovcnt)
+{
+	return (proc_composev_imsg(ps, id, -1, type, -1, -1, iov, iovcnt));
 }
 
 int
