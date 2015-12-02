@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.9 2015/11/30 09:46:08 mpi Exp $
+# $OpenBSD: Makefile,v 1.10 2015/12/02 11:05:35 mpi Exp $
 
 RDOMAIN?=	5
 
@@ -243,6 +243,15 @@ rttest${n}:
 	${RCMD} get -inet6 2001:ee0:2001:c0::/64 2>&1 | \
 		diff -u ${.CURDIR}/${.TARGET}.ok /dev/stdin
 
+# Verify order of multiple priorities
+n=	21
+RTTEST_TARGETS+:=rttest${n}
+rttest${n}:
+	${RCMD} add 10.8.1/24 -gateway 192.0.2.3 -priority 4
+	${RCMD} add 10.8.1/24 -gateway 192.0.2.3 -priority 3
+	${RCMD} add 10.8.1/24 -gateway 192.0.2.3 -priority 5
+	${RCMD} show -inet 2>&1 | \
+		diff -u ${.CURDIR}/${.TARGET}.ok /dev/stdin
 
 REGRESS_TARGETS=netmask ${RTTEST_TARGETS}
 REGRESS_ROOT_TARGETS=${REGRESS_TARGETS}
