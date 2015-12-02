@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.195 2015/12/02 18:38:19 claudio Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.196 2015/12/02 21:09:06 claudio Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -560,7 +560,7 @@ in_arpinput(struct mbuf *m)
 					   ether_sprintf(ea->arp_sha),
 					   ifp->if_xname);
 					goto out;
-				} else if (rt->rt_ifp != ifp) {
+				} else if (rt->rt_ifidx != ifp->if_index) {
 #if NCARP > 0
 					if (ifp->if_type != IFT_CARP)
 #endif
@@ -639,10 +639,9 @@ out:
 		rt = arplookup(itaddr.s_addr, 0, SIN_PROXY, rdomain);
 		if (rt == NULL)
 			goto out;
-#if NCARP > 0
-		if (rt->rt_ifp->if_type == IFT_CARP && ifp->if_type != IFT_CARP)
+		/* protect from possible duplicates only owner should respond */
+		if (rt->rt_ifidx != ifp->if_index)
 			goto out;
-#endif
 		memcpy(ea->arp_tha, ea->arp_sha, sizeof(ea->arp_sha));
 		sdl = satosdl(rt->rt_gateway);
 		memcpy(ea->arp_sha, LLADDR(sdl), sizeof(ea->arp_sha));
