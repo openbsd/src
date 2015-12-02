@@ -1,4 +1,4 @@
-/*	$OpenBSD: cut.c,v 1.22 2015/11/03 04:57:20 mmcc Exp $	*/
+/*	$OpenBSD: cut.c,v 1.23 2015/12/02 00:56:46 schwarze Exp $	*/
 /*	$NetBSD: cut.c,v 1.9 1995/09/02 05:59:23 jtc Exp $	*/
 
 /*
@@ -33,6 +33,7 @@
  * SUCH DAMAGE.
  */
 
+#include <assert.h>
 #include <ctype.h>
 #include <err.h>
 #include <errno.h>
@@ -43,12 +44,17 @@
 #include <string.h>
 #include <unistd.h>
 
+char	dchar[5];
+int	dlen;
+
+int	bflag;
 int	cflag;
-char	dchar;
 int	dflag;
 int	fflag;
+int	nflag;
 int	sflag;
 
+void	b_cut(FILE *, char *);
 void	c_cut(FILE *, char *);
 void	f_cut(FILE *, char *);
 void	get_list(char *);
@@ -61,36 +67,42 @@ main(int argc, char *argv[])
 	void (*fcn)(FILE *, char *);
 	int ch, rval;
 
-	setlocale (LC_ALL, "");
+	setlocale(LC_CTYPE, "");
 
 	if (pledge("stdio rpath", NULL) == -1)
 		err(1, "pledge");
 
-	dchar = '\t';			/* default delimiter is \t */
+	dchar[0] = '\t';		/* default delimiter */
+	dchar[1] = '\0';
+	dlen = 1;
 
-	/* Since we don't support multi-byte characters, the -c and -b 
-	   options are equivalent, and the -n option is meaningless. */
 	while ((ch = getopt(argc, argv, "b:c:d:f:sn")) != -1)
 		switch(ch) {
 		case 'b':
+			get_list(optarg);
+			bflag = 1;
+			break;
 		case 'c':
-			fcn = c_cut;
 			get_list(optarg);
 			cflag = 1;
 			break;
 		case 'd':
-			dchar = *optarg;
+			if ((dlen = mblen(optarg, MB_CUR_MAX)) == -1)
+				usage();
+			assert(dlen < sizeof(dchar));
+			(void)memcpy(dchar, optarg, dlen);
+			dchar[dlen] = '\0';
 			dflag = 1;
 			break;
 		case 'f':
 			get_list(optarg);
-			fcn = f_cut;
 			fflag = 1;
+			break;
+		case 'n':
+			nflag = 1;
 			break;
 		case 's':
 			sflag = 1;
-			break;
-		case 'n':
 			break;
 		case '?':
 		default:
@@ -99,11 +111,20 @@ main(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 
-	if (fflag) {
-		if (cflag)
-			usage();
-	} else if (!cflag || dflag || sflag)
+	if (bflag + cflag + fflag != 1 ||
+	    (nflag && !bflag) ||
+	    ((dflag || sflag) && !fflag))
 		usage();
+
+	if (MB_CUR_MAX == 1) {
+		nflag = 0;
+		if (cflag) {
+			bflag = 1;
+			cflag = 0;
+		}
+	}
+
+	fcn = fflag ? f_cut : (cflag || nflag) ? c_cut : b_cut;
 
 	rval = 0;
 	if (*argv)
@@ -192,7 +213,7 @@ get_list(char *list)
 
 /* ARGSUSED */
 void
-c_cut(FILE *fp, char *fname)
+b_cut(FILE *fp, char *fname)
 {
 	int ch, col;
 	char *pos;
@@ -220,65 +241,82 @@ c_cut(FILE *fp, char *fname)
 }
 
 void
+c_cut(FILE *fp, char *fname)
+{
+	static char	*line = NULL;
+	static size_t	 linesz = 0;
+	ssize_t		 linelen;
+	char		*cp, *pos, *maxpos;
+	int		 len;
+
+	while ((linelen = getline(&line, &linesz, fp)) != -1) {
+		if (line[linelen - 1] == '\n')
+			line[linelen - 1] = '\0';
+
+		cp = line;
+		pos = positions + 1;
+		maxpos = pos + maxval;
+		while(pos < maxpos && *cp != '\0') {
+			len = mblen(cp, MB_CUR_MAX);
+			if (len == -1)
+				len = 1;
+			pos += nflag ? len : 1;
+			if (pos[-1] == '\0')
+				cp += len;
+			else
+				while (len--)
+					putchar(*cp++);
+		}
+		if (autostop)
+			puts(cp);
+		else
+			putchar('\n');
+	}
+}
+
+void
 f_cut(FILE *fp, char *fname)
 {
-	int ch, field, isdelim;
-	char *pos, *p, sep;
-	int output;
-	size_t len;
-	char *lbuf, *tbuf;
+	static char	*line = NULL;
+	static size_t	 linesz = 0;
+	ssize_t		 linelen;
+	char		*sp, *ep, *pos, *maxpos;
+	int		 output;
 
-	for (sep = dchar, tbuf = NULL; (lbuf = fgetln(fp, &len));) {
-		output = 0;
-		if (lbuf[len - 1] != '\n') {
-			/* no newline at the end of the last line so add one */
-			if ((tbuf = malloc(len + 1)) == NULL)
-				err(1, NULL);
-			memcpy(tbuf, lbuf, len);
-			tbuf[len] = '\n';
-			lbuf = tbuf;
-		}
-		for (isdelim = 0, p = lbuf;; ++p) {
-			ch = *p;
-			/* this should work if newline is delimiter */
-			if (ch == sep)
-				isdelim = 1;
-			if (ch == '\n') {
-				if (!isdelim && !sflag)
-					(void)fwrite(lbuf, len, 1, stdout);
-				break;
-			}
-		}
-		if (!isdelim)
+	while ((linelen = getline(&line, &linesz, fp)) != -1) {
+		if (line[linelen - 1] == '\n')
+			line[linelen - 1] = '\0';
+
+		if ((ep = strstr(line, dchar)) == NULL) {
+			if (!sflag)
+				puts(line);
 			continue;
+		}
 
 		pos = positions + 1;
-		for (field = maxval, p = lbuf; field; --field, ++pos) {
-			if (*pos) {
-				if (output++)
-					(void)putchar(sep);
-				while ((ch = *p++) != '\n' && ch != sep)
-					(void)putchar(ch);
-			} else
-				while ((ch = *p++) != '\n' && ch != sep)
-					;
-			if (ch == '\n')
-				break;
-		}
-		if (ch != '\n') {
-			if (autostop) {
+		maxpos = pos + maxval;
+		output = 0;
+		sp = line;
+		for (;;) {
+			if (*pos++) {
 				if (output)
-					(void)putchar(sep);
-				for (; (ch = *p) != '\n'; ++p)
-					(void)putchar(ch);
+					fputs(dchar, stdout);
+				while (sp < ep)
+					putchar(*sp++);
+				output = 1;
 			} else
-				for (; (ch = *p) != '\n'; ++p)
-					;
+				sp = ep;
+			if (*sp == '\0' || pos == maxpos)
+				break;
+			sp += dlen;
+			if ((ep = strstr(sp, dchar)) == NULL)
+				ep = strchr(sp, '\0');
 		}
-		(void)putchar('\n');
+		if (autostop)
+			puts(sp);
+		else
+			putchar('\n');
 	}
-	if (tbuf)
-		free(tbuf);
 }
 
 void

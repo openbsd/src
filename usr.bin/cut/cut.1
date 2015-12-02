@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cut.1,v 1.24 2014/07/10 14:11:56 jmc Exp $
+.\"	$OpenBSD: cut.1,v 1.25 2015/12/02 00:56:46 schwarze Exp $
 .\"	$NetBSD: cut.1,v 1.6 1995/10/02 20:19:26 jtc Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)cut.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: July 10 2014 $
+.Dd $Mdocdate: December 2 2015 $
 .Dt CUT 1
 .Os
 .Sh NAME
@@ -114,6 +114,8 @@ The selected fields are output,
 separated by the field delimiter character.
 .It Fl n
 Do not split multi-byte characters.
+A character is written to standard output if and only if the byte
+position holding its last byte is selected.
 .It Fl s
 Suppresses lines with no field delimiter characters.
 Unless specified, lines with no delimiters are passed through unmodified.
@@ -145,11 +147,19 @@ utility is compliant with the
 .St -p1003.1-2008
 specification.
 .Sh CAVEATS
-The current implementation does not support multi-byte characters.
-Consequently
+The definition of a character depends on the current character set
+.Xr locale 1 .
+If
+.Ev LC_CTYPE
+is set to
+.Qq C
+or
+.Qq POSIX ,
 .Fl c
 does the same as
 .Fl b ,
-and
 .Fl n
-has no effect.
+has no effect, and
+.Fl d
+uses the first byte of
+.Ar delim .
