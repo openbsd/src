@@ -1,4 +1,4 @@
-.\" $OpenBSD: VOP_LOOKUP.9,v 1.31 2015/12/02 10:20:46 jmc Exp $
+.\" $OpenBSD: VOP_LOOKUP.9,v 1.32 2015/12/02 11:03:40 schwarze Exp $
 .\"
 .\" Copyright (c) 2003 Ted Unangst
 .\" All rights reserved.
@@ -316,6 +316,41 @@ argument.
 This should be the current process.
 VOP calls are not safe to call in an interrupt context.
 .Pp
+The
+.Vt vattr
+structure used by
+.Fn VOP_CREATE ,
+.Fn VOP_GETATTR ,
+.Fn VOP_MKDIR ,
+.Fn VOP_MKNOD ,
+.Fn VOP_SETATTR ,
+and
+.Fn VOP_SYMLINK
+is:
+.Bd -literal
+struct vattr {
+	enum vtype      va_type;      /* vnode type */
+	mode_t          va_mode;      /* files access mode and type */
+	nlink_t         va_nlink;     /* number of references */
+	uid_t           va_uid;       /* owner user id */
+	gid_t           va_gid;       /* owner group id */
+	long            va_fsid;      /* file system id */
+	long            va_fileid;    /* file id */
+	u_quad_t        va_size;      /* file size in bytes */
+	long            va_blocksize; /* blocksize preferred for i/o */
+	struct timespec va_atime;     /* time of last access */
+	struct timespec va_mtime;     /* time of last modification */
+	struct timespec va_ctime;     /* time file changed */
+	u_long          va_gen;       /* generation number of file */
+	u_long          va_flags;     /* flags defined for file */
+	dev_t           va_rdev;      /* device the vnode represents */
+	u_quad_t        va_bytes;     /* bytes of held disk space */
+	u_quad_t        va_filerev;   /* file modification number */
+	u_int           va_vaflags;   /* operations flags */
+	long            va_spare;     /* remain quad aligned */
+};
+.Ed
+.Pp
 The following sections comment on the VOP functions from the consumer's
 perspective.
 .Pp
@@ -485,31 +520,8 @@ or should not be changed by
 Upon success of obtaining or changing the attributes, zero is returned;
 otherwise, an appropriate error code is returned.
 All attributes are held in the
-.Fa vattr
-structure described below.
-.Bd -literal
-struct vattr {
-        enum vtype      va_type;        /* vnode type */
-        mode_t          va_mode;        /* files access mode and type */
-        nlink_t         va_nlink;       /* number of references */
-        uid_t           va_uid;         /* owner user id */
-        gid_t           va_gid;         /* owner group id */
-        long            va_fsid;        /* file system id */
-        long            va_fileid;      /* file id */
-        u_quad_t        va_size;        /* file size in bytes */
-        long            va_blocksize;   /* blocksize preferred for i/o */
-        struct timespec va_atime;       /* time of last access */
-        struct timespec va_mtime;       /* time of last modification */
-        struct timespec va_ctime;       /* time file changed */
-        u_long          va_gen;         /* generation number of file */
-        u_long          va_flags;       /* flags defined for file */
-        dev_t           va_rdev;        /* device the vnode represents */
-        u_quad_t        va_bytes;       /* bytes of held disk space */
-        u_quad_t        va_filerev;     /* file modification number */
-        u_int           va_vaflags;     /* operations flags */
-        long            va_spare;       /* remain quad aligned */
-};
-.Ed
+.Vt vattr
+structure shown above.
 .Pp
 .It Fn VOP_INACTIVE vp p
 Notify the underlying file system that the locked vnode
