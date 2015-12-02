@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.282 2015/12/02 16:35:52 bluhm Exp $	*/
+/*	$OpenBSD: route.c,v 1.283 2015/12/02 16:49:58 bluhm Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -832,7 +832,7 @@ rtrequest_delete(struct rt_addrinfo *info, u_int8_t prio, struct ifnet *ifp,
 	}
 
 	error = rtable_delete(tableid, info->rti_info[RTAX_DST],
-	    info->rti_info[RTAX_NETMASK], prio, rt);
+	    info->rti_info[RTAX_NETMASK], rt);
 	if (error != 0) {
 		rtfree(rt);
 		return (ESRCH);

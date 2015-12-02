@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtable.h,v 1.11 2015/12/02 09:17:47 mpi Exp $ */
+/*	$OpenBSD: rtable.h,v 1.12 2015/12/02 16:49:58 bluhm Exp $ */
 
 /*
  * Copyright (c) 2014-2015 Martin Pieuchot
@@ -60,7 +60,7 @@ int		 rtable_insert(unsigned int, struct sockaddr *,
 		     struct sockaddr *, struct sockaddr *, uint8_t,
 		     struct rtentry *);
 int		 rtable_delete(unsigned int, struct sockaddr *,
-		     struct sockaddr *, uint8_t, struct rtentry *);
+		     struct sockaddr *, struct rtentry *);
 int		 rtable_walk(unsigned int, sa_family_t,
 		     int (*)(struct rtentry *, void *, unsigned int), void *);
 
