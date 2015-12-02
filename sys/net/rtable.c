@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtable.c,v 1.29 2015/12/02 09:17:47 mpi Exp $ */
+/*	$OpenBSD: rtable.c,v 1.30 2015/12/02 11:09:01 mpi Exp $ */
 
 /*
  * Copyright (c) 2014-2015 Martin Pieuchot
@@ -592,7 +592,7 @@ rtable_lookup(unsigned int rtableid, struct sockaddr *dst,
 }
 
 struct rtentry *
-rtable_match(unsigned int rtableid, struct sockaddr *dst)
+rtable_match(unsigned int rtableid, struct sockaddr *dst, uint32_t *src)
 {
 	struct art_root			*ar;
 	struct art_node			*an;
@@ -909,7 +909,7 @@ void
 rtable_mpath_reprio(struct rtentry *rt, uint8_t prio)
 {
 	struct art_node			*an = rt->rt_node;
-	struct rtentry			*mrt, *prt;
+	struct rtentry			*mrt, *prt = NULL;
 
 	KERNEL_ASSERT_LOCKED();
 
@@ -928,10 +928,18 @@ rtable_mpath_reprio(struct rtentry *rt, uint8_t prio)
 		}
 
 		if (mrt->rt_priority > prio) {
-			/* prt -> rt -> mrt */
-			SRPL_INSERT_AFTER_LOCKED(&rt_rc, prt, rt, rt_next);
+			/*
+			 * ``rt'' has a higher (smaller) priority than
+			 * ``mrt'' so put it before in the list.
+			 */
+			if (prt != NULL) {
+				SRPL_INSERT_AFTER_LOCKED(&rt_rc, prt, rt,
+				    rt_next);
+			} else {
+				SRPL_INSERT_HEAD_LOCKED(&rt_rc, &an->an_rtlist,
+				    rt, rt_next);
+			}
 		} else {
-			/* prt -> mrt -> rt */
 			SRPL_INSERT_AFTER_LOCKED(&rt_rc, mrt, rt, rt_next);
 		}
 	} else {
