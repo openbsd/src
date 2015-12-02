@@ -1,4 +1,4 @@
-/*	$OpenBSD: cfscores.c,v 1.20 2015/11/30 08:38:13 tb Exp $	*/
+/*	$OpenBSD: cfscores.c,v 1.21 2015/12/02 18:34:10 tb Exp $	*/
 /*	$NetBSD: cfscores.c,v 1.3 1995/03/21 15:08:37 cgd Exp $	*/
 
 /*
@@ -59,7 +59,7 @@ void	printuser(void);
 int
 main(int argc, char *argv[])
 {
-	char *home, *name;
+	const char *home;
 	int ret;
 
 	if (pledge("stdio rpath", NULL) == -1)

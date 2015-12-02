@@ -1,4 +1,4 @@
-/*	$OpenBSD: canfield.c,v 1.21 2015/11/30 08:38:13 tb Exp $	*/
+/*	$OpenBSD: canfield.c,v 1.22 2015/12/02 18:34:10 tb Exp $	*/
 /*	$NetBSD: canfield.c,v 1.7 1995/05/13 07:28:35 jtc Exp $	*/
 
 /*
@@ -1627,7 +1627,7 @@ initall(void)
 {
 	int i, ret;
 	char scorepath[PATH_MAX];
-	char *home;
+	const char *home;
 
 	time(&acctstart);
 	initdeck(deck);
