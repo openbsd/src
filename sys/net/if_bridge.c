@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.272 2015/12/01 18:28:29 goda Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.273 2015/12/02 08:04:12 mpi Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -43,10 +43,7 @@
 #include <sys/mbuf.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
-#include <sys/errno.h>
 #include <sys/kernel.h>
-
-#include <crypto/siphash.h>
 
 #include <net/if.h>
 #include <net/if_types.h>

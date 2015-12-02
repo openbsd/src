@@ -1,4 +1,4 @@
-/*	$OpenBSD: bridgectl.c,v 1.1 2015/12/01 18:28:29 goda Exp $	*/
+/*	$OpenBSD: bridgectl.c,v 1.2 2015/12/02 08:04:12 mpi Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -31,10 +31,7 @@
  *
  */
 
-#include "bpfilter.h"
-#include "gif.h"
 #include "pf.h"
-#include "mpw.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,31 +39,14 @@
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <sys/timeout.h>
-#include <sys/errno.h>
 #include <sys/kernel.h>
-#include <sys/filio.h>
 
 #include <crypto/siphash.h>
 
 #include <net/if.h>
-#include <net/if_types.h>
-#include <net/if_llc.h>
 
 #include <netinet/in.h>
-#include <netinet/ip.h>
-#include <netinet/ip_var.h>
 #include <netinet/if_ether.h>
-#include <netinet/ip_icmp.h>
-
-#ifdef INET6
-#include <netinet6/in6_var.h>
-#include <netinet/ip6.h>
-#include <netinet6/ip6_var.h>
-#endif
-
-#if NBPFILTER > 0
-#include <net/bpf.h>
-#endif
 
 #include <net/if_bridge.h>
 
