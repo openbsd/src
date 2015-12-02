@@ -1,4 +1,4 @@
-/* $OpenBSD: xhci.c,v 1.65 2015/11/29 16:30:48 kettenis Exp $ */
+/* $OpenBSD: xhci.c,v 1.66 2015/12/02 09:23:23 mpi Exp $ */
 
 /*
  * Copyright (c) 2014-2015 Martin Pieuchot
@@ -783,15 +783,14 @@ xhci_event_xfer(struct xhci_softc *sc, uint64_t paddr, uint32_t status,
 
 		/* We need to report this condition for umass(4). */
 		if (code == XHCI_CODE_STALL)
-			xfer->status = USBD_STALLED;
+			xp->halted = USBD_STALLED;
 		else
-			xfer->status = USBD_IOERROR;
+			xp->halted = USBD_IOERROR;
 		/*
 		 * Since the stack might try to start a new transfer as
 		 * soon as a pending one finishes, make sure the endpoint
 		 * is fully reset before calling usb_transfer_complete().
 		 */
-		xp->halted = 1;
 		xp->aborted_xfer = xfer;
 		xhci_cmd_reset_ep_async(sc, slot, dci);
 		return;
@@ -821,7 +820,7 @@ xhci_event_command(struct xhci_softc *sc, uint64_t paddr)
 	struct xhci_pipe *xp;
 	uint32_t flags;
 	uint8_t dci, slot;
-	int trb_idx;
+	int trb_idx, status;
 
 	trb_idx = (paddr - sc->sc_cmd_ring.dma.paddr) / sizeof(*trb);
 	if (trb_idx < 0 || trb_idx >= sc->sc_cmd_ring.ntrb) {
@@ -852,8 +851,10 @@ xhci_event_command(struct xhci_softc *sc, uint64_t paddr)
 		if (xp == NULL)
 			break;
 
+		status = xp->halted;
 		xp->halted = 0;
 		if (xp->aborted_xfer != NULL) {
+			xp->aborted_xfer->status = status;
 			xhci_xfer_done(xp->aborted_xfer);
 			wakeup(xp);
 		}
@@ -1932,8 +1933,7 @@ xhci_abort_xfer(struct usbd_xfer *xfer, usbd_status status)
 	usb_rem_task(xfer->device, &xfer->abort_task);
 
 	/* Indicate that we are aborting this transfer. */
-	xfer->status = status;
-	xp->halted = 1;
+	xp->halted = status;
 	xp->aborted_xfer = xfer;
 
 	/* Stop the endpoint and wait until the hardware says so. */
