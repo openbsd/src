@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.h,v 1.3 2015/11/23 13:04:49 reyk Exp $	*/
+/*	$OpenBSD: vmd.h,v 1.4 2015/12/02 09:14:25 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -16,7 +16,10 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <stdarg.h>
+#include <sys/types.h>
+#include <sys/queue.h>
+
+#include "proc.h"
 
 #ifndef __VMD_H__
 #define __VMD_H__
@@ -25,6 +28,9 @@
 #define SOCKET_NAME		"/var/run/vmd.sock"
 #define VMM_NODE		"/dev/vmm"
 #define VM_NAME_MAX		256
+#define MAX_TAP			256
+#define NR_BACKLOG		5
+
 
 /* #define VMD_DEBUG */
 
@@ -34,10 +40,8 @@
 #define dprintf(x...)
 #endif /* VMM_DEBUG */
 
-
 enum imsg_type {
-        IMSG_NONE,
-	IMSG_VMDOP_DISABLE_VMM_REQUEST,
+	IMSG_VMDOP_DISABLE_VMM_REQUEST = IMSG_PROC_MAX,
 	IMSG_VMDOP_DISABLE_VMM_RESPONSE,
 	IMSG_VMDOP_ENABLE_VMM_REQUEST,
 	IMSG_VMDOP_ENABLE_VMM_RESPONSE,
@@ -50,28 +54,22 @@ enum imsg_type {
 	IMSG_VMDOP_GET_INFO_VM_END_DATA
 };
 
+SLIST_HEAD(vmstate_head, vmstate);
+
+struct vmd {
+	struct privsep		 vmd_ps;
+	int			 vmd_fd;
+
+	int			 vmd_debug;
+	int			 vmd_verbose;
+	int			 vmd_noaction;
+
+	struct vmstate_head	 vmd_vmstate;
+};
+
+/* vmm.c */
+int vmm_dispatch_control(int, struct privsep_proc *, struct imsg *);
 int write_page(uint32_t dst, void *buf, uint32_t, int);
 int read_page(uint32_t dst, void *buf, uint32_t, int);
-
-/* log.c */
-void	log_init(int, int);
-void	log_procinit(const char *);
-void	log_verbose(int);
-void	log_warn(const char *, ...)
-	    __attribute__((__format__ (printf, 1, 2)));
-void	log_warnx(const char *, ...)
-	    __attribute__((__format__ (printf, 1, 2)));
-void	log_info(const char *, ...)
-	    __attribute__((__format__ (printf, 1, 2)));
-void	log_debug(const char *, ...)
-	    __attribute__((__format__ (printf, 1, 2)));
-void	logit(int, const char *, ...)
-	    __attribute__((__format__ (printf, 2, 3)));
-void	vlog(int, const char *, va_list)
-	    __attribute__((__format__ (printf, 2, 0)));
-__dead void fatal(const char *, ...)
-	    __attribute__((__format__ (printf, 1, 2)));
-__dead void fatalx(const char *, ...)
-	    __attribute__((__format__ (printf, 1, 2)));
 
 #endif /* __VMD_H__ */

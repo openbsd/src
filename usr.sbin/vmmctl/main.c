@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.5 2015/12/01 20:52:44 halex Exp $	*/
+/*	$OpenBSD: main.c,v 1.6 2015/12/02 09:14:25 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -40,6 +40,7 @@
 
 static const char	*socket_name = SOCKET_NAME;
 static const char	*config_file = VMM_CONF;
+static int		 ctl_sock = -1;
 
 __dead void	 usage(void);
 __dead void	 ctl_usage(struct ctl_command *);
@@ -150,6 +151,11 @@ parse(int argc, char *argv[])
 	if (ctl->main(&res, argc, argv) != 0)
 		err(1, "failed");
 
+	if (ctl_sock != -1) {
+		close(ibuf->fd);
+		free(ibuf);
+	}
+
 	return (0);
 }
 
@@ -161,27 +167,23 @@ vmmaction(struct parse_result *res)
 	int			 done = 0;
 	int			 n;
 	int			 ret;
-	int			 ctl_sock;
 
-	/*
-	 * Connect to vmd control socket.
-	 * XXX vmd currently only accepts one request per connection,
-	 * XXX so we have to open the control socket each time this
-	 * XXX function is called.  This should be changed later.
-	 */
-	if ((ctl_sock = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
-		err(1, "socket");
+	if (ctl_sock == -1) {
+		if ((ctl_sock = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
+			err(1, "socket");
 
-	bzero(&sun, sizeof(sun));
-	sun.sun_family = AF_UNIX;
-	strlcpy(sun.sun_path, socket_name, sizeof(sun.sun_path));
+		bzero(&sun, sizeof(sun));
+		sun.sun_family = AF_UNIX;
+		strlcpy(sun.sun_path, socket_name, sizeof(sun.sun_path));
 
-	if (connect(ctl_sock, (struct sockaddr *)&sun, sizeof(sun)) == -1)
-		err(1, "connect: %s", socket_name);
+		if (connect(ctl_sock,
+		    (struct sockaddr *)&sun, sizeof(sun)) == -1)
+			err(1, "connect: %s", socket_name);
 
-	if ((ibuf = malloc(sizeof(struct imsgbuf))) == NULL)
-		err(1, "malloc");
-	imsg_init(ibuf, ctl_sock);
+		if ((ibuf = malloc(sizeof(struct imsgbuf))) == NULL)
+			err(1, "malloc");
+		imsg_init(ibuf, ctl_sock);
+	}
 
 	switch (res->action) {
 	case CMD_START:
@@ -253,9 +255,6 @@ vmmaction(struct parse_result *res)
 			imsg_free(&imsg);
 		}
 	}
-
-	close(ibuf->fd);
-	free(ibuf);
 
 	parse_free(res);
 
