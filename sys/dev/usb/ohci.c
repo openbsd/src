@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci.c,v 1.145 2015/06/26 11:17:34 mpi Exp $ */
+/*	$OpenBSD: ohci.c,v 1.146 2015/12/02 09:43:03 yasuoka Exp $ */
 /*	$NetBSD: ohci.c,v 1.139 2003/02/22 05:24:16 tsutsui Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
@@ -2901,7 +2901,7 @@ ohci_device_intr_start(struct usbd_xfer *xfer)
 	tail->xfer = NULL;
 
 	data->td.td_flags = htole32(
-		usbd_xfer_isread(xfer) ? OHCI_TD_IN : OHCI_TD_OUT |
+		(usbd_xfer_isread(xfer) ? OHCI_TD_IN : OHCI_TD_OUT) |
 		OHCI_TD_NOCC |
 		OHCI_TD_SET_DI(1) | OHCI_TD_TOGGLE_CARRY);
 	if (xfer->flags & USBD_SHORT_XFER_OK)
