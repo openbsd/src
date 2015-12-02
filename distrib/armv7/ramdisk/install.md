@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.19 2015/08/01 00:25:14 jsg Exp $
+#	$OpenBSD: install.md,v 1.20 2015/12/02 21:57:50 krw Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -141,7 +141,7 @@ __EOT
 }
 
 md_prep_fdisk() {
-	local _disk=$1 _q _d
+	local _disk=$1 _d
 
 	local bootparttype="C"
 	local bootsectorstart="64"
@@ -171,7 +171,7 @@ md_prep_fdisk() {
 		else
 			echo "MBR has invalid signature; not showing it."
 		fi
-		ask "Use (W)hole disk$_q or (E)dit the MBR?" "$_d"
+		ask "Use (W)hole disk$ or (E)dit the MBR?" "$_d"
 		case $resp in
 		w*|W*)
 			echo -n "Creating a ${bootfstype} partition and an OpenBSD partition for rest of $_disk..."
@@ -212,7 +212,6 @@ __EOT
 			fdisk -e ${_disk}
 			fdisk $_disk | grep -q ' A6 ' && return
 			echo No OpenBSD partition in MBR, try again. ;;
-		o*|O*)	return ;;
 		esac
 	done
 }
