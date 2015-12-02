@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.68 2015/08/20 13:41:41 visa Exp $ */
+/*	$OpenBSD: machdep.c,v 1.69 2015/12/02 14:52:51 visa Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -151,42 +151,15 @@ struct timecounter ipdclock_timecounter = {
 					 * by cp0 counter */
 };
 
-#define btoc(x) (((x)+PAGE_MASK)>>PAGE_SHIFT)
-
-#define OCTEON_DRAM_FIRST_256_END	0xfffffffull
-
 void
 octeon_memory_init(struct boot_info *boot_info)
 {
-	uint64_t phys_avail[10 + 2] = {0,};
-	uint64_t startpfn, endpfn;
-	uint32_t realmem;
 	extern char end[];
 	int i;
 	uint32_t realmem_bytes;
 
-	startpfn = atop(CKSEG0_TO_PHYS((vaddr_t)&end) + PAGE_SIZE);
-	endpfn = atop(96 << 20);
-	mem_layout[0].mem_first_page = startpfn;
-	mem_layout[0].mem_last_page = endpfn;
-
-	physmem = endpfn - startpfn;
-
-	realmem_bytes = ((boot_info->dram_size << 20) - PAGE_SIZE);
-	realmem_bytes &= ~(PAGE_SIZE - 1);
-
-	/* phys_avail regions are in bytes */
-	phys_avail[0] =
-	    (CKSEG0_TO_PHYS((uint64_t)&end) + PAGE_SIZE) & ~(PAGE_SIZE - 1);
-
-	if (realmem_bytes > OCTEON_DRAM_FIRST_256_END) {
-		phys_avail[1] = OCTEON_DRAM_FIRST_256_END;
-		realmem_bytes -= OCTEON_DRAM_FIRST_256_END;
-		realmem_bytes &= ~(PAGE_SIZE - 1);
-	} else
-		phys_avail[1] = realmem_bytes;
-
-	mem_layout[0].mem_last_page = atop(phys_avail[1]);
+	realmem_bytes = boot_info->dram_size << 20;
+	physmem = atop(realmem_bytes);
 
 	/*-
 	 * Octeon Memory looks as follows:
@@ -198,36 +171,40 @@ octeon_memory_init(struct boot_info *boot_info)
 	 * Over 512MB Memory DR2  15.5GB
 	 * 0000 0000 2000 0000     to  0000 0003 FFFF FFFF
 	 */
-	physmem = atop(phys_avail[1] - phys_avail[0]);
 
-	if (realmem_bytes > OCTEON_DRAM_FIRST_256_END) {
-		/* take out the upper non-cached 1/2 */
-		phys_avail[2] = 0x410000000ULL;
-		phys_avail[3] =
-		    (0x410000000ULL + OCTEON_DRAM_FIRST_256_END);
-		physmem += btoc(phys_avail[3] - phys_avail[2]);
-		mem_layout[2].mem_first_page = atop(phys_avail[2]);
-		mem_layout[2].mem_last_page = atop(phys_avail[3] - 1);
-		realmem_bytes -= OCTEON_DRAM_FIRST_256_END;
+	/* DR0, ignoring everything below the kernel image */
+	mem_layout[0].mem_first_page =
+	    atop(CKSEG0_TO_PHYS(round_page((vaddr_t)&end)));
+	if (physmem > atop(256 << 20))
+		mem_layout[0].mem_last_page = atop(256 << 20);
+	else
+		mem_layout[0].mem_last_page = physmem;
 
-		/* Now map the rest of the memory */
-		phys_avail[4] = 0x20000000ULL;
-		phys_avail[5] = (0x20000000ULL + realmem_bytes);
-		physmem += btoc(phys_avail[5] - phys_avail[4]);
-		mem_layout[1].mem_first_page = atop(phys_avail[4]);
-		mem_layout[1].mem_last_page = atop(phys_avail[5] - 1);
-		realmem_bytes = 0;
+	/* DR1 */
+	i = 1;
+	if (physmem > atop(256 << 20)) {
+#ifdef MIPS_PTE64
+		mem_layout[i].mem_first_page = atop(0x410000000ULL);
+		if (physmem > atop(512 << 20))
+			mem_layout[i].mem_last_page = atop(0x420000000ULL);
+		else
+			mem_layout[i].mem_last_page =
+			    atop(0x410000000ULL) + physmem - atop(256 << 20);
+		i++;
+#endif
 	}
 
- 	realmem = physmem;
+	/* DR2 */
+	if (physmem > atop(512 << 20)) {
+		mem_layout[i].mem_first_page = atop(0x20000000ULL);
+		mem_layout[i].mem_last_page =
+		    atop(0x20000000ULL) + physmem - atop(512 << 20);
+		/* i++; */
+	}
 
 	printf("Total DRAM Size 0x%016X\n",
 	    (uint32_t)(boot_info->dram_size << 20));
 
-	for (i = 0; phys_avail[i]; i += 2) {
-		printf("Bank %d = 0x%016lX   ->  0x%016lX\n", i >> 1,
-		    (long)phys_avail[i], (long)phys_avail[i + 1]);
-	}
 	for (i = 0; mem_layout[i].mem_last_page; i++) {
 		printf("mem_layout[%d] page 0x%016llX -> 0x%016llX\n", i,
 		    mem_layout[i].mem_first_page, mem_layout[i].mem_last_page);
