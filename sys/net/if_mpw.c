@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mpw.c,v 1.10 2015/11/06 11:45:04 mpi Exp $ */
+/*	$OpenBSD: if_mpw.c,v 1.11 2015/12/02 13:29:25 claudio Exp $ */
 
 /*
  * Copyright (c) 2015 Rafael Zalamena <rzalamena@openbsd.org>
@@ -500,8 +500,7 @@ mpw_start(struct ifnet *ifp0)
 	struct shim_hdr *shim;
 	struct sockaddr_storage ss;
 
-	rt = rtalloc((struct sockaddr *) &sc->sc_nexthop,
-	    RT_REPORT | RT_RESOLVE, 0);
+	rt = rtalloc((struct sockaddr *) &sc->sc_nexthop, RT_RESOLVE, 0);
 	if (!rtisvalid(rt)) {
 		rtfree(rt);
 		return;

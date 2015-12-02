@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_src.c,v 1.70 2015/10/25 14:43:06 florian Exp $	*/
+/*	$OpenBSD: in6_src.c,v 1.71 2015/12/02 13:29:26 claudio Exp $	*/
 /*	$KAME: in6_src.c,v 1.36 2001/02/06 04:08:17 itojun Exp $	*/
 
 /*
@@ -242,7 +242,7 @@ in6_selectsrc(struct in6_addr **in6src, struct sockaddr_in6 *dstsock,
 			sa6->sin6_scope_id = dstsock->sin6_scope_id;
 			if (IN6_IS_ADDR_MULTICAST(dst)) {
 				ro->ro_rt = rtalloc(sin6tosa(&ro->ro_dst),
-				    RT_REPORT|RT_RESOLVE, ro->ro_tableid);
+				    RT_RESOLVE, ro->ro_tableid);
 			} else {
 				ro->ro_rt = rtalloc_mpath(sin6tosa(&ro->ro_dst),
 				    NULL, ro->ro_tableid);

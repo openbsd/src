@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.309 2015/12/01 00:49:12 mmcc Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.310 2015/12/02 13:29:26 claudio Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -501,7 +501,7 @@ sendit:
 				if (ro && ro->ro_rt != NULL) {
 					rtfree(ro->ro_rt);
 					ro->ro_rt = rtalloc(&ro->ro_dst,
-					    RT_REPORT|RT_RESOLVE,
+					    RT_RESOLVE,
 					    m->m_pkthdr.ph_rtableid);
 				}
 				if (rt_mtucloned)
@@ -1443,8 +1443,7 @@ ip_setmoptions(int optname, struct ip_moptions **imop, struct mbuf *m,
 			sin.sin_len = sizeof(sin);
 			sin.sin_family = AF_INET;
 			sin.sin_addr = mreq->imr_multiaddr;
-			rt = rtalloc(sintosa(&sin), RT_REPORT|RT_RESOLVE,
-			    rtableid);
+			rt = rtalloc(sintosa(&sin), RT_RESOLVE, rtableid);
 			if (!rtisvalid(rt)) {
 				rtfree(rt);
 				error = EADDRNOTAVAIL;
@@ -1455,7 +1454,7 @@ ip_setmoptions(int optname, struct ip_moptions **imop, struct mbuf *m,
 			sin.sin_len = sizeof(sin);
 			sin.sin_family = AF_INET;
 			sin.sin_addr = mreq->imr_interface;
-			rt = rtalloc(sintosa(&sin), RT_REPORT, rtableid);
+			rt = rtalloc(sintosa(&sin), 0, rtableid);
 			if (!rtisvalid(rt) || !ISSET(rt->rt_flags, RTF_LOCAL)) {
 				rtfree(rt);
 				error = EADDRNOTAVAIL;

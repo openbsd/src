@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.280 2015/12/02 10:33:15 blambert Exp $	*/
+/*	$OpenBSD: route.c,v 1.281 2015/12/02 13:29:26 claudio Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -223,10 +223,6 @@ rtisvalid(struct rtentry *rt)
  * "RT_RESOLVE" means that a corresponding L2 entry should
  *   be added to the routing table and resolved (via ARP or
  *   NDP), if it does not exist.
- *
- * "RT_REPORT" indicates that a message should be sent to
- *   userland if no matching route has been found or if an
- *   error occured while adding a L2 entry.
  */
 struct rtentry *
 rt_match(struct sockaddr *dst, uint32_t *src, int flags, unsigned int tableid)
@@ -248,19 +244,17 @@ rt_match(struct sockaddr *dst, uint32_t *src, int flags, unsigned int tableid)
 			    &rt, tableid);
 			if (error) {
 				rt0->rt_use++;
-				goto miss;
+				rt_missmsg(RTM_MISS, &info, 0, 0, error,
+				    tableid);
+			} else {
+				/* Inform listeners of the new route */
+				rt_sendmsg(rt, RTM_ADD, tableid);
+				rtfree(rt0);
 			}
-			/* Inform listeners of the new route */
-			rt_sendmsg(rt, RTM_ADD, tableid);
-			rtfree(rt0);
 		}
 		rt->rt_use++;
-	} else {
+	} else
 		rtstat.rts_unreach++;
-miss:
-		if (ISSET(flags, RT_REPORT))
-			rt_missmsg(RTM_MISS, &info, 0, 0, error, tableid);
-	}
 	KERNEL_UNLOCK();
 	splx(s);
 	return (rt);
@@ -349,7 +343,7 @@ rt_hash(struct rtentry *rt, uint32_t *src)
 struct rtentry *
 rtalloc_mpath(struct sockaddr *dst, uint32_t *src, unsigned int rtableid)
 {
-	return (_rtalloc(dst, src, RT_REPORT|RT_RESOLVE, rtableid));
+	return (_rtalloc(dst, src, RT_RESOLVE, rtableid));
 }
 #endif /* SMALL_KERNEL */
 

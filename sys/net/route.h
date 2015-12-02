@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.h,v 1.124 2015/12/02 09:17:47 mpi Exp $	*/
+/*	$OpenBSD: route.h,v 1.125 2015/12/02 13:29:26 claudio Exp $	*/
 /*	$NetBSD: route.h,v 1.9 1996/02/13 22:00:49 christos Exp $	*/
 
 /*
@@ -340,8 +340,7 @@ void		 rtlabel_unref(u_int16_t);
 /*
  * Values for additional argument to rtalloc()
  */
-#define	RT_REPORT	0x1
-#define	RT_RESOLVE	0x2
+#define	RT_RESOLVE	1
 
 extern struct rtstat rtstat;
 extern const struct sockaddr_rtin rt_defmask4;
@@ -379,7 +378,7 @@ void			 rt_timer_timer(void *);
 int	 rtisvalid(struct rtentry *);
 int	 rt_hash(struct rtentry *, uint32_t *);
 #ifdef SMALL_KERNEL
-#define	 rtalloc_mpath(dst, s, rid) rtalloc((dst), RT_REPORT|RT_RESOLVE, (rid))
+#define	 rtalloc_mpath(dst, s, rid) rtalloc((dst), RT_RESOLVE, (rid))
 #else
 struct	 rtentry *rtalloc_mpath(struct sockaddr *, uint32_t *, u_int);
 #endif

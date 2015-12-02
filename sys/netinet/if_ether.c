@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.192 2015/12/02 09:28:46 mpi Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.193 2015/12/02 13:29:26 claudio Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -704,7 +704,7 @@ arplookup(u_int32_t addr, int create, int proxy, u_int tableid)
 	sin.sin_family = AF_INET;
 	sin.sin_addr.s_addr = addr;
 	sin.sin_other = proxy ? SIN_PROXY : 0;
-	flags = (create) ? (RT_REPORT|RT_RESOLVE) : 0;
+	flags = (create) ? RT_RESOLVE : 0;
 
 	rt = rtalloc((struct sockaddr *)&sin, flags, tableid);
 	if (!rtisvalid(rt) || ISSET(rt->rt_flags, RTF_GATEWAY) ||
