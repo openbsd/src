@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.196 2015/12/02 21:09:06 claudio Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.197 2015/12/02 22:02:18 claudio Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -565,14 +565,19 @@ in_arpinput(struct mbuf *m)
 					if (ifp->if_type != IFT_CARP)
 #endif
 					{
+						struct ifnet *rifp = if_get(
+						    rt->rt_ifidx);
+						if (rifp == NULL)
+							goto out;
 						inet_ntop(AF_INET, &isaddr,
 						    addr, sizeof(addr));
 						log(LOG_WARNING, "arp: attempt"
 						   " to overwrite entry for"
 						   " %s on %s by %s on %s\n",
-						   addr, rt->rt_ifp->if_xname,
+						   addr, rifp->if_xname,
 						   ether_sprintf(ea->arp_sha),
 						   ifp->if_xname);
+						if_put(rifp);
 					}
 					goto out;
 				} else {
@@ -587,13 +592,17 @@ in_arpinput(struct mbuf *m)
 			changed = 1;
 			}
 		} else if (!if_isconnected(ifp, rt->rt_ifidx)) {
+			struct ifnet *rifp = if_get(rt->rt_ifidx);
+			if (rifp == NULL)
+				goto out;
 			inet_ntop(AF_INET, &isaddr, addr, sizeof(addr));
 			log(LOG_WARNING,
 			    "arp: attempt to add entry for %s "
 			    "on %s by %s on %s\n", addr,
-			    rt->rt_ifp->if_xname,
+			    rifp->if_xname,
 			    ether_sprintf(ea->arp_sha),
 			    ifp->if_xname);
+			if_put(rifp);
 			goto out;
 		}
 		sdl->sdl_alen = sizeof(ea->arp_sha);
