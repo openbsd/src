@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd.c,v 1.131 2015/12/02 19:03:17 henning Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.132 2015/12/02 20:58:43 henning Exp $	*/
 
 /*
  * Copyright (c) 2015 Henning Brauer <henning@openbsd.org>
@@ -811,6 +811,7 @@ nextstate(struct con *cp)
 	}
 	switch (cp->state) {
 	case 0:
+	tlsinitdone:
 		/* banner sent; wait for input */
 		cp->ip = cp->ibuf;
 		cp->il = sizeof(cp->ibuf) - 1;
@@ -850,7 +851,6 @@ nextstate(struct con *cp)
 		}
 		goto mail;
 	case 2:
-	tlsinitdone:
 		/* sent 250 Hello, wait for input */
 		cp->ip = cp->ibuf;
 		cp->il = sizeof(cp->ibuf) - 1;
