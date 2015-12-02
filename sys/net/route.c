@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.279 2015/12/02 09:17:47 mpi Exp $	*/
+/*	$OpenBSD: route.c,v 1.280 2015/12/02 10:33:15 blambert Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -1575,7 +1575,7 @@ rtlabel_name2id(char *name)
 	if (new_id > LABELID_MAX)
 		return (0);
 
-	label = malloc(sizeof(*label), M_TEMP, M_NOWAIT|M_ZERO);
+	label = malloc(sizeof(*label), M_RTABLE, M_NOWAIT|M_ZERO);
 	if (label == NULL)
 		return (0);
 	strlcpy(label->rtl_name, name, sizeof(label->rtl_name));
@@ -1631,7 +1631,7 @@ rtlabel_unref(u_int16_t id)
 		if (id == p->rtl_id) {
 			if (--p->rtl_ref == 0) {
 				TAILQ_REMOVE(&rt_labels, p, rtl_entry);
-				free(p, M_TEMP, sizeof(*p));
+				free(p, M_RTABLE, sizeof(*p));
 			}
 			break;
 		}
