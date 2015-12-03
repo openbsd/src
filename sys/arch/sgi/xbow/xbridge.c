@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbridge.c,v 1.99 2015/09/27 10:12:09 semarie Exp $	*/
+/*	$OpenBSD: xbridge.c,v 1.100 2015/12/03 15:38:06 visa Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009, 2011  Miodrag Vallat.
@@ -1500,7 +1500,7 @@ xbridge_pci_intr_handler(void *v)
 		 */
 		rc = -1;
 #ifdef DEBUG
-		printf("%s: irq %d but not pending in ISR %08x\n",
+		printf("%s: irq %d but not pending in ISR %08llx\n",
 		    DEVNAME(xb), xi->xi_intrbit, isr);
 #endif
 	} else {
@@ -2389,7 +2389,7 @@ xbridge_resource_setup(struct xbpci_softc *xb)
 
 #ifdef DEBUG
 	for (dev = 0; dev < xb->xb_nslots; dev++)
-		printf("device %d: devio %08x\n",
+		printf("device %d: devio %08llx\n",
 		    dev, xbridge_read_reg(xb, BRIDGE_DEVICE(dev)));
 #endif
 	nppb = npccbb = 0;
@@ -2734,7 +2734,7 @@ xbridge_mapping_setup(struct xbpci_softc *xb, int io)
 				    BRIDGE_PCI_IO_SPACE_LENGTH - offs;
 
 #ifdef DEBUG
-			printf("direct io %p-%p base %p\n",
+			printf("direct io %#lx-%#lx base %#lx\n",
 			    offs, offs + len - 1, base);
 #endif
 			offs -= BRIDGE_PCI_IO_SPACE_BASE;
@@ -2790,7 +2790,7 @@ xbridge_mapping_setup(struct xbpci_softc *xb, int io)
 				    offs;
 
 #ifdef DEBUG
-			printf("direct mem %p-%p base %p\n",
+			printf("direct mem %#lx-%#lx base %#lx\n",
 			    offs, offs + len - 1, base);
 #endif
 			offs -= membase;
@@ -3007,7 +3007,7 @@ xbridge_resource_manage(struct xbpci_softc *xb, pcitag_t tag,
 		 * ARCS but can be reinitialized as we see fit).
 		 */
 #ifdef DEBUG
-		printf("tag %04x bar %02x type %d base %p size %p",
+		printf("tag %04lx bar %02x type %d base %#lx size %#lx",
 		    tag, reg, type, base, size);
 #endif
 		switch (type) {
@@ -3038,7 +3038,7 @@ xbridge_resource_manage(struct xbpci_softc *xb, pcitag_t tag,
 		}
 
 #ifdef DEBUG
-		printf(" setup at %p\n", base);
+		printf(" setup at %#lx\n", base);
 #endif
 		pci_conf_write(pc, tag, reg, base);
 
@@ -3054,7 +3054,7 @@ xbridge_resource_manage(struct xbpci_softc *xb, pcitag_t tag,
 
 		if (size != 0) {
 #ifdef DEBUG
-			printf("bar %02x type rom base %p size %p",
+			printf("bar %02x type rom base %#lx size %#lx",
 			    reg_rom, base, size);
 #endif
 			if (memex != NULL) {
@@ -3064,7 +3064,7 @@ xbridge_resource_manage(struct xbpci_softc *xb, pcitag_t tag,
 			} else
 				base = 0;
 #ifdef DEBUG
-			printf(" setup at %p\n", base);
+			printf(" setup at %#lx\n", base);
 #endif
 		} else
 			base = 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sginode.c,v 1.31 2015/02/06 22:12:19 miod Exp $	*/
+/*	$OpenBSD: sginode.c,v 1.32 2015/12/03 15:38:06 visa Exp $	*/
 /*
  * Copyright (c) 2008, 2009, 2011 Miodrag Vallat.
  *
@@ -93,8 +93,8 @@ kl_init(int ip35)
 
 	cfghdr = IP27_KLCONFIG_HDR(0);
 	DB_PRF(("config @%p\n", cfghdr));
-	DB_PRF(("magic %p version %x\n", cfghdr->magic, cfghdr->version));
-	DB_PRF(("console %p baud %d\n", cfghdr->cons_info.uart_base,
+	DB_PRF(("magic %#llx version %x\n", cfghdr->magic, cfghdr->version));
+	DB_PRF(("console %#lx baud %d\n", cfghdr->cons_info.uart_base,
 	    cfghdr->cons_info.baud));
 
 	val = IP27_LHUB_L(nibase | HUBNI_STATUS);
@@ -103,9 +103,9 @@ kl_init(int ip35)
         bios_printf("Machine is in %c mode.\n", kl_n_mode + 'M');
 
 	val = IP27_LHUB_L(HUBPI_REGION_PRESENT);
-        DB_PRF(("Region present %p.\n", val));
+        DB_PRF(("Region present %#llx.\n", val));
 	val = IP27_LHUB_L(HUBPI_CALIAS_SIZE);
-        DB_PRF(("Calias size %p.\n", val));
+        DB_PRF(("Calias size %#llx.\n", val));
 
 	/*
 	 * Get a grip on the global data area, and figure out how many
@@ -141,7 +141,7 @@ kl_init(int ip35)
 int
 kl_first_pass_board(lboard_t *boardinfo, void *arg)
 {
-	DB_PRF(("%cboard type %x slot %x nasid %x nic %p ncomp %d\n",
+	DB_PRF(("%cboard type %x slot %x nasid %x nic %#llx ncomp %d\n",
 	    boardinfo->struct_type & LBOARD ? 'l' : 'r',
 	    boardinfo->brd_type, boardinfo->brd_slot,
 	    boardinfo->brd_nasid, boardinfo->brd_nic,
@@ -351,7 +351,7 @@ kl_first_pass_comp(klinfo_t *comp, void *arg)
 #ifdef DEBUG
 	case KLSTRUCT_HUB:
 		hubcomp = (klhub_t *)comp;
-		DB_PRF(("\t  port %d flag %d speed %dMHz\n",
+		DB_PRF(("\t  port %d flag %d speed %lldMHz\n",
 		    hubcomp->hub_port.port_nasid, hubcomp->hub_port.port_flag,
 		    hubcomp->hub_speed / 1000000));
 		break;
@@ -363,7 +363,7 @@ kl_first_pass_comp(klinfo_t *comp, void *arg)
 			if (scsicomp == NULL)
 				continue;
 			DB_PRF(("\t\tbus %d, physid 0x%02x virtid %d,"
-			    " specific %ld, numdevs %d\n",
+			    " specific %lld, numdevs %d\n",
 			    i, scsicomp->scsi_info.physid,
 			    scsicomp->scsi_info.virtid,
 			    scsicomp->scsi_specific,
@@ -376,7 +376,7 @@ kl_first_pass_comp(klinfo_t *comp, void *arg)
 #ifdef DEBUG
 	if (arc != NULL) {
 		DB_PRF(("\t[ARCBios component:"
-		    " class %d type %d flags %02x key 0x%lx",
+		    " class %d type %d flags %02x key 0x%llx",
 		    arc->class, arc->type, arc->flags, arc->key));
 		if (arc->id_len != 0)
 			DB_PRF((" %.*s]\n",
@@ -508,7 +508,7 @@ kl_add_memory_ip27(int16_t nasid, int16_t *sizes, unsigned int cnt)
 			if (np == 0)
 				continue;
 
-			DB_PRF(("IP27 memory from %p to %p (%u MB)\n",
+			DB_PRF(("IP27 memory from %#lx to %#llx (%llu MB)\n",
 			    basepa, basepa + (np << 20), np));
 
 			np = atop(np << 20);	/* MB to pages */
@@ -555,7 +555,7 @@ kl_add_memory_ip35(int16_t nasid, int16_t *sizes, unsigned int cnt)
 	while (cnt-- != 0) {
 		np = *sizes++;
 		if (np != 0) {
-			DB_PRF(("IP35 memory from %p to %p (%u MB)\n",
+			DB_PRF(("IP35 memory from %#lx to %#llx (%llu MB)\n",
 			    basepa, basepa + (np << 20), np));
 
 			fp = atop(basepa);
