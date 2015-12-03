@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.181 2015/11/27 16:26:52 benno Exp $	*/
+/*	$OpenBSD: route.c,v 1.182 2015/12/03 08:00:49 claudio Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -1319,10 +1319,10 @@ print_rtmsg(struct rt_msghdr *rtm, int msglen)
 		printf("\n");
 		break;
 	default:
-		printf(", priority %d, ", rtm->rtm_priority);
-		printf("table %u, pid: %ld, seq %d, errno %d\nflags:",
-		    rtm->rtm_tableid, (long)rtm->rtm_pid, rtm->rtm_seq,
-		    rtm->rtm_errno);
+		printf(", priority %d, table %u, ifidx %u, ",
+		    rtm->rtm_priority, rtm->rtm_tableid, rtm->rtm_index);
+		printf("pid: %ld, seq %d, errno %d\nflags:",
+		    (long)rtm->rtm_pid, rtm->rtm_seq, rtm->rtm_errno);
 		bprintf(stdout, rtm->rtm_flags, routeflags);
 		if (verbose) {
 #define lock(f)	((rtm->rtm_rmx.rmx_locks & __CONCAT(RTV_,f)) ? 'L' : ' ')
