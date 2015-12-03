@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.133 2015/12/01 22:30:00 jmc Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.134 2015/12/03 21:11:33 jung Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -17,7 +17,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: December 1 2015 $
+.Dd $Mdocdate: December 3 2015 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -572,6 +572,17 @@ For example:
 expire 4d	# expire after 4 days
 expire 10h	# expire after 10 hours
 .Ed
+.It Xo
+.Ic limit session
+.Brq Cm max-rcpt | max-mails
+.Ar num
+.Xc
+Instruct   
+.Xr smtpd 8
+to accept a maximum number of recipients or emails at once in the receiving queue. Defaults are 100 for 
+.Ic max-mails 
+and 1000 for 
+.Ic max-rcpt .
 .It Xo
 .Ic limit mta
 .Op Ic for Ic domain Ar domain

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.163 2015/12/02 09:06:36 gilles Exp $	*/
+/*	$OpenBSD: parse.y,v 1.164 2015/12/03 21:11:33 jung Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -167,7 +167,7 @@ typedef struct {
 %}
 
 %token	AS QUEUE COMPRESSION ENCRYPTION MAXMESSAGESIZE MAXMTADEFERRED LISTEN ON ANY PORT EXPIRE
-%token	TABLE SECURE SMTPS CERTIFICATE DOMAIN BOUNCEWARN LIMIT INET4 INET6 NODSN
+%token	TABLE SECURE SMTPS CERTIFICATE DOMAIN BOUNCEWARN LIMIT INET4 INET6 NODSN SESSION
 %token  RELAY BACKUP VIA DELIVER TO LMTP MAILDIR MBOX RCPTTO HOSTNAME HOSTNAMES
 %token	ACCEPT REJECT INCLUDE ERROR MDA FROM FOR SOURCE MTA PKI SCHEDULER
 %token	ARROW AUTH TLS LOCAL VIRTUAL TAG TAGGED ALIAS FILTER KEY CA DHPARAMS
@@ -300,6 +300,26 @@ opt_limit_mda	: STRING NUMBER {
 			}
 			else {
 				yyerror("invalid scheduler limit keyword: %s", $1);
+				free($1);
+				YYERROR;
+			}
+			free($1);
+		}
+		;
+
+limits_session	: opt_limit_session limits_session
+		| /* empty */
+		;
+
+opt_limit_session : STRING NUMBER {
+			if (!strcmp($1, "max-rcpt")) {
+				conf->sc_session_max_rcpt = $2;
+			}
+			else if (!strcmp($1, "max-mails")) {
+				conf->sc_session_max_mails = $2;
+			}
+			else {
+				yyerror("invalid session limit keyword: %s", $1);
 				free($1);
 				YYERROR;
 			}
@@ -775,6 +795,7 @@ main		: BOUNCEWARN {
 		| MAXMTADEFERRED NUMBER  {
 			conf->sc_mta_max_deferred = $2;
 		}
+		| LIMIT SESSION limits_session
 		| LIMIT MDA limits_mda
 		| LIMIT MTA FOR DOMAIN STRING {
 			struct mta_limits	*d;
@@ -1404,6 +1425,7 @@ lookup(char *s)
 		{ "scheduler",		SCHEDULER },
 		{ "secure",		SECURE },
 		{ "sender",    		SENDER },
+		{ "session",   		SESSION },
 		{ "smtps",		SMTPS },
 		{ "source",		SOURCE },
 		{ "table",		TABLE },
@@ -1817,6 +1839,9 @@ parse_config(struct smtpd *x_conf, const char *filename, int opts)
 	conf->sc_scheduler_max_schedule = 10;
 	conf->sc_scheduler_max_evp_batch_size = 256;
 	conf->sc_scheduler_max_msg_batch_size = 1024;
+	
+	conf->sc_session_max_rcpt = 1000;
+	conf->sc_session_max_mails = 100;
 
 	conf->sc_mda_max_session = 50;
 	conf->sc_mda_max_user_session = 7;
