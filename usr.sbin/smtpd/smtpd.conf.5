@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.135 2015/12/03 21:13:53 jung Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.136 2015/12/03 22:15:54 jmc Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -579,7 +579,9 @@ expire 10h	# expire after 10 hours
 .Xc
 Instruct
 .Xr smtpd 8
-to accept a maximum number of recipients or emails at once in the receiving queue. Defaults are 100 for
+to accept a maximum number of recipients or emails at once
+in the receiving queue.
+Defaults are 100 for
 .Ic max-mails
 and 1000 for
 .Ic max-rcpt .
