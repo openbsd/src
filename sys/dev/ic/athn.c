@@ -1,4 +1,4 @@
-/*	$OpenBSD: athn.c,v 1.90 2015/11/25 03:09:58 dlg Exp $	*/
+/*	$OpenBSD: athn.c,v 1.91 2015/12/03 14:39:37 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -312,12 +312,10 @@ athn_attach(struct athn_softc *sc)
 		/* Set supported HT rates. */
 		for (i = 0; i < nrxstreams; i++)
 			ic->ic_sup_mcs[i] = 0xff;
-		/* Set the "Tx MCS Set Defined" bit. */
-		ic->ic_sup_mcs[12] |= 0x01;
+		ic->ic_tx_mcs_set |= IEEE80211_TX_MCS_SET_DEFINED;
 		if (ntxstreams != nrxstreams) {
-			/* Set "Tx Rx MCS Set Not Equal" bit. */
-			ic->ic_sup_mcs[12] |= 0x02;
-			ic->ic_sup_mcs[12] |= (ntxstreams - 1) << 2;
+			ic->ic_tx_mcs_set |= IEEE80211_TX_RX_MCS_NOT_EQUAL;
+			ic->ic_tx_mcs_set |= (ntxstreams - 1) << 2;
 		}
 	}
 #endif
