@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vmd.8,v 1.4 2015/12/03 16:18:13 reyk Exp $
+.\"	$OpenBSD: vmd.8,v 1.5 2015/12/03 21:45:45 reyk Exp $
 .\"
 .\" Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
 .\"
@@ -31,7 +31,7 @@ is a daemon responsible for the execution of virtual machines (VMs) on a
 host.
 .Nm
 is typically started at boot time and is controlled via
-.Xr vmmctl 8 .
+.Xr vmctl 8 .
 .Pp
 .Nm
 can be enabled during system boot by setting the following in
@@ -53,7 +53,7 @@ driving the VM's operations using
 .Pp
 .Nm
 is also responsible for proxying various other commands/requests from
-.Xr vmmctl 8 ,
+.Xr vmctl 8 ,
 such as stopping VMs, and retrieving information from
 .Xr vmm 4
 about running VMs.
@@ -93,13 +93,13 @@ This is optional.
 .It Pa /var/run/vmd.sock
 .Ux Ns -domain
 socket used for communication with
-.Xr vmmctl 8 .
+.Xr vmctl 8 .
 .El
 .Sh SEE ALSO
 .Xr vmm 4 ,
 .Xr vm.conf 5 ,
 .Xr rc.conf 8 ,
-.Xr vmmctl 8
+.Xr vmctl 8
 .Sh HISTORY
 The
 .Nm

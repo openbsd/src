@@ -14,10 +14,6 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/*
- * vmmctl(8) - control VMM subsystem
- */
-
 #include <sys/types.h>
 #include <sys/queue.h>
 #include <sys/uio.h>
@@ -38,7 +34,7 @@
 #include <unistd.h>
 
 #include "vmd.h"
-#include "parser.h"
+#include "vmctl.h"
 
 extern char *__progname;
 uint32_t info_id;

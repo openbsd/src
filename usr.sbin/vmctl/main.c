@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.7 2015/12/03 13:08:44 reyk Exp $	*/
+/*	$OpenBSD: main.c,v 1.1 2015/12/03 21:45:45 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -36,10 +36,10 @@
 #include <imsg.h>
 
 #include "vmd.h"
-#include "parser.h"
+#include "vmctl.h"
 
 static const char	*socket_name = SOCKET_NAME;
-static const char	*config_file = VMM_CONF;
+static const char	*config_file = VMD_CONF;
 static int		 ctl_sock = -1;
 
 __dead void	 usage(void);
@@ -427,8 +427,9 @@ ctl_load(struct parse_result *res, int argc, char *argv[])
 	else if (argc > 2)
 		ctl_usage(res->ctl);
 
-	/* parse configuration file options */
-	return (parse_config(config_file));
+	/* XXX send message to vmd(8) to load the configuration */
+	errno = ENOSYS;
+	return (-1);
 }
 
 int

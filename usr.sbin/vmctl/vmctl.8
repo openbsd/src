@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vmmctl.8,v 1.7 2015/11/27 09:11:39 reyk Exp $
+.\"	$OpenBSD: vmctl.8,v 1.1 2015/12/03 21:45:45 reyk Exp $
 .\"
 .\" Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
 .\"
@@ -14,12 +14,12 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 27 2015 $
-.Dt VMMCTL 8
+.Dd $Mdocdate: December 3 2015 $
+.Dt VMCTL 8
 .Os
 .Sh NAME
-.Nm vmmctl
-.Nd control VMM subsystem
+.Nm vmctl
+.Nd control the virtual machine daemon
 .Sh SYNOPSIS
 .Nm
 .Op Fl s Ar socket
@@ -72,7 +72,7 @@ Stops (terminates) a VM defined by the specified VM
 .El
 .Sh FILES
 .Bl -tag -width "/etc/var/run/vmd.sockXX" -compact
-.It Pa /etc/vmm.conf
+.It Pa /etc/vm.conf
 Default configuration file.
 .It Pa /var/run/vmd.sock
 .Ux Ns -domain
@@ -80,7 +80,7 @@ socket used for communication with
 .Xr vmd 8 .
 .El
 .Sh EXIT STATUS
-.Ex -std vmmctl
+.Ex -std vmctl
 .Nm
 may fail due to one of the following reasons:
 .Pp
@@ -92,19 +92,19 @@ A requested VM-based operation could not be completed.
 .El
 .Sh EXAMPLES
 Create a 4.5 Gigabyte disk image, disk.img:
-.Dl $ vmmctl create disk.img -s 4.5G
+.Dl $ vmctl create disk.img -s 4.5G
 .Pp
 Create a new VM with 512MB memory, one network interface, one disk image
 ('disk.img') and boot from kernel '/bsd':
 .Bd -literal -offset indent
-$ vmmctl start "myvm" -m 512M -i 1 -d disk.img -k /bsd
+$ vmctl start "myvm" -m 512M -i 1 -d disk.img -k /bsd
 .Ed
 .Pp
 Terminate VM number 1:
-.Dl $ vmmctl stop 1
+.Dl $ vmctl stop 1
 .Sh SEE ALSO
 .Xr vmm 4 ,
-.Xr vmm.conf 5 ,
+.Xr vm.conf 5 ,
 .Xr rc.conf 8 ,
 .Xr vmd 8
 .Sh HISTORY

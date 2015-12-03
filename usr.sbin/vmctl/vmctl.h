@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.h,v 1.4 2015/12/01 20:52:44 halex Exp $	*/
+/*	$OpenBSD: vmctl.h,v 1.1 2015/12/03 21:45:45 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -19,10 +19,8 @@
 #include <sys/queue.h>
 #include <imsg.h>
 
-#ifndef VMMCTL_PARSER_H
-#define VMMCTL_PARSER_H
-
-#define VMM_CONF	"/etc/vmm.conf"
+#ifndef VMCTL_PARSER_H
+#define VMCTL_PARSER_H
 
 enum actions {
 	NONE,
@@ -67,11 +65,7 @@ int	 parse_vmid(struct parse_result *, char *, uint32_t);
 void	 parse_free(struct parse_result *);
 int	 parse(int, char *[]);
 
-/* parse.y */
-int	 parse_config(const char *);
-int	 cmdline_symset(char *);
-
-/* vmmctl.c */
+/* vmctl.c */
 int	 create_imagefile(const char *, long);
 int	 start_vm(const char *, int, int, int, char **, char *);
 int	 start_vm_complete(struct imsg *, int *);
@@ -81,4 +75,4 @@ void	 get_info_vm(uint32_t);
 int	 add_info(struct imsg *, int *);
 void	 print_vm_info(struct vm_info_result *, size_t);
 
-#endif /* VMMCTL_PARSER_H */
+#endif /* VMCTL_PARSER_H */
