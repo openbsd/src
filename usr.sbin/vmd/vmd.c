@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.15 2015/12/03 16:18:13 reyk Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.16 2015/12/03 23:32:32 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -31,6 +31,7 @@
 #include <signal.h>
 #include <syslog.h>
 #include <unistd.h>
+#include <ctype.h>
 
 #include "proc.h"
 #include "vmd.h"
@@ -56,8 +57,9 @@ int
 vmd_dispatch_control(int fd, struct privsep_proc *p, struct imsg *imsg)
 {
 	struct privsep		*ps = p->p_ps;
-	int			 res = 0, cmd = 0;
+	int			 res = 0, cmd = 0, v = 0;
 	struct vm_create_params	 vcp;
+	char			*str = NULL;
 
 	switch (imsg->hdr.type) {
 	case IMSG_VMDOP_START_VM_REQUEST:
@@ -72,6 +74,15 @@ vmd_dispatch_control(int fd, struct privsep_proc *p, struct imsg *imsg)
 	case IMSG_VMDOP_TERMINATE_VM_REQUEST:
 	case IMSG_VMDOP_GET_INFO_VM_REQUEST:
 		proc_forward_imsg(ps, imsg, PROC_VMM, -1);
+		break;
+	case IMSG_VMDOP_RELOAD:
+		v = 1;
+	case IMSG_VMDOP_LOAD:
+		if (IMSG_DATA_SIZE(imsg) > 0)
+			str = get_string((uint8_t *)imsg->data,
+			    IMSG_DATA_SIZE(imsg));
+		vmd_reload(v, str);
+		free(str);
 		break;
 	default:
 		return (-1);
@@ -152,7 +163,13 @@ vmd_sighdlr(int sig, short event, void *arg)
 
 	switch (sig) {
 	case SIGHUP:
-		log_info("%s: ignoring SIGHUP", __func__);
+		log_info("%s: reload requested with SIGHUP", __func__);
+
+		/*
+		 * This is safe because libevent uses async signal handlers
+		 * that run in the event loop and not in signal context.
+		 */
+		vmd_reload(1, NULL);
 		break;
 	case SIGPIPE:
 		log_info("%s: ignoring SIGPIPE", __func__);
@@ -358,6 +375,24 @@ vmd_configure(void)
 }
 
 void
+vmd_reload(int reset, const char *filename)
+{
+	/* Switch back to the default config file */
+	if (filename == NULL || *filename == '\0')
+		filename = env->vmd_conffile;
+
+	log_debug("%s: level %d config file %s", __func__, reset, filename);
+
+	if (reset)
+		config_setreset(env, CONFIG_ALL);
+
+	if (parse_config(filename) == -1) {
+		log_debug("%s: failed to load config file %s",
+		    __func__, filename);
+	}
+}
+
+void
 vmd_shutdown(void)
 {
 	proc_kill(&env->vmd_ps);
@@ -404,4 +439,16 @@ vm_remove(struct vmd_vm *vm)
 		close(vm->vm_tty);
 
 	free(vm);
+}
+
+char *
+get_string(uint8_t *ptr, size_t len)
+{
+	size_t	 i;
+
+	for (i = 0; i < len; i++)
+		if (!isprint(ptr[i]))
+			break;
+
+	return strndup(ptr, i);
 }

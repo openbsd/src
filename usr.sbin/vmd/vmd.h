@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.h,v 1.9 2015/12/03 16:11:32 reyk Exp $	*/
+/*	$OpenBSD: vmd.h,v 1.10 2015/12/03 23:32:32 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -59,7 +59,9 @@ enum imsg_type {
 	IMSG_VMDOP_TERMINATE_VM_RESPONSE,
 	IMSG_VMDOP_GET_INFO_VM_REQUEST,
 	IMSG_VMDOP_GET_INFO_VM_DATA,
-	IMSG_VMDOP_GET_INFO_VM_END_DATA
+	IMSG_VMDOP_GET_INFO_VM_END_DATA,
+	IMSG_VMDOP_LOAD,
+	IMSG_VMDOP_RELOAD
 };
 
 struct vmop_start_result {
@@ -96,8 +98,10 @@ struct vmd {
 };
 
 /* vmd.c */
+void	 vmd_reload(int, const char *);
 struct vmd_vm *vm_getbyvmid(uint32_t);
 void	 vm_remove(struct vmd_vm *);
+char	*get_string(uint8_t *, size_t);
 
 /* vmm.c */
 pid_t	 vmm(struct privsep *, struct privsep_proc *);

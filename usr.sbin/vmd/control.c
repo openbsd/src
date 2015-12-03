@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.3 2015/12/03 13:08:44 reyk Exp $	*/
+/*	$OpenBSD: control.c,v 1.4 2015/12/03 23:32:32 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010-2015 Reyk Floeter <reyk@openbsd.org>
@@ -317,10 +317,9 @@ control_dispatch_imsg(int fd, short event, void *arg)
 			break;
 
 		switch (imsg.hdr.type) {
-		case IMSG_CTL_NOTIFY:
-		case IMSG_CTL_VERBOSE:
-		case IMSG_VMDOP_START_VM_REQUEST:
-		case IMSG_VMDOP_TERMINATE_VM_REQUEST:
+		case IMSG_VMDOP_GET_INFO_VM_REQUEST:
+			break;
+		default:
 			if (c->peercred.uid != 0) {
 				log_warnx("denied request %d from uid %d",
 				    imsg.hdr.type, c->peercred.uid);
@@ -328,8 +327,6 @@ control_dispatch_imsg(int fd, short event, void *arg)
 				goto fail;
 			}
 			break;
-		case IMSG_VMDOP_GET_INFO_VM_REQUEST:
-		default:
 			break;
 		}
 
@@ -365,6 +362,10 @@ control_dispatch_imsg(int fd, short event, void *arg)
 				control_close(fd, cs);
 				return;
 			}
+			break;
+		case IMSG_VMDOP_LOAD:
+		case IMSG_VMDOP_RELOAD:
+			proc_forward_imsg(ps, &imsg, PROC_PARENT, -1);
 			break;
 		default:
 			log_debug("%s: error handling imsg %d",

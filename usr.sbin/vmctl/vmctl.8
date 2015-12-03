@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vmctl.8,v 1.1 2015/12/03 21:45:45 reyk Exp $
+.\"	$OpenBSD: vmctl.8,v 1.2 2015/12/03 23:32:32 reyk Exp $
 .\"
 .\" Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
 .\"
@@ -46,7 +46,11 @@ The options are as follows:
 .It Cm create Ar path Fl s Ar bytes
 Creates a VM disk image file with the specified pathname and size,
 rounded to megabytes.
-.It Xo Cm start Ar name
+.It Cm load Op Ar filename
+Load the configuration from the specified file.
+.It Cm reload Op Ar filename 
+Reload the configuration from the default configuration file.
+.It Xo Cm start Op Ar name
 .Fl k Ar path
 .Fl m Ar bytes
 .Op Fl d Ar path

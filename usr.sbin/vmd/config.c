@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.3 2015/12/03 16:11:32 reyk Exp $	*/
+/*	$OpenBSD: config.c,v 1.4 2015/12/03 23:32:32 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -38,7 +38,7 @@ int
 config_init(struct vmd *env)
 {
 	struct privsep	*ps = &env->vmd_ps;
-	u_int		 what;
+	unsigned int	 what;
 
 	/* Global configuration */
 	if (privsep_process == PROC_PARENT) {
@@ -58,14 +58,13 @@ config_init(struct vmd *env)
 }
 
 void
-config_purge(struct vmd *env, u_int reset)
+config_purge(struct vmd *env, unsigned int reset)
 {
 	struct privsep		*ps = &env->vmd_ps;
 	struct vmd_vm		*vm;
-	u_int			 what;
+	unsigned int		 what;
 
 	what = ps->ps_what[privsep_process] & reset;
-
 	if (what & CONFIG_VMS && env->vmd_vms != NULL) {
 		while ((vm = TAILQ_FIRST(env->vmd_vms)) != NULL)
 			vm_remove(vm);
@@ -74,7 +73,7 @@ config_purge(struct vmd *env, u_int reset)
 }
 
 int
-config_setreset(struct vmd *env, u_int reset)
+config_setreset(struct vmd *env, unsigned int reset)
 {
 	struct privsep	*ps = &env->vmd_ps;
 	unsigned int	 id;

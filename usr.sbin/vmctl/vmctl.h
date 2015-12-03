@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmctl.h,v 1.1 2015/12/03 21:45:45 reyk Exp $	*/
+/*	$OpenBSD: vmctl.h,v 1.2 2015/12/03 23:32:32 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -26,6 +26,7 @@ enum actions {
 	NONE,
 	CMD_CREATE,
 	CMD_LOAD,
+	CMD_RELOAD,
 	CMD_START,
 	CMD_STATUS,
 	CMD_STOP,
