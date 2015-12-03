@@ -1,4 +1,4 @@
-.\"	$OpenBSD: etherip.4,v 1.1 2015/12/03 12:42:03 goda Exp $
+.\"	$OpenBSD: etherip.4,v 1.2 2015/12/03 12:54:43 sthen Exp $
 .\"
 .\" Copyright (c) 2015 YASUOKA Masahiko <yasuoka@openbsd.org>
 .\"
@@ -35,7 +35,8 @@ A
 interface can be created using the
 .Ic ifconfig etherip Ns Ar N Ic create
 command and it must be configured with the addresses used for
-the outer header.  This can be done by
+the outer header.
+This can be done by
 .Xr ifconfig 8 Ns 's
 .Ic tunnel
 command (which uses the
