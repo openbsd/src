@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.184 2015/12/03 14:19:55 mpi Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.185 2015/12/03 21:57:59 mpi Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -76,6 +76,8 @@
 #include <net/if_var.h>
 #include <net/route.h>
 #include <net/raw_cb.h>
+
+#include <netinet/in.h>
 
 #ifdef MPLS
 #include <netmpls/mpls.h>
@@ -456,6 +458,7 @@ route_output(struct mbuf *m, ...)
 	struct socket		*so;
 	struct rawcb		*rp = NULL;
 	struct sockaddr_rtlabel	 sa_rl;
+	struct sockaddr_in6	 sa_mask;
 #ifdef MPLS
 	struct sockaddr_mpls	 sa_mpls, *psa_mpls;
 #endif
@@ -660,8 +663,8 @@ route_output(struct mbuf *m, ...)
 		 * if none of them have a netmask both are host routes which is
 		 * also a perfect match.
 		 */
-		if (rtm->rtm_type != RTM_GET &&
-		    !rt_mask(rt) != !info.rti_info[RTAX_NETMASK]) {
+		if (rtm->rtm_type != RTM_GET && !rt_plen2mask(rt, &sa_mask) !=
+		    !info.rti_info[RTAX_NETMASK]) {
 			error = ESRCH;
 			goto flush;
 		}
@@ -671,7 +674,8 @@ route_output(struct mbuf *m, ...)
 report:
 			info.rti_info[RTAX_DST] = rt_key(rt);
 			info.rti_info[RTAX_GATEWAY] = rt->rt_gateway;
-			info.rti_info[RTAX_NETMASK] = rt_mask(rt);
+			info.rti_info[RTAX_NETMASK] =
+			    rt_plen2mask(rt, &sa_mask);
 			info.rti_info[RTAX_LABEL] =
 			    rtlabel_id2sa(rt->rt_labelid, &sa_rl);
 #ifdef MPLS
@@ -1193,6 +1197,7 @@ sysctl_dumpentry(struct rtentry *rt, void *v, unsigned int id)
 	struct sockaddr_mpls	 sa_mpls;
 #endif
 	struct sockaddr_rtlabel	 sa_rl;
+	struct sockaddr_in6	 sa_mask;
 
 	if (w->w_op == NET_RT_FLAGS && !(rt->rt_flags & w->w_arg))
 		return 0;
@@ -1212,7 +1217,7 @@ sysctl_dumpentry(struct rtentry *rt, void *v, unsigned int id)
 	bzero(&info, sizeof(info));
 	info.rti_info[RTAX_DST] = rt_key(rt);
 	info.rti_info[RTAX_GATEWAY] = rt->rt_gateway;
-	info.rti_info[RTAX_NETMASK] = rt_mask(rt);
+	info.rti_info[RTAX_NETMASK] = rt_plen2mask(rt, &sa_mask);
 	ifp = if_get(rt->rt_ifidx);
 	if (ifp != NULL) {
 		info.rti_info[RTAX_IFP] = sdltosa(ifp->if_sadl);

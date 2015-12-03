@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_rtr.c,v 1.135 2015/12/01 21:29:10 mpi Exp $	*/
+/*	$OpenBSD: nd6_rtr.c,v 1.136 2015/12/03 21:57:59 mpi Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.97 2001/02/07 11:09:13 itojun Exp $	*/
 
 /*
@@ -2056,6 +2056,7 @@ rt6_deleteroute(struct rtentry *rt, void *arg, unsigned int id)
 {
 	struct rt_addrinfo info;
 	struct in6_addr *gate = (struct in6_addr *)arg;
+	struct sockaddr_in6 sa_mask;
 
 	if (rt->rt_gateway == NULL || rt->rt_gateway->sa_family != AF_INET6)
 		return (0);
@@ -2082,6 +2083,6 @@ rt6_deleteroute(struct rtentry *rt, void *arg, unsigned int id)
 	info.rti_flags =  rt->rt_flags;
 	info.rti_info[RTAX_DST] = rt_key(rt);
 	info.rti_info[RTAX_GATEWAY] = rt->rt_gateway;
-	info.rti_info[RTAX_NETMASK] = rt_mask(rt);
+	info.rti_info[RTAX_NETMASK] = rt_plen2mask(rt, &sa_mask);
 	return (rtrequest(RTM_DELETE, &info, RTP_ANY, NULL, id));
 }

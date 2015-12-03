@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtable.h,v 1.12 2015/12/02 16:49:58 bluhm Exp $ */
+/*	$OpenBSD: rtable.h,v 1.13 2015/12/03 21:57:59 mpi Exp $ */
 
 /*
  * Copyright (c) 2014-2015 Martin Pieuchot
@@ -31,6 +31,7 @@
 
 #define	rt_key(rt)	(((struct sockaddr *)(rt)->rt_nodes[0].rn_key))
 #define	rt_mask(rt)	(((struct sockaddr *)(rt)->rt_nodes[0].rn_mask))
+#define	rt_plen(rt)	(rtable_satoplen(rt_key(rt)->sa_family, rt_mask(rt)))
 #define	RT_ROOT(rt)	((rt)->rt_nodes[0].rn_flags & RNF_ROOT)
 
 #else /* ART */
@@ -42,10 +43,12 @@
 #include <net/art.h>
 
 #define	rt_key(rt)	((rt)->rt_dest)
-#define	rt_mask(rt)	((rt)->rt_mask)
+#define	rt_plen(rt)	(((rt)->rt_node != NULL) ? (rt)->rt_node->an_plen : 0)
 #define	RT_ROOT(rt)	(0)
 
 #endif /* ART */
+
+int		 rtable_satoplen(sa_family_t, struct sockaddr *);
 
 void		 rtable_init(void);
 int		 rtable_exists(unsigned int);

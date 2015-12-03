@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.c,v 1.124 2015/11/24 13:37:16 mpi Exp $	*/
+/*	$OpenBSD: in.c,v 1.125 2015/12/03 21:57:59 mpi Exp $	*/
 /*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
 
 /*
@@ -893,4 +893,13 @@ in_ifdetach(struct ifnet *ifp)
 		in_purgeaddr(ifa);
 		dohooks(ifp->if_addrhooks, 0);
 	}
+}
+
+void
+in_prefixlen2mask(struct in_addr *maskp, int plen)
+{
+	if (plen == 0)
+		maskp->s_addr = 0;
+	else
+		maskp->s_addr = htonl(0xffffffff << (32 - plen));
 }

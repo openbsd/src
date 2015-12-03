@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.193 2015/12/03 14:55:18 vgross Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.194 2015/12/03 21:57:59 mpi Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -637,6 +637,7 @@ in_losing(struct inpcb *inp)
 {
 	struct rtentry *rt;
 	struct rt_addrinfo info;
+	struct sockaddr_in6 sa_mask;
 
 	if ((rt = inp->inp_route.ro_rt)) {
 		inp->inp_route.ro_rt = 0;
@@ -645,7 +646,7 @@ in_losing(struct inpcb *inp)
 		info.rti_flags = rt->rt_flags;
 		info.rti_info[RTAX_DST] = &inp->inp_route.ro_dst;
 		info.rti_info[RTAX_GATEWAY] = rt->rt_gateway;
-		info.rti_info[RTAX_NETMASK] = rt_mask(rt);
+		info.rti_info[RTAX_NETMASK] = rt_plen2mask(rt, &sa_mask);
 		rt_missmsg(RTM_LOSING, &info, rt->rt_flags, rt->rt_ifidx, 0,
 		    inp->inp_rtableid);
 		if (rt->rt_flags & RTF_DYNAMIC)

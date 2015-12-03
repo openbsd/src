@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.175 2015/12/02 16:35:53 bluhm Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.176 2015/12/03 21:57:59 mpi Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -893,9 +893,7 @@ nd6_rtrequest(struct ifnet *ifp, int req, struct rtentry *rt)
 
 	if (req == RTM_DELETE && (rt->rt_flags & RTF_GATEWAY) &&
 	    (IN6_ARE_ADDR_EQUAL(&(satosin6(rt_key(rt)))->sin6_addr,
-	    &in6addr_any) && rt_mask(rt) && (rt_mask(rt)->sa_len == 0 ||
-	    IN6_ARE_ADDR_EQUAL(&(satosin6(rt_mask(rt)))->sin6_addr,
-	    &in6addr_any)))) {
+	    &in6addr_any) && rt_plen(rt) == 0)) {
 		dr = defrouter_lookup(&satosin6(gate)->sin6_addr,
 		    ifp->if_index);
 		if (dr)

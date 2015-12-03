@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.h,v 1.129 2015/12/03 16:27:32 mpi Exp $	*/
+/*	$OpenBSD: route.h,v 1.130 2015/12/03 21:57:59 mpi Exp $	*/
 /*	$NetBSD: route.h,v 1.9 1996/02/13 22:00:49 christos Exp $	*/
 
 /*
@@ -98,7 +98,6 @@ struct rtentry {
 #else
 	struct art_node	*rt_node;	/* ART entry */
 	struct sockaddr	*rt_dest;	/* destination */
-	struct sockaddr *rt_mask;	/* mask (radix tree compat) */
 	SRPL_ENTRY(rtentry) rt_next;	/* Next multipath entry to our dst. */
 #endif
 	struct sockaddr	*rt_gateway;	/* value */
@@ -346,6 +345,7 @@ extern const struct sockaddr_rtin rt_defmask4;
 struct mbuf;
 struct socket;
 struct ifnet;
+struct sockaddr_in6;
 
 void	 route_init(void);
 int	 route_output(struct mbuf *, ...);
@@ -355,6 +355,7 @@ void	 rt_ifmsg(struct ifnet *);
 void	 rt_ifannouncemsg(struct ifnet *, int);
 void	 rt_maskedcopy(struct sockaddr *,
 	    struct sockaddr *, struct sockaddr *);
+struct sockaddr *rt_plen2mask(struct rtentry *, struct sockaddr_in6 *);
 void	 rt_sendmsg(struct rtentry *, int, u_int);
 void	 rt_sendaddrmsg(struct rtentry *, int);
 void	 rt_missmsg(int, struct rt_addrinfo *, int, u_int, int, u_int);
