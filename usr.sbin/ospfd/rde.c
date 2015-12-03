@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.98 2015/11/22 13:09:10 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.99 2015/12/03 11:41:06 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -255,7 +255,7 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 	ibuf = &iev->ibuf;
 
 	if (event & EV_READ) {
-		if ((n = imsg_read(ibuf)) == -1)
+		if ((n = imsg_read(ibuf)) == -1 && errno != EAGAIN)
 			fatal("imsg_read error");
 		if (n == 0)	/* connection closed */
 			shut = 1;
@@ -272,7 +272,7 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 
 	for (;;) {
 		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			fatal("rde_dispatch_imsg: imsg_read error");
+			fatal("rde_dispatch_imsg: imsg_get error");
 		if (n == 0)
 			break;
 
@@ -628,7 +628,7 @@ rde_dispatch_parent(int fd, short event, void *bula)
 	ibuf = &iev->ibuf;
 
 	if (event & EV_READ) {
-		if ((n = imsg_read(ibuf)) == -1)
+		if ((n = imsg_read(ibuf)) == -1 && errno != EAGAIN)
 			fatal("imsg_read error");
 		if (n == 0)	/* connection closed */
 			shut = 1;
@@ -642,7 +642,7 @@ rde_dispatch_parent(int fd, short event, void *bula)
 
 	for (;;) {
 		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			fatal("rde_dispatch_parent: imsg_read error");
+			fatal("rde_dispatch_parent: imsg_get error");
 		if (n == 0)
 			break;
 

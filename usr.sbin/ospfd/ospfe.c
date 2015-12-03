@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.c,v 1.92 2015/11/22 13:09:10 claudio Exp $ */
+/*	$OpenBSD: ospfe.c,v 1.93 2015/12/03 11:41:06 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -273,7 +273,7 @@ ospfe_dispatch_main(int fd, short event, void *bula)
 	int		 n, link_ok, stub_changed, shut = 0;
 
 	if (event & EV_READ) {
-		if ((n = imsg_read(ibuf)) == -1)
+		if ((n = imsg_read(ibuf)) == -1 && errno != EAGAIN)
 			fatal("imsg_read error");
 		if (n == 0)	/* connection closed */
 			shut = 1;
@@ -287,7 +287,7 @@ ospfe_dispatch_main(int fd, short event, void *bula)
 
 	for (;;) {
 		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			fatal("ospfe_dispatch_main: imsg_read error");
+			fatal("ospfe_dispatch_main: imsg_get error");
 		if (n == 0)
 			break;
 
@@ -435,7 +435,7 @@ ospfe_dispatch_rde(int fd, short event, void *bula)
 	u_int16_t		 l, age;
 
 	if (event & EV_READ) {
-		if ((n = imsg_read(ibuf)) == -1)
+		if ((n = imsg_read(ibuf)) == -1 && errno != EAGAIN)
 			fatal("imsg_read error");
 		if (n == 0)	/* connection closed */
 			shut = 1;
@@ -449,7 +449,7 @@ ospfe_dispatch_rde(int fd, short event, void *bula)
 
 	for (;;) {
 		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			fatal("ospfe_dispatch_rde: imsg_read error");
+			fatal("ospfe_dispatch_rde: imsg_get error");
 		if (n == 0)
 			break;
 
