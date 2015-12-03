@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.1 2015/11/04 09:45:52 mpi Exp $ */
+/*	$OpenBSD: main.c,v 1.2 2015/12/03 15:15:04 mpi Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -15,6 +15,8 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
+#include "srp_compat.h"
 
 #include <sys/socket.h>
 #include <net/route.h>

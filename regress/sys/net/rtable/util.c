@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.1 2015/11/04 09:45:52 mpi Exp $ */
+/*	$OpenBSD: util.c,v 1.2 2015/12/03 15:15:04 mpi Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -16,9 +16,13 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include "srp_compat.h"
+
 #include <sys/socket.h>
 #include <sys/domain.h>
 #include <sys/queue.h>
+#include <sys/srp.h>
+
 #include <net/rtable.h>
 #include <net/route.h>
 
@@ -112,7 +116,7 @@ route_delete(unsigned int rid, sa_family_t af, char *string)
 	assert(memcmp(rt_key(rt), dst, dst->sa_len) == 0);
 	assert(maskcmp(af, rt_mask(rt), mask) == 0);
 
-	if (rtable_delete(0, dst, mask, 0, rt)) {
+	if (rtable_delete(0, dst, mask, rt)) {
 		inet_net_satop(af, dst, plen, ip, sizeof(ip));
 		errx(1, "can't rm route: %s\n", ip);
 	}
@@ -202,7 +206,7 @@ rtentry_delete(struct rtentry *rt, void *w, unsigned int rid)
 
 	plen = sa2plen(af, rt_mask(rt));
 
-	if (rtable_delete(0, rt_key(rt), rt_mask(rt), 0, rt)) {
+	if (rtable_delete(0, rt_key(rt), rt_mask(rt), rt)) {
 		inet_net_satop(af, rt_key(rt), plen, dest, sizeof(dest));
 		errx(1, "can't rm route: %s\n", dest);
 	}

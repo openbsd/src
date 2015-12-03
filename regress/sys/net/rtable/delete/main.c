@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.2 2015/11/12 14:32:02 mpi Exp $ */
+/*	$OpenBSD: main.c,v 1.3 2015/12/03 15:15:04 mpi Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -16,6 +16,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include "srp_compat.h"
+
 #include <sys/socket.h>
 #include <net/route.h>
 
@@ -32,7 +34,6 @@
 #include <assert.h>
 
 extern void  *rtable_get(unsigned int, sa_family_t);
-extern void   rtable_put(void *);
 #endif /* ART */
 
 __dead void
@@ -68,7 +69,6 @@ main(int argc, char *argv[])
 	ar = rtable_get(0, AF_INET6);
 	assert(ar != NULL);
 	assert(ar->ar_root == NULL);
-	rtable_put(ar);
 #endif /* ART */
 
 	return (0);

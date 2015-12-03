@@ -1,4 +1,4 @@
-/* 	$OpenBSD: kern_compat.h,v 1.1 2015/11/04 09:45:52 mpi Exp $ */
+/* 	$OpenBSD: kern_compat.h,v 1.2 2015/12/03 15:15:04 mpi Exp $ */
 
 #ifndef _KERN_COMPAT_H_
 #define _KERN_COMPAT_H_
@@ -15,6 +15,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include "srp_compat.h"
 
 #define DIAGNOSTIC
 #define INET
