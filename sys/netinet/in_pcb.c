@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.192 2015/12/03 14:05:28 bluhm Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.193 2015/12/03 14:55:18 vgross Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -332,14 +332,13 @@ in_pcbbind(struct inpcb *inp, struct mbuf *nam, struct proc *p)
 
 				ia = ifatoia(ifa_ifwithaddr(sintosa(sin),
 				    inp->inp_rtableid));
-				if (ia == NULL)
-					return (EADDRNOTAVAIL);
 
 				/* SOCK_RAW does not use in_pcbbind() */
-				if (so->so_type != SOCK_DGRAM &&
-				    sin->sin_addr.s_addr !=
-				    ia->ia_addr.sin_addr.s_addr)
-					return (EADDRNOTAVAIL);
+				if (ia == NULL &&
+				    (so->so_type != SOCK_DGRAM ||
+				    !in_broadcast(sin->sin_addr,
+					inp->inp_rtableid)))
+						return (EADDRNOTAVAIL);
 			}
 		}
 		if (lport) {
@@ -353,7 +352,8 @@ in_pcbbind(struct inpcb *inp, struct mbuf *nam, struct proc *p)
 				t = in_pcblookup(table, &zeroin_addr, 0,
 				    &sin->sin_addr, lport, INPLOOKUP_WILDCARD,
 				    inp->inp_rtableid);
-				if (t && (so->so_euid != t->inp_socket->so_euid))
+				if (t &&
+				    (so->so_euid != t->inp_socket->so_euid))
 					return (EADDRINUSE);
 			}
 			t = in_pcblookup(table, &zeroin_addr, 0,

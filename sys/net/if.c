@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.418 2015/12/03 12:22:51 dlg Exp $	*/
+/*	$OpenBSD: if.c,v 1.419 2015/12/03 14:55:17 vgross Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -1219,13 +1219,6 @@ ifa_ifwithaddr(struct sockaddr *addr, u_int rtableid)
 				continue;
 
 			if (equal(addr, ifa->ifa_addr))
-				return (ifa);
-
-			/* IPv6 doesn't have broadcast */
-			if ((ifp->if_flags & IFF_BROADCAST) &&
-			    ifa->ifa_broadaddr &&
-			    ifa->ifa_broadaddr->sa_len != 0 &&
-			    equal(ifa->ifa_broadaddr, addr))
 				return (ifa);
 		}
 	}

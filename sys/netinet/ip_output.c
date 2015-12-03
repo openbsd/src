@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.311 2015/12/02 20:50:20 markus Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.312 2015/12/03 14:55:18 vgross Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -1368,13 +1368,12 @@ ip_setmoptions(int optname, struct ip_moptions **imop, struct mbuf *m,
 		sin.sin_family = AF_INET;
 		sin.sin_addr = addr;
 		ia = ifatoia(ifa_ifwithaddr(sintosa(&sin), rtableid));
-		if (ia && in_hosteq(sin.sin_addr, ia->ia_addr.sin_addr))
-			ifp = ia->ia_ifp;
-		if (ifp == NULL || (ifp->if_flags & IFF_MULTICAST) == 0) {
+		if (ia == NULL ||
+		    (ia->ia_ifp->if_flags & IFF_MULTICAST) == 0) {
 			error = EADDRNOTAVAIL;
 			break;
 		}
-		imo->imo_ifidx = ifp->if_index;
+		imo->imo_ifidx = ia->ia_ifp->if_index;
 		break;
 
 	case IP_MULTICAST_TTL:
@@ -1542,12 +1541,11 @@ ip_setmoptions(int optname, struct ip_moptions **imop, struct mbuf *m,
 			sin.sin_family = AF_INET;
 			sin.sin_addr = mreq->imr_interface;
 			ia = ifatoia(ifa_ifwithaddr(sintosa(&sin), rtableid));
-			if (ia && in_hosteq(sin.sin_addr, ia->ia_addr.sin_addr))
-				ifp = ia->ia_ifp;
-			else {
+			if (ia == NULL) {
 				error = EADDRNOTAVAIL;
 				break;
 			}
+			ifp = ia->ia_ifp;
 		}
 		/*
 		 * Find the membership in the membership array.

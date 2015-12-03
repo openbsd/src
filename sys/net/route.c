@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.285 2015/12/03 14:26:27 mpi Exp $	*/
+/*	$OpenBSD: route.c,v 1.286 2015/12/03 14:55:17 vgross Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -539,7 +539,9 @@ rtredirect(struct sockaddr *dst, struct sockaddr *gateway,
 	 bcmp((caddr_t)(a1), (caddr_t)(a2), (a1)->sa_len) == 0)
 	if (rt != NULL && (!equal(src, rt->rt_gateway) || rt->rt_ifa != ifa))
 		error = EINVAL;
-	else if (ifa_ifwithaddr(gateway, rdomain) != NULL)
+	else if (ifa_ifwithaddr(gateway, rdomain) != NULL ||
+	    (gateway->sa_family = AF_INET &&
+	    in_broadcast(satosin(gateway)->sin_addr, rdomain)))
 		error = EHOSTUNREACH;
 	if (error)
 		goto done;
