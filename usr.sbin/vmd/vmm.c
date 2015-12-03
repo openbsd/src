@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.4 2015/12/02 22:19:11 reyk Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.5 2015/12/03 08:42:11 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -234,7 +234,7 @@ terminate_vm(struct imsg *imsg)
 	vtp = (struct vm_terminate_params *)imsg->data;
 
 	if (ioctl(env->vmd_fd, VMM_IOC_TERM, vtp) < 0)
-                return (errno);
+		return (errno);
 
 	return (0);
 }
@@ -252,7 +252,7 @@ opentap(void)
 {
 	int i, fd;
 	char path[PATH_MAX];
-	
+
 	for (i = 0; i < MAX_TAP; i++) {
 		snprintf(path, PATH_MAX, "/dev/tap%d", i);
 		fd = open(path, O_RDWR | O_NONBLOCK);
@@ -356,7 +356,7 @@ start_vm(struct imsg *imsg)
 		close(vm->vm_kernel);
 
 		con_fd = vm->vm_tty;
-		if (fcntl(con_fd, F_SETFL, O_NONBLOCK) == -1)		
+		if (fcntl(con_fd, F_SETFL, O_NONBLOCK) == -1)
 			fatal("failed to set nonblocking mode on console");
 
 		/* Execute the vcpu run loop(s) for this VM */
@@ -364,7 +364,7 @@ start_vm(struct imsg *imsg)
 
 		_exit(ret != 0);
 	}
-	
+
 	return (0);
 
  err:
@@ -703,7 +703,7 @@ vcpu_exit_i8253(union vm_exit *vei)
 				    __progname, sel);
 				return;
 			}
-			
+
 			rw = vei->vei.vei_data &
 			    (TIMER_LATCH | TIMER_LSB |
 			    TIMER_MSB | TIMER_16BIT);
@@ -734,7 +734,7 @@ vcpu_exit_i8253(union vm_exit *vei)
 				    i8253_counter[sel].tv.tv_sec;
 				delta.tv_usec = now.tv_usec -
 				    i8253_counter[sel].tv.tv_usec;
-				if (delta.tv_usec < 0) { 
+				if (delta.tv_usec < 0) {
 					delta.tv_sec--;
 					delta.tv_usec += 1000000;
 				}
@@ -782,7 +782,7 @@ vcpu_exit_i8253(union vm_exit *vei)
 				data = i8253_counter[sel].olatch & 0xFF;
 				vei->vei.vei_data = data;
 				i8253_counter[sel].last_w = 0;
-			}				
+			}
 		}
 	}
 }
@@ -1089,7 +1089,7 @@ vcpu_exit_com(struct vm_run_params *vrp)
 {
 	union vm_exit *vei = vrp->vrp_exit;
 
-	switch(vei->vei.vei_port) {
+	switch (vei->vei.vei_port) {
 	case COM1_LCR:
 		vcpu_process_com_lcr(vei);
 		break;
@@ -1110,7 +1110,7 @@ vcpu_exit_com(struct vm_run_params *vrp)
 		break;
 	case COM1_SCR:
 		vcpu_process_com_scr(vei);
-		break;	
+		break;
 	case COM1_DATA:
 		vcpu_process_com_data(vei);
 		break;
@@ -1137,7 +1137,7 @@ vcpu_exit_pci(struct vm_run_params *vrp)
 
 	intr = 0xFF;
 
-	switch(vei->vei.vei_port) {
+	switch (vei->vei.vei_port) {
 	case PCI_MODE1_ADDRESS_REG:
 		pci_handle_address_reg(vrp);
 		break;
@@ -1146,7 +1146,7 @@ vcpu_exit_pci(struct vm_run_params *vrp)
 		break;
 	case VMM_PCI_IO_BAR_BASE ... VMM_PCI_IO_BAR_END:
 		intr = pci_handle_io(vrp);
-		break;		
+		break;
 	default:
 		log_warnx("%s: unknown PCI register 0x%llx",
 		    __progname, (uint64_t)vei->vei.vei_port);
@@ -1171,7 +1171,7 @@ vcpu_exit_inout(struct vm_run_params *vrp)
 	union vm_exit *vei = vrp->vrp_exit;
 	uint8_t intr;
 
-	switch(vei->vei.vei_port) {
+	switch (vei->vei.vei_port) {
 	case TIMER_CTRL:
 	case (TIMER_CNTR0 + TIMER_BASE):
 	case (TIMER_CNTR1 + TIMER_BASE):
@@ -1241,7 +1241,7 @@ vcpu_exit(struct vm_run_params *vrp)
 	}
 
 	/* XXX interrupt priority */
-	if (vionet_process_rx()) 
+	if (vionet_process_rx())
 		vrp->vrp_injint = 9;
 
 	/*
@@ -1312,7 +1312,7 @@ write_page(uint32_t dst, void *buf, uint32_t len, int do_mask)
 	 */
 	if (do_mask)
 		dst &= 0xFFFFFFF;
-	
+
 	vwp.vwp_paddr = (paddr_t)dst;
 	vwp.vwp_data = buf;
 	vwp.vwp_vm_id = vm_id;
@@ -1353,7 +1353,7 @@ read_page(uint32_t src, void *buf, uint32_t len, int do_mask)
 	 */
 	if (do_mask)
 		src &= 0xFFFFFFF;
-	
+
 	vrp.vrp_paddr = (paddr_t)src;
 	vrp.vrp_data = buf;
 	vrp.vrp_vm_id = vm_id;

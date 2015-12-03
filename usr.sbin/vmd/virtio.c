@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.3 2015/11/23 13:04:49 reyk Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.4 2015/12/03 08:42:11 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -50,7 +50,7 @@ int nr_vionet;
 const char *
 vioblk_cmd_name(uint32_t type)
 {
-	switch(type) {
+	switch (type) {
 	case VIRTIO_BLK_T_IN: return "read";
 	case VIRTIO_BLK_T_OUT: return "write";
 	case VIRTIO_BLK_T_SCSI_CMD: return "scsi read";
@@ -89,7 +89,7 @@ dump_descriptor_chain(struct vring_desc *desc, int16_t dxx)
 static const char *
 virtio_reg_name(uint8_t reg)
 {
-	switch(reg) {
+	switch (reg) {
 	case VIRTIO_CONFIG_DEVICE_FEATURES: return "device feature";
 	case VIRTIO_CONFIG_GUEST_FEATURES: return "guest feature";
 	case VIRTIO_CONFIG_QUEUE_ADDRESS: return "queue address";
@@ -125,7 +125,7 @@ void
 viornd_update_qs(void)
 {
 	/* Invalid queue? */
-	if (viornd.cfg.queue_select > 0) 
+	if (viornd.cfg.queue_select > 0)
 		return;
 
 	/* Update queue address/size based on queue select */
@@ -223,7 +223,6 @@ viornd_notifyq(void)
 			if (push_virtio_ring(buf, q_gpa, vr_sz)) {
 				log_warnx("viornd: error writing vio ring");
 			}
-			
 		}
 		free(rnd_data);
 	}
@@ -240,7 +239,7 @@ virtio_rnd_io(int dir, uint16_t reg, uint32_t *data, uint8_t *intr,
 	*intr = 0xFF;
 
 	if (dir == 0) {
-		switch(reg) {
+		switch (reg) {
 		case VIRTIO_CONFIG_DEVICE_FEATURES:
 		case VIRTIO_CONFIG_QUEUE_SIZE:
 		case VIRTIO_CONFIG_ISR_STATUS:
@@ -268,7 +267,7 @@ virtio_rnd_io(int dir, uint16_t reg, uint32_t *data, uint8_t *intr,
 			break;
 		}
 	} else {
-		switch(reg) {
+		switch (reg) {
 		case VIRTIO_CONFIG_DEVICE_FEATURES:
 			*data = viornd.cfg.device_feature;
 			break;
@@ -337,7 +336,7 @@ vioblk_do_read(struct vioblk_dev *dev, off_t sector, ssize_t sz)
 		free(buf);
 		return (NULL);
 	}
- 
+
 	if (read(dev->fd, buf, sz) != sz) {
 		log_warn("vioblk read error");
 		free(buf);
@@ -474,7 +473,7 @@ vioblk_notifyq(struct vioblk_dev *dev)
 				free(vr);
 				return (0);
 			}
-			
+
 			j = 0;
 			while (j < secdata_desc->len) {
 				if (secdata_desc->len - j >= PAGE_SIZE)
@@ -487,14 +486,15 @@ vioblk_notifyq(struct vioblk_dev *dev)
 					log_warnx("can't write sector "
 					    "data to gpa @ 0x%llx",
 					    secdata_desc->addr);
-					dump_descriptor_chain(desc, cmd_desc_idx);
+					dump_descriptor_chain(desc,
+					    cmd_desc_idx);
 					free(vr);
 					free(secdata);
 					return (0);
 				}
 
 				j += PAGE_SIZE;
-			}	
+			}
 
 			free(secdata);
 
@@ -537,7 +537,7 @@ vioblk_notifyq(struct vioblk_dev *dev)
 
 		if ((secdata_desc->flags & VRING_DESC_F_NEXT) == 0) {
 			log_warnx("wr vioblk: unchained vioblk data "
-			   "descriptor received (idx %d)", cmd_desc_idx);
+			    "descriptor received (idx %d)", cmd_desc_idx);
 			free(vr);
 			return (0);
 		}
@@ -571,7 +571,7 @@ vioblk_notifyq(struct vioblk_dev *dev)
 				}
 
 				j += PAGE_SIZE;
-			}	
+			}
 
 			if (vioblk_do_write(dev, cmd.sector + secbias,
 			    secdata, (ssize_t)secdata_desc->len)) {
@@ -657,7 +657,7 @@ virtio_blk_io(int dir, uint16_t reg, uint32_t *data, uint8_t *intr,
 	*intr = 0xFF;
 
 	if (dir == 0) {
-		switch(reg) {
+		switch (reg) {
 		case VIRTIO_CONFIG_DEVICE_FEATURES:
 		case VIRTIO_CONFIG_QUEUE_SIZE:
 		case VIRTIO_CONFIG_ISR_STATUS:
@@ -687,7 +687,7 @@ virtio_blk_io(int dir, uint16_t reg, uint32_t *data, uint8_t *intr,
 			break;
 		}
 	} else {
-		switch(reg) {
+		switch (reg) {
 		case VIRTIO_CONFIG_DEVICE_CONFIG_NOMSI + 4:
 			*data = (uint32_t)(dev->sz >> 32);
 			break;
@@ -732,7 +732,7 @@ virtio_net_io(int dir, uint16_t reg, uint32_t *data, uint8_t *intr,
 	*intr = 0xFF;
 
 	if (dir == 0) {
-		switch(reg) {
+		switch (reg) {
 		case VIRTIO_CONFIG_DEVICE_FEATURES:
 		case VIRTIO_CONFIG_QUEUE_SIZE:
 		case VIRTIO_CONFIG_ISR_STATUS:
@@ -762,7 +762,7 @@ virtio_net_io(int dir, uint16_t reg, uint32_t *data, uint8_t *intr,
 			break;
 		}
 	} else {
-		switch(reg) {
+		switch (reg) {
 		case VIRTIO_CONFIG_DEVICE_CONFIG_NOMSI:
 		case VIRTIO_CONFIG_DEVICE_CONFIG_NOMSI + 1:
 		case VIRTIO_CONFIG_DEVICE_CONFIG_NOMSI + 2:
@@ -815,7 +815,7 @@ void
 vionet_update_qs(struct vionet_dev *dev)
 {
 	/* Invalid queue? */
-	if (dev->cfg.queue_select > 1) 
+	if (dev->cfg.queue_select > 1)
 		return;
 
 	/* Update queue address/size based on queue select */
@@ -1100,7 +1100,7 @@ vionet_notifyq(struct vionet_dev *dev)
 		ofs = 0;
 		pkt_desc_idx = hdr_desc->next & VIONET_QUEUE_MASK;
 		pkt_desc = &desc[pkt_desc_idx];
-		
+
 		while (pkt_desc->flags & VRING_DESC_F_NEXT) {
 			/* must be not writable */
 			if (pkt_desc->flags & VRING_DESC_F_WRITE) {

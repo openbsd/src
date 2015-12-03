@@ -1,5 +1,5 @@
 /* $NetBSD: loadfile.c,v 1.10 2000/12/03 02:53:04 tsutsui Exp $ */
-/* $OpenBSD: loadfile_elf.c,v 1.2 2015/11/23 13:04:49 reyk Exp $ */
+/* $OpenBSD: loadfile_elf.c,v 1.3 2015/12/03 08:42:11 reyk Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -220,7 +220,7 @@ loadelf_main(int fd, int vm_id_in, int mem_sz)
 
 	vm_id = vm_id_in;
 
-        if ((r = read(fd, &hdr, sizeof(hdr))) != sizeof(hdr))
+	if ((r = read(fd, &hdr, sizeof(hdr))) != sizeof(hdr))
 		return 1;
 
 	bzero(&marks, sizeof(marks));
@@ -376,7 +376,7 @@ mread(int fd, uint32_t addr, size_t sz)
 	osz = sz;
 	if ((addr & PAGE_MASK) != 0) {
 		bzero(buf, sizeof(buf));
-		if (sz > PAGE_SIZE)  
+		if (sz > PAGE_SIZE)
 			ct = PAGE_SIZE - (addr & PAGE_MASK);
 		else
 			ct = sz;
@@ -590,7 +590,8 @@ elf64_exec(int fd, Elf64_Ehdr *elf, u_long *marks, int flags)
 				for (pos = 0; pos < phdr[i].p_filesz;
 				    pos += m) {
 					m = phdr[i].p_filesz - pos;
-					marc4random_buf(phdr[i].p_paddr + pos, m);
+					marc4random_buf(phdr[i].p_paddr + pos,
+					    m);
 				}
 			}
 			if (flags & (LOAD_RANDOM | COUNT_RANDOM)) {
@@ -615,7 +616,8 @@ elf64_exec(int fd, Elf64_Ehdr *elf, u_long *marks, int flags)
 		    (IS_DATA(phdr[i]) && (flags & LOAD_DATA))) {
 
 			/* Read in segment. */
-			if (lseek(fd, (off_t)phdr[i].p_offset, SEEK_SET) == -1) {
+			if (lseek(fd, (off_t)phdr[i].p_offset,
+			    SEEK_SET) == -1) {
 				free(phdr);
 				return 1;
 			}
@@ -811,7 +813,8 @@ elf32_exec(int fd, Elf32_Ehdr *elf, u_long *marks, int flags)
 				for (pos = 0; pos < phdr[i].p_filesz;
 				    pos += m) {
 					m = phdr[i].p_filesz - pos;
-					marc4random_buf(phdr[i].p_paddr + pos, m);
+					marc4random_buf(phdr[i].p_paddr + pos,
+					    m);
 				}
 			}
 			if (flags & (LOAD_RANDOM | COUNT_RANDOM)) {
@@ -836,7 +839,8 @@ elf32_exec(int fd, Elf32_Ehdr *elf, u_long *marks, int flags)
 		    (IS_DATA(phdr[i]) && (flags & LOAD_DATA))) {
 
 			/* Read in segment. */
-			if (lseek(fd, (off_t)phdr[i].p_offset, SEEK_SET) == -1) {
+			if (lseek(fd, (off_t)phdr[i].p_offset,
+			    SEEK_SET) == -1) {
 				free(phdr);
 				return 1;
 			}

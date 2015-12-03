@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.h,v 1.6 2015/12/02 23:33:43 reyk Exp $	*/
+/*	$OpenBSD: vmd.h,v 1.7 2015/12/03 08:42:11 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -49,12 +49,12 @@ enum imsg_type {
 	IMSG_VMDOP_DISABLE_VMM_RESPONSE,
 	IMSG_VMDOP_ENABLE_VMM_REQUEST,
 	IMSG_VMDOP_ENABLE_VMM_RESPONSE,
-        IMSG_VMDOP_START_VM_REQUEST,
-        IMSG_VMDOP_START_VM_DISK,
-        IMSG_VMDOP_START_VM_IF,
-        IMSG_VMDOP_START_VM_END,
+	IMSG_VMDOP_START_VM_REQUEST,
+	IMSG_VMDOP_START_VM_DISK,
+	IMSG_VMDOP_START_VM_IF,
+	IMSG_VMDOP_START_VM_END,
 	IMSG_VMDOP_START_VM_RESPONSE,
-        IMSG_VMDOP_TERMINATE_VM_REQUEST,
+	IMSG_VMDOP_TERMINATE_VM_REQUEST,
 	IMSG_VMDOP_TERMINATE_VM_RESPONSE,
 	IMSG_VMDOP_GET_INFO_VM_REQUEST,
 	IMSG_VMDOP_GET_INFO_VM_DATA,
@@ -104,7 +104,7 @@ int	 opentap(void);
 
 /* control.c */
 int	 config_init(struct vmd *);
-void	 config_purge(struct vmd *, u_int);
+void	 config_purge(struct vmd *, unsigned int);
 int	 config_setreset(struct vmd *, unsigned int);
 int	 config_getreset(struct vmd *, struct imsg *);
 int	 config_getvm(struct privsep *, struct imsg *);

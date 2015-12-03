@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.c,v 1.3 2015/11/23 13:04:49 reyk Exp $	*/
+/*	$OpenBSD: pci.c,v 1.4 2015/12/03 08:42:11 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -233,7 +233,7 @@ pci_handle_io(struct vm_run_params *vrp)
 
 	if (k >= 0 && l >= 0) {
 		fn = (pci_iobar_fn_t)pci.pci_devices[l].pd_barfunc[k];
-		if (fn(vei->vei.vei_dir, reg - 
+		if (fn(vei->vei.vei_dir, reg -
 		    PCI_MAPREG_IO_ADDR(pci.pci_devices[l].pd_bar[k]),
 		    &vei->vei.vei_data, &intr,
 		    pci.pci_devices[l].pd_bar_cookie[k])) {
