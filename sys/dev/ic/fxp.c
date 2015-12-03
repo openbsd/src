@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxp.c,v 1.128 2015/12/02 08:28:02 claudio Exp $	*/
+/*	$OpenBSD: fxp.c,v 1.129 2015/12/03 08:29:35 claudio Exp $	*/
 /*	$NetBSD: if_fxp.c,v 1.2 1997/06/05 02:01:55 thorpej Exp $	*/
 
 /*
@@ -687,26 +687,28 @@ fxp_start(struct ifnet *ifp)
 
 		txs = txs->tx_next;
 
-		m0 = ifq_deq_begin(&ifp->if_snd);
+		m0 = ifq_dequeue(&ifp->if_snd);
 		if (m0 == NULL)
 			break;
 
 		error = bus_dmamap_load_mbuf(sc->sc_dmat, txs->tx_map,
 		    m0, BUS_DMA_NOWAIT);
-		if (error == EFBIG) {
-			if (m_defrag(m0, M_DONTWAIT)) {
-				ifq_deq_rollback(&ifp->if_snd, m0);
-				break;
-			}
-			error = bus_dmamap_load_mbuf(sc->sc_dmat, txs->tx_map,
-			    m0, BUS_DMA_NOWAIT);
-		}
-		if (error != 0) {
-			ifq_deq_rollback(&ifp->if_snd, m0);
+		switch (error) {
+		case 0:
 			break;
+		case EFBIG:
+			if (m_defrag(m0, M_DONTWAIT) == 0 &&
+			    bus_dmamap_load_mbuf(sc->sc_dmat, txs->tx_map,
+			    m0, BUS_DMA_NOWAIT) == 0)
+				break;
+			/* FALLTHROUGH */
+		default:
+			ifp->if_oerrors++;
+			m_freem(m0);
+			/* try next packet */
+			continue;
 		}
 
-		ifq_deq_commit(&ifp->if_snd, m0);
 		txs->tx_mbuf = m0;
 
 #if NBPFILTER > 0
