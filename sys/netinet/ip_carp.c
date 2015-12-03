@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.282 2015/11/18 13:53:59 mpi Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.283 2015/12/03 16:27:32 mpi Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -94,7 +94,7 @@ struct carp_mc_entry {
 enum { HMAC_ORIG=0, HMAC_NOV6LL=1, HMAC_MAX=2 };
 
 struct carp_vhost_entry {
-	struct srpl_entry vhost_entries;
+	SRPL_ENTRY(carp_vhost_entry) vhost_entries;
 	struct refcnt vhost_refcnt;
 
 	struct carp_softc *parent_sc;
@@ -133,7 +133,7 @@ struct carp_softc {
 	struct ip6_moptions sc_im6o;
 #endif /* INET6 */
 
-	struct srpl_entry sc_list;
+	SRPL_ENTRY(carp_softc) sc_list;
 	struct refcnt sc_refcnt;
 
 	int sc_suppress;
@@ -147,7 +147,7 @@ struct carp_softc {
 
 	char sc_curlladdr[ETHER_ADDR_LEN];
 
-	struct srpl carp_vhosts;
+	SRPL_HEAD(, carp_vhost_entry) carp_vhosts;
 	int sc_vhe_count;
 	u_int8_t sc_vhids[CARP_MAXNODES];
 	u_int8_t sc_advskews[CARP_MAXNODES];

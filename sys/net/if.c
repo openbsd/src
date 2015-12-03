@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.419 2015/12/03 14:55:17 vgross Exp $	*/
+/*	$OpenBSD: if.c,v 1.420 2015/12/03 16:27:32 mpi Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -740,7 +740,7 @@ if_input_local(struct ifnet *ifp, struct mbuf *m, sa_family_t af)
 }
 
 struct ifih {
-	struct srpl_entry	  ifih_next;
+	SRPL_ENTRY(ifih)	  ifih_next;
 	int			(*ifih_input)(struct ifnet *, struct mbuf *,
 				      void *);
 	void			 *ifih_cookie;

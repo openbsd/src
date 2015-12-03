@@ -1,4 +1,4 @@
-/*	$OpenBSD: srp.h,v 1.6 2015/11/26 12:17:19 mpi Exp $ */
+/*	$OpenBSD: srp.h,v 1.7 2015/12/03 16:27:32 mpi Exp $ */
 
 /*
  * Copyright (c) 2014 Jonathan Matthew <jmatthew@openbsd.org>
@@ -79,10 +79,6 @@ struct srpl {
 	struct srp		sl_head;
 };
 
-struct srpl_entry {
-	struct srp		se_next;
-};
-
 struct srpl_iter {
 	struct srp *		si_ref;
 };
@@ -95,6 +91,13 @@ void		srpl_rc_init(struct srpl_rc *, void (*)(void *, void *),
 #define SRPL_RC_INITIALIZER(_r, _u, _c) { _r, SRP_GC_INITIALIZER(_u, _c) }
 
 #define SRPL_INIT(_sl)			srp_init(&(_sl)->sl_head)
+
+#define SRPL_HEAD(name, type)		struct srpl
+
+#define SRPL_ENTRY(type)						\
+struct {								\
+	struct srp		se_next;				\
+}
 
 static inline void *
 _srpl_enter(struct srpl *sl, struct srpl_iter *si)

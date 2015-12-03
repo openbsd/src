@@ -1,4 +1,4 @@
-.\"	$OpenBSD: srpl_rc_init.9,v 1.8 2015/11/26 13:08:18 jmc Exp $
+.\"	$OpenBSD: srpl_rc_init.9,v 1.9 2015/12/03 16:27:32 mpi Exp $
 .\"
 .\" Copyright (c) 2015 David Gwynne <dlg@openbsd.org>
 .\"
@@ -14,11 +14,13 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 26 2015 $
+.Dd $Mdocdate: December 3 2015 $
 .Dt SRPL_RC_INIT 9
 .Os
 .Sh NAME
 .Nm srpl_rc_init ,
+.Nm SRPL_HEAD ,
+.Nm SRPL_ENTRY ,
 .Nm SRPL_INIT ,
 .Nm SRPL_ENTER ,
 .Nm SRPL_NEXT ,
@@ -36,8 +38,6 @@
 .Nd singly-linked shared reference pointer list
 .Sh SYNOPSIS
 .In sys/srp.h
-.Vt struct srpl;
-.Vt struct srpl_entry;
 .Vt struct srpl_iter;
 .Vt struct srpl_rc;
 .Ft void
@@ -47,28 +47,30 @@
 .Fa "void (*unref)(void *, void *)"
 .Fa "void *ctx"
 .Fc
-.Fn "SRPL_INIT" "struct srpl_head *sl"
+.Fn SRPL_HEAD "HEADNAME" "TYPE"
+.Fn SRPL_ENTRY "TYPE"
+.Fn "SRPL_INIT" "SRPL_HEAD *sl"
 .Ft void *
-.Fn "SRPL_ENTER" "struct srpl *sl" "struct srpl_iter *si"
+.Fn "SRPL_ENTER" "SRPL_HEAD *sl" "struct srpl_iter *si"
 .Ft void *
 .Fn "SRPL_NEXT" "struct srpl_iter *si" "struct TYPE *listelm" "FIELDNAME"
 .Fo "SRPL_FOREACH"
 .Fa "VARNAME"
-.Fa "struct srpl *sl"
+.Fa "SRPL_HEAD *sl"
 .Fa "struct srpl_iter *si"
 .Fa "FIELDNAME"
 .Fc
 .Fn "SRPL_LEAVE" "struct srpl_iter *si" "struct TYPE *listelm"
-.Fn "SRPL_EMPTY_LOCKED" "struct srpl *sl"
+.Fn "SRPL_EMPTY_LOCKED" "SRPL_HEAD *sl"
 .Ft void *
-.Fn "SRPL_FIRST_LOCKED" "struct srpl *sl"
+.Fn "SRPL_FIRST_LOCKED" "SRPL_HEAD *sl"
 .Ft void *
 .Fn "SRPL_NEXT_LOCKED" "struct TYPE *listelm" "FIELDNAME"
-.Fn "SRPL_FOREACH_LOCKED" "VARNAME" "struct srpl *sl" "FIELDNAME"
-.Fn "SRPL_FOREACH_SAFE_LOCKED" "VARNAME" "struct srpl *sl" "FIELDNAME" "TEMP_VARNAME"
+.Fn "SRPL_FOREACH_LOCKED" "VARNAME" "SRPL_HEAD *sl" "FIELDNAME"
+.Fn "SRPL_FOREACH_SAFE_LOCKED" "VARNAME" "SRPL_HEAD *sl" "FIELDNAME" "TEMP_VARNAME"
 .Fo "SRPL_INSERT_HEAD_LOCKED"
 .Fa "struct srpl_rc *rc"
-.Fa "struct srpl *sl"
+.Fa "SRPL_HEAD *sl"
 .Fa "struct TYPE *elm"
 .Fa "FIELDNAME"
 .Fc
@@ -80,7 +82,7 @@
 .Fc
 .Fo "SRPL_REMOVE_LOCKED"
 .Fa "struct srpl_rc *rc"
-.Fa "struct srpl *sl"
+.Fa "SRPL_HEAD *sl"
 .Fa "struct TYPE *listelm"
 .Fa "TYPE"
 .Fa "FIELDNAME"
@@ -98,9 +100,9 @@ This allows concurrent traversal of a linked list and access to the
 items on the list.
 .Pp
 SRP lists are a generic type represented by a
-.Vt struct srpl .
+.Vt SRPL_HEAD .
 The elements inserted into the list must be structures that contain a
-.Vt struct srpl_entry
+.Vt SRPL_ENTRY
 field.
 Further, the elements must also support reference counting as
 insertion and removal operations can cause items to be temporarily

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.147 2015/11/10 06:34:35 dlg Exp $	*/
+/*	$OpenBSD: if_vlan.c,v 1.148 2015/12/03 16:27:32 mpi Exp $	*/
 
 /*
  * Copyright 1998 Massachusetts Institute of Technology
@@ -77,7 +77,7 @@
 #define TAG_HASH_SIZE		(1 << TAG_HASH_BITS) 
 #define TAG_HASH_MASK		(TAG_HASH_SIZE - 1)
 #define TAG_HASH(tag)		(tag & TAG_HASH_MASK)
-struct srpl *vlan_tagh, *svlan_tagh;
+SRPL_HEAD(, ifvlan) *vlan_tagh, *svlan_tagh;
 struct rwlock vlan_tagh_lk = RWLOCK_INITIALIZER("vlantag");
 
 int	vlan_input(struct ifnet *, struct mbuf *, void *);
@@ -309,7 +309,7 @@ vlan_input(struct ifnet *ifp, struct mbuf *m, void *cookie)
 	struct ifvlan			*ifv;
 	struct ether_vlan_header	*evl;
 	struct ether_header		*eh;
-	struct srpl			*tagh, *list;
+	SRPL_HEAD(, ifvlan)		*tagh, *list;
 	struct srpl_iter		 i;
 	u_int				 tag;
 	struct mbuf_list		 ml = MBUF_LIST_INITIALIZER();
@@ -400,7 +400,7 @@ int
 vlan_config(struct ifvlan *ifv, struct ifnet *p, u_int16_t tag)
 {
 	struct sockaddr_dl	*sdl1, *sdl2;
-	struct srpl		*tagh, *list;
+	SRPL_HEAD(, ifvlan)	*tagh, *list;
 	u_int			 flags;
 
 	if (p->if_type != IFT_ETHER)
@@ -491,7 +491,7 @@ vlan_unconfig(struct ifnet *ifp, struct ifnet *newp)
 {
 	struct sockaddr_dl	*sdl;
 	struct ifvlan		*ifv;
-	struct srpl		*tagh, *list;
+	SRPL_HEAD(, ifvlan)	*tagh, *list;
 	struct ifnet		*p;
 
 	ifv = ifp->if_softc;

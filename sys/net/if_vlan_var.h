@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan_var.h,v 1.30 2015/09/13 10:02:36 dlg Exp $	*/
+/*	$OpenBSD: if_vlan_var.h,v 1.31 2015/12/03 16:27:32 mpi Exp $	*/
 
 /*
  * Copyright 1998 Massachusetts Institute of Technology
@@ -85,7 +85,7 @@ struct	ifvlan {
 		u_int16_t ifvm_type; /* non-standard ethertype or 0x8100 */
 	}	ifv_mib;
 	LIST_HEAD(__vlan_mchead, vlan_mc_entry)	vlan_mc_listhead;
-	struct srpl_entry ifv_list;
+	SRPL_ENTRY(ifvlan) ifv_list;
 	int ifv_flags;
 	struct refcnt ifv_refcnt;
 	void *lh_cookie;
