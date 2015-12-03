@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.2 2015/12/03 13:27:14 reyk Exp $	*/
+/*	$OpenBSD: config.c,v 1.3 2015/12/03 16:11:32 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -189,8 +189,6 @@ config_getvm(struct privsep *ps, struct vm_create_params *vcp,
 			goto fail;
 		}
 		close(ttys_fd);
-
-		log_info("%s console: %s", vcp->vcp_name, vm->vm_ttyname);
 
 		proc_compose_imsg(ps, PROC_VMM, -1,
 		    IMSG_VMDOP_START_VM_END, vm->vm_vmid, fd,

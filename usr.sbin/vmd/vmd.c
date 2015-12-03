@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.12 2015/12/03 13:27:14 reyk Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.13 2015/12/03 16:11:32 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -99,6 +99,20 @@ vmd_dispatch_vmm(int fd, struct privsep_proc *p, struct imsg *imsg)
 		memcpy(&res, imsg->data, sizeof(res));
 		if ((vm = vm_getbyvmid(imsg->hdr.peerid)) == NULL)
 			fatalx("%s: invalid vm response", __func__);
+		if (res) {
+			errno = res;
+			log_warn("%s: failed to start vm",
+			    vm->vm_params.vcp_name);
+		} else {
+			log_info("%s: started vm successfully, tty %s",
+			    vm->vm_params.vcp_name, vm->vm_ttyname);
+		}
+		/*
+		 * If the peerid is -1, the request originated from
+		 * the parent, not the control socket.
+		 */
+		if (vm->vm_peerid == (uint32_t)-1)
+			break;
 		vmr.vmr_result = res;
 		strlcpy(vmr.vmr_ttyname, vm->vm_ttyname,
 		    sizeof(vmr.vmr_ttyname));
@@ -210,14 +224,18 @@ main(int argc, char **argv)
 {
 	struct privsep	*ps;
 	int		 ch;
+	const char	*conffile = VMD_CONF;
 
 	if ((env = calloc(1, sizeof(*env))) == NULL)
 		fatal("calloc: env");
 
-	while ((ch = getopt(argc, argv, "dvn")) != -1) {
+	while ((ch = getopt(argc, argv, "df:vn")) != -1) {
 		switch (ch) {
 		case 'd':
 			env->vmd_debug = 2;
+			break;
+		case 'f':
+			conffile = optarg;
 			break;
 		case 'v':
 			env->vmd_verbose++;
@@ -229,6 +247,12 @@ main(int argc, char **argv)
 			usage();
 		}
 	}
+
+	if (env->vmd_noaction && !env->vmd_debug)
+		env->vmd_debug = 1;
+
+	/* log to stderr until daemonized */
+	log_init(env->vmd_debug ? env->vmd_debug : 1, LOG_DAEMON);
 
 	/* check for root privileges */
 	if (geteuid())
@@ -252,8 +276,11 @@ main(int argc, char **argv)
 	if (env->vmd_fd == -1)
 		fatal("can't open vmm device node %s", VMM_NODE);
 
-	/* log to stderr until daemonized */
-	log_init(env->vmd_debug ? env->vmd_debug : 1, LOG_DAEMON);
+	/* Configuration will be parsed after forking the children */
+	env->vmd_conffile = VMD_CONF;
+
+	log_init(env->vmd_debug, LOG_DAEMON);
+	log_verbose(env->vmd_verbose);
 
 	if (!env->vmd_debug && daemon(0, 0) == -1)
 		fatal("can't daemonize");
@@ -262,7 +289,9 @@ main(int argc, char **argv)
 	log_procinit("parent");
 
 	ps->ps_ninstances = 1;
-	proc_init(ps, procs, nitems(procs));
+
+	if (!env->vmd_noaction)
+		proc_init(ps, procs, nitems(procs));
 
 	event_init();
 
@@ -280,7 +309,8 @@ main(int argc, char **argv)
 	signal_add(&ps->ps_evsigpipe, NULL);
 	signal_add(&ps->ps_evsigusr1, NULL);
 
-	proc_listen(ps, procs, nitems(procs));
+	if (!env->vmd_noaction)
+		proc_listen(ps, procs, nitems(procs));
 
 	if (vmd_configure() == -1)
 		fatalx("configuration failed");
@@ -295,19 +325,6 @@ main(int argc, char **argv)
 int
 vmd_configure(void)
 {
-#if 0
-	if (parse_config(env->sc_conffile, env) == -1) {
-		proc_kill(&env->sc_ps);
-		exit(1);
-	}
-#endif
-
-	if (env->vmd_noaction) {
-		fprintf(stderr, "configuration OK\n");
-		proc_kill(&env->vmd_ps);
-		exit(0);
-	}
-
 	/*
 	 * pledge in the parent process:
 	 * stdio - for malloc and basic I/O including events.
@@ -319,6 +336,17 @@ vmd_configure(void)
 	 */
 	if (pledge("stdio rpath wpath proc tty sendfd", NULL) == -1)
 		fatal("pledge");
+
+	if (parse_config(env->vmd_conffile) == -1) {
+		proc_kill(&env->vmd_ps);
+		exit(1);
+	}
+
+	if (env->vmd_noaction) {
+		fprintf(stderr, "configuration OK\n");
+		proc_kill(&env->vmd_ps);
+		exit(0);
+	}
 
 	return (0);
 }

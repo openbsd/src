@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.h,v 1.8 2015/12/03 13:27:14 reyk Exp $	*/
+/*	$OpenBSD: vmd.h,v 1.9 2015/12/03 16:11:32 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -29,6 +29,7 @@
 #define VMD_H
 
 #define VMD_USER		"_vmd"
+#define VMD_CONF		"/etc/vm.conf"
 #define SOCKET_NAME		"/var/run/vmd.sock"
 #define VMM_NODE		"/dev/vmm"
 #define VM_NAME_MAX		64
@@ -81,7 +82,7 @@ TAILQ_HEAD(vmlist, vmd_vm);
 
 struct vmd {
 	struct privsep		 vmd_ps;
-	int			 vmd_fd;
+	const char		*vmd_conffile;
 
 	int			 vmd_debug;
 	int			 vmd_verbose;
@@ -90,6 +91,8 @@ struct vmd {
 
 	uint32_t		 vmd_nvm;
 	struct vmlist		*vmd_vms;
+
+	int			 vmd_fd;
 };
 
 /* vmd.c */
@@ -111,5 +114,9 @@ int	 config_getvm(struct privsep *, struct vm_create_params *,
 	    int, uint32_t);
 int	 config_getdisk(struct privsep *, struct imsg *);
 int	 config_getif(struct privsep *, struct imsg *);
+
+/* parse.y */
+int	 parse_config(const char *);
+int	 cmdline_symset(char *);
 
 #endif /* VMD_H */

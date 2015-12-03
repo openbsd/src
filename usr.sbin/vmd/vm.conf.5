@@ -1,0 +1,140 @@
+.\" $OpenBSD: vm.conf.5,v 1.1 2015/12/03 16:11:32 reyk Exp $
+.\"
+.\" Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
+.\" Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: December 3 2015 $
+.Dt VM.CONF 5
+.Os
+.Sh NAME
+.Nm vm.conf
+.Nd virtual machine configuration
+.Sh DESCRIPTION
+.Nm
+is the configuration file to configure the virtual machine monitor
+(VMM) subsystem.
+A VMM manages virtual machines (VMs) on a
+.Ar host .
+The VMM subsystem is responsible for creating, destroying, and
+executing VMs.
+.Sh SECTIONS
+.Nm
+is divided into three main sections:
+.Bl -tag -width xxxx
+.It Sy Macros
+User-defined variables may be defined and used later, simplifying the
+configuration file.
+.It Sy VM Configuration
+Configuration for each individual virtual machine.
+.El
+.Pp
+Within the sections,
+the
+.Ar bytes
+argument can be specified with a human-readable scale,
+using the format described in
+.Xr scan_scaled 3 .
+.Pp
+The current line can be extended over multiple lines using a backslash
+.Pq Sq \e .
+Comments can be put anywhere in the file using a hash mark
+.Pq Sq # ,
+and extend to the end of the current line.
+Care should be taken when commenting out multi-line text:
+the comment is effective until the end of the entire block.
+.Pp
+Argument names not beginning with a letter, digit, or underscore
+must be quoted.
+.Pp
+Additional configuration files can be included with the
+.Ic include
+keyword, for example:
+.Bd -literal -offset indent
+include "/etc/vm1.example.com.conf"
+.Ed
+.Sh MACROS
+Macros can be defined that will later be expanded in context.
+Macro names must start with a letter, digit, or underscore,
+and may contain any of those characters.
+Macro names may not be reserved words (for example,
+.Ic vm ,
+.Ic memory ,
+or
+.Ic disk ) .
+Macros are not expanded inside quotes.
+.Pp
+For example:
+.Bd -literal -offset indent
+ramdisk="/bsd.rd"
+vm "vm1.example.com" {
+	memory 512M
+	kernel $ramdisk
+}
+.Ed
+.Sh VM CONFIGURATION
+Each
+.Ic vm
+section starts with a declaration of the virtual machine
+.Ar name :
+.Bl -tag -width Ds
+.It Ic vm Ar name Brq ...
+This name can be any string, and is typically a hostname.
+.El
+.Pp
+Followed by a block of parameters that is enclosed in curly brackets:
+.Bl -tag -width Ds
+.It Cm enable
+Automatically start the VM.
+This is the default if neither
+.Cm enable
+nor
+.Cm disable
+is specified.
+.It Cm disable
+Do not start this VM.
+.It Cm disk Ar path
+Disk image file (may be specified multiple times to add multiple disk images).
+.It Cm kernel Ar path
+Kernel to load when booting the VM.
+.It Cm memory Ar bytes
+Memory size of the VM, in bytes, rounded to megabytes.
+.It Cm interfaces Ar count
+Number of network interfaces to add to the VM.
+.El
+.Sh EXAMPLES
+Create a new VM with 512MB memory, 1 network interface, one disk image
+('disk.img') and boot from kernel '/bsd':
+.Bd -literal -offset indent
+vm "vm2.example.com" {
+	memory 512M
+	interfaces 1
+	disk "/var/vmm/vm2-disk.img"
+	kernel "/bsd"
+}
+.Ed
+.Sh SEE ALSO
+.Xr vmm 4 ,
+.Xr vmd 8 ,
+.Xr vmmctl 8
+.Sh HISTORY
+The
+.Nm
+file format first appeared in
+.Ox 5.9 .
+.Sh AUTHORS
+.An -nosplit
+.An Mike Larkin Aq Mt mlarkin@openbsd.org
+and
+.An Reyk Floeter Aq Mt reyk@openbsd.org .
