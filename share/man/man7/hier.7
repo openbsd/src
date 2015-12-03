@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hier.7,v 1.145 2015/11/05 23:38:07 bluhm Exp $
+.\"	$OpenBSD: hier.7,v 1.146 2015/12/03 11:32:34 nicm Exp $
 .\"	$NetBSD: hier.7,v 1.7 1994/11/30 19:07:10 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)hier.7	8.1 (Berkeley) 6/5/93
 .\"
-.Dd $Mdocdate: November 5 2015 $
+.Dd $Mdocdate: December 3 2015 $
 .Dt HIER 7
 .Os
 .Sh NAME
@@ -405,15 +405,10 @@ Kernel internals.
 .It misc/
 Miscellaneous system-wide ASCII text files.
 .Pp
-.Bl -tag -width terminfo.db -compact
+.Bl -tag -width pcvtfonts/ -compact
 .It termcap
 Terminal characteristics database (see
 .Xr termcap 5 ) .
-.It termcap.db
-Hash database file containing terminal descriptions (see
-.Xr cap_mkdb 1 ) .
-.It terminfo.db
-Terminal information database.
 .It pcvtfonts/
 Additional i386 console fonts.
 .El
@@ -434,6 +429,9 @@ Management Information Base (MIB) definitions.
 Tab description files for a variety of terminals; used in
 the termcap file (see
 .Xr termcap 5 ) .
+.It terminfo/
+Compiled terminal characteristics files, see
+.Xr terminfo 5 .
 .It texinfo/
 Templates for
 .Xr texinfo 5 .
