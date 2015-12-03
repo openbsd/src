@@ -1,10 +1,10 @@
-.\" $OpenBSD: MAKEDEV.8,v 1.99 2015/10/23 15:18:01 claudio Exp $
+.\" $OpenBSD: MAKEDEV.8,v 1.100 2015/12/03 09:01:56 claudio Exp $
 .\"
 .\" THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 .\" generated from:
 .\"
-.\"	OpenBSD: etc.i386/MAKEDEV.md,v 1.75 2015/10/23 15:14:11 claudio Exp 
-.\"	OpenBSD: MAKEDEV.common,v 1.79 2015/10/23 15:14:11 claudio Exp 
+.\"	OpenBSD: etc.i386/MAKEDEV.md,v 1.76 2015/11/10 21:42:28 sthen Exp 
+.\"	OpenBSD: MAKEDEV.common,v 1.81 2015/11/10 21:49:18 sthen Exp 
 .\"	OpenBSD: MAKEDEV.man,v 1.7 2009/03/18 17:34:25 sobrado Exp 
 .\"	OpenBSD: MAKEDEV.mansub,v 1.2 2004/02/20 19:13:01 miod Exp 
 .\"
@@ -23,7 +23,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 23 2015 $
+.Dd $Mdocdate: December 3 2015 $
 .Dt MAKEDEV 8 i386
 .Os
 .Sh NAME
@@ -274,6 +274,9 @@ Unknown SCSI devices, see
 .It Ar video*
 Video V4L2 devices, see
 .Xr video 4 .
+.It Ar vmm
+Virtual Machine Monitor, see
+.Xr vmm 4 .
 .It Ar vscsi*
 Virtual SCSI controller, see
 .Xr vscsi 4 .
