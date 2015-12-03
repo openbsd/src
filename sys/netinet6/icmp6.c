@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.181 2015/12/02 16:35:53 bluhm Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.182 2015/12/03 21:11:53 sashan Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -1302,7 +1302,7 @@ icmp6_reflect(struct mbuf *m, size_t off)
 #if NPF > 0
 	pf_pkt_addr_changed(m);
 #endif
-	ip6_output(m, NULL, NULL, IPV6_MINMTU, NULL, NULL);
+	ip6_send(m);
 	return;
 
  bad:

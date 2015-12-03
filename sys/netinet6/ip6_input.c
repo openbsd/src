@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.151 2015/11/11 10:23:23 mpi Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.152 2015/12/03 21:11:54 sashan Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -77,6 +77,7 @@
 #include <sys/timeout.h>
 #include <sys/kernel.h>
 #include <sys/syslog.h>
+#include <sys/task.h>
 
 #include <net/if.h>
 #include <net/if_var.h>
@@ -89,6 +90,7 @@
 #include <netinet/ip.h>
 
 #include <netinet/in_pcb.h>
+#include <netinet/ip_var.h>
 #include <netinet6/in6_var.h>
 #include <netinet/ip6.h>
 #include <netinet6/ip6_var.h>
@@ -123,6 +125,12 @@ int ip6_check_rh0hdr(struct mbuf *, int *);
 int ip6_hopopts_input(u_int32_t *, u_int32_t *, struct mbuf **, int *);
 struct mbuf *ip6_pullexthdr(struct mbuf *, size_t, int);
 
+static struct mbuf_queue	ip6send_mq;
+
+static void ip6_send_dispatch(void *);
+static struct task ip6send_task =
+	TASK_INITIALIZER(ip6_send_dispatch, &ip6send_mq);
+
 /*
  * IP6 initialization: fill in IP6 protocol switch table.
  * All protocols not implemented in kernel go to raw IP6 protocol handler.
@@ -149,6 +157,8 @@ ip6_init(void)
 	nd6_init();
 	frag6_init();
 	ip6_init2((void *)0);
+
+	mq_init(&ip6send_mq, 64, IPL_SOFTNET);
 }
 
 void
@@ -1430,4 +1440,29 @@ ip6_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 		return (EOPNOTSUPP);
 	}
 	/* NOTREACHED */
+}
+
+void
+ip6_send_dispatch(void *xmq)
+{
+	struct mbuf_queue *mq = xmq;
+	struct mbuf *m;
+	struct mbuf_list ml;
+	int s;
+
+	mq_delist(mq, &ml);
+	KERNEL_LOCK();
+	s = splsoftnet();
+	while ((m = ml_dequeue(&ml)) != NULL) {
+		ip6_output(m, NULL, NULL, IPV6_MINMTU, NULL, NULL);
+	}
+	splx(s);
+	KERNEL_UNLOCK();
+}
+
+void
+ip6_send(struct mbuf *m)
+{
+	mq_enqueue(&ip6send_mq, m);
+	task_add(softnettq, &ip6send_task);
 }

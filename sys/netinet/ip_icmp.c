@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.149 2015/12/02 16:35:53 bluhm Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.150 2015/12/03 21:11:53 sashan Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -854,7 +854,10 @@ icmp_send(struct mbuf *m, struct mbuf *opts)
 		printf("icmp_send dst %s src %s\n", dst, src);
 	}
 #endif
-	ip_output(m, opts, NULL, 0, NULL, NULL, 0);
+	if (opts != NULL)
+		m = ip_insertoptions(m, opts, &hlen);
+
+	ip_send(m);
 }
 
 u_int32_t

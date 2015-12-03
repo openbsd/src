@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.264 2015/12/03 15:12:59 markus Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.265 2015/12/03 21:11:53 sashan Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -44,6 +44,7 @@
 #include <sys/socketvar.h>
 #include <sys/sysctl.h>
 #include <sys/pool.h>
+#include <sys/task.h>
 
 #include <net/if.h>
 #include <net/if_var.h>
@@ -121,6 +122,8 @@ struct pool ipq_pool;
 
 struct ipstat ipstat;
 
+static struct mbuf_queue	ipsend_mq;
+
 void	ip_ours(struct mbuf *);
 int	ip_dooptions(struct mbuf *, struct ifnet *);
 int	in_ouraddr(struct mbuf *, struct ifnet *, struct in_addr);
@@ -130,6 +133,8 @@ int	ip_input_ipsec_fwd_check(struct mbuf *, int);
 int	ip_input_ipsec_ours_check(struct mbuf *, int);
 #endif /* IPSEC */
 
+static void ip_send_dispatch(void *);
+static struct task ipsend_task = TASK_INITIALIZER(ip_send_dispatch, &ipsend_mq);
 /*
  * Used to save the IP options in case a protocol wants to respond
  * to an incoming packet over the same route if the packet got here
@@ -188,6 +193,8 @@ ip_init(void)
 	strlcpy(ipsec_def_enc, IPSEC_DEFAULT_DEF_ENC, sizeof(ipsec_def_enc));
 	strlcpy(ipsec_def_auth, IPSEC_DEFAULT_DEF_AUTH, sizeof(ipsec_def_auth));
 	strlcpy(ipsec_def_comp, IPSEC_DEFAULT_DEF_COMP, sizeof(ipsec_def_comp));
+
+	mq_init(&ipsend_mq, 64, IPL_SOFTNET);
 }
 
 struct	route ipforward_rt;
@@ -1752,3 +1759,27 @@ ip_savecontrol(struct inpcb *inp, struct mbuf **mp, struct ip *ip,
 	}
 }
 
+void
+ip_send_dispatch(void *xmq)
+{
+	struct mbuf_queue *mq = xmq;
+	struct mbuf *m;
+	struct mbuf_list ml;
+	int s;
+
+	mq_delist(mq, &ml);
+	KERNEL_LOCK();
+	s = splsoftnet();
+	while ((m = ml_dequeue(&ml)) != NULL) {
+		ip_output(m, NULL, NULL, 0, NULL, NULL, 0);
+	}
+	splx(s);
+	KERNEL_UNLOCK();
+}
+
+void
+ip_send(struct mbuf *m)
+{
+	mq_enqueue(&ipsend_mq, m);
+	task_add(softnettq, &ipsend_task);
+}

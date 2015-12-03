@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_var.h,v 1.62 2015/12/03 16:27:32 mpi Exp $	*/
+/*	$OpenBSD: if_var.h,v 1.63 2015/12/03 21:11:53 sashan Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -361,6 +361,7 @@ int		niq_enlist(struct niqueue *, struct mbuf_list *);
 
 extern struct ifnet_head ifnet;
 extern unsigned int lo0ifidx;
+extern struct taskq *softnettq;
 
 void	if_start(struct ifnet *);
 void	if_start_barrier(struct ifnet *);

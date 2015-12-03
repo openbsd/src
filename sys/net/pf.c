@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.956 2015/12/03 14:05:28 bluhm Exp $ */
+/*	$OpenBSD: pf.c,v 1.957 2015/12/03 21:11:53 sashan Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2424,11 +2424,11 @@ pf_send_tcp(const struct pf_rule *r, sa_family_t af,
 
 	switch (af) {
 	case AF_INET:
-		ip_output(m, NULL, NULL, 0, NULL, NULL, 0);
+		ip_send(m);
 		break;
 #ifdef INET6
 	case AF_INET6:
-		ip6_output(m, NULL, NULL, 0, NULL, NULL);
+		ip6_send(m);
 		break;
 #endif /* INET6 */
 	}

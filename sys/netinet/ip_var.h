@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_var.h,v 1.60 2015/07/16 21:14:21 mpi Exp $	*/
+/*	$OpenBSD: ip_var.h,v 1.61 2015/12/03 21:11:53 sashan Exp $	*/
 /*	$NetBSD: ip_var.h,v 1.16 1996/02/13 23:43:20 christos Exp $	*/
 
 /*
@@ -180,6 +180,8 @@ void	 ip_freef(struct ipq *);
 void	 ip_freemoptions(struct ip_moptions *);
 int	 ip_getmoptions(int, struct ip_moptions *, struct mbuf **);
 void	 ip_init(void);
+struct mbuf*
+	 ip_insertoptions(struct mbuf *, struct mbuf *, int *);
 int	 ip_mforward(struct mbuf *, struct ifnet *);
 int	 ip_optcopy(struct ip *, struct ip *);
 int	 ip_output(struct mbuf *, struct mbuf *, struct route *, int,
@@ -191,6 +193,7 @@ struct in_ifaddr *
 	 ip_rtaddr(struct in_addr, u_int);
 u_int16_t
 	 ip_randomid(void);
+void	 ip_send(struct mbuf *);
 int	 ip_setmoptions(int, struct ip_moptions **, struct mbuf *, u_int);
 void	 ip_slowtimo(void);
 struct mbuf *
@@ -207,5 +210,6 @@ void	 rip_input(struct mbuf *, ...);
 int	 rip_output(struct mbuf *, ...);
 int	 rip_usrreq(struct socket *,
 	    int, struct mbuf *, struct mbuf *, struct mbuf *, struct proc *);
+
 #endif /* _KERNEL */
 #endif /* _NETINET_IP_VAR_H_ */

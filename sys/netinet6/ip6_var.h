@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_var.h,v 1.56 2015/10/25 14:43:06 florian Exp $	*/
+/*	$OpenBSD: ip6_var.h,v 1.57 2015/12/03 21:11:54 sashan Exp $	*/
 /*	$KAME: ip6_var.h,v 1.33 2000/06/11 14:59:20 jinmei Exp $	*/
 
 /*
@@ -275,6 +275,7 @@ int	ip6_setpktopts(struct mbuf *, struct ip6_pktopts *,
 void	ip6_clearpktopts(struct ip6_pktopts *, int);
 void	ip6_randomid_init(void);
 u_int32_t ip6_randomid(void);
+void	ip6_send(struct mbuf *);
 
 int	route6_input(struct mbuf **, int *, int);
 
