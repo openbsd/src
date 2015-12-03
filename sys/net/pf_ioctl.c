@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.295 2015/12/03 09:49:15 bluhm Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.296 2015/12/03 10:34:11 blambert Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -357,7 +357,7 @@ tagname2tag(struct pf_tags *head, char *tagname, int create)
 		return (0);
 
 	/* allocate and fill new struct pf_tagname */
-	tag = malloc(sizeof(*tag), M_TEMP, M_NOWAIT|M_ZERO);
+	tag = malloc(sizeof(*tag), M_RTABLE, M_NOWAIT|M_ZERO);
 	if (tag == NULL)
 		return (0);
 	strlcpy(tag->name, tagname, sizeof(tag->name));
@@ -397,7 +397,7 @@ tag_unref(struct pf_tags *head, u_int16_t tag)
 		if (tag == p->tag) {
 			if (--p->ref == 0) {
 				TAILQ_REMOVE(head, p, entries);
-				free(p, M_TEMP, 0);
+				free(p, M_RTABLE, 0);
 			}
 			break;
 		}
