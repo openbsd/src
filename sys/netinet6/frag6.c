@@ -1,4 +1,4 @@
-/*	$OpenBSD: frag6.c,v 1.65 2015/10/22 10:22:53 mpi Exp $	*/
+/*	$OpenBSD: frag6.c,v 1.66 2015/12/03 13:13:04 tedu Exp $	*/
 /*	$KAME: frag6.c,v 1.40 2002/05/27 21:40:31 itojun Exp $	*/
 
 /*
@@ -215,9 +215,7 @@ frag6_input(struct mbuf **mp, int *offp, int proto)
 	 * If maxfrag is 0, never accept fragments.
 	 * If maxfrag is -1, accept all fragments without limitation.
 	 */
-	if (ip6_maxfrags < 0)
-		;
-	else if (frag6_nfrags >= (u_int)ip6_maxfrags)
+	if (ip6_maxfrags >= 0 && frag6_nfrags >= (u_int)ip6_maxfrags)
 		goto dropfrag;
 
 	TAILQ_FOREACH(q6, &frag6_queue, ip6q_queue)
@@ -239,9 +237,8 @@ frag6_input(struct mbuf **mp, int *offp, int proto)
 		 * If maxfragpackets is -1, accept all fragments without
 		 * limitation.
 		 */
-		if (ip6_maxfragpackets < 0)
-			;
-		else if (frag6_nfragpackets >= (u_int)ip6_maxfragpackets)
+		if (ip6_maxfragpackets >= 0 &&
+		    frag6_nfragpackets >= (u_int)ip6_maxfragpackets)
 			goto dropfrag;
 		frag6_nfragpackets++;
 		q6 = malloc(sizeof(*q6), M_FTABLE, M_NOWAIT | M_ZERO);
