@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.262 2015/10/26 09:34:50 jsg Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.263 2015/12/03 13:15:53 sthen Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"     @(#)ifconfig.8	8.4 (Berkeley) 6/1/94
 .\"
-.Dd $Mdocdate: October 26 2015 $
+.Dd $Mdocdate: December 3 2015 $
 .Dt IFCONFIG 8
 .Os
 .Sh NAME
@@ -174,6 +174,7 @@ At least the following devices can be created on demand:
 .Xr bridge 4 ,
 .Xr carp 4 ,
 .Xr enc 4 ,
+.Xr etherip 4 ,
 .Xr gif 4 ,
 .Xr gre 4 ,
 .Xr lo 4 ,
@@ -507,9 +508,10 @@ interface groups
 .Xr trunk 4
 .It
 tunnel
-.Pf ( Xr gif 4
-and
-.Xr gre 4 )
+.Pf ( Xr etherip 4 ,
+.Xr gif 4 ,
+.Xr gre 4 ,
+.Xr vxlan 4 )
 .It
 .Xr vlan 4
 .El
@@ -1540,7 +1542,13 @@ for a complete list of the available protocols,
 .Ek
 .nr nS 0
 .Pp
-The following options are available for a tunnel interface:
+.Xr etherip 4 ,
+.Xr gif 4 ,
+.Xr gre 4 ,
+and
+.Xr vxlan 4
+are all tunnel interfaces.
+The following options are available:
 .Bl -tag -width Ds
 .It Cm deletetunnel Ar src_address dest_address
 Remove the source and destination tunnel addresses.
@@ -1564,9 +1572,7 @@ Disable the
 .Xr gre 4
 keepalive mechanism.
 .It Cm tunnel Ar src_address dest_address Ns Op : Ns Ar dest_port
-Set the source and destination tunnel addresses on a tunnel interface,
-including
-.Xr gif 4 .
+Set the source and destination tunnel addresses on a tunnel interface.
 Packets routed to this interface will be encapsulated in
 IPv4 or IPv6, depending on the source and destination address families.
 Both addresses must be of the same family.
