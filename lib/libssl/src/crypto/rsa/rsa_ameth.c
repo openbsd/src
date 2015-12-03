@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_ameth.c,v 1.14 2015/02/11 04:05:14 beck Exp $ */
+/* $OpenBSD: rsa_ameth.c,v 1.15 2015/12/03 23:03:10 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -298,7 +298,7 @@ rsa_pss_decode(const X509_ALGOR *alg, X509_ALGOR **pmaskHash)
 	if (pss->maskGenAlgorithm) {
 		ASN1_TYPE *param = pss->maskGenAlgorithm->parameter;
 		if (OBJ_obj2nid(pss->maskGenAlgorithm->algorithm) == NID_mgf1 &&
-		    param->type == V_ASN1_SEQUENCE) {
+		    param && param->type == V_ASN1_SEQUENCE) {
 			p = param->value.sequence->data;
 			plen = param->value.sequence->length;
 			*pmaskHash = d2i_X509_ALGOR(NULL, &p, plen);
