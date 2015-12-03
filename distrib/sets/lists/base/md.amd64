@@ -2184,7 +2184,7 @@
 ./usr/sbin/memconfig
 ./usr/sbin/pcidump
 ./usr/sbin/vmd
-./usr/sbin/vmmctl
+./usr/sbin/vmctl
 ./usr/sbin/wsconscfg
 ./usr/sbin/wsfontload
 ./usr/sbin/wsmoused
