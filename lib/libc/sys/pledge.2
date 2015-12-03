@@ -1,4 +1,4 @@
-.\" $OpenBSD: pledge.2,v 1.18 2015/12/01 15:14:24 millert Exp $
+.\" $OpenBSD: pledge.2,v 1.19 2015/12/03 16:50:44 bluhm Exp $
 .\"
 .\" Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 1 2015 $
+.Dd $Mdocdate: December 3 2015 $
 .Dt PLEDGE 2
 .Os
 .Sh NAME
@@ -91,13 +91,9 @@ isn't allowed.
 .Pp
 .It Xr open 2
 May open
-.Pa /etc/localtime ,
-any files below
-.Pa /usr/share/zoneinfo
-and files ending in
-.Pa libc.cat
-below the directory
-.Pa /usr/share/nls/ .
+.Pa /etc/localtime
+and any files below
+.Pa /usr/share/zoneinfo .
 .Pp
 .It Xr readlink 2
 May operate on
