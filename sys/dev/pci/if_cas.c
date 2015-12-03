@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cas.c,v 1.46 2015/11/25 03:09:59 dlg Exp $	*/
+/*	$OpenBSD: if_cas.c,v 1.47 2015/12/03 09:51:52 jmatthew Exp $	*/
 
 /*
  *
@@ -56,6 +56,7 @@
 #include <sys/errno.h>
 #include <sys/device.h>
 #include <sys/endian.h>
+#include <sys/atomic.h>
 
 #include <net/if.h>
 #include <net/if_media.h>
@@ -120,7 +121,7 @@ int		cas_disable_tx(struct cas_softc *);
 void		cas_rxdrain(struct cas_softc *);
 int		cas_add_rxbuf(struct cas_softc *, int idx);
 void		cas_iff(struct cas_softc *);
-int		cas_encap(struct cas_softc *, struct mbuf *, u_int32_t *);
+int		cas_encap(struct cas_softc *, struct mbuf *, int *);
 
 /* MII methods & callbacks */
 int		cas_mii_readreg(struct device *, int, int);
@@ -346,7 +347,7 @@ cas_attach(struct device *parent, struct device *self, void *aux)
 	}
 	intrstr = pci_intr_string(pa->pa_pc, ih);
 	sc->sc_ih = pci_intr_establish(pa->pa_pc,
-	    ih, IPL_NET, cas_intr, sc, self->dv_xname);
+	    ih, IPL_NET | IPL_MPSAFE, cas_intr, sc, self->dv_xname);
 	if (sc->sc_ih == NULL) {
 		printf(": couldn't establish interrupt");
 		if (intrstr != NULL)
@@ -727,6 +728,9 @@ cas_stop(struct ifnet *ifp, int disable)
 
 	cas_reset_rx(sc);
 	cas_reset_tx(sc);
+
+	intr_barrier(sc->sc_ih);
+	KASSERT((ifp->if_flags & IFF_RUNNING) == 0);
 
 	/*
 	 * Release any queued transmit buffers.
@@ -1347,8 +1351,11 @@ cas_intr(void *v)
 			printf("%s: MAC tx fault, status %x\n",
 			    sc->sc_dev.dv_xname, txstat);
 #endif
-		if (txstat & (CAS_MAC_TX_UNDERRUN | CAS_MAC_TX_PKT_TOO_LONG))
+		if (txstat & (CAS_MAC_TX_UNDERRUN | CAS_MAC_TX_PKT_TOO_LONG)) {
+			KERNEL_LOCK();
 			cas_init(ifp);
+			KERNEL_UNLOCK();
+		}
 	}
 	if (status & CAS_INTR_RX_MAC) {
 		int rxstat = bus_space_read_4(t, seb, CAS_MAC_RX_STATUS);
@@ -1362,8 +1369,10 @@ cas_intr(void *v)
 		 * due to a silicon bug so handle them silently.
 		 */
 		if (rxstat & CAS_MAC_RX_OVERFLOW) {
+			KERNEL_LOCK();
 			ifp->if_ierrors++;
 			cas_init(ifp);
+			KERNEL_UNLOCK();
 		}
 #ifdef CAS_DEBUG
 		else if (rxstat & ~(CAS_MAC_RX_DONE | CAS_MAC_RX_FRAME_CNT))
@@ -1762,28 +1771,33 @@ cas_iff(struct cas_softc *sc)
 }
 
 int
-cas_encap(struct cas_softc *sc, struct mbuf *mhead, u_int32_t *bixp)
+cas_encap(struct cas_softc *sc, struct mbuf *m, int *used)
 {
 	u_int64_t flags;
-	u_int32_t cur, frag, i;
+	u_int32_t first, cur, frag, i;
 	bus_dmamap_t map;
 
-	cur = frag = *bixp;
+	cur = frag = (sc->sc_tx_prod + *used) % CAS_NTXDESC;
 	map = sc->sc_txd[cur].sd_map;
 
-	if (bus_dmamap_load_mbuf(sc->sc_dmatag, map, mhead,
+	switch (bus_dmamap_load_mbuf(sc->sc_dmatag, map, m,
 	    BUS_DMA_NOWAIT) != 0) {
-		return (ENOBUFS);
-	}
-
-	if ((sc->sc_tx_cnt + map->dm_nsegs) > (CAS_NTXDESC - 2)) {
-		bus_dmamap_unload(sc->sc_dmatag, map);
+	case 0:
+		break;
+	case EFBIG:
+		if (m_defrag(m, M_DONTWAIT) == 0 &&
+		    bus_dmamap_load_mbuf(sc->sc_dmatag, map, m,
+		    BUS_DMA_NOWAIT) == 0)
+			break;
+		/* FALLTHROUGH */
+	default:
 		return (ENOBUFS);
 	}
 
 	bus_dmamap_sync(sc->sc_dmatag, map, 0, map->dm_mapsize,
 	    BUS_DMASYNC_PREWRITE);
 
+	first = cur;
 	for (i = 0; i < map->dm_nsegs; i++) {
 		sc->sc_txdescs[frag].cd_addr =
 		    CAS_DMA_WRITE(map->dm_segs[i].ds_addr);
@@ -1799,14 +1813,13 @@ cas_encap(struct cas_softc *sc, struct mbuf *mhead, u_int32_t *bixp)
 			frag = 0;
 	}
 
-	sc->sc_tx_cnt += map->dm_nsegs;
-	sc->sc_txd[*bixp].sd_map = sc->sc_txd[cur].sd_map;
+	sc->sc_txd[first].sd_map = sc->sc_txd[cur].sd_map;
 	sc->sc_txd[cur].sd_map = map;
-	sc->sc_txd[cur].sd_mbuf = mhead;
+	sc->sc_txd[cur].sd_mbuf = m;
 
 	bus_space_write_4(sc->sc_memt, sc->sc_memh, CAS_TX_KICK, frag);
 
-	*bixp = frag;
+	*used += map->dm_nsegs;
 
 	/* sync descriptors */
 
@@ -1822,9 +1835,11 @@ cas_tint(struct cas_softc *sc, u_int32_t status)
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	struct cas_sxd *sd;
 	u_int32_t cons, comp;
+	int freed, used;
 
 	comp = bus_space_read_4(sc->sc_memt, sc->sc_memh, CAS_TX_COMPLETION);
 	cons = sc->sc_tx_cons;
+	freed = 0;
 	while (cons != comp) {
 		sd = &sc->sc_txd[cons];
 		if (sd->sd_mbuf != NULL) {
@@ -1835,18 +1850,23 @@ cas_tint(struct cas_softc *sc, u_int32_t status)
 			sd->sd_mbuf = NULL;
 			ifp->if_opackets++;
 		}
-		sc->sc_tx_cnt--;
+		freed++;
 		if (++cons == CAS_NTXDESC)
 			cons = 0;
 	}
 	sc->sc_tx_cons = cons;
 
-	if (sc->sc_tx_cnt < CAS_NTXDESC - 2)
+	used = atomic_sub_int_nv(&sc->sc_tx_cnt, freed);
+	if (used < CAS_NTXDESC - 2)
 		ifq_clr_oactive(&ifp->if_snd);
-	if (sc->sc_tx_cnt == 0)
+	if (used == 0)
 		ifp->if_timer = 0;
 
-	cas_start(ifp);
+	if (!IFQ_IS_EMPTY(&ifp->if_snd)) {
+		KERNEL_LOCK();
+		cas_start(ifp);
+		KERNEL_UNLOCK();
+	}
 
 	return (1);
 }
@@ -1855,40 +1875,37 @@ void
 cas_start(struct ifnet *ifp)
 {
 	struct cas_softc *sc = ifp->if_softc;
-	struct mbuf *m;
-	u_int32_t bix;
+	struct mbuf *m = NULL;
+	int used;
 
 	if (!(ifp->if_flags & IFF_RUNNING) || ifq_is_oactive(&ifp->if_snd))
 		return;
 
-	bix = sc->sc_tx_prod;
-	while (sc->sc_txd[bix].sd_mbuf == NULL) {
-		m = ifq_deq_begin(&ifp->if_snd);
-		if (m == NULL)
-			break;
-
-#if NBPFILTER > 0
-		/*
-		 * If BPF is listening on this interface, let it see the
-		 * packet before we commit it to the wire.
-		 */
-		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_OUT);
-#endif
-
-		/*
-		 * Encapsulate this packet and start it going...
-		 * or fail...
-		 */
-		if (cas_encap(sc, m, &bix)) {
-			ifq_deq_rollback(&ifp->if_snd, m);
+	used = 0;
+	while (1) {
+		if ((sc->sc_tx_cnt + used + CAS_NTXSEGS) >= (CAS_NTXDESC - 2)) {
 			ifq_set_oactive(&ifp->if_snd);
 			break;
 		}
 
-		ifq_deq_commit(&ifp->if_snd, m);
-		ifp->if_timer = 5;
+		IFQ_DEQUEUE(&ifp->if_snd, m);
+		if (m == NULL)
+			break;
+
+		if (cas_encap(sc, m, &used)) {
+			m_freem(m);
+			continue;
+		}
+
+#if NBPFILTER > 0
+		if (ifp->if_bpf)
+			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_OUT);
+#endif
 	}
 
-	sc->sc_tx_prod = bix;
+	if (used != 0) {
+		ifp->if_timer = 5;
+		sc->sc_tx_prod = (sc->sc_tx_prod + used) % CAS_NTXDESC;
+		atomic_add_int(&sc->sc_tx_cnt, used);
+	}
 }
