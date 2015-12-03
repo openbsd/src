@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.207 2015/09/11 07:42:35 claudio Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.208 2015/12/03 14:05:28 bluhm Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -527,12 +527,8 @@ udp_input(struct mbuf *m, ...)
 	/*
 	 * Locate pcb for datagram.
 	 */
-#if 0
-	if (m->m_pkthdr.pf.statekey) {
-		inp = m->m_pkthdr.pf.statekey->inp;
-		if (inp && inp->inp_pf_sk)
-			KASSERT(m->m_pkthdr.pf.statekey == inp->inp_pf_sk);
-	}
+#if NPF > 0 && 0  /* currently disabled */
+	inp = pf_inp_lookup(m);
 #endif
 	if (inp == NULL) {
 #ifdef INET6
@@ -544,12 +540,6 @@ udp_input(struct mbuf *m, ...)
 #endif /* INET6 */
 		inp = in_pcbhashlookup(&udbtable, ip->ip_src, uh->uh_sport,
 		    ip->ip_dst, uh->uh_dport, m->m_pkthdr.ph_rtableid);
-#if NPF > 0
-		if (m->m_pkthdr.pf.statekey && inp) {
-			m->m_pkthdr.pf.statekey->inp = inp;
-			inp->inp_pf_sk = m->m_pkthdr.pf.statekey;
-		}
-#endif
 	}
 	if (inp == 0) {
 		int	inpl_reverse = 0;
@@ -591,13 +581,8 @@ udp_input(struct mbuf *m, ...)
 	KASSERT(sotoinpcb(inp->inp_socket) == inp);
 
 #if NPF > 0
-	if (m->m_pkthdr.pf.statekey && !m->m_pkthdr.pf.statekey->inp &&
-	    !inp->inp_pf_sk && (inp->inp_socket->so_state & SS_ISCONNECTED)) {
-		m->m_pkthdr.pf.statekey->inp = inp;
-		inp->inp_pf_sk = m->m_pkthdr.pf.statekey;
-	}
-	/* The statekey has finished finding the inp, it is no longer needed. */
-	m->m_pkthdr.pf.statekey = NULL;
+	if (inp->inp_socket->so_state & SS_ISCONNECTED)
+		pf_inp_link(m, inp);
 #endif
 
 #ifdef IPSEC

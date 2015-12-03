@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.310 2015/11/29 15:09:32 mpi Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.311 2015/12/03 14:05:28 bluhm Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -580,11 +580,7 @@ tcp_input(struct mbuf *m, ...)
 	 * Locate pcb for segment.
 	 */
 #if NPF > 0
-	if (m->m_pkthdr.pf.statekey) {
-		inp = m->m_pkthdr.pf.statekey->inp;
-		if (inp && inp->inp_pf_sk)
-			KASSERT(m->m_pkthdr.pf.statekey == inp->inp_pf_sk);
-	}
+	inp = pf_inp_lookup(m);
 #endif
 findpcb:
 	if (inp == NULL) {
@@ -602,12 +598,6 @@ findpcb:
 			    m->m_pkthdr.ph_rtableid);
 			break;
 		}
-#if NPF > 0
-		if (m->m_pkthdr.pf.statekey && inp) {
-			m->m_pkthdr.pf.statekey->inp = inp;
-			inp->inp_pf_sk = m->m_pkthdr.pf.statekey;
-		}
-#endif
 	}
 	if (inp == NULL) {
 		int	inpl_reverse = 0;
@@ -880,13 +870,7 @@ findpcb:
 #endif
 
 #if NPF > 0
-	if (m->m_pkthdr.pf.statekey && !m->m_pkthdr.pf.statekey->inp &&
-	    !inp->inp_pf_sk) {
-		m->m_pkthdr.pf.statekey->inp = inp;
-		inp->inp_pf_sk = m->m_pkthdr.pf.statekey;
-	}
-	/* The statekey has finished finding the inp, it is no longer needed. */
-	m->m_pkthdr.pf.statekey = NULL;
+	pf_inp_link(m, inp);
 #endif
 
 #ifdef IPSEC
@@ -1294,10 +1278,7 @@ trimthenstep6:
 			 * has already been linked to the socket.  Remove the
 			 * link between old socket and new state.
 			 */
-			if (inp->inp_pf_sk) {
-				inp->inp_pf_sk->inp = NULL;
-				inp->inp_pf_sk = NULL;
-			}
+			pf_inp_unlink(inp);
 #endif
 			/*
 			* Advance the iss by at least 32768, but
