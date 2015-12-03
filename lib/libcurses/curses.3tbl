@@ -1,5 +1,5 @@
 '\" t
-.\" $OpenBSD: curses.3tbl,v 1.24 2014/07/16 14:21:45 jmc Exp $
+.\" $OpenBSD: curses.3tbl,v 1.25 2015/12/03 11:29:55 nicm Exp $
 .\"
 .\"***************************************************************************
 .\" Copyright (c) 1998-2007,2008 Free Software Foundation, Inc.              *
@@ -29,11 +29,11 @@
 .\" authorization.                                                           *
 .\"***************************************************************************
 .\"
-.\" $Id: curses.3tbl,v 1.24 2014/07/16 14:21:45 jmc Exp $
+.\" $Id: curses.3tbl,v 1.25 2015/12/03 11:29:55 nicm Exp $
 .hy 0
 .TH ncurses 3 ""
 .ds n 5
-.ds d /usr/share/misc/terminfo
+.ds d /usr/share/terminfo
 .SH NAME
 \fBncurses\fR - CRT screen handling and optimization package
 .SH SYNOPSIS
@@ -967,7 +967,7 @@ directories listed in the TERMINFO_DIRS symbol
 -
 one or more directories whose names are configured and compiled into the
 ncurses library, e.g.,
-/usr/share/misc/terminfo
+/usr/share/terminfo
 .RE
 .TP 5
 TERMINFO_DIRS
@@ -991,7 +991,7 @@ $TERMINFO, $TERMINFO_DIRS, $TERMPATH, as well as $HOME.
 .TP 5
 /usr/share/tabset
 directory containing initialization files for the terminal capability database
-/usr/share/misc/terminfo
+/usr/share/terminfo
 terminal capability database
 .SH SEE ALSO
 \fBterminfo\fR(\*n) and related pages whose names begin "curs_" for detailed routine

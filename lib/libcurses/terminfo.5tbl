@@ -32,10 +32,10 @@
 .\" authorization.                                                           *
 .\"***************************************************************************
 .\"
-.\" $Id: terminfo.5tbl,v 1.13 2010/01/12 23:21:59 nicm Exp $
+.\" $Id: terminfo.5tbl,v 1.14 2015/12/03 11:29:55 nicm Exp $
 .TH terminfo 5 "" "" "File Formats"
 .ds n 5
-.ds d /usr/share/misc/terminfo
+.ds d /usr/share/terminfo
 .SH NAME
 terminfo \- terminal capability database
 .SH SYNOPSIS
@@ -1632,7 +1632,7 @@ YI Set page length to #1 hundredth of an inch
 T}
 .TE
 .ad
-.\" $Id: terminfo.5tbl,v 1.13 2010/01/12 23:21:59 nicm Exp $
+.\" $Id: terminfo.5tbl,v 1.14 2015/12/03 11:29:55 nicm Exp $
 .\" Beginning of terminfo.tail file
 .\" This file is part of ncurses.
 .\" See "terminfo.head" for copyright.

@@ -1,4 +1,4 @@
-/* $OpenBSD: read_entry.c,v 1.16 2010/01/12 23:22:06 nicm Exp $ */
+/* $OpenBSD: read_entry.c,v 1.17 2015/12/03 11:29:55 nicm Exp $ */
 
 /****************************************************************************
  * Copyright (c) 1998-2007,2008 Free Software Foundation, Inc.              *
@@ -44,7 +44,7 @@
 #include <tic.h>
 #include <term_entry.h>
 
-MODULE_ID("$Id: read_entry.c,v 1.16 2010/01/12 23:22:06 nicm Exp $")
+MODULE_ID("$Id: read_entry.c,v 1.17 2015/12/03 11:29:55 nicm Exp $")
 
 #define TYPE_CALLOC(type,elts) typeCalloc(type, (unsigned)(elts))
 
@@ -370,11 +370,6 @@ _nc_read_file_entry(const char *const filename, TERMTYPE *ptr)
     int limit;
     char buffer[MAX_ENTRY_SIZE + 1];
 
-#ifdef __OpenBSD__
-    if (_nc_read_bsd_terminfo_file(filename, ptr) == 1)
-	return (1);
-#endif /* __OpenBSD__ */
-
     if (_nc_access(filename, R_OK) < 0
 	|| (fd = open(filename, O_RDONLY | O_BINARY)) < 0) {
 	T(("cannot open terminfo %s (errno=%d)", filename, errno));
@@ -520,12 +515,6 @@ NCURSES_EXPORT(int)
 _nc_read_entry(const char *const name, char *const filename, TERMTYPE *const tp)
 {
     int code = TGETENT_NO;
-
-#ifdef __OpenBSD__
-    /* First check the BSD terminfo.db file */
-    if (_nc_read_bsd_terminfo_entry(name, filename, tp) == 1)
-	return (1);
-#endif /* __OpenBSD__ */
 
     snprintf(filename, PATH_MAX, "%s", name);
     if (strlen(name) == 0

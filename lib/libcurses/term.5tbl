@@ -26,10 +26,10 @@
 .\" authorization.                                                           *
 .\"***************************************************************************
 .\"
-.\" $Id: term.5tbl,v 1.6 2010/01/12 23:21:59 nicm Exp $
+.\" $Id: term.5tbl,v 1.7 2015/12/03 11:29:55 nicm Exp $
 .TH term 5
 .ds n 5
-.ds d /usr/share/misc/terminfo
+.ds d /usr/share/terminfo
 .SH NAME
 term \- format of compiled term file.
 .SH SYNOPSIS
