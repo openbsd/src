@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.312 2015/12/03 14:55:18 vgross Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.313 2015/12/03 16:21:38 markus Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -78,12 +78,14 @@ static __inline u_int16_t __attribute__((__unused__))
     in_cksum_phdr(u_int32_t, u_int32_t, u_int32_t);
 void in_delayed_cksum(struct mbuf *);
 
+#ifdef IPSEC
 struct tdb *
 ip_output_ipsec_lookup(struct mbuf *m, int hlen, int *error, struct inpcb *inp,
     int ipsecflowinfo);
 int
 ip_output_ipsec_send(struct tdb *tdb, struct mbuf *m, struct ifnet *ifp,
     struct route *ro);
+#endif /* IPSEC */
 
 /*
  * IP output.  The packet in mbuf chain m contains a skeletal IP
