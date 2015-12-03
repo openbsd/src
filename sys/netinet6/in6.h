@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.h,v 1.86 2015/10/29 16:04:10 tedu Exp $	*/
+/*	$OpenBSD: in6.h,v 1.87 2015/12/03 10:34:24 tedu Exp $	*/
 /*	$KAME: in6.h,v 1.83 2001/03/29 02:55:07 jinmei Exp $	*/
 
 /*
@@ -315,9 +315,6 @@ struct route_in6 {
 #define IPV6_RECVRTHDR		38 /* bool; recv routing header */
 #define IPV6_RECVHOPOPTS	39 /* bool; recv hop-by-hop option */
 #define IPV6_RECVDSTOPTS	40 /* bool; recv dst option after rthdr */
-#ifdef _KERNEL
-#define IPV6_RECVRTHDRDSTOPTS	41 /* bool; recv dst option before rthdr */
-#endif
 
 #define IPV6_USE_MIN_MTU	42 /* bool; send packets at the minimum MTU */
 #define IPV6_RECVPATHMTU	43 /* bool; notify an according MTU */

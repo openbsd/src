@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.201 2015/12/02 13:29:26 claudio Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.202 2015/12/03 10:34:24 tedu Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -1229,7 +1229,6 @@ ip6_ctloutput(int op, struct socket *so, int level, int optname,
 			 */
 			case IPV6_RECVHOPOPTS:
 			case IPV6_RECVDSTOPTS:
-			case IPV6_RECVRTHDRDSTOPTS:
 				if (!privileged) {
 					error = EPERM;
 					break;
@@ -1297,10 +1296,6 @@ do { \
 
 				case IPV6_RECVDSTOPTS:
 					OPTSET(IN6P_DSTOPTS);
-					break;
-
-				case IPV6_RECVRTHDRDSTOPTS:
-					OPTSET(IN6P_RTHDRDSTOPTS);
 					break;
 
 				case IPV6_RECVRTHDR:
@@ -1538,7 +1533,6 @@ do { \
 
 			case IPV6_RECVHOPOPTS:
 			case IPV6_RECVDSTOPTS:
-			case IPV6_RECVRTHDRDSTOPTS:
 			case IPV6_UNICAST_HOPS:
 			case IPV6_RECVPKTINFO:
 			case IPV6_RECVHOPLIMIT:
@@ -1558,10 +1552,6 @@ do { \
 
 				case IPV6_RECVDSTOPTS:
 					optval = OPTBIT(IN6P_DSTOPTS);
-					break;
-
-				case IPV6_RECVRTHDRDSTOPTS:
-					optval = OPTBIT(IN6P_RTHDRDSTOPTS);
 					break;
 
 				case IPV6_UNICAST_HOPS:
