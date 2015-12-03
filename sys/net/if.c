@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.417 2015/12/02 16:35:52 bluhm Exp $	*/
+/*	$OpenBSD: if.c,v 1.418 2015/12/03 12:22:51 dlg Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -81,6 +81,7 @@
 #include <sys/sysctl.h>
 #include <sys/task.h>
 #include <sys/atomic.h>
+#include <sys/proc.h>
 
 #include <dev/rndvar.h>
 
@@ -151,6 +152,9 @@ void	if_input_process(void *);
 #ifdef DDB
 void	ifa_print_all(void);
 #endif
+
+void	if_start_mpsafe(struct ifnet *ifp);
+void	if_start_locked(struct ifnet *ifp);
 
 /*
  * interface index map
@@ -535,30 +539,90 @@ if_attach_common(struct ifnet *ifp)
 void
 if_start(struct ifnet *ifp)
 {
+	if (ISSET(ifp->if_xflags, IFXF_MPSAFE))
+		if_start_mpsafe(ifp);
+	else
+		if_start_locked(ifp);
+}
 
-	splassert(IPL_NET);
+void
+if_start_locked(struct ifnet *ifp)
+{
+	int s;
 
-	if (ifq_len(&ifp->if_snd) >= min(8, ifp->if_snd.ifq_maxlen) &&
-	    !ifq_is_oactive(&ifp->if_snd)) {
-		if (ISSET(ifp->if_xflags, IFXF_TXREADY)) {
-			TAILQ_REMOVE(&iftxlist, ifp, if_txlist);
-			CLR(ifp->if_xflags, IFXF_TXREADY);
-		}
-		ifp->if_start(ifp);
+	KERNEL_LOCK();
+	s = splnet();
+	ifp->if_start(ifp);
+	splx(s);
+	KERNEL_UNLOCK();
+}
+
+static inline unsigned int
+ifq_enter(struct ifqueue *ifq)
+{
+	return (atomic_inc_int_nv(&ifq->ifq_serializer) == 1);
+}
+
+static inline unsigned int
+ifq_leave(struct ifqueue *ifq)
+{
+	if (atomic_cas_uint(&ifq->ifq_serializer, 1, 0) == 1)
+		return (1);
+
+	ifq->ifq_serializer = 1;
+
+	return (0);
+}
+
+void
+if_start_mpsafe(struct ifnet *ifp)
+{
+	struct ifqueue *ifq = &ifp->if_snd;
+
+	if (!ifq_enter(ifq))
 		return;
-	}
 
-	if (!ISSET(ifp->if_xflags, IFXF_TXREADY)) {
-		SET(ifp->if_xflags, IFXF_TXREADY);
-		TAILQ_INSERT_TAIL(&iftxlist, ifp, if_txlist);
-		schednetisr(NETISR_TX);
-	}
+	do {
+		if (__predict_false(!ISSET(ifp->if_flags, IFF_RUNNING))) {
+			ifq->ifq_serializer = 0;
+			wakeup_one(&ifq->ifq_serializer);
+			return;
+		}
+
+		if (ifq_empty(ifq) || ifq_is_oactive(ifq))
+			continue;
+
+		ifp->if_start(ifp);
+
+	} while (!ifq_leave(ifq));
+}
+
+void
+if_start_barrier(struct ifnet *ifp)
+{
+	struct sleep_state sls;
+	struct ifqueue *ifq = &ifp->if_snd;
+
+	/* this should only be called from converted drivers */
+	KASSERT(ISSET(ifp->if_xflags, IFXF_MPSAFE));
+
+	/* drivers should only call this on the way down */
+	KASSERT(!ISSET(ifp->if_flags, IFF_RUNNING));
+
+	if (ifq->ifq_serializer == 0)
+		return;
+
+	if_start_mpsafe(ifp); /* spin the wheel to guarantee a wakeup */
+	do {
+		sleep_setup(&sls, &ifq->ifq_serializer, PWAIT, "ifbar");
+		sleep_finish(&sls, ifq->ifq_serializer != 0);
+	} while (ifq->ifq_serializer != 0);
 }
 
 int
 if_enqueue(struct ifnet *ifp, struct mbuf *m)
 {
-	int s, length, error = 0;
+	int length, error = 0;
 	unsigned short mflags;
 
 #if NBRIDGE > 0
@@ -569,25 +633,19 @@ if_enqueue(struct ifnet *ifp, struct mbuf *m)
 	length = m->m_pkthdr.len;
 	mflags = m->m_flags;
 
-	s = splnet();
-
 	/*
 	 * Queue message on interface, and start output if interface
 	 * not yet active.
 	 */
 	IFQ_ENQUEUE(&ifp->if_snd, m, error);
-	if (error) {
-		splx(s);
+	if (error)
 		return (error);
-	}
 
 	ifp->if_obytes += length;
 	if (mflags & M_MCAST)
 		ifp->if_omcasts++;
 
 	if_start(ifp);
-
-	splx(s);
 
 	return (0);
 }
@@ -808,21 +866,6 @@ if_input_process(void *xmq)
 }
 
 void
-nettxintr(void)
-{
-	struct ifnet *ifp;
-	int s;
-
-	s = splnet();
-	while ((ifp = TAILQ_FIRST(&iftxlist)) != NULL) {
-		TAILQ_REMOVE(&iftxlist, ifp, if_txlist);
-		CLR(ifp->if_xflags, IFXF_TXREADY);
-		ifp->if_start(ifp);
-	}
-	splx(s);
-}
-
-void
 if_deactivate(struct ifnet *ifp)
 {
 	int s;
@@ -905,8 +948,6 @@ if_detach(struct ifnet *ifp)
 
 	/* Remove the interface from the list of all interfaces.  */
 	TAILQ_REMOVE(&ifnet, ifp, if_list);
-	if (ISSET(ifp->if_xflags, IFXF_TXREADY))
-		TAILQ_REMOVE(&iftxlist, ifp, if_txlist);
 
 	while ((ifg = TAILQ_FIRST(&ifp->if_groups)) != NULL)
 		if_delgroup(ifp, ifg->ifgl_group->ifg_group);

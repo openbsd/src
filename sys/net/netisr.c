@@ -68,8 +68,6 @@ netintr(void *unused) /* ARGSUSED */
 	if (t & (1 << NETISR_PFSYNC))
 		pfsyncintr();
 #endif
-	if (t & (1 << NETISR_TX))
-		nettxintr();
 }
 
 void
