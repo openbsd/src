@@ -6032,10 +6032,12 @@
 ./usr/share/man/man9/RWLOCK_INITIALIZER.9
 ./usr/share/man/man9/SRPL_EMPTY_LOCKED.9
 ./usr/share/man/man9/SRPL_ENTER.9
+./usr/share/man/man9/SRPL_ENTRY.9
 ./usr/share/man/man9/SRPL_FIRST_LOCKED.9
 ./usr/share/man/man9/SRPL_FOREACH.9
 ./usr/share/man/man9/SRPL_FOREACH_LOCKED.9
 ./usr/share/man/man9/SRPL_FOREACH_SAFE_LOCKED.9
+./usr/share/man/man9/SRPL_HEAD.9
 ./usr/share/man/man9/SRPL_INSERT_AFTER_LOCKED.9
 ./usr/share/man/man9/SRPL_INSERT_HEAD_LOCKED.9
 ./usr/share/man/man9/SRPL_LEAVE.9

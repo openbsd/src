@@ -2250,6 +2250,7 @@
 ./usr/share/man/man5/usermgmt.conf.5
 ./usr/share/man/man5/utmp.5
 ./usr/share/man/man5/uuencode.5
+./usr/share/man/man5/vm.conf.5
 ./usr/share/man/man5/vmm.conf.5
 ./usr/share/man/man5/wsconsctl.conf.5
 ./usr/share/man/man5/wtmp.5
