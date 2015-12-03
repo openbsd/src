@@ -2561,8 +2561,6 @@
 ./usr/share/misc/na.phone
 ./usr/share/misc/scsi_modes
 ./usr/share/misc/termcap
-./usr/share/misc/termcap.db
-./usr/share/misc/terminfo.db
 ./usr/share/misc/units.lib
 ./usr/share/misc/usb_hid_usages
 ./usr/share/misc/zipcodes

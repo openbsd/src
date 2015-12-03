@@ -947,6 +947,7 @@
 ./usr/include/net/if_bridge.h
 ./usr/include/net/if_dl.h
 ./usr/include/net/if_enc.h
+./usr/include/net/if_etherip.h
 ./usr/include/net/if_gif.h
 ./usr/include/net/if_gre.h
 ./usr/include/net/if_llc.h

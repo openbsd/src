@@ -1587,6 +1587,7 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/net/if_bridge.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/net/if_dl.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/net/if_enc.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/net/if_etherip.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/net/if_gif.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/net/if_gre.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/net/if_llc.ph
