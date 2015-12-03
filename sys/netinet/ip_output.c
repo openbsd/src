@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.313 2015/12/03 16:21:38 markus Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.314 2015/12/03 21:29:58 sashan Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -72,7 +72,6 @@
 #endif
 #endif /* IPSEC */
 
-struct mbuf *ip_insertoptions(struct mbuf *, struct mbuf *, int *);
 void ip_mloopback(struct ifnet *, struct mbuf *, struct sockaddr_in *);
 static __inline u_int16_t __attribute__((__unused__))
     in_cksum_phdr(u_int32_t, u_int32_t, u_int32_t);
