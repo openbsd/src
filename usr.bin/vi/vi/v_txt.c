@@ -1,4 +1,4 @@
-/*	$OpenBSD: v_txt.c,v 1.28 2015/01/16 06:40:14 deraadt Exp $	*/
+/*	$OpenBSD: v_txt.c,v 1.29 2015/12/03 08:13:15 bentley Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -618,30 +618,21 @@ replay:	if (LF_ISSET(TXT_REPLAY))
 
 	/*
 	 * !!!
-	 * If this character was quoted by a K_VLNEXT or a backslash, replace
-	 * the placeholder (a carat or a backslash) with the new character.
-	 * If it was quoted by a K_VLNEXT, we've already adjusted the cursor
-	 * because it has to appear on top of the placeholder character.  If
-	 * it was quoted by a backslash, adjust the cursor now, the cursor
-	 * doesn't appear on top of it.  Historic practice in both cases.
+	 * If this character was quoted by a K_VLNEXT, replace the placeholder
+	 * (a carat) with the new character.  We've already adjusted the cursor
+	 * because it has to appear on top of the placeholder character.
+	 * Historic practice.
 	 *
 	 * Skip tests for abbreviations; ":ab xa XA" followed by "ixa^V<space>"
 	 * doesn't perform an abbreviation.  Special case, ^V^J (not ^V^M) is
 	 * the same as ^J, historically.
 	 */
-	if (quote == Q_BTHIS || quote == Q_VTHIS) {
+	if (quote == Q_VTHIS) {
 		FL_CLR(ec_flags, EC_QUOTED);
 		if (LF_ISSET(TXT_MAPINPUT))
 			FL_SET(ec_flags, EC_MAPINPUT);
 
-		if (quote == Q_BTHIS &&
-		    (evp->e_value == K_VERASE || evp->e_value == K_VKILL)) {
-			quote = Q_NOTSET;
-			--tp->cno;
-			++tp->owrite;
-			goto insl_ch;
-		}
-		if (quote == Q_VTHIS && evp->e_value != K_NL) {
+		if (evp->e_value != K_NL) {
 			quote = Q_NOTSET;
 			goto insl_ch;
 		}
@@ -1201,31 +1192,6 @@ leftmargin:		tp->lb[tp->cno - 1] = ' ';
 		if (LF_ISSET(TXT_SHOWMATCH))
 			showmatch = 1;
 		goto ins_ch;
-	case K_BACKSLASH:		/* Quote next erase/kill. */
-		/*
-		 * !!!
-		 * Historic vi tried to make abbreviations after a backslash
-		 * escape work.  If you did ":ab x y", and inserted "x\^H",
-		 * (assuming the erase character was ^H) you got "x^H", and
-		 * no abbreviation was done.  If you inserted "x\z", however,
-		 * it tried to back up and do the abbreviation, i.e. replace
-		 * 'x' with 'y'.  The problem was it got it wrong, and you
-		 * ended up with "zy\".
-		 *
-		 * This is really hard to do (you have to remember the
-		 * word/non-word state, for example), and doesn't make any
-		 * sense to me.  Both backslash and the characters it
-		 * (usually) escapes will individually trigger the
-		 * abbreviation, so I don't see why the combination of them
-		 * wouldn't.  I don't expect to get caught on this one,
-		 * particularly since it never worked right, but I've been
-		 * wrong before.
-		 *
-		 * Do the tests for abbreviations, so ":ab xa XA",
-		 * "ixa\<K_VERASE>" performs the abbreviation.
-		 */
-		quote = Q_BNEXT;
-		goto insq_ch;
 	case K_VLNEXT:			/* Quote next character. */
 		evp->e_c = '^';
 		quote = Q_VNEXT;
@@ -1363,8 +1329,6 @@ ebuf_chk:	if (tp->cno >= tp->len) {
 
 		/* Step the quote state forward. */
 		if (quote != Q_NOTSET) {
-			if (quote == Q_BNEXT)
-				quote = Q_BTHIS;
 			if (quote == Q_VNEXT)
 				quote = Q_VTHIS;
 		}

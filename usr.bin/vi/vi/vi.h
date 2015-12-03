@@ -1,4 +1,4 @@
-/*	$OpenBSD: vi.h,v 1.8 2015/04/24 21:48:31 brynet Exp $	*/
+/*	$OpenBSD: vi.h,v 1.9 2015/12/03 08:13:15 bentley Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -218,7 +218,7 @@ typedef struct _smap {
 typedef enum { CNOTSET, FSEARCH, fSEARCH, TSEARCH, tSEARCH } cdir_t;
 
 typedef enum { AB_NOTSET, AB_NOTWORD, AB_INWORD } abb_t;
-typedef enum { Q_NOTSET, Q_BNEXT, Q_BTHIS, Q_VNEXT, Q_VTHIS } quote_t;
+typedef enum { Q_NOTSET, Q_VNEXT, Q_VTHIS } quote_t;
 
 /* Vi private, per-screen memory. */
 typedef struct _vi_private {
