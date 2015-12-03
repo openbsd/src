@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.h,v 1.126 2015/12/02 16:35:53 bluhm Exp $	*/
+/*	$OpenBSD: route.h,v 1.127 2015/12/03 14:19:55 mpi Exp $	*/
 /*	$NetBSD: route.h,v 1.9 1996/02/13 22:00:49 christos Exp $	*/
 
 /*
@@ -102,8 +102,6 @@ struct rtentry {
 	struct srpl_entry rt_next;	/* Next multipath entry to our dst. */
 #endif
 	struct sockaddr	*rt_gateway;	/* value */
-	struct ifnet	*rt_ifp;	/* the answer: interface to use */
-#define rt_ifidx rt_ifp->if_index
 	struct ifaddr	*rt_ifa;	/* the answer: interface addr to use */
 	caddr_t		 rt_llinfo;	/* pointer to link level info cache or
 					   to an MPLS structure */ 
@@ -111,6 +109,7 @@ struct rtentry {
 	struct rtentry	*rt_parent;	/* If cloned, parent of this route. */
 	LIST_HEAD(, rttimer) rt_timer;  /* queue of timeouts for misc funcs */
 	struct rt_kmetrics rt_rmx;	/* metrics used by rx'ing protocols */
+	unsigned int	 rt_ifidx;	/* the answer: interface to use */
 	unsigned int	 rt_flags;	/* up/down?, host/net */
 	unsigned int	 rt_tableid;	/* routing table ID  */
 	int		 rt_refcnt;	/* # held references */
@@ -345,10 +344,11 @@ void		 rtlabel_unref(u_int16_t);
 extern struct rtstat rtstat;
 extern const struct sockaddr_rtin rt_defmask4;
 
-struct	mbuf;
-struct	socket;
-void	 route_init(void);
+struct mbuf;
+struct socket;
+struct ifnet;
 
+void	 route_init(void);
 int	 route_output(struct mbuf *, ...);
 int	 route_usrreq(struct socket *, int, struct mbuf *,
 			   struct mbuf *, struct mbuf *, struct proc *);

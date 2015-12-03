@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.183 2015/11/18 14:13:52 mpi Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.184 2015/12/03 14:19:55 mpi Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -758,7 +758,7 @@ report:
 
 					ifa->ifa_refcnt++;
 					rt->rt_ifa = ifa;
-					rt->rt_ifp = ifa->ifa_ifp;
+					rt->rt_ifidx = ifa->ifa_ifp->if_index;
 #ifndef SMALL_KERNEL
 					/* recheck link state after ifp change*/
 					rt_if_linkstate_change(rt, ifa->ifa_ifp,

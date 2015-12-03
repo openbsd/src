@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.283 2015/12/02 16:49:58 bluhm Exp $	*/
+/*	$OpenBSD: route.c,v 1.284 2015/12/03 14:19:55 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -1009,7 +1009,7 @@ rtrequest(int req, struct rt_addrinfo *info, u_int8_t prio,
 
 		ifa->ifa_refcnt++;
 		rt->rt_ifa = ifa;
-		rt->rt_ifp = ifp;
+		rt->rt_ifidx = ifp->if_index;
 		if (rt->rt_flags & RTF_CLONED) {
 			/*
 			 * If the ifa of the cloning route was stale, a
@@ -1031,7 +1031,7 @@ rtrequest(int req, struct rt_addrinfo *info, u_int8_t prio,
 
 				ifa->ifa_refcnt++;
 				(*ret_nrt)->rt_ifa = ifa;
-				(*ret_nrt)->rt_ifp = ifp;
+				(*ret_nrt)->rt_ifidx = ifp->if_index;
 				ifp->if_rtrequest(ifp, RTM_ADD, *ret_nrt);
 			}
 			/*
