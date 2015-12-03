@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pppx.c,v 1.46 2015/11/20 05:31:24 dlg Exp $ */
+/*	$OpenBSD: if_pppx.c,v 1.47 2015/12/03 17:03:33 bluhm Exp $ */
 
 /*
  * Copyright (c) 2010 Claudio Jeker <claudio@openbsd.org>
@@ -383,7 +383,7 @@ pppxwrite(dev_t dev, struct uio *uio, int ioflag)
 		return (EAFNOSUPPORT);
 	}
 
-	if (niq_enqueue(ifq, m) != 0)
+	if (niq_enqueue(ifq, top) != 0)
 		return (ENOBUFS);
 
 	return (error);
