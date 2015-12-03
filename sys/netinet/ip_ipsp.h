@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.172 2015/08/25 11:50:14 deraadt Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.173 2015/12/03 13:12:20 tedu Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -58,14 +58,6 @@ union sockaddr_union {
 	struct sockaddr_in	sin;
 	struct sockaddr_in6	sin6;
 };
-
-/* HMAC key sizes */
-#define	MD5HMAC96_KEYSIZE	16
-#define	SHA1HMAC96_KEYSIZE	20
-#define	RIPEMD160HMAC96_KEYSIZE	20
-#define	SHA2_256HMAC96_KEYSIZE	32
-#define	SHA2_384HMAC96_KEYSIZE	48
-#define	SHA2_512HMAC96_KEYSIZE	64
 
 #define	AH_HMAC_MAX_HASHLEN	32	/* 256 bits of authenticator for SHA512 */
 #define	AH_HMAC_RPLENGTH	4	/* 32 bits of replay counter */
