@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_proto.c,v 1.82 2015/10/07 10:50:35 mpi Exp $	*/
+/*	$OpenBSD: in6_proto.c,v 1.83 2015/12/03 12:42:03 goda Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -113,6 +113,11 @@
 #include "pf.h"
 #if NPF > 0
 #include <netinet6/ip6_divert.h>
+#endif
+
+#include "etherip.h"
+#if NETHERIP > 0
+#include <net/if_etherip.h>
 #endif
 
 /*
@@ -234,6 +239,13 @@ struct ip6protosw inet6sw[] = {
   divert6_init,	0,		0,		0,		divert6_sysctl
 },
 #endif /* NPF > 0 */
+#if NETHERIP > 0
+{ SOCK_RAW,	&inet6domain,	IPPROTO_ETHERIP,PR_ATOMIC|PR_ADDR,
+  ip6_etherip_input, rip6_output,	0,		rip6_ctloutput,
+  rip6_usrreq,
+  0,		0,		0,		0,		ip_etherip_sysctl
+},
+#endif /* NETHERIP */
 /* raw wildcard */
 { SOCK_RAW,	&inet6domain,	0,		PR_ATOMIC|PR_ADDR,
   rip6_input,	rip6_output,	0,		rip6_ctloutput,

@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.608 2015/12/01 18:28:29 goda Exp $
+#	$OpenBSD: files,v 1.609 2015/12/03 12:42:03 goda Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -531,6 +531,7 @@ pseudo-device ppp: ifnet
 pseudo-device tun: ifnet
 pseudo-device bpfilter: ifnet
 pseudo-device enc: ifnet
+pseudo-device etherip: ifnet, ether, ifmedia
 pseudo-device bridge: ifnet, ether
 pseudo-device vlan: ifnet, ether
 pseudo-device carp: ifnet, ether
@@ -759,6 +760,7 @@ file net/bpf.c				bpfilter		needs-count
 file net/bpf_filter.c			bpfilter
 file net/if.c
 file net/if_ethersubr.c			ether			needs-flag
+file net/if_etherip.c			etherip			needs-flag
 file net/if_spppsubr.c			sppp
 file net/if_loop.c			loop
 file net/if_media.c			ifmedia
