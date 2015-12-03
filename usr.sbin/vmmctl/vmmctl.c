@@ -124,7 +124,7 @@ start_vm_complete(struct imsg *imsg, int *ret)
 		if (res) {
 			fprintf(stderr, "%s: start VM command failed (%d) - "
 			    "%s\n", __progname, res, strerror(res));
-			*ret = EIO;	
+			*ret = EIO;
 		} else {
 			fprintf(stdout, "%s: start VM command successful, "
 			    "tty %s\n", __progname, vmr->vmr_ttyname);
@@ -158,7 +158,7 @@ terminate_vm(uint32_t terminate_id)
 	imsg_compose(ibuf, IMSG_VMDOP_TERMINATE_VM_REQUEST, 0, 0, -1,
 	    &vtp, sizeof(struct vm_terminate_params));
 }
- 
+
 /*
  * terminate_vm_complete
  *
@@ -186,7 +186,7 @@ terminate_vm_complete(struct imsg *imsg, int *ret)
 
 	if (imsg->hdr.type == IMSG_VMDOP_TERMINATE_VM_RESPONSE) {
 		res = *(int *)imsg->data;
- 		if (res) {
+		if (res) {
 			fprintf(stderr, "%s: terminate VM command failed "
 			    "(%d) - %s\n", __progname, res, strerror(res));
 			*ret = EIO;
@@ -360,6 +360,6 @@ create_imagefile(const char *imgfile_path, long imgsize)
 		return (ret);
 	}
 
-	ret = close(fd);	
+	ret = close(fd);
 	return (ret);
 }

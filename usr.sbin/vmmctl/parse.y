@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.6 2015/12/02 09:20:41 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.7 2015/12/03 08:52:29 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007-2015 Reyk Floeter <reyk@openbsd.org>
@@ -246,7 +246,7 @@ lookup(char *s)
 		{ "disk",		DISK },
 		{ "enable",		ENABLE },
 		{ "id",			VMID },
- 		{ "include",		INCLUDE },
+		{ "include",		INCLUDE },
 		{ "interfaces",		NIFS },
 		{ "kernel",		KERNEL },
 		{ "memory",		MEMORY },
@@ -292,7 +292,8 @@ lgetc(int quotec)
 
 	if (quotec) {
 		if ((c = getc(file->stream)) == EOF) {
-			yyerror("reached end of file while parsing quoted string");
+			yyerror("reached end of file while parsing "
+			    "quoted string");
 			if (file == topfile || popfile() == EOF)
 				return (EOF);
 			return (quotec);
