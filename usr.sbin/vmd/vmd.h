@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.h,v 1.7 2015/12/03 08:42:11 reyk Exp $	*/
+/*	$OpenBSD: vmd.h,v 1.8 2015/12/03 13:27:14 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -107,7 +107,8 @@ int	 config_init(struct vmd *);
 void	 config_purge(struct vmd *, unsigned int);
 int	 config_setreset(struct vmd *, unsigned int);
 int	 config_getreset(struct vmd *, struct imsg *);
-int	 config_getvm(struct privsep *, struct imsg *);
+int	 config_getvm(struct privsep *, struct vm_create_params *,
+	    int, uint32_t);
 int	 config_getdisk(struct privsep *, struct imsg *);
 int	 config_getif(struct privsep *, struct imsg *);
 

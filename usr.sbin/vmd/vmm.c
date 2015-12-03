@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.5 2015/12/03 08:42:11 reyk Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.6 2015/12/03 13:27:14 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -168,12 +168,15 @@ vmm_run(struct privsep *ps, struct privsep_proc *p, void *arg)
 int
 vmm_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 {
-	struct privsep	*ps = p->p_ps;
-	int		 res = 0, cmd = 0;
+	struct privsep		*ps = p->p_ps;
+	int			 res = 0, cmd = 0;
+	struct vm_create_params	 vcp;
 
 	switch (imsg->hdr.type) {
 	case IMSG_VMDOP_START_VM_REQUEST:
-		res = config_getvm(ps, imsg);
+		IMSG_SIZE_CHECK(imsg, &vcp);
+		memcpy(&vcp, imsg->data, sizeof(vcp));
+		res = config_getvm(ps, &vcp, imsg->fd, imsg->hdr.peerid);
 		if (res != 0)
 			cmd = IMSG_VMDOP_START_VM_RESPONSE;
 		break;
