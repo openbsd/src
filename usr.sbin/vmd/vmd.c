@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.14 2015/12/03 16:13:04 reyk Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.15 2015/12/03 16:18:13 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -215,7 +215,8 @@ __dead void
 usage(void)
 {
 	extern char *__progname;
-	fprintf(stderr, "usage: %s [-dv]\n", __progname);
+	fprintf(stderr, "usage: %s [-dnv] [-D macro=value] [-f file]\n",
+	    __progname);
 	exit(1);
 }
 
@@ -229,8 +230,13 @@ main(int argc, char **argv)
 	if ((env = calloc(1, sizeof(*env))) == NULL)
 		fatal("calloc: env");
 
-	while ((ch = getopt(argc, argv, "df:vn")) != -1) {
+	while ((ch = getopt(argc, argv, "D:df:vn")) != -1) {
 		switch (ch) {
+		case 'D':
+			if (cmdline_symset(optarg) < 0)
+				log_warnx("could not parse macro definition %s",
+				    optarg);
+			break;
 		case 'd':
 			env->vmd_debug = 2;
 			break;
