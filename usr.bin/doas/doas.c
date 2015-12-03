@@ -1,4 +1,4 @@
-/* $OpenBSD: doas.c,v 1.45 2015/10/24 19:23:48 miod Exp $ */
+/* $OpenBSD: doas.c,v 1.46 2015/12/03 08:12:15 tedu Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -21,6 +21,7 @@
 #include <limits.h>
 #include <login_cap.h>
 #include <bsd_auth.h>
+#include <readpassphrase.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -323,7 +324,7 @@ main(int argc, char **argv, char **envp)
 	char cwdpath[PATH_MAX];
 	const char *cwd;
 
-	if (pledge("stdio rpath getpw proc exec id", NULL) == -1)
+	if (pledge("stdio rpath getpw tty proc exec id", NULL) == -1)
 		err(1, "pledge");
 
 	closefrom(STDERR_FILENO + 1);
@@ -405,11 +406,27 @@ main(int argc, char **argv, char **envp)
 	}
 
 	if (!(rule->options & NOPASS)) {
+		char *challenge = NULL, *response, rbuf[1024], cbuf[128];
+		auth_session_t *as;
+
 		if (nflag)
 			errx(1, "Authorization required");
-		if (!auth_userokay(myname, NULL, "auth-doas", NULL)) {
+
+		if (!(as = auth_userchallenge(myname, NULL, "auth-doas",
+		    &challenge)))
+			err(1, "auth challenge failed");
+		if (!challenge) {
+			char host[HOST_NAME_MAX + 1];
+			if (gethostname(host, sizeof(host)))
+				snprintf(host, sizeof(host), "?");
+			snprintf(cbuf, sizeof(cbuf),
+			    "doas (%.32s@%.32s) password: ", myname, host);
+			challenge = cbuf;
+		}
+		response = readpassphrase(challenge, rbuf, sizeof(rbuf), 0);
+		if (!auth_userresponse(as, response, 0)) {
 			syslog(LOG_AUTHPRIV | LOG_NOTICE,
-			    "failed password for %s", myname);
+			    "failed auth for %s", myname);
 			errc(1, EPERM, NULL);
 		}
 	}
