@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.284 2015/12/03 14:19:55 mpi Exp $	*/
+/*	$OpenBSD: route.c,v 1.285 2015/12/03 14:26:27 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -953,7 +953,6 @@ rtrequest(int req, struct rt_addrinfo *info, u_int8_t prio,
 
 		rt->rt_refcnt = 1;
 		rt->rt_flags = info->rti_flags | RTF_UP;
-		rt->rt_tableid = tableid;
 		rt->rt_priority = prio;	/* init routing priority */
 		LIST_INIT(&rt->rt_timer);
 
