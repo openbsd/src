@@ -1,4 +1,4 @@
-/*	$OpenBSD: rs.c,v 1.29 2015/11/14 17:03:02 schwarze Exp $	*/
+/*	$OpenBSD: rs.c,v 1.30 2015/12/03 12:23:15 schwarze Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -39,10 +39,16 @@
 #include <err.h>
 #include <errno.h>
 #include <limits.h>
+#include <locale.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
+struct	entry {
+	int	 w;  /* Display width. */
+	char	*s;  /* Multibyte string. */
+};
 
 long	flags;
 #define	TRANSPOSE	000001
@@ -63,26 +69,27 @@ long	flags;
 
 short	*colwidths;
 int	nelem;
-char	**elem;
-char	**endelem;
+struct entry *elem;
+struct entry *endelem;
 char	*curline;
 int	allocsize = BUFSIZ;
-ssize_t	curlen;
 int	irows, icols;
 int	orows, ocols;
-ssize_t	maxlen;
+int	maxwidth;
 int	skip;
 int	propgutter;
 char	isep = ' ', osep = ' ';
 int	owidth = 80, gutter = 2;
 
+int	  mbsavis(char **, const char *);
+
 void	  usage(void);
 void	  getargs(int, char *[]);
 void	  getfile(void);
 int	  get_line(void);
-char	**getptrs(char **);
+struct entry *getptrs(struct entry *);
 void	  prepfile(void);
-void	  prints(char *, int);
+void	  prints(struct entry *, int);
 void	  putfile(void);
 
 #define INCR(ep) do {			\
@@ -93,6 +100,8 @@ void	  putfile(void);
 int
 main(int argc, char *argv[])
 {
+	setlocale(LC_CTYPE, "");
+
 	if (pledge("stdio", NULL) == -1)
 		err(1, "pledge");
 
@@ -110,13 +119,14 @@ main(int argc, char *argv[])
 void
 getfile(void)
 {
+	const char delim[2] = { isep, '\0' };
 	char *p;
-	char *endp;
-	char **ep = NULL;
+	struct entry *ep;
 	int multisep = (flags & ONEISEPONLY ? 0 : 1);
 	int nullpad = flags & NULLPAD;
-	char **padto;
+	struct entry *padto;
 
+	curline = NULL;
 	while (skip--) {
 		if (get_line() == EOF)
 			return;
@@ -125,67 +135,67 @@ getfile(void)
 	}
 	if (get_line() == EOF)
 		return;
-	if (flags & NOARGS && curlen < owidth)
+	if (flags & NOARGS && strlen(curline) < (size_t)owidth)
 		flags |= ONEPERLINE;
 	if (flags & ONEPERLINE)
 		icols = 1;
 	else				/* count cols on first line */
-		for (p = curline, endp = curline + curlen; p < endp; p++) {
+		for (p = curline; *p != '\0'; p++) {
 			if (*p == isep && multisep)
 				continue;
 			icols++;
 			while (*p && *p != isep)
 				p++;
 		}
-	ep = getptrs(elem);
+	ep = getptrs(NULL);
 	p = curline;
 	do {
 		if (flags & ONEPERLINE) {
-			*ep = curline;
+			ep->w = mbsavis(&ep->s, curline);
+			if (maxwidth < ep->w)
+				maxwidth = ep->w;
 			INCR(ep);		/* prepare for next entry */
-			if (maxlen < curlen)
-				maxlen = curlen;
 			irows++;
 			continue;
 		}
-		for (p = curline, endp = curline + curlen; p < endp; p++) {
-			if (*p == isep && multisep)
-				continue;	/* eat up column separators */
-			if (*p == isep)		/* must be an empty column */
-				*ep = "";
-			else			/* store column entry */
-				*ep = p;
-			while (p < endp && *p != isep)
-				p++;		/* find end of entry */
-			*p = '\0';		/* mark end of entry */
-			if (maxlen < p - *ep)	/* update maxlen */
-				maxlen = p - *ep;
+		p = curline;
+		while (p != NULL && *p != '\0') {
+			if (*p == isep) {
+				p++;
+				if (multisep)
+					continue;
+				ep->s = "";	/* empty column */
+				ep->w = 0;
+			} else
+				ep->w = mbsavis(&ep->s, strsep(&p, delim));
+			if (maxwidth < ep->w)
+				maxwidth = ep->w;
 			INCR(ep);		/* prepare for next entry */
 		}
 		irows++;			/* update row count */
 		if (nullpad) {			/* pad missing entries */
 			padto = elem + irows * icols;
 			while (ep < padto) {
-				*ep = "";
+				ep->s = "";
+				ep->w = 0;
 				INCR(ep);
 			}
 		}
 	} while (get_line() != EOF);
-	*ep = NULL;				/* mark end of pointers */
 	nelem = ep - elem;
 }
 
 void
 putfile(void)
 {
-	char **ep;
+	struct entry *ep;
 	int i, j, n;
 
 	ep = elem;
 	if (flags & TRANSPOSE) {
 		for (i = 0; i < orows; i++) {
 			for (j = i; j < nelem; j += orows)
-				prints(ep[j], (j - i) / orows);
+				prints(ep + j, (j - i) / orows);
 			putchar('\n');
 		}
 	} else {
@@ -193,7 +203,7 @@ putfile(void)
 			for (j = 0; j < ocols; j++) {
 				if (n++ >= nelem)
 					break;
-				prints(*ep++, j);
+				prints(ep++, j);
 			}
 			putchar('\n');
 		}
@@ -201,19 +211,15 @@ putfile(void)
 }
 
 void
-prints(char *s, int col)
+prints(struct entry *ep, int col)
 {
 	int n;
-	char *p = s;
 
-	while (*p)
-		p++;
-	n = (flags & ONEOSEPONLY ? 1 : colwidths[col] - (p - s));
+	n = (flags & ONEOSEPONLY ? 1 : colwidths[col] - ep->w);
 	if (flags & RIGHTADJUST)
 		while (n-- > 0)
 			putchar(osep);
-	for (p = s; *p; p++)
-		putchar(*p);
+	fputs(ep->s, stdout);
 	while (n-- > 0)
 		putchar(osep);
 }
@@ -232,18 +238,18 @@ usage(void)
 void
 prepfile(void)
 {
-	char **ep;
+	struct entry *ep;
 	int  i;
 	int  j;
-	char **lp;
+	struct entry *lp;
 	int colw;
 	int max = 0;
 	int n;
 
 	if (!nelem)
 		exit(0);
-	gutter += maxlen * propgutter / 100.0;
-	colw = maxlen + gutter;
+	gutter += maxwidth * propgutter / 100.0;
+	colw = maxwidth + gutter;
 	if (flags & MTRANSPOSE) {
 		orows = icols;
 		ocols = irows;
@@ -263,14 +269,11 @@ prepfile(void)
 		orows = nelem / ocols + (nelem % ocols ? 1 : 0);
 	else if (ocols == 0)			/* decide on cols */
 		ocols = nelem / orows + (nelem % orows ? 1 : 0);
-	lp = elem + orows * ocols;
-	while (lp > endelem) {
-		getptrs(elem + nelem);
-		lp = elem + orows * ocols;
-	}
+	while ((lp = elem + orows * ocols) > endelem)
+	     (void)getptrs(NULL);
 	if (flags & RECYCLE) {
 		for (ep = elem + nelem; ep < lp; ep++)
-			*ep = *(ep - nelem);
+			memcpy(ep, ep - nelem, sizeof(*ep));
 		nelem = lp - elem;
 	}
 	if (!(colwidths = calloc(ocols, sizeof(short))))
@@ -279,13 +282,13 @@ prepfile(void)
 		for (ep = elem, i = 0; i < ocols; i++) {
 			max = 0;
 			if (flags & TRANSPOSE) {
-				for (j = 0; j < orows; j++)
-					if ((n = strlen(*ep++)) > max)
-						max = n;
+				for (j = 0; j < orows; j++, ep++)
+					if (ep->w > max)
+						max = ep->w;
 			} else {
 				for (j = i; j < nelem; j += ocols)
-					if ((n = strlen(ep[j])) > max)
-						max = n;
+					if (ep[j].w > max)
+						max = ep[j].w;
 			}
 			colwidths[i] = max + gutter;
 		}
@@ -305,43 +308,38 @@ prepfile(void)
 }
 
 int
-get_line(void)	/* get line; maintain curline, curlen; manage storage */
+get_line(void)
 {
-	static	char	*ibuf = NULL;
-	static	size_t	 ibufsz = 0;
+	static	size_t	 cursz;
+	static	ssize_t	 curlen;
 
 	if (irows > 0 && flags & DETAILSHAPE)
 		printf(" %zd line %d\n", curlen, irows);
 
-	if ((curlen = getline(&ibuf, &ibufsz, stdin)) == EOF) {
+	if ((curlen = getline(&curline, &cursz, stdin)) == EOF) {
 		if (ferror(stdin))
 			err(1, NULL);
 		return EOF;
 	}
-	if (curlen > 0 && ibuf[curlen - 1] == '\n')
-		ibuf[--curlen] = '\0';
-
-	if (skip >= 0 || flags & SHAPEONLY)
-		curline = ibuf;
-	else if ((curline = strdup(ibuf)) == NULL)
-		err(1, NULL);
+	if (curlen > 0 && curline[curlen - 1] == '\n')
+		curline[--curlen] = '\0';
 
 	return 0;
 }
 
-char **
-getptrs(char **sp)
+struct entry *
+getptrs(struct entry *sp)
 {
-	char **p;
+	struct entry *p;
 	int newsize;
 
 	newsize = allocsize * 2;
-	p = reallocarray(elem, newsize, sizeof(char *));
+	p = reallocarray(elem, newsize, sizeof(*p));
 	if (p == NULL)
 		err(1, "no memory");
 
 	allocsize = newsize;
-	sp += p - elem;
+	sp = sp == NULL ? p : p + (sp - elem);
 	elem = p;
 	endelem = elem + allocsize;
 	return(sp);
