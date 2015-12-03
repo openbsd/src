@@ -1,7 +1,7 @@
-/*	$OpenBSD: vmd.c,v 1.13 2015/12/03 16:11:32 reyk Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.14 2015/12/03 16:13:04 reyk Exp $	*/
 
 /*
- * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
+ * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
