@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.102 2015/05/18 14:59:42 krw Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.103 2015/12/03 20:54:13 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -105,12 +105,6 @@ dispatch(void)
 	void (*func)(void);
 
 	while (quit == 0) {
-		if (ifi->rdomain != get_rdomain(ifi->name)) {
-			warning("%s rdomain changed; exiting", ifi->name);
-			quit = INTERNALSIG;
-			continue;
-		}
-
 		if (timeout.func) {
 			time(&cur_time);
 			if (timeout.when <= cur_time) {
