@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.190 2015/12/02 22:13:44 vgross Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.191 2015/12/03 09:49:15 bluhm Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -528,8 +528,8 @@ in_pcbdetach(struct inpcb *inp)
 		ip_freemoptions(inp->inp_moptions);
 #if NPF > 0
 	if (inp->inp_pf_sk) {
-		pf_unlink_divert_state(inp->inp_pf_sk);
-		/* pf_unlink_divert_state() may have detached the state */
+		pf_remove_divert_state(inp->inp_pf_sk);
+		/* pf_remove_divert_state() may have detached the state */
 		if (inp->inp_pf_sk)
 			inp->inp_pf_sk->inp = NULL;
 	}

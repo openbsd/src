@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.424 2015/12/02 16:00:42 sashan Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.425 2015/12/03 09:49:15 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1669,8 +1669,8 @@ extern struct pool		 pf_state_scrub_pl;
 extern void			 pf_purge_thread(void *);
 extern void			 pf_purge_expired_src_nodes(int);
 extern void			 pf_purge_expired_states(u_int32_t);
-extern void			 pf_unlink_state(struct pf_state *);
-extern void			 pf_unlink_divert_state(struct pf_state_key *);
+extern void			 pf_remove_state(struct pf_state *);
+extern void			 pf_remove_divert_state(struct pf_state_key *);
 extern void			 pf_free_state(struct pf_state *);
 extern int			 pf_state_insert(struct pfi_kif *,
 				    struct pf_state_key **,

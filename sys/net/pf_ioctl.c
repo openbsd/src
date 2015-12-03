@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.294 2015/11/24 13:37:16 mpi Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.295 2015/12/03 09:49:15 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1430,7 +1430,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				/* don't send out individual delete messages */
 				SET(s->state_flags, PFSTATE_NOSYNC);
 #endif	/* NPFSYNC > 0 */
-				pf_unlink_state(s);
+				pf_remove_state(s);
 				killed++;
 			}
 		}
@@ -1453,7 +1453,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			if (psk->psk_pfcmp.creatorid == 0)
 				psk->psk_pfcmp.creatorid = pf_status.hostid;
 			if ((s = pf_find_state_byid(&psk->psk_pfcmp))) {
-				pf_unlink_state(s);
+				pf_remove_state(s);
 				psk->psk_killed = 1;
 			}
 			break;
@@ -1499,7 +1499,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			    !strcmp(psk->psk_label, s->rule.ptr->label))) &&
 			    (!psk->psk_ifname[0] || !strcmp(psk->psk_ifname,
 			    s->kif->pfik_name))) {
-				pf_unlink_state(s);
+				pf_remove_state(s);
 				killed++;
 			}
 		}
