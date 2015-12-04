@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tetris.6,v 1.19 2015/11/29 14:31:02 tb Exp $
+.\"	$OpenBSD: tetris.6,v 1.20 2015/12/04 19:46:04 tb Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	@(#)tetris.6	8.1 (Berkeley) 5/31/93
 .\"
-.Dd $Mdocdate: November 29 2015 $
+.Dd $Mdocdate: December 4 2015 $
 .Dt TETRIS 6
 .Os
 .Sh NAME
@@ -146,14 +146,14 @@ Scores which are the highest on a given level
 are marked with asterisks
 .Dq * .
 .Sh ENVIRONMENT
-.Bl -tag -width Ds
+.Bl -tag -width $HOME/.tetris.scores
 .It Ev LOGNAME
 Name displayed in high score file.
 .El
 .Sh FILES
 .Bl -tag -width $HOME/.tetris.scores
 .It Pa $HOME/.tetris.scores
-high score file
+High score file.
 .El
 .Sh AUTHORS
 .An -nosplit
