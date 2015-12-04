@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubcmtp.c,v 1.10 2015/11/30 09:30:48 kettenis Exp $ */
+/*	$OpenBSD: ubcmtp.c,v 1.11 2015/12/04 16:22:27 kettenis Exp $ */
 
 /*
  * Copyright (c) 2013-2014, joshua stein <jcs@openbsd.org>
@@ -507,16 +507,15 @@ int
 ubcmtp_activate(struct device *self, int act)
 {
 	struct ubcmtp_softc *sc = (struct ubcmtp_softc *)self;
-	int ret;
+	int rv = 0;
 
 	if (act == DVACT_DEACTIVATE) {
-		ret = 0;
 		if (sc->sc_wsmousedev != NULL)
-			ret = config_deactivate(sc->sc_wsmousedev);
+			rv = config_deactivate(sc->sc_wsmousedev);
 		usbd_deactivate(sc->sc_udev);
-		return (ret);
 	}
-	return (EOPNOTSUPP);
+
+	return (rv);
 }
 
 int
