@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmctl.h,v 1.2 2015/12/03 23:32:32 reyk Exp $	*/
+/*	$OpenBSD: vmctl.h,v 1.3 2015/12/04 15:40:17 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -21,6 +21,8 @@
 
 #ifndef VMCTL_PARSER_H
 #define VMCTL_PARSER_H
+
+#define VMCTL_CU	"/usr/bin/cu"
 
 enum actions {
 	NONE,
@@ -69,7 +71,7 @@ int	 parse(int, char *[]);
 /* vmctl.c */
 int	 create_imagefile(const char *, long);
 int	 start_vm(const char *, int, int, int, char **, char *);
-int	 start_vm_complete(struct imsg *, int *);
+int	 start_vm_complete(struct imsg *, int *, int);
 void	 terminate_vm(uint32_t);
 int	 terminate_vm_complete(struct imsg *, int *);
 void	 get_info_vm(uint32_t);

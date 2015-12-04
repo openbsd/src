@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.2 2015/12/03 23:32:32 reyk Exp $	*/
+/*	$OpenBSD: main.c,v 1.3 2015/12/04 15:40:17 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -40,6 +40,7 @@
 
 static const char	*socket_name = SOCKET_NAME;
 static int		 ctl_sock = -1;
+static int		 tty_autoconnect = 0;
 
 __dead void	 usage(void);
 __dead void	 ctl_usage(struct ctl_command *);
@@ -56,8 +57,8 @@ struct ctl_command ctl_commands[] = {
 	{ "create",	CMD_CREATE,	ctl_create,	"\"name\" -s size", 1 },
 	{ "load",	CMD_LOAD,	ctl_load,	"[path]" },
 	{ "reload",	CMD_RELOAD,	ctl_load,	"[path]" },
-	{ "start",	CMD_START,	ctl_start,
-	    "\"name\" -k kernel -m memory [-i interfaces] [[-d disk] ...]" },
+	{ "start",	CMD_START,	ctl_start,	"\"name\""
+	    " [-c] -k kernel -m memory [-i interfaces] [-d disk]*" },
 	{ "status",	CMD_STATUS,	ctl_status,	"[id]" },
 	{ "stop",	CMD_STOP,	ctl_stop,	"id" },
 	{ NULL }
@@ -145,7 +146,7 @@ parse(int argc, char *argv[])
 
 	if (!ctl->has_pledge) {
 		/* pledge(2) default if command doesn't have its own pledge */
-		if (pledge("stdio rpath unix", NULL) == -1)
+		if (pledge("stdio rpath exec unix", NULL) == -1)
 			err(1, "pledge");
 	}
 	if (ctl->main(&res, argc, argv) != 0)
@@ -166,10 +167,11 @@ vmmaction(struct parse_result *res)
 	struct imsg		 imsg;
 	int			 done = 0;
 	int			 n;
-	int			 ret;
+	int			 ret, action;
 
 	if (ctl_sock == -1) {
-		if ((ctl_sock = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
+		if ((ctl_sock = socket(AF_UNIX,
+		    SOCK_STREAM|SOCK_CLOEXEC, 0)) == -1)
 			err(1, "socket");
 
 		bzero(&sun, sizeof(sun));
@@ -229,6 +231,9 @@ vmmaction(struct parse_result *res)
 		break;
 	}
 
+	action = res->action;
+	parse_free(res);
+
 	while (ibuf->w.queued)
 		if (msgbuf_write(&ibuf->w) <= 0 && errno != EAGAIN)
 			err(1, "write error");
@@ -258,9 +263,10 @@ vmmaction(struct parse_result *res)
 			}
 
 			ret = 0;
-			switch (res->action) {
+			switch (action) {
 			case CMD_START:
-				done = start_vm_complete(&imsg, &ret);
+				done = start_vm_complete(&imsg, &ret,
+				    tty_autoconnect);
 				break;
 			case CMD_STOP:
 				done = terminate_vm_complete(&imsg, &ret);
@@ -276,8 +282,6 @@ vmmaction(struct parse_result *res)
 			imsg_free(&imsg);
 		}
 	}
-
-	parse_free(res);
 
 	return (0);
 }
@@ -458,8 +462,11 @@ ctl_start(struct parse_result *res, int argc, char *argv[])
 	argc--;
 	argv++;
 
-	while ((ch = getopt(argc, argv, "k:m:d:i:")) != -1) {
+	while ((ch = getopt(argc, argv, "ck:m:d:i:")) != -1) {
 		switch (ch) {
+		case 'c':
+			tty_autoconnect = 1;
+			break;
 		case 'k':
 			if (res->path)
 				errx(1, "kernel specified multiple times");

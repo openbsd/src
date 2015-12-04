@@ -98,6 +98,7 @@ start_vm(const char *name, int memsize, int nnics, int ndisks, char **disks,
  * Parameters:
  *  imsg : response imsg received from vmd
  *  ret  : return value
+ *  autoconnect : open the console after startup
  *
  * Return:
  *  Always 1 to indicate we have processed the return message (even if it
@@ -109,7 +110,7 @@ start_vm(const char *name, int memsize, int nnics, int ndisks, char **disks,
  *   EIO   : start_vm command failed
  */
 int
-start_vm_complete(struct imsg *imsg, int *ret)
+start_vm_complete(struct imsg *imsg, int *ret, int autoconnect)
 {
 	struct vmop_start_result *vmr;
 	int res;
@@ -121,6 +122,16 @@ start_vm_complete(struct imsg *imsg, int *ret)
 			fprintf(stderr, "%s: start VM command failed (%d) - "
 			    "%s\n", __progname, res, strerror(res));
 			*ret = EIO;
+		} else if (autoconnect) {
+			closefrom(STDERR_FILENO + 1);
+
+			/* Only returns on error */
+			if (execl(VMCTL_CU, VMCTL_CU,
+			    "-l", vmr->vmr_ttyname, "-s", "9600", NULL) == -1) {
+				fprintf(stderr, "%s: failed to open "
+				    "the console\n", __progname);
+				*ret = errno;
+			}
 		} else {
 			fprintf(stdout, "%s: start VM command successful, "
 			    "tty %s\n", __progname, vmr->vmr_ttyname);
