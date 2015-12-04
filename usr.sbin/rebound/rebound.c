@@ -1,4 +1,4 @@
-/* $OpenBSD: rebound.c,v 1.52 2015/12/04 16:33:40 tedu Exp $ */
+/* $OpenBSD: rebound.c,v 1.53 2015/12/04 16:44:20 tedu Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -41,6 +41,7 @@ uint16_t randomid(void);
 
 static struct timespec now;
 static int debug;
+static int daemonized;
 
 struct dnspacket {
 	uint16_t id;
@@ -114,12 +115,11 @@ logmsg(int prio, const char *msg, ...)
 	va_list ap;
 
 	va_start(ap, msg);
-	if (debug) {
+	if (debug || !daemonized) {
 		vfprintf(stderr, msg, ap);
 		fprintf(stderr, "\n");
-	} else {
-		vsyslog(LOG_DAEMON | prio, msg, ap);
 	}
+	vsyslog(LOG_DAEMON | prio, msg, ap);
 	va_end(ap);
 }
 
@@ -129,12 +129,12 @@ logerr(const char *msg, ...)
 	va_list ap;
 
 	va_start(ap, msg);
-	if (debug) {
+	if (debug || !daemonized) {
+		fprintf(stderr, "rebound: ");
 		vfprintf(stderr, msg, ap);
 		fprintf(stderr, "\n");
-	} else {
-		vsyslog(LOG_DAEMON | LOG_ERR, msg, ap);
 	}
+	vsyslog(LOG_DAEMON | LOG_ERR, msg, ap);
 	va_end(ap);
 	exit(1);
 }
@@ -654,10 +654,10 @@ main(int argc, char **argv)
 	signal(SIGPIPE, SIG_IGN);
 
 	if (getrlimit(RLIMIT_NOFILE, &rlim) == -1)
-		err(1, "getrlimit");
+		logerr("getrlimit: %s", strerror(errno));
 	rlim.rlim_cur = rlim.rlim_max;
 	if (setrlimit(RLIMIT_NOFILE, &rlim) == -1)
-		err(1, "setrlimit");
+		logerr("setrlimit: %s", strerror(errno));
 	connmax = rlim.rlim_cur - 10;
 	if (connmax > 512)
 		connmax = 512;
@@ -679,26 +679,28 @@ main(int argc, char **argv)
 
 	ud = socket(AF_INET, SOCK_DGRAM | SOCK_NONBLOCK, 0);
 	if (ud == -1)
-		err(1, "socket");
+		logerr("socket: %s", strerror(errno));
 	if (bind(ud, (struct sockaddr *)&bindaddr, sizeof(bindaddr)) == -1)
-		err(1, "bind");
+		logerr("bind: %s", strerror(errno));
 
 	ld = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0);
 	if (ld == -1)
-		err(1, "socket");
+		logerr("socket: %s", strerror(errno));
 	one = 1;
 	setsockopt(ld, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one));
 	if (bind(ld, (struct sockaddr *)&bindaddr, sizeof(bindaddr)) == -1)
-		err(1, "bind");
+		logerr("bind: %s", strerror(errno));
 	if (listen(ld, 10) == -1)
-		err(1, "listen");
+		logerr("listen: %s", strerror(errno));
 
 	if (debug) {
 		launch(conffile, ud, ld, -1);
 		return 1;
 	}
 
-	daemon(0, 0);
+	if (daemon(0, 0) == -1)
+		logerr("daemon: %s", strerror(errno));
+	daemonized = 1;
 
 	kq = kqueue();
 
