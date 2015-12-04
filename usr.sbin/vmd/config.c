@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.4 2015/12/03 23:32:32 reyk Exp $	*/
+/*	$OpenBSD: config.c,v 1.5 2015/12/04 10:54:21 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -110,6 +110,8 @@ config_getvm(struct privsep *ps, struct vm_create_params *vcp,
 	unsigned int		 i;
 	int			 fd, ttys_fd;
 
+	if (vcp->vcp_ncpus == 0)
+		vcp->vcp_ncpus = 1;
 	if (vcp->vcp_ncpus > VMM_MAX_VCPUS_PER_VM) {
 		log_debug("invalid number of CPUs");
 		return (-1);
