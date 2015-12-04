@@ -1,4 +1,4 @@
-/*	$OpenBSD: lcp.c,v 1.14 2015/12/02 05:07:09 mmcc Exp $ */
+/*	$OpenBSD: lcp.c,v 1.15 2015/12/04 13:12:44 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: lcp.c,v 1.14 2015/12/02 05:07:09 mmcc Exp $ */
+/* $Id: lcp.c,v 1.15 2015/12/04 13:12:44 yasuoka Exp $ */
 /**@file
  * This file provides LCP related functions.
  *<pre>
@@ -41,7 +41,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <syslog.h>
-#include <strings.h>
+#include <string.h>
 #include <event.h>
 #include <ctype.h>
 
