@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftp-proxy.c,v 1.31 2015/12/01 07:32:37 deraadt Exp $ */
+/*	$OpenBSD: ftp-proxy.c,v 1.32 2015/12/04 19:05:43 sebastia Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Camiel Dobbelaar, <cd@sentia.nl>
@@ -52,7 +52,7 @@
 #define TCP_BACKLOG	10
 
 #define CHROOT_DIR	"/var/empty"
-#define NOPRIV_USER	"ftp-proxy"
+#define NOPRIV_USER	"_ftp_proxy"
 
 /* pfctl standard NAT range. */
 #define PF_NAT_PROXY_PORT_LOW	50001
