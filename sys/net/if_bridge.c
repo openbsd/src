@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.273 2015/12/02 08:04:12 mpi Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.274 2015/12/04 10:32:42 mpi Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -111,7 +111,6 @@
 void	bridgeattach(int);
 int	bridge_ioctl(struct ifnet *, u_long, caddr_t);
 int	bridge_input(struct ifnet *, struct mbuf *, void *);
-void	bridge_start(struct ifnet *);
 void	bridge_process(struct ifnet *, struct mbuf *);
 void	bridgeintr_frame(struct bridge_softc *, struct ifnet *, struct mbuf *);
 void	bridge_broadcast(struct bridge_softc *, struct ifnet *,
@@ -189,8 +188,8 @@ bridge_clone_create(struct if_clone *ifc, int unit)
 	ifp->if_softc = sc;
 	ifp->if_mtu = ETHERMTU;
 	ifp->if_ioctl = bridge_ioctl;
-	ifp->if_output = bridge_output;
-	ifp->if_start = bridge_start;
+	ifp->if_output = NULL;
+	ifp->if_start = NULL;
 	ifp->if_type = IFT_BRIDGE;
 	ifp->if_hdrlen = ETHER_HDR_LEN;
 
@@ -830,14 +829,6 @@ sendunicast:
 	}
 	bridge_ifenqueue(sc, dst_if, m);
 	return (0);
-}
-
-/*
- * Start output on the bridge.  This function should never be called.
- */
-void
-bridge_start(struct ifnet *ifp)
-{
 }
 
 /*
