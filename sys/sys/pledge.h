@@ -1,4 +1,4 @@
-/*	$OpenBSD: pledge.h,v 1.22 2015/11/29 01:15:49 benno Exp $	*/
+/*	$OpenBSD: pledge.h,v 1.23 2015/12/04 07:33:05 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -50,13 +50,15 @@
 #define PLEDGE_COREDUMP	0x01000000	/* generates coredump (default) */
 #define PLEDGE_DISKLABEL 0x02000000	/* disklabels */
 #define PLEDGE_PF	0x04000000	/* pf ioctls */
+#define PLEDGE_AUDIO	0x08000000	/* audio ioctls */
+#define PLEDGE_DPATH	0x10000000	/* mknod & mkfifo */
 
 /* Following flags are set by kernel, as it learns things.
  * Not user settable. Should be moved to a seperate variable */
 
 #define PLEDGE_STATLIE	0x40000000
 #define PLEDGE_YPACTIVE	0x80000000	/* YP use detected and allowed */
-#define PLEDGE_USERSET	0x0fffffff
+#define PLEDGE_USERSET	0x3fffffff
 
 #ifdef PLEDGENAMES
 static struct {
@@ -90,6 +92,8 @@ static struct {
 	{ PLEDGE_COREDUMP,	"coredump" },
 	{ PLEDGE_DISKLABEL,	"disklabel" },
 	{ PLEDGE_PF,		"pf" },
+	{ PLEDGE_AUDIO,		"audio" },
+	{ PLEDGE_DPATH,		"dpath" },
 	{ 0, NULL },
 };
 #endif

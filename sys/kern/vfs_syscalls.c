@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.245 2015/11/20 07:11:52 deraadt Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.246 2015/12/04 07:33:05 deraadt Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -1247,6 +1247,7 @@ domknodat(struct proc *p, int fd, const char *path, mode_t mode, dev_t dev)
 			return (EINVAL);
 	}
 	NDINITAT(&nd, CREATE, LOCKPARENT, UIO_USERSPACE, fd, path, p);
+	nd.ni_pledge = PLEDGE_DPATH;
 	if ((error = namei(&nd)) != 0)
 		return (error);
 	vp = nd.ni_vp;
