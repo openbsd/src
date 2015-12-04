@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.420 2015/12/03 16:27:32 mpi Exp $	*/
+/*	$OpenBSD: if.c,v 1.421 2015/12/04 11:50:01 mpi Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -626,8 +626,12 @@ if_enqueue(struct ifnet *ifp, struct mbuf *m)
 	unsigned short mflags;
 
 #if NBRIDGE > 0
-	if (ifp->if_bridgeport && (m->m_flags & M_PROTO1) == 0)
-		return (bridge_output(ifp, m, NULL, NULL));
+	if (ifp->if_bridgeport && (m->m_flags & M_PROTO1) == 0) {
+		KERNEL_LOCK();
+		error = bridge_output(ifp, m, NULL, NULL);
+		KERNEL_UNLOCK();
+		return (error);
+	}
 #endif
 
 	length = m->m_pkthdr.len;
