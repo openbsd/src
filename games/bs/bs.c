@@ -1,4 +1,4 @@
-/*	$OpenBSD: bs.c,v 1.30 2015/11/30 08:33:29 tb Exp $	*/
+/*	$OpenBSD: bs.c,v 1.31 2015/12/04 10:41:35 tedu Exp $	*/
 /*
  * Copyright (c) 1986, Bruce Holloway
  * All rights reserved.
@@ -247,9 +247,7 @@ static void intro(void)
 	(void)strlcpy(name, dftname, sizeof(name));
 
     (void)initscr();
-#ifdef KEY_MIN
     keypad(stdscr, TRUE);
-#endif /* KEY_MIN */
     (void)saveterm();
     (void)nonl();
     (void)cbreak();
@@ -278,7 +276,6 @@ static void intro(void)
     (void) mvaddstr(22,27,"Hit any key to continue..."); (void)refresh();
     (void) getch();
 
-#ifdef A_COLOR
     start_color();
 
     init_pair(COLOR_BLACK, COLOR_BLACK, COLOR_BLACK);
@@ -289,11 +286,8 @@ static void intro(void)
     init_pair(COLOR_MAGENTA, COLOR_MAGENTA, COLOR_BLACK);
     init_pair(COLOR_BLUE, COLOR_BLUE, COLOR_BLACK);
     init_pair(COLOR_YELLOW, COLOR_YELLOW, COLOR_BLACK);
-#endif /* A_COLOR */
 
-#ifdef NCURSES_MOUSE_VERSION
     (void) mousemask(BUTTON1_CLICKED, (mmask_t *)NULL);
-#endif /* NCURSES_MOUSE_VERSION*/
 }
 
 /* print a message at the prompt line */
@@ -398,16 +392,12 @@ static void initgame(void)
     for(i=0; i < BDEPTH; ++i)
     {
 	(void) mvaddch(PYBASE + i, PXBASE - 3, (chtype)(i + 'A'));
-#ifdef A_COLOR
 	if (has_colors())
 	    attron(COLOR_PAIR(COLOR_BLUE));
-#endif /* A_COLOR */
 	(void) addch(' ');
 	for (j = 0; j < BWIDTH; j++)
 	    (void) addstr(" . ");
-#ifdef A_COLOR
 	attrset(0);
-#endif /* A_COLOR */
 	(void) addch(' ');
 	(void) addch((chtype)(i + 'A'));
     }
@@ -417,16 +407,12 @@ static void initgame(void)
     for(i=0; i < BDEPTH; ++i)
     {
 	(void) mvaddch(CYBASE + i, CXBASE - 3, (chtype)(i + 'A'));
-#ifdef A_COLOR
 	if (has_colors())
 	    attron(COLOR_PAIR(COLOR_BLUE));
-#endif /* A_COLOR */
 	(void) addch(' ');
 	for (j = 0; j < BWIDTH; j++)
 	    (void) addstr(" . ");
-#ifdef A_COLOR
 	attrset(0);
-#endif /* A_COLOR */
 	(void) addch(' ');
 	(void) addch((chtype)(i + 'A'));
     }
@@ -591,51 +577,35 @@ static int getcoord(int atcpu)
 	switch(c = getch())
 	{
 	case 'k': case '8':
-#ifdef KEY_MIN
 	case KEY_UP:
-#endif /* KEY_MIN */
 	    ny = cury+BDEPTH-1; nx = curx;
 	    break;
 	case 'j': case '2':
-#ifdef KEY_MIN
 	case KEY_DOWN:
-#endif /* KEY_MIN */
 	    ny = cury+1;        nx = curx;
 	    break;
 	case 'h': case '4':
-#ifdef KEY_MIN
 	case KEY_LEFT:
-#endif /* KEY_MIN */
 	    ny = cury;          nx = curx+BWIDTH-1;
 	    break;
 	case 'l': case '6':
-#ifdef KEY_MIN
 	case KEY_RIGHT:
-#endif /* KEY_MIN */
 	    ny = cury;          nx = curx+1;
 	    break;
 	case 'y': case '7':
-#ifdef KEY_MIN
 	case KEY_A1:
-#endif /* KEY_MIN */
 	    ny = cury+BDEPTH-1; nx = curx+BWIDTH-1;
 	    break;
 	case 'b': case '1':
-#ifdef KEY_MIN
 	case KEY_C1:
-#endif /* KEY_MIN */
 	    ny = cury+1;        nx = curx+BWIDTH-1;
 	    break;
 	case 'u': case '9':
-#ifdef KEY_MIN
 	case KEY_A3:
-#endif /* KEY_MIN */
 	    ny = cury+BDEPTH-1; nx = curx+1;
 	    break;
 	case 'n': case '3':
-#ifdef KEY_MIN
 	case KEY_C3:
-#endif /* KEY_MIN */
 	    ny = cury+1;        nx = curx+1;
 	    break;
 	case FF:
@@ -643,7 +613,6 @@ static int getcoord(int atcpu)
 	    (void)clearok(stdscr, TRUE);
 	    (void)refresh();
 	    break;
-#ifdef NCURSES_MOUSE_VERSION
 	case KEY_MOUSE:
 	    {
 		MEVENT	myevent;
@@ -661,7 +630,6 @@ static int getcoord(int atcpu)
 		    beep();
 	    }
 	    break;
-#endif /* NCURSES_MOUSE_VERSION */
 	case ERR:
 	    uninitgame(1);
 	    break;
@@ -808,14 +776,10 @@ static ship_t *hitship(int x, int y)
 				if (turn == PLAYER)
 				{
 				    cgoto(y1, x1);
-#ifdef A_COLOR
 				    if (has_colors())
 					attron(COLOR_PAIR(COLOR_GREEN));
-#endif /* A_COLOR */
 				    (void)addch(MARK_MISS);
-#ifdef A_COLOR
 				    attrset(0);
-#endif /* A_COLOR */
 				}
 			    }
 			}
@@ -863,18 +827,14 @@ static int plyturn(void)
     hit = IS_SHIP(board[COMPUTER][curx][cury]);
     hits[PLAYER][curx][cury] = hit ? MARK_HIT : MARK_MISS;
     cgoto(cury, curx);
-#ifdef A_COLOR
     if (has_colors()) {
 	if (hit)
 	    attron(COLOR_PAIR(COLOR_RED));
 	else
 	    attron(COLOR_PAIR(COLOR_GREEN));
     }
-#endif /* A_COLOR */
     (void) addch((chtype)hits[PLAYER][curx][cury]);
-#ifdef A_COLOR
     attrset(0);
-#endif /* A_COLOR */
 
     prompt(1, "You %s.", hit ? "scored a hit" : "missed");
     if(hit && (ss = hitship(curx, cury)))
@@ -1021,18 +981,14 @@ static int cpufire(int x, int y)
     (void)clrtoeol();
 
     pgoto(y, x);
-#ifdef A_COLOR
     if (has_colors()) {
 	if (hit)
 	    attron(COLOR_PAIR(COLOR_RED));
 	else
 	    attron(COLOR_PAIR(COLOR_GREEN));
     }
-#endif /* A_COLOR */
     (void) addch((chtype)(hit ? SHOWHIT : SHOWSPLASH));
-#ifdef A_COLOR
     attrset(0);
-#endif /* A_COLOR */
 
     return(hit ? (sunk ? S_SUNK : S_HIT) : S_MISS);
 }
@@ -1237,11 +1193,6 @@ if (!closepack)  error("Assertion failed: not closepack 2");
 	(void)sleep(1);
     }
 
-#ifdef DEBUG
-    (void) mvprintw(PROMPTLINE + 2, 0,
-		    "New state %d, x=%d, y=%d, d=%d",
-		    next, x, y, d);
-#endif /* DEBUG */
     return(hit);
 }
 
