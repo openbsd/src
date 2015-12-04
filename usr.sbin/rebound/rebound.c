@@ -1,4 +1,4 @@
-/* $OpenBSD: rebound.c,v 1.50 2015/12/04 09:13:05 tedu Exp $ */
+/* $OpenBSD: rebound.c,v 1.51 2015/12/04 10:59:36 tedu Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -23,7 +23,6 @@
 #include <sys/event.h>
 #include <sys/resource.h>
 #include <sys/time.h>
-#include <sys/signal.h>
 #include <sys/wait.h>
 
 #include <signal.h>
