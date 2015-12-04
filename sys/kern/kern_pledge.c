@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.132 2015/12/04 07:33:05 deraadt Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.133 2015/12/04 13:05:34 semarie Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -312,8 +312,8 @@ const u_int pledge_syscalls[SYS_MAXSYSCALL] = {
 
 	[SYS_socket] = PLEDGE_INET | PLEDGE_UNIX | PLEDGE_DNS | PLEDGE_YPACTIVE,
 	[SYS_connect] = PLEDGE_INET | PLEDGE_UNIX | PLEDGE_DNS | PLEDGE_YPACTIVE,
-	[SYS_bind] = PLEDGE_INET | PLEDGE_UNIX | PLEDGE_DNS,
-	[SYS_getsockname] = PLEDGE_INET | PLEDGE_UNIX | PLEDGE_DNS,
+	[SYS_bind] = PLEDGE_INET | PLEDGE_UNIX | PLEDGE_DNS | PLEDGE_YPACTIVE,
+	[SYS_getsockname] = PLEDGE_INET | PLEDGE_UNIX | PLEDGE_DNS | PLEDGE_YPACTIVE,
 
 	[SYS_listen] = PLEDGE_INET | PLEDGE_UNIX,
 	[SYS_accept4] = PLEDGE_INET | PLEDGE_UNIX,
@@ -704,8 +704,7 @@ pledge_namei(struct proc *p, struct nameidata *ni, char *origpath)
 				 * worse than pre-pledge, but is a work in
 				 * progress, needing a clever design.
 				 */
-				p->p_p->ps_pledge |=
-				    PLEDGE_YPACTIVE | PLEDGE_INET;
+				p->p_p->ps_pledge |= PLEDGE_YPACTIVE;
 				return (0);
 			}
 			if (strncmp(path, "/var/yp/binding/",
@@ -1110,7 +1109,7 @@ pledge_sendit(struct proc *p, const void *to)
 	if ((p->p_p->ps_flags & PS_PLEDGE) == 0)
 		return (0);
 
-	if ((p->p_p->ps_pledge & (PLEDGE_INET | PLEDGE_UNIX | PLEDGE_DNS)))
+	if ((p->p_p->ps_pledge & (PLEDGE_INET | PLEDGE_UNIX | PLEDGE_DNS | PLEDGE_YPACTIVE)))
 		return (0);		/* may use address */
 	if (to == NULL)
 		return (0);		/* behaves just like write */
@@ -1306,7 +1305,7 @@ pledge_sockopt(struct proc *p, int set, int level, int optname)
 		break;
 	}
 
-	if ((p->p_p->ps_pledge & (PLEDGE_INET|PLEDGE_UNIX|PLEDGE_DNS)) == 0)
+	if ((p->p_p->ps_pledge & (PLEDGE_INET|PLEDGE_UNIX|PLEDGE_DNS|PLEDGE_YPACTIVE)) == 0)
 		return pledge_fail(p, EPERM, PLEDGE_INET);
 	/* In use by some service libraries */
 	switch (level) {
@@ -1327,6 +1326,25 @@ pledge_sockopt(struct proc *p, int set, int level, int optname)
 			case IPV6_USE_MIN_MTU:
 				return (0);
 			}
+		}
+	}
+
+	/* YP may do these requests */
+	if (p->p_p->ps_pledge & PLEDGE_YPACTIVE) {
+		switch (level) {
+		case IPPROTO_IP:
+			switch (optname) {
+			case IP_PORTRANGE:
+				return (0);
+			}
+			break;
+
+		case IPPROTO_IPV6:
+			switch (optname) {
+			case IPV6_PORTRANGE:
+				return (0);
+			}
+			break;
 		}
 	}
 
