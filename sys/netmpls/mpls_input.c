@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpls_input.c,v 1.53 2015/12/02 13:45:07 claudio Exp $	*/
+/*	$OpenBSD: mpls_input.c,v 1.54 2015/12/04 11:13:21 claudio Exp $	*/
 
 /*
  * Copyright (c) 2008 Claudio Jeker <claudio@openbsd.org>
@@ -219,12 +219,10 @@ do_v6:
 		}
 
 		/* shortcut sending out the packet */
-		KERNEL_LOCK();
 		if (!ISSET(ifp->if_xflags, IFXF_MPLS))
 			(*ifp->if_output)(ifp, m, rt->rt_gateway, rt);
 		else
 			(*ifp->if_ll_output)(ifp, m, rt->rt_gateway, rt);
-		KERNEL_UNLOCK();
 		goto done;
 	case MPLS_OP_PUSH:
 		/* this does not make much sense but it does not hurt */
@@ -267,9 +265,7 @@ do_v6:
 		goto done;
 	}
 
-	KERNEL_LOCK();
 	(*ifp->if_ll_output)(ifp, m, smplstosa(smpls), rt);
-	KERNEL_UNLOCK();
 done:
 	if_put(ifp);
 	rtfree(rt);
@@ -390,9 +386,7 @@ mpls_do_error(struct mbuf *m, int type, int code, int destmtu)
 			return (NULL);
 		}
 		rtfree(rt);
-		KERNEL_LOCK();
 		error = icmp_reflect(m, NULL, ia);
-		KERNEL_UNLOCK();
 		if (error)
 			return (NULL);
 
