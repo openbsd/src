@@ -1,4 +1,4 @@
-#	$OpenBSD: Server.pm,v 1.6 2015/01/28 22:58:38 bluhm Exp $
+#	$OpenBSD: Server.pm,v 1.7 2015/12/04 13:49:42 bluhm Exp $
 
 # Copyright (c) 2010-2015 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -57,10 +57,10 @@ sub listen {
 	    SSL_verify_mode	=> SSL_VERIFY_NONE,
 	    $self->{sslversion} ? (SSL_version => $self->{sslversion}) : (),
 	    $self->{sslciphers} ? (SSL_cipher_list => $self->{sslciphers}) : (),
-	) or die ref($self), " $iosocket socket listen failed: $!,$SSL_ERROR";
+	) or die ref($self), " $iosocket socket failed: $!,$SSL_ERROR";
 	if ($self->{listenproto} ne "udp") {
 		listen($ls, 1)
-		    or die ref($self), " socket failed: $!";
+		    or die ref($self), " socket listen failed: $!";
 	}
 	my $log = $self->{log};
 	print $log "listen sock: ",$ls->sockhost()," ",$ls->sockport(),"\n";

@@ -13,7 +13,7 @@ our %args = (
     client => {
 	func => sub {
 	    my $self = shift;
-	    write_lines($self, 2, 900);
+	    write_lines($self, 5, 900);
 	    write_log($self);
 	},
     },

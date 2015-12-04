@@ -1,3 +1,5 @@
+/*	$OpenBSD: ttylog.c,v 1.4 2015/12/04 13:49:42 bluhm Exp $	*/
+
 /*
  * Copyright (c) 2015 Alexander Bluhm <bluhm@openbsd.org>
  *
