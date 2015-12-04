@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.201 2015/12/02 22:12:29 benno Exp $	*/
+/*	$OpenBSD: relay.c,v 1.202 2015/12/04 15:28:55 benno Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -330,6 +330,9 @@ relay_init(struct privsep *ps, struct privsep_proc *p, void *arg)
 
 	/* Unlimited file descriptors (use system limits) */
 	socket_rlimit(-1);
+
+	if (pledge("stdio recvfd inet", NULL) == -1)
+		fatal("pledge");
 
 	/* Schedule statistics timer */
 	evtimer_set(&env->sc_statev, relay_statistics, NULL);
