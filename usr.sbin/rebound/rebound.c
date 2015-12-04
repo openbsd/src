@@ -1,4 +1,4 @@
-/* $OpenBSD: rebound.c,v 1.49 2015/12/04 04:50:43 gsoares Exp $ */
+/* $OpenBSD: rebound.c,v 1.50 2015/12/04 09:13:05 tedu Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -651,6 +651,8 @@ main(int argc, char **argv)
 
 	if (argc)
 		usage();
+
+	signal(SIGPIPE, SIG_IGN);
 
 	if (getrlimit(RLIMIT_NOFILE, &rlim) == -1)
 		err(1, "getrlimit");
