@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.2 2015/12/03 15:15:04 mpi Exp $ */
+/*	$OpenBSD: util.c,v 1.3 2015/12/04 12:30:57 mpi Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -38,19 +38,21 @@
 
 #include "util.h"
 
+struct sockaddr *rt_plen2mask(struct rtentry *, struct sockaddr_in6 *);
+
 struct domain inetdomain = {
 	AF_INET, "inet", NULL, NULL, NULL, NULL, NULL,
 	sizeof(struct sockaddr_in), offsetof(struct sockaddr_in, sin_addr),
+	32,
 };
 
 struct domain inet6domain = {
 	AF_INET6, "inet6", NULL, NULL, NULL, NULL, NULL,
 	sizeof(struct sockaddr_in6), offsetof(struct sockaddr_in6, sin6_addr),
+	128,
 };
 
 struct domain *domains[] = { &inetdomain, &inet6domain, NULL };
-
-int	 sa2plen(sa_family_t, struct sockaddr *);
 
 /*
  * Insert a route from a string containing a destination: "192.168.1/24"
@@ -114,7 +116,7 @@ route_delete(unsigned int rid, sa_family_t af, char *string)
 	}
 
 	assert(memcmp(rt_key(rt), dst, dst->sa_len) == 0);
-	assert(maskcmp(af, rt_mask(rt), mask) == 0);
+	assert(rt_plen(rt) == rtable_satoplen(af, mask));
 
 	if (rtable_delete(0, dst, mask, rt)) {
 		inet_net_satop(af, dst, plen, ip, sizeof(ip));
@@ -156,7 +158,7 @@ route_lookup(unsigned int rid, sa_family_t af, char *string)
 		errx(1, "%s not found\n", ip);
 	}
 	assert(memcmp(rt_key(rt), dst, dst->sa_len) == 0);
-	assert(maskcmp(af, rt_mask(rt), mask) == 0);
+	assert(rt_plen(rt) == rtable_satoplen(af, mask));
 }
 
 int
@@ -187,11 +189,9 @@ int
 rtentry_dump(struct rtentry *rt, void *w, unsigned int rid)
 {
 	char			 dest[INET6_ADDRSTRLEN];
-	int			 plen;
 	sa_family_t		 af = rt_key(rt)->sa_family;
 
-	plen = sa2plen(af, rt_mask(rt));
-	inet_net_satop(af, rt_key(rt), plen, dest, sizeof(dest));
+	inet_net_satop(af, rt_key(rt), rt_plen(rt), dest, sizeof(dest));
 	printf("%s\n", dest);
 
 	return (0);
@@ -201,13 +201,12 @@ int
 rtentry_delete(struct rtentry *rt, void *w, unsigned int rid)
 {
 	char			 dest[INET6_ADDRSTRLEN];
-	int			 plen;
 	sa_family_t		 af = rt_key(rt)->sa_family;
+	struct sockaddr_in6	 sa_mask;
+	struct sockaddr		*mask = rt_plen2mask(rt, &sa_mask);
 
-	plen = sa2plen(af, rt_mask(rt));
-
-	if (rtable_delete(0, rt_key(rt), rt_mask(rt), rt)) {
-		inet_net_satop(af, rt_key(rt), plen, dest, sizeof(dest));
+	if (rtable_delete(0, rt_key(rt), mask, rt)) {
+		inet_net_satop(af, rt_key(rt), rt_plen(rt), dest, sizeof(dest));
 		errx(1, "can't rm route: %s\n", dest);
 	}
 	return (0);
@@ -233,84 +232,78 @@ rt_maskedcopy(struct sockaddr *src, struct sockaddr *dst,
 		memset(cp2, 0, (unsigned int)(cplim2 - cp2));
 }
 
-int
-sa2plen(sa_family_t af, struct sockaddr *mask)
+void
+in_prefixlen2mask(struct in_addr *maskp, int plen)
 {
-	uint8_t			*ap, *ep;
-	int			 off, plen = 0;
+	if (plen == 0)
+		maskp->s_addr = 0;
+	else
+		maskp->s_addr = htonl(0xffffffff << (32 - plen));
+}
+
+void
+in6_prefixlen2mask(struct in6_addr *maskp, int len)
+{
+	uint8_t maskarray[8] = {0x80, 0xc0, 0xe0, 0xf0, 0xf8, 0xfc, 0xfe, 0xff};
+	int bytelen, bitlen, i;
+
+	assert(0 <= len && len <= 128);
+
+	memset(maskp, 0, sizeof(*maskp));
+	bytelen = len / 8;
+	bitlen = len % 8;
+	for (i = 0; i < bytelen; i++)
+		maskp->s6_addr[i] = 0xff;
+	/* len == 128 is ok because bitlen == 0 then */
+	if (bitlen)
+		maskp->s6_addr[bytelen] = maskarray[bitlen - 1];
+}
+
+struct sockaddr *
+rt_plentosa(sa_family_t af, int plen, struct sockaddr_in6 *sa_mask)
+{
+	struct sockaddr_in	*sin = (struct sockaddr_in *)sa_mask;
+#ifdef INET6
+	struct sockaddr_in6	*sin6 = (struct sockaddr_in6 *)sa_mask;
+#endif
+
+	assert(plen >= 0 || plen == -1);
+
+	if (plen == -1)
+		return (NULL);
+
+	memset(sa_mask, 0, sizeof(*sa_mask));
 
 	switch (af) {
 	case AF_INET:
-		off = offsetof(struct sockaddr_in, sin_addr);
+		sin->sin_family = AF_INET;
+		sin->sin_len = sizeof(struct sockaddr_in);
+		in_prefixlen2mask(&sin->sin_addr, plen);
 		break;
+#ifdef INET6
 	case AF_INET6:
-		off = offsetof(struct sockaddr_in6, sin6_addr);
+		sin6->sin6_family = AF_INET6;
+		sin6->sin6_len = sizeof(struct sockaddr_in6);
+		in6_prefixlen2mask(&sin6->sin6_addr, plen);
 		break;
+#endif /* INET6 */
 	default:
-		return (-1);
+		return (NULL);
 	}
 
-	/* Default route */
-	if (mask->sa_len == 0)
-		return (0);
-
-	ap = (uint8_t *)((uint8_t *)mask) + off;
-	ep = (uint8_t *)((uint8_t *)mask) + mask->sa_len;
-	if (ap > ep)
-		return (-1);
-
-	if (ap == ep)
-		return (0);
-
-	/* "Beauty" adapted from sbin/route/show.c ... */
-	while (ap < ep) {
-		switch (*ap) {
-		case 0xff:
-			plen += 8;
-			ap++;
-			break;
-		case 0xfe:
-			plen += 7;
-			return (plen);
-		case 0xfc:
-			plen += 6;
-			return (plen);
-		case 0xf8:
-			plen += 5;
-			return (plen);
-		case 0xf0:
-			plen += 4;
-			return (plen);
-		case 0xe0:
-			plen += 3;
-			return (plen);
-		case 0xc0:
-			plen += 2;
-			return (plen);
-		case 0x80:
-			plen += 1;
-			return (plen);
-		case 0x00:
-			return (plen);
-		default:
-			/* Non contiguous mask. */
-			return (-1);
-		}
-
-	}
-
-	return (plen);
+	return ((struct sockaddr *)sa_mask);
 }
 
-
-in_addr_t
-prefixlen2mask(u_int8_t prefixlen)
+struct sockaddr *
+rt_plen2mask(struct rtentry *rt, struct sockaddr_in6 *sa_mask)
 {
-	if (prefixlen == 0)
-		return (0);
-
-	return (0xffffffff << (32 - prefixlen));
+#ifndef ART
+	return (rt_mask(rt));
+#else
+	return (rt_plentosa(rt_key(rt)->sa_family, rt_plen(rt), sa_mask));
+#endif /* ART */
 }
+
 
 int
 inet_net_ptosa(sa_family_t af, const char *buf, struct sockaddr *sa,
@@ -334,7 +327,7 @@ inet_net_ptosa(sa_family_t af, const char *buf, struct sockaddr *sa,
 		memset(sin, 0, sizeof(*sin));
 		sin->sin_len = sizeof(*sin);
 		sin->sin_family = 0;
-		sin->sin_addr.s_addr = htonl(prefixlen2mask(plen));
+		in_prefixlen2mask(&sin->sin_addr, plen);
 		break;
 	case AF_INET6:
 		memset(sin6, 0, sizeof(*sin6));

@@ -1,4 +1,4 @@
-/* 	$OpenBSD: kern_compat.h,v 1.2 2015/12/03 15:15:04 mpi Exp $ */
+/* 	$OpenBSD: kern_compat.h,v 1.3 2015/12/04 12:30:57 mpi Exp $ */
 
 #ifndef _KERN_COMPAT_H_
 #define _KERN_COMPAT_H_
@@ -24,6 +24,8 @@
 
 #define KASSERT(x)		assert(x)
 #define KERNEL_ASSERT_LOCKED()	/* nothing */
+#define KERNEL_LOCK()		/* nothing */
+#define KERNEL_UNLOCK()		/* nothing */
 
 #define panic(x...) errx(1, x)
 
