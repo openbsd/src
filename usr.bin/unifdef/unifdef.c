@@ -56,7 +56,7 @@
 
 static const char copyright[] =
     #include "version.h"
-    "@(#) $Author: deraadt $\n"
+    "@(#) $Author: mmcc $\n"
     "@(#) $URL: http://dotat.at/prog/unifdef $\n"
 ;
 
@@ -425,7 +425,7 @@ processinout(const char *ifn, const char *ofn)
 
 	process();
 
-	if (backext != NULL) {
+	if (backext != NULL && *backext != '\0') {
 		char *backname = astrcat(ofn, backext);
 		if (rename(ofn, backname) < 0)
 			err(2, "can't rename \"%s\" to \"%s\"", ofn, backname);
