@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_id.c,v 1.10 2015/03/14 03:38:52 jsg Exp $	*/
+/*	$OpenBSD: ip6_id.c,v 1.11 2015/12/04 12:10:26 tedu Exp $	*/
 /*	$NetBSD: ip6_id.c,v 1.7 2003/09/13 21:32:59 itojun Exp $	*/
 /*	$KAME: ip6_id.c,v 1.8 2003/09/06 13:41:06 itojun Exp $	*/
 
@@ -122,9 +122,9 @@ static struct randomtab randomtab_20 = {
 	{ 2, 3, 14563, 0 },	/* factors of ru_n */
 };
 
-u_int32_t pmod(u_int32_t, u_int32_t, u_int32_t);
-void initid(struct randomtab *);
-u_int32_t randomid(struct randomtab *);
+u_int32_t ip6id_pmod(u_int32_t, u_int32_t, u_int32_t);
+void ip6id_initid(struct randomtab *);
+u_int32_t ip6id_randomid(struct randomtab *);
 
 /*
  * Do a fast modular exponation, returned value will be in the range
@@ -132,7 +132,7 @@ u_int32_t randomid(struct randomtab *);
  */
 
 u_int32_t
-pmod(u_int32_t gen, u_int32_t expo, u_int32_t mod)
+ip6id_pmod(u_int32_t gen, u_int32_t expo, u_int32_t mod)
 {
 	u_int64_t s, t, u;
 
@@ -158,7 +158,7 @@ pmod(u_int32_t gen, u_int32_t expo, u_int32_t mod)
  * application does not have to worry about it.
  */
 void
-initid(struct randomtab *p)
+ip6id_initid(struct randomtab *p)
 {
 	u_int32_t j, i;
 	int noprime = 1;
@@ -171,7 +171,7 @@ initid(struct randomtab *p)
 
 	/* Determine the LCG we use */
 	p->ru_b = (arc4random() & (~0U >> (32 - p->ru_bits))) | 1;
-	p->ru_a = pmod(p->ru_agen,
+	p->ru_a = ip6id_pmod(p->ru_agen,
 	    (arc4random() & (~0U >> (32 - p->ru_bits))) & (~1U), p->ru_m);
 	while (p->ru_b % 3 == 0)
 		p->ru_b += 2;
@@ -194,7 +194,7 @@ initid(struct randomtab *p)
 			j = (j + 1) % p->ru_n;
 	}
 
-	p->ru_g = pmod(p->ru_gen, j, p->ru_n);
+	p->ru_g = ip6id_pmod(p->ru_gen, j, p->ru_n);
 	p->ru_counter = 0;
 
 	p->ru_reseed = time_second + p->ru_out;
@@ -202,17 +202,17 @@ initid(struct randomtab *p)
 }
 
 u_int32_t
-randomid(struct randomtab *p)
+ip6id_randomid(struct randomtab *p)
 {
 	int i, n;
 
 	if (p->ru_counter >= p->ru_max || time_second > p->ru_reseed)
-		initid(p);
+		ip6id_initid(p);
 
 	/* Skip a random number of ids */
 	n = arc4random() & 0x3;
 	if (p->ru_counter + n >= p->ru_max)
-		initid(p);
+		ip6id_initid(p);
 
 	for (i = 0; i <= n; i++) {
 		/* Linear Congruential Generator */
@@ -221,13 +221,13 @@ randomid(struct randomtab *p)
 
 	p->ru_counter += i;
 
-	return (p->ru_seed ^ pmod(p->ru_g, p->ru_seed2 + p->ru_x, p->ru_n)) |
+	return (p->ru_seed ^ ip6id_pmod(p->ru_g, p->ru_seed2 + p->ru_x, p->ru_n)) |
 	    p->ru_msb;
 }
 
 u_int32_t
 ip6_randomflowlabel(void)
 {
-	return randomid(&randomtab_20) & 0xfffff;
+	return ip6id_randomid(&randomtab_20) & 0xfffff;
 }
 
