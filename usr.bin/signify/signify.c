@@ -1,4 +1,4 @@
-/* $OpenBSD: signify.c,v 1.104 2015/11/02 22:01:10 bluhm Exp $ */
+/* $OpenBSD: signify.c,v 1.105 2015/12/04 11:05:22 tedu Exp $ */
 /*
  * Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
  *
@@ -367,7 +367,7 @@ sign(const char *seckeyfile, const char *msgfile, const char *sigfile,
 	SHA512Update(&ctx, enckey.seckey, sizeof(enckey.seckey));
 	SHA512Final(digest, &ctx);
 	if (memcmp(enckey.checksum, digest, sizeof(enckey.checksum)) != 0)
-	    errx(1, "incorrect passphrase");
+		errx(1, "incorrect passphrase");
 	explicit_bzero(digest, sizeof(digest));
 
 	msg = readmsg(msgfile, &msglen);
@@ -559,9 +559,8 @@ verifychecksum(struct checksum *c, int quiet)
 	} else {
 		errx(1, "can't handle algorithm %s", c->algo);
 	}
-	if (strcmp(c->hash, buf) != 0) {
+	if (strcmp(c->hash, buf) != 0)
 		return 0;
-	}
 	if (!quiet)
 		printf("%s: OK\n", c->file);
 	return 1;
