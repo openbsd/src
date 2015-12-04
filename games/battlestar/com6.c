@@ -1,4 +1,4 @@
-/*	$OpenBSD: com6.c,v 1.20 2015/11/29 15:31:06 tb Exp $	*/
+/*	$OpenBSD: com6.c,v 1.21 2015/12/04 17:34:40 tb Exp $	*/
 /*	$NetBSD: com6.c,v 1.5 1995/04/27 21:30:23 mycroft Exp $	*/
 
 /*
@@ -92,7 +92,7 @@ static FILE *score_fp;
 void
 open_score_file(void)
 {
-	const char	 scorefile[PATH_MAX];
+	char		 scorefile[PATH_MAX];
 	const char	*home;
 	int		 ret;
 

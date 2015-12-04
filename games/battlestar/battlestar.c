@@ -1,4 +1,4 @@
-/*	$OpenBSD: battlestar.c,v 1.17 2015/11/29 15:31:06 tb Exp $	*/
+/*	$OpenBSD: battlestar.c,v 1.18 2015/12/04 17:34:40 tb Exp $	*/
 /*	$NetBSD: battlestar.c,v 1.3 1995/03/21 15:06:47 cgd Exp $	*/
 
 /*
@@ -52,8 +52,6 @@ main(int argc, char *argv[])
 		err(1, "pledge");
 
 	open_score_file();
-
-	/* revoke privs */
 
 	if (argc < 2)
 		initialize(NULL);
