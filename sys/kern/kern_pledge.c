@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.130 2015/12/03 16:50:44 bluhm Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.131 2015/12/04 06:01:55 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -699,8 +699,8 @@ pledge_namei(struct proc *p, struct nameidata *ni, char *origpath)
 				 * worse than pre-pledge, but is a work in
 				 * progress, needing a clever design.
 				 */
-				atomic_setbits_int(&p->p_p->ps_pledge,
-				    PLEDGE_YPACTIVE | PLEDGE_INET);
+				p->p_p->ps_pledge |=
+				    PLEDGE_YPACTIVE | PLEDGE_INET;
 				return (0);
 			}
 			if (strncmp(path, "/var/yp/binding/",
