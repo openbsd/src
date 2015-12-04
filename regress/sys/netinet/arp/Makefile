@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1.1.1 2015/11/05 01:49:12 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.2 2015/12/04 20:48:24 bluhm Exp $
 
 # The following ports must be installed:
 #
@@ -91,7 +91,7 @@ run-regress-arp-request: addr.py
 	@echo Send ARP Request for remote address and insert local address
 	ssh -t ${REMOTE_SSH} ${SUDO} arp -d ${LOCAL_ADDR}
 	${SUDO} ${PYTHON}arp_request.py
-	ssh -t ${REMOTE_SSH} ${SUDO} arp -an >arp.log
+	ssh ${REMOTE_SSH} ${SUDO} arp -an >arp.log
 	grep '^${LOCAL_ADDR} .* ${LOCAL_MAC} ' arp.log
 
 TARGETS +=	arp-multicast
@@ -103,7 +103,7 @@ run-regress-arp-multicast: addr.py
 	scp ${REMOTE_SSH}:/var/log/messages old.log
 	${SUDO} ${PYTHON}arp_multicast.py
 	scp ${REMOTE_SSH}:/var/log/messages new.log
-	ssh -t ${REMOTE_SSH} ${SUDO} arp -an >arp.log
+	ssh ${REMOTE_SSH} ${SUDO} arp -an >arp.log
 	ssh -t ${REMOTE_SSH} ${SUDO} arp -d ${LOCAL_ADDR}
 	diff old.log new.log | grep '^> ' >diff.log
 	grep 'bsd: arp info overwritten for ${LOCAL_ADDR} by 33:33:33:33:33:33' diff.log
@@ -134,10 +134,10 @@ run-regress-arp-announcement: addr.py
 	scp ${REMOTE_SSH}:/var/log/messages old.log
 	${SUDO} ${PYTHON}arp_announcement.py
 	scp ${REMOTE_SSH}:/var/log/messages new.log
-	ssh -t ${REMOTE_SSH} ${SUDO} arp -an >arp.log
+	ssh ${REMOTE_SSH} ${SUDO} arp -an >arp.log
 	diff old.log new.log | grep '^> ' >diff.log
 	grep 'bsd: duplicate IP address ${REMOTE_ADDR} sent from ethernet address ${LOCAL_MAC}' diff.log
-	grep '^${REMOTE_ADDR} .* ${REMOTE_MAC} .* permanent ' arp.log
+	grep '^${REMOTE_ADDR} .* ${REMOTE_MAC} .* permanent * l$$' arp.log
 
 TARGETS +=	arp-gratuitous
 run-regress-arp-gratuitous: addr.py
@@ -147,10 +147,10 @@ run-regress-arp-gratuitous: addr.py
 	scp ${REMOTE_SSH}:/var/log/messages old.log
 	${SUDO} ${PYTHON}arp_gratuitous.py
 	scp ${REMOTE_SSH}:/var/log/messages new.log
-	ssh -t ${REMOTE_SSH} ${SUDO} arp -an >arp.log
+	ssh ${REMOTE_SSH} ${SUDO} arp -an >arp.log
 	diff old.log new.log | grep '^> ' >diff.log
 	grep 'bsd: duplicate IP address ${REMOTE_ADDR} sent from ethernet address ${LOCAL_MAC}' diff.log
-	grep '^${REMOTE_ADDR} .* ${REMOTE_MAC} .* permanent ' arp.log
+	grep '^${REMOTE_ADDR} .* ${REMOTE_MAC} .* permanent * l$$' arp.log
 
 TARGETS +=	arp-permanent
 run-regress-arp-permanent: addr.py
@@ -161,11 +161,11 @@ run-regress-arp-permanent: addr.py
 	scp ${REMOTE_SSH}:/var/log/messages old.log
 	${SUDO} ${PYTHON}arp_fake.py
 	scp ${REMOTE_SSH}:/var/log/messages new.log
-	ssh -t ${REMOTE_SSH} ${SUDO} arp -an >arp.log
+	ssh ${REMOTE_SSH} ${SUDO} arp -an >arp.log
 	ssh -t ${REMOTE_SSH} ${SUDO} arp -d ${FAKE_ADDR}
 	diff old.log new.log | grep '^> ' >diff.log
 	grep 'bsd: arp: attempt to overwrite permanent entry for ${FAKE_ADDR} by ${LOCAL_MAC}' diff.log
-	grep '^${FAKE_ADDR} .* ${FAKE_MAC} .* permanent ' arp.log
+	grep '^${FAKE_ADDR} .* ${FAKE_MAC} .* permanent * $$' arp.log
 
 TARGETS +=	arp-address
 run-regress-arp-address: addr.py
@@ -175,10 +175,10 @@ run-regress-arp-address: addr.py
 	scp ${REMOTE_SSH}:/var/log/messages old.log
 	${SUDO} ${PYTHON}arp_other.py
 	scp ${REMOTE_SSH}:/var/log/messages new.log
-	ssh -t ${REMOTE_SSH} ${SUDO} arp -an >arp.log
+	ssh ${REMOTE_SSH} ${SUDO} arp -an >arp.log
 	diff old.log new.log | grep '^> ' >diff.log
 	grep 'bsd: arp: attempt to overwrite permanent entry for ${OTHER_ADDR} by ${LOCAL_MAC}' diff.log
-	grep '^${OTHER_ADDR} .* permanent ' arp.log
+	grep '^${OTHER_ADDR} .* permanent * l$$' arp.log
 
 TARGETS +=	arp-temporary
 run-regress-arp-temporary: addr.py
@@ -189,7 +189,7 @@ run-regress-arp-temporary: addr.py
 	scp ${REMOTE_SSH}:/var/log/messages old.log
 	${SUDO} ${PYTHON}arp_otherfake.py
 	scp ${REMOTE_SSH}:/var/log/messages new.log
-	ssh -t ${REMOTE_SSH} ${SUDO} arp -an >arp.log
+	ssh ${REMOTE_SSH} ${SUDO} arp -an >arp.log
 	ssh -t ${REMOTE_SSH} ${SUDO} arp -d ${OTHERFAKE_ADDR}
 	diff old.log new.log | grep '^> ' >diff.log
 	grep 'bsd: arp: attempt to overwrite entry for ${OTHERFAKE_ADDR} on .* by ${LOCAL_MAC} on .*' diff.log
@@ -204,7 +204,7 @@ run-regress-arp-incomlete: addr.py
 	scp ${REMOTE_SSH}:/var/log/messages old.log
 	${SUDO} ${PYTHON}arp_otherfake.py
 	scp ${REMOTE_SSH}:/var/log/messages new.log
-	ssh -t ${REMOTE_SSH} ${SUDO} arp -an >arp.log
+	ssh ${REMOTE_SSH} ${SUDO} arp -an >arp.log
 	ssh -t ${REMOTE_SSH} ${SUDO} arp -d ${OTHERFAKE_ADDR}
 	diff old.log new.log | grep '^> ' >diff.log
 	grep 'bsd: arp: attempt to add entry for ${OTHERFAKE_ADDR} on .* by ${LOCAL_MAC} on .*' diff.log
@@ -216,9 +216,19 @@ run-regress-arp-proxy: addr.py
 	@echo Send ARP Request for fake address that is proxied
 	ssh -t ${REMOTE_SSH} ${SUDO} arp -s ${FAKE_ADDR} ${FAKE_MAC} pub
 	${SUDO} ${PYTHON}arp_proxy.py
-	ssh -t ${REMOTE_SSH} ${SUDO} arp -an >arp.log
+	ssh ${REMOTE_SSH} ${SUDO} arp -an >arp.log
 	ssh -t ${REMOTE_SSH} ${SUDO} arp -d ${FAKE_ADDR}
-	grep '^${FAKE_ADDR} .* ${FAKE_MAC} .* static .* p' arp.log
+	grep '^${FAKE_ADDR} .* ${FAKE_MAC} .* static * p$$' arp.log
+
+TARGETS +=	arp-nonproxy
+run-regress-arp-nonproxy: addr.py
+	@echo '\n======== $@ ========'
+	@echo Send ARP Request for fake address that is not published
+	ssh -t ${REMOTE_SSH} ${SUDO} arp -s ${FAKE_ADDR} ${FAKE_MAC}
+	${SUDO} ${PYTHON}arp_nonproxy.py
+	ssh ${REMOTE_SSH} ${SUDO} arp -an >arp.log
+	ssh -t ${REMOTE_SSH} ${SUDO} arp -d ${FAKE_ADDR}
+	grep '^${FAKE_ADDR} .* ${FAKE_MAC} .* static * $$' arp.log
 
 REGRESS_TARGETS =	${TARGETS:S/^/run-regress-/}
 
