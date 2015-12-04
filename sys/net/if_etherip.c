@@ -470,7 +470,7 @@ ip_etherip_input(struct mbuf *m, ...)
 	}
 
 	eip = mtod(m, struct etherip_header *);
-	if (eip->eip_ver != ETHERIP_VERSION && eip->eip_pad) {
+	if (eip->eip_ver != ETHERIP_VERSION || eip->eip_pad) {
 		etheripstat.etherip_adrops++;
 		m_freem(m);
 		return;
