@@ -1,4 +1,4 @@
-/* $OpenBSD: sshconnect2.c,v 1.229 2015/11/15 22:26:49 jcs Exp $ */
+/* $OpenBSD: sshconnect2.c,v 1.230 2015/12/04 00:24:55 djm Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  * Copyright (c) 2008 Damien Miller.  All rights reserved.
@@ -970,7 +970,7 @@ identity_sign(struct identity *id, u_char **sigp, size_t *lenp,
 	int ret;
 
 	/* the agent supports this key */
-	if (id->agent_fd)
+	if (id->agent_fd != -1)
 		return ssh_agent_sign(id->agent_fd, id->key, sigp, lenp,
 		    data, datalen, compat);
 
@@ -1189,7 +1189,7 @@ load_identity_file(Identity *id)
 			quit = 1;
 			break;
 		}
-		if (!quit && private != NULL && !id->agent_fd &&
+		if (!quit && private != NULL && id->agent_fd == -1 &&
 		    !(id->key && id->isprivate))
 			maybe_add_key_to_agent(id->filename, private, comment,
 			    passphrase);
@@ -1219,7 +1219,7 @@ pubkey_prepare(Authctxt *authctxt)
 	struct identity *id, *id2, *tmp;
 	struct idlist agent, files, *preferred;
 	struct sshkey *key;
-	int agent_fd, i, r, found;
+	int agent_fd = -1, i, r, found;
 	size_t j;
 	struct ssh_identitylist *idlist;
 
@@ -1237,6 +1237,7 @@ pubkey_prepare(Authctxt *authctxt)
 			continue;
 		options.identity_keys[i] = NULL;
 		id = xcalloc(1, sizeof(*id));
+		id->agent_fd = -1;
 		id->key = key;
 		id->filename = xstrdup(options.identity_files[i]);
 		id->userprovided = options.identity_file_userprovided[i];
@@ -1272,6 +1273,7 @@ pubkey_prepare(Authctxt *authctxt)
 		    key->cert->type != SSH2_CERT_TYPE_USER)
 			continue;
 		id = xcalloc(1, sizeof(*id));
+		id->agent_fd = -1;
 		id->key = key;
 		id->filename = xstrdup(options.certificate_files[i]);
 		id->userprovided = options.certificate_file_userprovided[i];
@@ -1340,8 +1342,9 @@ pubkey_prepare(Authctxt *authctxt)
 			memset(id, 0, sizeof(*id));
 			continue;
 		}
-		debug2("key: %s (%p),%s", id->filename, id->key,
-		    id->userprovided ? " explicit" : "");
+		debug2("key: %s (%p)%s%s", id->filename, id->key,
+		    id->userprovided ? ", explicit" : "",
+		    id->agent_fd != -1 ? ", agent" : "");
 	}
 }
 
