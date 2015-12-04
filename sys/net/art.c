@@ -1,4 +1,4 @@
-/*	$OpenBSD: art.c,v 1.10 2015/11/24 12:48:20 dlg Exp $ */
+/*	$OpenBSD: art.c,v 1.11 2015/12/04 14:15:27 mpi Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -83,16 +83,16 @@ int			 art_table_free(struct art_root *, struct art_table *);
 int			 art_table_walk(struct art_root *, struct art_table *,
 			     int (*f)(struct art_node *, void *), void *);
 
-struct pool		at_pool, at_heap_8_pool, at_heap_16_pool;
+struct pool		at_pool, at_heap_4_pool, at_heap_8_pool;
 
 void
 art_init(void)
 {
 	pool_init(&at_pool, sizeof(struct art_table), 0, 0, 0, "art_table",
 	    NULL);
-	pool_init(&at_heap_8_pool, AT_HEAPSIZE(8), 0, 0, 0, "art_heap8", NULL);
-	pool_init(&at_heap_16_pool, AT_HEAPSIZE(16), 0, 0, 0, "art_heap16",
-	    NULL);
+	pool_init(&at_heap_4_pool, AT_HEAPSIZE(4), 0, 0, 0, "art_heap4", NULL);
+	pool_init(&at_heap_8_pool, AT_HEAPSIZE(8), 0, 0, 0, "art_heap8",
+	    &pool_allocator_single);
 }
 
 /*
@@ -112,17 +112,17 @@ art_alloc(unsigned int rtableid, int off)
 	switch (off) {
 	case 4: /* AF_INET && AF_MPLS */
 		ar->ar_alen = 32;
-		ar->ar_nlvl = 3;
-		ar->ar_bits[0] = 16;
-		ar->ar_bits[1] = 8;
-		ar->ar_bits[2] = 8;
+		ar->ar_nlvl = 7;
+		ar->ar_bits[0] = 8;
+		for (i = 1; i < ar->ar_nlvl; i++)
+			ar->ar_bits[i] = 4;
 		break;
 #ifdef INET6
 	case 8: /* AF_INET6 */
 		ar->ar_alen = 128;
-		ar->ar_nlvl = 16;
+		ar->ar_nlvl = 32;
 		for (i = 0; i < ar->ar_nlvl; i++)
-			ar->ar_bits[i] = 8;
+			ar->ar_bits[i] = 4;
 		break;
 #endif /* INET6 */
 	default:
@@ -661,11 +661,11 @@ art_table_get(struct art_root *ar, struct art_table *parent, int j)
 		return (NULL);
 
 	switch (AT_HEAPSIZE(ar->ar_bits[lvl])) {
+	case AT_HEAPSIZE(4):
+		at_heap = pool_get(&at_heap_4_pool, PR_NOWAIT|PR_ZERO);
+		break;
 	case AT_HEAPSIZE(8):
 		at_heap = pool_get(&at_heap_8_pool, PR_NOWAIT|PR_ZERO);
-		break;
-	case AT_HEAPSIZE(16):
-		at_heap = pool_get(&at_heap_16_pool, PR_NOWAIT|PR_ZERO);
 		break;
 	default:
 		panic("incorrect stride length %u", ar->ar_bits[lvl]);
@@ -718,15 +718,15 @@ art_table_put(struct art_root *ar, struct art_table *at)
 		ar->ar_root = NULL;
 	}
 
-	switch (AT_HEAPSIZE(ar->ar_bits[lvl])) {
+	switch (AT_HEAPSIZE(at->at_bits)) {
+	case AT_HEAPSIZE(4):
+		pool_put(&at_heap_4_pool, at->at_heap);
+		break;
 	case AT_HEAPSIZE(8):
 		pool_put(&at_heap_8_pool, at->at_heap);
 		break;
-	case AT_HEAPSIZE(16):
-		pool_put(&at_heap_16_pool, at->at_heap);
-		break;
 	default:
-		panic("incorrect stride length %u", ar->ar_bits[lvl]);
+		panic("incorrect stride length %u", at->at_bits);
 	}
 
 	pool_put(&at_pool, at);
