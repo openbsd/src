@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.80 2015/10/01 16:03:48 kettenis Exp $ */
+/* $OpenBSD: pmap.c,v 1.81 2015/12/04 06:21:52 jsg Exp $ */
 /* $NetBSD: pmap.c,v 1.154 2000/12/07 22:18:55 thorpej Exp $ */
 
 /*-
@@ -3061,6 +3061,7 @@ pmap_growkernel(vaddr_t maxkvaddr)
 	return (pmap_maxkvaddr);
 
  die:
+	mtx_leave(&pmap_growkernel_mtx);
 	panic("pmap_growkernel: out of memory");
 }
 
