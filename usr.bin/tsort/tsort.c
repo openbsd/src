@@ -1,4 +1,4 @@
-/* $OpenBSD: tsort.c,v 1.32 2015/10/11 23:01:32 espie Exp $ */
+/* $OpenBSD: tsort.c,v 1.33 2015/12/04 17:58:05 espie Exp $ */
 /* ex:ts=8 sw=4:
  *
  * Copyright (c) 1999-2004 Marc Espie <espie@openbsd.org>
@@ -386,6 +386,8 @@ read_hints(FILE *f, struct ohash *h, int quiet, const char *name,
 			str = e;
 		}
 	}
+    	if (!feof(f))
+		err(EX_IOERR, "error reading %s", name);
 	return order;
 }
 
