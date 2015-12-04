@@ -1334,6 +1334,7 @@
 ./usr/share/man/man4/eso.4
 ./usr/share/man/man4/ess.4
 ./usr/share/man/man4/et.4
+./usr/share/man/man4/etherip.4
 ./usr/share/man/man4/etphy.4
 ./usr/share/man/man4/ex.4
 ./usr/share/man/man4/exphy.4
@@ -2667,8 +2668,8 @@
 ./usr/share/man/man8/vax/MAKEDEV.8
 ./usr/share/man/man8/vax/boot_vax.8
 ./usr/share/man/man8/vipw.8
-./usr/share/man/man8/vmd.8
 ./usr/share/man/man8/vmctl.8
+./usr/share/man/man8/vmd.8
 ./usr/share/man/man8/vmstat.8
 ./usr/share/man/man8/vnconfig.8
 ./usr/share/man/man8/watchdogd.8
