@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.21 2015/11/29 15:13:19 tb Exp $	*/
+/*	$OpenBSD: main.c,v 1.22 2015/12/04 16:40:09 tb Exp $	*/
 /*	$NetBSD: main.c,v 1.5 1995/04/22 10:08:54 cgd Exp $	*/
 
 /*
@@ -54,7 +54,7 @@ main(int ac, char *av[])
 	char		*sp;
 #endif
 
-	if (pledge("stdio rpath wpath cpath getpw tty", NULL) == -1)
+	if (pledge("stdio rpath wpath cpath tty", NULL) == -1)
 		err(1, "pledge");
 
 	home = getenv("HOME");

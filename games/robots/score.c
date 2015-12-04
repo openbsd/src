@@ -1,4 +1,4 @@
-/*	$OpenBSD: score.c,v 1.12 2015/11/29 15:13:19 tb Exp $	*/
+/*	$OpenBSD: score.c,v 1.13 2015/12/04 16:40:09 tb Exp $	*/
 /*	$NetBSD: score.c,v 1.3 1995/04/22 10:09:12 cgd Exp $	*/
 
 /*
@@ -129,11 +129,17 @@ score(int score_wfd)
 void
 set_name(SCORE *scp)
 {
-	struct passwd	*pp;
+	const char	*name;
 
-	if ((pp = getpwuid(scp->s_uid)) == NULL)
-		pp->pw_name = "???";
-	strlcpy(scp->s_name, pp->pw_name, LOGIN_NAME_MAX);
+	name = getenv("LOGNAME");
+	if (name == NULL || *name == '\0')
+		name = getenv("USER");
+	if (name == NULL || *name == '\0')
+		name = getlogin();
+	if (name == NULL || *name == '\0')
+		name = "  ???";
+
+	strlcpy(scp->s_name, name, LOGIN_NAME_MAX);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: robots.h,v 1.10 2015/11/29 15:13:19 tb Exp $	*/
+/*	$OpenBSD: robots.h,v 1.11 2015/12/04 16:40:09 tb Exp $	*/
 /*	$NetBSD: robots.h,v 1.5 1995/04/24 12:24:54 cgd Exp $	*/
 
 /*
@@ -40,7 +40,6 @@
 #include	<errno.h>
 #include	<fcntl.h>
 #include	<limits.h>
-#include	<pwd.h>
 #include	<signal.h>
 #include	<string.h>
 #include	<stdlib.h>
