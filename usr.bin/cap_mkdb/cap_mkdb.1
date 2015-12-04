@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cap_mkdb.1,v 1.18 2015/12/03 11:32:34 nicm Exp $
+.\"	$OpenBSD: cap_mkdb.1,v 1.19 2015/12/04 13:58:09 nicm Exp $
 .\"	$NetBSD: cap_mkdb.1,v 1.4 1995/03/26 03:59:36 glass Exp $
 .\"
 .\" Copyright (c) 1992, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)cap_mkdb.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: December 3 2015 $
+.Dd $Mdocdate: December 4 2015 $
 .Dt CAP_MKDB 1
 .Os
 .Sh NAME
@@ -46,8 +46,6 @@
 .Nm
 builds a hashed database out of the
 .Xr getcap 3
-or
-.Xr terminfo 5
 logical database constructed by the concatenation of the specified
 files.
 .Pp
@@ -68,10 +66,6 @@ The options are as follows:
 .Bl -tag -width Ds
 .It Fl f Ar outfile
 Specify a different database basename.
-.It Fl i
-Expect the capability records to be parsed to be in
-.Xr terminfo 5
-format.
 .It Fl v
 Print out the number of capability records in the database.
 .El
@@ -99,22 +93,9 @@ in a key/data pair of the second type.
 The data field of this key/data pair is used to look up a key/data
 pair of the first type which has the real data associated with the
 name.
-.Sh FILES
-.Bl -tag -width /usr/share/misc/termcap.db -compact
-.It Pa /usr/share/misc/termcap
-uncompiled terminal capabilities file
-.It Pa /usr/share/misc/termcap.db
-terminal capabilities database
-.It Pa /usr/share/terminfo
-terminal information database
-.It Pa /etc/termcap
-symbolic link to
-.Pa /usr/share/misc/termcap
-.El
 .Sh EXIT STATUS
 .Ex -std cap_mkdb
 .Sh SEE ALSO
 .Xr dbopen 3 ,
 .Xr getcap 3 ,
-.Xr termcap 5 ,
-.Xr terminfo 5
+.Xr termcap 5
