@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtable.c,v 1.32 2015/12/03 21:57:59 mpi Exp $ */
+/*	$OpenBSD: rtable.c,v 1.33 2015/12/04 13:42:48 mpi Exp $ */
 
 /*
  * Copyright (c) 2014-2015 Martin Pieuchot
@@ -348,15 +348,16 @@ rtable_match(unsigned int rtableid, struct sockaddr *dst, uint32_t *src)
 {
 	struct radix_node_head	*rnh;
 	struct radix_node	*rn;
-	struct rtentry		*rt;
+	struct rtentry		*rt = NULL;
 
 	rnh = rtable_get(rtableid, dst->sa_family);
 	if (rnh == NULL)
 		return (NULL);
 
+	KERNEL_LOCK();
 	rn = rn_match(dst, rnh);
 	if (rn == NULL || (rn->rn_flags & RNF_ROOT) != 0)
-		return (NULL);
+		goto out;
 
 	rt = ((struct rtentry *)rn);
 	rtref(rt);
@@ -364,7 +365,8 @@ rtable_match(unsigned int rtableid, struct sockaddr *dst, uint32_t *src)
 #ifndef SMALL_KERNEL
 	rt = rtable_mpath_select(rt, src);
 #endif /* SMALL_KERNEL */
-
+out:
+	KERNEL_UNLOCK();
 	return (rt);
 }
 
@@ -595,7 +597,7 @@ rtable_match(unsigned int rtableid, struct sockaddr *dst, uint32_t *src)
 {
 	struct art_root			*ar;
 	struct art_node			*an;
-	struct rtentry			*rt;
+	struct rtentry			*rt = NULL;
 	struct srpl_iter		 i;
 	uint8_t				*addr;
 
@@ -604,9 +606,11 @@ rtable_match(unsigned int rtableid, struct sockaddr *dst, uint32_t *src)
 		return (NULL);
 
 	addr = satoaddr(ar, dst);
+
+	KERNEL_LOCK();
 	an = art_match(ar, addr);
 	if (an == NULL)
-		return (NULL);
+		goto out;
 
 	rt = SRPL_ENTER(&an->an_rtlist, &i);
 	rtref(rt);
@@ -615,7 +619,8 @@ rtable_match(unsigned int rtableid, struct sockaddr *dst, uint32_t *src)
 #ifndef SMALL_KERNEL
 	rt = rtable_mpath_select(rt, src);
 #endif /* SMALL_KERNEL */
-
+out:
+	KERNEL_UNLOCK();
 	return (rt);
 }
 

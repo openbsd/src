@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.287 2015/12/03 21:57:59 mpi Exp $	*/
+/*	$OpenBSD: route.c,v 1.288 2015/12/04 13:42:48 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -240,15 +240,14 @@ rt_match(struct sockaddr *dst, uint32_t *src, int flags, unsigned int tableid)
 	info.rti_info[RTAX_DST] = dst;
 
 	s = splsoftnet();
-	KERNEL_LOCK();
 	rt = rtable_match(tableid, dst, src);
 	if (rt != NULL) {
 		if ((rt->rt_flags & RTF_CLONING) && ISSET(flags, RT_RESOLVE)) {
 			rt0 = rt;
+			KERNEL_LOCK();
 			error = rtrequest(RTM_RESOLVE, &info, RTP_DEFAULT,
 			    &rt, tableid);
 			if (error) {
-				rt0->rt_use++;
 				rt_missmsg(RTM_MISS, &info, 0, 0, error,
 				    tableid);
 			} else {
@@ -256,11 +255,11 @@ rt_match(struct sockaddr *dst, uint32_t *src, int flags, unsigned int tableid)
 				rt_sendmsg(rt, RTM_ADD, tableid);
 				rtfree(rt0);
 			}
+			KERNEL_UNLOCK();
 		}
 		rt->rt_use++;
 	} else
 		rtstat.rts_unreach++;
-	KERNEL_UNLOCK();
 	splx(s);
 	return (rt);
 }
