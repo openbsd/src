@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.162 2015/11/12 23:11:11 rpe Exp $
+#	$OpenBSD: netstart,v 1.163 2015/12/05 18:43:12 mpi Exp $
 
 # Turn off Strict Bourne shell mode.
 set +o sh
@@ -270,37 +270,18 @@ done
 # Multicast routing.
 #
 # The routing to the 224.0.0.0/4 net is setup according to these rules:
-# multicast_host	multicast_router	route		comment
-# NO			NO			-reject		no multicast
-# NO			YES			none installed	daemon will run
-# YES/interface		NO			-interface	YES=def. iface
-#	   Any other combination		-reject		config error
+# multicast			route			comment
+# NO				-reject			no multicast
+# YES				none installed		daemon can run
+# Any other combination		-reject			config error
 route -qn delete 224.0.0.0/4 >/dev/null 2>&1
-case "$multicast_host:$multicast_router" in
-NO:NO)
+case $multicast in
+NO)
 	route -qn add -net 224.0.0.0/4 -interface 127.0.0.1 -reject >/dev/null
 	;;
-NO:YES)
+YES)
 	;;
-*:NO)
-	maddr=$(if [[ $multicast_host == YES ]]; then
-		ed -s '!route -qn show -inet' <<EOF
-/^default/p
-EOF
-	else
-		ed -s "!ifconfig $multicast_host" <<EOF
-/^	inet /p
-EOF
-	fi 2>/dev/null)
-	if [[ -n $maddr ]]; then
-		set $maddr
-		route -qn add -net 224.0.0.0/4 -interface $2 >/dev/null
-	else
-		route -qn add -net 224.0.0.0/4 -interface \
-			127.0.0.1 -reject >/dev/null
-	fi
-	;;
-*:*)
+*)
 	echo 'config error, multicasting disabled until rc.conf is fixed'
 	route -qn add -net 224.0.0.0/4 -interface 127.0.0.1 -reject >/dev/null
 	;;

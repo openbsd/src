@@ -1,4 +1,4 @@
-.\"	$OpenBSD: netstart.8,v 1.19 2011/11/13 12:43:49 ajacoutot Exp $
+.\"	$OpenBSD: netstart.8,v 1.20 2015/12/05 18:43:12 mpi Exp $
 .\"
 .\" Copyright (c) 2002, Miodrag Vallat.
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\"
 .\"     @(#)rc.8	8.2 (Berkeley) 12/11/93
 .\"
-.Dd $Mdocdate: November 13 2011 $
+.Dd $Mdocdate: December 5 2015 $
 .Dt NETSTART 8
 .Os
 .Sh NAME
@@ -102,48 +102,14 @@ and/or
 .Va net.inet6.ip6.mforwarding
 .Xr sysctl 8
 variables should be set to 1.
-Routing to the 224.0.0.0/4 net is set up using values from
-.Xr rc.conf 8
-according to these rules:
-.Bl -bullet
-.It
-The default.
-If the multicast settings are as follows
-then multicast routing will not be enabled.
-.Bd -literal -offset indent
-multicast_host=NO
-multicast_router=NO
-.Ed
-.It
-If the multicast settings are as follows
-then multicast routing will be enabled,
-but no multicast route will be set up.
-It is expected that a routing daemon, such as
-.Xr mrouted 8 ,
-will be started as well.
-.Bd -literal -offset indent
-multicast_host=NO
-multicast_router=YES
-.Ed
-.It
-If the multicast settings are as follows
-then multicast routing will be enabled,
-using the default interface,
-or the interface name specified by
-.Va multicast_host .
-.Bd -literal -offset indent
-multicast_host=YES
-multicast_router=NO
-.Ed
-or:
-.Bd -literal -offset indent -compact
-multicast_host=foo0	# interface name
-multicast_router=NO
-.Ed
-.It
-Other cases are configuration errors and will cause multicast routing not to be
-enabled.
-.El
+Multicast routing is only enabled if
+.Va multicast
+is set to
+.Qq YES
+in
+.Xr rc.conf.local 8 .
+Other cases are configuration errors
+and will cause multicast routing not to be enabled.
 .Sh SEE ALSO
 .Xr multicast 4 ,
 .Xr defaultdomain 5 ,
