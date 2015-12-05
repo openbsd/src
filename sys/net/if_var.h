@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_var.h,v 1.63 2015/12/03 21:11:53 sashan Exp $	*/
+/*	$OpenBSD: if_var.h,v 1.64 2015/12/05 16:24:59 mpi Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -36,10 +36,13 @@
 #ifndef _NET_IF_VAR_H_
 #define _NET_IF_VAR_H_
 
+#ifdef _KERNEL
+
 #include <sys/queue.h>
 #include <sys/mbuf.h>
 #include <sys/srp.h>
 #include <sys/refcnt.h>
+#include <sys/time.h>
 
 /*
  * Structures defining a network interface, providing a packet
@@ -65,8 +68,6 @@
  * routing and gateway routines maintaining information used to locate
  * interfaces.  These routines live in the files if.c and route.c
  */
-
-#include <sys/time.h>
 
 struct rtentry;
 struct timeout;
@@ -261,7 +262,6 @@ struct ifg_list {
 	TAILQ_ENTRY(ifg_list)	 ifgl_next;
 };
 
-#ifdef _KERNEL
 /*
  * Interface send queues.
  */
