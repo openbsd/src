@@ -1,5 +1,5 @@
-/*	$Id: aldap.c,v 1.30 2012/04/30 21:40:03 jmatthew Exp $ */
-/*	$OpenBSD: aldap.c,v 1.30 2012/04/30 21:40:03 jmatthew Exp $ */
+/*	$Id: aldap.c,v 1.31 2015/12/05 19:10:19 mmcc Exp $ */
+/*	$OpenBSD: aldap.c,v 1.31 2015/12/05 19:10:19 mmcc Exp $ */
 
 /*
  * Copyright (c) 2008 Alexander Schrijver <aschrijver@openbsd.org>
@@ -352,8 +352,7 @@ aldap_parse_page_control(struct ber_element *control, size_t len)
 void
 aldap_freepage(struct aldap_page_control *page)
 {
-	if (page->cookie)
-		free(page->cookie);
+	free(page->cookie);
 	free(page);
 }
 
