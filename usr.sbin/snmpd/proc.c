@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.c,v 1.17 2015/11/23 19:31:52 reyk Exp $	*/
+/*	$OpenBSD: proc.c,v 1.18 2015/12/05 13:14:40 claudio Exp $	*/
 
 /*
  * Copyright (c) 2010 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -452,7 +452,7 @@ proc_dispatch(int fd, short event, void *arg)
 	ibuf = &iev->ibuf;
 
 	if (event & EV_READ) {
-		if ((n = imsg_read(ibuf)) == -1)
+		if ((n = imsg_read(ibuf)) == -1 && errno != EAGAIN)
 			fatal(__func__);
 		if (n == 0) {
 			/* this pipe is dead, so remove the event handler */

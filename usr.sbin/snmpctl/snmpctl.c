@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpctl.c,v 1.20 2014/04/14 12:56:21 blambert Exp $	*/
+/*	$OpenBSD: snmpctl.c,v 1.21 2015/12/05 13:14:40 claudio Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -181,7 +181,7 @@ main(int argc, char *argv[])
 			err(1, "write error");
 
 	while (!done) {
-		if ((n = imsg_read(&ibuf)) == -1)
+		if ((n = imsg_read(&ibuf)) == -1 && errno != EAGAIN)
 			errx(1, "imsg_read error");
 		if (n == 0)
 			errx(1, "pipe closed");
