@@ -1,4 +1,4 @@
-.\" $OpenBSD: imsg_init.3,v 1.13 2015/07/11 16:23:59 deraadt Exp $
+.\" $OpenBSD: imsg_init.3,v 1.14 2015/12/05 13:06:52 claudio Exp $
 .\"
 .\" Copyright (c) 2010 Nicholas Marriott <nicm@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 11 2015 $
+.Dd $Mdocdate: December 5 2015 $
 .Dt IMSG_INIT 3
 .Os
 .Sh NAME
@@ -515,7 +515,7 @@ dispatch_imsg(struct imsgbuf *ibuf)
 	ssize_t         n, datalen;
 	int		idata;
 
-	if ((n = imsg_read(ibuf)) == -1 || n == 0) {
+	if (((n = imsg_read(ibuf)) == -1 && errno != EAGAIN) || n == 0) {
 		/* handle socket error */
 	}
 
