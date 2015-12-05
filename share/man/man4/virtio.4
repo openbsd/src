@@ -1,4 +1,4 @@
-.\"     $OpenBSD: virtio.4,v 1.9 2014/01/21 21:14:58 sf Exp $
+.\"     $OpenBSD: virtio.4,v 1.10 2015/12/05 19:36:19 sf Exp $
 .\"
 .\" Copyright (c) 2012 Stefan Fritsch <sf@sfritsch.de>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 21 2014 $
+.Dd $Mdocdate: December 5 2015 $
 .Dt VIRTIO 4
 .Os
 .Sh NAME
@@ -45,6 +45,11 @@ VirtIO random number device
 .It Xr vioscsi 4
 VirtIO SCSI adapter
 .El
+.Pp
+The
+.Nm
+driver conforms to the virtio 0.9.5 specification.
+The virtio 1.0 standard is not supported, yet.
 .Sh SEE ALSO
 .Xr intro 4
 .Sh HISTORY
