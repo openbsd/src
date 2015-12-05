@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.957 2015/12/03 21:11:53 sashan Exp $ */
+/*	$OpenBSD: pf.c,v 1.958 2015/12/05 14:58:06 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -178,7 +178,7 @@ void			 pf_rule_to_actions(struct pf_rule *,
 			    struct pf_rule_actions *);
 int			 pf_test_rule(struct pf_pdesc *, struct pf_rule **,
 			    struct pf_state **, struct pf_rule **,
-			    struct pf_ruleset **);
+			    struct pf_ruleset **, u_short *);
 static __inline int	 pf_create_state(struct pf_pdesc *, struct pf_rule *,
 			    struct pf_rule *, struct pf_rule *,
 			    struct pf_state_key **, struct pf_state_key **,
@@ -3082,7 +3082,7 @@ pf_rule_to_actions(struct pf_rule *r, struct pf_rule_actions *a)
 
 int
 pf_test_rule(struct pf_pdesc *pd, struct pf_rule **rm, struct pf_state **sm,
-    struct pf_rule **am, struct pf_ruleset **rsm)
+    struct pf_rule **am, struct pf_ruleset **rsm, u_short *reason)
 {
 	struct pf_rule		*r;
 	struct pf_rule		*nr = NULL;
@@ -3096,7 +3096,6 @@ pf_test_rule(struct pf_pdesc *pd, struct pf_rule **rm, struct pf_state **sm,
 	struct tcphdr		*th = pd->hdr.tcp;
 	struct pf_state_key	*skw = NULL, *sks = NULL;
 	struct pf_rule_actions	 act;
-	u_short			 reason;
 	int			 rewrite = 0;
 	int			 tag = -1;
 	int			 asd = 0;
@@ -3112,7 +3111,7 @@ pf_test_rule(struct pf_pdesc *pd, struct pf_rule **rm, struct pf_state **sm,
 	SLIST_INIT(&rules);
 
 	if (pd->dir == PF_IN && if_congested()) {
-		REASON_SET(&reason, PFRES_CONGEST);
+		REASON_SET(reason, PFRES_CONGEST);
 		return (PF_DROP);
 	}
 
@@ -3263,7 +3262,7 @@ pf_test_rule(struct pf_pdesc *pd, struct pf_rule **rm, struct pf_state **sm,
 			if (r->action == PF_MATCH) {
 				if ((ri = pool_get(&pf_rule_item_pl,
 				    PR_NOWAIT)) == NULL) {
-					REASON_SET(&reason, PFRES_MEMORY);
+					REASON_SET(reason, PFRES_MEMORY);
 					goto cleanup;
 				}
 				ri->r = r;
@@ -3273,13 +3272,13 @@ pf_test_rule(struct pf_pdesc *pd, struct pf_rule **rm, struct pf_state **sm,
 				if (r->rule_flag & PFRULE_AFTO)
 					pd->naf = r->naf;
 				if (pf_get_transaddr(r, pd, sns, &nr) == -1) {
-					REASON_SET(&reason, PFRES_TRANSLATE);
+					REASON_SET(reason, PFRES_TRANSLATE);
 					goto cleanup;
 				}
 #if NPFLOG > 0 
 				if (r->log) {
-					REASON_SET(&reason, PFRES_MATCH);
-					PFLOG_PACKET(pd, reason, r, a, ruleset,
+					REASON_SET(reason, PFRES_MATCH);
+					PFLOG_PACKET(pd, *reason, r, a, ruleset,
 					    NULL);
 				}
 #endif	/* NPFLOG > 0 */
@@ -3319,14 +3318,14 @@ pf_test_rule(struct pf_pdesc *pd, struct pf_rule **rm, struct pf_state **sm,
 	if (r->rule_flag & PFRULE_AFTO)
 		pd->naf = r->naf;
 	if (pf_get_transaddr(r, pd, sns, &nr) == -1) {
-		REASON_SET(&reason, PFRES_TRANSLATE);
+		REASON_SET(reason, PFRES_TRANSLATE);
 		goto cleanup;
 	}
-	REASON_SET(&reason, PFRES_MATCH);
+	REASON_SET(reason, PFRES_MATCH);
 
 #if NPFLOG > 0
 	if (r->log)
-		PFLOG_PACKET(pd, reason, r, a, ruleset, NULL);
+		PFLOG_PACKET(pd, *reason, r, a, ruleset, NULL);
 	if (act.log & PF_LOG_MATCHES)
 		pf_log_matches(pd, r, a, ruleset, &rules);
 #endif	/* NPFLOG > 0 */
@@ -3344,7 +3343,7 @@ pf_test_rule(struct pf_pdesc *pd, struct pf_rule **rm, struct pf_state **sm,
 
 			if (pf_check_proto_cksum(pd, pd->off,
 			    pd->tot_len - pd->off, IPPROTO_TCP, pd->af))
-				REASON_SET(&reason, PFRES_PROTCKSUM);
+				REASON_SET(reason, PFRES_PROTCKSUM);
 			else {
 				if (th->th_flags & TH_SYN)
 					ack++;
@@ -3377,7 +3376,7 @@ pf_test_rule(struct pf_pdesc *pd, struct pf_rule **rm, struct pf_state **sm,
 		pd->destchg = 1;
 
 	if (r->action == PF_PASS && pd->badopts && ! r->allow_opts) {
-		REASON_SET(&reason, PFRES_IPOPTIONS);
+		REASON_SET(reason, PFRES_IPOPTIONS);
 #if NPFLOG > 0
 		pd->pflog |= PF_LOG_FORCE;
 #endif	/* NPFLOG > 0 */
@@ -3392,13 +3391,13 @@ pf_test_rule(struct pf_pdesc *pd, struct pf_rule **rm, struct pf_state **sm,
 		if (r->rule_flag & PFRULE_SRCTRACK &&
 		    pf_insert_src_node(&sns[PF_SN_NONE], r, PF_SN_NONE, pd->af,
 		    pd->src, NULL) != 0) {
-			REASON_SET(&reason, PFRES_SRCLIMIT);
+			REASON_SET(reason, PFRES_SRCLIMIT);
 			goto cleanup;
 		}
 
 		if (r->max_states && (r->states_cur >= r->max_states)) {
 			pf_status.lcounters[LCNT_STATES]++;
-			REASON_SET(&reason, PFRES_MAXSTATES);
+			REASON_SET(reason, PFRES_MAXSTATES);
 			goto cleanup;
 		}
 
@@ -6418,7 +6417,7 @@ pf_test(sa_family_t af, int fwdir, struct ifnet *ifp, struct mbuf **m0)
 		 * handle fragments that aren't reassembled by
 		 * normalization
 		 */
-		action = pf_test_rule(&pd, &r, &s, &a, &ruleset);
+		action = pf_test_rule(&pd, &r, &s, &a, &ruleset, &reason);
 		if (action != PF_PASS)
 			REASON_SET(&reason, PFRES_FRAG);
 		break;
@@ -6443,7 +6442,8 @@ pf_test(sa_family_t af, int fwdir, struct ifnet *ifp, struct mbuf **m0)
 			pd.pflog |= s->log;
 #endif	/* NPFLOG > 0 */
 		} else if (s == NULL)
-			action = pf_test_rule(&pd, &r, &s, &a, &ruleset);
+			action = pf_test_rule(&pd, &r, &s, &a, &ruleset,
+			    &reason);
 		break;
 	}
 
@@ -6467,7 +6467,8 @@ pf_test(sa_family_t af, int fwdir, struct ifnet *ifp, struct mbuf **m0)
 			pd.pflog |= s->log;
 #endif	/* NPFLOG > 0 */
 		} else if (s == NULL)
-			action = pf_test_rule(&pd, &r, &s, &a, &ruleset);
+			action = pf_test_rule(&pd, &r, &s, &a, &ruleset,
+			    &reason);
 		break;
 	}
 #endif /* INET6 */
@@ -6491,7 +6492,8 @@ pf_test(sa_family_t af, int fwdir, struct ifnet *ifp, struct mbuf **m0)
 			pd.pflog |= s->log;
 #endif	/* NPFLOG > 0 */
 		} else if (s == NULL)
-			action = pf_test_rule(&pd, &r, &s, &a, &ruleset);
+			action = pf_test_rule(&pd, &r, &s, &a, &ruleset,
+			    &reason);
 
 		if (pd.virtual_proto == IPPROTO_TCP) {
 			if (s) {
