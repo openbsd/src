@@ -1,24 +1,4 @@
-@(#) $Id: README,v 1.8 2007/10/07 16:41:05 deraadt Exp $ (LBL)
-
-TCPDUMP 3.4
-Lawrence Berkeley National Laboratory
-Network Research Group
-tcpdump@ee.lbl.gov
-ftp://ftp.ee.lbl.gov/tcpdump.tar.Z
-
-This directory contains source code for tcpdump, a tool for network
-monitoring and data acquisition.  The original distribution is
-available via anonymous ftp to ftp.ee.lbl.gov, in tcpdump.tar.Z.
-
-Tcpdump now uses libpcap, a system-independent interface for user-level
-packet capture.  Before building tcpdump, you must first retrieve and
-build libpcap, also from LBL, in:
-
-	ftp://ftp.ee.lbl.gov/libpcap.tar.Z
-
-Once libpcap is built (either install it or make sure it's in
-../libpcap), you can build tcpdump using the procedure in the INSTALL
-file.
+@(#) $Id: README,v 1.9 2015/12/05 21:41:29 mmcc Exp $ (LBL)
 
 The program is loosely based on SMI's "etherfind" although none of the
 etherfind code remains.  It was originally written by Van Jacobson as
@@ -28,10 +8,6 @@ taken from Sun's etherfind were later re-written by Steven McCanne of
 LBL.  To insure that there would be no vestige of proprietary code in
 tcpdump, Steve wrote these pieces from the specification given by the
 manual entry, with no access to the source of tcpdump or etherfind.
-
-Over the past few years, tcpdump has been steadily improved by the
-excellent contributions from the Internet community (just browse
-through the CHANGES file).  We are grateful for all the input.
 
 Richard Stevens gives an excellent treatment of the Internet protocols
 in his book ``TCP/IP Illustrated, Volume 1''. If you want to learn more
@@ -49,10 +25,6 @@ Another tool that tcpdump users might find useful is tcpslice:
 It is a program that can be used to extract portions of tcpdump binary
 trace files. See the above distribution for further details and
 documentation.
-
-Problems, bugs, questions, desirable enhancements, source code
-contributions, etc., should be sent to the email address
-"tcpdump@ee.lbl.gov".
 
  - Steve McCanne
    Craig Leres
