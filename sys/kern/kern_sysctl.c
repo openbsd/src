@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.298 2015/11/01 19:03:33 semarie Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.299 2015/12/05 20:54:34 kettenis Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -2375,18 +2375,18 @@ sysctl_cptime2(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 {
 	CPU_INFO_ITERATOR cii;
 	struct cpu_info *ci;
-	int i;
+	int found = 0;
 
 	if (namelen != 1)
 		return (ENOTDIR);
 
-	i = name[0];
-
 	CPU_INFO_FOREACH(cii, ci) {
-		if (i-- == 0)
+		if (name[0] == CPU_INFO_UNIT(ci)) {
+			found = 1;
 			break;
+		}
 	}
-	if (i > 0)
+	if (!found)
 		return (ENOENT);
 
 	return (sysctl_rdstruct(oldp, oldlenp, newp,
