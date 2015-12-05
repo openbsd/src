@@ -1,4 +1,4 @@
-﻿$OpenBSD: README,v 1.13 2015/12/05 06:55:09 mmcc Exp $
+﻿$OpenBSD: README,v 1.14 2015/12/05 06:56:46 mmcc Exp $
 
 Last updated Jul '99 for pdksh-5.2.14.
 
@@ -22,14 +22,7 @@ Files of interest:
 	CONTRIBUTORS	short history of pdksh, people who contributed, etc.
 	NOTES		lists of known bugs in pdksh, at&t ksh, and posix.
 	PROJECTS	list of things that need to be done in pdksh.
-	BUG-REPORTS	list of recently reported bugs that have been fixed
-			and all reported bugs that haven't been fixed.
 	LEGAL		A file detailing legal issues concerning pdksh.
-	etc/*		system profile and kshrc files used by Simon J. Gerraty.
-	misc/README*	readme files from previous versions.
-	misc/Changes*	changelog files from previous versions.
-	os2/*		files and info needed to compile ksh on os/2.
-	tests/*		pdksh's regression testing system.
 
 
 BTW, THE MOST FREQUENTLY REPORTED BUG IS
