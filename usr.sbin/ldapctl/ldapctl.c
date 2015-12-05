@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldapctl.c,v 1.6 2015/11/01 07:39:28 jmatthew Exp $	*/
+/*	$OpenBSD: ldapctl.c,v 1.7 2015/12/05 13:19:13 claudio Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -342,7 +342,7 @@ main(int argc, char *argv[])
 			err(1, "write error");
 
 	while (!done) {
-		if ((n = imsg_read(&ibuf)) == -1)
+		if ((n = imsg_read(&ibuf)) == -1 && errno != EAGAIN)
 			errx(1, "imsg_read error");
 		if (n == 0)
 			errx(1, "pipe closed");
