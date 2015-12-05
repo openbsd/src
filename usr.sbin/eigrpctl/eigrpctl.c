@@ -1,4 +1,4 @@
-/*	$OpenBSD: eigrpctl.c,v 1.4 2015/10/29 02:54:29 deraadt Exp $ */
+/*	$OpenBSD: eigrpctl.c,v 1.5 2015/12/05 15:48:40 claudio Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -191,7 +191,7 @@ main(int argc, char *argv[])
 			err(1, "write error");
 
 	while (!done) {
-		if ((n = imsg_read(ibuf)) == -1)
+		if ((n = imsg_read(ibuf)) == -1 && errno != EAGAIN)
 			errx(1, "imsg_read error");
 		if (n == 0)
 			errx(1, "pipe closed");
