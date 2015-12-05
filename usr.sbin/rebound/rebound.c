@@ -1,4 +1,4 @@
-/* $OpenBSD: rebound.c,v 1.53 2015/12/04 16:44:20 tedu Exp $ */
+/* $OpenBSD: rebound.c,v 1.54 2015/12/05 10:24:17 tedu Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -427,7 +427,7 @@ readconfig(FILE *conf, struct sockaddr_storage *remoteaddr)
 }
 
 static int
-launch(const char *confname, int ud, int ld, int kq)
+launch(FILE *conf, int ud, int ld, int kq)
 {
 	struct sockaddr_storage remoteaddr;
 	struct kevent ch[2], kev[4];
@@ -435,15 +435,8 @@ launch(const char *confname, int ud, int ld, int kq)
 	struct request reqkey, *req;
 	struct dnscache *ent;
 	struct passwd *pwd;
-	FILE *conf;
 	int i, r, af;
 	pid_t parent, child;
-
-	conf = fopen(confname, "r");
-	if (!conf) {
-		logmsg(LOG_ERR, "failed to open config %s", confname);
-		return -1;
-	}
 
 	parent = getpid();
 	if (!debug) {
@@ -478,7 +471,7 @@ launch(const char *confname, int ud, int ld, int kq)
 	af = readconfig(conf, &remoteaddr);
 	fclose(conf);
 	if (af == -1)
-		logerr("failed to read config %s", confname);
+		logerr("parse error in config file");
 
 	EV_SET(&kev[0], ud, EVFILT_READ, EV_ADD, 0, 0, NULL);
 	EV_SET(&kev[1], ld, EVFILT_READ, EV_ADD, 0, 0, NULL);
@@ -627,7 +620,8 @@ main(int argc, char **argv)
 	struct kevent kev;
 	struct rlimit rlim;
 	struct timespec ts, *timeout = NULL;
-	const char *conffile = "/etc/rebound.conf";
+	const char *confname = "/etc/rebound.conf";
+	FILE *conf;
 
 	if (pledge("stdio rpath getpw inet proc id", NULL) == -1)
 		logerr("pledge failed");
@@ -635,7 +629,7 @@ main(int argc, char **argv)
 	while ((ch = getopt(argc, argv, "c:d")) != -1) {
 		switch (ch) {
 		case 'c':
-			conffile = optarg;
+			confname = optarg;
 			break;
 		case 'd':
 			debug = 1;
@@ -693,8 +687,12 @@ main(int argc, char **argv)
 	if (listen(ld, 10) == -1)
 		logerr("listen: %s", strerror(errno));
 
+	conf = fopen(confname, "r");
+	if (!conf)
+		logerr("failed to open config %s", confname);
+
 	if (debug) {
-		launch(conffile, ud, ld, -1);
+		launch(conf, ud, ld, -1);
 		return 1;
 	}
 
@@ -711,7 +709,7 @@ main(int argc, char **argv)
 	while (1) {
 		hupped = 0;
 		childdead = 0;
-		child = launch(conffile, ud, ld, kq);
+		child = launch(conf, ud, ld, kq);
 		if (child == -1)
 			logerr("failed to launch");
 
@@ -735,6 +733,10 @@ main(int argc, char **argv)
 				if (childdead)
 					break;
 				kill(child, SIGHUP);
+				conf = fopen(confname, "r");
+				if (!conf)
+					logerr("failed to open config %s",
+					    confname);
 			} else if (kev.filter == EVFILT_PROC) {
 				/* child died. wait for our own HUP. */
 				logmsg(LOG_INFO, "observed child exit");
