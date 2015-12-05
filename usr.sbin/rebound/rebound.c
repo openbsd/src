@@ -1,4 +1,4 @@
-/* $OpenBSD: rebound.c,v 1.54 2015/12/05 10:24:17 tedu Exp $ */
+/* $OpenBSD: rebound.c,v 1.55 2015/12/05 11:51:23 tedu Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -478,8 +478,6 @@ launch(FILE *conf, int ud, int ld, int kq)
 	EV_SET(&kev[2], SIGHUP, EVFILT_SIGNAL, EV_ADD, 0, 0, NULL);
 	EV_SET(&kev[3], SIGUSR1, EVFILT_SIGNAL, EV_ADD, 0, 0, NULL);
 	kevent(kq, kev, 4, NULL, 0, NULL);
-	signal(SIGUSR1, SIG_IGN);
-	signal(SIGHUP, SIG_IGN);
 	logmsg(LOG_INFO, "worker process going to work");
 	while (1) {
 		r = kevent(kq, NULL, 0, kev, 4, timeout);
@@ -645,8 +643,6 @@ main(int argc, char **argv)
 	if (argc)
 		usage();
 
-	signal(SIGPIPE, SIG_IGN);
-
 	if (getrlimit(RLIMIT_NOFILE, &rlim) == -1)
 		logerr("getrlimit: %s", strerror(errno));
 	rlim.rlim_cur = rlim.rlim_max;
@@ -691,10 +687,12 @@ main(int argc, char **argv)
 	if (!conf)
 		logerr("failed to open config %s", confname);
 
-	if (debug) {
-		launch(conf, ud, ld, -1);
-		return 1;
-	}
+	signal(SIGPIPE, SIG_IGN);
+	signal(SIGUSR1, SIG_IGN);
+	signal(SIGHUP, SIG_IGN);
+
+	if (debug)
+		return launch(conf, ud, ld, -1);
 
 	if (daemon(0, 0) == -1)
 		logerr("daemon: %s", strerror(errno));
@@ -704,8 +702,6 @@ main(int argc, char **argv)
 
 	EV_SET(&kev, SIGHUP, EVFILT_SIGNAL, EV_ADD, 0, 0, NULL);
 	kevent(kq, &kev, 1, NULL, 0, NULL);
-	signal(SIGUSR1, SIG_IGN);
-	signal(SIGHUP, SIG_IGN);
 	while (1) {
 		hupped = 0;
 		childdead = 0;
