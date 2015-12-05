@@ -1,4 +1,4 @@
-﻿$OpenBSD: README,v 1.14 2015/12/05 06:56:46 mmcc Exp $
+﻿$OpenBSD: README,v 1.15 2015/12/05 19:40:45 mmcc Exp $
 
 Last updated Jul '99 for pdksh-5.2.14.
 
@@ -6,17 +6,9 @@ PD-ksh is a mostly complete AT&T ksh look-alike (see NOTES file for a list
 of things not supported).  Work is mostly finished to make it fully
 compatible with both POSIX and AT&T ksh (when the two don't conflict).
 
-Since pdksh is free and compiles and runs on most common unix systems, it
-is very useful in creating a consistent user interface across multiple
-machines.
-
 PDksh was being maintained by Michael Rendell (michael@cs.mun.ca),
 who took over from Simon J. Gerraty (sjg@zen.void.oz.au) at the later's
-suggestion.  A short list of things that have been added since the last
-public pdksh release (4.9) are auto-configuration, arrays, $(( .. )),
-[[ .. ]], variable attributes, co-processes, extended file globbing,
-many POSIXisms and many bug fixes.  See the NEWS and ChangeLog files for
-other features added and bugs fixed.
+suggestion.
 
 Files of interest:
 	CONTRIBUTORS	short history of pdksh, people who contributed, etc.
