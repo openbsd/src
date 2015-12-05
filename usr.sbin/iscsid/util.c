@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.5 2015/01/16 15:57:06 deraadt Exp $ */
+/*	$OpenBSD: util.c,v 1.6 2015/12/05 06:38:18 mmcc Exp $ */
 
 /*
  * Copyright (c) 2009 Claudio Jeker <claudio@openbsd.org>
@@ -29,7 +29,7 @@
 #include <netdb.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <strings.h>
+#include <string.h>
 #include <unistd.h>
 
 #include "iscsid.h"

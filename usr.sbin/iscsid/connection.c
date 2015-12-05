@@ -1,4 +1,4 @@
-/*	$OpenBSD: connection.c,v 1.20 2014/11/23 13:10:30 claudio Exp $ */
+/*	$OpenBSD: connection.c,v 1.21 2015/12/05 06:38:18 mmcc Exp $ */
 
 /*
  * Copyright (c) 2009 Claudio Jeker <claudio@openbsd.org>
@@ -30,7 +30,7 @@
 #include <event.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <strings.h>
+#include <string.h>
 #include <unistd.h>
 
 #include "iscsid.h"
