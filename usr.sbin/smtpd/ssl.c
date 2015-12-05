@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl.c,v 1.79 2015/11/05 12:35:58 jung Exp $	*/
+/*	$OpenBSD: ssl.c,v 1.80 2015/12/05 21:27:42 mmcc Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -137,8 +137,7 @@ ssl_load_file(const char *name, off_t *len, mode_t perm)
 	return (buf);
 
 fail:
-	if (buf != NULL)
-		free(buf);
+	free(buf);
 	saved_errno = errno;
 	close(fd);
 	errno = saved_errno;

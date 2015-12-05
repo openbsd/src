@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.257 2015/12/01 20:04:38 gilles Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.258 2015/12/05 21:27:42 mmcc Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -390,8 +390,7 @@ parent_sig_handler(int sig, short event, void *p)
 					cause = child->cause;
 					child->cause = NULL;
 				}
-				if (child->cause)
-					free(child->cause);
+				free(child->cause);
 				log_debug("debug: smtpd: mda process done "
 				    "for session %016"PRIx64 ": %s",
 				    child->mda_id, cause);
