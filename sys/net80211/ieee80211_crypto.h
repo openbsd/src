@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_crypto.h,v 1.22 2009/01/26 19:09:41 damien Exp $	*/
+/*	$OpenBSD: ieee80211_crypto.h,v 1.23 2015/12/05 16:26:53 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2007,2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -47,6 +47,16 @@ enum ieee80211_akm {
 	IEEE80211_AKM_SHA256_PSK	= 0x00000008	/* 11w */
 };
 
+#define IEEE80211_TKIP_HDRLEN	8
+#define IEEE80211_TKIP_MICLEN	8
+#define IEEE80211_TKIP_ICVLEN	4
+#define IEEE80211_CCMP_HDRLEN	8
+#define IEEE80211_CCMP_MICLEN	8
+
+#define IEEE80211_PMK_LEN	32
+
+#ifdef _KERNEL 
+
 static __inline int
 ieee80211_is_8021x_akm(enum ieee80211_akm akm)
 {
@@ -60,16 +70,6 @@ ieee80211_is_sha256_akm(enum ieee80211_akm akm)
 	return akm == IEEE80211_AKM_SHA256_8021X ||
 	    akm == IEEE80211_AKM_SHA256_PSK;
 }
-
-#define	IEEE80211_KEYBUF_SIZE	16
-
-#define IEEE80211_TKIP_HDRLEN	8
-#define IEEE80211_TKIP_MICLEN	8
-#define IEEE80211_TKIP_ICVLEN	4
-#define IEEE80211_CCMP_HDRLEN	8
-#define IEEE80211_CCMP_MICLEN	8
-
-#define IEEE80211_PMK_LEN	32
 
 struct ieee80211_key {
 	u_int8_t		k_id;		/* identifier (0-5) */
@@ -86,6 +86,8 @@ struct ieee80211_key {
 	u_int8_t		k_key[32];
 	void			*k_priv;
 };
+
+#define IEEE80211_KEYBUF_SIZE	16
 
 /*
  * Entry in the PMKSA cache.
@@ -178,4 +180,5 @@ struct	mbuf *ieee80211_bip_encap(struct ieee80211com *, struct mbuf *,
 struct	mbuf *ieee80211_bip_decap(struct ieee80211com *, struct mbuf *,
 	    struct ieee80211_key *);
 
+#endif /* _KERNEL */
 #endif /* _NET80211_IEEE80211_CRYPTO_H_ */
