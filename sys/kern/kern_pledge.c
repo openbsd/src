@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.134 2015/12/04 16:56:35 deraadt Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.135 2015/12/05 19:21:49 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -1280,6 +1280,7 @@ pledge_ioctl(struct proc *p, long com, struct file *fp)
 		case SIOCGIFNETMASK_IN6:
 		case SIOCGNBRINFO_IN6:
 		case SIOCGIFINFO_IN6:
+		case SIOCGIFMEDIA:
 			if (fp->f_type == DTYPE_SOCKET)
 				return (0);
 			break;
