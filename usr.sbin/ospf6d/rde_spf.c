@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_spf.c,v 1.24 2012/09/18 18:58:57 bluhm Exp $ */
+/*	$OpenBSD: rde_spf.c,v 1.25 2015/12/05 06:45:19 mmcc Exp $ */
 
 /*
  * Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -22,7 +22,7 @@
 #include <arpa/inet.h>
 #include <err.h>
 #include <stdlib.h>
-#include <strings.h>
+#include <string.h>
 
 #include "ospf6d.h"
 #include "ospf6.h"
