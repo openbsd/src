@@ -1,4 +1,4 @@
-/*	$OpenBSD: echo.c,v 1.64 2015/11/11 08:52:12 lum Exp $	*/
+/*	$OpenBSD: echo.c,v 1.65 2015/12/05 02:14:02 jsg Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -148,11 +148,11 @@ eyesno(const char *sp)
 				maclcur->l_fp = lp->l_fp;
 				free(lp);
 			}
-			if (strncasecmp(rep, "yes", sizeof(rep)) == 0) {
+			if (strcasecmp(rep, "yes") == 0) {
 				ewprintf("");
 				return (TRUE);
 			}
-			if (strncasecmp(rep, "no", sizeof(rep)) == 0) {
+			if (strcasecmp(rep, "no") == 0) {
 				ewprintf("");
 				return (FALSE);
 			}
