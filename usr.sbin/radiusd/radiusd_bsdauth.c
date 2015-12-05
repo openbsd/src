@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd_bsdauth.c,v 1.6 2015/10/19 22:07:37 yasuoka Exp $	*/
+/*	$OpenBSD: radiusd_bsdauth.c,v 1.7 2015/12/05 13:22:32 claudio Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -24,6 +24,7 @@
 
 #include <bsd_auth.h>
 #include <err.h>
+#include <errno.h>
 #include <grp.h>
 #include <imsg.h>
 #include <login_cap.h>
@@ -99,7 +100,7 @@ main(int argc, char *argv[])
 		err(EXIT_FAILURE, "pledge");
 
 	for (;;) {
-		if ((n = imsg_read(&ibuf)) <= 0)
+		if ((n = imsg_read(&ibuf)) <= 0 && errno != EAGAIN)
 			break;
 		for (;;) {
 			if ((n = imsg_get(&ibuf, &imsg)) == -1)
