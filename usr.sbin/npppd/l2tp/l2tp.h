@@ -1,4 +1,4 @@
-/*	$OpenBSD: l2tp.h,v 1.11 2015/06/24 05:20:16 yasuoka Exp $	*/
+/*	$OpenBSD: l2tp.h,v 1.12 2015/12/05 16:10:31 yasuoka Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -30,7 +30,7 @@
 /*@file
  * header file for the L2TP module
  */
-/* $Id: l2tp.h,v 1.11 2015/06/24 05:20:16 yasuoka Exp $ */
+/* $Id: l2tp.h,v 1.12 2015/12/05 16:10:31 yasuoka Exp $ */
 
 /************************************************************************
  * Protocol Constants
@@ -420,9 +420,9 @@ typedef struct _l2tp_call {
 	/** bound {@link ::_npppd_ppp ppp} */
 	void		*ppp;
 	/** session ID */
-	int		session_id;
+	uint16_t	session_id;
 	/** peer's session ID */
-	int		peer_session_id;
+	uint16_t	peer_session_id;
 	/** next sequence number  */
 	uint16_t	snd_nxt;
 	/** receiving sequence number */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pppoe_session.c,v 1.10 2015/09/13 08:22:10 mpi Exp $ */
+/*	$OpenBSD: pppoe_session.c,v 1.11 2015/12/05 16:10:31 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -28,7 +28,7 @@
 
 /**@file
  * Session management of PPPoE protocol
- * $Id: pppoe_session.c,v 1.10 2015/09/13 08:22:10 mpi Exp $
+ * $Id: pppoe_session.c,v 1.11 2015/12/05 16:10:31 yasuoka Exp $
  */
 
 #include <sys/types.h>
@@ -493,6 +493,7 @@ pppoe_session_bind_ppp(pppoe_session *_this)
 	_this->ppp = ppp;
 
 	ppp->tunnel_type = NPPPD_TUNNEL_PPPOE;
+	ppp->tunnel_session_id = _this->session_id;
 	ppp->phy_context = _this;
 	ppp->send_packet = pppoe_session_ppp_output;
 	ppp->phy_close = pppoe_session_close_by_ppp;

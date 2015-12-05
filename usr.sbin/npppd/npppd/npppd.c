@@ -1,4 +1,4 @@
-/*	$OpenBSD: npppd.c,v 1.42 2015/11/09 01:14:22 yasuoka Exp $ */
+/*	$OpenBSD: npppd.c,v 1.43 2015/12/05 16:10:31 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2005-2008,2009 Internet Initiative Japan Inc.
@@ -29,7 +29,7 @@
  * Next pppd(nppd). This file provides a npppd daemon process and operations
  * for npppd instance.
  * @author	Yasuoka Masahiko
- * $Id: npppd.c,v 1.42 2015/11/09 01:14:22 yasuoka Exp $
+ * $Id: npppd.c,v 1.43 2015/12/05 16:10:31 yasuoka Exp $
  */
 #include "version.h"
 #include <sys/param.h>	/* ALIGNED_POINTER */
@@ -874,7 +874,7 @@ npppd_network_output(npppd *_this, npppd_ppp *ppp, int proto, u_char *pktp,
 		}
 	}
 #endif
-	npppd_iface_write(ppp_iface(ppp), proto, pktp, lpktp);
+	npppd_iface_write(ppp_iface(ppp), ppp, proto, pktp, lpktp);
 }
 
 #ifdef USE_NPPPD_PIPEX

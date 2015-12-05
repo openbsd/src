@@ -1,4 +1,4 @@
-/*	$OpenBSD: npppd.h,v 1.16 2015/01/19 01:48:59 deraadt Exp $ */
+/*	$OpenBSD: npppd.h,v 1.17 2015/12/05 16:10:31 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -56,6 +56,11 @@
 #define NPPPD_TUNNEL_PPTP		2	/** PPTP Tunnel Type */
 #define NPPPD_TUNNEL_PPPOE		3	/** PPPoE Tunnel Type */
 #define NPPPD_TUNNEL_SSTP		4	/** SSTP Tunnel Type */
+
+#define npppd_pipex_proto(_tunnel)				\
+    (((_tunnel) == NPPPD_TUNNEL_L2TP)? PIPEX_PROTO_L2TP :	\
+    ((_tunnel) == NPPPD_TUNNEL_PPTP)? PIPEX_PROTO_PPTP :	\
+    ((_tunnel) == NPPPD_TUNNEL_PPPOE)? PIPEX_PROTO_PPPOE : -1)
 
 #define	NPPPD_AUTH_METHODS_PAP		0x0001
 #define	NPPPD_AUTH_METHODS_CHAP		0x0002

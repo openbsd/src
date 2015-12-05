@@ -1,4 +1,4 @@
-/*	$OpenBSD: npppd_iface.h,v 1.6 2012/09/18 13:14:08 yasuoka Exp $ */
+/*	$OpenBSD: npppd_iface.h,v 1.7 2015/12/05 16:10:31 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -69,7 +69,7 @@ int   npppd_iface_reinit (npppd_iface *, struct iface *);
 int   npppd_iface_start (npppd_iface *);
 void  npppd_iface_stop (npppd_iface *);
 void  npppd_iface_fini (npppd_iface *);
-void  npppd_iface_write (npppd_iface *, int proto, u_char *, int);
+void  npppd_iface_write (npppd_iface *, npppd_ppp *, int proto, u_char *, int);
 
 #ifdef __cplusplus
 }

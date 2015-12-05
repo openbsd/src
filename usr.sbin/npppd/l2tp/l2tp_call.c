@@ -1,4 +1,4 @@
-/*	$OpenBSD: l2tp_call.c,v 1.18 2015/07/20 19:03:54 yasuoka Exp $	*/
+/*	$OpenBSD: l2tp_call.c,v 1.19 2015/12/05 16:10:31 yasuoka Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: l2tp_call.c,v 1.18 2015/07/20 19:03:54 yasuoka Exp $ */
+/* $Id: l2tp_call.c,v 1.19 2015/12/05 16:10:31 yasuoka Exp $ */
 /**@file L2TP LNS call */
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -1008,6 +1008,7 @@ l2tp_call_bind_ppp(l2tp_call *_this, dialin_proxy_info *dpi)
 	_this->ppp = ppp;
 
 	ppp->tunnel_type = NPPPD_TUNNEL_L2TP;
+	ppp->tunnel_session_id = _this->session_id;
 	ppp->phy_context = _this;
 	ppp->send_packet = l2tp_call_ppp_output;
 	ppp->phy_close = l2tp_call_closed_by_ppp;

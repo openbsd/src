@@ -1,4 +1,4 @@
-/*	$OpenBSD: npppd_iface.c,v 1.12 2015/10/11 07:32:06 guenther Exp $ */
+/*	$OpenBSD: npppd_iface.c,v 1.13 2015/12/05 16:10:31 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: npppd_iface.c,v 1.12 2015/10/11 07:32:06 guenther Exp $ */
+/* $Id: npppd_iface.c,v 1.13 2015/12/05 16:10:31 yasuoka Exp $ */
 /**@file
  * The interface of npppd and kernel.
  * This is an implementation to use tun(4) or pppx(4).
@@ -41,6 +41,8 @@
 #include <net/if_dl.h>
 #include <net/if_tun.h>
 #include <net/if_types.h>
+#include <net/if.h>
+#include <net/pipex.h>
 
 #include <fcntl.h>
 
@@ -86,11 +88,13 @@
 #define	NPPPD_IFACE_DBG(x)
 #endif
 
+static void  npppd_iface_network_input_ipv4(npppd_iface *, struct pppx_hdr *,
+		u_char *, int);
 static void  npppd_iface_network_input(npppd_iface *, u_char *, int);
 static int   npppd_iface_setup_ip(npppd_iface *);
 static void  npppd_iface_io_event_handler (int, short, void *);
 static int   npppd_iface_log (npppd_iface *, int, const char *, ...)
-	__printflike(3,4);
+		__printflike(3,4);
 
 #ifdef USE_NPPPD_PIPEX
 static int npppd_iface_pipex_enable(npppd_iface *_this);
@@ -481,7 +485,8 @@ npppd_iface_network_input_delegate(struct radish *radish, void *args0)
 }
 
 static void
-npppd_iface_network_input_ipv4(npppd_iface *_this, u_char *pktp, int lpktp)
+npppd_iface_network_input_ipv4(npppd_iface *_this, struct pppx_hdr *pppx,
+    u_char *pktp, int lpktp)
 {
 	struct ip *iphdr;
 	npppd *_npppd;
@@ -498,17 +503,23 @@ npppd_iface_network_input_ipv4(npppd_iface *_this, u_char *pktp, int lpktp)
 		npppd_iface_log(_this, LOG_ERR, "Received short packet.");
 		return;
 	}
-	if (IN_MULTICAST(ntohl(iphdr->ip_dst.s_addr))) {
-		NPPPD_IFACE_ASSERT(((npppd *)(_this->npppd))->rd != NULL);
-		input_arg._this = _this;
-		input_arg.pktp = pktp;
-		input_arg.lpktp = lpktp;
-		/* delegate */
-		rd_walktree(((npppd *)(_this->npppd))->rd,
-		    npppd_iface_network_input_delegate, &input_arg);
-		return;
+	if (_this->using_pppx)
+		ppp = npppd_get_ppp_by_id(_npppd, pppx->pppx_id);
+	else {
+		if (IN_MULTICAST(ntohl(iphdr->ip_dst.s_addr))) {
+			NPPPD_IFACE_ASSERT(
+			    ((npppd *)(_this->npppd))->rd != NULL);
+			input_arg._this = _this;
+			input_arg.pktp = pktp;
+			input_arg.lpktp = lpktp;
+			/* delegate */
+			rd_walktree(((npppd *)(_this->npppd))->rd,
+			    npppd_iface_network_input_delegate, &input_arg);
+			return;
+		}
+		ppp = npppd_get_ppp_by_ip(_npppd, iphdr->ip_dst);
 	}
-	ppp = npppd_get_ppp_by_ip(_npppd, iphdr->ip_dst);
+
 	if (ppp == NULL) {
 #ifdef NPPPD_DEBUG
 		log_printf(LOG_INFO, "%s received a packet to unknown "
@@ -547,6 +558,18 @@ static void
 npppd_iface_network_input(npppd_iface *_this, u_char *pktp, int lpktp)
 {
 	uint32_t af;
+	struct pppx_hdr *pppx = NULL;
+
+	if (_this->using_pppx) {
+		if (lpktp < sizeof(struct pppx_hdr)) {
+			npppd_iface_log(_this, LOG_ERR,
+			    "Received short packet.");
+			return;
+		}
+		pppx = (struct pppx_hdr *)pktp;
+		pktp += sizeof(struct pppx_hdr);
+		lpktp -= sizeof(struct pppx_hdr);
+	}
 
 	if (lpktp < sizeof(uint32_t)) {
 		npppd_iface_log(_this, LOG_ERR, "Received short packet.");
@@ -557,7 +580,7 @@ npppd_iface_network_input(npppd_iface *_this, u_char *pktp, int lpktp)
 
 	switch (af) {
 	case AF_INET:
-		npppd_iface_network_input_ipv4(_this, pktp, lpktp);
+		npppd_iface_network_input_ipv4(_this, pppx, pktp, lpktp);
 		break;
 
 	default:
@@ -569,25 +592,33 @@ npppd_iface_network_input(npppd_iface *_this, u_char *pktp, int lpktp)
 
 /** write to tunnel device */
 void
-npppd_iface_write(npppd_iface *_this, int proto, u_char *pktp, int lpktp)
+npppd_iface_write(npppd_iface *_this, npppd_ppp *ppp, int proto, u_char *pktp,
+    int lpktp)
 {
-	int err;
+	int niov = 0, tlen;
 	uint32_t th;
-	struct iovec iov[2];
-
+	struct iovec iov[3];
+	struct pppx_hdr pppx;
 	NPPPD_IFACE_ASSERT(_this != NULL);
 	NPPPD_IFACE_ASSERT(_this->devf >= 0);
 
+	tlen = 0;
 	th = htonl(proto);
+	if (_this->using_pppx) {
+		pppx.pppx_proto = npppd_pipex_proto(ppp->tunnel_type);
+		pppx.pppx_id = ppp->tunnel_session_id;
+		iov[niov].iov_base = &pppx;
+		iov[niov++].iov_len = sizeof(pppx);
+		tlen += sizeof(pppx);
+	}
+	iov[niov].iov_base = &th;
+	iov[niov++].iov_len = sizeof(th);
+	tlen += sizeof(th);
+	iov[niov].iov_base = pktp;
+	iov[niov++].iov_len = lpktp;
+	tlen += lpktp;
 
-	iov[0].iov_base = &th;
-	iov[0].iov_len = sizeof(th);
-	iov[1].iov_base = pktp;
-	iov[1].iov_len = lpktp;
-
-	err = writev(_this->devf, iov, countof(iov));
-
-	if (err != lpktp + sizeof(th))
+	if (writev(_this->devf, iov, niov) != tlen)
 		npppd_iface_log(_this, LOG_ERR, "write failed: %m");
 }
 
