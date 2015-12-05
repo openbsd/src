@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.c,v 1.93 2015/12/03 11:41:06 claudio Exp $ */
+/*	$OpenBSD: ospfe.c,v 1.94 2015/12/05 12:20:13 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -87,6 +87,9 @@ ospfe(struct ospfd_conf *xconf, int pipe_parent2ospfe[2], int pipe_ospfe2rde[2],
 		return (pid);
 	}
 
+	/* cleanup a bit */
+	kif_clear();
+
 	/* create ospfd control socket outside chroot */
 	if (control_init(xconf->csock) == -1)
 		fatalx("control socket setup failed");
@@ -125,6 +128,9 @@ ospfe(struct ospfd_conf *xconf, int pipe_parent2ospfe[2], int pipe_ospfe2rde[2],
 	    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||
 	    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
 		fatal("can't drop privileges");
+
+	if (pledge("stdio inet mcast", NULL) == -1)
+		fatal("pledge");
 
 	event_init();
 	nbr_init(NBR_HASHSIZE);
@@ -224,7 +230,6 @@ ospfe_shutdown(void)
 	}
 
 	nbr_del(nbr_find_peerid(NBR_IDSELF));
-	kr_shutdown();
 	close(oeconf->ospf_socket);
 
 	/* clean up */

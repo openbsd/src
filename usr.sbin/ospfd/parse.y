@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.79 2014/11/20 05:51:20 jsg Exp $ */
+/*	$OpenBSD: parse.y,v 1.80 2015/12/05 12:20:13 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -107,6 +107,7 @@ struct config_defaults	*defs;
 
 struct area	*conf_get_area(struct in_addr);
 struct iface	*conf_get_if(struct kif *, struct kif_addr *);
+int		 conf_check_rdomain(unsigned int);
 
 typedef struct {
 	union {
@@ -1133,6 +1134,9 @@ parse_config(char *filename, int opts)
 	/* free global config defaults */
 	md_list_clr(&globaldefs.md_list);
 
+	/* check that all interfaces belong to the configured rdomain */
+	errors += conf_check_rdomain(conf->rdomain);
+
 	if (errors) {
 		clear_config(conf);
 		return (NULL);
@@ -1253,6 +1257,25 @@ conf_get_if(struct kif *kif, struct kif_addr *ka)
 	i->auth_keyid = 1;
 
 	return (i);
+}
+
+int
+conf_check_rdomain(unsigned int rdomain)
+{
+	struct area	*a;
+	struct iface	*i;
+	int		 errs = 0;
+
+	LIST_FOREACH(a, &conf->area_list, entry)
+		LIST_FOREACH(i, &a->iface_list, entry)
+			if (i->rdomain != rdomain) {
+				logit(LOG_CRIT,
+				    "interface %s not in rdomain %u",
+				    i->name, rdomain);
+				errs++;
+			}
+
+	return (errs);
 }
 
 void

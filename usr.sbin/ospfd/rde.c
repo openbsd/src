@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.99 2015/12/03 11:41:06 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.100 2015/12/05 12:20:13 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -111,6 +111,9 @@ rde(struct ospfd_conf *xconf, int pipe_parent2rde[2], int pipe_ospfe2rde[2],
 		return (pid);
 	}
 
+	/* cleanup a bit */
+	kif_clear();
+
 	rdeconf = xconf;
 
 	if ((pw = getpwnam(OSPFD_USER)) == NULL)
@@ -128,6 +131,9 @@ rde(struct ospfd_conf *xconf, int pipe_parent2rde[2], int pipe_ospfe2rde[2],
 	    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||
 	    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
 		fatal("can't drop privileges");
+
+	if (pledge("stdio", NULL) == -1)
+		fatal("pledge");
 
 	event_init();
 	rde_nbr_init(NBR_HASHSIZE);
@@ -211,7 +217,6 @@ rde_shutdown(void)
 	}
 	rde_asext_free();
 	rde_nbr_free();
-	kr_shutdown();
 
 	msgbuf_clear(&iev_ospfe->ibuf.w);
 	free(iev_ospfe);

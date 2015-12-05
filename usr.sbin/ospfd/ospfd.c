@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.c,v 1.87 2015/12/03 11:41:06 claudio Exp $ */
+/*	$OpenBSD: ospfd.c,v 1.88 2015/12/05 12:20:13 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -192,13 +192,12 @@ main(int argc, char *argv[])
 		opts |= OSPFD_OPT_STUB_ROUTER;
 	}
 
-
 	/* fetch interfaces early */
 	kif_init();
 
 	/* parse config file */
 	if ((ospfd_conf = parse_config(conffile, opts)) == NULL) {
-		kr_shutdown();
+		kif_clear();
 		exit(1);
 	}
 	ospfd_conf->csock = sockname;
@@ -208,7 +207,7 @@ main(int argc, char *argv[])
 			print_config(ospfd_conf);
 		else
 			fprintf(stderr, "configuration OK\n");
-		kr_shutdown();
+		kif_clear();
 		exit(0);
 	}
 

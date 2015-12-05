@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.105 2015/10/26 11:46:25 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.106 2015/12/05 12:20:13 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -85,7 +85,6 @@ void			 kroute_clear(void);
 struct kif_node		*kif_find(u_short);
 struct kif_node		*kif_insert(u_short);
 int			 kif_remove(struct kif_node *);
-void			 kif_clear(void);
 struct kif		*kif_update(u_short, int, struct if_data *,
 			    struct sockaddr_dl *);
 int			 kif_validate(u_short);
@@ -110,22 +109,17 @@ int		rtmsg_process(char *, size_t);
 void		kr_fib_reload_timer(int, short, void *);
 void		kr_fib_reload_arm_timer(int);
 
-RB_HEAD(kroute_tree, kroute_node)	krt;
+RB_HEAD(kroute_tree, kroute_node)	krt = RB_INITIALIZER(&krt);
 RB_PROTOTYPE(kroute_tree, kroute_node, entry, kroute_compare)
 RB_GENERATE(kroute_tree, kroute_node, entry, kroute_compare)
 
-RB_HEAD(kif_tree, kif_node)		kit;
+RB_HEAD(kif_tree, kif_node)		kit = RB_INITIALIZER(&kit);
 RB_PROTOTYPE(kif_tree, kif_node, entry, kif_compare)
 RB_GENERATE(kif_tree, kif_node, entry, kif_compare)
 
 int
 kif_init(void)
 {
-	RB_INIT(&kit);
-	/* init also krt tree so that we can call kr_shutdown() */
-	RB_INIT(&krt);
-	kr_state.fib_sync = 0;	/* decoupled */
-
 	if (fetchifs(0) == -1)
 		return (-1);
 
@@ -886,6 +880,7 @@ kif_update(u_short ifindex, int flags, struct if_data *ifd,
 	kif->k.if_type = ifd->ifi_type;
 	kif->k.baudrate = ifd->ifi_baudrate;
 	kif->k.mtu = ifd->ifi_mtu;
+	kif->k.rdomain = ifd->ifi_rdomain;
 
 	if (sdl && sdl->sdl_family == AF_LINK) {
 		if (sdl->sdl_nlen >= sizeof(kif->k.ifname))
