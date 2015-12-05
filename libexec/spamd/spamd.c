@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd.c,v 1.133 2015/12/02 21:10:17 henning Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.134 2015/12/05 20:32:53 henning Exp $	*/
 
 /*
  * Copyright (c) 2015 Henning Brauer <henning@openbsd.org>
@@ -84,7 +84,14 @@ struct con {
 	int stutter;
 	int badcmd;
 	int sr;
+	int tlsaction;
 } *con;
+
+#define	SPAMD_TLS_ACT_NONE		0
+#define	SPAMD_TLS_ACT_READ_POLLIN	1
+#define	SPAMD_TLS_ACT_READ_POLLOUT	2
+#define	SPAMD_TLS_ACT_WRITE_POLLIN	3
+#define	SPAMD_TLS_ACT_WRITE_POLLOUT	4
 
 void     usage(void);
 char    *grow_obuf(struct con *, int);
@@ -1067,9 +1074,16 @@ handler(struct con *cp)
 	int end = 0;
 	ssize_t n;
 
-	if (cp->r) {
+	if (cp->r || cp->tlsaction != SPAMD_TLS_ACT_NONE) {
 		if (cp->cctx) {
+			cp->tlsaction = SPAMD_TLS_ACT_NONE;
 			n = tls_read(cp->cctx, cp->ip, cp->il);
+			if (n == TLS_WANT_POLLIN)
+				cp->tlsaction = SPAMD_TLS_ACT_READ_POLLIN;
+			if (n == TLS_WANT_POLLOUT)
+				cp->tlsaction = SPAMD_TLS_ACT_READ_POLLOUT;
+			if (cp->tlsaction != SPAMD_TLS_ACT_NONE)
+				return;
 		} else
 			n = read(cp->pfd->fd, cp->ip, cp->il);
 
@@ -1078,10 +1092,6 @@ handler(struct con *cp)
 		else if (n == -1) {
 			if (debug > 0)
 				warn("read");
-			closecon(cp);
-		} if (n < 0) {
-			if (debug > 0)
-				warn("tls_read unexpected POLLIN/POLLOUT");
 			closecon(cp);
 		} else {
 			cp->ip[n] = '\0';
@@ -1112,11 +1122,20 @@ handlew(struct con *cp, int one)
 	    (t - cp->s) > grey_stutter)
 		cp->stutter=0;
 
-	if (cp->w) {
+	if (cp->w || cp->tlsaction != SPAMD_TLS_ACT_NONE) {
 		if (*cp->op == '\n' && !cp->sr) {
 			/* insert \r before \n */
 			if (cp->cctx) {
+				cp->tlsaction = SPAMD_TLS_ACT_NONE;
 				n = tls_write(cp->cctx, "\r", 1);
+				if (n == TLS_WANT_POLLIN)
+					cp->tlsaction =
+					    SPAMD_TLS_ACT_WRITE_POLLIN;
+				if (n == TLS_WANT_POLLOUT)
+					cp->tlsaction =
+					    SPAMD_TLS_ACT_WRITE_POLLOUT;
+				if (cp->tlsaction != SPAMD_TLS_ACT_NONE)
+					return;
 			} else
 				n = write(cp->pfd->fd, "\r", 1);
 
@@ -1128,12 +1147,6 @@ handlew(struct con *cp, int one)
 					warn("write");
 				closecon(cp);
 				goto handled;
-			} else if (n < 0) {
-				if (debug > 0)
-					warn("tls_write unexpected "
-					    "POLLIN/POLLOUT");
-				closecon(cp);
-				goto handled;
 			}
 		}
 		if (*cp->op == '\r')
@@ -1141,7 +1154,14 @@ handlew(struct con *cp, int one)
 		else
 			cp->sr = 0;
 		if (cp->cctx) {
+			cp->tlsaction = SPAMD_TLS_ACT_NONE;
 			n = tls_write(cp->cctx, cp->op, cp->ol);
+			if (n == TLS_WANT_POLLIN)
+				cp->tlsaction = SPAMD_TLS_ACT_WRITE_POLLIN;
+			if (n == TLS_WANT_POLLOUT)
+				cp->tlsaction = SPAMD_TLS_ACT_WRITE_POLLOUT;
+			if (cp->tlsaction != SPAMD_TLS_ACT_NONE)
+				return;
 		} else
 			n = write(cp->pfd->fd, cp->op,
 			   (one && cp->stutter) ? 1 : cp->ol);
@@ -1151,10 +1171,6 @@ handlew(struct con *cp, int one)
 		else if (n == -1) {
 			if (debug > 0 && errno != EPIPE)
 				warn("write");
-			closecon(cp);
-		} else if (n < 0) {
-			if (debug > 0)
-				warn("tls_write unexpected POLLIN/POLLOUT");
 			closecon(cp);
 		} else {
 			cp->op += n;
@@ -1550,6 +1566,12 @@ jail:
 					con[i].pfd->events |= POLLOUT;
 				writers = 1;
 			}
+			if (con[i].tlsaction == SPAMD_TLS_ACT_READ_POLLIN ||
+			    con[i].tlsaction == SPAMD_TLS_ACT_WRITE_POLLIN)
+				con[i].pfd->events = POLLIN;
+			if (con[i].tlsaction == SPAMD_TLS_ACT_READ_POLLOUT ||
+			    con[i].tlsaction == SPAMD_TLS_ACT_WRITE_POLLOUT)
+				con[i].pfd->events = POLLOUT;
 			if (i + 1 > numcon)
 				numcon = i + 1;
 		}
@@ -1591,10 +1613,20 @@ jail:
 				closecon(&con[i]);
 				continue;
 			}
-			if (pfd[PFD_FIRSTCON + i].revents & POLLIN)
-				handler(&con[i]);
-			if (pfd[PFD_FIRSTCON + i].revents & POLLOUT)
-				handlew(&con[i], clients + 5 < maxcon);
+			if (pfd[PFD_FIRSTCON + i].revents & POLLIN) {
+				if (con[i].tlsaction ==
+				    SPAMD_TLS_ACT_WRITE_POLLIN)
+					handlew(&con[i], clients + 5 < maxcon);
+				else
+					handler(&con[i]);
+			}
+			if (pfd[PFD_FIRSTCON + i].revents & POLLOUT) {
+				if (con[i].tlsaction ==
+				    SPAMD_TLS_ACT_READ_POLLOUT)
+					handler(&con[i]);
+				else
+					handlew(&con[i], clients + 5 < maxcon);
+			}
 		}
 		if (pfd[PFD_SMTPLISTEN].revents & (POLLIN|POLLHUP)) {
 			socklen_t sinlen;
