@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-l2tp.c,v 1.8 2015/01/16 06:40:21 deraadt Exp $	*/
+/*	$OpenBSD: print-l2tp.c,v 1.9 2015/12/05 05:56:26 mmcc Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994, 1995, 1996, 1997
@@ -25,7 +25,7 @@
 
 #include <sys/types.h>
 #include <stdio.h>
-#include <strings.h>
+#include <string.h>
 
 #include "l2tp.h"
 #include "interface.h"
