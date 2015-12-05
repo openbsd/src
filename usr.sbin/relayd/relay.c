@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.202 2015/12/04 15:28:55 benno Exp $	*/
+/*	$OpenBSD: relay.c,v 1.203 2015/12/05 20:58:32 benno Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -1214,7 +1214,7 @@ int
 relay_from_table(struct rsession *con)
 {
 	struct relay		*rlay = con->se_relay;
-	struct host		*host;
+	struct host		*host = NULL;
 	struct relay_table	*rlt = NULL;
 	struct table		*table = NULL;
 	int			 idx = -1;
