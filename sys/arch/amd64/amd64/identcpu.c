@@ -1,4 +1,4 @@
-/*	$OpenBSD: identcpu.c,v 1.67 2015/11/23 22:57:12 deraadt Exp $	*/
+/*	$OpenBSD: identcpu.c,v 1.68 2015/12/05 10:27:48 kettenis Exp $	*/
 /*	$NetBSD: identcpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*
@@ -545,12 +545,15 @@ identifycpu(struct cpu_info *ci)
 				printf(",%s", cpu_seff0_ecxfeatures[i].str);
 	}
 
-	if (!strcmp(cpu_vendor, "GenuineIntel") && cpuid_level >= 0x06 ) {
+	if (!strcmp(cpu_vendor, "GenuineIntel") && cpuid_level >= 0x06) {
 		CPUID(0x06, ci->ci_feature_tpmflags, dummy, dummy, dummy);
 		for (i = 0; i < nitems(cpu_tpm_eaxfeatures); i++)
 			if (ci->ci_feature_tpmflags &
 			    cpu_tpm_eaxfeatures[i].bit)
 				printf(",%s", cpu_tpm_eaxfeatures[i].str);
+	} else if (!strcmp(cpu_vendor, "AuthenticAMD")) {
+		if (ci->ci_family >= 0x12)
+			ci->ci_feature_tpmflags |= TPM_ARAT;
 	}
 
 	printf("\n");
