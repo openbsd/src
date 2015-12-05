@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_time.c,v 1.95 2015/11/01 19:03:33 semarie Exp $	*/
+/*	$OpenBSD: kern_time.c,v 1.96 2015/12/05 10:11:53 tedu Exp $	*/
 /*	$NetBSD: kern_time.c,v 1.20 1996/02/18 11:57:06 fvdl Exp $	*/
 
 /*
@@ -149,7 +149,6 @@ clock_gettime(struct proc *p, clockid_t clock_id, struct timespec *tp)
 	return (0);
 }
 
-/* ARGSUSED */
 int
 sys_clock_gettime(struct proc *p, void *v, register_t *retval)
 {
@@ -175,7 +174,6 @@ sys_clock_gettime(struct proc *p, void *v, register_t *retval)
 	return (error);
 }
 
-/* ARGSUSED */
 int
 sys_clock_settime(struct proc *p, void *v, register_t *retval)
 {
@@ -255,7 +253,6 @@ sys_clock_getres(struct proc *p, void *v, register_t *retval)
 	return error;
 }
 
-/* ARGSUSED */
 int
 sys_nanosleep(struct proc *p, void *v, register_t *retval)
 {
@@ -321,7 +318,6 @@ sys_nanosleep(struct proc *p, void *v, register_t *retval)
 	return error;
 }
 
-/* ARGSUSED */
 int
 sys_gettimeofday(struct proc *p, void *v, register_t *retval)
 {
@@ -355,7 +351,6 @@ sys_gettimeofday(struct proc *p, void *v, register_t *retval)
 	return (error);
 }
 
-/* ARGSUSED */
 int
 sys_settimeofday(struct proc *p, void *v, register_t *retval)
 {
@@ -391,7 +386,6 @@ sys_settimeofday(struct proc *p, void *v, register_t *retval)
 	return (0);
 }
 
-/* ARGSUSED */
 int
 sys_adjfreq(struct proc *p, void *v, register_t *retval)
 {
@@ -420,7 +414,6 @@ sys_adjfreq(struct proc *p, void *v, register_t *retval)
 	return (0);
 }
 
-/* ARGSUSED */
 int
 sys_adjtime(struct proc *p, void *v, register_t *retval)
 {
@@ -486,7 +479,6 @@ struct mutex itimer_mtx = MUTEX_INITIALIZER(IPL_CLOCK);
  * real time timers .it_interval.  Rather, we compute the next time in
  * absolute time the timer should go off.
  */
-/* ARGSUSED */
 int
 sys_getitimer(struct proc *p, void *v, register_t *retval)
 {
@@ -531,7 +523,6 @@ sys_getitimer(struct proc *p, void *v, register_t *retval)
 	return (copyout(&aitv, SCARG(uap, itv), sizeof (struct itimerval)));
 }
 
-/* ARGSUSED */
 int
 sys_setitimer(struct proc *p, void *v, register_t *retval)
 {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_log.c,v 1.33 2015/11/24 23:59:22 deraadt Exp $	*/
+/*	$OpenBSD: subr_log.c,v 1.34 2015/12/05 10:11:53 tedu Exp $	*/
 /*	$NetBSD: subr_log.c,v 1.11 1996/03/30 22:24:44 christos Exp $	*/
 
 /*
@@ -153,7 +153,6 @@ msgbuf_putchar(struct msgbuf *mbp, const char c)
 	}
 }
 
-/*ARGSUSED*/
 int
 logopen(dev_t dev, int flags, int mode, struct proc *p)
 {
@@ -163,7 +162,6 @@ logopen(dev_t dev, int flags, int mode, struct proc *p)
 	return (0);
 }
 
-/*ARGSUSED*/
 int
 logclose(dev_t dev, int flag, int mode, struct proc *p)
 {
@@ -176,7 +174,6 @@ logclose(dev_t dev, int flag, int mode, struct proc *p)
 	return (0);
 }
 
-/*ARGSUSED*/
 int
 logread(dev_t dev, struct uio *uio, int flag)
 {
@@ -219,7 +216,6 @@ logread(dev_t dev, struct uio *uio, int flag)
 	return (error);
 }
 
-/*ARGSUSED*/
 int
 logpoll(dev_t dev, int events, struct proc *p)
 {
@@ -294,7 +290,6 @@ logwakeup(void)
 	}
 }
 
-/*ARGSUSED*/
 int
 logioctl(dev_t dev, u_long com, caddr_t data, int flag, struct proc *p)
 {

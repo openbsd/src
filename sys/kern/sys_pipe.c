@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_pipe.c,v 1.69 2015/02/10 21:56:10 miod Exp $	*/
+/*	$OpenBSD: sys_pipe.c,v 1.70 2015/12/05 10:11:53 tedu Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -292,7 +292,6 @@ pipeselwakeup(struct pipe *cpipe)
 		gsignal(cpipe->pipe_pgid, SIGIO);
 }
 
-/* ARGSUSED */
 int
 pipe_read(struct file *fp, off_t *poff, struct uio *uio, struct ucred *cred)
 {
@@ -729,7 +728,6 @@ pipe_stat(struct file *fp, struct stat *ub, struct proc *p)
 	return (0);
 }
 
-/* ARGSUSED */
 int
 pipe_close(struct file *fp, struct proc *p)
 {
@@ -839,7 +837,6 @@ filt_pipedetach(struct knote *kn)
 	}
 }
 
-/*ARGSUSED*/
 int
 filt_piperead(struct knote *kn, long hint)
 {
@@ -856,7 +853,6 @@ filt_piperead(struct knote *kn, long hint)
 	return (kn->kn_data > 0);
 }
 
-/*ARGSUSED*/
 int
 filt_pipewrite(struct knote *kn, long hint)
 {

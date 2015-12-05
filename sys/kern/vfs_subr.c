@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.237 2015/11/16 18:23:50 deraadt Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.238 2015/12/05 10:11:53 tedu Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -1419,7 +1419,6 @@ out:
 	return (error);
 }
 
-/* ARGSUSED */
 int
 vfs_free_netcred(struct radix_node *rn, void *w, u_int id)
 {

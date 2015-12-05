@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.246 2015/12/04 07:33:05 deraadt Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.247 2015/12/05 10:11:53 tedu Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -97,7 +97,6 @@ int dofutimens(struct proc *, int, struct timespec [2]);
 /*
  * Mount a file system.
  */
-/* ARGSUSED */
 int
 sys_mount(struct proc *p, void *v, register_t *retval)
 {
@@ -364,7 +363,6 @@ checkdirs(struct vnode *olddp)
  * Note: unmount takes a path to the vnode mounted on as argument,
  * not special file (as before).
  */
-/* ARGSUSED */
 int
 sys_unmount(struct proc *p, void *v, register_t *retval)
 {
@@ -471,7 +469,6 @@ int syncprt = 0;
 struct ctldebug debug0 = { "syncprt", &syncprt };
 #endif
 
-/* ARGSUSED */
 int
 sys_sync(struct proc *p, void *v, register_t *retval)
 {
@@ -498,7 +495,6 @@ sys_sync(struct proc *p, void *v, register_t *retval)
 /*
  * Change filesystem quotas.
  */
-/* ARGSUSED */
 int
 sys_quotactl(struct proc *p, void *v, register_t *retval)
 {
@@ -552,7 +548,6 @@ copyout_statfs(struct statfs *sp, void *uaddr, struct proc *p)
 /*
  * Get filesystem statistics.
  */
-/* ARGSUSED */
 int
 sys_statfs(struct proc *p, void *v, register_t *retval)
 {
@@ -582,7 +577,6 @@ sys_statfs(struct proc *p, void *v, register_t *retval)
 /*
  * Get filesystem statistics.
  */
-/* ARGSUSED */
 int
 sys_fstatfs(struct proc *p, void *v, register_t *retval)
 {
@@ -676,7 +670,6 @@ sys_getfsstat(struct proc *p, void *v, register_t *retval)
 /*
  * Change current working directory to a given file descriptor.
  */
-/* ARGSUSED */
 int
 sys_fchdir(struct proc *p, void *v, register_t *retval)
 {
@@ -722,7 +715,6 @@ sys_fchdir(struct proc *p, void *v, register_t *retval)
 /*
  * Change current working directory (``.'').
  */
-/* ARGSUSED */
 int
 sys_chdir(struct proc *p, void *v, register_t *retval)
 {
@@ -748,7 +740,6 @@ sys_chdir(struct proc *p, void *v, register_t *retval)
 /*
  * Change notion of root (``/'') directory.
  */
-/* ARGSUSED */
 int
 sys_chroot(struct proc *p, void *v, register_t *retval)
 {
@@ -1130,7 +1121,6 @@ bad:
 	return (error);
 }
 
-/* ARGSUSED */
 int
 sys_fhstat(struct proc *p, void *v, register_t *retval)
 {
@@ -1165,7 +1155,6 @@ sys_fhstat(struct proc *p, void *v, register_t *retval)
 	return (error);
 }
 
-/* ARGSUSED */
 int
 sys_fhstatfs(struct proc *p, void *v, register_t *retval)
 {
@@ -1204,7 +1193,6 @@ sys_fhstatfs(struct proc *p, void *v, register_t *retval)
 /*
  * Create a special file or named pipe.
  */
-/* ARGSUSED */
 int
 sys_mknod(struct proc *p, void *v, register_t *retval)
 {
@@ -1300,7 +1288,6 @@ domknodat(struct proc *p, int fd, const char *path, mode_t mode, dev_t dev)
 /*
  * Create a named pipe.
  */
-/* ARGSUSED */
 int
 sys_mkfifo(struct proc *p, void *v, register_t *retval)
 {
@@ -1329,7 +1316,6 @@ sys_mkfifoat(struct proc *p, void *v, register_t *retval)
 /*
  * Make a hard file link.
  */
-/* ARGSUSED */
 int
 sys_link(struct proc *p, void *v, register_t *retval)
 {
@@ -1404,7 +1390,6 @@ out:
 /*
  * Make a symbolic link.
  */
-/* ARGSUSED */
 int
 sys_symlink(struct proc *p, void *v, register_t *retval)
 {
@@ -1466,7 +1451,6 @@ out:
 /*
  * Delete a name from the filesystem.
  */
-/* ARGSUSED */
 int
 sys_unlink(struct proc *p, void *v, register_t *retval)
 {
@@ -1700,7 +1684,6 @@ out:
 /*
  * Get file status; this version follows links.
  */
-/* ARGSUSED */
 int
 sys_stat(struct proc *p, void *v, register_t *retval)
 {
@@ -1770,7 +1753,6 @@ dofstatat(struct proc *p, int fd, const char *path, struct stat *buf, int flag)
 /*
  * Get file status; this version does not follow links.
  */
-/* ARGSUSED */
 int
 sys_lstat(struct proc *p, void *v, register_t *retval)
 {
@@ -1786,7 +1768,6 @@ sys_lstat(struct proc *p, void *v, register_t *retval)
 /*
  * Get configurable pathname variables.
  */
-/* ARGSUSED */
 int
 sys_pathconf(struct proc *p, void *v, register_t *retval)
 {
@@ -1810,7 +1791,6 @@ sys_pathconf(struct proc *p, void *v, register_t *retval)
 /*
  * Return target name of a symbolic link.
  */
-/* ARGSUSED */
 int
 sys_readlink(struct proc *p, void *v, register_t *retval)
 {
@@ -1973,7 +1953,6 @@ out:
 /*
  * Change mode of a file given path name.
  */
-/* ARGSUSED */
 int
 sys_chmod(struct proc *p, void *v, register_t *retval)
 {
@@ -2035,7 +2014,6 @@ dofchmodat(struct proc *p, int fd, const char *path, mode_t mode, int flag)
 /*
  * Change mode of a file given a file descriptor.
  */
-/* ARGSUSED */
 int
 sys_fchmod(struct proc *p, void *v, register_t *retval)
 {
@@ -2073,7 +2051,6 @@ sys_fchmod(struct proc *p, void *v, register_t *retval)
 /*
  * Set ownership given a path name.
  */
-/* ARGSUSED */
 int
 sys_chown(struct proc *p, void *v, register_t *retval)
 {
@@ -2151,7 +2128,6 @@ out:
 /*
  * Set ownership given a path name, without following links.
  */
-/* ARGSUSED */
 int
 sys_lchown(struct proc *p, void *v, register_t *retval)
 {
@@ -2203,7 +2179,6 @@ out:
 /*
  * Set ownership given a file descriptor.
  */
-/* ARGSUSED */
 int
 sys_fchown(struct proc *p, void *v, register_t *retval)
 {
@@ -2254,7 +2229,6 @@ out:
 /*
  * Set the access and modification times given a path name.
  */
-/* ARGSUSED */
 int
 sys_utimes(struct proc *p, void *v, register_t *retval)
 {
@@ -2383,7 +2357,6 @@ dovutimens(struct proc *p, struct vnode *vp, struct timespec ts[2])
 /*
  * Set the access and modification times given a file descriptor.
  */
-/* ARGSUSED */
 int
 sys_futimes(struct proc *p, void *v, register_t *retval)
 {
@@ -2450,7 +2423,6 @@ dofutimens(struct proc *p, int fd, struct timespec ts[2])
 /*
  * Truncate a file given its path name.
  */
-/* ARGSUSED */
 int
 sys_truncate(struct proc *p, void *v, register_t *retval)
 {
@@ -2485,7 +2457,6 @@ sys_truncate(struct proc *p, void *v, register_t *retval)
 /*
  * Truncate a file given a file descriptor.
  */
-/* ARGSUSED */
 int
 sys_ftruncate(struct proc *p, void *v, register_t *retval)
 {
@@ -2525,7 +2496,6 @@ bad:
 /*
  * Sync an open file.
  */
-/* ARGSUSED */
 int
 sys_fsync(struct proc *p, void *v, register_t *retval)
 {
@@ -2555,7 +2525,6 @@ sys_fsync(struct proc *p, void *v, register_t *retval)
  * Rename files.  Source and destination must either both be directories,
  * or both not be directories.  If target is a directory, it must be empty.
  */
-/* ARGSUSED */
 int
 sys_rename(struct proc *p, void *v, register_t *retval)
 {
@@ -2665,7 +2634,6 @@ out1:
 /*
  * Make a directory file.
  */
-/* ARGSUSED */
 int
 sys_mkdir(struct proc *p, void *v, register_t *retval)
 {
@@ -2725,7 +2693,6 @@ domkdirat(struct proc *p, int fd, const char *path, mode_t mode)
 /*
  * Remove a directory file.
  */
-/* ARGSUSED */
 int
 sys_rmdir(struct proc *p, void *v, register_t *retval)
 {
@@ -2815,7 +2782,6 @@ sys_umask(struct proc *p, void *v, register_t *retval)
  * Void all references to file by ripping underlying filesystem
  * away from vnode.
  */
-/* ARGSUSED */
 int
 sys_revoke(struct proc *p, void *v, register_t *retval)
 {

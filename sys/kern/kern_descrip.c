@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.124 2015/11/01 19:03:33 semarie Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.125 2015/12/05 10:11:53 tedu Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -215,7 +215,6 @@ fd_getfile_mode(struct filedesc *fdp, int fd, int mode)
 /*
  * Duplicate a file descriptor.
  */
-/* ARGSUSED */
 int
 sys_dup(struct proc *p, void *v, register_t *retval)
 {
@@ -331,7 +330,6 @@ out:
 /*
  * The file control system call.
  */
-/* ARGSUSED */
 int
 sys_fcntl(struct proc *p, void *v, register_t *retval)
 {
@@ -664,7 +662,6 @@ fdrelease(struct proc *p, int fd)
 /*
  * Close a file descriptor.
  */
-/* ARGSUSED */
 int
 sys_close(struct proc *p, void *v, register_t *retval)
 {
@@ -724,7 +721,6 @@ sys_fstat(struct proc *p, void *v, register_t *retval)
 /*
  * Return pathconf information about a file descriptor.
  */
-/* ARGSUSED */
 int
 sys_fpathconf(struct proc *p, void *v, register_t *retval)
 {
@@ -1180,7 +1176,6 @@ fdrop(struct file *fp, struct proc *p)
  * Just attempt to get a record lock of the requested type on
  * the entire file (l_whence = SEEK_SET, l_start = 0, l_len = 0).
  */
-/* ARGSUSED */
 int
 sys_flock(struct proc *p, void *v, register_t *retval)
 {
@@ -1237,7 +1232,6 @@ out:
  * consists of only the ``open()'' routine, because all subsequent
  * references to this file will be direct to the other driver.
  */
-/* ARGSUSED */
 int
 filedescopen(dev_t dev, int mode, int type, struct proc *p)
 {

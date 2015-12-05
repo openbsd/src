@@ -1,4 +1,4 @@
-/*	$OpenBSD: spec_vnops.c,v 1.83 2015/02/10 21:56:09 miod Exp $	*/
+/*	$OpenBSD: spec_vnops.c,v 1.84 2015/12/05 10:11:53 tedu Exp $	*/
 /*	$NetBSD: spec_vnops.c,v 1.29 1996/04/22 01:42:38 christos Exp $	*/
 
 /*
@@ -662,7 +662,6 @@ spec_advlock(void *v)
 /*
  * Special device bad operation
  */
-/*ARGSUSED*/
 int
 spec_badop(void *v)
 {

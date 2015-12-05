@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.143 2015/10/30 19:47:40 bluhm Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.144 2015/12/05 10:11:53 tedu Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -102,7 +102,6 @@ soinit(void)
  * implement the semantics of socket operations by
  * switching out to the protocol specific routines.
  */
-/*ARGSUSED*/
 int
 socreate(int dom, struct socket **aso, int type, int proto)
 {
@@ -1834,7 +1833,6 @@ filt_sordetach(struct knote *kn)
 	splx(s);
 }
 
-/*ARGSUSED*/
 int
 filt_soread(struct knote *kn, long hint)
 {
@@ -1869,7 +1867,6 @@ filt_sowdetach(struct knote *kn)
 	splx(s);
 }
 
-/*ARGSUSED*/
 int
 filt_sowrite(struct knote *kn, long hint)
 {
@@ -1891,7 +1888,6 @@ filt_sowrite(struct knote *kn, long hint)
 	return (kn->kn_data >= so->so_snd.sb_lowat);
 }
 
-/*ARGSUSED*/
 int
 filt_solisten(struct knote *kn, long hint)
 {

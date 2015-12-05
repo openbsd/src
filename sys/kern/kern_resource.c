@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_resource.c,v 1.54 2015/02/09 09:39:09 miod Exp $	*/
+/*	$OpenBSD: kern_resource.c,v 1.55 2015/12/05 10:11:53 tedu Exp $	*/
 /*	$NetBSD: kern_resource.c,v 1.38 1996/10/23 07:19:38 matthias Exp $	*/
 
 /*-
@@ -118,7 +118,6 @@ sys_getpriority(struct proc *curp, void *v, register_t *retval)
 	return (0);
 }
 
-/* ARGSUSED */
 int
 sys_setpriority(struct proc *curp, void *v, register_t *retval)
 {
@@ -201,7 +200,6 @@ donice(struct proc *curp, struct process *chgpr, int n)
 	return (0);
 }
 
-/* ARGSUSED */
 int
 sys_setrlimit(struct proc *p, void *v, register_t *retval)
 {
@@ -313,7 +311,6 @@ dosetrlimit(struct proc *p, u_int which, struct rlimit *limp)
 	return (0);
 }
 
-/* ARGSUSED */
 int
 sys_getrlimit(struct proc *p, void *v, register_t *retval)
 {
@@ -420,7 +417,6 @@ calcru(struct tusage *tup, struct timeval *up, struct timeval *sp,
 		TIMESPEC_TO_TIMEVAL(ip, &i);
 }
 
-/* ARGSUSED */
 int
 sys_getrusage(struct proc *p, void *v, register_t *retval)
 {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.66 2015/10/29 13:20:44 jsing Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.67 2015/12/05 10:11:53 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -197,7 +197,6 @@ filt_kqdetach(struct knote *kn)
 	SLIST_REMOVE(&kq->kq_sel.si_note, kn, knote, kn_selnext);
 }
 
-/*ARGSUSED*/
 int
 filt_kqueue(struct knote *kn, long hint)
 {
@@ -818,14 +817,12 @@ done:
  * XXX
  * This could be expanded to call kqueue_scan, if desired.
  */
-/*ARGSUSED*/
 int
 kqueue_read(struct file *fp, off_t *poff, struct uio *uio, struct ucred *cred)
 {
 	return (ENXIO);
 }
 
-/*ARGSUSED*/
 int
 kqueue_write(struct file *fp, off_t *poff, struct uio *uio, struct ucred *cred)
 
@@ -833,14 +830,12 @@ kqueue_write(struct file *fp, off_t *poff, struct uio *uio, struct ucred *cred)
 	return (ENXIO);
 }
 
-/*ARGSUSED*/
 int
 kqueue_ioctl(struct file *fp, u_long com, caddr_t data, struct proc *p)
 {
 	return (ENOTTY);
 }
 
-/*ARGSUSED*/
 int
 kqueue_poll(struct file *fp, int events, struct proc *p)
 {
@@ -860,7 +855,6 @@ kqueue_poll(struct file *fp, int events, struct proc *p)
 	return (revents);
 }
 
-/*ARGSUSED*/
 int
 kqueue_stat(struct file *fp, struct stat *st, struct proc *p)
 {
@@ -873,7 +867,6 @@ kqueue_stat(struct file *fp, struct stat *st, struct proc *p)
 	return (0);
 }
 
-/*ARGSUSED*/
 int
 kqueue_close(struct file *fp, struct proc *p)
 {

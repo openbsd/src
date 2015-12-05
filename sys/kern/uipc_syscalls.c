@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.129 2015/11/21 08:02:43 semarie Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.130 2015/12/05 10:11:53 tedu Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -149,7 +149,6 @@ dns_portcheck(struct proc *p, struct socket *so, void *nam, size_t namelen)
 	return (EINVAL);	
 }
 
-/* ARGSUSED */
 int
 sys_bind(struct proc *p, void *v, register_t *retval)
 {
@@ -185,7 +184,6 @@ out:
 	return (error);
 }
 
-/* ARGSUSED */
 int
 sys_listen(struct proc *p, void *v, register_t *retval)
 {
@@ -358,7 +356,6 @@ bad:
 	return (error);
 }
 
-/* ARGSUSED */
 int
 sys_connect(struct proc *p, void *v, register_t *retval)
 {
@@ -903,7 +900,6 @@ out:
 	return (error);
 }
 
-/* ARGSUSED */
 int
 sys_shutdown(struct proc *p, void *v, register_t *retval)
 {
@@ -921,7 +917,6 @@ sys_shutdown(struct proc *p, void *v, register_t *retval)
 	return (error);
 }
 
-/* ARGSUSED */
 int
 sys_setsockopt(struct proc *p, void *v, register_t *retval)
 {
@@ -975,7 +970,6 @@ bad:
 	return (error);
 }
 
-/* ARGSUSED */
 int
 sys_getsockopt(struct proc *p, void *v, register_t *retval)
 {
@@ -1023,7 +1017,6 @@ out:
 /*
  * Get socket name.
  */
-/* ARGSUSED */
 int
 sys_getsockname(struct proc *p, void *v, register_t *retval)
 {
@@ -1062,7 +1055,6 @@ bad:
 /*
  * Get name of peer for connected socket.
  */
-/* ARGSUSED */
 int
 sys_getpeername(struct proc *p, void *v, register_t *retval)
 {
@@ -1154,7 +1146,6 @@ getsock(struct proc *p, int fdes, struct file **fpp)
 	return (0);
 }
 
-/* ARGSUSED */
 int
 sys_setrtable(struct proc *p, void *v, register_t *retval)
 {
@@ -1176,7 +1167,6 @@ sys_setrtable(struct proc *p, void *v, register_t *retval)
 	return (0);
 }
 
-/* ARGSUSED */
 int
 sys_getrtable(struct proc *p, void *v, register_t *retval)
 {

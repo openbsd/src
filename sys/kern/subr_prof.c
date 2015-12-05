@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_prof.c,v 1.28 2015/03/14 03:38:50 jsg Exp $	*/
+/*	$OpenBSD: subr_prof.c,v 1.29 2015/12/05 10:11:53 tedu Exp $	*/
 /*	$NetBSD: subr_prof.c,v 1.12 1996/04/22 01:38:50 christos Exp $	*/
 
 /*-
@@ -182,7 +182,6 @@ sysctl_doprof(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
  * The scale factor is a fixed point number with 16 bits of fraction, so that
  * 1.0 is represented as 0x10000.  A scale factor of 0 turns off profiling.
  */
-/* ARGSUSED */
 int
 sys_profil(struct proc *p, void *v, register_t *retval)
 {

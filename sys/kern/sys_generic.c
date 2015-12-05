@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_generic.c,v 1.109 2015/11/01 19:03:33 semarie Exp $	*/
+/*	$OpenBSD: sys_generic.c,v 1.110 2015/12/05 10:11:53 tedu Exp $	*/
 /*	$NetBSD: sys_generic.c,v 1.24 1996/03/29 00:25:32 cgd Exp $	*/
 
 /*
@@ -74,7 +74,6 @@ int doppoll(struct proc *, struct pollfd *, u_int, const struct timespec *,
 /*
  * Read system call.
  */
-/* ARGSUSED */
 int
 sys_read(struct proc *p, void *v, register_t *retval)
 {
@@ -382,7 +381,6 @@ dofilewritev(struct proc *p, int fd, struct file *fp, const struct iovec *iovp,
 /*
  * Ioctl system call
  */
-/* ARGSUSED */
 int
 sys_ioctl(struct proc *p, void *v, register_t *retval)
 {
@@ -759,7 +757,6 @@ selscan(struct proc *p, fd_set *ibits, fd_set *obits, int nfd, int ni,
 	return (0);
 }
 
-/*ARGSUSED*/
 int
 seltrue(dev_t dev, int events, struct proc *p)
 {
@@ -1030,7 +1027,6 @@ bad:
 /*
  * utrace system call
  */
-/* ARGSUSED */
 int
 sys_utrace(struct proc *curp, void *v, register_t *retval)
 {
