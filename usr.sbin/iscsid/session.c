@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.7 2014/05/10 11:30:47 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.8 2015/12/05 06:37:24 mmcc Exp $ */
 
 /*
  * Copyright (c) 2011 Claudio Jeker <claudio@openbsd.org>
@@ -126,11 +126,9 @@ session_shutdown(struct session *s)
 void
 session_config(struct session *s, struct session_config *sc)
 {
-	if (s->config.TargetName)
-		free(s->config.TargetName);
+	free(s->config.TargetName);
 	s->config.TargetName = NULL;
-	if (s->config.InitiatorName)
-		free(s->config.InitiatorName);
+	free(s->config.InitiatorName);
 	s->config.InitiatorName = NULL;
 
 	s->config = *sc;
