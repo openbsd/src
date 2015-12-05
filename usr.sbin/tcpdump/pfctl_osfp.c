@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_osfp.c,v 1.10 2015/01/20 18:26:58 deraadt Exp $ */
+/*	$OpenBSD: pfctl_osfp.c,v 1.11 2015/12/05 19:27:17 mmcc Exp $ */
 
 /*
  * Copyright (c) 2003 Mike Frantzen <frantzen@openbsd.org>
@@ -113,16 +113,11 @@ pfctl_file_fingerprints(int dev, int opts, const char *fp_filename)
 		buf[len -1] = '\n';
 		line = buf;
 		lineno++;
-		if (class)
-			free(class);
-		if (version)
-			free(version);
-		if (subtype)
-			free(subtype);
-		if (desc)
-			free(desc);
-		if (tcpopts)
-			free(tcpopts);
+		free(class);
+		free(version);
+		free(subtype);
+		free(desc);
+		free(tcpopts);
 		class = version = subtype = desc = tcpopts = NULL;
 		memset(&fp, 0, sizeof(fp));
 
@@ -251,14 +246,10 @@ pfctl_file_fingerprints(int dev, int opts, const char *fp_filename)
 		add_fingerprint(dev, opts, &fp);
 	}
 
-	if (class)
-		free(class);
-	if (version)
-		free(version);
-	if (subtype)
-		free(subtype);
-	if (desc)
-		free(desc);
+	free(class);
+	free(version);
+	free(subtype);
+	free(desc);
 
 	if (opts & PF_OPT_VERBOSE2)
 		printf("Loaded %d passive OS fingerprints\n",

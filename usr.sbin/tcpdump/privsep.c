@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.39 2015/11/03 05:04:06 mmcc Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.40 2015/12/05 19:27:17 mmcc Exp $	*/
 
 /*
  * Copyright (c) 2003 Can Erkin Acar
@@ -583,10 +583,8 @@ impl_getlines(int fd)
 
 		write_string(fd, buf);
 
-		if (lbuf != NULL) {
-			free(lbuf);
-			lbuf = NULL;
-		}
+		free(lbuf);
+		lbuf = NULL;
 	}
 	write_zero(fd);
 	fclose(fp);
