@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_proc.c,v 1.5 2015/01/20 17:37:54 deraadt Exp $	*/
+/*	$OpenBSD: queue_proc.c,v 1.6 2015/12/05 13:14:21 claudio Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -23,6 +23,7 @@
 #include <sys/stat.h>
 
 #include <ctype.h>
+#include <errno.h>
 #include <event.h>
 #include <fcntl.h>
 #include <imsg.h>
@@ -70,7 +71,7 @@ queue_proc_call(void)
 			return;
 		}
 
-		if ((n = imsg_read(&ibuf)) == -1) {
+		if ((n = imsg_read(&ibuf)) == -1 && errno != EAGAIN) {
 			log_warn("warn: queue-proc: imsg_read");
 			break;
 		}

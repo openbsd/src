@@ -1,4 +1,4 @@
-/*	$OpenBSD: table_proc.c,v 1.5 2015/01/20 17:37:54 deraadt Exp $	*/
+/*	$OpenBSD: table_proc.c,v 1.6 2015/12/05 13:14:21 claudio Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -73,7 +73,7 @@ table_proc_call(struct table_proc_priv *p)
 			return;
 		}
 
-		if ((n = imsg_read(&p->ibuf)) == -1) {
+		if ((n = imsg_read(&p->ibuf)) == -1 && errno != EAGAIN) {
 			log_warn("warn: table-proc: imsg_read");
 			break;
 		}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: enqueue.c,v 1.105 2015/11/03 05:06:24 mmcc Exp $	*/
+/*	$OpenBSD: enqueue.c,v 1.106 2015/12/05 13:14:21 claudio Exp $	*/
 
 /*
  * Copyright (c) 2005 Henning Brauer <henning@bulabula.org>
@@ -790,7 +790,7 @@ open_connection(void)
 			err(1, "write error");
 
 	while (1) {
-		if ((n = imsg_read(ibuf)) == -1)
+		if ((n = imsg_read(ibuf)) == -1 && errno != EAGAIN)
 			errx(1, "imsg_read error");
 		if (n == 0)
 			errx(1, "pipe closed");

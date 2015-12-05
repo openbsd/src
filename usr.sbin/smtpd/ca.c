@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.18 2015/11/05 12:35:58 jung Exp $	*/
+/*	$OpenBSD: ca.c,v 1.19 2015/12/05 13:14:21 claudio Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -394,7 +394,7 @@ rsae_send_imsg(int flen, const unsigned char *from, unsigned char *to,
 	ibuf = &p_ca->imsgbuf;
 
 	while (!done) {
-		if ((n = imsg_read(ibuf)) == -1)
+		if ((n = imsg_read(ibuf)) == -1 && errno != EAGAIN)
 			fatalx("imsg_read");
 		if (n == 0)
 			fatalx("pipe closed");
