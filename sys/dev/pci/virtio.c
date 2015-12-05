@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.17 2015/07/18 00:37:16 sf Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.18 2015/12/05 19:40:34 sf Exp $	*/
 /*	$NetBSD: virtio.c,v 1.3 2011/11/02 23:05:52 njoly Exp $	*/
 
 /*
@@ -648,7 +648,7 @@ publish_avail_idx(struct virtio_softc *sc, struct virtqueue *vq)
 /*
  * enqueue_commit: add it to the aring.
  */
-int
+void
 virtio_enqueue_commit(struct virtio_softc *sc, struct virtqueue *vq, int slot,
     int notifynow)
 {
@@ -682,8 +682,6 @@ notify:
 				sc->sc_ops->kick(sc, vq->vq_index);
 		}
 	}
-
-	return 0;
 }
 
 /*
