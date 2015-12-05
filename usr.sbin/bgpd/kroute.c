@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.206 2015/10/22 11:13:16 phessler Exp $ */
+/*	$OpenBSD: kroute.c,v 1.207 2015/12/05 18:28:04 benno Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -404,7 +404,7 @@ ktable_update(u_int rtableid, char *name, char *ifname, int flags, u_int8_t
 void
 ktable_preload(void)
 {
-	struct ktable 	*kt;
+	struct ktable	*kt;
 	u_int		 i;
 
 	for (i = 0; i < krt_size; i++) {
@@ -417,7 +417,7 @@ ktable_preload(void)
 void
 ktable_postload(u_int8_t fib_prio)
 {
-	struct ktable 	*kt;
+	struct ktable	*kt;
 	u_int		 i;
 
 	for (i = krt_size; i > 0; i--) {
@@ -630,7 +630,7 @@ krVPN4_change(struct ktable *kt, struct kroute_full *kl, u_int8_t fib_prio)
 
 	if (action == RTM_ADD) {
 		if ((kr = calloc(1, sizeof(struct kroute_node))) == NULL) {
-			log_warn("kr_change");
+			log_warn("krVPN4_change");
 			return (-1);
 		}
 		kr->r.prefix.s_addr = kl->prefix.vpn4.addr.s_addr;
@@ -683,7 +683,7 @@ kr_delete(u_int rtableid, struct kroute_full *kl, u_int8_t fib_prio)
 	case AID_VPN_IPv4:
 		return (krVPN4_delete(kt, kl, fib_prio));
 	}
-	log_warnx("kr_change: not handled AID");
+	log_warnx("%s: not handled AID", __func__);
 	return (-1);
 }
 
@@ -1832,8 +1832,8 @@ int
 knexthop_insert(struct ktable *kt, struct knexthop_node *kn)
 {
 	if (RB_INSERT(knexthop_tree, KT2KNT(kt), kn) != NULL) {
-		log_warnx("knexthop_tree insert failed for %s",
-			    log_addr(&kn->nexthop));
+		log_warnx("knexthop_insert failed for %s",
+		    log_addr(&kn->nexthop));
 		free(kn);
 		return (-1);
 	}
@@ -1943,8 +1943,8 @@ kif_kr_insert(struct kroute_node *kr)
 
 	if ((kif = kif_find(kr->r.ifindex)) == NULL) {
 		if (kr->r.ifindex)
-			log_warnx("interface with index %u not found",
-			    kr->r.ifindex);
+			log_warnx("%s: interface with index %u not found",
+			    __func__, kr->r.ifindex);
 		return (0);
 	}
 
@@ -1973,8 +1973,8 @@ kif_kr_remove(struct kroute_node *kr)
 
 	if ((kif = kif_find(kr->r.ifindex)) == NULL) {
 		if (kr->r.ifindex)
-			log_warnx("interface with index %u not found",
-			    kr->r.ifindex);
+			log_warnx("%s: interface with index %u not found",
+			    __func__, kr->r.ifindex);
 		return (0);
 	}
 
@@ -2002,8 +2002,8 @@ kif_kr6_insert(struct kroute6_node *kr)
 
 	if ((kif = kif_find(kr->r.ifindex)) == NULL) {
 		if (kr->r.ifindex)
-			log_warnx("interface with index %u not found",
-			    kr->r.ifindex);
+			log_warnx("%s: interface with index %u not found",
+			    __func__, kr->r.ifindex);
 		return (0);
 	}
 
@@ -2032,8 +2032,8 @@ kif_kr6_remove(struct kroute6_node *kr)
 
 	if ((kif = kif_find(kr->r.ifindex)) == NULL) {
 		if (kr->r.ifindex)
-			log_warnx("interface with index %u not found",
-			    kr->r.ifindex);
+			log_warnx("%s: interface with index %u not found",
+			    __func__, kr->r.ifindex);
 		return (0);
 	}
 
@@ -2085,8 +2085,8 @@ kroute_validate(struct kroute *kr)
 
 	if ((kif = kif_find(kr->ifindex)) == NULL) {
 		if (kr->ifindex)
-			log_warnx("interface with index %d not found, "
-			    "referenced from route for %s/%u",
+			log_warnx("%s: interface with index %d not found, "
+			    "referenced from route for %s/%u", __func__,
 			    kr->ifindex, inet_ntoa(kr->prefix),
 			    kr->prefixlen);
 		return (1);
@@ -2105,8 +2105,8 @@ kroute6_validate(struct kroute6 *kr)
 
 	if ((kif = kif_find(kr->ifindex)) == NULL) {
 		if (kr->ifindex)
-			log_warnx("interface with index %d not found, "
-			    "referenced from route for %s/%u",
+			log_warnx("%s: interface with index %d not found, "
+			    "referenced from route for %s/%u", __func__,
 			    kr->ifindex, log_in6addr(&kr->prefix),
 			    kr->prefixlen);
 		return (1);
@@ -2453,8 +2453,8 @@ if_change(u_short ifindex, int flags, struct if_data *ifd)
 	u_int8_t		 reachable;
 
 	if ((kif = kif_find(ifindex)) == NULL) {
-		log_warnx("interface with index %u not found",
-		    ifindex);
+		log_warnx("%s: interface with index %u not found",
+		    __func__, ifindex);
 		return;
 	}
 
@@ -3193,7 +3193,7 @@ dispatch_rtmsg_addr(struct rt_msghdr *rtm, struct sockaddr *rti_info[RTAX_MAX],
 			if (mpath)
 				/* get the correct route */
 				if ((kr = kroute_matchgw(kr, sa_in)) == NULL) {
-					log_warnx("dispatch_rtmsg[delete] "
+					log_warnx("dispatch_rtmsg_addr[delete] "
 					    "mpath route not found");
 					return (0);
 				}
@@ -3213,7 +3213,7 @@ dispatch_rtmsg_addr(struct rt_msghdr *rtm, struct sockaddr *rti_info[RTAX_MAX],
 				/* get the correct route */
 				if ((kr6 = kroute6_matchgw(kr6, sa_in6)) ==
 				    NULL) {
-					log_warnx("dispatch_rtmsg[delete] "
+					log_warnx("dispatch_rtmsg_addr[delete] "
 					    "IPv6 mpath route not found");
 					return (0);
 				}
@@ -3226,8 +3226,8 @@ dispatch_rtmsg_addr(struct rt_msghdr *rtm, struct sockaddr *rti_info[RTAX_MAX],
 	}
 
 	if (sa == NULL && !(flags & F_CONNECTED)) {
-		log_warnx("dispatch_rtmsg no nexthop for %s/%u",
-		    log_addr(&prefix), prefixlen);
+		log_warnx("%s: no nexthop for %s/%u",
+		    __func__, log_addr(&prefix), prefixlen);
 		return (0);
 	}
 
@@ -3240,7 +3240,7 @@ dispatch_rtmsg_addr(struct rt_msghdr *rtm, struct sockaddr *rti_info[RTAX_MAX],
 				/* get the correct route */
 				if (mpath && rtm->rtm_type == RTM_CHANGE &&
 				    (kr = kroute_matchgw(kr, sa_in)) == NULL) {
-					log_warnx("dispatch_rtmsg[change] "
+					log_warnx("dispatch_rtmsg_addr[change] "
 					    "mpath route not found");
 					return (-1);
 				} else if (mpath && rtm->rtm_type == RTM_ADD)
@@ -3365,7 +3365,7 @@ add4:
 add6:
 			if ((kr6 = calloc(1,
 			    sizeof(struct kroute6_node))) == NULL) {
-				log_warn("dispatch_rtmsg");
+				log_warn("dispatch_rtmsg_addr");
 				return (-1);
 			}
 			memcpy(&kr6->r.prefix, &prefix.v6,

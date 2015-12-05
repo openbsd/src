@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrt.c,v 1.79 2015/10/27 18:19:33 mmcc Exp $ */
+/*	$OpenBSD: mrt.c,v 1.80 2015/12/05 18:28:04 benno Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -468,7 +468,7 @@ mrt_dump_entry_v2(struct mrt *mrt, struct rib_entry *re, u_int32_t snum)
 	}
 
 	if ((buf = ibuf_dynamic(0, UINT_MAX)) == NULL) {
-		log_warn("mrt_dump_entry: ibuf_dynamic");
+		log_warn("%s: ibuf_dynamic", __func__);
 		return (-1);
 	}
 
@@ -483,13 +483,13 @@ mrt_dump_entry_v2(struct mrt *mrt, struct rib_entry *re, u_int32_t snum)
 		DUMP_BYTE(buf, safi);
 	}
 	if (prefix_writebuf(buf, &addr, re->prefix->prefixlen) == -1) {
-		log_warn("mrt_dump_entry_mp: prefix_writebuf error");
+		log_warn("%s: prefix_writebuf error", __func__);
 		goto fail;
 	}
 
 	off = ibuf_size(buf);
 	if (ibuf_reserve(buf, sizeof(nump)) == NULL) {
-		log_warn("mrt_dump_v2_hdr: ibuf_reserve error");
+		log_warn("%s: ibuf_reserve error", __func__);
 		goto fail;
 	}
 	nump = 0;
@@ -508,18 +508,18 @@ mrt_dump_entry_v2(struct mrt *mrt, struct rib_entry *re, u_int32_t snum)
 		DUMP_LONG(buf, p->lastchange); /* originated */
 
 		if ((tbuf = ibuf_dynamic(0, MAX_PKTSIZE)) == NULL) {
-			log_warn("mrt_dump_entry_v2: ibuf_dynamic");
+			log_warn("%s: ibuf_dynamic", __func__);
 			return (-1);
 		}
 		if (mrt_attr_dump(tbuf, p->aspath, nh, 1) == -1) {
-			log_warnx("mrt_dump_entry_v2: mrt_attr_dump error");
+			log_warnx("%s: mrt_attr_dump error", __func__);
 			ibuf_free(buf);
 			return (-1);
 		}
 		len = ibuf_size(tbuf);
 		DUMP_SHORT(buf, (u_int16_t)len);
 		if (ibuf_add(buf, tbuf->buf, ibuf_size(tbuf)) == -1) {
-			log_warn("mrt_dump_entry_v2: ibuf_add error");
+			log_warn("%s: ibuf_add error", __func__);
 			ibuf_free(tbuf);
 			return (-1);
 		}
@@ -556,7 +556,7 @@ mrt_dump_v2_hdr(struct mrt *mrt, struct bgpd_config *conf,
 	u_int16_t	 nlen, nump;
 
 	if ((buf = ibuf_dynamic(0, UINT_MAX)) == NULL) {
-		log_warn("mrt_dump_v2_hdr: ibuf_dynamic");
+		log_warn("%s: ibuf_dynamic", __func__);
 		return (-1);
 	}
 
@@ -566,13 +566,13 @@ mrt_dump_v2_hdr(struct mrt *mrt, struct bgpd_config *conf,
 		nlen += 1;
 	DUMP_SHORT(buf, nlen);
 	if (ibuf_add(buf, mrt->rib, nlen) == -1) {
-		log_warn("mrt_dump_v2_hdr: ibuf_add error");
+		log_warn("%s: ibuf_add error", __func__);
 		goto fail;
 	}
 
 	off = ibuf_size(buf);
 	if (ibuf_reserve(buf, sizeof(nump)) == NULL) {
-		log_warn("mrt_dump_v2_hdr: ibuf_reserve error");
+		log_warn("%s: ibuf_reserve error", __func__);
 		goto fail;
 	}
 	nump = 0;
@@ -681,7 +681,7 @@ int
 mrt_dump_hdr_se(struct ibuf ** bp, struct peer *peer, u_int16_t type,
     u_int16_t subtype, u_int32_t len, int swap)
 {
-	time_t	 	now;
+	time_t		now;
 
 	if ((*bp = ibuf_dynamic(MRT_HEADER_SIZE, MRT_HEADER_SIZE +
 	    MRT_BGP4MP_AS4_IPv6_HEADER_SIZE + len)) == NULL) {
