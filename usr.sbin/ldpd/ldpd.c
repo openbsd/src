@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpd.c,v 1.26 2015/07/21 05:04:12 renato Exp $ */
+/*	$OpenBSD: ldpd.c,v 1.27 2015/12/05 13:11:48 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -325,7 +325,7 @@ main_dispatch_ldpe(int fd, short event, void *bula)
 	int			 shut = 0, verbose;
 
 	if (event & EV_READ) {
-		if ((n = imsg_read(ibuf)) == -1)
+		if ((n = imsg_read(ibuf)) == -1 && errno != EAGAIN)
 			fatal("imsg_read error");
 		if (n == 0)	/* connection closed */
 			shut = 1;
@@ -402,7 +402,7 @@ main_dispatch_lde(int fd, short event, void *bula)
 	struct kpw	*kpw;
 
 	if (event & EV_READ) {
-		if ((n = imsg_read(ibuf)) == -1)
+		if ((n = imsg_read(ibuf)) == -1 && errno != EAGAIN)
 			fatal("imsg_read error");
 		if (n == 0)	/* connection closed */
 			shut = 1;

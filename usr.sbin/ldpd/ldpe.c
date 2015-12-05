@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpe.c,v 1.40 2015/10/23 10:10:17 renato Exp $ */
+/*	$OpenBSD: ldpe.c,v 1.41 2015/12/05 13:11:48 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -352,7 +352,7 @@ ldpe_dispatch_main(int fd, short event, void *bula)
 	struct nbr		*nbr;
 
 	if (event & EV_READ) {
-		if ((n = imsg_read(ibuf)) == -1)
+		if ((n = imsg_read(ibuf)) == -1 && errno != EAGAIN)
 			fatal("imsg_read error");
 		if (n == 0)	/* connection closed */
 			shut = 1;
@@ -366,7 +366,7 @@ ldpe_dispatch_main(int fd, short event, void *bula)
 
 	for (;;) {
 		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			fatal("ldpe_dispatch_main: imsg_read error");
+			fatal("ldpe_dispatch_main: imsg_get error");
 		if (n == 0)
 			break;
 
@@ -540,7 +540,7 @@ ldpe_dispatch_lde(int fd, short event, void *bula)
 	struct nbr		*nbr = NULL;
 
 	if (event & EV_READ) {
-		if ((n = imsg_read(ibuf)) == -1)
+		if ((n = imsg_read(ibuf)) == -1 && errno != EAGAIN)
 			fatal("imsg_read error");
 		if (n == 0)	/* connection closed */
 			shut = 1;
@@ -554,7 +554,7 @@ ldpe_dispatch_lde(int fd, short event, void *bula)
 
 	for (;;) {
 		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			fatal("ldpe_dispatch_lde: imsg_read error");
+			fatal("ldpe_dispatch_lde: imsg_get error");
 		if (n == 0)
 			break;
 
