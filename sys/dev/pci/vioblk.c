@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioblk.c,v 1.7 2015/03/14 03:38:49 jsg Exp $	*/
+/*	$OpenBSD: vioblk.c,v 1.8 2015/12/05 19:55:33 sf Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch.
@@ -308,6 +308,12 @@ vioblk_vq_done1(struct vioblk_softc *sc, struct virtio_softc *vsc,
 void
 vioblk_scsi_cmd(struct scsi_xfer *xs)
 {
+	struct vioblk_softc *sc = xs->sc_link->adapter_softc;
+	struct virtqueue *vq = &sc->sc_vq[0];
+	struct virtio_softc *vsc = sc->sc_virtio;
+	struct virtio_blk_req *vr;
+	int len, s, timeout, isread, slot, ret, nsegs;
+	int error = XS_NO_CCB;
 	struct scsi_rw *rw;
 	struct scsi_rw_big *rwb;
 	struct scsi_rw_12 *rw12;
@@ -315,7 +321,6 @@ vioblk_scsi_cmd(struct scsi_xfer *xs)
 	u_int64_t lba = 0;
 	u_int32_t sector_count;
 	uint8_t operation;
-	int isread;
 
 	switch (xs->cmd->opcode) {
 	case READ_BIG:
@@ -383,16 +388,6 @@ vioblk_scsi_cmd(struct scsi_xfer *xs)
 		lba = _8btol(rw16->addr);
 		sector_count = _4btol(rw16->length);
 	}
-
-{
-	struct vioblk_softc *sc = xs->sc_link->adapter_softc;
-	struct virtqueue *vq = &sc->sc_vq[0];
-	struct virtio_blk_req *vr;
-	struct virtio_softc *vsc = sc->sc_virtio;
-	int len, s;
-	int timeout;
-	int slot, ret, nsegs;
-	int error = XS_NO_CCB;
 
 	s = splbio();
 	ret = virtio_enqueue_prep(vq, &slot);
@@ -476,7 +471,6 @@ out_done:
 	vioblk_scsi_done(xs, error);
 	vr->vr_len = VIOBLK_DONE;
 	splx(s);
-}
 }
 
 void
