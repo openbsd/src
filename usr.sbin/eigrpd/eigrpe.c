@@ -1,4 +1,4 @@
-/*	$OpenBSD: eigrpe.c,v 1.8 2015/10/25 00:43:35 renato Exp $ */
+/*	$OpenBSD: eigrpe.c,v 1.9 2015/12/05 15:49:01 claudio Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -256,7 +256,7 @@ eigrpe_dispatch_main(int fd, short event, void *bula)
 	int			 n, shut = 0;
 
 	if (event & EV_READ) {
-		if ((n = imsg_read(ibuf)) == -1)
+		if ((n = imsg_read(ibuf)) == -1 && errno != EAGAIN)
 			fatal("imsg_read error");
 		if (n == 0)	/* connection closed */
 			shut = 1;
@@ -270,7 +270,7 @@ eigrpe_dispatch_main(int fd, short event, void *bula)
 
 	for (;;) {
 		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			fatal("eigrpe_dispatch_main: imsg_read error");
+			fatal("eigrpe_dispatch_main: imsg_get error");
 		if (n == 0)
 			break;
 
@@ -420,7 +420,7 @@ eigrpe_dispatch_rde(int fd, short event, void *bula)
 	int			 n, shut = 0;
 
 	if (event & EV_READ) {
-		if ((n = imsg_read(ibuf)) == -1)
+		if ((n = imsg_read(ibuf)) == -1 && errno != EAGAIN)
 			fatal("imsg_read error");
 		if (n == 0)	/* connection closed */
 			shut = 1;
@@ -434,7 +434,7 @@ eigrpe_dispatch_rde(int fd, short event, void *bula)
 
 	for (;;) {
 		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			fatal("eigrpe_dispatch_rde: imsg_read error");
+			fatal("eigrpe_dispatch_rde: imsg_get error");
 		if (n == 0)
 			break;
 

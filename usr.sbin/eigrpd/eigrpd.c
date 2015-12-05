@@ -1,4 +1,4 @@
-/*	$OpenBSD: eigrpd.c,v 1.3 2015/10/21 03:52:12 renato Exp $ */
+/*	$OpenBSD: eigrpd.c,v 1.4 2015/12/05 15:49:01 claudio Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -349,7 +349,7 @@ main_dispatch_eigrpe(int fd, short event, void *bula)
 	ibuf = &iev->ibuf;
 
 	if (event & EV_READ) {
-		if ((n = imsg_read(ibuf)) == -1)
+		if ((n = imsg_read(ibuf)) == -1 && errno != EAGAIN)
 			fatal("imsg_read error");
 		if (n == 0)	/* connection closed */
 			shut = 1;
@@ -426,7 +426,7 @@ main_dispatch_rde(int fd, short event, void *bula)
 	ibuf = &iev->ibuf;
 
 	if (event & EV_READ) {
-		if ((n = imsg_read(ibuf)) == -1)
+		if ((n = imsg_read(ibuf)) == -1 && errno != EAGAIN)
 			fatal("imsg_read error");
 		if (n == 0)	/* connection closed */
 			shut = 1;
