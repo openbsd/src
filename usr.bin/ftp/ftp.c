@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftp.c,v 1.94 2015/12/05 22:20:44 krw Exp $	*/
+/*	$OpenBSD: ftp.c,v 1.95 2015/12/05 22:28:40 krw Exp $	*/
 /*	$NetBSD: ftp.c,v 1.27 1997/08/18 10:20:23 lukem Exp $	*/
 
 /*
@@ -113,7 +113,10 @@ hookup(char *host, char *port)
 {
 	int s, tos, error;
 	static char hostnamebuf[HOST_NAME_MAX+1];
-	struct addrinfo hints, *res, *res0, *ares;
+	struct addrinfo hints, *res, *res0;
+#ifndef SMALL
+	struct addrinfo *ares;
+#endif
 	char hbuf[NI_MAXHOST];
 	char *cause = "unknown";
 	socklen_t namelen;
@@ -1274,7 +1277,9 @@ initconn(void)
 	u_int af, hal, pal;
 	char *pasvcmd = NULL;
 	socklen_t namelen;
+#ifndef SMALL
 	struct addrinfo *ares;
+#endif
 
 	if (myctladdr.su_family == AF_INET6
 	 && (IN6_IS_ADDR_LINKLOCAL(&myctladdr.su_sin6.sin6_addr)
