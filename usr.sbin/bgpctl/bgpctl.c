@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.186 2015/11/01 21:20:46 benno Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.187 2015/12/05 13:17:05 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -400,7 +400,7 @@ main(int argc, char *argv[])
 			err(1, "write error");
 
 	while (!done) {
-		if ((n = imsg_read(ibuf)) == -1)
+		if ((n = imsg_read(ibuf)) == -1 && errno != EAGAIN)
 			err(1, "imsg_read error");
 		if (n == 0)
 			errx(1, "pipe closed");
