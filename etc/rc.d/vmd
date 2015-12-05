@@ -1,0 +1,9 @@
+#!/bin/sh
+#
+# $OpenBSD: vmd,v 1.1 2015/12/05 09:55:18 jasper Exp $
+
+daemon="/usr/sbin/vmd"
+
+. /etc/rc.d/rc.subr
+
+rc_cmd $1
