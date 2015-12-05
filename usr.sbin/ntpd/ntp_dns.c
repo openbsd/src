@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp_dns.c,v 1.14 2015/10/25 10:52:48 deraadt Exp $ */
+/*	$OpenBSD: ntp_dns.c,v 1.15 2015/12/05 13:12:16 claudio Exp $ */
 
 /*
  * Copyright (c) 2003-2008 Henning Brauer <henning@openbsd.org>
@@ -145,7 +145,7 @@ dns_dispatch_imsg(void)
 	struct ibuf		*buf;
 	const char		*str;
 
-	if ((n = imsg_read(ibuf_dns)) == -1)
+	if ((n = imsg_read(ibuf_dns)) == -1 && errno != EAGAIN)
 		return (-1);
 
 	if (n == 0) {	/* connection closed */

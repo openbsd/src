@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.139 2015/10/30 16:41:53 reyk Exp $ */
+/*	$OpenBSD: ntp.c,v 1.140 2015/12/05 13:12:16 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -428,7 +428,7 @@ ntp_dispatch_imsg(void)
 	struct imsg		 imsg;
 	int			 n;
 
-	if ((n = imsg_read(ibuf_main)) == -1)
+	if ((n = imsg_read(ibuf_main)) == -1 && errno != EAGAIN)
 		return (-1);
 
 	if (n == 0) {	/* connection closed */

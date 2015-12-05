@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.c,v 1.99 2015/11/24 01:03:25 deraadt Exp $ */
+/*	$OpenBSD: ntpd.c,v 1.100 2015/12/05 13:12:16 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -357,7 +357,7 @@ dispatch_imsg(struct ntpd_conf *lconf, const char *pw_dir,
 	int			 n;
 	double			 d;
 
-	if ((n = imsg_read(ibuf)) == -1)
+	if ((n = imsg_read(ibuf)) == -1 && errno != EAGAIN)
 		return (-1);
 
 	if (n == 0) {	/* connection closed */
@@ -662,7 +662,7 @@ ctl_main(int argc, char *argv[])
 
 	done = 0;
 	while (!done) {
-		if ((n = imsg_read(ibuf_ctl)) == -1)
+		if ((n = imsg_read(ibuf_ctl)) == -1 && errno != EAGAIN)
 			err(1, "ibuf_ctl: imsg_read error");
 		if (n == 0)
 			errx(1, "ntpctl: pipe closed");
