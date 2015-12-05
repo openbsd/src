@@ -1,4 +1,4 @@
-/*	$OpenBSD: map.c,v 1.15 2014/10/26 03:28:41 guenther Exp $	*/
+/*	$OpenBSD: map.c,v 1.16 2015/12/05 21:15:01 mmcc Exp $	*/
 
 /*-
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -333,14 +333,10 @@ free_map(am_node *mp)
 {
 	remove_am(mp);
 
-	if (mp->am_link)
-		free(mp->am_link);
-	if (mp->am_name)
-		free(mp->am_name);
-	if (mp->am_path)
-		free(mp->am_path);
-	if (mp->am_pref)
-		free(mp->am_pref);
+	free(mp->am_link);
+	free(mp->am_name);
+	free(mp->am_path);
+	free(mp->am_pref);
 
 	if (mp->am_mnt)
 		free_mntfs(mp->am_mnt);

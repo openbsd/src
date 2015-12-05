@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)srvr_afs.c	8.1 (Berkeley) 6/6/93
- *	$Id: srvr_afs.c,v 1.7 2014/10/26 03:28:41 guenther Exp $
+ *	$Id: srvr_afs.c,v 1.8 2015/12/05 21:15:01 mmcc Exp $
  */
 
 /*
@@ -123,8 +123,7 @@ timeout_srvr(void *arg)
 		/*
 		 * Free the net address
 		 */
-		if (fs->fs_ip)
-			free(fs->fs_ip);
+		free(fs->fs_ip);
 
 		/*
 		 * Free the host name.

@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)info_passwd.c	8.1 (Berkeley) 6/6/93
- *	$Id: info_passwd.c,v 1.9 2014/10/20 02:33:42 guenther Exp $
+ *	$Id: info_passwd.c,v 1.10 2015/12/05 21:15:01 mmcc Exp $
  */
 
 /*
@@ -143,8 +143,7 @@ passwd_search(mnt_map *m, char *map, char *key, char **pval, time_t *tp)
 	}
 
 enoent:
-	if (dir)
-		free(dir);
+	free(dir);
 
 	return ENOENT;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mapc.c,v 1.22 2014/10/26 03:28:41 guenther Exp $	*/
+/*	$OpenBSD: mapc.c,v 1.23 2015/12/05 21:15:01 mmcc Exp $	*/
 
 /*-
  * Copyright (c) 1989 Jan-Simon Pendry
@@ -461,8 +461,7 @@ mapc_clear(mnt_map *m)
 		while (k) {
 			kv *n = k->next;
 			free(k->key);
-			if (k->val)
-				free(k->val);
+			free(k->val);
 			free(k);
 			k = n;
 		}

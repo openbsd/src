@@ -155,10 +155,8 @@ restart()
 			/*
 			 * Clean up mo
 			 */
-			if (mo.opt_rhost)
-				free(mo.opt_rhost);
-			if (mo.opt_rfs)
-				free(mo.opt_rfs);
+			free(mo.opt_rhost);
+			free(mo.opt_rfs);
 		}
 	}
 

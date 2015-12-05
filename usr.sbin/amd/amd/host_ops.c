@@ -1,4 +1,4 @@
-/*	$OpenBSD: host_ops.c,v 1.18 2014/10/26 03:00:35 guenther Exp $	*/
+/*	$OpenBSD: host_ops.c,v 1.19 2015/12/05 21:15:01 mmcc Exp $	*/
 
 /*
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -363,10 +363,8 @@ host_fmount(mntfs *mf)
 	 */
 out:
 	discard_mntlist(mlist);
-	if (ep)
-		free(ep);
-	if (fp)
-		free(fp);
+	free(ep);
+	free(fp);
 	if (client)
 		clnt_destroy(client);
 	if (exlist)
