@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypldap_dns.c,v 1.9 2015/11/15 01:31:57 jmatthew Exp $ */
+/*	$OpenBSD: ypldap_dns.c,v 1.10 2015/12/05 13:15:06 claudio Exp $ */
 
 /*
  * Copyright (c) 2003-2008 Henning Brauer <henning@openbsd.org>
@@ -141,7 +141,7 @@ dns_dispatch_imsg(int fd, short events, void *p)
 		fatalx("unknown event");
 
 	if (events & EV_READ) {
-		if ((n = imsg_read(ibuf)) == -1)
+		if ((n = imsg_read(ibuf)) == -1 && errno != EAGAIN)
 			fatal("imsg_read error");
 		if (n == 0)
 			shut = 1;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypldap.c,v 1.17 2015/11/15 01:31:57 jmatthew Exp $ */
+/*	$OpenBSD: ypldap.c,v 1.18 2015/12/05 13:15:06 claudio Exp $ */
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -359,7 +359,7 @@ main_dispatch_client(int fd, short events, void *p)
 		fatalx("unknown event");
 
 	if (events & EV_READ) {
-		if ((n = imsg_read(ibuf)) == -1)
+		if ((n = imsg_read(ibuf)) == -1 && errno != EAGAIN)
 			fatal("imsg_read error");
 		if (n == 0)
 			shut = 1;
