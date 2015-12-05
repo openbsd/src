@@ -1,4 +1,4 @@
-$OpenBSD: README,v 1.11 2015/10/09 16:26:03 tedu Exp $
+﻿$OpenBSD: README,v 1.12 2015/12/05 02:25:39 mmcc Exp $
 
 Last updated Jul '99 for pdksh-5.2.14.
 
@@ -37,19 +37,6 @@ Files of interest:
 	os2/*		files and info needed to compile ksh on os/2.
 	tests/*		pdksh's regression testing system.
 
-
-If you are reporting a bug (with or without a fix), please include
-	* the version of pdksh you are using (see version.c, or, if you are
-	  running pdksh, try echo $KSH_VERSION),
-	* the machine, operating system and compiler you are using,
-	* and a description of how to repeat the bug (a small shell
-	  script that demonstrates the bug is best).
-as well as the following, if relevant (if you aren't sure, include them)
-	* what options you are using (both configure options and set -o options)
-	* the output of configure, with the verbose flag
-	  (eg, make distclean; ./configure --verbose)
-	* the contents of config.log (this is created by the configure script)
-	* if you are using gcc (the GNU C compiler), which version it is.
 
 BTW, THE MOST FREQUENTLY REPORTED BUG IS
 	echo hi | read a; echo $a	# Does not print hi
