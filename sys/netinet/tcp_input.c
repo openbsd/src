@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.311 2015/12/03 14:05:28 bluhm Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.312 2015/12/05 10:52:26 tedu Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -689,13 +689,13 @@ findpcb:
 			switch (af) {
 #ifdef INET6
 			case AF_INET6:
-				bcopy(ip6, &tcp_saveti6.ti6_i, sizeof(*ip6));
-				bcopy(th, &tcp_saveti6.ti6_t, sizeof(*th));
+				memcpy(&tcp_saveti6.ti6_i, ip6, sizeof(*ip6));
+				memcpy(&tcp_saveti6.ti6_t, th, sizeof(*th));
 				break;
 #endif
 			case AF_INET:
-				bcopy(ip, &tcp_saveti.ti_i, sizeof(*ip));
-				bcopy(th, &tcp_saveti.ti_t, sizeof(*th));
+				memcpy(&tcp_saveti.ti_i, ip, sizeof(*ip));
+				memcpy(&tcp_saveti.ti_t, th, sizeof(*th));
 				break;
 			}
 		}
@@ -2272,7 +2272,7 @@ tcp_dooptions(struct tcpcb *tp, u_char *cp, int cnt, struct tcphdr *th,
 				continue;
 			if (TCPS_HAVERCVDSYN(tp->t_state))
 				continue;
-			bcopy((char *) cp + 2, (char *) &mss, sizeof(mss));
+			memcpy(&mss, cp + 2, sizeof(mss));
 			mss = ntohs(mss);
 			oi->maxseg = mss;
 			break;
@@ -2292,9 +2292,9 @@ tcp_dooptions(struct tcpcb *tp, u_char *cp, int cnt, struct tcphdr *th,
 			if (optlen != TCPOLEN_TIMESTAMP)
 				continue;
 			oi->ts_present = 1;
-			bcopy(cp + 2, &oi->ts_val, sizeof(oi->ts_val));
+			memcpy(&oi->ts_val, cp + 2, sizeof(oi->ts_val));
 			oi->ts_val = ntohl(oi->ts_val);
-			bcopy(cp + 6, &oi->ts_ecr, sizeof(oi->ts_ecr));
+			memcpy(&oi->ts_ecr, cp + 6, sizeof(oi->ts_ecr));
 			oi->ts_ecr = ntohl(oi->ts_ecr);
 
 			if (!(th->th_flags & TH_SYN))
@@ -2547,10 +2547,9 @@ tcp_sack_option(struct tcpcb *tp, struct tcphdr *th, u_char *cp, int optlen)
 	while (tmp_olen > 0) {
 		struct sackblk sack;
 
-		bcopy(tmp_cp, (char *) &(sack.start), sizeof(tcp_seq));
+		memcpy(&sack.start, tmp_cp, sizeof(tcp_seq));
 		sack.start = ntohl(sack.start);
-		bcopy(tmp_cp + sizeof(tcp_seq),
-		    (char *) &(sack.end), sizeof(tcp_seq));
+		memcpy(&sack.end, tmp_cp + sizeof(tcp_seq), sizeof(tcp_seq));
 		sack.end = ntohl(sack.end);
 		tmp_olen -= TCPOLEN_SACK;
 		tmp_cp += TCPOLEN_SACK;
@@ -2833,7 +2832,7 @@ tcp_pulloutofband(struct socket *so, u_int urgent, struct mbuf *m, int off)
 
 			tp->t_iobc = *cp;
 			tp->t_oobflags |= TCPOOB_HAVEDATA;
-			bcopy(cp+1, cp, (unsigned)(m->m_len - cnt - 1));
+			memmove(cp, cp + 1, m->m_len - cnt - 1);
 			m->m_len--;
 			return;
 		}
@@ -3652,8 +3651,8 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 	 */
 	{
 	  struct inpcb *newinp = sotoinpcb(so);
-	  bcopy(inp->inp_seclevel, newinp->inp_seclevel,
-		sizeof(inp->inp_seclevel));
+	  memcpy(newinp->inp_seclevel, inp->inp_seclevel,
+	      sizeof(inp->inp_seclevel));
 	}
 #endif /* IPSEC */
 #ifdef INET6
@@ -3718,7 +3717,7 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 	if (am == NULL)
 		goto resetandabort;
 	am->m_len = src->sa_len;
-	bcopy(src, mtod(am, caddr_t), src->sa_len);
+	memcpy(mtod(am, caddr_t), src, src->sa_len);
 
 	switch (src->sa_family) {
 	case AF_INET:
@@ -4009,8 +4008,8 @@ syn_cache_add(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 	 * Fill in the cache, and put the necessary IP and TCP
 	 * options into the reply.
 	 */
-	bcopy(src, &sc->sc_src, src->sa_len);
-	bcopy(dst, &sc->sc_dst, dst->sa_len);
+	memcpy(&sc->sc_src, src, src->sa_len);
+	memcpy(&sc->sc_dst, dst, dst->sa_len);
 	sc->sc_rtableid = sotoinpcb(so)->inp_rtableid;
 	sc->sc_flags = 0;
 	sc->sc_ipopts = ipopts;

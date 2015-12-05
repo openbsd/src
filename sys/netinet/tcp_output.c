@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_output.c,v 1.115 2015/10/24 16:08:48 mpi Exp $	*/
+/*	$OpenBSD: tcp_output.c,v 1.116 2015/12/05 10:52:26 tedu Exp $	*/
 /*	$NetBSD: tcp_output.c,v 1.16 1997/06/03 16:17:09 kml Exp $	*/
 
 /*
@@ -544,7 +544,7 @@ send:
 			opt[0] = TCPOPT_MAXSEG;
 			opt[1] = 4;
 			mss = htons((u_int16_t) tcp_mss(tp, 0));
-			bcopy((caddr_t)&mss, (caddr_t)(opt + 2), sizeof(mss));
+			memcpy(opt + 2, &mss, sizeof(mss));
 			optlen = 4;
 
 			if (flags & TH_ACK)
@@ -775,8 +775,8 @@ send:
 	if (tp->t_template->m_len != hdrlen - optlen)
 		panic("tcp_output: template len != hdrlen - optlen");
 #endif /* DIAGNOSTIC */
-	bcopy(mtod(tp->t_template, caddr_t), mtod(m, caddr_t),
-		tp->t_template->m_len);
+	memcpy(mtod(m, caddr_t), mtod(tp->t_template, caddr_t),
+	    tp->t_template->m_len);
 	th = (struct tcphdr *)(mtod(m, caddr_t) + tp->t_template->m_len -
 		sizeof(struct tcphdr));
 
@@ -827,7 +827,7 @@ send:
 
 	th->th_ack = htonl(tp->rcv_nxt);
 	if (optlen) {
-		bcopy((caddr_t)opt, (caddr_t)(th + 1), optlen);
+		memcpy(th + 1, opt, optlen);
 		th->th_off = (sizeof (struct tcphdr) + optlen) >> 2;
 	}
 #ifdef TCP_ECN

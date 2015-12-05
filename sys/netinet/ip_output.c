@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.314 2015/12/03 21:29:58 sashan Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.315 2015/12/05 10:52:26 tedu Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -761,7 +761,7 @@ ip_insertoptions(struct mbuf *m, struct mbuf *opt, int *phlen)
 		m = n;
 		m->m_len = optlen + sizeof(struct ip);
 		m->m_data += max_linkhdr;
-		bcopy((caddr_t)ip, mtod(m, caddr_t), sizeof(struct ip));
+		memcpy(mtod(m, caddr_t), ip, sizeof(struct ip));
 	} else {
 		m->m_data -= optlen;
 		m->m_len += optlen;
@@ -769,7 +769,7 @@ ip_insertoptions(struct mbuf *m, struct mbuf *opt, int *phlen)
 		memmove(mtod(m, caddr_t), (caddr_t)ip, sizeof(struct ip));
 	}
 	ip = mtod(m, struct ip *);
-	bcopy((caddr_t)p->ipopt_list, (caddr_t)(ip + 1), optlen);
+	memcpy(ip + 1, p->ipopt_list, optlen);
 	*phlen = sizeof(struct ip) + optlen;
 	ip->ip_len = htons(ntohs(ip->ip_len) + optlen);
 	return (m);
@@ -811,7 +811,7 @@ ip_optcopy(struct ip *ip, struct ip *jp)
 		if (optlen > cnt)
 			optlen = cnt;
 		if (IPOPT_COPIED(opt)) {
-			bcopy((caddr_t)cp, (caddr_t)dp, optlen);
+			memcpy(dp, cp, optlen);
 			dp += optlen;
 		}
 	}
@@ -1058,8 +1058,8 @@ ip_ctloutput(int op, struct socket *so, int level, int optname,
 			*mp = m = m_get(M_WAIT, MT_SOOPTS);
 			if (inp->inp_options) {
 				m->m_len = inp->inp_options->m_len;
-				bcopy(mtod(inp->inp_options, caddr_t),
-				    mtod(m, caddr_t), m->m_len);
+				memcpy(mtod(m, caddr_t),
+				    mtod(inp->inp_options, caddr_t), m->m_len);
 			} else
 				m->m_len = 0;
 			break;
@@ -1280,7 +1280,7 @@ ip_pcbopts(struct mbuf **pcbopt, struct mbuf *m)
 			/*
 			 * Move first hop before start of options.
 			 */
-			bcopy((caddr_t)&cp[IPOPT_OFFSET+1], mtod(m, caddr_t),
+			memcpy(mtod(m, caddr_t), &cp[IPOPT_OFFSET+1],
 			    sizeof(struct in_addr));
 			/*
 			 * Then copy rest of options back
@@ -1486,7 +1486,7 @@ ip_setmoptions(int optname, struct ip_moptions **imop, struct mbuf *m,
 				    sizeof(*nmships) * newmax, M_IPMOPTS,
 				    M_NOWAIT|M_ZERO);
 				if (nmships != NULL) {
-					bcopy(omships, nmships,
+					memcpy(nmships, omships,
 					    sizeof(*omships) *
 					    imo->imo_max_memberships);
 					free(omships, M_IPMOPTS,
