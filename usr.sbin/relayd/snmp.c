@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmp.c,v 1.25 2015/12/02 13:41:27 reyk Exp $	*/
+/*	$OpenBSD: snmp.c,v 1.26 2015/12/05 10:59:03 blambert Exp $	*/
 
 /*
  * Copyright (c) 2008 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -76,8 +76,6 @@ void	 snmp_agentx_process(struct agentx_handle *, struct agentx_pdu *,
 	    void *);
 int	 snmp_register(struct relayd *);
 int	 snmp_unregister(struct relayd *);
-void	 snmp_event_add(struct relayd *, int);
-void	 snmp_agentx_process(struct agentx_handle *, struct agentx_pdu *, void *);
 
 void	*sstodata(struct sockaddr_storage *);
 size_t	 sstolen(struct sockaddr_storage *);
@@ -228,11 +226,12 @@ snmp_sock(int fd, short event, void *arg)
 			}
 
 			/* short read */
+			goto out;
 		}
 
 		snmp_agentx_process(snmp_agentx, pdu, env);
 	}
-
+out:
 	snmp_event_add(env, evflags);
 	return;
 
