@@ -1,4 +1,4 @@
-/*	$OpenBSD: dvmrpe.c,v 1.14 2015/02/10 08:49:30 claudio Exp $ */
+/*	$OpenBSD: dvmrpe.c,v 1.15 2015/12/05 13:11:00 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -243,7 +243,7 @@ dvmrpe_dispatch_main(int fd, short event, void *bula)
 	int		 link_ok;
 
 	if (event & EV_READ) {
-		if ((n = imsg_read(ibuf)) == -1)
+		if ((n = imsg_read(ibuf)) == -1 && errno != EAGAIN)
 			fatal("imsg_read error");
 		if (n == 0)	/* connection closed */
 			fatalx("pipe closed");
@@ -308,7 +308,7 @@ dvmrpe_dispatch_rde(int fd, short event, void *bula)
 	ssize_t			 n;
 
 	 if (event & EV_READ) {
-		if ((n = imsg_read(ibuf)) == -1)
+		if ((n = imsg_read(ibuf)) == -1 && errno != EAGAIN)
 			fatal("imsg_read error");
 		if (n == 0)	/* connection closed */
 			fatalx("pipe closed");
