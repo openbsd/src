@@ -1,10 +1,10 @@
-#	$OpenBSD: Makefile,v 1.17 2015/04/25 20:47:49 guenther Exp $
+#	$OpenBSD: Makefile,v 1.18 2015/12/05 10:51:49 blambert Exp $
 
 PROG=	kqueue-test
 CFLAGS+=-Wall
 SRCS=	kqueue-pipe.c kqueue-fork.c main.c kqueue-process.c kqueue-random.c \
 	kqueue-pty.c kqueue-tun.c kqueue-signal.c kqueue-fdpass.c \
-	kqueue-flock.c
+	kqueue-flock.c kqueue-timer.c
 LDADD=	-levent -lutil
 DPADD=	${LIBEVENT} ${LIBUTIL}
 
@@ -30,9 +30,11 @@ kq-fdpass: ${PROG}
 	./${PROG} -F
 kq-flock: ${PROG}
 	./${PROG} -l
+kq-timer: ${PROG}
+	./${PROG} -i
 
 REGRESS_TARGETS=kq-pipe kq-fork kq-process kq-random kq-pty kq-signal \
-	kq-fdpass kq-flock
+	kq-fdpass kq-flock kq-timer
 # kq-tun broke at some point, apparently from a change in tun routing 
 REGRESS_ROOT_TARGETS=${REGRESS_TARGETS}
 .PHONY: ${REGRESS_TARGETS}

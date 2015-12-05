@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.7 2012/07/08 12:31:03 guenther Exp $	*/
+/*	$OpenBSD: main.c,v 1.8 2015/12/05 10:51:49 blambert Exp $	*/
 /*
  *	Written by Artur Grabowski <art@openbsd.org> 2002 Public Domain
  */
@@ -16,6 +16,7 @@ int do_pty(void);
 int do_tun(void);
 int do_fdpass(void);
 int do_flock(void);
+int do_timer(void);
 
 int
 main(int argc, char **argv)
@@ -24,13 +25,16 @@ main(int argc, char **argv)
 	int ret, c;
 
 	ret = 0;
-	while ((c = getopt(argc, argv, "fFlpPrstT")) != -1) {
+	while ((c = getopt(argc, argv, "fFilpPrstT")) != -1) {
 		switch (c) {
 		case 'f':
 			ret |= check_inheritance();
 			break;
 		case 'F':
 			ret |= do_fdpass();
+			break;
+		case 'i':
+			ret |= do_timer();
 			break;
 		case 'l':
 			ret |= do_flock();
