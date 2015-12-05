@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd.c,v 1.12 2015/10/27 04:48:06 yasuoka Exp $	*/
+/*	$OpenBSD: radiusd.c,v 1.13 2015/12/05 06:50:52 mmcc Exp $	*/
 
 /*
  * Copyright (c) 2013 Internet Initiative Japan Inc.
@@ -313,8 +313,7 @@ radiusd_free(struct radiusd *radiusd)
 
 	TAILQ_FOREACH_SAFE(authen, &radiusd->authen, next, authent) {
 		TAILQ_REMOVE(&radiusd->authen, authen, next);
-		if (authen->auth != NULL)
-			free(authen->auth);
+		free(authen->auth);
 		TAILQ_FOREACH_SAFE(modref, &authen->deco, next, modreft) {
 			TAILQ_REMOVE(&authen->deco, modref, next);
 			free(modref);
@@ -1016,8 +1015,7 @@ radiusd_module_load(struct radiusd *radiusd, const char *path, const char *name)
 	return (module);
 
 on_error:
-	if (module != NULL)
-		free(module);
+	free(module);
 	if (pairsock[0] >= 0)
 		close(pairsock[0]);
 	if (pairsock[1] >= 0)
@@ -1433,8 +1431,7 @@ radiusd_module_set(struct radiusd_module *module, const char *name,
 	return (0);
 
 on_error:
-	if (buf != NULL)
-		free(buf);
+	free(buf);
 	return (-1);
 }
 
