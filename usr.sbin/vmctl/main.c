@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.3 2015/12/04 15:40:17 reyk Exp $	*/
+/*	$OpenBSD: main.c,v 1.4 2015/12/05 04:40:05 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -70,7 +70,7 @@ usage(void)
 	extern char	*__progname;
 	int		 i;
 
-	fprintf(stderr, "usage:\t%s [-s socket] command [arg ...]\n",
+	fprintf(stderr, "usage:\t%s command [arg ...]\n",
 	    __progname);
 	for (i = 0; ctl_commands[i].name != NULL; i++) {
 		fprintf(stderr, "\t%s %s %s\n", __progname,
@@ -94,11 +94,8 @@ main(int argc, char *argv[])
 {
 	int	 ch;
 
-	while ((ch = getopt(argc, argv, "s:")) != -1) {
+	while ((ch = getopt(argc, argv, "")) != -1) {
 		switch (ch) {
-		case 's':
-			socket_name = optarg;
-			break;
 		default:
 			usage();
 			/* NOTREACHED */
