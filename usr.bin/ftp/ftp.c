@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftp.c,v 1.92 2015/09/27 05:25:01 guenther Exp $	*/
+/*	$OpenBSD: ftp.c,v 1.93 2015/12/05 22:14:04 krw Exp $	*/
 /*	$NetBSD: ftp.c,v 1.27 1997/08/18 10:20:23 lukem Exp $	*/
 
 /*
@@ -746,6 +746,7 @@ sendrequest(const char *cmd, const char *local, const char *remote,
 	progressmeter(-1, remote);
 	may_reset_noop_timeout();
 	oldintp = signal(SIGPIPE, SIG_IGN);
+	serrno = 0;
 	switch (curtype) {
 
 	case TYPE_I:
@@ -1055,6 +1056,7 @@ recvrequest(const char *cmd, const char * volatile local, const char *remote,
 	}
 	progressmeter(-1, remote);
 	may_reset_noop_timeout();
+	serrno = 0;
 	switch (curtype) {
 
 	case TYPE_I:
