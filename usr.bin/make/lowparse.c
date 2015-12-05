@@ -1,4 +1,4 @@
-/*	$OpenBSD: lowparse.c,v 1.33 2014/11/03 12:48:37 espie Exp $ */
+/*	$OpenBSD: lowparse.c,v 1.34 2015/12/05 18:31:17 espie Exp $ */
 
 /* low-level parsing functions. */
 
@@ -165,8 +165,12 @@ new_input_file(const char *name, FILE *stream)
 static void
 free_input_stream(struct input_stream *istream)
 {
-	if (istream->F && fileno(istream->F) != STDIN_FILENO)
-		(void)fclose(istream->F);
+	if (istream->F) {
+		if (ferror(istream->F))
+			Parse_Error(PARSE_FATAL, "Read error");
+		if (fileno(istream->F) != STDIN_FILENO)
+			(void)fclose(istream->F);
+	}
 	free(istream->str);
 	/* Note we can't free the file names, as they are embedded in GN
 	 * for error reports. */
