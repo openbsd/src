@@ -175,8 +175,7 @@ smi_delete(struct oid *oid)
 	    value == oid)
 		RB_REMOVE(oidtree, &smi_oidtree, value);
 
-	if (oid->o_data != NULL)
-		free(oid->o_data);
+	free(oid->o_data);
 	if (oid->o_flags & OID_DYNAMIC) {
 		free(oid->o_name);
 		free(oid);
@@ -536,8 +535,7 @@ smi_print_element(struct ber_element *root)
 	return (str);
 
  fail:
-	if (str != NULL)
-		free(str);
+	free(str);
 	return (NULL);
 }
 

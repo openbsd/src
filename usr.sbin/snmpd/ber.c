@@ -1,4 +1,4 @@
-/*	$OpenBSD: ber.c,v 1.29 2015/02/12 00:30:38 pelikan Exp $ */
+/*	$OpenBSD: ber.c,v 1.30 2015/12/05 06:42:18 mmcc Exp $ */
 
 /*
  * Copyright (c) 2007, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -25,7 +25,7 @@
 #include <stdlib.h>
 #include <err.h>	/* XXX for debug output */
 #include <stdio.h>	/* XXX for debug output */
-#include <strings.h>
+#include <string.h>
 #include <unistd.h>
 #include <stdarg.h>
 
@@ -1256,8 +1256,7 @@ ber_set_writecallback(struct ber_element *elm, void (*cb)(void *, size_t),
 void
 ber_free(struct ber *b)
 {
-	if (b->br_wbuf != NULL)
-		free (b->br_wbuf);
+	free(b->br_wbuf);
 }
 
 static ssize_t

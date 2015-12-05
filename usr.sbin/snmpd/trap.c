@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.25 2015/11/21 13:09:47 reyk Exp $	*/
+/*	$OpenBSD: trap.c,v 1.26 2015/12/05 06:42:18 mmcc Exp $	*/
 
 /*
  * Copyright (c) 2008 Reyk Floeter <reyk@openbsd.org>
@@ -138,8 +138,7 @@ trap_agentx(struct agentx_handle *h, struct agentx_pdu *pdu, int *idx,
  done:
 	if (varbind != NULL)
 		ber_free_elements(varbind);
-	if (v)
-		free(v);
+	free(v);
 	*idx = x;
 	return (ret);
 }

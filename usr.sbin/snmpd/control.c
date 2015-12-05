@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.35 2015/11/23 19:31:52 reyk Exp $	*/
+/*	$OpenBSD: control.c,v 1.36 2015/12/05 06:42:18 mmcc Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -626,8 +626,7 @@ control_dispatch_agentx(int fd, short event, void *arg)
 		uptime = smi_getticks();
 		if ((pdu = snmp_agentx_response_pdu(uptime, error, idx)) == NULL) {
 			log_debug("failed to generate response");
-			if (varcpy)
-				free(varcpy);
+			free(varcpy);
 			control_event_add(c, fd, EV_WRITE, NULL);	/* XXX -- EV_WRITE? */
 			return;
 		}
@@ -652,8 +651,7 @@ control_dispatch_agentx(int fd, short event, void *arg)
 	log_debug("subagent session '%i' destroyed", h->sessionid);
 	snmp_agentx_free(h);
 	purge_registered_oids(&c->oids);
-	if (varcpy)
-		free(varcpy);
+	free(varcpy);
 	control_close(c, "agentx teardown", NULL);
 }
 
