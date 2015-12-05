@@ -1,4 +1,4 @@
-/* $OpenBSD: proc.c,v 1.6 2015/11/24 21:32:36 nicm Exp $ */
+/* $OpenBSD: proc.c,v 1.7 2015/12/05 13:18:24 claudio Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -61,7 +61,8 @@ proc_event_cb(__unused int fd, short events, void *arg)
 	struct imsg	 imsg;
 
 	if (!(peer->flags & PEER_BAD) && (events & EV_READ)) {
-		if ((n = imsg_read(&peer->ibuf)) == -1 || n == 0) {
+		if (((n = imsg_read(&peer->ibuf)) == -1 && errno != EAGAIN) ||
+		    n == 0) {
 			peer->dispatchcb(NULL, peer->arg);
 			return;
 		}
