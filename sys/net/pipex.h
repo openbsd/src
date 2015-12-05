@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.h,v 1.19 2014/10/21 10:52:53 yasuoka Exp $	*/
+/*	$OpenBSD: pipex.h,v 1.20 2015/12/05 16:09:09 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -157,8 +157,8 @@ struct pipex_session_config_req {
 
 /* for pppx(4) */
 struct pppx_hdr {
-	u_int32_t	pppx_proto;
-	u_int32_t	pppx_id;
+	u_int32_t	pppx_proto;	/* write: protocol in PIPEX_PROTO_ */
+	u_int32_t	pppx_id;	/* write: session_id, read: ppp_id */
 };
 
 struct pipex_session_descr_req {

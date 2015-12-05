@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.163 2015/11/20 12:20:30 mpi Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.164 2015/12/05 16:09:09 yasuoka Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -564,8 +564,8 @@ tun_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 		bpf_mtap(ifp->if_bpf, m0, BPF_DIRECTION_OUT);
 #endif
 #ifdef PIPEX
-	if ((m0 = pipex_output(m0, dst->sa_family, sizeof(u_int32_t),
-	    &tp->pipex_iface)) == NULL) {
+	if (pipex_enable && (m0 = pipex_output(m0, dst->sa_family,
+	    sizeof(u_int32_t), &tp->pipex_iface)) == NULL) {
 		splx(s);
 		return (0);
 	}
