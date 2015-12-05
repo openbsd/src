@@ -1,3 +1,4 @@
+/*	$OpenBSD: if_etherip.c,v 1.3 2015/12/05 22:16:27 mpi Exp $	*/
 /*
  * Copyright (c) 2015 Kazuya GODA <goda@openbsd.org>
  *
@@ -22,28 +23,24 @@
 #include <sys/systm.h>
 #include <sys/mbuf.h>
 #include <sys/socket.h>
-#include <sys/sockio.h>
 #include <sys/ioctl.h>
 #include <sys/device.h>
-#include <sys/errno.h>
-#include <sys/protosw.h>
 #include <sys/sysctl.h>
 
 #include <net/if.h>
 #include <net/if_var.h>
 #include <net/if_dl.h>
 #include <net/if_media.h>
+
 #include <netinet/in.h>
-#include <netinet/in_systm.h>
-#include <netinet/in_var.h>
 #include <netinet/ip.h>
 #include <netinet/ip_var.h>
 #include <netinet/if_ether.h>
 #include <netinet/ip_ether.h>
+
 #ifdef INET6
 #include <netinet/ip6.h>
 #include <netinet6/ip6_var.h>
-#include <netinet6/in6_var.h>
 #endif
 
 #if NBPFILTER > 0
@@ -64,7 +61,7 @@ struct etherip_softc {
 	LIST_ENTRY(etherip_softc) sc_entry;
 };
 
-LIST_HEAD(etherip_softc_list, etherip_softc);
+LIST_HEAD(, etherip_softc) etherip_softc_list;
 
 #if 0
 /*
@@ -84,36 +81,33 @@ struct etheripstat etheripstat;
 #endif
 
 void etheripattach(int);
-static int etherip_clone_create(struct if_clone *, int);
-static int etherip_clone_destroy(struct ifnet *);
-static int etherip_ioctl(struct ifnet *, u_long, caddr_t);
-static void etherip_start(struct ifnet *);
-static int etherip_media_change(struct ifnet *);
-static void etherip_media_status(struct ifnet *, struct ifmediareq *);
-static int etherip_set_tunnel_addr(struct ifnet *, struct sockaddr_storage *,
+int etherip_clone_create(struct if_clone *, int);
+int etherip_clone_destroy(struct ifnet *);
+int etherip_ioctl(struct ifnet *, u_long, caddr_t);
+void etherip_start(struct ifnet *);
+int etherip_media_change(struct ifnet *);
+void etherip_media_status(struct ifnet *, struct ifmediareq *);
+int etherip_set_tunnel_addr(struct ifnet *, struct sockaddr_storage *,
    struct sockaddr_storage *);
 
-struct etherip_softc_list etherip_softc_list;
-struct if_clone	etherip_cloner =
-    IF_CLONE_INITIALIZER("etherip", etherip_clone_create, etherip_clone_destroy);
+struct if_clone	etherip_cloner = IF_CLONE_INITIALIZER("etherip",
+    etherip_clone_create, etherip_clone_destroy);
 
 
 void
 etheripattach(int count)
 {
-
 	if_clone_attach(&etherip_cloner);
 }
 
-static int
+int
 etherip_clone_create(struct if_clone *ifc, int unit)
 {
 	struct ifnet *ifp;
 	struct etherip_softc *sc;
 
-	if ((sc = malloc(sizeof(*sc),
-	    M_DEVBUF, M_NOWAIT|M_ZERO)) == NULL)
-		return (ENOMEM);
+	if ((sc = malloc(sizeof(*sc), M_DEVBUF, M_NOWAIT|M_ZERO)) == NULL)
+		return ENOMEM;
 
 	ifp = &sc->sc_ac.ac_if;
 	snprintf(ifp->if_xname, sizeof ifp->if_xname, "etherip%d", unit);
@@ -138,10 +132,10 @@ etherip_clone_create(struct if_clone *ifc, int unit)
 
 	LIST_INSERT_HEAD(&etherip_softc_list, sc, sc_entry);
 
-	return (0);
+	return 0;
 }
 
-static int
+int
 etherip_clone_destroy(struct ifnet *ifp)
 {
 	struct etherip_softc *sc = ifp->if_softc;
@@ -151,66 +145,69 @@ etherip_clone_destroy(struct ifnet *ifp)
 	ifmedia_delete_instance(&sc->sc_media, IFM_INST_ANY);
 	ether_ifdetach(ifp);
 	if_detach(ifp);
-	free(sc, M_DEVBUF, 0);
+	free(sc, M_DEVBUF, sizeof(*sc));
 
-	return (0);
+	return 0;
 }
 
-static int
+int
 etherip_media_change(struct ifnet *ifp)
 {
-	return (0);
+	return 0;
 }
 
-static void
+void
 etherip_media_status(struct ifnet *ifp, struct ifmediareq *imr)
 {
 	imr->ifm_active = IFM_ETHER | IFM_AUTO;
 	imr->ifm_status = IFM_AVALID | IFM_ACTIVE;
 }
 
-static void
+void
 etherip_start(struct ifnet *ifp)
 {
 	struct etherip_softc *sc = ifp->if_softc;
 	struct mbuf *m;
-	int s, error;
+	int error;
 
 	for (;;) {
-		s = splnet();
 		IFQ_DEQUEUE(&ifp->if_snd, m);
-		splx(s);
 		if (m == NULL)
 			break;
-		ifp->if_opackets++;
 
 #if NBPFILTER > 0
 		if (ifp->if_bpf)
 			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_OUT);
 #endif
-		if (sc->sc_src.ss_family != AF_UNSPEC && sc->sc_dst.ss_family != AF_UNSPEC) {
-			ifp->if_flags |= IFF_OACTIVE;
-			switch (sc->sc_src.ss_family) {
-			case AF_INET:
-				error = ip_etherip_output(ifp, m);
-				break;
-#ifdef INET6
-			case AF_INET6:
-				error = ip6_etherip_output(ifp, m);
-				break;
-#endif
-			default:
-				error = ENETDOWN;
-			}
-			ifp->if_flags &= ~IFF_OACTIVE;
-		} else
+		if (sc->sc_src.ss_family == AF_UNSPEC ||
+		    sc->sc_dst.ss_family == AF_UNSPEC) {
 			m_freem(m);
+			continue;
+		}
+
+		ifp->if_opackets++;
+
+		switch (sc->sc_src.ss_family) {
+		case AF_INET:
+			error = ip_etherip_output(ifp, m);
+			break;
+#ifdef INET6
+		case AF_INET6:
+			error = ip6_etherip_output(ifp, m);
+			break;
+#endif
+		default:
+			unhandled_af(sc->sc_src.ss_family);
+		}
+
+		if (error)
+			ifp->if_oerrors++;
 	}
 
 }
 
 
-static int
+int
 etherip_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct etherip_softc *sc = ifp->if_softc;
@@ -269,8 +266,8 @@ etherip_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 		s = splsoftnet();
 		ifp->if_flags &= ~IFF_RUNNING;
-		bzero(&sc->sc_src, sizeof(sc->sc_src));
-		bzero(&sc->sc_dst, sizeof(sc->sc_dst));
+		memset(&sc->sc_src, 0, sizeof(sc->sc_src));
+		memset(&sc->sc_dst, 0, sizeof(sc->sc_dst));
 		splx(s);
 		error = 0;
 		break;
@@ -279,8 +276,8 @@ etherip_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		if (sc->sc_dst.ss_family == AF_UNSPEC)
 			return EADDRNOTAVAIL;
 
-		bzero(&lifr->addr, sizeof(lifr->addr));
-		bzero(&lifr->dstaddr, sizeof(lifr->dstaddr));
+		memset(&lifr->addr, 0, sizeof(lifr->addr));
+		memset(&lifr->dstaddr, 0, sizeof(lifr->dstaddr));
 		memcpy(&lifr->addr, &sc->sc_src, sc->sc_src.ss_len);
 		memcpy(&lifr->dstaddr, &sc->sc_dst, sc->sc_dst.ss_len);
 
@@ -297,10 +294,10 @@ etherip_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 	}
 
-	return (error);
+	return error;
 }
 
-static int
+int
 etherip_set_tunnel_addr(struct ifnet *ifp, struct sockaddr_storage *src,
     struct sockaddr_storage *dst)
 {
@@ -309,7 +306,7 @@ etherip_set_tunnel_addr(struct ifnet *ifp, struct sockaddr_storage *src,
 
 	sc  = ifp->if_softc;
 
-	s = splnet();
+	s = splsoftnet();
 	LIST_FOREACH (tsc, &etherip_softc_list, sc_entry) {
 		if (tsc == sc)
 			continue;
@@ -342,7 +339,6 @@ ip_etherip_output(struct ifnet *ifp, struct mbuf *m)
 	struct sockaddr_in *src, *dst;
 	struct etherip_header *eip;
 	struct ip *ip;
-	int error;
 
 	src = (struct sockaddr_in *)&sc->sc_src;
 	dst = (struct sockaddr_in *)&sc->sc_dst;
@@ -351,6 +347,10 @@ ip_etherip_output(struct ifnet *ifp, struct mbuf *m)
 	    src->sin_family != AF_INET || dst->sin_family != AF_INET) {
 		m_freem(m);
 		return EAFNOSUPPORT;
+	}
+	if (dst->sin_addr.s_addr == INADDR_ANY) {
+		m_freem(m);
+		return ENETUNREACH;
 	}
 
 	m->m_flags &= ~(M_BCAST|M_MCAST);
@@ -381,10 +381,6 @@ ip_etherip_output(struct ifnet *ifp, struct mbuf *m)
 	ip->ip_len = htons(m->m_pkthdr.len);
 	ip->ip_ttl = IPDEFTTL;
 	ip->ip_src = src->sin_addr;
-	if (dst->sin_addr.s_addr == INADDR_ANY) {
-		m_freem(m);
-		return ENETUNREACH;
-	}
 	ip->ip_dst = dst->sin_addr;
 
 #if NPF > 0
@@ -394,11 +390,7 @@ ip_etherip_output(struct ifnet *ifp, struct mbuf *m)
 	etheripstat.etherip_obytes += (m->m_pkthdr.len -
 	    (sizeof(struct ip) + sizeof(struct etherip_header)));
 
-	error = ip_output(m, NULL, NULL, IP_RAWOUTPUT, NULL, NULL, 0);
-	if (error)
-		ifp->if_oerrors++;
-
-	return error;
+	return ip_output(m, NULL, NULL, IP_RAWOUTPUT, NULL, NULL, 0);
 }
 
 void
@@ -488,12 +480,8 @@ ip_etherip_input(struct mbuf *m, ...)
 	}
 	m->m_flags &= ~(M_BCAST|M_MCAST);
 
-	ifp->if_ipackets++;
-
 	ml_enqueue(&ml, m);
 	if_input(ifp, &ml);
-
-	return;
 }
 
 #ifdef INET6
@@ -504,7 +492,6 @@ ip6_etherip_output(struct ifnet *ifp, struct mbuf *m)
 	struct sockaddr_in6 *src, *dst;
 	struct etherip_header *eip;
 	struct ip6_hdr *ip6;
-	int error;
 
 	src = (struct sockaddr_in6 *)&sc->sc_src;
 	dst = (struct sockaddr_in6 *)&sc->sc_dst;
@@ -513,6 +500,10 @@ ip6_etherip_output(struct ifnet *ifp, struct mbuf *m)
 	    src->sin6_family != AF_INET6 || dst->sin6_family != AF_INET6) {
 		m_freem(m);
 		return EAFNOSUPPORT;
+	}
+	if (IN6_IS_ADDR_UNSPECIFIED(&dst->sin6_addr)) {
+		m_freem(m);
+		return ENETUNREACH;
 	}
 
 	m->m_flags &= ~(M_BCAST|M_MCAST);
@@ -540,12 +531,7 @@ ip6_etherip_output(struct ifnet *ifp, struct mbuf *m)
 	ip6->ip6_hlim = ip6_defhlim;
 	ip6->ip6_plen = htons(m->m_pkthdr.len - sizeof(struct ip6_hdr));
 	ip6->ip6_src  = src->sin6_addr;
-	if (!IN6_IS_ADDR_UNSPECIFIED(&dst->sin6_addr))
-		ip6->ip6_dst = dst->sin6_addr;
-	else  {
-		m_freem(m);
-		return ENETUNREACH;
-	}
+	ip6->ip6_dst = dst->sin6_addr;
 
 #if NPF > 0
 	pf_pkt_addr_changed(m);
@@ -554,11 +540,7 @@ ip6_etherip_output(struct ifnet *ifp, struct mbuf *m)
 	etheripstat.etherip_obytes += (m->m_pkthdr.len -
 	    (sizeof(struct ip6_hdr) + sizeof(struct etherip_header)));
 
-	error = ip6_output(m, 0, NULL, IPV6_MINMTU, 0, NULL);
-	if (error)
-		ifp->if_oerrors++;
-
-	return error;
+	return ip6_output(m, 0, NULL, IPV6_MINMTU, 0, NULL);
 }
 
 int
@@ -639,8 +621,6 @@ ip6_etherip_input(struct mbuf **mp, int *offp, int proto)
 
 	m->m_flags &= ~(M_BCAST|M_MCAST);
 
-	ifp->if_ipackets++;
-
 	ml_enqueue(&ml, m);
 	if_input(ifp, &ml);
 
@@ -655,19 +635,19 @@ ip_etherip_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 {
 	/* All sysctl names at this level are terminal. */
 	if (namelen != 1)
-		return (ENOTDIR);
+		return ENOTDIR;
 
 	switch (name[0]) {
 	case ETHERIPCTL_ALLOW:
-		return (sysctl_int(oldp, oldlenp, newp, newlen,
-				   &etherip_allow));
+		return sysctl_int(oldp, oldlenp, newp, newlen, &etherip_allow);
 	case ETHERIPCTL_STATS:
 		if (newp != NULL)
-			return (EPERM);
-		return (sysctl_struct(oldp, oldlenp, newp, newlen,
-				      &etheripstat, sizeof(etheripstat)));
+			return EPERM;
+		return sysctl_struct(oldp, oldlenp, newp, newlen,
+		    &etheripstat, sizeof(etheripstat));
 	default:
-		return (ENOPROTOOPT);
+		break;
 	}
-	/* NOTREACHED */
+
+	return ENOPROTOOPT;
 }

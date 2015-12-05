@@ -20,36 +20,37 @@
 #if 0
 /*
  * TODO:
- *   At this stage, struct etheripstat and struct etherip_header, and EtherIP sysctl
- *   objects  are present at netinet/ip_ether.h .
- *   When implementation of etherip is removed from gif(4), there are moved here.
+ *   At this stage, struct etheripstat and struct etherip_header,
+ *   and EtherIP sysctl objects are present at netinet/ip_ether.h.
+ *   When implementation of etherip is removed from gif(4), there
+ *   are moved here.
  */
 
 extern int etherip_allow;
 extern struct etheripstat etheripstat;
 
 struct etheripstat {
-	u_int32_t	etherip_hdrops;		/* packet shorter than header shows */
-	u_int32_t	etherip_qfull;		/* bridge queue full, packet dropped */
-	u_int32_t	etherip_noifdrops;	/* no interface/bridge information */
-	u_int32_t	etherip_pdrops;		/* packet dropped due to policy */
-	u_int32_t	etherip_adrops;         /* all other drops */
-	u_int32_t	etherip_ipackets;	/* total input packets */
-	u_int32_t	etherip_opackets;	/* total output packets */
-	u_int64_t	etherip_ibytes;		/* input bytes */
-	u_int64_t	etherip_obytes;		/* output bytes */
+	uint32_t	etherip_hdrops;	/* packet shorter than header shows */
+	uint32_t	etherip_qfull;	/* bridge queue full, packet dropped */
+	uint32_t	etherip_noifdrops;	/* no interface/bridge info */
+	uint32_t	etherip_pdrops;		/* dropped due to policy */
+	uint32_t	etherip_adrops;		/* all other drops */
+	uint32_t	etherip_ipackets;	/* total input packets */
+	uint32_t	etherip_opackets;	/* total output packets */
+	uint64_t	etherip_ibytes;		/* input bytes */
+	uint64_t	etherip_obytes;		/* output bytes */
 };
 
 struct etherip_header {
 #if BYTE_ORDER == LITTLE_ENDIAN
-	u_int		eip_res:4;	/* reserved */
-	u_int		eip_ver:4;	/* version */
+	unsigned int	eip_res:4;	/* reserved */
+	unsigned int	eip_ver:4;	/* version */
 #endif
 #if BYTE_ORDER == BIG_ENDIAN
-	u_int		eip_ver:4;	/* version */
-	u_int		eip_res:4;	/* reserved */
+	unsigned int	eip_ver:4;	/* version */
+	unsigned int	eip_res:4;	/* reserved */
 #endif
-	u_int8_t	eip_pad;	/* required padding byte */
+	uint8_t	eip_pad;	/* required padding byte */
 } __packed;
 
 #define ETHERIP_VERSION		0x03
@@ -70,7 +71,7 @@ struct etherip_header {
 
 #endif /* 0 */
 
-int ip_etherip_sysctl(int *, u_int, void *, size_t *, void *, size_t);
+int ip_etherip_sysctl(int *, uint, void *, size_t *, void *, size_t);
 int ip_etherip_output(struct ifnet *, struct mbuf *);
 void ip_etherip_input(struct mbuf *, ...);
 
