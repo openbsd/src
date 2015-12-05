@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.5 2015/12/05 17:30:34 claudio Exp $	*/
+/*	$OpenBSD: main.c,v 1.6 2015/12/05 22:34:31 sobrado Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -58,7 +58,7 @@ struct ctl_command ctl_commands[] = {
 	{ "load",	CMD_LOAD,	ctl_load,	"[path]" },
 	{ "reload",	CMD_RELOAD,	ctl_load,	"[path]" },
 	{ "start",	CMD_START,	ctl_start,	"\"name\""
-	    " [-c] -k kernel -m memory [-i interfaces] [-d disk]*" },
+	    " [-c] -k kernel -m size [-i count] [-d disk]*" },
 	{ "status",	CMD_STATUS,	ctl_status,	"[id]" },
 	{ "stop",	CMD_STOP,	ctl_stop,	"id" },
 	{ NULL }

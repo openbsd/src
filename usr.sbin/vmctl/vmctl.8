@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vmctl.8,v 1.6 2015/12/05 04:40:05 deraadt Exp $
+.\"	$OpenBSD: vmctl.8,v 1.7 2015/12/05 22:34:31 sobrado Exp $
 .\"
 .\" Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
 .\"
@@ -35,15 +35,18 @@ VMs.
 .Pp
 Within the commands,
 the
-.Ar bytes
+.Ar size
 argument can be specified with a human-readable scale,
 using the format described in
 .Xr scan_scaled 3 .
 .Sh VM COMMANDS
 The options are as follows:
 .Bl -tag -width Ds
-.It Cm create Ar path Fl s Ar bytes
-Creates a VM disk image file with the specified pathname and size,
+.It Cm create Ar path Fl s Ar size
+Creates a VM disk image file with the specified
+.Ar path
+and
+.Ar size ,
 rounded to megabytes.
 .It Cm load Op Ar filename
 Load the configuration from the specified file.
@@ -52,12 +55,12 @@ Reload the configuration from the default configuration file.
 .It Xo Cm start Op Ar name
 .Op Fl c
 .Fl k Ar path
-.Fl m Ar bytes
+.Fl m Ar size
 .Op Fl d Ar path
 .Op Fl i Ar count
 .Xc
 Starts a VM defined by the specified name and parameters:
-.Bl -tag -width "memory size"
+.Bl -tag -width "-i count"
 .It Fl c
 Automatically connect to the VM console.
 .It Fl d Ar path
@@ -66,8 +69,10 @@ Disk image file (may be specified multiple times to add multiple disk images).
 Number of network interfaces to add to the VM.
 .It Fl k Ar path
 Kernel to load when booting the VM.
-.It Fl m Ar bytes
-Memory size of the VM, in bytes, rounded to megabytes.
+.It Fl m Ar size
+Memory
+.Ar size
+of the VM, rounded to megabytes.
 .El
 .It Cm status Op Ar id
 Lists VMs running on the host, optionally listing just the selected VM
