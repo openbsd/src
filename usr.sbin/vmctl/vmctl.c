@@ -291,7 +291,7 @@ print_vm_info(struct vm_info_result *list, size_t ct)
 	size_t i, j;
 	char *vcpu_state;
 
-	printf("%5s %5s %5s %7s   %s\n", "ID", "PID", "VCPUS", "MAXMEM",
+	printf("%5s %5s %5s %9s   %s\n", "ID", "PID", "VCPUS", "MAXMEM",
 	    "NAME");
 	for (i = 0; i < ct; i++) {
 		if (info_id == 0 || info_id == list[i].vir_id)
