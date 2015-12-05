@@ -1,4 +1,4 @@
-﻿$OpenBSD: README,v 1.12 2015/12/05 02:25:39 mmcc Exp $
+﻿$OpenBSD: README,v 1.13 2015/12/05 06:55:09 mmcc Exp $
 
 Last updated Jul '99 for pdksh-5.2.14.
 
@@ -17,12 +17,6 @@ public pdksh release (4.9) are auto-configuration, arrays, $(( .. )),
 [[ .. ]], variable attributes, co-processes, extended file globbing,
 many POSIXisms and many bug fixes.  See the NEWS and ChangeLog files for
 other features added and bugs fixed.
-
-Note that pdksh is provided AS IS, with NO WARRANTY, either expressed or
-implied.  Also note that although the bulk of the code in pdksh is in the
-public domain, some files are copyrighten (but freely distributable) and
-subject to certain conditions (eg, don't remove copyright, document any
-changes, etc.).  See the LEGAL file for details.
 
 Files of interest:
 	CONTRIBUTORS	short history of pdksh, people who contributed, etc.
