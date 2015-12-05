@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioblk.c,v 1.8 2015/12/05 19:55:33 sf Exp $	*/
+/*	$OpenBSD: vioblk.c,v 1.9 2015/12/05 19:57:03 sf Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch.
@@ -339,6 +339,10 @@ vioblk_scsi_cmd(struct scsi_xfer *xs)
 		break;
 
 	case SYNCHRONIZE_CACHE:
+		if ((vsc->sc_features & VIRTIO_BLK_F_FLUSH) == 0) {
+			vioblk_scsi_done(xs, XS_NOERROR);
+			return;
+		}
 		operation = VIRTIO_BLK_T_FLUSH;
 		break;
 
