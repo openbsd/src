@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.h,v 1.174 2015/12/03 12:22:51 dlg Exp $	*/
+/*	$OpenBSD: if.h,v 1.175 2015/12/05 19:04:37 deraadt Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -400,8 +400,7 @@ struct ifmediareq {
 	uint64_t	ifm_mask;		/* don't care mask */
 	uint64_t	ifm_status;		/* media status */
 	uint64_t	ifm_active;		/* active options */ 
-	int		ifm_count;		/* # entries in ifm_ulist
-						array */
+	int		ifm_count;		/* # entries in ifm_ulist array */
 	uint64_t	*ifm_ulist;		/* media words */
 };
 
