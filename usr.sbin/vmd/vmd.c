@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.16 2015/12/03 23:32:32 reyk Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.17 2015/12/05 20:33:51 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -297,7 +297,7 @@ main(int argc, char **argv)
 	/* Open /dev/vmm */
 	env->vmd_fd = open(VMM_NODE, O_RDWR);
 	if (env->vmd_fd == -1)
-		fatal("can't open vmm device node %s", VMM_NODE);
+		fatal("%s", VMM_NODE);
 
 	/* Configuration will be parsed after forking the children */
 	env->vmd_conffile = VMD_CONF;
