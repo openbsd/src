@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppp.c,v 1.25 2015/07/23 09:04:06 yasuoka Exp $ */
+/*	$OpenBSD: ppp.c,v 1.26 2015/12/05 18:43:36 mmcc Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: ppp.c,v 1.25 2015/07/23 09:04:06 yasuoka Exp $ */
+/* $Id: ppp.c,v 1.26 2015/12/05 18:43:36 mmcc Exp $ */
 /**@file
  * This file provides PPP(Point-to-Point Protocol, RFC 1661) and
  * {@link :: _npppd_ppp PPP instance} related functions.
@@ -39,7 +39,7 @@
 #include <netdb.h>
 #include <stdio.h>
 #include <stdarg.h>
-#include <strings.h>
+#include <string.h>
 #include <unistd.h>
 #include <errno.h>
 #include <syslog.h>
@@ -424,8 +424,7 @@ ppp_destroy(void *ctx)
 {
 	npppd_ppp *_this = ctx;
 
-	if (_this->proxy_authen_resp != NULL)
-		free(_this->proxy_authen_resp);
+	free(_this->proxy_authen_resp);
 
 	/*
 	 * Down/stop the protocols again to make sure they are stopped
@@ -437,8 +436,7 @@ ppp_destroy(void *ctx)
 	pap_stop(&_this->pap);
 	chap_stop(&_this->chap);
 
-	if (_this->outpacket_buf != NULL)
-		free(_this->outpacket_buf);
+	free(_this->outpacket_buf);
 
 	free(_this);
 }
@@ -603,10 +601,8 @@ ppp_auth_ok(npppd_ppp *_this)
 
 		return;
 	}
-	if (_this->proxy_authen_resp != NULL) {
-		free(_this->proxy_authen_resp);
-		_this->proxy_authen_resp = NULL;
-	}
+	free(_this->proxy_authen_resp);
+	_this->proxy_authen_resp = NULL;
 
 	fsm_lowerup(&_this->ipcp.fsm);
 	fsm_open(&_this->ipcp.fsm);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: npppd_auth.c,v 1.16 2015/01/19 01:48:59 deraadt Exp $ */
+/*	$OpenBSD: npppd_auth.c,v 1.17 2015/12/05 18:43:36 mmcc Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -26,7 +26,7 @@
  * SUCH DAMAGE.
  */
 /**@file authentication realm */
-/* $Id: npppd_auth.c,v 1.16 2015/01/19 01:48:59 deraadt Exp $ */
+/* $Id: npppd_auth.c,v 1.17 2015/12/05 18:43:36 mmcc Exp $ */
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
@@ -284,8 +284,7 @@ npppd_auth_get_user_password(npppd_auth_base *base,
 	}
 	strlcpy(password, user->password, sz);
 out:
-	if (user != NULL)
-		free(user);
+	free(user);
 
 	return retval;
 }
@@ -377,8 +376,7 @@ npppd_auth_get_calling_number(npppd_auth_base *base, const char *username,
 	strlcpy(number, user->calling_number, sz);
 
 out:
-	if (user != NULL)
-		free(user);
+	free(user);
 
 	return retval;
 }

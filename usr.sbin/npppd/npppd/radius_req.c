@@ -1,4 +1,4 @@
-/*	$OpenBSD: radius_req.c,v 1.10 2015/07/23 09:04:06 yasuoka Exp $ */
+/*	$OpenBSD: radius_req.c,v 1.11 2015/12/05 18:43:36 mmcc Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -28,7 +28,7 @@
 /**@file
  * This file provides functions for RADIUS request using radius(3) and event(3).
  * @author	Yasuoka Masahiko
- * $Id: radius_req.c,v 1.10 2015/07/23 09:04:06 yasuoka Exp $
+ * $Id: radius_req.c,v 1.11 2015/12/05 18:43:36 mmcc Exp $
  */
 #include <sys/types.h>
 #include <sys/time.h>
@@ -296,8 +296,7 @@ radius_prepare(radius_req_setting *setting, void *context,
 
 	return 0;
 fail:
-	if (lap != NULL)
-		free(lap);
+	free(lap);
 
 	return 1;
 }

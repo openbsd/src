@@ -1,4 +1,4 @@
-/*	$OpenBSD: l2tp_ctrl.c,v 1.20 2015/06/24 05:20:16 yasuoka Exp $	*/
+/*	$OpenBSD: l2tp_ctrl.c,v 1.21 2015/12/05 18:43:36 mmcc Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -26,7 +26,7 @@
  * SUCH DAMAGE.
  */
 /**@file Control connection processing functions for L2TP LNS */
-/* $Id: l2tp_ctrl.c,v 1.20 2015/06/24 05:20:16 yasuoka Exp $ */
+/* $Id: l2tp_ctrl.c,v 1.21 2015/12/05 18:43:36 mmcc Exp $ */
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/socket.h>
@@ -228,8 +228,7 @@ l2tp_ctrl_destroy(l2tp_ctrl *_this)
 {
 	L2TP_CTRL_ASSERT(_this != NULL);
 #if defined(USE_LIBSOCKUTIL) || defined(USE_SA_COOKIE)
-	if (_this->sa_cookie != NULL)
-		free(_this->sa_cookie);
+	free(_this->sa_cookie);
 #endif
 	free(_this);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccp.c,v 1.6 2012/09/18 13:14:08 yasuoka Exp $ */
+/*	$OpenBSD: ccp.c,v 1.7 2015/12/05 18:43:36 mmcc Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -28,7 +28,7 @@
 /**@file
  * This file provides functions for CCP (Compression Control Protocol).
  * MPPE is supported as a CCP option.
- * $Id: ccp.c,v 1.6 2012/09/18 13:14:08 yasuoka Exp $
+ * $Id: ccp.c,v 1.7 2015/12/05 18:43:36 mmcc Exp $
  */
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -192,10 +192,8 @@ fail:
 		*lpktp = len;
 		break;
 	}
-	if (rejbuf != NULL)
-		free(rejbuf);
-	if (nakbuf0 != NULL)
-		free(nakbuf0);
+	free(rejbuf);
+	free(nakbuf0);
 
 	return rcode;
 #undef	remlen

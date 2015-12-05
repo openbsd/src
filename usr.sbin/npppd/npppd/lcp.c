@@ -1,4 +1,4 @@
-/*	$OpenBSD: lcp.c,v 1.15 2015/12/04 13:12:44 yasuoka Exp $ */
+/*	$OpenBSD: lcp.c,v 1.16 2015/12/05 18:43:36 mmcc Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: lcp.c,v 1.15 2015/12/04 13:12:44 yasuoka Exp $ */
+/* $Id: lcp.c,v 1.16 2015/12/05 18:43:36 mmcc Exp $ */
 /**@file
  * This file provides LCP related functions.
  *<pre>
@@ -534,10 +534,8 @@ fail:
 		psm_peer_opt_set_accepted(&f->ppp->lcp, pfc, 0);
 		psm_peer_opt_set_accepted(&f->ppp->lcp, acfc, 0);
 	}
-	if (rejbuf != NULL)
-		free(rejbuf);
-	if (nakbuf0 != NULL)
-		free(nakbuf0);
+	free(rejbuf);
+	free(nakbuf0);
 
 	return rcode;
 #undef	remlen

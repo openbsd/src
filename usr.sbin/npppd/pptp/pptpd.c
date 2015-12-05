@@ -1,4 +1,4 @@
-/*	$OpenBSD: pptpd.c,v 1.27 2015/06/23 07:07:33 yasuoka Exp $	*/
+/*	$OpenBSD: pptpd.c,v 1.28 2015/12/05 18:43:36 mmcc Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -25,12 +25,12 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: pptpd.c,v 1.27 2015/06/23 07:07:33 yasuoka Exp $ */
+/* $Id: pptpd.c,v 1.28 2015/12/05 18:43:36 mmcc Exp $ */
 
 /**@file
  * This file provides a implementation of PPTP daemon.  Currently it
  * provides functions for PAC (PPTP Access Concentrator) only.
- * $Id: pptpd.c,v 1.27 2015/06/23 07:07:33 yasuoka Exp $
+ * $Id: pptpd.c,v 1.28 2015/12/05 18:43:36 mmcc Exp $
  */
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -213,8 +213,7 @@ pptpd_add_listener(pptpd *_this, int idx, struct pptp_conf *conf,
 	}
 	return 0;
 fail:
-	if (plistener != NULL)
-		free(plistener);
+	free(plistener);
 	return 1;
 }
 

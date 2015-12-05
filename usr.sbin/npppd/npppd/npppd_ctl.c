@@ -1,4 +1,4 @@
-/*	$OpenBSD: npppd_ctl.c,v 1.14 2015/01/19 01:48:59 deraadt Exp $ */
+/*	$OpenBSD: npppd_ctl.c,v 1.15 2015/12/05 18:43:36 mmcc Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -82,8 +82,7 @@ void
 npppd_ctl_destroy(struct npppd_ctl *_this)
 {
 	if (_this != NULL) {
-		if (_this->started_ppp != NULL)
-			free(_this->started_ppp);
+		free(_this->started_ppp);
 		free(_this);
 	}
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.19 2015/12/05 13:19:32 claudio Exp $ */
+/*	$OpenBSD: privsep.c,v 1.20 2015/12/05 18:43:36 mmcc Exp $ */
 
 /*
  * Copyright (c) 2010 Yasuoka Masahiko <yasuoka@openbsd.org>
@@ -729,10 +729,8 @@ privsep_priv_dispatch_imsg(struct imsgbuf *ibuf)
 			} else if (retval == -1) {
 				buf = NULL;
 on_broken_entry:
-				if (buf != NULL)
-					free(buf);
-				if (str != NULL)
-					free(str);
+				free(buf);
+				free(str);
 				r.retval = -1;
 				r.rerrno = ENOENT;
 			} else {

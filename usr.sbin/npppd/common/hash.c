@@ -220,8 +220,7 @@ hash_free(htbl)
 	hash_table *htbl;
 {
 	if (htbl != NULL) {
-		if (htbl->bucket != NULL)
-			free(htbl->bucket);
+		free(htbl->bucket);
 		free(htbl);
 	}
 }

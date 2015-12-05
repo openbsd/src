@@ -1,4 +1,4 @@
-/*	$OpenBSD: npppd_pool.c,v 1.8 2014/10/25 03:23:49 lteo Exp $ */
+/*	$OpenBSD: npppd_pool.c,v 1.9 2015/12/05 18:43:36 mmcc Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -109,8 +109,7 @@ npppd_pool_uninit(npppd_pool *_this)
 	_this->initialized = 0;
 
 	slist_fini(&_this->dyna_addrs);
-	if (_this->addrs != NULL)
-		free(_this->addrs);
+	free(_this->addrs);
 	_this->addrs = NULL;
 	_this->addrs_size = 0;
 	_this->npppd = NULL;
@@ -202,15 +201,13 @@ npppd_pool_reload(npppd_pool *_this)
 			count++;
 		}
 	}
-	if (_this->addrs != NULL)
-		free(_this->addrs);
+	free(_this->addrs);
 	_this->addrs = addrs;
 	_this->addrs_size = addrs_size;
 
 	return 0;
 fail:
-	if (addrs != NULL)
-		free(addrs);
+	free(addrs);
 
 	return 1;
 }

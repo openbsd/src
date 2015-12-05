@@ -120,8 +120,7 @@ slist_set_size(slist *list, int size)
 void
 slist_fini(slist *list)
 {
-	if (list->list != NULL)
-		free(list->list);
+	free(list->list);
 	slist_init(list);
 }
 
