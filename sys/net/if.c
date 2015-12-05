@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.421 2015/12/04 11:50:01 mpi Exp $	*/
+/*	$OpenBSD: if.c,v 1.422 2015/12/05 10:07:55 tedu Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -1232,7 +1232,6 @@ ifa_ifwithaddr(struct sockaddr *addr, u_int rtableid)
 /*
  * Locate the point to point interface with a given destination address.
  */
-/*ARGSUSED*/
 struct ifaddr *
 ifa_ifwithdstaddr(struct sockaddr *addr, u_int rdomain)
 {
@@ -2025,7 +2024,6 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
  * in later ioctl's (above) to get
  * other information.
  */
-/*ARGSUSED*/
 int
 ifconf(u_long cmd, caddr_t data)
 {

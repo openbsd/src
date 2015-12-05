@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.274 2015/12/04 10:32:42 mpi Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.275 2015/12/05 10:07:55 tedu Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -150,7 +150,6 @@ struct niqueue bridgeintrq = NIQUEUE_INITIALIZER(1024, NETISR_BRIDGE);
 struct if_clone bridge_cloner =
     IF_CLONE_INITIALIZER("bridge", bridge_clone_create, bridge_clone_destroy);
 
-/* ARGSUSED */
 void
 bridgeattach(int n)
 {

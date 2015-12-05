@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_loop.c,v 1.74 2015/11/27 15:00:12 mpi Exp $	*/
+/*	$OpenBSD: if_loop.c,v 1.75 2015/12/05 10:07:55 tedu Exp $	*/
 /*	$NetBSD: if_loop.c,v 1.15 1996/05/07 02:40:33 thorpej Exp $	*/
 
 /*
@@ -151,7 +151,6 @@ int	loop_clone_destroy(struct ifnet *);
 struct if_clone loop_cloner =
     IF_CLONE_INITIALIZER("lo", loop_clone_create, loop_clone_destroy);
 
-/* ARGSUSED */
 void
 loopattach(int n)
 {
@@ -222,7 +221,6 @@ looutput(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 	return (if_input_local(ifp, m, dst->sa_family));
 }
 
-/* ARGSUSED */
 void
 lortrequest(struct ifnet *ifp, int cmd, struct rtentry *rt)
 {
@@ -233,7 +231,6 @@ lortrequest(struct ifnet *ifp, int cmd, struct rtentry *rt)
 /*
  * Process an ioctl request.
  */
-/* ARGSUSED */
 int
 loioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {

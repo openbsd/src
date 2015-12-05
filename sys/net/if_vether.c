@@ -1,4 +1,4 @@
-/* $OpenBSD: if_vether.c,v 1.25 2015/10/25 12:05:40 mpi Exp $ */
+/* $OpenBSD: if_vether.c,v 1.26 2015/12/05 10:07:55 tedu Exp $ */
 
 /*
  * Copyright (c) 2009 Theo de Raadt
@@ -138,7 +138,6 @@ vetherstart(struct ifnet *ifp)
 	}
 }
 
-/* ARGSUSED */
 int
 vetherioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {

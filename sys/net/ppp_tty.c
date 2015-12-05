@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppp_tty.c,v 1.39 2015/11/24 13:37:16 mpi Exp $	*/
+/*	$OpenBSD: ppp_tty.c,v 1.40 2015/12/05 10:07:55 tedu Exp $	*/
 /*	$NetBSD: ppp_tty.c,v 1.12 1997/03/24 21:23:10 christos Exp $	*/
 
 /*
@@ -170,7 +170,6 @@ struct pool ppp_pkts;
  * Attach the given tty to the first available ppp unit.
  * Called from device open routine or ttioctl.
  */
-/* ARGSUSED */
 int
 pppopen(dev_t dev, struct tty *tp)
 {
@@ -388,7 +387,6 @@ pppwrite(struct tty *tp, struct uio *uio, int flag)
  * This discipline requires that tty device drivers call
  * the line specific l_ioctl routine from their ioctl routines.
  */
-/* ARGSUSED */
 int
 ppptioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct proc *p)
 {

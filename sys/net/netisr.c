@@ -32,7 +32,7 @@ int	 netisr;
 void	*netisr_intr;
 
 void
-netintr(void *unused) /* ARGSUSED */
+netintr(void *unused)
 {
 	int n, t = 0;
 

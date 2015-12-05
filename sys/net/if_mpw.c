@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mpw.c,v 1.11 2015/12/02 13:29:25 claudio Exp $ */
+/*	$OpenBSD: if_mpw.c,v 1.12 2015/12/05 10:07:55 tedu Exp $ */
 
 /*
  * Copyright (c) 2015 Rafael Zalamena <rzalamena@openbsd.org>
@@ -71,7 +71,6 @@ struct	mbuf *mpw_vlan_handle(struct mbuf *, struct mpw_softc *);
 struct if_clone mpw_cloner =
     IF_CLONE_INITIALIZER("mpw", mpw_clone_create, mpw_clone_destroy);
 
-/* ARGSUSED */
 void
 mpwattach(int n)
 {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.130 2015/10/07 08:41:01 mpi Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.131 2015/12/05 10:07:55 tedu Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -318,7 +318,6 @@ bpf_detachd(struct bpf_d *d)
 	d->bd_bif = NULL;
 }
 
-/* ARGSUSED */
 void
 bpfilterattach(int n)
 {
@@ -329,7 +328,6 @@ bpfilterattach(int n)
  * Open ethernet device.  Returns ENXIO for illegal minor device number,
  * EBUSY if file is open by another process.
  */
-/* ARGSUSED */
 int
 bpfopen(dev_t dev, int flag, int mode, struct proc *p)
 {
@@ -352,7 +350,6 @@ bpfopen(dev_t dev, int flag, int mode, struct proc *p)
  * Close the descriptor by detaching it from its interface,
  * deallocating its buffers, and marking it free.
  */
-/* ARGSUSED */
 int
 bpfclose(dev_t dev, int flag, int mode, struct proc *p)
 {
@@ -607,7 +604,6 @@ bpf_reset_d(struct bpf_d *d)
  *  BIOCGHDRCMPLT	Get "header already complete" flag
  *  BIOCSHDRCMPLT	Set "header already complete" flag
  */
-/* ARGSUSED */
 int
 bpfioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 {

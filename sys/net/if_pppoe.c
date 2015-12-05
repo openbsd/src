@@ -1,4 +1,4 @@
-/* $OpenBSD: if_pppoe.c,v 1.51 2015/11/28 19:10:26 reyk Exp $ */
+/* $OpenBSD: if_pppoe.c,v 1.52 2015/12/05 10:07:55 tedu Exp $ */
 /* $NetBSD: if_pppoe.c,v 1.51 2003/11/28 08:56:48 keihan Exp $ */
 
 /*
@@ -195,7 +195,6 @@ struct if_clone pppoe_cloner =
     IF_CLONE_INITIALIZER("pppoe", pppoe_clone_create, pppoe_clone_destroy);
 
 
-/* ARGSUSED */
 void
 pppoeattach(int count)
 {

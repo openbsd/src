@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_usrreq.c,v 1.21 2015/07/15 22:16:42 deraadt Exp $	*/
+/*	$OpenBSD: raw_usrreq.c,v 1.22 2015/12/05 10:07:55 tedu Exp $	*/
 /*	$NetBSD: raw_usrreq.c,v 1.11 1996/02/13 22:00:43 christos Exp $	*/
 
 /*
@@ -131,7 +131,6 @@ raw_input(struct mbuf *m0, ...)
 		m_freem(m);
 }
 
-/*ARGSUSED*/
 void *
 raw_ctlinput(int cmd, struct sockaddr *arg, u_int rdomain, void *d)
 {
@@ -142,7 +141,6 @@ raw_ctlinput(int cmd, struct sockaddr *arg, u_int rdomain, void *d)
 	/* INCOMPLETE */
 }
 
-/*ARGSUSED*/
 int
 raw_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
     struct mbuf *control, struct proc *p)
