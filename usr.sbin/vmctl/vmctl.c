@@ -1,3 +1,5 @@
+/*	$OpenBSD: vmctl.c,v 1.4 2015/12/05 20:26:38 reyk Exp $	*/
+
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
