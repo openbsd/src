@@ -1,6 +1,6 @@
 ######## TERMINAL TYPE DESCRIPTIONS SOURCE FILE
 #
-# $OpenBSD: termtypes.master,v 1.55 2015/07/26 08:23:33 nicm Exp $
+# $OpenBSD: termtypes.master,v 1.56 2015/12/05 20:32:16 nicm Exp $
 #
 # OpenBSD local changes:
 #   - add rxvt-unicode and rxvt-unicode-256color
@@ -13,8 +13,8 @@
 # Report bugs and new terminal descriptions to
 #	bug-ncurses@gnu.org
 #
-#	$Revision: 1.55 $
-#	$Date: 2015/07/26 08:23:33 $
+#	$Revision: 1.56 $
+#	$Date: 2015/12/05 20:32:16 $
 #
 # The original header is preserved below for reference.  It is noted that there
 # is a "newer" version which differs in some cosmetic details (but actually
@@ -1253,9 +1253,50 @@ nsterm-build326|Terminal.app in OS X 10.9,
 nsterm-build343|Terminal.app in OS X 10.10,
 	kend=\EOF, khome=\EOH, use=nsterm-build326,
 
+# reviewed Terminal.app in El Capitan (version 2.6 build 361) -TD
+# Using vttest:
+# + no vt52 mode for cursor keys, though vt52 screen works in vttest
+# + f1-f4 map to pf1-pf4
+# + no vt220 support aside from DECTCEM and ECH
+# + there are no protected areas.  Forget about anything above vt220.
+# + in ECMA-48 cursor movement, VPR and HPR fail.  Others work.
+# + vttest color 11.6.4 and 11.6.5 (bce for ED/EL and ECH/indexing) are bce
+# + but bce fails for 11.6.7.2 (test repeat).
+# + SD (11.6.7.3) also fails, but SL/SR/SU work.
+# + 11.6.6 (test insert/delete char/line with bce) has several failures.
+# + normal (not X10 or Highlight tracking) mouse now works.
+# + mouse any-event works
+# + mouse button-event works
+# + in alternate screen:
+#   mode 47/48 work
+#   mode 1047 fails to restore cursor position (do not use)
+#   mode 1049 fails to restore screen contents (do not use)
+# + dtterm window-modify operations work (some messages are not printed)
+# + dtterm window-report gives size of window in characters/pixels as
+#   well as state of window.
+# Using tack:
+# + there is no difference between cnorm/cvvis
+# + has dim/invis/blink (no protect of course)
+# + most function keys with shift/control modifiers give beep
+#   (user can configure, but out-of-the-box is what I record)
+# + shift-F5 is \E[25~ through shift-F12 is \E[34~ (skips \E[30~ between
+#   F8 and F9).
+# + kLFT5/kRIT5 work, but not up/down with control-modifier
+# + kLFT/kRIT work, but not up/down with shift-modifier
+# + there are a few predefined bindings with Alt, but no clear pattern.
+# + uses alt-key as UTF-8 "meta" something like xterm altSendsEscape
+# Using ncurses test-program with xterm-new:
+# + no italics
+# Using xterm's scripts:
+# + palette for 256-colors is hardcoded.
+# + no support for "dynamic colors"
+# + no support for tcap-query.
+nsterm-build361|Terminal.app in OS X 10.11,
+	kmous=\E[M, use=nsterm-build343,
+
 # This is an alias which should always point to the "current" version
 nsterm|Apple_Terminal|AppKit Terminal.app,
-	use=nsterm-build343,
+	use=nsterm-build361,
 
 # iTerm.app from http://iterm.sourceforge.net/ is an alternative (and
 # more featureful) terminal emulator for Mac OS X. It is similar
@@ -2177,37 +2218,52 @@ iris-color|xwsh|IRIX ANSI with color,
 # Added several capabilities to pccon+base, reading wsemul_vt100_subr.c -TD
 # Changed kbs to DEL and removed keys that duplicate stty settings -TD
 #
+# Notes from testing with vttest:
+#	fails wrapping test
+#	no 8-bit controls
+#	identifies as vt200 with selective erase, but does not implement DECSCA
+#	no vt52 mode
+#	also lacks these:
+# 		ESC # 8   DEC Screen Alignment Test (DECALN).
+# 		CSI ? 5 h Reverse Video (DECSCNM).
+#
 pccon+keys|OpenBSD PC keyboard keys,
 	kbs=\177, kcub1=\E[D, kcud1=\E[B, kcuf1=\E[C, kcuu1=\E[A,
 	kdch1=\E[3~, kend=\E[8~, kent=^M, kf1=\E[11~, kf10=\E[21~,
-	kf11=\E[23~, kf12=\E[24~, kf2=\E[12~, kf3=\E[13~,
+	kf11=\E[23~, kf12=\E[24~, kf13=\E[25~, kf14=\E[26~,
+	kf15=\E[28~, kf16=\E[29~, kf17=\E[31~, kf18=\E[32~,
+	kf19=\E[33~, kf2=\E[12~, kf20=\E[34~, kf21=\E[35~,
+	kf22=\E[36~, kf23=\E[37~, kf24=\E[38~, kf3=\E[13~,
 	kf4=\E[14~, kf5=\E[15~, kf6=\E[17~, kf7=\E[18~, kf8=\E[19~,
 	kf9=\E[20~, khome=\E[7~, kich1=\E[2~, knp=\E[6~, kpp=\E[5~,
 	krfr=^R,
 pccon+sgr+acs0|sgr and simple ASCII pseudographics for OpenBSD PC console,
 	acsc=+>\,<-\^.v0#`+a\:f\\h#i#j+k+l+m+n+o~p-q-r-s_t+u+v+w+x|y#z#{*|!}#~o,
-	sgr=\E[0%?%p1%p3%|%t;7%;m, sgr0=\E[m,
+	sgr=\E[0%?%p1%p3%|%t;7%;%?%p6%t;1%;%?%p2%t;4%;m,
+	sgr0=\E[m,
 pccon+sgr+acs|sgr and default ASCII pseudographics for OpenBSD PC console,
 	acsc=++\,\,--..00``aaffgghhiijjkkllmmnnooppqqrrssttuuvvwwxxyyzz{{||}}~~,
 	enacs=\E)0$<5>, rmacs=\E(B$<5>,
-	sgr=\E[0%?%p1%p3%|%t;7%;m%?%p9%t\E(0%e\E(B%;$<5>,
+	sgr=\E[0%?%p6%t;1%;%?%p2%t;4%;%?%p1%p3%|%t;7%;m%?%p9%t\E(0%e\E(B%;$<2>,
 	sgr0=\E[m\E(B$<5>, smacs=\E(0$<5>,
+# underline renders as color
 pccon+colors|ANSI colors for OpenBSD PC console,
 	bce,
-	colors#8, pairs#64,
-	op=\E[m, setab=\E[4%p1%dm, setaf=\E[3%p1%dm,
+	colors#8, ncv#2, pairs#64,
+	op=\E[47;30m, setab=\E[4%p1%dm, setaf=\E[3%p1%dm,
 pccon+base|base capabilities for OpenBSD PC console,
 	am, km, mc5i, msgr, npc, nxon, xenl, xon,
 	cols#80, it#8, lines#24,
-	bel=^G, clear=\E[H\E[J, cr=^M, cub1=^H, cud1=^J, cuf1=\E[C,
-	cup=\E[%i%p1%d;%p2%dH, cuu1=\E[A, dch=\E[%p1%dP,
-	dch1=\E[P, dl1=\E[M, ech=\E[%p1%dX, ed=\E[J, el=\E[K,
-	el1=\E[1K, home=\E[H, ht=^I, hts=\EH, ich=\E[%p1%d@,
+	bel=^G, bold=\E[1m, clear=\E[H\E[J, cr=^M, cub1=^H, cud1=^J,
+	cuf1=\E[C, cup=\E[%i%p1%d;%p2%dH, cuu1=\E[A,
+	dch=\E[%p1%dP, dch1=\E[P, dl1=\E[M, ech=\E[%p1%dX, ed=\E[J,
+	el=\E[K, el1=\E[1K, home=\E[H, ht=^I, hts=\EH, ich=\E[%p1%d@,
 	il1=\E[L, ind=\ED, nel=\EE, rev=\E[7m, ri=\EM, rmam=\E[?7l,
-	rmso=\E[m, rs2=\Ec$<50>, smam=\E[?7h, smso=\E[7m,
-	tbc=\E[3g, u6=\E[%i%d;%dR, u7=\E[6n,
+	rmso=\E[27m, rmul=\E[24m, rs2=\Ec$<50>, smam=\E[?7h,
+	smso=\E[7m, smul=\E[4m, tbc=\E[3g, u6=\E[%i%d;%dR,
+	u7=\E[6n,
 pccon0-m|OpenBSD PC console without colors & with simple ASCII pseudographics,
-	use=pccon+base, use=pccon+sgr+acs0, use=pccon+keys,
+	use=pccon+sgr+acs0, use=pccon+base, use=pccon+keys,
 pccon0|OpenBSD PC console with simple ASCII pseudographics,
 	use=pccon0-m, use=pccon+colors,
 pccon-m|OpenBSD PC console without colors,
@@ -6340,7 +6396,7 @@ ncsa-vt220|NCSA Telnet using vt220-compatible function keys,
 #### Pilot Pro Palm-Top
 #
 # Termcap for Top Gun Telnet and SSH on the Palm Pilot.
-# http://www.ai/~iang/TGssh/
+# https://web.archive.org/web/20051103015726/http://www.ai/~iang/TGssh/
 pilot|tgtelnet|Top Gun Telnet on the Palm Pilot Professional,
 	OTbs, am, xenl,
 	cols#39, lines#16,
@@ -6491,7 +6547,7 @@ sun-type4|Sun Workstation console with type 4 keyboard,
 # underline and standout.
 #
 # Since the documentation and terminfo do not agree, see also current code at
-# http://src.opensolaris.org/source/xref/onnv/onnv-gate/usr/src/uts/common/io/tem_safe.c
+# https://web.archive.org/web/20091231042744/http://src.opensolaris.org/source/xref/onnv/onnv-gate/usr/src/uts/common/io/tem_safe.c
 #
 # That (actually a different driver which "supports" sun-color) also supports
 # these features:
@@ -9770,7 +9826,8 @@ vi603|visual603|visual 603,
 # Wyse sales can be reached by phone at 1-800-GET-WYSE.  Tech support is at
 # (800)-800-WYSE (option 5 gets you a human).  There's a Web page at the
 # obvious address, <http://www.wyse.com>.  They keep terminfo entries at
-# <http://www.wyse.co.uk/support/appnotes/idxappnt.htm>.
+# https://web.archive.org/web/19970712022641/http://www.wyse.co.uk/support/appnotes/idxappnt.htm
+#
 #
 # Wyse bought out Link Technology, Inc. in 1990 and closed it down in 1995.
 # They now own the Qume and Amdek brands, too.  So these are the people to
@@ -13042,7 +13099,7 @@ screwpoint|adds viewpoint with ^O bug,
 #
 # Update by TD - 2004:
 # Adapted from
-#	http://www.cs.utk.edu/~shuford/terminal/adds_viewpoint_news.txt
+#	https://web.archive.org/web/19990922005103/http://www.cs.utk.edu/~shuford/terminal/adds_viewpoint_news.txt
 #
 # COMMANDS                        ASCII CODE
 #
@@ -18518,7 +18575,7 @@ osexec|Osborne executive,
 #
 
 # See
-#	http://www.minix3.org/manpages/html4/console.html
+#	https://web.archive.org/web/20120703021949/http://www.minix3.org/manpages/html4/console.html
 minix|minix console (v3),
 	acsc=+\020\,\021-\030.^Y0\333`\004a\261f\370g\361h\260j\331k\277l\332m\300n\305o~p\304q\304r\304s_t\303u\264v\301w\302x\263y\363z\362{\343|\330}\234~\376,
 	kdch1=\177, kend=\E[Y, kf0=\E[21~, kf1=\E[11~, kf10=\E[21~,
@@ -18706,16 +18763,19 @@ m2-nam|minitel|minitel-2|minitel-2-nam|France Telecom Minitel 2 mode te'le'infor
 minitel1|minitel 1,
 	am, bw, eslok, hs, hz, msgr,
 	colors#8, cols#40, lines#24, pairs#8,
-	acsc=+.\,\,./f0g1, bel=^G, blink=\EH, civis=^T, clear=^L,
-	cnorm=^Q, cr=^M, cub1=^H, cud1=^J, cuf1=^I,
-	cup=\037%p1%{65}%+%c%p2%{65}%+%c, cuu1=^K, el=^X,
-	enacs=^Y, fsl=^J, home=^^, ind=^J,
-	is2=\E;`ZQ\E\:iC\E\:iE\021, nel=^M^J, op=\EG,
-	rep=%p1%c\022%p2%{63}%+%c, rev=\E], ri=^K, rmso=\E\\,
-	setf=\E%?%p1%{1}%=%tD%e%p1%{3}%=%tF%e%p1%{4}%=%tA%e%p1%{6}%=%tC%e%p1%{64}%+%c%;,
+	bel=^G, blink=\EH, civis=^T, clear=^L, cnorm=^Q, cr=^M,
+	cub1=^H, cud1=^J, cuf1=^I,
+	cup=\037%p1%'A'%+%c%p2%'A'%+%c, cuu1=^K, el=^X,
+	flash=\037@A\EW \177\022\177\022P\r\030\n, fsl=^J,
+	home=^^, ind=^J, is2=\E;`ZQ\E\:iC\E\:iE\021, nel=^M^J,
+	op=\EG, rep=%p1%c\022%p2%'?'%+%c, rev=\E], ri=^K,
+	rmso=\E\\,
+	setf=\E%?%p1%{1}%=%tD%e%p1%{3}%=%tF%e%p1%{4}%=%tA%e%p1%{6}%=%tC%e%p1%'@'%+%c%;,
 	sgr=%?%p1%t\E]%;%?%p3%t\E]%;%?%p4%t\EH%;,
-	sgr0=\EI\E\\, smso=\E], tsl=\037@%p1%{65}%+%c,
-# is2=Fnct TE, Fnct MR, Fnct CM et pour finir: curseur ON.
+	sgr0=\EI\E\\, smso=\E], tsl=\037@%p1%'A'%+%c,
+	u6=\037%c%'A'%-%c%'A'%-, u7=\Ea, .acsc=}#f0g1\,\,+../,
+	.enacs=^Y, .rs2=^L, .u8=\001Br4\004, .u9=\E9{,
+# is2=Fnct TE, Fnct ER, Fnct CM et pour finir: curseur ON.
 minitel1b|minitel 1-bistandard (in 40cols mode),
 	mir,
 	cub=\E[%p1%dD, cud=\E[%p1%dB, cuf=\E[%p1%dC,
@@ -18723,21 +18783,56 @@ minitel1b|minitel 1-bistandard (in 40cols mode),
 	dl1=\E[M, ed=\E[J, el1=\E[1K, il=\E[%p1%dL, il1=\E[L,
 	is1=\E;iYA\E;jYC, kclr=\E[2J, kctab=^I, kcub1=\E[D,
 	kcud1=\E[B, kcuf1=\E[C, kcuu1=\E[A, kdch1=\E[P, kdl1=\E[M,
-	kel=^X, khome=\E[H, kich1=\E[4h, kil1=\E[L, rmir=\E[4l,
-	smir=\E[4h, smkx=\E;iYA\E;jYC, use=minitel1,
-# <rmkx> posait des problemes (logout en sortant de vi).
+	khome=\E[H, kich1=\E[4h, kil1=\E[L, rmir=\E[4l, smir=\E[4h,
+	.ich=\E[%p1%d@, .ich1=\E[@, .kel=^X, .rmkx=\E;jYA,
+	.smkx=\E;iYA\E;jYC, .u8=\001Cu<\004, use=minitel1,
+# rmkx posait des problemes (logout en sortant de vi).
 minitel1b-80|minitel 1-bistandard (standard teleinformatique),
 	am@, bw@, hz@,
 	colors@, cols#80, it#8, pairs@,
 	blink=\E[5m, bold=\E[1m, civis=\037@A\024\n,
-	clear=\E[H\E[2J, cnorm=\037@A\021\n, cuf1=\E[C,
+	clear=\E[H\E[J, cnorm=\037@A\021\n, cuf1=\E[C,
 	cup=\E[%i%p1%d;%p2%dH, cuu1=\E[A, el=\E[K, home=\E[H,
-	ht=^I, ind=\ED, is1@, is2@, kent=\EOM, kf0=\EOp, kf1=\EOq,
-	kf2=\EOr, kf3=\EOs, kf4=\EOt, kf5=\EOu, kf6=\EOv, kf7=\EOw,
-	kf8=\EOx, kf9=\EOy, nel=\EE, op@, rc=\E8, rep@, rev=\E[7m,
-	ri=\EM, rmkx@, rmso=\E[27m, rmul=\E[24m, sc=\E7, setf@,
-	sgr=\E[%?%p1%t7;%;%?%p2%t4;%;%?%p3%t7;%;%?%p4%t5;%;%?%p6%t1;%;m,
-	sgr0=\E[m, smkx@, smso=\E[7m, smul=\E[4m, use=minitel1b,
+	ht=^I, ind=\ED, is1@, is2@, kbs=\EOl, kcan=\EOQ, kent=\EOM,
+	kf0=\EOp, kf1=\EOq, kf2=\EOr, kf3=\EOs, kf4=\EOt, kf5=\EOu,
+	kf6=\EOv, kf7=\EOw, kf8=\EOx, kf9=\EOy, khlp=\EOm, knp=\EOn,
+	kpp=\EOR, krfr=\EOS, nel=\EE, op@, rc=\E8, rep@, rev=\E[7m,
+	ri=\EM, rmkx@, rmso=\E[27m, rmul=\E[24m, rs2=\E[H\E[J\E[m,
+	sc=\E7, setf@, sgr@, sgr0=\E[m, smkx@, smso=\E[7m, smul=\E[4m,
+	u6@, u7@, .acsc=}#f[, .enacs=^O, .mc0=\E[i, .rmacs=^O,
+	.rs2=\Ec,
+	.sgr=\E[%?%p1%t7;%;%?%p2%t4;%;%?%p3%t7;%;%?%p4%t5;%;%?%p6%t1;%;m,
+	.smacs=^N, use=minitel1b,
+minitel1b-nb|minitel 1b (40cols) noir & blanc sans couleurs avec bold et dim ...,
+	colors@, pairs@,
+	acsc=`>a9f!j%k4l<m-n=p#q\,rpt=u5v-w<x5yvzy|l~$,
+	bold=\EG, clear=^L\EB, cup=\E[%i%p1%d;%p2%dH, dim=\ED,
+	home=^^\EB, kend=\E)4\r, kf0=^Y0, kf1=\E$4\r, kf11=^Y1,
+	kf12=^Y/, kf2=\E#4\r, kf3=\E&4\r, kf4=\E!4\r, kf5=\E'4\r,
+	kf6=\E/4\r, kf7=^Y8, kf8=^Y\,, kf9=^Y., knp=\E(4\r,
+	kpp=\E"4\r, op@, rmacs=^O, setf@,
+	sgr=%?%p1%p3%O%t\E]%;%?%p4%t\EH%;%?%p5%t\ED%;%?%p6%t\EG%;,
+	sgr0=\EI\E\\\EB, smacs=^N, .invis=\E@, .rs2=^L\EB,
+	.u8=\001Cu|\004, use=minitel1b,
+
+# From: Alexandre Montaron, 19 Nov 2015
+#
+# He comments:
+# viewdata lacks a true cup capabilitie,
+# so I achieved it with home and cud1/cuf1 sequences only !
+viewdata|prestel/viewdata terminals,
+	am, bw, eslok, hz,
+	cols#40, lines#24,
+	bel=^G, civis=^T, clear=^L, cnorm=^Q, cr=^M, cub1=^H, cud1=^J,
+	cuf1=^I,
+	cup=\036%?%p1%{07}%>%t\n\n\n\n\n\n\n\n%;%?%p1%{15}%>%t\n\n\n\n\n\n\n\n%;%?%p1%{4}%&%t\n\n\n\n%;%?%p1%{2}%&%t\n\n%;%?%p1%{1}%&%t\n%;%?%p2%{07}%>%t\011\011\011\011\011\011\011\011%;%?%p2%{15}%>%t\011\011\011\011\011\011\011\011%;%?%p2%{23}%>%t\011\011\011\011\011\011\011\011%;%?%p2%{31}%>%t\011\011\011\011\011\011\011\011%;%?%p2%{4}%&%t\011\011\011\011%;%?%p2%{2}%&%t\011\011%;%?%p2%{1}%&%t\011%;,
+	cuu1=^K, home=^^, nel=^M^J, .el=^X, .ind=^J,
+	.rep=%p1%c\022%p2%'?'%+%c, .ri=^K,
+# Also:
+# viewdata-rv works with some applications (e.g. emacs, xemacs) but fails with vim.
+viewdata-rv|prestel/viewdata terminals with reverse capabilitie (as green),
+	xmc#1,
+	rmso=\EG, smso=\EB, use=viewdata,
 
 ######## OBSOLETE VDT TYPES
 #
@@ -23436,7 +23531,7 @@ v3220|LANPAR Vision II model 3220/3221/3222,
 #	  FreeMiNT by Guido Flohr (from patch/report by Alan Hourihane).
 #
 # 2010-06-12
-#	* add mlterm+256color entry -TD
+#	* add mlterm-256color entry -TD
 #
 # 2010-07-17
 #	* add hard-reset for rs2 to wsvt25 to help ensure that reset ends
@@ -23763,5 +23858,22 @@ v3220|LANPAR Vision II model 3220/3221/3222,
 # 2015-07-25
 #	+ add status line to tmux via xterm+sl (patch by Nicholas Marriott).
 #	+ fixes for st 0.5 from testing with tack -TD
+#
+# 2015-10-24
+#	+ updated minitel entries to fix kel problem with emacs, and add
+#	  minitel1b-nb (Alexandre Montaron).
+#	+ reviewed/updated nsterm entry Terminal.app in OSX -TD
+#	+ replace some dead URLs in commands with equivalents from the
+#	  Internet Archive -TD
+#
+# 2015-11-14
+#	+ add bold to pccon+sgr+acs and pccon-base (Tati Chevron).
+#	+ add keys f12-f124 to pccon+keys (Tati Chevron).
+#
+# 2015-11-21
+#	+ fix some inconsistencies in the pccon* entries -TD
+#
+# 2015-11-28
+#	  add viewdata (Alexandre Montaron).
 #
 ######## SHANTIH!  SHANTIH!  SHANTIH!
