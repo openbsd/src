@@ -3919,6 +3919,7 @@
 ./usr/share/terminfo/m/minitel1
 ./usr/share/terminfo/m/minitel1b
 ./usr/share/terminfo/m/minitel1b-80
+./usr/share/terminfo/m/minitel1b-nb
 ./usr/share/terminfo/m/minix
 ./usr/share/terminfo/m/minix-1.5
 ./usr/share/terminfo/m/minix-1.7
@@ -4091,6 +4092,7 @@
 ./usr/share/terminfo/n/nsterm-bce
 ./usr/share/terminfo/n/nsterm-build326
 ./usr/share/terminfo/n/nsterm-build343
+./usr/share/terminfo/n/nsterm-build361
 ./usr/share/terminfo/n/nsterm-c
 ./usr/share/terminfo/n/nsterm-c-7
 ./usr/share/terminfo/n/nsterm-c-acs
@@ -4806,6 +4808,8 @@
 ./usr/share/terminfo/v/vi55
 ./usr/share/terminfo/v/vi550
 ./usr/share/terminfo/v/vi603
+./usr/share/terminfo/v/viewdata
+./usr/share/terminfo/v/viewdata-rv
 ./usr/share/terminfo/v/viewpoint
 ./usr/share/terminfo/v/viewpoint3a+
 ./usr/share/terminfo/v/viewpoint60
