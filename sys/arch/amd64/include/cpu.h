@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.99 2015/11/23 22:57:12 deraadt Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.100 2015/12/06 23:41:32 guenther Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 2003/04/26 18:39:39 fvdl Exp $	*/
 
 /*-
@@ -383,9 +383,6 @@ void	i8259_default_setup(void);
 
 void cpu_init_msrs(struct cpu_info *);
 
-
-/* trap.c */
-void	child_return(void *);
 
 /* dkcsum.c */
 void	dkcsumattach(void);
