@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.860 2015/11/20 14:41:48 sthen Exp $
+#	$OpenBSD: install.sub,v 1.861 2015/12/06 20:29:07 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -1484,7 +1484,7 @@ set_term() {
 
 # Configure the network.
 donetconfig() {
-	local _dn _ns _n
+	local _dn _ns _f1 _f2 _f3
 
 	configure_ifs
 	v4_defroute
@@ -1496,19 +1496,13 @@ donetconfig() {
 	# or not, during the rest of the install.
 	if [[ -f /tmp/resolv.conf.shadow ]]; then
 		mv /tmp/resolv.conf.shadow /tmp/resolv.conf
-		# Get nameserver address(es). Store as a blank separated list.
-		for _n in $(grep '^nameserver ' /tmp/resolv.conf); do
-			[[ $_n == nameserver ]] || _ns="$_ns$_n "
-		done
-		# Zap trailing space in _ns.
-		set -- $_ns
-		_ns=$*
-		# Get default fully qualified domain name from *first* domain
-		# given on *last* search or domain statement.
-		_dn=$(sed -n \
-			-e '/^domain[[:space:]][[:space:]]*/{s///;s/\([^[:space:]]*\).*$/\1/;h;}' \
-			-e '/^search[[:space:]][[:space:]]*/{s///;s/\([^[:space:]]*\).*$/\1/;h;}' \
-			-e '${g;p;}' /tmp/resolv.conf)
+		# Get/store nameserver address(es) as a blank separated list
+		# and the default fully qualified domain name from *first*
+		# domain given on *last* search or domain statement.
+		while read -r -- _f1 _f2 _f3; do
+			[[ $_f1 == nameserver ]] && _ns="${_ns:+$_ns }$_f2"
+			[[ $_f1 == @(domain|search) ]] && _dn=$_f2
+		done </tmp/resolv.conf
 	fi
 
 	# Get & apply fully qualified domain name to hostname.
