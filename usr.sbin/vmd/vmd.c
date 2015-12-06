@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.20 2015/12/06 02:26:14 reyk Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.21 2015/12/06 21:02:51 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -443,6 +443,19 @@ vm_getbyid(uint32_t id)
 
 	TAILQ_FOREACH(vm, env->vmd_vms, vm_entry) {
 		if (vm->vm_params.vcp_id == id)
+			return (vm);
+	}
+
+	return (NULL);
+}
+
+struct vmd_vm *
+vm_getbyname(const char *name)
+{
+	struct vmd_vm	*vm;
+
+	TAILQ_FOREACH(vm, env->vmd_vms, vm_entry) {
+		if (strcmp(vm->vm_params.vcp_name, name) == 0)
 			return (vm);
 	}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.2 2015/12/06 01:16:22 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.3 2015/12/06 21:02:51 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007-2015 Reyk Floeter <reyk@openbsd.org>
@@ -37,6 +37,7 @@
 #include <ctype.h>
 #include <netdb.h>
 #include <util.h>
+#include <errno.h>
 #include <err.h>
 
 #include "proc.h"
@@ -146,7 +147,7 @@ main		: VM STRING			{
 			int ret;
 
 			if (vcp_disable) {
-				log_debug("%s:%d: vm \"%s\" disabled (skipped)",
+				log_debug("%s:%d: vm \"%s\" skipped (disabled)",
 				    file->name, yylval.lineno, vcp.vcp_name);
 			} else if (!env->vmd_noaction) {
 				/*
@@ -155,7 +156,12 @@ main		: VM STRING			{
 				 * XXX the configuration.
 				 */
 				ret = config_getvm(&env->vmd_ps, &vcp, -1, -1);
-				if (ret == -1) {
+				if (ret == -1 && errno == EALREADY) {
+					log_debug("%s:%d: vm \"%s\""
+					    " skipped (running)",
+					    file->name, yylval.lineno,
+					    vcp.vcp_name);
+				} else if (ret == -1) {
 					log_warn("%s:%d: vm \"%s\" failed",
 					    file->name, yylval.lineno,
 					    vcp.vcp_name);

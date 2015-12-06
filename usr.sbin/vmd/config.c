@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.6 2015/12/06 01:14:08 reyk Exp $	*/
+/*	$OpenBSD: config.c,v 1.7 2015/12/06 21:02:51 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -112,6 +112,11 @@ config_getvm(struct privsep *ps, struct vm_create_params *vcp,
 	int			 fd, ttys_fd;
 
 	errno = 0;
+
+	if (vm_getbyname(vcp->vcp_name) != NULL) {
+		errno = EALREADY;
+		goto fail;
+	}
 
 	if (vcp->vcp_ncpus == 0)
 		vcp->vcp_ncpus = 1;
