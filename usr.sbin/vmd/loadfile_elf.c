@@ -1,5 +1,5 @@
 /* $NetBSD: loadfile.c,v 1.10 2000/12/03 02:53:04 tsutsui Exp $ */
-/* $OpenBSD: loadfile_elf.c,v 1.3 2015/12/03 08:42:11 reyk Exp $ */
+/* $OpenBSD: loadfile_elf.c,v 1.4 2015/12/06 17:42:15 mlarkin Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -127,7 +127,6 @@ static void mbzero(uint32_t, int);
 static void mbcopy(char *, char *, int);
 
 extern char *__progname;
-extern int vmm_fd;
 extern int vm_id;
 
 /*
