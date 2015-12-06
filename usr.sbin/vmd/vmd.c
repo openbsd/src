@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.18 2015/12/06 01:16:22 reyk Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.19 2015/12/06 01:58:21 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -99,24 +99,27 @@ vmd_dispatch_control(int fd, struct privsep_proc *p, struct imsg *imsg)
 int
 vmd_dispatch_vmm(int fd, struct privsep_proc *p, struct imsg *imsg)
 {
-	struct vmop_start_result vmr;
+	struct vmop_result	 vmr;
 	struct privsep		*ps = p->p_ps;
 	int			 res = 0;
 	struct vmd_vm		*vm;
+	struct vm_create_params	*vcp;
 
 	switch (imsg->hdr.type) {
 	case IMSG_VMDOP_START_VM_RESPONSE:
-		IMSG_SIZE_CHECK(imsg, &res);
-		memcpy(&res, imsg->data, sizeof(res));
+		IMSG_SIZE_CHECK(imsg, &vmr);
+		memcpy(&vmr, imsg->data, sizeof(vmr));
 		if ((vm = vm_getbyvmid(imsg->hdr.peerid)) == NULL)
 			fatalx("%s: invalid vm response", __func__);
-		if (res) {
-			errno = res;
-			log_warn("%s: failed to start vm",
-			    vm->vm_params.vcp_name);
+		vcp = &vm->vm_params;
+		if (vmr.vmr_result) {
+			errno = vmr.vmr_result;
+			log_warn("%s: failed to start vm", vcp->vcp_name);
+			vm_remove(vm);
 		} else {
-			log_info("%s: started vm successfully, tty %s",
-			    vm->vm_params.vcp_name, vm->vm_ttyname);
+			vcp->vcp_id = vmr.vmr_id;
+			log_info("%s: started vm %d successfully, tty %s",
+			    vcp->vcp_name, vcp->vcp_id, vm->vm_ttyname);
 		}
 		/*
 		 * If the peerid is -1, the request originated from
@@ -129,13 +132,19 @@ vmd_dispatch_vmm(int fd, struct privsep_proc *p, struct imsg *imsg)
 		    sizeof(vmr.vmr_ttyname));
 		if (proc_compose_imsg(ps, PROC_CONTROL, -1,
 		    IMSG_VMDOP_START_VM_RESPONSE,
-		    vm->vm_peerid, -1, &vmr, sizeof(vmr)) == -1)
+		    vm->vm_peerid, -1, &vmr, sizeof(vmr)) == -1) {
+			vm_remove(vm);
 			return (-1);
+		}
 		break;
 	case IMSG_VMDOP_TERMINATE_VM_RESPONSE:
-		IMSG_SIZE_CHECK(imsg, &res);
+		IMSG_SIZE_CHECK(imsg, &vmr);
 		proc_forward_imsg(ps, imsg, PROC_CONTROL, -1);
-		break;
+		if (vmr.vmr_result == 0) {
+			/* Remove local reference */
+			vm = vm_getbyid(vmr.vmr_id);
+			vm_remove(vm);
+		}
 		break;
 	case IMSG_VMDOP_GET_INFO_VM_DATA:
 	case IMSG_VMDOP_GET_INFO_VM_END_DATA:
@@ -409,6 +418,19 @@ vm_getbyvmid(uint32_t vmid)
 
 	TAILQ_FOREACH(vm, env->vmd_vms, vm_entry) {
 		if (vm->vm_vmid == vmid)
+			return (vm);
+	}
+
+	return (NULL);
+}
+
+struct vmd_vm *
+vm_getbyid(uint32_t id)
+{
+	struct vmd_vm	*vm;
+
+	TAILQ_FOREACH(vm, env->vmd_vms, vm_entry) {
+		if (vm->vm_params.vcp_id == id)
 			return (vm);
 	}
 

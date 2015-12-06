@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmctl.c,v 1.4 2015/12/05 20:26:38 reyk Exp $	*/
+/*	$OpenBSD: vmctl.c,v 1.5 2015/12/06 01:58:21 reyk Exp $	*/
 
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
@@ -114,15 +114,15 @@ start_vm(const char *name, int memsize, int nnics, int ndisks, char **disks,
 int
 start_vm_complete(struct imsg *imsg, int *ret, int autoconnect)
 {
-	struct vmop_start_result *vmr;
+	struct vmop_result *vmr;
 	int res;
 
 	if (imsg->hdr.type == IMSG_VMDOP_START_VM_RESPONSE) {
-		vmr = (struct vmop_start_result *)imsg->data;
+		vmr = (struct vmop_result *)imsg->data;
 		res = vmr->vmr_result;
 		if (res) {
-			fprintf(stderr, "%s: start VM command failed (%d) - "
-			    "%s\n", __progname, res, strerror(res));
+			errno = res;
+			warn("start vm command failed");
 			*ret = EIO;
 		} else if (autoconnect) {
 			closefrom(STDERR_FILENO + 1);
@@ -130,18 +130,16 @@ start_vm_complete(struct imsg *imsg, int *ret, int autoconnect)
 			/* Only returns on error */
 			if (execl(VMCTL_CU, VMCTL_CU,
 			    "-l", vmr->vmr_ttyname, "-s", "9600", NULL) == -1) {
-				fprintf(stderr, "%s: failed to open "
-				    "the console\n", __progname);
+				warn("failed to open the console");
 				*ret = errno;
 			}
 		} else {
-			fprintf(stdout, "%s: start VM command successful, "
-			    "tty %s\n", __progname, vmr->vmr_ttyname);
+			warnx("started vm %d successfully, tty %s",
+			    vmr->vmr_id, vmr->vmr_ttyname);
 			*ret = 0;
 		}
 	} else {
-		fprintf(stderr, "%s: unexpected response received from vmd\n",
-		    __progname);
+		warnx("unexpected response received from vmd");
 		*ret = EINVAL;
 	}
 
@@ -191,22 +189,22 @@ terminate_vm(uint32_t terminate_id)
 int
 terminate_vm_complete(struct imsg *imsg, int *ret)
 {
+	struct vmop_result *vmr;
 	int res;
 
 	if (imsg->hdr.type == IMSG_VMDOP_TERMINATE_VM_RESPONSE) {
-		res = *(int *)imsg->data;
+		vmr = (struct vmop_result *)imsg->data;
+		res = vmr->vmr_result;
 		if (res) {
-			fprintf(stderr, "%s: terminate VM command failed "
-			    "(%d) - %s\n", __progname, res, strerror(res));
+			errno = res;
+			warn("terminate vm command failed");
 			*ret = EIO;
 		} else {
-			fprintf(stderr, "%s: terminate VM command successful\n",
-			    __progname);
+			warnx("terminated vm %d successfully", vmr->vmr_id);
 			*ret = 0;
 		}
 	} else {
-		fprintf(stderr, "%s: unexpected response received from vmd\n",
-		    __progname);
+		warnx("unexpected response received from vmd");
 		*ret = EINVAL;
 	}
 
