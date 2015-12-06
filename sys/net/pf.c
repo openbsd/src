@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.959 2015/12/05 21:23:51 henning Exp $ */
+/*	$OpenBSD: pf.c,v 1.960 2015/12/06 10:03:23 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -151,8 +151,6 @@ void			 pf_change_ap(struct pf_pdesc *, struct pf_addr *,
 			    u_int16_t *, struct pf_addr *, u_int16_t);
 int			 pf_modulate_sack(struct pf_pdesc *,
 			    struct pf_state_peer *);
-void			 pf_change_a6(struct pf_pdesc *, struct pf_addr *a,
-			    struct pf_addr *an);
 int			 pf_icmp_mapping(struct pf_pdesc *, u_int8_t, int *,
 			    u_int16_t *, u_int16_t *);
 void			 pf_change_icmp(struct pf_pdesc *, struct pf_addr *,
@@ -1678,17 +1676,6 @@ pf_change_a(struct pf_pdesc *pd, void *a, u_int32_t an)
 		    pd->proto, pd->af);
 	memcpy(a, &an, sizeof(u_int32_t));
 }
-
-#ifdef INET6
-void
-pf_change_a6(struct pf_pdesc *pd, struct pf_addr *a, struct pf_addr *an)
-{
-	if (pd->csum_status == PF_CSUM_UNKNOWN)
-		pf_check_proto_cksum(pd, pd->off, pd->tot_len - pd->off,
-		    pd->proto, pd->af);
-	PF_ACPY(a, an, AF_INET6);
-}
-#endif /* INET6 */
 
 int
 pf_icmp_mapping(struct pf_pdesc *pd, u_int8_t type, int *icmp_dir,
@@ -3754,11 +3741,11 @@ pf_translate(struct pf_pdesc *pd, struct pf_addr *saddr, u_int16_t sport,
 			rewrite = 1;
 		} else {
 			if (PF_ANEQ(saddr, pd->src, pd->af)) {
-				pf_change_a6(pd, pd->src, saddr);
+				pf_change_ap(pd, pd->src, NULL, saddr, 0);
 				rewrite = 1;
 			}
 			if (PF_ANEQ(daddr, pd->dst, pd->af)) {
-				pf_change_a6(pd, pd->dst, daddr);
+				pf_change_ap(pd, pd->dst, NULL, daddr, 0);
 				rewrite = 1;
 			}
 		}
@@ -3794,11 +3781,11 @@ pf_translate(struct pf_pdesc *pd, struct pf_addr *saddr, u_int16_t sport,
 #ifdef INET6
 		case AF_INET6:
 			if (!afto && PF_ANEQ(saddr, pd->src, pd->af)) {
-				pf_change_a6(pd, pd->src, saddr);
+				pf_change_ap(pd, pd->src, NULL, saddr, 0);
 				rewrite = 1;
 			}
 			if (!afto && PF_ANEQ(daddr, pd->dst, pd->af)) {
-				pf_change_a6(pd, pd->dst, daddr);
+				pf_change_ap(pd, pd->dst, NULL, daddr, 0);
 				rewrite = 1;
 			}
 			break;
@@ -4600,13 +4587,13 @@ pf_test_state_icmp(struct pf_pdesc *pd, struct pf_state **state,
 				}
 				if (!afto && PF_ANEQ(pd->src,
 				    &nk->addr[sidx], AF_INET6))
-					pf_change_a6(pd, saddr,
-					    &nk->addr[sidx]);
+					pf_change_ap(pd, saddr, NULL,
+					    &nk->addr[sidx], 0);
 
 				if (!afto && PF_ANEQ(pd->dst,
 				    &nk->addr[didx], AF_INET6)) {
-					pf_change_a6(pd, daddr,
-					    &nk->addr[didx]);
+					pf_change_ap(pd, daddr, NULL,
+					    &nk->addr[didx], 0);
 					pd->destchg = 1;
 				}
 
