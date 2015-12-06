@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.308 2015/12/06 12:50:05 tedu Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.309 2015/12/06 12:52:18 tedu Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -263,7 +263,6 @@ void	sppp_printproto(const char *, struct sauthreq *);
 void	setifpriority(const char *, int);
 void	setifpowersave(const char *, int);
 void	setifmetric(const char *, int);
-void	notrailers(const char *, int);
 void	pflow_status(void);
 void	pflow_addr(const char*, struct sockaddr_storage *);
 void	setpflow_sender(const char *, int);
@@ -371,8 +370,6 @@ const struct	cmd {
 #endif /*INET6*/
 #ifndef SMALL
 	{ "hwfeatures", NEXTARG0,	0,		printifhwfeatures },
-	{ "trailers",	-1,		0,		notrailers },
-	{ "-trailers",	1,		0,		notrailers },
 	{ "metric",	NEXTARG,	0,		setifmetric },
 	{ "powersave",	NEXTARG0,	0,		setifpowersave },
 	{ "-powersave",	-1,		0,		setifpowersave },
@@ -1215,15 +1212,6 @@ notealias(const char *addr, int param)
 	} else
 		clearaddr = 0;
 }
-
-#ifndef SMALL
-/*ARGSUSED*/
-void
-notrailers(const char *vname, int value)
-{
-	printf("Note: trailers are no longer sent, but always received\n");
-}
-#endif
 
 /*ARGSUSED*/
 void
