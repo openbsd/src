@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.307 2015/11/25 10:52:25 mpi Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.308 2015/12/06 12:50:05 tedu Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -171,7 +171,6 @@ void	setifwpagroupcipher(const char *, int);
 void	setifwpakey(const char *, int);
 void	setifchan(const char *, int);
 void	setifscan(const char *, int);
-void	setiftxpower(const char *, int);
 void	setifnwflag(const char *, int);
 void	unsetifnwflag(const char *, int);
 void	setifnetmask(const char *, int);
@@ -423,8 +422,6 @@ const struct	cmd {
 	{ "pppoeac",	NEXTARG,	0,		setpppoe_ac },
 	{ "-pppoeac",	1,		0,		setpppoe_ac },
 	{ "timeslot",	NEXTARG,	0,		settimeslot },
-	{ "txpower",	NEXTARG,	0,		setiftxpower },
-	{ "-txpower",	1,		0,		setiftxpower },
 	{ "authproto",	NEXTARG,	0,		setspppproto },
 	{ "authname",	NEXTARG,	0,		setspppname },
 	{ "authkey",	NEXTARG,	0,		setspppkey },
@@ -501,7 +498,6 @@ const struct	cmd {
 	{ "priority",	NEXTARG,	0,		setignore },
 	{ "rtlabel",	NEXTARG,	0,		setignore },
 	{ "mpls",	IFXF_MPLS,	0,		setignore },
-	{ "txpower",	NEXTARG,	0,		setignore },
 	{ "nwflag",	NEXTARG,	0,		setignore },
 	{ "rdomain",	NEXTARG,	0,		setignore },
 	{ "-inet",	AF_INET,	0,		removeaf },
@@ -1937,28 +1933,6 @@ setifscan(const char *val, int d)
 }
 
 #ifndef SMALL
-void
-setiftxpower(const char *val, int d)
-{
-	const char *errmsg = NULL;
-	struct ieee80211_txpower txpower;
-	int dbm;
-
-	strlcpy(txpower.i_name, name, sizeof(txpower.i_name));
-
-	if (d == 1) {
-		txpower.i_mode = IEEE80211_TXPOWER_MODE_AUTO;
-	} else {
-		dbm = strtonum(val, SHRT_MIN, SHRT_MAX, &errmsg);
-		if (errmsg)
-			errx(1, "txpower %sdBm: %s", val, errmsg);
-		txpower.i_val = (int16_t)dbm;
-		txpower.i_mode = IEEE80211_TXPOWER_MODE_FIXED;
-	}
-
-	if (ioctl(s, SIOCS80211TXPOWER, (caddr_t)&txpower) == -1)
-		warn("SIOCS80211TXPOWER");
-}
 
 void
 setifnwflag(const char *val, int d)
@@ -2040,14 +2014,13 @@ void
 ieee80211_status(void)
 {
 	int len, i, nwkey_verbose, inwid, inwkey, ipsk, ichan, ipwr;
-	int ibssid, itxpower, iwpa;
+	int ibssid, iwpa;
 	struct ieee80211_nwid nwid;
 	struct ieee80211_nwkey nwkey;
 	struct ieee80211_wpapsk psk;
 	struct ieee80211_power power;
 	struct ieee80211chanreq channel;
 	struct ieee80211_bssid bssid;
-	struct ieee80211_txpower txpower;
 	struct ieee80211_wpaparams wpa;
 	struct ieee80211_nodereq nr;
 	u_int8_t zero_bssid[IEEE80211_ADDR_LEN];
@@ -2080,17 +2053,13 @@ ieee80211_status(void)
 	strlcpy(bssid.i_name, name, sizeof(bssid.i_name));
 	ibssid = ioctl(s, SIOCG80211BSSID, &bssid);
 
-	memset(&txpower, 0, sizeof(txpower));
-	strlcpy(txpower.i_name, name, sizeof(txpower.i_name));
-	itxpower = ioctl(s, SIOCG80211TXPOWER, &txpower);
-
 	memset(&wpa, 0, sizeof(wpa));
 	strlcpy(wpa.i_name, name, sizeof(wpa.i_name));
 	iwpa = ioctl(s, SIOCG80211WPAPARMS, &wpa);
 
 	/* check if any ieee80211 option is active */
 	if (inwid == 0 || inwkey == 0 || ipsk == 0 || ipwr == 0 ||
-	    ichan == 0 || ibssid == 0 || iwpa == 0 || itxpower == 0)
+	    ichan == 0 || ibssid == 0 || iwpa == 0)
 		fputs("\tieee80211:", stdout);
 	else
 		return;
@@ -2218,11 +2187,6 @@ ieee80211_status(void)
 
 	if (ipwr == 0 && power.i_enabled)
 		printf(" powersave on (%dms sleep)", power.i_maxsleep);
-
-	if (itxpower == 0)
-		printf(" %ddBm%s", txpower.i_val,
-		    txpower.i_mode == IEEE80211_TXPOWER_MODE_AUTO ?
-		    " (auto)" : "");
 
 	if (ioctl(s, SIOCG80211FLAGS, (caddr_t)&ifr) == 0 &&
 	    ifr.ifr_flags) {

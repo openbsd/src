@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.263 2015/12/03 13:15:53 sthen Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.264 2015/12/06 12:50:05 tedu Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"     @(#)ifconfig.8	8.4 (Berkeley) 6/1/94
 .\"
-.Dd $Mdocdate: December 3 2015 $
+.Dd $Mdocdate: December 6 2015 $
 .Dt IFCONFIG 8
 .Os
 .Sh NAME
@@ -885,7 +885,6 @@ will begin advertising as master.
 .Op Oo Fl Oc Ns Cm nwkey Ar key
 .Op Oo Fl Oc Ns Cm powersave Op Ar duration
 .Op Cm scan
-.Op Oo Fl Oc Ns Cm txpower Ar dBm
 .Op Oo Fl Oc Ns Cm wpa
 .Op Cm wpaakms Ar akm,akm,...
 .Op Cm wpaciphers Ar cipher,cipher,...
@@ -1003,13 +1002,6 @@ Disable 802.11 power saving mode.
 .It Cm scan
 Show the results of an access point scan.
 In Host AP mode, this will dump the list of known nodes without scanning.
-.It Cm txpower Ar dBm
-Set the transmit power.
-The driver will disable any auto level and transmit power controls in this
-mode.
-.It Fl txpower
-Disable manual transmit power mode and enable any auto level and transmit
-power controls.
 .It Cm wpa
 Enable Wi-Fi Protected Access.
 WPA is a Wi-Fi Alliance protocol based on the IEEE 802.11i standard.
