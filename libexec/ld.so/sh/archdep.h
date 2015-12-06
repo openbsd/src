@@ -1,4 +1,4 @@
-/*	$OpenBSD: archdep.h,v 1.4 2014/12/30 19:26:38 miod Exp $ */
+/*	$OpenBSD: archdep.h,v 1.5 2015/12/06 23:36:12 guenther Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -29,6 +29,8 @@
 #ifndef _SH_ARCHDEP_H_
 #define _SH_ARCHDEP_H_
 
+#define	RELOC_TAG	DT_RELA
+
 #define	DL_MALLOC_ALIGN	4	/* Arch constraint or otherwise */
 
 #define	MACHID	EM_SH	/* ELF e_machine ID value checked */
@@ -57,20 +59,7 @@ _dl_mmap(void *addr, unsigned int len, unsigned int prot,
 }
 
 static inline void
-RELOC_REL(Elf_Rel *r, const Elf_Sym *s, Elf_Addr *p, unsigned long v)
-{
-	if (ELF_R_TYPE(r->r_info) == R_SH_RELATIVE) {
-		*p += v;
-	} else {
-		/* XXX - printf might not work here, but we give it a shot. */
-		_dl_printf("Unknown bootstrap relocation.\n");
-		_dl_exit(6);
-	}
-}
-
-static inline void
-RELOC_RELA(Elf32_Rela *r, const Elf32_Sym *s, Elf32_Addr *p, unsigned long v,
-    Elf_Addr *pltgot)
+RELOC_DYN(Elf32_Rela *r, const Elf32_Sym *s, Elf32_Addr *p, unsigned long v)
 {
 	if (ELF_R_TYPE(r->r_info) == R_SH_RELATIVE) {
 		*p = v + r->r_addend;

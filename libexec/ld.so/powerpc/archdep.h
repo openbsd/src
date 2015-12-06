@@ -1,4 +1,4 @@
-/*	$OpenBSD: archdep.h,v 1.17 2015/09/19 20:16:25 kettenis Exp $ */
+/*	$OpenBSD: archdep.h,v 1.18 2015/12/06 23:36:12 guenther Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -29,6 +29,8 @@
 #ifndef _POWERPC_ARCHDEP_H_
 #define _POWERPC_ARCHDEP_H_
 
+#define	RELOC_TAG	DT_RELA
+
 #define	DL_MALLOC_ALIGN	4	/* Arch constraint or otherwise */
 
 #define	MACHID	EM_PPC	/* ELF e_machine ID value checked */
@@ -58,15 +60,7 @@ _dl_dcbf(Elf32_Addr *addr)
 }
 
 static inline void
-RELOC_REL(Elf_Rel *r, const Elf_Sym *s, Elf_Addr *p, unsigned long v)
-{
-	/* PowerPC does not use REL type relocations */
-	_dl_exit(20);
-}
-
-static inline void
-RELOC_RELA(Elf32_Rela *r, const Elf32_Sym *s, Elf32_Addr *p, unsigned long v,
-    Elf_Addr *pltgot)
+RELOC_DYN(Elf32_Rela *r, const Elf32_Sym *s, Elf32_Addr *p, unsigned long v)
 {
 	if (ELF32_R_TYPE(r->r_info) == RELOC_RELATIVE) {
 		*p = v + r->r_addend;

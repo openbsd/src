@@ -1,4 +1,4 @@
-/*	$OpenBSD: archdep.h,v 1.1 2013/01/20 23:01:44 miod Exp $	*/
+/*	$OpenBSD: archdep.h,v 1.2 2015/12/06 23:36:12 guenther Exp $	*/
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -29,6 +29,8 @@
 #ifndef _M88K_ARCHDEP_H_
 #define _M88K_ARCHDEP_H_
 
+#define	RELOC_TAG	DT_RELA
+
 #define	DL_MALLOC_ALIGN		4	/* Arch constraint or otherwise */
 
 #define	MACHID			EM_88K	/* ELF e_machine ID value checked */
@@ -47,15 +49,7 @@
  */
 
 static inline void
-RELOC_REL(Elf_Rel *r, const Elf_Sym *s, Elf_Addr *p, unsigned long v)
-{
-	/* m88k does not use REL type relocations */
-	_dl_exit(20);
-}
-
-static inline void
-RELOC_RELA(Elf32_Rela *r, const Elf32_Sym *s, Elf32_Addr *p, unsigned long v,
-    Elf_Addr *pltgot)
+RELOC_DYN(Elf32_Rela *r, const Elf32_Sym *s, Elf32_Addr *p, unsigned long v)
 {
 	if (ELF32_R_TYPE(r->r_info) == RELOC_BBASED_32) {
 		*p = v + r->r_addend;

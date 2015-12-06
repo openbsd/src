@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.h,v 1.13 2015/09/19 20:11:22 kettenis Exp $ */
+/*	$OpenBSD: boot.h,v 1.14 2015/12/06 23:36:12 guenther Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -50,9 +50,30 @@
 #include "stdlib.h"
 #include "dl_prebind.h"
 
-#define	DT_PROC(n)	((n) - DT_LOPROC + DT_NUM)
-
 #ifdef RCRT0
+
+#define	DT_PROC(n)	((n) - DT_LOPROC)
+
+#if RELOC_TAG == DT_RELA
+typedef	Elf_RelA	RELOC_TYPE;
+#elif RELOC_TAG == DT_REL
+typedef	Elf_Rel		RELOC_TYPE;
+#else
+# error "unknown RELOC_TAG"
+#endif
+
+/* The set of dynamic tags that we're interested in for bootstrapping */
+struct boot_dyn {
+	RELOC_TYPE	*dt_reloc;	/* DT_RELA   or DT_REL */
+	Elf_Addr	dt_relocsz;	/* DT_RELASZ or DT_RELSZ */
+	Elf_Addr	*dt_pltgot;
+	Elf_Addr	dt_pltrelsz;
+	const Elf_Sym	*dt_symtab;
+	RELOC_TYPE	*dt_jmprel;
+#if DT_PROCNUM > 0
+	u_long		dt_proc[DT_PROCNUM];
+#endif
+};
 
 /*
  * Local decls.
@@ -67,7 +88,7 @@ extern char __got_end[];
 void
 _dl_boot_bind(const long sp, long *dl_data, Elf_Dyn *dynamicp)
 {
-	struct elf_object  dynld;	/* Resolver data for the loader */
+	struct boot_dyn	dynld;		/* Resolver data for the loader */
 	AuxInfo		*auxstack;
 	long		*stack;
 	Elf_Dyn		*dynp;
@@ -75,9 +96,11 @@ _dl_boot_bind(const long sp, long *dl_data, Elf_Dyn *dynamicp)
 	size_t		size;
 	int		pagesize;
 	int		n, argc;
-	char **argv, **envp;
-	long loff;
-	int prot_exec = 0;
+	char		**argv, **envp;
+	long		loff;
+	int		prot_exec = 0;
+	RELOC_TYPE	*rp;
+	Elf_Addr	i;
 
 	/*
 	 * Scan argument and environment vectors. Find dynamic
@@ -125,145 +148,61 @@ _dl_boot_bind(const long sp, long *dl_data, Elf_Dyn *dynamicp)
 #else
 	dynp = (Elf_Dyn *)((long)_DYNAMIC + loff);
 #endif
-	_dl_memset(dynld.Dyn.info, 0, sizeof(dynld.Dyn.info));
-	while (dynp != NULL && dynp->d_tag != DT_NULL) {
-		if (dynp->d_tag < DT_NUM)
-			dynld.Dyn.info[dynp->d_tag] = dynp->d_un.d_val;
+
+	_dl_memset(&dynld, 0, sizeof(dynld));
+	while (dynp->d_tag != DT_NULL) {
+		/* first the tags that are pointers to be relocated */
+		if (dynp->d_tag == DT_PLTGOT)
+			dynld.dt_pltgot = (void *)(dynp->d_un.d_ptr + loff);
+		else if (dynp->d_tag == DT_SYMTAB)
+			dynld.dt_symtab = (void *)(dynp->d_un.d_ptr + loff);
+		else if (dynp->d_tag == RELOC_TAG)	/* DT_{RELA,REL} */
+			dynld.dt_reloc = (void *)(dynp->d_un.d_ptr + loff);
+		else if (dynp->d_tag == DT_JMPREL)
+			dynld.dt_jmprel = (void *)(dynp->d_un.d_ptr + loff);
+
+		/* Now for the tags that are just sizes or counts */
+		else if (dynp->d_tag == DT_PLTRELSZ)
+			dynld.dt_pltrelsz = dynp->d_un.d_val;
+		else if (dynp->d_tag == RELOC_TAG+1)	/* DT_{RELA,REL}SZ */
+			dynld.dt_relocsz = dynp->d_un.d_val;
+#if DT_PROCNUM > 0
 		else if (dynp->d_tag >= DT_LOPROC &&
 		    dynp->d_tag < DT_LOPROC + DT_PROCNUM)
-			dynld.Dyn.info[dynp->d_tag - DT_LOPROC + DT_NUM] =
+			dynld.dt_proc[dynp->d_tag - DT_LOPROC] =
 			    dynp->d_un.d_val;
-		if (dynp->d_tag == DT_TEXTREL)
-			dynld.dyn.textrel = 1;
+#endif /* DT_PROCNUM */
 		dynp++;
 	}
 
-	/*
-	 * Do the 'bootstrap relocation'. This is really only needed if
-	 * the code was loaded at another location than it was linked to.
-	 * We don't do undefined symbols resolving (to difficult..)
-	 */
+	rp = dynld.dt_jmprel;
+	for (i = 0; i < dynld.dt_pltrelsz; i += sizeof *rp) {
+		Elf_Addr *ra;
+		const Elf_Sym *sp;
 
-	/* "relocate" dyn.X values if they represent addresses */
-	{
-		int i, val;
-		/* must be code, not pic data */
-		int table[20];
-
-		i = 0;
-		table[i++] = DT_PLTGOT;
-		table[i++] = DT_HASH;
-		table[i++] = DT_STRTAB;
-		table[i++] = DT_SYMTAB;
-		table[i++] = DT_RELA;
-		table[i++] = DT_INIT;
-		table[i++] = DT_FINI;
-		table[i++] = DT_REL;
-		table[i++] = DT_JMPREL;
-		table[i++] = DT_PLTREL;
-		/* other processors insert their extras here */
-		table[i++] = DT_NULL;
-		for (i = 0; table[i] != DT_NULL; i++) {
-			val = table[i];
-			if (val >= DT_LOPROC && val < DT_LOPROC + DT_PROCNUM)
-				val = val - DT_LOPROC + DT_NUM;
-			else if (val >= DT_NUM || val == DT_PLTREL)
-				continue;
-			if (dynld.Dyn.info[val] != 0)
-				dynld.Dyn.info[val] += loff;
+		sp = dynld.dt_symtab + ELF_R_SYM(rp->r_info);
+		if (!ELF_R_SYM(rp->r_info) || sp->st_value != 0) {
+#ifdef HAVE_JMPREL
+			ra = (Elf_Addr *)(rp->r_offset + loff);
+			RELOC_JMPREL(rp, sp, ra, loff, dynld.dt_pltgot);
+#else
+			_dl_exit(6);
+#endif
 		}
+		rp++;
 	}
 
-	for (n = 0; n < 2; n++) {
-		u_int32_t rs;
-		Elf_Rel *rp;
-		int	i;
+	rp = dynld.dt_reloc;
+	for (i = 0; i < dynld.dt_relocsz; i += sizeof *rp) {
+		Elf_Addr *ra;
+		const Elf_Sym *sp;
 
-		switch (n) {
-		case 0:
-			if (dynld.Dyn.info[DT_PLTREL] != DT_REL)
-				continue;
-			rp = (Elf_Rel *)(dynld.Dyn.info[DT_JMPREL]);
-			rs = dynld.dyn.pltrelsz;
-			break;
-		case 1:
-			rp = (Elf_Rel *)(dynld.Dyn.info[DT_REL]);
-			rs = dynld.dyn.relsz;
-			break;
-		default:
-			rp = NULL;
-			rs = 0;
-		}
-		for (i = 0; i < rs; i += sizeof (Elf_Rel), rp++) {
-			Elf_Addr *ra;
-			const Elf_Sym *sp;
-
-			sp = dynld.dyn.symtab;
-			sp += ELF_R_SYM(rp->r_info);
-
-			if (ELF_R_SYM(rp->r_info) && sp->st_value == 0) {
-#if 0
-/* cannot printf in this function */
-				_dl_wrstderr("Dynamic loader failure: self bootstrapping impossible.\n");
-				_dl_wrstderr("Undefined symbol: ");
-				_dl_wrstderr((char *)dynld.dyn.strtab +
-				    sp->st_name);
-#endif
-#ifdef RCRT0
-				continue;
-#else
-				_dl_exit(5);
-#endif
-			}
-
+		sp = dynld.dt_symtab + ELF_R_SYM(rp->r_info);
+		if (!ELF_R_SYM(rp->r_info) || sp->st_value != 0) {
 			ra = (Elf_Addr *)(rp->r_offset + loff);
-			RELOC_REL(rp, sp, ra, loff);
+			RELOC_DYN(rp, sp, ra, loff);
 		}
-	}
-
-	for (n = 0; n < 2; n++) {
-		unsigned long rs;
-		Elf_RelA *rp;
-		int	i;
-
-		switch (n) {
-		case 0:
-			if (dynld.Dyn.info[DT_PLTREL] != DT_RELA)
-				continue;
-			rp = (Elf_RelA *)(dynld.Dyn.info[DT_JMPREL]);
-			rs = dynld.dyn.pltrelsz;
-			break;
-		case 1:
-			rp = (Elf_RelA *)(dynld.Dyn.info[DT_RELA]);
-			rs = dynld.dyn.relasz;
-			break;
-		default:
-			rp = NULL;
-			rs = 0;
-		}
-		for (i = 0; i < rs; i += sizeof (Elf_RelA), rp++) {
-			Elf_Addr *ra;
-			const Elf_Sym *sp;
-
-			sp = dynld.dyn.symtab;
-			sp += ELF_R_SYM(rp->r_info);
-			if (ELF_R_SYM(rp->r_info) && sp->st_value == 0) {
-#if 0
-				_dl_wrstderr("Dynamic loader failure: self bootstrapping impossible.\n");
-				_dl_wrstderr("Undefined symbol: ");
-				_dl_wrstderr((char *)dynld.dyn.strtab +
-				    sp->st_name);
-#endif
-#ifdef RCRT0
-				continue;
-#else
-				_dl_exit(6);
-#endif
-			}
-
-			ra = (Elf_Addr *)(rp->r_offset + loff);
-			RELOC_RELA(rp, sp, ra, loff, dynld.dyn.pltgot);
-		}
+		rp++;
 	}
 
 	RELOC_GOT(&dynld, loff);
@@ -291,7 +230,7 @@ _dl_boot_bind(const long sp, long *dl_data, Elf_Dyn *dynamicp)
 #endif
 
 #if defined(__powerpc__)
-	if (dynld.Dyn.info[DT_PROC(DT_PPC_GOT)] == 0)
+	if (dynld.dt_proc[DT_PROC(DT_PPC_GOT)] == 0)
 		prot_exec = PROT_EXEC;
 #endif
 

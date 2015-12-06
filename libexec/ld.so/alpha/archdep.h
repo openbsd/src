@@ -1,4 +1,4 @@
-/*	$OpenBSD: archdep.h,v 1.16 2014/12/27 13:13:25 kettenis Exp $ */
+/*	$OpenBSD: archdep.h,v 1.17 2015/12/06 23:36:12 guenther Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -29,6 +29,8 @@
 #ifndef _ALPHA_ARCHDEP_H_
 #define _ALPHA_ARCHDEP_H_
 
+#define	RELOC_TAG	DT_RELA
+
 #define	DL_MALLOC_ALIGN	8	/* Arch constraint or otherwise */
 
 #define	MACHID	EM_ALPHA_EXP	/* ELF e_machine ID value checked */
@@ -42,15 +44,7 @@
 #include "util.h"
 
 static inline void
-RELOC_REL(Elf64_Rel *r, const Elf64_Sym *s, Elf64_Addr *p, unsigned long v)
-{
-	/* Alpha does not use REL type relocations */
-	_dl_exit(20);
-}
-
-static inline void
-RELOC_RELA(Elf64_Rela *r, const Elf64_Sym *s, Elf64_Addr *p, unsigned long v,
-    Elf_Addr *pltgot)
+RELOC_DYN(Elf64_Rela *r, const Elf64_Sym *s, Elf64_Addr *p, unsigned long v)
 {
 	if (ELF64_R_TYPE(r->r_info) == RELOC_RELATIVE) {
 		/* handled by _reloc_alpha_got */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: archdep.h,v 1.6 2014/12/22 03:51:08 kurt Exp $	*/
+/*	$OpenBSD: archdep.h,v 1.7 2015/12/06 23:36:12 guenther Exp $	*/
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -29,6 +29,8 @@
 #ifndef _X86_64_ARCHDEP_H_
 #define _X86_64_ARCHDEP_H_
 
+#define	RELOC_TAG	DT_RELA
+
 #define	DL_MALLOC_ALIGN	8	/* Arch constraint or otherwise */
 
 #define	MACHID	EM_AMD64	/* ELF e_machine ID value checked */
@@ -52,14 +54,7 @@ _dl_mmap(void *addr, unsigned int len, unsigned int prot,
 
 
 static inline void
-RELOC_REL(Elf64_Rel *r, const Elf64_Sym *s, Elf64_Addr *p, unsigned long v)
-{
-	/* AMD64 is a rela architecture */
-}
-
-static inline void
-RELOC_RELA(Elf64_Rela *r, const Elf64_Sym *s, Elf64_Addr *p, unsigned long v,
-    Elf_Addr *pltgot)
+RELOC_DYN(Elf64_Rela *r, const Elf64_Sym *s, Elf64_Addr *p, unsigned long v)
 {
 	if (ELF64_R_TYPE(r->r_info) == R_X86_64_RELATIVE) {
 		*p = v + r->r_addend;

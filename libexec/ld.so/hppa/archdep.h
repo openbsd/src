@@ -1,4 +1,4 @@
-/*	$OpenBSD: archdep.h,v 1.9 2014/01/19 10:25:45 guenther Exp $	*/
+/*	$OpenBSD: archdep.h,v 1.10 2015/12/06 23:36:12 guenther Exp $	*/
 
 /*
  * Copyright (c) 2004 Michael Shalayeff
@@ -30,6 +30,9 @@
 #ifndef _HPPA_ARCHDEP_H_
 #define _HPPA_ARCHDEP_H_
 
+#define	RELOC_TAG	DT_RELA
+#define	HAVE_JMPREL	1
+
 #define	DL_MALLOC_ALIGN	8	/* Arch constraint or otherwise */
 
 #define	MACHID	EM_PARISC		/* ELF e_machine ID value checked */
@@ -53,24 +56,26 @@ _dl_mmap(void *addr, unsigned int len, unsigned int prot,
 
 
 static inline void
-RELOC_REL(Elf_Rel *r, const Elf_Sym *s, Elf_Addr *p, unsigned long v)
+RELOC_JMPREL(Elf_RelA *r, const Elf_Sym *s, Elf_Addr *p, unsigned long v,
+    Elf_Addr *pltgot)
 {
-	/* HPPA does no REL type relocations */
-	_dl_exit(20);
+	if (ELF_R_TYPE(r->r_info) == RELOC_IPLT) {
+		p[0] = v + s->st_value + r->r_addend;
+		p[1] = (Elf_Addr)pltgot;
+	} else {
+		_dl_printf("unknown bootstrap relocation\n");
+		_dl_exit(5);
+	}
 }
 
 static inline void
-RELOC_RELA(Elf_RelA *r, const Elf_Sym *s, Elf_Addr *p, unsigned long v,
-    Elf_Addr *pltgot)
+RELOC_DYN(Elf_RelA *r, const Elf_Sym *s, Elf_Addr *p, unsigned long v)
 {
 	if (ELF_R_TYPE(r->r_info) == RELOC_DIR32) {
 		if (ELF_R_SYM(r->r_info) != 0)
 			*p = v + s->st_value + r->r_addend;
 		else
 			*p = v + r->r_addend;
-	} else if (ELF_R_TYPE(r->r_info) == RELOC_IPLT) {
-		p[0] = v + s->st_value + r->r_addend;
-		p[1] = (Elf_Addr)pltgot;
 	} else if (ELF_R_TYPE(r->r_info) == RELOC_PLABEL32) {
 		*p = v + s->st_value + r->r_addend;
 	} else {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: archdep.h,v 1.9 2014/12/30 11:26:48 kettenis Exp $ */
+/*	$OpenBSD: archdep.h,v 1.10 2015/12/06 23:36:12 guenther Exp $ */
 
 /*
  * Copyright (c) 1998-2002 Opsycon AB, Sweden.
@@ -35,11 +35,12 @@
 #include "resolve.h"
 #include "util.h"
 
+#define	RELOC_TAG	DT_REL
 #define	DL_MALLOC_ALIGN	8	/* Arch constraint or otherwise */
 #define	MACHID	EM_MIPS		/* ELF e_machine ID value checked */
 
 
-#define RELOC_REL(relp, symp, adrp, val)				\
+#define RELOC_DYN(relp, symp, adrp, val)				\
 do {									\
 	if (ELF64_R_TYPE(relp->r_info) == R_MIPS_REL32_64) {		\
 		if (ELF64_R_SYM(relp->r_info) != 0)			\
@@ -51,24 +52,17 @@ do {									\
 	}								\
 } while (0)
 
-#define RELOC_RELA(rela, sym, ptr, val, pltgot)				\
-do {									\
-	_dl_exit(20);	/* We don't do RELA now */			\
-} while (0)
-
-struct elf_object;
-
 #define RELOC_GOT(obj, off)						\
 do {									\
-	struct elf_object *__dynld = obj;				\
+	struct boot_dyn *__dynld = obj;					\
 	long __loff = off;						\
 	Elf64_Addr *gotp;						\
 	int i, n;							\
 	const Elf_Sym *sp;						\
 									\
 	/* Do all local gots */						\
-	gotp = __dynld->dyn.pltgot;					\
-	n = __dynld->Dyn.info[DT_MIPS_LOCAL_GOTNO - DT_LOPROC + DT_NUM];\
+	gotp = __dynld->dt_pltgot;					\
+	n = __dynld->dt_proc[DT_MIPS_LOCAL_GOTNO - DT_LOPROC];		\
 									\
 	for (i = ((gotp[1] & 0x0000000080000000) ? 2 : 1); i < n; i++) {\
 		gotp[i] += __loff;					\
@@ -76,16 +70,16 @@ do {									\
 	gotp += n;							\
 									\
 	/* Do symbol referencing gots. There should be no global... */	\
-	n =  __dynld->Dyn.info[DT_MIPS_SYMTABNO - DT_LOPROC + DT_NUM] -	\
-	  __dynld->Dyn.info[DT_MIPS_GOTSYM - DT_LOPROC + DT_NUM];	\
-	sp = __dynld->dyn.symtab;					\
-	sp += __dynld->Dyn.info[DT_MIPS_GOTSYM - DT_LOPROC + DT_NUM];	\
+	n =  __dynld->dt_proc[DT_MIPS_SYMTABNO - DT_LOPROC] -		\
+	  __dynld->dt_proc[DT_MIPS_GOTSYM - DT_LOPROC];			\
+	sp = __dynld->dt_symtab;					\
+	sp += __dynld->dt_proc[DT_MIPS_GOTSYM - DT_LOPROC];		\
 									\
 	while (n--) {							\
 		if (sp->st_shndx == SHN_UNDEF ||			\
 		    sp->st_shndx == SHN_COMMON) {			\
 			if (ELF64_ST_BIND(sp->st_info) != STB_WEAK)	\
-				_dl_exit(6);				\
+				_dl_exit(7);				\
 		} else if (ELF64_ST_TYPE(sp->st_info) == STT_FUNC) {	\
 			*gotp += __loff;				\
 		} else {						\
@@ -94,7 +88,6 @@ do {									\
 		gotp++;							\
 		sp++;							\
 	}								\
-	__dynld->status |= STAT_GOT_DONE;				\
 } while (0)
 
 #define GOT_PERMS PROT_READ

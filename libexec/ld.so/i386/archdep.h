@@ -1,4 +1,4 @@
-/*	$OpenBSD: archdep.h,v 1.13 2014/12/24 14:04:09 kurt Exp $ */
+/*	$OpenBSD: archdep.h,v 1.14 2015/12/06 23:36:12 guenther Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -28,6 +28,8 @@
 
 #ifndef _I386_ARCHDEP_H_
 #define _I386_ARCHDEP_H_
+
+#define	RELOC_TAG	DT_REL
 
 #define	DL_MALLOC_ALIGN	8	/* Arch constraint or otherwise */
 
@@ -60,7 +62,7 @@ _dl_mquery(void *addr, unsigned int len, unsigned int prot,
 
 
 static inline void
-RELOC_REL(Elf32_Rel *r, const Elf32_Sym *s, Elf32_Addr *p, unsigned long v)
+RELOC_DYN(Elf32_Rel *r, const Elf32_Sym *s, Elf32_Addr *p, unsigned long v)
 {
 
 	if (ELF32_R_TYPE(r->r_info) == RELOC_RELATIVE) {
@@ -73,12 +75,6 @@ RELOC_REL(Elf32_Rel *r, const Elf32_Sym *s, Elf32_Addr *p, unsigned long v)
 		_dl_printf("unknown bootstrap relocation\n");
 		_dl_exit(6);
 	}
-}
-
-static inline void
-RELOC_RELA(Elf32_Rela *r, const Elf32_Sym *s, Elf32_Addr *p, unsigned long v,
-    Elf_Addr *pltgot)
-{
 }
 
 #define RELOC_GOT(obj, offs)
