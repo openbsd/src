@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.h,v 1.100 2015/11/28 21:52:02 beck Exp $	*/
+/*	$OpenBSD: buf.h,v 1.101 2015/12/06 23:42:30 guenther Exp $	*/
 /*	$NetBSD: buf.h,v 1.25 1997/04/09 21:12:17 mycroft Exp $	*/
 
 /*
@@ -340,7 +340,6 @@ void  bgetvp(struct vnode *, struct buf *);
 void  buf_replacevnode(struct buf *, struct vnode *);
 void  buf_daemon(struct proc *);
 void  buf_replacevnode(struct buf *, struct vnode *);
-void  buf_daemon(struct proc *);
 int bread_cluster(struct vnode *, daddr_t, int, struct buf **);
 
 #ifdef DEBUG
