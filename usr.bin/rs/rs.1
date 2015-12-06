@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rs.1,v 1.16 2014/01/20 05:07:48 schwarze Exp $
+.\"	$OpenBSD: rs.1,v 1.17 2015/12/06 08:07:51 schwarze Exp $
 .\"	$FreeBSD: src/usr.bin/rs/rs.1,v 1.4 1999/08/28 01:05:21 peter Exp $
 .\"
 .\" Copyright (c) 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)rs.1	8.2 (Berkeley) 12/30/93
 .\"
-.Dd $Mdocdate: January 20 2014 $
+.Dd $Mdocdate: December 6 2015 $
 .Dt RS 1
 .Os
 .Sh NAME
@@ -167,6 +167,19 @@ transposes its input, and assumes one array entry per input line
 unless the first non-ignored line is longer than the display width.
 Option letters which take numerical arguments interpret a missing
 number as zero unless otherwise indicated.
+.Sh ENVIRONMENT
+.Bl -tag -width LC_CTYPE
+.It Ev LC_CTYPE
+The character set
+.Xr locale 1 .
+It is used to calculate required column widths and to adjust entries
+within columns.
+If unset or set to
+.Qq C ,
+.Qq POSIX ,
+or an unsupported value, each byte is treated as a character of
+display width 1.
+.El
 .Sh EXAMPLES
 .Nm
 can be used as a filter to convert the stream output
