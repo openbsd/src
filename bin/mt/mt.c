@@ -1,4 +1,4 @@
-/*	$OpenBSD: mt.c,v 1.36 2013/11/12 04:36:02 deraadt Exp $	*/
+/*	$OpenBSD: mt.c,v 1.37 2015/12/06 12:00:16 tobias Exp $	*/
 /*	$NetBSD: mt.c,v 1.14.2.1 1996/05/27 15:12:11 mrg Exp $	*/
 
 /*
@@ -88,6 +88,8 @@ int		_rmtmtioctop(int fd, struct mtop *com);
 struct mtget	*_rmtstatus(int fd);
 void		_rmtclose(void);
 
+extern char	*__progname;
+
 char	*host = NULL;	/* remote host (if any) */
 
 int
@@ -133,7 +135,6 @@ _rmtclose(void)
 #endif
 }
 
-char	*progname;
 int	eject = 0;
 
 int
@@ -145,12 +146,7 @@ main(int argc, char *argv[])
 	char *p, *tape, *realtape, *opts;
 	size_t len;
 
-	if ((progname = strrchr(argv[0], '/')))
-		progname++;
-	else
-		progname = argv[0];
-
-	if (strcmp(progname, "eject") == 0) {
+	if (strcmp(__progname, "eject") == 0) {
 		opts = "t";
 		eject = 1;
 		tape = NULL;
@@ -320,9 +316,9 @@ void
 usage(void)
 {
 	if (eject)
-		(void)fprintf(stderr, "usage: %s [-t] device\n", progname);
+		(void)fprintf(stderr, "usage: %s [-t] device\n", __progname);
 	else
 		(void)fprintf(stderr,
-		    "usage: %s [-f device] command [count]\n", progname);
+		    "usage: %s [-f device] command [count]\n", __progname);
 	exit(X_USAGE);
 }

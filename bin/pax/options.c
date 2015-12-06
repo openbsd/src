@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.91 2015/05/18 20:26:16 czarkoff Exp $	*/
+/*	$OpenBSD: options.c,v 1.92 2015/12/06 12:00:16 tobias Exp $	*/
 /*	$NetBSD: options.c,v 1.6 1996/03/26 23:54:18 mrg Exp $	*/
 
 /*-
@@ -184,14 +184,12 @@ char *chdname = NULL;
 void
 options(int argc, char **argv)
 {
+	extern char *__progname;
 
 	/*
 	 * Are we acting like pax, tar or cpio (based on argv[0])
 	 */
-	if ((argv0 = strrchr(argv[0], '/')) != NULL)
-		argv0++;
-	else
-		argv0 = argv[0];
+	argv0 = __progname;
 
 	if (strcmp(NM_TAR, argv0) == 0) {
 		tar_options(argc, argv);

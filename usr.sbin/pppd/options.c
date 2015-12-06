@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.28 2015/01/16 06:40:19 deraadt Exp $	*/
+/*	$OpenBSD: options.c,v 1.29 2015/12/06 12:00:16 tobias Exp $	*/
 
 /*
  * options.c - handles option processing for PPP.
@@ -517,7 +517,7 @@ usage()
 {
     if (phase == PHASE_INITIALIZE)
 	fprintf(stderr, usage_string, VERSION, PATCHLEVEL, IMPLEMENTATION,
-		progname);
+		__progname);
 }
 
 /*
@@ -687,7 +687,7 @@ option_error(char *fmt, ...)
     vfmtmsg(buf, sizeof(buf), fmt, args);
     va_end(args);
     if (phase == PHASE_INITIALIZE)
-	fprintf(stderr, "%s: %s\n", progname, buf);
+	fprintf(stderr, "%s: %s\n", __progname, buf);
     syslog(LOG_ERR, "%s", buf);
 }
 

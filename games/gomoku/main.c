@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.29 2015/11/30 08:44:51 tb Exp $	*/
+/*	$OpenBSD: main.c,v 1.30 2015/12/06 12:00:16 tobias Exp $	*/
 /*
  * Copyright (c) 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -45,10 +45,11 @@
 #define PROGRAM	1		/* get input from program */
 #define INPUTF	2		/* get input from a file */
 
+extern char *__progname;	/* name of program */
+
 int	interactive = 1;	/* true if interactive */
 int	debug;			/* true if debugging */
 int	test;			/* both moves come from 1: input, 2: computer */
-char	*prog;			/* name of program */
 FILE	*debugfp;		/* file for debug output */
 FILE	*inputfp;		/* file for debug input */
 
@@ -84,12 +85,6 @@ main(argc, argv)
 	if (pledge("stdio rpath wpath cpath tty", NULL) == -1)
 		err(1, "pledge");
 
-	prog = strrchr(argv[0], '/');
-	if (prog)
-		prog++;
-	else
-		prog = argv[0];
-
 	if ((tmpname = getlogin()) != NULL)
 		strlcpy(you, tmpname, sizeof(you));
 	else
@@ -117,7 +112,7 @@ main(argc, argv)
 		default:
 			fprintf(stderr,
 			    "usage: %s [-bcdu] [-D debugfile] [inputfile]\n",
-			    prog);
+			    __progname);
 			exit(1);
 		}
 	}
@@ -194,8 +189,8 @@ again:
 		}
 	}
 	if (interactive) {
-		plyr[BLACK] = input[BLACK] == USER ? you : prog;
-		plyr[WHITE] = input[WHITE] == USER ? you : prog;
+		plyr[BLACK] = input[BLACK] == USER ? you : __progname;
+		plyr[WHITE] = input[WHITE] == USER ? you : __progname;
 		bdwho(1);
 	}
 
@@ -222,8 +217,8 @@ again:
 				input[WHITE] = PROGRAM;
 				break;
 			}
-			plyr[BLACK] = input[BLACK] == USER ? you : prog;
-			plyr[WHITE] = input[WHITE] == USER ? you : prog;
+			plyr[BLACK] = input[BLACK] == USER ? you : __progname;
+			plyr[WHITE] = input[WHITE] == USER ? you : __progname;
 			bdwho(1);
 			goto top;
 
@@ -554,7 +549,7 @@ void
 panic(str)
 	char *str;
 {
-	fprintf(stderr, "%s: %s\n", prog, str);
+	fprintf(stderr, "%s: %s\n", __progname, str);
 	fputs("resign\n", stdout);
 	quit(0);
 }

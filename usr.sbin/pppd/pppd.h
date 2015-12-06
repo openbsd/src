@@ -1,4 +1,4 @@
-/*	$OpenBSD: pppd.h,v 1.20 2015/09/12 12:42:36 miod Exp $	*/
+/*	$OpenBSD: pppd.h,v 1.21 2015/12/06 12:00:16 tobias Exp $	*/
 
 /*
  * pppd.h - PPP daemon global declarations.
@@ -77,7 +77,7 @@ extern char	hostname[];	/* Our hostname */
 extern u_char	outpacket_buf[]; /* Buffer for outgoing packets */
 extern int	phase;		/* Current state of link - see values below */
 extern int	baud_rate;	/* Current link speed in bits/sec */
-extern char	*progname;	/* Name of this program */
+extern char	*__progname;	/* Name of this program */
 extern int	redirect_stderr;/* Connector's stderr should go to file */
 extern char	peer_authname[];/* Authenticated name of peer */
 extern int	privileged;	/* We were run by real-uid root */

@@ -58,7 +58,7 @@
 //
 // Global Variables
 //
-char *program_name;
+extern char *__progname;
 
 
 //
@@ -70,20 +70,9 @@ char *program_name;
 // Routines
 //
 void
-init_program_name(char **argv)
-{
-    if ((program_name = strrchr(argv[0], '/')) != (char *)NULL) {
-	program_name++;
-    } else {
-	program_name = argv[0];
-    }
-}
-
-
-void
 do_help()
 {
-    printf("usage: %s [-hilrv] disk\n", program_name);
+    printf("usage: %s [-hilrv] disk\n", __progname);
 /*
 	{"debug",	no_argument,		0,	'd'},
 	{"abbr",	no_argument,		0,	'a'},
@@ -112,7 +101,7 @@ fatal(int value, const char *fmt, ...)
 {
     va_list ap;
 
-    fprintf(stderr, "%s: ", program_name);
+    fprintf(stderr, "%s: ", __progname);
     va_start(ap, fmt);
     vfprintf(stderr, fmt, ap);
     va_end(ap);
@@ -136,7 +125,7 @@ error(int value, const char *fmt, ...)
 {
     va_list ap;
 
-    fprintf(stderr, "%s: ", program_name);
+    fprintf(stderr, "%s: ", __progname);
     va_start(ap, fmt);
     vfprintf(stderr, fmt, ap);
     va_end(ap);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.35 2015/11/19 22:01:33 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.36 2015/12/06 12:00:16 tobias Exp $	*/
 /*	$NetBSD: main.c,v 1.5 1996/02/28 21:04:05 thorpej Exp $	*/
 
 /*
@@ -77,6 +77,7 @@ int
 main(int argc, char *argv[])
 {
 	int ch;
+	extern char *__progname;
 	char *user, *alias;
 	const char *errstr;
 
@@ -84,10 +85,7 @@ main(int argc, char *argv[])
 
 	TerminalSaveState();
 
-	if ((prompt = strrchr(argv[0], '/')))
-		++prompt;
-	else
-		prompt = argv[0];
+	prompt = __progname;
 
 	user = alias = NULL;
 

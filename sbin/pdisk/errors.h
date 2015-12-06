@@ -54,7 +54,6 @@ extern int hflag;
 // Forward declarations
 //
 void do_help(void);
-void init_program_name(char **argv);
 void error(int value, const char *fmt, ...);
 void fatal(int value, const char *fmt, ...);
 void usage(const char *kind);

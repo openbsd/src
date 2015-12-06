@@ -1,4 +1,4 @@
-/* $OpenBSD: crunched_main.c,v 1.4 2014/01/11 04:43:00 deraadt Exp $	 */
+/* $OpenBSD: crunched_main.c,v 1.5 2015/12/06 12:00:16 tobias Exp $	 */
 
 /*
  * Copyright (c) 1994 University of Maryland
@@ -47,22 +47,19 @@ extern struct stub entry_points[];
 int
 main(int argc, char *argv[], char **envp)
 {
-	char		*slash, *basename;
+	extern char	*__progname;
 	struct stub	*ep;
 
-	if (argv[0] == NULL || *argv[0] == '\0')
+	if (__progname == NULL || *__progname == '\0')
 		crunched_usage();
 
-	slash = strrchr(argv[0], '/');
-	basename = slash ? slash + 1 : argv[0];
-
 	for (ep = entry_points; ep->name != NULL; ep++)
-		if (!strcmp(basename, ep->name))
+		if (!strcmp(__progname, ep->name))
 			break;
 
 	if (ep->name)
 		return ep->f(argc, argv, envp);
-	fprintf(stderr, "%s: %s not compiled in\n", EXECNAME, basename);
+	fprintf(stderr, "%s: %s not compiled in\n", EXECNAME, __progname);
 	crunched_usage();
 }
 
