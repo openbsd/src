@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.h,v 1.12 2015/12/06 02:26:14 reyk Exp $	*/
+/*	$OpenBSD: vmd.h,v 1.13 2015/12/06 10:30:41 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -65,9 +65,9 @@ enum imsg_type {
 };
 
 struct vmop_result {
-	int		 vmr_result;
-	uint32_t	 vmr_id;
-	char		 vmr_ttyname[VM_TTYNAME_MAX];
+	int			 vmr_result;
+	uint32_t		 vmr_id;
+	char			 vmr_ttyname[VM_TTYNAME_MAX];
 };
 
 struct vmop_info_result {
@@ -76,15 +76,15 @@ struct vmop_info_result {
 };
 
 struct vmd_vm {
-	struct vm_create_params	vm_params;
-	uint32_t		vm_vmid;
-	int			vm_kernel;
-	int			vm_disks[VMM_MAX_DISKS_PER_VM];
-	int			vm_ifs[VMM_MAX_NICS_PER_VM];
-	char			vm_ttyname[VM_TTYNAME_MAX];
-	int			vm_tty;
-	uint32_t		vm_peerid;
-	TAILQ_ENTRY(vmd_vm)	vm_entry;
+	struct vm_create_params	 vm_params;
+	uint32_t		 vm_vmid;
+	int			 vm_kernel;
+	int			 vm_disks[VMM_MAX_DISKS_PER_VM];
+	int			 vm_ifs[VMM_MAX_NICS_PER_VM];
+	char			 vm_ttyname[VM_TTYNAME_MAX];
+	int			 vm_tty;
+	uint32_t		 vm_peerid;
+	TAILQ_ENTRY(vmd_vm)	 vm_entry;
 };
 TAILQ_HEAD(vmlist, vmd_vm);
 
