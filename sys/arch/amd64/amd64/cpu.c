@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.92 2015/12/06 01:16:58 mlarkin Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.93 2015/12/06 03:14:55 dlg Exp $	*/
 /* $NetBSD: cpu.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $ */
 
 /*-
@@ -517,9 +517,11 @@ cpu_init(struct cpu_info *ci)
 		fpu_save_len = ebx;
 	}
 
+#if NVMM > 0
 	/* Re-enable VMM if needed */
 	if (ci->ci_flags & CPUF_VMM)
 		start_vmm_on_cpu(ci);
+#endif /* NVMM > 0 */
 
 #ifdef MULTIPROCESSOR
 	ci->ci_flags |= CPUF_RUNNING;
