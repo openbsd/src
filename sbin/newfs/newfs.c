@@ -1,4 +1,4 @@
-/*	$OpenBSD: newfs.c,v 1.103 2015/11/25 19:45:21 kettenis Exp $	*/
+/*	$OpenBSD: newfs.c,v 1.104 2015/12/06 11:56:47 tobias Exp $	*/
 /*	$NetBSD: newfs.c,v 1.20 1996/05/16 07:13:03 thorpej Exp $	*/
 
 /*
@@ -423,10 +423,11 @@ main(int argc, char *argv[])
 				warnx("%s: not a character-special device",
 				    special);
 		}
-		cp = strchr(argv[0], '\0') - 1;
-		if (cp == NULL ||
-		    ((*cp < 'a' || *cp > ('a' + maxpartitions - 1))
-		    && !isdigit((unsigned char)*cp)))
+		if (*argv[0] == '\0')
+			fatal("empty partition name supplied");
+		cp = argv[0] + strlen(argv[0]) - 1;
+		if ((*cp < 'a' || *cp > ('a' + maxpartitions - 1))
+		    && !isdigit((unsigned char)*cp))
 			fatal("%s: can't figure out file system partition",
 			    argv[0]);
 		lp = getdisklabel(special, fsi);
@@ -631,8 +632,9 @@ rewritelabel(char *s, int fd, struct disklabel *lp)
 		/*
 		 * Make name for 'c' partition.
 		 */
-		strncpy(specname, s, sizeof(specname) - 1);
-		specname[sizeof(specname) - 1] = '\0';
+		if (*s == '\0' ||
+		    strlcpy(specname, s, sizeof(specname)) >= sizeof(specname))
+			fatal("%s: invalid partition name supplied", s);
 		cp = specname + strlen(specname) - 1;
 		if (!isdigit((unsigned char)*cp))
 			*cp = 'c';
