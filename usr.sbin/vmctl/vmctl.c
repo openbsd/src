@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmctl.c,v 1.5 2015/12/06 01:58:21 reyk Exp $	*/
+/*	$OpenBSD: vmctl.c,v 1.6 2015/12/06 02:26:14 reyk Exp $	*/
 
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
@@ -252,16 +252,16 @@ int
 add_info(struct imsg *imsg, int *ret)
 {
 	static size_t ct = 0;
-	static struct vm_info_result *vir = NULL;
+	static struct vmop_info_result *vir = NULL;
 
 	if (imsg->hdr.type == IMSG_VMDOP_GET_INFO_VM_DATA) {
 		vir = reallocarray(vir, ct + 1,
-		    sizeof(struct vm_info_result));
+		    sizeof(struct vmop_info_result));
 		if (vir == NULL) {
 			*ret = ENOMEM;
 			return (1);
 		}
-		bcopy(imsg->data, &vir[ct], sizeof(struct vm_info_result));
+		memcpy(&vir[ct], imsg->data, sizeof(struct vmop_info_result));
 		ct++;
 		*ret = 0;
 		return (0);
@@ -286,25 +286,28 @@ add_info(struct imsg *imsg, int *ret)
  *  ct  : the size (number of elements in 'list') of the result
  */
 void
-print_vm_info(struct vm_info_result *list, size_t ct)
+print_vm_info(struct vmop_info_result *list, size_t ct)
 {
+	struct vm_info_result *vir;
 	size_t i, j;
 	char *vcpu_state;
 
-	printf("%5s %5s %5s %9s   %s\n", "ID", "PID", "VCPUS", "MAXMEM",
-	    "NAME");
+	printf("%5s %5s %5s %9s %*s %s\n", "ID", "PID", "VCPUS", "MAXMEM",
+	    VM_TTYNAME_MAX, "TTY", "NAME");
 	for (i = 0; i < ct; i++) {
-		if (info_id == 0 || info_id == list[i].vir_id)
-			printf("%5u %5u %5zd %7zdMB %s\n",
-			    list[i].vir_id, list[i].vir_creator_pid,
-			    list[i].vir_ncpus, list[i].vir_memory_size,
-			    list[i].vir_name);
-		if (info_id == list[i].vir_id) {
-			for (j = 0; j < list[i].vir_ncpus; j++) {
-				if (list[i].vir_vcpu_state[j] ==
+		vir = &list[i].vir_info;
+		if (info_id == 0 || info_id == vir->vir_id)
+			printf("%5u %5u %5zd %7zdMB %*s %s\n",
+			    vir->vir_id, vir->vir_creator_pid,
+			    vir->vir_ncpus, vir->vir_memory_size,
+			    VM_TTYNAME_MAX, list[i].vir_ttyname,
+			    vir->vir_name);
+		if (info_id == vir->vir_id) {
+			for (j = 0; j < vir->vir_ncpus; j++) {
+				if (vir->vir_vcpu_state[j] ==
 				    VCPU_STATE_STOPPED)
 					vcpu_state = "STOPPED";
-				else if (list[i].vir_vcpu_state[j] ==
+				else if (vir->vir_vcpu_state[j] ==
 				    VCPU_STATE_RUNNING)
 					vcpu_state = "RUNNING";
 				else

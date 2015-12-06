@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.19 2015/12/06 01:58:21 reyk Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.20 2015/12/06 02:26:14 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -104,6 +104,7 @@ vmd_dispatch_vmm(int fd, struct privsep_proc *p, struct imsg *imsg)
 	int			 res = 0;
 	struct vmd_vm		*vm;
 	struct vm_create_params	*vcp;
+	struct vmop_info_result	 vir;
 
 	switch (imsg->hdr.type) {
 	case IMSG_VMDOP_START_VM_RESPONSE:
@@ -128,10 +129,9 @@ vmd_dispatch_vmm(int fd, struct privsep_proc *p, struct imsg *imsg)
 		if (vm->vm_peerid == (uint32_t)-1)
 			break;
 		vmr.vmr_result = res;
-		strlcpy(vmr.vmr_ttyname, vm->vm_ttyname,
+		(void)strlcpy(vmr.vmr_ttyname, vm->vm_ttyname,
 		    sizeof(vmr.vmr_ttyname));
-		if (proc_compose_imsg(ps, PROC_CONTROL, -1,
-		    IMSG_VMDOP_START_VM_RESPONSE,
+		if (proc_compose_imsg(ps, PROC_CONTROL, -1, imsg->hdr.type,
 		    vm->vm_peerid, -1, &vmr, sizeof(vmr)) == -1) {
 			vm_remove(vm);
 			return (-1);
@@ -139,6 +139,7 @@ vmd_dispatch_vmm(int fd, struct privsep_proc *p, struct imsg *imsg)
 		break;
 	case IMSG_VMDOP_TERMINATE_VM_RESPONSE:
 		IMSG_SIZE_CHECK(imsg, &vmr);
+		memcpy(&vmr, imsg->data, sizeof(vmr));
 		proc_forward_imsg(ps, imsg, PROC_CONTROL, -1);
 		if (vmr.vmr_result == 0) {
 			/* Remove local reference */
@@ -147,6 +148,17 @@ vmd_dispatch_vmm(int fd, struct privsep_proc *p, struct imsg *imsg)
 		}
 		break;
 	case IMSG_VMDOP_GET_INFO_VM_DATA:
+		IMSG_SIZE_CHECK(imsg, &vir);
+		memcpy(&vir, imsg->data, sizeof(vir));
+		if ((vm = vm_getbyid(vir.vir_info.vir_id)) != NULL)
+			(void)strlcpy(vir.vir_ttyname, vm->vm_ttyname,
+			    sizeof(vir.vir_ttyname));
+		if (proc_compose_imsg(ps, PROC_CONTROL, -1, imsg->hdr.type,
+		    imsg->hdr.peerid, -1, &vir, sizeof(vir)) == -1) {
+			vm_remove(vm);
+			return (-1);
+		}
+		break;
 	case IMSG_VMDOP_GET_INFO_VM_END_DATA:
 		IMSG_SIZE_CHECK(imsg, &res);
 		proc_forward_imsg(ps, imsg, PROC_CONTROL, -1);

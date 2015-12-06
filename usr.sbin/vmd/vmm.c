@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.9 2015/12/06 01:58:21 reyk Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.10 2015/12/06 02:26:14 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -453,6 +453,7 @@ get_info_vm(struct privsep *ps, struct imsg *imsg, int terminate)
 	struct vm_info_params vip;
 	struct vm_info_result *info;
 	struct vm_terminate_params vtp;
+	struct vmop_info_result vir;
 
 	/*
 	 * We issue the VMM_IOC_INFO ioctl twice, once with an input
@@ -469,6 +470,7 @@ get_info_vm(struct privsep *ps, struct imsg *imsg, int terminate)
 	vip.vip_size = 0;
 	info = NULL;
 	ret = 0;
+	memset(&vir, 0, sizeof(vir));
 
 	/* First ioctl to see how many bytes needed (vip.vip_size) */
 	if (ioctl(env->vmd_fd, VMM_IOC_INFO, &vip) < 0)
@@ -498,9 +500,12 @@ get_info_vm(struct privsep *ps, struct imsg *imsg, int terminate)
 				return (ret);
 			log_debug("%s: terminated id %d",
 			    info[i].vir_name, info[i].vir_id);
-		} else if (proc_compose_imsg(ps, PROC_PARENT, -1,
+			continue;
+		}
+		memcpy(&vir.vir_info, &info[i], sizeof(vir.vir_info));
+		if (proc_compose_imsg(ps, PROC_PARENT, -1,
 		    IMSG_VMDOP_GET_INFO_VM_DATA, imsg->hdr.peerid, -1,
-		    &info[i], sizeof(struct vm_info_result)) == -1)
+		    &vir, sizeof(vir)) == -1)
 			return (EIO);
 	}
 	free(info);

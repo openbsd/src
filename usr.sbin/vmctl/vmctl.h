@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmctl.h,v 1.3 2015/12/04 15:40:17 reyk Exp $	*/
+/*	$OpenBSD: vmctl.h,v 1.4 2015/12/06 02:26:14 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -76,6 +76,6 @@ void	 terminate_vm(uint32_t);
 int	 terminate_vm_complete(struct imsg *, int *);
 void	 get_info_vm(uint32_t);
 int	 add_info(struct imsg *, int *);
-void	 print_vm_info(struct vm_info_result *, size_t);
+void	 print_vm_info(struct vmop_info_result *, size_t);
 
 #endif /* VMCTL_PARSER_H */
