@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.15 2015/12/01 12:03:55 mpi Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.16 2015/12/06 01:16:58 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -647,7 +647,8 @@ start_vmm_on_cpu(struct cpu_info *ci)
 	uint32_t cr4;
 
 	/* No VMM mode? exit. */
-	if (ci->ci_flags & CPUF_VMM)
+	if ((ci->ci_vmm_flags & CI_VMM_VMX) == 0 &&
+	    (ci->ci_vmm_flags & CI_VMM_SVM) == 0)
 		return;
 
 	/*
