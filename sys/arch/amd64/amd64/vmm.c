@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.19 2015/12/06 20:04:25 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.20 2015/12/06 20:12:15 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -101,6 +101,7 @@ int vm_get_info(struct vm_info_params *);
 int vm_writepage(struct vm_writepage_params *);
 int vm_readpage(struct vm_readpage_params *);
 int vcpu_init(struct vcpu *);
+int vcpu_init_regs_vmx(struct vcpu *);
 int vcpu_init_vmx(struct vcpu *);
 int vcpu_init_svm(struct vcpu *);
 int vcpu_run_vmx(struct vcpu *, uint8_t, int16_t *);
