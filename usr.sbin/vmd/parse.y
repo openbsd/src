@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.1 2015/12/03 16:11:32 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.2 2015/12/06 01:16:22 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007-2015 Reyk Floeter <reyk@openbsd.org>
@@ -143,6 +143,8 @@ main		: VM STRING			{
 				YYERROR;
 			}
 		} '{' optnl vm_opts_l '}'	{
+			int ret;
+
 			if (vcp_disable) {
 				log_debug("%s:%d: vm \"%s\" disabled (skipped)",
 				    file->name, yylval.lineno, vcp.vcp_name);
@@ -152,15 +154,17 @@ main		: VM STRING			{
 				 * XXX this should be done after parsing
 				 * XXX the configuration.
 				 */
-				if (config_getvm(&env->vmd_ps, &vcp,
-				    -1, -1) == -1) {
-					log_warnx("%s:%d: vm \"%s\" failed",
+				ret = config_getvm(&env->vmd_ps, &vcp, -1, -1);
+				if (ret == -1) {
+					log_warn("%s:%d: vm \"%s\" failed",
 					    file->name, yylval.lineno,
 					    vcp.vcp_name);
 					YYERROR;
+				} else {
+					log_debug("%s:%d: vm \"%s\" enabled",
+					    file->name, yylval.lineno,
+					    vcp.vcp_name);
 				}
-				log_debug("%s:%d: vm \"%s\" enabled",
-				    file->name, yylval.lineno, vcp.vcp_name);
 			}
 		}
 		;

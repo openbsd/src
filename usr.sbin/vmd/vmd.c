@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.17 2015/12/05 20:33:51 reyk Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.18 2015/12/06 01:16:22 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -67,7 +67,7 @@ vmd_dispatch_control(int fd, struct privsep_proc *p, struct imsg *imsg)
 		memcpy(&vcp, imsg->data, sizeof(vcp));
 		res = config_getvm(ps, &vcp, -1, imsg->hdr.peerid);
 		if (res == -1) {
-			res = EINVAL;
+			res = errno;
 			cmd = IMSG_VMDOP_START_VM_RESPONSE;
 		}
 		break;
