@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.17 2015/12/06 18:31:26 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.18 2015/12/06 18:42:18 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -239,29 +239,27 @@ vmm_attach(struct device *parent, struct device *self, void *aux)
 	SLIST_INIT(&sc->vm_list);
 	rw_init(&sc->vm_lock, "vmlistlock");
 
-	if (sc->nr_vmx_cpus)
-		printf(": %u VMX capable CPU%s, %u %s EPT capable\n",
-		    sc->nr_vmx_cpus, (sc->nr_vmx_cpus > 1) ? "s" : "",
-		    sc->nr_ept_cpus, (sc->nr_ept_cpus > 1) ? "are" : "is");
-	else if (sc->nr_svm_cpus)
-		printf(": %u SVM capable CPU%s, %u %s RVI capable\n",
-		    sc->nr_svm_cpus, (sc->nr_svm_cpus > 1) ? "s" : "",
-		    sc->nr_rvi_cpus, (sc->nr_rvi_cpus > 1) ? "are" : "is");
+	if (sc->nr_ept_cpus) {
+		printf(": VMX/EPT\n");
+		sc->mode = VMM_MODE_EPT;
+	} else if (sc->nr_vmx_cpus) {
+		printf(": VMX\n");
+		sc->mode = VMM_MODE_VMX;
+	} else if (sc->nr_rvi_cpus) {
+		printf(": SVM/RVI\n");
+		sc->mode = VMM_MODE_RVI;
+	} else if (sc->nr_svm_cpus) {
+		printf(": SVM\n");
+		sc->mode = VMM_MODE_SVM;
+	} else {
+		printf(": unknown\n");
+		sc->mode = VMM_MODE_UNKNOWN;
+	}
 
 	pool_init(&vm_pool, sizeof(struct vm), 0, 0, PR_WAITOK, "vmpool",
 	    NULL);
 	pool_init(&vcpu_pool, sizeof(struct vcpu), 0, 0, PR_WAITOK, "vcpupl",
 	    NULL);
-
-	sc->mode = VMM_MODE_UNKNOWN;
-	if (sc->nr_ept_cpus > 0)
-		sc->mode = VMM_MODE_EPT;
-	else if (sc->nr_vmx_cpus > 0)
-		sc->mode = VMM_MODE_VMX;
-	else if (sc->nr_rvi_cpus > 0)
-		sc->mode = VMM_MODE_RVI;
-	else
-		sc->mode = VMM_MODE_SVM;
 
 	vmm_softc = sc;
 }
