@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.5 2015/12/04 10:54:21 reyk Exp $	*/
+/*	$OpenBSD: config.c,v 1.6 2015/12/06 01:14:08 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -29,6 +29,7 @@
 #include <string.h>
 #include <fcntl.h>
 #include <util.h>
+#include <errno.h>
 #include <imsg.h>
 
 #include "proc.h"
@@ -106,25 +107,27 @@ config_getvm(struct privsep *ps, struct vm_create_params *vcp,
     int kernel_fd, uint32_t peerid)
 {
 	struct vmd		*env = ps->ps_env;
-	struct vmd_vm		*vm;
+	struct vmd_vm		*vm = NULL;
 	unsigned int		 i;
 	int			 fd, ttys_fd;
+
+	errno = 0;
 
 	if (vcp->vcp_ncpus == 0)
 		vcp->vcp_ncpus = 1;
 	if (vcp->vcp_ncpus > VMM_MAX_VCPUS_PER_VM) {
 		log_debug("invalid number of CPUs");
-		return (-1);
+		goto fail;
 	} else if (vcp->vcp_ndisks > VMM_MAX_DISKS_PER_VM) {
 		log_debug("invalid number of disks");
-		return (-1);
+		goto fail;
 	} else if (vcp->vcp_nnics > VMM_MAX_NICS_PER_VM) {
 		log_debug("invalid number of interfaces");
-		return (-1);
+		goto fail;
 	}
 
 	if ((vm = calloc(1, sizeof(*vm))) == NULL)
-		return (-1);
+		goto fail;
 
 	memcpy(&vm->vm_params, vcp, sizeof(vm->vm_params));
 
@@ -199,6 +202,8 @@ config_getvm(struct privsep *ps, struct vm_create_params *vcp,
 	return (0);
 
  fail:
+	if (errno == 0)
+		errno = EINVAL;
 	vm_remove(vm);
 	return (-1);
 }
