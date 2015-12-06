@@ -1,4 +1,4 @@
-/*	$OpenBSD: namei.h,v 1.29 2015/11/02 16:31:55 semarie Exp $	*/
+/*	$OpenBSD: namei.h,v 1.30 2015/12/06 17:50:21 deraadt Exp $	*/
 /*	$NetBSD: namei.h,v 1.11 1996/02/09 18:25:20 christos Exp $	*/
 
 /*
@@ -62,7 +62,7 @@ struct nameidata {
      /* struct	ucred *ni_cred;		   credentials */
 	struct	vnode *ni_startdir;	/* starting directory */
 	struct	vnode *ni_rootdir;	/* logical root directory */
-	int	ni_pledge;		/* expected pledge for namei */
+	uint64_t ni_pledge;		/* expected pledge for namei */
 	/*
 	 * Results: returned from/manipulated by lookup
 	 */

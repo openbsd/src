@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.135 2015/12/05 19:21:49 deraadt Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.136 2015/12/06 17:50:21 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -72,7 +72,7 @@ int substrcmp(const char *p1, size_t s1, const char *p2, size_t s2);
 /*
  * Ordered in blocks starting with least risky and most required.
  */
-const u_int pledge_syscalls[SYS_MAXSYSCALL] = {
+const uint64_t pledge_syscalls[SYS_MAXSYSCALL] = {
 	/*
 	 * Minimum required 
 	 */
@@ -368,7 +368,7 @@ sys_pledge(struct proc *p, void *v, register_t *retval)
 		syscallarg(const char *)request;
 		syscallarg(const char **)paths;
 	} */	*uap = v;
-	int flags = 0;
+	uint64_t flags = 0;
 	int error;
 
 	if (SCARG(uap, request)) {
@@ -563,7 +563,7 @@ pledge_syscall(struct proc *p, int code, int *tval)
 }
 
 int
-pledge_fail(struct proc *p, int error, int code)
+pledge_fail(struct proc *p, int error, uint64_t code)
 {
 	char *codes = "";
 	int i;
