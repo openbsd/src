@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.472 2015/12/05 09:55:18 jasper Exp $
+#	$OpenBSD: rc,v 1.473 2015/12/06 13:51:41 rpe Exp $
 
 # System startup script run by init on autoboot or after single-user.
 # Output and error are redirected to console by init, and the console is the
@@ -352,7 +352,7 @@ dmesg >/var/run/dmesg.boot	# Save a copy of the boot messages.
 make_keys
 
 echo -n 'starting early daemons:'
-start_daemon syslogd ldattach pflogd nsd unbound ntpd
+start_daemon syslogd ldattach pflogd nsd rebound unbound ntpd
 start_daemon iscsid isakmpd iked sasyncd ldapd npppd
 echo '.'
 
