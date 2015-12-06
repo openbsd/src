@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cas.c,v 1.47 2015/12/03 09:51:52 jmatthew Exp $	*/
+/*	$OpenBSD: if_cas.c,v 1.48 2015/12/06 11:32:54 jsg Exp $	*/
 
 /*
  *
@@ -1780,8 +1780,7 @@ cas_encap(struct cas_softc *sc, struct mbuf *m, int *used)
 	cur = frag = (sc->sc_tx_prod + *used) % CAS_NTXDESC;
 	map = sc->sc_txd[cur].sd_map;
 
-	switch (bus_dmamap_load_mbuf(sc->sc_dmatag, map, m,
-	    BUS_DMA_NOWAIT) != 0) {
+	switch (bus_dmamap_load_mbuf(sc->sc_dmatag, map, m, BUS_DMA_NOWAIT)) {
 	case 0:
 		break;
 	case EFBIG:
