@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.16 2015/12/06 01:16:58 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.17 2015/12/06 18:31:26 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -287,6 +287,15 @@ vmm_activate(struct device *self, int act)
 int
 vmmopen(dev_t dev, int flag, int mode, struct proc *p)
 {
+	/* Don't allow open if we didn't attach */
+	if (vmm_softc == NULL)
+		return (ENODEV);
+
+	/* Don't allow open if we didn't detect any supported CPUs */
+	/* XXX presently this means EPT until SP and SVM are back */
+	if (vmm_softc->mode != VMM_MODE_EPT)
+		return (ENODEV);
+
 	return 0;
 }
 
@@ -300,10 +309,6 @@ int
 vmmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	int ret;
-
-	/* Don't allow ioctls if we have no supported CPUs */
-	if (vmm_softc->mode == VMM_MODE_UNKNOWN)
-		return (ENOTTY);
 
 	switch (cmd) {
 	case VMM_IOC_CREATE:
