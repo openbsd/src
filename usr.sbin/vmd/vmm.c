@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.7 2015/12/03 23:32:32 reyk Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.8 2015/12/06 00:32:57 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -109,8 +109,8 @@ struct ns8250_regs com1_regs;
 int start_client_vmd(void);
 int opentap(void);
 int start_vm(struct imsg *);
-int terminate_vm(struct imsg *);
-int get_info_vm(struct privsep *, struct imsg *);
+int terminate_vm(struct vm_terminate_params *);
+int get_info_vm(struct privsep *, struct imsg *, int);
 int run_vm(int *, int *, struct vm_create_params *);
 void *vcpu_run_loop(void *);
 int vcpu_exit(struct vm_run_params *);
@@ -163,6 +163,9 @@ vmm_run(struct privsep *ps, struct privsep_proc *p, void *arg)
 	if (pledge("stdio vmm", NULL) == -1)
 		fatal("pledge");
 #endif
+
+	/* Get and terminate all running VMs */
+	get_info_vm(ps, NULL, 1);
 }
 
 int
@@ -171,6 +174,7 @@ vmm_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 	struct privsep		*ps = p->p_ps;
 	int			 res = 0, cmd = 0;
 	struct vm_create_params	 vcp;
+	struct vm_terminate_params vtp;
 
 	switch (imsg->hdr.type) {
 	case IMSG_VMDOP_START_VM_REQUEST:
@@ -195,11 +199,13 @@ vmm_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 		cmd = IMSG_VMDOP_START_VM_RESPONSE;
 		break;
 	case IMSG_VMDOP_TERMINATE_VM_REQUEST:
-		res = terminate_vm(imsg);
+		IMSG_SIZE_CHECK(imsg, &vtp);
+		memcpy(&vtp, imsg->data, sizeof(vtp));
+		res = terminate_vm(&vtp);
 		cmd = IMSG_VMDOP_TERMINATE_VM_RESPONSE;
 		break;
 	case IMSG_VMDOP_GET_INFO_VM_REQUEST:
-		res = get_info_vm(ps, imsg);
+		res = get_info_vm(ps, imsg, 0);
 		cmd = IMSG_VMDOP_GET_INFO_VM_END_DATA;
 		break;
 	case IMSG_CTL_RESET:
@@ -233,12 +239,8 @@ vmm_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
  *      valid)
  */
 int
-terminate_vm(struct imsg *imsg)
+terminate_vm(struct vm_terminate_params *vtp)
 {
-	struct vm_terminate_params *vtp;
-
-	vtp = (struct vm_terminate_params *)imsg->data;
-
 	if (ioctl(env->vmd_fd, VMM_IOC_TERM, vtp) < 0)
 		return (errno);
 
@@ -385,20 +387,22 @@ start_vm(struct imsg *imsg)
  * Returns a list of VMs known to vmm(4).
  *
  * Parameters:
- *  ibuf: the imsg ibuf in which to place the results. A new imsg will
- *      be created using this ibuf.
+ *  ps: the privsep context.
+ *  imsg: the received imsg including the peer id.
+ *  terminate: terminate the listed vm.
  *
  * Return values:
  *  0: success
  *  !0 : failure (eg, ENOMEM, EIO or another error code from vmm(4) ioctl)
  */
 int
-get_info_vm(struct privsep *ps, struct imsg *imsg)
+get_info_vm(struct privsep *ps, struct imsg *imsg, int terminate)
 {
 	int ret;
 	size_t ct, i;
 	struct vm_info_params vip;
 	struct vm_info_result *info;
+	struct vm_terminate_params vtp;
 
 	/*
 	 * We issue the VMM_IOC_INFO ioctl twice, once with an input
@@ -438,7 +442,13 @@ get_info_vm(struct privsep *ps, struct imsg *imsg)
 	/* Return info */
 	ct = vip.vip_size / sizeof(struct vm_info_result);
 	for (i = 0; i < ct; i++) {
-		if (proc_compose_imsg(ps, PROC_PARENT, -1,
+		if (terminate) {
+			vtp.vtp_vm_id = info[i].vir_id;
+			if ((ret = terminate_vm(&vtp)) != 0)
+				return (ret);
+			log_debug("%s: terminated id %d",
+			    info[i].vir_name, info[i].vir_id);
+		} else if (proc_compose_imsg(ps, PROC_PARENT, -1,
 		    IMSG_VMDOP_GET_INFO_VM_DATA, imsg->hdr.peerid, -1,
 		    &info[i], sizeof(struct vm_info_result)) == -1)
 			return (EIO);
