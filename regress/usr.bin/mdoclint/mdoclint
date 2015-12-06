@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 #
-# $OpenBSD: mdoclint,v 1.46 2015/12/01 22:27:28 jmc Exp $
+# $OpenBSD: mdoclint,v 1.47 2015/12/06 08:55:09 schwarze Exp $
 # $NetBSD: mdoclint,v 1.49 2014/06/23 18:10:21 wiz Exp $
 #
 # Copyright (c) 2001-2013 Thomas Klausner
@@ -272,11 +272,19 @@ sub verify_xref
 		$self->warning("Xref to itself (use .Nm instead)") if $opt_x;
 	}
 	# try to find corresponding man page
-	for my $dir ("/usr/share/man",
-	    OPENBSD ? "/usr/X11R6/man" : "/usr/X11R7/man") {
-		for my $a ("", $arch) {
-			for my $page ("man$section/$a/$page.$section") {
-				return 1 if -f "$dir/$page";
+	if (OPENBSD) {
+		open my $saveout, '>&', STDOUT;
+		open STDOUT, '>', '/dev/null';
+		my $irc = system 'man', '-M', '/usr/share/man:/usr/X11R6/man',
+		    '-s', $section, '-f', $page;
+		open STDOUT, '>&', $saveout;
+		return 1 unless $irc;
+	} else {
+		for my $dir ('/usr/share/man', '/usr/X11R7/man') {
+			for my $a ('', $arch) {
+				for my $page ("man$section/$a/$page.$section") {
+					return 1 if -f "$dir/$page";
+				}
 			}
 		}
 	}
