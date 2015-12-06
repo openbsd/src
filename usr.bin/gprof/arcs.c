@@ -1,4 +1,4 @@
-/*	$OpenBSD: arcs.c,v 1.13 2015/08/20 22:32:41 deraadt Exp $	*/
+/*	$OpenBSD: arcs.c,v 1.14 2015/12/06 23:22:51 guenther Exp $	*/
 /*	$NetBSD: arcs.c,v 1.6 1995/04/19 07:15:52 cgd Exp $	*/
 
 /*
@@ -95,9 +95,14 @@ addarc(nltype *parentp, nltype *childp, long count)
 nltype	**topsortnlp;
 
 int
-topcmp(nltype **npp1, nltype **npp2)
+topcmp(const void *v1, const void *v2)
 {
-    return (*npp1) -> toporder - (*npp2) -> toporder;
+    const nltype * const *npp1 = v1;
+    const nltype * const *npp2 = v2;
+
+    if ((*npp1) -> toporder < (*npp2) -> toporder)
+	return -1;
+    return (*npp1) -> toporder > (*npp2) -> toporder;
 }
 
 nltype **

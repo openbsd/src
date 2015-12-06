@@ -1,4 +1,4 @@
-/*	$OpenBSD: printgprof.c,v 1.13 2015/08/20 22:32:41 deraadt Exp $	*/
+/*	$OpenBSD: printgprof.c,v 1.14 2015/12/06 23:22:51 guenther Exp $	*/
 /*	$NetBSD: printgprof.c,v 1.5 1995/04/19 07:16:21 cgd Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
 #include "gprof.h"
 #include "pathnames.h"
 
-int namecmp(nltype **, nltype **);
+int namecmp(const void *, const void *);
 
 void
 printprof()
@@ -66,21 +66,19 @@ printprof()
 }
 
 int
-timecmp(nltype **npp1, nltype **npp2)
+timecmp(const void *v1, const void *v2)
 {
-    double	timediff;
-    long	calldiff;
+    const nltype * const *npp1 = v1;
+    const nltype * const *npp2 = v2;
 
-    timediff = (*npp2) -> time - (*npp1) -> time;
-    if ( timediff > 0.0 )
+    if ((*npp2) -> time < (*npp1) -> time)
+	return -1;
+    if ((*npp2) -> time > (*npp1) -> time)
 	return 1 ;
-    if ( timediff < 0.0 )
+    if ((*npp2) -> ncall < (*npp1) -> ncall)
 	return -1;
-    calldiff = (*npp2) -> ncall - (*npp1) -> ncall;
-    if ( calldiff > 0 )
+    if ((*npp2) -> ncall > (*npp1) -> ncall)
 	return 1;
-    if ( calldiff < 0 )
-	return -1;
     return( strcmp( (*npp1) -> name , (*npp2) -> name ) );
 }
 
@@ -233,26 +231,37 @@ printgprof(nltype **timesortnlp)
      *	all else being equal, sort by names.
      */
 int
-totalcmp(nltype **npp1, nltype **npp2)
+totalcmp(const void *v1, const void *v2)
 {
-    nltype		*np1 = *npp1;
-    nltype		*np2 = *npp2;
-    double		diff;
+    const nltype *np1 = *(const nltype **)v1;
+    const nltype *np2 = *(const nltype **)v2;
+    double t1, t2;
+    int np1noname, np2noname, np1cyclehdr, np2cyclehdr;
 
-    diff =    ( np1 -> propself + np1 -> propchild )
-	    - ( np2 -> propself + np2 -> propchild );
-    if ( diff < 0.0 )
+    t1 = np1 -> propself + np1 -> propchild;
+    t2 = np2 -> propself + np2 -> propchild;
+    if ( t2 > t1 )
 	    return 1;
-    if ( diff > 0.0 )
+    if ( t2 < t1 )
 	    return -1;
-    if ( np1 -> name == 0 && np1 -> cycleno != 0 ) 
+
+    np1noname = ( np1 -> name == 0 );
+    np2noname = ( np2 -> name == 0 );
+    np1cyclehdr = ( np1noname && np1 -> cycleno != 0 );
+    np2cyclehdr = ( np2noname && np2 -> cycleno != 0 );
+
+    if ( np1cyclehdr && !np2cyclehdr )
 	return -1;
-    if ( np2 -> name == 0 && np2 -> cycleno != 0 )
+    else if ( !np1cyclehdr && np2cyclehdr )
 	return 1;
-    if ( np1 -> name == 0 )
+
+    if ( np1noname && !np2noname )
 	return -1;
-    if ( np2 -> name == 0 )
+    else if ( !np1noname && np2noname )
 	return 1;
+    else if ( np1noname && np2noname )
+	return 0;
+
     if ( *(np1 -> name) != '_' && *(np2 -> name) == '_' )
 	return -1;
     if ( *(np1 -> name) == '_' && *(np2 -> name) != '_' )
@@ -642,8 +651,11 @@ printblurb(const char *blurbname)
 }
 
 int
-namecmp(nltype **npp1, nltype **npp2)
+namecmp(const void *v1, const void *v2)
 {
+    const nltype * const *npp1 = v1;
+    const nltype * const *npp2 = v2;
+
     return( strcmp( (*npp1) -> name , (*npp2) -> name ) );
 }
 
