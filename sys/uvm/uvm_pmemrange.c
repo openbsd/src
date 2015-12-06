@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pmemrange.c,v 1.48 2015/08/21 16:04:35 visa Exp $	*/
+/*	$OpenBSD: uvm_pmemrange.c,v 1.49 2015/12/06 10:42:43 blambert Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Ariane van der Steldt <ariane@stack.nl>
@@ -1036,9 +1036,11 @@ out:
 		atomic_clearbits_int(&found->pg_flags, PG_PMAPMASK);
 
 		if (found->pg_flags & PG_ZERO) {
+			uvm_lock_fpageq();
 			uvmexp.zeropages--;
 			if (uvmexp.zeropages < UVM_PAGEZERO_TARGET)
 				wakeup(&uvmexp.zeropages);
+			uvm_unlock_fpageq();
 		}
 		if (flags & UVM_PLA_ZERO) {
 			if (found->pg_flags & PG_ZERO)
