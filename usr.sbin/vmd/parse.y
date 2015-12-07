@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.4 2015/12/07 12:52:00 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.5 2015/12/07 13:30:06 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007-2015 Reyk Floeter <reyk@openbsd.org>
@@ -101,6 +101,7 @@ typedef struct {
 %token	<v.string>	STRING
 %token  <v.number>	NUMBER
 %type	<v.number>	disable
+%type	<v.string>	string
 
 %%
 
@@ -112,7 +113,7 @@ grammar		: /* empty */
 		| grammar error '\n'		{ file->errors++; }
 		;
 
-include		: INCLUDE STRING		{
+include		: INCLUDE string		{
 			struct file	*nfile;
 
 			if ((nfile = pushfile($2, 0)) == NULL) {
@@ -135,7 +136,7 @@ varset		: STRING '=' STRING		{
 		}
 		;
 
-main		: VM STRING			{
+main		: VM string			{
 			memset(&vcp, 0, sizeof(vcp));
 			vcp_disable = 0;
 			if (strlcpy(vcp.vcp_name, $2, sizeof(vcp.vcp_name)) >=
@@ -182,7 +183,7 @@ vm_opts_l	: vm_opts_l vm_opts nl
 vm_opts		: disable			{
 			vcp_disable = $1;
 		}
-		| DISK STRING			{
+		| DISK string			{
 			if (parse_disk($2) != 0) {
 				yyerror("failed to parse disks: %s", $2);
 				free($2);
@@ -190,7 +191,7 @@ vm_opts		: disable			{
 			}
 			free($2);
 		}
-		| KERNEL STRING			{
+		| KERNEL string			{
 			if (vcp.vcp_kernel[0] != '\0') {
 				yyerror("kernel specified more than once");
 				free($2);
@@ -241,6 +242,15 @@ vm_opts		: disable			{
 			}
 			vcp.vcp_memory_size = (size_t)res;
 		}
+		;
+
+string		: STRING string				{
+			if (asprintf(&$$, "%s%s", $1, $2) == -1)
+				fatal("asprintf string");
+			free($1);
+			free($2);
+		}
+		| STRING
 		;
 
 disable		: ENABLE			{ $$ = 0; }
@@ -537,7 +547,7 @@ nodigits:
 	x != '!' && x != '=' && x != '#' && \
 	x != ','))
 
-	if (isalnum(c) || c == ':' || c == '_') {
+	if (isalnum(c) || c == ':' || c == '_' || c == '/') {
 		do {
 			*p++ = c;
 			if ((unsigned)(p-buf) >= sizeof(buf)) {
