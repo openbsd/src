@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.576 2015/10/21 07:59:18 mpi Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.577 2015/12/07 06:34:14 jsg Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -1068,6 +1068,7 @@ const struct cpu_cpuid_feature i386_ecpuid_ecxfeatures[] = {
 
 const struct cpu_cpuid_feature cpu_seff0_ebxfeatures[] = {
 	{ SEFF0EBX_FSGSBASE,	"FSGSBASE" },
+	{ SEFF0EBX_SGX,		"SGX" },
 	{ SEFF0EBX_BMI1,	"BMI1" },
 	{ SEFF0EBX_HLE,		"HLE" },
 	{ SEFF0EBX_AVX2,	"AVX2" },
@@ -1076,9 +1077,30 @@ const struct cpu_cpuid_feature cpu_seff0_ebxfeatures[] = {
 	{ SEFF0EBX_ERMS,	"ERMS" },
 	{ SEFF0EBX_INVPCID,	"INVPCID" },
 	{ SEFF0EBX_RTM,		"RTM" },
+	{ SEFF0EBX_PQM,		"PQM" },
+	{ SEFF0EBX_MPX,		"MPX" },
+	{ SEFF0EBX_AVX512F,	"AVX512F" },
+	{ SEFF0EBX_AVX512DQ,	"AVX512DQ" },
 	{ SEFF0EBX_RDSEED,	"RDSEED" },
 	{ SEFF0EBX_ADX,		"ADX" },
 	{ SEFF0EBX_SMAP,	"SMAP" },
+	{ SEFF0EBX_AVX512IFMA,	"AVX512IFMA" },
+	{ SEFF0EBX_PCOMMIT,	"PCOMMIT" },
+	{ SEFF0EBX_CLFLUSHOPT,	"CLFLUSHOPT" },
+	{ SEFF0EBX_CLWB,	"CLWB" },
+	{ SEFF0EBX_PT,		"PT" },
+	{ SEFF0EBX_AVX512PF,	"AVX512PF" },
+	{ SEFF0EBX_AVX512ER,	"AVX512ER" },
+	{ SEFF0EBX_AVX512CD,	"AVX512CD" },
+	{ SEFF0EBX_SHA,		"SHA" },
+	{ SEFF0EBX_AVX512BW,	"AVX512BW" },
+	{ SEFF0EBX_AVX512VL,	"AVX512VL" },
+};
+
+const struct cpu_cpuid_feature cpu_seff0_ecxfeatures[] = {
+	{ SEFF0ECX_PREFETCHWT1,	"PREFETCHWT1" },
+	{ SEFF0ECX_AVX512VBMI,	"AVX512VBMI" },
+	{ SEFF0ECX_PKU,		"PKU" },
 };
 
 const struct cpu_cpuid_feature cpu_tpm_eaxfeatures[] = {
@@ -1980,15 +2002,20 @@ identifycpu(struct cpu_info *ci)
 
 				/* "Structured Extended Feature Flags" */
 				CPUID_LEAF(0x7, 0, dummy,
-				    ci->ci_feature_sefflags, dummy, dummy);
-				max = sizeof(cpu_seff0_ebxfeatures) /
-				    sizeof(cpu_seff0_ebxfeatures[0]);
-				for (i = 0; i < max; i++)
-					if (ci->ci_feature_sefflags &
+				    ci->ci_feature_sefflags_ebx,
+				    ci->ci_feature_sefflags_ecx, dummy);
+				for (i = 0; i < nitems(cpu_seff0_ebxfeatures); i++)
+					if (ci->ci_feature_sefflags_ebx &
 					    cpu_seff0_ebxfeatures[i].feature_bit)
 						printf("%s%s",
 						    (numbits == 0 ? "" : ","),
 						    cpu_seff0_ebxfeatures[i].feature_name);
+				for (i = 0; i < nitems(cpu_seff0_ecxfeatures); i++)
+					if (ci->ci_feature_sefflags_ecx &
+					    cpu_seff0_ecxfeatures[i].feature_bit)
+						printf("%s%s",
+						    (numbits == 0 ? "" : ","),
+						    cpu_seff0_ecxfeatures[i].feature_name);
 			}
 
 			if (!strcmp(cpu_vendor, "GenuineIntel") &&
@@ -2012,7 +2039,7 @@ identifycpu(struct cpu_info *ci)
 		if (cpu_ecxfeature & CPUIDECX_RDRAND)
 			has_rdrand = 1;
 #ifndef SMALL_KERNEL
-		if (ci->ci_feature_sefflags & SEFF0EBX_SMAP)
+		if (ci->ci_feature_sefflags_ebx & SEFF0EBX_SMAP)
 			replacesmap();
 #endif
 

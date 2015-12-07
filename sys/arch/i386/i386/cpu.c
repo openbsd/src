@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.68 2015/11/06 02:49:06 jsg Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.69 2015/12/07 06:34:14 jsg Exp $	*/
 /* $NetBSD: cpu.c,v 1.1.2.7 2000/06/26 02:04:05 sommerfeld Exp $ */
 
 /*-
@@ -375,10 +375,10 @@ cpu_init(struct cpu_info *ci)
 	if (cpu_feature & CPUID_PGE)
 		cr4 |= CR4_PGE;	/* enable global TLB caching */
 
-	if (ci->ci_feature_sefflags & SEFF0EBX_SMEP)
+	if (ci->ci_feature_sefflags_ebx & SEFF0EBX_SMEP)
 		cr4 |= CR4_SMEP;
 #ifndef SMALL_KERNEL
-	if (ci->ci_feature_sefflags & SEFF0EBX_SMAP)
+	if (ci->ci_feature_sefflags_ebx & SEFF0EBX_SMAP)
 		cr4 |= CR4_SMAP;
 #endif
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: specialreg.h,v 1.52 2015/06/07 08:11:50 guenther Exp $	*/
+/*	$OpenBSD: specialreg.h,v 1.53 2015/12/07 06:34:14 jsg Exp $	*/
 /*	$NetBSD: specialreg.h,v 1.7 1994/10/27 04:16:26 cgd Exp $	*/
 
 /*-
@@ -164,8 +164,8 @@
  * "Structured Extended Feature Flags Parameters" (CPUID function 0x7, leaf 0)
  * EBX bits
  */
-
 #define	SEFF0EBX_FSGSBASE	0x00000001 /* {RD,WR}[FG]SBASE instructions */
+#define	SEFF0EBX_SGX		0x00000004 /* Software Guard Extensions */
 #define	SEFF0EBX_BMI1		0x00000008 /* advanced bit manipulation */
 #define	SEFF0EBX_HLE		0x00000010 /* Hardware Lock Elision */
 #define	SEFF0EBX_AVX2		0x00000020 /* Advanced Vector Extensions 2 */
@@ -174,9 +174,28 @@
 #define	SEFF0EBX_ERMS		0x00000200 /* Enhanced REP MOVSB/STOSB */
 #define	SEFF0EBX_INVPCID	0x00000400 /* INVPCID instruction */
 #define	SEFF0EBX_RTM		0x00000800 /* Restricted Transactional Memory */
+#define	SEFF0EBX_PQM		0x00001000 /* Quality of Service Monitoring */
+#define	SEFF0EBX_MPX		0x00004000 /* Memory Protection Extensions */
+#define	SEFF0EBX_AVX512F	0x00010000 /* AVX-512 foundation inst */
+#define	SEFF0EBX_AVX512DQ	0x00020000 /* AVX-512 double/quadword */
 #define	SEFF0EBX_RDSEED		0x00040000 /* RDSEED instruction */
 #define	SEFF0EBX_ADX		0x00080000 /* ADCX/ADOX instructions */
 #define	SEFF0EBX_SMAP		0x00100000 /* Supervisor mode access prevent */
+#define	SEFF0EBX_AVX512IFMA	0x00200000 /* AVX-512 integer mult-add */
+#define	SEFF0EBX_PCOMMIT	0x00400000 /* Persistent commit inst */
+#define	SEFF0EBX_CLFLUSHOPT	0x00800000 /* cache line flush */
+#define	SEFF0EBX_CLWB		0x01000000 /* cache line write back */
+#define	SEFF0EBX_PT		0x02000000 /* Processor Trace */
+#define	SEFF0EBX_AVX512PF	0x04000000 /* AVX-512 prefetch */
+#define	SEFF0EBX_AVX512ER	0x08000000 /* AVX-512 exp/reciprocal */
+#define	SEFF0EBX_AVX512CD	0x10000000 /* AVX-512 conflict detection */
+#define	SEFF0EBX_SHA		0x20000000 /* SHA Extensions */
+#define	SEFF0EBX_AVX512BW	0x40000000 /* AVX-512 byte/word inst */
+#define	SEFF0EBX_AVX512VL	0x80000000 /* AVX-512 vector len inst */
+/* SEFF ECX bits */
+#define SEFF0ECX_PREFETCHWT1	0x00000001 /* PREFETCHWT1 instruction */
+#define SEFF0ECX_AVX512VBMI	0x00000002 /* AVX-512 vector bit inst */
+#define SEFF0ECX_PKU		0x00000008 /* Page prot keys for user mode */
 
 /*
  * Thermal and Power Management (CPUID function 0x6) EAX bits
