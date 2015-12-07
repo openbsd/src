@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.21 2015/12/06 21:02:51 reyk Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.22 2015/12/07 12:52:00 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -265,6 +265,9 @@ main(int argc, char **argv)
 	int		 ch;
 	const char	*conffile = VMD_CONF;
 
+	/* log to stderr until daemonized */
+	log_init(1, LOG_DAEMON);
+
 	if ((env = calloc(1, sizeof(*env))) == NULL)
 		fatal("calloc: env");
 
@@ -294,9 +297,6 @@ main(int argc, char **argv)
 
 	if (env->vmd_noaction && !env->vmd_debug)
 		env->vmd_debug = 1;
-
-	/* log to stderr until daemonized */
-	log_init(env->vmd_debug ? env->vmd_debug : 1, LOG_DAEMON);
 
 	/* check for root privileges */
 	if (geteuid())
