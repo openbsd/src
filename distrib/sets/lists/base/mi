@@ -2130,8 +2130,6 @@
 ./usr/libexec/rpc.rwalld
 ./usr/libexec/security
 ./usr/libexec/sftp-server
-./usr/libexec/smtpd
-./usr/libexec/smtpd/makemap
 ./usr/libexec/spamd
 ./usr/libexec/spamd-setup
 ./usr/libexec/spamlogd

@@ -5,6 +5,7 @@
 ./etc/csh.login
 ./etc/csh.logout
 ./etc/dumpdates
+./etc/examples/vm.conf
 ./etc/fbtab
 ./etc/ftpusers
 ./etc/gettytab
