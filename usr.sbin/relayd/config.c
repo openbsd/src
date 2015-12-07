@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.26 2015/12/02 13:41:27 reyk Exp $	*/
+/*	$OpenBSD: config.c,v 1.27 2015/12/07 04:03:27 mmcc Exp $	*/
 
 /*
  * Copyright (c) 2011 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -178,10 +178,8 @@ config_purge(struct relayd *env, u_int reset)
 	if (what & CONFIG_PROTOS && env->sc_protos != NULL) {
 		while ((proto = TAILQ_FIRST(env->sc_protos)) != NULL) {
 			TAILQ_REMOVE(env->sc_protos, proto, entry);
-			if (proto->style != NULL)
-				free(proto->style);
-			if (proto->tlscapass != NULL)
-				free(proto->tlscapass);
+			free(proto->style);
+			free(proto->tlscapass);
 			free(proto);
 		}
 		env->sc_protocount = 0;
@@ -944,12 +942,9 @@ config_getrelay(struct relayd *env, struct imsg *imsg)
 	return (0);
 
  fail:
-	if (rlay->rl_tls_cert)
-		free(rlay->rl_tls_cert);
-	if (rlay->rl_tls_key)
-		free(rlay->rl_tls_key);
-	if (rlay->rl_tls_ca)
-		free(rlay->rl_tls_ca);
+	free(rlay->rl_tls_cert);
+	free(rlay->rl_tls_key);
+	free(rlay->rl_tls_ca);
 	close(rlay->rl_s);
 	free(rlay);
 	return (-1);
@@ -993,7 +988,6 @@ config_getrelaytable(struct relayd *env, struct imsg *imsg)
 	return (0);
 
  fail:
-	if (rlt != NULL)
-		free(rlt);
+	free(rlt);
 	return (-1);
 }

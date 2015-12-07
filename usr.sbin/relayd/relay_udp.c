@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay_udp.c,v 1.41 2015/12/02 13:41:27 reyk Exp $	*/
+/*	$OpenBSD: relay_udp.c,v 1.42 2015/12/07 04:03:27 mmcc Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2013 Reyk Floeter <reyk@openbsd.org>
@@ -190,8 +190,7 @@ relay_udp_response(int fd, short sig, void *arg)
 		return;
 
 	relay_close(con, "unknown response");
-	if (priv != NULL)
-		free(priv);
+	free(priv);
 }
 
 void
@@ -289,8 +288,7 @@ relay_udp_server(int fd, short sig, void *arg)
 	/* Save the received data */
 	if (evbuffer_add(con->se_out.output, buf, len) == -1) {
 		relay_close(con, "failed to store buffer");
-		if (cnl != NULL)
-			free(cnl);
+		free(cnl);
 		return;
 	}
 

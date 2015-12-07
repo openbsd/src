@@ -1,4 +1,4 @@
-/*      $OpenBSD: agentx.c,v 1.12 2015/07/19 01:08:07 blambert Exp $    */
+/*      $OpenBSD: agentx.c,v 1.13 2015/12/07 04:03:27 mmcc Exp $    */
 /*
  * Copyright (c) 2013,2014 Bret Stephen Lambert <blambert@openbsd.org>
  *
@@ -246,8 +246,7 @@ void
 snmp_agentx_pdu_free(struct agentx_pdu *pdu)
 {
 	free(pdu->buffer);
-	if (pdu->request)
-		free(pdu->request);
+	free(pdu->request);
 	free(pdu);
 }
 
