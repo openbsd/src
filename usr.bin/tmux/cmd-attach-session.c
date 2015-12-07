@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-attach-session.c,v 1.49 2015/11/05 23:32:21 nicm Exp $ */
+/* $OpenBSD: cmd-attach-session.c,v 1.50 2015/12/07 09:47:41 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -162,6 +162,7 @@ cmd_attach_session(struct cmd_q *cmdq, const char *tflag, int dflag, int rflag,
 		cmdq->client_exit = 0;
 	}
 	recalculate_sizes();
+	alerts_check_session(s);
 	server_update_socket();
 
 	return (CMD_RETURN_NORMAL);
