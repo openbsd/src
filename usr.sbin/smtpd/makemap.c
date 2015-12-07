@@ -1,4 +1,4 @@
-/*	$OpenBSD: makemap.c,v 1.56 2015/10/26 16:38:06 sunil Exp $	*/
+/*	$OpenBSD: makemap.c,v 1.57 2015/12/07 12:29:19 sunil Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -42,16 +42,14 @@
 
 #define	PATH_ALIASES	"/etc/mail/aliases"
 
-extern char *__progname;
-
-__dead void	usage(void);
-static int parse_map(char *);
-static int parse_entry(char *, size_t, size_t);
-static int parse_mapentry(char *, size_t, size_t);
-static int parse_setentry(char *, size_t, size_t);
-static int make_plain(DBT *, char *);
-static int make_aliases(DBT *, char *);
-static char *conf_aliases(char *);
+static void	 usage(void);
+static int	 parse_map(char *);
+static int	 parse_entry(char *, size_t, size_t);
+static int	 parse_mapentry(char *, size_t, size_t);
+static int	 parse_setentry(char *, size_t, size_t);
+static int	 make_plain(DBT *, char *);
+static int	 make_aliases(DBT *, char *);
+static char	*conf_aliases(char *);
 
 DB	*db;
 char	*source;
@@ -60,6 +58,7 @@ int	 dbputs;
 
 struct smtpd	smtpd;
 struct smtpd	*env = &smtpd;
+extern char	*__progname;
 
 enum program {
 	P_MAKEMAP,
@@ -88,7 +87,7 @@ fork_proc_backend(const char *backend, const char *conf, const char *procname)
 }
 
 int
-main(int argc, char *argv[])
+makemap(int argc, char *argv[])
 {
 	struct stat	 sb;
 	char		 dbname[PATH_MAX];
@@ -225,7 +224,7 @@ bad:
 	return 1;
 }
 
-int
+static int
 parse_map(char *filename)
 {
 	FILE	*fp;
@@ -265,7 +264,7 @@ parse_map(char *filename)
 	return 1;
 }
 
-int
+static int
 parse_entry(char *line, size_t len, size_t lineno)
 {
 	switch (type) {
@@ -278,7 +277,7 @@ parse_entry(char *line, size_t len, size_t lineno)
 	return 0;
 }
 
-int
+static int
 parse_mapentry(char *line, size_t len, size_t lineno)
 {
 	DBT	 key;
@@ -336,7 +335,7 @@ bad:
 	return 0;
 }
 
-int
+static int
 parse_setentry(char *line, size_t len, size_t lineno)
 {
 	DBT	 key;
@@ -371,7 +370,7 @@ parse_setentry(char *line, size_t len, size_t lineno)
 	return 1;
 }
 
-int
+static int
 make_plain(DBT *val, char *text)
 {
 	val->data = xstrdup(text, "make_plain");
@@ -380,7 +379,7 @@ make_plain(DBT *val, char *text)
 	return (val->size);
 }
 
-int
+static int
 make_aliases(DBT *val, char *text)
 {
 	struct expandnode	xn;
@@ -412,7 +411,7 @@ error:
 	return 0;
 }
 
-char *
+static char *
 conf_aliases(char *cfgpath)
 {
 	struct table	*table;
@@ -435,7 +434,7 @@ conf_aliases(char *cfgpath)
 	return (path);
 }
 
-void
+static void
 usage(void)
 {
 	if (mode == P_NEWALIASES)

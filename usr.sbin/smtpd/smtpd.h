@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.493 2015/12/03 21:11:33 jung Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.494 2015/12/07 12:29:19 sunil Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1219,6 +1219,8 @@ void mda_postfork(void);
 void mda_postprivdrop(void);
 void mda_imsg(struct mproc *, struct imsg *);
 
+/* makemap.c */
+int makemap(int, char **);
 
 /* mailaddr.c */
 int mailaddr_line(struct maddrmap *, const char *);

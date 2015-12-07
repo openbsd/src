@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpctl.c,v 1.137 2015/12/05 13:14:21 claudio Exp $	*/
+/*	$OpenBSD: smtpctl.c,v 1.138 2015/12/07 12:29:19 sunil Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -84,8 +84,6 @@ struct queue_backend queue_backend_ram;
 __dead void
 usage(void)
 {
-	extern char *__progname;
-
 	if (sendmail)
 		fprintf(stderr, "usage: %s [-tv] [-f from] [-F name] to ...\n",
 		    __progname);
@@ -937,7 +935,7 @@ do_discover(int argc, struct parameter *argv)
 		srv_read(&n_evp, sizeof n_evp);
 		srv_end();
 	}
-	
+
 	printf("%zu envelope%s discovered\n", n_evp, (n_evp != 1) ? "s" : "");
 	return (0);
 }
@@ -987,10 +985,12 @@ main(int argc, char **argv)
 		if (pledge("stdio rpath wpath cpath tmppath flock "
 			"dns getpw recvfd", NULL) == -1)
 			err(1, "pledge");
-		
+
 		sendmail = 1;
 		return (enqueue(argc, argv, offlinefp));
-	}
+	} else if (strcmp(__progname, "makemap") == 0 ||
+	    strcmp(__progname, "newaliases") == 0)
+		return makemap(argc, argv);
 
 	if (geteuid())
 		errx(1, "need root privileges");
@@ -1075,8 +1075,8 @@ show_queue_envelope(struct envelope *e, int online)
 			(void)snprintf(runstate, sizeof runstate, "pending|%zd",
 			    (ssize_t)(e->nexttry - now));
 		else if (e->flags & EF_INFLIGHT)
-			(void)snprintf(runstate, sizeof runstate, "inflight|%zd",
-			    (ssize_t)(now - e->lasttry));
+			(void)snprintf(runstate, sizeof runstate,
+			    "inflight|%zd", (ssize_t)(now - e->lasttry));
 		else
 			(void)snprintf(runstate, sizeof runstate, "invalid|");
 		e->flags &= ~(EF_PENDING|EF_INFLIGHT);
@@ -1330,7 +1330,7 @@ static int
 is_encrypted_fp(FILE *fp)
 {
 	uint8_t	magic;
-	int    	ret = 0;
+	int	ret = 0;
 
 	if (fread(&magic, 1, sizeof magic, fp) != sizeof magic)
 		goto end;

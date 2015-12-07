@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.40 2015/12/01 09:58:38 gilles Exp $
+#	$OpenBSD: Makefile,v 1.41 2015/12/07 12:29:19 sunil Exp $
 
 .PATH:		${.CURDIR}/..
 
@@ -35,6 +35,16 @@ SRCS+=	to.c
 SRCS+=	expand.c
 SRCS+=	tree.c
 SRCS+=	dict.c
+SRCS+=	aliases.c
+SRCS+=	limit.c
+SRCS+=	makemap.c
+SRCS+=	parse.y
+SRCS+=	mailaddr.c
+SRCS+=	table.c
+SRCS+=	table_static.c
+SRCS+=	table_db.c
+SRCS+=	table_getpwnam.c
+SRCS+=	table_proc.c
 
 LDADD+=	-lutil -lz -lcrypto
 DPADD+=	${LIBUTIL} ${LIBZ} ${LIBCRYPTO}
