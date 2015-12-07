@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmctl.c,v 1.6 2015/12/06 02:26:14 reyk Exp $	*/
+/*	$OpenBSD: vmctl.c,v 1.7 2015/12/07 18:23:24 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
@@ -338,21 +338,14 @@ int
 create_imagefile(const char *imgfile_path, long imgsize)
 {
 	int fd, ret;
-	struct stat sb;
 	off_t ofs;
 	char ch = '\0';
 
 	/* Refuse to overwrite an existing image */
-	bzero(&sb, sizeof(sb));
-	if (stat(imgfile_path, &sb) == 0) {
-		return (EEXIST);
-	}
-
-	fd = open(imgfile_path, O_RDWR | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
-
-	if (fd == -1) {
+	fd = open(imgfile_path, O_RDWR | O_CREAT | O_TRUNC | O_EXCL,
+	    S_IRUSR | S_IWUSR);
+	if (fd == -1)
 		return (errno);
-	}
 
 	ofs = (imgsize * 1024 * 1024) - 1;
 
