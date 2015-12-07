@@ -25,7 +25,6 @@
 
 #include <sys/param.h>	/* MACHINE MACHINE_ARCH */
 
-#include <locale.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -41,8 +40,6 @@ main(int argc, char *argv[])
 	extern char *__progname;
 	int short_form = 0, c;
 	char *arch, *opts;
-
-	setlocale(LC_ALL, "");
 
 	machine = strcmp(__progname, "machine") == 0;
 	if (machine) {
