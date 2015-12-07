@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_subst.c,v 1.23 2015/11/19 07:53:31 bentley Exp $	*/
+/*	$OpenBSD: ex_subst.c,v 1.24 2015/12/07 20:39:19 mmcc Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -301,7 +301,7 @@ ex_subtilde(SCR *sp, EXCMD *cmdp)
 #define	NEEDNEWLINE(sp) {						\
 	if ((sp)->newl_len == (sp)->newl_cnt) {				\
 		(sp)->newl_len += 25;					\
-		REALLOCARRAY((sp), (sp)->newl, size_t *,		\
+		REALLOCARRAY((sp), (sp)->newl,				\
 		    (sp)->newl_len, sizeof(size_t));			\
 		if ((sp)->newl == NULL) {				\
 			(sp)->newl_len = 0;				\
@@ -313,7 +313,7 @@ ex_subtilde(SCR *sp, EXCMD *cmdp)
 #define	BUILD(sp, l, len) {						\
 	if (lbclen + (len) > lblen) {					\
 		lblen += MAXIMUM(lbclen + (len), 256);			\
-		REALLOC((sp), lb, char *, lblen);			\
+		REALLOC((sp), lb, lblen);				\
 		if (lb == NULL) {					\
 			lbclen = 0;					\
 			return (1);					\
@@ -326,7 +326,7 @@ ex_subtilde(SCR *sp, EXCMD *cmdp)
 #define	NEEDSP(sp, len, pnt) {						\
 	if (lbclen + (len) > lblen) {					\
 		lblen += MAXIMUM(lbclen + (len), 256);			\
-		REALLOC((sp), lb, char *, lblen);			\
+		REALLOC((sp), lb, lblen);				\
 		if (lb == NULL) {					\
 			lbclen = 0;					\
 			return (1);					\
@@ -939,7 +939,7 @@ re_compile(SCR *sp, char *ptrn, size_t plen, char **ptrnp, size_t *lenp,
 		 * Regcomp isn't 8-bit clean, so the pattern is nul-terminated
 		 * for now.  There's just no other solution.  
 		 */
-		MALLOC(sp, *ptrnp, char *, plen + 1);
+		MALLOC(sp, *ptrnp, plen + 1);
 		if (*ptrnp != NULL) {
 			memcpy(*ptrnp, ptrn, plen);
 			(*ptrnp)[plen] = '\0';

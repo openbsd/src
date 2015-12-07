@@ -1,4 +1,4 @@
-/*	$OpenBSD: exf.c,v 1.38 2015/11/19 07:53:31 bentley Exp $	*/
+/*	$OpenBSD: exf.c,v 1.39 2015/12/07 20:39:19 mmcc Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -86,7 +86,7 @@ file_add(SCR *sp, CHAR_T *name)
 		}
 
 	/* Allocate and initialize the FREF structure. */
-	CALLOC(sp, frp, FREF *, 1, sizeof(FREF));
+	CALLOC(sp, frp, 1, sizeof(FREF));
 	if (frp == NULL)
 		return (NULL);
 
@@ -153,7 +153,7 @@ file_init(SCR *sp, FREF *frp, char *rcv_name, int flags)
 	 *	Default recover mail file fd to -1.
 	 *	Set initial EXF flag bits.
 	 */
-	CALLOC_RET(sp, ep, EXF *, 1, sizeof(EXF));
+	CALLOC_RET(sp, ep, 1, sizeof(EXF));
 	ep->c_lno = ep->c_nlines = OOBLNO;
 	ep->rcv_fd = ep->fcntl_fd = -1;
 	F_SET(ep, F_FIRSTMODIFY);
@@ -495,7 +495,7 @@ file_spath(SCR *sp, FREF *frp, struct stat *sbp, int *existsp)
 
 	/* If we found it, build a new pathname and discard the old one. */
 	if (found) {
-		MALLOC_RET(sp, p, char *, len + 1);
+		MALLOC_RET(sp, p, len + 1);
 		memcpy(p, path, len + 1);
 		free(frp->name);
 		frp->name = p;

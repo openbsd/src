@@ -1,4 +1,4 @@
-/*	$OpenBSD: v_init.c,v 1.6 2014/11/12 04:28:41 bentley Exp $	*/
+/*	$OpenBSD: v_init.c,v 1.7 2015/12/07 20:39:19 mmcc Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -37,7 +37,7 @@ v_screen_copy(SCR *orig, SCR *sp)
 	VI_PRIVATE *ovip, *nvip;
 
 	/* Create the private vi structure. */
-	CALLOC_RET(orig, nvip, VI_PRIVATE *, 1, sizeof(VI_PRIVATE));
+	CALLOC_RET(orig, nvip, 1, sizeof(VI_PRIVATE));
 	sp->vi_private = nvip;
 
 	/* Invalidate the line size cache. */
@@ -50,7 +50,7 @@ v_screen_copy(SCR *orig, SCR *sp)
 
 		/* User can replay the last input, but nothing else. */
 		if (ovip->rep_len != 0) {
-			MALLOC_RET(orig, nvip->rep, EVENT *, ovip->rep_len);
+			MALLOC_RET(orig, nvip->rep, ovip->rep_len);
 			memmove(nvip->rep, ovip->rep, ovip->rep_len);
 			nvip->rep_len = ovip->rep_len;
 		}

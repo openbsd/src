@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.11 2015/03/28 12:54:37 bcallah Exp $	*/
+/*	$OpenBSD: util.c,v 1.12 2015/12/07 20:39:19 mmcc Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -42,7 +42,7 @@ binc(SCR *sp, void *bp, size_t *bsizep, size_t min)
 		return (bp);
 
 	csize = *bsizep + MAXIMUM(min, 256);
-	REALLOC(sp, bp, void *, csize);
+	REALLOC(sp, bp, csize);
 
 	if (bp == NULL) {
 		/*
@@ -123,7 +123,7 @@ v_strdup(SCR *sp, const CHAR_T *str, size_t len)
 {
 	CHAR_T *copy;
 
-	MALLOC(sp, copy, CHAR_T *, len + 1);
+	MALLOC(sp, copy, len + 1);
 	if (copy == NULL)
 		return (NULL);
 	memcpy(copy, str, len * sizeof(CHAR_T));

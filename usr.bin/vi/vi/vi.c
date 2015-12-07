@@ -1,4 +1,4 @@
-/*	$OpenBSD: vi.c,v 1.15 2014/11/12 04:28:41 bentley Exp $	*/
+/*	$OpenBSD: vi.c,v 1.16 2015/12/07 20:39:19 mmcc Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -962,7 +962,7 @@ v_init(SCR *sp)
 	sp->woff = 0;
 
 	/* Create a screen map. */
-	CALLOC_RET(sp, HMAP, SMAP *, SIZE_HMAP(sp), sizeof(SMAP));
+	CALLOC_RET(sp, HMAP, SIZE_HMAP(sp), sizeof(SMAP));
 	TMAP = HMAP + (sp->t_rows - 1);
 	HMAP->lno = sp->lno;
 	HMAP->coff = 0;

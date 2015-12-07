@@ -1,4 +1,4 @@
-/*	$OpenBSD: seq.c,v 1.10 2015/01/16 06:40:14 deraadt Exp $	*/
+/*	$OpenBSD: seq.c,v 1.11 2015/12/07 20:39:19 mmcc Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -66,7 +66,7 @@ seq_set(SCR *sp, CHAR_T *name, size_t nlen, CHAR_T *input, size_t ilen,
 	}
 
 	/* Allocate and initialize SEQ structure. */
-	CALLOC(sp, qp, SEQ *, 1, sizeof(SEQ));
+	CALLOC(sp, qp, 1, sizeof(SEQ));
 	if (qp == NULL) {
 		sv_errno = errno;
 		goto mem1;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: screen.c,v 1.12 2014/11/20 08:50:53 bentley Exp $	*/
+/*	$OpenBSD: screen.c,v 1.13 2015/12/07 20:39:19 mmcc Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -39,7 +39,7 @@ screen_init(GS *gp, SCR *orig, SCR **spp)
 	size_t len;
 
 	*spp = NULL;
-	CALLOC_RET(orig, sp, SCR *, 1, sizeof(SCR));
+	CALLOC_RET(orig, sp, 1, sizeof(SCR));
 	*spp = sp;
 
 /* INITIALIZED AT SCREEN CREATE. */
@@ -89,7 +89,7 @@ screen_init(GS *gp, SCR *orig, SCR **spp)
 		sp->repl_len = orig->repl_len;
 		if (orig->newl_len) {
 			len = orig->newl_len * sizeof(size_t);
-			MALLOC(sp, sp->newl, size_t *, len);
+			MALLOC(sp, sp->newl, len);
 			if (sp->newl == NULL) {
 mem:				msgq(orig, M_SYSERR, NULL);
 				goto err;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.h,v 1.6 2014/10/14 22:23:12 deraadt Exp $	*/
+/*	$OpenBSD: mem.h,v 1.7 2015/12/07 20:39:19 mmcc Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -111,57 +111,50 @@
 
 /*
  * Malloc a buffer, casting the return pointer.  Various versions.
- *
- * !!!
- * The cast should be unnecessary, malloc(3) and friends return void *'s,
- * which is all we need.  However, some systems that nvi needs to run on
- * don't do it right yet, resulting in the compiler printing out roughly
- * a million warnings.  After awhile, it seemed easier to put the casts
- * in instead of explaining it all the time.
  */
-#define	CALLOC(sp, p, cast, nmemb, size) {				\
-	if (((p) = (cast)calloc((nmemb), (size))) == NULL)		\
+#define	CALLOC(sp, p, nmemb, size) {					\
+	if (((p) = calloc((nmemb), (size))) == NULL)			\
 		msgq((sp), M_SYSERR, NULL);				\
 }
-#define	CALLOC_GOTO(sp, p, cast, nmemb, size) {				\
-	if (((p) = (cast)calloc((nmemb), (size))) == NULL)		\
+#define	CALLOC_GOTO(sp, p, nmemb, size) {				\
+	if (((p) = calloc((nmemb), (size))) == NULL)			\
 		goto alloc_err;						\
 }
-#define	CALLOC_NOMSG(sp, p, cast, nmemb, size) {			\
-	(p) = (cast)calloc((nmemb), (size));				\
+#define	CALLOC_NOMSG(sp, p, nmemb, size) {				\
+	(p) = calloc((nmemb), (size));					\
 }
-#define	CALLOC_RET(sp, p, cast, nmemb, size) {				\
-	if (((p) = (cast)calloc((nmemb), (size))) == NULL) {		\
+#define	CALLOC_RET(sp, p, nmemb, size) {				\
+	if (((p) = calloc((nmemb), (size))) == NULL) {			\
 		msgq((sp), M_SYSERR, NULL);				\
 		return (1);						\
 	}								\
 }
 
-#define	MALLOC(sp, p, cast, size) {					\
-	if (((p) = (cast)malloc(size)) == NULL)				\
+#define	MALLOC(sp, p, size) {						\
+	if (((p) = malloc(size)) == NULL)				\
 		msgq((sp), M_SYSERR, NULL);				\
 }
-#define	MALLOC_GOTO(sp, p, cast, size) {				\
-	if (((p) = (cast)malloc(size)) == NULL)				\
+#define	MALLOC_GOTO(sp, p, size) {					\
+	if (((p) = malloc(size)) == NULL)				\
 		goto alloc_err;						\
 }
-#define	MALLOC_NOMSG(sp, p, cast, size) {				\
-	(p) = (cast)malloc(size);					\
+#define	MALLOC_NOMSG(sp, p, size) {					\
+	(p) = malloc(size);						\
 }
-#define	MALLOC_RET(sp, p, cast, size) {					\
-	if (((p) = (cast)malloc(size)) == NULL) {			\
+#define	MALLOC_RET(sp, p, size) {					\
+	if (((p) = malloc(size)) == NULL) {				\
 		msgq((sp), M_SYSERR, NULL);				\
 		return (1);						\
 	}								\
 }
 
-#define	REALLOC(sp, p, cast, size) {					\
-	if (((p) = (cast)(realloc((p), (size)))) == NULL)		\
+#define	REALLOC(sp, p, size) {						\
+	if (((p) = (realloc((p), (size)))) == NULL)			\
 		msgq((sp), M_SYSERR, NULL);				\
 }
 
-#define	REALLOCARRAY(sp, p, cast, nelem, size) {			\
-	if (((p) = (cast)(reallocarray((p), (nelem), (size)))) == NULL)	\
+#define	REALLOCARRAY(sp, p, nelem, size) {				\
+	if (((p) = (reallocarray((p), (nelem), (size)))) == NULL)	\
 		msgq((sp), M_SYSERR, NULL);				\
 }
 

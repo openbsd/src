@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_init.c,v 1.15 2015/11/19 07:53:31 bentley Exp $	*/
+/*	$OpenBSD: ex_init.c,v 1.16 2015/12/07 20:39:19 mmcc Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -44,7 +44,7 @@ ex_screen_copy(SCR *orig, SCR *sp)
 	EX_PRIVATE *oexp, *nexp;
 
 	/* Create the private ex structure. */
-	CALLOC_RET(orig, nexp, EX_PRIVATE *, 1, sizeof(EX_PRIVATE));
+	CALLOC_RET(orig, nexp, 1, sizeof(EX_PRIVATE));
 	sp->ex_private = nexp;
 
 	/* Initialize queues. */
@@ -272,7 +272,7 @@ ex_run_str(SCR *sp, char *name, char *str, size_t len, int ex_flags,
 
 	gp = sp->gp;
 	if (EXCMD_RUNNING(gp)) {
-		CALLOC_RET(sp, ecp, EXCMD *, 1, sizeof(EXCMD));
+		CALLOC_RET(sp, ecp, 1, sizeof(EXCMD));
 		LIST_INSERT_HEAD(&gp->ecq, ecp, q);
 	} else
 		ecp = &gp->excmd;

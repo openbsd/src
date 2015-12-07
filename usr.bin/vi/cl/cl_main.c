@@ -1,4 +1,4 @@
-/*	$OpenBSD: cl_main.c,v 1.26 2015/03/29 01:04:23 bcallah Exp $	*/
+/*	$OpenBSD: cl_main.c,v 1.27 2015/12/07 20:39:19 mmcc Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -151,7 +151,7 @@ gs_init(char *name)
 		name = p + 1;
 
 	/* Allocate the global structure. */
-	CALLOC_NOMSG(NULL, gp, GS *, 1, sizeof(GS));
+	CALLOC_NOMSG(NULL, gp, 1, sizeof(GS));
 	if (gp == NULL)
 		perr(name, NULL);
 
@@ -171,7 +171,7 @@ cl_init(GS *gp)
 	int fd;
 
 	/* Allocate the CL private structure. */
-	CALLOC_NOMSG(NULL, clp, CL_PRIVATE *, 1, sizeof(CL_PRIVATE));
+	CALLOC_NOMSG(NULL, clp, 1, sizeof(CL_PRIVATE));
 	if (clp == NULL)
 		perr(gp->progname, NULL);
 	gp->cl_private = clp;

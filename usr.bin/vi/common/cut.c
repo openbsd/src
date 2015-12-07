@@ -1,4 +1,4 @@
-/*	$OpenBSD: cut.c,v 1.13 2014/11/12 04:28:41 bentley Exp $	*/
+/*	$OpenBSD: cut.c,v 1.14 2015/12/07 20:39:19 mmcc Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -119,7 +119,7 @@ copyloop:
 	 * Otherwise, if it's not an append, free its current contents.
 	 */
 	if (cbp == NULL) {
-		CALLOC_RET(sp, cbp, CB *, 1, sizeof(CB));
+		CALLOC_RET(sp, cbp, 1, sizeof(CB));
 		cbp->name = name;
 		TAILQ_INIT(&cbp->textq);
 		LIST_INSERT_HEAD(&sp->gp->cutq, cbp, q);
@@ -300,12 +300,12 @@ text_init(SCR *sp, const char *p, size_t len, size_t total_len)
 {
 	TEXT *tp;
 
-	CALLOC(sp, tp, TEXT *, 1, sizeof(TEXT));
+	CALLOC(sp, tp, 1, sizeof(TEXT));
 	if (tp == NULL)
 		return (NULL);
 	/* ANSI C doesn't define a call to malloc(3) for 0 bytes. */
 	if ((tp->lb_len = total_len) != 0) {
-		MALLOC(sp, tp->lb, CHAR_T *, tp->lb_len);
+		MALLOC(sp, tp->lb, tp->lb_len);
 		if (tp->lb == NULL) {
 			free(tp);
 			return (NULL);
