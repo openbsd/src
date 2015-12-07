@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_http.c,v 1.102 2015/12/03 11:46:25 reyk Exp $	*/
+/*	$OpenBSD: server_http.c,v 1.103 2015/12/07 20:30:17 mmcc Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -590,8 +590,7 @@ server_read_httpchunks(struct bufferevent *bev, void *arg)
 	case 0:
 		/* Chunk is terminated by an empty newline */
 		line = evbuffer_readln(src, NULL, EVBUFFER_EOL_CRLF_STRICT);
-		if (line != NULL)
-			free(line);
+		free(line);
 		if (server_bufferevent_print(clt, "\r\n") == -1)
 			goto fail;
 		clt->clt_toread = TOREAD_HTTP_CHUNK_LENGTH;
