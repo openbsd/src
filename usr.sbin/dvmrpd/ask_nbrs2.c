@@ -1,4 +1,4 @@
-/*	$OpenBSD: ask_nbrs2.c,v 1.4 2015/05/05 01:26:37 jsg Exp $ */
+/*	$OpenBSD: ask_nbrs2.c,v 1.5 2015/12/07 19:17:18 mmcc Exp $ */
 
 /*
  * Copyright (c) 2006 Esben Norby <norby@openbsd.org>
@@ -23,7 +23,6 @@
 #include <arpa/inet.h>
 
 #include <stdlib.h>
-#include <strings.h>
 
 #include "igmp.h"
 #include "dvmrpd.h"
