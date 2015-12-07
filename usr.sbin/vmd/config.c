@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.8 2015/12/07 14:43:24 reyk Exp $	*/
+/*	$OpenBSD: config.c,v 1.9 2015/12/07 15:57:53 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -141,7 +141,7 @@ config_getvm(struct privsep *ps, struct vm_create_params *vcp,
 	for (i = 0; i < vcp->vcp_nnics; i++)
 		vm->vm_ifs[i] = -1;
 	vm->vm_kernel = -1;
-	vm->vm_vmid = ++env->vmd_nvm;
+	vm->vm_vmid = env->vmd_nvm + 1;
 
 	if (vm_getbyvmid(vm->vm_vmid) != NULL)
 		fatalx("too many vms");
@@ -204,6 +204,7 @@ config_getvm(struct privsep *ps, struct vm_create_params *vcp,
 		    vcp, sizeof(*vcp));
 	}
 
+	env->vmd_nvm++;
 	return (0);
 
  fail:
