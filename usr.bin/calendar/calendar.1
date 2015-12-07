@@ -1,4 +1,4 @@
-.\"	$OpenBSD: calendar.1,v 1.39 2015/10/23 11:01:30 zhuk Exp $
+.\"	$OpenBSD: calendar.1,v 1.40 2015/12/07 18:46:35 espie Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"     The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)calendar.1  8.1 (Berkeley) 6/29/93
 .\"
-.Dd $Mdocdate: October 23 2015 $
+.Dd $Mdocdate: December 7 2015 $
 .Dt CALENDAR 1
 .Os
 .Sh NAME
@@ -37,7 +37,7 @@
 .Nd reminder service
 .Sh SYNOPSIS
 .Nm calendar
-.Op Fl ab
+.Op Fl abw
 .Op Fl A Ar num
 .Op Fl B Ar num
 .Op Fl f Ar calendarfile
@@ -82,6 +82,8 @@ instead of using the current date.
 If yy is specified, but cc is not,
 a value for yy between 69 and 99 results in a cc value of 19.
 Otherwise, a cc value of 20 is used.
+.It Fl w
+Print day of the week name in front of each event.
 .El
 .Pp
 To handle calendars in your national code table you can specify

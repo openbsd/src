@@ -1,4 +1,4 @@
-/*	$OpenBSD: calendar.h,v 1.14 2015/03/15 00:41:28 millert Exp $	*/
+/*	$OpenBSD: calendar.h,v 1.15 2015/12/07 18:46:35 espie Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -32,6 +32,7 @@
 
 extern struct passwd *pw;
 extern int doall;
+extern int daynames;
 extern int bodun_always;
 extern time_t f_time;
 extern struct tm *tp;
@@ -44,9 +45,11 @@ struct fixs {
 	int len;
 };
 
+#define PRINT_DATE_BASE_LEN 35
+
 struct event {
 	time_t	when;
-	char	print_date[31];
+	char	print_date[PRINT_DATE_BASE_LEN+1];
 	char	**desc;
 	char	*ldesc;
 	struct event	*next;
@@ -54,7 +57,7 @@ struct event {
 
 struct match {
 	time_t	when;
-	char	print_date[30];
+	char	print_date[PRINT_DATE_BASE_LEN];
 	int	bodun;
 	int	var;
 	struct match	*next;

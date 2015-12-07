@@ -1,4 +1,4 @@
-/*	$OpenBSD: day.c,v 1.30 2015/10/23 11:43:16 zhuk Exp $	*/
+/*	$OpenBSD: day.c,v 1.31 2015/12/07 18:46:35 espie Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -76,6 +76,14 @@ static struct fixs ndays[8];          /* short national days names */
 
 static struct fixs fnmonths[13];      /* full national months names */
 static struct fixs nmonths[13];       /* short national month names */
+
+void
+fill_print_date(struct match *m, struct tm *tm)
+{
+	if (strftime(m->print_date, sizeof(m->print_date),
+	    daynames ? "%a %b %d" : "%b %d", tm) == 0)
+		m->print_date[sizeof(m->print_date) - 1] = '\0';
+}
 
 void
 setnnames(void)
@@ -455,12 +463,7 @@ isnow(char *endp, int bodun)
 			}
 
 			(void)mktime(&tmtmp);
-			if (strftime(tmp->print_date,
-			    sizeof(tmp->print_date),
-			/*    "%a %b %d", &tm);  Skip weekdays */
-			    "%b %d", &tmtmp) == 0)
-				tmp->print_date[sizeof(tmp->print_date) - 1] = '\0';
-
+			fill_print_date(tmp, &tmtmp);
 			tmp->var   = varp;
 			tmp->next  = NULL;
 			return(tmp);
@@ -549,11 +552,7 @@ isnow(char *endp, int bodun)
 					if ((tmp = malloc(sizeof(struct match))) == NULL)
 						err(1, NULL);
 					tmp->when = ttmp;
-					if (strftime(tmp->print_date,
-					    sizeof(tmp->print_date),
-					/*    "%a %b %d", &tm);  Skip weekdays */
-					    "%b %d", &tmtmp) == 0)
-						tmp->print_date[sizeof(tmp->print_date) - 1] = '\0';
+					fill_print_date(tmp, &tmtmp);
 					tmp->bodun = bodun && tdiff == -1;
 					tmp->var   = varp;
 					tmp->next  = NULL;
