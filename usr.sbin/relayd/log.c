@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.30 2015/11/22 13:27:13 reyk Exp $	*/
+/*	$OpenBSD: log.c,v 1.31 2015/12/07 12:13:51 reyk Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -176,10 +176,10 @@ vfatal(const char *emsg, va_list ap)
 		sep = "";
 	}
 	if (errno)
-		logit(LOG_CRIT, "fatal in %s: %s%s%s",
+		logit(LOG_CRIT, "%s: %s%s%s",
 		    log_procname, s, sep, strerror(errno));
 	else
-		logit(LOG_CRIT, "fatal in %s%s%s", log_procname, sep, s);
+		logit(LOG_CRIT, "%s%s%s", log_procname, sep, s);
 }
 
 void
