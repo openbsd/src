@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.50 2015/06/25 02:04:08 uebayasi Exp $	*/
+/*	$OpenBSD: util.c,v 1.51 2015/12/07 18:50:06 mmcc Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -623,7 +623,7 @@ printline(str_t *line, int sep, regmatch_t *pmatch)
 	if (nflag) {
 		if (n)
 			putchar(sep);
-		printf("%d", line->line_no);
+		printf("%lld", (long long)line->line_no);
 		++n;
 	}
 	if (bflag) {
