@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.c,v 1.15 2015/02/16 06:35:17 ratchov Exp $	*/
+/*	$OpenBSD: sock.c,v 1.16 2015/12/07 11:58:29 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -152,6 +152,7 @@ sock_close(struct sock *f)
 	}
 	file_del(f->file);
 	close(f->fd);
+	file_slowaccept = 0;
 	xfree(f);
 }
 
