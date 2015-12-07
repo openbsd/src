@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.367 2015/12/05 13:09:11 claudio Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.368 2015/12/07 07:40:47 tb Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -1286,14 +1286,13 @@ send_discover(void)
 	if (!client->interval)
 		client->interval = config->initial_interval;
 	else {
-		client->interval += (arc4random() >> 2) %
-		    (2 * client->interval);
+		client->interval += arc4random_uniform(2 * client->interval);
 	}
 
 	/* Don't backoff past cutoff. */
 	if (client->interval > config->backoff_cutoff)
-		client->interval = ((config->backoff_cutoff / 2) +
-		    ((arc4random() >> 2) % config->backoff_cutoff));
+		client->interval = (config->backoff_cutoff / 2) +
+		    arc4random_uniform(config->backoff_cutoff);
 
 	/* If the backoff would take us to the panic timeout, just use that
 	   as the interval. */
@@ -1410,13 +1409,12 @@ send_request(void)
 	if (!client->interval)
 		client->interval = config->initial_interval;
 	else
-		client->interval += ((arc4random() >> 2) %
-		    (2 * client->interval));
+		client->interval += arc4random_uniform(2 * client->interval);
 
 	/* Don't backoff past cutoff. */
 	if (client->interval > config->backoff_cutoff)
-		client->interval = ((config->backoff_cutoff / 2) +
-		    ((arc4random() >> 2) % client->interval));
+		client->interval = (config->backoff_cutoff / 2) +
+		    arc4random_uniform(client->interval);
 
 	/*
 	 * If the backoff would take us to the expiry time, just set the
