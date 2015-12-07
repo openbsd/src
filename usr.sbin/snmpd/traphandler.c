@@ -1,4 +1,5 @@
-/*	$OpenBSD: traphandler.c,v 1.3 2015/11/22 13:27:13 reyk Exp $	*/
+/*	$OpenBSD: traphandler.c,v 1.4 2015/12/07 12:33:08 reyk Exp $	*/
+
 /*
  * Copyright (c) 2014 Bret Stephen Lambert <blambert@openbsd.org>
  *
@@ -177,8 +178,7 @@ traphandler_recvmsg(int fd, short events, void *arg)
 	iov[1].iov_len = n;
 
 	/* Forward it to the parent process */
-	if (proc_composev_imsg(ps, PROC_PARENT, -1, IMSG_ALERT,
-	    -1, iov, 2) == -1)
+	if (proc_composev(ps, PROC_PARENT, IMSG_ALERT, iov, 2) == -1)
 		goto done;
 
  done:

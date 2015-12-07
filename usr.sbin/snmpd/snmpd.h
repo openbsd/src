@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpd.h,v 1.65 2015/11/23 19:31:52 reyk Exp $	*/
+/*	$OpenBSD: snmpd.h,v 1.66 2015/12/07 12:33:08 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -737,9 +737,13 @@ int	 imsg_composev_event(struct imsgev *, u_int16_t, u_int32_t,
 	    pid_t, int, const struct iovec *, int);
 void	 proc_range(struct privsep *, enum privsep_procid, int *, int *);
 int	 proc_compose_imsg(struct privsep *, enum privsep_procid, int,
-	    u_int16_t, int, void *, u_int16_t);
+	    u_int16_t, u_int32_t, int, void *, u_int16_t);
+int	 proc_compose(struct privsep *, enum privsep_procid,
+	    uint16_t, void *, uint16_t);
 int	 proc_composev_imsg(struct privsep *, enum privsep_procid, int,
-	    u_int16_t, int, const struct iovec *, int);
+	    u_int16_t, u_int32_t, int, const struct iovec *, int);
+int	 proc_composev(struct privsep *, enum privsep_procid,
+	    uint16_t, const struct iovec *, int);
 int	 proc_forward_imsg(struct privsep *, struct imsg *,
 	    enum privsep_procid, int);
 struct imsgbuf *
