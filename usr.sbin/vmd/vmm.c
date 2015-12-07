@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.10 2015/12/06 02:26:14 reyk Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.11 2015/12/07 14:43:24 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -191,13 +191,17 @@ vmm_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 		break;
 	case IMSG_VMDOP_START_VM_DISK:
 		res = config_getdisk(ps, imsg);
-		if (res != 0)
+		if (res == -1) {
+			res = errno;
 			cmd = IMSG_VMDOP_START_VM_RESPONSE;
+		}
 		break;
 	case IMSG_VMDOP_START_VM_IF:
 		res = config_getif(ps, imsg);
-		if (res != 0)
+		if (res == -1) {
+			res = errno;
 			cmd = IMSG_VMDOP_START_VM_RESPONSE;
+		}
 		break;
 	case IMSG_VMDOP_START_VM_END:
 		res = start_vm(imsg, &id);
@@ -331,7 +335,8 @@ start_vm(struct imsg *imsg, uint32_t *id)
 
 	if ((vm = vm_getbyvmid(imsg->hdr.peerid)) == NULL) {
 		log_warn("%s: can't find vm", __func__);
-		return (-1);
+		ret = ENOENT;
+		goto err;
 	}
 	vcp = &vm->vm_params;
 

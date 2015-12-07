@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.7 2015/12/06 21:02:51 reyk Exp $	*/
+/*	$OpenBSD: config.c,v 1.8 2015/12/07 14:43:24 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -218,9 +218,12 @@ config_getdisk(struct privsep *ps, struct imsg *imsg)
 {
 	struct vmd_vm	*vm;
 	unsigned int	 n;
-
-	if ((vm = vm_getbyvmid(imsg->hdr.peerid)) == NULL)
+	
+	errno = 0;
+	if ((vm = vm_getbyvmid(imsg->hdr.peerid)) == NULL) {
+		errno = ENOENT;
 		return (-1);
+	}
 
 	IMSG_SIZE_CHECK(imsg, &n);
 	memcpy(&n, imsg->data, sizeof(n));
@@ -228,6 +231,7 @@ config_getdisk(struct privsep *ps, struct imsg *imsg)
 	if (n >= vm->vm_params.vcp_ndisks ||
 	    vm->vm_disks[n] != -1 || imsg->fd == -1) {
 		log_debug("invalid disk id");
+		errno = EINVAL;
 		return (-1);
 	}
 	vm->vm_disks[n] = imsg->fd;
@@ -241,14 +245,18 @@ config_getif(struct privsep *ps, struct imsg *imsg)
 	struct vmd_vm	*vm;
 	unsigned int	 n;
 
-	if ((vm = vm_getbyvmid(imsg->hdr.peerid)) == NULL)
+	errno = 0;
+	if ((vm = vm_getbyvmid(imsg->hdr.peerid)) == NULL) {
+		errno = ENOENT;
 		return (-1);
+	}
 
 	IMSG_SIZE_CHECK(imsg, &n);
 	memcpy(&n, imsg->data, sizeof(n));
 	if (n >= vm->vm_params.vcp_nnics ||
 	    vm->vm_ifs[n] != -1 || imsg->fd == -1) {
 		log_debug("invalid interface id");
+		errno = EINVAL;
 		return (-1);
 	}
 	vm->vm_ifs[n] = imsg->fd;
