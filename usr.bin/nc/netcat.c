@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.144 2015/11/23 01:23:56 bcook Exp $ */
+/* $OpenBSD: netcat.c,v 1.145 2015/12/07 02:38:54 tb Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  * Copyright (c) 2015 Bob Beck.  All rights reserved.
@@ -58,7 +58,6 @@
 #include "atomicio.h"
 
 #define PORT_MAX	65535
-#define PORT_MAX_LEN	6
 #define UNIX_DG_TMP_SOCKET_SIZE	19
 
 #define POLL_STDIN 0
@@ -1289,25 +1288,22 @@ build_ports(char *p)
 			lo = cp;
 		}
 
-		/* Load ports sequentially. */
-		for (cp = lo; cp <= hi; cp++) {
-			portlist[x] = calloc(1, PORT_MAX_LEN);
-			if (portlist[x] == NULL)
-				err(1, NULL);
-			snprintf(portlist[x], PORT_MAX_LEN, "%d", cp);
-			x++;
-		}
-
-		/* Randomly swap ports. */
+		/*
+		 * Initialize portlist with a random permutation.  Based on
+		 * Knuth, as in ip_randomid() in sys/netinet/ip_id.c.
+		 */
 		if (rflag) {
-			int y;
-			char *c;
-
-			for (x = 0; x <= (hi - lo); x++) {
-				y = (arc4random() & 0xFFFF) % (hi - lo);
-				c = portlist[x];
-				portlist[x] = portlist[y];
-				portlist[y] = c;
+			for (x = 0; x <= hi - lo; x++) {
+				cp = arc4random_uniform(x + 1);
+				portlist[x] = portlist[cp];
+				if (asprintf(&portlist[cp], "%d", x + lo) < 0)
+					err(1, "asprintf");
+			}
+		} else { /* Load ports sequentially. */
+			for (cp = lo; cp <= hi; cp++) {
+				if (asprintf(&portlist[x], "%d", cp) < 0)
+					err(1, "asprintf");
+				x++;
 			}
 		}
 	} else {
