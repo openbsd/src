@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.11 2015/12/07 14:43:24 reyk Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.12 2015/12/07 16:02:09 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -234,6 +234,10 @@ vmm_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 	case 0:
 		break;
 	case IMSG_VMDOP_START_VM_RESPONSE:
+		if (res != 0) {
+			vm = vm_getbyvmid(imsg->hdr.peerid);
+			vm_remove(vm);
+		}
 	case IMSG_VMDOP_TERMINATE_VM_RESPONSE:
 		memset(&vmr, 0, sizeof(vmr));
 		vmr.vmr_result = res;
