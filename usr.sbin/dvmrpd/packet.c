@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.4 2015/12/07 18:59:31 mmcc Exp $ */
+/*	$OpenBSD: packet.c,v 1.5 2015/12/07 19:14:49 mmcc Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2006 Esben Norby <norby@openbsd.org>
@@ -48,7 +48,7 @@ gen_dvmrp_hdr(struct ibuf *buf, struct iface *iface, u_int8_t code)
 {
 	struct dvmrp_hdr	dvmrp_hdr;
 
-	bzero(&dvmrp_hdr, sizeof(dvmrp_hdr));
+	memset(&dvmrp_hdr, 0, sizeof(dvmrp_hdr));
 	dvmrp_hdr.type = PKT_TYPE_DVMRP;
 	dvmrp_hdr.code = code;
 	dvmrp_hdr.chksum = 0;				/* updated later */

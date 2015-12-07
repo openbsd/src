@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.12 2015/09/27 17:29:46 stsp Exp $ */
+/*	$OpenBSD: kroute.c,v 1.13 2015/12/07 19:14:49 mmcc Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -136,7 +136,7 @@ kif_find(int ifindex)
 {
 	struct kif_node	s;
 
-	bzero(&s, sizeof(s));
+	memset(&s, 0, sizeof(s));
 	s.k.ifindex = ifindex;
 
 	return (RB_FIND(kif_tree, &kit, &s));

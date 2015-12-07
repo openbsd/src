@@ -1,4 +1,4 @@
-/*	$OpenBSD: prune.c,v 1.5 2015/05/05 01:26:37 jsg Exp $ */
+/*	$OpenBSD: prune.c,v 1.6 2015/12/07 19:14:49 mmcc Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 Esben Norby <norby@openbsd.org>
@@ -23,7 +23,7 @@
 #include <arpa/inet.h>
 
 #include <stdlib.h>
-#include <strings.h>
+#include <string.h>
 
 #include "igmp.h"
 #include "dvmrpd.h"
@@ -47,7 +47,7 @@ send_prune(struct nbr *nbr, struct prune *p)
 	if (nbr->iface->passive)
 		return (0);
 
-	bzero(&prune, sizeof(prune));
+	memset(&prune, 0, sizeof(prune));
 
 	dst.sin_family = AF_INET;
 	dst.sin_len = sizeof(struct sockaddr_in);
@@ -97,7 +97,7 @@ recv_prune(struct nbr *nbr, char *buf, u_int16_t len)
 		return;
 	}
 
-	bzero(&p, sizeof(p));
+	memset(&p, 0, sizeof(p));
 
 	prune = (struct prune_hdr *)buf;
 

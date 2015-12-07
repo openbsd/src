@@ -1,4 +1,4 @@
-/*	$OpenBSD: igmp.c,v 1.3 2014/11/18 20:54:28 krw Exp $ */
+/*	$OpenBSD: igmp.c,v 1.4 2015/12/07 19:14:49 mmcc Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 Esben Norby <norby@openbsd.org>
@@ -51,7 +51,7 @@ send_igmp_query(struct iface *iface, struct group *group)
 		fatal("send_igmp_query");
 
 	/* IGMP header */
-	bzero(&igmp_hdr, sizeof(igmp_hdr));
+	memset(&igmp_hdr, 0, sizeof(igmp_hdr));
 	igmp_hdr.type = PKT_TYPE_MEMBER_QUERY;
 
 	if (group == NULL) {

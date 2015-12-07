@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.21 2015/12/05 13:11:00 claudio Exp $ */
+/*	$OpenBSD: control.c,v 1.22 2015/12/07 19:14:49 mmcc Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -52,7 +52,7 @@ control_init(void)
 		return (-1);
 	}
 
-	bzero(&sun, sizeof(sun));
+	memset(&sun, 0, sizeof(sun));
 	sun.sun_family = AF_UNIX;
 	strlcpy(sun.sun_path, DVMRPD_SOCKET, sizeof(sun.sun_path));
 
