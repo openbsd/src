@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.c,v 1.29 2015/11/22 13:27:13 reyk Exp $	*/
+/*	$OpenBSD: iked.c,v 1.30 2015/12/07 12:46:37 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -383,8 +383,7 @@ parent_dispatch_control(int fd, struct privsep_proc *p, struct imsg *imsg)
 	case IMSG_CTL_DECOUPLE:
 	case IMSG_CTL_ACTIVE:
 	case IMSG_CTL_PASSIVE:
-		proc_compose_imsg(&env->sc_ps, PROC_IKEV2, -1,
-		    type, -1, NULL, 0);
+		proc_compose(&env->sc_ps, PROC_IKEV2, type, NULL, 0);
 		break;
 	case IMSG_CTL_RELOAD:
 		if (IMSG_DATA_SIZE(imsg) > 0)

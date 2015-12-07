@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.39 2015/10/22 15:55:18 reyk Exp $	*/
+/*	$OpenBSD: ca.c,v 1.40 2015/12/07 12:46:37 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -249,8 +249,7 @@ ca_setcert(struct iked *env, struct iked_sahdr *sh, struct iked_id *id,
 	iov[iovcnt].iov_len = len;
 	iovcnt++;
 
-	if (proc_composev_imsg(&env->sc_ps, procid, -1,
-	    IMSG_CERT, -1, iov, iovcnt) == -1)
+	if (proc_composev(&env->sc_ps, procid, IMSG_CERT, iov, iovcnt) == -1)
 		return (-1);
 	return (0);
 }
@@ -291,8 +290,7 @@ ca_setreq(struct iked *env, struct iked_sa *sa,
 	iov[iovcnt].iov_len = len;
 	iovcnt++;
 
-	if (proc_composev_imsg(&env->sc_ps, procid, -1,
-	    IMSG_CERTREQ, -1, iov, iovcnt) == -1)
+	if (proc_composev(&env->sc_ps, procid, IMSG_CERTREQ, iov, iovcnt) == -1)
 		goto done;
 
 	sa_stateflags(sa, IKED_REQ_CERTREQ);
@@ -336,8 +334,7 @@ ca_setauth(struct iked *env, struct iked_sa *sa,
 		log_debug("%s: auth length %zu", __func__, ibuf_size(authmsg));
 	}
 
-	if (proc_composev_imsg(&env->sc_ps, id, -1,
-	    IMSG_AUTH, -1, iov, iovcnt) == -1)
+	if (proc_composev(&env->sc_ps, id, IMSG_AUTH, iov, iovcnt) == -1)
 		return (-1);
 	return (0);
 }
@@ -397,8 +394,7 @@ ca_getcert(struct iked *env, struct imsg *imsg)
 	iov[1].iov_base = &type;
 	iov[1].iov_len = sizeof(type);
 
-	if (proc_composev_imsg(&env->sc_ps, PROC_IKEV2, -1,
-	    cmd, -1, iov, iovcnt) == -1)
+	if (proc_composev(&env->sc_ps, PROC_IKEV2, cmd, iov, iovcnt) == -1)
 		return (-1);
 	return (0);
 }
@@ -644,8 +640,8 @@ ca_reload(struct iked *env)
 		    ibuf_length(env->sc_certreq) == SHA_DIGEST_LENGTH ?
 		    "" : "s");
 
-		(void)proc_composev_imsg(&env->sc_ps, PROC_IKEV2, -1,
-		    IMSG_CERTREQ, -1, iov, iovcnt);
+		(void)proc_composev(&env->sc_ps, PROC_IKEV2, IMSG_CERTREQ,
+		    iov, iovcnt);
 	}
 
 	/*
@@ -695,8 +691,7 @@ ca_reload(struct iked *env)
 	iov[0].iov_len = sizeof(env->sc_certreqtype);
 	if (iovcnt == 0)
 		iovcnt++;
-	(void)proc_composev_imsg(&env->sc_ps, PROC_IKEV2, -1,
-	    IMSG_CERTREQ, -1, iov, iovcnt);
+	(void)proc_composev(&env->sc_ps, PROC_IKEV2, IMSG_CERTREQ, iov, iovcnt);
 
 	return (0);
 }
