@@ -1,4 +1,4 @@
-/*	$OpenBSD: arp.c,v 1.69 2015/10/14 04:03:01 deraadt Exp $ */
+/*	$OpenBSD: arp.c,v 1.70 2015/12/08 14:20:24 tedu Exp $ */
 /*	$NetBSD: arp.c,v 1.12 1995/04/24 13:25:18 cgd Exp $ */
 
 /*
@@ -316,9 +316,7 @@ set(int argc, char *argv[])
 				usage();
 				return (0);
 			}
-		} else if (strncmp(argv[0], "trail", 5) == 0)
-			printf("%s: Sending trailers is no longer supported\n",
-			    host);
+		}
 
 		argv++;
 	}
