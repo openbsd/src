@@ -1,4 +1,4 @@
-/*	$OpenBSD: wc.c,v 1.19 2015/10/09 01:37:09 deraadt Exp $	*/
+/*	$OpenBSD: wc.c,v 1.20 2015/12/08 01:00:45 schwarze Exp $	*/
 
 /*
  * Copyright (c) 1980, 1987, 1991, 1993
@@ -40,9 +40,11 @@
 #include <err.h>
 #include <unistd.h>
 #include <util.h>
+#include <wchar.h>
+#include <wctype.h>
 
 int64_t	tlinect, twordct, tcharct;
-int	doline, doword, dochar, humanchar;
+int	doline, doword, dochar, humanchar, multibyte;
 int 	rval;
 extern char *__progname;
 
@@ -55,7 +57,7 @@ main(int argc, char *argv[])
 {
 	int ch;
 
-	setlocale(LC_ALL, "");
+	setlocale(LC_CTYPE, "");
 
 	if (pledge("stdio rpath", NULL) == -1)
 		err(1, "pledge");
@@ -68,8 +70,11 @@ main(int argc, char *argv[])
 		case 'w':
 			doword = 1;
 			break;
-		case 'c':
 		case 'm':
+			if (MB_CUR_MAX > 1)
+				multibyte = 1;
+			/* FALLTHROUGH */
+		case 'c':
 			dochar = 1;
 			break;
 		case 'h':
@@ -112,15 +117,20 @@ main(int argc, char *argv[])
 void
 cnt(char *file)
 {
-	u_char *C;
+	static char *buf;
+	static ssize_t bufsz;
+
+	FILE *stream;
+	char *C;
+	wchar_t wc;
 	short gotsp;
-	int len;
+	ssize_t len;
 	int64_t linect, wordct, charct;
 	struct stat sbuf;
 	int fd;
-	u_char buf[MAXBSIZE];
 
 	linect = wordct = charct = 0;
+	stream = NULL;
 	if (file) {
 		if ((fd = open(file, O_RDONLY, 0)) < 0) {
 			warn("%s", file);
@@ -131,7 +141,10 @@ cnt(char *file)
 		fd = STDIN_FILENO;
 	}
 
-	if (!doword) {
+	if (!doword && !multibyte) {
+		if (bufsz < MAXBSIZE &&
+		    (buf = realloc(buf, MAXBSIZE)) == NULL)
+			err(1, NULL);
 		/*
 		 * Line counting is split out because it's a lot
 		 * faster to get lines than to get words, since
@@ -178,37 +191,57 @@ cnt(char *file)
 			}
 		}
 	} else {
-		/* Do it the hard way... */
+		if (file == NULL)
+			stream = stdin;
+		else if ((stream = fdopen(fd, "r")) == NULL) {
+			warn("%s", file);
+			close(fd);
+			rval = 1;
+			return;
+		}
+
+		/*
+		 * Do it the hard way.
+		 * According to POSIX, a word is a "maximal string of
+		 * characters delimited by whitespace."  Nothing is said
+		 * about a character being printing or non-printing.
+		 */
 		gotsp = 1;
-		while ((len = read(fd, buf, MAXBSIZE)) > 0) {
-			/*
-			 * This loses in the presence of multi-byte characters.
-			 * To do it right would require a function to return a
-			 * character while knowing how many bytes it consumed.
-			 */
-			charct += len;
-			for (C = buf; len--; ++C) {
-				if (isspace(*C)) {
-					gotsp = 1;
-					if (*C == '\n')
-						++linect;
-				} else {
-					/*
-					 * This line implements the POSIX
-					 * spec, i.e. a word is a "maximal
-					 * string of characters delimited by
-					 * whitespace."  Notice nothing was
-					 * said about a character being
-					 * printing or non-printing.
-					 */
-					if (gotsp) {
+		while ((len = getline(&buf, &bufsz, stream)) > 0) {
+			if (multibyte) {
+				for (C = buf; *C != '\0'; C += len) {
+					++charct;
+					len = mbtowc(&wc, C, MB_CUR_MAX);
+					if (len == -1) {
+						(void)mbtowc(NULL, NULL,
+						    MB_CUR_MAX);
+						len = 1;
+						wc = L' ';
+					}
+					if (iswspace(wc)) {
+						gotsp = 1;
+						if (wc == L'\n')
+							++linect;
+					} else if (gotsp) {
+						gotsp = 0;
+						++wordct;
+					}
+				}
+			} else {
+				charct += len;
+				for (C = buf; *C != '\0'; ++C) {
+					if (isspace((unsigned char)*C)) {
+						gotsp = 1;
+						if (*C == '\n')
+							++linect;
+					} else if (gotsp) {
 						gotsp = 0;
 						++wordct;
 					}
 				}
 			}
 		}
-		if (len == -1) {
+		if (ferror(stream)) {
 			warn("%s", file);
 			rval = 1;
 		}
@@ -224,7 +257,7 @@ cnt(char *file)
 	twordct += wordct;
 	tcharct += charct;
 
-	if (close(fd) != 0) {
+	if ((stream == NULL ? close(fd) : fclose(stream)) != 0) {
 		warn("%s", file);
 		rval = 1;
 	}

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wc.1,v 1.25 2015/04/21 10:46:48 schwarze Exp $
+.\"	$OpenBSD: wc.1,v 1.26 2015/12/08 01:00:44 schwarze Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"     from: @(#)wc.1	8.2 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: April 21 2015 $
+.Dd $Mdocdate: December 8 2015 $
 .Dt WC 1
 .Os
 .Sh NAME
@@ -72,9 +72,10 @@ using powers of 2 for sizes (K=1024, M=1048576, etc.).
 The number of lines in each input file
 is written to the standard output.
 .It Fl m
-Intended to count characters instead of bytes;
-currently an alias for
-.Fl c .
+Count characters instead of bytes, and use
+.Xr iswspace 3
+instead of
+.Xr isspace 3 .
 .It Fl w
 The number of words in each input file
 is written to the standard output.
@@ -102,6 +103,20 @@ lines	 words	bytes	file_name
 The counts for lines, words, and bytes
 .Pq or characters
 are integers separated by spaces.
+.Sh ENVIRONMENT
+.Bl -tag -width LC_CTYPE
+.It Ev LC_CTYPE
+The character set
+.Xr locale 1 ,
+defining which byte sequences form characters.
+If unset or set to
+.Qq C ,
+.Qq POSIX ,
+or an unsupported value,
+.Fl m
+has the same effect as
+.Fl c .
+.El
 .Sh EXIT STATUS
 .Ex -std wc
 .Sh SEE ALSO
@@ -111,7 +126,7 @@ The
 .Nm
 utility is compliant with the
 .St -p1003.1-2008
-specification, except that it ignores the locale.
+specification.
 .Pp
 The flag
 .Op Fl h
@@ -121,7 +136,3 @@ A
 .Nm
 utility appeared in
 .At v1 .
-.Sh BUGS
-The
-.Fl m
-option counts bytes instead of characters.
