@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-pipe-pane.c,v 1.30 2015/11/18 14:27:44 nicm Exp $ */
+/* $OpenBSD: cmd-pipe-pane.c,v 1.31 2015/12/08 08:34:18 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -89,7 +89,7 @@ cmd_pipe_pane_exec(struct cmd *self, struct cmd_q *cmdq)
 	}
 
 	/* Expand the command. */
-	ft = format_create();
+	ft = format_create(0);
 	format_defaults(ft, c, s, wl, wp);
 	cmd = format_expand_time(ft, args->argv[0], time(NULL));
 	format_free(ft);

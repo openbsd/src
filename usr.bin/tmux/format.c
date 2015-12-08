@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.100 2015/11/24 21:52:06 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.101 2015/12/08 08:34:18 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -465,14 +465,7 @@ format_cb_pane_tabs(struct format_tree *ft, struct format_entry *fe)
 
 /* Create a new tree. */
 struct format_tree *
-format_create(void)
-{
-	return (format_create_flags(0));
-}
-
-/* Create a new tree for the status line. */
-struct format_tree *
-format_create_flags(int flags)
+format_create(int flags)
 {
 	struct format_tree	*ft;
 
