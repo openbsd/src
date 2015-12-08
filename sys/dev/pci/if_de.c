@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_de.c,v 1.132 2015/11/25 11:20:38 mpi Exp $	*/
+/*	$OpenBSD: if_de.c,v 1.133 2015/12/08 06:12:56 dlg Exp $	*/
 /*	$NetBSD: if_de.c,v 1.58 1998/01/12 09:39:58 thorpej Exp $	*/
 
 /*-
@@ -2885,7 +2885,6 @@ tulip_addr_filter(tulip_softc_t * const sc)
     sc->tulip_cmdmode &= ~TULIP_CMD_RXRUN;
     sc->tulip_intrmask &= ~TULIP_STS_RXSTOPPED;
     sc->tulip_if.if_flags &= ~IFF_ALLMULTI;
-    sc->tulip_if.if_start = tulip_ifstart;	/* so the setup packet gets queued */
     if (sc->tulip_multicnt > 14) {
 	u_int32_t *sp = sc->tulip_setupdata;
 	unsigned hash;
@@ -3035,7 +3034,6 @@ tulip_reset(tulip_softc_t * const sc)
 	sc->tulip_flags |= TULIP_INRESET;
 	sc->tulip_flags &= ~(TULIP_NEEDRESET|TULIP_RXBUFSLOW);
 	ifq_clr_oactive(&sc->tulip_if.if_snd);
-	sc->tulip_if.if_start = tulip_ifstart;
     }
 
     TULIP_CSR_WRITE(sc, csr_txlist, sc->tulip_txdescmap->dm_segs[0].ds_addr);
@@ -3959,7 +3957,6 @@ tulip_txput(tulip_softc_t * const sc, struct mbuf *m, int notonqueue)
     if (sc->tulip_flags & TULIP_TXPROBE_ACTIVE) {
 	TULIP_CSR_WRITE(sc, csr_txpoll, 1);
 	ifq_set_oactive(&sc->tulip_if.if_snd);
-	sc->tulip_if.if_start = tulip_ifstart;
 	TULIP_PERFEND(txput);
 	return (NULL);
     }
@@ -3989,7 +3986,6 @@ tulip_txput(tulip_softc_t * const sc, struct mbuf *m, int notonqueue)
 #endif
     if (sc->tulip_flags & (TULIP_WANTTXSTART|TULIP_DOINGSETUP)) {
 	ifq_set_oactive(&sc->tulip_if.if_snd);
-	sc->tulip_if.if_start = tulip_ifstart;
 	if ((sc->tulip_intrmask & TULIP_STS_TXINTR) == 0) {
 	    sc->tulip_intrmask |= TULIP_STS_TXINTR;
 	    TULIP_CSR_WRITE(sc, csr_intr, sc->tulip_intrmask);
@@ -4020,7 +4016,6 @@ tulip_txput_setup(tulip_softc_t * const sc)
 	printf(TULIP_PRINTF_FMT ": txput_setup: tx not running\n",
 	       TULIP_PRINTF_ARGS);
 	sc->tulip_flags |= TULIP_WANTTXSTART;
-	sc->tulip_if.if_start = tulip_ifstart;
 	return;
     }
 #endif
@@ -4031,7 +4026,6 @@ tulip_txput_setup(tulip_softc_t * const sc)
 	tulip_tx_intr(sc);
     if ((sc->tulip_flags & TULIP_DOINGSETUP) || ri->ri_free == 1) {
 	sc->tulip_flags |= TULIP_WANTTXSTART;
-	sc->tulip_if.if_start = tulip_ifstart;
 	return;
     }
     bcopy(sc->tulip_setupdata, sc->tulip_setupbuf,
