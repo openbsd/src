@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_vnops.c,v 1.122 2015/09/23 15:37:26 tedu Exp $	*/
+/*	$OpenBSD: ufs_vnops.c,v 1.123 2015/12/08 15:31:01 tedu Exp $	*/
 /*	$NetBSD: ufs_vnops.c,v 1.18 1996/05/11 18:28:04 mycroft Exp $	*/
 
 /*
@@ -182,13 +182,13 @@ ufs_mknod(void *v)
 {
 	struct vop_mknod_args *ap = v;
 	struct vattr *vap = ap->a_vap;
-        struct vnode **vpp = ap->a_vpp;
+	struct vnode **vpp = ap->a_vpp;
 	struct inode *ip;
 	int error;
 
 	if ((error =
-	     ufs_makeinode(MAKEIMODE(vap->va_type, vap->va_mode),
-			   ap->a_dvp, vpp, ap->a_cnp)) != 0)
+	    ufs_makeinode(MAKEIMODE(vap->va_type, vap->va_mode),
+	    ap->a_dvp, vpp, ap->a_cnp)) != 0)
 		return (error);
 	VN_KNOTE(ap->a_dvp, NOTE_WRITE);
 	ip = VTOI(*vpp);
@@ -942,7 +942,7 @@ abortit:
 			DIP_ADD(dp, nlink, 1);
 			dp->i_flag |= IN_CHANGE;
 			if (DOINGSOFTDEP(tdvp))
-                               softdep_change_linkcnt(dp, 0);
+				softdep_change_linkcnt(dp, 0);
 			if ((error = UFS_UPDATE(dp, !DOINGSOFTDEP(tdvp))) 
 			    != 0) {
 				dp->i_effnlink--;
@@ -1009,9 +1009,9 @@ abortit:
 		}
 		
 		if ((error = ufs_dirrewrite(dp, xp, ip->i_number,
-                   IFTODT(DIP(ip, mode)), (doingdirectory && newparent) ?
-		   newparent : doingdirectory)) != 0)
-                        goto bad;
+		    IFTODT(DIP(ip, mode)), (doingdirectory && newparent) ?
+		    newparent : doingdirectory)) != 0)
+			goto bad;
 		if (doingdirectory) {
 			if (!newparent) {
 				dp->i_effnlink--;
@@ -1023,17 +1023,17 @@ abortit:
 				softdep_change_linkcnt(xp, 0);
 		}
 		if (doingdirectory && !DOINGSOFTDEP(tvp)) {
-		       /*
+			/*
 			* Truncate inode. The only stuff left in the directory
 			* is "." and "..". The "." reference is inconsequential
-                        * since we are quashing it. We have removed the "."
-                        * reference and the reference in the parent directory,
-                        * but there may be other hard links. The soft
-                        * dependency code will arrange to do these operations
-                        * after the parent directory entry has been deleted on
-                        * disk, so when running with that code we avoid doing
-                        * them now.
-                        */
+			* since we are quashing it. We have removed the "."
+			* reference and the reference in the parent directory,
+			* but there may be other hard links. The soft
+			* dependency code will arrange to do these operations
+			* after the parent directory entry has been deleted on
+			* disk, so when running with that code we avoid doing
+			* them now.
+			*/
 			if (!newparent) {
 				DIP_ADD(dp, nlink, -1);
 				dp->i_flag |= IN_CHANGE;
@@ -1042,11 +1042,11 @@ abortit:
 			DIP_ADD(xp, nlink, -1);
 			xp->i_flag |= IN_CHANGE;
 			if ((error = UFS_TRUNCATE(VTOI(tvp), (off_t)0, IO_SYNC,
-			        tcnp->cn_cred)) != 0)
+			    tcnp->cn_cred)) != 0)
 				goto bad;
-                }
+		}
 		VN_KNOTE(tdvp, NOTE_WRITE);
-	        vput(tdvp);
+		vput(tdvp);
 		VN_KNOTE(tvp, NOTE_DELETE);
 		vput(tvp);
 		xp = NULL;
@@ -1216,7 +1216,7 @@ ufs_mkdir(void *v)
 	dirtemplate.dotdot_ino = dp->i_number;
 
 	if ((error = UFS_BUF_ALLOC(ip, (off_t)0, DIRBLKSIZ, cnp->cn_cred,
-            B_CLRBUF, &bp)) != 0)
+	    B_CLRBUF, &bp)) != 0)
 		goto bad;
 	DIP_ASSIGN(ip, size, DIRBLKSIZ);
 	ip->i_flag |= IN_CHANGE | IN_UPDATE;
@@ -1242,38 +1242,38 @@ ufs_mkdir(void *v)
 	}
 
 	/*
-         * Directory set up, now install its entry in the parent directory.
-         *
-         * If we are not doing soft dependencies, then we must write out the
-         * buffer containing the new directory body before entering the new
-         * name in the parent. If we are doing soft dependencies, then the
-         * buffer containing the new directory body will be passed to and
-         * released in the soft dependency code after the code has attached
-         * an appropriate ordering dependency to the buffer which ensures that
-         * the buffer is written before the new name is written in the parent.
+	 * Directory set up, now install its entry in the parent directory.
+	 *
+	 * If we are not doing soft dependencies, then we must write out the
+	 * buffer containing the new directory body before entering the new
+	 * name in the parent. If we are doing soft dependencies, then the
+	 * buffer containing the new directory body will be passed to and
+	 * released in the soft dependency code after the code has attached
+	 * an appropriate ordering dependency to the buffer which ensures that
+	 * the buffer is written before the new name is written in the parent.
 	 */
-        if (!DOINGSOFTDEP(dvp) && ((error = VOP_BWRITE(bp)) != 0))
-                goto bad;
-        ufs_makedirentry(ip, cnp, &newdir);
-        error = ufs_direnter(dvp, tvp, &newdir, cnp, bp);
+	if (!DOINGSOFTDEP(dvp) && ((error = VOP_BWRITE(bp)) != 0))
+		goto bad;
+	ufs_makedirentry(ip, cnp, &newdir);
+	error = ufs_direnter(dvp, tvp, &newdir, cnp, bp);
   
 bad:
-        if (error == 0) {
+	if (error == 0) {
 		VN_KNOTE(dvp, NOTE_WRITE | NOTE_LINK);
-                *ap->a_vpp = tvp;
-        } else {
-                dp->i_effnlink--;
-                DIP_ADD(dp, nlink, -1);
-                dp->i_flag |= IN_CHANGE;
+		*ap->a_vpp = tvp;
+	} else {
+		dp->i_effnlink--;
+		DIP_ADD(dp, nlink, -1);
+		dp->i_flag |= IN_CHANGE;
 		if (DOINGSOFTDEP(dvp))
 			softdep_change_linkcnt(dp, 0);
-                /*
-                 * No need to do an explicit VOP_TRUNCATE here, vrele will
-                 * do this for us because we set the link count to 0.
-                 */
-                ip->i_effnlink = 0;
-                DIP_ASSIGN(ip, nlink, 0);
-                ip->i_flag |= IN_CHANGE;
+		/*
+		 * No need to do an explicit VOP_TRUNCATE here, vrele will
+		 * do this for us because we set the link count to 0.
+		 */
+		ip->i_effnlink = 0;
+		DIP_ASSIGN(ip, nlink, 0);
+		ip->i_flag |= IN_CHANGE;
 		if (DOINGSOFTDEP(tvp))
 			softdep_change_linkcnt(ip, 0);
 		vput(tvp);
@@ -1312,10 +1312,10 @@ ufs_rmdir(void *v)
 		return (EINVAL);
 	}
 	/*
-         * Do not remove a directory that is in the process of being renamed.
-         * Verify the directory is empty (and valid). Rmdir ".." will not be
-         * valid since ".." will contain a reference to the current directory
-         * and thus be non-empty.
+	 * Do not remove a directory that is in the process of being renamed.
+	 * Verify the directory is empty (and valid). Rmdir ".." will not be
+	 * valid since ".." will contain a reference to the current directory
+	 * and thus be non-empty.
 	 */
 	error = 0;
 	if (ip->i_flag & IN_RENAME) {
@@ -1355,7 +1355,7 @@ ufs_rmdir(void *v)
 
 	VN_KNOTE(dvp, NOTE_WRITE | NOTE_LINK);
 	cache_purge(dvp);
-        /*
+	/*
 	 * Truncate inode. The only stuff left in the directory is "." and
 	 * "..". The "." reference is inconsequential since we are quashing
 	 * it. The soft dependency code will arrange to do these operations
@@ -1381,7 +1381,7 @@ ufs_rmdir(void *v)
 
 out:
 	VN_KNOTE(vp, NOTE_DELETE);
-        vput(dvp);
+	vput(dvp);
 	vput(vp);
 	return (error);
 }
@@ -1398,7 +1398,7 @@ ufs_symlink(void *v)
 	int len, error;
 
 	error = ufs_makeinode(IFLNK | ap->a_vap->va_mode, ap->a_dvp,
-			      vpp, ap->a_cnp);
+	    vpp, ap->a_cnp);
 	if (error)
 		return (error);
 	VN_KNOTE(ap->a_dvp, NOTE_WRITE);
@@ -1640,9 +1640,9 @@ ufs_print(void *v)
 	printf("tag VT_UFS, ino %u, on dev %d, %d", ip->i_number,
 		major(ip->i_dev), minor(ip->i_dev));
 	printf(" flags 0x%x, effnlink %d, nlink %d\n",
-	       ip->i_flag, ip->i_effnlink, DIP(ip, nlink));
+	   ip->i_flag, ip->i_effnlink, DIP(ip, nlink));
 	printf("\tmode 0%o, owner %d, group %d, size %lld",
-	       DIP(ip, mode), DIP(ip, uid), DIP(ip, gid), DIP(ip, size));
+	    DIP(ip, mode), DIP(ip, uid), DIP(ip, gid), DIP(ip, size));
 
 #ifdef FIFO
 	if (vp->v_type == VFIFO)
@@ -1874,7 +1874,7 @@ ufs_vinit(struct mount *mntp, struct vops *specops, struct vops *fifoops,
 		break;
 	}
 	if (ip->i_number == ROOTINO)
-                vp->v_flag |= VROOT;
+		vp->v_flag |= VROOT;
 	/*
 	 * Initialize modrev times
 	 */
@@ -2030,13 +2030,13 @@ filt_ufsread(struct knote *kn, long hint)
 		return (1);
 	}
 
-        kn->kn_data = DIP(ip, size) - kn->kn_fp->f_offset;
+	kn->kn_data = DIP(ip, size) - kn->kn_fp->f_offset;
 	if (kn->kn_data == 0 && kn->kn_sfflags & NOTE_EOF) {
 		kn->kn_fflags |= NOTE_EOF;
 		return (1);
 	}
 
-        return (kn->kn_data != 0);
+	return (kn->kn_data != 0);
 }
 
 int
@@ -2051,8 +2051,8 @@ filt_ufswrite(struct knote *kn, long hint)
 		return (1);
 	}
 
-        kn->kn_data = 0;
-        return (1);
+	kn->kn_data = 0;
+	return (1);
 }
 
 int
