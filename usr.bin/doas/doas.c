@@ -1,4 +1,4 @@
-/* $OpenBSD: doas.c,v 1.47 2015/12/08 13:39:40 sthen Exp $ */
+/* $OpenBSD: doas.c,v 1.48 2015/12/08 14:45:36 tedu Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -419,7 +419,7 @@ main(int argc, char **argv, char **envp)
 
 		if (!(as = auth_userchallenge(myname, login_style, "auth-doas",
 		    &challenge)))
-			err(1, "auth challenge failed");
+			errx(1, "Authorization failed");
 		if (!challenge) {
 			char host[HOST_NAME_MAX + 1];
 			if (gethostname(host, sizeof(host)))
