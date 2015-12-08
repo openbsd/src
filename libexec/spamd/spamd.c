@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd.c,v 1.134 2015/12/05 20:32:53 henning Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.135 2015/12/08 03:21:09 beck Exp $	*/
 
 /*
  * Copyright (c) 2015 Henning Brauer <henning@openbsd.org>
@@ -112,6 +112,7 @@ void     getcaddr(struct con *);
 void     gethelo(char *, size_t, char *);
 int      read_configline(FILE *);
 void	 spamd_tls_init(char *, char *);
+void	 check_spamd_db(void);
 
 char hostname[HOST_NAME_MAX+1];
 struct syslog_data sdata = SYSLOG_DATA_INIT;
@@ -1353,9 +1354,21 @@ main(int argc, char *argv[])
 	    greylist ? " (greylist)" : "",
 	    (syncrecv || syncsend) ? " (sync)" : "");
 
-	if (!greylist)
+	if (syncsend || syncrecv) {
+		syncfd = sync_init(sync_iface, sync_baddr, sync_port);
+		if (syncfd == -1)
+			err(1, "sync init");
+	}
+
+	if ((pw = getpwnam("_spamd")) == NULL)
+		errx(1, "no such user _spamd");
+
+	if (!greylist) {
 		maxblack = maxcon;
-	else if (maxblack > maxcon)
+
+		if (pledge("stdio rpath inet proc id", NULL) == -1)
+			err(1, "pledge");
+	} else if (maxblack > maxcon)
 		usage();
 
 	rlp.rlim_cur = rlp.rlim_max = maxcon + 15;
@@ -1421,15 +1434,6 @@ main(int argc, char *argv[])
 	if (bind(conflisten, (struct sockaddr *)&lin, sizeof lin) == -1)
 		err(1, "bind local");
 
-	if (syncsend || syncrecv) {
-		syncfd = sync_init(sync_iface, sync_baddr, sync_port);
-		if (syncfd == -1)
-			err(1, "sync init");
-	}
-
-	if ((pw = getpwnam("_spamd")) == NULL)
-		errx(1, "no such user _spamd");
-
 	if (debug == 0) {
 		if (daemon(1, 1) == -1)
 			err(1, "daemon");
@@ -1441,6 +1445,11 @@ main(int argc, char *argv[])
 			syslog_r(LOG_ERR, &sdata, "open /dev/pf: %m");
 			exit(1);
 		}
+
+		check_spamd_db();
+
+		if (pledge("stdio rpath wpath flock inet proc exec id", NULL) == -1)
+			err(1, "pledge");
 
 		maxblack = (maxblack >= maxcon) ? maxcon - 100 : maxblack;
 		if (maxblack < 0)
@@ -1509,6 +1518,9 @@ jail:
 		    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||
 		    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
 			err(1, "failed to drop privs");
+
+	if (pledge("stdio inet", NULL) == -1)
+		err(1, "pledge");
 
 	if (listen(smtplisten, 10) == -1)
 		err(1, "listen");
