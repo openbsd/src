@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.609 2015/12/03 12:42:03 goda Exp $
+#	$OpenBSD: files,v 1.610 2015/12/08 10:06:11 dlg Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -759,6 +759,7 @@ file net/art.c				art
 file net/bpf.c				bpfilter		needs-count
 file net/bpf_filter.c			bpfilter
 file net/if.c
+file net/ifq.c
 file net/if_ethersubr.c			ether			needs-flag
 file net/if_etherip.c			etherip			needs-flag
 file net/if_spppsubr.c			sppp

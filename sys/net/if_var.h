@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_var.h,v 1.64 2015/12/05 16:24:59 mpi Exp $	*/
+/*	$OpenBSD: if_var.h,v 1.65 2015/12/08 10:06:12 dlg Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -43,6 +43,8 @@
 #include <sys/srp.h>
 #include <sys/refcnt.h>
 #include <sys/time.h>
+
+#include <net/ifq.h>
 
 /*
  * Structures defining a network interface, providing a packet
@@ -89,35 +91,6 @@ struct if_clone {
 
 #define	IF_CLONE_INITIALIZER(name, create, destroy)			\
 	{ { 0 }, name, sizeof(name) - 1, create, destroy }
-
-/*
- * Structure defining the send queue for a network interface.
- */
-
-struct ifqueue;
-
-struct ifq_ops {
-	void			*(*ifqop_alloc)(void *);
-	void			 (*ifqop_free)(void *);
-	int			 (*ifqop_enq)(struct ifqueue *, struct mbuf *);
-	struct mbuf 		*(*ifqop_deq_begin)(struct ifqueue *, void **);
-	void			 (*ifqop_deq_commit)(struct ifqueue *,
-				    struct mbuf *, void *);
-	void	 		 (*ifqop_purge)(struct ifqueue *,
-				    struct mbuf_list *);
-};
-
-struct ifqueue {
-	struct mutex		 ifq_mtx;
-	uint64_t		 ifq_drops;
-	const struct ifq_ops	*ifq_ops;
-	void			*ifq_q;
-	unsigned int		 ifq_len;
-	unsigned int		 ifq_serializer;
-	unsigned int		 ifq_oactive;
-
-	unsigned int		 ifq_maxlen;
-};
 
 /*
  * Structure defining a queue for a network interface.
@@ -262,48 +235,6 @@ struct ifg_list {
 	TAILQ_ENTRY(ifg_list)	 ifgl_next;
 };
 
-/*
- * Interface send queues.
- */
-
-void		 ifq_init(struct ifqueue *);
-void		 ifq_attach(struct ifqueue *, const struct ifq_ops *, void *);
-void		 ifq_destroy(struct ifqueue *);
-int		 ifq_enqueue_try(struct ifqueue *, struct mbuf *);
-int		 ifq_enqueue(struct ifqueue *, struct mbuf *);
-struct mbuf	*ifq_deq_begin(struct ifqueue *);
-void		 ifq_deq_commit(struct ifqueue *, struct mbuf *);
-void		 ifq_deq_rollback(struct ifqueue *, struct mbuf *);
-struct mbuf	*ifq_dequeue(struct ifqueue *);
-unsigned int	 ifq_purge(struct ifqueue *);
-void		*ifq_q_enter(struct ifqueue *, const struct ifq_ops *);
-void		 ifq_q_leave(struct ifqueue *, void *);
-
-#define	ifq_len(_ifq)			((_ifq)->ifq_len)
-#define	ifq_empty(_ifq)			(ifq_len(_ifq) == 0)
-#define	ifq_set_maxlen(_ifq, _l)	((_ifq)->ifq_maxlen = (_l))
-
-static inline void
-ifq_set_oactive(struct ifqueue *ifq)
-{
-	ifq->ifq_oactive = 1;
-}
-
-static inline void
-ifq_clr_oactive(struct ifqueue *ifq)
-{
-	ifq->ifq_oactive = 0;
-}
-
-static inline unsigned int
-ifq_is_oactive(struct ifqueue *ifq)
-{
-	return (ifq->ifq_oactive);
-}
-
-extern const struct ifq_ops * const ifq_priq_ops;
-
-#define	IFQ_MAXLEN	256
 #define	IFNET_SLOWHZ	1		/* granularity is 1 second */
 
 /*
