@@ -87,6 +87,31 @@
 
 #define CPUID_OFFSET_XEN_HYPERCALL		0x2
 
+#if defined(__i386__) || defined(__amd64__)
+struct arch_vcpu_info {
+	unsigned long cr2;
+	unsigned long pad;
+} __packed;
+
+typedef unsigned long xen_pfn_t;
+typedef unsigned long xen_ulong_t;
+
+/* Maximum number of virtual CPUs in legacy multi-processor guests. */
+#define XEN_LEGACY_MAX_VCPUS 32
+
+struct arch_shared_info {
+	unsigned long max_pfn;	/* max pfn that appears in table */
+	/*
+	 * Frame containing list of mfns containing list of mfns containing p2m.
+	 */
+	xen_pfn_t pfn_to_mfn_frame_list;
+	unsigned long nmi_reason;
+	uint64_t pad[32];
+} __packed;
+#else
+#error "Not implemented"
+#endif	/* __i386__ || __amd64__ */
+
 /*
  * interface/xen.h
  */
@@ -95,6 +120,300 @@ typedef uint16_t domid_t;
 
 /* DOMID_SELF is used in certain contexts to refer to oneself. */
 #define DOMID_SELF		(0x7FF0U)
+
+/*
+ * Event channel endpoints per domain:
+ *  1024 if a long is 32 bits; 4096 if a long is 64 bits.
+ */
+#define NR_EVENT_CHANNELS (sizeof(unsigned long) * sizeof(unsigned long) * 64)
+
+struct vcpu_time_info {
+	/*
+	 * Updates to the following values are preceded and followed by an
+	 * increment of 'version'. The guest can therefore detect updates by
+	 * looking for changes to 'version'. If the least-significant bit of
+	 * the version number is set then an update is in progress and the
+	 * guest must wait to read a consistent set of values.
+	 *
+	 * The correct way to interact with the version number is similar to
+	 * Linux's seqlock: see the implementations of read_seqbegin and
+	 * read_seqretry.
+	 */
+	uint32_t version;
+	uint32_t pad0;
+	uint64_t tsc_timestamp;	/* TSC at last update of time vals.  */
+	uint64_t system_time;	/* Time, in nanosecs, since boot.    */
+	/*
+	 * Current system time:
+	 *   system_time +
+	 *   ((((tsc - tsc_timestamp) << tsc_shift) * tsc_to_system_mul) >> 32)
+	 * CPU frequency (Hz):
+	 *   ((10^9 << 32) / tsc_to_system_mul) >> tsc_shift
+	 */
+	uint32_t tsc_to_system_mul;
+	int8_t tsc_shift;
+	int8_t pad1[3];
+} __packed; /* 32 bytes */
+
+struct vcpu_info {
+	/*
+	 * 'evtchn_upcall_pending' is written non-zero by Xen to indicate
+	 * a pending notification for a particular VCPU. It is then cleared
+	 * by the guest OS /before/ checking for pending work, thus avoiding
+	 * a set-and-check race. Note that the mask is only accessed by Xen
+	 * on the CPU that is currently hosting the VCPU. This means that the
+	 * pending and mask flags can be updated by the guest without special
+	 * synchronisation (i.e., no need for the x86 LOCK prefix).
+	 * This may seem suboptimal because if the pending flag is set by
+	 * a different CPU then an IPI may be scheduled even when the mask
+	 * is set. However, note:
+	 *  1. The task of 'interrupt holdoff' is covered by the per-event-
+	 *     channel mask bits. A 'noisy' event that is continually being
+	 *     triggered can be masked at source at this very precise
+	 *     granularity.
+	 *  2. The main purpose of the per-VCPU mask is therefore to restrict
+	 *     reentrant execution: whether for concurrency control, or to
+	 *     prevent unbounded stack usage. Whatever the purpose, we expect
+	 *     that the mask will be asserted only for short periods at a time,
+	 *     and so the likelihood of a 'spurious' IPI is suitably small.
+	 * The mask is read before making an event upcall to the guest: a
+	 * non-zero mask therefore guarantees that the VCPU will not receive
+	 * an upcall activation. The mask is cleared when the VCPU requests
+	 * to block: this avoids wakeup-waiting races.
+	 */
+	uint8_t evtchn_upcall_pending;
+	uint8_t pad1[3];
+	uint8_t evtchn_upcall_mask;
+	uint8_t pad2[3];
+	unsigned long evtchn_pending_sel;
+	struct arch_vcpu_info arch;
+	struct vcpu_time_info time;
+} __packed; /* 64 bytes (x86) */
+
+/*
+ * Xen/kernel shared data -- pointer provided in start_info.
+ *
+ * This structure is defined to be both smaller than a page, and the only data
+ * on the shared page, but may vary in actual size even within compatible Xen
+ * versions; guests should not rely on the size of this structure remaining
+ * constant.
+ */
+struct shared_info {
+	struct vcpu_info vcpu_info[XEN_LEGACY_MAX_VCPUS];
+
+	/*
+	 * A domain can create "event channels" on which it can send and
+	 * receive asynchronous event notifications. There are three classes
+	 * of event that are delivered by this mechanism:
+	 *  1. Bi-directional inter- and intra-domain connections.  Domains
+	 *     must arrange out-of-band to set up a connection (usually by
+	 *     allocating an unbound 'listener' port and avertising that via
+	 *     a storage service such as xenstore).
+	 *  2. Physical interrupts. A domain with suitable hardware-access
+	 *     privileges can bind an event-channel port to a physical
+	 *     interrupt source.
+	 *  3. Virtual interrupts ('events'). A domain can bind an event
+	 *     channel port to a virtual interrupt source, such as the
+	 *     virtual-timer device or the emergency console.
+	 *
+	 * Event channels are addressed by a "port index". Each channel is
+	 * associated with two bits of information:
+	 *  1. PENDING -- notifies the domain that there is a pending
+	 *     notification to be processed. This bit is cleared by the guest.
+	 *  2. MASK -- if this bit is clear then a 0->1 transition of PENDING
+	 *     will cause an asynchronous upcall to be scheduled. This bit is
+	 *     only updated by the guest. It is read-only within Xen. If a
+	 *     channel becomes pending while the channel is masked then the
+	 *     'edge' is lost (i.e., when the channel is unmasked, the guest
+	 *     must manually handle pending notifications as no upcall will be
+	 *     scheduled by Xen).
+	 *
+	 * To expedite scanning of pending notifications, any 0->1 pending
+	 * transition on an unmasked channel causes a corresponding bit in a
+	 * per-vcpu selector word to be set. Each bit in the selector covers a
+	 * 'C long' in the PENDING bitfield array.
+	 */
+	unsigned long evtchn_pending[sizeof(unsigned long) * 8];
+	unsigned long evtchn_mask[sizeof(unsigned long) * 8];
+
+	/*
+	 * Wallclock time: updated only by control software. Guests should
+	 * base their gettimeofday() syscall on this wallclock-base value.
+	 */
+	uint32_t wc_version;	/* Version counter: see vcpu_time_info_t. */
+	uint32_t wc_sec;	/* Secs  00:00:00 UTC, Jan 1, 1970.  */
+	uint32_t wc_nsec;	/* Nsecs 00:00:00 UTC, Jan 1, 1970.  */
+
+	struct arch_shared_info arch;
+} __packed;
+
+
+/*
+ * interface/hvm/hvm_op.h
+ */
+
+/* Get/set subcommands: extra argument == pointer to xen_hvm_param struct. */
+#define HVMOP_set_param		0
+#define HVMOP_get_param		1
+struct xen_hvm_param {
+	domid_t  domid;		/* IN */
+	uint32_t index;		/* IN */
+	uint64_t value;		/* IN/OUT */
+};
+
+/*
+ * Parameter space for HVMOP_{set,get}_param.
+ */
+
+/*
+ * How should CPU0 event-channel notifications be delivered?
+ * val[63:56] == 0: val[55:0] is a delivery GSI (Global System Interrupt).
+ * val[63:56] == 1: val[55:0] is a delivery PCI INTx line, as follows:
+ *                  Domain = val[47:32], Bus  = val[31:16],
+ *                  DevFn  = val[15: 8], IntX = val[ 1: 0]
+ * val[63:56] == 2: val[7:0] is a vector number, check for
+ *                  XENFEAT_hvm_callback_vector to know if this delivery
+ *                  method is available.
+ * If val == 0 then CPU0 event-channel notifications are not delivered.
+ */
+#define HVM_PARAM_CALLBACK_IRQ			0
+
+/*
+ * These are not used by Xen. They are here for convenience of HVM-guest
+ * xenbus implementations.
+ */
+#define HVM_PARAM_STORE_PFN			1
+#define HVM_PARAM_STORE_EVTCHN			2
+
+#define HVM_PARAM_PAE_ENABLED			4
+
+#define HVM_PARAM_IOREQ_PFN			5
+
+#define HVM_PARAM_BUFIOREQ_PFN			6
+#define HVM_PARAM_BUFIOREQ_EVTCHN		26
+
+/*
+ * Set mode for virtual timers (currently x86 only):
+ *  delay_for_missed_ticks (default):
+ *   Do not advance a vcpu's time beyond the correct delivery time for
+ *   interrupts that have been missed due to preemption. Deliver missed
+ *   interrupts when the vcpu is rescheduled and advance the vcpu's virtual
+ *   time stepwise for each one.
+ *  no_delay_for_missed_ticks:
+ *   As above, missed interrupts are delivered, but guest time always tracks
+ *   wallclock (i.e., real) time while doing so.
+ *  no_missed_ticks_pending:
+ *   No missed interrupts are held pending. Instead, to ensure ticks are
+ *   delivered at some non-zero rate, if we detect missed ticks then the
+ *   internal tick alarm is not disabled if the VCPU is preempted during the
+ *   next tick period.
+ *  one_missed_tick_pending:
+ *   Missed interrupts are collapsed together and delivered as one 'late tick'.
+ *   Guest time always tracks wallclock (i.e., real) time.
+ */
+#define HVM_PARAM_TIMER_MODE			10
+#define HVMPTM_delay_for_missed_ticks		 0
+#define HVMPTM_no_delay_for_missed_ticks	 1
+#define HVMPTM_no_missed_ticks_pending		 2
+#define HVMPTM_one_missed_tick_pending		 3
+
+/* Boolean: Enable virtual HPET (high-precision event timer)? (x86-only) */
+#define HVM_PARAM_HPET_ENABLED			11
+
+/* Identity-map page directory used by Intel EPT when CR0.PG=0. */
+#define HVM_PARAM_IDENT_PT			12
+
+/* Device Model domain, defaults to 0. */
+#define HVM_PARAM_DM_DOMAIN			13
+
+/* ACPI S state: currently support S0 and S3 on x86. */
+#define HVM_PARAM_ACPI_S_STATE			14
+
+/* TSS used on Intel when CR0.PE=0. */
+#define HVM_PARAM_VM86_TSS			15
+
+/* Boolean: Enable aligning all periodic vpts to reduce interrupts */
+#define HVM_PARAM_VPT_ALIGN			16
+
+/* Console debug shared memory ring and event channel */
+#define HVM_PARAM_CONSOLE_PFN			17
+#define HVM_PARAM_CONSOLE_EVTCHN		18
+
+/*
+ * Select location of ACPI PM1a and TMR control blocks. Currently two locations
+ * are supported, specified by version 0 or 1 in this parameter:
+ *   - 0: default, use the old addresses
+ *        PM1A_EVT == 0x1f40; PM1A_CNT == 0x1f44; PM_TMR == 0x1f48
+ *   - 1: use the new default qemu addresses
+ *        PM1A_EVT == 0xb000; PM1A_CNT == 0xb004; PM_TMR == 0xb008
+ * You can find these address definitions in <hvm/ioreq.h>
+ */
+#define HVM_PARAM_ACPI_IOPORTS_LOCATION		19
+
+/* Enable blocking memory events, async or sync (pause vcpu until response)
+ * onchangeonly indicates messages only on a change of value */
+#define HVM_PARAM_MEMORY_EVENT_CR0		20
+#define HVM_PARAM_MEMORY_EVENT_CR3		21
+#define HVM_PARAM_MEMORY_EVENT_CR4		22
+#define HVM_PARAM_MEMORY_EVENT_INT3		23
+#define HVM_PARAM_MEMORY_EVENT_SINGLE_STEP	25
+
+#define HVMPME_MODE_MASK			(3 << 0)
+#define HVMPME_mode_disabled			 0
+#define HVMPME_mode_async			 1
+#define HVMPME_mode_sync			 2
+#define HVMPME_onchangeonly			(1 << 2)
+
+/* Boolean: Enable nestedhvm (hvm only) */
+#define HVM_PARAM_NESTEDHVM			24
+
+/* Params for the mem event rings */
+#define HVM_PARAM_PAGING_RING_PFN		27
+#define HVM_PARAM_ACCESS_RING_PFN		28
+#define HVM_PARAM_SHARING_RING_PFN		29
+
+#define HVM_NR_PARAMS				30
+
+/** The callback method types for Hypervisor event delivery to our domain. */
+enum {
+	HVM_CB_TYPE_GSI,
+	HVM_CB_TYPE_PCI_INTX,
+	HVM_CB_TYPE_VECTOR,
+	HVM_CB_TYPE_MASK		= 0xFF,
+	HVM_CB_TYPE_SHIFT		= 56
+};
+
+/** Format for specifying a GSI type callback. */
+enum {
+	HVM_CB_GSI_GSI_MASK		= 0xFFFFFFFF,
+	HVM_CB_GSI_GSI_SHIFT		= 0
+};
+#define HVM_CALLBACK_GSI(gsi) \
+	(((uint64_t)HVM_CB_TYPE_GSI << HVM_CB_TYPE_SHIFT) | \
+	 ((gsi) & HVM_CB_GSI_GSI_MASK) << HVM_CB_GSI_GSI_SHIFT)
+
+/** Format for specifying a virtual PCI interrupt line GSI style callback. */
+enum {
+	HVM_CB_PCI_INTX_INTPIN_MASK	= 0x3,
+	HVM_CB_PCI_INTX_INTPIN_SHIFT	= 0,
+	HVM_CB_PCI_INTX_SLOT_MASK	= 0x1F,
+	HVM_CB_PCI_INTX_SLOT_SHIFT	= 11,
+};
+#define HVM_CALLBACK_PCI_INTX(slot, pin) \
+	(((uint64_t)HVM_CB_TYPE_PCI_INTX << HVM_CB_TYPE_SHIFT) | \
+	 (((slot) & HVM_CB_PCI_INTX_SLOT_MASK) << HVM_CB_PCI_INTX_SLOT_SHIFT) | \
+	 (((pin) & HVM_CB_PCI_INTX_INTPIN_MASK) << HVM_CB_PCI_INTX_INTPIN_SHIFT))
+
+/** Format for specifying a direct IDT vector injection style callback. */
+enum {
+	HVM_CB_VECTOR_VECTOR_MASK	= 0xFFFFFFFF,
+	HVM_CB_VECTOR_VECTOR_SHIFT	= 0
+};
+#define HVM_CALLBACK_VECTOR(vector) \
+	(((uint64_t)HVM_CB_TYPE_VECTOR << HVM_CB_TYPE_SHIFT) | \
+	 (((vector) & HVM_CB_GSI_GSI_MASK) << HVM_CB_GSI_GSI_SHIFT))
+
+
 
 /*
  * interface/features.h
@@ -144,6 +463,55 @@ typedef uint16_t domid_t;
 /* operation as Dom0 is supported */
 #define XENFEAT_dom0				11
 
+/*
+ * interface/memory.h
+ *
+ * Memory reservation and information.
+ */
+
+/*
+ * Increase or decrease the specified domain's memory reservation.
+ * Returns the number of extents successfully allocated or freed.
+ * arg == addr of struct xen_memory_reservation.
+ */
+#define XENMEM_increase_reservation	0
+#define XENMEM_decrease_reservation	1
+#define XENMEM_populate_physmap		6
+
+#define XENMAPSPACE_shared_info		0	/* shared info page */
+#define XENMAPSPACE_grant_table		1	/* grant table page */
+#define XENMAPSPACE_gmfn		2	/* GMFN */
+#define XENMAPSPACE_gmfn_range		3	/* GMFN range */
+#define XENMAPSPACE_gmfn_foreign	4	/* GMFN from another domain */
+
+/*
+ * Sets the GPFN at which a particular page appears in the specified guest's
+ * pseudophysical address space.
+ * arg == addr of xen_add_to_physmap_t.
+ */
+#define XENMEM_add_to_physmap		7
+struct xen_add_to_physmap {
+	/* Which domain to change the mapping for. */
+	domid_t domid;
+
+	/* Number of pages to go through for gmfn_range */
+	uint16_t size;
+
+	/* Source mapping space. */
+#define XENMAPSPACE_shared_info	0 /* shared info page */
+#define XENMAPSPACE_grant_table	1 /* grant table page */
+#define XENMAPSPACE_gmfn	2 /* GMFN */
+#define XENMAPSPACE_gmfn_range	3 /* GMFN range */
+	unsigned int space;
+
+#define XENMAPIDX_grant_table_status 0x80000000
+
+	/* Index into source mapping space. */
+	xen_ulong_t idx;
+
+	/* GPFN where the source mapping page should appear. */
+	xen_pfn_t gpfn;
+};
 
 /*
  * interface/version.h
