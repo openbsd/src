@@ -1,4 +1,4 @@
-/* $OpenBSD: parse_netgroup.c,v 1.12 2009/10/27 23:59:58 deraadt Exp $ */
+/* $OpenBSD: parse_netgroup.c,v 1.13 2015/12/08 07:16:33 mmcc Exp $ */
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -143,20 +143,15 @@ __endnetgrent(void)
 		free(olp);
 	}
 	linehead = NULL;
-	if (grouphead.grname) {
-		free(grouphead.grname);
-		grouphead.grname = NULL;
-	}
+	free(grouphead.grname);
+	grouphead.grname = NULL;
 	gp = grouphead.gr;
 	while (gp) {
 		ogp = gp;
 		gp = gp->ng_next;
-		if (ogp->ng_str[NG_HOST])
-			free(ogp->ng_str[NG_HOST]);
-		if (ogp->ng_str[NG_USER])
-			free(ogp->ng_str[NG_USER]);
-		if (ogp->ng_str[NG_DOM])
-			free(ogp->ng_str[NG_DOM]);
+		free(ogp->ng_str[NG_HOST]);
+		free(ogp->ng_str[NG_USER]);
+		free(ogp->ng_str[NG_DOM]);
 		free(ogp);
 	}
 	grouphead.gr = NULL;

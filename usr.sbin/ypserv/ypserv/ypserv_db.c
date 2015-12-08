@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypserv_db.c,v 1.29 2015/01/16 06:40:23 deraadt Exp $ */
+/*	$OpenBSD: ypserv_db.c,v 1.30 2015/12/08 07:16:33 mmcc Exp $ */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -301,8 +301,7 @@ ypdb_open_db(domainname domain, mapname map, ypstat *status,
 		if (d == NULL || d->domain == NULL) {
 			yplog("  ypdb_open_db: MALLOC failed");
 			ypdb_close(db);
-			if (d)
-				free(d);
+			free(d);
 			return(NULL);
 		}
 		LIST_INIT(&d->dmaps);
@@ -320,8 +319,7 @@ ypdb_open_db(domainname domain, mapname map, ypstat *status,
 	if (m)
 		m->map = strdup(map);
 	if (m == NULL || m->map == NULL) {
-		if (m)
-			free(m);
+		free(m);
 		yplog("  ypdb_open_db: MALLOC failed");
 		ypdb_close(db);
 		return(NULL);
