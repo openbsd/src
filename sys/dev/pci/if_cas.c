@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cas.c,v 1.48 2015/12/06 11:32:54 jsg Exp $	*/
+/*	$OpenBSD: if_cas.c,v 1.49 2015/12/08 13:34:22 tedu Exp $	*/
 
 /*
  *
@@ -489,7 +489,7 @@ cas_config(struct cas_softc *sc)
 	strlcpy(ifp->if_xname, sc->sc_dev.dv_xname, sizeof ifp->if_xname);
 	ifp->if_softc = sc;
 	ifp->if_flags =
-	    IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_MULTICAST;
+	    IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_start = cas_start;
 	ifp->if_ioctl = cas_ioctl;
 	ifp->if_watchdog = cas_watchdog;

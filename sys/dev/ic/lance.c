@@ -1,4 +1,4 @@
-/*	$OpenBSD: lance.c,v 1.10 2015/11/25 03:09:58 dlg Exp $	*/
+/*	$OpenBSD: lance.c,v 1.11 2015/12/08 13:34:22 tedu Exp $	*/
 /*	$NetBSD: lance.c,v 1.46 2012/02/02 19:43:03 tls Exp $	*/
 
 /*-
@@ -175,7 +175,7 @@ lance_config(struct lance_softc *sc)
 	ifp->if_ioctl = lance_ioctl;
 	ifp->if_watchdog = lance_watchdog;
 	ifp->if_flags =
-	    IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_MULTICAST;
+	    IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 #ifdef LANCE_REVC_BUG
 	ifp->if_flags &= ~IFF_MULTICAST;
 #endif

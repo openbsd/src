@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82596.c,v 1.49 2015/11/25 11:12:53 mpi Exp $	*/
+/*	$OpenBSD: i82596.c,v 1.50 2015/12/08 13:34:22 tedu Exp $	*/
 /*	$NetBSD: i82586.c,v 1.18 1998/08/15 04:42:42 mycroft Exp $	*/
 
 /*-
@@ -290,7 +290,7 @@ i82596_attach(struct ie_softc *sc, const char *name, u_int8_t *etheraddr,
 #ifdef I82596_DEBUG
 		IFF_DEBUG |
 #endif
-		IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_MULTICAST;
+		IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	IFQ_SET_READY(&ifp->if_snd);
 
         /* Initialize media goo. */

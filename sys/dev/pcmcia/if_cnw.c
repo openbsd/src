@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cnw.c,v 1.34 2015/11/24 17:11:40 mpi Exp $	*/
+/*	$OpenBSD: if_cnw.c,v 1.35 2015/12/08 13:34:22 tedu Exp $	*/
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -418,7 +418,7 @@ cnw_attach(parent, self, aux)
 	ifp->if_start = cnw_start;
 	ifp->if_ioctl = cnw_ioctl;
 	ifp->if_watchdog = cnw_watchdog;
-	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS;
+	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX;
 	IFQ_SET_READY(&ifp->if_snd);
 
 	/* Attach the interface */

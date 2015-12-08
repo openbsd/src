@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ef_isapnp.c,v 1.36 2015/11/25 11:20:38 mpi Exp $	*/
+/*	$OpenBSD: if_ef_isapnp.c,v 1.37 2015/12/08 13:34:22 tedu Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -199,7 +199,7 @@ ef_isapnp_attach(parent, self, aux)
 	ifp->if_ioctl = efioctl;
 	ifp->if_watchdog = efwatchdog;
 	ifp->if_flags =
-	    IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_MULTICAST;
+	    IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	IFQ_SET_READY(&ifp->if_snd);
 
 	sc->sc_mii.mii_ifp = ifp;

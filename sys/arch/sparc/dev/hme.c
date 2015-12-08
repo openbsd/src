@@ -1,4 +1,4 @@
-/*	$OpenBSD: hme.c,v 1.77 2015/11/25 11:20:38 mpi Exp $	*/
+/*	$OpenBSD: hme.c,v 1.78 2015/12/08 13:34:22 tedu Exp $	*/
 
 /*
  * Copyright (c) 1998 Jason L. Wright (jason@thought.net)
@@ -235,7 +235,7 @@ hmeattach(parent, self, aux)
 	ifp->if_ioctl = hmeioctl;
 	ifp->if_watchdog = hmewatchdog;
 	ifp->if_flags =
-		IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_MULTICAST;
+		IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_capabilities = IFCAP_VLAN_MTU;
 	IFQ_SET_MAXLEN(&ifp->if_snd, HME_TX_RING_SIZE);
 	IFQ_SET_READY(&ifp->if_snd);

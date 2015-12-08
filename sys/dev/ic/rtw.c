@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtw.c,v 1.94 2015/11/25 03:09:58 dlg Exp $	*/
+/*	$OpenBSD: rtw.c,v 1.95 2015/12/08 13:34:22 tedu Exp $	*/
 /*	$NetBSD: rtw.c,v 1.29 2004/12/27 19:49:16 dyoung Exp $ */
 
 /*-
@@ -3996,8 +3996,7 @@ rtw_attach(struct rtw_softc *sc)
 	ifp = &sc->sc_if;
 	(void)memcpy(ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
 	ifp->if_softc = sc;
-	ifp->if_flags = IFF_SIMPLEX | IFF_BROADCAST | IFF_MULTICAST |
-	    IFF_NOTRAILERS;
+	ifp->if_flags = IFF_SIMPLEX | IFF_BROADCAST | IFF_MULTICAST;
 	ifp->if_ioctl = rtw_ioctl;
 	ifp->if_start = rtw_start;
 	ifp->if_watchdog = rtw_watchdog;

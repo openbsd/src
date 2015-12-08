@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xe.c,v 1.56 2015/11/25 03:09:59 dlg Exp $	*/
+/*	$OpenBSD: if_xe.c,v 1.57 2015/12/08 13:34:22 tedu Exp $	*/
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist, Brandon Creighton, Job de Haas
@@ -358,7 +358,7 @@ xe_pcmcia_attach(parent, self, aux)
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 	ifp->if_softc = sc;
 	ifp->if_flags =
-	    IFF_BROADCAST | IFF_NOTRAILERS | IFF_SIMPLEX | IFF_MULTICAST;
+	    IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_ioctl = xe_ioctl;
 	ifp->if_start = xe_start;
 	ifp->if_watchdog = xe_watchdog;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sq.c,v 1.23 2015/11/25 03:09:58 dlg Exp $	*/
+/*	$OpenBSD: if_sq.c,v 1.24 2015/12/08 13:34:22 tedu Exp $	*/
 /*	$NetBSD: if_sq.c,v 1.42 2011/07/01 18:53:47 dyoung Exp $	*/
 
 /*
@@ -359,7 +359,7 @@ sq_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_start = sq_start;
 	ifp->if_ioctl = sq_ioctl;
 	ifp->if_watchdog = sq_watchdog;
-	ifp->if_flags = IFF_BROADCAST | IFF_NOTRAILERS | IFF_MULTICAST;
+	ifp->if_flags = IFF_BROADCAST | IFF_MULTICAST;
 	IFQ_SET_READY(&ifp->if_snd);
 
 	if_attach(ifp);

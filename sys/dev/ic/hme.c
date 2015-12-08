@@ -1,4 +1,4 @@
-/*	$OpenBSD: hme.c,v 1.78 2015/11/25 03:09:58 dlg Exp $	*/
+/*	$OpenBSD: hme.c,v 1.79 2015/12/08 13:34:22 tedu Exp $	*/
 /*	$NetBSD: hme.c,v 1.21 2001/07/07 15:59:37 thorpej Exp $	*/
 
 /*-
@@ -215,7 +215,7 @@ hme_config(struct hme_softc *sc)
 	ifp->if_ioctl = hme_ioctl;
 	ifp->if_watchdog = hme_watchdog;
 	ifp->if_flags =
-	    IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_MULTICAST;
+	    IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	IFQ_SET_READY(&ifp->if_snd);
 	ifp->if_capabilities = IFCAP_VLAN_MTU;
 

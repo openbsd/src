@@ -1,4 +1,4 @@
-/*    $OpenBSD: if_el.c,v 1.31 2015/11/25 03:09:59 dlg Exp $       */
+/*    $OpenBSD: if_el.c,v 1.32 2015/12/08 13:34:22 tedu Exp $       */
 /*	$NetBSD: if_el.c,v 1.39 1996/05/12 23:52:32 mycroft Exp $	*/
 
 /*
@@ -178,7 +178,7 @@ elattach(parent, self, aux)
 	ifp->if_start = elstart;
 	ifp->if_ioctl = elioctl;
 	ifp->if_watchdog = elwatchdog;
-	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS;
+	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX;
 	IFQ_SET_READY(&ifp->if_snd);
 
 	/* Now we can attach the interface. */

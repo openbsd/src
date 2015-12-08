@@ -1,4 +1,4 @@
-/*	$OpenBSD: be.c,v 1.39 2015/11/25 11:20:38 mpi Exp $	*/
+/*	$OpenBSD: be.c,v 1.40 2015/12/08 13:34:22 tedu Exp $	*/
 /*	$NetBSD: be.c,v 1.26 2001/03/20 15:39:20 pk Exp $	*/
 
 /*-
@@ -430,7 +430,7 @@ beattach(struct device *parent, struct device *self, void *aux)
 	ifp->if_ioctl = beioctl;
 	ifp->if_watchdog = bewatchdog;
 	ifp->if_flags =
-	    IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_MULTICAST;
+	    IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	IFQ_SET_READY(&ifp->if_snd);
 
 	/* Attach the interface. */

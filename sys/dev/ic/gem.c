@@ -1,4 +1,4 @@
-/*	$OpenBSD: gem.c,v 1.118 2015/11/28 09:42:10 jmatthew Exp $	*/
+/*	$OpenBSD: gem.c,v 1.119 2015/12/08 13:34:22 tedu Exp $	*/
 /*	$NetBSD: gem.c,v 1.1 2001/09/16 00:11:43 eeh Exp $ */
 
 /*
@@ -218,7 +218,7 @@ gem_config(struct gem_softc *sc)
 	strlcpy(ifp->if_xname, sc->sc_dev.dv_xname, sizeof ifp->if_xname);
 	ifp->if_softc = sc;
 	ifp->if_flags =
-	    IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_MULTICAST;
+	    IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_start = gem_start;
 	ifp->if_ioctl = gem_ioctl;
 	ifp->if_watchdog = gem_watchdog;

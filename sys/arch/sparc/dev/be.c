@@ -1,4 +1,4 @@
-/*	$OpenBSD: be.c,v 1.58 2015/11/25 11:20:38 mpi Exp $	*/
+/*	$OpenBSD: be.c,v 1.59 2015/12/08 13:34:22 tedu Exp $	*/
 
 /*
  * Copyright (c) 1998 Theo de Raadt and Jason L. Wright.
@@ -209,7 +209,7 @@ beattach(parent, self, aux)
 	ifp->if_start = bestart;
 	ifp->if_ioctl = beioctl;
 	ifp->if_watchdog = bewatchdog;
-	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS |
+	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX |
 	    IFF_MULTICAST;
 
 	IFQ_SET_MAXLEN(&ifp->if_snd, BE_TX_RING_SIZE);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_eg.c,v 1.44 2015/11/25 11:20:38 mpi Exp $	*/
+/*	$OpenBSD: if_eg.c,v 1.45 2015/12/08 13:34:22 tedu Exp $	*/
 /*	$NetBSD: if_eg.c,v 1.26 1996/05/12 23:52:27 mycroft Exp $	*/
 
 /*
@@ -419,7 +419,7 @@ egattach(struct device *parent, struct device *self, void *aux)
 	ifp->if_start = egstart;
 	ifp->if_ioctl = egioctl;
 	ifp->if_watchdog = egwatchdog;
-	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS;
+	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX;
 	IFQ_SET_READY(&ifp->if_snd);
 	
 	/* Now we can attach the interface. */
