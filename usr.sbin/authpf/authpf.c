@@ -1,4 +1,4 @@
-/*	$OpenBSD: authpf.c,v 1.123 2015/01/21 21:50:32 deraadt Exp $	*/
+/*	$OpenBSD: authpf.c,v 1.124 2015/12/08 07:11:53 mmcc Exp $	*/
 
 /*
  * Copyright (C) 1998 - 2007 Bob Beck (beck@openbsd.org).
@@ -546,10 +546,8 @@ allowed_luser(struct passwd *pw)
 				    strcmp("*", buf) == 0;
 			}
 
-			if (lbuf != NULL) {
-				free(lbuf);
-				lbuf = NULL;
-			}
+			free(lbuf);
+			lbuf = NULL;
 
 			if (matched) {
 				fclose(f);
