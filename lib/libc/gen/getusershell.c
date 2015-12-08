@@ -1,4 +1,4 @@
-/*	$OpenBSD: getusershell.c,v 1.16 2015/09/14 16:09:13 tedu Exp $ */
+/*	$OpenBSD: getusershell.c,v 1.17 2015/12/08 16:28:26 tedu Exp $ */
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -28,14 +28,13 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/stat.h>
-
 #include <ctype.h>
 #include <limits.h>
 #include <paths.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
 /*
@@ -44,7 +43,7 @@
  */
 
 static char *okshells[] = { _PATH_BSHELL, _PATH_CSHELL, _PATH_KSHELL, NULL };
-static char **curshell, **shells, *strings;
+static char **curshell, **shells;
 static char **initshells(void);
 
 /*
@@ -66,11 +65,14 @@ getusershell(void)
 void
 endusershell(void)
 {
-	
+	char **s;
+
+	if ((s = shells))
+		while (*s)
+			free(*s++);
 	free(shells);
 	shells = NULL;
-	free(strings);
-	strings = NULL;
+
 	curshell = NULL;
 }
 
@@ -84,48 +86,50 @@ setusershell(void)
 static char **
 initshells(void)
 {
-	char **sp, *cp;
+	size_t nshells, nalloc, linesize;
+	char *line;
 	FILE *fp;
-	struct stat statb;
 
 	free(shells);
 	shells = NULL;
-	free(strings);
-	strings = NULL;
+
 	if ((fp = fopen(_PATH_SHELLS, "re")) == NULL)
 		return (okshells);
-	if (fstat(fileno(fp), &statb) == -1) {
-		(void)fclose(fp);
-		return (okshells);
-	}
-	if (statb.st_size > SIZE_MAX) {
-		(void)fclose(fp);
-		return (okshells);
-	}
-	if ((strings = malloc((size_t)statb.st_size)) == NULL) {
-		(void)fclose(fp);
-		return (okshells);
-	}
-	shells = calloc((size_t)(statb.st_size / 3 + 2), sizeof (char *));
-	if (shells == NULL) {
-		(void)fclose(fp);
-		free(strings);
-		strings = NULL;
-		return (okshells);
-	}
-	sp = shells;
-	cp = strings;
-	while (fgets(cp, PATH_MAX + 1, fp) != NULL) {
-		while (*cp != '#' && *cp != '/' && *cp != '\0')
-			cp++;
-		if (*cp == '#' || *cp == '\0')
+
+	line = NULL;
+	nalloc = 10; // just an initial guess
+	nshells = 0;
+	shells = reallocarray(NULL, nalloc, sizeof (char *));
+	if (shells == NULL)
+		goto fail;
+	linesize = 0;
+	while (getline(&line, &linesize, fp) != -1) {
+		if (*line != '/')
 			continue;
-		*sp++ = cp;
-		while (!isspace((unsigned char)*cp) && *cp != '#' && *cp != '\0')
-			cp++;
-		*cp++ = '\0';
+		line[strcspn(line, "#\n")] = '\0';
+		if (!(shells[nshells] = strdup(line)))
+			goto fail;
+
+		if (nshells + 1 == nalloc) {
+			char **new = reallocarray(shells, nalloc * 2, sizeof(char *));
+			if (!new)
+				goto fail;
+			shells = new;
+			nalloc *= 2;
+		}
+		nshells++;
 	}
-	*sp = NULL;
+	free(line);
+	shells[nshells] = NULL;
 	(void)fclose(fp);
 	return (shells);
+
+fail:
+	free(line);
+	while (nshells)
+		free(shells[nshells--]);
+	free(shells);
+	shells = NULL;
+	(void)fclose(fp);
+	return (okshells);
 }
