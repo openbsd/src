@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.145 2015/12/07 02:38:54 tb Exp $ */
+/* $OpenBSD: netcat.c,v 1.146 2015/12/08 15:33:33 beck Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  * Copyright (c) 2015 Bob Beck.  All rights reserved.
@@ -104,6 +104,12 @@ int	tls_cachanged;				/* Using non-default CA file */
 int     TLSopt;					/* TLS options */
 char	*tls_expectname;			/* required name in peer cert */
 char	*tls_expecthash;			/* required hash of peer cert */
+uint8_t *cacert;
+size_t  cacertlen;
+uint8_t *privkey;
+size_t  privkeylen;
+uint8_t *pubcert;
+size_t  pubcertlen;
 
 int timeout = -1;
 int family = AF_UNSPEC;
@@ -421,16 +427,26 @@ main(int argc, char *argv[])
 	}
 
 	if (usetls) {
+		if (Rflag && (cacert=tls_load_file(Rflag, &cacertlen, NULL)) == NULL)
+			errx(1, "unable to load root CA file %s", Rflag);
+		if (Cflag && (pubcert=tls_load_file(Rflag, &pubcertlen, NULL)) == NULL)
+			errx(1, "unable to load TLS certificate file %s", Cflag);
+		if (Kflag && (privkey=tls_load_file(Rflag, &privkeylen, NULL)) == NULL)
+			errx(1, "unable to load TLS key file %s", Kflag);
+
+		if (pledge("stdio inet dns", NULL) == -1)
+			err(1, "pledge");
+
 		if (tls_init() == -1)
 			errx(1, "unable to initialize TLS");
 		if ((tls_cfg = tls_config_new()) == NULL)
 			errx(1, "unable to allocate TLS config");
-		if (Cflag && (tls_config_set_cert_file(tls_cfg, Cflag) == -1))
-			errx(1, "unable to set TLS certificate file %s", Cflag);
-		if (Kflag && (tls_config_set_key_file(tls_cfg, Kflag) == -1))
-			errx(1, "unable to set TLS key file %s", Kflag);
-		if (Rflag && (tls_config_set_ca_file(tls_cfg, Rflag) == -1))
+		if (Rflag && tls_config_set_ca_mem(tls_cfg, cacert, cacertlen) == -1)
 			errx(1, "unable to set root CA file %s", Rflag);
+		if (Cflag && tls_config_set_cert_mem(tls_cfg, cacert, cacertlen) == -1)
+			errx(1, "unable to set TLS certificate file %s", Cflag);
+		if (Kflag && tls_config_set_key_mem(tls_cfg, privkey, privkeylen) == -1)
+			errx(1, "unable to set TLS key file %s", Kflag);
 		if (TLSopt & TLS_LEGACY) {
 			tls_config_set_protocols(tls_cfg, TLS_PROTOCOLS_ALL);
 			tls_config_set_ciphers(tls_cfg, "legacy");
