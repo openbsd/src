@@ -28,9 +28,14 @@
 #include <uvm/uvm_extern.h>
 
 #include <dev/pv/pvvar.h>
+#include <dev/pv/xenreg.h>
 #include <dev/pv/xenvar.h>
 
 struct xen_softc *xen_sc;
+
+int	xen_init_hypercall(struct xen_softc *);
+int	xen_getversion(struct xen_softc *);
+int	xen_getfeatures(struct xen_softc *);
 
 int 	xen_match(struct device *, void *, void *);
 void	xen_attach(struct device *, struct device *, void *);
@@ -68,8 +73,16 @@ xen_attach(struct device *parent, struct device *self, void *aux)
 
 	printf("\n");
 
+	if (xen_init_hypercall(sc))
+		return;
+
 	/* Wire it up to the global */
 	xen_sc = sc;
+
+	if (xen_getversion(sc))
+		return;
+	if (xen_getfeatures(sc))
+		return;
 }
 
 void
@@ -88,4 +101,219 @@ xen_activate(struct device *self, int act)
 		break;
 	}
 	return (rv);
+}
+
+int
+xen_init_hypercall(struct xen_softc *sc)
+{
+	extern void *xen_hypercall_page;
+	uint32_t regs[4];
+	paddr_t pa;
+
+	/* Get hypercall page configuration MSR */
+	CPUID(sc->sc_base + CPUID_OFFSET_XEN_HYPERCALL,
+	    regs[0], regs[1], regs[2], regs[3]);
+
+	/* We don't support more than one hypercall page */
+	if (regs[0] != 1) {
+		printf("%s: requested %d hypercall pages\n",
+		    sc->sc_dev.dv_xname, regs[0]);
+		return (-1);
+	}
+
+	sc->sc_hc = &xen_hypercall_page;
+
+	if (!pmap_extract(pmap_kernel(), (vaddr_t)sc->sc_hc, &pa)) {
+		printf("%s: hypercall page PA extraction failed\n",
+		    sc->sc_dev.dv_xname);
+		return (-1);
+	}
+	wrmsr(regs[1], pa);
+
+	DPRINTF("%s: hypercall page at va %p pa %#lx\n", sc->sc_dev.dv_xname,
+	    sc->sc_hc, pa);
+
+	return (0);
+}
+
+int
+xen_hypercall(struct xen_softc *sc, int op, int argc, ...)
+{
+	va_list ap;
+	ulong argv[5];
+	int i;
+
+	if (argc < 0 || argc > 5)
+		return (-1);
+	va_start(ap, argc);
+	for (i = 0; i < argc; i++)
+		argv[i] = (ulong)va_arg(ap, ulong);
+	return (xen_hypercallv(sc, op, argc, argv));
+}
+
+int
+xen_hypercallv(struct xen_softc *sc, int op, int argc, ulong *argv)
+{
+	ulong hcall;
+	int rv = 0;
+
+	hcall = (ulong)sc->sc_hc + op * 32;
+
+#if defined(XEN_DEBUG) && disabled
+	{
+		int i;
+
+		printf("hypercall %d", op);
+		if (argc > 0) {
+			printf(", args {");
+			for (i = 0; i < argc; i++)
+				printf(" %#lx", argv[i]);
+			printf(" }\n");
+		} else
+			printf("\n");
+	}
+#endif
+
+	switch (argc) {
+	case 0: {
+		HYPERCALL_RES1;
+		__asm__ volatile (			\
+			  HYPERCALL_LABEL		\
+			: HYPERCALL_OUT1		\
+			: HYPERCALL_PTR(hcall)		\
+			: HYPERCALL_CLOBBER		\
+		);
+		HYPERCALL_RET(rv);
+		break;
+	}
+	case 1: {
+		HYPERCALL_RES1; HYPERCALL_RES2;
+		HYPERCALL_ARG1(argv[0]);
+		__asm__ volatile (			\
+			  HYPERCALL_LABEL		\
+			: HYPERCALL_OUT1 HYPERCALL_OUT2	\
+			: HYPERCALL_IN1			\
+			, HYPERCALL_PTR(hcall)		\
+			: HYPERCALL_CLOBBER		\
+		);
+		HYPERCALL_RET(rv);
+		break;
+	}
+	case 2: {
+		HYPERCALL_RES1; HYPERCALL_RES2; HYPERCALL_RES3;
+		HYPERCALL_ARG1(argv[0]); HYPERCALL_ARG2(argv[1]);
+		__asm__ volatile (			\
+			  HYPERCALL_LABEL		\
+			: HYPERCALL_OUT1 HYPERCALL_OUT2	\
+			  HYPERCALL_OUT3		\
+			: HYPERCALL_IN1	HYPERCALL_IN2	\
+			, HYPERCALL_PTR(hcall)		\
+			: HYPERCALL_CLOBBER		\
+		);
+		HYPERCALL_RET(rv);
+		break;
+	}
+	case 3: {
+		HYPERCALL_RES1; HYPERCALL_RES2; HYPERCALL_RES3;
+		HYPERCALL_RES4;
+		HYPERCALL_ARG1(argv[0]); HYPERCALL_ARG2(argv[1]);
+		HYPERCALL_ARG3(argv[2]);
+		__asm__ volatile (			\
+			  HYPERCALL_LABEL		\
+			: HYPERCALL_OUT1 HYPERCALL_OUT2	\
+			  HYPERCALL_OUT3 HYPERCALL_OUT4	\
+			: HYPERCALL_IN1	HYPERCALL_IN2	\
+			  HYPERCALL_IN3			\
+			, HYPERCALL_PTR(hcall)		\
+			: HYPERCALL_CLOBBER		\
+		);
+		HYPERCALL_RET(rv);
+		break;
+	}
+	case 4: {
+		HYPERCALL_RES1; HYPERCALL_RES2; HYPERCALL_RES3;
+		HYPERCALL_RES4; HYPERCALL_RES5;
+		HYPERCALL_ARG1(argv[0]); HYPERCALL_ARG2(argv[1]);
+		HYPERCALL_ARG3(argv[2]); HYPERCALL_ARG4(argv[3]);
+		__asm__ volatile (			\
+			  HYPERCALL_LABEL		\
+			: HYPERCALL_OUT1 HYPERCALL_OUT2	\
+			  HYPERCALL_OUT3 HYPERCALL_OUT4	\
+			  HYPERCALL_OUT5		\
+			: HYPERCALL_IN1	HYPERCALL_IN2	\
+			  HYPERCALL_IN3	HYPERCALL_IN4	\
+			, HYPERCALL_PTR(hcall)		\
+			: HYPERCALL_CLOBBER		\
+		);
+		HYPERCALL_RET(rv);
+		break;
+	}
+	case 5: {
+		HYPERCALL_RES1; HYPERCALL_RES2; HYPERCALL_RES3;
+		HYPERCALL_RES4; HYPERCALL_RES5; HYPERCALL_RES6;
+		HYPERCALL_ARG1(argv[0]); HYPERCALL_ARG2(argv[1]);
+		HYPERCALL_ARG3(argv[2]); HYPERCALL_ARG4(argv[3]);
+		HYPERCALL_ARG5(argv[4]);
+		__asm__ volatile (			\
+			  HYPERCALL_LABEL		\
+			: HYPERCALL_OUT1 HYPERCALL_OUT2	\
+			  HYPERCALL_OUT3 HYPERCALL_OUT4	\
+			  HYPERCALL_OUT5 HYPERCALL_OUT6	\
+			: HYPERCALL_IN1	HYPERCALL_IN2	\
+			  HYPERCALL_IN3	HYPERCALL_IN4	\
+			  HYPERCALL_IN5			\
+			, HYPERCALL_PTR(hcall)		\
+			: HYPERCALL_CLOBBER		\
+		);
+		HYPERCALL_RET(rv);
+		break;
+	}
+	default:
+		DPRINTF("%s: wrong number of arguments: %d\n", __func__, argc);
+		rv = -1;
+		break;
+	}
+	return (rv);
+}
+
+int
+xen_getversion(struct xen_softc *sc)
+{
+	char buf[16];
+	int version;
+	ulong argv[2] = { XENVER_extraversion, (ulong)&buf[0] };
+	int argc = 2;
+
+	memset(buf, 0, sizeof(buf));
+	if ((version = xen_hypercall(sc, xen_version, 1, XENVER_version)) < 0) {
+		printf("%s: failed to fetch version\n", sc->sc_dev.dv_xname);
+		return (-1);
+	}
+	if (xen_hypercallv(sc, xen_version, argc, argv) < 0) {
+		printf("%s: failed to fetch extended version\n",
+		    sc->sc_dev.dv_xname);
+		return (-1);
+	}
+	printf("%s: version %d.%d%s\n", sc->sc_dev.dv_xname,
+	    version >> 16, version & 0xffff, buf);
+	return (0);
+}
+
+int
+xen_getfeatures(struct xen_softc *sc)
+{
+	struct xen_feature_info xfi;
+	ulong argv[2] = { XENVER_get_features, (ulong)&xfi };
+	int argc = 2;
+
+	memset(&xfi, 0, sizeof(xfi));
+	if (xen_hypercallv(sc, xen_version, argc, argv) < 0) {
+		printf("%s: failed to fetch features\n", sc->sc_dev.dv_xname);
+		return (-1);
+	}
+	sc->sc_features = xfi.submap;
+	printf("%s: features %b\n", sc->sc_dev.dv_xname, sc->sc_features,
+	    "\20\014DOM0\013PIRQ\012PVCLOCK\011CBVEC\010GNTFLAGS\007HMA"
+	    "\006PTUPD\005PAE4G\004SUPERVISOR\003AUTOPMAP\002WDT\001WPT");
+	return (0);
 }
