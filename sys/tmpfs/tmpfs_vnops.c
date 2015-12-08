@@ -1,4 +1,4 @@
-/*	$OpenBSD: tmpfs_vnops.c,v 1.22 2015/04/17 04:43:21 guenther Exp $	*/
+/*	$OpenBSD: tmpfs_vnops.c,v 1.23 2015/12/08 15:26:25 tedu Exp $	*/
 /*	$NetBSD: tmpfs_vnops.c,v 1.100 2012/11/05 17:27:39 dholland Exp $	*/
 
 /*
@@ -1335,9 +1335,9 @@ tmpfs_rename(void *v)
 	 */
 	if ((fcnp->cn_namelen == 1 && fcnp->cn_nameptr[0] == '.') ||
 	    (fcnp->cn_namelen == 2 && fcnp->cn_nameptr[0] == '.' &&
-	     fcnp->cn_nameptr[1] == '.')) {
-	     	tmpfs_rename_abort(v);
-	     	return EINVAL;
+	    fcnp->cn_nameptr[1] == '.')) {
+		tmpfs_rename_abort(v);
+		return EINVAL;
 	}
 
 	/*
@@ -2636,13 +2636,13 @@ filt_tmpfsread(struct knote *kn, long hint)
 		return (1);
 	}
 
-        kn->kn_data = node->tn_size - kn->kn_fp->f_offset;
+	kn->kn_data = node->tn_size - kn->kn_fp->f_offset;
 	if (kn->kn_data == 0 && kn->kn_sfflags & NOTE_EOF) {
 		kn->kn_fflags |= NOTE_EOF;
 		return (1);
 	}
 
-        return (kn->kn_data != 0);
+	return (kn->kn_data != 0);
 }
 
 int
@@ -2657,8 +2657,8 @@ filt_tmpfswrite(struct knote *kn, long hint)
 		return (1);
 	}
 
-        kn->kn_data = 0;
-        return (1);
+	kn->kn_data = 0;
+	return (1);
 }
 
 int
