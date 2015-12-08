@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.319 2015/09/11 13:35:15 claudio Exp $
+#	$OpenBSD: files.pci,v 1.320 2015/12/08 22:04:07 mikeb Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -801,6 +801,11 @@ file	dev/pci/glxpcib.c		glxpcib
 # Realtek RTS5209 Card Reader
 attach	rtsx at pci with rtsx_pci
 file	dev/pci/rtsx_pci.c		rtsx
+
+# XenSource Platform Device
+device	xspd
+attach	xspd at pci
+file	dev/pci/xspd.c			xspd
 
 # VirtIO
 device	virtio {}
