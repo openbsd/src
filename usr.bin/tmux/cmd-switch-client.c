@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-switch-client.c,v 1.33 2015/10/28 09:51:55 nicm Exp $ */
+/* $OpenBSD: cmd-switch-client.c,v 1.34 2015/12/08 00:51:17 mmcc Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -52,12 +52,8 @@ cmd_switch_client_exec(struct cmd *self, struct cmd_q *cmdq)
 	if ((c = cmd_find_client(cmdq, args_get(args, 'c'), 0)) == NULL)
 		return (CMD_RETURN_ERROR);
 
-	if (args_has(args, 'r')) {
-		if (c->flags & CLIENT_READONLY)
-			c->flags &= ~CLIENT_READONLY;
-		else
-			c->flags |= CLIENT_READONLY;
-	}
+	if (args_has(args, 'r'))
+		c->flags ^= CLIENT_READONLY;
 
 	tablename = args_get(args, 'T');
 	if (tablename != NULL) {
