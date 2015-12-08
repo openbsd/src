@@ -1,4 +1,4 @@
-/* $OpenBSD: rebound.c,v 1.55 2015/12/05 11:51:23 tedu Exp $ */
+/* $OpenBSD: rebound.c,v 1.56 2015/12/08 18:03:49 tedu Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -209,12 +209,13 @@ reqcmp(struct request *r1, struct request *r2)
 RB_GENERATE_STATIC(reqtree, request, reqnode, reqcmp)
 
 static void
-fakereply(int ud, uint16_t id, struct sockaddr *fromaddr, socklen_t fromlen)
+servfail(int ud, uint16_t id, struct sockaddr *fromaddr, socklen_t fromlen)
 {
 	struct dnspacket pkt;
 
 	memset(&pkt, 0, sizeof(pkt));
 	pkt.id = id;
+	pkt.flags = htons(1 << 15 | 0x2);
 	sendto(ud, &pkt, sizeof(pkt), 0, fromaddr, fromlen);
 }
 
@@ -284,7 +285,7 @@ newrequest(int ud, struct sockaddr *remoteaddr)
 	if (connect(req->s, remoteaddr, remoteaddr->sa_len) == -1) {
 		logmsg(LOG_NOTICE, "failed to connect (%d)", errno);
 		if (errno == EADDRNOTAVAIL)
-			fakereply(ud, req->clientid, &from, fromlen);
+			servfail(ud, req->clientid, &from, fromlen);
 		goto fail;
 	}
 	if (send(req->s, buf, r, 0) != r) {
