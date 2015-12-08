@@ -1,4 +1,4 @@
-/*	$OpenBSD: task.h,v 1.8 2015/02/09 03:15:41 dlg Exp $ */
+/*	$OpenBSD: task.h,v 1.9 2015/12/08 11:40:37 dlg Exp $ */
 
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
@@ -29,6 +29,8 @@ struct task {
 	void		*t_arg;
 	unsigned int	t_flags;
 };
+
+TAILQ_HEAD(task_list, task);
 
 #define TASKQ_MPSAFE		(1 << 0)
 #define TASKQ_CANTSLEEP		(1 << 1)
