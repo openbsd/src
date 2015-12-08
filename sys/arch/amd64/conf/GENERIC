@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.403 2015/12/08 22:04:07 mikeb Exp $
+#	$OpenBSD: GENERIC,v 1.404 2015/12/08 22:05:31 mikeb Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -601,7 +601,7 @@ hifn*	at pci?			# Hi/fn 7751 crypto card
 ubsec*	at pci?			# Bluesteel Networks 5xxx crypto card
 safe*	at pci?			# SafeNet SafeXcel 1141/1741
 
-xspd0	at pci?			# XenSource Platform Device
+#xspd0	at pci?			# XenSource Platform Device
 
 # 1-Wire devices
 option ONEWIREVERBOSE
