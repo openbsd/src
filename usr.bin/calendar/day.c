@@ -1,4 +1,4 @@
-/*	$OpenBSD: day.c,v 1.31 2015/12/07 18:46:35 espie Exp $	*/
+/*	$OpenBSD: day.c,v 1.32 2015/12/08 19:04:50 mmcc Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -98,8 +98,7 @@ setnnames(void)
 		for (; l > 0 && isspace((unsigned char)buf[l - 1]); l--)
 			;
 		buf[l] = '\0';
-		if (ndays[i].name != NULL)
-			free(ndays[i].name);
+		free(ndays[i].name);
 		if ((ndays[i].name = strdup(buf)) == NULL)
 			err(1, NULL);
 		ndays[i].len = strlen(buf);
@@ -108,8 +107,7 @@ setnnames(void)
 		for (; l > 0 && isspace((unsigned char)buf[l - 1]); l--)
 			;
 		buf[l] = '\0';
-		if (fndays[i].name != NULL)
-			free(fndays[i].name);
+		free(fndays[i].name);
 		if ((fndays[i].name = strdup(buf)) == NULL)
 			err(1, NULL);
 		fndays[i].len = strlen(buf);
@@ -121,8 +119,7 @@ setnnames(void)
 		for (; l > 0 && isspace((unsigned char)buf[l - 1]); l--)
 			;
 		buf[l] = '\0';
-		if (nmonths[i].name != NULL)
-			free(nmonths[i].name);
+		free(nmonths[i].name);
 		if ((nmonths[i].name = strdup(buf)) == NULL)
 			err(1, NULL);
 		nmonths[i].len = strlen(buf);
@@ -131,8 +128,7 @@ setnnames(void)
 		for (; l > 0 && isspace((unsigned char)buf[l - 1]); l--)
 			;
 		buf[l] = '\0';
-		if (fnmonths[i].name != NULL)
-			free(fnmonths[i].name);
+		free(fnmonths[i].name);
 		if ((fnmonths[i].name = strdup(buf)) == NULL)
 			err(1, NULL);
 		fnmonths[i].len = strlen(buf);

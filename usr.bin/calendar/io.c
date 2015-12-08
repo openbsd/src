@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.42 2015/10/23 12:36:23 deraadt Exp $	*/
+/*	$OpenBSD: io.c,v 1.43 2015/12/08 19:04:50 mmcc Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -98,8 +98,7 @@ cal(void)
 			    !strcmp(buf + 5, "by_BY.KOI8-B")) {
 				bodun_maybe++;
 				bodun = 0;
-				if (prefix)
-					free(prefix);
+				free(prefix);
 				prefix = NULL;
 			} else
 				bodun_maybe = 0;
@@ -124,8 +123,7 @@ cal(void)
 				calendar = LUNAR;
 		} else if (bodun_maybe && strncmp(buf, "BODUN=", 6) == 0) {
 			bodun++;
-			if (prefix)
-				free(prefix);
+			free(prefix);
 			if ((prefix = strdup(buf + 6)) == NULL)
 				err(1, NULL);
 			continue;
@@ -138,8 +136,7 @@ cal(void)
 				    (p - buf == spev[i].nlen) &&
 				    buf[spev[i].nlen + 1]) {
 					p++;
-					if (spev[i].uname != NULL)
-						free(spev[i].uname);
+					free(spev[i].uname);
 					if ((spev[i].uname = strdup(p)) == NULL)
 						err(1, NULL);
 					spev[i].ulen = strlen(p);
@@ -211,8 +208,7 @@ cal(void)
 	tmp = events;
 	while (tmp) {
 		events = tmp;
-		if (tmp->ldesc)
-			free(tmp->ldesc);
+		free(tmp->ldesc);
 		tmp = tmp->next;
 		free(events);
 	}
