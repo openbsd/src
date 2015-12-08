@@ -48,6 +48,8 @@ void	xen_deferred(void *);
 void	xen_resume(struct device *);
 int	xen_activate(struct device *, int);
 
+int	xs_attach(struct xen_softc *);
+
 const struct cfdriver xen_cd = {
 	NULL, "xen", DV_DULL
 };
@@ -96,6 +98,9 @@ xen_attach(struct device *parent, struct device *self, void *aux)
 	xen_init_cbvec(sc);
 
 	if (xen_init_interrupts(sc))
+		return;
+
+	if (xs_attach(sc))
 		return;
 
 	mountroothook_establish(xen_deferred, sc);
