@@ -1,4 +1,4 @@
-.\"	$OpenBSD: le.4,v 1.5 2014/11/15 14:41:02 bentley Exp $
+.\"	$OpenBSD: le.4,v 1.6 2015/12/08 13:35:37 tedu Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     from: @(#)le.4	8.2 (Berkeley) 11/30/93
 .\"
-.Dd $Mdocdate: November 15 2014 $
+.Dd $Mdocdate: December 8 2015 $
 .Dt LE 4 luna88k
 .Os
 .Sh NAME
@@ -49,22 +49,6 @@ interface provides access to a 10 Mb/s Ethernet network via the
 7990
 .Tn LANCE
 Ethernet chip set.
-.Pp
-The use of
-.Dq trailer
-encapsulation to minimize copying data on
-input and output is supported by the interface but offers no advantage
-due to the large
-.Tn HP
-page size.
-The use of trailers is negotiated with
-.Tn ARP .
-This negotiation may be disabled, on a per-interface basis,
-by setting the
-.Dv IFF_NOTRAILERS
-flag with an
-.Dv SIOCSIFFLAGS
-.Xr ioctl 2 .
 .Sh SEE ALSO
 .Xr arp 4 ,
 .Xr ifmedia 4 ,
