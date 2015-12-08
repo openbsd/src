@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.423 2015/12/08 10:06:12 dlg Exp $	*/
+/*	$OpenBSD: if.c,v 1.424 2015/12/08 10:18:56 mpi Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -254,7 +254,6 @@ struct srp_gc if_ifp_gc = SRP_GC_INITIALIZER(if_ifp_dtor, NULL);
 struct srp_gc if_map_gc = SRP_GC_INITIALIZER(if_map_dtor, NULL);
 
 struct ifnet_head ifnet = TAILQ_HEAD_INITIALIZER(ifnet);
-struct ifnet_head iftxlist = TAILQ_HEAD_INITIALIZER(iftxlist);
 unsigned int lo0ifidx;
 
 void
