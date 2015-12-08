@@ -33,6 +33,8 @@ struct xen_softc {
 #define  XENFEAT_CBVEC		(1<<8)
 
 	struct shared_info	*sc_ipg;	/* HYPERVISOR_shared_info */
+
+	int			 sc_cbvec;	/* callback was installed */
 };
 
 extern struct xen_softc *xen_sc;

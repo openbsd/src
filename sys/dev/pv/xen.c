@@ -27,6 +27,8 @@
 
 #include <uvm/uvm_extern.h>
 
+#include <machine/i82489var.h>
+
 #include <dev/pv/pvvar.h>
 #include <dev/pv/xenreg.h>
 #include <dev/pv/xenvar.h>
@@ -37,6 +39,7 @@ int	xen_init_hypercall(struct xen_softc *);
 int	xen_getversion(struct xen_softc *);
 int	xen_getfeatures(struct xen_softc *);
 int	xen_init_info_page(struct xen_softc *);
+int	xen_init_cbvec(struct xen_softc *);
 
 int 	xen_match(struct device *, void *, void *);
 void	xen_attach(struct device *, struct device *, void *);
@@ -87,6 +90,8 @@ xen_attach(struct device *parent, struct device *self, void *aux)
 
 	if (xen_init_info_page(sc))
 		return;
+
+	xen_init_cbvec(sc);
 }
 
 void
@@ -398,4 +403,33 @@ xen_init_info_page(struct xen_softc *sc)
 	DPRINTF("%s: shared info page at va %p pa %#lx\n", sc->sc_dev.dv_xname,
 	    sc->sc_ipg, pa);
 	return (0);
+}
+
+int
+xen_init_cbvec(struct xen_softc *sc)
+{
+	struct xen_hvm_param xhp;
+
+	if ((sc->sc_features & XENFEAT_CBVEC) == 0)
+		return (ENOENT);
+
+	xhp.domid = DOMID_SELF;
+	xhp.index = HVM_PARAM_CALLBACK_IRQ;
+	xhp.value = HVM_CALLBACK_VECTOR(LAPIC_XEN_VECTOR);
+	if (xen_hypercall(sc, hvm_op, 2, HVMOP_set_param, &xhp)) {
+		/* Will retry with the xspd(4) PCI interrupt */
+		return (ENOENT);
+	}
+	DPRINTF("%s: registered callback IDT vector %d\n",
+	    sc->sc_dev.dv_xname, LAPIC_XEN_VECTOR);
+
+	sc->sc_cbvec = 1;
+
+	return (0);
+}
+
+void
+xen_intr(void)
+{
+	/* stub */
 }
