@@ -41,6 +41,7 @@ int	xen_getfeatures(struct xen_softc *);
 int	xen_init_info_page(struct xen_softc *);
 int	xen_init_cbvec(struct xen_softc *);
 int	xen_init_interrupts(struct xen_softc *);
+void	xen_disable_emulated_devices(struct xen_softc *);
 
 int 	xen_match(struct device *, void *, void *);
 void	xen_attach(struct device *, struct device *, void *);
@@ -102,6 +103,8 @@ xen_attach(struct device *parent, struct device *self, void *aux)
 
 	if (xs_attach(sc))
 		return;
+
+	xen_disable_emulated_devices(sc);
 
 	mountroothook_establish(xen_deferred, sc);
 }
@@ -699,4 +702,37 @@ xen_intr_enable(void)
 				    sc->sc_dev.dv_xname, xi->xi_port);
 		}
 	}
+}
+
+#include <machine/pio.h>
+
+#define	XMI_PORT		0x10
+#define XMI_MAGIC		0x49d2
+#define XMI_UNPLUG_IDE		0x01
+#define XMI_UNPLUG_NIC		0x02
+#define XMI_UNPLUG_IDESEC	0x04
+
+int xen_disable_pv_ide, xen_disable_pv_idesec, xen_disable_pv_nic;
+
+void
+xen_disable_emulated_devices(struct xen_softc *sc)
+{
+#if defined(__i386__) || defined(__amd64__)
+	ushort unplug = 0;
+
+	if (inw(XMI_PORT) != XMI_MAGIC) {
+		printf("%s: no magic!\n", sc->sc_dev.dv_xname);
+		return;
+	}
+	if (xen_disable_pv_ide)
+		unplug |= XMI_UNPLUG_IDE;
+	if (xen_disable_pv_idesec)
+		unplug |= XMI_UNPLUG_IDESEC;
+	if (xen_disable_pv_nic)
+		unplug |= XMI_UNPLUG_NIC;
+	if (unplug) {
+		outw(XMI_PORT, unplug);
+		DPRINTF("%s: disabled emulated devices\n", sc->sc_dev.dv_xname);
+	}
+#endif	/* __i386__ || __amd64__ */
 }
