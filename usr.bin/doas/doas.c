@@ -1,4 +1,4 @@
-/* $OpenBSD: doas.c,v 1.46 2015/12/03 08:12:15 tedu Exp $ */
+/* $OpenBSD: doas.c,v 1.47 2015/12/08 13:39:40 sthen Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -37,7 +37,8 @@
 static void __dead
 usage(void)
 {
-	fprintf(stderr, "usage: doas [-ns] [-C config] [-u user] command [args]\n");
+	fprintf(stderr, "usage: doas [-ns] [-a style] [-C config] [-u user]"
+	    " command [args]\n");
 	exit(1);
 }
 
@@ -323,6 +324,7 @@ main(int argc, char **argv, char **envp)
 	int nflag = 0;
 	char cwdpath[PATH_MAX];
 	const char *cwd;
+	char *login_style = NULL;
 
 	if (pledge("stdio rpath getpw tty proc exec id", NULL) == -1)
 		err(1, "pledge");
@@ -331,8 +333,11 @@ main(int argc, char **argv, char **envp)
 
 	uid = getuid();
 
-	while ((ch = getopt(argc, argv, "C:nsu:")) != -1) {
+	while ((ch = getopt(argc, argv, "a:C:nsu:")) != -1) {
 		switch (ch) {
+		case 'a':
+			login_style = optarg;
+			break;
 		case 'C':
 			confpath = optarg;
 			break;
@@ -412,7 +417,7 @@ main(int argc, char **argv, char **envp)
 		if (nflag)
 			errx(1, "Authorization required");
 
-		if (!(as = auth_userchallenge(myname, NULL, "auth-doas",
+		if (!(as = auth_userchallenge(myname, login_style, "auth-doas",
 		    &challenge)))
 			err(1, "auth challenge failed");
 		if (!challenge) {
