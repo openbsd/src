@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vmctl.8,v 1.7 2015/12/05 22:34:31 sobrado Exp $
+.\"	$OpenBSD: vmctl.8,v 1.8 2015/12/08 08:01:20 reyk Exp $
 .\"
 .\" Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 5 2015 $
+.Dd $Mdocdate: December 8 2015 $
 .Dt VMCTL 8
 .Os
 .Sh NAME
@@ -42,6 +42,9 @@ using the format described in
 .Sh VM COMMANDS
 The options are as follows:
 .Bl -tag -width Ds
+.It Cm console Ar id
+Connect to the console of the VM with the specified
+.Ar id .
 .It Cm create Ar path Fl s Ar size
 Creates a VM disk image file with the specified
 .Ar path

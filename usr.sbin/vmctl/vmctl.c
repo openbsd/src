@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmctl.c,v 1.7 2015/12/07 18:23:24 deraadt Exp $	*/
+/*	$OpenBSD: vmctl.c,v 1.8 2015/12/08 08:01:20 reyk Exp $	*/
 
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
@@ -40,6 +40,7 @@
 
 extern char *__progname;
 uint32_t info_id;
+int info_console;
 
 /*
  * start_vm
@@ -125,14 +126,8 @@ start_vm_complete(struct imsg *imsg, int *ret, int autoconnect)
 			warn("start vm command failed");
 			*ret = EIO;
 		} else if (autoconnect) {
-			closefrom(STDERR_FILENO + 1);
-
-			/* Only returns on error */
-			if (execl(VMCTL_CU, VMCTL_CU,
-			    "-l", vmr->vmr_ttyname, "-s", "9600", NULL) == -1) {
-				warn("failed to open the console");
-				*ret = errno;
-			}
+			/* does not return */
+			ctl_openconsole(vmr->vmr_ttyname);
 		} else {
 			warnx("started vm %d successfully, tty %s",
 			    vmr->vmr_id, vmr->vmr_ttyname);
@@ -217,9 +212,10 @@ terminate_vm_complete(struct imsg *imsg, int *ret)
  * Request a list of running VMs from vmd
  */
 void
-get_info_vm(uint32_t id)
+get_info_vm(uint32_t id, int console)
 {
 	info_id = id;
+	info_console = console;
 	imsg_compose(ibuf, IMSG_VMDOP_GET_INFO_VM_REQUEST, 0, 0, -1, NULL, 0);
 }
 
@@ -266,7 +262,10 @@ add_info(struct imsg *imsg, int *ret)
 		*ret = 0;
 		return (0);
 	} else if (imsg->hdr.type == IMSG_VMDOP_GET_INFO_VM_END_DATA) {
-		print_vm_info(vir, ct);
+		if (info_console)
+			vm_console(vir, ct);
+		else
+			print_vm_info(vir, ct);
 		free(vir);
 		*ret = 0;
 		return (1);
@@ -318,6 +317,32 @@ print_vm_info(struct vmop_info_result *list, size_t ct)
 			}
 		}
 	}
+}
+
+/*
+ * vm_console
+ *
+ * Connects to the vm console returned from vmd in 'list'.
+ *
+ * Parameters
+ *  list: the vm information (consolidated) returned from vmd via imsg
+ *  ct  : the size (number of elements in 'list') of the result
+ */
+__dead void
+vm_console(struct vmop_info_result *list, size_t ct)
+{
+	struct vmop_info_result *vir;
+	size_t i;
+
+	for (i = 0; i < ct; i++) {
+		vir = &list[i];
+		if (info_id == vir->vir_info.vir_id) {
+			/* does not return */
+			ctl_openconsole(vir->vir_ttyname);
+		}
+	}
+
+	errx(1, "console %d not found", info_id);
 }
 
 /*

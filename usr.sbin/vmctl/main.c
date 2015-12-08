@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.6 2015/12/05 22:34:31 sobrado Exp $	*/
+/*	$OpenBSD: main.c,v 1.7 2015/12/08 08:01:20 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -47,6 +47,7 @@ __dead void	 ctl_usage(struct ctl_command *);
 
 int		 vmm_action(struct parse_result *);
 
+int		 ctl_console(struct parse_result *, int, char *[]);
 int		 ctl_create(struct parse_result *, int, char *[]);
 int		 ctl_load(struct parse_result *, int, char *[]);
 int		 ctl_start(struct parse_result *, int, char *[]);
@@ -54,6 +55,7 @@ int		 ctl_status(struct parse_result *, int, char *[]);
 int		 ctl_stop(struct parse_result *, int, char *[]);
 
 struct ctl_command ctl_commands[] = {
+	{ "console",	CMD_CONSOLE,	ctl_console,	"[id]" },
 	{ "create",	CMD_CREATE,	ctl_create,	"\"name\" -s size", 1 },
 	{ "load",	CMD_LOAD,	ctl_load,	"[path]" },
 	{ "reload",	CMD_RELOAD,	ctl_load,	"[path]" },
@@ -211,7 +213,10 @@ vmmaction(struct parse_result *res)
 		terminate_vm(res->id);
 		break;
 	case CMD_STATUS:
-		get_info_vm(res->id);
+		get_info_vm(res->id, 0);
+		break;
+	case CMD_CONSOLE:
+		get_info_vm(res->id, 1);
 		break;
 	case CMD_RELOAD:
 		imsg_compose(ibuf, IMSG_VMDOP_RELOAD, 0, 0, -1,
@@ -268,6 +273,7 @@ vmmaction(struct parse_result *res)
 			case CMD_STOP:
 				done = terminate_vm_complete(&imsg, &ret);
 				break;
+			case CMD_CONSOLE:
 			case CMD_STATUS:
 				done = add_info(&imsg, &ret);
 				break;
@@ -505,4 +511,24 @@ ctl_stop(struct parse_result *res, int argc, char *argv[])
 		ctl_usage(res->ctl);
 
 	return (vmmaction(res));
+}
+
+int
+ctl_console(struct parse_result *res, int argc, char *argv[])
+{
+	if (argc == 2) {
+		if (parse_vmid(res, argv[1], 0) == -1)
+			errx(1, "invalid id: %s", argv[1]);
+	} else if (argc != 2)
+		ctl_usage(res->ctl);
+
+	return (vmmaction(res));
+}
+
+__dead void
+ctl_openconsole(const char *name)
+{
+	closefrom(STDERR_FILENO + 1);
+	execl(VMCTL_CU, VMCTL_CU, "-l", name, "-s", "9600", NULL);
+	err(1, "failed to open the console");
 }
