@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwmvar.h,v 1.12 2015/10/22 11:51:28 jsg Exp $	*/
+/*	$OpenBSD: if_iwmvar.h,v 1.13 2015/12/08 17:10:02 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -305,7 +305,7 @@ struct iwm_ucode_status {
 
 #define IWM_OTP_LOW_IMAGE_SIZE 2048
 
-#define IWM_MVM_TE_SESSION_PROTECTION_MAX_TIME_MS 500
+#define IWM_MVM_TE_SESSION_PROTECTION_MAX_TIME_MS 1000
 #define IWM_MVM_TE_SESSION_PROTECTION_MIN_TIME_MS 400
 
 enum IWM_CMD_MODE {
@@ -440,8 +440,6 @@ struct iwm_softc {
 	size_t sc_scan_cmd_len;
 	int sc_scan_last_antenna;
 	int sc_scanband;
-
-	int sc_auth_prot;
 
 	int sc_fixed_ridx;
 

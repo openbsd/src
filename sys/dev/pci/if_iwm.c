@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.68 2015/11/25 03:09:59 dlg Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.69 2015/12/08 17:10:02 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -272,7 +272,7 @@ int	iwm_mvm_send_time_event_cmd(struct iwm_softc *,
 int	iwm_mvm_time_event_send_add(struct iwm_softc *, struct iwm_node *,
 					void *, struct iwm_time_event_cmd_v2 *);
 void	iwm_mvm_protect_session(struct iwm_softc *, struct iwm_node *,
-				uint32_t, uint32_t, uint32_t);
+				uint32_t, uint32_t);
 int	iwm_nvm_read_chunk(struct iwm_softc *, uint16_t, uint16_t, uint16_t,
 				uint8_t *, uint16_t *);
 int	iwm_nvm_read_section(struct iwm_softc *, uint16_t, uint8_t *,
@@ -2216,7 +2216,7 @@ iwm_mvm_time_event_send_add(struct iwm_softc *sc, struct iwm_node *in,
 
 void
 iwm_mvm_protect_session(struct iwm_softc *sc, struct iwm_node *in,
-	uint32_t duration, uint32_t min_duration, uint32_t max_delay)
+	uint32_t duration, uint32_t max_delay)
 {
 	struct iwm_time_event_cmd_v2 time_cmd;
 
@@ -4988,7 +4988,6 @@ iwm_auth(struct iwm_softc *sc)
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct iwm_node *in = (void *)ic->ic_bss;
 	uint32_t duration;
-	uint32_t min_duration;
 	int error;
 
 	in->in_assoc = 0;
@@ -5014,32 +5013,14 @@ iwm_auth(struct iwm_softc *sc)
 		return error;
 	}
 
-	/* a bit superfluous? */
-	while (sc->sc_auth_prot)
-		tsleep(&sc->sc_auth_prot, 0, "iwmauth", 0);
-	sc->sc_auth_prot = 1;
-
-	duration = min(IWM_MVM_TE_SESSION_PROTECTION_MAX_TIME_MS,
-	    200 + in->in_ni.ni_intval);
-	min_duration = min(IWM_MVM_TE_SESSION_PROTECTION_MIN_TIME_MS,
-	    100 + in->in_ni.ni_intval);
-	iwm_mvm_protect_session(sc, in, duration, min_duration, 500);
-
-	while (sc->sc_auth_prot != 2) {
-		/*
-		 * well, meh, but if the kernel is sleeping for half a
-		 * second, we have bigger problems
-		 */
-		if (sc->sc_auth_prot == 0) {
-			DPRINTF(("%s: missed auth window!\n", DEVNAME(sc)));
-			return ETIMEDOUT;
-		} else if (sc->sc_auth_prot == -1) {
-			DPRINTF(("%s: no time event, denied!\n", DEVNAME(sc)));
-			sc->sc_auth_prot = 0;
-			return EAUTH;
-		}
-		tsleep(&sc->sc_auth_prot, 0, "iwmau2", 0);
-	}
+	/*
+	 * Prevent the FW from wandering off channel during association
+	 * by "protecting" the session with a time event.
+	 */
+	/* XXX duration is in units of TU, not MS */
+	duration = IWM_MVM_TE_SESSION_PROTECTION_MAX_TIME_MS;
+	iwm_mvm_protect_session(sc, in, duration, 500 /* XXX magic number */);
+	DELAY(100);
 
 	return 0;
 }
@@ -5642,7 +5623,6 @@ iwm_stop(struct ifnet *ifp, int disable)
 	sc->sc_flags |= IWM_FLAG_STOPPED;
 	sc->sc_generation++;
 	sc->sc_scanband = 0;
-	sc->sc_auth_prot = 0;
 	ic->ic_scan_lock = IEEE80211_SCAN_UNLOCKED;
 	ifp->if_flags &= ~IFF_RUNNING;
 	ifq_clr_oactive(&ifp->if_snd);
@@ -6082,16 +6062,8 @@ iwm_notif_intr(struct iwm_softc *sc)
 			struct iwm_time_event_notif *notif;
 			SYNC_RESP_STRUCT(notif, pkt);
 
-			if (notif->status) {
-				if (le32toh(notif->action) &
-				    IWM_TE_V2_NOTIF_HOST_EVENT_START)
-					sc->sc_auth_prot = 2;
-				else
-					sc->sc_auth_prot = 0;
-			} else {
-				sc->sc_auth_prot = -1;
-			}
-			wakeup(&sc->sc_auth_prot);
+			DPRINTF(("%s: TE notif status = 0x%x action = 0x%x\n",
+			    DEVNAME(sc), notif->status, notif->action));
 			break; }
 
 		case IWM_MCAST_FILTER_CMD:

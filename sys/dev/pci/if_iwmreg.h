@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwmreg.h,v 1.6 2015/11/15 09:39:09 stsp Exp $	*/
+/*	$OpenBSD: if_iwmreg.h,v 1.7 2015/12/08 17:10:02 stsp Exp $	*/
 
 /******************************************************************************
  *
@@ -2007,6 +2007,43 @@ struct iwm_time_event_cmd_v1 {
 
 
 /* Time event - defines for command API v2 */
+
+/**
+ * DOC: Time Events - what is it?
+ *
+ * Time Events are a fw feature that allows the driver to control the presence
+ * of the device on the channel. Since the fw supports multiple channels
+ * concurrently, the fw may choose to jump to another channel at any time.
+ * In order to make sure that the fw is on a specific channel at a certain time
+ * and for a certain duration, the driver needs to issue a time event.
+ *
+ * The simplest example is for BSS association. The driver issues a time event,
+ * waits for it to start, and only then tells mac80211 that we can start the
+ * association. This way, we make sure that the association will be done
+ * smoothly and won't be interrupted by channel switch decided within the fw.
+ */
+
+ /**
+ * DOC: The flow against the fw
+ *
+ * When the driver needs to make sure we are in a certain channel, at a certain
+ * time and for a certain duration, it sends a Time Event. The flow against the
+ * fw goes like this:
+ *	1) Driver sends a TIME_EVENT_CMD to the fw
+ *	2) Driver gets the response for that command. This response contains the
+ *	   Unique ID (UID) of the event.
+ *	3) The fw sends notification when the event starts.
+ *
+ * Of course the API provides various options that allow to cover parameters
+ * of the flow.
+ *	What is the duration of the event?
+ *	What is the start time of the event?
+ *	Is there an end-time for the event?
+ *	How much can the event be delayed?
+ *	Can the event be split?
+ *	If yes what is the maximal number of chunks?
+ *	etc...
+ */
 
 /*
  * @IWM_TE_V2_FRAG_NONE: fragmentation of the time event is NOT allowed.
