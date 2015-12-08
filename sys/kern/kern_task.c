@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_task.c,v 1.15 2015/11/19 13:19:24 dlg Exp $ */
+/*	$OpenBSD: kern_task.c,v 1.16 2015/12/08 11:44:12 dlg Exp $ */
 
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
@@ -37,7 +37,7 @@ struct taskq {
 	const char	*tq_name;
 
 	struct mutex	tq_mtx;
-	TAILQ_HEAD(, task) tq_worklist;
+	struct task_list tq_worklist;
 };
 
 struct taskq taskq_sys = {
