@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-detach-client.c,v 1.22 2015/11/24 20:40:51 nicm Exp $ */
+/* $OpenBSD: cmd-detach-client.c,v 1.23 2015/12/08 01:10:31 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -72,9 +72,8 @@ cmd_detach_client_exec(struct cmd *self, struct cmd_q *cmdq)
 			return (CMD_RETURN_ERROR);
 
 		TAILQ_FOREACH(cloop, &clients, entry) {
-			if (cloop->session != s)
-				continue;
-			proc_send_s(cloop->peer, msgtype, cloop->session->name);
+			if (cloop->session == s)
+				server_client_detach(cloop, msgtype);
 		}
 		return (CMD_RETURN_STOP);
 	}
@@ -85,13 +84,12 @@ cmd_detach_client_exec(struct cmd *self, struct cmd_q *cmdq)
 
 	if (args_has(args, 'a')) {
 		TAILQ_FOREACH(cloop, &clients, entry) {
-			if (cloop->session == NULL || cloop == c)
-				continue;
-			proc_send_s(cloop->peer, msgtype, cloop->session->name);
+			if (cloop->session != NULL && cloop != c)
+				server_client_detach(cloop, msgtype);
 		}
 		return (CMD_RETURN_NORMAL);
 	}
 
-	proc_send_s(c->peer, msgtype, c->session->name);
+	server_client_detach(c, msgtype);
 	return (CMD_RETURN_STOP);
 }

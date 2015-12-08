@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.173 2015/12/01 09:41:03 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.174 2015/12/08 01:10:31 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -254,6 +254,19 @@ server_client_free(__unused int fd, __unused short events, void *arg)
 
 	if (c->references == 0)
 		free(c);
+}
+
+/* Detach a client. */
+void
+server_client_detach(struct client *c, enum msgtype msgtype)
+{
+	struct session	*s = c->session;
+
+	if (s == NULL)
+		return;
+
+	hooks_run(c->session->hooks, "client-detached", c);
+	proc_send_s(c->peer, msgtype, s->name);
 }
 
 /* Check for mouse keys. */
@@ -995,6 +1008,8 @@ server_client_dispatch(struct imsg *imsg, void *arg)
 			recalculate_sizes();
 			server_redraw_client(c);
 		}
+		if (c->session != NULL)
+			hooks_run(c->session->hooks, "client-resized", c);
 		break;
 	case MSG_EXITING:
 		if (datalen != 0)

@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.468 2015/11/29 17:06:59 guenther Exp $
+.\" $OpenBSD: tmux.1,v 1.469 2015/12/08 01:10:31 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 29 2015 $
+.Dd $Mdocdate: December 8 2015 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -3193,6 +3193,52 @@ is used.
 .Fl v
 shows only the option value, not the name.
 .El
+.Sh HOOKS
+.Nm
+allows commands to run on various triggers, called
+.Em hooks .
+Each hook has a
+.Em name .
+The following hooks are available:
+.Bl -tag -width "XXXXXXXXXXXXXXXX"
+.It client-attached
+Run when a client is attached.
+.It client-detached
+Run when a client is detached
+.It client-resized
+Run when a client is resized.
+.El
+.Pp
+Hooks are managed with these commands:
+.Bl -tag -width Ds
+.It Xo Ic set-hook
+.Op Fl g
+.Op Fl t Ar target-session
+.Ar hook-name
+.Ar command
+.Xc
+Sets hook
+.Ar hook-name
+to
+.Ar command .
+If
+.Fl g
+is given,
+.Em hook-name
+is added to the global list of hooks, otherwise it is added to the session
+hooks (for
+.Ar target-session
+with
+.Fl t ) .
+Like options, session hooks inherit from the global ones.
+.It Xo Ic show-hooks
+.Op Fl g
+.Op Fl t Ar target-session
+.Xc
+Shows the global list of hooks with
+.Fl g ,
+otherwise the session hooks.
+.Ed
 .Sh MOUSE SUPPORT
 If the
 .Ic mouse

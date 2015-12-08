@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.82 2015/11/13 08:09:28 nicm Exp $
+# $OpenBSD: Makefile,v 1.83 2015/12/08 01:10:31 nicm Exp $
 
 PROG=	tmux
 SRCS=	alerts.c \
@@ -56,6 +56,7 @@ SRCS=	alerts.c \
 	cmd-send-keys.c \
 	cmd-set-buffer.c \
 	cmd-set-environment.c \
+	cmd-set-hook.c \
 	cmd-set-option.c \
 	cmd-show-environment.c \
 	cmd-show-messages.c \
@@ -78,6 +79,7 @@ SRCS=	alerts.c \
 	format.c \
 	grid-view.c \
 	grid.c \
+	hooks.c \
 	input-keys.c \
 	input.c \
 	job.c \

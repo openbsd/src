@@ -1,4 +1,4 @@
-/* $OpenBSD: session.c,v 1.60 2015/11/18 14:27:44 nicm Exp $ */
+/* $OpenBSD: session.c,v 1.61 2015/12/08 01:10:31 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -123,7 +123,9 @@ session_create(const char *name, int argc, char **argv, const char *path,
 	s->environ = environ_create();
 	if (env != NULL)
 		environ_copy(env, s->environ);
+
 	s->options = options_create(global_s_options);
+	s->hooks = hooks_create(global_hooks);
 
 	s->tio = NULL;
 	if (tio != NULL) {
@@ -189,7 +191,9 @@ session_free(__unused int fd, __unused short events, void *arg)
 
 	if (s->references == 0) {
 		environ_free(s->environ);
+
 		options_free(s->options);
+		hooks_free(s->hooks);
 
 		free(s->name);
 		free(s);

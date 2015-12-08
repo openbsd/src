@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.c,v 1.162 2015/11/24 23:46:15 nicm Exp $ */
+/* $OpenBSD: tmux.c,v 1.163 2015/12/08 01:10:31 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -38,6 +38,7 @@ struct options	*global_options;	/* server options */
 struct options	*global_s_options;	/* session options */
 struct options	*global_w_options;	/* window options */
 struct environ	*global_environ;
+struct hooks	*global_hooks;
 
 struct timeval	 start_time;
 const char	*socket_path;
@@ -268,6 +269,8 @@ main(int argc, char **argv)
 		    strcasestr(s, "UTF8") != NULL)
 			flags |= CLIENT_UTF8;
 	}
+
+	global_hooks = hooks_create(NULL);
 
 	global_environ = environ_create();
 	for (var = environ; *var != NULL; var++)
