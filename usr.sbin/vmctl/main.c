@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.8 2015/12/08 08:02:15 reyk Exp $	*/
+/*	$OpenBSD: main.c,v 1.9 2015/12/08 13:15:09 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -20,7 +20,6 @@
 #include <sys/socket.h>
 #include <sys/queue.h>
 #include <sys/un.h>
-#include <sys/cdefs.h>
 
 #include <machine/vmmvar.h>
 
@@ -36,6 +35,7 @@
 #include <imsg.h>
 
 #include "vmd.h"
+#include "proc.h"
 #include "vmctl.h"
 
 static const char	*socket_name = SOCKET_NAME;
