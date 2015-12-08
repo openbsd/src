@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_var.h,v 1.65 2015/12/08 10:06:12 dlg Exp $	*/
+/*	$OpenBSD: if_var.h,v 1.66 2015/12/08 10:14:58 dlg Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -149,8 +149,6 @@ struct ifnet {				/* and the entries */
 	void	(*if_start)(struct ifnet *);
 					/* ioctl routine */
 	int	(*if_ioctl)(struct ifnet *, u_long, caddr_t);
-					/* stop routine */
-	int	(*if_stop)(struct ifnet *, int);
 					/* timer routine */
 	void	(*if_watchdog)(struct ifnet *);
 	int	(*if_wol)(struct ifnet *, int);
