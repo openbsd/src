@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.595 2015/12/08 01:10:31 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.596 2015/12/08 08:14:04 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -693,10 +693,12 @@ struct grid {
 
 /* Hook data structures. */
 struct hook {
-	const char      *name;
-	struct cmd_q    *cmdq;
-	struct cmd_list *cmdlist;
-	RB_ENTRY(hook)   entry;
+	const char	*name;
+
+	struct cmd_q	*cmdq;
+	struct cmd_list	*cmdlist;
+
+	RB_ENTRY(hook)	 entry;
 };
 
 /* Option data structures. */

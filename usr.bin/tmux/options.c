@@ -1,4 +1,4 @@
-/* $OpenBSD: options.c,v 1.15 2015/11/18 13:06:54 nicm Exp $ */
+/* $OpenBSD: options.c,v 1.16 2015/12/08 08:14:04 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -47,7 +47,7 @@ options_cmp(struct options_entry *o1, struct options_entry *o2)
 struct options *
 options_create(struct options *parent)
 {
-	struct options *oo;
+	struct options	*oo;
 
 	oo = xcalloc(1, sizeof *oo);
 	RB_INIT(&oo->tree);
