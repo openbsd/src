@@ -31,6 +31,8 @@ struct xen_softc {
 	void			*sc_hc;
 	uint32_t		 sc_features;
 #define  XENFEAT_CBVEC		(1<<8)
+
+	struct shared_info	*sc_ipg;	/* HYPERVISOR_shared_info */
 };
 
 extern struct xen_softc *xen_sc;
