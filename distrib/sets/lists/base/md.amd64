@@ -1669,6 +1669,7 @@
 ./usr/libdata/perl5/site_perl/amd64-openbsd/net/if_var.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/net/if_vlan_var.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/net/if_vxlan.ph
+./usr/libdata/perl5/site_perl/amd64-openbsd/net/ifq.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/net/netisr.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/net/pfkeyv2.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/net/pfvar.ph
@@ -2183,8 +2184,8 @@
 ./usr/sbin/hotplugd
 ./usr/sbin/memconfig
 ./usr/sbin/pcidump
-./usr/sbin/vmd
 ./usr/sbin/vmctl
+./usr/sbin/vmd
 ./usr/sbin/wsconscfg
 ./usr/sbin/wsfontload
 ./usr/sbin/wsmoused

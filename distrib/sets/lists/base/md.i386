@@ -1673,6 +1673,7 @@
 ./usr/libdata/perl5/site_perl/i386-openbsd/net/if_var.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/net/if_vlan_var.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/net/if_vxlan.ph
+./usr/libdata/perl5/site_perl/i386-openbsd/net/ifq.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/net/netisr.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/net/pfkeyv2.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/net/pfvar.ph

@@ -1658,6 +1658,7 @@
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/net/if_var.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/net/if_vlan_var.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/net/if_vxlan.ph
+./usr/libdata/perl5/site_perl/mips64el-openbsd/net/ifq.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/net/netisr.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/net/pfkeyv2.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/net/pfvar.ph

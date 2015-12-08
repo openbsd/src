@@ -1638,6 +1638,7 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/net/if_var.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/net/if_vlan_var.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/net/if_vxlan.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/net/ifq.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/net/netisr.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/net/pfkeyv2.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/net/pfvar.ph

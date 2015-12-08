@@ -1551,6 +1551,7 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/net/if_var.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/net/if_vlan_var.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/net/if_vxlan.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/net/ifq.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/net/netisr.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/net/pfkeyv2.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/net/pfvar.ph
