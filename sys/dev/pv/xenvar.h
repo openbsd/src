@@ -25,6 +25,16 @@
 #define DPRINTF(x...)
 #endif
 
+struct xen_intsrc {
+	SLIST_ENTRY(xen_intsrc)	  xi_entry;
+	void			(*xi_handler)(void *);
+	void			 *xi_arg;
+	struct evcount		  xi_evcnt;
+	evtchn_port_t		  xi_port;
+	int			  xi_noclose;
+	int			  xi_masked;
+};
+
 struct xen_softc {
 	struct device		 sc_dev;
 	uint32_t		 sc_base;
@@ -35,6 +45,9 @@ struct xen_softc {
 	struct shared_info	*sc_ipg;	/* HYPERVISOR_shared_info */
 
 	int			 sc_cbvec;	/* callback was installed */
+	uint64_t		 sc_irq;	/* IDT vector number */
+	struct evcount		 sc_evcnt;	/* upcall counter */
+	SLIST_HEAD(, xen_intsrc) sc_intrs;
 };
 
 extern struct xen_softc *xen_sc;
@@ -44,9 +57,23 @@ extern struct xen_softc *xen_sc;
  */
 #define memory_op		12
 #define xen_version		17
+#define event_channel_op	32
 #define hvm_op			34
 
 int	xen_hypercall(struct xen_softc *, int, int, ...);
 int	xen_hypercallv(struct xen_softc *, int, int, ulong *);
+
+/*
+ *  Interrupts
+ */
+typedef uint32_t xen_intr_handle_t;
+
+void	xen_intr(void);
+void	xen_intr_ack(void);
+void	xen_intr_signal(xen_intr_handle_t);
+int	xen_intr_establish(evtchn_port_t, xen_intr_handle_t *, void (*)(void *),
+	    void *, char *);
+int	xen_intr_disestablish(xen_intr_handle_t);
+void	xen_intr_enable(void);
 
 #endif	/* _XENVAR_H_ */

@@ -414,6 +414,121 @@ enum {
 	 (((vector) & HVM_CB_GSI_GSI_MASK) << HVM_CB_GSI_GSI_SHIFT))
 
 
+/*
+ * interface/event_channel.h
+ *
+ * Event channels between domains.
+ */
+
+#define EVTCHNOP_bind_interdomain	0
+#define EVTCHNOP_bind_virq		1
+#define EVTCHNOP_bind_pirq		2
+#define EVTCHNOP_close			3
+#define EVTCHNOP_send			4
+#define EVTCHNOP_status			5
+#define EVTCHNOP_alloc_unbound		6
+#define EVTCHNOP_bind_ipi		7
+#define EVTCHNOP_bind_vcpu		8
+#define EVTCHNOP_unmask			9
+#define EVTCHNOP_reset			10
+
+typedef uint32_t evtchn_port_t;
+
+/*
+ * EVTCHNOP_alloc_unbound: Allocate a port in domain <dom> and mark as
+ * accepting interdomain bindings from domain <remote_dom>. A fresh port
+ * is allocated in <dom> and returned as <port>.
+ * NOTES:
+ *  1. If the caller is unprivileged then <dom> must be DOMID_SELF.
+ *  2. <rdom> may be DOMID_SELF, allowing loopback connections.
+ */
+struct evtchn_alloc_unbound {
+	/* IN parameters */
+	domid_t dom, remote_dom;
+	/* OUT parameters */
+	evtchn_port_t port;
+};
+
+/*
+ * EVTCHNOP_close: Close a local event channel <port>. If the channel is
+ * interdomain then the remote end is placed in the unbound state
+ * (EVTCHNSTAT_unbound), awaiting a new connection.
+ */
+struct evtchn_close {
+	/* IN parameters. */
+	evtchn_port_t port;
+};
+
+/*
+ * EVTCHNOP_send: Send an event to the remote end of the channel whose local
+ * endpoint is <port>.
+ */
+struct evtchn_send {
+	/* IN parameters. */
+	evtchn_port_t port;
+};
+
+/*
+ * EVTCHNOP_status: Get the current status of the communication channel which
+ * has an endpoint at <dom, port>.
+ * NOTES:
+ *  1. <dom> may be specified as DOMID_SELF.
+ *  2. Only a sufficiently-privileged domain may obtain the status of an event
+ *     channel for which <dom> is not DOMID_SELF.
+ */
+struct evtchn_status {
+	/* IN parameters */
+	domid_t  dom;
+	evtchn_port_t port;
+	/* OUT parameters */
+#define EVTCHNSTAT_closed	0  /* Channel is not in use.                 */
+#define EVTCHNSTAT_unbound	1  /* Channel is waiting interdom connection.*/
+#define EVTCHNSTAT_interdomain	2  /* Channel is connected to remote domain. */
+#define EVTCHNSTAT_pirq		3  /* Channel is bound to a phys IRQ line.   */
+#define EVTCHNSTAT_virq		4  /* Channel is bound to a virtual IRQ line */
+#define EVTCHNSTAT_ipi		5  /* Channel is bound to a virtual IPI line */
+	uint32_t status;
+	uint32_t vcpu;		   /* VCPU to which this channel is bound.   */
+	union {
+		struct {
+			domid_t dom;
+		} unbound;	   /* EVTCHNSTAT_unbound */
+		struct {
+			domid_t dom;
+			evtchn_port_t port;
+		} interdomain;	   /* EVTCHNSTAT_interdomain */
+		uint32_t pirq;	   /* EVTCHNSTAT_pirq */
+		uint32_t virq;	   /* EVTCHNSTAT_virq */
+	} u;
+};
+
+/*
+ * EVTCHNOP_bind_vcpu: Specify which vcpu a channel should notify when an
+ * event is pending.
+ * NOTES:
+ *  1. IPI-bound channels always notify the vcpu specified at bind time.
+ *     This binding cannot be changed.
+ *  2. Per-VCPU VIRQ channels always notify the vcpu specified at bind time.
+ *     This binding cannot be changed.
+ *  3. All other channels notify vcpu0 by default. This default is set when
+ *     the channel is allocated (a port that is freed and subsequently reused
+ *     has its binding reset to vcpu0).
+ */
+struct evtchn_bind_vcpu {
+	/* IN parameters. */
+	evtchn_port_t port;
+	uint32_t vcpu;
+};
+
+/*
+ * EVTCHNOP_unmask: Unmask the specified local event-channel port and deliver
+ * a notification to the appropriate VCPU if an event is pending.
+ */
+struct evtchn_unmask {
+	/* IN parameters. */
+	evtchn_port_t port;
+};
+
 
 /*
  * interface/features.h
