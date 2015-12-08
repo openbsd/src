@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.23 2015/12/08 23:47:59 jsg Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.24 2015/12/08 23:59:39 jsg Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -299,8 +299,10 @@ main(int argc, char **argv)
 		env->vmd_debug = 1;
 
 	/* check for root privileges */
-	if (geteuid())
-		fatalx("need root privileges");
+	if (env->vmd_noaction == 0) {
+		if (geteuid())
+			fatalx("need root privileges");
+	}
 
 	ps = &env->vmd_ps;
 	ps->ps_env = env;
@@ -316,9 +318,11 @@ main(int argc, char **argv)
 	TAILQ_INIT(&ps->ps_rcsocks);
 
 	/* Open /dev/vmm */
-	env->vmd_fd = open(VMM_NODE, O_RDWR);
-	if (env->vmd_fd == -1)
-		fatal("%s", VMM_NODE);
+	if (env->vmd_noaction == 0) {
+		env->vmd_fd = open(VMM_NODE, O_RDWR);
+		if (env->vmd_fd == -1)
+			fatal("%s", VMM_NODE);
+	}
 
 	/* Configuration will be parsed after forking the children */
 	env->vmd_conffile = conffile;
