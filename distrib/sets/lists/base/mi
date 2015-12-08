@@ -86,6 +86,7 @@
 ./etc/examples/sensorsd.conf
 ./etc/examples/snmpd.conf
 ./etc/examples/sysctl.conf
+./etc/examples/vm.conf
 ./etc/examples/ypldap.conf
 ./etc/firmware
 ./etc/hotplug
