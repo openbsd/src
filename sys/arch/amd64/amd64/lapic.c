@@ -1,4 +1,4 @@
-/*	$OpenBSD: lapic.c,v 1.41 2015/07/18 19:21:02 sf Exp $	*/
+/*	$OpenBSD: lapic.c,v 1.42 2015/12/08 19:45:55 mikeb Exp $	*/
 /* $NetBSD: lapic.c,v 1.2 2003/05/08 01:04:35 fvdl Exp $ */
 
 /*-
@@ -55,6 +55,7 @@
 #include <dev/ic/i8253reg.h>
 
 #include "ioapic.h"
+#include "xen.h"
 
 #if NIOAPIC > 0
 #include <machine/i82093var.h>
@@ -352,6 +353,12 @@ lapic_boot_init(paddr_t lapic_base)
 
 	idt_allocmap[LAPIC_TIMER_VECTOR] = 1;
 	idt_vec_set(LAPIC_TIMER_VECTOR, Xintr_lapic_ltimer);
+
+#if NXEN > 0
+	/* Xen HVM Event Channel Interrupt Vector */
+	idt_allocmap[LAPIC_XEN_VECTOR] = 1;
+	idt_vec_set(LAPIC_XEN_VECTOR, Xintr_xen_upcall);
+#endif
 
 	evcount_attach(&clk_count, "clock", &clk_irq);
 #ifdef MULTIPROCESSOR

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vector.S,v 1.43 2015/07/17 15:37:58 guenther Exp $	*/
+/*	$OpenBSD: vector.S,v 1.44 2015/12/08 19:45:55 mikeb Exp $	*/
 /*	$NetBSD: vector.S,v 1.5 2004/06/28 09:13:11 fvdl Exp $	*/
 
 /*
@@ -83,6 +83,7 @@
 #include "ioapic.h"
 #include "lapic.h"
 #include "assym.h"
+#include "xen.h"
 
 /*****************************************************************************/
 
@@ -435,8 +436,42 @@ IDTVEC(resume_lapic_ltimer)
 	movq	$(1 << LIR_TIMER),%rax
 	orq	%rax,CPUVAR(IPENDING)
 	INTRFASTEXIT
-#endif /* NLAPIC > 0 */
 
+#if NXEN > 0
+/*
+ * Xen event channel upcall interrupt handler.
+ * Only used when the hypervisor supports direct vector callbacks.
+ */
+IDTVEC(recurse_xen_upcall)
+	INTR_RECURSE_HWFRAME
+	pushq	$0
+	subq	$8,%rsp			/* unused __if_trapno */
+	INTRENTRY
+	jmp	1f
+IDTVEC(intr_xen_upcall)
+	pushq	$0
+	subq	$8,%rsp			/* unused __if_trapno */
+	INTRENTRY
+	call	_C_LABEL(xen_intr_ack)
+	movl	CPUVAR(ILEVEL),%ebx
+	cmpl	$IPL_NET,%ebx
+	jae	2f
+IDTVEC(resume_xen_upcall)
+1:
+	incl	CPUVAR(IDEPTH)
+	movl	$IPL_NET,CPUVAR(ILEVEL)
+	sti
+	cld
+	pushq	%rbx
+	call	_C_LABEL(xen_intr)
+	jmp	_C_LABEL(Xdoreti)
+2:
+	movq	$(1 << LIR_XEN),%rax
+	orq	%rax,CPUVAR(IPENDING)
+3:
+	INTRFASTEXIT
+#endif /* NXEN > 0 */
+#endif /* NLAPIC > 0 */
 
 #define voidop(num)
 

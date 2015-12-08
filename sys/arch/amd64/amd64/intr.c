@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.46 2015/09/13 11:48:17 kettenis Exp $	*/
+/*	$OpenBSD: intr.c,v 1.47 2015/12/08 19:45:55 mikeb Exp $	*/
 /*	$NetBSD: intr.c,v 1.3 2003/03/03 22:16:20 fvdl Exp $	*/
 
 /*
@@ -54,6 +54,7 @@
 
 #include "ioapic.h"
 #include "lapic.h"
+#include "xen.h"
 
 #if NIOAPIC > 0
 #include <machine/mpbiosvar.h>
@@ -549,6 +550,9 @@ struct intrhand fake_softnet_intrhand;
 struct intrhand fake_softtty_intrhand;
 struct intrhand fake_timer_intrhand;
 struct intrhand fake_ipi_intrhand;
+#if NXEN > 0
+struct intrhand fake_xen_intrhand;
+#endif
 
 #if NLAPIC > 0 && defined(MULTIPROCESSOR) && 0
 static char *x86_ipi_names[X86_NIPI] = X86_IPI_NAMES;
@@ -613,9 +617,19 @@ cpu_intr_init(struct cpu_info *ci)
 	isp->is_handlers = &fake_ipi_intrhand;
 	isp->is_pic = &local_pic;
 	ci->ci_isources[LIR_IPI] = isp;
-
 #endif
+#if NXEN > 0
+	isp = malloc(sizeof (struct intrsource), M_DEVBUF, M_NOWAIT|M_ZERO);
+	if (isp == NULL)
+		panic("can't allocate fixed interrupt source");
+	isp->is_recurse = Xrecurse_xen_upcall;
+	isp->is_resume = Xresume_xen_upcall;
+	fake_xen_intrhand.ih_level = IPL_NET;
+	isp->is_handlers = &fake_xen_intrhand;
+	isp->is_pic = &local_pic;
+	ci->ci_isources[LIR_XEN] = isp;
 #endif
+#endif	/* NLAPIC */
 
 	intr_calculatemasks(ci);
 
