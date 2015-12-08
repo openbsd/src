@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.22 2015/12/07 12:52:00 reyk Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.23 2015/12/08 23:47:59 jsg Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -321,7 +321,7 @@ main(int argc, char **argv)
 		fatal("%s", VMM_NODE);
 
 	/* Configuration will be parsed after forking the children */
-	env->vmd_conffile = VMD_CONF;
+	env->vmd_conffile = conffile;
 
 	log_init(env->vmd_debug, LOG_DAEMON);
 	log_verbose(env->vmd_verbose);
