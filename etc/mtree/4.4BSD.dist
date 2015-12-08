@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.276 2015/12/01 08:10:38 deraadt Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.277 2015/12/08 16:38:20 deraadt Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 
@@ -184,8 +184,6 @@ usr
         lpr
         ..
         radiusd			type=dir uname=root gname=wheel mode=0755
-        ..
-        smtpd			type=dir uname=root gname=wheel mode=0755
         ..
     ..
 
