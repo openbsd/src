@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.73 2015/11/09 01:08:56 mlarkin Exp $	*/
+/*	$OpenBSD: locore.S,v 1.74 2015/12/08 18:54:10 mikeb Exp $	*/
 /*	$NetBSD: locore.S,v 1.13 2004/03/25 18:33:17 drochner Exp $	*/
 
 /*
@@ -109,6 +109,7 @@
 #include "ioapic.h"
 #include "ksyms.h"
 #include "acpi.h"
+#include "xen.h"
 
 #include <sys/errno.h>
 #include <sys/syscall.h>
@@ -1171,3 +1172,12 @@ _C_LABEL(codepatch_begin):
 	.globl _C_LABEL(codepatch_end)
 _C_LABEL(codepatch_end):
 	.previous
+
+#if NXEN > 0
+	/* Hypercall page needs to be page aligned */
+	.text
+	.align	NBPG
+	.globl	_C_LABEL(xen_hypercall_page)
+_C_LABEL(xen_hypercall_page):
+	.skip	0x1000, 0x90	/* Fill with NOPs */
+#endif /* NXEN > 0 */
