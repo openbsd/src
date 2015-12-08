@@ -57,6 +57,12 @@ struct xen_softc {
 
 extern struct xen_softc *xen_sc;
 
+struct xen_attach_args {
+	void			*xa_parent;
+	char			 xa_name[16];
+	char			 xa_node[64];
+};
+
 /*
  *  Hypercalls
  */

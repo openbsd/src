@@ -48,6 +48,7 @@ void	xen_attach(struct device *, struct device *, void *);
 void	xen_deferred(void *);
 void	xen_resume(struct device *);
 int	xen_activate(struct device *, int);
+int	xen_probe_devices(struct xen_softc *);
 
 int	xs_attach(struct xen_softc *);
 
@@ -105,6 +106,8 @@ xen_attach(struct device *parent, struct device *self, void *aux)
 		return;
 
 	xen_disable_emulated_devices(sc);
+
+	xen_probe_devices(sc);
 
 	mountroothook_establish(xen_deferred, sc);
 }
@@ -702,6 +705,70 @@ xen_intr_enable(void)
 				    sc->sc_dev.dv_xname, xi->xi_port);
 		}
 	}
+}
+
+static int
+xen_attach_print(void *aux, const char *name)
+{
+	struct xen_attach_args *xa = aux;
+
+	if (name)
+		printf("\"%s\" at %s: %s", xa->xa_name, name, xa->xa_node);
+
+	return (UNCONF);
+}
+
+int
+xen_probe_devices(struct xen_softc *sc)
+{
+	struct xen_attach_args xa;
+	struct xs_transaction xst;
+	struct iovec *iovp1, *iovp2;
+	int error = 0, iov1_cnt, iov2_cnt, i, j;
+	char path[64];
+
+	memset(&xst, 0, sizeof(xst));
+	xst.xst_id = 0;
+	xst.xst_sc = sc->sc_xs;
+	xst.xst_flags |= XST_POLL;
+
+	if ((error = xs_cmd(&xst, XS_DIRECTORY, "device", &iovp1,
+	    &iov1_cnt)) != 0)
+		return (error);
+
+	for (i = 0; i < iov1_cnt; i++) {
+		/* Special handling */
+		if (!strcmp("suspend", (char *)iovp1[i].iov_base)) {
+			xa.xa_parent = sc;
+			strlcpy(xa.xa_name, (char *)iovp1[i].iov_base,
+			    sizeof(xa.xa_name));
+			snprintf(xa.xa_node, sizeof(xa.xa_node), "device/%s",
+			    (char *)iovp1[i].iov_base);
+			config_found((struct device *)sc, &xa,
+			    xen_attach_print);
+			continue;
+		}
+		snprintf(path, sizeof(path), "device/%s",
+		    (char *)iovp1[i].iov_base);
+		if ((error = xs_cmd(&xst, XS_DIRECTORY, path, &iovp2,
+		    &iov2_cnt)) != 0) {
+			xs_resfree(&xst, iovp1, iov1_cnt);
+			return (error);
+		}
+		for (j = 0; j < iov2_cnt; j++) {
+			xa.xa_parent = sc;
+			strlcpy(xa.xa_name, (char *)iovp1[i].iov_base,
+			    sizeof(xa.xa_name));
+			snprintf(xa.xa_node, sizeof(xa.xa_node), "device/%s/%s",
+			    (char *)iovp1[i].iov_base,
+			    (char *)iovp2[j].iov_base);
+			config_found((struct device *)sc, &xa,
+			    xen_attach_print);
+		}
+		xs_resfree(&xst, iovp2, iov2_cnt);
+	}
+
+	return (error);
 }
 
 #include <machine/pio.h>
