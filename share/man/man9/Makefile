@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.266 2015/12/03 16:27:32 mpi Exp $
+#	$OpenBSD: Makefile,v 1.267 2015/12/08 10:06:40 mpi Exp $
 #	$NetBSD: Makefile,v 1.4 1996/01/09 03:23:01 thorpej Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
@@ -17,8 +17,8 @@ MAN=	aml_evalnode.9 atomic_add_int.9 atomic_cas_uint.9 \
 	hardclock.9 hook_establish.9 hz.9 idgen32.9 \
 	ieee80211.9 ieee80211_crypto.9 ieee80211_input.9 ieee80211_ioctl.9 \
 	ieee80211_node.9 ieee80211_output.9 ieee80211_proto.9 \
-	ieee80211_radiotap.9 if_rxr_init.9 ifq_enqueue.9 ifq_deq_begin.9 \
-	iic.9 intro.9 inittodr.9 intr_barrier.9 \
+	ieee80211_radiotap.9 if_get.9 if_rxr_init.9 ifq_enqueue.9 \
+	ifq_deq_begin.9 iic.9 intro.9 inittodr.9 intr_barrier.9 \
 	kern.9 km_alloc.9 knote.9 kthread.9 ktrace.9 \
 	loadfirmware.9 lock.9 log.9 \
 	malloc.9 membar_sync.9 mbuf.9 mbuf_tags.9 md5.9 mi_switch.9 \
@@ -213,6 +213,7 @@ MLINKS+=ieee80211_proto.9 ieee80211_proto_attach.9 \
 	ieee80211_proto.9 ieee80211_print_essid.9 \
 	ieee80211_proto.9 ieee80211_dump_pkt.9 \
 	ieee80211_proto.9 ieee80211_fix_rate.9
+MLINKS+=if_get.9 if_put.9
 MLINKS+=if_rxr_init.9 if_rxr_get.9 if_rxr_init.9 if_rxr_put.9 \
 	if_rxr_init.9 if_rxr_inuse.9 if_rxr_init.9 if_rxr_ioctl.9 \
 	if_rxr_init.9 if_rxr_info_ioctl.9
