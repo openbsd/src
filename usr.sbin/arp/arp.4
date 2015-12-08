@@ -1,4 +1,4 @@
-.\"	$OpenBSD: arp.4,v 1.21 2015/11/01 21:26:48 jmc Exp $
+.\"	$OpenBSD: arp.4,v 1.22 2015/12/08 14:19:33 tedu Exp $
 .\"	$NetBSD: arp.4,v 1.2 1995/03/01 11:50:56 chopps Exp $
 .\"
 .\" Copyright (c) 1985, 1986, 1988, 1994
@@ -30,7 +30,7 @@
 .\"
 .\"	from: @(#)arp4.4	6.5 (Berkeley) 4/18/94
 .\"
-.Dd $Mdocdate: November 1 2015 $
+.Dd $Mdocdate: December 8 2015 $
 .Dt ARP 4
 .Os
 .Sh NAME
@@ -93,10 +93,6 @@ A static entry will not
 time out, but may be overwritten by network traffic, while a permanent
 entry will not time out and cannot be overwritten.
 .Pp
-In the past,
-ARP was used to negotiate the use of a trailer encapsulation.
-This is no longer supported.
-.Pp
 ARP watches passively for hosts impersonating the local host (i.e., a host
 which responds to an ARP mapping request for the local host's address).
 .Sh DIAGNOSTICS
@@ -152,12 +148,4 @@ This indicates a netmask problem.
 .%D November 1982
 .%R RFC 826
 .%T "An Ethernet Address Resolution Protocol"
-.Re
-.Pp
-.Rs
-.%A Samuel J. Leffler
-.%A Michael J. Karels
-.%D April 1984
-.%R RFC 893
-.%T Trailer Encapsulations
 .Re
