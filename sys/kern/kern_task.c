@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_task.c,v 1.16 2015/12/08 11:44:12 dlg Exp $ */
+/*	$OpenBSD: kern_task.c,v 1.17 2015/12/08 11:48:54 dlg Exp $ */
 
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
@@ -30,14 +30,14 @@ struct taskq {
 		TQ_S_CREATED,
 		TQ_S_RUNNING,
 		TQ_S_DESTROYED
-	}		tq_state;
-	unsigned int	tq_running;
-	unsigned int	tq_nthreads;
-	unsigned int	tq_flags;
-	const char	*tq_name;
+	}			 tq_state;
+	unsigned int		 tq_running;
+	unsigned int		 tq_nthreads;
+	unsigned int		 tq_flags;
+	const char		*tq_name;
 
-	struct mutex	tq_mtx;
-	struct task_list tq_worklist;
+	struct mutex		 tq_mtx;
+	struct task_list	 tq_worklist;
 };
 
 struct taskq taskq_sys = {
