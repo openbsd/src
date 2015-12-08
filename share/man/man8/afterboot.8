@@ -1,4 +1,4 @@
-.\"	$OpenBSD: afterboot.8,v 1.152 2015/11/20 18:43:25 mmcc Exp $
+.\"	$OpenBSD: afterboot.8,v 1.153 2015/12/08 13:36:05 tedu Exp $
 .\"
 .\" Copyright (c) 1997 Marshall M. Midden
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 20 2015 $
+.Dd $Mdocdate: December 8 2015 $
 .Dt AFTERBOOT 8
 .\" Originally created by Marshall M. Midden -- 1997-10-20, m4@umn.edu
 .Os
@@ -180,7 +180,7 @@ lo0: flags=8009<UP,LOOPBACK,MULTICAST> mtu 32972
 .Pp
 an Ethernet interface something like:
 .Bd -literal -offset indent
-le0: flags=9863<UP,BROADCAST,NOTRAILERS,RUNNING,SIMPLEX,MULTICAST>
+le0: flags=9863<UP,BROADCAST,RUNNING,SIMPLEX,MULTICAST>
 	inet 192.168.4.52 netmask 0xffffff00 broadcast 192.168.4.255
 	inet6 fe80::5ef0:f0f0%le0 prefixlen 64 scopeid 0x1
 .Ed
