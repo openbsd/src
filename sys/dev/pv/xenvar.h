@@ -17,9 +17,32 @@
 #ifndef _XENVAR_H_
 #define _XENVAR_H_
 
+#define XEN_DEBUG
+
+#ifdef XEN_DEBUG
+#define DPRINTF(x...)		printf(x)
+#else
+#define DPRINTF(x...)
+#endif
+
 struct xen_softc {
 	struct device		 sc_dev;
 	uint32_t		 sc_base;
+	void			*sc_hc;
+	uint32_t		 sc_features;
+#define  XENFEAT_CBVEC		(1<<8)
 };
+
+extern struct xen_softc *xen_sc;
+
+/*
+ *  Hypercalls
+ */
+#define memory_op		12
+#define xen_version		17
+#define hvm_op			34
+
+int	xen_hypercall(struct xen_softc *, int, int, ...);
+int	xen_hypercallv(struct xen_softc *, int, int, ulong *);
 
 #endif	/* _XENVAR_H_ */
