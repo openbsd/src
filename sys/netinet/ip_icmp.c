@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.150 2015/12/03 21:11:53 sashan Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.151 2015/12/09 09:27:40 mpi Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -1042,19 +1042,21 @@ icmp_mtudisc(struct icmp *icp, u_int rtableid)
 void
 icmp_mtudisc_timeout(struct rtentry *rt, struct rttimer *r)
 {
-	if (rt == NULL)
-		panic("icmp_mtudisc_timeout:  bad route to timeout");
+	struct ifnet *ifp;
+	int s;
 
-	if ((rt->rt_flags & (RTF_DYNAMIC | RTF_HOST)) ==
-	    (RTF_DYNAMIC | RTF_HOST)) {
+	ifp = if_get(rt->rt_ifidx);
+	if (ifp == NULL)
+		return;
+
+	if ((rt->rt_flags & (RTF_DYNAMIC|RTF_HOST)) == (RTF_DYNAMIC|RTF_HOST)) {
 		void *(*ctlfunc)(int, struct sockaddr *, u_int, void *);
 		struct sockaddr_in sin;
-		int s;
 
 		sin = *satosin(rt_key(rt));
 
 		s = splsoftnet();
-		rtdeletemsg(rt, NULL, r->rtt_tableid);
+		rtdeletemsg(rt, ifp, r->rtt_tableid);
 
 		/* Notify TCP layer of increased Path MTU estimate */
 		ctlfunc = inetsw[ip_protox[IPPROTO_TCP]].pr_ctlinput;
@@ -1062,9 +1064,12 @@ icmp_mtudisc_timeout(struct rtentry *rt, struct rttimer *r)
 			(*ctlfunc)(PRC_MTUINC, sintosa(&sin),
 			    r->rtt_tableid, NULL);
 		splx(s);
-	} else
+	} else {
 		if ((rt->rt_rmx.rmx_locks & RTV_MTU) == 0)
 			rt->rt_rmx.rmx_mtu = 0;
+	}
+
+	if_put(ifp);
 }
 
 /*
@@ -1088,17 +1093,20 @@ icmp_ratelimit(const struct in_addr *dst, const int type, const int code)
 void
 icmp_redirect_timeout(struct rtentry *rt, struct rttimer *r)
 {
-	if (rt == NULL)
-		panic("icmp_redirect_timeout:  bad route to timeout");
+	struct ifnet *ifp;
+	int s;
 
-	if ((rt->rt_flags & (RTF_DYNAMIC | RTF_HOST)) ==
-	    (RTF_DYNAMIC | RTF_HOST)) {
-		int s;
+	ifp = if_get(rt->rt_ifidx);
+	if (ifp == NULL)
+		return;
 
+	if ((rt->rt_flags & (RTF_DYNAMIC|RTF_HOST)) == (RTF_DYNAMIC|RTF_HOST)) {
 		s = splsoftnet();
-		rtdeletemsg(rt, NULL, r->rtt_tableid);
+		rtdeletemsg(rt, ifp, r->rtt_tableid);
 		splx(s);
 	}
+
+	if_put(ifp);
 }
 
 int
