@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_pciids.h,v 1.1 2015/09/23 23:12:11 kettenis Exp $	*/
+/*	$OpenBSD: i915_pciids.h,v 1.2 2015/12/09 05:17:44 jsg Exp $	*/
 /*
  * Copyright 2013 Intel Corporation
  * All Rights Reserved.
@@ -192,8 +192,8 @@
 	INTEL_VGA_DEVICE(0x0A06, info), /* ULT GT1 mobile */ \
 	INTEL_VGA_DEVICE(0x0A16, info), /* ULT GT2 mobile */ \
 	INTEL_VGA_DEVICE(0x0A26, info), /* ULT GT3 mobile */ \
-	INTEL_VGA_DEVICE(0x0A0E, info), /* ULT GT1 reserved */ \
-	INTEL_VGA_DEVICE(0x0A1E, info), /* ULT GT2 reserved */ \
+	INTEL_VGA_DEVICE(0x0A0E, info), /* ULX GT1 mobile */ \
+	INTEL_VGA_DEVICE(0x0A1E, info), /* ULX GT2 mobile */ \
 	INTEL_VGA_DEVICE(0x0A2E, info), /* ULT GT3 reserved */ \
 	INTEL_VGA_DEVICE(0x0D06, info), /* CRW GT1 mobile */ \
 	INTEL_VGA_DEVICE(0x0D16, info), /* CRW GT2 mobile */ \

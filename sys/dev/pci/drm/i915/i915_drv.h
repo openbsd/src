@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.h,v 1.72 2015/11/01 14:07:43 jsg Exp $ */
+/* $OpenBSD: i915_drv.h,v 1.73 2015/12/09 05:17:44 jsg Exp $ */
 /* i915_drv.h -- Private header for the I915 driver -*- linux-c -*-
  */
 /*
@@ -1954,6 +1954,9 @@ struct drm_i915_file_private {
 #define IS_ULT(dev)		(IS_HSW_ULT(dev) || IS_BDW_ULT(dev))
 #define IS_HSW_GT3(dev)		(IS_HASWELL(dev) && \
 				 ((dev)->pdev->device & 0x00F0) == 0x0020)
+/* ULX machines are also considered ULT. */
+#define IS_HSW_ULX(dev)		((dev)->pdev->device == 0x0A0E || \
+				 (dev)->pdev->device == 0x0A1E)
 #define IS_PRELIMINARY_HW(intel_info) ((intel_info)->is_preliminary)
 
 /*

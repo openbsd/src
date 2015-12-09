@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_drv.h,v 1.8 2015/09/23 23:12:12 kettenis Exp $	*/
+/*	$OpenBSD: intel_drv.h,v 1.9 2015/12/09 05:17:44 jsg Exp $	*/
 /*
  * Copyright (c) 2006 Dave Airlie <airlied@linux.ie>
  * Copyright (c) 2007-2008 Intel Corporation
@@ -497,6 +497,7 @@ struct intel_dp {
 	struct delayed_work panel_vdd_work;
 	bool want_panel_vdd;
 	bool psr_setup_done;
+	bool use_tps3;
 	struct intel_connector *attached_connector;
 };
 
