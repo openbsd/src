@@ -1,4 +1,4 @@
-/*	$OpenBSD: tunefs.c,v 1.39 2015/11/23 19:19:30 deraadt Exp $	*/
+/*	$OpenBSD: tunefs.c,v 1.40 2015/12/09 01:08:31 jsg Exp $	*/
 /*	$NetBSD: tunefs.c,v 1.33 2005/01/19 20:46:16 xtraeme Exp $	*/
 
 /*
@@ -147,10 +147,10 @@ main(int argc, char *argv[])
 	if (argc != 1)
 		usage();
 
-	if (Nflag)
+	if (Nflag) {
 		if (pledge("stdio rpath disklabel", NULL) == -1)
 			err(1, "pledge");
-	else {
+	} else {
 		if (pledge("stdio rpath wpath disklabel", NULL) == -1)
 			err(1, "pledge");
 	}
