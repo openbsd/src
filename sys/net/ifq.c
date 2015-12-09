@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifq.c,v 1.2 2015/12/09 03:22:39 dlg Exp $ */
+/*	$OpenBSD: ifq.c,v 1.3 2015/12/09 12:07:42 dlg Exp $ */
 
 /*
  * Copyright (c) 2015 David Gwynne <dlg@openbsd.org>
@@ -21,7 +21,6 @@
 #include <sys/socket.h>
 #include <sys/mbuf.h>
 #include <sys/proc.h>
-#include <sys/atomic.h>
 
 #include <net/if.h>
 #include <net/if_var.h>
@@ -70,41 +69,6 @@ void	ifq_barrier_task(void *);
 
 #define TASK_ONQUEUE 0x1
 
-static inline unsigned int
-ifq_enter(struct ifqueue *ifq)
-{
-	return (atomic_inc_int_nv(&ifq->ifq_serializer) == 1);
-}
-
-static inline unsigned int
-ifq_leave(struct ifqueue *ifq)
-{
-	return (atomic_cas_uint(&ifq->ifq_serializer, 1, 0) == 1);
-}
-
-static inline int
-ifq_next_task(struct ifqueue *ifq, struct task *work)
-{
-	struct task *t;
-	int rv = 0;
-
-	ifq->ifq_serializer = 1;
-
-	mtx_enter(&ifq->ifq_task_mtx);
-	t = TAILQ_FIRST(&ifq->ifq_task_list);
-	if (t != NULL) {
-		TAILQ_REMOVE(&ifq->ifq_task_list, t, t_entry);
-		CLR(t->t_flags, TASK_ONQUEUE);
-
-		*work = *t; /* copy to caller to avoid races */
-
-		rv = 1;
-	}
-	mtx_leave(&ifq->ifq_task_mtx);
-
-	return (rv);
-}
-
 void
 ifq_serialize(struct ifqueue *ifq, struct task *t)
 {
@@ -118,16 +82,25 @@ ifq_serialize(struct ifqueue *ifq, struct task *t)
 		SET(t->t_flags, TASK_ONQUEUE);
 		TAILQ_INSERT_TAIL(&ifq->ifq_task_list, t, t_entry);
 	}
-	mtx_leave(&ifq->ifq_task_mtx);
 
-	if (!ifq_enter(ifq))
-		return;
+	if (ifq->ifq_serializer == 0) {
+		ifq->ifq_serializer = 1;
 
-	do {
-		while (ifq_next_task(ifq, &work))
+		while ((t = TAILQ_FIRST(&ifq->ifq_task_list)) != NULL) {
+			TAILQ_REMOVE(&ifq->ifq_task_list, t, t_entry);
+			CLR(t->t_flags, TASK_ONQUEUE);
+			work = *t; /* copy to caller to avoid races */
+
+			mtx_leave(&ifq->ifq_task_mtx);
+
 			(*work.t_func)(work.t_arg);
 
-	} while (!ifq_leave(ifq));
+			mtx_enter(&ifq->ifq_task_mtx);
+		}
+
+		ifq->ifq_serializer = 0;
+	}
+	mtx_leave(&ifq->ifq_task_mtx);
 }
 
 void
