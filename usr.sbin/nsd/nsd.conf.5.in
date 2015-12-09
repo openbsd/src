@@ -245,10 +245,10 @@ Default is 0, meaning there is no maximum.
 Overrides the default TCP timeout. This also affects zone transfers over TCP.
 .TP
 .B ipv4\-edns\-size:\fR <number>
-Preferred EDNS buffer size for IPv4. 
+Preferred EDNS buffer size for IPv4.  Default 4096.
 .TP
 .B ipv6\-edns\-size:\fR <number>
-Preferred EDNS buffer size for IPv6. 
+Preferred EDNS buffer size for IPv6.  Default 4096.
 .TP
 .B pidfile:\fR <filename>
 Use the pid file instead of the platform specific default, usually 
@@ -333,7 +333,7 @@ And notify refusal, and axfr request refusals.
 .TP
 .B hide\-version:\fR <yes or no>
 Prevent NSD from replying with the version string on CHAOS class 
-queries.
+queries.  Default is no.
 .TP
 .B log\-time\-ascii:\fR <yes or no>
 Log time in ascii, if "no" then in seconds epoch.  Default is yes.
@@ -343,12 +343,12 @@ has a timestamp formatted by syslog.
 .B round\-robin:\fR <yes or no>
 Enable round robin rotation of records in the answer.  This changes the
 order of records in the answer and this may balance load across them.
-The default is off.
+The default is no.
 .TP
 .B zonefiles\-check:\fR <yes or no>
 Make NSD check the mtime of zone files on start and sighup.  If you
 disable it it starts faster (less disk activity in case of a lot of zones).
-The default is enabled.  The nsd\-control reload command reloads zone files
+The default is yes.  The nsd\-control reload command reloads zone files
 regardless of this option.
 .TP
 .B zonefiles\-write:\fR <seconds>
@@ -378,10 +378,10 @@ This option controls the number of packets discarded before we send back a SLIP 
 1 means every query will get a SLIP response.
 .TP
 .B rrl\-ipv4\-prefix\-length:\fR <subnet>
-IPv4 prefix length. Addresses are grouped by netblock.
+IPv4 prefix length. Addresses are grouped by netblock.  Default 24.
 .TP
 .B rrl\-ipv6\-prefix\-length:\fR <subnet>
-IPv6 prefix length. Addresses are grouped by netblock.
+IPv6 prefix length. Addresses are grouped by netblock.  Default 64.
 .TP
 .B rrl\-whitelist\-ratelimit:\fR <qps>
 The max qps for query sorts for a source, which have been
