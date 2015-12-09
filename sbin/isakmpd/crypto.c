@@ -1,4 +1,4 @@
-/* $OpenBSD: crypto.c,v 1.32 2013/03/21 04:30:14 deraadt Exp $	 */
+/* $OpenBSD: crypto.c,v 1.33 2015/12/09 21:41:50 naddy Exp $	 */
 /* $EOM: crypto.c,v 1.32 2000/03/07 20:08:51 niklas Exp $	 */
 
 /*
@@ -37,13 +37,10 @@
 #include "crypto.h"
 #include "log.h"
 
-enum cryptoerr  des1_init(struct keystate *, u_int8_t *, u_int16_t);
 enum cryptoerr  des3_init(struct keystate *, u_int8_t *, u_int16_t);
 enum cryptoerr  blf_init(struct keystate *, u_int8_t *, u_int16_t);
 enum cryptoerr  cast_init(struct keystate *, u_int8_t *, u_int16_t);
 enum cryptoerr  aes_init(struct keystate *, u_int8_t *, u_int16_t);
-void            des1_encrypt(struct keystate *, u_int8_t *, u_int16_t);
-void            des1_decrypt(struct keystate *, u_int8_t *, u_int16_t);
 void            des3_encrypt(struct keystate *, u_int8_t *, u_int16_t);
 void            des3_decrypt(struct keystate *, u_int8_t *, u_int16_t);
 void            blf_encrypt(struct keystate *, u_int8_t *, u_int16_t);
@@ -54,12 +51,6 @@ void            aes_encrypt(struct keystate *, u_int8_t *, u_int16_t);
 void            aes_decrypt(struct keystate *, u_int8_t *, u_int16_t);
 
 struct crypto_xf transforms[] = {
-	{
-		DES_CBC, "Data Encryption Standard (CBC-Mode)", 8, 8,
-		BLOCKSIZE, 0,
-		des1_init,
-		des1_encrypt, des1_decrypt
-	},
 	{
 		TRIPLEDES_CBC, "Triple-DES (CBC-Mode)", 24, 24,
 		BLOCKSIZE, 0,
@@ -85,33 +76,6 @@ struct crypto_xf transforms[] = {
 		aes_encrypt, aes_decrypt
 	},
 };
-
-enum cryptoerr
-des1_init(struct keystate *ks, u_int8_t *key, u_int16_t len)
-{
-	/* DES_set_key returns -1 for parity problems, and -2 for weak keys */
-	DES_set_odd_parity((void *)key);
-	switch (DES_set_key((void *)key, &ks->ks_des[0])) {
-	case -2:
-		return EWEAKKEY;
-	default:
-		return EOKAY;
-	}
-}
-
-void
-des1_encrypt(struct keystate *ks, u_int8_t *d, u_int16_t len)
-{
-	DES_cbc_encrypt((void *)d, (void *)d, len, &ks->ks_des[0], (void *)ks->riv,
-	    DES_ENCRYPT);
-}
-
-void
-des1_decrypt(struct keystate *ks, u_int8_t *d, u_int16_t len)
-{
-	DES_cbc_encrypt((void *)d, (void *)d, len, &ks->ks_des[0], (void *)ks->riv,
-	    DES_DECRYPT);
-}
 
 enum cryptoerr
 des3_init(struct keystate *ks, u_int8_t *key, u_int16_t len)

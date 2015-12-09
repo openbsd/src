@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.145 2015/07/17 18:31:08 blambert Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.146 2015/12/09 21:41:50 naddy Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -103,7 +103,6 @@ static int npromisc = 0;
 
 static const struct sadb_alg ealgs[] = {
 	{ SADB_EALG_NULL, 0, 0, 0 },
-	{ SADB_EALG_DESCBC, 64, 64, 64 },
 	{ SADB_EALG_3DESCBC, 64, 192, 192 },
 	{ SADB_X_EALG_BLF, 64, 40, BLF_MAXKEYLEN * 8},
 	{ SADB_X_EALG_CAST, 64, 40, 128},
@@ -1848,11 +1847,6 @@ pfkeyv2_acquire(struct ipsec_policy *ipo, union sockaddr_union *gw,
 				sadb_comb->sadb_comb_encrypt = SADB_EALG_3DESCBC;
 				sadb_comb->sadb_comb_encrypt_minbits = 192;
 				sadb_comb->sadb_comb_encrypt_maxbits = 192;
-			} else if (!strncasecmp(ipsec_def_enc, "des",
-			    sizeof("des"))) {
-				sadb_comb->sadb_comb_encrypt = SADB_EALG_DESCBC;
-				sadb_comb->sadb_comb_encrypt_minbits = 64;
-				sadb_comb->sadb_comb_encrypt_maxbits = 64;
 			} else if (!strncasecmp(ipsec_def_enc, "blowfish",
 			    sizeof("blowfish"))) {
 				sadb_comb->sadb_comb_encrypt = SADB_X_EALG_BLF;

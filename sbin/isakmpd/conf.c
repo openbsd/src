@@ -1,4 +1,4 @@
-/* $OpenBSD: conf.c,v 1.104 2015/08/20 22:02:21 deraadt Exp $	 */
+/* $OpenBSD: conf.c,v 1.105 2015/12/09 21:41:50 naddy Exp $	 */
 /* $EOM: conf.c,v 1.48 2000/12/04 02:04:29 angelos Exp $	 */
 
 /*
@@ -288,13 +288,13 @@ conf_parse(int trans, char *buf, size_t sz)
  *
  * Resulting section names can be:
  *  For main mode:
- *     {DES,BLF,3DES,CAST,AES,AES-{128,192,256}-{MD5,SHA,SHA2-{256,384,512}} \
+ *     {BLF,3DES,CAST,AES,AES-{128,192,256}-{MD5,SHA,SHA2-{256,384,512}} \
  *         [-GRP{1,2,5,14,15}][-{DSS,RSA_SIG}]
  *  For quick mode:
  *     QM-{proto}[-TRP]-{cipher}[-{hash}][-PFS[-{group}]]-SUITE
  *     where
  *       {proto}  = ESP, AH
- *       {cipher} = DES, 3DES, CAST, BLF, AES, AES-{128,192,256}, AESCTR
+ *       {cipher} = 3DES, CAST, BLF, AES, AES-{128,192,256}, AESCTR
  *       {hash}   = MD5, SHA, RIPEMD, SHA2-{256,384,512}
  *       {group}  = GRP1, GRP2, GRP5, GRP14, GRP15
  *
@@ -477,21 +477,21 @@ conf_load_defaults(int tr)
 		     0};
 	char	*mm_hash_p[] = {"-MD5", "-SHA", "-SHA2-256", "-SHA2-384",
 		    "-SHA2-512", "", 0 };
-	char	*mm_enc[] = {"DES_CBC", "BLOWFISH_CBC", "3DES_CBC", "CAST_CBC",
+	char	*mm_enc[] = {"BLOWFISH_CBC", "3DES_CBC", "CAST_CBC",
 		    "AES_CBC", "AES_CBC", "AES_CBC", "AES_CBC", 0};
-	char	*mm_enc_p[] = {"DES", "BLF", "3DES", "CAST", "AES", "AES-128",
+	char	*mm_enc_p[] = {"BLF", "3DES", "CAST", "AES", "AES-128",
 		    "AES-192", "AES-256", 0};
 	char	*dhgroup[] = {"MODP_1024", "MODP_768", "MODP_1024",
 		    "MODP_1536", "MODP_2048", "MODP_3072", "MODP_4096",
 		    "MODP_6144", "MODP_8192", 0};
 	char	*dhgroup_p[] = {"", "-GRP1", "-GRP2", "-GRP5", "-GRP14",
 		    "-GRP15", "-GRP16", "-GRP17", "-GRP18", 0};
-	char	*qm_enc[] = {"DES", "3DES", "CAST", "BLOWFISH", "AES",
+	char	*qm_enc[] = {"3DES", "CAST", "BLOWFISH", "AES",
 		    "AES", "AES", "AES", "AES_CTR", "AES_CTR", "AES_CTR",
 		    "AES_CTR", "AES_GCM_16",
 		    "AES_GCM_16", "AES_GCM_16", "AES_GMAC", "AES_GMAC",
 		    "AES_GMAC", "NULL", "NONE", 0};
-	char	*qm_enc_p[] = {"-DES", "-3DES", "-CAST", "-BLF", "-AES",
+	char	*qm_enc_p[] = {"-3DES", "-CAST", "-BLF", "-AES",
 		    "-AES-128", "-AES-192", "-AES-256", "-AESCTR",
 		    "-AESCTR-128", "-AESCTR-192", "-AESCTR-256",
 		    "-AESGCM-128", "-AESGCM-192", "-AESGCM-256",

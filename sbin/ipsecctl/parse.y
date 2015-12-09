@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.163 2015/11/04 12:46:13 mikeb Exp $	*/
+/*	$OpenBSD: parse.y,v 1.164 2015/12/09 21:41:50 naddy Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -105,7 +105,6 @@ const struct ipsec_xf encxfs[] = {
 	{ "unknown",		ENCXF_UNKNOWN,		0,	0,	0, 0 },
 	{ "none",		ENCXF_NONE,		0,	0,	0, 0 },
 	{ "3des-cbc",		ENCXF_3DES_CBC,		24,	24,	0, 0 },
-	{ "des-cbc",		ENCXF_DES_CBC,		8,	8,	0, 0 },
 	{ "aes",		ENCXF_AES,		16,	32,	0, 0 },
 	{ "aes-128",		ENCXF_AES_128,		16,	16,	0, 0 },
 	{ "aes-192",		ENCXF_AES_192,		24,	24,	0, 0 },

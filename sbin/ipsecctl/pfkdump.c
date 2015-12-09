@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkdump.c,v 1.41 2015/12/02 12:43:59 naddy Exp $	*/
+/*	$OpenBSD: pfkdump.c,v 1.42 2015/12/09 21:41:50 naddy Exp $	*/
 
 /*
  * Copyright (c) 2003 Markus Friedl.  All rights reserved.
@@ -157,7 +157,6 @@ struct idname auth_types[] = {
 struct idname enc_types[] = {
 	{ SADB_EALG_NONE,		"none",			NULL },
 	{ SADB_EALG_3DESCBC,		"3des-cbc",		NULL },
-	{ SADB_EALG_DESCBC,		"des-cbc",		NULL },
 	{ SADB_X_EALG_AES,		"aes",			NULL },
 	{ SADB_X_EALG_AESCTR,		"aesctr",		NULL },
 	{ SADB_X_EALG_AESGCM16,		"aes-gcm",		NULL },
@@ -678,9 +677,6 @@ pfkey_print_sa(struct sadb_msg *msg, int opts)
 			switch (sa->sadb_sa_encrypt) {
 			case SADB_EALG_3DESCBC:
 				xfs.encxf = &encxfs[ENCXF_3DES_CBC];
-				break;
-			case SADB_EALG_DESCBC:
-				xfs.encxf = &encxfs[ENCXF_DES_CBC];
 				break;
 			case SADB_X_EALG_AES:
 				switch (r.enckey->len) {

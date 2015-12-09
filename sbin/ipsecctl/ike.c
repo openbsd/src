@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike.c,v 1.80 2015/05/25 19:29:36 naddy Exp $	*/
+/*	$OpenBSD: ike.c,v 1.81 2015/12/09 21:41:50 naddy Exp $	*/
 /*
  * Copyright (c) 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -197,9 +197,6 @@ ike_section_p2(struct ipsec_rule *r, FILE *fd)
 			switch (r->p2xfs->encxf->id) {
 			case ENCXF_3DES_CBC:
 				enc_alg = "3DES";
-				break;
-			case ENCXF_DES_CBC:
-				enc_alg = "DES";
 				break;
 			case ENCXF_AES:
 				enc_alg = "AES";
@@ -440,9 +437,6 @@ ike_section_p1(struct ipsec_rule *r, FILE *fd)
 		switch (r->p1xfs->encxf->id) {
 		case ENCXF_3DES_CBC:
 			enc_alg = "3DES";
-			break;
-		case ENCXF_DES_CBC:
-			enc_alg = "DES";
 			break;
 		case ENCXF_AES:
 			enc_alg = "AES";

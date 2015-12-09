@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.conf.5,v 1.131 2015/01/16 15:37:20 schwarze Exp $
+.\" $OpenBSD: isakmpd.conf.5,v 1.132 2015/12/09 21:41:50 naddy Exp $
 .\" $EOM: isakmpd.conf.5,v 1.57 2000/12/21 14:43:17 ho Exp $
 .\"
 .\" Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -28,7 +28,7 @@
 .\"
 .\" Manual page, using -mandoc macros
 .\"
-.Dd $Mdocdate: January 16 2015 $
+.Dd $Mdocdate: December 9 2015 $
 .Dt ISAKMPD.CONF 5
 .Os
 .Sh NAME
@@ -96,7 +96,7 @@ For Main Mode:
 where:
 .Bl -tag -width "cipher" -offset indent -compact
 .It Ar cipher
-is either DES, BLF, 3DES, CAST, AES, AES-128, AES-192 or AES-256
+is either BLF, 3DES, CAST, AES, AES-128, AES-192 or AES-256
 .It Ar hash
 is either MD5, SHA, or SHA2-{256,384,512}
 .It Ar group
@@ -121,7 +121,7 @@ where:
 .It Ar proto
 is either ESP or AH
 .It Ar cipher
-is either DES, 3DES, CAST, BLF, AES, AES-128, AES-192, AES-256, AESCTR,
+is either 3DES, CAST, BLF, AES, AES-128, AES-192, AES-256, AESCTR,
 AESCTR-128, AESCTR-192, AESCTR-256,
 AESGCM-128, AESGCM-192, AESGCM-256, AESGMAC-128, AESGMAC-192, AESGMAC-256
 or NULL
@@ -1005,22 +1005,6 @@ Transforms=		3DES-SHA
 # Main mode transforms
 ######################
 
-# DES
-
-[DES-MD5]
-ENCRYPTION_ALGORITHM=	DES_CBC
-HASH_ALGORITHM=		MD5
-AUTHENTICATION_METHOD=	PRE_SHARED
-GROUP_DESCRIPTION=	MODP_1024
-Life=			LIFE_MAIN_MODE
-
-[DES-SHA]
-ENCRYPTION_ALGORITHM=	DES_CBC
-HASH_ALGORITHM=		SHA
-AUTHENTICATION_METHOD=	PRE_SHARED
-GROUP_DESCRIPTION=	MODP_1024
-Life=			LIFE_MAIN_MODE
-
 # 3DES
 
 [3DES-SHA]
@@ -1092,26 +1076,6 @@ Life=			LIFE_MAIN_MODE
 # Quick mode protection suites
 ##############################
 
-# DES
-
-[QM-ESP-DES-SUITE]
-Protocols=		QM-ESP-DES
-
-[QM-ESP-DES-PFS-SUITE]
-Protocols=		QM-ESP-DES-PFS
-
-[QM-ESP-DES-MD5-SUITE]
-Protocols=		QM-ESP-DES-MD5
-
-[QM-ESP-DES-MD5-PFS-SUITE]
-Protocols=		QM-ESP-DES-MD5-PFS
-
-[QM-ESP-DES-SHA-SUITE]
-Protocols=		QM-ESP-DES-SHA
-
-[QM-ESP-DES-SHA-PFS-SUITE]
-Protocols=		QM-ESP-DES-SHA-PFS
-
 # 3DES
 
 [QM-ESP-3DES-SHA-SUITE]
@@ -1162,34 +1126,13 @@ Protocols=		QM-AH-MD5-PFS
 
 # AH + ESP (non-default)
 
-[QM-AH-MD5-ESP-DES-SUITE]
-Protocols=		QM-AH-MD5,QM-ESP-DES
+[QM-AH-MD5-ESP-3DES-SHA-SUITE]
+Protocols=		QM-AH-MD5,QM-ESP-3DES-SHA
 
-[QM-AH-MD5-ESP-DES-MD5-SUITE]
-Protocols=		QM-AH-MD5,QM-ESP-DES-MD5
-
-[QM-ESP-DES-MD5-AH-MD5-SUITE]
-Protocols=		QM-ESP-DES-MD5,QM-AH-MD5
+[QM-ESP-3DES-SHA-AH-MD5-SUITE]
+Protocols=		QM-ESP-3DES-SHA,QM-AH-MD5
 
 # Quick mode protocols
-
-# DES
-
-[QM-ESP-DES]
-PROTOCOL_ID=		IPSEC_ESP
-Transforms=		QM-ESP-DES-XF
-
-[QM-ESP-DES-MD5]
-PROTOCOL_ID=		IPSEC_ESP
-Transforms=		QM-ESP-DES-MD5-XF
-
-[QM-ESP-DES-MD5-PFS]
-PROTOCOL_ID=		IPSEC_ESP
-Transforms=		QM-ESP-DES-MD5-PFS-XF
-
-[QM-ESP-DES-SHA]
-PROTOCOL_ID=		IPSEC_ESP
-Transforms=		QM-ESP-DES-SHA-XF
 
 # 3DES
 
@@ -1273,32 +1216,6 @@ PROTOCOL_ID=		IPSEC_AH
 Transforms=		QM-AH-MD5-PFS-XF
 
 # Quick mode transforms
-
-# ESP DES+MD5
-
-[QM-ESP-DES-XF]
-TRANSFORM_ID=		DES
-ENCAPSULATION_MODE=	TUNNEL
-Life=			LIFE_QUICK_MODE
-
-[QM-ESP-DES-MD5-XF]
-TRANSFORM_ID=		DES
-ENCAPSULATION_MODE=	TUNNEL
-AUTHENTICATION_ALGORITHM=	HMAC_MD5
-Life=			LIFE_QUICK_MODE
-
-[QM-ESP-DES-MD5-PFS-XF]
-TRANSFORM_ID=		DES
-ENCAPSULATION_MODE=	TUNNEL
-GROUP_DESCRIPTION=	MODP_1024
-AUTHENTICATION_ALGORITHM=	HMAC_MD5
-Life=			LIFE_QUICK_MODE
-
-[QM-ESP-DES-SHA-XF]
-TRANSFORM_ID=		DES
-ENCAPSULATION_MODE=	TUNNEL
-AUTHENTICATION_ALGORITHM=	HMAC_SHA
-Life=			LIFE_QUICK_MODE
 
 # 3DES
 

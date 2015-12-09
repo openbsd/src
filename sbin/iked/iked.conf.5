@@ -1,4 +1,4 @@
-.\" $OpenBSD: iked.conf.5,v 1.43 2015/11/04 12:40:49 mikeb Exp $
+.\" $OpenBSD: iked.conf.5,v 1.44 2015/12/09 21:41:49 naddy Exp $
 .\"
 .\" Copyright (c) 2010 - 2014 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 4 2015 $
+.Dd $Mdocdate: December 9 2015 $
 .Dt IKED.CONF 5
 .Os
 .Sh NAME
@@ -757,7 +757,6 @@ The following cipher types are permitted with the
 keyword:
 .Bl -column "chacha20-poly1305" "Key Length" "[ESP only]" -offset indent
 .It Em "Cipher" Ta Em "Key Length" Ta ""
-.It Li des Ta "56 bits" Ta "[ESP only]"
 .It Li 3des Ta "168 bits" Ta ""
 .It Li aes-128 Ta "128 bits" Ta ""
 .It Li aes-192 Ta "192 bits" Ta ""
@@ -782,11 +781,7 @@ not encryption:
 .It Li null Ta "" Ta "[ESP only]"
 .El
 .Pp
-Use of DES as an encryption algorithm is considered to be insecure
-since brute force attacks are practical due its short key length.
-.Pp
-DES requires 8 bytes to form a 56-bit key and 3DES requires 24 bytes
-to form its 168-bit key.
+3DES requires 24 bytes to form its 168-bit key.
 This is because the most significant bit of each byte is used for parity.
 .Pp
 The keysize of AES-CTR is actually 128-bit.

@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsec.c,v 1.144 2015/08/20 22:02:21 deraadt Exp $	 */
+/* $OpenBSD: ipsec.c,v 1.145 2015/12/09 21:41:50 naddy Exp $	 */
 /* $EOM: ipsec.c,v 1.143 2000/12/11 23:57:42 niklas Exp $	 */
 
 /*
@@ -1822,10 +1822,6 @@ ipsec_esp_enckeylength(struct proto *proto)
 
 	/* Compute the keylength to use.  */
 	switch (proto->id) {
-	case IPSEC_ESP_DES:
-	case IPSEC_ESP_DES_IV32:
-	case IPSEC_ESP_DES_IV64:
-		return 8;
 	case IPSEC_ESP_3DES:
 		return 24;
 	case IPSEC_ESP_CAST:

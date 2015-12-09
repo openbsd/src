@@ -1,4 +1,4 @@
-/* $OpenBSD: sa.c,v 1.122 2015/08/20 22:02:21 deraadt Exp $	 */
+/* $OpenBSD: sa.c,v 1.123 2015/12/09 21:41:50 naddy Exp $	 */
 /* $EOM: sa.c,v 1.112 2000/12/12 00:22:52 niklas Exp $	 */
 
 /*
@@ -550,12 +550,6 @@ report_proto(FILE *fd, struct proto *proto)
 
 		fprintf(fd, "Encryption algorithm: ");
 		switch (proto->id) {
-		case IPSEC_ESP_DES:
-		case IPSEC_ESP_DES_IV32:
-		case IPSEC_ESP_DES_IV64:
-			fprintf(fd, "DES\n");
-			break;
-
 		case IPSEC_ESP_3DES:
 			fprintf(fd, "3DES\n");
 			break;

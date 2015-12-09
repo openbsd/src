@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.53 2015/11/04 12:40:49 mikeb Exp $	*/
+/*	$OpenBSD: parse.y,v 1.54 2015/12/09 21:41:49 naddy Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -177,7 +177,6 @@ const struct ipsec_xf ikeencxfs[] = {
 };
 
 const struct ipsec_xf ipsecencxfs[] = {
-	{ "des",		IKEV2_XFORMENCR_DES,		8 },
 	{ "3des",		IKEV2_XFORMENCR_3DES,		24 },
 	{ "3des-cbc",		IKEV2_XFORMENCR_3DES,		24 },
 	{ "aes-128",		IKEV2_XFORMENCR_AES_CBC,	16, 16 },
