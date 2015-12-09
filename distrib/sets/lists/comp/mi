@@ -6417,6 +6417,7 @@
 ./usr/share/man/man9/ifq_is_oactive.9
 ./usr/share/man/man9/ifq_len.9
 ./usr/share/man/man9/ifq_purge.9
+./usr/share/man/man9/ifq_restart.9
 ./usr/share/man/man9/ifq_set_oactive.9
 ./usr/share/man/man9/iic.9
 ./usr/share/man/man9/iic_acquire_bus.9
