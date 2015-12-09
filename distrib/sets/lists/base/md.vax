@@ -619,6 +619,8 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pv
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pv/pvreg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pv/pvvar.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/dev/pv/xenreg.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/dev/pv/xenvar.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/radio_if.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/radiovar.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/rasops

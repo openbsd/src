@@ -662,6 +662,8 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pv
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pv/pvreg.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pv/pvvar.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pv/xenreg.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pv/xenvar.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/radio_if.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/radiovar.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/rasops

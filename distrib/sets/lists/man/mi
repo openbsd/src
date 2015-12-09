@@ -2083,11 +2083,13 @@
 ./usr/share/man/man4/wsmouse.4
 ./usr/share/man/man4/wsmux.4
 ./usr/share/man/man4/xe.4
+./usr/share/man/man4/xen.4
 ./usr/share/man/man4/xf86.4
 ./usr/share/man/man4/xge.4
 ./usr/share/man/man4/xhci.4
 ./usr/share/man/man4/xl.4
 ./usr/share/man/man4/xmphy.4
+./usr/share/man/man4/xspd.4
 ./usr/share/man/man4/yds.4
 ./usr/share/man/man4/ym.4
 ./usr/share/man/man4/zaurus
