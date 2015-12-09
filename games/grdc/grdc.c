@@ -1,4 +1,4 @@
-/*	$OpenBSD: grdc.c,v 1.20 2015/11/30 08:46:07 tb Exp $	*/
+/*	$OpenBSD: grdc.c,v 1.21 2015/12/09 02:00:40 jsg Exp $	*/
 /*
  *
  * Copyright 2002 Amos Shapir.  Public domain.
@@ -20,6 +20,7 @@
 #include <stdio.h>
 #include <time.h>
 #include <unistd.h>
+#include <err.h>
 
 #define XLENGTH 58
 #define YDEPTH  7
