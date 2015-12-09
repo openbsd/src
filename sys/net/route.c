@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.289 2015/12/05 10:07:55 tedu Exp $	*/
+/*	$OpenBSD: route.c,v 1.290 2015/12/09 09:02:02 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -645,6 +645,9 @@ rtdeletemsg(struct rtentry *rt, struct ifnet *ifp, u_int tableid)
 static inline int
 rtequal(struct rtentry *a, struct rtentry *b)
 {
+	if (a == b)
+		return 1;
+
 	if (memcmp(rt_key(a), rt_key(b), rt_key(a)->sa_len) == 0 &&
 	    rt_plen(a) == rt_plen(b))
 		return 1;
@@ -656,10 +659,22 @@ int
 rtflushclone1(struct rtentry *rt, void *arg, u_int id)
 {
 	struct rtentry *parent = arg;
+	struct ifnet *ifp;
 
-	if ((rt->rt_flags & RTF_CLONED) != 0 && (rt->rt_parent == parent ||
-	    rtequal(rt->rt_parent, parent)))
-		rtdeletemsg(rt, NULL, id);
+	ifp = if_get(rt->rt_ifidx);
+
+	/*
+	 * This happens when an interface with a RTF_CLONING route is
+	 * being detached.  In this case it's safe to bail because all
+	 * the routes are being purged by rt_if_remove().
+	 */
+	if (ifp == NULL)
+	        return 0;
+
+	if (ISSET(rt->rt_flags, RTF_CLONED) && rtequal(rt->rt_parent, parent))
+	        rtdeletemsg(rt, ifp, id);
+
+	if_put(ifp);
 	return 0;
 }
 
