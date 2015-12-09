@@ -1,4 +1,4 @@
-/*	$OpenBSD: ukbd.c,v 1.71 2015/03/14 03:38:50 jsg Exp $	*/
+/*	$OpenBSD: ukbd.c,v 1.72 2015/12/09 09:23:21 jung Exp $	*/
 /*      $NetBSD: ukbd.c,v 1.85 2003/03/11 16:44:00 augustss Exp $        */
 
 /*
@@ -158,13 +158,13 @@ const struct wskbd_accessops ukbd_accessops = {
 	ukbd_ioctl,
 };
 
-int ukbd_match(struct device *, void *, void *); 
-void ukbd_attach(struct device *, struct device *, void *); 
-int ukbd_detach(struct device *, int); 
+int	ukbd_match(struct device *, void *, void *);
+void	ukbd_attach(struct device *, struct device *, void *);
+int	ukbd_detach(struct device *, int);
 
-struct cfdriver ukbd_cd = { 
-	NULL, "ukbd", DV_DULL 
-}; 
+struct cfdriver ukbd_cd = {
+	NULL, "ukbd", DV_DULL
+};
 
 const struct cfattach ukbd_ca = {
 	sizeof(struct ukbd_softc), ukbd_match, ukbd_attach, ukbd_detach
@@ -181,6 +181,9 @@ void	ukbd_gdium_munge(void *, uint8_t *, u_int);
 void	ukbd_apple_munge(void *, uint8_t *, u_int);
 void	ukbd_apple_mba_munge(void *, uint8_t *, u_int);
 void	ukbd_apple_iso_munge(void *, uint8_t *, u_int);
+void	ukbd_apple_iso_mba_munge(void *, uint8_t *, u_int);
+void	ukbd_apple_translate(void *, uint8_t *, u_int,
+	    const struct ukbd_translation *, u_int);
 uint8_t	ukbd_translate(const struct ukbd_translation *, size_t, uint8_t);
 
 int
@@ -241,17 +244,20 @@ ukbd_attach(struct device *parent, struct device *self, void *aux)
 				switch (uha->uaa->product) {
 				case USB_PRODUCT_APPLE_FOUNTAIN_ISO:
 				case USB_PRODUCT_APPLE_GEYSER_ISO:
+				case USB_PRODUCT_APPLE_WELLSPRING6_ISO:
 					sc->sc_munge = ukbd_apple_iso_munge;
 					break;
-				case USB_PRODUCT_APPLE_WELLSPRING4A_ANSI:
-				case USB_PRODUCT_APPLE_WELLSPRING4A_ISO:
-				case USB_PRODUCT_APPLE_WELLSPRING4A_JIS:
-				case USB_PRODUCT_APPLE_WELLSPRING4_ANSI:
-				case USB_PRODUCT_APPLE_WELLSPRING4_ISO:
-				case USB_PRODUCT_APPLE_WELLSPRING4_JIS:
-				case USB_PRODUCT_APPLE_WELLSPRING_ANSI:
 				case USB_PRODUCT_APPLE_WELLSPRING_ISO:
+				case USB_PRODUCT_APPLE_WELLSPRING4_ISO:
+				case USB_PRODUCT_APPLE_WELLSPRING4A_ISO:
+					sc->sc_munge = ukbd_apple_iso_mba_munge;
+					break;
+				case USB_PRODUCT_APPLE_WELLSPRING_ANSI:
 				case USB_PRODUCT_APPLE_WELLSPRING_JIS:
+				case USB_PRODUCT_APPLE_WELLSPRING4_ANSI:
+				case USB_PRODUCT_APPLE_WELLSPRING4_JIS:
+				case USB_PRODUCT_APPLE_WELLSPRING4A_ANSI:
+				case USB_PRODUCT_APPLE_WELLSPRING4A_JIS:
 					sc->sc_munge = ukbd_apple_mba_munge;
 					break;
 				default:
@@ -431,15 +437,14 @@ ukbd_cnpollc(void *v, int on)
 }
 
 void
-ukbd_cnbell(void *v, u_int pitch, u_int period, u_int volume) 
+ukbd_cnbell(void *v, u_int pitch, u_int period, u_int volume)
 {
 	hidkbd_bell(pitch, period, volume, 1);
-}	
+}
 
 int
 ukbd_cnattach(void)
 {
-
 	/*
 	 * XXX USB requires too many parts of the kernel to be running
 	 * XXX in order to work, so we can't do much for the console
@@ -460,11 +465,27 @@ ukbd_translate(const struct ukbd_translation *table, size_t tsize,
 }
 
 void
-ukbd_apple_munge(void *vsc, uint8_t *ibuf, u_int ilen)
+ukbd_apple_translate(void *vsc, uint8_t *ibuf, u_int ilen,
+    const struct ukbd_translation* trans, u_int tlen)
 {
 	struct ukbd_softc *sc = vsc;
 	struct hidkbd *kbd = &sc->sc_kbd;
 	uint8_t *pos, *spos, *epos, xlat;
+
+	spos = ibuf + kbd->sc_keycodeloc.pos / 8;
+	epos = spos + kbd->sc_nkeycode;
+
+	for (pos = spos; pos != epos; pos++) {
+		xlat = ukbd_translate(trans, tlen, *pos);
+		if (xlat != 0)
+			*pos = xlat;
+	}
+}
+
+void
+ukbd_apple_munge(void *vsc, uint8_t *ibuf, u_int ilen)
+{
+	struct ukbd_softc *sc = vsc;
 
 	static const struct ukbd_translation apple_fn_trans[] = {
 		{ 40, 73 },	/* return -> insert */
@@ -498,23 +519,14 @@ ukbd_apple_munge(void *vsc, uint8_t *ibuf, u_int ilen)
 	if (!hid_get_data(ibuf, ilen, &sc->sc_apple_fn))
 		return;
 
-	spos = ibuf + kbd->sc_keycodeloc.pos / 8;
-	epos = spos + kbd->sc_nkeycode;
-
-	for (pos = spos; pos != epos; pos++) {
-		xlat = ukbd_translate(apple_fn_trans,
-		    nitems(apple_fn_trans), *pos);
-		if (xlat != 0)
-			*pos = xlat;
-	}
+	ukbd_apple_translate(vsc, ibuf, ilen, apple_fn_trans,
+	    nitems(apple_fn_trans));
 }
 
 void
 ukbd_apple_mba_munge(void *vsc, uint8_t *ibuf, u_int ilen)
 {
 	struct ukbd_softc *sc = vsc;
-	struct hidkbd *kbd = &sc->sc_kbd;
-	uint8_t *pos, *spos, *epos, xlat;
 
 	static const struct ukbd_translation apple_fn_trans[] = {
 		{ 40, 73 },	/* return -> insert */
@@ -544,40 +556,34 @@ ukbd_apple_mba_munge(void *vsc, uint8_t *ibuf, u_int ilen)
 	if (!hid_get_data(ibuf, ilen, &sc->sc_apple_fn))
 		return;
 
-	spos = ibuf + kbd->sc_keycodeloc.pos / 8;
-	epos = spos + kbd->sc_nkeycode;
-
-	for (pos = spos; pos != epos; pos++) {
-		xlat = ukbd_translate(apple_fn_trans,
-		    nitems(apple_fn_trans), *pos);
-		if (xlat != 0)
-			*pos = xlat;
-	}
+	ukbd_apple_translate(vsc, ibuf, ilen, apple_fn_trans,
+	    nitems(apple_fn_trans));
 }
 
 void
 ukbd_apple_iso_munge(void *vsc, uint8_t *ibuf, u_int ilen)
 {
-	struct ukbd_softc *sc = vsc;
-	struct hidkbd *kbd = &sc->sc_kbd;
-	uint8_t *pos, *spos, *epos, xlat;
-
 	static const struct ukbd_translation apple_iso_trans[] = {
 		{ 53, 100 },	/* less -> grave */
 		{ 100, 53 },
 	};
 
-	spos = ibuf + kbd->sc_keycodeloc.pos / 8;
-	epos = spos + kbd->sc_nkeycode;
-
-	for (pos = spos; pos != epos; pos++) {
-		xlat = ukbd_translate(apple_iso_trans,
-		    nitems(apple_iso_trans), *pos);
-		if (xlat != 0)
-			*pos = xlat;
-	}
-
+	ukbd_apple_translate(vsc, ibuf, ilen, apple_iso_trans,
+	    nitems(apple_iso_trans));
 	ukbd_apple_munge(vsc, ibuf, ilen);
+}
+
+void
+ukbd_apple_iso_mba_munge(void *vsc, uint8_t *ibuf, u_int ilen)
+{
+	static const struct ukbd_translation apple_iso_trans[] = {
+		{ 53, 100 },	/* less -> grave */
+		{ 100, 53 },
+	};
+
+	ukbd_apple_translate(vsc, ibuf, ilen, apple_iso_trans,
+	    nitems(apple_iso_trans));
+	ukbd_apple_mba_munge(vsc, ibuf, ilen);
 }
 
 #ifdef __loongson__
