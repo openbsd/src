@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.267 2015/12/08 10:06:40 mpi Exp $
+#	$OpenBSD: Makefile,v 1.268 2015/12/09 06:29:02 dlg Exp $
 #	$NetBSD: Makefile,v 1.4 1996/01/09 03:23:01 thorpej Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
@@ -220,7 +220,7 @@ MLINKS+=if_rxr_init.9 if_rxr_get.9 if_rxr_init.9 if_rxr_put.9 \
 MLINKS+=ifq_enqueue.9 ifq_dequeue.9 ifq_enqueue.9 ifq_purge.9 \
 	ifq_enqueue.9 ifq_len.9 ifq_enqueue.9 ifq_empty.9 \
 	ifq_enqueue.9 ifq_set_oactive.9 ifq_enqueue.9 ifq_clr_oactive.9 \
-	ifq_enqueue.9 ifq_is_oactive.9
+	ifq_enqueue.9 ifq_is_oactive.9 ifq_enqueue.9 ifq_restart.9
 MLINKS+=ifq_deq_begin.9 ifq_deq_commit.9 ifq_deq_begin.9 ifq_deq_rollback.9
 MLINKS+=iic.9 iic_acquire_bus.9 iic.9 iic_release_bus.9 iic.9 iic_exec.9 \
 	iic.9 iic_smbus_write_byte.9 iic.9 iic_smbus_read_byte.9 \

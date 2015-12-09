@@ -1,4 +1,4 @@
-.\"     $OpenBSD: ifq_enqueue.9,v 1.4 2015/11/25 03:09:57 dlg Exp $
+.\"     $OpenBSD: ifq_enqueue.9,v 1.5 2015/12/09 06:29:02 dlg Exp $
 .\"
 .\"  Copyright (c) 2015 David Gwynne <dlg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 25 2015 $
+.Dd $Mdocdate: December 9 2015 $
 .Dt IFQ_ENQUEUE 9
 .Os
 .Sh NAME
@@ -25,7 +25,8 @@
 .Nm ifq_empty ,
 .Nm ifq_set_oactive ,
 .Nm ifq_clr_oactive ,
-.Nm ifq_is_oactive
+.Nm ifq_is_oactive ,
+.Nm ifq_restart
 .Nd interface send queue API
 .Sh SYNOPSIS
 .In net/if_var.h
@@ -45,6 +46,8 @@
 .Fn ifq_clr_oactive "struct ifqueue *ifq"
 .Ft unsigned int
 .Fn ifq_is_oactive "struct ifqueue *ifq"
+.Ft void
+.Fn ifq_restart "struct ifqueue *ifq"
 .Sh DESCRIPTION
 The ifqueue API provides implementions of data structures and
 operations for the network stack to queue mbufs for a network driver
@@ -97,6 +100,13 @@ meaning it is now able to transmit packets.
 Return if the hardware associated with the interface send queue
 .Fa ifq
 is unable to transmit more packets.
+.It Fn ifq_restart "struct ifqueue *ifq"
+Dispatch a call to
+.Fn ifq_clr_oactive
+and the interfaces start routine.
+This call is serialised with other calls to the start routine via
+.Fn if_start
+and therefore provides race free modification of the "active" mark.
 .El
 .Sh CONTEXT
 .Fn ifq_enqueue ,
