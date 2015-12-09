@@ -23,7 +23,7 @@
 #include "xfrd-disk.h"
 #include "util.h"
 
-/* sort tcppipe, first on IP address, for an IPadresss, sort on num_unused */
+/* sort tcppipe, first on IP address, for an IPaddresss, sort on num_unused */
 static int
 xfrd_pipe_cmp(const void* a, const void* b)
 {
@@ -908,7 +908,7 @@ xfrd_tcp_release(xfrd_tcp_set_t* set, xfrd_zone_t* zone)
 		socklen_t to_len = xfrd_acl_sockaddr_to(
 			set->tcp_waiting_first->master, &to);
 		if(to_len == tp->ip_len && memcmp(&to, &tp->ip, to_len) == 0) {
-			/* use this connnection for the waiting zone */
+			/* use this connection for the waiting zone */
 			zone = set->tcp_waiting_first;
 			assert(zone->tcp_conn == -1);
 			zone->tcp_conn = conn;

@@ -132,7 +132,7 @@ struct query;
 #define	ARCOUNT(packet)		(buffer_read_u16_at((packet), 10))
 #define ARCOUNT_SET(packet, c)	(buffer_write_u16_at((packet), 10, (c)))
 
-/* Miscelaneous limits */
+/* Miscellaneous limits */
 #define MAX_PACKET_SIZE         65535   /* Maximum supported size of DNS packets.  */
 
 #define	QIOBUFSZ		(MAX_PACKET_SIZE + MAX_RR_SIZE)

@@ -333,7 +333,7 @@ zparser_conv_algorithm(region_type *region, const char *text)
 uint16_t *
 zparser_conv_certificate_type(region_type *region, const char *text)
 {
-	/* convert a algoritm string to integer */
+	/* convert an algorithm string to integer */
 	const lookup_table_type *type;
 	uint16_t id;
 

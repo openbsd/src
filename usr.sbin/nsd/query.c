@@ -1108,7 +1108,7 @@ answer_authoritative(struct nsd   *nsd,
 		match = NULL;
 	}
 
-	/* Authorative zone.  */
+	/* Authoritative zone.  */
 #ifdef NSEC3
 	if (q->edns.dnssec_ok && q->zone->nsec3_param) {
 		nsec3_answer_authoritative(&match, q, answer,
@@ -1204,7 +1204,7 @@ answer_lookup_zone(struct nsd *nsd, struct query *q, answer_type *answer,
 	if (exact && q->qtype == TYPE_DS && closest_encloser == q->zone->apex) {
 		/*
 		 * Type DS query at the zone apex (and the server is
-		 * not authoratitive for the parent zone).
+		 * not authoritative for the parent zone).
 		 */
 		if (q->qclass == CLASS_ANY) {
 			AA_CLR(q->packet);

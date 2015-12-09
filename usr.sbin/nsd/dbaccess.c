@@ -84,7 +84,7 @@ apex_rrset_checks(namedb_type* db, rrset_type* rrset, domain_type* domain)
 		}
 		memcpy(zone->soa_nx_rrset->rrs, rrset->rrs, sizeof(rr_type));
 
-		/* check the ttl and MINIMUM value and set accordinly */
+		/* check the ttl and MINIMUM value and set accordingly */
 		memcpy(&soa_minimum, rdata_atom_data(rrset->rrs->rdatas[6]),
 				rdata_atom_size(rrset->rrs->rdatas[6]));
 		if (rrset->rrs->ttl > ntohl(soa_minimum)) {

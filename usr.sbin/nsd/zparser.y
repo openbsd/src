@@ -134,7 +134,7 @@ line:	NL
     |	error NL
     ;
 
-/* needed to cope with ( and ) in arbitary places */
+/* needed to cope with ( and ) in arbitrary places */
 sp:	SP
     |	sp SP
     ;
@@ -1052,7 +1052,7 @@ rdata_caa:	STR sp STR sp STR trail
 
 rdata_unknown:	URR sp STR sp str_sp_seq trail
     {
-	    /* $2 is the number of octects, currently ignored */
+	    /* $2 is the number of octets, currently ignored */
 	    $$ = zparser_conv_hex(parser->region, $5.str, $5.len);
 
     }

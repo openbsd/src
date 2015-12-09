@@ -47,7 +47,7 @@ region_type *region_create(void *(*allocator)(size_t),
  * Note that large_object_size must be <= chunk_size.
  * Anything larger than the large object size is individually alloced.
  * large_object_size = chunk_size/8 is reasonable;
- * initial_cleanup_size is the number of prealloced ptrs for cleanups.
+ * initial_cleanup_size is the number of preallocated ptrs for cleanups.
  * The cleanups are in a growing array, and it must start larger than zero.
  * If recycle is true, environmentally friendly memory recycling is be enabled.
  */

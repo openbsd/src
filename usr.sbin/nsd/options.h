@@ -56,7 +56,7 @@ struct nsd_options {
 	/* rbtree of keys defined, by name */
 	rbtree_t* keys;
 
-	/* list of ip adresses to bind to (or NULL for all) */
+	/* list of ip addresses to bind to (or NULL for all) */
 	ip_address_option_t* ip_addresses;
 
 	int ip_transparent;
@@ -201,7 +201,7 @@ struct acl_options {
 	union acl_addr_storage addr;
 	union acl_addr_storage range_mask;
 	enum {
-		acl_range_single = 0,	/* single adress */
+		acl_range_single = 0,	/* single address */
 		acl_range_mask = 1,	/* 10.20.30.40&255.255.255.0 */
 		acl_range_subnet = 2,	/* 10.20.30.40/28 */
 		acl_range_minmax = 3	/* 10.20.30.40-10.20.30.60 (mask=max) */

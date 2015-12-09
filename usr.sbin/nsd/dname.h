@@ -172,7 +172,7 @@ dname_label(const dname_type *dname, uint8_t label)
 
 
 /*
- * Compare two domain names.  The comparison defines a lexographical
+ * Compare two domain names.  The comparison defines a lexicographical
  * ordering based on the domain name's labels, starting with the most
  * significant label.
  *
@@ -185,7 +185,7 @@ int dname_compare(const dname_type *left, const dname_type *right);
 
 
 /*
- * Compare two labels.  The comparison defines a lexographical
+ * Compare two labels.  The comparison defines a lexicographical
  * ordering based on the characters in the labels.
  *
  * Return < 0 if LEFT < RIGHT, 0 if LEFT == RIGHT, and > 0 if LEFT >

@@ -804,7 +804,7 @@ rrtype_from_string(const char *name)
 	rrtype_descriptor_type *entry;
 
 	/* Because this routine is called during zone parse for every record,
-	 * we optimise for frequently occuring records.
+	 * we optimise for frequently occurring records.
 	 * Also, we optimise for 'IN' and numbers are not rr types, because
 	 * during parse this routine is called for every rr class and TTL
 	 * to determine that it is not an RR type */

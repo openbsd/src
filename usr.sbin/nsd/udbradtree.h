@@ -88,7 +88,7 @@ struct udb_radarray_d {
 /**
  * Create new radix tree on udb storage
  * @param udb: the udb to allocate space on.
- * @param ptr: ptr to the udbradtree is returned here. pass uninitialised.
+ * @param ptr: ptr to the udbradtree is returned here.  Pass uninitialised.
  * 	type is udb_radtree_d.
  * @return 0 on alloc failure.
  */
@@ -116,7 +116,7 @@ void udb_radix_tree_delete(udb_base* udb, udb_ptr* rt);
  * @param key: key string.
  * @param len: length of key.
  * @param elem: pointer to element data, on the udb store.
- * @param result: the inserted node is set to this value.  Pass uninited.
+ * @param result: the inserted node is set to this value.  Pass uninitialised.
 	Not set if the routine fails.
  * @return NULL on failure - out of memory.
  * 	NULL on failure - duplicate entry.
@@ -165,7 +165,7 @@ int udb_radix_find_less_equal(udb_base* udb, udb_ptr* rt, uint8_t* k,
  * @param rt: the radix tree, type udb_radtree_d.
  * @param p: set to the first node in the tree, or NULL if none.
  * 	type udb_radnode_d.
- * 	pass uninited, zero or unlinked udb_ptr.
+ * 	pass uninitialised, zero or unlinked udb_ptr.
  */
 void udb_radix_first(udb_base* udb, udb_ptr* rt, udb_ptr* p);
 
@@ -174,7 +174,7 @@ void udb_radix_first(udb_base* udb, udb_ptr* rt, udb_ptr* p);
  * @param udb: the udb.
  * @param rt: the radix tree, type udb_radtree_d.
  * @param p: last node or NULL if none, type udb_radnode_d.
- * 	pass uninited, zero or unlinked udb_ptr.
+ * 	pass uninitialised, zero or unlinked udb_ptr.
  */
 void udb_radix_last(udb_base* udb, udb_ptr* rt, udb_ptr* p);
 
@@ -220,7 +220,7 @@ size_t size_of_lookup_ext(udb_ptr* node);
  * @param dname: domain name in uncompressed wireformat.
  * @param dlen: length of k.
  * @param elem: element to store
- * @param result: the inserted node is set to this value.  Pass uninited.
+ * @param result: the inserted node is set to this value.  Pass uninitialised.
 	Not set if the routine fails.
  * @return 0 on failure
  */
