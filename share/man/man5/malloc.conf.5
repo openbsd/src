@@ -1,4 +1,4 @@
-.\"	$OpenBSD: malloc.conf.5,v 1.1 2014/12/06 18:54:55 schwarze Exp $
+.\"	$OpenBSD: malloc.conf.5,v 1.2 2015/12/09 14:09:50 tb Exp $
 .\"
 .\" Copyright (c) 2012 Damien Miller <djm@openbsd.org>
 .\" Copyright (c) 2008, 2009, 2010, 2011 Otto Moerbeek <otto@drijf.net>
@@ -17,7 +17,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 6 2014 $
+.Dd $Mdocdate: December 9 2015 $
 .Dt MALLOC.CONF 5
 .Os
 .Sh NAME
@@ -43,6 +43,14 @@ inconsistencies or incorrect usage.
 This is the default and a very handy debugging aid,
 since the core file represents the time of failure,
 rather than when the bogus pointer was used.
+.It Cm C
+.Dq Canaries .
+Add canaries at the end of allocations in order to detect
+heap overflows.
+The canary's content is checked when
+.Xr free 3
+is called.
+If it has been corrupted, the process is aborted.
 .It Cm D
 .Dq Dump .
 .Xr malloc 3
@@ -84,7 +92,9 @@ Freed chunks are filled with 0xdf.
 .It Cm j
 .Dq Don't Junk .
 By default, small chunks are always junked, and the first part of pages
-is junked after free.
+is junked after free and its reuse is delayed.
+After the delay, the filling pattern is validated
+and the process is aborted if the pattern was modified.
 This option ensures that no junking is performed.
 .It Cm P
 .Dq Move allocations within a page.
