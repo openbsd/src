@@ -1,4 +1,4 @@
-/*	$OpenBSD: login.c,v 1.65 2015/10/26 15:29:17 zhuk Exp $	*/
+/*	$OpenBSD: login.c,v 1.66 2015/12/09 19:26:26 mmcc Exp $	*/
 /*	$NetBSD: login.c,v 1.13 1996/05/15 23:50:16 jtc Exp $	*/
 
 /*-
@@ -394,8 +394,7 @@ main(int argc, char *argv[])
 		}
 		if ((style = strchr(username, ':')) != NULL)
 			*style++ = '\0';
-		if (fullname)
-			free(fullname);
+		free(fullname);
 		if (auth_setitem(as, AUTHV_NAME, username) < 0 ||
 		    (fullname = strdup(username)) == NULL) {
 			syslog(LOG_ERR, "%m");
