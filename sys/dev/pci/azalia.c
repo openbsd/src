@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.223 2015/12/07 03:04:45 jsg Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.224 2015/12/09 14:25:46 ratchov Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -4055,12 +4055,6 @@ azalia_round_blocksize(void *v, int blk)
 	/* number of blocks must be <= HDA_BDL_MAX */
 	az = v;
 	size = az->pstream.buffer.size;
-#ifdef DIAGNOSTIC
-	if (size <= 0) {
-		printf("%s: size is 0", __func__);
-		return 256;
-	}
-#endif
 	if (size > HDA_BDL_MAX * blk) {
 		blk = size / HDA_BDL_MAX;
 		if (blk & 0x7f)
