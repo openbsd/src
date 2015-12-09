@@ -102,4 +102,7 @@ test_fmt "" " \n" "\n"
 test_fmt "" "a \n" "a\n"
 test_fmt "" "a\t\n" "a\n"
 
+#utf-8
+test_fmt "14" "pöüöüöü üüp\n" "pöüöüöü üüp\n"
+
 exit 0
