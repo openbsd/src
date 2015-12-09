@@ -782,3 +782,41 @@ xs_cmd(struct xs_transaction *xst, int cmd, const char *path,
 
 	return (error);
 }
+
+int
+xs_getprop(struct xen_attach_args *xa, const char *property, char *value,
+    int size, int waitok)
+{
+	struct xen_softc *sc = xa->xa_parent;
+	struct xs_transaction xst;
+	struct iovec *iovp;
+	char path[128];
+	int error, iov_cnt;
+
+	if (!property)
+		return (-1);
+
+	memset(&xst, 0, sizeof(xst));
+	xst.xst_id = 0;
+	xst.xst_sc = sc->sc_xs;
+	if (!waitok)
+		xst.xst_flags = XST_POLL;
+
+	snprintf(path, sizeof(path), "%s/%s", xa->xa_node, property);
+	if ((error = xs_cmd(&xst, XS_READ, path, &iovp, &iov_cnt)) != 0 &&
+	     error != ENOENT)
+		return (error);
+
+	/* Try backend */
+	if (error == ENOENT) {
+		snprintf(path, sizeof(path), "%s/%s", xa->xa_backend, property);
+		if ((error = xs_cmd(&xst, XS_READ, path, &iovp, &iov_cnt)) != 0)
+			return (error);
+	}
+
+	strlcpy(value, (char *)iovp->iov_base, size);
+
+	xs_resfree(&xst, iovp, iov_cnt);
+
+	return (0);
+}
