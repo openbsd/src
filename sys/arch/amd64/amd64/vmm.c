@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.20 2015/12/06 20:12:15 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.21 2015/12/09 02:29:09 deraadt Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -571,8 +571,7 @@ vmm_start(void)
 			printf("%s: failed to enter VMM mode\n",
 				ci->ci_dev->dv_xname);
 			ret = EIO;
-		} else
-			printf("%s: entered VMM mode\n", ci->ci_dev->dv_xname);
+		}
 	}
 #endif /* MULTIPROCESSOR */
 
@@ -582,8 +581,7 @@ vmm_start(void)
 		printf("%s: failed to enter VMM mode\n",
 			self->ci_dev->dv_xname);
 		ret = EIO;
-	} else
-		printf("%s: entered VMM mode\n", self->ci_dev->dv_xname);
+	}
 
 	return (ret);
 }
@@ -621,8 +619,7 @@ vmm_stop(void)
 			printf("%s: failed to exit VMM mode\n",
 				ci->ci_dev->dv_xname);
 			ret = EIO;
-		} else
-			printf("%s: exited VMM mode\n", ci->ci_dev->dv_xname);
+		}
 	}
 #endif /* MULTIPROCESSOR */
 
@@ -632,8 +629,7 @@ vmm_stop(void)
 		printf("%s: failed to exit VMM mode\n",
 			self->ci_dev->dv_xname);
 		ret = EIO;
-	} else
-		printf("%s: exited VMM mode\n", self->ci_dev->dv_xname);
+	}
 
 	return (ret);
 }
