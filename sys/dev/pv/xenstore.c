@@ -701,16 +701,12 @@ xs_cmd(struct xs_transaction *xst, int cmd, const char *path,
 		return (-1);
 
 	switch (cmd) {
-	case XS_TRANSACTION_START:
+	case XS_TOPEN:
 		ov[0].iov_base = "";
 		ov[0].iov_len = 1;
 		ov_cnt++;
 		break;
-	case XS_TRANSACTION_END:
-		mode = WRITE;
-		break;
-	case XS_MKDIR:
-	case XS_RM:
+	case XS_TCLOSE:
 	case XS_WRITE:
 		mode = WRITE;
 		/* FALLTHROUGH */
