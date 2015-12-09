@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.309 2015/12/06 12:52:18 tedu Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.310 2015/12/09 16:02:44 mpi Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -782,6 +782,7 @@ nextarg:
 		 * it is not specified.
 		 */
 		setifprefixlen("64", 0);
+		/* in6_getprefix("64", MASK) if MASK is available here... */
 	}
 
 	if (clearaddr) {
@@ -1130,14 +1131,11 @@ setifaddr(const char *addr, int param)
 	 * and the flags may change when the address is set.
 	 */
 	setaddr++;
-	if (doalias >= 0) {
+	if (doalias >= 0)
 		newaddr = 1;
-		afp->af_getaddr(addr, ADDR);
-	}
-	if (doalias == 0) {
+	if (doalias == 0)
 		clearaddr = 1;
-		afp->af_getaddr(addr, RIDADDR);
-	}
+	afp->af_getaddr(addr, (doalias >= 0 ? ADDR : RIDADDR));
 }
 
 #ifndef SMALL
@@ -4839,7 +4837,7 @@ in_getaddr(const char *s, int which)
 	if (which != MASK)
 		sin->sin_family = AF_INET;
 
-	if (which != MASK && strrchr(s, '/') != NULL &&
+	if (which == ADDR && strrchr(s, '/') != NULL &&
 	    (bits = inet_net_pton(AF_INET, s, &tsin.sin_addr,
 	    sizeof(tsin.sin_addr))) != -1) {
 		l = snprintf(p, sizeof(p), "%d", bits);
@@ -4959,7 +4957,7 @@ in6_getaddr(const char *s, int which)
 	hints.ai_family = AF_INET6;
 	hints.ai_socktype = SOCK_DGRAM;	/*dummy*/
 
-	if (which != MASK && strchr(s, '/') != NULL) {
+	if (which == ADDR && strchr(s, '/') != NULL) {
 		if (strlcpy(buf, s, sizeof(buf)) >= sizeof(buf))
 			errx(1, "%s: bad value", s);
 		pfxlen = strchr(buf, '/');
