@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_var.h,v 1.67 2015/12/09 03:22:39 dlg Exp $	*/
+/*	$OpenBSD: if_var.h,v 1.68 2015/12/09 15:05:51 mpi Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -74,7 +74,6 @@
 
 struct rtentry;
 struct timeout;
-struct arpcom;
 struct ifnet;
 struct task;
 
@@ -301,15 +300,6 @@ void	if_input(struct ifnet *, struct mbuf_list *);
 int	if_input_local(struct ifnet *, struct mbuf *, sa_family_t);
 void	if_rtrequest_dummy(struct ifnet *, int, struct rtentry *);
 void	p2p_rtrequest(struct ifnet *, int, struct rtentry *);
-
-void	ether_ifattach(struct ifnet *);
-void	ether_ifdetach(struct ifnet *);
-int	ether_ioctl(struct ifnet *, struct arpcom *, u_long, caddr_t);
-int	ether_input(struct ifnet *, struct mbuf *, void *);
-int	ether_output(struct ifnet *,
-	    struct mbuf *, struct sockaddr *, struct rtentry *);
-void	ether_rtrequest(struct ifnet *, int, struct rtentry *);
-char	*ether_sprintf(u_char *);
 
 struct	ifaddr *ifa_ifwithaddr(struct sockaddr *, u_int);
 struct	ifaddr *ifa_ifwithdstaddr(struct sockaddr *, u_int);

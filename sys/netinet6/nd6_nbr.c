@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_nbr.c,v 1.100 2015/11/18 13:58:02 mpi Exp $	*/
+/*	$OpenBSD: nd6_nbr.c,v 1.101 2015/12/09 15:05:51 mpi Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -50,6 +50,7 @@
 #include <net/route.h>
 
 #include <netinet/in.h>
+#include <netinet/if_ether.h>
 #include <netinet6/in6_var.h>
 #include <netinet/ip6.h>
 #include <netinet6/ip6_var.h>

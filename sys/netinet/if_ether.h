@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.h,v 1.64 2015/11/24 15:27:46 mpi Exp $	*/
+/*	$OpenBSD: if_ether.h,v 1.65 2015/12/09 15:05:51 mpi Exp $	*/
 /*	$NetBSD: if_ether.h,v 1.22 1996/05/11 13:00:00 mycroft Exp $	*/
 
 /*
@@ -195,6 +195,15 @@ void	ether_fakeaddr(struct ifnet *);
 int	ether_addmulti(struct ifreq *, struct arpcom *);
 int	ether_delmulti(struct ifreq *, struct arpcom *);
 int	ether_multiaddr(struct sockaddr *, u_int8_t[], u_int8_t[]);
+void	ether_ifattach(struct ifnet *);
+void	ether_ifdetach(struct ifnet *);
+int	ether_ioctl(struct ifnet *, struct arpcom *, u_long, caddr_t);
+int	ether_input(struct ifnet *, struct mbuf *, void *);
+int	ether_output(struct ifnet *,
+	    struct mbuf *, struct sockaddr *, struct rtentry *);
+void	ether_rtrequest(struct ifnet *, int, struct rtentry *);
+char	*ether_sprintf(u_char *);
+
 
 /*
  * Ethernet multicast address structure.  There is one of these for each
