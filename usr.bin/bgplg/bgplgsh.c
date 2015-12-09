@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgplgsh.c,v 1.7 2015/01/16 06:40:06 deraadt Exp $	*/
+/*	$OpenBSD: bgplgsh.c,v 1.8 2015/12/09 17:52:24 mmcc Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Reyk Floeter <reyk@openbsd.org>
@@ -151,8 +151,7 @@ lg_argextra(char **argv, int argc, int off, struct cmd *cmdp)
 
 	new_argv[c] = NULL;
 
-	if (argv != NULL)
-		free(argv);
+	free(argv);
 
 	return (new_argv);
 }
@@ -185,10 +184,8 @@ lg_checkcmd(int argc, char **argv, int *off, struct cmd *cmd)
 	ret = 0;
 
  done:
-	if (cmdp != NULL)
-		free(cmdp);
-	if (cmdstr != NULL)
-		free(cmdstr);
+	free(cmdp);
+	free(cmdstr);
 	return (ret);
 }
 
@@ -268,14 +265,10 @@ main(void)
 		}
 
  next:
-		if (argp != NULL) {
-			free(argp);
-			argp = NULL;
-		}
-		if (line != NULL) {
-			free(line);
-			line = NULL;
-		}
+		free(argp);
+		argp = NULL;
+		free(line);
+		line = NULL;
 		cmd = NULL;
 	}
 
