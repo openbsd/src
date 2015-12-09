@@ -90,31 +90,13 @@ void	xen_intr_enable(void);
 /*
  *  XenStore
  */
-enum {
-	XS_DEBUG,
-	XS_DIRECTORY,
-	XS_READ,
-	XS_GET_PERMS,
-	XS_WATCH,
-	XS_UNWATCH,
-	XS_TRANSACTION_START,
-	XS_TRANSACTION_END,
-	XS_INTRODUCE,
-	XS_RELEASE,
-	XS_GET_DOMAIN_PATH,
-	XS_WRITE,
-	XS_MKDIR,
-	XS_RM,
-	XS_SET_PERMS,
-	XS_WATCH_EVENT,
-	XS_ERROR,
-	XS_IS_DOMAIN_INTRODUCED,
-	XS_RESUME,
-	XS_SET_TARGET,
-	XS_RESTRICT,
-	XS_RESET_WATCHES,
-	XS_MAX
-};
+#define XS_LIST			0x01
+#define XS_READ			0x02
+#define XS_TOPEN		0x06
+#define XS_TCLOSE		0x07
+#define XS_WRITE		0x0b
+#define XS_ERROR		0x10
+#define XS_MAX			0x16
 
 struct xs_transaction {
 	uint32_t		 xst_id;

@@ -732,7 +732,7 @@ xen_probe_devices(struct xen_softc *sc)
 	xst.xst_sc = sc->sc_xs;
 	xst.xst_flags |= XST_POLL;
 
-	if ((error = xs_cmd(&xst, XS_DIRECTORY, "device", &iovp1,
+	if ((error = xs_cmd(&xst, XS_LIST, "device", &iovp1,
 	    &iov1_cnt)) != 0)
 		return (error);
 
@@ -750,7 +750,7 @@ xen_probe_devices(struct xen_softc *sc)
 		}
 		snprintf(path, sizeof(path), "device/%s",
 		    (char *)iovp1[i].iov_base);
-		if ((error = xs_cmd(&xst, XS_DIRECTORY, path, &iovp2,
+		if ((error = xs_cmd(&xst, XS_LIST, path, &iovp2,
 		    &iov2_cnt)) != 0) {
 			xs_resfree(&xst, iovp1, iov1_cnt);
 			return (error);
