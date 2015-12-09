@@ -1,5 +1,5 @@
 /*
- * validator/val_nsec3.c - validator NSEC3 denial of existance functions.
+ * validator/val_nsec3.c - validator NSEC3 denial of existence functions.
  *
  * Copyright (c) 2007, NLnet Labs. All rights reserved.
  *
@@ -38,7 +38,7 @@
  *
  * This file contains helper functions for the validator module.
  * The functions help with NSEC3 checking, the different NSEC3 proofs
- * for denial of existance, and proofs for presence of types.
+ * for denial of existence, and proofs for presence of types.
  */
 #include "config.h"
 #include <ctype.h>
