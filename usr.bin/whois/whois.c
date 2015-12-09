@@ -1,4 +1,4 @@
-/*      $OpenBSD: whois.c,v 1.52 2015/11/02 20:39:37 sthen Exp $   */
+/*      $OpenBSD: whois.c,v 1.53 2015/12/09 19:29:49 mmcc Exp $   */
 
 /*
  * Copyright (c) 1980, 1993
@@ -259,8 +259,7 @@ whois(const char *query, const char *server, const char *port, int flags)
 		}
 	}
 	fclose(fp);
-	if (nbuf != NULL)
-		free(nbuf);
+	free(nbuf);
 
 	if (nhost != NULL) {
 		error = whois(query, nhost, port, 0);

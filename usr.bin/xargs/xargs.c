@@ -1,4 +1,4 @@
-/*	$OpenBSD: xargs.c,v 1.30 2015/10/10 15:52:30 deraadt Exp $	*/
+/*	$OpenBSD: xargs.c,v 1.31 2015/12/09 19:29:49 mmcc Exp $	*/
 /*	$FreeBSD: xargs.c,v 1.51 2003/05/03 19:09:11 obrien Exp $	*/
 
 /*-
@@ -483,10 +483,8 @@ prerun(int argc, char *argv[])
 	/*
 	 * Free the input line buffer, if we have one.
 	 */
-	if (inpline != NULL) {
-		free(inpline);
-		inpline = NULL;
-	}
+	free(inpline);
+	inpline = NULL;
 }
 
 static void
