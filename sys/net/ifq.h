@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifq.h,v 1.1 2015/12/08 10:06:12 dlg Exp $ */
+/*	$OpenBSD: ifq.h,v 1.2 2015/12/09 03:22:39 dlg Exp $ */
 
 /*
  * Copyright (c) 2015 David Gwynne <dlg@openbsd.org>
@@ -24,13 +24,24 @@ struct ifnet;
 struct ifq_ops;
 
 struct ifqueue {
+	struct ifnet		*ifq_if;
+
+	/* mbuf handling */
 	struct mutex		 ifq_mtx;
 	uint64_t		 ifq_drops;
 	const struct ifq_ops	*ifq_ops;
 	void			*ifq_q;
 	unsigned int		 ifq_len;
-	unsigned int		 ifq_serializer;
 	unsigned int		 ifq_oactive;
+
+	/* work serialisation */
+	struct mutex		 ifq_task_mtx;
+	struct task_list	 ifq_task_list;
+	unsigned int		 ifq_serializer;
+
+	/* work to be serialised */
+	struct task		 ifq_start;
+	struct task		 ifq_restart;
 
 	unsigned int		 ifq_maxlen;
 };
@@ -54,7 +65,7 @@ struct ifq_ops {
  * Interface send queues.
  */
 
-void		 ifq_init(struct ifqueue *);
+void		 ifq_init(struct ifqueue *, struct ifnet *);
 void		 ifq_attach(struct ifqueue *, const struct ifq_ops *, void *);
 void		 ifq_destroy(struct ifqueue *);
 int		 ifq_enqueue_try(struct ifqueue *, struct mbuf *);
@@ -66,6 +77,8 @@ struct mbuf	*ifq_dequeue(struct ifqueue *);
 unsigned int	 ifq_purge(struct ifqueue *);
 void		*ifq_q_enter(struct ifqueue *, const struct ifq_ops *);
 void		 ifq_q_leave(struct ifqueue *, void *);
+void		 ifq_serialize(struct ifqueue *, struct task *);
+void		 ifq_barrier(struct ifqueue *);
 
 #define	ifq_len(_ifq)			((_ifq)->ifq_len)
 #define	ifq_empty(_ifq)			(ifq_len(_ifq) == 0)
@@ -87,6 +100,18 @@ static inline unsigned int
 ifq_is_oactive(struct ifqueue *ifq)
 {
 	return (ifq->ifq_oactive);
+}
+
+static inline void
+ifq_start(struct ifqueue *ifq)
+{
+	ifq_serialize(ifq, &ifq->ifq_start);
+}
+
+static inline void
+ifq_restart(struct ifqueue *ifq)
+{
+	ifq_serialize(ifq, &ifq->ifq_restart);
 }
 
 extern const struct ifq_ops * const ifq_priq_ops;

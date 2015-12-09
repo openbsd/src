@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_myx.c,v 1.90 2015/12/03 12:45:56 dlg Exp $	*/
+/*	$OpenBSD: if_myx.c,v 1.91 2015/12/09 03:22:39 dlg Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -1208,7 +1208,7 @@ myx_up(struct myx_softc *sc)
 	ifq_clr_oactive(&ifp->if_snd);
 	SET(ifp->if_flags, IFF_RUNNING);
 	myx_iff(sc);
-	myx_start(ifp);
+	if_start(ifp);
 
 	return;
 
@@ -1330,6 +1330,8 @@ myx_down(struct myx_softc *sc)
 	int			 s;
 	int			 ring;
 
+	CLR(ifp->if_flags, IFF_RUNNING);
+
 	bus_dmamap_sync(sc->sc_dmat, map, 0, map->dm_mapsize,
 	    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 	sc->sc_linkdown = sts->ms_linkdown;
@@ -1362,8 +1364,7 @@ myx_down(struct myx_softc *sc)
 	}
 
 	ifq_clr_oactive(&ifp->if_snd);
-	CLR(ifp->if_flags, IFF_RUNNING);
-	if_start_barrier(ifp);
+	ifq_barrier(&ifp->if_snd);
 
 	for (ring = 0; ring < 2; ring++) {
 		struct myx_rx_ring *mrr = &sc->sc_rx_ring[ring];
@@ -1702,9 +1703,8 @@ myx_txeof(struct myx_softc *sc, u_int32_t done_count)
 	sc->sc_tx_ring_cons = idx;
 	sc->sc_tx_cons = cons;
 
-	ifq_clr_oactive(&ifp->if_snd);
-	if (!ifq_empty(&ifp->if_snd))
-		if_start(ifp);
+	if (ifq_is_oactive(&ifp->if_snd))
+		ifq_restart(&ifp->if_snd);
 }
 
 void

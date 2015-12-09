@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.424 2015/12/08 10:18:56 mpi Exp $	*/
+/*	$OpenBSD: if.c,v 1.425 2015/12/09 03:22:39 dlg Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -153,7 +153,6 @@ void	if_input_process(void *);
 void	ifa_print_all(void);
 #endif
 
-void	if_start_mpsafe(struct ifnet *ifp);
 void	if_start_locked(struct ifnet *ifp);
 
 /*
@@ -511,7 +510,7 @@ if_attach_common(struct ifnet *ifp)
 	TAILQ_INIT(&ifp->if_addrlist);
 	TAILQ_INIT(&ifp->if_maddrlist);
 
-	ifq_init(&ifp->if_snd);
+	ifq_init(&ifp->if_snd, ifp);
 
 	ifp->if_addrhooks = malloc(sizeof(*ifp->if_addrhooks),
 	    M_TEMP, M_WAITOK);
@@ -539,7 +538,7 @@ void
 if_start(struct ifnet *ifp)
 {
 	if (ISSET(ifp->if_xflags, IFXF_MPSAFE))
-		if_start_mpsafe(ifp);
+		ifq_start(&ifp->if_snd);
 	else
 		if_start_locked(ifp);
 }

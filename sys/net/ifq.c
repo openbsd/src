@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifq.c,v 1.1 2015/12/08 10:06:12 dlg Exp $ */
+/*	$OpenBSD: ifq.c,v 1.2 2015/12/09 03:22:39 dlg Exp $ */
 
 /*
  * Copyright (c) 2015 David Gwynne <dlg@openbsd.org>
@@ -64,6 +64,12 @@ struct priq {
  * ifqueue serialiser
  */
 
+void	ifq_start_task(void *);
+void	ifq_restart_task(void *);
+void	ifq_barrier_task(void *);
+
+#define TASK_ONQUEUE 0x1
+
 static inline unsigned int
 ifq_enter(struct ifqueue *ifq)
 {
@@ -73,57 +79,108 @@ ifq_enter(struct ifqueue *ifq)
 static inline unsigned int
 ifq_leave(struct ifqueue *ifq)
 {
-	if (atomic_cas_uint(&ifq->ifq_serializer, 1, 0) == 1)
-		return (1);
+	return (atomic_cas_uint(&ifq->ifq_serializer, 1, 0) == 1);
+}
+
+static inline int
+ifq_next_task(struct ifqueue *ifq, struct task *work)
+{
+	struct task *t;
+	int rv = 0;
 
 	ifq->ifq_serializer = 1;
 
-	return (0);
+	mtx_enter(&ifq->ifq_task_mtx);
+	t = TAILQ_FIRST(&ifq->ifq_task_list);
+	if (t != NULL) {
+		TAILQ_REMOVE(&ifq->ifq_task_list, t, t_entry);
+		CLR(t->t_flags, TASK_ONQUEUE);
+
+		*work = *t; /* copy to caller to avoid races */
+
+		rv = 1;
+	}
+	mtx_leave(&ifq->ifq_task_mtx);
+
+	return (rv);
 }
 
 void
-if_start_mpsafe(struct ifnet *ifp)
+ifq_serialize(struct ifqueue *ifq, struct task *t)
 {
-	struct ifqueue *ifq = &ifp->if_snd;
+	struct task work;
+
+	if (ISSET(t->t_flags, TASK_ONQUEUE))
+		return;
+
+	mtx_enter(&ifq->ifq_task_mtx);
+	if (!ISSET(t->t_flags, TASK_ONQUEUE)) {
+		SET(t->t_flags, TASK_ONQUEUE);
+		TAILQ_INSERT_TAIL(&ifq->ifq_task_list, t, t_entry);
+	}
+	mtx_leave(&ifq->ifq_task_mtx);
 
 	if (!ifq_enter(ifq))
 		return;
 
 	do {
-		if (__predict_false(!ISSET(ifp->if_flags, IFF_RUNNING))) {
-			ifq->ifq_serializer = 0;
-			wakeup_one(&ifq->ifq_serializer);
-			return;
-		}
-
-		if (ifq_empty(ifq) || ifq_is_oactive(ifq))
-			continue;
-
-		ifp->if_start(ifp);
+		while (ifq_next_task(ifq, &work))
+			(*work.t_func)(work.t_arg);
 
 	} while (!ifq_leave(ifq));
 }
 
 void
-if_start_barrier(struct ifnet *ifp)
+ifq_start_task(void *p)
+{
+	struct ifqueue *ifq = p;
+	struct ifnet *ifp = ifq->ifq_if;
+
+	if (!ISSET(ifp->if_flags, IFF_RUNNING) ||
+	    ifq_empty(ifq) || ifq_is_oactive(ifq))
+		return;
+
+	ifp->if_start(ifp);
+}
+
+void
+ifq_restart_task(void *p)
+{
+	struct ifqueue *ifq = p;
+	struct ifnet *ifp = ifq->ifq_if;
+
+	ifq_clr_oactive(ifq);
+	ifp->if_start(ifp);
+}
+
+void
+ifq_barrier(struct ifqueue *ifq)
 {
 	struct sleep_state sls;
-	struct ifqueue *ifq = &ifp->if_snd;
+	unsigned int notdone = 1;
+	struct task t = TASK_INITIALIZER(ifq_barrier_task, &notdone);
 
 	/* this should only be called from converted drivers */
-	KASSERT(ISSET(ifp->if_xflags, IFXF_MPSAFE));
-
-	/* drivers should only call this on the way down */
-	KASSERT(!ISSET(ifp->if_flags, IFF_RUNNING));
+	KASSERT(ISSET(ifq->ifq_if->if_xflags, IFXF_MPSAFE));
 
 	if (ifq->ifq_serializer == 0)
 		return;
 
-	if_start_mpsafe(ifp); /* spin the wheel to guarantee a wakeup */
-	do {
-		sleep_setup(&sls, &ifq->ifq_serializer, PWAIT, "ifbar");
-		sleep_finish(&sls, ifq->ifq_serializer != 0);
-	} while (ifq->ifq_serializer != 0);
+	ifq_serialize(ifq, &t);
+
+	while (notdone) {
+		sleep_setup(&sls, &notdone, PWAIT, "ifqbar");
+		sleep_finish(&sls, notdone);
+	}
+}
+
+void
+ifq_barrier_task(void *p)
+{
+	unsigned int *notdone = p;
+
+	*notdone = 0;
+	wakeup_one(notdone);
 }
 
 /*
@@ -131,8 +188,10 @@ if_start_barrier(struct ifnet *ifp)
  */
 
 void
-ifq_init(struct ifqueue *ifq)
+ifq_init(struct ifqueue *ifq, struct ifnet *ifp)
 {
+	ifq->ifq_if = ifp;
+
 	mtx_init(&ifq->ifq_mtx, IPL_NET);
 	ifq->ifq_drops = 0;
 
@@ -140,8 +199,14 @@ ifq_init(struct ifqueue *ifq)
 	ifq->ifq_ops = &priq_ops;
 	ifq->ifq_q = priq_ops.ifqop_alloc(NULL);
 
-	ifq->ifq_serializer = 0;
 	ifq->ifq_len = 0;
+
+	mtx_init(&ifq->ifq_task_mtx, IPL_NET);
+	TAILQ_INIT(&ifq->ifq_task_list);
+	ifq->ifq_serializer = 0;
+
+	task_set(&ifq->ifq_start, ifq_start_task, ifq);
+	task_set(&ifq->ifq_restart, ifq_restart_task, ifq);
 
 	if (ifq->ifq_maxlen == 0)
 		ifq_set_maxlen(ifq, IFQ_MAXLEN);
