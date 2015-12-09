@@ -61,6 +61,7 @@ struct xen_attach_args {
 	void			*xa_parent;
 	char			 xa_name[16];
 	char			 xa_node[64];
+	char			 xa_backend[128];
 };
 
 /*

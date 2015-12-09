@@ -723,9 +723,9 @@ xen_probe_devices(struct xen_softc *sc)
 {
 	struct xen_attach_args xa;
 	struct xs_transaction xst;
-	struct iovec *iovp1, *iovp2;
-	int error = 0, iov1_cnt, iov2_cnt, i, j;
-	char path[64];
+	struct iovec *iovp1, *iovp2, *iovp3;
+	int i, j, error = 0, iov1_cnt, iov2_cnt, iov3_cnt;
+	char path[128];
 
 	memset(&xst, 0, sizeof(xst));
 	xst.xst_id = 0;
@@ -762,6 +762,12 @@ xen_probe_devices(struct xen_softc *sc)
 			snprintf(xa.xa_node, sizeof(xa.xa_node), "device/%s/%s",
 			    (char *)iovp1[i].iov_base,
 			    (char *)iovp2[j].iov_base);
+			snprintf(path, sizeof(path), "%s/backend", xa.xa_node);
+			if (!xs_cmd(&xst, XS_READ, path, &iovp3, &iov3_cnt)) {
+				strlcpy(xa.xa_backend, (char *)iovp3->iov_base,
+				    sizeof(xa.xa_backend));
+				xs_resfree(&xst, iovp3, iov3_cnt);
+			}
 			config_found((struct device *)sc, &xa,
 			    xen_attach_print);
 		}
