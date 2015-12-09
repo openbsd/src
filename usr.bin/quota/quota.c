@@ -1,4 +1,4 @@
-/*	$OpenBSD: quota.c,v 1.36 2015/08/20 22:32:41 deraadt Exp $	*/
+/*	$OpenBSD: quota.c,v 1.37 2015/12/09 19:39:10 mmcc Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -477,8 +477,7 @@ getprivs(long id, int quotatype)
 		quptail->next = 0;
 		qup = NULL;
 	}
-	if (qup)
-		free(qup);
+	free(qup);
 	endfsent();
 	return (quphead);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: commands.c,v 1.81 2015/11/24 05:06:24 beck Exp $	*/
+/*	$OpenBSD: commands.c,v 1.82 2015/12/09 19:39:10 mmcc Exp $	*/
 /*	$NetBSD: commands.c,v 1.14 1996/03/24 22:03:48 jtk Exp $	*/
 
 /*
@@ -1479,10 +1479,8 @@ env_define(const char *var, const char *value)
 	struct env_lst *ep;
 
 	if ((ep = env_find(var))) {
-		if (ep->var)
-			free(ep->var);
-		if (ep->value)
-			free(ep->value);
+		free(ep->var);
+		free(ep->value);
 	} else {
 		if ((ep = malloc(sizeof(struct env_lst))) == NULL)
 			err(1, "malloc");
@@ -1510,10 +1508,8 @@ env_undefine(const char *var)
 		ep->prev->next = ep->next;
 		if (ep->next)
 			ep->next->prev = ep->prev;
-		if (ep->var)
-			free(ep->var);
-		if (ep->value)
-			free(ep->value);
+		free(ep->var);
+		free(ep->value);
 		free(ep);
 	}
 }

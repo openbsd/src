@@ -1,4 +1,4 @@
-/*	$OpenBSD: pwd_check.c,v 1.14 2015/11/26 19:01:47 deraadt Exp $	*/
+/*	$OpenBSD: pwd_check.c,v 1.15 2015/12/09 19:39:10 mmcc Exp $	*/
 
 /*
  * Copyright 2000 Niels Provos <provos@citi.umich.edu>
@@ -183,14 +183,12 @@ pwd_check(login_cap_t *lc, char *password)
 	/* get the return value from the child */
 	wait(&child);
 	if (WIFEXITED(child) && WEXITSTATUS(child) == 0) {
-		if (checker != NULL)
-			free(checker);
+		free(checker);
 		return (1);
 	}
 
  out:
-	if (checker != NULL)
-		free(checker);
+	free(checker);
 	printf("Please use a different password. Unusual capitalization,\n");
 	printf("control characters, or digits are suggested.\n");
 

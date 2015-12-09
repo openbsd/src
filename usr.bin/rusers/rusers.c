@@ -1,4 +1,4 @@
-/*	$OpenBSD: rusers.c,v 1.35 2015/08/20 22:32:41 deraadt Exp $	*/
+/*	$OpenBSD: rusers.c,v 1.36 2015/12/09 19:39:10 mmcc Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -625,8 +625,7 @@ allhosts(void)
 cleanup:
 	if (ifap != NULL)
 		freeifaddrs(ifap);
-	if (fds != NULL)
-		free(fds);
+	free(fds);
 	if (sock[0] >= 0)
 		(void)close(sock[0]);
 	if (sock[1] >= 0)
