@@ -52,7 +52,7 @@ int	xen_probe_devices(struct xen_softc *);
 
 int	xs_attach(struct xen_softc *);
 
-const struct cfdriver xen_cd = {
+struct cfdriver xen_cd = {
 	NULL, "xen", DV_DULL
 };
 
