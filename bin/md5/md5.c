@@ -1,4 +1,4 @@
-/*	$OpenBSD: md5.c,v 1.83 2015/10/10 20:18:30 deraadt Exp $	*/
+/*	$OpenBSD: md5.c,v 1.84 2015/12/09 19:36:17 mmcc Exp $	*/
 
 /*
  * Copyright (c) 2001,2003,2005-2007,2010,2013,2014
@@ -710,8 +710,7 @@ digest_filelist(const char *file, struct hash_function *defhash, int selcount,
 		fclose(listfp);
 	if (!found)
 		warnx("%s: no properly formatted checksum lines found", file);
-	if (lbuf != NULL)
-		free(lbuf);
+	free(lbuf);
 	return(error || !found);
 }
 

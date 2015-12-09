@@ -1,4 +1,4 @@
-/*	$OpenBSD: filter.c,v 1.36 2015/04/18 18:28:37 deraadt Exp $	*/
+/*	$OpenBSD: filter.c,v 1.37 2015/12/09 19:36:17 mmcc Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -216,10 +216,8 @@ logic_free(struct logic *logic)
 		logic_free(logic->left);
 	if (logic->right)
 		logic_free(logic->right);
-	if (logic->type)
-		free(logic->type);
-	if (logic->filterdata)
-		free(logic->filterdata);
+	free(logic->type);
+	free(logic->filterdata);
 	free(logic);
 }
 
@@ -228,8 +226,7 @@ filter_free(struct filter *filter)
 {
 	if (filter->logicroot)
 		logic_free(filter->logicroot);
-	if (filter->rule)
-		free(filter->rule);
+	free(filter->rule);
 	free(filter);
 }
 

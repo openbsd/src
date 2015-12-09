@@ -1,4 +1,4 @@
-/*	$OpenBSD: intercept.c,v 1.64 2015/10/01 02:32:07 guenther Exp $	*/
+/*	$OpenBSD: intercept.c,v 1.65 2015/12/09 19:36:17 mmcc Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -402,10 +402,8 @@ intercept_freepid(pid_t pidnr)
 	intercept.freepid(pid);
 
 	SPLAY_REMOVE(pidtree, &pids, pid);
-	if (pid->name)
-		free(pid->name);
-	if (pid->newname)
-		free(pid->newname);
+	free(pid->name);
+	free(pid->newname);
 	free(pid);
 }
 
@@ -786,8 +784,7 @@ intercept_syscall(int fd, pid_t pid, u_int16_t seqnr, int policynr,
 		icpid->execve_code = code;
 		icpid->policynr = policynr;
 
-		if (icpid->newname)
-			free(icpid->newname);
+		free(icpid->newname);
 
 		intercept.getarg(0, args, argsize, &addr);
 		argname = intercept_filename(fd, pid, addr, ICLINK_ALL, before);
@@ -887,15 +884,12 @@ intercept_newimage(int fd, pid_t pid, int policynr,
 	if (icpid == NULL)
 		icpid = intercept_getpid(pid);
 
-	if (icpid->name)
-		free(icpid->name);
+	free(icpid->name);
 	if ((icpid->name = strdup(newname)) == NULL)
 		err(1, "%s:%d: strdup", __func__, __LINE__);
 
-	if (icpid->newname != NULL) {
-		free(icpid->newname);
-		icpid->newname = NULL;
-	}
+	free(icpid->newname);
+	icpid->newname = NULL;
 
 	if (intercept_newimagecb != NULL)
 		(*intercept_newimagecb)(fd, pid, policynr, emulation,

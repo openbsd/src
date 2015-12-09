@@ -1,4 +1,4 @@
-/*	$OpenBSD: intercept-translate.c,v 1.17 2014/08/10 04:57:33 guenther Exp $	*/
+/*	$OpenBSD: intercept-translate.c,v 1.18 2015/12/09 19:36:17 mmcc Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -56,10 +56,8 @@ static int ic_print_sockaddr(char *, size_t, struct intercept_translate *);
 static void
 ic_trans_free(struct intercept_translate *trans)
 {
-	if (trans->trans_data)
-		free(trans->trans_data);
-	if (trans->trans_print)
-		free(trans->trans_print);
+	free(trans->trans_data);
+	free(trans->trans_print);
 	trans->trans_valid = 0;
 	trans->trans_data = NULL;
 	trans->trans_print = NULL;

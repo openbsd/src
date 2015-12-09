@@ -1,4 +1,4 @@
-/*	$OpenBSD: openbsd-syscalls.c,v 1.45 2015/01/16 00:19:12 deraadt Exp $	*/
+/*	$OpenBSD: openbsd-syscalls.c,v 1.46 2015/12/09 19:36:17 mmcc Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -197,8 +197,7 @@ obsd_getpid(pid_t pid)
 static void
 obsd_freepid(struct intercept_pid *ipid)
 {
-	if (ipid->data != NULL)
-		free(ipid->data);
+	free(ipid->data);
 }
 
 static void
