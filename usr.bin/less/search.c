@@ -121,8 +121,7 @@ set_pattern(struct pattern_info *info, char *pattern, int search_type)
 static void
 clear_pattern(struct pattern_info *info)
 {
-	if (info->text != NULL)
-		free(info->text);
+	free(info->text);
 	info->text = NULL;
 	uncompile_pattern(&info->compiled);
 }
