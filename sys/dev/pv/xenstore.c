@@ -648,6 +648,7 @@ int
 xs_parse(struct xs_transaction *xst, struct xs_msg *xsm, struct iovec **iov,
     int *iov_cnt)
 {
+	int dlen = xsm->xsm_hdr.xmh_len;
 	char *bp, *cp;
 	int i, flags;
 
@@ -655,8 +656,15 @@ xs_parse(struct xs_transaction *xst, struct xs_msg *xsm, struct iovec **iov,
 
 	*iov_cnt = 0;
 	/* Make sure that the data is NUL terminated */
-	xsm->xsm_data[xsm->xsm_hdr.xmh_len - 1] = '\0';
-	for (i = 0; i < xsm->xsm_hdr.xmh_len; i++)
+	if (xsm->xsm_data[dlen - 1] != '\0') {
+		/*
+		 * The XS_READ operation always returns length without
+		 * the trailing NUL so we have to adjust the length.
+		 */
+		dlen = MIN(dlen + 1, xsm->xsm_dlen);
+		xsm->xsm_data[dlen - 1] = '\0';
+	}
+	for (i = 0; i < dlen; i++)
 		if (i > 0 && xsm->xsm_data[i] == '\0')
 			(*iov_cnt)++;
 	if (!*iov_cnt)
@@ -666,10 +674,9 @@ xs_parse(struct xs_transaction *xst, struct xs_msg *xsm, struct iovec **iov,
 		return (-1);
 	bp = xsm->xsm_data;
 	for (i = 0; i < *iov_cnt; i++) {
-		for (cp = bp;
-		     cp - (caddr_t)xsm->xsm_data < xsm->xsm_hdr.xmh_len; cp++)
-			if (*cp == '\0')
-				break;
+		cp = bp;
+		while (cp - (caddr_t)xsm->xsm_data < dlen && *cp != '\0')
+			cp++;
 		(*iov)[i].iov_len = cp - bp + 1;
 		(*iov)[i].iov_base = malloc((*iov)[i].iov_len, M_DEVBUF, flags);
 		if (!(*iov)[i].iov_base)
