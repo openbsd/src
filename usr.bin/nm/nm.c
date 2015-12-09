@@ -1,4 +1,4 @@
-/*	$OpenBSD: nm.c,v 1.50 2015/11/13 15:22:44 deraadt Exp $	*/
+/*	$OpenBSD: nm.c,v 1.51 2015/12/09 19:28:34 mmcc Exp $	*/
 /*	$NetBSD: nm.c,v 1.7 1996/01/14 23:04:03 pk Exp $	*/
 
 /*
@@ -617,10 +617,8 @@ skip:		if (fseeko(fp, last_ar_off + even(mmbrlen), SEEK_SET)) {
 			break;
 		}
 	}
-	if (nametab) {
-		free(nametab);
-		nametab = NULL;
-	}
+	free(nametab);
+	nametab = NULL;
 	free(name);
 	return(rval);
 }
