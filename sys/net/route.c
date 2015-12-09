@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.290 2015/12/09 09:02:02 mpi Exp $	*/
+/*	$OpenBSD: route.c,v 1.291 2015/12/09 09:23:08 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -830,6 +830,13 @@ rtrequest_delete(struct rt_addrinfo *info, u_int8_t prio, struct ifnet *ifp,
 	    info->rti_info[RTAX_NETMASK], info->rti_info[RTAX_GATEWAY], prio);
 	if (rt == NULL)
 		return (ESRCH);
+
+	/* Make sure that's the route the caller want to delete. */
+	if (ifp != NULL && ifp->if_index != rt->rt_ifidx) {
+		rtfree(rt);
+		return (ESRCH);
+	}
+
 #ifndef SMALL_KERNEL
 	/*
 	 * If we got multipath routes, we require users to specify
