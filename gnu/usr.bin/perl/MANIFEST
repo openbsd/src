@@ -1729,6 +1729,9 @@ cpan/OpenBSD-MkTemp/lib/OpenBSD/MkTemp.pm	OpenBSD::MkTemp
 cpan/OpenBSD-MkTemp/MkTemp.xs	OpenBSD::MkTemp
 cpan/OpenBSD-MkTemp/README	OpenBSD::MkTemp Readme
 cpan/OpenBSD-MkTemp/t/OpenBSD-MkTemp.t	OpenBSD::MkTemp test file
+cpan/OpenBSD-Pledge/lib/OpenBSD/Pledge.pm	OpenBSD::Pledge
+cpan/OpenBSD-Pledge/Pledge.xs	OpenBSD::Pledge
+cpan/OpenBSD-Pledge/t/OpenBSD-Pledge.t	OpenBSD::Pledge test file
 cpan/Package-Constants/lib/Package/Constants.pm	Package::Constants
 cpan/Package-Constants/t/01_list.t		Package::Constants tests
 cpan/Params-Check/lib/Params/Check.pm	Params::Check
