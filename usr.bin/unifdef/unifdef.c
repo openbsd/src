@@ -1217,9 +1217,9 @@ skipcomment(const char *cp)
 					cp += 2;
 			} else if (strncmp(cp, "\n", 1) == 0) {
 				if (incomment == CHAR_LITERAL)
-					error("unterminated char literal");
+					error("Unterminated char literal");
 				else
-					error("unterminated string literal");
+					error("Unterminated string literal");
 			} else
 				cp += 1;
 			continue;
@@ -1493,7 +1493,7 @@ defundef(void)
 	if ((cp = matchsym("define", kw)) != NULL) {
 		sym = getsym(&cp);
 		if (sym == NULL)
-			error("missing macro name in #define");
+			error("Missing macro name in #define");
 		if (*cp == '(') {
 			val = "1";
 		} else {
@@ -1505,12 +1505,12 @@ defundef(void)
 	} else if ((cp = matchsym("undef", kw)) != NULL) {
 		sym = getsym(&cp);
 		if (sym == NULL)
-			error("missing macro name in #undef");
+			error("Missing macro name in #undef");
 		cp = skipcomment(cp);
 		debug("#undef");
 		addsym2(false, sym, NULL);
 	} else {
-		error("unrecognized preprocessor directive");
+		error("Unrecognized preprocessor directive");
 	}
 	skipline(cp);
 done:
@@ -1582,7 +1582,7 @@ error(const char *msg)
 		warnx("%s: %d: %s (#if line %d depth %d)",
 		    filename, linenum, msg, stifline[depth], depth);
 	closeio();
-	errx(2, "output may be truncated");
+	errx(2, "Output may be truncated");
 }
 
 static FILE *
