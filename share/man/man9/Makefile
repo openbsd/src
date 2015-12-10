@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.268 2015/12/09 06:29:02 dlg Exp $
+#	$OpenBSD: Makefile,v 1.269 2015/12/10 00:41:46 dlg Exp $
 #	$NetBSD: Makefile,v 1.4 1996/01/09 03:23:01 thorpej Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
@@ -220,7 +220,8 @@ MLINKS+=if_rxr_init.9 if_rxr_get.9 if_rxr_init.9 if_rxr_put.9 \
 MLINKS+=ifq_enqueue.9 ifq_dequeue.9 ifq_enqueue.9 ifq_purge.9 \
 	ifq_enqueue.9 ifq_len.9 ifq_enqueue.9 ifq_empty.9 \
 	ifq_enqueue.9 ifq_set_oactive.9 ifq_enqueue.9 ifq_clr_oactive.9 \
-	ifq_enqueue.9 ifq_is_oactive.9 ifq_enqueue.9 ifq_restart.9
+	ifq_enqueue.9 ifq_is_oactive.9 ifq_enqueue.9 ifq_restart.9 \
+	ifq_enqueue.9 ifq_barrier.9
 MLINKS+=ifq_deq_begin.9 ifq_deq_commit.9 ifq_deq_begin.9 ifq_deq_rollback.9
 MLINKS+=iic.9 iic_acquire_bus.9 iic.9 iic_release_bus.9 iic.9 iic_exec.9 \
 	iic.9 iic_smbus_write_byte.9 iic.9 iic_smbus_read_byte.9 \
@@ -324,7 +325,8 @@ MLINKS+=arc4random.9 add_true_randomness.9 \
 	arc4random.9 arc4random_buf.9 \
 	arc4random.9 arc4random_uniform.9
 MLINKS+=rasops.9 rasops_init.9 rasops.9 rasops_reconfig.9
-MLINKS+=refcnt_init.9 refcnt_take.9 refcnt_init.9 refcnt_rele.9 \
+MLINKS+=refcnt_init.9 refcnt_take.9 refcnt_init.9 refcnt_take_n.9 \
+	refcnt_init.9 refcnt_rele.9 \
 	refcnt_init.9 refcnt_rele_wake.9 refcnt_init.9 refcnt_finalize.9 \
 	refcnt_init.9 REFCNT_INITIALIZER.9
 MLINKS+=rssadapt.9 ieee80211_rssadapt_choose.9 \

@@ -1,4 +1,4 @@
-.\"     $OpenBSD: ifq_enqueue.9,v 1.6 2015/12/09 07:28:17 jmc Exp $
+.\"     $OpenBSD: ifq_enqueue.9,v 1.7 2015/12/10 00:41:46 dlg Exp $
 .\"
 .\"  Copyright (c) 2015 David Gwynne <dlg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 9 2015 $
+.Dd $Mdocdate: December 10 2015 $
 .Dt IFQ_ENQUEUE 9
 .Os
 .Sh NAME
@@ -26,7 +26,8 @@
 .Nm ifq_set_oactive ,
 .Nm ifq_clr_oactive ,
 .Nm ifq_is_oactive ,
-.Nm ifq_restart
+.Nm ifq_restart ,
+.Nm ifq_barrier
 .Nd interface send queue API
 .Sh SYNOPSIS
 .In net/if_var.h
@@ -48,6 +49,8 @@
 .Fn ifq_is_oactive "struct ifqueue *ifq"
 .Ft void
 .Fn ifq_restart "struct ifqueue *ifq"
+.Ft void
+.Fn ifq_barrier "struct ifqueue *ifq"
 .Sh DESCRIPTION
 The ifqueue API provides implementions of data structures and
 operations for the network stack to queue mbufs for a network driver
@@ -107,6 +110,14 @@ and the interface's start routine.
 This call is serialised with other calls to the start routine via
 .Fn if_start
 and therefore provides race free modification of the "active" mark.
+.It Fn ifq_barrier "struct ifqueue *ifq"
+.Fn ifq_barrier
+guarantees that any work currently running in the interface queues
+serialiser (eg, work dispatched by
+.Fn ifq_restart
+or the interfaces start routine) has finished before
+.Fn ifq_barrier
+returns.
 .El
 .Sh CONTEXT
 .Fn ifq_enqueue ,
@@ -119,6 +130,9 @@ and therefore provides race free modification of the "active" mark.
 and
 .Fn ifq_is_oactive
 can be called during autoconf, from process context, or from interrupt context.
+.Pp
+.Fn ifq_barrier
+can be called from process context.
 .Sh RETURN VALUES
 .Fn ifq_enqueue
 returns 0 if the mbuf was successfully queued, or non-zero if mbuf was freed.
