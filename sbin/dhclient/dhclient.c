@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.368 2015/12/07 07:40:47 tb Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.369 2015/12/10 18:22:59 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -594,6 +594,14 @@ main(int argc, char *argv[])
 		error("setresuid");
 
 	endpwent();
+
+	if (no_daemon) {
+		if (pledge("stdio inet dns route", NULL) == -1)
+			error("pledge");
+	} else {
+		if (pledge("stdio inet dns route proc", NULL) == -1)
+			error("pledge");
+	}
 
 	setproctitle("%s", ifi->name);
 	time(&client->startup_time);
