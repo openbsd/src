@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.49 2015/12/09 21:41:49 naddy Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.50 2015/12/10 17:23:34 mmcc Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -1571,7 +1571,7 @@ pfkey_timer_cb(int unused, short event, void *arg)
 
 /*
  * pfkey_process returns 0 if the message has been processed and -1 if
- * the system is busy and the the message should be passed again, later.
+ * the system is busy and the message should be passed again, later.
  */
 int
 pfkey_process(struct iked *env, struct pfkey_message *pm)
