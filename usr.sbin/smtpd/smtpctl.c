@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpctl.c,v 1.138 2015/12/07 12:29:19 sunil Exp $	*/
+/*	$OpenBSD: smtpctl.c,v 1.139 2015/12/10 07:49:58 sunil Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -293,6 +293,9 @@ srv_iter_envelopes(uint32_t msgid, struct envelope *evp)
 	static uint32_t	currmsgid = 0;
 	static uint64_t	from = 0;
 	static int	done = 0, need_send = 1, found;
+	char		buf[sizeof(*evp)];
+	size_t		buflen;
+	uint64_t	evpid;
 
 	if (currmsgid != msgid) {
 		if (currmsgid != 0 && !done)
@@ -325,7 +328,12 @@ srv_iter_envelopes(uint32_t msgid, struct envelope *evp)
 		goto again;
 	}
 
-	srv_read(evp, sizeof(*evp));
+	srv_read(&evpid, sizeof evpid);
+	buflen = rlen;
+	srv_read(buf, rlen);	
+	envelope_load_buffer(evp, buf, buflen - 1);
+	evp->id = evpid;
+
 	srv_end();
 	from = evp->id + 1;
 	found++;

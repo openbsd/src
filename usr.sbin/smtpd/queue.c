@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.c,v 1.172 2015/11/23 06:54:21 sunil Exp $	*/
+/*	$OpenBSD: queue.c,v 1.173 2015/12/10 07:49:58 sunil Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -72,8 +72,9 @@ queue_imsg(struct mproc *p, struct imsg *imsg)
 	uint64_t		 reqid, evpid, holdq;
 	uint32_t		 msgid;
 	time_t			 nexttry;
-	size_t			 n_evp;
+	size_t			 buflen, id_sz, n_evp;
 	int			 fd, mta_ext, ret, v, flags, code;
+	char			 buf[sizeof(evp)];
 
 	memset(&bounce, 0, sizeof(struct delivery_bounce));
 	if (p->proc == PROC_PONY) {
@@ -328,8 +329,13 @@ queue_imsg(struct mproc *p, struct imsg *imsg)
 				 */
 				evp.lasttry = nexttry;
 			}
+
+			id_sz = sizeof evp.id;
+			(void)memcpy(buf, &evp.id, id_sz);
+			buflen = envelope_dump_buffer(&evp, buf + id_sz,
+			    sizeof(buf) - id_sz);
 			m_compose(p_control, IMSG_CTL_LIST_ENVELOPES,
-			    imsg->hdr.peerid, 0, -1, &evp, sizeof evp);
+			    imsg->hdr.peerid, 0, -1, buf, id_sz + buflen + 1);
 			return;
 		}
 	}
