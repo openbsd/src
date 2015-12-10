@@ -1,4 +1,4 @@
-/*	$OpenBSD: socks.c,v 1.22 2015/12/10 16:49:28 mmcc Exp $	*/
+/*	$OpenBSD: socks.c,v 1.23 2015/12/10 18:31:52 mmcc Exp $	*/
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist.  All rights reserved.
@@ -278,7 +278,7 @@ socks_connect(const char *host, const char *port,
 		if (cnt != 4)
 			err(1, "read failed (%zu/4)", cnt);
 		if (buf[1] != 0) {
-			errx(1, "connection failed, SOCKS error: %s",
+			errx(1, "connection failed, SOCKSv5 error: %s",
 			    socks5_strerror(buf[1]));
 		}
 		switch (buf[3]) {
@@ -316,7 +316,7 @@ socks_connect(const char *host, const char *port,
 		if (cnt != 8)
 			err(1, "read failed (%zu/8)", cnt);
 		if (buf[1] != 90) {
-			errx(1, "connection failed, SOCKS error: %s",
+			errx(1, "connection failed, SOCKSv4 error: %s",
 			    socks4_strerror(buf[1]));
 		}
 	} else if (socksv == -1) {
