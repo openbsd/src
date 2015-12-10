@@ -1,4 +1,4 @@
-.\"     $OpenBSD: ifq_enqueue.9,v 1.7 2015/12/10 00:41:46 dlg Exp $
+.\"     $OpenBSD: ifq_enqueue.9,v 1.8 2015/12/10 00:42:51 dlg Exp $
 .\"
 .\"  Copyright (c) 2015 David Gwynne <dlg@openbsd.org>
 .\"
@@ -127,8 +127,9 @@ returns.
 .Fn ifq_empty ,
 .Fn ifq_set_oactive ,
 .Fn ifq_clr_oactive ,
+.Fn ifq_is_oactive ,
 and
-.Fn ifq_is_oactive
+.Fn ifq_restart
 can be called during autoconf, from process context, or from interrupt context.
 .Pp
 .Fn ifq_barrier
