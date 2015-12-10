@@ -1,4 +1,4 @@
-/*	$OpenBSD: xform.c,v 1.53 2015/11/13 15:29:55 naddy Exp $	*/
+/*	$OpenBSD: xform.c,v 1.54 2015/12/10 21:00:51 naddy Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -66,10 +66,8 @@
 #include <crypto/chachapoly.h>
 
 extern void des_ecb3_encrypt(caddr_t, caddr_t, caddr_t, caddr_t, caddr_t, int);
-extern void des_ecb_encrypt(caddr_t, caddr_t, caddr_t, int);
 
 int  des_set_key(void *, caddr_t);
-int  des1_setkey(void *, u_int8_t *, int);
 int  des3_setkey(void *, u_int8_t *, int);
 int  blf_setkey(void *, u_int8_t *, int);
 int  cast5_setkey(void *, u_int8_t *, int);
@@ -78,7 +76,6 @@ int  aes_ctr_setkey(void *, u_int8_t *, int);
 int  aes_xts_setkey(void *, u_int8_t *, int);
 int  null_setkey(void *, u_int8_t *, int);
 
-void des1_encrypt(caddr_t, u_int8_t *);
 void des3_encrypt(caddr_t, u_int8_t *);
 void blf_encrypt(caddr_t, u_int8_t *);
 void cast5_encrypt(caddr_t, u_int8_t *);
@@ -86,7 +83,6 @@ void rijndael128_encrypt(caddr_t, u_int8_t *);
 void null_encrypt(caddr_t, u_int8_t *);
 void aes_xts_encrypt(caddr_t, u_int8_t *);
 
-void des1_decrypt(caddr_t, u_int8_t *);
 void des3_decrypt(caddr_t, u_int8_t *);
 void blf_decrypt(caddr_t, u_int8_t *);
 void cast5_decrypt(caddr_t, u_int8_t *);
@@ -135,15 +131,6 @@ struct aes_xts_ctx {
 void aes_xts_crypt(struct aes_xts_ctx *, u_int8_t *, u_int);
 
 /* Encryption instances */
-struct enc_xform enc_xform_des = {
-	CRYPTO_DES_CBC, "DES",
-	8, 8, 8, 8, 128,
-	des1_encrypt,
-	des1_decrypt,
-	des1_setkey,
-	NULL
-};
-
 struct enc_xform enc_xform_3des = {
 	CRYPTO_3DES_CBC, "3DES",
 	8, 8, 24, 24, 384,
@@ -336,24 +323,6 @@ struct comp_algo comp_algo_lzs = {
 /*
  * Encryption wrapper routines.
  */
-void
-des1_encrypt(caddr_t key, u_int8_t *blk)
-{
-	des_ecb_encrypt(blk, blk, key, 1);
-}
-
-void
-des1_decrypt(caddr_t key, u_int8_t *blk)
-{
-	des_ecb_encrypt(blk, blk, key, 0);
-}
-
-int
-des1_setkey(void *sched, u_int8_t *key, int len)
-{
-	return des_set_key(key, sched);
-}
-
 void
 des3_encrypt(caddr_t key, u_int8_t *blk)
 {

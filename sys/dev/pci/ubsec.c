@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsec.c,v 1.160 2014/08/15 15:37:51 mikeb Exp $	*/
+/*	$OpenBSD: ubsec.c,v 1.161 2015/12/10 21:00:51 naddy Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -267,7 +267,6 @@ ubsec_attach(struct device *parent, struct device *self, void *aux)
 
 	bzero(algs, sizeof(algs));
 	algs[CRYPTO_3DES_CBC] = CRYPTO_ALG_FLAG_SUPPORTED;
-	algs[CRYPTO_DES_CBC] = CRYPTO_ALG_FLAG_SUPPORTED;
 	algs[CRYPTO_MD5_HMAC] = CRYPTO_ALG_FLAG_SUPPORTED;
 	algs[CRYPTO_SHA1_HMAC] = CRYPTO_ALG_FLAG_SUPPORTED;
 	if (sc->sc_flags & UBS_FLAGS_AES)
@@ -627,8 +626,7 @@ ubsec_newsession(u_int32_t *sidp, struct cryptoini *cri)
 			if (macini)
 				return (EINVAL);
 			macini = c;
-		} else if (c->cri_alg == CRYPTO_DES_CBC ||
-		    c->cri_alg == CRYPTO_3DES_CBC ||
+		} else if (c->cri_alg == CRYPTO_3DES_CBC ||
 		    c->cri_alg == CRYPTO_AES_CBC) {
 			if (encini)
 				return (EINVAL);
@@ -689,10 +687,6 @@ ubsec_newsession(u_int32_t *sidp, struct cryptoini *cri)
 		if (encini->cri_alg == CRYPTO_AES_CBC) {
 			bcopy(encini->cri_key, ses->ses_key,
 			    encini->cri_klen / 8);
-		} else if (encini->cri_alg == CRYPTO_DES_CBC) {
-			bcopy(encini->cri_key, &ses->ses_key[0], 8);
-			bcopy(encini->cri_key, &ses->ses_key[2], 8);
-			bcopy(encini->cri_key, &ses->ses_key[4], 8);
 		} else
 			bcopy(encini->cri_key, ses->ses_key, 24);
 
@@ -853,8 +847,7 @@ ubsec_process(struct cryptop *crp)
 		    crd1->crd_alg == CRYPTO_SHA1_HMAC) {
 			maccrd = crd1;
 			enccrd = NULL;
-		} else if (crd1->crd_alg == CRYPTO_DES_CBC ||
-		    crd1->crd_alg == CRYPTO_3DES_CBC ||
+		} else if (crd1->crd_alg == CRYPTO_3DES_CBC ||
 		    crd1->crd_alg == CRYPTO_AES_CBC) {
 			maccrd = NULL;
 			enccrd = crd1;
@@ -865,14 +858,12 @@ ubsec_process(struct cryptop *crp)
 	} else {
 		if ((crd1->crd_alg == CRYPTO_MD5_HMAC ||
 		    crd1->crd_alg == CRYPTO_SHA1_HMAC) &&
-		    (crd2->crd_alg == CRYPTO_DES_CBC ||
-		    crd2->crd_alg == CRYPTO_3DES_CBC ||
+		    (crd2->crd_alg == CRYPTO_3DES_CBC ||
 		    crd2->crd_alg == CRYPTO_AES_CBC) &&
 		    ((crd2->crd_flags & CRD_F_ENCRYPT) == 0)) {
 			maccrd = crd1;
 			enccrd = crd2;
-		} else if ((crd1->crd_alg == CRYPTO_DES_CBC ||
-		    crd1->crd_alg == CRYPTO_3DES_CBC ||
+		} else if ((crd1->crd_alg == CRYPTO_3DES_CBC ||
 		    crd1->crd_alg == CRYPTO_AES_CBC) &&
 		    (crd2->crd_alg == CRYPTO_MD5_HMAC ||
 		    crd2->crd_alg == CRYPTO_SHA1_HMAC) &&

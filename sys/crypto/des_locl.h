@@ -1,4 +1,4 @@
-/*	$OpenBSD: des_locl.h,v 1.6 2015/01/16 15:29:45 tedu Exp $	*/
+/*	$OpenBSD: des_locl.h,v 1.7 2015/12/10 21:00:51 naddy Exp $	*/
 
 /* lib/des/des_locl.h */
 /* Copyright (C) 1995 Eric Young (eay@mincom.oz.au)
@@ -68,7 +68,6 @@ typedef struct des_ks_struct
 #define DES_SCHEDULE_SZ (sizeof(des_key_schedule))
 
 
-void des_encrypt(u_int32_t *data,des_key_schedule ks, int enc);
 void des_encrypt2(u_int32_t *data,des_key_schedule ks, int enc);
 
 

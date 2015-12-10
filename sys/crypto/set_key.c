@@ -1,4 +1,4 @@
-/*	$OpenBSD: set_key.c,v 1.3 2013/11/18 18:49:53 brad Exp $	*/
+/*	$OpenBSD: set_key.c,v 1.4 2015/12/10 21:00:51 naddy Exp $	*/
 
 /* lib/des/set_key.c */
 /* Copyright (C) 1995 Eric Young (eay@mincom.oz.au)
@@ -58,22 +58,9 @@
 #include "podd.h"
 #include "sk.h"
 
-#ifdef PROTO
 static int check_parity(des_cblock (*key));
-#else
-static int check_parity();
-#endif
 
 int des_check_key=0;
-
-void
-des_set_odd_parity(des_cblock (*key))
-{
-	int i;
-
-	for (i = 0; i < DES_KEY_SZ; i++)
-		(*key)[i] = odd_parity[(*key)[i]];
-}
 
 static int
 check_parity(des_cblock (*key))
@@ -224,10 +211,4 @@ des_set_key(des_cblock (*key), des_key_schedule schedule)
 		*(k++) = s & 0xffffffffL;
 	}
 	return (0);
-}
-
-int
-des_key_sched(des_cblock (*key), des_key_schedule schedule)
-{
-	return (des_set_key(key, schedule));
 }

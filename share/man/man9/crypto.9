@@ -1,4 +1,4 @@
-.\"	$OpenBSD: crypto.9,v 1.41 2015/11/23 17:53:57 jmc Exp $
+.\"	$OpenBSD: crypto.9,v 1.42 2015/12/10 21:00:51 naddy Exp $
 .\"
 .\" The author of this man page is Angelos D. Keromytis (angelos@cis.upenn.edu)
 .\"
@@ -15,7 +15,7 @@
 .\" MERCHANTABILITY OF THIS SOFTWARE OR ITS FITNESS FOR ANY PARTICULAR
 .\" PURPOSE.
 .\"
-.Dd $Mdocdate: November 23 2015 $
+.Dd $Mdocdate: December 10 2015 $
 .Dt CRYPTO_GET_DRIVERID 9
 .Os
 .Sh NAME
@@ -140,7 +140,6 @@ structure are:
 Contains an algorithm identifier.
 Currently supported encryption algorithms are:
 .Bd -literal
-CRYPTO_DES_CBC
 CRYPTO_3DES_CBC
 CRYPTO_BLF_CBC
 CRYPTO_CAST_CBC
@@ -511,9 +510,6 @@ Some type of benchmarking is in order here.
 .Pp
 Multiple instances of the same algorithm in the same session are not
 supported.
-Note that 3DES is considered one algorithm (and not three
-instances of DES).
-Thus, 3DES and DES could be mixed in the same request.
 .Pp
 A queue for completed operations should be implemented and processed
 at some software

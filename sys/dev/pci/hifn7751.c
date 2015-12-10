@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751.c,v 1.173 2015/11/13 15:29:55 naddy Exp $	*/
+/*	$OpenBSD: hifn7751.c,v 1.174 2015/12/10 21:00:51 naddy Exp $	*/
 
 /*
  * Invertex AEON / Hifn 7751 driver
@@ -295,7 +295,6 @@ hifn_attach(struct device *parent, struct device *self, void *aux)
 	case HIFN_PUSTAT_ENA_1:
 		algs[CRYPTO_MD5_HMAC] = CRYPTO_ALG_FLAG_SUPPORTED;
 		algs[CRYPTO_SHA1_HMAC] = CRYPTO_ALG_FLAG_SUPPORTED;
-		algs[CRYPTO_DES_CBC] = CRYPTO_ALG_FLAG_SUPPORTED;
 	}
 	if (sc->sc_flags & HIFN_HAS_AES)
 		algs[CRYPTO_AES_CBC] = CRYPTO_ALG_FLAG_SUPPORTED;
@@ -1866,7 +1865,6 @@ hifn_newsession(u_int32_t *sidp, struct cryptoini *cri)
 				return (EINVAL);
 			mac = 1;
 			break;
-		case CRYPTO_DES_CBC:
 		case CRYPTO_3DES_CBC:
 		case CRYPTO_AES_CBC:
 			if (cry)
@@ -1983,8 +1981,7 @@ hifn_process(struct cryptop *crp)
 		    crd1->crd_alg == CRYPTO_SHA1_HMAC) {
 			maccrd = crd1;
 			enccrd = NULL;
-		} else if (crd1->crd_alg == CRYPTO_DES_CBC ||
-		    crd1->crd_alg == CRYPTO_3DES_CBC ||
+		} else if (crd1->crd_alg == CRYPTO_3DES_CBC ||
 		    crd1->crd_alg == CRYPTO_AES_CBC) {
 			if ((crd1->crd_flags & CRD_F_ENCRYPT) == 0)
 				cmd->base_masks |= HIFN_BASE_CMD_DECODE;
@@ -1999,15 +1996,13 @@ hifn_process(struct cryptop *crp)
 	} else {
 		if ((crd1->crd_alg == CRYPTO_MD5_HMAC ||
 		     crd1->crd_alg == CRYPTO_SHA1_HMAC) &&
-		    (crd2->crd_alg == CRYPTO_DES_CBC ||
-		     crd2->crd_alg == CRYPTO_3DES_CBC ||
+		    (crd2->crd_alg == CRYPTO_3DES_CBC ||
 		     crd2->crd_alg == CRYPTO_AES_CBC) &&
 		    ((crd2->crd_flags & CRD_F_ENCRYPT) == 0)) {
 			cmd->base_masks = HIFN_BASE_CMD_DECODE;
 			maccrd = crd1;
 			enccrd = crd2;
-		} else if ((crd1->crd_alg == CRYPTO_DES_CBC ||
-		     crd1->crd_alg == CRYPTO_3DES_CBC ||
+		} else if ((crd1->crd_alg == CRYPTO_3DES_CBC ||
 		     crd1->crd_alg == CRYPTO_AES_CBC) &&
 		    (crd2->crd_alg == CRYPTO_MD5_HMAC ||
 		     crd2->crd_alg == CRYPTO_SHA1_HMAC) &&
@@ -2027,11 +2022,6 @@ hifn_process(struct cryptop *crp)
 		cmd->enccrd = enccrd;
 		cmd->base_masks |= HIFN_BASE_CMD_CRYPT;
 		switch (enccrd->crd_alg) {
-		case CRYPTO_DES_CBC:
-			cmd->cry_masks |= HIFN_CRYPT_CMD_ALG_DES |
-			    HIFN_CRYPT_CMD_MODE_CBC |
-			    HIFN_CRYPT_CMD_NEW_IV;
-			break;
 		case CRYPTO_3DES_CBC:
 			cmd->cry_masks |= HIFN_CRYPT_CMD_ALG_3DES |
 			    HIFN_CRYPT_CMD_MODE_CBC |

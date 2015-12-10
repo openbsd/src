@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptosoft.c,v 1.79 2015/11/18 12:23:14 mikeb Exp $	*/
+/*	$OpenBSD: cryptosoft.c,v 1.80 2015/12/10 21:00:51 naddy Exp $	*/
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -789,9 +789,6 @@ swcr_newsession(u_int32_t *sid, struct cryptoini *cri)
 		}
 
 		switch (cri->cri_alg) {
-		case CRYPTO_DES_CBC:
-			txf = &enc_xform_des;
-			goto enccommon;
 		case CRYPTO_3DES_CBC:
 			txf = &enc_xform_3des;
 			goto enccommon;
@@ -963,7 +960,6 @@ swcr_freesession(u_int64_t tid)
 		swcr_sessions[sid] = swd->sw_next;
 
 		switch (swd->sw_alg) {
-		case CRYPTO_DES_CBC:
 		case CRYPTO_3DES_CBC:
 		case CRYPTO_BLF_CBC:
 		case CRYPTO_CAST_CBC:
@@ -1075,7 +1071,6 @@ swcr_process(struct cryptop *crp)
 		switch (sw->sw_alg) {
 		case CRYPTO_NULL:
 			break;
-		case CRYPTO_DES_CBC:
 		case CRYPTO_3DES_CBC:
 		case CRYPTO_BLF_CBC:
 		case CRYPTO_CAST_CBC:
@@ -1144,7 +1139,6 @@ swcr_init(void)
 
 	bzero(algs, sizeof(algs));
 
-	algs[CRYPTO_DES_CBC] = CRYPTO_ALG_FLAG_SUPPORTED;
 	algs[CRYPTO_3DES_CBC] = CRYPTO_ALG_FLAG_SUPPORTED;
 	algs[CRYPTO_BLF_CBC] = CRYPTO_ALG_FLAG_SUPPORTED;
 	algs[CRYPTO_CAST_CBC] = CRYPTO_ALG_FLAG_SUPPORTED;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: safe.c,v 1.40 2015/07/16 16:12:15 mpi Exp $	*/
+/*	$OpenBSD: safe.c,v 1.41 2015/12/10 21:00:51 naddy Exp $	*/
 
 /*-
  * Copyright (c) 2003 Sam Leffler, Errno Consulting
@@ -253,7 +253,6 @@ safe_attach(struct device *parent, struct device *self, void *aux)
 	if (devinfo & SAFE_DEVINFO_DES) {
 		printf(" 3DES");
 		algs[CRYPTO_3DES_CBC] = CRYPTO_ALG_FLAG_SUPPORTED;
-		algs[CRYPTO_DES_CBC] = CRYPTO_ALG_FLAG_SUPPORTED;
 	}
 	if (devinfo & SAFE_DEVINFO_AES) {
 		printf(" AES");
@@ -377,8 +376,7 @@ safe_process(struct cryptop *crp)
 			maccrd = crd1;
 			enccrd = NULL;
 			cmd0 |= SAFE_SA_CMD0_OP_HASH;
-		} else if (crd1->crd_alg == CRYPTO_DES_CBC ||
-		    crd1->crd_alg == CRYPTO_3DES_CBC ||
+		} else if (crd1->crd_alg == CRYPTO_3DES_CBC ||
 		    crd1->crd_alg == CRYPTO_AES_CBC) {
 			maccrd = NULL;
 			enccrd = crd1;
@@ -391,14 +389,12 @@ safe_process(struct cryptop *crp)
 	} else {
 		if ((crd1->crd_alg == CRYPTO_MD5_HMAC ||
 		    crd1->crd_alg == CRYPTO_SHA1_HMAC) &&
-		   (crd2->crd_alg == CRYPTO_DES_CBC ||
-		    crd2->crd_alg == CRYPTO_3DES_CBC ||
+		   (crd2->crd_alg == CRYPTO_3DES_CBC ||
 		    crd2->crd_alg == CRYPTO_AES_CBC) &&
 		    ((crd2->crd_flags & CRD_F_ENCRYPT) == 0)) {
 			maccrd = crd1;
 			enccrd = crd2;
-		} else if ((crd1->crd_alg == CRYPTO_DES_CBC ||
-		    crd1->crd_alg == CRYPTO_3DES_CBC ||
+		} else if ((crd1->crd_alg == CRYPTO_3DES_CBC ||
 		    crd1->crd_alg == CRYPTO_AES_CBC) &&
 		    (crd2->crd_alg == CRYPTO_MD5_HMAC ||
 		     crd2->crd_alg == CRYPTO_SHA1_HMAC) &&
@@ -414,11 +410,7 @@ safe_process(struct cryptop *crp)
 	}
 
 	if (enccrd) {
-		if (enccrd->crd_alg == CRYPTO_DES_CBC) {
-			cmd0 |= SAFE_SA_CMD0_DES;
-			cmd1 |= SAFE_SA_CMD1_CBC;
-			ivsize = 2*sizeof(u_int32_t);
-		} else if (enccrd->crd_alg == CRYPTO_3DES_CBC) {
+		if (enccrd->crd_alg == CRYPTO_3DES_CBC) {
 			cmd0 |= SAFE_SA_CMD0_3DES;
 			cmd1 |= SAFE_SA_CMD1_CBC;
 			ivsize = 2*sizeof(u_int32_t);
@@ -1279,8 +1271,7 @@ safe_newsession(u_int32_t *sidp, struct cryptoini *cri)
 			if (macini)
 				return (EINVAL);
 			macini = c;
-		} else if (c->cri_alg == CRYPTO_DES_CBC ||
-		    c->cri_alg == CRYPTO_3DES_CBC ||
+		} else if (c->cri_alg == CRYPTO_3DES_CBC ||
 		    c->cri_alg == CRYPTO_AES_CBC) {
 			if (encini)
 				return (EINVAL);
@@ -1292,10 +1283,6 @@ safe_newsession(u_int32_t *sidp, struct cryptoini *cri)
 		return (EINVAL);
 	if (encini) {			/* validate key length */
 		switch (encini->cri_alg) {
-		case CRYPTO_DES_CBC:
-			if (encini->cri_klen != 64)
-				return (EINVAL);
-			break;
 		case CRYPTO_3DES_CBC:
 			if (encini->cri_klen != 192)
 				return (EINVAL);
