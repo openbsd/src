@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsec.c,v 1.145 2015/12/09 21:41:50 naddy Exp $	 */
+/* $OpenBSD: ipsec.c,v 1.146 2015/12/10 17:27:00 mmcc Exp $	 */
 /* $EOM: ipsec.c,v 1.143 2000/12/11 23:57:42 niklas Exp $	 */
 
 /*
@@ -667,8 +667,7 @@ ipsec_set_network(u_int8_t *src_id, u_int8_t *dst_id, struct sa *sa)
 	    src_id + ISAKMP_ID_DOI_DATA_OFF + IPSEC_ID_PORT_OFF,
 	    IPSEC_ID_PORT_LEN);
 
-	if (nat_id)
-		free(nat_id);
+	free(nat_id);
 
 	/* Set destination address.  */
 	switch (dst_af) {

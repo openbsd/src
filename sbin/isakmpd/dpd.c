@@ -1,4 +1,4 @@
-/*	$OpenBSD: dpd.c,v 1.18 2014/01/23 01:04:28 deraadt Exp $	*/
+/*	$OpenBSD: dpd.c,v 1.19 2015/12/10 17:27:00 mmcc Exp $	*/
 
 /*
  * Copyright (c) 2004 Håkan Olsson.  All rights reserved.
@@ -334,8 +334,7 @@ dpd_event(void *v_sa)
 		addr = 0;
 	LOG_DBG((LOG_MESSAGE, 30, "dpd_event: sending R_U_THERE to %s seq %u",
 	    addr ? addr : "<unknown>", isakmp_sa->dpd_seq));
-	if (addr)
-		free(addr);
+	free(addr);
 	message_send_dpd_notify(isakmp_sa, ISAKMP_NOTIFY_STATUS_DPD_R_U_THERE,
 	    isakmp_sa->dpd_seq);
 

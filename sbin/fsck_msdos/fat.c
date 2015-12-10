@@ -1,4 +1,4 @@
-/*	$OpenBSD: fat.c,v 1.26 2015/09/27 16:56:06 guenther Exp $	*/
+/*	$OpenBSD: fat.c,v 1.27 2015/12/10 17:26:59 mmcc Exp $	*/
 /*	$NetBSD: fat.c,v 1.8 1997/10/17 11:19:53 ws Exp $	*/
 
 /*
@@ -86,10 +86,8 @@ readfat(int fs, struct bootblock *boot, int no, struct fatEntry **fp)
 	buffer = calloc(boot->FATsecs, boot->BytesPerSec);
 	if (fat == NULL || buffer == NULL) {
 		xperror("No space for FAT");
-		if (fat != NULL)
-			free(fat);
-		if (buffer != NULL)
-			free(buffer);
+		free(fat);
+		free(buffer);
 		return (FSFATAL);
 	}
 

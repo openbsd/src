@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsecctl.c,v 1.79 2015/01/16 06:39:58 deraadt Exp $	*/
+/*	$OpenBSD: ipsecctl.c,v 1.80 2015/12/10 17:27:00 mmcc Exp $	*/
 /*
  * Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -217,27 +217,19 @@ ipsecctl_free_rule(struct ipsec_rule *rp)
 		free(rp->peer);
 	}
 	if (rp->auth) {
-		if (rp->auth->srcid)
-			free(rp->auth->srcid);
-		if (rp->auth->dstid)
-			free(rp->auth->dstid);
+		free(rp->auth->srcid);
+		free(rp->auth->dstid);
 		free(rp->auth);
 	}
 	if (rp->ikeauth) {
-		if (rp->ikeauth->string)
-			free(rp->ikeauth->string);
+		free(rp->ikeauth->string);
 		free(rp->ikeauth);
 	}
-	if (rp->xfs)
-		free(rp->xfs);
-	if (rp->p1xfs)
-		free(rp->p1xfs);
-	if (rp->p2xfs)
-		free(rp->p2xfs);
-	if (rp->p1life)
-		free(rp->p1life);
-	if (rp->p2life)
-		free(rp->p2life);
+	free(rp->xfs);
+	free(rp->p1xfs);
+	free(rp->p2xfs);
+	free(rp->p1life);
+	free(rp->p2life);
 	if (rp->authkey) {
 		free(rp->authkey->data);
 		free(rp->authkey);
@@ -246,16 +238,11 @@ ipsecctl_free_rule(struct ipsec_rule *rp)
 		free(rp->enckey->data);
 		free(rp->enckey);
 	}
-	if (rp->p1name)
-		free(rp->p1name);
-	if (rp->p2name)
-		free(rp->p2name);
-	if (rp->p2lid)
-		free(rp->p2lid);
-	if (rp->p2nid)
-		free(rp->p2nid);
-	if (rp->p2rid)
-		free(rp->p2rid);
+	free(rp->p1name);
+	free(rp->p2name);
+	free(rp->p2lid);
+	free(rp->p2nid);
+	free(rp->p2rid);
 	free(rp);
 }
 
@@ -534,10 +521,8 @@ ipsecctl_show_flows(int opts)
 			free(rp->peer);
 		}
 		if (rp->auth) {
-			if (rp->auth->srcid)
-				free(rp->auth->srcid);
-			if (rp->auth->dstid)
-				free(rp->auth->dstid);
+			free(rp->auth->srcid);
+			free(rp->auth->dstid);
 			free(rp->auth);
 		}
 		free(rp);

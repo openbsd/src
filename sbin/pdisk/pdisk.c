@@ -565,11 +565,9 @@ do_create_partition(partition_map_header *map, int get_type)
 	add_partition_to_map(name, type_name, base, length, map);
     }
 xit2:
-    if (type_name)
-        free(type_name);
+    free(type_name);
 xit1:
-    if (name)
-        free(name);
+    free(name);
     return;
 }
 
@@ -704,8 +702,7 @@ do_change_type(partition_map_header *map)
     map->changed = 1;
 
 out:
-    if (type)
-        free(type);
+    free(type);
     return;
 }
 

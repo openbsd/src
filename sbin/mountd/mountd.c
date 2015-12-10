@@ -1,4 +1,4 @@
-/*	$OpenBSD: mountd.c,v 1.81 2015/08/20 22:16:35 millert Exp $	*/
+/*	$OpenBSD: mountd.c,v 1.82 2015/12/10 17:27:00 mmcc Exp $	*/
 /*	$NetBSD: mountd.c,v 1.31 1996/02/18 11:57:53 fvdl Exp $	*/
 
 /*
@@ -1495,8 +1495,7 @@ free_exp(struct exportlist *ep)
 		free_host(ep->ex_defdir->dp_hosts);
 		free((caddr_t)ep->ex_defdir);
 	}
-	if (ep->ex_fsdir)
-		free(ep->ex_fsdir);
+	free(ep->ex_fsdir);
 	free_dir(ep->ex_dirl);
 	free((caddr_t)ep);
 }
@@ -2001,8 +2000,7 @@ free_grp(struct grouplist *grp)
 		}
 		free((caddr_t)grp->gr_ptr.gt_hostent);
 	} else if (grp->gr_type == GT_NET) {
-		if (grp->gr_ptr.gt_net.nt_name)
-			free(grp->gr_ptr.gt_net.nt_name);
+		free(grp->gr_ptr.gt_net.nt_name);
 	}
 	free((caddr_t)grp);
 }

@@ -1,4 +1,4 @@
-/* $OpenBSD: ike_quick_mode.c,v 1.109 2015/08/20 22:02:21 deraadt Exp $	 */
+/* $OpenBSD: ike_quick_mode.c,v 1.110 2015/12/10 17:27:00 mmcc Exp $	 */
 /* $EOM: ike_quick_mode.c,v 1.139 2001/01/26 10:43:17 niklas Exp $	 */
 
 /*
@@ -758,16 +758,14 @@ initiator_send_HASH_SA_NONCE(struct message *msg)
 			for (xf_no = 0; xf_no < proto->xf_cnt; xf_no++) {
 				pa = calloc(1, sizeof *pa);
 				if (!pa) {
-					if (proto->data)
-						free(proto->data);
+					free(proto->data);
 					free(proto);
 					goto bail_out;
 				}
 				pa->len = transform_len[prop_no][xf_no];
 				pa->attrs = malloc(pa->len);
 				if (!pa->attrs) {
-					if (proto->data)
-						free(proto->data);
+					free(proto->data);
 					free(proto);
 					free(pa);
 					goto bail_out;

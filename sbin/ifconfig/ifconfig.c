@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.310 2015/12/09 16:02:44 mpi Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.311 2015/12/10 17:26:59 mmcc Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -1042,8 +1042,7 @@ printif(char *ifname, int ifaliases)
 		}
 	}
 	freeifaddrs(ifap);
-	if (oname != NULL)
-		free(oname);
+	free(oname);
 	if (count == 0) {
 		fprintf(stderr, "%s: no such interface\n", name);
 		exit(1);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.c,v 1.29 2015/08/20 22:02:21 deraadt Exp $	*/
+/*	$OpenBSD: dir.c,v 1.30 2015/12/10 17:26:59 mmcc Exp $	*/
 /*	$NetBSD: dir.c,v 1.11 1997/10/17 11:19:35 ws Exp $	*/
 
 /*
@@ -975,7 +975,6 @@ reconnect(int dosfs, struct bootblock *boot, struct fatEntry *fat, cl_t head)
 void
 finishlf(void)
 {
-	if (lfbuf)
-		free(lfbuf);
+	free(lfbuf);
 	lfbuf = NULL;
 }

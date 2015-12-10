@@ -1,4 +1,4 @@
-/* $OpenBSD: exchange.c,v 1.136 2015/04/20 17:22:18 mikeb Exp $	 */
+/* $OpenBSD: exchange.c,v 1.137 2015/12/10 17:27:00 mmcc Exp $	 */
 /* $EOM: exchange.c,v 1.143 2000/12/04 00:02:25 angelos Exp $	 */
 
 /*
@@ -1576,8 +1576,7 @@ exchange_free_aca_list(struct exchange *exchange)
 
 	for (aca = TAILQ_FIRST(&exchange->aca_list); aca;
 	    aca = TAILQ_FIRST(&exchange->aca_list)) {
-		if (aca->raw_ca)
-			free(aca->raw_ca);
+		free(aca->raw_ca);
 		if (aca->data) {
 			if (aca->handler)
 				aca->handler->free_aca(aca->data);

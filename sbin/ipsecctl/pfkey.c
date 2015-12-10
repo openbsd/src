@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.56 2015/12/09 21:41:50 naddy Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.57 2015/12/10 17:27:00 mmcc Exp $	*/
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
  * Copyright (c) 2003, 2004 Markus Friedl <markus@openbsd.org>
@@ -379,10 +379,8 @@ pfkey_flow(int sd, u_int8_t satype, u_int8_t action, u_int8_t direction,
 		ret = -1;
 	}
 
-	if (sa_srcid)
-		free(sa_srcid);
-	if (sa_dstid)
-		free(sa_dstid);
+	free(sa_srcid);
+	free(sa_dstid);
 
 	return ret;
 }

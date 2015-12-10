@@ -1,4 +1,4 @@
-/* $OpenBSD: ike_phase_1.c,v 1.75 2015/08/20 22:02:21 deraadt Exp $	 */
+/* $OpenBSD: ike_phase_1.c,v 1.76 2015/12/10 17:27:00 mmcc Exp $	 */
 /* $EOM: ike_phase_1.c,v 1.31 2000/12/11 23:47:56 niklas Exp $	 */
 
 /*
@@ -380,8 +380,7 @@ bail_out:
 	free(proposal);
 	if (transform) {
 		for (i = 0; i < conf->cnt; i++)
-			if (transform[i])
-				free(transform[i]);
+			free(transform[i]);
 		free(transform);
 	}
 	free(transform_len);

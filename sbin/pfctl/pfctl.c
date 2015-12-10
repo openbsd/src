@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.331 2015/10/02 15:32:17 krw Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.332 2015/12/10 17:27:00 mmcc Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1546,8 +1546,7 @@ _error:
 				err(1, "DIOCXROLLBACK");
 		exit(1);
 	} else {		/* sub ruleset */
-		if (path)
-			free(path);
+		free(path);
 		return (-1);
 	}
 

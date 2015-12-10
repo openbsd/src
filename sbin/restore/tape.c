@@ -1,4 +1,4 @@
-/*	$OpenBSD: tape.c,v 1.46 2015/08/25 04:18:43 guenther Exp $	*/
+/*	$OpenBSD: tape.c,v 1.47 2015/12/10 17:27:00 mmcc Exp $	*/
 /*	$NetBSD: tape.c,v 1.26 1997/04/15 07:12:25 lukem Exp $	*/
 
 /*
@@ -173,8 +173,7 @@ newtapebuf(long size)
 	ntrec = size;
 	if (size <= tapebufsize)
 		return;
-	if (tapebuf != NULL)
-		free(tapebuf);
+	free(tapebuf);
 	tapebuf = calloc(size, TP_BSIZE);
 	if (tapebuf == NULL)
 		errx(1, "Cannot allocate space for tape buffer");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.299 2015/11/23 19:19:29 deraadt Exp $	*/
+/*	$OpenBSD: editor.c,v 1.300 2015/12/10 17:26:59 mmcc Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -510,8 +510,7 @@ done:
 	mpfree(omountpoints);
 	mpfree(origmountpoints);
 	mpfree(tmpmountpoints);
-	if (disk_geop)
-		free(disk_geop);
+	free(disk_geop);
 	return(error);
 }
 

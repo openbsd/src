@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.55 2015/11/18 19:25:07 tedu Exp $	*/
+/*	$OpenBSD: init.c,v 1.56 2015/12/10 17:27:00 mmcc Exp $	*/
 /*	$NetBSD: init.c,v 1.22 1996/05/15 23:29:33 jtc Exp $	*/
 
 /*-
@@ -929,8 +929,7 @@ setupargv(session_t *sp, struct ttyent *typ)
 		return (0);
 	}
 	if (typ->ty_window) {
-		if (sp->se_window)
-			free(sp->se_window);
+		free(sp->se_window);
 		sp->se_window = strdup(typ->ty_window);
 		if (sp->se_window == NULL) {
 			warning("can't allocate window");

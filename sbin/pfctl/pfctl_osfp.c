@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_osfp.c,v 1.22 2015/01/21 21:50:33 deraadt Exp $ */
+/*	$OpenBSD: pfctl_osfp.c,v 1.23 2015/12/10 17:27:00 mmcc Exp $ */
 
 /*
  * Copyright (c) 2003 Mike Frantzen <frantzen@openbsd.org>
@@ -106,16 +106,11 @@ pfctl_file_fingerprints(int dev, int opts, const char *fp_filename)
 
 	while ((line = fgetln(in, &len)) != NULL) {
 		lineno++;
-		if (class)
-			free(class);
-		if (version)
-			free(version);
-		if (subtype)
-			free(subtype);
-		if (desc)
-			free(desc);
-		if (tcpopts)
-			free(tcpopts);
+		free(class);
+		free(version);
+		free(subtype);
+		free(desc);
+		free(tcpopts);
 		class = version = subtype = desc = tcpopts = NULL;
 		memset(&fp, 0, sizeof(fp));
 
@@ -244,16 +239,11 @@ pfctl_file_fingerprints(int dev, int opts, const char *fp_filename)
 		add_fingerprint(dev, opts, &fp);
 	}
 
-	if (class)
-		free(class);
-	if (version)
-		free(version);
-	if (subtype)
-		free(subtype);
-	if (desc)
-		free(desc);
-	if (tcpopts)
-		free(tcpopts);
+	free(class);
+	free(version);
+	free(subtype);
+	free(desc);
+	free(tcpopts);
 
 	fclose(in);
 
