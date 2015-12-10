@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnx.c,v 1.118 2015/12/05 16:23:37 jmatthew Exp $	*/
+/*	$OpenBSD: if_bnx.c,v 1.119 2015/12/10 12:24:27 dlg Exp $	*/
 
 /*-
  * Copyright (c) 2006 Broadcom Corporation
@@ -871,6 +871,7 @@ bnx_attachhook(void *xsc)
 	ifp = &sc->arpcom.ac_if;
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
+	ifp->if_xflags = IFXF_MPSAFE;
 	ifp->if_ioctl = bnx_ioctl;
 	ifp->if_start = bnx_start;
 	ifp->if_watchdog = bnx_watchdog;
@@ -4573,20 +4574,14 @@ bnx_tx_intr(struct bnx_softc *sc)
 
 	used = atomic_sub_int_nv(&sc->used_tx_bd, freed);
 
+	sc->tx_cons = sw_tx_cons;
+
 	/* Clear the TX timeout timer. */
 	if (used == 0)
 		ifp->if_timer = 0;
 
-	/* Clear the tx hardware queue full flag. */
-	if (used < sc->max_tx_bd) {
-		DBRUNIF(ifq_is_oactive(&ifp->if_snd),
-		    printf("%s: Open TX chain! %d/%d (used/total)\n",
-			sc->bnx_dev.dv_xname, used,
-			sc->max_tx_bd));
-		ifq_clr_oactive(&ifp->if_snd);
-	}
-
-	sc->tx_cons = sw_tx_cons;
+	if (ifq_is_oactive(&ifp->if_snd))
+		ifq_restart(&ifp->if_snd);
 }
 
 /****************************************************************************/
@@ -4880,10 +4875,8 @@ bnx_start(struct ifnet *ifp)
 	int			used;
 	u_int16_t		tx_prod, tx_chain_prod;
 
-	/* If there's no link or the transmit queue is empty then just exit. */
-	if (!sc->bnx_link || IFQ_IS_EMPTY(&ifp->if_snd)) {
-		DBPRINT(sc, BNX_INFO_SEND,
-		    "%s(): No link or transmit queue empty.\n", __FUNCTION__);
+	if (!sc->bnx_link) {
+		ifq_purge(&ifp->if_snd);
 		goto bnx_start_exit;
 	}
 
