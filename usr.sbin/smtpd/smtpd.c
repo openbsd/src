@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.260 2015/12/10 09:33:50 sunil Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.261 2015/12/10 14:07:04 sunil Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -764,7 +764,8 @@ post_fork(int proc)
 {
 	if (proc != PROC_QUEUE && env->sc_queue_key) {
 		explicit_bzero(env->sc_queue_key, strlen(env->sc_queue_key));
-		free(env->sc_queue_key);
+		if (strcasecmp(env->sc_queue_key, "stdin") != 0)
+			free(env->sc_queue_key);
 	}
 
 	if (proc != PROC_CONTROL) {
@@ -865,7 +866,7 @@ purge_task(void)
 		closedir(d);
 	} else
 		log_warn("warn: purge_task: opendir");
-	
+
 	if (n > 2) {
 		switch (purge_pid = fork()) {
 		case -1:
@@ -1038,7 +1039,7 @@ offline_scan(int fd, short ev, void *arg)
 				log_warnx("warn: smtpd: could not unlink %s", e->fts_accpath);
 			continue;
 		}
-		
+
 		if (offline_add(e->fts_name)) {
 			log_warnx("warn: smtpd: "
 			    "could not add offline message %s", e->fts_name);
