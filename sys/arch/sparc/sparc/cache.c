@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache.c,v 1.20 2010/07/10 19:32:24 miod Exp $	*/
+/*	$OpenBSD: cache.c,v 1.21 2015/12/10 19:48:04 mmcc Exp $	*/
 /*	$NetBSD: cache.c,v 1.34 1997/09/26 22:17:23 pk Exp $	*/
 
 /*
@@ -69,11 +69,6 @@
 #include <sparc/sparc/asm.h>
 #include <sparc/sparc/cache.h>
 #include <sparc/sparc/cpuvar.h>
-
-#if defined(solbourne)
-#include <machine/idt.h>
-#include <machine/kap.h>
-#endif
 
 struct cachestats cachestats;
 
@@ -894,59 +889,3 @@ srmmu_pcache_flush_line(va, pa)
 	sta(va, ASI_IDCACHELFP, 0);
 }
 #endif /* SUN4M */
-
-#if defined(solbourne)
-void
-kap_cache_enable()
-{
-	kap_cache_flush(NULL, 0);
-	sta(0, ASI_ICACHE_INVAL, 0);
-
-	sta(ICU_CONF, ASI_PHYS_IO,
-	    lda(ICU_CONF, ASI_PHYS_IO) & ~CONF_ICACHE_DISABLE);
-	CACHEINFO.c_enabled = 1;
-
-	printf("cache enabled\n");
-}
-
-void
-kap_vcache_flush_context()
-{
-	kap_cache_flush(0, 0);
-	sta(0, ASI_DCACHE_INVAL, 0);
-	sta(0, ASI_ICACHE_INVAL, 0);
-}
-
-void
-kap_vcache_flush_page(va)
-	int va;
-{
-	kap_cache_flush((caddr_t)va, PAGE_SIZE);
-}
-
-void
-kap_cache_flush(base, len)
-	caddr_t base;
-	u_int len;
-{
-	u_int line;
-	u_int32_t mmcr;
-
-	/*
-	 * Due to the small size of the data cache and the fact that we
-	 * would be flushing 4 bytes by 4 bytes, it is faster to flush
-	 * the whole cache instead.
-	 */
-
-	mmcr = lda(0, ASI_MMCR) & ~(MMCR_DSET0 | MMCR_DSET1);
-	/* flush bank 0 */
-	sta(0, ASI_MMCR, mmcr | MMCR_DSET0);
-	for (line = 0; line < DCACHE_LINE(DCACHE_LINES); line += DCACHE_INCR)
-		(void)lda(line, ASI_DCACHE_FLUSH);
-	/* flush bank 1 */
-	sta(0, ASI_MMCR, mmcr | MMCR_DSET1);
-	for (line = 0; line < DCACHE_LINE(DCACHE_LINES); line += DCACHE_INCR)
-		(void)lda(line, ASI_DCACHE_FLUSH);
-}
-
-#endif	/* solbourne */

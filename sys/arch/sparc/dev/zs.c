@@ -1,4 +1,4 @@
-/*	$OpenBSD: zs.c,v 1.57 2015/03/18 19:49:14 miod Exp $	*/
+/*	$OpenBSD: zs.c,v 1.58 2015/12/10 19:48:04 mmcc Exp $	*/
 /*	$NetBSD: zs.c,v 1.50 1997/10/18 00:00:40 gwr Exp $	*/
 
 /*-
@@ -68,10 +68,6 @@
 #include <sparc/sparc/auxioreg.h>
 #include <sparc/dev/cons.h>
 
-#ifdef solbourne
-#include <machine/prom.h>
-#endif
-
 #include <uvm/uvm_extern.h>
 
 #include "zskbd.h"
@@ -100,18 +96,10 @@ int zs_major = 12;
 
 /* The layout of this is hardware-dependent (padding, order). */
 struct zschan {
-#if !defined(solbourne)
 	volatile u_char	zc_csr;		/* ctrl,status, and indirect access */
 	u_char		zc_xxx0;
 	volatile u_char	zc_data;	/* data */
 	u_char		zc_xxx1;
-#endif
-#if defined(solbourne)
-	volatile u_char	zc_csr;		/* ctrl,status, and indirect access */
-	u_char		zc_xxx0[7];
-	volatile u_char	zc_data;	/* data */
-	u_char		zc_xxx1[7];
-#endif
 };
 struct zsdevice {
 	/* Yes, they are backwards. */
@@ -220,11 +208,6 @@ zs_match(parent, vcf, aux)
 
 	if (strcmp(cf->cf_driver->cd_name, ra->ra_name))
 		return (0);
-
-#ifdef solbourne
-	if (CPU_ISKAP)
-		return (ca->ca_bustype == BUS_OBIO);
-#endif
 
 	if ((ca->ca_bustype == BUS_MAIN && (CPU_ISSUN4C || CPU_ISSUN4E)) ||
 	    (ca->ca_bustype == BUS_OBIO && CPU_ISSUN4M))

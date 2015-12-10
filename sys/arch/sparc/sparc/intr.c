@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.42 2015/11/02 16:55:31 mpi Exp $ */
+/*	$OpenBSD: intr.c,v 1.43 2015/12/10 19:48:04 mmcc Exp $ */
 /*	$NetBSD: intr.c,v 1.20 1997/07/29 09:42:03 fair Exp $ */
 
 /*
@@ -521,11 +521,6 @@ softintr_schedule(void *arg)
 		case CPU_SUN4E:
 		case CPU_SUN4C:
 			intreg_set_44c(sih->sih_hw);
-			break;
-#endif
-#if defined(solbourne)
-		case CPU_KAP:
-			ienab_bis(sih->sih_hw);
 			break;
 #endif
 		}

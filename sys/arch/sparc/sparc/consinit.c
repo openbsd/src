@@ -1,4 +1,4 @@
-/*	$OpenBSD: consinit.c,v 1.1 2015/02/28 17:54:54 miod Exp $	*/
+/*	$OpenBSD: consinit.c,v 1.2 2015/12/10 19:48:04 mmcc Exp $	*/
 /*	$NetBSD: zs.c,v 1.50 1997/10/18 00:00:40 gwr Exp $	*/
 
 /*-
@@ -54,10 +54,6 @@
 
 #include <sparc/dev/cons.h>
 
-#ifdef solbourne
-#include <machine/prom.h>
-#endif
-
 #include "zskbd.h"
 #include "zs.h"
 
@@ -71,8 +67,6 @@
 extern int zs_hwflags[NZS][2];
 
 /*****************************************************************/
-
-#if !defined(solbourne)
 
 cons_decl(prom);
 
@@ -178,8 +172,6 @@ promcnputc(dev, c)
 	splx(s);
 }
 
-#endif	/* !solbourne */
-
 /*****************************************************************/
 
 char *prom_inSrc_name[] = {
@@ -203,7 +195,6 @@ consinit()
 	int channel, zs_unit;
 	int inSource, outSink;
 
-#if !defined(solbourne)
 	if (promvec->pv_romvec_vers > 2) {
 		/* We need to probe the PROM device tree */
 		int node,fd;
@@ -312,30 +303,6 @@ setup_output:
 		outSink  = *promvec->pv_stdout;
 	}
 setup_console:
-#endif	/* !solbourne */
-#ifdef solbourne
-	if (CPU_ISKAP) {
-		const char *dev;
-
-		inSource = PROMDEV_TTYA;	/* default */
-		dev = prom_getenv(ENV_INPUTDEVICE);
-		if (dev != NULL) {
-			if (strcmp(dev, "ttyb") == 0)
-				inSource = PROMDEV_TTYB;
-			if (strcmp(dev, "keyboard") == 0)
-				inSource = PROMDEV_KBD;
-		}
-
-		outSink = PROMDEV_TTYA;	/* default */
-		dev = prom_getenv(ENV_OUTPUTDEVICE);
-		if (dev != NULL) {
-			if (strcmp(dev, "ttyb") == 0)
-				outSink = PROMDEV_TTYB;
-			if (strcmp(dev, "screen") == 0)
-				outSink = PROMDEV_SCREEN;
-		}
-	}
-#endif
 
 	if (inSource != outSink) {
 		printf("cninit: mismatched PROM output selector\n");

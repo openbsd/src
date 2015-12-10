@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le.c,v 1.37 2015/09/11 13:02:28 stsp Exp $	*/
+/*	$OpenBSD: if_le.c,v 1.38 2015/12/10 19:48:04 mmcc Exp $	*/
 /*	$NetBSD: if_le.c,v 1.50 1997/09/09 20:54:48 pk Exp $	*/
 
 /*-
@@ -77,12 +77,6 @@
 #include <sparc/dev/if_lereg.h>
 #include <sparc/dev/if_levar.h>
 
-#ifdef solbourne
-#include <sparc/sparc/asm.h>
-#include <machine/idt.h>
-#include <machine/kap.h>
-#endif
-
 int	lematch(struct device *, void *, void *);
 void	leattach(struct device *, struct device *, void *);
 
@@ -151,10 +145,6 @@ void	lehwreset(struct lance_softc *);
 void	lehwinit(struct lance_softc *);
 #if defined(SUN4M)
 void	lenocarrier(struct lance_softc *);
-#endif
-#if defined(solbourne)
-void	kap_copytobuf(struct lance_softc *, void *, int, int);
-void	kap_copyfrombuf(struct lance_softc *, void *, int, int);
 #endif
 
 void
@@ -400,11 +390,6 @@ lematch(struct device *parent, void *vcf, void *aux)
 
 	if (strcmp(cf->cf_driver->cd_name, ra->ra_name))
 		return (0);
-#if defined(solbourne)
-	if (CPU_ISKAP) {
-		return (ca->ca_bustype == BUS_OBIO);
-	}
-#endif
 #if defined(SUN4C) || defined(SUN4D) || defined(SUN4E) || defined(SUN4M)
 	if (ca->ca_bustype == BUS_SBUS) {
 		if (!sbus_testdma((struct sbus_softc *)parent, ca))
@@ -481,26 +466,6 @@ leattach(struct device *parent, struct device *self, void *aux)
 	{
 		u_long laddr;
 
-#if defined(solbourne)
-		if (CPU_ISKAP && ca->ca_bustype == BUS_OBIO) {
-			/*
-			 * Use the fixed buffer allocated in pmap_bootstrap().
-			 * for now, until I get the iCU translation to work...
-			 */
-			extern vaddr_t lance_va;
-
-			laddr = PTW1_TO_PHYS(lance_va);
-			sc->sc_mem = (void *)PHYS_TO_PTW2(laddr);
-
-			/* disable ICU translations for ethernet */
-			sta(ICU_TER, ASI_PHYS_IO,
-			    lda(ICU_TER, ASI_PHYS_IO) & ~TER_ETHERNET);
-
-			/* stash the high 15 bits of the physical address */
-			sta(SE_BASE + 0x18, ASI_PHYS_IO,
-			    laddr & 0xfffe0000);
-		} /* else */
-#endif	/* solbourne */
 #if defined(SUN4) || defined(SUN4C) || defined(SUN4D) || defined(SUN4E) || defined(SUN4M)
 #if defined(SUN4C) || defined(SUN4D) || defined(SUN4E) || defined(SUN4M)
 		if (sbuschild && CPU_ISSUN4DOR4M)
@@ -515,18 +480,8 @@ leattach(struct device *parent, struct device *self, void *aux)
 		if ((laddr & 0xffffff) >= (laddr & 0xffffff) + MEMSIZE)
 			panic("if_le: Lance buffer crosses 16MB boundary");
 #endif
-#if defined(solbourne)
-		if (CPU_ISKAP && ca->ca_bustype == BUS_OBIO)
-			sc->sc_addr = laddr & 0x01ffff;
-		else
-#endif
 			sc->sc_addr = laddr & 0xffffff;
 		sc->sc_memsize = MEMSIZE;
-#if defined(solbourne)
-		if (CPU_ISKAP && ca->ca_bustype == BUS_OBIO)
-			sc->sc_conf3 = LE_C3_BSWP;
-		else
-#endif
 			sc->sc_conf3 = LE_C3_BSWP | LE_C3_ACON | LE_C3_BCON;
 #if defined(SUN4C) || defined(SUN4D) || defined(SUN4E) || defined(SUN4M)
 		if (dmachild) {
@@ -599,17 +554,6 @@ leattach(struct device *parent, struct device *self, void *aux)
 
 	am7990_config(&lesc->sc_am7990);
 
-#if defined(solbourne)
-	if (CPU_ISKAP && ca->ca_bustype == BUS_OBIO) {
-		sc->sc_copytodesc = kap_copytobuf;
-		sc->sc_copyfromdesc = kap_copyfrombuf;
-
-		sc->sc_initaddr = 1 << 23 | (sc->sc_initaddr & 0x01ffff);
-		sc->sc_rmdaddr = 1 << 23 | (sc->sc_rmdaddr & 0x01ffff);
-		sc->sc_tmdaddr = 1 << 23 | (sc->sc_tmdaddr & 0x01ffff);
-	}
-#endif
-
 	lesc->sc_ih.ih_fun = am7990_intr;
 #if defined(SUN4M) /*XXX*/
 	if (CPU_ISSUN4M && lesc->sc_dma)
@@ -621,16 +565,3 @@ leattach(struct device *parent, struct device *self, void *aux)
 	/* now initialize DMA */
 	lehwreset(sc);
 }
-
-#if defined(solbourne)
-void
-kap_copytobuf(struct lance_softc *sc, void *to, int boff, int len)
-{
-	return (lance_copytobuf_contig(sc, to, boff & ~(1 << 23), len));
-}
-void
-kap_copyfrombuf(struct lance_softc *sc, void *from, int boff, int len)
-{
-	return (lance_copyfrombuf_contig(sc, from, boff & ~(1 << 23), len));
-}
-#endif
