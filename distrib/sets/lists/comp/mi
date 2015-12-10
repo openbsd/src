@@ -6407,6 +6407,7 @@
 ./usr/share/man/man9/if_rxr_inuse.9
 ./usr/share/man/man9/if_rxr_ioctl.9
 ./usr/share/man/man9/if_rxr_put.9
+./usr/share/man/man9/ifq_barrier.9
 ./usr/share/man/man9/ifq_clr_oactive.9
 ./usr/share/man/man9/ifq_deq_begin.9
 ./usr/share/man/man9/ifq_deq_commit.9
@@ -6607,6 +6608,7 @@
 ./usr/share/man/man9/refcnt_rele.9
 ./usr/share/man/man9/refcnt_rele_wake.9
 ./usr/share/man/man9/refcnt_take.9
+./usr/share/man/man9/refcnt_take_n.9
 ./usr/share/man/man9/resettodr.9
 ./usr/share/man/man9/route.9
 ./usr/share/man/man9/rrw_enter.9

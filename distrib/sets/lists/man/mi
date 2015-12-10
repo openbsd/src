@@ -863,6 +863,7 @@
 ./usr/share/man/man3p/OpenBSD::PackingList.3p
 ./usr/share/man/man3p/OpenBSD::PkgCfl.3p
 ./usr/share/man/man3p/OpenBSD::PkgSpec.3p
+./usr/share/man/man3p/OpenBSD::Pledge.3p
 ./usr/share/man/man3p/OpenBSD::RequiredBy.3p
 ./usr/share/man/man3p/OpenBSD::Search.3p
 ./usr/share/man/man3p/OpenBSD::State.3p
