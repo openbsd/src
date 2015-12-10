@@ -1,4 +1,4 @@
-/*	$OpenBSD: i386_installboot.c,v 1.20 2015/12/01 19:10:16 krw Exp $	*/
+/*	$OpenBSD: i386_installboot.c,v 1.21 2015/12/10 18:40:46 mmcc Exp $	*/
 /*	$NetBSD: installboot.c,v 1.5 1995/11/17 23:23:50 gwr Exp $ */
 
 /*
@@ -369,8 +369,7 @@ rmdir:
 	if (rmdir(dst) == -1)
 		err(1, "rmdir('%s') failed", dst);
 
-	if (src)
-		free(src);
+	free(src);
 
 	if (rslt == -1)
 		exit(1);
