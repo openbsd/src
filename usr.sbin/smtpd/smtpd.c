@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.259 2015/12/08 17:28:03 sunil Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.260 2015/12/10 09:33:50 sunil Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1220,8 +1220,10 @@ parent_forward_open(char *username, char *directory, uid_t uid, gid_t gid)
 	struct stat	sb;
 
 	if (! bsnprintf(pathname, sizeof (pathname), "%s/.forward",
-		directory))
-		fatal("smtpd: parent_forward_open: snprintf");
+		directory)) {
+		log_warnx("warn: smtpd: %s: pathname too large", pathname);
+		return -1;
+	}
 
 	if (stat(directory, &sb) < 0) {
 		log_warn("warn: smtpd: parent_forward_open: %s", directory);
