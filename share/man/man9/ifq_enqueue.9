@@ -1,4 +1,4 @@
-.\"     $OpenBSD: ifq_enqueue.9,v 1.8 2015/12/10 00:42:51 dlg Exp $
+.\"     $OpenBSD: ifq_enqueue.9,v 1.9 2015/12/10 06:58:56 jmc Exp $
 .\"
 .\"  Copyright (c) 2015 David Gwynne <dlg@openbsd.org>
 .\"
@@ -112,10 +112,10 @@ This call is serialised with other calls to the start routine via
 and therefore provides race free modification of the "active" mark.
 .It Fn ifq_barrier "struct ifqueue *ifq"
 .Fn ifq_barrier
-guarantees that any work currently running in the interface queues
-serialiser (eg, work dispatched by
+guarantees that any work currently running in the interface queue
+serialiser (e.g. work dispatched by
 .Fn ifq_restart
-or the interfaces start routine) has finished before
+or the interface's start routine) has finished before
 .Fn ifq_barrier
 returns.
 .El
