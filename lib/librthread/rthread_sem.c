@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_sem.c,v 1.20 2015/01/16 16:48:52 deraadt Exp $ */
+/*	$OpenBSD: rthread_sem.c,v 1.21 2015/12/10 13:02:24 tedu Exp $ */
 /*
  * Copyright (c) 2004,2005,2013 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -342,7 +342,7 @@ sem_open(const char *name, int oflag, ...)
 		errno = EINVAL;
 		return (SEM_FAILED);
 	}
-	if (sb.st_uid != getuid()) {
+	if (sb.st_uid != geteuid()) {
 		close(fd);
 		errno = EPERM;
 		return (SEM_FAILED);
