@@ -1,4 +1,4 @@
-/*	$OpenBSD: grey.c,v 1.61 2015/12/08 03:21:09 beck Exp $	*/
+/*	$OpenBSD: grey.c,v 1.62 2015/12/10 16:06:29 beck Exp $	*/
 
 /*
  * Copyright (c) 2004-2006 Bob Beck.  All rights reserved.
@@ -1065,6 +1065,11 @@ greywatcher(void)
 
 	drop_privs();
 
+	if (pledge("stdio rpath wpath inet flock proc exec", NULL) == -1) {
+		syslog_r(LOG_ERR, &sdata, "pledge failed (%m)");
+		exit(1);
+	}
+		
 	startup = time(NULL);
 	db_pid = fork();
 	switch (db_pid) {
