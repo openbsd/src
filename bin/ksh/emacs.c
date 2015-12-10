@@ -1,4 +1,4 @@
-/*	$OpenBSD: emacs.c,v 1.60 2015/10/19 14:42:16 mmcc Exp $	*/
+/*	$OpenBSD: emacs.c,v 1.61 2015/12/10 10:00:14 schwarze Exp $	*/
 
 /*
  *  Emacs-like command line editing and history
@@ -82,7 +82,7 @@ static char    *xend;		/* end input buffer */
 static char    *xcp;		/* current position */
 static char    *xep;		/* current end */
 static char    *xbp;		/* start of visible portion of input buffer */
-static char    *xlp;		/* last char visible on screen */
+static char    *xlp;		/* last byte visible on screen */
 static int	x_adj_ok;
 /*
  * we use x_adj_done so that functions can tell
@@ -138,6 +138,7 @@ static int	x_comment(int);
 static int	x_fold_case(int);
 static char	*x_lastcp(void);
 static void	do_complete(int, Comp_type);
+static int	isu8cont(unsigned char);
 
 /* proto's for keybindings */
 static int	x_abort(int);
@@ -261,6 +262,12 @@ static const struct x_ftab x_ftab[] = {
 #endif
 	{ 0, 0, 0 },
 };
+
+int
+isu8cont(unsigned char c)
+{
+	return (c & (0x80 | 0x40)) == 0x80;
+}
 
 int
 x_emacs(char *buf, size_t len)
@@ -468,6 +475,8 @@ x_del_back(int c)
 	}
 	if (x_arg > col)
 		x_arg = col;
+	while (x_arg < col && isu8cont(xcp[-x_arg]))
+		x_arg++;
 	x_goto(xcp - x_arg);
 	x_delete(x_arg, false);
 	return KSTD;
@@ -484,11 +493,13 @@ x_del_char(int c)
 	}
 	if (x_arg > nleft)
 		x_arg = nleft;
+	while (x_arg < nleft && isu8cont(xcp[x_arg]))
+		x_arg++;
 	x_delete(x_arg, false);
 	return KSTD;
 }
 
-/* Delete nc chars to the right of the cursor (including cursor position) */
+/* Delete nc bytes to the right of the cursor (including cursor position) */
 static void
 x_delete(int nc, int push)
 {
@@ -660,6 +671,8 @@ x_size(int c)
 		return 4;	/* Kludge, tabs are always four spaces. */
 	if (iscntrl(c))		/* control char */
 		return 2;
+	if (isu8cont(c))
+		return 0;
 	return 1;
 }
 
@@ -697,6 +710,8 @@ x_mv_back(int c)
 	}
 	if (x_arg > col)
 		x_arg = col;
+	while (x_arg < col && isu8cont(xcp[-x_arg]))
+		x_arg++;
 	x_goto(xcp - x_arg);
 	return KSTD;
 }
@@ -712,6 +727,8 @@ x_mv_forw(int c)
 	}
 	if (x_arg > nleft)
 		x_arg = nleft;
+	while (x_arg < nleft && isu8cont(xcp[x_arg + 1]))
+		x_arg++;
 	x_goto(xcp + x_arg);
 	return KSTD;
 }
@@ -1119,6 +1136,8 @@ x_kill(int c)
 		x_arg = lastcol;
 	else if (x_arg > lastcol)
 		x_arg = lastcol;
+	while (x_arg < lastcol && isu8cont(xbuf[x_arg]))
+		x_arg++;
 	ndel = x_arg - col;
 	if (ndel < 0) {
 		x_goto(xbuf + x_arg);
@@ -2108,13 +2127,13 @@ x_fold_case(int c)
 }
 
 /* NAME:
- *      x_lastcp - last visible char
+ *      x_lastcp - last visible byte
  *
  * SYNOPSIS:
  *      x_lastcp()
  *
  * DESCRIPTION:
- *      This function returns a pointer to that  char in the
+ *      This function returns a pointer to that byte in the
  *      edit buffer that will be the last displayed on the
  *      screen.  The sequence:
  *
