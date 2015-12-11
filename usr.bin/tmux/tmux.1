@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.470 2015/12/08 06:42:07 jmc Exp $
+.\" $OpenBSD: tmux.1,v 1.471 2015/12/11 12:27:36 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 8 2015 $
+.Dd $Mdocdate: December 11 2015 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -3406,6 +3406,7 @@ The following variables are available, where appropriate:
 .It Li "client_tty" Ta "" Ta "Pseudo terminal of client"
 .It Li "client_utf8" Ta "" Ta "1 if client supports utf8"
 .It Li "client_width" Ta "" Ta "Width of client"
+.It Li "command_name" Ta "" Ta "Name of command in use, if any"
 .It Li "cursor_flag" Ta "" Ta "Pane cursor flag"
 .It Li "cursor_x" Ta "" Ta "Cursor X position in pane"
 .It Li "cursor_y" Ta "" Ta "Cursor Y position in pane"

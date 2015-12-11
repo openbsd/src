@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-new-window.c,v 1.53 2015/12/08 08:34:18 nicm Exp $ */
+/* $OpenBSD: cmd-new-window.c,v 1.54 2015/12/11 12:27:36 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -94,7 +94,7 @@ cmd_new_window_exec(struct cmd *self, struct cmd_q *cmdq)
 
 	to_free = NULL;
 	if (args_has(args, 'c')) {
-		ft = format_create(0);
+		ft = format_create(cmdq, 0);
 		format_defaults(ft, cmd_find_client(cmdq, NULL, 1), s, NULL,
 		    NULL);
 		cwd = to_free = format_expand(ft, args_get(args, 'c'));
@@ -143,7 +143,7 @@ cmd_new_window_exec(struct cmd *self, struct cmd_q *cmdq)
 		if ((template = args_get(args, 'F')) == NULL)
 			template = NEW_WINDOW_TEMPLATE;
 
-		ft = format_create(0);
+		ft = format_create(cmdq, 0);
 		format_defaults(ft, cmd_find_client(cmdq, NULL, 1), s, wl,
 		    NULL);
 

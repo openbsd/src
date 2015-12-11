@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.101 2015/12/08 08:34:18 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.102 2015/12/11 12:27:36 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -465,7 +465,7 @@ format_cb_pane_tabs(struct format_tree *ft, struct format_entry *fe)
 
 /* Create a new tree. */
 struct format_tree *
-format_create(int flags)
+format_create(struct cmd_q *cmdq, int flags)
 {
 	struct format_tree	*ft;
 
@@ -483,6 +483,9 @@ format_create(int flags)
 	format_add_cb(ft, "pid", format_cb_pid);
 	format_add(ft, "socket_path", "%s", socket_path);
 	format_add_tv(ft, "start_time", &start_time);
+
+	if (cmdq != NULL && cmdq->cmd != NULL)
+		format_add(ft, "command_name", "%s", cmdq->cmd->entry->name);
 
 	return (ft);
 }

@@ -1,4 +1,4 @@
-/* $OpenBSD: control-notify.c,v 1.14 2015/12/08 08:34:18 nicm Exp $ */
+/* $OpenBSD: control-notify.c,v 1.15 2015/12/11 12:27:36 nicm Exp $ */
 
 /*
  * Copyright (c) 2012 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -88,7 +88,7 @@ control_notify_window_layout_changed(struct window *w)
 		if (w->layout_root == NULL)
 			continue;
 
-		ft = format_create(0);
+		ft = format_create(NULL, 0);
 		wl = winlink_find_by_window(&s->windows, w);
 		if (wl != NULL) {
 			format_defaults(ft, c, NULL, wl, NULL);
