@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.9 2015/12/08 13:15:09 reyk Exp $	*/
+/*	$OpenBSD: main.c,v 1.10 2015/12/11 09:08:05 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -455,7 +455,8 @@ ctl_load(struct parse_result *res, int argc, char *argv[])
 int
 ctl_start(struct parse_result *res, int argc, char *argv[])
 {
-	int			 ch;
+	int		 ch;
+	char		 path[PATH_MAX];
 
 	if (argc < 2)
 		ctl_usage(res->ctl);
@@ -473,7 +474,9 @@ ctl_start(struct parse_result *res, int argc, char *argv[])
 		case 'k':
 			if (res->path)
 				errx(1, "kernel specified multiple times");
-			if ((res->path = strdup(optarg)) == NULL)
+			if (realpath(optarg, path) == NULL)
+				err(1, "invalid kernel path");
+			if ((res->path = strdup(path)) == NULL)
 				errx(1, "strdup");
 			break;
 		case 'm':
@@ -483,8 +486,10 @@ ctl_start(struct parse_result *res, int argc, char *argv[])
 				errx(1, "invalid memory size: %s", optarg);
 			break;
 		case 'd':
-			if (parse_disk(res, optarg) != 0)
-				errx(1, "invalid memory size: %s", optarg);
+			if (realpath(optarg, path) == NULL)
+				err(1, "invalid disk path");
+			if (parse_disk(res, path) != 0)
+				errx(1, "invalid disk: %s", optarg);
 			break;
 		case 'i':
 			if (res->nifs != -1)
