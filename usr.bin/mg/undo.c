@@ -1,4 +1,4 @@
-/* $OpenBSD: undo.c,v 1.56 2015/03/19 21:22:15 bcallah Exp $ */
+/* $OpenBSD: undo.c,v 1.57 2015/12/11 20:21:23 mmcc Exp $ */
 /*
  * This file is in the public domain
  */
@@ -115,10 +115,8 @@ free_undo_record(struct undo_rec *rec)
 		TAILQ_INIT(&undo_free);
 		initialised = 1;
 	}
-	if (rec->content != NULL) {
-		free(rec->content);
-		rec->content = NULL;
-	}
+	free(rec->content);
+	rec->content = NULL;
 	if (undo_free_num >= MAX_FREE_RECORDS) {
 		free(rec);
 		return;

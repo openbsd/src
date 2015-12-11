@@ -1,4 +1,4 @@
-/*	$OpenBSD: yank.c,v 1.13 2015/03/19 21:22:15 bcallah Exp $	*/
+/*	$OpenBSD: yank.c,v 1.14 2015/12/11 20:21:23 mmcc Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -87,8 +87,7 @@ kgrow(int dir)
 	}
 	nstart = (dir == KBACK) ? (kstart + KBLOCK) : (KBLOCK / 4);
 	bcopy(&(kbufp[kstart]), &(nbufp[nstart]), (int)(kused - kstart));
-	if (kbufp != NULL)
-		free(kbufp);
+	free(kbufp);
 	kbufp = nbufp;
 	ksize += KBLOCK;
 	kused = kused - kstart + nstart;

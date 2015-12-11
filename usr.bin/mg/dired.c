@@ -1,4 +1,4 @@
-/*	$OpenBSD: dired.c,v 1.80 2015/10/29 19:46:47 lum Exp $	*/
+/*	$OpenBSD: dired.c,v 1.81 2015/12/11 20:21:23 mmcc Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -673,8 +673,7 @@ out:
 		close(fds[1]);
 	if (infd != -1)
 		close(infd);
-	if (argv != NULL)
-		free(argv);
+	free(argv);
 	return ret;
 }
 
