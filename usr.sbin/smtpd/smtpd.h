@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.495 2015/12/11 07:48:33 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.496 2015/12/11 07:51:38 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1185,6 +1185,18 @@ int expand_to_text(struct expand *, char *, size_t);
 RB_PROTOTYPE(expandtree, expandnode, nodes, expand_cmp);
 
 
+/* filter.c */
+void filter_postfork(void);
+void filter_configure(void);
+void filter_connect(uint64_t, const struct sockaddr *,
+    const struct sockaddr *, const char *, const char *);
+void filter_mailaddr(uint64_t, int, const struct mailaddr *);
+void filter_line(uint64_t, int, const char *);
+void filter_eom(uint64_t, int, size_t);
+void filter_event(uint64_t, int);
+void filter_build_fd_chain(uint64_t, int);
+
+
 /* forward.c */
 int forwards_get(int, struct expand *);
 
@@ -1221,8 +1233,10 @@ void mda_postfork(void);
 void mda_postprivdrop(void);
 void mda_imsg(struct mproc *, struct imsg *);
 
+
 /* makemap.c */
 int makemap(int, char **);
+
 
 /* mailaddr.c */
 int mailaddr_line(struct maddrmap *, const char *);
@@ -1358,6 +1372,8 @@ void smtp_collect(void);
 int smtp_session(struct listener *, int, const struct sockaddr_storage *,
     const char *);
 void smtp_session_imsg(struct mproc *, struct imsg *);
+void smtp_filter_response(uint64_t, int, int, uint32_t, const char *);
+void smtp_filter_fd(uint64_t, int);
 
 
 /* smtpd.c */
