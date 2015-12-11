@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-set-hook.c,v 1.1 2015/12/08 01:10:31 nicm Exp $ */
+/* $OpenBSD: cmd-set-hook.c,v 1.2 2015/12/11 15:46:57 nicm Exp $ */
 
 /*
  * Copyright (c) 2012 Thomas Adam <thomas@xteddy.org>
@@ -93,8 +93,7 @@ cmd_set_hook_exec(struct cmd *self, struct cmd_q *cmdq)
 			    name);
 			return (CMD_RETURN_ERROR);
 		}
-		if ((hook = hooks_find(hooks, name)) != NULL)
-			hooks_remove(hooks, hook);
+		hooks_remove(hooks, name);
 		return (CMD_RETURN_NORMAL);
 	}
 

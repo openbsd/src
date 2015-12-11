@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.598 2015/12/11 12:27:36 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.599 2015/12/11 15:46:57 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -703,7 +703,7 @@ struct hook {
 
 /* Option data structures. */
 struct options_entry {
-	char		*name;
+	const char		*name;
 
 	enum {
 		OPTIONS_STRING,
@@ -1514,7 +1514,7 @@ struct hook	*hooks_first(struct hooks *);
 struct hook	*hooks_next(struct hook *);
 void		 hooks_add(struct hooks *, const char *, struct cmd_list *);
 void		 hooks_copy(struct hooks *, struct hooks *);
-void		 hooks_remove(struct hooks *, struct hook *);
+void		 hooks_remove(struct hooks *, const char *);
 struct hook	*hooks_find(struct hooks *, const char *);
 void		 hooks_run(struct hooks *, const char *, struct client *);
 
