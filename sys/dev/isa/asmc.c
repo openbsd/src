@@ -1,4 +1,4 @@
-/*	$OpenBSD: asmc.c,v 1.15 2015/12/11 20:15:50 jung Exp $	*/
+/*	$OpenBSD: asmc.c,v 1.16 2015/12/11 20:36:32 jung Exp $	*/
 /*
  * Copyright (c) 2015 Joerg Jung <jung@openbsd.org>
  *
@@ -80,7 +80,6 @@ struct asmc_softc {
 };
 
 int	asmc_try(struct asmc_softc *, int, const char *, uint8_t *, uint8_t);
-void	asmc_kbdled(struct asmc_softc *, uint8_t);
 
 void	asmc_init(void *);
 void	asmc_refresh(void *);
@@ -280,7 +279,13 @@ asmc_attach(struct device *parent, struct device *self, void *aux)
 	printf(", %u key%s\n", ntohl(*(uint32_t *)buf),
 	    (ntohl(*(uint32_t *)buf) == 1) ? "" : "s");
 
-	asmc_kbdled(sc, 127);
+	/* keyboard backlight led is optional */
+	buf[0] = 127, buf[1] = 0;
+	if ((r = asmc_try(sc, ASMC_WRITE, "LKSB", buf, 2))) {
+		if (r != ASMC_NOTFOUND)
+			printf("%s: keyboard backlight failed (0x%x)\n",
+			    sc->sc_dev.dv_xname, r);
+	}
 
 	if (!(sc->sc_taskq = taskq_create("asmc", 1, IPL_NONE, 0))) {
 		printf("%s: can't create task queue\n", sc->sc_dev.dv_xname);
@@ -326,6 +331,7 @@ int
 asmc_detach(struct device *self, int flags)
 {
 	struct asmc_softc *sc = (struct asmc_softc *)self;
+	uint8_t buf[2] = { 0, 0 };
 	int i;
 
 	if (sc->sc_sensor_task) {
@@ -348,7 +354,7 @@ asmc_detach(struct device *self, int flags)
 		taskq_destroy(sc->sc_taskq);
 	}
 
-	asmc_kbdled(sc, 0);
+	asmc_try(sc, ASMC_WRITE, "LKSB", buf, 2);
 
 	return 0;
 }
@@ -593,20 +599,6 @@ asmc_motion(struct asmc_softc *sc, uint8_t idx)
 	return 0;
 }
 #endif
-
-void
-asmc_kbdled(struct asmc_softc *sc, uint8_t b)
-{
-	uint8_t buf[2] = { b, 0 };
-	int r;
-
-	/* keyboard backlight led is optional */
-	if ((r = asmc_try(sc, ASMC_WRITE, "LKSB", buf, 2))) {
-		if (r != ASMC_NOTFOUND)
-			printf("%s: keyboard backlight failed (0x%x)\n",
-			    sc->sc_dev.dv_xname, r);
-	}
-}
 
 void
 asmc_init(void *arg)
