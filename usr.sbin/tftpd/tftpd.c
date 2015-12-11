@@ -1,4 +1,4 @@
-/*	$OpenBSD: tftpd.c,v 1.32 2015/10/18 03:54:22 deraadt Exp $	*/
+/*	$OpenBSD: tftpd.c,v 1.33 2015/12/11 20:11:10 mmcc Exp $	*/
 
 /*
  * Copyright (c) 2012 David Gwynne <dlg@uq.edu.au>
@@ -610,8 +610,7 @@ client_alloc(void)
 void
 client_free(struct tftp_client *client)
 {
-	if (client->options != NULL)
-		free(client->options);
+	free(client->options);
 
 	if (client->file != NULL)
 		fclose(client->file);
