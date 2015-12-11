@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.11 2014/10/30 16:45:37 bluhm Exp $	*/
+/*	$OpenBSD: log.c,v 1.12 2015/12/11 18:49:39 nicm Exp $	*/
 
 /*
  * log.c
@@ -150,25 +150,4 @@ event_log(int severity, const char *msg)
 {
 	if (log_fn)
 		log_fn(severity, msg);
-	else {
-		const char *severity_str;
-		switch (severity) {
-		case _EVENT_LOG_DEBUG:
-			severity_str = "debug";
-			break;
-		case _EVENT_LOG_MSG:
-			severity_str = "msg";
-			break;
-		case _EVENT_LOG_WARN:
-			severity_str = "warn";
-			break;
-		case _EVENT_LOG_ERR:
-			severity_str = "err";
-			break;
-		default:
-			severity_str = "???";
-			break;
-		}
-		(void)fprintf(stderr, "[%s] %s\n", severity_str, msg);
-	}
 }
