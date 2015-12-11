@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.471 2015/12/11 12:27:36 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.472 2015/12/11 16:27:01 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
 .\"
@@ -416,6 +416,10 @@ If a session is omitted, the current session is used if available; if no
 current session is available, the most recently used is chosen.
 .Pp
 .Ar target-window
+(or
+.Ar src-window
+or
+.Ar dst-window )
 specifies a window in the form
 .Em session Ns \&: Ns Em window .
 .Em session
@@ -471,8 +475,11 @@ Each has a single-character alternative form.
 .El
 .Pp
 .Ar target-pane
-may be a
-pane ID or takes a similar form to
+(or
+.Ar src-pane
+or
+.Ar dst-pane )
+may be a pane ID or takes a similar form to
 .Ar target-window
 but with the optional addition of a period followed by a pane index or pane ID,
 for example:
