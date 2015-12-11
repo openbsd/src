@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.189 2015/11/14 17:27:21 mpi Exp $ */
+/*	$OpenBSD: ehci.c,v 1.190 2015/12/11 12:23:09 mpi Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -1448,14 +1448,18 @@ ehci_open(struct usbd_pipe *pipe)
 		    (speed != EHCI_QH_SPEED_HIGH && xfertype == UE_CONTROL ?
 		    EHCI_QH_CTL : 0) |
 		    EHCI_QH_SET_NRL(naks)
-		    );
+		);
 		sqh->qh.qh_endphub = htole32(
 		    EHCI_QH_SET_MULT(1) |
-		    EHCI_QH_SET_HUBA(hshubaddr) |
-		    EHCI_QH_SET_PORT(hshubport) |
-		    EHCI_QH_SET_CMASK(0x1c) | /* XXX */
 		    EHCI_QH_SET_SMASK(xfertype == UE_INTERRUPT ? 0x01 : 0)
-		    );
+		);
+		if (speed != EHCI_QH_SPEED_HIGH) {
+			sqh->qh.qh_endphub |= htole32(
+			    EHCI_QH_SET_HUBA(hshubaddr) |
+			    EHCI_QH_SET_PORT(hshubport) |
+			    EHCI_QH_SET_CMASK(0x1c) /* XXX */
+			);
+		}
 		sqh->qh.qh_curqtd = htole32(EHCI_LINK_TERMINATE);
 		/* Fill the overlay qTD */
 		sqh->qh.qh_qtd.qtd_next = htole32(EHCI_LINK_TERMINATE);
