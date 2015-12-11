@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.242 2015/12/03 21:11:33 jung Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.243 2015/12/11 21:23:42 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -334,7 +334,7 @@ header_append_domain_buffer(char *buffer, char *domain, size_t len)
 }
 
 static void
-header_masquerade_callback(const struct rfc2822_header *hdr, void *arg)
+header_domain_append_callback(const struct rfc2822_header *hdr, void *arg)
 {
 	struct smtp_session    *s = arg;
 	struct rfc2822_line    *l;
@@ -485,11 +485,11 @@ smtp_session(struct listener *listener, int sock,
 	rfc2822_header_callback(&s->rfc2822_parser, "bcc",
 	    header_bcc_callback, s);
 	rfc2822_header_callback(&s->rfc2822_parser, "from",
-	    header_masquerade_callback, s);
+	    header_domain_append_callback, s);
 	rfc2822_header_callback(&s->rfc2822_parser, "to",
-	    header_masquerade_callback, s);
+	    header_domain_append_callback, s);
 	rfc2822_header_callback(&s->rfc2822_parser, "cc",
-	    header_masquerade_callback, s);
+	    header_domain_append_callback, s);
 	rfc2822_body_callback(&s->rfc2822_parser,
 	    dataline_callback, s);
 
