@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.291 2015/12/09 09:23:08 mpi Exp $	*/
+/*	$OpenBSD: route.c,v 1.292 2015/12/11 08:58:23 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -623,6 +623,8 @@ rtdeletemsg(struct rtentry *rt, struct ifnet *ifp, u_int tableid)
 	unsigned int		ifidx;
 	struct sockaddr_in6	sa_mask;
 
+	KASSERT(rt->rt_ifidx == ifp->if_index);
+
 	/*
 	 * Request the new route so that the entry is not actually
 	 * deleted.  That will allow the information being reported to
@@ -1088,8 +1090,14 @@ rtrequest(int req, struct rt_addrinfo *info, u_int8_t prio,
 		    rt->rt_priority, rt);
 		if (error != 0 && (crt = rtalloc(ndst, 0, tableid)) != NULL) {
 			/* overwrite cloned route */
-			if ((crt->rt_flags & RTF_CLONED) != 0) {
-				rtdeletemsg(crt, NULL, tableid);
+			if (ISSET(crt->rt_flags, RTF_CLONED)) {
+				struct ifnet *cifp;
+
+				cifp = if_get(crt->rt_ifidx);
+				KASSERT(cifp != NULL);
+				rtdeletemsg(crt, cifp, tableid);
+				if_put(cifp);
+
 				error = rtable_insert(tableid, ndst,
 				    info->rti_info[RTAX_NETMASK],
 				    info->rti_info[RTAX_GATEWAY],
