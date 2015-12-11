@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-switch-client.c,v 1.34 2015/12/08 00:51:17 mmcc Exp $ */
+/* $OpenBSD: cmd-switch-client.c,v 1.35 2015/12/11 12:39:47 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -131,6 +131,7 @@ cmd_switch_client_exec(struct cmd *self, struct cmd_q *cmdq)
 	server_check_unattached();
 	server_redraw_client(c);
 	s->curw->flags &= ~WINLINK_ALERTFLAGS;
+	alerts_check_session(s);
 
 	return (CMD_RETURN_NORMAL);
 }
