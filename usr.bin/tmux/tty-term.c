@@ -1,4 +1,4 @@
-/* $OpenBSD: tty-term.c,v 1.42 2015/11/18 13:06:54 nicm Exp $ */
+/* $OpenBSD: tty-term.c,v 1.43 2015/12/11 16:37:21 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -406,12 +406,12 @@ tty_term_find(char *name, int fd, char **cause)
 	if (setupterm(name, fd, &error) != OK) {
 		switch (error) {
 		case 1:
-			xasprintf(
-			    cause, "can't use hardcopy terminal: %s", name);
+			xasprintf(cause, "can't use hardcopy terminal: %s",
+			    name);
 			break;
 		case 0:
-			xasprintf(
-			    cause, "missing or unsuitable terminal: %s", name);
+			xasprintf(cause, "missing or unsuitable terminal: %s",
+			    name);
 			break;
 		case -1:
 			xasprintf(cause, "can't find terminfo database");

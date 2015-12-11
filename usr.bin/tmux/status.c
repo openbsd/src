@@ -1,4 +1,4 @@
-/* $OpenBSD: status.c,v 1.145 2015/12/11 12:27:36 nicm Exp $ */
+/* $OpenBSD: status.c,v 1.146 2015/12/11 16:37:21 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1124,8 +1124,8 @@ status_prompt_key(struct client *c, key_code key)
 		}
 
 		if (c->prompt_flags & PROMPT_SINGLE) {
-			if (c->prompt_callbackfn(
-			    c->prompt_data, c->prompt_buffer) == 0)
+			if (c->prompt_callbackfn(c->prompt_data,
+			    c->prompt_buffer) == 0)
 				status_prompt_clear(c);
 		}
 

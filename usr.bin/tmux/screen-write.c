@@ -1,4 +1,4 @@
-/* $OpenBSD: screen-write.c,v 1.82 2015/11/23 23:47:57 nicm Exp $ */
+/* $OpenBSD: screen-write.c,v 1.83 2015/12/11 16:37:21 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -767,8 +767,8 @@ screen_write_reverseindex(struct screen_write_ctx *ctx)
 
 /* Set scroll region. */
 void
-screen_write_scrollregion(
-    struct screen_write_ctx *ctx, u_int rupper, u_int rlower)
+screen_write_scrollregion(struct screen_write_ctx *ctx, u_int rupper,
+    u_int rlower)
 {
 	struct screen	*s = ctx->s;
 
@@ -874,16 +874,16 @@ screen_write_clearscreen(struct screen_write_ctx *ctx)
 {
 	struct screen	*s = ctx->s;
 	struct tty_ctx	 ttyctx;
+	u_int		 sx = screen_size_x(s);
+	u_int		 sy = screen_size_y(s);
 
 	screen_write_initctx(ctx, &ttyctx, 0);
 
 	/* Scroll into history if it is enabled. */
 	if (s->grid->flags & GRID_HISTORY)
 		grid_view_clear_history(s->grid);
-	else {
-		grid_view_clear(
-		    s->grid, 0, 0, screen_size_x(s), screen_size_y(s));
-	}
+	else
+		grid_view_clear(s->grid, 0, 0, sx, sy);
 
 	tty_write(tty_cmd_clearscreen, &ttyctx);
 }
