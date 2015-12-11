@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.496 2015/12/11 07:51:38 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.497 2015/12/11 21:44:01 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1075,7 +1075,7 @@ struct ca_cert_resp_msg {
 
 struct ca_vrfy_req_msg {
 	uint64_t		reqid;
-	char			pkiname[HOST_NAME_MAX+1];
+	char			name[HOST_NAME_MAX+1];
 	unsigned char  	       *cert;
 	off_t			cert_len;
 	size_t			n_chain;
@@ -1210,9 +1210,11 @@ void imsgproc_set_write(struct imsgproc *);
 void imsgproc_set_read_write(struct imsgproc *);
 void imsgproc_reset_callback(struct imsgproc *, void (*)(struct imsg *, void *), void *);
 
+
 /* limit.c */
 void limit_mta_set_defaults(struct mta_limits *);
 int limit_mta_set(struct mta_limits *, const char*, int64_t);
+
 
 /* lka.c */
 pid_t lka(void);
@@ -1308,6 +1310,7 @@ struct mta_task *mta_route_next_task(struct mta_relay *, struct mta_route *);
 const char *mta_host_to_text(struct mta_host *);
 const char *mta_relay_to_text(struct mta_relay *);
 
+
 /* mta_session.c */
 void mta_session(struct mta_relay *, struct mta_route *);
 void mta_session_imsg(struct mproc *, struct imsg *);
@@ -1341,6 +1344,7 @@ int queue_envelope_load(uint64_t, struct envelope *);
 int queue_envelope_update(struct envelope *);
 int queue_envelope_walk(struct envelope *);
 int queue_message_walk(struct envelope *, uint32_t, int *, void **);
+
 
 /* ruleset.c */
 struct rule *ruleset_match(const struct envelope *);
@@ -1448,6 +1452,7 @@ const char *sockaddr_to_text(struct sockaddr *);
 const char *mailaddr_to_text(const struct mailaddr *);
 const char *expandnode_to_text(struct expandnode *);
 
+
 /* util.c */
 typedef struct arglist arglist;
 struct arglist {
@@ -1496,6 +1501,7 @@ int base64_decode(char const *, unsigned char *, size_t);
 /* waitq.c */
 int  waitq_wait(void *, void (*)(void *, void *, void *), void *);
 void waitq_run(void *, void *);
+
 
 /* runq.c */
 struct runq;

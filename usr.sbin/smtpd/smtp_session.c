@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.243 2015/12/11 21:23:42 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.244 2015/12/11 21:44:01 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -2071,8 +2071,8 @@ smtp_verify_certificate(struct smtp_session *s)
 		pkiname = s->listener->pki_name;
 	else
 		pkiname = s->smtpname;
-	if (strlcpy(req_ca_vrfy.pkiname, pkiname, sizeof req_ca_vrfy.pkiname)
-	    >= sizeof req_ca_vrfy.pkiname)
+	if (strlcpy(req_ca_vrfy.name, pkiname, sizeof req_ca_vrfy.name)
+	    >= sizeof req_ca_vrfy.name)
 		return 0;
 
 	x = SSL_get_peer_certificate(s->io.ssl);

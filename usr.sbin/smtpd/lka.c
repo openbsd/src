@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.180 2015/11/30 14:05:34 gilles Exp $	*/
+/*	$OpenBSD: lka.c,v 1.181 2015/12/11 21:44:00 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -168,7 +168,7 @@ lka_imsg(struct mproc *p, struct imsg *imsg)
 				fatalx("lka:ca_vrfy: verify without a certificate");
 
 			resp_ca_vrfy.reqid = req_ca_vrfy_smtp->reqid;
-			pki = dict_xget(env->sc_pki_dict, req_ca_vrfy_smtp->pkiname);
+			pki = dict_xget(env->sc_pki_dict, req_ca_vrfy_smtp->name);
 			cafile = CA_FILE;
 			if (pki->pki_ca_file)
 				cafile = pki->pki_ca_file;
@@ -289,7 +289,7 @@ lka_imsg(struct mproc *p, struct imsg *imsg)
 				fatalx("lka:ca_vrfy: verify without a certificate");
 
 			resp_ca_vrfy.reqid = req_ca_vrfy_mta->reqid;
-			pki = dict_get(env->sc_pki_dict, req_ca_vrfy_mta->pkiname);
+			pki = dict_get(env->sc_pki_dict, req_ca_vrfy_mta->name);
 
 			cafile = CA_FILE;
 			if (pki && pki->pki_ca_file)
