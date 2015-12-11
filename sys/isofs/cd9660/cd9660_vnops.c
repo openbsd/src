@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_vnops.c,v 1.72 2015/04/17 04:43:20 guenther Exp $	*/
+/*	$OpenBSD: cd9660_vnops.c,v 1.73 2015/12/11 11:25:55 tedu Exp $	*/
 /*	$NetBSD: cd9660_vnops.c,v 1.42 1997/10/16 23:56:57 christos Exp $	*/
 
 /*-
@@ -64,6 +64,9 @@
 #include <isofs/cd9660/cd9660_extern.h>
 #include <isofs/cd9660/cd9660_node.h>
 #include <isofs/cd9660/iso_rrip.h>
+
+int cd9660_kqfilter(void *v);
+
 
 /*
  * Structure for reading directories
@@ -841,6 +844,7 @@ struct vops cd9660_vops = {
 	.vop_write	= cd9660_write,
 	.vop_ioctl	= cd9660_ioctl,
 	.vop_poll	= cd9660_poll,
+	.vop_kqfilter	= cd9660_kqfilter,
 	.vop_revoke	= cd9660_revoke,
 	.vop_fsync	= cd9660_fsync,
 	.vop_remove	= cd9660_remove,
@@ -947,3 +951,103 @@ struct vops cd9660_fifovops = {
 	.vop_advlock	= fifo_advlock,
 };
 #endif /* FIFO */
+
+void filt_cd9660detach(struct knote *kn);
+int filt_cd9660read(struct knote *kn, long hint);
+int filt_cd9660write(struct knote *kn, long hint);
+int filt_cd9660vnode(struct knote *kn, long hint);
+
+struct filterops cd9660read_filtops = 
+	{ 1, NULL, filt_cd9660detach, filt_cd9660read };
+struct filterops cd9660write_filtops = 
+	{ 1, NULL, filt_cd9660detach, filt_cd9660write };
+struct filterops cd9660vnode_filtops = 
+	{ 1, NULL, filt_cd9660detach, filt_cd9660vnode };
+
+int
+cd9660_kqfilter(void *v)
+{
+	struct vop_kqfilter_args *ap = v;
+	struct vnode *vp = ap->a_vp;
+	struct knote *kn = ap->a_kn;
+
+	switch (kn->kn_filter) {
+	case EVFILT_READ:
+		kn->kn_fop = &cd9660read_filtops;
+		break;
+	case EVFILT_WRITE:
+		kn->kn_fop = &cd9660write_filtops;
+		break;
+	case EVFILT_VNODE:
+		kn->kn_fop = &cd9660vnode_filtops;
+		break;
+	default:
+		return (EINVAL);
+	}
+
+	kn->kn_hook = (caddr_t)vp;
+
+	SLIST_INSERT_HEAD(&vp->v_selectinfo.si_note, kn, kn_selnext);
+
+	return (0);
+}
+
+void
+filt_cd9660detach(struct knote *kn)
+{
+	struct vnode *vp = (struct vnode *)kn->kn_hook;
+
+	SLIST_REMOVE(&vp->v_selectinfo.si_note, kn, knote, kn_selnext);
+}
+
+int
+filt_cd9660read(struct knote *kn, long hint)
+{
+	struct vnode *vp = (struct vnode *)kn->kn_hook;
+	struct iso_node *node = VTOI(vp);
+
+	/*
+	 * filesystem is gone, so set the EOF flag and schedule 
+	 * the knote for deletion.
+	 */
+	if (hint == NOTE_REVOKE) {
+		kn->kn_flags |= (EV_EOF | EV_ONESHOT);
+		return (1);
+	}
+
+	kn->kn_data = node->i_size - kn->kn_fp->f_offset;
+	if (kn->kn_data == 0 && kn->kn_sfflags & NOTE_EOF) {
+		kn->kn_fflags |= NOTE_EOF;
+		return (1);
+	}
+
+	return (kn->kn_data != 0);
+}
+
+int
+filt_cd9660write(struct knote *kn, long hint)
+{
+	/*
+	 * filesystem is gone, so set the EOF flag and schedule 
+	 * the knote for deletion.
+	 */
+	if (hint == NOTE_REVOKE) {
+		kn->kn_flags |= (EV_EOF | EV_ONESHOT);
+		return (1);
+	}
+
+	kn->kn_data = 0;
+	return (1);
+}
+
+int
+filt_cd9660vnode(struct knote *kn, long hint)
+{
+	if (kn->kn_sfflags & hint)
+		kn->kn_fflags |= hint;
+	if (hint == NOTE_REVOKE) {
+		kn->kn_flags |= EV_EOF;
+		return (1);
+	}
+	return (kn->kn_fflags != 0);
+}
