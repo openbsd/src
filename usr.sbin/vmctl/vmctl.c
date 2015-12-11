@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmctl.c,v 1.8 2015/12/08 08:01:20 reyk Exp $	*/
+/*	$OpenBSD: vmctl.c,v 1.9 2015/12/11 10:16:53 reyk Exp $	*/
 
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
@@ -40,6 +40,7 @@
 
 extern char *__progname;
 uint32_t info_id;
+char info_name[VMM_MAX_NAME_LEN];
 int info_console;
 
 /*
@@ -150,15 +151,17 @@ start_vm_complete(struct imsg *imsg, int *ret, int autoconnect)
  *  terminate_id: ID of the vm to be terminated
  */
 void
-terminate_vm(uint32_t terminate_id)
+terminate_vm(uint32_t terminate_id, const char *name)
 {
-	struct vm_terminate_params vtp;
+	struct vmop_id vid;
 
-	bzero(&vtp, sizeof(struct vm_terminate_params));
-	vtp.vtp_vm_id = terminate_id;
+	memset(&vid, 0, sizeof(vid));
+	vid.vid_id = terminate_id;
+	if (name != NULL)
+		(void)strlcpy(vid.vid_name, name, sizeof(vid.vid_name));
 
 	imsg_compose(ibuf, IMSG_VMDOP_TERMINATE_VM_REQUEST, 0, 0, -1,
-	    &vtp, sizeof(struct vm_terminate_params));
+	    &vid, sizeof(vid));
 }
 
 /*
@@ -212,11 +215,30 @@ terminate_vm_complete(struct imsg *imsg, int *ret)
  * Request a list of running VMs from vmd
  */
 void
-get_info_vm(uint32_t id, int console)
+get_info_vm(uint32_t id, const char *name, int console)
 {
 	info_id = id;
+	if (name != NULL)
+		(void)strlcpy(info_name, name, sizeof(info_name));
 	info_console = console;
 	imsg_compose(ibuf, IMSG_VMDOP_GET_INFO_VM_REQUEST, 0, 0, -1, NULL, 0);
+}
+
+/*
+ * chec_info_id
+ *
+ * Check if requested name or id matches specified arguments
+ */
+int
+check_info_id(const char *name, uint32_t id)
+{
+	if (info_id == 0 && *info_name == '\0')
+		return (-1);
+	if (info_id != 0 && info_id == id)
+		return (1);
+	if (*info_name != '\0' && name && strcmp(info_name, name) == 0)
+		return (1);
+	return (0);
 }
 
 /*
@@ -295,13 +317,14 @@ print_vm_info(struct vmop_info_result *list, size_t ct)
 	    VM_TTYNAME_MAX, "TTY", "NAME");
 	for (i = 0; i < ct; i++) {
 		vir = &list[i].vir_info;
-		if (info_id == 0 || info_id == vir->vir_id)
+		if (check_info_id(vir->vir_name, vir->vir_id)) {
 			printf("%5u %5u %5zd %7zdMB %*s %s\n",
 			    vir->vir_id, vir->vir_creator_pid,
 			    vir->vir_ncpus, vir->vir_memory_size,
 			    VM_TTYNAME_MAX, list[i].vir_ttyname,
 			    vir->vir_name);
-		if (info_id == vir->vir_id) {
+		}
+		if (check_info_id(vir->vir_name, vir->vir_id) > 0) {
 			for (j = 0; j < vir->vir_ncpus; j++) {
 				if (vir->vir_vcpu_state[j] ==
 				    VCPU_STATE_STOPPED)
@@ -336,7 +359,8 @@ vm_console(struct vmop_info_result *list, size_t ct)
 
 	for (i = 0; i < ct; i++) {
 		vir = &list[i];
-		if (info_id == vir->vir_info.vir_id) {
+		if (check_info_id(vir->vir_info.vir_name,
+		    vir->vir_info.vir_id) > 0) {
 			/* does not return */
 			ctl_openconsole(vir->vir_ttyname);
 		}

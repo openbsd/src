@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.11 2015/12/11 09:24:10 reyk Exp $	*/
+/*	$OpenBSD: main.c,v 1.12 2015/12/11 10:16:53 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -210,13 +210,13 @@ vmmaction(struct parse_result *res)
 		}
 		break;
 	case CMD_STOP:
-		terminate_vm(res->id);
+		terminate_vm(res->id, res->name);
 		break;
 	case CMD_STATUS:
-		get_info_vm(res->id, 0);
+		get_info_vm(res->id, res->name, 0);
 		break;
 	case CMD_CONSOLE:
-		get_info_vm(res->id, 1);
+		get_info_vm(res->id, res->name, 1);
 		break;
 	case CMD_RELOAD:
 		imsg_compose(ibuf, IMSG_VMDOP_RELOAD, 0, 0, -1,
@@ -373,11 +373,18 @@ parse_vmid(struct parse_result *res, char *word)
 		return (-1);
 	}
 	id = strtonum(word, 0, UINT32_MAX, &error);
-	if (error != NULL)  {
-		warnx("invalid id: %s", error);
-		return (-1);
+	if (error == NULL) {
+		res->id = id;
+		res->name = NULL;
+	} else {
+		if (strlen(word) >= VMM_MAX_NAME_LEN) {
+			warnx("name too long");
+			return (-1);
+		}
+		res->id = 0;
+		if ((res->name = strdup(word)) == NULL)
+			errx(1, "strdup");
 	}
-	res->id = id;
 
 	return (0);
 }

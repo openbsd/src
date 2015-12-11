@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vmctl.8,v 1.8 2015/12/08 08:01:20 reyk Exp $
+.\"	$OpenBSD: vmctl.8,v 1.9 2015/12/11 10:16:53 reyk Exp $
 .\"
 .\" Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 8 2015 $
+.Dd $Mdocdate: December 11 2015 $
 .Dt VMCTL 8
 .Os
 .Sh NAME
@@ -39,6 +39,10 @@ the
 argument can be specified with a human-readable scale,
 using the format described in
 .Xr scan_scaled 3 .
+The
+.Ar id
+argument can be either a numeric, non-zero identifier or alternatively
+the name of a virtual machine.
 .Sh VM COMMANDS
 The options are as follows:
 .Bl -tag -width Ds

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.24 2015/12/08 23:59:39 jsg Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.25 2015/12/11 10:16:53 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -56,10 +56,15 @@ static struct privsep_proc procs[] = {
 int
 vmd_dispatch_control(int fd, struct privsep_proc *p, struct imsg *imsg)
 {
-	struct privsep		*ps = p->p_ps;
-	int			 res = 0, cmd = 0, v = 0;
-	struct vm_create_params	 vcp;
-	char			*str = NULL;
+	struct privsep			*ps = p->p_ps;
+	int				 res = 0, cmd = 0, v = 0;
+	struct vm_create_params		 vcp;
+	struct vmop_id			 vid;
+	struct vm_terminate_params	 vtp;
+	struct vmop_result		 vmr;
+	struct vmd_vm			*vm = NULL;
+	char				*str = NULL;
+	uint32_t			 id = 0;
 
 	switch (imsg->hdr.type) {
 	case IMSG_VMDOP_START_VM_REQUEST:
@@ -72,6 +77,23 @@ vmd_dispatch_control(int fd, struct privsep_proc *p, struct imsg *imsg)
 		}
 		break;
 	case IMSG_VMDOP_TERMINATE_VM_REQUEST:
+		IMSG_SIZE_CHECK(imsg, &vid);
+		memcpy(&vid, imsg->data, sizeof(vid));
+		if ((id = vid.vid_id) == 0) {
+			/* Lookup vm (id) by name */
+			if ((vm = vm_getbyname(vid.vid_name)) == NULL) {
+				res = ENOENT;
+				cmd = IMSG_VMDOP_TERMINATE_VM_RESPONSE;
+				break;
+			}
+			id = vm->vm_params.vcp_id;
+		}
+		memset(&vtp, 0, sizeof(vtp));
+		vtp.vtp_vm_id = id;
+		if (proc_compose_imsg(ps, PROC_VMM, -1, imsg->hdr.type,
+		    imsg->hdr.peerid, -1, &vtp, sizeof(vtp)) == -1)
+			return (-1);
+		break;
 	case IMSG_VMDOP_GET_INFO_VM_REQUEST:
 		proc_forward_imsg(ps, imsg, PROC_VMM, -1);
 		break;
@@ -88,10 +110,24 @@ vmd_dispatch_control(int fd, struct privsep_proc *p, struct imsg *imsg)
 		return (-1);
 	}
 
-	if (cmd &&
-	    proc_compose_imsg(ps, PROC_CONTROL, -1, cmd, imsg->hdr.peerid, -1,
-	    &res, sizeof(res)) == -1)
-		return (-1);
+	switch (cmd) {
+	case 0:
+		break;
+	case IMSG_VMDOP_START_VM_RESPONSE:
+	case IMSG_VMDOP_TERMINATE_VM_RESPONSE:
+		memset(&vmr, 0, sizeof(vmr));
+		vmr.vmr_result = res;
+		vmr.vmr_id = id;
+		if (proc_compose_imsg(ps, PROC_CONTROL, -1, cmd,
+		    imsg->hdr.peerid, -1, &vmr, sizeof(vmr)) == -1)
+			return (-1);
+		break;
+	default:
+		if (proc_compose_imsg(ps, PROC_CONTROL, -1, cmd,
+		    imsg->hdr.peerid, -1, &res, sizeof(res)) == -1)
+			return (-1);
+		break;
+	}
 
 	return (0);
 }

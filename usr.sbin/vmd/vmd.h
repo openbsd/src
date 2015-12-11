@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.h,v 1.15 2015/12/06 21:02:51 reyk Exp $	*/
+/*	$OpenBSD: vmd.h,v 1.16 2015/12/11 10:16:53 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -69,6 +69,11 @@ struct vmop_result {
 struct vmop_info_result {
 	struct vm_info_result	 vir_info;
 	char			 vir_ttyname[VM_TTYNAME_MAX];
+};
+
+struct vmop_id {
+	uint32_t		 vid_id;
+	char			 vid_name[VMM_MAX_NAME_LEN];
 };
 
 struct vmd_vm {
