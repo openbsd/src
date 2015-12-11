@@ -241,25 +241,6 @@ xs_attach(struct xen_softc *sc)
 	return (-1);
 }
 
-int
-xs_resume(struct xen_softc *sc)
-{
-	struct xs_softc *xs = sc->sc_xs;
-
-	xs->xs_ring->xsr_rsp_prod = xs->xs_ring->xsr_rsp_cons;
-
-	if (xen_intr_disestablish(xs->xs_ih))
-		return (-1);
-
-	if (xen_intr_establish(xs->xs_port, &xs->xs_ih, xs_intr, xs, "xs0"))
-		return (-1);
-
-	DPRINTF("%s: xenstore interrupt established for port %d\n",
-	    sc->sc_dev.dv_xname, xs->xs_ih);
-
-	return (0);
-}
-
 static inline int
 xs_sem_get(uint *semaphore)
 {
