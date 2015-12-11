@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.10 2015/12/11 09:08:05 reyk Exp $	*/
+/*	$OpenBSD: main.c,v 1.11 2015/12/11 09:24:10 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -363,16 +363,19 @@ parse_disk(struct parse_result *res, char *word)
 }
 
 int
-parse_vmid(struct parse_result *res, char *word, uint32_t id)
+parse_vmid(struct parse_result *res, char *word)
 {
 	const char	*error;
+	uint32_t	 id;
 
-	if (word != NULL) {
-		id = strtonum(word, 0, UINT32_MAX, &error);
-		if (error != NULL)  {
-			warnx("invalid id: %s", error);
-			return (-1);
-		}
+	if (word == NULL) {
+		warnx("missing vmid argument");
+		return (-1);
+	}
+	id = strtonum(word, 0, UINT32_MAX, &error);
+	if (error != NULL)  {
+		warnx("invalid id: %s", error);
+		return (-1);
 	}
 	res->id = id;
 
@@ -427,7 +430,7 @@ int
 ctl_status(struct parse_result *res, int argc, char *argv[])
 {
 	if (argc == 2) {
-		if (parse_vmid(res, argv[1], 0) == -1)
+		if (parse_vmid(res, argv[1]) == -1)
 			errx(1, "invalid id: %s", argv[1]);
 	} else if (argc > 2)
 		ctl_usage(res->ctl);
@@ -510,7 +513,7 @@ int
 ctl_stop(struct parse_result *res, int argc, char *argv[])
 {
 	if (argc == 2) {
-		if (parse_vmid(res, argv[1], 0) == -1)
+		if (parse_vmid(res, argv[1]) == -1)
 			errx(1, "invalid id: %s", argv[1]);
 	} else if (argc != 2)
 		ctl_usage(res->ctl);
@@ -522,7 +525,7 @@ int
 ctl_console(struct parse_result *res, int argc, char *argv[])
 {
 	if (argc == 2) {
-		if (parse_vmid(res, argv[1], 0) == -1)
+		if (parse_vmid(res, argv[1]) == -1)
 			errx(1, "invalid id: %s", argv[1]);
 	} else if (argc != 2)
 		ctl_usage(res->ctl);
