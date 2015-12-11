@@ -1,4 +1,4 @@
-/*	$OpenBSD: arch.c,v 1.85 2015/01/16 15:36:29 deraadt Exp $ */
+/*	$OpenBSD: arch.c,v 1.86 2015/12/11 21:37:03 mmcc Exp $ */
 /*	$NetBSD: arch.c,v 1.17 1996/11/06 17:58:59 christos Exp $	*/
 
 /*
@@ -649,8 +649,8 @@ ArchSVR4Entry(struct SVR4namelist *l, const char *name, size_t size, FILE *arch)
 				break;
 			}
 		if (DEBUG(ARCH))
-			printf("Found svr4 archive name table with %lu entries\n",
-			    (u_long)entry);
+			printf("Found svr4 archive name table with %zu entries\n",
+			    entry);
 		return (char *)svr4list;
 	}
 	/* Then the names themselves are given as offsets in this table.  */
@@ -665,8 +665,8 @@ ArchSVR4Entry(struct SVR4namelist *l, const char *name, size_t size, FILE *arch)
 	}
 	if (entry >= l->fnamesize) {
 		if (DEBUG(ARCH))
-			printf("SVR4 entry offset /%s is greater than %lu\n",
-			    name, (u_long)l->fnamesize);
+			printf("SVR4 entry offset /%s is greater than %zu\n",
+			    name, l->fnamesize);
 		return NULL;
 	}
 
