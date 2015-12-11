@@ -1,4 +1,4 @@
-/*	$OpenBSD: asmc.c,v 1.14 2015/12/11 20:06:48 jung Exp $	*/
+/*	$OpenBSD: asmc.c,v 1.15 2015/12/11 20:15:50 jung Exp $	*/
 /*
  * Copyright (c) 2015 Joerg Jung <jung@openbsd.org>
  *
@@ -79,7 +79,6 @@ struct asmc_softc {
 	struct sensor_task	*sc_sensor_task;
 };
 
-uint8_t	asmc_status(struct asmc_softc *);
 int	asmc_try(struct asmc_softc *, int, const char *, uint8_t *, uint8_t);
 void	asmc_kbdled(struct asmc_softc *, uint8_t);
 
@@ -354,7 +353,7 @@ asmc_detach(struct device *self, int flags)
 	return 0;
 }
 
-uint8_t
+static uint8_t
 asmc_status(struct asmc_softc *sc)
 {
 	return bus_space_read_1(sc->sc_iot, sc->sc_ioh, ASMC_STATUS);
