@@ -1,4 +1,4 @@
-/* $OpenBSD: tables.c,v 1.2 2015/11/19 22:16:43 tedu Exp $ */
+/* $OpenBSD: tables.c,v 1.3 2015/12/11 00:08:43 mmcc Exp $ */
 
 /*  tables.c - tables serialization code
  *
@@ -117,8 +117,7 @@ int yytbl_data_init (struct yytbl_data *td, enum yytbl_id id)
  */
 int yytbl_data_destroy (struct yytbl_data *td)
 {
-	if (td->td_data)
-		free (td->td_data);
+	free(td->td_data);
 	td->td_data = 0;
 	free (td);
 	return 0;

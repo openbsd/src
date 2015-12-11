@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.24 2015/11/20 04:07:43 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.25 2015/12/11 00:08:43 mmcc Exp $	*/
 
 /* flex - tool to generate fast lexical analyzers */
 
@@ -387,8 +387,7 @@ check_options()
 		}
 		if ((tablesout = fopen(tablesfilename, "w")) == NULL)
 			lerrsf(_("could not create %s"), tablesfilename);
-		if (pname)
-			free(pname);
+		free(pname);
 		tablesfilename = 0;
 
 		yytbl_writer_init(&tableswr, tablesout);
