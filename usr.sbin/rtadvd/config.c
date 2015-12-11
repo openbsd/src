@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.44 2015/10/25 22:11:34 jca Exp $	*/
+/*	$OpenBSD: config.c,v 1.45 2015/12/11 20:15:52 mmcc Exp $	*/
 /*	$KAME: config.c,v 1.62 2002/05/29 10:13:10 itojun Exp $	*/
 
 /*
@@ -807,11 +807,9 @@ make_packet(struct rainfo *rainfo)
 	/* allocate memory for the packet */
 	if ((buf = malloc(packlen)) == NULL)
 		fatal("malloc");
-	if (rainfo->ra_data) {
-		/* free the previous packet */
-		free(rainfo->ra_data);
-		rainfo->ra_data = NULL;
-	}
+	/* free the previous packet */
+	free(rainfo->ra_data);
+	rainfo->ra_data = NULL;
 	rainfo->ra_data = buf;
 	/* XXX: what if packlen > 576? */
 	rainfo->ra_datalen = packlen;

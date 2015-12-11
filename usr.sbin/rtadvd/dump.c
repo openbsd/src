@@ -1,4 +1,4 @@
-/*	$OpenBSD: dump.c,v 1.16 2015/10/25 22:11:34 jca Exp $	*/
+/*	$OpenBSD: dump.c,v 1.17 2015/12/11 20:15:52 mmcc Exp $	*/
 /*	$KAME: dump.c,v 1.27 2002/05/29 14:23:55 itojun Exp $	*/
 
 /*
@@ -204,14 +204,10 @@ rtadvd_dump(void)
 			    vltime, (vltimexpire)? vltimexpire : "",
 			    pltime, (pltimexpire)? pltimexpire : "", flags);
 
-			if (vltimexpire) {
-				free(vltimexpire);
-				vltimexpire = NULL;
-			}
-			if (pltimexpire) {
-				free(pltimexpire);
-				pltimexpire = NULL;
-			}
+			free(vltimexpire);
+			vltimexpire = NULL;
+			free(pltimexpire);
+			pltimexpire = NULL;
 			free(vltime);
 			free(pltime);
 			free(flags);

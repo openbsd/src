@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.34 2015/12/01 12:11:31 jca Exp $	*/
+/*	$OpenBSD: if.c,v 1.35 2015/12/11 20:15:52 mmcc Exp $	*/
 /*	$KAME: if.c,v 1.17 2001/01/21 15:27:30 itojun Exp $	*/
 
 /*
@@ -503,8 +503,7 @@ init_iflist(void)
 		free(ifblock);
 		ifblock_size = 0;
 	}
-	if (iflist)
-		free(iflist);
+	free(iflist);
 	/* get iflist block from kernel */
 	get_iflist(&ifblock, &ifblock_size);
 
