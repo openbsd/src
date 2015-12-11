@@ -1,4 +1,4 @@
-/*	$OpenBSD: coll.c,v 1.10 2015/04/05 13:59:26 millert Exp $	*/
+/*	$OpenBSD: coll.c,v 1.11 2015/12/11 21:41:51 mmcc Exp $	*/
 
 /*-
  * Copyright (C) 2009 Gabor Kovesdan <gabor@FreeBSD.org>
@@ -556,7 +556,7 @@ list_coll_offset(struct sort_list_item **ss1, struct sort_list_item **ss2,
 
 	if (debug_sort) {
 		if (offset)
-			printf("; offset=%d", (int) offset);
+			printf("; offset=%zu", offset);
 		bwsprintf(stdout, ((*ss1)->str), "; s1=<", ">");
 		bwsprintf(stdout, ((*ss2)->str), ", s2=<", ">");
 		printf("; cmp1=%d\n", ret);
@@ -758,7 +758,7 @@ wstrcoll(struct key_value *kv1, struct key_value *kv2, size_t offset)
 
 	if (debug_sort) {
 		if (offset)
-			printf("; offset=%d\n", (int) offset);
+			printf("; offset=%zu\n", offset);
 		bwsprintf(stdout, kv1->k, "; k1=<", ">");
 		printf("(%zu)", BWSLEN(kv1->k));
 		bwsprintf(stdout, kv2->k, ", k2=<", ">");
