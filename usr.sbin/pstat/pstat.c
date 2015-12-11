@@ -1,4 +1,4 @@
-/*	$OpenBSD: pstat.c,v 1.100 2015/08/28 04:38:47 guenther Exp $	*/
+/*	$OpenBSD: pstat.c,v 1.101 2015/12/11 11:53:52 tedu Exp $	*/
 /*	$NetBSD: pstat.c,v 1.27 1996/10/23 22:50:06 cgd Exp $	*/
 
 /*-
@@ -187,7 +187,7 @@ main(int argc, char *argv[])
 	if (dformat && getuid())
 		errx(1, "Only root can use -d");
 
-	if ((dformat == 0 && argc > 0) || (dformat && argc == 0))
+	if ((dformat == NULL && argc > 0) || (dformat && argc == 0))
 		usage();
 
 	need_nlist = vnodeflag || dformat;
