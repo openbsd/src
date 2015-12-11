@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fdisk.8,v 1.89 2015/12/11 21:57:31 krw Exp $
+.\"	$OpenBSD: fdisk.8,v 1.90 2015/12/11 23:30:23 jmc Exp $
 .\"
 .\"
 .\" Copyright (c) 1997 Tobias Weingartner
@@ -344,7 +344,7 @@ to enter an interactive command mode.
 The prompt contains information about the state of the edit
 process.
 .Pp
-.Dl fdisk:*1\*(Gt
+.Dl fdisk:*1>
 .Pp
 .Sq *
 means that the in-memory copy of the partition table has been modified, but
@@ -477,9 +477,7 @@ default MBR template
 .Sh SEE ALSO
 .Xr fstab 5 ,
 .Xr boot_amd64 8 ,
-.Xr boot_armish 8 ,
 .Xr boot_i386 8 ,
-.Xr boot_landisk 8 ,
 .Xr boot_macppc 8 ,
 .Xr boot_zaurus 8 ,
 .Xr disklabel 8
