@@ -167,7 +167,7 @@ typedef uint64_t   UINTN;
     #if _MSC_EXTENSIONS
         #define EFIAPI __cdecl  // Force C calling convention for Microsoft C compiler
     #else
-        #define EFIAPI          // Substitute expresion to force C calling convention
+        #define EFIAPI          // Substitute expression to force C calling convention
     #endif
 #endif
 
