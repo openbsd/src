@@ -1,4 +1,4 @@
-/*	$OpenBSD: output.c,v 1.24 2014/12/02 15:40:37 otto Exp $	*/
+/*	$OpenBSD: output.c,v 1.25 2015/12/11 20:25:47 mmcc Exp $	*/
 /*	$NetBSD: output.c,v 1.4 1996/03/19 03:21:41 jtc Exp $	*/
 
 /*
@@ -516,10 +516,8 @@ pack_table(void)
 	}
 
 	for (i = 0; i < nvectors; i++) {
-		if (froms[i])
-			free(froms[i]);
-		if (tos[i])
-			free(tos[i]);
+		free(froms[i]);
+		free(tos[i]);
 	}
 
 	free(froms);

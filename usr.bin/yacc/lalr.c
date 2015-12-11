@@ -1,4 +1,4 @@
-/*	$OpenBSD: lalr.c,v 1.17 2014/05/17 15:19:17 chl Exp $	*/
+/*	$OpenBSD: lalr.c,v 1.18 2015/12/11 20:25:47 mmcc Exp $	*/
 /*	$NetBSD: lalr.c,v 1.4 1996/03/19 03:21:33 jtc Exp $	*/
 
 /*
@@ -338,10 +338,8 @@ initialize_F(void)
 	SETBIT(F, 0);
 	digraph(reads);
 
-	for (i = 0; i < ngotos; i++) {
-		if (reads[i])
-			free(reads[i]);
-	}
+	for (i = 0; i < ngotos; i++)
+		free(reads[i]);
 
 	free(reads);
 	free(edge);
@@ -414,8 +412,7 @@ build_relations(void)
 	new_includes = transpose(includes, ngotos);
 
 	for (i = 0; i < ngotos; i++)
-		if (includes[i])
-			free(includes[i]);
+		free(includes[i]);
 
 	free(includes);
 
