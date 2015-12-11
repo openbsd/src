@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.261 2015/12/10 14:07:04 sunil Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.262 2015/12/11 07:44:59 sunil Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -132,6 +132,7 @@ int	profiling = 0;
 int	verbose = 0;
 int	debug = 0;
 int	foreground = 0;
+int	foreground_log = 0;
 int	control_socket = -1;
 
 struct tree	 children;
@@ -457,7 +458,7 @@ main(int argc, char *argv[])
 
 	TAILQ_INIT(&offline_q);
 
-	while ((c = getopt(argc, argv, "B:dD:hnP:f:T:v")) != -1) {
+	while ((c = getopt(argc, argv, "B:dD:hnP:f:FT:v")) != -1) {
 		switch (c) {
 		case 'B':
 			if (strstr(optarg, "queue=") == optarg)
@@ -473,6 +474,7 @@ main(int argc, char *argv[])
 			break;
 		case 'd':
 			foreground = 1;
+			foreground_log = 1;
 			break;
 		case 'D':
 			if (cmdline_symset(optarg) < 0)
@@ -491,6 +493,10 @@ main(int argc, char *argv[])
 		case 'f':
 			conffile = optarg;
 			break;
+		case 'F':
+			foreground = 1;
+			break;
+			
 		case 'T':
 			if (!strcmp(optarg, "imsg"))
 				verbose |= TRACE_IMSG;
@@ -625,7 +631,7 @@ main(int argc, char *argv[])
 	if (env->sc_queue_flags & QUEUE_COMPRESSION)
 		env->sc_comp = compress_backend_lookup("gzip");
 
-	log_init(foreground);
+	log_init(foreground_log);
 	log_verbose(verbose);
 
 	load_pki_tree();
