@@ -1,4 +1,4 @@
-/*	$OpenBSD: user.c,v 1.48 2015/11/19 16:14:08 krw Exp $	*/
+/*	$OpenBSD: user.c,v 1.49 2015/12/11 21:57:31 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -79,7 +79,7 @@ USER_edit(off_t offset, off_t reloff)
 		memset(&gh, 0, sizeof(gh));
 		memset(&gp, 0, sizeof(gp));
 		if (MBR_protective_mbr(&mbr) == 0)
-			GPT_get_gpt();
+			GPT_get_gpt(0);
 	}
 
 	printf("Enter 'help' for information\n");
@@ -137,7 +137,7 @@ done:
 }
 
 void
-USER_print_disk(void)
+USER_print_disk(int verbosity)
 {
 	off_t offset, firstoff;
 	int i, error;
@@ -151,11 +151,28 @@ USER_print_disk(void)
 		if (error == -1)
 			break;
 		MBR_parse(&dos_mbr, offset, firstoff, &mbr);
-		if (offset == 0 && MBR_protective_mbr(&mbr) == 0) {
-			if (letoh64(gh.gh_sig) == GPTSIGNATURE) {
-				GPT_print("s");
-				break;
-			}
+		if (offset == 0) {
+		       if (verbosity || MBR_protective_mbr(&mbr) == 0) {
+				if (verbosity) {
+					printf("Primary GPT:\n");
+					GPT_get_gpt(1); /* Get Primary */
+				}
+				if (letoh64(gh.gh_sig) == GPTSIGNATURE)
+					GPT_print("s");
+				else
+					printf("\tNot Found\n");
+				if (verbosity) {
+					printf("\n");
+					printf("Secondary GPT:\n");
+					GPT_get_gpt(2); /* Get Secondary */
+					if (letoh64(gh.gh_sig) == GPTSIGNATURE)
+						GPT_print("s");
+					else
+						printf("\tNot Found\n");
+					printf("\nMBR:\n");
+				} else
+					break;
+		       }
 		}
 
 		MBR_print(&mbr, NULL);

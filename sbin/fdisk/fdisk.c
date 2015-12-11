@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdisk.c,v 1.96 2015/12/01 06:25:43 krw Exp $	*/
+/*	$OpenBSD: fdisk.c,v 1.97 2015/12/11 21:57:31 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -50,7 +50,7 @@ usage(void)
 	extern char * __progname;
 
 	fprintf(stderr, "usage: %s "
-	    "[-egy] [-i|-u] [-b #] [-c # -h # -s #] "
+	    "[-egvy] [-i|-u] [-b #] [-c # -h # -s #] "
 	    "[-f mbrfile] [-l # ] disk\n"
 	    "\t-b: specify special boot partition block count; requires -i\n"
 	    "\t-chs: specify disk geometry; all three must be specified\n"
@@ -60,6 +60,7 @@ usage(void)
 	    "\t-i: initialize disk with MBR unless -g is also specified\n"
 	    "\t-l: specify LBA block count; cannot be used with -chs\n"
 	    "\t-u: update MBR code; preserve partition table\n"
+	    "\t-v: print the MBR, the Primary GPT and the Secondary GPT\n"
 	    "\t-y: do not ask questions\n"
 	    "`disk' may be of the forms: sd0 or /dev/rsd0c.\n",
 	    __progname);
@@ -72,6 +73,7 @@ main(int argc, char *argv[])
 	ssize_t len;
 	int ch, fd, error;
 	int e_flag = 0, f_flag = 0, g_flag = 0, i_flag = 0, u_flag = 0;
+	int verbosity = 0;
 	int c_arg = 0, h_arg = 0, s_arg = 0;
 	u_int32_t l_arg = 0;
 	char *query;
@@ -87,7 +89,7 @@ main(int argc, char *argv[])
 	if (pledge("stdio rpath wpath disklabel proc exec", NULL) == -1)
 		err(1, "pledge");
 
-	while ((ch = getopt(argc, argv, "ieguf:c:h:s:l:b:y")) != -1) {
+	while ((ch = getopt(argc, argv, "iegpuvf:c:h:s:l:b:y")) != -1) {
 		const char *errstr;
 
 		switch(ch) {
@@ -148,6 +150,9 @@ main(int argc, char *argv[])
 		case 'y':
 			y_flag = 1;
 			break;
+		case 'v':
+			verbosity++;
+			break;
 		default:
 			usage();
 		}
@@ -170,9 +175,9 @@ main(int argc, char *argv[])
 		errx(1, "Can't read sector 0!");
 	MBR_parse(&dos_mbr, 0, 0, &mbr);
 
-	/* Get the GPT if present. */
+	/* Get the GPT if present. Either primary or secondary is ok. */
 	if (MBR_protective_mbr(&mbr) == 0)
-		GPT_get_gpt();
+		GPT_get_gpt(0);
 
 	if (letoh64(gh.gh_sig) != GPTSIGNATURE) {
 		if (DL_GETDSIZE(&dl) > disk.size)
@@ -183,7 +188,7 @@ main(int argc, char *argv[])
 	if ((i_flag + u_flag + e_flag) == 0) {
 		if (pledge("stdio", NULL) == -1)
 			err(1, "pledge");
-		USER_print_disk();
+		USER_print_disk(verbosity);
 		goto done;
 	}
 

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fdisk.8,v 1.88 2015/11/17 17:47:49 jmc Exp $
+.\"	$OpenBSD: fdisk.8,v 1.89 2015/12/11 21:57:31 krw Exp $
 .\"
 .\"
 .\" Copyright (c) 1997 Tobias Weingartner
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 17 2015 $
+.Dd $Mdocdate: December 11 2015 $
 .Dt FDISK 8
 .Os
 .Sh NAME
@@ -23,7 +23,7 @@
 .Nd partition table maintenance program
 .Sh SYNOPSIS
 .Nm fdisk
-.Op Fl egy
+.Op Fl egvy
 .Op Fl i | u
 .Op Fl b Ar blocks
 .Oo
@@ -156,6 +156,13 @@ Only one of
 or
 .Fl u
 can be specified.
+.It Fl v
+Print the contents of the MBR, the Primary GPT and the Secondary GPT.
+Cannot be used with
+.Fl i ,
+.Fl u ,
+or
+.Fl e .
 .It Fl y
 Avoid asking yes/no questions when not desirable.
 .It Ar disk
