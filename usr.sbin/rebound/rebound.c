@@ -1,4 +1,4 @@
-/* $OpenBSD: rebound.c,v 1.56 2015/12/08 18:03:49 tedu Exp $ */
+/* $OpenBSD: rebound.c,v 1.57 2015/12/11 13:47:08 tedu Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -95,14 +95,11 @@ struct request {
 	socklen_t fromlen;
 	struct timespec ts;
 	TAILQ_ENTRY(request) fifo;
-	RB_ENTRY(request) reqnode;
 	uint16_t clientid;
 	uint16_t reqid;
 	struct dnscache *cacheent;
 };
 static TAILQ_HEAD(, request) reqfifo;
-static RB_HEAD(reqtree, request) reqtree;
-RB_PROTOTYPE_STATIC(reqtree, request, reqnode, reqcmp)
 
 static int conncount;
 static int connmax;
@@ -178,7 +175,6 @@ freerequest(struct request *req)
 		conncount -= 1;
 	if (req->s != -1) {
 		TAILQ_REMOVE(&reqfifo, req, fifo);
-		RB_REMOVE(reqtree, &reqtree, req);
 		close(req->s);
 	}
 	if (req->client != -1)
@@ -200,13 +196,6 @@ freecacheent(struct dnscache *ent)
 	free(ent->resp);
 	free(ent);
 }
-
-static int
-reqcmp(struct request *r1, struct request *r2)
-{
-	return (r1->s < r2->s ? -1 : r1->s > r2->s);
-}
-RB_GENERATE_STATIC(reqtree, request, reqnode, reqcmp)
 
 static void
 servfail(int ud, uint16_t id, struct sockaddr *fromaddr, socklen_t fromlen)
@@ -280,7 +269,6 @@ newrequest(int ud, struct sockaddr *remoteaddr)
 		goto fail;
 
 	TAILQ_INSERT_TAIL(&reqfifo, req, fifo);
-	RB_INSERT(reqtree, &reqtree, req);
 
 	if (connect(req->s, remoteaddr, remoteaddr->sa_len) == -1) {
 		logmsg(LOG_NOTICE, "failed to connect (%d)", errno);
@@ -384,7 +372,6 @@ newtcprequest(int ld, struct sockaddr *remoteaddr)
 		goto fail;
 
 	TAILQ_INSERT_TAIL(&reqfifo, req, fifo);
-	RB_INSERT(reqtree, &reqtree, req);
 
 	if (connect(req->s, remoteaddr, remoteaddr->sa_len) == -1) {
 		if (errno != EINPROGRESS)
@@ -433,7 +420,7 @@ launch(FILE *conf, int ud, int ld, int kq)
 	struct sockaddr_storage remoteaddr;
 	struct kevent ch[2], kev[4];
 	struct timespec ts, *timeout = NULL;
-	struct request reqkey, *req;
+	struct request *req;
 	struct dnscache *ent;
 	struct passwd *pwd;
 	int i, r, af;
@@ -510,16 +497,13 @@ launch(FILE *conf, int ud, int ld, int kq)
 				logmsg(LOG_INFO, "parent died");
 				exit(0);
 			} else if (kev[i].filter == EVFILT_WRITE) {
-				reqkey.s = kev[i].ident;
-				req = RB_FIND(reqtree, &reqtree, &reqkey);
-				if (!req)
-					logerr("lost partial tcp request");
+				req = kev[i].udata;
 				req = tcpphasetwo(req);
 				if (req) {
 					EV_SET(&ch[0], req->s, EVFILT_WRITE,
 					    EV_DELETE, 0, 0, NULL);
 					EV_SET(&ch[1], req->s, EVFILT_READ,
-					    EV_ADD, 0, 0, NULL);
+					    EV_ADD, 0, 0, req);
 					kevent(kq, ch, 2, NULL, 0, NULL);
 				}
 			} else if (kev[i].filter != EVFILT_READ) {
@@ -528,7 +512,7 @@ launch(FILE *conf, int ud, int ld, int kq)
 				while ((req = newrequest(ud,
 				    (struct sockaddr *)&remoteaddr))) {
 					EV_SET(&ch[0], req->s, EVFILT_READ,
-					    EV_ADD, 0, 0, NULL);
+					    EV_ADD, 0, 0, req);
 					kevent(kq, ch, 1, NULL, 0, NULL);
 					if (conncount > connmax)
 						break;
@@ -538,16 +522,13 @@ launch(FILE *conf, int ud, int ld, int kq)
 				    (struct sockaddr *)&remoteaddr))) {
 					EV_SET(&ch[0], req->s,
 					    req->tcp == 1 ? EVFILT_WRITE :
-					    EVFILT_READ, EV_ADD, 0, 0, NULL);
+					    EVFILT_READ, EV_ADD, 0, 0, req);
 					kevent(kq, ch, 1, NULL, 0, NULL);
 					if (conncount > connmax)
 						break;
 				}
 			} else {
-				reqkey.s = kev[i].ident;
-				req = RB_FIND(reqtree, &reqtree, &reqkey);
-				if (!req)
-					logerr("lost request");
+				req = kev[i].udata;
 				if (req->tcp == 0)
 					sendreply(ud, req);
 				freerequest(req);
@@ -658,7 +639,6 @@ main(int argc, char **argv)
 	tzset();
 	openlog("rebound", LOG_PID | LOG_NDELAY, LOG_DAEMON);
 
-	RB_INIT(&reqtree);
 	TAILQ_INIT(&reqfifo);
 	TAILQ_INIT(&cachefifo);
 
