@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp.c,v 1.144 2015/11/30 12:49:35 gilles Exp $	*/
+/*	$OpenBSD: smtp.c,v 1.145 2015/12/11 20:14:14 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -52,6 +52,7 @@ static void smtp_setup_listeners(void);
 
 #define	SMTP_FD_RESERVE	5
 static size_t	sessions;
+static size_t	maxsessions;
 
 void
 smtp_imsg(struct mproc *p, struct imsg *imsg)
@@ -183,8 +184,8 @@ smtp_setup_events(void)
 
 	purge_config(PURGE_PKI_KEYS);
 
-	log_debug("debug: smtp: will accept at most %d clients",
-	    (getdtablesize() - getdtablecount())/2 - SMTP_FD_RESERVE);
+	maxsessions = (getdtablesize() - getdtablecount()) / 2 - SMTP_FD_RESERVE;
+	log_debug("debug: smtp: will accept at most %zx clients", maxsessions);
 }
 
 static void
@@ -235,9 +236,8 @@ smtp_enqueue(uid_t *euid)
 	if (env->sc_flags & SMTPD_SMTP_PAUSED)
 		return (-1);
 
-	/* XXX dont' fatal here */
 	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, fd))
-		fatal("socketpair");
+		return (-1);
 
 	hostname = env->sc_hostname;
 	if (euid) {
@@ -313,11 +313,9 @@ pause:
 static int
 smtp_can_accept(void)
 {
-	size_t max;
-
-	max = (getdtablesize() - getdtablecount()) / 2 - SMTP_FD_RESERVE;
-
-	return (sessions < max);
+	if (sessions + 1 == maxsessions)
+		return 0;
+	return (getdtablesize() - getdtablecount() - SMTP_FD_RESERVE >= 2);
 }
 
 void
