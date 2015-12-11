@@ -27,8 +27,7 @@ server:
 	# Allow binding to non local addresses. Default no.
 	# ip-transparent: no
 
-	# use the reuseport socket option for performance.
-	# The default is yes on linux, no for others.
+	# use the reuseport socket option for performance. Default no.
 	# reuseport: no
 
 	# enable debug mode, does not fork daemon process into the background.
@@ -83,6 +82,10 @@ server:
 	# don't answer VERSION.BIND and VERSION.SERVER CHAOS class queries
 	# hide-version: no
 
+	# version string the server responds with for chaos queries.
+	# default is 'NSD x.y.z' with the server's version number.
+	# version: "NSD"
+
 	# identify the server (CH TXT ID.SERVER entry).
 	# identity: "unidentified server"
 
@@ -130,8 +133,9 @@ server:
 	# rrl-size: 1000000
 
 	# Response Rate Limiting, maximum QPS allowed (from one query source).
-	# Default 200. If set to 0, ratelimiting is disabled. Also set
+	# If set to 0, ratelimiting is disabled. Also set
 	# rrl-whitelist-ratelimit to 0 to disable ratelimit processing.
+	# Default is @ratelimit_default@.
 	# rrl-ratelimit: 200
 
 	# Response Rate Limiting, number of packets to discard before
@@ -139,7 +143,8 @@ server:
 	# resolver to retry with TCP). Default is 2 (one half of the
 	# queries will receive a SLIP response, 0 disables SLIP (all
 	# packets are discarded), 1 means every request will get a
-	# SLIP response.
+	# SLIP response.  When the ratelimit is hit the traffic is
+	# divided by the rrl-slip value.
 	# rrl-slip: 2
 
 	# Response Rate Limiting, IPv4 prefix length. Addresses are
@@ -151,7 +156,7 @@ server:
 	# rrl-ipv6-prefix-length: 64
 
 	# Response Rate Limiting, maximum QPS allowed (from one query source)
-	# for whitelisted types. Default 2000.
+	# for whitelisted types. Default is @ratelimit_default@.
 	# rrl-whitelist-ratelimit: 2000
 	# RRLend
 

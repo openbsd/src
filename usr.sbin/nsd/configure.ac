@@ -4,7 +4,7 @@ dnl
 
 sinclude(acx_nlnetlabs.m4)
 
-AC_INIT(NSD,4.1.6,nsd-bugs@nlnetlabs.nl)
+AC_INIT(NSD,4.1.7,nsd-bugs@nlnetlabs.nl)
 AC_CONFIG_HEADER([config.h])
 
 CFLAGS="$CFLAGS"
@@ -91,7 +91,9 @@ AC_ARG_WITH([dbfile],
 AC_SUBST(dbfile)
 AC_DEFINE_UNQUOTED(DBFILE, ["`eval echo $dbfile`"], [Pathname to the NSD database])
 
-dbdir=`dirname $dbfile`
+if test -n "$dbfile"; then
+	dbdir=`dirname $dbfile`
+fi
 AC_SUBST(dbdir)
 
 piddir=`dirname $pidfile`
@@ -336,9 +338,6 @@ AC_DEFUN([CHECK_SSL], [
 	    if test x_$ssldir = x_/usr/sfw; then
 		LDFLAGS="$LDFLAGS -R$ssldir/lib";
 	    fi
-            AC_CHECK_LIB(crypto, HMAC_CTX_init,, [
-                    AC_MSG_ERROR([OpenSSL found in $ssldir, but version 0.9.7 or higher is required])
-                ])
         fi
         AC_SUBST(HAVE_SSL)
     fi
@@ -504,12 +503,6 @@ AC_CHECK_STRPTIME_WORKS
 ACX_CHECK_NONBLOCKING_BROKEN
 ACX_MKDIR_ONE_ARG
 
-# see if reuseport is enabled by default (also a config option).
-# freebsd can compile the option, but it does not work, it works on Linux.
-if test "`uname`" = "Linux"; then
-	AC_DEFINE([REUSEPORT_BY_DEFAULT], 1, [enable reuseport option by default.])
-fi
-
 # set -I. and -Isrcdir
 if test -n "$CPPFLAGS"; then
 	CPPFLAGS="$CPPFLAGS -I."
@@ -603,7 +596,7 @@ AC_SYS_LARGEFILE
 AC_CHECK_SIZEOF(void*)
 AC_CHECK_SIZEOF(off_t)
 AC_CHECK_FUNCS([arc4random arc4random_uniform])
-AC_CHECK_FUNCS([tzset alarm chroot dup2 endpwent gethostname memset memcpy pwrite socket strcasecmp strchr strdup strerror strncasecmp strtol writev getaddrinfo getnameinfo freeaddrinfo gai_strerror sigaction sigprocmask strptime strftime localtime_r setusercontext glob initgroups setresuid setreuid setresgid setregid getpwnam mmap])
+AC_CHECK_FUNCS([tzset alarm chroot dup2 endpwent gethostname memset memcpy pwrite socket strcasecmp strchr strdup strerror strncasecmp strtol writev getaddrinfo getnameinfo freeaddrinfo gai_strerror sigaction sigprocmask strptime strftime localtime_r setusercontext glob initgroups setresuid setreuid setresgid setregid getpwnam mmap ppoll])
 
 AC_ARG_ENABLE(recvmmsg, AC_HELP_STRING([--enable-recvmmsg], [Enable recvmmsg and sendmmsg compilation, faster but some kernel versions may have implementation problems]))
 case "$enable_recvmmsg" in
@@ -819,10 +812,28 @@ case "$enable_ratelimit" in
 esac
 AC_SUBST(ratelimit)
 
+AC_ARG_ENABLE(ratelimit-default-is-off, AC_HELP_STRING([--enable-ratelimit-default-is-off], [Enable this to set default of ratelimit to off (enable in nsd.conf), otherwise ratelimit is enabled by default if --enable-ratelimit is enabled]))
+case "$enable_ratelimit_default_is_off" in
+	yes)
+		AC_DEFINE_UNQUOTED([RATELIMIT_DEFAULT_OFF], [], [Define this to set ratelimit to off by default.])
+		ratelimit_default="off"
+		;;
+	no|*)
+		ratelimit_default="on"
+		;;
+esac
+AC_SUBST(ratelimit_default)
+
+
 # we need SSL for TSIG (and maybe also for NSEC3).
 CHECK_SSL
 if test x$HAVE_SSL = x"yes"; then
 	ACX_LIB_SSL
+	if test -n "$ssldir"; then 
+            AC_CHECK_LIB(crypto, HMAC_CTX_init,, [
+                    AC_MSG_ERROR([OpenSSL found in $ssldir, but version 0.9.7 or higher is required])
+                ])
+	fi
 	SSL_LIBS="-lssl"
 	AC_SUBST(SSL_LIBS)
 	AC_CHECK_HEADERS([openssl/ssl.h],,, [AC_INCLUDES_DEFAULT])

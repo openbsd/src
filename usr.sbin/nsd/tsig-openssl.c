@@ -44,7 +44,9 @@ tsig_openssl_init_algorithm(region_type* region,
 		log_msg(LOG_ERR, "cannot parse %s algorithm", wireformat);
 		return 0;
 	}
-	algorithm->maximum_digest_size = EVP_MAX_MD_SIZE;
+	algorithm->maximum_digest_size = EVP_MD_size(hmac_algorithm);
+	if(algorithm->maximum_digest_size < 20)
+		algorithm->maximum_digest_size = EVP_MAX_MD_SIZE;
 	algorithm->data = hmac_algorithm;
 	algorithm->hmac_create_context = create_context;
 	algorithm->hmac_init_context = init_context;

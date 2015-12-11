@@ -12,6 +12,7 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
+#include <limits.h>
 
 #include "region-allocator.h"
 #include "util.h"

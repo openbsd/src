@@ -1434,7 +1434,10 @@ process_rr(void)
 		rr_type* o;
 		if (rr->type != TYPE_RRSIG && rrset->rrs[0].ttl != rr->ttl) {
 			zc_warning_prev_line(
-				"TTL does not match the TTL of the RRset");
+				"%s TTL %u does not match the TTL %u of the %s RRset",
+				domain_to_string(rr->owner), (unsigned)rr->ttl,
+				(unsigned)rrset->rrs[0].ttl,
+				rrtype_to_string(rr->type));
 		}
 
 		/* Search for possible duplicates... */

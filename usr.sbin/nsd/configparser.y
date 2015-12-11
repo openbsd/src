@@ -67,7 +67,7 @@ extern config_parser_state_t* cfg_parser;
 %token VAR_RRL_IPV4_PREFIX_LENGTH VAR_RRL_IPV6_PREFIX_LENGTH
 %token VAR_RRL_WHITELIST_RATELIMIT VAR_RRL_WHITELIST
 %token VAR_ZONEFILES_CHECK VAR_ZONEFILES_WRITE VAR_LOG_TIME_ASCII
-%token VAR_ROUND_ROBIN VAR_ZONESTATS VAR_REUSEPORT
+%token VAR_ROUND_ROBIN VAR_ZONESTATS VAR_REUSEPORT VAR_VERSION
 
 %%
 toplevelvars: /* empty */ | toplevelvars toplevelvar ;
@@ -97,7 +97,7 @@ content_server: server_ip_address | server_ip_transparent | server_debug_mode | 
 	server_rrl_ipv4_prefix_length | server_rrl_ipv6_prefix_length | server_rrl_whitelist_ratelimit |
 	server_zonefiles_check | server_do_ip4 | server_do_ip6 |
 	server_zonefiles_write | server_log_time_ascii | server_round_robin |
-	server_reuseport;
+	server_reuseport | server_version;
 server_ip_address: VAR_IP_ADDRESS STRING 
 	{ 
 		OUTYY(("P(server_ip_address:%s)\n", $2)); 
@@ -213,6 +213,12 @@ server_identity: VAR_IDENTITY STRING
 	{ 
 		OUTYY(("P(server_identity:%s)\n", $2)); 
 		cfg_parser->opt->identity = region_strdup(cfg_parser->opt->region, $2);
+	}
+	;
+server_version: VAR_VERSION STRING
+	{ 
+		OUTYY(("P(server_version:%s)\n", $2)); 
+		cfg_parser->opt->version = region_strdup(cfg_parser->opt->region, $2);
 	}
 	;
 server_nsid: VAR_NSID STRING

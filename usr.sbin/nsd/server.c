@@ -760,6 +760,11 @@ server_init_ifs(struct nsd *nsd, size_t from, size_t to, int* reuseport_works)
 			continue;
 		}
 		nsd->tcp[i].fam = (int)addr->ai_family;
+		/* turn off REUSEPORT for TCP by copying the socket fd */
+		if(i >= nsd->ifs) {
+			nsd->tcp[i].s = nsd->tcp[i%nsd->ifs].s;
+			continue;
+		}
 		if ((nsd->tcp[i].s = socket(addr->ai_family, addr->ai_socktype, 0)) == -1) {
 #if defined(INET6)
 			if (addr->ai_family == AF_INET6 &&

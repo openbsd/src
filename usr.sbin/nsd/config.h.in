@@ -188,6 +188,9 @@
 /* Define to 1 if you have the <openssl/ssl.h> header file. */
 #undef HAVE_OPENSSL_SSL_H
 
+/* Define to 1 if you have the `ppoll' function. */
+#undef HAVE_PPOLL
+
 /* Define to 1 if you have the `pselect' function. */
 #undef HAVE_PSELECT
 
@@ -411,11 +414,11 @@
 /* Define this to enable rate limiting. */
 #undef RATELIMIT
 
+/* Define this to set ratelimit to off by default. */
+#undef RATELIMIT_DEFAULT_OFF
+
 /* Define as the return type of signal handlers (`int' or `void'). */
 #undef RETSIGTYPE
-
-/* enable reuseport option by default. */
-#undef REUSEPORT_BY_DEFAULT
 
 /* Define this to configure as a root server. */
 #undef ROOT_SERVER

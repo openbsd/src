@@ -1,4 +1,4 @@
-.TH "nsd.conf" "5" "Oct 22, 2015" "NLnet Labs" "nsd 4.1.6"
+.TH "nsd.conf" "5" "Dec 10, 2015" "NLnet Labs" "nsd 4.1.7"
 .\" Copyright (c) 2001\-2008, NLnet Labs. All rights reserved.
 .\" See LICENSE for the license.
 .SH "NAME"
@@ -173,11 +173,9 @@ that it can answer immediately when the address is added. Default is no.
 Use the SO_REUSEPORT socket option, and create file descriptors for every
 server in the server\-count.  This improves performance of the network
 stack.  Only really useful if you also configure a server\-count higher
-than 1 (such as, equal to the number of cpus).  The default is yes on
-Linux (where it works, and has been (backported) to 2.6 and 3.x kernels).
-On FreeBSD it is known to fail (default is no), but you can enable it
-if you think it is fixed.  And a cautious default of no is used for
-other systems.
+than 1 (such as, equal to the number of cpus).  The default is no. 
+It works on Linux, but does not work on FreeBSD, and likely does not
+work on other systems.
 .TP
 .B debug\-mode:\fR <yes or no>
 Turns on debugging mode for nsd, does not fork a daemon process. 
@@ -215,6 +213,11 @@ Returns the specified identity when asked for CH TXT ID.SERVER.
 Default is the name as returned by gethostname(3). Same as 
 commandline option 
 .BR \-i .
+.TP
+.B version:\fR <string>
+Returns the specified version string when asked for CH TXT version.server,
+and version.bind queries.  Default is the compiled package version.
+See hide\-version to set the server to not respond to such queries.
 .TP
 .B nsid:\fR <string>
 Add the specified nsid to the EDNS section of the answer when queried
@@ -366,16 +369,24 @@ This option gives the size of the hashtable. Default 1000000. More buckets
 use more memory, and reduce the chance of hash collisions.
 .TP
 .B rrl\-ratelimit:\fR <qps>
-The max qps allowed (from one query source). Default 200 qps. If set to 0
-then it is disabled (unlimited rate), also set the whilelist\-ratelimit
+The max qps allowed (from one query source). Default is @ratelimit_default@ (with a suggested 200 qps). If set to 0
+then it is disabled (unlimited rate), also set the whitelist\-ratelimit
 to 0 to disable ratelimit processing.  If you set verbosity to 2 the
 blocked and unblocked subnets are logged.  Blocked queries are blocked
-and some receive TCP fallback replies.
+and some receive TCP fallback replies.  Once the rate limit is reached,
+NSD begins dropping responses. However, one in every "rrl\-slip" number
+of responses is allowed, with the TC bit set. If slip is set to 2, the
+outgoing response rate will be halved. If it's set to 3, the outgoing
+response rate will be one\-third, and so on.  If you set rrl\-slip to 10,
+traffic is reduced to 1/10th.  Ratelimit options rrl\-ratelimit, rrl\-size and
+rrl\-whitelist\-ratelimit are updated when nsd\-control reconfig is done (also
+the zone\-specific ratelimit options are updated).
 .TP
 .B rrl\-slip:\fR <numpackets>
 This option controls the number of packets discarded before we send back a SLIP response
 (a response with "truncated" bit set to one). 0 disables the sending of SLIP packets, 
-1 means every query will get a SLIP response.
+1 means every query will get a SLIP response.  Default is 2, cuts traffic in
+half and legit users have a fair chance to get a +TC response.
 .TP
 .B rrl\-ipv4\-prefix\-length:\fR <subnet>
 IPv4 prefix length. Addresses are grouped by netblock.  Default 24.
@@ -385,7 +396,7 @@ IPv6 prefix length. Addresses are grouped by netblock.  Default 64.
 .TP
 .B rrl\-whitelist\-ratelimit:\fR <qps>
 The max qps for query sorts for a source, which have been
-whitelisted. Default 2000 qps. With the rrl\-whitelist option you can set
+whitelisted. Default @ratelimit_default@ (with a suggested 2000 qps). With the rrl\-whitelist option you can set
 specific queries to receive this qps limit instead of the normal limit.
 With the value 0 the rate is unlimited.
 .\" rrlend

@@ -352,6 +352,7 @@ config_print_zone(nsd_options_t* opt, const char* k, int s, const char *o,
 		/* str */
 		SERV_GET_PATH(final, database, o);
 		SERV_GET_STR(identity, o);
+		SERV_GET_STR(version, o);
 		SERV_GET_STR(nsid, o);
 		SERV_GET_PATH(final, logfile, o);
 		SERV_GET_PATH(final, pidfile, o);
@@ -447,6 +448,7 @@ config_test_print_server(nsd_options_t* opt)
 	printf("\thide-version: %s\n", opt->hide_version?"yes":"no");
 	print_string_var("database:", opt->database);
 	print_string_var("identity:", opt->identity);
+	print_string_var("version:", opt->version);
 	print_string_var("nsid:", opt->nsid);
 	print_string_var("logfile:", opt->logfile);
 	printf("\tserver_count: %d\n", opt->server_count);
@@ -585,6 +587,11 @@ additional_checks(nsd_options_t* opt, const char* filename)
 	if (opt->identity && strlen(opt->identity) > UCHAR_MAX) {
                 fprintf(stderr, "%s: server identity too long (%u characters)\n",
                       filename, (unsigned) strlen(opt->identity));
+		errors ++;
+        }
+	if (opt->version && strlen(opt->version) > UCHAR_MAX) {
+                fprintf(stderr, "%s: server version too long (%u characters)\n",
+                      filename, (unsigned) strlen(opt->version));
 		errors ++;
         }
 

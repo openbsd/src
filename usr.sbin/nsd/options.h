@@ -67,6 +67,7 @@ struct nsd_options {
 	int do_ip6;
 	const char* database;
 	const char* identity;
+	const char* version;
 	const char* logfile;
 	int server_count;
 	int tcp_count;

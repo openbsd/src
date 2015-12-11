@@ -309,7 +309,6 @@ process_query_section(query_type *query)
 		&query->qtype, &query->qclass))
 		return 0;
 	query->qname = dname_make(query->region, qnamebuf, 1);
-	query->opcode = OPCODE(query->packet);
 	return 1;
 }
 
@@ -1316,6 +1315,15 @@ query_process(query_type *q, nsd_type *nsd)
 	if (QR(q->packet)) {
 		/* Not a query? Drop it on the floor. */
 		return QUERY_DISCARDED;
+	}
+
+	/* check opcode early on, because new opcodes may have different
+	 * specification of the meaning of the rest of the packet */
+	q->opcode = OPCODE(q->packet);
+	if(q->opcode != OPCODE_QUERY && q->opcode != OPCODE_NOTIFY) {
+		if(query_ratelimit_err(nsd))
+			return QUERY_DISCARDED;
+		return query_error(q, NSD_RC_IMPL);
 	}
 
 	if (RCODE(q->packet) != RCODE_OK || !process_query_section(q)) {

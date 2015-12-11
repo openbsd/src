@@ -56,6 +56,7 @@ nsd_options_create(region_type* region)
 	opt->do_ip6 = 1;
 	opt->database = DBFILE;
 	opt->identity = 0;
+	opt->version = 0;
 	opt->nsid = 0;
 	opt->logfile = 0;
 	opt->log_time_ascii = 1;
@@ -69,11 +70,7 @@ nsd_options_create(region_type* region)
 	opt->pidfile = PIDFILE;
 	opt->port = UDP_PORT;
 /* deprecated?	opt->port = TCP_PORT; */
-#ifdef REUSEPORT_BY_DEFAULT
-	opt->reuseport = 1;
-#else
 	opt->reuseport = 0;
-#endif
 	opt->statistics = 0;
 	opt->chroot = 0;
 	opt->username = USER;
@@ -83,11 +80,16 @@ nsd_options_create(region_type* region)
 	opt->zonelistfile = ZONELISTFILE;
 #ifdef RATELIMIT
 	opt->rrl_size = RRL_BUCKETS;
-	opt->rrl_ratelimit = RRL_LIMIT/2;
 	opt->rrl_slip = RRL_SLIP;
 	opt->rrl_ipv4_prefix_length = RRL_IPV4_PREFIX_LENGTH;
 	opt->rrl_ipv6_prefix_length = RRL_IPV6_PREFIX_LENGTH;
+#  ifdef RATELIMIT_DEFAULT_OFF
+	opt->rrl_ratelimit = 0;
+	opt->rrl_whitelist_ratelimit = 0;
+#  else
+	opt->rrl_ratelimit = RRL_LIMIT/2;
 	opt->rrl_whitelist_ratelimit = RRL_WLIST_LIMIT/2;
+#  endif
 #endif
 	opt->zonefiles_check = 1;
 	if(opt->database == NULL || opt->database[0] == 0)
@@ -1507,7 +1509,7 @@ acl_key_matches(acl_options_t* acl, struct query* q)
 	}
 	if(!acl->key_options->tsig_key) {
 		DEBUG(DEBUG_XFRD,2, (LOG_INFO, "keymatch fail no config"));
-		return 0; /* key not properly configged */
+		return 0; /* key not properly configured */
 	}
 	if(dname_compare(q->tsig.key_name,
 		acl->key_options->tsig_key->name) != 0) {
