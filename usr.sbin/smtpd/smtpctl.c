@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpctl.c,v 1.139 2015/12/10 07:49:58 sunil Exp $	*/
+/*	$OpenBSD: smtpctl.c,v 1.140 2015/12/11 07:30:24 gilles Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -330,7 +330,7 @@ srv_iter_envelopes(uint32_t msgid, struct envelope *evp)
 
 	srv_read(&evpid, sizeof evpid);
 	buflen = rlen;
-	srv_read(buf, rlen);	
+	srv_read(buf, rlen);
 	envelope_load_buffer(evp, buf, buflen - 1);
 	evp->id = evpid;
 
