@@ -792,7 +792,7 @@ xs_cmd(struct xs_transaction *xst, int cmd, const char *path,
 
 int
 xs_getprop(struct xen_attach_args *xa, const char *property, char *value,
-    int size, int waitok)
+    int size)
 {
 	struct xen_softc *sc = xa->xa_parent;
 	struct xs_transaction xst;
@@ -806,7 +806,7 @@ xs_getprop(struct xen_attach_args *xa, const char *property, char *value,
 	memset(&xst, 0, sizeof(xst));
 	xst.xst_id = 0;
 	xst.xst_sc = sc->sc_xs;
-	if (!waitok)
+	if (cold)
 		xst.xst_flags = XST_POLL;
 
 	snprintf(path, sizeof(path), "%s/%s", xa->xa_node, property);

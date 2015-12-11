@@ -108,7 +108,7 @@ struct xs_transaction {
 
 int	xs_cmd(struct xs_transaction *, int, const char *, struct iovec **,
 	    int *);
-int	xs_getprop(struct xen_attach_args *, const char *, char *, int, int);
+int	xs_getprop(struct xen_attach_args *, const char *, char *, int);
 void	xs_resfree(struct xs_transaction *, struct iovec *, int);
 
 #endif	/* _XENVAR_H_ */
