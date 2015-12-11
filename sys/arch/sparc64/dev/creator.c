@@ -1,4 +1,4 @@
-/*	$OpenBSD: creator.c,v 1.49 2015/01/26 20:25:38 miod Exp $	*/
+/*	$OpenBSD: creator.c,v 1.50 2015/12/11 16:07:01 mpi Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -65,7 +65,7 @@ int	creator_updatecursor(struct creator_softc *, u_int);
 void	creator_curs_enable(struct creator_softc *, u_int);
 
 #ifndef SMALL_KERNEL
-void	creator_load_firmware(void *);
+void	creator_load_firmware(struct device *);
 #endif /* SMALL_KERNEL */
 void	creator_load_sram(struct creator_softc *, u_int32_t *, u_int32_t);
 
@@ -200,8 +200,8 @@ creator_attach(parent, self, aux)
 		 * without it though, so doing this late should be
 		 * fine.
 		 */
-		if (sc->sc_type == FFB_AFB) 
-			mountroothook_establish(creator_load_firmware, sc);
+		if (sc->sc_type == FFB_AFB)
+			config_mountroot(self, creator_load_firmware);
 #endif /* SMALL_KERNEL */
 	}
 
@@ -744,9 +744,9 @@ struct creator_firmware {
 #define CREATOR_FIRMWARE_REV	0x101
 
 void
-creator_load_firmware(void *vsc)
+creator_load_firmware(struct device *self)
 {
-	struct creator_softc *sc = vsc;
+	struct creator_softc *sc = (struct creator_softc *)self;
 	struct creator_firmware *fw;
 	u_int32_t ascr;
 	size_t buflen;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4280.c,v 1.47 2015/05/11 06:46:22 ratchov Exp $	*/
+/*	$OpenBSD: cs4280.c,v 1.48 2015/12/11 16:07:01 mpi Exp $	*/
 /*	$NetBSD: cs4280.c,v 1.5 2000/06/26 04:56:23 simonb Exp $	*/
 
 /*
@@ -165,7 +165,7 @@ struct cs4280_softc {
 int	cs4280_match(struct device *, void *, void *);
 void	cs4280_attach(struct device *, struct device *, void *);
 int	cs4280_activate(struct device *, int);
-void	cs4280_attachhook(void *xsc);
+void	cs4280_attachhook(struct device *);
 int	cs4280_intr(void *);
 void	cs4280_reset(void *);
 int	cs4280_download_image(struct cs4280_softc *);
@@ -539,9 +539,9 @@ cs4280_set_dac_rate(struct cs4280_softc *sc, int rate)
 }
 
 void
-cs4280_attachhook(void *xsc)
+cs4280_attachhook(struct device *self)
 {
-	struct cs4280_softc *sc = xsc;
+	struct cs4280_softc *sc = (struct cs4280_softc *)self;
 	mixer_ctrl_t ctl;
 
 	/* Initialization */
@@ -565,7 +565,7 @@ cs4280_attachhook(void *xsc)
 	ctl.dev = cs4280_get_portnum_by_name(sc, AudioCinputs,
 					     AudioNcd, AudioNmute);
 	cs4280_mixer_set_port(sc, &ctl);
-	
+
 	audio_attach_mi(&cs4280_hw_if, sc, &sc->sc_dev);
 
 #if NMIDI > 0
@@ -632,7 +632,7 @@ cs4280_attach(struct device *parent, struct device *self, void *aux)
 	if (cs4280_init(sc, 1) != 0)
 		return;
 
-	mountroothook_establish(cs4280_attachhook, sc);
+	config_mountroot(self, cs4280_attachhook);
 
 	/* AC 97 attachement */
 	sc->host_if.arg = sc;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmt.c,v 1.5 2015/08/27 19:51:36 deraadt Exp $ */
+/*	$OpenBSD: vmt.c,v 1.6 2015/12/11 16:07:01 mpi Exp $ */
 
 /*
  * Copyright (c) 2007 David Crawshaw <david@zentus.com>
@@ -365,7 +365,7 @@ vmt_attach(struct device *parent, struct device *self, void *aux)
 	sensordev_install(&sc->sc_sensordev);
 
 	timeout_set(&sc->sc_tick, vmt_tick, sc);
-	if (mountroothook_establish(vmt_tick, sc) == NULL)
+	if (startuphook_establish(vmt_tick, sc) == NULL)
 		DPRINTF("%s: unable to establish tick\n", DEVNAME(sc));
 
 	timeout_set(&sc->sc_tclo_tick, vmt_tclo_tick, sc);

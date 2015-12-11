@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.69 2015/12/08 17:10:02 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.70 2015/12/11 16:07:02 mpi Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -410,7 +410,7 @@ void	iwm_notif_intr(struct iwm_softc *);
 int	iwm_intr(void *);
 int	iwm_match(struct device *, void *, void *);
 int	iwm_preinit(struct iwm_softc *);
-void	iwm_attach_hook(void *);
+void	iwm_attach_hook(struct device *);
 void	iwm_attach(struct device *, struct device *, void *);
 void	iwm_init_task(void *);
 int	iwm_activate(struct device *, int);
@@ -6340,9 +6340,9 @@ iwm_preinit(struct iwm_softc *sc)
 }
 
 void
-iwm_attach_hook(void *arg)
+iwm_attach_hook(struct device *self)
 {
-	struct iwm_softc *sc = arg;
+	struct iwm_softc *sc = (void *)self;
 
 	KASSERT(!cold);
 
@@ -6560,10 +6560,7 @@ iwm_attach(struct device *parent, struct device *self, void *aux)
 	 * We cannot read the MAC address without loading the
 	 * firmware from disk. Postpone until mountroot is done.
 	 */
-	if (rootvp == NULL)
-		mountroothook_establish(iwm_attach_hook, sc);
-	else
-		iwm_attach_hook(sc);
+	config_mountroot(self, iwm_attach_hook);
 
 	return;
 

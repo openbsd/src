@@ -1,4 +1,4 @@
-.\"     $OpenBSD: autoconf.9,v 1.15 2015/11/23 17:53:57 jmc Exp $
+.\"     $OpenBSD: autoconf.9,v 1.16 2015/12/11 16:07:02 mpi Exp $
 .\"     $NetBSD: autoconf.9,v 1.9 2002/02/13 08:18:35 ross Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 23 2015 $
+.Dd $Mdocdate: December 11 2015 $
 .Dt CONFIG_SEARCH 9
 .Os
 .Sh NAME
@@ -36,8 +36,7 @@
 .Nm config_rootsearch ,
 .Nm config_found_sm ,
 .Nm config_found ,
-.Nm config_rootfound ,
-.Nm config_defer
+.Nm config_rootfound
 .Nd autoconfiguration framework
 .Sh SYNOPSIS
 .In sys/param.h
@@ -238,20 +237,6 @@ function performs the same operation on the root device identified
 by the
 .Fa rootname
 string.
-.Sh DEFERRED CONFIGURATION
-.nr nS 1
-.Ft "void"
-.Fn config_defer "struct device *dev" "void (*func)(struct device *)"
-.nr nS 0
-.Pp
-The
-.Fn config_defer
-function is called by the child to defer the remainder of its configuration
-until all its parent's devices have been attached.
-At this point, the function
-.Fa func
-is called with the argument
-.Fa dev .
 .Sh CODE REFERENCES
 The autoconfiguration framework itself is implemented within the file
 .Pa sys/kern/subr_autoconf.c .

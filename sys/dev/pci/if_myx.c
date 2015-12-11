@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_myx.c,v 1.91 2015/12/09 03:22:39 dlg Exp $	*/
+/*	$OpenBSD: if_myx.c,v 1.92 2015/12/11 16:07:02 mpi Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -166,7 +166,7 @@ void	 myx_attach(struct device *, struct device *, void *);
 int	 myx_pcie_dc(struct myx_softc *, struct pci_attach_args *);
 int	 myx_query(struct myx_softc *sc, char *, size_t);
 u_int	 myx_ether_aton(char *, u_int8_t *, u_int);
-void	 myx_attachhook(void *);
+void	 myx_attachhook(struct device *);
 int	 myx_loadfirmware(struct myx_softc *, const char *);
 int	 myx_probe_firmware(struct myx_softc *);
 
@@ -311,10 +311,7 @@ myx_attach(struct device *parent, struct device *self, void *aux)
 	if (myx_pcie_dc(sc, pa) != 0)
 		printf("%s: unable to configure PCI Express\n", DEVNAME(sc));
 
-	if (mountroothook_establish(myx_attachhook, sc) == NULL) {
-		printf("%s: unable to establish mountroot hook\n", DEVNAME(sc));
-		goto unmap;
-	}
+	config_mountroot(self, myx_attachhook);
 
 	return;
 
@@ -468,9 +465,9 @@ err:
 }
 
 void
-myx_attachhook(void *arg)
+myx_attachhook(struct device *self)
 {
-	struct myx_softc	*sc = (struct myx_softc *)arg;
+	struct myx_softc	*sc = (struct myx_softc *)self;
 	struct ifnet		*ifp = &sc->sc_ac.ac_if;
 	struct myx_cmd		 mc;
 

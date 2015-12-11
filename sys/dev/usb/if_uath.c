@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_uath.c,v 1.75 2015/11/25 03:10:00 dlg Exp $	*/
+/*	$OpenBSD: if_uath.c,v 1.76 2015/12/11 16:07:02 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -122,7 +122,7 @@ static const struct uath_type {
 #define uath_lookup(v, p)	\
 	((const struct uath_type *)usb_lookup(uath_devs, v, p))
 
-void	uath_attachhook(void *);
+void	uath_attachhook(struct device *);
 int	uath_open_pipes(struct uath_softc *);
 void	uath_close_pipes(struct uath_softc *);
 int	uath_alloc_tx_data_list(struct uath_softc *);
@@ -199,9 +199,9 @@ uath_match(struct device *parent, void *match, void *aux)
 }
 
 void
-uath_attachhook(void *xsc)
+uath_attachhook(struct device *self)
 {
-	struct uath_softc *sc = xsc;
+	struct uath_softc *sc = (struct uath_softc *)self;
 	u_char *fw;
 	size_t size;
 	int error;
@@ -270,10 +270,7 @@ uath_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	if (sc->sc_flags & UATH_FLAG_PRE_FIRMWARE) {
-		if (rootvp == NULL)
-			mountroothook_establish(uath_attachhook, sc);
-		else
-			uath_attachhook(sc);
+		config_mountroot(self, uath_attachhook);
 		return;
 	}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_oce.c,v 1.90 2015/11/25 03:09:59 dlg Exp $	*/
+/*	$OpenBSD: if_oce.c,v 1.91 2015/12/11 16:07:02 mpi Exp $	*/
 
 /*
  * Copyright (c) 2012 Mike Belopuhov
@@ -365,7 +365,7 @@ struct oce_softc {
 int 	oce_match(struct device *, void *, void *);
 void	oce_attach(struct device *, struct device *, void *);
 int 	oce_pci_alloc(struct oce_softc *, struct pci_attach_args *);
-void	oce_attachhook(void *);
+void	oce_attachhook(struct device *);
 void	oce_attach_ifp(struct oce_softc *);
 int 	oce_ioctl(struct ifnet *, u_long, caddr_t);
 int	oce_rxrinfo(struct oce_softc *, struct if_rxrinfo *);
@@ -621,7 +621,7 @@ oce_attach(struct device *parent, struct device *self, void *aux)
 	timeout_set(&sc->sc_tick, oce_tick, sc);
 	timeout_set(&sc->sc_rxrefill, oce_refill_rx, sc);
 
-	mountroothook_establish(oce_attachhook, sc);
+	config_mountroot(self, oce_attachhook);
 
 	printf(", address %s\n", ether_sprintf(sc->sc_ac.ac_enaddr));
 
@@ -779,9 +779,9 @@ oce_intr_disable(struct oce_softc *sc)
 }
 
 void
-oce_attachhook(void *arg)
+oce_attachhook(struct device *self)
 {
-	struct oce_softc *sc = arg;
+	struct oce_softc *sc = (struct oce_softc *)self;
 
 	oce_get_link_status(sc);
 

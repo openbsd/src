@@ -1,4 +1,4 @@
-/*	$OpenBSD: udl.c,v 1.83 2015/05/02 10:44:29 jsg Exp $ */
+/*	$OpenBSD: udl.c,v 1.84 2015/12/11 16:07:02 mpi Exp $ */
 
 /*
  * Copyright (c) 2009 Marcus Glocker <mglocker@openbsd.org>
@@ -72,7 +72,7 @@ int udl_debug = 1;
  */
 int		udl_match(struct device *, void *, void *);
 void		udl_attach(struct device *, struct device *, void *);
-void		udl_attach_hook(void *);
+void		udl_attach_hook(struct device *);
 int		udl_detach(struct device *, int);
 int		udl_activate(struct device *, int);
 
@@ -393,16 +393,13 @@ udl_attach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Load Huffman table.
 	 */
-	if (rootvp == NULL)
-		mountroothook_establish(udl_attach_hook, sc);
-	else
-		udl_attach_hook(sc);
+	config_mountroot(self, udl_attach_hook);
 }
 
 void
-udl_attach_hook(void *arg)
+udl_attach_hook(struct device *self)
 {
-	struct udl_softc *sc = arg;
+	struct udl_softc *sc = (struct udl_softc *)self;
 
 	if (udl_load_huffman(sc) != 0) {
 		/* compression not possible */

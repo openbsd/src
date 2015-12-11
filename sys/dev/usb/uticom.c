@@ -1,4 +1,4 @@
-/*	$OpenBSD: uticom.c,v 1.27 2015/03/14 03:38:50 jsg Exp $	*/
+/*	$OpenBSD: uticom.c,v 1.28 2015/12/11 16:07:02 mpi Exp $	*/
 /*
  * Copyright (c) 2005 Dmitry Komissaroff <dxi@mail.ru>.
  *
@@ -155,7 +155,7 @@ static	int  uticom_param(void *, int, struct termios *);
 static	int  uticom_open(void *, int);
 static	void uticom_close(void *, int);
 
-void uticom_attach_hook(void *arg);
+void uticom_attach_hook(struct device *);
 
 static int uticom_download_fw(struct uticom_softc *sc, int pipeno,
     struct usbd_device *dev);
@@ -213,16 +213,13 @@ uticom_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_udev = dev;
 	sc->sc_iface = uaa->iface;
 
-	if (rootvp == NULL)
-		mountroothook_establish(uticom_attach_hook, sc);
-	else
-		uticom_attach_hook(sc);
+	config_mountroot(self, uticom_attach_hook);
 }
 
 void
-uticom_attach_hook(void *arg)
+uticom_attach_hook(struct device *self)
 {
-	struct uticom_softc		*sc = arg;
+	struct uticom_softc		*sc = (struct uticom_softc *)self;
 	usb_config_descriptor_t		*cdesc;
 	usb_interface_descriptor_t	*id;
 	usb_endpoint_descriptor_t	*ed;

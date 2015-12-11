@@ -1,4 +1,4 @@
-/*	$OpenBSD: pgtvar.h,v 1.16 2013/12/06 21:03:03 deraadt Exp $  */
+/*	$OpenBSD: pgtvar.h,v 1.17 2015/12/11 16:07:01 mpi Exp $  */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -211,7 +211,7 @@ struct pgt_softc {
 };
 
 int	pgt_intr(void *);
-void	pgt_attach(void *);
+void	pgt_attach(struct device *);
 int	pgt_detach(struct pgt_softc *);
 int	pgt_activate(struct device *, int);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_upgt.c,v 1.75 2015/11/25 03:10:00 dlg Exp $ */
+/*	$OpenBSD: if_upgt.c,v 1.76 2015/12/11 16:07:02 mpi Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -80,7 +80,7 @@ int upgt_debug = 2;
  */
 int		upgt_match(struct device *, void *, void *);
 void		upgt_attach(struct device *, struct device *, void *);
-void		upgt_attach_hook(void *);
+void		upgt_attach_hook(struct device *);
 int		upgt_detach(struct device *, int);
 
 int		upgt_device_type(struct upgt_softc *, uint16_t, uint16_t);
@@ -299,10 +299,7 @@ upgt_attach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * We need the firmware loaded to complete the attach.
 	 */
-	if (rootvp == NULL)
-		mountroothook_establish(upgt_attach_hook, sc);
-	else
-		upgt_attach_hook(sc);
+	config_mountroot(self, upgt_attach_hook);
 
 	return;
 fail:
@@ -310,9 +307,9 @@ fail:
 }
 
 void
-upgt_attach_hook(void *arg)
+upgt_attach_hook(struct device *self)
 {
-	struct upgt_softc *sc = arg;
+	struct upgt_softc *sc = (struct upgt_softc *)self;
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifnet *ifp = &ic->ic_if;
 	usbd_status error;

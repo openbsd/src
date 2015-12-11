@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nxe.c,v 1.71 2015/11/25 03:09:59 dlg Exp $ */
+/*	$OpenBSD: if_nxe.c,v 1.72 2015/12/11 16:07:02 mpi Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -750,7 +750,7 @@ int			nxe_board_info(struct nxe_softc *);
 int			nxe_user_info(struct nxe_softc *);
 int			nxe_init(struct nxe_softc *);
 void			nxe_uninit(struct nxe_softc *);
-void			nxe_mountroot(void *);
+void			nxe_mountroot(struct device *);
 
 /* chip state */
 void			nxe_tick(void *);
@@ -972,7 +972,7 @@ nxe_pci_map(struct nxe_softc *sc, struct pci_attach_args *pa)
 		goto unmap_mem;
 	}
 
-	mountroothook_establish(nxe_mountroot, sc);
+	config_mountroot(&sc->sc_dev, nxe_mountroot);
 	return (0);
 
 unmap_mem:
@@ -1765,9 +1765,9 @@ nxe_uninit(struct nxe_softc *sc)
 }
 
 void
-nxe_mountroot(void *arg)
+nxe_mountroot(struct device *self)
 {
-	struct nxe_softc		*sc = arg;
+	struct nxe_softc		*sc = (struct nxe_softc *)self;
 
 	DASSERT(sc->sc_window == 1);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: yds.c,v 1.51 2015/09/10 18:10:34 deraadt Exp $	*/
+/*	$OpenBSD: yds.c,v 1.52 2015/12/11 16:07:02 mpi Exp $	*/
 /*	$NetBSD: yds.c,v 1.5 2001/05/21 23:55:04 minoura Exp $	*/
 
 /*
@@ -193,7 +193,7 @@ static u_int32_t yds_get_lpfk(u_int);
 static struct yds_dma *yds_find_dma(struct yds_softc *, void *);
 
 int	yds_init(struct yds_softc *, int);
-void	yds_attachhook(void *);
+void	yds_attachhook(struct device *);
 
 #ifdef AUDIO_DEBUG
 static void yds_dump_play_slot(struct yds_softc *, int);
@@ -720,17 +720,17 @@ yds_attach(struct device *parent, struct device *self, void *aux)
 		YWRITE2(sc, i, 0);
 
 	sc->sc_legacy_iot = pa->pa_iot;
-	mountroothook_establish(yds_attachhook, sc);
+	config_mountroot(self, yds_attachhook);
 }
 
 void
-yds_attachhook(void *xsc)
+yds_attachhook(struct device *self)
 {
-	struct yds_softc *sc = xsc;
+	struct yds_softc *sc = (struct yds_softc *)self;
 	struct yds_codec_softc *codec;
 	mixer_ctrl_t ctl;
 	int r, i;
-	
+
 	/* Initialize the device */
 	if (yds_init(sc, 0) == -1)
 		return;

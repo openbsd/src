@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_malo.c,v 1.89 2015/11/25 03:09:59 dlg Exp $ */
+/*      $OpenBSD: if_malo.c,v 1.90 2015/12/11 16:07:02 mpi Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -70,7 +70,7 @@ int	malo_pcmcia_detach(struct device *, int);
 int	malo_pcmcia_activate(struct device *, int);
 void	malo_pcmcia_wakeup(struct malo_softc *);
 
-void	cmalo_attach(void *);
+void	cmalo_attach(struct device *);
 int	cmalo_ioctl(struct ifnet *, u_long, caddr_t);
 int	cmalo_fw_alloc(struct malo_softc *);
 void	cmalo_fw_free(struct malo_softc *);
@@ -206,11 +206,7 @@ malo_pcmcia_attach(struct device *parent, struct device *self, void *aux)
 	}
 	printf("\n");
 
-	/* attach device */
-	if (rootvp == NULL)
-		mountroothook_establish(cmalo_attach, sc);
-	else
-		cmalo_attach(sc);
+	config_mountroot(self, cmalo_attach);
 }
 
 int
@@ -289,9 +285,9 @@ malo_pcmcia_wakeup(struct malo_softc *sc)
  * Driver.
  */
 void
-cmalo_attach(void *arg)
+cmalo_attach(struct device *self)
 {
-	struct malo_softc *sc = arg;
+	struct malo_softc *sc = (struct malo_softc *)self;
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
 	int i;

@@ -45,7 +45,7 @@ void	xen_disable_emulated_devices(struct xen_softc *);
 
 int 	xen_match(struct device *, void *, void *);
 void	xen_attach(struct device *, struct device *, void *);
-void	xen_deferred(void *);
+void	xen_deferred(struct device *);
 void	xen_resume(struct device *);
 int	xen_activate(struct device *, int);
 int	xen_probe_devices(struct xen_softc *);
@@ -109,13 +109,13 @@ xen_attach(struct device *parent, struct device *self, void *aux)
 
 	xen_probe_devices(sc);
 
-	mountroothook_establish(xen_deferred, sc);
+	config_mountroot(self, xen_deferred);
 }
 
 void
-xen_deferred(void *arg)
+xen_deferred(struct device *self)
 {
-	struct xen_softc *sc = arg;
+	struct xen_softc *sc = (struct xen_softc *)self;
 
 	if (!sc->sc_cbvec) {
 		DPRINTF("%s: callback vector hasn't been established\n",

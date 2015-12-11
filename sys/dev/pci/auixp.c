@@ -1,4 +1,4 @@
-/* $OpenBSD: auixp.c,v 1.35 2015/05/11 06:46:21 ratchov Exp $ */
+/* $OpenBSD: auixp.c,v 1.36 2015/12/11 16:07:01 mpi Exp $ */
 /* $NetBSD: auixp.c,v 1.9 2005/06/27 21:13:09 thorpej Exp $ */
 
 /*
@@ -139,7 +139,7 @@ void	auixp_get_default_params(void *, int, struct audio_params *);
 /* Supporting subroutines */
 int	auixp_init(struct auixp_softc *);
 void	auixp_autodetect_codecs(struct auixp_softc *);
-void	auixp_post_config(void *);
+void	auixp_post_config(struct device *);
 
 void	auixp_reset_aclink(struct auixp_softc *);
 int	auixp_attach_codec(void *, struct ac97_codec_if *);
@@ -1114,16 +1114,15 @@ auixp_attach(struct device *parent, struct device *self, void *aux)
 	 * delay further configuration of codecs and audio after interrupts
 	 * are enabled.
 	 */
-	mountroothook_establish(auixp_post_config, self);
+	config_mountroot(self, auixp_post_config);
 }
 
 /* called from autoconfigure system when interrupts are enabled */
 void
-auixp_post_config(void *self)
+auixp_post_config(struct device *self)
 {
-	struct auixp_softc *sc;
+	struct auixp_softc *sc = (struct auixp_softc *)self;
 
-	sc = (struct auixp_softc *)self;
 	/* detect the AC97 codecs */
 	auixp_autodetect_codecs(sc);
 

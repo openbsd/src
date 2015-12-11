@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_zyd.c,v 1.113 2015/11/25 03:10:00 dlg Exp $	*/
+/*	$OpenBSD: if_zyd.c,v 1.114 2015/12/11 16:07:02 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -159,7 +159,7 @@ const struct cfattach zyd_ca = {
 	sizeof(struct zyd_softc), zyd_match, zyd_attach, zyd_detach
 };
 
-void		zyd_attachhook(void *);
+void		zyd_attachhook(struct device *);
 int		zyd_complete_attach(struct zyd_softc *);
 int		zyd_open_pipes(struct zyd_softc *);
 void		zyd_close_pipes(struct zyd_softc *);
@@ -246,9 +246,9 @@ zyd_match(struct device *parent, void *match, void *aux)
 }
 
 void
-zyd_attachhook(void *xsc)
+zyd_attachhook(struct device *self)
 {
-	struct zyd_softc *sc = xsc;
+	struct zyd_softc *sc = (struct zyd_softc *)self;
 	const char *fwname;
 	u_char *fw;
 	size_t size;
@@ -293,10 +293,7 @@ zyd_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	if (rootvp == NULL)
-		mountroothook_establish(zyd_attachhook, sc);
-	else
-		zyd_attachhook(sc);
+	config_mountroot(self, zyd_attachhook);
 }
 
 int

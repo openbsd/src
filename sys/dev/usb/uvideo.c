@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.181 2015/07/09 14:58:32 mpi Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.182 2015/12/11 16:07:02 mpi Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -120,7 +120,7 @@ int		uvideo_open(void *, int, int *, uint8_t *, void (*)(void *),
 int		uvideo_close(void *);
 int		uvideo_match(struct device *, void *, void *);
 void		uvideo_attach(struct device *, struct device *, void *);
-void		uvideo_attach_hook(void *);
+void		uvideo_attach_hook(struct device *);
 int		uvideo_detach(struct device *, int);
 int		uvideo_activate(struct device *, int);
 
@@ -526,17 +526,13 @@ uvideo_attach(struct device *parent, struct device *self, void *aux)
 	/* maybe the device has quirks */
 	sc->sc_quirk = uvideo_lookup(uaa->vendor, uaa->product);
 
-	/* if the device needs ucode do mountroothook */
-	if ((sc->sc_quirk && sc->sc_quirk->ucode_name) && rootvp == NULL)
-		mountroothook_establish(uvideo_attach_hook, sc);
-	else
-		uvideo_attach_hook(sc);
+	config_mountroot(self, uvideo_attach_hook);
 }
 
 void
-uvideo_attach_hook(void *arg)
+uvideo_attach_hook(struct device *self)
 {
-	struct uvideo_softc *sc = arg;
+	struct uvideo_softc *sc = (struct uvideo_softc *)self;
 	usb_config_descriptor_t *cdesc;
 	usbd_status error;
 

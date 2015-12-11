@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_txp.c,v 1.122 2015/11/25 03:09:59 dlg Exp $	*/
+/*	$OpenBSD: if_txp.c,v 1.123 2015/12/11 16:07:02 mpi Exp $	*/
 
 /*
  * Copyright (c) 2001
@@ -73,7 +73,7 @@
 
 int txp_probe(struct device *, void *, void *);
 void txp_attach(struct device *, struct device *, void *);
-void txp_attachhook(void *vsc);
+void txp_attachhook(struct device *);
 int txp_intr(void *);
 void txp_tick(void *);
 int txp_ioctl(struct ifnet *, u_long, caddr_t);
@@ -142,9 +142,9 @@ txp_probe(struct device *parent, void *match, void *aux)
 }
 
 void
-txp_attachhook(void *vsc)
+txp_attachhook(struct device *self)
 {
-	struct txp_softc *sc = vsc;
+	struct txp_softc *sc = (struct txp_softc *)self;
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	u_int16_t p1;
 	u_int32_t p2;
@@ -270,10 +270,7 @@ txp_attach(struct device *parent, struct device *self, void *aux)
 	}
 	printf(": %s\n", intrstr);
 
-	if (rootvp == NULL)
-		mountroothook_establish(txp_attachhook, sc);
-	else
-		txp_attachhook(sc);
+	config_mountroot(self, txp_attachhook);
 
 }
 

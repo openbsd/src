@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_kms.c,v 1.44 2015/11/22 15:35:49 kettenis Exp $	*/
+/*	$OpenBSD: radeon_kms.c,v 1.45 2015/12/11 16:07:02 mpi Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -106,7 +106,7 @@ int	radeondrm_probe(struct device *, void *, void *);
 void	radeondrm_attach_kms(struct device *, struct device *, void *);
 int	radeondrm_detach_kms(struct device *, int);
 int	radeondrm_activate_kms(struct device *, int);
-void	radeondrm_attachhook(void *);
+void	radeondrm_attachhook(struct device *);
 int	radeondrm_forcedetach(struct radeon_device *);
 
 extern struct drm_ioctl_desc radeon_ioctls_kms[];
@@ -646,10 +646,7 @@ radeondrm_attach_kms(struct device *parent, struct device *self, void *aux)
 #endif
 
 	rdev->shutdown = true;
-	if (rootvp == NULL)
-		mountroothook_establish(radeondrm_attachhook, rdev);
-	else
-		radeondrm_attachhook(rdev);
+	config_mountroot(self, radeondrm_attachhook);
 }
 
 int
@@ -668,9 +665,9 @@ radeondrm_forcedetach(struct radeon_device *rdev)
 }
 
 void
-radeondrm_attachhook(void *xsc)
+radeondrm_attachhook(struct device *self)
 {
-	struct radeon_device	*rdev = xsc;
+	struct radeon_device	*rdev = (struct radeon_device *)self;
 	int			 r, acpi_status;
 
 	/* radeon_device_init should report only fatal error

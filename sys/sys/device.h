@@ -1,4 +1,4 @@
-/*	$OpenBSD: device.h,v 1.53 2015/09/11 20:43:23 dlg Exp $	*/
+/*	$OpenBSD: device.h,v 1.54 2015/12/11 16:07:02 mpi Exp $	*/
 /*	$NetBSD: device.h,v 1.15 1996/04/09 20:55:24 cgd Exp $	*/
 
 /*
@@ -171,7 +171,6 @@ extern volatile int config_pending;	/* semaphore for mountroot */
 
 void config_init(void);
 void *config_search(cfmatch_t, struct device *, void *);
-void *config_rootsearch(cfmatch_t, char *, void *);
 struct device *config_found_sm(struct device *, void *, cfprint_t,
     cfmatch_t);
 struct device *config_rootfound(char *, void *);
@@ -188,6 +187,8 @@ struct device *config_make_softc(struct device *parent,
 void config_defer(struct device *, void (*)(struct device *));
 void config_pending_incr(void);
 void config_pending_decr(void);
+void config_mountroot(struct device *, void (*)(struct device *));
+void config_process_deferred_mountroot(void);
 
 struct device *device_mainbus(void);
 struct device *device_mpath(void);

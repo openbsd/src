@@ -1,4 +1,4 @@
-/*	$OpenBSD: lcd.c,v 1.3 2011/01/23 09:39:15 jsing Exp $	*/
+/*	$OpenBSD: lcd.c,v 1.4 2015/12/11 16:07:01 mpi Exp $	*/
 
 /*
  * Copyright (c) 2007 Mark Kettenis
@@ -56,7 +56,7 @@ struct cfdriver lcd_cd = {
 	NULL, "lcd", DV_DULL
 };
 
-void	lcd_mountroot(void *);
+void	lcd_mountroot(struct device *);
 void	lcd_write(struct lcd_softc *, const char *);
 void	lcd_blink(void *, int);
 void	lcd_blink_finish(void *);
@@ -86,7 +86,7 @@ lcd_attach(struct device *parent, struct device *self, void *aux)
 		printf(": cannot map cmd register\n");
 		return;
 	}
-		
+
 	if (bus_space_map(sc->sc_iot, pdc_lcd->data_addr,
 		1, 0, &sc->sc_datah)) {
 		printf(": cannot map data register\n");
@@ -106,13 +106,13 @@ lcd_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_blink.bl_arg = sc;
 	blink_led_register(&sc->sc_blink);
 
-	mountroothook_establish(lcd_mountroot, sc);
+	config_mountroot(self, lcd_mountroot);
 }
 
 void
-lcd_mountroot(void *arg)
+lcd_mountroot(struct device *self)
 {
-	struct lcd_softc *sc = arg;
+	struct lcd_softc *sc = (struct lcd_softc *)self;
 
 	bus_space_write_1(sc->sc_iot, sc->sc_cmdh, 0, LCD_CLS);
 	delay(100 * sc->sc_delay);

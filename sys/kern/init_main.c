@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.246 2015/11/08 20:45:57 naddy Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.247 2015/12/11 16:07:02 mpi Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -536,7 +536,7 @@ main(void *framep)
 	cpu_boot_secondary_processors();
 #endif
 
-	domountroothooks();
+	config_process_deferred_mountroot();
 
 	/*
 	 * Okay, now we can let init(8) exec!  It's off to userland!

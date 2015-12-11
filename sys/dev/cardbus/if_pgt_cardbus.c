@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pgt_cardbus.c,v 1.17 2015/11/24 17:11:39 mpi Exp $ */
+/*	$OpenBSD: if_pgt_cardbus.c,v 1.18 2015/12/11 16:07:01 mpi Exp $ */
 
 /*
  * Copyright (c) 2006 Marcus Glocker <mglocker@openbsd.org>
@@ -136,10 +136,7 @@ pgt_cardbus_attach(struct device *parent, struct device *self, void *aux)
 
 	printf(": irq %d\n", csc->sc_intrline);
 
-	if (rootvp == NULL)
-		mountroothook_establish(pgt_attach, sc);
-	else
-		pgt_attach(sc);
+	config_mountroot(self, pgt_attach);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2661.c,v 1.88 2015/11/25 03:09:58 dlg Exp $	*/
+/*	$OpenBSD: rt2661.c,v 1.89 2015/12/11 16:07:01 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -69,7 +69,7 @@ int rt2661_debug = 1;
 #define DPRINTFN(n, x)
 #endif
 
-void		rt2661_attachhook(void *);
+void		rt2661_attachhook(struct device *);
 int		rt2661_alloc_tx_ring(struct rt2661_softc *,
 		    struct rt2661_tx_ring *, int);
 void		rt2661_reset_tx_ring(struct rt2661_softc *,
@@ -248,10 +248,7 @@ rt2661_attach(void *xsc, int id)
 		goto fail2;
 	}
 
-	if (rootvp == NULL)
-		mountroothook_establish(rt2661_attachhook, sc);
-	else
-		rt2661_attachhook(sc);
+	config_mountroot(xsc, rt2661_attachhook);
 
 	return 0;
 
@@ -262,9 +259,9 @@ fail1:	while (--ac >= 0)
 }
 
 void
-rt2661_attachhook(void *xsc)
+rt2661_attachhook(struct device *self)
 {
-	struct rt2661_softc *sc = xsc;
+	struct rt2661_softc *sc = (struct rt2661_softc *)self;
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifnet *ifp = &ic->ic_if;
 	const char *name = NULL;

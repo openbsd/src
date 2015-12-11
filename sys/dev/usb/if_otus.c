@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_otus.c,v 1.51 2015/11/25 03:10:00 dlg Exp $	*/
+/*	$OpenBSD: if_otus.c,v 1.52 2015/12/11 16:07:02 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -94,7 +94,7 @@ static const struct usb_devno otus_devs[] = {
 int		otus_match(struct device *, void *, void *);
 void		otus_attach(struct device *, struct device *, void *);
 int		otus_detach(struct device *, int);
-void		otus_attachhook(void *);
+void		otus_attachhook(struct device *);
 void		otus_get_chanlist(struct otus_softc *);
 int		otus_load_firmware(struct otus_softc *, const char *,
 		    uint32_t);
@@ -218,10 +218,7 @@ otus_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	if (rootvp == NULL)
-		mountroothook_establish(otus_attachhook, sc);
-	else
-		otus_attachhook(sc);
+	config_mountroot(self, otus_attachhook);
 }
 
 int
@@ -258,9 +255,9 @@ otus_detach(struct device *self, int flags)
 }
 
 void
-otus_attachhook(void *xsc)
+otus_attachhook(struct device *self)
 {
-	struct otus_softc *sc = xsc;
+	struct otus_softc *sc = (struct otus_softc *)self;
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifnet *ifp = &ic->ic_if;
 	usb_device_request_t req;

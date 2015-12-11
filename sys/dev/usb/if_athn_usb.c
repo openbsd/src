@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_athn_usb.c,v 1.41 2015/11/25 03:09:59 dlg Exp $	*/
+/*	$OpenBSD: if_athn_usb.c,v 1.42 2015/12/11 16:07:02 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2011 Damien Bergamini <damien.bergamini@free.fr>
@@ -96,7 +96,7 @@ static const struct athn_usb_type {
 int		athn_usb_match(struct device *, void *, void *);
 void		athn_usb_attach(struct device *, struct device *, void *);
 int		athn_usb_detach(struct device *, int);
-void		athn_usb_attachhook(void *);
+void		athn_usb_attachhook(struct device *);
 int		athn_usb_open_pipes(struct athn_usb_softc *);
 void		athn_usb_close_pipes(struct athn_usb_softc *);
 int		athn_usb_alloc_rx_list(struct athn_usb_softc *);
@@ -256,10 +256,7 @@ athn_usb_attach(struct device *parent, struct device *self, void *aux)
 	if (athn_usb_alloc_tx_cmd(usc) != 0)
 		return;
 
-	if (rootvp == NULL)
-		mountroothook_establish(athn_usb_attachhook, usc);
-	else
-		athn_usb_attachhook(usc);
+	config_mountroot(self, athn_usb_attachhook);
 }
 
 int
@@ -288,9 +285,9 @@ athn_usb_detach(struct device *self, int flags)
 }
 
 void
-athn_usb_attachhook(void *xsc)
+athn_usb_attachhook(struct device *self)
 {
-	struct athn_usb_softc *usc = xsc;
+	struct athn_usb_softc *usc = (struct athn_usb_softc *)self;
 	struct athn_softc *sc = &usc->sc_sc;
 	struct athn_ops *ops = &sc->ops;
 	struct ieee80211com *ic = &sc->sc_ic;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rum.c,v 1.117 2015/11/25 03:10:00 dlg Exp $	*/
+/*	$OpenBSD: if_rum.c,v 1.118 2015/12/11 16:07:02 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2005-2007 Damien Bergamini <damien.bergamini@free.fr>
@@ -127,7 +127,7 @@ static const struct usb_devno rum_devs[] = {
 	{ USB_VENDOR_ZYXEL,		USB_PRODUCT_ZYXEL_RT2573 }
 };
 
-void		rum_attachhook(void *);
+void		rum_attachhook(struct device *);
 int		rum_alloc_tx_list(struct rum_softc *);
 void		rum_free_tx_list(struct rum_softc *);
 int		rum_alloc_rx_list(struct rum_softc *);
@@ -235,9 +235,9 @@ rum_match(struct device *parent, void *match, void *aux)
 }
 
 void
-rum_attachhook(void *xsc)
+rum_attachhook(struct device *self)
 {
-	struct rum_softc *sc = xsc;
+	struct rum_softc *sc = (struct rum_softc *)self;
 	const char *name = "rum-rt2573";
 	u_char *ucode;
 	size_t size;
@@ -324,10 +324,7 @@ rum_attach(struct device *parent, struct device *self, void *aux)
 	    sc->sc_dev.dv_xname, sc->macbbp_rev, tmp,
 	    rum_get_rf(sc->rf_rev), ether_sprintf(ic->ic_myaddr));
 
-	if (rootvp == NULL)
-		mountroothook_establish(rum_attachhook, sc);
-	else
-		rum_attachhook(sc);
+	config_mountroot(self, rum_attachhook);
 
 	ic->ic_phytype = IEEE80211_T_OFDM;	/* not only, but not used */
 	ic->ic_opmode = IEEE80211_M_STA;	/* default to BSS mode */

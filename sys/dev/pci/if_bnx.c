@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnx.c,v 1.119 2015/12/10 12:24:27 dlg Exp $	*/
+/*	$OpenBSD: if_bnx.c,v 1.120 2015/12/11 16:07:01 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2006 Broadcom Corporation
@@ -274,7 +274,7 @@ static struct flash_spec flash_5709 = {
 /****************************************************************************/
 int	bnx_probe(struct device *, void *, void *);
 void	bnx_attach(struct device *, struct device *, void *);
-void	bnx_attachhook(void *);
+void	bnx_attachhook(struct device *);
 int	bnx_read_firmware(struct bnx_softc *sc, int);
 int	bnx_read_rv2p(struct bnx_softc *sc, int);
 #if 0
@@ -753,7 +753,7 @@ bnx_attach(struct device *parent, struct device *self, void *aux)
 
 	printf(": %s\n", intrstr);
 
-	mountroothook_establish(bnx_attachhook, sc);
+	config_mountroot(self, bnx_attachhook);
 	return;
 
 bnx_attach_fail:
@@ -762,9 +762,9 @@ bnx_attach_fail:
 }
 
 void
-bnx_attachhook(void *xsc)
+bnx_attachhook(struct device *self)
 {
-	struct bnx_softc *sc = xsc;
+	struct bnx_softc *sc = (struct bnx_softc *)self;
 	struct pci_attach_args *pa = &sc->bnx_pa;
 	struct ifnet		*ifp;
 	int			error, mii_flags = 0;

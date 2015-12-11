@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atu.c,v 1.116 2015/11/25 03:09:59 dlg Exp $ */
+/*	$OpenBSD: if_atu.c,v 1.117 2015/12/11 16:07:02 mpi Exp $ */
 /*
  * Copyright (c) 2003, 2004
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -267,8 +267,8 @@ int	atu_initial_config(struct atu_softc *sc);
 int	atu_join(struct atu_softc *sc, struct ieee80211_node *node);
 int8_t	atu_get_dfu_state(struct atu_softc *sc);
 u_int8_t atu_get_opmode(struct atu_softc *sc, u_int8_t *mode);
-void	atu_internal_firmware(void *);
-void	atu_external_firmware(void *);
+void	atu_internal_firmware(struct device *);
+void	atu_external_firmware(struct device *);
 int	atu_get_card_config(struct atu_softc *sc);
 int	atu_media_change(struct ifnet *ifp);
 void	atu_media_status(struct ifnet *ifp, struct ifmediareq *req);
@@ -852,9 +852,9 @@ atu_get_opmode(struct atu_softc *sc, u_int8_t *mode)
  * Upload the internal firmware into the device
  */
 void
-atu_internal_firmware(void *arg)
+atu_internal_firmware(struct device *self)
 {
-	struct atu_softc *sc = arg;
+	struct atu_softc *sc = (struct atu_softc *)self;
 	u_char	state, *ptr = NULL, *firm = NULL, status[6];
 	int block_size, block = 0, err, i;
 	size_t	bytes_left = 0;
@@ -983,9 +983,9 @@ fail:
 }
 
 void
-atu_external_firmware(void *arg)
+atu_external_firmware(struct device *self)
 {
-	struct atu_softc *sc = arg;
+	struct atu_softc *sc = (struct atu_softc *)self;
 	u_char	*ptr = NULL, *firm = NULL;
 	int	block_size, block = 0, err, i;
 	size_t	bytes_left = 0;
@@ -1297,10 +1297,7 @@ atu_attach(struct device *parent, struct device *self, void *aux)
 		DPRINTF(("%s: starting internal firmware download\n",
 		    sc->atu_dev.dv_xname));
 
-		if (rootvp == NULL)
-			mountroothook_establish(atu_internal_firmware, sc);
-		else
-			atu_internal_firmware(sc);
+		config_mountroot(self, atu_internal_firmware);
 		/*
 		 * atu_internal_firmware will cause a reset of the device
 		 * so we don't want to do any more configuration after this
@@ -1337,10 +1334,7 @@ atu_attach(struct device *parent, struct device *self, void *aux)
 			}
 		}
 
-		if (rootvp == NULL)
-			mountroothook_establish(atu_external_firmware, sc);
-		else
-			atu_external_firmware(sc);
+		config_mountroot(self, atu_external_firmware);
 
 		/*
 		 * atu_external_firmware will call atu_complete_attach after

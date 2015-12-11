@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_kue.c,v 1.83 2015/11/25 03:10:00 dlg Exp $ */
+/*	$OpenBSD: if_kue.c,v 1.84 2015/12/11 16:07:02 mpi Exp $ */
 /*	$NetBSD: if_kue.c,v 1.50 2002/07/16 22:00:31 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -178,7 +178,7 @@ usbd_status kue_ctl(struct kue_softc *, int, u_int8_t,
 			   u_int16_t, void *, u_int32_t);
 usbd_status kue_setword(struct kue_softc *, u_int8_t, u_int16_t);
 int kue_load_fw(struct kue_softc *);
-void kue_attachhook(void *);
+void kue_attachhook(struct device *);
 
 usbd_status
 kue_setword(struct kue_softc *sc, u_int8_t breq, u_int16_t word)
@@ -399,9 +399,9 @@ kue_match(struct device *parent, void *match, void *aux)
 }
 
 void
-kue_attachhook(void *xsc)
+kue_attachhook(struct device *self)
 {
-	struct kue_softc *sc = xsc;
+	struct kue_softc	*sc = (struct kue_softc *)self;
 	int			s;
 	struct ifnet		*ifp;
 	struct usbd_device	*dev = sc->kue_udev;
@@ -526,10 +526,7 @@ kue_attach(struct device *parent, struct device *self, void *aux)
 	sc->kue_product = uaa->product;
 	sc->kue_vendor = uaa->vendor;
 
-	if (rootvp == NULL)
-		mountroothook_establish(kue_attachhook, sc);
-	else
-		kue_attachhook(sc);
+	config_mountroot(self, kue_attachhook);
 }
 
 int

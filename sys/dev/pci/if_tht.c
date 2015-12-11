@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tht.c,v 1.137 2015/11/25 03:09:59 dlg Exp $ */
+/*	$OpenBSD: if_tht.c,v 1.138 2015/12/11 16:07:02 mpi Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -498,7 +498,7 @@ struct tht_softc {
 
 int			tht_match(struct device *, void *, void *);
 void			tht_attach(struct device *, struct device *, void *);
-void			tht_mountroot(void *);
+void			tht_mountroot(struct device *);
 int			tht_intr(void *);
 
 struct cfattach tht_ca = {
@@ -794,13 +794,13 @@ tht_attach(struct device *parent, struct device *self, void *aux)
 
 	printf(": address %s\n", ether_sprintf(sc->sc_ac.ac_enaddr));
 
-	mountroothook_establish(tht_mountroot, sc);
+	config_mountroot(self, tht_mountroot);
 }
 
 void
-tht_mountroot(void *arg)
+tht_mountroot(struct device *self)
 {
-	struct tht_softc		*sc = arg;
+	struct tht_softc		*sc = (struct tht_softc *)self;
 
 	if (tht_fifo_alloc(sc, &sc->sc_txt, &tht_txt_desc) != 0)
 		return;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2860.c,v 1.85 2015/11/25 03:09:58 dlg Exp $	*/
+/*	$OpenBSD: rt2860.c,v 1.86 2015/12/11 16:07:01 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -67,7 +67,7 @@ int rt2860_debug = 0;
 #define DPRINTFN(n, x)
 #endif
 
-void		rt2860_attachhook(void *);
+void		rt2860_attachhook(struct device *);
 int		rt2860_alloc_tx_ring(struct rt2860_softc *,
 		    struct rt2860_tx_ring *);
 void		rt2860_reset_tx_ring(struct rt2860_softc *,
@@ -258,10 +258,7 @@ rt2860_attach(void *xsc, int id)
 	sc->mgtqid = (sc->mac_ver == 0x2860 && sc->mac_rev == 0x0100) ?
 	    EDCA_AC_VO : 5;
 
-	if (rootvp == NULL)
-		mountroothook_establish(rt2860_attachhook, sc);
-	else
-		rt2860_attachhook(sc);
+	config_mountroot(xsc, rt2860_attachhook);
 
 	return 0;
 
@@ -272,9 +269,9 @@ fail1:	while (--qid >= 0)
 }
 
 void
-rt2860_attachhook(void *xsc)
+rt2860_attachhook(struct device *self)
 {
-	struct rt2860_softc *sc = xsc;
+	struct rt2860_softc *sc = (struct rt2860_softc *)self;
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifnet *ifp = &ic->ic_if;
 	int i, error;

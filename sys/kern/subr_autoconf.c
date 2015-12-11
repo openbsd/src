@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_autoconf.c,v 1.89 2015/09/11 20:43:23 dlg Exp $	*/
+/*	$OpenBSD: subr_autoconf.c,v 1.90 2015/12/11 16:07:02 mpi Exp $	*/
 /*	$NetBSD: subr_autoconf.c,v 1.21 1996/04/04 06:06:18 cgd Exp $	*/
 
 /*
@@ -88,7 +88,9 @@ struct deferred_config {
 };
 
 TAILQ_HEAD(, deferred_config) deferred_config_queue;
+TAILQ_HEAD(, deferred_config) mountroot_config_queue;
 
+void *config_rootsearch(cfmatch_t, char *, void *);
 void config_process_deferred_children(struct device *);
 
 struct devicelist alldevs;		/* list of all devices */
@@ -112,6 +114,7 @@ void
 config_init(void)
 {
 	TAILQ_INIT(&deferred_config_queue);
+	TAILQ_INIT(&mountroot_config_queue);
 	TAILQ_INIT(&alldevs);
 }
 
@@ -676,6 +679,39 @@ config_defer(struct device *dev, void (*func)(struct device *))
 }
 
 /*
+ * Defer the configuration of the specified device until after
+ * root file system is mounted.
+ */
+void
+config_mountroot(struct device *dev, void (*func)(struct device *))
+{
+	struct deferred_config *dc;
+
+	/*
+	 * No need to defer if root file system is already mounted.
+	 */
+	if (rootvp != NULL) {
+		(*func)(dev);
+		return;
+	}
+
+#ifdef DIAGNOSTIC
+	for (dc = TAILQ_FIRST(&mountroot_config_queue); dc != NULL;
+	     dc = TAILQ_NEXT(dc, dc_queue)) {
+		if (dc->dc_dev == dev)
+			panic("config_mountroot: deferred twice");
+	}
+#endif
+
+	if ((dc = malloc(sizeof(*dc), M_DEVBUF, M_NOWAIT)) == NULL)
+		panic("config_mountroot: can't allocate defer structure");
+
+	dc->dc_dev = dev;
+	dc->dc_func = func;
+	TAILQ_INSERT_TAIL(&mountroot_config_queue, dc, dc_queue);
+}
+
+/*
  * Process the deferred configuration queue for a device.
  */
 void
@@ -692,6 +728,22 @@ config_process_deferred_children(struct device *parent)
 			free(dc, M_DEVBUF, 0);
 			config_pending_decr();
 		}
+	}
+}
+
+/*
+ * Process the deferred configuration queue after the root file
+ * system is mounted .
+ */
+void
+config_process_deferred_mountroot(void)
+{
+	struct deferred_config *dc;
+
+	while ((dc = TAILQ_FIRST(&mountroot_config_queue)) != NULL) {
+		TAILQ_REMOVE(&mountroot_config_queue, dc, dc_queue);
+		(*dc->dc_func)(dc->dc_dev);
+		free(dc, M_DEVBUF, 0);
 	}
 }
 
@@ -874,7 +926,7 @@ device_lookup(struct cfdriver *cd, int unit)
 
 	if (unit >= 0 && unit < cd->cd_ndevs)
 		dv = (struct device *)(cd->cd_devs[unit]);
-	
+
 	if (!dv)
 		return (NULL);
 
@@ -906,7 +958,7 @@ device_mpath(void)
 
 	if (mpath_cd.cd_ndevs < 1)
 		return (NULL);
-		
+
 	return (mpath_cd.cd_devs[0]);
 #else
 	return (NULL);
