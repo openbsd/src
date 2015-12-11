@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.494 2015/12/07 12:29:19 sunil Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.495 2015/12/11 07:48:33 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -83,6 +83,7 @@
 #define	F_TLS_VERIFY		0x200
 #define	F_EXT_DSN		0x400
 #define	F_RECEIVEDAUTH		0x800
+#define	F_MASQUERADE		0x1000
 
 /* must match F_* for mta */
 #define RELAY_STARTTLS		0x01
@@ -551,6 +552,7 @@ struct listener {
 	char			 authtable[LINE_MAX];
 	char			 hostname[HOST_NAME_MAX+1];
 	char			 hostnametable[PATH_MAX];
+	char			 sendertable[PATH_MAX];
 	TAILQ_ENTRY(listener)	 entry;
 
 	int			 local;		/* there must be a better way */
