@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)amq.c	8.1 (Berkeley) 6/7/93
- *	$Id: amq.c,v 1.18 2015/01/21 09:50:25 guenther Exp $
+ *	$Id: amq.c,v 1.19 2015/12/11 04:26:01 mmcc Exp $
  */
 
 /*
@@ -565,11 +565,3 @@ privsock(int ty)
 	}
 	return sock;
 }
-
-#ifdef DEBUG
-void
-xfree(char *f, char *l, void *p)
-{
-	free(p);
-}
-#endif /* DEBUG */

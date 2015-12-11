@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)xutil.c	8.1 (Berkeley) 6/6/93
- *	$Id: xutil.c,v 1.17 2014/10/26 02:58:43 guenther Exp $
+ *	$Id: xutil.c,v 1.18 2015/12/11 04:26:01 mmcc Exp $
  */
 
 #include "am.h"
@@ -84,13 +84,9 @@ xmalloc(size_t len)
 	int retries = 600;
 
 	do {
-		p = malloc(len);
-		if (p) {
-#if defined(DEBUG) && defined(DEBUG_MEM)
-			Debug(D_MEM) plog(XLOG_DEBUG, "Allocated size %zu; block %#x", len, p);
-#endif /* defined(DEBUG) && defined(DEBUG_MEM) */
+		if ((p = malloc(len)) != NULL)
 			return p;
-		}
+
 		if (retries > 0) {
 			plog(XLOG_ERROR, "Retrying memory allocation");
 			sleep(1);
@@ -103,10 +99,6 @@ xmalloc(size_t len)
 void *
 xreallocarray(void *ptr, size_t nmemb, size_t size)
 {
-#if defined(DEBUG) && defined(DEBUG_MEM)
-	Debug(D_MEM) plog(XLOG_DEBUG, "Reallocated nmemb %zu of size %zu; block %#x", nmemb, size, ptr);
-#endif /* defined(DEBUG) && defined(DEBUG_MEM) */
-
 	ptr = reallocarray(ptr, nmemb, size);
 
 	if (ptr == NULL)
@@ -114,14 +106,6 @@ xreallocarray(void *ptr, size_t nmemb, size_t size)
 	return (ptr);
 }
 
-#if defined(DEBUG) && defined(DEBUG_MEM)
-xfree(char *f, int l, void *p)
-{
-	Debug(D_MEM) plog(XLOG_DEBUG, "Free in %s:%d: block %#x", f, l, p);
-#undef free
-	free(p);
-}
-#endif /* defined(DEBUG) && defined(DEBUG_MEM) */
 #ifdef DEBUG_MEM
 static int mem_bytes;
 static int orig_mem_bytes;
