@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.254 2015/12/12 14:15:53 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.255 2015/12/12 14:27:03 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -895,7 +895,7 @@ smtp_session_imsg(struct mproc *p, struct imsg *imsg)
 		else if (s->listener->flags & F_TLS_VERIFY) {
 			log_info("smtp-in: Disconnecting session %016" PRIx64
 			    ": SSL certificate check failed", s->id);
-			smtp_free(s, "SSL certificate check failed");	
+			smtp_free(s, "SSL certificate check failed");
 			return;
 		}
 		smtp_io(&s->io, IO_TLSVERIFIED);
@@ -1097,7 +1097,7 @@ smtp_io(struct io *io, int evt)
 		if (s->listener->flags & F_TLS_VERIFY) {
 			log_info("smtp-in: Disconnecting session %016" PRIx64
 			    ": client did not present certificate", s->id);
-			smtp_free(s, "client did not present certificate");	
+			smtp_free(s, "client did not present certificate");
 			return;
 		}
 
@@ -1861,7 +1861,6 @@ smtp_message_write(struct smtp_session *s, const char *line)
 	if (ret == -1) {
 		s->msgflags |= MF_ERROR_RESOURCES;
 		return;
-		
 	}
 	if (ret == 0) {
 		s->msgflags |= MF_ERROR_MALFORMED;
@@ -2151,12 +2150,12 @@ smtp_verify_certificate(struct smtp_session *s)
 	X509_free(x);
 
 	if (cert_len[0] < 0) {
-		log_warnx("warn: failed to encode certificate");	
+		log_warnx("warn: failed to encode certificate");
 		goto end;
 	}
 	log_debug("debug: certificate 0: len=%d", cert_len[0]);
 	if (cert_len[0] > (int)MAX_CERT_LEN) {
-		log_warnx("warn: certificate too long");	
+		log_warnx("warn: certificate too long");
 		goto end;
 	}
 
@@ -2164,7 +2163,7 @@ smtp_verify_certificate(struct smtp_session *s)
 		cert_count = sk_X509_num(xchain);
 		log_debug("debug: certificate chain len: %d", cert_count);
 		if (cert_count >= MAX_CERTS) {
-			log_warnx("warn: certificate chain too long");	
+			log_warnx("warn: certificate chain too long");
 			goto end;
 		}
 	}
@@ -2175,12 +2174,12 @@ smtp_verify_certificate(struct smtp_session *s)
 		x = sk_X509_value(xchain, i);
 		cert_len[i+1] = i2d_X509(x, &cert_der[i+1]);
 		if (cert_len[i+1] < 0) {
-			log_warnx("warn: failed to encode certificate");	
+			log_warnx("warn: failed to encode certificate");
 			goto end;
 		}
 		log_debug("debug: certificate %i: len=%d", i+1, cert_len[i+1]);
 		if (cert_len[i+1] > (int)MAX_CERT_LEN) {
-			log_warnx("warn: certificate too long");	
+			log_warnx("warn: certificate too long");
 			goto end;
 		}
 	}
