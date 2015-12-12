@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_ciph.c,v 1.83 2015/09/13 12:34:02 jsing Exp $ */
+/* $OpenBSD: ssl_ciph.c,v 1.84 2015/12/12 22:04:10 mmcc Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1451,7 +1451,7 @@ ssl_create_cipher_list(const SSL_METHOD *ssl_method,
 	ssl_cipher_apply_rule(0, 0, SSL_aECDH, 0, 0, 0, 0, CIPHER_ORD, -1, &head, &tail);
 	ssl_cipher_apply_rule(0, SSL_kRSA, 0, 0, 0, 0, 0, CIPHER_ORD, -1, &head, &tail);
 
-	/* RC4 is sort-of broken -- move the the end */
+	/* RC4 is sort of broken - move it to the end */
 	ssl_cipher_apply_rule(0, 0, 0, SSL_RC4, 0, 0, 0, CIPHER_ORD, -1, &head, &tail);
 
 	/* Now sort by symmetric encryption strength.  The above ordering remains
