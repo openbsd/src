@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-bind-key.c,v 1.22 2015/11/12 11:05:34 nicm Exp $ */
+/* $OpenBSD: cmd-bind-key.c,v 1.23 2015/12/12 18:19:00 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -62,7 +62,7 @@ cmd_bind_key_exec(struct cmd *self, struct cmd_q *cmdq)
 	}
 
 	key = key_string_lookup_string(args->argv[0]);
-	if (key == KEYC_NONE) {
+	if (key == KEYC_NONE || key == KEYC_UNKNOWN) {
 		cmdq_error(cmdq, "unknown key: %s", args->argv[0]);
 		return (CMD_RETURN_ERROR);
 	}

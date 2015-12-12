@@ -1,4 +1,4 @@
-/* $OpenBSD: input-keys.c,v 1.51 2015/11/23 23:47:57 nicm Exp $ */
+/* $OpenBSD: input-keys.c,v 1.52 2015/12/12 18:19:00 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -161,14 +161,14 @@ input_key(struct window_pane *wp, key_code key, struct mouse_event *m)
 	 * if necessary. If it is a UTF-8 key, split it and send it.
 	 */
 	justkey = (key & ~KEYC_ESCAPE);
-	if (key != KEYC_NONE && justkey <= 0x7f) {
+	if (justkey <= 0x7f) {
 		if (key & KEYC_ESCAPE)
 			bufferevent_write(wp->event, "\033", 1);
 		ud.data[0] = justkey;
 		bufferevent_write(wp->event, &ud.data[0], 1);
 		return;
 	}
-	if (key != KEYC_NONE && justkey > 0x7f && justkey < KEYC_BASE) {
+	if (justkey > 0x7f && justkey < KEYC_BASE) {
 		if (utf8_split(justkey, &ud) != UTF8_DONE)
 			return;
 		if (key & KEYC_ESCAPE)

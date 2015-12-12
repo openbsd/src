@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-set-option.c,v 1.87 2015/11/20 12:01:19 nicm Exp $ */
+/* $OpenBSD: cmd-set-option.c,v 1.88 2015/12/12 18:19:00 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -396,7 +396,8 @@ cmd_set_option_key(__unused struct cmd *self, struct cmd_q *cmdq,
 {
 	key_code	key;
 
-	if ((key = key_string_lookup_string(value)) == KEYC_NONE) {
+	key = key_string_lookup_string(value);
+	if (key == KEYC_UNKNOWN) {
 		cmdq_error(cmdq, "bad key: %s", value);
 		return (NULL);
 	}
