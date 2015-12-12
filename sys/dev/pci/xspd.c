@@ -1,3 +1,5 @@
+/*	$OpenBSD: xspd.c,v 1.2 2015/12/12 21:09:20 reyk Exp $	*/
+
 /*
  * Copyright (c) 2015 Mike Belopuhov
  *
