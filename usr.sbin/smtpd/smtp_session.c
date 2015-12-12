@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.246 2015/12/12 10:22:39 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.247 2015/12/12 10:24:27 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -218,8 +218,8 @@ static struct tree wait_lka_ptr;
 static struct tree wait_lka_helo;
 static struct tree wait_lka_mail;
 static struct tree wait_lka_rcpt;
-static struct tree wait_lka_filter;
-static struct tree wait_lka_filter_data;
+static struct tree wait_filter;
+static struct tree wait_filter_data;
 static struct tree wait_mfa_data;
 static struct tree wait_parent_auth;
 static struct tree wait_queue_msg;
@@ -442,8 +442,8 @@ smtp_session_init(void)
 		tree_init(&wait_lka_helo);
 		tree_init(&wait_lka_mail);
 		tree_init(&wait_lka_rcpt);
-		tree_init(&wait_lka_filter);
-		tree_init(&wait_lka_filter_data);
+		tree_init(&wait_filter);
+		tree_init(&wait_filter_data);
 		tree_init(&wait_mfa_data);
 		tree_init(&wait_parent_auth);
 		tree_init(&wait_queue_msg);
