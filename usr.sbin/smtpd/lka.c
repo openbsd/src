@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.184 2015/12/12 13:25:18 gilles Exp $	*/
+/*	$OpenBSD: lka.c,v 1.185 2015/12/12 13:48:50 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -69,7 +69,6 @@ lka_imsg(struct mproc *p, struct imsg *imsg)
 	struct iovec		iov[2];
 	static struct ca_vrfy_req_msg	*req_ca_vrfy = NULL;
 	struct ca_vrfy_req_msg		*req_ca_vrfy_chain;
-	struct ca_vrfy_resp_msg		resp_ca_vrfy;
 	struct ca_cert_req_msg		*req_ca_cert;
 	struct ca_cert_resp_msg		 resp_ca_cert;
 	struct sockaddr_storage	 ss;
@@ -82,9 +81,7 @@ lka_imsg(struct mproc *p, struct imsg *imsg)
 	char			 buf[LINE_MAX];
 	const char		*tablename, *username, *password, *label;
 	uint64_t		 reqid;
-	size_t			 i;
 	int			 v;
-	const char	        *cafile = NULL;
 
 	if (imsg->hdr.type == IMSG_MTA_DNS_HOST ||
 	    imsg->hdr.type == IMSG_MTA_DNS_PTR ||
@@ -188,26 +185,7 @@ lka_imsg(struct mproc *p, struct imsg *imsg)
 		case IMSG_MTA_TLS_VERIFY:
 			if (req_ca_vrfy == NULL)
 				fatalx("lka:ca_vrfy: verify without a certificate");
-
-			resp_ca_vrfy.reqid = req_ca_vrfy->reqid;
-			pki = dict_get(env->sc_pki_dict, req_ca_vrfy->name);
-			cafile = CA_FILE;
-			if (pki && pki->pki_ca_file)
-				cafile = pki->pki_ca_file;
-			if (! lka_X509_verify(req_ca_vrfy, cafile, NULL))
-				resp_ca_vrfy.status = CA_FAIL;
-			else
-				resp_ca_vrfy.status = CA_OK;
-
-			m_compose(p, imsg->hdr.type, 0, 0, -1, &resp_ca_vrfy,
-			    sizeof resp_ca_vrfy);
-
-			for (i = 0; i < req_ca_vrfy->n_chain; ++i)
-				free(req_ca_vrfy->chain_cert[i]);
-			free(req_ca_vrfy->chain_cert);
-			free(req_ca_vrfy->chain_cert_len);
-			free(req_ca_vrfy->cert);
-			free(req_ca_vrfy);
+			lka_certificate_verify(imsg->hdr.type, req_ca_vrfy);
 			req_ca_vrfy = NULL;
 			return;
 
@@ -699,9 +677,34 @@ end:
 static void
 lka_certificate_verify(enum imsg_type type, struct ca_vrfy_req_msg *req)
 {
+	lka_certificate_verify_resume(type, req);
 }
 
 static void
 lka_certificate_verify_resume(enum imsg_type type, struct ca_vrfy_req_msg *req)
 {
+	struct ca_vrfy_resp_msg		resp;
+	struct pki		       *pki;
+	const char		       *cafile;
+	size_t				i;
+
+	resp.reqid = req->reqid;
+	pki = dict_get(env->sc_pki_dict, req->name);
+	cafile = CA_FILE;
+	if (pki && pki->pki_ca_file)
+		cafile = pki->pki_ca_file;
+	if (! lka_X509_verify(req, cafile, NULL))
+		resp.status = CA_FAIL;
+	else
+		resp.status = CA_OK;
+
+	m_compose(p_pony, type, 0, 0, -1, &resp,
+	    sizeof resp);
+
+	for (i = 0; i < req->n_chain; ++i)
+		free(req->chain_cert[i]);
+	free(req->chain_cert);
+	free(req->chain_cert_len);
+	free(req->cert);
+	free(req);
 }
