@@ -1,4 +1,4 @@
-/* $OpenBSD: a_time_tm.c,v 1.8 2015/10/22 15:38:05 jsing Exp $ */
+/* $OpenBSD: a_time_tm.c,v 1.9 2015/12/12 21:02:59 beck Exp $ */
 /*
  * Copyright (c) 2015 Bob Beck <beck@openbsd.org>
  *
@@ -132,7 +132,8 @@ rfc5280_string_from_tm(struct tm *tm)
 int
 asn1_time_parse(const char *bytes, size_t len, struct tm *tm, int mode)
 {
-	int i, type = 0;
+	size_t i;
+	int type = 0;
 	struct tm ltm;
 	struct tm *lt;
 	const char *p;
