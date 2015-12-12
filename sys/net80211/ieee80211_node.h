@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.h,v 1.49 2015/11/15 12:34:07 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_node.h,v 1.50 2015/12/12 11:25:46 stsp Exp $	*/
 /*	$NetBSD: ieee80211_node.h,v 1.9 2004/04/30 22:57:32 dyoung Exp $	*/
 
 /*-
@@ -112,8 +112,8 @@ struct ieee80211_tx_ba {
 	struct ieee80211_node	*ba_ni;	/* backpointer for callbacks */
 	struct timeout		ba_to;
 	int			ba_timeout_val;
-#define IEEE80211_BA_MIN_TIMEOUT	(10 * 1000)		/* 10msec */
-#define IEEE80211_BA_MAX_TIMEOUT	(10 * 1000 * 1000)	/* 10sec */
+#define IEEE80211_BA_MIN_TIMEOUT	(10 * 1000 * 1000)	/* 10 sec */
+#define IEEE80211_BA_MAX_TIMEOUT	(60 * 1000 * 1000)	/* 60 sec */
 
 	int			ba_state;
 #define IEEE80211_BA_INIT	0

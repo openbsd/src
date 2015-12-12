@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.92 2015/11/24 13:45:06 mpi Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.93 2015/12/12 11:25:46 stsp Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -68,6 +68,9 @@ u_int8_t ieee80211_node_getrssi(struct ieee80211com *,
 void ieee80211_setup_node(struct ieee80211com *, struct ieee80211_node *,
     const u_int8_t *);
 void ieee80211_free_node(struct ieee80211com *, struct ieee80211_node *);
+#ifndef IEEE80211_NO_HT
+void ieee80211_ba_del(struct ieee80211_node *);
+#endif
 struct ieee80211_node *ieee80211_alloc_node_helper(struct ieee80211com *);
 void ieee80211_node_cleanup(struct ieee80211com *, struct ieee80211_node *);
 void ieee80211_needs_auth(struct ieee80211com *, struct ieee80211_node *);
@@ -757,6 +760,9 @@ ieee80211_node_cleanup(struct ieee80211com *ic, struct ieee80211_node *ni)
 		free(ni->ni_rsnie, M_DEVBUF, 0);
 		ni->ni_rsnie = NULL;
 	}
+#ifndef IEEE80211_NO_HT
+	ieee80211_ba_del(ni);
+#endif
 }
 
 void
@@ -1065,6 +1071,32 @@ ieee80211_find_node_for_beacon(struct ieee80211com *ic,
 	return (keep);
 }
 
+#ifndef IEEE80211_NO_HT
+void
+ieee80211_ba_del(struct ieee80211_node *ni)
+{
+	int tid;
+
+	for (tid = 0; tid < nitems(ni->ni_rx_ba); tid++) {
+		struct ieee80211_rx_ba *ba = &ni->ni_rx_ba[tid];
+		if (ba->ba_state == IEEE80211_BA_AGREED) {
+			if (timeout_pending(&ba->ba_to))
+				timeout_del(&ba->ba_to);
+			ba->ba_state = IEEE80211_BA_INIT;
+		}
+	}
+
+	for (tid = 0; tid < nitems(ni->ni_tx_ba); tid++) {
+		struct ieee80211_tx_ba *ba = &ni->ni_tx_ba[tid];
+		if (ba->ba_state == IEEE80211_BA_AGREED) {
+			if (timeout_pending(&ba->ba_to))
+				timeout_del(&ba->ba_to);
+			ba->ba_state = IEEE80211_BA_INIT;
+		}
+	}
+}
+#endif
+
 void
 ieee80211_free_node(struct ieee80211com *ic, struct ieee80211_node *ni)
 {
@@ -1078,6 +1110,9 @@ ieee80211_free_node(struct ieee80211com *ic, struct ieee80211_node *ni)
 	timeout_del(&ni->ni_eapol_to);
 	timeout_del(&ni->ni_sa_query_to);
 	IEEE80211_AID_CLR(ni->ni_associd, ic->ic_aid_bitmap);
+#endif
+#ifndef IEEE80211_NO_HT
+	ieee80211_ba_del(ni);
 #endif
 	RB_REMOVE(ieee80211_tree, &ic->ic_tree, ni);
 	ic->ic_nnodes--;
