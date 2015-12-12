@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.250 2015/12/12 10:33:21 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.251 2015/12/12 10:35:52 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -492,6 +492,10 @@ smtp_session(struct listener *listener, int sock,
 	s->phase = PHASE_INIT;
 
 	(void)strlcpy(s->smtpname, listener->hostname, sizeof(s->smtpname));
+
+	log_trace(TRACE_SMTP, "smtp: %p: connected to listener %p "
+	    "[hostname=%s, port=%d, tag=%s]", s, listener,
+	    listener->hostname, ntohs(listener->port), listener->tag);
 
 	/* Setup parser and callbacks before smtp_connected() can be called */
 	rfc2822_parser_init(&s->rfc2822_parser);
