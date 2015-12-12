@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta_session.c,v 1.78 2015/12/11 21:44:01 gilles Exp $	*/
+/*	$OpenBSD: mta_session.c,v 1.79 2015/12/12 08:40:40 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -1536,10 +1536,14 @@ mta_start_tls(struct mta_session *s)
 	struct ca_cert_req_msg	req_ca_cert;
 	const char	       *certname;
 
-	if (s->relay->pki_name)
+	if (s->relay->pki_name) {
 		certname = s->relay->pki_name;
-	else
+		req_ca_cert.fallback = 0;
+	}
+	else {
 		certname = s->helo;
+		req_ca_cert.fallback = 1;
+	}
 
 	req_ca_cert.reqid = s->id;
 	(void)strlcpy(req_ca_cert.name, certname, sizeof req_ca_cert.name);
@@ -1568,10 +1572,14 @@ mta_verify_certificate(struct mta_session *s)
 	memset(cert_der, 0, sizeof(cert_der));
 	memset(&req_ca_vrfy, 0, sizeof req_ca_vrfy);
 
-	if (s->relay->pki_name)
+	if (s->relay->pki_name) {
 		pkiname = s->relay->pki_name;
-	else
+		req_ca_vrfy.fallback = 0;
+	}
+	else {
 		pkiname = s->helo;
+		req_ca_vrfy.fallback = 1;
+	}
 	if (strlcpy(req_ca_vrfy.name, pkiname, sizeof req_ca_vrfy.name)
 	    >= sizeof req_ca_vrfy.name)
 		return 0;
