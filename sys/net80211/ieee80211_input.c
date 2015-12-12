@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.143 2015/12/12 11:25:46 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.144 2015/12/12 12:22:14 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -1585,10 +1585,13 @@ ieee80211_recv_probe_resp(struct ieee80211com *ic, struct mbuf *m,
 	 */
 	if (ni->ni_flags & IEEE80211_NODE_QOS) {
 		/* always prefer EDCA IE over Wi-Fi Alliance WMM IE */
-		if (edcaie != NULL)
-			ieee80211_parse_edca_params(ic, edcaie);
-		else if (wmmie != NULL)
-			ieee80211_parse_wmm_params(ic, wmmie);
+		if ((edcaie != NULL &&
+		     ieee80211_parse_edca_params(ic, edcaie) == 0) ||
+		    (wmmie != NULL &&
+		     ieee80211_parse_wmm_params(ic, wmmie) == 0))
+			ni->ni_flags |= IEEE80211_NODE_QOS;
+		else
+			ni->ni_flags &= ~IEEE80211_NODE_QOS;
 	}
 
 	if (ic->ic_state == IEEE80211_S_SCAN
