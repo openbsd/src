@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.170 2015/12/12 12:28:04 gilles Exp $	*/
+/*	$OpenBSD: parse.y,v 1.171 2015/12/12 12:34:51 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1836,6 +1836,7 @@ parse_config(struct smtpd *x_conf, const char *filename, int opts)
 	    conf->sc_listeners == NULL		||
 	    conf->sc_ca_dict == NULL		||
 	    conf->sc_pki_dict == NULL		||
+	    conf->sc_ssl_dict == NULL		||
 	    conf->sc_limits_dict == NULL) {
 		log_warn("warn: cannot allocate memory");
 		free(conf->sc_tables_dict);
