@@ -1,4 +1,4 @@
-/*	$OpenBSD: pvbus.c,v 1.9 2015/12/12 12:33:49 reyk Exp $	*/
+/*	$OpenBSD: pvbus.c,v 1.10 2015/12/12 12:47:49 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -262,6 +262,13 @@ pvbus_xen(struct pvbus_hv *hv)
 	    regs[0], regs[1], regs[2], regs[3]);
 	hv->hv_major = regs[0] >> XEN_VERSION_MAJOR_S;
 	hv->hv_minor = regs[0] & XEN_VERSION_MINOR_M;
+
+	/* x2apic is broken in Xen 4.2 or older */
+	if ((hv->hv_major < 4) ||
+	    (hv->hv_major == 4 && hv->hv_minor < 3)) {
+		/* Remove CPU flag for x2apic */
+		cpu_ecxfeature &= ~CPUIDECX_X2APIC;
+	}
 }
 
 void
