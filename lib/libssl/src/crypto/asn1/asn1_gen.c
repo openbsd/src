@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1_gen.c,v 1.14 2015/07/18 14:40:59 miod Exp $ */
+/* $OpenBSD: asn1_gen.c,v 1.15 2015/12/12 21:03:52 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2002.
  */
@@ -146,7 +146,7 @@ ASN1_generate_v3(char *str, X509V3_CTX *cnf)
 	unsigned char *p;
 	const unsigned char *cp;
 	int cpy_len;
-	long hdr_len;
+	long hdr_len = 0;
 	int hdr_constructed = 0, hdr_tag, hdr_class;
 	int r;
 
