@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.171 2015/12/12 12:34:51 gilles Exp $	*/
+/*	$OpenBSD: parse.y,v 1.172 2015/12/12 12:38:36 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -116,6 +116,7 @@ enum listen_options {
 	LO_NODSN	= 0x000400,
 	LO_SENDERS	= 0x000800,
 	LO_RECEIVEDAUTH = 0x001000,
+	LO_MASQUERADE	= 0x002000,
 	LO_CA		= 0x010000
 };
 
@@ -637,6 +638,24 @@ opt_listen     	: INET4			{
 			}
 			listen_opts.sendertable = t;
 		}
+		/*
+		| SENDERS tables MASQUERADE	{
+			struct table	*t = $2;
+
+			if (listen_opts.options & LO_SENDERS) {
+				yyerror("senders already specified");
+				YYERROR;
+			}
+			listen_opts.options |= LO_SENDERS|LO_MASQUERADE;
+
+			if (! table_check_use(t, T_DYNAMIC|T_HASH, K_MAILADDRMAP)) {
+				yyerror("invalid use of table \"%s\" as "
+				    "SENDERS parameter", t->t_name);
+				YYERROR;
+			}
+			listen_opts.sendertable = t;
+		}
+		*/
 		;
 
 listen		: opt_listen listen
@@ -2114,8 +2133,11 @@ config_listener(struct listener *h,  struct listen_opts *lo)
 	(void)strlcpy(h->hostname, lo->hostname, sizeof(h->hostname));
 	if (lo->hostnametable)
 		(void)strlcpy(h->hostnametable, lo->hostnametable->t_name, sizeof(h->hostnametable));
-	if (lo->sendertable)
+	if (lo->sendertable) {
 		(void)strlcpy(h->sendertable, lo->sendertable->t_name, sizeof(h->sendertable));
+		if (lo->options & LO_MASQUERADE)
+			h->flags |= F_MASQUERADE;
+	}
 
 	if (lo->ssl & F_TLS_VERIFY)
 		h->flags |= F_TLS_VERIFY;
