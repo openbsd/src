@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)xutil.c	8.1 (Berkeley) 6/6/93
- *	$Id: xutil.c,v 1.18 2015/12/11 04:26:01 mmcc Exp $
+ *	$Id: xutil.c,v 1.19 2015/12/12 20:06:42 mmcc Exp $
  */
 
 #include "am.h"
@@ -106,34 +106,6 @@ xreallocarray(void *ptr, size_t nmemb, size_t size)
 	return (ptr);
 }
 
-#ifdef DEBUG_MEM
-static int mem_bytes;
-static int orig_mem_bytes;
-
-static void
-checkup_mem(void)
-{
-	extern struct mallinfo __mallinfo;
-	if (mem_bytes != __mallinfo.uordbytes) {
-		if (orig_mem_bytes == 0)
-			mem_bytes = orig_mem_bytes = __mallinfo.uordbytes;
-		else {
-			fprintf(logfp, "%s[%ld]: ", __progname, (long)mypid);
-			if (mem_bytes < __mallinfo.uordbytes) {
-				fprintf(logfp, "ALLOC: %d bytes",
-					__mallinfo.uordbytes - mem_bytes);
-			} else {
-				fprintf(logfp, "FREE: %d bytes",
-					mem_bytes - __mallinfo.uordbytes);
-			}
-			mem_bytes = __mallinfo.uordbytes;
-			fprintf(logfp, ", making %d missing\n",
-				mem_bytes - orig_mem_bytes);
-		}
-	}
-	malloc_verify();
-}
-#endif /* DEBUG_MEM */
 
 /*
  * Take a log format string and expand occurrences of %m
@@ -216,9 +188,6 @@ plog(int lvl, const char *fmt, ...)
 	if (!(xlog_level & lvl))
 		return;
 
-#ifdef DEBUG_MEM
-	checkup_mem();
-#endif /* DEBUG_MEM */
 
 	if (syslogging) {
 		switch(lvl) {	/* from mike <mcooper@usc.edu> */
