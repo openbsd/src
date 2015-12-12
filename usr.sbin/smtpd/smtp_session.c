@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.253 2015/12/12 14:01:56 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.254 2015/12/12 14:15:53 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -128,7 +128,7 @@ struct smtp_session {
 
 	char			 helo[LINE_MAX];
 	char			 cmd[LINE_MAX];
-	char			 username[LOGIN_NAME_MAX];
+	char			 username[SMTPD_MAXMAILADDRSIZE];
 
 	struct envelope		 evp;
 
