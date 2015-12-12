@@ -1,4 +1,4 @@
-/*	$OpenBSD: localtime.c,v 1.56 2015/11/01 03:45:29 guenther Exp $ */
+/*	$OpenBSD: localtime.c,v 1.57 2015/12/12 21:25:44 mmcc Exp $ */
 /*
 ** This file is in the public domain, so clarified as of
 ** 1996-06-05 by Arthur David Olson.
@@ -1328,7 +1328,7 @@ gmtsub(const time_t *timep, long offset, struct tm *tmp)
 	_THREAD_PRIVATE_MUTEX_LOCK(gmt);
 	if (!gmt_is_set) {
 		gmt_is_set = TRUE;
-		gmtptr = (struct state *) calloc(1, sizeof *gmtptr);
+		gmtptr = calloc(1, sizeof(*gmtptr));
 		if (gmtptr != NULL)
 			gmtload(gmtptr);
 	}
