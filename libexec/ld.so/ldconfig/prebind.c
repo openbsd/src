@@ -1,4 +1,4 @@
-/* $OpenBSD: prebind.c,v 1.31 2015/10/14 17:29:44 tobias Exp $ */
+/* $OpenBSD: prebind.c,v 1.32 2015/12/12 20:09:28 mmcc Exp $ */
 /*
  * Copyright (c) 2006 Dale Rahn <drahn@dalerahn.com>
  *
@@ -712,14 +712,11 @@ void
 elf_free_object(struct elf_object *object)
 {
 	free(object->load_name);
-	if (object->dyn.hash != NULL)
-		free(object->dyn.hash);
+	free(object->dyn.hash);
 	free((void *)object->dyn.strtab);
 	free((void *)object->dyn.symtab);
-	if (object->dyn.rel != NULL)
-		free(object->dyn.rel);
-	if (object->dyn.rela != NULL)
-		free(object->dyn.rela);
+	free(object->dyn.rel);
+	free(object->dyn.rela);
 	if (object->dyn.rpath != NULL)
 		free((void *)object->dyn.rpath);
 	free(object);

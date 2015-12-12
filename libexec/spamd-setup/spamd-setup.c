@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd-setup.c,v 1.46 2015/06/03 02:24:36 millert Exp $ */
+/*	$OpenBSD: spamd-setup.c,v 1.47 2015/12/12 20:09:28 mmcc Exp $ */
 
 /*
  * Copyright (c) 2003 Bob Beck.  All rights reserved.
@@ -511,8 +511,7 @@ add_blacklist(struct bl *bl, size_t *blc, size_t *bls, gzFile gzf, int white)
 	if (bu == 0)
 		errno = EIO;
  bldone:
-	if (buf)
-		free(buf);
+	free(buf);
 	if (serrno)
 		errno = serrno;
 	return (bl);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.211 2015/11/16 17:31:14 tedu Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.212 2015/12/12 20:09:28 mmcc Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -939,8 +939,7 @@ pass(char *passwd)
 		}
 	} else if (lc != NULL) {
 		/* Save anonymous' password. */
-		if (guestpw != NULL)
-			free(guestpw);
+		free(guestpw);
 		guestpw = strdup(passwd);
 		if (guestpw == NULL) {
 			kill_slave("out of mem");
@@ -1113,8 +1112,7 @@ pass(char *passwd)
 		(void) fflush(stdout);
 		(void) fclose(fp);
 	}
-	if (motd != NULL)
-		free(motd);
+	free(motd);
 	if (guest) {
 		reply(230, "Guest login ok, access restrictions apply.");
 		snprintf(proctitle, sizeof(proctitle),
@@ -2533,8 +2531,7 @@ extended_port(const char *arg)
 	}
 	reply(200, "EPRT command successful.");
 
-	if (tmp)
-		free(tmp);
+	free(tmp);
 	if (res)
 		freeaddrinfo(res);
 	return 0;
@@ -2542,8 +2539,7 @@ extended_port(const char *arg)
 parsefail:
 	reply(500, "Invalid argument, rejected.");
 	usedefault = 1;
-	if (tmp)
-		free(tmp);
+	free(tmp);
 	if (res)
 		freeaddrinfo(res);
 	return -1;
@@ -2551,8 +2547,7 @@ parsefail:
 protounsupp:
 	epsv_protounsupp("Protocol not supported");
 	usedefault = 1;
-	if (tmp)
-		free(tmp);
+	free(tmp);
 	if (res)
 		freeaddrinfo(res);
 	return -1;
