@@ -1118,7 +1118,6 @@ main(int argc, char *argv[])
 	if (pledge("stdio rpath wpath cpath dns inet proc", NULL) == -1)
 		error("pledge");
 
-
 	xfrd_make_tempdir(&nsd);
 #ifdef USE_ZONE_STATS
 	options_zonestatnames_create(nsd.options);
