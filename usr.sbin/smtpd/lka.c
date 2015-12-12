@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.183 2015/12/12 11:31:28 sunil Exp $	*/
+/*	$OpenBSD: lka.c,v 1.184 2015/12/12 13:25:18 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -67,8 +67,7 @@ lka_imsg(struct mproc *p, struct imsg *imsg)
 	int			 ret;
 	struct pki		*pki;
 	struct iovec		iov[2];
-	static struct ca_vrfy_req_msg	*req_ca_vrfy_smtp = NULL;
-	static struct ca_vrfy_req_msg	*req_ca_vrfy_mta = NULL;
+	static struct ca_vrfy_req_msg	*req_ca_vrfy = NULL;
 	struct ca_vrfy_req_msg		*req_ca_vrfy_chain;
 	struct ca_vrfy_resp_msg		resp_ca_vrfy;
 	struct ca_cert_req_msg		*req_ca_cert;
@@ -141,6 +140,7 @@ lka_imsg(struct mproc *p, struct imsg *imsg)
 			return;
 
 		case IMSG_SMTP_TLS_INIT:
+		case IMSG_MTA_TLS_INIT:
 			req_ca_cert = imsg->data;
 			resp_ca_cert.reqid = req_ca_cert->reqid;
 
@@ -149,7 +149,7 @@ lka_imsg(struct mproc *p, struct imsg *imsg)
 			pki = dict_get(env->sc_pki_dict, buf);
 			if (pki == NULL) {
 				resp_ca_cert.status = CA_FAIL;
-				m_compose(p, IMSG_SMTP_TLS_INIT, 0, 0, -1, &resp_ca_cert,
+				m_compose(p, imsg->hdr.type, 0, 0, -1, &resp_ca_cert,
 				    sizeof(resp_ca_cert));
 				return;
 			}
@@ -159,53 +159,56 @@ lka_imsg(struct mproc *p, struct imsg *imsg)
 			iov[0].iov_len = sizeof(resp_ca_cert);
 			iov[1].iov_base = pki->pki_cert;
 			iov[1].iov_len = pki->pki_cert_len;
-			m_composev(p, IMSG_SMTP_TLS_INIT, 0, 0, -1, iov, nitems(iov));
+			m_composev(p, imsg->hdr.type, 0, 0, -1, iov, nitems(iov));
 			return;
 
 		case IMSG_SMTP_TLS_VERIFY_CERT:
-			req_ca_vrfy_smtp = xmemdup(imsg->data, sizeof *req_ca_vrfy_smtp, "lka:ca_vrfy");
-			req_ca_vrfy_smtp->cert = xmemdup((char *)imsg->data +
-			    sizeof *req_ca_vrfy_smtp, req_ca_vrfy_smtp->cert_len, "lka:ca_vrfy");
-			req_ca_vrfy_smtp->chain_cert = xcalloc(req_ca_vrfy_smtp->n_chain,
+		case IMSG_MTA_TLS_VERIFY_CERT:
+			req_ca_vrfy = xmemdup(imsg->data, sizeof *req_ca_vrfy, "lka:ca_vrfy");
+			req_ca_vrfy->cert = xmemdup((char *)imsg->data +
+			    sizeof *req_ca_vrfy, req_ca_vrfy->cert_len, "lka:ca_vrfy");
+			req_ca_vrfy->chain_cert = xcalloc(req_ca_vrfy->n_chain,
 			    sizeof (unsigned char *), "lka:ca_vrfy");
-			req_ca_vrfy_smtp->chain_cert_len = xcalloc(req_ca_vrfy_smtp->n_chain,
+			req_ca_vrfy->chain_cert_len = xcalloc(req_ca_vrfy->n_chain,
 			    sizeof (off_t), "lka:ca_vrfy");
 			return;
 
 		case IMSG_SMTP_TLS_VERIFY_CHAIN:
-			if (req_ca_vrfy_smtp == NULL)
+		case IMSG_MTA_TLS_VERIFY_CHAIN:
+			if (req_ca_vrfy == NULL)
 				fatalx("lka:ca_vrfy: chain without a certificate");
 			req_ca_vrfy_chain = imsg->data;
-			req_ca_vrfy_smtp->chain_cert[req_ca_vrfy_smtp->chain_offset] = xmemdup((char *)imsg->data +
+			req_ca_vrfy->chain_cert[req_ca_vrfy->chain_offset] = xmemdup((char *)imsg->data +
 			    sizeof *req_ca_vrfy_chain, req_ca_vrfy_chain->cert_len, "lka:ca_vrfy");
-			req_ca_vrfy_smtp->chain_cert_len[req_ca_vrfy_smtp->chain_offset] = req_ca_vrfy_chain->cert_len;
-			req_ca_vrfy_smtp->chain_offset++;
+			req_ca_vrfy->chain_cert_len[req_ca_vrfy->chain_offset] = req_ca_vrfy_chain->cert_len;
+			req_ca_vrfy->chain_offset++;
 			return;
 
 		case IMSG_SMTP_TLS_VERIFY:
-			if (req_ca_vrfy_smtp == NULL)
+		case IMSG_MTA_TLS_VERIFY:
+			if (req_ca_vrfy == NULL)
 				fatalx("lka:ca_vrfy: verify without a certificate");
 
-			resp_ca_vrfy.reqid = req_ca_vrfy_smtp->reqid;
-			pki = dict_xget(env->sc_pki_dict, req_ca_vrfy_smtp->name);
+			resp_ca_vrfy.reqid = req_ca_vrfy->reqid;
+			pki = dict_get(env->sc_pki_dict, req_ca_vrfy->name);
 			cafile = CA_FILE;
-			if (pki->pki_ca_file)
+			if (pki && pki->pki_ca_file)
 				cafile = pki->pki_ca_file;
-			if (! lka_X509_verify(req_ca_vrfy_smtp, cafile, NULL))
+			if (! lka_X509_verify(req_ca_vrfy, cafile, NULL))
 				resp_ca_vrfy.status = CA_FAIL;
 			else
 				resp_ca_vrfy.status = CA_OK;
 
-			m_compose(p, IMSG_SMTP_TLS_VERIFY, 0, 0, -1, &resp_ca_vrfy,
+			m_compose(p, imsg->hdr.type, 0, 0, -1, &resp_ca_vrfy,
 			    sizeof resp_ca_vrfy);
 
-			for (i = 0; i < req_ca_vrfy_smtp->n_chain; ++i)
-				free(req_ca_vrfy_smtp->chain_cert[i]);
-			free(req_ca_vrfy_smtp->chain_cert);
-			free(req_ca_vrfy_smtp->chain_cert_len);
-			free(req_ca_vrfy_smtp->cert);
-			free(req_ca_vrfy_smtp);
-			req_ca_vrfy_smtp = NULL;
+			for (i = 0; i < req_ca_vrfy->n_chain; ++i)
+				free(req_ca_vrfy->chain_cert[i]);
+			free(req_ca_vrfy->chain_cert);
+			free(req_ca_vrfy->chain_cert_len);
+			free(req_ca_vrfy->cert);
+			free(req_ca_vrfy);
+			req_ca_vrfy = NULL;
 			return;
 
 		case IMSG_SMTP_AUTHENTICATE:
@@ -260,75 +263,6 @@ lka_imsg(struct mproc *p, struct imsg *imsg)
 	if (p->proc == PROC_PONY) {
 		switch (imsg->hdr.type) {
 
-		case IMSG_MTA_TLS_INIT:
-			req_ca_cert = imsg->data;
-			resp_ca_cert.reqid = req_ca_cert->reqid;
-
-			xlowercase(buf, req_ca_cert->name, sizeof(buf));
-			log_debug("debug: lka: looking up pki \"%s\"", buf);
-			pki = dict_get(env->sc_pki_dict, buf);
-			if (pki == NULL) {
-				resp_ca_cert.status = CA_FAIL;
-				m_compose(p, IMSG_MTA_TLS_INIT, 0, 0, -1, &resp_ca_cert,
-				    sizeof(resp_ca_cert));
-				return;
-			}
-			resp_ca_cert.status = CA_OK;
-			resp_ca_cert.cert_len = pki->pki_cert_len;
-			iov[0].iov_base = &resp_ca_cert;
-			iov[0].iov_len = sizeof(resp_ca_cert);
-			iov[1].iov_base = pki->pki_cert;
-			iov[1].iov_len = pki->pki_cert_len;
-			m_composev(p, IMSG_MTA_TLS_INIT, 0, 0, -1, iov, nitems(iov));
-			return;
-
-		case IMSG_MTA_TLS_VERIFY_CERT:
-			req_ca_vrfy_mta = xmemdup(imsg->data, sizeof *req_ca_vrfy_mta, "lka:ca_vrfy");
-			req_ca_vrfy_mta->cert = xmemdup((char *)imsg->data +
-			    sizeof *req_ca_vrfy_mta, req_ca_vrfy_mta->cert_len, "lka:ca_vrfy");
-			req_ca_vrfy_mta->chain_cert = xcalloc(req_ca_vrfy_mta->n_chain,
-			    sizeof (unsigned char *), "lka:ca_vrfy");
-			req_ca_vrfy_mta->chain_cert_len = xcalloc(req_ca_vrfy_mta->n_chain,
-			    sizeof (off_t), "lka:ca_vrfy");
-			return;
-
-		case IMSG_MTA_TLS_VERIFY_CHAIN:
-			if (req_ca_vrfy_mta == NULL)
-				fatalx("lka:ca_vrfy: verify without a certificate");
-
-			req_ca_vrfy_chain = imsg->data;
-			req_ca_vrfy_mta->chain_cert[req_ca_vrfy_mta->chain_offset] = xmemdup((char *)imsg->data +
-			    sizeof *req_ca_vrfy_chain, req_ca_vrfy_chain->cert_len, "lka:ca_vrfy");
-			req_ca_vrfy_mta->chain_cert_len[req_ca_vrfy_mta->chain_offset] = req_ca_vrfy_chain->cert_len;
-			req_ca_vrfy_mta->chain_offset++;
-			return;
-
-		case IMSG_MTA_TLS_VERIFY:
-			if (req_ca_vrfy_mta == NULL)
-				fatalx("lka:ca_vrfy: verify without a certificate");
-
-			resp_ca_vrfy.reqid = req_ca_vrfy_mta->reqid;
-			pki = dict_get(env->sc_pki_dict, req_ca_vrfy_mta->name);
-
-			cafile = CA_FILE;
-			if (pki && pki->pki_ca_file)
-				cafile = pki->pki_ca_file;
-			if (! lka_X509_verify(req_ca_vrfy_mta, cafile, NULL))
-				resp_ca_vrfy.status = CA_FAIL;
-			else
-				resp_ca_vrfy.status = CA_OK;
-
-			m_compose(p, IMSG_MTA_TLS_VERIFY, 0, 0, -1, &resp_ca_vrfy,
-			    sizeof resp_ca_vrfy);
-
-			for (i = 0; i < req_ca_vrfy_mta->n_chain; ++i)
-				free(req_ca_vrfy_mta->chain_cert[i]);
-			free(req_ca_vrfy_mta->chain_cert);
-			free(req_ca_vrfy_mta->chain_cert_len);
-			free(req_ca_vrfy_mta->cert);
-			free(req_ca_vrfy_mta);
-			req_ca_vrfy_mta = NULL;
-			return;
 
 		case IMSG_MTA_LOOKUP_CREDENTIALS:
 			m_msg(&m, imsg);
