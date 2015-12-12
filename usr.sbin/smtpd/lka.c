@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.181 2015/12/11 21:44:00 gilles Exp $	*/
+/*	$OpenBSD: lka.c,v 1.182 2015/12/12 10:55:21 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -57,6 +57,8 @@ static int lka_addrname(const char *, const struct sockaddr *,
     struct addrname *);
 static int lka_mailaddrmap(const char *, const char *, const struct mailaddr *);
 static int lka_X509_verify(struct ca_vrfy_req_msg *, const char *, const char *);
+static void lka_certificate_verify(enum imsg_type, struct ca_vrfy_req_msg *);
+static void lka_certificate_verify_resume(enum imsg_type, struct ca_vrfy_req_msg *);
 
 static void
 lka_imsg(struct mproc *p, struct imsg *imsg)
@@ -741,4 +743,14 @@ end:
 		sk_X509_pop_free(x509_chain, X509_free);
 
 	return ret;
+}
+
+static void
+lka_certificate_verify(enum imsg_type type, struct ca_vrfy_req_msg *req)
+{
+}
+
+static void
+lka_certificate_verify_resume(enum imsg_type type, struct ca_vrfy_req_msg *req)
+{
 }
