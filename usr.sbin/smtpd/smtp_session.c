@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.244 2015/12/11 21:44:01 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.245 2015/12/12 09:59:04 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -193,9 +193,9 @@ static void smtp_filter_commit(struct smtp_session *);
 static void smtp_filter_rollback(struct smtp_session *);
 static void smtp_filter_eom(struct smtp_session *);
 static void smtp_filter_helo(struct smtp_session *);
-static void smtp_filter_mail(struct smtp_session *s);
-static void smtp_filter_rcpt(struct smtp_session *s);
-static void smtp_filter_data(struct smtp_session *s);
+static void smtp_filter_mail(struct smtp_session *);
+static void smtp_filter_rcpt(struct smtp_session *);
+static void smtp_filter_data(struct smtp_session *);
 
 static struct { int code; const char *cmd; } commands[] = {
 	{ CMD_HELO,		"HELO" },
