@@ -1,4 +1,4 @@
-/*	$OpenBSD: disk.h,v 1.20 2015/11/13 02:27:17 krw Exp $	*/
+/*	$OpenBSD: disk.h,v 1.21 2015/12/12 02:49:50 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -28,7 +28,7 @@ struct disk {
 	u_int32_t size;
 };
 
-void  DISK_open(void);
+void  DISK_open(int);
 int  DISK_printgeometry(char *);
 char *DISK_readsector(off_t);
 int DISK_writesector(char *, off_t);

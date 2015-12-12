@@ -1,4 +1,4 @@
-/*	$OpenBSD: disk.c,v 1.53 2015/12/01 06:29:13 krw Exp $	*/
+/*	$OpenBSD: disk.c,v 1.54 2015/12/12 02:49:50 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -38,12 +38,13 @@ struct disk disk;
 struct disklabel dl;
 
 void
-DISK_open(void)
+DISK_open(int rw)
 {
 	struct stat st;
 	u_int64_t sz, spc;
 
-	disk.fd = opendev(disk.name, O_RDWR, OPENDEV_PART, NULL);
+	disk.fd = opendev(disk.name, rw ? O_RDWR : O_RDONLY, OPENDEV_PART,
+	    NULL);
 	if (disk.fd == -1)
 		err(1, "%s", disk.name);
 	if (fstat(disk.fd, &st) == -1)
