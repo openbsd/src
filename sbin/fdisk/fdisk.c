@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdisk.c,v 1.98 2015/12/12 02:49:50 krw Exp $	*/
+/*	$OpenBSD: fdisk.c,v 1.99 2015/12/12 04:14:36 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -168,7 +168,7 @@ main(int argc, char *argv[])
 		usage();
 
 	disk.name = argv[0];
-	DISK_open(i_flag + u_flag + e_flag);
+	DISK_open(i_flag || u_flag || e_flag);
 
 	error = MBR_read(0, &dos_mbr);
 	if (error)
@@ -185,7 +185,7 @@ main(int argc, char *argv[])
 			    (unsigned long long)DL_GETDSIZE(&dl));
 	}
 
-	if ((i_flag + u_flag + e_flag) == 0) {
+	if (!(i_flag || u_flag || e_flag)) {
 		if (pledge("stdio", NULL) == -1)
 			err(1, "pledge");
 		USER_print_disk(verbosity);
