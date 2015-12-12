@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.498 2015/12/12 08:35:19 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.499 2015/12/12 09:00:22 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -37,7 +37,6 @@
 
 #define MAX_HOPS_COUNT		 100
 #define	DEFAULT_MAX_BODY_SIZE	(35*1024*1024)
-#define MAX_TAG_SIZE		 32
 #define	MAX_FILTER_NAME		 32
 #define	MAX_FILTER_ARGS		 255
 
@@ -377,7 +376,7 @@ struct rule {
 	TAILQ_ENTRY(rule)		r_entry;
 	enum decision			r_decision;
 	uint8_t				r_nottag;
-	char				r_tag[MAX_TAG_SIZE];
+	char				r_tag[SMTPD_TAG_SIZE];
 
 	uint8_t				r_notsources;
 	struct table		       *r_sources;
@@ -499,7 +498,7 @@ struct maddrmap {
 struct envelope {
 	TAILQ_ENTRY(envelope)		entry;
 
-	char				tag[MAX_TAG_SIZE];
+	char				tag[SMTPD_TAG_SIZE];
 
 	uint32_t			version;
 	uint64_t			id;
@@ -547,7 +546,7 @@ struct listener {
 	struct event		 ev;
 	char			 pki_name[PATH_MAX];
 	char			 ca_name[PATH_MAX];
-	char			 tag[MAX_TAG_SIZE];
+	char			 tag[SMTPD_TAG_SIZE];
 	char			 filter[PATH_MAX];
 	char			 authtable[LINE_MAX];
 	char			 hostname[HOST_NAME_MAX+1];
