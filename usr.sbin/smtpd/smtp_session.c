@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.245 2015/12/12 09:59:04 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.246 2015/12/12 10:22:39 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -196,6 +196,7 @@ static void smtp_filter_helo(struct smtp_session *);
 static void smtp_filter_mail(struct smtp_session *);
 static void smtp_filter_rcpt(struct smtp_session *);
 static void smtp_filter_data(struct smtp_session *);
+static void smtp_filter_dataline(struct smtp_session *, const char *);
 
 static struct { int code; const char *cmd; } commands[] = {
 	{ CMD_HELO,		"HELO" },
@@ -215,7 +216,10 @@ static struct { int code; const char *cmd; } commands[] = {
 
 static struct tree wait_lka_ptr;
 static struct tree wait_lka_helo;
+static struct tree wait_lka_mail;
 static struct tree wait_lka_rcpt;
+static struct tree wait_lka_filter;
+static struct tree wait_lka_filter_data;
 static struct tree wait_mfa_data;
 static struct tree wait_parent_auth;
 static struct tree wait_queue_msg;
@@ -436,7 +440,10 @@ smtp_session_init(void)
 	if (!init) {
 		tree_init(&wait_lka_ptr);
 		tree_init(&wait_lka_helo);
+		tree_init(&wait_lka_mail);
 		tree_init(&wait_lka_rcpt);
+		tree_init(&wait_lka_filter);
+		tree_init(&wait_lka_filter_data);
 		tree_init(&wait_mfa_data);
 		tree_init(&wait_parent_auth);
 		tree_init(&wait_queue_msg);
@@ -2265,6 +2272,11 @@ static void
 smtp_filter_data(struct smtp_session *s)
 {
 	smtp_mfa_response(s, IMSG_SMTP_REQ_DATA, FILTER_OK, 0, NULL);
+}
+
+static void
+smtp_filter_dataline(struct smtp_session *s, const char *line)
+{
 }
 
 #define CASE(x) case x : return #x
