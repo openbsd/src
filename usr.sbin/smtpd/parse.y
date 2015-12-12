@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.172 2015/12/12 12:38:36 gilles Exp $	*/
+/*	$OpenBSD: parse.y,v 1.173 2015/12/12 14:44:36 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -891,6 +891,15 @@ main		: BOUNCEWARN {
 		} filter_args
 		| PKI STRING	{
 			char buf[HOST_NAME_MAX+1];
+
+			/* if not catchall, check that it is a valid domain */
+			if (strcmp($2, "*") != 0) {
+				if (! res_hnok($2)) {
+					yyerror("not a valid domain name: %s", $2);
+					free($2);
+					YYERROR;
+				}
+			}
 			xlowercase(buf, $2, sizeof(buf));
 			free($2);
 			pki = dict_get(conf->sc_pki_dict, buf);
