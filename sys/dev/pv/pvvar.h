@@ -1,4 +1,4 @@
-/*	$OpenBSD: pvvar.h,v 1.5 2015/11/13 07:52:20 mlarkin Exp $	*/
+/*	$OpenBSD: pvvar.h,v 1.6 2015/12/12 12:33:49 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -33,12 +33,13 @@ enum {
 struct pvbus_hv {
 	uint32_t		 hv_base;
 	uint32_t		 hv_features;
-	uint32_t		 hv_version;
+	uint16_t		 hv_major;
+	uint16_t		 hv_minor;
 };
 
 struct pvbus_softc {
 	struct device		 pvbus_dev;
-	struct pvbus_hv		 pvbus_hv[PVBUS_MAX];
+	struct pvbus_hv		*pvbus_hv;
 };
 
 struct pvbus_attach_args {
@@ -50,8 +51,7 @@ struct pv_attach_args {
 	struct pvbus_hv		*pva_hv;
 };
 
-extern int has_hv_cpuid;
-
+void	 pvbus_identify(void);
 int	 pvbus_probe(void);
 
 #endif /* _DEV_PV_PVBUS_H_ */

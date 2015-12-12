@@ -1,4 +1,4 @@
-/*	$OpenBSD: identcpu.c,v 1.69 2015/12/07 06:34:14 jsg Exp $	*/
+/*	$OpenBSD: identcpu.c,v 1.70 2015/12/12 12:33:49 reyk Exp $	*/
 /*	$NetBSD: identcpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*
@@ -604,11 +604,6 @@ identifycpu(struct cpu_info *ci)
 
 		if (cpu_ecxfeature & CPUIDECX_RDRAND)
 			has_rdrand = 1;
-
-#if NPVBUS > 0
-		if (cpu_ecxfeature & CPUIDECX_HV)
-			has_hv_cpuid = 1;
-#endif
 
 		if (ci->ci_feature_sefflags_ebx & SEFF0EBX_SMAP)
 			replacesmap();

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pvbus.c,v 1.8 2015/11/16 10:16:07 dlg Exp $	*/
+/*	$OpenBSD: pvbus.c,v 1.9 2015/12/12 12:33:49 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -31,6 +31,7 @@
 #include <sys/socket.h>
 
 #include <machine/specialreg.h>
+#include <machine/cpu.h>
 #ifdef __amd64__
 #include <machine/vmmvar.h>
 #endif
@@ -52,9 +53,11 @@ void	 pvbus_attach(struct device *, struct device *, void *);
 int	 pvbus_print(void *, const char *);
 int	 pvbus_search(struct device *, void *, void *);
 
-void	 pvbus_kvm(struct pvbus_softc *, struct pvbus_hv *);
-void	 pvbus_hyperv(struct pvbus_softc *, struct pvbus_hv *);
-void	 pvbus_xen(struct pvbus_softc *, struct pvbus_hv *);
+void	 pvbus_kvm(struct pvbus_hv *);
+void	 pvbus_hyperv(struct pvbus_hv *);
+void	 pvbus_hyperv_print(struct pvbus_hv *);
+void	 pvbus_xen(struct pvbus_hv *);
+void	 pvbus_xen_print(struct pvbus_hv *);
 
 struct cfattach pvbus_ca = {
 	sizeof(struct pvbus_softc),
@@ -73,17 +76,20 @@ struct cfdriver pvbus_cd = {
 struct pvbus_type {
 	const char	*signature;
 	const char	*name;
-	void		(*init)(struct pvbus_softc *, struct pvbus_hv *);
+	void		(*init)(struct pvbus_hv *);
+	void		(*print)(struct pvbus_hv *);
 } pvbus_types[PVBUS_MAX] = {
-	{ "KVMKVMKVM\0\0\0",	"KVM",		pvbus_kvm },
-	{ "Microsoft Hv",	"Hyper-V",	pvbus_hyperv },
-	{ "VMwareVMware",	"VMware",	NULL },
-	{ "XenVMMXenVMM",	"Xen",		pvbus_xen },
-	{ "bhyve bhyve ",	"bhyve",	NULL },
+	{ "KVMKVMKVM\0\0\0",	"KVM",	pvbus_kvm },
+	{ "Microsoft Hv",	"Hyper-V", pvbus_hyperv, pvbus_hyperv_print },
+	{ "VMwareVMware",	"VMware" },
+	{ "XenVMMXenVMM",	"Xen",	pvbus_xen, pvbus_xen_print },
+	{ "bhyve bhyve ",	"bhyve" },
 #ifdef __amd64__
-	{ VMM_HV_SIGNATURE,	"OpenBSD",	NULL },
+	{ VMM_HV_SIGNATURE,	"OpenBSD" },
 #endif
 };
+
+struct pvbus_hv pvbus_hv[PVBUS_MAX];
 
 int
 pvbus_probe(void)
@@ -105,6 +111,28 @@ void
 pvbus_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pvbus_softc *sc = (struct pvbus_softc *)self;
+	int i, cnt;
+
+	sc->pvbus_hv = pvbus_hv;
+
+	printf(":");
+	for (i = 0, cnt = 0; i < PVBUS_MAX; i++) {
+		if (pvbus_hv[i].hv_base == 0)
+			continue;
+		if (cnt++)
+			printf(",");
+		printf(" %s", pvbus_types[i].name);
+		if (pvbus_types[i].print != NULL)
+			(pvbus_types[i].print)(&pvbus_hv[i]);
+	}
+
+	printf("\n");
+	config_search(pvbus_search, self, sc);
+}
+
+void
+pvbus_identify(void)
+{
 	struct pvbus_hv *hv;
 	uint32_t reg0, base;
 	union {
@@ -112,8 +140,6 @@ pvbus_attach(struct device *parent, struct device *self, void *aux)
 		char		str[CPUID_HV_SIGNATURE_STRLEN];
 	} r;
 	int i, cnt;
-
-	printf(":");
 
 	for (base = CPUID_HV_SIGNATURE_START, cnt = 0;
 	    base < CPUID_HV_SIGNATURE_END;
@@ -133,20 +159,17 @@ pvbus_attach(struct device *parent, struct device *self, void *aux)
 			    memcmp(pvbus_types[i].signature, r.str,
 			    CPUID_HV_SIGNATURE_STRLEN) != 0)
 				continue;
-			hv = &sc->pvbus_hv[i];
+			hv = &pvbus_hv[i];
 			hv->hv_base = base;
-
-			if (cnt++)
-				printf(",");
-			printf(" %s", pvbus_types[i].name);
 			if (pvbus_types[i].init != NULL)
-				(pvbus_types[i].init)(sc, hv);
+				(pvbus_types[i].init)(hv);
+			cnt++;
 		}
 	}
 
  out:
-	printf("\n");
-	config_search(pvbus_search, self, sc);
+	if (cnt)
+		has_hv_cpuid = 1;
 }
 
 int
@@ -198,7 +221,7 @@ pvbus_print(void *aux, const char *pnp)
 }
 
 void
-pvbus_kvm(struct pvbus_softc *sc, struct pvbus_hv *hv)
+pvbus_kvm(struct pvbus_hv *hv)
 {
 	uint32_t regs[4];
 
@@ -208,7 +231,7 @@ pvbus_kvm(struct pvbus_softc *sc, struct pvbus_hv *hv)
 }
 
 void
-pvbus_hyperv(struct pvbus_softc *sc, struct pvbus_hv *hv)
+pvbus_hyperv(struct pvbus_hv *hv)
 {
 	uint32_t regs[4];
 
@@ -218,25 +241,31 @@ pvbus_hyperv(struct pvbus_softc *sc, struct pvbus_hv *hv)
 
 	CPUID(hv->hv_base + CPUID_OFFSET_HYPERV_VERSION,
 	    regs[0], regs[1], regs[2], regs[3]);
-	hv->hv_version = regs[1];
-
-	printf(" %u.%u.%u",
-	    (regs[1] & HYPERV_VERSION_EBX_MAJOR_M) >>
-	    HYPERV_VERSION_EBX_MAJOR_S,
-	    (regs[1] & HYPERV_VERSION_EBX_MINOR_M) >>
-	    HYPERV_VERSION_EBX_MINOR_S,
-	    regs[0]);
+	hv->hv_major = (regs[1] & HYPERV_VERSION_EBX_MAJOR_M) >>
+	    HYPERV_VERSION_EBX_MAJOR_S;
+	hv->hv_minor = (regs[1] & HYPERV_VERSION_EBX_MINOR_M) >>
+	    HYPERV_VERSION_EBX_MINOR_S;
 }
 
 void
-pvbus_xen(struct pvbus_softc *sc, struct pvbus_hv *hv)
+pvbus_hyperv_print(struct pvbus_hv *hv)
+{
+	printf(" %u.%u", hv->hv_major, hv->hv_minor);
+}
+
+void
+pvbus_xen(struct pvbus_hv *hv)
 {
 	uint32_t regs[4];
 
 	CPUID(hv->hv_base + CPUID_OFFSET_XEN_VERSION,
 	    regs[0], regs[1], regs[2], regs[3]);
-	hv->hv_version = regs[0];
+	hv->hv_major = regs[0] >> XEN_VERSION_MAJOR_S;
+	hv->hv_minor = regs[0] & XEN_VERSION_MINOR_M;
+}
 
-	printf(" %u.%u", regs[0] >> XEN_VERSION_MAJOR_S,
-	    regs[0] & XEN_VERSION_MINOR_M);
+void
+pvbus_xen_print(struct pvbus_hv *hv)
+{
+	printf(" %u.%u", hv->hv_major, hv->hv_minor);
 }

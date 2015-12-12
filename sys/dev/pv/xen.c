@@ -30,6 +30,7 @@
 #include <machine/i82489var.h>
 
 #include <dev/pv/pvvar.h>
+#include <dev/pv/pvreg.h>
 #include <dev/pv/xenreg.h>
 #include <dev/pv/xenvar.h>
 

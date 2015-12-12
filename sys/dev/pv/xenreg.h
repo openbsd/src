@@ -85,8 +85,6 @@
 # error "Not implemented"
 #endif
 
-#define CPUID_OFFSET_XEN_HYPERCALL		0x2
-
 #if defined(__i386__) || defined(__amd64__)
 struct arch_vcpu_info {
 	unsigned long cr2;
