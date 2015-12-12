@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.500 2015/12/12 09:09:40 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.501 2015/12/12 09:58:33 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -114,8 +114,8 @@ struct relayhost {
 	uint16_t flags;
 	char hostname[HOST_NAME_MAX+1];
 	uint16_t port;
-	char pki_name[PATH_MAX];
-	char ca_name[PATH_MAX];
+	char pki_name[HOST_NAME_MAX+1];
+	char ca_name[HOST_NAME_MAX+1];
 	char authtable[PATH_MAX];
 	char authlabel[PATH_MAX];
 	char sourcetable[PATH_MAX];
