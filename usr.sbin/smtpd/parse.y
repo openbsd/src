@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.175 2015/12/12 18:49:38 gilles Exp $	*/
+/*	$OpenBSD: parse.y,v 1.176 2015/12/12 18:52:23 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -926,11 +926,11 @@ main		: BOUNCEWARN {
 				(void)strlcpy(sca->ca_name, buf, sizeof(sca->ca_name));
 				dict_set(conf->sc_ca_dict, sca->ca_name, sca);
 			}
-		  } ca
-		  | CIPHERS STRING {
-			  env->sc_tls_ciphers = $2;
-		  }
-		  ;
+		} ca
+		| CIPHERS STRING {
+			env->sc_tls_ciphers = $2;
+		}
+		;
 
 filter_args	:
 		| STRING {
