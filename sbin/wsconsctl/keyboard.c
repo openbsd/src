@@ -1,4 +1,4 @@
-/*	$OpenBSD: keyboard.c,v 1.12 2013/03/21 06:04:05 miod Exp $	*/
+/*	$OpenBSD: keyboard.c,v 1.13 2015/12/12 12:31:37 jung Exp $	*/
 /*	$NetBSD: keyboard.c 1.1 1998/12/28 14:01:17 hannken Exp $ */
 
 /*-
@@ -50,6 +50,7 @@ static struct wskbd_keyrepeat_data repeat;
 static struct wskbd_keyrepeat_data dfrepeat;
 static int ledstate;
 static kbd_t kbdencoding;
+static struct field_pc backlight;
 
 struct field keyboard_field_tab[] = {
     { "type",			&kbtype,	FMT_KBDTYPE,	FLG_RDONLY },
@@ -66,12 +67,16 @@ struct field keyboard_field_tab[] = {
     { "repeat.deln.default",	&dfrepeat.delN,	FMT_UINT,	FLG_MODIFY },
     { "ledstate",		&ledstate,	FMT_UINT,	0 },
     { "encoding",		&kbdencoding,	FMT_KBDENC,	FLG_MODIFY },
+    { "backlight",		&backlight,	FMT_PC,		FLG_MODIFY|FLG_INIT },
     { NULL }
 };
 
 void
 keyboard_get_values(int fd)
 {
+	struct wskbd_backlight kbl;
+	struct field *pf;
+
 	if (field_by_value(keyboard_field_tab, &kbtype)->flags & FLG_GET)
 		if (ioctl(fd, WSKBDIO_GTYPE, &kbtype) < 0)
 			warn("WSKBDIO_GTYPE");
@@ -131,11 +136,29 @@ keyboard_get_values(int fd)
 	if (field_by_value(keyboard_field_tab, &kbdencoding)->flags & FLG_GET)
 		if (ioctl(fd, WSKBDIO_GETENCODING, &kbdencoding) < 0)
 			warn("WSKBDIO_GETENCODING");
+
+	pf = field_by_value(keyboard_field_tab, &backlight);
+	if (pf->flags & FLG_GET && !(pf->flags & FLG_DEAD)) {
+		errno = ENOTTY;
+		if (ioctl(fd, WSKBDIO_GETBACKLIGHT, &kbl) < 0) {
+			if (errno == ENOTTY)
+				pf->flags |= FLG_DEAD;
+			else
+				warn("WSKBDIO_GETBACKLIGHT");
+		} else {
+			backlight.min = kbl.min;
+			backlight.cur = kbl.curval;
+			backlight.max = kbl.max;
+		}
+	}
 }
 
 int
 keyboard_put_values(int fd)
 {
+	struct wskbd_backlight kbl;
+	struct field *pf;
+
 	bell.which = 0;
 	if (field_by_value(keyboard_field_tab, &bell.pitch)->flags & FLG_SET)
 		bell.which |= WSKBD_BELL_DOPITCH;
@@ -201,6 +224,22 @@ keyboard_put_values(int fd)
 		if (ioctl(fd, WSKBDIO_SETENCODING, &kbdencoding) < 0) {
 			warn("WSKBDIO_SETENCODING");
 			return 1;
+		}
+	}
+
+	pf = field_by_value(keyboard_field_tab, &backlight);
+	if (pf->flags & FLG_SET && !(pf->flags & FLG_DEAD)) {
+		kbl.min = backlight.min;
+		kbl.curval = backlight.cur;
+		kbl.max = backlight.max;
+		errno = ENOTTY;
+		if (ioctl(fd, WSKBDIO_SETBACKLIGHT, &kbl) < 0) {
+			if (errno == ENOTTY)
+				pf->flags |= FLG_DEAD;
+			else {
+				warn("WSKBDIO_SETBACKLIGHT");
+				return 1;
+			}
 		}
 	}
 
