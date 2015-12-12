@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.142 2015/12/12 20:02:31 gilles Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.143 2015/12/12 21:13:39 jmc Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -575,11 +575,9 @@ Associate a custom CA certificate located in
 .Ar cafile
 with
 .Ar hostname .
-.It Xo
-.Ic ciphers Ar cipher-list
-.Xc
+.It Ic ciphers Ar cipher-list
 Specify an alternate ciphers list to use when establishing TLS sessions.
-It is highly recommanded to avoid making use of this option unless there
+It is highly recommended to avoid making use of this option unless there
 is a good understanding of the implications.
 .Pp
 When not specified, only ciphers considered safe are chosen.
@@ -752,7 +750,8 @@ parameter is used, then
 will look up a mapping of username to email addresses to see whether
 the authenticated user is allowed to submit mail
 as the sender that was provided in the SMTP session.
-In addition, if the masquerade option is provided, the From header will be rewritten
+In addition, if the masquerade option is provided,
+the From header will be rewritten
 to match the sender provided in the SMTP session.
 .Pp
 If the
