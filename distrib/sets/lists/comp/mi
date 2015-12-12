@@ -6257,6 +6257,7 @@
 ./usr/share/man/man9/config_detach_children.9
 ./usr/share/man/man9/config_found.9
 ./usr/share/man/man9/config_found_sm.9
+./usr/share/man/man9/config_mountroot.9
 ./usr/share/man/man9/config_rootfound.9
 ./usr/share/man/man9/config_rootsearch.9
 ./usr/share/man/man9/config_search.9
@@ -6290,7 +6291,6 @@
 ./usr/share/man/man9/dma_alloc.9
 ./usr/share/man/man9/dma_free.9
 ./usr/share/man/man9/dohooks.9
-./usr/share/man/man9/domountroothooks.9
 ./usr/share/man/man9/dostartuphooks.9
 ./usr/share/man/man9/evcount.9
 ./usr/share/man/man9/evcount_attach.9
@@ -6520,8 +6520,6 @@
 ./usr/share/man/man9/ml_len.9
 ./usr/share/man/man9/ml_purge.9
 ./usr/share/man/man9/mono_time.9
-./usr/share/man/man9/mountroothook_disestablish.9
-./usr/share/man/man9/mountroothook_establish.9
 ./usr/share/man/man9/mq_dechain.9
 ./usr/share/man/man9/mq_delist.9
 ./usr/share/man/man9/mq_dequeue.9
