@@ -1,4 +1,4 @@
-/*	$OpenBSD: asmc.c,v 1.16 2015/12/11 20:36:32 jung Exp $	*/
+/*	$OpenBSD: asmc.c,v 1.17 2015/12/12 12:34:05 jung Exp $	*/
 /*
  * Copyright (c) 2015 Joerg Jung <jung@openbsd.org>
  *
@@ -23,12 +23,14 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
+#include <sys/rwlock.h>
 #include <sys/task.h>
 #include <sys/sensors.h>
 
 #include <machine/bus.h>
 
 #include <dev/isa/isavar.h>
+#include <dev/wscons/wsconsio.h>
 
 #define ASMC_BASE	0x300	/* SMC base address */
 #define ASMC_IOSIZE	32	/* I/O region size 0x300-0x31f */
@@ -66,10 +68,13 @@ struct asmc_softc {
 	uint8_t			 sc_init;	/* initialization done? */
 	uint8_t			 sc_nfans;	/* number of fans */
 	uint8_t			 sc_lightlen;	/* light data len */
+	uint8_t			 sc_kbdled;	/* backlight led value */
 
+	struct rwlock		 sc_lock;
 	struct taskq		*sc_taskq;
 	struct task		 sc_task_init;
 	struct task		 sc_task_refresh;
+	struct task		 sc_task_backlight;
 
 	struct ksensor		 sc_sensor_temp[ASMC_MAXTEMP];
 	struct ksensor		 sc_sensor_fan[ASMC_MAXFAN];
@@ -88,6 +93,13 @@ void	asmc_update(void *);
 int	asmc_match(struct device *, void *, void *);
 void	asmc_attach(struct device *, struct device *, void *);
 int 	asmc_detach(struct device *, int);
+
+/* wskbd hook functions */
+void	asmc_kbdled(void *);
+int	asmc_get_backlight(struct wskbd_backlight *);
+int	asmc_set_backlight(struct wskbd_backlight *);
+extern int (*wskbd_get_backlight)(struct wskbd_backlight *);
+extern int (*wskbd_set_backlight)(struct wskbd_backlight *);
 
 const struct cfattach asmc_ca = {
 	sizeof(struct asmc_softc), asmc_match, asmc_attach
@@ -263,6 +275,8 @@ asmc_attach(struct device *parent, struct device *self, void *aux)
 	}
 	sc->sc_iot = ia->ia_iot;
 
+	rw_init(&sc->sc_lock, sc->sc_dev.dv_xname);
+
 	if ((r = asmc_try(sc, ASMC_READ, "REV ", buf, 6))) {
 		printf(": revision failed (0x%x)\n", r);
 		bus_space_unmap(ia->ia_iot, ia->ia_iobase, ASMC_IOSIZE);
@@ -280,11 +294,14 @@ asmc_attach(struct device *parent, struct device *self, void *aux)
 	    (ntohl(*(uint32_t *)buf) == 1) ? "" : "s");
 
 	/* keyboard backlight led is optional */
-	buf[0] = 127, buf[1] = 0;
+	sc->sc_kbdled = buf[0] = 127, buf[1] = 0;
 	if ((r = asmc_try(sc, ASMC_WRITE, "LKSB", buf, 2))) {
 		if (r != ASMC_NOTFOUND)
 			printf("%s: keyboard backlight failed (0x%x)\n",
 			    sc->sc_dev.dv_xname, r);
+	} else {
+		wskbd_get_backlight = asmc_get_backlight;
+		wskbd_set_backlight = asmc_set_backlight;
 	}
 
 	if (!(sc->sc_taskq = taskq_create("asmc", 1, IPL_NONE, 0))) {
@@ -294,6 +311,7 @@ asmc_attach(struct device *parent, struct device *self, void *aux)
 	}
 	task_set(&sc->sc_task_init, asmc_init, sc);
 	task_set(&sc->sc_task_refresh, asmc_refresh, sc);
+	task_set(&sc->sc_task_backlight, asmc_kbdled, sc);
 
 	strlcpy(sc->sc_sensor_dev.xname, sc->sc_dev.dv_xname,
 	    sizeof(sc->sc_sensor_dev.xname));
@@ -331,7 +349,7 @@ int
 asmc_detach(struct device *self, int flags)
 {
 	struct asmc_softc *sc = (struct asmc_softc *)self;
-	uint8_t buf[2] = { 0, 0 };
+	uint8_t buf[2] = { (sc->sc_kbdled = 0), 0 };
 	int i;
 
 	if (sc->sc_sensor_task) {
@@ -348,6 +366,7 @@ asmc_detach(struct device *self, int flags)
 	for (i = 0; i < ASMC_MAXTEMP; i++)
 		sensor_detach(&sc->sc_sensor_dev, &sc->sc_sensor_temp[i]);
 
+	task_del(systq, &sc->sc_task_backlight);
 	if (sc->sc_taskq) {
 		task_del(sc->sc_taskq, &sc->sc_task_refresh);
 		task_del(sc->sc_taskq, &sc->sc_task_init);
@@ -355,7 +374,58 @@ asmc_detach(struct device *self, int flags)
 	}
 
 	asmc_try(sc, ASMC_WRITE, "LKSB", buf, 2);
+	return 0;
+}
 
+void
+asmc_kbdled(void *arg)
+{
+	struct asmc_softc *sc = arg;
+	uint8_t buf[2] = { sc->sc_kbdled, 0 };
+	int r;
+
+	if ((r = asmc_try(sc, ASMC_WRITE, "LKSB", buf, 2)))
+#if 0 /* todo: write error, as no 0x04 wait status, but led is changed */
+		printf("%s: keyboard backlight failed (0x%x)\n",
+		    sc->sc_dev.dv_xname, r);
+#endif
+		;
+}
+
+int
+asmc_get_backlight(struct wskbd_backlight *kbl)
+{
+	struct asmc_softc *sc = NULL;
+	int i;
+
+	for (i = 0; i < asmc_cd.cd_ndevs && !sc; i++)
+		if (asmc_cd.cd_devs[i])
+			sc = (struct asmc_softc *)asmc_cd.cd_devs[i];
+	if (!sc)
+		return -1;
+
+	kbl->min = 0;
+	kbl->max = 0xff;
+	kbl->curval = sc->sc_kbdled;
+	return 0;
+}
+
+int
+asmc_set_backlight(struct wskbd_backlight *kbl)
+{
+	struct asmc_softc *sc = NULL;
+	int i;
+
+	for (i = 0; i < asmc_cd.cd_ndevs && !sc; i++)
+		if (asmc_cd.cd_devs[i])
+			sc = (struct asmc_softc *)asmc_cd.cd_devs[i];
+	if (!sc)
+		return -1;
+
+	if (kbl->curval > 0xff)
+		return EINVAL;
+	sc->sc_kbdled = kbl->curval;
+	task_add(systq, &sc->sc_task_backlight);
 	return 0;
 }
 
@@ -438,11 +508,16 @@ asmc_try(struct asmc_softc *sc, int cmd, const char *key, uint8_t *buf,
 	uint8_t s;
 	int i, r;
 
+	rw_enter_write(&sc->sc_lock);
 	for (i = 0; i < ASMC_RETRY; i++)
 		if (!(r = asmc_command(sc, cmd, key, buf, len)))
 			break;
 	if (r && (s = asmc_status(sc)))
 		r = s;
+	rw_exit_write(&sc->sc_lock);
+	if (sc->sc_sensor_task) /* give kbdled a chance to grab the lock */
+		tsleep(&sc->sc_taskq, 0, "asmc",
+		    (1 * hz + 999999) / 1000000 + 1);
 	return r;
 }
 
