@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-set-option.c,v 1.88 2015/12/12 18:19:00 nicm Exp $ */
+/* $OpenBSD: cmd-set-option.c,v 1.89 2015/12/12 18:32:24 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -182,6 +182,10 @@ cmd_set_option_exec(struct cmd *self, struct cmd_q *cmdq)
 			if (options_get_number(w->options, "automatic-rename"))
 				w->active->flags |= PANE_CHANGED;
 		}
+	}
+	if (strcmp(oe->name, "key-table") == 0) {
+		TAILQ_FOREACH(c, &clients, entry)
+			server_client_set_key_table(c, NULL);
 	}
 	if (strcmp(oe->name, "status") == 0 ||
 	    strcmp(oe->name, "status-interval") == 0)

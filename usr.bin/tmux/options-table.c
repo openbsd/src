@@ -1,4 +1,4 @@
-/* $OpenBSD: options-table.c,v 1.69 2015/11/24 09:34:55 nicm Exp $ */
+/* $OpenBSD: options-table.c,v 1.70 2015/12/12 18:32:24 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -209,6 +209,12 @@ const struct options_table_entry options_table[] = {
 	  .minimum = 0,
 	  .maximum = INT_MAX,
 	  .default_num = 2000
+	},
+
+	{ .name = "key-table",
+	  .type = OPTIONS_TABLE_STRING,
+	  .scope = OPTIONS_TABLE_SESSION,
+	  .default_str = "root"
 	},
 
 	{ .name = "lock-after-time",

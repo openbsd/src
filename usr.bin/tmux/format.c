@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.102 2015/12/11 12:27:36 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.103 2015/12/12 18:32:24 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1035,6 +1035,7 @@ void
 format_defaults_client(struct format_tree *ft, struct client *c)
 {
 	struct session	*s;
+	const char	*name;
 
 	if (ft->s == NULL)
 		ft->s = c->session;
@@ -1052,7 +1053,8 @@ format_defaults_client(struct format_tree *ft, struct client *c)
 	format_add_tv(ft, "client_created", &c->creation_time);
 	format_add_tv(ft, "client_activity", &c->activity_time);
 
-	if (strcmp(c->keytable->name, "root") == 0)
+	name = server_client_get_key_table(c);
+	if (strcmp(c->keytable->name, name) == 0)
 		format_add(ft, "client_prefix", "%d", 0);
 	else
 		format_add(ft, "client_prefix", "%d", 1);
