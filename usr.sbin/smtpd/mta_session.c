@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta_session.c,v 1.79 2015/12/12 08:40:40 gilles Exp $	*/
+/*	$OpenBSD: mta_session.c,v 1.80 2015/12/12 08:43:42 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -1563,7 +1563,7 @@ mta_verify_certificate(struct mta_session *s)
 	struct iovec		iov[2];
 	X509		       *x;
 	STACK_OF(X509)	       *xchain;
-	const char	       *pkiname;
+	const char	       *name;
 	unsigned char	       *cert_der[MAX_CERTS];
 	int			cert_len[MAX_CERTS];
 	int			i, cert_count, res;
@@ -1573,14 +1573,14 @@ mta_verify_certificate(struct mta_session *s)
 	memset(&req_ca_vrfy, 0, sizeof req_ca_vrfy);
 
 	if (s->relay->pki_name) {
-		pkiname = s->relay->pki_name;
+		name = s->relay->pki_name;
 		req_ca_vrfy.fallback = 0;
 	}
 	else {
-		pkiname = s->helo;
+		name = s->helo;
 		req_ca_vrfy.fallback = 1;
 	}
-	if (strlcpy(req_ca_vrfy.name, pkiname, sizeof req_ca_vrfy.name)
+	if (strlcpy(req_ca_vrfy.name, name, sizeof req_ca_vrfy.name)
 	    >= sizeof req_ca_vrfy.name)
 		return 0;
 
