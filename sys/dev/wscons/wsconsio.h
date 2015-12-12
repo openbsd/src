@@ -1,4 +1,4 @@
-/* $OpenBSD: wsconsio.h,v 1.72 2015/08/30 10:05:09 yasuoka Exp $ */
+/* $OpenBSD: wsconsio.h,v 1.73 2015/12/12 12:30:18 jung Exp $ */
 /* $NetBSD: wsconsio.h,v 1.74 2005/04/28 07:15:44 martin Exp $ */
 
 /*
@@ -179,6 +179,13 @@ struct wskbd_map_data {
 #define WSKBDIO_SETMAP		_IOW('W', 14, struct wskbd_map_data)
 #define WSKBDIO_GETENCODING	_IOR('W', 15, kbd_t)
 #define WSKBDIO_SETENCODING	_IOW('W', 16, kbd_t)
+
+/* Get/set keyboard backlight.  Not applicable to all keyboard types. */
+struct wskbd_backlight {
+	unsigned int min, max, curval;
+};
+#define	WSKBDIO_GETBACKLIGHT	_IOR('W', 17, struct wskbd_backlight)
+#define	WSKBDIO_SETBACKLIGHT	_IOW('W', 18, struct wskbd_backlight)
 
 /* internal use only */
 #define WSKBDIO_SETMODE		_IOW('W', 19, int)

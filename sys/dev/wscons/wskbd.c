@@ -1,4 +1,4 @@
-/* $OpenBSD: wskbd.c,v 1.82 2015/09/10 18:14:52 mpi Exp $ */
+/* $OpenBSD: wskbd.c,v 1.83 2015/12/12 12:30:18 jung Exp $ */
 /* $NetBSD: wskbd.c,v 1.80 2005/05/04 01:52:16 augustss Exp $ */
 
 /*
@@ -229,6 +229,9 @@ int	wskbd_mux_close(struct wsevsrc *);
 
 int	wskbd_do_open(struct wskbd_softc *, struct wseventvar *);
 int	wskbd_do_ioctl(struct device *, u_long, caddr_t, int, struct proc *);
+
+int	(*wskbd_get_backlight)(struct wskbd_backlight *);
+int	(*wskbd_set_backlight)(struct wskbd_backlight *);
 
 struct cfdriver wskbd_cd = {
 	NULL, "wskbd", DV_TTY
@@ -1010,6 +1013,7 @@ wskbd_displayioctl(struct device *dev, u_long cmd, caddr_t data, int flag,
 	case WSKBDIO_SETDEFAULTKEYREPEAT:
 	case WSKBDIO_SETMAP:
 	case WSKBDIO_SETENCODING:
+	case WSKBDIO_SETBACKLIGHT:
 		if ((flag & FWRITE) == 0)
 			return (EACCES);
 	}
@@ -1155,6 +1159,18 @@ getkeyrepeat:
 			wsmux_set_layout(sc->sc_base.me_parent, enc);
 #endif
 		return (0);
+
+	case WSKBDIO_GETBACKLIGHT:
+		if (wskbd_get_backlight != NULL)
+			return (*wskbd_get_backlight)((struct wskbd_backlight *)data);
+		error = ENOTTY;
+		break;
+
+	case WSKBDIO_SETBACKLIGHT:
+		if (wskbd_set_backlight != NULL)
+			return (*wskbd_set_backlight)((struct wskbd_backlight *)data);
+		error = ENOTTY;
+		break;
 	}
 
 	/*
