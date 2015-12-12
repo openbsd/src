@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.255 2015/12/12 14:27:03 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.256 2015/12/12 14:33:35 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -74,7 +74,6 @@ enum session_flags {
 	SF_AUTHENTICATED	= 0x0008,
 	SF_BOUNCE		= 0x0010,
 	SF_VERIFIED		= 0x0020,
-	SF_MFACONNSENT		= 0x0040,
 	SF_BADINPUT		= 0x0080,
 	SF_FILTERCONN		= 0x0100,
 	SF_FILTERDATA		= 0x0200,
@@ -1804,7 +1803,7 @@ smtp_connected(struct smtp_session *s)
 		return;
 	}
 
-	s->flags |= SF_MFACONNSENT;
+	s->flags |= SF_FILTERCONN;
 	smtp_filter_connect(s, (struct sockaddr *)&ss);
 }
 
@@ -2034,7 +2033,7 @@ smtp_free(struct smtp_session *s, const char * reason)
 		m_close(p_queue);
 	}
 
-	if (s->flags & SF_MFACONNSENT)
+	if (s->flags & SF_FILTERCONN)
 		smtp_filter_disconnect(s);
 
 	if (s->flags & SF_SECURE && s->listener->flags & F_SMTPS)
