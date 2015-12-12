@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.168 2015/12/12 11:31:29 sunil Exp $	*/
+/*	$OpenBSD: parse.y,v 1.169 2015/12/12 12:22:25 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -839,6 +839,20 @@ main		: BOUNCEWARN {
 		} ON STRING listen {
 			listen_opts.ifx = $4;
 			create_listener(conf->sc_listeners, &listen_opts);
+		}
+		| ENQUEUER FILTER STRING {
+			if (dict_get(&conf->sc_filters, $3) == NULL) {
+				yyerror("undefined filter \"%s\"", $3);
+				free($3);
+				YYERROR;
+			}
+			if (strlcpy(conf->sc_enqueue_filter, $3,
+				sizeof conf->sc_enqueue_filter)
+			    >= sizeof conf->sc_enqueue_filter) {
+				free($3);
+				YYERROR;
+			}
+			free($3);
 		}
 		| FILTER STRING STRING {
 			if (!strcmp($3, "chain")) {

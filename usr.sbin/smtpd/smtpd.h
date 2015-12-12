@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.504 2015/12/12 10:52:22 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.505 2015/12/12 12:22:26 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -623,6 +623,8 @@ struct smtpd {
 
 	struct dict				sc_filters;
 	uint32_t				filtermask;
+
+	char					sc_enqueue_filter[PATH_MAX];
 };
 
 #define	TRACE_DEBUG	0x0001

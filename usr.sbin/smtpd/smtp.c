@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp.c,v 1.147 2015/12/12 11:31:29 sunil Exp $	*/
+/*	$OpenBSD: smtp.c,v 1.148 2015/12/12 12:22:25 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -228,6 +228,8 @@ smtp_enqueue(uid_t *euid)
 		listener->ss.ss_len = sizeof(struct sockaddr *);
 		(void)strlcpy(listener->hostname, env->sc_hostname,
 		    sizeof(listener->hostname));
+		(void)strlcpy(listener->filter, env->sc_enqueue_filter,
+		    sizeof listener->filter);
 	}
 
 	/*
