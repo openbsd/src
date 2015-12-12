@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.249 2015/12/12 10:31:01 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.250 2015/12/12 10:33:21 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -141,11 +141,16 @@ struct smtp_session {
 	TAILQ_HEAD(, smtp_rcpt)	 rcpts;
 
 	size_t			 datain;
+	size_t			 odatalen;
+	struct iobuf		 obuf;
+	struct io		 oev;
 	size_t			 datalen;
 	FILE			*ofile;
 	int			 hdrdone;
 	int			 rcvcount;
+	int			 dataeom;
 
+	int			 skiphdr;
 	struct event		 pause;
 
 	struct rfc2822_parser	 rfc2822_parser;
