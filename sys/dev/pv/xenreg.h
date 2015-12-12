@@ -1,3 +1,5 @@
+/*	$OpenBSD: xenreg.h,v 1.5 2015/12/12 21:07:45 reyk Exp $	*/
+
 /*
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to

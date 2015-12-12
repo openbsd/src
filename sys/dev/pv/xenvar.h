@@ -1,3 +1,5 @@
+/*	$OpenBSD: xenvar.h,v 1.12 2015/12/12 21:07:45 reyk Exp $	*/
+
 /*
  * Copyright (c) 2015 Mike Belopuhov
  *

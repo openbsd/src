@@ -1,3 +1,5 @@
+/*	$OpenBSD: xenstore.c,v 1.7 2015/12/12 21:07:45 reyk Exp $	*/
+
 /*
  * Copyright (c) 2015 Mike Belopuhov
  *
