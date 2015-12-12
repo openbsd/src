@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl.h,v 1.14 2015/12/12 11:04:19 gilles Exp $	*/
+/*	$OpenBSD: ssl.h,v 1.15 2015/12/12 14:40:20 gilles Exp $	*/
 /*
  * Copyright (c) 2013 Gilles Chehade <gilles@poolp.org>
  *
@@ -19,7 +19,7 @@
 #define	SSL_SESSION_TIMEOUT	300
 
 struct pki {
-	char			 pki_name[PATH_MAX];
+	char			 pki_name[HOST_NAME_MAX+1];
 
 	char			*pki_ca_file;
 	char			*pki_ca;
