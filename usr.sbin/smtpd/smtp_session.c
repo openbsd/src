@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.247 2015/12/12 10:24:27 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.248 2015/12/12 10:27:18 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -899,12 +899,16 @@ smtp_mfa_response(struct smtp_session *s, int msg, int status, uint32_t code,
 
 		if (s->listener->flags & F_SMTPS) {
 			req_ca_cert.reqid = s->id;
-			if (s->listener->pki_name[0])
+			if (s->listener->pki_name[0]) {
 				(void)strlcpy(req_ca_cert.name, s->listener->pki_name,
 				    sizeof req_ca_cert.name);
-			else
+				req_ca_cert.fallback = 0;
+			}
+			else {
 				(void)strlcpy(req_ca_cert.name, s->smtpname,
 				    sizeof req_ca_cert.name);
+				req_ca_cert.fallback = 1;
+			}
 			m_compose(p_lka, IMSG_SMTP_TLS_INIT, 0, 0, -1,
 			    &req_ca_cert, sizeof(req_ca_cert));
 			tree_xset(&wait_ssl_init, s->id, s);
