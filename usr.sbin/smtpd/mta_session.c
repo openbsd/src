@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta_session.c,v 1.80 2015/12/12 08:43:42 gilles Exp $	*/
+/*	$OpenBSD: mta_session.c,v 1.81 2015/12/12 17:16:56 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -326,7 +326,7 @@ mta_session_imsg(struct mproc *p, struct imsg *imsg)
 				return;
 			}
 			else {
-				ssl = ssl_mta_init(NULL, NULL, 0);
+				ssl = ssl_mta_init(NULL, NULL, 0, env->sc_tls_ciphers);
 				if (ssl == NULL)
 					fatal("mta: ssl_mta_init");
 				io_start_tls(&s->io, ssl);
@@ -342,7 +342,7 @@ mta_session_imsg(struct mproc *p, struct imsg *imsg)
 		else
 			pkiname = s->helo;
 		ssl = ssl_mta_init(pkiname,
-		    resp_ca_cert->cert, resp_ca_cert->cert_len);
+		    resp_ca_cert->cert, resp_ca_cert->cert_len, env->sc_tls_ciphers);
 		if (ssl == NULL)
 			fatal("mta: ssl_mta_init");
 		io_start_tls(&s->io, ssl);

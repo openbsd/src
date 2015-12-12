@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.505 2015/12/12 12:22:26 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.506 2015/12/12 17:16:56 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -625,6 +625,8 @@ struct smtpd {
 	uint32_t				filtermask;
 
 	char					sc_enqueue_filter[PATH_MAX];
+
+	char				       *sc_tls_ciphers;
 };
 
 #define	TRACE_DEBUG	0x0001
@@ -1398,7 +1400,7 @@ int fork_proc_backend(const char *, const char *, const char *);
 
 
 /* ssl_smtpd.c */
-void   *ssl_mta_init(void *, char *, off_t);
+void   *ssl_mta_init(void *, char *, off_t, const char *);
 void   *ssl_smtp_init(void *, void *, int);
 
 

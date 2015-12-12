@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl.c,v 1.81 2015/12/12 17:14:40 gilles Exp $	*/
+/*	$OpenBSD: ssl.c,v 1.82 2015/12/12 17:16:56 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -68,13 +68,13 @@ ssl_init(void)
 }
 
 int
-ssl_setup(SSL_CTX **ctxp, struct pki *pki)
+ssl_setup(SSL_CTX **ctxp, struct pki *pki, const char *ciphers)
 {
 	DH	*dh;
 	SSL_CTX	*ctx;
 	uint8_t sid[SSL_MAX_SID_CTX_LENGTH];
 
-	ctx = ssl_ctx_create(pki->pki_name, pki->pki_cert, pki->pki_cert_len);
+	ctx = ssl_ctx_create(pki->pki_name, pki->pki_cert, pki->pki_cert_len, ciphers);
 
 	/*
 	 * Set session ID context to a random value.  We don't support
@@ -256,7 +256,7 @@ fail:
 }
 
 SSL_CTX *
-ssl_ctx_create(const char *pkiname, char *cert, off_t cert_len)
+ssl_ctx_create(const char *pkiname, char *cert, off_t cert_len, const char *ciphers)
 {
 	SSL_CTX	*ctx;
 	size_t	 pkinamelen = 0;
@@ -274,7 +274,9 @@ ssl_ctx_create(const char *pkiname, char *cert, off_t cert_len)
 	SSL_CTX_set_options(ctx,
 	    SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION);
 
-	if (!SSL_CTX_set_cipher_list(ctx, SSL_CIPHERS)) {
+	if (ciphers == NULL)
+		ciphers = SSL_CIPHERS;
+	if (!SSL_CTX_set_cipher_list(ctx, ciphers)) {
 		ssl_error("ssl_ctx_create");
 		fatal("ssl_ctx_create: could not set cipher list");
 	}
