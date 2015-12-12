@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.252 2015/12/12 11:31:29 sunil Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.253 2015/12/12 14:01:56 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -868,8 +868,6 @@ smtp_session_imsg(struct mproc *p, struct imsg *imsg)
 		}
 
 		resp_ca_cert = xmemdup(imsg->data, sizeof *resp_ca_cert, "smtp:ca_cert");
-		if (resp_ca_cert == NULL)
-			fatal(NULL);
 		resp_ca_cert->cert = xstrdup((char *)imsg->data +
 		    sizeof *resp_ca_cert, "smtp:ca_cert");
 		if (s->listener->pki_name[0])
