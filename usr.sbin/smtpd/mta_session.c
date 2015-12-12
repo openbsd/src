@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta_session.c,v 1.81 2015/12/12 17:16:56 gilles Exp $	*/
+/*	$OpenBSD: mta_session.c,v 1.82 2015/12/12 20:02:31 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -259,7 +259,6 @@ mta_session_imsg(struct mproc *p, struct imsg *imsg)
 	const char		*name;
 	void			*ssl;
 	int			 dnserror, status;
-	char			*pkiname;
 
 	switch (imsg->hdr.type) {
 
@@ -337,11 +336,7 @@ mta_session_imsg(struct mproc *p, struct imsg *imsg)
 		resp_ca_cert = xmemdup(imsg->data, sizeof *resp_ca_cert, "mta:ca_cert");
 		resp_ca_cert->cert = xstrdup((char *)imsg->data +
 		    sizeof *resp_ca_cert, "mta:ca_cert");
-		if (s->relay->pki_name)
-			pkiname = s->relay->pki_name;
-		else
-			pkiname = s->helo;
-		ssl = ssl_mta_init(pkiname,
+		ssl = ssl_mta_init(resp_ca_cert->name,
 		    resp_ca_cert->cert, resp_ca_cert->cert_len, env->sc_tls_ciphers);
 		if (ssl == NULL)
 			fatal("mta: ssl_mta_init");
@@ -1572,8 +1567,9 @@ mta_verify_certificate(struct mta_session *s)
 	memset(cert_der, 0, sizeof(cert_der));
 	memset(&req_ca_vrfy, 0, sizeof req_ca_vrfy);
 
-	if (s->relay->pki_name) {
-		name = s->relay->pki_name;
+	/* Send the client certificate */
+	if (s->relay->ca_name) {
+		name = s->relay->ca_name;
 		req_ca_vrfy.fallback = 0;
 	}
 	else {

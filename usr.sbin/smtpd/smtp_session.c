@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.258 2015/12/12 18:49:38 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.259 2015/12/12 20:02:31 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -714,7 +714,6 @@ smtp_session_imsg(struct mproc *p, struct imsg *imsg)
 	struct smtp_session		*s;
 	struct smtp_rcpt		*rcpt;
 	void				*ssl;
-	char				*pkiname;
 	char				 user[LOGIN_NAME_MAX];
 	struct msg			 m;
 	const char			*line, *helo;
@@ -1040,12 +1039,7 @@ smtp_session_imsg(struct mproc *p, struct imsg *imsg)
 		resp_ca_cert = xmemdup(imsg->data, sizeof *resp_ca_cert, "smtp:ca_cert");
 		resp_ca_cert->cert = xstrdup((char *)imsg->data +
 		    sizeof *resp_ca_cert, "smtp:ca_cert");
-		if (s->listener->pki_name[0])
-			pkiname = s->listener->pki_name;
-		else
-			pkiname = s->smtpname;
-		ssl_ctx = dict_get(env->sc_ssl_dict, pkiname);
-
+		ssl_ctx = dict_get(env->sc_ssl_dict, resp_ca_cert->name);
 		ssl = ssl_smtp_init(ssl_ctx, smtp_sni_callback,
 		    s->listener->flags & F_TLS_VERIFY);
 		io_set_read(&s->io);
@@ -2286,7 +2280,7 @@ smtp_verify_certificate(struct smtp_session *s)
 	struct iovec		iov[2];
 	X509		       *x;
 	STACK_OF(X509)	       *xchain;
-	const char	       *pkiname;
+	const char	       *name;
 	unsigned char	       *cert_der[MAX_CERTS];
 	int			cert_len[MAX_CERTS];
 	int			i, cert_count, res;
@@ -2295,11 +2289,17 @@ smtp_verify_certificate(struct smtp_session *s)
 	memset(cert_der, 0, sizeof(cert_der));
 	memset(&req_ca_vrfy, 0, sizeof req_ca_vrfy);
 
-	if (s->listener->pki_name[0])
-		pkiname = s->listener->pki_name;
-	else
-		pkiname = s->smtpname;
-	if (strlcpy(req_ca_vrfy.name, pkiname, sizeof req_ca_vrfy.name)
+	/* Send the client certificate */
+	if (s->listener->ca_name[0]) {
+		name = s->listener->ca_name;
+		req_ca_vrfy.fallback = 0;
+	}
+	else {
+		name = s->smtpname;
+		req_ca_vrfy.fallback = 1;
+	}
+
+	if (strlcpy(req_ca_vrfy.name, name, sizeof req_ca_vrfy.name)
 	    >= sizeof req_ca_vrfy.name)
 		return 0;
 

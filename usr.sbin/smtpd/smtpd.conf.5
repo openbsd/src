@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.141 2015/12/12 18:49:38 gilles Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.142 2015/12/12 20:02:31 gilles Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -570,6 +570,11 @@ bounce-warn	1h, 6h, 2d
 will generate a failure report when an envelope is in the queue for more
 than one hour, six hours and two days.
 The default is 4h.
+.It Ic ca Ar hostname Ic ca Ar cafile
+Associate a custom CA certificate located in
+.Ar cafile
+with
+.Ar hostname .
 .It Xo
 .Ic ciphers Ar cipher-list
 .Xc
@@ -791,11 +796,6 @@ Creation of certificates is documented in
 .It Ic pki Ar hostname Ic key Ar keyfile
 Associate the key located in
 .Ar keyfile
-with
-.Ar hostname .
-.It Ic pki Ar hostname Ic ca Ar cafile
-Associate a custom CA certificate
-.Ar cafile
 with
 .Ar hostname .
 .It Ic pki Ar hostname Ic dhparams Ar dhfile

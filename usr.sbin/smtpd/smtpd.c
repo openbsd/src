@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.265 2015/12/12 11:31:29 sunil Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.266 2015/12/12 20:02:31 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -730,9 +730,6 @@ load_pki_tree(void)
 		if (! ssl_load_certificate(pki, pki->pki_cert_file))
 			fatalx("load_pki_tree: failed to load certificate file");
 
-		if (pki->pki_ca_file)
-			if (! ssl_load_cafile(pki, pki->pki_ca_file))
-				fatalx("load_pki_tree: failed to load CA file");
 		if (pki->pki_dhparams_file)
 			if (! ssl_load_dhparams(pki, pki->pki_dhparams_file))
 				fatalx("load_pki_tree: failed to load dhparams file");
@@ -742,10 +739,8 @@ load_pki_tree(void)
 	iter_dict = NULL;
 	while (dict_iter(env->sc_ca_dict, &iter_dict, &k, (void **)&sca)) {
 		log_debug("info: loading CA information for %s", k);
-		/*
-		 * if (! ssl_load_cafile(sca, sca->ca_cert_file))
-		 *	fatalx("load_pki_tree: failed to load CA file");
-		 */
+		if (! ssl_load_cafile(sca, sca->ca_cert_file))
+			fatalx("load_pki_tree: failed to load CA file");
 	}
 }
 

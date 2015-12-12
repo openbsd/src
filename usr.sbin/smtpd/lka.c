@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.187 2015/12/12 14:06:08 gilles Exp $	*/
+/*	$OpenBSD: lka.c,v 1.188 2015/12/12 20:02:31 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -155,6 +155,7 @@ lka_imsg(struct mproc *p, struct imsg *imsg)
 			}
 			resp_ca_cert.status = CA_OK;
 			resp_ca_cert.cert_len = pki->pki_cert_len;
+			(void)strlcpy(resp_ca_cert.name, pki->pki_name, sizeof resp_ca_cert.name);
 			iov[0].iov_base = &resp_ca_cert;
 			iov[0].iov_len = sizeof(resp_ca_cert);
 			iov[1].iov_base = pki->pki_cert;
@@ -686,16 +687,20 @@ static void
 lka_certificate_verify_resume(enum imsg_type type, struct ca_vrfy_req_msg *req)
 {
 	struct ca_vrfy_resp_msg		resp;
-	struct pki		       *pki;
+	struct ca		       *sca;
 	const char		       *cafile;
 	size_t				i;
 
 	resp.reqid = req->reqid;
-	pki = dict_get(env->sc_pki_dict, req->name);
-	cafile = CA_FILE;
-	if (pki && pki->pki_ca_file)
-		cafile = pki->pki_ca_file;
-	if (! lka_X509_verify(req, cafile, NULL))
+	sca = dict_get(env->sc_ca_dict, req->name);
+	if (sca == NULL)
+		if (req->fallback)
+			sca = dict_get(env->sc_ca_dict, "*");
+	cafile = sca ? sca->ca_cert_file : CA_FILE;
+
+	if (sca == NULL && !req->fallback)
+		resp.status = CA_FAIL;
+	else if (! lka_X509_verify(req, cafile, NULL))
 		resp.status = CA_FAIL;
 	else
 		resp.status = CA_OK;

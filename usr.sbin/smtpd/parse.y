@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.176 2015/12/12 18:52:23 gilles Exp $	*/
+/*	$OpenBSD: parse.y,v 1.177 2015/12/12 20:02:31 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -393,9 +393,6 @@ opt_pki		: CERTIFICATE STRING {
 		}
 		| KEY STRING {
 			pki->pki_key_file = $2;
-		}
-		| CA STRING {
-			pki->pki_ca_file = $2;
 		}
 		| DHPARAMS STRING {
 			pki->pki_dhparams_file = $2;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl.h,v 1.17 2015/12/12 17:16:56 gilles Exp $	*/
+/*	$OpenBSD: ssl.h,v 1.18 2015/12/12 20:02:31 gilles Exp $	*/
 /*
  * Copyright (c) 2013 Gilles Chehade <gilles@poolp.org>
  *
@@ -20,10 +20,6 @@
 
 struct pki {
 	char			 pki_name[HOST_NAME_MAX+1];
-
-	char			*pki_ca_file;
-	char			*pki_ca;
-	off_t			 pki_ca_len;
 
 	char			*pki_cert_file;
 	char			*pki_cert;
@@ -63,7 +59,7 @@ void		ssl_error(const char *);
 
 int		ssl_load_certificate(struct pki *, const char *);
 int		ssl_load_keyfile(struct pki *, const char *, const char *);
-int		ssl_load_cafile(struct pki *, const char *);
+int		ssl_load_cafile(struct ca *, const char *);
 int		ssl_load_dhparams(struct pki *, const char *);
 int		ssl_load_pkey(const void *, size_t, char *, off_t,
 		    X509 **, EVP_PKEY **);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.196 2015/12/01 10:48:21 gilles Exp $	*/
+/*	$OpenBSD: mta.c,v 1.197 2015/12/12 20:02:31 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -1648,6 +1648,9 @@ mta_relay(struct envelope *e)
 	key.pki_name = e->agent.mta.relay.pki_name;
 	if (!key.pki_name[0])
 		key.pki_name = NULL;
+	key.ca_name = e->agent.mta.relay.ca_name;
+	if (!key.ca_name[0])
+		key.ca_name = NULL;
 	key.authtable = e->agent.mta.relay.authtable;
 	if (!key.authtable[0])
 		key.authtable = NULL;
@@ -1675,6 +1678,7 @@ mta_relay(struct envelope *e)
 		r->backuppref = -1;
 		r->port = key.port;
 		r->pki_name = key.pki_name ? xstrdup(key.pki_name, "mta: pki_name") : NULL;
+		r->ca_name = key.ca_name ? xstrdup(key.ca_name, "mta: ca_name") : NULL;
 		if (key.authtable)
 			r->authtable = xstrdup(key.authtable, "mta: authtable");
 		if (key.authlabel)
@@ -1730,6 +1734,7 @@ mta_relay_unref(struct mta_relay *relay)
 	free(relay->authtable);
 	free(relay->backupname);
 	free(relay->pki_name);
+	free(relay->ca_name);
 	free(relay->helotable);
 	free(relay->heloname);
 	free(relay->secret);
@@ -1958,6 +1963,13 @@ mta_relay_cmp(const struct mta_relay *a, const struct mta_relay *b)
 	if (a->pki_name && b->pki_name == NULL)
 		return (1);
 	if (a->pki_name && ((r = strcmp(a->pki_name, b->pki_name))))
+		return (r);
+
+	if (a->ca_name == NULL && b->ca_name)
+		return (-1);
+	if (a->ca_name && b->ca_name == NULL)
+		return (1);
+	if (a->ca_name && ((r = strcmp(a->ca_name, b->ca_name))))
 		return (r);
 
 	if (a->backupname && ((r = strcmp(a->backupname, b->backupname))))
