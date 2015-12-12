@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.169 2015/12/12 12:22:25 gilles Exp $	*/
+/*	$OpenBSD: parse.y,v 1.170 2015/12/12 12:28:04 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -701,7 +701,7 @@ opt_relay_common: AS STRING	{
 				YYERROR;
 			}
 			if (dict_get(conf->sc_pki_dict,
-			    rule->r_value.relayhost.pki_name) == NULL) {
+				rule->r_value.relayhost.pki_name) == NULL) {
 				log_warnx("pki name not found: %s", $2);
 				free($2);
 				YYERROR;
