@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-switch-client.c,v 1.35 2015/12/11 12:39:47 nicm Exp $ */
+/* $OpenBSD: cmd-switch-client.c,v 1.36 2015/12/12 18:28:47 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -65,6 +65,7 @@ cmd_switch_client_exec(struct cmd *self, struct cmd_q *cmdq)
 		table->references++;
 		key_bindings_unref_table(c->keytable);
 		c->keytable = table;
+		return (CMD_RETURN_NORMAL);
 	}
 
 	tflag = args_get(args, 't');
