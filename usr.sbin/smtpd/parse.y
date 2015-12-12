@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.174 2015/12/12 17:16:56 gilles Exp $	*/
+/*	$OpenBSD: parse.y,v 1.175 2015/12/12 18:49:38 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -638,7 +638,6 @@ opt_listen     	: INET4			{
 			}
 			listen_opts.sendertable = t;
 		}
-		/*
 		| SENDERS tables MASQUERADE	{
 			struct table	*t = $2;
 
@@ -655,7 +654,6 @@ opt_listen     	: INET4			{
 			}
 			listen_opts.sendertable = t;
 		}
-		*/
 		;
 
 listen		: opt_listen listen

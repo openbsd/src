@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.257 2015/12/12 18:42:58 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.258 2015/12/12 18:49:38 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -752,6 +752,11 @@ smtp_session_imsg(struct mproc *p, struct imsg *imsg)
 			m_add_id(p_queue, s->id);
 			m_close(p_queue);
 			tree_xset(&wait_queue_msg, s->id, s);
+
+			/* sender check passed, override From callback if masquerading */
+			if (s->listener->flags & F_MASQUERADE)
+				rfc2822_header_callback(&s->rfc2822_parser, "from",
+				    header_masquerade_callback, s);
 			break;
 
 		case LKA_PERMFAIL:
