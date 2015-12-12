@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.264 2015/12/12 10:48:43 gilles Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.265 2015/12/12 11:31:29 sunil Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1534,6 +1534,7 @@ imsg_to_str(int type)
 	CASE(IMSG_SMTP_MESSAGE_CREATE);
 	CASE(IMSG_SMTP_MESSAGE_ROLLBACK);
 	CASE(IMSG_SMTP_MESSAGE_OPEN);
+	CASE(IMSG_SMTP_CHECK_SENDER);
 	CASE(IMSG_SMTP_EXPAND_RCPT);
 	CASE(IMSG_SMTP_LOOKUP_HELO);
 	CASE(IMSG_SMTP_TLS_INIT);

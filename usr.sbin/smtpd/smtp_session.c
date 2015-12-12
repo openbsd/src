@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.251 2015/12/12 10:35:52 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.252 2015/12/12 11:31:29 sunil Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -575,6 +575,32 @@ smtp_session_imsg(struct mproc *p, struct imsg *imsg)
 			smtp_connected(s);
 		return;
 
+	case IMSG_SMTP_CHECK_SENDER:
+		m_msg(&m, imsg);
+		m_get_id(&m, &reqid);
+		m_get_int(&m, &status);
+		m_end(&m);
+		s = tree_xpop(&wait_lka_mail, reqid);
+		switch (status) {
+		case LKA_OK:
+			m_create(p_queue, IMSG_SMTP_MESSAGE_CREATE, 0, 0, -1);
+			m_add_id(p_queue, s->id);
+			m_close(p_queue);
+			tree_xset(&wait_queue_msg, s->id, s);
+			break;
+
+		case LKA_PERMFAIL:
+			smtp_reply(s, "%d %s", 530, "Sender rejected");
+			io_reload(&s->io);
+			break;
+		case LKA_TEMPFAIL:
+			smtp_reply(s, "421 %s: Temporary Error",
+			    esc_code(ESC_STATUS_TEMPFAIL, ESC_OTHER_MAIL_SYSTEM_STATUS));
+			io_reload(&s->io);
+			break;
+		}
+		return;
+
 	case IMSG_SMTP_EXPAND_RCPT:
 		m_msg(&m, imsg);
 		m_get_id(&m, &reqid);
@@ -970,10 +996,22 @@ smtp_mfa_response(struct smtp_session *s, int msg, int status, uint32_t code,
 			return;
 		}
 
-		m_create(p_queue, IMSG_SMTP_MESSAGE_CREATE, 0, 0, -1);
-		m_add_id(p_queue, s->id);
-		m_close(p_queue);
-		tree_xset(&wait_queue_msg, s->id, s);
+		/* only check sendertable if defined and user has authenticated */
+		if (s->flags & SF_AUTHENTICATED && s->listener->sendertable[0]) {
+			m_create(p_lka, IMSG_SMTP_CHECK_SENDER, 0, 0, -1);
+			m_add_id(p_lka, s->id);
+			m_add_string(p_lka, s->listener->sendertable);
+			m_add_string(p_lka, s->username);
+			m_add_mailaddr(p_lka, &s->evp.sender);
+			m_close(p_lka);
+			tree_xset(&wait_lka_mail, s->id, s);
+		}
+		else {
+			m_create(p_queue, IMSG_SMTP_MESSAGE_CREATE, 0, 0, -1);
+			m_add_id(p_queue, s->id);
+			m_close(p_queue);
+			tree_xset(&wait_queue_msg, s->id, s);
+		}
 		return;
 
 	case IMSG_SMTP_REQ_RCPT:

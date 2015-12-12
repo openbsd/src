@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd-api.h,v 1.27 2015/11/30 14:49:54 gilles Exp $	*/
+/*	$OpenBSD: smtpd-api.h,v 1.28 2015/12/12 11:31:29 sunil Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -196,9 +196,9 @@ enum table_service {
 	K_CREDENTIALS	= 0x004,	/* returns struct credentials	*/
 	K_NETADDR	= 0x008,	/* returns struct netaddr	*/
 	K_USERINFO	= 0x010,	/* returns struct userinfo	*/
-	K_SOURCE	= 0x020, /* returns struct source	*/
-	K_MAILADDR	= 0x040, /* returns struct mailaddr	*/
-	K_ADDRNAME	= 0x080, /* returns struct addrname	*/
+	K_SOURCE	= 0x020,	/* returns struct source	*/
+	K_MAILADDR	= 0x040,	/* returns struct mailaddr	*/
+	K_ADDRNAME	= 0x080,	/* returns struct addrname	*/
 	K_MAILADDRMAP	= 0x100,	/* returns struct maddrmap	*/
 };
 #define K_ANY		  0xfff

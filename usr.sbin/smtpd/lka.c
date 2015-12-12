@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.182 2015/12/12 10:55:21 gilles Exp $	*/
+/*	$OpenBSD: lka.c,v 1.183 2015/12/12 11:31:28 sunil Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -77,6 +77,7 @@ lka_imsg(struct mproc *p, struct imsg *imsg)
 	struct userinfo		 userinfo;
 	struct addrname		 addrname;
 	struct envelope		 evp;
+	struct mailaddr		 maddr;
 	struct msg		 m;
 	union lookup		 lk;
 	char			 buf[LINE_MAX];
@@ -97,6 +98,22 @@ lka_imsg(struct mproc *p, struct imsg *imsg)
 
 	if (p->proc == PROC_PONY) {
 		switch (imsg->hdr.type) {
+		case IMSG_SMTP_CHECK_SENDER:
+			m_msg(&m, imsg);
+			m_get_id(&m, &reqid);
+			m_get_string(&m, &tablename);
+			m_get_string(&m, &username);
+			m_get_mailaddr(&m, &maddr);
+			m_end(&m);
+
+			ret = lka_mailaddrmap(tablename, username, &maddr);
+
+			m_create(p, IMSG_SMTP_CHECK_SENDER, 0, 0, -1);
+			m_add_id(p, reqid);
+			m_add_int(p, ret);
+			m_close(p);
+			return;
+
 		case IMSG_SMTP_EXPAND_RCPT:
 			m_msg(&m, imsg);
 			m_get_id(&m, &reqid);
