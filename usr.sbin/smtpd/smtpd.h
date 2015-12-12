@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.499 2015/12/12 09:00:22 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.500 2015/12/12 09:09:40 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -97,8 +97,9 @@
 
 #define MTA_EXT_DSN		0x400
 
+
 struct userinfo {
-	char username[LOGIN_NAME_MAX];
+	char username[SMTPD_VUSERNAME_SIZE];
 	char directory[PATH_MAX];
 	uid_t uid;
 	gid_t gid;
@@ -408,9 +409,9 @@ struct rule {
 struct delivery_mda {
 	enum action_type	method;
 	char			usertable[PATH_MAX];
-	char			username[LOGIN_NAME_MAX];
+	char			username[SMTPD_VUSERNAME_SIZE];
 	char			buffer[EXPAND_BUFFER];
-	char			delivery_user[LINE_MAX];
+	char			delivery_user[SMTPD_VUSERNAME_SIZE];
 };
 
 struct delivery_mta {
@@ -552,6 +553,7 @@ struct listener {
 	char			 hostname[HOST_NAME_MAX+1];
 	char			 hostnametable[PATH_MAX];
 	char			 sendertable[PATH_MAX];
+
 	TAILQ_ENTRY(listener)	 entry;
 
 	int			 local;		/* there must be a better way */
@@ -648,7 +650,7 @@ struct forward_req {
 	uint64_t			id;
 	uint8_t				status;
 
-	char				user[LOGIN_NAME_MAX];
+	char				user[SMTPD_VUSERNAME_SIZE];
 	uid_t				uid;
 	gid_t				gid;
 	char				directory[PATH_MAX];
@@ -658,7 +660,7 @@ struct deliver {
 	char			to[PATH_MAX];
 	char			from[PATH_MAX];
 	char			dest[LINE_MAX];
-	char			user[LOGIN_NAME_MAX];
+	char			user[SMTPD_VUSERNAME_SIZE];
 	short			mode;
 
 	struct userinfo		userinfo;
