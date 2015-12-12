@@ -1,4 +1,4 @@
-/*	$OpenBSD: net.c,v 1.22 2015/08/20 22:39:29 deraadt Exp $	*/
+/*	$OpenBSD: net.c,v 1.23 2015/12/12 20:04:23 mmcc Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -641,10 +641,8 @@ net_shutdown(void)
 			free(qm);
 		}
 		net_disconnect_peer(p);
-		if (p->sa)
-			free(p->sa);
-		if (p->name)
-			free(p->name);
+		free(p->sa);
+		free(p->name);
 		LIST_REMOVE(p, link);
 		cfgstate.peercnt--;
 		free(p);

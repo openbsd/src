@@ -1,4 +1,4 @@
-/*	$OpenBSD: sensorsd.c,v 1.58 2015/11/19 06:08:06 deraadt Exp $ */
+/*	$OpenBSD: sensorsd.c,v 1.59 2015/12/12 20:04:23 mmcc Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -244,8 +244,7 @@ destroy_sdlim(struct sdlim_t *sdlim)
 
 	while ((limit = TAILQ_FIRST(&sdlim->limits)) != NULL) {
 		TAILQ_REMOVE(&sdlim->limits, limit, entries);
-		if (limit->command != NULL)
-			free(limit->command);
+		free(limit->command);
 		free(limit);
 	}
 	free(sdlim);

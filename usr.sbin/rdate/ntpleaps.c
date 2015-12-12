@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpleaps.c,v 1.13 2014/10/08 04:48:22 deraadt Exp $	*/
+/*	$OpenBSD: ntpleaps.c,v 1.14 2015/12/12 20:04:23 mmcc Exp $	*/
 
 /*
  * Copyright (c) 2002 Thorsten Glaser. All rights reserved.
@@ -188,8 +188,7 @@ ntpleaps_read(void)
 
 	/* Clean up and activate the table */
 	close(fd);
-	if (leapsecs != NULL)
-		free(leapsecs);
+	free(leapsecs);
 	leapsecs = l;
 	leapsecs_num = r;
 	return (0);
