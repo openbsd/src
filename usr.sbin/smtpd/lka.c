@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.185 2015/12/12 13:48:50 gilles Exp $	*/
+/*	$OpenBSD: lka.c,v 1.186 2015/12/12 13:56:41 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -240,7 +240,6 @@ lka_imsg(struct mproc *p, struct imsg *imsg)
 
 	if (p->proc == PROC_PONY) {
 		switch (imsg->hdr.type) {
-
 
 		case IMSG_MTA_LOOKUP_CREDENTIALS:
 			m_msg(&m, imsg);
