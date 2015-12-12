@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.248 2015/12/12 10:27:18 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.249 2015/12/12 10:31:01 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -45,6 +45,7 @@
 #include "log.h"
 #include "ssl.h"
 
+#define	DATA_HIWAT			65535
 #define	APPEND_DOMAIN_BUFFER_SIZE	4096
 
 enum smtp_phase {
@@ -75,6 +76,8 @@ enum session_flags {
 	SF_VERIFIED		= 0x0020,
 	SF_MFACONNSENT		= 0x0040,
 	SF_BADINPUT		= 0x0080,
+	SF_FILTERCONN		= 0x0100,
+	SF_FILTERDATA		= 0x0200,
 };
 
 enum message_flags {
