@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.186 2015/12/12 13:56:41 gilles Exp $	*/
+/*	$OpenBSD: lka.c,v 1.187 2015/12/12 14:06:08 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -144,6 +144,9 @@ lka_imsg(struct mproc *p, struct imsg *imsg)
 			xlowercase(buf, req_ca_cert->name, sizeof(buf));
 			log_debug("debug: lka: looking up pki \"%s\"", buf);
 			pki = dict_get(env->sc_pki_dict, buf);
+			if (pki == NULL)
+				if (req_ca_cert->fallback)
+					pki = dict_get(env->sc_pki_dict, "*");
 			if (pki == NULL) {
 				resp_ca_cert.status = CA_FAIL;
 				m_compose(p, imsg->hdr.type, 0, 0, -1, &resp_ca_cert,
