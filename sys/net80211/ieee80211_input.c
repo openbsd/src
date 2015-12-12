@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.144 2015/12/12 12:22:14 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.145 2015/12/12 13:56:10 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -1061,6 +1061,13 @@ ieee80211_amsdu_decap(struct ieee80211com *ic, struct mbuf *m,
 			len -= LLC_SNAPFRAMELEN;
 		}
 		len += ETHER_HDR_LEN;
+		if (len > m->m_pkthdr.len) {
+			/* stop processing A-MSDU subframes */
+			DPRINTF(("A-MSDU subframe too long (%d)\n", len));
+			ic->ic_stats.is_rx_decap++;
+			m_freem(m);
+			break;
+		}
 
 		/* "detach" our A-MSDU subframe from the others */
 		n = m_split(m, len, M_NOWAIT);
@@ -1072,6 +1079,10 @@ ieee80211_amsdu_decap(struct ieee80211com *ic, struct mbuf *m,
 		}
 		ieee80211_deliver_data(ic, m, ni);
 
+		if (n->m_len == 0) {
+			m_freem(n);
+			break;
+		}
 		m = n;
 		/* remove padding */
 		pad = ((len + 3) & ~3) - len;
