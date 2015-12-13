@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-queue.c,v 1.31 2015/12/13 14:32:38 nicm Exp $ */
+/* $OpenBSD: cmd-queue.c,v 1.32 2015/12/13 16:11:42 nicm Exp $ */
 
 /*
  * Copyright (c) 2013 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -199,6 +199,8 @@ cmdq_continue_one(struct cmd_q *cmdq)
 	if (cmd_prepare_state(cmd, cmdq) != 0)
 		goto error;
 	retval = cmd->entry->exec(cmd, cmdq);
+	if (retval == CMD_RETURN_ERROR)
+		goto error;
 
 	cmdq_guard(cmdq, "end", flags);
 	return (retval);
