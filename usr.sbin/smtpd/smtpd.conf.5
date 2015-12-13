@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.143 2015/12/12 21:13:39 jmc Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.144 2015/12/13 10:28:41 gilles Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -17,7 +17,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: December 12 2015 $
+.Dd $Mdocdate: December 13 2015 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -783,6 +783,11 @@ The default maximum message size is 35MB if none is specified.
 Associate the certificate located in
 .Ar certfile
 with
+.Ar hostname .
+.Pp
+If a fallback certificate or SNI is wanted, the
+.Sq *
+wildcard may be used as
 .Ar hostname .
 .Pp
 A certificate chain may be created by appending one or many certificates,
