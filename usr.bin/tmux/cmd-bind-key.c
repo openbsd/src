@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-bind-key.c,v 1.23 2015/12/12 18:19:00 nicm Exp $ */
+/* $OpenBSD: cmd-bind-key.c,v 1.24 2015/12/13 21:53:57 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -33,11 +33,15 @@ enum cmd_retval	 cmd_bind_key_mode_table(struct cmd *, struct cmd_q *,
 		     key_code);
 
 const struct cmd_entry cmd_bind_key_entry = {
-	"bind-key", "bind",
-	"cnrt:T:", 1, -1,
-	"[-cnr] [-t mode-table] [-T key-table] key command [arguments]",
-	0,
-	cmd_bind_key_exec
+	.name = "bind-key",
+	.alias = "bind",
+
+	.args = { "cnrt:T:", 1, -1 },
+	.usage = "[-cnr] [-t mode-table] [-T key-table] key command "
+		 "[arguments]",
+
+	.flags = 0,
+	.exec = cmd_bind_key_exec
 };
 
 enum cmd_retval

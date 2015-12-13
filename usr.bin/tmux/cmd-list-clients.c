@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-list-clients.c,v 1.24 2015/12/13 14:32:38 nicm Exp $ */
+/* $OpenBSD: cmd-list-clients.c,v 1.25 2015/12/13 21:53:57 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -36,11 +36,14 @@
 enum cmd_retval	cmd_list_clients_exec(struct cmd *, struct cmd_q *);
 
 const struct cmd_entry cmd_list_clients_entry = {
-	"list-clients", "lsc",
-	"F:t:", 0, 0,
-	"[-F format] " CMD_TARGET_SESSION_USAGE,
-	CMD_READONLY|CMD_SESSION_T,
-	cmd_list_clients_exec
+	.name = "list-clients",
+	.alias = "lsc",
+
+	.args = { "F:t:", 0, 0 },
+	.usage = "[-F format] " CMD_TARGET_SESSION_USAGE,
+
+	.flags = CMD_READONLY|CMD_SESSION_T,
+	.exec = cmd_list_clients_exec
 };
 
 enum cmd_retval

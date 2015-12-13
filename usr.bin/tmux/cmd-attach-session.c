@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-attach-session.c,v 1.55 2015/12/13 14:32:38 nicm Exp $ */
+/* $OpenBSD: cmd-attach-session.c,v 1.56 2015/12/13 21:53:57 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -33,11 +33,14 @@
 enum cmd_retval	cmd_attach_session_exec(struct cmd *, struct cmd_q *);
 
 const struct cmd_entry cmd_attach_session_entry = {
-	"attach-session", "attach",
-	"c:dErt:", 0, 0,
-	"[-dEr] [-c working-directory] " CMD_TARGET_SESSION_USAGE,
-	CMD_STARTSERVER|CMD_SESSION_T|CMD_PANE_T|CMD_PREFERUNATTACHED,
-	cmd_attach_session_exec
+	.name = "attach-session",
+	.alias = "attach",
+
+	.args = { "c:dErt:", 0, 0 },
+	.usage = "[-dEr] [-c working-directory] " CMD_TARGET_SESSION_USAGE,
+
+	.flags = CMD_STARTSERVER|CMD_SESSION_T|CMD_PANE_T|CMD_PREFERUNATTACHED,
+	.exec = cmd_attach_session_exec
 };
 
 enum cmd_retval

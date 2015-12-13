@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-rename-session.c,v 1.17 2015/12/13 14:32:38 nicm Exp $ */
+/* $OpenBSD: cmd-rename-session.c,v 1.18 2015/12/13 21:53:57 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -29,11 +29,14 @@
 enum cmd_retval	 cmd_rename_session_exec(struct cmd *, struct cmd_q *);
 
 const struct cmd_entry cmd_rename_session_entry = {
-	"rename-session", "rename",
-	"t:", 1, 1,
-	CMD_TARGET_SESSION_USAGE " new-name",
-	CMD_SESSION_T,
-	cmd_rename_session_exec
+	.name = "rename-session",
+	.alias = "rename",
+
+	.args = { "t:", 1, 1 },
+	.usage = CMD_TARGET_SESSION_USAGE " new-name",
+
+	.flags = CMD_SESSION_T,
+	.exec = cmd_rename_session_exec
 };
 
 enum cmd_retval

@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-set-hook.c,v 1.3 2015/12/13 14:32:38 nicm Exp $ */
+/* $OpenBSD: cmd-set-hook.c,v 1.4 2015/12/13 21:53:57 nicm Exp $ */
 
 /*
  * Copyright (c) 2012 Thomas Adam <thomas@xteddy.org>
@@ -30,19 +30,25 @@
 enum cmd_retval cmd_set_hook_exec(struct cmd *, struct cmd_q *);
 
 const struct cmd_entry cmd_set_hook_entry = {
-	"set-hook", NULL,
-	"gt:u", 1, 2,
-	"[-gu] " CMD_TARGET_SESSION_USAGE " hook-name [command]",
-	CMD_SESSION_T,
-	cmd_set_hook_exec
+	.name = "set-hook",
+	.alias = NULL,
+
+	.args = { "gt:u", 1, 2 },
+	.usage = "[-gu] " CMD_TARGET_SESSION_USAGE " hook-name [command]",
+
+	.flags = CMD_SESSION_T,
+	.exec = cmd_set_hook_exec
 };
 
 const struct cmd_entry cmd_show_hooks_entry = {
-	"show-hooks", NULL,
-	"gt:", 0, 1,
-	"[-g] " CMD_TARGET_SESSION_USAGE,
-	CMD_SESSION_T,
-	cmd_set_hook_exec
+	.name = "show-hooks",
+	.alias = NULL,
+
+	.args = { "gt:", 0, 1 },
+	.usage = "[-g] " CMD_TARGET_SESSION_USAGE,
+
+	.flags = CMD_SESSION_T,
+	.exec = cmd_set_hook_exec
 };
 
 enum cmd_retval

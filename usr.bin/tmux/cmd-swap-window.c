@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-swap-window.c,v 1.13 2015/12/13 14:32:38 nicm Exp $ */
+/* $OpenBSD: cmd-swap-window.c,v 1.14 2015/12/13 21:53:57 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -29,11 +29,14 @@
 enum cmd_retval	cmd_swap_window_exec(struct cmd *, struct cmd_q *);
 
 const struct cmd_entry cmd_swap_window_entry = {
-	"swap-window", "swapw",
-	"ds:t:", 0, 0,
-	"[-d] " CMD_SRCDST_WINDOW_USAGE,
-	CMD_WINDOW_MARKED_S|CMD_WINDOW_MARKED_T,
-	cmd_swap_window_exec
+	.name = "swap-window",
+	.alias = "swapw",
+
+	.args = { "ds:t:", 0, 0 },
+	.usage = "[-d] " CMD_SRCDST_WINDOW_USAGE,
+
+	.flags = CMD_WINDOW_MARKED_S|CMD_WINDOW_MARKED_T,
+	.exec = cmd_swap_window_exec
 };
 
 enum cmd_retval

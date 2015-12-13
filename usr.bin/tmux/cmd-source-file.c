@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-source-file.c,v 1.22 2015/12/13 14:32:38 nicm Exp $ */
+/* $OpenBSD: cmd-source-file.c,v 1.23 2015/12/13 21:53:57 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Tiago Cunha <me@tiagocunha.org>
@@ -31,11 +31,14 @@ enum cmd_retval	cmd_source_file_exec(struct cmd *, struct cmd_q *);
 void		cmd_source_file_done(struct cmd_q *);
 
 const struct cmd_entry cmd_source_file_entry = {
-	"source-file", "source",
-	"", 1, 1,
-	"path",
-	0,
-	cmd_source_file_exec
+	.name = "source-file",
+	.alias = "source",
+
+	.args = { "", 1, 1 },
+	.usage = "path",
+
+	.flags = 0,
+	.exec = cmd_source_file_exec
 };
 
 enum cmd_retval

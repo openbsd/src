@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd.c,v 1.116 2015/12/13 21:17:37 nicm Exp $ */
+/* $OpenBSD: cmd.c,v 1.117 2015/12/13 21:53:57 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -353,12 +353,12 @@ cmd_parse(int argc, char **argv, const char *file, u_int line, char **cause)
 		return (NULL);
 	}
 
-	args = args_parse(entry->args_template, argc, argv);
+	args = args_parse(entry->args.template, argc, argv);
 	if (args == NULL)
 		goto usage;
-	if (entry->args_lower != -1 && args->argc < entry->args_lower)
+	if (entry->args.lower != -1 && args->argc < entry->args.lower)
 		goto usage;
-	if (entry->args_upper != -1 && args->argc > entry->args_upper)
+	if (entry->args.upper != -1 && args->argc > entry->args.upper)
 		goto usage;
 
 	cmd = xcalloc(1, sizeof *cmd);

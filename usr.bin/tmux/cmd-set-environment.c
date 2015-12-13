@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-set-environment.c,v 1.13 2015/12/13 14:32:38 nicm Exp $ */
+/* $OpenBSD: cmd-set-environment.c,v 1.14 2015/12/13 21:53:57 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -30,11 +30,14 @@
 enum cmd_retval	 cmd_set_environment_exec(struct cmd *, struct cmd_q *);
 
 const struct cmd_entry cmd_set_environment_entry = {
-	"set-environment", "setenv",
-	"grt:u", 1, 2,
-	"[-gru] " CMD_TARGET_SESSION_USAGE " name [value]",
-	CMD_SESSION_T,
-	cmd_set_environment_exec
+	.name = "set-environment",
+	.alias = "setenv",
+
+	.args = { "grt:u", 1, 2 },
+	.usage = "[-gru] " CMD_TARGET_SESSION_USAGE " name [value]",
+
+	.flags = CMD_SESSION_T,
+	.exec = cmd_set_environment_exec
 };
 
 enum cmd_retval

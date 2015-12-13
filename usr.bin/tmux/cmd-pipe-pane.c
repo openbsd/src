@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-pipe-pane.c,v 1.33 2015/12/13 14:32:38 nicm Exp $ */
+/* $OpenBSD: cmd-pipe-pane.c,v 1.34 2015/12/13 21:53:57 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -38,11 +38,14 @@ enum cmd_retval	 cmd_pipe_pane_exec(struct cmd *, struct cmd_q *);
 void	cmd_pipe_pane_error_callback(struct bufferevent *, short, void *);
 
 const struct cmd_entry cmd_pipe_pane_entry = {
-	"pipe-pane", "pipep",
-	"ot:", 0, 1,
-	"[-o] " CMD_TARGET_PANE_USAGE " [command]",
-	CMD_PANE_T,
-	cmd_pipe_pane_exec
+	.name = "pipe-pane",
+	.alias = "pipep",
+
+	.args = { "ot:", 0, 1 },
+	.usage = "[-o] " CMD_TARGET_PANE_USAGE " [command]",
+
+	.flags = CMD_PANE_T,
+	.exec = cmd_pipe_pane_exec
 };
 
 enum cmd_retval

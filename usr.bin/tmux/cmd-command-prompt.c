@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-command-prompt.c,v 1.30 2015/12/13 14:32:38 nicm Exp $ */
+/* $OpenBSD: cmd-command-prompt.c,v 1.31 2015/12/13 21:53:57 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -35,11 +35,15 @@ int	cmd_command_prompt_callback(void *, const char *);
 void	cmd_command_prompt_free(void *);
 
 const struct cmd_entry cmd_command_prompt_entry = {
-	"command-prompt", NULL,
-	"I:p:t:", 0, 1,
-	"[-I inputs] [-p prompts] " CMD_TARGET_CLIENT_USAGE " [template]",
-	CMD_CLIENT_T,
-	cmd_command_prompt_exec
+	.name = "command-prompt",
+	.alias = NULL,
+
+	.args = { "I:p:t:", 0, 1 },
+	.usage = "[-I inputs] [-p prompts] " CMD_TARGET_CLIENT_USAGE " "
+		 "[template]",
+
+	.flags = CMD_CLIENT_T,
+	.exec = cmd_command_prompt_exec
 };
 
 struct cmd_command_prompt_cdata {

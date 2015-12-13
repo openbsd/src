@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-choose-buffer.c,v 1.26 2015/12/13 14:32:38 nicm Exp $ */
+/* $OpenBSD: cmd-choose-buffer.c,v 1.27 2015/12/13 21:53:57 nicm Exp $ */
 
 /*
  * Copyright (c) 2010 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -33,11 +33,14 @@
 enum cmd_retval	 cmd_choose_buffer_exec(struct cmd *, struct cmd_q *);
 
 const struct cmd_entry cmd_choose_buffer_entry = {
-	"choose-buffer", NULL,
-	"F:t:", 0, 1,
-	CMD_TARGET_WINDOW_USAGE " [-F format] [template]",
-	CMD_WINDOW_T,
-	cmd_choose_buffer_exec
+	.name = "choose-buffer",
+	.alias = NULL,
+
+	.args = { "F:t:", 0, 1 },
+	.usage = CMD_TARGET_WINDOW_USAGE " [-F format] [template]",
+
+	.flags = CMD_WINDOW_T,
+	.exec = cmd_choose_buffer_exec
 };
 
 enum cmd_retval

@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-confirm-before.c,v 1.26 2015/12/13 14:32:38 nicm Exp $ */
+/* $OpenBSD: cmd-confirm-before.c,v 1.27 2015/12/13 21:53:57 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Tiago Cunha <me@tiagocunha.org>
@@ -34,11 +34,14 @@ int		 cmd_confirm_before_callback(void *, const char *);
 void		 cmd_confirm_before_free(void *);
 
 const struct cmd_entry cmd_confirm_before_entry = {
-	"confirm-before", "confirm",
-	"p:t:", 1, 1,
-	"[-p prompt] " CMD_TARGET_CLIENT_USAGE " command",
-	CMD_CLIENT_T,
-	cmd_confirm_before_exec
+	.name = "confirm-before",
+	.alias = "confirm",
+
+	.args = { "p:t:", 1, 1 },
+	.usage = "[-p prompt] " CMD_TARGET_CLIENT_USAGE " command",
+
+	.flags = CMD_CLIENT_T,
+	.exec = cmd_confirm_before_exec
 };
 
 struct cmd_confirm_before_data {

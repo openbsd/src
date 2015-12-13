@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-unbind-key.c,v 1.23 2015/12/12 18:19:00 nicm Exp $ */
+/* $OpenBSD: cmd-unbind-key.c,v 1.24 2015/12/13 21:53:57 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -31,11 +31,14 @@ enum cmd_retval	cmd_unbind_key_mode_table(struct cmd *, struct cmd_q *,
 		    key_code);
 
 const struct cmd_entry cmd_unbind_key_entry = {
-	"unbind-key", "unbind",
-	"acnt:T:", 0, 1,
-	"[-acn] [-t mode-table] [-T key-table] key",
-	0,
-	cmd_unbind_key_exec
+	.name = "unbind-key",
+	.alias = "unbind",
+
+	.args = { "acnt:T:", 0, 1 },
+	.usage = "[-acn] [-t mode-table] [-T key-table] key",
+
+	.flags = 0,
+	.exec = cmd_unbind_key_exec
 };
 
 enum cmd_retval

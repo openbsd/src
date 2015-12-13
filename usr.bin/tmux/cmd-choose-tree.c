@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-choose-tree.c,v 1.29 2015/12/13 14:32:38 nicm Exp $ */
+/* $OpenBSD: cmd-choose-tree.c,v 1.30 2015/12/13 21:53:57 nicm Exp $ */
 
 /*
  * Copyright (c) 2012 Thomas Adam <thomas@xteddy.org>
@@ -44,28 +44,38 @@
 enum cmd_retval	cmd_choose_tree_exec(struct cmd *, struct cmd_q *);
 
 const struct cmd_entry cmd_choose_tree_entry = {
-	"choose-tree", NULL,
-	"S:W:swub:c:t:", 0, 1,
-	"[-suw] [-b session-template] [-c window template] [-S format] " \
-	"[-W format] " CMD_TARGET_WINDOW_USAGE,
-	CMD_WINDOW_T,
-	cmd_choose_tree_exec
+	.name = "choose-tree",
+	.alias = NULL,
+
+	.args = { "S:W:swub:c:t:", 0, 1 },
+	.usage = "[-suw] [-b session-template] [-c window template] "
+		 "[-S format] [-W format] " CMD_TARGET_WINDOW_USAGE,
+
+	.flags = CMD_WINDOW_T,
+	.exec = cmd_choose_tree_exec
 };
 
 const struct cmd_entry cmd_choose_session_entry = {
-	"choose-session", NULL,
-	"F:t:", 0, 1,
-	CMD_TARGET_WINDOW_USAGE " [-F format] [template]",
-	CMD_WINDOW_T,
-	cmd_choose_tree_exec
+	.name = "choose-session",
+	.alias = NULL,
+
+	.args = { "F:t:", 0, 1 },
+
+	.usage = CMD_TARGET_WINDOW_USAGE " [-F format] [template]",
+	.flags = CMD_WINDOW_T,
+
+	.exec = cmd_choose_tree_exec
 };
 
 const struct cmd_entry cmd_choose_window_entry = {
-	"choose-window", NULL,
-	"F:t:", 0, 1,
-	CMD_TARGET_WINDOW_USAGE "[-F format] [template]",
-	CMD_WINDOW_T,
-	cmd_choose_tree_exec
+	.name = "choose-window",
+	.alias = NULL,
+
+	.args = { "F:t:", 0, 1 },
+	.usage = CMD_TARGET_WINDOW_USAGE "[-F format] [template]",
+
+	.flags = CMD_WINDOW_T,
+	.exec = cmd_choose_tree_exec
 };
 
 enum cmd_retval

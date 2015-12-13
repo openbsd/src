@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-load-buffer.c,v 1.40 2015/12/13 14:32:38 nicm Exp $ */
+/* $OpenBSD: cmd-load-buffer.c,v 1.41 2015/12/13 21:53:57 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Tiago Cunha <me@tiagocunha.org>
@@ -35,11 +35,14 @@ enum cmd_retval	 cmd_load_buffer_exec(struct cmd *, struct cmd_q *);
 void		 cmd_load_buffer_callback(struct client *, int, void *);
 
 const struct cmd_entry cmd_load_buffer_entry = {
-	"load-buffer", "loadb",
-	"b:", 1, 1,
-	CMD_BUFFER_USAGE " path",
-	0,
-	cmd_load_buffer_exec
+	.name = "load-buffer",
+	.alias = "loadb",
+
+	.args = { "b:", 1, 1 },
+	.usage = CMD_BUFFER_USAGE " path",
+
+	.flags = 0,
+	.exec = cmd_load_buffer_exec
 };
 
 enum cmd_retval

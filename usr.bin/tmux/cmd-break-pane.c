@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-break-pane.c,v 1.33 2015/12/13 14:32:38 nicm Exp $ */
+/* $OpenBSD: cmd-break-pane.c,v 1.34 2015/12/13 21:53:57 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -31,11 +31,14 @@
 enum cmd_retval	 cmd_break_pane_exec(struct cmd *, struct cmd_q *);
 
 const struct cmd_entry cmd_break_pane_entry = {
-	"break-pane", "breakp",
-	"dPF:s:t:", 0, 0,
-	"[-dP] [-F format] " CMD_SRCDST_PANE_USAGE,
-	CMD_PANE_S|CMD_INDEX_T,
-	cmd_break_pane_exec
+	.name = "break-pane",
+	.alias = "breakp",
+
+	.args = { "dPF:s:t:", 0, 0 },
+	.usage = "[-dP] [-F format] " CMD_SRCDST_PANE_USAGE,
+
+	.flags = CMD_PANE_S|CMD_INDEX_T,
+	.exec = cmd_break_pane_exec
 };
 
 enum cmd_retval

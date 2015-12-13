@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-swap-pane.c,v 1.22 2015/12/13 14:32:38 nicm Exp $ */
+/* $OpenBSD: cmd-swap-pane.c,v 1.23 2015/12/13 21:53:57 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -29,11 +29,14 @@
 enum cmd_retval	 cmd_swap_pane_exec(struct cmd *, struct cmd_q *);
 
 const struct cmd_entry cmd_swap_pane_entry = {
-	"swap-pane", "swapp",
-	"dDs:t:U", 0, 0,
-	"[-dDU] " CMD_SRCDST_PANE_USAGE,
-	CMD_PANE_MARKED_S|CMD_PANE_T,
-	cmd_swap_pane_exec
+	.name = "swap-pane",
+	.alias = "swapp",
+
+	.args = { "dDs:t:U", 0, 0 },
+	.usage = "[-dDU] " CMD_SRCDST_PANE_USAGE,
+
+	.flags = CMD_PANE_MARKED_S|CMD_PANE_T,
+	.exec = cmd_swap_pane_exec
 };
 
 enum cmd_retval

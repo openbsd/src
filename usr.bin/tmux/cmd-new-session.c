@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-new-session.c,v 1.81 2015/12/13 14:32:38 nicm Exp $ */
+/* $OpenBSD: cmd-new-session.c,v 1.82 2015/12/13 21:53:57 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -36,21 +36,27 @@
 enum cmd_retval	 cmd_new_session_exec(struct cmd *, struct cmd_q *);
 
 const struct cmd_entry cmd_new_session_entry = {
-	"new-session", "new",
-	"Ac:dDEF:n:Ps:t:x:y:", 0, -1,
-	"[-AdDEP] [-c start-directory] [-F format] [-n window-name] "
-	"[-s session-name] " CMD_TARGET_SESSION_USAGE " [-x width] "
-	"[-y height] [command]",
-	CMD_STARTSERVER|CMD_CANFAIL|CMD_SESSION_T,
-	cmd_new_session_exec
+	.name = "new-session",
+	.alias = "new",
+
+	.args = { "Ac:dDEF:n:Ps:t:x:y:", 0, -1 },
+	.usage = "[-AdDEP] [-c start-directory] [-F format] [-n window-name] "
+		 "[-s session-name] " CMD_TARGET_SESSION_USAGE " [-x width] "
+		 "[-y height] [command]",
+
+	.flags = CMD_STARTSERVER|CMD_CANFAIL|CMD_SESSION_T,
+	.exec = cmd_new_session_exec
 };
 
 const struct cmd_entry cmd_has_session_entry = {
-	"has-session", "has",
-	"t:", 0, 0,
-	CMD_TARGET_SESSION_USAGE,
-	CMD_SESSION_T,
-	cmd_new_session_exec
+	.name = "has-session",
+	.alias = "has",
+
+	.args = { "t:", 0, 0 },
+	.usage = CMD_TARGET_SESSION_USAGE,
+
+	.flags = CMD_SESSION_T,
+	.exec = cmd_new_session_exec
 };
 
 enum cmd_retval
