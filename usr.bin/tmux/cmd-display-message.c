@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-display-message.c,v 1.32 2015/12/13 14:32:38 nicm Exp $ */
+/* $OpenBSD: cmd-display-message.c,v 1.33 2015/12/13 18:31:47 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Tiago Cunha <me@tiagocunha.org>
@@ -39,7 +39,7 @@ const struct cmd_entry cmd_display_message_entry = {
 	"c:pt:F:", 0, 1,
 	"[-p] [-c target-client] [-F format] " CMD_TARGET_PANE_USAGE
 	" [message]",
-	CMD_CLIENT_C|CMD_PANE_T,
+	CMD_CLIENT_C|CMD_PANE_T|CMD_CLIENT_CANFAIL,
 	cmd_display_message_exec
 };
 
