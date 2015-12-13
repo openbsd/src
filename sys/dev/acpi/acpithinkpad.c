@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpithinkpad.c,v 1.46 2015/12/13 21:17:42 kettenis Exp $	*/
+/*	$OpenBSD: acpithinkpad.c,v 1.47 2015/12/13 23:12:11 kettenis Exp $	*/
 /*
  * Copyright (c) 2008 joshua stein <jcs@openbsd.org>
  *
@@ -23,6 +23,7 @@
 #include <dev/acpi/acpidev.h>
 #include <dev/acpi/amltypes.h>
 #include <dev/acpi/dsdt.h>
+#include <dev/wscons/wsconsio.h>
 
 #include <machine/apmvar.h>
 
@@ -117,6 +118,8 @@ struct acpithinkpad_softc {
 
 	struct ksensor		 sc_sens[THINKPAD_NSENSORS];
 	struct ksensordev	 sc_sensdev;
+
+	uint64_t		 sc_thinklight;
 };
 
 extern void acpiec_read(struct acpiec_softc *, u_int8_t, int, u_int8_t *);
@@ -135,6 +138,14 @@ int	thinkpad_brightness_up(struct acpithinkpad_softc *);
 int	thinkpad_brightness_down(struct acpithinkpad_softc *);
 int	thinkpad_adaptive_change(struct acpithinkpad_softc *);
 int	thinkpad_activate(struct device *, int);
+
+/* wskbd hook functions */
+void	thinkpad_get_thinklight(struct acpithinkpad_softc *);
+void	thinkpad_set_thinklight(void *, int);
+int	thinkpad_get_backlight(struct wskbd_backlight *);
+int	thinkpad_set_backlight(struct wskbd_backlight *);
+extern int (*wskbd_get_backlight)(struct wskbd_backlight *);
+extern int (*wskbd_set_backlight)(struct wskbd_backlight *);
 
 void    thinkpad_sensor_attach(struct acpithinkpad_softc *sc);
 void    thinkpad_sensor_refresh(void *);
@@ -238,6 +249,12 @@ thinkpad_attach(struct device *parent, struct device *self, void *aux)
 	/* Set event mask to receive everything */
 	thinkpad_enable_events(sc);
 	thinkpad_sensor_attach(sc);
+
+	if (aml_evalinteger(sc->sc_acpi, sc->sc_devnode, "KLCG",
+	    0, NULL, &sc->sc_thinklight) == 0) {
+		wskbd_get_backlight = thinkpad_get_backlight;
+		wskbd_set_backlight = thinkpad_set_backlight;
+	}
 
 	/* Run thinkpad_hotkey on button presses */
 	aml_register_notify(sc->sc_devnode, aa->aaa_dev,
@@ -355,6 +372,9 @@ thinkpad_hotkey(struct aml_node *node, int notify_type, void *arg)
 #endif
 			handled = 1;
 			break;
+		case THINKPAD_BUTTON_THINKLIGHT:
+			thinkpad_get_thinklight(sc);
+			break;
 		case THINKPAD_ADAPTIVE_NEXT:
 		case THINKPAD_ADAPTIVE_QUICK:
 			thinkpad_adaptive_change(sc);
@@ -380,7 +400,6 @@ thinkpad_hotkey(struct aml_node *node, int notify_type, void *arg)
 		case THINKPAD_BUTTON_FN_TOGGLE:
 		case THINKPAD_BUTTON_LOCK_SCREEN:
 		case THINKPAD_BUTTON_POINTER_SWITCH:
-		case THINKPAD_BUTTON_THINKLIGHT:
 		case THINKPAD_BUTTON_THINKVANTAGE:
 		case THINKPAD_BUTTON_BLACK:
 		case THINKPAD_BUTTON_CONFIG:
@@ -548,4 +567,54 @@ thinkpad_activate(struct device *self, int act)
 		break;
 	}
 	return (0);
+}
+
+void
+thinkpad_get_thinklight(struct acpithinkpad_softc *sc)
+{
+	aml_evalinteger(sc->sc_acpi, sc->sc_devnode, "KLCG",
+	    0, NULL, &sc->sc_thinklight);
+}
+
+void
+thinkpad_set_thinklight(void *arg0, int arg1)
+{
+	struct acpithinkpad_softc *sc = arg0;
+	struct aml_value arg;
+
+	memset(&arg, 0, sizeof(arg));
+	arg.type = AML_OBJTYPE_INTEGER;
+	arg.v_integer = sc->sc_thinklight;
+	aml_evalname(sc->sc_acpi, sc->sc_devnode, "KLCS", 1, &arg, NULL);
+}
+
+int
+thinkpad_get_backlight(struct wskbd_backlight *kbl)
+{
+	struct acpithinkpad_softc *sc = acpithinkpad_cd.cd_devs[0];
+
+	KASSERT(sc != NULL);
+
+	kbl->min = 0;
+	kbl->max = (sc->sc_thinklight >> 8) & 0xff;
+	kbl->curval = sc->sc_thinklight & 0xff;
+	return 0;
+}
+
+int
+thinkpad_set_backlight(struct wskbd_backlight *kbl)
+{
+	struct acpithinkpad_softc *sc = acpithinkpad_cd.cd_devs[0];
+	int maxval = (sc->sc_thinklight >> 8) & 0xff;
+
+	KASSERT(sc != NULL);
+
+	if (kbl->curval > maxval)
+		return EINVAL;
+
+	sc->sc_thinklight &= ~0xff;
+	sc->sc_thinklight |= kbl->curval;
+	acpi_addtask(sc->sc_acpi, thinkpad_set_thinklight, sc, 0);
+	acpi_wakeup(sc->sc_acpi);
+	return 0;
 }
