@@ -1,4 +1,4 @@
-/*	$OpenBSD: makemap.c,v 1.58 2015/12/11 07:10:06 guenther Exp $	*/
+/*	$OpenBSD: makemap.c,v 1.59 2015/12/13 11:06:19 sunil Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -43,23 +43,18 @@
 #define	PATH_ALIASES	"/etc/mail/aliases"
 
 static void	 usage(void);
-static int	 parse_map(char *);
-static int	 parse_entry(char *, size_t, size_t);
-static int	 parse_mapentry(char *, size_t, size_t);
-static int	 parse_setentry(char *, size_t, size_t);
+static int	 parse_map(DB *, int *, char *);
+static int	 parse_entry(DB *, int *, char *, size_t, size_t);
+static int	 parse_mapentry(DB *, int *, char *, size_t, size_t);
+static int	 parse_setentry(DB *, int *, char *, size_t, size_t);
 static int	 make_plain(DBT *, char *);
 static int	 make_aliases(DBT *, char *);
 static char	*conf_aliases(char *);
 static int	dump_db(const char *, DBTYPE);
 
-DB	*db;
-char	*source;
-char	*oflag;
-int	 Uflag;
-int	 dbputs;
-
-struct smtpd	smtpd;
+struct smtpd	 smtpd;
 struct smtpd	*env = &smtpd;
+char		*source;
 extern char	*__progname;
 
 enum program {
@@ -93,9 +88,10 @@ makemap(int argc, char *argv[])
 {
 	struct stat	 sb;
 	char		 dbname[PATH_MAX];
+	DB		*db;
 	const char	*opts;
-	char		*conf;
-	int		 ch;
+	char		*conf, *oflag = NULL;
+	int		 ch, dbputs = 0, Uflag = 0;
 	DBTYPE		 dbtype = DB_HASH;
 	char		*p;
 
@@ -208,7 +204,7 @@ makemap(int argc, char *argv[])
 			goto bad;
 		}
 
-	if (! parse_map(source))
+	if (! parse_map(db, &dbputs, source))
 		goto bad;
 
 	if (db->close(db) == -1) {
@@ -233,7 +229,7 @@ bad:
 }
 
 static int
-parse_map(char *filename)
+parse_map(DB *db, int *dbputs, char *filename)
 {
 	FILE	*fp;
 	char	*line;
@@ -260,7 +256,7 @@ parse_map(char *filename)
 
 	while ((line = fparseln(fp, &len, &lineno,
 	    NULL, FPARSELN_UNESCCOMM)) != NULL) {
-		if (! parse_entry(line, len, lineno)) {
+		if (! parse_entry(db, dbputs, line, len, lineno)) {
 			free(line);
 			fclose(fp);
 			return 0;
@@ -273,20 +269,20 @@ parse_map(char *filename)
 }
 
 static int
-parse_entry(char *line, size_t len, size_t lineno)
+parse_entry(DB *db, int *dbputs, char *line, size_t len, size_t lineno)
 {
 	switch (type) {
 	case T_PLAIN:
 	case T_ALIASES:
-		return parse_mapentry(line, len, lineno);
+		return parse_mapentry(db, dbputs, line, len, lineno);
 	case T_SET:
-		return parse_setentry(line, len, lineno);
+		return parse_setentry(db, dbputs, line, len, lineno);
 	}
 	return 0;
 }
 
 static int
-parse_mapentry(char *line, size_t len, size_t lineno)
+parse_mapentry(DB *db, int *dbputs, char *line, size_t len, size_t lineno)
 {
 	DBT	 key;
 	DBT	 val;
@@ -332,7 +328,7 @@ parse_mapentry(char *line, size_t len, size_t lineno)
 		return 0;
 	}
 
-	dbputs++;
+	(*dbputs)++;
 
 	free(val.data);
 
@@ -344,7 +340,7 @@ bad:
 }
 
 static int
-parse_setentry(char *line, size_t len, size_t lineno)
+parse_setentry(DB *db, int *dbputs, char *line, size_t len, size_t lineno)
 {
 	DBT	 key;
 	DBT	 val;
@@ -373,7 +369,7 @@ parse_setentry(char *line, size_t len, size_t lineno)
 		return 0;
 	}
 
-	dbputs++;
+	(*dbputs)++;
 
 	return 1;
 }
@@ -445,9 +441,10 @@ conf_aliases(char *cfgpath)
 static int
 dump_db(const char *dbname, DBTYPE dbtype)
 {
-	DBT	key, val;
+	DB	*db;
+	DBT	 key, val;
 	char	*keystr, *valstr;
-	int	r;
+	int	 r;
 
 	db = dbopen(dbname, O_RDONLY, 0644, dbtype, NULL);
 	if (db == NULL)
@@ -479,7 +476,7 @@ usage(void)
 	if (mode == P_NEWALIASES)
 		fprintf(stderr, "usage: %s [-f file]\n", __progname);
 	else
-		fprintf(stderr, "usage: %s [-d dbtype] [-o dbfile] "
+		fprintf(stderr, "usage: %s [-U] [-d dbtype] [-o dbfile] "
 		    "[-t type] file\n", __progname);
 	exit(1);
 }
