@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.145 2015/12/13 10:56:26 gilles Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.146 2015/12/13 11:28:12 jmc Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -595,9 +595,7 @@ For example:
 expire 4d	# expire after 4 days
 expire 10h	# expire after 10 hours
 .Ed
-.It Xo
-.Ic filter Ar name Ar filter Op Ar arguments
-.Xc
+.It Ic filter Ar name filter Op Ar arguments
 Specify a filter with the given
 .Ar name
 and the program
@@ -607,9 +605,7 @@ using the given filter
 Filters are used to hook into the SMTP dialog and provide additional filtering
 options for
 .Xr smtpd 8 .
-.It Xo
-.Ic filter Ar name Ic chain Ar filter Op , Ar ...
-.Xc
+.It Ic filter Ar name Ic chain Ar filter Op , Ar ...
 Specify a filter chain with the given
 .Ar name
 and filters.
