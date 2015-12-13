@@ -1,0 +1,297 @@
+.\"	$OpenBSD: filter_api.3,v 1.1 2015/12/13 19:55:16 jung Exp $
+.\"
+.\" Copyright (c) 2015, Joerg Jung <jung@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: December 13 2015 $
+.Dt FILTER_API 3
+.Os
+.Sh NAME
+.Nm filter_api_loop ,
+.Nm filter_api_accept ,
+.Nm filter_api_reject ,
+.Nm filter_api_reject_code ,
+.Nm filter_api_writeln ,
+.Nm filter_api_on_connect ,
+.Nm filter_api_on_helo ,
+.Nm filter_api_on_mail ,
+.Nm filter_api_on_rcpt ,
+.Nm filter_api_on_data ,
+.Nm filter_api_on_dataline ,
+.Nm filter_api_on_eom ,
+.Nm filter_api_on_reset ,
+.Nm filter_api_on_disconnect ,
+.Nm filter_api_on_commit ,
+.Nm filter_api_on_rollback ,
+.Nm filter_api_setugid ,
+.Nm filter_api_set_chroot ,
+.Nm filter_api_no_chroot ,
+.Nm filter_api_set_udata ,
+.Nm filter_api_get_udata ,
+.Nm filter_api_sockaddr_to_text ,
+.Nm filter_api_mailaddr_to_text
+.Nd filter API for smtpd
+.Sh SYNOPSIS
+.In smtpd-defines.h
+.In smtpd-api.h
+.Ft void
+.Fn filter_api_loop "void"
+.Ft int
+.Fn filter_api_accept "uint64_t id"
+.Ft int
+.Fn filter_api_reject "uint64_t id" "enum filter_status status"
+.Ft int
+.Fn filter_api_reject_code "uint64_t id" "enum filter_status status" \
+    "uint32_t code" "const char *line"
+.Ft void
+.Fn filter_api_writeln "uint64_t id" "const char * line"
+.Ft void
+.Fn filter_api_on_connect "int(*cb)(uint64_t, struct filter_connect *)"
+.Ft void
+.Fn filter_api_on_helo "int(*cb)(uint64_t, const char *)"
+.Ft void
+.Fn filter_api_on_mail "int(*cb)(uint64_t, struct mailaddr *)"
+.Ft void
+.Fn filter_api_on_rcpt "int(*cb)(uint64_t, struct mailaddr *)"
+.Ft void
+.Fn filter_api_on_data "int(*cb)(uint64_t)"
+.Ft void
+.Fn filter_api_on_dataline "void(*cb)(uint64_t, const char *)"
+.Ft void
+.Fn filter_api_on_eom "int(*cb)(uint64_t, size_t)"
+.Ft void
+.Fn filter_api_on_reset "void(*cb)(uint64_t)"
+.Ft void
+.Fn filter_api_on_disconnect "void(*cb)(uint64_t)"
+.Ft void
+.Fn filter_api_on_commit "void(*cb)(uint64_t)"
+.Ft void
+.Fn filter_api_on_rollback "void(*cb)(uint64_t)"
+.Ft void
+.Fn filter_api_setugid "uid_t uid" "gid_t gid"
+.Ft void
+.Fn filter_api_set_chroot "const char *rootpath"
+.Ft void
+.Fn filter_api_no_chroot "void"
+.Ft void
+.Fn filter_api_set_udata "uint64_t id" "void *data"
+.Ft void *
+.Fn filter_api_get_udata "uint64_t id"
+.Ft const char *
+.Fn filter_api_sockaddr_to_text "const struct sockaddr *sa"
+.Ft const char *
+.Fn filter_api_mailaddr_to_text "const struct mailaddr *maddr"
+.Sh DESCRIPTION
+.Nm filter_api
+is an interface intended to provide filter capabilities for the
+.Xr smtpd 8
+daemon.
+.Nm filter_api
+is used in standalone filter programs, which setup callback functions to hook
+into the SMTP dialog.
+For example, each SMTP command can be intercepted with callback functions.
+.Pp
+The function
+.Fn filter_api_loop
+is used to enter the filter loop, waiting for callback functions to be called.
+.Pp
+The function
+.Fn filter_api_accept
+can be called to accept the current message with the given
+.Fa id
+from within a callback function.
+.Pp
+The functions
+.Fn filter_api_reject
+and
+.Fn filter_api_reject_code
+can be called to reject the current message with the given
+.Fa id
+from within a callback function.
+Both expect the
+.Fa status
+to be specified which should be one of the following values.
+.Bl -tag -width -Ds
+.It Dv FILTER_FAIL
+The filter failed and the message should not be accepted.
+.It Dv FILTER_CLOSE
+The filter is done and the message should not be accepted.
+.El
+.Pp
+Morover, with the function
+.Fn filter_api_reject_code
+a
+.Fa code
+and
+.Fa line
+can be specified, to reject the current message with a custom SMTP reply code
+and error message.
+.Pp
+The function
+.Fn filter_api_writeln
+is intended to write (received) SMTP DATA command lines (back) from within a
+callback function.
+This might be used by a filter to add or modifiy DATA lines.
+.Sh CALLBACK FUNCTIONS
+The function
+.Fn filter_api_on_connect
+is called on new SMTP connections.
+The callback can be used to accept or reject messages based on the given
+connection information.
+.Pp
+The function
+.Fn filter_api_on_helo
+is called on SMTP HELO command.
+The callback can be used to accept or reject messages based on the given HELO
+string.
+.Pp
+The function
+.Fn filter_api_on_mail
+is called on SMTP MAIL FROM command.
+The callback can be used to accept or reject messages based on the given MAIL
+FROM address.
+.Pp
+The function
+.Fn filter_api_on_rcpt
+is called on SMTP RCPT TO command.
+The callback can be used to accept or reject messages based on the given RCPT
+TO address.
+.Pp
+The function
+.Fn filter_api_on_data
+is called on SMTP DATA command.
+The callback might be used to setup data structures for filtering the upcoming
+DATA lines.
+.Pp
+The function
+.Fn filter_api_on_dataline
+is called on each SMTP DATA line.
+The callback can be used to accept or reject messaged based on the (header or
+body) content of the current message.
+.Pp
+The function
+.Fn filter_api_on_eom
+is called on the end (of DATA command) of the current message.
+The callback might be used to cleanup data structures and finalize the decision
+of accepting or rejecting the message.
+.Pp
+The function
+.Fn filter_api_on_reset
+is called on SMTP RSET command.
+The callback might be used to reset the current filter state.
+.Pp
+The function
+.Fn filter_api_on_disconnect
+is called on closed SMTP connections.
+The callback might be used to cleanup earlier setup data structures.
+.Pp
+The function
+.Fn filter_api_on_commit
+is called on commit of the current message.
+.\"The callback might be used to trigger further operations.
+.Pp
+The function
+.Fn filter_api_on_rollback
+is called on rollback of the SMTP session.
+The callback might be used to cleanup earlier setup data structures.
+.Sh HELPER FUNCTIONS
+The function
+.Fn filter_api_setugid
+can be called using
+.Fa uid
+and
+.Fa gid
+to set the running user and group of the filter.
+.Pp
+The function
+.Fn filter_api_set_chroot
+can be called using
+.Fa rootpath
+to set the chroot path of the filter.
+.Pp
+The function
+.Fn filter_api_no_chroot
+can be called to disable chroot for the filter.
+.Pp
+The function
+.Fn filter_api_set_udata
+can be called for the current message with the given
+.Fa id
+to set a user data pointer
+.Fa data
+from within a callback function.
+.Pp
+The function
+.Fn filter_api_get_udata
+can be called to get the user data pointer for the current message with the
+given
+.Fa id
+from within a callback function.
+.Pp
+The function
+.Fn filter_api_sockaddr_to_text
+can be called to convert a socket address
+.Fa sa
+to a string.
+.Pp
+The function
+.Fn filter_api_mailaddr_to_text
+can be called to convert a mail address
+.Fa maddr
+to a string.
+.Sh RETURN VALUES
+The functions
+.Fn filter_api_accept ,
+.Fn filter_api_reject ,
+and
+.Fn filter_api_reject_code ,
+return 1, intended to be used in a return statement of a callback function.
+.Pp
+The function
+.Fn filter_api_get_udata
+returns a pointer to the user data set for the current message.
+.Pp
+The functions
+.Fn filter_api_sockaddr_to_text
+and
+.Fn filter_api_mailaddr_to_text
+return a pointer to a static buffer containing the string representation.
+The buffer remains valid until the next call to the conversion functions.
+In case of error, the function
+.Fn filter_api_sockaddr_to_text
+returns the static string
+.Dq Li (unknown)
+and the function
+.Fn filter_api_mailaddr_to_text
+returns NULL.
+.Sh ERRORS
+The function
+.Fn filter_api_sockaddr_to_text
+may fail for any of the errors specified for the routine
+.Xr getnameinfo 3
+and listed in
+.Xr gai_strerror 3 .
+.Sh EXAMPLES
+.Xr filter-stub 8
+which ships with the OpenSMTPD-extras package is intended to provide an example
+code template.
+.Sh SEE ALSO
+.Xr smtpd.conf 5 ,
+.Xr smtpd 8 ,
+.Xr filter-stub 8
+.Sh HISTORY
+The
+.Nm filter_api
+first appeared in
+.Ox 5.9 .
