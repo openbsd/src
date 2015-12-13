@@ -1,4 +1,4 @@
-.\"	$OpenBSD: filter_api.3,v 1.1 2015/12/13 19:55:16 jung Exp $
+.\"	$OpenBSD: filter_api.3,v 1.2 2015/12/13 23:50:44 gsoares Exp $
 .\"
 .\" Copyright (c) 2015, Joerg Jung <jung@openbsd.org>
 .\"
@@ -275,6 +275,10 @@ returns the static string
 and the function
 .Fn filter_api_mailaddr_to_text
 returns NULL.
+.Sh EXAMPLES
+.Xr filter-stub 8
+which ships with the OpenSMTPD-extras package is intended to provide an example
+code template.
 .Sh ERRORS
 The function
 .Fn filter_api_sockaddr_to_text
@@ -282,14 +286,10 @@ may fail for any of the errors specified for the routine
 .Xr getnameinfo 3
 and listed in
 .Xr gai_strerror 3 .
-.Sh EXAMPLES
-.Xr filter-stub 8
-which ships with the OpenSMTPD-extras package is intended to provide an example
-code template.
 .Sh SEE ALSO
 .Xr smtpd.conf 5 ,
-.Xr smtpd 8 ,
-.Xr filter-stub 8
+.Xr filter-stub 8 ,
+.Xr smtpd 8
 .Sh HISTORY
 The
 .Nm filter_api
