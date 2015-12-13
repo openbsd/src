@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl_smtpd.c,v 1.11 2015/12/12 17:16:56 gilles Exp $	*/
+/*	$OpenBSD: ssl_smtpd.c,v 1.12 2015/12/13 09:52:44 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -82,18 +82,14 @@ dummy_verify(int ok, X509_STORE_CTX *store)
 }
 
 void *
-ssl_smtp_init(void *ssl_ctx, void *sni, int verify)
+ssl_smtp_init(void *ssl_ctx, int verify)
 {
 	SSL	*ssl = NULL;
-	int	(*cb)(SSL *,int *,void *) = sni;
 
 	log_debug("debug: session_start_ssl: switching to SSL");
 
 	if (verify)
 		SSL_CTX_set_verify(ssl_ctx, SSL_VERIFY_PEER, dummy_verify);
-
-	if (cb)
-		SSL_CTX_set_tlsext_servername_callback(ssl_ctx, cb);
 
 	if ((ssl = SSL_new(ssl_ctx)) == NULL)
 		goto err;

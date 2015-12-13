@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl.h,v 1.18 2015/12/12 20:02:31 gilles Exp $	*/
+/*	$OpenBSD: ssl.h,v 1.19 2015/12/13 09:52:44 gilles Exp $	*/
 /*
  * Copyright (c) 2013 Gilles Chehade <gilles@poolp.org>
  *
@@ -47,7 +47,8 @@ struct ca {
 
 /* ssl.c */
 void		ssl_init(void);
-int		ssl_setup(SSL_CTX **, struct pki *, const char *);
+int		ssl_setup(SSL_CTX **, struct pki *,
+    int (*)(SSL *, int *, void *), const char *);
 SSL_CTX	       *ssl_ctx_create(const char *, char *, off_t, const char *);
 int	        ssl_cmp(struct pki *, struct pki *);
 void		ssl_set_ephemeral_key_exchange(SSL_CTX *, DH *);

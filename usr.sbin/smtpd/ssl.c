@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl.c,v 1.84 2015/12/12 20:02:31 gilles Exp $	*/
+/*	$OpenBSD: ssl.c,v 1.85 2015/12/13 09:52:44 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -68,7 +68,8 @@ ssl_init(void)
 }
 
 int
-ssl_setup(SSL_CTX **ctxp, struct pki *pki, const char *ciphers)
+ssl_setup(SSL_CTX **ctxp, struct pki *pki,
+    int (*sni_cb)(SSL *,int *,void *), const char *ciphers)
 {
 	DH	*dh;
 	SSL_CTX	*ctx;
@@ -84,6 +85,9 @@ ssl_setup(SSL_CTX **ctxp, struct pki *pki, const char *ciphers)
 	arc4random_buf(sid, sizeof(sid));
 	if (!SSL_CTX_set_session_id_context(ctx, sid, sizeof(sid)))
 		goto err;
+
+	if (sni_cb)
+		SSL_CTX_set_tlsext_servername_callback(ctx, sni_cb);
 
 	if (pki->pki_dhparams_len == 0)
 		dh = get_dh2048();
