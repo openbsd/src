@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd.c,v 1.112 2015/12/13 17:55:14 nicm Exp $ */
+/* $OpenBSD: cmd.c,v 1.113 2015/12/13 17:58:26 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -512,7 +512,7 @@ cmd_set_state_flag(struct cmd *cmd, struct cmd_q *cmdq, char c)
 	case CMD_MOVEW_R|CMD_INDEX_T:
 	case CMD_MOVEW_R|CMD_INDEX_S:
 		error = cmd_find_target(fsf, cmdq, flag, CMD_FIND_SESSION,
-		    targetflags);
+		    targetflags|CMD_FIND_QUIET);
 		if (error != 0) {
 			error = cmd_find_target(fsf, cmdq, flag,
 			    CMD_FIND_WINDOW, CMD_FIND_WINDOW_INDEX);
