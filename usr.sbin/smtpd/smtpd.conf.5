@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.144 2015/12/13 10:28:41 gilles Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.145 2015/12/13 10:56:26 gilles Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -596,6 +596,24 @@ expire 4d	# expire after 4 days
 expire 10h	# expire after 10 hours
 .Ed
 .It Xo
+.Ic filter Ar name Ar filter Op Ar arguments
+.Xc
+Specify a filter with the given
+.Ar name
+and the program
+.Ar filter
+using the given filter
+.Ar arguments .
+Filters are used to hook into the SMTP dialog and provide additional filtering
+options for
+.Xr smtpd 8 .
+.It Xo
+.Ic filter Ar name Ic chain Ar filter Op , Ar ...
+.Xc
+Specify a filter chain with the given
+.Ar name
+and filters.
+.It Xo
 .Ic limit session
 .Brq Cm max-rcpt | max-mails
 .Ar num
@@ -639,6 +657,7 @@ Changing the default value might degrade performances.
 .Ic listen on Ar interface
 .Op Ar family
 .Op Ic port Ar port
+.Op Ic filter Ar name
 .Op Ic tls | tls-require | tls-require verify | smtps | secure
 .Op Ic pki Ar pkiname
 .Op Ic auth | auth-optional Op < Ns Ar authtable Ns >
@@ -667,6 +686,12 @@ Accepted values are
 .Ic inet4
 and
 .Ic inet6 .
+.Pp
+A
+.Ic filter
+may be specified, to use a filter or filter chain with the given
+.Ar name
+on SMTP transactions.
 .Pp
 Secured connections are provided either using STARTTLS
 .Pq Ic tls ,
