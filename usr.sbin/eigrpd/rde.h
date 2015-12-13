@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.5 2015/10/27 03:25:55 renato Exp $ */
+/*	$OpenBSD: rde.h,v 1.6 2015/12/13 19:02:49 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -155,12 +155,15 @@ struct eigrp_route	*route_new(struct rt_node *, struct rde_nbr *,
     struct rinfo *);
 void			 route_del(struct rt_node *, struct eigrp_route *);
 uint32_t		 safe_sum_uint32(uint32_t, uint32_t);
+uint32_t		 safe_mul_uint32(uint32_t, uint32_t);
 uint32_t		 eigrp_composite_delay(uint32_t);
 uint32_t		 eigrp_real_delay(uint32_t);
 uint32_t		 eigrp_composite_bandwidth(uint32_t);
 uint32_t		 eigrp_real_bandwidth(uint32_t);
-void			 route_update_metrics(struct eigrp_route *,
-    struct rinfo *);
+uint32_t		 route_composite_metric(uint8_t *, uint32_t, uint32_t,
+    uint8_t, uint8_t);
+void			 route_update_metrics(struct eigrp *,
+    struct eigrp_route *, struct rinfo *);
 void			 reply_outstanding_add(struct rt_node *,
     struct rde_nbr *);
 struct reply_node	*reply_outstanding_find(struct rt_node *,

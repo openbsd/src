@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_dual.c,v 1.11 2015/12/13 19:00:42 renato Exp $ */
+/*	$OpenBSD: rde_dual.c,v 1.12 2015/12/13 19:02:49 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -273,7 +273,7 @@ route_new(struct rt_node *rn, struct rde_nbr *nbr, struct rinfo *ri)
 	route->nbr = nbr;
 	route->type = ri->type;
 	memcpy(&route->nexthop, &ri->nexthop, sizeof(route->nexthop));
-	route_update_metrics(route, ri);
+	route_update_metrics(eigrp, route, ri);
 	TAILQ_INSERT_TAIL(&rn->routes, route, entry);
 
 	log_debug("%s: prefix %s via %s distance (%u/%u)", __func__,
@@ -304,6 +304,19 @@ safe_sum_uint32(uint32_t a, uint32_t b)
 	uint64_t	total;
 
 	total = (uint64_t) a + (uint64_t) b;
+
+	if (total >> 32)
+		return ((uint32_t )(~0));
+
+	return ((uint32_t) total);
+}
+
+uint32_t
+safe_mul_uint32(uint32_t a, uint32_t b)
+{
+	uint64_t	total;
+
+	total = (uint64_t) a * (uint64_t) b;
 
 	if (total >> 32)
 		return ((uint32_t )(~0));
@@ -343,46 +356,82 @@ eigrp_real_bandwidth(uint32_t bandwidth)
 	return ((EIGRP_SCALING_FACTOR * (uint32_t)10000000) / bandwidth);
 }
 
-void
-route_update_metrics(struct eigrp_route *route, struct rinfo *ri)
+uint32_t
+route_composite_metric(uint8_t *kvalues, uint32_t delay, uint32_t bandwidth,
+    uint8_t load, uint8_t reliability)
 {
-	uint32_t	 bandwidth;
-	int		 mtu;
+	uint64_t	 distance;
+	uint32_t	 operand1, operand2, operand3;
+	double		 operand4;
 
-	if (route->nbr->flags & F_RDE_NBR_SELF) {
-		memcpy(&route->metric, &ri->metric, sizeof(route->metric));
-		memcpy(&route->emetric, &ri->emetric, sizeof(route->emetric));
+	/*
+	 * Need to apply the scaling factor before any division to avoid
+	 * losing information from truncation.
+	 */
+	operand1 = safe_mul_uint32(kvalues[0] * EIGRP_SCALING_FACTOR,
+	    10000000 / bandwidth);
+	operand2 = safe_mul_uint32(kvalues[1] * EIGRP_SCALING_FACTOR,
+	    10000000 /bandwidth) / (256 - load);
+	operand3 = safe_mul_uint32(kvalues[2] * EIGRP_SCALING_FACTOR, delay);
+
+	distance = (uint64_t) operand1 + (uint64_t) operand2 +
+	    (uint64_t) operand3;
+
+	/* if K5 is set to zero, the last term of the formula is not used */
+	if (kvalues[4] != 0) {
+		operand4 = (double) kvalues[4] / (reliability + kvalues[3]);
+		/* no risk of overflow (64 bits), operand4 can be at most 255 */
+		distance *= operand4;
+	}
+
+	/* overflow protection */
+	if (distance >> 32)
+		distance = ((uint32_t )(~0));
+
+	return ((uint32_t) distance);
+}
+
+void
+route_update_metrics(struct eigrp *eigrp, struct eigrp_route *route,
+    struct rinfo *ri)
+{
+	struct eigrp_iface	*ei = route->nbr->ei;
+	uint32_t		 delay, bandwidth;
+	int			 mtu;
+
+	memcpy(&route->metric, &ri->metric, sizeof(route->metric));
+	memcpy(&route->emetric, &ri->emetric, sizeof(route->emetric));
+	route->flags |= F_EIGRP_ROUTE_M_CHANGED;
+
+	delay = eigrp_real_delay(route->metric.delay);
+	bandwidth = eigrp_real_bandwidth(route->metric.bandwidth);
+
+	if (route->nbr->flags & F_RDE_NBR_SELF)
 		route->rdistance = 0;
+	else {
+		route->rdistance = route_composite_metric(eigrp->kvalues,
+		    delay, bandwidth, route->metric.load,
+		    route->metric.reliability);
 
-		/* no need to update the local metric */
-	} else {
-		memcpy(&route->metric, &ri->metric, sizeof(route->metric));
-		memcpy(&route->emetric, &ri->emetric, sizeof(route->emetric));
-		route->rdistance = safe_sum_uint32(ri->metric.delay,
-		    ri->metric.bandwidth);
+		/* update the delay */
+		delay = safe_sum_uint32(delay, ei->delay);
+		route->metric.delay = eigrp_composite_delay(delay);
 
-		/* update delay. */
-		route->metric.delay = safe_sum_uint32(route->metric.delay,
-		    eigrp_composite_delay(route->nbr->ei->delay));
-
-		/* update bandwidth */
-		bandwidth = min(route->nbr->ei->bandwidth,
-		    eigrp_real_bandwidth(route->metric.bandwidth));
+		/* update the bandwidth */
+		bandwidth = min(bandwidth, ei->bandwidth);
 		route->metric.bandwidth = eigrp_composite_bandwidth(bandwidth);
 
-		/* update mtu */
-		mtu = min(metric_decode_mtu(route->metric.mtu),
-		    route->nbr->ei->iface->mtu);
+		/* update the mtu */
+		mtu = min(metric_decode_mtu(route->metric.mtu), ei->iface->mtu);
 		metric_encode_mtu(route->metric.mtu, mtu);
 
-		/* update hop count */
+		/* update the hop count */
 		if (route->metric.hop_count < UINT8_MAX)
 			route->metric.hop_count++;
 	}
 
-	route->distance = safe_sum_uint32(route->metric.delay,
-	    route->metric.bandwidth);
-	route->flags |= F_EIGRP_ROUTE_M_CHANGED;
+	route->distance = route_composite_metric(eigrp->kvalues, delay,
+	    bandwidth, DEFAULT_LOAD, DEFAULT_RELIABILITY);
 }
 
 void
@@ -626,6 +675,7 @@ rt_set_successor(struct rt_node *rn, struct eigrp_route *successor)
 		rn->successor.rdistance = EIGRP_INFINITE_METRIC;
 		memset(&rn->successor.metric, 0,
 		    sizeof(rn->successor.metric));
+		rn->successor.metric.delay = EIGRP_INFINITE_METRIC;
 		memset(&rn->successor.emetric, 0,
 		    sizeof(rn->successor.emetric));
 	} else {
@@ -846,7 +896,7 @@ rde_check_update(struct rde_nbr *nbr, struct rinfo *ri)
 			if (route == NULL)
 				route = route_new(rn, nbr, ri);
 			else
-				route_update_metrics(route, ri);
+				route_update_metrics(eigrp, route, ri);
 		}
 	}
 
@@ -927,7 +977,7 @@ rde_check_query(struct rde_nbr *nbr, struct rinfo *ri, int siaquery)
 		if (route == NULL)
 			route = route_new(rn, nbr, ri);
 		else
-			route_update_metrics(route, ri);
+			route_update_metrics(eigrp, route, ri);
 	}
 
 	switch (rn->state) {
@@ -1115,7 +1165,7 @@ rde_check_reply(struct rde_nbr *nbr, struct rinfo *ri, int siareply)
 		if (route == NULL)
 			route = route_new(rn, nbr, ri);
 		else
-			route_update_metrics(route, ri);
+			route_update_metrics(eigrp, route, ri);
 	}
 
 	reply_outstanding_remove(reply);
