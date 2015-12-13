@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-show-environment.c,v 1.13 2015/12/13 14:32:38 nicm Exp $ */
+/* $OpenBSD: cmd-show-environment.c,v 1.14 2015/12/13 18:15:13 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -37,7 +37,7 @@ const struct cmd_entry cmd_show_environment_entry = {
 	"show-environment", "showenv",
 	"gst:", 0, 1,
 	"[-gs] " CMD_TARGET_SESSION_USAGE " [name]",
-	CMD_SESSION_T,
+	CMD_SESSION_T|CMD_CANFAIL,
 	cmd_show_environment_exec
 };
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-show-options.c,v 1.26 2015/12/13 14:32:38 nicm Exp $ */
+/* $OpenBSD: cmd-show-options.c,v 1.27 2015/12/13 18:15:13 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -38,7 +38,7 @@ const struct cmd_entry cmd_show_options_entry = {
 	"show-options", "show",
 	"gqst:vw", 0, 1,
 	"[-gqsvw] [-t target-session|target-window] [option]",
-	CMD_WINDOW_T,
+	CMD_WINDOW_T|CMD_CANFAIL,
 	cmd_show_options_exec
 };
 
@@ -46,7 +46,7 @@ const struct cmd_entry cmd_show_window_options_entry = {
 	"show-window-options", "showw",
 	"gvt:", 0, 1,
 	"[-gv] " CMD_TARGET_WINDOW_USAGE " [option]",
-	CMD_WINDOW_T,
+	CMD_WINDOW_T|CMD_CANFAIL,
 	cmd_show_options_exec
 };
 
