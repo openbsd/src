@@ -1,4 +1,4 @@
-/*	$OpenBSD: pony.c,v 1.10 2015/12/01 09:44:54 gilles Exp $	*/
+/*	$OpenBSD: pony.c,v 1.11 2015/12/13 10:54:11 gilles Exp $	*/
 
 /*
  * Copyright (c) 2014 Gilles Chehade <gilles@poolp.org>
@@ -57,7 +57,7 @@ pony_imsg(struct mproc *p, struct imsg *imsg)
 	case IMSG_CONF_START:
 		return;
 	case IMSG_CONF_END:
-		smtp_configure();
+		filter_configure();
 		return;
 	case IMSG_CTL_VERBOSE:
 		m_msg(&m, imsg);
@@ -171,6 +171,7 @@ pony(void)
 	mda_postfork();
 	mta_postfork();
 	smtp_postfork();
+	filter_postfork();
 
 	/* do not purge listeners and pki, they are purged
 	 * in smtp_configure()
