@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-show-environment.c,v 1.12 2015/10/28 09:51:55 nicm Exp $ */
+/* $OpenBSD: cmd-show-environment.c,v 1.13 2015/12/13 14:32:38 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -37,7 +37,7 @@ const struct cmd_entry cmd_show_environment_entry = {
 	"show-environment", "showenv",
 	"gst:", 0, 1,
 	"[-gs] " CMD_TARGET_SESSION_USAGE " [name]",
-	0,
+	CMD_SESSION_T,
 	cmd_show_environment_exec
 };
 
@@ -86,18 +86,13 @@ enum cmd_retval
 cmd_show_environment_exec(struct cmd *self, struct cmd_q *cmdq)
 {
 	struct args		*args = self->args;
-	struct session		*s;
 	struct environ		*env;
 	struct environ_entry	*envent;
 
 	if (args_has(self->args, 'g'))
 		env = global_environ;
-	else {
-		s = cmd_find_session(cmdq, args_get(args, 't'), 0);
-		if (s == NULL)
-			return (CMD_RETURN_ERROR);
-		env = s->environ;
-	}
+	else
+		env = cmdq->state.tflag.s->environ;
 
 	if (args->argc != 0) {
 		envent = environ_find(env, args->argv[0]);

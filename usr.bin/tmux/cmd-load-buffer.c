@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-load-buffer.c,v 1.39 2015/11/14 09:41:06 nicm Exp $ */
+/* $OpenBSD: cmd-load-buffer.c,v 1.40 2015/12/13 14:32:38 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Tiago Cunha <me@tiagocunha.org>
@@ -72,7 +72,7 @@ cmd_load_buffer_exec(struct cmd *self, struct cmd_q *cmdq)
 
 	if (c != NULL && c->session == NULL)
 		cwd = c->cwd;
-	else if ((s = cmd_find_current(cmdq)) != NULL)
+	else if ((s = c->session) != NULL)
 		cwd = s->cwd;
 	else
 		cwd = ".";

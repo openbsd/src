@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-choose-buffer.c,v 1.25 2015/11/12 11:09:11 nicm Exp $ */
+/* $OpenBSD: cmd-choose-buffer.c,v 1.26 2015/12/13 14:32:38 nicm Exp $ */
 
 /*
  * Copyright (c) 2010 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -36,7 +36,7 @@ const struct cmd_entry cmd_choose_buffer_entry = {
 	"choose-buffer", NULL,
 	"F:t:", 0, 1,
 	CMD_TARGET_WINDOW_USAGE " [-F format] [template]",
-	0,
+	CMD_WINDOW_T,
 	cmd_choose_buffer_exec
 };
 
@@ -44,24 +44,21 @@ enum cmd_retval
 cmd_choose_buffer_exec(struct cmd *self, struct cmd_q *cmdq)
 {
 	struct args			*args = self->args;
-	struct client			*c;
+	struct client			*c = cmdq->state.c;
+	struct winlink			*wl = cmdq->state.tflag.wl;
 	struct window_choose_data	*cdata;
-	struct winlink			*wl;
 	struct paste_buffer		*pb;
 	char				*action, *action_data;
 	const char			*template;
 	u_int				 idx;
 
-	if ((c = cmd_find_client(cmdq, NULL, 1)) == NULL) {
+	if (c == NULL) {
 		cmdq_error(cmdq, "no client available");
 		return (CMD_RETURN_ERROR);
 	}
 
 	if ((template = args_get(args, 'F')) == NULL)
 		template = CHOOSE_BUFFER_TEMPLATE;
-
-	if ((wl = cmd_find_window(cmdq, args_get(args, 't'), NULL)) == NULL)
-		return (CMD_RETURN_ERROR);
 
 	if (paste_get_top(NULL) == NULL)
 		return (CMD_RETURN_NORMAL);

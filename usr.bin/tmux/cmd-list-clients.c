@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-list-clients.c,v 1.23 2015/12/11 12:27:36 nicm Exp $ */
+/* $OpenBSD: cmd-list-clients.c,v 1.24 2015/12/13 14:32:38 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -39,7 +39,7 @@ const struct cmd_entry cmd_list_clients_entry = {
 	"list-clients", "lsc",
 	"F:t:", 0, 0,
 	"[-F format] " CMD_TARGET_SESSION_USAGE,
-	CMD_READONLY,
+	CMD_READONLY|CMD_SESSION_T,
 	cmd_list_clients_exec
 };
 
@@ -54,11 +54,9 @@ cmd_list_clients_exec(struct cmd *self, struct cmd_q *cmdq)
 	u_int			 idx;
 	char			*line;
 
-	if (args_has(args, 't')) {
-		s = cmd_find_session(cmdq, args_get(args, 't'), 0);
-		if (s == NULL)
-			return (CMD_RETURN_ERROR);
-	} else
+	if (args_has(args, 't'))
+		s = cmdq->state.tflag.s;
+	else
 		s = NULL;
 
 	if ((template = args_get(args, 'F')) == NULL)
