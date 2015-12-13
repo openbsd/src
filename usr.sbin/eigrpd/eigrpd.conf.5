@@ -1,4 +1,4 @@
-.\"	$OpenBSD: eigrpd.conf.5,v 1.4 2015/10/27 13:14:44 renato Exp $
+.\"	$OpenBSD: eigrpd.conf.5,v 1.5 2015/12/13 19:01:20 renato Exp $
 .\"
 .\" Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
 .\" Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -18,7 +18,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 27 2015 $
+.Dd $Mdocdate: December 13 2015 $
 .Dt EIGRPD.CONF 5
 .Os
 .Sh NAME
@@ -154,11 +154,11 @@ Valid range is 1\-65535.
 Specify a default metric for all routes redistributed into EIGRP.
 Valid ranges are: 1\-10000000 for the bandwidth, 1\-16777215 for the delay,
 1\-255 for the reliability, 1\-255 for the load and 1\-65535 for the mtu.
-.It Ic k-values Ar K1 Ar K2 Ar K3 Ar K4 Ar K5
+.It Ic k-values Ar K1 Ar K2 Ar K3 Ar K4 Ar K5 Ar K6
 Set the coefficients used by the composite metric calculation.
 Two routers become neighbors only if their K-values are the same.
 For K1 and K3, The default value is 1.
-For K2, K4 and K5 the default value is 0;
+For K2, K4, K5 and K6 the default value is 0;
 valid range is 1\-254.
 .It Ic maximum-hops Ar number
 Advertise as unreachable the routes with a hop count higher than specified.
