@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.507 2015/12/13 09:52:44 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.508 2015/12/13 11:06:13 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -47,7 +47,7 @@
 #ifndef SMTPD_NAME
 #define	SMTPD_NAME		 "OpenSMTPD"
 #endif
-#define	SMTPD_VERSION		 "5.4.6"
+#define	SMTPD_VERSION		 "master"
 #define SMTPD_SESSION_TIMEOUT	 300
 #define SMTPD_BACKLOG		 5
 
