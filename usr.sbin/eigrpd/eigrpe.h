@@ -1,4 +1,4 @@
-/*	$OpenBSD: eigrpe.h,v 1.3 2015/10/05 01:59:33 renato Exp $ */
+/*	$OpenBSD: eigrpe.h,v 1.4 2015/12/13 18:55:53 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -85,6 +85,7 @@ void		 eigrpe_orig_local_route(struct eigrp_iface *,
     struct if_addr *, int);
 void		 eigrpe_iface_ctl(struct ctl_conn *, unsigned int);
 void		 eigrpe_nbr_ctl(struct ctl_conn *);
+void		 eigrpe_stats_ctl(struct ctl_conn *);
 
 /* interface.c */
 struct iface		*if_new(struct eigrpd_conf *, struct kif *);

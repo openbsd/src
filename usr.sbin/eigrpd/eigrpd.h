@@ -1,4 +1,4 @@
-/*	$OpenBSD: eigrpd.h,v 1.5 2015/10/21 03:52:12 renato Exp $ */
+/*	$OpenBSD: eigrpd.h,v 1.6 2015/12/13 18:55:53 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -71,6 +71,7 @@ enum imsg_type {
 	IMSG_CTL_SHOW_INTERFACE,
 	IMSG_CTL_SHOW_NBR,
 	IMSG_CTL_SHOW_TOPOLOGY,
+	IMSG_CTL_SHOW_STATS,
 	IMSG_CTL_FIB_COUPLE,
 	IMSG_CTL_FIB_DECOUPLE,
 	IMSG_CTL_IFACE,
@@ -252,6 +253,23 @@ struct redistribute {
 };
 SIMPLEQ_HEAD(redist_list, redistribute);
 
+struct eigrp_stats {
+	uint32_t		 hellos_sent;
+	uint32_t		 hellos_recv;
+	uint32_t		 updates_sent;
+	uint32_t		 updates_recv;
+	uint32_t		 queries_sent;
+	uint32_t		 queries_recv;
+	uint32_t		 replies_sent;
+	uint32_t		 replies_recv;
+	uint32_t		 acks_sent;
+	uint32_t		 acks_recv;
+	uint32_t		 squeries_sent;
+	uint32_t		 squeries_recv;
+	uint32_t		 sreplies_sent;
+	uint32_t		 sreplies_recv;
+};
+
 /* eigrp instance */
 struct eigrp {
 	TAILQ_ENTRY(eigrp)	 entry;
@@ -270,6 +288,7 @@ struct eigrp {
 	struct rde_nbr		*rnbr_summary;
 	struct rt_tree		 topology;
 	uint32_t		 seq_num;
+	struct eigrp_stats	 stats;
 };
 
 /* eigrp_conf */
@@ -397,6 +416,12 @@ struct ctl_show_topology_req {
 	union eigrpd_addr	 prefix;
 	uint8_t			 prefixlen;
 	uint16_t		 flags;
+};
+
+struct ctl_stats {
+	int			 af;
+	uint16_t		 as;
+	struct eigrp_stats	 stats;
 };
 
 /* parse.y */

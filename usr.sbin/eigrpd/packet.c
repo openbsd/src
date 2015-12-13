@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.4 2015/10/10 05:03:39 renato Exp $ */
+/*	$OpenBSD: packet.c,v 1.5 2015/12/13 18:55:53 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -190,13 +190,41 @@ send_packet(struct eigrp_iface *ei, struct nbr *nbr, uint32_t flags,
 
 	switch (eigrp->af) {
 	case AF_INET:
-		send_packet_v4(iface, nbr, buf);
+		if (send_packet_v4(iface, nbr, buf) < 0)
+			return (-1);
 		break;
 	case AF_INET6:
-		send_packet_v6(iface, nbr, buf);
+		if (send_packet_v6(iface, nbr, buf) < 0)
+			return (-1);
 		break;
 	default:
 		fatalx("send_packet: unknown af");
+	}
+
+	switch (eigrp_hdr->opcode) {
+	case EIGRP_OPC_HELLO:
+		if (ntohl(eigrp_hdr->ack_num) == 0)
+			ei->eigrp->stats.hellos_sent++;
+		else
+			ei->eigrp->stats.acks_sent++;
+		break;
+	case EIGRP_OPC_UPDATE:
+		ei->eigrp->stats.updates_sent++;
+		break;
+	case EIGRP_OPC_QUERY:
+		ei->eigrp->stats.queries_sent++;
+		break;
+	case EIGRP_OPC_REPLY:
+		ei->eigrp->stats.replies_sent++;
+		break;
+	case EIGRP_OPC_SIAQUERY:
+		ei->eigrp->stats.squeries_sent++;
+		break;
+	case EIGRP_OPC_SIAREPLY:
+		ei->eigrp->stats.sreplies_sent++;
+		break;
+	default:
+		break;
 	}
 
 	return (0);
@@ -402,23 +430,31 @@ recv_packet(int af, union eigrpd_addr *src, union eigrpd_addr *dest,
 	/* switch EIGRP packet type */
 	switch (eigrp_hdr->opcode) {
 	case EIGRP_OPC_HELLO:
-		if (ntohl(eigrp_hdr->ack_num) == 0)
+		if (ntohl(eigrp_hdr->ack_num) == 0) {
 			recv_hello(ei, src, nbr, tp);
+			ei->eigrp->stats.hellos_recv++;
+		} else
+			ei->eigrp->stats.acks_recv++;
 		break;
 	case EIGRP_OPC_UPDATE:
 		recv_update(nbr, &rinfo_list, ntohl(eigrp_hdr->flags));
+		ei->eigrp->stats.updates_recv++;
 		break;
 	case EIGRP_OPC_QUERY:
 		recv_query(nbr, &rinfo_list, 0);
+		ei->eigrp->stats.queries_recv++;
 		break;
 	case EIGRP_OPC_REPLY:
 		recv_reply(nbr, &rinfo_list, 0);
+		ei->eigrp->stats.replies_recv++;
 		break;
 	case EIGRP_OPC_SIAQUERY:
 		recv_query(nbr, &rinfo_list, 1);
+		ei->eigrp->stats.squeries_recv++;
 		break;
 	case EIGRP_OPC_SIAREPLY:
 		recv_reply(nbr, &rinfo_list, 1);
+		ei->eigrp->stats.sreplies_recv++;
 		break;
 	default:
 		log_debug("%s: unknown EIGRP packet type, interface %s",

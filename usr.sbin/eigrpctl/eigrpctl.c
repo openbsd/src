@@ -1,4 +1,4 @@
-/*	$OpenBSD: eigrpctl.c,v 1.6 2015/12/07 20:28:18 mmcc Exp $ */
+/*	$OpenBSD: eigrpctl.c,v 1.7 2015/12/13 18:55:53 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -59,6 +59,7 @@ const char *	 get_media_descr(uint64_t);
 const char *	 get_linkstate(uint8_t, int);
 void		 print_baudrate(uint64_t);
 int		 show_fib_interface_msg(struct imsg *);
+int		 show_stats_msg(struct imsg *, struct parse_result *);
 
 struct imsgbuf	*ibuf;
 
@@ -157,6 +158,9 @@ main(int argc, char *argv[])
 			imsg_compose(ibuf, IMSG_CTL_IFINFO, 0, 0, -1, NULL, 0);
 		show_interface_head();
 		break;
+	case SHOW_STATS:
+		imsg_compose(ibuf, IMSG_CTL_SHOW_STATS, 0, 0, -1, NULL, 0);
+		break;
 	case FIB:
 		errx(1, "fib couple|decouple");
 		break;
@@ -224,6 +228,9 @@ main(int argc, char *argv[])
 				break;
 			case SHOW_FIB_IFACE:
 				done = show_fib_interface_msg(&imsg);
+				break;
+			case SHOW_STATS:
+				done = show_stats_msg(&imsg, res);
 				break;
 			case NONE:
 			case FIB:
@@ -771,6 +778,49 @@ show_fib_interface_msg(struct imsg *imsg)
 			print_baudrate(k->baudrate);
 		}
 		printf("\n");
+		break;
+	case IMSG_CTL_END:
+		printf("\n");
+		return (1);
+	default:
+		break;
+	}
+
+	return (0);
+}
+
+int
+show_stats_msg(struct imsg *imsg, struct parse_result *res)
+{
+	struct ctl_stats	*cs;
+
+	switch (imsg->hdr.type) {
+	case IMSG_CTL_SHOW_STATS:
+		if (imsg->hdr.len < IMSG_HEADER_SIZE + sizeof(struct ctl_stats))
+			errx(1, "wrong imsg len");
+		cs = imsg->data;
+
+		if (res->family != AF_UNSPEC && res->family != cs->af)
+			break;
+		if (res->as != 0 && res->as != cs->as)
+			break;
+
+		printf("Address Family %s, Autonomous System %u\n",
+		    af_name(cs->af), cs->as);
+		printf("  Hellos sent/received: %u/%u\n",
+		    cs->stats.hellos_sent, cs->stats.hellos_recv);
+		printf("  Updates sent/received: %u/%u\n",
+		    cs->stats.updates_sent, cs->stats.updates_recv);
+		printf("  Queries sent/received: %u/%u\n",
+		    cs->stats.queries_sent, cs->stats.queries_recv);
+		printf("  Replies sent/received: %u/%u\n",
+		    cs->stats.replies_sent, cs->stats.replies_recv);
+		printf("  Acks sent/received: %u/%u\n",
+		    cs->stats.acks_sent, cs->stats.acks_recv);
+		printf("  SIA-Queries sent/received: %u/%u\n",
+		    cs->stats.squeries_sent, cs->stats.squeries_recv);
+		printf("  SIA-Replies sent/received: %u/%u\n",
+		    cs->stats.sreplies_sent, cs->stats.sreplies_recv);
 		break;
 	case IMSG_CTL_END:
 		printf("\n");

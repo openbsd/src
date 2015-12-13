@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.h,v 1.1 2015/10/02 04:31:52 renato Exp $ */
+/*	$OpenBSD: parser.h,v 1.2 2015/12/13 18:55:53 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -39,6 +39,7 @@ enum actions {
 	SHOW_TOPOLOGY,
 	SHOW_FIB,
 	SHOW_FIB_IFACE,
+	SHOW_STATS,
 	RELOAD
 };
 
