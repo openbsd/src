@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_amrr.c,v 1.9 2015/11/15 13:20:16 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_amrr.c,v 1.10 2015/12/14 08:37:01 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -118,6 +118,7 @@ ieee80211_amrr_choose(struct ieee80211_amrr *amrr, struct ieee80211_node *ni,
 			amn->amn_success = 0;
 			increase_rate(ni);
 			DPRINTF(("increase rate=%d,#tx=%d,#retries=%d\n",
+			    (ni->ni_flags & IEEE80211_NODE_HT) ? ni->ni_txmcs :
 			    RV(ni->ni_rates.rs_rates[ni->ni_txrate]),
 			    amn->amn_txcnt, amn->amn_retrycnt));
 			need_change = 1;
@@ -139,6 +140,7 @@ ieee80211_amrr_choose(struct ieee80211_amrr *amrr, struct ieee80211_node *ni,
 			}
 			decrease_rate(ni);
 			DPRINTF(("decrease rate=%d,#tx=%d,#retries=%d\n",
+			    (ni->ni_flags & IEEE80211_NODE_HT) ? ni->ni_txmcs :
 			    RV(ni->ni_rates.rs_rates[ni->ni_txrate]),
 			    amn->amn_txcnt, amn->amn_retrycnt));
 			need_change = 1;
