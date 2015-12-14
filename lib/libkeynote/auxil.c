@@ -1,4 +1,4 @@
-/* $OpenBSD: auxil.c,v 1.10 2015/11/19 02:35:24 mmcc Exp $ */
+/* $OpenBSD: auxil.c,v 1.11 2015/12/14 03:35:40 mmcc Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -487,11 +487,9 @@ keynote_free_assertion(struct assertion *as)
     if (as == NULL)
       return;
 
-    if (as->as_buf != NULL)
-      free(as->as_buf);
+    free(as->as_buf);
 
-    if (as->as_signature != NULL)
-      free(as->as_signature);
+    free(as->as_signature);
 
     if (as->as_env != NULL)
       keynote_env_cleanup(&(as->as_env), 1);

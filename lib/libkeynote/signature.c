@@ -1,4 +1,4 @@
-/* $OpenBSD: signature.c,v 1.19 2013/11/13 16:28:17 deraadt Exp $ */
+/* $OpenBSD: signature.c,v 1.20 2015/12/14 03:35:40 mmcc Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -563,16 +563,14 @@ kn_decode_key(struct keynote_deckey *dc, char *key, int keytype)
     {
 	if ((px509Cert = X509_new()) == (X509 *) NULL)
 	{
-	    if (ptr)
-	      free(ptr);
+	    free(ptr);
 	    keynote_errno = ERROR_MEMORY;
 	    return -1;
 	}
 
 	if(d2i_X509(&px509Cert, (const unsigned char **)&decoded, len) == NULL)
 	{
-	    if (ptr)
-	      free(ptr);
+	    free(ptr);
 	    X509_free(px509Cert);
 	    keynote_errno = ERROR_SYNTAX;
 	    return -1;
@@ -580,8 +578,7 @@ kn_decode_key(struct keynote_deckey *dc, char *key, int keytype)
 
 	if ((pPublicKey = X509_get_pubkey(px509Cert)) == (EVP_PKEY *) NULL)
 	{
-	    if (ptr)
-	      free(ptr);
+	    free(ptr);
 	    X509_free(px509Cert);
 	    keynote_errno = ERROR_SYNTAX;
 	    return -1;
@@ -590,8 +587,7 @@ kn_decode_key(struct keynote_deckey *dc, char *key, int keytype)
 	/* RSA-specific */
 	dc->dec_key = pPublicKey->pkey.rsa;
 
-	if(ptr)
-	  free(ptr);
+	free(ptr);
 	return 0;
     }    
 
