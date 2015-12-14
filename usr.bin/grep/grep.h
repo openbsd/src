@@ -1,4 +1,4 @@
-/*	$OpenBSD: grep.h,v 1.23 2015/12/07 18:50:06 mmcc Exp $	*/
+/*	$OpenBSD: grep.h,v 1.24 2015/12/14 20:02:07 mmcc Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -43,7 +43,7 @@
 
 typedef struct {
 	size_t		 len;
-	off_t		 line_no;
+	long long	 line_no;
 	off_t		 off;
 	char		*file;
 	char		*dat;
