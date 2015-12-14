@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwmvar.h,v 1.13 2015/12/08 17:10:02 stsp Exp $	*/
+/*	$OpenBSD: if_iwmvar.h,v 1.14 2015/12/14 08:34:56 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -191,6 +191,7 @@ struct iwm_nvm_data {
 	int sku_cap_11n_enable;
 	int sku_cap_amt_enable;
 	int sku_cap_ipan_enable;
+	int sku_cap_mimo_disable;
 
 	uint8_t radio_cfg_type;
 	uint8_t radio_cfg_step;
@@ -365,8 +366,17 @@ struct iwm_softc {
 
 	struct task		init_task;
 	struct task		newstate_task;
+	struct task		setrates_task;
 	enum ieee80211_state	ns_nstate;
 	int			ns_arg;
+
+#ifndef IEEE80211_NO_HT
+	/* Task for firmware BlockAck setup/teardown and its arguments. */
+	struct task		ba_task;
+	int			ba_start;
+	int			ba_tid;
+	uint16_t		ba_ssn;
+#endif
 
 	bus_space_tag_t sc_st;
 	bus_space_handle_t sc_sh;
@@ -435,6 +445,9 @@ struct iwm_softc {
 	struct iwm_bf_data sc_bf;
 
 	int sc_tx_timer;
+#ifndef IEEE80211_NO_HT
+	int sc_rx_ba_sessions;
+#endif
 
 	struct iwm_scan_cmd *sc_scan_cmd;
 	size_t sc_scan_cmd_len;
@@ -497,8 +510,6 @@ struct iwm_node {
 
 	struct iwm_lq_cmd in_lq;
 	struct ieee80211_amrr_node in_amn;
-
-	uint8_t in_ridx[IEEE80211_RATE_MAXSIZE];
 };
 #define IWM_STATION_ID 0
 

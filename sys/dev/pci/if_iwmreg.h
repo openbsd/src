@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwmreg.h,v 1.8 2015/12/10 17:34:14 mmcc Exp $	*/
+/*	$OpenBSD: if_iwmreg.h,v 1.9 2015/12/14 08:34:56 stsp Exp $	*/
 
 /******************************************************************************
  *
@@ -2398,9 +2398,7 @@ struct iwm_rx_phy_info {
 #define IWM_PHY_INFO_FLAG_SHPREAMBLE	(1 << 2)
 	uint16_t channel;
 	uint32_t non_cfg_phy[IWM_RX_INFO_PHY_CNT];
-	uint8_t rate;
-	uint8_t rflags;
-	uint16_t xrflags;
+	uint32_t rate_n_flags;
 	uint32_t byte_count;
 	uint16_t mac_active_msk;
 	uint16_t frame_time;
@@ -3461,10 +3459,56 @@ struct iwm_beacon_filter_cmd {
 	.bf_escape_timer = htole32(IWM_BF_ESCAPE_TIMER_DEFAULT),	     \
 	.ba_escape_timer = htole32(IWM_BA_ESCAPE_TIMER_DEFAULT)
 
+/* uCode API values for HT/VHT bit rates */
+enum {
+	IWM_RATE_HT_SISO_MCS_0_PLCP = 0,
+	IWM_RATE_HT_SISO_MCS_1_PLCP = 1,
+	IWM_RATE_HT_SISO_MCS_2_PLCP = 2,
+	IWM_RATE_HT_SISO_MCS_3_PLCP = 3,
+	IWM_RATE_HT_SISO_MCS_4_PLCP = 4,
+	IWM_RATE_HT_SISO_MCS_5_PLCP = 5,
+	IWM_RATE_HT_SISO_MCS_6_PLCP = 6,
+	IWM_RATE_HT_SISO_MCS_7_PLCP = 7,
+	IWM_RATE_HT_MIMO2_MCS_0_PLCP = 0x8,
+	IWM_RATE_HT_MIMO2_MCS_1_PLCP = 0x9,
+	IWM_RATE_HT_MIMO2_MCS_2_PLCP = 0xA,
+	IWM_RATE_HT_MIMO2_MCS_3_PLCP = 0xB,
+	IWM_RATE_HT_MIMO2_MCS_4_PLCP = 0xC,
+	IWM_RATE_HT_MIMO2_MCS_5_PLCP = 0xD,
+	IWM_RATE_HT_MIMO2_MCS_6_PLCP = 0xE,
+	IWM_RATE_HT_MIMO2_MCS_7_PLCP = 0xF,
+	IWM_RATE_VHT_SISO_MCS_0_PLCP = 0,
+	IWM_RATE_VHT_SISO_MCS_1_PLCP = 1,
+	IWM_RATE_VHT_SISO_MCS_2_PLCP = 2,
+	IWM_RATE_VHT_SISO_MCS_3_PLCP = 3,
+	IWM_RATE_VHT_SISO_MCS_4_PLCP = 4,
+	IWM_RATE_VHT_SISO_MCS_5_PLCP = 5,
+	IWM_RATE_VHT_SISO_MCS_6_PLCP = 6,
+	IWM_RATE_VHT_SISO_MCS_7_PLCP = 7,
+	IWM_RATE_VHT_SISO_MCS_8_PLCP = 8,
+	IWM_RATE_VHT_SISO_MCS_9_PLCP = 9,
+	IWM_RATE_VHT_MIMO2_MCS_0_PLCP = 0x10,
+	IWM_RATE_VHT_MIMO2_MCS_1_PLCP = 0x11,
+	IWM_RATE_VHT_MIMO2_MCS_2_PLCP = 0x12,
+	IWM_RATE_VHT_MIMO2_MCS_3_PLCP = 0x13,
+	IWM_RATE_VHT_MIMO2_MCS_4_PLCP = 0x14,
+	IWM_RATE_VHT_MIMO2_MCS_5_PLCP = 0x15,
+	IWM_RATE_VHT_MIMO2_MCS_6_PLCP = 0x16,
+	IWM_RATE_VHT_MIMO2_MCS_7_PLCP = 0x17,
+	IWM_RATE_VHT_MIMO2_MCS_8_PLCP = 0x18,
+	IWM_RATE_VHT_MIMO2_MCS_9_PLCP = 0x19,
+	IWM_RATE_HT_SISO_MCS_INV_PLCP,
+	IWM_RATE_HT_MIMO2_MCS_INV_PLCP = IWM_RATE_HT_SISO_MCS_INV_PLCP,
+	IWM_RATE_VHT_SISO_MCS_INV_PLCP = IWM_RATE_HT_SISO_MCS_INV_PLCP,
+	IWM_RATE_VHT_MIMO2_MCS_INV_PLCP = IWM_RATE_HT_SISO_MCS_INV_PLCP,
+	IWM_RATE_HT_SISO_MCS_8_PLCP = IWM_RATE_HT_SISO_MCS_INV_PLCP,
+	IWM_RATE_HT_SISO_MCS_9_PLCP = IWM_RATE_HT_SISO_MCS_INV_PLCP,
+	IWM_RATE_HT_MIMO2_MCS_8_PLCP = IWM_RATE_HT_SISO_MCS_INV_PLCP,
+	IWM_RATE_HT_MIMO2_MCS_9_PLCP = IWM_RATE_HT_SISO_MCS_INV_PLCP,
+};
+
 /*
- * These serve as indexes into
- * struct iwm_rate_info fw_rate_idx_to_plcp[IWM_RATE_COUNT];
- * TODO: avoid overlap between legacy and HT rates
+ * These serve as indexes into struct iwm_rate iwm_rates[IWM_RIDX_MAX].
  */
 enum {
 	IWM_RATE_1M_INDEX = 0,
@@ -3518,7 +3562,7 @@ enum {
 	IWM_RATE_2M_PLCP  = 20,
 	IWM_RATE_5M_PLCP  = 55,
 	IWM_RATE_11M_PLCP = 110,
-	IWM_RATE_INVM_PLCP = -1,
+	IWM_RATE_INVM_PLCP = 0xff,
 };
 
 /*
