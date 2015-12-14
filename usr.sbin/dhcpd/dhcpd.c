@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.c,v 1.48 2015/02/10 23:06:13 krw Exp $ */
+/*	$OpenBSD: dhcpd.c,v 1.49 2015/12/14 01:08:50 krw Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@cvs.openbsd.org>
@@ -45,7 +45,7 @@
 #include <err.h>
 #include <pwd.h>
 
-void usage(void);
+__dead void usage(void);
 
 time_t cur_time, last_scan;
 struct group root_group;
@@ -187,21 +187,17 @@ main(int argc, char *argv[])
 		if (setrtable(rdomain) == -1)
 			error("setrtable (%m)");
 
-	if (udpsockmode)
-		udpsock_startup(udpaddr);
-	icmp_startup(1, lease_pinged);
-
 	if (syncsend || syncrecv) {
 		syncfd = sync_init(sync_iface, sync_baddr, sync_port);
 		if (syncfd == -1)
 			err(1, "sync init");
 	}
 
-	if ((pw = getpwnam("_dhcp")) == NULL)
-		error("user \"_dhcp\" not found");
-
 	if (daemonize)
 		daemon(0, 0);
+
+	if ((pw = getpwnam("_dhcp")) == NULL)
+		error("user \"_dhcp\" not found");
 
 	/* don't go near /dev/pf unless we actually intend to use it */
 	if ((abandoned_tab != NULL) ||
@@ -227,6 +223,15 @@ main(int argc, char *argv[])
 		}
 	}
 
+	if (udpsockmode) {
+		udpsock_startup(udpaddr);
+	} else {
+		if (pledge("stdio rpath inet sendfd proc id", NULL) == -1)
+			err(1, "pledge");
+	}
+
+	icmp_startup(1, lease_pinged);
+
 	if (chroot(_PATH_VAREMPTY) == -1)
 		error("chroot %s: %m", _PATH_VAREMPTY);
 	if (chdir("/") == -1)
@@ -236,6 +241,14 @@ main(int argc, char *argv[])
 	    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
 		error("can't drop privileges: %m");
 
+	if (udpsockmode) {
+		if (pledge("stdio inet route sendfd", NULL) == -1)
+			err(1, "pledge");
+	} else {
+		if (pledge("stdio inet sendfd", NULL) == -1)
+			err(1, "pledge");
+	}
+
 	add_timeout(cur_time + 5, periodic_scan, NULL);
 	dispatch();
 
@@ -243,7 +256,7 @@ main(int argc, char *argv[])
 	exit(0);
 }
 
-void
+__dead void
 usage(void)
 {
 	extern char *__progname;

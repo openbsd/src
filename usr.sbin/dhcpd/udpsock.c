@@ -1,4 +1,4 @@
-/*	$OpenBSD: udpsock.c,v 1.2 2015/01/16 06:40:16 deraadt Exp $	*/
+/*	$OpenBSD: udpsock.c,v 1.3 2015/12/14 01:08:50 krw Exp $	*/
 
 /*
  * Copyright (c) 2014 YASUOKA Masahiko <yasuoka@openbsd.org>
@@ -55,6 +55,9 @@ udpsock_startup(struct in_addr bindaddr)
 	if (setsockopt(sock, IPPROTO_IP, IP_RECVIF, &onoff, sizeof(onoff)) != 0)
 		error("setsocketopt IP_RECVIF failed for udp: %s",
 		    strerror(errno));
+
+	if (pledge("stdio rpath inet sendfd proc id", NULL) == -1)
+		error("pledge: %s", strerror(errno));
 
 	sin4.sin_family = AF_INET;
 	sin4.sin_len = sizeof(sin4);
