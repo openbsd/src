@@ -1,4 +1,4 @@
-/*	$OpenBSD: listen.h,v 1.1 2012/11/23 07:03:28 ratchov Exp $	*/
+/*	$OpenBSD: listen.h,v 1.2 2015/12/14 17:44:29 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -24,6 +24,7 @@ struct listen {
 	struct file *file;
 	char *path;
 	int fd;
+	int slowaccept;
 };
 
 extern struct listen *listen_list;
