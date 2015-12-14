@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_backend.c,v 1.59 2015/11/05 09:14:31 sunil Exp $	*/
+/*	$OpenBSD: queue_backend.c,v 1.60 2015/12/14 10:22:12 jung Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@poolp.org>
@@ -127,7 +127,7 @@ queue_init(const char *name, int server)
 	gr = getgrnam(SMTPD_QUEUE_GROUP);
 	if (gr == NULL)
 		errx(1, "unknown group %s", SMTPD_QUEUE_GROUP);
-	
+
 	tree_init(&evpcache_tree);
 	TAILQ_INIT(&evpcache_list);
 
@@ -653,7 +653,7 @@ queue_message_walk(struct envelope *ep, uint32_t msgid, int *done, void **data)
 			/*
 			 * do not cache the envelope here, while discovering
 			 * envelopes one could re-run discover on already
-			 * scheduled envelopes which leads to triggering of 
+			 * scheduled envelopes which leads to triggering of
 			 * strict checks in caching. Envelopes could anyway
 			 * be loaded from backend if it isn't cached.
 			 */

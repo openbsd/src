@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_session.c,v 1.77 2015/11/30 12:57:05 gilles Exp $	*/
+/*	$OpenBSD: lka_session.c,v 1.78 2015/12/14 10:22:12 jung Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@poolp.org>
@@ -709,7 +709,7 @@ lka_expand_token(char *dest, size_t len, const char *token,
 				return 0; /* modifier not found */
 		} while ((mods = sep) != NULL);
 	}
-	
+
 	if (! raw && replace)
 		for (i = 0; (size_t)i < strlen(tmp); ++i)
 			if (strchr(MAILADDR_ESCAPE, tmp[i]))
@@ -843,7 +843,7 @@ lka_expand_format(char *buf, size_t len, const struct envelope *ep,
 	return ret;
 }
 
-static int 
+static int
 mod_lowercase(char *buf, size_t len)
 {
 	char tmp[EXPAND_BUFFER];
@@ -855,7 +855,7 @@ mod_lowercase(char *buf, size_t len)
 	return 1;
 }
 
-static int 
+static int
 mod_uppercase(char *buf, size_t len)
 {
 	char tmp[EXPAND_BUFFER];

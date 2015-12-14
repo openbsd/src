@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.188 2015/12/12 20:02:31 gilles Exp $	*/
+/*	$OpenBSD: lka.c,v 1.189 2015/12/14 10:22:12 jung Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -525,7 +525,7 @@ lka_credentials(const char *tablename, const char *label, char *dst, size_t sz)
 
 		r = base64_encode((unsigned char *)buf, buflen, dst, sz);
 		free(buf);
-		
+
 		if (r == -1) {
 			log_warnx("warn: credentials parse error for %s:%s",
 			    tablename, label);
@@ -666,7 +666,7 @@ lka_X509_verify(struct ca_vrfy_req_msg *vrfy,
 	else
 		ret = 1;
 
-end:	
+end:
 	if (x509)
 		X509_free(x509);
 	if (x509_tmp)

@@ -1,5 +1,5 @@
-/*	$OpenBSD: iobuf.c,v 1.8 2015/12/05 21:27:42 mmcc Exp $	*/
-/*      
+/*	$OpenBSD: iobuf.c,v 1.9 2015/12/14 10:22:12 jung Exp $	*/
+/*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any

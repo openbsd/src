@@ -1,4 +1,4 @@
-/* $OpenBSD: delivery_lmtp.c,v 1.14 2015/10/27 21:20:11 jung Exp $ */
+/* $OpenBSD: delivery_lmtp.c,v 1.15 2015/12/14 10:22:11 jung Exp $ */
 
 /*
  * Copyright (c) 2013 Ashish SHUKLA <ashish.is@lostca.se>
@@ -125,7 +125,7 @@ lmtp_open(struct deliver *deliver)
 	ssize_t		 len;
 	int		 s;
 
-	strsep(&rcpt, " "); 
+	strsep(&rcpt, " ");
 	s = (to[0] == '/') ? unix_socket(to) : inet_socket(to);
 	if ((fp = fdopen(s, "r+")) == NULL)
 		err(1, "fdopen");

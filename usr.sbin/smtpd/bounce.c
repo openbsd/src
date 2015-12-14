@@ -1,4 +1,4 @@
-/*	$OpenBSD: bounce.c,v 1.68 2015/11/23 06:54:21 sunil Exp $	*/
+/*	$OpenBSD: bounce.c,v 1.69 2015/12/14 10:22:11 jung Exp $	*/
 
 /*
  * Copyright (c) 2009 Gilles Chehade <gilles@poolp.org>
@@ -389,7 +389,7 @@ bounce_next_message(struct bounce_session *s)
 	if ((fd = queue_message_fd_r(msg->msgid)) == -1) {
 		bounce_delivery(msg, IMSG_QUEUE_DELIVERY_TEMPFAIL,
 		    "Could not open message fd");
-		goto again;		
+		goto again;
 	}
 
 	if ((s->msgfp = fdopen(fd, "r")) == NULL) {
@@ -808,7 +808,7 @@ action_str(const struct delivery_bounce *b)
 	case B_DSN:
 		if (b->mta_without_dsn)
 			return ("relayed");
-		
+
 		return ("success");
 	default:
 		log_warn("warn: bounce: unknown bounce_type");

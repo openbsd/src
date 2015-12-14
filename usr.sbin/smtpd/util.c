@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.122 2015/10/17 22:24:36 gilles Exp $	*/
+/*	$OpenBSD: util.c,v 1.123 2015/12/14 10:22:12 jung Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Markus Friedl.  All rights reserved.
@@ -500,21 +500,21 @@ valid_domainpart(const char *s)
 			p = s + 6;
 		else
 			p = s + 1;
-	
+
 		if (strlcpy(domain, p, sizeof domain) >= sizeof domain)
 			return 0;
 
 		c = strchr(domain, (int)']');
 		if (!c || c[1] != '\0')
 			return 0;
-		
+
 		*c = '\0';
-		
+
 		if (inet_pton(AF_INET6, domain, &ina6) == 1)
 			return 1;
 		if (inet_pton(AF_INET, domain, &ina) == 1)
 			return 1;
-		
+
 		return 0;
 	}
 

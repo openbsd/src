@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.197 2015/12/12 20:02:31 gilles Exp $	*/
+/*	$OpenBSD: mta.c,v 1.198 2015/12/14 10:22:12 jung Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -1042,7 +1042,7 @@ mta_on_source(struct mta_relay *relay, struct mta_source *source)
 		else if (errmask & CONNECTOR_ERROR_BLOCKED)
 			relay->failstr = "All routes to destination blocked";
 		else
-			relay->failstr = "No valid route to destination";	
+			relay->failstr = "No valid route to destination";
 	}
 
 	relay->nextsource = relay->lastsource + delay;
@@ -1906,7 +1906,7 @@ mta_relay_show(struct mta_relay *r, struct mproc *p, uint32_t id, time_t t)
 		    flags);
 		m_compose(p, IMSG_CTL_MTA_SHOW_RELAYS, id, 0, -1, buf,
 		    strlen(buf) + 1);
-		
+
 
 	}
 }

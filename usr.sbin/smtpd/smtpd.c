@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.266 2015/12/12 20:02:31 gilles Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.267 2015/12/14 10:22:12 jung Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -496,7 +496,7 @@ main(int argc, char *argv[])
 		case 'F':
 			foreground = 1;
 			break;
-			
+
 		case 'T':
 			if (!strcmp(optarg, "imsg"))
 				verbose |= TRACE_IMSG;

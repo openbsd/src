@@ -1,4 +1,4 @@
-/*	$OpenBSD: to.c,v 1.22 2015/11/30 12:53:08 gilles Exp $	*/
+/*	$OpenBSD: to.c,v 1.23 2015/12/14 10:22:12 jung Exp $	*/
 
 /*
  * Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -127,7 +127,7 @@ text_to_mailaddr(struct mailaddr *maddr, const char *email)
 		if (strlcpy(maddr->domain, hostname, sizeof maddr->domain)
 		    >= sizeof maddr->domain)
 			return 0;
-	}	
+	}
 
 	return 1;
 }
