@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.22 2015/12/14 06:59:07 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.23 2015/12/14 07:46:03 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -756,6 +756,10 @@ vm_create(struct vm_create_params *vcp, struct proc *p)
 	struct vcpu *vcpu;
 
 	if (!(curcpu()->ci_flags & CPUF_VMM))
+		return (EINVAL);
+
+	/* XXX - support UP only (for now) */
+	if (vcp->vcp_ncpus != 1)
 		return (EINVAL);
 
 	vm = pool_get(&vm_pool, PR_WAITOK | PR_ZERO);
