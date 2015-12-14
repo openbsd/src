@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_conf.c,v 1.18 2015/09/30 18:41:06 jsing Exp $ */
+/* $OpenBSD: v3_conf.c,v 1.19 2015/12/14 03:39:14 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -278,7 +278,7 @@ v3_generic_extension(const char *ext, char *value, int crit, int gen_type,
     X509V3_CTX *ctx)
 {
 	unsigned char *ext_der = NULL;
-	long ext_len;
+	long ext_len = 0;
 	ASN1_OBJECT *obj = NULL;
 	ASN1_OCTET_STRING *oct = NULL;
 	X509_EXTENSION *extension = NULL;
@@ -294,6 +294,10 @@ v3_generic_extension(const char *ext, char *value, int crit, int gen_type,
 		ext_der = string_to_hex(value, &ext_len);
 	else if (gen_type == 2)
 		ext_der = generic_asn1(value, ctx, &ext_len);
+	else {
+		ERR_asprintf_error_data("Unexpected generic extension type %d", gen_type);
+		goto err;
+	}
 
 	if (ext_der == NULL) {
 		X509V3err(X509V3_F_V3_GENERIC_EXTENSION,
