@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mailwrapper.8,v 1.12 2014/03/27 22:34:42 jmc Exp $
+.\"	$OpenBSD: mailwrapper.8,v 1.13 2015/12/14 02:56:07 sunil Exp $
 .\"	$NetBSD: mailwrapper.8,v 1.5 1999/03/22 18:44:01 garbled Exp $
 .\"
 .\" Copyright (c) 1998
@@ -30,7 +30,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 27 2014 $
+.Dd $Mdocdate: December 14 2015 $
 .Dt MAILWRAPPER 8
 .Os
 .Sh NAME
@@ -120,9 +120,11 @@ is typically set up as a symlink to
 which is not usually invoked on its own.
 .Sh DIAGNOSTICS
 .Nm
-will return an error value and print a diagnostic if its configuration
-file is missing or malformed, or does not contain a mapping for the
-name under which
+will invoke
+.Xr smtpd 8
+if its configuration file is missing.
+It will return an error value and print a diagnostic if its configuration
+file is malformed, or does not contain a mapping for the name under which
 .Nm
 was invoked.
 .Sh SEE ALSO

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mailwrapper.c,v 1.20 2015/10/12 22:01:08 deraadt Exp $	*/
+/*	$OpenBSD: mailwrapper.c,v 1.21 2015/12/14 02:56:07 sunil Exp $	*/
 /*	$NetBSD: mailwrapper.c,v 1.2 1999/02/20 22:10:07 thorpej Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #include <util.h>
 
 #define _PATH_MAILERCONF	"/etc/mailer.conf"
-#define _PATH_DEFAULTMTA	"/usr/libexec/sendmail/sendmail"
+#define _PATH_DEFAULTMTA	"/usr/sbin/smtpctl"
 
 struct arglist {
 	size_t argc, maxc;
