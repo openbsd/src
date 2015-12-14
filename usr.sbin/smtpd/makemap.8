@@ -1,4 +1,4 @@
-.\"	$OpenBSD: makemap.8,v 1.26 2015/12/11 07:10:06 guenther Exp $
+.\"	$OpenBSD: makemap.8,v 1.27 2015/12/14 09:22:57 sunil Exp $
 .\"
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@openbsd.org>
 .\" Copyright (c) 2008-2009 Gilles Chehade <gilles@poolp.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 11 2015 $
+.Dd $Mdocdate: December 14 2015 $
 .Dt MAKEMAP 8
 .Os
 .Sh NAME
@@ -24,6 +24,7 @@
 .Sh SYNOPSIS
 .Nm makemap
 .Op Fl U
+.Op Fl d Ar dbtype
 .Op Fl o Ar dbfile
 .Op Fl t Ar type
 .Ar file
@@ -86,6 +87,15 @@ This format can be used for building primary domain maps.
 Instead of generating a database map from text input,
 dump the contents of a database map as text
 with the key and value separated with a tab.
+.It Fl d Ar dbtype
+Specify the format of the database.
+Available formats are
+.Ar hash ,
+.Ar btree
+and
+.Ar dbm .
+The default value is
+.Ar hash .
 .El
 .Sh PRIMARY DOMAINS
 Primary domains can be kept in tables.
