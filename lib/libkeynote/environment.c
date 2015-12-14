@@ -1,4 +1,4 @@
-/* $OpenBSD: environment.c,v 1.23 2015/11/18 16:08:39 mmcc Exp $ */
+/* $OpenBSD: environment.c,v 1.24 2015/12/14 06:18:06 mmcc Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -35,15 +35,15 @@
 
 static int sessioncounter = 0;
 
-char **keynote_values = (char **) NULL;
-char *keynote_privkey = (char *) NULL;
+char **keynote_values = NULL;
+char *keynote_privkey = NULL;
 
-struct assertion *keynote_current_assertion = (struct assertion *) NULL;
+struct assertion *keynote_current_assertion = NULL;
 
-struct environment *keynote_init_list = (struct environment *) NULL;
-struct environment *keynote_temp_list = (struct environment *) NULL;
+struct environment *keynote_init_list = NULL;
+struct environment *keynote_temp_list = NULL;
 
-struct keylist *keynote_keypred_keylist = (struct keylist *) NULL;
+struct keylist *keynote_keypred_keylist = NULL;
 
 struct keynote_session *keynote_sessions[SESSIONTABLESIZE];
 struct keynote_session *keynote_current_session = NULL;
@@ -68,40 +68,37 @@ keynote_get_action_authorizers(char *name)
     if (!strcmp(name, KEYNOTE_CALLBACK_CLEANUP) ||
         !strcmp(name, KEYNOTE_CALLBACK_INITIALIZE))
     {
-        if (keynote_current_session->ks_authorizers_cache != (char *) NULL)
-	{
+        if (keynote_current_session->ks_authorizers_cache != NULL) {
 	    free(keynote_current_session->ks_authorizers_cache);
-	    keynote_current_session->ks_authorizers_cache = (char *) NULL;
+	    keynote_current_session->ks_authorizers_cache = NULL;
 	}
 
 	return "";
     }
 
-    if (keynote_current_session->ks_authorizers_cache != (char *) NULL)
+    if (keynote_current_session->ks_authorizers_cache != NULL)
       return keynote_current_session->ks_authorizers_cache;
 
     for (cachesize = 0, kl = keynote_current_session->ks_action_authorizers;
-	 kl != (struct keylist *) NULL;
+	 kl != NULL;
 	 kl = kl->key_next)
-      if (kl->key_stringkey != (char *) NULL)
+      if (kl->key_stringkey != NULL)
         cachesize += strlen(kl->key_stringkey) + 1;
 
     if (cachesize == 0)
       return "";
 
     keynote_current_session->ks_authorizers_cache =
-	(char *) calloc(cachesize, sizeof(char));
-    if (keynote_current_session->ks_authorizers_cache == (char *) NULL)
-    {
+	calloc(cachesize, sizeof(char));
+    if (keynote_current_session->ks_authorizers_cache == NULL) {
 	keynote_errno = ERROR_MEMORY;
-	return (char *) NULL;
+	return NULL;
     }
 
     for (len = 0, kl = keynote_current_session->ks_action_authorizers;
-	 kl != (struct keylist *) NULL;
+	 kl != NULL;
 	 kl = kl->key_next)
-      if (kl->key_stringkey != (char *) NULL)
-      {
+      if (kl->key_stringkey != NULL) {
 	  snprintf(keynote_current_session->ks_authorizers_cache + len,
 		   cachesize - len, "%s,", kl->key_stringkey);
 	  len += strlen(kl->key_stringkey) + 1;
@@ -123,10 +120,9 @@ keynote_get_values(char *name)
     if (!strcmp(name, KEYNOTE_CALLBACK_CLEANUP) ||
         !strcmp(name, KEYNOTE_CALLBACK_INITIALIZE))
     {
-        if (keynote_current_session->ks_values_cache != (char *) NULL)
-	{
+        if (keynote_current_session->ks_values_cache != NULL) {
 	    free(keynote_current_session->ks_values_cache);
-	    keynote_current_session->ks_values_cache = (char *) NULL;
+	    keynote_current_session->ks_values_cache = NULL;
 	}
 
 	return "";
