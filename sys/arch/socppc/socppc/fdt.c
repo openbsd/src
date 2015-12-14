@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdt.c,v 1.9 2010/04/21 03:03:26 deraadt Exp $	*/
+/*	$OpenBSD: fdt.c,v 1.10 2015/12/14 03:25:59 mmcc Exp $	*/
 
 /*
  * Copyright (c) 2009 Dariusz Swiderski <sfires@sfires.net>
@@ -180,7 +180,7 @@ fdt_node_property(void *node, char *name, char **out)
 		nameid = *(ptr + 2); /* id of name in strings table */
 		tmp = fdt_get_str(nameid);
 		if (!strcmp(name, tmp)) {
-			*out = (char *)(ptr + 3); /* begining of the value */
+			*out = (char *)(ptr + 3); /* beginning of the value */
 			return *(ptr + 1); /* size of value */
 		}
 		ptr = skip_property(ptr);

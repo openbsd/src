@@ -1,4 +1,4 @@
-/*	$OpenBSD: paragraph.c,v 1.41 2015/10/10 09:13:14 lum Exp $	*/
+/*	$OpenBSD: paragraph.c,v 1.42 2015/12/14 03:25:59 mmcc Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -156,7 +156,7 @@ fillpara(int f, int n)
 	} else
 		eopline = curwp->w_dotp;
 
-	/* and back top the begining of the paragraph */
+	/* and back top the beginning of the paragraph */
 	(void)gotobop(FFRAND, 1);
 
 	/* initialize various info */

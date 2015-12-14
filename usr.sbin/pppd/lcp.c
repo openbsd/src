@@ -1,4 +1,4 @@
-/*	$OpenBSD: lcp.c,v 1.12 2015/06/12 14:18:25 mikeb Exp $	*/
+/*	$OpenBSD: lcp.c,v 1.13 2015/12/14 03:25:59 mmcc Exp $	*/
 
 /*
  * lcp.c - PPP Link Control Protocol.
@@ -1185,7 +1185,7 @@ lcp_reqci(f, inp, lenp, reject_if_disagree)
     rejp = inp;
     while (l) {
 	orc = CONFACK;			/* Assume success */
-	cip = p = next;			/* Remember begining of CI */
+	cip = p = next;			/* Remember beginning of CI */
 	if (l < 2 ||			/* Not enough data for CI header or */
 	    p[1] < 2 ||			/*  CI length too small or */
 	    p[1] > l) {			/*  CI length too big? */

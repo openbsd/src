@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipcp.c,v 1.14 2015/01/16 06:40:19 deraadt Exp $	*/
+/*	$OpenBSD: ipcp.c,v 1.15 2015/12/14 03:25:59 mmcc Exp $	*/
 
 /*
  * ipcp.c - PPP IP Control Protocol.
@@ -806,7 +806,7 @@ ipcp_reqci(f, inp, len, reject_if_disagree)
     next = inp;
     while (l) {
 	orc = CONFACK;			/* Assume success */
-	cip = p = next;			/* Remember begining of CI */
+	cip = p = next;			/* Remember beginning of CI */
 	if (l < 2 ||			/* Not enough data for CI header or */
 	    p[1] < 2 ||			/*  CI length too small or */
 	    p[1] > l) {			/*  CI length too big? */

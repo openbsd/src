@@ -1,4 +1,4 @@
-/* $OpenBSD: parse_assertion.c,v 1.15 2015/11/19 02:35:24 mmcc Exp $ */
+/* $OpenBSD: parse_assertion.c,v 1.16 2015/12/14 03:25:59 mmcc Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -262,7 +262,7 @@ keynote_fix_fields(struct assertion *ast, int sigfield)
 	    if (keynote_add_htable(as, 1) != RESULT_TRUE)
 	      return -1;
 
-	    /* Point to begining of the previous list. */
+	    /* Point to beginning of the previous list. */
 	    i--;
 	    break;
 	}
