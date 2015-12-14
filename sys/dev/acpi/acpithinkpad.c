@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpithinkpad.c,v 1.47 2015/12/13 23:12:11 kettenis Exp $	*/
+/*	$OpenBSD: acpithinkpad.c,v 1.48 2015/12/14 18:48:50 kettenis Exp $	*/
 /*
  * Copyright (c) 2008 joshua stein <jcs@openbsd.org>
  *
@@ -120,6 +120,8 @@ struct acpithinkpad_softc {
 	struct ksensordev	 sc_sensdev;
 
 	uint64_t		 sc_thinklight;
+	const char		*sc_thinklight_get;
+	const char		*sc_thinklight_set;
 };
 
 extern void acpiec_read(struct acpiec_softc *, u_int8_t, int, u_int8_t *);
@@ -250,8 +252,17 @@ thinkpad_attach(struct device *parent, struct device *self, void *aux)
 	thinkpad_enable_events(sc);
 	thinkpad_sensor_attach(sc);
 
+	/* Check for ThinkLight or keyboard backlight */
 	if (aml_evalinteger(sc->sc_acpi, sc->sc_devnode, "KLCG",
 	    0, NULL, &sc->sc_thinklight) == 0) {
+		sc->sc_thinklight_get = "KLCG";
+		sc->sc_thinklight_set = "KLCS";
+		wskbd_get_backlight = thinkpad_get_backlight;
+		wskbd_set_backlight = thinkpad_set_backlight;
+	} else if (aml_evalinteger(sc->sc_acpi, sc->sc_devnode, "MLCG",
+	    0, NULL, &sc->sc_thinklight) == 0) {
+		sc->sc_thinklight_get = "MLCG";
+		sc->sc_thinklight_set = "MLCS";
 		wskbd_get_backlight = thinkpad_get_backlight;
 		wskbd_set_backlight = thinkpad_set_backlight;
 	}
@@ -572,8 +583,8 @@ thinkpad_activate(struct device *self, int act)
 void
 thinkpad_get_thinklight(struct acpithinkpad_softc *sc)
 {
-	aml_evalinteger(sc->sc_acpi, sc->sc_devnode, "KLCG",
-	    0, NULL, &sc->sc_thinklight);
+	aml_evalinteger(sc->sc_acpi, sc->sc_devnode,
+	    sc->sc_thinklight_get, 0, NULL, &sc->sc_thinklight);
 }
 
 void
@@ -584,8 +595,9 @@ thinkpad_set_thinklight(void *arg0, int arg1)
 
 	memset(&arg, 0, sizeof(arg));
 	arg.type = AML_OBJTYPE_INTEGER;
-	arg.v_integer = sc->sc_thinklight;
-	aml_evalname(sc->sc_acpi, sc->sc_devnode, "KLCS", 1, &arg, NULL);
+	arg.v_integer = sc->sc_thinklight & 0x0f;
+	aml_evalname(sc->sc_acpi, sc->sc_devnode,
+	    sc->sc_thinklight_set, 1, &arg, NULL);
 }
 
 int
@@ -596,8 +608,8 @@ thinkpad_get_backlight(struct wskbd_backlight *kbl)
 	KASSERT(sc != NULL);
 
 	kbl->min = 0;
-	kbl->max = (sc->sc_thinklight >> 8) & 0xff;
-	kbl->curval = sc->sc_thinklight & 0xff;
+	kbl->max = (sc->sc_thinklight >> 8) & 0x0f;
+	kbl->curval = sc->sc_thinklight & 0x0f;
 	return 0;
 }
 
@@ -605,7 +617,7 @@ int
 thinkpad_set_backlight(struct wskbd_backlight *kbl)
 {
 	struct acpithinkpad_softc *sc = acpithinkpad_cd.cd_devs[0];
-	int maxval = (sc->sc_thinklight >> 8) & 0xff;
+	int maxval = (sc->sc_thinklight >> 8) & 0x0f;
 
 	KASSERT(sc != NULL);
 
