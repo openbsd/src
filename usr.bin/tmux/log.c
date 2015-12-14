@@ -1,4 +1,4 @@
-/* $OpenBSD: log.c,v 1.21 2015/12/14 00:31:54 nicm Exp $ */
+/* $OpenBSD: log.c,v 1.22 2015/12/14 00:32:19 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -144,7 +144,6 @@ fatalx(const char *msg, ...)
 	char	*fmt;
 	va_list	 ap;
 
-	abort();
 	va_start(ap, msg);
 	if (asprintf(&fmt, "fatal: %s", msg) == -1)
 		exit(1);
