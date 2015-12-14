@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.c,v 1.47 2015/10/19 16:32:37 beck Exp $ */
+/* $OpenBSD: x509_vfy.c,v 1.48 2015/12/14 03:38:13 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -685,7 +685,7 @@ check_cert(X509_STORE_CTX *ctx)
 {
 	X509_CRL *crl = NULL, *dcrl = NULL;
 	X509 *x;
-	int ok, cnum;
+	int ok = 0, cnum;
 	unsigned int last_reasons;
 
 	cnum = ctx->error_depth;
