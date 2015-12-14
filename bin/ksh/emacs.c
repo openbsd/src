@@ -1,4 +1,4 @@
-/*	$OpenBSD: emacs.c,v 1.61 2015/12/10 10:00:14 schwarze Exp $	*/
+/*	$OpenBSD: emacs.c,v 1.62 2015/12/14 13:59:42 tb Exp $	*/
 
 /*
  *  Emacs-like command line editing and history
@@ -19,6 +19,8 @@
 
 #include <ctype.h>
 #include <locale.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "sh.h"

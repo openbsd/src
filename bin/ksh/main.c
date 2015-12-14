@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.74 2015/11/11 02:52:46 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.75 2015/12/14 13:59:42 tb Exp $	*/
 
 /*
  * startup, main loop, environments and error handling
@@ -6,9 +6,14 @@
 
 #include <sys/stat.h>
 
+#include <errno.h>
+#include <fcntl.h>
 #include <paths.h>
 #include <pwd.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "sh.h"
 

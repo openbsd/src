@@ -1,4 +1,4 @@
-/*	$OpenBSD: jobs.c,v 1.52 2015/11/12 22:33:07 deraadt Exp $	*/
+/*	$OpenBSD: jobs.c,v 1.53 2015/12/14 13:59:42 tb Exp $	*/
 
 /*
  * Process and job control
@@ -21,8 +21,12 @@
 #include <sys/wait.h>
 
 #include <ctype.h>
+#include <errno.h>
+#include <fcntl.h>
 #include <limits.h>
+#include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "sh.h"
 #include "tty.h"

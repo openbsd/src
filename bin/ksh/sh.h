@@ -1,4 +1,4 @@
-/*	$OpenBSD: sh.h,v 1.54 2015/11/20 09:29:53 tb Exp $	*/
+/*	$OpenBSD: sh.h,v 1.55 2015/12/14 13:59:42 tb Exp $	*/
 
 /*
  * Public Domain Bourne/Korn shell
@@ -10,19 +10,10 @@
 
 /* Start of common headers */
 
-#include <sys/types.h>
-
-#include <stdio.h>
 #include <setjmp.h>
-#include <stdbool.h>
-#include <stdlib.h>
-#include <unistd.h>
 #include <stdarg.h>
-
-#include <errno.h>
-#include <fcntl.h>
-
 #include <signal.h>
+#include <stdbool.h>
 
 /* end of common headers */
 

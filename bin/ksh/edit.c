@@ -1,4 +1,4 @@
-/*	$OpenBSD: edit.c,v 1.50 2015/11/01 15:38:53 mmcc Exp $	*/
+/*	$OpenBSD: edit.c,v 1.51 2015/12/14 13:59:42 tb Exp $	*/
 
 /*
  * Command line editing - common code
@@ -12,8 +12,11 @@
 #include <sys/stat.h>
 
 #include <ctype.h>
+#include <errno.h>
 #include <libgen.h>
+#include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "sh.h"
 #include "edit.h"

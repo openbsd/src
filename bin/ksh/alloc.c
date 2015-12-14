@@ -1,4 +1,4 @@
-/*	$OpenBSD: alloc.c,v 1.13 2015/10/19 02:15:45 mmcc Exp $	*/
+/*	$OpenBSD: alloc.c,v 1.14 2015/12/14 13:59:42 tb Exp $	*/
 /*
  * Copyright (c) 2002 Marc Espie.
  *
@@ -29,6 +29,7 @@
  */
 
 #include <stdint.h>
+#include <stdlib.h>
 
 #include "sh.h"
 

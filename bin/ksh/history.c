@@ -1,4 +1,4 @@
-/*	$OpenBSD: history.c,v 1.54 2015/12/14 06:09:43 mmcc Exp $	*/
+/*	$OpenBSD: history.c,v 1.55 2015/12/14 13:59:42 tb Exp $	*/
 
 /*
  * command history
@@ -15,7 +15,12 @@
 
 #include <sys/stat.h>
 
+#include <errno.h>
+#include <fcntl.h>
+#include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "sh.h"
 
