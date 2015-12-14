@@ -1,4 +1,4 @@
-/*	$OpenBSD: filter.c,v 1.9 2015/11/24 08:40:10 gilles Exp $	*/
+/*	$OpenBSD: filter.c,v 1.10 2015/12/14 10:28:50 sunil Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@poolp.org>
@@ -162,12 +162,12 @@ filter_extend_chain(struct filter_lst *chain, const char *name)
 
 	fconf = dict_xget(&env->sc_filters, name);
 	if (fconf->chain) {
-		log_debug("filter:     extending with \"%s\"", name);
+		log_debug("filter: extending with \"%s\"", name);
 		for (i = 0; i < fconf->argc; i++)
 			filter_extend_chain(chain, fconf->argv[i]);
 	}
 	else {
-		log_debug("filter:     adding filter \"%s\"", name);
+		log_debug("filter: adding filter \"%s\"", name);
 		n = xcalloc(1, sizeof(*n), "filter_extend_chain");
 		fchain = dict_get(&chains, name);
 		n->proc = TAILQ_FIRST(fchain)->proc;
@@ -203,7 +203,6 @@ filter_postfork(void)
 			continue;
 
 		log_debug("filter: building simple chain \"%s\"", filter->name);
-
 		proc = xcalloc(1, sizeof(*proc), "filter_postfork");
 		p = &proc->mproc;
 		p->handler = filter_imsg;
@@ -218,7 +217,6 @@ filter_postfork(void)
 			fatalx("filter_postfork");
 
 		log_debug("filter: registering proc \"%s\"", filter->name);
-
 		f = xcalloc(1, sizeof(*f), "filter_postfork");
 		f->proc = proc;
 
@@ -237,7 +235,8 @@ filter_postfork(void)
 	while (!done) {
 		done = 1;
 		iter = NULL;
-		while (dict_iter(&env->sc_filters, &iter, NULL, (void **)&filter)) {
+		while (dict_iter(&env->sc_filters, &iter, NULL,
+		    (void **)&filter)) {
 			if (filter->done)
 				continue;
 			done = 0;
@@ -252,10 +251,12 @@ filter_postfork(void)
 				continue;
 			fchain = xcalloc(1, sizeof(*fchain), "filter_postfork");
 			TAILQ_INIT(fchain);
-			log_debug("filter: building chain \"%s\"...", filter->name);
+			log_debug("filter: building chain \"%s\"...",
+			    filter->name);
 			for (i = 0; i < filter->argc; i++)
 				filter_extend_chain(fchain, filter->argv[i]);
-			log_debug("filter: done building chain \"%s\"", filter->name);
+			log_debug("filter: done building chain \"%s\"",
+			    filter->name);
 			dict_xset(&chains, filter->name, fchain);
 		}
 	}
@@ -304,7 +305,6 @@ filter_event(uint64_t id, int event)
 		s = tree_xget(&sessions, id);
 
 	q = filter_query(s, QK_EVENT, event);
-
 	filter_drain_query(q);
 }
 
@@ -325,7 +325,6 @@ filter_connect(uint64_t id, const struct sockaddr *local,
 	tree_xset(&sessions, s->id, s);
 
 	filter_event(id, EVENT_CONNECT);
-
 	q = filter_query(s, QK_QUERY, QUERY_CONNECT);
 
 	memmove(&q->u.connect.local, local, local->sa_len);
@@ -387,9 +386,10 @@ filter_set_sink(struct filter_session *s, int sink)
 {
 	struct mproc	*p;
 
-	while(s->fcurr) {
+	while (s->fcurr) {
 		if (s->fcurr->proc->hooks & HOOK_DATALINE) {
-			log_trace(TRACE_FILTERS, "filter: sending fd %d to %s", sink, filter_to_text(s->fcurr));
+			log_trace(TRACE_FILTERS, "filter: sending fd %d to %s",
+			    sink, filter_to_text(s->fcurr));
 			p = &s->fcurr->proc->mproc;
 			m_create(p, IMSG_FILTER_PIPE, 0, 0, sink);
 			m_add_id(p, s->id);
@@ -400,7 +400,6 @@ filter_set_sink(struct filter_session *s, int sink)
 	}
 
 	log_trace(TRACE_FILTERS, "filter: chain input is %d", sink);
-
 	smtp_filter_fd(s->id, sink);
 }
 
@@ -434,11 +433,11 @@ filter_query(struct filter_session *s, int kind, int type)
 	q->hasrun = 0;
 
 	if (kind == QK_QUERY)
-		log_trace(TRACE_FILTERS, "filter: new query %s %s", kind_to_str(kind),
-		    query_to_str(type));
+		log_trace(TRACE_FILTERS, "filter: new query %s %s",
+		    kind_to_str(kind), query_to_str(type));
 	else
-		log_trace(TRACE_FILTERS, "filter: new query %s %s", kind_to_str(kind),
-		    event_to_str(type));
+		log_trace(TRACE_FILTERS, "filter: new query %s %s",
+		    kind_to_str(kind), event_to_str(type));
 
 	return (q);
 }
@@ -448,17 +447,16 @@ filter_drain_query(struct filter_query *q)
 {
 	struct filter_query	*prev;
 
-	log_trace(TRACE_FILTERS, "filter: filter_drain_query %s", filter_query_to_text(q));
+	log_trace(TRACE_FILTERS, "filter: filter_drain_query %s",
+	    filter_query_to_text(q));
 
 	/*
 	 * The query must be passed through all filters that registered
 	 * a hook, until one rejects it.
 	 */
 	while (q->state != QUERY_DONE) {
-
 		/* Walk over all filters */
 		while (q->current) {
-
 			/* Trigger the current filter if not done yet. */
 			if (!q->hasrun) {
 				filter_run_query(q->current, q);
@@ -479,8 +477,8 @@ filter_drain_query(struct filter_query *q)
 			if (prev && prev->current == q->current) {
 				q->state = QUERY_WAITING;
 				log_trace(TRACE_FILTERS,
-				    "filter: query blocked by previous query %s",
-				    filter_query_to_text(prev));
+				    "filter: query blocked by previous query"
+				    "%s", filter_query_to_text(prev));
 				return;
 			}
 
@@ -505,7 +503,8 @@ filter_run_query(struct filter *f, struct filter_query *q)
 {
 	if (q->kind == QK_QUERY) {
 
-		log_trace(TRACE_FILTERS, "filter: running filter %s for query %s",
+		log_trace(TRACE_FILTERS,
+		    "filter: running filter %s for query %s",
 		    filter_to_text(f), filter_query_to_text(q));
 
 		m_create(&f->proc->mproc, IMSG_FILTER_QUERY, 0, 0, -1);
@@ -540,14 +539,15 @@ filter_run_query(struct filter *f, struct filter_query *q)
 		q->state = QUERY_RUNNING;
 	}
 	else {
-		log_trace(TRACE_FILTERS, "filter: running filter %s for query %s",
+		log_trace(TRACE_FILTERS,
+		    "filter: running filter %s for query %s",
 		    filter_to_text(f), filter_query_to_text(q));
 
 		m_create(&f->proc->mproc, IMSG_FILTER_EVENT, 0, 0, -1);
 		m_add_id(&f->proc->mproc, q->session->id);
 		m_add_int(&f->proc->mproc, q->type);
 		m_close(&f->proc->mproc);
- 	}
+	}
 }
 
 static void
@@ -555,25 +555,29 @@ filter_end_query(struct filter_query *q)
 {
 	struct filter_session *s = q->session;
 
-	log_trace(TRACE_FILTERS, "filter: filter_end_query %s", filter_query_to_text(q));
+	log_trace(TRACE_FILTERS, "filter: filter_end_query %s",
+	    filter_query_to_text(q));
 
 	if (q->kind == QK_EVENT)
 		goto done;
 
 	if (q->type == QUERY_EOM) {
 
-		log_trace(TRACE_FILTERS, "filter: filter_end_query(%d, %zu, %zu)", s->iev.sock,
+		log_trace(TRACE_FILTERS,
+		    "filter: filter_end_query(%d, %zu, %zu)", s->iev.sock,
 		    s->idatalen, q->u.datalen);
 
 		if (s->error) {
-			smtp_filter_response(s->id, QUERY_EOM, FILTER_FAIL, 0, NULL);
+			smtp_filter_response(s->id, QUERY_EOM, FILTER_FAIL,
+			    0, NULL);
 			free(q->smtp.response);
 			goto done;
 		}
 		else if (q->u.datalen != s->idatalen) {
 			log_warnx("filter: datalen mismatch on session %" PRIx64
 			    ": %zu/%zu", s->id, s->idatalen, q->u.datalen);
-			smtp_filter_response(s->id, QUERY_EOM, FILTER_FAIL, 0, NULL);
+			smtp_filter_response(s->id, QUERY_EOM, FILTER_FAIL,
+			    0, NULL);
 			free(q->smtp.response);
 			goto done;
 		}
@@ -662,7 +666,8 @@ filter_imsg(struct mproc *p, struct imsg *imsg)
 
 		q = tree_xpop(&queries, qid);
 		if (q->type != type) {
-			log_warnx("warn: filter: type mismatch %d != %d", q->type, type);
+			log_warnx("warn: filter: type mismatch %d != %d",
+			    q->type, type);
 			fatalx("exiting");
 		}
 		q->smtp.status = status;
@@ -741,14 +746,16 @@ filter_tx_io(struct io *io, int evt)
 	size_t			 len, n;
 	char			*data;
 
-	log_trace(TRACE_FILTERS, "filter: filter_tx_io(%p, %s)", s, io_strevent(evt));
+	log_trace(TRACE_FILTERS, "filter: filter_tx_io(%p, %s)",
+	    s, io_strevent(evt));
 
 	switch (evt) {
 	case IO_DATAIN:
 		data = iobuf_data(&s->ibuf);
 		len = iobuf_len(&s->ibuf);
 
-		log_trace(TRACE_FILTERS, "filter: filter_tx_io: datain (%zu) for req %016"PRIx64"",
+		log_trace(TRACE_FILTERS,
+		    "filter: filter_tx_io: datain (%zu) for req %016"PRIx64"",
 		    len, s->id);
 
 		n = fwrite(data, 1, len, s->ofile);
@@ -763,11 +770,14 @@ filter_tx_io(struct io *io, int evt)
 		return;
 
 	case IO_DISCONNECTED:
-		log_trace(TRACE_FILTERS, "debug: filter: tx done (%zu) for req %016"PRIx64, s->idatalen, s->id);
+		log_trace(TRACE_FILTERS,
+		    "debug: filter: tx done (%zu) for req %016"PRIx64,
+		    s->idatalen, s->id);
 		break;
 
 	default:
-		log_warn("warn: filter_tx_io: bad evt (%d) for req %016"PRIx64, evt, s->id);
+		log_warn("warn: filter_tx_io: bad evt (%d) for req %016"PRIx64,
+		    evt, s->id);
 		s->error = 1;
 		break;
 	}
@@ -795,12 +805,14 @@ filter_query_to_text(struct filter_query *q)
 	tmp[0] = '\0';
 
 	if (q->kind == QK_QUERY) {
-		switch(q->type) {
+		switch (q->type) {
 		case QUERY_CONNECT:
 			strlcat(tmp, "=", sizeof tmp);
-			strlcat(tmp, ss_to_text(&q->u.connect.local), sizeof tmp);
+			strlcat(tmp, ss_to_text(&q->u.connect.local),
+			    sizeof tmp);
 			strlcat(tmp, " <-> ", sizeof tmp);
-			strlcat(tmp, ss_to_text(&q->u.connect.remote), sizeof tmp);
+			strlcat(tmp, ss_to_text(&q->u.connect.remote),
+			    sizeof tmp);
 			strlcat(tmp, "(", sizeof tmp);
 			strlcat(tmp, q->u.connect.hostname, sizeof tmp);
 			strlcat(tmp, ")", sizeof tmp);
@@ -837,7 +849,8 @@ filter_session_to_text(struct filter_session *s)
 	if (s == NULL)
 		return "filter_session@NULL";
 
-	snprintf(buf, sizeof(buf), "filter_session@%p[datalen=%zu,eom=%p,ofile=%p]",
+	snprintf(buf, sizeof(buf),
+	    "filter_session@%p[datalen=%zu,eom=%p,ofile=%p]",
 	    s, s->idatalen, s->eom, s->ofile);
 
 	return buf;
