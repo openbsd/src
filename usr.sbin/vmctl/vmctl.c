@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmctl.c,v 1.9 2015/12/11 10:16:53 reyk Exp $	*/
+/*	$OpenBSD: vmctl.c,v 1.10 2015/12/14 06:59:07 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
@@ -313,16 +313,16 @@ print_vm_info(struct vmop_info_result *list, size_t ct)
 	size_t i, j;
 	char *vcpu_state;
 
-	printf("%5s %5s %5s %9s %*s %s\n", "ID", "PID", "VCPUS", "MAXMEM",
-	    VM_TTYNAME_MAX, "TTY", "NAME");
+	printf("%5s %5s %5s %9s %9s %*s %s\n", "ID", "PID", "VCPUS", "MAXMEM",
+	    "CURMEM", VM_TTYNAME_MAX, "TTY", "NAME");
 	for (i = 0; i < ct; i++) {
 		vir = &list[i].vir_info;
 		if (check_info_id(vir->vir_name, vir->vir_id)) {
-			printf("%5u %5u %5zd %7zdMB %*s %s\n",
+			printf("%5u %5u %5zd %7zdMB %7zdMB %*s %s\n",
 			    vir->vir_id, vir->vir_creator_pid,
 			    vir->vir_ncpus, vir->vir_memory_size,
-			    VM_TTYNAME_MAX, list[i].vir_ttyname,
-			    vir->vir_name);
+			    vir->vir_used_size / 1024 / 1024 , VM_TTYNAME_MAX,
+			    list[i].vir_ttyname, vir->vir_name);
 		}
 		if (check_info_id(vir->vir_name, vir->vir_id) > 0) {
 			for (j = 0; j < vir->vir_ncpus; j++) {

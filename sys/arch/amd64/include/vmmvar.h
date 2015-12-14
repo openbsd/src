@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmmvar.h,v 1.3 2015/11/26 08:26:48 reyk Exp $	*/
+/*	$OpenBSD: vmmvar.h,v 1.4 2015/12/14 06:59:07 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -164,6 +164,7 @@ struct vm_run_params {
 struct vm_info_result {
 	/* Output parameters from VMM_IOC_INFO */
 	size_t		vir_memory_size;
+	size_t		vir_used_size;
 	size_t		vir_ncpus;
 	uint8_t		vir_vcpu_state[VMM_MAX_VCPUS_PER_VM];
 	pid_t		vir_creator_pid;

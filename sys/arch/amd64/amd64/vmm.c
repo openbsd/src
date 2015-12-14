@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.21 2015/12/09 02:29:09 deraadt Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.22 2015/12/14 06:59:07 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -56,6 +56,7 @@ struct vm {
 	uint32_t		 vm_id;
 	pid_t			 vm_creator_pid;
 	uint32_t		 vm_memory_size;
+	size_t			 vm_used_size;
 	char			 vm_name[VMM_MAX_NAME_LEN];
 
 	struct vcpu_head	 vm_vcpu_list;
@@ -2237,6 +2238,7 @@ vm_get_info(struct vm_info_params *vip)
 	vip->vip_info_ct = vmm_softc->vm_ct;
 	SLIST_FOREACH(vm, &vmm_softc->vm_list, vm_link) {
 		out[i].vir_memory_size = vm->vm_memory_size;
+		out[i].vir_used_size = vm->vm_used_size;
 		out[i].vir_ncpus = vm->vm_vcpu_ct;
 		out[i].vir_id = vm->vm_id;
 		out[i].vir_creator_pid = vm->vm_creator_pid;
@@ -2851,6 +2853,7 @@ vmx_fault_page(struct vcpu *vcpu, paddr_t gpa)
 					pmap_kremove(kva, PAGE_SIZE);
 					km_free((void *)kva, PAGE_SIZE, &kv_any,
 					    &kp_none);
+					vcpu->vc_parent->vm_used_size += PAGE_SIZE;
 				} else {
 					printf("vmx_fault_page: kva failure\n");
 					ret = ENOMEM;
