@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-lock-server.c,v 1.20 2015/12/13 21:53:57 nicm Exp $ */
+/* $OpenBSD: cmd-lock-server.c,v 1.21 2015/12/14 00:31:54 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -44,7 +44,9 @@ const struct cmd_entry cmd_lock_session_entry = {
 	.args = { "t:", 0, 0 },
 	.usage = CMD_TARGET_SESSION_USAGE,
 
-	.flags = CMD_SESSION_T,
+	.tflag = CMD_SESSION,
+
+	.flags = 0,
 	.exec = cmd_lock_server_exec
 };
 
@@ -55,7 +57,9 @@ const struct cmd_entry cmd_lock_client_entry = {
 	.args = { "t:", 0, 0 },
 	.usage = CMD_TARGET_CLIENT_USAGE,
 
-	.flags = CMD_CLIENT_T,
+	.tflag = CMD_CLIENT,
+
+	.flags = 0,
 	.exec = cmd_lock_server_exec
 };
 

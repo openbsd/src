@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-switch-client.c,v 1.39 2015/12/13 21:53:57 nicm Exp $ */
+/* $OpenBSD: cmd-switch-client.c,v 1.40 2015/12/14 00:31:54 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -37,8 +37,10 @@ const struct cmd_entry cmd_switch_client_entry = {
 	.usage = "[-Elnpr] [-c target-client] [-t target-session] "
 		 "[-T key-table]",
 
-	.flags = CMD_READONLY|CMD_CLIENT_C|CMD_PANE_T|CMD_SESSION_T|
-		 CMD_PREFERUNATTACHED,
+	.cflag = CMD_CLIENT,
+	.tflag = CMD_SESSION_WITHPANE,
+
+	.flags = CMD_READONLY,
 	.exec = cmd_switch_client_exec
 };
 

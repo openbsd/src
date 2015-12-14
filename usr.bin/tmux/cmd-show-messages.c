@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-show-messages.c,v 1.18 2015/12/13 21:53:57 nicm Exp $ */
+/* $OpenBSD: cmd-show-messages.c,v 1.19 2015/12/14 00:31:54 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -38,7 +38,9 @@ const struct cmd_entry cmd_show_messages_entry = {
 	.args = { "JTt:", 0, 0 },
 	.usage = "[-JT] " CMD_TARGET_CLIENT_USAGE,
 
-	.flags = CMD_CLIENT_T,
+	.tflag = CMD_CLIENT,
+
+	.flags = 0,
 	.exec = cmd_show_messages_exec
 };
 

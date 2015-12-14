@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-select-pane.c,v 1.28 2015/12/13 21:53:57 nicm Exp $ */
+/* $OpenBSD: cmd-select-pane.c,v 1.29 2015/12/14 00:31:54 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -33,7 +33,9 @@ const struct cmd_entry cmd_select_pane_entry = {
 	.args = { "DdegLlMmP:Rt:U", 0, 0 },
 	.usage = "[-DdegLlMmRU] [-P style] " CMD_TARGET_PANE_USAGE,
 
-	.flags = CMD_PANE_T,
+	.tflag = CMD_PANE,
+
+	.flags = 0,
 	.exec = cmd_select_pane_exec
 };
 
@@ -44,7 +46,9 @@ const struct cmd_entry cmd_last_pane_entry = {
 	.args = { "det:", 0, 0 },
 	.usage = "[-de] " CMD_TARGET_WINDOW_USAGE,
 
-	.flags = CMD_WINDOW_T,
+	.tflag = CMD_WINDOW,
+
+	.flags = 0,
 	.exec = cmd_select_pane_exec
 };
 

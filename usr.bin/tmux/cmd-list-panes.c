@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-list-panes.c,v 1.25 2015/12/13 21:53:57 nicm Exp $ */
+/* $OpenBSD: cmd-list-panes.c,v 1.26 2015/12/14 00:31:54 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -41,7 +41,9 @@ const struct cmd_entry cmd_list_panes_entry = {
 	.args = { "asF:t:", 0, 0 },
 	.usage = "[-as] [-F format] " CMD_TARGET_WINDOW_USAGE,
 
-	.flags = CMD_WINDOW_T,
+	.tflag = CMD_WINDOW,
+
+	.flags = 0,
 	.exec = cmd_list_panes_exec
 };
 

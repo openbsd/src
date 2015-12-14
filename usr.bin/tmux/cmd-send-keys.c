@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-send-keys.c,v 1.25 2015/12/13 21:53:57 nicm Exp $ */
+/* $OpenBSD: cmd-send-keys.c,v 1.26 2015/12/14 00:31:54 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -36,7 +36,9 @@ const struct cmd_entry cmd_send_keys_entry = {
 	.args = { "lRMt:", 0, -1 },
 	.usage = "[-lRM] " CMD_TARGET_PANE_USAGE " key ...",
 
-	.flags = CMD_PANE_T,
+	.tflag = CMD_PANE,
+
+	.flags = 0,
 	.exec = cmd_send_keys_exec
 };
 
@@ -47,7 +49,9 @@ const struct cmd_entry cmd_send_prefix_entry = {
 	.args = { "2t:", 0, 0 },
 	.usage = "[-2] " CMD_TARGET_PANE_USAGE,
 
-	.flags = CMD_PANE_T,
+	.tflag = CMD_PANE,
+
+	.flags = 0,
 	.exec = cmd_send_keys_exec
 };
 

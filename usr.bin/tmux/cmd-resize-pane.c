@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-resize-pane.c,v 1.20 2015/12/13 21:53:57 nicm Exp $ */
+/* $OpenBSD: cmd-resize-pane.c,v 1.21 2015/12/14 00:31:54 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -38,7 +38,9 @@ const struct cmd_entry cmd_resize_pane_entry = {
 	.usage = "[-DLMRUZ] [-x width] [-y height] " CMD_TARGET_PANE_USAGE " "
 		 "[adjustment]",
 
-	.flags = CMD_PANE_T,
+	.tflag = CMD_PANE,
+
+	.flags = 0,
 	.exec = cmd_resize_pane_exec
 };
 

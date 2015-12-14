@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-respawn-window.c,v 1.27 2015/12/13 21:53:57 nicm Exp $ */
+/* $OpenBSD: cmd-respawn-window.c,v 1.28 2015/12/14 00:31:54 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -36,7 +36,9 @@ const struct cmd_entry cmd_respawn_window_entry = {
 	.args = { "kt:", 0, -1 },
 	.usage = "[-k] " CMD_TARGET_WINDOW_USAGE " [command]",
 
-	.flags = CMD_WINDOW_T,
+	.tflag = CMD_WINDOW,
+
+	.flags = 0,
 	.exec = cmd_respawn_window_exec
 };
 

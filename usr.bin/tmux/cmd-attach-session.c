@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-attach-session.c,v 1.56 2015/12/13 21:53:57 nicm Exp $ */
+/* $OpenBSD: cmd-attach-session.c,v 1.57 2015/12/14 00:31:54 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -39,7 +39,9 @@ const struct cmd_entry cmd_attach_session_entry = {
 	.args = { "c:dErt:", 0, 0 },
 	.usage = "[-dEr] [-c working-directory] " CMD_TARGET_SESSION_USAGE,
 
-	.flags = CMD_STARTSERVER|CMD_SESSION_T|CMD_PANE_T|CMD_PREFERUNATTACHED,
+	.tflag = CMD_SESSION_WITHPANE,
+
+	.flags = CMD_STARTSERVER,
 	.exec = cmd_attach_session_exec
 };
 

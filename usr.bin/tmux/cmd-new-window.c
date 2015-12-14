@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-new-window.c,v 1.57 2015/12/13 21:53:57 nicm Exp $ */
+/* $OpenBSD: cmd-new-window.c,v 1.58 2015/12/14 00:31:54 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -42,7 +42,9 @@ const struct cmd_entry cmd_new_window_entry = {
 	.usage = "[-adkP] [-c start-directory] [-F format] [-n window-name] "
 		 CMD_TARGET_WINDOW_USAGE " [command]",
 
-	.flags = CMD_INDEX_T,
+	.tflag = CMD_WINDOW_INDEX,
+
+	.flags = 0,
 	.exec = cmd_new_window_exec
 };
 

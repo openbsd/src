@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-show-environment.c,v 1.15 2015/12/13 21:53:57 nicm Exp $ */
+/* $OpenBSD: cmd-show-environment.c,v 1.16 2015/12/14 00:31:54 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -40,7 +40,9 @@ const struct cmd_entry cmd_show_environment_entry = {
 	.args = { "gst:", 0, 1 },
 	.usage = "[-gs] " CMD_TARGET_SESSION_USAGE " [name]",
 
-	.flags = CMD_SESSION_T|CMD_CANFAIL,
+	.tflag = CMD_SESSION_CANFAIL,
+
+	.flags = 0,
 	.exec = cmd_show_environment_exec
 };
 

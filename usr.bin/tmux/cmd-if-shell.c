@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-if-shell.c,v 1.39 2015/12/13 21:53:57 nicm Exp $ */
+/* $OpenBSD: cmd-if-shell.c,v 1.40 2015/12/14 00:31:54 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Tiago Cunha <me@tiagocunha.org>
@@ -43,7 +43,9 @@ const struct cmd_entry cmd_if_shell_entry = {
 	.usage = "[-bF] " CMD_TARGET_PANE_USAGE " shell-command command "
 		 "[command]",
 
-	.flags = CMD_PANE_T|CMD_CANFAIL,
+	.tflag = CMD_PANE_CANFAIL,
+
+	.flags = 0,
 	.exec = cmd_if_shell_exec
 };
 

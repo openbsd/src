@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-list-clients.c,v 1.25 2015/12/13 21:53:57 nicm Exp $ */
+/* $OpenBSD: cmd-list-clients.c,v 1.26 2015/12/14 00:31:54 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -42,7 +42,9 @@ const struct cmd_entry cmd_list_clients_entry = {
 	.args = { "F:t:", 0, 0 },
 	.usage = "[-F format] " CMD_TARGET_SESSION_USAGE,
 
-	.flags = CMD_READONLY|CMD_SESSION_T,
+	.tflag = CMD_SESSION,
+
+	.flags = CMD_READONLY,
 	.exec = cmd_list_clients_exec
 };
 

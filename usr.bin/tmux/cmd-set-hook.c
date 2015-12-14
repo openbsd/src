@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-set-hook.c,v 1.4 2015/12/13 21:53:57 nicm Exp $ */
+/* $OpenBSD: cmd-set-hook.c,v 1.5 2015/12/14 00:31:54 nicm Exp $ */
 
 /*
  * Copyright (c) 2012 Thomas Adam <thomas@xteddy.org>
@@ -36,7 +36,9 @@ const struct cmd_entry cmd_set_hook_entry = {
 	.args = { "gt:u", 1, 2 },
 	.usage = "[-gu] " CMD_TARGET_SESSION_USAGE " hook-name [command]",
 
-	.flags = CMD_SESSION_T,
+	.tflag = CMD_SESSION,
+
+	.flags = 0,
 	.exec = cmd_set_hook_exec
 };
 
@@ -47,7 +49,9 @@ const struct cmd_entry cmd_show_hooks_entry = {
 	.args = { "gt:", 0, 1 },
 	.usage = "[-g] " CMD_TARGET_SESSION_USAGE,
 
-	.flags = CMD_SESSION_T,
+	.tflag = CMD_SESSION,
+
+	.flags = 0,
 	.exec = cmd_set_hook_exec
 };
 

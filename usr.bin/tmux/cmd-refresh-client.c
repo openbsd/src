@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-refresh-client.c,v 1.17 2015/12/13 21:53:57 nicm Exp $ */
+/* $OpenBSD: cmd-refresh-client.c,v 1.18 2015/12/14 00:31:54 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -33,7 +33,9 @@ const struct cmd_entry cmd_refresh_client_entry = {
 	.args = { "C:St:", 0, 0 },
 	.usage = "[-S] [-C size] " CMD_TARGET_CLIENT_USAGE,
 
-	.flags = CMD_CLIENT_T,
+	.tflag = CMD_CLIENT,
+
+	.flags = 0,
 	.exec = cmd_refresh_client_exec
 };
 

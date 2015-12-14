@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-command-prompt.c,v 1.31 2015/12/13 21:53:57 nicm Exp $ */
+/* $OpenBSD: cmd-command-prompt.c,v 1.32 2015/12/14 00:31:54 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -42,7 +42,9 @@ const struct cmd_entry cmd_command_prompt_entry = {
 	.usage = "[-I inputs] [-p prompts] " CMD_TARGET_CLIENT_USAGE " "
 		 "[template]",
 
-	.flags = CMD_CLIENT_T,
+	.tflag = CMD_CLIENT,
+
+	.flags = 0,
 	.exec = cmd_command_prompt_exec
 };
 

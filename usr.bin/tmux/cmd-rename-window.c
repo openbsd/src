@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-rename-window.c,v 1.14 2015/12/13 21:53:57 nicm Exp $ */
+/* $OpenBSD: cmd-rename-window.c,v 1.15 2015/12/14 00:31:54 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -35,7 +35,9 @@ const struct cmd_entry cmd_rename_window_entry = {
 	.args = { "t:", 1, 1 },
 	.usage = CMD_TARGET_WINDOW_USAGE " new-name",
 
-	.flags = CMD_WINDOW_T,
+	.tflag = CMD_WINDOW,
+
+	.flags = 0,
 	.exec = cmd_rename_window_exec
 };
 

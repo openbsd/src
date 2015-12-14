@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-clear-history.c,v 1.16 2015/12/13 21:53:57 nicm Exp $ */
+/* $OpenBSD: cmd-clear-history.c,v 1.17 2015/12/14 00:31:54 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -33,7 +33,9 @@ const struct cmd_entry cmd_clear_history_entry = {
 	.args = { "t:", 0, 0 },
 	.usage = CMD_TARGET_PANE_USAGE,
 
-	.flags = CMD_PANE_T,
+	.tflag = CMD_PANE,
+
+	.flags = 0,
 	.exec = cmd_clear_history_exec
 };
 

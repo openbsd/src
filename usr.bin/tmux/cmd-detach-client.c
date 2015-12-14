@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-detach-client.c,v 1.25 2015/12/13 21:53:57 nicm Exp $ */
+/* $OpenBSD: cmd-detach-client.c,v 1.26 2015/12/14 00:31:54 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -35,7 +35,10 @@ const struct cmd_entry cmd_detach_client_entry = {
 	.args = { "as:t:P", 0, 0 },
 	.usage = "[-P] [-a] [-s target-session] " CMD_TARGET_CLIENT_USAGE,
 
-	.flags = CMD_READONLY|CMD_CLIENT_T|CMD_SESSION_S,
+	.sflag = CMD_SESSION,
+	.tflag = CMD_CLIENT,
+
+	.flags = CMD_READONLY,
 	.exec = cmd_detach_client_exec
 };
 
@@ -46,7 +49,9 @@ const struct cmd_entry cmd_suspend_client_entry = {
 	.args = { "t:", 0, 0 },
 	.usage = CMD_TARGET_CLIENT_USAGE,
 
-	.flags = CMD_CLIENT_T,
+	.tflag = CMD_CLIENT,
+
+	.flags = 0,
 	.exec = cmd_detach_client_exec
 };
 

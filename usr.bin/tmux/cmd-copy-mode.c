@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-copy-mode.c,v 1.23 2015/12/13 21:53:57 nicm Exp $ */
+/* $OpenBSD: cmd-copy-mode.c,v 1.24 2015/12/14 00:31:54 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -33,7 +33,9 @@ const struct cmd_entry cmd_copy_mode_entry = {
 	.args = { "Met:u", 0, 0 },
 	.usage = "[-Mu] " CMD_TARGET_PANE_USAGE,
 
-	.flags = CMD_PANE_T,
+	.tflag = CMD_PANE,
+
+	.flags = 0,
 	.exec = cmd_copy_mode_exec
 };
 
