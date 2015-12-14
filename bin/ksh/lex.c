@@ -1,4 +1,4 @@
-/*	$OpenBSD: lex.c,v 1.64 2015/11/18 15:31:21 nicm Exp $	*/
+/*	$OpenBSD: lex.c,v 1.65 2015/12/14 06:09:43 mmcc Exp $	*/
 
 /*
  * lexical analysis and source input
@@ -1121,7 +1121,7 @@ getsc_line(Source *s)
 			char *p = shf_getse(xp, Xnleft(s->xs, xp), s->u.shf);
 
 			if (!p && shf_error(s->u.shf) &&
-			    shf_errno(s->u.shf) == EINTR) {
+			    s->u.shf->errno_ == EINTR) {
 				shf_clearerr(s->u.shf);
 				if (trap)
 					runtraps(0);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: shf.h,v 1.7 2015/10/21 15:47:41 mmcc Exp $	*/
+/*	$OpenBSD: shf.h,v 1.8 2015/12/14 06:09:43 mmcc Exp $	*/
 
 #ifndef SHF_H
 # define SHF_H
@@ -15,7 +15,6 @@
 				    ((shf)->wnleft--, *(shf)->wp++ = (c)))
 #define shf_eof(shf)		((shf)->flags & SHF_EOF)
 #define shf_error(shf)		((shf)->flags & SHF_ERROR)
-#define shf_errno(shf)		((shf)->errno_)
 #define shf_clearerr(shf)	((shf)->flags &= ~(SHF_EOF | SHF_ERROR))
 
 /* Flags passed to shf_*open() */
