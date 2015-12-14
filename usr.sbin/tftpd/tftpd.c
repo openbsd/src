@@ -1,4 +1,4 @@
-/*	$OpenBSD: tftpd.c,v 1.33 2015/12/11 20:11:10 mmcc Exp $	*/
+/*	$OpenBSD: tftpd.c,v 1.34 2015/12/14 16:34:55 semarie Exp $	*/
 
 /*
  * Copyright (c) 2012 David Gwynne <dlg@uq.edu.au>
@@ -344,6 +344,9 @@ main(int argc, char *argv[])
 
 	tftpd_listen(addr, port, family);
 
+	if (!debug && daemon(1, 0) == -1)
+		err(1, "unable to daemonize");
+
 	if (chroot(dir))
 		err(1, "chroot %s", dir);
 	if (chdir("/"))
@@ -354,9 +357,6 @@ main(int argc, char *argv[])
 	    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||
 	    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
 		errx(1, "can't drop privileges");
-
-	if (!debug && daemon(1, 0) == -1)
-		err(1, "unable to daemonize");
 
 	if (pledge("stdio rpath wpath cpath fattr dns inet", NULL) == -1)
 		err(1, "pledge");
