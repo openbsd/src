@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.c,v 1.89 2015/11/24 17:11:39 mpi Exp $ */
+/* $OpenBSD: if_em_hw.c,v 1.90 2015/12/14 03:04:10 mmcc Exp $ */
 /*
  * if_em_hw.c Shared functions for accessing and configuring the MAC
  */
@@ -9579,7 +9579,7 @@ em_ich8_cycle_init(struct em_hw *hw)
 	/*
 	 * Either we should have a hardware SPI cycle in progress bit to
 	 * check against, in order to start a new cycle or FDONE bit should
-	 * be changed in the hardware so that it is 1 after harware reset,
+	 * be changed in the hardware so that it is 1 after hardware reset,
 	 * which can then be used as an indication whether a cycle is in
 	 * progress or has been completed .. we should also have some
 	 * software semaphore mechanism to guard FDONE or the cycle in
