@@ -1,4 +1,4 @@
-/*	$OpenBSD: sem.c,v 1.35 2015/01/16 06:40:16 deraadt Exp $	*/
+/*	$OpenBSD: sem.c,v 1.36 2015/12/14 05:59:56 mmcc Exp $	*/
 /*	$NetBSD: sem.c,v 1.10 1996/11/11 23:40:11 gwr Exp $	*/
 
 /*
@@ -495,8 +495,6 @@ setmajor(struct devbase *d, int n)
 	else
 		d->d_major = n;
 }
-
-#define ABS(x) ((x) < 0 ? -(x) : (x))
 
 static int
 exclude(struct nvlist *nv, const char *name, const char *what)
