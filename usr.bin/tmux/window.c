@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.151 2015/12/02 23:09:22 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.152 2015/12/15 00:00:01 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -568,7 +568,7 @@ window_add_pane(struct window *w, u_int hlimit)
 void
 window_lost_pane(struct window *w, struct window_pane *wp)
 {
-	if (wp == marked_window_pane)
+	if (wp == marked_pane.wp)
 		server_clear_marked();
 
 	if (wp == w->active) {
@@ -691,7 +691,7 @@ window_printable_flags(struct session *s, struct winlink *wl)
 		flags[pos++] = '*';
 	if (wl == TAILQ_FIRST(&s->lastw))
 		flags[pos++] = '-';
-	if (server_check_marked() && wl == marked_winlink)
+	if (server_check_marked() && wl == marked_pane.wl)
 		flags[pos++] = 'M';
 	if (wl->window->flags & WINDOW_ZOOMED)
 		flags[pos++] = 'Z';

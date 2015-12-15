@@ -1,4 +1,4 @@
-/* $OpenBSD: screen-redraw.c,v 1.33 2015/10/27 15:58:42 nicm Exp $ */
+/* $OpenBSD: screen-redraw.c,v 1.34 2015/12/15 00:00:01 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -331,9 +331,9 @@ screen_redraw_draw_borders(struct client *c, int status, u_int top)
 				continue;
 			active = screen_redraw_check_is(i, j, type, w,
 			    w->active, wp);
-			if (server_is_marked(s, s->curw, marked_window_pane) &&
+			if (server_is_marked(s, s->curw, marked_pane.wp) &&
 			    screen_redraw_check_is(i, j, type, w,
-			    marked_window_pane, wp)) {
+			    marked_pane.wp, wp)) {
 				if (active)
 					tty_attributes(tty, &m_active_gc, NULL);
 				else

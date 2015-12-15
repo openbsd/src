@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-select-pane.c,v 1.29 2015/12/14 00:31:54 nicm Exp $ */
+/* $OpenBSD: cmd-select-pane.c,v 1.30 2015/12/15 00:00:01 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -94,13 +94,13 @@ cmd_select_pane_exec(struct cmd *self, struct cmd_q *cmdq)
 	if (args_has(args, 'm') || args_has(args, 'M')) {
 		if (args_has(args, 'm') && !window_pane_visible(wp))
 			return (CMD_RETURN_NORMAL);
-		lastwp = marked_window_pane;
+		lastwp = marked_pane.wp;
 
 		if (args_has(args, 'M') || server_is_marked(s, wl, wp))
 			server_clear_marked();
 		else
 			server_set_marked(s, wl, wp);
-		markedwp = marked_window_pane;
+		markedwp = marked_pane.wp;
 
 		if (lastwp != NULL) {
 			server_redraw_window_borders(lastwp->window);
