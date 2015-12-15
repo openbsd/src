@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmmvar.h,v 1.4 2015/12/14 06:59:07 mlarkin Exp $	*/
+/*	$OpenBSD: vmmvar.h,v 1.5 2015/12/15 01:56:51 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -204,6 +204,12 @@ struct vm_readpage_params {
 	char			*vrp_data; /* Page Data */
 };
 
+struct vm_resetcpu_params {
+	/* Input parameters to VMM_IOC_RESETCPU */
+	uint32_t		vrp_vm_id;
+	uint32_t		vrp_vcpu_id;
+};
+
 /* IOCTL definitions */
 #define VMM_IOC_CREATE _IOWR('V', 1, struct vm_create_params) /* Create VM */
 #define VMM_IOC_RUN _IOWR('V', 2, struct vm_run_params) /* Run VCPU */
@@ -211,6 +217,7 @@ struct vm_readpage_params {
 #define VMM_IOC_TERM _IOW('V', 4, struct vm_terminate_params) /* Terminate VM */
 #define VMM_IOC_WRITEPAGE _IOW('V', 5, struct vm_writepage_params) /* Wr Pg */
 #define VMM_IOC_READPAGE _IOW('V', 6, struct vm_readpage_params) /* Rd Pg */
+#define VMM_IOC_RESETCPU _IOW('V', 7, struct vm_resetcpu_params) /* Reset */
 
 #ifdef _KERNEL
 
