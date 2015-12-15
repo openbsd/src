@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-find.c,v 1.25 2015/12/15 00:45:02 nicm Exp $ */
+/* $OpenBSD: cmd-find.c,v 1.26 2015/12/15 14:32:55 nicm Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -834,8 +834,8 @@ cmd_find_copy_state(struct cmd_find_state *dst, struct cmd_find_state *src)
 {
 	dst->s = src->s;
 	dst->wl = src->wl;
-	dst->idx = dst->wl->idx;
-	dst->w = dst->wl->window;
+	dst->idx = src->idx;
+	dst->w = src->w;
 	dst->wp = src->wp;
 }
 
