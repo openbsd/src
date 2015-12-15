@@ -1,4 +1,4 @@
-/*	$OpenBSD: asmc.c,v 1.18 2015/12/15 19:46:14 jung Exp $	*/
+/*	$OpenBSD: asmc.c,v 1.19 2015/12/15 20:05:25 jung Exp $	*/
 /*
  * Copyright (c) 2015 Joerg Jung <jung@openbsd.org>
  *
@@ -111,12 +111,13 @@ struct cfdriver asmc_cd = {
 
 static struct asmc_prod asmc_prods[] = {
 	{ "MacBookAir", {
-		"TB0T", "TB1S", "TB1T", "TB2S", "TB2T", "TC0C", "TC0D", "TC0E",
-		"TC0F", "TC0P", "TC1C", "TC1E", "TC2C", "TCFP", "TCGC", "TCSA",
-		"TCZ3", "TCZ4", "TCZ5", "TG0E", "TG1E", "TG2E", "TGZ3", "TGZ4",
-		"TGZ5", "THSP", "TM0P", "TN0D", "TPCD", "TTF0", "TV0P", "TVFP",
-		"TW0P", "Ta0P", "Th0H", "Th0P", "Th1H", "Tm0P", "Tm1P", "Tp0P",
-		"Tp1P", "TpFP", "Ts0P", "Ts0S", NULL }
+		"TB0T", "TB1S", "TB1T", "TB2S", "TB2T", "TBXT", "TC0C", "TC0D",
+		"TC0E", "TC0F", "TC0P", "TC1C", "TC1E", "TC2C", "TCFP", "TCGC",
+		"TCHP", "TCMX", "TCSA", "TCXC", "TCZ3", "TCZ4", "TCZ5", "TG0E",
+		"TG1E", "TG2E", "TGZ3", "TGZ4", "TGZ5", "TH0A", "TH0B", "TH0V",
+		"TH0a", "TH0b", "THSP", "TM0P", "TN0D", "TPCD", "TS2P", "TTF0",
+		"TV0P", "TVFP", "TW0P", "Ta0P", "Th0H", "Th0P", "Th1H", "Tm0P",
+		"Tm1P", "Tp0P", "Tp1P", "TpFP", "Ts0P", "Ts0S", NULL }
 	},
 	{ "MacBookPro", {
 		"TA0P", "TALP", "TB0T", "TB1T", "TB2T", "TB3T", "TBXT", "TC0C",
