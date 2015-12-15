@@ -1,4 +1,4 @@
-/*	$OpenBSD: include.h,v 1.7 2014/11/16 04:49:48 guenther Exp $	*/
+/*	$OpenBSD: include.h,v 1.8 2015/12/15 18:40:54 tb Exp $	*/
 /*	$NetBSD: include.h,v 1.5 1995/04/27 21:22:23 mycroft Exp $	*/
 
 /*-
@@ -57,7 +57,6 @@
 #include <fcntl.h>
 #include <limits.h>
 #include <math.h>
-#include <pwd.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
