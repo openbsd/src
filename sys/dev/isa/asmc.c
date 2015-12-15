@@ -1,4 +1,4 @@
-/*	$OpenBSD: asmc.c,v 1.19 2015/12/15 20:05:25 jung Exp $	*/
+/*	$OpenBSD: asmc.c,v 1.20 2015/12/15 20:34:33 jung Exp $	*/
 /*
  * Copyright (c) 2015 Joerg Jung <jung@openbsd.org>
  *
@@ -120,15 +120,14 @@ static struct asmc_prod asmc_prods[] = {
 		"Tm1P", "Tp0P", "Tp1P", "TpFP", "Ts0P", "Ts0S", NULL }
 	},
 	{ "MacBookPro", {
-		"TA0P", "TALP", "TB0T", "TB1T", "TB2T", "TB3T", "TBXT", "TC0C",
-		"TC0D", "TC0E", "TC0F", "TC0P", "TC1C", "TC2C", "TC3C", "TC4C",
-		"TCFC", "TCGC", "TCSA", "TCTD", "TCXC", "TG0D", "TG0F", "TG0H",
-		"TG0P", "TG0T", "TG1D", "TG1F", "TG1H", "TG1d", "TH0A", "TH0B",
-		"TH0F", "TH0R", "TH0V", "TH0a", "TH0b", "TH0c", "THSP", "TM0P",
-		"TM0S", "TMBS", "TMCD", "TN0D", "TN0P", "TN0S", "TN1D", "TN1F",
-		"TN1G", "TN1S", "TP0P", "TPCD", "TTF0", "TW0P", "Ta0P", "TaSP",
-		"Th0H", "Th1H", "Th2H", "Tm0P", "Ts0P", "Ts0S", "Ts1P", "Ts1S",
-		NULL }
+		"TA0P", "TA1P", "TALP", "TB0T", "TB1T", "TB2T", "TB3T", "TBXT",
+		"TC0C", "TC0D", "TC0E", "TC0F", "TC0P", "TC1C", "TC2C", "TC3C",
+		"TC4C", "TCGC", "TCSA", "TCXC", "TG0D", "TG0F", "TG0H", "TG0P",
+		"TG0T", "TG1D", "TG1F", "TG1H", "TG1d", "TH0A", "TH0B", "TH0F",
+		"TH0R", "TH0V", "TH0a", "TH0b", "TH0c", "TH0x", "THSP", "TM0P",
+		"TM0S", "TMCD", "TN0D", "TN0P", "TN0S", "TN1D", "TN1F", "TN1G",
+		"TN1S", "TP0P", "TPCD", "TTF0", "TW0P", "Ta0P", "TaSP", "Th0H",
+		"Th1H", "Th2H", "Tm0P", "Ts0P", "Ts0S", "Ts1P", "Ts1S", NULL }
 	},
 	{ "MacBook", {
 		"TB0T", "TB1T", "TB2T", "TB3T", "TC0D", "TC0P", "TM0P", "TN0D",
