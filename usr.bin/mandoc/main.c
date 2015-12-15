@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.166 2015/11/20 21:58:32 schwarze Exp $ */
+/*	$OpenBSD: main.c,v 1.167 2015/12/15 17:36:19 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2012, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -272,8 +272,9 @@ main(int argc, char *argv[])
 	    !isatty(STDOUT_FILENO))
 		use_pager = 0;
 
-	if (!use_pager && pledge("stdio rpath flock", NULL) == -1)
-		err((int)MANDOCLEVEL_SYSERR, "pledge");
+	if (!use_pager)
+		if (pledge("stdio rpath flock", NULL) == -1)
+			err((int)MANDOCLEVEL_SYSERR, "pledge");
 
 	/* Parse arguments. */
 
@@ -390,9 +391,13 @@ main(int argc, char *argv[])
 
 	/* mandoc(1) */
 
-	if (pledge(use_pager ? "stdio rpath tmppath tty proc exec" :
-	    "stdio rpath", NULL) == -1)
-		err((int)MANDOCLEVEL_SYSERR, "pledge");
+	if (use_pager) {
+		if (pledge("stdio rpath tmppath tty proc exec", NULL) == -1)
+			err((int)MANDOCLEVEL_SYSERR, "pledge");
+	} else {
+		if (pledge("stdio rpath", NULL) == -1)
+			err((int)MANDOCLEVEL_SYSERR, "pledge");
+	}
 
 	if (search.argmode == ARG_FILE && ! moptions(&options, auxpaths))
 		return (int)MANDOCLEVEL_BADARG;
