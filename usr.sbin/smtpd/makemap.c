@@ -1,4 +1,4 @@
-/*	$OpenBSD: makemap.c,v 1.59 2015/12/13 11:06:19 sunil Exp $	*/
+/*	$OpenBSD: makemap.c,v 1.60 2015/12/15 06:05:15 guenther Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -94,6 +94,7 @@ makemap(int argc, char *argv[])
 	int		 ch, dbputs = 0, Uflag = 0;
 	DBTYPE		 dbtype = DB_HASH;
 	char		*p;
+	int		fd = -1;
 
 	log_init(1);
 
@@ -187,10 +188,10 @@ makemap(int argc, char *argv[])
 
 	if (! bsnprintf(dbname, sizeof(dbname), "%s.XXXXXXXXXXX", oflag))
 		errx(1, "path too long");
-	if (mkstemp(dbname) == -1)
+	if ((fd = mkstemp(dbname)) == -1)
 		err(1, "mkstemp");
 
-	db = dbopen(dbname, O_EXLOCK|O_RDWR|O_SYNC, 0644, dbtype, NULL);
+	db = dbopen(dbname, O_RDWR, 0644, dbtype, NULL);
 	if (db == NULL) {
 		warn("dbopen: %s", dbname);
 		goto bad;
@@ -212,6 +213,18 @@ makemap(int argc, char *argv[])
 		goto bad;
 	}
 
+	/* force to disk before renaming over an existing file */
+	if (fsync(fd) == -1) {
+		warn("fsync: %s", dbname);
+		goto bad;
+	}
+	if (close(fd) == -1) {
+		fd = -1;
+		warn("close: %s", dbname);
+		goto bad;
+	}
+	fd = -1;
+
 	if (rename(dbname, oflag) == -1) {
 		warn("rename");
 		goto bad;
@@ -224,6 +237,8 @@ makemap(int argc, char *argv[])
 
 	return 0;
 bad:
+	if (fd != -1)
+		close(fd);
 	unlink(dbname);
 	return 1;
 }
