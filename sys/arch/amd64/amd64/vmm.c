@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.24 2015/12/15 01:56:51 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.25 2015/12/15 03:24:26 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -1795,22 +1795,6 @@ vcpu_init_vmx(struct vcpu *vcpu)
 		ret = ENOMEM;
 		goto exit;
 	}
-
-	DPRINTF("exit save va/pa  0x%llx  0x%llx\n",
-	    (uint64_t)vcpu->vc_vmx_msr_exit_save_va,
-	    (uint64_t)vcpu->vc_vmx_msr_exit_save_pa);
-	DPRINTF("exit load va/pa  0x%llx  0x%llx\n",
-	    (uint64_t)vcpu->vc_vmx_msr_exit_load_va,
-	    (uint64_t)vcpu->vc_vmx_msr_exit_load_pa);
-	DPRINTF("entry load va/pa  0x%llx  0x%llx\n",
-	    (uint64_t)vcpu->vc_vmx_msr_entry_load_va,
-	    (uint64_t)vcpu->vc_vmx_msr_entry_load_pa);
-	DPRINTF("vlapic va/pa 0x%llx  0x%llx\n",
-	    (uint64_t)vcpu->vc_vlapic_va,
-	    (uint64_t)vcpu->vc_vlapic_pa);
-	DPRINTF("msr bitmap va/pa 0x%llx  0x%llx\n",
-	    (uint64_t)vcpu->vc_msr_bitmap_va,
-	    (uint64_t)vcpu->vc_msr_bitmap_pa);
 
 	vmcs = (struct vmcs *)vcpu->vc_control_va;
 	vmcs->vmcs_revision = curcpu()->ci_vmm_cap.vcc_vmx.vmx_vmxon_revision;
