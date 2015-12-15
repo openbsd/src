@@ -1,4 +1,4 @@
-/*	$OpenBSD: asmc.c,v 1.20 2015/12/15 20:34:33 jung Exp $	*/
+/*	$OpenBSD: asmc.c,v 1.21 2015/12/15 20:58:22 jung Exp $	*/
 /*
  * Copyright (c) 2015 Joerg Jung <jung@openbsd.org>
  *
@@ -555,11 +555,14 @@ static int
 asmc_temp(struct asmc_softc *sc, uint8_t idx)
 {
 	uint8_t buf[2];
+	uint32_t uk;
 	int i, r;
 
 	if ((r = asmc_try(sc, ASMC_READ, sc->sc_prod->pr_temp[idx], buf, 2)))
 		return r;
-	sc->sc_sensor_temp[idx].value = asmc_uk(buf);
+	if ((uk = asmc_uk(buf)) < 253150000) /* ignore unlikely values */
+		return 0;
+	sc->sc_sensor_temp[idx].value = uk;
 	sc->sc_sensor_temp[idx].flags &= ~SENSOR_FUNKNOWN;
 
 	if (sc->sc_init)
