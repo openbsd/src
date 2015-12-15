@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtable.c,v 1.33 2015/12/04 13:42:48 mpi Exp $ */
+/*	$OpenBSD: rtable.c,v 1.34 2015/12/15 13:08:50 mpi Exp $ */
 
 /*
  * Copyright (c) 2014-2015 Martin Pieuchot
@@ -735,15 +735,32 @@ rtable_delete(unsigned int rtableid, struct sockaddr *dst,
     struct sockaddr *mask, struct rtentry *rt)
 {
 	struct art_root			*ar;
-	struct art_node			*an = rt->rt_node;
+	struct art_node			*an;
 	uint8_t				*addr;
 	int				 plen;
 #ifndef SMALL_KERNEL
 	struct rtentry			*mrt;
 	int				 npaths = 0;
+#endif /* SMALL_KERNEL */
 
 	KERNEL_ASSERT_LOCKED();
 
+	ar = rtable_get(rtableid, dst->sa_family);
+	if (ar == NULL)
+		return (EAFNOSUPPORT);
+
+	addr = satoaddr(ar, dst);
+	plen = rtable_satoplen(dst->sa_family, mask);
+
+	an = art_lookup(ar, addr, plen);
+	/* Make sure we've got a perfect match. */
+	if (an == NULL || an->an_plen != plen ||
+	    memcmp(an->an_dst, dst, dst->sa_len))
+		return (ESRCH);
+
+	KASSERT(an == rt->rt_node);
+
+#ifndef SMALL_KERNEL
 	/*
 	 * If other multipath route entries are still attached to
 	 * this ART node we only have to unlink it.
@@ -765,20 +782,6 @@ rtable_delete(unsigned int rtableid, struct sockaddr *dst,
 		return (0);
 	}
 #endif /* SMALL_KERNEL */
-
-	ar = rtable_get(rtableid, dst->sa_family);
-	if (ar == NULL)
-		return (EAFNOSUPPORT);
-
-#ifdef DIAGNOSTIC
-	if (memcmp(dst, an->an_dst, dst->sa_len))
-		panic("destination do not match");
-	if (mask && an->an_plen != rtable_satoplen(dst->sa_family, mask))
-		panic("mask do not match");
-#endif /* DIAGNOSTIC */
-
-	addr = satoaddr(ar, an->an_dst);
-	plen = an->an_plen;
 
 	if (art_delete(ar, an, addr, plen) == NULL)
 		return (ESRCH);
