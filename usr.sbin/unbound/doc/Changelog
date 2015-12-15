@@ -1,3 +1,99 @@
+8 December 2015: Wouter
+	- Fixup 724 for unbound-control.
+
+7 December 2015: Ralph
+	- Do not minimise forwarded requests.
+
+4 December 2015: Wouter
+	- Removed unneeded whitespace from example.conf.
+
+3 December 2015: Ralph
+	- (after rc1 tag)
+	- Committed fix to qname minimisation and unit test case for it.
+	
+3 December 2015: Wouter
+	- iana portlist update.
+	- 1.5.7rc1 prerelease tag.
+
+2 December 2015: Wouter
+	- Fixup 724: Fix PCA prompt for unbound-service-install.exe.
+	  re-enable stdout printout.
+	- For 724: Add Changelog to windows binary dist.
+
+1 December 2015: Ralph
+	- Qname minimisation review fixes
+
+1 December 2015: Wouter
+	- Fixup 724 fix for fname_after_chroot() calls.
+	- Remove stdout printout for unbound-service-install.exe
+	- .gitignore for git users.
+
+30 November 2015: Ralph
+	- Implemented qname minimisation
+
+30 November 2015: Wouter
+	- Fix for #724: conf syntax to read files from run dir (on Windows).
+
+25 November 2015: Wouter
+	- Fix for #720, fix unbound-control-setup windows batch file.
+
+24 November 2015: Wouter
+	- Fix #720: add windows scripts to zip bundle.
+	- iana portlist update.
+
+20 November 2015: Wouter
+	- Added assert on rrset cache correctness.
+	- Fix that malformed EDNS query gets a response without malformed EDNS.
+
+18 November 2015: Wouter
+	- newer acx_nlnetlabs.m4.
+	- spelling fixes from Igor Sobrado Delgado.
+
+17 November 2015: Wouter
+	- Fix #594. libunbound: optionally use libnettle for crypto.
+	  Contributed by Luca Bruno.  Added --with-nettle for use with
+	  --with-libunbound-only.
+	- refactor nsec3 hash implementation to be more library-portable.
+	- iana portlist update.
+	- Fixup DER encoded DSA signatures for libnettle.
+
+16 November 2015: Wouter
+	- Fix for lenient accept of reverse order DNAME and CNAME.
+
+6 November 2015: Wouter
+	- Change example.conf: ftp.internic.net to https://www.internic.net
+
+5 November 2015: Wouter
+	- ACX_SSL_CHECKS no longer adds -ldl needlessly.
+
+3 November 2015: Wouter
+	- Fix #718: Fix unbound-control-setup with support for env
+	  without HEREDOC bash support.
+
+29 October 2015: Wouter
+	- patch from Doug Hogan for SSL_OP_NO_SSLvx options.
+	- Fix #716: nodata proof with empty non-terminals and wildcards.
+
+28 October 2015: Wouter
+	- Fix checklock testcode for linux threads on exit.
+
+27 October 2015: Wouter
+	- isblank() compat implementation.
+	- detect libexpat without xml_StopParser function.
+	- portability fixes.
+	- portability, replace snprintf if return value broken.
+
+23 October 2015: Wouter
+	- Fix #714: Document config to block private-address for IPv4
+	  mapped IPv6 addresses.
+
+22 October 2015: Wouter
+	- Fix #712: unbound-anchor appears to not fsync root.key.
+
+20 October 2015: Wouter
+	- 1.5.6 release.
+	- trunk tracks development of 1.5.7.
+
 15 October 2015: Wouter
 	- Fix segfault in the dns64 module in the formaterror error path.
 	- Fix sldns_wire2str_rdata_scan for malformed RRs.

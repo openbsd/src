@@ -1,7 +1,7 @@
 #
 # Example configuration file.
 #
-# See unbound.conf(5) man page, version 1.5.6.
+# See unbound.conf(5) man page, version 1.5.7.
 #
 # this is a comment.
 
@@ -295,6 +295,11 @@ server:
 	# advertised in the DS record.  If no, allows the weakest algorithm
 	# to validate the zone.
 	# harden-algo-downgrade: no
+
+	# Sent minimum amount of information to upstream servers to enhance
+	# privacy. Only sent minimum required labels of the QNAME and set QTYPE
+	# to NS when possible.
+	# qname-minimisation: no
 
 	# Use 0x20-encoded random bits in the query to foil spoof attempts.
 	# This feature is an experimental implementation of draft dns-0x20.
