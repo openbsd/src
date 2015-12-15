@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.12 2015/12/07 16:02:09 reyk Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.13 2015/12/15 02:18:34 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -638,6 +638,7 @@ run_vm(int *child_disks, int *child_taps, struct vm_create_params *vcp)
 	pthread_t *tid;
 	void *exit_status;
 	struct vm_run_params **vrp;
+	struct vm_terminate_params vtp;
 
 	ret = 0;
 
@@ -699,6 +700,13 @@ run_vm(int *child_disks, int *child_taps, struct vm_create_params *vcp)
 		if (exit_status != NULL) {
 			log_warnx("%s: vm %d vcpu run thread %zd exited "
 			    "abnormally", __progname, vcp->vcp_id, i);
+			/* Terminate the VM if we can */
+			bzero(&vtp, sizeof(vtp));
+			vtp.vtp_vm_id = vcp->vcp_id;
+			if (terminate_vm(&vtp)) {
+				log_warnx("%s: could not terminate vm %d",
+				    __progname, vcp->vcp_id);
+			}
 			ret = EIO;
 		}
 	}
