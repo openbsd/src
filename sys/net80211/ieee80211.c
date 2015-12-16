@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211.c,v 1.51 2015/11/27 04:03:45 jsg Exp $	*/
+/*	$OpenBSD: ieee80211.c,v 1.52 2015/12/16 12:52:03 stsp Exp $	*/
 /*	$NetBSD: ieee80211.c,v 1.19 2004/06/06 05:45:29 dyoung Exp $	*/
 
 /*-
@@ -366,6 +366,8 @@ ieee80211_media_init(struct ifnet *ifp,
 		if (ic->ic_caps & IEEE80211_C_HOSTAP)
 			ADD(ic, IFM_AUTO, mopt | IFM_IEEE80211_HOSTAP);
 #endif
+		if (ic->ic_caps & IEEE80211_C_MONITOR)
+			ADD(ic, IFM_AUTO, mopt | IFM_IEEE80211_MONITOR);
 		for (i = 0; i < IEEE80211_HT_NUM_MCS; i++) {
 			if (!isset(ic->ic_sup_mcs, i))
 				continue;
@@ -378,6 +380,9 @@ ieee80211_media_init(struct ifnet *ifp,
 				ADD(ic, IFM_IEEE80211_HT_MCS0 + i,
 				    mopt | IFM_IEEE80211_HOSTAP);
 #endif
+			if (ic->ic_caps & IEEE80211_C_MONITOR)
+				ADD(ic, IFM_IEEE80211_HT_MCS0 + i,
+				    mopt | IFM_IEEE80211_MONITOR);
 		}
 		ic->ic_flags |= IEEE80211_F_HTON; /* enable 11n by default */
 	}
