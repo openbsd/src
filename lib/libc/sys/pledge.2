@@ -1,4 +1,4 @@
-.\" $OpenBSD: pledge.2,v 1.20 2015/12/16 08:27:32 semarie Exp $
+.\" $OpenBSD: pledge.2,v 1.21 2015/12/16 17:08:17 semarie Exp $
 .\"
 .\" Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
 .\"
@@ -254,6 +254,11 @@ create new files or directories in the filesystem:
 .Xr unlinkat 2 ,
 .Xr mkdir 2 ,
 .Xr mkdirat 2 .
+.It Va "dpath"
+A number of system calls are allowed to create special files:
+.Pp
+.Xr mkfifo 2 ,
+.Xr mknod 2 .
 .It Va "tmppath"
 A number of system calls are allowed to do operations in the
 .Pa /tmp
