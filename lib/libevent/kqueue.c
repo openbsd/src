@@ -1,4 +1,4 @@
-/*	$OpenBSD: kqueue.c,v 1.36 2014/10/30 16:45:37 bluhm Exp $	*/
+/*	$OpenBSD: kqueue.c,v 1.37 2015/12/16 20:12:31 tedu Exp $	*/
 
 /*
  * Copyright 2000-2002 Niels Provos <provos@citi.umich.edu>
@@ -51,8 +51,6 @@
 #define NEVENT		64
 
 struct kqop {
-	struct kevent *changes;
-	int nchanges;
 	struct kevent *events;
 	struct event_list evsigevents[NSIG];
 	int nevents;
@@ -64,7 +62,6 @@ static void *kq_init	(struct event_base *);
 static int kq_add	(void *, struct event *);
 static int kq_del	(void *, struct event *);
 static int kq_dispatch	(struct event_base *, void *, struct timeval *);
-static int kq_insert	(struct kqop *, struct kevent *);
 static void kq_dealloc (struct event_base *, void *);
 
 const struct eventop kqops = {
@@ -103,14 +100,8 @@ kq_init(struct event_base *base)
 	kqueueop->pid = getpid();
 
 	/* Initalize fields */
-	kqueueop->changes = calloc(NEVENT, sizeof(struct kevent));
-	if (kqueueop->changes == NULL) {
-		free (kqueueop);
-		return (NULL);
-	}
 	kqueueop->events = calloc(NEVENT, sizeof(struct kevent));
 	if (kqueueop->events == NULL) {
-		free (kqueueop->changes);
 		free (kqueueop);
 		return (NULL);
 	}
@@ -124,51 +115,6 @@ kq_init(struct event_base *base)
 	return (kqueueop);
 }
 
-static int
-kq_insert(struct kqop *kqop, struct kevent *kev)
-{
-	int nevents = kqop->nevents;
-
-	if (kqop->nchanges == nevents) {
-		struct kevent *newchange;
-		struct kevent *newresult;
-
-		nevents *= 2;
-
-		newchange = reallocarray(kqop->changes,
-		    nevents, sizeof(struct kevent));
-		if (newchange == NULL) {
-			event_warn("%s: malloc", __func__);
-			return (-1);
-		}
-		kqop->changes = newchange;
-
-		newresult = reallocarray(kqop->events,
-		    nevents, sizeof(struct kevent));
-
-		/*
-		 * If we fail, we don't have to worry about freeing,
-		 * the next realloc will pick it up.
-		 */
-		if (newresult == NULL) {
-			event_warn("%s: malloc", __func__);
-			return (-1);
-		}
-		kqop->events = newresult;
-
-		kqop->nevents = nevents;
-	}
-
-	memcpy(&kqop->changes[kqop->nchanges++], kev, sizeof(struct kevent));
-
-	event_debug(("%s: fd %d %s%s",
-		__func__, (int)kev->ident,
-		kev->filter == EVFILT_READ ? "EVFILT_READ" : "EVFILT_WRITE",
-		kev->flags == EV_DELETE ? " (del)" : ""));
-
-	return (0);
-}
-
 static void
 kq_sighandler(int sig)
 {
@@ -179,7 +125,6 @@ static int
 kq_dispatch(struct event_base *base, void *arg, struct timeval *tv)
 {
 	struct kqop *kqop = arg;
-	struct kevent *changes = kqop->changes;
 	struct kevent *events = kqop->events;
 	struct event *ev;
 	struct timespec ts, *ts_p = NULL;
@@ -190,9 +135,7 @@ kq_dispatch(struct event_base *base, void *arg, struct timeval *tv)
 		ts_p = &ts;
 	}
 
-	res = kevent(kqop->kq, changes, kqop->nchanges,
-	    events, kqop->nevents, ts_p);
-	kqop->nchanges = 0;
+	res = kevent(kqop->kq, NULL, 0, events, kqop->nevents, ts_p);
 	if (res == -1) {
 		if (errno != EINTR) {
 			event_warn("kevent");
@@ -326,7 +269,7 @@ kq_add(void *arg, struct event *ev)
 			kev.flags |= EV_ONESHOT;
 		kev.udata = ev;
 
-		if (kq_insert(kqop, &kev) == -1)
+		if (kevent(kqop->kq, &kev, 1, NULL, 0, NULL) == -1)
 			return (-1);
 
 		ev->ev_flags |= EVLIST_X_KQINKERNEL;
@@ -341,7 +284,7 @@ kq_add(void *arg, struct event *ev)
 			kev.flags |= EV_ONESHOT;
 		kev.udata = ev;
 
-		if (kq_insert(kqop, &kev) == -1)
+		if (kevent(kqop->kq, &kev, 1, NULL, 0, NULL) == -1)
 			return (-1);
 
 		ev->ev_flags |= EVLIST_X_KQINKERNEL;
@@ -392,7 +335,7 @@ kq_del(void *arg, struct event *ev)
 		kev.filter = EVFILT_READ;
 		kev.flags = EV_DELETE;
 
-		if (kq_insert(kqop, &kev) == -1)
+		if (kevent(kqop->kq, &kev, 1, NULL, 0, NULL) == -1)
 			return (-1);
 
 		ev->ev_flags &= ~EVLIST_X_KQINKERNEL;
@@ -404,7 +347,7 @@ kq_del(void *arg, struct event *ev)
 		kev.filter = EVFILT_WRITE;
 		kev.flags = EV_DELETE;
 
-		if (kq_insert(kqop, &kev) == -1)
+		if (kevent(kqop->kq, &kev, 1, NULL, 0, NULL) == -1)
 			return (-1);
 
 		ev->ev_flags &= ~EVLIST_X_KQINKERNEL;
@@ -420,8 +363,6 @@ kq_dealloc(struct event_base *base, void *arg)
 
 	evsignal_dealloc(base);
 
-	if (kqop->changes)
-		free(kqop->changes);
 	if (kqop->events)
 		free(kqop->events);
 	if (kqop->kq >= 0 && kqop->pid == getpid())
