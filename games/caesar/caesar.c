@@ -1,4 +1,4 @@
-/*	$OpenBSD: caesar.c,v 1.17 2015/10/14 08:12:12 doug Exp $	*/
+/*	$OpenBSD: caesar.c,v 1.18 2015/12/16 14:21:50 tb Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -69,7 +69,8 @@ int
 main(int argc, char *argv[])
 {
 	int ch, i, nread;
-	char *inbuf, *p, **av;
+	extern char *__progname;
+	char *inbuf;
 	int obs[26], try, winner;
 	double dot, winnerdot;
 
@@ -77,11 +78,7 @@ main(int argc, char *argv[])
 		err(1, "pledge");
 
 	/* check to see if we were called as rot13 */
-	av = argv;
-	p = strrchr(*av, '/');
-	if (p++ == NULL)
-		p = *av;
-	if (strcmp(p,"rot13") == 0)
+	if (strcmp(__progname, "rot13") == 0)
 		printit(13);
 
 	if (argc > 1) {

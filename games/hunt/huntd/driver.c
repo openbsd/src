@@ -1,4 +1,4 @@
-/*	$OpenBSD: driver.c,v 1.22 2015/09/25 17:50:53 schwarze Exp $	*/
+/*	$OpenBSD: driver.c,v 1.23 2015/12/16 14:21:50 tb Exp $	*/
 /*	$NetBSD: driver.c,v 1.5 1997/10/20 00:37:16 lukem Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
@@ -52,7 +52,6 @@
 #include "conf.h"
 #include "server.h"
 
-char	*First_arg;		/* pointer to argv[0] */
 u_int16_t Server_port;
 int	Server_socket;		/* test socket to answer datagrams */
 FLAG	should_announce = TRUE;	/* true if listening on standard port */
@@ -88,6 +87,7 @@ main(ac, av)
 	static FLAG	server = FALSE;
 	extern int	optind;
 	extern char	*optarg;
+	extern char	*__progname;
 	int		c;
 	static struct timeval	linger = { 0, 0 };
 	static struct timeval	timeout = { 0, 0 }, *to;
@@ -96,8 +96,6 @@ main(ac, av)
 	int		nready;
 	int		fd;
 	int		background = 0;
-
-	First_arg = av[0];
 
 	config();
 
@@ -127,7 +125,7 @@ erred:
 			fprintf(stderr,
 			    "usage: %s [-bs] [-a addr] [-D var=value] "
 			    "[-p port]\n",
-			    av[0]);
+			    __progname);
 			exit(2);
 		}
 	}
