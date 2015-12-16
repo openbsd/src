@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.247 2015/12/05 10:11:53 tedu Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.248 2015/12/16 08:27:32 semarie Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -1244,6 +1244,8 @@ domknodat(struct proc *p, int fd, const char *path, mode_t mode, dev_t dev)
 	else {
 		VATTR_NULL(&vattr);
 		vattr.va_mode = (mode & ALLPERMS) &~ p->p_fd->fd_cmask;
+		if ((p->p_p->ps_flags & PS_PLEDGE))
+			vattr.va_mode &= ACCESSPERMS;
 		vattr.va_rdev = dev;
 
 		switch (mode & S_IFMT) {
