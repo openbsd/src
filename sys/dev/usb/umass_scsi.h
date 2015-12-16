@@ -1,4 +1,4 @@
-/* $OpenBSD: umass_scsi.h,v 1.4 2008/06/26 05:42:19 ray Exp $ */
+/* $OpenBSD: umass_scsi.h,v 1.5 2015/12/16 14:50:26 mpi Exp $ */
 /*	$NetBSD: umass_scsipi.h,v 1.1 2001/12/24 13:25:53 augustss Exp $	*/
 
 /*
@@ -33,3 +33,4 @@
 
 int umass_scsi_attach(struct umass_softc *sc);
 int umass_atapi_attach(struct umass_softc *sc);
+int umass_scsi_detach(struct umass_softc *sc, int flags);

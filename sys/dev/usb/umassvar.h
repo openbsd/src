@@ -1,4 +1,4 @@
-/*	$OpenBSD: umassvar.h,v 1.14 2013/11/06 14:37:31 pirofti Exp $ */
+/*	$OpenBSD: umassvar.h,v 1.15 2015/12/16 14:50:26 mpi Exp $ */
 /*	$NetBSD: umassvar.h,v 1.20 2003/09/08 19:31:01 mycroft Exp $	*/
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
@@ -144,9 +144,7 @@ struct umass_wire_methods {
 	umass_wire_state	wire_state;
 };
 
-struct umassbus_softc {
-	struct device		*sc_child;	/* child device, for detach */
-};
+struct umass_scsi_softc;
 
 /* the per device structure */
 struct umass_softc {
@@ -261,7 +259,7 @@ struct umass_softc {
 	int			sc_refcnt;
 	int			sc_sense;
 
-	struct umassbus_softc	*bus;		 /* bus dependent data */
+	struct umass_scsi_softc	*bus;		 /* bus dependent data */
 
 	/* For polled transfers */
 	int			polling_depth;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: umass_scsi.c,v 1.42 2015/03/14 03:38:50 jsg Exp $ */
+/*	$OpenBSD: umass_scsi.c,v 1.43 2015/12/16 14:50:26 mpi Exp $ */
 /*	$NetBSD: umass_scsipi.c,v 1.9 2003/02/16 23:14:08 augustss Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 #include <machine/bus.h>
 
 struct umass_scsi_softc {
-	struct umassbus_softc	base;
+	struct device		*sc_child;
 	struct scsi_link	sc_link;
 	struct scsi_iopool	sc_iopool;
 	int			sc_open;
@@ -103,8 +103,7 @@ umass_scsi_attach(struct umass_softc *sc)
 			     sc->sc_dev.dv_xname, sc, scbus));
 
 	sc->sc_refcnt++;
-	scbus->base.sc_child =
-	  config_found((struct device *)sc, &saa, scsiprint);
+	scbus->sc_child = config_found((struct device *)sc, &saa, scsiprint);
 	if (--sc->sc_refcnt < 0)
 		usb_detach_wakeup(&sc->sc_dev);
 
@@ -131,8 +130,7 @@ umass_atapi_attach(struct umass_softc *sc)
 			     sc->sc_dev.dv_xname, sc, scbus));
 
 	sc->sc_refcnt++;
-	scbus->base.sc_child = config_found((struct device *)sc,
-	    &saa, scsiprint);
+	scbus->sc_child = config_found((struct device *)sc, &saa, scsiprint);
 	if (--sc->sc_refcnt < 0)
 		usb_detach_wakeup(&sc->sc_dev);
 
@@ -146,7 +144,7 @@ umass_scsi_setup(struct umass_softc *sc)
 
 	scbus = malloc(sizeof(*scbus), M_DEVBUF, M_WAITOK | M_ZERO);
 
-	sc->bus = (struct umassbus_softc *)scbus;
+	sc->bus = scbus;
 
 	scsi_iopool_init(&scbus->sc_iopool, scbus, umass_io_get, umass_io_put);
 
@@ -159,6 +157,22 @@ umass_scsi_setup(struct umass_softc *sc)
 	scbus->sc_link.pool = &scbus->sc_iopool;
 
 	return (scbus);
+}
+
+int
+umass_scsi_detach(struct umass_softc *sc, int flags)
+{
+	struct umass_scsi_softc *scbus = sc->bus;
+	int rv = 0;
+
+	if (scbus != NULL) {
+		if (scbus->sc_child != NULL)
+			rv = config_detach(scbus->sc_child, flags);
+		free(scbus, M_DEVBUF, sizeof(*scbus));
+		sc->bus = NULL;
+	}
+
+	return (rv);
 }
 
 int
@@ -289,7 +303,7 @@ umass_scsi_minphys(struct buf *bp, struct scsi_link *sl)
 void
 umass_scsi_cb(struct umass_softc *sc, void *priv, int residue, int status)
 {
-	struct umass_scsi_softc *scbus = (struct umass_scsi_softc *)sc->bus;
+	struct umass_scsi_softc *scbus = sc->bus;
 	struct scsi_xfer *xs = priv;
 	struct scsi_link *link = xs->sc_link;
 	int cmdlen;
