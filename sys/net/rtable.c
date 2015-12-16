@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtable.c,v 1.34 2015/12/15 13:08:50 mpi Exp $ */
+/*	$OpenBSD: rtable.c,v 1.35 2015/12/16 13:19:14 mpi Exp $ */
 
 /*
  * Copyright (c) 2014-2015 Martin Pieuchot
@@ -74,7 +74,6 @@ void		   rtmap_dtor(void *, void *);
 
 struct srp_gc	   rtmap_gc = SRP_GC_INITIALIZER(rtmap_dtor, NULL);
 
-struct rtentry	  *rtable_mpath_select(struct rtentry *, uint32_t *);
 void		   rtable_init_backend(unsigned int);
 void		  *rtable_alloc(unsigned int, sa_family_t, unsigned int);
 void		  *rtable_get(unsigned int, sa_family_t);
@@ -349,6 +348,9 @@ rtable_match(unsigned int rtableid, struct sockaddr *dst, uint32_t *src)
 	struct radix_node_head	*rnh;
 	struct radix_node	*rn;
 	struct rtentry		*rt = NULL;
+#ifndef SMALL_KERNEL
+	int			 hash;
+#endif /* SMALL_KERNEL */
 
 	rnh = rtable_get(rtableid, dst->sa_family);
 	if (rnh == NULL)
@@ -363,7 +365,32 @@ rtable_match(unsigned int rtableid, struct sockaddr *dst, uint32_t *src)
 	rtref(rt);
 
 #ifndef SMALL_KERNEL
-	rt = rtable_mpath_select(rt, src);
+	/* Gateway selection by Hash-Threshold (RFC 2992) */
+	if ((hash = rt_hash(rt, src)) != -1) {
+		struct rtentry		*mrt = rt;
+		int			 threshold, npaths = 1;
+
+		KASSERT(hash <= 0xffff);
+
+		while ((mrt = rtable_mpath_next(mrt)) != NULL)
+			npaths++;
+
+		threshold = (0xffff / npaths) + 1;
+
+		mrt = rt;
+		while (hash > threshold && mrt != NULL) {
+			/* stay within the multipath routes */
+			mrt = rtable_mpath_next(mrt);
+			hash -= threshold;
+		}
+
+		/* if gw selection fails, use the first match (default) */
+		if (mrt != NULL) {
+			rtref(mrt);
+			rtfree(rt);
+			rt = mrt;
+		}
+	}
 #endif /* SMALL_KERNEL */
 out:
 	KERNEL_UNLOCK();
@@ -453,41 +480,6 @@ rtable_mpath_capable(unsigned int rtableid, sa_family_t af)
 
 	mpath = rnh->rnh_multipath;
 	return (mpath);
-}
-
-/* Gateway selection by Hash-Threshold (RFC 2992) */
-struct rtentry *
-rtable_mpath_select(struct rtentry *rt, uint32_t *src)
-{
-	struct rtentry *mrt = rt;
-	int npaths, threshold, hash;
-
-	if ((hash = rt_hash(rt, src)) == -1)
-		return (rt);
-
-	KASSERT(hash <= 0xffff);
-
-	npaths = 1;
-	while ((mrt = rtable_mpath_next(mrt)) != NULL)
-		npaths++;
-
-	threshold = (0xffff / npaths) + 1;
-
-	mrt = rt;
-	while (hash > threshold && mrt != NULL) {
-		/* stay within the multipath routes */
-		mrt = rtable_mpath_next(mrt);
-		hash -= threshold;
-	}
-
-	/* if gw selection fails, use the first match (default) */
-	if (mrt != NULL) {
-		rtref(mrt);
-		rtfree(rt);
-		rt = mrt;
-	}
-
-	return (rt);
 }
 
 void
@@ -600,6 +592,9 @@ rtable_match(unsigned int rtableid, struct sockaddr *dst, uint32_t *src)
 	struct rtentry			*rt = NULL;
 	struct srpl_iter		 i;
 	uint8_t				*addr;
+#ifndef SMALL_KERNEL
+	int				 hash;
+#endif /* SMALL_KERNEL */
 
 	ar = rtable_get(rtableid, dst->sa_family);
 	if (ar == NULL)
@@ -617,7 +612,37 @@ rtable_match(unsigned int rtableid, struct sockaddr *dst, uint32_t *src)
 	SRPL_LEAVE(&i, rt);
 
 #ifndef SMALL_KERNEL
-	rt = rtable_mpath_select(rt, src);
+	/* Gateway selection by Hash-Threshold (RFC 2992) */
+	if ((hash = rt_hash(rt, src)) != -1) {
+		struct rtentry		*mrt;
+		struct srpl_iter	 i;
+		int			 threshold, npaths = 0;
+
+		KASSERT(hash <= 0xffff);
+
+		SRPL_FOREACH(mrt, &an->an_rtlist, &i, rt_next) {
+			/* Only count nexthops with the same priority. */
+			if (mrt->rt_priority == rt->rt_priority)
+				npaths++;
+		}
+		SRPL_LEAVE(&i, mrt);
+
+		threshold = (0xffff / npaths) + 1;
+
+		mrt = SRPL_ENTER(&an->an_rtlist, &i);
+		while (hash > threshold && mrt != NULL) {
+			if (mrt->rt_priority == rt->rt_priority)
+				hash -= threshold;
+			mrt = SRPL_NEXT(&i, mrt, rt_next);
+		}
+
+		if (mrt != NULL) {
+			rtref(mrt);
+			rtfree(rt);
+			rt = mrt;
+		}
+		SRPL_LEAVE(&i, mrt);
+	}
 #endif /* SMALL_KERNEL */
 out:
 	KERNEL_UNLOCK();
@@ -844,47 +869,6 @@ int
 rtable_mpath_capable(unsigned int rtableid, sa_family_t af)
 {
 	return (1);
-}
-
-/* Gateway selection by Hash-Threshold (RFC 2992) */
-struct rtentry *
-rtable_mpath_select(struct rtentry *rt, uint32_t *src)
-{
-	struct art_node			*an = rt->rt_node;
-	struct rtentry			*mrt;
-	struct srpl_iter		 i;
-	int				 npaths, threshold, hash;
-
-	if ((hash = rt_hash(rt, src)) == -1)
-		return (rt);
-
-	KASSERT(hash <= 0xffff);
-
-	npaths = 0;
-	SRPL_FOREACH(mrt, &an->an_rtlist, &i, rt_next) {
-		/* Only count nexthops with the same priority. */
-		if (mrt->rt_priority == rt->rt_priority)
-			npaths++;
-	}
-	SRPL_LEAVE(&i, mrt);
-
-	threshold = (0xffff / npaths) + 1;
-
-	mrt = SRPL_ENTER(&an->an_rtlist, &i);
-	while (hash > threshold && mrt != NULL) {
-		if (mrt->rt_priority == rt->rt_priority)
-			hash -= threshold;
-		mrt = SRPL_NEXT(&i, mrt, rt_next);
-	}
-
-	if (mrt != NULL) {
-		rtref(mrt);
-		rtfree(rt);
-		rt = mrt;
-	}
-	SRPL_LEAVE(&i, mrt);
-
-	return (rt);
 }
 
 void
