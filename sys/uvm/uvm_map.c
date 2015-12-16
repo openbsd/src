@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.204 2015/11/14 14:53:14 miod Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.205 2015/12/16 14:22:21 kettenis Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -119,6 +119,7 @@ struct vm_map_entry	*uvm_mapent_alloc(struct vm_map*, int);
 void			 uvm_mapent_free(struct vm_map_entry*);
 void			 uvm_unmap_kill_entry(struct vm_map*,
 			    struct vm_map_entry*);
+void			 uvm_unmap_detach_intrsafe(struct uvm_map_deadq *);
 void			 uvm_mapent_mkfree(struct vm_map*,
 			    struct vm_map_entry*, struct vm_map_entry**,
 			    struct uvm_map_deadq*, boolean_t);
@@ -1554,6 +1555,20 @@ uvm_unmap_detach(struct uvm_map_deadq *deadq, int flags)
 	KERNEL_UNLOCK();
 }
 
+void
+uvm_unmap_detach_intrsafe(struct uvm_map_deadq *deadq)
+{
+	struct vm_map_entry *entry;
+
+	while ((entry = TAILQ_FIRST(deadq)) != NULL) {
+		KASSERT(entry->aref.ar_amap == NULL);
+		KASSERT(!UVM_ET_ISSUBMAP(entry));
+		KASSERT(!UVM_ET_ISOBJ(entry));
+		TAILQ_REMOVE(deadq, entry, dfree.deadq);
+		uvm_mapent_free(entry);
+	}
+}
+
 /*
  * Create and insert new entry.
  *
@@ -1791,7 +1806,10 @@ uvm_unmap(struct vm_map *map, vaddr_t start, vaddr_t end)
 	uvm_unmap_remove(map, start, end, &dead, FALSE, TRUE);
 	vm_map_unlock(map);
 
-	uvm_unmap_detach(&dead, 0);
+	if (map->flags & VM_MAP_INTRSAFE)
+		uvm_unmap_detach_intrsafe(&dead);
+	else
+		uvm_unmap_detach(&dead, 0);
 }
 
 /*
