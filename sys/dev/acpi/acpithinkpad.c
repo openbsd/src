@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpithinkpad.c,v 1.48 2015/12/14 18:48:50 kettenis Exp $	*/
+/*	$OpenBSD: acpithinkpad.c,v 1.49 2015/12/16 15:43:14 kettenis Exp $	*/
 /*
  * Copyright (c) 2008 joshua stein <jcs@openbsd.org>
  *
@@ -583,8 +583,9 @@ thinkpad_activate(struct device *self, int act)
 void
 thinkpad_get_thinklight(struct acpithinkpad_softc *sc)
 {
-	aml_evalinteger(sc->sc_acpi, sc->sc_devnode,
-	    sc->sc_thinklight_get, 0, NULL, &sc->sc_thinklight);
+	if (sc->sc_thinklight_get)
+		aml_evalinteger(sc->sc_acpi, sc->sc_devnode,
+		    sc->sc_thinklight_get, 0, NULL, &sc->sc_thinklight);
 }
 
 void
