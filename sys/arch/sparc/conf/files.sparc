@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc,v 1.102 2015/07/17 22:52:29 tedu Exp $
+#	$OpenBSD: files.sparc,v 1.103 2015/12/16 18:56:21 mmcc Exp $
 #	$NetBSD: files.sparc,v 1.44 1997/08/31 21:29:16 pk Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
@@ -26,7 +26,7 @@ device	vmel {[addr = -1], [level = -1], [vect = -1]}
 attach	vmel at mainbus, vme
 device	vmes {[addr = -1], [level = -1], [vect = -1]}
 attach	vmes at mainbus, vme
-file	arch/sparc/dev/obio.c		(obio | vmel | vmes | vme) & !solbourne
+file	arch/sparc/dev/obio.c		obio | vmel | vmes | vme
 
 device	auxreg
 attach	auxreg at mainbus, obio
@@ -43,7 +43,7 @@ attach	timer at mainbus, obio
 
 device	eeprom
 attach	eeprom at obio
-file	arch/sparc/sparc/clock.c		!solbourne
+file	arch/sparc/sparc/clock.c
 
 device	power
 attach	power at obio
@@ -286,7 +286,7 @@ file	arch/sparc/fpu/fpu_mul.c
 file	arch/sparc/fpu/fpu_sqrt.c
 file	arch/sparc/fpu/fpu_subr.c
 
-file	arch/sparc/sparc/autoconf.c		!solbourne
+file	arch/sparc/sparc/autoconf.c
 file	arch/sparc/sparc/cache.c
 file	arch/sparc/sparc/conf.c
 file	arch/sparc/sparc/consinit.c
@@ -296,14 +296,14 @@ file	arch/sparc/sparc/emul.c
 file	arch/sparc/sparc/in_cksum.c
 file	arch/sparc/sparc/intr.c
 file	arch/sparc/sparc/kgdb_machdep.c	kgdb
-file	arch/sparc/sparc/machdep.c		!solbourne
-file	arch/sparc/sparc/mem.c			!solbourne
+file	arch/sparc/sparc/machdep.c
+file	arch/sparc/sparc/mem.c
 file	arch/sparc/sparc/mutex.c
-file	arch/sparc/sparc/openprom.c		!solbourne
-file	arch/sparc/sparc/pmap.c			!solbourne
+file	arch/sparc/sparc/openprom.c
+file	arch/sparc/sparc/pmap.c
 file	arch/sparc/sparc/process_machdep.c
 file	arch/sparc/sparc/sys_machdep.c
-file	arch/sparc/sparc/trap.c			!solbourne
+file	arch/sparc/sparc/trap.c
 file	arch/sparc/sparc/vm_machdep.c
 
 file	arch/sparc/sparc/db_interface.c	ddb | kgdb
