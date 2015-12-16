@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-queue.c,v 1.32 2015/12/13 16:11:42 nicm Exp $ */
+/* $OpenBSD: cmd-queue.c,v 1.33 2015/12/16 21:50:37 nicm Exp $ */
 
 /*
  * Copyright (c) 2013 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -43,6 +43,9 @@ cmdq_new(struct client *c)
 	TAILQ_INIT(&cmdq->queue);
 	cmdq->item = NULL;
 	cmdq->cmd = NULL;
+
+	cmd_find_clear_state(&cmdq->current, NULL, 0);
+	cmdq->parent = NULL;
 
 	return (cmdq);
 }
@@ -286,3 +289,4 @@ cmdq_flush(struct cmd_q *cmdq)
 	}
 	cmdq->item = NULL;
 }
+

@@ -1,4 +1,4 @@
-/* $OpenBSD: server-fn.c,v 1.96 2015/12/12 18:32:24 nicm Exp $ */
+/* $OpenBSD: server-fn.c,v 1.97 2015/12/16 21:50:37 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -293,12 +293,13 @@ server_unlink_window(struct session *s, struct winlink *wl)
 }
 
 void
-server_destroy_pane(struct window_pane *wp)
+server_destroy_pane(struct window_pane *wp, int hooks)
 {
 	struct window		*w = wp->window;
 	int			 old_fd;
 	struct screen_write_ctx	 ctx;
 	struct grid_cell	 gc;
+	struct cmd_find_state	 fs;
 
 	old_fd = wp->fd;
 	if (wp->fd != -1) {
@@ -319,12 +320,18 @@ server_destroy_pane(struct window_pane *wp)
 		screen_write_puts(&ctx, &gc, "Pane is dead");
 		screen_write_stop(&ctx);
 		wp->flags |= PANE_REDRAW;
+
+		if (hooks && cmd_find_from_pane(&fs, wp) == 0)
+			hooks_run(hooks_get(fs.s), NULL, &fs, "pane-died");
 		return;
 	}
 
 	server_unzoom_window(w);
 	layout_close_pane(wp);
 	window_remove_pane(w, wp);
+
+	if (hooks && cmd_find_from_window(&fs, w) == 0)
+		hooks_run(hooks_get(fs.s), NULL, &fs, "pane-exited");
 
 	if (TAILQ_EMPTY(&w->panes))
 		server_kill_window(w);
