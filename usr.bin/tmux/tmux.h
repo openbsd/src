@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.613 2015/12/16 21:50:37 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.614 2015/12/16 22:05:35 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1937,7 +1937,7 @@ void	 recalculate_sizes(void);
 /* input.c */
 void	 input_init(struct window_pane *);
 void	 input_free(struct window_pane *);
-void	 input_reset(struct window_pane *);
+void	 input_reset(struct window_pane *, int);
 struct evbuffer *input_pending(struct window_pane *);
 void	 input_parse(struct window_pane *);
 

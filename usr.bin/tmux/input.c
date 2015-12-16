@@ -1,4 +1,4 @@
-/* $OpenBSD: input.c,v 1.96 2015/11/23 23:47:57 nicm Exp $ */
+/* $OpenBSD: input.c,v 1.97 2015/12/16 22:05:35 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -762,24 +762,12 @@ input_init(struct window_pane *wp)
 
 	ictx = wp->ictx = xcalloc(1, sizeof *ictx);
 
-	input_reset_cell(ictx);
-
-	*ictx->interm_buf = '\0';
-	ictx->interm_len = 0;
-
-	*ictx->param_buf = '\0';
-	ictx->param_len = 0;
-
 	ictx->input_space = INPUT_BUF_START;
 	ictx->input_buf = xmalloc(INPUT_BUF_START);
 
-	*ictx->input_buf = '\0';
-	ictx->input_len = 0;
-
-	ictx->state = &input_state_ground;
-	ictx->flags = 0;
-
 	ictx->since_ground = evbuffer_new();
+
+	input_reset(wp, 0);
 }
 
 /* Destroy input parser. */
@@ -797,18 +785,32 @@ input_free(struct window_pane *wp)
 
 /* Reset input state and clear screen. */
 void
-input_reset(struct window_pane *wp)
+input_reset(struct window_pane *wp, int clear)
 {
 	struct input_ctx	*ictx = wp->ictx;
 
 	input_reset_cell(ictx);
 
-	if (wp->mode == NULL)
-		screen_write_start(&ictx->ctx, wp, &wp->base);
-	else
-		screen_write_start(&ictx->ctx, NULL, &wp->base);
-	screen_write_reset(&ictx->ctx);
-	screen_write_stop(&ictx->ctx);
+	if (clear) {
+		if (wp->mode == NULL)
+			screen_write_start(&ictx->ctx, wp, &wp->base);
+		else
+			screen_write_start(&ictx->ctx, NULL, &wp->base);
+		screen_write_reset(&ictx->ctx);
+		screen_write_stop(&ictx->ctx);
+	}
+
+	*ictx->interm_buf = '\0';
+	ictx->interm_len = 0;
+
+	*ictx->param_buf = '\0';
+	ictx->param_len = 0;
+
+	*ictx->input_buf = '\0';
+	ictx->input_len = 0;
+
+	ictx->state = &input_state_ground;
+	ictx->flags = 0;
 }
 
 /* Return pending data. */
