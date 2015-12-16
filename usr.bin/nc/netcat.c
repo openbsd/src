@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.146 2015/12/08 15:33:33 beck Exp $ */
+/* $OpenBSD: netcat.c,v 1.147 2015/12/16 14:23:33 beck Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  * Copyright (c) 2015 Bob Beck.  All rights reserved.
@@ -1466,7 +1466,7 @@ map_tls(char *s, int *val)
 void
 report_tls(struct tls * tls_ctx, char * host, char *tls_expectname)
 {
-	char *subject = NULL, *issuer = NULL;
+	time_t t;
 	fprintf(stderr, "TLS handshake negotiated %s/%s with host %s\n",
 	    tls_conn_version(tls_ctx), tls_conn_cipher(tls_ctx), host);
 	fprintf(stderr, "Peer name %s\n",
@@ -1477,12 +1477,15 @@ report_tls(struct tls * tls_ctx, char * host, char *tls_expectname)
 	if (tls_peer_cert_issuer(tls_ctx))
 		fprintf(stderr, "Issuer: %s\n",
 		    tls_peer_cert_issuer(tls_ctx));
+	if ((t = tls_peer_cert_notbefore(tls_ctx)) != -1)
+		fprintf(stderr, "Valid From: %s", ctime(&t));
+	if ((t = tls_peer_cert_notafter(tls_ctx)) != -1)
+		fprintf(stderr, "Valid Until: %s", ctime(&t));
 	if (tls_peer_cert_hash(tls_ctx))
 		fprintf(stderr, "Cert Hash: %s\n",
 		    tls_peer_cert_hash(tls_ctx));
-	free(subject);
-	free(issuer);
 }
+
 void
 report_connect(const struct sockaddr *sa, socklen_t salen)
 {
