@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_search_async.c,v 1.18 2015/09/20 14:19:21 eric Exp $	*/
+/*	$OpenBSD: res_search_async.c,v 1.19 2015/12/16 16:32:30 deraadt Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -57,13 +57,9 @@ struct asr_query *
 _res_search_async_ctx(const char *name, int class, int type, struct asr_ctx *ac)
 {
 	struct asr_query	*as;
-	char			 alias[MAXDNAME];
 
 	DPRINT("asr: res_search_async_ctx(\"%s\", %i, %i)\n", name, class,
 	    type);
-
-	if (_asr_hostalias(ac, name, alias, sizeof(alias)))
-		return _res_query_async_ctx(alias, class, type, ac);
 
 	if ((as = _asr_async_new(ac, ASR_SEARCH)) == NULL)
 		goto err; /* errno set */

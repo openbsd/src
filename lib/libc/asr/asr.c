@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr.c,v 1.49 2015/11/23 18:04:53 deraadt Exp $	*/
+/*	$OpenBSD: asr.c,v 1.50 2015/12/16 16:32:30 deraadt Exp $	*/
 /*
  * Copyright (c) 2010-2012 Eric Faurot <eric@openbsd.org>
  *
@@ -35,10 +35,6 @@
 #include <limits.h>
 
 #include "asr_private.h"
-
-#ifndef ASR_OPT_HOSTALIASES
-#define ASR_OPT_HOSTALIASES 1
-#endif
 
 #include "thread_private.h"
 
@@ -838,47 +834,4 @@ _asr_iter_db(struct asr_query *as)
 	DPRINT("asr_iter_db: %i\n", as->as_db_idx);
 
 	return (0);
-}
-
-/*
- * Check if the hostname "name" is a user-defined alias as per hostname(7).
- * If so, copies the result in the buffer "abuf" of size "abufsz" and
- * return "abuf". Otherwise return NULL.
- */
-char *
-_asr_hostalias(struct asr_ctx *ac, const char *name, char *abuf, size_t abufsz)
-{
-#if ASR_OPT_HOSTALIASES
-	FILE	 *fp;
-	size_t	  len;
-	char	 *file, *buf, *tokens[2];
-	int	  ntok;
-
-	if (ac->ac_options & RES_NOALIASES ||
-	    asr_ndots(name) != 0 ||
-	    issetugid() ||
-	    (file = getenv("HOSTALIASES")) == NULL ||
-	    (fp = fopen(file, "re")) == NULL)
-		return (NULL);
-
-	DPRINT("asr: looking up aliases in \"%s\"\n", file);
-
-	while ((buf = fgetln(fp, &len)) != NULL) {
-		if (buf[len - 1] == '\n')
-			len--;
-		buf[len] = '\0';
-		if ((ntok = strsplit(buf, tokens, 2)) != 2)
-			continue;
-		if (!strcasecmp(tokens[0], name)) {
-			if (strlcpy(abuf, tokens[1], abufsz) > abufsz)
-				continue;
-			DPRINT("asr: found alias \"%s\"\n", abuf);
-			fclose(fp);
-			return (abuf);
-		}
-	}
-
-	fclose(fp);
-#endif
-	return (NULL);
 }
