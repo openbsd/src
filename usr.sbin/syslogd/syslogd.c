@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.201 2015/10/24 12:49:37 bluhm Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.202 2015/12/16 13:38:39 bluhm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -1995,7 +1995,14 @@ die_signalcb(int signum, short event, void *arg)
 void
 mark_timercb(int unused, short event, void *arg)
 {
+	struct event		*ev = arg;
+	struct timeval		 to;
+
 	markit();
+
+	to.tv_sec = TIMERINTVL;
+	to.tv_usec = 0;
+	evtimer_add(ev, &to);
 }
 
 void
