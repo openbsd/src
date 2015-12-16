@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gethostbyname.3,v 1.28 2015/12/16 16:32:30 deraadt Exp $
+.\"	$OpenBSD: gethostbyname.3,v 1.29 2015/12/16 18:12:42 jmc Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -171,6 +171,7 @@ The contents of the error message is the same as that returned by
 with argument
 .Fa h_errno .
 .Sh ENVIRONMENT
+.Bl -tag -width RES_OPTIONS
 .It RES_OPTIONS
 A list of options to override the resolver's internal defaults.
 See
