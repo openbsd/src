@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-show-environment.c,v 1.16 2015/12/14 00:31:54 nicm Exp $ */
+/* $OpenBSD: cmd-show-environment.c,v 1.17 2015/12/16 21:47:00 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -94,7 +94,7 @@ cmd_show_environment_exec(struct cmd *self, struct cmd_q *cmdq)
 	struct environ		*env;
 	struct environ_entry	*envent;
 
-	if (args_has(self->args, 'g'))
+	if (args_has(self->args, 'g') || cmdq->state.tflag.s == NULL)
 		env = global_environ;
 	else
 		env = cmdq->state.tflag.s->environ;
