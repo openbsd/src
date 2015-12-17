@@ -1,4 +1,4 @@
-/*	$OpenBSD: pppoed.c,v 1.18 2015/10/11 07:32:06 guenther Exp $	*/
+/*	$OpenBSD: pppoed.c,v 1.19 2015/12/17 08:09:20 tb Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -28,7 +28,7 @@
 /**@file
  * This file provides the PPPoE(RFC2516) server(access concentrator)
  * implementaion.
- * $Id: pppoed.c,v 1.18 2015/10/11 07:32:06 guenther Exp $
+ * $Id: pppoed.c,v 1.19 2015/12/17 08:09:20 tb Exp $
  */
 #include <sys/param.h>	/* ALIGN */
 #include <sys/types.h>
@@ -147,11 +147,11 @@ pppoed_init(pppoed *_this)
 #if PPPOE_NSESSION > 0xffff
 #error PPPOE_NSESSION must be less than 65536
 #endif
-	off = arc4random() % 0xffff;
+	off = arc4random() & 0xffff;
 	for (i = 0; i < PPPOE_NSESSION; i++) {
-		id = (i + off) % 0xffff;
+		id = (i + off) & 0xffff;
 		if (id == 0)
-			id = (off - 1) % 0xffff;
+			id = (off - 1) & 0xffff;
 		if (slist_add(&_this->session_free_list, (void *)(intptr_t)id)
 		    == NULL) {
 			pppoed_log(_this, LOG_ERR,

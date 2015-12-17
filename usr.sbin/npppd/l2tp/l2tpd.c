@@ -1,4 +1,4 @@
-/*	$OpenBSD: l2tpd.c,v 1.17 2015/12/05 18:43:36 mmcc Exp $ */
+/*	$OpenBSD: l2tpd.c,v 1.18 2015/12/17 08:09:20 tb Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -26,7 +26,7 @@
  * SUCH DAMAGE.
  */
 /**@file L2TP(Layer Two Tunneling Protocol "L2TP") / RFC2661 */
-/* $Id: l2tpd.c,v 1.17 2015/12/05 18:43:36 mmcc Exp $ */
+/* $Id: l2tpd.c,v 1.18 2015/12/17 08:09:20 tb Exp $ */
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/time.h>
@@ -113,11 +113,11 @@ l2tpd_init(l2tpd *_this)
 		    __func__);
 		return 1;
 	}
-	off = arc4random() % L2TP_SESSION_ID_MASK;
+	off = arc4random() & L2TP_SESSION_ID_MASK;
 	for (i = 0; i < L2TP_NCALL; i++) {
-		id = (i + off) % L2TP_SESSION_ID_MASK;
+		id = (i + off) & L2TP_SESSION_ID_MASK;
 		if (id == 0)
-			id = (off - 1) % L2TP_SESSION_ID_MASK;
+			id = (off - 1) & L2TP_SESSION_ID_MASK;
 		if (slist_add(&_this->free_session_id_list,
 		    (void *)(uintptr_t)id) == NULL) {
 			l2tpd_log(_this, LOG_ERR,
