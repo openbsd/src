@@ -1,3 +1,4 @@
+/*	$OpenBSD: hash.h,v 1.2 2015/12/17 08:01:55 tb Exp $ */
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -23,7 +24,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: hash.h,v 1.1 2010/01/11 04:20:57 yasuoka Exp $ */
+/* $Id: hash.h,v 1.2 2015/12/17 08:01:55 tb Exp $ */
 #ifndef HASH_H
 #define HASH_H
 

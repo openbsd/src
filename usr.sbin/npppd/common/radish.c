@@ -1,3 +1,4 @@
+/*	$OpenBSD: radish.c,v 1.4 2015/12/17 08:01:55 tb Exp $ */
 #ifndef GENERIC_USE
 #define GENERIC_USE
 #endif

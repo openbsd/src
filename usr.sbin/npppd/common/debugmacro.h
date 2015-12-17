@@ -1,3 +1,4 @@
+/*	$OpenBSD: debugmacro.h,v 1.3 2015/12/17 08:01:55 tb Exp $ */
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
  * All rights reserved.

@@ -1,3 +1,4 @@
+/*	$OpenBSD: ipsec_util.c,v 1.8 2015/12/17 08:01:55 tb Exp $ */
 /*-
  * Copyright (c) 2007, 2009 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -23,7 +24,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: ipsec_util.c,v 1.7 2015/01/19 01:48:59 deraadt Exp $ */
+/* $Id: ipsec_util.c,v 1.8 2015/12/17 08:01:55 tb Exp $ */
 /*@file IPsec related utility functions */
 /*
  * RFC 2367 PF_KEY Key Management API, Version 2

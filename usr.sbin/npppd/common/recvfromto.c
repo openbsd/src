@@ -1,3 +1,4 @@
+/*	$OpenBSD: recvfromto.c,v 1.6 2015/12/17 08:01:55 tb Exp $ */
 /* adapted from ipsec-tools 0.6 src/racoon/sockmisc.c */
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
