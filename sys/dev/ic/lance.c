@@ -1,4 +1,4 @@
-/*	$OpenBSD: lance.c,v 1.11 2015/12/08 13:34:22 tedu Exp $	*/
+/*	$OpenBSD: lance.c,v 1.12 2015/12/17 19:26:28 mmcc Exp $	*/
 /*	$NetBSD: lance.c,v 1.46 2012/02/02 19:43:03 tls Exp $	*/
 
 /*-
@@ -145,7 +145,7 @@ ether_cmp(void *one, void *two)
 	diff |= *a++ - *b++;
 #else
 	/*
-	 * Most modern CPUs do better with a single expresion.
+	 * Most modern CPUs do better with a single expression.
 	 * Note that short-cut evaluation is NOT helpful here,
 	 * because it just makes the code longer, not faster!
 	 */
