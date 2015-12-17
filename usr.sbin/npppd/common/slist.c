@@ -1,3 +1,4 @@
+/*	$OpenBSD: slist.c,v 1.7 2015/12/17 07:56:01 tb Exp $ */
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -434,7 +435,7 @@ slist_shuffle(slist *list)
 
 	len = slist_length(list);
 	for (i = len; i > 1; i--)
-		slist_swap0(list, i - 1, (int)(arc4random() % i));
+		slist_swap0(list, i - 1, (int)arc4random_uniform(i));
 }
 
 /** Init an iterator. Only one iterator exists.  */
