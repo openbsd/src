@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sched.c,v 1.39 2015/10/16 19:07:24 mpi Exp $	*/
+/*	$OpenBSD: kern_sched.c,v 1.40 2015/12/17 22:14:40 kettenis Exp $	*/
 /*
  * Copyright (c) 2007, 2008 Artur Grabowski <art@openbsd.org>
  *
@@ -557,6 +557,15 @@ sched_proc_to_cpu_cost(struct cpu_info *ci, struct proc *p)
 	}
 	if (cpuset_isset(&sched_queued_cpus, ci))
 		cost += spc->spc_nrun * sched_cost_runnable;
+
+	/*
+	 * Try to avoid the primary cpu as it handles hardware interrupts.
+	 *
+	 * XXX Needs to be revisited when we distribute interrupts
+	 * over cpus.
+	 */
+	if (CPU_IS_PRIMARY(ci))
+		cost += sched_cost_runnable;
 
 	/*
 	 * Higher load on the destination means we don't want to go there.
