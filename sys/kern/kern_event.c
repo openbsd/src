@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.68 2015/12/17 16:57:20 tedu Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.69 2015/12/17 17:00:48 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -799,9 +799,9 @@ start:
 			splx(s);
 #ifdef KTRACE
 			if (KTRPOINT(p, KTR_STRUCT))
-				ktrevent(p, &kq->kq_kev, nkev);
+				ktrevent(p, kq->kq_kev, nkev);
 #endif
-			error = copyout(&kq->kq_kev, ulistp,
+			error = copyout(kq->kq_kev, ulistp,
 			    sizeof(struct kevent) * nkev);
 			ulistp += nkev;
 			nkev = 0;
@@ -817,9 +817,9 @@ done:
 	if (nkev != 0) {
 #ifdef KTRACE
 		if (KTRPOINT(p, KTR_STRUCT))
-			ktrevent(p, &kq->kq_kev, nkev);
+			ktrevent(p, kq->kq_kev, nkev);
 #endif
-		error = copyout(&kq->kq_kev, ulistp,
+		error = copyout(kq->kq_kev, ulistp,
 		    sizeof(struct kevent) * nkev);
 	}
 	*retval = maxevents - count;
