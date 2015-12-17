@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx.h,v 1.24 2015/07/17 21:42:49 krw Exp $	*/
+/*	$OpenBSD: aic79xx.h,v 1.25 2015/12/17 19:35:24 tedu Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -656,9 +656,7 @@ struct scb {
 
 	struct ahd_softc	 *ahd_softc;
 	scb_flag		  flags;
-#ifndef __linux__
 	bus_dmamap_t		  dmamap;
-#endif
 	struct scb_platform_data *platform_data;
 	struct map_node		 *hscb_map;
 	struct map_node		 *sg_map;
@@ -1102,9 +1100,7 @@ struct ahd_softc {
 	bus_space_tag_t		tags[2];
 	bus_space_handle_t	bshs[2];
 
-#ifndef __linux__
 	bus_dma_tag_t		  buffer_dmat;   /* dmat for buffer I/O */
-#endif
 	struct scb_data		scb_data;
 
 	struct hardware_scb	 *next_queued_hscb;
