@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.224 2015/12/09 14:25:46 ratchov Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.225 2015/12/17 15:07:57 ratchov Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -1171,12 +1171,10 @@ azalia_set_command(azalia_t *az, int caddr, nid_t nid, uint32_t control,
 	uint32_t verb;
 	uint16_t corbwp;
 
-#ifdef DIAGNOSTIC
 	if ((AZ_READ_1(az, CORBCTL) & HDA_CORBCTL_CORBRUN) == 0) {
-		DPRINTF(("%s: CORB is not running.\n", XNAME(az)));
+		printf("%s: CORB is not running.\n", XNAME(az));
 		return(-1);
 	}
-#endif
 	verb = (caddr << 28) | (nid << 20) | (control << 8) | param;
 	corbwp = AZ_READ_2(az, CORBWP);
 	wp = corbwp & HDA_CORBWP_CORBWP;
@@ -1197,12 +1195,10 @@ azalia_get_response(azalia_t *az, uint32_t *result)
 	int i;
 	uint16_t wp;
 
-#ifdef DIAGNOSTIC
 	if ((AZ_READ_1(az, RIRBCTL) & HDA_RIRBCTL_RIRBDMAEN) == 0) {
-		DPRINTF(("%s: RIRB is not running.\n", XNAME(az)));
+		printf("%s: RIRB is not running.\n", XNAME(az));
 		return(-1);
 	}
-#endif
 
 	rirb = (rirb_entry_t*)az->rirb_dma.addr;
 	i = 5000;
