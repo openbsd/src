@@ -47,6 +47,7 @@
    (UNSPEC_MFHILO		26)
    (UNSPEC_TLS_LDM		27)
    (UNSPEC_TLS_GET_TP		28)
+   (UNSPEC_SYNC			29)
 
    (UNSPEC_ADDRESS_FIRST	100)
 
@@ -5483,3 +5484,18 @@
 ; The MIPS DSP Instructions.
 
 (include "mips-dsp.md")
+
+(define_expand "memory_barrier"
+  [(set (mem:BLK (match_dup 0))
+	(unspec:BLK [(mem:BLK (match_dup 0))] UNSPEC_SYNC))]
+  ""
+{
+  operands[0] = gen_rtx_MEM (BLKmode, gen_rtx_SCRATCH (Pmode));
+  MEM_VOLATILE_P (operands[0]) = 1;
+})
+
+(define_insn "*sync_internal"
+  [(set (match_operand:BLK 0 "" "")
+	(unspec:BLK [(match_operand:BLK 1 "" "")] UNSPEC_SYNC))]
+  ""
+  "sync")
