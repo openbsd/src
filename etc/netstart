@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.163 2015/12/05 18:43:12 mpi Exp $
+#	$OpenBSD: netstart,v 1.164 2015/12/17 23:19:23 ajacoutot Exp $
 
 # Turn off Strict Bourne shell mode.
 set +o sh
@@ -275,18 +275,8 @@ done
 # YES				none installed		daemon can run
 # Any other combination		-reject			config error
 route -qn delete 224.0.0.0/4 >/dev/null 2>&1
-case $multicast in
-NO)
+[[ $multicast != YES ]] && \
 	route -qn add -net 224.0.0.0/4 -interface 127.0.0.1 -reject >/dev/null
-	;;
-YES)
-	;;
-*)
-	echo 'config error, multicasting disabled until rc.conf is fixed'
-	route -qn add -net 224.0.0.0/4 -interface 127.0.0.1 -reject >/dev/null
-	;;
-esac
-
 
 # Configure PPPoE, GIF, GRE, TUN and PFLOW interfaces, delayed because they
 # require routes to be set. TUN might depend on PPPoE, and GIF or GRE may
