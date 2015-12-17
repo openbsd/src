@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmt.c,v 1.6 2015/12/11 16:07:01 mpi Exp $ */
+/*	$OpenBSD: vmt.c,v 1.7 2015/12/17 09:26:36 mpi Exp $ */
 
 /*
  * Copyright (c) 2007 David Crawshaw <david@zentus.com>
@@ -208,6 +208,7 @@ void	 vmt_shutdown(void *);
 void	 vmt_update_guest_info(struct vmt_softc *);
 void	 vmt_update_guest_uptime(struct vmt_softc *);
 
+void	 vmt_tick_hook(struct device *self);
 void	 vmt_tick(void *);
 void	 vmt_resume(void);
 
@@ -364,9 +365,7 @@ vmt_attach(struct device *parent, struct device *self, void *aux)
 	sensor_attach(&sc->sc_sensordev, &sc->sc_sensor);
 	sensordev_install(&sc->sc_sensordev);
 
-	timeout_set(&sc->sc_tick, vmt_tick, sc);
-	if (startuphook_establish(vmt_tick, sc) == NULL)
-		DPRINTF("%s: unable to establish tick\n", DEVNAME(sc));
+	config_mountroot(self, vmt_tick_hook);
 
 	timeout_set(&sc->sc_tclo_tick, vmt_tclo_tick, sc);
 	timeout_add_sec(&sc->sc_tclo_tick, 1);
@@ -467,6 +466,15 @@ vmt_update_guest_info(struct vmt_softc *sc)
 
 		sc->sc_set_guest_os = 1;
 	}
+}
+
+void
+vmt_tick_hook(struct device *self)
+{
+	struct vmt_softc *sc = (struct vmt_softc *)self;
+
+	timeout_set(&sc->sc_tick, vmt_tick, sc);
+	vmt_tick(sc);
 }
 
 void
