@@ -1,4 +1,4 @@
-/* $OpenBSD: rebound.c,v 1.58 2015/12/12 17:19:51 tedu Exp $ */
+/* $OpenBSD: rebound.c,v 1.59 2015/12/17 18:24:57 tedu Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -207,8 +207,8 @@ servfail(int ud, uint16_t id, struct sockaddr *fromaddr, socklen_t fromlen)
 	sendto(ud, &pkt, sizeof(pkt), 0, fromaddr, fromlen);
 }
 
-static struct request *
-newrequest(int ud, struct sockaddr *remoteaddr)
+static int
+newrequest(int ud, struct request **reqp, struct sockaddr *remoteaddr)
 {
 	struct sockaddr from;
 	socklen_t fromlen;
@@ -218,22 +218,24 @@ newrequest(int ud, struct sockaddr *remoteaddr)
 	struct dnscache *hit;
 	size_t r;
 
+	*reqp = NULL;
+
 	dnsreq = (struct dnspacket *)buf;
 
 	fromlen = sizeof(from);
 	r = recvfrom(ud, buf, sizeof(buf), 0, &from, &fromlen);
 	if (r == 0 || r == -1 || r < sizeof(struct dnspacket))
-		return NULL;
+		return -1;
 
 	conntotal += 1;
 	if ((hit = cachelookup(dnsreq, r))) {
 		hit->resp->id = dnsreq->id;
 		sendto(ud, hit->resp, hit->resplen, 0, &from, fromlen);
-		return NULL;
+		return 0;
 	}
 
 	if (!(req = calloc(1, sizeof(*req))))
-		return NULL;
+		return -1;
 
 	conncount += 1;
 	req->ts = now;
@@ -280,11 +282,12 @@ newrequest(int ud, struct sockaddr *remoteaddr)
 		goto fail;
 	}
 
-	return req;
+	*reqp = req;
+	return 0;
 
 fail:
 	freerequest(req);
-	return NULL;
+	return -1;
 }
 
 static void
@@ -508,8 +511,10 @@ launch(FILE *conf, int ud, int ld, int kq)
 			} else if (kev[i].filter != EVFILT_READ) {
 				logerr("don't know what happened");
 			} else if (kev[i].ident == ud) {
-				while ((req = newrequest(ud,
-				    (struct sockaddr *)&remoteaddr))) {
+				while (newrequest(ud, &req,
+				    (struct sockaddr *)&remoteaddr) == 0) {
+					if (!req)
+						continue;
 					EV_SET(&ch[0], req->s, EVFILT_READ,
 					    EV_ADD, 0, 0, req);
 					kevent(kq, ch, 1, NULL, 0, NULL);
