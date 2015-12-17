@@ -1,4 +1,4 @@
-/*	$OpenBSD: addr_range.c,v 1.4 2015/08/20 22:46:32 deraadt Exp $ */
+/*	$OpenBSD: addr_range.c,v 1.5 2015/12/17 18:37:58 mmcc Exp $ */
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -56,7 +56,7 @@
  * Author:
  *	Yasuoka Masahiko <yasuoka@iij.ad.jp>
  *
- * $Id: addr_range.c,v 1.4 2015/08/20 22:46:32 deraadt Exp $
+ * $Id: addr_range.c,v 1.5 2015/12/17 18:37:58 mmcc Exp $
  */
 #ifdef ADDR_RANGE_DEBUG
 #define IIJDEBUG
@@ -228,7 +228,7 @@ in_addr_range_list_add(struct in_addr_range **list, const char *str)
 	if ((p0 = strdup(str)) == NULL) {
 #ifdef IIJDEBUG
 		saved_errno = errno;
-		log_printf(LOG_DL_1, "malloc() failes: %m");
+		log_printf(LOG_DL_1, "malloc() failed: %m");
 		errno = saved_errno;
 #endif
 		return -1;
@@ -242,7 +242,7 @@ in_addr_range_list_add(struct in_addr_range **list, const char *str)
 		if (sscanf(p1, "%d", &mask) != 1) {
 #ifdef IIJDEBUG
 			saved_errno = errno;
-			log_printf(LOG_DL_1, "sscanf(%s) failes: %m",
+			log_printf(LOG_DL_1, "sscanf(%s) failed: %m",
 			    p1);
 			errno = saved_errno;
 #endif
@@ -269,7 +269,7 @@ in_addr_range_list_add(struct in_addr_range **list, const char *str)
 			errno = EINVAL;
 #ifdef IIJDEBUG
 		saved_errno = errno;
-		log_printf(LOG_DL_1, "inet_aton(%s) failes: %m", p0);
+		log_printf(LOG_DL_1, "inet_aton(%s) failed: %m", p0);
 		errno = saved_errno;
 #endif
 		free(p0);
@@ -280,7 +280,7 @@ in_addr_range_list_add(struct in_addr_range **list, const char *str)
 			errno = EINVAL;
 #ifdef IIJDEBUG
 		saved_errno = errno;
-		log_printf(LOG_DL_1, "inet_aton(%s) failes: %m", p1);
+		log_printf(LOG_DL_1, "inet_aton(%s) failed: %m", p1);
 		errno = saved_errno;
 #endif
 		free(p0);

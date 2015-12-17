@@ -1,4 +1,4 @@
-/* $OpenBSD: prebind_delete.c,v 1.13 2015/06/03 02:24:36 millert Exp $ */
+/* $OpenBSD: prebind_delete.c,v 1.14 2015/12/17 18:37:58 mmcc Exp $ */
 
 /*
  * Copyright (c) 2006 Dale Rahn <drahn@dalerahn.com>
@@ -88,7 +88,7 @@ strip_dir(char *dir)
 
 	dirp = opendir(dir);
 
-	/* if dir failes to open, skip */
+	/* if dir failed to open, skip */
 	if (dirp == NULL)
 		return 0;
 
