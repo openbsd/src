@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.147 2015/12/16 14:23:33 beck Exp $ */
+/* $OpenBSD: netcat.c,v 1.148 2015/12/17 19:30:28 mmcc Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  * Copyright (c) 2015 Bob Beck.  All rights reserved.
@@ -1469,7 +1469,7 @@ report_tls(struct tls * tls_ctx, char * host, char *tls_expectname)
 	time_t t;
 	fprintf(stderr, "TLS handshake negotiated %s/%s with host %s\n",
 	    tls_conn_version(tls_ctx), tls_conn_cipher(tls_ctx), host);
-	fprintf(stderr, "Peer name %s\n",
+	fprintf(stderr, "Peer name: %s\n",
 	    tls_expectname ? tls_expectname : host);
 	if (tls_peer_cert_subject(tls_ctx))
 		fprintf(stderr, "Subject: %s\n",
