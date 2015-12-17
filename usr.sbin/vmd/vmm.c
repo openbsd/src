@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.13 2015/12/15 02:18:34 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.14 2015/12/17 09:29:28 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -111,9 +111,10 @@ int opentap(void);
 int start_vm(struct imsg *, uint32_t *);
 int terminate_vm(struct vm_terminate_params *);
 int get_info_vm(struct privsep *, struct imsg *, int);
-int run_vm(int *, int *, struct vm_create_params *);
+int run_vm(int *, int *, struct vm_create_params *, struct vcpu_init_state *);
 void *vcpu_run_loop(void *);
 int vcpu_exit(struct vm_run_params *);
+int vcpu_reset(uint32_t, uint32_t, struct vcpu_init_state *);
 int vmm_create_vm(struct vm_create_params *);
 void init_emulated_hw(struct vm_create_params *, int *, int *);
 void vcpu_exit_inout(struct vm_run_params *);
@@ -140,6 +141,35 @@ extern char *__progname;
 
 static struct privsep_proc procs[] = {
 	{ "parent",	PROC_PARENT,	vmm_dispatch_parent  },
+};
+
+/*
+ * Represents a standard register set for an OS to be booted
+ * as a flat 32 bit address space, before paging is enabled.
+ *
+ * NOT set here are:
+ *  RIP
+ *  RSP
+ *  GDTR BASE
+ *
+ * Specific bootloaders should clone this structure and override
+ * those fields as needed.
+ */
+static const struct vcpu_init_state vcpu_init_flat32 = {
+	0x2,					/* RFLAGS */
+	0x0,					/* RIP */
+	0x0,					/* RSP */
+	0x0,					/* CR3 */
+	{ 0x8, 0xFFFFFFFF, 0xC09F, 0x0},	/* CS */
+	{ 0x10, 0xFFFFFFFF, 0xC093, 0x0},	/* DS */
+	{ 0x10, 0xFFFFFFFF, 0xC093, 0x0},	/* ES */
+	{ 0x10, 0xFFFFFFFF, 0xC093, 0x0},	/* FS */
+	{ 0x10, 0xFFFFFFFF, 0xC093, 0x0},	/* GS */
+	{ 0x10, 0xFFFFFFFF, 0xC093, 0x0},	/* SS */
+	{ 0x0, 0xFFFF, 0x0, 0x0},		/* GDTR */
+	{ 0x0, 0xFFFF, 0x0, 0x0},		/* IDTR */
+	{ 0x0, 0xFFFF, 0x0082, 0x0},		/* LDTR */
+	{ 0x0, 0xFFFF, 0x008B, 0x0},		/* TR */
 };
 
 pid_t
@@ -257,6 +287,38 @@ vmm_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 }
 
 /*
+ * vcpu_reset
+ *
+ * Requests vmm(4) to reset the VCPUs in the indicated VM to
+ * the register state provided
+ *
+ * Parameters
+ *  vmid: VM ID to reset
+ *  vcpu_id: VCPU ID to reset
+ *  vis: the register state to initialize 
+ *
+ * Return values:
+ *  0: success
+ *  !0 : ioctl to vmm(4) failed (eg, ENOENT if the supplied VM ID is not
+ *      valid)
+ */
+int
+vcpu_reset(uint32_t vmid, uint32_t vcpu_id, struct vcpu_init_state *vis)
+{
+	struct vm_resetcpu_params vrp;
+
+	memset(&vrp, 0, sizeof(vrp));
+	vrp.vrp_vm_id = vmid;
+	vrp.vrp_vcpu_id = vcpu_id;
+	memcpy(&vrp.vrp_init_state, vis, sizeof(struct vcpu_init_state));
+
+	if (ioctl(env->vmd_fd, VMM_IOC_RESETCPU, &vrp) < 0)
+		return (errno);
+
+	return (0);
+}
+
+/*
  * terminate_vm
  *
  * Requests vmm(4) to terminate the VM whose ID is provided in the
@@ -336,6 +398,7 @@ start_vm(struct imsg *imsg, uint32_t *id)
 	size_t			 i;
 	int			 ret = EINVAL;
 	int			 fds[2];
+	struct vcpu_init_state vis;
 
 	if ((vm = vm_getbyvmid(imsg->hdr.peerid)) == NULL) {
 		log_warn("%s: can't find vm", __func__);
@@ -412,9 +475,15 @@ start_vm(struct imsg *imsg, uint32_t *id)
 			fatal("create vmm ioctl failed - exiting");
 		}
 
+		/*
+		 * Set up default "flat 32 bit" register state - RIP,
+		 * RSP, and GDT info will be set in bootloader
+	 	 */
+		memcpy(&vis, &vcpu_init_flat32, sizeof(struct vcpu_init_state));
+
 		/* Load kernel image */
-		ret = loadelf_main(vm->vm_kernel,
-		    vcp->vcp_id, vcp->vcp_memory_size);
+		ret = loadelf_main(vm->vm_kernel, vcp->vcp_id,
+		    vcp->vcp_memory_size, &vis);
 		if (ret) {
 			errno = ret;
 			fatal("failed to load kernel - exiting");
@@ -427,7 +496,7 @@ start_vm(struct imsg *imsg, uint32_t *id)
 			fatal("failed to set nonblocking mode on console");
 
 		/* Execute the vcpu run loop(s) for this VM */
-		ret = run_vm(vm->vm_disks, vm->vm_ifs, vcp);
+		ret = run_vm(vm->vm_disks, vm->vm_ifs, vcp, &vis);
 
 		_exit(ret != 0);
 	}
@@ -625,13 +694,15 @@ init_emulated_hw(struct vm_create_params *vcp, int *child_disks,
  *      configuration
  *  child_disks: previously-opened child VM disk file file descriptors
  *  child_taps: previously-opened child tap file descriptors
+ *  vis: VCPU register state to initialize
  *
  * Return values:
  *  0: the VM exited normally
  *  !0 : the VM exited abnormally or failed to start
  */
 int
-run_vm(int *child_disks, int *child_taps, struct vm_create_params *vcp)
+run_vm(int *child_disks, int *child_taps, struct vm_create_params *vcp,
+    struct vcpu_init_state *vis)
 {
 	size_t i;
 	int ret;
@@ -680,6 +751,12 @@ run_vm(int *child_disks, int *child_taps, struct vm_create_params *vcp)
 		}
 		vrp[i]->vrp_vm_id = vcp->vcp_id;
 		vrp[i]->vrp_vcpu_id = i;
+
+		if (vcpu_reset(vcp->vcp_id, i, vis)) {
+			log_warn("%s: cannot reset VCPU %zu - exiting.",
+			    __progname, i);
+			return (EIO);
+		}
 
 		/* Start each VCPU run thread at vcpu_run_loop */
 		ret = pthread_create(&tid[i], NULL, vcpu_run_loop, vrp[i]);

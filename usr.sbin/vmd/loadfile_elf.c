@@ -1,5 +1,5 @@
 /* $NetBSD: loadfile.c,v 1.10 2000/12/03 02:53:04 tsutsui Exp $ */
-/* $OpenBSD: loadfile_elf.c,v 1.4 2015/12/06 17:42:15 mlarkin Exp $ */
+/* $OpenBSD: loadfile_elf.c,v 1.5 2015/12/17 09:29:28 mlarkin Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -95,12 +95,13 @@
 #include <sys/param.h>
 #include <sys/exec.h>
 
-#include "loadfile.h"
-#include "vmd.h"
 #include <sys/exec_elf.h>
 #include <machine/vmmvar.h>
 #include <machine/biosvar.h>
 #include <machine/segments.h>
+
+#include "loadfile.h"
+#include "vmd.h"
 
 #define BOOTARGS_PAGE 0x2000
 #define GDT_PAGE 0x10000
@@ -115,11 +116,10 @@ union {
 
 static void setsegment(struct mem_segment_descriptor *, uint32_t,
     size_t, int, int, int, int);
-int loadelf_main(int fd, int, int);
 int elf32_exec(int, Elf32_Ehdr *, u_long *, int);
 int elf64_exec(int, Elf64_Ehdr *, u_long *, int);
 static void push_bootargs(int);
-static void push_stack(int, uint32_t);
+static size_t push_stack(int, uint32_t);
 static void push_gdt(void);
 static size_t mread(int, uint32_t, size_t);
 static void marc4random_buf(uint32_t, int);
@@ -206,15 +206,17 @@ push_gdt(void)
  *  vm_id_in: ID of the VM to load the kernel into
  *  mem_sz: memory size in MB assigned to the guest (passed through to
  *      push_bootargs)
+ *  (out) vis: register state to set on init for this kernel
  *
  * Return values:
  *  0 if successful
  *  various error codes returned from read(2) or loadelf functions
  */
 int
-loadelf_main(int fd, int vm_id_in, int mem_sz)
+loadelf_main(int fd, int vm_id_in, int mem_sz, struct vcpu_init_state *vis)
 {
 	int r;
+	size_t stacksize;
 	u_long marks[MARK_MAX];
 
 	vm_id = vm_id_in;
@@ -233,7 +235,11 @@ loadelf_main(int fd, int vm_id_in, int mem_sz)
 
 	push_bootargs(mem_sz);
 	push_gdt();
-	push_stack(mem_sz, marks[MARK_END]);
+	stacksize = push_stack(mem_sz, marks[MARK_END]);
+
+	vis->vis_rip = (uint64_t)marks[MARK_ENTRY];
+	vis->vis_rsp = (uint64_t)(STACK_PAGE + PAGE_SIZE) - stacksize;
+	vis->vis_gdtr.vsi_base = GDT_PAGE;
 
 	return r;
 }
@@ -319,9 +325,9 @@ push_bootargs(int mem_sz)
  *  end: kernel 'end' symbol value
  *
  * Return values:
- *  nothing
+ *  size of the stack
  */
-static void
+static size_t
 push_stack(int mem_sz, uint32_t end)
 {
 	uint32_t stack[1024];
@@ -342,6 +348,8 @@ push_stack(int mem_sz, uint32_t end)
 	stack[--loc] = 0x0;
 
 	write_page(STACK_PAGE, &stack, PAGE_SIZE, 1);
+
+	return (1024 - (loc - 1)) * sizeof(uint32_t);
 }
 
 /*

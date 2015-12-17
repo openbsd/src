@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmmvar.h,v 1.5 2015/12/15 01:56:51 mlarkin Exp $	*/
+/*	$OpenBSD: vmmvar.h,v 1.6 2015/12/17 09:29:28 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -112,7 +112,6 @@ enum {
 	VEI_DIR_IN
 };
 
-
 /*
  * vm exit data
  *  vm_exit_inout		: describes an IN/OUT exit
@@ -131,6 +130,41 @@ union vm_exit {
 	struct vm_exit_inout	vei;		/* IN/OUT exit */
 };
 
+/*
+ * struct vcpu_segment_info describes a segment + selector set, used
+ * in constructing the initial vcpu register content
+ */
+struct vcpu_segment_info {
+	uint16_t vsi_sel;
+	uint32_t vsi_limit;
+	uint32_t vsi_ar;
+	uint64_t vsi_base;
+};
+
+/*
+ * struct vcpu_init_state describes the set of vmd-settable registers
+ * that the VM's vcpus will be set to during VM boot or reset. Certain
+ * registers are always set to 0 (eg, the GP regs) and certain registers
+ * have fixed values based on hardware requirements and calculated by
+ * vmm (eg, CR0/CR4)
+ */
+struct vcpu_init_state {
+	uint64_t			vis_rflags;
+	uint64_t			vis_rip;
+	uint64_t			vis_rsp;
+	uint64_t			vis_cr3;
+
+	struct vcpu_segment_info	vis_cs;
+	struct vcpu_segment_info	vis_ds;
+	struct vcpu_segment_info	vis_es;
+	struct vcpu_segment_info	vis_fs;
+	struct vcpu_segment_info	vis_gs;
+	struct vcpu_segment_info	vis_ss;
+	struct vcpu_segment_info	vis_gdtr;
+	struct vcpu_segment_info	vis_idtr;
+	struct vcpu_segment_info	vis_ldtr;
+	struct vcpu_segment_info	vis_tr;
+};
 
 struct vm_create_params {
 	/* Input parameters to VMM_IOC_CREATE */
@@ -208,6 +242,7 @@ struct vm_resetcpu_params {
 	/* Input parameters to VMM_IOC_RESETCPU */
 	uint32_t		vrp_vm_id;
 	uint32_t		vrp_vcpu_id;
+	struct vcpu_init_state	vrp_init_state;
 };
 
 /* IOCTL definitions */
