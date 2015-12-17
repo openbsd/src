@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.197 2015/12/02 22:02:18 claudio Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.198 2015/12/17 16:05:30 tedu Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -63,12 +63,6 @@
 #if NCARP > 0
 #include <netinet/ip_carp.h>
 #endif
-
-/*
- * ARP trailer negotiation.  Trailer protocol is not IP specific,
- * but ARP request/response use IP addresses.
- */
-#define ETHERTYPE_IPTRAILERS ETHERTYPE_TRAIL
 
 struct llinfo_arp {
 	LIST_ENTRY(llinfo_arp)	 la_list;
@@ -454,7 +448,6 @@ arpintr(void)
 
 		switch (ntohs(ar->ar_pro)) {
 		case ETHERTYPE_IP:
-		case ETHERTYPE_IPTRAILERS:
 			in_arpinput(m);
 			continue;
 		}
@@ -778,7 +771,6 @@ revarpinput(struct mbuf *m)
 	switch (ntohs(ar->ar_pro)) {
 
 	case ETHERTYPE_IP:
-	case ETHERTYPE_IPTRAILERS:
 		in_revarpinput(m);
 		return;
 
