@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpithinkpad.c,v 1.49 2015/12/16 15:43:14 kettenis Exp $	*/
+/*	$OpenBSD: acpithinkpad.c,v 1.50 2015/12/17 12:17:14 kettenis Exp $	*/
 /*
  * Copyright (c) 2008 joshua stein <jcs@openbsd.org>
  *
@@ -122,6 +122,8 @@ struct acpithinkpad_softc {
 	uint64_t		 sc_thinklight;
 	const char		*sc_thinklight_get;
 	const char		*sc_thinklight_set;
+
+	uint64_t		 sc_brightness;
 };
 
 extern void acpiec_read(struct acpiec_softc *, u_int8_t, int, u_int8_t *);
@@ -141,13 +143,19 @@ int	thinkpad_brightness_down(struct acpithinkpad_softc *);
 int	thinkpad_adaptive_change(struct acpithinkpad_softc *);
 int	thinkpad_activate(struct device *, int);
 
-/* wskbd hook functions */
+/* wscons hook functions */
 void	thinkpad_get_thinklight(struct acpithinkpad_softc *);
 void	thinkpad_set_thinklight(void *, int);
 int	thinkpad_get_backlight(struct wskbd_backlight *);
 int	thinkpad_set_backlight(struct wskbd_backlight *);
 extern int (*wskbd_get_backlight)(struct wskbd_backlight *);
 extern int (*wskbd_set_backlight)(struct wskbd_backlight *);
+void	thinkpad_get_brightness(struct acpithinkpad_softc *);
+void	thinkpad_set_brightness(void *, int);
+int	thinkpad_get_param(struct wsdisplay_param *);
+int	thinkpad_set_param(struct wsdisplay_param *);
+extern int (*ws_get_param)(struct wsdisplay_param *);
+extern int (*ws_set_param)(struct wsdisplay_param *);
 
 void    thinkpad_sensor_attach(struct acpithinkpad_softc *sc);
 void    thinkpad_sensor_refresh(void *);
@@ -265,6 +273,12 @@ thinkpad_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_thinklight_set = "MLCS";
 		wskbd_get_backlight = thinkpad_get_backlight;
 		wskbd_set_backlight = thinkpad_set_backlight;
+	}
+
+	if (aml_evalinteger(sc->sc_acpi, sc->sc_devnode, "PBLG",
+	    0, NULL, &sc->sc_brightness) == 0) {
+		ws_get_param = thinkpad_get_param;
+		ws_set_param = thinkpad_set_param;
 	}
 
 	/* Run thinkpad_hotkey on button presses */
@@ -391,6 +405,9 @@ thinkpad_hotkey(struct aml_node *node, int notify_type, void *arg)
 			thinkpad_adaptive_change(sc);
 			handled = 1;
 			break;
+		case THINKPAD_BACKLIGHT_CHANGED:
+			thinkpad_get_brightness(sc);
+			break;
 		case THINKPAD_ADAPTIVE_BACK:
 		case THINKPAD_ADAPTIVE_GESTURES:
 		case THINKPAD_ADAPTIVE_REFRESH:
@@ -398,7 +415,6 @@ thinkpad_hotkey(struct aml_node *node, int notify_type, void *arg)
 		case THINKPAD_ADAPTIVE_SNIP:
 		case THINKPAD_ADAPTIVE_TAB:
 		case THINKPAD_ADAPTIVE_VOICE:
-		case THINKPAD_BACKLIGHT_CHANGED:
 		case THINKPAD_KEYLIGHT_CHANGED:
 		case THINKPAD_BRIGHTNESS_CHANGED:
 		case THINKPAD_BUTTON_BATTERY_INFO:
@@ -630,4 +646,68 @@ thinkpad_set_backlight(struct wskbd_backlight *kbl)
 	acpi_addtask(sc->sc_acpi, thinkpad_set_thinklight, sc, 0);
 	acpi_wakeup(sc->sc_acpi);
 	return 0;
+}
+
+void
+thinkpad_get_brightness(struct acpithinkpad_softc *sc)
+{
+	aml_evalinteger(sc->sc_acpi, sc->sc_devnode,
+	    "PBLG", 0, NULL, &sc->sc_brightness);
+}
+
+void
+thinkpad_set_brightness(void *arg0, int arg1)
+{
+	struct acpithinkpad_softc *sc = arg0;
+	struct aml_value arg;
+
+	memset(&arg, 0, sizeof(arg));
+	arg.type = AML_OBJTYPE_INTEGER;
+	arg.v_integer = sc->sc_brightness & 0xff;
+	aml_evalname(sc->sc_acpi, sc->sc_devnode,
+	    "PBLS", 1, &arg, NULL);
+}
+
+int
+thinkpad_get_param(struct wsdisplay_param *dp)
+{
+	struct acpithinkpad_softc *sc = acpithinkpad_cd.cd_devs[0];
+
+	if (sc == NULL)
+		return -1;
+
+	switch (dp->param) {
+	case WSDISPLAYIO_PARAM_BRIGHTNESS:
+		dp->min = 0;
+		dp->max = (sc->sc_brightness >> 8) & 0xff;
+		dp->curval = sc->sc_brightness & 0xff;
+		return 0;
+	default:
+		return -1;
+	}
+}
+
+int
+thinkpad_set_param(struct wsdisplay_param *dp)
+{
+	struct acpithinkpad_softc *sc = acpithinkpad_cd.cd_devs[0];
+	int maxval = (sc->sc_brightness >> 8) & 0xff;
+
+	if (sc == NULL)
+		return -1;
+
+	switch (dp->param) {
+	case WSDISPLAYIO_PARAM_BRIGHTNESS:
+		if (dp->curval < 0)
+			dp->curval = 0;
+		if (dp->curval > maxval)
+			dp->curval = maxval;
+		sc->sc_brightness &= ~0xff;
+		sc->sc_brightness |= dp->curval;
+		acpi_addtask(sc->sc_acpi, thinkpad_set_brightness, sc, 0);
+		acpi_wakeup(sc->sc_acpi);
+		return 0;
+	default:
+		return -1;
+	}
 }
