@@ -1,4 +1,4 @@
-/* $OpenBSD: environment.c,v 1.26 2015/12/18 17:48:13 mmcc Exp $ */
+/* $OpenBSD: environment.c,v 1.27 2015/12/18 17:51:29 mmcc Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -908,30 +908,28 @@ kn_get_authorizer(int sessid, int assertid, int *algorithm)
     int i;
 
     keynote_errno = *algorithm = 0;
-    if ((keynote_current_session == (struct keynote_session *) NULL) ||
-	(keynote_current_session->ks_id != sessid))
+    if (keynote_current_session == NULL ||
+	keynote_current_session->ks_id != sessid)
     {
 	keynote_current_session = keynote_find_session(sessid);
-	if (keynote_current_session == (struct keynote_session *) NULL)
-	{
+	if (keynote_current_session == NULL) {
 	    keynote_errno = ERROR_NOTFOUND;
-	    return (void *) NULL;
+	    return NULL;
 	}
     }
 
     /* Traverse the hash table looking for assertid */
     for (i = 0; i < HASHTABLESIZE; i++)
       for (as = keynote_current_session->ks_assertion_table[i];
-	   as != (struct assertion *) NULL;
+	   as != NULL;
 	   as = as->as_next)
 	if (as->as_id == assertid)
 	  goto out;
 
  out:
-    if (as == (struct assertion *) NULL)
-    {
+    if (as == NULL) {
 	keynote_errno = ERROR_NOTFOUND;
-	return (void *) NULL;
+	return NULL;
     }
 
     if (as->as_authorizer == NULL)
@@ -952,35 +950,33 @@ kn_get_licensees(int sessid, int assertid)
     int i;
 
     keynote_errno = 0;
-    if ((keynote_current_session == (struct keynote_session *) NULL) ||
-	(keynote_current_session->ks_id != sessid))
+    if (keynote_current_session == NULL ||
+	keynote_current_session->ks_id != sessid)
     {
 	keynote_current_session = keynote_find_session(sessid);
-	if (keynote_current_session == (struct keynote_session *) NULL)
-	{
+	if (keynote_current_session == NULL) {
 	    keynote_errno = ERROR_NOTFOUND;
-	    return (struct keynote_keylist *) NULL;
+	    return NULL;
 	}
     }
 
     /* Traverse the hash table looking for assertid */
     for (i = 0; i < HASHTABLESIZE; i++)
       for (as = keynote_current_session->ks_assertion_table[i];
-	   as != (struct assertion *) NULL;
+	   as != NULL;
 	   as = as->as_next)
 	if (as->as_id == assertid)
 	  goto out;
 
  out:
-    if (as == (struct assertion *) NULL)
-    {
+    if (as == NULL) {
 	keynote_errno = ERROR_NOTFOUND;
-	return (struct keynote_keylist *) NULL;
+	return NULL;
     }
 
     if (as->as_keylist == NULL)
       if (keynote_parse_keypred(as, 1) != RESULT_TRUE)
-	return (struct keynote_keylist *) NULL;
+	return NULL;
 
     return (struct keynote_keylist *) as->as_keylist;
 }
