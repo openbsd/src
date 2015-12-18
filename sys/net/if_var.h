@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_var.h,v 1.68 2015/12/09 15:05:51 mpi Exp $	*/
+/*	$OpenBSD: if_var.h,v 1.69 2015/12/18 14:02:15 visa Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -293,7 +293,6 @@ extern unsigned int lo0ifidx;
 extern struct taskq *softnettq;
 
 void	if_start(struct ifnet *);
-void	if_start_barrier(struct ifnet *);
 int	if_enqueue_try(struct ifnet *, struct mbuf *);
 int	if_enqueue(struct ifnet *, struct mbuf *);
 void	if_input(struct ifnet *, struct mbuf_list *);
