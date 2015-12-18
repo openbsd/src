@@ -1,4 +1,4 @@
-/*	$OpenBSD: mknod.c,v 1.18 2010/03/27 09:10:02 jmc Exp $	*/
+/*	$OpenBSD: mknod.c,v 1.19 2015/12/18 15:34:27 deraadt Exp $	*/
 /*	$NetBSD: mknod.c,v 1.8 1995/08/11 00:08:18 jtc Exp $	*/
 
 /*
@@ -61,7 +61,7 @@ main(int argc, char *argv[])
 		ismkfifo = 1;
 
 	while ((ch = getopt(argc, argv, "m:")) != -1)
-		switch(ch) {
+		switch (ch) {
 		case 'm':
 			if (!(set = setmode(optarg))) {
 				errx(1, "invalid file mode.");
@@ -82,6 +82,10 @@ main(int argc, char *argv[])
 		}
 	argc -= optind;
 	argv += optind;
+
+	if (set)
+		if (pledge("stdio rpath wpath cpath dpath fattr", NULL) == -1)
+			err(1, "pledge");
 
 	if (argv[0] == NULL)
 		usage(ismkfifo);
