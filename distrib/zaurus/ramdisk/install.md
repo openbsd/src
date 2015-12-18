@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.38 2015/12/02 21:17:17 krw Exp $
+#	$OpenBSD: install.md,v 1.39 2015/12/18 16:20:58 rpe Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -42,9 +42,9 @@ md_prep_fdisk() {
 
 	while :; do
 		_d=whole
-		if fdisk $_disk | grep -q 'Signature: 0xAA55'; then
+		if disk_has $_disk mbr; then
 			fdisk $_disk
-			if fdisk $_disk | grep -q '^..: A6 '; then
+			if disk_has $_disk mbr openbsd; then
 				_q=", use the (O)penBSD area"
 				_d=OpenBSD
 			fi
@@ -70,7 +70,7 @@ must be marked as the only active partition.  Inside the fdisk command, the
 $(fdisk ${_disk})
 __EOT
 			fdisk -e ${_disk}
-			fdisk $_disk | grep -q ' A6 ' && return
+			disk_has $_disk mbr openbsd && return
 			echo No OpenBSD partition in MBR, try again. ;;
 		o*|O*)
 			[[ $_d == OpenBSD ]] || continue

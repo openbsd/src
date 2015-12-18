@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.64 2015/12/02 21:17:17 krw Exp $
+#	$OpenBSD: install.md,v 1.65 2015/12/18 16:20:58 rpe Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -43,29 +43,19 @@ md_installboot() {
 
 	# If there is an MSDOS partition on the boot disk, copy ofwboot
 	# into it.
-	if fdisk $_disk | grep -q 'Signature: 0xAA55'; then
-		if fdisk $_disk | grep -q '^..: 06 '; then
-			if mount /dev/${_disk}i /mnt2 >/dev/null 2>&1; then
-				# Use cat to avoid holes created by cp(1)
-				cat /mnt/usr/mdec/ofwboot > /mnt2/ofwboot
-				umount /mnt2
-			fi
+	if disk_has $_disk mbr openbsd; then
+		if mount /dev/${_disk}i /mnt2 >/dev/null 2>&1; then
+			# Use cat to avoid holes created by cp(1)
+			cat /mnt/usr/mdec/ofwboot > /mnt2/ofwboot
+			umount /mnt2
 		fi
 	fi
-}
-
-md_has_hfs () {
-	pdisk -l /dev/${1}c 2>&1 | grep -q '^Partition map '
-}
-
-md_has_hfs_openbsd () {
-	pdisk -l /dev/${1}c 2>&1 | grep -q ' OpenBSD OpenBSD '
 }
 
 md_prep_MBR() {
 	local _disk=$1 _q _d
 
-	if md_has_hfs $_disk; then
+	if disk_has $_disk hfs; then
 		cat <<__EOT
 
 WARNING: Putting an MBR partition table on $_disk will DESTROY the existing HFS
@@ -80,9 +70,9 @@ __EOT
 	while :; do
 		_d=whole
 
-		if fdisk $_disk | grep -q 'Signature: 0xAA55'; then
+		if disk_has $_disk mbr; then
 			fdisk $_disk
-			if fdisk $_disk | grep -q '^..: A6 '; then
+			if disk_has $_disk mbr openbsd; then
 				_q=", use the (O)penBSD area"
 				_d=OpenBSD
 			fi
@@ -112,11 +102,11 @@ at least 1MB and be marked as the *only* active partition.
 $(fdisk $_disk)
 __EOT
 			fdisk -e $_disk
-			fdisk $_disk | grep -q '^..: 06 ' ||
+			disk_has $_disk mbr dos ||
 				{ echo "\nNo DOS (id 06) partition!\n"; continue; }
-			fdisk $_disk | grep -q '^\*.: 06 ' ||
+			disk_has $_disk mbr dos_active ||
 				{ echo "\nNo active DOS partition!\n"; continue; }
-			fdisk $_disk | grep -q "^..: A6 " ||
+			disk_has $_disk mbr openbsd ||
 				{ echo "\nNo OpenBSD (id A6) partition!\n"; continue; }
 			break ;;
 		o*|O*)
@@ -135,7 +125,7 @@ md_prep_HFS() {
 	while :; do
 		_q=
 		_d=Modify
-		md_has_hfs_openbsd $_disk &&
+		disk_has $_disk hfs openbsd &&
 			{ _q="Use the (O)penBSD partition, "; _d=OpenBSD; }
 		pdisk -l /dev/${_disk}c
 		ask "$_q(M)odify a partition or (A)bort?" "$_d"
@@ -143,7 +133,7 @@ md_prep_HFS() {
 		[aA]*)	return 1 ;;
 		[oO]*)	return 0 ;;
 		[mM]*)	pdisk /dev/${_disk}c
-			md_has_hfs_openbsd $_disk && break
+			disk_has $_disk hfs openbsd && break
 			echo "\nNo 'OpenBSD'-type partition named 'OpenBSD'!"
 		esac
 	done
@@ -157,7 +147,7 @@ md_prep_disklabel() {
 	PARTTABLE=
 	while [[ -z $PARTTABLE ]]; do
 		resp=MBR
-		md_has_hfs $_disk && ask "Use HFS or MBR partition table?" HFS
+		disk_has $_disk hfs && ask "Use HFS or MBR partition table?" HFS
 		case $resp in
 		[mM]*)	md_prep_MBR $_disk && PARTTABLE=MBR ;;
 		[hH]*)	md_prep_HFS $_disk && PARTTABLE=HFS ;;

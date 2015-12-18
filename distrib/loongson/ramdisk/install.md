@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.22 2015/12/02 21:17:17 krw Exp $
+#	$OpenBSD: install.md,v 1.23 2015/12/18 16:20:58 rpe Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -55,9 +55,9 @@ md_prep_fdisk() {
 
 	while :; do
 		_d=whole
-		if fdisk $_disk | grep -q 'Signature: 0xAA55'; then
+		if disk_has $_disk mbr; then
 			fdisk $_disk
-			if fdisk $_disk | grep -q '^..: A6 '; then
+			if disk_has $_disk mbr openbsd; then
 				_q=", use the (O)penBSD area"
 				_d=OpenBSD
 			fi
@@ -121,9 +121,9 @@ first 'Linux files' partition.
 $(fdisk ${_disk})
 __EOT
 			fdisk -e $_disk
-			fdisk $_disk | grep -q '^..: 83 ' || \
+			disk_has $_disk mbr linux ||
 				{ echo "\nNo Linux files (id 83) partition!\n"; continue; }
-			fdisk $_disk | grep -q "^..: A6 " || \
+			disk_has $_disk mbr openbsd ||
 				{ echo "\nNo OpenBSD (id A6) partition!\n"; continue; }
 			disklabel $_disk 2>/dev/null | grep -q "^  i:" || disklabel -w -d $_disk
 			break ;;
