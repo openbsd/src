@@ -1,4 +1,4 @@
-/* $OpenBSD: environment.c,v 1.25 2015/12/14 06:34:25 mmcc Exp $ */
+/* $OpenBSD: environment.c,v 1.26 2015/12/18 17:48:13 mmcc Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -535,19 +535,16 @@ kn_add_action(int sessid, char *name, char *value, int flags)
     int i;
 
     keynote_errno = 0;
-    if ((name == (char *) NULL) || (value == (char *) NULL) ||
-	(name[0] == '_'))
-    {
+    if (name == NULL || value == NULL || name[0] == '_') {
 	keynote_errno = ERROR_SYNTAX;
 	return -1;
     }
 
-    if ((keynote_current_session == (struct keynote_session *) NULL) ||
-	(keynote_current_session->ks_id != sessid))
+    if (keynote_current_session == NULL ||
+	keynote_current_session->ks_id != sessid)
     {
 	keynote_current_session = keynote_find_session(sessid);
-	if (keynote_current_session == (struct keynote_session *) NULL)
-	{
+	if (keynote_current_session == NULL) {
 	    keynote_errno = ERROR_NOTFOUND;
 	    return -1;
 	}
@@ -575,18 +572,16 @@ kn_remove_action(int sessid, char *name)
     int i;
 
     keynote_errno = 0;
-    if ((name == (char *) NULL) || (name[0] == '_'))
-    {
+    if (name == NULL || name[0] == '_') {
 	keynote_errno = ERROR_SYNTAX;
 	return -1;
     }
 
-    if ((keynote_current_session == (struct keynote_session *) NULL) ||
-	(keynote_current_session->ks_id != sessid))
+    if (keynote_current_session == NULL ||
+	keynote_current_session->ks_id != sessid)
     {
 	keynote_current_session = keynote_find_session(sessid);
-	if (keynote_current_session == (struct keynote_session *) NULL)
-	{
+	if (keynote_current_session == NULL) {
 	    keynote_errno = ERROR_NOTFOUND;
 	    return -1;
 	}
@@ -616,21 +611,18 @@ kn_do_query(int sessid, char **returnvalues, int numvalues)
     int i;
 
     keynote_errno = 0;
-    if ((keynote_current_session == (struct keynote_session *) NULL) ||
-	(keynote_current_session->ks_id != sessid))
+    if (keynote_current_session == NULL ||
+	keynote_current_session->ks_id != sessid)
     {
 	keynote_current_session = keynote_find_session(sessid);
-	if (keynote_current_session == (struct keynote_session *) NULL)
-	{
+	if (keynote_current_session == NULL) {
 	    keynote_errno = ERROR_NOTFOUND;
 	    return -1;
 	}
     }
 
     /* Check that we have at least one action authorizer */
-    if (keynote_current_session->ks_action_authorizers ==
-	(struct keylist *) NULL)
-    {
+    if (keynote_current_session->ks_action_authorizers == NULL) {
 	keynote_errno = ERROR_NOTFOUND;
 	return -1;
     }
@@ -639,16 +631,15 @@ kn_do_query(int sessid, char **returnvalues, int numvalues)
      * We may use already set returnvalues, or use new ones,
      * but we must have some before we can evaluate.
      */
-    if ((returnvalues == (char **) NULL) &&
-	(keynote_current_session->ks_values == (char **) NULL))
+    if (returnvalues == NULL &&
+	keynote_current_session->ks_values == NULL)
     {
 	keynote_errno = ERROR_SYNTAX;
 	return -1;
     }
 
     /* Replace any existing returnvalues */
-    if (returnvalues != (char **) NULL)
-    {
+    if (returnvalues != NULL) {
 	keynote_current_session->ks_values = returnvalues;
 	keynote_current_session->ks_values_num = numvalues;
     }
@@ -656,7 +647,7 @@ kn_do_query(int sessid, char **returnvalues, int numvalues)
     /* Reset assertion state from any previous queries */
     for (i = 0; i < HASHTABLESIZE; i++)
       for (as = keynote_current_session->ks_assertion_table[i];
-	   as != (struct assertion *) NULL;
+	   as != NULL;
 	   as = as->as_next)
       {
 	  as->as_kresult = KRESULT_UNTOUCHED;
@@ -680,12 +671,11 @@ kn_get_failed(int sessid, int type, int num)
     int i;
 
     keynote_errno = 0;
-    if ((keynote_current_session == (struct keynote_session *) NULL) ||
-	(keynote_current_session->ks_id != sessid))
+    if (keynote_current_session == NULL ||
+	keynote_current_session->ks_id != sessid)
     {
 	keynote_current_session = keynote_find_session(sessid);
-	if (keynote_current_session == (struct keynote_session *) NULL)
-	{
+	if (keynote_current_session == NULL) {
 	    keynote_errno = ERROR_NOTFOUND;
 	    return -1;
 	}
@@ -693,7 +683,7 @@ kn_get_failed(int sessid, int type, int num)
 
     for (i = 0; i < HASHTABLESIZE; i++)
       for (as = keynote_current_session->ks_assertion_table[i];
-	   as != (struct assertion *) NULL;
+	   as != NULL;
 	   as = as->as_next)
 	switch (type)
 	{
@@ -748,7 +738,7 @@ kn_query(struct environment *env, char **retvalues, int numval,
       return -1;
 
     /* Action set */
-    for (en = env; en != (struct environment *) NULL; en = en->env_next)
+    for (en = env; en != NULL; en = en->env_next)
       if (kn_add_action(sessid, en->env_name, en->env_value,
           en->env_flags) == -1)
       {
@@ -810,17 +800,14 @@ kn_read_asserts(char *buffer, int bufferlen, int *numassertions)
     char **buf, **tempbuf, *ptr;
 
     keynote_errno = 0;
-    if (buffer == (char *) NULL)
-    {
+    if (buffer == NULL) {
 	keynote_errno = ERROR_SYNTAX;
-	return (char **) NULL;
+	return NULL;
     }
 
-    buf = (char **) calloc(bufsize, sizeof(char *));
-    if (buf == (char **) NULL)
-    {
+    if ((buf = calloc(bufsize, sizeof(char *))) == NULL) {
 	keynote_errno = ERROR_MEMORY;
-	return (char **) NULL;
+	return NULL;
     }
 
     /*
@@ -841,16 +828,15 @@ kn_read_asserts(char *buffer, int bufferlen, int *numassertions)
 		if (valid)  /* Something there */
 		{
 		    /* Allocate enough memory */
-		    buf[*numassertions] = (char *) calloc((buffer + i) - ptr
+		    buf[*numassertions] = calloc((buffer + i) - ptr
 							  + 1, sizeof(char));
-		    if (buf[*numassertions] == (char *) NULL)
-		    {
+		    if (buf[*numassertions] == NULL) {
 			/* Free any already-allocated strings */
 			for (flag = 0; flag < *numassertions; flag++)
 			  free(buf[flag]);
 			free(buf);
 			keynote_errno = ERROR_MEMORY;
-			return (char **) NULL;
+			return NULL;
 		    }
 
 		    /* Copy string */
@@ -866,15 +852,13 @@ kn_read_asserts(char *buffer, int bufferlen, int *numassertions)
 		if (*numassertions > bufsize - 4)
 		{
 		    /* Allocate twice the space */
-		    tempbuf = reallocarray(buf, bufsize,
-			2 * sizeof(char *));
-		    if (tempbuf == (char **) NULL)
-		    {
+		    tempbuf = reallocarray(buf, bufsize, 2 * sizeof(char *));
+		    if (tempbuf == NULL) {
 			for (flag = 0; flag < *numassertions; flag++)
 			  free(buf[flag]);
 			free(buf);
 			keynote_errno = ERROR_MEMORY;
-			return (char **) NULL;
+			return NULL;
 		    }
 
 		    buf = tempbuf;
@@ -901,13 +885,12 @@ kn_read_asserts(char *buffer, int bufferlen, int *numassertions)
     if (valid)
     {
 	/* This one's easy, we can just use strdup() */
-	if ((buf[*numassertions] = strdup(ptr)) == (char *) NULL)
-	{
+	if ((buf[*numassertions] = strdup(ptr)) == NULL) {
 	    for (flag = 0; flag < *numassertions; flag++)
 	      free(buf[flag]);
 	    free(buf);
 	    keynote_errno = ERROR_MEMORY;
-	    return (char **) NULL;
+	    return NULL;
 	}
 	(*numassertions)++;
     }
