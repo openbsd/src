@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.164 2015/12/17 23:19:23 ajacoutot Exp $
+#	$OpenBSD: netstart,v 1.165 2015/12/18 08:49:53 ajacoutot Exp $
 
 # Turn off Strict Bourne shell mode.
 set +o sh
@@ -268,12 +268,6 @@ done
 done
 
 # Multicast routing.
-#
-# The routing to the 224.0.0.0/4 net is setup according to these rules:
-# multicast			route			comment
-# NO				-reject			no multicast
-# YES				none installed		daemon can run
-# Any other combination		-reject			config error
 route -qn delete 224.0.0.0/4 >/dev/null 2>&1
 [[ $multicast != YES ]] && \
 	route -qn add -net 224.0.0.0/4 -interface 127.0.0.1 -reject >/dev/null
