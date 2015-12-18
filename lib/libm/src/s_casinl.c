@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_casinl.c,v 1.3 2011/07/20 21:02:51 martynas Exp $	*/
+/*	$OpenBSD: s_casinl.c,v 1.4 2015/12/18 12:17:44 shadchin Exp $	*/
 
 /*
  * Copyright (c) 2008 Stephen L. Moshier <steve@moshier.net>
@@ -71,6 +71,7 @@ casinl(long double complex z)
 	x = creall(z);
 	y = cimagl(z);
 
+#if 0
 	if (y == 0.0L) {
 		if (fabsl(x) > 1.0L) {
 			w = PIO2L + 0.0L * I;
@@ -81,6 +82,7 @@ casinl(long double complex z)
 		}
 		return (w);
 	}
+#endif
 
 	/* Power series expansion */
 	b = cabsl(z);

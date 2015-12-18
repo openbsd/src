@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_casin.c,v 1.6 2013/07/03 04:46:36 espie Exp $	*/
+/*	$OpenBSD: s_casin.c,v 1.7 2015/12/18 12:17:44 shadchin Exp $	*/
 /*
  * Copyright (c) 2008 Stephen L. Moshier <steve@moshier.net>
  *
@@ -63,6 +63,7 @@ casin(double complex z)
 	x = creal (z);
 	y = cimag (z);
 
+#if 0
 	if (y == 0.0) {
 		if (fabs(x) > 1.0) {
 			w = M_PI_2 + 0.0 * I;
@@ -73,6 +74,7 @@ casin(double complex z)
 		}
 		return (w);
 	}
+#endif
 
 	/* Power series expansion */
 	/*

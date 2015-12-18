@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_casinf.c,v 1.3 2011/07/20 19:28:33 martynas Exp $	*/
+/*	$OpenBSD: s_casinf.c,v 1.4 2015/12/18 12:17:44 shadchin Exp $	*/
 /*
  * Copyright (c) 2008 Stephen L. Moshier <steve@moshier.net>
  *
@@ -65,6 +65,7 @@ casinf(float complex z)
 	x = crealf(z);
 	y = cimagf(z);
 
+#if 0
 	if(y == 0.0f) {
 		if(fabsf(x) > 1.0f) {
 			w = (float)M_PI_2 + 0.0f * I;
@@ -75,6 +76,7 @@ casinf(float complex z)
 		}
 		return (w);
 	}
+#endif
 
 	/* Power series expansion */
 	/*
