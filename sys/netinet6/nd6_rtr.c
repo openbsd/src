@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_rtr.c,v 1.136 2015/12/03 21:57:59 mpi Exp $	*/
+/*	$OpenBSD: nd6_rtr.c,v 1.137 2015/12/18 10:55:51 tb Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.97 2001/02/07 11:09:13 itojun Exp $	*/
 
 /*
@@ -1951,7 +1951,7 @@ in6_ifadd(struct nd_prefix *pr, int privacy)
 		ifra.ifra_lifetime.ia6t_vltime = ND6_PRIV_VALID_LIFETIME;
 	    if (ifra.ifra_lifetime.ia6t_pltime > ND6_PRIV_PREFERRED_LIFETIME)
 		ifra.ifra_lifetime.ia6t_pltime = ND6_PRIV_PREFERRED_LIFETIME
-			- (arc4random() % ND6_PRIV_MAX_DESYNC_FACTOR);
+			- arc4random_uniform(ND6_PRIV_MAX_DESYNC_FACTOR);
 	}
 
 	/* XXX: scope zone ID? */
