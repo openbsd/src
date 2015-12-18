@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.75 2015/02/10 04:20:26 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.76 2015/12/18 22:17:46 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -404,8 +404,9 @@ priv_set_interface_mtu(struct imsg_set_interface_mtu *imsg)
 
 	if ((s = socket(AF_INET, SOCK_STREAM, 0)) == -1)
 		error("socket open failed: %s", strerror(errno));
-	if (ioctl(s, SIOCSIFMTU, &ifr) < 0)
-		warning("SIOCSIFMTU failed (%d): %s", imsg->mtu, strerror(errno));
+	if (ioctl(s, SIOCSIFMTU, &ifr) == -1)
+		warning("SIOCSIFMTU failed (%d): %s", imsg->mtu,
+		    strerror(errno));
 	close(s);
 }
 
