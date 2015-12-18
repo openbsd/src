@@ -37,7 +37,7 @@ int
 rand_r(u_int *seed)
 {
 	*seed = *seed * 1103515245 + 12345;
-	return (*seed % ((u_int)RAND_MAX + 1));
+	return (*seed & RAND_MAX);
 }
 DEF_WEAK(rand_r);
 
@@ -50,7 +50,7 @@ int
 rand(void)
 {
 	if (rand_deterministic == 0)
-		return (arc4random() % ((u_int)RAND_MAX + 1));
+		return (arc4random() & RAND_MAX);
 	return (rand_r(&next));
 }
 
