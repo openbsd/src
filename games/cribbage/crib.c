@@ -1,4 +1,4 @@
-/*	$OpenBSD: crib.c,v 1.19 2015/11/29 14:42:36 tb Exp $	*/
+/*	$OpenBSD: crib.c,v 1.20 2015/12/18 18:47:56 tb Exp $	*/
 /*	$NetBSD: crib.c,v 1.7 1997/07/10 06:47:29 mikel Exp $	*/
 
 /*-
@@ -49,7 +49,7 @@ main(int argc, char *argv[])
 	bool playing;
 	int ch;
 
-	if(pledge("stdio rpath tty proc exec", NULL) == -1)
+	if (pledge("stdio rpath tty proc exec", NULL) == -1)
 		err(1, "pledge");
 
 	while ((ch = getopt(argc, argv, "emqr")) != -1)
