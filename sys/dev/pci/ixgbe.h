@@ -1,4 +1,4 @@
-/*	$OpenBSD: ixgbe.h,v 1.20 2015/11/24 17:11:40 mpi Exp $	*/
+/*	$OpenBSD: ixgbe.h,v 1.21 2015/12/18 19:08:36 kettenis Exp $	*/
 
 /******************************************************************************
 
@@ -52,6 +52,7 @@
 #include <sys/timeout.h>
 #include <sys/pool.h>
 #include <sys/rwlock.h>
+#include <sys/atomic.h>
 
 #include <net/if.h>
 #include <net/bpf.h>

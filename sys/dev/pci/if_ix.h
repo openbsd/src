@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.h,v 1.29 2015/09/11 13:02:28 stsp Exp $	*/
+/*	$OpenBSD: if_ix.h,v 1.30 2015/12/18 19:08:36 kettenis Exp $	*/
 
 /******************************************************************************
 
@@ -77,10 +77,9 @@
 #define IXGBE_TX_TIMEOUT                   5	/* set to 5 seconds */
 
 /*
- * This parameters control when the driver calls the routine to reclaim
- * transmit descriptors.
+ * Thise parameter controls the minimum number of available transmit
+ * descriptors needed before we attempt transmission of a packet.
  */
-#define IXGBE_TX_CLEANUP_THRESHOLD	(sc->num_tx_desc / 16)
 #define IXGBE_TX_OP_THRESHOLD		(sc->num_tx_desc / 32)
 
 #define IXGBE_MAX_FRAME_SIZE	9216
@@ -170,7 +169,7 @@ struct tx_ring {
 	union ixgbe_adv_tx_desc	*tx_base;
 	struct ixgbe_tx_buf	*tx_buffers;
 	struct ixgbe_dma_alloc	txdma;
-	volatile uint16_t	tx_avail;
+	volatile uint32_t	tx_avail;
 	uint32_t		next_avail_desc;
 	uint32_t		next_to_clean;
 	enum {
@@ -277,7 +276,6 @@ struct ix_softc {
 	 * Receive rings:
 	 *	Allocated at run time, an array of rings.
 	 */
-	struct mutex		rx_mtx;
 	struct rx_ring		*rx_rings;
 	uint64_t		que_mask;
 	int			num_rx_desc;
