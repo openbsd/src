@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc2.c,v 1.34 2015/09/03 15:14:08 visa Exp $	*/
+/*	$OpenBSD: dwc2.c,v 1.35 2015/12/18 17:23:14 mmcc Exp $	*/
 /*	$NetBSD: dwc2.c,v 1.32 2014/09/02 23:26:20 macallan Exp $	*/
 
 /*-
@@ -1575,10 +1575,6 @@ dwc2_init(struct dwc2_softc *sc)
 
 	sc->sc_hsotg = malloc(sizeof(struct dwc2_hsotg), M_DEVBUF,
 	    M_ZERO | M_WAITOK);
-	if (sc->sc_hsotg == NULL) {
-		err = ENOMEM;
-		goto fail1;
-	}
 
 	sc->sc_hsotg->hsotg_sc = sc;
 	sc->sc_hsotg->dev = &sc->sc_bus.bdev;

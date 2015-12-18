@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc2_hcdddma.c,v 1.10 2015/06/28 11:48:18 jmatthew Exp $	*/
+/*	$OpenBSD: dwc2_hcdddma.c,v 1.11 2015/12/18 17:23:14 mmcc Exp $	*/
 /*	$NetBSD: dwc2_hcdddma.c,v 1.6 2014/04/03 06:34:58 skrll Exp $	*/
 
 /*
@@ -124,11 +124,6 @@ STATIC int dwc2_desc_list_alloc(struct dwc2_hsotg *hsotg, struct dwc2_qh *qh,
 
 	qh->n_bytes = malloc(sizeof(u32) * dwc2_max_desc_num(qh), M_DEVBUF,
 	    M_ZERO | M_WAITOK);
-	if (!qh->n_bytes) {
-		usb_freemem(&hsotg->hsotg_sc->sc_bus, &qh->desc_list_usbdma);
-		qh->desc_list = NULL;
-		return -ENOMEM;
-	}
 
 	return 0;
 }
