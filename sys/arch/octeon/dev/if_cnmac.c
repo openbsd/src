@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cnmac.c,v 1.36 2015/11/25 14:00:27 visa Exp $	*/
+/*	$OpenBSD: if_cnmac.c,v 1.37 2015/12/18 13:36:12 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -670,11 +670,8 @@ void
 octeon_eth_buf_ext_free_m(caddr_t buf, u_int size, void *arg)
 {
 	uint64_t *work = (void *)arg;
-	int s = splnet();
 
 	cn30xxfpa_buf_put_paddr(octeon_eth_fb_wqe, XKPHYS_TO_PHYS(work));
-
-	splx(s);
 }
 
 void
@@ -682,12 +679,9 @@ octeon_eth_buf_ext_free_ext(caddr_t buf, u_int size,
     void *arg)
 {
 	uint64_t *work = (void *)arg;
-	int s = splnet();
 
 	cn30xxfpa_buf_put_paddr(octeon_eth_fb_wqe, XKPHYS_TO_PHYS(work));
 	cn30xxfpa_buf_put_paddr(octeon_eth_fb_pkt, XKPHYS_TO_PHYS(buf));
-
-	splx(s);
 }
 
 /* ---- ifnet interfaces */
