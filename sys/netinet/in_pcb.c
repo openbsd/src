@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.194 2015/12/03 21:57:59 mpi Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.195 2015/12/18 22:25:16 vgross Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -318,7 +318,7 @@ in_pcbbind(struct inpcb *inp, struct mbuf *nam, struct proc *p)
 			 * and a multicast address is bound on both
 			 * new and duplicated sockets.
 			 */
-			if (so->so_options & SO_REUSEADDR)
+			if (so->so_options & (SO_REUSEADDR|SO_REUSEPORT))
 				reuseport = SO_REUSEADDR|SO_REUSEPORT;
 		} else if (sin->sin_addr.s_addr != INADDR_ANY) {
 			sin->sin_port = 0;		/* yech... */

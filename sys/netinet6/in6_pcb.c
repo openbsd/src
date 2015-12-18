@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_pcb.c,v 1.83 2015/12/02 22:13:44 vgross Exp $	*/
+/*	$OpenBSD: in6_pcb.c,v 1.84 2015/12/18 22:25:16 vgross Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -214,7 +214,7 @@ in6_pcbbind(struct inpcb *inp, struct mbuf *nam, struct proc *p)
 			 * and a multicast address is bound on both
 			 * new and duplicated sockets.
 			 */
-			if (so->so_options & SO_REUSEADDR)
+			if (so->so_options & (SO_REUSEADDR|SO_REUSEPORT))
 				reuseport = SO_REUSEADDR | SO_REUSEPORT;
 		} else if (!IN6_IS_ADDR_UNSPECIFIED(&sin6->sin6_addr)) {
 			struct ifaddr *ifa = NULL;
