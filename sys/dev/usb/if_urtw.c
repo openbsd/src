@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urtw.c,v 1.60 2015/11/25 03:10:00 dlg Exp $	*/
+/*	$OpenBSD: if_urtw.c,v 1.61 2015/12/18 19:43:14 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2009 Martynas Venckus <martynas@openbsd.org>
@@ -1078,6 +1078,7 @@ urtw_8225_write_s16(struct urtw_softc *sc, uint8_t addr, int index,
 	USETW(req.wIndex, index);
 	USETW(req.wLength, sizeof(uint16_t));
 
+	data = htole16(data);	
 	return (usbd_do_request(sc->sc_udev, &req, &data));
 }
 
@@ -1587,6 +1588,7 @@ urtw_read16_c(struct urtw_softc *sc, int val, uint16_t *data, uint8_t idx)
 	USETW(req.wLength, sizeof(uint16_t));
 
 	error = usbd_do_request(sc->sc_udev, &req, data);
+	*data = letoh16(*data);
 	return (error);
 }
 
@@ -1603,6 +1605,7 @@ urtw_read32_c(struct urtw_softc *sc, int val, uint32_t *data, uint8_t idx)
 	USETW(req.wLength, sizeof(uint32_t));
 
 	error = usbd_do_request(sc->sc_udev, &req, data);
+	*data = letoh32(*data);
 	return (error);
 }
 
@@ -1645,6 +1648,7 @@ urtw_write16_c(struct urtw_softc *sc, int val, uint16_t data, uint8_t idx)
 	USETW(req.wIndex, idx & 0x03);
 	USETW(req.wLength, sizeof(uint16_t));
 
+	data = htole16(data);	
 	return (usbd_do_request(sc->sc_udev, &req, &data));
 }
 
@@ -1659,6 +1663,7 @@ urtw_write32_c(struct urtw_softc *sc, int val, uint32_t data, uint8_t idx)
 	USETW(req.wIndex, idx & 0x03);
 	USETW(req.wLength, sizeof(uint32_t));
 
+	data = htole32(data);	
 	return (usbd_do_request(sc->sc_udev, &req, &data));
 }
 
