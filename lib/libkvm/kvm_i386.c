@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_i386.c,v 1.26 2015/04/07 05:50:40 guenther Exp $ */
+/*	$OpenBSD: kvm_i386.c,v 1.27 2015/12/19 18:40:30 mmcc Exp $ */
 /*	$NetBSD: kvm_i386.c,v 1.9 1996/03/18 22:33:38 thorpej Exp $	*/
 
 /*-
@@ -101,8 +101,7 @@ void
 _kvm_freevtop(kvm_t *kd)
 {
 	if (kd->vmst != NULL) {
-		if (kd->vmst->PTD != NULL)
-			free(kd->vmst->PTD);
+		free(kd->vmst->PTD);
 
 		free(kd->vmst);
 		kd->vmst = NULL;
@@ -167,10 +166,8 @@ _kvm_initvtop(kvm_t *kd)
 	return (0);
 
 invalid:
-	if (vm->PTD != NULL) {
-		free(vm->PTD);
-		vm->PTD = NULL;
-	}
+	free(vm->PTD);
+	vm->PTD = NULL;
 	return (-1);
 }
 

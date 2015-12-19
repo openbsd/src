@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm.c,v 1.58 2015/09/08 15:40:32 dlg Exp $ */
+/*	$OpenBSD: kvm.c,v 1.59 2015/12/19 18:40:30 mmcc Exp $ */
 /*	$NetBSD: kvm.c,v 1.43 1996/05/05 04:31:59 gwr Exp $	*/
 
 /*-
@@ -411,10 +411,8 @@ _kvm_get_header(kvm_t *kd)
 	return (0);
 
 fail:
-	if (kd->kcore_hdr != NULL) {
-		free(kd->kcore_hdr);
-		kd->kcore_hdr = NULL;
-	}
+	free(kd->kcore_hdr);
+	kd->kcore_hdr = NULL;
 	if (kd->cpu_data != NULL) {
 		free(kd->cpu_data);
 		kd->cpu_data = NULL;
@@ -507,10 +505,8 @@ kvm_dump_mkheader(kvm_t *kd, off_t dump_off)
 		return (hdr_size);
 
 fail:
-	if (kd->kcore_hdr != NULL) {
-		free(kd->kcore_hdr);
-		kd->kcore_hdr = NULL;
-	}
+	free(kd->kcore_hdr);
+	kd->kcore_hdr = NULL;
 	if (kd->cpu_data != NULL) {
 		free(kd->cpu_data);
 		kd->cpu_data = NULL;

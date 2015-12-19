@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_arm.c,v 1.8 2013/03/28 16:27:31 deraadt Exp $	*/
+/*	$OpenBSD: kvm_arm.c,v 1.9 2015/12/19 18:40:30 mmcc Exp $	*/
 /*
  * Copyright (c) 2006 Miodrag Vallat.
  *
@@ -69,10 +69,8 @@
 void
 _kvm_freevtop(kvm_t *kd)
 {
-	if (kd->vmst != NULL) {
-		free(kd->vmst);
-		kd->vmst = NULL;
-	}
+	free(kd->vmst);
+	kd->vmst = NULL;
 }
 
 int

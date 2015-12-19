@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_hppa64.c,v 1.3 2013/11/01 15:57:56 deraadt Exp $	*/
+/*	$OpenBSD: kvm_hppa64.c,v 1.4 2015/12/19 18:40:30 mmcc Exp $	*/
 
 /*
  * Copyright (c) 2002, Miodrag Vallat.
@@ -40,10 +40,8 @@
 void
 _kvm_freevtop(kvm_t *kd)
 {
-	if (kd->vmst != NULL) {
-		free(kd->vmst);
-		kd->vmst = NULL;
-	}
+	free(kd->vmst);
+	kd->vmst = NULL;
 }
 
 int
