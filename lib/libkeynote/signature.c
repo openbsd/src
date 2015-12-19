@@ -1,4 +1,4 @@
-/* $OpenBSD: signature.c,v 1.22 2015/12/19 01:15:45 mmcc Exp $ */
+/* $OpenBSD: signature.c,v 1.23 2015/12/19 18:49:02 mmcc Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -588,14 +588,13 @@ kn_keycompare(void *key1, void *key2, int algorithm)
     RSA *p3, *p4;
     struct keynote_binary *bn1, *bn2;
 
-    if ((key1 == (void *) NULL) ||
-	(key2 == (void *) NULL))
+    if (key1 == NULL || key2 == NULL)
       return RESULT_FALSE;
 
     switch (algorithm)
     {
 	case KEYNOTE_ALGORITHM_NONE:
-	    if  (!strcmp((char *) key1, (char *) key2))
+	    if (!strcmp(key1, key2))
 	      return RESULT_TRUE;
 	    else
 	      return RESULT_FALSE;
@@ -659,17 +658,17 @@ int
 keynote_sigverify_assertion(struct assertion *as)
 {
     int hashtype, enc, intenc, alg = KEYNOTE_ALGORITHM_NONE, hashlen = 0;
-    unsigned char *sig, *decoded = (char *) NULL, *ptr;
+    unsigned char *sig, *decoded = NULL, *ptr;
     unsigned char res2[20];
     SHA_CTX shscontext;
     MD5_CTX md5context;
     int len = 0;
     DSA *dsa;
     RSA *rsa;
-    if ((as->as_signature == (char *) NULL) ||
-	(as->as_startofsignature == (char *) NULL) ||
-	(as->as_allbutsignature == (char *) NULL) ||
-	(as->as_allbutsignature - as->as_startofsignature <= 0))
+    if (as->as_signature == NULL ||
+	as->as_startofsignature == NULL ||
+	as->as_allbutsignature == NULL ||
+	as->as_allbutsignature - as->as_startofsignature <= 0)
       return SIGRESULT_FALSE;
 
     alg = keynote_get_sig_algorithm(as->as_signature, &hashtype, &enc,
@@ -723,7 +722,7 @@ keynote_sigverify_assertion(struct assertion *as)
     switch (enc)
     {
 	case ENCODING_NONE:
-	    ptr = (char *) NULL;
+	    ptr = NULL;
 	    break;
 
 	case ENCODING_HEX:
@@ -742,10 +741,9 @@ keynote_sigverify_assertion(struct assertion *as)
 	    }
 
 	    len = 3 * (len / 4);
-	    decoded = (unsigned char *) calloc(len, sizeof(unsigned char));
+	    decoded = calloc(len, sizeof(unsigned char));
 	    ptr = decoded;
-	    if (decoded == (unsigned char *) NULL)
-	    {
+	    if (decoded == NULL) {
 		keynote_errno = ERROR_MEMORY;
 		return -1;
 	    }
@@ -756,9 +754,8 @@ keynote_sigverify_assertion(struct assertion *as)
 	    break;
 
 	case ENCODING_NATIVE:
-	    decoded = (unsigned char *) strdup(sig);
-	    if (decoded == (unsigned char *) NULL)
-	    {
+	    
+	    if ((decoded = strdup(sig)) == NULL) {
 		keynote_errno = ERROR_MEMORY;
 		return -1;
 	    }
@@ -775,10 +772,8 @@ keynote_sigverify_assertion(struct assertion *as)
     if ((alg == KEYNOTE_ALGORITHM_DSA) && (intenc == INTERNAL_ENC_ASN1))
     {
 	dsa = (DSA *) as->as_authorizer;
-	if (DSA_verify(0, res2, hashlen, decoded, len, dsa) == 1)
-	{
-	    if (ptr != (unsigned char *) NULL)
-	      free(ptr);
+	if (DSA_verify(0, res2, hashlen, decoded, len, dsa) == 1) {
+	    free(ptr);
 	    return SIGRESULT_TRUE;
 	}
     }
@@ -787,10 +782,8 @@ keynote_sigverify_assertion(struct assertion *as)
       {
           rsa = (RSA *) as->as_authorizer;
           if (RSA_verify_ASN1_OCTET_STRING(RSA_PKCS1_PADDING, res2, hashlen,
-					   decoded, len, rsa) == 1)
-          {
-              if (ptr != (unsigned char *) NULL)
-                free(ptr);
+					   decoded, len, rsa) == 1) {
+              free(ptr);
               return SIGRESULT_TRUE;
           }
       }
@@ -800,18 +793,15 @@ keynote_sigverify_assertion(struct assertion *as)
 	    /* RSA-specific */
 	    rsa = (RSA *) as->as_authorizer;
 	    if (RSA_verify(NID_shaWithRSAEncryption, res2, hashlen, decoded,
-			   len, rsa) == 1)
-	    {
-		if (ptr != (unsigned char *) NULL)
-		  free(ptr);
+			   len, rsa) == 1) {
+		free(ptr);
 		return SIGRESULT_TRUE;
 	    }
 	}
     
     /* Handle more algorithms here */
     
-    if (ptr != (unsigned char *) NULL)
-      free(ptr);
+    free(ptr);
 
     return SIGRESULT_FALSE;
 }
@@ -824,8 +814,8 @@ keynote_sign_assertion(struct assertion *as, char *sigalg, void *key,
 		       int keyalg, int verifyflag)
 {
     int slen, i, hashlen = 0, hashtype, alg, encoding, internalenc;
-    unsigned char *sig = (char *) NULL, *finalbuf = (char *) NULL;
-    unsigned char res2[LARGEST_HASH_SIZE], *sbuf = (char *) NULL;
+    unsigned char *sig = NULL, *finalbuf = NULL;
+    unsigned char res2[LARGEST_HASH_SIZE], *sbuf = NULL;
     BIO *biokey = (BIO *) NULL;
     DSA *dsa = (DSA *) NULL;
     RSA *rsa = (RSA *) NULL;
@@ -833,16 +823,16 @@ keynote_sign_assertion(struct assertion *as, char *sigalg, void *key,
     MD5_CTX md5context;
     int len;
 
-    if ((as->as_signature_string_s == (char *) NULL) ||
-	(as->as_startofsignature == (char *) NULL) ||
-	(as->as_allbutsignature == (char *) NULL) ||
-	(as->as_allbutsignature - as->as_startofsignature <= 0) ||
-	(as->as_authorizer == (void *) NULL) ||
-	(key == (void *) NULL) ||
-	(as->as_signeralgorithm == KEYNOTE_ALGORITHM_NONE))
+    if (as->as_signature_string_s == NULL ||
+	as->as_startofsignature == NULL ||
+	as->as_allbutsignature == NULL ||
+	as->as_allbutsignature - as->as_startofsignature <= 0 ||
+	as->as_authorizer == NULL ||
+	key == NULL ||
+	as->as_signeralgorithm == KEYNOTE_ALGORITHM_NONE)
     {
 	keynote_errno = ERROR_SYNTAX;
-	return (char *) NULL;
+	return NULL;
     }
 
     alg = keynote_get_sig_algorithm(sigalg, &hashtype, &encoding,
@@ -859,7 +849,7 @@ keynote_sign_assertion(struct assertion *as, char *sigalg, void *key,
 	   (keyalg == KEYNOTE_ALGORITHM_RSA))))
     {
 	keynote_errno = ERROR_SYNTAX;
-	return (char *) NULL;
+	return NULL;
     }
 
     sig = strchr(sigalg, ':');
