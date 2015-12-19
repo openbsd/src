@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.153 2015/12/16 21:50:38 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.154 2015/12/19 08:43:04 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1127,7 +1127,9 @@ window_pane_key(struct window_pane *wp, struct client *c, struct session *s,
 		TAILQ_FOREACH(wp2, &wp->window->panes, entry) {
 			if (wp2 == wp || wp2->mode != NULL)
 				continue;
-			if (wp2->fd != -1 && window_pane_visible(wp2))
+			if (wp2->fd == -1 || wp2->flags & PANE_INPUTOFF)
+				continue;
+			if (window_pane_visible(wp2))
 				input_key(wp2, key, NULL);
 		}
 	}
