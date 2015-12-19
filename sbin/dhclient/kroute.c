@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.77 2015/12/19 01:09:10 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.78 2015/12/19 14:56:22 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -186,6 +186,8 @@ add_route(struct in_addr dest, struct in_addr netmask,
 void
 priv_add_route(struct imsg_add_route *imsg)
 {
+	char destbuf[INET_ADDRSTRLEN], gatewaybuf[INET_ADDRSTRLEN];
+	char maskbuf[INET_ADDRSTRLEN], ifabuf[INET_ADDRSTRLEN];
 	struct rt_msghdr rtm;
 	struct sockaddr_in dest, gateway, mask, ifa;
 	struct sockaddr_rtlabel label;
@@ -194,6 +196,11 @@ priv_add_route(struct imsg_add_route *imsg)
 
 	if ((s = socket(AF_ROUTE, SOCK_RAW, 0)) == -1)
 		error("Routing Socket open failed: %s", strerror(errno));
+
+	memset(destbuf, 0, sizeof(destbuf));
+	memset(maskbuf, 0, sizeof(maskbuf));
+	memset(gatewaybuf, 0, sizeof(gatewaybuf));
+	memset(ifabuf, 0, sizeof(ifabuf));
 
 	/* Build RTM header */
 
@@ -211,6 +218,7 @@ priv_add_route(struct imsg_add_route *imsg)
 	iov[iovcnt++].iov_len = sizeof(rtm);
 
 	if (imsg->addrs & RTA_DST) {
+		strlcpy(destbuf, inet_ntoa(imsg->dest), sizeof(destbuf));
 		memset(&dest, 0, sizeof(dest));
 
 		dest.sin_len = sizeof(dest);
@@ -224,6 +232,8 @@ priv_add_route(struct imsg_add_route *imsg)
 	}
 
 	if (imsg->addrs & RTA_GATEWAY) {
+		strlcpy(gatewaybuf, inet_ntoa(imsg->gateway),
+		    sizeof(gatewaybuf));
 		memset(&gateway, 0, sizeof(gateway));
 
 		gateway.sin_len = sizeof(gateway);
@@ -237,6 +247,7 @@ priv_add_route(struct imsg_add_route *imsg)
 	}
 
 	if (imsg->addrs & RTA_NETMASK) {
+		strlcpy(maskbuf, inet_ntoa(imsg->netmask), sizeof(maskbuf));
 		memset(&mask, 0, sizeof(mask));
 
 		mask.sin_len = sizeof(mask);
@@ -250,6 +261,7 @@ priv_add_route(struct imsg_add_route *imsg)
 	}
 
 	if (imsg->addrs & RTA_IFA) {
+		strlcpy(ifabuf, inet_ntoa(imsg->ifa), sizeof(ifabuf));
 		memset(&ifa, 0, sizeof(ifa));
 
 		ifa.sin_len = sizeof(ifa);
@@ -274,10 +286,12 @@ priv_add_route(struct imsg_add_route *imsg)
 	for (i = 0; i < 5; i++) {
 		if (writev(s, iov, iovcnt) != -1)
 			break;
-		if (errno != EEXIST && errno != ENETUNREACH)
-			error("failed to add default route: %s",
+		if (i == 4)
+			warning("failed to add route (%s/%s via %s/%s): %s",
+			    destbuf, maskbuf, gatewaybuf, ifabuf,
 			    strerror(errno));
-		sleep(1);
+		else if (errno == EEXIST || errno == ENETUNREACH)
+			sleep(1);
 	}
 
 	close(s);
