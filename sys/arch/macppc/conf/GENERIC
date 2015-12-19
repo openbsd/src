@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.253 2015/11/23 10:30:02 mpi Exp $g
+#	$OpenBSD: GENERIC,v 1.254 2015/12/19 11:24:54 mpi Exp $g
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -351,8 +351,8 @@ ral*		at cardbus?	# Ralink RT2500/RT2501/RT2600
 
 wsdisplay*	at vgafb?
 
-#appleagp*	at pchb?
-#agp*		at appleagp?	# AGP bridges
+appleagp*	at pchb?
+agp*		at appleagp?	# AGP bridges
 
 radeondrm*	at pci? 	# ATI Radeon DRM driver
 drm*		at radeondrm?
