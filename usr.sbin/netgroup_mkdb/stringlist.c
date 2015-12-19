@@ -1,4 +1,4 @@
-/*	$OpenBSD: stringlist.c,v 1.2 2015/10/01 13:04:42 jsg Exp $	*/
+/*	$OpenBSD: stringlist.c,v 1.3 2015/12/19 20:37:11 mmcc Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -221,11 +221,9 @@ getnetgroup(char **pp)
 	return ng;
 
 baddomain:
-	if (ng->ng_user)
-		free(ng->ng_user);
+	free(ng->ng_user);
 baduser:
-	if (ng->ng_host)
-		free(ng->ng_host);
+	free(ng->ng_host);
 badhost:
 	free(ng);
 	return NULL;
