@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpd.c,v 1.62 2015/10/28 13:25:55 millert Exp $	*/
+/*	$OpenBSD: lpd.c,v 1.63 2015/12/19 19:59:07 mmcc Exp $	*/
 /*	$NetBSD: lpd.c,v 1.33 2002/01/21 14:42:29 wiz Exp $	*/
 
 /*
@@ -790,8 +790,7 @@ socksetup(int af, int options, const char *port)
 
 	if (socks == NULL || *socks == 0) {
 		syslog(LOG_ERR, "Couldn't bind to any socket");
-		if (socks != NULL)
-			free(socks);
+		free(socks);
 		mcleanup(0);
 	}
 	return(socks);
