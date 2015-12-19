@@ -1314,8 +1314,7 @@ free_all_prunes(void)
 
     g = kernel_no_route;
     while (g) {
-	if (g->gt_srctbl)
-	    free(g->gt_srctbl);
+	free(g->gt_srctbl);
 
 	prev_g = g;
 	g = g->gt_next;
