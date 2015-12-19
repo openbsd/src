@@ -1,4 +1,4 @@
-/*	$OpenBSD: constraint.c,v 1.23 2015/12/05 13:12:16 claudio Exp $	*/
+/*	$OpenBSD: constraint.c,v 1.24 2015/12/19 17:55:29 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -42,7 +42,6 @@
 #include <tls.h>
 #include <pwd.h>
 
-#include "log.h"
 #include "ntpd.h"
 
 int	 constraint_addr_init(struct constraint *);
@@ -284,6 +283,8 @@ priv_constraint_child(struct constraint *cstr, struct ntp_addr_msg *am,
 	void			*ctx;
 	struct iovec		 iov[2];
 	int			 i;
+
+	log_procinit("constraint");
 
 	if (setpriority(PRIO_PROCESS, 0, 0) == -1)
 		log_warn("could not set priority");

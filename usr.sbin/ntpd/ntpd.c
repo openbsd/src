@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.c,v 1.100 2015/12/05 13:12:16 claudio Exp $ */
+/*	$OpenBSD: ntpd.c,v 1.101 2015/12/19 17:55:29 reyk Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -30,6 +30,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <syslog.h>
 #include <time.h>
 #include <unistd.h>
 #include <fcntl.h>
@@ -131,7 +132,7 @@ main(int argc, char *argv[])
 
 	memset(&lconf, 0, sizeof(lconf));
 
-	log_init(1);		/* log to stderr until daemonized */
+	log_init(1, LOG_DAEMON);	/* log to stderr until daemonized */
 
 	while ((ch = getopt(argc, argv, "df:nsSv")) != -1) {
 		switch (ch) {
@@ -188,7 +189,7 @@ main(int argc, char *argv[])
 
 	reset_adjtime();
 	if (!lconf.settime) {
-		log_init(lconf.debug);
+		log_init(lconf.debug, LOG_DAEMON);
 		if (!lconf.debug)
 			if (daemon(1, 0))
 				fatal("daemon");
@@ -208,6 +209,7 @@ main(int argc, char *argv[])
 	chld_pid = ntp_main(pipe_chld, fd_ctl, &lconf, pw);
 
 	setproctitle("[priv]");
+	log_procinit("[priv]");
 	readfreq();
 
 	signal(SIGTERM, sighdlr);
@@ -266,7 +268,7 @@ main(int argc, char *argv[])
 		if (nfds == 0 && lconf.settime) {
 			lconf.settime = 0;
 			timeout = INFTIM;
-			log_init(lconf.debug);
+			log_init(lconf.debug, LOG_DAEMON);
 			log_warnx("no reply received in time, skipping initial "
 			    "time setting");
 			if (!lconf.debug)
@@ -392,7 +394,7 @@ dispatch_imsg(struct ntpd_conf *lconf, const char *pw_dir,
 				fatalx("invalid IMSG_SETTIME received");
 			if (!lconf->settime)
 				break;
-			log_init(lconf->debug);
+			log_init(lconf->debug, LOG_DAEMON);
 			memcpy(&d, imsg.data, sizeof(d));
 			ntpd_settime(d);
 			/* daemonize now */
