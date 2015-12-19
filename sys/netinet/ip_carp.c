@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.283 2015/12/03 16:27:32 mpi Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.284 2015/12/19 11:19:35 mpi Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -2305,13 +2305,20 @@ carp_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *sa,
 {
 	struct carp_softc *sc = ((struct carp_softc *)ifp->if_softc);
 	struct carp_vhost_entry *vhe;
+	struct srpl_iter i;
+	int ismaster;
 
-	KERNEL_ASSERT_LOCKED(); /* touching carp_vhosts */
+	KASSERT(sc->sc_carpdev != NULL);
 
-	vhe = sc->cur_vhe ? sc->cur_vhe : SRPL_FIRST_LOCKED(&sc->carp_vhosts);
+	if (sc->cur_vhe == NULL) {
+		vhe = SRPL_ENTER(&sc->carp_vhosts, &i); /* head */
+		ismaster = (vhe->state == MASTER);
+		SRPL_LEAVE(&i, vhe);
+	} else {
+		ismaster = (sc->cur_vhe->state == MASTER);
+	}
 
-	if ((sc->sc_carpdev == NULL) ||
-	    (sc->sc_balancing == CARP_BAL_NONE && vhe->state != MASTER)) {
+	if ((sc->sc_balancing == CARP_BAL_NONE && !ismaster)) {
 		m_freem(m);
 		return (ENETUNREACH);
 	}
