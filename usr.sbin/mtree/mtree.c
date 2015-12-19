@@ -1,4 +1,4 @@
-/*	$OpenBSD: mtree.c,v 1.22 2015/01/16 06:40:18 deraadt Exp $	*/
+/*	$OpenBSD: mtree.c,v 1.23 2015/12/19 19:58:38 tb Exp $	*/
 /*	$NetBSD: mtree.c,v 1.7 1996/09/05 23:29:22 thorpej Exp $	*/
 
 /*-
@@ -132,6 +132,27 @@ main(int argc, char *argv[])
 
 	if (argc)
 		usage();
+
+	/*
+	 * If uflag is set we can't make any pledges because we must be able
+	 * to chown and place setugid bits.  Make sure that we're pledged
+	 * when -c was specified.
+	 */
+	if (!uflag || cflag) {
+		if (rflag && tflag) {
+			if (pledge("stdio rpath cpath getpw fattr", NULL) == -1)
+				err(1, "pledge");
+		} else if (rflag && !tflag) {
+			if (pledge("stdio rpath cpath getpw", NULL) == -1)
+				err(1, "pledge");
+		} else if (!rflag && tflag) {
+			if (pledge("stdio rpath getpw fattr", NULL) == -1)
+				err(1, "pledge");
+		} else {
+			if (pledge("stdio rpath getpw", NULL) == -1)
+				err(1, "pledge");
+		}
+	}
 
 	if (dir && chdir(dir))
 		error("%s: %s", dir, strerror(errno));
