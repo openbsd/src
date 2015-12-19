@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.h,v 1.125 2015/11/24 01:03:25 deraadt Exp $ */
+/*	$OpenBSD: ntpd.h,v 1.126 2015/12/19 13:58:08 reyk Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -373,6 +373,7 @@ struct l_fixedpt	 d_to_lfp(double);
 double			 sfp_to_d(struct s_fixedpt);
 struct s_fixedpt	 d_to_sfp(double);
 char			*print_rtable(int);
+const char		*log_sockaddr(struct sockaddr *);
 
 /* sensors.c */
 void			sensor_init(void);
