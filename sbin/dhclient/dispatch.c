@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.103 2015/12/03 20:54:13 krw Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.104 2015/12/19 01:16:33 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -161,7 +161,6 @@ dispatch(void)
 		if ((fds[2].revents & (POLLIN | POLLHUP))) {
 			/* Pipe to [priv] closed. Assume it emitted error. */
 			quit = INTERNALSIG;
-			continue;
 		}
 	}
 
