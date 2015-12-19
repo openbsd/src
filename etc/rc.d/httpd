@@ -1,11 +1,16 @@
 #!/bin/sh
 #
-# $OpenBSD: httpd,v 1.3 2014/07/22 17:37:16 reyk Exp $
+# $OpenBSD: httpd,v 1.4 2015/12/19 13:45:12 ajacoutot Exp $
 
 daemon="/usr/sbin/httpd"
 
 . /etc/rc.d/rc.subr
 
 pexp="httpd: parent.*"
+
+# child will not return a config parsing error to the parent
+rc_pre() {
+	${daemon} -n ${daemon_flags}
+}
 
 rc_cmd $1

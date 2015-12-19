@@ -1,11 +1,16 @@
 #!/bin/sh
 #
-# $OpenBSD: relayd,v 1.1 2011/07/06 18:55:36 robert Exp $
+# $OpenBSD: relayd,v 1.2 2015/12/19 13:45:12 ajacoutot Exp $
 
 daemon="/usr/sbin/relayd"
 
 . /etc/rc.d/rc.subr
 
 pexp="relayd: parent.*"
+
+# child will not return a config parsing error to the parent
+rc_pre() {
+	${daemon} -n ${daemon_flags}
+}
 
 rc_cmd $1
