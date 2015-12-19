@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.80 2015/10/05 16:29:55 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.81 2015/12/19 19:47:53 deraadt Exp $
 
 machine		alpha
 maxusers	4
@@ -64,7 +64,7 @@ vga*		at pci?				# PCI VGA graphics
 ppb*		at pci?				# PCI-PCI bridges
 sio*		at pci?				# Intel PCI-ISA bridge
 tga*		at pci?				# DEC ZLXp-E[123] graphics
-pcn*		at pci?				# AMD PCnet-PCI Ethernet
+#pcn*		at pci?				# AMD PCnet-PCI Ethernet
 
 qlw*		at pci?				# QLogic ISP SCSI
 qla*		at pci?				# QLogic ISP 2[123]xx FibreChannel
