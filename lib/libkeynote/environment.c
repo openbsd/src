@@ -1,4 +1,4 @@
-/* $OpenBSD: environment.c,v 1.27 2015/12/18 17:51:29 mmcc Exp $ */
+/* $OpenBSD: environment.c,v 1.28 2015/12/19 01:15:44 mmcc Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -196,8 +196,8 @@ keynote_env_lookup(char *name, struct environment **table,
 	 en != NULL;
 	 en = en->env_next)
       if (((en->env_flags & ENVIRONMENT_FLAG_REGEX) &&
-	   (regexec(&(en->env_regex), name, 0, (regmatch_t *) NULL, 0) ==
-	    0)) || (!strcmp(name, en->env_name)))
+	   (regexec(&(en->env_regex), name, 0, NULL, 0) == 0)) ||
+	    (!strcmp(name, en->env_name)))
       {
 	  if ((en->env_flags & ENVIRONMENT_FLAG_FUNC) &&
 	      (en->env_value != NULL))

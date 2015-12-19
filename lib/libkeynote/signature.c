@@ -1,4 +1,4 @@
-/* $OpenBSD: signature.c,v 1.21 2015/12/18 22:55:04 mmcc Exp $ */
+/* $OpenBSD: signature.c,v 1.22 2015/12/19 01:15:45 mmcc Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -367,7 +367,7 @@ keynote_get_private_key_algorithm(char *key, int *encoding,
 int
 kn_decode_key(struct keynote_deckey *dc, char *key, int keytype)
 {
-    void *kk = (void *) NULL;
+    void *kk = NULL;
     X509 *px509Cert;
     EVP_PKEY *pPublicKey;
     unsigned char *ptr = NULL, *decoded = NULL;
@@ -383,9 +383,7 @@ kn_decode_key(struct keynote_deckey *dc, char *key, int keytype)
 						    &internalencoding);
     if (dc->dec_algorithm == KEYNOTE_ALGORITHM_NONE)
     {
-	dc->dec_key = (void *) strdup(key);
-	if (dc->dec_key == (void *) NULL)
-	{
+	if ((dc->dec_key = strdup(key)) == NULL) {
 	    keynote_errno = ERROR_MEMORY;
 	    return -1;
 	}
@@ -419,10 +417,9 @@ kn_decode_key(struct keynote_deckey *dc, char *key, int keytype)
 	    }
 
 	    len = 3 * (len / 4);
-	    decoded = (unsigned char *) calloc(len, sizeof(unsigned char));
+	    decoded = calloc(len, sizeof(unsigned char));
 	    ptr = decoded;
-	    if (decoded == (unsigned char *) NULL)
-	    {
+	    if (decoded == NULL) {
 		keynote_errno = ERROR_MEMORY;
 		return -1;
 	    }
@@ -433,8 +430,7 @@ kn_decode_key(struct keynote_deckey *dc, char *key, int keytype)
 
 	case ENCODING_NATIVE:
 	    decoded = strdup(key);
-	    if (decoded == (unsigned char *) NULL)
-	    {
+	    if (decoded == NULL) {
 		keynote_errno = ERROR_MEMORY;
 		return -1;
 	    }
@@ -452,8 +448,7 @@ kn_decode_key(struct keynote_deckey *dc, char *key, int keytype)
 	(internalencoding == INTERNAL_ENC_ASN1))
     {
 	dc->dec_key = DSA_new();
-	if (dc->dec_key == (DSA *) NULL)
-	{
+	if (dc->dec_key == NULL) {
 	    keynote_errno = ERROR_MEMORY;
 	    return -1;
 	}
@@ -461,10 +456,8 @@ kn_decode_key(struct keynote_deckey *dc, char *key, int keytype)
 	kk = dc->dec_key;
 	if (keytype == KEYNOTE_PRIVATE_KEY)
 	{
-	    if (d2i_DSAPrivateKey((DSA **) &kk,(const unsigned char **) &decoded, len) == (DSA *) NULL)
-	    {
-		if (ptr != (unsigned char *) NULL)
-		  free(ptr);
+	    if (d2i_DSAPrivateKey((DSA **) &kk,(const unsigned char **) &decoded, len) == NULL) {
+		free(ptr);
 		DSA_free(kk);
 		keynote_errno = ERROR_SYNTAX; /* Could be a memory error */
 		return -1;
@@ -472,18 +465,15 @@ kn_decode_key(struct keynote_deckey *dc, char *key, int keytype)
 	}
 	else
 	{
-	    if (d2i_DSAPublicKey((DSA **) &kk, (const unsigned char **) &decoded, len) == (DSA *) NULL)
-	    {
-		if (ptr != (unsigned char *) NULL)
-		  free(ptr);
+	    if (d2i_DSAPublicKey((DSA **) &kk, (const unsigned char **) &decoded, len) == NULL) {
+		free(ptr);
 		DSA_free(kk);
 		keynote_errno = ERROR_SYNTAX; /* Could be a memory error */
 		return -1;
 	    }
 	}
 
-	if (ptr != (unsigned char *) NULL)
-	  free(ptr);
+	free(ptr);
 
 	return 0;
     }
@@ -493,8 +483,7 @@ kn_decode_key(struct keynote_deckey *dc, char *key, int keytype)
         (internalencoding == INTERNAL_ENC_PKCS1))
     {
         dc->dec_key = RSA_new();
-        if (dc->dec_key == (RSA *) NULL)
-        {
+        if (dc->dec_key == NULL) {
             keynote_errno = ERROR_MEMORY;
             return -1;
         }
@@ -502,18 +491,14 @@ kn_decode_key(struct keynote_deckey *dc, char *key, int keytype)
         kk = dc->dec_key;
         if (keytype == KEYNOTE_PRIVATE_KEY)
         {
-            if (d2i_RSAPrivateKey((RSA **) &kk, (const unsigned char **) &decoded, len) == (RSA *) NULL)
-            {
-                if (ptr != (unsigned char *) NULL)
-                  free(ptr);
+            if (d2i_RSAPrivateKey((RSA **) &kk, (const unsigned char **) &decoded, len) == NULL) {
+                free(ptr);
                 RSA_free(kk);
                 keynote_errno = ERROR_SYNTAX; /* Could be a memory error */
                 return -1;
             }
-	    if (RSA_blinding_on ((RSA *) kk, NULL) != 1)
-	    {
-                if (ptr != (unsigned char *) NULL)
-                  free(ptr);
+	    if (RSA_blinding_on((RSA *) kk, NULL) != 1) {
+                free(ptr);
                 RSA_free(kk);
                 keynote_errno = ERROR_MEMORY;
                 return -1;
@@ -521,18 +506,15 @@ kn_decode_key(struct keynote_deckey *dc, char *key, int keytype)
         }
         else
         {
-            if (d2i_RSAPublicKey((RSA **) &kk, (const unsigned char **) &decoded, len) == (RSA *) NULL)
-            {
-                if (ptr != (unsigned char *) NULL)
-                  free(ptr);
+            if (d2i_RSAPublicKey((RSA **) &kk, (const unsigned char **) &decoded, len) == NULL) {
+                free(ptr);
                 RSA_free(kk);
                 keynote_errno = ERROR_SYNTAX; /* Could be a memory error */
                 return -1;
             }
         }
 
-        if (ptr != (unsigned char *) NULL)
-          free(ptr);
+        free(ptr);
 
         return 0;
     }
@@ -542,8 +524,7 @@ kn_decode_key(struct keynote_deckey *dc, char *key, int keytype)
 	(internalencoding == INTERNAL_ENC_ASN1) &&
 	(keytype == KEYNOTE_PUBLIC_KEY))
     {
-	if ((px509Cert = X509_new()) == (X509 *) NULL)
-	{
+	if ((px509Cert = X509_new()) == NULL) {
 	    free(ptr);
 	    keynote_errno = ERROR_MEMORY;
 	    return -1;
@@ -557,8 +538,7 @@ kn_decode_key(struct keynote_deckey *dc, char *key, int keytype)
 	    return -1;
 	}
 
-	if ((pPublicKey = X509_get_pubkey(px509Cert)) == (EVP_PKEY *) NULL)
-	{
+	if ((pPublicKey = X509_get_pubkey(px509Cert)) == NULL) {
 	    free(ptr);
 	    X509_free(px509Cert);
 	    keynote_errno = ERROR_SYNTAX;
@@ -590,8 +570,7 @@ kn_decode_key(struct keynote_deckey *dc, char *key, int keytype)
 
     /* Add support for more algorithms here */
 
-    if (ptr != (unsigned char *) NULL)
-      free(ptr);
+    free(ptr);
 
     /* This shouldn't ever be reached really */
     keynote_errno = ERROR_SYNTAX;
