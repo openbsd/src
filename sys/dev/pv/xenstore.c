@@ -1,4 +1,4 @@
-/*	$OpenBSD: xenstore.c,v 1.7 2015/12/12 21:07:45 reyk Exp $	*/
+/*	$OpenBSD: xenstore.c,v 1.8 2015/12/19 09:12:29 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Belopuhov
@@ -808,5 +808,34 @@ xs_getprop(struct xen_attach_args *xa, const char *property, char *value,
 
 	xs_resfree(&xst, iovp, iov_cnt);
 
+	return (0);
+}
+
+int
+xs_setprop(struct xen_attach_args *xa, const char *property, char *value,
+    int size)
+{
+	struct xen_softc *sc = xa->xa_parent;
+	struct xs_transaction xst;
+	struct iovec iov, *iovp = &iov;
+	char path[128];
+	int error, iov_cnt;
+
+	if (!property)
+		return (-1);
+
+	memset(&xst, 0, sizeof(xst));
+	xst.xst_id = 0;
+	xst.xst_sc = sc->sc_xs;
+	if (cold)
+		xst.xst_flags = XST_POLL;
+
+	iov.iov_base = value;
+	iov.iov_len = size;
+	iov_cnt = 1;
+
+	snprintf(path, sizeof(path), "%s/%s", xa->xa_node, property);
+	if ((error = xs_cmd(&xst, XS_WRITE, path, &iovp, &iov_cnt)) != 0)
+		return (error);
 	return (0);
 }

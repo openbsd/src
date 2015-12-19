@@ -1,4 +1,4 @@
-/*	$OpenBSD: xenvar.h,v 1.12 2015/12/12 21:07:45 reyk Exp $	*/
+/*	$OpenBSD: xenvar.h,v 1.13 2015/12/19 09:12:29 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Belopuhov
@@ -111,6 +111,7 @@ struct xs_transaction {
 int	xs_cmd(struct xs_transaction *, int, const char *, struct iovec **,
 	    int *);
 int	xs_getprop(struct xen_attach_args *, const char *, char *, int);
+int	xs_setprop(struct xen_attach_args *, const char *, char *, int);
 void	xs_resfree(struct xs_transaction *, struct iovec *, int);
 
 #endif	/* _XENVAR_H_ */
