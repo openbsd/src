@@ -1,4 +1,4 @@
-/*	$OpenBSD: sili.c,v 1.57 2015/09/09 18:24:26 deraadt Exp $ */
+/*	$OpenBSD: sili.c,v 1.58 2015/12/19 20:05:32 tb Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -377,7 +377,7 @@ sili_simulate_error(struct sili_ccb *ccb, int *need_restart, int *err_port)
 		case ATA_C_READDMA_EXT:
 		case ATA_C_WRITEDMA:
 		case ATA_C_READDMA:
-			if ((arc4random() % sili_error_test_inv_p) == 0) {
+			if (arc4random_uniform(sili_error_test_inv_p) == 0) {
 				printf("%s: faking error on slot %d\n",
 				    PORTNAME(sp), ccb->ccb_xa.tag);
 				ccb->ccb_xa.state = ATA_S_ERROR;
