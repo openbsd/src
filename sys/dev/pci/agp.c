@@ -1,4 +1,4 @@
-/* $OpenBSD: agp.c,v 1.46 2015/09/09 19:47:11 deraadt Exp $ */
+/* $OpenBSD: agp.c,v 1.47 2015/12/19 14:59:25 kettenis Exp $ */
 /*-
  * Copyright (c) 2000 Doug Rabson
  * All rights reserved.
@@ -52,7 +52,6 @@
  * integrated graphics, since they are not technically a true agp chipset,
  * but provide an almost identical interface.
  */
-int	agp_generic_enable(struct agp_softc *, u_int32_t);
 struct agp_memory *
 	agp_generic_alloc_memory(struct agp_softc *, int, vsize_t size);
 int	agp_generic_free_memory(struct agp_softc *, struct agp_memory *);
