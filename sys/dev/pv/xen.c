@@ -1,4 +1,4 @@
-/*	$OpenBSD: xen.c,v 1.14 2015/12/12 21:07:45 reyk Exp $	*/
+/*	$OpenBSD: xen.c,v 1.15 2015/12/19 09:11:14 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Belopuhov
@@ -537,7 +537,6 @@ xen_intr(void)
 			if ((xi = xen_lookup_intsrc(sc, port)) == NULL)
 				continue;
 			xi->xi_evcnt.ec_count++;
-
 			if (xi->xi_handler)
 				xi->xi_handler(xi->xi_arg);
 		}
@@ -625,9 +624,9 @@ xen_intr_establish(evtchn_port_t port, xen_intr_handle_t *xih,
 	if (!cold) {
 		eu.port = xi->xi_port;
 		if (xen_hypercall(sc, event_channel_op, 2, EVTCHNOP_unmask,
-		    &eu) || isset(sc->sc_ipg->evtchn_mask, port))
+		    &eu) || isset(sc->sc_ipg->evtchn_mask, xi->xi_port))
 			printf("%s: unmasking port %u failed\n",
-			    sc->sc_dev.dv_xname, port);
+			    sc->sc_dev.dv_xname, xi->xi_port);
 	}
 
 #ifdef XEN_DEBUG
@@ -664,18 +663,15 @@ xen_intr_disestablish(xen_intr_handle_t xih)
 	struct evtchn_close ec;
 	struct xen_intsrc *xi;
 
-	if (xen_lookup_intsrc(sc, port) != NULL) {
-		DPRINTF("%s: failed to lookup an established interrupt handler "
-		    "for port %u\n", sc->sc_dev.dv_xname, port);
+	if ((xi = xen_lookup_intsrc(sc, port)) == NULL)
 		return (-1);
-	}
 
 	evcount_detach(&xi->xi_evcnt);
 
 	SLIST_REMOVE(&sc->sc_intrs, xi, xen_intsrc, xi_entry);
 
-	setbit((char *)sc->sc_ipg->evtchn_mask, xi->xi_port);
-	clrbit((char *)sc->sc_ipg->evtchn_pending[0], xi->xi_port);
+	setbit((char *)&sc->sc_ipg->evtchn_mask[0], xi->xi_port);
+	clrbit((char *)&sc->sc_ipg->evtchn_pending[0], xi->xi_port);
 	membar_producer();
 
 	if (!xi->xi_noclose) {
