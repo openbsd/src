@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_apple.c,v 1.6 2015/12/19 11:23:35 mpi Exp $	*/
+/*	$OpenBSD: agp_apple.c,v 1.7 2015/12/19 11:29:41 mpi Exp $	*/
 
 /*
  * Copyright (c) 2012 Martin Pieuchot <mpi@openbsd.org>
@@ -51,6 +51,7 @@ int	agp_apple_set_aperture(void *sc, bus_size_t);
 void	agp_apple_bind_page(void *, bus_addr_t, paddr_t, int);
 void	agp_apple_unbind_page(void *, bus_addr_t);
 void	agp_apple_flush_tlb(void *);
+int	agp_apple_enable(void *, uint32_t);
 
 const struct cfattach appleagp_ca = {
 	sizeof(struct agp_apple_softc), agp_apple_match, agp_apple_attach,
@@ -64,6 +65,7 @@ const struct agp_methods agp_apple_methods = {
 	agp_apple_bind_page,
 	agp_apple_unbind_page,
 	agp_apple_flush_tlb,
+	agp_apple_enable,
 };
 
 int
@@ -221,9 +223,24 @@ agp_apple_flush_tlb(void *v)
 		    AGP_APPLE_GART_ENABLE | AGP_APPLE_GART_INVALIDATE);
 		pci_conf_write(asc->asc_pc, asc->asc_tag, AGP_APPLE_GARTCTRL,
 		    AGP_APPLE_GART_ENABLE);
+	}
+}
+
+int
+agp_apple_enable(void *v, uint32_t mode)
+{
+	struct agp_apple_softc *asc = v;
+
+	if ((asc->asc_flags & AGP_APPLE_ISU3) == 0) {
+		/*
+		 * GART invalidate/SBA reset?  Linux and Darwin do something
+		 * similar and it prevents GPU lockups with KMS.
+		 */
 		pci_conf_write(asc->asc_pc, asc->asc_tag, AGP_APPLE_GARTCTRL,
 		    AGP_APPLE_GART_ENABLE | AGP_APPLE_GART_2XRESET);
-		pci_conf_write(asc->asc_pc, asc->asc_tag, AGP_APPLE_GARTCTRL,
-		    AGP_APPLE_GART_ENABLE);
+		pci_conf_write(asc->asc_pc, asc->asc_tag,
+		    AGP_APPLE_GARTCTRL, AGP_APPLE_GART_ENABLE);
 	}
+
+	return (agp_generic_enable(asc->agpdev, mode));
 }
