@@ -1,4 +1,4 @@
-#	$OpenBSD: rc.subr,v 1.101 2015/12/05 18:43:12 mpi Exp $
+#	$OpenBSD: rc.subr,v 1.102 2015/12/19 11:19:17 ajacoutot Exp $
 #
 # Copyright (c) 2010, 2011, 2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -76,16 +76,13 @@ _rc_exit() {
 _rc_wait() {
 	local _i=0
 	while [ $_i -lt ${daemon_timeout} ]; do
-		case "$1" in
-			reload|start)
-				_rc_do rc_check && return 0
-				;;
-			stop)
-				_rc_do rc_check || return 0
-				;;
-			*)
-				break
-				;;
+    		case "$1" in
+		reload|start)
+			_rc_do rc_check && return 0 ;;
+		stop)
+			_rc_do rc_check || return 0 ;;
+		*)
+			break ;;
 		esac
 		sleep 1
 		_i=$((_i+1))
