@@ -1,4 +1,4 @@
-.\"	$OpenBSD: uniq.1,v 1.17 2010/09/03 11:09:29 jmc Exp $
+.\"	$OpenBSD: uniq.1,v 1.18 2015/12/19 10:21:01 schwarze Exp $
 .\"	$NetBSD: uniq.1,v 1.5 1994/12/06 07:51:15 jtc Exp $
 .\"
 .\" Copyright (c) 1991, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)uniq.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: September 3 2010 $
+.Dd $Mdocdate: December 19 2015 $
 .Dt UNIQ 1
 .Os
 .Sh NAME
@@ -114,6 +114,14 @@ A file name of
 .Ql -
 denotes the standard input or the standard output
 .Pq depending on its position on the command line .
+.Sh ENVIRONMENT
+.Bl -tag -width LC_CTYPE
+.It Ev LC_CTYPE
+The character set
+.Xr locale 1 .
+Determines which groups of bytes are treated as characters
+and which characters are considered blank.
+.El
 .Sh EXIT STATUS
 .Ex -std uniq
 .Sh SEE ALSO

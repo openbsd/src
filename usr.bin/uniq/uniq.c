@@ -1,4 +1,4 @@
-/*	$OpenBSD: uniq.c,v 1.23 2015/11/02 20:25:42 mmcc Exp $	*/
+/*	$OpenBSD: uniq.c,v 1.24 2015/12/19 10:21:01 schwarze Exp $	*/
 /*	$NetBSD: uniq.c,v 1.7 1995/08/31 22:03:48 jtc Exp $	*/
 
 /*
@@ -37,10 +37,13 @@
 #include <err.h>
 #include <errno.h>
 #include <limits.h>
+#include <locale.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <wchar.h>
+#include <wctype.h>
 
 #define	MAXLINELEN	(8 * 1024)
 
@@ -60,6 +63,8 @@ main(int argc, char *argv[])
 	FILE *ifp = NULL, *ofp = NULL;
 	int ch;
 	char *prevline, *thisline;
+
+	setlocale(LC_CTYPE, "");
 
 	if (pledge("stdio rpath wpath cpath", NULL) == -1)
 		err(1, "pledge");
@@ -176,16 +181,32 @@ show(FILE *ofp, char *str)
 char *
 skip(char *str)
 {
+	wchar_t wc;
 	int nchars, nfields;
+	int len;
+	int field_started;
 
 	for (nfields = numfields; nfields && *str; nfields--) {
-		while (isblank((unsigned char)*str))
-			str++;
-		while (*str && !isblank((unsigned char)*str))
-			str++;
+		/* Skip one field, including preceding blanks. */
+		for (field_started = 0; *str != '\0'; str += len) {
+			if ((len = mbtowc(&wc, str, MB_CUR_MAX)) == -1) {
+				(void)mbtowc(NULL, NULL, MB_CUR_MAX);
+				wc = L'?';
+				len = 1;
+			}
+			if (iswblank(wc)) {
+				if (field_started)
+					break;
+			} else
+				field_started = 1;
+		}
 	}
-	for (nchars = numchars; nchars-- && *str && *str != '\n'; ++str)
-		;
+
+	/* Skip some additional characters. */
+	for (nchars = numchars; nchars-- && *str != '\0'; str += len)
+		if ((len = mblen(str, MB_CUR_MAX)) == -1)
+			len = 1;
+
 	return (str);
 }
 
