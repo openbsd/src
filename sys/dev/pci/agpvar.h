@@ -1,4 +1,4 @@
-/*	$OpenBSD: agpvar.h,v 1.32 2015/12/19 14:59:25 kettenis Exp $	*/
+/*	$OpenBSD: agpvar.h,v 1.33 2015/12/19 16:07:20 kettenis Exp $	*/
 /*	$NetBSD: agpvar.h,v 1.4 2001/10/01 21:54:48 fvdl Exp $	*/
 
 /*-
@@ -41,12 +41,6 @@
 
 #define AGPUNIT(x)	minor(x)
 
-/* we can't use the BUS_DMA_NOCACHE here or it won't get mapped via the gtt */
-#define BUS_DMA_GTT_NOCACHE		(1 << 30)
-#define BUS_DMA_GTT_CACHE_LLC		(1 << 29)
-#define BUS_DMA_GTT_CACHE_LLC_MLC	(1 << 28)
-#define BUS_DMA_GTT_WRAPAROUND		(1 << 27)
-
 struct agp_attach_args {
 	char			*aa_busname;
 	struct pci_attach_args	*aa_pa;
@@ -64,25 +58,6 @@ enum agp_acquire_state {
 	AGP_ACQUIRE_FREE,
 	AGP_ACQUIRE_USER,
 	AGP_ACQUIRE_KERNEL
-};
-
-/*
- * Data structure to describe an AGP memory allocation.
- */
-TAILQ_HEAD(agp_memory_list, agp_memory);
-struct agp_memory {
-	TAILQ_ENTRY(agp_memory)	 am_link;	/* wiring for the tailq */
-	bus_dmamap_t		 am_dmamap;
-	bus_dma_segment_t	*am_dmaseg;
-	bus_size_t		 am_size;	/* number of bytes allocated */
-	bus_size_t		 am_offset;	/* page offset if bound */
-	paddr_t			 am_physical;
-	caddr_t			 am_kva;	/* kva if mapped */
-	u_int32_t		 am_mapref;	/* mapping reference count */
-	int			 am_id;		/* unique id for block */
-	int			 am_is_bound;	/* non-zero if bound */
-	int			 am_nseg;
-	int			 am_type;	/* chipset specific type */
 };
 
 /*
@@ -109,11 +84,6 @@ struct agp_methods {
 	void	(*unbind_page)(void *, bus_addr_t);
 	void	(*flush_tlb)(void *);
 	int	(*enable)(void *, u_int32_t mode);
-	struct agp_memory *
-		(*alloc_memory)(void *, int, vsize_t);
-	int	(*free_memory)(void *, struct agp_memory *);
-	int	(*bind_memory)(void *, struct agp_memory *, bus_size_t);
-	int	(*unbind_memory)(void *, struct agp_memory *);
 };
 
 /*
@@ -122,8 +92,6 @@ struct agp_methods {
 struct agp_softc {
 	struct device			 sc_dev;
 
-	struct agp_memory_list		 sc_memory; 	/* mem blocks */
-	struct rwlock			 sc_lock;	/* GATT access lock */
 	const struct agp_methods 	*sc_methods;	/* callbacks */
 	void				*sc_chipc;	/* chipset softc */
 
@@ -168,9 +136,6 @@ void	agp_free_gatt(bus_dma_tag_t, struct agp_gatt *);
 void	agp_flush_cache(void);
 void	agp_flush_cache_range(vaddr_t, vsize_t);
 int	agp_generic_enable(struct agp_softc *, u_int32_t);
-int	agp_generic_bind_memory(struct agp_softc *, struct agp_memory *,
-	    bus_size_t);
-int	agp_generic_unbind_memory(struct agp_softc *, struct agp_memory *);
 int	agp_init_map(bus_space_tag_t, bus_addr_t, bus_size_t, int, struct
 	    agp_map **);
 void	agp_destroy_map(struct agp_map *);
@@ -188,9 +153,6 @@ void	agp_free_dmamem(bus_dma_tag_t, size_t, bus_dmamap_t,
 int	agpdev_print(void *, const char *);
 int	agpbus_probe(struct agp_attach_args *aa);
 
-void	*agp_map(struct agp_softc *, bus_addr_t, bus_size_t,
-	    bus_space_handle_t *);
-void	agp_unmap(struct agp_softc *, void *, size_t, bus_space_handle_t);
 paddr_t	agp_mmap(struct agp_softc *, off_t, int);
 
 /*
@@ -227,31 +189,6 @@ int	 agp_release(void *);
  * defined in <dev/pci/agpreg.h>
  */
 int	 agp_enable(void *, u_int32_t);
-
-/*
- * Allocate physical memory suitable for mapping into the AGP
- * aperture.  The value returned is an opaque handle which can be
- * passed to agp_bind(), agp_unbind() or agp_deallocate().
- */
-void	*agp_alloc_memory(void *, int, vsize_t);
-
-/*
- * Free memory which was allocated with agp_allocate().
- */
-void	 agp_free_memory(void *, void *);
-
-/*
- * Bind memory allocated with agp_allocate() at a given offset within
- * the AGP aperture. Returns EINVAL if the memory is already bound or
- * the offset is not at an AGP page boundary.
- */
-int	 agp_bind_memory(void *, void *, off_t);
-
-/*
- * Unbind memory from the AGP aperture. Returns EINVAL if the memory
- * is not bound.
- */
-int	 agp_unbind_memory(void *, void *);
 
 /*
  * Retrieve information about a memory block allocated with

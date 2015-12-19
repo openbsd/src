@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_i810.c,v 1.92 2015/10/29 07:47:03 kettenis Exp $	*/
+/*	$OpenBSD: agp_i810.c,v 1.93 2015/12/19 16:07:20 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -101,10 +101,6 @@ void	agp_i810_bind_page(void *, bus_size_t, paddr_t, int);
 void	agp_i810_unbind_page(void *, bus_size_t);
 void	agp_i810_flush_tlb(void *);
 int	agp_i810_enable(void *, u_int32_t mode);
-struct agp_memory * agp_i810_alloc_memory(void *, int, vsize_t);
-int	agp_i810_free_memory(void *, struct agp_memory *);
-int	agp_i810_bind_memory(void *, struct agp_memory *, bus_size_t);
-int	agp_i810_unbind_memory(void *, struct agp_memory *);
 void	intagp_write_gtt(struct agp_i810_softc *, bus_size_t, paddr_t);
 int	intagp_gmch_match(struct pci_attach_args *);
 
@@ -125,10 +121,6 @@ struct agp_methods agp_i810_methods = {
 	agp_i810_unbind_page,
 	agp_i810_flush_tlb,
 	agp_i810_enable,
-	agp_i810_alloc_memory,
-	agp_i810_free_memory,
-	agp_i810_bind_memory,
-	agp_i810_unbind_memory,
 };
 
 int
@@ -622,168 +614,6 @@ agp_i810_flush_tlb(void *sc)
 int
 agp_i810_enable(void *sc, u_int32_t mode)
 {
-	return (0);
-}
-
-struct agp_memory *
-agp_i810_alloc_memory(void *softc, int type, vsize_t size)
-{
-	struct agp_i810_softc	*isc = softc;
-	struct agp_softc	*sc = isc->agpdev;
-	struct agp_memory	*mem;
-	int			 error;
-
-	if ((size & (AGP_PAGE_SIZE - 1)) != 0)
-		return (NULL);
-
-	if (sc->sc_allocated + size > sc->sc_maxmem)
-		return (NULL);
-
-	if (type == 1) {
-		/*
-		 * Mapping local DRAM into GATT.
-		 */
-		if (isc->chiptype != CHIP_I810 || size != isc->dcache_size)
-			return (NULL);
-	} else if (type == 2) {
-		/*
-		 * Bogus mapping of 1 or 4 pages for the hardware cursor.
-		 */
-		if (size != AGP_PAGE_SIZE && size != 4 * AGP_PAGE_SIZE) {
-#ifdef DEBUG
-			printf("agp: trying to map %lu for hw cursor\n", size);
-#endif
-			return (NULL);
-		}
-	}
-
-	mem = malloc(sizeof *mem, M_AGP, M_WAITOK | M_ZERO);
-	mem->am_id = sc->sc_nextid++;
-	mem->am_size = size;
-	mem->am_type = type;
-
-	if (type == 2) {
-		/*
-		 * Allocate and wire down the pages now so that we can
-		 * get their physical address.
-		 */
-		if ((mem->am_dmaseg = malloc(sizeof (*mem->am_dmaseg), M_AGP,
-		    M_WAITOK | M_CANFAIL)) == NULL) {
-			free(mem, M_AGP, sizeof *mem);
-			return (NULL);
-		}
-
-		if ((error = agp_alloc_dmamem(sc->sc_dmat, size,
-		    &mem->am_dmamap, &mem->am_physical, mem->am_dmaseg)) != 0) {
-			free(mem->am_dmaseg, M_AGP, sizeof (*mem->am_dmaseg));
-			free(mem, M_AGP, sizeof *mem);
-			printf("agp: agp_alloc_dmamem(%d)\n", error);
-			return (NULL);
-		}
-	} else if (type != 1) {
-		if ((error = bus_dmamap_create(sc->sc_dmat, size,
-		    size / PAGE_SIZE + 1, size, 0, BUS_DMA_NOWAIT,
-		    &mem->am_dmamap)) != 0) {
-			free(mem, M_AGP, sizeof *mem);
-			printf("agp: bus_dmamap_create(%d)\n", error);
-			return (NULL);
-		}
-	}
-
-	TAILQ_INSERT_TAIL(&sc->sc_memory, mem, am_link);
-	sc->sc_allocated += size;
-
-	return (mem);
-}
-
-int
-agp_i810_free_memory(void *softc, struct agp_memory *mem)
-{
-	struct agp_i810_softc	*isc = softc;
-	struct agp_softc	*sc = isc->agpdev;
-
-	if (mem->am_is_bound)
-		return (EBUSY);
-
-	if (mem->am_type == 2) {
-		agp_free_dmamem(sc->sc_dmat, mem->am_size, mem->am_dmamap,
-		    mem->am_dmaseg);
-		free(mem->am_dmaseg, M_AGP, sizeof (*mem->am_dmaseg));
-	} else if (mem->am_type != 1) {
-		bus_dmamap_destroy(sc->sc_dmat, mem->am_dmamap);
-	}
-
-	sc->sc_allocated -= mem->am_size;
-	TAILQ_REMOVE(&sc->sc_memory, mem, am_link);
-	free(mem, M_AGP, sizeof *mem);
-	return (0);
-}
-
-int
-agp_i810_bind_memory(void *sc, struct agp_memory *mem, bus_size_t offset)
-{
-	struct agp_i810_softc	*isc = sc;
-	u_int32_t 		 i;
-
-	if (mem->am_is_bound != 0)
-		return (EINVAL);
-
-	if (isc->chiptype != CHIP_I810 && (offset >> AGP_PAGE_SHIFT) <
-	    isc->stolen) {
-#ifdef DEBUG
-		printf("agp: trying to bind into stolen memory\n");
-#endif
-		return (EINVAL);
-	}
-
-	if (mem->am_type == 2) {
-		for (i = 0; i < mem->am_size; i += AGP_PAGE_SIZE)
-			agp_i810_bind_page(isc, isc->isc_apaddr + offset + i,
-			    mem->am_physical + i, 0);
-		mem->am_offset = offset;
-		mem->am_is_bound = 1;
-		return (0);
-	}
-
-	if (mem->am_type != 1)
-		return (agp_generic_bind_memory(isc->agpdev, mem, offset));
-
-	if (isc->chiptype != CHIP_I810)
-		return (EINVAL);
-
-	for (i = 0; i < mem->am_size; i += AGP_PAGE_SIZE)
-		intagp_write_gtt(isc, i, i | INTEL_ENABLED | INTEL_LOCAL);
-	mem->am_is_bound = 1;
-	return (0);
-}
-
-int
-agp_i810_unbind_memory(void *sc, struct agp_memory *mem)
-{
-	struct agp_i810_softc	*isc = sc;
-	u_int32_t		 i;
-
-	if (mem->am_is_bound == 0)
-		return (EINVAL);
-
-	if (mem->am_type == 2) {
-		for (i = 0; i < mem->am_size; i += AGP_PAGE_SIZE)
-			agp_i810_unbind_page(isc, isc->isc_apaddr +
-			    mem->am_offset + i);
-		mem->am_offset = 0;
-		mem->am_is_bound = 0;
-		return (0);
-	}
-
-	if (mem->am_type != 1)
-		return (agp_generic_unbind_memory(isc->agpdev, mem));
-
-	if (isc->chiptype != CHIP_I810)
-		return (EINVAL);
-
-	for (i = 0; i < mem->am_size; i += AGP_PAGE_SIZE)
-		intagp_write_gtt(isc, i, 0);
-	mem->am_is_bound = 0;
 	return (0);
 }
 
