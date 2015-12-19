@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_apple.c,v 1.5 2014/03/29 18:09:30 guenther Exp $	*/
+/*	$OpenBSD: agp_apple.c,v 1.6 2015/12/19 11:23:35 mpi Exp $	*/
 
 /*
  * Copyright (c) 2012 Martin Pieuchot <mpi@openbsd.org>
@@ -81,6 +81,8 @@ agp_apple_match(struct device *parent, void *match, void *aux)
 		case PCI_PRODUCT_APPLE_UNINORTH2_AGP:
 		case PCI_PRODUCT_APPLE_UNINORTH_AGP3:
 		case PCI_PRODUCT_APPLE_INTREPID2_AGP:
+			/* XXX until KMS works with these bridges */
+			return (0);
 		case PCI_PRODUCT_APPLE_U3_AGP:
 		case PCI_PRODUCT_APPLE_U3L_AGP:
 		case PCI_PRODUCT_APPLE_K2_AGP:
