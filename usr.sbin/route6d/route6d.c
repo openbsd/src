@@ -1,4 +1,4 @@
-/*	$OpenBSD: route6d.c,v 1.83 2015/11/30 22:02:09 jca Exp $	*/
+/*	$OpenBSD: route6d.c,v 1.84 2015/12/19 20:02:03 mmcc Exp $	*/
 /*	$KAME: route6d.c,v 1.111 2006/10/25 06:38:13 jinmei Exp $	*/
 
 /*
@@ -2056,8 +2056,7 @@ ifrt(struct ifc *ifcp, int again)
 			}
                 }
 	next:
-		if (rrt)
-			free(rrt);
+		free(rrt);
 	}
 	return need_trigger;
 }
