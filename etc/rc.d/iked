@@ -1,12 +1,12 @@
 #!/bin/sh
 #
-# $OpenBSD: iked,v 1.1 2011/07/06 18:55:36 robert Exp $
+# $OpenBSD: iked,v 1.2 2015/12/19 10:09:04 ajacoutot Exp $
 
 daemon="/sbin/iked"
 
 . /etc/rc.d/rc.subr
 
-pexp="iked:.*parent.*"
+pexp="iked: parent.*"
 
 rc_pre() {
 	[ X"${sasyncd_flags}" != X"NO" ] && \
