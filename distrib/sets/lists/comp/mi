@@ -6000,6 +6000,7 @@
 ./usr/share/man/man3/ypprot_err.3
 ./usr/share/man/man3/zlibCompileFlags.3
 ./usr/share/man/man3/zlibVersion.3
+./usr/share/man/man9/CTASSERT.9
 ./usr/share/man/man9/FREF.9
 ./usr/share/man/man9/FRELE.9
 ./usr/share/man/man9/KASSERT.9
