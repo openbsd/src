@@ -59,7 +59,7 @@
 ./usr/lib/libreadline.so.4.0
 ./usr/lib/librpcsvc.so.2.0
 ./usr/lib/libskey.so.6.0
-./usr/lib/libsndio.so.6.0
+./usr/lib/libsndio.so.6.1
 ./usr/lib/libsqlite3.so.31.0
 ./usr/lib/libssl.so.38.0
 ./usr/lib/libstdc++.so.57.0
