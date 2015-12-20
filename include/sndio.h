@@ -1,4 +1,4 @@
-/*	$OpenBSD: sndio.h,v 1.8 2012/08/22 08:56:46 espie Exp $	*/
+/*	$OpenBSD: sndio.h,v 1.9 2015/12/20 11:29:29 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -143,6 +143,11 @@ int mio_nfds(struct mio_hdl *);
 int mio_pollfd(struct mio_hdl *, struct pollfd *, int);
 int mio_revents(struct mio_hdl *, struct pollfd *);
 int mio_eof(struct mio_hdl *);
+
+int mio_rmidi_getfd(const char *, unsigned int, int);
+struct mio_hdl *mio_rmidi_fdopen(int, unsigned int, int);
+int sio_sun_getfd(const char *, unsigned int, int);
+struct sio_hdl *sio_sun_fdopen(int, unsigned int, int);
 
 #ifdef __cplusplus
 }

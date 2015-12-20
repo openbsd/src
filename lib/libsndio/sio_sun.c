@@ -1,4 +1,4 @@
-/*	$OpenBSD: sio_sun.c,v 1.23 2015/11/22 12:10:26 ratchov Exp $	*/
+/*	$OpenBSD: sio_sun.c,v 1.24 2015/12/20 11:29:29 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -328,7 +328,7 @@ sio_sun_getcap(struct sio_hdl *sh, struct sio_cap *cap)
 #undef NRATES
 }
 
-static int
+int
 sio_sun_getfd(const char *str, unsigned int mode, int nbio)
 {
 	const char *p;
@@ -336,6 +336,9 @@ sio_sun_getfd(const char *str, unsigned int mode, int nbio)
 	unsigned int devnum;
 	int fd, flags;
 
+#ifdef DEBUG
+	_sndio_debug_init();
+#endif
 	p = _sndio_parsetype(str, "rsnd");
 	if (p == NULL) {
 		DPRINTF("sio_sun_getfd: %s: \"rsnd\" expected\n", str);
@@ -368,13 +371,16 @@ sio_sun_getfd(const char *str, unsigned int mode, int nbio)
 	return fd;
 }
 
-static struct sio_hdl *
+struct sio_hdl *
 sio_sun_fdopen(int fd, unsigned int mode, int nbio)
 {
 	struct audio_info aui;
 	struct sio_sun_hdl *hdl;
 	struct sio_par par;
 
+#ifdef DEBUG
+	_sndio_debug_init();
+#endif
 	hdl = malloc(sizeof(struct sio_sun_hdl));
 	if (hdl == NULL)
 		return NULL;
