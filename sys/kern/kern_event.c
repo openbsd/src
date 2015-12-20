@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.69 2015/12/17 17:00:48 tedu Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.70 2015/12/20 17:56:18 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -1033,8 +1033,8 @@ knote_attach(struct knote *kn, struct filedesc *fdp)
 		    fdp->fd_knlistsize * sizeof(struct klist));
 		memset(&list[fdp->fd_knlistsize], 0,
 		    (size - fdp->fd_knlistsize) * sizeof(struct klist));
-		if (fdp->fd_knlist != NULL)
-			free(fdp->fd_knlist, M_TEMP, 0);
+		free(fdp->fd_knlist, M_TEMP,
+		    fdp->fd_knlistsize * sizeof(struct klist));
 		fdp->fd_knlistsize = size;
 		fdp->fd_knlist = list;
 	}
