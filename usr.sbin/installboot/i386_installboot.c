@@ -1,4 +1,4 @@
-/*	$OpenBSD: i386_installboot.c,v 1.21 2015/12/10 18:40:46 mmcc Exp $	*/
+/*	$OpenBSD: i386_installboot.c,v 1.22 2015/12/20 18:04:34 rpe Exp $	*/
 /*	$NetBSD: installboot.c,v 1.5 1995/11/17 23:23:50 gwr Exp $ */
 
 /*
@@ -220,8 +220,8 @@ write_bootblocks(int devfd, char *dev, struct disklabel *dl)
 void
 write_efisystem(struct disklabel *dl, char part)
 {
-	static char *fsckfmt = "/sbin/fsck_msdos -f %s >/dev/null";
-	static char *newfsfmt ="/sbin/newfs_msdos -t msdos %s >/dev/null";
+	static char *fsckfmt = "/sbin/fsck_msdos %s >/dev/null";
+	static char *newfsfmt ="/sbin/newfs_msdos %s >/dev/null";
 	struct msdosfs_args args;
 	char cmd[60];
 	char dst[50];	/* /tmp/installboot.XXXXXXXXXX/efi/BOOT/BOOTIA32.EFI */
