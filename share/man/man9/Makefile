@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.270 2015/12/11 16:07:02 mpi Exp $
+#	$OpenBSD: Makefile,v 1.271 2015/12/20 08:10:36 sf Exp $
 #	$NetBSD: Makefile,v 1.4 1996/01/09 03:23:01 thorpej Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
@@ -229,7 +229,7 @@ MLINKS+=iic.9 iic_acquire_bus.9 iic.9 iic_release_bus.9 iic.9 iic_exec.9 \
 MLINKS+=kern.9 imax.9 kern.9 imin.9 kern.9 lmax.9 kern.9 lmin.9 \
 	kern.9 max.9 kern.9 min.9 kern.9 ulmax.9 kern.9 ulmin.9 kern.9 abs.9 \
 	kern.9 assert.9 kern.9 KASSERT.9 kern.9 KDASSERT.9 \
-	kern.9 KASSERTMSG.9 kern.9 KDASSERTMSG.9 \
+	kern.9 KASSERTMSG.9 kern.9 KDASSERTMSG.9 kern.9 CTASSERT.9 \
 	kern.9 skpc.9 kern.9 scanc.9 kern.9 bcmp.9 \
 	kern.9 memchr.9 kern.9 memcmp.9 kern.9 ffs.9 kern.9 fls.9 kern.9 flsl.9 \
 	kern.9 strlen.9 kern.9 strncpy.9 kern.9 strlcpy.9 kern.9 strlcat.9 \
