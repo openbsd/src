@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.182 2015/12/11 16:07:02 mpi Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.183 2015/12/20 10:08:05 mpi Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -526,7 +526,10 @@ uvideo_attach(struct device *parent, struct device *self, void *aux)
 	/* maybe the device has quirks */
 	sc->sc_quirk = uvideo_lookup(uaa->vendor, uaa->product);
 
-	config_mountroot(self, uvideo_attach_hook);
+	if (sc->sc_quirk && sc->sc_quirk->ucode_name)
+		config_mountroot(self, uvideo_attach_hook);
+	else
+		uvideo_attach_hook(self);
 }
 
 void
