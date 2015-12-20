@@ -1,5 +1,5 @@
 %{
-/* $OpenBSD: keynote-ver.l,v 1.17 2015/11/19 19:48:27 tedu Exp $ */
+/* $OpenBSD: keynote-ver.l,v 1.18 2015/12/20 00:28:18 mmcc Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -218,9 +218,7 @@ read_environment(char *filename)
     FILE *fp;
     int i;
 
-    fp = fopen(filename, "r");
-    if (fp == (FILE *) NULL)
-    {
+    if ((fp = fopen(filename, "r")) == NULL) {
 	perror(filename);
 	return -1;
     }
