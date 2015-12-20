@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.267 2015/12/14 10:22:12 jung Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.268 2015/12/20 14:06:24 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -658,7 +658,6 @@ main(int argc, char *argv[])
 	log_debug("debug: using \"%s\" queue backend", backend_queue);
 	log_debug("debug: using \"%s\" scheduler backend", backend_scheduler);
 	log_debug("debug: using \"%s\" stat backend", backend_stat);
-	log_info("info: startup%s", (verbose & TRACE_DEBUG)?" [debug mode]":"");
 
 	if (env->sc_hostname[0] == '\0')
 		errx(1, "machine does not have a hostname set");
