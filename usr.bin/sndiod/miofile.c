@@ -1,4 +1,4 @@
-/*	$OpenBSD: miofile.c,v 1.3 2012/11/30 22:26:34 ratchov Exp $	*/
+/*	$OpenBSD: miofile.c,v 1.4 2015/12/20 11:38:33 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -24,6 +24,7 @@
 #include <string.h>
 #include <sndio.h>
 #include "defs.h"
+#include "fdpass.h"
 #include "file.h"
 #include "midi.h"
 #include "miofile.h"
@@ -47,7 +48,7 @@ struct fileops port_mio_ops = {
 int
 port_mio_open(struct port *p)
 {
-	p->mio.hdl = mio_open(p->path, p->midi->mode, 1);
+	p->mio.hdl = fdpass_mio_open(p->num, p->midi->mode);
 	if (p->mio.hdl == NULL)
 		return 0;
 	p->mio.file = file_new(&port_mio_ops, p, p->path, mio_nfds(p->mio.hdl));

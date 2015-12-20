@@ -1,7 +1,7 @@
-#	$OpenBSD: Makefile,v 1.3 2013/11/21 08:15:46 ratchov Exp $
+#	$OpenBSD: Makefile,v 1.4 2015/12/20 11:38:33 ratchov Exp $
 
 PROG=	sndiod
-SRCS=	abuf.c dev.c dsp.c file.c listen.c midi.c miofile.c \
+SRCS=	abuf.c dev.c dsp.c fdpass.c file.c listen.c midi.c miofile.c \
 	opt.c siofile.c sndiod.c sock.c utils.c
 MAN=	sndiod.1
 CFLAGS+=-DDEBUG -I${.CURDIR}/../../lib/libsndio

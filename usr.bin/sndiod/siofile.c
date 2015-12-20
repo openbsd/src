@@ -1,4 +1,4 @@
-/*	$OpenBSD: siofile.c,v 1.9 2015/07/24 08:46:35 ratchov Exp $	*/
+/*	$OpenBSD: siofile.c,v 1.10 2015/12/20 11:38:33 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -27,6 +27,7 @@
 #include "defs.h"
 #include "dev.h"
 #include "dsp.h"
+#include "fdpass.h"
 #include "file.h"
 #include "siofile.h"
 #include "utils.h"
@@ -92,15 +93,15 @@ dev_sio_open(struct dev *d)
 	struct sio_par par;
 	unsigned int mode = d->mode & (MODE_PLAY | MODE_REC);
 
-	d->sio.hdl = sio_open(d->path, mode, 1);
+	d->sio.hdl = fdpass_sio_open(d->num, mode);
 	if (d->sio.hdl == NULL) {
 		if (mode != (SIO_PLAY | SIO_REC))
 			return 0;
-		d->sio.hdl = sio_open(d->path, SIO_PLAY, 1);
+		d->sio.hdl = fdpass_sio_open(d->num, SIO_PLAY);
 		if (d->sio.hdl != NULL)
 			mode = SIO_PLAY;
 		else {
-			d->sio.hdl = sio_open(d->path, SIO_REC, 1);
+			d->sio.hdl = fdpass_sio_open(d->num, SIO_REC);
 			if (d->sio.hdl != NULL)
 				mode = SIO_REC;
 			else
