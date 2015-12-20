@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_autoconf.c,v 1.90 2015/12/11 16:07:02 mpi Exp $	*/
+/*	$OpenBSD: subr_autoconf.c,v 1.91 2015/12/20 10:03:23 mpi Exp $	*/
 /*	$NetBSD: subr_autoconf.c,v 1.21 1996/04/04 06:06:18 cgd Exp $	*/
 
 /*
@@ -725,7 +725,7 @@ config_process_deferred_children(struct device *parent)
 		if (dc->dc_dev->dv_parent == parent) {
 			TAILQ_REMOVE(&deferred_config_queue, dc, dc_queue);
 			(*dc->dc_func)(dc->dc_dev);
-			free(dc, M_DEVBUF, 0);
+			free(dc, M_DEVBUF, sizeof(*dc));
 			config_pending_decr();
 		}
 	}
@@ -743,7 +743,7 @@ config_process_deferred_mountroot(void)
 	while ((dc = TAILQ_FIRST(&mountroot_config_queue)) != NULL) {
 		TAILQ_REMOVE(&mountroot_config_queue, dc, dc_queue);
 		(*dc->dc_func)(dc->dc_dev);
-		free(dc, M_DEVBUF, 0);
+		free(dc, M_DEVBUF, sizeof(*dc));
 	}
 }
 
