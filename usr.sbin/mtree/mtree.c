@@ -1,4 +1,4 @@
-/*	$OpenBSD: mtree.c,v 1.23 2015/12/19 19:58:38 tb Exp $	*/
+/*	$OpenBSD: mtree.c,v 1.24 2015/12/20 19:53:24 benno Exp $	*/
 /*	$NetBSD: mtree.c,v 1.7 1996/09/05 23:29:22 thorpej Exp $	*/
 
 /*-
@@ -31,6 +31,7 @@
  */
 
 #include <sys/stat.h>
+#include <err.h>
 #include <errno.h>
 #include <unistd.h>
 #include <stdio.h>
