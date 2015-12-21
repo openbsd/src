@@ -1,11 +1,11 @@
-# $OpenBSD: Makefile,v 1.40 2015/11/29 09:21:01 espie Exp $
+# $OpenBSD: Makefile,v 1.41 2015/12/21 11:31:40 espie Exp $
 
 # We don't pass t7, t13, t14, t17, t19, t20 t21 t26
 # and t16 yields piss poor performance
 REGRESS_TARGETS=t1 t2 t3 t4 t5 t6 t7 t8 t9 t10 t11 t12 \
 	t13 t14 t15 t16 t17 t18 t19 t20 t21 t22 t23 t24 \
 	t25 t26 t27 t28 t29 t30 t31 t32 t33 t34 t35 t36 \
-	t37 t38 t38j t39 t40 t41 t42 t43
+	t37 t38 t38j t39 t40 t41 t42 t43 t44 t45
 
 MALLOC_OPTIONS?=AJ
 t1: t1.out
@@ -174,6 +174,13 @@ t42:
 t43:
 	cd ${.CURDIR} && env -i PATH=${PATH} MALLOC_OPTIONS=${MALLOC_OPTIONS} ${MAKE} -r -j2 -f mk39 b 2>&1 | diff - t43.out
 	cd ${.CURDIR} && env -i PATH=${PATH} MALLOC_OPTIONS=${MALLOC_OPTIONS} ${MAKE} -r -j2 -f mk39 a 2>&1 | diff - t43.out
+
+t44:
+	if cd ${.CURDIR} && env -i PATH=${PATH} MALLOC_OPTIONS=${MALLOC_OPTIONS} ${MAKE} -r -f mk40 2>/dev/null || test $$? -ge 128; then false; fi
+	
+t45:
+	if cd ${.CURDIR} && env -i PATH=${PATH} MALLOC_OPTIONS=${MALLOC_OPTIONS} ${MAKE} -r -f mk41 2>/dev/null || test $$? -ge 128; then false; fi
+	
 
 
 t1.out:
