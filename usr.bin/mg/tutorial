@@ -118,7 +118,6 @@ screen when you type C-g indicating that a command was cancelled.
 
 In general, when in doubt, use C-g to get out of trouble.
 
-
 Inserting/Deleting Text
 -----------------------
 
@@ -253,6 +252,20 @@ in the bottom of your screen. In general, it is a good idea to save quite
 often. When you save a file, mg saves a backup of the file with a tilde (~)
 character at the end.
 
+If you decide to open a directory instead of a file, mg will transistion into a
+mode called dired. Dired fills a buffer with the contents of the selected
+directory, one file or sub-directory's details per line. Some basic file
+management functions can be performed on the files and sub-directories in the
+buffer. For example, with the cursor over a specific file:
+
+	Pressing c will give you the opportunity to copy the file.
+	Pressing d will mark the file for deletion.
+	Pressing x will unlink files previously marked for deletion.
+	Pressing Return will open the highlighted file into it's own buffer for
+	editing.
+
+There are more dired commands, see the man page for further information.
+
 Working with Buffers and Windows
 --------------------------------
 
@@ -333,7 +346,7 @@ Author Info
 -----------
 
 Original Author of this document: Mayukh Bose, 
-Date last updated: 2014-10-19
+Date last updated: 2015-12-21
 
 Copyright
 ---------
