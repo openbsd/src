@@ -1,4 +1,4 @@
-vers(a, {-$OpenBSD: MAKEDEV.common,v 1.82 2015/12/09 04:11:58 deraadt Exp $-})dnl
+vers(a, {-$OpenBSD: MAKEDEV.common,v 1.83 2015/12/21 22:15:53 sf Exp $-})dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -383,6 +383,8 @@ _mkdev(com, {-tty[0-7][0-9a-f]-}, {-U=${i#tty*}
 	M tty$U c major_com_c $o 660 dialer uucp
 	M cua$U c major_com_c Add($o, 128) 660 dialer uucp-})dnl
 __devitem(ttyc, ttyc*, Cyclades serial ports,cy)dnl
+__devitem(ttyVI, ttyVI*, Virtio serial ports,viocon)dnl
+_mkdev(ttyVI, ttyVI*, {-M ttyVI$U c major_ttyVI_c $U 660 dialer uucp-})dnl
 __devitem(tzs, tty[a-z]*, Zilog 8530 Serial Port,zs)dnl
 _mkdev(tzs, {-tty[a-z]-}, {-u=${i#tty*}
 	case $u in
