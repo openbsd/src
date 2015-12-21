@@ -1,7 +1,7 @@
-.\"	$OpenBSD: mg.1,v 1.95 2015/11/18 17:41:09 reyk Exp $
+.\"	$OpenBSD: mg.1,v 1.96 2015/12/21 09:04:52 lum Exp $
 .\" This file is in the public domain.
 .\"
-.Dd $Mdocdate: November 18 2015 $
+.Dd $Mdocdate: December 21 2015 $
 .Dt MG 1
 .Os
 .Sh NAME
@@ -304,6 +304,8 @@ fill-paragraph
 search-backward
 .It M-s
 search-forward
+.It M-t
+transpose-words
 .It M-u
 upcase-word
 .It M-v
@@ -879,6 +881,12 @@ If multiple iterations are requested, the current paragraph will
 be moved
 .Va n
 paragraphs forward.
+.It transpose-words
+Transpose adjacent words.
+If multiple iterations are requested, the current word will
+be moved
+.Va n
+words forward.
 .It undo
 Undo the most recent action.
 If invoked again without an intervening command,
@@ -938,6 +946,8 @@ Specific key bindings are available in dired mode.
 .Bl -tag -width xxxxxxxxxxxx -offset indent -compact
 .It DEL
 dired-unmark-backward
+.It RET, e, f and C-m
+dired-find-file
 .It SPC
 dired-next-line
 .It !
@@ -948,8 +958,6 @@ dired-create-directory
 dired-do-copy
 .It d and C-d
 dired-flag-file-deletion
-.It e, f and C-m
-dired-find-file
 .It g
 dired-revert
 .It n
