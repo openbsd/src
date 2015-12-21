@@ -1,4 +1,4 @@
-/* $OpenBSD: memconfig.c,v 1.16 2014/04/12 15:57:50 jsg Exp $ */
+/* $OpenBSD: memconfig.c,v 1.17 2015/12/21 21:37:09 mmcc Exp $ */
 
 /*-
  * Copyright (c) 1999 Michael Smith <msmith@freebsd.org>
@@ -194,8 +194,7 @@ listfunc(int memfd, int argc, char *argv[])
 		printf("\n");
 	}
 	free(mrd);
-	if (owner)
-		free(owner);
+	free(owner);
 }
 
 static void
