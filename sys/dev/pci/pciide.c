@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.356 2015/11/24 11:24:21 mpi Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.357 2015/12/21 20:52:33 mmcc Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -6976,7 +6976,7 @@ pdcsata_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 				    "regs\n",
 				    sc->sc_wdcdev.sc_dev.dv_xname,
 				    channel);
-				continue;
+				goto loop_end;
 			}
 		}
 		ps->regs[channel].cmd_iohs[wdr_status & _WDC_REGMASK] =
@@ -7022,6 +7022,8 @@ pdcsata_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		    (channel + 1) << 2, 0x00000001);
 
 		pdc203xx_setup_channel(&cp->wdc_channel);
+
+loop_end: ;
 	}
 
 	printf("%s: using %s for native-PCI interrupt\n",
