@@ -1,4 +1,4 @@
-/*	$OpenBSD: listen.c,v 1.5 2015/12/20 11:38:33 ratchov Exp $	*/
+/*	$OpenBSD: listen.c,v 1.6 2015/12/21 22:03:47 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -70,10 +70,8 @@ listen_close(struct listen *f)
 	}
 	*pf = f->next;
 
-	if (f->path != NULL) {
-		unlink(f->path);
+	if (f->path != NULL)
 		xfree(f->path);
-	}
 	file_del(f->file);
 	close(f->fd);
 	xfree(f);

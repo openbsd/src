@@ -1,4 +1,4 @@
-/*	$OpenBSD: sndiod.c,v 1.18 2015/12/20 11:38:33 ratchov Exp $	*/
+/*	$OpenBSD: sndiod.c,v 1.19 2015/12/21 22:03:47 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -557,8 +557,6 @@ main(int argc, char **argv)
 		while (file_poll())
 			; /* nothing */
 		midi_done();
-
-		rmdir(base);
 	}
 	while (opt_list != NULL)
 		opt_del(opt_list);
