@@ -1,4 +1,4 @@
-/*	$OpenBSD: tree.c,v 1.15 2010/01/02 04:21:16 krw Exp $ */
+/*	$OpenBSD: tree.c,v 1.16 2015/12/21 21:39:11 mmcc Exp $ */
 
 /* Routines for manipulating parse trees... */
 
@@ -213,8 +213,7 @@ tree_evaluate(struct tree_cache *tree_cache)
 	 * Free the old buffer if needed, then store the new buffer
 	 * location and size and return.
 	 */
-	if (tree_cache->value)
-		free(tree_cache->value);
+	free(tree_cache->value);
 	tree_cache->value = bp;
 	tree_cache->len = bufix;
 	tree_cache->buf_size = bc;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcp.c,v 1.43 2015/08/20 22:39:29 deraadt Exp $ */
+/*	$OpenBSD: dhcp.c,v 1.44 2015/12/21 21:39:11 mmcc Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999
@@ -743,8 +743,7 @@ ack_lease(struct packet *packet, struct lease *lease, unsigned int offer,
 	    !memcmp(lease->client_hostname, packet->options[DHO_HOST_NAME].data,
 	    packet->options[DHO_HOST_NAME].len)) {
 	} else if (packet->options[DHO_HOST_NAME].len) {
-		if (lease->client_hostname)
-			free(lease->client_hostname);
+		free(lease->client_hostname);
 		lease->client_hostname = malloc(
 		    packet->options[DHO_HOST_NAME].len + 1);
 		if (!lease->client_hostname)
