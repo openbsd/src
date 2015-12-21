@@ -89,6 +89,7 @@ static void OP_MS (int, int);
 static void OP_XS (int, int);
 static void OP_M (int, int);
 static void OP_VMX (int, int);
+static void OP_VMX2 (int, int);
 static void OP_0fae (int, int);
 static void OP_0f07 (int, int);
 static void NOP_Fixup (int, int);
@@ -315,6 +316,7 @@ fetch_data (struct disassemble_info *info, bfd_byte *addr)
 #define MS OP_MS, v_mode
 #define XS OP_XS, v_mode
 #define VM OP_VMX, q_mode
+#define VM2 OP_VMX2, q_mode
 #define OPSUF OP_3DNowSuffix, 0
 #define OPSIMD OP_SIMD_Suffix, 0
 #define OP0FAE OP_0fae, v_mode
@@ -1435,7 +1437,7 @@ static const struct dis386 grps[][8] = {
     { "(bad)",	XX, XX, XX },
     { "(bad)",	XX, XX, XX },
     { "",	VM, XX, XX },		/* See OP_VMX.  */
-    { "vmptrst", Eq, XX, XX },
+    { "",	VM2, XX, XX },
   },
   /* GRP10 */
   {
@@ -5336,6 +5338,21 @@ OP_VMX (int bytemode, int sizeflag)
       else
 	strcpy (obuf, "vmptrld");
       OP_E (bytemode, sizeflag);
+    }
+}
+
+static void
+OP_VMX2 (int bytemode ATTRIBUTE_UNUSED, int sizeflag)
+{
+  if (mod == 3)
+    {
+      strcpy (obuf, "rdseed");
+      OP_E (v_mode, sizeflag);
+    }
+  else
+    {
+      strcpy (obuf, "vmptrst");
+      OP_E (q_mode, sizeflag);
     }
 }
 
