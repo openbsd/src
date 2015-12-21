@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.h,v 1.35 2015/07/20 22:28:57 sf Exp $	*/
+/*	$OpenBSD: tty.h,v 1.36 2015/12/21 21:49:03 sf Exp $	*/
 /*	$NetBSD: tty.h,v 1.30.4.1 1996/06/02 09:08:13 mrg Exp $	*/
 
 /*-
@@ -312,4 +312,26 @@ int	cttypoll(dev_t, int, struct proc *);
 void	clalloc(struct clist *, int, int);
 void	clfree(struct clist *);
 
-#endif
+int	nullioctl(struct tty *, u_long, caddr_t, int, struct proc *);
+
+int	pppopen(dev_t dev, struct tty *, struct proc *);
+int	pppclose(struct tty *, int, struct proc *);
+int	ppptioctl(struct tty *, u_long, caddr_t, int, struct proc *);
+int	pppinput(int c, struct tty *);
+int	pppstart(struct tty *);
+int	pppread(struct tty *, struct uio *, int);
+int	pppwrite(struct tty *, struct uio *, int);
+
+int	nmeaopen(dev_t, struct tty *, struct proc *);
+int	nmeaclose(struct tty *, int, struct proc *);
+int	nmeainput(int, struct tty *);
+
+int	mstsopen(dev_t, struct tty *, struct proc *);
+int	mstsclose(struct tty *, int, struct proc *);
+int	mstsinput(int, struct tty *);
+
+int	endrunopen(dev_t, struct tty *, struct proc *);
+int	endrunclose(struct tty *, int, struct proc *);
+int	endruninput(int, struct tty *);
+
+#endif /* _KERNEL */

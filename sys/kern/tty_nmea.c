@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_nmea.c,v 1.44 2014/11/03 03:08:00 deraadt Exp $ */
+/*	$OpenBSD: tty_nmea.c,v 1.45 2015/12/21 21:49:02 sf Exp $ */
 
 /*
  * Copyright (c) 2006, 2007, 2008 Marc Balmer <mbalmer@openbsd.org>
@@ -34,9 +34,6 @@ int nmeadebug = 0;
 #endif
 #define DPRINTF(x)	DPRINTFN(0, x)
 
-int	nmeaopen(dev_t, struct tty *, struct proc *);
-int	nmeaclose(struct tty *, int, struct proc *);
-int	nmeainput(int, struct tty *);
 void	nmeaattach(int);
 
 #define NMEAMAX		82

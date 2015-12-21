@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppp_tty.c,v 1.40 2015/12/05 10:07:55 tedu Exp $	*/
+/*	$OpenBSD: ppp_tty.c,v 1.41 2015/12/21 21:49:02 sf Exp $	*/
 /*	$NetBSD: ppp_tty.c,v 1.12 1997/03/24 21:23:10 christos Exp $	*/
 
 /*
@@ -127,14 +127,7 @@
 #include <net/if_ppp.h>
 #include <net/if_pppvar.h>
 
-int	pppopen(dev_t dev, struct tty *tp);
-int	pppclose(struct tty *tp, int flag);
-int	pppread(struct tty *tp, struct uio *uio, int flag);
-int	pppwrite(struct tty *tp, struct uio *uio, int flag);
-int	ppptioctl(struct tty *tp, u_long cmd, caddr_t data, int flag,
-		       struct proc *);
-int	pppinput(int c, struct tty *tp);
-int	pppstart(struct tty *tp, int);
+int	pppstart_internal(struct tty *tp, int);
 
 u_int16_t pppfcs(u_int16_t fcs, u_char *cp, int len);
 void	pppasyncstart(struct ppp_softc *);
@@ -171,9 +164,8 @@ struct pool ppp_pkts;
  * Called from device open routine or ttioctl.
  */
 int
-pppopen(dev_t dev, struct tty *tp)
+pppopen(dev_t dev, struct tty *tp, struct proc *p)
 {
-    struct proc *p = curproc;		/* XXX */
     struct ppp_softc *sc;
     int error, s;
 
@@ -238,7 +230,7 @@ pppopen(dev_t dev, struct tty *tp)
  * Mimics part of ttyclose().
  */
 int
-pppclose(struct tty *tp, int flag)
+pppclose(struct tty *tp, int flag, struct proc *p)
 {
     struct ppp_softc *sc;
     int s;
@@ -659,7 +651,7 @@ pppasyncstart(struct ppp_softc *sc)
 
     /* Call pppstart to start output again if necessary. */
     s = spltty();
-    pppstart(tp, 0);
+    pppstart_internal(tp, 0);
 
     /*
      * This timeout is needed for operation on a pseudo-tty,
@@ -698,7 +690,7 @@ pppasyncctlp(struct ppp_softc *sc)
  * called later at splsoftnet.
  */
 int
-pppstart(struct tty *tp, int force)
+pppstart_internal(struct tty *tp, int force)
 {
     struct ppp_softc *sc = (struct ppp_softc *) tp->t_sc;
 
@@ -723,6 +715,12 @@ pppstart(struct tty *tp, int force)
     return 0;
 }
 
+int
+pppstart(struct tty *tp)
+{
+	return pppstart_internal(tp, 0);
+}
+
 /*
  * Timeout routine - try to start some more output.
  */
@@ -735,7 +733,7 @@ ppp_timeout(void *x)
 
     s = spltty();
     sc->sc_flags &= ~SC_TIMEOUT;
-    pppstart(tp, 1);
+    pppstart_internal(tp, 1);
     splx(s);
 }
 

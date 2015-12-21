@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_conf.c,v 1.21 2015/03/14 03:38:51 jsg Exp $	*/
+/*	$OpenBSD: tty_conf.c,v 1.22 2015/12/21 21:49:02 sf Exp $	*/
 /*	$NetBSD: tty_conf.c,v 1.18 1996/05/19 17:17:55 jonathan Exp $	*/
 
 /*-
@@ -47,41 +47,6 @@
 #define	ttyerrio ((int (*)(struct tty *, struct uio *, int))enodev)
 #define	ttyerrinput ((int (*)(int c, struct tty *))enodev)
 #define	ttyerrstart ((int (*)(struct tty *))enodev)
-
-int	nullioctl(struct tty *, u_long, caddr_t, int, struct proc *);
-
-#include "ppp.h"
-#if NPPP > 0
-int	pppopen(dev_t dev, struct tty *tp, struct proc *);
-int	pppclose(struct tty *tp, int flags, struct proc *);
-int	ppptioctl(struct tty *tp, u_long cmd, caddr_t data,
-			int flag, struct proc *p);
-int	pppinput(int c, struct tty *tp);
-int	pppstart(struct tty *tp);
-int	pppread(struct tty *tp, struct uio *uio, int flag);
-int	pppwrite(struct tty *tp, struct uio *uio, int flag);
-#endif
-
-#include "nmea.h"
-#if NNMEA > 0
-int	nmeaopen(dev_t, struct tty *, struct proc *);
-int	nmeaclose(struct tty *, int, struct proc *);
-int	nmeainput(int, struct tty *);
-#endif
-
-#include "msts.h"
-#if NMSTS > 0
-int	mstsopen(dev_t, struct tty *, struct proc *);
-int	mstsclose(struct tty *, int, struct proc *);
-int	mstsinput(int, struct tty *);
-#endif
-
-#include "endrun.h"
-#if NENDRUN > 0
-int	endrunopen(dev_t, struct tty *, struct proc *);
-int	endrunclose(struct tty *, int, struct proc *);
-int	endruninput(int, struct tty *);
-#endif
 
 struct	linesw linesw[] =
 {
