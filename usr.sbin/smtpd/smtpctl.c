@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpctl.c,v 1.140 2015/12/11 07:30:24 gilles Exp $	*/
+/*	$OpenBSD: smtpctl.c,v 1.141 2015/12/21 11:20:07 sunil Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -976,13 +976,52 @@ do_uncorrupt(int argc, struct parameter *argv)
 int
 main(int argc, char **argv)
 {
+	arglist		 args;
 	gid_t		 gid;
 	char		*argv_mailq[] = { "show", "queue", NULL };
+	char		*aliases_path = NULL, *p;
 	FILE		*offlinefp = NULL;
+	int		 ch, i, sendmail_makemap = 0;
 
 	gid = getgid();
 	if (strcmp(__progname, "sendmail") == 0 ||
 	    strcmp(__progname, "send-mail") == 0) {
+		/*
+		 * determine whether we are called with flags
+		 * that should invoke makemap/newaliases.
+		 */
+		while ((ch = getopt(argc, argv, "b:C:O:")) != -1) {
+			switch (ch) {
+			case 'b':
+				if (strcmp(optarg, "i") == 0)
+					sendmail_makemap = 1;
+				break;
+			case 'C':	 
+				break; /* compatibility, not required */
+			case 'O':
+				if (strncmp(optarg, "AliasFile=", 10) != 0)
+					break;
+				p = strchr(optarg, '=');
+				aliases_path = ++p;
+				break;
+			}
+		}
+		argc -= optind;
+		argv += optind;
+		optind = 0;
+		if (sendmail_makemap) {
+			memset(&args, 0, sizeof args);
+			addargs(&args, "%s", "makemap");
+			for (i = 0; i < argc; i++)
+				addargs(&args, "%s", argv[i]);
+
+			addargs(&args, "%s", "-taliases");
+			if (aliases_path)
+				addargs(&args, "%s", aliases_path);
+
+			return makemap(args.num, args.list);
+		}
+
 		if (!srv_connect())
 			offlinefp = offline_file();
 
