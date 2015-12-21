@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.52 2015/12/14 13:59:42 tb Exp $	*/
+/*	$OpenBSD: misc.c,v 1.53 2015/12/21 04:57:50 mmcc Exp $	*/
 
 /*
  * Miscellaneous functions
@@ -986,7 +986,7 @@ print_value_quoted(const char *s)
 	}
 	for (p = s; *p; p++) {
 		if (*p == '\'') {
-			shprintf("'\\'" + 1 - inquote);
+			shprintf(inquote ? "'\\'" : "\\'");
 			inquote = 0;
 		} else {
 			if (!inquote) {
