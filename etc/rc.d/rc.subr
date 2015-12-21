@@ -1,4 +1,4 @@
-#	$OpenBSD: rc.subr,v 1.103 2015/12/19 14:10:41 ajacoutot Exp $
+#	$OpenBSD: rc.subr,v 1.104 2015/12/21 09:29:12 ajacoutot Exp $
 #
 # Copyright (c) 2010, 2011, 2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -203,7 +203,7 @@ rc_cmd() {
 				_rc_do rc_pre || break
 			fi
 			_rc_do rc_start || break
-			_rc_do _rc_wait start || break
+			#_rc_do _rc_wait start || break
 			_rc_do _rc_write_runfile
 			_rc_exit ok
 		done
