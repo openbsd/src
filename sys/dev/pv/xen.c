@@ -1,4 +1,4 @@
-/*	$OpenBSD: xen.c,v 1.15 2015/12/19 09:11:14 mikeb Exp $	*/
+/*	$OpenBSD: xen.c,v 1.16 2015/12/21 18:13:44 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Belopuhov
@@ -563,16 +563,15 @@ xen_intr_establish(evtchn_port_t port, xen_intr_handle_t *xih,
 	struct xen_softc *sc = xen_sc;
 	struct xen_intsrc *xi;
 	struct evtchn_alloc_unbound eau;
-	struct evtchn_unmask eu;
 #if notyet
 	struct evtchn_bind_vcpu ebv;
 #endif
-#ifdef XEN_DEBUG
+#if defined(XEN_DEBUG) && disabled
 	struct evtchn_status es;
 #endif
 
 	if (port && xen_lookup_intsrc(sc, port)) {
-		printf("%s: interrupt handler has already been established "
+		DPRINTF("%s: interrupt handler has already been established "
 		    "for port %u\n", sc->sc_dev.dv_xname, port);
 		return (-1);
 	}
@@ -621,15 +620,7 @@ xen_intr_establish(evtchn_port_t port, xen_intr_handle_t *xih,
 
 	SLIST_INSERT_HEAD(&sc->sc_intrs, xi, xi_entry);
 
-	if (!cold) {
-		eu.port = xi->xi_port;
-		if (xen_hypercall(sc, event_channel_op, 2, EVTCHNOP_unmask,
-		    &eu) || isset(sc->sc_ipg->evtchn_mask, xi->xi_port))
-			printf("%s: unmasking port %u failed\n",
-			    sc->sc_dev.dv_xname, xi->xi_port);
-	}
-
-#ifdef XEN_DEBUG
+#if defined(XEN_DEBUG) && disabled
 	memset(&es, 0, sizeof(es));
 	es.dom = DOMID_SELF;
 	es.port = xi->xi_port;
