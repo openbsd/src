@@ -1,4 +1,4 @@
-/*	$OpenBSD: xen.c,v 1.17 2015/12/21 18:17:36 mikeb Exp $	*/
+/*	$OpenBSD: xen.c,v 1.18 2015/12/21 19:43:16 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Belopuhov
@@ -620,6 +620,9 @@ xen_intr_establish(evtchn_port_t port, xen_intr_handle_t *xih,
 
 	SLIST_INSERT_HEAD(&sc->sc_intrs, xi, xi_entry);
 
+	/* Mask the event port */
+	setbit((char *)&sc->sc_ipg->evtchn_mask[0], xi->xi_port);
+
 #if defined(XEN_DEBUG) && disabled
 	memset(&es, 0, sizeof(es));
 	es.dom = DOMID_SELF;
@@ -695,6 +698,38 @@ xen_intr_enable(void)
 				    sc->sc_dev.dv_xname, xi->xi_port);
 		}
 	}
+}
+
+void
+xen_intr_mask(xen_intr_handle_t xih)
+{
+	struct xen_softc *sc = xen_sc;
+	evtchn_port_t port = (evtchn_port_t)xih;
+	struct xen_intsrc *xi;
+
+	if ((xi = xen_lookup_intsrc(sc, port)) != NULL) {
+		xi->xi_masked = 1;
+		setbit((char *)&sc->sc_ipg->evtchn_mask[0], xi->xi_port);
+		membar_producer();
+	}
+}
+
+int
+xen_intr_unmask(xen_intr_handle_t xih)
+{
+	struct xen_softc *sc = xen_sc;
+	evtchn_port_t port = (evtchn_port_t)xih;
+	struct xen_intsrc *xi;
+	struct evtchn_unmask eu;
+
+	if ((xi = xen_lookup_intsrc(sc, port)) != NULL) {
+		xi->xi_masked = 0;
+		if (!isset(sc->sc_ipg->evtchn_mask, xi->xi_port))
+			return (0);
+		eu.port = xi->xi_port;
+		return (xen_hypercall(sc, XC_EVTCHN, 2, EVTCHNOP_unmask, &eu));
+	}
+	return (0);
 }
 
 static int
