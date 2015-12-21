@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.217 2015/11/28 02:42:22 deraadt Exp $
+# $OpenBSD: sysmerge.sh,v 1.218 2015/12/21 10:54:49 ajacoutot Exp $
 #
 # Copyright (c) 2008-2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
@@ -337,8 +337,12 @@ sm_install() {
 		fi
 		;;
 	/etc/mail/aliases)
-		echo " (running newaliases(8))"
-		sm_warn $(newaliases 2>&1 >/dev/null)
+		if [[ -f /etc/mail/aliases.db ]]; then
+			echo " (running newaliases(8))"
+			sm_warn $(newaliases 2>&1 >/dev/null)
+		else
+			echo
+		fi
 		;;
 	*)
 		echo
