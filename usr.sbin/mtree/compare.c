@@ -1,5 +1,5 @@
 /*	$NetBSD: compare.c,v 1.11 1996/09/05 09:56:48 mycroft Exp $	*/
-/*	$OpenBSD: compare.c,v 1.24 2015/01/16 06:40:18 deraadt Exp $	*/
+/*	$OpenBSD: compare.c,v 1.25 2015/12/21 19:37:21 mmcc Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -318,10 +318,8 @@ typeerr:		LABEL;
 			(void)printf("%sflags: %s %s\n", tab, p->fts_accpath,
 				     strerror(errno));
 			tab = "\t";
-			if (db_flags != NULL)
-				free(db_flags);
-			if (cur_flags != NULL)
-				free(cur_flags);
+			free(db_flags);
+			free(cur_flags);
 		} else {
 			LABEL;
 			REPLACE_COMMA(db_flags);
