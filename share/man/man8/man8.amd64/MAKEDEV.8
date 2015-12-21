@@ -1,10 +1,10 @@
-.\" $OpenBSD: MAKEDEV.8,v 1.74 2015/12/03 09:01:56 claudio Exp $
+.\" $OpenBSD: MAKEDEV.8,v 1.75 2015/12/21 22:23:24 sf Exp $
 .\"
 .\" THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 .\" generated from:
 .\"
-.\"	OpenBSD: etc.amd64/MAKEDEV.md,v 1.61 2015/11/10 21:42:28 sthen Exp 
-.\"	OpenBSD: MAKEDEV.common,v 1.81 2015/11/10 21:49:18 sthen Exp 
+.\"	OpenBSD: etc.amd64/MAKEDEV.md,v 1.62 2015/12/21 22:15:53 sf Exp 
+.\"	OpenBSD: MAKEDEV.common,v 1.83 2015/12/21 22:15:53 sf Exp 
 .\"	OpenBSD: MAKEDEV.man,v 1.7 2009/03/18 17:34:25 sobrado Exp 
 .\"	OpenBSD: MAKEDEV.mansub,v 1.2 2004/02/20 19:13:01 miod Exp 
 .\"
@@ -23,7 +23,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 3 2015 $
+.Dd $Mdocdate: December 21 2015 $
 .Dt MAKEDEV 8 amd64
 .Os
 .Sh NAME
@@ -115,6 +115,9 @@ NS16x50 serial ports, see
 .It Ar ttyc*
 Cyclades serial ports, see
 .Xr cy 4 .
+.It Ar ttyVI*
+Virtio serial ports, see
+.Xr viocon 4 .
 .El
 .Pp
 .Sy Pseudo terminals
