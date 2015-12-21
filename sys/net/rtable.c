@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtable.c,v 1.35 2015/12/16 13:19:14 mpi Exp $ */
+/*	$OpenBSD: rtable.c,v 1.36 2015/12/21 10:51:55 mpi Exp $ */
 
 /*
  * Copyright (c) 2014-2015 Martin Pieuchot
@@ -482,12 +482,15 @@ rtable_mpath_capable(unsigned int rtableid, sa_family_t af)
 	return (mpath);
 }
 
-void
-rtable_mpath_reprio(struct rtentry *rt, uint8_t newprio)
+int
+rtable_mpath_reprio(unsigned int rtableid, struct sockaddr *dst,
+    struct sockaddr *mask, uint8_t prio, struct rtentry *rt)
 {
 	struct radix_node	*rn = (struct radix_node *)rt;
 
-	rn_mpath_reprio(rn, newprio);
+	rn_mpath_reprio(rn, prio);
+
+	return (0);
 }
 
 struct rtentry *
@@ -749,7 +752,7 @@ rtable_insert(unsigned int rtableid, struct sockaddr *dst,
 
 #ifndef SMALL_KERNEL
 	/* Put newly inserted entry at the right place. */
-	rtable_mpath_reprio(rt, rt->rt_priority);
+	rtable_mpath_reprio(rtableid, dst, mask, rt->rt_priority, rt);
 #endif /* SMALL_KERNEL */
 
 	return (0);
@@ -871,11 +874,30 @@ rtable_mpath_capable(unsigned int rtableid, sa_family_t af)
 	return (1);
 }
 
-void
-rtable_mpath_reprio(struct rtentry *rt, uint8_t prio)
+int
+rtable_mpath_reprio(unsigned int rtableid, struct sockaddr *dst,
+    struct sockaddr *mask, uint8_t prio, struct rtentry *rt)
 {
-	struct art_node			*an = rt->rt_node;
+	struct art_root			*ar;
+	struct art_node			*an;
+	uint8_t				*addr;
+	int				 plen;
 	struct rtentry			*mrt, *prt = NULL;
+
+	ar = rtable_get(rtableid, dst->sa_family);
+	if (ar == NULL)
+		return (EAFNOSUPPORT);
+
+	addr = satoaddr(ar, dst);
+	plen = rtable_satoplen(dst->sa_family, mask);
+
+	an = art_lookup(ar, addr, plen);
+	/* Make sure we've got a perfect match. */
+	if (an == NULL || an->an_plen != plen ||
+	    memcmp(an->an_dst, dst, dst->sa_len))
+		return (ESRCH);
+
+	KASSERT(an == rt->rt_node);
 
 	KERNEL_ASSERT_LOCKED();
 
@@ -911,6 +933,8 @@ rtable_mpath_reprio(struct rtentry *rt, uint8_t prio)
 	} else {
 		SRPL_INSERT_HEAD_LOCKED(&rt_rc, &an->an_rtlist, rt, rt_next);
 	}
+
+	return (0);
 }
 
 struct rtentry *

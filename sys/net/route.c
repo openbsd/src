@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.292 2015/12/11 08:58:23 mpi Exp $	*/
+/*	$OpenBSD: route.c,v 1.293 2015/12/21 10:51:55 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -1771,7 +1771,9 @@ rt_if_linkstate_change(struct rtentry *rt, void *arg, u_int id)
 		if (!(rt->rt_flags & RTF_UP)) {
 			/* bring route up */
 			rt->rt_flags |= RTF_UP;
-			rtable_mpath_reprio(rt, rt->rt_priority & RTP_MASK);
+			rtable_mpath_reprio(id, rt_key(rt),
+			    rt_plen2mask(rt, &sa_mask),
+			    rt->rt_priority & RTP_MASK, rt);
 		}
 	} else {
 		if (rt->rt_flags & RTF_UP) {
@@ -1786,7 +1788,9 @@ rt_if_linkstate_change(struct rtentry *rt, void *arg, u_int id)
 			}
 			/* take route down */
 			rt->rt_flags &= ~RTF_UP;
-			rtable_mpath_reprio(rt, rt->rt_priority | RTP_DOWN);
+			rtable_mpath_reprio(id, rt_key(rt),
+			    rt_plen2mask(rt, &sa_mask),
+			    rt->rt_priority | RTP_DOWN, rt);
 		}
 	}
 	if_group_routechange(rt_key(rt), rt_plen2mask(rt, &sa_mask));
