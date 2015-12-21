@@ -1,4 +1,4 @@
-/*	$OpenBSD: xspd.c,v 1.2 2015/12/12 21:09:20 reyk Exp $	*/
+/*	$OpenBSD: xspd.c,v 1.3 2015/12/21 18:17:36 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Belopuhov
@@ -101,7 +101,7 @@ xspd_attach(struct device *parent, struct device *self, void *aux)
 	else
 		xhp.value = HVM_CALLBACK_GSI(pci_intr_line(pa->pa_pc, ih));
 
-	if (xen_hypercall(xen_sc, hvm_op, 2, HVMOP_set_param, &xhp)) {
+	if (xen_hypercall(xen_sc, XC_HVM, 2, HVMOP_set_param, &xhp)) {
 		printf("%s: failed to register callback PCI vector\n",
 		    sc->sc_dev.dv_xname);
 		pci_intr_disestablish(pa->pa_pc, sc->sc_ih);

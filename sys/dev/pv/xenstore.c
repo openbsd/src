@@ -1,4 +1,4 @@
-/*	$OpenBSD: xenstore.c,v 1.8 2015/12/19 09:12:29 mikeb Exp $	*/
+/*	$OpenBSD: xenstore.c,v 1.9 2015/12/21 18:17:36 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Belopuhov
@@ -185,7 +185,7 @@ xs_attach(struct xen_softc *sc)
 	memset(&xhv, 0, sizeof(xhv));
 	xhv.domid = DOMID_SELF;
 	xhv.index = HVM_PARAM_STORE_EVTCHN;
-	if (xen_hypercall(sc, hvm_op, 2, HVMOP_get_param, &xhv))
+	if (xen_hypercall(sc, XC_HVM, 2, HVMOP_get_param, &xhv))
 		goto fail_1;
 	xs->xs_port = xhv.value;
 
@@ -196,7 +196,7 @@ xs_attach(struct xen_softc *sc)
 	memset(&xhv, 0, sizeof(xhv));
 	xhv.domid = DOMID_SELF;
 	xhv.index = HVM_PARAM_STORE_PFN;
-	if (xen_hypercall(sc, hvm_op, 2, HVMOP_get_param, &xhv))
+	if (xen_hypercall(sc, XC_HVM, 2, HVMOP_get_param, &xhv))
 		goto fail_1;
 	pa = ptoa(xhv.value);
 	/* Allocate a page of virtual memory */
