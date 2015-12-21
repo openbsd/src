@@ -4,7 +4,7 @@
 # generated from:
 #
 #	OpenBSD: etc.amd64/MAKEDEV.md,v 1.61 2015/11/10 21:42:28 sthen Exp 
-#	OpenBSD: MAKEDEV.common,v 1.81 2015/11/10 21:49:18 sthen Exp 
+#	OpenBSD: MAKEDEV.common,v 1.82 2015/12/09 04:11:58 deraadt Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.81 2012/11/05 08:07:09 jasper Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
@@ -248,7 +248,7 @@ vscsi*)
 	;;
 
 vmm)
-	M vmm c 10 0 640
+	M vmm c 10 0 600
 	;;
 
 video*)
