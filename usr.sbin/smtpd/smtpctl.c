@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpctl.c,v 1.142 2015/12/22 15:59:10 sunil Exp $	*/
+/*	$OpenBSD: smtpctl.c,v 1.143 2015/12/22 21:50:22 gilles Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -990,6 +990,7 @@ main(int argc, char **argv)
 		 * determine whether we are called with flags
 		 * that should invoke makemap/newaliases.
 		 */
+		opterr = 0;
 		while ((ch = getopt(argc, argv, "b:C:O:")) != -1) {
 			switch (ch) {
 			case 'b':
@@ -1006,10 +1007,13 @@ main(int argc, char **argv)
 				break;
 			}
 		}
-		argc -= optind;
-		argv += optind;
-		optind = 0;
+		opterr = 1;
+
 		if (sendmail_makemap) {
+			argc -= optind;
+			argv += optind;
+			optind = 0;
+
 			memset(&args, 0, sizeof args);
 			addargs(&args, "%s", "makemap");
 			for (i = 0; i < argc; i++)
@@ -1021,6 +1025,7 @@ main(int argc, char **argv)
 
 			return makemap(args.num, args.list);
 		}
+		optind = 0;
 
 		if (!srv_connect())
 			offlinefp = offline_file();
