@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftp-proxy.c,v 1.32 2015/12/04 19:05:43 sebastia Exp $ */
+/*	$OpenBSD: ftp-proxy.c,v 1.33 2015/12/22 08:35:17 mmcc Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Camiel Dobbelaar, <cd@sentia.nl>
@@ -300,7 +300,7 @@ end_session(struct session *s)
 	if (s->server_bufev)
 		bufferevent_free(s->server_bufev);
 
-	/* Remove rulesets by commiting empty ones. */
+	/* Remove rulesets by committing empty ones. */
 	err = 0;
 	if (prepare_commit(s->id) == -1)
 		err = errno;
