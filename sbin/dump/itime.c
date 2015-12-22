@@ -1,4 +1,4 @@
-/*	$OpenBSD: itime.c,v 1.22 2015/08/20 22:02:20 deraadt Exp $	*/
+/*	$OpenBSD: itime.c,v 1.23 2015/12/22 21:03:58 mmcc Exp $	*/
 /*	$NetBSD: itime.c,v 1.4 1997/04/15 01:09:50 lukem Exp $	*/
 
 /*-
@@ -47,10 +47,10 @@
 
 #include "dump.h"
 
-struct	dumpdates **ddatev = 0;
+struct	dumpdates **ddatev = NULL;
 int	nddates = 0;
 int	ddates_in = 0;
-struct	dumptime *dthead = 0;
+struct	dumptime *dthead = NULL;
 
 static	void dumprecout(FILE *, struct dumpdates *);
 static	int getrecord(FILE *, struct dumpdates *);
@@ -166,10 +166,10 @@ putdumptime(void)
 	fd = fileno(df);
 	(void) flock(fd, LOCK_EX);
 	fname = duid ? duid : disk;
-	free((char *)ddatev);
-	ddatev = 0;
+	free(ddatev);
+	ddatev = NULL;
 	nddates = 0;
-	dthead = 0;
+	dthead = NULL;
 	ddates_in = 0;
 	readdumptimes(df);
 	if (fseek(df, 0L, SEEK_SET) < 0)
