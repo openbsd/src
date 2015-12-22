@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetd.c,v 1.149 2015/11/01 19:59:28 deraadt Exp $	*/
+/*	$OpenBSD: inetd.c,v 1.150 2015/12/22 19:44:01 mmcc Exp $	*/
 
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
@@ -1014,8 +1014,7 @@ struct servtab	*dupconfig(struct servtab *);
 int
 setconfig(void)
 {
-	if (defhost)
-		free(defhost);
+	free(defhost);
 	defhost = newstr("*");
 	if (fconfig != NULL) {
 		fseek(fconfig, 0L, SEEK_SET);
