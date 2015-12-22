@@ -1,4 +1,4 @@
-/*	$OpenBSD: hostapd.c,v 1.35 2015/01/16 06:40:17 deraadt Exp $	*/
+/*	$OpenBSD: hostapd.c,v 1.36 2015/12/22 19:45:09 mmcc Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@openbsd.org>
@@ -91,8 +91,7 @@ hostapd_log(u_int level, const char *fmt, ...)
 		vsyslog(LOG_INFO, fmt, ap);
 	va_end(ap);
 
-	if (nfmt != NULL)
-		free(nfmt);
+	free(nfmt);
 }
 
 void
