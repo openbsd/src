@@ -1,4 +1,4 @@
-/* $OpenBSD: agp.c,v 1.48 2015/12/19 16:07:20 kettenis Exp $ */
+/* $OpenBSD: agp.c,v 1.49 2015/12/22 21:05:37 kettenis Exp $ */
 /*-
  * Copyright (c) 2000 Doug Rabson
  * All rights reserved.
@@ -44,13 +44,6 @@
 #include <dev/pci/agpvar.h>
 #include <dev/pci/agpreg.h>
 
-/*
- * the enable and {alloc, free, bind, unbind} memory routines have default
- * fallbacks, these macros do the right thing. The callbacks with no fallback
- * are called directly. These are mostly hacks around the weirdness of intel
- * integrated graphics, since they are not technically a true agp chipset,
- * but provide an almost identical interface.
- */
 void	agp_attach(struct device *, struct device *, void *);
 int	agp_probe(struct device *, void *, void *);
 
