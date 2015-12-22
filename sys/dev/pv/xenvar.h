@@ -1,4 +1,4 @@
-/*	$OpenBSD: xenvar.h,v 1.16 2015/12/22 22:16:53 mikeb Exp $	*/
+/*	$OpenBSD: xenvar.h,v 1.17 2015/12/22 22:19:46 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Belopuhov
@@ -121,6 +121,7 @@ int	xen_intr_unmask(xen_intr_handle_t);
 #define XS_TOPEN		0x06
 #define XS_TCLOSE		0x07
 #define XS_WRITE		0x0b
+#define XS_RM			0x0d
 #define XS_ERROR		0x10
 #define XS_MAX			0x16
 
