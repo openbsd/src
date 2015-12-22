@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbhid.c,v 1.11 2013/11/27 00:13:23 deraadt Exp $	*/
+/*	$OpenBSD: usbhid.c,v 1.12 2015/12/22 19:46:16 mmcc Exp $	*/
 /*      $NetBSD: usbhid.c,v 1.22 2002/02/20 20:30:42 christos Exp $ */
 
 /*
@@ -412,8 +412,7 @@ allocreport(struct Sreport *report, report_desc_t rd, int repindex)
 static void
 freereport(struct Sreport *report)
 {
-	if (report->buffer != NULL)
-		free(report->buffer);
+	free(report->buffer);
 	report->status = srs_uninit;
 }
 
