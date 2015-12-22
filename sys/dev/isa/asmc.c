@@ -1,4 +1,4 @@
-/*	$OpenBSD: asmc.c,v 1.21 2015/12/15 20:58:22 jung Exp $	*/
+/*	$OpenBSD: asmc.c,v 1.22 2015/12/22 19:04:42 kettenis Exp $	*/
 /*
  * Copyright (c) 2015 Joerg Jung <jung@openbsd.org>
  *
@@ -44,7 +44,11 @@
 #define ASMC_WRITE	0x11	/* SMC write command */
 #define ASMC_INFO	0x13	/* SMC info/type command */
 
-#define ASMC_RETRY	10
+#define ASMC_OBF	0x01	/* Output buffer full */
+#define ASMC_IBF	0x02	/* Input buffer full */
+#define ASMC_ACCEPT	0x04
+
+#define ASMC_RETRY	3
 #define ASMC_MAXLEN	32	/* SMC maximum data size len */
 #define ASMC_NOTFOUND	0x84	/* SMC status key not found */
 
@@ -385,11 +389,8 @@ asmc_kbdled(void *arg)
 	int r;
 
 	if ((r = asmc_try(sc, ASMC_WRITE, "LKSB", buf, 2)))
-#if 0 /* todo: write error, as no 0x04 wait status, but led is changed */
 		printf("%s: keyboard backlight failed (0x%x)\n",
 		    sc->sc_dev.dv_xname, r);
-#endif
-		;
 }
 
 int
@@ -436,44 +437,57 @@ asmc_status(struct asmc_softc *sc)
 }
 
 static int
-asmc_wait(struct asmc_softc *sc, uint8_t m)
-{
-	int us;
-
-	for (us = (2 << 4); us < (2 << 16); us *= 2) { /* wait up to 128 ms */
-		(!sc->sc_sensor_task) ? delay(us) :
-		    tsleep(&sc->sc_taskq, 0, "asmc",
-		        (us * hz + 999999) / 1000000 + 1);
-		if (bus_space_read_1(sc->sc_iot, sc->sc_ioh, ASMC_COMMAND) & m)
-			return 1;
-	}
-	return 0;
-}
-
-static int
 asmc_write(struct asmc_softc *sc, uint8_t off, uint8_t val)
 {
+	uint8_t str;
+	int i;
+
+	for (i = 500; i > 0; i--) {
+		str = bus_space_read_1(sc->sc_iot, sc->sc_ioh, ASMC_COMMAND);
+		if ((str & ASMC_IBF) == 0)
+			break;
+		delay(10);
+	}
+	if (i == 0)
+		return ETIMEDOUT;
+
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, off, val);
-	if (asmc_wait(sc, 0x04)) /* write accepted? */
-		return 0;
-	return 1;
+
+	for (i = 500; i > 0; i--) {
+		str = bus_space_read_1(sc->sc_iot, sc->sc_ioh, ASMC_COMMAND);
+		if (str & ASMC_ACCEPT)
+			break;
+		delay(10);
+	}
+	if (i == 0)
+		return ETIMEDOUT;
+
+	return 0;
 }
 
 static int
 asmc_read(struct asmc_softc *sc, uint8_t off, uint8_t *buf)
 {
-	if (asmc_wait(sc, 0x01)) { /* ready for read? */
-		*buf = bus_space_read_1(sc->sc_iot, sc->sc_ioh, off);
-		return 0;
+	uint8_t str;
+	int i;
+
+	for (i = 500; i > 0; i--) {
+		str = bus_space_read_1(sc->sc_iot, sc->sc_ioh, ASMC_COMMAND);
+		if (str & ASMC_OBF)
+			break;
+		delay(10);
 	}
-	return 1;
+	if (i == 0)
+		return ETIMEDOUT;
+
+	*buf = bus_space_read_1(sc->sc_iot, sc->sc_ioh, off);
+	return 0;
 }
 
 static int
 asmc_command(struct asmc_softc *sc, int cmd, const char *key, uint8_t *buf,
     uint8_t len)
 {
-	uint8_t n;
 	int i;
 
 	if (len > ASMC_MAXLEN)
@@ -489,9 +503,6 @@ asmc_command(struct asmc_softc *sc, int cmd, const char *key, uint8_t *buf,
 		for (i = 0; i < len; i++)
 			if (asmc_read(sc, ASMC_DATA, &buf[i]))
 				return 1;
-		for (i = 0; i < ASMC_MAXLEN; i++) /* sanity flush */
-			if (asmc_read(sc, ASMC_DATA, &n))
-				break;
 	} else if (cmd == ASMC_WRITE) {
 		for (i = 0; i < len; i++)
 			if (asmc_write(sc, ASMC_DATA, buf[i]))
@@ -515,9 +526,7 @@ asmc_try(struct asmc_softc *sc, int cmd, const char *key, uint8_t *buf,
 	if (r && (s = asmc_status(sc)))
 		r = s;
 	rw_exit_write(&sc->sc_lock);
-	if (sc->sc_sensor_task) /* give kbdled a chance to grab the lock */
-		tsleep(&sc->sc_taskq, 0, "asmc",
-		    (1 * hz + 999999) / 1000000 + 1);
+
 	return r;
 }
 
