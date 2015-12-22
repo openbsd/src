@@ -15,7 +15,6 @@
 ./etc/login.conf
 ./etc/mail.rc
 ./etc/mail/aliases
-./etc/mail/aliases.db
 ./etc/mail/smtpd.conf
 ./etc/mail/spamd.conf
 ./etc/mailer.conf
