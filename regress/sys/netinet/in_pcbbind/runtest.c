@@ -1,4 +1,4 @@
-/* $OpenBSD: runtest.c,v 1.2 2015/12/09 14:52:59 vgross Exp $ */
+/* $OpenBSD: runtest.c,v 1.3 2015/12/22 13:23:24 vgross Exp $ */
 /*
  * Copyright (c) 2015 Vincent Gross <vincent.gross@kilob.yt>
  *
@@ -229,7 +229,7 @@ mcast_reuse_testsuite(struct addrinfo *local, void *mr)
 	if (rc)
 		warnx("%s : test #%d failed", __func__, 4);
 
-#if 1
+#if 0
 	rc = 0; s = sockets;
 	rc |= runtest(s++, local, 1, 1, mr, 0);
 	rc |= runtest(s++, local, 1, 0, mr, 0);
@@ -255,7 +255,7 @@ mcast_reuse_testsuite(struct addrinfo *local, void *mr)
 	rc |= runtest(s++, local, 1, 0, mr, 0);
 	rc |= runtest(s++, local, 1, 1, mr, 0);
 	rc |= runtest(s++, local, 1, 0, mr, 0);
-	rc |= runtest(s++, local, 0, 1, mr, 0); /* XXX - EADDRINUSE */
+	rc |= runtest(s++, local, 0, 1, mr, 0);
 	cleanup(sockets, 5);
 	test_rc |= rc;
 	if (rc)
@@ -300,10 +300,15 @@ mcast6_testsuite(struct addrinfo *local, struct ipv6_mreq *local_mreq,
 	if (rc)
 		warnx("%s : test #%d failed", __func__, 3);
 
+	/*
+	 * :: is not a multicast address, SO_REUSEADDR and SO_REUSEPORT
+	 * keep their unicast semantics although we are binding on multicast
+	 */
+
 	rc = 0; s = sockets;
 	rc |= runtest(s++, any, 0, 1, any_mreq, 0);
 	rc |= runtest(s++, any, 0, 1, any_mreq, 0);
-	rc |= runtest(s++, any, 1, 0, any_mreq, 0); /* XXX - EADDRINUSE */
+	rc |= runtest(s++, any, 1, 0, any_mreq, EADDRINUSE);
 	rc |= runtest(s++, any, 0, 0, any_mreq, EADDRINUSE);
 	cleanup(sockets, 4);
 	test_rc |= rc;
@@ -313,19 +318,21 @@ mcast6_testsuite(struct addrinfo *local, struct ipv6_mreq *local_mreq,
 	rc = 0; s = sockets;
 	rc |= runtest(s++, local, 1, 0, local_mreq, 0);
 	rc |= runtest(s++, local, 1, 0, local_mreq, 0);
-	rc |= runtest(s++, local, 0, 1, local_mreq, 0); /* XXX - EADDRINUSE */
+	rc |= runtest(s++, local, 0, 1, local_mreq, 0);
 	rc |= runtest(s++, local, 0, 0, local_mreq, EADDRINUSE);
-	cleanup(sockets, 3);
+	cleanup(sockets, 4);
 	test_rc |= rc;
 	if (rc)
 		warnx("%s : test #%d failed", __func__, 5);
 
+	/* See above */
+
 	rc = 0; s = sockets;
 	rc |= runtest(s++, any, 1, 0, any_mreq, 0);
-	rc |= runtest(s++, any, 1, 0, any_mreq, 0); /* XXX - EADDRINUSE */
-	rc |= runtest(s++, any, 0, 1, any_mreq, 0); /* XXX - EADDRINUSE */
+	rc |= runtest(s++, any, 1, 0, any_mreq, EADDRINUSE);
+	rc |= runtest(s++, any, 0, 1, any_mreq, EADDRINUSE);
 	rc |= runtest(s++, any, 0, 0, any_mreq, EADDRINUSE);
-	cleanup(sockets, 3);
+	cleanup(sockets, 4);
 	test_rc |= rc;
 	if (rc)
 		warnx("%s : test #%d failed", __func__, 6);
