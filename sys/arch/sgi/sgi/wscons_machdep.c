@@ -1,4 +1,4 @@
-/*	$OpenBSD: wscons_machdep.c,v 1.11 2012/04/18 17:28:24 miod Exp $ */
+/*	$OpenBSD: wscons_machdep.c,v 1.12 2015/12/22 21:36:57 mmcc Exp $ */
 
 /*
  * Copyright (c) 2010 Miodrag Vallat.
@@ -346,7 +346,7 @@ widget_cnprobe()
 
 success:
 	/*
-	 * At this point, we are commited to setup a glass console,
+	 * At this point, we are committed to setup a glass console,
 	 * so prevent serial console from winning over.
 	 */
 	comconsaddr = 0;

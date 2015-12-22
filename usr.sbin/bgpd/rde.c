@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.344 2015/12/03 09:26:59 benno Exp $ */
+/*	$OpenBSD: rde.c,v 1.345 2015/12/22 21:36:57 mmcc Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2445,7 +2445,7 @@ rde_send_kroute(struct prefix *new, struct prefix *old, u_int16_t ribid)
 	enum imsg_type		 type;
 
 	/*
-	 * Make sure that self announce prefixes are not commited to the
+	 * Make sure that self announce prefixes are not committed to the
 	 * FIB. If both prefixes are unreachable no update is needed.
 	 */
 	if ((old == NULL || old->aspath->flags & F_PREFIX_ANNOUNCED) &&

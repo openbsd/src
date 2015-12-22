@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.165 2015/12/07 01:51:39 beck Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.166 2015/12/22 21:36:57 mmcc Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
 
 /*
@@ -3059,7 +3059,7 @@ nfs_writebp(struct buf *bp, int force)
 		}
 
 		/*
-		 * If it's already been commited by somebody else,
+		 * If it's already been committed by somebody else,
 		 * bail.
 		 */
 		if (!nfs_in_committed_range(vp, bp)) {
