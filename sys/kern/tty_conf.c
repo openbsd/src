@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_conf.c,v 1.22 2015/12/21 21:49:02 sf Exp $	*/
+/*	$OpenBSD: tty_conf.c,v 1.23 2015/12/22 20:31:51 sf Exp $	*/
 /*	$NetBSD: tty_conf.c,v 1.18 1996/05/19 17:17:55 jonathan Exp $	*/
 
 /*-
@@ -41,6 +41,11 @@
 #include <sys/systm.h>
 #include <sys/tty.h>
 #include <sys/conf.h>
+
+#include "ppp.h"
+#include "nmea.h"
+#include "msts.h"
+#include "endrun.h"
 
 #define	ttynodisc ((int (*)(dev_t, struct tty *, struct proc *))enodev)
 #define	ttyerrclose ((int (*)(struct tty *, int flags, struct proc *))enodev)
