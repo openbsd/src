@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.114 2015/11/29 09:17:12 espie Exp $	*/
+/*	$OpenBSD: parse.c,v 1.115 2015/12/22 21:50:54 espie Exp $	*/
 /*	$NetBSD: parse.c,v 1.29 1997/03/10 21:20:04 christos Exp $	*/
 
 /*
@@ -822,12 +822,18 @@ ParseDoDependency(const char *line)	/* the line to parse */
 	Array_Reset(&gsources);
 
 	cp = parse_do_targets(&paths, &tOp, line);
-	if (cp == NULL || specType == SPECIAL_ERROR)
+	if (cp == NULL || specType == SPECIAL_ERROR) {
+		/* invalidate targets for further processing */
+		Array_Reset(&gtargets); 
 		return;
+	}
 
 	op = parse_operator(&cp);
-	if (op == OP_ERROR)
+	if (op == OP_ERROR) {
+		/* invalidate targets for further processing */
+		Array_Reset(&gtargets); 
 		return;
+	}
 
 	Array_FindP(&gtargets, ParseDoOp, op);
 	dedup_targets(&gtargets);
