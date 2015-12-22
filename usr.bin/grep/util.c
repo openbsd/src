@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.53 2015/12/22 17:07:06 millert Exp $	*/
+/*	$OpenBSD: util.c,v 1.54 2015/12/22 19:35:50 mmcc Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -588,7 +588,7 @@ grep_cmp(const char *pattern, const char *data, size_t len)
 
 	for (i = 0; i < len; i++) {
 		if (((pattern[i] == data[i]) || (!Fflag && pattern[i] == '.'))
-		    || (iflag && pattern[i] == toupper(data[i])))
+		    || (iflag && pattern[i] == toupper((unsigned char)data[i])))
 			continue;
 		return false;
 	}
