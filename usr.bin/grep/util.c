@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.52 2015/12/14 20:02:07 mmcc Exp $	*/
+/*	$OpenBSD: util.c,v 1.53 2015/12/22 17:07:06 millert Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -34,6 +34,7 @@
 #include <errno.h>
 #include <fts.h>
 #include <regex.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -50,7 +51,7 @@ static int	linesqueued;
 static int	procline(str_t *l, int);
 static int	grep_search(fastgrep_t *, char *, size_t, regmatch_t *pmatch);
 #ifndef SMALL
-static int	grep_cmp(const char *, const char *, size_t);
+static bool	grep_cmp(const char *, const char *, size_t);
 static void	grep_revstr(unsigned char *, int);
 #endif
 
@@ -485,7 +486,7 @@ grep_search(fastgrep_t *fg, char *data, size_t dataLen, regmatch_t *pmatch)
 				j = 0;
 			if (!((fg->bol && fg->eol) && (dataLen != fg->patternLen)))
 				if (grep_cmp(fg->pattern, data + j,
-				    fg->patternLen) == -1) {
+				    fg->patternLen)) {
 					pmatch->rm_so = j;
 					pmatch->rm_eo = j + fg->patternLen;
 					if (!fg->wmatch || wmatch(data, dataLen,
@@ -498,7 +499,7 @@ grep_search(fastgrep_t *fg, char *data, size_t dataLen, regmatch_t *pmatch)
 		j = dataLen;
 		do {
 			if (grep_cmp(fg->pattern, data + j - fg->patternLen,
-			    fg->patternLen) == -1) {
+			    fg->patternLen)) {
 				pmatch->rm_so = j - fg->patternLen;
 				pmatch->rm_eo = j;
 				if (!fg->wmatch || wmatch(data, dataLen,
@@ -516,7 +517,7 @@ grep_search(fastgrep_t *fg, char *data, size_t dataLen, regmatch_t *pmatch)
 		/* Quick Search algorithm. */
 		j = 0;
 		do {
-			if (grep_cmp(fg->pattern, data + j, fg->patternLen) == -1) {
+			if (grep_cmp(fg->pattern, data + j, fg->patternLen)) {
 				pmatch->rm_so = j;
 				pmatch->rm_eo = j + fg->patternLen;
 				if (fg->patternLen == 0 || !fg->wmatch ||
@@ -578,22 +579,21 @@ grep_reallocarray(void *ptr, size_t nmemb, size_t size)
 
 #ifndef SMALL
 /*
- * Returns:	i >= 0 on failure (position that it failed)
- *		-1 on success
+ * Returns:	true on success, false on failure
  */
-static int
+static bool
 grep_cmp(const char *pattern, const char *data, size_t len)
 {
-	int i;
+	size_t i;
 
 	for (i = 0; i < len; i++) {
 		if (((pattern[i] == data[i]) || (!Fflag && pattern[i] == '.'))
 		    || (iflag && pattern[i] == toupper(data[i])))
 			continue;
-		return (i);
+		return false;
 	}
 
-	return (-1);
+	return true;
 }
 
 static void
