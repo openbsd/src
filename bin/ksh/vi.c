@@ -1,4 +1,4 @@
-/*	$OpenBSD: vi.c,v 1.38 2015/11/05 18:41:02 mmcc Exp $	*/
+/*	$OpenBSD: vi.c,v 1.39 2015/12/22 08:39:26 mmcc Exp $	*/
 
 /*
  *	vi command editing
@@ -1908,13 +1908,13 @@ expand_word(int command)
 	/* Undo previous expansion */
 	if (command == 0 && expanded == EXPAND && buf) {
 		restore_edstate(es, buf);
-		buf = 0;
+		buf = NULL;
 		expanded = NONE;
 		return 0;
 	}
 	if (buf) {
 		free_edstate(buf);
-		buf = 0;
+		buf = NULL;
 	}
 
 	nwords = x_cf_glob(XCF_COMMAND_FILE|XCF_FULLPATH,
@@ -1970,13 +1970,13 @@ complete_word(int command, int count)
 	}
 	if (command == 0 && expanded == PRINT && buf) {
 		restore_edstate(es, buf);
-		buf = 0;
+		buf = NULL;
 		expanded = NONE;
 		return 0;
 	}
 	if (buf) {
 		free_edstate(buf);
-		buf = 0;
+		buf = NULL;
 	}
 
 	/* XCF_FULLPATH for count 'cause the menu printed by print_expansions()
