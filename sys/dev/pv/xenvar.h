@@ -1,4 +1,4 @@
-/*	$OpenBSD: xenvar.h,v 1.15 2015/12/21 19:43:16 mikeb Exp $	*/
+/*	$OpenBSD: xenvar.h,v 1.16 2015/12/22 22:16:53 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Belopuhov
@@ -33,8 +33,23 @@ struct xen_intsrc {
 	void			 *xi_arg;
 	struct evcount		  xi_evcnt;
 	evtchn_port_t		  xi_port;
-	int			  xi_noclose;
-	int			  xi_masked;
+	short			  xi_noclose;
+	short			  xi_masked;
+};
+
+struct xen_gntent {
+	SLIST_ENTRY(xen_gntent)	 ge_entry;
+	grant_entry_t		*ge_table;
+	grant_ref_t		 ge_start;
+	short			 ge_reserved;
+	short			 ge_next;
+	short			 ge_free;
+	struct mutex		 ge_mtx;
+};
+
+struct xen_gntmap {
+	grant_ref_t		 gm_ref;
+	paddr_t			 gm_paddr;
 };
 
 struct xen_softc {
@@ -51,6 +66,10 @@ struct xen_softc {
 	struct evcount		 sc_evcnt;	/* upcall counter */
 	SLIST_HEAD(, xen_intsrc) sc_intrs;
 
+	SLIST_HEAD(, xen_gntent) sc_gnts;	/* grant table entries */
+	int			 sc_gntcnt;	/* current number of pages */
+	int			 sc_gntmax;	/* maximum number of pages */
+
 	/*
 	 * Xenstore
 	 */
@@ -64,6 +83,7 @@ struct xen_attach_args {
 	char			 xa_name[16];
 	char			 xa_node[64];
 	char			 xa_backend[128];
+	bus_dma_tag_t		 xa_dmat;
 };
 
 /*

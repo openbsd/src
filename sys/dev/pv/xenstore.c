@@ -1,4 +1,4 @@
-/*	$OpenBSD: xenstore.c,v 1.9 2015/12/21 18:17:36 mikeb Exp $	*/
+/*	$OpenBSD: xenstore.c,v 1.10 2015/12/22 22:16:53 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Belopuhov
@@ -23,6 +23,8 @@
 #include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/mutex.h>
+
+#include <machine/bus.h>
 
 #include <uvm/uvm_extern.h>
 
