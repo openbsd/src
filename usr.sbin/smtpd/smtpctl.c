@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpctl.c,v 1.141 2015/12/21 11:20:07 sunil Exp $	*/
+/*	$OpenBSD: smtpctl.c,v 1.142 2015/12/22 15:59:10 sunil Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -996,7 +996,7 @@ main(int argc, char **argv)
 				if (strcmp(optarg, "i") == 0)
 					sendmail_makemap = 1;
 				break;
-			case 'C':	 
+			case 'C':
 				break; /* compatibility, not required */
 			case 'O':
 				if (strncmp(optarg, "AliasFile=", 10) != 0)
