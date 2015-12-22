@@ -1,4 +1,4 @@
-/*	$OpenBSD: softraid.c,v 1.15 2015/10/28 13:33:42 jsing Exp $	*/
+/*	$OpenBSD: softraid.c,v 1.16 2015/12/22 21:15:43 krw Exp $	*/
 
 /*
  * Copyright (c) 2012 Joel Sing <jsing@openbsd.org>
@@ -28,6 +28,7 @@
 #include <lib/libsa/hmac_sha1.h>
 #include <lib/libsa/pbkdf2.h>
 #include <lib/libsa/rijndael.h>
+#include <lib/libz/zlib.h>
 
 #include "libsa.h"
 #include "disk.h"
@@ -394,6 +395,121 @@ sr_strategy(struct sr_boot_volume *bv, int rw, daddr32_t blk, size_t size,
 		return ENOTSUP;
 }
 
+/*
+ * Returns 0 if the MBR with the provided partition array is a GPT protective
+ * MBR, and returns 1 otherwise. A GPT protective MBR would have one and only
+ * one MBR partition, an EFI partition that either covers the whole disk or as
+ * much of it as is possible with a 32bit size field.
+ *
+ * Taken from kern/subr_disk.c.
+ *
+ * NOTE: MS always uses a size of UINT32_MAX for the EFI partition!**
+ */
+int
+gpt_chk_mbr(struct dos_partition *dp, struct disklabel *dl)
+{
+	struct dos_partition *dp2;
+	int efi, found, i;
+	u_int64_t dsize;
+	u_int32_t psize;
+
+	found = efi = 0;
+	for (dp2=dp, i=0; i < NDOSPART; i++, dp2++) {
+		if (dp2->dp_typ == DOSPTYP_UNUSED)
+			continue;
+		found++;
+		if (dp2->dp_typ != DOSPTYP_EFI)
+			continue;
+		dsize = DL_GETDSIZE(dl);
+		psize = letoh32(dp2->dp_size);
+		if (psize == (dsize - 1) ||
+		    psize == UINT32_MAX) {
+			if (letoh32(dp2->dp_start) == 1)
+				efi++;
+		}
+	}
+	if (found == 1 && efi == 1)
+		return (0);
+
+	return (1);
+}
+
+static uint64_t
+findopenbsd_gpt(struct sr_boot_volume *bv)
+{
+	struct			 gpt_header gh;
+	int			 i, part;
+	uint64_t		 lba;
+	uint32_t		 orig_csum, new_csum;
+	uint32_t		 ghsize, ghpartsize, ghpartnum, ghpartspersec;
+	const char		 openbsd_uuid_code[] = GPT_UUID_OPENBSD;
+	static struct uuid	*openbsd_uuid = NULL, openbsd_uuid_space;
+	static struct gpt_partition
+				 gp[NGPTPARTITIONS];
+	static u_char		 buf[4096];
+
+	/* Prepare OpenBSD UUID */
+	if (openbsd_uuid == NULL) {
+		/* XXX: should be replaced by uuid_dec_be() */
+		memcpy(&openbsd_uuid_space, openbsd_uuid_code,
+		    sizeof(openbsd_uuid_space));
+		openbsd_uuid_space.time_low =
+		    betoh32(openbsd_uuid_space.time_low);
+		openbsd_uuid_space.time_mid =
+		    betoh16(openbsd_uuid_space.time_mid);
+		openbsd_uuid_space.time_hi_and_version =
+		    betoh16(openbsd_uuid_space.time_hi_and_version);
+
+		openbsd_uuid = &openbsd_uuid_space;
+	}
+
+	/* LBA1: GPT Header */
+	lba = 1;
+	sr_strategy(bv, F_READ, lba, DEV_BSIZE, buf, NULL);
+	memcpy(&gh, buf, sizeof(gh));
+
+	/* Check signature */
+	if (letoh64(gh.gh_sig) != GPTSIGNATURE)
+		return (-1);
+
+	if (letoh32(gh.gh_rev) != GPTREVISION)
+		return (-1);
+
+	ghsize = letoh32(gh.gh_size);
+	if (ghsize < GPTMINHDRSIZE || ghsize > sizeof(struct gpt_header))
+		return (-1);
+
+	/* Check checksum */
+	orig_csum = gh.gh_csum;
+	gh.gh_csum = 0;
+	new_csum = crc32(0, (unsigned char *)&gh, ghsize);
+	gh.gh_csum = orig_csum;
+	if (letoh32(orig_csum) != new_csum)
+		return (1);
+
+	lba = letoh64(gh.gh_part_lba);
+	ghpartsize = letoh32(gh.gh_part_size);
+	ghpartspersec = DEV_BSIZE / ghpartsize;
+	ghpartnum = letoh32(gh.gh_part_num);
+	for (i = 0; i < (ghpartnum + ghpartspersec - 1) / ghpartspersec;
+	    i++, lba++) {
+		sr_strategy(bv, F_READ, lba, DEV_BSIZE, buf, NULL);
+		memcpy(gp + i * ghpartspersec, buf,
+		    ghpartspersec * sizeof(struct gpt_partition));
+	}
+	new_csum = crc32(0, (unsigned char *)&gp, ghpartnum * ghpartsize);
+	if (new_csum != letoh32(gh.gh_part_csum))
+		return (-1);
+
+	for (part = 0; part < ghpartnum; part++) {
+		if (memcmp(&gp[part].gp_type, openbsd_uuid,
+		    sizeof(struct uuid)) == 0)
+			return letoh64(gp[part].gp_lba_start);
+	}
+
+	return (-1);
+}
+
 const char *
 sr_getdisklabel(struct sr_boot_volume *bv, struct disklabel *label)
 {
@@ -406,7 +522,9 @@ sr_getdisklabel(struct sr_boot_volume *bv, struct disklabel *label)
 	/* Check for MBR to determine partition offset. */
 	bzero(&mbr, sizeof(mbr));
 	sr_strategy(bv, F_READ, DOSBBSECTOR, sizeof(mbr), &mbr, NULL);
-	if (mbr.dmbr_sign == DOSMBR_SIGNATURE) {
+	if (gpt_chk_mbr(mbr.dmbr_parts, label)) {
+		start = findopenbsd_gpt(bv);
+	} else if (mbr.dmbr_sign == DOSMBR_SIGNATURE) {
 
 		/* Search for OpenBSD partition */
 		for (i = 0; i < NDOSPART; i++) {
