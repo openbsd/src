@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-bootp.c,v 1.21 2015/11/18 15:36:20 mmcc Exp $	*/
+/*	$OpenBSD: print-bootp.c,v 1.22 2015/12/22 21:01:07 mmcc Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993, 1994, 1995, 1996, 1997
@@ -128,7 +128,7 @@ bootp_print(const u_char *cp, u_int length,
 		else if (bp->bp_op == BOOTREPLY)
 			e = (const char *)EDST(eh);
 		else
-			e = 0;
+			e = NULL;
 		if (e == 0 || memcmp((char *)bp->bp_chaddr, e, 6) != 0)
 			printf(" ether %s", etheraddr_string(bp->bp_chaddr));
 	}

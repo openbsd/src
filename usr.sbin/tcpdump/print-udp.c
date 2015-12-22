@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-udp.c,v 1.39 2015/11/16 00:16:39 mmcc Exp $	*/
+/*	$OpenBSD: print-udp.c,v 1.40 2015/12/22 21:01:07 mmcc Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996
@@ -211,7 +211,7 @@ static const u_char *
 rtcp_print(const u_char *hdr, const u_char *ep)
 {
 	/* rtp v2 control (rtcp) */
-	struct rtcp_rr *rr = 0;
+	struct rtcp_rr *rr = NULL;
 	struct rtcp_sr *sr;
 	struct rtcphdr *rh = (struct rtcphdr *)hdr;
 	u_int len;
