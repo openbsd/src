@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.56 2015/11/02 07:02:53 guenther Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.57 2015/12/22 08:54:16 mmcc Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -329,7 +329,7 @@ void	_reloc_alpha_got(Elf_Dyn *dynp, Elf_Addr relocbase);
 void
 _reloc_alpha_got(Elf_Dyn *dynp, Elf_Addr relocbase)
 {
-	const Elf_RelA *rela = 0, *relalim;
+	const Elf_RelA *rela = NULL, *relalim;
 	Elf_Addr relasz = 0;
 	Elf_Addr *where;
 

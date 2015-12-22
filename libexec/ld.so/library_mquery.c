@@ -1,4 +1,4 @@
-/*	$OpenBSD: library_mquery.c,v 1.50 2015/11/06 05:12:30 guenther Exp $ */
+/*	$OpenBSD: library_mquery.c,v 1.51 2015/12/22 08:54:16 mmcc Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -103,7 +103,7 @@ _dl_tryload_shlib(const char *libname, int type, int flags)
 	int libfile, i;
 	struct load_list *ld, *lowld = NULL;
 	elf_object_t *object;
-	Elf_Dyn *dynp = 0;
+	Elf_Dyn *dynp = NULL;
 	Elf_Ehdr *ehdr;
 	Elf_Phdr *phdp;
 	Elf_Addr load_end = 0;

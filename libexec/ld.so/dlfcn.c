@@ -1,4 +1,4 @@
-/*	$OpenBSD: dlfcn.c,v 1.91 2015/09/19 20:56:47 guenther Exp $ */
+/*	$OpenBSD: dlfcn.c,v 1.92 2015/12/22 08:54:16 mmcc Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -119,7 +119,7 @@ dlopen(const char *libname, int flags)
 		if (err != 0) {
 			_dl_real_close(object);
 			_dl_errno = DL_CANT_LOAD_OBJ;
-			object = 0;
+			object = NULL;
 			failed = 1;
 		} else {
 			_dl_call_init(object);
