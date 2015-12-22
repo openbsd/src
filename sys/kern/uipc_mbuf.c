@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.214 2015/11/21 11:46:24 mpi Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.215 2015/12/22 13:33:26 sashan Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -72,6 +72,8 @@
  * Research Laboratory (NRL).
  */
 
+#include "pf.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
@@ -85,6 +87,9 @@
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <net/if.h>
+#if NPF > 0
+#include <net/pfvar.h>
+#endif	/* NPF > 0 */
 
 
 #include <uvm/uvm_extern.h>
@@ -261,6 +266,10 @@ m_resethdr(struct mbuf *m)
 	/* delete all mbuf tags to reset the state */
 	m_tag_delete_chain(m);
 
+#if NPF > 0
+	pf_pkt_unlink_state_key(m);
+#endif	/* NPF > 0 */
+
 	/* like m_inithdr(), but keep any associated data and mbufs */
 	memset(&m->m_pkthdr, 0, sizeof(m->m_pkthdr));
 	m->m_pkthdr.pf.prio = IFQ_DEFPRIO;
@@ -350,8 +359,12 @@ m_free(struct mbuf *m)
 		if (n)
 			n->m_flags |= M_ZEROIZE;
 	}
-	if (m->m_flags & M_PKTHDR)
+	if (m->m_flags & M_PKTHDR) {
 		m_tag_delete_chain(m);
+#if NPF > 0
+		pf_pkt_unlink_state_key(m);
+#endif	/* NPF > 0 */
+	}
 	if (m->m_flags & M_EXT)
 		m_extfree(m);
 
