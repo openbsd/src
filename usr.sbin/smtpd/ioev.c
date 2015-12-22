@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioev.c,v 1.22 2015/10/16 21:13:33 sthen Exp $	*/
+/*	$OpenBSD: ioev.c,v 1.23 2015/12/22 07:54:57 sunil Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -893,7 +893,8 @@ io_reload_ssl(struct io *io)
 			ev = EV_READ;
 			dispatch = io_dispatch_read_ssl;
 		}
-		else if (IO_WRITING(io) && !(io->flags & IO_PAUSE_OUT) && io_queued(io)) {
+		else if (IO_WRITING(io) && !(io->flags & IO_PAUSE_OUT) &&
+		    io_queued(io)) {
 			ev = EV_WRITE;
 			dispatch = io_dispatch_write_ssl;
 		}
