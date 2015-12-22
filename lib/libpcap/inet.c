@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.23 2015/11/17 21:39:23 mmcc Exp $	*/
+/*	$OpenBSD: inet.c,v 1.24 2015/12/22 19:51:04 mmcc Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996, 1997, 1998
@@ -82,14 +82,10 @@ pcap_freealldevs(pcap_if_t *alldevs)
 		for (curaddr = curdev->addresses; curaddr != NULL;
 		    curaddr = nextaddr) {
 			nextaddr = curaddr->next;
-			if (curaddr->addr)
-				free(curaddr->addr);
-			if (curaddr->netmask)
-				free(curaddr->netmask);
-			if (curaddr->broadaddr)
-				free(curaddr->broadaddr);
-			if (curaddr->dstaddr)
-				free(curaddr->dstaddr);
+			free(curaddr->addr);
+			free(curaddr->netmask);
+			free(curaddr->broadaddr);
+			free(curaddr->dstaddr);
 			free(curaddr);
 		}
 
@@ -101,8 +97,7 @@ pcap_freealldevs(pcap_if_t *alldevs)
 		/*
 		 * Free the description string, if any.
 		 */
-		if (curdev->description != NULL)
-			free(curdev->description);
+		free(curdev->description);
 
 		/*
 		 * Free the interface.

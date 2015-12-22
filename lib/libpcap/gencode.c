@@ -1,4 +1,4 @@
-/*	$OpenBSD: gencode.c,v 1.43 2015/11/17 21:39:23 mmcc Exp $	*/
+/*	$OpenBSD: gencode.c,v 1.44 2015/12/22 19:51:04 mmcc Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998
@@ -208,11 +208,10 @@ freechunks()
 	int i;
 
 	cur_chunk = 0;
-	for (i = 0; i < NCHUNKS; ++i)
-		if (chunks[i].m != NULL) {
-			free(chunks[i].m);
-			chunks[i].m = NULL;
-		}
+	for (i = 0; i < NCHUNKS; ++i) {
+		free(chunks[i].m);
+		chunks[i].m = NULL;
+	}
 }
 
 /*

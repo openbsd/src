@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcap-bpf.c,v 1.31 2015/11/17 21:39:23 mmcc Exp $	*/
+/*	$OpenBSD: pcap-bpf.c,v 1.32 2015/12/22 19:51:04 mmcc Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995, 1996, 1998
@@ -416,10 +416,10 @@ pcap_cleanup_bpf(pcap_t *p)
 	}
 	if (p->sf.rfile != NULL) {
 		(void)fclose(p->sf.rfile);
-		if (p->sf.base != NULL)
-			free(p->sf.base);
-	} else if (p->buffer != NULL)
+		free(p->sf.base);
+	} else
 		free(p->buffer);
+
 	pcap_freecode(&p->fcode);
 	if (p->dlt_list != NULL) {
 		free(p->dlt_list);

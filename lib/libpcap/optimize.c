@@ -1,4 +1,4 @@
-/*	$OpenBSD: optimize.c,v 1.17 2015/11/17 21:39:23 mmcc Exp $	*/
+/*	$OpenBSD: optimize.c,v 1.18 2015/12/22 19:51:04 mmcc Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1993, 1994, 1995, 1996
@@ -2032,8 +2032,7 @@ filled:
 		++dst;
 		++off;
 	}
-	if (offset)
-		free(offset);
+	free(offset);
 
 #ifdef BDEBUG
 	bids[dst - fstart] = p->id + 1;
