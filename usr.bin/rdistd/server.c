@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.39 2015/12/22 08:22:33 mmcc Exp $	*/
+/*	$OpenBSD: server.c,v 1.40 2015/12/22 08:48:39 mmcc Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -517,7 +517,7 @@ docmdspecial(void)
 		case RC_FILE:
 			if (env == NULL) {
 				len = (2 * sizeof(E_FILES)) + strlen(cp) + 10;
-				env = (char *) xmalloc(len);
+				env = xmalloc(len);
 				(void) snprintf(env, len, "export %s;%s=%s", 
 					       E_FILES, E_FILES, cp);
 			} else {

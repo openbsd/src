@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.h,v 1.1 2015/01/20 09:00:16 guenther Exp $	*/
+/*	$OpenBSD: client.h,v 1.2 2015/12/22 08:48:39 mmcc Exp $	*/
 
 #ifndef __CLIENT_H__
 #define __CLIENT_H__
@@ -60,7 +60,7 @@
 #define INSERT		1
 #define REPLACE		2
 
-#define ALLOC(x) 	(struct x *) xmalloc(sizeof(struct x))
+#define ALLOC(x) 	xmalloc(sizeof(struct x))
 #define A(s)		((s) ? s : "<null>")
 
 
