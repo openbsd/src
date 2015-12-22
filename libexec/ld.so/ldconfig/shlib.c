@@ -1,4 +1,4 @@
-/*	$OpenBSD: shlib.c,v 1.11 2015/01/18 04:48:24 deraadt Exp $	*/
+/*	$OpenBSD: shlib.c,v 1.12 2015/12/22 08:15:05 mmcc Exp $	*/
 /*	$NetBSD: shlib.c,v 1.13 1998/04/04 01:00:29 fvdl Exp $	*/
 
 /*
@@ -81,7 +81,7 @@ add_search_dir(char *name)
 		    !strncmp(search_dirs[i], name, len))
 				return;
 	n_search_dirs++;
-	search_dirs = (char **)xrealloc(search_dirs,
+	search_dirs = xrealloc(search_dirs,
 	    n_search_dirs * sizeof search_dirs[0]);
 	search_dirs[n_search_dirs - 1] = xmalloc(++len);
 	(void)strlcpy(search_dirs[n_search_dirs - 1], name, len);
@@ -107,7 +107,7 @@ remove_search_dir(char *name)
 			bcopy(&search_dirs[i+1], &search_dirs[i],
 			    (n_search_dirs - i - 1) * sizeof search_dirs[0]);
 		n_search_dirs--;
-		search_dirs = (char **)xrealloc(search_dirs,
+		search_dirs = xrealloc(search_dirs,
 		    n_search_dirs * sizeof search_dirs[0]);
 		break;
 	}
