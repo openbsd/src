@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.147 2015/12/15 23:16:13 jung Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.148 2015/12/22 20:59:14 gilles Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -17,7 +17,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: December 15 2015 $
+.Dd $Mdocdate: December 22 2015 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -1019,15 +1019,14 @@ A secrets file is needed to specify a username and password:
 # chmod 640 /etc/mail/secrets
 # chown root:_smtpd /etc/mail/secrets
 # echo "label username:password" > /etc/mail/secrets
-# makemap /etc/mail/secrets
 .Ed
 .Pp
 .Nm
 would look like this:
 .Bd -literal -offset indent
 listen on lo0
-table aliases db:/etc/mail/aliases.db
-table secrets db:/etc/mail/secrets.db
+table aliases file:/etc/mail/aliases
+table secrets file:/etc/mail/secrets
 accept for local alias <aliases> deliver to mbox
 accept for any relay via tls+auth://label@smtp.example.com \e
 	auth <secrets>
@@ -1058,7 +1057,7 @@ pki mail.example.com key "/etc/ssl/private/mail.example.com.key"
 listen on lo0
 listen on egress tls pki mail.example.com auth
 
-table aliases db:/etc/mail/aliases.db
+table aliases file:/etc/mail/aliases
 
 accept for local alias <aliases> deliver to mda "/path/to/mda \-f \-"
 accept from any for domain example.com \e
@@ -1077,7 +1076,7 @@ The signed messages are received on port 10028 and tagged for relaying.
 listen on lo0
 listen on lo0 port 10028 tag DKIM
 
-table aliases db:/etc/mail/aliases.db
+table aliases file:/etc/mail/aliases
 
 accept for local alias <aliases> deliver to mbox
 accept tagged DKIM for any relay
