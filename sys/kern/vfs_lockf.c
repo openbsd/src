@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_lockf.c,v 1.20 2015/03/14 03:38:51 jsg Exp $	*/
+/*	$OpenBSD: vfs_lockf.c,v 1.21 2015/12/22 21:39:34 mmcc Exp $	*/
 /*	$NetBSD: vfs_lockf.c,v 1.7 1996/02/04 02:18:21 christos Exp $	*/
 
 /*
@@ -639,7 +639,7 @@ lf_split(struct lockf *lock1, struct lockf *lock2)
 	}
 #endif /* LOCKF_DEBUG */
 	/*
-	 * Check to see if spliting into only two pieces.
+	 * Check to see if splitting into only two pieces.
 	 */
 	if (lock1->lf_start == lock2->lf_start) {
 		lock1->lf_start = lock2->lf_end + 1;
