@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.427 2015/12/22 13:33:26 sashan Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.428 2015/12/23 21:04:55 jasper Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -38,9 +38,6 @@
 #include <sys/tree.h>
 #include <sys/rwlock.h>
 #include <sys/syslimits.h>
-#include <sys/refcnt.h>
-
-#include <netinet/in.h>
 
 #include <net/radix.h>
 #include <net/route.h>
@@ -57,11 +54,6 @@ struct ip6_hdr;
 #error md5 digest length mismatch
 #endif
 #endif
-
-typedef struct refcnt	pf_refcnt_t;
-#define	PF_REF_INIT(_x)	refcnt_init(&(_x))
-#define	PF_REF_TAKE(_x)	refcnt_take(&(_x))
-#define	PF_REF_RELE(_x)	refcnt_rele(&(_x)) 
 
 enum	{ PF_INOUT, PF_IN, PF_OUT, PF_FWD };
 enum	{ PF_PASS, PF_DROP, PF_SCRUB, PF_NOSCRUB, PF_NAT, PF_NONAT,
@@ -704,8 +696,6 @@ struct pf_state_key {
 	struct pf_statelisthead	 states;
 	struct pf_state_key	*reverse;
 	struct inpcb		*inp;
-	pf_refcnt_t		 refcnt;
-	u_int8_t	 	 removed;
 };
 #define PF_REVERSED_KEY(key, family)				\
 	((key[PF_SK_WIRE]->af != key[PF_SK_STACK]->af) &&	\
@@ -1919,11 +1909,7 @@ int			 pf_postprocess_addr(struct pf_state *);
 
 void			 pf_cksum(struct pf_pdesc *, struct mbuf *);
 
-struct pf_state_key	*pf_state_key_ref(struct pf_state_key *);
-void			 pf_state_key_unref(struct pf_state_key *);
-int			 pf_state_key_isvalid(struct pf_state_key *);
-void			 pf_pkt_unlink_state_key(struct mbuf *);
-
 #endif /* _KERNEL */
+
 
 #endif /* _NET_PFVAR_H_ */
