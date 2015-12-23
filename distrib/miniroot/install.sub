@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.863 2015/12/23 08:00:09 rpe Exp $
+#	$OpenBSD: install.sub,v 1.864 2015/12/23 08:05:11 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -1544,23 +1544,27 @@ donetconfig() {
 		done </tmp/resolv.conf
 	fi
 
-	# Get & apply fully qualified domain name to hostname.
+	# Get & apply fqdn to hostname. Don't ask if there's only one configured
+	# interface and if it's managed by dhclient and if the domain name is 
+	# configured via dhclient too.
 	resp="${_dn:=$(get_fqdn)}"
-	if [[ ! -f /tmp/dhclient.conf || $NIFS != 1 ]]; then
-		ask "DNS domain name? (e.g. 'bar.com')" "$resp"
-	else
+	if ifconfig dhcp >/dev/null 2>&1 && [[ $NIFS == 1 && -n $_dn ]]; then
 		echo "Using DNS domainname $resp"
+	else
+		ask "DNS domain name? (e.g. 'bar.com')" "$resp"
 	fi
 	hostname "$(hostname -s).$resp"
 
-	# If only one interface, and it is running dhclient, ask nothing
-	# else Get/Confirm nameservers.
+	# Get & add nameservers to /tmp/resolv.conf. Don't ask if there's only
+	# one configured interface and if it's managed by dhclient and if the
+	# nameserver is configured via dhclient too.
 	resp="${_ns:=none}"
-	if [[ ! -f /tmp/dhclient.conf || $NIFS != 1 || $resp == none ]]; then
-		ask "DNS nameservers? (IP address list or 'none')" "$resp"
-	else
+	if ifconfig dhcp >/dev/null 2>&1 && [[ $NIFS == 1 && -n $_ns ]]; then
 		echo "Using DNS nameservers at $resp"
+	else
+		ask "DNS nameservers? (IP address list or 'none')" "$resp"
 	fi
+
 	# Construct appropriate resolv.conf.
 	if [[ $resp != none ]]; then
 		echo "lookup file bind" >/tmp/resolv.conf
