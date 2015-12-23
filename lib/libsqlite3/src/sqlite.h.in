@@ -124,7 +124,7 @@ extern "C" {
 ** but are associated with the library instead of the header file.  ^(Cautious
 ** programmers might include assert() statements in their application to
 ** verify that values returned by these interfaces match the macros in
-** the header, and thus insure that the application is
+** the header, and thus ensure that the application is
 ** compiled with matching library and header files.
 **
 ** <blockquote><pre>
@@ -374,7 +374,7 @@ typedef int (*sqlite3_callback)(void*,int,char**, char**);
 ** Restrictions:
 **
 ** <ul>
-** <li> The application must insure that the 1st parameter to sqlite3_exec()
+** <li> The application must ensure that the 1st parameter to sqlite3_exec()
 **      is a valid and open [database connection].
 ** <li> The application must not close the [database connection] specified by
 **      the 1st parameter to sqlite3_exec() while sqlite3_exec() is running.
@@ -477,6 +477,7 @@ int sqlite3_exec(
 #define SQLITE_IOERR_MMAP              (SQLITE_IOERR | (24<<8))
 #define SQLITE_IOERR_GETTEMPPATH       (SQLITE_IOERR | (25<<8))
 #define SQLITE_IOERR_CONVPATH          (SQLITE_IOERR | (26<<8))
+#define SQLITE_IOERR_VNODE             (SQLITE_IOERR | (27<<8))
 #define SQLITE_LOCKED_SHAREDCACHE      (SQLITE_LOCKED |  (1<<8))
 #define SQLITE_BUSY_RECOVERY           (SQLITE_BUSY   |  (1<<8))
 #define SQLITE_BUSY_SNAPSHOT           (SQLITE_BUSY   |  (2<<8))
@@ -1366,9 +1367,11 @@ int sqlite3_os_end(void);
 ** applications and so this routine is usually not necessary.  It is
 ** provided to support rare applications with unusual needs.
 **
-** The sqlite3_config() interface is not threadsafe.  The application
-** must insure that no other SQLite interfaces are invoked by other
-** threads while sqlite3_config() is running.  Furthermore, sqlite3_config()
+** <b>The sqlite3_config() interface is not threadsafe. The application
+** must ensure that no other SQLite interfaces are invoked by other
+** threads while sqlite3_config() is running.</b>
+**
+** The sqlite3_config() interface
 ** may only be invoked prior to library initialization using
 ** [sqlite3_initialize()] or after shutdown by [sqlite3_shutdown()].
 ** ^If sqlite3_config() is called after [sqlite3_initialize()] and before
@@ -3373,7 +3376,8 @@ int sqlite3_stmt_readonly(sqlite3_stmt *pStmt);
 **
 ** ^The sqlite3_stmt_busy(S) interface returns true (non-zero) if the
 ** [prepared statement] S has been stepped at least once using 
-** [sqlite3_step(S)] but has not run to completion and/or has not 
+** [sqlite3_step(S)] but has neither run to completion (returned
+** [SQLITE_DONE] from [sqlite3_step(S)]) nor
 ** been reset using [sqlite3_reset(S)].  ^The sqlite3_stmt_busy(S)
 ** interface returns false if S is a NULL pointer.  If S is not a 
 ** NULL pointer and is not a pointer to a valid [prepared statement]
@@ -3626,7 +3630,7 @@ const char *sqlite3_bind_parameter_name(sqlite3_stmt*, int);
 **
 ** See also: [sqlite3_bind_blob|sqlite3_bind()],
 ** [sqlite3_bind_parameter_count()], and
-** [sqlite3_bind_parameter_index()].
+** [sqlite3_bind_parameter_name()].
 */
 int sqlite3_bind_parameter_index(sqlite3_stmt*, const char *zName);
 
@@ -4356,6 +4360,22 @@ int sqlite3_value_type(sqlite3_value*);
 int sqlite3_value_numeric_type(sqlite3_value*);
 
 /*
+** CAPI3REF: Finding The Subtype Of SQL Values
+** METHOD: sqlite3_value
+**
+** The sqlite3_value_subtype(V) function returns the subtype for
+** an [application-defined SQL function] argument V.  The subtype
+** information can be used to pass a limited amount of context from
+** one SQL function to another.  Use the [sqlite3_result_subtype()]
+** routine to set the subtype for the return value of an SQL function.
+**
+** SQLite makes no use of subtype itself.  It merely passes the subtype
+** from the result of one [application-defined SQL function] into the
+** input of another.
+*/
+unsigned int sqlite3_value_subtype(sqlite3_value*);
+
+/*
 ** CAPI3REF: Copy And Free SQL Values
 ** METHOD: sqlite3_value
 **
@@ -4653,6 +4673,21 @@ void sqlite3_result_text16be(sqlite3_context*, const void*, int,void(*)(void*));
 void sqlite3_result_value(sqlite3_context*, sqlite3_value*);
 void sqlite3_result_zeroblob(sqlite3_context*, int n);
 int sqlite3_result_zeroblob64(sqlite3_context*, sqlite3_uint64 n);
+
+
+/*
+** CAPI3REF: Setting The Subtype Of An SQL Function
+** METHOD: sqlite3_context
+**
+** The sqlite3_result_subtype(C,T) function causes the subtype of
+** the result from the [application-defined SQL function] with 
+** [sqlite3_context] C to be the value T.  Only the lower 8 bits 
+** of the subtype T are preserved in current versions of SQLite;
+** higher order bits are discarded.
+** The number of subtype bytes preserved by SQLite might increase
+** in future releases of SQLite.
+*/
+void sqlite3_result_subtype(sqlite3_context*,unsigned int);
 
 /*
 ** CAPI3REF: Define New Collating Sequences
@@ -5599,13 +5634,31 @@ struct sqlite3_module {
 ** ^The estimatedRows value is an estimate of the number of rows that
 ** will be returned by the strategy.
 **
+** The xBestIndex method may optionally populate the idxFlags field with a 
+** mask of SQLITE_INDEX_SCAN_* flags. Currently there is only one such flag -
+** SQLITE_INDEX_SCAN_UNIQUE. If the xBestIndex method sets this flag, SQLite
+** assumes that the strategy may visit at most one row. 
+**
+** Additionally, if xBestIndex sets the SQLITE_INDEX_SCAN_UNIQUE flag, then
+** SQLite also assumes that if a call to the xUpdate() method is made as
+** part of the same statement to delete or update a virtual table row and the
+** implementation returns SQLITE_CONSTRAINT, then there is no need to rollback
+** any database changes. In other words, if the xUpdate() returns
+** SQLITE_CONSTRAINT, the database contents must be exactly as they were
+** before xUpdate was called. By contrast, if SQLITE_INDEX_SCAN_UNIQUE is not
+** set and xUpdate returns SQLITE_CONSTRAINT, any database changes made by
+** the xUpdate method are automatically rolled back by SQLite.
+**
 ** IMPORTANT: The estimatedRows field was added to the sqlite3_index_info
 ** structure for SQLite version 3.8.2. If a virtual table extension is
 ** used with an SQLite version earlier than 3.8.2, the results of attempting 
 ** to read or write the estimatedRows field are undefined (but are likely 
 ** to included crashing the application). The estimatedRows field should
 ** therefore only be used if [sqlite3_libversion_number()] returns a
-** value greater than or equal to 3008002.
+** value greater than or equal to 3008002. Similarly, the idxFlags field
+** was added for version 3.9.0. It may therefore only be used if
+** sqlite3_libversion_number() returns a value greater than or equal to
+** 3009000.
 */
 struct sqlite3_index_info {
   /* Inputs */
@@ -5633,7 +5686,14 @@ struct sqlite3_index_info {
   double estimatedCost;           /* Estimated cost of using this index */
   /* Fields below are only available in SQLite 3.8.2 and later */
   sqlite3_int64 estimatedRows;    /* Estimated number of rows returned */
+  /* Fields below are only available in SQLite 3.9.0 and later */
+  int idxFlags;              /* Mask of SQLITE_INDEX_SCAN_* flags */
 };
+
+/*
+** CAPI3REF: Virtual Table Scan Flags
+*/
+#define SQLITE_INDEX_SCAN_UNIQUE      1     /* Scan visits at most 1 row */
 
 /*
 ** CAPI3REF: Virtual Table Constraint Operator Codes
@@ -6092,6 +6152,9 @@ int sqlite3_vfs_unregister(sqlite3_vfs*);
 ** <li>  SQLITE_MUTEX_STATIC_APP1
 ** <li>  SQLITE_MUTEX_STATIC_APP2
 ** <li>  SQLITE_MUTEX_STATIC_APP3
+** <li>  SQLITE_MUTEX_STATIC_VFS1
+** <li>  SQLITE_MUTEX_STATIC_VFS2
+** <li>  SQLITE_MUTEX_STATIC_VFS3
 ** </ul>
 **
 ** ^The first two constants (SQLITE_MUTEX_FAST and SQLITE_MUTEX_RECURSIVE)

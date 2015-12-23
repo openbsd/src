@@ -286,12 +286,14 @@ struct WhereScan {
   WhereClause *pOrigWC;      /* Original, innermost WhereClause */
   WhereClause *pWC;          /* WhereClause currently being scanned */
   char *zCollName;           /* Required collating sequence, if not NULL */
+  Expr *pIdxExpr;            /* Search for this index expression */
   char idxaff;               /* Must match this affinity, if zCollName!=NULL */
   unsigned char nEquiv;      /* Number of entries in aEquiv[] */
   unsigned char iEquiv;      /* Next unused slot in aEquiv[] */
   u32 opMask;                /* Acceptable operators */
   int k;                     /* Resume scanning at this->pWC->a[this->k] */
-  int aEquiv[22];            /* Cursor,Column pairs for equivalence classes */
+  int aiCur[11];             /* Cursors in the equivalence class */
+  i16 aiColumn[11];          /* Corresponding column number in the eq-class */
 };
 
 /*
@@ -410,7 +412,7 @@ struct WhereInfo {
   u16 wctrlFlags;           /* Flags originally passed to sqlite3WhereBegin() */
   i8 nOBSat;                /* Number of ORDER BY terms satisfied by indices */
   u8 sorted;                /* True if really sorted (not just grouped) */
-  u8 okOnePass;             /* Ok to use one-pass algorithm for UPDATE/DELETE */
+  u8 eOnePass;              /* ONEPASS_OFF, or _SINGLE, or _MULTI */
   u8 untestedTerms;         /* Not all WHERE terms resolved by outer loop */
   u8 eDistinct;             /* One of the WHERE_DISTINCT_* values below */
   u8 nLevel;                /* Number of nested loop */
@@ -475,6 +477,7 @@ void sqlite3WhereSplit(WhereClause*,Expr*,u8);
 Bitmask sqlite3WhereExprUsage(WhereMaskSet*, Expr*);
 Bitmask sqlite3WhereExprListUsage(WhereMaskSet*, ExprList*);
 void sqlite3WhereExprAnalyze(SrcList*, WhereClause*);
+void sqlite3WhereTabFuncArgs(Parse*, struct SrcList_item*, WhereClause*);
 
 
 

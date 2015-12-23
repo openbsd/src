@@ -81,6 +81,19 @@ static int pthreadMutexNotheld(sqlite3_mutex *p){
 #endif
 
 /*
+** Try to provide a memory barrier operation, needed for initialization
+** and also for the implementation of xShmBarrier in the VFS in cases
+** where SQLite is compiled without mutexes.
+*/
+void sqlite3MemoryBarrier(void){
+#if defined(SQLITE_MEMORY_BARRIER)
+  SQLITE_MEMORY_BARRIER;
+#elif defined(__GNUC__) && GCC_VERSION>=4001000
+  __sync_synchronize();
+#endif
+}
+
+/*
 ** Initialize and deinitialize the mutex subsystem.
 */
 static int pthreadMutexInit(void){ return SQLITE_OK; }

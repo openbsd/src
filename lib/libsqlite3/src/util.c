@@ -1065,11 +1065,8 @@ u8 sqlite3GetVarint32(const unsigned char *p, u32 *v){
 ** 64-bit integer.
 */
 int sqlite3VarintLen(u64 v){
-  int i = 0;
-  do{
-    i++;
-    v >>= 7;
-  }while( v!=0 && ALWAYS(i<9) );
+  int i;
+  for(i=1; (v >>= 7)!=0; i++){ assert( i<9 ); }
   return i;
 }
 
@@ -1082,11 +1079,13 @@ u32 sqlite3Get4byte(const u8 *p){
   u32 x;
   memcpy(&x,p,4);
   return x;
-#elif SQLITE_BYTEORDER==1234 && defined(__GNUC__) && GCC_VERSION>=4003000
+#elif SQLITE_BYTEORDER==1234 && !defined(SQLITE_DISABLE_INTRINSIC) \
+    && defined(__GNUC__) && GCC_VERSION>=4003000
   u32 x;
   memcpy(&x,p,4);
   return __builtin_bswap32(x);
-#elif SQLITE_BYTEORDER==1234 && defined(_MSC_VER) && _MSC_VER>=1300
+#elif SQLITE_BYTEORDER==1234 && !defined(SQLITE_DISABLE_INTRINSIC) \
+    && defined(_MSC_VER) && _MSC_VER>=1300
   u32 x;
   memcpy(&x,p,4);
   return _byteswap_ulong(x);

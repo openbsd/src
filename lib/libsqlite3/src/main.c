@@ -25,6 +25,12 @@
 #ifdef SQLITE_ENABLE_ICU
 # include "sqliteicu.h"
 #endif
+#ifdef SQLITE_ENABLE_JSON1
+int sqlite3Json1Init(sqlite3*);
+#endif
+#ifdef SQLITE_ENABLE_FTS5
+int sqlite3Fts5Init(sqlite3*);
+#endif
 
 #ifndef SQLITE_AMALGAMATION
 /* IMPLEMENTATION-OF: R-46656-45156 The sqlite3_version[] string constant
@@ -932,15 +938,21 @@ static void functionDestroy(sqlite3 *db, FuncDef *p){
 static void disconnectAllVtab(sqlite3 *db){
 #ifndef SQLITE_OMIT_VIRTUALTABLE
   int i;
+  HashElem *p;
   sqlite3BtreeEnterAll(db);
   for(i=0; i<db->nDb; i++){
     Schema *pSchema = db->aDb[i].pSchema;
     if( db->aDb[i].pSchema ){
-      HashElem *p;
       for(p=sqliteHashFirst(&pSchema->tblHash); p; p=sqliteHashNext(p)){
         Table *pTab = (Table *)sqliteHashData(p);
         if( IsVirtual(pTab) ) sqlite3VtabDisconnect(db, pTab);
       }
+    }
+  }
+  for(p=sqliteHashFirst(&db->aModule); p; p=sqliteHashNext(p)){
+    Module *pMod = (Module *)sqliteHashData(p);
+    if( pMod->pEpoTab ){
+      sqlite3VtabDisconnect(db, pMod->pEpoTab);
     }
   }
   sqlite3VtabUnlockList(db);
@@ -1120,6 +1132,7 @@ void sqlite3LeaveMutexAndCloseZombie(sqlite3 *db){
     if( pMod->xDestroy ){
       pMod->xDestroy(pMod->pAux);
     }
+    sqlite3VtabEponymousTableClear(db, pMod);
     sqlite3DbFree(db, pMod);
   }
   sqlite3HashClear(&db->aModule);
@@ -2865,9 +2878,15 @@ static int openDatabase(
   }
 #endif
 
-#ifdef SQLITE_ENABLE_FTS3
+#ifdef SQLITE_ENABLE_FTS3 /* automatically defined by SQLITE_ENABLE_FTS4 */
   if( !db->mallocFailed && rc==SQLITE_OK ){
     rc = sqlite3Fts3Init(db);
+  }
+#endif
+
+#ifdef SQLITE_ENABLE_FTS5
+  if( !db->mallocFailed && rc==SQLITE_OK ){
+    rc = sqlite3Fts5Init(db);
   }
 #endif
 
@@ -2886,6 +2905,12 @@ static int openDatabase(
 #ifdef SQLITE_ENABLE_DBSTAT_VTAB
   if( !db->mallocFailed && rc==SQLITE_OK){
     rc = sqlite3DbstatRegister(db);
+  }
+#endif
+
+#ifdef SQLITE_ENABLE_JSON1
+  if( !db->mallocFailed && rc==SQLITE_OK){
+    rc = sqlite3Json1Init(db);
   }
 #endif
 

@@ -42,6 +42,16 @@ static void explainAppendTerm(
 }
 
 /*
+** Return the name of the i-th column of the pIdx index.
+*/
+static const char *explainIndexColumnName(Index *pIdx, int i){
+  i = pIdx->aiColumn[i];
+  if( i==XN_EXPR ) return "<expr>";
+  if( i==XN_ROWID ) return "rowid";
+  return pIdx->pTable->aCol[i].zName;
+}
+
+/*
 ** Argument pLevel describes a strategy for scanning table pTab. This 
 ** function appends text to pStr that describes the subset of table
 ** rows scanned by the strategy in the form of an SQL expression.
@@ -55,33 +65,27 @@ static void explainAppendTerm(
 **
 **   "a=? AND b>?"
 */
-static void explainIndexRange(StrAccum *pStr, WhereLoop *pLoop, Table *pTab){
+static void explainIndexRange(StrAccum *pStr, WhereLoop *pLoop){
   Index *pIndex = pLoop->u.btree.pIndex;
   u16 nEq = pLoop->u.btree.nEq;
   u16 nSkip = pLoop->nSkip;
   int i, j;
-  Column *aCol = pTab->aCol;
-  i16 *aiColumn = pIndex->aiColumn;
 
   if( nEq==0 && (pLoop->wsFlags&(WHERE_BTM_LIMIT|WHERE_TOP_LIMIT))==0 ) return;
   sqlite3StrAccumAppend(pStr, " (", 2);
   for(i=0; i<nEq; i++){
-    char *z = aiColumn[i] < 0 ? "rowid" : aCol[aiColumn[i]].zName;
-    if( i>=nSkip ){
-      explainAppendTerm(pStr, i, z, "=");
-    }else{
-      if( i ) sqlite3StrAccumAppend(pStr, " AND ", 5);
-      sqlite3XPrintf(pStr, 0, "ANY(%s)", z);
-    }
+    const char *z = explainIndexColumnName(pIndex, i);
+    if( i ) sqlite3StrAccumAppend(pStr, " AND ", 5);
+    sqlite3XPrintf(pStr, 0, i>=nSkip ? "%s=?" : "ANY(%s)", z);
   }
 
   j = i;
   if( pLoop->wsFlags&WHERE_BTM_LIMIT ){
-    char *z = aiColumn[j] < 0 ? "rowid" : aCol[aiColumn[j]].zName;
+    const char *z = explainIndexColumnName(pIndex, i);
     explainAppendTerm(pStr, i++, z, ">");
   }
   if( pLoop->wsFlags&WHERE_TOP_LIMIT ){
-    char *z = aiColumn[j] < 0 ? "rowid" : aCol[aiColumn[j]].zName;
+    const char *z = explainIndexColumnName(pIndex, j);
     explainAppendTerm(pStr, i, z, "<");
   }
   sqlite3StrAccumAppend(pStr, ")", 1);
@@ -162,22 +166,21 @@ int sqlite3WhereExplainOneScan(
       if( zFmt ){
         sqlite3StrAccumAppend(&str, " USING ", 7);
         sqlite3XPrintf(&str, 0, zFmt, pIdx->zName);
-        explainIndexRange(&str, pLoop, pItem->pTab);
+        explainIndexRange(&str, pLoop);
       }
     }else if( (flags & WHERE_IPK)!=0 && (flags & WHERE_CONSTRAINT)!=0 ){
-      const char *zRange;
+      const char *zRangeOp;
       if( flags&(WHERE_COLUMN_EQ|WHERE_COLUMN_IN) ){
-        zRange = "(rowid=?)";
+        zRangeOp = "=";
       }else if( (flags&WHERE_BOTH_LIMIT)==WHERE_BOTH_LIMIT ){
-        zRange = "(rowid>? AND rowid<?)";
+        zRangeOp = ">? AND rowid<";
       }else if( flags&WHERE_BTM_LIMIT ){
-        zRange = "(rowid>?)";
+        zRangeOp = ">";
       }else{
         assert( flags&WHERE_TOP_LIMIT);
-        zRange = "(rowid<?)";
+        zRangeOp = "<";
       }
-      sqlite3StrAccumAppendAll(&str, " USING INTEGER PRIMARY KEY ");
-      sqlite3StrAccumAppendAll(&str, zRange);
+      sqlite3XPrintf(&str, 0, " USING INTEGER PRIMARY KEY (rowid%s?)",zRangeOp);
     }
 #ifndef SQLITE_OMIT_VIRTUALTABLE
     else if( (flags & WHERE_VIRTUALTABLE)!=0 ){
@@ -492,7 +495,7 @@ static int codeAllEqualityTerms(
   nReg = pLoop->u.btree.nEq + nExtraReg;
   pParse->nMem += nReg;
 
-  zAff = sqlite3DbStrDup(pParse->db, sqlite3IndexAffinityStr(v, pIdx));
+  zAff = sqlite3DbStrDup(pParse->db,sqlite3IndexAffinityStr(pParse->db,pIdx));
   if( !zAff ){
     pParse->db->mallocFailed = 1;
   }
@@ -511,8 +514,8 @@ static int codeAllEqualityTerms(
     sqlite3VdbeJumpHere(v, j);
     for(j=0; j<nSkip; j++){
       sqlite3VdbeAddOp3(v, OP_Column, iIdxCur, j, regBase+j);
-      assert( pIdx->aiColumn[j]>=0 );
-      VdbeComment((v, "%s", pIdx->pTable->aCol[pIdx->aiColumn[j]].zName));
+      testcase( pIdx->aiColumn[j]==XN_EXPR );
+      VdbeComment((v, "%s", explainIndexColumnName(pIdx, j)));
     }
   }    
 
@@ -646,14 +649,14 @@ Bitmask sqlite3WhereCodeOneLoopStart(
   ** initialize a memory cell that records if this table matches any
   ** row of the left table of the join.
   */
-  if( pLevel->iFrom>0 && (pTabItem[0].jointype & JT_LEFT)!=0 ){
+  if( pLevel->iFrom>0 && (pTabItem[0].fg.jointype & JT_LEFT)!=0 ){
     pLevel->iLeftJoin = ++pParse->nMem;
     sqlite3VdbeAddOp2(v, OP_Integer, 0, pLevel->iLeftJoin);
     VdbeComment((v, "init LEFT JOIN no-match flag"));
   }
 
   /* Special case of a FROM clause subquery implemented as a co-routine */
-  if( pTabItem->viaCoroutine ){
+  if( pTabItem->fg.viaCoroutine ){
     int regYield = pTabItem->regReturn;
     sqlite3VdbeAddOp3(v, OP_InitCoroutine, regYield, 0, pTabItem->addrFillSub);
     pLevel->p2 =  sqlite3VdbeAddOp2(v, OP_Yield, regYield, addrBrk);
@@ -697,8 +700,8 @@ Bitmask sqlite3WhereCodeOneLoopStart(
         disableTerm(pLevel, pLoop->aLTerm[j]);
       }
     }
-    pLevel->op = OP_VNext;
     pLevel->p1 = iCur;
+    pLevel->op = pWInfo->eOnePass ? OP_Noop : OP_VNext;
     pLevel->p2 = sqlite3VdbeCurrentAddr(v);
     sqlite3ReleaseTempRange(pParse, iReg, nConstraint+2);
     sqlite3ExprCachePop(pParse);
@@ -1066,7 +1069,12 @@ Bitmask sqlite3WhereCodeOneLoopStart(
       iRowidReg = ++pParse->nMem;
       sqlite3VdbeAddOp2(v, OP_IdxRowid, iIdxCur, iRowidReg);
       sqlite3ExprCacheStore(pParse, iCur, -1, iRowidReg);
-      sqlite3VdbeAddOp2(v, OP_Seek, iCur, iRowidReg);  /* Deferred seek */
+      if( pWInfo->eOnePass!=ONEPASS_OFF ){
+        sqlite3VdbeAddOp3(v, OP_NotExists, iCur, 0, iRowidReg);
+        VdbeCoverage(v);
+      }else{
+        sqlite3VdbeAddOp2(v, OP_Seek, iCur, iRowidReg);  /* Deferred seek */
+      }
     }else if( iCur!=iIdxCur ){
       Index *pPk = sqlite3PrimaryKeyIndex(pIdx->pTable);
       iRowidReg = sqlite3GetTempRange(pParse, pPk->nKeyCol);
@@ -1258,7 +1266,7 @@ Bitmask sqlite3WhereCodeOneLoopStart(
       if( pOrTerm->leftCursor==iCur || (pOrTerm->eOperator & WO_AND)!=0 ){
         WhereInfo *pSubWInfo;           /* Info for single OR-term scan */
         Expr *pOrExpr = pOrTerm->pExpr; /* Current OR clause term */
-        int j1 = 0;                     /* Address of jump operation */
+        int jmp1 = 0;                   /* Address of jump operation */
         if( pAndExpr && !ExprHasProperty(pOrExpr, EP_FromJoin) ){
           pAndExpr->pLeft = pOrExpr;
           pOrExpr = pAndExpr;
@@ -1285,7 +1293,8 @@ Bitmask sqlite3WhereCodeOneLoopStart(
             int iSet = ((ii==pOrWc->nTerm-1)?-1:ii);
             if( HasRowid(pTab) ){
               r = sqlite3ExprCodeGetColumn(pParse, pTab, -1, iCur, regRowid, 0);
-              j1 = sqlite3VdbeAddOp4Int(v, OP_RowSetTest, regRowset, 0, r,iSet);
+              jmp1 = sqlite3VdbeAddOp4Int(v, OP_RowSetTest, regRowset, 0,
+                                           r,iSet);
               VdbeCoverage(v);
             }else{
               Index *pPk = sqlite3PrimaryKeyIndex(pTab);
@@ -1315,7 +1324,7 @@ Bitmask sqlite3WhereCodeOneLoopStart(
               ** need to insert the key into the temp table, as it will never 
               ** be tested for.  */ 
               if( iSet ){
-                j1 = sqlite3VdbeAddOp4Int(v, OP_Found, regRowset, 0, r, nPk);
+                jmp1 = sqlite3VdbeAddOp4Int(v, OP_Found, regRowset, 0, r, nPk);
                 VdbeCoverage(v);
               }
               if( iSet>=0 ){
@@ -1334,7 +1343,7 @@ Bitmask sqlite3WhereCodeOneLoopStart(
 
           /* Jump here (skipping the main loop body subroutine) if the
           ** current sub-WHERE row is a duplicate from prior sub-WHEREs. */
-          if( j1 ) sqlite3VdbeJumpHere(v, j1);
+          if( jmp1 ) sqlite3VdbeJumpHere(v, jmp1);
 
           /* The pSubWInfo->untestedTerms flag means that this OR term
           ** contained one or more AND term from a notReady table.  The
@@ -1380,7 +1389,7 @@ Bitmask sqlite3WhereCodeOneLoopStart(
       sqlite3ExprDelete(db, pAndExpr);
     }
     sqlite3VdbeChangeP1(v, iRetInit, sqlite3VdbeCurrentAddr(v));
-    sqlite3VdbeAddOp2(v, OP_Goto, 0, pLevel->addrBrk);
+    sqlite3VdbeGoto(v, pLevel->addrBrk);
     sqlite3VdbeResolveLabel(v, iLoopBody);
 
     if( pWInfo->nLevel>1 ) sqlite3StackFree(db, pOrTab);
@@ -1395,7 +1404,7 @@ Bitmask sqlite3WhereCodeOneLoopStart(
     static const u8 aStep[] = { OP_Next, OP_Prev };
     static const u8 aStart[] = { OP_Rewind, OP_Last };
     assert( bRev==0 || bRev==1 );
-    if( pTabItem->isRecursive ){
+    if( pTabItem->fg.isRecursive ){
       /* Tables marked isRecursive have only a single row that is stored in
       ** a pseudo-cursor.  No need to Rewind or Next such cursors. */
       pLevel->op = OP_Noop;

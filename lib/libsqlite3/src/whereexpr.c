@@ -796,6 +796,51 @@ static Bitmask exprSelectUsage(WhereMaskSet *pMaskSet, Select *pS){
 }
 
 /*
+** Expression pExpr is one operand of a comparison operator that might
+** be useful for indexing.  This routine checks to see if pExpr appears
+** in any index.  Return TRUE (1) if pExpr is an indexed term and return
+** FALSE (0) if not.  If TRUE is returned, also set *piCur to the cursor
+** number of the table that is indexed and *piColumn to the column number
+** of the column that is indexed, or -2 if an expression is being indexed.
+**
+** If pExpr is a TK_COLUMN column reference, then this routine always returns
+** true even if that particular column is not indexed, because the column
+** might be added to an automatic index later.
+*/
+static int exprMightBeIndexed(
+  SrcList *pFrom,        /* The FROM clause */
+  Bitmask mPrereq,       /* Bitmask of FROM clause terms referenced by pExpr */
+  Expr *pExpr,           /* An operand of a comparison operator */
+  int *piCur,            /* Write the referenced table cursor number here */
+  int *piColumn          /* Write the referenced table column number here */
+){
+  Index *pIdx;
+  int i;
+  int iCur;
+  if( pExpr->op==TK_COLUMN ){
+    *piCur = pExpr->iTable;
+    *piColumn = pExpr->iColumn;
+    return 1;
+  }
+  if( mPrereq==0 ) return 0;                 /* No table references */
+  if( (mPrereq&(mPrereq-1))!=0 ) return 0;   /* Refs more than one table */
+  for(i=0; mPrereq>1; i++, mPrereq>>=1){}
+  iCur = pFrom->a[i].iCursor;
+  for(pIdx=pFrom->a[i].pTab->pIndex; pIdx; pIdx=pIdx->pNext){
+    if( pIdx->aColExpr==0 ) continue;
+    for(i=0; i<pIdx->nKeyCol; i++){
+      if( pIdx->aiColumn[i]!=(-2) ) continue;
+      if( sqlite3ExprCompare(pExpr, pIdx->aColExpr->a[i].pExpr, iCur)==0 ){
+        *piCur = iCur;
+        *piColumn = -2;
+        return 1;
+      }
+    }
+  }
+  return 0;
+}
+
+/*
 ** The input to this routine is an WhereTerm structure with only the
 ** "pExpr" field filled in.  The job of this routine is to analyze the
 ** subexpression and populate all the other fields of the WhereTerm
@@ -865,16 +910,19 @@ static void exprAnalyze(
   pTerm->iParent = -1;
   pTerm->eOperator = 0;
   if( allowedOp(op) ){
+    int iCur, iColumn;
     Expr *pLeft = sqlite3ExprSkipCollate(pExpr->pLeft);
     Expr *pRight = sqlite3ExprSkipCollate(pExpr->pRight);
     u16 opMask = (pTerm->prereqRight & prereqLeft)==0 ? WO_ALL : WO_EQUIV;
-    if( pLeft->op==TK_COLUMN ){
-      pTerm->leftCursor = pLeft->iTable;
-      pTerm->u.leftColumn = pLeft->iColumn;
+    if( exprMightBeIndexed(pSrc, prereqLeft, pLeft, &iCur, &iColumn) ){
+      pTerm->leftCursor = iCur;
+      pTerm->u.leftColumn = iColumn;
       pTerm->eOperator = operatorMask(op) & opMask;
     }
     if( op==TK_IS ) pTerm->wtFlags |= TERM_IS;
-    if( pRight && pRight->op==TK_COLUMN ){
+    if( pRight 
+     && exprMightBeIndexed(pSrc, pTerm->prereqRight, pRight, &iCur, &iColumn)
+    ){
       WhereTerm *pNew;
       Expr *pDup;
       u16 eExtraOp = 0;        /* Extra bits for pNew->eOperator */
@@ -902,9 +950,8 @@ static void exprAnalyze(
         pNew = pTerm;
       }
       exprCommute(pParse, pDup);
-      pLeft = sqlite3ExprSkipCollate(pDup->pLeft);
-      pNew->leftCursor = pLeft->iTable;
-      pNew->u.leftColumn = pLeft->iColumn;
+      pNew->leftCursor = iCur;
+      pNew->u.leftColumn = iColumn;
       testcase( (prereqLeft | extraRight) != prereqLeft );
       pNew->prereqRight = prereqLeft | extraRight;
       pNew->prereqAll = prereqAll;
@@ -1245,5 +1292,45 @@ void sqlite3WhereExprAnalyze(
   int i;
   for(i=pWC->nTerm-1; i>=0; i--){
     exprAnalyze(pTabList, pWC, i);
+  }
+}
+
+/*
+** For table-valued-functions, transform the function arguments into
+** new WHERE clause terms.  
+**
+** Each function argument translates into an equality constraint against
+** a HIDDEN column in the table.
+*/
+void sqlite3WhereTabFuncArgs(
+  Parse *pParse,                    /* Parsing context */
+  struct SrcList_item *pItem,       /* The FROM clause term to process */
+  WhereClause *pWC                  /* Xfer function arguments to here */
+){
+  Table *pTab;
+  int j, k;
+  ExprList *pArgs;
+  Expr *pColRef;
+  Expr *pTerm;
+  if( pItem->fg.isTabFunc==0 ) return;
+  pTab = pItem->pTab;
+  assert( pTab!=0 );
+  pArgs = pItem->u1.pFuncArg;
+  assert( pArgs!=0 );
+  for(j=k=0; j<pArgs->nExpr; j++){
+    while( k<pTab->nCol && (pTab->aCol[k].colFlags & COLFLAG_HIDDEN)==0 ){ k++; }
+    if( k>=pTab->nCol ){
+      sqlite3ErrorMsg(pParse, "too many arguments on %s() - max %d",
+                      pTab->zName, j);
+      return;
+    }
+    pColRef = sqlite3PExpr(pParse, TK_COLUMN, 0, 0, 0);
+    if( pColRef==0 ) return;
+    pColRef->iTable = pItem->iCursor;
+    pColRef->iColumn = k++;
+    pColRef->pTab = pTab;
+    pTerm = sqlite3PExpr(pParse, TK_EQ, pColRef,
+                         sqlite3ExprDup(pParse->db, pArgs->a[j].pExpr, 0), 0);
+    whereClauseInsert(pWC, pTerm, TERM_DYNAMIC);
   }
 }

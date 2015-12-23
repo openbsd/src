@@ -571,7 +571,7 @@ int sqlite3VdbeExec(
     ** sqlite3_column_text16() failed.  */
     goto no_mem;
   }
-  assert( p->rc==SQLITE_OK || p->rc==SQLITE_BUSY );
+  assert( p->rc==SQLITE_OK || (p->rc&0xff)==SQLITE_BUSY );
   assert( p->bIsReader || p->readOnly!=0 );
   p->rc = SQLITE_OK;
   p->iCurrentTime = 0;
@@ -3008,12 +3008,12 @@ case OP_AutoCommit: {
       goto vdbe_return;
     }else{
       db->autoCommit = (u8)desiredAutoCommit;
-      if( sqlite3VdbeHalt(p)==SQLITE_BUSY ){
-        p->pc = (int)(pOp - aOp);
-        db->autoCommit = (u8)(1-desiredAutoCommit);
-        p->rc = rc = SQLITE_BUSY;
-        goto vdbe_return;
-      }
+    }
+    if( sqlite3VdbeHalt(p)==SQLITE_BUSY ){
+      p->pc = (int)(pOp - aOp);
+      db->autoCommit = (u8)(1-desiredAutoCommit);
+      p->rc = rc = SQLITE_BUSY;
+      goto vdbe_return;
     }
     assert( db->nStatement==0 );
     sqlite3CloseSavepoints(db);
@@ -3085,9 +3085,11 @@ case OP_Transaction: {
 
   if( pBt ){
     rc = sqlite3BtreeBeginTrans(pBt, pOp->p2);
-    if( rc==SQLITE_BUSY ){
+    testcase( rc==SQLITE_BUSY_SNAPSHOT );
+    testcase( rc==SQLITE_BUSY_RECOVERY );
+    if( (rc&0xff)==SQLITE_BUSY ){
       p->pc = (int)(pOp - aOp);
-      p->rc = rc = SQLITE_BUSY;
+      p->rc = rc;
       goto vdbe_return;
     }
     if( rc!=SQLITE_OK ){
@@ -3966,9 +3968,10 @@ case OP_Found: {        /* jump, in3 */
 **
 ** P1 is the index of a cursor open on an SQL table btree (with integer
 ** keys).  P3 is an integer rowid.  If P1 does not contain a record with
-** rowid P3 then jump immediately to P2.  If P1 does contain a record
-** with rowid P3 then leave the cursor pointing at that record and fall
-** through to the next instruction.
+** rowid P3 then jump immediately to P2.  Or, if P2 is 0, raise an
+** SQLITE_CORRUPT error. If P1 does contain a record with rowid P3 then 
+** leave the cursor pointing at that record and fall through to the next
+** instruction.
 **
 ** The OP_NotFound opcode performs the same operation on index btrees
 ** (with arbitrary multi-value keys).
@@ -4000,13 +4003,21 @@ case OP_NotExists: {        /* jump, in3 */
   res = 0;
   iKey = pIn3->u.i;
   rc = sqlite3BtreeMovetoUnpacked(pCrsr, 0, iKey, 0, &res);
+  assert( rc==SQLITE_OK || res==0 );
   pC->movetoTarget = iKey;  /* Used by OP_Delete */
   pC->nullRow = 0;
   pC->cacheStatus = CACHE_STALE;
   pC->deferredMoveto = 0;
   VdbeBranchTaken(res!=0,2);
   pC->seekResult = res;
-  if( res!=0 ) goto jump_to_p2;
+  if( res!=0 ){
+    assert( rc==SQLITE_OK );
+    if( pOp->p2==0 ){
+      rc = SQLITE_CORRUPT_BKPT;
+    }else{
+      goto jump_to_p2;
+    }
+  }
   break;
 }
 
@@ -4272,14 +4283,15 @@ case OP_InsertInt: {
   break;
 }
 
-/* Opcode: Delete P1 P2 * P4 *
+/* Opcode: Delete P1 P2 * P4 P5
 **
 ** Delete the record at which the P1 cursor is currently pointing.
 **
-** The cursor will be left pointing at either the next or the previous
-** record in the table. If it is left pointing at the next record, then
-** the next Next instruction will be a no-op.  Hence it is OK to delete
-** a record from within a Next loop.
+** If the P5 parameter is non-zero, the cursor will be left pointing at 
+** either the next or the previous record in the table. If it is left 
+** pointing at the next record, then the next Next instruction will be a 
+** no-op. As a result, in this case it is OK to delete a record from within a
+** Next loop. If P5 is zero, then the cursor is left in an undefined state.
 **
 ** If the OPFLAG_NCHANGE flag of P2 is set, then the row change count is
 ** incremented (otherwise not).
@@ -4294,6 +4306,7 @@ case OP_InsertInt: {
 */
 case OP_Delete: {
   VdbeCursor *pC;
+  u8 hasUpdateCallback;
 
   assert( pOp->p1>=0 && pOp->p1<p->nCursor );
   pC = p->apCsr[pOp->p1];
@@ -4301,22 +4314,27 @@ case OP_Delete: {
   assert( pC->pCursor!=0 );  /* Only valid for real tables, no pseudotables */
   assert( pC->deferredMoveto==0 );
 
+  hasUpdateCallback = db->xUpdateCallback && pOp->p4.z && pC->isTable;
+  if( pOp->p5 && hasUpdateCallback ){
+    sqlite3BtreeKeySize(pC->pCursor, &pC->movetoTarget);
+  }
+
 #ifdef SQLITE_DEBUG
   /* The seek operation that positioned the cursor prior to OP_Delete will
   ** have also set the pC->movetoTarget field to the rowid of the row that
   ** is being deleted */
-  if( pOp->p4.z && pC->isTable ){
+  if( pOp->p4.z && pC->isTable && pOp->p5==0 ){
     i64 iKey = 0;
     sqlite3BtreeKeySize(pC->pCursor, &iKey);
     assert( pC->movetoTarget==iKey ); 
   }
 #endif
  
-  rc = sqlite3BtreeDelete(pC->pCursor);
+  rc = sqlite3BtreeDelete(pC->pCursor, pOp->p5);
   pC->cacheStatus = CACHE_STALE;
 
   /* Invoke the update-hook if required. */
-  if( rc==SQLITE_OK && db->xUpdateCallback && pOp->p4.z && pC->isTable ){
+  if( rc==SQLITE_OK && hasUpdateCallback ){
     db->xUpdateCallback(db->pUpdateArg, SQLITE_DELETE,
                         db->aDb[pC->iDb].zName, pOp->p4.z, pC->movetoTarget);
     assert( pC->iDb>=0 );
@@ -4855,7 +4873,7 @@ case OP_IdxDelete: {
 #endif
   rc = sqlite3BtreeMovetoUnpacked(pCrsr, &r, 0, 0, &res);
   if( rc==SQLITE_OK && res==0 ){
-    rc = sqlite3BtreeDelete(pCrsr);
+    rc = sqlite3BtreeDelete(pCrsr, 0);
   }
   assert( pC->deferredMoveto==0 );
   pC->cacheStatus = CACHE_STALE;
@@ -5653,12 +5671,12 @@ case OP_MemMax: {        /* in2 */
 }
 #endif /* SQLITE_OMIT_AUTOINCREMENT */
 
-/* Opcode: IfPos P1 P2 * * *
-** Synopsis: if r[P1]>0 goto P2
+/* Opcode: IfPos P1 P2 P3 * *
+** Synopsis: if r[P1]>0 then r[P1]-=P3, goto P2
 **
 ** Register P1 must contain an integer.
-** If the value of register P1 is 1 or greater, jump to P2 and
-** add the literal value P3 to register P1.
+** If the value of register P1 is 1 or greater, subtract P3 from the
+** value in P1 and jump to P2.
 **
 ** If the initial value of register P1 is less than 1, then the
 ** value is unchanged and control passes through to the next instruction.
@@ -5667,38 +5685,44 @@ case OP_IfPos: {        /* jump, in1 */
   pIn1 = &aMem[pOp->p1];
   assert( pIn1->flags&MEM_Int );
   VdbeBranchTaken( pIn1->u.i>0, 2);
-  if( pIn1->u.i>0 ) goto jump_to_p2;
+  if( pIn1->u.i>0 ){
+    pIn1->u.i -= pOp->p3;
+    goto jump_to_p2;
+  }
   break;
 }
 
-/* Opcode: IfNeg P1 P2 P3 * *
-** Synopsis: r[P1]+=P3, if r[P1]<0 goto P2
+/* Opcode: SetIfNotPos P1 P2 P3 * *
+** Synopsis: if r[P1]<=0 then r[P2]=P3
 **
-** Register P1 must contain an integer.  Add literal P3 to the value in
-** register P1 then if the value of register P1 is less than zero, jump to P2. 
+** Register P1 must contain an integer.
+** If the value of register P1 is not positive (if it is less than 1) then
+** set the value of register P2 to be the integer P3.
 */
-case OP_IfNeg: {        /* jump, in1 */
+case OP_SetIfNotPos: {        /* in1, in2 */
   pIn1 = &aMem[pOp->p1];
   assert( pIn1->flags&MEM_Int );
-  pIn1->u.i += pOp->p3;
-  VdbeBranchTaken(pIn1->u.i<0, 2);
-  if( pIn1->u.i<0 ) goto jump_to_p2;
+  if( pIn1->u.i<=0 ){
+    pOut = out2Prerelease(p, pOp);
+    pOut->u.i = pOp->p3;
+  }
   break;
 }
 
 /* Opcode: IfNotZero P1 P2 P3 * *
-** Synopsis: if r[P1]!=0 then r[P1]+=P3, goto P2
+** Synopsis: if r[P1]!=0 then r[P1]-=P3, goto P2
 **
 ** Register P1 must contain an integer.  If the content of register P1 is
-** initially nonzero, then add P3 to P1 and jump to P2.  If register P1 is
-** initially zero, leave it unchanged and fall through.
+** initially nonzero, then subtract P3 from the value in register P1 and
+** jump to P2.  If register P1 is initially zero, leave it unchanged
+** and fall through.
 */
 case OP_IfNotZero: {        /* jump, in1 */
   pIn1 = &aMem[pOp->p1];
   assert( pIn1->flags&MEM_Int );
   VdbeBranchTaken(pIn1->u.i<0, 2);
   if( pIn1->u.i ){
-     pIn1->u.i += pOp->p3;
+     pIn1->u.i -= pOp->p3;
      goto jump_to_p2;
   }
   break;
