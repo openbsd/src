@@ -1,4 +1,4 @@
-/*	$OpenBSD: softraid.c,v 1.16 2015/12/22 21:15:43 krw Exp $	*/
+/*	$OpenBSD: softraid.c,v 1.17 2015/12/23 15:22:48 krw Exp $	*/
 
 /*
  * Copyright (c) 2012 Joel Sing <jsing@openbsd.org>
@@ -522,7 +522,7 @@ sr_getdisklabel(struct sr_boot_volume *bv, struct disklabel *label)
 	/* Check for MBR to determine partition offset. */
 	bzero(&mbr, sizeof(mbr));
 	sr_strategy(bv, F_READ, DOSBBSECTOR, sizeof(mbr), &mbr, NULL);
-	if (gpt_chk_mbr(mbr.dmbr_parts, label)) {
+	if (gpt_chk_mbr(mbr.dmbr_parts, label) == 0) {
 		start = findopenbsd_gpt(bv);
 	} else if (mbr.dmbr_sign == DOSMBR_SIGNATURE) {
 
