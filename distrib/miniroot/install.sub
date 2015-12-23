@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.865 2015/12/23 17:45:13 rpe Exp $
+#	$OpenBSD: install.sub,v 1.866 2015/12/23 18:06:32 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -241,6 +241,15 @@ get_dkdevs () {
 # Return list of CDROM devices.
 get_cddevs () {
 	echo $(scan_disknames "${MDCDDEVS:-/^cd[0-9][0-9]* /s/ .*//p}")
+}
+
+# Return list of disks not yet initialized.
+get_dkdevs_uninitialized() {
+	local _disks=$(get_dkdevs) _d
+	for _d in $DISKS_DONE; do
+		_disks=$(rmel "$_d" $_disks)
+	done
+	bsort $_disks
 }
 
 # Return list of network devices. Filter out dynamically created network
