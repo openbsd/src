@@ -1,4 +1,4 @@
-/*	$OpenBSD: mountd.c,v 1.83 2015/12/15 18:17:34 tim Exp $	*/
+/*	$OpenBSD: mountd.c,v 1.84 2015/12/23 21:16:17 tim Exp $	*/
 /*	$NetBSD: mountd.c,v 1.31 1996/02/18 11:57:53 fvdl Exp $	*/
 
 /*
@@ -36,8 +36,11 @@
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/mount.h>
+#include <sys/queue.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
+#include <sys/uio.h>
+#include <sys/wait.h>
 #include <syslog.h>
 
 #include <rpc/rpc.h>
@@ -51,6 +54,7 @@
 #include <ctype.h>
 #include <errno.h>
 #include <grp.h>
+#include <imsg.h>
 #include <netdb.h>
 #include <netgroup.h>
 #include <poll.h>
@@ -64,6 +68,8 @@
 #include "pathnames.h"
 
 #include <stdarg.h>
+
+#define isterminated(str, size) (memchr((str), '\0', (size)) != NULL)
 
 /*
  * Structures for keeping the mount list and export list
@@ -130,17 +136,40 @@ struct fhreturn {
 	nfsfh_t	fhr_fh;
 };
 
+#define IMSG_GETFH_REQ		0x0
+#define IMSG_GETFH_RESP		0x1
+#define IMSG_EXPORT_REQ		0x2
+#define IMSG_EXPORT_RESP	0x3
+#define IMSG_DELEXPORT		0x4
+#define IMSG_MLIST_APPEND	0x5
+#define IMSG_MLIST_OPEN		0x6
+#define IMSG_MLIST_CLOSE	0x7
+#define IMSG_MLIST_WRITE	0x8
+
+struct getfh_resp {
+	fhandle_t	gr_fh;
+	int		gr_error;
+};
+
+struct export_req {
+	char		er_path[MNAMELEN];
+	struct export_args er_args;
+	struct sockaddr	er_addr;
+	struct sockaddr	er_mask;
+};
+
 /* Global defs */
 char	*add_expdir(struct dirlist **, char *, int);
 void	add_dlist(struct dirlist **, struct dirlist *, struct grouplist *, int);
 void	add_mlist(char *, char *);
+void	check_child(int);
 int	check_dirpath(char *);
 int	check_options(struct dirlist *);
 int	chk_host(struct dirlist *, in_addr_t, int *, int *);
 void	del_mlist(char *, char *);
 struct dirlist *dirp_search(struct dirlist *, char *);
 int	do_mount(struct exportlist *, struct grouplist *, int, struct xucred *,
-	    char *, int, struct statfs *);
+	    char *, int);
 int	do_opt(char **, char **, struct exportlist *, struct grouplist *,
 	    int *, int *, struct xucred *);
 struct	exportlist *ex_search(fsid_t *);
@@ -165,8 +194,11 @@ void	mntsrv(struct svc_req *, SVCXPRT *);
 void	nextfield(char **, char **);
 void	out_of_mem(void);
 void	parsecred(char *, struct xucred *);
+void	privchild(int);
 int	put_exlist(struct dirlist *, XDR *, struct dirlist *, int *);
+ssize_t	recv_imsg(struct imsg *);
 int	scan_tree(struct dirlist *, in_addr_t);
+int	send_imsg(u_int32_t, void *, u_int16_t);
 void	send_umntall(int signo);
 int	umntall_each(caddr_t, struct sockaddr_in *);
 int	xdr_dir(XDR *, char *);
@@ -193,8 +225,10 @@ int opt_flags;
 #define	OP_NET		0x10
 #define	OP_ALLDIRS	0x40
 
+struct imsgbuf ibuf;
 int debug = 0;
 
+volatile sig_atomic_t gotchld;
 volatile sig_atomic_t gothup;
 volatile sig_atomic_t gotterm;
 
@@ -210,7 +244,7 @@ main(int argc, char *argv[])
 {
 	SVCXPRT *udptransp, *tcptransp;
 	FILE *pidfile;
-	int c;
+	int c, socks[2];
 
 	while ((c = getopt(argc, argv, "dnr")) != -1)
 		switch (c) {
@@ -234,12 +268,6 @@ main(int argc, char *argv[])
 	strlcpy(exname, argc == 1? *argv : _PATH_EXPORTS, sizeof(exname));
 
 	openlog("mountd", LOG_PID, LOG_DAEMON);
-	if (debug)
-		fprintf(stderr, "Getting export list.\n");
-	get_exportlist();
-	if (debug)
-		fprintf(stderr, "Getting mount list.\n");
-	get_mountlist();
 	if (debug)
 		fprintf(stderr, "Here we go.\n");
 	if (debug == 0) {
@@ -265,9 +293,41 @@ main(int argc, char *argv[])
 		fclose(pidfile);
 	}
 
+	signal(SIGCHLD, (void (*)(int)) check_child);
 	signal(SIGHUP, (void (*)(int)) new_exportlist);
+
+	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, socks) == -1) {
+		syslog(LOG_ERR, "socketpair: %m");
+		exit(1);
+	}
+
+	switch (fork()) {
+	case -1:
+		syslog(LOG_ERR, "fork: %m");
+		exit(1);
+	case 0:
+		close(socks[0]);
+		privchild(socks[1]);
+	}
+
+	close(socks[1]);
+
+	if (pledge("stdio rpath inet dns getpw", NULL) == -1) {
+		syslog(LOG_ERR, "pledge: %m");
+		exit(1);
+	}
+
 	signal(SIGTERM, (void (*)(int)) send_umntall);
-	signal(SIGSYS, SIG_IGN);
+	imsg_init(&ibuf, socks[0]);
+	setproctitle("parent");
+
+	if (debug)
+		fprintf(stderr, "Getting export list.\n");
+	get_exportlist();
+	if (debug)
+		fprintf(stderr, "Getting mount list.\n");
+	get_mountlist();
+
 	if ((udptransp = svcudp_create(RPC_ANYSOCK)) == NULL ||
 	    (tcptransp = svctcp_create(RPC_ANYSOCK, 0, 0)) == NULL) {
 		syslog(LOG_ERR, "Can't create socket");
@@ -288,23 +348,349 @@ main(int argc, char *argv[])
 }
 
 void
+check_child(int signo)
+{
+	gotchld = 1;
+}
+
+void
+privchild(int sock)
+{
+	struct imsg imsg;
+	struct pollfd pfd[1];
+	struct ufs_args args;
+	struct statfs sfb;
+	struct getfh_resp resp;
+	struct export_req *req;
+	struct mountlist *ml;
+	FILE *fp;
+	char *path;
+	int error, size;
+
+	signal(SIGSYS, SIG_IGN);
+	imsg_init(&ibuf, sock);
+	setproctitle("[priv]");
+	fp = NULL;
+
+	for (;;) {
+		if (gothup) {
+			kill(getppid(), SIGHUP);
+			gothup = 0;
+		}
+
+		pfd[0].fd = ibuf.fd;
+		pfd[0].events = POLLIN;
+		switch (poll(pfd, 1, INFTIM)) {
+		case -1:
+			if (errno == EINTR)
+				continue;
+			syslog(LOG_ERR, "poll: %m");
+			_exit(1);
+		case 0:
+			continue;
+		}
+		if (pfd[0].revents & POLLHUP) {
+			syslog(LOG_ERR, "Socket disconnected");
+			_exit(1);
+		}
+		if (!(pfd[0].revents & POLLIN))
+			continue;
+
+		switch (imsg_read(&ibuf)) {
+		case -1:
+			syslog(LOG_ERR, "imsg_read: %m");
+			_exit(1);
+		case 0:
+			syslog(LOG_ERR, "Socket disconnected");
+			_exit(1);
+		}
+
+		while ((size = imsg_get(&ibuf, &imsg)) != 0) {
+			if (size == -1) {
+				syslog(LOG_ERR, "imsg_get: %m");
+				_exit(1);
+			}
+			size -= IMSG_HEADER_SIZE;
+
+			switch (imsg.hdr.type) {
+			case IMSG_GETFH_REQ:
+				if (size != PATH_MAX) {
+					syslog(LOG_ERR, "Invalid message size");
+					break;
+				}
+				path = imsg.data;
+				if (getfh(path, &resp.gr_fh) == -1)
+					resp.gr_error = errno;
+				else
+					resp.gr_error = 0;
+				send_imsg(IMSG_GETFH_RESP, &resp, sizeof(resp));
+				break;
+			case IMSG_EXPORT_REQ:
+				if (size != sizeof(*req)) {
+					syslog(LOG_ERR, "Invalid message size");
+					break;
+				}
+				req = imsg.data;
+				if (statfs(req->er_path, &sfb) == -1) {
+					error = errno;
+					syslog(LOG_ERR, "statfs: %m");
+					send_imsg(IMSG_EXPORT_RESP, &error,
+					    sizeof(error));
+					break;
+				}
+				args.fspec = 0;
+				args.export_info = req->er_args;
+				args.export_info.ex_addr = &req->er_addr;
+				args.export_info.ex_mask = &req->er_mask;
+				if (mount(sfb.f_fstypename, sfb.f_mntonname,
+				    sfb.f_flags | MNT_UPDATE, &args) == -1) {
+				    	error = errno;
+				    	syslog(LOG_ERR, "mount: %m");
+					send_imsg(IMSG_EXPORT_RESP, &error,
+					    sizeof(error));
+					break;
+				}
+				error = 0;
+				send_imsg(IMSG_EXPORT_RESP, &error, sizeof(error));
+				break;
+			case IMSG_DELEXPORT:
+				if (size != MNAMELEN) {
+					syslog(LOG_ERR, "Invalid message size");
+					break;
+				}
+				path = imsg.data;
+				if (statfs(path, &sfb) == -1) {
+					syslog(LOG_ERR, "statfs: %m");
+					break;
+				}
+				memset(&args, 0, sizeof(args));
+				args.export_info.ex_flags = MNT_DELEXPORT;
+				if (mount(sfb.f_fstypename, sfb.f_mntonname,
+				    sfb.f_flags | MNT_UPDATE, &args) == -1)
+					syslog(LOG_ERR, "mount: %m");
+				break;
+			case IMSG_MLIST_APPEND:
+				if (size != sizeof(*ml)) {
+					syslog(LOG_ERR, "Invalid message size");
+					break;
+				}
+				if (fp != NULL)
+					break;
+				ml = imsg.data;
+				if (!isterminated(&ml->ml_host,
+				    sizeof(ml->ml_host)) ||
+				    !isterminated(&ml->ml_dirp,
+				    sizeof(ml->ml_dirp)))
+					break;
+				fp = fopen(_PATH_RMOUNTLIST, "a");
+				if (fp == NULL) {
+					syslog(LOG_ERR, "fopen: %s: %m",
+					    _PATH_RMOUNTLIST);
+					break;
+				}
+				fprintf(fp, "%s %s\n", ml->ml_host,
+				    ml->ml_dirp);
+				fclose(fp);
+				fp = NULL;
+				break;
+			case IMSG_MLIST_OPEN:
+				if (size != 0) {
+					syslog(LOG_ERR, "Invalid message size");
+					break;
+				}
+				if (fp != NULL)
+					break;
+				fp = fopen(_PATH_RMOUNTLIST, "w");
+				if (fp == NULL)
+					syslog(LOG_ERR, "fopen: %s: %m",
+					    _PATH_RMOUNTLIST);
+				break;
+			case IMSG_MLIST_WRITE:
+				if (size != sizeof(*ml)) {
+					syslog(LOG_ERR, "Invalid message size");
+					break;
+				}
+				if (fp == NULL)
+					break;
+				ml = imsg.data;
+				if (!isterminated(&ml->ml_host,
+				    sizeof(ml->ml_host)) ||
+				    !isterminated(&ml->ml_dirp,
+				    sizeof(ml->ml_host)))
+					break;
+				fprintf(fp, "%s %s\n", ml->ml_host,
+				    ml->ml_dirp);
+				break;
+			case IMSG_MLIST_CLOSE:
+				if (size != 0) {
+					syslog(LOG_ERR, "Invalid message size");
+					break;
+				}
+				if (fp != NULL) {
+					fclose(fp);
+					fp = NULL;
+				}
+				break;
+			default:
+				syslog(LOG_ERR, "Unexpected message type");
+				break;
+			}
+
+			imsg_free(&imsg);
+		}
+	}
+}
+
+int
+imsg_getfh(char *path, fhandle_t *fh)
+{
+	struct imsg imsg;
+	struct getfh_resp *resp;
+	ssize_t size;
+
+	if (send_imsg(IMSG_GETFH_REQ, path, PATH_MAX) == -1)
+		return (-1);
+
+	size = recv_imsg(&imsg);
+	if (size == -1)
+		return (-1);
+	if (imsg.hdr.type != IMSG_GETFH_RESP || size != sizeof(*resp)) {
+		syslog(LOG_ERR, "Invalid message");
+		imsg_free(&imsg);
+		errno = EINVAL;
+		return (-1);
+	}
+
+	resp = imsg.data;
+	*fh = resp->gr_fh;
+	if (resp->gr_error) {
+		errno = resp->gr_error;
+		imsg_free(&imsg);
+		return (-1);
+	}
+
+	imsg_free(&imsg);
+	return (0);
+}
+
+int
+imsg_export(const char *dir, struct export_args *args)
+{
+	struct export_req req;
+	struct imsg imsg;
+	ssize_t size;
+
+	if (strlcpy(req.er_path, dir, sizeof(req.er_path)) >=
+	    sizeof(req.er_path)) {
+		syslog(LOG_ERR, "%s: mount dir too long", dir);
+		errno = EINVAL;
+		return (-1);
+	}
+
+	req.er_args = *args;
+	if (args->ex_addrlen)
+		req.er_addr = *args->ex_addr;
+	if (args->ex_masklen)
+		req.er_mask = *args->ex_mask;
+
+	if (send_imsg(IMSG_EXPORT_REQ, &req, sizeof(req)) == -1)
+		return (-1);
+
+	size = recv_imsg(&imsg);
+	if (size == -1)
+		return (-1);
+	if (imsg.hdr.type != IMSG_EXPORT_RESP || size != sizeof(int)) {
+		syslog(LOG_ERR, "Invalid message");
+		imsg_free(&imsg);
+		errno = EINVAL;
+		return (-1);
+	}
+
+	if (*(int *)imsg.data != 0) {
+		errno = *(int *)imsg.data;
+		imsg_free(&imsg);
+		return (-1);
+	}
+
+	imsg_free(&imsg);
+	return (0);
+}
+
+ssize_t
+recv_imsg(struct imsg *imsg)
+{
+	ssize_t n;
+
+	n = imsg_read(&ibuf);
+	if (n == -1) {
+		syslog(LOG_ERR, "imsg_read: %m");
+		return (-1);
+	}
+	if (n == 0) {
+		syslog(LOG_ERR, "Socket disconnected");
+		errno = EINVAL;
+		return (-1);
+	}
+
+	n = imsg_get(&ibuf, imsg);
+	if (n == -1) {
+		syslog(LOG_ERR, "imsg_get: %m");
+		return (-1);
+	}
+	if (n == 0) {
+		syslog(LOG_ERR, "No messages ready");
+		errno = EINVAL;
+		return (-1);
+	}
+
+	return (n - IMSG_HEADER_SIZE);
+}
+
+int
+send_imsg(u_int32_t type, void *data, u_int16_t size)
+{
+	if (imsg_compose(&ibuf, type, 0, 0, -1, data, size) == -1) {
+		syslog(LOG_ERR, "imsg_compose: %m");
+		return (-1);
+	}
+
+	if (imsg_flush(&ibuf) == -1) {
+		syslog(LOG_ERR, "imsg_flush: %m");
+		return (-1);
+	}
+
+	return (0);
+}
+
+void
 mountd_svc_run(void)
 {
 	struct pollfd *pfd = NULL, *newp;
 	nfds_t saved_max_pollfd = 0;
-	int nready;
+	int nready, status;
 
 	for (;;) {
+		if (gotchld) {
+			if (waitpid(WAIT_ANY, &status, WNOHANG) == -1) {
+				syslog(LOG_ERR, "waitpid: %m");
+				break;
+			}
+			if (WIFEXITED(status)) {
+				syslog(LOG_ERR, "Child exited");
+				break;
+			}
+			if (WIFSIGNALED(status)) {
+				syslog(LOG_ERR, "Child terminated by signal");
+				break;
+			}
+			gotchld = 0;
+		}
 		if (gothup) {
 			get_exportlist();
 			gothup = 0;
 		}
-		if (gotterm) {
-			(void) clnt_broadcast(RPCPROG_MNT, RPCMNT_VER1,
-			    RPCMNT_UMNTALL, xdr_void, (caddr_t)0, xdr_void,
-			    (caddr_t)0, umntall_each);
-			exit(0);
-		}
+		if (gotterm)
+			break;
 		if (svc_max_pollfd > saved_max_pollfd) {
 			newp = reallocarray(pfd, svc_max_pollfd, sizeof(*pfd));
 			if (!newp) {
@@ -332,6 +718,10 @@ mountd_svc_run(void)
 			break;
 		}
 	}
+
+	(void) clnt_broadcast(RPCPROG_MNT, RPCMNT_VER1, RPCMNT_UMNTALL,
+	    xdr_void, (caddr_t)0, xdr_void, (caddr_t)0, umntall_each);
+	exit(0);
 }
 
 /*
@@ -421,7 +811,7 @@ mntsrv(struct svc_req *rqstp, SVCXPRT *transp)
 			fhr.fhr_vers = rqstp->rq_vers;
 			/* Get the file handle */
 			memset(&fhr.fhr_fh, 0, sizeof(nfsfh_t));
-			if (getfh(dirpath, (fhandle_t *)&fhr.fhr_fh) < 0) {
+			if (imsg_getfh(dirpath, (fhandle_t *)&fhr.fhr_fh) < 0) {
 				if (errno == ENOSYS) {
 					syslog(LOG_ERR,
 					    "Kernel does not support NFS exporting, "
@@ -682,12 +1072,6 @@ get_exportlist(void)
 	struct statfs fsb, *ofsp, *fsp;
 	struct hostent *hpe;
 	struct xucred anon;
-	union {
-		struct ufs_args ua;
-		struct iso_args ia;
-		struct mfs_args ma;
-		struct msdosfs_args da;
-	} targs;
 	struct fsarray {
 		int exflags;
 		char *mntonname;
@@ -742,8 +1126,9 @@ get_exportlist(void)
 	}
 
 	/*
-	 * Read in the exports file and build the list, calling
-	 * mount() as we go along to push the export rules into the kernel.
+	 * Read in the exports file and build the list, calling mount() through
+	 * the privileged child as we go along to push the export rules into
+	 * the kernel.
 	 */
 	if ((exp_file = fopen(exname, "r")) == NULL) {
 		syslog(LOG_ERR, "Can't open %s", exname);
@@ -976,7 +1361,7 @@ get_exportlist(void)
 			 * Non-zero return indicates an error.  Return
 			 * val of 1 means line is invalid (not just entry).
 			 */
-			i = do_mount(ep, grp, exflags, &anon, dirp, dirplen, &fsb);
+			i = do_mount(ep, grp, exflags, &anon, dirp, dirplen);
 			exflags &= ~MNT_DELEXPORT;
 			if (i == 1) {
 				getexp_err(ep, tgrp);
@@ -1035,12 +1420,8 @@ nextline:
 		if (debug)
 			fprintf(stderr, "unexporting %s %s\n",
 			    fsp->f_mntonname, fstbl[i].mntonname);
-		bzero(&targs, sizeof(targs));
-		targs.ua.export_info.ex_flags = MNT_DELEXPORT;
-		if (mount(fsp->f_fstypename, fsp->f_mntonname,
-		    fsp->f_flags | MNT_UPDATE, &targs) < 0)
-			syslog(LOG_ERR, "Can't delete exports for %s: %m",
-			    fsp->f_mntonname);
+		send_imsg(IMSG_DELEXPORT, fsp->f_mntonname,
+		    sizeof(fsp->f_mntonname));
 	}
 	free(fstbl);
 	fclose(exp_file);
@@ -1548,24 +1929,18 @@ out_of_mem(void)
  */
 int
 do_mount(struct exportlist *ep, struct grouplist *grp, int exflags,
-    struct xucred *anoncrp, char *dirp, int dirplen, struct statfs *fsb)
+    struct xucred *anoncrp, char *dirp, int dirplen)
 {
 	struct sockaddr_in sin, imask;
-	union {
-		struct ufs_args ua;
-		struct iso_args ia;
-		struct mfs_args ma;
-		struct msdosfs_args da;
-	} args;
+	struct export_args args;
 	char savedc = '\0';
 	u_int32_t **addrp;
 	char *cp = NULL;
 	in_addr_t net;
 	int done;
 
-	args.ua.fspec = 0;
-	args.ua.export_info.ex_flags = exflags;
-	args.ua.export_info.ex_anon = *anoncrp;
+	args.ex_flags = exflags;
+	args.ex_anon = *anoncrp;
 	memset(&sin, 0, sizeof(sin));
 	memset(&imask, 0, sizeof(imask));
 	sin.sin_family = AF_INET;
@@ -1581,21 +1956,21 @@ do_mount(struct exportlist *ep, struct grouplist *grp, int exflags,
 	while (!done) {
 		switch (grp->gr_type) {
 		case GT_HOST:
-			args.ua.export_info.ex_addr = (struct sockaddr *)&sin;
-			args.ua.export_info.ex_masklen = 0;
+			args.ex_addr = (struct sockaddr *)&sin;
+			args.ex_masklen = 0;
 			if (!addrp) {
-				args.ua.export_info.ex_addrlen = 0;
+				args.ex_addrlen = 0;
 				break;
 			}
 			sin.sin_addr.s_addr = **addrp;
-			args.ua.export_info.ex_addrlen = sizeof(sin);
+			args.ex_addrlen = sizeof(sin);
 			break;
 		case GT_NET:
 			sin.sin_addr.s_addr = grp->gr_ptr.gt_net.nt_net;
-			args.ua.export_info.ex_addr = (struct sockaddr *)&sin;
-			args.ua.export_info.ex_addrlen = sizeof (sin);
-			args.ua.export_info.ex_mask = (struct sockaddr *)&imask;
-			args.ua.export_info.ex_masklen = sizeof (imask);
+			args.ex_addr = (struct sockaddr *)&sin;
+			args.ex_addrlen = sizeof (sin);
+			args.ex_mask = (struct sockaddr *)&imask;
+			args.ex_masklen = sizeof (imask);
 			if (grp->gr_ptr.gt_net.nt_mask) {
 				imask.sin_addr.s_addr = grp->gr_ptr.gt_net.nt_mask;
 				break;
@@ -1625,8 +2000,7 @@ do_mount(struct exportlist *ep, struct grouplist *grp, int exflags,
 		 * Also, needs to know how to export all types of local
 		 * exportable file systems and not just MOUNT_FFS.
 		 */
-		while (mount(fsb->f_fstypename, dirp,
-		    fsb->f_flags | MNT_UPDATE, &args) < 0) {
+		while (imsg_export(dirp, &args) == -1) {
 			if (cp)
 				*cp-- = savedc;
 			else
@@ -1907,7 +2281,6 @@ del_mlist(char *hostp, char *dirp)
 {
 	struct mountlist *mlp, **mlpp;
 	struct mountlist *mlp2;
-	FILE *mlfile;
 	int fnd = 0;
 
 	mlpp = &mlhead;
@@ -1925,17 +2298,13 @@ del_mlist(char *hostp, char *dirp)
 		}
 	}
 	if (fnd) {
-		if ((mlfile = fopen(_PATH_RMOUNTLIST, "w")) == NULL) {
-			syslog(LOG_ERR, "Can't update %s: %m",
-			    _PATH_RMOUNTLIST);
-			return;
-		}
+		send_imsg(IMSG_MLIST_OPEN, NULL, 0);
 		mlp = mlhead;
 		while (mlp) {
-			fprintf(mlfile, "%s %s\n", mlp->ml_host, mlp->ml_dirp);
+			send_imsg(IMSG_MLIST_WRITE, mlp, sizeof(*mlp));
 			mlp = mlp->ml_next;
 		}
-		fclose(mlfile);
+		send_imsg(IMSG_MLIST_CLOSE, NULL, 0);
 	}
 }
 
@@ -1943,7 +2312,6 @@ void
 add_mlist(char *hostp, char *dirp)
 {
 	struct mountlist *mlp, **mlpp;
-	FILE *mlfile;
 
 	mlpp = &mlhead;
 	mlp = mlhead;
@@ -1960,12 +2328,7 @@ add_mlist(char *hostp, char *dirp)
 	strlcpy(mlp->ml_dirp, dirp, sizeof(mlp->ml_dirp));
 	mlp->ml_next = NULL;
 	*mlpp = mlp;
-	if ((mlfile = fopen(_PATH_RMOUNTLIST, "a")) == NULL) {
-		syslog(LOG_ERR, "Can't update %s: %m", _PATH_RMOUNTLIST);
-		return;
-	}
-	fprintf(mlfile, "%s %s\n", mlp->ml_host, mlp->ml_dirp);
-	fclose(mlfile);
+	send_imsg(IMSG_MLIST_APPEND, mlp, sizeof(*mlp));
 }
 
 /*
