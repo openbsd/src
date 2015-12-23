@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.56 2015/12/10 17:27:00 mmcc Exp $	*/
+/*	$OpenBSD: init.c,v 1.57 2015/12/23 02:41:12 mmcc Exp $	*/
 /*	$NetBSD: init.c,v 1.22 1996/05/15 23:29:33 jtc Exp $	*/
 
 /*-
@@ -694,8 +694,8 @@ f_runcom(void)
 
 		argv[0] = "sh";
 		argv[1] = _PATH_RUNCOM;
-		argv[2] = runcom_mode == AUTOBOOT ? "autoboot" : 0;
-		argv[3] = 0;
+		argv[2] = runcom_mode == AUTOBOOT ? "autoboot" : NULL;
+		argv[3] = NULL;
 
 		sigprocmask(SIG_SETMASK, &sa.sa_mask, NULL);
 
@@ -897,10 +897,10 @@ new_session(session_t *sprev, int session_index, struct ttyent *typ)
 		return (0);
 	}
 
-	sp->se_next = 0;
-	if (sprev == 0) {
+	sp->se_next = NULL;
+	if (sprev == NULL) {
 		sessions = sp;
-		sp->se_prev = 0;
+		sp->se_prev = NULL;
 	} else {
 		sprev->se_next = sp;
 		sp->se_prev = sprev;
@@ -925,7 +925,7 @@ setupargv(session_t *sp, struct ttyent *typ)
 	if (sp->se_getty_argv == 0) {
 		warning("can't parse getty for port %s", sp->se_device);
 		free(sp->se_getty);
-		sp->se_getty = 0;
+		sp->se_getty = NULL;
 		return (0);
 	}
 	if (typ->ty_window) {
@@ -967,7 +967,7 @@ f_read_ttys(void)
 		snext = sp->se_next;
 		free_session(sp);
 	}
-	sessions = 0;
+	sessions = NULL;
 	if (start_session_db())
 		return single_user;
 
@@ -1238,7 +1238,7 @@ f_clean_ttys(void)
 	while ((typ = getttyent())) {
 		++session_index;
 
-		for (sprev = 0, sp = sessions; sp; sprev = sp, sp = sp->se_next)
+		for (sprev = NULL, sp = sessions; sp; sprev = sp, sp = sp->se_next)
 			if (strcmp(typ->ty_name, sp->se_device + devlen) == 0)
 				break;
 
