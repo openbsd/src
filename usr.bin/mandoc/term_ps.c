@@ -1,4 +1,4 @@
-/*	$OpenBSD: term_ps.c,v 1.43 2015/10/13 22:57:49 schwarze Exp $ */
+/*	$OpenBSD: term_ps.c,v 1.44 2015/12/23 20:31:17 mmcc Exp $ */
 /*
  * Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -637,10 +637,8 @@ pspdf_free(void *arg)
 
 	p = (struct termp *)arg;
 
-	if (p->ps->psmarg)
-		free(p->ps->psmarg);
-	if (p->ps->pdfobjs)
-		free(p->ps->pdfobjs);
+	free(p->ps->psmarg);
+	free(p->ps->pdfobjs);
 
 	free(p->ps);
 	term_free(p);
