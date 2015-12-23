@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sched.c,v 1.40 2015/12/17 22:14:40 kettenis Exp $	*/
+/*	$OpenBSD: kern_sched.c,v 1.41 2015/12/23 14:51:17 kettenis Exp $	*/
 /*
  * Copyright (c) 2007, 2008 Artur Grabowski <art@openbsd.org>
  *
@@ -98,13 +98,6 @@ sched_init_cpu(struct cpu_info *ci)
 	 */
 	cpuset_init_cpu(ci);
 	cpuset_add(&sched_all_cpus, ci);
-
-#ifdef MULTIPROCESSOR
-	sbartq = taskq_create("sbar", 1, IPL_NONE,
-	    TASKQ_MPSAFE | TASKQ_CANTSLEEP);
-	if (sbartq == NULL)
-		panic("unable to create sbar taskq");
-#endif
 }
 
 void
@@ -233,6 +226,12 @@ sched_exit(struct proc *p)
 void
 sched_init_runqueues(void)
 {
+#ifdef MULTIPROCESSOR
+	sbartq = taskq_create("sbar", 1, IPL_NONE,
+	    TASKQ_MPSAFE | TASKQ_CANTSLEEP);
+	if (sbartq == NULL)
+		panic("unable to create sbar taskq");
+#endif
 }
 
 void
