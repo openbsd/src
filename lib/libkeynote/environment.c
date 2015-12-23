@@ -1,4 +1,4 @@
-/* $OpenBSD: environment.c,v 1.28 2015/12/19 01:15:44 mmcc Exp $ */
+/* $OpenBSD: environment.c,v 1.29 2015/12/23 20:28:15 mmcc Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -68,10 +68,8 @@ keynote_get_action_authorizers(char *name)
     if (!strcmp(name, KEYNOTE_CALLBACK_CLEANUP) ||
         !strcmp(name, KEYNOTE_CALLBACK_INITIALIZE))
     {
-        if (keynote_current_session->ks_authorizers_cache != NULL) {
-	    free(keynote_current_session->ks_authorizers_cache);
-	    keynote_current_session->ks_authorizers_cache = NULL;
-	}
+        free(keynote_current_session->ks_authorizers_cache);
+        keynote_current_session->ks_authorizers_cache = NULL;
 
 	return "";
     }
@@ -120,10 +118,8 @@ keynote_get_values(char *name)
     if (!strcmp(name, KEYNOTE_CALLBACK_CLEANUP) ||
         !strcmp(name, KEYNOTE_CALLBACK_INITIALIZE))
     {
-        if (keynote_current_session->ks_values_cache != NULL) {
-	    free(keynote_current_session->ks_values_cache);
-	    keynote_current_session->ks_values_cache = NULL;
-	}
+        free(keynote_current_session->ks_values_cache);
+        keynote_current_session->ks_values_cache = NULL;
 
 	return "";
     }
@@ -164,16 +160,14 @@ keynote_free_env(struct environment *en)
     if (en == NULL)
       return;
 
-    if (en->env_name != NULL)
-      free(en->env_name);
+    free(en->env_name);
 
     if (en->env_flags & ENVIRONMENT_FLAG_REGEX)
       regfree(&(en->env_regex));
 
     if (!(en->env_flags & ENVIRONMENT_FLAG_FUNC))
     {
-        if (en->env_value != NULL)
-	  free(en->env_value);
+        free(en->env_value);
     }
     else
       ((char * (*) (char *))en->env_value)(KEYNOTE_CALLBACK_CLEANUP);
