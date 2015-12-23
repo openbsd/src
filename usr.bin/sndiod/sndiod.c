@@ -1,4 +1,4 @@
-/*	$OpenBSD: sndiod.c,v 1.20 2015/12/23 12:20:24 ratchov Exp $	*/
+/*	$OpenBSD: sndiod.c,v 1.21 2015/12/23 12:24:12 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -475,9 +475,8 @@ main(int argc, char **argv)
 		wpw_gid = pw->pw_gid;		
 		wpw_dir = xstrdup(pw->pw_dir);
 	} else {
-		//hpw_uid = wpw_uid = 0;
-		//hpw_gid = wpw_gid = 0;
-		//wpw_dir = NULL;
+		hpw_uid = wpw_uid = hpw_gid = wpw_gid = 0xdeadbeef;
+		wpw_dir = NULL;
 	}
 
 	/* start subprocesses */
