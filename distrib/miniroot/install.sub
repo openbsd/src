@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.862 2015/12/18 16:20:58 rpe Exp $
+#	$OpenBSD: install.sub,v 1.863 2015/12/23 08:00:09 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -1045,23 +1045,22 @@ configure_ifs() {
 
 # Set up IPv4 default route.
 v4_defroute() {
-	local _dr _prompt=" or 'none'"
+	local _dr
 
-	# Get/Confirm an IPv4 default route if an IPv4 address was configured.
+	# Only configure a default route if an IPv4 address was configured.
 	[[ -n $(ifconfig | sed -n '/[ 	]inet .* broadcast /p') ]] || return
 
-	# If only one interface, and it is running dhclient, ask nothing.
-	[[ -f /tmp/dhclient.conf && $NIFS == 1 ]] && return
+	# Check routing table to see if a default route ($1) already exists
+	# and if it is handled by dhclient ($2).
+	set -- $(route -nv show -inet | { set -- $(grep '^default '); print $2 $9; })
+	[[ -n $1 ]] && _dr=$1
 
-	[[ -x /sbin/dhclient ]] && _prompt=", 'dhcp'$_prompt"
-	_prompt="Default IPv4 route? (IPv4 address$_prompt)"
-
-	_dr=$(route -n show -inet | sed -n '/^default */{s///; s/ .*//; p;}')
-	[[ -f /tmp/dhclient.conf ]] && _dr=dhcp
+	# Don't ask if a default route exits and is handled by dhclient.
+	[[ -n $_dr && $2 == DHCLIENT && -f /tmp/dhclient.conf ]] && return
 
 	while :; do
-		ask_until "$_prompt" "$_dr"
-		[[ $resp == @(none|dhcp) ]] && break
+		ask_until "Default IPv4 route? (IPv4 address or none)" "$_dr"
+		[[ $resp == none ]] && break
 		route delete -inet default >/dev/null 2>&1
 		route -n add -inet -host default "$resp" && { echo "$resp" >>/tmp/mygate; break; }
 		# Put the old default route back. The new one did not work.
