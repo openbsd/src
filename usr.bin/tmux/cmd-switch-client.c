@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-switch-client.c,v 1.40 2015/12/14 00:31:54 nicm Exp $ */
+/* $OpenBSD: cmd-switch-client.c,v 1.41 2015/12/23 00:12:57 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -90,10 +90,9 @@ cmd_switch_client_exec(struct cmd *self, struct cmd_q *cmdq)
 			cmdq_error(cmdq, "can't find last session");
 			return (CMD_RETURN_ERROR);
 		}
+	} else {
 		if (cmdq->client == NULL)
 			return (CMD_RETURN_NORMAL);
-
-		s = state->tflag.s;
 		if (state->tflag.wl != NULL) {
 			wp = state->tflag.wp;
 			if (wp != NULL)
