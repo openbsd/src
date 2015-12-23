@@ -1,4 +1,4 @@
-/* $OpenBSD: asn_pack.c,v 1.14 2014/07/11 13:41:59 miod Exp $ */
+/* $OpenBSD: asn_pack.c,v 1.15 2015/12/23 20:37:23 mmcc Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -180,10 +180,8 @@ ASN1_item_pack(void *obj, const ASN1_ITEM *it, ASN1_STRING **oct)
 	} else
 		octmp = *oct;
 
-	if (octmp->data) {
-		free(octmp->data);
-		octmp->data = NULL;
-	}
+	free(octmp->data);
+	octmp->data = NULL;
 
 	if (!(octmp->length = ASN1_item_i2d(obj, &octmp->data, it))) {
 		ASN1err(ASN1_F_ASN1_ITEM_PACK, ASN1_R_ENCODE_ERROR);
