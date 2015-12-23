@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.136 2015/12/06 17:50:21 deraadt Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.137 2015/12/23 20:09:47 ratchov Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -40,6 +40,7 @@
 #include <sys/disklabel.h>
 #include <sys/dkio.h>
 #include <sys/mtio.h>
+#include <sys/audioio.h>
 #include <net/bpf.h>
 #include <net/route.h>
 #include <net/if.h>
@@ -1169,6 +1170,21 @@ pledge_ioctl(struct proc *p, long com, struct file *fp)
 			    fp->f_type == DTYPE_SOCKET)
 				return (0);
 			break;
+		}
+	}
+
+	if ((p->p_p->ps_pledge & PLEDGE_AUDIO)) {
+		switch (com) {
+		case AUDIO_GETPOS:
+		case AUDIO_SETINFO:
+		case AUDIO_GETINFO:
+		case AUDIO_GETENC:
+		case AUDIO_SETFD:
+		case AUDIO_GETPROPS:
+			if (fp->f_type == DTYPE_VNODE &&
+			    vp->v_type == VCHR &&
+			    cdevsw[major(vp->v_rdev)].d_open == audioopen)
+				return (0);
 		}
 	}
 
