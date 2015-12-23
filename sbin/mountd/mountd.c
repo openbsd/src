@@ -1,4 +1,4 @@
-/*	$OpenBSD: mountd.c,v 1.84 2015/12/23 21:16:17 tim Exp $	*/
+/*	$OpenBSD: mountd.c,v 1.85 2015/12/23 21:32:52 tim Exp $	*/
 /*	$NetBSD: mountd.c,v 1.31 1996/02/18 11:57:53 fvdl Exp $	*/
 
 /*
@@ -367,7 +367,6 @@ privchild(int sock)
 	char *path;
 	int error, size;
 
-	signal(SIGSYS, SIG_IGN);
 	imsg_init(&ibuf, sock);
 	setproctitle("[priv]");
 	fp = NULL;
@@ -812,12 +811,6 @@ mntsrv(struct svc_req *rqstp, SVCXPRT *transp)
 			/* Get the file handle */
 			memset(&fhr.fhr_fh, 0, sizeof(nfsfh_t));
 			if (imsg_getfh(dirpath, (fhandle_t *)&fhr.fhr_fh) < 0) {
-				if (errno == ENOSYS) {
-					syslog(LOG_ERR,
-					    "Kernel does not support NFS exporting, "
-					    "mountd aborting..");
-					_exit(1);
-				}
 				bad = errno;
 				syslog(LOG_ERR, "Can't get fh for %s", dirpath);
 				if (!svc_sendreply(transp, xdr_long,
