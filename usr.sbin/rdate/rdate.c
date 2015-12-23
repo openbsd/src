@@ -1,4 +1,4 @@
-/*	$OpenBSD: rdate.c,v 1.34 2015/10/31 18:24:01 deraadt Exp $	*/
+/*	$OpenBSD: rdate.c,v 1.35 2015/12/23 19:13:52 deraadt Exp $	*/
 /*	$NetBSD: rdate.c,v 1.4 1996/03/16 12:37:45 pk Exp $	*/
 
 /*
@@ -64,7 +64,7 @@ extern char    *__progname;
 __dead void	usage(void);
 
 struct {
-	char message[256];
+	char message[2048];
 	struct timeval new;
 	struct timeval adjust;
 } pdata;
