@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.137 2015/12/23 20:09:47 ratchov Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.138 2015/12/23 21:07:57 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -1174,6 +1174,7 @@ pledge_ioctl(struct proc *p, long com, struct file *fp)
 	}
 
 	if ((p->p_p->ps_pledge & PLEDGE_AUDIO)) {
+#ifndef SMALL_KERNEL
 		switch (com) {
 		case AUDIO_GETPOS:
 		case AUDIO_SETINFO:
@@ -1186,6 +1187,7 @@ pledge_ioctl(struct proc *p, long com, struct file *fp)
 			    cdevsw[major(vp->v_rdev)].d_open == audioopen)
 				return (0);
 		}
+#endif /* !SMALL_KERNEL */
 	}
 
 	if ((p->p_p->ps_pledge & PLEDGE_DISKLABEL)) {
