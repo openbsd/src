@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.21 2015/12/18 16:20:58 rpe Exp $
+#	$OpenBSD: install.md,v 1.22 2015/12/23 13:31:22 rpe Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -35,25 +35,23 @@
 # This code runs when the script is initally sourced to set up 
 # MDSETS, SANESETS and DEFAULTSETS 
 
-dmesg | grep "^omap0 at mainbus0:" >/dev/null
-if [[ $? == 0 ]]; then
+if dmesg | grep -q '^omap0 at mainbus0:'; then
         MDPLAT=OMAP
 	LOADADDR=0x82800000
 fi
-dmesg | grep "^imx0 at mainbus0:" >/dev/null
-if [[ $? == 0 ]]; then
+
+if dmesg | grep -q '^imx0 at mainbus0:'; then
         MDPLAT=IMX
 	LOADADDR=0x18800000
 fi
-dmesg | grep "^sunxi0 at mainbus0:" >/dev/null
-if [[ $? == 0 ]]; then
+
+if dmesg | grep '^sunxi0 at mainbus0:'; then
 	MDPLAT=SUNXI
 	LOADADDR=0x40200000
 fi
-dmesg | grep "^vexpress0 at mainbus0:" >/dev/null
-if [[ $? == 0 ]]; then
-	dmesg | grep "^cpu0 at mainbus0: ARM Cortex A9 " >/dev/null
-	if [[ $? == 0 ]]; then
+
+if dmesg | grep -q '^vexpress0 at mainbus0:'; then
+	if dmesg | grep -q '^cpu0 at mainbus0: ARM Cortex A9 '; then
 		MDPLAT=VEXPRESSA9
 		LOADADDR=0x60300000
 	else
