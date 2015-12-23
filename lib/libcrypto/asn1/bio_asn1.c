@@ -1,4 +1,4 @@
-/* $OpenBSD: bio_asn1.c,v 1.11 2015/02/10 09:52:35 miod Exp $ */
+/* $OpenBSD: bio_asn1.c,v 1.12 2015/12/23 01:46:33 mmcc Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -173,7 +173,7 @@ asn1_bio_init(BIO_ASN1_BUF_CTX *ctx, int size)
 	ctx->copylen = 0;
 	ctx->asn1_class = V_ASN1_UNIVERSAL;
 	ctx->asn1_tag = V_ASN1_OCTET_STRING;
-	ctx->ex_buf = 0;
+	ctx->ex_buf = NULL;
 	ctx->ex_pos = 0;
 	ctx->ex_len = 0;
 	ctx->state = ASN1_STATE_START;
