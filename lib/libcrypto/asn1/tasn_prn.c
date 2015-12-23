@@ -1,4 +1,4 @@
-/* $OpenBSD: tasn_prn.c,v 1.13 2015/02/14 15:15:27 miod Exp $ */
+/* $OpenBSD: tasn_prn.c,v 1.14 2015/12/23 01:50:26 mmcc Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -214,7 +214,7 @@ asn1_item_print_ctx(BIO *out, ASN1_VALUE **fld, int indent, const ASN1_ITEM *it,
 		parg.pctx = pctx;
 		asn1_cb = aux->asn1_cb;
 	} else
-		asn1_cb = 0;
+		asn1_cb = NULL;
 
 	if (*fld == NULL) {
 		if (pctx->flags & ASN1_PCTX_FLAGS_SHOW_ABSENT) {
