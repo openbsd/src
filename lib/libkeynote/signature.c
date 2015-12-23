@@ -1,4 +1,4 @@
-/* $OpenBSD: signature.c,v 1.24 2015/12/23 21:07:37 mmcc Exp $ */
+/* $OpenBSD: signature.c,v 1.25 2015/12/23 21:15:58 mmcc Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -305,22 +305,6 @@ keynote_get_key_algorithm(char *key, int *encoding, int *internalencoding)
 	*encoding = ENCODING_HEX;
 	return KEYNOTE_ALGORITHM_X509;
     }
-
-#if 0 /* Not supported yet */
-    if (!strncasecmp(ELGAMAL_HEX, key, ELGAMAL_HEX_LEN))
-    {
-	*internalencoding = INTERNAL_ENC_ASN1;
-	*encoding = ENCODING_HEX;
-	return KEYNOTE_ALGORITHM_ELGAMAL;
-    }
-
-    if (!strncasecmp(ELGAMAL_BASE64, key, ELGAMAL_BASE64_LEN))
-    {
-	*internalencoding = INTERNAL_ENC_ASN1;
-	*encoding = ENCODING_BASE64;
-	return KEYNOTE_ALGORITHM_ELGAMAL;
-    }
-#endif /* 0 */
 
     if (!strncasecmp(BINARY_HEX, key, BINARY_HEX_LEN))
     {
