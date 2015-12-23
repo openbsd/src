@@ -1,4 +1,4 @@
-/* $OpenBSD: s_server.c,v 1.23 2015/12/01 12:04:51 jca Exp $ */
+/* $OpenBSD: s_server.c,v 1.24 2015/12/23 20:43:42 mmcc Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2003,8 +2003,7 @@ err:
 	if (ret >= 0)
 		BIO_printf(bio_s_out, "ACCEPT\n");
 
-	if (buf != NULL)
-		free(buf);
+	free(buf);
 	if (io != NULL)
 		BIO_free_all(io);
 /*	if (ssl_bio != NULL) BIO_free(ssl_bio);*/
