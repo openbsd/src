@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcc.c,v 1.7 2015/09/24 18:37:50 miod Exp $	*/
+/*	$OpenBSD: tcc.c,v 1.8 2015/12/23 11:45:24 visa Exp $	*/
 
 /*
  * Copyright (c) 2012 Miodrag Vallat.
@@ -102,14 +102,25 @@ uint32_t
 tcc_bus_error(uint32_t hwpend, struct trap_frame *tf)
 {
 	uint64_t intr, error, addr, errack;
+	unsigned int errtype;
 
 	intr = tcc_read(TCC_INTR);
 	error = tcc_read(TCC_ERROR);
-	addr = tcc_read(TCC_BERR_ADDR);
 
-	printf("tcc bus error: intr %llx error %llx (%llu) addr %08llx\n",
-	    intr, error, (error & TCC_ERROR_TYPE_MASK) >> TCC_ERROR_TYPE_SHIFT,
-	    addr);
+	errtype = (error & TCC_ERROR_TYPE_MASK) >> TCC_ERROR_TYPE_SHIFT;
+
+	/*
+	 * Execution of the `sync' instruction is not supported by the
+	 * T-Bus and raises a machine check exception.
+	 * Do not report anything on console in that case, so that
+	 * userland does not suffer too much.
+	 */
+	if (errtype != TCC_ERROR_TYPE_TBUS || (intr & TCC_INTR_MCHECK) == 0) {
+		addr = tcc_read(TCC_BERR_ADDR);
+
+		printf("tcc bus error: intr %llx error %llx (%u) addr %08llx\n",
+		    intr, error, errtype, addr);
+	}
 
 	/* Ack error condition */
 	errack = 0;
