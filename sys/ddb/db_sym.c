@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_sym.c,v 1.38 2015/08/12 06:19:25 mlarkin Exp $	*/
+/*	$OpenBSD: db_sym.c,v 1.39 2015/12/23 01:39:02 mmcc Exp $	*/
 /*	$NetBSD: db_sym.c,v 1.24 2000/08/11 22:50:47 tv Exp $	*/
 
 /* 
@@ -445,7 +445,7 @@ db_search_symbol(db_addr_t val, db_strategy_t strategy, db_expr_t *offp)
 	db_sym_t	ret = DB_SYM_NULL, sym;
 
 	newdiff = diff = ~0;
-	db_last_symtab = 0;
+	db_last_symtab = NULL;
 	for (i = 0; i < MAXNOSYMTABS; i++) {
 	    if (!db_symtabs[i].name)
 	        continue;
@@ -469,7 +469,7 @@ db_symbol_values(db_sym_t sym, char **namep, db_expr_t *valuep)
 	db_expr_t	value;
 
 	if (sym == DB_SYM_NULL) {
-		*namep = 0;
+		*namep = NULL;
 		return;
 	}
 

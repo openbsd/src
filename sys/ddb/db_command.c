@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_command.c,v 1.65 2015/03/14 03:38:46 jsg Exp $	*/
+/*	$OpenBSD: db_command.c,v 1.66 2015/12/23 01:39:02 mmcc Exp $	*/
 /*	$NetBSD: db_command.c,v 1.20 1996/03/30 22:30:05 christos Exp $	*/
 
 /* 
@@ -600,7 +600,7 @@ void db_machine_commands_install(struct db_command *ptr)
 
 #endif
 
-struct db_command	*db_last_command = 0;
+struct db_command	*db_last_command = NULL;
 
 void
 db_help_cmd(db_expr_t addr, int haddr, db_expr_t count, char *modif)
