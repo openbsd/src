@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: upgrade.sh,v 1.88 2015/12/06 09:30:27 rpe Exp $
+#	$OpenBSD: upgrade.sh,v 1.89 2015/12/23 17:51:08 rpe Exp $
 #	$NetBSD: upgrade.sh,v 1.2.4.5 1996/08/27 18:15:08 gwr Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
@@ -49,23 +49,22 @@ while :; do
 	ask "Root filesystem?" $ROOTDEV
 	resp=${resp##*/}
 	[[ -b /dev/$resp ]] && break
-
 	echo "$resp is not a block device."
 done
 ROOTDEV=$resp
 
 echo -n "Checking root filesystem (fsck -fp /dev/$ROOTDEV)..."
 fsck -fp /dev/$ROOTDEV >/dev/null 2>&1 || { echo "FAILED."; exit; }
-echo	"OK."
+echo "OK."
 
 echo -n "Mounting root filesystem (mount -o ro /dev/$ROOTDEV /mnt)..."
 mount -o ro /dev/$ROOTDEV /mnt || { echo "FAILED."; exit; }
-echo	"OK."
+echo "OK."
 
 # The fstab, hosts and myname files are required.
-for _f in fstab hosts myname; do
-	[[ -f /mnt/etc/$_f ]] || { echo "No /mnt/etc/$_f!"; exit; }
-	cp /mnt/etc/$_f /tmp/$_f
+for _f in /mnt/etc/{fstab,hosts,myname}; do
+	[[ -f $_f ]] || { echo "No $_f!"; exit; }
+	cp $_f /tmp/${_f##*/}
 done
 hostname $(stripcom /tmp/myname)
 THESETS="$THESETS site$VERSION-$(hostname -s).tgz"
