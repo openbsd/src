@@ -1,4 +1,4 @@
-/*	$OpenBSD: sndiod.c,v 1.21 2015/12/23 12:24:12 ratchov Exp $	*/
+/*	$OpenBSD: sndiod.c,v 1.22 2015/12/23 20:12:18 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -507,6 +507,8 @@ main(int argc, char **argv)
 			    setresuid(hpw_uid, hpw_uid, hpw_uid))
 				err(1, "cannot drop privileges");
 		}
+		if (pledge("stdio sendfd rpath wpath", NULL) < 0)
+			err(1, "pledge");
 		while (file_poll())
 			; /* nothing */
 	} else {
@@ -550,6 +552,13 @@ main(int argc, char **argv)
 			    setresgid(wpw_gid, wpw_gid, wpw_gid) ||
 			    setresuid(wpw_uid, wpw_uid, wpw_uid))
 				err(1, "cannot drop privileges");
+		}
+		if (tcpaddr) {
+			if (pledge("stdio audio recvfd unix inet", NULL) == -1)
+				err(1, "pledge");
+		} else {
+			if (pledge("stdio audio recvfd unix", NULL) == -1)
+				err(1, "pledge");
 		}
 		for (;;) {
 			if (quit_flag)
