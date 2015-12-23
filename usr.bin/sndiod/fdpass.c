@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdpass.c,v 1.1 2015/12/20 11:38:33 ratchov Exp $	*/
+/*	$OpenBSD: fdpass.c,v 1.2 2015/12/23 11:26:42 ratchov Exp $	*/
 /*
  * Copyright (c) 2015 Alexandre Ratchov <alex@caoua.org>
  *
@@ -181,7 +181,7 @@ fdpass_recv(struct fdpass *f, int *cmd, int *num, int *mode, int *fd)
 		return 0;
 	}
 	if (n == 0) {
-		if (log_level >= 1) {
+		if (log_level >= 3) {
 			fdpass_log(f);
 			log_puts(": recvmsg eof\n");
 		}
@@ -281,7 +281,7 @@ fdpass_in_worker(void *arg)
 {
 	struct fdpass *f = arg;
 
-	if (log_level >= 1) {
+	if (log_level >= 3) {
 		fdpass_log(f);
 		log_puts(": exit\n");
 	}
@@ -341,7 +341,7 @@ fdpass_hup(void *arg)
 {
 	struct fdpass *f = arg;
 
-	if (log_level >= 1) {
+	if (log_level >= 3) {
 		fdpass_log(f);
 		log_puts(": hup\n");
 	}
