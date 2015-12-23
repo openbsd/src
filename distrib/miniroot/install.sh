@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sh,v 1.270 2015/09/09 23:07:10 halex Exp $
+#	$OpenBSD: install.sh,v 1.271 2015/12/23 17:54:52 rpe Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
@@ -65,7 +65,7 @@ MODE=install
 
 # Ask for/set the system hostname and add the hostname specific siteXX set.
 ask_until "System hostname? (short form, e.g. 'foo')" "$(hostname -s)"
-[[ ${resp%%.*} != $(hostname -s) ]] && hostname $resp
+[[ ${resp%%.*} != $(hostname -s) ]] && hostname "$resp"
 THESETS="$THESETS site$VERSION-$(hostname -s).tgz"
 
 echo
@@ -75,9 +75,10 @@ donetconfig
 
 # If there's network connectivity, fetch list of mirror servers and installer
 # choices from previous runs.
-((NIFS != 0)) && startcgiinfo
+((NIFS)) && startcgiinfo
 
 echo
+
 while :; do
 	askpassword "Password for root account?"
 	_rootpass="$_password"
@@ -87,8 +88,10 @@ done
 
 # Ask for the root user public ssh key during autoinstall.
 rootkey=
-$AUTO && ask "Public ssh key for root account?" none &&
+if $AUTO; then
+	ask "Public ssh key for root account?" none
 	[[ $resp != none ]] && rootkey=$resp
+fi
 
 # Ask user about daemon startup on boot, X Window usage and console setup.
 questions
@@ -99,6 +102,7 @@ ask_root_sshd
 
 # Set TZ variable based on zonefile and user selection.
 set_timezone /var/tzlist
+
 echo
 
 # Get information about ROOTDISK, etc.
@@ -157,6 +161,7 @@ while :; do
 			[[ /tmp/fstab.$DISK == $(grep -l " $_mp " /tmp/fstab.*) ]] ||
 				{ _rest=$DISK; DISK=; break; }
 		done </tmp/fstab.$DISK
+
 		if [[ -z $DISK ]]; then
 			# Duplicate mountpoint.
 			# Allow disklabel(8) to read back mountpoint info
@@ -293,9 +298,11 @@ hostname >/tmp/myname
 # to '1.2.3.4 hostname.$FQDN hostname'. Leave untouched lines containing
 # domain information or aliases. These are lines the user added/changed
 # manually.
+
 # Add common entries.
 echo "127.0.0.1\tlocalhost" >/mnt/etc/hosts
 echo "::1\t\tlocalhost" >>/mnt/etc/hosts
+
 # Note we may have no hosts file if no interfaces were configured.
 if [[ -f /tmp/hosts ]]; then
 	_dn=$(get_fqdn)
