@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrtparser.c,v 1.7 2015/10/24 11:54:50 claudio Exp $ */
+/*	$OpenBSD: mrtparser.c,v 1.8 2015/12/23 20:42:20 mmcc Exp $ */
 /*
  * Copyright (c) 2011 Claudio Jeker <claudio@openbsd.org>
  *
@@ -847,8 +847,7 @@ mrt_extract_attr(struct mrt_rib_entry *re, u_char *a, int alen, sa_family_t af,
 			break;
 		case MRT_ATTR_AS4PATH:
 			if (!as4) {
-				if (re->aspath)
-					free(re->aspath);
+				free(re->aspath);
 				re->aspath_len = attr_len;
 				if ((re->aspath = malloc(attr_len)) == NULL)
 					err(1, "malloc");

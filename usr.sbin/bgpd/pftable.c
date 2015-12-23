@@ -1,4 +1,4 @@
-/*	$OpenBSD: pftable.c,v 1.8 2015/01/21 21:50:32 deraadt Exp $ */
+/*	$OpenBSD: pftable.c,v 1.9 2015/12/23 20:42:20 mmcc Exp $ */
 
 /*
  * Copyright (c) 2004 Damien Miller <djm@openbsd.org>
@@ -160,10 +160,8 @@ pftable_clear_all(void)
 	LIST_FOREACH(pft, &tables, entry) {
 		if (pftable_clear(pft->name) != 0)
 			return (-1);
-		if (pft->worklist != NULL) {
-			free(pft->worklist);
-			pft->worklist = NULL;
-		}
+		free(pft->worklist);
+		pft->worklist = NULL;
 		pft->nalloc = pft->naddrs = 0;
 		pft->what = 0;
 	}
@@ -250,8 +248,7 @@ pftable_commit(void)
 	LIST_FOREACH(pft, &tables, entry) {
 		if (pft->what != 0 && pftable_change(pft) != 0)
 			ret = -1;
-		if (pft->worklist != NULL)
-			free(pft->worklist);
+		free(pft->worklist);
 		pft->worklist = NULL;
 		pft->nalloc = pft->naddrs = 0;
 		pft->what = 0;
