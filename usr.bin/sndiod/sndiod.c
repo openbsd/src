@@ -1,4 +1,4 @@
-/*	$OpenBSD: sndiod.c,v 1.19 2015/12/21 22:03:47 ratchov Exp $	*/
+/*	$OpenBSD: sndiod.c,v 1.20 2015/12/23 12:20:24 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -339,6 +339,9 @@ main(int argc, char **argv)
 	struct passwd *pw;
 	int s[2];
 	pid_t pid;
+	uid_t euid, hpw_uid, wpw_uid;
+	gid_t hpw_gid, wpw_gid;
+	char *wpw_dir;
 
 	atexit(log_flush);
 
@@ -460,6 +463,23 @@ main(int argc, char **argv)
 	setsig();
 	filelist_init();
 
+	euid = geteuid();
+	if (euid == 0) {
+		if ((pw = getpwnam(SNDIO_PRIV_USER)) == NULL)
+			errx(1, "unknown user %s", SNDIO_PRIV_USER);
+		hpw_uid = pw->pw_uid;
+		hpw_gid = pw->pw_gid;		
+		if ((pw = getpwnam(SNDIO_USER)) == NULL)
+			errx(1, "unknown user %s", SNDIO_USER);
+		wpw_uid = pw->pw_uid;
+		wpw_gid = pw->pw_gid;		
+		wpw_dir = xstrdup(pw->pw_dir);
+	} else {
+		//hpw_uid = wpw_uid = 0;
+		//hpw_gid = wpw_gid = 0;
+		//wpw_dir = NULL;
+	}
+
 	/* start subprocesses */
 
 	if (socketpair(AF_UNIX, SOCK_STREAM, 0, s) < 0) {
@@ -482,12 +502,10 @@ main(int argc, char **argv)
 			if (daemon(0, 0) < 0)
 				err(1, "daemon");
 		}
-		if (geteuid() == 0) {
-			if ((pw = getpwnam(SNDIO_PRIV_USER)) == NULL)
-				errx(1, "unknown user %s", SNDIO_PRIV_USER);
-			if (setgroups(1, &pw->pw_gid) ||
-			    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||
-			    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
+		if (euid == 0) {
+			if (setgroups(1, &hpw_gid) ||
+			    setresgid(hpw_gid, hpw_gid, hpw_gid) ||
+			    setresuid(hpw_uid, hpw_uid, hpw_uid))
 				err(1, "cannot drop privileges");
 		}
 		while (file_poll())
@@ -524,16 +542,14 @@ main(int argc, char **argv)
 			if (daemon(0, 0) < 0)
 				err(1, "daemon");
 		}
-		if (geteuid() == 0) {
-			if ((pw = getpwnam(SNDIO_USER)) == NULL)
-				errx(1, "unknown user %s", SNDIO_USER);
+		if (euid == 0) {
 			if (setpriority(PRIO_PROCESS, 0, SNDIO_PRIO) < 0)
 				err(1, "setpriority");
-			if (chroot(pw->pw_dir) != 0 || chdir("/") != 0)
-				err(1, "cannot chroot to %s", pw->pw_dir);
-			if (setgroups(1, &pw->pw_gid) ||
-			    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||
-			    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
+			if (chroot(wpw_dir) != 0 || chdir("/") != 0)
+				err(1, "cannot chroot to %s", wpw_dir);
+			if (setgroups(1, &wpw_gid) ||
+			    setresgid(wpw_gid, wpw_gid, wpw_gid) ||
+			    setresuid(wpw_uid, wpw_uid, wpw_uid))
 				err(1, "cannot drop privileges");
 		}
 		for (;;) {
