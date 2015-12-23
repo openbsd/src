@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.218 2015/12/21 10:54:49 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.219 2015/12/23 10:01:58 ajacoutot Exp $
 #
 # Copyright (c) 2008-2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
@@ -37,7 +37,7 @@ stripcom() {
 }
 
 sm_error() {
-	(($#)) && echo "---- Error: $@"
+	(($#)) && echo "!!!! $@"
 	rm -rf ${_TMPROOT}
 	exit 1
 }
@@ -50,11 +50,11 @@ sm_trap() {
 trap "sm_trap" 1 2 3 13 15
 
 sm_info() {
-	(($#)) && echo "---- Info: $@" || true
+	(($#)) && echo "---- $@" || true
 }
 
 sm_warn() {
-	(($#)) && echo "---- Warning: $@" || true
+	(($#)) && echo "**** $@" || true
 }
 
 sm_extract_sets() {
