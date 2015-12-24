@@ -1,4 +1,4 @@
-/*	$OpenBSD: efidev.c,v 1.11 2015/11/29 15:35:41 krw Exp $	*/
+/*	$OpenBSD: efidev.c,v 1.12 2015/12/24 14:12:43 krw Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -170,7 +170,7 @@ efid_diskio(int rw, struct diskinfo *dip, u_int off, int nsect, void *buf)
  *
  * NOTE: MS always uses a size of UINT32_MAX for the EFI partition!**
  */
-int
+static int
 gpt_chk_mbr(struct dos_partition *dp, efi_diskinfo_t ed)
 {
 	struct dos_partition *dp2;

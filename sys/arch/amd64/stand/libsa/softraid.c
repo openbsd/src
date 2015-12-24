@@ -1,4 +1,4 @@
-/*	$OpenBSD: softraid.c,v 1.18 2015/12/24 05:14:18 krw Exp $	*/
+/*	$OpenBSD: softraid.c,v 1.19 2015/12/24 14:12:43 krw Exp $	*/
 
 /*
  * Copyright (c) 2012 Joel Sing <jsing@openbsd.org>
@@ -407,7 +407,7 @@ sr_strategy(struct sr_boot_volume *bv, int rw, daddr32_t blk, size_t size,
  *
  * NOTE: MS always uses a size of UINT32_MAX for the EFI partition!**
  */
-int
+static int
 gpt_chk_mbr(struct dos_partition *dp, struct sr_boot_volume *bv)
 {
 	struct dos_partition *dp2;
