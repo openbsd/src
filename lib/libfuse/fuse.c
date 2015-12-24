@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse.c,v 1.26 2015/07/07 13:56:45 ajacoutot Exp $ */
+/* $OpenBSD: fuse.c,v 1.27 2015/12/24 17:02:37 mmcc Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -478,8 +478,7 @@ fuse_setup(int argc, char **argv, const struct fuse_operations *ops,
 
 	return (fuse);
 err:
-	if (*mp)
-		free(*mp);
+	free(*mp);
 	return (NULL);
 }
 
