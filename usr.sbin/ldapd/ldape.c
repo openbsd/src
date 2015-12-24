@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldape.c,v 1.22 2015/11/02 06:32:51 jmatthew Exp $ */
+/*	$OpenBSD: ldape.c,v 1.23 2015/12/24 17:47:57 mmcc Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -374,7 +374,7 @@ ldape(struct passwd *pw, char *csockpath, int pipe_parent2ldap[2])
 	    ldape_needfd);
 
 	/* Initialize control socket. */
-	bzero(&csock, sizeof(csock));
+	memset(&csock, 0, sizeof(csock));
 	csock.cs_name = csockpath;
 	control_init(&csock);
 	control_listen(&csock);

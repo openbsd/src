@@ -1,4 +1,4 @@
-/*	$OpenBSD: btest.c,v 1.1 2010/05/31 17:36:31 martinh Exp $ */
+/*	$OpenBSD: btest.c,v 1.2 2015/12/24 17:47:57 mmcc Exp $ */
 
 /* Simple test program for the btree database. */
 /*
@@ -57,9 +57,9 @@ main(int argc, char **argv)
 	if (bt == NULL)
 		err(1, filename);
 
-	bzero(&key, sizeof(key));
-	bzero(&data, sizeof(data));
-	bzero(&maxkey, sizeof(maxkey));
+	memset(&key, 0, sizeof(key));
+	memset(&data, 0, sizeof(data));
+	memset(&maxkey, 0, sizeof(maxkey));
 
 	if (strcmp(argv[0], "put") == 0) {
 		if (argc < 3)

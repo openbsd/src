@@ -1,4 +1,4 @@
-/*	$OpenBSD: namespace.c,v 1.13 2014/09/13 16:06:37 doug Exp $ */
+/*	$OpenBSD: namespace.c,v 1.14 2015/12/24 17:47:57 mmcc Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -145,7 +145,7 @@ namespace_reopen(const char *path)
 
 	log_debug("asking parent to open %s", path);
 
-	bzero(&req, sizeof(req));
+	memset(&req, 0, sizeof(req));
 	if (strlcpy(req.path, path, sizeof(req.path)) >= sizeof(req.path)) {
 		log_warnx("%s: path truncated", __func__);
 		return -1;
@@ -260,8 +260,8 @@ namespace_find(struct namespace *ns, char *dn)
 		return NULL;
 	}
 
-	bzero(&key, sizeof(key));
-	bzero(&val, sizeof(val));
+	memset(&key, 0, sizeof(key));
+	memset(&val, 0, sizeof(val));
 
 	key.data = dn;
 	key.size = strlen(dn);
@@ -330,7 +330,7 @@ namespace_put(struct namespace *ns, char *dn, struct ber_element *root,
 	assert(ns->data_txn != NULL);
 	assert(ns->indx_txn != NULL);
 
-	bzero(&key, sizeof(key));
+	memset(&key, 0, sizeof(key));
 	key.data = dn;
 	key.size = strlen(dn);
 
@@ -382,8 +382,8 @@ namespace_del(struct namespace *ns, char *dn)
 	assert(ns->indx_txn != NULL);
 	assert(ns->data_txn != NULL);
 
-	bzero(&key, sizeof(key));
-	bzero(&data, sizeof(data));
+	memset(&key, 0, sizeof(key));
+	memset(&data, 0, sizeof(data));
 
 	key.data = dn;
 	key.size = strlen(key.data);

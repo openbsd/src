@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.11 2015/11/02 06:32:51 jmatthew Exp $	*/
+/*	$OpenBSD: control.c,v 1.12 2015/12/24 17:47:57 mmcc Exp $	*/
 
 /*
  * Copyright (c) 2010 Martin Hedenfalk <martin@bzero.se>
@@ -58,7 +58,7 @@ control_init(struct control_sock *cs)
 	if ((fd = socket(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK, 0)) == -1)
 		fatal("control_init: socket");
 
-	bzero(&sun, sizeof(sun));
+	memset(&sun, 0, sizeof(sun));
 	sun.sun_family = AF_UNIX;
 	if (strlcpy(sun.sun_path, cs->cs_name,
 	    sizeof(sun.sun_path)) >= sizeof(sun.sun_path))
@@ -207,7 +207,7 @@ send_stats(struct imsgev *iev)
 	TAILQ_FOREACH(ns, &conf->namespaces, next) {
 		if (namespace_has_referrals(ns))
 			continue;
-		bzero(&nss, sizeof(nss));
+		memset(&nss, 0, sizeof(nss));
 		strlcpy(nss.suffix, ns->suffix, sizeof(nss.suffix));
 		if ((st = btree_stat(ns->data_db)) != NULL)
 			bcopy(st, &nss.data_stat, sizeof(nss.data_stat));

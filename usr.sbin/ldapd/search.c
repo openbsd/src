@@ -1,4 +1,4 @@
-/*	$OpenBSD: search.c,v 1.16 2015/12/24 17:23:44 mmcc Exp $ */
+/*	$OpenBSD: search.c,v 1.17 2015/12/24 17:47:57 mmcc Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -290,8 +290,8 @@ conn_search(struct search *search)
 
 	conn = search->conn;
 
-	bzero(&key, sizeof(key));
-	bzero(&val, sizeof(val));
+	memset(&key, 0, sizeof(key));
+	memset(&val, 0, sizeof(val));
 
 	if (search->plan->indexed)
 		txn = search->indx_txn;
@@ -346,7 +346,7 @@ conn_search(struct search *search)
 			search->cindx = TAILQ_NEXT(search->cindx, next);
 			if (search->cindx != NULL) {
 				rc = BT_SUCCESS;
-				bzero(&key, sizeof(key));
+				memset(&key, 0, sizeof(key));
 				key.data = search->cindx->prefix;
 				key.size = strlen(key.data);
 				log_debug("re-init cursor on [%s]", key.data);
@@ -367,7 +367,7 @@ conn_search(struct search *search)
 
 		if (search->plan->indexed) {
 			bcopy(&key, &ikey, sizeof(key));
-			bzero(&key, sizeof(key));
+			memset(&key, 0, sizeof(key));
 			btval_reset(&val);
 
 			rc = index_to_dn(search->ns, &ikey, &key);
@@ -948,8 +948,8 @@ ldap_search(struct request *req)
 	if (search->scope == LDAP_SCOPE_BASE) {
 		struct btval		 key, val;
 
-		bzero(&key, sizeof(key));
-		bzero(&val, sizeof(val));
+		memset(&key, 0, sizeof(key));
+		memset(&val, 0, sizeof(val));
 		key.data = search->basedn;
 		key.size = strlen(key.data);
 

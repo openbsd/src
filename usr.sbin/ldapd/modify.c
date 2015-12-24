@@ -1,4 +1,4 @@
-/*	$OpenBSD: modify.c,v 1.16 2015/02/11 04:04:30 pelikan Exp $ */
+/*	$OpenBSD: modify.c,v 1.17 2015/12/24 17:47:57 mmcc Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -72,7 +72,7 @@ ldap_delete(struct request *req)
 	if ((cursor = btree_txn_cursor_open(NULL, ns->data_txn)) == NULL)
 		goto done;
 
-	bzero(&key, sizeof(key));
+	memset(&key, 0, sizeof(key));
 	key.data = dn;
 	key.size = strlen(dn);
 	if (btree_cursor_get(cursor, &key, NULL, BT_CURSOR_EXACT) != 0) {

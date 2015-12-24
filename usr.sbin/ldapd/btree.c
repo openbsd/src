@@ -1,4 +1,4 @@
-/*	$OpenBSD: btree.c,v 1.34 2015/12/22 08:35:17 mmcc Exp $ */
+/*	$OpenBSD: btree.c,v 1.35 2015/12/24 17:47:57 mmcc Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -449,7 +449,7 @@ btval_reset(struct btval *btv)
 			btv->mp->ref--;
 		if (btv->free_data)
 			free(btv->data);
-		bzero(btv, sizeof(*btv));
+		memset(btv, 0, sizeof(*btv));
 	}
 }
 
@@ -1206,7 +1206,7 @@ btree_search_node(struct btree *bt, struct mpage *mp, struct btval *key,
 
 	assert(NUMKEYS(mp) > 0);
 
-	bzero(&nodekey, sizeof(nodekey));
+	memset(&nodekey, 0, sizeof(nodekey));
 
 	low = IS_LEAF(mp) ? 0 : 1;
 	high = NUMKEYS(mp) - 1;
@@ -1497,7 +1497,7 @@ btree_read_data(struct btree *bt, struct mpage *mp, struct node *leaf,
 	size_t		 sz = 0;
 	pgno_t		 pgno;
 
-	bzero(data, sizeof(*data));
+	memset(data, 0, sizeof(*data));
 	max = bt->head.psize - PAGEHDRSZ;
 
 	if (!F_ISSET(leaf->flags, F_BIGDATA)) {
@@ -2745,7 +2745,7 @@ btree_split(struct btree *bt, struct mpage **mpp, unsigned int *newindxp,
 		return BT_FAIL;
 	bcopy(mp->page, copy, bt->head.psize);
 	assert(mp->ref == 0);				/* XXX */
-	bzero(&mp->page->ptrs, bt->head.psize - PAGEHDRSZ);
+	memset(&mp->page->ptrs, 0, bt->head.psize - PAGEHDRSZ);
 	mp->page->lower = PAGEHDRSZ;
 	mp->page->upper = bt->head.psize;
 
@@ -2753,7 +2753,7 @@ btree_split(struct btree *bt, struct mpage **mpp, unsigned int *newindxp,
 
 	/* First find the separating key between the split pages.
 	 */
-	bzero(&sepkey, sizeof(sepkey));
+	memset(&sepkey, 0, sizeof(sepkey));
 	if (newindx == split_indx) {
 		sepkey.size = newkey->size;
 		sepkey.data = newkey->data;
