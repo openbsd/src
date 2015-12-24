@@ -1,4 +1,4 @@
-/*	$OpenBSD: basename.c,v 1.11 2015/10/09 01:37:06 deraadt Exp $	*/
+/*	$OpenBSD: basename.c,v 1.12 2015/12/24 17:05:09 mmcc Exp $	*/
 /*	$NetBSD: basename.c,v 1.9 1995/09/02 05:29:46 jtc Exp $	*/
 
 /*-
@@ -32,10 +32,10 @@
 
 #include <err.h>
 #include <libgen.h>
+#include <locale.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <locale.h>
 #include <unistd.h>
 
 void usage(void);
