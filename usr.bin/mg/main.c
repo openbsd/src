@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.80 2015/11/19 19:30:44 bentley Exp $	*/
+/*	$OpenBSD: main.c,v 1.81 2015/12/24 09:07:47 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -42,7 +42,7 @@ extern void     closetags(void);
 static __dead void
 usage()
 {
-	fprintf(stderr, "usage: %s [-n] [-f mode] [+number] [file ...]\n",
+	fprintf(stderr, "usage: %s [-nR] [-f mode] [+number] [file ...]\n",
 	    __progname);
 	exit(1);
 }
@@ -53,14 +53,17 @@ main(int argc, char **argv)
 	char		*cp, *init_fcn_name = NULL;
 	PF		 init_fcn = NULL;
 	int	 	 o, i, nfiles;
-	int	  	 nobackups = 0;
+	int	  	 nobackups = 0, bro = 0;
 	struct buffer	*bp = NULL;
 
 	if (pledge("stdio rpath wpath cpath fattr getpw tty proc exec", NULL) == -1)
 		err(1, "pledge");
 
-	while ((o = getopt(argc, argv, "nf:")) != -1)
+	while ((o = getopt(argc, argv, "nRf:")) != -1)
 		switch (o) {
+		case 'R':
+			bro = 1;
+			break;
 		case 'n':
 			nobackups = 1;
 			break;
@@ -170,6 +173,8 @@ notnum:
 						init_fcn(FFOTHARG, 1);
 					nfiles++;
 				}
+				if (bro)
+					curbp->b_flag |= BFREADONLY;
 			}
 		}
 	}
