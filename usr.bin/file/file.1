@@ -1,4 +1,4 @@
-.\" $OpenBSD: file.1,v 1.43 2015/07/30 11:13:24 jmc Exp $
+.\" $OpenBSD: file.1,v 1.44 2015/12/24 11:45:34 jca Exp $
 .\" $FreeBSD: src/usr.bin/file/file.1,v 1.16 2000/03/01 12:19:39 sheldonh Exp $
 .\"
 .\" Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -28,7 +28,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 30 2015 $
+.Dd $Mdocdate: December 24 2015 $
 .Dt FILE 1
 .Os
 .Sh NAME
@@ -83,7 +83,7 @@ reads from the standard input.
 .Pp
 The options are as follows:
 .Bl -tag -width indent
-.It Fl b
+.It Fl b , -brief
 Does not prepend filenames to output lines.
 .It Fl c
 Prints a summary of the parsed magic file; usually used for debugging.
@@ -97,7 +97,7 @@ Thus it may say
 .Dq text/plain
 rather than
 .Dq ASCII text .
-.It Fl L
+.It Fl L , -dereference
 Causes symlinks to be followed.
 .It Fl s
 Attempts to read block and character device files, not just regular files.

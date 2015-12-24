@@ -1,4 +1,4 @@
-/* $OpenBSD: file.c,v 1.56 2015/12/05 13:18:09 claudio Exp $ */
+/* $OpenBSD: file.c,v 1.57 2015/12/24 11:45:34 jca Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -102,9 +102,11 @@ static char	*magicpath;
 static FILE	*magicfp;
 
 static struct option longopts[] = {
-	{ "mime",      no_argument, NULL, 'i' },
-	{ "mime-type", no_argument, NULL, 'i' },
-	{ NULL,        0,           NULL, 0   }
+	{ "brief",       no_argument, NULL, 'b' },
+	{ "dereference", no_argument, NULL, 'L' },
+	{ "mime",        no_argument, NULL, 'i' },
+	{ "mime-type",   no_argument, NULL, 'i' },
+	{ NULL,          0,           NULL, 0   }
 };
 
 __dead void
