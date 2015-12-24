@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.204 2015/12/07 04:03:27 mmcc Exp $	*/
+/*	$OpenBSD: relay.c,v 1.205 2015/12/24 05:06:24 mmcc Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -1177,7 +1177,7 @@ relay_accept(int fd, short event, void *arg)
 		close(s);
 		free(con);
 		/*
-		 * the session struct was not completly set up, but still
+		 * the session struct was not completely set up, but still
 		 * counted as an inflight session. account for this.
 		 */
 		relay_inflight--;
