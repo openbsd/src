@@ -1,4 +1,4 @@
-/* $OpenBSD: umcs.h,v 1.2 2015/11/07 19:06:05 miod Exp $ */
+/* $OpenBSD: umcs.h,v 1.3 2015/12/24 16:54:37 mmcc Exp $ */
 /* $NetBSD: umcs.h,v 1.1 2014/03/16 09:34:45 martin Exp $ */
 
 /*-
@@ -158,7 +158,7 @@
 
 
 /*
- * THIS ONE IS UNDOCUMENTED IN FULL DATASHEET, but e-mail from tech support
+ * THIS ONE IS UNDOCUMENTED IN FULL DATASHEET, but email from tech support
  * confirms, that it is register for GPIO_0 and GPIO_1 data input/output.
  * Chips has 2 GPIO, but first one (lower bit) MUST be used by device
  * authors as "number of port" indicator, grounded (0) for two-port

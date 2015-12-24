@@ -1,4 +1,4 @@
-/*	$OpenBSD: bounce.c,v 1.70 2015/12/14 10:31:25 sunil Exp $	*/
+/*	$OpenBSD: bounce.c,v 1.71 2015/12/24 16:54:37 mmcc Exp $	*/
 
 /*
  * Copyright (c) 2009 Gilles Chehade <gilles@poolp.org>
@@ -340,7 +340,7 @@ bounce_duration(long long int d)
 
 #define NOTICE_INTRO							    \
 	"    Hi!\n\n"							    \
-	"    This is the MAILER-DAEMON, please DO NOT REPLY to this e-mail.\n"
+	"    This is the MAILER-DAEMON, please DO NOT REPLY to this email.\n"
 
 const char *notice_error =
     "    An error has occurred while attempting to deliver a message for\n"

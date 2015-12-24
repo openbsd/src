@@ -1,4 +1,4 @@
-/* $OpenBSD: ca.c,v 1.19 2015/10/17 15:00:11 doug Exp $ */
+/* $OpenBSD: ca.c,v 1.20 2015/12/24 16:54:37 mmcc Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1681,7 +1681,7 @@ again2:
 	if (verbose)
 		BIO_printf(bio_err, "The subject name appears to be ok, checking data base for clashes\n");
 
-	/* Build the correct Subject if no e-mail is wanted in the subject */
+	/* Build the correct Subject if no email is wanted in the subject */
 	/*
 	 * and add it later on because of the method extensions are added
 	 * (altName)
