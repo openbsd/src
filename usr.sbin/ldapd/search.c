@@ -1,4 +1,4 @@
-/*	$OpenBSD: search.c,v 1.15 2015/06/03 02:24:36 millert Exp $ */
+/*	$OpenBSD: search.c,v 1.16 2015/12/24 17:23:44 mmcc Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -215,12 +215,11 @@ check_search_entry(struct btval *key, struct btval *val, struct search *search)
 		return 0;
 	}
 
-	if ((dn0 = malloc(key->size + 1)) == NULL) {
+	if ((dn0 = strndup(key->data, key->size)) == NULL) {
 		log_warn("malloc");
 		return 0;
 	}
-	strncpy(dn0, key->data, key->size);
-	dn0[key->size] = 0;
+
 	if (!authorized(search->conn, search->ns, ACI_READ, dn0,
 	    LDAP_SCOPE_BASE)) {
 		/* LDAP_INSUFFICIENT_ACCESS */
