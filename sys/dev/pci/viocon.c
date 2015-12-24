@@ -1,4 +1,4 @@
-/*	$OpenBSD: viocon.c,v 1.1 2015/12/21 22:15:53 sf Exp $	*/
+/*	$OpenBSD: viocon.c,v 1.2 2015/12/24 16:21:11 mmcc Exp $	*/
 
 /*
  * Copyright (c) 2013-2015 Stefan Fritsch <sf@sfritsch.de>
@@ -206,10 +206,8 @@ viocon_attach(struct device *parent, struct device *self, void *aux)
 	return;
 err:
 	vsc->sc_child = VIRTIO_CHILD_ERROR;
-	if (vsc->sc_vqs)
-		free(vsc->sc_vqs, M_DEVBUF, 2 * (maxports + 1) * sizeof(struct virtqueue));
-	if (sc->sc_ports)
-		free(sc->sc_ports, M_DEVBUF, maxports * sizeof(sc->sc_ports[0]));
+	free(vsc->sc_vqs, M_DEVBUF, 2 * (maxports + 1) * sizeof(struct virtqueue));
+	free(sc->sc_ports, M_DEVBUF, maxports * sizeof(sc->sc_ports[0]));
 }
 
 int
