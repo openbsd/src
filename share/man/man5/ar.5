@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ar.5,v 1.4 2015/09/10 17:55:21 schwarze Exp $
+.\"	$OpenBSD: ar.5,v 1.5 2015/12/24 01:47:25 bentley Exp $
 .\"	$NetBSD: ar.5,v 1.2 1995/03/25 06:39:38 glass Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)ar.5.5	8.1 (Berkeley) 6/9/93
 .\"
-.Dd $Mdocdate: September 10 2015 $
+.Dd $Mdocdate: December 24 2015 $
 .Dt AR 5
 .Os
 .Sh NAME
@@ -55,9 +55,7 @@ of a header for a file, a possible file name, and the file contents.
 The header is portable between machine architectures and, if the file
 contents are printable, the archive is itself printable.
 .Pp
-The header is made up of six variable length
-.Tn ASCII
-fields, followed by a
+The header is made up of six variable length ASCII fields, followed by a
 two character trailer.
 The fields are the object name (16 characters), the file last modification
 time (12 characters), the user and group IDs (each 6 characters), the file
@@ -86,9 +84,7 @@ The two-byte trailer is the string "\`\en".
 .Pp
 Only the name field has any provision for overflow.
 If any file name is more than 16 characters in length or contains an
-embedded space, the string "#1/" followed by the
-.Tn ASCII
-length of the
+embedded space, the string "#1/" followed by the ASCII length of the
 name is written in the name field.
 The file size (stored in the archive header) is incremented by the length
 of the name.
@@ -100,7 +96,8 @@ If any fields are their particular maximum number of characters in
 length, there will be no separation between the fields.
 .Pp
 Objects in the archive are always an even number of bytes long; files
-which are an odd number of bytes long are padded with a newline (`\en')
+which are an odd number of bytes long are padded with a newline
+.Pq Ql \en
 character, although the size in the header does not reflect this.
 .Sh SEE ALSO
 .Xr ar 1 ,
@@ -115,21 +112,35 @@ There have been at least four
 .Nm ar
 formats.
 The first was denoted by the leading magic number 0177555 (stored as
-type int).
+type
+.Vt int ) .
 These archives were almost certainly created on a 16-bit machine, and
 contain headers made up of five fields.
 The fields are the object name (8 characters), the file last modification
-time (type long), the user ID (type char), the file mode (type char) and
-the file size (type unsigned int).
+time (type
+.Vt long ) ,
+the user ID (type
+.Vt char ) ,
+the file mode (type
+.Vt char )
+and the file size (type
+.Vt unsigned int ) .
 Files were padded to an even number of bytes.
 .Pp
 The second was denoted by the leading magic number 0177545 (stored as
-type int).
+type
+.Vt int ) .
 These archives may have been created on either 16 or 32-bit machines, and
 contain headers made up of six fields.
 The fields are the object name (14 characters), the file last modification
-time (type long), the user and group IDs (each type char), the file mode
-(type int) and the file size (type long).
+time (type
+.Vt long ) ,
+the user and group IDs (each type
+.Vt char ) ,
+the file mode (type
+.Vt int )
+and the file size (type
+.Vt long ) .
 Files were padded to an even number of bytes.
 .\" For more information on converting from this format see
 .\" .Xr arcv 8 .
