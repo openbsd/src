@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.27 2015/12/24 09:26:45 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.28 2015/12/24 09:40:27 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -2763,7 +2763,7 @@ vmx_handle_hlt(struct vcpu *vcpu)
 
 	if (vmread(VMCS_INSTRUCTION_LENGTH, &insn_length)) {
 		printf("vmx_handle_hlt: can't obtain instruction length\n");
-		return (1);
+		return (EINVAL);
 	}
 
 	vcpu->vc_gueststate.vg_rip += insn_length;
@@ -3034,12 +3034,12 @@ vmx_handle_inout(struct vcpu *vcpu)
 
 	if (vmread(VMCS_INSTRUCTION_LENGTH, &insn_length)) {
 		printf("vmx_handle_inout: can't obtain instruction length\n");
-		return (1);
+		return (EINVAL);
 	}
 
 	if (vmx_get_exit_qualification(&exit_qual)) {
 		printf("vmx_handle_inout: can't get exit qual\n");
-		return (1);
+		return (EINVAL);
 	}
 
 	/* Bits 0:2 - size of exit */
@@ -3108,12 +3108,12 @@ vmx_handle_cr(struct vcpu *vcpu)
 
 	if (vmread(VMCS_INSTRUCTION_LENGTH, &insn_length)) {
 		printf("vmx_handle_cr: can't obtain instruction length\n");
-		return (1);
+		return (EINVAL);
 	}
 
 	if (vmx_get_exit_qualification(&exit_qual)) {
 		printf("vmx_handle_cr: can't get exit qual\n");
-		return (1);
+		return (EINVAL);
 	}
 
 	/* Low 4 bits of exit_qual represent the CR number */
@@ -3161,7 +3161,7 @@ vmx_handle_cpuid(struct vcpu *vcpu)
 
 	if (vmread(VMCS_INSTRUCTION_LENGTH, &insn_length)) {
 		printf("vmx_handle_cpuid: can't obtain instruction length\n");
-		return (1);
+		return (EINVAL);
 	}
 
 	/* All CPUID instructions are 0x0F 0xA2 */
