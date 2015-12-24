@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.26 2015/12/17 09:29:28 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.27 2015/12/24 09:26:45 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -394,6 +394,12 @@ vm_readpage(struct vm_readpage_params *vrp)
 		return (ENOENT);
 	}
 
+	/* Check that the data to be read is within a page */
+	if (vrp->vrp_len > (PAGE_SIZE - (vrp->vrp_paddr & PAGE_MASK))) {
+		rw_exit_read(&vmm_softc->vm_lock);
+		return (EINVAL);
+	}
+
 	/* Calculate page containing vrp->vrp_paddr */
 	vr_page = vrp->vrp_paddr & ~PAGE_MASK;
 
@@ -525,6 +531,12 @@ vm_writepage(struct vm_writepage_params *vwp)
 	if (vm == NULL) {
 		rw_exit_read(&vmm_softc->vm_lock);
 		return (ENOENT);
+	}
+
+	/* Check that the data to be written is within a page */
+	if (vwp->vwp_len > (PAGE_SIZE - (vwp->vwp_paddr & PAGE_MASK))) {
+		rw_exit_read(&vmm_softc->vm_lock);
+		return (EINVAL);
 	}
 
 	/* Calculate page containing vwp->vwp_paddr */
