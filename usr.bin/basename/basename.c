@@ -1,4 +1,4 @@
-/*	$OpenBSD: basename.c,v 1.12 2015/12/24 17:05:09 mmcc Exp $	*/
+/*	$OpenBSD: basename.c,v 1.13 2015/12/24 17:11:47 mmcc Exp $	*/
 /*	$NetBSD: basename.c,v 1.9 1995/09/02 05:29:46 jtc Exp $	*/
 
 /*-
@@ -89,7 +89,7 @@ main(int argc, char *argv[])
 		}
 	}
 	(void)puts(p);
-	exit(0);
+	return 0;
 }
 
 extern char *__progname;
