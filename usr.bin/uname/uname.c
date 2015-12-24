@@ -1,4 +1,4 @@
-/*	$OpenBSD: uname.c,v 1.16 2015/10/09 01:37:09 deraadt Exp $	*/
+/*	$OpenBSD: uname.c,v 1.17 2015/12/24 15:01:24 tb Exp $	*/
 
 /*
  * Copyright (c) 1994 Winning Strategies, Inc.
@@ -32,12 +32,13 @@
  */
 
 #include <sys/param.h>	/* MACHINE_ARCH */
+#include <sys/utsname.h>
+
+#include <err.h>
+#include <locale.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <locale.h>
 #include <unistd.h>
-#include <sys/utsname.h>
-#include <err.h>
 
 static void usage(void);
 
@@ -73,6 +74,9 @@ main(int argc, char *argv[])
 		case 'n':
 			print_mask |= PRINT_NODENAME;
 			break;
+		case 'p':
+			print_mask |= PRINT_MACHINE_ARCH;
+			break;
 		case 'r':
 			print_mask |= PRINT_RELEASE;
 			break;
@@ -81,9 +85,6 @@ main(int argc, char *argv[])
 			break;
 		case 'v':
 			print_mask |= PRINT_VERSION;
-			break;
-		case 'p':
-			print_mask |= PRINT_MACHINE_ARCH;
 			break;
 		default:
 			usage();
@@ -100,39 +101,46 @@ main(int argc, char *argv[])
 		print_mask = PRINT_SYSNAME;
 	}
 
-	if (uname(&u)) {
+	if (uname(&u))
 		err(1, NULL);
-		/* NOTREACHED */
-	}
 
 	if (print_mask & PRINT_SYSNAME) {
 		space++;
 		fputs(u.sysname, stdout);
 	}
 	if (print_mask & PRINT_NODENAME) {
-		if (space++) putchar(' ');
+		if (space++)
+			putchar(' ');
+
 		fputs(u.nodename, stdout);
 	}
 	if (print_mask & PRINT_RELEASE) {
-		if (space++) putchar(' ');
+		if (space++)
+			putchar(' ');
+
 		fputs(u.release, stdout);
 	}
 	if (print_mask & PRINT_VERSION) {
-		if (space++) putchar(' ');
+		if (space++)
+			putchar(' ');
+
 		fputs(u.version, stdout);
 	}
 	if (print_mask & PRINT_MACHINE) {
-		if (space++) putchar(' ');
+		if (space++)
+			putchar(' ');
+
 		fputs(u.machine, stdout);
 	}
 	if (print_mask & PRINT_MACHINE_ARCH) {
-		if (space++) putchar(' ');
+		if (space++)
+			putchar(' ');
+
 		fputs(MACHINE_ARCH, stdout);
 	}
 	putchar('\n');
 
-	exit(0);
-	/* NOTREACHED */
+	return 0;
 }
 
 static void
