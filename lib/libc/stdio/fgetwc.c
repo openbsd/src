@@ -1,4 +1,4 @@
-/*	$OpenBSD: fgetwc.c,v 1.5 2015/08/31 02:53:57 guenther Exp $	*/
+/*	$OpenBSD: fgetwc.c,v 1.6 2015/12/24 19:55:39 schwarze Exp $	*/
 /* $NetBSD: fgetwc.c,v 1.3 2003/03/07 07:11:36 tshiozak Exp $ */
 
 /*-
@@ -69,7 +69,7 @@ __fgetwc_unlock(FILE *fp)
 		c = ch;
 		size = mbrtowc(&wc, &c, 1, st);
 		if (size == (size_t)-1) {
-			errno = EILSEQ;
+			fp->_flags |= __SERR;
 			return WEOF;
 		}
 	} while (size == (size_t)-2);
