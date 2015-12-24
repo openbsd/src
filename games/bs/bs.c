@@ -1,4 +1,4 @@
-/*	$OpenBSD: bs.c,v 1.31 2015/12/04 10:41:35 tedu Exp $	*/
+/*	$OpenBSD: bs.c,v 1.32 2015/12/24 16:55:13 tb Exp $	*/
 /*
  * Copyright (c) 1986, Bruce Holloway
  * All rights reserved.
@@ -50,7 +50,41 @@
 #include <time.h>
 #include <unistd.h>
 
-static int getcoord(int atcpu);
+typedef struct {
+	char *name;		/* name of the ship type */
+	char hits;		/* how many times has this ship been hit? */
+	char symbol;		/* symbol for game purposes */
+	char length;		/* length of ship */
+	signed char x, y;	/* coordinates of ship start point */
+	unsigned char dir;	/* direction of `bow' */
+	bool placed;		/* has it been placed on the board? */
+} ship_t;
+
+static void	 announceopts(void);
+static int	 awinna(void);
+static bool	 checkplace(int, ship_t *, int);
+static int	 collidecheck(int, int, int);
+static int	 cpufire(int, int);
+static bool	 cpushipcanfit(int, int, int, int);
+static int	 cputurn(void);
+static void	 do_options(int, char *[]);
+static void	 error(char *);
+static int	 getcoord(int);
+static ship_t	*hitship(int, int);
+static void	 initgame(void);
+static void	 intro(void);
+static void	 placeship(int, ship_t *, int);
+static int	 playagain(void);
+static int	 plyturn(void);
+static void	 prompt(int, const char *, ...)
+    __attribute__((__format__ (printf, 2, 3)));
+static void	 randomfire(int *, int *);
+static void	 randomplace(int, ship_t *);
+static int	 rnd(int);
+static int	 scount(int);
+static int	 sgetc(char *);
+static void	 uninitgame(int);
+__dead void	 usage(void);
 
 /*
  * Constants for tuning the random-fire algorithm. It prefers moves that
@@ -127,43 +161,29 @@ static char dftname[] = "stranger";
 #define NW	5
 #define N	6
 #define NE	7
-static int xincr[8] = {1,  1,  0, -1, -1, -1,  0,  1};
-static int yincr[8] = {0,  1,  1,  1,  0, -1, -1, -1};
+static int xincr[8] = { 1,  1,  0, -1, -1, -1,  0,  1 };
+static int yincr[8] = { 0,  1,  1,  1,  0, -1, -1, -1 };
 
 /* current ship position and direction */
 static int curx = (BWIDTH / 2);
 static int cury = (BDEPTH / 2);
 
-typedef struct
-{
-    char *name;		/* name of the ship type */
-    char hits;		/* how many times has this ship been hit? */
-    char symbol;	/* symbol for game purposes */
-    char length;	/* length of ship */
-    signed char x, y;	/* coordinates of ship start point */
-    unsigned char dir;	/* direction of `bow' */
-    bool placed;	/* has it been placed on the board? */
-}
-ship_t;
-
-static bool checkplace(int b, ship_t *ss, int vis);
-
 ship_t plyship[SHIPTYPES] =
 {
-    { carrier,	0, 'A', 5, 0, 0, 0, FALSE},
-    { battle,	0, 'B', 4, 0, 0, 0, FALSE},
-    { destroy,	0, 'D', 3, 0, 0, 0, FALSE},
-    { sub,	0, 'S', 3, 0, 0, 0, FALSE},
-    { ptboat,	0, 'P', 2, 0, 0, 0, FALSE}
+	{ carrier,	0, 'A', 5, 0, 0, 0, FALSE },
+	{ battle,	0, 'B', 4, 0, 0, 0, FALSE },
+	{ destroy,	0, 'D', 3, 0, 0, 0, FALSE },
+	{ sub,		0, 'S', 3, 0, 0, 0, FALSE },
+	{ ptboat,	0, 'P', 2, 0, 0, 0, FALSE }
 };
 
 ship_t cpuship[SHIPTYPES] =
 {
-    { carrier,	0, 'A', 5, 0, 0, 0, FALSE},
-    { battle,	0, 'B', 4, 0, 0, 0, FALSE},
-    { destroy,	0, 'D', 3, 0, 0, 0, FALSE},
-    { sub,	0, 'S', 3, 0, 0, 0, FALSE},
-    { ptboat,	0, 'P', 2, 0, 0, 0, FALSE}
+	{ carrier,	0, 'A', 5, 0, 0, 0, FALSE },
+	{ battle,	0, 'B', 4, 0, 0, 0, FALSE },
+	{ destroy,	0, 'D', 3, 0, 0, 0, FALSE },
+	{ sub,		0, 'S', 3, 0, 0, 0, FALSE },
+	{ ptboat,	0, 'P', 2, 0, 0, 0, FALSE }
 };
 
 /* The following variables (and associated defines), used for computer 
