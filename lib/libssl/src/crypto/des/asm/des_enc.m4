@@ -1536,7 +1536,7 @@ DES_ncbc_encrypt:
 	xor	global4, local1, out5     ! iv xor next block
 
 	ba	.ncbc.enc.next.block_2
-	add	in1, 8, in1               ! output adress
+	add	in1, 8, in1               ! output address
 
 .ncbc.enc.next.block_fp:
 

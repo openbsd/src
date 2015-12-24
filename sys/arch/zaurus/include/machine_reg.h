@@ -1,4 +1,4 @@
-/*	$OpenBSD: machine_reg.h,v 1.3 2010/06/07 16:34:20 drahn Exp $	*/
+/*	$OpenBSD: machine_reg.h,v 1.4 2015/12/24 05:50:15 mmcc Exp $	*/
 /*	$NetBSD: lubbock_reg.h,v 1.1 2003/06/18 10:51:15 bsh Exp $ */
 
 /*
@@ -61,7 +61,7 @@
  * Magic numbers for the C860 (PXA255) and C3000 (PXA27x).
  */
 
-/* physical adresses of companion chips */
+/* physical addresses of companion chips */
 #define C3000_SCOOP0_BASE	0x10800000 /* XXX same as C860 */
 #define C3000_SCOOP1_BASE	0x08800040
 

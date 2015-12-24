@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache.h,v 1.6 2014/07/14 05:59:26 guenther Exp $	*/
+/*	$OpenBSD: cache.h,v 1.7 2015/12/24 05:50:15 mmcc Exp $	*/
 /*	$NetBSD: cache.h,v 1.3 1995/03/21 09:07:12 cgd Exp $	*/
 
 /*-
@@ -41,7 +41,7 @@
  * caches. Traditional passwd/group cache routines perform quite poorly with
  * archives. The chances of hitting a valid lookup with an archive is quite a
  * bit worse than with files already resident on the file system. These misses
- * create a MAJOR performance cost. To adress this problem, these routines
+ * create a MAJOR performance cost. To address this problem, these routines
  * cache both hits and misses.
  *
  * NOTE:  name lengths must be as large as those stored in ANY PROTOCOL and
