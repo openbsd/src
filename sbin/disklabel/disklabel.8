@@ -1,4 +1,4 @@
-.\"	$OpenBSD: disklabel.8,v 1.117 2015/10/16 04:20:54 miod Exp $
+.\"	$OpenBSD: disklabel.8,v 1.118 2015/12/24 13:47:08 otto Exp $
 .\"	$NetBSD: disklabel.8,v 1.9 1995/03/18 14:54:38 cgd Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1991, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)disklabel.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: October 16 2015 $
+.Dd $Mdocdate: December 24 2015 $
 .Dt DISKLABEL 8
 .Os
 .Sh NAME
@@ -505,9 +505,10 @@ and are not modified during the allocation process.
 Disk size determines the set of partitions which are created.
 Each partition is allocated space between a specified minimum
 and maximum.
-Each partition is allocated its minimum and remaining space
-is split between the partitions up to their maximum allowed space,
-which is a fixed percentage.
+Initially, each partition is allocated its minimum space;
+remaining space is split between the partitions according to the
+given percentages,
+up to their maximum allowed space.
 Space left after all partitions have reached their maximum size
 is left unallocated.
 The sizes below are approximations,
