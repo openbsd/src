@@ -1,5 +1,5 @@
 /*	$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp $	*/
-/*	$OpenBSD: vmstat.c,v 1.138 2015/04/18 18:28:38 deraadt Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.139 2015/12/24 03:25:08 mmcc Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -346,7 +346,7 @@ dovmstat(u_int interval, int reps)
 			mib[1] = VM_UVMEXP;
 			if (sysctl(mib, 2, &uvmexp, &size, NULL, 0) < 0) {
 				warn("could not get vm.uvmexp");
-				bzero(&uvmexp, sizeof(struct uvmexp));
+				memset(&uvmexp, 0, sizeof(struct uvmexp));
 			}
 		} else {
 			kread(X_UVMEXP, &uvmexp, sizeof(struct uvmexp));
@@ -356,7 +356,7 @@ dovmstat(u_int interval, int reps)
 		mib[1] = VM_METER;
 		if (sysctl(mib, 2, &total, &size, NULL, 0) < 0) {
 			warn("could not read vm.vmmeter");
-			bzero(&total, sizeof(total));
+			memset(&total, 0, sizeof(total));
 		}
 		(void)printf(" %u %u %u ",
 		    total.t_rq - 1, total.t_dw + total.t_pw, total.t_sw);
@@ -449,7 +449,7 @@ dotimes(void)
 		mib[1] = VM_UVMEXP;
 		if (sysctl(mib, 2, &uvmexp, &size, NULL, 0) < 0) {
 			warn("could not read vm.uvmexp");
-			bzero(&uvmexp, sizeof(struct uvmexp));
+			memset(&uvmexp, 0, sizeof(struct uvmexp));
 		}
 	} else {
 		kread(X_UVMEXP, &uvmexp, sizeof(struct uvmexp));
@@ -493,7 +493,7 @@ dosum(void)
 		mib[1] = VM_UVMEXP;
 		if (sysctl(mib, 2, &uvmexp, &size, NULL, 0) < 0) {
 			warn("could not read vm.uvmexp");
-			bzero(&uvmexp, sizeof(struct uvmexp));
+			memset(&uvmexp, 0, sizeof(struct uvmexp));
 		}
 	} else {
 		kread(X_UVMEXP, &uvmexp, sizeof(struct uvmexp));
@@ -552,7 +552,7 @@ dosum(void)
 		mib[1] = KERN_NCHSTATS;
 		if (sysctl(mib, 2, &nchstats, &size, NULL, 0) < 0) {
 			warn("could not read kern.nchstats");
-			bzero(&nchstats, sizeof(nchstats));
+			memset(&nchstats, 0, sizeof(nchstats));
 		}
 	} else {
 		kread(X_NCHSTATS, &nchstats, sizeof(nchstats));
@@ -599,7 +599,7 @@ doforkst(void)
 		mib[1] = KERN_FORKSTAT;
 		if (sysctl(mib, 2, &fks, &size, NULL, 0) < 0) {
 			warn("could not read kern.forkstat");
-			bzero(&fks, sizeof(struct forkstat));
+			memset(&fks, 0, sizeof(struct forkstat));
 		}
 	} else {
 		kread(X_FORKSTAT, &fks, sizeof(struct forkstat));
@@ -816,7 +816,7 @@ domem(void)
 	}
 
 	if (memf == NULL && nlistf == NULL) {
-		bzero(kmemstats, sizeof(kmemstats));
+		memset(kmemstats, 0, sizeof(kmemstats));
 		for (i = 0; i < M_LAST; i++) {
 			mib[0] = CTL_KERN;
 			mib[1] = KERN_MALLOCSTATS;

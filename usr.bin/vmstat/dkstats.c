@@ -1,4 +1,4 @@
-/*	$OpenBSD: dkstats.c,v 1.37 2015/01/16 06:40:14 deraadt Exp $	*/
+/*	$OpenBSD: dkstats.c,v 1.38 2015/12/24 03:25:08 mmcc Exp $	*/
 /*	$NetBSD: dkstats.c,v 1.1 1996/05/10 23:19:27 thorpej Exp $	*/
 
 /*
@@ -221,7 +221,7 @@ dkreadstats(void)
 						last.dk_seek[i] = 0;
 						last.dk_rbytes[i] = 0;
 						last.dk_wbytes[i] = 0;
-						bzero(&last.dk_time[i],
+						memset(&last.dk_time[i], 0,
 						    sizeof(struct timeval));
 						continue;
 					}
@@ -319,7 +319,7 @@ dkreadstats(void)
 						last.dk_seek[i] = 0;
 						last.dk_rbytes[i] = 0;
 						last.dk_wbytes[i] = 0;
-						bzero(&last.dk_time[i],
+						memset(&last.dk_time[i], 0,
 						    sizeof(struct timeval));
 						continue;
 					}
@@ -361,7 +361,7 @@ dkreadstats(void)
 #ifdef	DEBUG
 			warn("could not read hw.diskstats");
 #endif	/* DEBUG */
-			bzero(q, cur.dk_ndrive * sizeof(struct diskstats));
+			memset(q, 0, cur.dk_ndrive * sizeof(struct diskstats));
 		}
 
 		for (i = 0; i < cur.dk_ndrive; i++)	{
@@ -379,7 +379,7 @@ dkreadstats(void)
 		mib[1] = KERN_CPTIME;
 		if (sysctl(mib, 2, cur.cp_time, &size, NULL, 0) < 0) {
 			warn("could not read kern.cp_time");
-			bzero(cur.cp_time, sizeof(cur.cp_time));
+			memset(cur.cp_time, 0, sizeof(cur.cp_time));
 		}
 		size = sizeof(cur.tk_nin);
 		mib[0] = CTL_KERN;
@@ -573,7 +573,7 @@ deref_kptr(void *kptr, void *ptr, size_t len)
 	char buf[128];
 
 	if (kvm_read(kd, (u_long)kptr, ptr, len) != len) {
-		bzero(buf, sizeof(buf));
+		memset(buf, 0, sizeof(buf));
 		snprintf(buf, (sizeof(buf) - 1),
 		     "can't dereference kptr 0x%lx", (u_long)kptr);
 		KVM_ERROR(buf);
