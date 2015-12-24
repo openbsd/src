@@ -1,4 +1,4 @@
-/*	$OpenBSD: efidev.c,v 1.13 2015/12/24 18:03:02 krw Exp $	*/
+/*	$OpenBSD: efidev.c,v 1.14 2015/12/24 21:37:25 krw Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -356,7 +356,7 @@ findopenbsd_gpt(efi_diskinfo_t ed, const char **err)
 	gh.gh_csum = orig_csum;
 	if (letoh32(orig_csum) != new_csum) {
 		*err = "bad GPT header checksum\n";
-		return (1);
+		return (-1);
 	}
 
 	lba = letoh64(gh.gh_part_lba);

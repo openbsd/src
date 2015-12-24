@@ -1,4 +1,4 @@
-/*	$OpenBSD: softraid.c,v 1.20 2015/12/24 18:03:03 krw Exp $	*/
+/*	$OpenBSD: softraid.c,v 1.21 2015/12/24 21:37:25 krw Exp $	*/
 
 /*
  * Copyright (c) 2012 Joel Sing <jsing@openbsd.org>
@@ -485,7 +485,7 @@ findopenbsd_gpt(struct sr_boot_volume *bv)
 	new_csum = crc32(0, (unsigned char *)&gh, ghsize);
 	gh.gh_csum = orig_csum;
 	if (letoh32(orig_csum) != new_csum)
-		return (1);
+		return (-1);
 
 	lba = letoh64(gh.gh_part_lba);
 	ghpartsize = letoh32(gh.gh_part_size);
