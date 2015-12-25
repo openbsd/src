@@ -196,16 +196,6 @@ add_lnum(LINENUM linenum, off_t pos)
 	}
 }
 
-/*
- * If we get stuck in a long loop trying to figure out the
- * line number, print a message to tell the user what we're doing.
- */
-static void
-longloopmessage(void)
-{
-	ierror("Calculating line numbers", NULL);
-}
-
 static int loopcount;
 static time_t startime;
 
@@ -215,7 +205,7 @@ longish(void)
 	if (loopcount >= 0 && ++loopcount > 100) {
 		loopcount = 0;
 		if (time(NULL) >= startime + LONGTIME) {
-			longloopmessage();
+			ierror("Calculating line numbers", NULL);
 			loopcount = -1;
 		}
 	}
