@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip27.h,v 1.5 2015/12/25 08:34:51 visa Exp $	*/
+/*	$OpenBSD: ip27.h,v 1.6 2015/12/25 09:02:57 visa Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -54,6 +54,14 @@
 
 #define	IP27_IOC_SLOTNO			2
 #define	IP27_IOC2_SLOTNO		6
+
+/* PROM entry points */
+
+#define IP27_PROM_LAUNCH_SLAVE		0x1fc00038
+
+#define ip27_prom_launch_slave (*(void (*)(int nasid, int cpu, \
+    void (*func)(uint64_t), uint64_t param, uint64_t sp, \
+    uint64_t gp))PHYS_TO_CKSEG1(IP27_PROM_LAUNCH_SLAVE))
 
 /*
  * IP27 configuration structure.  Used to tell Origin 200 and Origin 2000

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip27_machdep.c,v 1.68 2015/12/25 08:34:51 visa Exp $	*/
+/*	$OpenBSD: ip27_machdep.c,v 1.69 2015/12/25 09:02:57 visa Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -27,12 +27,14 @@
 #include <sys/atomic.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
+#include <sys/proc.h>
 #include <sys/reboot.h>
 #include <sys/timetc.h>
 #include <sys/tty.h>
 
 #include <mips64/arcbios.h>
 #include <mips64/archtype.h>
+#include <mips64/cache.h>
 
 #include <machine/autoconf.h>
 #include <machine/bus.h>
@@ -92,6 +94,13 @@ void	ip27_nmi(void *);
 
 #ifdef MULTIPROCESSOR
 
+unsigned int	ip27_ncpus;
+
+int	ip27_kl_launch_cpu(klinfo_t *, void *);
+int	ip27_kl_launch_cpu_board(lboard_t *, void *);
+int	ip27_kl_attach_cpu(klinfo_t *, void *);
+int	ip27_kl_attach_cpu_board(lboard_t *, void *);
+
 uint	ip27_hub_get_timecount(struct timecounter *);
 
 struct timecounter ip27_hub_timecounter = {
@@ -102,6 +111,14 @@ struct timecounter ip27_hub_timecounter = {
 	.tc_name = "hubrt",
 	.tc_quality = 100
 };
+
+volatile uint64_t	ip27_spinup_a0;
+volatile uint64_t	ip27_spinup_sp;
+volatile uint32_t	ip27_spinup_turn = ~0;
+
+#define SPINUP_TICKET(nasid, slice)	(((nasid) << 8) | (slice))
+
+void ip27_cpu_spinup_trampoline(uint64_t);
 
 #endif /* MULTIPROCESSOR */
 
@@ -217,6 +234,17 @@ ip27_setup()
 	kl_init(ip35);
 	if (kl_n_mode != 0)
 		xbow_long_shift = 28;
+
+#ifdef MULTIPROCESSOR
+	/*
+	 * Pre-launch secondary CPUs with the help of the PROM. This has to be
+	 * done now, before tearing down the PROM TLB and disabling interrupts
+	 * on the secondary CPUs. The CPUs will wait in the spinup trampoline
+	 * until the system launches them for real.
+	 */
+	ip27_ncpus = 1;
+	kl_scan_all_nodes(IP27_BC_NODE, ip27_kl_launch_cpu_board, NULL);
+#endif
 
 	/*
 	 * Initialize the early console parameters.
@@ -363,6 +391,9 @@ ip27_autoconf(struct device *parent)
 	 * Now attach all nodes' I/O devices.
 	 */
 
+#ifdef MULTIPROCESSOR
+	ip27_ncpus = 1;
+#endif
 	ip27_attach_node(parent, masternasid);
 	for (node = 0; node < maxnodes; node++) {
 		if (gda->nasid[node] < 0)
@@ -385,6 +416,11 @@ ip27_attach_node(struct device *parent, int16_t nasid)
 
 	currentnasid = nasid;
 	bzero(&u, sizeof u);
+
+#ifdef MULTIPROCESSOR
+	kl_scan_node(nasid, IP27_BC_NODE, ip27_kl_attach_cpu_board, parent);
+#endif
+
 	if (ip35) {
 		l1_display(nasid, TRUE, "OpenBSD/sgi");
 
@@ -994,10 +1030,154 @@ ip27_nmi(void *arg)
 
 #ifdef MULTIPROCESSOR
 
+int
+ip27_kl_launch_cpu(klinfo_t *comp, void *arg)
+{
+	struct cpu_info *ci = curcpu();
+
+	/* Skip the running CPU. */
+	if (comp->nasid == ci->ci_nasid &&
+	    comp->physid == ci->ci_slice)
+		return 0;
+
+	/* XXX Skip CPUs on other nodes. */
+	if (comp->nasid != ci->ci_nasid)
+		return 0;
+
+	if (ip27_ncpus >= MAXCPUS)
+		return 0;
+
+	ip27_prom_launch_slave(comp->nasid, comp->physid,
+	    ip27_cpu_spinup_trampoline,
+	    SPINUP_TICKET(comp->nasid, comp->physid), 0, 0);
+	ip27_ncpus++;
+
+	return 0;
+}
+
+int
+ip27_kl_launch_cpu_board(lboard_t *board, void *arg)
+{
+	kl_scan_board(board, KLSTRUCT_CPU, ip27_kl_launch_cpu, arg);
+	return 0;
+}
+
+int
+ip27_kl_attach_cpu(klinfo_t *comp, void *arg)
+{
+	struct cpu_attach_args caa;
+	struct cpu_hwinfo hw;
+	struct cpu_info *ci = curcpu();
+	struct device *parent = arg;
+	klcpu_t *cpucomp;
+
+	/* Skip the running CPU. */
+	if (comp->nasid == ci->ci_nasid &&
+	    comp->physid == ci->ci_slice)
+		return 0;
+
+	/* XXX Skip CPUs on other nodes. */
+	if (comp->nasid != ci->ci_nasid)
+		return 0;
+
+	if (ip27_ncpus >= MAXCPUS)
+		return 0;
+
+	cpucomp = (klcpu_t *)comp;
+
+	hw.c0prid = cpucomp->cpu_prid;
+	hw.c1prid = cpucomp->cpu_prid;
+	hw.clock = cpucomp->cpu_speed * 1000000;
+	hw.tlbsize = 64;
+	hw.type = (cpucomp->cpu_prid >> 8) & 0xff;
+
+	caa.caa_maa.maa_name = "cpu";
+	caa.caa_maa.maa_nasid = comp->nasid;
+	caa.caa_maa.maa_physid = comp->physid;
+	caa.caa_hw = &hw;
+	config_found(parent, &caa, ip27_print);
+	ip27_ncpus++;
+
+	return 0;
+}
+
+int
+ip27_kl_attach_cpu_board(lboard_t *board, void *arg)
+{
+	kl_scan_board(board, KLSTRUCT_CPU, ip27_kl_attach_cpu, arg);
+	return 0;
+}
+
 uint
 ip27_hub_get_timecount(struct timecounter *tc)
 {
 	return IP27_RHUB_L(masternasid, HUBPI_RT_COUNT);
+}
+
+void
+hw_cpu_hatch(struct cpu_info *ci)
+{
+	int s;
+
+	setcurcpu(ci);
+
+	/*
+	 * Make sure we can access the extended address space.
+	 * Note that r10k and later do not allow XUSEG accesses
+	 * from kernel mode unless SR_UX is set.
+	 */
+	setsr(getsr() | SR_KX | SR_UX);
+
+	tlb_init(64);
+	tlb_set_pid(0);
+
+	/*
+	 * Turn off bootstrap exception vectors.
+	 */
+	setsr(getsr() & ~SR_BOOT_EXC_VEC);
+
+	/*
+	 * Clear out the I and D caches.
+	 */
+	Mips10k_ConfigCache(ci);
+	Mips_SyncCache(ci);
+
+	printf("cpu%lu launched\n", cpu_number());
+
+	(*md_startclock)(ci);
+
+	ncpus++;
+	cpuset_add(&cpus_running, ci);
+
+	mips64_ipi_init();
+	ip27_hub_setintrmask(0);
+
+	spl0();
+	(void)updateimask(0);
+
+	SCHED_LOCK(s);
+	cpu_switchto(NULL, sched_chooseproc());
+}
+
+void
+hw_cpu_boot_secondary(struct cpu_info *ci)
+{
+	vaddr_t kstack;
+
+	kstack = alloc_contiguous_pages(USPACE);
+	if (kstack == 0)
+		panic("unable to allocate idle stack\n");
+
+	__asm__ (".set noreorder\n");
+	ci->ci_curprocpaddr = (void *)kstack;
+	ip27_spinup_a0 = (uint64_t)ci;
+	ip27_spinup_sp = (uint64_t)(kstack + USPACE);
+	mips_sync();
+	__asm__ (".set reorder\n");
+	ip27_spinup_turn = SPINUP_TICKET(ci->ci_nasid, ci->ci_slice);
+
+	while (!cpuset_isset(&cpus_running, ci))
+		;
 }
 
 #endif /* MULTIPROCESSOR */
