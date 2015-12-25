@@ -1,4 +1,4 @@
-/*	$OpenBSD: html.c,v 1.61 2015/10/13 22:57:49 schwarze Exp $ */
+/*	$OpenBSD: html.c,v 1.62 2015/12/25 20:43:04 bentley Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -718,8 +718,8 @@ void
 bufcat_id(struct html *h, const char *src)
 {
 
-	/* Cf. <http://www.w3.org/TR/html4/types.html#h-6.2>. */
+	/* Cf. <http://www.w3.org/TR/html5/dom.html#the-id-attribute>. */
 
-	while ('\0' != *src)
-		bufcat_fmt(h, "%.2x", *src++);
+	for (; '\0' != *src; src++)
+		bufncat(h, *src == ' ' ? "_" : src, 1);
 }

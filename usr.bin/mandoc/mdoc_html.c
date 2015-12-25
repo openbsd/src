@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_html.c,v 1.113 2015/10/12 00:07:27 schwarze Exp $ */
+/*	$OpenBSD: mdoc_html.c,v 1.114 2015/12/25 20:43:04 bentley Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -540,7 +540,6 @@ mdoc_sh_pre(MDOC_ARGS)
 	}
 
 	bufinit(h);
-	bufcat(h, "x");
 
 	for (n = n->child; n != NULL && n->type == ROFFT_TEXT; ) {
 		bufcat_id(h, n->string);
@@ -570,7 +569,6 @@ mdoc_ss_pre(MDOC_ARGS)
 		return 1;
 
 	bufinit(h);
-	bufcat(h, "x");
 
 	for (n = n->child; n != NULL && n->type == ROFFT_TEXT; ) {
 		bufcat_id(h, n->string);
@@ -1061,7 +1059,7 @@ mdoc_sx_pre(MDOC_ARGS)
 	struct htmlpair	 tag[2];
 
 	bufinit(h);
-	bufcat(h, "#x");
+	bufcat(h, "#");
 
 	for (n = n->child; n; ) {
 		bufcat_id(h, n->string);
