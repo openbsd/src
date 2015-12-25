@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.15 2012/10/03 11:18:23 miod Exp $ */
+/*	$OpenBSD: locore.S,v 1.16 2015/12/25 05:52:29 visa Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -89,7 +89,7 @@ LEAF(hw_cpu_spinup_trampoline, 0)
 	 NOP
 END(hw_cpu_spinup_trampoline)
 
-#ifdef TGT_OCTANE
+#if defined(TGT_OCTANE)
 
 LEAF(hw_getcurcpu, 0)
 	GET_CPU_INFO(v0, v1)
@@ -112,5 +112,21 @@ LEAF(hw_setcurcpu, 0)
 	j	ra
 	 PTR_S	a0, (MPCONF_LEN - REGSZ)(v1)
 END(hw_setcurcpu)
-#endif
+
+#elif defined(TGT_ORIGIN)
+
+LEAF(hw_getcurcpu, 0)
+	GET_CPU_INFO(v0, v1)
+	j	ra
+	 NOP
+END(hw_getcurcpu)
+
+LEAF(hw_setcurcpu, 0)
+	DMTC0	a0, COP_0_ERROR_PC
+	j	ra
+	 NOP
+END(hw_setcurcpu)
+
+#endif /* TGT_ORIGIN */
+
 #endif /* MULTIPROCESSOR */

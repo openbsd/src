@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.5 2012/06/17 12:34:19 miod Exp $ */
+/*	$OpenBSD: asm.h,v 1.6 2015/12/25 05:52:29 visa Exp $ */
 #ifndef	_SGI_ASM_H_
 #define	_SGI_ASM_H_
 
@@ -9,7 +9,8 @@
 
 #ifdef MULTIPROCESSOR
 
-#ifdef TGT_OCTANE
+#if defined(TGT_OCTANE)
+
 #include <sgi/xbow/xheartreg.h>
 
 /* Returns the physical cpu identifier */
@@ -25,8 +26,14 @@
 	PTR_ADD	ci, MPCONF_BASE;			\
 	or	tmp, ci;				\
 	PTR_L	ci, (MPCONF_LEN - REGSZ)(tmp)
-#endif
 
-#endif
+#elif defined(TGT_ORIGIN)
+
+#define HW_GET_CPU_INFO(ci, tmp)			\
+	DMFC0	ci, COP_0_ERROR_PC
+
+#endif /* TGT_ORIGIN */
+
+#endif /* MULTIPROCESSOR */
 
 #endif	/* _SGI_ASM_H_ */
