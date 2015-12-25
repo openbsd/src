@@ -1,4 +1,4 @@
-/*	$OpenBSD: banner.c,v 1.18 2015/10/14 08:12:12 doug Exp $	*/
+/*	$OpenBSD: banner.c,v 1.19 2015/12/25 23:41:43 gsoares Exp $	*/
 /*	$NetBSD: banner.c,v 1.4 1995/04/22 11:55:15 cgd Exp $	*/
 
 /*
@@ -1016,6 +1016,7 @@ int
 main(int argc, char *argv[])
 { 
 	int ch;
+	const char *errstr;
 
 	if (pledge("stdio", NULL) == -1)
 		err(1, "pledge");
@@ -1029,9 +1030,9 @@ main(int argc, char *argv[])
 			trace = 1;
 			break;
 		case 'w':
-			width = atoi(optarg);
-			if (width <= 0 || width > DWIDTH)
-				errx(1, "illegal argument for -w option");
+			width = strtonum(optarg, 1, DWIDTH, &errstr);
+			if (errstr)
+				errx(1, "width is %s: %s", errstr, optarg);
 			break;
 		case '?': case 'h':
 		default:
@@ -1149,5 +1150,5 @@ main(int argc, char *argv[])
 		}
 	}
 
-	exit(0);
+	return 0;
 }
