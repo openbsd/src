@@ -1,4 +1,4 @@
-/*	$OpenBSD: strftime.c,v 1.28 2015/10/24 18:13:18 guenther Exp $ */
+/*	$OpenBSD: strftime.c,v 1.29 2015/12/25 19:10:29 mmcc Exp $ */
 /*
 ** Copyright (c) 1989, 1993
 **	The Regents of the University of California.  All rights reserved.
@@ -670,10 +670,9 @@ _loc(void)
 		goto bad_locale;
 	bufsize = namesize + st.st_size;
 	locale_buf = NULL;
-	nlbuf = (lbuf == NULL) ? malloc(bufsize) : realloc(lbuf, bufsize);
+	nlbuf = realloc(lbuf, bufsize);
 	if (nlbuf == NULL) {
-		if (lbuf)
-			free(lbuf);
+		free(lbuf);
 		lbuf = NULL;
 		goto bad_locale;
 	}
