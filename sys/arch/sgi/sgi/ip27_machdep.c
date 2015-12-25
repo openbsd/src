@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip27_machdep.c,v 1.67 2015/12/25 06:18:50 visa Exp $	*/
+/*	$OpenBSD: ip27_machdep.c,v 1.68 2015/12/25 08:34:51 visa Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -125,16 +125,20 @@ struct intrhand *hubpi_intrhand1[HUBPI_NINTS];
 
 struct {
 	uint64_t hw[2];
-} hubpi_intem, hubpi_imask[NIPLS];
+} hubpi_intem[MAXCPUS], hubpi_imask[MAXCPUS][NIPLS];
 
 void
 ip27_setup()
 {
+	struct cpu_info *ci = curcpu();
 	struct ip27_config *ip27_config;
 	uint64_t synergy0_0;
 	console_t *cons;
 	nmi_t *nmi;
 	static char unknown_model[20];
+
+	ci->ci_nasid = masternasid;
+	ci->ci_slice = IP27_LHUB_L(HUBPI_CPU_NUMBER);
 
 	io_base = PHYS_TO_XKPHYS_UNCACHED(0, SP_IO);
 
@@ -349,6 +353,7 @@ ip27_autoconf(struct device *parent)
 	bzero(&u, sizeof u);
 	u.maa.maa_name = "cpu";
 	u.maa.maa_nasid = currentnasid = masternasid;
+	u.maa.maa_physid = IP27_LHUB_L(HUBPI_CPU_NUMBER);
 	u.caa.caa_hw = &bootcpu_hwinfo;
 	config_found(parent, &u, ip27_print);
 	u.maa.maa_name = "clock";
@@ -682,13 +687,14 @@ ip27_halt(int howto)
 int
 ip27_hub_intr_register(int widget, int level, int *intrbit)
 {
+	u_long cpuid = cpu_number();
 	int bit;
 
 	/*
 	 * Try to allocate a bit on hardware level 0 first.
 	 */
 	for (bit = HUBPI_INTR0_WIDGET_MAX; bit >= HUBPI_INTR0_WIDGET_MIN; bit--)
-		if ((hubpi_intem.hw[0] & (1UL << bit)) == 0)
+		if ((hubpi_intem[cpuid].hw[0] & (1UL << bit)) == 0)
 			goto found;
 
 	/*
@@ -696,7 +702,7 @@ ip27_hub_intr_register(int widget, int level, int *intrbit)
 	 * level 1.
 	 */
 	for (bit = HUBPI_INTR1_WIDGET_MAX; bit >= HUBPI_INTR1_WIDGET_MIN; bit--)
-		if ((hubpi_intem.hw[1] & (1UL << bit)) == 0) {
+		if ((hubpi_intem[cpuid].hw[1] & (1UL << bit)) == 0) {
 			bit += HUBPI_NINTS;
 			goto found;
 		}
@@ -716,6 +722,7 @@ ip27_hub_intr_establish(int (*func)(void *), void *arg, int intrbit,
     int level, const char *name, struct intrhand *ihstore)
 {
 	struct intrhand *ih, **anchor;
+	u_long cpuid = cpu_number();
 	int s;
 
 #ifdef DIAGNOSTIC
@@ -760,7 +767,8 @@ ip27_hub_intr_establish(int (*func)(void *), void *arg, int intrbit,
 
 	*anchor = ih;
 
-	hubpi_intem.hw[intrbit / HUBPI_NINTS] |= 1UL << (intrbit % HUBPI_NINTS);
+	hubpi_intem[cpuid].hw[intrbit / HUBPI_NINTS] |=
+	    1UL << (intrbit % HUBPI_NINTS);
 	if (intrbit / HUBPI_NINTS != 0)
 		ip27_hub_intr_makemasks1();
 	else
@@ -775,6 +783,7 @@ void
 ip27_hub_intr_disestablish(int intrbit)
 {
 	struct intrhand *ih, **anchor;
+	u_long cpuid = cpu_number();
 	int s;
 
 #ifdef DIAGNOSTIC
@@ -796,7 +805,7 @@ ip27_hub_intr_disestablish(int intrbit)
 
 	*anchor = NULL;
 
-	hubpi_intem.hw[intrbit / HUBPI_NINTS] &=
+	hubpi_intem[cpuid].hw[intrbit / HUBPI_NINTS] &=
 	    ~(1UL << (intrbit % HUBPI_NINTS));
 	if (intrbit / HUBPI_NINTS != 0)
 		ip27_hub_intr_makemasks1();
@@ -812,13 +821,21 @@ ip27_hub_intr_disestablish(int intrbit)
 void
 ip27_hub_intr_clear(int intrbit)
 {
-	IP27_RHUB_PI_S(masternasid, 0, HUBPI_IR_CHANGE, PI_IR_CLR | intrbit);
+	struct cpu_info *ci = curcpu();
+
+	IP27_RHUB_PI_S(ci->ci_nasid, IP27_SLICE_SUBNODE(ci->ci_slice),
+	    HUBPI_IR_CHANGE, PI_IR_CLR | intrbit);
+	(void)IP27_RHUB_PI_L(ci->ci_nasid, IP27_SLICE_SUBNODE(ci->ci_slice),
+	    HUBPI_IR0);
 }
 
 void
 ip27_hub_intr_set(int intrbit)
 {
-	IP27_RHUB_PI_S(masternasid, 0, HUBPI_IR_CHANGE, PI_IR_SET | intrbit);
+	struct cpu_info *ci = curcpu();
+
+	IP27_RHUB_PI_S(ci->ci_nasid, IP27_SLICE_SUBNODE(ci->ci_slice),
+	    HUBPI_IR_CHANGE, PI_IR_SET | intrbit);
 }
 
 void
@@ -831,8 +848,8 @@ ip27_hub_splx(int newipl)
 	ci->ci_ipl = newipl;
 	mips_sync();
 	__asm__ (".set reorder\n");
-	if (CPU_IS_PRIMARY(ci))
-		ip27_hub_setintrmask(newipl);
+	ip27_hub_setintrmask(newipl);
+
 	/* If we still have softints pending trigger processing. */
 	if (ci->ci_softpending && newipl < IPL_SOFTINT)
 		setsoftintr0();
@@ -845,20 +862,22 @@ ip27_hub_splx(int newipl)
 #define	INTR_FUNCTIONNAME	hubpi_intr0
 #define	MASK_FUNCTIONNAME	ip27_hub_intr_makemasks0
 #define	INTR_LOCAL_DECLS
-#define	MASK_LOCAL_DECLS
+#define	MASK_LOCAL_DECLS \
+	struct cpu_info *ci = curcpu();
 #define	INTR_GETMASKS \
 do { \
-	/* XXX this assumes we run on cpu0 */ \
 	isr = IP27_LHUB_L(HUBPI_IR0); \
-	imr = IP27_LHUB_L(HUBPI_CPU0_IMR0); \
+	imr = IP27_LHUB_L(IP27_SLICE_LCPU(ci->ci_slice) == 0 ? \
+	    HUBPI_CPU0_IMR0 : HUBPI_CPU1_IMR0); \
 	bit = HUBPI_INTR0_WIDGET_MAX; \
 } while (0)
 #define	INTR_MASKPENDING \
 do { \
-	IP27_LHUB_S(HUBPI_CPU0_IMR0, imr & ~isr); \
+	IP27_LHUB_S(IP27_SLICE_LCPU(ci->ci_slice) == 0 ? \
+	    HUBPI_CPU0_IMR0 : HUBPI_CPU1_IMR0, imr & ~isr); \
 	(void)IP27_LHUB_L(HUBPI_IR0); \
 } while (0)
-#define	INTR_IMASK(ipl)		hubpi_imask[ipl].hw[0]
+#define	INTR_IMASK(ipl)		hubpi_imask[ci->ci_cpuid][ipl].hw[0]
 #define	INTR_HANDLER(bit)	hubpi_intrhand0[bit]
 #define	INTR_SPURIOUS(bit) \
 do { \
@@ -866,7 +885,8 @@ do { \
 } while (0)
 #define	INTR_MASKRESTORE \
 do { \
-	IP27_LHUB_S(HUBPI_CPU0_IMR0, imr); \
+	IP27_LHUB_S(IP27_SLICE_LCPU(ci->ci_slice) == 0 ? \
+	    HUBPI_CPU0_IMR0 : HUBPI_CPU1_IMR0, imr); \
 	(void)IP27_LHUB_L(HUBPI_IR0); \
 } while (0)
 #define	INTR_MASKSIZE	HUBPI_NINTS
@@ -876,20 +896,22 @@ do { \
 #define	INTR_FUNCTIONNAME	hubpi_intr1
 #define	MASK_FUNCTIONNAME	ip27_hub_intr_makemasks1
 #define	INTR_LOCAL_DECLS
-#define	MASK_LOCAL_DECLS
+#define	MASK_LOCAL_DECLS \
+	struct cpu_info *ci = curcpu();
 #define	INTR_GETMASKS \
 do { \
-	/* XXX this assumes we run on cpu0 */ \
 	isr = IP27_LHUB_L(HUBPI_IR1); \
-	imr = IP27_LHUB_L(HUBPI_CPU0_IMR1); \
+	imr = IP27_LHUB_L(IP27_SLICE_LCPU(ci->ci_slice) == 0 ? \
+	    HUBPI_CPU0_IMR1 : HUBPI_CPU1_IMR1); \
 	bit = HUBPI_INTR1_WIDGET_MAX; \
 } while (0)
 #define	INTR_MASKPENDING \
 do { \
-	IP27_LHUB_S(HUBPI_CPU0_IMR1, imr & ~isr); \
+	IP27_LHUB_S(IP27_SLICE_LCPU(ci->ci_slice) == 0 ? \
+	    HUBPI_CPU0_IMR1 : HUBPI_CPU1_IMR1, imr & ~isr); \
 	(void)IP27_LHUB_L(HUBPI_IR1); \
 } while (0)
-#define	INTR_IMASK(ipl)		hubpi_imask[ipl].hw[1]
+#define	INTR_IMASK(ipl)		hubpi_imask[ci->ci_cpuid][ipl].hw[1]
 #define	INTR_HANDLER(bit)	hubpi_intrhand1[bit]
 #define	INTR_SPURIOUS(bit) \
 do { \
@@ -897,7 +919,8 @@ do { \
 } while (0)
 #define	INTR_MASKRESTORE \
 do { \
-	IP27_LHUB_S(HUBPI_CPU0_IMR1, imr); \
+	IP27_LHUB_S(IP27_SLICE_LCPU(ci->ci_slice) == 0 ? \
+	    HUBPI_CPU0_IMR1 : HUBPI_CPU1_IMR1, imr); \
 	(void)IP27_LHUB_L(HUBPI_IR1); \
 } while (0)
 #define	INTR_MASKSIZE	HUBPI_NINTS
@@ -907,12 +930,22 @@ do { \
 void
 ip27_hub_setintrmask(int level)
 {
-	/* XXX this assumes we run on cpu0 */
-	IP27_LHUB_S(HUBPI_CPU0_IMR0,
-	    hubpi_intem.hw[0] & ~hubpi_imask[level].hw[0]);
+	struct cpu_info *ci = curcpu();
+	u_long imr0, imr1;
+
+	if (IP27_SLICE_LCPU(ci->ci_slice) == 0) {
+		imr0 = HUBPI_CPU0_IMR0;
+		imr1 = HUBPI_CPU0_IMR1;
+	} else {
+		imr0 = HUBPI_CPU1_IMR0;
+		imr1 = HUBPI_CPU1_IMR1;
+	}
+
+	IP27_LHUB_S(imr0, hubpi_intem[ci->ci_cpuid].hw[0] &
+	    ~hubpi_imask[ci->ci_cpuid][level].hw[0]);
 	(void)IP27_LHUB_L(HUBPI_IR0);
-	IP27_LHUB_S(HUBPI_CPU0_IMR1,
-	    hubpi_intem.hw[1] & ~hubpi_imask[level].hw[1]);
+	IP27_LHUB_S(imr1, hubpi_intem[ci->ci_cpuid].hw[1] &
+	    ~hubpi_imask[ci->ci_cpuid][level].hw[1]);
 	(void)IP27_LHUB_L(HUBPI_IR1);
 }
 

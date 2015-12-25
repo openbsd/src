@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip27.h,v 1.4 2010/05/09 18:37:47 miod Exp $	*/
+/*	$OpenBSD: ip27.h,v 1.5 2015/12/25 08:34:51 visa Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -80,3 +80,10 @@ struct ip27_config {
 	volatile uint32_t	prom_rev;
 	volatile uint32_t	config_specific;
 };
+
+/*
+ * CPU identification
+ */
+
+#define IP27_SLICE_LCPU(x)		((x) & 1)
+#define IP27_SLICE_SUBNODE(x)		(((x) & 2) >> 1)

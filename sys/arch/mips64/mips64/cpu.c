@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.58 2015/06/16 18:28:51 miod Exp $ */
+/*	$OpenBSD: cpu.c,v 1.59 2015/12/25 08:34:50 visa Exp $ */
 
 /*
  * Copyright (c) 1997-2004 Opsycon AB (www.opsycon.se)
@@ -122,6 +122,11 @@ cpuattach(struct device *parent, struct device *dev, void *aux)
 		ci->ci_l2 = cpu_info_primary.ci_l2;
 		ci->ci_l3 = cpu_info_primary.ci_l3;
 	}
+#endif
+
+#ifdef TGT_ORIGIN
+	ci->ci_nasid = caa->caa_maa.maa_nasid;
+	ci->ci_slice = caa->caa_maa.maa_physid;
 #endif
 
 	printf(": ");
