@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip27_machdep.c,v 1.69 2015/12/25 09:02:57 visa Exp $	*/
+/*	$OpenBSD: ip27_machdep.c,v 1.70 2015/12/25 09:22:00 visa Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -93,6 +93,8 @@ int	ip27_print(void *, const char *);
 void	ip27_nmi(void *);
 
 #ifdef MULTIPROCESSOR
+
+#define IP27_SLICE_IPI(slice) ((slice) + HUBPI_ISR0_IPI_A)
 
 unsigned int	ip27_ncpus;
 
@@ -914,6 +916,19 @@ do { \
 	(void)IP27_LHUB_L(HUBPI_IR0); \
 } while (0)
 #define	INTR_IMASK(ipl)		hubpi_imask[ci->ci_cpuid][ipl].hw[0]
+#ifdef MULTIPROCESSOR
+#define	INTR_IPI_HOOK(ipl) \
+do { \
+	unsigned long ipibit = IP27_SLICE_IPI(ci->ci_slice); \
+	unsigned long ipimask = 1 << ipibit; \
+	if ((isr & ipimask) && \
+	    !(hubpi_imask[ci->ci_cpuid][ipl].hw[0] & ipimask)) { \
+		struct intrhand *ih = hubpi_intrhand0[ipibit]; \
+		ih->ih_fun(ih->ih_arg); \
+		isr &= ~ipimask; \
+	} \
+} while (0)
+#endif /* MULTIPROCESSOR */
 #define	INTR_HANDLER(bit)	hubpi_intrhand0[bit]
 #define	INTR_SPURIOUS(bit) \
 do { \
@@ -1112,6 +1127,41 @@ uint
 ip27_hub_get_timecount(struct timecounter *tc)
 {
 	return IP27_RHUB_L(masternasid, HUBPI_RT_COUNT);
+}
+
+void
+hw_ipi_intr_set(u_long cpuid)
+{
+	struct cpu_info *ci = get_cpu_info(cpuid);
+	int intr;
+
+	intr = IP27_SLICE_IPI(ci->ci_slice);
+	IP27_RHUB_PI_S(ci->ci_nasid, IP27_SLICE_SUBNODE(ci->ci_slice),
+	    HUBPI_IR_CHANGE, PI_IR_SET | intr);
+}
+
+void
+hw_ipi_intr_clear(u_long cpuid)
+{
+	struct cpu_info *ci = get_cpu_info(cpuid);
+	int intr;
+
+	intr = IP27_SLICE_IPI(ci->ci_slice);
+	IP27_RHUB_PI_S(ci->ci_nasid, IP27_SLICE_SUBNODE(ci->ci_slice),
+	    HUBPI_IR_CHANGE, PI_IR_CLR | intr);
+	(void)IP27_RHUB_PI_L(ci->ci_nasid, IP27_SLICE_SUBNODE(ci->ci_slice),
+	    HUBPI_IR0);
+}
+
+int
+hw_ipi_intr_establish(int (*func)(void *), u_long cpuid)
+{
+	struct cpu_info *ci = get_cpu_info(cpuid);
+	int intr;
+
+	intr = IP27_SLICE_IPI(ci->ci_slice);
+	return ip27_hub_intr_establish(func, (void *)cpuid, intr, IPL_IPI,
+	    NULL, &ci->ci_ipiih);
 }
 
 void

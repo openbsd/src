@@ -1,4 +1,4 @@
-/*	$OpenBSD: hub.h,v 1.9 2015/12/25 06:18:50 visa Exp $	*/
+/*	$OpenBSD: hub.h,v 1.10 2015/12/25 09:22:00 visa Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -147,8 +147,10 @@
 /* 35-0 available */
 
 /** Level 0 interrupt */
-/* 63-9 available */
+/* 63-11 available */
 /* IPI interrupts */
+#define	HUBPI_ISR0_IPI_D		10
+#define	HUBPI_ISR0_IPI_C		9
 #define	HUBPI_ISR0_IPI_B		8
 #define	HUBPI_ISR0_IPI_A		7
 /* ? */
@@ -166,7 +168,7 @@
 #define	HUBPI_INTR1_WIDGET_MAX		35
 #define	HUBPI_INTR1_WIDGET_MIN		0
 #define	HUBPI_INTR0_WIDGET_MAX		63
-#define	HUBPI_INTR0_WIDGET_MIN		9
+#define	HUBPI_INTR0_WIDGET_MIN		11
 
 #define	HUBPI_NINTS			64	/* per register */
 
