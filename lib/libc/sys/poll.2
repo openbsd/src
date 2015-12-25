@@ -1,4 +1,4 @@
-.\"	$OpenBSD: poll.2,v 1.31 2015/03/03 01:13:41 kspillner Exp $
+.\"	$OpenBSD: poll.2,v 1.32 2015/12/25 01:48:08 tb Exp $
 .\"
 .\" Copyright (c) 1994 Jason R. Thorpe
 .\" All rights reserved.
@@ -28,7 +28,7 @@
 .\" OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\"
-.Dd $Mdocdate: March 3 2015 $
+.Dd $Mdocdate: December 25 2015 $
 .Dt POLL 2
 .Os
 .Sh NAME
@@ -266,7 +266,7 @@ int nready;
 timeout.tv_sec = 60;
 timeout.tv_usec = 0;
 FD_ZERO(&readfds);
-FD_SET(STDIN_FILENO);
+FD_SET(STDIN_FILENO, &readfds);
 nready = select(STDIN_FILENO + 1, &readfds, NULL, NULL, &timeout);
 if (nready == -1)
 	err(1, "select");
