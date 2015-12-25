@@ -1,4 +1,4 @@
-/*	$OpenBSD: fish.c,v 1.18 2015/11/30 08:42:03 tb Exp $	*/
+/*	$OpenBSD: fish.c,v 1.19 2015/12/25 20:59:09 mestre Exp $	*/
 /*	$NetBSD: fish.c,v 1.3 1995/03/23 08:28:18 cgd Exp $	*/
 
 /*-
@@ -79,7 +79,7 @@ int	nrandom(int);
 void	printhand(const int *);
 void	printplayer(int);
 int	promove(void);
-void	usage(void);
+__dead void	usage(void);
 int	usermove(void);
 
 int

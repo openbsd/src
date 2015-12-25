@@ -1,4 +1,4 @@
-/*	$OpenBSD: pig.c,v 1.13 2015/10/24 18:29:15 mmcc Exp $	*/
+/*	$OpenBSD: pig.c,v 1.14 2015/12/25 20:59:09 mestre Exp $	*/
 /*	$NetBSD: pig.c,v 1.2 1995/03/23 08:41:40 cgd Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@
 #include <unistd.h>
 
 void pigout(char *, int);
-void usage(void);
+__dead void usage(void);
 
 int
 main(int argc, char *argv[])

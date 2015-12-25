@@ -1,4 +1,4 @@
-/*	$OpenBSD: primes.c,v 1.18 2015/11/30 08:53:53 tb Exp $	*/
+/*	$OpenBSD: primes.c,v 1.19 2015/12/25 20:59:09 mestre Exp $	*/
 /*	$NetBSD: primes.c,v 1.5 1995/04/24 12:24:47 cgd Exp $	*/
 
 /*
@@ -93,7 +93,7 @@ extern const int pattern_size;	/* length of pattern array */
 
 void	primes(ubig, ubig);
 ubig	read_num_buf(void);
-void	usage(void);
+__dead void	usage(void);
 
 int
 main(int argc, char *argv[])

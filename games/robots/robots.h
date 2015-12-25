@@ -1,4 +1,4 @@
-/*	$OpenBSD: robots.h,v 1.11 2015/12/04 16:40:09 tb Exp $	*/
+/*	$OpenBSD: robots.h,v 1.12 2015/12/25 20:59:09 mestre Exp $	*/
 /*	$NetBSD: robots.h,v 1.5 1995/04/24 12:24:54 cgd Exp $	*/
 
 /*
@@ -134,4 +134,4 @@ void	score(int);
 void	set_name(SCORE *);
 void	show_score(void);
 int	sign(int);
-void	usage(void);
+__dead void	usage(void);

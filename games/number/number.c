@@ -1,4 +1,4 @@
-/*	$OpenBSD: number.c,v 1.16 2015/10/24 18:37:23 mmcc Exp $	*/
+/*	$OpenBSD: number.c,v 1.17 2015/12/25 20:59:09 mestre Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -67,9 +67,8 @@ void	convert(char *);
 void	convertexp(char *);
 int	number(const char *, int);
 void	pfract(int);
-void	toobig(void);
 int	unit(int, const char *);
-void	usage(void);
+__dead void	usage(void);
 
 int lflag;
 

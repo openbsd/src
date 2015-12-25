@@ -1,4 +1,4 @@
-/*	$OpenBSD: random.c,v 1.14 2015/11/04 21:22:10 tedu Exp $	*/
+/*	$OpenBSD: random.c,v 1.15 2015/12/25 20:59:09 mestre Exp $	*/
 /*	$NetBSD: random.c,v 1.3 1995/04/22 07:44:05 cgd Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
 #include <unistd.h>
 #include <limits.h>
 
-void usage(void);
+__dead void usage(void);
 
 int
 main(int argc, char *argv[])

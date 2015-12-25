@@ -1,4 +1,4 @@
-/*	$OpenBSD: arithmetic.c,v 1.21 2015/10/24 17:13:27 mmcc Exp $	*/
+/*	$OpenBSD: arithmetic.c,v 1.22 2015/12/25 20:59:09 mestre Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -71,12 +71,12 @@
 #include <unistd.h>
 
 int	getrandom(int, int, int);
-void	intr(int);
+__dead void	intr(int);
 int	opnum(int);
 void	penalise(int, int, int);
 int	problem(void);
 void	showstats(void);
-void	usage(void);
+__dead void	usage(void);
 
 const char keylist[] = "+-x/";
 const char defaultkeys[] = "+-";

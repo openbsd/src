@@ -1,4 +1,4 @@
-/*	$OpenBSD: grdc.c,v 1.21 2015/12/09 02:00:40 jsg Exp $	*/
+/*	$OpenBSD: grdc.c,v 1.22 2015/12/25 20:59:09 mestre Exp $	*/
 /*
  *
  * Copyright 2002 Amos Shapir.  Public domain.
@@ -42,7 +42,7 @@ int hascolor = 0;
 void set(int, int);
 void standt(int);
 void getwinsize(int *, int *);
-void usage(void);
+__dead void usage(void);
 
 void
 sighndl(int signo)

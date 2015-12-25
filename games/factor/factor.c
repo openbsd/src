@@ -1,4 +1,4 @@
-/*	$OpenBSD: factor.c,v 1.22 2015/10/24 17:31:00 mmcc Exp $	*/
+/*	$OpenBSD: factor.c,v 1.23 2015/12/25 20:59:09 mestre Exp $	*/
 /*	$NetBSD: factor.c,v 1.5 1995/03/23 08:28:07 cgd Exp $	*/
 
 /*
@@ -78,7 +78,7 @@ extern const int pattern_size;
 
 void	pr_fact(u_int64_t);		/* print factors of a value */
 void	pr_bigfact(u_int64_t);
-void	usage(void);
+__dead void	usage(void);
 
 int
 main(int argc, char *argv[])

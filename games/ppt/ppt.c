@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppt.c,v 1.13 2015/10/14 08:12:12 doug Exp $	*/
+/*	$OpenBSD: ppt.c,v 1.14 2015/12/25 20:59:09 mestre Exp $	*/
 /*	$NetBSD: ppt.c,v 1.4 1995/03/23 08:35:40 cgd Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 
 #define	EDGE	"___________"
 
-void	usage(void);
+__dead void	usage(void);
 void	putppt(int);
 int	getppt(const char *buf);
 
