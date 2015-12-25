@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bufq_init.9,v 1.5 2015/09/14 15:14:55 schwarze Exp $
+.\"	$OpenBSD: bufq_init.9,v 1.6 2015/12/25 20:50:57 bentley Exp $
 .\"
 .\" Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 14 2015 $
+.Dd $Mdocdate: December 25 2015 $
 .Dt BUFQ_INIT 9
 .Os
 .Sh NAME
@@ -58,7 +58,7 @@ It is the responsibility of the disk device driver to provide
 pre-allocated bufq structures.
 .Pp
 .Fn bufq_init
-initialiases the
+initialises the
 .Fa bufq
 structure and allocates any state required by the scheduling algorithm
 by the
