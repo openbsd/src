@@ -1,4 +1,4 @@
-/*	$OpenBSD: bs.c,v 1.32 2015/12/24 16:55:13 tb Exp $	*/
+/*	$OpenBSD: bs.c,v 1.33 2015/12/25 03:20:57 mestre Exp $	*/
 /*
  * Copyright (c) 1986, Bruce Holloway
  * All rights reserved.
@@ -214,8 +214,9 @@ static int plywon=0, cpuwon=0;		/* How many games has each won? */
 
 static int salvo, blitz, closepack;
 
-static void uninitgame(int sig)
 /* end the game, either normally or due to signal */
+static void
+uninitgame(int sig)
 {
     clear();
     (void)refresh();
@@ -225,8 +226,9 @@ static void uninitgame(int sig)
     exit(sig);
 }
 
-static void announceopts(void)
 /* announce which game options are enabled */
+static void
+announceopts(void)
 {
     if (salvo || blitz || closepack)
     {
@@ -249,7 +251,8 @@ static void announceopts(void)
 	"Playing standard game (noblitz, nosalvo, noclosepack)");
 }
 
-static void intro(void)
+static void
+intro(void)
 {
     char *tmpname;
 
@@ -311,8 +314,6 @@ static void intro(void)
 }
 
 /* print a message at the prompt line */
-static void prompt(int, const char *, ...)
-			__attribute__((__format__ (printf, 2, 3)));
 static void
 prompt(int n, const char *f, ...)
 {
@@ -326,7 +327,8 @@ prompt(int n, const char *f, ...)
     (void) refresh();
 }
 
-static void error(char *s)
+static void
+error(char *s)
 {
     (void) move(PROMPTLINE + 2, 0);
     (void) clrtoeol();
@@ -337,7 +339,8 @@ static void error(char *s)
     }
 }
 
-static void placeship(int b, ship_t *ss, int vis)
+static void
+placeship(int b, ship_t *ss, int vis)
 {
     int l;
 
@@ -356,13 +359,15 @@ static void placeship(int b, ship_t *ss, int vis)
     ss->hits = 0;
 }
 
-static int rnd(int n)
+static int
+rnd(int n)
 {
     return(arc4random_uniform(n));
 }
 
-static void randomplace(int b, ship_t *ss)
 /* generate a valid random ship placement into px,py */
+static void
+randomplace(int b, ship_t *ss)
 {
     do {
 	ss->dir = rnd(2) ? E : S;
@@ -372,7 +377,8 @@ static void randomplace(int b, ship_t *ss)
 	(!checkplace(b, ss, FALSE));
 }
 
-static void initgame(void)
+static void
+initgame(void)
 {
     int i, j, unplaced;
     ship_t *ss;
@@ -572,7 +578,8 @@ regetchar:
     (void) getch();
 }
 
-static int getcoord(int atcpu)
+static int
+getcoord(int atcpu)
 {
     int ny, nx, c;
 
@@ -666,8 +673,9 @@ static int getcoord(int atcpu)
     }
 }
 
-static int collidecheck(int b, int y, int x)
 /* is this location on the selected zboard adjacent to a ship? */
+static int
+collidecheck(int b, int y, int x)
 {
     int	collide;
 
@@ -693,7 +701,8 @@ static int collidecheck(int b, int y, int x)
     return(collide);
 }
 
-static bool checkplace(int b, ship_t *ss, int vis)
+static bool
+checkplace(int b, ship_t *ss, int vis)
 {
     int l, xend, yend;
 
@@ -741,7 +750,8 @@ static bool checkplace(int b, ship_t *ss, int vis)
     return(TRUE);
 }
 
-static int awinna(void)
+static int
+awinna(void)
 {
     int i, j;
     ship_t *ss;
@@ -758,8 +768,9 @@ static int awinna(void)
     return(-1);
 }
 
-static ship_t *hitship(int x, int y)
 /* register a hit on the targeted ship */
+static ship_t *
+hitship(int x, int y)
 {
     ship_t *sb, *ss;
     char sym;
@@ -826,7 +837,8 @@ static ship_t *hitship(int x, int y)
     return((ship_t *)NULL);
 }
 
-static int plyturn(void)
+static int
+plyturn(void)
 {
     ship_t *ss;
     int hit;
@@ -883,7 +895,8 @@ static int plyturn(void)
     return(hit);
 }
 
-static int sgetc(char *s)
+static int
+sgetc(char *s)
 {
     char *s1;
     int ch;
@@ -907,11 +920,12 @@ static int sgetc(char *s)
 	}
 }
 
-static bool cpushipcanfit(int x, int y, int length, int direction)
 /* Checks to see if there's room for a ship of a given length in a given
  * direction.  If direction is negative, check in all directions.  Note
  * that North and South are equivalent, as are East and West.
  */
+static bool
+cpushipcanfit(int x, int y, int length, int direction)
 {
 	int len = 1;
 	int x1, y1;
@@ -940,9 +954,9 @@ static bool cpushipcanfit(int x, int y, int length, int direction)
 	}
 }
 
-
-static void randomfire(int *px, int *py)
 /* random-fire routine -- implements simple diagonal-striping strategy */
+static void
+randomfire(int *px, int *py)
 {
     static int huntoffs;		/* Offset on search strategy */
     int ypossible[BWIDTH * BDEPTH], xpossible[BWIDTH * BDEPTH], nposs;
@@ -986,8 +1000,9 @@ static void randomfire(int *px, int *py)
 #define S_HIT	1
 #define S_SUNK	-1
 
-static int cpufire(int x, int y)
 /* fire away at given location */
+static int
+cpufire(int x, int y)
 {
     int hit;
     bool sunk;
@@ -1018,7 +1033,8 @@ static int cpufire(int x, int y)
  * unstructuredness below. The five labels are states which need to be held
  * between computer turns.
  */
-static int cputurn(void)
+static int
+cputurn(void)
 {
     static bool used[4];
     static ship_t ts;
@@ -1216,8 +1232,8 @@ if (!closepack)  error("Assertion failed: not closepack 2");
     return(hit);
 }
 
-static
-int playagain(void)
+static int
+playagain(void)
 {
     int j;
     ship_t *ss;
@@ -1249,7 +1265,8 @@ int playagain(void)
     return(sgetc("YN") == 'Y');
 }
 
-void usage()
+__dead void
+usage(void)
 {
 	(void) fprintf(stderr, "usage: bs [-b | -s] [-c]\n");
 	(void) fprintf(stderr, "\tWhere the options are:\n");
@@ -1259,7 +1276,8 @@ void usage()
 	exit(1);
 }
 
-static void do_options(int c, char *op[])
+static void
+do_options(int c, char *op[])
 {
     int ch;
 
@@ -1296,7 +1314,8 @@ static void do_options(int c, char *op[])
 	(void) usage();
 }
 
-static int scount(int who)
+static int
+scount(int who)
 {
     int i, shots;
     ship_t *sp;
@@ -1316,7 +1335,8 @@ static int scount(int who)
     return(shots);
 }
 
-int main(int argc, char *argv[])
+int
+main(int argc, char *argv[])
 {
     if (pledge("stdio rpath tty", NULL) == -1)
         err(1, "pledge");
