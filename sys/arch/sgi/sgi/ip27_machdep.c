@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip27_machdep.c,v 1.66 2015/09/08 10:21:50 deraadt Exp $	*/
+/*	$OpenBSD: ip27_machdep.c,v 1.67 2015/12/25 06:18:50 visa Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -24,11 +24,12 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/atomic.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/reboot.h>
+#include <sys/timetc.h>
 #include <sys/tty.h>
-#include <sys/atomic.h>
 
 #include <mips64/arcbios.h>
 #include <mips64/archtype.h>
@@ -88,6 +89,21 @@ void	ip27_hub_splx(int);
 void	ip27_attach_node(struct device *, int16_t);
 int	ip27_print(void *, const char *);
 void	ip27_nmi(void *);
+
+#ifdef MULTIPROCESSOR
+
+uint	ip27_hub_get_timecount(struct timecounter *);
+
+struct timecounter ip27_hub_timecounter = {
+	.tc_get_timecount = ip27_hub_get_timecount,
+	.tc_poll_pps = NULL,
+	.tc_counter_mask = 0xffffffff,	/* truncated to 32 bits. */
+	.tc_frequency = 1250000,
+	.tc_name = "hubrt",
+	.tc_quality = 100
+};
+
+#endif /* MULTIPROCESSOR */
 
 /*
  * IP27 interrupt handling declarations: 128 hw sources, plus timers and
@@ -304,6 +320,10 @@ ip27_setup()
 	     IP27_NODE_IO_BASE(0)) /* HUB register offset */;
 
 	_device_register = dksc_device_register;
+
+#ifdef MULTIPROCESSOR
+	tc_init(&ip27_hub_timecounter);
+#endif
 }
 
 /*
@@ -938,3 +958,13 @@ ip27_nmi(void *arg)
 	panic("NMI");
 	/* NOTREACHED */
 }
+
+#ifdef MULTIPROCESSOR
+
+uint
+ip27_hub_get_timecount(struct timecounter *tc)
+{
+	return IP27_RHUB_L(masternasid, HUBPI_RT_COUNT);
+}
+
+#endif /* MULTIPROCESSOR */

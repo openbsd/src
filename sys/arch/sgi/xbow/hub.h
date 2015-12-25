@@ -1,4 +1,4 @@
-/*	$OpenBSD: hub.h,v 1.8 2015/12/12 16:48:19 visa Exp $	*/
+/*	$OpenBSD: hub.h,v 1.9 2015/12/25 06:18:50 visa Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -104,6 +104,8 @@
 #define	HUBPI_CPU0_IMR1			0x000000b0
 #define	HUBPI_CPU1_IMR0			0x000000b8
 #define	HUBPI_CPU1_IMR1			0x000000c0
+
+#define	HUBPI_RT_COUNT			0x00030100
 
 /*
  * Offset to use to access the second PI over the remote hub interface
