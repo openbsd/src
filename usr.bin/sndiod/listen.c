@@ -1,4 +1,4 @@
-/*	$OpenBSD: listen.c,v 1.6 2015/12/21 22:03:47 ratchov Exp $	*/
+/*	$OpenBSD: listen.c,v 1.7 2015/12/25 17:16:43 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -163,20 +163,6 @@ listen_new_tcp(char *addr, unsigned int port)
 			perror("setsockopt");
 			goto bad_close;
 		}
-		if (ai->ai_family == AF_INET6) {
-			/*
-			 * make sure IPv6 sockets are restricted to IPv6
-			 * addresses because we already use a IP socket
-			 * for IP addresses
-			 */
-			opt = 1;
-			if (setsockopt(s, IPPROTO_IPV6, IPV6_V6ONLY,
-				&opt, sizeof(int)) < 0) {
-				perror("setsockopt");
-				goto bad_close;
-			}
-		}
-			
 		if (bind(s, ai->ai_addr, ai->ai_addrlen) < 0) {
 			perror("bind");
 			goto bad_close;
