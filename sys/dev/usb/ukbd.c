@@ -1,4 +1,4 @@
-/*	$OpenBSD: ukbd.c,v 1.72 2015/12/09 09:23:21 jung Exp $	*/
+/*	$OpenBSD: ukbd.c,v 1.73 2015/12/25 20:28:48 jung Exp $	*/
 /*      $NetBSD: ukbd.c,v 1.85 2003/03/11 16:44:00 augustss Exp $        */
 
 /*
@@ -245,6 +245,7 @@ ukbd_attach(struct device *parent, struct device *self, void *aux)
 				case USB_PRODUCT_APPLE_FOUNTAIN_ISO:
 				case USB_PRODUCT_APPLE_GEYSER_ISO:
 				case USB_PRODUCT_APPLE_WELLSPRING6_ISO:
+				case USB_PRODUCT_APPLE_WELLSPRING8_ISO:
 					sc->sc_munge = ukbd_apple_iso_munge;
 					break;
 				case USB_PRODUCT_APPLE_WELLSPRING_ISO:
