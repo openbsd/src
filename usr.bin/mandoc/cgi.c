@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgi.c,v 1.54 2015/11/07 17:58:52 schwarze Exp $ */
+/*	$OpenBSD: cgi.c,v 1.55 2015/12/25 20:16:19 bentley Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015 Ingo Schwarze <schwarze@usta.de>
@@ -61,9 +61,6 @@ static	void		 html_print(const char *);
 static	void		 html_putchar(char);
 static	int		 http_decode(char *);
 static	void		 http_parse(struct req *, const char *);
-static	void		 http_print(const char *);
-static	void		 http_putchar(char);
-static	void		 http_printquery(const struct req *, const char *);
 static	void		 pathgen(struct req *);
 static	void		 pg_error_badrequest(const char *);
 static	void		 pg_error_internal(void);
@@ -145,40 +142,6 @@ html_putchar(char c)
 		putchar((unsigned char)c);
 		break;
 	}
-}
-
-static void
-http_printquery(const struct req *req, const char *sep)
-{
-
-	if (NULL != req->q.query) {
-		printf("query=");
-		http_print(req->q.query);
-	}
-	if (0 == req->q.equal)
-		printf("%sapropos=1", sep);
-	if (NULL != req->q.sec) {
-		printf("%ssec=", sep);
-		http_print(req->q.sec);
-	}
-	if (NULL != req->q.arch) {
-		printf("%sarch=", sep);
-		http_print(req->q.arch);
-	}
-	if (strcmp(req->q.manpath, req->p[0])) {
-		printf("%smanpath=", sep);
-		http_print(req->q.manpath);
-	}
-}
-
-static void
-http_print(const char *p)
-{
-
-	if (NULL == p)
-		return;
-	while ('\0' != *p)
-		http_putchar(*p++);
 }
 
 /*
@@ -299,20 +262,6 @@ next:
 		if (*qs != '\0')
 			qs++;
 	}
-}
-
-static void
-http_putchar(char c)
-{
-
-	if (isalnum((unsigned char)c)) {
-		putchar((unsigned char)c);
-		return;
-	} else if (' ' == c) {
-		putchar('+');
-		return;
-	}
-	printf("%%%.2x", c);
 }
 
 /*
@@ -621,9 +570,8 @@ pg_searchres(const struct req *req, struct manpage *r, size_t sz)
 		 * without any delay.
 		 */
 		printf("Status: 303 See Other\r\n");
-		printf("Location: http://%s%s/%s/%s?",
+		printf("Location: http://%s%s/%s/%s",
 		    HTTP_HOST, scriptname, req->q.manpath, r[0].file);
-		http_printquery(req, "&");
 		printf("\r\n"
 		     "Content-Type: text/html; charset=utf-8\r\n"
 		     "\r\n");
@@ -638,9 +586,8 @@ pg_searchres(const struct req *req, struct manpage *r, size_t sz)
 	for (i = 0; i < sz; i++) {
 		printf("<TR>\n"
 		       "<TD CLASS=\"title\">\n"
-		       "<A HREF=\"%s/%s/%s?",
+		       "<A HREF=\"%s/%s/%s",
 		    scriptname, req->q.manpath, r[i].file);
-		http_printquery(req, "&amp;");
 		printf("\">");
 		html_print(r[i].names);
 		printf("</A>\n"
