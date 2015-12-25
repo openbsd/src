@@ -1,4 +1,4 @@
-/*	$OpenBSD: ktrstruct.c,v 1.13 2015/10/18 05:03:22 guenther Exp $	*/
+/*	$OpenBSD: ktrstruct.c,v 1.14 2015/12/25 02:11:47 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -34,6 +34,7 @@
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/time.h>
+#include <sys/event.h>
 #include <sys/un.h>
 #include <ufs/ufs/quota.h>
 #include <netinet/in.h>
@@ -392,6 +393,23 @@ ktriovec(const char *data, int count)
 }
 
 static void
+ktrevent(const char *data, int count)
+{
+	struct kevent kev;
+	int i;
+
+	printf("struct kevent");
+	if (count > 1)
+		printf(" [%d]", count);
+	for (i = 0; i < count; i++) {
+		memcpy(&kev, data, sizeof(kev));
+		data += sizeof(kev);
+		printf(" { ident=%lu }", kev.ident);
+	}
+	printf("\n");
+}
+
+static void
 ktrcmsghdr(char *data, socklen_t len)
 {
 	struct msghdr msg;
@@ -552,6 +570,10 @@ ktrstruct(char *buf, size_t buflen)
 		if (datalen % sizeof(struct iovec))
 			goto invalid;
 		ktriovec(data, datalen / sizeof(struct iovec));
+	} else if (strcmp(name, "kevent") == 0) {
+		if (datalen % sizeof(struct kevent))
+			goto invalid;
+		ktrevent(data, datalen / sizeof(struct kevent));
 	} else if (strcmp(name, "cmsghdr") == 0) {
 		char *cmsg;
 
