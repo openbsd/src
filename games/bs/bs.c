@@ -1,4 +1,4 @@
-/*	$OpenBSD: bs.c,v 1.33 2015/12/25 03:20:57 mestre Exp $	*/
+/*	$OpenBSD: bs.c,v 1.34 2015/12/26 00:26:39 mestre Exp $	*/
 /*
  * Copyright (c) 1986, Bruce Holloway
  * All rights reserved.
@@ -83,7 +83,7 @@ static void	 randomplace(int, ship_t *);
 static int	 rnd(int);
 static int	 scount(int);
 static int	 sgetc(char *);
-static void	 uninitgame(int);
+__dead static void	 uninitgame(int);
 __dead void	 usage(void);
 
 /*

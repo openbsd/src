@@ -1,4 +1,4 @@
-/*	$OpenBSD: robots.h,v 1.12 2015/12/25 20:59:09 mestre Exp $	*/
+/*	$OpenBSD: robots.h,v 1.13 2015/12/26 00:26:39 mestre Exp $	*/
 /*	$NetBSD: robots.h,v 1.5 1995/04/24 12:24:54 cgd Exp $	*/
 
 /*
@@ -126,7 +126,7 @@ void	move_robots(void);
 bool	must_telep(void);
 void	play_level(void);
 int	query(char *);
-void	quit(int);
+__dead void	quit(int);
 void	reset_count(void);
 int	rnd(int);
 COORD	*rnd_pos(void);

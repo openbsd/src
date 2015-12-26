@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.18 2015/12/04 17:34:40 tb Exp $	*/
+/*	$OpenBSD: extern.h,v 1.19 2015/12/26 00:26:39 mestre Exp $	*/
 /*	$NetBSD: extern.h,v 1.5 1995/04/24 12:22:18 cgd Exp $	*/
 
 /*
@@ -330,7 +330,7 @@ void chime(void);
 void convert(int);
 void crash(void);
 int cypher(void);
-void die(int);
+__dead void die(int);
 void dig(void);
 void dooropen(void);
 int draw(void);
@@ -350,7 +350,7 @@ void kiss(void);
 int land(void);
 int launch(void);
 void light(void);
-void live(void);
+__dead void live(void);
 void love(void);
 int moveplayer(int, int);
 void murder(void);

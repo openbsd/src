@@ -1,4 +1,4 @@
-/*	$OpenBSD: canfield.c,v 1.22 2015/12/02 18:34:10 tb Exp $	*/
+/*	$OpenBSD: canfield.c,v 1.23 2015/12/26 00:26:39 mestre Exp $	*/
 /*	$NetBSD: canfield.c,v 1.7 1995/05/13 07:28:35 jtc Exp $	*/
 
 /*
@@ -186,7 +186,7 @@ time_t acctstart;
 int dbfd = -1;
 
 void	askquit(int);
-void	cleanup(int) __attribute__((__noreturn__));
+__dead void	cleanup(int);
 void	cleanupboard(void);
 void	clearabovemovebox(void);
 void	clearbelowmovebox(void);

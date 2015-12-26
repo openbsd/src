@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.9 2014/12/09 05:01:14 deraadt Exp $	*/
+/*	$OpenBSD: extern.h,v 1.10 2015/12/26 00:26:39 mestre Exp $	*/
 /*	$NetBSD: extern.h,v 1.4 1995/04/27 21:22:22 mycroft Exp $	*/
 
 /*-
@@ -88,8 +88,8 @@ void		ioerror(int, int, const char *);
 void		iomove(int);
 int		list_games(void);
 int		log_score(int);
-void		log_score_quit(int);
-void		loser(const PLANE *, const char *);
+__dead void		log_score_quit(int);
+__dead void		loser(const PLANE *, const char *);
 char		name(const PLANE *);
 int		next_plane(void);
 void		noise(void);

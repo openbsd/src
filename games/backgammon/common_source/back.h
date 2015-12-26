@@ -1,4 +1,4 @@
-/*	$OpenBSD: back.h,v 1.14 2015/12/02 20:05:01 tb Exp $	*/
+/*	$OpenBSD: back.h,v 1.15 2015/12/26 00:26:39 mestre Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -142,7 +142,7 @@ void	fixcol(int, int, int, int, int);
 void	fixpos(int, int, int, int, int);
 void	getarg(int, char **);
 void	getmove(void);
-void	getout(int);		/* function to exit backgammon cleanly */
+__dead void	getout(int);	/* function to exit backgammon cleanly */
 void	gwrite(void);
 void	init(void);
 void	initcurses(void);

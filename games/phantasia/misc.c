@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.16 2014/07/12 03:41:04 deraadt Exp $	*/
+/*	$OpenBSD: misc.c,v 1.17 2015/12/26 00:26:39 mestre Exp $	*/
 /*	$NetBSD: misc.c,v 1.2 1995/03/24 03:59:03 cgd Exp $	*/
 
 /*
@@ -1414,7 +1414,7 @@ readmessage()
 /
 *************************************************************************/
 
-void
+__dead void
 error(whichfile)
 	char	*whichfile;
 {

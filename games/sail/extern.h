@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.10 2014/03/11 07:42:55 guenther Exp $	*/
+/*	$OpenBSD: extern.h,v 1.11 2015/12/26 00:26:40 mestre Exp $	*/
 /*	$NetBSD: extern.h,v 1.8 1998/09/13 15:27:30 hubertf Exp $ */
 
 /*
@@ -368,9 +368,9 @@ int boarding(struct ship *, int);
 void unboard(struct ship *, struct ship *, int);
 
 /* pl_1.c */
-void leave(int) __attribute__((__noreturn__));
-void choke(int) __attribute__((__noreturn__));
 void child(int);
+__dead void choke(int);
+__dead void leave(int);
 
 /* pl_2.c */
 __dead void play(void);

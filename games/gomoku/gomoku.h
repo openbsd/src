@@ -1,4 +1,4 @@
-/*	$OpenBSD: gomoku.h,v 1.10 2012/03/04 04:05:15 fgsch Exp $	*/
+/*	$OpenBSD: gomoku.h,v 1.11 2015/12/26 00:26:39 mestre Exp $	*/
 /*
  * Copyright (c) 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -303,7 +303,7 @@ void	panic(char *);
 int	pickmove(int);
 void	printcombo(struct combostr *, char *, size_t);
 void	qlog(char *);
-void	quit(int);
+__dead void	quit(int);
 int	readinput(FILE *);
 void	scanframes(int);
 int	sortcombo(struct combostr **, struct combostr **, struct combostr *);

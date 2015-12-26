@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.h,v 1.11 2015/09/27 05:13:11 guenther Exp $*/
+/*	$OpenBSD: hack.h,v 1.12 2015/12/26 00:26:39 mestre Exp $*/
 /*	$NetBSD: hack.h,v 1.3 1995/03/23 08:30:21 cgd Exp $*/
 
 /*
@@ -565,7 +565,7 @@ void outrumor(void);
 
 /* hack.save.c */
 int  dosave(void);
-void hackhangup(int);
+__dead void hackhangup(int);
 int  dorecover(int);
 struct obj *restobjchn(int);
 struct monst *restmonchn(int);
@@ -660,7 +660,7 @@ void drown(void);
 void gettty(void);
 void settty(char *);
 void setftty(void);
-void error(const char *, ...) __attribute__((__format__ (printf, 1, 2)));
+__dead void error(const char *, ...) __attribute__((__format__ (printf, 1, 2)));
 void getlin(char *);
 void getret(void);
 void cgetret(char *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mille.h,v 1.11 2015/01/19 00:47:01 deraadt Exp $	*/
+/*	$OpenBSD: mille.h,v 1.12 2015/12/26 00:26:39 mestre Exp $	*/
 /*	$NetBSD: mille.h,v 1.5 1995/03/24 05:01:51 cgd Exp $	*/
 
 /*
@@ -224,7 +224,7 @@ int	canplay(const PLAY *, const PLAY *, CARD);
 int	check_ext(bool);
 void	check_go(void);
 void	check_more(void);
-void	die(int);
+__dead void	die(int);
 void	domove(void);
 bool	error(char *, ...);
 void	finalscore(PLAY *);
