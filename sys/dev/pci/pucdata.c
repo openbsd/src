@@ -1,4 +1,4 @@
-/*	$OpenBSD: pucdata.c,v 1.99 2015/11/14 14:47:56 miod Exp $	*/
+/*	$OpenBSD: pucdata.c,v 1.100 2015/12/26 22:16:12 kettenis Exp $	*/
 /*	$NetBSD: pucdata.c,v 1.6 1999/07/03 05:55:23 cgd Exp $	*/
 
 /*
@@ -1547,6 +1547,35 @@ const struct puc_device_description puc_devs[] = {
 	    {	0xffff,	0xffff,				      0xffff, 0xffff },
 	    {
 		{ PUC_COM_POW2(0), 0x10, 0x0000 },
+	    },
+	},
+
+	/*
+	 * Perle Speed8 LE.
+	 * Based on an Oxford Semiconductor OX16PCI954 chip, using the
+	 * 8-bit pass-through Local Bus function to hook up 4
+	 * additional UARTs.
+	 */
+	{   /* OX16PCI954 internal UARTs */
+	    {   PCI_VENDOR_PERLE, PCI_PRODUCT_PERLE_SPEED8_LE,
+		PCI_VENDOR_OXFORD2, PCI_PRODUCT_OXFORD2_OX16PCI954   },
+	    {   0xffff, 0xffff, 0xffff, 0xffff   },
+	    {
+		{ PUC_COM_POW2(3), 0x10, 0x0000 },
+		{ PUC_COM_POW2(3), 0x10, 0x0008 },
+		{ PUC_COM_POW2(3), 0x10, 0x0010 },
+		{ PUC_COM_POW2(3), 0x10, 0x0018 },
+	     },
+	},
+	{   /* OX16PCI954 8-bit pass-through Local Bus */
+	    {   PCI_VENDOR_PERLE, PCI_PRODUCT_PERLE_SPEED8_LE,
+		PCI_VENDOR_OXFORD2, 0x9511   },
+	    {   0xffff, 0xffff, 0xffff, 0xffff   },
+	    {
+		{ PUC_COM_POW2(3), 0x10, 0x0000 },
+		{ PUC_COM_POW2(3), 0x10, 0x0008 },
+		{ PUC_COM_POW2(3), 0x10, 0x0010 },
+		{ PUC_COM_POW2(3), 0x10, 0x0018 },
 	    },
 	},
 
