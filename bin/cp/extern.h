@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.14 2015/01/16 06:39:31 deraadt Exp $	*/
+/*	$OpenBSD: extern.h,v 1.15 2015/12/26 18:11:43 guenther Exp $	*/
 /*	$NetBSD: extern.h,v 1.3 1995/03/21 09:02:16 cgd Exp $	*/
 
 /*-
@@ -50,6 +50,5 @@ int	copy_file(FTSENT *, int);
 int	copy_link(FTSENT *, int);
 int	copy_special(struct stat *, int);
 int	setfile(struct stat *, int);
-int	setlink(struct stat *);
 void	usage(void);
 __END_DECLS

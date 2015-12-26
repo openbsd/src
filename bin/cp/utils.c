@@ -1,4 +1,4 @@
-/*	$OpenBSD: utils.c,v 1.38 2015/11/16 21:35:58 tedu Exp $	*/
+/*	$OpenBSD: utils.c,v 1.39 2015/12/26 18:11:43 guenther Exp $	*/
 /*	$NetBSD: utils.c,v 1.6 1997/02/26 14:40:51 cgd Exp $	*/
 
 /*-
@@ -217,7 +217,7 @@ copy_link(FTSENT *p, int exists)
 		warn("symlink: %s", name);
 		return (1);
 	}
-	return (pflag ? setlink(p->fts_statp) : 0);
+	return (pflag ? setfile(p->fts_statp, -1) : 0);
 }
 
 int
@@ -300,20 +300,6 @@ setfile(struct stat *fs, int fd)
 			rval = 1;
 		}
 	return (rval);
-}
-
-
-int
-setlink(struct stat *fs)
-{
-
-	if (lchown(to.p_path, fs->st_uid, fs->st_gid)) {
-		if (errno != EPERM) {
-			warn("lchown: %s", to.p_path);
-			return (1);
-		}
-	}
-	return (0);
 }
 
 
