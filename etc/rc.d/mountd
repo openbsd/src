@@ -1,10 +1,12 @@
 #!/bin/sh
 #
-# $OpenBSD: mountd,v 1.4 2013/01/26 08:00:11 ajacoutot Exp $
+# $OpenBSD: mountd,v 1.5 2015/12/26 02:52:53 krw Exp $
 
 daemon="/sbin/mountd"
 
 . /etc/rc.d/rc.subr
+
+pexp="mountd: \[priv\]"
 
 rc_stop=NO
 
