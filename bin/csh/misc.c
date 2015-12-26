@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.17 2015/10/26 22:03:06 naddy Exp $	*/
+/*	$OpenBSD: misc.c,v 1.18 2015/12/26 13:48:38 mestre Exp $	*/
 /*	$NetBSD: misc.c,v 1.6 1995/03/21 09:03:09 cgd Exp $	*/
 
 /*-
@@ -124,8 +124,8 @@ blkfree(Char **av0)
     if (!av0)
 	return;
     for (; *av; av++)
-	xfree(* av);
-    xfree(av0);
+	free(* av);
+    free(av0);
 }
 
 Char  **
@@ -252,7 +252,7 @@ lshift(Char **v, int c)
     Char **u;
 
     for (u = v; *u && --c >= 0; u++)
-	xfree(*u);
+	free(*u);
     (void) blkcpy(v, u);
 }
 

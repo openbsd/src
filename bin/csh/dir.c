@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.c,v 1.20 2015/02/08 06:09:50 tedu Exp $	*/
+/*	$OpenBSD: dir.c,v 1.21 2015/12/26 13:48:38 mestre Exp $	*/
 /*	$NetBSD: dir.c,v 1.9 1995/03/21 09:02:42 cgd Exp $	*/
 
 /*-
@@ -299,7 +299,7 @@ dnormalize(Char *cp)
 	    cwd[dotdot = Strlen(cwd)] = '/';
 	    cwd[dotdot + 1] = '\0';
 	    dp = Strspl(cwd, cp);
-	    xfree(cwd);
+	    free(cwd);
 	    return dp;
 	}
 	else {
@@ -386,7 +386,7 @@ dgoto(Char *cp)
 	    p--;		/* don't add a / after root */
 	for (q = cp; (*p++ = *q++) != '\0';)
 	    continue;
-	xfree(cp);
+	free(cp);
 	cp = dp;
 	dp += cwdlen;
     }
@@ -414,11 +414,11 @@ dfollow(Char *cp)
      */
     dp = dnormalize(cp);
     if (chdir(short2str(dp)) >= 0) {
-	xfree(cp);
+	free(cp);
 	return dgoto(dp);
     }
     else {
-	xfree(dp);
+	free(dp);
 	if (chdir(short2str(cp)) >= 0)
 	    return dgoto(cp);
 	serrno = errno;
@@ -438,7 +438,7 @@ dfollow(Char *cp)
 		continue;
 	    if (chdir(short2str(buf)) >= 0) {
 		printd = 1;
-		xfree(cp);
+		free(cp);
 		cp = Strsave(buf);
 		return dgoto(cp);
 	    }
@@ -446,13 +446,13 @@ dfollow(Char *cp)
     }
     dp = value(cp);
     if ((dp[0] == '/' || dp[0] == '.') && chdir(short2str(dp)) >= 0) {
-	xfree(cp);
+	free(cp);
 	cp = Strsave(dp);
 	printd = 1;
 	return dgoto(cp);
     }
     (void) strlcpy(ebuf, short2str(cp), sizeof ebuf);
-    xfree(cp);
+    free(cp);
     stderror(ERR_SYSTEM, ebuf, strerror(serrno));
     return (NULL);
 }
@@ -593,8 +593,8 @@ dfree(struct directory *dp)
 	dp->di_next = dp->di_prev = 0;
     }
     else {
-	xfree((char *) dp->di_name);
-	xfree(dp);
+	free((char *) dp->di_name);
+	free(dp);
     }
 }
 
@@ -630,7 +630,7 @@ dcanon(Char *cp, Char *p)
 	(void) Strlcpy(tmpdir, p1, sizeof tmpdir/sizeof(Char));
 	(void) Strlcat(tmpdir, STRslash, sizeof tmpdir/sizeof(Char));
 	(void) Strlcat(tmpdir, cp, sizeof tmpdir/sizeof(Char));
-	xfree(cp);
+	free(cp);
 	cp = p = Strsave(tmpdir);
     }
 
@@ -735,7 +735,7 @@ dcanon(Char *cp, Char *p)
 		     */
 		    p = newcp;
 		}
-		xfree(cp);
+		free(cp);
 		cp = newcp;
 		continue;	/* canonicalize the link */
 	    }
@@ -824,7 +824,7 @@ dcanon(Char *cp, Char *p)
 		     */
 		    p = newcp;
 		}
-		xfree(cp);
+		free(cp);
 		cp = newcp;
 		continue;	/* canonicalize the link */
 	    }
@@ -879,7 +879,7 @@ dcanon(Char *cp, Char *p)
 	     * Use STRhome to make '~' work
 	     */
 	    newcp = Strspl(p1, cp + Strlen(p2));
-	    xfree(cp);
+	    free(cp);
 	    cp = newcp;
 	}
     }

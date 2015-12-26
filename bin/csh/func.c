@@ -1,4 +1,4 @@
-/*    $OpenBSD: func.c,v 1.31 2015/10/26 16:27:04 naddy Exp $       */
+/*    $OpenBSD: func.c,v 1.32 2015/12/26 13:48:38 mestre Exp $       */
 /*    $NetBSD: func.c,v 1.11 1996/02/09 02:28:29 christos Exp $       */
 
 /*-
@@ -127,7 +127,7 @@ doonintr(Char **v, struct command *t)
 	stderror(ERR_NAME | ERR_TERMINAL);
     cp = gointr;
     gointr = 0;
-    xfree(cp);
+    free(cp);
     if (vv == 0) {
 	if (setintr) {
 	    sigemptyset(&sigset);
@@ -300,7 +300,7 @@ dogoto(Char **v, struct command *t)
     Char   *lp;
 
     gotolab(lp = globone(v[1], G_ERROR));
-    xfree(lp);
+    free(lp);
 }
 
 void
@@ -341,7 +341,7 @@ doswitch(Char **v, struct command *t)
     if (*v)
 	stderror(ERR_SYNTAX);
     search(T_SWITCH, 0, lp = globone(cp, G_ERROR));
-    xfree(lp);
+    free(lp);
 }
 
 void
@@ -659,7 +659,7 @@ search(int type, int level, Char *goal)
 	    cp = strip(Dfix1(aword));
 	    if (Gmatch(goal, cp))
 		level = -1;
-	    xfree(cp);
+	    free(cp);
 	    break;
 
 	case T_DEFAULT:
@@ -824,8 +824,8 @@ wfree(void)
 	if (wp->w_fe0)
 	    blkfree(wp->w_fe0);
 	if (wp->w_fename)
-	    xfree(wp->w_fename);
-	xfree(wp);
+	    free(wp->w_fename);
+	free(wp);
     }
 }
 
@@ -917,7 +917,7 @@ dosetenv(Char **v, struct command *t)
 	importpath(lp);
 	dohash(NULL, NULL);
     }
-    xfree(lp);
+    free(lp);
 }
 
 void
@@ -929,7 +929,7 @@ dounsetenv(Char **v, struct command *t)
     static Char *name = NULL;
 
     if (name)
-	xfree(name);
+	free(name);
     /*
      * Find the longest environment variable
      */
@@ -957,7 +957,7 @@ dounsetenv(Char **v, struct command *t)
 		Unsetenv(name);
 		break;
 	    }
-    xfree(name);
+    free(name);
     name = NULL;
 }
 
@@ -975,21 +975,21 @@ Setenv(Char *name, Char *val)
 	if (*cp != 0 || *dp != '=')
 	    continue;
 	cp = Strspl(STRequal, val);
-	xfree(* ep);
+	free(* ep);
 	*ep = strip(Strspl(name, cp));
-	xfree(cp);
+	free(cp);
 	blkfree((Char **) environ);
 	environ = short2blk(STR_environ);
 	return;
     }
     cp = Strspl(name, STRequal);
     blk[0] = strip(Strspl(cp, val));
-    xfree(cp);
+    free(cp);
     blk[1] = 0;
     STR_environ = blkspl(STR_environ, blk);
     blkfree((Char **) environ);
     environ = short2blk(STR_environ);
-    xfree(oep);
+    free(oep);
 }
 
 static void
@@ -1009,8 +1009,8 @@ Unsetenv(Char *name)
 	STR_environ = blkspl(STR_environ, ep + 1);
 	environ = short2blk(STR_environ);
 	*ep = cp;
-	xfree(cp);
-	xfree(oep);
+	free(cp);
+	free(oep);
 	return;
     }
 }

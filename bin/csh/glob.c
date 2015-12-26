@@ -1,4 +1,4 @@
-/*	$OpenBSD: glob.c,v 1.21 2015/12/22 08:18:36 mmcc Exp $	*/
+/*	$OpenBSD: glob.c,v 1.22 2015/12/26 13:48:38 mestre Exp $	*/
 /*	$NetBSD: glob.c,v 1.10 1995/03/21 09:03:01 cgd Exp $	*/
 
 /*-
@@ -110,7 +110,7 @@ globtilde(Char **nv, Char *s)
 	*b++ = *s++;
     *b = EOS;
     --u;
-    xfree(u);
+    free(u);
     return (Strsave(gstart));
 }
 
@@ -228,13 +228,13 @@ expbrace(Char ***nvp, Char ***elp, int size)
 	    int     len;
 
 	    if ((len = globbrace(s, b, &bl)) < 0) {
-		xfree(nv);
+		free(nv);
 		stderror(ERR_MISSING, -len);
 	    }
-	    xfree(s);
+	    free(s);
 	    if (len == 1) {
 		*vl-- = *bl;
-		xfree(bl);
+		free(bl);
 		continue;
 	    }
 	    len = blklen(bl);
@@ -258,7 +258,7 @@ expbrace(Char ***nvp, Char ***elp, int size)
 	    vp++;
 	    for (bp = bl + 1; *bp; *vp++ = *bp++)
 		continue;
-	    xfree(bl);
+	    free(bl);
 	}
 
     }
@@ -294,7 +294,7 @@ globexpand(Char **v)
 		    vl = &nv[size - GLOBSPACE];
 		}
 	    }
-	    xfree(pargv);
+	    free(pargv);
 	    pargv = NULL;
 	}
 	else {
@@ -345,9 +345,9 @@ handleone(Char *str, Char **vl, int action)
 	str = Strsave(*vlp++);
 	do {
 	    cp = Strspl(str, STRspace);
-	    xfree(str);
+	    free(str);
 	    str = Strspl(cp, *vlp);
-	    xfree(cp);
+	    free(cp);
 	}
 	while (*++vlp)
 	    ;
@@ -430,14 +430,14 @@ globone(Char *str, int action)
 	vo = globexpand(v);
 	if (noglob || (gflg & G_GLOB) == 0) {
 	    if (vo[0] == NULL) {
-		xfree(vo);
+		free(vo);
 		return (Strsave(STRNULL));
 	    }
 	    if (vo[1] != NULL)
 		return (handleone(str, vo, action));
 	    else {
 		str = strip(vo[0]);
-		xfree(vo);
+		free(vo);
 		return (str);
 	    }
 	}
@@ -455,14 +455,14 @@ globone(Char *str, int action)
 	stderror(ERR_NAME | ERR_NOMATCH);
     }
     if (vl[0] == NULL) {
-	xfree(vl);
+	free(vl);
 	return (Strsave(STRNULL));
     }
     if (vl[1] != NULL)
 	return (handleone(str, vl, action));
     else {
 	str = strip(*vl);
-	xfree(vl);
+	free(vl);
 	return (str);
     }
 }
@@ -692,7 +692,7 @@ backeval(Char *cp, bool literal)
 	execute(t, -1, NULL, NULL);
 	exitstat();
     }
-    xfree(cp);
+    free(cp);
     (void) close(pvec[1]);
     c = 0;
     ip = NULL;

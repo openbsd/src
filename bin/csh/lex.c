@@ -1,4 +1,4 @@
-/*	$OpenBSD: lex.c,v 1.20 2015/10/26 22:03:06 naddy Exp $	*/
+/*	$OpenBSD: lex.c,v 1.21 2015/12/26 13:48:38 mestre Exp $	*/
 /*	$NetBSD: lex.c,v 1.9 1995/09/27 00:38:46 jtc Exp $	*/
 
 /*-
@@ -211,8 +211,8 @@ freelex(struct wordent *vp)
     while (vp->next != vp) {
 	fp = vp->next;
 	vp->next = fp->next;
-	xfree(fp->word);
-	xfree(fp);
+	free(fp->word);
+	free(fp);
     }
     vp->prev = vp;
 }
@@ -847,11 +847,11 @@ dosub(int sc, struct wordent *en, bool global)
 			otword = tword;
 			tword = subword(otword, sc, &didone);
 			if (Strcmp(tword, otword) == 0) {
-			    xfree(otword);
+			    free(otword);
 			    break;
 			}
 			else
-			    xfree(otword);
+			    free(otword);
 		    }
 		}
 	    }
@@ -1413,7 +1413,7 @@ again:
 
 	if (fbuf) {
 	    (void) blkcpy(nfbuf, fbuf);
-	    xfree(fbuf);
+	    free(fbuf);
 	}
 	fbuf = nfbuf;
 	fbuf[fblocks] = xcalloc(BUFSIZ, sizeof(Char));
@@ -1483,7 +1483,7 @@ bfree(void)
     sb = (int) (fseekp - 1) / BUFSIZ;
     if (sb > 0) {
 	for (i = 0; i < sb; i++)
-	    xfree(fbuf[i]);
+	    free(fbuf[i]);
 	(void) blkcpy(fbuf, &fbuf[sb]);
 	fseekp -= BUFSIZ * sb;
 	feobp -= BUFSIZ * sb;

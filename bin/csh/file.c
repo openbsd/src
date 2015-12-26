@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.22 2015/10/26 15:01:15 naddy Exp $	*/
+/*	$OpenBSD: file.c,v 1.23 2015/12/26 13:48:38 mestre Exp $	*/
 /*	$NetBSD: file.c,v 1.11 1996/11/08 19:34:37 christos Exp $	*/
 
 /*-
@@ -390,8 +390,8 @@ free_items(Char **items, int numitems)
     int i;
 
     for (i = 0; i < numitems; i++)
-	xfree(items[i]);
-    xfree(items);
+	free(items[i]);
+    free(items);
 }
 
 #define FREE_ITEMS(items) { \
