@@ -1,4 +1,4 @@
-/*	$OpenBSD: auth.c,v 1.34 2015/01/16 06:40:19 deraadt Exp $	*/
+/*	$OpenBSD: auth.c,v 1.35 2015/12/26 20:51:35 guenther Exp $	*/
 
 /*
  * auth.c - PPP authentication and phase control.
@@ -930,12 +930,12 @@ plogin(user, passwd, msg, msglen)
 	    struct lastlog ll;
 	    int fd;
 
-	    if ((fd = open(_PATH_LASTLOG, O_RDWR, 0)) >= 0) {
-		(void)lseek(fd, (off_t)(pw->pw_uid * sizeof(ll)), SEEK_SET);
-		memset((void *)&ll, 0, sizeof(ll));
+	    if ((fd = open(_PATH_LASTLOG, O_RDWR)) >= 0) {
+		memset(&ll, 0, sizeof(ll));
 		(void)time(&ll.ll_time);
 		(void)strncpy(ll.ll_line, tty, sizeof(ll.ll_line));
-		(void)write(fd, (char *)&ll, sizeof(ll));
+		(void)pwrite(fd, &ll, sizeof(ll), (off_t)pw->pw_uid *
+		    sizeof(ll));
 		(void)close(fd);
 	    }
     }

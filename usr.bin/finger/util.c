@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.31 2015/08/20 22:32:41 deraadt Exp $	*/
+/*	$OpenBSD: util.c,v 1.32 2015/12/26 20:51:35 guenther Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -196,13 +196,12 @@ enter_lastlog(PERSON *pn)
 		opened = 1;
 	}
 	if (fd == -1 ||
-	    lseek(fd, (off_t)(pn->uid * sizeof(ll)), SEEK_SET) !=
-	    (long)(pn->uid * sizeof(ll)) ||
-	    read(fd, (char *)&ll, sizeof(ll)) != sizeof(ll)) {
-			/* as if never logged in */
-			ll.ll_line[0] = ll.ll_host[0] = '\0';
-			ll.ll_time = 0;
-		}
+	    pread(fd, &ll, sizeof(ll), (off_t)pn->uid * sizeof(ll)) !=
+	    sizeof(ll)) {
+		/* as if never logged in */
+		ll.ll_line[0] = ll.ll_host[0] = '\0';
+		ll.ll_time = 0;
+	}
 	if ((w = pn->whead) == NULL)
 		doit = 1;
 	else if (ll.ll_time != 0) {
