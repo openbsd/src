@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1780 2015/11/28 14:11:33 kettenis Exp 
+ *	OpenBSD: pcidevs,v 1.1781 2015/12/26 21:57:25 kettenis Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -21124,6 +21124,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "HSP MicroModem 56",
 	},
 	{
+	    PCI_VENDOR_PERLE, PCI_PRODUCT_PERLE_SPEED8_LE,
+	    "Speed8 LE",
+	},
+	{
 	    PCI_VENDOR_QUMRANET, PCI_PRODUCT_QUMRANET_VIO_NET,
 	    "Virtio Network",
 	},
@@ -26354,6 +26358,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_TERRATEC,
 	    "TerraTec",
+	},
+	{
+	    PCI_VENDOR_PERLE,
+	    "Perle",
 	},
 	{
 	    PCI_VENDOR_SYMBOL,

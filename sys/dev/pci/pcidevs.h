@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1780 2015/11/28 14:11:33 kettenis Exp 
+ *	OpenBSD: pcidevs,v 1.1781 2015/12/26 21:57:25 kettenis Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -276,6 +276,7 @@
 #define	PCI_VENDOR_ENE	0x1524		/* ENE */
 #define	PCI_VENDOR_ARALION	0x1538		/* Aralion */
 #define	PCI_VENDOR_TERRATEC	0x153b		/* TerraTec */
+#define	PCI_VENDOR_PERLE	0x155f		/* Perle */
 #define	PCI_VENDOR_SYMBOL	0x1562		/* Symbol */
 #define	PCI_VENDOR_SYBA	0x1592		/* Syba */
 #define	PCI_VENDOR_BLUESTEEL	0x15ab		/* Bluesteel */
@@ -6060,6 +6061,9 @@
 /* PCTEL */
 #define	PCI_PRODUCT_PCTEL_MICROMODEM56	0x7879		/* HSP MicroModem 56 */
 #define	PCI_PRODUCT_PCTEL_MICROMODEM56_1	0x7892		/* HSP MicroModem 56 */
+
+/* Perle */
+#define	PCI_PRODUCT_PERLE_SPEED8_LE	0xb008		/* Speed8 LE */
 
 /* Qumranet products */
 #define	PCI_PRODUCT_QUMRANET_VIO_NET	0x1000		/* Virtio Network */
