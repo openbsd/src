@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1780 2015/11/28 14:11:33 kettenis Exp $
+$OpenBSD: pcidevs,v 1.1781 2015/12/26 21:57:25 kettenis Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -271,6 +271,7 @@ vendor	TOPIC		0x151f	Topic/SmartLink
 vendor	ENE		0x1524	ENE
 vendor	ARALION		0x1538	Aralion
 vendor	TERRATEC	0x153b	TerraTec
+vendor	PERLE		0x155f	Perle
 vendor	SYMBOL		0x1562	Symbol
 vendor	SYBA		0x1592	Syba
 vendor	BLUESTEEL	0x15ab	Bluesteel
@@ -6055,6 +6056,9 @@ product PCTECH RZ1000		0x1000	RZ1000
 /* PCTEL */
 product PCTEL MICROMODEM56	0x7879	HSP MicroModem 56
 product PCTEL MICROMODEM56_1	0x7892	HSP MicroModem 56
+
+/* Perle */
+product PERLE SPEED8_LE		0xb008	Speed8 LE
 
 /* Qumranet products */
 product QUMRANET VIO_NET	0x1000	Virtio Network
