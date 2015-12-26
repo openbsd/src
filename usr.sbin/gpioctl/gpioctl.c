@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpioctl.c,v 1.16 2011/10/04 07:19:13 jmc Exp $	*/
+/*	$OpenBSD: gpioctl.c,v 1.17 2015/12/26 20:52:03 mmcc Exp $	*/
 /*
  * Copyright (c) 2008 Marc Balmer <mbalmer@openbsd.org>
  * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
@@ -192,7 +192,7 @@ getinfo(void)
 {
 	struct gpio_info info;
 
-	bzero(&info, sizeof(info));
+	memset(&info, 0, sizeof(info));
 	if (ioctl(devfd, GPIOINFO, &info) == -1)
 		err(1, "GPIOINFO");
 
@@ -207,7 +207,7 @@ pinread(int pin, char *gp_name)
 {
 	struct gpio_pin_op op;
 
-	bzero(&op, sizeof(op));
+	memset(&op, 0, sizeof(op));
 	if (gp_name != NULL)
 		strlcpy(op.gp_name, gp_name, sizeof(op.gp_name));
 	else
@@ -233,7 +233,7 @@ pinwrite(int pin, char *gp_name, int value)
 	if (value < 0 || value > 2)
 		errx(1, "%d: invalid value", value);
 
-	bzero(&op, sizeof(op));
+	memset(&op, 0, sizeof(op));
 	if (gp_name != NULL)
 		strlcpy(op.gp_name, gp_name, sizeof(op.gp_name));
 	else
@@ -264,7 +264,7 @@ pinset(int pin, char *name, int fl, char *alias)
 	struct gpio_pin_set set;
 	const struct bitstr *bs;
 
-	bzero(&set, sizeof(set));
+	memset(&set, 0, sizeof(set));
 	if (name != NULL)
 		strlcpy(set.gp_name, name, sizeof(set.gp_name));
 	else
@@ -305,7 +305,7 @@ unset(int pin, char *name)
 {
 	struct gpio_pin_set set;
 
-	bzero(&set, sizeof(set));
+	memset(&set, 0, sizeof(set));
 	if (name != NULL)
 		strlcpy(set.gp_name, name, sizeof(set.gp_name));
 	else
@@ -320,7 +320,7 @@ devattach(char *dvname, int offset, u_int32_t mask, u_int32_t flags)
 {
 	struct gpio_attach attach;
 
-	bzero(&attach, sizeof(attach));
+	memset(&attach, 0, sizeof(attach));
 	strlcpy(attach.ga_dvname, dvname, sizeof(attach.ga_dvname));
 	attach.ga_offset = offset;
 	attach.ga_mask = mask;
@@ -334,7 +334,7 @@ devdetach(char *dvname)
 {
 	struct gpio_attach attach;
 
-	bzero(&attach, sizeof(attach));
+	memset(&attach, 0, sizeof(attach));
 	strlcpy(attach.ga_dvname, dvname, sizeof(attach.ga_dvname));
 	if (ioctl(devfd, GPIODETACH, &attach) == -1)
 		err(1, "GPIODETACH");
