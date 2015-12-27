@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbr.c,v 1.63 2015/11/19 16:14:08 krw Exp $	*/
+/*	$OpenBSD: mbr.c,v 1.64 2015/12/27 20:39:51 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -34,31 +34,21 @@
 
 struct mbr initial_mbr;
 
+static int gpt_chk_mbr(struct dos_partition *, u_int64_t);
+
 int
 MBR_protective_mbr(struct mbr *mbr)
 {
-	u_int64_t dsize;
-	int efi, found, i;
-	u_int32_t psize;
+	struct dos_partition dp[NDOSPART], dos_partition;
+	int i;
 
-	found = efi = 0;
 	for (i = 0; i < NDOSPART; i++) {
-		if (mbr->part[i].id == DOSPTYP_UNUSED)
-			continue;
-		found++;
-		if (mbr->part[i].id != DOSPTYP_EFI)
-			continue;
-		dsize = DL_GETDSIZE(&dl);
-		psize = mbr->part[i].ns;
-		if (psize == (dsize - 1) || psize == UINT32_MAX) {
-			if (mbr->part[i].bs == 1)
-				efi++;
-		}
+		PRT_make(&mbr->part[i], mbr->offset, mbr->reloffset,
+		    &dos_partition);
+		memcpy(&dp[i], &dos_partition, sizeof(dp[i]));
 	}
-	if (found == 1 && efi == 1)
-		return (0);
 
-	return (1);
+	return (gpt_chk_mbr(dp, DL_GETDSIZE(&dl)));
 }
 
 void
@@ -290,3 +280,41 @@ MBR_zapgpt(struct dos_mbr *dos_mbr, uint64_t lastsec)
 	}
 	free(secbuf);
 }
+
+/*
+ * Returns 0 if the MBR with the provided partition array is a GPT protective
+ * MBR, and returns 1 otherwise. A GPT protective MBR would have one and only
+ * one MBR partition, an EFI partition that either covers the whole disk or as
+ * much of it as is possible with a 32bit size field.
+ *
+ * Taken from kern/subr_disk.c.
+ *
+ * NOTE: MS always uses a size of UINT32_MAX for the EFI partition!**
+ */
+int
+gpt_chk_mbr(struct dos_partition *dp, u_int64_t dsize)
+{
+	struct dos_partition *dp2;
+	int efi, found, i;
+	u_int32_t psize;
+
+	found = efi = 0;
+	for (dp2=dp, i=0; i < NDOSPART; i++, dp2++) {
+		if (dp2->dp_typ == DOSPTYP_UNUSED)
+			continue;
+		found++;
+		if (dp2->dp_typ != DOSPTYP_EFI)
+			continue;
+		psize = letoh32(dp2->dp_size);
+		if (psize == (dsize - 1) ||
+		    psize == UINT32_MAX) {
+			if (letoh32(dp2->dp_start) == 1)
+				efi++;
+		}
+	}
+	if (found == 1 && efi == 1)
+		return (0);
+
+	return (1);
+}
+
