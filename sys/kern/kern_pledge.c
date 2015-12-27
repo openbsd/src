@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.139 2015/12/27 01:37:46 deraadt Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.140 2015/12/27 16:36:07 tb Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -64,7 +64,7 @@
 #define PLEDGENAMES
 #include <sys/pledge.h>
 
-#include "pty.h"
+#include "audio.h"
 #include "pty.h"
 
 int pledgereq_flags(const char *req);
