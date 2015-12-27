@@ -1,4 +1,4 @@
-/*	$OpenBSD: asmc.c,v 1.22 2015/12/22 19:04:42 kettenis Exp $	*/
+/*	$OpenBSD: asmc.c,v 1.23 2015/12/27 19:50:14 jung Exp $	*/
 /*
  * Copyright (c) 2015 Joerg Jung <jung@openbsd.org>
  *
@@ -75,9 +75,6 @@ struct asmc_softc {
 	uint8_t			 sc_kbdled;	/* backlight led value */
 
 	struct rwlock		 sc_lock;
-	struct taskq		*sc_taskq;
-	struct task		 sc_task_init;
-	struct task		 sc_task_refresh;
 	struct task		 sc_task_backlight;
 
 	struct ksensor		 sc_sensor_temp[ASMC_MAXTEMP];
@@ -89,9 +86,7 @@ struct asmc_softc {
 };
 
 int	asmc_try(struct asmc_softc *, int, const char *, uint8_t *, uint8_t);
-
-void	asmc_init(void *);
-void	asmc_refresh(void *);
+void	asmc_init(struct asmc_softc *);
 void	asmc_update(void *);
 
 int	asmc_match(struct device *, void *, void *);
@@ -307,14 +302,6 @@ asmc_attach(struct device *parent, struct device *self, void *aux)
 		wskbd_get_backlight = asmc_get_backlight;
 		wskbd_set_backlight = asmc_set_backlight;
 	}
-
-	if (!(sc->sc_taskq = taskq_create("asmc", 1, IPL_NONE, 0))) {
-		printf("%s: can't create task queue\n", sc->sc_dev.dv_xname);
-		bus_space_unmap(ia->ia_iot, ia->ia_iobase, ASMC_IOSIZE);
-		return;
-	}
-	task_set(&sc->sc_task_init, asmc_init, sc);
-	task_set(&sc->sc_task_refresh, asmc_refresh, sc);
 	task_set(&sc->sc_task_backlight, asmc_kbdled, sc);
 
 	strlcpy(sc->sc_sensor_dev.xname, sc->sc_dev.dv_xname,
@@ -339,14 +326,14 @@ asmc_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_sensor_motion[i].flags |= SENSOR_FINVALID;
 		sc->sc_sensor_motion[i].flags |= SENSOR_FUNKNOWN;
 	}
+	asmc_init(sc);
+
 	if (!(sc->sc_sensor_task = sensor_task_register(sc, asmc_update, 5))) {
 		printf("%s: unable to register task\n", sc->sc_dev.dv_xname);
-		taskq_destroy(sc->sc_taskq);
 		bus_space_unmap(ia->ia_iot, ia->ia_iobase, ASMC_IOSIZE);
 		return;
 	}
 	sensordev_install(&sc->sc_sensor_dev);
-	task_add(sc->sc_taskq, &sc->sc_task_init);
 }
 
 int
@@ -371,12 +358,6 @@ asmc_detach(struct device *self, int flags)
 		sensor_detach(&sc->sc_sensor_dev, &sc->sc_sensor_temp[i]);
 
 	task_del(systq, &sc->sc_task_backlight);
-	if (sc->sc_taskq) {
-		task_del(sc->sc_taskq, &sc->sc_task_refresh);
-		task_del(sc->sc_taskq, &sc->sc_task_init);
-		taskq_destroy(sc->sc_taskq);
-	}
-
 	asmc_try(sc, ASMC_WRITE, "LKSB", buf, 2);
 	return 0;
 }
@@ -689,9 +670,8 @@ asmc_motion(struct asmc_softc *sc, uint8_t idx)
 #endif
 
 void
-asmc_init(void *arg)
+asmc_init(struct asmc_softc *sc)
 {
-	struct asmc_softc *sc = arg;
 	uint8_t buf[2];
 	int i, r;
 
@@ -734,7 +714,7 @@ asmc_init(void *arg)
 }
 
 void
-asmc_refresh(void *arg)
+asmc_update(void *arg)
 {
 	struct asmc_softc *sc = arg;
 	int i;
@@ -753,13 +733,4 @@ asmc_refresh(void *arg)
 		if (!(sc->sc_sensor_motion[i].flags & SENSOR_FINVALID))
 			asmc_motion(sc, i);
 #endif
-}
-
-void
-asmc_update(void *arg)
-{
-	struct asmc_softc *sc = arg;
-
-	if (sc->sc_init)
-		task_add(sc->sc_taskq, &sc->sc_task_refresh);
 }
