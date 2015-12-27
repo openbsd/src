@@ -1,4 +1,4 @@
-/*	$OpenBSD: asmc.c,v 1.26 2015/12/27 20:26:55 jung Exp $	*/
+/*	$OpenBSD: asmc.c,v 1.27 2015/12/27 20:42:33 jung Exp $	*/
 /*
  * Copyright (c) 2015 Joerg Jung <jung@openbsd.org>
  *
@@ -405,49 +405,35 @@ asmc_status(struct asmc_softc *sc)
 }
 
 static int
-asmc_write(struct asmc_softc *sc, uint8_t off, uint8_t val)
+asmc_wait(struct asmc_softc *sc, uint8_t mask, uint8_t val)
 {
-	uint8_t str;
 	int i;
 
-	for (i = 500; i > 0; i--) {
-		str = bus_space_read_1(sc->sc_iot, sc->sc_ioh, ASMC_COMMAND);
-		if ((str & ASMC_IBF) == 0)
-			break;
+	for (i = 0; i < 500; i++) { /* wait up to 5 ms */
+		if ((bus_space_read_1(sc->sc_iot, sc->sc_ioh, ASMC_COMMAND) &
+		    mask) == val)
+			return 0;
 		delay(10);
 	}
-	if (i == 0)
-		return ETIMEDOUT;
+	return ETIMEDOUT;
+}
 
+static int
+asmc_write(struct asmc_softc *sc, uint8_t off, uint8_t val)
+{
+	if (asmc_wait(sc, ASMC_IBF, 0))
+		return 1;
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, off, val);
-
-	for (i = 500; i > 0; i--) {
-		str = bus_space_read_1(sc->sc_iot, sc->sc_ioh, ASMC_COMMAND);
-		if (str & ASMC_ACCEPT)
-			break;
-		delay(10);
-	}
-	if (i == 0)
-		return ETIMEDOUT;
-
+	if (asmc_wait(sc, ASMC_ACCEPT, ASMC_ACCEPT))
+		return 1;
 	return 0;
 }
 
 static int
 asmc_read(struct asmc_softc *sc, uint8_t off, uint8_t *buf)
 {
-	uint8_t str;
-	int i;
-
-	for (i = 500; i > 0; i--) {
-		str = bus_space_read_1(sc->sc_iot, sc->sc_ioh, ASMC_COMMAND);
-		if (str & ASMC_OBF)
-			break;
-		delay(10);
-	}
-	if (i == 0)
-		return ETIMEDOUT;
-
+	if (asmc_wait(sc, ASMC_OBF, ASMC_OBF))
+		return 1;
 	*buf = bus_space_read_1(sc->sc_iot, sc->sc_ioh, off);
 	return 0;
 }
