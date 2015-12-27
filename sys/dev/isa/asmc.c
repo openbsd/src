@@ -1,4 +1,4 @@
-/*	$OpenBSD: asmc.c,v 1.23 2015/12/27 19:50:14 jung Exp $	*/
+/*	$OpenBSD: asmc.c,v 1.24 2015/12/27 20:05:05 jung Exp $	*/
 /*
  * Copyright (c) 2015 Joerg Jung <jung@openbsd.org>
  *
@@ -377,15 +377,9 @@ asmc_kbdled(void *arg)
 int
 asmc_get_backlight(struct wskbd_backlight *kbl)
 {
-	struct asmc_softc *sc = NULL;
-	int i;
+	struct asmc_softc *sc = asmc_cd.cd_devs[0];
 
-	for (i = 0; i < asmc_cd.cd_ndevs && !sc; i++)
-		if (asmc_cd.cd_devs[i])
-			sc = (struct asmc_softc *)asmc_cd.cd_devs[i];
-	if (!sc)
-		return -1;
-
+	KASSERT(sc != NULL);
 	kbl->min = 0;
 	kbl->max = 0xff;
 	kbl->curval = sc->sc_kbdled;
@@ -395,15 +389,9 @@ asmc_get_backlight(struct wskbd_backlight *kbl)
 int
 asmc_set_backlight(struct wskbd_backlight *kbl)
 {
-	struct asmc_softc *sc = NULL;
-	int i;
+	struct asmc_softc *sc = asmc_cd.cd_devs[0];
 
-	for (i = 0; i < asmc_cd.cd_ndevs && !sc; i++)
-		if (asmc_cd.cd_devs[i])
-			sc = (struct asmc_softc *)asmc_cd.cd_devs[i];
-	if (!sc)
-		return -1;
-
+	KASSERT(sc != NULL);
 	if (kbl->curval > 0xff)
 		return EINVAL;
 	sc->sc_kbdled = kbl->curval;
