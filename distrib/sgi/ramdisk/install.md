@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.36 2015/06/02 19:54:06 rpe Exp $
+#	$OpenBSD: install.md,v 1.37 2015/12/27 16:31:08 deraadt Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -35,46 +35,34 @@
 IPARCH=$(sysctl -n hw.model)
 NCPU=$(sysctl -n hw.ncpufound)
 
-MDSETS="bsd.${IPARCH} bsd.rd.${IPARCH}"
-SANESETS="bsd.${IPARCH}"
+MDSETS="bsd.$IPARCH bsd.rd.$IPARCH"
+SANESETS="bsd.$IPARCH"
 # Since we do not provide bsd.mp on IP27 yet, do not add bsd.mp.IP27 to the
 # sets, as this will cause a warning in sane_install()
-if ((NCPU > 1)) && [[ $IPARCH = IP30 ]]; then
-	MDSETS="${MDSETS} bsd.mp.${IPARCH}"
-	SANESETS="${SANESETS} bsd.mp.${IPARCH}"
+if ((NCPU > 1)) && [[ $IPARCH == IP30 ]]; then
+	MDSETS="$MDSETS bsd.mp.$IPARCH}"
+	SANESETS="$SANESETS bsd.mp.$IPARCH"
 fi
-DEFAULTSETS=${MDSETS}
+DEFAULTSETS=$MDSETS
 
 md_installboot() {
 	local _disk=$1
 
 	echo "Installing boot loader in volume header."
-	/usr/mdec/sgivol -w boot /mnt/usr/mdec/boot-`sysctl -n hw.model` $_disk
-	case $? in
-	0)
-		;;
-	*)	echo
-		echo "WARNING: Boot install failed. Booting from disk will not be possible"
-		;;
-	esac
+	if ! /usr/mdec/sgivol -w boot /mnt/usr/mdec/boot-$(sysctl -n hw.model) $_disk; then
+		echo "\nWARNING: Boot install failed. Booting from disk will not be possible"
+	fi
 
-	if [[ -f /mnt/bsd.${IPARCH} ]]; then
-		mv /mnt/bsd.${IPARCH} /mnt/bsd
-	fi
-	if [[ -f /mnt/bsd.mp.${IPARCH} ]]; then
-		mv /mnt/bsd.mp.${IPARCH} /mnt/bsd.mp
-	fi
-	if [[ -f /mnt/bsd.rd.${IPARCH} ]]; then
-		mv /mnt/bsd.rd.${IPARCH} /mnt/bsd.rd
-	fi
+	[[ -f /mnt/bsd.$IPARCH ]] && mv /mnt/bsd.$IPARCH /mnt/bsd
+	[[ -f /mnt/bsd.mp.$IPARCH ]] && mv /mnt/bsd.mp.$IPARCH /mnt/bsd.mp
+	[[ -f /mnt/bsd.rd.$IPARCH ]] && mv /mnt/bsd.rd.$IPARCH /mnt/bsd.rd
 }
 
 md_prep_disklabel()
 {
 	local _disk=$1 _f=/tmp/fstab.$1
 
-	echo
-	echo "Checking SGI Volume Header:"
+	echo "\nChecking SGI Volume Header:"
 	/usr/mdec/sgivol -q $_disk >/dev/null 2>/dev/null
 	case $? in
 	0)	/usr/mdec/sgivol $_disk
@@ -84,12 +72,9 @@ An SGI Volume Header was found on the disk. Normally you want to replace it
 with a new Volume Header suitable for installing OpenBSD. Doing this will
 of course delete all data currently on the disk.
 __EOT
-		ask "Do you want to overwrite the current header?" y
-		case "$resp" in
-		y*|Y*)
+		if ask_yn "Do you want to overwrite the current header?" y; then
 			/usr/mdec/sgivol -qi $_disk
-			;;
-		n*|N*)
+		else
 			cat <<__EOT
 
 If the Volume Header was installed by a previous OpenBSD install keeping
@@ -98,48 +83,21 @@ If you are trying to keep an old IRIX Volume Header, OpenBSD install will
 use the 'a' partition on the disk for the install and any data in that
 partition will be lost.
 __EOT
-			ask "Are you sure you want to try to keep the old header?" y
-			case "$resp" in
-			y*|Y*)
-				;;
-			n*|N*)
-				ask "Do you want to overwrite the old header instead?" n
-				case "$resp" in
-				y*|Y*)
-					/usr/mdec/sgivol -qi $_disk
-					;;
-				n*|N*)
+			if ! ask_yn "Are you sure you want to try to keep the old header?" y; then
+				ask_yn "Do you want to overwrite the old header instead?" ||
 					return 1
-					;;
-				esac
-				;;
-			esac
-			;;
-		esac
+				/usr/mdec/sgivol -qi $_disk
+			fi
+		fi
 		;;
-	1)	echo
-		echo "Your disk seems to be unaccessible. It was not possible"
+	1)	echo "\nYour disk seems to be unaccessible. It was not possible"
 		echo "determine if there is a proper Volume Header or not."
-		ask "Do you want to continue anyway?" n
-		case "$resp" in
-		y*|Y*)
-			;;
-		n*|N*)
-			return 1 ;;
-		esac
+		ask_yn "Do you want to continue anyway?" || return 1
 		;;
-	2)	echo
-		echo "There is no Volume Header found on the disk. A Volume"
+	2)	echo "\nThere is no Volume Header found on the disk. A Volume"
 		echo "header is required to be able to boot from the disk."
-		ask "Do you want to install a Volume Header?" y
-		case "$resp" in
-		y*|Y*)
-			/usr/mdec/sgivol -qi $_disk
-			;;
-		n*|N*)
-			return 1
-			;;
-		esac
+		ask_yn "Do you want to install a Volume Header?" y || return 1
+		/usr/mdec/sgivol -qi $_disk
 		;;
 	esac
 

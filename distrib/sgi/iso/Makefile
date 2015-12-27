@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.25 2015/09/27 19:11:37 miod Exp $
+#	$OpenBSD: Makefile,v 1.26 2015/12/27 16:31:07 deraadt Exp $
 
 TOP=	${.CURDIR}/..
 
@@ -16,7 +16,7 @@ BASE=		${RELDIR}/base${OSrev}.tgz ${RELDIR}/comp${OSrev}.tgz \
 .for IP in ${ALLIP}
 BASE+=		${RELDIR}/bsd.IP${IP} ${RELDIR}/bsd.rd.IP${IP}
 .endfor
-BASE+=		${RELDIR}/bsd.mp.IP30
+BASE+=		${RELDIR}/bsd.mp.IP27 ${RELDIR}/bsd.mp.IP30
 XBASE=		${RELXDIR}/xbase${OSrev}.tgz ${RELXDIR}/xfont${OSrev}.tgz \
 		${RELXDIR}/xshare${OSrev}.tgz ${RELXDIR}/xserv${OSrev}.tgz
 
