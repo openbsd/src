@@ -1,4 +1,4 @@
-/*	$OpenBSD: asmc.c,v 1.24 2015/12/27 20:05:05 jung Exp $	*/
+/*	$OpenBSD: asmc.c,v 1.25 2015/12/27 20:17:39 jung Exp $	*/
 /*
  * Copyright (c) 2015 Joerg Jung <jung@openbsd.org>
  *
@@ -69,7 +69,6 @@ struct asmc_softc {
 	bus_space_handle_t	 sc_ioh;
 
 	struct asmc_prod	*sc_prod;
-	uint8_t			 sc_init;	/* initialization done? */
 	uint8_t			 sc_nfans;	/* number of fans */
 	uint8_t			 sc_lightlen;	/* light data len */
 	uint8_t			 sc_kbdled;	/* backlight led value */
@@ -530,7 +529,7 @@ asmc_lux(uint8_t *buf, uint8_t lightlen)
 }
 
 static int
-asmc_temp(struct asmc_softc *sc, uint8_t idx)
+asmc_temp(struct asmc_softc *sc, uint8_t idx, int init)
 {
 	uint8_t buf[2];
 	uint32_t uk;
@@ -543,7 +542,7 @@ asmc_temp(struct asmc_softc *sc, uint8_t idx)
 	sc->sc_sensor_temp[idx].value = uk;
 	sc->sc_sensor_temp[idx].flags &= ~SENSOR_FUNKNOWN;
 
-	if (sc->sc_init)
+	if (!init)
 		return 0;
 
 	strlcpy(sc->sc_sensor_temp[idx].desc, sc->sc_prod->pr_temp[idx],
@@ -563,7 +562,7 @@ asmc_temp(struct asmc_softc *sc, uint8_t idx)
 }
 
 static int
-asmc_fan(struct asmc_softc *sc, uint8_t idx)
+asmc_fan(struct asmc_softc *sc, uint8_t idx, int init)
 {
 	char key[5];
 	uint8_t buf[17], *end;
@@ -575,7 +574,7 @@ asmc_fan(struct asmc_softc *sc, uint8_t idx)
 	sc->sc_sensor_fan[idx].value = asmc_rpm(buf);
 	sc->sc_sensor_fan[idx].flags &= ~SENSOR_FUNKNOWN;
 
-	if (sc->sc_init)
+	if (!init)
 		return 0;
 
 	snprintf(key, sizeof(key), "F%dID", idx);
@@ -599,7 +598,7 @@ asmc_fan(struct asmc_softc *sc, uint8_t idx)
 }
 
 static int
-asmc_light(struct asmc_softc *sc, uint8_t idx)
+asmc_light(struct asmc_softc *sc, uint8_t idx, int init)
 {
 	char key[5];
 	uint8_t buf[10];
@@ -619,7 +618,7 @@ asmc_light(struct asmc_softc *sc, uint8_t idx)
 	sc->sc_sensor_light[idx].value = asmc_lux(buf, sc->sc_lightlen);
 	sc->sc_sensor_light[idx].flags &= ~SENSOR_FUNKNOWN;
 
-	if (sc->sc_init)
+	if (!init)
 		return 0;
 
 	strlcpy(sc->sc_sensor_light[idx].desc, asmc_light_desc[idx],
@@ -631,7 +630,7 @@ asmc_light(struct asmc_softc *sc, uint8_t idx)
 
 #if 0 /* todo: implement motion sensors update and initialization */
 static int
-asmc_motion(struct asmc_softc *sc, uint8_t idx)
+asmc_motion(struct asmc_softc *sc, uint8_t idx, int init)
 {
 	char key[5];
 	uint8_t buf[2];
@@ -643,7 +642,7 @@ asmc_motion(struct asmc_softc *sc, uint8_t idx)
 	sc->sc_sensor_motion[idx].value = 0;
 	sc->sc_sensor_motion[idx].flags &= ~SENSOR_FUNKNOWN;
 
-	if (sc->sc_init)
+	if (!init)
 		return 0;
 
 	/* todo: setup and attach sensors and description */
@@ -665,7 +664,7 @@ asmc_init(struct asmc_softc *sc)
 
 	/* number of temperature sensors depends on product */
 	for (i = 0; sc->sc_prod->pr_temp[i] && i < ASMC_MAXTEMP; i++)
-		if ((r = asmc_temp(sc, i)) && r != ASMC_NOTFOUND)
+		if ((r = asmc_temp(sc, i, 1)) && r != ASMC_NOTFOUND)
 			printf("%s: read temp %d failed (0x%x)\n",
 			    sc->sc_dev.dv_xname, i, r);
 	/* number of fan sensors depends on product */
@@ -675,12 +674,12 @@ asmc_init(struct asmc_softc *sc)
 	else
 		sc->sc_nfans = buf[0];
 	for (i = 0; i < sc->sc_nfans && i < ASMC_MAXFAN; i++)
-		if ((r = asmc_fan(sc, i)) && r != ASMC_NOTFOUND)
+		if ((r = asmc_fan(sc, i, 1)) && r != ASMC_NOTFOUND)
 			printf("%s: read fan %d failed (0x%x)\n",
 			    sc->sc_dev.dv_xname, i, r);
 	/* left and right light sensors are optional */
 	for (i = 0; i < ASMC_MAXLIGHT; i++)
-		if ((r = asmc_light(sc, i)) && r != ASMC_NOTFOUND)
+		if ((r = asmc_light(sc, i, 1)) && r != ASMC_NOTFOUND)
 			printf("%s: read light %d failed (0x%x)\n",
 			    sc->sc_dev.dv_xname, i, r);
 	/* motion sensors are optional */
@@ -694,11 +693,10 @@ asmc_init(struct asmc_softc *sc)
 		printf("%s write MOCN failed (0x%x)\n",
 		    sc->sc_dev.dv_xname, r);
 	for (i = 0; i < ASMC_MAXMOTION; i++)
-		if ((r = asmc_motion(sc, i)) && r != ASMC_NOTFOUND)
+		if ((r = asmc_motion(sc, i, 1)) && r != ASMC_NOTFOUND)
 			printf("%s: read motion %d failed (0x%x)\n",
 			    sc->sc_dev.dv_xname, i, r);
 #endif
-	sc->sc_init = 1;
 }
 
 void
@@ -709,16 +707,16 @@ asmc_update(void *arg)
 
 	for (i = 0; sc->sc_prod->pr_temp[i] && i < ASMC_MAXTEMP; i++)
 		if (!(sc->sc_sensor_temp[i].flags & SENSOR_FINVALID))
-			asmc_temp(sc, i);
+			asmc_temp(sc, i, 0);
 	for (i = 0; i < sc->sc_nfans && i < ASMC_MAXFAN; i++)
 		if (!(sc->sc_sensor_fan[i].flags & SENSOR_FINVALID))
-			asmc_fan(sc, i);
+			asmc_fan(sc, i, 0);
 	for (i = 0; i < ASMC_MAXLIGHT; i++)
 		if (!(sc->sc_sensor_light[i].flags & SENSOR_FINVALID))
-			asmc_light(sc, i);
+			asmc_light(sc, i, 0);
 #if 0
 	for (i = 0; i < ASMC_MAXMOTION; i++)
 		if (!(sc->sc_sensor_motion[i].flags & SENSOR_FINVALID))
-			asmc_motion(sc, i);
+			asmc_motion(sc, i, 0);
 #endif
 }
