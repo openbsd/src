@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.866 2015/12/23 18:06:32 rpe Exp $
+#	$OpenBSD: install.sub,v 1.867 2015/12/27 18:42:11 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -359,6 +359,68 @@ disklabel_autolayout() {
 		disklabel -F $_f $_op -A $_disk
 		return
 	done
+}
+
+configure_disk() {
+	local _disk=$1 _fstab=/tmp/fstab.$1
+
+	makedev $_disk || return
+
+	# Deal with disklabels, including editing the root disklabel
+	# and labeling additional disks. This is machine-dependent since
+	# some platforms may not be able to provide this functionality.
+	# /tmp/fstab.$_disk is created here with 'disklabel -F'.
+	rm -f /tmp/*.$_disk
+	md_prep_disklabel $_disk || return
+
+	# Make sure there is a '/ mount point.
+	if ! grep -qs ' / ffs ' /tmp/fstab.$ROOTDISK; then
+		echo "'/' must be configured!"
+		return 1
+	fi
+
+	if [[ -f $_fstab ]]; then
+		# Avoid duplicate mount points on different disks.
+		while read _pp _mp _rest; do
+			if [[ $_mp == none ]]; then
+				# Multiple swap partitions are ok.
+				echo "$_pp $_mp $_rest" >>/tmp/fstab
+				continue
+			fi
+			# Non-swap mountpoints must be in only one file.
+			if [[ $_fstab != $(grep -l " $_mp " /tmp/fstab.*) ]]; then 
+				_rest=$_disk
+				_disk=
+				break
+			fi
+		done <$_fstab
+
+		if [[ -z $_disk ]]; then
+			# Duplicate mountpoint.
+			# Allow disklabel(8) to read back mountpoint info
+			# if it is immediately run against the same disk.
+			cat /tmp/fstab.$_rest >/etc/fstab
+			rm /tmp/fstab.$_rest
+			set -- $(grep -h " $_mp " /tmp/fstab.*[0-9])
+			echo "$_pp and $1 can't both be mounted at $_mp."
+			return 1
+		fi
+
+		# Add ffs filesystems to list after newfs'ing them. Ignore
+		# other filesystems.
+		while read _pp _mp _fstype _rest; do
+			[[ $_fstype == ffs ]] || continue
+			_OPT=
+			[[ $_mp == / ]] && _OPT=$MDROOTFSOPT
+			newfs -q $_OPT ${_pp##/dev/}
+			# N.B.: '!' is lexically < '/'. That is
+			#	required for correct sorting of
+			#	mount points.
+			FSENT="$FSENT $_mp!$_pp"
+		done <$_fstab
+	fi
+
+	return 0
 }
 
 # ------------------------------------------------------------------------------

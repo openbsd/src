@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sh,v 1.272 2015/12/23 18:06:32 rpe Exp $
+#	$OpenBSD: install.sh,v 1.273 2015/12/27 18:42:11 rpe Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
@@ -108,21 +108,16 @@ echo
 # Get information about ROOTDISK, etc.
 get_rootinfo
 
-DISK=
 DISKS_DONE=
-_DKDEVS=$(get_dkdevs)
-_fsent=
+FSENT=
 
 # Remove traces of previous install attempt.
 rm -f /tmp/fstab*
 
 # Configure the disk(s).
 while :; do
-	DISKS_DONE=$(addel "$DISK" $DISKS_DONE)
-	_DKDEVS=$(rmel "$DISK" $_DKDEVS)
-
 	# Always do ROOTDISK first, and repeat until it is configured.
-	if isin $ROOTDISK $_DKDEVS; then
+	if ! isin $ROOTDISK $DISKS_DONE; then
 		resp=$ROOTDISK
 		rm -f /tmp/fstab
 	else
@@ -132,63 +127,14 @@ while :; do
 			'$(get_dkdevs_uninitialized)' done
 		[[ $resp == done ]] && break
 	fi
-
-	DISK=$resp
-	makedev $DISK || continue
-
-	# Deal with disklabels, including editing the root disklabel
-	# and labeling additional disks. This is machine-dependent since
-	# some platforms may not be able to provide this functionality.
-	# /tmp/fstab.$DISK is created here with 'disklabel -F'.
-	rm -f /tmp/*.$DISK
-	md_prep_disklabel $DISK || { DISK=; continue; }
-
-	# Make sure there is a '/' mount point.
-	grep -qs " / ffs " /tmp/fstab.$ROOTDISK ||
-		{ DISK=; echo "'/' must be configured!"; continue; }
-
-	if [[ -f /tmp/fstab.$DISK ]]; then
-		# Avoid duplicate mount points on different disks.
-		while read _pp _mp _rest; do
-			if [[ $_mp == none ]]; then
-				# Multiple swap partitions are ok.
-				echo "$_pp $_mp $_rest" >>/tmp/fstab
-				continue
-			fi
-			# Non-swap mountpoints must be in only one file.
-			[[ /tmp/fstab.$DISK == $(grep -l " $_mp " /tmp/fstab.*) ]] ||
-				{ _rest=$DISK; DISK=; break; }
-		done </tmp/fstab.$DISK
-
-		if [[ -z $DISK ]]; then
-			# Duplicate mountpoint.
-			# Allow disklabel(8) to read back mountpoint info
-			# if it is immediately run against the same disk.
-			cat /tmp/fstab.$_rest >/etc/fstab
-			rm /tmp/fstab.$_rest
-			set -- $(grep -h " $_mp " /tmp/fstab.*[0-9])
-			echo "$_pp and $1 can't both be mounted at $_mp."
-			continue
-		fi
-
-		# Add ffs filesystems to list after newfs'ing them. Ignore
-		# other filesystems.
-		while read _pp _mp _fstype _rest; do
-			[[ $_fstype == ffs ]] || continue
-			_OPT=
-			[[ $_mp == / ]] && _OPT=$MDROOTFSOPT
-			newfs -q $_OPT ${_pp##/dev/}
-			# N.B.: '!' is lexically < '/'. That is
-			#	required for correct sorting of
-			#	mount points.
-			_fsent="$_fsent $_mp!$_pp"
-		done </tmp/fstab.$DISK
-	fi
+	_disk=$resp
+	configure_disk $_disk || continue
+	DISKS_DONE=$(addel $_disk $DISKS_DONE)
 done
 
 # Write fstab entries to fstab in mount point alphabetic order
 # to enforce a rational mount order.
-for _mp in $(bsort $_fsent); do
+for _mp in $(bsort $FSENT); do
 	_pp=${_mp##*!}
 	_mp=${_mp%!*}
 	echo -n "$_pp $_mp ffs rw"
