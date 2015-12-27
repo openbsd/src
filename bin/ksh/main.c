@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.76 2015/12/27 09:24:00 halex Exp $	*/
+/*	$OpenBSD: main.c,v 1.77 2015/12/27 19:33:26 jca Exp $	*/
 
 /*
  * startup, main loop, environments and error handling
@@ -120,8 +120,8 @@ char username[_PW_NAME_LEN + 1];
 
 /* The shell uses its own variation on argv, to build variables like
  * $0 and $@.
- * If we need to alter argv, allocate a new array first since
- * modifying the original argv will modify ps output.
+ * Allocate a new array since modifying the original argv will modify
+ * ps output.
  */
 static char **
 make_argv(int argc, char *argv[])
