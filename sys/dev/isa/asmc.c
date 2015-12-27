@@ -1,4 +1,4 @@
-/*	$OpenBSD: asmc.c,v 1.25 2015/12/27 20:17:39 jung Exp $	*/
+/*	$OpenBSD: asmc.c,v 1.26 2015/12/27 20:26:55 jung Exp $	*/
 /*
  * Copyright (c) 2015 Joerg Jung <jung@openbsd.org>
  *
@@ -16,7 +16,7 @@
  */
 
 /*
- * Driver for Apple's System Management Controller (SMC)
+ * Driver for Apple's System Management Controller (SMC) an H8S/2117 chip
  */
 
 #include <sys/param.h>
@@ -71,7 +71,7 @@ struct asmc_softc {
 	struct asmc_prod	*sc_prod;
 	uint8_t			 sc_nfans;	/* number of fans */
 	uint8_t			 sc_lightlen;	/* light data len */
-	uint8_t			 sc_kbdled;	/* backlight led value */
+	uint8_t			 sc_backlight;	/* keyboard backlight value */
 
 	struct rwlock		 sc_lock;
 	struct task		 sc_task_backlight;
@@ -93,7 +93,7 @@ void	asmc_attach(struct device *, struct device *, void *);
 int 	asmc_detach(struct device *, int);
 
 /* wskbd hook functions */
-void	asmc_kbdled(void *);
+void	asmc_backlight(void *);
 int	asmc_get_backlight(struct wskbd_backlight *);
 int	asmc_set_backlight(struct wskbd_backlight *);
 extern int (*wskbd_get_backlight)(struct wskbd_backlight *);
@@ -292,7 +292,7 @@ asmc_attach(struct device *parent, struct device *self, void *aux)
 	    (ntohl(*(uint32_t *)buf) == 1) ? "" : "s");
 
 	/* keyboard backlight led is optional */
-	sc->sc_kbdled = buf[0] = 127, buf[1] = 0;
+	sc->sc_backlight = buf[0] = 127, buf[1] = 0;
 	if ((r = asmc_try(sc, ASMC_WRITE, "LKSB", buf, 2))) {
 		if (r != ASMC_NOTFOUND)
 			printf("%s: keyboard backlight failed (0x%x)\n",
@@ -301,7 +301,7 @@ asmc_attach(struct device *parent, struct device *self, void *aux)
 		wskbd_get_backlight = asmc_get_backlight;
 		wskbd_set_backlight = asmc_set_backlight;
 	}
-	task_set(&sc->sc_task_backlight, asmc_kbdled, sc);
+	task_set(&sc->sc_task_backlight, asmc_backlight, sc);
 
 	strlcpy(sc->sc_sensor_dev.xname, sc->sc_dev.dv_xname,
 	    sizeof(sc->sc_sensor_dev.xname));
@@ -339,7 +339,7 @@ int
 asmc_detach(struct device *self, int flags)
 {
 	struct asmc_softc *sc = (struct asmc_softc *)self;
-	uint8_t buf[2] = { (sc->sc_kbdled = 0), 0 };
+	uint8_t buf[2] = { (sc->sc_backlight = 0), 0 };
 	int i;
 
 	if (sc->sc_sensor_task) {
@@ -362,10 +362,10 @@ asmc_detach(struct device *self, int flags)
 }
 
 void
-asmc_kbdled(void *arg)
+asmc_backlight(void *arg)
 {
 	struct asmc_softc *sc = arg;
-	uint8_t buf[2] = { sc->sc_kbdled, 0 };
+	uint8_t buf[2] = { sc->sc_backlight, 0 };
 	int r;
 
 	if ((r = asmc_try(sc, ASMC_WRITE, "LKSB", buf, 2)))
@@ -381,7 +381,7 @@ asmc_get_backlight(struct wskbd_backlight *kbl)
 	KASSERT(sc != NULL);
 	kbl->min = 0;
 	kbl->max = 0xff;
-	kbl->curval = sc->sc_kbdled;
+	kbl->curval = sc->sc_backlight;
 	return 0;
 }
 
@@ -393,7 +393,7 @@ asmc_set_backlight(struct wskbd_backlight *kbl)
 	KASSERT(sc != NULL);
 	if (kbl->curval > 0xff)
 		return EINVAL;
-	sc->sc_kbdled = kbl->curval;
+	sc->sc_backlight = kbl->curval;
 	task_add(systq, &sc->sc_task_backlight);
 	return 0;
 }
