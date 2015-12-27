@@ -1,4 +1,4 @@
-/*	$OpenBSD: cp.c,v 1.6 2015/12/26 18:11:43 guenther Exp $	*/
+/*	$OpenBSD: cp.c,v 1.7 2015/12/27 01:25:57 chl Exp $	*/
 /*	$NetBSD: cp.c,v 1.14 1995/09/07 06:14:51 jtc Exp $	*/
 
 /*
@@ -386,7 +386,7 @@ copy(char *argv[], enum op type, int fts_options)
 }
 
 
-/*	$OpenBSD: cp.c,v 1.6 2015/12/26 18:11:43 guenther Exp $	*/
+/*	$OpenBSD: cp.c,v 1.7 2015/12/27 01:25:57 chl Exp $	*/
 /*	$NetBSD: utils.c,v 1.6 1997/02/26 14:40:51 cgd Exp $	*/
 
 /*-
@@ -438,7 +438,7 @@ copy_file(FTSENT *entp, int dne)
 {
 	static char *buf;
 	static char *zeroes;
-	struct stat to_stat, *fs;
+	struct stat *fs;
 	int ch, checkch, from_fd, rcount, rval, to_fd, wcount;
 #ifdef VM_AND_BUFFER_CACHE_SYNCHRONIZED
 	char *p;
