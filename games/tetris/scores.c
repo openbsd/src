@@ -1,4 +1,4 @@
-/*	$OpenBSD: scores.c,v 1.16 2015/11/29 14:31:02 tb Exp $	*/
+/*	$OpenBSD: scores.c,v 1.17 2015/12/27 01:24:27 chl Exp $	*/
 /*	$NetBSD: scores.c,v 1.2 1995/04/22 07:42:38 cgd Exp $	*/
 
 /*-
@@ -94,7 +94,7 @@ static char *thisuser(void);
 static void
 getscores(FILE **fpp)
 {
-	int sd, mint, mask, i, ret;
+	int sd, mint, i, ret;
 	char *mstr, *human, *home;
 	char scorepath[PATH_MAX];
 	FILE *sf;
