@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.138 2015/12/23 21:07:57 deraadt Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.139 2015/12/27 01:37:46 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -64,6 +64,7 @@
 #define PLEDGENAMES
 #include <sys/pledge.h>
 
+#include "pty.h"
 #include "pty.h"
 
 int pledgereq_flags(const char *req);
@@ -1174,7 +1175,7 @@ pledge_ioctl(struct proc *p, long com, struct file *fp)
 	}
 
 	if ((p->p_p->ps_pledge & PLEDGE_AUDIO)) {
-#ifndef SMALL_KERNEL
+#if NAUDIO > 0
 		switch (com) {
 		case AUDIO_GETPOS:
 		case AUDIO_SETINFO:
@@ -1187,7 +1188,7 @@ pledge_ioctl(struct proc *p, long com, struct file *fp)
 			    cdevsw[major(vp->v_rdev)].d_open == audioopen)
 				return (0);
 		}
-#endif /* !SMALL_KERNEL */
+#endif /* NAUDIO > 0 */
 	}
 
 	if ((p->p_p->ps_pledge & PLEDGE_DISKLABEL)) {
