@@ -1,4 +1,4 @@
-/*	$OpenBSD: identcpu.c,v 1.70 2015/12/12 12:33:49 reyk Exp $	*/
+/*	$OpenBSD: identcpu.c,v 1.71 2015/12/27 04:31:34 jsg Exp $	*/
 /*	$NetBSD: identcpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*
@@ -62,6 +62,7 @@ int amd64_has_pclmul;
 int amd64_has_aesni;
 #endif
 int has_rdrand;
+int has_rdseed;
 
 #include "pvbus.h"
 #if NPVBUS > 0
@@ -604,6 +605,9 @@ identifycpu(struct cpu_info *ci)
 
 		if (cpu_ecxfeature & CPUIDECX_RDRAND)
 			has_rdrand = 1;
+
+		if (ci->ci_feature_sefflags_ebx & SEFF0EBX_RDSEED)
+			has_rdseed = 1;
 
 		if (ci->ci_feature_sefflags_ebx & SEFF0EBX_SMAP)
 			replacesmap();

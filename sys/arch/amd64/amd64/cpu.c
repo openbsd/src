@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.93 2015/12/06 03:14:55 dlg Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.94 2015/12/27 04:31:34 jsg Exp $	*/
 /* $NetBSD: cpu.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $ */
 
 /*-
@@ -875,23 +875,27 @@ void
 rdrand(void *v)
 {
 	struct timeout *tmo = v;
-	extern int	has_rdrand;
+	extern int	has_rdrand, has_rdseed;
 	union {
 		uint64_t u64;
 		uint32_t u32[2];
 	} r;
-	uint64_t valid;
+	uint8_t valid;
 	int i;
 
-	if (has_rdrand == 0)
+	if (has_rdrand == 0 && has_rdseed == 0)
 		return;
 	for (i = 0; i < 2; i++) {
-		__asm volatile(
-		    "xor	%1, %1\n\t"
-		    "rdrand	%0\n\t"
-		    "rcl	$1, %1\n"
-		    : "=r" (r.u64), "=r" (valid) );
-
+		if (has_rdseed)
+			__asm volatile(
+			    "rdseed	%0\n\t"
+			    "setc	%1\n"
+			    : "=r" (r.u64), "=qm" (valid) );
+		if (has_rdseed == 0 || valid == 0)
+			__asm volatile(
+			    "rdrand	%0\n\t"
+			    "setc	%1\n"
+			    : "=r" (r.u64), "=qm" (valid) );
 		if (valid) {
 			add_true_randomness(r.u32[0]);
 			add_true_randomness(r.u32[1]);

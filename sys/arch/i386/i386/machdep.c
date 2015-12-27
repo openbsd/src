@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.578 2015/12/12 12:33:49 reyk Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.579 2015/12/27 04:31:34 jsg Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -314,6 +314,7 @@ int allowaperture = 0;
 #endif
 
 int has_rdrand;
+int has_rdseed;
 
 #include "pvbus.h"
 #if NPVBUS > 0
@@ -2038,6 +2039,8 @@ identifycpu(struct cpu_info *ci)
 	if (ci->ci_flags & CPUF_PRIMARY) {
 		if (cpu_ecxfeature & CPUIDECX_RDRAND)
 			has_rdrand = 1;
+		if (ci->ci_feature_sefflags_ebx & SEFF0EBX_RDSEED)
+			has_rdseed = 1;
 #ifndef SMALL_KERNEL
 		if (ci->ci_feature_sefflags_ebx & SEFF0EBX_SMAP)
 			replacesmap();
