@@ -35,6 +35,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include <stdlib.h>
 #include <string.h>
 #include <err.h>
+#include <unistd.h>
 
 char *program_name;
 #if 0
