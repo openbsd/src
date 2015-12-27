@@ -81,7 +81,7 @@ struct filestate {
  * Macros to manipulate the list of buffers in thisfile->buflist.
  */
 #define	FOR_BUFS(bn) \
-	for (bn = ch_bufhead;  bn != END_OF_CHAIN;  bn = bn->next)
+	for ((bn) = ch_bufhead;  (bn) != END_OF_CHAIN;  (bn) = (bn)->next)
 
 #define	BUF_RM(bn) \
 	(bn)->next->prev = (bn)->prev; \
