@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.75 2015/12/14 13:59:42 tb Exp $	*/
+/*	$OpenBSD: main.c,v 1.76 2015/12/27 09:24:00 halex Exp $	*/
 
 /*
  * startup, main loop, environments and error handling
@@ -127,15 +127,13 @@ static char **
 make_argv(int argc, char *argv[])
 {
 	int i;
-	char **nargv = argv;
+	char **nargv;
 
-	if (strcmp(argv[0], kshname) != 0) {
-		nargv = areallocarray(NULL, argc + 1, sizeof(char *), &aperm);
-		nargv[0] = (char *) kshname;
-		for (i = 1; i < argc; i++)
-			nargv[i] = argv[i];
-		nargv[i] = NULL;
-	}
+	nargv = areallocarray(NULL, argc + 1, sizeof(char *), &aperm);
+	nargv[0] = (char *) kshname;
+	for (i = 1; i < argc; i++)
+		nargv[i] = argv[i];
+	nargv[i] = NULL;
 
 	return nargv;
 }
