@@ -1,4 +1,4 @@
-/*	$OpenBSD: asmc.c,v 1.27 2015/12/27 20:42:33 jung Exp $	*/
+/*	$OpenBSD: asmc.c,v 1.28 2015/12/27 20:54:53 jung Exp $	*/
 /*
  * Copyright (c) 2015 Joerg Jung <jung@openbsd.org>
  *
@@ -306,22 +306,18 @@ asmc_attach(struct device *parent, struct device *self, void *aux)
 	strlcpy(sc->sc_sensor_dev.xname, sc->sc_dev.dv_xname,
 	    sizeof(sc->sc_sensor_dev.xname));
 	for (i = 0; i < ASMC_MAXTEMP; i++) {
-		sc->sc_sensor_temp[i].type = SENSOR_TEMP;
 		sc->sc_sensor_temp[i].flags |= SENSOR_FINVALID;
 		sc->sc_sensor_temp[i].flags |= SENSOR_FUNKNOWN;
 	}
 	for (i = 0; i < ASMC_MAXFAN; i++) {
-		sc->sc_sensor_fan[i].type = SENSOR_FANRPM;
 		sc->sc_sensor_fan[i].flags |= SENSOR_FINVALID;
 		sc->sc_sensor_fan[i].flags |= SENSOR_FUNKNOWN;
 	}
 	for (i = 0; i < ASMC_MAXLIGHT; i++) {
-		sc->sc_sensor_light[i].type = SENSOR_LUX;
 		sc->sc_sensor_light[i].flags |= SENSOR_FINVALID;
 		sc->sc_sensor_light[i].flags |= SENSOR_FUNKNOWN;
 	}
 	for (i = 0; i < ASMC_MAXMOTION; i++) {
-		sc->sc_sensor_motion[i].type = SENSOR_ACCEL;
 		sc->sc_sensor_motion[i].flags |= SENSOR_FINVALID;
 		sc->sc_sensor_motion[i].flags |= SENSOR_FUNKNOWN;
 	}
@@ -542,6 +538,7 @@ asmc_temp(struct asmc_softc *sc, uint8_t idx, int init)
 		strlcat(sc->sc_sensor_temp[idx].desc, asmc_temp_desc[i][1],
 		    sizeof(sc->sc_sensor_temp[idx].desc));
 	}
+	sc->sc_sensor_temp[idx].type = SENSOR_TEMP;
 	sc->sc_sensor_temp[idx].flags &= ~SENSOR_FINVALID;
 	sensor_attach(&sc->sc_sensor_dev, &sc->sc_sensor_temp[idx]);
 	return 0;
@@ -578,6 +575,7 @@ asmc_fan(struct asmc_softc *sc, uint8_t idx, int init)
 		strlcat(sc->sc_sensor_fan[idx].desc, asmc_fan_loc[buf[2]],
 		    sizeof(sc->sc_sensor_fan[idx].desc));
 	}
+	sc->sc_sensor_fan[idx].type = SENSOR_FANRPM;
 	sc->sc_sensor_fan[idx].flags &= ~SENSOR_FINVALID;
 	sensor_attach(&sc->sc_sensor_dev, &sc->sc_sensor_fan[idx]);
 	return 0;
@@ -609,6 +607,7 @@ asmc_light(struct asmc_softc *sc, uint8_t idx, int init)
 
 	strlcpy(sc->sc_sensor_light[idx].desc, asmc_light_desc[idx],
 	    sizeof(sc->sc_sensor_light[idx].desc));
+	sc->sc_sensor_light[idx].type = SENSOR_LUX;
 	sc->sc_sensor_light[idx].flags &= ~SENSOR_FINVALID;
 	sensor_attach(&sc->sc_sensor_dev, &sc->sc_sensor_light[idx]);
 	return 0;
@@ -636,6 +635,7 @@ asmc_motion(struct asmc_softc *sc, uint8_t idx, int init)
 	    sizeof(sc->sc_sensor_motion[idx].desc));
 	strlcat(sc->sc_sensor_motion[idx].desc, "-axis",
 	    sizeof(sc->sc_sensor_motion[idx].desc));
+	sc->sc_sensor_motion[idx].type = SENSOR_ACCEL;
 	sc->sc_sensor_motion[idx].flags &= ~SENSOR_FINVALID;
 	sensor_attach(&sc->sc_sensor_dev, &sc->sc_sensor_motion[idx]);
 	return 0;
