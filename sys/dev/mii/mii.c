@@ -1,4 +1,4 @@
-/*	$OpenBSD: mii.c,v 1.21 2010/04/20 20:42:16 deraadt Exp $	*/
+/*	$OpenBSD: mii.c,v 1.22 2015/12/28 22:25:40 mmcc Exp $	*/
 /*	$NetBSD: mii.c,v 1.19 2000/02/02 17:09:44 thorpej Exp $	*/
 
 /*-
@@ -95,7 +95,7 @@ mii_attach(struct device *parent, struct mii_data *mii, int capmask,
 				 * configured at this address.
 				 */
 				offset++;
-				continue;
+				goto loop_end;
 			}
 		}
 
@@ -144,6 +144,8 @@ mii_attach(struct device *parent, struct mii_data *mii, int capmask,
 			mii->mii_instance++;
 		}
 		offset++;
+
+		loop_end: ;
 	}
 }
 
