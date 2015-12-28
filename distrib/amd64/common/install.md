@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.48 2015/12/18 16:20:58 rpe Exp $
+#	$OpenBSD: install.md,v 1.49 2015/12/28 17:00:13 rpe Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -125,8 +125,10 @@ __EOT
 			echo "try again." ;;
 		o*|O*)
 			[[ $_d == OpenBSD ]] || continue
-			if disk_has $_disk gpt && ! disk_has $_disk gpt efisys; then
+			if [[ $_disk == $ROOTDISK ]] && disk_has $_disk gpt &&
+				! disk_has $_disk gpt efisys; then
 				echo "No EFI Sys partition in GPT, try again."
+				$AUTO && exit 1
 				continue
 			fi
 			return ;;
