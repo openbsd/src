@@ -1,4 +1,4 @@
-/*	$OpenBSD: regcomp.c,v 1.27 2015/11/01 03:45:29 guenther Exp $ */
+/*	$OpenBSD: regcomp.c,v 1.28 2015/12/28 22:08:18 mmcc Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994 Henry Spencer.
  * Copyright (c) 1992, 1993, 1994
@@ -1184,8 +1184,7 @@ mcadd( struct parse *p, cset *cs, char *cp)
 	cs->smultis += strlen(cp) + 1;
 	np = realloc(cs->multis, cs->smultis);
 	if (np == NULL) {
-		if (cs->multis)
-			free(cs->multis);
+		free(cs->multis);
 		cs->multis = NULL;
 		SETERROR(REG_ESPACE);
 		return;

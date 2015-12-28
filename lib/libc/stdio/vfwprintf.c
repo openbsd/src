@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfwprintf.c,v 1.14 2015/09/29 03:19:24 guenther Exp $ */
+/*	$OpenBSD: vfwprintf.c,v 1.15 2015/12/28 22:08:18 mmcc Exp $ */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -667,10 +667,7 @@ reswitch:	switch (ch) {
 				prec = dtoaend - dtoaresult;
 			if (expt == INT_MAX)
 				ox[1] = '\0';
-			if (convbuf) {
-				free(convbuf);
-				convbuf = NULL;
-			}
+			free(convbuf);
 			cp = convbuf = __mbsconv(dtoaresult, -1);
 			if (cp == NULL)
 				goto error;
@@ -719,10 +716,7 @@ fp_begin:
 				if (expt == 9999)
 					expt = INT_MAX;
  			}
-			if (convbuf) {
-				free(convbuf);
-				convbuf = NULL;
-			}
+			free(convbuf);
 			cp = convbuf = __mbsconv(dtoaresult, -1);
 			if (cp == NULL)
 				goto error;
@@ -828,10 +822,7 @@ fp_common:
 				char *mbsarg;
 				if ((mbsarg = GETARG(char *)) == NULL)
 					mbsarg = "(null)";
-				if (convbuf) {
-					free(convbuf);
-					convbuf = NULL;
-				}
+				free(convbuf);
 				convbuf = __mbsconv(mbsarg, prec);
 				if (convbuf == NULL) {
 					fp->_flags |= __SERR;
@@ -1047,8 +1038,7 @@ overflow:
 	ret = -1;
 
 finish:
-	if (convbuf)
-		free(convbuf);
+	free(convbuf);
 #ifdef FLOATING_POINT
 	if (dtoaresult)
 		__freedtoa(dtoaresult);

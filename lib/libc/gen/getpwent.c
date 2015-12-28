@@ -1,4 +1,4 @@
-/*	$OpenBSD: getpwent.c,v 1.59 2015/12/01 15:08:25 deraadt Exp $ */
+/*	$OpenBSD: getpwent.c,v 1.60 2015/12/28 22:08:18 mmcc Exp $ */
 /*
  * Copyright (c) 2008 Theo de Raadt
  * Copyright (c) 1988, 1993
@@ -553,10 +553,8 @@ __yppwlookup(int lookup, char *name, uid_t uid, struct passwd *pw,
 
 			switch (pw->pw_name[1]) {
 			case '\0':
-				if (ypcurrent) {
-					free(ypcurrent);
-					ypcurrent = NULL;
-				}
+				free(ypcurrent);
+				ypcurrent = NULL;
 				r = yp_match(__ypdomain, map,
 				    name, strlen(name),
 				    &ypcurrent, &ypcurrentlen);
@@ -568,10 +566,8 @@ __yppwlookup(int lookup, char *name, uid_t uid, struct passwd *pw,
 				break;
 			case '@':
 pwnam_netgrp:
-				if (ypcurrent) {
-					free(ypcurrent);
-					ypcurrent = NULL;
-				}
+				free(ypcurrent);
+				ypcurrent = NULL;
 				if (s == -1)	/* first time */
 					setnetgrent(pw->pw_name + 2);
 				s = getnetgrent(&host, &user, &dom);
@@ -599,10 +595,8 @@ pwnam_netgrp:
 				}
 				break;
 			default:
-				if (ypcurrent) {
-					free(ypcurrent);
-					ypcurrent = NULL;
-				}
+				free(ypcurrent);
+				ypcurrent = NULL;
 				user = pw->pw_name + 1;
 				r = yp_match(__ypdomain, map,
 				    user, strlen(user),

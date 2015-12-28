@@ -1,4 +1,4 @@
-/*	$OpenBSD: glob.c,v 1.45 2015/11/24 22:03:33 millert Exp $ */
+/*	$OpenBSD: glob.c,v 1.46 2015/12/28 22:08:18 mmcc Exp $ */
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -810,14 +810,10 @@ globextend(const Char *path, glob_t *pglob, struct glob_lim *limitp,
 			    pglob->gl_pathv && pglob->gl_pathv[i])
 				free(pglob->gl_statv[i]);
 		}
-		if (pglob->gl_pathv) {
-			free(pglob->gl_pathv);
-			pglob->gl_pathv = NULL;
-		}
-		if (pglob->gl_statv) {
-			free(pglob->gl_statv);
-			pglob->gl_statv = NULL;
-		}
+		free(pglob->gl_pathv);
+		pglob->gl_pathv = NULL;
+		free(pglob->gl_statv);
+		pglob->gl_statv = NULL;
 		return(GLOB_NOSPACE);
 	}
 

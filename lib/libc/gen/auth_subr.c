@@ -1,4 +1,4 @@
-/*	$OpenBSD: auth_subr.c,v 1.49 2015/11/24 22:03:33 millert Exp $	*/
+/*	$OpenBSD: auth_subr.c,v 1.50 2015/12/28 22:08:18 mmcc Exp $	*/
 
 /*
  * Copyright (c) 2000-2002,2004 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -313,10 +313,8 @@ auth_challenge(auth_session_t *as)
 
 	as->state = 0;
 
-	if (as->challenge) {
-		free(as->challenge);
-		as->challenge = NULL;
-	}
+	free(as->challenge);
+	as->challenge = NULL;
 
 	auth_call(as, path, as->style, "-s", "challenge", as->name,
 	    as->class, (char *)NULL);

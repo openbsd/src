@@ -1,4 +1,4 @@
-/*	$OpenBSD: hash_bigkey.c,v 1.18 2015/01/16 16:48:51 deraadt Exp $	*/
+/*	$OpenBSD: hash_bigkey.c,v 1.19 2015/12/28 22:08:18 mmcc Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -452,8 +452,7 @@ collect_data(HTAB *hashp, BUFHEAD *bufp, int len, int set)
 
 	if (bp[2] == FULL_KEY_DATA) {		/* End of Data */
 		totlen = len + mylen;
-		if (hashp->tmp_buf)
-			free(hashp->tmp_buf);
+		free(hashp->tmp_buf);
 		if ((hashp->tmp_buf = (char *)malloc(totlen)) == NULL)
 			return (-1);
 		if (set) {
@@ -518,8 +517,7 @@ collect_key(HTAB *hashp, BUFHEAD *bufp, int len, DBT *val, int set)
 	save_addr = bufp->addr;
 	totlen = len + mylen;
 	if (bp[2] == FULL_KEY || bp[2] == FULL_KEY_DATA) {    /* End of Key. */
-		if (hashp->tmp_key != NULL)
-			free(hashp->tmp_key);
+		free(hashp->tmp_key);
 		if ((hashp->tmp_key = (char *)malloc(totlen)) == NULL)
 			return (-1);
 		if (__big_return(hashp, bufp, 1, val, set))

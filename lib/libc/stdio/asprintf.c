@@ -1,4 +1,4 @@
-/*	$OpenBSD: asprintf.c,v 1.21 2015/08/31 02:53:57 guenther Exp $	*/
+/*	$OpenBSD: asprintf.c,v 1.22 2015/12/28 22:08:18 mmcc Exp $	*/
 
 /*
  * Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -52,10 +52,8 @@ asprintf(char **str, const char *fmt, ...)
 	return (ret);
 
 err:
-	if (f._bf._base) {
-		free(f._bf._base);
-		f._bf._base = NULL;
-	}
+	free(f._bf._base);
+	f._bf._base = NULL;
 	*str = NULL;
 	errno = ENOMEM;
 	return (-1);

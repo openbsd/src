@@ -1,4 +1,4 @@
-/*	$OpenBSD: bt_open.c,v 1.18 2014/09/15 06:12:19 guenther Exp $	*/
+/*	$OpenBSD: bt_open.c,v 1.19 2015/12/28 22:08:18 mmcc Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -318,8 +318,7 @@ eftype:	errno = EFTYPE;
 
 err:	saved_errno = errno;
 	if (t) {
-		if (t->bt_dbp)
-			free(t->bt_dbp);
+		free(t->bt_dbp);
 		if (t->bt_fd != -1)
 			(void)close(t->bt_fd);
 		free(t);

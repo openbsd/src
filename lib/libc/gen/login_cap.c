@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_cap.c,v 1.32 2015/09/14 16:09:13 tedu Exp $	*/
+/*	$OpenBSD: login_cap.c,v 1.33 2015/12/28 22:08:18 mmcc Exp $	*/
 
 /*
  * Copyright (c) 2000-2004 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -164,10 +164,8 @@ login_getstyle(login_cap_t *lc, char *style, char *atype)
 	if (style && strcmp(style, "s/key") == 0)
 		style = "skey";
 
-	if (lc->lc_style) {
-		free(lc->lc_style);
-		lc->lc_style = NULL;
-	}
+	free(lc->lc_style);
+	lc->lc_style = NULL;
 
     	if (!atype || !(auths = login_getcapstr(lc, atype, NULL, NULL)))
 		auths = login_getcapstr(lc, "auth", NULL, NULL);
