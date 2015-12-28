@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1time.c,v 1.7 2015/10/25 11:59:37 miod Exp $ */
+/* $OpenBSD: asn1time.c,v 1.8 2015/12/28 14:18:38 bcook Exp $ */
 /*
  * Copyright (c) 2015 Joel Sing <jsing@openbsd.org>
  *
@@ -232,7 +232,7 @@ asn1_gentime_test(int test_no, struct asn1_time_test *att)
 {
 	const unsigned char *der;
 	unsigned char *p = NULL;
-	ASN1_GENERALIZEDTIME *gt;
+	ASN1_GENERALIZEDTIME *gt = NULL;
 	int failure = 1;
 	int len;
 
