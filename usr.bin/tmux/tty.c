@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.196 2015/12/11 16:37:21 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.197 2015/12/28 14:02:52 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -491,7 +491,7 @@ tty_update_mode(struct tty *tty, int mode, struct screen *s)
 {
 	int	changed;
 
-	if (s != NULL && strcmp(s->ccolour, tty->ccolour))
+	if (s != NULL && strcmp(s->ccolour, tty->ccolour) != 0)
 		tty_force_cursor_colour(tty, s->ccolour);
 
 	if (tty->flags & TTY_NOCURSOR)
