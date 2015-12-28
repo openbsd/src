@@ -1,4 +1,4 @@
-/*	$OpenBSD: sparc64_installboot.c,v 1.6 2015/11/30 17:34:57 jsing Exp $	*/
+/*	$OpenBSD: sparc64_installboot.c,v 1.7 2015/12/28 23:00:29 krw Exp $	*/
 
 /*
  * Copyright (c) 2012, 2013 Joel Sing <jsing@openbsd.org>
@@ -103,13 +103,11 @@ md_installboot(int devfd, char *dev)
 			exit(1);
 
 	/* Write bootblock into the superblock. */
-	if (lseek(devfd, DEV_BSIZE, SEEK_SET) != DEV_BSIZE)
-		err(1, "lseek");
 	if (verbose)
 		fprintf(stderr, "%s boot block to disk %s\n",
 		    (nowrite ? "would write" : "writing"), dev);
 	if (nowrite)
 		return;
-	if (write(devfd, blkstore, blksize) != (ssize_t)blksize)
-		err(1, "write");
+	if (pwrite(devfd, blkstore, blksize, DEV_BSIZE) != (ssize_t)blksize)
+		err(1, "pwrite");
 }
