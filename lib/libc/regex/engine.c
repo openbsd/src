@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.18 2014/10/09 02:50:16 deraadt Exp $	*/
+/*	$OpenBSD: engine.c,v 1.19 2015/12/28 23:01:22 mmcc Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994 Henry Spencer.
@@ -277,10 +277,8 @@ matcher(struct re_guts *g, char *string, size_t nmatch, regmatch_t pmatch[],
 			}
 	}
 
-	if (m->pmatch != NULL)
-		free((char *)m->pmatch);
-	if (m->lastpos != NULL)
-		free((char *)m->lastpos);
+	free(m->pmatch);
+	free(m->lastpos);
 	STATETEARDOWN(m);
 	return(0);
 }
