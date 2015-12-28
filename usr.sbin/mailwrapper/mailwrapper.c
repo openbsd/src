@@ -1,4 +1,4 @@
-/*	$OpenBSD: mailwrapper.c,v 1.21 2015/12/14 02:56:07 sunil Exp $	*/
+/*	$OpenBSD: mailwrapper.c,v 1.22 2015/12/28 16:27:28 jung Exp $	*/
 /*	$NetBSD: mailwrapper.c,v 1.2 1999/02/20 22:10:07 thorpej Exp $	*/
 
 /*
@@ -51,7 +51,7 @@ struct arglist {
 int main(int, char *[], char *[]);
 
 static void initarg(struct arglist *);
-static void addarg(struct arglist *, const char *, int);
+static void addarg(struct arglist *, const char *);
 
 extern const char *__progname;	/* from crt0.o */
 
@@ -65,7 +65,7 @@ initarg(struct arglist *al)
 }
 
 static void
-addarg(struct arglist *al, const char *arg, int copy)
+addarg(struct arglist *al, const char *arg)
 {
 	if (al->argc == al->maxc) {
 		al->maxc <<= 1;
@@ -73,11 +73,8 @@ addarg(struct arglist *al, const char *arg, int copy)
 		if (al->argv == NULL)
 			err(1, "realloc");
 	}
-	if (copy) {
-		if ((al->argv[al->argc++] = strdup(arg)) == NULL)
-			err(1, "strdup");
-	} else
-		al->argv[al->argc++] = (char *)arg;
+
+	al->argv[al->argc++] = (char *)arg;
 }
 
 int
@@ -98,7 +95,7 @@ main(int argc, char *argv[], char *envp[])
 
 	initarg(&al);
 	for (len = 0; len < argc; len++)
-		addarg(&al, argv[len], 0);
+		addarg(&al, argv[len]);
 
 	config = fopen(_PATH_MAILERCONF, "r");
 
@@ -106,7 +103,7 @@ main(int argc, char *argv[], char *envp[])
 		err(1, "pledge");
 
 	if (config == NULL) {
-		addarg(&al, NULL, 0);
+		addarg(&al, NULL);
 		openlog(__progname, LOG_PID, LOG_MAIL);
 		syslog(LOG_INFO, "cannot open %s, using %s as default MTA",
 		    _PATH_MAILERCONF, _PATH_DEFAULTMTA);
@@ -145,7 +142,7 @@ main(int argc, char *argv[], char *envp[])
 			for (ap = strsep(&cp, WS); ap != NULL;
 			    ap = strsep(&cp, WS))
 				if (*ap)
-					addarg(&al, ap, 0);
+					addarg(&al, ap);
 			break;
 		}
 
@@ -154,7 +151,7 @@ main(int argc, char *argv[], char *envp[])
 
 	(void)fclose(config);
 
-	addarg(&al, NULL, 0);
+	addarg(&al, NULL);
 
 	execve(to, al.argv, envp);
 	err(1, "cannot exec %s", to);
