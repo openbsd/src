@@ -1,4 +1,4 @@
-/*	$OpenBSD: delivery_filename.c,v 1.13 2015/10/10 11:42:49 jung Exp $	*/
+/*	$OpenBSD: delivery_filename.c,v 1.14 2015/12/28 19:47:57 millert Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@poolp.org>
@@ -87,7 +87,8 @@ delivery_filename_open(struct deliver *deliver)
 			else
 				putc('>', fp);
 		}
-		fprintf(fp, "%s\n", ln);
+		fputs(ln, fp);
+		putc('\n', fp);
 		if (ferror(fp))
 			break;
 	}
