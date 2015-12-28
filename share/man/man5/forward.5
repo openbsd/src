@@ -1,4 +1,4 @@
-.\"	$OpenBSD: forward.5,v 1.10 2012/08/12 17:01:35 schwarze Exp $
+.\"	$OpenBSD: forward.5,v 1.11 2015/12/28 23:30:59 mmcc Exp $
 .\"
 .\"	Copyright (c) 2001 Marco S. Hyman
 .\"
@@ -10,12 +10,12 @@
 .\"	IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
 .\"	WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 .\"
-.Dd $Mdocdate: August 12 2012 $
+.Dd $Mdocdate: December 28 2015 $
 .Dt FORWARD 5
 .Os
 .Sh NAME
 .Nm forward
-.Nd e-mail forwarding information file
+.Nd email forwarding information file
 .Sh DESCRIPTION
 Users may put a file named
 .Pa .forward
@@ -29,7 +29,7 @@ file.
 .Pp
 A
 .Pa .forward
-file contains one or more lines where each line is an e-mail address
+file contains one or more lines where each line is an email address
 or the name of a private incoming mailer where incoming mail will be
 forwarded.
 Multiple entries may be specified on one line, comma separated.
@@ -47,7 +47,7 @@ file must be owned by and readable by the indicated user.
 .Sh FILES
 .Bl -tag -width $HOME/.forward -compact
 .It Pa $HOME/.forward
-e-mail forwarding information
+email forwarding information
 .El
 .Sh EXAMPLES
 .Bd -literal -offset indent
