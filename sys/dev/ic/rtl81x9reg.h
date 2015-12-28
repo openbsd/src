@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtl81x9reg.h,v 1.96 2015/11/02 00:08:50 dlg Exp $	*/
+/*	$OpenBSD: rtl81x9reg.h,v 1.97 2015/12/28 05:49:15 jmatthew Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -918,6 +918,7 @@ struct rl_softc {
 #define	RL_IMTYPE_NONE		0
 #define	RL_IMTYPE_SIM		1	/* simulated */
 #define	RL_IMTYPE_HW		2	/* hardware based */
+	int			rl_timerintr;
 };
 
 /*
