@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.h,v 1.42 2015/11/19 21:03:36 millert Exp $	*/
+/*	$OpenBSD: queue.h,v 1.43 2015/12/28 19:38:40 millert Exp $	*/
 /*	$NetBSD: queue.h,v 1.11 1996/05/16 05:17:14 mycroft Exp $	*/
 
 /*
@@ -37,7 +37,7 @@
 
 /*
  * This file defines five types of data structures: singly-linked lists,
- * lists, simple queues, tail queues, and circular queues.
+ * lists, simple queues, tail queues and XOR simple queues.
  *
  *
  * A singly-linked list is headed by a single forward pointer. The elements
@@ -57,7 +57,7 @@
  * or after an existing element or at the head of the list. A list
  * may only be traversed in the forward direction.
  *
- * A simple queue is headed by a pair of pointers, one the head of the
+ * A simple queue is headed by a pair of pointers, one to the head of the
  * list and the other to the tail of the list. The elements are singly
  * linked to save space, so elements can only be removed from the
  * head of the list. New elements can be added to the list before or after
@@ -71,13 +71,10 @@
  * after an existing element, at the head of the list, or at the end of
  * the list. A tail queue may be traversed in either direction.
  *
- * A circle queue is headed by a pair of pointers, one to the head of the
- * list and the other to the tail of the list. The elements are doubly
- * linked so that an arbitrary element can be removed without a need to
- * traverse the list. New elements can be added to the list before or after
- * an existing element, at the head of the list, or at the end of the list.
- * A circle queue may be traversed in either direction, but has a more
- * complex end of list detection.
+ * An XOR simple queue is used in the same way as a regular simple queue.
+ * The difference is that the head structure also includes a "cookie" that
+ * is XOR'd with the queue pointer (first, last or next) to generate the
+ * real pointer value.
  *
  * For details on the use of these macros, see the queue(3) manual page.
  */
@@ -179,7 +176,7 @@ struct {								\
 }
 
 /*
- * List access methods
+ * List access methods.
  */
 #define	LIST_FIRST(head)		((head)->lh_first)
 #define	LIST_END(head)			NULL
@@ -423,7 +420,7 @@ struct {								\
 }
 
 /*
- * tail queue access methods
+ * Tail queue access methods.
  */
 #define	TAILQ_FIRST(head)		((head)->tqh_first)
 #define	TAILQ_END(head)			NULL
