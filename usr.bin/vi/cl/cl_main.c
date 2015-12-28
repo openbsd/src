@@ -1,4 +1,4 @@
-/*	$OpenBSD: cl_main.c,v 1.27 2015/12/07 20:39:19 mmcc Exp $	*/
+/*	$OpenBSD: cl_main.c,v 1.28 2015/12/28 19:24:01 millert Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -16,6 +16,7 @@
 
 #include <bitstring.h>
 #include <curses.h>
+#include <err.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <paths.h>
@@ -36,7 +37,6 @@ sigset_t __sigblockset;				/* GLOBAL: Blocked signals. */
 static void	   cl_func_std(GS *);
 static CL_PRIVATE *cl_init(GS *);
 static GS	  *gs_init(char *);
-static void	   perr(char *, char *);
 static int	   setsig(int, struct sigaction *, void (*)(int));
 static void	   sig_end(GS *);
 static void	   term_init(char *, char *);
@@ -78,7 +78,7 @@ main(int argc, char *argv[])
 	/* Add the terminal type to the global structure. */
 	if ((OG_D_STR(gp, GO_TERM) =
 	    OG_STR(gp, GO_TERM) = strdup(ttype)) == NULL)
-		perr(gp->progname, NULL);
+		err(1, NULL);
 
 	/* Figure out how big the screen is. */
 	if (cl_ssize(NULL, 0, &rows, &cols, NULL))
@@ -153,7 +153,7 @@ gs_init(char *name)
 	/* Allocate the global structure. */
 	CALLOC_NOMSG(NULL, gp, 1, sizeof(GS));
 	if (gp == NULL)
-		perr(name, NULL);
+		err(1, NULL);
 
 
 	gp->progname = name;
@@ -173,7 +173,7 @@ cl_init(GS *gp)
 	/* Allocate the CL private structure. */
 	CALLOC_NOMSG(NULL, clp, 1, sizeof(CL_PRIVATE));
 	if (clp == NULL)
-		perr(gp->progname, NULL);
+		err(1, NULL);
 	gp->cl_private = clp;
 
 	/*
@@ -195,10 +195,8 @@ cl_init(GS *gp)
 		if (tcgetattr(STDIN_FILENO, &clp->orig) == -1)
 			goto tcfail;
 	} else if ((fd = open(_PATH_TTY, O_RDONLY, 0)) != -1) {
-		if (tcgetattr(fd, &clp->orig) == -1) {
-tcfail:			perr(gp->progname, "tcgetattr");
-			exit (1);
-		}
+		if (tcgetattr(fd, &clp->orig) == -1)
+tcfail:			err(1, "tcgetattr");
 		(void)close(fd);
 	}
 
@@ -292,7 +290,7 @@ sig_init(GS *gp, SCR *sp)
 		    sigaddset(&__sigblockset, SIGWINCH) ||
 		    setsig(SIGWINCH, &clp->oact[INDX_WINCH], h_winch)
 		    ) {
-			perr(gp->progname, NULL);
+			err(1, NULL);
 			return (1);
 		}
 	} else
@@ -372,18 +370,4 @@ cl_func_std(GS *gp)
 	gp->scr_screen = cl_screen;
 	gp->scr_suspend = cl_suspend;
 	gp->scr_usage = cl_usage;
-}
-
-/*
- * perr --
- *	Print system error.
- */
-static void
-perr(char *name, char *msg)
-{
-	(void)fprintf(stderr, "%s:", name);
-	if (msg != NULL)
-		(void)fprintf(stderr, "%s:", msg);
-	(void)fprintf(stderr, "%s\n", strerror(errno));
-	exit(1);
 }
