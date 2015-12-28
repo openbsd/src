@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.263 2015/12/14 10:22:12 jung Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.264 2015/12/28 22:08:30 jung Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1186,7 +1186,7 @@ smtp_filter_fd(uint64_t id, int fd)
 	io_init(&s->oev, fd, s, smtp_data_io, &s->obuf);
 
 	iobuf_fqueue(&s->obuf, "Received: ");
-	if (! (s->listener->flags & F_MASK_SOURCE)) {
+	if (!(s->listener->flags & F_MASK_SOURCE)) {
 		iobuf_fqueue(&s->obuf, "from %s (%s [%s])",
 		    s->evp.helo,
 		    s->hostname,
@@ -1330,7 +1330,7 @@ smtp_io(struct io *io, int evt)
                         s->skiphdr = 0;
 
                         /* BCC should be stripped from headers */
-                        if (! s->hdrdone) {
+                        if (!s->hdrdone) {
                                 if (strncasecmp("bcc:", line, 4) == 0) {
                                         s->skiphdr = 1;
                                         goto nextline;

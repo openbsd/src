@@ -1,4 +1,4 @@
-/*	$OpenBSD: table_static.c,v 1.13 2015/12/22 07:52:52 sunil Exp $	*/
+/*	$OpenBSD: table_static.c,v 1.14 2015/12/28 22:08:30 jung Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -238,9 +238,9 @@ table_static_fetch(void *hdl, struct dict *params,
 	struct table   *t = hdl;
 	const char     *k;
 
-	if (! dict_iter(&t->t_dict, &t->t_iter, &k, (void **)NULL)) {
+	if (!dict_iter(&t->t_dict, &t->t_iter, &k, (void **)NULL)) {
 		t->t_iter = NULL;
-		if (! dict_iter(&t->t_dict, &t->t_iter, &k, (void **)NULL))
+		if (!dict_iter(&t->t_dict, &t->t_iter, &k, (void **)NULL))
 			return 0;
 	}
 

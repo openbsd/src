@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.19 2015/12/05 13:14:21 claudio Exp $	*/
+/*	$OpenBSD: ca.c,v 1.20 2015/12/28 22:08:30 jung Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -213,7 +213,7 @@ ca_X509_verify(void *certificate, void *chain, const char *CAfile,
 	if ((store = X509_STORE_new()) == NULL)
 		goto end;
 
-	if (! X509_STORE_load_locations(store, CAfile, NULL)) {
+	if (!X509_STORE_load_locations(store, CAfile, NULL)) {
 		log_warn("warn: unable to load CA file %s", CAfile);
 		goto end;
 	}

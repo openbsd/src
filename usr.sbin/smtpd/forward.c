@@ -1,4 +1,4 @@
-/*	$OpenBSD: forward.c,v 1.38 2015/12/05 21:27:42 mmcc Exp $	*/
+/*	$OpenBSD: forward.c,v 1.39 2015/12/28 22:08:30 jung Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -74,7 +74,7 @@ forwards_get(int fd, struct expand *expand)
 	lineno = 0;
 	save = expand->nb_nodes;
 	while ((line = fparseln(fp, &len, &lineno, NULL, 0)) != NULL) {
-		if (! expand_line(expand, line, 0)) {
+		if (!expand_line(expand, line, 0)) {
 			log_info("info: parse error in forward file");
 			goto end;
 		}

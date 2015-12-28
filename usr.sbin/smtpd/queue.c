@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.c,v 1.174 2015/12/14 10:22:12 jung Exp $	*/
+/*	$OpenBSD: queue.c,v 1.175 2015/12/28 22:08:30 jung Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -708,7 +708,7 @@ queue(void)
 		log_info("queue: queue compression enabled");
 
 	if (env->sc_queue_key) {
-		if (! crypto_setup(env->sc_queue_key, strlen(env->sc_queue_key)))
+		if (!crypto_setup(env->sc_queue_key, strlen(env->sc_queue_key)))
 			fatalx("crypto_setup: invalid key for queue encryption");
 		log_info("queue: queue encryption enabled");
 	}

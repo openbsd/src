@@ -1,4 +1,4 @@
-/*	$OpenBSD: expand.c,v 1.28 2015/01/20 17:37:54 deraadt Exp $	*/
+/*	$OpenBSD: expand.c,v 1.29 2015/12/28 22:08:30 jung Exp $	*/
 
 /*
  * Copyright (c) 2009 Gilles Chehade <gilles@poolp.org>
@@ -251,9 +251,9 @@ expand_line(struct expand *expand, const char *s, int do_includes)
 		subrcpt = strip(subrcpt);
 		if (subrcpt[0] == '\0')
 			continue;
-		if (! text_to_expandnode(&xn, subrcpt))
+		if (!text_to_expandnode(&xn, subrcpt))
 			return 0;
-		if (! do_includes)
+		if (!do_includes)
 			if (xn.type == EXPAND_INCLUDE)
 				continue;
 		expand_insert(expand, &xn);

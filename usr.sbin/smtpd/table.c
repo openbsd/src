@@ -1,4 +1,4 @@
-/*	$OpenBSD: table.c,v 1.21 2015/11/30 14:13:03 gilles Exp $	*/
+/*	$OpenBSD: table.c,v 1.22 2015/12/28 22:08:30 jung Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -128,7 +128,7 @@ table_lookup(struct table *table, struct dict *params, const char *key, enum tab
 	if (table->t_backend->lookup == NULL)
 		return (-1);
 
-	if (! lowercase(lkey, key, sizeof lkey)) {
+	if (!lowercase(lkey, key, sizeof lkey)) {
 		log_warnx("warn: lookup key too long: %s", key);
 		return -1;
 	}
@@ -299,7 +299,7 @@ table_add(struct table *t, const char *key, const char *val)
 	if (t->t_type & T_DYNAMIC)
 		fatalx("table_add: cannot add to table");
 
-	if (! lowercase(lkey, key, sizeof lkey)) {
+	if (!lowercase(lkey, key, sizeof lkey)) {
 		log_warnx("warn: lookup key too long: %s", key);
 		return;
 	}
@@ -375,9 +375,9 @@ table_mailaddr_match(const char *s1, const char *s2)
 	struct mailaddr m1;
 	struct mailaddr m2;
 
-	if (! text_to_mailaddr(&m1, s1))
+	if (!text_to_mailaddr(&m1, s1))
 		return 0;
-	if (! text_to_mailaddr(&m2, s2))
+	if (!text_to_mailaddr(&m2, s2))
 		return 0;
 	return mailaddr_match(&m1, &m2);
 }
@@ -394,9 +394,9 @@ table_netaddr_match(const char *s1, const char *s2)
 
 	if (strcasecmp(s1, s2) == 0)
 		return 1;
-	if (! text_to_netaddr(&n1, s1))
+	if (!text_to_netaddr(&n1, s1))
 		return 0;
-	if (! text_to_netaddr(&n2, s2))
+	if (!text_to_netaddr(&n2, s2))
 		return 0;
 	if (n1.ss.ss_family != n2.ss.ss_family)
 		return 0;
@@ -511,7 +511,7 @@ table_open_all(void)
 
 	iter = NULL;
 	while (dict_iter(env->sc_tables_dict, &iter, NULL, (void **)&t))
-		if (! table_open(t))
+		if (!table_open(t))
 			fatalx("failed to open table %s", t->t_name);
 }
 
@@ -613,7 +613,7 @@ table_parse_lookup(enum table_service service, const char *key,
 		if (lk->maddrmap == NULL)
 			return (-1);
 		maddrmap_init(lk->maddrmap);
-		if (! mailaddr_line(lk->maddrmap, line)) {
+		if (!mailaddr_line(lk->maddrmap, line)) {
 			maddrmap_free(lk->maddrmap);
 			return (-1);
 		}

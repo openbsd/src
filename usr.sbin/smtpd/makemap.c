@@ -1,4 +1,4 @@
-/*	$OpenBSD: makemap.c,v 1.60 2015/12/15 06:05:15 guenther Exp $	*/
+/*	$OpenBSD: makemap.c,v 1.61 2015/12/28 22:08:30 jung Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -148,7 +148,7 @@ makemap(int argc, char *argv[])
 
 		p = strstr(argv[1], ".db");
 		if (p == NULL || strcmp(p, ".db") != 0) {
-			if (! bsnprintf(dbname, sizeof dbname, "%s.db",
+			if (!bsnprintf(dbname, sizeof dbname, "%s.db",
 				argv[1]))
 				errx(1, "database name too long");
 		}
@@ -186,7 +186,7 @@ makemap(int argc, char *argv[])
 		if (stat(source, &sb) == -1)
 			err(1, "stat: %s", source);
 
-	if (! bsnprintf(dbname, sizeof(dbname), "%s.XXXXXXXXXXX", oflag))
+	if (!bsnprintf(dbname, sizeof(dbname), "%s.XXXXXXXXXXX", oflag))
 		errx(1, "path too long");
 	if ((fd = mkstemp(dbname)) == -1)
 		err(1, "mkstemp");
@@ -205,7 +205,7 @@ makemap(int argc, char *argv[])
 			goto bad;
 		}
 
-	if (! parse_map(db, &dbputs, source))
+	if (!parse_map(db, &dbputs, source))
 		goto bad;
 
 	if (db->close(db) == -1) {
@@ -271,7 +271,7 @@ parse_map(DB *db, int *dbputs, char *filename)
 
 	while ((line = fparseln(fp, &len, &lineno,
 	    NULL, FPARSELN_UNESCCOMM)) != NULL) {
-		if (! parse_entry(db, dbputs, line, len, lineno)) {
+		if (!parse_entry(db, dbputs, line, len, lineno)) {
 			free(line);
 			fclose(fp);
 			return 0;
@@ -330,11 +330,11 @@ parse_mapentry(DB *db, int *dbputs, char *line, size_t len, size_t lineno)
 	}
 
 	if (type == T_PLAIN) {
-		if (! make_plain(&val, valp))
+		if (!make_plain(&val, valp))
 			goto bad;
 	}
 	else if (type == T_ALIASES) {
-		if (! make_aliases(&val, valp))
+		if (!make_aliases(&val, valp))
 			goto bad;
 	}
 
@@ -416,7 +416,7 @@ make_aliases(DBT *val, char *text)
 		if (*subrcpt == '\0')
 			goto error;
 
-		if (! text_to_expandnode(&xn, subrcpt))
+		if (!text_to_expandnode(&xn, subrcpt))
 			goto error;
 	}
 

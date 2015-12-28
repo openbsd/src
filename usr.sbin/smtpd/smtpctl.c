@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpctl.c,v 1.143 2015/12/22 21:50:22 gilles Exp $	*/
+/*	$OpenBSD: smtpctl.c,v 1.144 2015/12/28 22:08:30 jung Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -140,7 +140,7 @@ offline_file(void)
 	int	fd;
 	FILE   *fp;
 
-	if (! bsnprintf(path, sizeof(path), "%s%s/%lld.XXXXXXXXXX", PATH_SPOOL,
+	if (!bsnprintf(path, sizeof(path), "%s%s/%lld.XXXXXXXXXX", PATH_SPOOL,
 		PATH_OFFLINE, (long long int) time(NULL)))
 		err(EX_UNAVAILABLE, "snprintf");
 
@@ -620,7 +620,7 @@ do_show_envelope(int argc, struct parameter *argv)
 {
 	char	 buf[PATH_MAX];
 
-	if (! bsnprintf(buf, sizeof(buf), "%s%s/%02x/%08x/%016" PRIx64,
+	if (!bsnprintf(buf, sizeof(buf), "%s%s/%02x/%08x/%016" PRIx64,
 	    PATH_SPOOL,
 	    PATH_QUEUE,
 	    (evpid_to_msgid(argv[0].u.u_evpid) & 0xff000000) >> 24,
@@ -652,7 +652,7 @@ do_show_message(int argc, struct parameter *argv)
 	else
 		msgid = argv[0].u.u_msgid;
 
-	if (! bsnprintf(buf, sizeof(buf), "%s%s/%02x/%08x/message",
+	if (!bsnprintf(buf, sizeof(buf), "%s%s/%02x/%08x/message",
 		PATH_SPOOL,
 		PATH_QUEUE,
 		(msgid & 0xff000000) >> 24,
@@ -1200,7 +1200,7 @@ show_offline_envelope(uint64_t evpid)
 
 	struct envelope	evp;
 
-	if (! bsnprintf(pathname, sizeof pathname,
+	if (!bsnprintf(pathname, sizeof pathname,
 		"/queue/%02x/%08x/%016"PRIx64,
 		(evpid_to_msgid(evpid) & 0xff000000) >> 24,
 		evpid_to_msgid(evpid), evpid))
@@ -1224,7 +1224,7 @@ show_offline_envelope(uint64_t evpid)
 		goto end;
 	}
 
-	if (! envelope_load_buffer(&evp, p, plen))
+	if (!envelope_load_buffer(&evp, p, plen))
 		goto end;
 	evp.id = evpid;
 	show_queue_envelope(&evp, 0);
@@ -1270,7 +1270,7 @@ display(const char *s)
 		if (i == 3)
 			errx(1, "crypto-setup: invalid key");
 
-		if (! crypto_decrypt_file(fp, ofp)) {
+		if (!crypto_decrypt_file(fp, ofp)) {
 			printf("object is encrypted: %s\n", key);
 			exit(1);
 		}

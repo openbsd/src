@@ -1,4 +1,4 @@
-/*	$OpenBSD: enqueue.c,v 1.108 2015/12/14 10:22:11 jung Exp $	*/
+/*	$OpenBSD: enqueue.c,v 1.109 2015/12/28 22:08:30 jung Exp $	*/
 
 /*
  * Copyright (c) 2005 Henning Brauer <henning@bulabula.org>
@@ -153,7 +153,7 @@ qp_encoded_write(FILE *fp, char *buf, size_t len)
 			else
 				fprintf(fp, "%c", *buf & 0xff);
 		}
-		else if (! isprint((unsigned char)*buf) && *buf != '\n')
+		else if (!isprint((unsigned char)*buf) && *buf != '\n')
 			fprintf(fp, "=%2X", *buf & 0xff);
 		else
 			fprintf(fp, "%c", *buf);
@@ -310,11 +310,11 @@ enqueue(int argc, char *argv[], FILE *ofp)
 	 */
 
 	/* banner */
-	if (! get_responses(fout, 1))
+	if (!get_responses(fout, 1))
 		goto fail;
 
 	send_line(fout, verbose, "EHLO localhost\n");
-	if (! get_responses(fout, 1))
+	if (!get_responses(fout, 1))
 		goto fail;
 
 	if (msg.dsn_envid != NULL)
@@ -326,7 +326,7 @@ enqueue(int argc, char *argv[], FILE *ofp)
 	    msg.dsn_ret ? msg.dsn_ret : "",
 	    envid_sz ? "ENVID=" : "",
 	    envid_sz ? msg.dsn_envid : "");
-	if (! get_responses(fout, 1))
+	if (!get_responses(fout, 1))
 		goto fail;
 
 	for (i = 0; i < msg.rcpt_cnt; i++) {
@@ -334,12 +334,12 @@ enqueue(int argc, char *argv[], FILE *ofp)
 		    msg.rcpts[i],
 		    msg.dsn_notify ? "NOTIFY=" : "",
 		    msg.dsn_notify ? msg.dsn_notify : "");
-		if (! get_responses(fout, 1))
+		if (!get_responses(fout, 1))
 			goto fail;
 	}
 
 	send_line(fout, verbose, "DATA\n");
-	if (! get_responses(fout, 1))
+	if (!get_responses(fout, 1))
 		goto fail;
 
 	/* add From */
@@ -425,11 +425,11 @@ enqueue(int argc, char *argv[], FILE *ofp)
 	}
 	free(buf);
 	send_line(fout, verbose, ".\n");
-	if (! get_responses(fout, 1))
+	if (!get_responses(fout, 1))
 		goto fail;
 
 	send_line(fout, verbose, "QUIT\n");
-	if (! get_responses(fout, 1))
+	if (!get_responses(fout, 1))
 		goto fail;
 
 	fclose(fp);

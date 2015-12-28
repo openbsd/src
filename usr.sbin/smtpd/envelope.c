@@ -1,4 +1,4 @@
-/*	$OpenBSD: envelope.c,v 1.35 2015/12/14 10:35:29 sunil Exp $	*/
+/*	$OpenBSD: envelope.c,v 1.36 2015/12/28 22:08:30 jung Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -102,7 +102,7 @@ envelope_buffer_to_dict(struct dict *d,  const char *ibuf, size_t buflen)
 		field = buf;
 		while (*buf && (isalnum((unsigned char)*buf) || *buf == '-'))
 			buf++;
-		if (! *buf)
+		if (!*buf)
 			goto err;
 
 		/* skip whitespaces before separator */
@@ -136,7 +136,7 @@ envelope_load_buffer(struct envelope *ep, const char *ibuf, size_t buflen)
 	int		 ret = 0;
 
 	dict_init(&d);
-	if (! envelope_buffer_to_dict(&d, ibuf, buflen)) {
+	if (!envelope_buffer_to_dict(&d, ibuf, buflen)) {
 		log_debug("debug: cannot parse envelope to dict");
 		goto end;
 	}
@@ -359,7 +359,7 @@ ascii_load_mda_method(enum action_type *dest, char *buf)
 static int
 ascii_load_mailaddr(struct mailaddr *dest, char *buf)
 {
-	if (! text_to_mailaddr(dest, buf))
+	if (!text_to_mailaddr(dest, buf))
 		return 0;
 	return 1;
 }
@@ -387,7 +387,7 @@ ascii_load_flags(enum envelope_flags *dest, char *buf)
 static int
 ascii_load_mta_relay_url(struct relayhost *relay, char *buf)
 {
-	if (! text_to_relayhost(relay, buf))
+	if (!text_to_relayhost(relay, buf))
 		return 0;
 	return 1;
 }
@@ -499,7 +499,7 @@ ascii_load_field(const char *field, struct envelope *ep, char *buf)
 		int ret;
 		uint16_t flags = ep->agent.mta.relay.flags;
 		ret = ascii_load_mta_relay_url(&ep->agent.mta.relay, buf);
-		if (! ret)
+		if (!ret)
 			return (0);
 		ep->agent.mta.relay.flags |= flags;
 		return ret;
@@ -589,7 +589,7 @@ envelope_ascii_load(struct envelope *ep, struct dict *d)
 
 	hdl = NULL;
 	while (dict_iter(d, &hdl, &field, (void **)&value))
-		if (! ascii_load_field(field, ep, value))
+		if (!ascii_load_field(field, ep, value))
 			goto err;
 
 	return (1);
@@ -936,7 +936,7 @@ envelope_ascii_dump(const struct envelope *ep, char **dest, size_t *len,
 		return;
 
 	memset(buf, 0, sizeof buf);
-	if (! ascii_dump_field(field, ep, buf, sizeof buf))
+	if (!ascii_dump_field(field, ep, buf, sizeof buf))
 		goto err;
 	if (buf[0] == '\0')
 		return;
@@ -976,13 +976,13 @@ envelope_upgrade_v1(struct dict *d)
 	 */
 	if ((val = dict_get(d, "mta-relay"))) {
 		if (strncasecmp("ssl://", val, 6) == 0) {
-			if (! bsnprintf(buf_relay, sizeof(buf_relay),
+			if (!bsnprintf(buf_relay, sizeof(buf_relay),
 			    "secure://%s", val+6))
 				return (0);
 			dict_set(d, "mta-relay", buf_relay);
 		}
 		else if (strncasecmp("ssl+auth://", val, 11) == 0) {
-			if (! bsnprintf(buf_relay, sizeof(buf_relay),
+			if (!bsnprintf(buf_relay, sizeof(buf_relay),
 			    "secure+auth://%s", val+11))
 				return (0);
 			dict_set(d, "mta-relay", buf_relay);

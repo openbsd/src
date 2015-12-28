@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.108 2015/11/05 09:14:31 sunil Exp $	*/
+/*	$OpenBSD: control.c,v 1.109 2015/12/28 22:08:30 jung Exp $	*/
 
 /*
  * Copyright (c) 2012 Gilles Chehade <gilles@poolp.org>
@@ -510,7 +510,7 @@ control_dispatch_ext(struct mproc *p, struct imsg *imsg)
 		if (c->euid)
 			goto badcred;
 		kvp = imsg->data;
-		if (! stat_backend->iter(&kvp->iter, &key, &val))
+		if (!stat_backend->iter(&kvp->iter, &key, &val))
 			kvp->iter = NULL;
 		else {
 			(void)strlcpy(kvp->key, key, sizeof kvp->key);
@@ -675,7 +675,7 @@ control_dispatch_ext(struct mproc *p, struct imsg *imsg)
 		if (c->euid)
 			goto badcred;
 
-		if (! (env->sc_flags & SMTPD_MDA_PAUSED)) {
+		if (!(env->sc_flags & SMTPD_MDA_PAUSED)) {
 			m_compose(p, IMSG_CTL_FAIL, 0, 0, -1, NULL, 0);
 			return;
 		}

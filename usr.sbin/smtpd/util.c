@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.123 2015/12/14 10:22:12 jung Exp $	*/
+/*	$OpenBSD: util.c,v 1.124 2015/12/28 22:08:30 jung Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Markus Friedl.  All rights reserved.
@@ -178,7 +178,7 @@ mkdirs_component(char *path, mode_t mode)
 		if (mkdir(path, mode | S_IWUSR | S_IXUSR) == -1)
 			return 0;
 	}
-	else if (! S_ISDIR(sb.st_mode))
+	else if (!S_ISDIR(sb.st_mode))
 		return 0;
 
 	return 1;
@@ -204,7 +204,7 @@ mkdirs(char *path, mode_t mode)
 	for (p = path; *p; p++) {
 		if (*p == '/') {
 			if (buf[0] != '\0')
-				if (! mkdirs_component(buf, mode))
+				if (!mkdirs_component(buf, mode))
 					return 0;
 			while (*p == '/')
 				p++;
@@ -216,8 +216,8 @@ mkdirs(char *path, mode_t mode)
 		}
 		buf[i++] = *p;
 	}
-	if (! done)
-		if (! mkdirs_component(buf, mode))
+	if (!done)
+		if (!mkdirs_component(buf, mode))
 			return 0;
 
 	if (chmod(path, mode) == -1)
@@ -377,7 +377,7 @@ mktmpfile(void)
 	char		path[PATH_MAX];
 	int		fd;
 
-	if (! bsnprintf(path, sizeof(path), "%s/smtpd.XXXXXXXXXX",
+	if (!bsnprintf(path, sizeof(path), "%s/smtpd.XXXXXXXXXX",
 		PATH_TEMPORARY)) {
 		log_warn("snprintf");
 		fatal("exiting");
@@ -449,7 +449,7 @@ mailaddr_match(const struct mailaddr *maddr1, const struct mailaddr *maddr2)
 	if (m2.user[0] == '\0' && m2.domain[0] == '\0')
 		return 1;
 
-	if (! hostname_match(m1.domain, m2.domain))
+	if (!hostname_match(m1.domain, m2.domain))
 		return 0;
 
 	if (m2.user[0]) {
@@ -471,7 +471,7 @@ valid_localpart(const char *s)
 {
 #define IS_ATEXT(c) (isalnum((unsigned char)(c)) || strchr(MAILADDR_ALLOWED, (c)))
 nextatom:
-	if (! IS_ATEXT(*s) || *s == '\0')
+	if (!IS_ATEXT(*s) || *s == '\0')
 		return 0;
 	while (*(++s) != '\0') {
 		if (*s == '.')
@@ -642,7 +642,7 @@ xlowercase(char *buf, const char *s, size_t len)
 	if (len == 0)
 		fatalx("lowercase: len == 0");
 
-	if (! lowercase(buf, s, len))
+	if (!lowercase(buf, s, len))
 		fatalx("lowercase: truncation");
 }
 

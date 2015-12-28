@@ -1,4 +1,4 @@
-/*	$OpenBSD: mailaddr.c,v 1.1 2015/10/28 14:30:03 gilles Exp $	*/
+/*	$OpenBSD: mailaddr.c,v 1.2 2015/12/28 22:08:30 jung Exp $	*/
 
 /*
  * Copyright (c) 2015 Gilles Chehade <gilles@poolp.org>
@@ -93,7 +93,7 @@ mailaddr_line(struct maddrmap *maddrmap, const char *s)
 		subrcpt = strip(subrcpt);
 		if (subrcpt[0] == '\0')
 			continue;
-		if (! text_to_mailaddr(&mn.mailaddr, subrcpt))
+		if (!text_to_mailaddr(&mn.mailaddr, subrcpt))
 			return 0;
 		log_debug("subrcpt: [%s]", subrcpt);
 		maddrmap_insert(maddrmap, &mn);

@@ -1,4 +1,4 @@
-/* $OpenBSD: crypto.c,v 1.4 2013/12/26 17:25:32 eric Exp $	 */
+/* $OpenBSD: crypto.c,v 1.5 2015/12/28 22:08:30 jung Exp $	 */
 
 /*
  * Copyright (c) 2013 Gilles Chehade <gilles@openbsd.org>
@@ -322,7 +322,7 @@ main(int argc, char *argv[])
 		return 1;
 	}
 
-	if (! crypto_setup(argv[1], strlen(argv[1]))) {
+	if (!crypto_setup(argv[1], strlen(argv[1]))) {
 		printf("crypto_setup failed\n");
 		return 1;
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.16 2014/07/08 10:30:52 eric Exp $	*/
+/*	$OpenBSD: log.c,v 1.17 2015/12/28 22:08:30 jung Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -48,7 +48,7 @@ log_init(int n_foreground)
 	extern char	*__progname;
 
 	foreground = n_foreground;
-	if (! foreground)
+	if (!foreground)
 		openlog(__progname, LOG_PID | LOG_NDELAY, LOG_MAIL);
 
 	tzset();

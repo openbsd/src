@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.189 2015/12/14 10:22:12 jung Exp $	*/
+/*	$OpenBSD: lka.c,v 1.190 2015/12/28 22:08:30 jung Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -616,7 +616,7 @@ lka_mailaddrmap(const char *tablename, const char *username, const struct mailad
 	default:
 		found = 0;
 		TAILQ_FOREACH(mn, &lk.maddrmap->queue, entries) {
-			if (! mailaddr_match(maddr, &mn->mailaddr))
+			if (!mailaddr_match(maddr, &mn->mailaddr))
 				continue;
 			found = 1;
 			break;
@@ -661,7 +661,7 @@ lka_X509_verify(struct ca_vrfy_req_msg *vrfy,
 			x509_tmp = NULL;
 		}
 	}
-	if (! ca_X509_verify(x509, x509_chain, CAfile, NULL, &errstr))
+	if (!ca_X509_verify(x509, x509_chain, CAfile, NULL, &errstr))
 		log_debug("debug: lka: X509 verify: %s", errstr);
 	else
 		ret = 1;
@@ -700,7 +700,7 @@ lka_certificate_verify_resume(enum imsg_type type, struct ca_vrfy_req_msg *req)
 
 	if (sca == NULL && !req->fallback)
 		resp.status = CA_FAIL;
-	else if (! lka_X509_verify(req, cafile, NULL))
+	else if (!lka_X509_verify(req, cafile, NULL))
 		resp.status = CA_FAIL;
 	else
 		resp.status = CA_OK;

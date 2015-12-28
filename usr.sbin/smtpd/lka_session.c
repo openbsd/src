@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_session.c,v 1.78 2015/12/14 10:22:12 jung Exp $	*/
+/*	$OpenBSD: lka_session.c,v 1.79 2015/12/28 22:08:30 jung Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@poolp.org>
@@ -644,41 +644,41 @@ lka_expand_token(char *dest, size_t len, const char *token,
 	}
 
 	/* token -> expanded token */
-	if (! strcasecmp("sender", rtoken)) {
+	if (!strcasecmp("sender", rtoken)) {
 		if (snprintf(tmp, sizeof tmp, "%s@%s",
 			ep->sender.user, ep->sender.domain) >= (int)sizeof tmp)
 			return 0;
 		string = tmp;
 	}
-	else if (! strcasecmp("dest", rtoken)) {
+	else if (!strcasecmp("dest", rtoken)) {
 		if (snprintf(tmp, sizeof tmp, "%s@%s",
 			ep->dest.user, ep->dest.domain) >= (int)sizeof tmp)
 			return 0;
 		string = tmp;
 	}
-	else if (! strcasecmp("rcpt", rtoken)) {
+	else if (!strcasecmp("rcpt", rtoken)) {
 		if (snprintf(tmp, sizeof tmp, "%s@%s",
 			ep->rcpt.user, ep->rcpt.domain) >= (int)sizeof tmp)
 			return 0;
 		string = tmp;
 	}
-	else if (! strcasecmp("sender.user", rtoken))
+	else if (!strcasecmp("sender.user", rtoken))
 		string = ep->sender.user;
-	else if (! strcasecmp("sender.domain", rtoken))
+	else if (!strcasecmp("sender.domain", rtoken))
 		string = ep->sender.domain;
-	else if (! strcasecmp("user.username", rtoken))
+	else if (!strcasecmp("user.username", rtoken))
 		string = ui->username;
-	else if (! strcasecmp("user.directory", rtoken)) {
+	else if (!strcasecmp("user.directory", rtoken)) {
 		string = ui->directory;
 		replace = 0;
 	}
-	else if (! strcasecmp("dest.user", rtoken))
+	else if (!strcasecmp("dest.user", rtoken))
 		string = ep->dest.user;
-	else if (! strcasecmp("dest.domain", rtoken))
+	else if (!strcasecmp("dest.domain", rtoken))
 		string = ep->dest.domain;
-	else if (! strcasecmp("rcpt.user", rtoken))
+	else if (!strcasecmp("rcpt.user", rtoken))
 		string = ep->rcpt.user;
-	else if (! strcasecmp("rcpt.domain", rtoken))
+	else if (!strcasecmp("rcpt.domain", rtoken))
 		string = ep->rcpt.domain;
 	else
 		return 0;
@@ -695,12 +695,12 @@ lka_expand_token(char *dest, size_t len, const char *token,
 			if ((sep = strchr(mods, '|')) != NULL)
 				*sep++ = '\0';
 			for (i = 0; (size_t)i < nitems(token_modifiers); ++i) {
-				if (! strcasecmp(token_modifiers[i].name, mods)) {
+				if (!strcasecmp(token_modifiers[i].name, mods)) {
 					if (token_modifiers[i].f == NULL) {
 						raw = 1;
 						break;
 					}
-					if (! token_modifiers[i].f(tmp, sizeof tmp))
+					if (!token_modifiers[i].f(tmp, sizeof tmp))
 						return 0; /* modifier error */
 					break;
 				}
@@ -710,7 +710,7 @@ lka_expand_token(char *dest, size_t len, const char *token,
 		} while ((mods = sep) != NULL);
 	}
 
-	if (! raw && replace)
+	if (!raw && replace)
 		for (i = 0; (size_t)i < strlen(tmp); ++i)
 			if (strchr(MAILADDR_ESCAPE, tmp[i]))
 				tmp[i] = ':';
@@ -848,7 +848,7 @@ mod_lowercase(char *buf, size_t len)
 {
 	char tmp[EXPAND_BUFFER];
 
-	if (! lowercase(tmp, buf, sizeof tmp))
+	if (!lowercase(tmp, buf, sizeof tmp))
 		return 0;
 	if (strlcpy(buf, tmp, len) >= len)
 		return 0;
@@ -860,7 +860,7 @@ mod_uppercase(char *buf, size_t len)
 {
 	char tmp[EXPAND_BUFFER];
 
-	if (! uppercase(tmp, buf, sizeof tmp))
+	if (!uppercase(tmp, buf, sizeof tmp))
 		return 0;
 	if (strlcpy(buf, tmp, len) >= len)
 		return 0;
