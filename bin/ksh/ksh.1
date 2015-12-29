@@ -1,8 +1,8 @@
-.\"	$OpenBSD: ksh.1,v 1.172 2015/12/26 18:44:01 jmc Exp $
+.\"	$OpenBSD: ksh.1,v 1.173 2015/12/29 01:02:34 mmcc Exp $
 .\"
 .\"	Public Domain
 .\"
-.Dd $Mdocdate: December 26 2015 $
+.Dd $Mdocdate: December 29 2015 $
 .Dt KSH 1
 .Os
 .Sh NAME
@@ -1386,12 +1386,6 @@ is set, it overrides
 If this parameter is found to be set after any profile files are executed, the
 expanded value is used as a shell startup file.
 It typically contains function and alias definitions.
-.It Ev ERRNO
-Integer value of the shell's
-.Va errno
-variable.
-It indicates the reason the last system call failed.
-Not yet implemented.
 .It Ev EXECSHELL
 If set, this parameter is assumed to contain the shell that is to be used to
 execute commands that
