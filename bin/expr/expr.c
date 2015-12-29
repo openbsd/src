@@ -1,4 +1,4 @@
-/*	$OpenBSD: expr.c,v 1.22 2015/10/09 01:37:06 deraadt Exp $	*/
+/*	$OpenBSD: expr.c,v 1.23 2015/12/29 19:06:16 gsoares Exp $	*/
 /*	$NetBSD: expr.c,v 1.3.6.1 1996/06/04 20:41:47 cgd Exp $	*/
 
 /*
@@ -502,7 +502,7 @@ main(int argc, char *argv[])
 	(void) setlocale(LC_ALL, "");
 
 	if (pledge("stdio", NULL) == -1)
-		err(1, "pledge");
+		err(2, "pledge");
 
 	if (argc > 1 && !strcmp(argv[1], "--"))
 		argv++;
