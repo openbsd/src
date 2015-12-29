@@ -1,4 +1,4 @@
-/*	$OpenBSD: vdsp.c,v 1.40 2015/09/15 21:04:10 kettenis Exp $	*/
+/*	$OpenBSD: vdsp.c,v 1.41 2015/12/29 04:46:28 mmcc Exp $	*/
 /*
  * Copyright (c) 2009, 2011, 2014 Mark Kettenis
  *
@@ -975,19 +975,13 @@ vdsp_close(void *arg1)
 
 	sc->sc_seq_no = 0;
 
-	if (sc->sc_vd) {
-		free(sc->sc_vd, M_DEVBUF, 0);
-		sc->sc_vd = NULL;
-	}
-	if (sc->sc_vd_ring != NULL) {
-		free(sc->sc_vd_ring, M_DEVBUF,
-		    sc->sc_num_descriptors * sizeof(*sc->sc_vd_ring));
-		sc->sc_vd_ring = NULL;
-	}
-	if (sc->sc_label) {
-		free(sc->sc_label, M_DEVBUF, 0);
-		sc->sc_label = NULL;
-	}
+	free(sc->sc_vd, M_DEVBUF, 0);
+	sc->sc_vd = NULL;
+	free(sc->sc_vd_ring, M_DEVBUF,
+	     sc->sc_num_descriptors * sizeof(*sc->sc_vd_ring));
+	sc->sc_vd_ring = NULL;
+	free(sc->sc_label, M_DEVBUF, 0);
+	sc->sc_label = NULL;
 	if (sc->sc_vp) {
 		vn_close(sc->sc_vp, FREAD | FWRITE, p->p_ucred, p);
 		sc->sc_vp = NULL;

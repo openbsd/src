@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.178 2015/09/18 12:50:28 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.179 2015/12/29 04:46:28 mmcc Exp $	*/
 /*	$NetBSD: pmap.c,v 1.118 1998/05/19 19:00:18 thorpej Exp $ */
 
 /*
@@ -3711,8 +3711,7 @@ if (pmapdebug) {
 	}
 }
 #endif
-	if (pm->pm_regstore)
-		free(pm->pm_regstore, M_VMPMAP, 0);
+	free(pm->pm_regstore, M_VMPMAP, 0);
 
 #if defined(SUN4M)
 	if (CPU_ISSUN4M) {

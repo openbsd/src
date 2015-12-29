@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.364 2015/08/19 19:05:24 krw Exp $ */
+/* $OpenBSD: softraid.c,v 1.365 2015/12/29 04:46:28 mmcc Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -1463,8 +1463,7 @@ unwind:
 		for (bc1 = SLIST_FIRST(&bv1->sbv_chunks); bc1 != NULL;
 		    bc1 = bc2) {
 			bc2 = SLIST_NEXT(bc1, sbc_link);
-			if (bc1->sbc_metadata)
-				free(bc1->sbc_metadata, M_DEVBUF, 0);
+			free(bc1->sbc_metadata, M_DEVBUF, 0);
 			free(bc1, M_DEVBUF, 0);
 		}
 		free(bv1, M_DEVBUF, 0);
@@ -1472,15 +1471,13 @@ unwind:
 	/* Free keydisks chunks. */
 	for (bc1 = SLIST_FIRST(&kdh); bc1 != NULL; bc1 = bc2) {
 		bc2 = SLIST_NEXT(bc1, sbc_link);
-		if (bc1->sbc_metadata)
-			free(bc1->sbc_metadata, M_DEVBUF, 0);
+		free(bc1->sbc_metadata, M_DEVBUF, 0);
 		free(bc1, M_DEVBUF, 0);
 	}
 	/* Free unallocated chunks. */
 	for (bc1 = SLIST_FIRST(&bch); bc1 != NULL; bc1 = bc2) {
 		bc2 = SLIST_NEXT(bc1, sbc_link);
-		if (bc1->sbc_metadata)
-			free(bc1->sbc_metadata, M_DEVBUF, 0);
+		free(bc1->sbc_metadata, M_DEVBUF, 0);
 		free(bc1, M_DEVBUF, 0);
 	}
 
@@ -1960,8 +1957,7 @@ sr_ccb_free(struct sr_discipline *sd)
 	while ((ccb = TAILQ_FIRST(&sd->sd_ccb_freeq)) != NULL)
 		TAILQ_REMOVE(&sd->sd_ccb_freeq, ccb, ccb_link);
 
-	if (sd->sd_ccb)
-		free(sd->sd_ccb, M_DEVBUF, 0);
+	free(sd->sd_ccb, M_DEVBUF, 0);
 }
 
 struct sr_ccb *
@@ -2985,16 +2981,13 @@ sr_hotspare(struct sr_softc *sc, dev_t dev)
 	goto done;
 
 fail:
-	if (hotspare)
-		free(hotspare, M_DEVBUF, 0);
+	free(hotspare, M_DEVBUF, 0);
 
 done:
-	if (sd && sd->sd_vol.sv_chunks)
-		free(sd->sd_vol.sv_chunks, M_DEVBUF, 0);
 	if (sd)
-		free(sd, M_DEVBUF, 0);
-	if (sm)
-		free(sm, M_DEVBUF, 0);
+		free(sd->sd_vol.sv_chunks, M_DEVBUF, 0);
+	free(sd, M_DEVBUF, 0);
+	free(sm, M_DEVBUF, 0);
 	if (open) {
 		VOP_CLOSE(vn, FREAD | FWRITE, NOCRED, curproc);
 		vput(vn);
@@ -3800,10 +3793,8 @@ sr_ioctl_installboot(struct sr_softc *sc, struct sr_discipline *sd,
 	rv = 0;
 
 done:
-	if (bootblk)
-		free(bootblk, M_DEVBUF, 0);
-	if (bootldr)
-		free(bootldr, M_DEVBUF, 0);
+	free(bootblk, M_DEVBUF, 0);
+	free(bootldr, M_DEVBUF, 0);
 
 	return (rv);
 }
@@ -3858,18 +3849,14 @@ sr_discipline_free(struct sr_discipline *sd)
 	    sd->sd_meta ? sd->sd_meta->ssd_devname : "nodev");
 	if (sd->sd_free_resources)
 		sd->sd_free_resources(sd);
-	if (sd->sd_vol.sv_chunks)
-		free(sd->sd_vol.sv_chunks, M_DEVBUF, 0);
-	if (sd->sd_meta)
-		free(sd->sd_meta, M_DEVBUF, 0);
-	if (sd->sd_meta_foreign)
-		free(sd->sd_meta_foreign, M_DEVBUF, 0);
+	free(sd->sd_vol.sv_chunks, M_DEVBUF, 0);
+	free(sd->sd_meta, M_DEVBUF, 0);
+	free(sd->sd_meta_foreign, M_DEVBUF, 0);
 
 	som = &sd->sd_meta_opt;
 	for (omi = SLIST_FIRST(som); omi != NULL; omi = omi_next) {
 		omi_next = SLIST_NEXT(omi, omi_link);
-		if (omi->omi_som)
-			free(omi->omi_som, M_DEVBUF, 0);
+		free(omi->omi_som, M_DEVBUF, 0);
 		free(omi, M_DEVBUF, 0);
 	}
 

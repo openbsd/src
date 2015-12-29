@@ -1,4 +1,4 @@
-/*	$OpenBSD: central.c,v 1.8 2014/07/12 18:44:43 tedu Exp $	*/
+/*	$OpenBSD: central.c,v 1.9 2015/12/29 04:46:28 mmcc Exp $	*/
 
 /*
  * Copyright (c) 2004 Jason L. Wright (jason@thought.net)
@@ -107,8 +107,7 @@ central_attach(parent, self, aux)
 
 		(void)config_found(&sc->sc_dv, (void *)&ca, central_print);
 
-		if (ca.ca_name != NULL)
-			free(ca.ca_name, M_DEVBUF, 0);
+		free(ca.ca_name, M_DEVBUF, 0);
 	}
 }
 

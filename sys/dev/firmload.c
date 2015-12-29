@@ -1,4 +1,4 @@
-/*	$OpenBSD: firmload.c,v 1.13 2015/08/26 22:33:24 deraadt Exp $	*/
+/*	$OpenBSD: firmload.c,v 1.14 2015/12/29 04:46:28 mmcc Exp $	*/
 
 /*
  * Copyright (c) 2004 Theo de Raadt <deraadt@openbsd.org>
@@ -105,7 +105,6 @@ loadfirmware(const char *name, u_char **bufp, size_t *buflen)
 fail:
 	vput(nid.ni_vp);
 err:
-	if (path)
-		free(path, M_TEMP, MAXPATHLEN);
+	free(path, M_TEMP, MAXPATHLEN);
 	return (error);
 }
