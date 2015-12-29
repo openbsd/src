@@ -1,4 +1,4 @@
-/*	$OpenBSD: funmap.c,v 1.51 2015/09/26 15:03:15 lum Exp $	*/
+/*	$OpenBSD: funmap.c,v 1.52 2015/12/29 19:44:32 lum Exp $	*/
 
 /* This file is in the public domain */
 
@@ -201,6 +201,7 @@ static struct funmap functnames[] = {
 	{togglereadonly, "toggle-read-only" },
 	{twiddle, "transpose-chars",},
 	{transposepara, "transpose-paragraphs",},
+	{transposeword, "transpose-words",},
 	{undo, "undo",},
 	{undo_add_boundary, "undo-boundary",},
 	{undo_boundary_enable, "undo-boundary-toggle",},

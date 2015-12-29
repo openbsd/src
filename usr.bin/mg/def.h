@@ -1,4 +1,4 @@
-/*	$OpenBSD: def.h,v 1.152 2015/10/29 19:46:47 lum Exp $	*/
+/*	$OpenBSD: def.h,v 1.153 2015/12/29 19:44:32 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -602,6 +602,7 @@ int		 capword(int, int);
 int		 delfword(int, int);
 int		 delbword(int, int);
 int		 inword(void);
+int		 transposeword(int, int);
 
 /* region.c X */
 int		 killregion(int, int);

@@ -1,7 +1,7 @@
-.\"	$OpenBSD: mg.1,v 1.98 2015/12/24 09:07:47 lum Exp $
+.\"	$OpenBSD: mg.1,v 1.99 2015/12/29 19:44:32 lum Exp $
 .\" This file is in the public domain.
 .\"
-.Dd $Mdocdate: December 24 2015 $
+.Dd $Mdocdate: December 29 2015 $
 .Dt MG 1
 .Os
 .Sh NAME
@@ -306,6 +306,8 @@ fill-paragraph
 search-backward
 .It M-s
 search-forward
+.It M-t
+transpose-words
 .It M-u
 upcase-word
 .It M-v
@@ -881,6 +883,8 @@ If multiple iterations are requested, the current paragraph will
 be moved
 .Va n
 paragraphs forward.
+.It transpose-words
+Transpose adjacent words.
 .It undo
 Undo the most recent action.
 If invoked again without an intervening command,
