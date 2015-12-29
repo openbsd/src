@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.202 2015/12/16 13:38:39 bluhm Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.203 2015/12/29 17:51:56 bluhm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -321,6 +321,7 @@ void	die(int);
 void	markit(void);
 void	fprintlog(struct filed *, int, char *);
 void	init(void);
+void	logevent(int, const char *);
 void	logerror(const char *);
 void	logerrorx(const char *);
 void	logerrorctx(const char *, struct tls *);
@@ -709,6 +710,8 @@ main(int argc, char *argv[])
 		err(1, "pledge");
 
 	/* Process is now unprivileged and inside a chroot */
+	if (Debug)
+		event_set_log_callback(logevent);
 	event_init();
 
 	if ((ev_ctlaccept = malloc(sizeof(struct event))) == NULL ||
@@ -2023,6 +2026,12 @@ init_signalcb(int signum, short event, void *arg)
 		tcpbuf_dropped = 0;
 		logmsg(LOG_SYSLOG|LOG_WARNING, ebuf, LocalHostName, ADDDATE);
 	}
+}
+
+void
+logevent(int severity, const char *msg)
+{
+	logdebug("libevent: [%d] %s\n", severity, msg);
 }
 
 void
