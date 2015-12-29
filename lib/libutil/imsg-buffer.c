@@ -1,4 +1,4 @@
-/*	$OpenBSD: imsg-buffer.c,v 1.7 2015/07/12 18:40:49 nicm Exp $	*/
+/*	$OpenBSD: imsg-buffer.c,v 1.8 2015/12/29 18:05:01 benno Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -180,6 +180,8 @@ again:
 void
 ibuf_free(struct ibuf *buf)
 {
+	if (buf == NULL)
+		return;
 	free(buf->buf);
 	free(buf);
 }
