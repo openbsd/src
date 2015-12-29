@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.c,v 1.101 2015/12/19 17:55:29 reyk Exp $ */
+/*	$OpenBSD: ntpd.c,v 1.102 2015/12/29 18:23:28 millert Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -552,13 +552,13 @@ writefreq(double d)
 	if (freqfp == NULL)
 		return 0;
 	rewind(freqfp);
-	fprintf(freqfp, "%.3f\n", d * 1e6);	/* scale to ppm */
-	r = ferror(freqfp);
-	if (r != 0) {
+	r = fprintf(freqfp, "%.3f\n", d * 1e6);	/* scale to ppm */
+	if (r < 0 || fflush(freqfp) != 0) {
 		if (warnonce) {
 			log_warnx("can't write %s", DRIFTFILE);
 			warnonce = 0;
 		}
+		clearerr(freqfp);
 		return 0;
 	}
 	ftruncate(fileno(freqfp), ftello(freqfp));
