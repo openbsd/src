@@ -1,4 +1,4 @@
-/*	$OpenBSD: nlist.c,v 1.65 2015/10/16 16:54:38 tobias Exp $ */
+/*	$OpenBSD: nlist.c,v 1.66 2015/12/29 22:31:21 mmcc Exp $ */
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -76,6 +76,9 @@ __elf_is_okay__(Elf_Ehdr *ehdr)
 		    ehdr->e_version == ELF_TARG_VER)
 			retval = 1;
 	}
+
+	if (ehdr->e_shentsize != sizeof(Elf_Shdr))
+		return 0;
 
 	return retval;
 }
