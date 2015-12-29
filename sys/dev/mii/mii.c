@@ -1,4 +1,4 @@
-/*	$OpenBSD: mii.c,v 1.22 2015/12/28 22:25:40 mmcc Exp $	*/
+/*	$OpenBSD: mii.c,v 1.23 2015/12/29 18:35:39 mmcc Exp $	*/
 /*	$NetBSD: mii.c,v 1.19 2000/02/02 17:09:44 thorpej Exp $	*/
 
 /*-
@@ -108,7 +108,7 @@ mii_attach(struct device *parent, struct mii_data *mii, int capmask,
 		if (bmsr == 0 || bmsr == 0xffff ||
 		    (bmsr & (BMSR_MEDIAMASK|BMSR_EXTSTAT)) == 0) {
 			/* Assume no PHY at this address. */
-			continue;
+			goto loop_end;
 		}
 
 		/*
@@ -117,7 +117,7 @@ mii_attach(struct device *parent, struct mii_data *mii, int capmask,
 		 */
 		if (offloc != MII_OFFSET_ANY && offloc != offset) {
 			offset++;
-			continue;
+			goto loop_end;
 		}
 
 		/*
@@ -145,7 +145,7 @@ mii_attach(struct device *parent, struct mii_data *mii, int capmask,
 		}
 		offset++;
 
-		loop_end: ;
+loop_end:	;
 	}
 }
 
