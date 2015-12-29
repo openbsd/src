@@ -1,4 +1,4 @@
-.\" $OpenBSD: imsg_init.3,v 1.14 2015/12/05 13:06:52 claudio Exp $
+.\" $OpenBSD: imsg_init.3,v 1.15 2015/12/29 18:05:23 benno Exp $
 .\"
 .\" Copyright (c) 2010 Nicholas Marriott <nicm@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 5 2015 $
+.Dd $Mdocdate: December 29 2015 $
 .Dt IMSG_INIT 3
 .Os
 .Sh NAME
@@ -403,6 +403,9 @@ and require the application to retry again in the future.
 frees
 .Fa buf
 and any associated storage.
+If
+.Fa buf
+is a NULL pointer, no action occurs.
 .Pp
 The
 .Fn msgbuf_init
