@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifq.c,v 1.3 2015/12/09 12:07:42 dlg Exp $ */
+/*	$OpenBSD: ifq.c,v 1.4 2015/12/29 12:35:43 dlg Exp $ */
 
 /*
  * Copyright (c) 2015 David Gwynne <dlg@openbsd.org>
@@ -83,8 +83,8 @@ ifq_serialize(struct ifqueue *ifq, struct task *t)
 		TAILQ_INSERT_TAIL(&ifq->ifq_task_list, t, t_entry);
 	}
 
-	if (ifq->ifq_serializer == 0) {
-		ifq->ifq_serializer = 1;
+	if (ifq->ifq_serializer == NULL) {
+		ifq->ifq_serializer = curcpu();
 
 		while ((t = TAILQ_FIRST(&ifq->ifq_task_list)) != NULL) {
 			TAILQ_REMOVE(&ifq->ifq_task_list, t, t_entry);
@@ -98,9 +98,15 @@ ifq_serialize(struct ifqueue *ifq, struct task *t)
 			mtx_enter(&ifq->ifq_task_mtx);
 		}
 
-		ifq->ifq_serializer = 0;
+		ifq->ifq_serializer = NULL;
 	}
 	mtx_leave(&ifq->ifq_task_mtx);
+}
+
+int
+ifq_is_serialized(struct ifqueue *ifq)
+{
+	return (ifq->ifq_serializer == curcpu());
 }
 
 void
@@ -136,7 +142,7 @@ ifq_barrier(struct ifqueue *ifq)
 	/* this should only be called from converted drivers */
 	KASSERT(ISSET(ifq->ifq_if->if_xflags, IFXF_MPSAFE));
 
-	if (ifq->ifq_serializer == 0)
+	if (ifq->ifq_serializer == NULL)
 		return;
 
 	ifq_serialize(ifq, &t);
@@ -176,7 +182,7 @@ ifq_init(struct ifqueue *ifq, struct ifnet *ifp)
 
 	mtx_init(&ifq->ifq_task_mtx, IPL_NET);
 	TAILQ_INIT(&ifq->ifq_task_list);
-	ifq->ifq_serializer = 0;
+	ifq->ifq_serializer = NULL;
 
 	task_set(&ifq->ifq_start, ifq_start_task, ifq);
 	task_set(&ifq->ifq_restart, ifq_restart_task, ifq);

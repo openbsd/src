@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifq.h,v 1.3 2015/12/10 03:05:17 dlg Exp $ */
+/*	$OpenBSD: ifq.h,v 1.4 2015/12/29 12:35:43 dlg Exp $ */
 
 /*
  * Copyright (c) 2015 David Gwynne <dlg@openbsd.org>
@@ -37,7 +37,7 @@ struct ifqueue {
 	/* work serialisation */
 	struct mutex		 ifq_task_mtx;
 	struct task_list	 ifq_task_list;
-	unsigned int		 ifq_serializer;
+	void			*ifq_serializer;
 
 	/* work to be serialised */
 	struct task		 ifq_start;
@@ -149,7 +149,8 @@ struct ifqueue {
  * == Network Driver API
  * 
  * The API used by network drivers is mostly documented in the
- * ifq_dequeue(9) manpage except for ifq_serialize().
+ * ifq_dequeue(9) manpage except for ifq_serialize(),
+ * ifq_is_serialized(), and IFQ_ASSERT_SERIALIZED().
  * 
  * === ifq_serialize()
  * 
@@ -163,6 +164,16 @@ struct ifqueue {
  * Because the work may be run on another CPU, the lifetime of the
  * task and the work it represents can extend beyond the end of the
  * call to ifq_serialize() that dispatched it.
+ * 
+ * === ifq_is_serialized()
+ * 
+ * This function returns whether the caller is currently within the
+ * ifqueue serializer context.
+ * 
+ * === IFQ_ASSERT_SERIALIZED()
+ * 
+ * This macro will assert that the caller is currently within the
+ * specified ifqueue serialiser context.
  * 
  * 
  * = ifqueue work serialisation
@@ -318,6 +329,7 @@ unsigned int	 ifq_purge(struct ifqueue *);
 void		*ifq_q_enter(struct ifqueue *, const struct ifq_ops *);
 void		 ifq_q_leave(struct ifqueue *, void *);
 void		 ifq_serialize(struct ifqueue *, struct task *);
+int		 ifq_is_serialized(struct ifqueue *);
 void		 ifq_barrier(struct ifqueue *);
 
 #define	ifq_len(_ifq)			((_ifq)->ifq_len)
@@ -353,6 +365,8 @@ ifq_restart(struct ifqueue *ifq)
 {
 	ifq_serialize(ifq, &ifq->ifq_restart);
 }
+
+#define IFQ_ASSERT_SERIALIZED(_ifq)	KASSERT(ifq_is_serialized(_ifq))
 
 extern const struct ifq_ops * const ifq_priq_ops;
 
