@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.380 2015/11/29 20:19:35 kettenis Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.381 2015/12/29 12:47:22 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -2994,6 +2994,7 @@ bge_attach(struct device *parent, struct device *self, void *aux)
 	ifp = &sc->arpcom.ac_if;
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
+	ifp->if_xflags = IFXF_MPSAFE;
 	ifp->if_ioctl = bge_ioctl;
 	ifp->if_start = bge_start;
 	ifp->if_watchdog = bge_watchdog;
@@ -3665,12 +3666,12 @@ bge_txeof(struct bge_softc *sc)
 
 	txcnt = atomic_sub_int_nv(&sc->bge_txcnt, freed);
 
-	if (txcnt < BGE_TX_RING_CNT - 16)
-		ifq_clr_oactive(&ifp->if_snd);
-	if (txcnt == 0)
-		ifp->if_timer = 0;
-
 	sc->bge_tx_saved_considx = cons;
+
+	if (ifq_is_oactive(&ifp->if_snd))
+		ifq_restart(&ifp->if_snd);
+	else if (txcnt == 0)
+		ifp->if_timer = 0;
 }
 
 int
@@ -3733,12 +3734,6 @@ bge_intr(void *xsc)
 
 		/* Check TX ring producer/consumer */
 		bge_txeof(sc);
-
-		if (!IFQ_IS_EMPTY(&ifp->if_snd)) {
-			KERNEL_LOCK();
-			bge_start(ifp);
-			KERNEL_UNLOCK();
-		}
 	}
 
 	return (1);
@@ -4099,11 +4094,11 @@ doit:
 	if (i < dmamap->dm_nsegs)
 		goto fail_unload;
 
-	bus_dmamap_sync(sc->bge_dmatag, dmamap, 0, dmamap->dm_mapsize,
-	    BUS_DMASYNC_PREWRITE);
-
 	if (frag == sc->bge_tx_saved_considx)
 		goto fail_unload;
+
+	bus_dmamap_sync(sc->bge_dmatag, dmamap, 0, dmamap->dm_mapsize,
+	    BUS_DMASYNC_PREWRITE);
 
 	sc->bge_rdata->bge_tx_ring[cur].bge_flags |= BGE_TXBDFLAG_END;
 	sc->bge_cdata.bge_tx_chain[cur] = m;
@@ -4126,16 +4121,14 @@ fail_unload:
 void
 bge_start(struct ifnet *ifp)
 {
-	struct bge_softc *sc;
+	struct bge_softc *sc = ifp->if_softc;
 	struct mbuf *m;
 	int txinc;
 
-	sc = ifp->if_softc;
-
-	if (!(ifp->if_flags & IFF_RUNNING) || ifq_is_oactive(&ifp->if_snd))
+	if (!BGE_STS_BIT(sc, BGE_STS_LINK)) {
+		IFQ_PURGE(&ifp->if_snd);
 		return;
-	if (!BGE_STS_BIT(sc, BGE_STS_LINK))
-		return;
+	}
 
 	txinc = 0;
 	while (1) {
@@ -4591,7 +4584,6 @@ bge_stop(struct bge_softc *sc, int softonly)
 	timeout_del(&sc->bge_rxtimeout_jumbo);
 
 	ifp->if_flags &= ~IFF_RUNNING;
-	ifq_clr_oactive(&ifp->if_snd);
 	ifp->if_timer = 0;
 
 	if (!softonly) {
@@ -4653,6 +4645,9 @@ bge_stop(struct bge_softc *sc, int softonly)
 	}
 
 	intr_barrier(sc->bge_intrhand);
+	ifq_barrier(&ifp->if_snd);
+
+	ifq_clr_oactive(&ifp->if_snd);
 
 	/* Free the RX lists. */
 	bge_free_rx_ring_std(sc);
