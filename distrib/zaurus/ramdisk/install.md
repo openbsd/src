@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.39 2015/12/18 16:20:58 rpe Exp $
+#	$OpenBSD: install.md,v 1.40 2015/12/29 11:16:14 rpe Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -53,12 +53,12 @@ md_prep_fdisk() {
 		fi
 		ask "Use (W)hole disk$_q or (E)dit the MBR?" "$_d"
 		case $resp in
-		w*|W*)
+		[wW]*)
 			echo -n "Setting OpenBSD MBR partition to whole $_disk..."
 			fdisk -iy $_disk >/dev/null
 			echo "done."
 			return ;;
-		e*|E*)
+		[eE]*)
 			# Manually configure the MBR.
 			cat <<__EOT
 
@@ -72,7 +72,7 @@ __EOT
 			fdisk -e ${_disk}
 			disk_has $_disk mbr openbsd && return
 			echo No OpenBSD partition in MBR, try again. ;;
-		o*|O*)
+		[oO]*)
 			[[ $_d == OpenBSD ]] || continue
 			return ;;
 		esac

@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.23 2015/12/18 16:20:58 rpe Exp $
+#	$OpenBSD: install.md,v 1.24 2015/12/29 11:16:14 rpe Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@ md_prep_fdisk() {
 		fi
 		ask "Use (W)hole disk$_q or (E)dit the MBR?" "$_d"
 		case $resp in
-		w*|W*)
+		[wW]*)
 			case $(sysctl -n hw.product) in
 			Gdium)
 				_s=32
@@ -104,7 +104,7 @@ __EOT
 			disklabel $_disk 2>/dev/null | grep -q "^  i:" || disklabel -w -d $_disk
 			newfs -qt ext2fs $_o ${_disk}i
 			break ;;
-		e*|E*)
+		[eE]*)
 			# Manually configure the MBR.
 			cat <<__EOT
 
@@ -127,7 +127,7 @@ __EOT
 				{ echo "\nNo OpenBSD (id A6) partition!\n"; continue; }
 			disklabel $_disk 2>/dev/null | grep -q "^  i:" || disklabel -w -d $_disk
 			break ;;
-		o*|O*)
+		[oO]*)
 			[[ $_d == OpenBSD ]] || continue
 			break ;;
 		esac

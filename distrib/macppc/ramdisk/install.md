@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.65 2015/12/18 16:20:58 rpe Exp $
+#	$OpenBSD: install.md,v 1.66 2015/12/29 11:16:14 rpe Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -81,13 +81,13 @@ __EOT
 		fi
 		ask "Use (W)hole disk$_q or (E)dit the MBR?" "$_d"
 		case $resp in
-		w*|W*)
+		[wW]*)
 			echo -n "Creating a 1MB DOS partition and an OpenBSD partition for rest of $_disk..."
 			dd if=/dev/zero of=/dev/r${_disk}c bs=1m count=1
 			fdisk -iy $_disk >/dev/null
 			echo "done."
 			break ;;
-		e*|E*)
+		[eE]*)
 			# Manually configure the MBR.
 			cat <<__EOT
 
@@ -109,7 +109,7 @@ __EOT
 			disk_has $_disk mbr openbsd ||
 				{ echo "\nNo OpenBSD (id A6) partition!\n"; continue; }
 			break ;;
-		o*|O*)
+		[oO]*)
 			[[ $_d == OpenBSD ]] || continue
 			break ;;
 		esac

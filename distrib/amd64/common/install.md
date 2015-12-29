@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.49 2015/12/28 17:00:13 rpe Exp $
+#	$OpenBSD: install.md,v 1.50 2015/12/29 11:16:14 rpe Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -69,12 +69,12 @@ md_prep_fdisk() {
 
 		ask "$_q or (E)dit?" "$_d"
 		case $resp in
-		w*|W*)
+		[wW]*)
 			echo -n "Setting OpenBSD MBR partition to whole $_disk..."
 			fdisk -iy $_disk >/dev/null
 			echo "done."
 			return ;;
-		g*|G*)
+		[gG]*)
 			if [[ $MDEFI != y ]]; then
 				ask_yn "An EFI/GPT disk may not boot. Proceed?"
 				[[ $resp == n ]] && continue
@@ -84,7 +84,7 @@ md_prep_fdisk() {
 			fdisk -iy -g -b 960 $_disk >/dev/null
 			echo "done."
 			return ;;
-		e*|E*)
+		[eE]*)
 			if disk_has $_disk gpt; then
 				# Manually configure the GPT.
 				cat <<__EOT
@@ -123,7 +123,7 @@ __EOT
 				echo -n "No OpenBSD partition in MBR,"
 			fi
 			echo "try again." ;;
-		o*|O*)
+		[oO]*)
 			[[ $_d == OpenBSD ]] || continue
 			if [[ $_disk == $ROOTDISK ]] && disk_has $_disk gpt &&
 				! disk_has $_disk gpt efisys; then
