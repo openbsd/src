@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.h,v 1.49 2015/05/15 10:54:26 dlg Exp $ */
+/*	$OpenBSD: atascsi.h,v 1.50 2015/12/29 09:44:46 kettenis Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -53,6 +53,8 @@ struct scsi_link;
  * ATA SET FEATURES subcommands
  */
 #define ATA_SF_WRITECACHE_EN	0x02
+#define ATA_SF_XFERMODE		0x03
+#define  ATA_SF_XFERMODE_UDMA	0x40
 #define ATA_SF_LOOKAHEAD_EN	0xaa
 
 struct ata_identify {
@@ -77,6 +79,7 @@ struct ata_identify {
 	u_int16_t	piomode;	/*  51 */
 	u_int16_t	dmamode;	/*  52 */
 	u_int16_t	validinfo;	/*  53 */
+#define ATA_ID_VALIDINFO_ULTRADMA	0x0004
 	u_int16_t	curcyls;	/*  54 */
 	u_int16_t	curheads;	/*  55 */
 	u_int16_t	cursectrk;	/*  56 */

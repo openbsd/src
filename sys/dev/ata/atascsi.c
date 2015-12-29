@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.c,v 1.125 2015/08/28 00:03:53 deraadt Exp $ */
+/*	$OpenBSD: atascsi.c,v 1.126 2015/12/29 09:44:46 kettenis Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -266,6 +266,8 @@ atascsi_probe(struct scsi_link *link)
 	int				port, type, qdepth;
 	int				rv;
 	u_int16_t			cmdset;
+	u_int16_t			validinfo, ultradma;
+	int				i, xfermode = -1;
 
 	port = link->target;
 	if (port >= as->as_link.adapter_buswidth)
@@ -363,6 +365,24 @@ atascsi_probe(struct scsi_link *link)
 
 	if (type != ATA_PORT_T_DISK)
 		return (0);
+
+	/*
+	 * Early SATA drivers (as well as PATA drives) need to have
+	 * their transfer mode set properly, otherwise commands that
+	 * use DMA will time out.
+	 */
+	validinfo = letoh16(ap->ap_identify.validinfo);
+	if (ISSET(validinfo, ATA_ID_VALIDINFO_ULTRADMA)) {
+		ultradma = letoh16(ap->ap_identify.ultradma);
+		for (i = 7; i >= 0; i--) {
+			if (ultradma & (1 << i)) {
+				xfermode = ATA_SF_XFERMODE_UDMA | i;
+				break;
+			}
+		}
+	}
+	if (xfermode != -1)
+		(void)atascsi_port_set_features(ap, ATA_SF_XFERMODE, xfermode);
 
 	if (as->as_capability & ASAA_CAP_NCQ &&
 	    ISSET(letoh16(ap->ap_identify.satacap), ATA_SATACAP_NCQ) &&
