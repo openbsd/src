@@ -1,4 +1,4 @@
-/*      $OpenBSD: cmp.c,v 1.13 2015/10/10 05:35:22 doug Exp $      */
+/*      $OpenBSD: cmp.c,v 1.14 2015/12/29 19:04:46 gsoares Exp $      */
 /*      $NetBSD: cmp.c,v 1.7 1995/09/08 03:22:56 tls Exp $      */
 
 /*
@@ -58,7 +58,7 @@ main(int argc, char *argv[])
 	setlocale(LC_ALL, "");
 
 	if (pledge("stdio rpath", NULL) == -1)
-		err(1, "pledge");
+		err(ERR_EXIT, "pledge");
 
 	while ((ch = getopt(argc, argv, "ls")) != -1)
 		switch (ch) {
@@ -113,7 +113,7 @@ main(int argc, char *argv[])
 	}
 
 	if (pledge("stdio", NULL) == -1)
-		err(1, "pledge");
+		err(ERR_EXIT, "pledge");
 
 	skip1 = argc > 2 ? strtoq(argv[2], NULL, 0) : 0;
 	skip2 = argc == 4 ? strtoq(argv[3], NULL, 0) : 0;

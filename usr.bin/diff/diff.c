@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.64 2015/10/26 12:52:27 tedu Exp $	*/
+/*	$OpenBSD: diff.c,v 1.65 2015/12/29 19:04:46 gsoares Exp $	*/
 
 /*
  * Copyright (c) 2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -212,7 +212,7 @@ main(int argc, char **argv)
 	argv += optind;
 
 	if (pledge("stdio rpath tmppath", NULL) == -1)
-		err(1, "pledge");
+		err(2, "pledge");
 
 	/*
 	 * Do sanity checks, fill in stb1 and stb2 and call the appropriate

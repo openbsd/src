@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdiff.c,v 1.35 2015/10/18 04:18:41 deraadt Exp $ */
+/*	$OpenBSD: sdiff.c,v 1.36 2015/12/29 19:04:46 gsoares Exp $ */
 
 /*
  * Written by Raymond Lai <ray@cyth.net>.
@@ -165,7 +165,7 @@ main(int argc, char **argv)
 	    *tmp1, *tmp2, *s1, *s2;
 
 	if (pledge("stdio rpath wpath cpath proc exec", NULL) == -1)
-		err(1, "pledge");
+		err(2, "pledge");
 
 	/*
 	 * Process diff flags.

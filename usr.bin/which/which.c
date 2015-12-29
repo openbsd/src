@@ -1,4 +1,4 @@
-/*	$OpenBSD: which.c,v 1.21 2015/10/10 19:02:19 deraadt Exp $	*/
+/*	$OpenBSD: which.c,v 1.22 2015/12/29 19:04:46 gsoares Exp $	*/
 
 /*
  * Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -85,7 +85,7 @@ main(int argc, char *argv[])
 		err(1, "Can't set uid to %u", geteuid());
 
 	if (pledge("stdio rpath", NULL) == -1)
-		err(1, "pledge");
+		err(2, "pledge");
 
 	for (n = 0; n < argc; n++)
 		if (findprog(argv[n], path, progmode, allmatches) == 0)

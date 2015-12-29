@@ -1,4 +1,4 @@
-/*	$OpenBSD: biff.c,v 1.13 2015/10/12 20:03:24 deraadt Exp $	*/
+/*	$OpenBSD: biff.c,v 1.14 2015/12/29 19:04:46 gsoares Exp $	*/
 /*	$NetBSD: biff.c,v 1.3 1995/03/26 02:34:22 glass Exp $	*/
 
 /*
@@ -50,7 +50,7 @@ main(int argc, char *argv[])
 	char *name;
 
 	if (pledge("stdio rpath fattr", NULL) == -1)
-		err(1, "pledge");
+		err(2, "pledge");
 
 	while ((ch = getopt(argc, argv, "")) != -1)
 		switch(ch) {
