@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbr.c,v 1.64 2015/12/27 20:39:51 krw Exp $	*/
+/*	$OpenBSD: mbr.c,v 1.65 2015/12/30 17:21:39 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -79,7 +79,15 @@ MBR_init(struct mbr *mbr)
 	u_int64_t adj;
 	daddr_t i;
 
-	memset(&mbr->part, 0, sizeof(mbr->part));
+	/*
+	 * XXX Do *NOT* zap all MBR parts! Some archs still read initmbr
+	 * from disk!! Just mark them inactive until -b goodness spreads
+	 * further.
+	 */
+	mbr->part[0].flag = 0;
+	mbr->part[1].flag = 0;
+	mbr->part[2].flag = 0;
+
 	memset(&gh, 0, sizeof(gh));
 	memset(&gp, 0, sizeof(gp));
 
