@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrt.c,v 1.80 2015/12/05 18:28:04 benno Exp $ */
+/*	$OpenBSD: mrt.c,v 1.81 2015/12/30 12:06:56 benno Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -355,10 +355,8 @@ mrt_dump_entry_mp(struct mrt *mrt, struct prefix *p, u_int16_t snum,
 	return (len + MRT_HEADER_SIZE);
 
 fail:
-	if (hbuf)
-		ibuf_free(hbuf);
-	if (h2buf)
-		ibuf_free(h2buf);
+	ibuf_free(hbuf);
+	ibuf_free(h2buf);
 	ibuf_free(buf);
 	return (-1);
 }
@@ -540,8 +538,7 @@ mrt_dump_entry_v2(struct mrt *mrt, struct rib_entry *re, u_int32_t snum)
 
 	return (0);
 fail:
-	if (hbuf)
-		ibuf_free(hbuf);
+	ibuf_free(hbuf);
 	ibuf_free(buf);
 	return (-1);
 }
@@ -595,8 +592,7 @@ mrt_dump_v2_hdr(struct mrt *mrt, struct bgpd_config *conf,
 
 	return (0);
 fail:
-	if (hbuf)
-		ibuf_free(hbuf);
+	ibuf_free(hbuf);
 	ibuf_free(buf);
 	return (-1);
 }
