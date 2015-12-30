@@ -1,4 +1,4 @@
-/*	$OpenBSD: check_tcp.c,v 1.49 2015/12/24 13:58:30 benno Exp $	*/
+/*	$OpenBSD: check_tcp.c,v 1.50 2015/12/30 12:08:34 benno Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -141,10 +141,8 @@ tcp_close(struct ctl_tcp_event *cte, int status)
 	cte->s = -1;
 	if (status != 0)
 		cte->host->up = status;
-	if (cte->buf) {
-		ibuf_free(cte->buf);
-		cte->buf = NULL;
-	}
+	ibuf_free(cte->buf);
+	cte->buf = NULL;
 }
 
 void

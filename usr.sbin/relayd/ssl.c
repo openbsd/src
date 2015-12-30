@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl.c,v 1.29 2015/03/24 08:44:04 giovanni Exp $	*/
+/*	$OpenBSD: ssl.c,v 1.30 2015/12/30 12:08:34 benno Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -216,10 +216,8 @@ ssl_cleanup(struct ctl_tcp_event *cte)
 		SSL_shutdown(cte->ssl);
 		SSL_clear(cte->ssl);
 	}
-	if (cte->buf != NULL) {
-		ibuf_free(cte->buf);
-		cte->buf = NULL;
-	}
+	ibuf_free(cte->buf);
+	cte->buf = NULL;
 }
 
 void
