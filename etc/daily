@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: daily,v 1.83 2015/04/29 00:10:44 halex Exp $
+#	$OpenBSD: daily,v 1.84 2015/12/30 22:59:53 rpe Exp $
 #	From: @(#)daily	8.2 (Berkeley) 1/25/94
 #
 # For local additions, create the file /etc/daily.local.
@@ -49,10 +49,10 @@ if [ -d /tmp -a ! -L /tmp ]; then
 	cd /tmp && {
 	find -x . \
 	    \( -path './ssh-*' -o -path ./.X11-unix -o -path ./.ICE-unix \
-		-o -path ./portslocks -o -path './tmux-*' \) \
+		-o -path './tmux-*' \) \
 	    -prune -o -type f -atime +7 -execdir rm -f -- {} \; 2>/dev/null
 	find -x . -type d -mtime +1 ! -path ./vi.recover ! -path ./.X11-unix \
-	    ! -path ./.ICE-unix ! -path ./portslocks ! -name . \
+	    ! -path ./.ICE-unix ! -name . \
 	    -execdir rmdir -- {} \; >/dev/null 2>&1; }
 fi
 
