@@ -1,4 +1,4 @@
-dnl	$OpenBSD: contents,v 1.14 2014/11/10 07:15:41 jsg Exp $
+dnl	$OpenBSD: contents,v 1.15 2015/12/30 23:48:59 rpe Exp $
 TopPart
 
 dnl can't use OpenBSDminiroot here - comment is inappropriate
@@ -15,7 +15,7 @@ dnl not yet...
 dnl OpenBSDcd
 dnl XXX describe boot, mbr, and xxboot. Or stop providing them?
 
-DistributionDescription(ten)
+DistributionDescription(eight)
 
 OpenBSDbase(64276130,165536765)
 

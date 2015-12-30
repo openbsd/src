@@ -1,4 +1,4 @@
-dnl	$OpenBSD: contents,v 1.13 2014/11/10 07:15:41 jsg Exp $
+dnl	$OpenBSD: contents,v 1.14 2015/12/30 23:49:00 rpe Exp $
 TopPart
 
 OpenBSDdistsets
@@ -13,7 +13,7 @@ OpenBSDminiroot
 
 	boot		The OpenBSD/MACHINE bootloader.
 
-DistributionDescription(ten)
+DistributionDescription(eight)
 
 OpenBSDbase(57671758,194218589)
 

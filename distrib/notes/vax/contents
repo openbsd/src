@@ -1,4 +1,4 @@
-dnl	$OpenBSD: contents,v 1.34 2014/11/10 07:15:42 jsg Exp $
+dnl	$OpenBSD: contents,v 1.35 2015/12/30 23:49:00 rpe Exp $
 TopPart
 
 OpenBSDdistsets
@@ -18,7 +18,7 @@ OpenBSDfloppy
 
 OpenBSDfloppydesc(single,The)
 
-DistributionDescription(ten)
+DistributionDescription(eight)
 
 OpenBSDbase(86919981,204343440)
 

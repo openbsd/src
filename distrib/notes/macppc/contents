@@ -1,4 +1,4 @@
-dnl	$OpenBSD: contents,v 1.35 2014/11/10 07:15:42 jsg Exp $
+dnl	$OpenBSD: contents,v 1.36 2015/12/30 23:49:00 rpe Exp $
 TopPart
 
 OpenBSDdistsets
@@ -17,7 +17,7 @@ OpenBSDcd
 dnl
 dnl	bsd.tbxi
 
-DistributionDescription(ten)
+DistributionDescription(eight)
 
 OpenBSDbase(67713862,191086121)
 

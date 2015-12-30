@@ -1,4 +1,4 @@
-dnl	$OpenBSD: contents,v 1.60 2015/08/31 16:04:49 deraadt Exp $
+dnl	$OpenBSD: contents,v 1.61 2015/12/30 23:48:59 rpe Exp $
 TopPart
 
 OpenBSDminiroot
@@ -59,7 +59,7 @@ OpenBSDcd
 
 OpenBSDfloppydesc(three,Each,s)
 
-DistributionDescription(ten)
+DistributionDescription(eight)
 
 OpenBSDbase(67412475,206465200)
 

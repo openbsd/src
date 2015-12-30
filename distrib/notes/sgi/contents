@@ -1,4 +1,4 @@
-dnl	$OpenBSD: contents,v 1.27 2015/09/20 15:24:39 miod Exp $
+dnl	$OpenBSD: contents,v 1.28 2015/12/30 23:49:00 rpe Exp $
 TopPart
 
 OpenBSDdistsets
@@ -82,7 +82,7 @@ dnl can't use OpenBSDcd because of the multiple bsd.rd
 			``volume header'' of the boot disk.
 
 
-DistributionDescription(ten)
+DistributionDescription(eight)
 
 OpenBSDbase(59952041,197445683)
 

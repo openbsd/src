@@ -1,4 +1,4 @@
-dnl	$OpenBSD: contents,v 1.16 2014/11/10 07:15:41 jsg Exp $
+dnl	$OpenBSD: contents,v 1.17 2015/12/30 23:49:00 rpe Exp $
 TopPart
 
 OpenBSDminiroot
@@ -17,7 +17,7 @@ OpenBSDrd
 
 	boot		The OpenBSD/MACHINE boot block.
 
-DistributionDescription(ten)
+DistributionDescription(eight)
 
 OpenBSDbase(64527917,184893363)
 

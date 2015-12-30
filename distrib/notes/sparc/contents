@@ -1,4 +1,4 @@
-dnl	$OpenBSD: contents,v 1.71 2014/11/10 07:15:42 jsg Exp $
+dnl	$OpenBSD: contents,v 1.72 2015/12/30 23:49:00 rpe Exp $
 TopPart
 
 OpenBSDminiroot
@@ -34,7 +34,7 @@ Sun bootblocks require a separate kernel image and root filesystem.
 
 OpenBSDfloppydesc(single,The)
 
-DistributionDescription(ten)
+DistributionDescription(eight)
 
 OpenBSDbase(56009365,161293549)
 

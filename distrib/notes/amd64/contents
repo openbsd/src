@@ -1,4 +1,4 @@
-dnl	$OpenBSD: contents,v 1.35 2014/11/10 07:15:41 jsg Exp $
+dnl	$OpenBSD: contents,v 1.36 2015/12/30 23:48:59 rpe Exp $
 TopPart
 
 OpenBSDminiroot
@@ -50,7 +50,7 @@ dnl
 dnl In addition, the "tools/" directory contains some utilities that might be
 dnl useful for the installation.
 
-DistributionDescription(ten)
+DistributionDescription(eight)
 
 OpenBSDbase(63620376,186626286)
 

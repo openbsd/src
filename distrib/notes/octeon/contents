@@ -1,4 +1,4 @@
-dnl	$OpenBSD: contents,v 1.6 2015/06/09 19:36:43 jasper Exp $
+dnl	$OpenBSD: contents,v 1.7 2015/12/30 23:49:00 rpe Exp $
 TopPart
 
 OpenBSDdistsets
@@ -14,7 +14,7 @@ dnl OpenBSDcd
 dnl
 dnl	boot		The OpenBSD/MACHINE bootloader.
 
-DistributionDescription(ten)
+DistributionDescription(eight)
 
 OpenBSDbase(57530500,191070055)
 
