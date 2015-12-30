@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttylog.c,v 1.4 2015/12/04 13:49:42 bluhm Exp $	*/
+/*	$OpenBSD: ttylog.c,v 1.5 2015/12/30 13:15:52 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2015 Alexander Bluhm <bluhm@openbsd.org>
@@ -33,33 +33,39 @@
 #include <utmp.h>
 
 __dead void usage(void);
+void redirect(void);
+void restore(void);
 void timeout(int);
 void terminate(int);
 void iostdin(int);
 
 FILE *lg;
-char *tty;
+char *console, *username, *tty;
+int sfd;
 
 __dead void
 usage()
 {
-	fprintf(stderr, "usage: %s username logfile\n", getprogname());
+	fprintf(stderr, "usage: %s /dev/console|username logfile\n",
+	    getprogname());
 	exit(2);
 }
 
 int
 main(int argc, char *argv[])
 {
-	char buf[8192], ptyname[16], *username, *logfile;
-	struct utmp utmp;
+	char buf[8192], ptyname[16], *logfile;
 	struct sigaction act;
 	sigset_t set;
-	int mfd, sfd;
 	ssize_t n;
+	int mfd;
 
 	if (argc != 3)
 		usage();
-	username = argv[1];
+	if (strcmp(argv[1], "/dev/console") == 0)
+		console = argv[1];
+	else
+		username = argv[1];
 	logfile = argv[2];
 
 	sigemptyset(&set);
@@ -93,12 +99,7 @@ main(int argc, char *argv[])
 	if (dup2(sfd, 1) == -1)
 		err(1, "dup2 stdout");
 
-	memset(&utmp, 0, sizeof(utmp));
-	strlcpy(utmp.ut_line, tty, sizeof(utmp.ut_line));
-	strlcpy(utmp.ut_name, username, sizeof(utmp.ut_name));
-	time(&utmp.ut_time);
-	login(&utmp);
-	fprintf(lg, "login %s %s\n", username, tty);
+	redirect();
 
 	act.sa_handler = iostdin;
 	if (sigaction(SIGIO, &act, NULL) == -1)
@@ -139,21 +140,66 @@ main(int argc, char *argv[])
 		err(1, "read %s", ptyname);
 	fprintf(lg, "EOF %s\n", ptyname);
 
-	if (logout(tty) == 0)
-		errx(1, "logout %s", tty);
-	fprintf(lg, "logout %s\n", tty);
+	restore();
 
 	errx(3, "EOF");
+}
+
+void
+redirect(void)
+{
+	struct utmp utmp;
+	int fd, on;
+
+	if (console) {
+		/* first remove any existing console redirection */
+		on = 0;
+		if ((fd = open("/dev/console", O_WRONLY)) == -1)
+			err(1, "open /dev/console");
+		if (ioctl(fd, TIOCCONS, &on) == -1)
+			err(1, "ioctl TIOCCONS");
+		close(fd);
+		/* then redirect console to our pseudo tty */
+		on = 1;
+		if (ioctl(sfd, TIOCCONS, &on) == -1)
+			err(1, "ioctl TIOCCONS on");
+		fprintf(lg, "console %s on %s\n", console, tty);
+	}
+	if (username) {
+		memset(&utmp, 0, sizeof(utmp));
+		strlcpy(utmp.ut_line, tty, sizeof(utmp.ut_line));
+		strlcpy(utmp.ut_name, username, sizeof(utmp.ut_name));
+		time(&utmp.ut_time);
+		login(&utmp);
+		fprintf(lg, "login %s %s\n", username, tty);
+	}
+}
+
+void
+restore(void)
+{
+	int on;
+
+	if (tty == NULL)
+		return;
+	if (console) {
+		on = 0;
+		if (ioctl(sfd, TIOCCONS, &on) == -1)
+			err(1, "ioctl TIOCCONS off");
+		fprintf(lg, "console %s off\n", tty);
+	}
+	if (username) {
+		if (logout(tty) == 0)
+			errx(1, "logout %s", tty);
+		fprintf(lg, "logout %s\n", tty);
+	}
 }
 
 void
 timeout(int sig)
 {
 	fprintf(lg, "signal timeout %d\n", sig);
-	if (tty) {
-		logout(tty);
-		fprintf(lg, "logout %s\n", tty);
-	}
+	restore();
 	errx(3, "timeout");
 }
 
@@ -161,10 +207,7 @@ void
 terminate(int sig)
 {
 	fprintf(lg, "signal terminate %d\n", sig);
-	if (tty) {
-		logout(tty);
-		fprintf(lg, "logout %s\n", tty);
-	}
+	restore();
 	errx(3, "terminate");
 }
 
@@ -177,10 +220,7 @@ iostdin(int sig)
 	fprintf(lg, "signal iostdin %d\n", sig);
 	if ((n = read(0, buf, sizeof(buf))) < 0)
 		err(1, "read stdin");
-	if (tty) {
-		logout(tty);
-		fprintf(lg, "logout %s\n", tty);
-	}
+	restore();
 	if (n > 0)
 		errx(3, "read stdin %zd bytes", n);
 	exit(0);

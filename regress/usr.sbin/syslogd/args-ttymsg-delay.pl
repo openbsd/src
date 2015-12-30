@@ -2,8 +2,8 @@
 # The syslogd writes it into a file and through a pipe and to tty.
 # The syslogd passes it via UDP to the loghost.
 # The server receives the message on its UDP socket.
-# Find the message in client, file, pipe, tty, syslogd, server log.
-# Check that syslogd has logged that the tty blocked.
+# Find the message in client, file, pipe, user, syslogd, server log.
+# Check that syslogd has logged that the user's tty blocked.
 
 use strict;
 use warnings;
@@ -22,7 +22,7 @@ our %args = (
 	    qr/ttymsg delayed write/ => '>=1',
 	},
     },
-    tty => {
+    user => {
 	loggrep => {
 	    qr/ 0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ.* [12]$/ => 2,
 	    get_testgrep() => 1,

@@ -17,15 +17,15 @@ our %args = (
 	    RLIMIT_NOFILE => 30,
 	},
 	loggrep => {
-	    qr/syslogd: receive_fd: recvmsg: Message too long/ => 4,
+	    qr/syslogd: receive_fd: recvmsg: Message too long/ => 5,
 	    # One file is opened by test default config, 20 by multifile.
-	    qr/X FILE:/ => 1+16,
-	    qr/X UNUSED:/ => 4,
+	    qr/X FILE:/ => 1+15,
+	    qr/X UNUSED:/ => 5,
 	},
     },
     multifile => [
-	(map { { loggrep => get_testgrep() } } 0..15),
-	(map { { loggrep => { qr/./s => 0 } } } 16..19),
+	(map { { loggrep => get_testgrep() } } 0..14),
+	(map { { loggrep => { qr/./s => 0 } } } 15..19),
     ],
 );
 

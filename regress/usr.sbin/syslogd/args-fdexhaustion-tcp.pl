@@ -25,10 +25,10 @@ our %args = (
 	    RLIMIT_NOFILE => 30,
 	},
 	loggrep => {
-	    qr/syslogd: receive_fd: recvmsg: Message too long/ => 5,
+	    qr/syslogd: receive_fd: recvmsg: Message too long/ => 6,
 	    # One file is opened by test default config, 20 by multifile.
-	    qr/X FILE:/ => 1+15,
-	    qr/X UNUSED:/ => 5,
+	    qr/X FILE:/ => 1+14,
+	    qr/X UNUSED:/ => 6,
 	    qr/Accepting tcp connection/ => 0,
 	    qr/Listen again/ => '>=1',
 	},
@@ -37,8 +37,8 @@ our %args = (
 	loggrep => { get_testlog() => 0 },
     },
     multifile => [
-	(map { { loggrep => qr/syslogd: accept deferred/ } } 0..14),
-	(map { { loggrep => { qr/./s => 0 } } } 15..19),
+	(map { { loggrep => qr/syslogd: accept deferred/ } } 0..13),
+	(map { { loggrep => { qr/./s => 0 } } } 14..19),
     ],
     file => {
 	loggrep => qr/syslogd: accept deferred: Too many open files/,

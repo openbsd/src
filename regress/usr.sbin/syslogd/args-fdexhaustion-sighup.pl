@@ -30,8 +30,8 @@ our %args = (
 	    qr/syslogd: receive_fd: recvmsg: Message too long/ => '>='.(4+2*3),
 	    # During first initialization the lockpipe is open.  When
 	    # SIGHUP happens it is closed and one more file can be opened.
-	    qr/X FILE:/ => 1+16+1+17,
-	    qr/X UNUSED:/ => 4+3,
+	    qr/X FILE:/ => 1+15+1+16,
+	    qr/X UNUSED:/ => 5+4,
 	},
     },
     server => {
@@ -49,15 +49,15 @@ our %args = (
 	},
     },
     multifile => [
-	(map { { loggrep => get_testgrep() } } 0..16),
-	(map { { loggrep => { qr/./s => 0 } } } 17..19),
+	(map { { loggrep => get_testgrep() } } 0..15),
+	(map { { loggrep => { qr/./s => 0 } } } 16..19),
     ],
-    tty => {
+    user => {
 	loggrep => {
 	    get_firstlog() => 1,
 	    get_testlog() => 0,
 	}
-    }
+    },
 );
 
 1;

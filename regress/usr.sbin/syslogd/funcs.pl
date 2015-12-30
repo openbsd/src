@@ -1,4 +1,4 @@
-#	$OpenBSD: funcs.pl,v 1.28 2015/12/04 13:49:42 bluhm Exp $
+#	$OpenBSD: funcs.pl,v 1.29 2015/12/30 13:15:52 bluhm Exp $
 
 # Copyright (c) 2010-2015 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -363,14 +363,20 @@ sub check_out {
 	unless ($args{pipe}{nocheck}) {
 		$r->loggrep("bytes transferred", 1) or sleep 1;
 	}
-	unless ($args{tty}{nocheck}) {
-		open(my $fh, '<', $r->{outtty})
-		    or die "Open file $r->{outtty} for reading failed: $!";
-		grep { qr/^logout/ } <$fh> or sleep 1;
+	foreach my $dev (qw(console user)) {
+		$args{$dev}{nocheck} ||= $args{tty}{nocheck};
+		$args{$dev}{loggrep} ||= $args{tty}{loggrep};
+		next if $args{$dev}{nocheck};
+		my $ctl = $r->{"ctl$dev"};
+		close($ctl);
+		my $file = $r->{"out$dev"};
+		open(my $fh, '<', $file)
+		    or die "Open file $file for reading failed: $!";
+		grep { /^logout/ or /^console .* off/ } <$fh> or sleep 1;
 		close($fh);
 	}
 
-	foreach my $name (qw(file pipe tty)) {
+	foreach my $name (qw(file pipe console user)) {
 		next if $args{$name}{nocheck};
 		my $file = $r->{"out$name"} or die;
 		my $pattern = $args{$name}{loggrep} || get_testgrep();

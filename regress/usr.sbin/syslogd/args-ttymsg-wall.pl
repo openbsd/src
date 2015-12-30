@@ -4,8 +4,8 @@
 # The special message also goes to all users with wall *.
 # The syslogd passes it via UDP to the loghost.
 # The server receives the message on its UDP socket.
-# Find the message in client, file, pipe, tty, syslogd, server log.
-# Check that the special message is in the tty log twice.
+# Find the message in client, file, pipe, console, user, syslogd, server log.
+# Check that the special message is in the user's tty log twice.
 
 use strict;
 use warnings;
@@ -22,7 +22,7 @@ our %args = (
     syslogd => {
 	conf => "local5.err\t*",
     },
-    tty => {
+    user => {
 	loggrep => {
 	    qr/Message from syslogd/ => 1,
 	    qr/syslogd-regress.* test message to all users/ => 2,
