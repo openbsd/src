@@ -1,4 +1,4 @@
-/*	$OpenBSD: fstat.c,v 1.84 2015/11/17 17:17:24 deraadt Exp $	*/
+/*	$OpenBSD: fstat.c,v 1.85 2015/12/30 19:02:12 mestre Exp $	*/
 
 /*
  * Copyright (c) 2009 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -96,10 +96,10 @@ int	nflg;	/* (numerical) display f.s. and rdev as dev_t */
 int	oflg;	/* display file offset */
 int	sflg;	/* display file xfer/bytes counters */
 int	vflg;	/* display errors in locating kernel data objects etc... */
-int 	cflg; 	/* fuser only */
+int	cflg; 	/* fuser only */
 
-int 	fuser;	/* 1 if we are fuser, 0 if we are fstat */
-int 	signo;	/* signal to send (fuser only) */
+int	fuser;	/* 1 if we are fuser, 0 if we are fstat */
+int	signo;	/* signal to send (fuser only) */
 
 kvm_t *kd;
 uid_t uid;
@@ -107,7 +107,7 @@ uid_t uid;
 void fstat_dofile(struct kinfo_file *);
 void fstat_header(void);
 void getinetproto(int);
-void usage(void);
+__dead void usage(void);
 int getfname(char *);
 void kqueuetrans(struct kinfo_file *);
 void pipetrans(struct kinfo_file *);
@@ -827,8 +827,7 @@ socktrans(struct kinfo_file *kf)
  *	print name of protocol number
  */
 void
-getinetproto(number)
-	int number;
+getinetproto(int number)
 {
 	static int isopen;
 	struct protoent *pe;
