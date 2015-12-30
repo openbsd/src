@@ -1,4 +1,4 @@
-/*	$OpenBSD: syn.c,v 1.37 2015/11/01 15:38:53 mmcc Exp $	*/
+/*	$OpenBSD: syn.c,v 1.38 2015/12/30 09:07:00 tedu Exp $	*/
 
 /*
  * shell parser (C version)
@@ -555,8 +555,8 @@ function_body(char *name,
 		reject = true;
 	}
 
-	old_func_parse = e->flags & EF_FUNC_PARSE;
-	e->flags |= EF_FUNC_PARSE;
+	old_func_parse = genv->flags & EF_FUNC_PARSE;
+	genv->flags |= EF_FUNC_PARSE;
 	if ((t->left = get_command(CONTIN)) == NULL) {
 		/*
 		 * Probably something like foo() followed by eof or ;.
@@ -576,7 +576,7 @@ function_body(char *name,
 		t->left->lineno = 1;
 	}
 	if (!old_func_parse)
-		e->flags &= ~EF_FUNC_PARSE;
+		genv->flags &= ~EF_FUNC_PARSE;
 
 	return t;
 }

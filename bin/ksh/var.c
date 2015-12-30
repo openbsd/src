@@ -1,4 +1,4 @@
-/*	$OpenBSD: var.c,v 1.54 2015/12/14 13:59:42 tb Exp $	*/
+/*	$OpenBSD: var.c,v 1.55 2015/12/30 09:07:00 tedu Exp $	*/
 
 #include <sys/stat.h>
 
@@ -34,7 +34,7 @@ static struct tbl *arraysearch(struct tbl *, int);
 
 /*
  * create a new block for function calls and simple commands
- * assume caller has allocated and set up e->loc
+ * assume caller has allocated and set up genv->loc
  */
 void
 newblock(void)
@@ -44,19 +44,19 @@ newblock(void)
 
 	l = alloc(sizeof(struct block), ATEMP);
 	l->flags = 0;
-	ainit(&l->area); /* todo: could use e->area (l->area => l->areap) */
-	if (!e->loc) {
+	ainit(&l->area); /* todo: could use genv->area (l->area => l->areap) */
+	if (!genv->loc) {
 		l->argc = 0;
 		l->argv = (char **) empty;
 	} else {
-		l->argc = e->loc->argc;
-		l->argv = e->loc->argv;
+		l->argc = genv->loc->argc;
+		l->argv = genv->loc->argv;
 	}
 	l->exit = l->error = NULL;
 	ktinit(&l->vars, &l->area, 0);
 	ktinit(&l->funs, &l->area, 0);
-	l->next = e->loc;
-	e->loc = l;
+	l->next = genv->loc;
+	genv->loc = l;
 }
 
 /*
@@ -65,11 +65,11 @@ newblock(void)
 void
 popblock(void)
 {
-	struct block *l = e->loc;
+	struct block *l = genv->loc;
 	struct tbl *vp, **vpp = l->vars.tbls, *vq;
 	int i;
 
-	e->loc = l->next;	/* pop block */
+	genv->loc = l->next;	/* pop block */
 	for (i = l->vars.size; --i >= 0; )
 		if ((vp = *vpp++) != NULL && (vp->flag&SPECIAL)) {
 			if ((vq = global(vp->name))->flag & ISSET)
@@ -162,7 +162,7 @@ array_index_calc(const char *n, bool *arrayp, int *valp)
 struct tbl *
 global(const char *n)
 {
-	struct block *l = e->loc;
+	struct block *l = genv->loc;
 	struct tbl *vp;
 	long	 num;
 	int c;
@@ -219,7 +219,7 @@ global(const char *n)
 		}
 		return vp;
 	}
-	for (l = e->loc; ; l = l->next) {
+	for (l = genv->loc; ; l = l->next) {
 		vp = ktsearch(&l->vars, n, h);
 		if (vp != NULL) {
 			if (array)
@@ -245,7 +245,7 @@ global(const char *n)
 struct tbl *
 local(const char *n, bool copy)
 {
-	struct block *l = e->loc;
+	struct block *l = genv->loc;
 	struct tbl *vp;
 	unsigned int h;
 	bool	 array;
@@ -841,7 +841,7 @@ makenv(void)
 	int i;
 
 	XPinit(env, 64);
-	for (l = e->loc; l != NULL; l = l->next)
+	for (l = genv->loc; l != NULL; l = l->next)
 		for (vpp = l->vars.tbls, i = l->vars.size; --i >= 0; )
 			if ((vp = *vpp++) != NULL &&
 			    (vp->flag&(ISSET|EXPORT)) == (ISSET|EXPORT)) {

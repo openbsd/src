@@ -1,4 +1,4 @@
-/*	$OpenBSD: jobs.c,v 1.53 2015/12/14 13:59:42 tb Exp $	*/
+/*	$OpenBSD: jobs.c,v 1.54 2015/12/30 09:07:00 tedu Exp $	*/
 
 /*
  * Process and job control
@@ -1293,7 +1293,7 @@ check_job(Job *j)
 				struct env *ep;
 				int fd = 2;
 
-				for (ep = e; ep; ep = ep->oenv)
+				for (ep = genv; ep; ep = ep->oenv)
 					if (ep->savefd && ep->savefd[2])
 						fd = ep->savefd[2];
 				shf_reopen(fd, SHF_WR, shl_j);

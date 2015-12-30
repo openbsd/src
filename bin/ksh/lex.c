@@ -1,4 +1,4 @@
-/*	$OpenBSD: lex.c,v 1.66 2015/12/14 13:59:42 tb Exp $	*/
+/*	$OpenBSD: lex.c,v 1.67 2015/12/30 09:07:00 tedu Exp $	*/
 
 /*
  * lexical analysis and source input
@@ -1201,7 +1201,7 @@ set_prompt(int to, Source *s)
 		ps1 = str_save(str_val(global("PS1")), ATEMP);
 		saved_atemp = ATEMP;	/* ps1 is freed by substitute() */
 		newenv(E_ERRH);
-		if (sigsetjmp(e->jbuf, 0)) {
+		if (sigsetjmp(genv->jbuf, 0)) {
 			prompt = safe_prompt;
 			/* Don't print an error - assume it has already
 			 * been printed.  Reason is we may have forked

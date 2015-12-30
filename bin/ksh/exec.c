@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.c,v 1.63 2015/12/14 13:59:42 tb Exp $	*/
+/*	$OpenBSD: exec.c,v 1.64 2015/12/30 09:07:00 tedu Exp $	*/
 
 /*
  * execute command tree
@@ -101,9 +101,9 @@ execute(struct op *volatile t,
 	flags &= ~XTIME;
 
 	if (t->ioact != NULL || t->type == TPIPE || t->type == TCOPROC) {
-		e->savefd = areallocarray(NULL, NUFILE, sizeof(short), ATEMP);
+		genv->savefd = areallocarray(NULL, NUFILE, sizeof(short), ATEMP);
 		/* initialize to not redirected */
-		memset(e->savefd, 0, NUFILE * sizeof(short));
+		memset(genv->savefd, 0, NUFILE * sizeof(short));
 	}
 
 	/* do redirection, to be restored in quitenv() */
@@ -134,8 +134,8 @@ execute(struct op *volatile t,
 	case TPIPE:
 		flags |= XFORK;
 		flags &= ~XEXEC;
-		e->savefd[0] = savefd(0);
-		e->savefd[1] = savefd(1);
+		genv->savefd[0] = savefd(0);
+		genv->savefd[1] = savefd(1);
 		while (t->type == TPIPE) {
 			openpipe(pv);
 			(void) ksh_dup2(pv[1], 1, false); /* stdout of curr */
@@ -150,8 +150,8 @@ execute(struct op *volatile t,
 			flags |= XPIPEI;
 			t = t->right;
 		}
-		restfd(1, e->savefd[1]); /* stdout of last */
-		e->savefd[1] = 0; /* no need to re-restore this */
+		restfd(1, genv->savefd[1]); /* stdout of last */
+		genv->savefd[1] = 0; /* no need to re-restore this */
 		/* Let exchild() close 0 in parent, after fork, before wait */
 		i = exchild(t, flags|XPCLOSE, xerrok, 0);
 		if (!(flags&XBGND) && !(flags&XXCOM))
@@ -174,8 +174,8 @@ execute(struct op *volatile t,
 		 * signal handler
 		 */
 		sigprocmask(SIG_BLOCK, &sm_sigchld, &omask);
-		e->type = E_ERRH;
-		i = sigsetjmp(e->jbuf, 0);
+		genv->type = E_ERRH;
+		i = sigsetjmp(genv->jbuf, 0);
 		if (i) {
 			sigprocmask(SIG_SETMASK, &omask, NULL);
 			quitenv(NULL);
@@ -190,8 +190,8 @@ execute(struct op *volatile t,
 		coproc_cleanup(true);
 
 		/* do this before opening pipes, in case these fail */
-		e->savefd[0] = savefd(0);
-		e->savefd[1] = savefd(1);
+		genv->savefd[0] = savefd(0);
+		genv->savefd[1] = savefd(1);
 
 		openpipe(pv);
 		if (pv[0] != 0) {
@@ -213,7 +213,7 @@ execute(struct op *volatile t,
 			++coproc.id;
 		}
 		sigprocmask(SIG_SETMASK, &omask, NULL);
-		e->type = E_EXEC; /* no more need for error handler */
+		genv->type = E_EXEC; /* no more need for error handler */
 
 		/* exchild() closes coproc.* in child after fork,
 		 * will also increment coproc.njobs when the
@@ -272,13 +272,13 @@ execute(struct op *volatile t,
 	    {
 		volatile bool is_first = true;
 		ap = (t->vars != NULL) ? eval(t->vars, DOBLANK|DOGLOB|DOTILDE) :
-		    e->loc->argv + 1;
-		e->type = E_LOOP;
+		    genv->loc->argv + 1;
+		genv->type = E_LOOP;
 		while (1) {
-			i = sigsetjmp(e->jbuf, 0);
+			i = sigsetjmp(genv->jbuf, 0);
 			if (!i)
 				break;
-			if ((e->flags&EF_BRKCONT_PASS) ||
+			if ((genv->flags&EF_BRKCONT_PASS) ||
 			    (i != LBREAK && i != LCONTIN)) {
 				quitenv(NULL);
 				unwind(i);
@@ -309,12 +309,12 @@ execute(struct op *volatile t,
 
 	case TWHILE:
 	case TUNTIL:
-		e->type = E_LOOP;
+		genv->type = E_LOOP;
 		while (1) {
-			i = sigsetjmp(e->jbuf, 0);
+			i = sigsetjmp(genv->jbuf, 0);
 			if (!i)
 				break;
-			if ((e->flags&EF_BRKCONT_PASS) ||
+			if ((genv->flags&EF_BRKCONT_PASS) ||
 			    (i != LBREAK && i != LCONTIN)) {
 				quitenv(NULL);
 				unwind(i);
@@ -583,16 +583,16 @@ comexec(struct op *t, struct tbl *volatile tp, char **ap, volatile int flags,
 			kshname = ap[0];
 		else
 			ap[0] = (char *) kshname;
-		e->loc->argv = ap;
+		genv->loc->argv = ap;
 		for (i = 0; *ap++ != NULL; i++)
 			;
-		e->loc->argc = i - 1;
+		genv->loc->argc = i - 1;
 		/* ksh-style functions handle getopts sanely,
 		 * bourne/posix functions are insane...
 		 */
 		if (tp->flag & FKSH) {
-			e->loc->flags |= BF_DOGETOPTS;
-			e->loc->getopts_state = user_opt;
+			genv->loc->flags |= BF_DOGETOPTS;
+			genv->loc->getopts_state = user_opt;
 			getopts_reset(1);
 		}
 
@@ -602,8 +602,8 @@ comexec(struct op *t, struct tbl *volatile tp, char **ap, volatile int flags,
 		old_inuse = tp->flag & FINUSE;
 		tp->flag |= FINUSE;
 
-		e->type = E_FUNC;
-		i = sigsetjmp(e->jbuf, 0);
+		genv->type = E_FUNC;
+		i = sigsetjmp(genv->jbuf, 0);
 		if (i == 0) {
 			/* seems odd to pass XERROK here, but at&t ksh does */
 			exstat = execute(tp->val.t, flags & XERROK, xerrok);
@@ -733,7 +733,7 @@ findfunc(const char *name, unsigned int h, int create)
 	struct block *l;
 	struct tbl *tp = NULL;
 
-	for (l = e->loc; l; l = l->next) {
+	for (l = genv->loc; l; l = l->next) {
 		tp = ktsearch(&l->funs, name, h);
 		if (tp)
 			break;
@@ -1123,10 +1123,10 @@ iosetup(struct ioword *iop, struct tbl *tp)
 		return -1;
 	}
 	/* Do not save if it has already been redirected (i.e. "cat >x >y"). */
-	if (e->savefd[iop->unit] == 0) {
+	if (genv->savefd[iop->unit] == 0) {
 		/* If these are the same, it means unit was previously closed */
 		if (u == iop->unit)
-			e->savefd[iop->unit] = -1;
+			genv->savefd[iop->unit] = -1;
 		else
 			/* c_exec() assumes e->savefd[fd] set for any
 			 * redirections.  Ask savefd() not to close iop->unit;
@@ -1134,7 +1134,7 @@ iosetup(struct ioword *iop, struct tbl *tp)
 			 * is 2; also means we can't lose the fd (eg, both
 			 * dup2 below and dup2 in restfd() failing).
 			 */
-			e->savefd[iop->unit] = savefd(iop->unit);
+			genv->savefd[iop->unit] = savefd(iop->unit);
 	}
 
 	if (do_close)
@@ -1188,7 +1188,7 @@ herein(const char *content, int sub)
 	/* Create temp file to hold content (done before newenv so temp
 	 * doesn't get removed too soon).
 	 */
-	h = maketemp(ATEMP, TT_HEREDOC_EXP, &e->temps);
+	h = maketemp(ATEMP, TT_HEREDOC_EXP, &genv->temps);
 	if (!(shf = h->shf) || (fd = open(h->name, O_RDONLY, 0)) < 0) {
 		warningf(true, "can't %s temporary file %s: %s",
 		    !shf ? "create" : "open",
@@ -1200,7 +1200,7 @@ herein(const char *content, int sub)
 
 	osource = source;
 	newenv(E_ERRH);
-	i = sigsetjmp(e->jbuf, 0);
+	i = sigsetjmp(genv->jbuf, 0);
 	if (i) {
 		source = osource;
 		quitenv(shf);

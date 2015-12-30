@@ -1,4 +1,4 @@
-/*	$OpenBSD: c_sh.c,v 1.57 2015/12/14 13:59:42 tb Exp $	*/
+/*	$OpenBSD: c_sh.c,v 1.58 2015/12/30 09:07:00 tedu Exp $	*/
 
 /*
  * built-in Bourne commands
@@ -30,7 +30,7 @@ c_label(char **wp)
 int
 c_shift(char **wp)
 {
-	struct block *l = e->loc;
+	struct block *l = genv->loc;
 	int n;
 	long val;
 	char *arg;
@@ -208,7 +208,7 @@ c_dot(char **wp)
 	/* Set positional parameters? */
 	if (wp[builtin_opt.optind + 1]) {
 		argv = wp + builtin_opt.optind;
-		argv[0] = e->loc->argv[0]; /* preserve $0 */
+		argv[0] = genv->loc->argv[0]; /* preserve $0 */
 		for (argc = 0; argv[argc + 1]; argc++)
 			;
 	} else {
@@ -529,7 +529,7 @@ c_exitreturn(char **wp)
 		/* need to tell if this is exit or return so trap exit will
 		 * work right (POSIX)
 		 */
-		for (ep = e; ep; ep = ep->oenv)
+		for (ep = genv; ep; ep = ep->oenv)
 			if (STOP_RETURN(ep->type)) {
 				how = LRETURN;
 				break;
@@ -570,7 +570,7 @@ c_brkcont(char **wp)
 	}
 
 	/* Stop at E_NONE, E_PARSE, E_FUNC, or E_INCL */
-	for (ep = e; ep && !STOP_BRKCONT(ep->type); ep = ep->oenv)
+	for (ep = genv; ep && !STOP_BRKCONT(ep->type); ep = ep->oenv)
 		if (ep->type == E_LOOP) {
 			if (--quit == 0)
 				break;
@@ -605,7 +605,7 @@ int
 c_set(char **wp)
 {
 	int argi, setargs;
-	struct block *l = e->loc;
+	struct block *l = genv->loc;
 	char **owp = wp;
 
 	if (wp[1] == NULL) {
@@ -808,20 +808,20 @@ c_exec(char **wp)
 	int i;
 
 	/* make sure redirects stay in place */
-	if (e->savefd != NULL) {
+	if (genv->savefd != NULL) {
 		for (i = 0; i < NUFILE; i++) {
-			if (e->savefd[i] > 0)
-				close(e->savefd[i]);
+			if (genv->savefd[i] > 0)
+				close(genv->savefd[i]);
 			/*
 			 * For ksh keep anything > 2 private,
 			 * for sh, let them be (POSIX says what
 			 * happens is unspecified and the bourne shell
 			 * keeps them open).
 			 */
-			if (!Flag(FSH) && i > 2 && e->savefd[i])
+			if (!Flag(FSH) && i > 2 && genv->savefd[i])
 				fcntl(i, F_SETFD, FD_CLOEXEC);
 		}
-		e->savefd = NULL;
+		genv->savefd = NULL;
 	}
 	return 0;
 }

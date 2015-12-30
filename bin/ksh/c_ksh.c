@@ -1,4 +1,4 @@
-/*	$OpenBSD: c_ksh.c,v 1.47 2015/12/14 13:59:42 tb Exp $	*/
+/*	$OpenBSD: c_ksh.c,v 1.48 2015/12/30 09:07:00 tedu Exp $	*/
 
 /*
  * built-in Korn commands: c_*
@@ -710,7 +710,7 @@ c_typeset(char **wp)
 	/* list variables and attributes */
 	flag = fset | fclr; /* no difference at this point.. */
 	if (func) {
-		for (l = e->loc; l; l = l->next) {
+		for (l = genv->loc; l; l = l->next) {
 			for (p = ktsort(&l->funs); (vp = *p++); ) {
 				if (flag && (vp->flag & flag) == 0)
 					continue;
@@ -723,7 +723,7 @@ c_typeset(char **wp)
 			}
 		}
 	} else {
-		for (l = e->loc; l; l = l->next) {
+		for (l = genv->loc; l; l = l->next) {
 			for (p = ktsort(&l->vars); (vp = *p++); ) {
 				struct tbl *tvp;
 				int any_set = 0;
@@ -1271,15 +1271,15 @@ c_getopts(char **wp)
 		return 1;
 	}
 
-	if (e->loc->next == NULL) {
+	if (genv->loc->next == NULL) {
 		internal_errorf(0, "c_getopts: no argv");
 		return 1;
 	}
 	/* Which arguments are we parsing... */
 	if (*wp == NULL)
-		wp = e->loc->next->argv;
+		wp = genv->loc->next->argv;
 	else
-		*--wp = e->loc->next->argv[0];
+		*--wp = genv->loc->next->argv[0];
 
 	/* Check that our saved state won't cause a core dump... */
 	for (argc = 0; wp[argc]; argc++)
