@@ -1,4 +1,4 @@
-.\"	$OpenBSD: factor.6,v 1.12 2011/01/24 00:42:44 schwarze Exp $
+.\"	$OpenBSD: factor.6,v 1.13 2015/12/30 14:07:53 tb Exp $
 .\"
 .\" Copyright (c) 1989, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -37,7 +37,7 @@
 .\"
 .\"   chongo <for a good prime call: 391581 * 2^216193 - 1> /\oo/\
 .\"
-.Dd $Mdocdate: January 24 2011 $
+.Dd $Mdocdate: December 30 2015 $
 .Dt FACTOR 6
 .Os
 .Sh NAME
@@ -55,10 +55,8 @@ The
 utility will factor 64-bit positive integers.
 When a number is factored, it is printed, followed by a
 .Sq \&: ,
-and the list of factors on a single line.
-Factors are listed in ascending order, and are preceded by a space.
-If a factor divides a value more than once, it will be printed
-more than once.
+and the list of its prime factors in ascending order, on a single line.
+Every prime factor is printed as often as it divides the number.
 .Pp
 When
 .Nm

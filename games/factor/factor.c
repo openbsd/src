@@ -1,4 +1,4 @@
-/*	$OpenBSD: factor.c,v 1.23 2015/12/25 20:59:09 mestre Exp $	*/
+/*	$OpenBSD: factor.c,v 1.24 2015/12/30 14:07:53 tb Exp $	*/
 /*	$NetBSD: factor.c,v 1.5 1995/03/23 08:28:07 cgd Exp $	*/
 
 /*
@@ -143,17 +143,16 @@ main(int argc, char *argv[])
 }
 
 /*
- * pr_fact - print the factors of a number
+ * pr_fact - print the prime factors of a number
  *
  * If the number is 0 or 1, then print the number and return.
  * If the number is < 0, print -1, negate the number and continue
  * processing.
  *
  * Print the factors of the number, from the lowest to the highest.
- * A factor will be printed multiple times if it divides the value
- * multiple times.
+ * A prime factor will be printed as often as it divides the value.
  *
- * Factors are printed with leading tabs.
+ * Prime factors are printed with leading spaces.
  */
 void
 pr_fact(u_int64_t val)		/* Factor this value. */
