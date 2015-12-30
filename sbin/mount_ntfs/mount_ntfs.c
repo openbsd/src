@@ -1,4 +1,4 @@
-/* $OpenBSD: mount_ntfs.c,v 1.15 2015/01/16 06:39:59 deraadt Exp $ */
+/* $OpenBSD: mount_ntfs.c,v 1.16 2015/12/30 21:38:28 millert Exp $ */
 /* $NetBSD: mount_ntfs.c,v 1.9 2003/05/03 15:37:08 christos Exp $ */
 
 /*
@@ -42,7 +42,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sysexits.h>
 #include <unistd.h>
 #include <limits.h>
 
@@ -113,7 +112,7 @@ main(int argc, char *argv[])
 		args.export_info.ex_flags = 0;
 	if (!set_gid || !set_uid || !set_mask) {
 		if (stat(dir, &sb) == -1)
-			err(EX_OSERR, "stat %s", dir);
+			err(1, "stat %s", dir);
 
 		if (!set_uid)
 			args.uid = sb.st_uid;
@@ -123,7 +122,7 @@ main(int argc, char *argv[])
 			args.mode = sb.st_mode & (S_IRWXU | S_IRWXG | S_IRWXO);
 	}
 	if (mount(MOUNT_NTFS, dir, mntflags, &args) < 0)
-		err(EX_OSERR, "%s on %s", dev, dir);
+		err(1, "%s on %s", dev, dir);
 
 	exit(0);
 }
@@ -150,5 +149,5 @@ usage(void)
 	fprintf(stderr,
 	    "usage: mount_ntfs [-ai] [-g gid] [-m mask] [-o options] [-u uid]"
 	    " special node\n");
-	exit(EX_USAGE);
+	exit(1);
 }
