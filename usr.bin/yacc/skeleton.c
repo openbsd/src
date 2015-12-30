@@ -1,4 +1,4 @@
-/*	$OpenBSD: skeleton.c,v 1.36 2015/12/28 19:14:04 mmcc Exp $	*/
+/*	$OpenBSD: skeleton.c,v 1.37 2015/12/30 14:45:38 tedu Exp $	*/
 /*	$NetBSD: skeleton.c,v 1.10 1996/03/25 00:36:18 mrg Exp $	*/
 
 /*
@@ -137,14 +137,14 @@ char *body[] =
 	"#endif",
 	"    if (newsize && YY_SIZE_MAX / newsize < sizeof *newss)",
 	"        goto bail;",
-	"    newss = realloc(yyss, newsize * sizeof(*newss)); /* overflow check above */",
+	"    newss = (short *)realloc(yyss, newsize * sizeof(*newss)); /* overflow check above */",
 	"    if (newss == NULL)",
 	"        goto bail;",
 	"    yyss = newss;",
 	"    yyssp = newss + sslen;",
 	"    if (newsize && YY_SIZE_MAX / newsize < sizeof *newvs)",
 	"        goto bail;",
-	"    newvs = realloc(yyvs, newsize * sizeof(*newvs)); /* overflow check above */",
+	"    newvs = (YYSTYPE *)realloc(yyvs, newsize * sizeof(*newvs)); /* overflow check above */",
 	"    if (newvs == NULL)",
 	"        goto bail;",
 	"    yyvs = newvs;",
