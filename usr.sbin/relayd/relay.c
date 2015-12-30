@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.205 2015/12/24 05:06:24 mmcc Exp $	*/
+/*	$OpenBSD: relay.c,v 1.206 2015/12/30 16:00:57 benno Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -2157,8 +2157,7 @@ relay_tls_ctx_create(struct relay *rlay)
 	return (ctx);
 
  err:
-	if (ctx != NULL)
-		SSL_CTX_free(ctx);
+	SSL_CTX_free(ctx);
 	ssl_error(rlay->rl_conf.name, "relay_tls_ctx_create");
 	return (NULL);
 }
@@ -2220,8 +2219,7 @@ relay_tls_transaction(struct rsession *con, struct ctl_relay_event *cre)
 	return;
 
  err:
-	if (ssl != NULL)
-		SSL_free(ssl);
+	SSL_free(ssl);
 	ssl_error(rlay->rl_conf.name, "relay_tls_transaction");
 	relay_close(con, "session tls failed");
 }

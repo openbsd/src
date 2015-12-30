@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.c,v 1.151 2015/12/30 12:08:34 benno Exp $	*/
+/*	$OpenBSD: relayd.c,v 1.152 2015/12/30 16:00:57 benno Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -566,8 +566,7 @@ purge_table(struct relayd *env, struct tablelist *head, struct table *table)
 			close(host->cte.s);
 		}
 		ibuf_free(host->cte.buf);
-		if (host->cte.ssl != NULL)
-			SSL_free(host->cte.ssl);
+		SSL_free(host->cte.ssl);
 		free(host);
 	}
 	free(table->sendbuf);
@@ -638,8 +637,7 @@ purge_relay(struct relayd *env, struct relay *rlay)
 		rlay->rl_tls_capkey = NULL;
 	}
 
-	if (rlay->rl_ssl_ctx != NULL)
-		SSL_CTX_free(rlay->rl_ssl_ctx);
+	SSL_CTX_free(rlay->rl_ssl_ctx);
 
 	while ((rlt = TAILQ_FIRST(&rlay->rl_tables))) {
 		TAILQ_REMOVE(&rlay->rl_tables, rlt, rlt_entry);
