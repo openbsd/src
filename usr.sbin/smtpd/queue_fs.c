@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_fs.c,v 1.13 2015/12/28 22:08:30 jung Exp $	*/
+/*	$OpenBSD: queue_fs.c,v 1.14 2015/12/30 11:40:30 jung Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@poolp.org>
@@ -423,7 +423,8 @@ queue_fs_message_walk(uint64_t *evpid, char *buf, size_t len,
 			continue;
 
 		/* ignore files other than envelopes */
-		if (dp->d_namlen != 16 || strncmp(dp->d_name, msgid_str, 8))
+		if (strlen(dp->d_name) != 16 ||
+		    strncmp(dp->d_name, msgid_str, 8))
 			continue;
 
 		tmp = NULL;
