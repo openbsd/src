@@ -1,4 +1,4 @@
-/*	$OpenBSD: word.c,v 1.18 2015/12/29 19:44:32 lum Exp $	*/
+/*	$OpenBSD: word.c,v 1.19 2015/12/30 20:51:51 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -119,7 +119,6 @@ transposeword(int f, int n)
 		free(word1);
 		return (FALSE);
 	}
-	tmp_len = strlen(word1);
 
 	while (n-- > 0) {
 		i = 0;
@@ -155,7 +154,7 @@ transposeword(int f, int n)
 		tmp2_w_dotp = curwp->w_dotp;
 
 		ret = grabword(&word2);
-		if (ret < 0) {
+		if (ret < 0 || ret == ABORT) {
 			dobeep();
 			ewprintf("Error copying word: %s", strerror(ret));
 			free(word1);
