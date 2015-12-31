@@ -1,4 +1,4 @@
-/*	$OpenBSD: crib.c,v 1.20 2015/12/18 18:47:56 tb Exp $	*/
+/*	$OpenBSD: crib.c,v 1.21 2015/12/31 18:10:19 mestre Exp $	*/
 /*	$NetBSD: crib.c,v 1.7 1997/07/10 06:47:29 mikel Exp $	*/
 
 /*-
@@ -30,18 +30,13 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/types.h>
-#include <curses.h>
 #include <err.h>
 #include <signal.h>
 #include <stdlib.h>
-#include <string.h>
 #include <unistd.h>
 
-#include "deck.h"
 #include "cribbage.h"
 #include "cribcur.h"
-#include "pathnames.h"
 
 int
 main(int argc, char *argv[])

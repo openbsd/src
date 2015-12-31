@@ -1,4 +1,4 @@
-/*	$OpenBSD: deck.h,v 1.3 2003/06/03 03:01:39 millert Exp $	*/
+/*	$OpenBSD: deck.h,v 1.4 2015/12/31 18:10:19 mestre Exp $	*/
 /*	$NetBSD: deck.h,v 1.3 1995/03/21 15:08:49 cgd Exp $	*/
 
 /*
@@ -35,7 +35,6 @@
 /*
  * define structure of a deck of cards and other related things
  */
-
 
 #define		CARDS		52		/* number cards in deck */
 #define		RANKS		13		/* number ranks in deck */

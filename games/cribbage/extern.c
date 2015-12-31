@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.c,v 1.7 2009/10/27 23:59:24 deraadt Exp $	*/
+/*	$OpenBSD: extern.c,v 1.8 2015/12/31 18:10:20 mestre Exp $	*/
 /*	$NetBSD: extern.c,v 1.3 1995/03/21 15:08:50 cgd Exp $	*/
 
 /*-
@@ -33,7 +33,6 @@
 #include <curses.h>
 
 #include "deck.h"
-#include "cribbage.h"
 
 bool	explain		= FALSE;	/* player mistakes explained */
 bool	iwon		= FALSE;	/* if comp won last game */

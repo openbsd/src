@@ -1,4 +1,4 @@
-/*	$OpenBSD: score.c,v 1.10 2014/05/08 23:12:40 schwarze Exp $	*/
+/*	$OpenBSD: score.c,v 1.11 2015/12/31 18:10:20 mestre Exp $	*/
 /*	$NetBSD: score.c,v 1.3 1995/03/21 15:08:57 cgd Exp $	*/
 
 /*-
@@ -30,12 +30,9 @@
  * SUCH DAMAGE.
  */
 
-#include <curses.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#include "deck.h"
 #include "cribbage.h"
 
 /*

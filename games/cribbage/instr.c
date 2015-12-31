@@ -1,4 +1,4 @@
-/*	$OpenBSD: instr.c,v 1.12 2015/11/29 14:42:36 tb Exp $	*/
+/*	$OpenBSD: instr.c,v 1.13 2015/12/31 18:10:20 mestre Exp $	*/
 /*	$NetBSD: instr.c,v 1.5 1997/07/10 06:47:30 mikel Exp $	*/
 
 /*-
@@ -30,22 +30,15 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/types.h>
 #include <sys/wait.h>
-#include <sys/stat.h>
 
-#include <curses.h>
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <paths.h>
-#include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <unistd.h>
 
-#include "deck.h"
-#include "cribbage.h"
 #include "pathnames.h"
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: support.c,v 1.12 2010/11/03 12:51:10 dcoppa Exp $	*/
+/*	$OpenBSD: support.c,v 1.13 2015/12/31 18:10:20 mestre Exp $	*/
 /*	$NetBSD: support.c,v 1.3 1995/03/21 15:08:59 cgd Exp $	*/
 
 /*-
@@ -30,11 +30,9 @@
  * SUCH DAMAGE.
  */
 
-#include <curses.h>
 #include <err.h>
 #include <string.h>
 
-#include "deck.h"
 #include "cribbage.h"
 #include "cribcur.h"
 

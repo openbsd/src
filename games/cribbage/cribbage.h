@@ -1,4 +1,4 @@
-/*	$OpenBSD: cribbage.h,v 1.11 2015/12/26 00:26:39 mestre Exp $	*/
+/*	$OpenBSD: cribbage.h,v 1.12 2015/12/31 18:10:19 mestre Exp $	*/
 /*	$NetBSD: cribbage.h,v 1.3 1995/03/21 15:08:46 cgd Exp $	*/
 
 /*
@@ -31,6 +31,11 @@
  *
  *	@(#)cribbage.h	8.1 (Berkeley) 5/31/93
  */
+
+#include <curses.h>
+#include <stdbool.h>
+
+#include "deck.h"
 
 extern  CARD		deck[ CARDS ];		/* a deck */
 extern  CARD		phand[ FULLHAND ];	/* player's hand */
