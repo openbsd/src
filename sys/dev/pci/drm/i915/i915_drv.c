@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.c,v 1.98 2015/11/22 15:35:49 kettenis Exp $ */
+/* $OpenBSD: i915_drv.c,v 1.99 2015/12/31 12:36:04 kettenis Exp $ */
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -1115,8 +1115,8 @@ inteldrm_show_screen(void *v, void *cookie, int waitok,
 
 	dev_priv->switchcb = cb;
 	dev_priv->switchcbarg = cbarg;
+	dev_priv->switchcookie = cookie;
 	if (cb) {
-		dev_priv->switchcookie = cookie;
 		task_add(systq, &dev_priv->switchtask);
 		return (EAGAIN);
 	}
