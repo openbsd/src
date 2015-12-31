@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.130 2015/12/18 22:47:18 kettenis Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.131 2015/12/31 19:07:37 kettenis Exp $	*/
 
 /******************************************************************************
 
@@ -376,27 +376,20 @@ ixgbe_start(struct ifnet * ifp)
 	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
 	for (;;) {
-		m_head = ifq_deq_begin(&ifp->if_snd);
+		/* Check that we have the minimal number of TX descriptors. */
+		if (txr->tx_avail <= IXGBE_TX_OP_THRESHOLD) {
+			ifq_set_oactive(&ifp->if_snd);
+			break;
+		}
+
+		m_head = ifq_dequeue(&ifp->if_snd);
 		if (m_head == NULL)
 			break;
 
 		if (ixgbe_encap(txr, m_head)) {
-			ifq_deq_rollback(&ifp->if_snd, m_head);
-			ifq_set_oactive(&ifp->if_snd);
-			/*
-			 *  Make sure there are still packets on the
-			 *  ring.  The interrupt handler may have
-			 *  cleaned up the ring before we were able to
-			 *  set the IF_OACTIVE flag.
-			 */
-			if (txr->tx_avail == sc->num_tx_desc) {
-				ifq_clr_oactive(&ifp->if_snd);
-				continue;
-			}
-			break;
+			m_freem(m_head);
+			continue;
 		}
-
-		ifq_deq_commit(&ifp->if_snd, m_head);
 
 #if NBPFILTER > 0
 		if (ifp->if_bpf)
@@ -894,9 +887,8 @@ ixgbe_intr(void *arg)
 	if (reg_eicr & IXGBE_EICR_LSC) {
 		KERNEL_LOCK();
 		ixgbe_update_link_status(sc);
-		if (!IFQ_IS_EMPTY(&ifp->if_snd))
-			ixgbe_start(ifp);
 		KERNEL_UNLOCK();
+		ifq_start(&ifp->if_snd);
 	}
 
 	/* ... more link status change */
@@ -1059,10 +1051,6 @@ ixgbe_encap(struct tx_ring *txr, struct mbuf *m_head)
 		cmd_type_len |= IXGBE_ADVTXD_DCMD_VLE;
 #endif
 
-	/* Check that we have least the minimal number of TX descriptors. */
-	if (txr->tx_avail <= IXGBE_TX_OP_THRESHOLD)
-		return (ENOBUFS);
-
 	/*
 	 * Important to capture the first descriptor
 	 * used because it will contain the index of
@@ -1092,10 +1080,7 @@ ixgbe_encap(struct tx_ring *txr, struct mbuf *m_head)
 	}
 
 	/* Make certain there are enough descriptors */
-	if (map->dm_nsegs > txr->tx_avail - 2) {
-		error = ENOBUFS;
-		goto xmit_fail;
-	}
+	KASSERT(map->dm_nsegs <= txr->tx_avail - 2);
 
 	/*
 	 * Set the appropriate offload context
@@ -1153,7 +1138,6 @@ ixgbe_encap(struct tx_ring *txr, struct mbuf *m_head)
 xmit_fail:
 	bus_dmamap_unload(txr->txdma.dma_tag, txbuf->map);
 	return (error);
-
 }
 
 void
@@ -1296,7 +1280,6 @@ ixgbe_stop(void *arg)
 
 	/* Tell the stack that the interface is no longer active */
 	ifp->if_flags &= ~IFF_RUNNING;
-	ifq_clr_oactive(&ifp->if_snd);
 
 	INIT_DEBUGOUT("ixgbe_stop: begin\n");
 	ixgbe_disable_intr(sc);
@@ -1315,9 +1298,12 @@ ixgbe_stop(void *arg)
 	/* reprogram the RAR[0] in case user changed it. */
 	ixgbe_set_rar(&sc->hw, 0, sc->hw.mac.addr, 0, IXGBE_RAH_AV);
 
+	ifq_barrier(&ifp->if_snd);
 	intr_barrier(sc->tag);
 
 	KASSERT((ifp->if_flags & IFF_RUNNING) == 0);
+
+	ifq_clr_oactive(&ifp->if_snd);
 
 	/* Should we really clear all structures on stop? */
 	ixgbe_free_transmit_structures(sc);
@@ -1389,11 +1375,9 @@ ixgbe_identify_hardware(struct ix_softc *sc)
 	}
 
 	/* Pick up the 82599 and VF settings */
-	if (sc->hw.mac.type != ixgbe_mac_82598EB) {
+	if (sc->hw.mac.type != ixgbe_mac_82598EB)
 		sc->hw.phy.smart_speed = ixgbe_smart_speed;
-		sc->num_segs = IXGBE_82599_SCATTER;
-	} else
-		sc->num_segs = IXGBE_82598_SCATTER;
+	sc->num_segs = IXGBE_82599_SCATTER;
 }
 
 /*********************************************************************
@@ -1547,6 +1531,7 @@ ixgbe_setup_interface(struct ix_softc *sc)
 	strlcpy(ifp->if_xname, sc->dev.dv_xname, IFNAMSIZ);
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
+	ifp->if_xflags = IFXF_MPSAFE;
 	ifp->if_ioctl = ixgbe_ioctl;
 	ifp->if_start = ixgbe_start;
 	ifp->if_timer = 0;
@@ -2439,17 +2424,8 @@ ixgbe_txeof(struct tx_ring *txr)
 	if (num_avail == sc->num_tx_desc)
 		ifp->if_timer = 0;
 
-	/*
-	 * If we have enough room, clear IFF_OACTIVE to tell the stack that
-	 * it is OK to send packets.
-	 */
-	if (ifq_is_oactive(&ifp->if_snd) &&
-	    num_avail > IXGBE_TX_OP_THRESHOLD) {
-		ifq_clr_oactive(&ifp->if_snd);
-		KERNEL_LOCK();
-		ixgbe_start(ifp);
-		KERNEL_UNLOCK();
-	}
+	if (ifq_is_oactive(&ifp->if_snd))
+		ifq_restart(&ifp->if_snd);
 
 	return TRUE;
 }
