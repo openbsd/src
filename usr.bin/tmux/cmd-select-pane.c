@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-select-pane.c,v 1.30 2015/12/15 00:00:01 nicm Exp $ */
+/* $OpenBSD: cmd-select-pane.c,v 1.31 2015/12/31 18:34:47 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -83,12 +83,6 @@ cmd_select_pane_exec(struct cmd *self, struct cmd_q *cmdq)
 		}
 
 		return (CMD_RETURN_NORMAL);
-	}
-
-	server_unzoom_window(wp->window);
-	if (!window_pane_visible(wp)) {
-		cmdq_error(cmdq, "pane not visible");
-		return (CMD_RETURN_ERROR);
 	}
 
 	if (args_has(args, 'm') || args_has(args, 'M')) {
