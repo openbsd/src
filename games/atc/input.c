@@ -1,4 +1,4 @@
-/*	$OpenBSD: input.c,v 1.12 2009/10/27 23:59:23 deraadt Exp $	*/
+/*	$OpenBSD: input.c,v 1.13 2015/12/31 16:50:29 mestre Exp $	*/
 /*	$NetBSD: input.c,v 1.4 1995/04/27 21:22:24 mycroft Exp $	*/
 
 /*-
@@ -42,8 +42,14 @@
  * For more info on this and all of my stuff, mail edjames@berkeley.edu.
  */
 
-#include "include.h"
-#include "pathnames.h"
+#include <ctype.h>
+#include <math.h>
+#include <stdlib.h>
+#include <string.h>
+#include <termios.h>
+
+#include "def.h"
+#include "extern.h"
 
 #define MAXRULES	6
 #define MAXDEPTH	15

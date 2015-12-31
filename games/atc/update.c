@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.17 2015/12/15 18:39:50 tb Exp $	*/
+/*	$OpenBSD: update.c,v 1.18 2015/12/31 16:50:29 mestre Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,10 @@
  * For more info on this and all of my stuff, mail edjames@berkeley.edu.
  */
 
-#include "include.h"
+#include <stdlib.h>
+#include <string.h>
+
+#include "extern.h"
 
 void
 setseed(const char *seed)

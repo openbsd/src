@@ -1,4 +1,4 @@
-/*	$OpenBSD: list.c,v 1.8 2015/08/22 14:47:41 deraadt Exp $	*/
+/*	$OpenBSD: list.c,v 1.9 2015/12/31 16:50:29 mestre Exp $	*/
 /*	$NetBSD: list.c,v 1.3 1995/03/21 15:04:18 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,9 @@
  * For more info on this and all of my stuff, mail edjames@berkeley.edu.
  */
 
-#include "include.h"
+#include <stdlib.h>
+
+#include "extern.h"
 
 PLANE	*
 newplane(void)

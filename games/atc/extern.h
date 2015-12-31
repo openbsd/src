@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.10 2015/12/26 00:26:39 mestre Exp $	*/
+/*	$OpenBSD: extern.h,v 1.11 2015/12/31 16:50:29 mestre Exp $	*/
 /*	$NetBSD: extern.h,v 1.4 1995/04/27 21:22:22 mycroft Exp $	*/
 
 /*-
@@ -43,6 +43,11 @@
  *
  * For more info on this and all of my stuff, mail edjames@berkeley.edu.
  */
+
+#include <curses.h>
+
+#include "def.h"
+#include "struct.h"
 
 extern char		GAMES[];
 extern const char	*file;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.20 2015/11/29 15:23:38 tb Exp $	*/
+/*	$OpenBSD: log.c,v 1.21 2015/12/31 16:50:29 mestre Exp $	*/
 /*	$NetBSD: log.c,v 1.3 1995/03/21 15:04:21 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,17 @@
  * For more info on this and all of my stuff, mail edjames@berkeley.edu.
  */
 
-#include "include.h"
+#include <sys/stat.h>
+#include <sys/types.h>
+
+#include <err.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+
+#include "extern.h"
 #include "pathnames.h"
 
 static FILE *score_fp;

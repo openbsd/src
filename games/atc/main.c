@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.25 2015/11/29 15:23:38 tb Exp $	*/
+/*	$OpenBSD: main.c,v 1.26 2015/12/31 16:50:29 mestre Exp $	*/
 /*	$NetBSD: main.c,v 1.4 1995/04/27 21:22:25 mycroft Exp $	*/
 
 /*-
@@ -42,7 +42,14 @@
  * For more info on this and all of my stuff, mail edjames@berkeley.edu.
  */
 
-#include "include.h"
+#include <err.h>
+#include <signal.h>
+#include <stdlib.h>
+#include <string.h>
+#include <termios.h>
+#include <unistd.h>
+
+#include "extern.h"
 #include "pathnames.h"
 
 int
