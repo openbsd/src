@@ -1,4 +1,4 @@
-.\"	$OpenBSD: chflags.1,v 1.15 2014/12/13 20:59:24 guenther Exp $
+.\"	$OpenBSD: chflags.1,v 1.16 2015/12/31 23:38:16 guenther Exp $
 .\"	$NetBSD: chflags.1,v 1.4 1995/08/31 22:50:22 jtc Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993, 1994
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)chflags.1	8.4 (Berkeley) 5/2/95
 .\"
-.Dd $Mdocdate: December 13 2014 $
+.Dd $Mdocdate: December 31 2015 $
 .Dt CHFLAGS 1
 .Os
 .Sh NAME
@@ -41,6 +41,7 @@
 .Nd change file flags
 .Sh SYNOPSIS
 .Nm chflags
+.Op Fl h
 .Oo
 .Fl R
 .Op Fl H | L | P
@@ -72,6 +73,14 @@ If the
 .Fl R
 option is also specified, symbolic links on the command line are followed.
 Symbolic links encountered in the tree traversal are not followed.
+.It Fl h
+Treat symbolic links like other files: modify links instead of
+following them.
+The
+.Fl h
+and
+.Fl R
+options are mutually exclusive.
 .It Fl L
 If the
 .Fl R

@@ -1,4 +1,4 @@
-/*	$OpenBSD: chmod.c,v 1.38 2015/10/09 01:37:06 deraadt Exp $	*/
+/*	$OpenBSD: chmod.c,v 1.39 2015/12/31 23:38:16 guenther Exp $	*/
 /*	$NetBSD: chmod.c,v 1.12 1995/03/21 09:02:09 cgd Exp $	*/
 
 /*
@@ -344,14 +344,10 @@ a_gid(const char *s)
 void
 usage(void)
 {
-	if (ischmod || ischflags)
-		fprintf(stderr,
-		    "usage: %s [-R [-H | -L | -P]] %s file ...\n",
-		    __progname, ischmod ? "mode" : "flags");
-	else
-		fprintf(stderr,
-		    "usage: %s [-h] [-R [-H | -L | -P]] %s file ...\n",
-		    __progname, ischown ? "owner[:group]" : "group");
+	fprintf(stderr,
+	    "usage: %s [-h] [-R [-H | -L | -P]] %s file ...\n",
+	    __progname, ischmod ? "mode" : ischflags ? "flags" :
+	    ischown ? "owner[:group]" : "group");
 	if (ischown)
 		fprintf(stderr,
 		    "       %s [-h] [-R [-H | -L | -P]] :group file ...\n",

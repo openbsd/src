@@ -1,4 +1,4 @@
-.\"	$OpenBSD: chown.8,v 1.19 2015/09/14 20:06:58 schwarze Exp $
+.\"	$OpenBSD: chown.8,v 1.20 2015/12/31 23:38:16 guenther Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     from: @(#)chown.8	8.3 (Berkeley) 3/31/94
 .\"
-.Dd $Mdocdate: September 14 2015 $
+.Dd $Mdocdate: December 31 2015 $
 .Dt CHOWN 8
 .Os
 .Sh NAME
@@ -64,11 +64,12 @@ If the
 option is specified, symbolic links on the command line are followed.
 Symbolic links encountered in the tree traversal are not followed.
 .It Fl h
-Change the user ID and/or the group ID on symbolic links.
+Treat symbolic links like other files: modify links instead of
+following them.
 The
-.Fl R
-and
 .Fl h
+and
+.Fl R
 options are mutually exclusive.
 .It Fl L
 If the
