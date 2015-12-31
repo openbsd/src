@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: getdate.y,v 1.9 2013/12/03 01:48:37 millert Exp $	*/
+/*	$OpenBSD: getdate.y,v 1.10 2015/12/31 19:20:51 kettenis Exp $	*/
 
 /*
 **  Originally written by Steven M. Bellovin <smb@research.att.com> while
@@ -20,6 +20,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+
+int yyparse(void);
 
 #define EPOCH		1970
 #define HOUR(x)		((time_t)(x) * 60)
