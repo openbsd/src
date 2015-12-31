@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_script.c,v 1.36 2015/09/10 18:10:35 deraadt Exp $	*/
+/*	$OpenBSD: exec_script.c,v 1.37 2015/12/31 18:55:33 mmcc Exp $	*/
 /*	$NetBSD: exec_script.c,v 1.13 1996/02/04 02:15:06 christos Exp $	*/
 
 /*
@@ -208,24 +208,25 @@ check_shell:
 #if NSYSTRACE > 0
 		if (ISSET(p->p_flag, P_SYSTRACE)) {
 			error = systrace_scriptname(p, *tmpsap);
-			if (error == 0)
-				tmpsap++;
-			else
+			if (error != 0)
 				/*
 				 * Since systrace_scriptname() provides a
 				 * convenience, not a security issue, we are
 				 * safe to do this.
 				 */
-				error = copystr(epp->ep_name, *tmpsap++,
+				error = copystr(epp->ep_name, *tmpsap,
 				    MAXPATHLEN, NULL);
 		} else
 #endif
-			error = copyinstr(epp->ep_name, *tmpsap++, MAXPATHLEN,
+			error = copyinstr(epp->ep_name, *tmpsap, MAXPATHLEN,
 			    NULL);
-		if (error != 0)
+		if (error != 0) {
+			*(tmpsap + 1) = NULL;
 			goto fail;
+		}
 	} else
-		snprintf(*tmpsap++, MAXPATHLEN, "/dev/fd/%d", epp->ep_fd);
+		snprintf(*tmpsap, MAXPATHLEN, "/dev/fd/%d", epp->ep_fd);
+	tmpsap++;
 	*tmpsap = NULL;
 
 	/*
