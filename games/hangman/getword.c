@@ -1,4 +1,4 @@
-/*	$OpenBSD: getword.c,v 1.9 2015/10/24 17:55:02 mmcc Exp $	*/
+/*	$OpenBSD: getword.c,v 1.10 2015/12/31 15:20:36 mestre Exp $	*/
 /*	$NetBSD: getword.c,v 1.4 1995/03/23 08:32:45 cgd Exp $	*/
 
 /*
@@ -30,7 +30,12 @@
  * SUCH DAMAGE.
  */
 
+#include <ctype.h>
+#include <curses.h>
+#include <err.h>
 #include <stdlib.h>
+#include <string.h>
+
 #include "hangman.h"
 #include "pathnames.h"
 

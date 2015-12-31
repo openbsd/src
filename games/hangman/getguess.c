@@ -1,4 +1,4 @@
-/*	$OpenBSD: getguess.c,v 1.13 2015/02/07 03:30:08 tedu Exp $	*/
+/*	$OpenBSD: getguess.c,v 1.14 2015/12/31 15:20:36 mestre Exp $	*/
 /*	$NetBSD: getguess.c,v 1.5 1995/03/23 08:32:43 cgd Exp $	*/
 
 /*
@@ -31,6 +31,11 @@
  */
 
 #include <sys/ttydefaults.h>
+
+#include <ctype.h>
+#include <curses.h>
+#include <unistd.h>
+
 #include "hangman.h"
 
 /*

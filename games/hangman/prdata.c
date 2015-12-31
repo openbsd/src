@@ -1,4 +1,4 @@
-/*	$OpenBSD: prdata.c,v 1.7 2015/02/07 03:26:20 tedu Exp $	*/
+/*	$OpenBSD: prdata.c,v 1.8 2015/12/31 15:20:36 mestre Exp $	*/
 /*	$NetBSD: prdata.c,v 1.3 1995/03/23 08:32:54 cgd Exp $	*/
 
 /*-
@@ -30,7 +30,9 @@
  * SUCH DAMAGE.
  */
 
-#include	"hangman.h"
+#include <curses.h>
+
+#include "hangman.h"
 
 /*
  * prdata:

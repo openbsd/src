@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.14 2015/12/25 20:59:09 mestre Exp $	*/
+/*	$OpenBSD: main.c,v 1.15 2015/12/31 15:20:36 mestre Exp $	*/
 /*	$NetBSD: main.c,v 1.3 1995/03/23 08:32:50 cgd Exp $	*/
 
 /*
@@ -30,8 +30,14 @@
  * SUCH DAMAGE.
  */
 
-# include	"hangman.h"
+#include <curses.h>
+#include <err.h>
 #include <paths.h>
+#include <signal.h>
+#include <stdlib.h>
+#include <unistd.h>
+
+#include "hangman.h"
 
 __dead void	usage(void);
 

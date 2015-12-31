@@ -1,4 +1,4 @@
-/*	$OpenBSD: prman.c,v 1.6 2009/10/27 23:59:25 deraadt Exp $	*/
+/*	$OpenBSD: prman.c,v 1.7 2015/12/31 15:20:36 mestre Exp $	*/
 /*	$NetBSD: prman.c,v 1.3 1995/03/23 08:32:56 cgd Exp $	*/
 
 /*-
@@ -30,7 +30,9 @@
  * SUCH DAMAGE.
  */
 
-#include	"hangman.h"
+#include <curses.h>
+
+#include "hangman.h"
 
 /*
  * prman:

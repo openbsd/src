@@ -1,4 +1,4 @@
-/*	$OpenBSD: endgame.c,v 1.7 2015/02/07 03:32:05 tedu Exp $	*/
+/*	$OpenBSD: endgame.c,v 1.8 2015/12/31 15:20:36 mestre Exp $	*/
 /*	$NetBSD: endgame.c,v 1.3 1995/03/23 08:32:40 cgd Exp $	*/
 
 /*
@@ -31,7 +31,10 @@
  */
 
 #include <sys/ttydefaults.h>
-#include	"hangman.h"
+
+#include <curses.h>
+
+#include "hangman.h"
 
 /*
  * endgame:

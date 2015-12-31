@@ -1,4 +1,4 @@
-/*	$OpenBSD: playgame.c,v 1.10 2015/02/07 03:26:20 tedu Exp $	*/
+/*	$OpenBSD: playgame.c,v 1.11 2015/12/31 15:20:36 mestre Exp $	*/
 /*	$NetBSD: playgame.c,v 1.3 1995/03/23 08:32:53 cgd Exp $	*/
 
 /*-
@@ -30,7 +30,10 @@
  * SUCH DAMAGE.
  */
 
-#include	"hangman.h"
+#include <curses.h>
+#include <string.h>
+
+#include "hangman.h"
 
 /*
  * playgame:

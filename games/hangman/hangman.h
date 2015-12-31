@@ -1,4 +1,4 @@
-/*	$OpenBSD: hangman.h,v 1.10 2015/12/26 00:26:39 mestre Exp $	*/
+/*	$OpenBSD: hangman.h,v 1.11 2015/12/31 15:20:36 mestre Exp $	*/
 /*	$NetBSD: hangman.h,v 1.5 1995/04/24 12:23:44 cgd Exp $	*/
 
 /*
@@ -32,17 +32,9 @@
  *	@(#)hangman.h	8.1 (Berkeley) 5/31/93
  */
 
-#include	<sys/types.h>
-#include	<sys/stat.h>
-#include	<ctype.h>
-#include	<curses.h>
-#include	<err.h>
-#include	<signal.h>
-#include	<stdlib.h>
-#include	<string.h>
-#include	<unistd.h>
-#include	"pathnames.h"
- 
+#include <stdbool.h>
+#include <stdio.h>
+
 #define	MAXBADWORDS	100
 
 #define	MINLEN	6

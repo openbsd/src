@@ -1,4 +1,4 @@
-/*	$OpenBSD: ksyms.c,v 1.8 2015/02/07 03:26:20 tedu Exp $	*/
+/*	$OpenBSD: ksyms.c,v 1.9 2015/12/31 15:20:36 mestre Exp $	*/
 
 /*
  * Copyright (c) 2008 Miodrag Vallat.
@@ -16,14 +16,15 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <unistd.h>
 #include <ctype.h>
+#include <curses.h>
+#include <elf_abi.h>
+#include <err.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <stdlib.h>
 #include <string.h>
-
-#include <sys/exec.h>
-#include <elf_abi.h>
+#include <unistd.h>
 
 #include "hangman.h"
 
