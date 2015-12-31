@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd.c,v 1.13 2015/12/05 06:50:52 mmcc Exp $	*/
+/*	$OpenBSD: radiusd.c,v 1.14 2015/12/31 16:22:27 millert Exp $	*/
 
 /*
  * Copyright (c) 2013 Internet Initiative Japan Inc.
@@ -38,7 +38,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sysexits.h>
 #include <syslog.h>
 #include <unistd.h>
 #include <util.h>
@@ -95,7 +94,7 @@ usage(void)
 	extern char *__progname;
 
 	fprintf(stderr, "usage: %s [-dn] [-f file]\n", __progname);
-	exit(EX_USAGE);
+	exit(EXIT_FAILURE);
 }
 
 int
@@ -140,7 +139,7 @@ main(int argc, char *argv[])
 
 	log_init(debug);
 	if (parse_config(conffile, radiusd) != 0)
-		errx(EX_DATAERR, "config error");
+		errx(EXIT_FAILURE, "config error");
 	if (noaction) {
 		fprintf(stderr, "configuration OK\n");
 		exit(EXIT_SUCCESS);
@@ -173,7 +172,7 @@ main(int argc, char *argv[])
 	signal_set(&radiusd->ev_sigchld, SIGCHLD, radiusd_on_sigchld, radiusd);
 
 	if (radiusd_start(radiusd) != 0)
-		errx(EX_DATAERR, "start failed");
+		errx(EXIT_FAILURE, "start failed");
 
 #ifdef RADIUSD_DEBUG
 	if (pledge("stdio inet proc abort", NULL) == -1)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusctl.c,v 1.5 2015/10/19 22:07:37 yasuoka Exp $	*/
+/*	$OpenBSD: radiusctl.c,v 1.6 2015/12/31 16:22:27 millert Exp $	*/
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
  *
@@ -26,7 +26,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sysexits.h>
 #include <unistd.h>
 
 #include <radius.h>
@@ -59,7 +58,7 @@ main(int argc, char *argv[])
 		switch (ch) {
 		default:
 			usage();
-			return (EX_USAGE);
+			return (EXIT_FAILURE);
 		}
 	argc -= optind;
 	argv += optind;
