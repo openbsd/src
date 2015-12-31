@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.c,v 1.125 2015/11/21 11:02:23 dlg Exp $	*/
+/*	$OpenBSD: if_trunk.c,v 1.126 2015/12/31 14:18:34 sthen Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -414,9 +414,6 @@ trunk_port_destroy(struct trunk_port *tp)
 	/* Restore previous input handler. */
 	if_ih_remove(ifp, trunk_input, tp);
 
-	if (tr->tr_port_destroy != NULL)
-		(*tr->tr_port_destroy)(tp);
-
 	/* Remove multicast addresses from this port */
 	trunk_ether_cmdmulti(tp, SIOCDELMULTI);
 
@@ -425,6 +422,9 @@ trunk_port_destroy(struct trunk_port *tp)
 		if_down(ifp);
 
 	ifpromisc(ifp, 0);
+
+	if (tr->tr_port_destroy != NULL)
+		(*tr->tr_port_destroy)(tp);
 
 	/* Restore interface type. */
 	ifp->if_type = tp->tp_iftype;
