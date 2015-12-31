@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.321 2015/12/21 22:15:53 sf Exp $
+#	$OpenBSD: files.pci,v 1.322 2015/12/31 13:06:49 kettenis Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -792,6 +792,11 @@ file	dev/pci/auglx.c			auglx
 device	itherm
 attach	itherm at pci
 file	dev/pci/itherm.c		itherm
+
+# Intel C610 temperature sensor
+device	pchtemp
+attach	pchtemp at pci
+file	dev/pci/pchtemp.c		pchtemp
 
 # AMD Geode CS5536 PCI-ISA bridge
 device	glxpcib{}: isabus, gpiobus, i2cbus
