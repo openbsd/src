@@ -1,4 +1,4 @@
-/*	$OpenBSD: pl_main.c,v 1.14 2015/08/22 14:47:41 deraadt Exp $	*/
+/*	$OpenBSD: pl_main.c,v 1.15 2015/12/31 16:44:22 mestre Exp $	*/
 /*	$NetBSD: pl_main.c,v 1.5 1995/04/24 12:25:25 cgd Exp $	*/
 
 /*
@@ -30,12 +30,15 @@
  * SUCH DAMAGE.
  */
 
-#include "player.h"
-#include <sys/types.h>
-#include <sys/wait.h>
-#include <stdlib.h>
-#include <unistd.h>
 #include <err.h>
+#include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+
+#include "extern.h"
+#include "player.h"
 
 /*ARGSUSED*/
 void

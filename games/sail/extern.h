@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.11 2015/12/26 00:26:40 mestre Exp $	*/
+/*	$OpenBSD: extern.h,v 1.12 2015/12/31 16:44:22 mestre Exp $	*/
 /*	$NetBSD: extern.h,v 1.8 1998/09/13 15:27:30 hubertf Exp $ */
 
 /*
@@ -32,13 +32,9 @@
  *	@(#)externs.h	8.1 (Berkeley) 5/31/93
  */
 
-#include <stdio.h>
-#include <signal.h>
-#include <string.h>
-#include <ctype.h>
-#include <setjmp.h>
 #include <sys/types.h>
-#include "machdep.h"
+
+#include <setjmp.h>
 
 #ifndef __GNUC__
 #define __attribute__(x)

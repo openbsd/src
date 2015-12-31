@@ -1,4 +1,4 @@
-/*	$OpenBSD: dr_2.c,v 1.5 2009/10/27 23:59:27 deraadt Exp $	*/
+/*	$OpenBSD: dr_2.c,v 1.6 2015/12/31 16:44:21 mestre Exp $	*/
 /*	$NetBSD: dr_2.c,v 1.4 1995/04/24 12:25:12 cgd Exp $	*/
 
 /*
@@ -30,8 +30,12 @@
  * SUCH DAMAGE.
  */
 
-#include "driver.h"
 #include <stdlib.h>
+#include <string.h>
+
+#include "driver.h"
+#include "extern.h"
+#include "player.h"
 
 #define couldwin(f,t) (f->specs->crew2 > t->specs->crew2 * 1.5)
 

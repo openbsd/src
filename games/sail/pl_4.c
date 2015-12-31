@@ -1,4 +1,4 @@
-/*	$OpenBSD: pl_4.c,v 1.5 2015/10/24 18:14:09 mmcc Exp $	*/
+/*	$OpenBSD: pl_4.c,v 1.6 2015/12/31 16:44:22 mestre Exp $	*/
 /*	$NetBSD: pl_4.c,v 1.4 1995/04/24 12:25:17 cgd Exp $	*/
 
 /*
@@ -30,6 +30,9 @@
  * SUCH DAMAGE.
  */
 
+#include <ctype.h>
+
+#include "extern.h"
 #include "player.h"
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pl_7.c,v 1.11 2015/09/27 05:09:01 guenther Exp $	*/
+/*	$OpenBSD: pl_7.c,v 1.12 2015/12/31 16:44:22 mestre Exp $	*/
 /*	$NetBSD: pl_7.c,v 1.6 1995/04/22 10:37:17 cgd Exp $	*/
 
 /*
@@ -30,11 +30,14 @@
  * SUCH DAMAGE.
  */
 
-#include "player.h"
-#include <stdarg.h>
-#include <unistd.h>
 #include <err.h>
+#include <signal.h>
+#include <string.h>
+#include <unistd.h>
 
+#include "extern.h"
+#include "machdep.h"
+#include "player.h"
 
 /*
  * Display interface

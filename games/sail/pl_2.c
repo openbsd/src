@@ -1,4 +1,4 @@
-/*	$OpenBSD: pl_2.c,v 1.4 2009/10/27 23:59:27 deraadt Exp $	*/
+/*	$OpenBSD: pl_2.c,v 1.5 2015/12/31 16:44:22 mestre Exp $	*/
 /*	$NetBSD: pl_2.c,v 1.3 1995/04/22 10:37:08 cgd Exp $	*/
 
 /*
@@ -30,6 +30,10 @@
  * SUCH DAMAGE.
  */
 
+#include <signal.h>
+
+#include "extern.h"
+#include "machdep.h"
 #include "player.h"
 
 void

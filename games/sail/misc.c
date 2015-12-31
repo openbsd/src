@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.7 2015/10/24 18:16:40 mmcc Exp $	*/
+/*	$OpenBSD: misc.c,v 1.8 2015/12/31 16:44:22 mestre Exp $	*/
 /*	$NetBSD: misc.c,v 1.3 1995/04/22 10:37:03 cgd Exp $	*/
 
 /*
@@ -30,9 +30,12 @@
  * SUCH DAMAGE.
  */
 
-#include <fcntl.h>
+#include <ctype.h>
+#include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
+
 #include "extern.h"
 #include "pathnames.h"
 

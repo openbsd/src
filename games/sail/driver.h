@@ -1,4 +1,4 @@
-/*	$OpenBSD: driver.h,v 1.4 2003/06/03 03:01:41 millert Exp $	*/
+/*	$OpenBSD: driver.h,v 1.5 2015/12/31 16:44:22 mestre Exp $	*/
 /*	$NetBSD: driver.h,v 1.3 1995/04/22 10:36:54 cgd Exp $	*/
 
 /*
@@ -31,7 +31,5 @@
  *
  *	@(#)driver.h	8.2 (Berkeley) 5/3/95
  */
-
-#include "extern.h"
 
 extern const int dtab[];

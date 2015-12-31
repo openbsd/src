@@ -1,4 +1,4 @@
-/*	$OpenBSD: dr_3.c,v 1.5 2009/10/27 23:59:27 deraadt Exp $	*/
+/*	$OpenBSD: dr_3.c,v 1.6 2015/12/31 16:44:22 mestre Exp $	*/
 /*	$NetBSD: dr_3.c,v 1.3 1995/04/22 10:36:49 cgd Exp $	*/
 
 /*
@@ -30,8 +30,12 @@
  * SUCH DAMAGE.
  */
 
-#include "driver.h"
 #include <stdlib.h>
+#include <string.h>
+
+#include "driver.h"
+#include "extern.h"
+#include "player.h"
 
 void
 moveall()		/* move all comp ships */

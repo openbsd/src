@@ -1,4 +1,4 @@
-/*	$OpenBSD: pl_3.c,v 1.4 2009/10/27 23:59:27 deraadt Exp $	*/
+/*	$OpenBSD: pl_3.c,v 1.5 2015/12/31 16:44:22 mestre Exp $	*/
 /*	$NetBSD: pl_3.c,v 1.3 1995/04/22 10:37:09 cgd Exp $	*/
 
 /*
@@ -30,8 +30,12 @@
  * SUCH DAMAGE.
  */
 
-#include "player.h"
+#include <signal.h>
 #include <stdlib.h>
+
+#include "extern.h"
+#include "machdep.h"
+#include "player.h"
 
 void
 acceptcombat()

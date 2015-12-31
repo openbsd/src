@@ -1,4 +1,4 @@
-/*	$OpenBSD: player.h,v 1.7 2003/06/03 03:01:41 millert Exp $	*/
+/*	$OpenBSD: player.h,v 1.8 2015/12/31 16:44:22 mestre Exp $	*/
 /*	$NetBSD: player.h,v 1.4 1995/04/22 10:37:22 cgd Exp $	*/
 
 /*
@@ -33,7 +33,6 @@
  */
 
 #include <curses.h>
-#include "extern.h"
 
 /* sizes and coordinates for the screen */
 
