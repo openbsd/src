@@ -1,4 +1,4 @@
-/*      $OpenBSD: pmap.h,v 1.38 2015/02/15 21:34:33 miod Exp $ */
+/*      $OpenBSD: pmap.h,v 1.39 2015/12/31 04:25:51 visa Exp $ */
 
 /*
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -37,6 +37,8 @@
 
 #ifndef	_MIPS64_PMAP_H_
 #define	_MIPS64_PMAP_H_
+
+#include <sys/mutex.h>
 
 #ifdef	_KERNEL
 
@@ -97,6 +99,20 @@
 /* number of segments entries */
 #define	PMAP_SEGTABSIZE		(PMAP_L2SIZE / sizeof(void *))
 
+/*
+ * Concurrency control
+ *
+ * - struct pmap:
+ *   - pm_dir_mtx must be held when adding or removing a mapping in the pmap.
+ *   - pm_pte_mtx must be held when modifying the page directory or page table
+ *     entries. In addition, the lock protects the subfields of field pm_stats.
+ *
+ * - struct vm_page_md:
+ *   - pv_mtx protects the physical-to-virtual list.
+ *
+ * The order for locking is pm_dir_mtx -> pv_mtx -> pm_pte_mtx.
+ */
+
 struct segtab {
 	pt_entry_t	*seg_tab[PMAP_SEGTABSIZE];
 };
@@ -110,6 +126,8 @@ struct pmap_asid_info {
  * Machine dependent pmap structure.
  */
 typedef struct pmap {
+	struct mutex		pm_dir_mtx;	/* page directory lock */
+	struct mutex		pm_pte_mtx;	/* page table entry lock */
 	int			pm_count;	/* pmap reference count */
 	struct pmap_statistics	pm_stats;	/* pmap statistics */
 	struct segtab		*pm_segtab;	/* pointers to pages of PTEs */
@@ -212,11 +230,13 @@ typedef struct pv_entry {
 } *pv_entry_t;
 
 struct vm_page_md {
+	struct mutex	pv_mtx;		/* pv list lock */
 	struct pv_entry pv_ent;		/* pv list of this seg */
 };
 
 #define	VM_MDPAGE_INIT(pg) \
 	do { \
+		mtx_init(&(pg)->mdpage.pv_mtx, IPL_VM); \
 		(pg)->mdpage.pv_ent.pv_next = NULL; \
 		(pg)->mdpage.pv_ent.pv_pmap = NULL; \
 		(pg)->mdpage.pv_ent.pv_va = 0; \
