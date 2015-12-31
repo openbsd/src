@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.154 2015/12/19 08:43:04 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.155 2015/12/31 18:14:13 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -948,7 +948,7 @@ window_pane_read_callback(__unused struct bufferevent *bufev, void *data)
 
 	new_size = EVBUFFER_LENGTH(evb) - wp->pipe_off;
 	if (wp->pipe_fd != -1 && new_size > 0) {
-		new_data = EVBUFFER_DATA(evb);
+		new_data = EVBUFFER_DATA(evb) + wp->pipe_off;
 		bufferevent_write(wp->pipe_event, new_data, new_size);
 	}
 
