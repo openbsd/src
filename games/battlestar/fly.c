@@ -1,4 +1,4 @@
-/*	$OpenBSD: fly.c,v 1.13 2009/10/27 23:59:24 deraadt Exp $	*/
+/*	$OpenBSD: fly.c,v 1.14 2015/12/31 17:51:19 mestre Exp $	*/
 /*	$NetBSD: fly.c,v 1.3 1995/03/21 15:07:28 cgd Exp $	*/
 
 /*
@@ -30,9 +30,14 @@
  * SUCH DAMAGE.
  */
 
-#include "extern.h"
-#undef UP
 #include <curses.h>
+#include <signal.h>
+#include <stdlib.h>
+#include <unistd.h>
+
+#include "extern.h"
+
+#undef UP
 
 #define MIDR  (LINES/2 - 1)
 #define MIDC  (COLS/2 - 1)

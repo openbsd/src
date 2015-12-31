@@ -1,4 +1,4 @@
-/*	$OpenBSD: com7.c,v 1.12 2009/10/27 23:59:23 deraadt Exp $	*/
+/*	$OpenBSD: com7.c,v 1.13 2015/12/31 17:51:19 mestre Exp $	*/
 /*	$NetBSD: com7.c,v 1.3 1995/03/21 15:07:12 cgd Exp $	*/
 
 /*
@@ -29,6 +29,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <stdio.h>
+#include <stdlib.h>
 
 #include "extern.h"
 

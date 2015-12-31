@@ -1,4 +1,4 @@
-/*	$OpenBSD: room.c,v 1.10 2014/10/26 07:03:47 brad Exp $	*/
+/*	$OpenBSD: room.c,v 1.11 2015/12/31 17:51:19 mestre Exp $	*/
 /*	$NetBSD: room.c,v 1.3 1995/03/21 15:07:54 cgd Exp $	*/
 
 /*
@@ -29,6 +29,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <stdio.h>
 
 #include "extern.h"
 

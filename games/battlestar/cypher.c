@@ -1,4 +1,4 @@
-/*	$OpenBSD: cypher.c,v 1.18 2015/10/24 17:20:17 mmcc Exp $	*/
+/*	$OpenBSD: cypher.c,v 1.19 2015/12/31 17:51:19 mestre Exp $	*/
 /*	$NetBSD: cypher.c,v 1.3 1995/03/21 15:07:15 cgd Exp $	*/
 
 /*
@@ -30,7 +30,13 @@
  * SUCH DAMAGE.
  */
 
+#include <ctype.h>
+#include <err.h>
+#include <limits.h>
 #include <stdarg.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 #include "extern.h"
 #include "pathnames.h"

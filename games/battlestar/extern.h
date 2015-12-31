@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.19 2015/12/26 00:26:39 mestre Exp $	*/
+/*	$OpenBSD: extern.h,v 1.20 2015/12/31 17:51:19 mestre Exp $	*/
 /*	$NetBSD: extern.h,v 1.5 1995/04/24 12:22:18 cgd Exp $	*/
 
 /*
@@ -32,17 +32,7 @@
  *	@(#)extern.h	8.1 (Berkeley) 5/31/93
  */
 
-#include <sys/time.h>
-
-#include <ctype.h>
-#include <err.h>
-#include <errno.h>
-#include <limits.h>
-#include <signal.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
+#include <sys/types.h>
 
 #define BITS (8 * sizeof (int))
 
