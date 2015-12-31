@@ -1,4 +1,4 @@
-/*	$OpenBSD: fmt.c,v 1.34 2015/12/15 16:26:17 schwarze Exp $	*/
+/*	$OpenBSD: fmt.c,v 1.35 2015/12/31 16:10:31 millert Exp $	*/
 
 /* Sensible version of fmt
  *
@@ -174,7 +174,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sysexits.h>
 #include <unistd.h>
 #include <wchar.h>
 #include <wctype.h>
@@ -204,7 +203,7 @@ get_positive(const char *s, const char *err_mess, int fussyP)
 	}
 	if (result <= 0) {
 Lose:
-		errx(EX_USAGE, "%s", err_mess);
+		errx(1, "%s", err_mess);
 	}
 
 	return (size_t) result;
@@ -324,7 +323,7 @@ main(int argc, char *argv[])
 			--argc;
 			++argv;
 			if (max_length < goal_length)
-				errx(EX_USAGE, "max length must be >= goal length");
+				errx(1, "max length must be >= goal length");
 		}
 	}
 
@@ -691,7 +690,7 @@ xrealloc(void *ptr, size_t nbytes)
 
 	p  = realloc(ptr, nbytes);
 	if (p == NULL)
-		errx(EX_OSERR, "out of memory");
+		errx(1, "out of memory");
 	return p;
 }
 
