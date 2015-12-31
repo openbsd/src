@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.313 2015/11/25 03:09:59 dlg Exp $ */
+/* $OpenBSD: if_em.c,v 1.314 2015/12/31 14:20:25 dlg Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -2161,8 +2161,8 @@ em_setup_transmit_structures(struct em_softc *sc)
 	tx_buffer = sc->tx_buffer_area;
 	for (i = 0; i < sc->num_tx_desc; i++) {
 		error = bus_dmamap_create(sc->txtag, MAX_JUMBO_FRAME_SIZE,
-			    EM_MAX_SCATTER, MAX_JUMBO_FRAME_SIZE, 0,
-			    BUS_DMA_NOWAIT, &tx_buffer->map);
+		    EM_MAX_SCATTER / (sc->pcix_82544 ? 2 : 1),
+		    MAX_JUMBO_FRAME_SIZE, 0, BUS_DMA_NOWAIT, &tx_buffer->map);
 		if (error != 0) {
 			printf("%s: Unable to create TX DMA map\n",
 			    sc->sc_dv.dv_xname);
