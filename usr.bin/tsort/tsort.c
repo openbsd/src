@@ -1,4 +1,4 @@
-/* $OpenBSD: tsort.c,v 1.33 2015/12/04 17:58:05 espie Exp $ */
+/* $OpenBSD: tsort.c,v 1.34 2015/12/31 18:00:41 millert Exp $ */
 /* ex:ts=8 sw=4:
  *
  * Copyright (c) 1999-2004 Marc Espie <espie@openbsd.org>
@@ -25,7 +25,6 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sysexits.h>
 #include <unistd.h>
 #include <ohash.h>
 
@@ -173,7 +172,7 @@ emem(void *p)
 	if (p)
 		return p;
 	else
-		errx(EX_SOFTWARE, "Memory exhausted");
+		errx(1, "Memory exhausted");
 }
 
 static void *
@@ -347,9 +346,9 @@ read_pairs(FILE *f, struct ohash *h, int reverse, const char *name,
 		}
 	}
 	if (toggle == 0)
-		errx(EX_DATAERR, "odd number of node names in %s", name);
+		errx(1, "odd number of node names in %s", name);
     	if (!feof(f))
-		err(EX_IOERR, "error reading %s", name);
+		err(1, "error reading %s", name);
 	return order;
 }
 
@@ -387,7 +386,7 @@ read_hints(FILE *f, struct ohash *h, int quiet, const char *name,
 		}
 	}
     	if (!feof(f))
-		err(EX_IOERR, "error reading %s", name);
+		err(1, "error reading %s", name);
 	return order;
 }
 
@@ -891,7 +890,7 @@ parse_args(int argc, char *argv[], struct ohash *pairs)
 
 		f = fopen(files[j], "r");
 		if (f == NULL)
-			err(EX_NOINPUT, "Can't open hint file %s", files[i]);
+			err(1, "Can't open hint file %s", files[i]);
 		order = read_hints(f, pairs, quiet_flag, files[i], order);
 		fclose(f);
     	}
@@ -902,7 +901,7 @@ parse_args(int argc, char *argv[], struct ohash *pairs)
 
 		f = fopen(argv[0], "r");
 		if (f == NULL)
-			err(EX_NOINPUT, "Can't open file %s", argv[0]);
+			err(1, "Can't open file %s", argv[0]);
 		order = read_pairs(f, pairs, reverse_flag, argv[0], order,
 		    hints_flag == 2);
 		fclose(f);
@@ -991,7 +990,7 @@ tsort(struct ohash *pairs)
 	    if (warn_flag)
 		    return (broken_cycles < 256 ? broken_cycles : 255);
 	    else
-		    return (EX_OK);
+		    return (0);
 }
 
 int
@@ -1013,5 +1012,5 @@ static void
 usage(void)
 {
 	fprintf(stderr, "Usage: %s [-flqrvw] [-h file] [file]\n", __progname);
-	exit(EX_USAGE);
+	exit(1);
 }
