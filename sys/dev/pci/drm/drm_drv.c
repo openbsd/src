@@ -1,4 +1,4 @@
-/* $OpenBSD: drm_drv.c,v 1.141 2015/12/20 13:10:09 kettenis Exp $ */
+/* $OpenBSD: drm_drv.c,v 1.142 2015/12/31 13:01:00 kettenis Exp $ */
 /*-
  * Copyright 2007-2009 Owain G. Ainsworth <oga@openbsd.org>
  * Copyright © 2008 Intel Corporation
@@ -383,6 +383,7 @@ drm_attach(struct device *parent, struct device *self, void *aux)
 	dev->pdev->pc = da->pc;
 	dev->bridgetag = da->bridgetag;
 	dev->pdev->tag = da->tag;
+	dev->pdev->pci = (struct pci_softc *)parent->dv_parent;
 
 	rw_init(&dev->struct_mutex, "drmdevlk");
 	mtx_init(&dev->event_lock, IPL_TTY);

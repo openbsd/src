@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_pm.c,v 1.39 2015/09/26 19:52:16 kettenis Exp $	*/
+/*	$OpenBSD: intel_pm.c,v 1.40 2015/12/31 13:01:00 kettenis Exp $	*/
 /*
  * Copyright © 2012 Intel Corporation
  *
@@ -5216,13 +5216,13 @@ static void hsw_power_well_post_enable(struct drm_i915_private *dev_priv)
 	 * sure vgacon can keep working normally without triggering interrupts
 	 * and error messages.
 	 */
-#ifdef __linux__
 	vga_get_uninterruptible(dev->pdev, VGA_RSRC_LEGACY_IO);
+#ifdef __linux__
 	outb(inb(VGA_MSR_READ), VGA_MSR_WRITE);
-	vga_put(dev->pdev, VGA_RSRC_LEGACY_IO);
 #else
 	outb(VGA_MSR_WRITE, inb(VGA_MSR_READ));
 #endif
+	vga_put(dev->pdev, VGA_RSRC_LEGACY_IO);
 
 	if (IS_BROADWELL(dev)) {
 		spin_lock_irqsave(&dev_priv->irq_lock, irqflags);

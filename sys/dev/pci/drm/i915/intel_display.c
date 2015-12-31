@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_display.c,v 1.56 2015/09/25 09:42:14 kettenis Exp $	*/
+/*	$OpenBSD: intel_display.c,v 1.57 2015/12/31 13:01:00 kettenis Exp $	*/
 /*
  * Copyright © 2006-2007 Intel Corporation
  *
@@ -10904,19 +10904,19 @@ static void i915_disable_vga(struct drm_device *dev)
 	u8 sr1;
 	u32 vga_reg = i915_vgacntrl_reg(dev);
 
-#ifdef __linux__
 	vga_get_uninterruptible(dev->pdev, VGA_RSRC_LEGACY_IO);
+#ifdef __linux__
 	outb(SR01, VGA_SR_INDEX);
 #else
-	outb(VGA_SR_INDEX,SR01);
+	outb(VGA_SR_INDEX, SR01);
 #endif
 	sr1 = inb(VGA_SR_DATA);
 #ifdef __linux__
 	outb(sr1 | 1<<5, VGA_SR_DATA);
-	vga_put(dev->pdev, VGA_RSRC_LEGACY_IO);
 #else
 	outb(VGA_SR_DATA, sr1 | 1<<5);
 #endif
+	vga_put(dev->pdev, VGA_RSRC_LEGACY_IO);
 	udelay(300);
 
 	I915_WRITE(vga_reg, VGA_DISP_DISABLE);

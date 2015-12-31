@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.c,v 1.5 2015/09/26 11:17:15 kettenis Exp $	*/
+/*	$OpenBSD: drm_linux.c,v 1.6 2015/12/31 13:01:00 kettenis Exp $	*/
 /*
  * Copyright (c) 2013 Jonathan Gray <jsg@openbsd.org>
  *
@@ -16,6 +16,7 @@
  */
 
 #include <dev/pci/drm/drmP.h>
+#include <dev/pci/ppbreg.h>
 
 struct timespec
 ns_to_timespec(const int64_t nsec)
@@ -207,3 +208,75 @@ vunmap(void *addr, size_t size)
 	uvm_km_free(kernel_map, va, size);
 }
 
+#if defined(__amd64__) || defined(__i386__)
+
+/*
+ * This is a minimal implementation of the Linux vga_get/vga_put
+ * interface.  In all likelyhood, it will only work for inteldrm(4) as
+ * it assumes that if there is another active VGA device in the
+ * system, it is sitting behind a PCI bridge.
+ */
+
+extern int pci_enumerate_bus(struct pci_softc *,
+    int (*)(struct pci_attach_args *), struct pci_attach_args *);
+
+pcitag_t vga_bridge_tag;
+int vga_bridge_disabled;
+
+int
+vga_disable_bridge(struct pci_attach_args *pa)
+{
+	pcireg_t bhlc, bc;
+
+	if (pa->pa_domain != 0)
+		return 0;
+
+	bhlc = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_BHLC_REG);
+	if (PCI_HDRTYPE_TYPE(bhlc) != 1)
+		return 0;
+
+	bc = pci_conf_read(pa->pa_pc, pa->pa_tag, PPB_REG_BRIDGECONTROL);
+	if ((bc & PPB_BC_VGA_ENABLE) == 0)
+		return 0;
+	bc &= ~PPB_BC_VGA_ENABLE;
+	pci_conf_write(pa->pa_pc, pa->pa_tag, PPB_REG_BRIDGECONTROL, bc);
+
+	vga_bridge_tag = pa->pa_tag;
+	vga_bridge_disabled = 1;
+
+	return 1;
+}
+
+int
+vga_enable_bridge(struct pci_attach_args *pa)
+{
+	pcireg_t bc;
+
+	if (!vga_bridge_disabled)
+		return 0;
+
+	if (pa->pa_tag != vga_bridge_tag)
+		return 0;
+
+	bc = pci_conf_read(pa->pa_pc, pa->pa_tag, PPB_REG_BRIDGECONTROL);
+	bc |= PPB_BC_VGA_ENABLE;
+	pci_conf_write(pa->pa_pc, pa->pa_tag, PPB_REG_BRIDGECONTROL, bc);
+
+	return 1;
+}
+
+void
+vga_get_uninterruptible(struct pci_dev *pdev, int rsrc)
+{
+	KASSERT(pdev->pci->sc_bridgetag == NULL);
+	pci_enumerate_bus(pdev->pci, vga_disable_bridge, NULL);
+}
+
+void
+vga_put(struct pci_dev *pdev, int rsrc)
+{
+	KASSERT(pdev->pci->sc_bridgetag == NULL);
+	pci_enumerate_bus(pdev->pci, vga_enable_bridge, NULL);
+}
+
+#endif

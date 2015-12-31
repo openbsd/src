@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.h,v 1.42 2015/10/17 21:41:12 kettenis Exp $	*/
+/*	$OpenBSD: drm_linux.h,v 1.43 2015/12/31 13:01:00 kettenis Exp $	*/
 /*
  * Copyright (c) 2013, 2014, 2015 Mark Kettenis
  *
@@ -982,6 +982,7 @@ struct pci_dev {
 	uint16_t	subsystem_device;
 	pci_chipset_tag_t pc;
 	pcitag_t	tag;
+	struct pci_softc *pci;
 };
 #define PCI_ANY_ID (uint16_t) (~0U)
 
@@ -1078,6 +1079,11 @@ pci_dma_mapping_error(struct pci_dev *pdev, dma_addr_t dma_addr)
 {
 	return 0;
 }
+
+#define VGA_RSRC_LEGACY_IO	0x01
+
+void vga_get_uninterruptible(struct pci_dev *, int);
+void vga_put(struct pci_dev *, int);
 
 #endif
 
