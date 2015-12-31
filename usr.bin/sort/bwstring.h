@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwstring.h,v 1.1 2015/03/17 17:45:13 millert Exp $	*/
+/*	$OpenBSD: bwstring.h,v 1.2 2015/12/31 16:09:31 millert Exp $	*/
 
 /*-
  * Copyright (C) 2009 Gabor Kovesdan <gabor@FreeBSD.org>
@@ -33,7 +33,6 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <errno.h>
-#include <sysexits.h>
 #include <wchar.h>
 
 #include "mem.h"
