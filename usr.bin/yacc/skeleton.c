@@ -1,4 +1,4 @@
-/*	$OpenBSD: skeleton.c,v 1.38 2015/12/30 17:16:47 mmcc Exp $	*/
+/*	$OpenBSD: skeleton.c,v 1.39 2015/12/31 23:22:39 guenther Exp $	*/
 /*	$NetBSD: skeleton.c,v 1.10 1996/03/25 00:36:18 mrg Exp $	*/
 
 /*
@@ -109,6 +109,7 @@ char *header[] =
 	"short *yysslim;",
 	"YYSTYPE *yyvs;",
 	"unsigned int yystacksize;",
+	"int yyparse(void);",
 	NULL
 };
 
