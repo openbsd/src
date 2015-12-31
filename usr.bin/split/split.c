@@ -1,4 +1,4 @@
-/*	$OpenBSD: split.c,v 1.20 2015/10/09 01:37:08 deraadt Exp $	*/
+/*	$OpenBSD: split.c,v 1.21 2015/12/31 16:13:01 millert Exp $	*/
 /*	$NetBSD: split.c,v 1.5 1995/08/31 22:22:05 jtc Exp $	*/
 
 /*
@@ -42,7 +42,6 @@
 #include <string.h>
 #include <unistd.h>
 #include <regex.h>
-#include <sysexits.h>
 
 #define DEFLINE	1000			/* Default num lines per file. */
 
@@ -87,8 +86,8 @@ main(int argc, char *argv[])
 					numlines =
 					    strtol(argv[optind] + 1, &ep, 10);
 				if (numlines <= 0 || *ep)
-					errx(EX_USAGE,
-					    "%s: illegal line count", optarg);
+					errx(1, "%s: illegal line count",
+					    optarg);
 			}
 			break;
 		case '-':		/* Undocumented: historic stdin flag. */
@@ -99,13 +98,12 @@ main(int argc, char *argv[])
 		case 'a':		/* suffix length. */
 			sufflen = strtonum(optarg, 1, NAME_MAX, &errstr);
 			if (errstr)
-				errx(EX_USAGE, "%s: %s", optarg, errstr);
+				errx(1, "%s: %s", optarg, errstr);
 			break;
 		case 'b':		/* Byte count. */
 			if ((bytecnt = strtol(optarg, &ep, 10)) <= 0 ||
 			    (*ep != '\0' && *ep != 'k' && *ep != 'm'))
-				errx(EX_USAGE,
-				    "%s: illegal byte count", optarg);
+				errx(1, "%s: illegal byte count", optarg);
 			if (*ep == 'k')
 				scale = 1024;
 			else if (*ep == 'm')
@@ -113,21 +111,19 @@ main(int argc, char *argv[])
 			else
 				scale = 1;
 			if (bytecnt > SSIZE_MAX / scale)
-				errx(EX_USAGE, "%s: byte count too large",
-				    optarg);
+				errx(1, "%s: byte count too large", optarg);
 			bytecnt *= scale;
 			break;
 		case 'p' :      /* pattern matching. */
 			if (regcomp(&rgx, optarg, REG_EXTENDED|REG_NOSUB) != 0)
-				errx(EX_USAGE, "%s: illegal regexp", optarg);
+				errx(1, "%s: illegal regexp", optarg);
 			pflag = 1;
 			break;
 		case 'l':		/* Line count. */
 			if (numlines != 0)
 				usage();
 			if ((numlines = strtol(optarg, &ep, 10)) <= 0 || *ep)
-				errx(EX_USAGE,
-				    "%s: illegal line count", optarg);
+				errx(1, "%s: illegal line count", optarg);
 			break;
 		default:
 			usage();
@@ -138,7 +134,7 @@ main(int argc, char *argv[])
 	if (*argv != NULL)
 		if (ifd == -1) {		/* Input file. */
 			if ((ifd = open(*argv, O_RDONLY, 0)) < 0)
-				err(EX_NOINPUT, "%s", *argv);
+				err(1, "%s", *argv);
 			++argv;
 		}
 	if (*argv != NULL)			/* File name prefix. */
@@ -147,7 +143,7 @@ main(int argc, char *argv[])
 		usage();
 
 	if (strlen(fname) + sufflen >= sizeof(fname))
-		errx(EX_USAGE, "suffix is too long");
+		errx(1, "suffix is too long");
 	if (pflag && (numlines != 0 || bytecnt != 0))
 		usage();
 
@@ -184,7 +180,7 @@ split1(void)
 		case 0:
 			exit(0);
 		case -1:
-			err(EX_IOERR, "read");
+			err(1, "read");
 			/* NOTREACHED */
 		default:
 			if (!file_open)
@@ -192,25 +188,25 @@ split1(void)
 			if (bcnt + len >= bytecnt) {
 				dist = bytecnt - bcnt;
 				if (write(ofd, bfr, dist) != dist)
-					err(EX_IOERR, "write");
+					err(1, "write");
 				len -= dist;
 				for (C = bfr + dist; len >= bytecnt;
 				    len -= bytecnt, C += bytecnt) {
 					newfile();
 					if (write(ofd, C, bytecnt) != bytecnt)
-						err(EX_IOERR, "write");
+						err(1, "write");
 				}
 				if (len != 0) {
 					newfile();
 					if (write(ofd, C, len) != len)
-						err(EX_IOERR, "write");
+						err(1, "write");
 				} else
 					file_open = 0;
 				bcnt = len;
 			} else {
 				bcnt += len;
 				if (write(ofd, bfr, len) != len)
-					err(EX_IOERR, "write");
+					err(1, "write");
 			}
 		}
 }
@@ -227,7 +223,7 @@ split2(void)
 
 	/* Stick a stream on top of input file descriptor */
 	if ((infp = fdopen(ifd, "r")) == NULL)
-		err(EX_NOINPUT, "fdopen");
+		err(1, "fdopen");
 
 	/* Process input one line at a time */
 	while (fgets(bfr, sizeof(bfr), infp) != NULL) {
@@ -260,12 +256,12 @@ writeit:
 
 		/* Write out line */
 		if (write(ofd, bfr, len) != len)
-			err(EX_IOERR, "write");
+			err(1, "write");
 	}
 
 	/* EOF or error? */
 	if (ferror(infp))
-		err(EX_IOERR, "read");
+		err(1, "read");
 	else
 		exit(0);
 }
@@ -302,11 +298,11 @@ newfile(void)
 				*sptr = 'a';
 		}
 		if (sptr < suffix)
-			errx(EX_DATAERR, "too many files");
+			errx(1, "too many files");
 	}
 
 	if (!freopen(fname, "w", stdout))
-		err(EX_IOERR, "%s", fname);
+		err(1, "%s", fname);
 	file_open = 1;
 }
 
@@ -318,5 +314,5 @@ usage(void)
 	(void)fprintf(stderr, "usage: %s [-a suffix_length]\n"
 	    "             [-b byte_count[k|m] | -l line_count | -p pattern] "
 	    "[file [name]]\n", __progname);
-	exit(EX_USAGE);
+	exit(1);
 }
