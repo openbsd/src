@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.c,v 1.6 2015/12/31 13:01:00 kettenis Exp $	*/
+/*	$OpenBSD: drm_linux.c,v 1.7 2016/01/01 15:28:26 kettenis Exp $	*/
 /*
  * Copyright (c) 2013 Jonathan Gray <jsg@openbsd.org>
  *
@@ -247,24 +247,6 @@ vga_disable_bridge(struct pci_attach_args *pa)
 	return 1;
 }
 
-int
-vga_enable_bridge(struct pci_attach_args *pa)
-{
-	pcireg_t bc;
-
-	if (!vga_bridge_disabled)
-		return 0;
-
-	if (pa->pa_tag != vga_bridge_tag)
-		return 0;
-
-	bc = pci_conf_read(pa->pa_pc, pa->pa_tag, PPB_REG_BRIDGECONTROL);
-	bc |= PPB_BC_VGA_ENABLE;
-	pci_conf_write(pa->pa_pc, pa->pa_tag, PPB_REG_BRIDGECONTROL, bc);
-
-	return 1;
-}
-
 void
 vga_get_uninterruptible(struct pci_dev *pdev, int rsrc)
 {
@@ -275,8 +257,16 @@ vga_get_uninterruptible(struct pci_dev *pdev, int rsrc)
 void
 vga_put(struct pci_dev *pdev, int rsrc)
 {
-	KASSERT(pdev->pci->sc_bridgetag == NULL);
-	pci_enumerate_bus(pdev->pci, vga_enable_bridge, NULL);
+	pcireg_t bc;
+
+	if (!vga_bridge_disabled)
+		return;
+
+	bc = pci_conf_read(pdev->pc, vga_bridge_tag, PPB_REG_BRIDGECONTROL);
+	bc |= PPB_BC_VGA_ENABLE;
+	pci_conf_write(pdev->pc, vga_bridge_tag, PPB_REG_BRIDGECONTROL, bc);
+
+	vga_bridge_disabled = 0;
 }
 
 #endif
