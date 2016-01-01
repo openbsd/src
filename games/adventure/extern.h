@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.8 2015/12/26 00:26:39 mestre Exp $	*/
+/*	$OpenBSD: extern.h,v 1.9 2016/01/01 15:56:04 tedu Exp $	*/
 /*	$NetBSD: extern.h,v 1.3 1997/10/11 01:55:27 lukem Exp $	*/
 
 /*
@@ -71,9 +71,6 @@ void mspeak(int);
 struct text;
 void speak(const struct text *);
 void pspeak(int, int);
-
-/* main.c */
-int main(int, char **);
 
 /* save.c */
 int save(const char *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: battlestar.c,v 1.19 2015/12/31 17:51:19 mestre Exp $	*/
+/*	$OpenBSD: battlestar.c,v 1.20 2016/01/01 15:56:04 tedu Exp $	*/
 /*	$NetBSD: battlestar.c,v 1.3 1995/03/21 15:06:47 cgd Exp $	*/
 
 /*
@@ -43,8 +43,6 @@
 
 #include "extern.h"
 #include "pathnames.h"
-
-int main(int, char *[]);
 
 int
 main(int argc, char *argv[])
