@@ -1,5 +1,5 @@
 dnl
-dnl	$OpenBSD: m4.common,v 1.115 2015/08/24 10:41:11 ajacoutot Exp $
+dnl	$OpenBSD: m4.common,v 1.116 2016/01/01 15:58:28 rpe Exp $
 dnl
 dnl Copyright (c) 2004 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -327,9 +327,9 @@ dnl install.sub (install) hostname
 dnl install.sub (install) donetconfig
 	You will now be given an opportunity to configure the network.
 	The network configuration you enter (if any) can then be used to
-	do the install from another system using HTTP or FTP, and will
-	also be the configuration used by the system after the installation
-	is complete.
+	do the install from another system using HTTP, and will also be
+	the configuration used by the system after the installation is
+	complete.
 
 dnl XXX add a MDVLAN feature and document vlan setup
 	The install program will give you a list of network interfaces you
@@ -544,21 +544,21 @@ define({:-OpenBSDInstallPart6-:},
 	After these preparatory steps have been completed, you will be
         able to extract the distribution sets onto your system.  There
         are several install methods supported:
-	FTP, HTTP, $1or a local disk partition.-:})dnl
+	HTTP, $1or a local disk partition.-:})dnl
 dnl
 dnl Notes for various installation methods.
 dnl
 define({:-OpenBSDURLInstall-:},
-{:-	To install via FTP or HTTP:
-		To begin an FTP or HTTP install you will need the following
+{:-	To install via HTTP:
+		To begin an HTTP install you will need the following
 		pieces of information:
-		1) Proxy server URL if you are using a URL-based FTP or
-		   HTTP proxy (squid, CERN FTP, Apache 1.2 or higher).
+		1) Proxy server URL if you are using a URL-based HTTP
+		   proxy (squid, CERN FTP, Apache 1.2 or higher).
 		   You need to {:-define-:} a proxy if you are behind a
-		   firewall that blocks outgoing FTP or HTTP connections
+		   firewall that blocks outgoing HTTP connections
 		   (assuming you have a proxy available to use).
 		2) The IP address (or hostname if you configured
-		   DNS servers earlier in the install) of an FTP or HTTP
+		   DNS servers earlier in the install) of an HTTP
 		   server carrying the OpenBSD OSREV distribution.
 		   The installation program will try to fetch a list
 		   of such servers; depending on your network settings,
@@ -567,12 +567,6 @@ define({:-OpenBSDURLInstall-:},
 		   the list (the first entries are expected to be the
 		   closest mirrors to your location).
 		3) The directory holding the distribution sets.
-		   The default value of pub/OpenBSD/OSREV/MACHINE
-		   is almost always correct on FTP servers; for HTTP
-		   servers there is no standard location for this.
-		4) For FTP installs only, the login and password for the
-		   FTP account.  You will only be asked for a password for
-		   non-anonymous FTP.
 
 		Then refer to the section named "installation set selection"
 		below.-:})dnl
@@ -686,8 +680,8 @@ define({:-OpenBSDInstallWrapup-:},
 	Also, if the installation program complains that the distribution
 	sets you have been using do not match their recorded checksums, you
 	might want to check your installation source (although this can
-	happen between releases, if a snapshot is being updated on an FTP
-	or HTTP server with newer files while you are installing).
+	happen between releases, if a snapshot is being updated on a mirror
+	server with newer files while you are installing).
 
 ifelse(MDTZ,,dnl
 {:-	The last thing you'll need to configure is the time zone your system
@@ -860,7 +854,7 @@ define({:-OpenBSDXferShortPrelude-:},
 depend on which method of installation you choose.  Some methods
 require a bit of setup first that is explained below.
 
-The installation allows installing OpenBSD directly from FTP mirror
+The installation allows installing OpenBSD directly from HTTP mirror
 sites over the internet, however you must consider the speed and
 reliability of your internet connection for this option.  It may save
 much time and frustration to use ftp get/reget to transfer the
@@ -879,7 +873,7 @@ define({:-OpenBSDXferCDROM-:},
 {:-Creating a bootable CD-ROM:
 
 	First you need to get access to the OpenBSD bootable CD-ROM (ISO)
-	images. They can be found on one of the FTP or HTTP mirrors. Two
+	images. They can be found on one of the OpenBSD mirror servers. Two
 	files are available, install{:--:}OSrev.iso which contains all of
 	the sets needed for installation, and a smaller cd{:--:}OSrev.iso
 	which contains just the installer, for a network install.
@@ -900,8 +894,8 @@ define({:-OpenBSDXferFloppyFromDOS-:},
 	images.  If you can access the distribution from the CD-ROM under
 	DOS, you will find the bootable disks in the OSREV/MACHINE
 	directory.  Otherwise, you will have to download them from one of
-	the OpenBSD FTP or HTTP mirror sites, using an FTP client or a web
-	browser.  In either case, take care to do "binary" transfers, since
+	the OpenBSD mirror sites, using an FTP client or a web browser.
+	In either case, take care to do "binary" transfers, since
 	these are images files and any DOS cr/lf translations or Control-z
 	EOF interpretations will result in corrupted transfers.
 

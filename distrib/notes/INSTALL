@@ -1,4 +1,4 @@
-dnl	$OpenBSD: INSTALL,v 1.49 2014/08/06 02:34:23 doug Exp $
+dnl	$OpenBSD: INSTALL,v 1.50 2016/01/01 15:58:28 rpe Exp $
 include(INCLUDE/../m4.common)dnl
 includeit(features)dnl
 INSTALLATION NOTES for OpenBSD/MACHINE OSREV
@@ -40,7 +40,7 @@ Because OpenBSD is from Canada, the export of Cryptography pieces
 
 (NOTE: OpenBSD can not be re-exported from the US once it has entered
 the US.  Because of this, take care NOT to get the distribution from
-an FTP server in the US if you are outside of Canada and the US.)
+a mirror server in the US if you are outside of Canada and the US.)
 
 A comprehensive list of the improvements brought by the OSREV release
 is available on the web at http://www.OpenBSD.org/OSrev.html.
@@ -124,7 +124,7 @@ access to source code so that you can recompile pieces of the system.
 
 A few methods are provided.  If you have an OpenBSD CD-ROM, the source
 code is provided.  Otherwise, you can get the pieces over the Internet
-using anonymous CVS, CVSync or FTP.  For more information, see
+using anonymous CVS, CVSync, FTP or HTTP.  For more information, see
 
 	http://www.OpenBSD.org/anoncvs.html
 	http://www.OpenBSD.org/cvsync.html

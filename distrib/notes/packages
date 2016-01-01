@@ -1,4 +1,4 @@
-dnl	$OpenBSD: packages,v 1.46 2013/07/26 20:07:29 miod Exp $
+dnl	$OpenBSD: packages,v 1.47 2016/01/01 15:58:28 rpe Exp $
 As complete as your OpenBSD system is, you may want to add any of several
 excellent third party software applications.  There are several ways to do
 this.  You can:
@@ -56,23 +56,23 @@ Installing applications from the ftp.OpenBSD.org package collection:
 	All available packages for your architecture have been placed on
 	ftp.OpenBSD.org in the directory pub/OpenBSD/OSREV/packages/MACHINE_ARCH/
 	You may want to peruse this to see what packages are available.  The
-	packages are also on the OpenBSD FTP mirror sites.  See
+	packages are also on the OpenBSD mirror sites.  See
 
 		http://www.OpenBSD.org/ftp.html
 
-	for a list of current FTP mirror sites.
+	for a list of current mirror sites.
 
 	Installation of a package is very easy.
 	1) become the superuser (root)
 	2) use the ``pkg_add'' command to install the software
 
 	``pkg_add'' is smart enough to know how to download the software
-	from the OpenBSD FTP server.  Example:
+	from the OpenBSD HTTP server.  Example:
 
     $ su
     Password: <enter your root password>
     # pkg_add \
-      ftp://ftp.OpenBSD.org/pub/OpenBSD/{:--:}OSREV/packages/MACHINE_ARCH/emacs-21.4p23.tgz
+      http://ftp.OpenBSD.org/pub/OpenBSD/{:--:}OSREV/packages/MACHINE_ARCH/emacs-21.4p23.tgz
 
 Installing applications from the CD-ROM ports collection:
 
