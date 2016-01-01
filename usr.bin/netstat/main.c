@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.108 2015/10/23 08:18:57 tedu Exp $	*/
+/*	$OpenBSD: main.c,v 1.109 2016/01/01 17:38:45 mpi Exp $	*/
 /*	$NetBSD: main.c,v 1.9 1996/05/07 02:55:02 thorpej Exp $	*/
 
 /*
@@ -124,7 +124,7 @@ main(int argc, char *argv[])
 	int Tflag = 0;
 	int repeatcount = 0;
 	int proto = 0;
-	int need_nlist;
+	int need_nlist, kvm_flags = O_RDONLY;
 
 	af = AF_UNSPEC;
 	tableid = getrtable();
@@ -325,10 +325,11 @@ main(int argc, char *argv[])
 	 * The remaining code may need kvm so lets try to open it.
 	 * -r and -P are the only bits left that actually can use this.
 	 */
-	need_nlist = nlistf != NULL || memf != NULL || Pflag || (Aflag && rflag);
+	need_nlist = (nlistf != NULL) || (memf != NULL) || (Aflag && rflag);
+	if (!need_nlist && !Pflag)
+		kvm_flags |= KVM_NO_FILES;
 
-	if ((kvmd = kvm_openfiles(nlistf, memf, NULL, O_RDONLY |
-	    (need_nlist ? 0 : KVM_NO_FILES), buf)) == NULL)
+	if ((kvmd = kvm_openfiles(nlistf, memf, NULL, kvm_flags, buf)) == NULL)
 		errx(1, "kvm_openfiles: %s", buf);
 
 	if (need_nlist && (kvm_nlist(kvmd, nl) < 0 || nl[0].n_type == 0)) {
