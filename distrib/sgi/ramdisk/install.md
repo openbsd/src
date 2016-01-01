@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.38 2015/12/27 19:39:28 rpe Exp $
+#	$OpenBSD: install.md,v 1.39 2016/01/01 00:47:51 rpe Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,9 +37,7 @@ NCPU=$(sysctl -n hw.ncpufound)
 
 MDSETS="bsd.$IPARCH bsd.rd.$IPARCH"
 SANESETS="bsd.$IPARCH"
-# Since we do not provide bsd.mp on IP27 yet, do not add bsd.mp.IP27 to the
-# sets, as this will cause a warning in sane_install()
-if ((NCPU > 1)) && [[ $IPARCH == IP30 ]]; then
+if ((NCPU > 1)); then
 	MDSETS="$MDSETS bsd.mp.$IPARCH"
 	SANESETS="$SANESETS bsd.mp.$IPARCH"
 fi
@@ -49,13 +47,13 @@ md_installboot() {
 	local _disk=$1
 
 	echo "Installing boot loader in volume header."
-	if ! /usr/mdec/sgivol -w boot /mnt/usr/mdec/boot-$(sysctl -n hw.model) $_disk; then
+	if ! /usr/mdec/sgivol -w boot /mnt/usr/mdec/boot-$IPARCH $_disk; then
 		echo "\nWARNING: Boot install failed. Booting from disk will not be possible"
 	fi
 
-	[[ -f /mnt/bsd.$IPARCH ]] && mv /mnt/bsd.$IPARCH /mnt/bsd
-	[[ -f /mnt/bsd.mp.$IPARCH ]] && mv /mnt/bsd.mp.$IPARCH /mnt/bsd.mp
-	[[ -f /mnt/bsd.rd.$IPARCH ]] && mv /mnt/bsd.rd.$IPARCH /mnt/bsd.rd
+	for _k in /mnt/bsd{,.mp,.rd}; do
+		[[ -f $_k.$IPARCH ]] && mv $_k.$IPARCH $_k
+	done 
 }
 
 md_prep_disklabel()
