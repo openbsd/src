@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.30 2015/10/26 22:22:56 jca Exp $	*/
+/*	$OpenBSD: main.c,v 1.31 2016/01/01 20:55:13 tb Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -374,7 +374,7 @@ mf_fgets(SPACE *sp, enum e_spflag spflag)
 			if (len >= sizeof(tmpfname))
 				error(FATAL, "%s: name too long", fname);
 			if ((fd = mkstemp(tmpfname)) == -1)
-				error(FATAL, "%s", fname);
+				error(FATAL, "%s: %s", fname, strerror(errno));
 			if ((outfile = fdopen(fd, "w")) == NULL) {
 				unlink(tmpfname);
 				error(FATAL, "%s", fname);
