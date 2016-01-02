@@ -1,4 +1,4 @@
-/*	$OpenBSD: fstat.c,v 1.85 2015/12/30 19:02:12 mestre Exp $	*/
+/*	$OpenBSD: fstat.c,v 1.86 2016/01/02 13:22:52 semarie Exp $	*/
 
 /*
  * Copyright (c) 2009 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -276,7 +276,18 @@ main(int argc, char *argv[])
 		errx(1, "%s", kvm_geterr(kd));
 
 	if (fuser) {
-		if (sflg) { /* fuser might call kill(2) */
+		/*
+		 * fuser
+		 *  uflg: need "getpw"
+		 *  sflg: need "proc" (might call kill(2))
+		 */
+		if (uflg && sflg) {
+			if (pledge("stdio rpath getpw proc", NULL) == -1)
+				err(1, "pledge");
+		} else if (uflg) {
+			if (pledge("stdio rpath getpw", NULL) == -1)
+				err(1, "pledge");
+		} else if (sflg) {
 			if (pledge("stdio rpath proc", NULL) == -1)
 				err(1, "pledge");
 		} else {
@@ -284,6 +295,7 @@ main(int argc, char *argv[])
 				err(1, "pledge");
 		}
 	} else {
+		/* fstat */
 		if (pledge("stdio rpath getpw", NULL) == -1)
 			err(1, "pledge");
 	}
