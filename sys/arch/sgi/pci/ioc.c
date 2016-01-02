@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioc.c,v 1.39 2014/05/19 21:18:42 miod Exp $	*/
+/*	$OpenBSD: ioc.c,v 1.40 2016/01/02 05:49:35 visa Exp $	*/
 
 /*
  * Copyright (c) 2008 Joel Sing.
@@ -481,8 +481,21 @@ unknown:
 	}
 	if (ISSET(subdevice_mask, 1 << IOCDEV_KBC))
 		ioc_attach_child(sc, "iockbc", 0, IOCDEV_KBC);
-	if (ISSET(subdevice_mask, 1 << IOCDEV_EF))
+	if (ISSET(subdevice_mask, 1 << IOCDEV_EF)) {
+		/*
+		 * Make sure the PHY is correctly reset before attaching
+		 * the interface.
+		 */
+		bus_space_write_4(sc->sc_memt, sc->sc_memh,
+		    IOC3_GPPR(5), 0);
+		bus_space_write_4(sc->sc_memt, sc->sc_memh,
+		    IOC3_GPCR_S, IOC3_GPCR_PHY_RESET);
+		delay(10);
+		bus_space_write_4(sc->sc_memt, sc->sc_memh,
+		    IOC3_GPPR(5), 1);
+
 		ioc_attach_child(sc, "iec", 0, IOCDEV_EF);
+	}
 	if (ISSET(subdevice_mask, 1 << IOCDEV_LPT))
 		ioc_attach_child(sc, "lpt", 0, IOCDEV_LPT);
 	if (ISSET(subdevice_mask, 1 << IOCDEV_RTC))

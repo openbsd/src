@@ -1,4 +1,4 @@
-/*	$OpenBSD: hub.h,v 1.10 2015/12/25 09:22:00 visa Exp $	*/
+/*	$OpenBSD: hub.h,v 1.11 2016/01/02 05:49:36 visa Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -178,6 +178,8 @@
 
 #define	HUBMDBASE_IP27			0x00200000
 #define	HUBMDBASE_IP35			0x00780000
+
+#define	HUBMD_LED0			0x00020050
 
 
 /*

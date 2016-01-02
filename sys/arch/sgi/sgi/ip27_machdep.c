@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip27_machdep.c,v 1.70 2015/12/25 09:22:00 visa Exp $	*/
+/*	$OpenBSD: ip27_machdep.c,v 1.71 2016/01/02 05:49:36 visa Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -419,6 +419,19 @@ ip27_attach_node(struct device *parent, int16_t nasid)
 	currentnasid = nasid;
 	bzero(&u, sizeof u);
 
+	/*
+	 * IRIX performs this extra initialization on Origin 200 systems.
+	 * This seems to properly initialize on-board devices on the
+	 * second node.
+	 */
+	if (sys_config.system_type == SGI_IP27 &&
+	    sys_config.system_subtype == IP27_O200) {
+		IP27_RHUB_S(nasid, HUBMDBASE_IP27 | HUBMD_LED0,
+		    nasid == masternasid ? 1 : 9);
+		IP27_RHUB_S(nasid, HUBMDBASE_IP27 | HUBMD_LED0,
+		    nasid == masternasid ? 1 : 9);
+	}
+
 #ifdef MULTIPROCESSOR
 	kl_scan_node(nasid, IP27_BC_NODE, ip27_kl_attach_cpu_board, parent);
 #endif
@@ -669,7 +682,7 @@ ip27_halt(int howto)
 	} else
 		promop = GDA_PROMOP_REBOOT;
 
-	promop |= GDA_PROMOP_MAGIC | /* GDA_PROMOP_NO_DIAGS | */
+	promop |= GDA_PROMOP_MAGIC | GDA_PROMOP_NO_DIAGS |
 	    GDA_PROMOP_NO_MEMINIT;
 
 #if 0

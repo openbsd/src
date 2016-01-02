@@ -1,4 +1,4 @@
-/*	$OpenBSD: iocreg.h,v 1.10 2009/11/18 19:03:27 miod Exp $	*/
+/*	$OpenBSD: iocreg.h,v 1.11 2016/01/02 05:49:36 visa Exp $	*/
 
 /*
  * Copyright (c) 2008 Joel Sing.
@@ -101,6 +101,7 @@
 #define	IOC3_IRQ_KBC		0x00400000	/* keyboard controller */
 
 /* bits in GPCR */
+#define	IOC3_GPCR_PHY_RESET	0x00000020	/* reset Ethernet PHY */
 #define	IOC3_GPCR_UARTA_PIO	0x00000040	/* UARTA in PIO mode */
 #define	IOC3_GPCR_UARTB_PIO	0x00000080	/* UARTB in PIO mode */
 #define	IOC3_GPCR_MLAN		0x00200000	/* MicroLan enable */
