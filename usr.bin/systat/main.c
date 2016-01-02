@@ -1,4 +1,4 @@
-/* $Id: main.c,v 1.63 2015/04/18 18:28:38 deraadt Exp $	 */
+/* $Id: main.c,v 1.64 2016/01/02 15:02:05 benno Exp $	 */
 /*
  * Copyright (c) 2001, 2007 Can Erkin Acar
  * Copyright (c) 2001 Daniel Hartmeier
@@ -297,7 +297,6 @@ void
 cmd_count(const char *buf)
 {
 	const char *errstr;
-	int ms;
 
 	maxprint = strtonum(buf, 1, lines - HEADER_LINES, &errstr);
 	if (errstr)
