@@ -1,4 +1,4 @@
-/* $Id: engine.c,v 1.18 2015/01/19 07:39:24 deraadt Exp $	 */
+/* $Id: engine.c,v 1.19 2016/01/02 20:01:48 benno Exp $	 */
 /*
  * Copyright (c) 2001, 2007 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -361,7 +361,7 @@ print_bar_title(field_def *fld)
 void
 print_fld_bar(field_def *fld, int value)
 {
-	int i, tw, val, cur;
+	int i, tw, val;
 
 	if (fld->width < 1)
 		return;
@@ -370,7 +370,7 @@ print_fld_bar(field_def *fld, int value)
 	tw = fld->arg / 2;
 
 	tb_start();
-	cur = 0;
+
 	for(i = 0; i < fld->width; i++) {
 		tw += fld->arg;
 
@@ -488,7 +488,6 @@ field_setup(void)
 			width -= fwid;
 	}
 
-	change = 0;
 	while (width > 0) {
 		change = 0;
 		for (fp = curr_view->view; *fp != NULL; fp++) {
