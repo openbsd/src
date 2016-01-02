@@ -1,4 +1,4 @@
-.\" $OpenBSD: video.4,v 1.12 2014/10/18 08:01:34 armani Exp $
+.\" $OpenBSD: video.4,v 1.13 2016/01/02 07:46:07 feinerer Exp $
 .\"
 .\" Copyright (c) 2008 Marcus Glocker <mglocker@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 18 2014 $
+.Dd $Mdocdate: January 2 2016 $
 .Dt VIDEO 4
 .Os
 .Sh NAME
@@ -54,31 +54,34 @@ struct v4l2_capability {
 	u_int8_t	bus_info[32];
 	u_int32_t	version;
 	u_int32_t	capabilities;
-	u_int32_t	reserved[4];
+	u_int32_t	device_caps;
+	u_int32_t	reserved[3];
 };
 .Ed
 .It Dv VIDIOC_ENUM_FMT Fa "struct v4l2_fmtdesc *"
 Enumerate image formats.
 .Bd -literal
 struct v4l2_fmtdesc {
-	u_int32_t		index;
-	enum v4l2_buf_type	type;
-	u_int32_t		flags;
-	u_int8_t		description[32];
-	u_int32_t		pixelformat;
-	u_int32_t		reserved[4];
+	u_int32_t	index;
+	u_int32_t	type;
+	u_int32_t	flags;
+	u_int8_t	description[32];
+	u_int32_t	pixelformat;
+	u_int32_t	reserved[4];
 };
 .Ed
 .It Dv VIDIOC_S_FMT Fa "struct v4l2_format *"
 Set the data format.
 .Bd -literal
 struct v4l2_format {
-	enum v4l2_buf_type	type;
+	u_int32_t	type;
 	union {
 		struct v4l2_pix_format		pix;
+		struct v4l2_pix_format_mplane	pix_mp;
 		struct v4l2_window		win;
 		struct v4l2_vbi_format		vbi;
 		struct v4l2_sliced_vbi_format	sliced;
+		struct v4l2_sdr_format		sdr;
 		u_int8_t			raw_data[200];
         } fmt;
 };
@@ -99,7 +102,8 @@ struct v4l2_input {
 	u_int32_t	tuner;
 	v4l2_std_id	std;
 	u_int32_t	status;
-	u_int32_t	reserved[32];
+	u_int32_t	capabilities;
+	u_int32_t	reserved[3];
 };
 .Ed
 .It Dv VIDIOC_G_INPUT Fa "int *"
@@ -110,10 +114,10 @@ Select the current video input.
 Initiate memory mapping or user pointer I/O.
 .Bd -literal
 struct v4l2_requestbuffers {
-	u_int32_t		count;
-	enum v4l2_buf_type	type;
-	enum v4l2_memory	memory;
-	u_int32_t		reserved[2];
+	u_int32_t	count;
+	u_int32_t	type;
+	u_int32_t	memory;
+	u_int32_t	reserved[2];
 };
 .Ed
 .It Dv VIDIOC_QUERYBUF Fa "struct v4l2_buffer *"
@@ -121,20 +125,22 @@ Query the status of a buffer.
 .Bd -literal
 struct v4l2_buffer {
 	u_int32_t		index;
-	enum v4l2_buf_type	type;
+	u_int32_t		type;
 	u_int32_t		bytesused;
 	u_int32_t		flags;
-	enum v4l2_field		field;
+	u_int32_t		field;
 	struct timeval		timestamp;
 	struct v4l2_timecode	timecode;
 	u_int32_t		sequence;
-	enum v4l2_memory	memory;
+	u_int32_t		memory;
 	union {
-		u_int32_t	offset;
-		unsigned long	userptr;
+		u_int32_t		offset;
+		unsigned long		userptr;
+		struct v4l2_plane	*planes;
+		int32_t			fd;
 	} m;
 	u_int32_t		length;
-	u_int32_t		input;
+	u_int32_t		reserved2;
 	u_int32_t		reserved;
 };
 .Ed
@@ -169,7 +175,7 @@ struct v4l2_frmivalemun {
 	union {
 		struct v4l2_fract		discrete;
 		struct v4l2_frmival_stepwise	stepwise;
-	} un;
+	};
 	u_int32_t		reserved[2];
 };
 
@@ -183,7 +189,7 @@ struct v4l2_frmival_stepwise {
 Set streaming parameters.
 .Bd -literal
 struct v4l2_streamparm {
-	enum v4l2_buf_type	type;
+	u_int32_t	type;
 	union {
 		struct v4l2_captureparm	capture;
 		struct v4l2_outputparm	output;
@@ -218,15 +224,15 @@ Same structures as for
 Enumerate control items.
 .Bd -literal
 struct v4l2_queryctrl {
-	u_int32_t		id;
-	enum v4l2_ctrl_type	type;
-	u_int8_t		name[32];
-	int32_t			minimum;
-	int32_t			maximum;
-	int32_t			step;
-	int32_t			default_value;
-	u_int32_t		flags;
-	u_int32_t		reserved[2];
+	u_int32_t	id;
+	u_int32_t	type;
+	u_int8_t	name[32];
+	int32_t		minimum;
+	int32_t		maximum;
+	int32_t		step;
+	int32_t		default_value;
+	u_int32_t	flags;
+	u_int32_t	reserved[2];
 };
 .Ed
 .El
@@ -242,6 +248,10 @@ enum v4l2_buf_type {
 	V4L2_BUF_TYPE_SLICED_VBI_CAPTURE = 6,
 	V4L2_BUF_TYPE_SLICED_VBI_OUTPUT = 7,
 	V4L2_BUF_TYPE_VIDEO_OUTPUT_OVERLAY = 8,
+	V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE = 9,
+	V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE = 10,
+	V4L2_BUF_TYPE_SDR_CAPTURE = 11,
+	V4L2_BUF_TYPE_SDR_OUTPUT = 12,
 	V4L2_BUF_TYPE_PRIVATE = 0x80,
 };
 
@@ -249,6 +259,7 @@ enum v4l2_memory {
 	V4L2_MEMORY_MMAP = 1,
 	V4L2_MEMORY_USERPTR = 2,
 	V4L2_MEMORY_OVERLAY = 3,
+	V4L2_MEMORY_DMABUF = 4,
 };
 
 enum v4l2_ctrl_type {
@@ -258,6 +269,13 @@ enum v4l2_ctrl_type {
 	V4L2_CTRL_TYPE_BUTTON = 4,
 	V4L2_CTRL_TYPE_INTEGER64 = 5,
 	V4L2_CTRL_TYPE_CTRL_CLASS = 6,
+	V4L2_CTRL_TYPE_STRING = 7,
+	V4L2_CTRL_TYPE_BITMASK = 8,
+	V4L2_CTRL_TYPE_INTEGER_MENU = 9,
+	V4L2_CTRL_COMPOUND_TYPES = 0x0100,
+	V4L2_CTRL_TYPE_U8 = 0x0100,
+	V4L2_CTRL_TYPE_U16 = 0x0101,
+	V4L2_CTRL_TYPE_U32 = 0x0102,
 };
 
 enum v4l2_frmivaltypes {
@@ -270,22 +288,27 @@ enum v4l2_frmivaltypes {
 Command independent structures are:
 .Bd -literal
 struct v4l2_pix_format {
-	u_int32_t		width;
-	u_int32_t		height;
-	u_int32_t		pixelformat;
-	enum v4l2_field		field;
-	u_int32_t		bytesperline;
-	u_int32_t		sizeimage;
-	enum v4l2_colorspace	colorspace;
-	u_int32_t		priv;
+	u_int32_t	width;
+	u_int32_t	height;
+	u_int32_t	pixelformat;
+	u_int32_t	field;
+	u_int32_t	bytesperline;
+	u_int32_t	sizeimage;
+	u_int32_t	colorspace;
+	u_int32_t	priv;
+	u_int32_t	flags;
+	u_int32_t	ycbcr_enc;
+	u_int32_t	quantization;
+	u_int32_t	xfer_func;
 };
 
 struct v4l2_window {
 	struct v4l2_rect	 w;
-	enum v4l2_field		 chromakey;
+	u_int32_t		 field;
+	u_int32_t		 chromakey;
 	struct v4l2_clip	 __user *clips;
 	u_int32_t		 clipcount;
-	void __user		*bitmap;
+	void			__user *bitmap;
 	u_int8_t		 global_alpha;
 };
 
