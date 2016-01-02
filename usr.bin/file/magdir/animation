@@ -1,4 +1,4 @@
-#	$OpenBSD: animation,v 1.5 2009/04/24 18:54:34 chl Exp $
+#	$OpenBSD: animation,v 1.6 2016/01/02 13:25:33 sthen Exp $
 
 #------------------------------------------------------------------------------
 # animation:  file(1) magic for animation/movie formats
@@ -30,57 +30,182 @@
 #!:mime	image/x-quicktime
 4       string          pckg            Apple QuickTime compressed archive
 !:mime	application/x-quicktime-player
-4	string/B	jP		JPEG 2000 image
+4	string/W	jP		JPEG 2000 image
 !:mime	image/jp2
+# http://www.ftyps.com/ with local additions
 4	string		ftyp		ISO Media
->8	string		isom		\b, MPEG v4 system, version 1
-!:mime	video/mp4
->8	string		iso2		\b, MPEG v4 system, part 12 revision
->8	string		mp41		\b, MPEG v4 system, version 1
-!:mime	video/mp4
->8	string		mp42		\b, MPEG v4 system, version 2
-!:mime	video/mp4
->8	string		mp7t		\b, MPEG v4 system, MPEG v7 XML
->8	string		mp7b		\b, MPEG v4 system, MPEG v7 binary XML
->8	string/B	jp2		\b, JPEG 2000
-!:mime	image/jp2
->8	string		3gp		\b, MPEG v4 system, 3GPP
-!:mime	video/3gpp
+>8	string		3g2		\b, MPEG v4 system, 3GPP2
+!:mime	video/3gpp2
 >>11	byte		4		\b v4 (H.263/AMR GSM 6.10)
 >>11	byte		5		\b v5 (H.263/AMR GSM 6.10)
 >>11	byte		6		\b v6 (ITU H.264/AMR GSM 6.10)
+>>11	byte		a		\b C.S0050-0 V1.0
+>>11	byte		b		\b C.S0050-0-A V1.0.0
+>>11	byte		c		\b C.S0050-0-B V1.0
+>8	string		3ge		\b, MPEG v4 system, 3GPP
+!:mime	video/3gpp
+>>11	byte		6		\b, Release 6 MBMS Extended Presentations
+>>11	byte		7		\b, Release 7 MBMS Extended Presentations
+>8	string		3gg		\b, MPEG v4 system, 3GPP
+>11	byte		6		\b, Release 6 General Profile
+!:mime	video/3gpp
+>8	string		3gp		\b, MPEG v4 system, 3GPP
+>11	byte		1		\b, Release %d (non existent)
+>11	byte		2		\b, Release %d (non existent)
+>11	byte		3		\b, Release %d (non existent)
+>11	byte		4		\b, Release %d
+>11	byte		5		\b, Release %d
+>11	byte		6		\b, Release %d
+>11	byte		7		\b, Release %d Streaming Servers
+!:mime	video/3gpp
+>8	string		3gs		\b, MPEG v4 system, 3GPP
+>11	byte		7		\b, Release %d Streaming Servers
+!:mime	video/3gpp
+>8	string		avc1		\b, MPEG v4 system, 3GPP JVT AVC [ISO 14496-12:2005]
+!:mime	video/mp4
+>8	string/W	qt		\b, Apple QuickTime movie
+!:mime	video/quicktime
+>8	string		CAEP		\b, Canon Digital Camera
+>8	string		caqv		\b, Casio Digital Camera
+>8	string		CDes		\b, Convergent Design
+>8	string		da0a		\b, DMB MAF w/ MPEG Layer II aud, MOT slides, DLS, JPG/PNG/MNG
+>8	string		da0b		\b, DMB MAF, ext DA0A, with 3GPP timed text, DID, TVA, REL, IPMP
+>8	string		da1a		\b, DMB MAF audio with ER-BSAC audio, JPG/PNG/MNG images
+>8	string		da1b		\b, DMB MAF, ext da1a, with 3GPP timed text, DID, TVA, REL, IPMP
+>8	string		da2a		\b, DMB MAF aud w/ HE-AAC v2 aud, MOT slides, DLS, JPG/PNG/MNG
+>8	string		da2b		\b, DMB MAF, ext da2a, with 3GPP timed text, DID, TVA, REL, IPMP
+>8	string		da3a		\b, DMB MAF aud with HE-AAC aud, JPG/PNG/MNG images
+>8	string		da3b		\b, DMB MAF, ext da3a w/ BIFS, 3GPP, DID, TVA, REL, IPMP
+>8	string		dmb1		\b, DMB MAF supporting all the components defined in the spec
+>8	string		dmpf		\b, Digital Media Project
+>8	string		drc1		\b, Dirac (wavelet compression), encap in ISO base media (MP4)
+>8	string		dv1a		\b, DMB MAF vid w/ AVC vid, ER-BSAC aud, BIFS, JPG/PNG/MNG, TS
+>8	string		dv1b		\b, DMB MAF, ext dv1a, with 3GPP timed text, DID, TVA, REL, IPMP
+>8	string		dv2a		\b, DMB MAF vid w/ AVC vid, HE-AAC v2 aud, BIFS, JPG/PNG/MNG, TS
+>8	string		dv2b		\b, DMB MAF, ext dv2a, with 3GPP timed text, DID, TVA, REL, IPMP
+>8	string		dv3a		\b, DMB MAF vid w/ AVC vid, HE-AAC aud, BIFS, JPG/PNG/MNG, TS
+>8	string		dv3b		\b, DMB MAF, ext dv3a, with 3GPP timed text, DID, TVA, REL, IPMP
+>8	string		dvr1		\b, DVB (.DVB) over RTP
+!:mime	video/vnd.dvb.file
+>8	string		dvt1		\b, DVB (.DVB) over MPEG-2 Transport Stream
+!:mime	video/vnd.dvb.file
+>8	string		F4V		\b, Video for Adobe Flash Player 9+ (.F4V)
+!:mime	video/mp4
+>8	string		F4P		\b, Protected Video for Adobe Flash Player 9+ (.F4P)
+!:mime	video/mp4
+>8	string		F4A		\b, Audio for Adobe Flash Player 9+ (.F4A)
+!:mime	audio/mp4
+>8	string		F4B		\b, Audio Book for Adobe Flash Player 9+ (.F4B)
+!:mime	audio/mp4
+>8	string		isc2		\b, ISMACryp 2.0 Encrypted File
+#	?/enc-isoff-generic
+>8	string		iso2		\b, MP4 Base Media v2 [ISO 14496-12:2005]
+!:mime	video/mp4
+>8	string		isom		\b, MP4 Base Media v1 [IS0 14496-12:2003]
+!:mime	video/mp4
+>8	string/W	jp2		\b, JPEG 2000
+!:mime	image/jp2
+>8	string		JP2		\b, JPEG 2000 Image (.JP2) [ISO 15444-1 ?]
+!:mime	image/jp2
+>8	string		JP20		\b, Unknown, from GPAC samples (prob non-existent)
+>8	string		jpm		\b, JPEG 2000 Compound Image (.JPM) [ISO 15444-6]
+!:mime	image/jpm
+>8	string		jpx		\b, JPEG 2000 w/ extensions (.JPX) [ISO 15444-2]
+!:mime	image/jpx
+>8	string		KDDI		\b, 3GPP2 EZmovie for KDDI 3G cellphones
+!:mime	video/3gpp2
+>8	string		M4A 		\b, Apple iTunes ALAC/AAC-LC (.M4A) Audio
+!:mime	audio/x-m4a
+>8	string		M4B 		\b, Apple iTunes ALAC/AAC-LC (.M4B) Audio Book
+!:mime	audio/mp4
+>8	string		M4P 		\b, Apple iTunes ALAC/AAC-LC (.M4P) AES Protected Audio
+!:mime	video/mp4
+>8	string		M4V 		\b, Apple iTunes Video (.M4V) Video
+!:mime	video/x-m4v
+>8	string		M4VH		\b, Apple TV (.M4V)
+!:mime	video/x-m4v
+>8	string		M4VP		\b, Apple iPhone (.M4V)
+!:mime	video/x-m4v
+>8	string		mj2s		\b, Motion JPEG 2000 [ISO 15444-3] Simple Profile
+!:mime	video/mj2
+>8	string		mjp2		\b, Motion JPEG 2000 [ISO 15444-3] General Profile
+!:mime	video/mj2
+>8	string		mmp4		\b, MPEG-4/3GPP Mobile Profile (.MP4 / .3GP) (for NTT)
+!:mime	video/mp4
+>8	string		mobi		\b, MPEG-4, MOBI format
+!:mime	video/mp4
+>8	string		mp21		\b, MPEG-21 [ISO/IEC 21000-9]
+>8	string		mp41		\b, MP4 v1 [ISO 14496-1:ch13]
+!:mime	video/mp4
+>8	string		mp42		\b, MP4 v2 [ISO 14496-14]
+!:mime	video/mp4
+>8	string		mp71		\b, MP4 w/ MPEG-7 Metadata [per ISO 14496-12]
+>8	string		mp7t		\b, MPEG v4 system, MPEG v7 XML
+>8	string		mp7b		\b, MPEG v4 system, MPEG v7 binary XML
 >8	string		mmp4		\b, MPEG v4 system, 3GPP Mobile
 !:mime	video/mp4
->8	string		avc1		\b, MPEG v4 system, 3GPP JVT AVC
-!:mime	video/3gpp
->8	string/B	M4A		\b, MPEG v4 system, iTunes AAC-LC
-!:mime	audio/mp4
->8	string/B	M4V		\b, MPEG v4 system, iTunes AVC-LC
-!:mime	video/mp4
->8	string/B	M4P		\b, MPEG v4 system, iTunes AES encrypted
->8	string/B	M4B		\b, MPEG v4 system, iTunes bookmarked
->8	string/B	qt		\b, Apple QuickTime movie
+>8	string		MPPI		\b, Photo Player, MAF [ISO/IEC 23000-3]
+>8	string		mqt		\b, Sony / Mobile QuickTime (.MQV) US Pat 7,477,830
 !:mime	video/quicktime
+>8	string		MSNV		\b, MPEG-4 (.MP4) for SonyPSP
+!:mime	audio/mp4
+>8	string		NDAS		\b, MP4 v2 [ISO 14496-14] Nero Digital AAC Audio
+!:mime	audio/mp4
+>8	string		NDSC		\b, MPEG-4 (.MP4) Nero Cinema Profile
+!:mime	video/mp4
+>8	string		NDSH		\b, MPEG-4 (.MP4) Nero HDTV Profile
+!:mime	video/mp4
+>8	string		NDSM		\b, MPEG-4 (.MP4) Nero Mobile Profile
+!:mime	video/mp4
+>8	string		NDSP		\b, MPEG-4 (.MP4) Nero Portable Profile
+!:mime	video/mp4
+>8	string		NDSS		\b, MPEG-4 (.MP4) Nero Standard Profile
+!:mime	video/mp4
+>8	string		NDXC		\b, H.264/MPEG-4 AVC (.MP4) Nero Cinema Profile
+!:mime	video/mp4
+>8	string		NDXH		\b, H.264/MPEG-4 AVC (.MP4) Nero HDTV Profile
+!:mime	video/mp4
+>8	string		NDXM		\b, H.264/MPEG-4 AVC (.MP4) Nero Mobile Profile
+!:mime	video/mp4
+>8	string		NDXP		\b, H.264/MPEG-4 AVC (.MP4) Nero Portable Profile
+!:mime	video/mp4
+>8	string		NDXS		\b, H.264/MPEG-4 AVC (.MP4) Nero Standard Profile
+!:mime	video/mp4
+>8	string		odcf  		\b, OMA DCF DRM Format 2.0 (OMA-TS-DRM-DCF-V2_0-20060303-A)
+>8	string		opf2 		\b, OMA PDCF DRM Format 2.1 (OMA-TS-DRM-DCF-V2_1-20070724-C)
+>8	string		opx2  		\b, OMA PDCF DRM + XBS ext (OMA-TS-DRM_XBS-V1_0-20070529-C)
+>8	string		pana		\b, Panasonic Digital Camera
+>8	string		qt  		\b, Apple QuickTime (.MOV/QT)
+!:mime	video/quicktime
+>8	string		ROSS		\b, Ross Video
+>8	string		sdv		\b, SD Memory Card Video
+>8	string		ssc1		\b, Samsung stereo, single stream (patent pending)
+>8	string		ssc2		\b, Samsung stereo, dual stream (patent pending)
 
 # MPEG sequences
 # Scans for all common MPEG header start codes
-0        belong             0x00000001     JVT NAL sequence
->4       byte&0x1F          0x07           \b, H.264 video
+0	 belong		    0x00000001     
+>4	 byte&0x1F	    0x07	   JVT NAL sequence, H.264 video
 >>5      byte               66             \b, baseline
 >>5      byte               77             \b, main
 >>5      byte               88             \b, extended
 >>7      byte               x              \b @ L %u
-0        string             \000\000\001   MPEG sequence
->3       byte               0xBA
+0        belong&0xFFFFFF00  0x00000100     
+>3       byte               0xBA           MPEG sequence
+!:mime  video/mpeg
 >>4      byte               &0x40          \b, v2, program multiplex
 >>4      byte               ^0x40          \b, v1, system multiplex
->3       byte               0xBB           \b, v1/2, multiplex (missing pack header)
->3       byte&0x1F          0x07           \b, H.264 video
+>3       byte               0xBB           MPEG sequence, v1/2, multiplex (missing pack header)
+>3       byte&0x1F          0x07           MPEG sequence, H.264 video
 >>4      byte               66             \b, baseline
 >>4      byte               77             \b, main
 >>4      byte               88             \b, extended
 >>6      byte               x              \b @ L %u
->3       byte               0xB0           \b, v4
+# GRR too general as it catches also FoxPro Memo example NG.FPT
+>3       byte               0xB0           MPEG sequence, v4
+# TODO: maybe this extra line exclude FoxPro Memo example NG.FPT starting with 000001b0 00000100 00000000
+#>>4      byte               !0             MPEG sequence, v4
+!:mime  video/mpeg4-generic
 >>5      belong             0x000001B5
 >>>9     byte               &0x80
 >>>>10   byte&0xF0          16             \b, video
@@ -149,7 +274,8 @@
 >>4      byte               251            \b, FGS @ L3
 >>4      byte               252            \b, FGS @ L4
 >>4      byte               253            \b, FGS @ L5
->3       byte               0xB5           \b, v4
+>3       byte               0xB5           MPEG sequence, v4
+!:mime  video/mpeg4-generic
 >>4      byte               &0x80
 >>>5     byte&0xF0          16             \b, video (missing profile header)
 >>>5     byte&0xF0          32             \b, still texture (missing profile header)
@@ -159,7 +285,8 @@
 >>4      byte&0xF8          16             \b, still texture (missing profile header)
 >>4      byte&0xF8          24             \b, mesh (missing profile header)
 >>4      byte&0xF8          32             \b, face (missing profile header)
->3       byte               0xB3
+>3       byte               0xB3           MPEG sequence
+!:mime  video/mpeg
 >>12     belong             0x000001B8     \b, v1, progressive Y'CbCr 4:2:0 video
 >>12     belong             0x000001B2     \b, v1, progressive Y'CbCr 4:2:0 video
 >>12     belong             0x000001B5     \b, v2,
@@ -277,7 +404,7 @@
 # modified by Joerg Jenderek
 # GRR the original test are too common for many DOS files
 # so don't accept as MP3 until we've tested the rate
-0       beshort&0xFFFE
+0       beshort&0xFFFE  0xFFFA
 # rates
 >2      byte&0xF0       0x10           MPEG ADTS, layer III, v1,  32 kbps
 !:mime	audio/mpeg
@@ -326,6 +453,7 @@
 
 # MP2, M1A
 0       beshort&0xFFFE  0xFFFC         MPEG ADTS, layer II, v1
+!:mime	audio/mpeg
 # rates
 >2      byte&0xF0       0x10           \b,  32 kbps
 >2      byte&0xF0       0x20           \b,  48 kbps
@@ -362,6 +490,7 @@
 # updated by Joerg Jenderek
 # GRR the original test are too common for many DOS files, so test 32 <= kbits <= 448
 # GRR this test is still too general as it catches a BOM of UTF-16 files (0xFFFE)
+# FIXME: Almost all little endian UTF-16 text with BOM are clobbered by these entries
 #0	beshort&0xFFFE		0xFFFE	
 #>2	ubyte&0xF0	>0x0F		
 #>>2	ubyte&0xF0	<0xE1		MPEG ADTS, layer I, v1
@@ -399,6 +528,7 @@
 
 # MP3, M2A
 0       beshort&0xFFFE  0xFFF2         MPEG ADTS, layer III, v2
+!:mime	audio/mpeg
 # rate
 >2      byte&0xF0       0x10           \b,   8 kbps
 >2      byte&0xF0       0x20           \b,  16 kbps
@@ -433,6 +563,7 @@
 
 # MP2, M2A
 0       beshort&0xFFFE  0xFFF4         MPEG ADTS, layer II, v2
+!:mime	audio/mpeg
 # rate 
 >2      byte&0xF0       0x10           \b,   8 kbps
 >2      byte&0xF0       0x20           \b,  16 kbps 
@@ -467,6 +598,7 @@
 
 # MPA, M2A
 0       beshort&0xFFFE  0xFFF6         MPEG ADTS, layer I, v2
+!:mime	audio/mpeg
 # rate
 >2      byte&0xF0       0x10           \b,  32 kbps
 >2      byte&0xF0       0x20           \b,  48 kbps
@@ -501,6 +633,7 @@
 
 # MP3, M25A
 0       beshort&0xFFFE  0xFFE2         MPEG ADTS, layer III,  v2.5
+!:mime	audio/mpeg
 # rate  
 >2      byte&0xF0       0x10           \b,   8 kbps
 >2      byte&0xF0       0x20           \b,  16 kbps
@@ -600,7 +733,7 @@
 # Live MPEG-4 audio streams (instead of RTP FlexMux)
 0       beshort&0xFFE0  0x56E0         MPEG-4 LOAS
 !:mime	audio/x-mp4a-latm
-#>1     beshort&0x1FFF  x              \b, %u byte packet
+#>1     beshort&0x1FFF  x              \b, %hu byte packet
 >3      byte&0xE0       0x40
 >>4     byte&0x3C       0x04           \b, single stream
 >>4     byte&0x3C       0x08           \b, 2 streams
@@ -617,22 +750,30 @@
 #0       beshort         0x4DE1         MPEG-4 LO-EP audio stream
 #!:mime	audio/x-mp4a-latm
 
-# FLI animation format
-4	leshort		0xAF11			FLI file
+# Summary: FLI animation format
+# Created by: Daniel Quinlan <quinlan@yggdrasil.com>
+# Modified by (1): Abel Cheung <abelcheung@gmail.com> (avoid over-generic detection)
+4	leshort		0xAF11
+# standard FLI always has 320x200 resolution and 8 bit color
+>8	leshort		320
+>>10	leshort		200
+>>>12	leshort		8			FLI animation, 320x200x8
 !:mime	video/x-fli
->6	leshort		x			- %d frames,
->8	leshort		x			width=%d pixels,
->10	leshort		x			height=%d pixels,
->12	leshort		x			depth=%d,
->16	leshort		x			ticks/frame=%d
-# FLC animation format
-4	leshort		0xAF12			FLC file
+>>>>6	leshort		x			\b, %d frames
+# frame speed is multiple of 1/70s
+>>>>16	leshort		x			\b, %d/70s per frame
+
+# Summary: FLC animation format
+# Created by: Daniel Quinlan <quinlan@yggdrasil.com>
+# Modified by (1): Abel Cheung <abelcheung@gmail.com> (avoid over-generic detection)
+4	leshort		0xAF12
+# standard FLC always use 8 bit color
+>12	leshort		8			FLC animation
 !:mime	video/x-flc
->6	leshort		x			- %d frames
->8	leshort		x			width=%d pixels,
->10	leshort		x			height=%d pixels,
->12	leshort		x			depth=%d,
->16	leshort		x			ticks/frame=%d
+>>8	leshort		x			\b, %d
+>>10	leshort		x			\bx%dx8
+>>6	uleshort	x			\b, %d frames
+>>16	uleshort	x			\b, %dms per frame
 
 # DL animation format
 # XXX - collision with most `mips' magic
@@ -663,10 +804,6 @@
 # iso 13818 transport stream
 #
 # from Oskar Schirmer <schirmer@scara.com> Feb 3, 2001 (ISO 13818.1)
-# (the following is a little bit restrictive and works fine for a stream
-#  that starts with PAT properly. it won't work for stream data, that is
-#  cut from an input device data right in the middle, but this shouldn't
-#  disturb)
 # syncbyte      8 bit	0x47
 # error_ind     1 bit	-
 # payload_start 1 bit	1
@@ -674,9 +811,9 @@
 # PID          13 bit	0x0000
 # scrambling    2 bit	-
 # adaptfld_ctrl 2 bit	1 or 3
-# conti_count   4 bit	0
-0	belong&0xFF5FFF1F	0x47400010	MPEG transport stream data
->188	byte			!0x47		CORRUPTED
+# conti_count   4 bit	-
+0	belong&0xFF5FFF10	0x47400010
+>188	byte			0x47		MPEG transport stream data
 
 # DIF digital video file format <mpruett@sgi.com>
 0	belong&0xffffff00	0x1f070000      DIF
@@ -687,31 +824,39 @@
 
 # Microsoft Advanced Streaming Format (ASF) <mpruett@sgi.com>
 0	belong			0x3026b275	Microsoft ASF
+!:mime  video/x-ms-asf
 
 # MNG Video Format, <URL:http://www.libpng.org/pub/mng/spec/>
 0	string			\x8aMNG		MNG video data,
 !:mime	video/x-mng
 >4	belong			!0x0d0a1a0a	CORRUPTED,
 >4	belong			0x0d0a1a0a
->>16    belong	x				%ld x
->>20    belong	x				%ld
+>>16    belong	x				%d x
+>>20    belong	x				%d
 
 # JNG Video Format, <URL:http://www.libpng.org/pub/mng/spec/>
 0	string			\x8bJNG		JNG video data,
 !:mime	video/x-jng
 >4	belong			!0x0d0a1a0a	CORRUPTED,
 >4	belong			0x0d0a1a0a
->>16    belong	x				%ld x
->>20    belong	x				%ld
+>>16    belong	x				%d x
+>>20    belong	x				%d
 
 # Vivo video (Wolfram Kleff)
 3	string		\x0D\x0AVersion:Vivo	Vivo video data
 
 # VRML (Virtual Reality Modelling Language)
-0       string/b        #VRML\ V1.0\ ascii	VRML 1 file
+0       string/w        #VRML\ V1.0\ ascii	VRML 1 file
 !:mime	model/vrml
-0	string/b	#VRML\ V2.0\ utf8	ISO/IEC 14772 VRML 97 file
+0	string/w	#VRML\ V2.0\ utf8	ISO/IEC 14772 VRML 97 file
 !:mime	model/vrml
+
+# X3D (Extensible 3D) [http://www.web3d.org/specifications/x3d-3.0.dtd]
+# From Michel Briand <michelbriand@free.fr>
+0	string/t		\<?xml\ version="
+!:strength +1
+>20	search/1000/cw  \<!DOCTYPE\ X3D		X3D (Extensible 3D) model xml text
+!:mime model/x3d
 
 #---------------------------------------------------------------------------
 # HVQM4: compressed movie format designed by Hudson for Nintendo GameCube
@@ -722,7 +867,7 @@
 >0	byte		x		GameCube movie,
 >0x34	ubeshort	x		%d x
 >0x36	ubeshort	x		%d,
->0x26	ubeshort	x		%dµs,
+>0x26	ubeshort	x		%dus,
 >0x42	ubeshort	0		no audio
 >0x42	ubeshort	>0		%dHz audio
 
@@ -756,22 +901,108 @@
 
 #						MPEG file
 # MPEG sequences
-# FIXME: This section is from the old magic.mime file and needs integrating with the rest
-0       belong             0x000001BA
->4      byte               &0x40
-!:mime	video/mp2p
->4      byte               ^0x40
-!:mime	video/mpeg
-0       belong             0x000001BB
-!:mime	video/mpeg
-0       belong             0x000001B0
-!:mime	video/mp4v-es
-0       belong             0x000001B5
-!:mime	video/mp4v-es
-0       belong             0x000001B3
-!:mime	video/mpv
-0       belong&0xFF5FFF1F  0x47400010
-!:mime	video/mp2t
-0       belong             0x00000001
->4      byte&0x1F	   0x07
-!:mime	video/h264
+# FIXME: This section is from the old magic.mime file and needs
+# integrating with the rest
+#0       belong             0x000001BA
+#>4      byte               &0x40
+#!:mime	video/mp2p
+#>4      byte               ^0x40
+#!:mime	video/mpeg
+#0       belong             0x000001BB
+#!:mime	video/mpeg
+#0       belong             0x000001B0
+#!:mime	video/mp4v-es
+#0       belong             0x000001B5
+#!:mime	video/mp4v-es
+#0       belong             0x000001B3
+#!:mime	video/mpv
+#0       belong&0xFF5FFF10  0x47400010
+#!:mime	video/mp2t
+#0       belong             0x00000001
+#>4      byte&0x1F	   0x07
+#!:mime	video/h264
+
+# Type: Bink Video
+# Extension: .bik
+# URL:  http://wiki.multimedia.cx/index.php?title=Bink_Container
+# From: <hoehle@users.sourceforge.net>  2008-07-18
+0	string		BIK	Bink Video
+>3	regex		=[a-z]	rev.%s
+#>4	ulelong		x	size %d
+>20	ulelong		x	\b, %d
+>24	ulelong		x	\bx%d
+>8	ulelong		x	\b, %d frames
+>32	ulelong		x	at rate %d/
+>28	ulelong		>1	\b%d
+>40	ulelong		=0	\b, no audio
+>40	ulelong		!0	\b, %d audio track
+>>40	ulelong		!1	\bs
+# follow properties of the first audio track only
+>>48	uleshort	x	%dHz
+>>51	byte&0x20	0	mono
+>>51	byte&0x20	!0	stereo
+#>>51	byte&0x10	0	FFT
+#>>51	byte&0x10	!0	DCT
+
+# Type:	NUT Container
+# URL:	http://wiki.multimedia.cx/index.php?title=NUT
+# From:	Adam Buchbinder <adam.buchbinder@gmail.com>
+0	string	nut/multimedia\ container\0	NUT multimedia container
+
+# Type: Nullsoft Video (NSV)
+# URL:  http://wiki.multimedia.cx/index.php?title=Nullsoft_Video
+# From: Mike Melanson <mike@multimedia.cx>
+0	string	NSVf	Nullsoft Video
+
+# Type: REDCode Video
+# URL:  http://www.red.com/ ; http://wiki.multimedia.cx/index.php?title=REDCode
+# From: Mike Melanson <mike@multimedia.cx>
+4	string	RED1	REDCode Video
+
+# Type: MTV Multimedia File
+# URL:  http://wiki.multimedia.cx/index.php?title=MTV
+# From: Mike Melanson <mike@multimedia.cx>
+0	string	AMVS	MTV Multimedia File
+
+# Type: ARMovie
+# URL:  http://wiki.multimedia.cx/index.php?title=ARMovie
+# From: Mike Melanson <mike@multimedia.cx>
+0	string	ARMovie\012	ARMovie
+
+# Type: Interplay MVE Movie
+# URL:  http://wiki.multimedia.cx/index.php?title=Interplay_MVE
+# From: Mike Melanson <mike@multimedia.cx>
+0	string	Interplay\040MVE\040File\032	Interplay MVE Movie
+
+# Type: Windows Television DVR File
+# URL:  http://wiki.multimedia.cx/index.php?title=WTV
+# From: Mike Melanson <mike@mutlimedia.cx>
+# This takes the form of a Windows-style GUID
+0	bequad	0xB7D800203749DA11
+>8	bequad	0xA64E0007E95EAD8D	Windows Television DVR Media
+
+# Type: Sega FILM/CPK Multimedia
+# URL:  http://wiki.multimedia.cx/index.php?title=Sega_FILM
+# From: Mike Melanson <mike@multimedia.cx>
+0	string	FILM	Sega FILM/CPK Multimedia,
+>32	belong	x	%d x
+>28	belong	x	%d
+
+# Type: Nintendo THP Multimedia
+# URL:  http://wiki.multimedia.cx/index.php?title=THP
+# From: Mike Melanson <mike@multimedia.cx>
+0	string	THP\0	Nintendo THP Multimedia
+
+# Type: BBC Dirac Video
+# URL:  http://wiki.multimedia.cx/index.php?title=Dirac
+# From: Mike Melanson <mike@multimedia.cx>
+0	string	BBCD	BBC Dirac Video
+
+# Type: RAD Game Tools Smacker Multimedia
+# URL:  http://wiki.multimedia.cx/index.php?title=Smacker
+# From: Mike Melanson <mike@multimedia.cx>
+0	string	SMK	RAD Game Tools Smacker Multimedia
+>3	byte	x	version %c,
+>4	lelong	x	%d x
+>8	lelong	x	%d,
+>12	lelong	x	%d frames
