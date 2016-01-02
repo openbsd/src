@@ -1,7 +1,7 @@
-.\"	$OpenBSD: mg.1,v 1.100 2015/12/30 16:53:17 lum Exp $
+.\"	$OpenBSD: mg.1,v 1.101 2016/01/02 10:39:19 lum Exp $
 .\" This file is in the public domain.
 .\"
-.Dd $Mdocdate: December 30 2015 $
+.Dd $Mdocdate: January 2 2016 $
 .Dt MG 1
 .Os
 .Sh NAME
@@ -952,6 +952,8 @@ dired-next-line
 dired-shell-command
 .It +
 dired-create-directory
+.It a
+dired-find-alternate-file
 .It c
 dired-do-copy
 .It d and C-d
@@ -988,6 +990,9 @@ Copy the file listed on the current line of the dired buffer.
 Delete the files that have been flagged for deletion.
 .It dired-do-rename
 Rename the file listed on the current line of the dired buffer.
+.It dired-find-alternate-file
+Replace the current dired buffer with an alternate one as specified
+by the position of the cursor in the dired buffer.
 .It dired-find-file
 Open the file on the current line of the dired buffer.
 If the cursor is on a directory it will be opened in dired mode.

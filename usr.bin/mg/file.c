@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.99 2015/10/29 19:46:47 lum Exp $	*/
+/*	$OpenBSD: file.c,v 1.100 2016/01/02 10:39:19 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -94,9 +94,7 @@ filevisit(int f, int n)
 int
 filevisitalt(int f, int n)
 {
-	struct buffer	*bp;
-	char	 fname[NFILEN], *bufp, *adjf;
-	int	 status;
+	char	 fname[NFILEN], *bufp;
 
 	if (getbufcwd(fname, sizeof(fname)) != TRUE)
 		fname[0] = '\0';
@@ -107,11 +105,21 @@ filevisitalt(int f, int n)
 	else if (bufp[0] == '\0')
 		return (FALSE);
 
+	return (do_filevisitalt(fname));
+}
+
+int
+do_filevisitalt(char *fn)
+{
+	struct buffer	*bp;
+	int		 status;
+	char		*adjf;
+
 	status = killbuffer(curbp);
 	if (status == ABORT || status == FALSE)
 		return (ABORT);
 
-	adjf = adjustname(fname, TRUE);
+	adjf = adjustname(fn, TRUE);
 	if (adjf == NULL)
 		return (FALSE);
 	if (fisdir(adjf) == TRUE)

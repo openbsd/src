@@ -1,4 +1,4 @@
-/*	$OpenBSD: dired.c,v 1.81 2015/12/11 20:21:23 mmcc Exp $	*/
+/*	$OpenBSD: dired.c,v 1.82 2016/01/02 10:39:19 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -51,6 +51,7 @@ static int	 d_forwline(int, int);
 static int	 d_backline(int, int);
 static int	 d_killbuffer_cmd(int, int);
 static int	 d_refreshbuffer(int, int);
+static int	 d_filevisitalt(int, int);
 static void	 reaper(int);
 static struct buffer	*refreshbuffer(struct buffer *);
 static int	 createlist(struct buffer *);
@@ -120,7 +121,9 @@ static PF diredcz[] = {
 	d_create_directory	/* + */
 };
 
-static PF diredc[] = {
+static PF direda[] = {
+	d_filevisitalt,		/* a */
+	rescan,			/* b */
 	d_copy,			/* c */
 	d_del,			/* d */
 	d_findfile,		/* e */
@@ -184,7 +187,7 @@ static struct KEYMAPE (7) diredmap = {
 			CCHR('Z'), '+', diredcz, (KEYMAP *) & metamap
 		},
 		{
-			'c', 'g', diredc, NULL
+			'a', 'g', direda, NULL
 		},
 		{
 			'n', 'x', diredn, NULL
@@ -838,6 +841,17 @@ d_backline (int f, int n)
 {
 	backline(f | FFRAND, n);
 	return (d_warpdot(curwp->w_dotp, &curwp->w_doto));
+}
+
+int
+d_filevisitalt (int f, int n)
+{
+	char	 fname[NFILEN];
+
+	if (d_makename(curwp->w_dotp, fname, sizeof(fname)) == ABORT)
+		return (FALSE);
+
+	return(do_filevisitalt(fname));
 }
 
 /*
