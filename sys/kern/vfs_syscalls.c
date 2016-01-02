@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.249 2015/12/16 15:52:51 semarie Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.250 2016/01/02 00:24:16 deraadt Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -840,21 +840,7 @@ doopenat(struct proc *p, int fd, const char *path, int oflags, mode_t mode,
 	int type, indx, error, localtrunc = 0;
 	struct flock lf;
 	struct nameidata nd;
-	int ni_pledge;
-
-	switch (oflags & O_ACCMODE) {
-	case O_RDONLY:
-		ni_pledge = PLEDGE_RPATH;
-		break;
-	case O_WRONLY:
-		ni_pledge = PLEDGE_WPATH;
-		break;
-	case O_RDWR:
-		ni_pledge = PLEDGE_RPATH | PLEDGE_WPATH;
-		break;
-	}
-	if (oflags & O_CREAT)
-		ni_pledge |= PLEDGE_CPATH;
+	int ni_pledge = 0;
 
 	if (oflags & (O_EXLOCK | O_SHLOCK)) {
 		error = pledge_flock(p);
@@ -867,6 +853,13 @@ doopenat(struct proc *p, int fd, const char *path, int oflags, mode_t mode,
 	if ((error = falloc(p, &fp, &indx)) != 0)
 		goto out;
 	flags = FFLAGS(oflags);
+	if (flags & FREAD)
+		ni_pledge |= PLEDGE_RPATH;
+	if (flags & FWRITE)
+		ni_pledge |= PLEDGE_WPATH;
+	if (oflags & O_CREAT)
+		ni_pledge |= PLEDGE_CPATH;
+
 	if (flags & O_CLOEXEC)
 		fdp->fd_ofileflags[indx] |= UF_EXCLOSE;
 
