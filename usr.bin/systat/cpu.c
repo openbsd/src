@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.4 2015/01/16 00:03:37 deraadt Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.5 2016/01/02 20:02:40 benno Exp $	*/
 
 /*
  * Copyright (c) 2013 Reyk Floeter <reyk@openbsd.org>
@@ -246,12 +246,10 @@ initcpu(void)
 void
 print_cpu(void)
 {
-	time_t		tm;
 	int		cur = 0, c, i;
 	int		end = dispstart + maxprint;
 	int64_t		*states;
 	double		value[CPUSTATES];
-	tm = time(NULL);
 
 	if (end > num_disp)
 		end = num_disp;
