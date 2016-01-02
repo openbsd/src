@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.7 2015/01/16 00:03:37 deraadt Exp $ */
+/*	$OpenBSD: pf.c,v 1.8 2016/01/02 20:03:28 benno Exp $ */
 /*
  * Copyright (c) 2001, 2007 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -259,6 +259,9 @@ print_pf(void)
 	case LOG_DEBUG:
 		debug = "debug";
 		break;
+	default:
+		debug = "unknown";
+		break;		
 	}
 	ADD_LINE_S("pf", "Debug", debug);
 
