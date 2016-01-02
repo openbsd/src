@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.h,v 1.16 2015/12/11 10:16:53 reyk Exp $	*/
+/*	$OpenBSD: vmd.h,v 1.17 2016/01/02 15:05:21 benno Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -43,7 +43,7 @@
 #define dprintf(x...)   do { log_debug(x); } while(0)
 #else
 #define dprintf(x...)
-#endif /* VMM_DEBUG */
+#endif /* VMD_DEBUG */
 
 enum imsg_type {
 	IMSG_VMDOP_START_VM_REQUEST = IMSG_PROC_MAX,
