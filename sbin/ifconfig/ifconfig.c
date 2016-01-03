@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.312 2016/01/01 12:50:54 jung Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.313 2016/01/03 10:33:27 mpi Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -236,7 +236,6 @@ void	setcarp_passwd(const char *, int);
 void	setcarp_vhid(const char *, int);
 void	setcarp_state(const char *, int);
 void	setcarpdev(const char *, int);
-void	unsetcarpdev(const char *, int);
 void	setcarp_nodes(const char *, int);
 void	setcarp_balancing(const char *, int);
 void	setpfsync_syncdev(const char *, int);
@@ -395,7 +394,6 @@ const struct	cmd {
 	{ "carpdev",	NEXTARG,	0,		setcarpdev },
 	{ "carpnodes",	NEXTARG,	0,		setcarp_nodes },
 	{ "balancing",	NEXTARG,	0,		setcarp_balancing },
-	{ "-carpdev",	1,		0,		unsetcarpdev },
 	{ "syncdev",	NEXTARG,	0,		setpfsync_syncdev },
 	{ "-syncdev",	1,		0,		unsetpfsync_syncdev },
 	{ "syncif",	NEXTARG,	0,		setpfsync_syncdev },
@@ -4007,23 +4005,6 @@ setcarpdev(const char *val, int d)
 		err(1, "SIOCGVH");
 
 	strlcpy(carpr.carpr_carpdev, val, sizeof(carpr.carpr_carpdev));
-
-	if (ioctl(s, SIOCSVH, (caddr_t)&ifr) == -1)
-		err(1, "SIOCSVH");
-}
-
-void
-unsetcarpdev(const char *val, int d)
-{
-	struct carpreq carpr;
-
-	bzero(&carpr, sizeof(struct carpreq));
-	ifr.ifr_data = (caddr_t)&carpr;
-
-	if (ioctl(s, SIOCGVH, (caddr_t)&ifr) == -1)
-		err(1, "SIOCGVH");
-
-	bzero(&carpr.carpr_carpdev, sizeof(carpr.carpr_carpdev));
 
 	if (ioctl(s, SIOCSVH, (caddr_t)&ifr) == -1)
 		err(1, "SIOCSVH");
