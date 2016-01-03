@@ -1,4 +1,4 @@
-/*	$OpenBSD: wump.c,v 1.28 2015/12/25 20:59:09 mestre Exp $	*/
+/*	$OpenBSD: wump.c,v 1.29 2016/01/03 14:38:17 mestre Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,14 +41,15 @@
 
 #include <sys/types.h>
 #include <sys/wait.h>
+
 #include <err.h>
 #include <fcntl.h>
 #include <paths.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <time.h>
 #include <unistd.h>
+
 #include "pathnames.h"
 
 /* some defines to spec out what our wumpus cave should look like */

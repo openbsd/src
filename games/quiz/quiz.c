@@ -1,4 +1,4 @@
-/*	$OpenBSD: quiz.c,v 1.24 2015/12/25 20:59:09 mestre Exp $	*/
+/*	$OpenBSD: quiz.c,v 1.25 2016/01/03 14:38:17 mestre Exp $	*/
 /*	$NetBSD: quiz.c,v 1.9 1995/04/22 10:16:58 cgd Exp $	*/
 
 /*-
@@ -35,16 +35,17 @@
  */
 
 #include <sys/types.h>
+
+#include <ctype.h>
+#include <err.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <ctype.h>
-#include <err.h>
-#include <time.h>
 #include <unistd.h>
-#include "quiz.h"
+
 #include "pathnames.h"
+#include "quiz.h"
 
 static QE qlist;
 static int catone, cattwo, tflag;

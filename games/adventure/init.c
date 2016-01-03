@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.13 2014/12/31 15:45:57 tedu Exp $	*/
+/*	$OpenBSD: init.c,v 1.14 2016/01/03 14:38:16 mestre Exp $	*/
 /*	$NetBSD: init.c,v 1.4 1996/05/21 21:53:05 mrg Exp $	*/
 
 /*-
@@ -41,11 +41,10 @@
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <time.h>
 #include <unistd.h>
 
-#include "hdr.h"
 #include "extern.h"
+#include "hdr.h"
 
 int     blklin = TRUE;
 

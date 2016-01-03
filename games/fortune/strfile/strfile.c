@@ -1,4 +1,4 @@
-/*	$OpenBSD: strfile.c,v 1.24 2015/12/25 20:59:09 mestre Exp $	*/
+/*	$OpenBSD: strfile.c,v 1.25 2016/01/03 14:38:17 mestre Exp $	*/
 /*	$NetBSD: strfile.c,v 1.4 1995/04/24 12:23:09 cgd Exp $	*/
 
 /*-
@@ -39,8 +39,8 @@
 #include	<stdio.h>
 #include	<stdlib.h>
 #include	<string.h>
-#include	<time.h>
 #include	<unistd.h>
+
 #include	"strfile.h"
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: grdc.c,v 1.22 2015/12/25 20:59:09 mestre Exp $	*/
+/*	$OpenBSD: grdc.c,v 1.23 2016/01/03 14:38:17 mestre Exp $	*/
 /*
  *
  * Copyright 2002 Amos Shapir.  Public domain.
@@ -11,14 +11,14 @@
  * 10-18-89 added signal handling
  */
 
-#include <sys/types.h>
 #include <sys/ioctl.h>
+#include <sys/types.h>
+
 #include <curses.h>
 #include <limits.h>
 #include <signal.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <time.h>
 #include <unistd.h>
 #include <err.h>
 

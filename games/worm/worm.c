@@ -1,4 +1,4 @@
-/*	$OpenBSD: worm.c,v 1.35 2015/12/26 00:26:40 mestre Exp $	*/
+/*	$OpenBSD: worm.c,v 1.36 2016/01/03 14:38:17 mestre Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -35,13 +35,13 @@
  */
 
 #include <sys/types.h>
+
 #include <ctype.h>
 #include <curses.h>
 #include <err.h>
 #include <signal.h>
 #include <stdlib.h>
 #include <string.h>
-#include <time.h>
 #include <unistd.h>
 #include <poll.h>
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.22 2015/12/02 20:05:01 tb Exp $	*/
+/*	$OpenBSD: main.c,v 1.23 2016/01/03 14:38:16 mestre Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -30,7 +30,7 @@
  */
 
 #include <err.h>
-#include <time.h>
+
 #include "back.h"
 #include "backlocal.h"
 

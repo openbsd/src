@@ -1,4 +1,4 @@
-/*	$OpenBSD: random.c,v 1.15 2015/12/25 20:59:09 mestre Exp $	*/
+/*	$OpenBSD: random.c,v 1.16 2016/01/03 14:38:17 mestre Exp $	*/
 /*	$NetBSD: random.c,v 1.3 1995/04/22 07:44:05 cgd Exp $	*/
 
 /*
@@ -35,13 +35,10 @@
 
 #include <sys/types.h>
 
-#include <dev/rndvar.h>
-
 #include <err.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <time.h>
 #include <unistd.h>
 #include <limits.h>
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: save.c,v 1.9 2015/11/11 01:12:10 deraadt Exp $	*/
+/*	$OpenBSD: save.c,v 1.10 2016/01/03 14:38:17 mestre Exp $	*/
 /*	$NetBSD: save.c,v 1.4 1995/03/24 05:02:13 cgd Exp $	*/
 
 /*
@@ -30,7 +30,6 @@
  * SUCH DAMAGE.
  */
 
-#include <time.h>
 #include "mille.h"
 
 /*
