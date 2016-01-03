@@ -1626,6 +1626,7 @@
 ./usr/share/man/man4/pcfadc.4
 ./usr/share/man/man4/pcfiic.4
 ./usr/share/man/man4/pchb.4
+./usr/share/man/man4/pchtemp.4
 ./usr/share/man/man4/pci.4
 ./usr/share/man/man4/pcib.4
 ./usr/share/man/man4/pcic.4
