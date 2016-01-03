@@ -1,4 +1,4 @@
-/*	$OpenBSD: bell.c,v 1.3 2015/03/19 21:22:15 bcallah Exp $	*/
+/*	$OpenBSD: bell.c,v 1.4 2016/01/03 19:37:08 lum Exp $	*/
 
 /*
  * This file is in the public domain.
@@ -17,6 +17,7 @@
 #include <unistd.h>
 
 #include "def.h"
+#include "macro.h"
 
 void
 bellinit(void)
@@ -34,6 +35,8 @@ dobeep(void)
 	if (dovisiblebell) {
 		sgarbf = TRUE;
 		update(CNONE);
+		if (inmacro)	/* avoid delaying macro execution. */
+			return;
 		usleep(50000);
 	}
 }
