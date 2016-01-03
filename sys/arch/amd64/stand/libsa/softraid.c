@@ -1,4 +1,4 @@
-/*	$OpenBSD: softraid.c,v 1.21 2015/12/24 21:37:25 krw Exp $	*/
+/*	$OpenBSD: softraid.c,v 1.22 2016/01/03 15:01:31 krw Exp $	*/
 
 /*
  * Copyright (c) 2012 Joel Sing <jsing@openbsd.org>
@@ -438,15 +438,15 @@ static uint64_t
 findopenbsd_gpt(struct sr_boot_volume *bv)
 {
 	struct			 gpt_header gh;
-	int			 i, part;
+	int			 i, part, found;
 	uint64_t		 lba;
 	uint32_t		 orig_csum, new_csum;
 	uint32_t		 ghsize, ghpartsize, ghpartnum, ghpartspersec;
+	uint32_t		 gpsectors;
 	const char		 openbsd_uuid_code[] = GPT_UUID_OPENBSD;
+	struct gpt_partition	 gp;
 	static struct uuid	*openbsd_uuid = NULL, openbsd_uuid_space;
-	static struct gpt_partition
-				 gp[NGPTPARTITIONS];
-	static u_char		 buf[4096];
+	static u_char		 buf[DEV_BSIZE];
 
 	/* Prepare OpenBSD UUID */
 	if (openbsd_uuid == NULL) {
@@ -491,21 +491,27 @@ findopenbsd_gpt(struct sr_boot_volume *bv)
 	ghpartsize = letoh32(gh.gh_part_size);
 	ghpartspersec = DEV_BSIZE / ghpartsize;
 	ghpartnum = letoh32(gh.gh_part_num);
-	for (i = 0; i < (ghpartnum + ghpartspersec - 1) / ghpartspersec;
-	    i++, lba++) {
+	gpsectors = (ghpartnum + ghpartspersec - 1) / ghpartspersec;
+	new_csum = crc32(0L, Z_NULL, 0);
+	found = 0;
+	for (i = 0; i < gpsectors; i++, lba++) {
 		sr_strategy(bv, F_READ, lba, DEV_BSIZE, buf, NULL);
-		memcpy(gp + i * ghpartspersec, buf,
-		    ghpartspersec * sizeof(struct gpt_partition));
+		for (part = 0; part < ghpartspersec; part++) {
+			if (ghpartnum == 0)
+				break;
+			new_csum = crc32(new_csum, buf + part * sizeof(gp),
+			    sizeof(gp));
+			ghpartnum--;
+			if (found)
+				continue;
+			memcpy(&gp, buf + part * sizeof(gp), sizeof(gp));
+			if (memcmp(&gp.gp_type, openbsd_uuid,
+			    sizeof(struct uuid)) == 0)
+				found = 1;
+		}
 	}
-	new_csum = crc32(0, (unsigned char *)&gp, ghpartnum * ghpartsize);
-	if (new_csum != letoh32(gh.gh_part_csum))
-		return (-1);
-
-	for (part = 0; part < ghpartnum; part++) {
-		if (memcmp(&gp[part].gp_type, openbsd_uuid,
-		    sizeof(struct uuid)) == 0)
-			return letoh64(gp[part].gp_lba_start);
-	}
+	if (found && new_csum == letoh32(gh.gh_part_csum))
+		return letoh64(gp.gp_lba_start);
 
 	return (-1);
 }
