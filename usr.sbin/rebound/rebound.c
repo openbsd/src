@@ -1,4 +1,4 @@
-/* $OpenBSD: rebound.c,v 1.59 2015/12/17 18:24:57 tedu Exp $ */
+/* $OpenBSD: rebound.c,v 1.60 2016/01/03 18:15:17 tedu Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -645,6 +645,7 @@ main(int argc, char **argv)
 
 	TAILQ_INIT(&reqfifo);
 	TAILQ_INIT(&cachefifo);
+	RB_INIT(&cachetree);
 
 	memset(&bindaddr, 0, sizeof(bindaddr));
 	bindaddr.sin_len = sizeof(bindaddr);
