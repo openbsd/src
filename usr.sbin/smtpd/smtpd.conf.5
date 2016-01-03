@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.148 2015/12/22 20:59:14 gilles Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.149 2016/01/03 17:07:36 gilles Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -17,7 +17,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: December 22 2015 $
+.Dd $Mdocdate: January 3 2016 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -74,7 +74,7 @@ accepts and rejects messages
 based on information gathered during the SMTP session.
 .Pp
 For each message processed by the daemon,
-the filter rules are evaluated in sequential order,
+the rules are evaluated in sequential order,
 from first to last.
 The first matching rule decides what action is taken.
 If no rule matches the message,
@@ -93,7 +93,7 @@ If specified, the rule will only be matched if the client session was tagged wit
 .Ar tag .
 .El
 .Pp
-After that the client's IP address filter is specified:
+After that the client's IP address rule is specified:
 .Bl -tag -width Ds
 .It Ic from any
 Make the rule match regardless of the IP of connecting client.
@@ -116,7 +116,7 @@ is declared in the table
 .Ar table .
 .El
 .Pp
-In addition, finer filtering may be achieved on the sender if desired:
+In addition, finer access control may be achieved on the sender if desired:
 .Bl -tag -width Ds
 .It Xo
 .Ic sender
@@ -247,7 +247,7 @@ The
 table will be used as the virtual domain mapping.
 .El
 .Pp
-Further filtering may be achieved on specific recipients if desired:
+Further access control may be achieved on specific recipients if desired:
 .Bl -tag -width Ds
 .It Xo
 .Ic recipient
@@ -1094,8 +1094,8 @@ originate mail with your domain as the sender.
 listen on lo0
 listen on egress
 
-table aliases   db:/etc/mail/aliases.db
-table other-relays "/etc/mail/other-relays"
+table aliases file:/etc/mail/aliases
+table other-relays file:/etc/mail/other-relays
 
 accept for local alias <aliases> deliver to mbox
 accept from local for any relay
