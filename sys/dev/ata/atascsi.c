@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.c,v 1.126 2015/12/29 09:44:46 kettenis Exp $ */
+/*	$OpenBSD: atascsi.c,v 1.127 2016/01/03 21:07:46 kettenis Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -367,7 +367,7 @@ atascsi_probe(struct scsi_link *link)
 		return (0);
 
 	/*
-	 * Early SATA drivers (as well as PATA drives) need to have
+	 * Early SATA drives (as well as PATA drives) need to have
 	 * their transfer mode set properly, otherwise commands that
 	 * use DMA will time out.
 	 */
