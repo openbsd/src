@@ -1,4 +1,4 @@
-/*	$OpenBSD: uudecode.c,v 1.22 2015/10/09 01:37:09 deraadt Exp $	*/
+/*	$OpenBSD: uudecode.c,v 1.23 2016/01/03 14:43:20 tb Exp $	*/
 /*	$FreeBSD: uudecode.c,v 1.49 2003/05/03 19:44:46 obrien Exp $	*/
 
 /*-
@@ -126,7 +126,10 @@ main(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 
-	if (oflag || pflag == 0) {
+	if (sflag) {
+		if (pledge("stdio rpath wpath cpath getpw", NULL) == -1)
+			err(1, "pledge");
+	} else if (pflag == 0) {
 		if (pledge("stdio rpath wpath cpath", NULL) == -1)
 			err(1, "pledge");
 	} else {
