@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pchtemp.4,v 1.1 2015/12/31 13:17:31 kettenis Exp $
+.\"	$OpenBSD: pchtemp.4,v 1.2 2016/01/03 05:48:47 daniel Exp $
 .\"
 .\" Copyright (c) 2015 Mark Kettenis <kettenis@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 31 2015 $
+.Dd $Mdocdate: January 3 2016 $
 .Dt PCHTEMP 4
 .Os
 .Sh NAME
@@ -25,8 +25,8 @@
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for the temperature sensor in the Intel X99
-and C610 series platform controller hub (PCH).
+driver provides support for the temperature sensor in the Intel X99,
+C610 series and 100 series platform controller hub (PCH).
 .Pp
 These sensors provide 0.5 degC resolution.
 Sensor values are made available through the

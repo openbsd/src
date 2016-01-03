@@ -1,4 +1,4 @@
-/*	$OpenBSD: pchtemp.c,v 1.1 2015/12/31 13:06:49 kettenis Exp $	*/
+/*	$OpenBSD: pchtemp.c,v 1.2 2016/01/03 05:48:47 daniel Exp $	*/
 /*
  * Copyright (c) 2015 Mark Kettenis
  *
@@ -16,7 +16,7 @@
  */
 
 /*
- * Intel X99 and C610 PCH thermal sensor controller driver
+ * Intel X99, C610 and 100 Series PCH thermal sensor controller driver
  */
 
 #include <sys/param.h>
@@ -58,7 +58,8 @@ struct cfattach pchtemp_ca = {
 };
 
 const struct pci_matchid pchtemp_devices[] = {
-	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_C610_THERM }
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_C610_THERM },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_100SERIES_THERM },
 };
 
 int
