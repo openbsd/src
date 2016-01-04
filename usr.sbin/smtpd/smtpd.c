@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.269 2015/12/28 22:08:30 jung Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.270 2016/01/04 13:30:20 jung Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -813,7 +813,7 @@ fork_proc_backend(const char *key, const char *conf, const char *procname)
 	if (arg)
 		*arg++ = '\0';
 
-	if (snprintf(path, sizeof(path), PATH_LIBEXEC_DEPRECATED "/%s-%s", key, name) >=
+	if (snprintf(path, sizeof(path), PATH_LIBEXEC "/%s-%s", key, name) >=
 	    (ssize_t)sizeof(path)) {
 		log_warn("warn: %s-proc: exec path too long", key);
 		return (-1);
