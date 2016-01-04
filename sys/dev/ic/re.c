@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.188 2015/12/28 05:49:15 jmatthew Exp $	*/
+/*	$OpenBSD: re.c,v 1.189 2016/01/04 05:41:22 dlg Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -1042,6 +1042,7 @@ re_attach(struct rl_softc *sc, const char *intrstr)
 	ifp->if_softc = sc;
 	strlcpy(ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
+	ifp->if_xflags = IFXF_MPSAFE;
 	ifp->if_ioctl = re_ioctl;
 	ifp->if_start = re_start;
 	ifp->if_watchdog = re_watchdog;
@@ -1497,12 +1498,12 @@ re_txeof(struct rl_softc *sc)
 	 * to restart the channel here to flush them out. This only
 	 * seems to be required with the PCIe devices.
 	 */
-	if (tx_free < sc->rl_ldata.rl_tx_desc_cnt)
+	if (ifq_is_oactive(&ifp->if_snd))
+		ifq_restart(&ifp->if_snd);
+	else if (tx_free < sc->rl_ldata.rl_tx_desc_cnt)
 		CSR_WRITE_1(sc, sc->rl_txstart, RL_TXSTART_START);
-	else {
-		ifq_clr_oactive(&ifp->if_snd);
+	else
 		ifp->if_timer = 0;
-	}
 
 	return (1);
 }
@@ -1589,7 +1590,7 @@ re_intr(void *arg)
 				 * masks.
 				 */
 				re_rxeof(sc);
-				tx = re_txeof(sc);
+				re_txeof(sc);
 			} else
 				CSR_WRITE_4(sc, RL_TIMERCNT, 1); /* reload */
 		} else if (tx | rx) {
@@ -1600,12 +1601,6 @@ re_intr(void *arg)
 			 */
 			re_setup_intr(sc, 1, RL_IMTYPE_SIM);
 		}
-	}
-
-	if (!IFQ_IS_EMPTY(&ifp->if_snd)) {
-		KERNEL_LOCK();
-		re_start(ifp);
-		KERNEL_UNLOCK();
 	}
 
 	CSR_WRITE_2(sc, RL_IMR, sc->rl_intrs);
@@ -1691,7 +1686,7 @@ re_encap(struct rl_softc *sc, struct mbuf *m, struct rl_txq *txq, int *used)
 
 		/* FALLTHROUGH */
 	default:
-		return (ENOBUFS);
+		return (ENOMEM);
 	}
 
 	nsegs = map->dm_nsegs;
@@ -1715,8 +1710,8 @@ re_encap(struct rl_softc *sc, struct mbuf *m, struct rl_txq *txq, int *used)
 		nsegs++;
 	}
 
-	if (sc->rl_ldata.rl_tx_free - (*used + nsegs) <= 1) {
-		error = EFBIG;
+	if (*used + nsegs + 1 >= sc->rl_ldata.rl_tx_free) {
+		error = ENOBUFS;
 		goto fail_unload;
 	}
 
@@ -1840,35 +1835,40 @@ re_start(struct ifnet *ifp)
 	struct mbuf	*m;
 	int		idx, used = 0, txq_free, error;
 
-	if (!(ifp->if_flags & IFF_RUNNING) || ifq_is_oactive(&ifp->if_snd))
+	if (!ISSET(sc->rl_flags, RL_FLAG_LINK)) {
+		IFQ_PURGE(&ifp->if_snd);
 		return;
-	if ((sc->rl_flags & RL_FLAG_LINK) == 0)
-		return;
+	}
 
 	txq_free = sc->rl_ldata.rl_txq_considx;
 	idx = sc->rl_ldata.rl_txq_prodidx;
-	if (idx >= txq_free)
+	if (txq_free <= idx)
 		txq_free += RL_TX_QLEN;
 	txq_free -= idx;
 
-	while (txq_free > 1) {
+	for (;;) {
+		if (txq_free <= 1) {
+			ifq_set_oactive(&ifp->if_snd);
+			break;
+		}
+
 		m = ifq_deq_begin(&ifp->if_snd);
 		if (m == NULL)
 			break;
 
 		error = re_encap(sc, m, &sc->rl_ldata.rl_txq[idx], &used);
-		if (error != 0 && error != ENOBUFS) {
+		if (error == 0)
+			ifq_deq_commit(&ifp->if_snd, m);
+		else if (error == ENOBUFS) {
 			ifq_deq_rollback(&ifp->if_snd, m);
 			ifq_set_oactive(&ifp->if_snd);
 			break;
-		} else if (error != 0) {
+		} else {
 			ifq_deq_commit(&ifp->if_snd, m);
 			m_freem(m);
 			ifp->if_oerrors++;
 			continue;
 		}
-
-		ifq_deq_commit(&ifp->if_snd, m);
 
 #if NBPFILTER > 0
 		if (ifp->if_bpf)
@@ -1882,9 +1882,10 @@ re_start(struct ifnet *ifp)
 		return;
 	
 	ifp->if_timer = 5;
-	sc->rl_ldata.rl_txq_prodidx = idx;
 	atomic_sub_int(&sc->rl_ldata.rl_tx_free, used);
 	KASSERT(sc->rl_ldata.rl_tx_free >= 0);
+
+	sc->rl_ldata.rl_txq_prodidx = idx;
 
 	CSR_WRITE_1(sc, sc->rl_txstart, RL_TXSTART_START);
 }
@@ -2112,7 +2113,6 @@ re_watchdog(struct ifnet *ifp)
 	sc = ifp->if_softc;
 	s = splnet();
 	printf("%s: watchdog timeout\n", sc->sc_dev.dv_xname);
-	ifp->if_oerrors++;
 
 	re_txeof(sc);
 	re_rxeof(sc);
@@ -2140,7 +2140,6 @@ re_stop(struct ifnet *ifp)
 
 	timeout_del(&sc->timer_handle);
 	ifp->if_flags &= ~IFF_RUNNING;
-	ifq_clr_oactive(&ifp->if_snd);
 
 	/*
 	 * Disable accepting frames to put RX MAC into idle state.
@@ -2183,14 +2182,16 @@ re_stop(struct ifnet *ifp)
 	CSR_WRITE_2(sc, RL_IMR, 0x0000);
 	CSR_WRITE_2(sc, RL_ISR, 0xFFFF);
 
+	intr_barrier(sc->sc_ih);
+	ifq_barrier(&ifp->if_snd);
+
+	ifq_clr_oactive(&ifp->if_snd);
+	mii_down(&sc->sc_mii);
+
 	if (sc->rl_head != NULL) {
 		m_freem(sc->rl_head);
 		sc->rl_head = sc->rl_tail = NULL;
 	}
-
-	intr_barrier(sc->sc_ih);
-
-	mii_down(&sc->sc_mii);
 
 	/* Free the TX list buffers. */
 	for (i = 0; i < RL_TX_QLEN; i++) {
