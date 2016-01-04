@@ -1,4 +1,4 @@
-/*	$OpenBSD: xenstore.c,v 1.11 2015/12/22 22:19:46 mikeb Exp $	*/
+/*	$OpenBSD: xenstore.c,v 1.12 2016/01/04 16:06:50 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Belopuhov
@@ -756,8 +756,8 @@ xs_cmd(struct xs_transaction *xst, int cmd, const char *path,
 
 	if (xsm->xsm_hdr.xmh_type == XS_ERROR) {
 		error = xs_geterror(xsm);
-		DPRINTF("%s: xenstore request %d error %s\n",
-		    xs->xs_sc->sc_dev.dv_xname, cmd, xsm->xsm_data);
+		DPRINTF("%s: xenstore request %d \"%s\" error %s\n",
+		    xs->xs_sc->sc_dev.dv_xname, cmd, path, xsm->xsm_data);
 	} else if (mode == READ) {
 		KASSERT(iov && iov_cnt);
 		error = xs_parse(xst, xsm, iov, iov_cnt);
