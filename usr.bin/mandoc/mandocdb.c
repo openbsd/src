@@ -1,7 +1,7 @@
-/*	$OpenBSD: mandocdb.c,v 1.163 2015/12/15 17:36:19 schwarze Exp $ */
+/*	$OpenBSD: mandocdb.c,v 1.164 2016/01/04 14:44:02 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2011-2015 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2011-2016 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -148,8 +148,6 @@ static	void	 parse_man(struct mpage *, const struct roff_meta *,
 			const struct roff_node *);
 static	void	 parse_mdoc(struct mpage *, const struct roff_meta *,
 			const struct roff_node *);
-static	int	 parse_mdoc_body(struct mpage *, const struct roff_meta *,
-			const struct roff_node *);
 static	int	 parse_mdoc_head(struct mpage *, const struct roff_meta *,
 			const struct roff_node *);
 static	int	 parse_mdoc_Fd(struct mpage *, const struct roff_meta *,
@@ -164,6 +162,8 @@ static	int	 parse_mdoc_Nd(struct mpage *, const struct roff_meta *,
 static	int	 parse_mdoc_Nm(struct mpage *, const struct roff_meta *,
 			const struct roff_node *);
 static	int	 parse_mdoc_Sh(struct mpage *, const struct roff_meta *,
+			const struct roff_node *);
+static	int	 parse_mdoc_Va(struct mpage *, const struct roff_meta *,
 			const struct roff_node *);
 static	int	 parse_mdoc_Xr(struct mpage *, const struct roff_meta *,
 			const struct roff_node *);
@@ -234,8 +234,8 @@ static	const struct mdoc_handler mdocs[MDOC_MAX] = {
 	{ NULL, TYPE_Pa },  /* Pa */
 	{ NULL, 0 },  /* Rv */
 	{ NULL, TYPE_St },  /* St */
-	{ NULL, TYPE_Va },  /* Va */
-	{ parse_mdoc_body, TYPE_Va },  /* Vt */
+	{ parse_mdoc_Va, TYPE_Va },  /* Va */
+	{ parse_mdoc_Va, TYPE_Vt },  /* Vt */
 	{ parse_mdoc_Xr, 0 },  /* Xr */
 	{ NULL, 0 },  /* %A */
 	{ NULL, 0 },  /* %B */
@@ -1667,6 +1667,29 @@ parse_mdoc_Fo(struct mpage *mpage, const struct roff_meta *meta,
 }
 
 static int
+parse_mdoc_Va(struct mpage *mpage, const struct roff_meta *meta,
+	const struct roff_node *n)
+{
+	char *cp;
+
+	if (n->type != ROFFT_ELEM && n->type != ROFFT_BODY)
+		return 0;
+
+	if (n->nchild == 1 && n->child->type == ROFFT_TEXT)
+		return 1;
+
+	cp = NULL;
+	deroff(&cp, n);
+	if (cp != NULL) {
+		putkey(mpage, cp, TYPE_Vt | (n->tok == MDOC_Va ||
+		    n->type == ROFFT_BODY ? TYPE_Va : 0));
+		free(cp);
+	}
+
+	return 0;
+}
+
+static int
 parse_mdoc_Xr(struct mpage *mpage, const struct roff_meta *meta,
 	const struct roff_node *n)
 {
@@ -1732,14 +1755,6 @@ parse_mdoc_head(struct mpage *mpage, const struct roff_meta *meta,
 {
 
 	return n->type == ROFFT_HEAD;
-}
-
-static int
-parse_mdoc_body(struct mpage *mpage, const struct roff_meta *meta,
-	const struct roff_node *n)
-{
-
-	return n->type == ROFFT_BODY;
 }
 
 /*
