@@ -1,4 +1,4 @@
-.\" $OpenBSD: iwn.4,v 1.49 2015/02/10 20:38:58 stsp Exp $
+.\" $OpenBSD: iwn.4,v 1.50 2016/01/04 15:28:07 jmc Exp $
 .\"
 .\" Copyright (c) 2007,2008
 .\"	Damien Bergamini <damien.bergamini@free.fr>. All rights reserved.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 10 2015 $
+.Dd $Mdocdate: January 4 2016 $
 .Dt IWN 4
 .Os
 .Sh NAME
@@ -198,10 +198,4 @@ The
 driver was written by
 .An Damien Bergamini Aq Mt damien.bergamini@free.fr .
 .Sh CAVEATS
-The
-.Nm
-driver does not support any of the 802.11n capabilities offered by
-the adapters.
-Additional work is required in
-.Xr ieee80211 9
-before those features can be supported.
+802.11n operation is currently limited to data rates MCS 0 to MCS 7.
