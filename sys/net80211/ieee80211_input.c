@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.145 2015/12/12 13:56:10 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.146 2016/01/04 12:25:00 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -2250,24 +2250,17 @@ ieee80211_recv_assoc_resp(struct ieee80211com *ic, struct mbuf *m,
 	ieee80211_ht_negotiate(ic, ni);
 
 	/* Hop into 11n mode after associating to an HT AP in a non-11n mode. */
-	if (ic->ic_curmode != IEEE80211_MODE_AUTO &&
-	    ic->ic_curmode != IEEE80211_MODE_11N &&
-	    (ni->ni_flags & IEEE80211_NODE_HT))
+	if (ni->ni_flags & IEEE80211_NODE_HT)
 		ieee80211_setmode(ic, IEEE80211_MODE_11N);
-
-	/* Hop out of 11n mode after associating to a non-HT AP. */
-	if (ic->ic_curmode == IEEE80211_MODE_11N &&
-	    (ni->ni_flags & IEEE80211_NODE_HT) == 0) {
-		if (IEEE80211_IS_CHAN_T(ni->ni_chan))
-			ieee80211_setmode(ic, IEEE80211_MODE_TURBO);
-		else if (IEEE80211_IS_CHAN_A(ni->ni_chan))
-			ieee80211_setmode(ic, IEEE80211_MODE_11A);
-		else if (IEEE80211_IS_CHAN_G(ni->ni_chan))
-			ieee80211_setmode(ic, IEEE80211_MODE_11G);
-		else
-			ieee80211_setmode(ic, IEEE80211_MODE_11B);
-	}
+	else
 #endif
+		ieee80211_setmode(ic, ieee80211_chan2mode(ic, ni->ni_chan));
+	/*
+	 * Reset the erp state (mostly the slot time) now that
+	 * our operating mode has been nailed down.
+	 */
+	ieee80211_reset_erp(ic);
+
 	/*
 	 * Configure state now that we are associated.
 	 */

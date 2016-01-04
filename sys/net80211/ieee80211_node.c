@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.94 2015/12/18 13:27:00 sthen Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.95 2016/01/04 12:25:00 stsp Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -636,14 +636,6 @@ ieee80211_end_scan(struct ifnet *ifp)
 		goto notfound;
 	(*ic->ic_node_copy)(ic, ic->ic_bss, selbs);
 	ni = ic->ic_bss;
-
-	/*
-	 * Set the erp state (mostly the slot time) to deal with
-	 * the auto-select case; this should be redundant if the
-	 * mode is locked.
-	 */
-	ic->ic_curmode = ieee80211_chan2mode(ic, ni->ni_chan);
-	ieee80211_reset_erp(ic);
 
 	if (ic->ic_flags & IEEE80211_F_RSNON)
 		ieee80211_choose_rsnparams(ic);
