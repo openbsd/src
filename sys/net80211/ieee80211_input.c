@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.146 2016/01/04 12:25:00 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.147 2016/01/04 12:25:46 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -210,8 +210,7 @@ ieee80211_input_print(struct ieee80211com *ic,  struct ifnet *ifp,
 	    "%s: received %s from %s rssi %d mode %s\n", ifp->if_xname,
 	    ieee80211_mgt_subtype_name[subtype >> IEEE80211_FC0_SUBTYPE_SHIFT],
 	    ether_sprintf(wh->i_addr2), rxi->rxi_rssi,
-	    ieee80211_phymode_name[ieee80211_chan2mode(
-	        ic, ic->ic_bss->ni_chan)]);
+	    ieee80211_phymode_name[ic->ic_curmode]);
 
 	task_set(&msg->task, ieee80211_input_print_task, msg);
 	task_add(systq, &msg->task);

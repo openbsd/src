@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_proto.c,v 1.56 2015/11/24 13:45:06 mpi Exp $	*/
+/*	$OpenBSD: ieee80211_proto.c,v 1.57 2016/01/04 12:25:46 stsp Exp $	*/
 /*	$NetBSD: ieee80211_proto.c,v 1.8 2004/04/30 23:58:20 dyoung Exp $	*/
 
 /*-
@@ -894,15 +894,8 @@ justcleanup:
 		/* initialize bss for probe request */
 		IEEE80211_ADDR_COPY(ni->ni_macaddr, etherbroadcastaddr);
 		IEEE80211_ADDR_COPY(ni->ni_bssid, etherbroadcastaddr);
-#ifndef IEEE80211_NO_HT
-		if (ic->ic_curmode == IEEE80211_MODE_11N)
-			ni->ni_rates = ic->ic_sup_rates[
-			IEEE80211_IS_CHAN_2GHZ(ni->ni_chan) ?
-				IEEE80211_MODE_11G : IEEE80211_MODE_11A];
-		else
-#endif
-			ni->ni_rates = ic->ic_sup_rates[
-				ieee80211_chan2mode(ic, ni->ni_chan)];
+		ni->ni_rates = ic->ic_sup_rates[
+			ieee80211_chan2mode(ic, ni->ni_chan)];
 		ni->ni_associd = 0;
 		ni->ni_rstamp = 0;
 		switch (ostate) {
