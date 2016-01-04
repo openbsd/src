@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211.c,v 1.53 2015/12/18 07:42:24 stsp Exp $	*/
+/*	$OpenBSD: ieee80211.c,v 1.54 2016/01/04 12:23:53 stsp Exp $	*/
 /*	$NetBSD: ieee80211.c,v 1.19 2004/06/06 05:45:29 dyoung Exp $	*/
 
 /*-
@@ -875,6 +875,14 @@ ieee80211_next_mode(struct ifnet *ifp)
 		/* Wrap around and ignore turbo mode */
 		if (ic->ic_curmode == IEEE80211_MODE_TURBO)
 			continue;
+#ifndef IEEE80211_NO_HT
+		/* 
+		 * Skip over 11n mode. Its set of channels is the superset
+		 * of all channels supported by the other modes.
+		 */
+		if (ic->ic_curmode == IEEE80211_MODE_11N)
+			continue;
+#endif
 		if (ic->ic_curmode >= IEEE80211_MODE_MAX) {
 			ic->ic_curmode = IEEE80211_MODE_AUTO;
 			break;
