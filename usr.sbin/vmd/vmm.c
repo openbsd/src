@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.15 2016/01/04 02:07:28 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.16 2016/01/04 07:27:24 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -58,6 +58,8 @@
 #include "virtio.h"
 #include "proc.h"
 
+#define MAX_PORTS 65535
+
 /*
  * Emulated 8250 UART
  *
@@ -103,8 +105,11 @@ struct ns8250_regs {
 	uint8_t data;		/* Unread input data */
 };
 
+typedef uint8_t (*io_fn_t)(struct vm_run_params *);
+
 struct i8253_counter i8253_counter[3];
 struct ns8250_regs com1_regs;
+io_fn_t ioports_map[MAX_PORTS];
 
 int start_client_vmd(void);
 int opentap(void);
@@ -119,8 +124,8 @@ int vmm_create_vm(struct vm_create_params *);
 void init_emulated_hw(struct vm_create_params *, int *, int *);
 void vcpu_exit_inout(struct vm_run_params *);
 uint8_t vcpu_exit_pci(struct vm_run_params *);
-void vcpu_exit_i8253(union vm_exit *);
-void vcpu_exit_com(struct vm_run_params *);
+uint8_t vcpu_exit_i8253(struct vm_run_params *);
+uint8_t vcpu_exit_com(struct vm_run_params *);
 void vcpu_process_com_data(union vm_exit *);
 void vcpu_process_com_lcr(union vm_exit *);
 void vcpu_process_com_lsr(union vm_exit *);
@@ -665,6 +670,11 @@ void
 init_emulated_hw(struct vm_create_params *vcp, int *child_disks,
     int *child_taps)
 {
+	int i;
+
+	/* Reset the IO port map */
+	memset(&ioports_map, 0, sizeof(io_fn_t) * MAX_PORTS);
+	
 	/* Init the i8253 PIT's 3 counters */
 	memset(&i8253_counter, 0, sizeof(struct i8253_counter) * 3);
 	gettimeofday(&i8253_counter[0].tv, NULL);
@@ -673,11 +683,22 @@ init_emulated_hw(struct vm_create_params *vcp, int *child_disks,
 	i8253_counter[0].start = TIMER_DIV(100);
 	i8253_counter[1].start = TIMER_DIV(100);
 	i8253_counter[2].start = TIMER_DIV(100);
+	ioports_map[TIMER_CTRL] = vcpu_exit_i8253;
+	ioports_map[TIMER_BASE + TIMER_CNTR0] = vcpu_exit_i8253;
+	ioports_map[TIMER_BASE + TIMER_CNTR1] = vcpu_exit_i8253;
+	ioports_map[TIMER_BASE + TIMER_CNTR2] = vcpu_exit_i8253;
 
 	/* Init ns8250 UART */
 	memset(&com1_regs, 0, sizeof(struct ns8250_regs));
+	for (i = COM1_DATA; i <= COM1_SCR; i++)
+		ioports_map[i] = vcpu_exit_com;
 
 	/* Initialize PCI */
+	for (i = VMM_PCI_IO_BAR_BASE; i <= VMM_PCI_IO_BAR_END; i++)
+		ioports_map[i] = vcpu_exit_pci;
+	
+	ioports_map[PCI_MODE1_ADDRESS_REG] = vcpu_exit_pci;
+	ioports_map[PCI_MODE1_DATA_REG] = vcpu_exit_pci;
 	pci_init();
 
 	/* Initialize virtio devices */
@@ -845,16 +866,21 @@ vcpu_run_loop(void *arg)
  * clock.
  *
  * Parameters:
- *  vei: VM exit information from vmm(4) containing information on the in/out
+ *  vrp: vm run parameters containing exit information for the I/O
  *      instruction being performed
+ *
+ * Return value:
+ *  Interrupt to inject to the guest VM, or 0xFF if no interrupt should
+ *      be injected.
  */
-void
-vcpu_exit_i8253(union vm_exit *vei)
+uint8_t
+vcpu_exit_i8253(struct vm_run_params *vrp)
 {
 	uint32_t out_data;
 	uint8_t sel, rw, data;
 	uint64_t ns, ticks;
 	struct timeval now, delta;
+	union vm_exit *vei = vrp->vrp_exit;
 
 	if (vei->vei.vei_port == TIMER_CTRL) {
 		if (vei->vei.vei_dir == 0) { /* OUT instruction */
@@ -866,7 +892,7 @@ vcpu_exit_i8253(union vm_exit *vei)
 				log_warnx("%s: i8253 PIT: invalid "
 				    "timer selected (%d)",
 				    __progname, sel);
-				return;
+				goto ret;
 			}
 
 			rw = vei->vei.vei_data &
@@ -881,7 +907,7 @@ vcpu_exit_i8253(union vm_exit *vei)
 				log_warnx("%s: i8253 PIT: 16 bit "
 				    "counter I/O not supported",
 				    __progname);
-				    return;
+				    goto ret;
 			}
 
 			/*
@@ -913,14 +939,14 @@ vcpu_exit_i8253(union vm_exit *vei)
 				i8253_counter[sel].olatch =
 				    i8253_counter[sel].start -
 				    ticks % i8253_counter[sel].start;
-				return;
+				goto ret;
 			}
 
 			log_warnx("%s: i8253 PIT: unsupported rw mode "
 			    "%d", __progname, rw);
-			return;
+			goto ret;
 		} else {
-			/* XXX should this return 0xff? */
+			/* XXX should this return 0xff as the data read? */
 			log_warnx("%s: i8253 PIT: read from control "
 			    "port unsupported", __progname);
 		}
@@ -950,6 +976,10 @@ vcpu_exit_i8253(union vm_exit *vei)
 			}
 		}
 	}
+
+ret:
+	/* XXX don't yet support interrupts generated from the 8253 */
+	return (0xFF);
 }
 
 /*
@@ -1248,8 +1278,12 @@ vcpu_process_com_ier(union vm_exit *vei)
  *
  * Parameters:
  *  vrp: vcpu run parameters containing guest state for this exit
+ *
+ * Return value:
+ *  Interrupt to inject to the guest VM, or 0xFF if no interrupt should
+ *      be injected.
  */
-void
+uint8_t
 vcpu_exit_com(struct vm_run_params *vrp)
 {
 	union vm_exit *vei = vrp->vrp_exit;
@@ -1280,6 +1314,8 @@ vcpu_exit_com(struct vm_run_params *vrp)
 		vcpu_process_com_data(vei);
 		break;
 	}
+
+	return (0xFF);
 }
 
 /*
@@ -1290,9 +1326,9 @@ vcpu_exit_com(struct vm_run_params *vrp)
  * Parameters:
  *  vrp: vcpu run paramters containing guest state for this exit
  *
- * Return values:
- *  0xff if no interrupt is required after this pci exit,
- *      or an interrupt vector otherwise
+ * Return value:
+ *  Interrupt to inject to the guest VM, or 0xFF if no interrupt should
+ *      be injected.
  */
 uint8_t
 vcpu_exit_pci(struct vm_run_params *vrp)
@@ -1334,33 +1370,17 @@ void
 vcpu_exit_inout(struct vm_run_params *vrp)
 {
 	union vm_exit *vei = vrp->vrp_exit;
-	uint8_t intr;
+	uint8_t intr = 0xFF;
 
-	switch (vei->vei.vei_port) {
-	case TIMER_CTRL:
-	case (TIMER_CNTR0 + TIMER_BASE):
-	case (TIMER_CNTR1 + TIMER_BASE):
-	case (TIMER_CNTR2 + TIMER_BASE):
-		vcpu_exit_i8253(vei);
-		break;
-	case COM1_DATA ... COM1_SCR:
-		vcpu_exit_com(vrp);
-		break;
-	case PCI_MODE1_ADDRESS_REG:
-	case PCI_MODE1_DATA_REG:
-	case VMM_PCI_IO_BAR_BASE ... VMM_PCI_IO_BAR_END:
-		intr = vcpu_exit_pci(vrp);
-		if (intr != 0xFF)
-			vrp->vrp_injint = intr;
-		else
-			vrp->vrp_injint = -1;
-		break;
-	default:
-		/* IN from unsupported port gives FFs */
-		if (vei->vei.vei_dir == 1)
+	if (ioports_map[vei->vei.vei_port] != NULL)
+		intr = ioports_map[vei->vei.vei_port](vrp);
+	else if (vei->vei.vei_dir == 1)
 			vei->vei.vei_data = 0xFFFFFFFF;
-		break;
-	}
+	
+	if (intr != 0xFF)
+		vrp->vrp_injint = intr;
+	else
+		vrp->vrp_injint = -1;
 }
 
 /*
