@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.118 2015/12/29 19:04:46 gsoares Exp $ */
+/*	$OpenBSD: main.c,v 1.119 2016/01/04 10:59:23 tb Exp $ */
 /*	$NetBSD: main.c,v 1.34 1997/03/24 20:56:36 gwr Exp $	*/
 
 /*
@@ -367,7 +367,7 @@ MainParseChdir(int argc, char **argv)
 		switch (c) {
 		case 'C':
 			if (chdir(optarg) == -1)
-				err(1, "chdir(%s)", optarg);
+				err(2, "chdir(%s)", optarg);
 			break;
 		case -1:
 			optind++;	/* skip over non-option */
@@ -466,10 +466,8 @@ figure_out_MACHINE()
 	if (r == NULL) {
 		static struct utsname utsname;
 
-		if (uname(&utsname) == -1) {
-			perror("make: uname");
-			exit(2);
-		}
+		if (uname(&utsname) == -1)
+			err(2, "uname");
 		r = utsname.machine;
 	}
 	return r;
@@ -514,15 +512,11 @@ figure_out_CURDIR()
 
 	/* curdir is cwd... */
 	cwd = dogetcwd();
-	if (cwd == NULL) {
-		(void)fprintf(stderr, "make: %s.\n", strerror(errno));
-		exit(2);
-	}
+	if (cwd == NULL)
+		err(2, "%s", strerror(errno));
 
-	if (stat(cwd, &sa) == -1) {
-		(void)fprintf(stderr, "make: %s: %s.\n", cwd, strerror(errno));
-		exit(2);
-	}
+	if (stat(cwd, &sa) == -1)
+		err(2, "%s: %s", cwd, strerror(errno));
 
 	/* ...but we can use the alias $PWD if we can prove it is the same
 	 * directory */
