@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.74 2015/12/08 18:54:10 mikeb Exp $	*/
+/*	$OpenBSD: locore.S,v 1.75 2016/01/04 01:03:03 mlarkin Exp $	*/
 /*	$NetBSD: locore.S,v 1.13 2004/03/25 18:33:17 drochner Exp $	*/
 
 /*
@@ -176,7 +176,8 @@ _C_LABEL(lapic_isr):
 	.globl	_C_LABEL(cpu_perf_ebx)
 	.globl	_C_LABEL(cpu_perf_edx)
 	.globl	_C_LABEL(cpu_apmi_edx)
-	.globl	_C_LABEL(ssym),_C_LABEL(esym),_C_LABEL(boothowto),_C_LABEL(bootdev)
+	.globl	_C_LABEL(ssym),_C_LABEL(esym),_C_LABEL(boothowto)
+	.globl	_C_LABEL(bootdev)
 	.globl	_C_LABEL(bootinfo), _C_LABEL(bootinfo_size), _C_LABEL(atdevbase)
 	.globl	_C_LABEL(proc0paddr),_C_LABEL(PTDpaddr)
 	.globl	_C_LABEL(biosbasemem),_C_LABEL(biosextmem)
