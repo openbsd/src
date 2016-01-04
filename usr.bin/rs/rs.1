@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rs.1,v 1.17 2015/12/06 08:07:51 schwarze Exp $
+.\"	$OpenBSD: rs.1,v 1.18 2016/01/04 23:21:28 schwarze Exp $
 .\"	$FreeBSD: src/usr.bin/rs/rs.1,v 1.4 1999/08/28 01:05:21 peter Exp $
 .\"
 .\" Copyright (c) 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)rs.1	8.2 (Berkeley) 12/30/93
 .\"
-.Dd $Mdocdate: December 6 2015 $
+.Dd $Mdocdate: January 4 2016 $
 .Dt RS 1
 .Os
 .Sh NAME
@@ -234,6 +234,13 @@ $ rs \-eC 0 4 | sort | rs \-c 0 1
 .Xr pr 1 ,
 .Xr sort 1 ,
 .Xr vi 1
+.Sh HISTORY
+The
+.Nm
+utility first appeared in
+.Bx 4.2 .
+.Sh AUTHORS
+.An John A. Kunze
 .Sh BUGS
 Handles only two dimensional arrays.
 .Pp
