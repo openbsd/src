@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmmvar.h,v 1.6 2015/12/17 09:29:28 mlarkin Exp $	*/
+/*	$OpenBSD: vmmvar.h,v 1.7 2016/01/04 01:35:56 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -103,8 +103,9 @@
 enum {
 	VCPU_STATE_STOPPED,
 	VCPU_STATE_RUNNING,
-	VCPU_STATE_REQSTOP,
-	VCPU_STATE_UNKNOWN
+	VCPU_STATE_REQTERM,
+	VCPU_STATE_TERMINATED,
+	VCPU_STATE_UNKNOWN,
 };
 
 enum {
@@ -357,11 +358,11 @@ struct vcpu {
 
 	struct vm *vc_parent;
 	uint32_t vc_id;
+	u_int vc_state;
 	SLIST_ENTRY(vcpu) vc_vcpu_link;
 	vaddr_t vc_hsa_stack_va;
 
 	uint8_t vc_virt_mode;
-	uint8_t vc_state;
 
 	struct cpu_info *vc_last_pcpu;
 	union vm_exit vc_exit;
