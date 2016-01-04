@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.147 2016/01/04 12:25:46 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.148 2016/01/04 12:32:06 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -2459,7 +2459,7 @@ ieee80211_recv_addba_req(struct ieee80211com *ic, struct mbuf *m,
 	}
 	/* check that we support the requested Block Ack Policy */
 	if (!(ic->ic_htcaps & IEEE80211_HTCAP_DELAYEDBA) &&
-	    !(params & IEEE80211_BA_ACK_POLICY)) {
+	    !(params & IEEE80211_ADDBA_BA_POLICY)) {
 		status = IEEE80211_STATUS_INVALID_PARAM;
 		goto resp;
 	}

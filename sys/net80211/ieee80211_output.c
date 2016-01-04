@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_output.c,v 1.102 2015/12/12 11:31:48 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_output.c,v 1.103 2016/01/04 12:32:06 stsp Exp $	*/
 /*	$NetBSD: ieee80211_output.c,v 1.13 2004/05/31 11:02:55 dyoung Exp $	*/
 
 /*-
@@ -1455,7 +1455,11 @@ ieee80211_get_addba_req(struct ieee80211com *ic, struct ieee80211_node *ni,
 	*frm++ = IEEE80211_CATEG_BA;
 	*frm++ = IEEE80211_ACTION_ADDBA_REQ;
 	*frm++ = ba->ba_token;
-	params = ba->ba_winsize << 6 | tid << 2 | IEEE80211_BA_ACK_POLICY;
+	params = ba->ba_winsize << IEEE80211_ADDBA_BUFSZ_SHIFT |
+	    tid << IEEE80211_ADDBA_TID_SHIFT |
+	    IEEE80211_ADDBA_AMSDU;
+	if ((ic->ic_htcaps & IEEE80211_HTCAP_DELAYEDBA) == 0)
+		params |= IEEE80211_ADDBA_BA_POLICY; /* use immediate BA */
 	LE_WRITE_2(frm, params); frm += 2;
 	LE_WRITE_2(frm, ba->ba_timeout_val); frm += 2;
 	LE_WRITE_2(frm, ba->ba_winstart); frm += 2;
