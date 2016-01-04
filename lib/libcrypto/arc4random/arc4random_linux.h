@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc4random_linux.h,v 1.9 2015/01/15 06:57:18 deraadt Exp $	*/
+/*	$OpenBSD: arc4random_linux.h,v 1.10 2016/01/04 02:04:56 bcook Exp $	*/
 
 /*
  * Copyright (c) 1996, David Mazieres <dm@uun.org>
@@ -60,7 +60,8 @@ _rs_forkdetect(void)
 	static pid_t _rs_pid = 0;
 	pid_t pid = getpid();
 
-	if (_rs_pid == 0 || _rs_pid != pid || _rs_forked) {
+        /* XXX unusual calls to clone() can bypass checks */
+	if (_rs_pid == 0 || _rs_pid == 1 || _rs_pid != pid || _rs_forked) {
 		_rs_pid = pid;
 		_rs_forked = 0;
 		if (rs)
