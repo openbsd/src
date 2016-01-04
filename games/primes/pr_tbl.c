@@ -1,4 +1,4 @@
-/*	$OpenBSD: pr_tbl.c,v 1.5 2009/10/27 23:59:26 deraadt Exp $	*/
+/*	$OpenBSD: pr_tbl.c,v 1.6 2016/01/04 11:58:35 mestre Exp $	*/
 /*	$NetBSD: pr_tbl.c,v 1.3 1995/03/23 08:35:52 cgd Exp $	*/
 
 /*
@@ -45,6 +45,7 @@
  */
 
 #include <sys/types.h>
+
 #include "primes.h"
 
 const ubig prime[] = {

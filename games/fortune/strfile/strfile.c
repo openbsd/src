@@ -1,4 +1,4 @@
-/*	$OpenBSD: strfile.c,v 1.25 2016/01/03 14:38:17 mestre Exp $	*/
+/*	$OpenBSD: strfile.c,v 1.26 2016/01/04 11:58:35 mestre Exp $	*/
 /*	$NetBSD: strfile.c,v 1.4 1995/04/24 12:23:09 cgd Exp $	*/
 
 /*-
@@ -33,15 +33,15 @@
  * SUCH DAMAGE.
  */
 
-#include	<ctype.h>
-#include	<err.h>
-#include	<limits.h>
-#include	<stdio.h>
-#include	<stdlib.h>
-#include	<string.h>
-#include	<unistd.h>
+#include <ctype.h>
+#include <err.h>
+#include <limits.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
-#include	"strfile.h"
+#include "strfile.h"
 
 /*
  *	This program takes a file composed of strings separated by

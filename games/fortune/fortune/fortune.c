@@ -1,4 +1,4 @@
-/*	$OpenBSD: fortune.c,v 1.48 2015/12/25 20:59:09 mestre Exp $	*/
+/*	$OpenBSD: fortune.c,v 1.49 2016/01/04 11:58:35 mestre Exp $	*/
 /*	$NetBSD: fortune.c,v 1.8 1995/03/23 08:28:40 cgd Exp $	*/
 
 /*-
@@ -35,18 +35,19 @@
 
 #include <sys/stat.h>
 
+#include <assert.h>
+#include <ctype.h>
 #include <dirent.h>
 #include <fcntl.h>
-#include <assert.h>
-#include <unistd.h>
+#include <limits.h>
 #include <stdio.h>
-#include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
-#include <limits.h>
 #include <regex.h>
-#include "strfile.h"
+#include <unistd.h>
+
 #include "pathnames.h"
+#include "strfile.h"
 
 #define	bool	short
 

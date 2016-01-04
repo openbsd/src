@@ -1,4 +1,4 @@
-/*	$OpenBSD: random.c,v 1.16 2016/01/03 14:38:17 mestre Exp $	*/
+/*	$OpenBSD: random.c,v 1.17 2016/01/04 11:58:35 mestre Exp $	*/
 /*	$NetBSD: random.c,v 1.3 1995/04/22 07:44:05 cgd Exp $	*/
 
 /*
@@ -33,14 +33,11 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/types.h>
-
 #include <err.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <limits.h>
 
 __dead void usage(void);
 

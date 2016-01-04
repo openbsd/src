@@ -1,4 +1,4 @@
-/*	$OpenBSD: unstr.c,v 1.11 2014/11/16 04:49:48 guenther Exp $	*/
+/*	$OpenBSD: unstr.c,v 1.12 2016/01/04 11:58:35 mestre Exp $	*/
 /*	$NetBSD: unstr.c,v 1.3 1995/03/23 08:29:00 cgd Exp $	*/
 
 /*-
@@ -46,12 +46,14 @@
  *	Ken Arnold		Aug 13, 1978
  */
 
-#include	<ctype.h>
-#include	<err.h>
-#include	<limits.h>
-#include	<stdio.h>
-#include	<string.h>
-#include	"strfile.h"
+#include <ctype.h>
+#include <err.h>
+#include <limits.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include "strfile.h"
 
 char	*Infile,			/* name of input file */
 	Datafile[PATH_MAX],		/* name of data file */

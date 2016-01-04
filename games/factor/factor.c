@@ -1,4 +1,4 @@
-/*	$OpenBSD: factor.c,v 1.24 2015/12/30 14:07:53 tb Exp $	*/
+/*	$OpenBSD: factor.c,v 1.25 2016/01/04 11:58:35 mestre Exp $	*/
 /*	$NetBSD: factor.c,v 1.5 1995/03/23 08:28:07 cgd Exp $	*/
 
 /*
@@ -52,11 +52,9 @@
  * If no args are given, the list of numbers are read from stdin.
  */
 
-#include <sys/types.h>
-#include <err.h>
 #include <ctype.h>
+#include <err.h>
 #include <errno.h>
-#include <limits.h>
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>

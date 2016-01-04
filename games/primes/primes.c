@@ -1,4 +1,4 @@
-/*	$OpenBSD: primes.c,v 1.19 2015/12/25 20:59:09 mestre Exp $	*/
+/*	$OpenBSD: primes.c,v 1.20 2016/01/04 11:58:35 mestre Exp $	*/
 /*	$NetBSD: primes.c,v 1.5 1995/04/24 12:24:47 cgd Exp $	*/
 
 /*
@@ -50,11 +50,9 @@
  * validation check: there are 664579 primes between 0 and 10^7
  */
 
-#include <sys/types.h>
 #include <ctype.h>
 #include <err.h>
 #include <errno.h>
-#include <limits.h>
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
