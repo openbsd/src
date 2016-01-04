@@ -25,9 +25,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: getopt.3,v 1.45 2015/11/24 09:03:16 bentley Exp $
+.\"	$OpenBSD: getopt.3,v 1.46 2016/01/04 19:43:13 tb Exp $
 .\"
-.Dd $Mdocdate: November 24 2015 $
+.Dd $Mdocdate: January 4 2016 $
 .Dt GETOPT 3
 .Os
 .Sh NAME
@@ -183,7 +183,6 @@ while ((ch = getopt(argc, argv, "bf:")) != -1) {
 		break;
 	default:
 		usage();
-		/* NOTREACHED */
 	}
 }
 argc -= optind;
