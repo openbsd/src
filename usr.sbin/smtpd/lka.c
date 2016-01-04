@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.190 2015/12/28 22:08:30 jung Exp $	*/
+/*	$OpenBSD: lka.c,v 1.191 2016/01/04 13:36:32 jung Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -449,7 +449,7 @@ lka(void)
 	/* Ignore them until we get our config */
 	mproc_disable(p_pony);
 
-	if (pledge("stdio rpath inet dns getpw recvfd", NULL) == -1)
+	if (pledge("stdio rpath inet dns getpw recvfd proc exec", NULL) == -1)
 		err(1, "pledge");
 
 	if (event_dispatch() < 0)
