@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.c,v 1.4 2015/12/03 08:42:11 reyk Exp $	*/
+/*	$OpenBSD: pci.c,v 1.5 2016/01/04 02:07:28 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -170,7 +170,7 @@ pci_init(void)
 {
 	uint8_t id;
 
-	bzero(&pci, sizeof(pci));
+	memset(&pci, 0, sizeof(pci));
 	pci.pci_next_mmio_bar = VMM_PCI_MMIO_BAR_BASE;
 	pci.pci_next_io_bar = VMM_PCI_IO_BAR_BASE;
 

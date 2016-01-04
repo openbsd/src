@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.14 2015/12/17 09:29:28 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.15 2016/01/04 02:07:28 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -666,7 +666,7 @@ init_emulated_hw(struct vm_create_params *vcp, int *child_disks,
     int *child_taps)
 {
 	/* Init the i8253 PIT's 3 counters */
-	bzero(&i8253_counter, sizeof(struct i8253_counter) * 3);
+	memset(&i8253_counter, 0, sizeof(struct i8253_counter) * 3);
 	gettimeofday(&i8253_counter[0].tv, NULL);
 	gettimeofday(&i8253_counter[1].tv, NULL);
 	gettimeofday(&i8253_counter[2].tv, NULL);
@@ -675,7 +675,7 @@ init_emulated_hw(struct vm_create_params *vcp, int *child_disks,
 	i8253_counter[2].start = TIMER_DIV(100);
 
 	/* Init ns8250 UART */
-	bzero(&com1_regs, sizeof(struct ns8250_regs));
+	memset(&com1_regs, 0, sizeof(struct ns8250_regs));
 
 	/* Initialize PCI */
 	pci_init();
@@ -778,7 +778,7 @@ run_vm(int *child_disks, int *child_taps, struct vm_create_params *vcp,
 			log_warnx("%s: vm %d vcpu run thread %zd exited "
 			    "abnormally", __progname, vcp->vcp_id, i);
 			/* Terminate the VM if we can */
-			bzero(&vtp, sizeof(vtp));
+			memset(&vtp, 0, sizeof(vtp));
 			vtp.vtp_vm_id = vcp->vcp_id;
 			if (terminate_vm(&vtp)) {
 				log_warnx("%s: could not terminate vm %d",
