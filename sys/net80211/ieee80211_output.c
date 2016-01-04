@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_output.c,v 1.103 2016/01/04 12:32:06 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_output.c,v 1.104 2016/01/04 13:29:04 stsp Exp $	*/
 /*	$NetBSD: ieee80211_output.c,v 1.13 2004/05/31 11:02:55 dyoung Exp $	*/
 
 /*-
@@ -230,8 +230,7 @@ ieee80211_mgmt_output(struct ifnet *ifp, struct ieee80211_node *ni,
 			    >> IEEE80211_FC0_SUBTYPE_SHIFT],
 			    ether_sprintf(ni->ni_macaddr),
 			    ieee80211_chan2ieee(ic, ni->ni_chan),
-			    ieee80211_phymode_name[
-			    ieee80211_chan2mode(ic, ni->ni_chan)]);
+			    ieee80211_phymode_name[ic->ic_curmode]);
 	}
 
 #ifndef IEEE80211_STA_ONLY
