@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_ioctl.c,v 1.39 2015/03/14 03:38:51 jsg Exp $	*/
+/*	$OpenBSD: ieee80211_ioctl.c,v 1.40 2016/01/04 12:28:46 stsp Exp $	*/
 /*	$NetBSD: ieee80211_ioctl.c,v 1.15 2004/05/06 02:58:16 dyoung Exp $	*/
 
 /*-
@@ -647,6 +647,19 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			ic->ic_scan_lock |= IEEE80211_SCAN_REQUEST;
 			if (ic->ic_state != IEEE80211_S_SCAN) {
 				ieee80211_clean_cached(ic);
+				if (ic->ic_opmode == IEEE80211_M_STA &&
+				    ic->ic_state == IEEE80211_S_RUN &&
+				    IFM_MODE(ic->ic_media.ifm_cur->ifm_media)
+				    == IFM_AUTO) {
+					/* 
+					 * We're already associated to an AP.
+					 * Make the scanning loop start off in
+					 * auto mode so all supported bands
+					 * get scanned.
+					 */
+					ieee80211_setmode(ic,
+					    IEEE80211_MODE_AUTO);
+				}
 				ieee80211_new_state(ic, IEEE80211_S_SCAN, -1);
 			}
 		}
