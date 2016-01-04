@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.c,v 1.7 2015/08/26 00:29:24 rzalamena Exp $	*/
+/*	$OpenBSD: extern.c,v 1.8 2016/01/04 17:33:24 mestre Exp $	*/
 /*	$NetBSD: extern.c,v 1.3 1995/04/22 10:08:49 cgd Exp $	*/
 
 /*
@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  */
 
-#include	"robots.h"
+#include "robots.h"
 
 bool	Dead;			/* Player is now dead */
 bool	Full_clear = TRUE;	/* Lots of junk for init_field to clear */

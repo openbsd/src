@@ -1,4 +1,4 @@
-/*	$OpenBSD: gomoku.h,v 1.11 2015/12/26 00:26:39 mestre Exp $	*/
+/*	$OpenBSD: gomoku.h,v 1.12 2016/01/04 17:33:24 mestre Exp $	*/
 /*
  * Copyright (c) 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -34,7 +34,6 @@
  */
 
 #include <stdio.h>
-#include <sys/types.h>
 
 /* board dimensions */
 #define BSZ	19

@@ -1,4 +1,4 @@
-/*	$OpenBSD: grdc.c,v 1.23 2016/01/03 14:38:17 mestre Exp $	*/
+/*	$OpenBSD: grdc.c,v 1.24 2016/01/04 17:33:24 mestre Exp $	*/
 /*
  *
  * Copyright 2002 Amos Shapir.  Public domain.
@@ -12,15 +12,13 @@
  */
 
 #include <sys/ioctl.h>
-#include <sys/types.h>
 
 #include <curses.h>
+#include <err.h>
 #include <limits.h>
 #include <signal.h>
 #include <stdlib.h>
-#include <stdio.h>
 #include <unistd.h>
-#include <err.h>
 
 #define XLENGTH 58
 #define YDEPTH  7

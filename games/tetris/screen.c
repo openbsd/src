@@ -1,4 +1,4 @@
-/*	$OpenBSD: screen.c,v 1.15 2014/12/07 21:06:57 deraadt Exp $	*/
+/*	$OpenBSD: screen.c,v 1.16 2016/01/04 17:33:24 mestre Exp $	*/
 /*	$NetBSD: screen.c,v 1.4 1995/04/29 01:11:36 mycroft Exp $	*/
 
 /*-
@@ -48,7 +48,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <term.h>
-#include <termios.h>
 #include <unistd.h>
 
 #include "screen.h"

@@ -1,4 +1,4 @@
-/*	$OpenBSD: endgame.c,v 1.8 2015/12/31 15:20:36 mestre Exp $	*/
+/*	$OpenBSD: endgame.c,v 1.9 2016/01/04 17:33:24 mestre Exp $	*/
 /*	$NetBSD: endgame.c,v 1.3 1995/03/23 08:32:40 cgd Exp $	*/
 
 /*
@@ -30,9 +30,8 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/ttydefaults.h>
-
 #include <curses.h>
+#include <termios.h>
 
 #include "hangman.h"
 

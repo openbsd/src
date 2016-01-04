@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd_pos.c,v 1.6 2013/08/29 20:22:19 naddy Exp $	*/
+/*	$OpenBSD: rnd_pos.c,v 1.7 2016/01/04 17:33:24 mestre Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -29,7 +29,9 @@
  * SUCH DAMAGE.
  */
 
-#include	"robots.h"
+#include <stdlib.h>
+
+#include "robots.h"
 
 #define	IS_SAME(p,y,x)	((p).y != -1 && (p).y == y && (p).x == x)
 

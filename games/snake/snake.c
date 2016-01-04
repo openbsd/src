@@ -1,4 +1,4 @@
-/*	$OpenBSD: snake.c,v 1.21 2016/01/03 14:38:17 mestre Exp $	*/
+/*	$OpenBSD: snake.c,v 1.22 2016/01/04 17:33:24 mestre Exp $	*/
 /*	$NetBSD: snake.c,v 1.8 1995/04/29 00:06:41 mycroft Exp $	*/
 
 /*
@@ -41,9 +41,6 @@
  *	cc -O snake.c move.c -o snake -lm -lcurses
  */
 
-#include <sys/types.h>
-#include <sys/ioctl.h>
-
 #include <curses.h>
 #include <err.h>
 #include <errno.h>
@@ -51,7 +48,6 @@
 #include <limits.h>
 #include <math.h>
 #include <signal.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <termios.h>

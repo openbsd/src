@@ -1,4 +1,4 @@
-/*	$OpenBSD: score.c,v 1.13 2015/12/04 16:40:09 tb Exp $	*/
+/*	$OpenBSD: score.c,v 1.14 2016/01/04 17:33:24 mestre Exp $	*/
 /*	$NetBSD: score.c,v 1.3 1995/04/22 10:09:12 cgd Exp $	*/
 
 /*
@@ -30,7 +30,12 @@
  * SUCH DAMAGE.
  */
 
-#include	"robots.h"
+#include <fcntl.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+
+#include "robots.h"
 
 char	Scorefile[PATH_MAX];
 

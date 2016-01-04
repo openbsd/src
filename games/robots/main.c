@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.22 2015/12/04 16:40:09 tb Exp $	*/
+/*	$OpenBSD: main.c,v 1.23 2016/01/04 17:33:24 mestre Exp $	*/
 /*	$NetBSD: main.c,v 1.5 1995/04/22 10:08:54 cgd Exp $	*/
 
 /*
@@ -30,7 +30,15 @@
  * SUCH DAMAGE.
  */
 
-#include	"robots.h"
+#include <err.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <signal.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+
+#include "robots.h"
 
 void
 usage(void)

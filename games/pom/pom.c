@@ -1,4 +1,4 @@
-/*	$OpenBSD: pom.c,v 1.19 2015/12/26 00:26:39 mestre Exp $	*/
+/*	$OpenBSD: pom.c,v 1.20 2016/01/04 17:33:24 mestre Exp $	*/
 /*    $NetBSD: pom.c,v 1.6 1996/02/06 22:47:29 jtc Exp $      */
 
 /*
@@ -44,14 +44,12 @@
  *
  */
 
-#include <sys/time.h>
-#include <sys/types.h>
 #include <ctype.h>
+#include <err.h>
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <math.h>
-#include <err.h>
 #include <unistd.h>
 
 #ifndef M_PI

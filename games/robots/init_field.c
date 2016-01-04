@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_field.c,v 1.7 2009/10/27 23:59:26 deraadt Exp $	*/
+/*	$OpenBSD: init_field.c,v 1.8 2016/01/04 17:33:24 mestre Exp $	*/
 /*	$NetBSD: init_field.c,v 1.3 1995/04/22 10:08:52 cgd Exp $	*/
 
 /*
@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  */
 
-#include	"robots.h"
+#include "robots.h"
 
 /*
  * init_field:

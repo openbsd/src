@@ -1,4 +1,4 @@
-/*	$OpenBSD: worms.c,v 1.23 2015/11/21 05:29:42 deraadt Exp $	*/
+/*	$OpenBSD: worms.c,v 1.24 2016/01/04 17:33:24 mestre Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -46,12 +46,9 @@
  *				 October, 1980
  *
  */
-#include <sys/types.h>
-
 #include <curses.h>
 #include <err.h>
 #include <signal.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <termios.h>
 #include <unistd.h>

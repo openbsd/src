@@ -1,4 +1,4 @@
-/*	$OpenBSD: bdisp.c,v 1.11 2012/03/04 04:05:15 fgsch Exp $	*/
+/*	$OpenBSD: bdisp.c,v 1.12 2016/01/04 17:33:24 mestre Exp $	*/
 /*
  * Copyright (c) 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -31,10 +31,11 @@
  * SUCH DAMAGE.
  */
 
-#include "gomoku.h"
 #include <curses.h>
-#include <string.h>
 #include <err.h>
+#include <string.h>
+
+#include "gomoku.h"
 
 #define	SCRNH		24		/* assume 24 lines for the moment */
 #define	SCRNW		80		/* assume 80 chars for the moment */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: wump.c,v 1.29 2016/01/03 14:38:17 mestre Exp $	*/
+/*	$OpenBSD: wump.c,v 1.30 2016/01/04 17:33:24 mestre Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,6 @@
  * would care to remember.
  */
 
-#include <sys/types.h>
 #include <sys/wait.h>
 
 #include <err.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: morse.c,v 1.17 2015/10/23 02:01:15 jsg Exp $	*/
+/*	$OpenBSD: morse.c,v 1.18 2016/01/04 17:33:24 mestre Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -30,11 +30,11 @@
  */
 
 #include <ctype.h>
+#include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <err.h>
 
 static char
 	*digit[] = {

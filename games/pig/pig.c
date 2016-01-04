@@ -1,4 +1,4 @@
-/*	$OpenBSD: pig.c,v 1.14 2015/12/25 20:59:09 mestre Exp $	*/
+/*	$OpenBSD: pig.c,v 1.15 2016/01/04 17:33:24 mestre Exp $	*/
 /*	$NetBSD: pig.c,v 1.2 1995/03/23 08:41:40 cgd Exp $	*/
 
 /*-
@@ -29,8 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#include <sys/types.h>
 
 #include <ctype.h>
 #include <err.h>

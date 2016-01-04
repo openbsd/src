@@ -1,4 +1,4 @@
-/*	$OpenBSD: move.c,v 1.11 2015/08/26 00:29:24 rzalamena Exp $	*/
+/*	$OpenBSD: move.c,v 1.12 2016/01/04 17:33:24 mestre Exp $	*/
 /*	$NetBSD: move.c,v 1.4 1995/04/22 10:08:58 cgd Exp $	*/
 
 /*
@@ -29,6 +29,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <ctype.h>
+#include <poll.h>
+#include <termios.h>
+#include <unistd.h>
 
 #include "robots.h"
 

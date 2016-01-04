@@ -1,4 +1,4 @@
-/*	$OpenBSD: pickmove.c,v 1.14 2015/08/22 14:47:41 deraadt Exp $	*/
+/*	$OpenBSD: pickmove.c,v 1.15 2016/01/04 17:33:24 mestre Exp $	*/
 /*
  * Copyright (c) 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -31,11 +31,12 @@
  * SUCH DAMAGE.
  */
 
-#include "gomoku.h"
-#include <stdlib.h>
-#include <string.h>
 #include <curses.h>
 #include <limits.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include "gomoku.h"
 
 #define BITS_PER_INT	(sizeof(int) * CHAR_BIT)
 #define MAPSZ		(BAREA / BITS_PER_INT)
