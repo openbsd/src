@@ -1,4 +1,4 @@
-/*	$OpenBSD: patch.c,v 1.62 2015/12/29 19:04:46 gsoares Exp $	*/
+/*	$OpenBSD: patch.c,v 1.63 2016/01/04 14:09:46 gsoares Exp $	*/
 
 /*
  * patch - a program to apply diffs to original files
@@ -618,7 +618,7 @@ usage(void)
 "             [-r rej-name] [-V t | nil | never] [-x number] [-z backup-ext]\n"
 "             [--posix] [origfile [patchfile]]\n"
 "       patch <patchfile\n");
-	my_exit(EXIT_SUCCESS);
+	my_exit(2);
 }
 
 /*
