@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.149 2015/12/28 14:17:47 bcook Exp $ */
+/* $OpenBSD: netcat.c,v 1.150 2016/01/04 02:18:31 bcook Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  * Copyright (c) 2015 Bob Beck.  All rights reserved.
@@ -427,11 +427,11 @@ main(int argc, char *argv[])
 	}
 
 	if (usetls) {
-		if (Rflag && (cacert=tls_load_file(Rflag, &cacertlen, NULL)) == NULL)
+		if (Rflag && (cacert = tls_load_file(Rflag, &cacertlen, NULL)) == NULL)
 			errx(1, "unable to load root CA file %s", Rflag);
-		if (Cflag && (pubcert=tls_load_file(Rflag, &pubcertlen, NULL)) == NULL)
+		if (Cflag && (pubcert = tls_load_file(Cflag, &pubcertlen, NULL)) == NULL)
 			errx(1, "unable to load TLS certificate file %s", Cflag);
-		if (Kflag && (privkey=tls_load_file(Rflag, &privkeylen, NULL)) == NULL)
+		if (Kflag && (privkey = tls_load_file(Kflag, &privkeylen, NULL)) == NULL)
 			errx(1, "unable to load TLS key file %s", Kflag);
 
 		if (pledge("stdio inet dns", NULL) == -1)
@@ -443,7 +443,7 @@ main(int argc, char *argv[])
 			errx(1, "unable to allocate TLS config");
 		if (Rflag && tls_config_set_ca_mem(tls_cfg, cacert, cacertlen) == -1)
 			errx(1, "unable to set root CA file %s", Rflag);
-		if (Cflag && tls_config_set_cert_mem(tls_cfg, cacert, cacertlen) == -1)
+		if (Cflag && tls_config_set_cert_mem(tls_cfg, pubcert, pubcertlen) == -1)
 			errx(1, "unable to set TLS certificate file %s", Cflag);
 		if (Kflag && tls_config_set_key_mem(tls_cfg, privkey, privkeylen) == -1)
 			errx(1, "unable to set TLS key file %s", Kflag);
