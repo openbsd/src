@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vmx.c,v 1.40 2015/11/25 03:09:59 dlg Exp $	*/
+/*	$OpenBSD: if_vmx.c,v 1.41 2016/01/04 16:16:56 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2013 Tsubai Masanari
@@ -166,7 +166,7 @@ int vmxnet3_init(struct vmxnet3_softc *);
 int vmxnet3_ioctl(struct ifnet *, u_long, caddr_t);
 void vmxnet3_start(struct ifnet *);
 int vmxnet3_load_mbuf(struct vmxnet3_softc *, struct vmxnet3_txring *,
-    struct mbuf *);
+    struct mbuf **);
 void vmxnet3_watchdog(struct ifnet *);
 void vmxnet3_media_status(struct ifnet *, struct ifmediareq *);
 int vmxnet3_media_change(struct ifnet *);
@@ -1065,7 +1065,7 @@ vmxnet3_start(struct ifnet *ifp)
 		if (m == NULL)
 			break;
 
-		n = vmxnet3_load_mbuf(sc, ring, m);
+		n = vmxnet3_load_mbuf(sc, ring, &m);
 		if (n == -1) {
 			ifp->if_oerrors++;
 			continue;
@@ -1089,9 +1089,10 @@ vmxnet3_start(struct ifnet *ifp)
 
 int
 vmxnet3_load_mbuf(struct vmxnet3_softc *sc, struct vmxnet3_txring *ring,
-    struct mbuf *m)
+    struct mbuf **mp)
 {
 	struct vmxnet3_txdesc *txd, *sop;
+	struct mbuf *n, *m = *mp;
 	bus_dmamap_t map;
 	u_int hlen = ETHER_HDR_LEN, csum_off;
 	u_int prod;
@@ -1107,7 +1108,6 @@ vmxnet3_load_mbuf(struct vmxnet3_softc *sc, struct vmxnet3_txring *ring,
 	}
 #endif
 	if (m->m_pkthdr.csum_flags & (M_TCP_CSUM_OUT|M_UDP_CSUM_OUT)) {
-		struct mbuf *mp;
 		struct ip *ip;
 		int offp;
 
@@ -1116,16 +1116,17 @@ vmxnet3_load_mbuf(struct vmxnet3_softc *sc, struct vmxnet3_txring *ring,
 		else
 			csum_off = offsetof(struct udphdr, uh_sum);
 
-		mp = m_pulldown(m, hlen, sizeof(*ip), &offp);
-		if (mp == NULL)
+		n = m_pulldown(m, hlen, sizeof(*ip), &offp);
+		if (n == NULL)
 			return (-1);
 
-		ip = (struct ip *)(mp->m_data + offp);
+		ip = (struct ip *)(n->m_data + offp);
 		hlen += ip->ip_hl << 2;
 
-		mp = m_pulldown(m, 0, hlen + csum_off + 2, &offp);
-		if (mp == NULL)
+		*mp = m_pullup(m, hlen + csum_off + 2);
+		if (*mp == NULL)
 			return (-1);
+		m = *mp;
 	}
 
 	switch (bus_dmamap_load_mbuf(sc->sc_dmat, map, m, BUS_DMA_NOWAIT)) {
