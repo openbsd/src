@@ -1,4 +1,4 @@
-/*	$OpenBSD: softraid.c,v 1.22 2016/01/03 15:01:31 krw Exp $	*/
+/*	$OpenBSD: softraid.c,v 1.23 2016/01/04 02:31:18 krw Exp $	*/
 
 /*
  * Copyright (c) 2012 Joel Sing <jsing@openbsd.org>
@@ -46,7 +46,8 @@ struct sr_boot_keydisk {
 SLIST_HEAD(sr_boot_keydisk_head, sr_boot_keydisk);
 struct sr_boot_keydisk_head sr_keydisks;
 
-static int gpt_chk_mbr(struct dos_partition *dp, u_int64_t);
+static int gpt_chk_mbr(struct dos_partition *, u_int64_t);
+static uint64_t findopenbsd_gpt(struct sr_boot_volume *);
 
 void
 srprobe_meta_opt_load(struct sr_metadata *sm, struct sr_meta_opt_head *som)
