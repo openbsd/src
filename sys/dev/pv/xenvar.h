@@ -1,4 +1,4 @@
-/*	$OpenBSD: xenvar.h,v 1.17 2015/12/22 22:19:46 mikeb Exp $	*/
+/*	$OpenBSD: xenvar.h,v 1.18 2016/01/04 16:05:43 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Belopuhov
@@ -67,8 +67,7 @@ struct xen_softc {
 	SLIST_HEAD(, xen_intsrc) sc_intrs;
 
 	SLIST_HEAD(, xen_gntent) sc_gnts;	/* grant table entries */
-	int			 sc_gntcnt;	/* current number of pages */
-	int			 sc_gntmax;	/* maximum number of pages */
+	int			 sc_gntcnt;	/* number of allocated frames */
 
 	/*
 	 * Xenstore

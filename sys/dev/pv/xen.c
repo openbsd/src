@@ -1,4 +1,4 @@
-/*	$OpenBSD: xen.c,v 1.19 2015/12/22 22:16:53 mikeb Exp $	*/
+/*	$OpenBSD: xen.c,v 1.20 2016/01/04 16:05:43 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Belopuhov
@@ -790,9 +790,6 @@ xen_init_grant_tables(struct xen_softc *sc)
 		return (-1);
 	}
 
-	DPRINTF("%s: grant table frames allocated %u, max %u\n",
-	    sc->sc_dev.dv_xname, gqs.nr_frames, gqs.max_nr_frames);
-
 	gsv.version = 2;
 	ggv.dom = DOMID_SELF;
 	if (xen_hypercall(sc, XC_GNTTAB, 3, GNTTABOP_set_version, &gsv, 1) ||
@@ -805,11 +802,12 @@ xen_init_grant_tables(struct xen_softc *sc)
 
 	SLIST_INIT(&sc->sc_gnts);
 
-	for (i = 0; i < gqs.nr_frames; i++)
+	for (i = 0; i < gqs.max_nr_frames; i++)
 		if (xen_grant_table_grow(sc) == NULL)
 			break;
 
-	sc->sc_gntmax = gqs.max_nr_frames;
+	DPRINTF("%s: grant table frames allocated %u/%u\n",
+	    sc->sc_dev.dv_xname, sc->sc_gntcnt, gqs.max_nr_frames);
 
 	xen_bus_dma_init(sc);
 
@@ -861,9 +859,6 @@ xen_grant_table_grow(struct xen_softc *sc)
 	mtx_init(&ge->ge_mtx, IPL_NET);
 	SLIST_INSERT_HEAD(&sc->sc_gnts, ge, ge_entry);
 
-	DPRINTF("%s: grant table frame %d start %d pa %#lx\n",
-	    sc->sc_dev.dv_xname, sc->sc_gntcnt, ge->ge_start, pa);
-
 	sc->sc_gntcnt++;
 
 	return (ge);
@@ -875,7 +870,6 @@ xen_grant_table_alloc(struct xen_softc *sc, grant_ref_t *ref)
 	struct xen_gntent *ge;
 	int i;
 
- retry:
 	SLIST_FOREACH(ge, &sc->sc_gnts, ge_entry) {
 		if (!ge->ge_free)
 			continue;
@@ -903,13 +897,7 @@ xen_grant_table_alloc(struct xen_softc *sc, grant_ref_t *ref)
 		mtx_leave(&ge->ge_mtx);
 	}
 
-	/* We're out of entries, try growing the table */
-	if (sc->sc_gntcnt >= sc->sc_gntmax)
-		return (-1);
-
-	if (xen_grant_table_grow(sc) != NULL)
-		goto retry;
-
+	/* We're out of entries */
 	return (-1);
 }
 
