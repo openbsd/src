@@ -1,4 +1,4 @@
-/*	$OpenBSD: xen.c,v 1.20 2016/01/04 16:05:43 mikeb Exp $	*/
+/*	$OpenBSD: xen.c,v 1.21 2016/01/04 16:07:52 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Belopuhov
@@ -1125,18 +1125,8 @@ xen_probe_devices(struct xen_softc *sc)
 		return (error);
 
 	for (i = 0; i < iov1_cnt; i++) {
-		/* Special handling */
-		if (!strcmp("suspend", (char *)iovp1[i].iov_base)) {
-			xa.xa_parent = sc;
-			xa.xa_dmat = &xen_bus_dma_tag;
-			strlcpy(xa.xa_name, (char *)iovp1[i].iov_base,
-			    sizeof(xa.xa_name));
-			snprintf(xa.xa_node, sizeof(xa.xa_node), "device/%s",
-			    (char *)iovp1[i].iov_base);
-			config_found((struct device *)sc, &xa,
-			    xen_attach_print);
+		if (strcmp("suspend", (char *)iovp1[i].iov_base) == 0)
 			continue;
-		}
 		snprintf(path, sizeof(path), "device/%s",
 		    (char *)iovp1[i].iov_base);
 		if ((error = xs_cmd(&xst, XS_LIST, path, &iovp2,
