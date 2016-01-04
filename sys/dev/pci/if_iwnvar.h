@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwnvar.h,v 1.28 2014/09/09 18:55:08 sthen Exp $	*/
+/*	$OpenBSD: if_iwnvar.h,v 1.29 2016/01/04 13:54:19 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008
@@ -259,6 +259,8 @@ struct iwn_softc {
 
 	struct iwn_rx_stat	last_rx_stat;
 	int			last_rx_valid;
+#define IWN_LAST_RX_VALID	0x01
+#define IWN_LAST_RX_AMPDU	0x02
 	struct iwn_ucode_info	ucode_info;
 	struct iwn_rxon		rxon;
 	uint32_t		rawtemp;

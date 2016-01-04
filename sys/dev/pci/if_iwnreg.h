@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwnreg.h,v 1.49 2014/09/09 18:56:24 sthen Exp $	*/
+/*	$OpenBSD: if_iwnreg.h,v 1.50 2016/01/04 13:54:19 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008
@@ -301,7 +301,7 @@
 #define IWN_FH_RX_CONFIG_RB_SIZE_8K	(1U << 16)
 #define IWN_FH_RX_CONFIG_SINGLE_FRAME	(1U << 15)
 #define IWN_FH_RX_CONFIG_IRQ_DST_HOST	(1U << 12)
-#define IWN_FH_RX_CONFIG_RB_TIMEOUT(x)	((x) << 4)
+#define IWN_FH_RX_CONFIG_RB_TIMEOUT(x)	((x) << 4) /* units 32 usec */
 #define IWN_FH_RX_CONFIG_IGN_RXF_EMPTY	(1U <<  2)
 
 /* Possible flags for register IWN_FH_TX_CONFIG. */
@@ -383,6 +383,12 @@ struct iwn_rx_status {
 
 struct iwn_rx_desc {
 	uint32_t	len;
+#define IWN_RX_DESC_LEN_MASK		0x00003fff
+#define IWN_RX_DESC_LEN_SHIFT		0
+#define IWN_RX_DESC_FLAG_FLUSH_RB_REQ	0x80000000
+#define IWN_RX_DESC_FLAG_IGNORE_TC	0x40000000
+#define IWN_RX_DESC_FLAG_FAST_IRQ	0x20000000
+
 	uint8_t		type;
 #define IWN_UC_READY			  1
 #define IWN_ADD_NODE_DONE		 24
@@ -400,7 +406,7 @@ struct iwn_rx_desc {
 #define IWN_RX_DONE			195
 #define IWN_RX_COMPRESSED_BA		197
 
-	uint8_t		flags;
+	uint8_t		flags; /* XXX iwlwifi calls this "group_id" */
 	uint8_t		idx;
 	uint8_t		qid;
 } __packed;
@@ -488,12 +494,17 @@ struct iwn_rxon {
 #define IWN_RXON_24GHZ		(1 <<  0)
 #define IWN_RXON_CCK		(1 <<  1)
 #define IWN_RXON_AUTO		(1 <<  2)
+#define IWN_RXON_TGG_PROT	(1 <<  3)
 #define IWN_RXON_SHSLOT		(1 <<  4)
 #define IWN_RXON_SHPREAMBLE	(1 <<  5)
 #define IWN_RXON_NODIVERSITY	(1 <<  7)
 #define IWN_RXON_ANTENNA_A	(1 <<  8)
 #define IWN_RXON_ANTENNA_B	(1 <<  9)
 #define IWN_RXON_TSF		(1 << 15)
+#define IWN_RXON_HT_HT40MINUS	(1 << 22)
+#define IWN_RXON_HT_PROTMODE(x)	((x) << 23) /* 2 bits */
+#define IWN_RXON_HT_CHANMODE_PURE40	(1 << 25)
+#define IWN_RXON_HT_CHANMODE_MIXED2040	(2 << 25)
 #define IWN_RXON_CTS_TO_SELF	(1 << 30)
 
 	uint32_t	filter;
@@ -630,7 +641,12 @@ struct iwn4965_node_info {
 	uint32_t	reserved7;
 } __packed;
 
+#define IWN_RFLAG_MCS		(1 << 0)
 #define IWN_RFLAG_CCK		(1 << 1)
+#define IWN_RFLAG_GREENFIELD	(1 << 2)
+#define IWN_RFLAG_HT40		(1 << 3)
+#define IWN_RFLAG_DUPLICATE	(1 << 4)
+#define IWN_RFLAG_SGI		(1 << 5)
 #define IWN_RFLAG_ANT(x)	((x) << 6)
 
 /* Structure for command IWN_CMD_TX_DATA. */
@@ -1222,7 +1238,12 @@ struct iwn_rx_stat {
 	uint64_t	tstamp;
 	uint32_t	beacon;
 	uint16_t	flags;
+#define IWN_STAT_FLAG_24GHZ		(1 << 0)
+#define IWN_STAT_FLAG_MOD_CCK		(1 << 1)
 #define IWN_STAT_FLAG_SHPREAMBLE	(1 << 2)
+#define IWN_STAT_FLAG_NARROW_BAND	(1 << 3)
+#define IWN_STAT_FLAG_ANT(x)		((x) << 4) /* 3 bits */
+#define IWN_STAT_FLAG_AGG		(1 << 7)
 
 	uint16_t	chan;
 	uint8_t		phybuf[32];
@@ -1659,25 +1680,33 @@ static const struct iwn_chan_band {
 #define IWN_RIDX_CCK1	0
 #define IWN_RIDX_OFDM6	4
 
+#define IWN_PLCP_INVALID 0xff
+
 static const struct iwn_rate {
 	uint8_t	rate;
 	uint8_t	plcp;
 	uint8_t	flags;
+	uint8_t	ht_plcp;
+	uint8_t	ht_flags;
 } iwn_rates[IWN_RIDX_MAX + 1] = {
-	{   2,  10, IWN_RFLAG_CCK },
-	{   4,  20, IWN_RFLAG_CCK },
-	{  11,  55, IWN_RFLAG_CCK },
-	{  22, 110, IWN_RFLAG_CCK },
-	{  12, 0xd, 0 },
-	{  18, 0xf, 0 },
-	{  24, 0x5, 0 },
-	{  36, 0x7, 0 },
-	{  48, 0x9, 0 },
-	{  72, 0xb, 0 },
-	{  96, 0x1, 0 },
-	{ 108, 0x3, 0 },
-	{ 120, 0x3, 0 }
+		/* Legacy */		/* HT */ 
+	{   2,  10, IWN_RFLAG_CCK,	IWN_PLCP_INVALID, 0 },
+	{   4,  20, IWN_RFLAG_CCK,	IWN_PLCP_INVALID, 0 },
+	{  11,  55, IWN_RFLAG_CCK,	IWN_PLCP_INVALID, 0 },
+	{  22, 110, IWN_RFLAG_CCK,	IWN_PLCP_INVALID, 0 },
+	{  12, 0xd, 0,			0, IWN_RFLAG_MCS    },
+	{  18, 0xf, 0, 			IWN_PLCP_INVALID, 0 },
+	{  24, 0x5, 0, 			1, IWN_RFLAG_MCS    },
+	{  36, 0x7, 0, 			2, IWN_RFLAG_MCS,   },
+	{  48, 0x9, 0,			3, IWN_RFLAG_MCS,   },
+	{  72, 0xb, 0,			4, IWN_RFLAG_MCS,   },
+	{  96, 0x1, 0, 			5, IWN_RFLAG_MCS,   },
+	{ 108, 0x3, 0, 			6, IWN_RFLAG_MCS,   },
+	{ 128, IWN_PLCP_INVALID, 0,	7, IWN_RFLAG_MCS,   }
 };
+
+/* Convert an MCS index into an iwn_rates[] index. */
+const int iwn_mcs2ridx[] = { 4, 6, 7, 8, 9, 10, 11, 12 };
 
 #define IWN4965_MAX_PWR_INDEX	107
 
