@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.148 2016/01/04 12:32:06 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.149 2016/01/04 13:29:31 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -2420,8 +2420,10 @@ ieee80211_recv_addba_req(struct ieee80211com *ic, struct mbuf *m,
 
 	token = frm[2];
 	params = LE_READ_2(&frm[3]);
-	tid = (params >> 2) & 0xf;
-	bufsz = (params >> 6) & 0x3ff;
+	tid = ((params & IEEE80211_ADDBA_TID_MASK) >>
+	    IEEE80211_ADDBA_TID_SHIFT);
+	bufsz = (params & IEEE80211_ADDBA_BUFSZ_MASK) >>
+	    IEEE80211_ADDBA_BUFSZ_SHIFT;
 	timeout = LE_READ_2(&frm[5]);
 	ssn = LE_READ_2(&frm[7]) >> 4;
 
