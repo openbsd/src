@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar9287.c,v 1.23 2015/11/24 17:11:39 mpi Exp $	*/
+/*	$OpenBSD: ar9287.c,v 1.24 2016/01/05 18:41:15 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -201,11 +201,9 @@ ar9287_init_from_rom(struct athn_softc *sc, struct ieee80211_channel *c,
 	}
 
 	reg = AR_READ(sc, AR_PHY_SETTLING);
-#ifndef IEEE80211_NO_HT
 	if (extc != NULL)
 		reg = RW(reg, AR_PHY_SETTLING_SWITCH, modal->swSettleHt40);
 	else
-#endif
 		reg = RW(reg, AR_PHY_SETTLING_SWITCH, modal->switchSettling);
 	AR_WRITE(sc, AR_PHY_SETTLING, reg);
 
@@ -440,11 +438,9 @@ ar9287_set_txpower(struct athn_softc *sc, struct ieee80211_channel *c,
 	const struct ar9287_eeprom *eep = sc->eep;
 	const struct ar9287_modal_eep_header *modal = &eep->modalHeader;
 	uint8_t tpow_cck[4], tpow_ofdm[4];
-#ifndef IEEE80211_NO_HT
 	uint8_t tpow_cck_ext[4], tpow_ofdm_ext[4];
 	uint8_t tpow_ht20[8], tpow_ht40[8];
 	uint8_t ht40inc;
-#endif
 	int16_t pwr = 0, max_ant_gain, power[ATHN_POWER_COUNT];
 	int i;
 
@@ -471,7 +467,6 @@ ar9287_set_txpower(struct athn_softc *sc, struct ieee80211_channel *c,
 	ar5008_get_lg_tpow(sc, c, AR_CTL_11G, eep->calTargetPower2G,
 	    AR9287_NUM_2G_20_TARGET_POWERS, tpow_ofdm);
 
-#ifndef IEEE80211_NO_HT
 	/* Get HT-20 target powers. */
 	ar5008_get_ht_tpow(sc, c, AR_CTL_2GHT20, eep->calTargetPower2GHT20,
 	    AR9287_NUM_2G_20_TARGET_POWERS, tpow_ht20);
@@ -492,7 +487,6 @@ ar9287_set_txpower(struct athn_softc *sc, struct ieee80211_channel *c,
 		    eep->calTargetPower2G, AR9287_NUM_2G_20_TARGET_POWERS,
 		    tpow_ofdm_ext);
 	}
-#endif
 
 	memset(power, 0, sizeof(power));
 	/* Shuffle target powers accross transmit rates. */
@@ -512,7 +506,6 @@ ar9287_set_txpower(struct athn_softc *sc, struct ieee80211_channel *c,
 	power[ATHN_POWER_CCK55_SP] = tpow_cck[2];
 	power[ATHN_POWER_CCK11_LP] =
 	power[ATHN_POWER_CCK11_SP] = tpow_cck[3];
-#ifndef IEEE80211_NO_HT
 	for (i = 0; i < nitems(tpow_ht20); i++)
 		power[ATHN_POWER_HT20(i)] = tpow_ht20[i];
 	if (extc != NULL) {
@@ -529,7 +522,6 @@ ar9287_set_txpower(struct athn_softc *sc, struct ieee80211_channel *c,
 		if (IEEE80211_IS_CHAN_2GHZ(c))
 			power[ATHN_POWER_CCK_EXT] = tpow_cck_ext[0];
 	}
-#endif
 
 	for (i = 0; i < ATHN_POWER_COUNT; i++) {
 		power[i] -= AR_PWR_TABLE_OFFSET_DB * 2;	/* In half dB. */

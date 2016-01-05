@@ -1,4 +1,4 @@
-/*	$OpenBSD: athn.c,v 1.91 2015/12/03 14:39:37 stsp Exp $	*/
+/*	$OpenBSD: athn.c,v 1.92 2016/01/05 18:41:15 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -285,7 +285,6 @@ athn_attach(struct athn_softc *sc)
 	    IEEE80211_C_SHPREAMBLE |	/* Short preamble supported. */
 	    IEEE80211_C_PMGT;		/* Power saving supported. */
 
-#ifndef IEEE80211_NO_HT
 	if (sc->flags & ATHN_FLAG_11N) {
 		int i, ntxstreams, nrxstreams;
 
@@ -318,7 +317,6 @@ athn_attach(struct athn_softc *sc)
 			ic->ic_tx_mcs_set |= (ntxstreams - 1) << 2;
 		}
 	}
-#endif
 
 	/* Set supported rates. */
 	if (sc->flags & ATHN_FLAG_11G) {
@@ -451,10 +449,8 @@ athn_rx_start(struct athn_softc *sc)
 
 	/* Set Rx filter. */
 	rfilt = AR_RX_FILTER_UCAST | AR_RX_FILTER_BCAST | AR_RX_FILTER_MCAST;
-#ifndef IEEE80211_NO_HT
 	/* Want Compressed Block Ack Requests. */
 	rfilt |= AR_RX_FILTER_COMPR_BAR;
-#endif
 	rfilt |= AR_RX_FILTER_BEACON;
 	if (ic->ic_opmode != IEEE80211_M_STA) {
 		rfilt |= AR_RX_FILTER_PROBEREQ;
@@ -2511,10 +2507,9 @@ athn_clock_rate(struct athn_softc *sc)
 		clockrate = AR_CLOCK_RATE_CCK;
 	} else
 		clockrate = AR_CLOCK_RATE_2GHZ_OFDM;
-#ifndef IEEE80211_NO_HT
 	if (sc->curchanext != NULL)
 		clockrate *= 2;
-#endif
+
 	return (clockrate);
 }
 

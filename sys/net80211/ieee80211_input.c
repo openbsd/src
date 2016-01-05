@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.149 2016/01/04 13:29:31 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.150 2016/01/05 18:41:16 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -60,19 +60,15 @@
 
 struct	mbuf *ieee80211_defrag(struct ieee80211com *, struct mbuf *, int);
 void	ieee80211_defrag_timeout(void *);
-#ifndef IEEE80211_NO_HT
 void	ieee80211_input_ba(struct ifnet *, struct mbuf *,
 	    struct ieee80211_node *, int, struct ieee80211_rxinfo *);
 void	ieee80211_ba_move_window(struct ieee80211com *,
 	    struct ieee80211_node *, u_int8_t, u_int16_t);
-#endif
 struct	mbuf *ieee80211_align_mbuf(struct mbuf *);
 void	ieee80211_decap(struct ieee80211com *, struct mbuf *,
 	    struct ieee80211_node *, int);
-#ifndef IEEE80211_NO_HT
 void	ieee80211_amsdu_decap(struct ieee80211com *, struct mbuf *,
 	    struct ieee80211_node *, int);
-#endif
 void	ieee80211_deliver_data(struct ieee80211com *, struct mbuf *,
 	    struct ieee80211_node *);
 int	ieee80211_parse_edca_params_body(struct ieee80211com *,
@@ -102,14 +98,12 @@ void	ieee80211_recv_deauth(struct ieee80211com *, struct mbuf *,
 	    struct ieee80211_node *);
 void	ieee80211_recv_disassoc(struct ieee80211com *, struct mbuf *,
 	    struct ieee80211_node *);
-#ifndef IEEE80211_NO_HT
 void	ieee80211_recv_addba_req(struct ieee80211com *, struct mbuf *,
 	    struct ieee80211_node *);
 void	ieee80211_recv_addba_resp(struct ieee80211com *, struct mbuf *,
 	    struct ieee80211_node *);
 void	ieee80211_recv_delba(struct ieee80211com *, struct mbuf *,
 	    struct ieee80211_node *);
-#endif
 void	ieee80211_recv_sa_query_req(struct ieee80211com *, struct mbuf *,
 	    struct ieee80211_node *);
 #ifndef IEEE80211_STA_ONLY
@@ -122,12 +116,10 @@ void	ieee80211_recv_action(struct ieee80211com *, struct mbuf *,
 void	ieee80211_recv_pspoll(struct ieee80211com *, struct mbuf *,
 	    struct ieee80211_node *);
 #endif
-#ifndef IEEE80211_NO_HT
 void	ieee80211_recv_bar(struct ieee80211com *, struct mbuf *,
 	    struct ieee80211_node *);
 void	ieee80211_bar_tid(struct ieee80211com *, struct ieee80211_node *,
 	    u_int8_t, u_int16_t);
-#endif
 void	ieee80211_input_print(struct ieee80211com *,  struct ifnet *,
 	    struct ieee80211_frame *, struct ieee80211_rxinfo *);
 void	ieee80211_input_print_task(void *);
@@ -279,7 +271,6 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 		tid = 0;
 	}
 
-#ifndef IEEE80211_NO_HT
 	if (type == IEEE80211_FC0_TYPE_DATA && hasqos &&
 	    !(rxi->rxi_flags & IEEE80211_RXI_AMPDU_DONE)) {
 		int ba_state = ni->ni_rx_ba[tid].ba_state;
@@ -314,7 +305,6 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 			return;	/* don't free m! */
 		}
 	}
-#endif
 
 	/* duplicate detection (see 9.2.9) */
 	if (ieee80211_has_seq(wh) &&
@@ -497,12 +487,10 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 			bpf_mtap(ic->ic_rawbpf, m, BPF_DIRECTION_IN);
 #endif
 
-#ifndef IEEE80211_NO_HT
 		if ((ni->ni_flags & IEEE80211_NODE_HT) &&
 		    hasqos && (qos & IEEE80211_QOS_AMSDU))
 			ieee80211_amsdu_decap(ic, m, ni, hdrlen);
 		else
-#endif
 			ieee80211_decap(ic, m, ni, hdrlen);
 		return;
 
@@ -580,11 +568,9 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 			ieee80211_recv_pspoll(ic, m, ni);
 			break;
 #endif
-#ifndef IEEE80211_NO_HT
 		case IEEE80211_FC0_SUBTYPE_BAR:
 			ieee80211_recv_bar(ic, m, ni);
 			break;
-#endif
 		default:
 			break;
 		}
@@ -697,7 +683,6 @@ ieee80211_defrag_timeout(void *arg)
 	splx(s);
 }
 
-#ifndef IEEE80211_NO_HT
 /*
  * Process a received data MPDU related to a specific HT-immediate Block Ack
  * agreement (see 9.10.7.6).
@@ -809,7 +794,6 @@ ieee80211_ba_move_window(struct ieee80211com *ic, struct ieee80211_node *ni,
 	}
 	ba->ba_winend = (ba->ba_winstart + ba->ba_winsize - 1) & 0xfff;
 }
-#endif	/* !IEEE80211_NO_HT */
 
 void
 ieee80211_deliver_data(struct ieee80211com *ic, struct mbuf *m,
@@ -1008,7 +992,6 @@ ieee80211_decap(struct ieee80211com *ic, struct mbuf *m,
 	ieee80211_deliver_data(ic, m, ni);
 }
 
-#ifndef IEEE80211_NO_HT
 /*
  * Decapsulate an Aggregate MSDU (see 7.2.2.2).
  */
@@ -1088,7 +1071,6 @@ ieee80211_amsdu_decap(struct ieee80211com *ic, struct mbuf *m,
 		m_adj(m, pad);
 	}
 }
-#endif	/* !IEEE80211_NO_HT */
 
 /*
  * Parse an EDCA Parameter Set element (see 7.3.2.27).
@@ -1461,14 +1443,12 @@ ieee80211_recv_probe_resp(struct ieee80211com *ic, struct mbuf *m,
 		case IEEE80211_ELEMID_EDCAPARMS:
 			edcaie = frm;
 			break;
-#ifndef IEEE80211_NO_HT
 		case IEEE80211_ELEMID_HTCAPS:
 			htcaps = frm;
 			break;
 		case IEEE80211_ELEMID_HTOP:
 			htop = frm;
 			break;
-#endif
 		case IEEE80211_ELEMID_VENDOR:
 			if (frm[1] < 4) {
 				ic->ic_stats.is_rx_elem_toosmall++;
@@ -1657,12 +1637,10 @@ ieee80211_recv_probe_resp(struct ieee80211com *ic, struct mbuf *m,
 	ni->ni_erp = erp;
 	/* NB: must be after ni_chan is setup */
 	ieee80211_setup_rates(ic, ni, rates, xrates, IEEE80211_F_DOSORT);
-#ifndef IEEE80211_NO_HT
 	if (htcaps)
 		ieee80211_setup_htcaps(ni, htcaps + 2, htcaps[1]);
 	if (htop)
 		ieee80211_setup_htop(ni, htop + 2, htop[1]);
-#endif
 #ifndef IEEE80211_STA_ONLY
 	if (ic->ic_opmode == IEEE80211_M_IBSS && is_new && isprobe) {
 		/*
@@ -1717,11 +1695,9 @@ ieee80211_recv_probe_req(struct ieee80211com *ic, struct mbuf *m,
 		case IEEE80211_ELEMID_XRATES:
 			xrates = frm;
 			break;
-#ifndef IEEE80211_NO_HT
 		case IEEE80211_ELEMID_HTCAPS:
 			htcaps = frm;
 			break;
-#endif
 		}
 		frm += 2 + frm[1];
 	}
@@ -1768,10 +1744,8 @@ ieee80211_recv_probe_req(struct ieee80211com *ic, struct mbuf *m,
 		    ether_sprintf((u_int8_t *)wh->i_addr2)));
 		return;
 	}
-#ifndef IEEE80211_NO_HT
 	if (htcaps)
 		ieee80211_setup_htcaps(ni, htcaps + 2, htcaps[1]);
-#endif
 	IEEE80211_SEND_MGMT(ic, ni, IEEE80211_FC0_SUBTYPE_PROBE_RESP, 0);
 }
 #endif	/* IEEE80211_STA_ONLY */
@@ -1895,11 +1869,9 @@ ieee80211_recv_assoc_req(struct ieee80211com *ic, struct mbuf *m,
 			break;
 		case IEEE80211_ELEMID_QOS_CAP:
 			break;
-#ifndef IEEE80211_NO_HT
 		case IEEE80211_ELEMID_HTCAPS:
 			htcaps = frm;
 			break;
-#endif
 		case IEEE80211_ELEMID_VENDOR:
 			if (frm[1] < 4) {
 				ic->ic_stats.is_rx_elem_toosmall++;
@@ -2111,10 +2083,8 @@ ieee80211_recv_assoc_req(struct ieee80211com *ic, struct mbuf *m,
 	ni->ni_intval = bintval;
 	ni->ni_capinfo = capinfo;
 	ni->ni_chan = ic->ic_bss->ni_chan;
-#ifndef IEEE80211_NO_HT
 	if (htcaps)
 		ieee80211_setup_htcaps(ni, htcaps + 2, htcaps[1]);
-#endif
  end:
 	if (status != 0) {
 		IEEE80211_SEND_MGMT(ic, ni, resp, status);
@@ -2192,14 +2162,12 @@ ieee80211_recv_assoc_resp(struct ieee80211com *ic, struct mbuf *m,
 		case IEEE80211_ELEMID_EDCAPARMS:
 			edcaie = frm;
 			break;
-#ifndef IEEE80211_NO_HT
 		case IEEE80211_ELEMID_HTCAPS:
 			htcaps = frm;
 			break;
 		case IEEE80211_ELEMID_HTOP:
 			htop = frm;
 			break;
-#endif
 		case IEEE80211_ELEMID_VENDOR:
 			if (frm[1] < 4) {
 				ic->ic_stats.is_rx_elem_toosmall++;
@@ -2241,7 +2209,6 @@ ieee80211_recv_assoc_resp(struct ieee80211com *ic, struct mbuf *m,
 		else	/* for Reassociation */
 			ni->ni_flags &= ~IEEE80211_NODE_QOS;
 	}
-#ifndef IEEE80211_NO_HT
 	if (htcaps)
 		ieee80211_setup_htcaps(ni, htcaps + 2, htcaps[1]);
 	if (htop)
@@ -2252,7 +2219,6 @@ ieee80211_recv_assoc_resp(struct ieee80211com *ic, struct mbuf *m,
 	if (ni->ni_flags & IEEE80211_NODE_HT)
 		ieee80211_setmode(ic, IEEE80211_MODE_11N);
 	else
-#endif
 		ieee80211_setmode(ic, ieee80211_chan2mode(ic, ni->ni_chan));
 	/*
 	 * Reset the erp state (mostly the slot time) now that
@@ -2385,7 +2351,6 @@ ieee80211_recv_disassoc(struct ieee80211com *ic, struct mbuf *m,
 	}
 }
 
-#ifndef IEEE80211_NO_HT
 /*-
  * ADDBA Request frame format:
  * [1] Category
@@ -2650,7 +2615,6 @@ ieee80211_recv_delba(struct ieee80211com *ic, struct mbuf *m,
 		timeout_del(&ba->ba_to);
 	}
 }
-#endif	/* !IEEE80211_NO_HT */
 
 /*-
  * SA Query Request frame format:
@@ -2746,7 +2710,6 @@ ieee80211_recv_action(struct ieee80211com *ic, struct mbuf *m,
 	frm = (const u_int8_t *)&wh[1];
 
 	switch (frm[0]) {
-#ifndef IEEE80211_NO_HT
 	case IEEE80211_CATEG_BA:
 		switch (frm[1]) {
 		case IEEE80211_ACTION_ADDBA_REQ:
@@ -2760,7 +2723,6 @@ ieee80211_recv_action(struct ieee80211com *ic, struct mbuf *m,
 			break;
 		}
 		break;
-#endif
 	case IEEE80211_CATEG_SA_QUERY:
 		switch (frm[1]) {
 		case IEEE80211_ACTION_SA_QUERY_REQ:
@@ -2883,7 +2845,6 @@ ieee80211_recv_pspoll(struct ieee80211com *ic, struct mbuf *m,
 }
 #endif	/* IEEE80211_STA_ONLY */
 
-#ifndef IEEE80211_NO_HT
 /*
  * Process an incoming BlockAckReq control frame (see 7.2.1.7).
  */
@@ -2970,4 +2931,3 @@ ieee80211_bar_tid(struct ieee80211com *ic, struct ieee80211_node *ni,
 	if (SEQ_LT(ba->ba_winstart, ssn))
 		ieee80211_ba_move_window(ic, ni, tid, ssn);
 }
-#endif	/* !IEEE80211_NO_HT */

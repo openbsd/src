@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar9380.c,v 1.23 2015/11/24 17:11:39 mpi Exp $	*/
+/*	$OpenBSD: ar9380.c,v 1.24 2016/01/05 18:41:15 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2011 Damien Bergamini <damien.bergamini@free.fr>
@@ -582,7 +582,6 @@ ar9380_spur_mitigate_ofdm(struct athn_softc *sc, struct ieee80211_channel *c,
 	AR_WRITE_BARRIER(sc);
 
 	freq = c->ic_freq;
-#ifndef IEEE80211_NO_HT
 	if (extc != NULL) {
 		range = 19;	/* +/- 19MHz range. */
 		if (AR_READ(sc, AR_PHY_GEN_CTRL) & AR_PHY_GC_DYN2040_PRI_CH)
@@ -590,7 +589,6 @@ ar9380_spur_mitigate_ofdm(struct athn_softc *sc, struct ieee80211_channel *c,
 		else
 			freq -= 10;
 	} else
-#endif
 		range = 10;	/* +/- 10MHz range. */
 	for (i = 0; i < AR9380_EEPROM_MODAL_SPURS; i++) {
 		spur = spurchans[i];
@@ -609,7 +607,6 @@ ar9380_spur_mitigate_ofdm(struct athn_softc *sc, struct ieee80211_channel *c,
 		return;
 
 	/* Enable OFDM spur mitigation. */
-#ifndef IEEE80211_NO_HT
 	if (extc != NULL) {
 		spur_delta_phase = (spur * 131072) / 5;
 		reg = AR_READ(sc, AR_PHY_GEN_CTRL);
@@ -622,9 +619,7 @@ ar9380_spur_mitigate_ofdm(struct athn_softc *sc, struct ieee80211_channel *c,
 			    (reg & AR_PHY_GC_DYN2040_PRI_CH) != 0;
 			spur_off = spur - 10;
 		}
-	} else
-#endif
-	{
+	} else {
 		spur_delta_phase = (spur * 262144) / 5;
 		spur_subchannel_sd = 0;
 		spur_off = spur;

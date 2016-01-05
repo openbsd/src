@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.71 2015/12/14 08:34:56 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.72 2016/01/05 18:41:15 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -293,7 +293,6 @@ int	iwm_nvm_read_chunk(struct iwm_softc *, uint16_t, uint16_t, uint16_t,
 int	iwm_nvm_read_section(struct iwm_softc *, uint16_t, uint8_t *,
 				uint16_t *);
 void	iwm_init_channel_map(struct iwm_softc *, const uint16_t * const);
-#ifndef IEEE80211_NO_HT
 void	iwm_setup_ht_rates(struct iwm_softc *);
 int	iwm_ampdu_rx_start(struct ieee80211com *,
 		    struct ieee80211_node *, uint8_t);
@@ -308,8 +307,6 @@ void	iwm_ampdu_tx_stop(struct ieee80211com *,
 		    struct ieee80211_node *, uint8_t);
 #endif
 void	iwm_ba_task(void *);
-
-#endif /* IEEE80211_NO_HT */
 
 int	iwm_parse_nvm_data(struct iwm_softc *, const uint16_t *,
 				const uint16_t *, const uint16_t *, uint8_t,
@@ -2519,14 +2516,11 @@ iwm_init_channel_map(struct iwm_softc *sc, const uint16_t * const nvm_ch_flags)
 		if (!(ch_flags & IWM_NVM_CHANNEL_ACTIVE))
 			channel->ic_flags |= IEEE80211_CHAN_PASSIVE;
 
-#ifndef IEEE80211_NO_HT
 		if (data->sku_cap_11n_enable)
 			channel->ic_flags |= IEEE80211_CHAN_HT;
-#endif
 	}
 }
 
-#ifndef IEEE80211_NO_HT
 void
 iwm_setup_ht_rates(struct iwm_softc *sc)
 {
@@ -2656,7 +2650,6 @@ iwm_ampdu_rx_stop(struct ieee80211com *ic, struct ieee80211_node *ni,
 	sc->ba_tid = tid;
 	task_add(systq, &sc->ba_task);
 }
-#endif /* IEEE80211_NO_HT */
 
 int
 iwm_parse_nvm_data(struct iwm_softc *sc,
@@ -2680,13 +2673,8 @@ iwm_parse_nvm_data(struct iwm_softc *sc,
 	sku = le16_to_cpup(nvm_sw + IWM_SKU);
 	data->sku_cap_band_24GHz_enable = sku & IWM_NVM_SKU_CAP_BAND_24GHZ;
 	data->sku_cap_band_52GHz_enable = sku & IWM_NVM_SKU_CAP_BAND_52GHZ;
-#ifndef IEEE80211_NO_HT
 	data->sku_cap_11n_enable = sku & IWM_NVM_SKU_CAP_11N_ENABLE;
 	data->sku_cap_mimo_disable = sku & IWM_NVM_SKU_CAP_MIMO_DISABLE;
-#else
-	data->sku_cap_11n_enable = 0;
-	data->sku_cap_mimo_disable = 1;
-#endif
 
 	if (!data->valid_tx_ant || !data->valid_rx_ant) {
 		DPRINTF(("%s: invalid antennas (0x%x, 0x%x)\n",
@@ -3859,29 +3847,23 @@ iwm_tx_fill_cmd(struct iwm_softc *sc, struct iwm_node *in,
 		/* for non-data, use the lowest supported rate */
 		ridx = (IEEE80211_IS_CHAN_5GHZ(ni->ni_chan)) ?
 		    IWM_RIDX_OFDM : IWM_RIDX_CCK;
-#ifndef IEEE80211_NO_HT
 	} else if (ic->ic_fixed_mcs != -1) {
 		ridx = sc->sc_fixed_ridx;
-#endif
 	} else if (ic->ic_fixed_rate != -1) {
 		ridx = sc->sc_fixed_ridx;
 	} else {
 		/* for data frames, use RS table */
-#ifndef IEEE80211_NO_HT
 		if (ni->ni_flags & IEEE80211_NODE_HT) {
 			tx->initial_rate_index =
 			    (nitems(iwm_mcs2ridx) - 1) - ni->ni_txmcs;
 		} else
-#endif
 			tx->initial_rate_index = (nrates - 1) - ni->ni_txrate;
 		tx->tx_flags |= htole32(IWM_TX_CMD_FLG_STA_RATE);
 		DPRINTFN(12, ("start with txrate %d\n", tx->initial_rate_index));
-#ifndef IEEE80211_NO_HT
 		if (ni->ni_flags & IEEE80211_NODE_HT) {
 			ridx = iwm_mcs2ridx[ni->ni_txmcs];
 			return &iwm_rates[ridx];
 		}
-#endif
 		ridx = 0;
 		for (i = 0; i < nrates; i++) {
 			if (iwm_rates[i].rate == (ni->ni_txrate &
@@ -3897,13 +3879,11 @@ iwm_tx_fill_cmd(struct iwm_softc *sc, struct iwm_node *in,
 	rate_flags = 1 << IWM_RATE_MCS_ANT_POS;
 	if (IWM_RIDX_IS_CCK(ridx))
 		rate_flags |= IWM_RATE_MCS_CCK_MSK;
-#ifndef IEEE80211_NO_HT
 	if ((ni->ni_flags & IEEE80211_NODE_HT) &&
 	    rinfo->ht_plcp != IWM_RATE_HT_SISO_MCS_INV_PLCP) {
 		rate_flags |= IWM_RATE_MCS_HT_MSK; 
 		tx->rate_n_flags = htole32(rate_flags | rinfo->ht_plcp);
 	} else
-#endif
 		tx->rate_n_flags = htole32(rate_flags | rinfo->plcp);
 
 	return rinfo;
@@ -4969,7 +4949,6 @@ iwm_mvm_mac_ctxt_cmd_common(struct iwm_softc *sc, struct iwm_node *in,
 		cmd->ac[txf].edca_txop = 0;
 	}
 
-#ifndef IEEE80211_NO_HT
 	if (ni->ni_flags & IEEE80211_NODE_HT) {
 		enum ieee80211_htprot htprot =
 		    (ni->ni_htop1 & IEEE80211_HTOP1_PROT_MASK);
@@ -4992,7 +4971,6 @@ iwm_mvm_mac_ctxt_cmd_common(struct iwm_softc *sc, struct iwm_node *in,
 
 		cmd->qos_flags |= htole32(IWM_MAC_QOS_FLG_TGN);
 	}
-#endif
 	if (ic->ic_flags & IEEE80211_F_USEPROT)
 		cmd->protection_flags |= htole32(IWM_MAC_PROT_FLG_TGG_PROTECT);
 
@@ -5367,17 +5345,11 @@ iwm_calib_timeout(void *arg)
 	int s, otxrate;
 
 	s = splnet();
-	if ((ic->ic_fixed_rate == -1
-#ifndef IEEE80211_NO_HT
-	    || ic->ic_fixed_mcs == -1
-#endif
-	    ) && ic->ic_opmode == IEEE80211_M_STA
-	    && ic->ic_bss) {
-#ifndef IEEE80211_NO_HT
+	if ((ic->ic_fixed_rate == -1 || ic->ic_fixed_mcs == -1) &&
+	    ic->ic_opmode == IEEE80211_M_STA && ic->ic_bss) {
 		if (ni->ni_flags & IEEE80211_NODE_HT)
 			otxrate = ni->ni_txmcs;
 		else
-#endif
 			otxrate = ni->ni_txrate;
 		ieee80211_amrr_choose(&sc->sc_amrr, &in->in_ni, &in->in_amn);
 
@@ -5385,13 +5357,10 @@ iwm_calib_timeout(void *arg)
 		 * If AMRR has chosen a new TX rate we must update
 		 * the firwmare's LQ rate table from process context.
 		 */
-#ifndef IEEE80211_NO_HT
 		if ((ni->ni_flags & IEEE80211_NODE_HT) &&
 		    otxrate != ni->ni_txmcs)
 			task_add(systq, &sc->setrates_task);
-		else
-#endif
-		if (otxrate != ni->ni_txrate)
+		else if (otxrate != ni->ni_txrate)
 			task_add(systq, &sc->setrates_task);
 	}
 	splx(s);
@@ -5442,7 +5411,6 @@ iwm_setrates(struct iwm_node *in)
 		if (j >= nitems(lq->rs_table))
 			break;
 		tab = 0;
-#ifndef IEEE80211_NO_HT
 		if ((ni->ni_flags & IEEE80211_NODE_HT) &&
 		    iwm_rates[ridx].ht_plcp != IWM_RATE_HT_SISO_MCS_INV_PLCP) {
 			for (i = ni->ni_txmcs; i >= 0; i--) {
@@ -5455,7 +5423,6 @@ iwm_setrates(struct iwm_node *in)
 				}
 			}
 		}
-#endif
 		if (tab == 0 && iwm_rates[ridx].plcp != IWM_RATE_INVM_PLCP) {
 			for (i = ni->ni_txrate; i >= 0; i--) {
 				if (iwm_rates[ridx].rate == (rs->rs_rates[i] &
@@ -5502,12 +5469,9 @@ iwm_media_change(struct ifnet *ifp)
 	if (error != ENETRESET)
 		return error;
 
-#ifndef IEEE80211_NO_HT
 	if (ic->ic_fixed_mcs != -1)
 		sc->sc_fixed_ridx = iwm_mcs2ridx[ic->ic_fixed_mcs];
-	else
-#endif
-	if (ic->ic_fixed_rate != -1) {
+	else if (ic->ic_fixed_rate != -1) {
 		rate = ic->ic_sup_rates[ic->ic_curmode].
 		    rs_rates[ic->ic_fixed_rate] & IEEE80211_RATE_VAL;
 		/* Map 802.11 rate to HW rate index. */
@@ -5623,9 +5587,7 @@ iwm_newstate_task(void *psc)
 
 		/* Start at lowest available bit-rate, AMRR will raise. */
 		in->in_ni.ni_txrate = 0;
-#ifndef IEEE80211_NO_HT
 		in->in_ni.ni_txmcs = 0;
-#endif
 		iwm_setrates(in);
 
 		timeout_add_msec(&sc->sc_calib_to, 500);
@@ -5915,9 +5877,8 @@ iwm_stop(struct ifnet *ifp, int disable)
 	task_del(sc->sc_nswq, &sc->newstate_task);
 	task_del(sc->sc_eswq, &sc->sc_eswk);
 	task_del(systq, &sc->setrates_task);
-#ifndef IEEE80211_NO_HT
 	task_del(systq, &sc->ba_task);
-#endif
+
 	sc->sc_newstate(ic, IEEE80211_S_INIT, -1);
 
 	timeout_del(&sc->sc_calib_to);
@@ -6603,10 +6564,9 @@ iwm_preinit(struct iwm_softc *sc)
 	    IWM_UCODE_API(sc->sc_fwver),
 	    ether_sprintf(sc->sc_nvm.hw_addr));
 
-#ifndef IEEE80211_NO_HT
 	if (sc->sc_nvm.sku_cap_11n_enable)
 		iwm_setup_ht_rates(sc);
-#endif
+
 	/* not all hardware can do 5GHz band */
 	if (!sc->sc_nvm.sku_cap_band_52GHz_enable)
 		memset(&ic->ic_sup_rates[IEEE80211_MODE_11A], 0,
@@ -6626,13 +6586,11 @@ iwm_preinit(struct iwm_softc *sc)
 	/* Override 802.11 state transition machine. */
 	sc->sc_newstate = ic->ic_newstate;
 	ic->ic_newstate = iwm_newstate;
-#ifndef IEEE80211_NO_HT
 	ic->ic_ampdu_rx_start = iwm_ampdu_rx_start;
 	ic->ic_ampdu_rx_stop = iwm_ampdu_rx_stop;
 #ifdef notyet
 	ic->ic_ampdu_tx_start = iwm_ampdu_tx_start;
 	ic->ic_ampdu_tx_stop = iwm_ampdu_tx_stop;
-#endif
 #endif
 	ieee80211_media_init(ifp, iwm_media_change, ieee80211_media_status);
 
@@ -6819,13 +6777,11 @@ iwm_attach(struct device *parent, struct device *self, void *aux)
 	    IEEE80211_C_SHSLOT |	/* short slot time supported */
 	    IEEE80211_C_SHPREAMBLE;	/* short preamble supported */
 
-#ifndef IEEE80211_NO_HT
 	/* No optional HT features supported for now, */
 	ic->ic_htcaps = 0;
 	ic->ic_htxcaps = 0;
 	ic->ic_txbfcaps = 0;
 	ic->ic_aselcaps = 0;
-#endif
 
 	ic->ic_sup_rates[IEEE80211_MODE_11A] = ieee80211_std_rateset_11a;
 	ic->ic_sup_rates[IEEE80211_MODE_11B] = ieee80211_std_rateset_11b;
@@ -6864,9 +6820,7 @@ iwm_attach(struct device *parent, struct device *self, void *aux)
 	task_set(&sc->init_task, iwm_init_task, sc);
 	task_set(&sc->newstate_task, iwm_newstate_task, sc);
 	task_set(&sc->setrates_task, iwm_setrates_task, sc);
-#ifndef IEEE80211_NO_HT
 	task_set(&sc->ba_task, iwm_ba_task, sc);
-#endif
 
 	/*
 	 * We cannot read the MAC address without loading the

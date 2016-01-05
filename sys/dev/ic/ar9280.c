@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar9280.c,v 1.24 2015/11/24 17:11:39 mpi Exp $	*/
+/*	$OpenBSD: ar9280.c,v 1.25 2016/01/05 18:41:15 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -373,14 +373,12 @@ ar9280_init_from_rom(struct athn_softc *sc, struct ieee80211_channel *c,
 		reg = RW(reg, AR_PHY_TX_END_PA_ON, modal->txFrameToPaOn);
 		AR_WRITE(sc, AR_PHY_RF_CTL2, reg);
 	}
-#ifndef IEEE80211_NO_HT
 	if (sc->eep_rev >= AR_EEP_MINOR_VER_3 && extc != NULL) {
 		/* Overwrite switch settling with HT-40 value. */
 		reg = AR_READ(sc, AR_PHY_SETTLING);
 		reg = RW(reg, AR_PHY_SETTLING_SWITCH, modal->swSettleHt40);
 		AR_WRITE(sc, AR_PHY_SETTLING, reg);
 	}
-#endif
 	if (sc->eep_rev >= AR_EEP_MINOR_VER_19) {
 		reg = AR_READ(sc, AR_PHY_CCK_TX_CTRL);
 		reg = RW(reg, AR_PHY_CCK_TX_CTRL_TX_DAC_SCALE_CCK,
@@ -504,7 +502,6 @@ ar9280_spur_mitigate(struct athn_softc *sc, struct ieee80211_channel *c,
 	    AR_PHY_SPUR_REG_ENABLE_VIT_SPUR_RSSI |
 	    SM(AR_PHY_SPUR_REG_SPUR_RSSI_THRESH, AR_SPUR_RSSI_THRESH));
 
-#ifndef IEEE80211_NO_HT
 	if (extc != NULL) {
 		spur_delta_phase = (spur * 262144) / 10;
 		if (spur < 0) {
@@ -514,9 +511,7 @@ ar9280_spur_mitigate(struct athn_softc *sc, struct ieee80211_channel *c,
 			spur_subchannel_sd = 0;
 			spur_off = spur - 10;
 		}
-	} else
-#endif
-	{
+	} else {
 		spur_delta_phase = (spur * 524288) / 10;
 		spur_subchannel_sd = 0;
 		spur_off = spur;

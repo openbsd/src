@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rtwn.c,v 1.11 2015/11/25 03:09:59 dlg Exp $	*/
+/*	$OpenBSD: if_rtwn.c,v 1.12 2016/01/05 18:41:15 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -299,7 +299,6 @@ rtwn_attach(struct device *parent, struct device *self, void *aux)
 	    IEEE80211_C_WEP |		/* WEP. */
 	    IEEE80211_C_RSN;		/* WPA/RSN. */
 
-#ifndef IEEE80211_NO_HT
 	/* Set HT capabilities. */
 	ic->ic_htcaps =
 	    IEEE80211_HTCAP_CBW20_40 |
@@ -307,7 +306,6 @@ rtwn_attach(struct device *parent, struct device *self, void *aux)
 	/* Set supported HT rates. */
 	for (i = 0; i < sc->nrxchains; i++)
 		ic->ic_sup_mcs[i] = 0xff;
-#endif
 
 	/* Set supported .11b and .11g rates. */
 	ic->ic_sup_rates[IEEE80211_MODE_11B] = ieee80211_std_rateset_11b;
@@ -2803,7 +2801,6 @@ rtwn_set_chan(struct rtwn_softc *sc, struct ieee80211_channel *c,
 		rtwn_rf_write(sc, i, R92C_RF_CHNLBW,
 		    RW(sc->rf_chnlbw[i], R92C_RF_CHNLBW_CHNL, chan));
 	}
-#ifndef IEEE80211_NO_HT
 	if (extc != NULL) {
 		uint32_t reg;
 
@@ -2842,9 +2839,7 @@ rtwn_set_chan(struct rtwn_softc *sc, struct ieee80211_channel *c,
 		/* Select 40MHz bandwidth. */
 		rtwn_rf_write(sc, 0, R92C_RF_CHNLBW,
 		    (sc->rf_chnlbw[0] & ~0xfff) | chan);
-	} else
-#endif
-	{
+	} else {
 		rtwn_write_1(sc, R92C_BWOPMODE,
 		    rtwn_read_1(sc, R92C_BWOPMODE) | R92C_BWOPMODE_20MHZ);
 

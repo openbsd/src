@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2860.c,v 1.86 2015/12/11 16:07:01 mpi Exp $	*/
+/*	$OpenBSD: rt2860.c,v 1.87 2016/01/05 18:41:15 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -345,10 +345,8 @@ rt2860_attachhook(struct device *self)
 #ifndef IEEE80211_STA_ONLY
 	ic->ic_node_leave = rt2860_node_leave;
 #endif
-#ifndef IEEE80211_NO_HT
 	ic->ic_ampdu_rx_start = rt2860_ampdu_rx_start;
 	ic->ic_ampdu_rx_stop = rt2860_ampdu_rx_stop;
-#endif
 	ic->ic_updateslot = rt2860_updateslot;
 	ic->ic_updateedca = rt2860_updateedca;
 	ic->ic_set_key = rt2860_set_key;
@@ -875,7 +873,6 @@ rt2860_node_leave(struct ieee80211com *ic, struct ieee80211_node *ni)
 }
 #endif
 
-#ifndef IEEE80211_NO_HT
 int
 rt2860_ampdu_rx_start(struct ieee80211com *ic, struct ieee80211_node *ni,
     uint8_t tid)
@@ -904,7 +901,6 @@ rt2860_ampdu_rx_stop(struct ieee80211com *ic, struct ieee80211_node *ni,
 	tmp &= ~((1 << tid) << 16);
 	RAL_WRITE(sc, RT2860_WCID_ENTRY(wcid) + 4, tmp);
 }
-#endif
 
 int
 rt2860_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_output.c,v 1.104 2016/01/04 13:29:04 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_output.c,v 1.105 2016/01/05 18:41:16 stsp Exp $	*/
 /*	$NetBSD: ieee80211_output.c,v 1.13 2004/05/31 11:02:55 dyoung Exp $	*/
 
 /*-
@@ -87,7 +87,6 @@ struct	mbuf *ieee80211_get_assoc_resp(struct ieee80211com *,
 #endif
 struct	mbuf *ieee80211_get_disassoc(struct ieee80211com *,
 	    struct ieee80211_node *, u_int16_t);
-#ifndef IEEE80211_NO_HT
 struct	mbuf *ieee80211_get_addba_req(struct ieee80211com *,
 	    struct ieee80211_node *, u_int8_t);
 struct	mbuf *ieee80211_get_addba_resp(struct ieee80211com *,
@@ -95,7 +94,6 @@ struct	mbuf *ieee80211_get_addba_resp(struct ieee80211com *,
 struct	mbuf *ieee80211_get_delba(struct ieee80211com *,
 	    struct ieee80211_node *, u_int8_t, u_int8_t, u_int16_t);
 uint8_t *ieee80211_add_wme_info(uint8_t *, struct ieee80211com *);
-#endif
 struct	mbuf *ieee80211_get_sa_query(struct ieee80211com *,
 	    struct ieee80211_node *, u_int8_t);
 struct	mbuf *ieee80211_get_action(struct ieee80211com *,
@@ -570,10 +568,8 @@ ieee80211_encap(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node **pni)
 
 		if (ic->ic_tid_noack & (1 << tid))
 			qos |= IEEE80211_QOS_ACK_POLICY_NOACK;
-#ifndef IEEE80211_NO_HT
 		else if (ni->ni_tx_ba[tid].ba_state == IEEE80211_BA_AGREED)
 			qos |= IEEE80211_QOS_ACK_POLICY_BA;
-#endif
 		qwh->i_fc[0] |= IEEE80211_FC0_SUBTYPE_QOS;
 		*(u_int16_t *)qwh->i_qos = htole16(qos);
 		*(u_int16_t *)qwh->i_seq =
@@ -831,7 +827,6 @@ ieee80211_add_qos_capability(u_int8_t *frm, struct ieee80211com *ic)
 	return frm;
 }
 
-#ifndef IEEE80211_NO_HT
 /*
  * Add a Wifi-Alliance WME (aka WMM) info element to a frame.
  * WME is a requirement for Wifi-Alliance compliance and some
@@ -850,7 +845,6 @@ ieee80211_add_wme_info(uint8_t *frm, struct ieee80211com *ic)
 
 	return frm;
 }
-#endif
 /*
  * Add an RSN element to a frame (see 802.11-2012 8.4.2.27)
  */
@@ -1018,7 +1012,6 @@ ieee80211_add_xrates(u_int8_t *frm, const struct ieee80211_rateset *rs)
 	return frm + nrates;
 }
 
-#ifndef IEEE80211_NO_HT
 /*
  * Add an HT Capabilities element to a frame (see 7.3.2.57).
  */
@@ -1058,7 +1051,6 @@ ieee80211_add_htop(u_int8_t *frm, struct ieee80211com *ic)
 	return frm;
 }
 #endif	/* !IEEE80211_STA_ONLY */
-#endif	/* !IEEE80211_NO_HT */
 
 #ifndef IEEE80211_STA_ONLY
 /*
@@ -1126,12 +1118,10 @@ ieee80211_get_probe_req(struct ieee80211com *ic, struct ieee80211_node *ni)
 	frm = ieee80211_add_rates(frm, rs);
 	if (rs->rs_nrates > IEEE80211_RATE_SIZE)
 		frm = ieee80211_add_xrates(frm, rs);
-#ifndef IEEE80211_NO_HT
 	if (ic->ic_flags & IEEE80211_F_HTON) {
 		frm = ieee80211_add_htcaps(frm, ic);
 		frm = ieee80211_add_wme_info(frm, ic);
 	}
-#endif
 
 	m->m_pkthdr.len = m->m_len = frm - mtod(m, u_int8_t *);
 
@@ -1203,12 +1193,10 @@ ieee80211_get_probe_resp(struct ieee80211com *ic, struct ieee80211_node *ni)
 	if ((ic->ic_flags & IEEE80211_F_RSNON) &&
 	    (ic->ic_bss->ni_rsnprotos & IEEE80211_PROTO_WPA))
 		frm = ieee80211_add_wpa(frm, ic, ic->ic_bss);
-#ifndef IEEE80211_NO_HT
 	if (ic->ic_flags & IEEE80211_F_HTON) {
 		frm = ieee80211_add_htcaps(frm, ic);
 		frm = ieee80211_add_htop(frm, ic);
 	}
-#endif
 
 	m->m_pkthdr.len = m->m_len = frm - mtod(m, u_int8_t *);
 
@@ -1331,12 +1319,10 @@ ieee80211_get_assoc_req(struct ieee80211com *ic, struct ieee80211_node *ni,
 	if ((ic->ic_flags & IEEE80211_F_RSNON) &&
 	    (ni->ni_rsnprotos & IEEE80211_PROTO_WPA))
 		frm = ieee80211_add_wpa(frm, ic, ni);
-#ifndef IEEE80211_NO_HT
 	if (ic->ic_flags & IEEE80211_F_HTON) {
 		frm = ieee80211_add_htcaps(frm, ic);
 		frm = ieee80211_add_wme_info(frm, ic);
 	}
-#endif
 
 	m->m_pkthdr.len = m->m_len = frm - mtod(m, u_int8_t *);
 
@@ -1393,12 +1379,10 @@ ieee80211_get_assoc_resp(struct ieee80211com *ic, struct ieee80211_node *ni,
 		/* Association Comeback Time */
 		frm = ieee80211_add_tie(frm, 3, 1000 /* XXX */);
 	}
-#ifndef IEEE80211_NO_HT
 	if (ic->ic_flags & IEEE80211_F_HTON) {
 		frm = ieee80211_add_htcaps(frm, ic);
 		frm = ieee80211_add_htop(frm, ic);
 	}
-#endif
 
 	m->m_pkthdr.len = m->m_len = frm - mtod(m, u_int8_t *);
 
@@ -1427,7 +1411,6 @@ ieee80211_get_disassoc(struct ieee80211com *ic, struct ieee80211_node *ni,
 	return m;
 }
 
-#ifndef IEEE80211_NO_HT
 /*-
  * ADDBA Request frame format:
  * [1] Category
@@ -1542,7 +1525,6 @@ ieee80211_get_delba(struct ieee80211com *ic, struct ieee80211_node *ni,
 
 	return m;
 }
-#endif	/* !IEEE80211_NO_HT */
 
 /*-
  * SA Query Request/Reponse frame format:
@@ -1578,7 +1560,6 @@ ieee80211_get_action(struct ieee80211com *ic, struct ieee80211_node *ni,
 	struct mbuf *m = NULL;
 
 	switch (categ) {
-#ifndef IEEE80211_NO_HT
 	case IEEE80211_CATEG_BA:
 		switch (action) {
 		case IEEE80211_ACTION_ADDBA_REQ:
@@ -1594,7 +1575,6 @@ ieee80211_get_action(struct ieee80211com *ic, struct ieee80211_node *ni,
 			break;
 		}
 		break;
-#endif
 	case IEEE80211_CATEG_SA_QUERY:
 		switch (action) {
 #ifndef IEEE80211_STA_ONLY
@@ -1853,12 +1833,10 @@ ieee80211_beacon_alloc(struct ieee80211com *ic, struct ieee80211_node *ni)
 	if ((ic->ic_flags & IEEE80211_F_RSNON) &&
 	    (ni->ni_rsnprotos & IEEE80211_PROTO_WPA))
 		frm = ieee80211_add_wpa(frm, ic, ni);
-#ifndef IEEE80211_NO_HT
 	if (ic->ic_flags & IEEE80211_F_HTON) {
 		frm = ieee80211_add_htcaps(frm, ic);
 		frm = ieee80211_add_htop(frm, ic);
 	}
-#endif
 
 	m->m_pkthdr.len = m->m_len = frm - mtod(m, u_int8_t *);
 	m->m_pkthdr.ph_cookie = ni;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5416reg.h,v 1.5 2012/10/20 09:54:20 stsp Exp $	*/
+/*	$OpenBSD: ar5416reg.h,v 1.6 2016/01/05 18:41:15 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -206,7 +206,6 @@ static const uint32_t ar5416_vals_5g20[] = {
 	0x00000000, 0x00000000, 0x00000000
 };
 
-#ifndef IEEE80211_NO_HT
 static const uint32_t ar5416_vals_5g40[] = {
 	0x00000460, 0x000002d0, 0x00001cc0, 0x00014000, 0x07d007d0,
 	0x128d93cf, 0x08f04800, 0x00003210, 0x000003c4, 0x02020200,
@@ -238,7 +237,6 @@ static const uint32_t ar5416_vals_2g40[] = {
 	0x950f8ccf, 0xa5cf9b4f, 0xbddfaf1f, 0xd1ffc93f, 0x00000000,
 	0x00000000, 0x00000000, 0x00000000
 };
-#endif
 
 static const uint32_t ar5416_vals_2g20[] = {
 	0x00000160, 0x0000018c, 0x00003e38, 0x0000b000, 0x08400b00,
@@ -416,10 +414,8 @@ static const struct athn_ini ar5416_ini = {
 	nitems(ar5416_regs),
 	ar5416_regs,
 	ar5416_vals_5g20,
-#ifndef IEEE80211_NO_HT
 	ar5416_vals_5g40,
 	ar5416_vals_2g40,
-#endif
 	ar5416_vals_2g20,
 	nitems(ar5416_cm_regs),
 	ar5416_cm_regs,
@@ -461,7 +457,6 @@ static const uint32_t ar9160_vals_5g20[] = {
 	0x0000d7bf, 0x00000000, 0x00000000, 0x00000000
 };
 
-#ifndef IEEE80211_NO_HT
 static const uint32_t ar9160_vals_5g40[] = {
 	0x00000460, 0x000002d0, 0x00001cc0, 0x00014000, 0x07d007d0,
 	0x128d93cf, 0x08f04800, 0x00003210, 0x000003c4, 0x02020200,
@@ -493,7 +488,6 @@ static const uint32_t ar9160_vals_2g40[] = {
 	0x845b7a5a, 0x950f8ccf, 0xa5cf9b4f, 0xbddfaf1f, 0xd1ffc93f,
 	0x00000000, 0x00000000, 0x00000000, 0x00000000
 };
-#endif
 
 static const uint32_t ar9160_vals_2g20[] = {
 	0x00000160, 0x0000018c, 0x00003e38, 0x0000b000, 0x08400b00,
@@ -671,10 +665,8 @@ static const struct athn_ini ar9160_ini = {
 	nitems(ar9160_regs),
 	ar9160_regs,
 	ar9160_vals_5g20,
-#ifndef IEEE80211_NO_HT
 	ar9160_vals_5g40,
 	ar9160_vals_2g40,
-#endif
 	ar9160_vals_2g20,
 	nitems(ar9160_cm_regs),
 	ar9160_cm_regs,

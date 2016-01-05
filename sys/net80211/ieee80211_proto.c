@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_proto.c,v 1.57 2016/01/04 12:25:46 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_proto.c,v 1.58 2016/01/05 18:41:16 stsp Exp $	*/
 /*	$NetBSD: ieee80211_proto.c,v 1.8 2004/04/30 23:58:20 dyoung Exp $	*/
 
 /*-
@@ -96,9 +96,7 @@ ieee80211_proto_attach(struct ifnet *ifp)
 #endif
 	ic->ic_fragthreshold = 2346;		/* XXX not used yet */
 	ic->ic_fixed_rate = -1;			/* no fixed rate */
-#ifndef IEEE80211_NO_HT
 	ic->ic_fixed_mcs = -1;			/* no fixed mcs */
-#endif
 	ic->ic_protmode = IEEE80211_PROT_CTSONLY;
 
 	/* protocol state change handler */
@@ -547,7 +545,6 @@ ieee80211_sa_query_request(struct ieee80211com *ic, struct ieee80211_node *ni)
 }
 #endif	/* IEEE80211_STA_ONLY */
 
-#ifndef IEEE80211_NO_HT
 void
 ieee80211_ht_negotiate(struct ieee80211com *ic, struct ieee80211_node *ni)
 {
@@ -701,7 +698,6 @@ ieee80211_delba_request(struct ieee80211com *ic, struct ieee80211_node *ni,
 		}
 	}
 }
-#endif	/* !IEEE80211_NO_HT */
 
 void
 ieee80211_auth_open(struct ieee80211com *ic, const struct ieee80211_frame *wh,
@@ -1018,11 +1014,9 @@ justcleanup:
 				    IEEE80211_RATE_VAL;
 				printf(" channel %d",
 				    ieee80211_chan2ieee(ic, ni->ni_chan));
-#ifndef IEEE80211_NO_HT
 				if (ni->ni_flags & IEEE80211_NODE_HT)
 					printf(" start MCS %u", ni->ni_txmcs);
 				else
-#endif
 					printf(" start %u%sMb",
 					    rate / 2, (rate & 1) ? ".5" : "");
 				printf(" %s preamble %s slot time%s%s\n",

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar9285reg.h,v 1.7 2011/01/06 07:27:15 damien Exp $	*/
+/*	$OpenBSD: ar9285reg.h,v 1.8 2016/01/05 18:41:15 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -321,7 +321,6 @@ static const uint16_t ar9285_1_2_regs[] = {
 	P(0x0a250), P(0x0a358)
 };
 
-#ifndef IEEE80211_NO_HT
 static const uint32_t ar9285_1_2_vals_2g40[] = {
 	0x000002c0, 0x00000318, 0x00007c70, 0x00000000, 0x10801600,
 	0x12e00057, 0x00006880, 0x000003c4, 0x02020200, 0x01000e0e,
@@ -385,7 +384,6 @@ static const uint32_t ar9285_1_2_vals_2g40[] = {
 	0x00000004, 0x0001f000, 0x0001f000, 0x1883800a, 0x00000210,
 	0x0004a000, 0x7999aa0e
 };
-#endif
 
 static const uint32_t ar9285_1_2_vals_2g20[] = {
 	0x00000160, 0x0000018c, 0x00003e38, 0x00000000, 0x08400b00,
@@ -589,10 +587,8 @@ static const struct athn_ini ar9285_1_2_ini = {
 	nitems(ar9285_1_2_regs),
 	ar9285_1_2_regs,
 	NULL,	/* 2GHz only. */
-#ifndef IEEE80211_NO_HT
 	NULL,	/* 2GHz only. */
 	ar9285_1_2_vals_2g40,
-#endif
 	ar9285_1_2_vals_2g20,
 	nitems(ar9285_1_2_cm_regs),
 	ar9285_1_2_cm_regs,
@@ -667,7 +663,6 @@ static const uint16_t ar9271_regs[] = {
 	P(0x0a230), P(0x0a250), P(0x0a358)
 };
 
-#ifndef IEEE80211_NO_HT
 static const uint32_t ar9271_vals_2g40[] = {
 	0x000002c0, 0x00000318, 0x00007c70, 0x00000000, 0x10801600,
 	0x12e00057, 0x00006880, 0x000003c4, 0x02020200, 0x01000e0e,
@@ -731,7 +726,6 @@ static const uint32_t ar9271_vals_2g40[] = {
 	0x000eb7db, 0x00000004, 0x0001f000, 0x0001f000, 0x1883800a,
 	0x00000210, 0x0004a000, 0x7999aa0e
 };
-#endif
 
 static const uint32_t ar9271_vals_2g20[] = {
 	0x00000160, 0x0000018c, 0x00003e38, 0x00000000, 0x08400b00,
@@ -937,10 +931,8 @@ static const struct athn_ini ar9271_ini = {
 	nitems(ar9271_regs),
 	ar9271_regs,
 	NULL,	/* 2GHz only. */
-#ifndef IEEE80211_NO_HT
 	NULL,	/* 2GHz only. */
 	ar9271_vals_2g40,
-#endif
 	ar9271_vals_2g20,
 	nitems(ar9271_cm_regs),
 	ar9271_cm_regs,

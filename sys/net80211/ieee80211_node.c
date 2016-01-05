@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.95 2016/01/04 12:25:00 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.96 2016/01/05 18:41:16 stsp Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -68,21 +68,15 @@ u_int8_t ieee80211_node_getrssi(struct ieee80211com *,
 void ieee80211_setup_node(struct ieee80211com *, struct ieee80211_node *,
     const u_int8_t *);
 void ieee80211_free_node(struct ieee80211com *, struct ieee80211_node *);
-#ifndef IEEE80211_NO_HT
 void ieee80211_ba_del(struct ieee80211_node *);
-#endif
 struct ieee80211_node *ieee80211_alloc_node_helper(struct ieee80211com *);
 void ieee80211_node_cleanup(struct ieee80211com *, struct ieee80211_node *);
 void ieee80211_needs_auth(struct ieee80211com *, struct ieee80211_node *);
 #ifndef IEEE80211_STA_ONLY
-#ifndef IEEE80211_NO_HT
 void ieee80211_node_join_ht(struct ieee80211com *, struct ieee80211_node *);
-#endif
 void ieee80211_node_join_rsn(struct ieee80211com *, struct ieee80211_node *);
 void ieee80211_node_join_11g(struct ieee80211com *, struct ieee80211_node *);
-#ifndef IEEE80211_NO_HT
 void ieee80211_node_leave_ht(struct ieee80211com *, struct ieee80211_node *);
-#endif
 void ieee80211_node_leave_rsn(struct ieee80211com *, struct ieee80211_node *);
 void ieee80211_node_leave_11g(struct ieee80211com *, struct ieee80211_node *);
 void ieee80211_inact_timeout(void *);
@@ -752,9 +746,7 @@ ieee80211_node_cleanup(struct ieee80211com *ic, struct ieee80211_node *ni)
 		free(ni->ni_rsnie, M_DEVBUF, 0);
 		ni->ni_rsnie = NULL;
 	}
-#ifndef IEEE80211_NO_HT
 	ieee80211_ba_del(ni);
-#endif
 }
 
 void
@@ -1063,7 +1055,6 @@ ieee80211_find_node_for_beacon(struct ieee80211com *ic,
 	return (keep);
 }
 
-#ifndef IEEE80211_NO_HT
 void
 ieee80211_ba_del(struct ieee80211_node *ni)
 {
@@ -1087,7 +1078,6 @@ ieee80211_ba_del(struct ieee80211_node *ni)
 		}
 	}
 }
-#endif
 
 void
 ieee80211_free_node(struct ieee80211com *ic, struct ieee80211_node *ni)
@@ -1103,9 +1093,7 @@ ieee80211_free_node(struct ieee80211com *ic, struct ieee80211_node *ni)
 	timeout_del(&ni->ni_sa_query_to);
 	IEEE80211_AID_CLR(ni->ni_associd, ic->ic_aid_bitmap);
 #endif
-#ifndef IEEE80211_NO_HT
 	ieee80211_ba_del(ni);
-#endif
 	RB_REMOVE(ieee80211_tree, &ic->ic_tree, ni);
 	ic->ic_nnodes--;
 #ifndef IEEE80211_STA_ONLY
@@ -1282,7 +1270,6 @@ ieee80211_iterate_nodes(struct ieee80211com *ic, ieee80211_iter_func *f,
 }
 
 
-#ifndef IEEE80211_NO_HT
 /*
  * Install received HT caps information in the node's state block.
  */
@@ -1334,7 +1321,6 @@ ieee80211_setup_htop(struct ieee80211_node *ni, const uint8_t *data,
 
 	memcpy(ni->ni_basic_mcs, &data[6], sizeof(ni->ni_basic_mcs));
 }
-#endif /* IEEE80211_NO_HT */
 
 /*
  * Install received rate set information in the node's state block.
@@ -1409,7 +1395,6 @@ ieee80211_needs_auth(struct ieee80211com *ic, struct ieee80211_node *ni)
 	 */
 }
 
-#ifndef IEEE80211_NO_HT
 /*
  * Handle an HT STA joining an HT network.
  */
@@ -1418,7 +1403,6 @@ ieee80211_node_join_ht(struct ieee80211com *ic, struct ieee80211_node *ni)
 {
 	/* TBD */
 }
-#endif	/* !IEEE80211_NO_HT */
 
 /*
  * Handle a station joining an RSN network.
@@ -1550,11 +1534,9 @@ ieee80211_node_join(struct ieee80211com *ic, struct ieee80211_node *ni,
 	} else
 		ieee80211_node_join_rsn(ic, ni);
 
-#ifndef IEEE80211_NO_HT
 	ieee80211_ht_negotiate(ic, ni);
 	if (ni->ni_flags & IEEE80211_NODE_HT)
 		ieee80211_node_join_ht(ic, ni);
-#endif
 
 #if NBRIDGE > 0
 	/*
@@ -1567,7 +1549,6 @@ ieee80211_node_join(struct ieee80211com *ic, struct ieee80211_node *ni,
 #endif
 }
 
-#ifndef IEEE80211_NO_HT
 /*
  * Handle an HT STA leaving an HT network.
  */
@@ -1589,7 +1570,6 @@ ieee80211_node_leave_ht(struct ieee80211com *ic, struct ieee80211_node *ni)
 		}
 	}
 }
-#endif	/* !IEEE80211_NO_HT */
 
 /*
  * Handle a station leaving an RSN network.
@@ -1703,10 +1683,8 @@ ieee80211_node_leave(struct ieee80211com *ic, struct ieee80211_node *ni)
 	if (ic->ic_curmode == IEEE80211_MODE_11G)
 		ieee80211_node_leave_11g(ic, ni);
 
-#ifndef IEEE80211_NO_HT
 	if (ni->ni_flags & IEEE80211_NODE_HT)
 		ieee80211_node_leave_ht(ic, ni);
-#endif
 
 	if (ic->ic_node_leave != NULL)
 		(*ic->ic_node_leave)(ic, ni);

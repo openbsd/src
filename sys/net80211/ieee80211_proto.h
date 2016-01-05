@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_proto.h,v 1.40 2015/11/15 11:14:17 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_proto.h,v 1.41 2016/01/05 18:41:16 stsp Exp $	*/
 /*	$NetBSD: ieee80211_proto.h,v 1.3 2003/10/13 04:23:56 dyoung Exp $	*/
 
 /*-
@@ -153,7 +153,6 @@ extern	void ieee80211_setkeysdone(struct ieee80211com *);
 extern	void ieee80211_sa_query_timeout(void *);
 extern	void ieee80211_sa_query_request(struct ieee80211com *,
 	    struct ieee80211_node *);
-#ifndef IEEE80211_NO_HT
 extern	void ieee80211_ht_negotiate(struct ieee80211com *,
     struct ieee80211_node *);
 extern	void ieee80211_tx_ba_timeout(void *);
@@ -162,6 +161,5 @@ extern	int ieee80211_addba_request(struct ieee80211com *,
 	    struct ieee80211_node *,  u_int16_t, u_int8_t);
 extern	void ieee80211_delba_request(struct ieee80211com *,
 	    struct ieee80211_node *, u_int16_t, u_int8_t, u_int8_t);
-#endif
 
 #endif /* _NET80211_IEEE80211_PROTO_H_ */

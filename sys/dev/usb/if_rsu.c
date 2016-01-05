@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rsu.c,v 1.32 2015/11/25 03:10:00 dlg Exp $	*/
+/*	$OpenBSD: if_rsu.c,v 1.33 2016/01/05 18:41:16 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -109,13 +109,11 @@ static const struct usb_devno rsu_devs[] = {
 	{ USB_VENDOR_SWEEX2,		USB_PRODUCT_SWEEX2_LW154 }
 };
 
-#ifndef IEEE80211_NO_HT
 /* List of devices that have HT support disabled. */
 static const struct usb_devno rsu_devs_noht[] = {
 	{ USB_VENDOR_ASUS,		USB_PRODUCT_ASUS_RTL8192SU_1 },
 	{ USB_VENDOR_AZUREWAVE,		USB_PRODUCT_AZUREWAVE_RTL8192SU_4 }
 };
-#endif
 
 int		rsu_match(struct device *, void *, void *);
 void		rsu_attach(struct device *, struct device *, void *);
@@ -246,7 +244,6 @@ rsu_attach(struct device *parent, struct device *self, void *aux)
 	    IEEE80211_C_SHSLOT |	/* Short slot time supported. */
 	    IEEE80211_C_WEP |		/* WEP. */
 	    IEEE80211_C_RSN;		/* WPA/RSN. */
-#ifndef IEEE80211_NO_HT
 	/* Check if HT support is present. */
 	if (usb_lookup(rsu_devs_noht, uaa->vendor, uaa->product) == NULL) {
 		/* Set HT capabilities. */
@@ -257,7 +254,6 @@ rsu_attach(struct device *parent, struct device *self, void *aux)
 		for (i = 0; i < 2; i++)
 			ic->ic_sup_mcs[i] = 0xff;
 	}
-#endif
 
 	/* Set supported .11b and .11g rates. */
 	ic->ic_sup_rates[IEEE80211_MODE_11B] = ieee80211_std_rateset_11b;
@@ -1027,10 +1023,8 @@ rsu_join_bss(struct rsu_softc *sc, struct ieee80211_node *ni)
 		frm = ieee80211_add_rsn(frm, ic, ni);
 	if (ni->ni_flags & IEEE80211_NODE_QOS)
 		frm = ieee80211_add_qos_capability(frm, ic);
-#ifndef IEEE80211_NO_HT
 	if (ni->ni_flags & IEEE80211_NODE_HT)
 		frm = ieee80211_add_htcaps(frm, ic);
-#endif
 	if ((ic->ic_flags & IEEE80211_F_RSNON) &&
 	    (ni->ni_rsnprotos & IEEE80211_PROTO_WPA))
 		frm = ieee80211_add_wpa(frm, ic, ni);
@@ -1980,9 +1974,7 @@ rsu_fw_loadsection(struct rsu_softc *sc, uint8_t *buf, int len)
 int
 rsu_load_firmware(struct rsu_softc *sc)
 {
-#ifndef IEEE80211_NO_HT
 	struct ieee80211com *ic = &sc->sc_ic;
-#endif
 	struct r92s_fw_hdr *hdr;
 	struct r92s_fw_priv *dmem;
 	uint8_t *imem, *emem;
@@ -2113,9 +2105,7 @@ rsu_load_firmware(struct rsu_softc *sc)
 	dmem->rf_config = 0x12;	/* 1T2R */
 	dmem->vcs_type = R92S_VCS_TYPE_AUTO;
 	dmem->vcs_mode = R92S_VCS_MODE_RTS_CTS;
-#ifndef IEEE80211_NO_HT
 	dmem->bw40_en = (ic->ic_htcaps & IEEE80211_HTCAP_CBW20_40) != 0;
-#endif
 	dmem->turbo_mode = 1;
 	/* Load DMEM section. */
 	error = rsu_fw_loadsection(sc, (uint8_t *)dmem, sizeof(*dmem));
@@ -2256,7 +2246,6 @@ rsu_init(struct ifnet *ifp)
 		goto fail;
 	}
 
-#ifndef IEEE80211_NO_HT
 	if (ic->ic_htcaps & IEEE80211_HTCAP_CBW20_40) {
 		/* Enable 40MHz mode. */
 		error = rsu_fw_iocmd(sc,
@@ -2269,7 +2258,7 @@ rsu_init(struct ifnet *ifp)
 			goto fail;
 		}
 	}
-#endif
+
 	/* Set default channel. */
 	ic->ic_bss->ni_chan = ic->ic_ibss_chan;
 

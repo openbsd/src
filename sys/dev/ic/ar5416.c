@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5416.c,v 1.18 2015/11/24 17:11:39 mpi Exp $	*/
+/*	$OpenBSD: ar5416.c,v 1.19 2016/01/05 18:41:15 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -319,14 +319,12 @@ ar5416_init_from_rom(struct athn_softc *sc, struct ieee80211_channel *c,
 		reg = RW(reg, AR_PHY_TX_END_PA_ON, modal->txFrameToPaOn);
 		AR_WRITE(sc, AR_PHY_RF_CTL2, reg);
 	}
-#ifndef IEEE80211_NO_HT
 	if (sc->eep_rev >= AR_EEP_MINOR_VER_3 && extc != NULL) {
 		/* Overwrite switch settling with HT-40 value. */
 		reg = AR_READ(sc, AR_PHY_SETTLING);
 		reg = RW(reg, AR_PHY_SETTLING_SWITCH, modal->swSettleHt40);
 		AR_WRITE(sc, AR_PHY_SETTLING, reg);
 	}
-#endif
 }
 
 int
@@ -527,11 +525,9 @@ ar5416_set_txpower(struct athn_softc *sc, struct ieee80211_channel *c,
 	const struct ar5416_eeprom *eep = sc->eep;
 	const struct ar5416_modal_eep_header *modal;
 	uint8_t tpow_cck[4], tpow_ofdm[4];
-#ifndef IEEE80211_NO_HT
 	uint8_t tpow_cck_ext[4], tpow_ofdm_ext[4];
 	uint8_t tpow_ht20[8], tpow_ht40[8];
 	uint8_t ht40inc;
-#endif
 	int16_t pwr = 0, pwroff, max_ant_gain, power[ATHN_POWER_COUNT];
 	uint8_t cckinc;
 	int i;
@@ -565,7 +561,6 @@ ar5416_set_txpower(struct athn_softc *sc, struct ieee80211_channel *c,
 		ar5008_get_lg_tpow(sc, c, AR_CTL_11G, eep->calTargetPower2G,
 		    AR5416_NUM_2G_20_TARGET_POWERS, tpow_ofdm);
 
-#ifndef IEEE80211_NO_HT
 		/* Get HT-20 target powers. */
 		ar5008_get_ht_tpow(sc, c, AR_CTL_2GHT20,
 		    eep->calTargetPower2GHT20, AR5416_NUM_2G_20_TARGET_POWERS,
@@ -587,13 +582,11 @@ ar5416_set_txpower(struct athn_softc *sc, struct ieee80211_channel *c,
 			    eep->calTargetPower2G,
 			    AR5416_NUM_2G_20_TARGET_POWERS, tpow_ofdm_ext);
 		}
-#endif
 	} else {
 		/* Get OFDM target powers. */
 		ar5008_get_lg_tpow(sc, c, AR_CTL_11A, eep->calTargetPower5G,
 		    AR5416_NUM_5G_20_TARGET_POWERS, tpow_ofdm);
 
-#ifndef IEEE80211_NO_HT
 		/* Get HT-20 target powers. */
 		ar5008_get_ht_tpow(sc, c, AR_CTL_5GHT20,
 		    eep->calTargetPower5GHT20, AR5416_NUM_5G_20_TARGET_POWERS,
@@ -610,7 +603,6 @@ ar5416_set_txpower(struct athn_softc *sc, struct ieee80211_channel *c,
 			    eep->calTargetPower5G,
 			    AR5416_NUM_5G_20_TARGET_POWERS, tpow_ofdm_ext);
 		}
-#endif
 	}
 
 	/* Compute CCK/OFDM delta. */
@@ -636,7 +628,6 @@ ar5416_set_txpower(struct athn_softc *sc, struct ieee80211_channel *c,
 		power[ATHN_POWER_CCK11_LP] =
 		power[ATHN_POWER_CCK11_SP] = tpow_cck[3] + cckinc;
 	}
-#ifndef IEEE80211_NO_HT
 	for (i = 0; i < nitems(tpow_ht20); i++)
 		power[ATHN_POWER_HT20(i)] = tpow_ht20[i];
 	if (extc != NULL) {
@@ -653,7 +644,6 @@ ar5416_set_txpower(struct athn_softc *sc, struct ieee80211_channel *c,
 		if (IEEE80211_IS_CHAN_2GHZ(c))
 			power[ATHN_POWER_CCK_EXT] = tpow_cck_ext[0] + cckinc;
 	}
-#endif
 
 	if (AR_SREV_9280_10_OR_LATER(sc)) {
 		if (sc->eep_rev >= AR_EEP_MINOR_VER_21)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar9380reg.h,v 1.20 2013/10/21 16:12:41 stsp Exp $	*/
+/*	$OpenBSD: ar9380reg.h,v 1.21 2016/01/05 18:41:15 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -828,7 +828,6 @@ static const uint32_t ar9380_2_2_vals_5g20[] = {
 	0x001c0000, 0x00000000, 0x0000019c, 0x000001b5, 0x00000000
 };
 
-#ifndef IEEE80211_NO_HT
 static const uint32_t ar9380_2_2_vals_5g40[] = {
 	0x00000023, 0x00000460, 0x000002d0, 0x00001cc0, 0x07d007d0,
 	0x128d804f, 0x08f04800, 0x00003210, 0x00007d00, 0x0dd08f29,
@@ -862,7 +861,6 @@ static const uint32_t ar9380_2_2_vals_2g40[] = {
 	0x00000000, 0x0000019c, 0x000001ce, 0x00000150, 0x0000019c,
 	0x001c0000, 0x00000000, 0x0000019c, 0x000001ce, 0x00000150
 };
-#endif
 
 static const uint32_t ar9380_2_2_vals_2g20[] = {
 	0x00000023, 0x00000160, 0x0000018c, 0x00003e38, 0x08400b00,
@@ -1081,21 +1079,17 @@ static const uint32_t ar9380_2_2_fast_clock_vals_5g20[] = {
 	0x000044c0, 0x0372131c, 0x0000000b, 0x00000898
 };
 
-#ifndef IEEE80211_NO_HT
 static const uint32_t ar9380_2_2_fast_clock_vals_5g40[] = {
 	0x000004d0, 0x00000318, 0x00001fa0, 0x08980898, 0x148ec057,
 	0x00008980, 0x0372131c, 0x00000016, 0x00001130
 };
-#endif
 
 static const struct athn_ini ar9380_2_2_ini = {
 	nitems(ar9380_2_2_regs),
 	ar9380_2_2_regs,
 	ar9380_2_2_vals_5g20,
-#ifndef IEEE80211_NO_HT
 	ar9380_2_2_vals_5g40,
 	ar9380_2_2_vals_2g40,
-#endif
 	ar9380_2_2_vals_2g20,
 	nitems(ar9380_2_2_cm_regs),
 	ar9380_2_2_cm_regs,
@@ -1103,9 +1097,7 @@ static const struct athn_ini ar9380_2_2_ini = {
 	nitems(ar9380_2_2_fast_clock_regs),
 	ar9380_2_2_fast_clock_regs,
 	ar9380_2_2_fast_clock_vals_5g20,
-#ifndef IEEE80211_NO_HT
 	ar9380_2_2_fast_clock_vals_5g40
-#endif
 };
 
 /*
@@ -1316,10 +1308,8 @@ static const struct athn_ini ar9485_1_1_ini = {
 	nitems(ar9485_1_1_regs),
 	ar9485_1_1_regs,
 	NULL,	/* 2GHz only. */
-#ifndef IEEE80211_NO_HT
 	NULL,	/* 2GHz only. */
 	ar9485_1_1_vals_2g40,
-#endif
 	ar9485_1_1_vals_2g20,
 	nitems(ar9485_1_1_cm_regs),
 	ar9485_1_1_cm_regs,

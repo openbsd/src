@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar9003.c,v 1.38 2015/11/25 03:09:58 dlg Exp $	*/
+/*	$OpenBSD: ar9003.c,v 1.39 2016/01/05 18:41:15 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -1689,14 +1689,12 @@ ar9003_tx(struct athn_softc *sc, struct mbuf *m, struct ieee80211_node *ni,
 		    SM(AR_TXC18_CHAIN_SEL3, sc->txchainmask);
 	}
 #ifdef notyet
-#ifndef IEEE80211_NO_HT
 	/* Use the same short GI setting for all tries. */
 	if (ic->ic_flags & IEEE80211_F_SHGI)
 		ds->ds_ctl18 |= AR_TXC18_GI0123;
 	/* Use the same channel width for all tries. */
 	if (ic->ic_flags & IEEE80211_F_CBW40)
 		ds->ds_ctl18 |= AR_TXC18_2040_0123;
-#endif
 #endif
 
 	if (ds->ds_ctl11 & (AR_TXC11_RTS_ENABLE | AR_TXC11_CTS_ENABLE)) {
@@ -1831,13 +1829,11 @@ ar9003_set_phy(struct athn_softc *sc, struct ieee80211_channel *c,
 	phy = AR_READ(sc, AR_PHY_GEN_CTRL);
 	phy |= AR_PHY_GC_HT_EN | AR_PHY_GC_SHORT_GI_40 |
 	    AR_PHY_GC_SINGLE_HT_LTF1 | AR_PHY_GC_WALSH;
-#ifndef IEEE80211_NO_HT
 	if (extc != NULL) {
 		phy |= AR_PHY_GC_DYN2040_EN;
 		if (extc > c)	/* XXX */
 			phy |= AR_PHY_GC_DYN2040_PRI_CH;
 	}
-#endif
 	/* Turn off Green Field detection for now. */
 	phy &= ~AR_PHY_GC_GF_DETECT_EN;
 	AR_WRITE(sc, AR_PHY_GEN_CTRL, phy);
@@ -3025,7 +3021,6 @@ ar9003_write_txpower(struct athn_softc *sc, int16_t power[ATHN_POWER_COUNT])
 	    (power[ATHN_POWER_HT20( 4)] & 0x3f) << 16 |
 	    (power[ATHN_POWER_HT20( 1)] & 0x3f) <<  8 |
 	    (power[ATHN_POWER_HT20( 0)] & 0x3f));
-#ifndef IEEE80211_NO_HT
 	AR_WRITE(sc, AR_PHY_PWRTX_RATE6,
 	    (power[ATHN_POWER_HT20(13)] & 0x3f) << 24 |
 	    (power[ATHN_POWER_HT20(12)] & 0x3f) << 16 |
@@ -3056,7 +3051,6 @@ ar9003_write_txpower(struct athn_softc *sc, int16_t power[ATHN_POWER_COUNT])
 	    (power[ATHN_POWER_HT40(20)] & 0x3f) << 16 |
 	    (power[ATHN_POWER_HT40(15)] & 0x3f) <<  8 |
 	    (power[ATHN_POWER_HT40(14)] & 0x3f));
-#endif
 	AR_WRITE_BARRIER(sc);
 }
 
@@ -3124,15 +3118,12 @@ ar9003_hw_init(struct athn_softc *sc, struct ieee80211_channel *c,
 	 * The modal init values include the post phase for the SoC, MAC,
 	 * BB and Radio subsystems.
 	 */
-#ifndef IEEE80211_NO_HT
 	if (extc != NULL) {
 		if (IEEE80211_IS_CHAN_2GHZ(c))
 			pvals = ini->vals_2g40;
 		else
 			pvals = ini->vals_5g40;
-	} else
-#endif
-	{
+	} else {
 		if (IEEE80211_IS_CHAN_2GHZ(c))
 			pvals = ini->vals_2g20;
 		else
@@ -3155,11 +3146,9 @@ ar9003_hw_init(struct athn_softc *sc, struct ieee80211_channel *c,
 	if (IEEE80211_IS_CHAN_5GHZ(c) &&
 	    (sc->flags & ATHN_FLAG_FAST_PLL_CLOCK)) {
 		/* Update modal values for fast PLL clock. */
-#ifndef IEEE80211_NO_HT
 		if (extc != NULL)
 			pvals = ini->fastvals_5g40;
 		else
-#endif
 			pvals = ini->fastvals_5g20;
 		DPRINTFN(4, ("writing fast pll clock init vals\n"));
 		for (i = 0; i < ini->nfastregs; i++) {

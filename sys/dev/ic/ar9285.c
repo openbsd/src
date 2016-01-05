@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar9285.c,v 1.25 2015/11/24 17:11:39 mpi Exp $	*/
+/*	$OpenBSD: ar9285.c,v 1.26 2016/01/05 18:41:15 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2009-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -386,13 +386,11 @@ ar9285_init_from_rom(struct athn_softc *sc, struct ieee80211_channel *c,
 		    modal->txFrameToDataStart);
 		AR_WRITE(sc, AR_PHY_RF_CTL2, reg);
 	}
-#ifndef IEEE80211_NO_HT
 	if (sc->eep_rev >= AR_EEP_MINOR_VER_3 && extc != NULL) {
 		reg = AR_READ(sc, AR_PHY_SETTLING);
 		reg = RW(reg, AR_PHY_SETTLING_SWITCH, modal->swSettleHt40);
 		AR_WRITE(sc, AR_PHY_SETTLING, reg);
 	}
-#endif
 	AR_WRITE_BARRIER(sc);
 }
 
@@ -590,7 +588,6 @@ ar9285_cl_cal(struct athn_softc *sc, struct ieee80211_channel *c,
 	int ntries;
 
 	AR_SETBITS(sc, AR_PHY_CL_CAL_CTL, AR_PHY_CL_CAL_ENABLE);
-#ifndef IEEE80211_NO_HT
 	if (0 && extc == NULL) {	/* XXX IS_CHAN_HT20!! */
 		AR_SETBITS(sc, AR_PHY_CL_CAL_CTL, AR_PHY_PARALLEL_CAL_ENABLE);
 		AR_SETBITS(sc, AR_PHY_TURBO, AR_PHY_FC_DYN2040_EN);
@@ -610,7 +607,6 @@ ar9285_cl_cal(struct athn_softc *sc, struct ieee80211_channel *c,
 		AR_CLRBITS(sc, AR_PHY_CL_CAL_CTL, AR_PHY_PARALLEL_CAL_ENABLE);
 		AR_CLRBITS(sc, AR_PHY_CL_CAL_CTL, AR_PHY_CL_CAL_ENABLE);
 	}
-#endif
 	AR_CLRBITS(sc, AR_PHY_ADC_CTL, AR_PHY_ADC_CTL_OFF_PWDADC);
 	AR_SETBITS(sc, AR_PHY_AGC_CONTROL, AR_PHY_AGC_CONTROL_FLTR_CAL);
 	AR_SETBITS(sc, AR_PHY_TPCRG1, AR_PHY_TPCRG1_PD_CAL_ENABLE);
@@ -792,11 +788,9 @@ ar9285_set_txpower(struct athn_softc *sc, struct ieee80211_channel *c,
 	const struct ar9285_eeprom *eep = sc->eep;
 	const struct ar9285_modal_eep_header *modal = &eep->modalHeader;
 	uint8_t tpow_cck[4], tpow_ofdm[4];
-#ifndef IEEE80211_NO_HT
 	uint8_t tpow_cck_ext[4], tpow_ofdm_ext[4];
 	uint8_t tpow_ht20[8], tpow_ht40[8];
 	uint8_t ht40inc;
-#endif
 	int16_t max_ant_gain, power[ATHN_POWER_COUNT];
 	int i;
 
@@ -814,7 +808,6 @@ ar9285_set_txpower(struct athn_softc *sc, struct ieee80211_channel *c,
 	ar5008_get_lg_tpow(sc, c, AR_CTL_11G, eep->calTargetPower2G,
 	    AR9285_NUM_2G_20_TARGET_POWERS, tpow_ofdm);
 
-#ifndef IEEE80211_NO_HT
 	/* Get HT-20 target powers. */
 	ar5008_get_ht_tpow(sc, c, AR_CTL_2GHT20, eep->calTargetPower2GHT20,
 	    AR9285_NUM_2G_20_TARGET_POWERS, tpow_ht20);
@@ -835,7 +828,6 @@ ar9285_set_txpower(struct athn_softc *sc, struct ieee80211_channel *c,
 		    eep->calTargetPower2G, AR9285_NUM_2G_20_TARGET_POWERS,
 		    tpow_ofdm_ext);
 	}
-#endif
 
 	memset(power, 0, sizeof(power));
 	/* Shuffle target powers accross transmit rates. */
@@ -855,7 +847,6 @@ ar9285_set_txpower(struct athn_softc *sc, struct ieee80211_channel *c,
 	power[ATHN_POWER_CCK55_SP] = tpow_cck[2];
 	power[ATHN_POWER_CCK11_LP] =
 	power[ATHN_POWER_CCK11_SP] = tpow_cck[3];
-#ifndef IEEE80211_NO_HT
 	for (i = 0; i < nitems(tpow_ht20); i++)
 		power[ATHN_POWER_HT20(i)] = tpow_ht20[i];
 	if (extc != NULL) {
@@ -871,7 +862,6 @@ ar9285_set_txpower(struct athn_softc *sc, struct ieee80211_channel *c,
 		power[ATHN_POWER_OFDM_EXT] = tpow_ofdm_ext[0];
 		power[ATHN_POWER_CCK_EXT ] = tpow_cck_ext[0];
 	}
-#endif
 
 	for (i = 0; i < ATHN_POWER_COUNT; i++) {
 		power[i] -= AR_PWR_TABLE_OFFSET_DB * 2;	/* In half dB. */

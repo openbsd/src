@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar9287reg.h,v 1.3 2010/07/15 19:07:43 damien Exp $	*/
+/*	$OpenBSD: ar9287reg.h,v 1.4 2016/01/05 18:41:15 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -186,7 +186,6 @@ static const uint16_t ar9287_1_1_regs[] = {
 	P(0x0a250), P(0x0a358), P(0x0a3d8)
 };
 
-#ifndef IEEE80211_NO_HT
 static const uint32_t ar9287_1_1_vals_2g40[] = {
 	0x000002c0, 0x00000318, 0x00007c70, 0x00000000, 0x10801600,
 	0x12e00057, 0x08f04810, 0x0000320a, 0x00006880, 0x000003c4,
@@ -198,7 +197,6 @@ static const uint32_t ar9287_1_1_vals_2g40[] = {
 	0x00000444, 0x00000000, 0x00000000, 0x1883800a, 0x00000210,
 	0x0004a000, 0x7999aa0e, 0x00000000
 };
-#endif
 
 static const uint32_t ar9287_1_1_vals_2g20[] = {
 	0x00000160, 0x0000018c, 0x00003e38, 0x00000000, 0x08400b00,
@@ -368,10 +366,8 @@ static const struct athn_ini ar9287_1_1_ini = {
 	nitems(ar9287_1_1_regs),
 	ar9287_1_1_regs,
 	NULL,	/* 2GHz only. */
-#ifndef IEEE80211_NO_HT
 	NULL,	/* 2GHz only. */
 	ar9287_1_1_vals_2g40,
-#endif
 	ar9287_1_1_vals_2g20,
 	nitems(ar9287_1_1_cm_regs),
 	ar9287_1_1_cm_regs,

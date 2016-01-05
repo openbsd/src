@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_amrr.c,v 1.10 2015/12/14 08:37:01 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_amrr.c,v 1.11 2016/01/05 18:41:16 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -51,42 +51,34 @@
 static inline int
 is_min_rate(struct ieee80211_node *ni)
 {
-#ifndef IEEE80211_NO_HT
 	if (ni->ni_flags & IEEE80211_NODE_HT)
 		return (ni->ni_txmcs == 0);
-#endif
 	return (ni->ni_txrate == 0);
 }
 
 static inline int
 is_max_rate(struct ieee80211_node *ni)
 {
-#ifndef IEEE80211_NO_HT
 	if (ni->ni_flags & IEEE80211_NODE_HT)
 		return (ni->ni_txmcs == 7); /* XXX up to MCS 7 only */
-#endif
 	return (ni->ni_txrate == ni->ni_rates.rs_nrates - 1);
 }
 
 static inline void
 increase_rate(struct ieee80211_node *ni)
 {
-#ifndef IEEE80211_NO_HT
 	if (ni->ni_flags & IEEE80211_NODE_HT)
 		ni->ni_txmcs++;
 	else
-#endif
 		ni->ni_txrate++;
 }
 
 static inline void
 decrease_rate(struct ieee80211_node *ni)
 {
-#ifndef IEEE80211_NO_HT
 	if (ni->ni_flags & IEEE80211_NODE_HT)
 		ni->ni_txmcs--;
 	else
-#endif
 		ni->ni_txrate--;
 }
 

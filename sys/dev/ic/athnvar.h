@@ -1,4 +1,4 @@
-/*	$OpenBSD: athnvar.h,v 1.35 2013/12/06 21:03:02 deraadt Exp $	*/
+/*	$OpenBSD: athnvar.h,v 1.36 2016/01/05 18:41:15 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -178,10 +178,8 @@ struct athn_ini {
 	int		nregs;
 	const uint16_t	*regs;
 	const uint32_t	*vals_5g20;
-#ifndef IEEE80211_NO_HT
 	const uint32_t	*vals_5g40;
 	const uint32_t	*vals_2g40;
-#endif
 	const uint32_t	*vals_2g20;
 	int		ncmregs;
 	const uint16_t	*cmregs;
@@ -189,9 +187,7 @@ struct athn_ini {
 	int		nfastregs;
 	const uint16_t	*fastregs;
 	const uint32_t	*fastvals_5g20;
-#ifndef IEEE80211_NO_HT
 	const uint32_t	*fastvals_5g40;
-#endif
 };
 
 struct athn_gain {
