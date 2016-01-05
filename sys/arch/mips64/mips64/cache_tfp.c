@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache_tfp.c,v 1.5 2015/09/20 11:50:05 miod Exp $	*/
+/*	$OpenBSD: cache_tfp.c,v 1.6 2016/01/05 05:27:54 visa Exp $	*/
 
 /*
  * Copyright (c) 2012 Miodrag Vallat.
@@ -94,6 +94,7 @@ tfp_ConfigCache(struct cpu_info *ci)
 	ci->ci_InvalidateICachePage = tfp_InvalidateICachePage;
 	ci->ci_SyncICache = tfp_SyncICache;
 	ci->ci_SyncDCachePage = tfp_SyncDCachePage;
+	ci->ci_HitSyncDCachePage = tfp_SyncDCachePage;
 	ci->ci_HitSyncDCache = tfp_HitSyncDCache;
 	ci->ci_HitInvalidateDCache = tfp_HitInvalidateDCache;
 	ci->ci_IOSyncDCache = tfp_IOSyncDCache;

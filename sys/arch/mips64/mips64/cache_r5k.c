@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache_r5k.c,v 1.14 2014/06/17 18:58:35 miod Exp $	*/
+/*	$OpenBSD: cache_r5k.c,v 1.15 2016/01/05 05:27:54 visa Exp $	*/
 
 /*
  * Copyright (c) 2012 Miodrag Vallat.
@@ -422,6 +422,7 @@ Mips5k_ConfigCache(struct cpu_info *ci)
 	ci->ci_InvalidateICachePage = Mips5k_InvalidateICachePage;
 	ci->ci_SyncICache = Mips5k_SyncICache;
 	ci->ci_SyncDCachePage = Mips5k_SyncDCachePage;
+	ci->ci_HitSyncDCachePage = Mips5k_HitSyncDCachePage;
 	ci->ci_HitSyncDCache = Mips5k_HitSyncDCache;
 	ci->ci_HitInvalidateDCache = Mips5k_HitInvalidateDCache;
 	ci->ci_IOSyncDCache = Mips5k_IOSyncDCache;
@@ -776,6 +777,34 @@ Mips5k_SyncDCachePage(struct cpu_info *ci, vaddr_t va, paddr_t pa)
 		    PAGE_SIZE);
 	}
 #endif
+
+	mips_sync();
+}
+
+/*
+ * Writeback D$ for the given page, which is expected to be currently
+ * mapped, allowing the use of `Hit' operations. This is less aggressive
+ * than using `Index' operations.
+ */
+
+void
+Mips5k_HitSyncDCachePage(struct cpu_info *ci, vaddr_t va, paddr_t pa)
+{
+	if (ci->ci_cacheconfiguration & CTYPE_HAS_IL2)
+		mips5k_hitwbinv_secondary(va, PAGE_SIZE);
+	else {
+#ifdef CPU_R4600
+		/*
+		 * R4600 revision 2 needs to load from an uncached address
+		 * before any Hit or CreateDEX operation. Alternatively, 12
+		 * nop (cycles) will empty the cache load buffer.
+		 * We are only putting 10 here, and hope the overhead of the
+		 * code around will provide the rest.
+		 */
+		nop10();
+#endif
+		mips5k_hitwbinv_primary(va, PAGE_SIZE);
+	}
 
 	mips_sync();
 }

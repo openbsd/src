@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache_r10k.c,v 1.6 2014/03/31 20:21:19 miod Exp $	*/
+/*	$OpenBSD: cache_r10k.c,v 1.7 2016/01/05 05:27:54 visa Exp $	*/
 
 /*
  * Copyright (c) 2012 Miodrag Vallat.
@@ -102,6 +102,7 @@ Mips10k_ConfigCache(struct cpu_info *ci)
 	ci->ci_InvalidateICachePage = Mips10k_InvalidateICachePage;
 	ci->ci_SyncICache = Mips10k_SyncICache;
 	ci->ci_SyncDCachePage = Mips10k_SyncDCachePage;
+	ci->ci_HitSyncDCachePage = Mips10k_HitSyncDCachePage;
 	ci->ci_HitSyncDCache = Mips10k_HitSyncDCache;
 	ci->ci_HitInvalidateDCache = Mips10k_HitInvalidateDCache;
 	ci->ci_IOSyncDCache = Mips10k_IOSyncDCache;
@@ -308,6 +309,18 @@ Mips10k_SyncDCachePage(struct cpu_info *ci, vaddr_t va, paddr_t pa)
 	 */
 	mips10k_hitwbinv_primary(PHYS_TO_XKPHYS(pa, CCA_CACHED), PAGE_SIZE);
 #endif
+}
+
+/*
+ * Writeback D$ for the given page, which is expected to be currently
+ * mapped, allowing the use of `Hit' operations. This is less aggressive
+ * than using `Index' operations.
+ */
+
+void
+Mips10k_HitSyncDCachePage(struct cpu_info *ci, vaddr_t va, paddr_t pa)
+{
+	mips10k_hitwbinv_primary(va, PAGE_SIZE);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache_mips64r2.c,v 1.1 2015/08/15 22:31:38 miod Exp $	*/
+/*	$OpenBSD: cache_mips64r2.c,v 1.2 2016/01/05 05:27:54 visa Exp $	*/
 
 /*
  * Copyright (c) 2014 Miodrag Vallat.
@@ -127,6 +127,7 @@ mips64r2_ConfigCache(struct cpu_info *ci)
 	ci->ci_InvalidateICachePage = mips64r2_InvalidateICachePage;
 	ci->ci_SyncICache = mips64r2_SyncICache;
 	ci->ci_SyncDCachePage = mips64r2_SyncDCachePage;
+	ci->ci_HitSyncDCachePage = mips64r2_HitSyncDCachePage;
 	ci->ci_HitSyncDCache = mips64r2_HitSyncDCache;
 	ci->ci_HitInvalidateDCache = mips64r2_HitInvalidateDCache;
 	ci->ci_IOSyncDCache = mips64r2_IOSyncDCache;
@@ -313,6 +314,18 @@ mips64r2_SyncDCachePage(struct cpu_info *ci, vaddr_t va, paddr_t pa)
 			cache(IndexWBInvalidate_D, iva);
 		sva += ci->ci_l1data.linesize;
 	}
+}
+
+/*
+ * Writeback D$ for the given page, which is expected to be currently
+ * mapped, allowing the use of `Hit' operations. This is less aggressive
+ * than using `Index' operations.
+ */
+
+void
+mips64r2_HitSyncDCachePage(struct cpu_info *ci, vaddr_t va, paddr_t pa)
+{
+	mips64r2_hitwbinv_primary(va, PAGE_SIZE, ci->ci_l1data.linesize);
 }
 
 /*

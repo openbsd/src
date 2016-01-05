@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.h,v 1.6 2014/03/31 20:21:19 miod Exp $ */
+/* $OpenBSD: cpu.h,v 1.7 2016/01/05 05:27:54 visa Exp $ */
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -70,6 +70,8 @@ void hw_ipi_intr_clear(u_long);
 #define	Mips_SyncICache(ci)			\
 	Octeon_SyncICache((ci))
 #define	Mips_SyncDCachePage(ci, va, pa)		\
+	Octeon_SyncDCachePage((ci), (va), (pa))
+#define	Mips_HitSyncDCachePage(ci, va, pa)	\
 	Octeon_SyncDCachePage((ci), (va), (pa))
 #define	Mips_HitSyncDCache(ci, va, l)		\
 	Octeon_HitSyncDCache((ci), (va), (l))

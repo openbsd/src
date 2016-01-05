@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache.h,v 1.7 2015/08/15 22:31:38 miod Exp $	*/
+/*	$OpenBSD: cache.h,v 1.8 2016/01/05 05:27:54 visa Exp $	*/
 
 /*
  * Copyright (c) 2012 Miodrag Vallat.
@@ -42,6 +42,8 @@ void	chip##_InvalidateICachePage(struct cpu_info *, vaddr_t); \
 void	chip##_SyncICache(struct cpu_info *); \
 /* Writeback all D$ for the given page */ \
 void	chip##_SyncDCachePage(struct cpu_info *, vaddr_t, paddr_t); \
+/* Writeback all D$ for the (currently mapped) given page */ \
+void	chip##_HitSyncDCachePage(struct cpu_info *, vaddr_t, paddr_t); \
 /* Writeback all D$ for the given range */ \
 void	chip##_HitSyncDCache(struct cpu_info *, vaddr_t, size_t); \
 /* Invalidate all D$ for the given range */ \

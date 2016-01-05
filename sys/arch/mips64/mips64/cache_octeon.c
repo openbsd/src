@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache_octeon.c,v 1.9 2014/08/12 04:30:21 miod Exp $	*/
+/*	$OpenBSD: cache_octeon.c,v 1.10 2016/01/05 05:27:54 visa Exp $	*/
 /*
  * Copyright (c) 2010 Takuya ASADA.
  *
@@ -121,6 +121,7 @@ Octeon_ConfigCache(struct cpu_info *ci)
 	ci->ci_InvalidateICachePage = Octeon_InvalidateICachePage;
 	ci->ci_SyncICache = Octeon_SyncICache;
 	ci->ci_SyncDCachePage = Octeon_SyncDCachePage;
+	ci->ci_HitSyncDCachePage = Octeon_SyncDCachePage;
 	ci->ci_HitSyncDCache = Octeon_HitSyncDCache;
 	ci->ci_HitInvalidateDCache = Octeon_HitInvalidateDCache;
 	ci->ci_IOSyncDCache = Octeon_IOSyncDCache;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.107 2015/12/25 08:34:50 visa Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.108 2016/01/05 05:27:54 visa Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -174,6 +174,8 @@ struct cpu_info {
 	void		(*ci_InvalidateICachePage)(struct cpu_info *, vaddr_t);
 	void		(*ci_SyncICache)(struct cpu_info *);
 	void		(*ci_SyncDCachePage)(struct cpu_info *, vaddr_t,
+			    paddr_t);
+	void		(*ci_HitSyncDCachePage)(struct cpu_info *, vaddr_t,
 			    paddr_t);
 	void		(*ci_HitSyncDCache)(struct cpu_info *, vaddr_t, size_t);
 	void		(*ci_HitInvalidateDCache)(struct cpu_info *, vaddr_t,
@@ -508,6 +510,10 @@ u_int	cp1_get_prid(void);
 #ifndef	Mips_SyncDCachePage
 #define	Mips_SyncDCachePage(ci, va, pa) \
 	((ci)->ci_SyncDCachePage)(ci, va, pa)
+#endif
+#ifndef	Mips_HitSyncDCachePage
+#define	Mips_HitSyncDCachePage(ci, va, pa) \
+	((ci)->ci_HitSyncDCachePage)(ci, va, pa)
 #endif
 #ifndef	Mips_HitSyncDCache
 #define	Mips_HitSyncDCache(ci, va, l) \

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache_r4k.c,v 1.14 2014/03/31 20:21:19 miod Exp $	*/
+/*	$OpenBSD: cache_r4k.c,v 1.15 2016/01/05 05:27:54 visa Exp $	*/
 
 /*
  * Copyright (c) 2012 Miodrag Vallat.
@@ -121,6 +121,7 @@ Mips4k_ConfigCache(struct cpu_info *ci)
 	ci->ci_InvalidateICachePage = Mips4k_InvalidateICachePage;
 	ci->ci_SyncICache = Mips4k_SyncICache;
 	ci->ci_SyncDCachePage = Mips4k_SyncDCachePage;
+	ci->ci_HitSyncDCachePage = Mips4k_HitSyncDCachePage;
 	ci->ci_HitSyncDCache = Mips4k_HitSyncDCache;
 	ci->ci_HitInvalidateDCache = Mips4k_HitInvalidateDCache;
 	ci->ci_IOSyncDCache = Mips4k_IOSyncDCache;
@@ -294,12 +295,6 @@ Mips4k_SyncDCachePage(struct cpu_info *ci, vaddr_t va, paddr_t pa)
 	mips_sync();
 }
 
-/*
- * Writeback D$ for the given range. Range is expected to be currently
- * mapped, allowing the use of `Hit' operations. This is less aggressive
- * than using `Index' operations.
- */
-
 static __inline__ void
 mips4k_hitwbinv_primary(vaddr_t va, vsize_t sz, vsize_t line)
 {
@@ -323,6 +318,28 @@ mips4k_hitwbinv_secondary(vaddr_t va, vsize_t sz, vsize_t line)
 		va += line;
 	}
 }
+
+/*
+ * Writeback D$ for the given page, which is expected to be currently
+ * mapped, allowing the use of `Hit' operations. This is less aggressive
+ * than using `Index' operations.
+ */
+
+void
+Mips4k_HitSyncDCachePage(struct cpu_info *ci, vaddr_t va, paddr_t pa)
+{
+	mips4k_hitwbinv_primary(va, PAGE_SIZE, ci->ci_l1data.linesize);
+	if (ci->ci_l2.size != 0)
+		mips4k_hitwbinv_secondary(va, PAGE_SIZE, ci->ci_l2.linesize);
+
+	mips_sync();
+}
+
+/*
+ * Writeback D$ for the given range. Range is expected to be currently
+ * mapped, allowing the use of `Hit' operations. This is less aggressive
+ * than using `Index' operations.
+ */
 
 void
 Mips4k_HitSyncDCache(struct cpu_info *ci, vaddr_t _va, size_t _sz)

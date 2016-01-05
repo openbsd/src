@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcc.c,v 1.8 2015/12/23 11:45:24 visa Exp $	*/
+/*	$OpenBSD: tcc.c,v 1.9 2016/01/05 05:27:54 visa Exp $	*/
 
 /*
  * Copyright (c) 2012 Miodrag Vallat.
@@ -163,6 +163,7 @@ tcc_ConfigCache(struct cpu_info *ci)
 
 		ci->ci_SyncCache = tcc_SyncCache;
 		ci->ci_SyncDCachePage = tcc_SyncDCachePage;
+		ci->ci_HitSyncDCachePage = tcc_SyncDCachePage;
 		ci->ci_HitSyncDCache = tcc_HitSyncDCache;
 		ci->ci_HitInvalidateDCache = tcc_HitInvalidateDCache;
 		ci->ci_IOSyncDCache = tcc_IOSyncDCache;

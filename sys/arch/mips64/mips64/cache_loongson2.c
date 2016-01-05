@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache_loongson2.c,v 1.6 2014/03/31 20:21:19 miod Exp $	*/
+/*	$OpenBSD: cache_loongson2.c,v 1.7 2016/01/05 05:27:54 visa Exp $	*/
 
 /*
  * Copyright (c) 2009, 2012 Miodrag Vallat.
@@ -101,6 +101,7 @@ Loongson2_ConfigCache(struct cpu_info *ci)
 	ci->ci_InvalidateICachePage = Loongson2_InvalidateICachePage;
 	ci->ci_SyncICache = Loongson2_SyncICache;
 	ci->ci_SyncDCachePage = Loongson2_SyncDCachePage;
+	ci->ci_HitSyncDCachePage = Loongson2_SyncDCachePage;
 	ci->ci_HitSyncDCache = Loongson2_HitSyncDCache;
 	ci->ci_HitInvalidateDCache = Loongson2_HitInvalidateDCache;
 	ci->ci_IOSyncDCache = Loongson2_IOSyncDCache;
