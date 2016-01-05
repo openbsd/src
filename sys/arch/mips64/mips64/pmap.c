@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.83 2016/01/05 05:27:54 visa Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.84 2016/01/05 05:42:27 visa Exp $	*/
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -1309,16 +1309,13 @@ pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 			    va >= VM_MAX_KERNEL_ADDRESS)
 				panic("pmap_extract(%p, %p)", pmap, (void *)va);
 #endif
-			mtx_enter(&pmap->pm_pte_mtx);
 			pte = kvtopte(va);
 			if (*pte & PG_V)
 				pa = pfn_to_pad(*pte) | (va & PAGE_MASK);
 			else
 				rv = FALSE;
-			mtx_leave(&pmap->pm_pte_mtx);
 		}
 	} else {
-		mtx_enter(&pmap->pm_pte_mtx);
 		if (!(pte = pmap_segmap(pmap, va)))
 			rv = FALSE;
 		else {
@@ -1328,7 +1325,6 @@ pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 			else
 				rv = FALSE;
 		}
-		mtx_leave(&pmap->pm_pte_mtx);
 	}
 	if (rv != FALSE)
 		*pap = pa;
