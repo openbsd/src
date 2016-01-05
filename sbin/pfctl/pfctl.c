@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.332 2015/12/10 17:27:00 mmcc Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.333 2016/01/05 22:51:38 benno Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -220,7 +220,6 @@ static const char *tblcmdopt_list[] = {
 static const char *debugopt_list[] = {
 	"debug", "info", "notice", "warning",
 	"error", "crit", "alert", "emerg",
-	"none", "urgent", "misc", "loud",
 	NULL
 };
 
@@ -1883,15 +1882,7 @@ pfctl_set_debug(struct pfctl *pf, char *d)
 	u_int32_t	level;
 	int		loglevel;
 
-	if (!strcmp(d, "none"))
-		level = LOG_CRIT;
-	else if (!strcmp(d, "urgent"))
-		level = LOG_ERR;
-	else if (!strcmp(d, "misc"))
-		level = LOG_NOTICE;
-	else if (!strcmp(d, "loud"))
-		level = LOG_DEBUG;
-	else if ((loglevel = string_to_loglevel(d)) >= 0)
+	if ((loglevel = string_to_loglevel(d)) >= 0)
 		level = loglevel;
 	else {
 		warnx("unknown debug level \"%s\"", d);
