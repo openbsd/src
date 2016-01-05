@@ -1,4 +1,4 @@
-.\"	$OpenBSD: utimes.2,v 1.26 2015/09/10 17:55:21 schwarze Exp $
+.\"	$OpenBSD: utimes.2,v 1.27 2016/01/05 17:40:26 millert Exp $
 .\"	$NetBSD: utimes.2,v 1.9 1996/04/23 10:34:16 mycroft Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)utimes.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: September 10 2015 $
+.Dd $Mdocdate: January 5 2016 $
 .Dt UTIMES 2
 .Os
 .Sh NAME
@@ -42,13 +42,13 @@
 .Sh SYNOPSIS
 .In sys/time.h
 .Ft int
-.Fn utimes "const char *file" "const struct timeval *times"
+.Fn utimes "const char *path" "const struct timeval *times"
 .Ft int
 .Fn futimes "int fd" "const struct timeval *times"
 .In sys/stat.h
 .In fcntl.h
 .Ft int
-.Fn utimensat "int fd" "const char *file" "const struct timespec times[2]" "int flag"
+.Fn utimensat "int fd" "const char *path" "const struct timespec times[2]" "int flag"
 .Ft int
 .Fn futimens "int fd" "const struct timespec times[2]"
 .Sh DESCRIPTION
@@ -156,7 +156,7 @@ and the effective user ID of the process does not
 match the owner of the file, and is not the superuser, and write
 access is denied.
 .It Bq Er EFAULT
-.Fa file
+.Fa path
 or
 .Fa times
 points outside the process's allocated address space.
@@ -197,7 +197,7 @@ argument was neither zero nor
 .Dv AT_SYMLINK_NOFOLLOW .
 .It Bq Er EBADF
 The
-.Fa file
+.Fa path
 argument specifies a relative path and the
 .Fa fd
 argument is neither
@@ -205,13 +205,13 @@ argument is neither
 nor a valid file descriptor.
 .It Bq Er ENOTDIR
 The
-.Fa file
+.Fa path
 argument specifies a relative path and the
 .Fa fd
 argument is a valid file descriptor but it does not reference a directory.
 .It Bq Er EACCES
 The
-.Fa file
+.Fa path
 argument specifies a relative path but search permission is denied
 for the directory which the
 .Fa fd
