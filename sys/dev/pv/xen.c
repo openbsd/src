@@ -1,4 +1,4 @@
-/*	$OpenBSD: xen.c,v 1.22 2016/01/05 13:47:28 mikeb Exp $	*/
+/*	$OpenBSD: xen.c,v 1.23 2016/01/05 18:03:59 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Belopuhov
@@ -790,11 +790,11 @@ xen_init_grant_tables(struct xen_softc *sc)
 		return (-1);
 	}
 
-	gsv.version = 2;
+	gsv.version = 1;
 	ggv.dom = DOMID_SELF;
 	if (xen_hypercall(sc, XC_GNTTAB, 3, GNTTABOP_set_version, &gsv, 1) ||
 	    xen_hypercall(sc, XC_GNTTAB, 3, GNTTABOP_get_version, &ggv, 1) ||
-	    ggv.version != 2) {
+	    ggv.version != 1) {
 		printf("%s: failed to set grant tables API version\n",
 		    sc->sc_dev.dv_xname);
 		return (-1);
@@ -882,12 +882,12 @@ xen_grant_table_alloc(struct xen_softc *sc, grant_ref_t *ref)
 				i = 0;
 			if (ge->ge_reserved && i < ge->ge_reserved)
 				continue;
-			if (ge->ge_table[i].hdr.flags != GTF_invalid &&
-			    ge->ge_table[i].full_page.frame != 0)
+			if (ge->ge_table[i].flags != GTF_invalid &&
+			    ge->ge_table[i].frame != 0)
 				continue;
 			*ref = ge->ge_start + i;
 			/* XXX Mark as taken */
-			ge->ge_table[i].full_page.frame = 0xffffffff;
+			ge->ge_table[i].frame = 0xffffffff;
 			if ((ge->ge_next = i + 1) == GNTTAB_NEPG)
 				ge->ge_next = ge->ge_reserved + 1;
 			ge->ge_free--;
@@ -911,11 +911,11 @@ xen_grant_table_free(struct xen_softc *sc, grant_ref_t ref)
 			continue;
 		ref -= ge->ge_start;
 		mtx_enter(&ge->ge_mtx);
-		if (ge->ge_table[ref].hdr.flags != GTF_invalid) {
+		if (ge->ge_table[ref].flags != GTF_invalid) {
 			mtx_leave(&ge->ge_mtx);
 			return;
 		}
-		ge->ge_table[ref].full_page.frame = 0;
+		ge->ge_table[ref].frame = 0;
 		ge->ge_next = ref;
 		ge->ge_free++;
 		mtx_leave(&ge->ge_mtx);
@@ -933,11 +933,10 @@ xen_grant_table_enter(struct xen_softc *sc, grant_ref_t ref, paddr_t pa,
 			continue;
 		ref -= ge->ge_start;
 		mtx_enter(&ge->ge_mtx);
-		ge->ge_table[ref].full_page.frame = atop(pa);
-		ge->ge_table[ref].full_page.hdr.domid = 0;
+		ge->ge_table[ref].frame = atop(pa);
+		ge->ge_table[ref].domid = 0;
 		membar_producer();
-		ge->ge_table[ref].full_page.hdr.flags =
-		    GTF_permit_access | flags;
+		ge->ge_table[ref].flags = GTF_permit_access | flags;
 		mtx_leave(&ge->ge_mtx);
 		return (0);
 	}
@@ -957,12 +956,11 @@ xen_grant_table_remove(struct xen_softc *sc, grant_ref_t ref)
 
 		mtx_enter(&ge->ge_mtx);
 		/* Invalidate the grant reference */
-		ptr = (uint32_t *)&ge->ge_table[ref].hdr;
-		flags = (ge->ge_table[ref].hdr.flags &
-		    ~(GTF_reading | GTF_writing));
+		ptr = (uint32_t *)&ge->ge_table[ref];
+		flags = (ge->ge_table[ref].flags & ~(GTF_reading | GTF_writing));
 		while (atomic_cas_uint(ptr, flags, 0) != flags)
 			CPU_BUSY_CYCLE();
-		ge->ge_table[ref].full_page.frame = 0xffffffff;
+		ge->ge_table[ref].frame = 0xffffffff;
 		mtx_leave(&ge->ge_mtx);
 		break;
 	}

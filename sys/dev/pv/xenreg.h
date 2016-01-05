@@ -1,4 +1,4 @@
-/*	$OpenBSD: xenreg.h,v 1.6 2015/12/22 22:16:53 mikeb Exp $	*/
+/*	$OpenBSD: xenreg.h,v 1.7 2016/01/05 18:03:59 mikeb Exp $	*/
 
 /*
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -615,9 +615,6 @@ typedef uint32_t grant_ref_t;
  *  GTF_reading: Grant entry is currently mapped for reading by @domid. [XEN]
  *  GTF_writing: Grant entry is currently mapped for writing by @domid. [XEN]
  *  GTF_PAT, GTF_PWT, GTF_PCD: (x86) cache attribute flags for the grant [GST]
- *  GTF_sub_page: Grant access to only a subrange of the page.  @domid
- *                will only be allowed to copy from the grant, and not
- *                map it. [GST]
  */
 #define GTF_readonly				(1<<2)
 #define GTF_reading				(1<<3)
@@ -625,39 +622,17 @@ typedef uint32_t grant_ref_t;
 #define GTF_PWT					(1<<5)
 #define GTF_PCD					(1<<6)
 #define GTF_PAT					(1<<7)
-#define GTF_sub_page				(1<<8)
 
-struct grant_entry_header {
+typedef struct grant_entry {
 	uint16_t flags;
 	domid_t domid;
-};
-
-typedef union grant_entry {
-	struct grant_entry_header hdr;
-
-	/*
-	 * This member is used for V1-style full page grants, where either:
-	 *
-	 * -- hdr.type is GTF_accept_transfer, or
-	 * -- hdr.type is GTF_permit_access and GTF_sub_page is not set.
-	 *
-	 * In that case, the frame field has the same semantics as the
-	 * field of the same name in the V1 entry structure.
-	 */
-	struct {
-		struct grant_entry_header hdr;
-		uint32_t pad0;
-		uint64_t frame;
-	} full_page;
-
-	uint32_t __spacer[4]; /* Pad to a power of two */
-} grant_entry_t;
+	uint32_t frame;
+} __packed grant_entry_t;
 
 /* Number of grant table entries per memory page */
 #define GNTTAB_NEPG			(PAGE_SIZE / sizeof(grant_entry_t))
 
 #define GNTTABOP_query_size			6
-#define GNTTABOP_unmap_and_replace		7
 #define GNTTABOP_set_version			8
 #define GNTTABOP_get_version			10
 
