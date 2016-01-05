@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.12 2015/12/11 10:16:53 reyk Exp $	*/
+/*	$OpenBSD: main.c,v 1.13 2016/01/05 16:25:34 semarie Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -400,7 +400,7 @@ ctl_create(struct parse_result *res, int argc, char *argv[])
 
 	paths[0] = argv[1];
 	paths[1] = NULL;
-	if (pledge("stdio rpath wpath cpath", paths) == -1)
+	if (pledge("stdio rpath wpath cpath", NULL) == -1)
 		err(1, "pledge");
 	argc--;
 	argv++;
