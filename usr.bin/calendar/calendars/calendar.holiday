@@ -1,7 +1,7 @@
 /*
  * Holiday
  *
- * $OpenBSD: calendar.holiday,v 1.32 2015/10/12 06:33:21 jmc Exp $
+ * $OpenBSD: calendar.holiday,v 1.33 2016/01/05 08:28:02 jmc Exp $
  */
 
 #ifndef _calendar_holiday_
@@ -12,7 +12,6 @@
 01/01	Universal Fraternity Day in Mozambique
 01/02	Ancestry Day in Haiti
 01/02	St. Berchtold's Day in Switzerland
-01/03	New Year's Holiday in Scotland
 01/03	Revolution Day in Upper Volta
 01/04	Independence Day in Burma
 01/04	Martyrs Day in Zaire
