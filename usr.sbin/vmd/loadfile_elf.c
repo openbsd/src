@@ -1,5 +1,5 @@
 /* $NetBSD: loadfile.c,v 1.10 2000/12/03 02:53:04 tsutsui Exp $ */
-/* $OpenBSD: loadfile_elf.c,v 1.7 2016/01/05 06:54:03 mlarkin Exp $ */
+/* $OpenBSD: loadfile_elf.c,v 1.8 2016/01/05 06:55:28 mlarkin Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -116,8 +116,8 @@ union {
 
 static void setsegment(struct mem_segment_descriptor *, uint32_t,
     size_t, int, int, int, int);
-int elf32_exec(int, Elf32_Ehdr *, u_long *, int);
-int elf64_exec(int, Elf64_Ehdr *, u_long *, int);
+static int elf32_exec(int, Elf32_Ehdr *, u_long *, int);
+static int elf64_exec(int, Elf64_Ehdr *, u_long *, int);
 static void push_bootargs(int);
 static size_t push_stack(int, uint32_t);
 static void push_gdt(void);
@@ -565,7 +565,7 @@ mbcopy(char *src, char *dst, int sz)
  *  0 if successful
  *  1 if unsuccessful
  */
-int
+static int
 elf64_exec(int fd, Elf64_Ehdr *elf, u_long *marks, int flags)
 {
 	Elf64_Shdr *shp;
@@ -788,7 +788,7 @@ elf64_exec(int fd, Elf64_Ehdr *elf, u_long *marks, int flags)
  *  0 if successful
  *  1 if unsuccessful
  */
-int
+static int
 elf32_exec(int fd, Elf32_Ehdr *elf, u_long *marks, int flags)
 {
 	Elf32_Shdr *shp;
