@@ -1,4 +1,4 @@
-.\" $OpenBSD: video.4,v 1.13 2016/01/02 07:46:07 feinerer Exp $
+.\" $OpenBSD: video.4,v 1.14 2016/01/05 17:29:32 feinerer Exp $
 .\"
 .\" Copyright (c) 2008 Marcus Glocker <mglocker@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 2 2016 $
+.Dd $Mdocdate: January 5 2016 $
 .Dt VIDEO 4
 .Os
 .Sh NAME
@@ -303,13 +303,13 @@ struct v4l2_pix_format {
 };
 
 struct v4l2_window {
-	struct v4l2_rect	 w;
-	u_int32_t		 field;
-	u_int32_t		 chromakey;
-	struct v4l2_clip	 __user *clips;
-	u_int32_t		 clipcount;
+	struct v4l2_rect	w;
+	u_int32_t		field;
+	u_int32_t		chromakey;
+	struct v4l2_clip	__user *clips;
+	u_int32_t		clipcount;
 	void			__user *bitmap;
-	u_int8_t		 global_alpha;
+	u_int8_t		global_alpha;
 };
 
 struct v4l2_vbi_format {
