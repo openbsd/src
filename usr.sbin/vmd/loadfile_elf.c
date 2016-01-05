@@ -1,5 +1,5 @@
 /* $NetBSD: loadfile.c,v 1.10 2000/12/03 02:53:04 tsutsui Exp $ */
-/* $OpenBSD: loadfile_elf.c,v 1.6 2016/01/05 06:51:54 mlarkin Exp $ */
+/* $OpenBSD: loadfile_elf.c,v 1.7 2016/01/05 06:54:03 mlarkin Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -233,6 +233,9 @@ loadelf_main(int fd, int vm_id_in, int mem_sz, struct vcpu_init_state *vis)
 		r = elf64_exec(fd, &hdr.elf64, marks, LOAD_ALL);
 	}
 
+	if (r)
+		return (r);
+
 	push_bootargs(mem_sz);
 	push_gdt();
 	stacksize = push_stack(mem_sz, marks[MARK_END]);
@@ -241,7 +244,7 @@ loadelf_main(int fd, int vm_id_in, int mem_sz, struct vcpu_init_state *vis)
 	vis->vis_rsp = (uint64_t)(STACK_PAGE + PAGE_SIZE) - stacksize;
 	vis->vis_gdtr.vsi_base = GDT_PAGE;
 
-	return r;
+	return (0);
 }
 
 /*
