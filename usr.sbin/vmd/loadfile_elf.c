@@ -1,5 +1,5 @@
 /* $NetBSD: loadfile.c,v 1.10 2000/12/03 02:53:04 tsutsui Exp $ */
-/* $OpenBSD: loadfile_elf.c,v 1.5 2015/12/17 09:29:28 mlarkin Exp $ */
+/* $OpenBSD: loadfile_elf.c,v 1.6 2016/01/05 06:51:54 mlarkin Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -178,13 +178,13 @@ push_gdt(void)
 	uint8_t gdtpage[PAGE_SIZE];
 	struct mem_segment_descriptor *sd;
 
-	bzero(&gdtpage, sizeof(gdtpage));
+	memset(&gdtpage, 0, sizeof(gdtpage));
 	sd = (struct mem_segment_descriptor *)&gdtpage;
 
 	/*
 	 * Create three segment descriptors:
 	 *
-	 * GDT[0] : null desriptor. "Created" via bzero above.
+	 * GDT[0] : null desriptor. "Created" via memset above.
 	 * GDT[1] (selector @ 0x8): Executable segment, for CS
 	 * GDT[2] (selector @ 0x10): RW Data segment, for DS/ES/SS
 	 */
@@ -224,7 +224,7 @@ loadelf_main(int fd, int vm_id_in, int mem_sz, struct vcpu_init_state *vis)
 	if ((r = read(fd, &hdr, sizeof(hdr))) != sizeof(hdr))
 		return 1;
 
-	bzero(&marks, sizeof(marks));
+	memset(&marks, 0, sizeof(marks));
 	if (memcmp(hdr.elf32.e_ident, ELFMAG, SELFMAG) == 0 &&
 	    hdr.elf32.e_ident[EI_CLASS] == ELFCLASS32) {
 		r = elf32_exec(fd, &hdr.elf32, marks, LOAD_ALL);
@@ -333,7 +333,7 @@ push_stack(int mem_sz, uint32_t end)
 	uint32_t stack[1024];
 	uint16_t loc;
 
-	bzero(&stack, sizeof(stack));
+	memset(&stack, 0, sizeof(stack));
 	loc = 1024;
 
 	stack[--loc] = BOOTARGS_PAGE;
@@ -382,7 +382,7 @@ mread(int fd, uint32_t addr, size_t sz)
 	rd = 0;
 	osz = sz;
 	if ((addr & PAGE_MASK) != 0) {
-		bzero(buf, sizeof(buf));
+		memset(buf, 0, sizeof(buf));
 		if (sz > PAGE_SIZE)
 			ct = PAGE_SIZE - (addr & PAGE_MASK);
 		else
@@ -406,7 +406,7 @@ mread(int fd, uint32_t addr, size_t sz)
 		return (osz);
 
 	for (i = 0; i < sz; i += PAGE_SIZE, addr += PAGE_SIZE) {
-		bzero(buf, sizeof(buf));
+		memset(buf, 0, sizeof(buf));
 		if (i + PAGE_SIZE > sz)
 			ct = sz - i;
 		else
@@ -450,7 +450,7 @@ marc4random_buf(uint32_t addr, int sz)
 	 */
 	ct = 0;
 	if (addr % PAGE_SIZE != 0) {
-		bzero(buf, sizeof(buf));
+		memset(buf, 0, sizeof(buf));
 		ct = PAGE_SIZE - (addr % PAGE_SIZE);
 
 		arc4random_buf(buf, ct);
@@ -462,7 +462,7 @@ marc4random_buf(uint32_t addr, int sz)
 	}
 
 	for (i = 0; i < sz; i+= PAGE_SIZE, addr += PAGE_SIZE) {
-		bzero(buf, sizeof(buf));
+		memset(buf, 0, sizeof(buf));
 		if (i + PAGE_SIZE > sz)
 			ct = sz - i;
 		else
@@ -499,7 +499,7 @@ mbzero(uint32_t addr, int sz)
 	 * write_page
 	 */
 	ct = 0;
-	bzero(buf, sizeof(buf));
+	memset(buf, 0, sizeof(buf));
 	if (addr % PAGE_SIZE != 0) {
 		ct = PAGE_SIZE - (addr % PAGE_SIZE);
 
