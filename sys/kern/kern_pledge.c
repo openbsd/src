@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.140 2015/12/27 16:36:07 tb Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.141 2016/01/05 18:09:24 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -76,7 +76,7 @@ int substrcmp(const char *p1, size_t s1, const char *p2, size_t s2);
  */
 const uint64_t pledge_syscalls[SYS_MAXSYSCALL] = {
 	/*
-	 * Minimum required 
+	 * Minimum required
 	 */
 	[SYS_exit] = PLEDGE_ALWAYS,
 	[SYS_kbind] = PLEDGE_ALWAYS,
@@ -156,7 +156,7 @@ const uint64_t pledge_syscalls[SYS_MAXSYSCALL] = {
 	 */
 	[SYS_sendmsg] = PLEDGE_STDIO,
 
-	/* Common signal operations */ 
+	/* Common signal operations */
 	[SYS_nanosleep] = PLEDGE_STDIO,
 	[SYS_sigaltstack] = PLEDGE_STDIO,
 	[SYS_sigprocmask] = PLEDGE_STDIO,
