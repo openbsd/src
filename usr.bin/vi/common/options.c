@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.19 2015/11/24 10:28:14 bentley Exp $	*/
+/*	$OpenBSD: options.c,v 1.20 2016/01/06 22:27:39 millert Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -120,8 +120,6 @@ OPTLIST const optlist[] = {
  *	mixing code and data.  Don't add it, or I will kill you.
  */
 	{"modeline",	NULL,		OPT_0BOOL,	OPT_NOSET},
-/* O_MSGCAT	  4.4BSD */
-	{"msgcat",	f_msgcat,	OPT_STR,	0},
 /* O_NOPRINT	  4.4BSD */
 	{"noprint",	f_print,	OPT_STR,	OPT_EARLYSET},
 /* O_NUMBER	    4BSD */
@@ -350,8 +348,6 @@ opts_init(SCR *sp, int *oargs)
 	OI(O_FILEC, "filec=\t");
 	OI(O_KEYTIME, "keytime=6");
 	OI(O_MATCHTIME, "matchtime=7");
-	(void)snprintf(b1, sizeof(b1), "msgcat=%s", _PATH_MSGCAT);
-	OI(O_MSGCAT, b1);
 	OI(O_REPORT, "report=5");
 	OI(O_PARAGRAPHS, "paragraphs=IPLPPPQPP LIpplpipbp");
 	(void)snprintf(b1, sizeof(b1), "path=%s", "");

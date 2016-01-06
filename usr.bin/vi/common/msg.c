@@ -1,4 +1,4 @@
-/*	$OpenBSD: msg.c,v 1.23 2015/11/19 07:53:31 bentley Exp $	*/
+/*	$OpenBSD: msg.c,v 1.24 2016/01/06 22:27:39 millert Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -497,88 +497,6 @@ alloc_err:
 }
 
 /*
- * msg_open --
- *	Open the message catalogs.
- *
- * PUBLIC: int msg_open(SCR *, char *);
- */
-int
-msg_open(SCR *sp, char *file)
-{
-	/*
-	 * !!!
-	 * Assume that the first file opened is the system default, and that
-	 * all subsequent ones user defined.  Only display error messages
-	 * if we can't open the user defined ones -- it's useful to know if
-	 * the system one wasn't there, but if nvi is being shipped with an
-	 * installed system, the file will be there, if it's not, then the
-	 * message will be repeated every time nvi is started up.
-	 */
-	static int first = 1;
-	DB *db;
-	DBT data, key;
-	recno_t msgno;
-	char *p, *t, buf[PATH_MAX];
-
-	if ((p = strrchr(file, '/')) != NULL && p[1] == '\0' &&
-	    (((t = getenv("LC_MESSAGES")) != NULL && t[0] != '\0') ||
-	    ((t = getenv("LANG")) != NULL && t[0] != '\0'))) {
-		(void)snprintf(buf, sizeof(buf), "%s%s", file, t);
-		p = buf;
-	} else
-		p = file;
-	if ((db = dbopen(p,
-	    O_NONBLOCK | O_RDONLY, 0, DB_RECNO, NULL)) == NULL) {
-		if (first) {
-			first = 0;
-			return (1);
-		}
-		msgq_str(sp, M_SYSERR, p, "%s");
-		return (1);
-	}
-
-	/*
-	 * Test record 1 for the magic string.  The msgq call is here so
-	 * the message catalog build finds it.
-	 */
-#define	VMC	"VI_MESSAGE_CATALOG"
-	key.data = &msgno;
-	key.size = sizeof(recno_t);
-	msgno = 1;
-	if (db->get(db, &key, &data, 0) != 0 ||
-	    data.size != sizeof(VMC) - 1 ||
-	    memcmp(data.data, VMC, sizeof(VMC) - 1)) {
-		(void)db->close(db);
-		if (first) {
-			first = 0;
-			return (1);
-		}
-		msgq_str(sp, M_ERR, p,
-		    "030|The file %s is not a message catalog");
-		return (1);
-	}
-	first = 0;
-
-	if (sp->gp->msg != NULL)
-		(void)sp->gp->msg->close(sp->gp->msg);
-	sp->gp->msg = db;
-	return (0);
-}
-
-/*
- * msg_close --
- *	Close the message catalogs.
- *
- * PUBLIC: void msg_close(GS *);
- */
-void
-msg_close(GS *gp)
-{
-	if (gp->msg != NULL)
-		(void)gp->msg->close(gp->msg);
-}
-
-/*
  * msg_cont --
  *	Return common continuation messages.
  *
@@ -613,10 +531,6 @@ msg_cmsg(SCR *sp, cmsg_t which, size_t *lenp)
  * msg_cat --
  *	Return a single message from the catalog, plus its length.
  *
- * !!!
- * Only a single catalog message can be accessed at a time, if multiple
- * ones are needed, they must be copied into local memory.
- *
  * PUBLIC: const char *msg_cat(SCR *, const char *, size_t *);
  */
 const char *
@@ -631,30 +545,8 @@ msg_cat(SCR *sp, const char *str, size_t *lenp)
 	 * number and '|' symbol, we're done.
 	 */
 	if (isdigit(str[0]) &&
-	    isdigit(str[1]) && isdigit(str[2]) && str[3] == '|') {
-		key.data = &msgno;
-		key.size = sizeof(recno_t);
-		msgno = atoi(str);
-
-		/*
-		 * XXX
-		 * Really sleazy hack -- we put an extra character on the
-		 * end of the format string, and then we change it to be
-		 * the nul termination of the string.  There ought to be
-		 * a better way.  Once we can allocate multiple temporary
-		 * memory buffers, maybe we can use one of them instead.
-		 */
-		gp = sp == NULL ? NULL : sp->gp;
-		if (gp != NULL && gp->msg != NULL &&
-		    gp->msg->get(gp->msg, &key, &data, 0) == 0 &&
-		    data.size != 0) {
-			if (lenp != NULL)
-				*lenp = data.size - 1;
-			((char *)data.data)[data.size - 1] = '\0';
-			return (data.data);
-		}
+	    isdigit(str[1]) && isdigit(str[2]) && str[3] == '|')
 		str = &str[4];
-	}
 	if (lenp != NULL)
 		*lenp = strlen(str);
 	return (str);
