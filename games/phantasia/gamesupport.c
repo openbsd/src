@@ -1,4 +1,4 @@
-/*	$OpenBSD: gamesupport.c,v 1.7 2010/12/15 06:40:39 tedu Exp $	*/
+/*	$OpenBSD: gamesupport.c,v 1.8 2016/01/06 09:39:51 tb Exp $	*/
 /*	$NetBSD: gamesupport.c,v 1.3 1995/04/24 12:24:28 cgd Exp $	*/
 
 /*
@@ -54,8 +54,7 @@
 *************************************************************************/
 
 void
-changestats(ingameflag)
-	bool    ingameflag;
+changestats(bool ingameflag)
 {
 	static char flag[2] =	/* for printing values of bools */
 	{'F', 'T'};
@@ -198,7 +197,6 @@ changestats(ingameflag)
 				return;
 			} else
 				cleanup(TRUE);
-			/* NOTREACHED */
 		}
 		mvaddstr(20, 0, "!:Quit       ?:Delete");
 		mvaddstr(21, 0, "What would you like to change ? ");
@@ -509,7 +507,7 @@ BALTER:
 *************************************************************************/
 
 void
-monstlist()
+monstlist(void)
 {
 	int     count = 0;	/* count in file */
 
@@ -546,7 +544,7 @@ monstlist()
 *************************************************************************/
 
 void
-scorelist()
+scorelist(void)
 {
 	struct scoreboard sbuf;	/* for reading entries */
 	FILE   *fp;		/* to open the file */
@@ -583,7 +581,7 @@ scorelist()
 *************************************************************************/
 
 void
-activelist()
+activelist(void)
 {
 	fseek(Playersfp, 0L, SEEK_SET);
 	printf("Current characters on file are:\n\n");
@@ -621,7 +619,7 @@ activelist()
 *************************************************************************/
 
 void
-purgeoldplayers()
+purgeoldplayers(void)
 {
 	int     today;		/* day of year for today */
 	int     daysold;	/* how many days since the character has been
@@ -678,7 +676,7 @@ purgeoldplayers()
 *************************************************************************/
 
 void
-enterscore()
+enterscore(void)
 {
 	struct scoreboard sbuf;	/* buffer to read in scoreboard entries */
 	FILE   *fp;		/* to open scoreboard file */
@@ -694,7 +692,6 @@ enterscore()
 				loc += SZ_SCORESTRUCT;
 	} else {
 		error(_PATH_SCORE);
-		/* NOTREACHED */
 	}
 
 	/*

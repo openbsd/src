@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.17 2015/12/26 00:26:39 mestre Exp $	*/
+/*	$OpenBSD: misc.c,v 1.18 2016/01/06 09:39:51 tb Exp $	*/
 /*	$NetBSD: misc.c,v 1.2 1995/03/24 03:59:03 cgd Exp $	*/
 
 /*
@@ -115,10 +115,8 @@ movelevel()
 /
 *************************************************************************/
 
-char   *
-descrlocation(playerp, shortflag)
-	struct player *playerp;
-	bool    shortflag;
+char *
+descrlocation(struct player *playerp, bool shortflag)
 {
 	double  circle;		/* corresponding circle for coordinates */
 	int     quadrant;	/* quandrant of grid */
@@ -582,10 +580,8 @@ allstatslist()
 /
 *************************************************************************/
 
-char   *
-descrtype(playerp, shortflag)
-	struct player *playerp;
-	bool    shortflag;
+char *
+descrtype(struct player *playerp, bool shortflag)
 {
 	int     type;		/* for caluculating result subscript */
 	static char *results[] =/* description table */
@@ -673,9 +669,7 @@ descrtype(playerp, shortflag)
 *************************************************************************/
 
 long
-findname(name, playerp)
-	char   *name;
-	struct player *playerp;
+findname(char *name, struct player *playerp)
 {
 	long    loc = 0;	/* location in the file */
 
@@ -764,9 +758,7 @@ allocrecord()
 *************************************************************************/
 
 void
-freerecord(playerp, loc)
-	struct player *playerp;
-	long    loc;
+freerecord(struct player *playerp, long loc)
 {
 	playerp->p_name[0] = CH_MARKDELETE;
 	playerp->p_status = S_NOTUSED;
@@ -845,8 +837,7 @@ leavegame()
 *************************************************************************/
 
 void
-death(how)
-	char   *how;
+death(char *how)
 {
 	FILE   *fp;		/* for updating various files */
 	int     ch;		/* input */
@@ -968,9 +959,7 @@ death(how)
 *************************************************************************/
 
 void
-writerecord(playerp, place)
-	struct player *playerp;
-	long    place;
+writerecord(struct player *playerp, long place)
 {
 	fseek(Playersfp, place, SEEK_SET);
 	fwrite(playerp, SZ_PLAYERSTRUCT, 1, Playersfp);
@@ -1003,8 +992,7 @@ writerecord(playerp, place)
 *************************************************************************/
 
 double
-explevel(experience)
-	double  experience;
+explevel(double experience)
 {
 	if (experience < 1.1e7)
 		return (floor(pow((experience / 1000.0), 0.4875)));
@@ -1037,8 +1025,7 @@ explevel(experience)
 *************************************************************************/
 
 void
-truncstring(string)
-	char   *string;
+truncstring(char *string)
 {
 	int     length;		/* length of string */
 
@@ -1075,10 +1062,7 @@ truncstring(string)
 *************************************************************************/
 
 void
-altercoordinates(xnew, ynew, operation)
-	double  xnew;
-	double  ynew;
-	int     operation;
+altercoordinates(double xnew, double ynew, int operation)
 {
 	switch (operation) {
 	case A_FORCED:		/* move with no checks */
@@ -1151,9 +1135,7 @@ altercoordinates(xnew, ynew, operation)
 *************************************************************************/
 
 void
-readrecord(playerp, loc)
-	struct player *playerp;
-	long    loc;
+readrecord(struct player *playerp, long loc)
 {
 	fseek(Playersfp, loc, SEEK_SET);
 	fread(playerp, SZ_PLAYERSTRUCT, 1, Playersfp);
@@ -1183,7 +1165,7 @@ readrecord(playerp, loc)
 *************************************************************************/
 
 void
-adjuststats()
+adjuststats(void)
 {
 	double  dtemp;		/* for temporary calculations */
 
@@ -1298,8 +1280,7 @@ adjuststats()
 *************************************************************************/
 
 void
-initplayer(playerp)
-	struct player *playerp;
+initplayer(struct player *playerp)
 {
 	playerp->p_experience =
 	    playerp->p_level =
@@ -1381,7 +1362,7 @@ initplayer(playerp)
 *************************************************************************/
 
 void
-readmessage()
+readmessage(void)
 {
 	move(3, 0);
 	clrtoeol();
@@ -1415,8 +1396,7 @@ readmessage()
 *************************************************************************/
 
 __dead void
-error(whichfile)
-	char	*whichfile;
+error(char *whichfile)
 {
 
 	if (Windows)
@@ -1456,8 +1436,7 @@ error(whichfile)
 *************************************************************************/
 
 double
-distance(x1, x2, y1, y2)
-	double  x1, x2, y1, y2;
+distance(double x1, double x2, double y1, double y2)
 {
 	double  deltax, deltay;
 
@@ -1491,8 +1470,7 @@ distance(x1, x2, y1, y2)
 *************************************************************************/
 
 char *
-descrstatus(playerp)
-	struct player *playerp;
+descrstatus(struct player *playerp)
 {
 	switch (playerp->p_status) {
 	case S_PLAYING:
@@ -1551,7 +1529,7 @@ descrstatus(playerp)
 *************************************************************************/
 
 double
-drandom()
+drandom(void)
 {
 	return ((double) arc4random() / (UINT32_MAX + 1.0));
 }
@@ -1585,9 +1563,7 @@ drandom()
 *************************************************************************/
 
 void
-collecttaxes(gold, gems)
-	double  gold;
-	double  gems;
+collecttaxes(double gold, double gems)
 {
 	FILE   *fp;		/* to update Goldfile */
 	double  dtemp;		/* for temporary calculations */

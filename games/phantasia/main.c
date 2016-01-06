@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.17 2014/11/16 04:49:48 guenther Exp $	*/
+/*	$OpenBSD: main.c,v 1.18 2016/01/06 09:39:51 tb Exp $	*/
 /*	$NetBSD: main.c,v 1.3 1995/04/24 12:24:37 cgd Exp $	*/
 
 /*
@@ -95,9 +95,7 @@
 ****************************************************************************/
 
 int
-main(argc, argv)
-	int     argc;
-	char  **argv;
+main(int argc, char **argv)
 {
 	bool    noheader = FALSE;	/* set if don't want header */
 	bool    headeronly = FALSE;	/* set if only want header */
@@ -313,7 +311,7 @@ main(argc, argv)
 *************************************************************************/
 
 void
-initialstate()
+initialstate(void)
 {
 #ifdef TERMIOS
     struct termios tty;
@@ -398,7 +396,7 @@ initialstate()
 *************************************************************************/
 
 long
-rollnewplayer()
+rollnewplayer(void)
 {
 	int     chartype;	/* character type */
 	int     ch;		/* input */
@@ -515,7 +513,7 @@ rollnewplayer()
 *************************************************************************/
 
 void
-procmain()
+procmain(void)
 {
 	int     ch;		/* input */
 	double  x;		/* desired new x coordinate */
@@ -749,7 +747,7 @@ procmain()
 *************************************************************************/
 
 void
-titlelist()
+titlelist(void)
 {
 	FILE   *fp;		/* used for opening various files */
 	bool    councilfound = FALSE;	/* set if we find a member of the
@@ -883,7 +881,7 @@ titlelist()
 *************************************************************************/
 
 long
-recallplayer()
+recallplayer(void)
 {
 	long    loc = 0L;	/* location in player file */
 	int     loop;		/* loop counter */
@@ -966,7 +964,7 @@ recallplayer()
 *************************************************************************/
 
 void
-neatstuff()
+neatstuff(void)
 {
 	double  temp;		/* for temporary calculations */
 	int     ch;		/* input */
@@ -1090,8 +1088,7 @@ neatstuff()
 *************************************************************************/
 
 void
-genchar(type)
-	int     type;
+genchar(int type)
 {
 	int     subscript;	/* used for subscripting into Stattable */
 	struct charstats *statptr;	/* for pointing into Stattable */
@@ -1188,8 +1185,7 @@ playinit()
 *************************************************************************/
 
 void
-cleanup(doexit)
-	int	doexit;
+cleanup(int doexit)
 {
 	if (Windows) {
 		move(LINES - 2, 0);

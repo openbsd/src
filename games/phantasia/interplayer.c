@@ -1,4 +1,4 @@
-/*	$OpenBSD: interplayer.c,v 1.6 2014/07/12 03:41:04 deraadt Exp $	*/
+/*	$OpenBSD: interplayer.c,v 1.7 2016/01/06 09:39:51 tb Exp $	*/
 /*	$NetBSD: interplayer.c,v 1.2 1995/03/24 03:58:47 cgd Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
 *************************************************************************/
 
 void
-checkbattle()
+checkbattle(void)
 {
 	long    foeloc = 0L;	/* location in file of person to fight */
 
@@ -110,8 +110,7 @@ checkbattle()
 *************************************************************************/
 
 void
-battleplayer(foeplace)
-	long    foeplace;
+battleplayer(long foeplace)
 {
 	double  dtemp;		/* for temporary calculations */
 	double  oldhits = 0.0;	/* previous damage inflicted by foe */
@@ -357,7 +356,7 @@ LEAVE:
 *************************************************************************/
 
 void
-myturn()
+myturn(void)
 {
 	double  dtemp;		/* for temporary calculations */
 	int     ch;		/* input */
@@ -459,7 +458,7 @@ HIT:
 *************************************************************************/
 
 void
-checktampered()
+checktampered(void)
 {
 	long    loc = 0L;	/* location in energy void file */
 
@@ -520,10 +519,7 @@ checktampered()
 *************************************************************************/
 
 void
-tampered(what, arg1, arg2)
-	int     what;
-	double  arg1;
-	double  arg2;
+tampered(int what, double arg1, double arg2)
 {
 	long    loc;		/* location in file of other players */
 
@@ -704,8 +700,7 @@ tampered(what, arg1, arg2)
 *************************************************************************/
 
 void
-userlist(ingameflag)
-	bool    ingameflag;
+userlist(bool ingameflag)
 {
 	int     numusers = 0;	/* number of users on file */
 
@@ -795,7 +790,7 @@ userlist(ingameflag)
 *************************************************************************/
 
 void
-throneroom()
+throneroom(void)
 {
 	FILE   *fp;		/* to clear energy voids */
 	long    loc = 0L;	/* location of old king in player file */
@@ -876,7 +871,7 @@ throneroom()
 *************************************************************************/
 
 void
-dotampered()
+dotampered(void)
 {
 	short   tamper;		/* value for tampering with other players */
 	char   *option;		/* pointer to option description */
@@ -1108,9 +1103,7 @@ dotampered()
 *************************************************************************/
 
 void
-writevoid(vp, loc)
-	struct energyvoid *vp;
-	long    loc;
+writevoid(struct energyvoid *vp, long loc)
 {
 
 	fseek(Energyvoidfp, loc, SEEK_SET);
@@ -1145,7 +1138,7 @@ writevoid(vp, loc)
 *************************************************************************/
 
 long
-allocvoid()
+allocvoid(void)
 {
 	long    loc = 0L;	/* location of new energy void */
 
