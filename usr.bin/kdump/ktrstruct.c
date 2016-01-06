@@ -1,4 +1,4 @@
-/*	$OpenBSD: ktrstruct.c,v 1.14 2015/12/25 02:11:47 tedu Exp $	*/
+/*	$OpenBSD: ktrstruct.c,v 1.15 2016/01/06 17:52:18 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -402,9 +402,48 @@ ktrevent(const char *data, int count)
 	if (count > 1)
 		printf(" [%d]", count);
 	for (i = 0; i < count; i++) {
+		char flags[100];
+		const char *filter = "";
+		const char *comma = "";
 		memcpy(&kev, data, sizeof(kev));
 		data += sizeof(kev);
-		printf(" { ident=%lu }", kev.ident);
+		switch (kev.filter) {
+		case EVFILT_READ:
+			filter = "read";
+			break;
+		case EVFILT_WRITE:
+			filter = "write";
+			break;
+		case EVFILT_VNODE:
+			filter = "vnode";
+			break;
+		case EVFILT_PROC:
+			filter = "proc";
+			break;
+		case EVFILT_SIGNAL:
+			filter = "signal";
+			break;
+		case EVFILT_TIMER:
+			filter = "timer";
+			break;
+		}
+#define KEV_FLAG(value, name) \
+	do if (kev.flags & value) { \
+		strlcat(flags, comma, sizeof(flags)); \
+		strlcat(flags, name, sizeof(flags)); \
+		comma = ","; \
+	} while (0)
+
+		KEV_FLAG(EV_ADD, "add");
+		KEV_FLAG(EV_ENABLE, "enable");
+		KEV_FLAG(EV_DISABLE, "disable");
+		KEV_FLAG(EV_DELETE, "delete");
+		KEV_FLAG(EV_ONESHOT, "oneshot");
+		KEV_FLAG(EV_CLEAR, "clear");
+		KEV_FLAG(EV_EOF, "EOF");
+		KEV_FLAG(EV_ERROR, "error");
+
+		printf(" { filter=%s flags=%s ident=%lu }", filter, flags, kev.ident);
 	}
 	printf("\n");
 }
