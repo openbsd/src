@@ -207,15 +207,6 @@
 ./etc/rpc
 ./etc/services
 ./etc/signify
-./etc/signify/openbsd-55-base.pub
-./etc/signify/openbsd-55-fw.pub
-./etc/signify/openbsd-55-pkg.pub
-./etc/signify/openbsd-56-base.pub
-./etc/signify/openbsd-56-fw.pub
-./etc/signify/openbsd-56-pkg.pub
-./etc/signify/openbsd-57-base.pub
-./etc/signify/openbsd-57-fw.pub
-./etc/signify/openbsd-57-pkg.pub
 ./etc/signify/openbsd-58-base.pub
 ./etc/signify/openbsd-58-fw.pub
 ./etc/signify/openbsd-58-pkg.pub
@@ -223,6 +214,8 @@
 ./etc/signify/openbsd-60-base.pub
 ./etc/signify/openbsd-59-fw.pub
 ./etc/signify/openbsd-59-pkg.pub
+./etc/signify/openbsd-60-fw.pub
+./etc/signify/openbsd-60-pkg.pub
 ./etc/skel
 ./etc/skel/.ssh
 ./etc/ssh
