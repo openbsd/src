@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_output.c,v 1.105 2016/01/05 18:41:16 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_output.c,v 1.106 2016/01/06 19:56:50 stsp Exp $	*/
 /*	$NetBSD: ieee80211_output.c,v 1.13 2004/05/31 11:02:55 dyoung Exp $	*/
 
 /*-
@@ -1021,7 +1021,7 @@ ieee80211_add_htcaps(u_int8_t *frm, struct ieee80211com *ic)
 	*frm++ = IEEE80211_ELEMID_HTCAPS;
 	*frm++ = 26;
 	LE_WRITE_2(frm, ic->ic_htcaps); frm += 2;
-	*frm++ = 0; /* XXX A-MPDU params */
+	*frm++ = ic->ic_ampdu_params;
 	memcpy(frm, ic->ic_sup_mcs, 10); frm += 10;
 	LE_WRITE_2(frm, (ic->ic_max_rxrate & IEEE80211_MCS_RX_RATE_HIGH));
 	frm += 2;

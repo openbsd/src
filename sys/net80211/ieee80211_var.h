@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_var.h,v 1.68 2016/01/05 18:41:16 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_var.h,v 1.69 2016/01/06 19:56:50 stsp Exp $	*/
 /*	$NetBSD: ieee80211_var.h,v 1.7 2004/05/06 03:07:10 dyoung Exp $	*/
 
 /*-
@@ -318,6 +318,7 @@ struct ieee80211com {
 
 	u_int32_t		ic_txbfcaps;
 	u_int16_t		ic_htcaps;
+	u_int8_t		ic_ampdu_params;
 	u_int8_t		ic_sup_mcs[howmany(80, NBBY)];
 	u_int16_t		ic_max_rxrate;	/* in Mb/s, 0 <= rate <= 1023 */
 	u_int8_t		ic_tx_mcs_set;

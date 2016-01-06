@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.151 2016/01/06 09:17:42 stsp Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.152 2016/01/06 19:56:50 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -458,6 +458,7 @@ iwn_attach(struct device *parent, struct device *self, void *aux)
 	ic->ic_htxcaps = 0;
 	ic->ic_txbfcaps = 0;
 	ic->ic_aselcaps = 0;
+	ic->ic_ampdu_params = IEEE80211_AMPDU_PARAM_SS_4;
 
 #ifdef notyet
 	if (sc->sc_flags & IWN_FLAG_HAS_11N) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.73 2016/01/06 09:15:31 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.74 2016/01/06 19:56:50 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -6778,6 +6778,7 @@ iwm_attach(struct device *parent, struct device *self, void *aux)
 	ic->ic_htxcaps = 0;
 	ic->ic_txbfcaps = 0;
 	ic->ic_aselcaps = 0;
+	ic->ic_ampdu_params = IEEE80211_AMPDU_PARAM_SS_4;
 
 	ic->ic_sup_rates[IEEE80211_MODE_11A] = ieee80211_std_rateset_11a;
 	ic->ic_sup_rates[IEEE80211_MODE_11B] = ieee80211_std_rateset_11b;
