@@ -1,4 +1,4 @@
-/*	$OpenBSD: map.c,v 1.2 2001/01/28 23:41:47 niklas Exp $	*/
+/*	$OpenBSD: map.c,v 1.3 2016/01/06 09:24:38 tb Exp $	*/
 /*	$NetBSD: map.c,v 1.2 1995/03/24 03:58:58 cgd Exp $	*/
 
 #define	minusminus	plusplus
@@ -125,7 +125,7 @@ main()
 
     move(-1380, 1180);
     closepl();
-    exit(0);
+    return 0;
 }
 
 plusplus(s, x, y)	/* draw strings in plus plus quadrant */
