@@ -1,4 +1,4 @@
-.\"	$OpenBSD: set.opt.roff,v 1.9 2015/11/24 12:56:31 bentley Exp $
+.\"	$OpenBSD: set.opt.roff,v 1.10 2016/01/06 22:41:53 millert Exp $
 .\"
 .\" Copyright (c) 1994
 .\"     The Regents of the University of California.  All rights reserved.
@@ -607,30 +607,6 @@ This option only permits you to disallow messages for the edit session.
 See the
 .XR mesg 1
 utility for more information.
-.KY msgcat
-.IP "msgcat [/usr/share/vi/catalog/]"
-This option selects a message catalog to be used to display error and
-informational messages in a specified language.
-If the value of this option ends with a '/', it is treated as the name
-of a directory that contains a message catalog
-.QT "vi_XXXX" ,
-where
-.QT XXXX
-is the value of the
-.LI LANG
-environment variable, if it's set, or the value of the
-.LI LC_MESSAGES
-environment variable if it's not.
-If neither of those environment variables are set,
-or if the option doesn't end in a '/',
-the option is treated as the full path name of the message catalog to use.
-.sp
-If any messages are missing from the catalog,
-the backup text (English) is used instead.
-.sp
-See the distribution file
-.LI catalog/README
-for additional information on building and installing message catalogs.
 .KY modelines
 .IP "modelines, modeline [off]"
 If the

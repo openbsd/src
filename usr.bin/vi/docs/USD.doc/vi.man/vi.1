@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vi.1,v 1.62 2015/11/24 10:28:14 bentley Exp $
+.\"	$OpenBSD: vi.1,v 1.63 2016/01/06 22:41:53 millert Exp $
 .\"
 .\" Copyright (c) 1994
 .\"     The Regents of the University of California.  All rights reserved.
@@ -14,7 +14,7 @@
 .\"
 .\"     @(#)vi.1	8.51 (Berkeley) 10/10/96
 .\"
-.Dd $Mdocdate: November 24 2015 $
+.Dd $Mdocdate: January 6 2016 $
 .Dt VI 1
 .Os
 .Sh NAME
@@ -2367,9 +2367,6 @@ pauses on the matching character when the
 option is set.
 .It Cm mesg Bq on
 Permit messages from other users.
-.It Cm msgcat Bq /usr/share/vi/catalog/
-Selects a message catalog to be used to display error and informational
-messages in a specified language.
 .It Cm modelines , modeline Bq off
 Read the first and last few lines of each file for
 .Nm ex

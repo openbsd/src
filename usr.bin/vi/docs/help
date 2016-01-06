@@ -202,20 +202,20 @@ unabbreviate: delete an abbreviation
 	   ~: replace previous RE with previous replacement string,
 =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 Edit options:
-noaltwerase     filec=""        nomodeline      scroll=17       notildeop
-autoindent      flash           msgcat="./"     nosearchincr    timeout  
-autoprint       hardtabs=0      noprint=""      nosecure        nottywerase
-noautowrite     noiclower       nonumber        shiftwidth=8    noverbose  
-backup=""       noignorecase    nooctal         noshowmatch     warn
-nobeautify      keytime=6       open            noshowmode      window=35
-cedit=""        noleftright     optimize        sidescroll=16   nowindowname
-columns=80      lines=36        print=""        noslowopen      wraplen=0
-comment         nolisp          prompt          nosourceany     wrapmargin=0
-noedcompatible  nolist          readonly        tabstop=8       wrapscan
-escapetime=1    lock            noredraw        taglength=0     nowriteany
-noerrorbells    magic           remap           tags="tags"
-exrc            matchtime=7     report=5        term="xterm"
-noextended      mesg            ruler           noterse
+noaltwerase     filec=""        nomodeline      nosearchincr    timeout
+autoindent      flash           noprint=""      nosecure        nottywerase
+autoprint       hardtabs=0      nonumber        shiftwidth=8    noverbose
+noautowrite     noiclower       nooctalr        noshowmatch     warn
+backup=""       noignorecase    open            noshowmode      window=35
+nobeautify      keytime=6       optimize        sidescroll=16   nowindowname
+cedit=""        noleftright     print=""        noslowopen      wraplen=0
+columns=80      lines=36        prompt          nosourceany     wrapmargin=0
+comment         nolisp          readonly        tabstop=8       wrapscan
+noedcompatible  nolist          noredraw        taglength=0     nowriteany
+escapetime=1    lock            remap           tags="tags"
+noerrorbells    magic           report=5        term="xterm"
+exrc            matchtime=7     ruler           noterse
+noextended      mesg            scroll=17       notildeop
 cdpath="/usr/src/local/nvi:/tmp"
 directory="/tmp"
 paragraphs="IPLPPPQPP LIpplpipbp"
