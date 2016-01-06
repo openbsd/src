@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.150 2016/01/05 18:41:15 stsp Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.151 2016/01/06 09:17:42 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -3399,9 +3399,21 @@ iwn_set_link_quality(struct iwn_softc *sc, struct ieee80211_node *ni)
 		}
 		/* Fill the rest with MCS 0. */
 		rinfo = &iwn_rates[iwn_mcs2ridx[0]];
-		while (i < IWN_MAX_TX_RETRIES) {
+ 		while (i < IWN_MAX_TX_RETRIES - 1) {
 			linkq.retry[i].plcp = rinfo->ht_plcp;
 			linkq.retry[i].rflags = rinfo->ht_flags;
+ 			linkq.retry[i].rflags |= IWN_RFLAG_ANT(txant);
+ 			i++;
+ 		}
+
+		/* Fill the last slot with the lowest legacy rate. */
+		if (IEEE80211_IS_CHAN_5GHZ(ni->ni_chan))
+			rinfo = &iwn_rates[IWN_RIDX_OFDM6];
+		else
+			rinfo = &iwn_rates[IWN_RIDX_CCK1];
+		while (i < IWN_MAX_TX_RETRIES) {
+			linkq.retry[i].plcp = rinfo->plcp;
+			linkq.retry[i].rflags = rinfo->flags;
 			linkq.retry[i].rflags |= IWN_RFLAG_ANT(txant);
 			i++;
 		}
