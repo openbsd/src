@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_pipe.c,v 1.70 2015/12/05 10:11:53 tedu Exp $	*/
+/*	$OpenBSD: sys_pipe.c,v 1.71 2016/01/06 17:59:30 tedu Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -295,7 +295,7 @@ pipeselwakeup(struct pipe *cpipe)
 int
 pipe_read(struct file *fp, off_t *poff, struct uio *uio, struct ucred *cred)
 {
-	struct pipe *rpipe = (struct pipe *) fp->f_data;
+	struct pipe *rpipe = fp->f_data;
 	int error;
 	int nread = 0;
 	int size;
@@ -414,10 +414,9 @@ pipe_write(struct file *fp, off_t *poff, struct uio *uio, struct ucred *cred)
 {
 	int error = 0;
 	int orig_resid;
-
 	struct pipe *wpipe, *rpipe;
 
-	rpipe = (struct pipe *) fp->f_data;
+	rpipe = fp->f_data;
 	wpipe = rpipe->pipe_peer;
 
 	/*
@@ -635,7 +634,7 @@ retrywrite:
 int
 pipe_ioctl(struct file *fp, u_long cmd, caddr_t data, struct proc *p)
 {
-	struct pipe *mpipe = (struct pipe *)fp->f_data;
+	struct pipe *mpipe = fp->f_data;
 
 	switch (cmd) {
 
@@ -669,7 +668,7 @@ pipe_ioctl(struct file *fp, u_long cmd, caddr_t data, struct proc *p)
 int
 pipe_poll(struct file *fp, int events, struct proc *p)
 {
-	struct pipe *rpipe = (struct pipe *)fp->f_data;
+	struct pipe *rpipe = fp->f_data;
 	struct pipe *wpipe;
 	int revents = 0;
 
@@ -706,7 +705,7 @@ pipe_poll(struct file *fp, int events, struct proc *p)
 int
 pipe_stat(struct file *fp, struct stat *ub, struct proc *p)
 {
-	struct pipe *pipe = (struct pipe *)fp->f_data;
+	struct pipe *pipe = fp->f_data;
 
 	memset(ub, 0, sizeof(*ub));
 	ub->st_mode = S_IFIFO;
@@ -731,7 +730,7 @@ pipe_stat(struct file *fp, struct stat *ub, struct proc *p)
 int
 pipe_close(struct file *fp, struct proc *p)
 {
-	struct pipe *cpipe = (struct pipe *)fp->f_data;
+	struct pipe *cpipe = fp->f_data;
 
 	fp->f_ops = NULL;
 	fp->f_data = NULL;
@@ -796,7 +795,7 @@ pipeclose(struct pipe *cpipe)
 int
 pipe_kqfilter(struct file *fp, struct knote *kn)
 {
-	struct pipe *rpipe = (struct pipe *)kn->kn_fp->f_data;
+	struct pipe *rpipe = kn->kn_fp->f_data;
 	struct pipe *wpipe = rpipe->pipe_peer;
 
 	switch (kn->kn_filter) {
@@ -822,7 +821,7 @@ pipe_kqfilter(struct file *fp, struct knote *kn)
 void
 filt_pipedetach(struct knote *kn)
 {
-	struct pipe *rpipe = (struct pipe *)kn->kn_fp->f_data;
+	struct pipe *rpipe = kn->kn_fp->f_data;
 	struct pipe *wpipe = rpipe->pipe_peer;
 
 	switch (kn->kn_filter) {
@@ -840,7 +839,7 @@ filt_pipedetach(struct knote *kn)
 int
 filt_piperead(struct knote *kn, long hint)
 {
-	struct pipe *rpipe = (struct pipe *)kn->kn_fp->f_data;
+	struct pipe *rpipe = kn->kn_fp->f_data;
 	struct pipe *wpipe = rpipe->pipe_peer;
 
 	kn->kn_data = rpipe->pipe_buffer.cnt;
@@ -856,7 +855,7 @@ filt_piperead(struct knote *kn, long hint)
 int
 filt_pipewrite(struct knote *kn, long hint)
 {
-	struct pipe *rpipe = (struct pipe *)kn->kn_fp->f_data;
+	struct pipe *rpipe = kn->kn_fp->f_data;
 	struct pipe *wpipe = rpipe->pipe_peer;
 
 	if ((wpipe == NULL) || (wpipe->pipe_state & PIPE_EOF)) {

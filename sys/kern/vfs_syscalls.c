@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.250 2016/01/02 00:24:16 deraadt Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.251 2016/01/06 17:59:30 tedu Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -684,7 +684,7 @@ sys_fchdir(struct proc *p, void *v, register_t *retval)
 
 	if ((fp = fd_getfile(fdp, SCARG(uap, fd))) == NULL)
 		return (EBADF);
-	vp = (struct vnode *)fp->f_data;
+	vp = fp->f_data;
 	if (fp->f_type != DTYPE_VNODE || vp->v_type != VDIR)
 		return (ENOTDIR);
 	vref(vp);
@@ -1550,7 +1550,7 @@ sys_lseek(struct proc *p, void *v, register_t *retval)
 		return (EBADF);
 	if (fp->f_type != DTYPE_VNODE)
 		return (ESPIPE);
-	vp = (struct vnode *)fp->f_data;
+	vp = fp->f_data;
 	if (vp->v_type == VFIFO)
 		return (ESPIPE);
 	FREF(fp);
@@ -2031,7 +2031,7 @@ sys_fchmod(struct proc *p, void *v, register_t *retval)
 
 	if ((error = getvnode(p, SCARG(uap, fd), &fp)) != 0)
 		return (error);
-	vp = (struct vnode *)fp->f_data;
+	vp = fp->f_data;
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
 	if (vp->v_mount && vp->v_mount->mnt_flag & MNT_RDONLY)
 		error = EROFS;
@@ -2194,7 +2194,7 @@ sys_fchown(struct proc *p, void *v, register_t *retval)
 
 	if ((error = getvnode(p, SCARG(uap, fd), &fp)) != 0)
 		return (error);
-	vp = (struct vnode *)fp->f_data;
+	vp = fp->f_data;
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
 	if (vp->v_mount->mnt_flag & MNT_RDONLY)
 		error = EROFS;
@@ -2410,7 +2410,7 @@ dofutimens(struct proc *p, int fd, struct timespec ts[2])
 
 	if ((error = getvnode(p, fd, &fp)) != 0)
 		return (error);
-	vp = (struct vnode *)fp->f_data;
+	vp = fp->f_data;
 	vref(vp);
 	FRELE(fp, p);
 
@@ -2475,7 +2475,7 @@ sys_ftruncate(struct proc *p, void *v, register_t *retval)
 		error = EINVAL;
 		goto bad;
 	}
-	vp = (struct vnode *)fp->f_data;
+	vp = fp->f_data;
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
 	if (vp->v_type == VDIR)
 		error = EISDIR;
@@ -2505,7 +2505,7 @@ sys_fsync(struct proc *p, void *v, register_t *retval)
 
 	if ((error = getvnode(p, SCARG(uap, fd), &fp)) != 0)
 		return (error);
-	vp = (struct vnode *)fp->f_data;
+	vp = fp->f_data;
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
 	error = VOP_FSYNC(vp, fp->f_cred, MNT_WAIT, p);
 #ifdef FFS_SOFTUPDATES
@@ -2827,7 +2827,7 @@ getvnode(struct proc *p, int fd, struct file **fpp)
 	if (fp->f_type != DTYPE_VNODE)
 		return (EINVAL);
 
-	vp = (struct vnode *)fp->f_data;
+	vp = fp->f_data;
 	if (vp->v_type == VBAD)
 		return (EBADF);
 
@@ -2860,7 +2860,7 @@ sys_pread(struct proc *p, void *v, register_t *retval)
 	if ((fp = fd_getfile_mode(fdp, fd, FREAD)) == NULL)
 		return (EBADF);
 
-	vp = (struct vnode *)fp->f_data;
+	vp = fp->f_data;
 	if (fp->f_type != DTYPE_VNODE || vp->v_type == VFIFO ||
 	    (vp->v_flag & VISTTY)) {
 		return (ESPIPE);
@@ -2901,7 +2901,7 @@ sys_preadv(struct proc *p, void *v, register_t *retval)
 	if ((fp = fd_getfile_mode(fdp, fd, FREAD)) == NULL)
 		return (EBADF);
 
-	vp = (struct vnode *)fp->f_data;
+	vp = fp->f_data;
 	if (fp->f_type != DTYPE_VNODE || vp->v_type == VFIFO ||
 	    (vp->v_flag & VISTTY)) {
 		return (ESPIPE);
@@ -2941,7 +2941,7 @@ sys_pwrite(struct proc *p, void *v, register_t *retval)
 	if ((fp = fd_getfile_mode(fdp, fd, FWRITE)) == NULL)
 		return (EBADF);
 
-	vp = (struct vnode *)fp->f_data;
+	vp = fp->f_data;
 	if (fp->f_type != DTYPE_VNODE || vp->v_type == VFIFO ||
 	    (vp->v_flag & VISTTY)) {
 		return (ESPIPE);
@@ -2982,7 +2982,7 @@ sys_pwritev(struct proc *p, void *v, register_t *retval)
 	if ((fp = fd_getfile_mode(fdp, fd, FWRITE)) == NULL)
 		return (EBADF);
 
-	vp = (struct vnode *)fp->f_data;
+	vp = fp->f_data;
 	if (fp->f_type != DTYPE_VNODE || vp->v_type == VFIFO ||
 	    (vp->v_flag & VISTTY)) {
 		return (ESPIPE);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.142 2016/01/06 09:09:16 kettenis Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.143 2016/01/06 17:59:30 tedu Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -871,7 +871,7 @@ pledge_recvfd(struct proc *p, struct file *fp)
 	case DTYPE_PIPE:
 		return (0);
 	case DTYPE_VNODE:
-		vp = (struct vnode *)fp->f_data;
+		vp = fp->f_data;
 
 		if (vp->v_type != VDIR)
 			return (0);
@@ -903,7 +903,7 @@ pledge_sendfd(struct proc *p, struct file *fp)
 	case DTYPE_PIPE:
 		return (0);
 	case DTYPE_VNODE:
-		vp = (struct vnode *)fp->f_data;
+		vp = fp->f_data;
 
 		if (vp->v_type != VDIR)
 			return (0);
@@ -1147,7 +1147,7 @@ pledge_ioctl(struct proc *p, long com, struct file *fp)
 
 	/* fp != NULL was already checked */
 	if (fp->f_type == DTYPE_VNODE)
-		vp = (struct vnode *)fp->f_data;
+		vp = fp->f_data;
 
 	/*
 	 * Further sets of ioctl become available, but are checked a

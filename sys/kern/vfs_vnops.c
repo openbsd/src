@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_vnops.c,v 1.82 2015/05/01 01:30:58 millert Exp $	*/
+/*	$OpenBSD: vfs_vnops.c,v 1.83 2016/01/06 17:59:30 tedu Exp $	*/
 /*	$NetBSD: vfs_vnops.c,v 1.20 1996/02/04 02:18:41 christos Exp $	*/
 
 /*
@@ -327,7 +327,7 @@ vn_rdwr(enum uio_rw rw, struct vnode *vp, caddr_t base, int len, off_t offset,
 int
 vn_read(struct file *fp, off_t *poff, struct uio *uio, struct ucred *cred)
 {
-	struct vnode *vp = (struct vnode *)fp->f_data;
+	struct vnode *vp = fp->f_data;
 	int error = 0;
 	size_t count = uio->uio_resid;
 	struct proc *p = uio->uio_procp;
@@ -352,7 +352,7 @@ vn_read(struct file *fp, off_t *poff, struct uio *uio, struct ucred *cred)
 int
 vn_write(struct file *fp, off_t *poff, struct uio *uio, struct ucred *cred)
 {
-	struct vnode *vp = (struct vnode *)fp->f_data;
+	struct vnode *vp = fp->f_data;
 	struct proc *p = uio->uio_procp;
 	int error, ioflag = IO_UNIT;
 	size_t count;
@@ -384,7 +384,7 @@ vn_write(struct file *fp, off_t *poff, struct uio *uio, struct ucred *cred)
 int
 vn_statfile(struct file *fp, struct stat *sb, struct proc *p)
 {
-	struct vnode *vp = (struct vnode *)fp->f_data;
+	struct vnode *vp = fp->f_data;
 	return vn_stat(vp, sb, p);
 }
 
@@ -458,7 +458,7 @@ vn_stat(struct vnode *vp, struct stat *sb, struct proc *p)
 int
 vn_ioctl(struct file *fp, u_long com, caddr_t data, struct proc *p)
 {
-	struct vnode *vp = ((struct vnode *)fp->f_data);
+	struct vnode *vp = fp->f_data;
 	struct vattr vattr;
 	int error;
 
@@ -501,7 +501,7 @@ vn_ioctl(struct file *fp, u_long com, caddr_t data, struct proc *p)
 int
 vn_poll(struct file *fp, int events, struct proc *p)
 {
-	return (VOP_POLL(((struct vnode *)fp->f_data), fp->f_flag, events, p));
+	return (VOP_POLL(fp->f_data, fp->f_flag, events, p));
 }
 
 /*
@@ -553,7 +553,7 @@ vn_closefile(struct file *fp, struct proc *p)
 int
 vn_kqfilter(struct file *fp, struct knote *kn)
 {
-	return (VOP_KQFILTER(((struct vnode *)fp->f_data), kn));
+	return (VOP_KQFILTER(fp->f_data, kn));
 }
 
 /*
