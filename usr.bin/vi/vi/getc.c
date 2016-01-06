@@ -1,4 +1,4 @@
-/*	$OpenBSD: getc.c,v 1.9 2014/11/12 04:28:41 bentley Exp $	*/
+/*	$OpenBSD: getc.c,v 1.10 2016/01/06 22:28:52 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -48,7 +48,7 @@ cs_init(SCR *sp, VCS *csp)
 	if (db_eget(sp, csp->cs_lno, (char **) &csp->cs_bp, &csp->cs_len,
 	    &isempty)) {
 		if (isempty)
-			msgq(sp, M_BERR, "177|Empty file");
+			msgq(sp, M_BERR, "Empty file");
 		return (1);
 	}
 	if (csp->cs_len == 0 || v_isempty(csp->cs_bp, csp->cs_len)) {

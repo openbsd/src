@@ -1,4 +1,4 @@
-/*	$OpenBSD: v_match.c,v 1.8 2015/03/28 12:54:37 bcallah Exp $	*/
+/*	$OpenBSD: v_match.c,v 1.9 2016/01/06 22:28:52 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -54,7 +54,7 @@ v_match(SCR *sp, VICMD *vp)
 	}
 	for (off = vp->m_start.cno;; ++off) {
 		if (off >= len) {
-nomatch:		msgq(sp, M_BERR, "184|No match character on this line");
+nomatch:		msgq(sp, M_BERR, "No match character on this line");
 			return (1);
 		}
 		switch (startc = p[off]) {
@@ -114,7 +114,7 @@ nomatch:		msgq(sp, M_BERR, "184|No match character on this line");
 			break;
 	}
 	if (cnt) {
-		msgq(sp, M_BERR, "185|Matching character not found");
+		msgq(sp, M_BERR, "Matching character not found");
 		return (1);
 	}
 

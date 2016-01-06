@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_display.c,v 1.10 2015/11/19 07:53:31 bentley Exp $	*/
+/*	$OpenBSD: ex_display.c,v 1.11 2016/01/06 22:28:52 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -74,7 +74,7 @@ bdisplay(SCR *sp)
 	CB *cbp;
 
 	if (LIST_FIRST(&sp->gp->cutq) == NULL && sp->gp->dcbp == NULL) {
-		msgq(sp, M_INFO, "123|No cut buffers to display");
+		msgq(sp, M_INFO, "No cut buffers to display");
 		return (0);
 	}
 

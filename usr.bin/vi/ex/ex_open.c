@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_open.c,v 1.6 2014/11/12 04:28:41 bentley Exp $	*/
+/*	$OpenBSD: ex_open.c,v 1.7 2016/01/06 22:28:52 millert Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -33,10 +33,10 @@ ex_open(SCR *sp, EXCMD *cmdp)
 	/* If open option off, disallow open command. */
 	if (!O_ISSET(sp, O_OPEN)) {
 		msgq(sp, M_ERR,
-	    "140|The open command requires that the open option be set");
+	    "The open command requires that the open option be set");
 		return (1);
 	}
 
-	msgq(sp, M_ERR, "141|The open command is not yet implemented");
+	msgq(sp, M_ERR, "The open command is not yet implemented");
 	return (1);
 }

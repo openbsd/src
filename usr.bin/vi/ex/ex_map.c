@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_map.c,v 1.6 2014/11/12 04:28:41 bentley Exp $	*/
+/*	$OpenBSD: ex_map.c,v 1.7 2016/01/06 22:28:52 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -51,8 +51,8 @@ ex_map(SCR *sp, EXCMD *cmdp)
 	case 0:
 		if (seq_dump(sp, stype, 1) == 0)
 			msgq(sp, M_INFO, stype == SEQ_INPUT ?
-			    "132|No input map entries" :
-			    "133|No command map entries");
+			    "No input map entries" :
+			    "No command map entries");
 		return (0);
 	case 2:
 		input = cmdp->argv[0]->bp;
@@ -88,7 +88,7 @@ nofunc:	if (stype == SEQ_COMMAND && input[1] == '\0')
 		case K_ESCAPE:
 		case K_NL:
 			msgq(sp, M_ERR,
-			    "134|The %s character may not be remapped",
+			    "The %s character may not be remapped",
 			    KEY_NAME(sp, input[0]));
 			return (1);
 		}
@@ -108,7 +108,7 @@ ex_unmap(SCR *sp, EXCMD *cmdp)
 	if (seq_delete(sp, cmdp->argv[0]->bp, cmdp->argv[0]->len,
 	    FL_ISSET(cmdp->iflags, E_C_FORCE) ? SEQ_INPUT : SEQ_COMMAND)) {
 		msgq_str(sp, M_INFO,
-		    cmdp->argv[0]->bp, "135|\"%s\" isn't currently mapped");
+		    cmdp->argv[0]->bp, "\"%s\" isn't currently mapped");
 		return (1);
 	}
 	return (0);

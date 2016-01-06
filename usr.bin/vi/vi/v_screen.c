@@ -1,4 +1,4 @@
-/*	$OpenBSD: v_screen.c,v 1.8 2014/11/12 04:28:41 bentley Exp $	*/
+/*	$OpenBSD: v_screen.c,v 1.9 2016/01/06 22:28:52 millert Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -39,7 +39,7 @@ v_screen(SCR *sp, VICMD *vp)
 	 */
 	if (F_ISSET(sp, SC_COMEDIT)) {
 		msgq(sp, M_ERR,
-		    "308|Enter <CR> to execute a command, :q to exit");
+		    "Enter <CR> to execute a command, :q to exit");
 		return (1);
 	}
 		
@@ -50,7 +50,7 @@ v_screen(SCR *sp, VICMD *vp)
 	if (TAILQ_NEXT(sp, q))
 		sp->nextdisp = TAILQ_NEXT(sp, q);
 	else if (TAILQ_FIRST(&sp->gp->dq) == sp) {
-		msgq(sp, M_ERR, "187|No other screen to switch to");
+		msgq(sp, M_ERR, "No other screen to switch to");
 		return (1);
 	} else
 		sp->nextdisp = TAILQ_FIRST(&sp->gp->dq);

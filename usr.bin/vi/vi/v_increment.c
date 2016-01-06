@@ -1,4 +1,4 @@
-/*	$OpenBSD: v_increment.c,v 1.8 2014/11/12 04:28:41 bentley Exp $	*/
+/*	$OpenBSD: v_increment.c,v 1.9 2016/01/06 22:28:52 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -131,7 +131,7 @@ decimal:	base = 10;
 		end = beg;
 		ntype = fmt[DEC];
 		if (!isdigit(p[end])) {
-nonum:			msgq(sp, M_ERR, "181|Cursor not in a number");
+nonum:			msgq(sp, M_ERR, "Cursor not in a number");
 			return (1);
 		}
 	}
@@ -256,10 +256,10 @@ inc_err(SCR *sp, enum nresult nret)
 		abort();
 		/* NOREACHED */
 	case NUM_OVER:
-		msgq(sp, M_ERR, "182|Resulting number too large");
+		msgq(sp, M_ERR, "Resulting number too large");
 		break;
 	case NUM_UNDER:
-		msgq(sp, M_ERR, "183|Resulting number too small");
+		msgq(sp, M_ERR, "Resulting number too small");
 		break;
 	}
 }

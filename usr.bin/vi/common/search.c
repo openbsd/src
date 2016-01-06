@@ -1,4 +1,4 @@
-/*	$OpenBSD: search.c,v 1.12 2015/11/19 07:53:31 bentley Exp $	*/
+/*	$OpenBSD: search.c,v 1.13 2016/01/06 22:28:52 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -435,24 +435,24 @@ search_msg(SCR *sp, smsg_t msg)
 {
 	switch (msg) {
 	case S_EMPTY:
-		msgq(sp, M_ERR, "072|File empty; nothing to search");
+		msgq(sp, M_ERR, "File empty; nothing to search");
 		break;
 	case S_EOF:
 		msgq(sp, M_ERR,
-		    "073|Reached end-of-file without finding the pattern");
+		    "Reached end-of-file without finding the pattern");
 		break;
 	case S_NOPREV:
-		msgq(sp, M_ERR, "074|No previous search pattern");
+		msgq(sp, M_ERR, "No previous search pattern");
 		break;
 	case S_NOTFOUND:
-		msgq(sp, M_ERR, "075|Pattern not found");
+		msgq(sp, M_ERR, "Pattern not found");
 		break;
 	case S_SOF:
 		msgq(sp, M_ERR,
-		    "076|Reached top-of-file without finding the pattern");
+		    "Reached top-of-file without finding the pattern");
 		break;
 	case S_WRAP:
-		msgq(sp, M_ERR, "077|Search wrapped");
+		msgq(sp, M_ERR, "Search wrapped");
 		break;
 	default:
 		abort();
@@ -468,5 +468,5 @@ search_msg(SCR *sp, smsg_t msg)
 void
 search_busy(SCR *sp, busy_t btype)
 {
-	sp->gp->scr_busy(sp, "078|Searching...", btype);
+	sp->gp->scr_busy(sp, "Searching...", btype);
 }

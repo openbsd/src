@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_bang.c,v 1.8 2014/11/12 04:28:41 bentley Exp $	*/
+/*	$OpenBSD: ex_bang.c,v 1.9 2016/01/06 22:28:52 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -104,7 +104,7 @@ ex_bang(SCR *sp, EXCMD *cmdp)
 			} else if (O_ISSET(sp, O_WARN) &&
 			    !F_ISSET(sp, SC_EX_SILENT))
 				msg = msg_cat(sp,
-				    "303|File modified since last write.",
+				    "File modified since last write.",
 				    NULL);
 		}
 

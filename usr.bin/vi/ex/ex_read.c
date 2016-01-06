@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_read.c,v 1.10 2014/11/12 04:28:41 bentley Exp $	*/
+/*	$OpenBSD: ex_read.c,v 1.11 2016/01/06 22:28:52 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -257,13 +257,13 @@ ex_read(SCR *sp, EXCMD *cmdp)
 	if (!S_ISFIFO(sb.st_mode) && !S_ISREG(sb.st_mode)) {
 		(void)fclose(fp);
 		msgq(sp, M_ERR,
-		    "145|Only regular files and named pipes may be read");
+		    "Only regular files and named pipes may be read");
 		return (1);
 	}
 
 	/* Try and get a lock. */
 	if (file_lock(sp, NULL, NULL, fileno(fp), 0) == LOCK_UNAVAIL)
-		msgq(sp, M_ERR, "146|%s: read lock was unavailable", name);
+		msgq(sp, M_ERR, "%s: read lock was unavailable", name);
 
 	rval = ex_readfp(sp, name, fp, &cmdp->addr1, &nlines, 0);
 
@@ -312,7 +312,7 @@ ex_readfp(SCR *sp, char *name, FILE *fp, MARK *fm, recno_t *nlinesp,
 	 */
 	ccnt = 0;
 	lcnt = 0;
-	p = "147|Reading...";
+	p = "Reading...";
 	for (lno = fm->lno; !ex_getline(sp, fp, &len); ++lno, ++lcnt) {
 		if ((lcnt + 1) % INTERRUPT_CHECK == 0) {
 			if (INTERRUPTED(sp))
@@ -338,7 +338,7 @@ ex_readfp(SCR *sp, char *name, FILE *fp, MARK *fm, recno_t *nlinesp,
 	if (!silent) {
 		p = msg_print(sp, name, &nf);
 		msgq(sp, M_INFO,
-		    "148|%s: %lu lines, %lu characters", p, lcnt, ccnt);
+		    "%s: %lu lines, %lu characters", p, lcnt, ccnt);
 		if (nf)
 			FREE_SPACE(sp, p, 0);
 	}

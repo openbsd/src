@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_script.c,v 1.22 2015/12/07 20:39:19 mmcc Exp $	*/
+/*	$OpenBSD: ex_script.c,v 1.23 2016/01/06 22:28:52 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -59,7 +59,7 @@ ex_script(SCR *sp, EXCMD *cmdp)
 	/* Vi only command. */
 	if (!F_ISSET(sp, SC_VI)) {
 		msgq(sp, M_ERR,
-		    "150|The script command is only available in vi mode");
+		    "The script command is only available in vi mode");
 		return (1);
 	}
 
@@ -308,7 +308,7 @@ sscr_exec(SCR *sp, recno_t lno)
 	/* Delete any prompt. */
 	if (sscr_matchprompt(sp, p, len, &tlen)) {
 		if (tlen == len) {
-empty:			msgq(sp, M_BERR, "151|No command to execute");
+empty:			msgq(sp, M_BERR, "No command to execute");
 			goto err1;
 		}
 		p += (len - tlen);

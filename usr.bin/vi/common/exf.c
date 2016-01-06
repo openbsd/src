@@ -1,4 +1,4 @@
-/*	$OpenBSD: exf.c,v 1.39 2015/12/07 20:39:19 mmcc Exp $	*/
+/*	$OpenBSD: exf.c,v 1.40 2016/01/06 22:28:52 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -188,7 +188,7 @@ file_init(SCR *sp, FREF *frp, char *rcv_name, int flags)
 		if (fd == -1 || fstat(fd, &sb) == -1 ||
 		    fchmod(fd, S_IRUSR | S_IWUSR) == -1) {
 			msgq(sp, M_SYSERR,
-			    "237|Unable to create temporary file");
+			    "Unable to create temporary file");
 			if (fd != -1) {
 				close(fd);
 				(void)unlink(tname);
@@ -227,7 +227,7 @@ file_init(SCR *sp, FREF *frp, char *rcv_name, int flags)
 
 		if (!S_ISREG(sb.st_mode))
 			msgq_str(sp, M_ERR, oname,
-			    "238|Warning: %s is not a regular file");
+			    "Warning: %s is not a regular file");
 	}
 
 	/* Save device, inode and modification time. */
@@ -344,7 +344,7 @@ file_init(SCR *sp, FREF *frp, char *rcv_name, int flags)
 		case LOCK_UNAVAIL:
 			readonly = 1;
 			msgq_str(sp, M_INFO, oname,
-			    "239|%s already locked, session is read-only");
+			    "%s already locked, session is read-only");
 			break;
 		case LOCK_SUCCESS:
 			break;
@@ -658,7 +658,7 @@ file_end(SCR *sp, EXF *ep, int force)
 	 */
 	if (!F_ISSET(frp, FR_DONTDELETE) && frp->tname != NULL) {
 		if (unlink(frp->tname))
-			msgq_str(sp, M_SYSERR, frp->tname, "240|%s: remove");
+			msgq_str(sp, M_SYSERR, frp->tname, "%s: remove");
 		free(frp->tname);
 		frp->tname = NULL;
 		if (F_ISSET(frp, FR_TMPFILE)) {
@@ -676,7 +676,7 @@ file_end(SCR *sp, EXF *ep, int force)
 	 * Close the db structure.
 	 */
 	if (ep->db->close != NULL && ep->db->close(ep->db) && !force) {
-		msgq_str(sp, M_SYSERR, frp->name, "241|%s: close");
+		msgq_str(sp, M_SYSERR, frp->name, "%s: close");
 		++ep->refcnt;
 		return (1);
 	}
@@ -700,9 +700,9 @@ file_end(SCR *sp, EXF *ep, int force)
 	 */
 	if (!F_ISSET(ep, F_RCV_NORM)) {
 		if (ep->rcv_path != NULL && unlink(ep->rcv_path))
-			msgq_str(sp, M_SYSERR, ep->rcv_path, "242|%s: remove");
+			msgq_str(sp, M_SYSERR, ep->rcv_path, "%s: remove");
 		if (ep->rcv_mpath != NULL && unlink(ep->rcv_mpath))
-			msgq_str(sp, M_SYSERR, ep->rcv_mpath, "243|%s: remove");
+			msgq_str(sp, M_SYSERR, ep->rcv_mpath, "%s: remove");
 	}
 	if (ep->fcntl_fd != -1)
 		(void)close(ep->fcntl_fd);
@@ -756,8 +756,8 @@ file_write(SCR *sp, MARK *fm, MARK *tm, char *name, int flags)
 	/* Can't write files marked read-only, unless forced. */
 	if (!LF_ISSET(FS_FORCE) && noname && O_ISSET(sp, O_READONLY)) {
 		msgq(sp, M_ERR, LF_ISSET(FS_POSSIBLE) ?
-		    "244|Read-only file, not written; use ! to override" :
-		    "245|Read-only file, not written");
+		    "Read-only file, not written; use ! to override" :
+		    "Read-only file, not written");
 		return (1);
 	}
 
@@ -768,8 +768,8 @@ file_write(SCR *sp, MARK *fm, MARK *tm, char *name, int flags)
 		    !stat(name, &sb)) {
 			msgq_str(sp, M_ERR, name,
 			    LF_ISSET(FS_POSSIBLE) ?
-			    "246|%s exists, not written; use ! to override" :
-			    "247|%s exists, not written");
+			    "%s exists, not written; use ! to override" :
+			    "%s exists, not written");
 			return (1);
 		}
 
@@ -779,8 +779,8 @@ file_write(SCR *sp, MARK *fm, MARK *tm, char *name, int flags)
 		 */
 		if (!LF_ISSET(FS_ALL) && noname && !stat(name, &sb)) {
 			msgq(sp, M_ERR, LF_ISSET(FS_POSSIBLE) ?
-			    "248|Partial file, not written; use ! to override" :
-			    "249|Partial file, not written");
+			    "Partial file, not written; use ! to override" :
+			    "Partial file, not written");
 			return (1);
 		}
 	}
@@ -804,8 +804,8 @@ file_write(SCR *sp, MARK *fm, MARK *tm, char *name, int flags)
 		    (sb.st_dev != ep->mdev || sb.st_ino != ep->minode)) ||
 		    timespeccmp(&sb.st_mtim, &ep->mtim, !=))) {
 			msgq_str(sp, M_ERR, name, LF_ISSET(FS_POSSIBLE) ?
-"250|%s: file modified more recently than this copy; use ! to override" :
-"251|%s: file modified more recently than this copy");
+"%s: file modified more recently than this copy; use ! to override" :
+"%s: file modified more recently than this copy");
 			return (1);
 		}
 
@@ -831,7 +831,7 @@ file_write(SCR *sp, MARK *fm, MARK *tm, char *name, int flags)
 	/* Try and get a lock. */
 	if (!noname && file_lock(sp, NULL, NULL, fd, 0) == LOCK_UNAVAIL)
 		msgq_str(sp, M_ERR, name,
-		    "252|%s: write lock was unavailable");
+		    "%s: write lock was unavailable");
 
 	/*
 	 * Use stdio for buffering.
@@ -883,7 +883,7 @@ file_write(SCR *sp, MARK *fm, MARK *tm, char *name, int flags)
 	if (rval) {
 		if (!LF_ISSET(FS_APPEND))
 			msgq_str(sp, M_ERR, name,
-			    "254|%s: WARNING: FILE TRUNCATED");
+			    "%s: WARNING: FILE TRUNCATED");
 		return (1);
 	}
 
@@ -915,15 +915,15 @@ file_write(SCR *sp, MARK *fm, MARK *tm, char *name, int flags)
 	switch (mtype) {
 	case NEWFILE:
 		msgstr = msg_cat(sp,
-		    "256|%s: new file: %lu lines, %lu characters", NULL);
+		    "%s: new file: %lu lines, %lu characters", NULL);
 		len = snprintf(buf, sizeof(buf), msgstr, p, nlno, nch);
 		if (len >= sizeof(buf))
 			len = sizeof(buf) - 1;
 		break;
 	case OLDFILE:
 		msgstr = msg_cat(sp, LF_ISSET(FS_APPEND) ?
-		    "315|%s: appended: %lu lines, %lu characters" :
-		    "257|%s: %lu lines, %lu characters", NULL);
+		    "%s: appended: %lu lines, %lu characters" :
+		    "%s: %lu lines, %lu characters", NULL);
 		len = snprintf(buf, sizeof(buf), msgstr, p, nlno, nch);
 		if (len >= sizeof(buf))
 			len = sizeof(buf) - 1;
@@ -1026,7 +1026,7 @@ file_backup(SCR *sp, char *name, char *bname)
 	 */
 	if (cmd.argc != 1) {
 		msgq_str(sp, M_ERR, bname,
-		    "258|%s expanded into too many file names");
+		    "%s expanded into too many file names");
 		(void)close(rfd);
 		return (1);
 	}
@@ -1084,16 +1084,16 @@ file_backup(SCR *sp, char *name, char *bname)
 	if (stat(wfname, &sb) == 0) {
 		if (!S_ISREG(sb.st_mode)) {
 			msgq_str(sp, M_ERR, bname,
-			    "259|%s: not a regular file");
+			    "%s: not a regular file");
 			goto err;
 		}
 		if (sb.st_uid != getuid()) {
-			msgq_str(sp, M_ERR, bname, "260|%s: not owned by you");
+			msgq_str(sp, M_ERR, bname, "%s: not owned by you");
 			goto err;
 		}
 		if (sb.st_mode & (S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH)) {
 			msgq_str(sp, M_ERR, bname,
-			   "261|%s: accessible by a user other than the owner");
+			   "%s: accessible by a user other than the owner");
 			goto err;
 		}
 		flags = O_TRUNC;
@@ -1221,8 +1221,8 @@ file_m1(SCR *sp, int force, int flags)
 				return (1);
 		} else if (ep->refcnt <= 1 && !force) {
 			msgq(sp, M_ERR, LF_ISSET(FS_POSSIBLE) ?
-"262|File modified since last complete write; write or use ! to override" :
-"263|File modified since last complete write; write or use :edit! to override");
+"File modified since last complete write; write or use ! to override" :
+"File modified since last complete write; write or use :edit! to override");
 			return (1);
 		}
 	}
@@ -1254,7 +1254,7 @@ file_m2(SCR *sp, int force)
 	 */
 	if (F_ISSET(ep, F_MODIFIED) && ep->refcnt <= 1 && !force) {
 		msgq(sp, M_ERR,
-"264|File modified since last complete write; write or use ! to override");
+"File modified since last complete write; write or use ! to override");
 		return (1);
 	}
 
@@ -1287,7 +1287,7 @@ file_m3(SCR *sp, int force)
 	 */
 	if (F_ISSET(sp->frp, FR_TMPEXIT) && ep->refcnt <= 1 && !force) {
 		msgq(sp, M_ERR,
-		    "265|File is a temporary; exit will discard modifications");
+		    "File is a temporary; exit will discard modifications");
 		return (1);
 	}
 	return (0);
@@ -1320,7 +1320,7 @@ file_aw(SCR *sp, int flags)
 	 */
 	if (O_ISSET(sp, O_READONLY)) {
 		msgq(sp, M_INFO,
-		    "266|File readonly, modifications not auto-written");
+		    "File readonly, modifications not auto-written");
 		return (1);
 	}
 	return (file_write(sp, NULL, NULL, NULL, flags));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.20 2016/01/06 22:27:39 millert Exp $	*/
+/*	$OpenBSD: options.c,v 1.21 2016/01/06 22:28:52 millert Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -431,7 +431,7 @@ opts_init(SCR *sp, int *oargs)
 #undef OI
 
 err:	msgq(sp, M_ERR,
-	    "031|Unable to set default %s option", optlist[optindx].name);
+	    "Unable to set default %s option", optlist[optindx].name);
 	return (1);
 }
 
@@ -470,7 +470,7 @@ opts_set(SCR *sp, ARGS *argv[], char *usage)
 				if (p == name) {
 					if (usage != NULL)
 						msgq(sp, M_ERR,
-						    "032|Usage: %s", usage);
+						    "Usage: %s", usage);
 					return (1);
 				}
 				sep = p;
@@ -521,7 +521,7 @@ opts_set(SCR *sp, ARGS *argv[], char *usage)
 			/* Some options may not be reset. */
 			if (F_ISSET(op, OPT_NOUNSET) && turnoff) {
 				msgq_str(sp, M_ERR, name,
-			    "291|set: the %s option may not be turned off");
+			    "set: the %s option may not be turned off");
 				rval = 1;
 				break;
 			}
@@ -529,14 +529,14 @@ opts_set(SCR *sp, ARGS *argv[], char *usage)
 			/* Some options may not be set. */
 			if (F_ISSET(op, OPT_NOSET) && !turnoff) {
 				msgq_str(sp, M_ERR, name,
-			    "313|set: the %s option may never be turned on");
+			    "set: the %s option may never be turned on");
 				rval = 1;
 				break;
 			}
 
 			if (equals) {
 				msgq_str(sp, M_ERR, name,
-			    "034|set: [no]%s option doesn't take a value");
+			    "set: [no]%s option doesn't take a value");
 				rval = 1;
 				break;
 			}
@@ -590,7 +590,7 @@ opts_set(SCR *sp, ARGS *argv[], char *usage)
 		case OPT_NUM:
 			if (turnoff) {
 				msgq_str(sp, M_ERR, name,
-				    "035|set: %s option isn't a boolean");
+				    "set: %s option isn't a boolean");
 				rval = 1;
 				break;
 			}
@@ -610,11 +610,11 @@ opts_set(SCR *sp, ARGS *argv[], char *usage)
 				switch (nret) {
 				case NUM_ERR:
 					msgq(sp, M_SYSERR,
-					    "036|set: %s option: %s", p, t);
+					    "set: %s option: %s", p, t);
 					break;
 				case NUM_OVER:
 					msgq(sp, M_ERR,
-			    "037|set: %s option: %s: value overflow", p, t);
+			    "set: %s option: %s: value overflow", p, t);
 					break;
 				case NUM_OK:
 				case NUM_UNDER:
@@ -631,7 +631,7 @@ opts_set(SCR *sp, ARGS *argv[], char *usage)
 badnum:				p = msg_print(sp, name, &nf);
 				t = msg_print(sp, sep, &nf2);
 				msgq(sp, M_ERR,
-		    "038|set: %s option: %s is an illegal number", p, t);
+		    "set: %s option: %s is an illegal number", p, t);
 				if (nf)
 					FREE_SPACE(sp, p, 0);
 				if (nf2)
@@ -643,7 +643,7 @@ badnum:				p = msg_print(sp, name, &nf);
 			/* Some options may never be set to zero. */
 			if (F_ISSET(op, OPT_NOZERO) && value == 0) {
 				msgq_str(sp, M_ERR, name,
-			    "314|set: the %s option may never be set to 0");
+			    "set: the %s option may never be set to 0");
 				rval = 1;
 				break;
 			}
@@ -683,7 +683,7 @@ badnum:				p = msg_print(sp, name, &nf);
 		case OPT_STR:
 			if (turnoff) {
 				msgq_str(sp, M_ERR, name,
-				    "039|set: %s option isn't a boolean");
+				    "set: %s option isn't a boolean");
 				rval = 1;
 				break;
 			}
@@ -789,7 +789,7 @@ opts_empty(SCR *sp, int off, int silent)
 	if ((p = O_STR(sp, off)) == NULL || p[0] == '\0') {
 		if (!silent)
 			msgq_str(sp, M_ERR, optlist[off].name,
-			    "305|No %s edit option specified");
+			    "No %s edit option specified");
 		return (1);
 	}
 	return (0);
@@ -1067,7 +1067,7 @@ void
 opts_nomatch(SCR *sp, char *name)
 {
 	msgq_str(sp, M_ERR, name,
-	    "033|set: no %s option: 'set all' gives all option values");
+	    "set: no %s option: 'set all' gives all option values");
 }
 
 static int

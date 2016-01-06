@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_cd.c,v 1.11 2015/01/16 06:40:14 deraadt Exp $	*/
+/*	$OpenBSD: ex_cd.c,v 1.12 2016/01/06 22:28:52 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -48,7 +48,7 @@ ex_cd(SCR *sp, EXCMD *cmdp)
 	if (F_ISSET(sp->ep, F_MODIFIED) &&
 	    !FL_ISSET(cmdp->iflags, E_C_FORCE) && sp->frp->name[0] != '/') {
 		msgq(sp, M_ERR,
-    "120|File modified since last complete write; write or use ! to override");
+    "File modified since last complete write; write or use ! to override");
 		return (1);
 	}
 
@@ -59,7 +59,7 @@ ex_cd(SCR *sp, EXCMD *cmdp)
 			if ((pw = getpwuid(getuid())) == NULL ||
 			    pw->pw_dir == NULL || pw->pw_dir[0] == '\0') {
 				msgq(sp, M_ERR,
-			   "121|Unable to find home directory location");
+			   "Unable to find home directory location");
 				return (1);
 			}
 			dir = pw->pw_dir;
@@ -110,7 +110,7 @@ ex_cd(SCR *sp, EXCMD *cmdp)
 				*p = savech;
 				if (!chdir(buf)) {
 					if (getcwd(buf, sizeof(buf)) != NULL)
-		msgq_str(sp, M_INFO, buf, "122|New current directory: %s");
+		msgq_str(sp, M_INFO, buf, "New current directory: %s");
 					return (0);
 				}
 			}

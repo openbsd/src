@@ -1,4 +1,4 @@
-/*	$OpenBSD: v_txt.c,v 1.29 2015/12/03 08:13:15 bentley Exp $	*/
+/*	$OpenBSD: v_txt.c,v 1.30 2016/01/06 22:28:52 millert Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -586,7 +586,7 @@ next:	if (v_event_get(sp, evp, 0, ec_flags))
 		if (++abcnt > MAX_ABBREVIATION_EXPANSION) {
 			if (v_event_flush(sp, CH_ABBREVIATED))
 				msgq(sp, M_ERR,
-"191|Abbreviation exceeded expansion limit: characters discarded");
+"Abbreviation exceeded expansion limit: characters discarded");
 			abcnt = 0;
 			if (LF_ISSET(TXT_REPLAY))
 				goto done;
@@ -1230,7 +1230,7 @@ ins_ch:		/*
 		if (LF_ISSET(TXT_BEAUTIFY) && iscntrl(evp->e_c) &&
 		    evp->e_value != K_FORMFEED && evp->e_value != K_TAB) {
 			msgq(sp, M_BERR,
-			    "192|Illegal character; quote to enter");
+			    "Illegal character; quote to enter");
 			if (LF_ISSET(TXT_REPLAY))
 				goto done;
 			break;
@@ -1781,7 +1781,7 @@ txt_backup(SCR *sp, TEXTH *tiqh, TEXT *tp, u_int32_t *flagsp)
 	if ((ntp = TAILQ_PREV(tp, _texth, q)) == NULL) {
 		if (!FL_ISSET(*flagsp, TXT_REPLAY))
 			msgq(sp, M_BERR,
-			    "193|Already at the beginning of the insert");
+			    "Already at the beginning of the insert");
 		return (tp);
 	}
 
@@ -2845,5 +2845,5 @@ txt_Rresolve(SCR *sp, TEXTH *tiqh, TEXT *tp, const size_t orig_len)
 static void
 txt_nomorech(SCR *sp)
 {
-	msgq(sp, M_BERR, "194|No more characters to erase");
+	msgq(sp, M_BERR, "No more characters to erase");
 }

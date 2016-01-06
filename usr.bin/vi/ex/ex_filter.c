@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_filter.c,v 1.13 2015/01/16 06:40:14 deraadt Exp $	*/
+/*	$OpenBSD: ex_filter.c,v 1.14 2016/01/06 22:28:52 millert Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -86,7 +86,7 @@ ex_filter(SCR *sp, EXCMD *cmdp, MARK *fm, MARK *tm, MARK *rp, char *cmd,
 		fd = mkstemp(tname);
 		if (fd == -1) {
 			msgq(sp, M_SYSERR,
-			    "237|Unable to create temporary file");
+			    "Unable to create temporary file");
 			if (fd != -1) {
 				(void)close(fd);
 				(void)unlink(tname);

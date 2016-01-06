@@ -1,4 +1,4 @@
-/*	$OpenBSD: put.c,v 1.13 2014/11/12 04:28:41 bentley Exp $	*/
+/*	$OpenBSD: put.c,v 1.14 2016/01/06 22:28:52 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -44,14 +44,14 @@ put(SCR *sp, CB *cbp, CHAR_T *namep, MARK *cp, MARK *rp, int append)
 			cbp = sp->gp->dcbp;
 			if (cbp == NULL) {
 				msgq(sp, M_ERR,
-				    "053|The default buffer is empty");
+				    "The default buffer is empty");
 				return (1);
 			}
 		} else {
 			name = *namep;
 			CBNAME(sp, cbp, name);
 			if (cbp == NULL) {
-				msgq(sp, M_ERR, "054|Buffer %s is empty",
+				msgq(sp, M_ERR, "Buffer %s is empty",
 				    KEY_NAME(sp, name));
 				return (1);
 			}

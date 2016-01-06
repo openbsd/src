@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_tag.c,v 1.23 2015/12/07 20:39:19 mmcc Exp $	*/
+/*	$OpenBSD: ex_tag.c,v 1.24 2016/01/06 22:28:52 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -117,7 +117,7 @@ ex_tag_push(SCR *sp, EXCMD *cmdp)
 		break;
 	case 0:
 		if (exp->tag_last == NULL) {
-			msgq(sp, M_ERR, "158|No previous tag entered");
+			msgq(sp, M_ERR, "No previous tag entered");
 			return (1);
 		}
 		break;
@@ -235,7 +235,7 @@ ex_tag_next(SCR *sp, EXCMD *cmdp)
 		return (1);
 	}
 	if ((tp = TAILQ_NEXT(tqp->current, q)) == NULL) {
-		msgq(sp, M_ERR, "282|Already at the last tag of this group");
+		msgq(sp, M_ERR, "Already at the last tag of this group");
 		return (1);
 	}
 	if (ex_tag_nswitch(sp, tp, FL_ISSET(cmdp->iflags, E_C_FORCE)))
@@ -266,7 +266,7 @@ ex_tag_prev(SCR *sp, EXCMD *cmdp)
 		return (0);
 	}
 	if ((tp = TAILQ_PREV(tqp->current, _tagqh, q)) == NULL) {
-		msgq(sp, M_ERR, "255|Already at the first tag of this group");
+		msgq(sp, M_ERR, "Already at the first tag of this group");
 		return (1);
 	}
 	if (ex_tag_nswitch(sp, tp, FL_ISSET(cmdp->iflags, E_C_FORCE)))
@@ -408,7 +408,7 @@ ex_tag_pop(SCR *sp, EXCMD *cmdp)
 		}
 		if (tqp == NULL) {
 			msgq(sp, M_ERR,
-	"159|Less than %s entries on the tags stack; use :display t[ags]",
+	"Less than %s entries on the tags stack; use :display t[ags]",
 			    arg);
 			return (1);
 		}
@@ -432,7 +432,7 @@ filearg:	arglen = strlen(arg);
 		}
 		if (tqp == NULL) {
 			msgq_str(sp, M_ERR, arg,
-	"160|No file %s on the tags stack to return to; use :display t[ags]");
+	"No file %s on the tags stack to return to; use :display t[ags]");
 			return (1);
 		}
 		if (tqp == TAILQ_FIRST(&exp->tq))
@@ -560,7 +560,7 @@ ex_tag_display(SCR *sp)
 #define	L_SPACE	 5		/* Spaces after name, before tag. */
 #define	L_TAG	20		/* Tag. */
 	if (sp->cols <= L_NAME + L_SLOP) {
-		msgq(sp, M_ERR, "292|Display too small.");
+		msgq(sp, M_ERR, "Display too small.");
 		return (0);
 	}
 
@@ -787,13 +787,13 @@ tag_msg(SCR *sp, tagmsg_t msg, char *tag)
 	switch (msg) {
 	case TAG_BADLNO:
 		msgq_str(sp, M_ERR, tag,
-	    "164|%s: the tag's line number is past the end of the file");
+	    "%s: the tag's line number is past the end of the file");
 		break;
 	case TAG_EMPTY:
-		msgq(sp, M_INFO, "165|The tags stack is empty");
+		msgq(sp, M_INFO, "The tags stack is empty");
 		break;
 	case TAG_SEARCH:
-		msgq_str(sp, M_ERR, tag, "166|%s: search pattern not found");
+		msgq_str(sp, M_ERR, tag, "%s: search pattern not found");
 		break;
 	default:
 		abort();
@@ -962,7 +962,7 @@ ctag_slist(SCR *sp, char *tag)
 
 	/* Check to see if we found anything. */
 	if (TAILQ_EMPTY(&tqp->tagq)) {
-		msgq_str(sp, M_ERR, tag, "162|%s: tag not found");
+		msgq_str(sp, M_ERR, tag, "%s: tag not found");
 		if (echk)
 			TAILQ_FOREACH(tfp, &exp->tagfq, q)
 				if (F_ISSET(tfp, TAGF_ERR) &&
@@ -1073,7 +1073,7 @@ ctag_sfile(SCR *sp, TAGF *tfp, TAGQ *tqp, char *tname)
 		if ((slen = strlen(p)) == 0) {
 corrupt:		p = msg_print(sp, tname, &nf1);
 			t = msg_print(sp, tfp->name, &nf2);
-			msgq(sp, M_ERR, "163|%s: corrupted tag in %s", p, t);
+			msgq(sp, M_ERR, "%s: corrupted tag in %s", p, t);
 			if (nf1)
 				FREE_SPACE(sp, p, 0);
 			if (nf2)

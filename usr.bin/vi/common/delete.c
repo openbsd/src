@@ -1,4 +1,4 @@
-/*	$OpenBSD: delete.c,v 1.10 2015/02/06 22:29:31 millert Exp $	*/
+/*	$OpenBSD: delete.c,v 1.11 2016/01/06 22:28:52 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -114,7 +114,7 @@ del(SCR *sp, MARK *fm, MARK *tm, int lmode)
 		goto err;
 	if (len != 0 && tm->cno != len - 1) {
 		if (len < tm->cno + 1 || len - (tm->cno + 1) > SIZE_MAX - tlen) {
-			msgq(sp, M_ERR, "002|Line length overflow");
+			msgq(sp, M_ERR, "Line length overflow");
 			goto err;
 		}
 		nlen = (len - (tm->cno + 1)) + tlen;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_subst.c,v 1.24 2015/12/07 20:39:19 mmcc Exp $	*/
+/*	$OpenBSD: ex_subst.c,v 1.25 2016/01/06 22:28:52 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -408,7 +408,7 @@ s(SCR *sp, EXCMD *cmdp, char *s, regex_t *re, u_int flags)
 				--s;
 			if (errno == ERANGE) {
 				if (ul >= UINT_MAX)
-					msgq(sp, M_ERR, "153|Count overflow");
+					msgq(sp, M_ERR, "Count overflow");
 				else
 					msgq(sp, M_SYSERR, NULL);
 				return (1);
@@ -448,7 +448,7 @@ s(SCR *sp, EXCMD *cmdp, char *s, regex_t *re, u_int flags)
 		case 'r':
 			if (LF_ISSET(SUB_FIRST)) {
 				msgq(sp, M_ERR,
-		    "155|Regular expression specified; r flag meaningless");
+		    "Regular expression specified; r flag meaningless");
 				return (1);
 			}
 			if (!F_ISSET(sp, SC_RE_SEARCH)) {
@@ -469,7 +469,7 @@ usage:		ex_emsg(sp, cmdp->cmd->usage, EXM_USAGE);
 
 noargs:	if (F_ISSET(sp, SC_VI) && sp->c_suffix && (lflag || nflag || pflag)) {
 		msgq(sp, M_ERR,
-"156|The #, l and p flags may not be combined with the c flag in vi mode");
+"The #, l and p flags may not be combined with the c flag in vi mode");
 		return (1);
 	}
 
@@ -627,7 +627,7 @@ nextmatch:	match[0].rm_so = 0;
 					goto err;
 
 				vs_update(sp, msg_cat(sp,
-				    "169|Confirm change? [n]", NULL), NULL);
+				    "Confirm change? [n]", NULL), NULL);
 
 				if (v_event_get(sp, &ev, 0, 0))
 					goto err;
@@ -853,7 +853,7 @@ endmatch:	if (!linechanged)
 	rval = 0;
 	if (!matched) {
 		if (!F_ISSET(sp, SC_EX_GLOBAL)) {
-			msgq(sp, M_ERR, "157|No match found");
+			msgq(sp, M_ERR, "No match found");
 			goto err;
 		}
 	} else if (!lflag && !nflag && !pflag)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: v_ch.c,v 1.6 2014/11/12 04:28:41 bentley Exp $	*/
+/*	$OpenBSD: v_ch.c,v 1.7 2016/01/06 22:28:52 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -268,11 +268,11 @@ empty:		notfound(sp, key);
 static void
 noprev(SCR *sp)
 {
-	msgq(sp, M_BERR, "178|No previous F, f, T or t search");
+	msgq(sp, M_BERR, "No previous F, f, T or t search");
 }
 
 static void
 notfound(SCR *sp, ARG_CHAR_T ch)
 {
-	msgq(sp, M_BERR, "179|%s not found", KEY_NAME(sp, ch));
+	msgq(sp, M_BERR, "%s not found", KEY_NAME(sp, ch));
 }

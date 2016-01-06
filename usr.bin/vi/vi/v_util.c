@@ -1,4 +1,4 @@
-/*	$OpenBSD: v_util.c,v 1.7 2014/11/12 04:28:41 bentley Exp $	*/
+/*	$OpenBSD: v_util.c,v 1.8 2016/01/06 22:28:52 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -45,7 +45,7 @@ v_eof(SCR *sp, MARK *mp)
 		if (mp->lno >= lno)
 			v_emsg(sp, NULL, VIM_EOF);
 		else
-			msgq(sp, M_BERR, "195|Movement past the end-of-file");
+			msgq(sp, M_BERR, "Movement past the end-of-file");
 	}
 }
 
@@ -68,7 +68,7 @@ v_eol(SCR *sp, MARK *mp)
 		if (mp->cno == len - 1)
 			v_emsg(sp, NULL, VIM_EOL);
 		else
-			msgq(sp, M_BERR, "196|Movement past the end-of-line");
+			msgq(sp, M_BERR, "Movement past the end-of-line");
 	}
 }
 
@@ -81,7 +81,7 @@ v_eol(SCR *sp, MARK *mp)
 void
 v_nomove(SCR *sp)
 {
-	msgq(sp, M_BERR, "197|No cursor movement made");
+	msgq(sp, M_BERR, "No cursor movement made");
 }
 
 /*
@@ -94,9 +94,9 @@ void
 v_sof(SCR *sp, MARK *mp)
 {
 	if (mp == NULL || mp->lno == 1)
-		msgq(sp, M_BERR, "198|Already at the beginning of the file");
+		msgq(sp, M_BERR, "Already at the beginning of the file");
 	else
-		msgq(sp, M_BERR, "199|Movement past the beginning of the file");
+		msgq(sp, M_BERR, "Movement past the beginning of the file");
 }
 
 /*
@@ -108,7 +108,7 @@ v_sof(SCR *sp, MARK *mp)
 void
 v_sol(SCR *sp)
 {
-	msgq(sp, M_BERR, "200|Already in the first column");
+	msgq(sp, M_BERR, "Already in the first column");
 }
 
 /*
@@ -138,28 +138,28 @@ v_emsg(SCR *sp, char *p, vim_t which)
 	switch (which) {
 	case VIM_COMBUF:
 		msgq(sp, M_ERR,
-		    "201|Buffers should be specified before the command");
+		    "Buffers should be specified before the command");
 		break;
 	case VIM_EMPTY:
-		msgq(sp, M_BERR, "209|The file is empty");
+		msgq(sp, M_BERR, "The file is empty");
 		break;
 	case VIM_EOF:
-		msgq(sp, M_BERR, "202|Already at end-of-file");
+		msgq(sp, M_BERR, "Already at end-of-file");
 		break;
 	case VIM_EOL:
-		msgq(sp, M_BERR, "203|Already at end-of-line");
+		msgq(sp, M_BERR, "Already at end-of-line");
 		break;
 	case VIM_NOCOM:
 	case VIM_NOCOM_B:
 		msgq(sp,
 		    which == VIM_NOCOM_B ? M_BERR : M_ERR,
-		    "204|%s isn't a vi command", p);
+		    "%s isn't a vi command", p);
 		break;
 	case VIM_WRESIZE:
 		msgq(sp, M_ERR, "Window resize interrupted text input mode");
 		break;
 	case VIM_USAGE:
-		msgq(sp, M_ERR, "205|Usage: %s", p);
+		msgq(sp, M_ERR, "Usage: %s", p);
 		break;
 	}
 }

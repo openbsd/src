@@ -1,4 +1,4 @@
-/*	$OpenBSD: vs_refresh.c,v 1.19 2014/11/12 04:28:41 bentley Exp $	*/
+/*	$OpenBSD: vs_refresh.c,v 1.20 2016/01/06 22:28:52 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -770,11 +770,11 @@ static void
 vs_modeline(SCR *sp)
 {
 	static char * const modes[] = {
-		"215|Append",			/* SM_APPEND */
-		"216|Change",			/* SM_CHANGE */
-		"217|Command",			/* SM_COMMAND */
-		"218|Insert",			/* SM_INSERT */
-		"219|Replace",			/* SM_REPLACE */
+		"Append",			/* SM_APPEND */
+		"Change",			/* SM_CHANGE */
+		"Command",			/* SM_COMMAND */
+		"Insert",			/* SM_INSERT */
+		"Replace",			/* SM_REPLACE */
 	};
 	GS *gp;
 	size_t cols, curcol, curlen, endpoint, len, midpoint;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: msg.c,v 1.24 2016/01/06 22:27:39 millert Exp $	*/
+/*	$OpenBSD: msg.c,v 1.25 2016/01/06 22:28:52 millert Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -115,7 +115,7 @@ retry:		FREE_SPACE(sp, bp, blen);
 	mp = bp;
 	mlen = 0;
 	if (mt == M_SYSERR) {
-		p = msg_cat(sp, "020|Error: ", &len);
+		p = msg_cat(sp, "Error: ", &len);
 		if (REM < len)
 			goto retry;
 		memcpy(mp, p, len);
@@ -233,17 +233,17 @@ void
 mod_rpt(SCR *sp)
 {
 	static char * const action[] = {
-		"293|added",
-		"294|changed",
-		"295|deleted",
-		"296|joined",
-		"297|moved",
-		"298|shifted",
-		"299|yanked",
+		"added",
+		"changed",
+		"deleted",
+		"joined",
+		"moved",
+		"shifted",
+		"yanked",
 	};
 	static char * const lines[] = {
-		"300|line",
-		"301|lines",
+		"line",
+		"lines",
 	};
 	recno_t total;
 	u_long rptval;
@@ -368,7 +368,7 @@ msgq_status(SCR *sp, recno_t lno, u_int flags)
 		for (cnt = 0, ap = sp->argv; *ap != NULL; ++ap, ++cnt);
 		if (cnt > 1) {
 			(void)snprintf(p, ep - p,
-			    msg_cat(sp, "317|%d files to edit", NULL), cnt);
+			    msg_cat(sp, "%d files to edit", NULL), cnt);
 			p += strlen(p);
 			*p++ = ':';
 			*p++ = ' ';
@@ -386,13 +386,13 @@ msgq_status(SCR *sp, recno_t lno, u_int flags)
 	needsep = 0;
 	if (F_ISSET(sp->frp, FR_NEWFILE)) {
 		F_CLR(sp->frp, FR_NEWFILE);
-		t = msg_cat(sp, "021|new file", &len);
+		t = msg_cat(sp, "new file", &len);
 		memcpy(p, t, len);
 		p += len;
 		needsep = 1;
 	} else {
 		if (F_ISSET(sp->frp, FR_NAMECHANGE)) {
-			t = msg_cat(sp, "022|name changed", &len);
+			t = msg_cat(sp, "name changed", &len);
 			memcpy(p, t, len);
 			p += len;
 			needsep = 1;
@@ -402,9 +402,9 @@ msgq_status(SCR *sp, recno_t lno, u_int flags)
 			*p++ = ' ';
 		}
 		if (F_ISSET(sp->ep, F_MODIFIED))
-			t = msg_cat(sp, "023|modified", &len);
+			t = msg_cat(sp, "modified", &len);
 		else
-			t = msg_cat(sp, "024|unmodified", &len);
+			t = msg_cat(sp, "unmodified", &len);
 		memcpy(p, t, len);
 		p += len;
 		needsep = 1;
@@ -414,7 +414,7 @@ msgq_status(SCR *sp, recno_t lno, u_int flags)
 			*p++ = ',';
 			*p++ = ' ';
 		}
-		t = msg_cat(sp, "025|UNLOCKED", &len);
+		t = msg_cat(sp, "UNLOCKED", &len);
 		memcpy(p, t, len);
 		p += len;
 		needsep = 1;
@@ -424,7 +424,7 @@ msgq_status(SCR *sp, recno_t lno, u_int flags)
 			*p++ = ',';
 			*p++ = ' ';
 		}
-		t = msg_cat(sp, "026|readonly", &len);
+		t = msg_cat(sp, "readonly", &len);
 		memcpy(p, t, len);
 		p += len;
 		needsep = 1;
@@ -437,17 +437,17 @@ msgq_status(SCR *sp, recno_t lno, u_int flags)
 		if (db_last(sp, &last))
 			return;
 		if (last == 0) {
-			t = msg_cat(sp, "028|empty file", &len);
+			t = msg_cat(sp, "empty file", &len);
 			memcpy(p, t, len);
 			p += len;
 		} else {
-			t = msg_cat(sp, "027|line %lu of %lu [%ld%%]", &len);
+			t = msg_cat(sp, "line %lu of %lu [%ld%%]", &len);
 			(void)snprintf(p, ep - p, t, lno, last,
 			    (lno * 100) / last);
 			p += strlen(p);
 		}
 	} else {
-		t = msg_cat(sp, "029|line %lu", &len);
+		t = msg_cat(sp, "line %lu", &len);
 		(void)snprintf(p, ep - p, t, lno);
 		p += strlen(p);
 	}
@@ -507,20 +507,20 @@ msg_cmsg(SCR *sp, cmsg_t which, size_t *lenp)
 {
 	switch (which) {
 	case CMSG_CONF:
-		return (msg_cat(sp, "268|confirm? [ynq]", lenp));
+		return (msg_cat(sp, "confirm? [ynq]", lenp));
 	case CMSG_CONT:
-		return (msg_cat(sp, "269|Press any key to continue: ", lenp));
+		return (msg_cat(sp, "Press any key to continue: ", lenp));
 	case CMSG_CONT_EX:
 		return (msg_cat(sp,
-	    "270|Press any key to continue [: to enter more ex commands]: ",
+	    "Press any key to continue [: to enter more ex commands]: ",
 		    lenp));
 	case CMSG_CONT_R:
-		return (msg_cat(sp, "161|Press Enter to continue: ", lenp));
+		return (msg_cat(sp, "Press Enter to continue: ", lenp));
 	case CMSG_CONT_S:
-		return (msg_cat(sp, "275| cont?", lenp));
+		return (msg_cat(sp, " cont?", lenp));
 	case CMSG_CONT_Q:
 		return (msg_cat(sp,
-		    "271|Press any key to continue [q to quit]: ", lenp));
+		    "Press any key to continue [q to quit]: ", lenp));
 	default:
 		abort();
 	}

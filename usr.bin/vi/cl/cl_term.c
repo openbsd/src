@@ -1,4 +1,4 @@
-/*	$OpenBSD: cl_term.c,v 1.20 2015/04/10 18:05:51 brynet Exp $	*/
+/*	$OpenBSD: cl_term.c,v 1.21 2016/01/06 22:28:52 millert Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -201,7 +201,7 @@ cl_pfmap(SCR *sp, seq_t stype, CHAR_T *from, size_t flen, CHAR_T *to,
 	    p == (char *)-1 || strlen(p) == 0)
 		p = NULL;
 	if (p == NULL) {
-		msgq_str(sp, M_ERR, from, "233|This terminal has no %s key");
+		msgq_str(sp, M_ERR, from, "This terminal has no %s key");
 		return (1);
 	}
 
@@ -294,14 +294,14 @@ cl_omesg(SCR *sp, CL_PRIVATE *clp, int on)
 		if (chmod(tty, sb.st_mode | S_IWGRP) < 0) {
 			if (sp != NULL)
 				msgq(sp, M_SYSERR,
-				    "046|messages not turned on: %s", tty);
+				    "messages not turned on: %s", tty);
 			return (1);
 		}
 	} else
 		if (chmod(tty, sb.st_mode & ~S_IWGRP) < 0) {
 			if (sp != NULL)
 				msgq(sp, M_SYSERR,
-				    "045|messages not turned off: %s", tty);
+				    "messages not turned off: %s", tty);
 			return (1);
 		}
 	return (0);

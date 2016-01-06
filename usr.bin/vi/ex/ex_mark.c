@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_mark.c,v 1.6 2014/11/12 04:28:41 bentley Exp $	*/
+/*	$OpenBSD: ex_mark.c,v 1.7 2016/01/06 22:28:52 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -34,7 +34,7 @@ ex_mark(SCR *sp, EXCMD *cmdp)
 	NEEDFILE(sp, cmdp);
 
 	if (cmdp->argv[0]->len != 1) {
-		msgq(sp, M_ERR, "136|Mark names must be a single character");
+		msgq(sp, M_ERR, "Mark names must be a single character");
 		return (1);
 	}
 	return (mark_set(sp, cmdp->argv[0]->bp[0], &cmdp->addr1, 1));

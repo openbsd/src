@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_abbrev.c,v 1.6 2014/11/12 04:28:41 bentley Exp $	*/
+/*	$OpenBSD: ex_abbrev.c,v 1.7 2016/01/06 22:28:52 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -40,7 +40,7 @@ ex_abbr(SCR *sp, EXCMD *cmdp)
 	switch (cmdp->argc) {
 	case 0:
 		if (seq_dump(sp, SEQ_ABBREV, 0) == 0)
-			msgq(sp, M_INFO, "105|No abbreviations to display");
+			msgq(sp, M_INFO, "No abbreviations to display");
 		return (0);
 	case 2:
 		break;
@@ -63,13 +63,13 @@ ex_abbr(SCR *sp, EXCMD *cmdp)
 	 */
 	if (!inword(cmdp->argv[0]->bp[cmdp->argv[0]->len - 1])) {
 		msgq(sp, M_ERR,
-		    "106|Abbreviations must end with a \"word\" character");
+		    "Abbreviations must end with a \"word\" character");
 			return (1);
 	}
 	for (p = cmdp->argv[0]->bp; *p != '\0'; ++p)
 		if (isblank(p[0])) {
 			msgq(sp, M_ERR,
-			    "107|Abbreviations may not contain tabs or spaces");
+			    "Abbreviations may not contain tabs or spaces");
 			return (1);
 		}
 	if (cmdp->argv[0]->len > 2)
@@ -77,7 +77,7 @@ ex_abbr(SCR *sp, EXCMD *cmdp)
 		    len = cmdp->argv[0]->len - 2; len; --len, ++p)
 			if (inword(p[0]) != inword(p[1])) {
 				msgq(sp, M_ERR,
-"108|Abbreviations may not mix word/non-word characters, except at the end");
+"Abbreviations may not mix word/non-word characters, except at the end");
 				return (1);
 			}
 
@@ -104,7 +104,7 @@ ex_unabbr(SCR *sp, EXCMD *cmdp)
 	if (!F_ISSET(sp->gp, G_ABBREV) ||
 	    seq_delete(sp, ap->bp, ap->len, SEQ_ABBREV)) {
 		msgq_str(sp, M_ERR, ap->bp,
-		    "109|\"%s\" is not an abbreviation");
+		    "\"%s\" is not an abbreviation");
 		return (1);
 	}
 	return (0);

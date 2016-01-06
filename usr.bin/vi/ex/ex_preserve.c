@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_preserve.c,v 1.6 2014/11/12 04:28:41 bentley Exp $	*/
+/*	$OpenBSD: ex_preserve.c,v 1.7 2016/01/06 22:28:52 millert Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -36,7 +36,7 @@ ex_preserve(SCR *sp, EXCMD *cmdp)
 	NEEDFILE(sp, cmdp);
 
 	if (!F_ISSET(sp->ep, F_RCV_ON)) {
-		msgq(sp, M_ERR, "142|Preservation of this file not possible");
+		msgq(sp, M_ERR, "Preservation of this file not possible");
 		return (1);
 	}
 
@@ -52,7 +52,7 @@ ex_preserve(SCR *sp, EXCMD *cmdp)
 	if (rcv_sync(sp, RCV_SNAPSHOT))
 		return (1);
 
-	msgq(sp, M_INFO, "143|File preserved");
+	msgq(sp, M_INFO, "File preserved");
 	return (0);
 }
 

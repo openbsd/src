@@ -1,4 +1,4 @@
-/*	$OpenBSD: key.c,v 1.14 2015/01/16 06:40:14 deraadt Exp $	*/
+/*	$OpenBSD: key.c,v 1.15 2016/01/06 22:28:52 millert Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -139,7 +139,7 @@ v_key_init(SCR *sp)
 			break;
 		}
 	if (ch != gp->noprint) {
-		msgq(sp, M_ERR, "079|No non-printable character found");
+		msgq(sp, M_ERR, "No non-printable character found");
 		return (1);
 	}
 	return (0);
@@ -733,31 +733,31 @@ v_event_err(SCR *sp, EVENT *evp)
 {
 	switch (evp->e_event) {
 	case E_CHARACTER:
-		msgq(sp, M_ERR, "276|Unexpected character event");
+		msgq(sp, M_ERR, "Unexpected character event");
 		break;
 	case E_EOF:
-		msgq(sp, M_ERR, "277|Unexpected end-of-file event");
+		msgq(sp, M_ERR, "Unexpected end-of-file event");
 		break;
 	case E_INTERRUPT:
-		msgq(sp, M_ERR, "279|Unexpected interrupt event");
+		msgq(sp, M_ERR, "Unexpected interrupt event");
 		break;
 	case E_QUIT:
-		msgq(sp, M_ERR, "280|Unexpected quit event");
+		msgq(sp, M_ERR, "Unexpected quit event");
 		break;
 	case E_REPAINT:
-		msgq(sp, M_ERR, "281|Unexpected repaint event");
+		msgq(sp, M_ERR, "Unexpected repaint event");
 		break;
 	case E_STRING:
-		msgq(sp, M_ERR, "285|Unexpected string event");
+		msgq(sp, M_ERR, "Unexpected string event");
 		break;
 	case E_TIMEOUT:
-		msgq(sp, M_ERR, "286|Unexpected timeout event");
+		msgq(sp, M_ERR, "Unexpected timeout event");
 		break;
 	case E_WRESIZE:
-		msgq(sp, M_ERR, "316|Unexpected resize event");
+		msgq(sp, M_ERR, "Unexpected resize event");
 		break;
 	case E_WRITE:
-		msgq(sp, M_ERR, "287|Unexpected write event");
+		msgq(sp, M_ERR, "Unexpected write event");
 		break;
 
 	/*

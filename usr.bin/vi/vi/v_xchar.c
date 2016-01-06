@@ -1,4 +1,4 @@
-/*	$OpenBSD: v_xchar.c,v 1.7 2014/11/12 04:28:41 bentley Exp $	*/
+/*	$OpenBSD: v_xchar.c,v 1.8 2016/01/06 22:28:52 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -40,7 +40,7 @@ v_xchar(SCR *sp, VICMD *vp)
 		return (1);
 	}
 	if (len == 0) {
-nodel:		msgq(sp, M_BERR, "206|No characters to delete");
+nodel:		msgq(sp, M_BERR, "No characters to delete");
 		return (1);
 	}
 

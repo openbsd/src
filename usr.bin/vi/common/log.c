@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.6 2014/11/12 04:28:41 bentley Exp $	*/
+/*	$OpenBSD: log.c,v 1.7 2016/01/06 22:28:52 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -98,7 +98,7 @@ log_init(SCR *sp, EXF *ep)
 	ep->log = dbopen(NULL, O_CREAT | O_NONBLOCK | O_RDWR,
 	    S_IRUSR | S_IWUSR, DB_RECNO, NULL);
 	if (ep->log == NULL) {
-		msgq(sp, M_SYSERR, "009|Log file");
+		msgq(sp, M_SYSERR, "Log file");
 		F_SET(ep, F_NOLOG);
 		return (1);
 	}
@@ -357,12 +357,12 @@ log_backward(SCR *sp, MARK *rp)
 	ep = sp->ep;
 	if (F_ISSET(ep, F_NOLOG)) {
 		msgq(sp, M_ERR,
-		    "010|Logging not being performed, undo not possible");
+		    "Logging not being performed, undo not possible");
 		return (1);
 	}
 
 	if (ep->l_cur == 1) {
-		msgq(sp, M_BERR, "011|No changes to undo");
+		msgq(sp, M_BERR, "No changes to undo");
 		return (1);
 	}
 
@@ -460,7 +460,7 @@ log_setline(SCR *sp)
 	ep = sp->ep;
 	if (F_ISSET(ep, F_NOLOG)) {
 		msgq(sp, M_ERR,
-		    "012|Logging not being performed, undo not possible");
+		    "Logging not being performed, undo not possible");
 		return (1);
 	}
 
@@ -547,12 +547,12 @@ log_forward(SCR *sp, MARK *rp)
 	ep = sp->ep;
 	if (F_ISSET(ep, F_NOLOG)) {
 		msgq(sp, M_ERR,
-	    "013|Logging not being performed, roll-forward not possible");
+	    "Logging not being performed, roll-forward not possible");
 		return (1);
 	}
 
 	if (ep->l_cur == ep->l_high) {
-		msgq(sp, M_BERR, "014|No changes to re-do");
+		msgq(sp, M_BERR, "No changes to re-do");
 		return (1);
 	}
 
@@ -635,11 +635,11 @@ log_err(SCR *sp, char *file, int line)
 {
 	EXF *ep;
 
-	msgq(sp, M_SYSERR, "015|%s/%d: log put error", tail(file), line);
+	msgq(sp, M_SYSERR, "%s/%d: log put error", tail(file), line);
 	ep = sp->ep;
 	(void)ep->log->close(ep->log);
 	if (!log_init(sp, ep))
-		msgq(sp, M_ERR, "267|Log restarted");
+		msgq(sp, M_ERR, "Log restarted");
 }
 
 #if defined(DEBUG) && 0

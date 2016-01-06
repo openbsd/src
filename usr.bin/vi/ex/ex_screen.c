@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_screen.c,v 1.9 2014/11/12 04:28:41 bentley Exp $	*/
+/*	$OpenBSD: ex_screen.c,v 1.10 2016/01/06 22:28:52 millert Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -104,7 +104,7 @@ ex_sdisplay(SCR *sp)
 
 	gp = sp->gp;
 	if (TAILQ_EMPTY(&gp->hq)) {
-		msgq(sp, M_INFO, "149|No background screens to display");
+		msgq(sp, M_INFO, "No background screens to display");
 		return (0);
 	}
 

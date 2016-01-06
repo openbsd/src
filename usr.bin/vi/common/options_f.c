@@ -1,4 +1,4 @@
-/*	$OpenBSD: options_f.c,v 1.10 2016/01/06 22:27:39 millert Exp $	*/
+/*	$OpenBSD: options_f.c,v 1.11 2016/01/06 22:28:52 millert Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -45,7 +45,7 @@ f_columns(SCR *sp, OPTION *op, char *str, u_long *valp)
 {
 	/* Validate the number. */
 	if (*valp < MINIMUM_SCREEN_COLS) {
-		msgq(sp, M_ERR, "040|Screen columns too small, less than %d",
+		msgq(sp, M_ERR, "Screen columns too small, less than %d",
 		    MINIMUM_SCREEN_COLS);
 		return (1);
 	}
@@ -60,7 +60,7 @@ f_columns(SCR *sp, OPTION *op, char *str, u_long *valp)
 	 */
 #define	MAXIMUM_SCREEN_COLS	768
 	if (*valp > MAXIMUM_SCREEN_COLS) {
-		msgq(sp, M_ERR, "041|Screen columns too large, greater than %d",
+		msgq(sp, M_ERR, "Screen columns too large, greater than %d",
 		    MAXIMUM_SCREEN_COLS);
 		return (1);
 	}
@@ -75,7 +75,7 @@ f_lines(SCR *sp, OPTION *op, char *str, u_long *valp)
 {
 	/* Validate the number. */
 	if (*valp < MINIMUM_SCREEN_ROWS) {
-		msgq(sp, M_ERR, "042|Screen lines too small, less than %d",
+		msgq(sp, M_ERR, "Screen lines too small, less than %d",
 		    MINIMUM_SCREEN_ROWS);
 		return (1);
 	}
@@ -90,7 +90,7 @@ f_lines(SCR *sp, OPTION *op, char *str, u_long *valp)
 	 */
 #define	MAXIMUM_SCREEN_ROWS	500
 	if (*valp > MAXIMUM_SCREEN_ROWS) {
-		msgq(sp, M_ERR, "043|Screen lines too large, greater than %d",
+		msgq(sp, M_ERR, "Screen lines too large, greater than %d",
 		    MAXIMUM_SCREEN_ROWS);
 		return (1);
 	}
@@ -126,7 +126,7 @@ f_lines(SCR *sp, OPTION *op, char *str, u_long *valp)
 int
 f_lisp(SCR *sp, OPTION *op, char *str, u_long *valp)
 {
-	msgq(sp, M_ERR, "044|The lisp option is not implemented");
+	msgq(sp, M_ERR, "The lisp option is not implemented");
 	return (0);
 }
 
@@ -138,7 +138,7 @@ f_paragraph(SCR *sp, OPTION *op, char *str, u_long *valp)
 {
 	if (strlen(str) & 1) {
 		msgq(sp, M_ERR,
-		    "048|The paragraph option must be in two character groups");
+		    "The paragraph option must be in two character groups");
 		return (1);
 	}
 	return (0);
@@ -210,7 +210,7 @@ f_section(SCR *sp, OPTION *op, char *str, u_long *valp)
 {
 	if (strlen(str) & 1) {
 		msgq(sp, M_ERR,
-		    "049|The section option must be in two character groups");
+		    "The section option must be in two character groups");
 		return (1);
 	}
 	return (0);

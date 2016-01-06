@@ -1,4 +1,4 @@
-/*	$OpenBSD: v_search.c,v 1.13 2014/11/12 04:28:41 bentley Exp $	*/
+/*	$OpenBSD: v_search.c,v 1.14 2016/01/06 22:28:52 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -264,7 +264,7 @@ v_exaddr(SCR *sp, VICMD *vp, dir_t dir)
 	return (0);
 
 err1:	msgq(sp, M_ERR,
-	    "188|Characters after search string, line offset and/or z command");
+	    "Characters after search string, line offset and/or z command");
 err2:	vp->m_final.lno = s_lno;
 	vp->m_final.cno = s_cno;
 	return (1);
@@ -365,7 +365,7 @@ v_search(SCR *sp, VICMD *vp, char *ptrn, size_t plen, u_int flags, dir_t dir)
 			return (1);
 		break;
 	case NOTSET:
-		msgq(sp, M_ERR, "189|No previous search pattern");
+		msgq(sp, M_ERR, "No previous search pattern");
 		return (1);
 	default:
 		abort();
@@ -420,7 +420,7 @@ v_correct(SCR *sp, VICMD *vp, int isdelta)
 	 */
 	if (vp->m_start.lno == vp->m_stop.lno &&
 	    vp->m_start.cno == vp->m_stop.cno) {
-		msgq(sp, M_BERR, "190|Search wrapped to original position");
+		msgq(sp, M_BERR, "Search wrapped to original position");
 		return (1);
 	}
 

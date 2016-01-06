@@ -1,4 +1,4 @@
-/*	$OpenBSD: mark.c,v 1.10 2015/12/07 20:39:19 mmcc Exp $	*/
+/*	$OpenBSD: mark.c,v 1.11 2016/01/06 22:28:52 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -113,12 +113,12 @@ mark_get(SCR *sp, ARG_CHAR_T key, MARK *mp, mtype_t mtype)
 
 	lmp = mark_find(sp, key);
 	if (lmp == NULL || lmp->name != key) {
-		msgq(sp, mtype, "017|Mark %s: not set", KEY_NAME(sp, key));
+		msgq(sp, mtype, "Mark %s: not set", KEY_NAME(sp, key));
                 return (1);
 	}
 	if (F_ISSET(lmp, MARK_DELETED)) {
 		msgq(sp, mtype,
-		    "018|Mark %s: the line was deleted", KEY_NAME(sp, key));
+		    "Mark %s: the line was deleted", KEY_NAME(sp, key));
                 return (1);
 	}
 
@@ -129,7 +129,7 @@ mark_get(SCR *sp, ARG_CHAR_T key, MARK *mp, mtype_t mtype)
 	 */
 	if ((lmp->lno != 1 || lmp->cno != 0) && !db_exist(sp, lmp->lno)) {
 		msgq(sp, mtype,
-		    "019|Mark %s: cursor position no longer exists",
+		    "Mark %s: cursor position no longer exists",
 		    KEY_NAME(sp, key));
 		return (1);
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_write.c,v 1.12 2014/11/12 04:28:41 bentley Exp $	*/
+/*	$OpenBSD: ex_write.c,v 1.13 2016/01/06 22:28:52 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -301,7 +301,7 @@ ex_writefp(SCR *sp, char *name, FILE *fp, MARK *fm, MARK *tm, u_long *nlno,
 	 */
 	ccnt = 0;
 	lcnt = 0;
-	msg = "253|Writing...";
+	msg = "Writing...";
 	if (tline != 0)
 		for (; fline <= tline; ++fline, ++lcnt) {
 			/* Caller has to provide any interrupt message. */

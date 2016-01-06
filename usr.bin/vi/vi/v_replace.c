@@ -1,4 +1,4 @@
-/*	$OpenBSD: v_replace.c,v 1.8 2014/11/12 04:28:41 bentley Exp $	*/
+/*	$OpenBSD: v_replace.c,v 1.9 2016/01/06 22:28:52 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -67,7 +67,7 @@ v_replace(SCR *sp, VICMD *vp)
 	if (db_get(sp, vp->m_start.lno, DBG_FATAL, &p, &len))
 		return (1);
 	if (len == 0) {
-		msgq(sp, M_BERR, "186|No characters to replace");
+		msgq(sp, M_BERR, "No characters to replace");
 		return (1);
 	}
 

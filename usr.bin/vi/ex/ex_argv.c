@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_argv.c,v 1.17 2015/12/07 20:39:19 mmcc Exp $	*/
+/*	$OpenBSD: ex_argv.c,v 1.18 2016/01/06 22:28:52 millert Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -309,7 +309,7 @@ argv_fexp(SCR *sp, EXCMD *excp, char *cmd, size_t cmdlen, char *p,
 			exp = EXP(sp);
 			if (exp->lastbcomm == NULL) {
 				msgq(sp, M_ERR,
-				    "115|No previous command to replace \"!\"");
+				    "No previous command to replace \"!\"");
 				return (1);
 			}
 			len += tlen = strlen(exp->lastbcomm);
@@ -323,7 +323,7 @@ argv_fexp(SCR *sp, EXCMD *excp, char *cmd, size_t cmdlen, char *p,
 		case '%':
 			if ((t = sp->frp->name) == NULL) {
 				msgq(sp, M_ERR,
-				    "116|No filename to substitute for %%");
+				    "No filename to substitute for %%");
 				return (1);
 			}
 			tlen = strlen(t);
@@ -338,7 +338,7 @@ argv_fexp(SCR *sp, EXCMD *excp, char *cmd, size_t cmdlen, char *p,
 		case '#':
 			if ((t = sp->alt_name) == NULL) {
 				msgq(sp, M_ERR,
-				    "117|No filename to substitute for #");
+				    "No filename to substitute for #");
 				return (1);
 			}
 			len += tlen = strlen(t);
@@ -548,7 +548,7 @@ argv_lexp(SCR *sp, EXCMD *excp, char *path)
 		 * failed.  We can't know for certain that's the error, but
 		 * it's a good guess, and it matches historic practice. 
 		 */
-		msgq(sp, M_ERR, "304|Shell expansion failed");
+		msgq(sp, M_ERR, "Shell expansion failed");
 		return (1);
 	}
 	qsort(exp->args + off, exp->argsoff - off, sizeof(ARGS *), argv_comp);
@@ -583,7 +583,7 @@ argv_sexp(SCR *sp, char **bpp, size_t *blenp, size_t *lenp)
 	/* Secure means no shell access. */
 	if (O_ISSET(sp, O_SECURE)) {
 		msgq(sp, M_ERR,
-"289|Shell expansions not supported when the secure edit option is set");
+"Shell expansions not supported when the secure edit option is set");
 		return (1);
 	}
 
@@ -647,7 +647,7 @@ err:		if (ifp != NULL)
 		 * Assume that all shells have -c.
 		 */
 		execl(sh_path, sh, "-c", bp, (char *)NULL);
-		msgq_str(sp, M_SYSERR, sh_path, "118|Error: execl: %s");
+		msgq_str(sp, M_SYSERR, sh_path, "Error: execl: %s");
 		_exit(127);
 	default:			/* Parent. */
 		/* Close the pipe ends the parent won't use. */
@@ -683,7 +683,7 @@ err:		if (ifp != NULL)
 	if (ferror(ifp))
 		goto ioerr;
 	if (fclose(ifp)) {
-ioerr:		msgq_str(sp, M_ERR, sh, "119|I/O error: %s");
+ioerr:		msgq_str(sp, M_ERR, sh, "I/O error: %s");
 alloc_err:	rval = SEXP_ERR;
 	} else
 		rval = SEXP_OK;
@@ -707,7 +707,7 @@ alloc_err:	rval = SEXP_ERR;
 		rval = SEXP_EXPANSION_ERR;
 
 	if (rval == SEXP_EXPANSION_ERR)
-		msgq(sp, M_ERR, "304|Shell expansion failed");
+		msgq(sp, M_ERR, "Shell expansion failed");
 
 	return (rval == SEXP_OK ? 0 : 1);
 }

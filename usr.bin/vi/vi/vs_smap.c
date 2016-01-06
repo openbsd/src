@@ -1,4 +1,4 @@
-/*	$OpenBSD: vs_smap.c,v 1.8 2014/11/12 04:28:41 bentley Exp $	*/
+/*	$OpenBSD: vs_smap.c,v 1.9 2016/01/06 22:28:52 millert Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -1123,7 +1123,7 @@ vs_sm_position(SCR *sp, MARK *rp, u_long cnt, pos_t pos)
 			goto sof;
 		smp = HMAP + cnt;
 		if (cnt && !db_exist(sp, smp->lno)) {
-sof:			msgq(sp, M_BERR, "220|Movement past the end-of-screen");
+sof:			msgq(sp, M_BERR, "Movement past the end-of-screen");
 			return (1);
 		}
 		break;
@@ -1159,7 +1159,7 @@ sof:			msgq(sp, M_BERR, "220|Movement past the end-of-screen");
 			for (; smp->lno > last && smp > HMAP; --smp);
 			if (cnt > smp - HMAP) {
 eof:				msgq(sp, M_BERR,
-			    "221|Movement past the beginning-of-screen");
+			    "Movement past the beginning-of-screen");
 				return (1);
 			}
 			smp -= cnt;

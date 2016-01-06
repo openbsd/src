@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_join.c,v 1.7 2014/11/12 04:28:41 bentley Exp $	*/
+/*	$OpenBSD: ex_join.c,v 1.8 2016/01/06 22:28:52 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -44,7 +44,7 @@ ex_join(SCR *sp, EXCMD *cmdp)
 
 	/* Check for no lines to join. */
 	if (!db_exist(sp, from + 1)) {
-		msgq(sp, M_ERR, "131|No following lines to join");
+		msgq(sp, M_ERR, "No following lines to join");
 		return (1);
 	}
 
