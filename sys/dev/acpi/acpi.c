@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.297 2015/11/23 00:10:53 reyk Exp $ */
+/* $OpenBSD: acpi.c,v 1.298 2016/01/06 09:14:09 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -82,6 +82,7 @@ int	acpi_submatch(struct device *, void *, void *);
 int	acpi_print(void *, const char *);
 
 void	acpi_map_pmregs(struct acpi_softc *);
+void	acpi_unmap_pmregs(struct acpi_softc *);
 
 int	acpi_loadtables(struct acpi_softc *, struct acpi_rsdp *);
 
@@ -852,6 +853,7 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 	struct device *dev;
 #endif /* SMALL_KERNEL */
 	paddr_t facspa;
+	uint16_t pm1;
 	int s;
 
 	sc->sc_iot = ba->ba_iot;
@@ -909,12 +911,17 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
+	/* Map Power Management registers */
+	acpi_map_pmregs(sc);
+
 	/*
-	 * Check if we are able to enable ACPI control
+	 * Check if we can and need to enable ACPI control.
 	 */
-	if (sc->sc_fadt->smi_cmd &&
+	pm1 = acpi_read_pmreg(sc, ACPIREG_PM1_CNT, 0);
+	if ((pm1 & ACPI_PM1_SCI_EN) == 0 && sc->sc_fadt->smi_cmd &&
 	    (!sc->sc_fadt->acpi_enable && !sc->sc_fadt->acpi_disable)) {
 		printf(", ACPI control unavailable\n");
+		acpi_unmap_pmregs(sc);
 		return;
 	}
 
@@ -975,9 +982,6 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 	acpi_init_pm(sc);
 #endif /* SMALL_KERNEL */
 
-	/* Map Power Management registers */
-	acpi_map_pmregs(sc);
-
 	/* Initialize GPE handlers */
 	s = spltty();
 	acpi_init_gpes(sc);
@@ -997,7 +1001,7 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 	 * This may prevent thermal control on some systems where
 	 * that actually does work
 	 */
-	if (sc->sc_fadt->smi_cmd) {
+	if ((pm1 & ACPI_PM1_SCI_EN) == 0 && sc->sc_fadt->smi_cmd) {
 		if (acpi_enable(sc)) {
 			printf(", can't enable ACPI\n");
 			return;
@@ -1494,6 +1498,18 @@ acpi_map_pmregs(struct acpi_softc *sc)
 			sc->sc_pmregs[reg].addr = addr;
 			sc->sc_pmregs[reg].access = min(access, 4);
 		}
+	}
+}
+
+void
+acpi_unmap_pmregs(struct acpi_softc *sc)
+{
+	int reg;
+
+	for (reg = 0; reg < ACPIREG_MAXREG; reg++) {
+		if (sc->sc_pmregs[reg].size && sc->sc_pmregs[reg].addr)
+			bus_space_unmap(sc->sc_iot, sc->sc_pmregs[reg].ioh,
+			    sc->sc_pmregs[reg].size);
 	}
 }
 
