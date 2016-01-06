@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.70 2015/12/20 17:56:18 tedu Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.71 2016/01/06 17:58:46 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -173,13 +173,13 @@ filt_fileattach(struct knote *kn)
 {
 	struct file *fp = kn->kn_fp;
 
-	return ((*fp->f_ops->fo_kqfilter)(fp, kn));
+	return fp->f_ops->fo_kqfilter(fp, kn);
 }
 
 int
 kqueue_kqfilter(struct file *fp, struct knote *kn)
 {
-	struct kqueue *kq = (struct kqueue *)kn->kn_fp->f_data;
+	struct kqueue *kq = kn->kn_fp->f_data;
 
 	if (kn->kn_filter != EVFILT_READ)
 		return (EINVAL);
@@ -192,7 +192,7 @@ kqueue_kqfilter(struct file *fp, struct knote *kn)
 void
 filt_kqdetach(struct knote *kn)
 {
-	struct kqueue *kq = (struct kqueue *)kn->kn_fp->f_data;
+	struct kqueue *kq = kn->kn_fp->f_data;
 
 	SLIST_REMOVE(&kq->kq_sel.si_note, kn, knote, kn_selnext);
 }
@@ -200,7 +200,7 @@ filt_kqdetach(struct knote *kn)
 int
 filt_kqueue(struct knote *kn, long hint)
 {
-	struct kqueue *kq = (struct kqueue *)kn->kn_fp->f_data;
+	struct kqueue *kq = kn->kn_fp->f_data;
 
 	kn->kn_data = kq->kq_count;
 	return (kn->kn_data > 0);
@@ -496,12 +496,12 @@ sys_kevent(struct proc *p, void *v, register_t *retval)
 		SCARG(uap, timeout) = &ts;
 	}
 
-	kq = (struct kqueue *)fp->f_data;
+	kq = fp->f_data;
 	nerrors = 0;
 
 	while (SCARG(uap, nchanges) > 0) {
-		n = SCARG(uap, nchanges) > KQ_NEVENTS
-			? KQ_NEVENTS : SCARG(uap, nchanges);
+		n = SCARG(uap, nchanges) > KQ_NEVENTS ?
+		    KQ_NEVENTS : SCARG(uap, nchanges);
 		error = copyin(SCARG(uap, changelist), kq->kq_kev,
 		    n * sizeof(struct kevent));
 		if (error)
@@ -540,7 +540,7 @@ sys_kevent(struct proc *p, void *v, register_t *retval)
 	KQREF(kq);
 	FRELE(fp, p);
 	error = kqueue_scan(kq, SCARG(uap, nevents), SCARG(uap, eventlist),
-			    SCARG(uap, timeout), p, &n);
+	    SCARG(uap, timeout), p, &n);
 	KQRELE(kq);
 	*retval = n;
 	return (error);
@@ -581,10 +581,11 @@ kqueue_register(struct kqueue *kq, struct kevent *kev, struct proc *p)
 		FREF(fp);
 
 		if (kev->ident < fdp->fd_knlistsize) {
-			SLIST_FOREACH(kn, &fdp->fd_knlist[kev->ident], kn_link)
+			SLIST_FOREACH(kn, &fdp->fd_knlist[kev->ident], kn_link) {
 				if (kq == kn->kn_kq &&
 				    kev->filter == kn->kn_filter)
 					break;
+			}
 		}
 	} else {
 		if (fdp->fd_knhashmask != 0) {
@@ -592,11 +593,12 @@ kqueue_register(struct kqueue *kq, struct kevent *kev, struct proc *p)
 
 			list = &fdp->fd_knhash[
 			    KN_HASH((u_long)kev->ident, fdp->fd_knhashmask)];
-			SLIST_FOREACH(kn, list, kn_link)
+			SLIST_FOREACH(kn, list, kn_link) {
 				if (kev->ident == kn->kn_id &&
 				    kq == kn->kn_kq &&
 				    kev->filter == kn->kn_filter)
 					break;
+			}
 		}
 	}
 
@@ -707,7 +709,7 @@ kqueue_scan(struct kqueue *kq, int maxevents, struct kevent *ulistp,
 		}
 
 		timeout = atv.tv_sec > 24 * 60 * 60 ?
-			24 * 60 * 60 * hz : tvtohz(&atv);
+		    24 * 60 * 60 * hz : tvtohz(&atv);
 
 		getmicrouptime(&rtv);
 		timeradd(&atv, &rtv, &atv);
@@ -726,7 +728,7 @@ retry:
 		ttv = atv;
 		timersub(&ttv, &rtv, &ttv);
 		timeout = ttv.tv_sec > 24 * 60 * 60 ?
-			24 * 60 * 60 * hz : tvtohz(&ttv);
+		    24 * 60 * 60 * hz : tvtohz(&ttv);
 	}
 
 start:
@@ -871,7 +873,7 @@ kqueue_poll(struct file *fp, int events, struct proc *p)
 int
 kqueue_stat(struct file *fp, struct stat *st, struct proc *p)
 {
-	struct kqueue *kq = (struct kqueue *)fp->f_data;
+	struct kqueue *kq = fp->f_data;
 
 	memset(st, 0, sizeof(*st));
 	st->st_size = kq->kq_count;
@@ -883,7 +885,7 @@ kqueue_stat(struct file *fp, struct stat *st, struct proc *p)
 int
 kqueue_close(struct file *fp, struct proc *p)
 {
-	struct kqueue *kq = (struct kqueue *)fp->f_data;
+	struct kqueue *kq = fp->f_data;
 	struct filedesc *fdp = p->p_fd;
 	struct knote **knp, *kn, *kn0;
 	int i;
@@ -1015,7 +1017,7 @@ knote_attach(struct knote *kn, struct filedesc *fdp)
 	struct klist *list;
 	int size;
 
-	if (! kn->kn_fop->f_isfd) {
+	if (!kn->kn_fop->f_isfd) {
 		if (fdp->fd_knhashmask == 0)
 			fdp->fd_knhash = hashinit(KN_HASHSIZE, M_TEMP,
 			    M_WAITOK, &fdp->fd_knhashmask);
