@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.179 2015/12/30 06:04:39 tedu Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.180 2016/01/06 17:57:22 tedu Exp $	*/
 /*
  * Copyright (c) 2008, 2010, 2011 Otto Moerbeek <otto@drijf.net>
  * Copyright (c) 2012 Matthew Dempsky <matthew@openbsd.org>
@@ -177,7 +177,6 @@ struct chunk_info {
 
 struct malloc_readonly {
 	struct dir_info *malloc_pool;	/* Main bookkeeping information */
-	int	malloc_abort;		/* abort() on error */
 	int	malloc_freenow;		/* Free quickly - disable chunk rnd */
 	int	malloc_freeunmap;	/* mprotect free pages PROT_NONE? */
 	int	malloc_hint;		/* call madvice on free pages?  */
@@ -280,8 +279,8 @@ wrterror(char *msg, void *p)
 #endif /* MALLOC_STATS */
 
 	errno = saved_errno;
-	if (mopts.malloc_abort)
-		abort();
+
+	abort();
 }
 
 static void
@@ -485,7 +484,6 @@ omalloc_init(struct dir_info **dp)
 	/*
 	 * Default options
 	 */
-	mopts.malloc_abort = 1;
 	mopts.malloc_junk = 1;
 	mopts.malloc_move = 1;
 	mopts.malloc_cache = MALLOC_DEFAULT_CACHE;
@@ -523,10 +521,8 @@ omalloc_init(struct dir_info **dp)
 				mopts.malloc_cache >>= 1;
 				break;
 			case 'a':
-				mopts.malloc_abort = 0;
-				break;
 			case 'A':
-				mopts.malloc_abort = 1;
+				/* ignored */
 				break;
 			case 'c':
 				mopts.malloc_canaries = 0;

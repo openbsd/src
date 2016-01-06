@@ -30,9 +30,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: malloc.3,v 1.91 2015/09/14 13:08:01 schwarze Exp $
+.\"	$OpenBSD: malloc.3,v 1.92 2016/01/06 17:57:22 tedu Exp $
 .\"
-.Dd $Mdocdate: September 14 2015 $
+.Dd $Mdocdate: January 6 2016 $
 .Dt MALLOC 3
 .Os
 .Sh NAME
@@ -345,10 +345,7 @@ or
 detect an error condition,
 a message will be printed to file descriptor
 2 (not using stdio).
-Errors will result in the process being aborted,
-unless the
-.Cm a
-option has been specified.
+Errors will result in the process being aborted.
 .Pp
 Here is a brief description of the error messages and what they mean:
 .Bl -tag -width Ds
