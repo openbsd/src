@@ -1,11 +1,17 @@
-/*	$OpenBSD: gamesupport.c,v 1.8 2016/01/06 09:39:51 tb Exp $	*/
+/*	$OpenBSD: gamesupport.c,v 1.9 2016/01/06 14:28:09 mestre Exp $	*/
 /*	$NetBSD: gamesupport.c,v 1.3 1995/04/24 12:24:28 cgd Exp $	*/
 
 /*
  * gamesupport.c - auxiliary routines for support of Phantasia
  */
 
-#include "include.h"
+#include <curses.h>
+#include <stdio.h>
+#include <string.h>
+
+#include "pathnames.h"
+#include "phantdefs.h"
+#include "phantglobs.h"
 
 /************************************************************************
 /

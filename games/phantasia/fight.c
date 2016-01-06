@@ -1,11 +1,20 @@
-/*	$OpenBSD: fight.c,v 1.12 2016/01/06 09:39:51 tb Exp $	*/
+/*	$OpenBSD: fight.c,v 1.13 2016/01/06 14:28:09 mestre Exp $	*/
 /*	$NetBSD: fight.c,v 1.2 1995/03/24 03:58:39 cgd Exp $	*/
 
 /*
  * fight.c   Phantasia monster fighting routines
  */
 
-#include "include.h"
+#include <curses.h>
+#include <math.h>
+#include <setjmp.h>
+#include <string.h>
+
+#include "macros.h"
+#include "phantdefs.h"
+#include "phantglobs.h"
+
+static jmp_buf Fightenv;	/* used to jump into fight routine */
 
 /************************************************************************
 /

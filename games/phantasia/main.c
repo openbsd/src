@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.18 2016/01/06 09:39:51 tb Exp $	*/
+/*	$OpenBSD: main.c,v 1.19 2016/01/06 14:28:09 mestre Exp $	*/
 /*	$NetBSD: main.c,v 1.3 1995/04/24 12:24:37 cgd Exp $	*/
 
 /*
@@ -28,12 +28,21 @@
  * AT&T is in no way connected with this game.
  */
 
-#include <sys/types.h>
-#include <limits.h>
+#include <curses.h>
+#include <err.h>
+#include <math.h>
 #include <pwd.h>
+#include <stdlib.h>
+#include <string.h>
 #ifdef TERMIOS
 #include <termios.h>
 #endif
+#include <unistd.h>
+
+#include "macros.h"
+#include "pathnames.h"
+#include "phantdefs.h"
+#include "phantglobs.h"
 
 /*
  * The program allocates as much file space as it needs to store characters,
@@ -58,8 +67,6 @@
 /*
  * main.c	Main routines for Phantasia
  */
-
-#include "include.h"
 
 /***************************************************************************
 / FUNCTION NAME: main()

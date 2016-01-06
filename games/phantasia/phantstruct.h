@@ -1,9 +1,12 @@
-/*	$OpenBSD: phantstruct.h,v 1.4 2014/11/16 04:49:48 guenther Exp $	*/
+/*	$OpenBSD: phantstruct.h,v 1.5 2016/01/06 14:28:09 mestre Exp $	*/
 /*	$NetBSD: phantstruct.h,v 1.2 1995/03/24 04:00:11 cgd Exp $	*/
 
 /*
  * phantstruct.h - structure definitions for Phantasia
  */
+
+#include <limits.h>
+#include <stdbool.h>
 
 struct	player	    	/* player statistics */
     {

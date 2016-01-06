@@ -1,14 +1,23 @@
-/*	$OpenBSD: setup.c,v 1.16 2016/01/06 10:28:38 tb Exp $	*/
+/*	$OpenBSD: setup.c,v 1.17 2016/01/06 14:28:09 mestre Exp $	*/
 /*	$NetBSD: setup.c,v 1.4 1995/04/24 12:24:41 cgd Exp $	*/
 
 /*
  * setup.c - set up all files for Phantasia
  */
-#include <sys/types.h>
 #include <sys/stat.h>
-#include "include.h"
-#include <limits.h>
+
 #include <fcntl.h>
+#include <math.h>
+#include <stdbool.h>
+#include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+
+#include "macros.h"
+#include "pathnames.h"
+#include "phantdefs.h"
+#include "phantglobs.h"
 
 __dead void Error(char *, char *);
 
@@ -122,7 +131,7 @@ main(int argc, char *argv[])
 	}
 
     /* put holy grail info into energy void file */
-    Enrgyvoid.ev_active = TRUE;
+    Enrgyvoid.ev_active = true;
     Enrgyvoid.ev_x = ROLL(-1.0e6, 2.0e6);
     Enrgyvoid.ev_y = ROLL(-1.0e6, 2.0e6);
     snprintf(path, sizeof(path), "%s%s", prefix?prefix:"", _PATH_VOID);

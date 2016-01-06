@@ -1,9 +1,13 @@
-/*	$OpenBSD: phantglobs.h,v 1.6 2003/05/12 07:43:27 pjanzen Exp $	*/
+/*	$OpenBSD: phantglobs.h,v 1.7 2016/01/06 14:28:09 mestre Exp $	*/
 /*	$NetBSD: phantglobs.h,v 1.3 1995/04/24 12:24:39 cgd Exp $	*/
 
 /*
  * phantglobs.h - global declarations for Phantasia
  */
+
+#include <stdio.h>
+
+#include "phantstruct.h"
 
 extern	double	Circle;		/* which circle player is in */
 extern	double	Shield;		/* force field thrown up in monster battle */
@@ -25,9 +29,6 @@ extern	int	Lines;		/* line on screen counter for fight routines */
 
 extern	char	Ch_Erase;	/* backspace key */
 extern	char	Ch_Kill;	/* linekill key */
-
-extern	jmp_buf Fightenv;	/* used to jump into fight routine */
-extern	jmp_buf Timeoenv;	/* used for timing out waiting for input */
 
 extern	long	Fileloc;	/* location in file of player statistics */
 

@@ -1,13 +1,23 @@
-/*	$OpenBSD: misc.c,v 1.19 2016/01/06 09:43:26 tb Exp $	*/
+/*	$OpenBSD: misc.c,v 1.20 2016/01/06 14:28:09 mestre Exp $	*/
 /*	$NetBSD: misc.c,v 1.2 1995/03/24 03:59:03 cgd Exp $	*/
 
 /*
  * misc.c  Phantasia miscellaneous support routines
  */
 
+#include <curses.h>
 #include <err.h>
-#include "include.h"
+#include <math.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
+#include "macros.h"
+#include "pathnames.h"
+#include "phantdefs.h"
+#include "phantglobs.h"
 
 /************************************************************************
 /

@@ -1,11 +1,20 @@
-/*	$OpenBSD: interplayer.c,v 1.7 2016/01/06 09:39:51 tb Exp $	*/
+/*	$OpenBSD: interplayer.c,v 1.8 2016/01/06 14:28:09 mestre Exp $	*/
 /*	$NetBSD: interplayer.c,v 1.2 1995/03/24 03:58:47 cgd Exp $	*/
 
 /*
  * interplayer.c - player to player routines for Phantasia
  */
 
-#include "include.h"
+#include <curses.h>
+#include <math.h>
+#include <stdio.h>
+#include <string.h>
+#include <unistd.h>
+
+#include "macros.h"
+#include "pathnames.h"
+#include "phantdefs.h"
+#include "phantglobs.h"
 
 /************************************************************************
 /
