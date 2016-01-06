@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.313 2016/01/03 10:33:27 mpi Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.314 2016/01/06 21:37:00 tedu Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -2773,7 +2773,7 @@ print_media_word(uint64_t ifmw, int print_type, int as_syntax)
 		}
 	}
 	if (IFM_INST(ifmw) != 0)
-		printf(" instance %d", IFM_INST(ifmw));
+		printf(" instance %lld", IFM_INST(ifmw));
 }
 
 /* ARGSUSED */
