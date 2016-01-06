@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.18 2016/01/06 09:39:51 tb Exp $	*/
+/*	$OpenBSD: misc.c,v 1.19 2016/01/06 09:43:26 tb Exp $	*/
 /*	$NetBSD: misc.c,v 1.2 1995/03/24 03:59:03 cgd Exp $	*/
 
 /*
@@ -37,7 +37,7 @@
 *************************************************************************/
 
 void
-movelevel()
+movelevel(void)
 {
 	struct charstats *statptr;	/* for pointing into Stattable */
 	double  new;		/* new level */
@@ -213,7 +213,7 @@ descrlocation(struct player *playerp, bool shortflag)
 *************************************************************************/
 
 void
-tradingpost()
+tradingpost(void)
 {
 	double  numitems;	/* number of items to purchase */
 	double  cost;		/* cost of purchase */
@@ -484,7 +484,7 @@ tradingpost()
 *************************************************************************/
 
 void
-displaystats()
+displaystats(void)
 {
 	mvprintw(0, 0, "%s%s\n", Player.p_name, descrlocation(&Player, FALSE));
 	mvprintw(1, 0, "Level :%7.0f   Energy  :%9.0f(%9.0f)  Mana :%9.0f  Users:%3d\n",
@@ -519,7 +519,7 @@ displaystats()
 *************************************************************************/
 
 void
-allstatslist()
+allstatslist(void)
 {
 	static char *flags[] =	/* to print value of some bools */
 	{
@@ -711,7 +711,7 @@ findname(char *name, struct player *playerp)
 *************************************************************************/
 
 long
-allocrecord()
+allocrecord(void)
 {
 	long    loc = 0L;	/* location in file */
 
@@ -790,7 +790,7 @@ freerecord(struct player *playerp, long loc)
 *************************************************************************/
 
 void
-leavegame()
+leavegame(void)
 {
 
 	if (Player.p_level < 1.0)
