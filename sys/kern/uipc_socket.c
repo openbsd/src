@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.144 2015/12/05 10:11:53 tedu Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.145 2016/01/06 10:06:50 stefan Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -393,8 +393,9 @@ sosend(struct socket *so, struct mbuf *addr, struct uio *uio, struct mbuf *top,
 {
 	struct mbuf **mp;
 	struct mbuf *m;
-	long space, len, mlen, clen = 0;
-	quad_t resid;
+	long space, clen = 0;
+	u_long len, mlen;
+	size_t resid;
 	int error, s;
 	int atomic = sosendallatonce(so) || top;
 
@@ -402,22 +403,20 @@ sosend(struct socket *so, struct mbuf *addr, struct uio *uio, struct mbuf *top,
 		resid = uio->uio_resid;
 	else
 		resid = top->m_pkthdr.len;
-	/*
-	 * In theory resid should be unsigned (since uio->uio_resid is).
-	 * However, space must be signed, as it might be less than 0
-	 * if we over-committed, and we must use a signed comparison
-	 * of space and resid.  On the other hand, a negative resid
-	 * causes us to loop sending 0-length segments to the protocol.
-	 * MSG_EOR on a SOCK_STREAM socket is also invalid.
-	 */
-	if (resid < 0 ||
-	    (so->so_type == SOCK_STREAM && (flags & MSG_EOR))) {
+	/* MSG_EOR on a SOCK_STREAM socket is invalid. */
+	if (so->so_type == SOCK_STREAM && (flags & MSG_EOR)) {
 		error = EINVAL;
 		goto out;
 	}
 	if (uio && uio->uio_procp)
 		uio->uio_procp->p_ru.ru_msgsnd++;
 	if (control) {
+		/*
+		 * In theory clen should be unsigned (since control->m_len is).
+		 * However, space must be signed, as it might be less than 0
+		 * if we over-committed, and we must use a signed comparison
+		 * of space and clen.
+		 */
 		clen = control->m_len;
 		/* reserve extra space for AF_LOCAL's internalize */
 		if (so->so_proto->pr_domain->dom_family == AF_LOCAL &&
@@ -458,8 +457,9 @@ restart:
 		    (so->so_proto->pr_domain->dom_family != AF_LOCAL &&
 		    clen > so->so_snd.sb_hiwat))
 			snderr(EMSGSIZE);
-		if (space < resid + clen &&
-		    (atomic || space < so->so_snd.sb_lowat || space < clen)) {
+		if (space < clen ||
+		    (space - clen < resid &&
+		    (atomic || space < so->so_snd.sb_lowat))) {
 			if ((so->so_state & SS_NBIO) || (flags & MSG_DONTWAIT))
 				snderr(EWOULDBLOCK);
 			sbunlock(&so->so_snd);
@@ -496,15 +496,15 @@ restart:
 					if ((m->m_flags & M_EXT) == 0)
 						goto nopages;
 					if (atomic && top == 0) {
-						len = lmin(MCLBYTES - max_hdr,
+						len = ulmin(MCLBYTES - max_hdr,
 						    resid);
 						m->m_data += max_hdr;
 					} else
-						len = lmin(MCLBYTES, resid);
+						len = ulmin(MCLBYTES, resid);
 					space -= len;
 				} else {
 nopages:
-					len = lmin(lmin(mlen, resid), space);
+					len = ulmin(ulmin(mlen, resid), space);
 					space -= len;
 					/*
 					 * For datagram protocols, leave room
@@ -513,8 +513,7 @@ nopages:
 					if (atomic && top == 0 && len < mlen)
 						MH_ALIGN(m, len);
 				}
-				error = uiomovei(mtod(m, caddr_t), (int)len,
-				    uio);
+				error = uiomove(mtod(m, caddr_t), len, uio);
 				resid = uio->uio_resid;
 				m->m_len = len;
 				*mp = m;
@@ -522,14 +521,14 @@ nopages:
 				if (error)
 					goto release;
 				mp = &m->m_next;
-				if (resid <= 0) {
+				if (resid == 0) {
 					if (flags & MSG_EOR)
 						top->m_flags |= M_EOR;
 					break;
 				}
 			} while (space > 0 && atomic);
 			s = splsoftnet();		/* XXX */
-			if (resid <= 0)
+			if (resid == 0)
 				so->so_state &= ~SS_ISSENDING;
 			error = (*so->so_proto->pr_usrreq)(so,
 			    (flags & MSG_OOB) ? PRU_SENDOOB : PRU_SEND,
@@ -613,13 +612,11 @@ soreceive(struct socket *so, struct mbuf **paddr, struct uio *uio,
 {
 	struct mbuf *m, **mp;
 	struct mbuf *cm;
-	int flags, len, error, s, offset;
+	u_long len, offset, moff;
+	int flags, error, s, type, uio_error = 0;
 	struct protosw *pr = so->so_proto;
 	struct mbuf *nextrecord;
-	int moff, type = 0;
-	size_t orig_resid = uio->uio_resid;
-	int uio_error = 0;
-	int resid;
+	size_t resid, orig_resid = uio->uio_resid;
 
 	mp = mp0;
 	if (paddr)
@@ -639,8 +636,8 @@ soreceive(struct socket *so, struct mbuf **paddr, struct uio *uio,
 		if (error)
 			goto bad;
 		do {
-			error = uiomovei(mtod(m, caddr_t),
-			    (int) min(uio->uio_resid, m->m_len), uio);
+			error = uiomove(mtod(m, caddr_t),
+			    ulmin(uio->uio_resid, m->m_len), uio);
 			m = m_free(m);
 		} while (uio->uio_resid && error == 0 && m);
 bad:
@@ -851,7 +848,7 @@ dontblock:
 			SBLASTMBUFCHK(&so->so_rcv, "soreceive uiomove");
 			resid = uio->uio_resid;
 			splx(s);
-			uio_error = uiomovei(mtod(m, caddr_t) + moff, len, uio);
+			uio_error = uiomove(mtod(m, caddr_t) + moff, len, uio);
 			s = splsoftnet();
 			if (uio_error)
 				uio->uio_resid = resid - len;
