@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_print.c,v 1.10 2014/11/12 04:28:41 bentley Exp $	*/
+/*	$OpenBSD: ex_print.c,v 1.11 2016/01/06 22:29:38 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -181,7 +181,7 @@ ex_scprint(SCR *sp, MARK *fp, MARK *tp)
 		return (1);
 	if (INTERRUPTED(sp))
 		return (1);
-	p = "[ynq]";		/* XXX: should be msg_cat. */
+	p = "[ynq]";
 	if (ex_prchars(sp, p, &col, 5, 0, 0))
 		return (1);
 	(void)ex_fflush(sp);

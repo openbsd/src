@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_bang.c,v 1.9 2016/01/06 22:28:52 millert Exp $	*/
+/*	$OpenBSD: ex_bang.c,v 1.10 2016/01/06 22:29:38 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -103,9 +103,7 @@ ex_bang(SCR *sp, EXCMD *cmdp)
 					return (0);
 			} else if (O_ISSET(sp, O_WARN) &&
 			    !F_ISSET(sp, SC_EX_SILENT))
-				msg = msg_cat(sp,
-				    "File modified since last write.",
-				    NULL);
+				msg = "File modified since last write.";
 		}
 
 		/* If we're still in a vi screen, move out explicitly. */

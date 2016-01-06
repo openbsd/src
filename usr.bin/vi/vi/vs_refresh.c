@@ -1,4 +1,4 @@
-/*	$OpenBSD: vs_refresh.c,v 1.20 2016/01/06 22:28:52 millert Exp $	*/
+/*	$OpenBSD: vs_refresh.c,v 1.21 2016/01/06 22:29:38 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -880,8 +880,8 @@ vs_modeline(SCR *sp)
 	if (O_ISSET(sp, O_SHOWMODE)) {
 		if (F_ISSET(sp->ep, F_MODIFIED))
 			--endpoint;
-		t = msg_cat(sp, modes[sp->showmode], &len);
-		endpoint -= len;
+		t = modes[sp->showmode];
+		endpoint -= (len = strlen(t));
 	}
 
 	if (endpoint > curlen + 2) {

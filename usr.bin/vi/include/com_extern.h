@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_extern.h,v 1.8 2016/01/06 22:27:40 millert Exp $	*/
+/*	$OpenBSD: com_extern.h,v 1.9 2016/01/06 22:29:38 millert Exp $	*/
 
 int cut(SCR *, CHAR_T *, MARK *, MARK *, int);
 int cut_line(SCR *, recno_t, size_t, size_t, CB *);
@@ -55,7 +55,6 @@ void msgq_str(SCR *, mtype_t, char *, char *);
 void mod_rpt(SCR *);
 void msgq_status(SCR *, recno_t, u_int);
 const char *msg_cmsg(SCR *, cmsg_t, size_t *);
-const char *msg_cat(SCR *, const char *, size_t *);
 char *msg_print(SCR *, const char *, int *);
 int opts_init(SCR *, int *);
 int opts_set(SCR *, ARGS *[], char *);

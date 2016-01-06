@@ -1,4 +1,4 @@
-/*	$OpenBSD: exf.c,v 1.40 2016/01/06 22:28:52 millert Exp $	*/
+/*	$OpenBSD: exf.c,v 1.41 2016/01/06 22:29:38 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -914,16 +914,15 @@ file_write(SCR *sp, MARK *fm, MARK *tm, char *name, int flags)
 	p = msg_print(sp, name, &nf);
 	switch (mtype) {
 	case NEWFILE:
-		msgstr = msg_cat(sp,
-		    "%s: new file: %lu lines, %lu characters", NULL);
-		len = snprintf(buf, sizeof(buf), msgstr, p, nlno, nch);
+		len = snprintf(buf, sizeof(buf),
+		    "%s: new file: %lu lines, %lu characters", p, nlno, nch);
 		if (len >= sizeof(buf))
 			len = sizeof(buf) - 1;
 		break;
 	case OLDFILE:
-		msgstr = msg_cat(sp, LF_ISSET(FS_APPEND) ?
+		msgstr = LF_ISSET(FS_APPEND) ?
 		    "%s: appended: %lu lines, %lu characters" :
-		    "%s: %lu lines, %lu characters", NULL);
+		    "%s: %lu lines, %lu characters", NULL;
 		len = snprintf(buf, sizeof(buf), msgstr, p, nlno, nch);
 		if (len >= sizeof(buf))
 			len = sizeof(buf) - 1;
