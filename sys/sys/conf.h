@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.135 2015/10/23 15:10:52 claudio Exp $	*/
+/*	$OpenBSD: conf.h,v 1.136 2016/01/06 09:09:16 kettenis Exp $	*/
 /*	$NetBSD: conf.h,v 1.33 1996/05/03 20:03:32 christos Exp $	*/
 
 /*-
@@ -529,6 +529,7 @@ cdev_decl(ptm);
 cdev_decl(ctty);
 
 cdev_decl(audio);
+cdev_decl(drm);
 cdev_decl(midi);
 cdev_decl(radio);
 cdev_decl(video);

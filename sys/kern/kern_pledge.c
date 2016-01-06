@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.141 2016/01/05 18:09:24 deraadt Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.142 2016/01/06 09:09:16 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -66,6 +66,11 @@
 
 #include "audio.h"
 #include "pty.h"
+
+#if defined(__amd64__) || defined(__i386__) || \
+    defined(__macppc__) || defined(__sparc64__)
+#include "drm.h"
+#endif
 
 int pledgereq_flags(const char *req);
 int canonpath(const char *input, char *buf, size_t bufsize);
@@ -338,6 +343,7 @@ static const struct {
 	{ "disklabel",		PLEDGE_DISKLABEL },
 	{ "dns",		PLEDGE_DNS },
 	{ "dpath",		PLEDGE_DPATH },
+	{ "drm",		PLEDGE_DRM },
 	{ "exec",		PLEDGE_EXEC },
 	{ "fattr",		PLEDGE_FATTR },
 	{ "flock",		PLEDGE_FLOCK },
@@ -1123,6 +1129,7 @@ int
 pledge_ioctl(struct proc *p, long com, struct file *fp)
 {
 	struct vnode *vp = NULL;
+	int error = EPERM;
 
 	if ((p->p_p->ps_flags & PS_PLEDGE) == 0)
 		return (0);
@@ -1172,6 +1179,18 @@ pledge_ioctl(struct proc *p, long com, struct file *fp)
 				return (0);
 			break;
 		}
+	}
+
+	if ((p->p_p->ps_pledge & PLEDGE_DRM)) {
+#if NDRM > 0
+		if ((fp->f_type == DTYPE_VNODE) &&
+		    (vp->v_type == VCHR) &&
+		    (cdevsw[major(vp->v_rdev)].d_open == drmopen)) {
+			error = pledge_ioctl_drm(p, com, vp->v_rdev);
+			if (error == 0)
+				return 0;
+		}
+#endif /* NDRM > 0 */
 	}
 
 	if ((p->p_p->ps_pledge & PLEDGE_AUDIO)) {
@@ -1306,7 +1325,7 @@ pledge_ioctl(struct proc *p, long com, struct file *fp)
 		}
 	}
 
-	return pledge_fail(p, EPERM, PLEDGE_IOCTL);
+	return pledge_fail(p, error, PLEDGE_IOCTL);
 }
 
 int
