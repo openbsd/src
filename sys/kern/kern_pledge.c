@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.143 2016/01/06 17:59:30 tedu Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.144 2016/01/06 18:43:10 tedu Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -427,6 +427,8 @@ sys_pledge(struct proc *p, void *v, register_t *retval)
 	}
 
 	if (SCARG(uap, paths)) {
+		return (EINVAL);
+#if 0
 		const char **u = SCARG(uap, paths), *sp;
 		struct whitepaths *wl;
 		char *cwdpath = NULL, *path;
@@ -542,6 +544,7 @@ sys_pledge(struct proc *p, void *v, register_t *retval)
 			if (wl->wl_paths[i].name)
 				printf("pledge: %d=%s %lld\n", i, wl->wl_paths[i].name,
 				    (long long)wl->wl_paths[i].len);
+#endif
 #endif
 	}
 
