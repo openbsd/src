@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.72 2016/01/05 18:41:15 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.73 2016/01/06 09:15:31 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -3853,11 +3853,7 @@ iwm_tx_fill_cmd(struct iwm_softc *sc, struct iwm_node *in,
 		ridx = sc->sc_fixed_ridx;
 	} else {
 		/* for data frames, use RS table */
-		if (ni->ni_flags & IEEE80211_NODE_HT) {
-			tx->initial_rate_index =
-			    (nitems(iwm_mcs2ridx) - 1) - ni->ni_txmcs;
-		} else
-			tx->initial_rate_index = (nrates - 1) - ni->ni_txrate;
+		tx->initial_rate_index = 0;
 		tx->tx_flags |= htole32(IWM_TX_CMD_FLG_STA_RATE);
 		DPRINTFN(12, ("start with txrate %d\n", tx->initial_rate_index));
 		if (ni->ni_flags & IEEE80211_NODE_HT) {
