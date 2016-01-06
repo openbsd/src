@@ -1,4 +1,4 @@
-/*	$OpenBSD: softraid.c,v 1.23 2016/01/04 02:31:18 krw Exp $	*/
+/*	$OpenBSD: softraid.c,v 1.24 2016/01/06 02:10:03 krw Exp $	*/
 
 /*
  * Copyright (c) 2012 Joel Sing <jsing@openbsd.org>
@@ -47,7 +47,7 @@ SLIST_HEAD(sr_boot_keydisk_head, sr_boot_keydisk);
 struct sr_boot_keydisk_head sr_keydisks;
 
 static int gpt_chk_mbr(struct dos_partition *, u_int64_t);
-static uint64_t findopenbsd_gpt(struct sr_boot_volume *);
+static uint64_t findopenbsd_gpt(struct sr_boot_volume *, const char **);
 
 void
 srprobe_meta_opt_load(struct sr_metadata *sm, struct sr_meta_opt_head *som)
@@ -436,7 +436,7 @@ gpt_chk_mbr(struct dos_partition *dp, u_int64_t dsize)
 }
 
 static uint64_t
-findopenbsd_gpt(struct sr_boot_volume *bv)
+findopenbsd_gpt(struct sr_boot_volume *bv, const char **err)
 {
 	struct			 gpt_header gh;
 	int			 i, part, found;
@@ -470,23 +470,31 @@ findopenbsd_gpt(struct sr_boot_volume *bv)
 	memcpy(&gh, buf, sizeof(gh));
 
 	/* Check signature */
-	if (letoh64(gh.gh_sig) != GPTSIGNATURE)
+	if (letoh64(gh.gh_sig) != GPTSIGNATURE) {
+		*err = "bad GPT signature\n";
 		return (-1);
+	}
 
-	if (letoh32(gh.gh_rev) != GPTREVISION)
+	if (letoh32(gh.gh_rev) != GPTREVISION) {
+		*err = "bad GPT revision\n";
 		return (-1);
+	}
 
 	ghsize = letoh32(gh.gh_size);
-	if (ghsize < GPTMINHDRSIZE || ghsize > sizeof(struct gpt_header))
+	if (ghsize < GPTMINHDRSIZE || ghsize > sizeof(struct gpt_header)) {
+		*err = "bad GPT header size\n";
 		return (-1);
+	}
 
 	/* Check checksum */
 	orig_csum = gh.gh_csum;
 	gh.gh_csum = 0;
 	new_csum = crc32(0, (unsigned char *)&gh, ghsize);
 	gh.gh_csum = orig_csum;
-	if (letoh32(orig_csum) != new_csum)
+	if (letoh32(orig_csum) != new_csum) {
+		*err = "bad GPT header checksum\n";
 		return (-1);
+	}
 
 	lba = letoh64(gh.gh_part_lba);
 	ghpartsize = letoh32(gh.gh_part_size);
@@ -511,8 +519,12 @@ findopenbsd_gpt(struct sr_boot_volume *bv)
 				found = 1;
 		}
 	}
-	if (found && new_csum == letoh32(gh.gh_part_csum))
-		return letoh64(gp.gp_lba_start);
+	if (new_csum != letoh32(gh.gh_part_csum)) {
+		*err = "bad GPT entries checksum\n";
+		return (-1);
+	}
+	if (found)
+		return (letoh64(gp.gp_lba_start));
 
 	return (-1);
 }
@@ -522,6 +534,7 @@ sr_getdisklabel(struct sr_boot_volume *bv, struct disklabel *label)
 {
 	struct dos_partition *dp;
 	struct dos_mbr mbr;
+	const char *err = NULL;
 	u_int start = 0;
 	char buf[DEV_BSIZE];
 	int i;
@@ -530,7 +543,12 @@ sr_getdisklabel(struct sr_boot_volume *bv, struct disklabel *label)
 	bzero(&mbr, sizeof(mbr));
 	sr_strategy(bv, F_READ, DOSBBSECTOR, sizeof(mbr), &mbr, NULL);
 	if (gpt_chk_mbr(mbr.dmbr_parts, bv->sbv_size) == 0) {
-		start = findopenbsd_gpt(bv);
+		start = findopenbsd_gpt(bv, &err);
+		if (start == (u_int)-1) {
+			if (err != NULL)
+				return (err);
+			return "no OpenBSD partition\n";
+		}
 	} else if (mbr.dmbr_sign == DOSMBR_SIGNATURE) {
 
 		/* Search for OpenBSD partition */
