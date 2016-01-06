@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.152 2015/12/03 21:11:54 sashan Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.153 2016/01/06 10:02:42 sthen Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -524,7 +524,7 @@ ip6_input(struct mbuf *m)
 		if (ip6->ip6_plen == 0 && plen == 0) {
 			/*
 			 * Note that if a valid jumbo payload option is
-			 * contained, ip6_hoptops_input() must set a valid
+			 * contained, ip6_hopopts_input() must set a valid
 			 * (non-zero) payload length to the variable plen.
 			 */
 			ip6stat.ip6s_badoptions++;
@@ -1014,7 +1014,7 @@ ip6_savecontrol(struct inpcb *in6p, struct mbuf *m, struct mbuf **mp)
 	 */
 	if ((in6p->inp_flags & IN6P_HOPOPTS) != 0) {
 		/*
-		 * Check if a hop-by-hop options header is contatined in the
+		 * Check if a hop-by-hop options header is contained in the
 		 * received packet, and if so, store the options as ancillary
 		 * data. Note that a hop-by-hop options header must be
 		 * just after the IPv6 header, which is assured through the
