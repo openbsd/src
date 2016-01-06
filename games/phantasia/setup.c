@@ -1,4 +1,4 @@
-/*	$OpenBSD: setup.c,v 1.15 2016/01/06 09:24:38 tb Exp $	*/
+/*	$OpenBSD: setup.c,v 1.16 2016/01/06 10:28:38 tb Exp $	*/
 /*	$NetBSD: setup.c,v 1.4 1995/04/24 12:24:41 cgd Exp $	*/
 
 /*
@@ -59,9 +59,7 @@ static char *files[] = {		/* all files to create */
 char *monsterfile="monsters.asc";
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	char	**filename;	/* for pointing to file names */
 	int	fd;		/* file descriptor */
@@ -202,8 +200,7 @@ main(argc, argv)
 *************************************************************************/
 
 void
-Error(str, file)
-	char	*str, *file;
+Error(char *str, char *file)
 {
 	fprintf(stderr, "Error: ");
 	fprintf(stderr, str, file);
@@ -235,7 +232,7 @@ Error(str, file)
 *************************************************************************/
 
 double
-drandom()
+drandom(void)
 {
 	return((double) arc4random() / (UINT32_MAX + 1.0));
 }
