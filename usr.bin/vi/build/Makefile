@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.22 2015/11/19 07:53:30 bentley Exp $
+#	$OpenBSD: Makefile,v 1.23 2016/01/06 22:34:45 millert Exp $
 #	@(#)Makefile.in	8.75 (Berkeley) 10/23/96
 
 PROG=	vi
@@ -45,9 +45,5 @@ MLINKS+=	vi.1 view.1
 .include "../../Makefile.inc"
 .include <bsd.prog.mk>
 
-CATALOGS=	dutch english french german polish ru_RU.KOI8-R spanish \
-		swedish uk_UA.KOI8-U
 afterinstall:
-	${INSTALL} -d ${DESTDIR}${SHAREDIR}/vi/catalog
-	(cd ${.CURDIR}/../catalog && ${INSTALL} -m ${NONBINMODE} -c ${CATALOGS} ${DESTDIR}/usr/share/vi/catalog )
 	${INSTALL} -m ${BINMODE} -o ${BINOWN} -g ${BINGRP} -c ${.CURDIR}/recover ${DESTDIR}/usr/libexec/vi.recover
