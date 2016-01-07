@@ -1,4 +1,4 @@
-/*	$OpenBSD: expr.c,v 1.24 2016/01/06 17:53:14 tedu Exp $	*/
+/*	$OpenBSD: expr.c,v 1.25 2016/01/07 21:17:05 tedu Exp $	*/
 /*	$NetBSD: expr.c,v 1.3.6.1 1996/06/04 20:41:47 cgd Exp $	*/
 
 /*
@@ -7,6 +7,7 @@
  */
 
 #include <stdio.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include <limits.h>
@@ -331,10 +332,10 @@ eval4(void)
 				errx(2, "division by zero");
 			}
 			if (op == DIV) {
-				if (l->u.i != INT_MIN || r->u.i != -1)
+				if (l->u.i != INT64_MIN || r->u.i != -1)
 					l->u.i /= r->u.i;
 			} else {
-				if (l->u.i != INT_MIN || r->u.i != -1)
+				if (l->u.i != INT64_MIN || r->u.i != -1)
 					l->u.i %= r->u.i;
 				else
 					l->u.i = 0;
