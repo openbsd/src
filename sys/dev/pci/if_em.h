@@ -32,7 +32,7 @@ POSSIBILITY OF SUCH DAMAGE.
 ***************************************************************************/
 
 /* $FreeBSD: if_em.h,v 1.26 2004/09/01 23:22:41 pdeuskar Exp $ */
-/* $OpenBSD: if_em.h,v 1.69 2016/01/07 07:18:07 dlg Exp $ */
+/* $OpenBSD: if_em.h,v 1.70 2016/01/07 11:19:54 dlg Exp $ */
 
 #ifndef _EM_H_DEFINED_
 #define _EM_H_DEFINED_
@@ -269,10 +269,10 @@ typedef int	boolean_t;
 #define EM_MAX_SCATTER		64
 #define EM_TSO_SIZE		65535
 
-struct em_buffer {
-	int		next_eop;	/* Index of the desc to watch */
-	struct mbuf	*m_head;
-	bus_dmamap_t	map;		/* bus_dma map for packet */
+struct em_packet {
+	int		 pkt_eop;	/* Index of the desc to watch */
+	struct mbuf	*pkt_m;
+	bus_dmamap_t	 pkt_map;	/* bus_dma map for packet */
 };
 
 /*
@@ -353,7 +353,7 @@ struct em_softc {
 	u_int			 sc_tx_desc_head;
 	u_int			 sc_tx_desc_tail;
 	u_int			 sc_tx_desc_free;
-	struct em_buffer	*sc_tx_buffers;
+	struct em_packet	*sc_tx_pkts_ring;
 
 	u_int32_t		 sc_txd_cmd;
 
@@ -371,7 +371,7 @@ struct em_softc {
 	struct em_rx_desc	*sc_rx_desc_ring;
 	u_int			 sc_rx_desc_head;
 	u_int			 sc_rx_desc_tail;
-	struct em_buffer	*sc_rx_buffers;
+	struct em_packet	*sc_rx_pkts_ring;
 
 	u_int32_t		 sc_rx_buffer_len;
 
