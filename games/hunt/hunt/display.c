@@ -1,4 +1,4 @@
-/*	$OpenBSD: display.c,v 1.7 2016/01/07 21:29:31 mestre Exp $	*/
+/*	$OpenBSD: display.c,v 1.8 2016/01/07 21:37:53 mestre Exp $	*/
 
 /*
  * Display abstraction.
@@ -8,7 +8,7 @@
 #include <curses.h>
 
 void
-display_open()
+display_open(void)
 {
         initscr();
         (void) noecho();
@@ -16,39 +16,37 @@ display_open()
 }
 
 void
-display_beep()
+display_beep(void)
 {
 	beep();
 }
 
 void
-display_refresh()
+display_refresh(void)
 {
 	refresh();
 }
 
 void
-display_clear_eol()
+display_clear_eol(void)
 {
 	clrtoeol();
 }
 
 void
-display_put_ch(c)
-	char c;
+display_put_ch(char c)
 {
 	addch(c);
 }
 
 void
-display_put_str(s)
-	char *s;
+display_put_str(char *s)
 {
 	addstr(s);
 }
 
 void
-display_clear_the_screen()
+display_clear_the_screen(void)
 {
         clear();
         move(0, 0);
@@ -56,28 +54,25 @@ display_clear_the_screen()
 }
 
 void
-display_move(y, x)
-	int y, x;
+display_move(int y, int x)
 {
 	move(y, x);
 }
 
 void
-display_getyx(yp, xp)
-	int *yp, *xp;
+display_getyx(int *yp, int *xp)
 {
 	getyx(stdscr, *yp, *xp);
 }
 
 void
-display_end()
+display_end(void)
 {
 	endwin();
 }
 
 char
-display_atyx(y, x)
-	int y, x;
+display_atyx(int y, int x)
 {
 	int oy, ox;
 	char c;
@@ -89,22 +84,20 @@ display_atyx(y, x)
 }
 
 void
-display_redraw_screen()
+display_redraw_screen(void)
 {
 	clearok(stdscr, TRUE);
 	touchwin(stdscr);
 }
 
 int
-display_iserasechar(ch)
-	char ch;
+display_iserasechar(char ch)
 {
 	return ch == erasechar();
 }
 
 int
-display_iskillchar(ch)
-	char ch;
+display_iskillchar(char ch)
 {
 	return ch == killchar();
 }

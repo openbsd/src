@@ -1,4 +1,4 @@
-/*	$OpenBSD: makemaze.c,v 1.7 2016/01/07 21:29:31 mestre Exp $	*/
+/*	$OpenBSD: makemaze.c,v 1.8 2016/01/07 21:37:53 mestre Exp $	*/
 /*	$NetBSD: makemaze.c,v 1.2 1997/10/10 16:33:43 lukem Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
@@ -46,7 +46,7 @@ static	void	dig_maze(int, int);
 static	void	remap(void);
 
 void
-makemaze()
+makemaze(void)
 {
 	char	*sp;
 	int	y, x;
@@ -81,8 +81,7 @@ int	incr[NDIR][2] = {
 	};
 
 static void
-dig(y, x)
-	int	y, x;
+dig(int y, int x)
 {
 	int	*dp;
 	int	*ip;
@@ -106,8 +105,7 @@ dig(y, x)
  *	Is it legal to clear this spot?
  */
 static int
-candig(y, x)
-	int	y, x;
+candig(int y, int x)
 {
 	int	i;
 
@@ -137,8 +135,7 @@ candig(y, x)
 }
 
 static void
-dig_maze(x, y)
-	int	x, y;
+dig_maze(int x, int y)
 {
 	int	tx, ty;
 	int	i, j;
@@ -185,7 +182,7 @@ dig_maze(x, y)
 }
 
 static void
-remap()
+remap(void)
 {
 	int	y, x;
 	char	*sp;

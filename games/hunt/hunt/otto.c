@@ -1,4 +1,4 @@
-/*	$OpenBSD: otto.c,v 1.12 2016/01/07 21:29:31 mestre Exp $	*/
+/*	$OpenBSD: otto.c,v 1.13 2016/01/07 21:37:53 mestre Exp $	*/
 /*	$NetBSD: otto.c,v 1.2 1997/10/10 16:32:39 lukem Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
@@ -134,11 +134,7 @@ static	void		wander(void);
 static	void		_panic(const char *, int, const char *);
 
 int
-otto(y, x, face, buf, buflen)
-	int	y, x;
-	char	face;
-	char	*buf;
-	size_t	buflen;
+otto(int y, int x, char face, char *buf, size_t buflen)
 {
 	int		i;
 
@@ -193,11 +189,7 @@ done:
 }
 
 static int
-stop_look(itemp, c, dist, side)
-	struct	item	*itemp;
-	char	c;
-	int	dist;
-	int	side;
+stop_look(struct item *itemp, char c, int dist, int side)
 {
 	switch (c) {
 
@@ -264,9 +256,7 @@ stop_look(itemp, c, dist, side)
 }
 
 static void
-ottolook(rel_dir, itemp)
-	int		rel_dir;
-	struct	item	*itemp;
+ottolook(int rel_dir, struct item *itemp)
 {
 	int		r, c;
 	char		ch;
@@ -366,7 +356,7 @@ ottolook(rel_dir, itemp)
 }
 
 static void
-look_around()
+look_around(void)
 {
 	int	i;
 
@@ -380,8 +370,7 @@ look_around()
  */
 
 static void
-face_and_move_direction(rel_dir, distance)
-	int	rel_dir, distance;
+face_and_move_direction(int rel_dir, int distance)
 {
 	int	old_facing;
 	char	cmd;
@@ -417,9 +406,7 @@ face_and_move_direction(rel_dir, distance)
 }
 
 static void
-attack(rel_dir, itemp)
-	int		rel_dir;
-	struct	item	*itemp;
+attack(int rel_dir, struct item *itemp)
 {
 	if (!(itemp->flags & ON_SIDE)) {
 		face_and_move_direction(rel_dir, 0);
@@ -445,8 +432,7 @@ attack(rel_dir, itemp)
 }
 
 static void
-duck(rel_dir)
-	int	rel_dir;
+duck(int rel_dir)
 {
 	int	dir;
 
@@ -495,8 +481,7 @@ duck(rel_dir)
  */
 
 static int
-go_for_ammo(mine)
-	char	mine;
+go_for_ammo(char mine)
 {
 	int	i, rel_dir, dist;
 
@@ -522,7 +507,7 @@ go_for_ammo(mine)
 }
 
 static void
-wander()
+wander(void)
 {
 	int	i, j, rel_dir, dir_mask, dir_count;
 
@@ -566,17 +551,13 @@ wander()
 
 /* Otto always re-enters the game, cloaked. */
 int
-otto_quit(old_status)
-	int old_status;
+otto_quit(int old_status)
 {
 	return Q_CLOAK;
 }
 
 static void
-_panic(file, line, msg)
-	const char *file;
-	int line;
-	const char *msg;
+_panic(const char *file, int line, const char *msg)
 {
 
 	fprintf(stderr, "%s:%d: panic! %s\n", file, line, msg);

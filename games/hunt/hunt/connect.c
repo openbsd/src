@@ -1,4 +1,4 @@
-/*	$OpenBSD: connect.c,v 1.7 2016/01/07 21:29:31 mestre Exp $	*/
+/*	$OpenBSD: connect.c,v 1.8 2016/01/07 21:37:53 mestre Exp $	*/
 /*	$NetBSD: connect.c,v 1.3 1997/10/11 08:13:40 lukem Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
@@ -38,10 +38,7 @@
 #include "client.h"
 
 void
-do_connect(name, team, enter_status)
-	char *		name;
-	u_int8_t	team;
-	u_int32_t	enter_status;
+do_connect(char *name, u_int8_t team, u_int32_t enter_status)
 {
 	u_int32_t	uid;
 	u_int32_t	mode;

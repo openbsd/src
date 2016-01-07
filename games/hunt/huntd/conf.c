@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.9 2016/01/07 21:29:31 mestre Exp $	*/
+/*	$OpenBSD: conf.c,v 1.10 2016/01/07 21:37:53 mestre Exp $	*/
 /* David Leonard <d@openbsd.org>, 1999. Public domain. */
 
 #include <ctype.h>
@@ -120,11 +120,7 @@ static struct kwvar keywords[] = {
 };
 
 static char *
-parse_int(p, kvp, fnm, linep)
-	char *p;
-	struct kwvar *kvp;
-	const char *fnm;
-	int *linep;
+parse_int(char *p, struct kwvar *kvp, const char *fnm, int *linep)
 {
 	char *valuestart, *digitstart;
 	char savec;
@@ -155,11 +151,7 @@ parse_int(p, kvp, fnm, linep)
 }
 
 static char *
-parse_value(p, kvp, fnm, linep)
-	char *p;
-	struct kwvar *kvp;
-	const char *fnm;
-	int *linep;
+parse_value(char *p, struct kwvar *kvp, const char *fnm, int *linep)
 {
 
 	switch (kvp->type) {
@@ -175,10 +167,7 @@ parse_value(p, kvp, fnm, linep)
 }
 
 static void
-parse_line(buf, fnm, line)
-	char *buf;
-	char *fnm;
-	int *line;
+parse_line(char *buf, char *fnm, int *line)
 {
 	char *p;
 	char *word;
@@ -255,9 +244,7 @@ parse_line(buf, fnm, line)
 
 
 static void
-load_config(f, fnm)
-	FILE *	f;
-	char *	fnm;
+load_config(FILE *f, char *fnm)
 {
 	char buf[BUFSIZ];
 	size_t len;
@@ -284,7 +271,7 @@ load_config(f, fnm)
  * overwrite earlier values
  */
 void
-config()
+config(void)
 {
 	char *home;
 	char nm[MAXNAMLEN + 1];
@@ -316,8 +303,7 @@ config()
  * Parse a single configuration argument given on the command line
  */
 void
-config_arg(arg)
-	char *arg;
+config_arg( char *arg)
 {
 	int line = 0;
 

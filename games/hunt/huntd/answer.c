@@ -1,4 +1,4 @@
-/*	$OpenBSD: answer.c,v 1.16 2016/01/07 21:29:31 mestre Exp $	*/
+/*	$OpenBSD: answer.c,v 1.17 2016/01/07 21:37:53 mestre Exp $	*/
 /*	$NetBSD: answer.c,v 1.3 1997/10/10 16:32:50 lukem Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
@@ -58,7 +58,7 @@ static void	stmonitor(PLAYER *);
 static IDENT *	get_ident(struct sockaddr *, int, u_long, char *, char);
 
 void
-answer_first()
+answer_first(void)
 {
 	struct sockaddr		sockstruct;
 	int			newsock;
@@ -117,8 +117,7 @@ answer_first()
 }
 
 int
-answer_next(sp)
-	struct spawn *sp;
+answer_next(struct spawn *sp)
 {
 	PLAYER			*pp;
 	char			*cp1, *cp2;
@@ -273,8 +272,7 @@ close_it:
 
 /* Start a monitor: */
 static void
-stmonitor(pp)
-	PLAYER	*pp;
+stmonitor(PLAYER *pp)
 {
 
 	/* Monitors get to see the entire maze: */
@@ -295,9 +293,7 @@ stmonitor(pp)
 
 /* Start a player: */
 static void
-stplayer(newpp, enter_status)
-	PLAYER	*newpp;
-	int	enter_status;
+stplayer(PLAYER *newpp, int enter_status)
 {
 	int	x, y;
 	PLAYER	*pp;
@@ -421,7 +417,7 @@ stplayer(newpp, enter_status)
  *	Return a random direction
  */
 int
-rand_dir()
+rand_dir(void)
 {
 	switch (rand_num(4)) {
 	  case 0:
@@ -442,12 +438,7 @@ rand_dir()
  *	Get the score structure of a player
  */
 static IDENT *
-get_ident(sa, salen, uid, name, team)
-	struct sockaddr *sa;
-	int	salen;
-	u_long	uid;
-	char	*name;
-	char	team;
+get_ident(struct sockaddr *sa, int salen, u_long uid, char *name, char team)
 {
 	IDENT		*ip;
 	static IDENT	punt;
@@ -519,8 +510,7 @@ get_ident(sa, salen, uid, name, team)
 }
 
 void
-answer_info(fp)
-	FILE *fp;
+answer_info(FILE *fp)
 {
 	struct spawn *sp;
 	char buf[128];

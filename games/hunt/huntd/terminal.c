@@ -1,4 +1,4 @@
-/*	$OpenBSD: terminal.c,v 1.11 2016/01/07 21:29:31 mestre Exp $	*/
+/*	$OpenBSD: terminal.c,v 1.12 2016/01/07 21:37:53 mestre Exp $	*/
 /*	$NetBSD: terminal.c,v 1.2 1997/10/10 16:34:05 lukem Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
@@ -48,9 +48,7 @@
  *	terminal.
  */
 void
-cgoto(pp, y, x)
-	PLAYER	*pp;
-	int	y, x;
+cgoto(PLAYER *pp, int y, int x)
 {
 
 	if (pp == ALL_PLAYERS) {
@@ -74,9 +72,7 @@ cgoto(pp, y, x)
  *	Put out a single character.
  */
 void
-outch(pp, ch)
-	PLAYER	*pp;
-	char	ch;
+outch(PLAYER *pp, char ch)
 {
 
 	if (pp == ALL_PLAYERS) {
@@ -99,10 +95,7 @@ outch(pp, ch)
  *	Put out a string of the given length.
  */
 void
-outstr(pp, str, len)
-	PLAYER	*pp;
-	char	*str;
-	int	len;
+outstr(PLAYER *pp, char *str, int len)
 {
 	if (pp == ALL_PLAYERS) {
 		for (pp = Player; pp < End_player; pp++)
@@ -149,8 +142,7 @@ outyx(PLAYER *pp, int y, int x, const char *fmt, ...)
  *	Clear the screen, and reset the current position on the screen.
  */
 void
-clrscr(pp)
-	PLAYER	*pp;
+clrscr(PLAYER *pp)
 {
 
 	if (pp == ALL_PLAYERS) {
@@ -171,8 +163,7 @@ clrscr(pp)
  *	Clear to the end of the line
  */
 void
-ce(pp)
-	PLAYER	*pp;
+ce(PLAYER *pp)
 {
 	sendcom(pp, CLRTOEOL);
 }
@@ -218,8 +209,7 @@ sendcom(PLAYER *pp, int command, ...)
  *	Flush the output buffer to the player
  */
 void
-flush(pp)
-	PLAYER	*pp;
+flush(PLAYER *pp)
 {
 	if (pp == ALL_PLAYERS) {
 		for (pp = Player; pp < End_player; pp++)

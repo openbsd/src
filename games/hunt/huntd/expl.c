@@ -1,4 +1,4 @@
-/*	$OpenBSD: expl.c,v 1.12 2016/01/07 21:29:31 mestre Exp $	*/
+/*	$OpenBSD: expl.c,v 1.13 2016/01/07 21:37:53 mestre Exp $	*/
 /*	$NetBSD: expl.c,v 1.2 1997/10/10 16:33:18 lukem Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
@@ -48,9 +48,7 @@ static	void	init_removed(void);
  *	Show the explosions as they currently are
  */
 void
-showexpl(y, x, type)
-	int	y, x;
-	char	type;
+showexpl(int y, int x, char type)
 {
 	PLAYER	*pp;
 	EXPL	*ep;
@@ -106,7 +104,7 @@ showexpl(y, x, type)
  *	top
  */
 void
-rollexpl()
+rollexpl(void)
 {
 	EXPL	*ep;
 	PLAYER	*pp;
@@ -139,7 +137,7 @@ rollexpl()
 }
 
 int
-can_rollexpl()
+can_rollexpl(void)
 {
 	int i;
 
@@ -153,7 +151,7 @@ static	REGEN	*removed = NULL;
 static	REGEN	*rem_index = NULL;
 
 static void
-init_removed()
+init_removed(void)
 {
 	rem_index = removed = calloc(conf_maxremove, sizeof(REGEN));
 	if (rem_index == NULL) {
@@ -168,8 +166,7 @@ init_removed()
  *		 the location currently pointed at.
  */
 static void
-remove_wall(y, x)
-	int	y, x;
+remove_wall(int y, int x)
 {
 	REGEN	*r;
 	PLAYER	*pp;
@@ -242,7 +239,7 @@ found:
  *	Clear out the walls array
  */
 void
-clearwalls()
+clearwalls(void)
 {
 	REGEN	*rp;
 

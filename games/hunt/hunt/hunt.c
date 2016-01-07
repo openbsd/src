@@ -1,4 +1,4 @@
-/*	$OpenBSD: hunt.c,v 1.18 2016/01/07 21:29:31 mestre Exp $	*/
+/*	$OpenBSD: hunt.c,v 1.19 2016/01/07 21:37:53 mestre Exp $	*/
 /*	$NetBSD: hunt.c,v 1.8 1998/09/13 15:27:28 hubertf Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
@@ -82,9 +82,7 @@ static int	find_driver(void);
  *	Main program for local process
  */
 int
-main(ac, av)
-	int	ac;
-	char	**av;
+main(int ac, char **av)
 {
 	int		c;
 	extern int	optind;
@@ -146,7 +144,7 @@ main(ac, av)
 			fputs("usage: hunt [-bcfmqSs] [-n name] [-p port] "
 			    "[-t team] [-w message] [[-h] host]\n",
 			    stderr);
-			exit(1);
+			return 1;
 		}
 	}
 	if (optind + 1 < ac)
@@ -164,7 +162,7 @@ main(ac, av)
 
 	if (Show_scores) {
 		dump_scores();
-		exit(0);
+		return 0;
 	}
 
 	if (Query_driver) {
@@ -179,7 +177,7 @@ main(ac, av)
 			if (Sock_host)
 				break;
 		}
-		exit(0);
+		return 0;
 	}
 	if (Otto_mode) {
 		if (Am_monitor)
@@ -251,8 +249,7 @@ main(ac, av)
 			break;
 	}
 	leave(0, (char *) NULL);
-	/* NOTREACHED */
-	return(0);
+	return 0;
 }
 
 /*
@@ -263,7 +260,7 @@ main(ac, av)
  * then we choose it. Otherwise we present a list of the found drivers.
  */
 static int
-find_driver()
+find_driver(void)
 {
 	int last_driver, numdrivers, waiting, is_current;
 	struct driver *driver;
@@ -361,7 +358,7 @@ find_driver()
 }
 
 static void
-dump_scores()
+dump_scores(void)
 {
 	struct	driver *driver;
 	int	s, cnt, i;
@@ -405,7 +402,7 @@ dump_scores()
  *	means the game is full.
  */
 void
-bad_con()
+bad_con(void)
 {
 	leave(1, "lost connection to huntd");
 }
@@ -415,7 +412,7 @@ bad_con()
  *	version number mismatch.
  */
 void
-bad_ver()
+bad_ver(void)
 {
 	errno = 0;
 	leave(1, "Version number mismatch. No go.");
@@ -426,8 +423,7 @@ bad_ver()
  *	Handle a terminate signal
  */
 static void
-sigterm(dummy)
-	int dummy;
+sigterm(int dummy)
 {
 	leave(0, (char *) NULL);
 }
@@ -437,8 +433,7 @@ sigterm(dummy)
  *	Remove a '\n' at the end of a string if there is one
  */
 static void
-rmnl(s)
-	char	*s;
+rmnl(char *s)
 {
 	char	*cp;
 
@@ -452,8 +447,7 @@ rmnl(s)
  *	Handle a interrupt signal
  */
 void
-intr(dummy)
-	int dummy;
+intr(int dummy)
 {
 	int	ch;
 	int	explained;
@@ -499,9 +493,7 @@ intr(dummy)
  *	tty stats.
  */
 static void
-leave(eval, mesg)
-	int	eval;
-	char	*mesg;
+leave(int eval, char *mesg)
 {
 	int saved_errno;
 
@@ -525,8 +517,7 @@ leave(eval, mesg)
  *	initialise game parameters from the HUNT envvar
  */
 static long
-env_init(enter_status)
-	long	enter_status;
+env_init(long enter_status)
 {
 	int	i;
 	char	*envp, *envname, *s;
@@ -638,7 +629,7 @@ env_init(enter_status)
  *	quiz the user for the information they didn't provide earlier
  */
 static void
-fill_in_blanks()
+fill_in_blanks(void)
 {
 	int	i;
 	char	*cp;
