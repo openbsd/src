@@ -1,4 +1,4 @@
-/*	$OpenBSD: out.c,v 1.8 2016/01/07 14:30:32 mestre Exp $	*/
+/*	$OpenBSD: out.c,v 1.9 2016/01/07 14:37:51 mestre Exp $	*/
 /*	$NetBSD: out.c,v 1.3 1995/04/22 10:59:16 cgd Exp $	*/
 
 /*
@@ -40,8 +40,7 @@
 */
 
 void
-out(dev)
-	int	dev;
+out(int dev)
 {
 	const struct device	*d;
 

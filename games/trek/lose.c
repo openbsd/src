@@ -1,4 +1,4 @@
-/*	$OpenBSD: lose.c,v 1.6 2016/01/07 14:30:32 mestre Exp $	*/
+/*	$OpenBSD: lose.c,v 1.7 2016/01/07 14:37:51 mestre Exp $	*/
 /*	$NetBSD: lose.c,v 1.3 1995/04/22 10:59:08 cgd Exp $	*/
 
 /*
@@ -63,8 +63,7 @@ const char	*const Losemsg[] =
 };
 
 void
-lose(why)
-	int	why;
+lose(int why)
 {
 	extern jmp_buf	env;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rest.c,v 1.6 2016/01/07 14:30:32 mestre Exp $	*/
+/*	$OpenBSD: rest.c,v 1.7 2016/01/07 14:37:51 mestre Exp $	*/
 /*	$NetBSD: rest.c,v 1.3 1995/04/22 10:59:22 cgd Exp $	*/
 
 /*
@@ -50,8 +50,7 @@
 */
 
 void
-rest(v)
-	int v;
+rest(int v)
 {
 	double			t;
 	int		percent;

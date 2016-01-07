@@ -1,4 +1,4 @@
-/*	$OpenBSD: ranf.c,v 1.6 2016/01/07 14:30:32 mestre Exp $	*/
+/*	$OpenBSD: ranf.c,v 1.7 2016/01/07 14:37:51 mestre Exp $	*/
 /*	$NetBSD: ranf.c,v 1.3 1995/04/22 10:59:21 cgd Exp $	*/
 
 /*
@@ -33,8 +33,7 @@
 #include <stdlib.h>
 
 int
-ranf(max)
-	int	max;
+ranf(int max)
 {
 	int	t;
 
@@ -46,7 +45,7 @@ ranf(max)
 
 
 double
-franf()
+franf(void)
 {
 	double		t;
 	t = random() & 077777;

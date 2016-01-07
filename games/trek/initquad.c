@@ -1,4 +1,4 @@
-/*	$OpenBSD: initquad.c,v 1.6 2016/01/07 14:30:32 mestre Exp $	*/
+/*	$OpenBSD: initquad.c,v 1.7 2016/01/07 14:37:51 mestre Exp $	*/
 /*	$NetBSD: initquad.c,v 1.3 1995/04/22 10:59:04 cgd Exp $	*/
 
 /*
@@ -52,8 +52,7 @@
 */
 
 void
-initquad(f)
-	int	f;
+initquad(int f)
 {
 	int		i, j;
 	int		rx, ry;
@@ -133,10 +132,8 @@ initquad(f)
 	Move.newquad = 1;
 }
 
-
 void
-sector(x, y)
-	int	*x, *y;
+sector(int *x, int *y)
 {
 	int		i, j;
 

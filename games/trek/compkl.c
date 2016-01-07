@@ -1,4 +1,4 @@
-/*	$OpenBSD: compkl.c,v 1.7 2016/01/07 14:30:32 mestre Exp $	*/
+/*	$OpenBSD: compkl.c,v 1.8 2016/01/07 14:37:51 mestre Exp $	*/
 /*	$NetBSD: compkl.c,v 1.3 1995/04/22 10:58:38 cgd Exp $	*/
 
 /*
@@ -47,9 +47,9 @@
 
 static void sortkl(void);
 
+/* argument is set if new quadrant */
 void
-compkldist(f)
-	int	f;		/* set if new quadrant */
+compkldist(int f)
 {
 	int		i, dx, dy;
 	double		d;
@@ -91,7 +91,7 @@ compkldist(f)
 */
 
 static void
-sortkl()
+sortkl(void)
 {
 	struct kling	t;
 	int		f, i, m;

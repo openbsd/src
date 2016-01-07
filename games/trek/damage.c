@@ -1,4 +1,4 @@
-/*	$OpenBSD: damage.c,v 1.7 2016/01/07 14:30:32 mestre Exp $	*/
+/*	$OpenBSD: damage.c,v 1.8 2016/01/07 14:37:51 mestre Exp $	*/
 /*	$NetBSD: damage.c,v 1.3 1995/04/22 10:58:40 cgd Exp $	*/
 
 /*
@@ -47,10 +47,9 @@
 **	that the dock() and undock() have to reschedule the event.
 */
 
+/* dev1: device index ; dam: time to repair */
 void
-damage(dev1, dam)
-	int	dev1;		/*  device index */
-	double	dam;		/* time to repair */
+damage(int dev1, double dam)
 {
 	int		i;
 	struct event	*e;

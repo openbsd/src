@@ -1,4 +1,4 @@
-/*	$OpenBSD: torped.c,v 1.9 2016/01/07 14:30:32 mestre Exp $	*/
+/*	$OpenBSD: torped.c,v 1.10 2016/01/07 14:37:51 mestre Exp $	*/
 /*	$NetBSD: torped.c,v 1.3 1995/04/22 10:59:34 cgd Exp $	*/
 
 /*
@@ -59,8 +59,7 @@ static int randcourse(int);
 */
 
 void
-torped(v)
-	int v;
+torped(int v)
 {
 	int	ix, iy;
 	double	x, y, dx, dy;
@@ -222,8 +221,7 @@ torped(v)
 */
 
 static int
-randcourse(n)
-	int	n;
+randcourse(int n)
 {
 	double	r;
 	int	d;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.15 2016/01/07 14:30:32 mestre Exp $	*/
+/*	$OpenBSD: main.c,v 1.16 2016/01/07 14:37:51 mestre Exp $	*/
 /*	$NetBSD: main.c,v 1.4 1995/04/22 10:59:10 cgd Exp $	*/
 
 /*
@@ -116,9 +116,7 @@
 jmp_buf env;
 
 int
-main(argc, argv)
-	int	argc;
-	char	**argv;
+main(int argc, char **argv)
 {
 	int		ac;
 	char		**av;

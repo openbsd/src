@@ -1,4 +1,4 @@
-/*	$OpenBSD: computer.c,v 1.11 2016/01/07 14:30:32 mestre Exp $	*/
+/*	$OpenBSD: computer.c,v 1.12 2016/01/07 14:37:51 mestre Exp $	*/
 /*	$NetBSD: computer.c,v 1.4 1995/04/24 12:25:51 cgd Exp $	*/
 
 /*
@@ -101,8 +101,7 @@ static int kalc(int, int, int, int, double *);
 static void prkalc(int, double);
 
 void
-computer(v)
-	int v;
+computer(int v)
 {
 	int			ix, iy;
 	int			i, j;
@@ -311,12 +310,7 @@ computer(v)
 */
 
 static int
-kalc(tqx, tqy, tsx, tsy, dist)
-	int	tqx;
-	int	tqy;
-	int	tsx;
-	int	tsy;
-	double	*dist;
+kalc(int tqx, int tqy, int tsx, int tsy, double *dist)
 {
 	double		dx, dy;
 	double		quadsize;
@@ -341,9 +335,7 @@ kalc(tqx, tqy, tsx, tsy, dist)
 }
 
 static void
-prkalc(course, dist)
-	int	course;
-	double	dist;
+prkalc(int course, double dist)
 {
 	printf(": course %d  dist %.3f\n", course, dist);
 }

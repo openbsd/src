@@ -1,4 +1,4 @@
-/*	$OpenBSD: visual.c,v 1.6 2016/01/07 14:30:32 mestre Exp $	*/
+/*	$OpenBSD: visual.c,v 1.7 2016/01/07 14:37:51 mestre Exp $	*/
 /*	$NetBSD: visual.c,v 1.3 1995/04/22 10:59:39 cgd Exp $	*/
 
 /*
@@ -61,8 +61,7 @@ struct xy	Visdelta[11] =
 };
 
 void
-visual(z)
-	int z;
+visual(int z)
 {
 	int		ix, iy, co;
 	struct xy	*v;

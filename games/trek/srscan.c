@@ -1,4 +1,4 @@
-/*	$OpenBSD: srscan.c,v 1.8 2016/01/07 14:30:32 mestre Exp $	*/
+/*	$OpenBSD: srscan.c,v 1.9 2016/01/07 14:37:51 mestre Exp $	*/
 /*	$NetBSD: srscan.c,v 1.3 1995/04/22 10:59:31 cgd Exp $	*/
 
 /*
@@ -59,8 +59,7 @@ const char	*const Color[4] =
 };
 
 void
-srscan(f)
-	int	f;
+srscan(int f)
 {
 	int		i, j;
 	int		statinfo;

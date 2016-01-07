@@ -1,4 +1,4 @@
-/*	$OpenBSD: getpar.c,v 1.14 2016/01/07 14:30:32 mestre Exp $	*/
+/*	$OpenBSD: getpar.c,v 1.15 2016/01/07 14:37:51 mestre Exp $	*/
 /*	$NetBSD: getpar.c,v 1.4 1995/04/24 12:25:57 cgd Exp $	*/
 
 /*
@@ -44,8 +44,7 @@ static int testterm(void);
  **/
 
 int
-getintpar(s)
-	const char	*s;
+getintpar(const char *s)
 {
 	int	i, n;
 
@@ -68,8 +67,7 @@ getintpar(s)
  **/
 
 double
-getfltpar(s)
-	const char	*s;
+getfltpar(const char *s)
 {
 	int		i;
 	double		d;
@@ -100,8 +98,7 @@ const struct cvntab	Yntab[] =
 };
 
 int
-getynpar(s)
-	const char	*s;
+getynpar(const char *s)
 {
 	const struct cvntab	*r;
 
@@ -115,9 +112,7 @@ getynpar(s)
  **/
 
 const struct cvntab *
-getcodpar(s, tab)
-	const char		*s;
-	const struct cvntab	tab[];
+getcodpar(const char *s, const struct cvntab tab[])
 {
 	char				input[100];
 	const struct cvntab		*r;
@@ -194,11 +189,7 @@ getcodpar(s, tab)
  **/
 
 void
-getstrpar(s, r, l, t)
-	const char	*s;
-	char		*r;
-	int		l;
-	const char	*t;
+getstrpar(const char *s, char *r, int l, const char *t)
 {
 	int	i, f;
 	char	format[20];
@@ -227,7 +218,7 @@ getstrpar(s, r, l, t)
  **/
 
 int
-testnl()
+testnl(void)
 {
 	int	c;
 
@@ -249,8 +240,7 @@ testnl()
  **/
 
 void
-skiptonl(c)
-	int	c;
+skiptonl(int c)
 {
 	while (c != '\n')
 		if (!(c = getchar()))
@@ -265,7 +255,7 @@ skiptonl(c)
  **/
 
 static int
-testterm()
+testterm(void)
 {
 	int	c;
 
@@ -288,8 +278,7 @@ testterm()
 */
 
 int
-readdelim(d)
-	int	d;
+readdelim(int d)
 {
 	int	c;
 

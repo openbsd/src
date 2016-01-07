@@ -1,4 +1,4 @@
-/*	$OpenBSD: dcrept.c,v 1.6 2016/01/07 14:30:32 mestre Exp $	*/
+/*	$OpenBSD: dcrept.c,v 1.7 2016/01/07 14:37:51 mestre Exp $	*/
 /*	$NetBSD: dcrept.c,v 1.3 1995/04/22 10:58:43 cgd Exp $	*/
 
 /*
@@ -47,8 +47,7 @@
 */
 
 void
-dcrept(v)
-	int v;
+dcrept(int v)
 {
 	int		i, f;
 	double		x;

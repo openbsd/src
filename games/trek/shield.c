@@ -1,4 +1,4 @@
-/*	$OpenBSD: shield.c,v 1.8 2016/01/07 14:30:32 mestre Exp $	*/
+/*	$OpenBSD: shield.c,v 1.9 2016/01/07 14:37:51 mestre Exp $	*/
 /*	$NetBSD: shield.c,v 1.4 1995/04/24 12:26:09 cgd Exp $	*/
 
 /*
@@ -60,8 +60,7 @@ const struct cvntab Udtab[] =
 };
 
 void
-shield(f)
-	int	f;
+shield(int f)
 {
 	int			i;
 	const struct cvntab	*r;

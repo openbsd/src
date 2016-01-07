@@ -1,4 +1,4 @@
-/*	$OpenBSD: check_out.c,v 1.6 2016/01/07 14:30:32 mestre Exp $	*/
+/*	$OpenBSD: check_out.c,v 1.7 2016/01/07 14:37:51 mestre Exp $	*/
 /*	$NetBSD: check_out.c,v 1.3 1995/04/22 10:58:35 cgd Exp $	*/
 
 /*
@@ -46,8 +46,7 @@
 */
 
 int
-check_out(device)
-	int	device;
+check_out(int device)
 {
 	int	dev;
 

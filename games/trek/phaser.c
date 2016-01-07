@@ -1,4 +1,4 @@
-/*	$OpenBSD: phaser.c,v 1.9 2016/01/07 14:30:32 mestre Exp $	*/
+/*	$OpenBSD: phaser.c,v 1.10 2016/01/07 14:37:51 mestre Exp $	*/
 /*	$NetBSD: phaser.c,v 1.4 1995/04/24 12:26:02 cgd Exp $	*/
 
 /*
@@ -83,8 +83,7 @@ struct banks
 
 
 void
-phaser(v)
-	int v;
+phaser(int v)
 {
 	int		i, j;
 	struct kling	*k;

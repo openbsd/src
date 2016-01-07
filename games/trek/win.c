@@ -1,4 +1,4 @@
-/*	$OpenBSD: win.c,v 1.6 2016/01/07 14:30:32 mestre Exp $	*/
+/*	$OpenBSD: win.c,v 1.7 2016/01/07 14:37:51 mestre Exp $	*/
 /*	$NetBSD: win.c,v 1.3 1995/04/22 10:59:41 cgd Exp $	*/
 
 /*
@@ -51,7 +51,7 @@
 */
 
 void
-win()
+win(void)
 {
 	long			s;
 	const struct cvntab	*p = NULL;

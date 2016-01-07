@@ -1,4 +1,4 @@
-/*	$OpenBSD: setup.c,v 1.11 2016/01/07 14:30:32 mestre Exp $	*/
+/*	$OpenBSD: setup.c,v 1.12 2016/01/07 14:37:51 mestre Exp $	*/
 /*	$NetBSD: setup.c,v 1.4 1995/04/24 12:26:06 cgd Exp $	*/
 
 /*
@@ -71,7 +71,7 @@ const struct cvntab	Skitab[] =
 };
 
 void
-setup()
+setup(void)
 {
 	const struct cvntab	*r;
 	int			i, j;

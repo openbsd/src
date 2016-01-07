@@ -1,4 +1,4 @@
-/*	$OpenBSD: ram.c,v 1.6 2016/01/07 14:30:32 mestre Exp $	*/
+/*	$OpenBSD: ram.c,v 1.7 2016/01/07 14:37:51 mestre Exp $	*/
 /*	$NetBSD: ram.c,v 1.3 1995/04/22 10:59:19 cgd Exp $	*/
 
 /*
@@ -47,8 +47,7 @@
 */
 
 void
-ram(ix, iy)
-	int	ix, iy;
+ram(int ix, int iy)
 {
 	int		i;
 	char		c;

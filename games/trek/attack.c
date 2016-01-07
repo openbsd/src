@@ -1,4 +1,4 @@
-/*	$OpenBSD: attack.c,v 1.7 2016/01/07 14:30:32 mestre Exp $	*/
+/*	$OpenBSD: attack.c,v 1.8 2016/01/07 14:37:51 mestre Exp $	*/
 /*	$NetBSD: attack.c,v 1.3 1995/04/22 10:58:26 cgd Exp $	*/
 
 /*
@@ -65,9 +65,9 @@
 **	Casualties can also occur.
 */
 
+/* argument is set if attack while resting */
 void
-attack(resting)
-	int	resting;	/* set if attack while resting */
+attack(int resting)
 {
 	int	hit, i, l;
 	int	maxhit, tothit, shldabsb;

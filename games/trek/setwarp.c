@@ -1,4 +1,4 @@
-/*	$OpenBSD: setwarp.c,v 1.5 2016/01/07 14:30:32 mestre Exp $	*/
+/*	$OpenBSD: setwarp.c,v 1.6 2016/01/07 14:37:51 mestre Exp $	*/
 /*	$NetBSD: setwarp.c,v 1.3 1995/04/22 10:59:27 cgd Exp $	*/
 
 /*
@@ -43,8 +43,7 @@
 */
 
 void
-setwarp(v)
-	int v;
+setwarp(int v)
 {
 	double	warpfac;
 

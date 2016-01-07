@@ -1,4 +1,4 @@
-/*	$OpenBSD: snova.c,v 1.7 2016/01/07 14:30:32 mestre Exp $	*/
+/*	$OpenBSD: snova.c,v 1.8 2016/01/07 14:37:51 mestre Exp $	*/
 /*	$NetBSD: snova.c,v 1.3 1995/04/22 10:59:29 cgd Exp $	*/
 
 /*
@@ -57,8 +57,7 @@
 */
 
 void
-snova(x, y)
-	int	x, y;
+snova(int x, int y)
 {
 	int		qx, qy;
 	int		ix, iy = 0;

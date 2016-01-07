@@ -1,4 +1,4 @@
-/*	$OpenBSD: getcodi.c,v 1.4 2009/10/27 23:59:27 deraadt Exp $	*/
+/*	$OpenBSD: getcodi.c,v 1.5 2016/01/07 14:37:51 mestre Exp $	*/
 /*	$NetBSD: getcodi.c,v 1.3 1995/04/22 10:58:55 cgd Exp $	*/
 
 /*
@@ -44,9 +44,7 @@
 */
 
 int
-getcodi(co, di)
-	int	*co;
-	double	*di;
+getcodi(int *co, double *di)
 {
 	*co = getintpar("Course");
 

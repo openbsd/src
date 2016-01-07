@@ -1,4 +1,4 @@
-/*	$OpenBSD: kill.c,v 1.7 2016/01/07 14:30:32 mestre Exp $	*/
+/*	$OpenBSD: kill.c,v 1.8 2016/01/07 14:37:51 mestre Exp $	*/
 /*	$NetBSD: kill.c,v 1.3 1995/04/22 10:59:06 cgd Exp $	*/
 
 /*
@@ -51,8 +51,7 @@
 */
 
 void
-killk(ix, iy)
-	int	ix, iy;
+killk(int ix, int iy)
 {
 	int		i;
 
@@ -92,8 +91,7 @@ killk(ix, iy)
 */
 
 void
-killb(qx, qy)
-	int	qx, qy;
+killb(int qx, int qy)
 {
 	struct quad	*q;
 	struct xy	*b;
@@ -141,10 +139,12 @@ killb(qx, qy)
  **	kill an inhabited starsystem
  **/
 
+/* 
+ * x, y: quad coords if f == 0, else sector coords
+ * f != 0 -- this quad;  f < 0 -- Enterprise's fault
+ */
 void
-kills(x, y, f)
-	int	x, y;	/* quad coords if f == 0, else sector coords */
-	int	f;	/* f != 0 -- this quad;  f < 0 -- Enterprise's fault */
+kills(int x, int y, int f)
 {
 	struct quad	*q;
 	struct event	*e;
@@ -185,10 +185,12 @@ kills(x, y, f)
  **	"kill" a distress call
  **/
 
+/* 
+ * x, y: quadrant coordinates
+ * f: set if user is to be informed
+ */
 void
-killd(x, y, f)
-	int	x, y;		/* quadrant coordinates */
-	int	f;		/* set if user is to be informed */
+killd(int x, int y, int f)
 {
 	struct event	*e;
 	int		i;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: destruct.c,v 1.8 2016/01/07 14:30:32 mestre Exp $	*/
+/*	$OpenBSD: destruct.c,v 1.9 2016/01/07 14:37:51 mestre Exp $	*/
 /*	$NetBSD: destruct.c,v 1.3 1995/04/22 10:58:44 cgd Exp $	*/
 
 /*
@@ -58,8 +58,7 @@
 */
 
 void
-destruct(v)
-	int v;
+destruct(int v)
 {
 	char	checkpass[15];
 	int	i, j;

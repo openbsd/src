@@ -1,4 +1,4 @@
-/*	$OpenBSD: dumpme.c,v 1.6 2016/01/07 14:30:32 mestre Exp $	*/
+/*	$OpenBSD: dumpme.c,v 1.7 2016/01/07 14:37:51 mestre Exp $	*/
 /*	$NetBSD: dumpme.c,v 1.3 1995/04/22 10:58:48 cgd Exp $	*/
 
 /*
@@ -47,8 +47,7 @@
 */
 
 void
-dumpme(flag)
-	int	flag;
+dumpme(int flag)
 {
 	int		f, i;
 	double		x;

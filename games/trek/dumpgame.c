@@ -1,4 +1,4 @@
-/*	$OpenBSD: dumpgame.c,v 1.11 2016/01/07 14:30:32 mestre Exp $	*/
+/*	$OpenBSD: dumpgame.c,v 1.12 2016/01/07 14:37:51 mestre Exp $	*/
 /*	$NetBSD: dumpgame.c,v 1.4 1995/04/24 12:25:54 cgd Exp $	*/
 
 /*
@@ -74,8 +74,7 @@ static int readdump(int);
 */
 
 void
-dumpgame(v)
-	int v;
+dumpgame(int v)
 {
 	int		version;
 	int		fd;
@@ -114,7 +113,7 @@ dumpgame(v)
 */
 
 int
-restartgame()
+restartgame(void)
 {
 	int	fd, version;
 
@@ -144,8 +143,7 @@ restartgame()
 */
 
 static int
-readdump(fd1)
-	int	fd1;
+readdump(int fd1)
 {
 	int		fd, i;
 	struct dump	*d;

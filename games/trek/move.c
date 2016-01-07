@@ -1,4 +1,4 @@
-/*	$OpenBSD: move.c,v 1.7 2016/01/07 14:30:32 mestre Exp $	*/
+/*	$OpenBSD: move.c,v 1.8 2016/01/07 14:37:51 mestre Exp $	*/
 /*	$NetBSD: move.c,v 1.3 1995/04/22 10:59:12 cgd Exp $	*/
 
 /*
@@ -68,11 +68,7 @@
 */
 
 double
-move(ramflag, course, time, speed)
-	int	ramflag;
-	int	course;
-	double	time;
-	double	speed;
+move(int ramflag, int course, double time, double speed)
 {
 	double		angle;
 	double		x, y, dx, dy;

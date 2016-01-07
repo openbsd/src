@@ -1,4 +1,4 @@
-/*	$OpenBSD: checkcond.c,v 1.4 2009/10/27 23:59:27 deraadt Exp $	*/
+/*	$OpenBSD: checkcond.c,v 1.5 2016/01/07 14:37:51 mestre Exp $	*/
 /*	$NetBSD: checkcond.c,v 1.3 1995/04/22 10:58:37 cgd Exp $	*/
 
 /*
@@ -58,7 +58,7 @@
 */
 
 void
-checkcond()
+checkcond(void)
 {
 	/* see if we are still alive and well */
 	if (Ship.reserves < 0.0)
