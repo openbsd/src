@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.320 2016/01/07 06:20:38 dlg Exp $ */
+/* $OpenBSD: if_em.c,v 1.321 2016/01/07 06:37:45 dlg Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -582,8 +582,8 @@ em_start(struct ifnet *ifp)
 	}
 
 	if (sc->hw.mac_type != em_82547) {
-		bus_dmamap_sync(sc->sc_dmat, sc->txdma.dma_map, 0,
-		    sc->txdma.dma_map->dm_mapsize,
+		bus_dmamap_sync(sc->sc_dmat, sc->txdma.dma_map,
+		    0, sc->txdma.dma_map->dm_mapsize,
 		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 	}
 
@@ -616,8 +616,8 @@ em_start(struct ifnet *ifp)
 	}
 
 	if (sc->hw.mac_type != em_82547) {
-		bus_dmamap_sync(sc->sc_dmat, sc->txdma.dma_map, 0,
-		    sc->txdma.dma_map->dm_mapsize,
+		bus_dmamap_sync(sc->sc_dmat, sc->txdma.dma_map,
+		    0, sc->txdma.dma_map->dm_mapsize,
 		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 		/* 
 		 * Advance the Transmit Descriptor Tail (Tdt),
@@ -1117,8 +1117,8 @@ em_encap(struct em_softc *sc, struct mbuf *m_head)
 	}
 
 	if (sc->hw.mac_type == em_82547) {
-		bus_dmamap_sync(sc->sc_dmat, sc->txdma.dma_map, 0,
-		    sc->txdma.dma_map->dm_mapsize,
+		bus_dmamap_sync(sc->sc_dmat, sc->txdma.dma_map,
+		    0, sc->txdma.dma_map->dm_mapsize,
 		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 	}
 
@@ -1220,8 +1220,8 @@ em_encap(struct em_softc *sc, struct mbuf *m_head)
 	 * available to transmit.
 	 */
 	if (sc->hw.mac_type == em_82547) {
-		bus_dmamap_sync(sc->sc_dmat, sc->txdma.dma_map, 0,
-		    sc->txdma.dma_map->dm_mapsize,
+		bus_dmamap_sync(sc->sc_dmat, sc->txdma.dma_map,
+		    0, sc->txdma.dma_map->dm_mapsize,
 		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 		if (sc->link_duplex == HALF_DUPLEX)
 			em_82547_move_tail_locked(sc);
@@ -2053,8 +2053,9 @@ em_dma_free(struct em_softc *sc, struct em_dma_alloc *dma)
 int
 em_allocate_transmit_structures(struct em_softc *sc)
 {
-	bus_dmamap_sync(sc->sc_dmat, sc->txdma.dma_map, 0,
-	    sc->txdma.dma_size, BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+	bus_dmamap_sync(sc->sc_dmat, sc->txdma.dma_map,
+	    0, sc->txdma.dma_map->dm_mapsize,
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 	if (!(sc->tx_buffer_area = mallocarray(sc->num_tx_desc,
 	    sizeof(struct em_buffer), M_DEVBUF, M_NOWAIT | M_ZERO))) {
@@ -2235,8 +2236,9 @@ em_free_transmit_structures(struct em_softc *sc)
 		sc->tx_buffer_area = NULL;
 	}
 
-	bus_dmamap_sync(sc->sc_dmat, sc->txdma.dma_map, 0,
-	    sc->txdma.dma_size, BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
+	bus_dmamap_sync(sc->sc_dmat, sc->txdma.dma_map,
+	    0, sc->txdma.dma_map->dm_mapsize,
+	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 }
 
 /*********************************************************************
@@ -2354,8 +2356,9 @@ em_txeof(struct em_softc *sc)
 		last = 0;
 	done = last;
 
-	bus_dmamap_sync(sc->sc_dmat, sc->txdma.dma_map, 0,
-	    sc->txdma.dma_map->dm_mapsize, BUS_DMASYNC_POSTREAD);
+	bus_dmamap_sync(sc->sc_dmat, sc->txdma.dma_map,
+	    0, sc->txdma.dma_map->dm_mapsize,
+	    BUS_DMASYNC_POSTREAD);
 	while (eop_desc->upper.fields.status & E1000_TXD_STAT_DD) {
 		/* We clean the range of the packet */
 		while (first != done) {
@@ -2395,9 +2398,9 @@ em_txeof(struct em_softc *sc)
 		} else
 			break;
 	}
-	bus_dmamap_sync(sc->sc_dmat, sc->txdma.dma_map, 0,
-	    sc->txdma.dma_map->dm_mapsize,
-	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+	bus_dmamap_sync(sc->sc_dmat, sc->txdma.dma_map,
+	    0, sc->txdma.dma_map->dm_mapsize,
+	    BUS_DMASYNC_PREREAD);
 
 	sc->next_tx_to_clean = first;
 
@@ -2452,13 +2455,15 @@ em_get_buf(struct em_softc *sc, int i)
 	pkt->m_head = m;
 
 	bus_dmamap_sync(sc->sc_dmat, sc->rxdma.dma_map,
-	    sizeof(*desc) * i, sizeof(*desc), BUS_DMASYNC_POSTWRITE);
+	    sizeof(*desc) * i, sizeof(*desc),
+	    BUS_DMASYNC_POSTWRITE);
 
 	bzero(desc, sizeof(*desc));
 	desc->buffer_addr = htole64(pkt->map->dm_segs[0].ds_addr);
 
 	bus_dmamap_sync(sc->sc_dmat, sc->rxdma.dma_map,
-	    sizeof(*desc) * i, sizeof(*desc), BUS_DMASYNC_PREWRITE);
+	    sizeof(*desc) * i, sizeof(*desc),
+	    BUS_DMASYNC_PREWRITE);
 
 	return (0);
 }
@@ -2477,8 +2482,8 @@ em_allocate_receive_structures(struct em_softc *sc)
 	int		i, error;
 	struct em_buffer *rx_buffer;
 
-	bus_dmamap_sync(sc->sc_dmat, sc->rxdma.dma_map, 0,
-	    sc->rxdma.dma_map->dm_mapsize,
+	bus_dmamap_sync(sc->sc_dmat, sc->rxdma.dma_map,
+	    0, sc->rxdma.dma_map->dm_mapsize,
 	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 	if (!(sc->rx_buffer_area = mallocarray(sc->num_rx_desc,
@@ -2658,8 +2663,8 @@ em_free_receive_structures(struct em_softc *sc)
 
 	if_rxr_init(&sc->rx_ring, 0, 0);
 
-	bus_dmamap_sync(sc->sc_dmat, sc->rxdma.dma_map, 0,
-	    sc->rxdma.dma_map->dm_mapsize,
+	bus_dmamap_sync(sc->sc_dmat, sc->rxdma.dma_map,
+	    0, sc->rxdma.dma_map->dm_mapsize,
 	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
 	if (sc->rx_buffer_area != NULL) {
@@ -2744,7 +2749,7 @@ em_rxeof(struct em_softc *sc)
 	i = sc->next_rx_desc_to_check;
 
 	bus_dmamap_sync(sc->sc_dmat, sc->rxdma.dma_map,
-	    0, sizeof(*desc) * sc->num_rx_desc,
+	    0, sc->rxdma.dma_map->dm_mapsize,
 	    BUS_DMASYNC_POSTREAD);
 
 	do {
@@ -2872,7 +2877,7 @@ em_rxeof(struct em_softc *sc)
 	} while (if_rxr_inuse(&sc->rx_ring) > 0);
 
 	bus_dmamap_sync(sc->sc_dmat, sc->rxdma.dma_map,
-	    0, sizeof(*desc) * sc->num_rx_desc,
+	    0, sc->rxdma.dma_map->dm_mapsize,
 	    BUS_DMASYNC_PREREAD);
 
 	sc->next_rx_desc_to_check = i;
