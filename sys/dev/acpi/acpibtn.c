@@ -1,4 +1,4 @@
-/* $OpenBSD: acpibtn.c,v 1.41 2015/01/27 19:40:14 kettenis Exp $ */
+/* $OpenBSD: acpibtn.c,v 1.42 2016/01/07 12:08:18 mpi Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -35,6 +35,7 @@
 int	acpibtn_match(struct device *, void *, void *);
 void	acpibtn_attach(struct device *, struct device *, void *);
 int	acpibtn_notify(struct aml_node *, int, void *);
+int	acpibtn_activate(struct device *, int);
 
 struct acpibtn_softc {
 	struct device		sc_dev;
@@ -65,7 +66,8 @@ SLIST_HEAD(acpi_lid_head, acpi_lid) acpibtn_lids =
     SLIST_HEAD_INITIALIZER(acpibtn_lids);
 
 struct cfattach acpibtn_ca = {
-	sizeof(struct acpibtn_softc), acpibtn_match, acpibtn_attach
+	sizeof(struct acpibtn_softc), acpibtn_match, acpibtn_attach, NULL,
+	acpibtn_activate
 };
 
 struct cfdriver acpibtn_cd = {
@@ -155,7 +157,7 @@ acpibtn_attach(struct device *parent, struct device *self, void *aux)
 	struct acpibtn_softc	*sc = (struct acpibtn_softc *)self;
 	struct acpi_attach_args *aa = aux;
 	struct acpi_lid		*lid;
-	int64_t			lid_open;
+	int64_t			lid_open = 1;
 	int64_t			st;
 
 	sc->sc_acpi = (struct acpi_softc *)parent;
@@ -258,5 +260,25 @@ sleep:
 		break;
 	}
 
+	return (0);
+}
+
+int
+acpibtn_activate(struct device *self, int act)
+{
+	struct acpibtn_softc	*sc = (struct acpibtn_softc *)self;
+	int64_t			lid_open = 1;
+
+	switch (act) {
+	case DVACT_WAKEUP:
+		switch (sc->sc_btn_type) {
+		case ACPIBTN_LID:
+			aml_evalinteger(sc->sc_acpi, sc->sc_devnode,
+			    "_LID", 0, NULL, &lid_open);
+			sc->sc_sens.value = lid_open;
+			break;
+		}
+		break;
+	}
 	return (0);
 }
