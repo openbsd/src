@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.319 2016/01/07 05:34:11 dlg Exp $ */
+/* $OpenBSD: if_em.c,v 1.320 2016/01/07 06:20:38 dlg Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -339,7 +339,6 @@ em_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	struct em_softc *sc;
-	int tsize, rsize;
 	int defer = 0;
     
 	INIT_DEBUGOUT("em_attach: begin");
@@ -454,37 +453,23 @@ em_attach(struct device *parent, struct device *self, void *aux)
 	sc->hw.min_frame_size = 
 	    ETHER_MIN_LEN + ETHER_CRC_LEN;
 
-	if (sc->hw.mac_type >= em_82544)
-	    tsize = EM_ROUNDUP(sc->num_tx_desc * sizeof(struct em_tx_desc),
-		EM_MAX_TXD * sizeof(struct em_tx_desc));
-	else
-	    tsize = EM_ROUNDUP(sc->num_tx_desc * sizeof(struct em_tx_desc),
-		EM_MAX_TXD_82543 * sizeof(struct em_tx_desc));
-	tsize = EM_ROUNDUP(tsize, PAGE_SIZE);
-
 	/* Allocate Transmit Descriptor ring */
-	if (em_dma_malloc(sc, tsize, &sc->txdma)) {
+	if (em_dma_malloc(sc, sc->num_tx_desc * sizeof(struct em_tx_desc),
+	    &sc->txdma) != 0) {
 		printf("%s: Unable to allocate tx_desc memory\n", 
 		       DEVNAME(sc));
 		goto err_tx_desc;
 	}
 	sc->tx_desc_base = (struct em_tx_desc *)sc->txdma.dma_vaddr;
 
-	if (sc->hw.mac_type >= em_82544)
-	    rsize = EM_ROUNDUP(sc->num_rx_desc * sizeof(struct em_rx_desc),
-		EM_MAX_RXD * sizeof(struct em_rx_desc));
-	else
-	    rsize = EM_ROUNDUP(sc->num_rx_desc * sizeof(struct em_rx_desc),
-		EM_MAX_RXD_82543 * sizeof(struct em_rx_desc));
-	rsize = EM_ROUNDUP(rsize, PAGE_SIZE);
-
 	/* Allocate Receive Descriptor ring */
-	if (em_dma_malloc(sc, rsize, &sc->rxdma)) {
+	if (em_dma_malloc(sc, sc->num_rx_desc * sizeof(struct em_rx_desc),
+	    &sc->rxdma) != 0) {
 		printf("%s: Unable to allocate rx_desc memory\n",
 		       DEVNAME(sc));
 		goto err_rx_desc;
 	}
-	sc->rx_desc_base = (struct em_rx_desc *) sc->rxdma.dma_vaddr;
+	sc->rx_desc_base = (struct em_rx_desc *)sc->rxdma.dma_vaddr;
 
 	/* Initialize the hardware */
 	if ((defer = em_hardware_init(sc))) {
