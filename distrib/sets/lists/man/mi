@@ -443,7 +443,7 @@
 ./usr/share/man/man1/skeyinfo.1
 ./usr/share/man/man1/skeyinit.1
 ./usr/share/man/man1/sleep.1
-./usr/share/man/man1/sndiod.1
+./usr/share/man/man1/sndiod.8
 ./usr/share/man/man1/sort.1
 ./usr/share/man/man1/sparc
 ./usr/share/man/man1/sparc/fdformat.1
