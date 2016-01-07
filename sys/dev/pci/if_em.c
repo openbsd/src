@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.321 2016/01/07 06:37:45 dlg Exp $ */
+/* $OpenBSD: if_em.c,v 1.322 2016/01/07 06:49:04 dlg Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -2454,16 +2454,8 @@ em_get_buf(struct em_softc *sc, int i)
 	    BUS_DMASYNC_PREREAD);
 	pkt->m_head = m;
 
-	bus_dmamap_sync(sc->sc_dmat, sc->rxdma.dma_map,
-	    sizeof(*desc) * i, sizeof(*desc),
-	    BUS_DMASYNC_POSTWRITE);
-
 	bzero(desc, sizeof(*desc));
 	desc->buffer_addr = htole64(pkt->map->dm_segs[0].ds_addr);
-
-	bus_dmamap_sync(sc->sc_dmat, sc->rxdma.dma_map,
-	    sizeof(*desc) * i, sizeof(*desc),
-	    BUS_DMASYNC_PREWRITE);
 
 	return (0);
 }
@@ -2703,6 +2695,10 @@ em_rxfill(struct em_softc *sc)
 
 	i = sc->last_rx_desc_filled;
 
+	bus_dmamap_sync(sc->sc_dmat, sc->rxdma.dma_map,
+	    0, sc->rxdma.dma_map->dm_mapsize,
+	    BUS_DMASYNC_POSTWRITE);
+
 	for (slots = if_rxr_get(&sc->rx_ring, sc->num_rx_desc);
 	    slots > 0; slots--) {
 		if (++i == sc->num_rx_desc)
@@ -2716,6 +2712,10 @@ em_rxfill(struct em_softc *sc)
 	}
 
 	if_rxr_put(&sc->rx_ring, slots);
+
+	bus_dmamap_sync(sc->sc_dmat, sc->rxdma.dma_map,
+	    0, sc->rxdma.dma_map->dm_mapsize,
+	    BUS_DMASYNC_PREWRITE);
 
 	return (post);
 }
