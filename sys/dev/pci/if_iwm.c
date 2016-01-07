@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.74 2016/01/06 19:56:50 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.75 2016/01/07 23:08:38 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -5446,6 +5446,10 @@ iwm_setrates(struct iwm_node *in)
 
 	lq->single_stream_ant_msk = IWM_ANT_A;
 	lq->dual_stream_ant_msk = IWM_ANT_AB;
+
+	lq->agg_time_limit = htole16(4000);	/* 4ms */
+	lq->agg_disable_start_th = 3;
+	lq->agg_frame_cnt_limit = 0x3f;
 
 	cmd.data[0] = &in->in_lq;
 	if (iwm_send_cmd(sc, &cmd) != 0) {

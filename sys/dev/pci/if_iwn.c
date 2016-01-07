@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.152 2016/01/06 19:56:50 stsp Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.153 2016/01/07 23:08:38 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -3380,7 +3380,7 @@ iwn_set_link_quality(struct iwn_softc *sc, struct ieee80211_node *ni)
 	linkq.id = wn->id;
 	linkq.antmsk_1stream = txant;
 	linkq.antmsk_2stream = IWN_ANT_AB;
-	linkq.ampdu_max = 31;
+	linkq.ampdu_max = IWN_AMPDU_MAX;
 	linkq.ampdu_threshold = 3;
 	linkq.ampdu_limit = htole16(4000);	/* 4ms */
 
@@ -3462,7 +3462,7 @@ iwn_add_broadcast_node(struct iwn_softc *sc, int async, int ridx)
 	linkq.id = sc->broadcast_id;
 	linkq.antmsk_1stream = txant;
 	linkq.antmsk_2stream = IWN_ANT_AB;
-	linkq.ampdu_max = 64;
+	linkq.ampdu_max = IWN_AMPDU_MAX_NO_AGG;
 	linkq.ampdu_threshold = 3;
 	linkq.ampdu_limit = htole16(4000);	/* 4ms */
 
