@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.323 2016/01/07 07:03:55 dlg Exp $ */
+/* $OpenBSD: if_em.c,v 1.324 2016/01/07 07:18:07 dlg Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -308,8 +308,8 @@ em_defer_attach(struct device *self)
 		em_stop(sc, 1);
 
 		em_free_pci_resources(sc);
-		em_dma_free(sc, &sc->sc_rxdma);
-		em_dma_free(sc, &sc->sc_txdma);
+		em_dma_free(sc, &sc->sc_rx_dma);
+		em_dma_free(sc, &sc->sc_tx_dma);
 
 		return;
 	}
@@ -362,11 +362,11 @@ em_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Parameters (to be read from user) */
 	if (sc->hw.mac_type >= em_82544) {
-		sc->sc_num_tx_desc = EM_MAX_TXD;
-		sc->sc_num_rx_desc = EM_MAX_RXD;
+		sc->sc_tx_slots = EM_MAX_TXD;
+		sc->sc_rx_slots = EM_MAX_RXD;
 	} else {
-		sc->sc_num_tx_desc = EM_MAX_TXD_82543;
-		sc->sc_num_rx_desc = EM_MAX_RXD_82543;
+		sc->sc_tx_slots = EM_MAX_TXD_82543;
+		sc->sc_rx_slots = EM_MAX_RXD_82543;
 	}
 	sc->tx_int_delay = EM_TIDV;
 	sc->tx_abs_int_delay = EM_TADV;
@@ -454,22 +454,22 @@ em_attach(struct device *parent, struct device *self, void *aux)
 	    ETHER_MIN_LEN + ETHER_CRC_LEN;
 
 	/* Allocate Transmit Descriptor ring */
-	if (em_dma_malloc(sc, sc->sc_num_tx_desc * sizeof(struct em_tx_desc),
-	    &sc->sc_txdma) != 0) {
+	if (em_dma_malloc(sc, sc->sc_tx_slots * sizeof(struct em_tx_desc),
+	    &sc->sc_tx_dma) != 0) {
 		printf("%s: Unable to allocate tx_desc memory\n", 
 		       DEVNAME(sc));
 		goto err_tx_desc;
 	}
-	sc->sc_tx_desc_base = (struct em_tx_desc *)sc->sc_txdma.dma_vaddr;
+	sc->sc_tx_desc_ring = (struct em_tx_desc *)sc->sc_tx_dma.dma_vaddr;
 
 	/* Allocate Receive Descriptor ring */
-	if (em_dma_malloc(sc, sc->sc_num_rx_desc * sizeof(struct em_rx_desc),
-	    &sc->sc_rxdma) != 0) {
+	if (em_dma_malloc(sc, sc->sc_rx_slots * sizeof(struct em_rx_desc),
+	    &sc->sc_rx_dma) != 0) {
 		printf("%s: Unable to allocate rx_desc memory\n",
 		       DEVNAME(sc));
 		goto err_rx_desc;
 	}
-	sc->sc_rx_desc_base = (struct em_rx_desc *)sc->sc_rxdma.dma_vaddr;
+	sc->sc_rx_desc_ring = (struct em_rx_desc *)sc->sc_rx_dma.dma_vaddr;
 
 	/* Initialize the hardware */
 	if ((defer = em_hardware_init(sc))) {
@@ -551,9 +551,9 @@ em_attach(struct device *parent, struct device *self, void *aux)
 
 err_mac_addr:
 err_hw_init:
-	em_dma_free(sc, &sc->sc_rxdma);
+	em_dma_free(sc, &sc->sc_rx_dma);
 err_rx_desc:
-	em_dma_free(sc, &sc->sc_txdma);
+	em_dma_free(sc, &sc->sc_tx_dma);
 err_tx_desc:
 err_pci:
 	em_free_pci_resources(sc);
@@ -582,13 +582,13 @@ em_start(struct ifnet *ifp)
 	}
 
 	if (sc->hw.mac_type != em_82547) {
-		bus_dmamap_sync(sc->sc_dmat, sc->sc_txdma.dma_map,
-		    0, sc->sc_txdma.dma_map->dm_mapsize,
+		bus_dmamap_sync(sc->sc_dmat, sc->sc_tx_dma.dma_map,
+		    0, sc->sc_tx_dma.dma_map->dm_mapsize,
 		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 	}
 
 	for (;;) {
-		if (EM_MAX_SCATTER + 1 > sc->sc_num_tx_desc_avail) {
+		if (EM_MAX_SCATTER + 1 > sc->sc_tx_desc_free) {
 			ifq_set_oactive(&ifp->if_snd);
 			break;
 		}
@@ -616,8 +616,8 @@ em_start(struct ifnet *ifp)
 	}
 
 	if (sc->hw.mac_type != em_82547) {
-		bus_dmamap_sync(sc->sc_dmat, sc->sc_txdma.dma_map,
-		    0, sc->sc_txdma.dma_map->dm_mapsize,
+		bus_dmamap_sync(sc->sc_dmat, sc->sc_tx_dma.dma_map,
+		    0, sc->sc_tx_dma.dma_map->dm_mapsize,
 		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 		/* 
 		 * Advance the Transmit Descriptor Tail (Tdt),
@@ -626,7 +626,7 @@ em_start(struct ifnet *ifp)
 		 */
 		if (post) {
 			E1000_WRITE_REG(&sc->hw, TDT,
-			    sc->sc_next_avail_tx_desc);
+			    sc->sc_tx_desc_head);
 		}
 	}
 }
@@ -729,8 +729,8 @@ em_watchdog(struct ifnet *ifp)
 		return;
 	}
 	printf("%s: watchdog: cons %u prod %u free %u TDH %u TDT %u\n",
-	    DEVNAME(sc), sc->sc_next_tx_to_clean,
-	    sc->sc_next_avail_tx_desc, sc->sc_num_tx_desc_avail,
+	    DEVNAME(sc), sc->sc_tx_desc_tail,
+	    sc->sc_tx_desc_head, sc->sc_tx_desc_free,
 	    E1000_READ_REG(&sc->hw, TDH), E1000_READ_REG(&sc->hw, TDT));
 
 	em_init(sc);
@@ -904,7 +904,7 @@ em_intr(void *arg)
 		if (em_rxeof(sc) || ISSET(reg_icr, E1000_ICR_RXO)) {
 			if (em_rxfill(sc)) {
 				E1000_WRITE_REG(&sc->hw, RDT,
-				    sc->sc_last_rx_desc_filled);
+				    sc->sc_rx_desc_head);
 			}
 		}
 	}
@@ -1097,8 +1097,8 @@ em_encap(struct em_softc *sc, struct mbuf *m_head)
 	 * of the EOP which is the only one that
 	 * no gets a DONE bit writeback.
 	 */
-	first = sc->sc_next_avail_tx_desc;
-	tx_buffer = &sc->sc_tx_buffer_area[first];
+	first = sc->sc_tx_desc_head;
+	tx_buffer = &sc->sc_tx_buffers[first];
 	tx_buffer_mapped = tx_buffer;
 	map = tx_buffer->map;
 
@@ -1119,8 +1119,8 @@ em_encap(struct em_softc *sc, struct mbuf *m_head)
 	}
 
 	if (sc->hw.mac_type == em_82547) {
-		bus_dmamap_sync(sc->sc_dmat, sc->sc_txdma.dma_map,
-		    0, sc->sc_txdma.dma_map->dm_mapsize,
+		bus_dmamap_sync(sc->sc_dmat, sc->sc_tx_dma.dma_map,
+		    0, sc->sc_tx_dma.dma_map->dm_mapsize,
 		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 	}
 
@@ -1131,7 +1131,7 @@ em_encap(struct em_softc *sc, struct mbuf *m_head)
 	else
 		txd_upper = txd_lower = 0;
 
-	i = sc->sc_next_avail_tx_desc;
+	i = sc->sc_tx_desc_head;
 
 	for (j = 0; j < map->dm_nsegs; j++) {
 		/* If sc is 82544 and on PCI-X bus */
@@ -1144,8 +1144,8 @@ em_encap(struct em_softc *sc, struct mbuf *m_head)
 			    map->dm_segs[j].ds_addr, map->dm_segs[j].ds_len,
 			    &desc_array);
 			for (counter = 0; counter < array_elements; counter++) {
-				tx_buffer = &sc->sc_tx_buffer_area[i];
-				current_tx_desc = &sc->sc_tx_desc_base[i];
+				tx_buffer = &sc->sc_tx_buffers[i];
+				current_tx_desc = &sc->sc_tx_desc_ring[i];
 				current_tx_desc->buffer_addr = htole64(
 					desc_array.descriptor[counter].address);
 				current_tx_desc->lower.data = htole32(
@@ -1153,7 +1153,7 @@ em_encap(struct em_softc *sc, struct mbuf *m_head)
 					 (u_int16_t)desc_array.descriptor[counter].length));
 				current_tx_desc->upper.data = htole32((txd_upper));
 				last = i;
-				if (++i == sc->sc_num_tx_desc)
+				if (++i == sc->sc_tx_slots)
 					i = 0;
 
 				tx_buffer->m_head = NULL;
@@ -1161,15 +1161,15 @@ em_encap(struct em_softc *sc, struct mbuf *m_head)
 				txd_used++;
 			}
 		} else {
-			tx_buffer = &sc->sc_tx_buffer_area[i];
-			current_tx_desc = &sc->sc_tx_desc_base[i];
+			tx_buffer = &sc->sc_tx_buffers[i];
+			current_tx_desc = &sc->sc_tx_desc_ring[i];
 
 			current_tx_desc->buffer_addr = htole64(map->dm_segs[j].ds_addr);
 			current_tx_desc->lower.data = htole32(
 				sc->sc_txd_cmd | txd_lower | map->dm_segs[j].ds_len);
 			current_tx_desc->upper.data = htole32(txd_upper);
 			last = i;
-			if (++i == sc->sc_num_tx_desc)
+			if (++i == sc->sc_tx_slots)
 	        		i = 0;
 
 			tx_buffer->m_head = NULL;
@@ -1177,11 +1177,11 @@ em_encap(struct em_softc *sc, struct mbuf *m_head)
 		}
 	}
 
-	sc->sc_next_avail_tx_desc = i;
+	sc->sc_tx_desc_head = i;
 	if (sc->pcix_82544)
-		atomic_sub_int(&sc->sc_num_tx_desc_avail, txd_used);
+		atomic_sub_int(&sc->sc_tx_desc_free, txd_used);
 	else
-		atomic_sub_int(&sc->sc_num_tx_desc_avail, map->dm_nsegs);
+		atomic_sub_int(&sc->sc_tx_desc_free, map->dm_nsegs);
 
 #if NVLAN > 0
 	/* Find out if we are in VLAN mode */
@@ -1213,7 +1213,7 @@ em_encap(struct em_softc *sc, struct mbuf *m_head)
 	 * Keep track in the first buffer which
 	 * descriptor will be written back
 	 */
-	tx_buffer = &sc->sc_tx_buffer_area[first];
+	tx_buffer = &sc->sc_tx_buffers[first];
 	tx_buffer->next_eop = last;
 
 	/* 
@@ -1222,8 +1222,8 @@ em_encap(struct em_softc *sc, struct mbuf *m_head)
 	 * available to transmit.
 	 */
 	if (sc->hw.mac_type == em_82547) {
-		bus_dmamap_sync(sc->sc_dmat, sc->sc_txdma.dma_map,
-		    0, sc->sc_txdma.dma_map->dm_mapsize,
+		bus_dmamap_sync(sc->sc_dmat, sc->sc_tx_dma.dma_map,
+		    0, sc->sc_tx_dma.dma_map->dm_mapsize,
 		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 		if (sc->link_duplex == HALF_DUPLEX)
 			em_82547_move_tail_locked(sc);
@@ -1254,13 +1254,13 @@ em_82547_move_tail_locked(struct em_softc *sc)
 	boolean_t eop = 0;
 
 	hw_tdt = E1000_READ_REG(&sc->hw, TDT);
-	sw_tdt = sc->sc_next_avail_tx_desc;
+	sw_tdt = sc->sc_tx_desc_head;
 
 	while (hw_tdt != sw_tdt) {
-		tx_desc = &sc->sc_tx_desc_base[hw_tdt];
+		tx_desc = &sc->sc_tx_desc_ring[hw_tdt];
 		length += tx_desc->lower.flags.length;
 		eop = tx_desc->lower.data & E1000_TXD_CMD_EOP;
-		if (++hw_tdt == sc->sc_num_tx_desc)
+		if (++hw_tdt == sc->sc_tx_slots)
 			hw_tdt = 0;
 
 		if (eop) {
@@ -1830,7 +1830,7 @@ em_setup_interface(struct em_softc *sc)
 	ifp->if_watchdog = em_watchdog;
 	ifp->if_hardmtu =
 		sc->hw.max_frame_size - ETHER_HDR_LEN - ETHER_CRC_LEN;
-	IFQ_SET_MAXLEN(&ifp->if_snd, sc->sc_num_tx_desc - 1);
+	IFQ_SET_MAXLEN(&ifp->if_snd, sc->sc_tx_slots - 1);
 	IFQ_SET_READY(&ifp->if_snd);
 
 	ifp->if_capabilities = IFCAP_VLAN_MTU;
@@ -1897,13 +1897,13 @@ em_detach(struct device *self, int flags)
 
 	em_free_pci_resources(sc);
 
-	if (sc->sc_rx_desc_base != NULL) {
-		em_dma_free(sc, &sc->sc_rxdma);
-		sc->sc_rx_desc_base = NULL;
+	if (sc->sc_rx_desc_ring != NULL) {
+		em_dma_free(sc, &sc->sc_rx_dma);
+		sc->sc_rx_desc_ring = NULL;
 	}
-	if (sc->sc_tx_desc_base != NULL) {
-		em_dma_free(sc, &sc->sc_txdma);
-		sc->sc_tx_desc_base = NULL;
+	if (sc->sc_tx_desc_ring != NULL) {
+		em_dma_free(sc, &sc->sc_tx_dma);
+		sc->sc_tx_desc_ring = NULL;
 	}
 
 	ether_ifdetach(ifp);
@@ -2055,11 +2055,11 @@ em_dma_free(struct em_softc *sc, struct em_dma_alloc *dma)
 int
 em_allocate_transmit_structures(struct em_softc *sc)
 {
-	bus_dmamap_sync(sc->sc_dmat, sc->sc_txdma.dma_map,
-	    0, sc->sc_txdma.dma_map->dm_mapsize,
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_tx_dma.dma_map,
+	    0, sc->sc_tx_dma.dma_map->dm_mapsize,
 	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
-	if (!(sc->sc_tx_buffer_area = mallocarray(sc->sc_num_tx_desc,
+	if (!(sc->sc_tx_buffers = mallocarray(sc->sc_tx_slots,
 	    sizeof(struct em_buffer), M_DEVBUF, M_NOWAIT | M_ZERO))) {
 		printf("%s: Unable to allocate tx_buffer memory\n", 
 		       DEVNAME(sc));
@@ -2083,11 +2083,11 @@ em_setup_transmit_structures(struct em_softc *sc)
 	if ((error = em_allocate_transmit_structures(sc)) != 0)
 		goto fail;
 
-	bzero((void *) sc->sc_tx_desc_base,
-	      (sizeof(struct em_tx_desc)) * sc->sc_num_tx_desc);
+	bzero((void *) sc->sc_tx_desc_ring,
+	      (sizeof(struct em_tx_desc)) * sc->sc_tx_slots);
 
-	tx_buffer = sc->sc_tx_buffer_area;
-	for (i = 0; i < sc->sc_num_tx_desc; i++) {
+	tx_buffer = sc->sc_tx_buffers;
+	for (i = 0; i < sc->sc_tx_slots; i++) {
 		error = bus_dmamap_create(sc->sc_dmat, MAX_JUMBO_FRAME_SIZE,
 		    EM_MAX_SCATTER / (sc->pcix_82544 ? 2 : 1),
 		    MAX_JUMBO_FRAME_SIZE, 0, BUS_DMA_NOWAIT, &tx_buffer->map);
@@ -2099,11 +2099,11 @@ em_setup_transmit_structures(struct em_softc *sc)
 		tx_buffer++;
 	}
 
-	sc->sc_next_avail_tx_desc = 0;
-	sc->sc_next_tx_to_clean = 0;
+	sc->sc_tx_desc_head = 0;
+	sc->sc_tx_desc_tail = 0;
 
 	/* Set number of descriptors available */
-	sc->sc_num_tx_desc_avail = sc->sc_num_tx_desc;
+	sc->sc_tx_desc_free = sc->sc_tx_slots;
 
 	/* Set checksum context */
 	sc->active_checksum_context = OFFLOAD_NONE;
@@ -2129,9 +2129,9 @@ em_initialize_transmit_unit(struct em_softc *sc)
 	INIT_DEBUGOUT("em_initialize_transmit_unit: begin");
 
 	/* Setup the Base and Length of the Tx Descriptor Ring */
-	bus_addr = sc->sc_txdma.dma_map->dm_segs[0].ds_addr;
+	bus_addr = sc->sc_tx_dma.dma_map->dm_segs[0].ds_addr;
 	E1000_WRITE_REG(&sc->hw, TDLEN, 
-			sc->sc_num_tx_desc *
+			sc->sc_tx_slots *
 			sizeof(struct em_tx_desc));
 	E1000_WRITE_REG(&sc->hw, TDBAH, (u_int32_t)(bus_addr >> 32));
 	E1000_WRITE_REG(&sc->hw, TDBAL, (u_int32_t)bus_addr);
@@ -2210,9 +2210,9 @@ em_free_transmit_structures(struct em_softc *sc)
 
 	INIT_DEBUGOUT("free_transmit_structures: begin");
 
-	if (sc->sc_tx_buffer_area != NULL) {
-		tx_buffer = sc->sc_tx_buffer_area;
-		for (i = 0; i < sc->sc_num_tx_desc; i++, tx_buffer++) {
+	if (sc->sc_tx_buffers != NULL) {
+		tx_buffer = sc->sc_tx_buffers;
+		for (i = 0; i < sc->sc_tx_slots; i++, tx_buffer++) {
 			if (tx_buffer->map != NULL &&
 			    tx_buffer->map->dm_nsegs > 0) {
 				bus_dmamap_sync(sc->sc_dmat, tx_buffer->map,
@@ -2232,14 +2232,14 @@ em_free_transmit_structures(struct em_softc *sc)
 			}
 		}
 	}
-	if (sc->sc_tx_buffer_area != NULL) {
-		free(sc->sc_tx_buffer_area, M_DEVBUF,
-		    sc->sc_num_tx_desc * sizeof(struct em_buffer));
-		sc->sc_tx_buffer_area = NULL;
+	if (sc->sc_tx_buffers != NULL) {
+		free(sc->sc_tx_buffers, M_DEVBUF,
+		    sc->sc_tx_slots * sizeof(struct em_buffer));
+		sc->sc_tx_buffers = NULL;
 	}
 
-	bus_dmamap_sync(sc->sc_dmat, sc->sc_txdma.dma_map,
-	    0, sc->sc_txdma.dma_map->dm_mapsize,
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_tx_dma.dma_map,
+	    0, sc->sc_tx_dma.dma_map->dm_mapsize,
 	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 }
 
@@ -2287,9 +2287,9 @@ em_transmit_checksum_setup(struct em_softc *sc, struct mbuf *mp,
 	/* If we reach this point, the checksum offload context
 	 * needs to be reset.
 	 */
-	curr_txd = sc->sc_next_avail_tx_desc;
-	tx_buffer = &sc->sc_tx_buffer_area[curr_txd];
-	TXD = (struct em_context_desc *) &sc->sc_tx_desc_base[curr_txd];
+	curr_txd = sc->sc_tx_desc_head;
+	tx_buffer = &sc->sc_tx_buffers[curr_txd];
+	TXD = (struct em_context_desc *) &sc->sc_tx_desc_ring[curr_txd];
 
 	TXD->lower_setup.ip_fields.ipcss = ETHER_HDR_LEN;
 	TXD->lower_setup.ip_fields.ipcso = 
@@ -2317,11 +2317,11 @@ em_transmit_checksum_setup(struct em_softc *sc, struct mbuf *mp,
 	tx_buffer->m_head = NULL;
 	tx_buffer->next_eop = -1;
 
-	if (++curr_txd == sc->sc_num_tx_desc)
+	if (++curr_txd == sc->sc_tx_slots)
 		curr_txd = 0;
 
-	atomic_dec_int(&sc->sc_num_tx_desc_avail);
-	sc->sc_next_avail_tx_desc = curr_txd;
+	atomic_dec_int(&sc->sc_tx_desc_free);
+	sc->sc_tx_desc_head = curr_txd;
 }
 
 /**********************************************************************
@@ -2339,14 +2339,14 @@ em_txeof(struct em_softc *sc)
 	struct em_tx_desc   *tx_desc, *eop_desc;
 	struct ifnet   *ifp = &sc->sc_ac.ac_if;
 
-	if (sc->sc_num_tx_desc_avail == sc->sc_num_tx_desc)
+	if (sc->sc_tx_desc_free == sc->sc_tx_slots)
 		return;
 
-	first = sc->sc_next_tx_to_clean;
-	tx_desc = &sc->sc_tx_desc_base[first];
-	tx_buffer = &sc->sc_tx_buffer_area[first];
+	first = sc->sc_tx_desc_tail;
+	tx_desc = &sc->sc_tx_desc_ring[first];
+	tx_buffer = &sc->sc_tx_buffers[first];
 	last = tx_buffer->next_eop;
-	eop_desc = &sc->sc_tx_desc_base[last];
+	eop_desc = &sc->sc_tx_desc_ring[last];
 
 	/*
 	 * What this does is get the index of the
@@ -2354,12 +2354,12 @@ em_txeof(struct em_softc *sc)
 	 * first packet, that way we can do the
 	 * simple comparison on the inner while loop.
 	 */
-	if (++last == sc->sc_num_tx_desc)
+	if (++last == sc->sc_tx_slots)
 		last = 0;
 	done = last;
 
-	bus_dmamap_sync(sc->sc_dmat, sc->sc_txdma.dma_map,
-	    0, sc->sc_txdma.dma_map->dm_mapsize,
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_tx_dma.dma_map,
+	    0, sc->sc_tx_dma.dma_map->dm_mapsize,
 	    BUS_DMASYNC_POSTREAD);
 	while (eop_desc->upper.fields.status & E1000_TXD_STAT_DD) {
 		/* We clean the range of the packet */
@@ -2383,34 +2383,34 @@ em_txeof(struct em_softc *sc)
 			}
 			tx_buffer->next_eop = -1;
 
-			if (++first == sc->sc_num_tx_desc)
+			if (++first == sc->sc_tx_slots)
 				first = 0;
 
-			tx_buffer = &sc->sc_tx_buffer_area[first];
-			tx_desc = &sc->sc_tx_desc_base[first];
+			tx_buffer = &sc->sc_tx_buffers[first];
+			tx_desc = &sc->sc_tx_desc_ring[first];
 		}
 		/* See if we can continue to the next packet */
 		last = tx_buffer->next_eop;
 		if (last != -1) {
-			eop_desc = &sc->sc_tx_desc_base[last];
+			eop_desc = &sc->sc_tx_desc_ring[last];
 			/* Get new done point */
-			if (++last == sc->sc_num_tx_desc)
+			if (++last == sc->sc_tx_slots)
 				last = 0;
 			done = last;
 		} else
 			break;
 	}
-	bus_dmamap_sync(sc->sc_dmat, sc->sc_txdma.dma_map,
-	    0, sc->sc_txdma.dma_map->dm_mapsize,
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_tx_dma.dma_map,
+	    0, sc->sc_tx_dma.dma_map->dm_mapsize,
 	    BUS_DMASYNC_PREREAD);
 
-	sc->sc_next_tx_to_clean = first;
+	sc->sc_tx_desc_tail = first;
 
-	num_avail = atomic_add_int_nv(&sc->sc_num_tx_desc_avail, free);
+	num_avail = atomic_add_int_nv(&sc->sc_tx_desc_free, free);
 
 	if (ifq_is_oactive(&ifp->if_snd))
 		ifq_restart(&ifp->if_snd);
-	else if (num_avail == sc->sc_num_tx_desc)
+	else if (num_avail == sc->sc_tx_slots)
 		ifp->if_timer = 0;
 }
 
@@ -2427,8 +2427,8 @@ em_get_buf(struct em_softc *sc, int i)
 	struct em_rx_desc *desc;
 	int error;
 
-	pkt = &sc->sc_rx_buffer_area[i];
-	desc = &sc->sc_rx_desc_base[i];
+	pkt = &sc->sc_rx_buffers[i];
+	desc = &sc->sc_rx_desc_ring[i];
 
 	if (pkt->m_head != NULL) {
 		printf("%s: em_get_buf: slot %d already has an mbuf\n",
@@ -2476,19 +2476,19 @@ em_allocate_receive_structures(struct em_softc *sc)
 	int		i, error;
 	struct em_buffer *rx_buffer;
 
-	bus_dmamap_sync(sc->sc_dmat, sc->sc_rxdma.dma_map,
-	    0, sc->sc_rxdma.dma_map->dm_mapsize,
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_rx_dma.dma_map,
+	    0, sc->sc_rx_dma.dma_map->dm_mapsize,
 	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
-	if (!(sc->sc_rx_buffer_area = mallocarray(sc->sc_num_rx_desc,
+	if (!(sc->sc_rx_buffers = mallocarray(sc->sc_rx_slots,
 	    sizeof(struct em_buffer), M_DEVBUF, M_NOWAIT | M_ZERO))) {
 		printf("%s: Unable to allocate rx_buffer memory\n", 
 		       DEVNAME(sc));
 		return (ENOMEM);
 	}
 
-	rx_buffer = sc->sc_rx_buffer_area;
-	for (i = 0; i < sc->sc_num_rx_desc; i++, rx_buffer++) {
+	rx_buffer = sc->sc_rx_buffers;
+	for (i = 0; i < sc->sc_rx_slots; i++, rx_buffer++) {
 		error = bus_dmamap_create(sc->sc_dmat, EM_MCLBYTES, 1,
 		    EM_MCLBYTES, 0, BUS_DMA_NOWAIT, &rx_buffer->map);
 		if (error != 0) {
@@ -2518,18 +2518,18 @@ em_setup_receive_structures(struct em_softc *sc)
 	struct ifnet *ifp = &sc->sc_ac.ac_if;
 	u_int lwm;
 
-	memset(sc->sc_rx_desc_base, 0,
-	    sizeof(struct em_rx_desc) * sc->sc_num_rx_desc);
+	memset(sc->sc_rx_desc_ring, 0,
+	    sizeof(struct em_rx_desc) * sc->sc_rx_slots);
 
 	if (em_allocate_receive_structures(sc))
 		return (ENOMEM);
 
 	/* Setup our descriptor pointers */
-	sc->sc_next_rx_desc_to_check = 0;
-	sc->sc_last_rx_desc_filled = sc->sc_num_rx_desc - 1;
+	sc->sc_rx_desc_tail = 0;
+	sc->sc_rx_desc_head = sc->sc_rx_slots - 1;
 
 	lwm = max(4, 2 * ((ifp->if_hardmtu / MCLBYTES) + 1));
-	if_rxr_init(&sc->sc_rx_ring, lwm, sc->sc_num_rx_desc);
+	if_rxr_init(&sc->sc_rx_ring, lwm, sc->sc_rx_slots);
 
 	if (em_rxfill(sc) == 0) {
 		printf("%s: unable to fill any rx descriptors\n",
@@ -2570,8 +2570,8 @@ em_initialize_receive_unit(struct em_softc *sc)
 	}
 
 	/* Setup the Base and Length of the Rx Descriptor Ring */
-	bus_addr = sc->sc_rxdma.dma_map->dm_segs[0].ds_addr;
-	E1000_WRITE_REG(&sc->hw, RDLEN, sc->sc_num_rx_desc *
+	bus_addr = sc->sc_rx_dma.dma_map->dm_segs[0].ds_addr;
+	E1000_WRITE_REG(&sc->hw, RDLEN, sc->sc_rx_slots *
 			sizeof(struct em_rx_desc));
 	E1000_WRITE_REG(&sc->hw, RDBAH, (u_int32_t)(bus_addr >> 32));
 	E1000_WRITE_REG(&sc->hw, RDBAL, (u_int32_t)bus_addr);
@@ -2639,7 +2639,7 @@ em_initialize_receive_unit(struct em_softc *sc)
 
 	/* Setup the HW Rx Head and Tail Descriptor Pointers */
 	E1000_WRITE_REG(&sc->hw, RDH, 0);
-	E1000_WRITE_REG(&sc->hw, RDT, sc->sc_last_rx_desc_filled);
+	E1000_WRITE_REG(&sc->hw, RDT, sc->sc_rx_desc_head);
 }
 
 /*********************************************************************
@@ -2657,13 +2657,13 @@ em_free_receive_structures(struct em_softc *sc)
 
 	if_rxr_init(&sc->sc_rx_ring, 0, 0);
 
-	bus_dmamap_sync(sc->sc_dmat, sc->sc_rxdma.dma_map,
-	    0, sc->sc_rxdma.dma_map->dm_mapsize,
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_rx_dma.dma_map,
+	    0, sc->sc_rx_dma.dma_map->dm_mapsize,
 	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
-	if (sc->sc_rx_buffer_area != NULL) {
-		rx_buffer = sc->sc_rx_buffer_area;
-		for (i = 0; i < sc->sc_num_rx_desc; i++, rx_buffer++) {
+	if (sc->sc_rx_buffers != NULL) {
+		rx_buffer = sc->sc_rx_buffers;
+		for (i = 0; i < sc->sc_rx_slots; i++, rx_buffer++) {
 			if (rx_buffer->m_head != NULL) {
 				bus_dmamap_sync(sc->sc_dmat, rx_buffer->map,
 				    0, rx_buffer->map->dm_mapsize,
@@ -2675,10 +2675,10 @@ em_free_receive_structures(struct em_softc *sc)
 			bus_dmamap_destroy(sc->sc_dmat, rx_buffer->map);
 		}
 	}
-	if (sc->sc_rx_buffer_area != NULL) {
-		free(sc->sc_rx_buffer_area, M_DEVBUF,
-		    sc->sc_num_rx_desc * sizeof(struct em_buffer));
-		sc->sc_rx_buffer_area = NULL;
+	if (sc->sc_rx_buffers != NULL) {
+		free(sc->sc_rx_buffers, M_DEVBUF,
+		    sc->sc_rx_slots * sizeof(struct em_buffer));
+		sc->sc_rx_buffers = NULL;
 	}
 
 	if (sc->fmp != NULL) {
@@ -2695,28 +2695,28 @@ em_rxfill(struct em_softc *sc)
 	int post = 0;
 	int i;
 
-	i = sc->sc_last_rx_desc_filled;
+	i = sc->sc_rx_desc_head;
 
-	bus_dmamap_sync(sc->sc_dmat, sc->sc_rxdma.dma_map,
-	    0, sc->sc_rxdma.dma_map->dm_mapsize,
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_rx_dma.dma_map,
+	    0, sc->sc_rx_dma.dma_map->dm_mapsize,
 	    BUS_DMASYNC_POSTWRITE);
 
-	for (slots = if_rxr_get(&sc->sc_rx_ring, sc->sc_num_rx_desc);
+	for (slots = if_rxr_get(&sc->sc_rx_ring, sc->sc_rx_slots);
 	    slots > 0; slots--) {
-		if (++i == sc->sc_num_rx_desc)
+		if (++i == sc->sc_rx_slots)
 			i = 0;
 
 		if (em_get_buf(sc, i) != 0)
 			break;
 
-		sc->sc_last_rx_desc_filled = i;
+		sc->sc_rx_desc_head = i;
 		post = 1;
 	}
 
 	if_rxr_put(&sc->sc_rx_ring, slots);
 
-	bus_dmamap_sync(sc->sc_dmat, sc->sc_rxdma.dma_map,
-	    0, sc->sc_rxdma.dma_map->dm_mapsize,
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_rx_dma.dma_map,
+	    0, sc->sc_rx_dma.dma_map->dm_mapsize,
 	    BUS_DMASYNC_PREWRITE);
 
 	return (post);
@@ -2748,17 +2748,17 @@ em_rxeof(struct em_softc *sc)
 	if (if_rxr_inuse(&sc->sc_rx_ring) == 0)
 		return (0);
 
-	i = sc->sc_next_rx_desc_to_check;
+	i = sc->sc_rx_desc_tail;
 
-	bus_dmamap_sync(sc->sc_dmat, sc->sc_rxdma.dma_map,
-	    0, sc->sc_rxdma.dma_map->dm_mapsize,
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_rx_dma.dma_map,
+	    0, sc->sc_rx_dma.dma_map->dm_mapsize,
 	    BUS_DMASYNC_POSTREAD);
 
 	do {
 		m = NULL;
 
-		desc = &sc->sc_rx_desc_base[i];
-		pkt = &sc->sc_rx_buffer_area[i];
+		desc = &sc->sc_rx_desc_ring[i];
+		pkt = &sc->sc_rx_buffers[i];
 
 		status = desc->status;
 		if (!ISSET(status, E1000_RXD_STAT_DD))
@@ -2775,7 +2775,7 @@ em_rxeof(struct em_softc *sc)
 			panic("em_rxeof: NULL mbuf in slot %d "
 			    "(nrx %d, filled %d)", i,
 			    if_rxr_inuse(&sc->sc_rx_ring),
-			    sc->sc_last_rx_desc_filled);
+			    sc->sc_rx_desc_head);
 		}
 
 		if_rxr_put(&sc->sc_rx_ring, 1);
@@ -2874,15 +2874,15 @@ em_rxeof(struct em_softc *sc)
 		}
 
 		/* Advance our pointers to the next descriptor. */
-		if (++i == sc->sc_num_rx_desc)
+		if (++i == sc->sc_rx_slots)
 			i = 0;
 	} while (if_rxr_inuse(&sc->sc_rx_ring) > 0);
 
-	bus_dmamap_sync(sc->sc_dmat, sc->sc_rxdma.dma_map,
-	    0, sc->sc_rxdma.dma_map->dm_mapsize,
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_rx_dma.dma_map,
+	    0, sc->sc_rx_dma.dma_map->dm_mapsize,
 	    BUS_DMASYNC_PREREAD);
 
-	sc->sc_next_rx_desc_to_check = i;
+	sc->sc_rx_desc_tail = i;
 
 	if_input(ifp, &ml);
 
