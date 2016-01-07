@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.tty.c,v 1.13 2015/09/27 05:13:11 guenther Exp $	*/
+/*	$OpenBSD: hack.tty.c,v 1.14 2016/01/07 18:25:52 millert Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -167,6 +167,8 @@ setftty()
 		/* be satisfied with one character; no timeout */
 		curttyb.c_cc[VMIN] = 1;
 		curttyb.c_cc[VTIME] = 0;
+		/* we need to be able to read ^Z */
+		curttyb.c_cc[VSUSP] = _POSIX_VDISABLE;
 		change++;
 	}
 	if(change){
