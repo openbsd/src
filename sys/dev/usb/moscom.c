@@ -1,4 +1,4 @@
-/*	$OpenBSD: moscom.c,v 1.22 2015/03/14 03:38:49 jsg Exp $	*/
+/*	$OpenBSD: moscom.c,v 1.23 2016/01/07 12:53:37 mpi Exp $	*/
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -30,7 +30,7 @@
 #include <dev/usb/ucomvar.h>
 
 #define MOSCOMBUFSZ		256
-#define MOSCOM_CONFIG_NO	0
+#define MOSCOM_CONFIG_INDEX	0
 #define MOSCOM_IFACE_NO		0
 
 #define MOSCOM_READ		0x0d
@@ -199,7 +199,7 @@ moscom_attach(struct device *parent, struct device *self, void *aux)
 	bzero(&uca, sizeof(uca));
 	sc->sc_udev = uaa->device;
 
-	if (usbd_set_config_index(sc->sc_udev, MOSCOM_CONFIG_NO, 1) != 0) {
+	if (usbd_set_config_index(sc->sc_udev, MOSCOM_CONFIG_INDEX, 1) != 0) {
 		printf("%s: could not set configuration no\n",
 		    sc->sc_dev.dv_xname);
 		usbd_deactivate(sc->sc_udev);

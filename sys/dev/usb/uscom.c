@@ -1,4 +1,4 @@
-/*	$OpenBSD: uscom.c,v 1.3 2014/11/18 23:55:01 krw Exp $	*/
+/*	$OpenBSD: uscom.c,v 1.4 2016/01/07 12:53:37 mpi Exp $	*/
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -31,7 +31,7 @@
 #include <dev/usb/ucomvar.h>
 
 #define USCOMBUFSZ		256
-#define USCOM_CONFIG_NO		0
+#define USCOM_CONFIG_INDEX		0
 #define USCOM_IFACE_NO		0
 
 struct uscom_softc {
@@ -94,7 +94,7 @@ uscom_attach(struct device *parent, struct device *self, void *aux)
 	bzero(&uca, sizeof(uca));
 	sc->sc_udev = uaa->device;
 
-	if (usbd_set_config_index(sc->sc_udev, USCOM_CONFIG_NO, 1) != 0) {
+	if (usbd_set_config_index(sc->sc_udev, USCOM_CONFIG_INDEX, 1) != 0) {
 		printf("%s: could not set configuration no\n",
 		    sc->sc_dev.dv_xname);
 		usbd_deactivate(sc->sc_udev);

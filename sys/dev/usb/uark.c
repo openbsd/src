@@ -1,4 +1,4 @@
-/*	$OpenBSD: uark.c,v 1.22 2015/03/14 03:38:49 jsg Exp $	*/
+/*	$OpenBSD: uark.c,v 1.23 2016/01/07 12:53:37 mpi Exp $	*/
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -38,7 +38,7 @@ int	uarkebug = 0;
 #define DPRINTF(x) DPRINTFN(0, x)
 
 #define UARKBUFSZ		256
-#define UARK_CONFIG_NO	0
+#define UARK_CONFIG_INDEX	0
 #define UARK_IFACE_NO		0
 
 #define UARK_SET_DATA_BITS(x)	(x - 5)
@@ -126,7 +126,7 @@ uark_attach(struct device *parent, struct device *self, void *aux)
 	bzero(&uca, sizeof(uca));
 	sc->sc_udev = uaa->device;
 
-	if (usbd_set_config_index(sc->sc_udev, UARK_CONFIG_NO, 1) != 0) {
+	if (usbd_set_config_index(sc->sc_udev, UARK_CONFIG_INDEX, 1) != 0) {
 		printf("%s: could not set configuration no\n",
 		    sc->sc_dev.dv_xname);
 		usbd_deactivate(sc->sc_udev);

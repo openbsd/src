@@ -1,4 +1,4 @@
-/*	$OpenBSD: uslcom.c,v 1.36 2015/06/18 10:47:44 jsg Exp $	*/
+/*	$OpenBSD: uslcom.c,v 1.37 2016/01/07 12:53:37 mpi Exp $	*/
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -38,7 +38,7 @@ int	uslcomdebug = 0;
 #define DPRINTF(x) DPRINTFN(0, x)
 
 #define USLCOMBUFSZ		256
-#define USLCOM_CONFIG_NO	0
+#define USLCOM_CONFIG_INDEX	0
 #define USLCOM_IFACE_NO		0
 
 #define USLCOM_SET_DATA_BITS(x)	(x << 8)
@@ -297,7 +297,7 @@ uslcom_attach(struct device *parent, struct device *self, void *aux)
 	bzero(&uca, sizeof(uca));
 	sc->sc_udev = uaa->device;
 
-	if (usbd_set_config_index(sc->sc_udev, USLCOM_CONFIG_NO, 1) != 0) {
+	if (usbd_set_config_index(sc->sc_udev, USLCOM_CONFIG_INDEX, 1) != 0) {
 		printf("%s: could not set configuration no\n",
 		    sc->sc_dev.dv_xname);
 		usbd_deactivate(sc->sc_udev);
