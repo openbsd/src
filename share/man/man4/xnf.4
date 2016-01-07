@@ -1,4 +1,4 @@
-.\"	$OpenBSD: xnf.4,v 1.1 2016/01/07 11:15:16 mikeb Exp $
+.\"	$OpenBSD: xnf.4,v 1.2 2016/01/07 11:57:27 mikeb Exp $
 .\"
 .\" Copyright (c) 2016 Mike Belopuhov
 .\"
@@ -28,7 +28,7 @@ The
 driver provides support for a paravirtual networking interface
 .Dq Netfront
 native to the Xen hypervisor.
-.Sh CAVEATS
+.Sh IMPLEMENTATION NOTES
 Both receive and transmit ring sizes are fixed at 256 entries due to
 limitations of the interface.
 .Pp
