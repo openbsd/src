@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.131 2015/12/05 10:07:55 tedu Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.132 2016/01/07 05:31:17 guenther Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -340,6 +340,9 @@ bpfopen(dev_t dev, int flag, int mode, struct proc *p)
 	/* Mark "free" and do most initialization. */
 	d->bd_bufsize = bpf_bufsize;
 	d->bd_sig = SIGIO;
+
+	if (flag & FNONBLOCK)
+		d->bd_rtout = -1;
 
 	D_GET(d);
 
