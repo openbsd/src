@@ -443,7 +443,6 @@
 ./usr/share/man/man1/skeyinfo.1
 ./usr/share/man/man1/skeyinit.1
 ./usr/share/man/man1/sleep.1
-./usr/share/man/man1/sndiod.8
 ./usr/share/man/man1/sort.1
 ./usr/share/man/man1/sparc
 ./usr/share/man/man1/sparc/fdformat.1
@@ -2092,6 +2091,7 @@
 ./usr/share/man/man4/xhci.4
 ./usr/share/man/man4/xl.4
 ./usr/share/man/man4/xmphy.4
+./usr/share/man/man4/xnf.4
 ./usr/share/man/man4/xspd.4
 ./usr/share/man/man4/yds.4
 ./usr/share/man/man4/ym.4
@@ -2603,6 +2603,7 @@
 ./usr/share/man/man8/slowcgi.8
 ./usr/share/man/man8/smtpctl.8
 ./usr/share/man/man8/smtpd.8
+./usr/share/man/man8/sndiod.8
 ./usr/share/man/man8/snkadm.8
 ./usr/share/man/man8/snkinit.8
 ./usr/share/man/man8/snmpctl.8
