@@ -1,4 +1,4 @@
-/*	$OpenBSD: check_out.c,v 1.5 2009/10/27 23:59:27 deraadt Exp $	*/
+/*	$OpenBSD: check_out.c,v 1.6 2016/01/07 14:30:32 mestre Exp $	*/
 /*	$NetBSD: check_out.c,v 1.3 1995/04/22 10:58:35 cgd Exp $	*/
 
 /*
@@ -31,6 +31,7 @@
  */
 
 #include <stdio.h>
+
 #include "trek.h"
 
 /*

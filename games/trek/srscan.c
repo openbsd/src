@@ -1,4 +1,4 @@
-/*	$OpenBSD: srscan.c,v 1.7 2009/10/27 23:59:27 deraadt Exp $	*/
+/*	$OpenBSD: srscan.c,v 1.8 2016/01/07 14:30:32 mestre Exp $	*/
 /*	$NetBSD: srscan.c,v 1.3 1995/04/22 10:59:31 cgd Exp $	*/
 
 /*
@@ -31,8 +31,9 @@
  */
 
 #include <stdio.h>
-#include "trek.h"
+
 #include "getpar.h"
+#include "trek.h"
 
 /*
 **  SHORT RANGE SENSOR SCAN

@@ -1,4 +1,4 @@
-/*	$OpenBSD: out.c,v 1.7 2009/10/27 23:59:27 deraadt Exp $	*/
+/*	$OpenBSD: out.c,v 1.8 2016/01/07 14:30:32 mestre Exp $	*/
 /*	$NetBSD: out.c,v 1.3 1995/04/22 10:59:16 cgd Exp $	*/
 
 /*
@@ -32,6 +32,7 @@
 
 #include <stdio.h>
 #include <string.h>
+
 #include "trek.h"
 
 /*

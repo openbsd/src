@@ -1,4 +1,4 @@
-/*	$OpenBSD: schedule.c,v 1.6 2009/10/27 23:59:27 deraadt Exp $	*/
+/*	$OpenBSD: schedule.c,v 1.7 2016/01/07 14:30:32 mestre Exp $	*/
 /*	$NetBSD: schedule.c,v 1.3 1995/04/22 10:59:23 cgd Exp $	*/
 
 /*
@@ -30,9 +30,10 @@
  * SUCH DAMAGE.
  */
 
-#include <stdio.h>
-#include <math.h>
 #include <err.h>
+#include <math.h>
+#include <stdio.h>
+
 #include "trek.h"
 
 /*

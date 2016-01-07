@@ -1,4 +1,4 @@
-/*	$OpenBSD: getpar.c,v 1.13 2009/10/27 23:59:27 deraadt Exp $	*/
+/*	$OpenBSD: getpar.c,v 1.14 2016/01/07 14:30:32 mestre Exp $	*/
 /*	$NetBSD: getpar.c,v 1.4 1995/04/24 12:25:57 cgd Exp $	*/
 
 /*
@@ -33,6 +33,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
 #include "getpar.h"
 #include "trek.h"
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dumpgame.c,v 1.10 2015/11/11 01:12:10 deraadt Exp $	*/
+/*	$OpenBSD: dumpgame.c,v 1.11 2016/01/07 14:30:32 mestre Exp $	*/
 /*	$NetBSD: dumpgame.c,v 1.4 1995/04/24 12:25:54 cgd Exp $	*/
 
 /*
@@ -30,10 +30,11 @@
  * SUCH DAMAGE.
  */
 
-#include <stdio.h>
 #include <err.h>
-#include <unistd.h>
 #include <fcntl.h>
+#include <stdio.h>
+#include <unistd.h>
+
 #include "trek.h"
 
 /***  THIS CONSTANT MUST CHANGE AS THE DATA SPACES CHANGE ***/

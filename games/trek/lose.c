@@ -1,4 +1,4 @@
-/*	$OpenBSD: lose.c,v 1.5 2009/10/27 23:59:27 deraadt Exp $	*/
+/*	$OpenBSD: lose.c,v 1.6 2016/01/07 14:30:32 mestre Exp $	*/
 /*	$NetBSD: lose.c,v 1.3 1995/04/22 10:59:08 cgd Exp $	*/
 
 /*
@@ -30,11 +30,12 @@
  * SUCH DAMAGE.
  */
 
-#include <stdio.h>
 #include <setjmp.h>
+#include <stdio.h>
 #include <unistd.h>
-#include "trek.h"
+
 #include "getpar.h"
+#include "trek.h"
 
 /*
 **  PRINT OUT LOSER MESSAGES

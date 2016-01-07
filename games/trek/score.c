@@ -1,4 +1,4 @@
-/*	$OpenBSD: score.c,v 1.5 2009/10/27 23:59:27 deraadt Exp $	*/
+/*	$OpenBSD: score.c,v 1.6 2016/01/07 14:30:32 mestre Exp $	*/
 /*	$NetBSD: score.c,v 1.3 1995/04/22 10:59:24 cgd Exp $	*/
 
 /*
@@ -31,8 +31,9 @@
  */
 
 #include <stdio.h>
-#include "trek.h"
+
 #include "getpar.h"
+#include "trek.h"
 
 /*
 **  PRINT OUT THE CURRENT SCORE
