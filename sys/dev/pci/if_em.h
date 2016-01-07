@@ -32,7 +32,7 @@ POSSIBILITY OF SUCH DAMAGE.
 ***************************************************************************/
 
 /* $FreeBSD: if_em.h,v 1.26 2004/09/01 23:22:41 pdeuskar Exp $ */
-/* $OpenBSD: if_em.h,v 1.64 2016/01/07 04:30:45 dlg Exp $ */
+/* $OpenBSD: if_em.h,v 1.65 2016/01/07 04:37:53 dlg Exp $ */
 
 #ifndef _EM_H_DEFINED_
 #define _EM_H_DEFINED_
@@ -411,5 +411,7 @@ struct em_softc {
 	boolean_t	pcix_82544;
 	struct em_hw_stats stats;
 };
+
+#define DEVNAME(_sc) ((_sc)->sc_dev.dv_xname)
 
 #endif /* _EM_H_DEFINED_ */

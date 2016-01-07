@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.317 2016/01/07 04:30:45 dlg Exp $ */
+/* $OpenBSD: if_em.c,v 1.318 2016/01/07 04:37:53 dlg Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -300,7 +300,7 @@ em_defer_attach(struct device *self)
 
 	if ((gcu = em_lookup_gcu(self)) == 0) {
 		printf("%s: No GCU found, defered attachment failed\n",
-		    sc->sc_dev.dv_xname);
+		    DEVNAME(sc));
 
 		if (sc->sc_intrhand)
 			pci_intr_disestablish(pc, sc->sc_intrhand);
@@ -465,7 +465,7 @@ em_attach(struct device *parent, struct device *self, void *aux)
 	/* Allocate Transmit Descriptor ring */
 	if (em_dma_malloc(sc, tsize, &sc->txdma, BUS_DMA_NOWAIT)) {
 		printf("%s: Unable to allocate tx_desc memory\n", 
-		       sc->sc_dev.dv_xname);
+		       DEVNAME(sc));
 		goto err_tx_desc;
 	}
 	sc->tx_desc_base = (struct em_tx_desc *)sc->txdma.dma_vaddr;
@@ -481,7 +481,7 @@ em_attach(struct device *parent, struct device *self, void *aux)
 	/* Allocate Receive Descriptor ring */
 	if (em_dma_malloc(sc, rsize, &sc->rxdma, BUS_DMA_NOWAIT)) {
 		printf("%s: Unable to allocate rx_desc memory\n",
-		       sc->sc_dev.dv_xname);
+		       DEVNAME(sc));
 		goto err_rx_desc;
 	}
 	sc->rx_desc_base = (struct em_rx_desc *) sc->rxdma.dma_vaddr;
@@ -492,7 +492,7 @@ em_attach(struct device *parent, struct device *self, void *aux)
 			config_defer(self, em_defer_attach);
 		else {
 			printf("%s: Unable to initialize the hardware\n",
-			    sc->sc_dev.dv_xname);
+			    DEVNAME(sc));
 			goto err_hw_init;
 		}
 	}
@@ -525,7 +525,7 @@ em_attach(struct device *parent, struct device *self, void *aux)
 	/* Copy the permanent MAC address out of the EEPROM */
 	if (em_read_mac_addr(&sc->hw) < 0) {
 		printf("%s: EEPROM read error while reading mac address\n",
-		       sc->sc_dev.dv_xname);
+		       DEVNAME(sc));
 		goto err_mac_addr;
 	}
 
@@ -549,7 +549,7 @@ em_attach(struct device *parent, struct device *self, void *aux)
 	/* Indicate SOL/IDER usage */
 	if (em_check_phy_reset_block(&sc->hw))
 		printf("%s: PHY reset is blocked due to SOL/IDER session.\n",
-		    sc->sc_dev.dv_xname);
+		    DEVNAME(sc));
 
 	/* Identify 82544 on PCI-X */
 	em_get_bus_info(&sc->hw);
@@ -690,7 +690,7 @@ em_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		/* Check SOL/IDER usage */
 		if (em_check_phy_reset_block(&sc->hw)) {
 			printf("%s: Media change is blocked due to SOL/IDER session.\n",
-			    sc->sc_dev.dv_xname);
+			    DEVNAME(sc));
 			break;
 		}
 	case SIOCGIFMEDIA:
@@ -742,7 +742,7 @@ em_watchdog(struct ifnet *ifp)
 		return;
 	}
 	printf("%s: watchdog: cons %u prod %u free %u TDH %u TDT %u\n",
-	    sc->sc_dev.dv_xname, sc->next_tx_to_clean,
+	    DEVNAME(sc), sc->next_tx_to_clean,
 	    sc->next_avail_tx_desc, sc->num_tx_desc_avail,
 	    E1000_READ_REG(&sc->hw, TDH), E1000_READ_REG(&sc->hw, TDT));
 
@@ -847,7 +847,7 @@ em_init(void *arg)
 	/* Initialize the hardware */
 	if (em_hardware_init(sc)) {
 		printf("%s: Unable to initialize the hardware\n", 
-		       sc->sc_dev.dv_xname);
+		       DEVNAME(sc));
 		splx(s);
 		return;
 	}
@@ -860,7 +860,7 @@ em_init(void *arg)
 	/* Prepare transmit descriptors and buffers */
 	if (em_setup_transmit_structures(sc)) {
 		printf("%s: Could not setup transmit structures\n", 
-		       sc->sc_dev.dv_xname);
+		       DEVNAME(sc));
 		em_stop(sc, 0);
 		splx(s);
 		return;
@@ -870,7 +870,7 @@ em_init(void *arg)
 	/* Prepare receive descriptors and buffers */
 	if (em_setup_receive_structures(sc)) {
 		printf("%s: Could not setup receive structures\n", 
-		       sc->sc_dev.dv_xname);
+		       DEVNAME(sc));
 		em_stop(sc, 0);
 		splx(s);
 		return;
@@ -1042,7 +1042,7 @@ em_media_change(struct ifnet *ifp)
 			sc->hw.forced_speed_duplex = em_10_half;
 		break;
 	default:
-		printf("%s: Unsupported media type\n", sc->sc_dev.dv_xname);
+		printf("%s: Unsupported media type\n", DEVNAME(sc));
 	}
 
 	/*
@@ -1567,7 +1567,7 @@ em_identify_hardware(struct em_softc *sc)
 
 	/* Identify the MAC */
 	if (em_set_mac_type(&sc->hw))
-		printf("%s: Unknown MAC Type\n", sc->sc_dev.dv_xname);
+		printf("%s: Unknown MAC Type\n", DEVNAME(sc));
 
 	if (sc->hw.mac_type == em_pchlan)
 		sc->hw.revision_id = PCI_PRODUCT(pa->pa_id) & 0x0f;
@@ -1659,7 +1659,7 @@ em_allocate_pci_resources(struct em_softc *sc)
 
 	intrstr = pci_intr_string(pc, ih);
 	sc->sc_intrhand = pci_intr_establish(pc, ih, IPL_NET | IPL_MPSAFE,
-	    em_intr, sc, sc->sc_dev.dv_xname);
+	    em_intr, sc, DEVNAME(sc));
 	if (sc->sc_intrhand == NULL) {
 		printf(": couldn't establish interrupt");
 		if (intrstr != NULL)
@@ -1749,7 +1749,7 @@ em_hardware_init(struct em_softc *sc)
 		 */
 		if (em_validate_eeprom_checksum(&sc->hw) < 0) {
 			printf("%s: The EEPROM Checksum Is Not Valid\n",
-			       sc->sc_dev.dv_xname);
+			       DEVNAME(sc));
 			return (EIO);
 		}
 	}
@@ -1757,7 +1757,7 @@ em_hardware_init(struct em_softc *sc)
 	if (em_get_flash_presence_i210(&sc->hw) &&
 	    em_read_part_num(&sc->hw, &(sc->part_num)) < 0) {
 		printf("%s: EEPROM read error while reading part number\n",
-		       sc->sc_dev.dv_xname);
+		       DEVNAME(sc));
 		return (EIO);
 	}
 
@@ -1811,7 +1811,7 @@ em_hardware_init(struct em_softc *sc)
 			return (EAGAIN);
 		}
 		printf("\n%s: Hardware Initialization Failed\n",
-		       sc->sc_dev.dv_xname);
+		       DEVNAME(sc));
 		return (EIO);
 	}
 
@@ -1834,7 +1834,7 @@ em_setup_interface(struct em_softc *sc)
 	INIT_DEBUGOUT("em_setup_interface: begin");
 
 	ifp = &sc->sc_ac.ac_if;
-	strlcpy(ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
+	strlcpy(ifp->if_xname, DEVNAME(sc), IFNAMSIZ);
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_xflags = IFXF_MPSAFE;
@@ -2016,7 +2016,7 @@ em_dma_malloc(struct em_softc *sc, bus_size_t size,
 	    size, 0, BUS_DMA_NOWAIT, &dma->dma_map);
 	if (r != 0) {
 		printf("%s: em_dma_malloc: bus_dmamap_create failed; "
-			"error %u\n", sc->sc_dev.dv_xname, r);
+			"error %u\n", DEVNAME(sc), r);
 		goto fail_0;
 	}
 
@@ -2024,7 +2024,7 @@ em_dma_malloc(struct em_softc *sc, bus_size_t size,
 	    1, &dma->dma_nseg, BUS_DMA_NOWAIT);
 	if (r != 0) {
 		printf("%s: em_dma_malloc: bus_dmammem_alloc failed; "
-			"size %lu, error %d\n", sc->sc_dev.dv_xname,
+			"size %lu, error %d\n", DEVNAME(sc),
 			(unsigned long)size, r);
 		goto fail_1;
 	}
@@ -2033,7 +2033,7 @@ em_dma_malloc(struct em_softc *sc, bus_size_t size,
 	    &dma->dma_vaddr, BUS_DMA_NOWAIT);
 	if (r != 0) {
 		printf("%s: em_dma_malloc: bus_dmammem_map failed; "
-			"size %lu, error %d\n", sc->sc_dev.dv_xname,
+			"size %lu, error %d\n", DEVNAME(sc),
 			(unsigned long)size, r);
 		goto fail_2;
 	}
@@ -2043,7 +2043,7 @@ em_dma_malloc(struct em_softc *sc, bus_size_t size,
 			    mapflags | BUS_DMA_NOWAIT);
 	if (r != 0) {
 		printf("%s: em_dma_malloc: bus_dmamap_load failed; "
-			"error %u\n", sc->sc_dev.dv_xname, r);
+			"error %u\n", DEVNAME(sc), r);
 		goto fail_3;
 	}
 
@@ -2093,7 +2093,7 @@ em_allocate_transmit_structures(struct em_softc *sc)
 	if (!(sc->tx_buffer_area = mallocarray(sc->num_tx_desc,
 	    sizeof(struct em_buffer), M_DEVBUF, M_NOWAIT | M_ZERO))) {
 		printf("%s: Unable to allocate tx_buffer memory\n", 
-		       sc->sc_dev.dv_xname);
+		       DEVNAME(sc));
 		return (ENOMEM);
 	}
 
@@ -2126,7 +2126,7 @@ em_setup_transmit_structures(struct em_softc *sc)
 		    MAX_JUMBO_FRAME_SIZE, 0, BUS_DMA_NOWAIT, &tx_buffer->map);
 		if (error != 0) {
 			printf("%s: Unable to create TX DMA map\n",
-			    sc->sc_dev.dv_xname);
+			    DEVNAME(sc));
 			goto fail;
 		}
 		tx_buffer++;
@@ -2464,7 +2464,7 @@ em_get_buf(struct em_softc *sc, int i)
 
 	if (pkt->m_head != NULL) {
 		printf("%s: em_get_buf: slot %d already has an mbuf\n",
-		    sc->sc_dev.dv_xname, i);
+		    DEVNAME(sc), i);
 		return (ENOBUFS);
 	}
 
@@ -2517,7 +2517,7 @@ em_allocate_receive_structures(struct em_softc *sc)
 	if (!(sc->rx_buffer_area = mallocarray(sc->num_rx_desc,
 	    sizeof(struct em_buffer), M_DEVBUF, M_NOWAIT | M_ZERO))) {
 		printf("%s: Unable to allocate rx_buffer memory\n", 
-		       sc->sc_dev.dv_xname);
+		       DEVNAME(sc));
 		return (ENOMEM);
 	}
 
@@ -2530,7 +2530,7 @@ em_allocate_receive_structures(struct em_softc *sc)
 		if (error != 0) {
 			printf("%s: em_allocate_receive_structures: "
 			    "bus_dmamap_create failed; error %u\n",
-			    sc->sc_dev.dv_xname, error);
+			    DEVNAME(sc), error);
 			goto fail;
 		}
 		rx_buffer->m_head = NULL;
@@ -2572,7 +2572,7 @@ em_setup_receive_structures(struct em_softc *sc)
 
 	if (em_rxfill(sc) == 0) {
 		printf("%s: unable to fill any rx descriptors\n",
-		    sc->sc_dev.dv_xname);
+		    DEVNAME(sc));
 	}
 
 	return (0);
@@ -3272,7 +3272,7 @@ em_update_stats_counters(struct em_softc *sc)
 void
 em_print_hw_stats(struct em_softc *sc)
 {
-	const char * const unit = sc->sc_dev.dv_xname;
+	const char * const unit = DEVNAME(sc);
 
 	printf("%s: Excessive collisions = %lld\n", unit,
 		(long long)sc->stats.ecol);
