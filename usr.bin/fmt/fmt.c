@@ -1,4 +1,4 @@
-/*	$OpenBSD: fmt.c,v 1.35 2015/12/31 16:10:31 millert Exp $	*/
+/*	$OpenBSD: fmt.c,v 1.36 2016/01/07 18:02:43 schwarze Exp $	*/
 
 /* Sensible version of fmt
  *
@@ -619,13 +619,29 @@ output_word(size_t indent0, size_t indent1, const char *word,
 static void
 center_stream(FILE *stream, const char *name)
 {
-	char *line;
-	size_t l;
+	char *line, *cp;
+	wchar_t wc;
+	size_t l;	/* Display width of the line. */
+	int wcw;	/* Display width of one character. */
+	int wcl;	/* Length in bytes of one character. */
 
 	while ((line = get_line(stream)) != NULL) {
-		while (isspace((unsigned char)*line))
-			++line;
-		l = strlen(line);
+		l = 0;
+		for (cp = line; *cp != '\0'; cp += wcl) {
+			if (*cp == '\t')
+				*cp = ' ';
+			if ((wcl = mbtowc(&wc, cp, MB_CUR_MAX)) == -1) {
+				(void)mbtowc(NULL, NULL, MB_CUR_MAX);
+				*cp = '?';
+				wcl = 1;
+				wcw = 1;
+			} else if ((wcw = wcwidth(wc)) == -1)
+				wcw = 1;
+			if (l == 0 && iswspace(wc))
+				line += wcl;
+			else
+				l += wcw;
+		}
 		while (l < goal_length) {
 			putchar(' ');
 			l += 2;
