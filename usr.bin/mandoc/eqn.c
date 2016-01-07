@@ -1,4 +1,4 @@
-/*	$OpenBSD: eqn.c,v 1.22 2015/10/06 18:30:43 schwarze Exp $ */
+/*	$OpenBSD: eqn.c,v 1.23 2016/01/07 20:18:34 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -446,6 +446,7 @@ again:
 		memmove(start + *sz + diff, start + *sz,
 		    (strlen(start) - *sz) + 1);
 		memcpy(start, def->val, def->valsz);
+		lim++;
 		goto again;
 	}
 
