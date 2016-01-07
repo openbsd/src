@@ -1,4 +1,4 @@
-/*	$OpenBSD: initdeck.c,v 1.14 2015/08/22 14:47:41 deraadt Exp $	*/
+/*	$OpenBSD: initdeck.c,v 1.15 2016/01/07 16:00:32 tb Exp $	*/
 /*	$NetBSD: initdeck.c,v 1.3 1995/03/23 08:34:43 cgd Exp $	*/
 
 /*
@@ -34,6 +34,7 @@
 #include	<stdio.h>
 #include	<stdlib.h>
 #include	<unistd.h>
+
 #include	"deck.h"
 
 /*
@@ -70,6 +71,9 @@ main(ac, av)
 {
 	int n;
 
+	if (pledge("stdio rpath wpath cpath", NULL) == -1)
+		err(1, "pledge");
+
 	getargs(ac, av);
 	if ((inf = fopen(infile, "r")) == NULL)
 		err(1, "%s", infile);
@@ -85,6 +89,9 @@ main(ac, av)
 	fseek(inf, 0L, SEEK_SET);
 	if ((outf = fopen(outfile, "w")) == NULL)
 		err(1, "%s", outfile);
+
+	if (pledge("stdio", NULL) == -1)
+		err(1, "pledge");
 
 	fwrite(&deck[0].num_cards, sizeof(deck[0].num_cards), 1, outf);
 	fwrite(&deck[0].top_card, sizeof(deck[0].top_card), 1, outf);
@@ -125,8 +132,9 @@ main(ac, av)
 	}
 
 	fclose(outf);
-	printf("There were %d com. chest and %d chance cards\n", CC_D.num_cards, CH_D.num_cards);
-	exit(0);
+	printf("There were %d com. chest and %d chance cards\n", CC_D.num_cards,
+	    CH_D.num_cards);
+	return 0;
 }
 
 static void

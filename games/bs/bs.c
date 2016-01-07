@@ -1,4 +1,4 @@
-/*	$OpenBSD: bs.c,v 1.35 2016/01/03 14:38:17 mestre Exp $	*/
+/*	$OpenBSD: bs.c,v 1.36 2016/01/07 16:00:32 tb Exp $	*/
 /*
  * Copyright (c) 1986, Bruce Holloway
  * All rights reserved.
@@ -1392,6 +1392,5 @@ main(int argc, char *argv[])
     } while
 	(playagain());
     uninitgame(0);
-    /*NOTREACHED*/
-    exit(0);
+    return 0;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: driver.c,v 1.23 2015/12/16 14:21:50 tb Exp $	*/
+/*	$OpenBSD: driver.c,v 1.24 2016/01/07 16:00:32 tb Exp $	*/
 /*	$NetBSD: driver.c,v 1.5 1997/10/20 00:37:16 lukem Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
@@ -126,7 +126,7 @@ erred:
 			    "usage: %s [-bs] [-a addr] [-D var=value] "
 			    "[-p port]\n",
 			    __progname);
-			exit(2);
+			return 2;
 		}
 	}
 	if (optind < ac)
@@ -315,7 +315,7 @@ again:
 
 	/* Fin: */
 	cleanup(0);
-	exit(0);
+	return 0;
 }
 
 /*

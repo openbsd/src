@@ -1,4 +1,4 @@
-/*	$OpenBSD: mille.c,v 1.22 2015/11/30 08:49:06 tb Exp $	*/
+/*	$OpenBSD: mille.c,v 1.23 2016/01/07 16:00:32 tb Exp $	*/
 /*	$NetBSD: mille.c,v 1.4 1995/03/24 05:01:48 cgd Exp $	*/
 
 /*
@@ -64,15 +64,14 @@ main(ac, av)
 		break;
 	  default:
 		fprintf(stderr, "usage: %s [file]\n", __progname);
-		exit(1);
-		/* NOTREACHED */
+		return 1;
 	}
 	Play = PLAYER;
 	initscr();
 	if ((LINES < 24) || (COLS < 80)) {
 		endwin();
 		fprintf(stderr, "Screen must be at least 24x80\n");
-		exit(1);
+		return 1;
 	}
 	delwin(stdscr);
 	stdscr = Board = newwin(BOARD_Y, BOARD_X, 0, 0);

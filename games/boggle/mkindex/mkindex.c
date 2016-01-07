@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkindex.c,v 1.8 2009/10/27 23:59:24 deraadt Exp $	*/
+/*	$OpenBSD: mkindex.c,v 1.9 2016/01/07 16:00:31 tb Exp $	*/
 /*	$NetBSD: mkindex.c,v 1.2 1995/03/21 12:14:52 cgd Exp $	*/
 
 /*-
@@ -33,8 +33,10 @@
  * SUCH DAMAGE.
  */
 
+#include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 #include "bog.h"
 
@@ -46,6 +48,9 @@ main(int argc, char *argv[])
 	int clen, rlen, prev;
 	long off, start;
 	char buf[MAXWORDLEN + 1];
+
+	if (pledge("stdio", NULL) == -1)
+		err(1, "pledge");
 
 	prev = '\0';
 	off = start = 0L;
@@ -59,7 +64,7 @@ main(int argc, char *argv[])
 		off += clen + 1;
 	}
 	printf("%c %6ld %6ld\n", prev, start, off - 1);
-	exit(0);
+	return 0;
 }
 
 /*

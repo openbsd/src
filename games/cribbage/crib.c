@@ -1,4 +1,4 @@
-/*	$OpenBSD: crib.c,v 1.21 2015/12/31 18:10:19 mestre Exp $	*/
+/*	$OpenBSD: crib.c,v 1.22 2016/01/07 16:00:32 tb Exp $	*/
 /*	$NetBSD: crib.c,v 1.7 1997/07/10 06:47:29 mikel Exp $	*/
 
 /*-
@@ -64,7 +64,7 @@ main(int argc, char *argv[])
 		case '?':
 		default:
 			(void) fprintf(stderr, "usage: cribbage [-emqr]\n");
-			exit(1);
+			return 1;
 		}
 
 	initscr();
@@ -115,7 +115,7 @@ main(int argc, char *argv[])
 	} while (playing);
 
 	bye();
-	exit(0);
+	return 0;
 }
 
 /*

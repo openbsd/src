@@ -1,4 +1,4 @@
-/*	$OpenBSD: setup.c,v 1.12 2014/12/31 15:45:57 tedu Exp $	*/
+/*	$OpenBSD: setup.c,v 1.13 2016/01/07 16:00:31 tb Exp $	*/
 /*	$NetBSD: setup.c,v 1.2 1995/03/21 12:05:10 cgd Exp $	*/
 
 /*-
@@ -49,6 +49,7 @@
 #include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 #define USAGE "Usage: setup file > data.c (file is typically glorkz)\n"
 
@@ -63,13 +64,20 @@ main(int argc, char *argv[])
 	FILE	*infile;
 	int	c, count, linestart;
 
+	if (pledge("stdio rpath", NULL) == -1)
+	    err(1, "pledge");
+
 	if (argc != 2) {
 		fprintf(stderr, USAGE);
-		exit(1);
+		return 1;
 	}
 
 	if ((infile = fopen(argv[1], "r")) == NULL)
 		err(1, "Can't read file %s", argv[1]);
+
+	if (pledge("stdio", NULL) == -1)
+		err(1, "pledge");
+
 	puts("/*\n * data.c: created by setup from the ascii data file.");
 	puts(SIG1);
 	puts(SIG2);
@@ -103,5 +111,5 @@ main(int argc, char *argv[])
 	}
 	puts("\n\t0\n};");
 	fclose(infile);
-	exit(0);
+	return 0;
 }

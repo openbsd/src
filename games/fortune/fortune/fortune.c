@@ -1,4 +1,4 @@
-/*	$OpenBSD: fortune.c,v 1.49 2016/01/04 11:58:35 mestre Exp $	*/
+/*	$OpenBSD: fortune.c,v 1.50 2016/01/07 16:00:32 tb Exp $	*/
 /*	$NetBSD: fortune.c,v 1.8 1995/03/23 08:28:40 cgd Exp $	*/
 
 /*-
@@ -152,18 +152,18 @@ main(int ac, char *av[])
 {
 	if (pledge("stdio rpath", NULL) == -1) {
 		perror("pledge");
-		exit(1);
+		return 1;
 	}
 
 	getargs(ac, av);
 
 	if (Match)
-		exit(find_matches() != 0);
+		return find_matches() != 0;
 
 	init_prob();
 	if ((Short_only && minlen_in_list(File_list) > SLEN) ||
 	    (Long_only && maxlen_in_list(File_list) <= SLEN))
-		exit(0);
+		return 0;
 
 	do {
 		get_fort();
@@ -177,7 +177,7 @@ main(int ac, char *av[])
 			(void) fortlen();
 		sleep((unsigned int) max(Fort_len / CPERS, MINW));
 	}
-	exit(0);
+	return 0;
 }
 
 void

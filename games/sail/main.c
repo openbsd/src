@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.9 2015/12/16 14:16:27 tb Exp $	*/
+/*	$OpenBSD: main.c,v 1.10 2016/01/07 16:00:33 tb Exp $	*/
 /*	$NetBSD: main.c,v 1.3 1995/04/22 10:37:01 cgd Exp $	*/
 
 /*
@@ -54,7 +54,7 @@ main(argc, argv)
 
 	fd = open("/dev/null", O_RDONLY);
 	if (fd < 3)
-		exit(1);
+		return 1;
 	close(fd);
 
 	p = __progname;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: strfile.c,v 1.26 2016/01/04 11:58:35 mestre Exp $	*/
+/*	$OpenBSD: strfile.c,v 1.27 2016/01/07 16:00:32 tb Exp $	*/
 /*	$NetBSD: strfile.c,v 1.4 1995/04/24 12:23:09 cgd Exp $	*/
 
 /*-
@@ -137,6 +137,9 @@ main(int ac, char *av[])
 	STR		*fp;
 	static char	string[257];
 
+	if (pledge("stdio rpath wpath cpath", NULL) == -1)
+		err(1, "pledge");
+
 	getargs(ac, av);		/* evalute arguments */
 	dc = Delimch;
 	if ((inf = fopen(Infile, "r")) == NULL)
@@ -144,6 +147,10 @@ main(int ac, char *av[])
 
 	if ((outf = fopen(Outfile, "w")) == NULL)
 		err(1, "%s", Outfile);
+
+	if (pledge("stdio", NULL) == -1)
+		err(1, "pledge");
+
 	if (!STORING_PTRS)
 		(void) fseek(outf, sizeof Tbl, SEEK_SET);
 
@@ -237,7 +244,7 @@ main(int ac, char *av[])
 	}
 	if (fclose(outf))
 		err(1, "fclose `%s'", Outfile);
-	exit(0);
+	return 0;
 }
 
 /*

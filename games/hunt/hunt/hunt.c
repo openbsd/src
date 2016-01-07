@@ -1,4 +1,4 @@
-/*	$OpenBSD: hunt.c,v 1.16 2015/12/26 00:26:39 mestre Exp $	*/
+/*	$OpenBSD: hunt.c,v 1.17 2016/01/07 16:00:32 tb Exp $	*/
 /*	$NetBSD: hunt.c,v 1.8 1998/09/13 15:27:28 hubertf Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
@@ -154,7 +154,7 @@ main(ac, av)
 			fputs("usage: hunt [-bcfmqSs] [-n name] [-p port] "
 			    "[-t team] [-w message] [[-h] host]\n",
 			    stderr);
-			exit(1);
+			return 1;
 		}
 	}
 	if (optind + 1 < ac)
@@ -172,7 +172,7 @@ main(ac, av)
 
 	if (Show_scores) {
 		dump_scores();
-		exit(0);
+		return 0;
 	}
 
 	if (Query_driver) {
@@ -187,7 +187,7 @@ main(ac, av)
 			if (Sock_host)
 				break;
 		}
-		exit(0);
+		return 0;
 	}
 	if (Otto_mode) {
 		if (Am_monitor)
@@ -259,8 +259,7 @@ main(ac, av)
 			break;
 	}
 	leave(0, (char *) NULL);
-	/* NOTREACHED */
-	return(0);
+	return 0;
 }
 
 /*

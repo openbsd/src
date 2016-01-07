@@ -1,4 +1,4 @@
-/*	$OpenBSD: grdc.c,v 1.24 2016/01/04 17:33:24 mestre Exp $	*/
+/*	$OpenBSD: grdc.c,v 1.25 2016/01/07 16:00:32 tb Exp $	*/
 /*
  *
  * Copyright 2002 Amos Shapir.  Public domain.
@@ -234,14 +234,14 @@ main(int argc, char *argv[])
 			refresh();
 			endwin();
 			fprintf(stderr, "grdc terminated by signal %d\n", sigtermed);
-			exit(1);
+			return 1;
 		}
 	} while (n == 0 || nowtv.tv_sec < endtv.tv_sec);
 	standend();
 	clear();
 	refresh();
 	endwin();
-	return(0);
+	return 0;
 }
 
 void

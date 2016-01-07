@@ -1,4 +1,4 @@
-/*	$OpenBSD: cfscores.c,v 1.21 2015/12/02 18:34:10 tb Exp $	*/
+/*	$OpenBSD: cfscores.c,v 1.22 2016/01/07 16:00:32 tb Exp $	*/
 /*	$NetBSD: cfscores.c,v 1.3 1995/03/21 15:08:37 cgd Exp $	*/
 
 /*
@@ -79,7 +79,7 @@ main(int argc, char *argv[])
 		err(2, "%s", scorepath);
 
 	printuser();
-	exit(0);
+	return 0;
 }
 
 /*

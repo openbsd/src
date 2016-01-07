@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkdict.c,v 1.12 2015/10/24 17:27:06 mmcc Exp $	*/
+/*	$OpenBSD: mkdict.c,v 1.13 2016/01/07 16:00:31 tb Exp $	*/
 /*	$NetBSD: mkdict.c,v 1.2 1995/03/21 12:14:49 cgd Exp $	*/
 
 /*-
@@ -43,10 +43,11 @@
 
 #include <ctype.h>
 #include <err.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <limits.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "bog.h"
 
@@ -58,6 +59,9 @@ main(int argc, char *argv[])
 	int ch, common, n, nwords;
 	int current, len, prev, qcount;
 	char buf[2][MAXWORDLEN + 1];
+
+	if (pledge("stdio", NULL) == -1)
+		err(1, "pledge");
 
 	prev = 0;
 	current = 1;
@@ -112,5 +116,5 @@ main(int argc, char *argv[])
 		current = !current;
 	}
 	warnx("%d words", nwords);
-	exit(0);
+	return 0;
 }

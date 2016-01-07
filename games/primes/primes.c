@@ -1,4 +1,4 @@
-/*	$OpenBSD: primes.c,v 1.20 2016/01/04 11:58:35 mestre Exp $	*/
+/*	$OpenBSD: primes.c,v 1.21 2016/01/07 16:00:33 tb Exp $	*/
 /*	$NetBSD: primes.c,v 1.5 1995/04/24 12:24:47 cgd Exp $	*/
 
 /*
@@ -165,7 +165,7 @@ main(int argc, char *argv[])
 	if (start > stop)
 		errx(1, "start value must be less than stop value.");
 	primes(start, stop);
-	exit(0);
+	return 0;
 }
 
 /*

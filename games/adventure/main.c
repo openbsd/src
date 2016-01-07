@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.21 2015/11/30 08:14:48 tb Exp $	*/
+/*	$OpenBSD: main.c,v 1.22 2016/01/07 16:00:31 tb Exp $	*/
 /*	$NetBSD: main.c,v 1.5 1996/05/21 21:53:09 mrg Exp $	*/
 
 /*-
@@ -71,7 +71,7 @@ main(int argc, char *argv[])
 			errx(1, "can't open file");	/* So give up */
 		case 2:		/* Oops -- file was altered */
 			rspeak(202);	/* You dissolve */
-			exit(2);	/* File could be non-adventure */
+			return 2;	/* File could be non-adventure */
 		}			/* So don't unlink it. */
 	}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: makedefs.c,v 1.8 2015/10/24 17:43:28 mmcc Exp $	*/
+/*	$OpenBSD: makedefs.c,v 1.9 2016/01/07 16:00:32 tb Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -62,10 +62,11 @@
  */
 
 #include <ctype.h>
+#include <err.h>
+#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <fcntl.h>
 #include <unistd.h>
 
 /* construct definitions of object constants */
@@ -88,13 +89,16 @@ main(int argc, char **argv)
 	int propct = 0;
 	char *sp;
 
+	if (pledge("stdio rpath", NULL) == -1)
+		err(1, "pledge");
+
 	if (argc != 2) {
 		(void)fprintf(stderr, "usage: makedefs file\n");
-		exit(1);
+		return 1;
 	}
 	if ((fd = open(argv[1], O_RDONLY)) < 0) {
 		perror(argv[1]);
-		exit(1);
+		return 1;
 	}
 	skipuntil("objects[] = {");
 	while(getentry()) {
@@ -122,7 +126,7 @@ main(int argc, char **argv)
 	printf("#define	LAST_GEM	(JADE+1)\n");
 	printf("#define	LAST_RING	%d\n", propct);
 	printf("#define	NROFOBJECTS	%d\n", index-1);
-	exit(0);
+	return 0;
 }
 
 char line[LINSZ], *lp = line, *lp0 = line, *lpe = line;

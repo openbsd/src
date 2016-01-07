@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcd.c,v 1.22 2015/10/23 02:01:15 jsg Exp $	*/
+/*	$OpenBSD: bcd.c,v 1.23 2016/01/07 16:00:31 tb Exp $	*/
 /*	$NetBSD: bcd.c,v 1.6 1995/04/24 12:22:23 cgd Exp $	*/
 
 /*
@@ -139,7 +139,7 @@ main(int argc, char *argv[])
 		default:
 			fprintf(stderr, "usage: bcd [-l] [string ...]\n");
 			fprintf(stderr, "usage: bcd -d [-l]\n");
-			exit(1);
+			return 1;
 		}
 	}
 	argc -= optind;
@@ -166,7 +166,7 @@ main(int argc, char *argv[])
 		while (fgets(cardline, sizeof(cardline), stdin))
 			printcard(cardline);
 	}
-	exit(0);
+	return 0;
 }
 
 void

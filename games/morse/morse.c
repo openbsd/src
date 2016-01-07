@@ -1,4 +1,4 @@
-/*	$OpenBSD: morse.c,v 1.18 2016/01/04 17:33:24 mestre Exp $	*/
+/*	$OpenBSD: morse.c,v 1.19 2016/01/07 16:00:33 tb Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -127,7 +127,7 @@ main(int argc, char *argv[])
 		case '?': case 'h':
 		default:
 			fprintf(stderr, "usage: morse [-d | -s] [string ...]\n");
-			exit(1);
+			return 1;
 		}
 	argc -= optind;
 	argv += optind;
@@ -183,7 +183,7 @@ main(int argc, char *argv[])
 			morse(ch);
 		show("...-.-");	/* SK */
 	}
-	exit(0);
+	return 0;
 }
 
 void

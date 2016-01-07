@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.26 2015/12/31 16:50:29 mestre Exp $	*/
+/*	$OpenBSD: main.c,v 1.27 2016/01/07 16:00:31 tb Exp $	*/
 /*	$NetBSD: main.c,v 1.4 1995/04/27 21:22:25 mycroft Exp $	*/
 
 /*-
@@ -129,7 +129,7 @@ main(int argc, char *argv[])
 	}
 		
 	if (f_usage || f_showscore || f_list || f_printpath)
-		exit(0);
+		return 0;
 
 	if (file == NULL)
 		file = default_game();
@@ -137,7 +137,7 @@ main(int argc, char *argv[])
 		file = okay_game(file);
 
 	if (file == NULL || read_file(file) < 0)
-		exit(1);
+		return 1;
 
 	setup_screen(sp);
 

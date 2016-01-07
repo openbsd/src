@@ -1,4 +1,4 @@
-/*	$OpenBSD: snake.c,v 1.22 2016/01/04 17:33:24 mestre Exp $	*/
+/*	$OpenBSD: snake.c,v 1.23 2016/01/07 16:00:33 tb Exp $	*/
 /*	$NetBSD: snake.c,v 1.8 1995/04/29 00:06:41 mycroft Exp $	*/
 
 /*
@@ -166,7 +166,7 @@ main(int argc, char *argv[])
 				snscore(rawscores, 0);
 			else
 				printf("no scores so far\n");
-			exit(0);
+			return 0;
 			break;
 		case 't': /* slow terminal */
 			fast = 0;
@@ -176,7 +176,7 @@ main(int argc, char *argv[])
 		default:
 			fputs("usage: snake [-st] [-l length] [-w width]\n",
 			    stderr);
-			exit(1);
+			return 1;
 		}
 
 	readscores(1);
@@ -237,8 +237,7 @@ main(int argc, char *argv[])
 		chase(&snake[i], &snake[i - 1]);
 	setup();
 	mainloop();
-	/* NOT REACHED */
-	return(0);
+	return 0;
 }
 
 /* Main command loop */

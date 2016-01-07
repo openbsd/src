@@ -1,4 +1,4 @@
-/*	$OpenBSD: tetris.c,v 1.28 2016/01/04 17:33:24 mestre Exp $	*/
+/*	$OpenBSD: tetris.c,v 1.29 2016/01/07 16:00:33 tb Exp $	*/
 /*	$NetBSD: tetris.c,v 1.2 1995/04/22 07:42:47 cgd Exp $	*/
 
 /*-
@@ -185,7 +185,7 @@ main(int argc, char *argv[])
 			break;
 		case 's':
 			showscores(0);
-			exit(0);
+			return 0;
 		default:
 			usage();
 		}
@@ -342,7 +342,7 @@ main(int argc, char *argv[])
 
 	showscores(level);
 
-	exit(0);
+	return 0;
 }
 
 void

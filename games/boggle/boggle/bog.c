@@ -1,4 +1,4 @@
-/*	$OpenBSD: bog.c,v 1.27 2016/01/03 14:38:16 mestre Exp $	*/
+/*	$OpenBSD: bog.c,v 1.28 2016/01/07 16:00:31 tb Exp $	*/
 /*	$NetBSD: bog.c,v 1.5 1995/04/24 12:22:32 cgd Exp $	*/
 
 /*-
@@ -160,20 +160,20 @@ main(int argc, char *argv[])
 		newgame(bspec);
 		while ((p = batchword(stdin)) != NULL)
 			(void) printf("%s\n", p);
-		exit(0);
+		return 0;
 	}
 	setup();
 	prompt("Loading the dictionary...");
 	if ((dictfp = opendict(DICT)) == NULL) {
 		warn("%s", DICT);
 		cleanup();
-		exit(1);
+		return 1;
 	}
 #ifdef LOADDICT
 	if (loaddict(dictfp) < 0) {
 		warnx("can't load %s", DICT);
 		cleanup();
-		exit(1);
+		return 1;
 	}
 	(void)fclose(dictfp);
 	dictfp = NULL;
@@ -181,7 +181,7 @@ main(int argc, char *argv[])
 	if (loadindex(DICTINDEX) < 0) {
 		warnx("can't load %s", DICTINDEX);
 		cleanup();
-		exit(1);
+		return 1;
 	}
 
 	prompt("Type <space> to begin...");
@@ -211,7 +211,7 @@ main(int argc, char *argv[])
 		}
 	}
 	cleanup();
-	exit(0);
+	return 0;
 }
 
 /*

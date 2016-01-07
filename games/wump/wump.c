@@ -1,4 +1,4 @@
-/*	$OpenBSD: wump.c,v 1.30 2016/01/04 17:33:24 mestre Exp $	*/
+/*	$OpenBSD: wump.c,v 1.31 2016/01/07 16:00:34 tb Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -255,7 +255,7 @@ quiver holds %d custom super anti-evil Wumpus arrows.  Good luck.\n",
 
 		if (!getans("\nCare to play another game? (y-n) ")) {
 			(void)printf("\n");
-			exit(0);
+			return 0;
 		}
 		clear_things_in_cave();
 		if (!getans("In the same cave? (y-n) ")) {
