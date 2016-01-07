@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pv,v 1.4 2015/12/08 22:14:40 mikeb Exp $
+#	$OpenBSD: files.pv,v 1.5 2016/01/07 11:13:19 mikeb Exp $
 #
 # Config file and device description for paravirtual devices.
 # Included by ports that need it.
@@ -18,3 +18,7 @@ device	xen {}
 attach	xen at pvbus
 file	dev/pv/xen.c			xen	needs-flag
 file	dev/pv/xenstore.c		xen
+
+device	xnf: ether, ifnet, ifmedia
+attach	xnf at xen
+file	dev/pv/if_xnf.c			xnf
