@@ -32,7 +32,7 @@ POSSIBILITY OF SUCH DAMAGE.
 ***************************************************************************/
 
 /* $FreeBSD: if_em.h,v 1.26 2004/09/01 23:22:41 pdeuskar Exp $ */
-/* $OpenBSD: if_em.h,v 1.66 2016/01/07 05:34:11 dlg Exp $ */
+/* $OpenBSD: if_em.h,v 1.67 2016/01/07 06:25:35 dlg Exp $ */
 
 #ifndef _EM_H_DEFINED_
 #define _EM_H_DEFINED_
@@ -280,7 +280,6 @@ struct em_buffer {
  * em_dma_malloc and em_dma_free.
  */
 struct em_dma_alloc {
-	bus_addr_t		dma_paddr;
 	caddr_t			dma_vaddr;
 	bus_dmamap_t		dma_map;
 	bus_dma_segment_t	dma_seg;
