@@ -1,4 +1,4 @@
-/*	$OpenBSD: brconfig.h,v 1.8 2014/07/11 16:41:51 henning Exp $	*/
+/*	$OpenBSD: brconfig.h,v 1.9 2016/01/07 15:33:56 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2009 Claudio Jeker <claudio@openbsd.org>
@@ -68,7 +68,7 @@ int bridge_rule(int, char **, int);
 #define	IFFBITS								\
 	"\024\1UP\2BROADCAST\3DEBUG\4LOOPBACK\5POINTOPOINT\6NOTRAILERS" \
 	"\7RUNNING\10NOARP\11PROMISC\12ALLMULTI\13OACTIVE\14SIMPLEX"	\
-	"\15LINK0\16LINK1\17LINK2\20MULTICAST\21TXREADY\22NOINET6"	\
+	"\15LINK0\16LINK1\17LINK2\20MULTICAST\21MPSAFE"	\
 	"\23INET6_NOPRIVACY\24MPLS\25WOL\26AUTOCONF6"
 
 void printb(char *, unsigned int, unsigned char *);
