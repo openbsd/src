@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pvbus.4,v 1.4 2015/12/09 08:46:27 reyk Exp $
+.\"	$OpenBSD: pvbus.4,v 1.5 2016/01/07 11:15:16 mikeb Exp $
 .\"
 .\" Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2006 Jason McIntyre <jmc@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 9 2015 $
+.Dd $Mdocdate: January 7 2016 $
 .Dt PVBUS 4
 .Os
 .Sh NAME
@@ -54,8 +54,13 @@ multiple hypervisor interfaces may be available on the same host.
 .Bl -tag -width 13n -offset ind -compact
 .It Xr vmt 4
 VMware Tools driver
+.El
+.Ss Xen paravirtual devices
+.Bl -tag -width 13n -offset ind -compact
 .It Xr xen 4
 Xen domU nexus device
+.It Xr xnf 4
+Xen Netfront virtual networking interface
 .El
 .Sh SEE ALSO
 .Xr autoconf 4 ,
