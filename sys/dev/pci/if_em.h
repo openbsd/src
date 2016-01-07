@@ -32,7 +32,7 @@ POSSIBILITY OF SUCH DAMAGE.
 ***************************************************************************/
 
 /* $FreeBSD: if_em.h,v 1.26 2004/09/01 23:22:41 pdeuskar Exp $ */
-/* $OpenBSD: if_em.h,v 1.67 2016/01/07 06:25:35 dlg Exp $ */
+/* $OpenBSD: if_em.h,v 1.68 2016/01/07 07:03:55 dlg Exp $ */
 
 #ifndef _EM_H_DEFINED_
 #define _EM_H_DEFINED_
@@ -347,14 +347,14 @@ struct em_softc {
 	 * The index of the next available descriptor is next_avail_tx_desc.
 	 * The number of remaining tx_desc is num_tx_desc_avail.
 	 */
-	struct em_dma_alloc	txdma;		/* bus_dma glue for tx desc */
-	struct em_tx_desc	*tx_desc_base;
-	u_int32_t		next_avail_tx_desc;
-	u_int32_t		next_tx_to_clean;
-	volatile u_int32_t	num_tx_desc_avail;
-	u_int32_t		num_tx_desc;
-	u_int32_t		txd_cmd;
-	struct em_buffer	*tx_buffer_area;
+	struct em_dma_alloc	 sc_txdma;	/* bus_dma glue for tx desc */
+	struct em_tx_desc	*sc_tx_desc_base;
+	u_int32_t		 sc_next_avail_tx_desc;
+	u_int32_t		 sc_next_tx_to_clean;
+	volatile u_int32_t	 sc_num_tx_desc_avail;
+	u_int32_t		 sc_num_tx_desc;
+	u_int32_t		 sc_txd_cmd;
+	struct em_buffer	*sc_tx_buffer_area;
 
 	/*
 	 * Receive definitions
@@ -364,14 +364,14 @@ struct em_softc {
 	 * (at rx_buffer_area).
 	 * The next pair to check on receive is at offset next_rx_desc_to_check
 	 */
-	struct em_dma_alloc	rxdma;		/* bus_dma glue for rx desc */
-	struct em_rx_desc	*rx_desc_base;
-	struct if_rxring	rx_ring;
-	u_int32_t		next_rx_desc_to_check;
-	u_int32_t		last_rx_desc_filled;
-	u_int32_t		rx_buffer_len;
-	u_int16_t		num_rx_desc;
-	struct em_buffer	*rx_buffer_area;
+	struct em_dma_alloc	 sc_rxdma;	/* bus_dma glue for rx desc */
+	struct em_rx_desc	*sc_rx_desc_base;
+	struct if_rxring	 sc_rx_ring;
+	u_int32_t		 sc_next_rx_desc_to_check;
+	u_int32_t		 sc_last_rx_desc_filled;
+	u_int32_t		 sc_rx_buffer_len;
+	u_int16_t		 sc_num_rx_desc;
+	struct em_buffer	*sc_rx_buffer_area;
 
 	/*
 	 * First/last mbuf pointers, for
