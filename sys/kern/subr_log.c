@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_log.c,v 1.35 2016/01/01 19:15:00 bluhm Exp $	*/
+/*	$OpenBSD: subr_log.c,v 1.36 2016/01/07 12:27:07 bluhm Exp $	*/
 /*	$NetBSD: subr_log.c,v 1.11 1996/03/30 22:24:44 christos Exp $	*/
 
 /*
@@ -406,15 +406,43 @@ dosendsyslog(struct proc *p, const char *buf, size_t nbyte, int flags,
 	struct iovec *ktriov = NULL;
 	int iovlen;
 #endif
+	char pri[6];
 	struct iovec aiov;
 	struct uio auio;
-	size_t len;
+	size_t i, len;
 	int error;
 
-	if (syslogf == NULL && (flags & LOG_CONS) == 0)
-		return (ENOTCONN);
 	if (syslogf)
 		FREF(syslogf);
+	else if ((flags & LOG_CONS) == 0)
+		return (ENOTCONN);
+	else {
+		/*
+		 * Strip off syslog priority when logging to console.
+		 * LOG_PRIMASK | LOG_FACMASK is 0x03ff, so at most 4
+		 * decimal digits may appear in priority as <1023>.
+		 */
+		len = MIN(nbyte, sizeof(pri));
+		if (sflg == UIO_USERSPACE) {
+			if ((error = copyin(buf, pri, len)))
+				return (error);
+		} else
+			memcpy(pri, buf, len);
+		if (0 < len && pri[0] == '<') {
+			for (i = 1; i < len; i++) {
+				if (pri[i] < '0' || pri[i] > '9')
+					break;
+			}
+			if (i < len && pri[i] == '>') {
+				i++;
+				/* There must be at least one digit <0>. */
+				if (i >= 3) {
+					buf += i;
+					nbyte -= i;
+				}
+			}
+		}
+	}
 
 	aiov.iov_base = (char *)buf;
 	aiov.iov_len = nbyte;
