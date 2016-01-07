@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.318 2016/01/07 04:37:53 dlg Exp $ */
+/* $OpenBSD: if_em.c,v 1.319 2016/01/07 05:34:11 dlg Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -249,8 +249,7 @@ void em_82547_update_fifo_head(struct em_softc *, int);
 int  em_82547_tx_fifo_reset(struct em_softc *);
 void em_82547_move_tail(void *arg);
 void em_82547_move_tail_locked(struct em_softc *);
-int  em_dma_malloc(struct em_softc *, bus_size_t, struct em_dma_alloc *,
-		   int);
+int  em_dma_malloc(struct em_softc *, bus_size_t, struct em_dma_alloc *);
 void em_dma_free(struct em_softc *, struct em_dma_alloc *);
 u_int32_t em_fill_descriptors(u_int64_t address, u_int32_t length,
 			      PDESC_ARRAY desc_array);
@@ -346,6 +345,7 @@ em_attach(struct device *parent, struct device *self, void *aux)
 	INIT_DEBUGOUT("em_attach: begin");
 
 	sc = (struct em_softc *)self;
+	sc->sc_dmat = pa->pa_dmat;
 	sc->osdep.em_pa = *pa;
 
 	timeout_set(&sc->timer_handle, em_local_timer, sc);
@@ -463,7 +463,7 @@ em_attach(struct device *parent, struct device *self, void *aux)
 	tsize = EM_ROUNDUP(tsize, PAGE_SIZE);
 
 	/* Allocate Transmit Descriptor ring */
-	if (em_dma_malloc(sc, tsize, &sc->txdma, BUS_DMA_NOWAIT)) {
+	if (em_dma_malloc(sc, tsize, &sc->txdma)) {
 		printf("%s: Unable to allocate tx_desc memory\n", 
 		       DEVNAME(sc));
 		goto err_tx_desc;
@@ -479,7 +479,7 @@ em_attach(struct device *parent, struct device *self, void *aux)
 	rsize = EM_ROUNDUP(rsize, PAGE_SIZE);
 
 	/* Allocate Receive Descriptor ring */
-	if (em_dma_malloc(sc, rsize, &sc->rxdma, BUS_DMA_NOWAIT)) {
+	if (em_dma_malloc(sc, rsize, &sc->rxdma)) {
 		printf("%s: Unable to allocate rx_desc memory\n",
 		       DEVNAME(sc));
 		goto err_rx_desc;
@@ -597,7 +597,7 @@ em_start(struct ifnet *ifp)
 	}
 
 	if (sc->hw.mac_type != em_82547) {
-		bus_dmamap_sync(sc->txdma.dma_tag, sc->txdma.dma_map, 0,
+		bus_dmamap_sync(sc->sc_dmat, sc->txdma.dma_map, 0,
 		    sc->txdma.dma_map->dm_mapsize,
 		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 	}
@@ -631,7 +631,7 @@ em_start(struct ifnet *ifp)
 	}
 
 	if (sc->hw.mac_type != em_82547) {
-		bus_dmamap_sync(sc->txdma.dma_tag, sc->txdma.dma_map, 0,
+		bus_dmamap_sync(sc->sc_dmat, sc->txdma.dma_map, 0,
 		    sc->txdma.dma_map->dm_mapsize,
 		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 		/* 
@@ -1115,13 +1115,13 @@ em_encap(struct em_softc *sc, struct mbuf *m_head)
 	tx_buffer_mapped = tx_buffer;
 	map = tx_buffer->map;
 
-	error = bus_dmamap_load_mbuf(sc->txtag, map, m_head, BUS_DMA_NOWAIT);
+	error = bus_dmamap_load_mbuf(sc->sc_dmat, map, m_head, BUS_DMA_NOWAIT);
 	switch (error) {
 	case 0:
 		break;
 	case EFBIG:
 		if ((error = m_defrag(m_head, M_DONTWAIT)) == 0 &&
-		    (error = bus_dmamap_load_mbuf(sc->txtag, map, m_head,
+		    (error = bus_dmamap_load_mbuf(sc->sc_dmat, map, m_head,
 		     BUS_DMA_NOWAIT)) == 0)
 			break;
 
@@ -1132,7 +1132,7 @@ em_encap(struct em_softc *sc, struct mbuf *m_head)
 	}
 
 	if (sc->hw.mac_type == em_82547) {
-		bus_dmamap_sync(sc->txdma.dma_tag, sc->txdma.dma_map, 0,
+		bus_dmamap_sync(sc->sc_dmat, sc->txdma.dma_map, 0,
 		    sc->txdma.dma_map->dm_mapsize,
 		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 	}
@@ -1211,7 +1211,7 @@ em_encap(struct em_softc *sc, struct mbuf *m_head)
 	tx_buffer->m_head = m_head;
 	tx_buffer_mapped->map = tx_buffer->map;
 	tx_buffer->map = map;
-	bus_dmamap_sync(sc->txtag, map, 0, map->dm_mapsize,
+	bus_dmamap_sync(sc->sc_dmat, map, 0, map->dm_mapsize,
 	    BUS_DMASYNC_PREWRITE);
 
 	/* 
@@ -1235,7 +1235,7 @@ em_encap(struct em_softc *sc, struct mbuf *m_head)
 	 * available to transmit.
 	 */
 	if (sc->hw.mac_type == em_82547) {
-		bus_dmamap_sync(sc->txdma.dma_tag, sc->txdma.dma_map, 0,
+		bus_dmamap_sync(sc->sc_dmat, sc->txdma.dma_map, 0,
 		    sc->txdma.dma_map->dm_mapsize,
 		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 		if (sc->link_duplex == HALF_DUPLEX)
@@ -1909,8 +1909,15 @@ em_detach(struct device *self, int flags)
 	em_stop(sc, 1);
 
 	em_free_pci_resources(sc);
-	em_dma_free(sc, &sc->rxdma);
-	em_dma_free(sc, &sc->txdma);
+
+	if (sc->rx_desc_base != NULL) {
+		em_dma_free(sc, &sc->rxdma);
+		sc->rx_desc_base = NULL;
+	}
+	if (sc->tx_desc_base != NULL) {
+		em_dma_free(sc, &sc->txdma);
+		sc->tx_desc_base = NULL;
+	}
 
 	ether_ifdetach(ifp);
 	if_detach(ifp);
@@ -2006,59 +2013,39 @@ em_smartspeed(struct em_softc *sc)
  * Manage DMA'able memory.
  */
 int
-em_dma_malloc(struct em_softc *sc, bus_size_t size,
-    struct em_dma_alloc *dma, int mapflags)
+em_dma_malloc(struct em_softc *sc, bus_size_t size, struct em_dma_alloc *dma)
 {
 	int r;
 
-	dma->dma_tag = sc->osdep.em_pa.pa_dmat;
-	r = bus_dmamap_create(dma->dma_tag, size, 1,
-	    size, 0, BUS_DMA_NOWAIT, &dma->dma_map);
-	if (r != 0) {
-		printf("%s: em_dma_malloc: bus_dmamap_create failed; "
-			"error %u\n", DEVNAME(sc), r);
-		goto fail_0;
-	}
+	r = bus_dmamap_create(sc->sc_dmat, size, 1,
+	    size, 0, BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW, &dma->dma_map);
+	if (r != 0)
+		return (r);
 
-	r = bus_dmamem_alloc(dma->dma_tag, size, PAGE_SIZE, 0, &dma->dma_seg,
-	    1, &dma->dma_nseg, BUS_DMA_NOWAIT);
-	if (r != 0) {
-		printf("%s: em_dma_malloc: bus_dmammem_alloc failed; "
-			"size %lu, error %d\n", DEVNAME(sc),
-			(unsigned long)size, r);
-		goto fail_1;
-	}
+	r = bus_dmamem_alloc(sc->sc_dmat, size, PAGE_SIZE, 0, &dma->dma_seg,
+	    1, &dma->dma_nseg, BUS_DMA_WAITOK | BUS_DMA_ZERO);
+	if (r != 0)
+		goto destroy;
 
-	r = bus_dmamem_map(dma->dma_tag, &dma->dma_seg, dma->dma_nseg, size,
-	    &dma->dma_vaddr, BUS_DMA_NOWAIT);
-	if (r != 0) {
-		printf("%s: em_dma_malloc: bus_dmammem_map failed; "
-			"size %lu, error %d\n", DEVNAME(sc),
-			(unsigned long)size, r);
-		goto fail_2;
-	}
+	r = bus_dmamem_map(sc->sc_dmat, &dma->dma_seg, dma->dma_nseg, size,
+	    &dma->dma_vaddr, BUS_DMA_WAITOK);
+	if (r != 0)
+		goto free;
 
-	r = bus_dmamap_load(sc->osdep.em_pa.pa_dmat, dma->dma_map,
-			    dma->dma_vaddr, size, NULL,
-			    mapflags | BUS_DMA_NOWAIT);
-	if (r != 0) {
-		printf("%s: em_dma_malloc: bus_dmamap_load failed; "
-			"error %u\n", DEVNAME(sc), r);
-		goto fail_3;
-	}
+	r = bus_dmamap_load(sc->sc_dmat, dma->dma_map, dma->dma_vaddr, size,
+	    NULL, BUS_DMA_WAITOK);
+	if (r != 0)
+		goto unmap;
 
 	dma->dma_size = size;
 	return (0);
 
-fail_3:
-	bus_dmamem_unmap(dma->dma_tag, dma->dma_vaddr, size);
-fail_2:
-	bus_dmamem_free(dma->dma_tag, &dma->dma_seg, dma->dma_nseg);
-fail_1:
-	bus_dmamap_destroy(dma->dma_tag, dma->dma_map);
-fail_0:
-	dma->dma_map = NULL;
-	dma->dma_tag = NULL;
+unmap:
+	bus_dmamem_unmap(sc->sc_dmat, dma->dma_vaddr, size);
+free:
+	bus_dmamem_free(sc->sc_dmat, &dma->dma_seg, dma->dma_nseg);
+destroy:
+	bus_dmamap_destroy(sc->sc_dmat, dma->dma_map);
 
 	return (r);
 }
@@ -2066,19 +2053,10 @@ fail_0:
 void
 em_dma_free(struct em_softc *sc, struct em_dma_alloc *dma)
 {
-	if (dma->dma_tag == NULL)
-		return;
-
-	if (dma->dma_map != NULL) {
-		bus_dmamap_sync(dma->dma_tag, dma->dma_map, 0,
-		    dma->dma_map->dm_mapsize,
-		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
-		bus_dmamap_unload(dma->dma_tag, dma->dma_map);
-		bus_dmamem_unmap(dma->dma_tag, dma->dma_vaddr, dma->dma_size);
-		bus_dmamem_free(dma->dma_tag, &dma->dma_seg, dma->dma_nseg);
-		bus_dmamap_destroy(dma->dma_tag, dma->dma_map);
-	}
-	dma->dma_tag = NULL;
+	bus_dmamap_unload(sc->sc_dmat, dma->dma_map);
+	bus_dmamem_unmap(sc->sc_dmat, dma->dma_vaddr, dma->dma_size);
+	bus_dmamem_free(sc->sc_dmat, &dma->dma_seg, dma->dma_nseg);
+	bus_dmamap_destroy(sc->sc_dmat, dma->dma_map);
 }
 
 /*********************************************************************
@@ -2090,6 +2068,9 @@ em_dma_free(struct em_softc *sc, struct em_dma_alloc *dma)
 int
 em_allocate_transmit_structures(struct em_softc *sc)
 {
+	bus_dmamap_sync(sc->sc_dmat, sc->txdma.dma_map, 0,
+	    sc->txdma.dma_size, BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+
 	if (!(sc->tx_buffer_area = mallocarray(sc->num_tx_desc,
 	    sizeof(struct em_buffer), M_DEVBUF, M_NOWAIT | M_ZERO))) {
 		printf("%s: Unable to allocate tx_buffer memory\n", 
@@ -2117,11 +2098,9 @@ em_setup_transmit_structures(struct em_softc *sc)
 	bzero((void *) sc->tx_desc_base,
 	      (sizeof(struct em_tx_desc)) * sc->num_tx_desc);
 
-	sc->txtag = sc->osdep.em_pa.pa_dmat;
-
 	tx_buffer = sc->tx_buffer_area;
 	for (i = 0; i < sc->num_tx_desc; i++) {
-		error = bus_dmamap_create(sc->txtag, MAX_JUMBO_FRAME_SIZE,
+		error = bus_dmamap_create(sc->sc_dmat, MAX_JUMBO_FRAME_SIZE,
 		    EM_MAX_SCATTER / (sc->pcix_82544 ? 2 : 1),
 		    MAX_JUMBO_FRAME_SIZE, 0, BUS_DMA_NOWAIT, &tx_buffer->map);
 		if (error != 0) {
@@ -2140,8 +2119,6 @@ em_setup_transmit_structures(struct em_softc *sc)
 
 	/* Set checksum context */
 	sc->active_checksum_context = OFFLOAD_NONE;
-	bus_dmamap_sync(sc->txdma.dma_tag, sc->txdma.dma_map, 0,
-	    sc->txdma.dma_size, BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 	return (0);
 
@@ -2250,10 +2227,10 @@ em_free_transmit_structures(struct em_softc *sc)
 		for (i = 0; i < sc->num_tx_desc; i++, tx_buffer++) {
 			if (tx_buffer->map != NULL &&
 			    tx_buffer->map->dm_nsegs > 0) {
-				bus_dmamap_sync(sc->txtag, tx_buffer->map,
+				bus_dmamap_sync(sc->sc_dmat, tx_buffer->map,
 				    0, tx_buffer->map->dm_mapsize,
 				    BUS_DMASYNC_POSTWRITE);
-				bus_dmamap_unload(sc->txtag,
+				bus_dmamap_unload(sc->sc_dmat,
 				    tx_buffer->map);
 			}
 			if (tx_buffer->m_head != NULL) {
@@ -2261,7 +2238,7 @@ em_free_transmit_structures(struct em_softc *sc)
 				tx_buffer->m_head = NULL;
 			}
 			if (tx_buffer->map != NULL) {
-				bus_dmamap_destroy(sc->txtag,
+				bus_dmamap_destroy(sc->sc_dmat,
 				    tx_buffer->map);
 				tx_buffer->map = NULL;
 			}
@@ -2272,8 +2249,9 @@ em_free_transmit_structures(struct em_softc *sc)
 		    sc->num_tx_desc * sizeof(struct em_buffer));
 		sc->tx_buffer_area = NULL;
 	}
-	if (sc->txtag != NULL)
-		sc->txtag = NULL;
+
+	bus_dmamap_sync(sc->sc_dmat, sc->txdma.dma_map, 0,
+	    sc->txdma.dma_size, BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 }
 
 /*********************************************************************
@@ -2391,7 +2369,7 @@ em_txeof(struct em_softc *sc)
 		last = 0;
 	done = last;
 
-	bus_dmamap_sync(sc->txdma.dma_tag, sc->txdma.dma_map, 0,
+	bus_dmamap_sync(sc->sc_dmat, sc->txdma.dma_map, 0,
 	    sc->txdma.dma_map->dm_mapsize, BUS_DMASYNC_POSTREAD);
 	while (eop_desc->upper.fields.status & E1000_TXD_STAT_DD) {
 		/* We clean the range of the packet */
@@ -2403,11 +2381,11 @@ em_txeof(struct em_softc *sc)
 			if (tx_buffer->m_head != NULL) {
 				ifp->if_opackets++;
 				if (tx_buffer->map->dm_nsegs > 0) {
-					bus_dmamap_sync(sc->txtag,
+					bus_dmamap_sync(sc->sc_dmat,
 					    tx_buffer->map, 0,
 					    tx_buffer->map->dm_mapsize,
 					    BUS_DMASYNC_POSTWRITE);
-					bus_dmamap_unload(sc->txtag,
+					bus_dmamap_unload(sc->sc_dmat,
 					    tx_buffer->map);
 				}
 				m_freem(tx_buffer->m_head);
@@ -2432,7 +2410,7 @@ em_txeof(struct em_softc *sc)
 		} else
 			break;
 	}
-	bus_dmamap_sync(sc->txdma.dma_tag, sc->txdma.dma_map, 0,
+	bus_dmamap_sync(sc->sc_dmat, sc->txdma.dma_map, 0,
 	    sc->txdma.dma_map->dm_mapsize,
 	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
@@ -2478,23 +2456,23 @@ em_get_buf(struct em_softc *sc, int i)
 	m_adj(m, ETHER_ALIGN);
 #endif
 
-	error = bus_dmamap_load_mbuf(sc->rxtag, pkt->map, m, BUS_DMA_NOWAIT);
+	error = bus_dmamap_load_mbuf(sc->sc_dmat, pkt->map, m, BUS_DMA_NOWAIT);
 	if (error) {
 		m_freem(m);
 		return (error);
 	}
 
-	bus_dmamap_sync(sc->rxtag, pkt->map, 0, pkt->map->dm_mapsize,
+	bus_dmamap_sync(sc->sc_dmat, pkt->map, 0, pkt->map->dm_mapsize,
 	    BUS_DMASYNC_PREREAD);
 	pkt->m_head = m;
 
-	bus_dmamap_sync(sc->rxdma.dma_tag, sc->rxdma.dma_map,
+	bus_dmamap_sync(sc->sc_dmat, sc->rxdma.dma_map,
 	    sizeof(*desc) * i, sizeof(*desc), BUS_DMASYNC_POSTWRITE);
 
 	bzero(desc, sizeof(*desc));
 	desc->buffer_addr = htole64(pkt->map->dm_segs[0].ds_addr);
 
-	bus_dmamap_sync(sc->rxdma.dma_tag, sc->rxdma.dma_map,
+	bus_dmamap_sync(sc->sc_dmat, sc->rxdma.dma_map,
 	    sizeof(*desc) * i, sizeof(*desc), BUS_DMASYNC_PREWRITE);
 
 	return (0);
@@ -2514,6 +2492,10 @@ em_allocate_receive_structures(struct em_softc *sc)
 	int		i, error;
 	struct em_buffer *rx_buffer;
 
+	bus_dmamap_sync(sc->sc_dmat, sc->rxdma.dma_map, 0,
+	    sc->rxdma.dma_map->dm_mapsize,
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+
 	if (!(sc->rx_buffer_area = mallocarray(sc->num_rx_desc,
 	    sizeof(struct em_buffer), M_DEVBUF, M_NOWAIT | M_ZERO))) {
 		printf("%s: Unable to allocate rx_buffer memory\n", 
@@ -2521,11 +2503,9 @@ em_allocate_receive_structures(struct em_softc *sc)
 		return (ENOMEM);
 	}
 
-	sc->rxtag = sc->osdep.em_pa.pa_dmat;
-
 	rx_buffer = sc->rx_buffer_area;
 	for (i = 0; i < sc->num_rx_desc; i++, rx_buffer++) {
-		error = bus_dmamap_create(sc->rxtag, EM_MCLBYTES, 1,
+		error = bus_dmamap_create(sc->sc_dmat, EM_MCLBYTES, 1,
 		    EM_MCLBYTES, 0, BUS_DMA_NOWAIT, &rx_buffer->map);
 		if (error != 0) {
 			printf("%s: em_allocate_receive_structures: "
@@ -2535,9 +2515,6 @@ em_allocate_receive_structures(struct em_softc *sc)
 		}
 		rx_buffer->m_head = NULL;
 	}
-	bus_dmamap_sync(sc->rxdma.dma_tag, sc->rxdma.dma_map, 0,
-	    sc->rxdma.dma_map->dm_mapsize,
-	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
         return (0);
 
@@ -2696,18 +2673,22 @@ em_free_receive_structures(struct em_softc *sc)
 
 	if_rxr_init(&sc->rx_ring, 0, 0);
 
+	bus_dmamap_sync(sc->sc_dmat, sc->rxdma.dma_map, 0,
+	    sc->rxdma.dma_map->dm_mapsize,
+	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
+
 	if (sc->rx_buffer_area != NULL) {
 		rx_buffer = sc->rx_buffer_area;
 		for (i = 0; i < sc->num_rx_desc; i++, rx_buffer++) {
 			if (rx_buffer->m_head != NULL) {
-				bus_dmamap_sync(sc->rxtag, rx_buffer->map,
+				bus_dmamap_sync(sc->sc_dmat, rx_buffer->map,
 				    0, rx_buffer->map->dm_mapsize,
 				    BUS_DMASYNC_POSTREAD);
-				bus_dmamap_unload(sc->rxtag, rx_buffer->map);
+				bus_dmamap_unload(sc->sc_dmat, rx_buffer->map);
 				m_freem(rx_buffer->m_head);
 				rx_buffer->m_head = NULL;
 			}
-			bus_dmamap_destroy(sc->rxtag, rx_buffer->map);
+			bus_dmamap_destroy(sc->sc_dmat, rx_buffer->map);
 		}
 	}
 	if (sc->rx_buffer_area != NULL) {
@@ -2715,8 +2696,6 @@ em_free_receive_structures(struct em_softc *sc)
 		    sc->num_rx_desc * sizeof(struct em_buffer));
 		sc->rx_buffer_area = NULL;
 	}
-	if (sc->rxtag != NULL)
-		sc->rxtag = NULL;
 
 	if (sc->fmp != NULL) {
 		m_freem(sc->fmp);
@@ -2779,7 +2758,7 @@ em_rxeof(struct em_softc *sc)
 
 	i = sc->next_rx_desc_to_check;
 
-	bus_dmamap_sync(sc->rxdma.dma_tag, sc->rxdma.dma_map,
+	bus_dmamap_sync(sc->sc_dmat, sc->rxdma.dma_map,
 	    0, sizeof(*desc) * sc->num_rx_desc,
 	    BUS_DMASYNC_POSTREAD);
 
@@ -2794,9 +2773,9 @@ em_rxeof(struct em_softc *sc)
 			break;
 
 		/* pull the mbuf off the ring */
-		bus_dmamap_sync(sc->rxtag, pkt->map, 0, pkt->map->dm_mapsize,
+		bus_dmamap_sync(sc->sc_dmat, pkt->map, 0, pkt->map->dm_mapsize,
 		    BUS_DMASYNC_POSTREAD);
-		bus_dmamap_unload(sc->rxtag, pkt->map);
+		bus_dmamap_unload(sc->sc_dmat, pkt->map);
 		m = pkt->m_head;
 		pkt->m_head = NULL;
 
@@ -2907,7 +2886,7 @@ em_rxeof(struct em_softc *sc)
 			i = 0;
 	} while (if_rxr_inuse(&sc->rx_ring) > 0);
 
-	bus_dmamap_sync(sc->rxdma.dma_tag, sc->rxdma.dma_map,
+	bus_dmamap_sync(sc->sc_dmat, sc->rxdma.dma_map,
 	    0, sizeof(*desc) * sc->num_rx_desc,
 	    BUS_DMASYNC_PREREAD);
 

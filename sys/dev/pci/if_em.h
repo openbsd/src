@@ -32,7 +32,7 @@ POSSIBILITY OF SUCH DAMAGE.
 ***************************************************************************/
 
 /* $FreeBSD: if_em.h,v 1.26 2004/09/01 23:22:41 pdeuskar Exp $ */
-/* $OpenBSD: if_em.h,v 1.65 2016/01/07 04:37:53 dlg Exp $ */
+/* $OpenBSD: if_em.h,v 1.66 2016/01/07 05:34:11 dlg Exp $ */
 
 #ifndef _EM_H_DEFINED_
 #define _EM_H_DEFINED_
@@ -282,7 +282,6 @@ struct em_buffer {
 struct em_dma_alloc {
 	bus_addr_t		dma_paddr;
 	caddr_t			dma_vaddr;
-	bus_dma_tag_t		dma_tag;
 	bus_dmamap_t		dma_map;
 	bus_dma_segment_t	dma_seg;
 	bus_size_t		dma_size;
@@ -312,6 +311,9 @@ typedef struct _DESCRIPTOR_PAIR
 struct em_softc {
 	struct device	sc_dev;
 	struct arpcom	sc_ac;
+
+	bus_dma_tag_t	sc_dmat;
+
 	struct em_hw	hw;
 
 	/* OpenBSD operating-system-specific structures */
@@ -354,7 +356,6 @@ struct em_softc {
 	u_int32_t		num_tx_desc;
 	u_int32_t		txd_cmd;
 	struct em_buffer	*tx_buffer_area;
-	bus_dma_tag_t		txtag;		/* dma tag for tx */
 
 	/*
 	 * Receive definitions
@@ -372,7 +373,6 @@ struct em_softc {
 	u_int32_t		rx_buffer_len;
 	u_int16_t		num_rx_desc;
 	struct em_buffer	*rx_buffer_area;
-	bus_dma_tag_t		rxtag;
 
 	/*
 	 * First/last mbuf pointers, for
