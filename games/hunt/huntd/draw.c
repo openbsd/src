@@ -1,4 +1,4 @@
-/*	$OpenBSD: draw.c,v 1.7 2003/06/11 08:45:33 pjanzen Exp $	*/
+/*	$OpenBSD: draw.c,v 1.8 2016/01/07 21:29:31 mestre Exp $	*/
 /*	$NetBSD: draw.c,v 1.2 1997/10/10 16:33:04 lukem Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
@@ -33,9 +33,9 @@
 
 #include <string.h>
 
+#include "conf.h"
 #include "hunt.h"
 #include "server.h"
-#include "conf.h"
 
 static char	translate(char);
 static int	player_sym(PLAYER *, int, int);

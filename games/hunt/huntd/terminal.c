@@ -1,4 +1,4 @@
-/*	$OpenBSD: terminal.c,v 1.10 2008/06/20 13:08:44 ragge Exp $	*/
+/*	$OpenBSD: terminal.c,v 1.11 2016/01/07 21:29:31 mestre Exp $	*/
 /*	$NetBSD: terminal.c,v 1.2 1997/10/10 16:34:05 lukem Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
@@ -31,14 +31,14 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <err.h>
 #include <stdarg.h>
 #include <syslog.h>
-#include <err.h>
 #include <string.h>
 
+#include "conf.h"
 #include "hunt.h"
 #include "server.h"
-#include "conf.h"
 
 #define	TERM_WIDTH	80	/* Assume terminals are 80-char wide */
 

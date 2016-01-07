@@ -1,4 +1,4 @@
-/*	$OpenBSD: shots.c,v 1.10 2015/08/22 14:47:41 deraadt Exp $	*/
+/*	$OpenBSD: shots.c,v 1.11 2016/01/07 21:29:31 mestre Exp $	*/
 /*	$NetBSD: shots.c,v 1.3 1997/10/11 08:13:50 lukem Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
@@ -31,12 +31,11 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <err.h>
-#include <signal.h>
 #include <stdlib.h>
 #include <syslog.h>
-#include "hunt.h"
+
 #include "conf.h"
+#include "hunt.h"
 #include "server.h"
 
 #define	PLUS_DELTA(x, max)	if (x < max) x++; else x--

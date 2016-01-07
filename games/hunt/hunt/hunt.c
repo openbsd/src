@@ -1,4 +1,4 @@
-/*	$OpenBSD: hunt.c,v 1.17 2016/01/07 16:00:32 tb Exp $	*/
+/*	$OpenBSD: hunt.c,v 1.18 2016/01/07 21:29:31 mestre Exp $	*/
 /*	$NetBSD: hunt.c,v 1.8 1998/09/13 15:27:28 hubertf Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
@@ -31,30 +31,22 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/socket.h>
+
 #include <ctype.h>
 #include <err.h>
 #include <errno.h>
 #include <curses.h>
+#include <netdb.h>
 #include <signal.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <netdb.h>
 
-#include <sys/stat.h>
-#include <sys/time.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-
-#include <netinet/in.h>
-#include <net/if.h>
-
-#include <arpa/inet.h>
-
-#include "hunt.h"
 #include "display.h"
-#include "client.h"
+#include "hunt.h"
 #include "list.h"
+#include "client.h"
 
 #ifndef __GNUC__
 #define __attribute__(x)
@@ -154,7 +146,7 @@ main(ac, av)
 			fputs("usage: hunt [-bcfmqSs] [-n name] [-p port] "
 			    "[-t team] [-w message] [[-h] host]\n",
 			    stderr);
-			return 1;
+			exit(1);
 		}
 	}
 	if (optind + 1 < ac)
@@ -172,7 +164,7 @@ main(ac, av)
 
 	if (Show_scores) {
 		dump_scores();
-		return 0;
+		exit(0);
 	}
 
 	if (Query_driver) {
@@ -187,7 +179,7 @@ main(ac, av)
 			if (Sock_host)
 				break;
 		}
-		return 0;
+		exit(0);
 	}
 	if (Otto_mode) {
 		if (Am_monitor)
@@ -259,7 +251,8 @@ main(ac, av)
 			break;
 	}
 	leave(0, (char *) NULL);
-	return 0;
+	/* NOTREACHED */
+	return(0);
 }
 
 /*

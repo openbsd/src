@@ -1,4 +1,4 @@
-/*	$OpenBSD: otto.c,v 1.11 2015/10/24 17:46:19 mmcc Exp $	*/
+/*	$OpenBSD: otto.c,v 1.12 2016/01/07 21:29:31 mestre Exp $	*/
 /*	$NetBSD: otto.c,v 1.2 1997/10/10 16:32:39 lukem Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
@@ -41,17 +41,15 @@
  *	subroutine library.
  */
 
-#include <sys/time.h>
 #include <ctype.h>
-#include <signal.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <string.h>
-#include "hunt.h"
-#include "client.h"
-#include "display.h"
-
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+
+#include "display.h"
+#include "hunt.h"
+
 #define panic(m)	_panic(__FILE__,__LINE__,m)
 
 useconds_t	Otto_pause 	= 55000;

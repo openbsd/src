@@ -1,4 +1,4 @@
-/*	$OpenBSD: answer.c,v 1.15 2015/10/24 17:48:36 mmcc Exp $	*/
+/*	$OpenBSD: answer.c,v 1.16 2016/01/07 21:29:31 mestre Exp $	*/
 /*	$NetBSD: answer.c,v 1.3 1997/10/10 16:32:50 lukem Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
@@ -31,21 +31,19 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <arpa/inet.h>
+#include <netinet/in.h>
+
 #include <ctype.h>
-#include <errno.h>
 #include <fcntl.h>
 #include <stdlib.h>
-#include <unistd.h>
-#include <stdio.h>
-#include <syslog.h>
 #include <string.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
+#include <syslog.h>
+#include <unistd.h>
 
+#include "conf.h"
 #include "hunt.h"
 #include "server.h"
-#include "conf.h"
 
 /* Exported symbols for hosts_access(): */
 int allow_severity	= LOG_INFO;

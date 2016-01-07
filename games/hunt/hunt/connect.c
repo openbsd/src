@@ -1,4 +1,4 @@
-/*	$OpenBSD: connect.c,v 1.6 2003/06/11 08:45:24 pjanzen Exp $	*/
+/*	$OpenBSD: connect.c,v 1.7 2016/01/07 21:29:31 mestre Exp $	*/
 /*	$NetBSD: connect.c,v 1.3 1997/10/11 08:13:40 lukem Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
@@ -31,9 +31,9 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <signal.h>
-#include <unistd.h>
 #include <string.h>
+#include <unistd.h>
+
 #include "hunt.h"
 #include "client.h"
 

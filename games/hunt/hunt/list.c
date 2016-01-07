@@ -1,4 +1,4 @@
-/*	$OpenBSD: list.c,v 1.6 2014/10/11 04:06:05 doug Exp $	*/
+/*	$OpenBSD: list.c,v 1.7 2016/01/07 21:29:31 mestre Exp $	*/
 /*
  * Copyright 2001, David Leonard. All rights reserved.
  * Redistribution and use in source and binary forms with or without
@@ -6,25 +6,19 @@
  * This software is provided ``as is'' without express or implied warranty.
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <netdb.h>
-#include <unistd.h>
-#include <errno.h>
-#include <err.h>
-
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <sys/sockio.h>
 #include <sys/ioctl.h>
-
-#include <netinet/in.h>
-#include <net/if.h>
+#include <sys/socket.h>
 
 #include <arpa/inet.h>
+#include <net/if.h>
 
-#include "hunt.h"
+#include <err.h>
+#include <errno.h>
+#include <netdb.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+
 #include "list.h"
 
 /* Wait at most 5 seconds for a reply */

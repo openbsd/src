@@ -1,4 +1,4 @@
-/*	$OpenBSD: makemaze.c,v 1.6 2003/06/11 08:45:33 pjanzen Exp $	*/
+/*	$OpenBSD: makemaze.c,v 1.7 2016/01/07 21:29:31 mestre Exp $	*/
 /*	$NetBSD: makemaze.c,v 1.2 1997/10/10 16:33:43 lukem Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
@@ -33,9 +33,9 @@
 
 #include <string.h>
 
+#include "conf.h"
 #include "hunt.h"
 #include "server.h"
-#include "conf.h"
 
 # define	ISCLEAR(y,x)	(Maze[y][x] == SPACE)
 # define	ODD(n)		((n) & 01)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: execute.c,v 1.10 2015/09/27 07:06:41 guenther Exp $	*/
+/*	$OpenBSD: execute.c,v 1.11 2016/01/07 21:29:31 mestre Exp $	*/
 /*	$NetBSD: execute.c,v 1.2 1997/10/10 16:33:13 lukem Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
@@ -34,8 +34,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <syslog.h>
-#include "hunt.h"
+
 #include "conf.h"
+#include "hunt.h"
 #include "server.h"
 
 static void	cloak(PLAYER *);
