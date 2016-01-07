@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.96 2016/01/05 18:41:16 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.97 2016/01/07 23:22:31 stsp Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -1062,16 +1062,18 @@ ieee80211_ba_del(struct ieee80211_node *ni)
 
 	for (tid = 0; tid < nitems(ni->ni_rx_ba); tid++) {
 		struct ieee80211_rx_ba *ba = &ni->ni_rx_ba[tid];
-		if (ba->ba_state == IEEE80211_BA_AGREED) {
+		if (ba->ba_state != IEEE80211_BA_INIT) {
 			if (timeout_pending(&ba->ba_to))
 				timeout_del(&ba->ba_to);
+			if (timeout_pending(&ba->ba_gap_to))
+				timeout_del(&ba->ba_gap_to);
 			ba->ba_state = IEEE80211_BA_INIT;
 		}
 	}
 
 	for (tid = 0; tid < nitems(ni->ni_tx_ba); tid++) {
 		struct ieee80211_tx_ba *ba = &ni->ni_tx_ba[tid];
-		if (ba->ba_state == IEEE80211_BA_AGREED) {
+		if (ba->ba_state != IEEE80211_BA_INIT) {
 			if (timeout_pending(&ba->ba_to))
 				timeout_del(&ba->ba_to);
 			ba->ba_state = IEEE80211_BA_INIT;

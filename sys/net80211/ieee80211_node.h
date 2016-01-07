@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.h,v 1.51 2016/01/05 18:41:16 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_node.h,v 1.52 2016/01/07 23:22:31 stsp Exp $	*/
 /*	$NetBSD: ieee80211_node.h,v 1.9 2004/04/30 22:57:32 dyoung Exp $	*/
 
 /*-
@@ -112,18 +112,21 @@ struct ieee80211_tx_ba {
 	struct ieee80211_node	*ba_ni;	/* backpointer for callbacks */
 	struct timeout		ba_to;
 	int			ba_timeout_val;
-#define IEEE80211_BA_MIN_TIMEOUT	(10 * 1000 * 1000)	/* 10 sec */
-#define IEEE80211_BA_MAX_TIMEOUT	(60 * 1000 * 1000)	/* 60 sec */
+#define IEEE80211_BA_MIN_TIMEOUT	(1000 * 1000)	/* 1 sec */
+#define IEEE80211_BA_MAX_TIMEOUT	(5000 * 1000)	/* 5 sec */
 
 	int			ba_state;
 #define IEEE80211_BA_INIT	0
 #define IEEE80211_BA_REQUESTED	1
 #define IEEE80211_BA_AGREED	2
 
+	/* These values are IEEE802.11 frame sequence numbers (0x0-0xfff) */
 	u_int16_t		ba_winstart;
 	u_int16_t		ba_winend;
+
+	/* Number of A-MPDU subframes in reorder buffer. */
 	u_int16_t		ba_winsize;
-#define IEEE80211_BA_MAX_WINSZ	128	/* maximum we will accept */
+#define IEEE80211_BA_MAX_WINSZ	64	/* corresponds to maximum ADDBA BUFSZ */
 
 	u_int8_t		ba_token;
 };
@@ -141,6 +144,8 @@ struct ieee80211_rx_ba {
 	u_int16_t		ba_winend;
 	u_int16_t		ba_winsize;
 	u_int16_t		ba_head;
+	struct timeout		ba_gap_to;
+#define IEEE80211_BA_GAP_TIMEOUT	500 /* msec */
 };
 
 /*

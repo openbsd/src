@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.150 2016/01/05 18:41:16 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.151 2016/01/07 23:22:31 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -60,8 +60,11 @@
 
 struct	mbuf *ieee80211_defrag(struct ieee80211com *, struct mbuf *, int);
 void	ieee80211_defrag_timeout(void *);
-void	ieee80211_input_ba(struct ifnet *, struct mbuf *,
+void	ieee80211_input_ba(struct ieee80211com *, struct mbuf *,
 	    struct ieee80211_node *, int, struct ieee80211_rxinfo *);
+void	ieee80211_input_ba_flush(struct ieee80211com *, struct ieee80211_node *,
+	    struct ieee80211_rx_ba *);
+void	ieee80211_input_ba_gap_timeout(void *arg);
 void	ieee80211_ba_move_window(struct ieee80211com *,
 	    struct ieee80211_node *, u_int8_t, u_int16_t);
 struct	mbuf *ieee80211_align_mbuf(struct mbuf *);
@@ -301,7 +304,7 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 		    (qos & IEEE80211_QOS_ACK_POLICY_MASK) ==
 		    IEEE80211_QOS_ACK_POLICY_NORMAL)) {
 			/* go through A-MPDU reordering */
-			ieee80211_input_ba(ifp, m, ni, tid, rxi);
+			ieee80211_input_ba(ic, m, ni, tid, rxi);
 			return;	/* don't free m! */
 		}
 	}
@@ -688,9 +691,10 @@ ieee80211_defrag_timeout(void *arg)
  * agreement (see 9.10.7.6).
  */
 void
-ieee80211_input_ba(struct ifnet *ifp, struct mbuf *m,
+ieee80211_input_ba(struct ieee80211com *ic, struct mbuf *m,
     struct ieee80211_node *ni, int tid, struct ieee80211_rxinfo *rxi)
 {
+	struct ifnet *ifp = &ic->ic_if;
 	struct ieee80211_rx_ba *ba = &ni->ni_rx_ba[tid];
 	struct ieee80211_frame *wh;
 	int idx, count;
@@ -740,6 +744,22 @@ ieee80211_input_ba(struct ifnet *ifp, struct mbuf *m,
 	rxi->rxi_flags |= IEEE80211_RXI_AMPDU_DONE;
 	ba->ba_buf[idx].rxi = *rxi;
 
+	if (ba->ba_buf[ba->ba_head].m == NULL)
+		timeout_add_msec(&ba->ba_gap_to, IEEE80211_BA_GAP_TIMEOUT);
+	else if (timeout_pending(&ba->ba_gap_to))
+		timeout_del(&ba->ba_gap_to);
+
+	ieee80211_input_ba_flush(ic, ni, ba);
+}
+
+/* Flush a consecutive sequence of frames from the reorder buffer. */
+void
+ieee80211_input_ba_flush(struct ieee80211com *ic, struct ieee80211_node *ni,
+    struct ieee80211_rx_ba *ba)
+
+{
+	struct ifnet *ifp = &ic->ic_if;
+
 	/* pass reordered MPDUs up to the next MAC process */
 	while (ba->ba_buf[ba->ba_head].m != NULL) {
 		ieee80211_input(ifp, ba->ba_buf[ba->ba_head].m, ni,
@@ -752,6 +772,38 @@ ieee80211_input_ba(struct ifnet *ifp, struct mbuf *m,
 	}
 	ba->ba_winend = (ba->ba_winstart + ba->ba_winsize - 1) & 0xfff;
 }
+
+/* 
+ * Forcibly move the BA window forward to remove a leading gap which has
+ * been causing frames to linger in the reordering buffer for too long.
+ * A leading gap will occur if a particular A-MPDU subframe never arrives
+ * or if a bug in the sender causes sequence numbers to jump forward by > 1.
+ */
+void
+ieee80211_input_ba_gap_timeout(void *arg)
+{
+	struct ieee80211_rx_ba *ba = arg;
+	struct ieee80211_node *ni = ba->ba_ni;
+	struct ieee80211com *ic = ni->ni_ic;
+	int s, skipped;
+
+	s = splnet();
+
+	skipped = 0;
+	while (skipped < ba->ba_winsize && ba->ba_buf[ba->ba_head].m == NULL) {
+		/* move window forward */
+		ba->ba_head = (ba->ba_head + 1) % IEEE80211_BA_MAX_WINSZ;
+		ba->ba_winstart = (ba->ba_winstart + 1) & 0xfff;
+		skipped++;
+	}
+	if (skipped > 0)
+		ba->ba_winend = (ba->ba_winstart + ba->ba_winsize - 1) & 0xfff;
+
+	ieee80211_input_ba_flush(ic, ni, ba);
+
+	splx(s);	
+}
+
 
 /*
  * Change the value of WinStartB (move window forward) upon reception of a
@@ -782,17 +834,7 @@ ieee80211_ba_move_window(struct ieee80211com *ic, struct ieee80211_node *ni,
 	/* move window forward */
 	ba->ba_winstart = ssn;
 
-	/* pass reordered MPDUs up to the next MAC process */
-	while (ba->ba_buf[ba->ba_head].m != NULL) {
-		ieee80211_input(ifp, ba->ba_buf[ba->ba_head].m, ni,
-		    &ba->ba_buf[ba->ba_head].rxi);
-		ba->ba_buf[ba->ba_head].m = NULL;
-
-		ba->ba_head = (ba->ba_head + 1) % IEEE80211_BA_MAX_WINSZ;
-		/* move window forward */
-		ba->ba_winstart = (ba->ba_winstart + 1) & 0xfff;
-	}
-	ba->ba_winend = (ba->ba_winstart + ba->ba_winsize - 1) & 0xfff;
+	ieee80211_input_ba_flush(ic, ni, ba);
 }
 
 void
@@ -2440,6 +2482,7 @@ ieee80211_recv_addba_req(struct ieee80211com *ic, struct mbuf *m,
 		ba->ba_timeout_val = IEEE80211_BA_MAX_TIMEOUT;
 	ba->ba_ni = ni;
 	timeout_set(&ba->ba_to, ieee80211_rx_ba_timeout, ba);
+	timeout_set(&ba->ba_gap_to, ieee80211_input_ba_gap_timeout, ba);
 	ba->ba_winsize = bufsz;
 	if (ba->ba_winsize == 0 || ba->ba_winsize > IEEE80211_BA_MAX_WINSZ)
 		ba->ba_winsize = IEEE80211_BA_MAX_WINSZ;
@@ -2589,6 +2632,7 @@ ieee80211_recv_delba(struct ieee80211com *ic, struct mbuf *m,
 		ba->ba_state = IEEE80211_BA_INIT;
 		/* stop Block Ack inactivity timer */
 		timeout_del(&ba->ba_to);
+		timeout_del(&ba->ba_gap_to);
 
 		if (ba->ba_buf != NULL) {
 			/* free all MSDUs stored in reordering buffer */

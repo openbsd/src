@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_proto.c,v 1.58 2016/01/05 18:41:16 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_proto.c,v 1.59 2016/01/07 23:22:31 stsp Exp $	*/
 /*	$NetBSD: ieee80211_proto.c,v 1.8 2004/04/30 23:58:20 dyoung Exp $	*/
 
 /*-
@@ -687,6 +687,7 @@ ieee80211_delba_request(struct ieee80211com *ic, struct ieee80211_node *ni,
 		ba->ba_state = IEEE80211_BA_INIT;
 		/* stop Block Ack inactivity timer */
 		timeout_del(&ba->ba_to);
+		timeout_del(&ba->ba_gap_to);
 
 		if (ba->ba_buf != NULL) {
 			/* free all MSDUs stored in reordering buffer */
