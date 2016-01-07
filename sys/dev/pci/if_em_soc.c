@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_em_soc.c,v 1.3 2015/03/18 12:04:26 dlg Exp $	*/
+/*	$OpenBSD: if_em_soc.c,v 1.4 2016/01/07 04:21:36 dlg Exp $	*/
 
 /*
  * Copyright (c) 2009 Dariusz Swiderski <sfires@sfires.net>
@@ -77,7 +77,7 @@ gcu_miibus_readreg(struct em_hw *hw, int phy, int reg)
 
 	if (i >= GCU_MAX_ATTEMPTS) {
 		printf("%s: phy read timeout: phy %d, reg %d\n",
-		    sc->sc_dv.dv_xname, phy, reg);
+		    sc->sc_dev.dv_xname, phy, reg);
 		return (0);
 	}
 
@@ -87,7 +87,7 @@ gcu_miibus_readreg(struct em_hw *hw, int phy, int reg)
 
 	if((data & MDIO_STATUS_STATUS_MASK) != 0) {
 		printf("%s: unable to read phy %d reg %d\n",
-		    sc->sc_dv.dv_xname, phy, reg);
+		    sc->sc_dev.dv_xname, phy, reg);
 		return (0);
 	}
 	return (uint16_t) (data & MDIO_STATUS_READ_DATA_MASK);
@@ -125,7 +125,7 @@ gcu_miibus_writereg(struct em_hw *hw, int phy, int reg, int val)
 
 	if (i >= GCU_MAX_ATTEMPTS) {
 		printf("%s: phy read timeout: phy %d, reg %d\n",
-		    sc->sc_dv.dv_xname, phy, reg);
+		    sc->sc_dev.dv_xname, phy, reg);
 		return;
 	}
 }
