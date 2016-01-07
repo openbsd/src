@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.325 2016/01/07 11:19:54 dlg Exp $ */
+/* $OpenBSD: if_em.c,v 1.326 2016/01/07 12:18:38 dlg Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -2662,8 +2662,8 @@ em_free_receive_structures(struct em_softc *sc)
 	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
 	if (sc->sc_rx_pkts_ring != NULL) {
-		pkt = &sc->sc_rx_pkts_ring[i];
 		for (i = 0; i < sc->sc_rx_slots; i++) {
+			pkt = &sc->sc_rx_pkts_ring[i];
 			if (pkt->pkt_m != NULL) {
 				bus_dmamap_sync(sc->sc_dmat, pkt->pkt_map,
 				    0, pkt->pkt_map->dm_mapsize,
