@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.316 2016/01/07 04:21:36 dlg Exp $ */
+/* $OpenBSD: if_em.c,v 1.317 2016/01/07 04:30:45 dlg Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -529,8 +529,7 @@ em_attach(struct device *parent, struct device *self, void *aux)
 		goto err_mac_addr;
 	}
 
-	bcopy(sc->hw.mac_addr, sc->interface_data.ac_enaddr,
-	    ETHER_ADDR_LEN);
+	bcopy(sc->hw.mac_addr, sc->sc_ac.ac_enaddr, ETHER_ADDR_LEN);
 
 	/* Setup OS specific network interface */
 	if (!defer)
@@ -545,7 +544,7 @@ em_attach(struct device *parent, struct device *self, void *aux)
 	if (!defer)
 		em_update_link_status(sc);
 
-	printf(", address %s\n", ether_sprintf(sc->interface_data.ac_enaddr));
+	printf(", address %s\n", ether_sprintf(sc->sc_ac.ac_enaddr));
 
 	/* Indicate SOL/IDER usage */
 	if (em_check_phy_reset_block(&sc->hw))
@@ -705,7 +704,7 @@ em_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		break;
 
 	default:
-		error = ether_ioctl(ifp, &sc->interface_data, command, data);
+		error = ether_ioctl(ifp, &sc->sc_ac, command, data);
 	}
 
 	if (error == ENETRESET) {
@@ -766,7 +765,7 @@ void
 em_init(void *arg)
 {
 	struct em_softc *sc = arg;
-	struct ifnet   *ifp = &sc->interface_data.ac_if;
+	struct ifnet   *ifp = &sc->sc_ac.ac_if;
 	uint32_t	pba;
 	int s;
 
@@ -843,8 +842,7 @@ em_init(void *arg)
 	E1000_WRITE_REG(&sc->hw, PBA, pba);
 
 	/* Get the latest mac address, User can use a LAA */
-	bcopy(sc->interface_data.ac_enaddr, sc->hw.mac_addr,
-	      ETHER_ADDR_LEN);
+	bcopy(sc->sc_ac.ac_enaddr, sc->hw.mac_addr, ETHER_ADDR_LEN);
 
 	/* Initialize the hardware */
 	if (em_hardware_init(sc)) {
@@ -904,7 +902,7 @@ int
 em_intr(void *arg)
 {
 	struct em_softc	*sc = arg;
-	struct ifnet	*ifp = &sc->interface_data.ac_if;
+	struct ifnet	*ifp = &sc->sc_ac.ac_if;
 	u_int32_t	reg_icr, test_icr;
 
 	test_icr = reg_icr = E1000_READ_REG(&sc->hw, ICR);
@@ -1372,8 +1370,8 @@ em_82547_tx_fifo_reset(struct em_softc *sc)
 void
 em_iff(struct em_softc *sc)
 {
-	struct ifnet *ifp = &sc->interface_data.ac_if;
-	struct arpcom *ac = &sc->interface_data;
+	struct ifnet *ifp = &sc->sc_ac.ac_if;
+	struct arpcom *ac = &sc->sc_ac;
 	u_int32_t reg_rctl = 0;
 	u_int8_t  mta[MAX_NUM_MULTICAST_ADDRESSES * ETH_LENGTH_OF_ADDRESS];
 	struct ether_multi *enm;
@@ -1439,7 +1437,7 @@ em_local_timer(void *arg)
 	struct em_softc *sc = arg;
 	int s;
 
-	ifp = &sc->interface_data.ac_if;
+	ifp = &sc->sc_ac.ac_if;
 
 	s = splnet();
 
@@ -1460,7 +1458,7 @@ em_local_timer(void *arg)
 void
 em_update_link_status(struct em_softc *sc)
 {
-	struct ifnet *ifp = &sc->interface_data.ac_if;
+	struct ifnet *ifp = &sc->sc_ac.ac_if;
 
 	if (E1000_READ_REG(&sc->hw, STATUS) & E1000_STATUS_LU) {
 		if (sc->link_active == 0) {
@@ -1514,7 +1512,7 @@ void
 em_stop(void *arg, int softonly)
 {
 	struct em_softc *sc = arg;
-	struct ifnet   *ifp = &sc->interface_data.ac_if;
+	struct ifnet   *ifp = &sc->sc_ac.ac_if;
 
 	/* Tell the stack that the interface is no longer active */
 	ifp->if_flags &= ~IFF_RUNNING;
@@ -1835,7 +1833,7 @@ em_setup_interface(struct em_softc *sc)
 
 	INIT_DEBUGOUT("em_setup_interface: begin");
 
-	ifp = &sc->interface_data.ac_if;
+	ifp = &sc->sc_ac.ac_if;
 	strlcpy(ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
@@ -1900,7 +1898,7 @@ int
 em_detach(struct device *self, int flags)
 {
 	struct em_softc *sc = (struct em_softc *)self;
-	struct ifnet *ifp = &sc->interface_data.ac_if;
+	struct ifnet *ifp = &sc->sc_ac.ac_if;
 	struct pci_attach_args *pa = &sc->osdep.em_pa;
 	pci_chipset_tag_t	pc = pa->pa_pc;
 
@@ -1924,7 +1922,7 @@ int
 em_activate(struct device *self, int act)
 {
 	struct em_softc *sc = (struct em_softc *)self;
-	struct ifnet *ifp = &sc->interface_data.ac_if;
+	struct ifnet *ifp = &sc->sc_ac.ac_if;
 	int rv = 0;
 
 	switch (act) {
@@ -2372,7 +2370,7 @@ em_txeof(struct em_softc *sc)
 	int first, last, done, num_avail, free = 0;
 	struct em_buffer *tx_buffer;
 	struct em_tx_desc   *tx_desc, *eop_desc;
-	struct ifnet   *ifp = &sc->interface_data.ac_if;
+	struct ifnet   *ifp = &sc->sc_ac.ac_if;
 
 	if (sc->num_tx_desc_avail == sc->num_tx_desc)
 		return;
@@ -2556,7 +2554,7 @@ fail:
 int
 em_setup_receive_structures(struct em_softc *sc)
 {
-	struct ifnet *ifp = &sc->interface_data.ac_if;
+	struct ifnet *ifp = &sc->sc_ac.ac_if;
 	u_int lwm;
 
 	memset(sc->rx_desc_base, 0,
@@ -2763,7 +2761,7 @@ em_rxfill(struct em_softc *sc)
 int
 em_rxeof(struct em_softc *sc)
 {
-	struct ifnet	    *ifp = &sc->interface_data.ac_if;
+	struct ifnet	    *ifp = &sc->sc_ac.ac_if;
 	struct mbuf_list    ml = MBUF_LIST_INITIALIZER();
 	struct mbuf	    *m;
 	u_int8_t	    accept_frame = 0;
@@ -3159,7 +3157,7 @@ em_disable_aspm(struct em_softc *sc)
 void
 em_update_stats_counters(struct em_softc *sc)
 {
-	struct ifnet   *ifp = &sc->interface_data.ac_if;
+	struct ifnet   *ifp = &sc->sc_ac.ac_if;
 
 	sc->stats.crcerrs += E1000_READ_REG(&sc->hw, CRCERRS);
 	sc->stats.mpc += E1000_READ_REG(&sc->hw, MPC);

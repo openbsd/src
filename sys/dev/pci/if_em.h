@@ -32,7 +32,7 @@ POSSIBILITY OF SUCH DAMAGE.
 ***************************************************************************/
 
 /* $FreeBSD: if_em.h,v 1.26 2004/09/01 23:22:41 pdeuskar Exp $ */
-/* $OpenBSD: if_em.h,v 1.63 2016/01/07 04:21:36 dlg Exp $ */
+/* $OpenBSD: if_em.h,v 1.64 2016/01/07 04:30:45 dlg Exp $ */
 
 #ifndef _EM_H_DEFINED_
 #define _EM_H_DEFINED_
@@ -311,7 +311,7 @@ typedef struct _DESCRIPTOR_PAIR
 /* Our adapter structure */
 struct em_softc {
 	struct device	sc_dev;
-	struct arpcom	interface_data;
+	struct arpcom	sc_ac;
 	struct em_hw	hw;
 
 	/* OpenBSD operating-system-specific structures */
