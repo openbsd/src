@@ -1,4 +1,4 @@
-.\" $OpenBSD: sio_open.3,v 1.43 2015/09/14 15:14:55 schwarze Exp $
+.\" $OpenBSD: sio_open.3,v 1.44 2016/01/07 07:41:01 ratchov Exp $
 .\"
 .\" Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 14 2015 $
+.Dd $Mdocdate: January 7 2016 $
 .Dt SIO_OPEN 3
 .Os
 .Sh NAME
@@ -80,7 +80,7 @@ The
 library allows user processes to access
 .Xr audio 4
 hardware and the
-.Xr sndiod 1
+.Xr sndiod 8
 audio server in a uniform way.
 .Ss Opening and closing an audio device
 First the application must call the
@@ -255,7 +255,7 @@ has been called,
 must be called before parameters can be changed.
 .Pp
 If the device is exposed by the
-.Xr sndiod 1
+.Xr sndiod 8
 server, which is the default configuration,
 a transparent emulation layer will
 automatically be set up, and in this case any combination of
@@ -709,9 +709,9 @@ The debug level:
 may be a value between 0 and 2.
 .El
 .Sh SEE ALSO
-.Xr sndiod 1 ,
 .Xr audio 4 ,
 .Xr sndio 7 ,
+.Xr sndiod 8 ,
 .Xr audio 9
 .Sh BUGS
 The
@@ -727,7 +727,7 @@ function will stop playback immediately.
 If the application doesn't consume recorded data fast enough then
 .Dq "control messages"
 from the
-.Xr sndiod 1
+.Xr sndiod 8
 server are delayed and consequently
 .Fn sio_onmove
 callback or volume changes may be delayed.

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: aucat.1,v 1.111 2015/12/25 20:52:00 bentley Exp $
+.\"	$OpenBSD: aucat.1,v 1.112 2016/01/07 07:41:01 ratchov Exp $
 .\"
 .\" Copyright (c) 2006 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 25 2015 $
+.Dd $Mdocdate: January 7 2016 $
 .Dt AUCAT 1
 .Os
 .Sh NAME
@@ -223,7 +223,7 @@ back to the starting position.
 .El
 .Pp
 MIDI control is intended to be used together with
-.Xr sndiod 1 .
+.Xr sndiod 8 .
 For instance, the following command will create two devices:
 the default
 .Va snd/0
@@ -280,9 +280,9 @@ $ aucat -n -i stereo.wav -c 0:0 -o left.wav \e
 .Xr audioctl 1 ,
 .Xr cdio 1 ,
 .Xr mixerctl 1 ,
-.Xr sndiod 1 ,
 .Xr audio 4 ,
-.Xr sndio 7
+.Xr sndio 7 ,
+.Xr sndiod 8
 .Sh BUGS
 Resampling is low quality.
 .Pp

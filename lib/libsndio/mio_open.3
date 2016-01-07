@@ -1,4 +1,4 @@
-.\" $OpenBSD: mio_open.3,v 1.15 2015/09/14 15:14:55 schwarze Exp $
+.\" $OpenBSD: mio_open.3,v 1.16 2016/01/07 07:41:01 ratchov Exp $
 .\"
 .\" Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 14 2015 $
+.Dd $Mdocdate: January 7 2016 $
 .Dt MIO_OPEN 3
 .Os
 .Sh NAME
@@ -51,7 +51,7 @@ The
 library allows user processes to access
 .Xr midi 4
 hardware and
-.Xr sndiod 1
+.Xr sndiod 8
 MIDI thru boxes and control ports in a uniform way.
 .Ss Opening and closing an MIDI stream
 First the application must call the
@@ -243,7 +243,7 @@ The debug level:
 may be a value between 0 and 2.
 .El
 .Sh SEE ALSO
-.Xr sndiod 1 ,
 .Xr poll 2 ,
 .Xr midi 4 ,
-.Xr sndio 7
+.Xr sndio 7 ,
+.Xr sndiod 8
