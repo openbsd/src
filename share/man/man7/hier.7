@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hier.7,v 1.149 2015/12/08 18:35:00 jmc Exp $
+.\"	$OpenBSD: hier.7,v 1.150 2016/01/07 08:58:14 jmc Exp $
 .\"	$NetBSD: hier.7,v 1.7 1994/11/30 19:07:10 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)hier.7	8.1 (Berkeley) 6/5/93
 .\"
-.Dd $Mdocdate: December 8 2015 $
+.Dd $Mdocdate: January 7 2016 $
 .Dt HIER 7
 .Os
 .Sh NAME
@@ -331,7 +331,7 @@ System daemons and utilities (executed by users).
 .It share/
 Architecture independent data files.
 .Pp
-.Bl -tag -width "vi/catalog/" -compact
+.Bl -tag -width "calendar/" -compact
 .It calendar/
 Variety of pre-fab calendar files (see
 .Xr calendar 1 ) .
@@ -436,10 +436,6 @@ Compiled terminal characteristic files (see
 .It texinfo/
 Templates for
 .Xr texinfo 5 .
-.It vi/catalog/
-Catalog files for the
-.Xr vi 1
-text editor.
 .It zoneinfo/
 Time zone configuration information (see
 .Xr tzfile 5 ) .
