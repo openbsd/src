@@ -1,4 +1,4 @@
-/*	$OpenBSD: opt.c,v 1.2 2012/12/07 08:04:58 ratchov Exp $	*/
+/*	$OpenBSD: opt.c,v 1.3 2016/01/08 10:54:07 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2011 Alexandre Ratchov <alex@caoua.org>
  *
@@ -14,8 +14,6 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-#include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 
 #include "dev.h"
@@ -32,20 +30,27 @@ opt_new(char *name, struct dev *dev,
     int pmin, int pmax, int rmin, int rmax,
     int maxweight, int mmc, int dup, unsigned int mode)
 {
-	struct opt *o, **po;
+	struct opt *o;
 	unsigned int len;
 	char c;
 
+	if (opt_byname(name, dev->num)) {
+		log_puts(name);
+		log_puts(": already defined\n");
+		return NULL;
+	}
 	for (len = 0; name[len] != '\0'; len++) {
 		if (len == OPT_NAMEMAX) {
-			fprintf(stderr, "%s: name too long\n", name);
-			exit(1);
+			log_puts(name);
+			log_puts(": too long\n");
+			return NULL;
 		}
 		c = name[len];
 		if ((c < 'a' || c > 'z') &&
 		    (c < 'A' || c > 'Z')) {
-			fprintf(stderr, "%s: '%c' not allowed\n", name, c);
-			exit(1);
+			log_puts(name);
+			log_puts(": only alphabetic chars allowed\n");
+			return NULL;
 		}
 	}
 	o = xmalloc(sizeof(struct opt));
@@ -63,15 +68,8 @@ opt_new(char *name, struct dev *dev,
 	o->mode = mode;
 	o->dev = dev;
 	memcpy(o->name, name, len + 1);
-	for (po = &opt_list; *po != NULL; po = &(*po)->next) {
-		if (o->dev->num == (*po)->dev->num &&
-		    strcmp(o->name, (*po)->name) == 0) {
-			fprintf(stderr, "%s: already defined\n", o->name);
-			exit(1);
-		}
-	}
-	o->next = NULL;
-	*po = o;
+	o->next = opt_list;
+	opt_list = o;
 	if (log_level >= 2) {
 		dev_log(o->dev);
 		log_puts(".");
