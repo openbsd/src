@@ -1,4 +1,4 @@
-/*	$OpenBSD: move.c,v 1.16 2016/01/08 18:05:58 mestre Exp $	*/
+/*	$OpenBSD: move.c,v 1.17 2016/01/08 18:09:59 mestre Exp $	*/
 /*	$NetBSD: move.c,v 1.4 1995/03/24 05:01:57 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@
  */
 
 void
-domove()
+domove(void)
 {
 	PLAY	*pp;
 	int	i, j;
@@ -148,7 +148,7 @@ acc:
  * the game is over
  */
 void
-check_go()
+check_go(void)
 {
 	CARD	card;
 	PLAY	*pp, *op;
@@ -179,8 +179,7 @@ check_go()
 }
 
 int
-playcard(pp)
-	PLAY	*pp;
+playcard(PLAY *pp)
 {
 	int	v;
 	CARD	card;
@@ -326,7 +325,7 @@ protected:
 }
 
 void
-getmove()
+getmove(void)
 {
 	char	c;
 #ifdef DEBUG
@@ -462,8 +461,7 @@ ret:
  * return whether or not the player has picked
  */
 int
-haspicked(pp)
-	const PLAY	*pp;
+haspicked(const PLAY *pp)
 {
 	int	card;
 
@@ -482,8 +480,7 @@ haspicked(pp)
 }
 
 void
-account(card)
-	CARD	card;
+account(CARD card)
 {
 	CARD	oppos;
 
@@ -508,8 +505,7 @@ account(card)
 }
 
 void
-prompt(promptno)
-	int	promptno;
+prompt(int promptno)
 {
 	static const char	*const names[] = {
 				">>:Move:",
@@ -540,8 +536,7 @@ prompt(promptno)
 }
 
 void
-sort(hand)
-	CARD	*hand;
+sort(CARD *hand)
 {
 	CARD	*cp, *tp;
 	CARD	temp;

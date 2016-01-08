@@ -1,4 +1,4 @@
-/*	$OpenBSD: end.c,v 1.7 2016/01/08 18:05:58 mestre Exp $	*/
+/*	$OpenBSD: end.c,v 1.8 2016/01/08 18:09:59 mestre Exp $	*/
 /*	$NetBSD: end.c,v 1.4 1995/03/24 05:01:30 cgd Exp $	*/
 
 /*
@@ -41,8 +41,7 @@
  * the end-of-games points to the user who deserves it (if any).
  */
 void
-finalscore(pp)
-	PLAY	*pp;
+finalscore(PLAY *pp)
 {
 	int	temp, tot, num;
 
@@ -86,8 +85,7 @@ static int	Last_tot[2];	/* last tot used for extrapolate	*/
  * the end-of-games points to the user who deserves it (if any).
  */
 void
-extrapolate(pp)
-	PLAY	*pp;
+extrapolate(PLAY *pp)
 {
 	int		x, num, tot, count;
 
@@ -131,7 +129,7 @@ extrapolate(pp)
 }
 
 void
-undoex()
+undoex(void)
 {
 	PLAY	*pp;
 	int		i;

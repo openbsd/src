@@ -1,4 +1,4 @@
-/*	$OpenBSD: comp.c,v 1.9 2016/01/08 18:05:58 mestre Exp $	*/
+/*	$OpenBSD: comp.c,v 1.10 2016/01/08 18:09:59 mestre Exp $	*/
 /*	$NetBSD: comp.c,v 1.4 1995/03/24 05:01:11 cgd Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
 # define	V_VALUABLE	40
 
 void
-calcmove()
+calcmove(void)
 {
 	CARD		card;
 	int		*value;
@@ -394,8 +394,7 @@ play_it:
  * Return true if the given player could conceivably win with his next card.
  */
 int
-onecard(pp)
-	const PLAY	*pp;
+onecard(const PLAY *pp)
 {
 	CARD	bat, spd, card;
 
@@ -427,9 +426,7 @@ onecard(pp)
 }
 
 int
-canplay(pp, op, card)
-	const PLAY	*pp, *op;
-	CARD	card;
+canplay(const PLAY *pp, const PLAY *op, CARD card)
 {
 	switch (card) {
 	  case C_200:

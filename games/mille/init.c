@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.9 2016/01/08 18:05:58 mestre Exp $	*/
+/*	$OpenBSD: init.c,v 1.10 2016/01/08 18:09:59 mestre Exp $	*/
 /*	$NetBSD: init.c,v 1.5 1995/03/24 05:01:40 cgd Exp $	*/
 
 /*
@@ -40,7 +40,7 @@
  */
 
 void
-init()
+init(void)
 {
 	PLAY	*pp;
 	int	i, j;
@@ -84,7 +84,7 @@ init()
 }
 
 void
-shuffle()
+shuffle(void)
 {
 	int	i, r;
 	CARD	temp;
@@ -99,7 +99,7 @@ shuffle()
 }
 
 void
-newboard()
+newboard(void)
 {
 	int		i;
 	PLAY		*pp;
@@ -158,7 +158,7 @@ newboard()
 }
 
 void
-newscore()
+newscore(void)
 {
 	int		i, new;
 	PLAY		*pp;

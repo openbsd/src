@@ -1,4 +1,4 @@
-/*	$OpenBSD: mille.c,v 1.24 2016/01/08 18:05:58 mestre Exp $	*/
+/*	$OpenBSD: mille.c,v 1.25 2016/01/08 18:09:59 mestre Exp $	*/
 /*	$NetBSD: mille.c,v 1.4 1995/03/24 05:01:48 cgd Exp $	*/
 
 /*
@@ -45,9 +45,7 @@
  */
 
 int
-main(ac, av)
-	int	ac;
-	char	*av[];
+main(int ac, char *av[])
 {
 	bool	restore;
 	extern char *__progname;
@@ -129,8 +127,7 @@ main(ac, av)
  * quit.
  */
 void
-rub(dummy)
-	int dummy;
+rub(int dummy)
 {
 	(void)signal(SIGINT, SIG_IGN);
 	if (getyn(REALLYPROMPT))
@@ -142,8 +139,7 @@ rub(dummy)
  *	Time to go beddy-by
  */
 void
-die(code)
-	int code;
+die(int code)
 {
 	(void)signal(SIGINT, SIG_IGN);
 	if (outf)

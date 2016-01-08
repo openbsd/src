@@ -1,4 +1,4 @@
-/*	$OpenBSD: varpush.c,v 1.10 2016/01/08 18:05:58 mestre Exp $	*/
+/*	$OpenBSD: varpush.c,v 1.11 2016/01/08 18:09:59 mestre Exp $	*/
 /*	$NetBSD: varpush.c,v 1.4 1995/03/24 05:02:35 cgd Exp $	*/
 
 /*
@@ -48,9 +48,7 @@
  * channel file.  func() is either read or write.
  */
 bool
-varpush(file, func)
-	int	file;
-	ssize_t	(*func)(int, const struct iovec *, int);
+varpush(int file, ssize_t (*func)(int, const struct iovec *, int))
 {
 	int	temp;
 	const struct iovec vec[] = {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.12 2016/01/08 18:05:58 mestre Exp $	*/
+/*	$OpenBSD: misc.c,v 1.13 2016/01/08 18:09:59 mestre Exp $	*/
 /*	$NetBSD: misc.c,v 1.4 1995/03/24 05:01:54 cgd Exp $	*/
 
 /*
@@ -57,7 +57,7 @@ error(char *str, ...)
 }
 
 CARD
-getcard()
+getcard(void)
 {
 	int	c, c1;
 
@@ -106,8 +106,7 @@ cont:		;
 }
 
 int
-check_ext(forcomp)
-	bool	forcomp;
+check_ext(bool forcomp)
 {
 	if (End == 700) {
 		if (Play == PLAYER) {
@@ -158,8 +157,7 @@ done:
  * also allowed.  Return TRUE if the answer was yes, FALSE if no.
  */
 int
-getyn(promptno)
-	int	promptno;
+getyn(int promptno)
 {
 	char	c;
 
@@ -203,7 +201,7 @@ getyn(promptno)
  * it.  Exit appropriately.
  */
 void
-check_more()
+check_more(void)
 {
 	On_exit = TRUE;
 	if (Player[PLAYER].total >= 5000 || Player[COMP].total >= 5000) {
@@ -230,7 +228,7 @@ check_more()
 }
 
 int
-readch()
+readch(void)
 {
 	int	cnt;
 	static char	c;

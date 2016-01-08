@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.8 2016/01/08 18:05:58 mestre Exp $	*/
+/*	$OpenBSD: print.c,v 1.9 2016/01/08 18:09:59 mestre Exp $	*/
 /*	$NetBSD: print.c,v 1.4 1995/03/24 05:02:02 cgd Exp $	*/
 
 /*
@@ -40,7 +40,7 @@
 # define	CARD_STRT	2
 
 void
-prboard()
+prboard(void)
 {
 	PLAY	*pp;
 	int	i, j, k, temp;
@@ -95,9 +95,7 @@ prboard()
  *	Show the given card if it is different from the last one shown
  */
 void
-show_card(y, x, c, lc)
-	int	y, x;
-	CARD	c, *lc;
+show_card(int y, int x, CARD c, CARD *lc)
 {
 	if (c == *lc)
 		return;
@@ -109,8 +107,7 @@ show_card(y, x, c, lc)
 static char	Score_fmt[] = "%4d";
 
 void
-prscore(for_real)
-	bool	for_real;
+prscore(bool for_real)
 {
 	PLAY	*pp;
 	int	x;
@@ -156,9 +153,7 @@ prscore(for_real)
  *	showed it.
  */
 void
-show_score(y, x, s, ls)
-	int	y, x;
-	int	s, *ls;
+show_score(int y, int x, int s, int *ls)
 {
 	if (s == *ls)
 		return;
