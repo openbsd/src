@@ -1,4 +1,4 @@
-/*	$OpenBSD: abuf.c,v 1.3 2015/02/16 06:11:33 ratchov Exp $	*/
+/*	$OpenBSD: abuf.c,v 1.4 2016/01/08 16:17:31 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -53,7 +53,7 @@ abuf_init(struct abuf *buf, unsigned int len)
 void
 abuf_done(struct abuf *buf)
 {
-#ifdef DEBUG	
+#ifdef DEBUG
 	if (buf->used > 0) {
 		if (log_level >= 3) {
 			log_puts("deleting non-empty buffer, used = ");

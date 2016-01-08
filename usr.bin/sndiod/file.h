@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.h,v 1.4 2015/08/01 10:47:30 ratchov Exp $	*/
+/*	$OpenBSD: file.h,v 1.5 2016/01/08 16:17:31 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -34,7 +34,7 @@ struct fileops {
 	char *name;
 	int (*pollfd)(void *, struct pollfd *);
 	int (*revents)(void *, struct pollfd *);
-	/* 
+	/*
 	 * we have to handle POLLIN and POLLOUT events
 	 * in separate handles, since handling POLLIN can
 	 * close the file, and continuing (to handle POLLOUT)
@@ -52,7 +52,7 @@ struct file {
 #define FILE_INIT	0		/* ready */
 #define FILE_ZOMB	1		/* closed, but not free()d yet */
 	unsigned int state;		/* one of above */
-	unsigned int max_nfds;		/* max number of descriptors */	
+	unsigned int max_nfds;		/* max number of descriptors */
 	unsigned int nfds;		/* number of descriptors polled */
 	char *name;			/* for debug purposes */
 };

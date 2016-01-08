@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdpass.c,v 1.2 2015/12/23 11:26:42 ratchov Exp $	*/
+/*	$OpenBSD: fdpass.c,v 1.3 2016/01/08 16:17:31 ratchov Exp $	*/
 /*
  * Copyright (c) 2015 Alexandre Ratchov <alex@caoua.org>
  *
@@ -298,7 +298,7 @@ fdpass_in_helper(void *arg)
 	struct port *p;
 
 	if (!fdpass_recv(f, &cmd, &num, &mode, &fd))
-		return;	
+		return;
 	switch (cmd) {
 	case FDPASS_OPEN_SND:
 		d = dev_bynum(num);

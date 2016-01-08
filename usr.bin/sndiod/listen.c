@@ -1,4 +1,4 @@
-/*	$OpenBSD: listen.c,v 1.9 2016/01/08 13:28:08 ratchov Exp $	*/
+/*	$OpenBSD: listen.c,v 1.10 2016/01/08 16:17:31 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -130,9 +130,9 @@ listen_new_tcp(char *addr, unsigned int port)
 	struct addrinfo *ailist, *ai, aihints;
 	struct listen *f;
 	int s, error, opt = 1, n = 0;
-	
-	/* 
-	 * obtain a list of possible addresses for the host/port 
+
+	/*
+	 * obtain a list of possible addresses for the host/port
 	 */
 	memset(&aihints, 0, sizeof(struct addrinfo));
 	snprintf(serv, sizeof(serv), "%u", port);
@@ -147,7 +147,7 @@ listen_new_tcp(char *addr, unsigned int port)
 		return 0;
 	}
 
-	/* 
+	/*
 	 * for each address, try create a listening socket bound on
 	 * that address
 	 */
@@ -179,7 +179,7 @@ listen_new_tcp(char *addr, unsigned int port)
 				goto bad_close;
 			}
 		}
-			
+
 		if (bind(s, ai->ai_addr, ai->ai_addrlen) < 0) {
 			log_puts(addr);
 			log_puts(": failed to bind socket\n");

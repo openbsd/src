@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.18 2016/01/08 13:09:42 ratchov Exp $	*/
+/*	$OpenBSD: file.c,v 1.19 2016/01/08 16:17:31 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -258,7 +258,7 @@ file_del(struct file *f)
 		log_puts("bad state in file_del()\n");
 		panic();
 	}
-#endif	
+#endif
 	file_nfds -= f->max_nfds;
 	f->state = FILE_ZOMB;
 #ifdef DEBUG
@@ -282,7 +282,7 @@ file_process(struct file *f, struct pollfd *pfd)
 	if (log_level >= 3)
 		clock_gettime(CLOCK_MONOTONIC, &ts0);
 #endif
-	revents = (f->state != FILE_ZOMB) ? 
+	revents = (f->state != FILE_ZOMB) ?
 	    f->ops->revents(f->arg, pfd) : 0;
 	if ((revents & POLLHUP) && (f->state != FILE_ZOMB))
 		f->ops->hup(f->arg);
@@ -423,7 +423,7 @@ file_poll(void)
 				log_puts("out-of-bounds clock delta\n");
 		}
 	}
-	file_ts = ts;	
+	file_ts = ts;
 
 	/*
 	 * process files that rely on poll

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sndiod.c,v 1.27 2016/01/08 15:55:05 ratchov Exp $	*/
+/*	$OpenBSD: sndiod.c,v 1.28 2016/01/08 16:17:31 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -278,7 +278,7 @@ getbasepath(char *base, size_t size)
 		if (errno != EEXIST)
 			err(1, "mkdir(\"%s\")", base);
 	}
-	umask(omask);	
+	umask(omask);
 	if (stat(base, &sb) < 0)
 		err(1, "stat(\"%s\")", base);
 	if (sb.st_uid != uid || (sb.st_mode & mask) != 0)
@@ -432,8 +432,8 @@ main(int argc, char **argv)
 			break;
 		case 's':
 			if ((d = dev_list) == NULL) {
-				d = mkdev(DEFAULT_DEV, &par, 0, bufsz, round, rate,
-				    hold, autovol);
+				d = mkdev(DEFAULT_DEV, &par, 0, bufsz, round,
+				    rate, hold, autovol);
 			}
 			if (mkopt(optarg, d, pmin, pmax, rmin, rmax,
 				mode, vol, mmc, dup) == NULL)
@@ -459,7 +459,8 @@ main(int argc, char **argv)
 				errx(1, "%s: block size is %s", optarg, str);
 			break;
 		case 'f':
-			mkdev(optarg, &par, 0, bufsz, round, rate, hold, autovol);
+			mkdev(optarg, &par, 0, bufsz, round,
+			    rate, hold, autovol);
 			break;
 		default:
 			fputs(usagestr, stderr);
@@ -490,11 +491,11 @@ main(int argc, char **argv)
 		if ((pw = getpwnam(SNDIO_PRIV_USER)) == NULL)
 			errx(1, "unknown user %s", SNDIO_PRIV_USER);
 		hpw_uid = pw->pw_uid;
-		hpw_gid = pw->pw_gid;		
+		hpw_gid = pw->pw_gid;
 		if ((pw = getpwnam(SNDIO_USER)) == NULL)
 			errx(1, "unknown user %s", SNDIO_USER);
 		wpw_uid = pw->pw_uid;
-		wpw_gid = pw->pw_gid;		
+		wpw_gid = pw->pw_gid;
 		wpw_dir = xstrdup(pw->pw_dir);
 	} else {
 		hpw_uid = wpw_uid = hpw_gid = wpw_gid = 0xdeadbeef;

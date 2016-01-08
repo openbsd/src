@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.h,v 1.9 2015/02/16 06:28:05 ratchov Exp $	*/
+/*	$OpenBSD: dev.h,v 1.10 2016/01/08 16:17:31 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -42,7 +42,7 @@ struct slot {
 	void *arg;				/* user data for callbacks */
 	struct aparams par;			/* socket side params */
 	struct {
-		int weight;			/* dynamic range */	
+		int weight;			/* dynamic range */
 		int maxweight;			/* max dynamic range allowed */
 		unsigned int vol;		/* volume within the vol */
 		struct abuf buf;		/* socket side buffer */
@@ -105,7 +105,7 @@ struct dev {
 
 	/*
 	 * audio device (while opened)
-	 */	
+	 */
 	struct dev_sio sio;
 	struct aparams par;			/* encoding */
 	int pchan, rchan;			/* play & rec channels */

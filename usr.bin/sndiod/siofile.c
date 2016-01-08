@@ -1,4 +1,4 @@
-/*	$OpenBSD: siofile.c,v 1.10 2015/12/20 11:38:33 ratchov Exp $	*/
+/*	$OpenBSD: siofile.c,v 1.11 2016/01/08 16:17:31 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -163,7 +163,7 @@ dev_sio_open(struct dev *d)
 		log_putu(par.pchan);
 		log_puts(": unsupported number of play channels\n");
 		goto bad_close;
-	}	
+	}
 	if ((mode & SIO_REC) && par.rchan > NCHAN_MAX) {
 		log_puts(d->path);
 		log_puts(": ");
@@ -231,7 +231,7 @@ dev_sio_close(struct dev *d)
 #endif
 	timo_del(&d->sio.watchdog);
 	file_del(d->sio.file);
-	sio_close(d->sio.hdl);	
+	sio_close(d->sio.hdl);
 }
 
 void
@@ -294,7 +294,7 @@ dev_sio_pollfd(void *arg, struct pollfd *pfd)
 {
 	struct dev *d = arg;
 	int events;
-	
+
 	events = (d->sio.cstate == DEV_SIO_READ) ? POLLIN : POLLOUT;
 	return sio_pollfd(d->sio.hdl, pfd, events);
 }
