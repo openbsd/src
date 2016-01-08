@@ -1,4 +1,4 @@
-#	$OpenBSD: files.octeon,v 1.26 2015/09/09 15:48:52 visa Exp $
+#	$OpenBSD: files.octeon,v 1.27 2016/01/08 15:54:13 jcs Exp $
 
 # Standard stanzas config(8) can't run without
 maxpartitions 16
@@ -21,6 +21,7 @@ file	arch/octeon/octeon/machdep.c
 
 include "dev/ata/files.ata"
 include "dev/atapiscsi/files.atapiscsi"
+include	"dev/hid/files.hid"
 include	"dev/i2c/files.i2c"
 include	"dev/gpio/files.gpio"
 include	"dev/isa/files.isa"

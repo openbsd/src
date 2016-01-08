@@ -1,4 +1,4 @@
-/*	$OpenBSD: ucycom.c,v 1.32 2015/01/04 08:42:04 jsg Exp $	*/
+/*	$OpenBSD: ucycom.c,v 1.33 2016/01/08 15:54:14 jcs Exp $	*/
 /*	$NetBSD: ucycom.c,v 1.3 2005/08/05 07:27:47 skrll Exp $	*/
 
 /*
@@ -54,9 +54,10 @@
 #include <dev/usb/usbdi_util.h>
 #include <dev/usb/usbdevs.h>
 #include <dev/usb/uhidev.h>
-#include <dev/usb/hid.h>
 
 #include <dev/usb/ucomvar.h>
+
+#include <dev/hid/hid.h>
 
 #ifdef UCYCOM_DEBUG
 #define DPRINTF(x)	if (ucycomdebug) printf x

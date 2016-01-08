@@ -1,4 +1,4 @@
-#	$OpenBSD: files.armish,v 1.17 2014/07/11 21:54:37 tedu Exp $
+#	$OpenBSD: files.armish,v 1.18 2016/01/08 15:54:13 jcs Exp $
 
 maxpartitions   16
 maxusers	2 8 64
@@ -53,6 +53,9 @@ include "dev/ata/files.ata"
 include "dev/wscons/files.wscons"
 include "dev/wsfont/files.wsfont"
 include "dev/rasops/files.rasops"
+
+# Machine-independent HID support
+include "dev/hid/files.hid"
 
 # Include USB stuff
 include "dev/usb/files.usb"

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.macppc,v 1.84 2015/11/23 10:30:02 mpi Exp $
+#	$OpenBSD: files.macppc,v 1.85 2016/01/08 15:54:13 jcs Exp $
 
 #
 # macppc-specific configuration info
@@ -266,6 +266,11 @@ file	arch/macppc/macppc/rbus_machdep.c		cardbus
 # Machine-independent PCMCIA drivers
 #
 include "dev/pcmcia/files.pcmcia"
+
+#
+# Machine-independent HID support
+#
+include "dev/hid/files.hid"
 
 #
 # Machine-independent USB drivers

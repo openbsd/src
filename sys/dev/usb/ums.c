@@ -1,4 +1,4 @@
-/*	$OpenBSD: ums.c,v 1.40 2014/12/28 15:24:08 matthieu Exp $ */
+/*	$OpenBSD: ums.c,v 1.41 2016/01/08 15:54:14 jcs Exp $ */
 /*	$NetBSD: ums.c,v 1.60 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -49,12 +49,12 @@
 #include <dev/usb/usbdevs.h>
 #include <dev/usb/usb_quirks.h>
 #include <dev/usb/uhidev.h>
-#include <dev/usb/hid.h>
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsmousevar.h>
 
-#include <dev/usb/hidmsvar.h>
+#include <dev/hid/hid.h>
+#include <dev/hid/hidmsvar.h>
 
 struct ums_softc {
 	struct uhidev	sc_hdev;
@@ -122,7 +122,7 @@ ums_attach(struct device *parent, struct device *self, void *aux)
 	struct usb_attach_arg *uaa = uha->uaa;
 	int size, repid;
 	void *desc;
-	u_int32_t quirks;
+	u_int32_t quirks, qflags;
 
 	sc->sc_hdev.sc_intr = ums_intr;
 	sc->sc_hdev.sc_parent = uha->parent;
@@ -136,7 +136,16 @@ ums_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_hdev.sc_osize = hid_report_size(desc, size, hid_output, repid);
 	sc->sc_hdev.sc_fsize = hid_report_size(desc, size, hid_feature, repid);
 
-	if (hidms_setup(self, ms, quirks, uha->reportid, desc, size) != 0)
+	if (quirks & UQ_MS_REVZ)
+		qflags |= HIDMS_REVZ;
+	if (quirks & UQ_SPUR_BUT_UP)
+		qflags |= HIDMS_SPUR_BUT_UP;
+	if (quirks & UQ_MS_BAD_CLASS)
+		qflags |= HIDMS_MS_BAD_CLASS;
+	if (quirks & UQ_MS_LEADING_BYTE)
+		qflags |= HIDMS_LEADINGBYTE;
+
+	if (hidms_setup(self, ms, qflags, uha->reportid, desc, size) != 0)
 		return;
 
 	/*

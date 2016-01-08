@@ -1,4 +1,4 @@
-/*	$OpenBSD: hidkbdvar.h,v 1.1 2010/07/31 16:04:50 miod Exp $	*/
+/*	$OpenBSD: hidkbdvar.h,v 1.1 2016/01/08 15:54:13 jcs Exp $	*/
 /*      $NetBSD: ukbd.c,v 1.85 2003/03/11 16:44:00 augustss Exp $        */
 
 /*

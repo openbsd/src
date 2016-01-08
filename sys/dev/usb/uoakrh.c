@@ -1,4 +1,4 @@
-/*	$OpenBSD: uoakrh.c,v 1.11 2015/03/14 03:38:50 jsg Exp $   */
+/*	$OpenBSD: uoakrh.c,v 1.12 2016/01/08 15:54:14 jcs Exp $   */
 
 /*
  * Copyright (c) 2012 Yojiro UO <yuo@nui.org>
@@ -32,7 +32,9 @@
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdevs.h>
 #include <dev/usb/uhidev.h>
-#include <dev/usb/hid.h>
+
+#include <dev/hid/hid.h>
+
 #include "uoak.h"
 
 #ifdef OARKRH_DEBUG

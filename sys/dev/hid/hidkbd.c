@@ -1,4 +1,4 @@
-/*	$OpenBSD: hidkbd.c,v 1.16 2015/07/15 14:15:46 miod Exp $	*/
+/*	$OpenBSD: hidkbd.c,v 1.1 2016/01/08 15:54:13 jcs Exp $	*/
 /*      $NetBSD: ukbd.c,v 1.85 2003/03/11 16:44:00 augustss Exp $        */
 
 /*
@@ -43,18 +43,13 @@
 #include <sys/ioctl.h>
 #include <sys/malloc.h>
 
-#include <dev/usb/usb.h>
-#include <dev/usb/usbhid.h>
-
-#include <dev/usb/usb_quirks.h>
-#include <dev/usb/hid.h>
-
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wskbdvar.h>
 #include <dev/wscons/wsksymdef.h>
 #include <dev/wscons/wsksymvar.h>
 
-#include <dev/usb/hidkbdsc.h>
+#include <dev/hid/hid.h>
+#include <dev/hid/hidkbdsc.h>
 
 #ifdef HIDKBD_DEBUG
 #define DPRINTF(x)	do { if (hidkbddebug) printf x; } while (0)
@@ -178,7 +173,8 @@ hidkbd_attach(struct device *self, struct hidkbd *kbd, int console,
 #endif
 
 	kbd->sc_device = self;
-	kbd->sc_debounce = (qflags & UQ_SPUR_BUT_UP) != 0;
+	kbd->sc_debounce = (qflags & HIDKBD_SPUR_BUT_UP) != 0;
+
 	/*
 	 * Remember if we're the console keyboard.
 	 *

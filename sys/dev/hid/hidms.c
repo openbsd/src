@@ -1,4 +1,4 @@
-/*	$OpenBSD: hidms.c,v 1.8 2015/11/05 15:41:15 jcs Exp $ */
+/*	$OpenBSD: hidms.c,v 1.1 2016/01/08 15:54:13 jcs Exp $ */
 /*	$NetBSD: ums.c,v 1.60 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -41,16 +41,11 @@
 #include <sys/device.h>
 #include <sys/ioctl.h>
 
-#include <dev/usb/usb.h>
-#include <dev/usb/usbhid.h>
-
-#include <dev/usb/usb_quirks.h>
-#include <dev/usb/hid.h>
-
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsmousevar.h>
 
-#include <dev/usb/hidmsvar.h>
+#include <dev/hid/hid.h>
+#include <dev/hid/hidmsvar.h>
 
 #ifdef HIDMS_DEBUG
 #define DPRINTF(x)	do { if (hidmsdebug) printf x; } while (0)
@@ -78,12 +73,7 @@ hidms_setup(struct device *self, struct hidms *ms, uint32_t quirks,
 	ms->sc_device = self;
 	ms->sc_rawmode = 1;
 
-	if (quirks & UQ_MS_REVZ)
-		ms->sc_flags |= HIDMS_REVZ;
-	if (quirks & UQ_SPUR_BUT_UP)
-		ms->sc_flags |= HIDMS_SPUR_BUT_UP;
-	if (quirks & UQ_MS_LEADING_BYTE)
-		ms->sc_flags |= HIDMS_LEADINGBYTE;
+	ms->sc_flags = quirks;
 
 	if (!hid_locate(desc, dlen, HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_X), id,
 	    hid_input, &ms->sc_loc_x, &flags)) {
@@ -228,7 +218,7 @@ hidms_setup(struct device *self, struct hidms *ms, uint32_t quirks,
 	 * all of its other button positions are all off. It also reports that
 	 * it has two addional buttons and a tilt wheel.
 	 */
-	if (quirks & UQ_MS_BAD_CLASS) {
+	if (ms->sc_flags & HIDMS_MS_BAD_CLASS) {
 		/* HIDMS_LEADINGBYTE cleared on purpose */
 		ms->sc_flags = HIDMS_Z | HIDMS_SPUR_BUT_UP;
 		ms->sc_num_buttons = 3;

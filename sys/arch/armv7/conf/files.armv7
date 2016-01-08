@@ -1,4 +1,4 @@
-#	$OpenBSD: files.armv7,v 1.13 2015/06/08 06:33:16 jsg Exp $
+#	$OpenBSD: files.armv7,v 1.14 2016/01/08 15:54:13 jcs Exp $
 
 maxpartitions	16
 maxusers	2 8 64
@@ -34,6 +34,9 @@ include "dev/sdmmc/files.sdmmc"
 
 # Media Independent Interface (mii)
 include "dev/mii/files.mii"
+
+# Machine-independent HID support
+include "dev/hid/files.hid"
 
 # Machine-independent I2C drivers
 include "dev/i2c/files.i2c"

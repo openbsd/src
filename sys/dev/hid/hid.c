@@ -1,4 +1,4 @@
-/*	$OpenBSD: hid.c,v 1.28 2014/07/12 18:48:52 tedu Exp $ */
+/*	$OpenBSD: hid.c,v 1.1 2016/01/08 15:54:13 jcs Exp $ */
 /*	$NetBSD: hid.c,v 1.23 2002/07/11 21:14:25 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/hid.c,v 1.11 1999/11/17 22:33:39 n_hibma Exp $ */
 
@@ -36,10 +36,7 @@
 #include <sys/systm.h>
 #include <sys/malloc.h>
 
-#include <dev/usb/usb.h>
-#include <dev/usb/usbhid.h>
-
-#include <dev/usb/hid.h>
+#include <dev/hid/hid.h>
 
 #ifdef USBHID_DEBUG
 #define DPRINTF(x...)	 do { printf(x); } while (0)

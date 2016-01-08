@@ -1,4 +1,4 @@
-#	$OpenBSD: files.i386,v 1.227 2015/10/29 07:47:02 kettenis Exp $
+#	$OpenBSD: files.i386,v 1.228 2016/01/08 15:54:13 jcs Exp $
 #
 # new style config file for i386 architecture
 #
@@ -357,6 +357,11 @@ file	dev/isa/tcic2_isa.c		tcic_isa
 # Machine-independent PCMCIA drivers
 #
 include "dev/pcmcia/files.pcmcia"
+
+#
+# Machine-independent HID support
+#
+include	"dev/hid/files.hid"
 
 #
 # Machine-independent USB drivers

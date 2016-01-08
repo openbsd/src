@@ -1,4 +1,4 @@
-/* $OpenBSD: pcppi.c,v 1.12 2014/09/21 04:29:42 jsg Exp $ */
+/* $OpenBSD: pcppi.c,v 1.13 2016/01/08 15:54:13 jcs Exp $ */
 /* $NetBSD: pcppi.c,v 1.1 1998/04/15 20:26:18 drochner Exp $ */
 
 /*
@@ -49,7 +49,7 @@
 #if NPCKBD > 0 || NHIDKBD > 0
 #include <dev/ic/pckbcvar.h>
 #include <dev/pckbc/pckbdvar.h>
-#include <dev/usb/hidkbdvar.h>
+#include <dev/hid/hidkbdvar.h>
 void	pcppi_kbd_bell(void *, u_int, u_int, u_int, int);
 #endif
 

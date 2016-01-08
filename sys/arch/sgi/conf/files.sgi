@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sgi,v 1.54 2015/09/09 15:48:53 visa Exp $
+#	$OpenBSD: files.sgi,v 1.55 2016/01/08 15:54:13 jcs Exp $
 #
 # maxpartitions must be first item in files.${ARCH}
 #
@@ -215,6 +215,11 @@ include	"dev/wscons/files.wscons"
 #
 include	"dev/cardbus/files.cardbus"
 include	"dev/pcmcia/files.pcmcia"
+
+#
+# Machine-independent HID support
+#
+include	"dev/hid/files.hid"
 
 #
 # Machine-independent USB drivers

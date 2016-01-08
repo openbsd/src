@@ -1,4 +1,4 @@
-/*	$OpenBSD: ukbd.c,v 1.73 2015/12/25 20:28:48 jung Exp $	*/
+/*	$OpenBSD: ukbd.c,v 1.74 2016/01/08 15:54:14 jcs Exp $	*/
 /*      $NetBSD: ukbd.c,v 1.85 2003/03/11 16:44:00 augustss Exp $        */
 
 /*
@@ -65,7 +65,6 @@
 #include <dev/usb/usbdevs.h>
 #include <dev/usb/usb_quirks.h>
 #include <dev/usb/uhidev.h>
-#include <dev/usb/hid.h>
 #include <dev/usb/ukbdvar.h>
 
 #include <dev/wscons/wsconsio.h>
@@ -73,7 +72,8 @@
 #include <dev/wscons/wsksymdef.h>
 #include <dev/wscons/wsksymvar.h>
 
-#include <dev/usb/hidkbdsc.h>
+#include <dev/hid/hid.h>
+#include <dev/hid/hidkbdsc.h>
 
 #ifdef UKBD_DEBUG
 #define DPRINTF(x)	do { if (ukbddebug) printf x; } while (0)
@@ -208,7 +208,7 @@ ukbd_attach(struct device *parent, struct device *self, void *aux)
 	struct hidkbd *kbd = &sc->sc_kbd;
 	struct uhidev_attach_arg *uha = (struct uhidev_attach_arg *)aux;
 	struct usb_hid_descriptor *hid;
-	u_int32_t qflags;
+	u_int32_t quirks, qflags;
 	int dlen, repid;
 	int console = 1;
 	void *desc;
@@ -233,7 +233,10 @@ ukbd_attach(struct device *parent, struct device *self, void *aux)
 	    uha->uaa->product == USB_PRODUCT_APPLE_BLUETOOTH_HCI)
 		console = 0;
 
-	qflags = usbd_get_quirks(sc->sc_hdev.sc_udev)->uq_flags;
+	quirks = usbd_get_quirks(sc->sc_hdev.sc_udev)->uq_flags;
+	if (quirks & UQ_SPUR_BUT_UP)
+		qflags |= HIDKBD_SPUR_BUT_UP;
+
 	if (hidkbd_attach(self, kbd, console, qflags, repid, desc, dlen) != 0)
 		return;
 

@@ -1,0 +1,18 @@
+#	$OpenBSD: files.hid,v 1.1 2016/01/08 15:54:13 jcs Exp $
+
+# Human Interface Devices
+
+# HID "bus"
+define	hidbus {[reportid = -1]}
+
+# HID processing
+define	hid
+file	dev/hid/hid.c			hid
+
+# Keyboards
+define	hidkbd
+file	dev/hid/hidkbd.c		hidkbd			needs-flag
+
+# Mice
+define	hidms
+file	dev/hid/hidms.c			hidms

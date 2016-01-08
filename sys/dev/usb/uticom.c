@@ -1,4 +1,4 @@
-/*	$OpenBSD: uticom.c,v 1.28 2015/12/11 16:07:02 mpi Exp $	*/
+/*	$OpenBSD: uticom.c,v 1.29 2016/01/08 15:54:14 jcs Exp $	*/
 /*
  * Copyright (c) 2005 Dmitry Komissaroff <dxi@mail.ru>.
  *
@@ -35,7 +35,6 @@
 #include <machine/bus.h>
 
 #include <dev/usb/usb.h>
-
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdivar.h>
 #include <dev/usb/usbdi_util.h>

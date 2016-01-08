@@ -1,4 +1,4 @@
-#	$OpenBSD: files.usb,v 1.125 2016/01/08 09:36:59 mpi Exp $
+#	$OpenBSD: files.usb,v 1.126 2016/01/08 15:54:13 jcs Exp $
 #	$NetBSD: files.usb,v 1.16 2000/02/14 20:29:54 augustss Exp $
 #
 # Config file and device description for machine-independent USB code.
@@ -61,10 +61,6 @@ file	dev/usb/ugen.c			ugen			needs-flag
 # HID "bus"
 define	uhidbus {[reportid = -1]}
 
-# HID processing
-define	hid
-file	dev/usb/hid.c			hid
-
 # HID root device for multiple report IDs
 device	uhidev: hid, uhidbus
 attach	uhidev at uhub
@@ -76,16 +72,12 @@ attach	uhid at uhidbus
 file	dev/usb/uhid.c			uhid			needs-flag
 
 # Keyboards
-define	hidkbd
-file	dev/usb/hidkbd.c		hidkbd			needs-flag
 file	dev/usb/ukbdmap.c		hidkbd
 device	ukbd: hid, hidkbd, wskbddev
 attach	ukbd at uhidbus
 file	dev/usb/ukbd.c			ukbd			needs-flag
 
 # Mice
-define	hidms
-file	dev/usb/hidms.c			hidms
 device	ums: hid, hidms, wsmousedev
 attach	ums at uhidbus
 file	dev/usb/ums.c			ums

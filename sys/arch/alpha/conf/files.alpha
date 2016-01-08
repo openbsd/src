@@ -1,4 +1,4 @@
-#	$OpenBSD: files.alpha,v 1.102 2015/07/17 22:52:28 tedu Exp $
+#	$OpenBSD: files.alpha,v 1.103 2016/01/08 15:54:12 jcs Exp $
 #	$NetBSD: files.alpha,v 1.32 1996/11/25 04:03:21 cgd Exp $
 #
 # alpha-specific configuration info
@@ -334,6 +334,11 @@ file	arch/alpha/alpha/dec_alphabook1.c	dec_alphabook1
 file	arch/alpha/alpha/dec_1000a.c		dec_1000 | dec_1000a
 file	arch/alpha/alpha/dec_6600.c		dec_6600
 file	arch/alpha/alpha/api_up1000.c		api_up1000
+
+#
+# Machine-independent HID support
+#
+include	"dev/hid/files.hid"
 
 #
 # Machine-independent I2C drivers

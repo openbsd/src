@@ -1,4 +1,4 @@
-/*	$OpenBSD: hidkbdsc.h,v 1.4 2012/07/13 12:33:08 shadchin Exp $	*/
+/*	$OpenBSD: hidkbdsc.h,v 1.1 2016/01/08 15:54:13 jcs Exp $	*/
 /*      $NetBSD: ukbd.c,v 1.85 2003/03/11 16:44:00 augustss Exp $        */
 
 /*
@@ -35,6 +35,9 @@
 #define MAXVARS 128
 
 #define MAXKEYS (MAXVARS+2*MAXKEYCODE)
+
+/* quirks */
+#define HIDKBD_SPUR_BUT_UP 0x001 /* spurious button up events */
 
 struct hidkbd_variable {
 	struct hid_location loc;

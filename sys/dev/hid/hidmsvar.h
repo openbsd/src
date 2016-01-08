@@ -1,4 +1,4 @@
-/*	$OpenBSD: hidmsvar.h,v 1.3 2013/08/09 22:10:17 edd Exp $ */
+/*	$OpenBSD: hidmsvar.h,v 1.1 2016/01/08 15:54:13 jcs Exp $ */
 /*	$NetBSD: ums.c,v 1.60 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -54,6 +54,7 @@ struct hidms {
 #define HIDMS_TIP		0x100   /* Tip switch on a digitiser pen */
 #define HIDMS_BARREL		0x200	/* Barrel switch on a digitiser pen */
 #define HIDMS_ERASER		0x400   /* Eraser switch on a digitiser pen */
+#define HIDMS_MS_BAD_CLASS	0x800	/* Mouse doesn't identify properly */
 
 	int		sc_num_buttons;
 	u_int32_t	sc_buttons;	/* mouse button status */

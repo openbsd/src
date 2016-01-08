@@ -1,4 +1,4 @@
-#	$OpenBSD: files.hppa64,v 1.19 2015/07/17 22:52:28 tedu Exp $
+#	$OpenBSD: files.hppa64,v 1.20 2016/01/08 15:54:13 jcs Exp $
 #
 # hppa64-specific configuration info
 
@@ -46,6 +46,11 @@ include	"dev/cardbus/files.cardbus"
 # Machine-independent PCMCIA drivers
 #
 include	"dev/pcmcia/files.pcmcia"
+
+#
+# Machine-independent HID support
+#
+include	"dev/hid/files.hid"
 
 #
 # Machine-independent USB drivers

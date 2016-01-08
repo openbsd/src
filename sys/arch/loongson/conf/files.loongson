@@ -1,4 +1,4 @@
-#	$OpenBSD: files.loongson,v 1.20 2015/08/15 22:31:38 miod Exp $
+#	$OpenBSD: files.loongson,v 1.21 2016/01/08 15:54:13 jcs Exp $
 
 # Standard stanzas config(8) can't run without
 maxpartitions 16
@@ -35,6 +35,7 @@ include "dev/ata/files.ata"
 include "dev/atapiscsi/files.atapiscsi"
 include	"dev/i2c/files.i2c"
 include	"dev/gpio/files.gpio"
+include	"dev/hid/files.hid"
 include	"dev/isa/files.isa"
 include	"dev/isa/files.isapnp"
 include	"dev/mii/files.mii"

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc64,v 1.147 2015/07/17 22:52:29 tedu Exp $
+#	$OpenBSD: files.sparc64,v 1.148 2016/01/08 15:54:13 jcs Exp $
 #	$NetBSD: files.sparc64,v 1.50 2001/08/10 20:53:50 eeh Exp $
 
 # maxpartitions must be first item in files.${ARCH}
@@ -352,6 +352,11 @@ major	{sd = 7}
 major	{vnd = 8}
 major	{cd = 18}
 major	{rd = 5}
+
+#
+# Machine-independent HID support
+#
+include	"dev/hid/files.hid"
 
 #
 # Machine-independent I2C drivers

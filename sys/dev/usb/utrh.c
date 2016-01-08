@@ -1,4 +1,4 @@
-/*	$OpenBSD: utrh.c,v 1.17 2014/12/11 18:39:28 mpi Exp $   */
+/*	$OpenBSD: utrh.c,v 1.18 2016/01/08 15:54:14 jcs Exp $   */
 
 /*
  * Copyright (c) 2009 Yojiro UO <yuo@nui.org>
@@ -32,7 +32,8 @@
 #include <dev/usb/usbdi_util.h>
 #include <dev/usb/usbdevs.h>
 #include <dev/usb/uhidev.h>
-#include <dev/usb/hid.h>
+
+#include <dev/hid/hid.h>
 
 #ifdef UTRH_DEBUG
 #define DPRINTF(x)	do { printf x; } while (0)

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.socppc,v 1.13 2015/01/20 17:08:35 mpi Exp $
+#	$OpenBSD: files.socppc,v 1.14 2016/01/08 15:54:13 jcs Exp $
 
 #
 # macppc-specific configuration info
@@ -89,6 +89,11 @@ include "../../../dev/ata/files.ata"
 include "dev/wscons/files.wscons"
 include "dev/wsfont/files.wsfont"
 include "dev/rasops/files.rasops"
+
+#
+# Machine-independent HID support
+#
+include	"dev/hid/files.hid"
 
 #
 # Machine-independent USB drivers
