@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.29 2016/01/04 01:35:56 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.30 2016/01/08 11:20:58 reyk Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -26,6 +26,7 @@
 #include <sys/ioctl.h>
 #include <sys/queue.h>
 #include <sys/rwlock.h>
+#include <sys/pledge.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -354,6 +355,34 @@ vmmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	}
 
 	return (ret);
+}
+
+/*
+ * pledge_ioctl_vmm
+ *
+ * Restrict the allowed ioctls in a pledged process context.
+ * Is called from pledge_ioctl().
+ */
+int
+pledge_ioctl_vmm(struct proc *p, long com)
+{
+	switch (com) {
+	case VMM_IOC_CREATE:
+	case VMM_IOC_INFO:
+		/* The "parent" process in vmd forks and manages VMs */
+		if (p->p_p->ps_pledge & PLEDGE_PROC)
+			return (0);
+		break;
+	case VMM_IOC_TERM:
+		/* XXX VM processes should only terminate themselves */
+	case VMM_IOC_RUN:
+	case VMM_IOC_WRITEPAGE:
+	case VMM_IOC_READPAGE:
+	case VMM_IOC_RESETCPU:
+		return (0);
+	}
+
+	return (EPERM);
 }
 
 /*

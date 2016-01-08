@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.144 2016/01/06 18:43:10 tedu Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.145 2016/01/08 11:20:58 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -66,6 +66,13 @@
 
 #include "audio.h"
 #include "pty.h"
+
+#if defined(__amd64__)
+#include "vmm.h"
+#if NVMM > 0
+#include <machine/conf.h>
+#endif
+#endif
 
 #if defined(__amd64__) || defined(__i386__) || \
     defined(__macppc__) || defined(__sparc64__)
@@ -366,6 +373,7 @@ static const struct {
 	{ "tty",		PLEDGE_TTY },
 	{ "unix",		PLEDGE_UNIX },
 	{ "vminfo",		PLEDGE_VMINFO },
+	{ "vmm",		PLEDGE_VMM },
 	{ "wpath",		PLEDGE_WPATH },
 };
 
@@ -1326,6 +1334,18 @@ pledge_ioctl(struct proc *p, long com, struct file *fp)
 				return (0);
 			break;
 		}
+	}
+
+	if ((p->p_p->ps_pledge & PLEDGE_VMM)) {
+#if NVMM > 0
+		if ((fp->f_type == DTYPE_VNODE) &&
+		    (vp->v_type == VCHR) &&
+		    (cdevsw[major(vp->v_rdev)].d_open == vmmopen)) {
+			error = pledge_ioctl_vmm(p, com);
+			if (error == 0)
+				return 0;
+		}
+#endif
 	}
 
 	return pledge_fail(p, error, PLEDGE_IOCTL);
