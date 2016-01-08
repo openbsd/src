@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.143 2015/10/13 08:53:43 guenther Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.144 2016/01/08 20:36:01 sthen Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -833,10 +833,15 @@ again:
 		} else if (isredirect &&
 		    strncasecmp(cp, LOCATION, sizeof(LOCATION) - 1) == 0) {
 			cp += sizeof(LOCATION) - 1;
-			if (strstr(cp, "://") == NULL) {
+			/*
+			 * If there is a colon before the first slash, this URI
+			 * is not relative. RFC 3986 4.2
+			 */
+			if (cp[strcspn(cp, ":/")] != ':') {
 #ifdef SMALL
 				errx(1, "Relative redirect not supported");
 #else /* SMALL */
+				/* XXX doesn't handle protocol-relative URIs */
 				if (*cp == '/') {
 					locbase = NULL;
 					cp++;
