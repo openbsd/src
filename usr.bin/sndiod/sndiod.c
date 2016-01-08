@@ -1,4 +1,4 @@
-/*	$OpenBSD: sndiod.c,v 1.24 2016/01/08 13:19:34 ratchov Exp $	*/
+/*	$OpenBSD: sndiod.c,v 1.25 2016/01/08 13:32:17 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -327,7 +327,7 @@ main(int argc, char **argv)
 {
 	int c, background, unit;
 	int pmin, pmax, rmin, rmax;
-	char base[SOCKPATH_MAX], path[SOCKPATH_MAX], *tcpaddr;
+	char base[SOCKPATH_MAX], path[SOCKPATH_MAX];
 	unsigned int mode, dup, mmc, vol;
 	unsigned int hold, autovol, bufsz, round, rate;
 	const char *str;
@@ -336,6 +336,10 @@ main(int argc, char **argv)
 	struct port *p;
 	struct listen *l;
 	struct passwd *pw;
+	struct tcpaddr {
+		char *host;
+		struct tcpaddr *next;
+	} *tcpaddr_list, *ta;
 	int s[2];
 	pid_t pid;
 	uid_t euid, hpw_uid, wpw_uid;
@@ -363,7 +367,7 @@ main(int argc, char **argv)
 	rmax = 1;
 	aparams_init(&par);
 	mode = MODE_PLAY | MODE_REC;
-	tcpaddr = NULL;
+	tcpaddr_list = NULL;
 
 	while ((c = getopt(argc, argv, "a:b:c:C:de:f:j:L:m:q:r:s:t:U:v:w:x:z:")) != -1) {
 		switch (c) {
@@ -377,7 +381,10 @@ main(int argc, char **argv)
 				errx(1, "%s: unit number is %s", optarg, str);
 			break;
 		case 'L':
-			tcpaddr = optarg;
+			ta = xmalloc(sizeof(struct tcpaddr));
+			ta->host = optarg;
+			ta->next = tcpaddr_list;
+			tcpaddr_list = ta;
 			break;
 		case 'm':
 			mode = opt_mode();
@@ -521,8 +528,8 @@ main(int argc, char **argv)
 		    base, unit);
 		if (!listen_new_un(path))
 			return 1;
-		if (tcpaddr) {
-			if (!listen_new_tcp(tcpaddr, AUCAT_PORT + unit))
+		for (ta = tcpaddr_list; ta != NULL; ta = ta->next) {
+			if (!listen_new_tcp(ta->host, AUCAT_PORT + unit))
 				return 1;
 		}
 		for (l = listen_list; l != NULL; l = l->next) {
@@ -555,7 +562,7 @@ main(int argc, char **argv)
 			    setresuid(wpw_uid, wpw_uid, wpw_uid))
 				err(1, "cannot drop privileges");
 		}
-		if (tcpaddr) {
+		if (tcpaddr_list) {
 			if (pledge("stdio audio recvfd unix inet", NULL) == -1)
 				err(1, "pledge");
 		} else {
@@ -590,6 +597,11 @@ main(int argc, char **argv)
 		dev_del(dev_list);
 	while (port_list)
 		port_del(port_list);
+	while (tcpaddr_list) {
+		ta = tcpaddr_list;
+		tcpaddr_list = ta->next;
+		xfree(ta);
+	}
 	filelist_done();
 	unsetsig();
 	return 0;
