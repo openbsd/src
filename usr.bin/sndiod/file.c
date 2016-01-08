@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.15 2015/08/27 07:38:38 ratchov Exp $	*/
+/*	$OpenBSD: file.c,v 1.16 2016/01/08 10:44:15 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -412,19 +412,21 @@ file_poll(void)
 	file_wtime += 1000000000LL * (ts.tv_sec - sleepts.tv_sec);
 	file_wtime += ts.tv_nsec - sleepts.tv_nsec;
 #endif
-	delta_nsec = 1000000000LL * (ts.tv_sec - file_ts.tv_sec);
-	delta_nsec += ts.tv_nsec - file_ts.tv_nsec;
+	if (timo_queue) {
+		delta_nsec = 1000000000LL * (ts.tv_sec - file_ts.tv_sec);
+		delta_nsec += ts.tv_nsec - file_ts.tv_nsec;
 #ifdef DEBUG
-	if (delta_nsec < 0)
-		log_puts("file_poll: negative time interval\n");
+		if (delta_nsec < 0)
+			log_puts("file_poll: negative time interval\n");
 #endif
-	file_ts = ts;
-	if (delta_nsec >= 0 && delta_nsec < 1000000000LL)
-		timo_update(delta_nsec / 1000);
-	else {
-		if (log_level >= 2)
-			log_puts("ignored huge clock delta\n");
+		if (delta_nsec >= 0 && delta_nsec < 1000000000LL)
+			timo_update(delta_nsec / 1000);
+		else {
+			if (log_level >= 2)
+				log_puts("out-of-bounds clock delta\n");
+		}
 	}
+	file_ts = ts;	
 
 	/*
 	 * process files that rely on poll
