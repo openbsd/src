@@ -1,4 +1,4 @@
-/*	$OpenBSD: sndiod.c,v 1.25 2016/01/08 13:32:17 ratchov Exp $	*/
+/*	$OpenBSD: sndiod.c,v 1.26 2016/01/08 13:56:33 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -317,7 +317,7 @@ mkopt(char *path, struct dev *d,
 	o = opt_new(path, d, pmin, pmax, rmin, rmax,
 	    MIDI_TO_ADATA(vol), mmc, dup, mode);
 	if (o == NULL)
-		errx(1, "%s: couldn't create subdev", path);
+		return NULL;
 	dev_adjpar(d, o->mode, o->pmin, o->pmax, o->rmin, o->rmax);
 	return o;
 }
@@ -419,8 +419,9 @@ main(int argc, char **argv)
 				d = mkdev(DEFAULT_DEV, &par, 0, bufsz, round, rate,
 				    hold, autovol);
 			}
-			mkopt(optarg, d, pmin, pmax, rmin, rmax,
-			    mode, vol, mmc, dup);
+			if (mkopt(optarg, d, pmin, pmax, rmin, rmax,
+				mode, vol, mmc, dup) == NULL)
+				return 1;
 			break;
 		case 'q':
 			p = port_new(optarg, MODE_MIDIMASK, hold);
@@ -462,8 +463,9 @@ main(int argc, char **argv)
 	for (d = dev_list; d != NULL; d = d->next) {
 		if (opt_byname("default", d->num))
 			continue;
-		mkopt("default", d, pmin, pmax, rmin, rmax,
-		    mode, vol, mmc, dup);
+		if (mkopt("default", d, pmin, pmax, rmin, rmax,
+			mode, vol, mmc, dup) == NULL)
+			return 1;
 	}
 
 	setsig();
