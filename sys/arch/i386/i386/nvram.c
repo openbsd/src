@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvram.c,v 1.4 2015/02/10 21:56:09 miod Exp $ */
+/*	$OpenBSD: nvram.c,v 1.5 2016/01/08 08:00:12 stefan Exp $ */
 
 /*
  * Copyright (c) 2004 Joshua Stein <jcs@openbsd.org>
@@ -93,29 +93,32 @@ int
 nvramread(dev_t dev, struct uio *uio, int flags)
 {
 	u_char buf[NVRAM_SIZE];
-	u_int pos = uio->uio_offset;
+	off_t pos = uio->uio_offset;
 	u_char *tmp;
-	int count = min(sizeof(buf), uio->uio_resid);
+	size_t count = ulmin(sizeof(buf), uio->uio_resid);
 	int ret;
 
 	if (!nvram_initialized)
 		return (ENXIO);
 
+	if (uio->uio_offset < 0)
+		return (EINVAL);
+
 	if (uio->uio_resid == 0)
 		return (0);
 
 #ifdef NVRAM_DEBUG
-	printf("attempting to read %d bytes at offset %d\n", count, pos);
+	printf("attempting to read %zu bytes at offset %lld\n", count, pos);
 #endif
 
 	for (tmp = buf; count-- > 0 && pos < NVRAM_SIZE; ++pos, ++tmp)
 		*tmp = nvram_get_byte(pos);
 
 #ifdef NVRAM_DEBUG
-	printf("nvramread read %d bytes (%s)\n", (tmp - buf), tmp);
+	printf("nvramread read %td bytes (%s)\n", (tmp - buf), tmp);
 #endif
 
-	ret = uiomovei((caddr_t)buf, (tmp - buf), uio);
+	ret = uiomove(buf, (tmp - buf), uio);
 
 	uio->uio_offset += uio->uio_resid;
 
