@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.policy.5,v 1.46 2012/07/13 15:16:18 mikeb Exp $
+.\" $OpenBSD: isakmpd.policy.5,v 1.47 2016/01/08 07:43:38 jmc Exp $
 .\" $EOM: isakmpd.policy.5,v 1.24 2000/11/23 12:55:25 niklas Exp $
 .\"
 .\" Copyright (c) 1999-2001, Angelos D. Keromytis.  All rights reserved.
@@ -26,7 +26,7 @@
 .\"
 .\" Manual page, using -mandoc macros
 .\"
-.Dd $Mdocdate: July 13 2012 $
+.Dd $Mdocdate: January 8 2016 $
 .Dt ISAKMPD.POLICY 5
 .Os
 .Sh NAME
@@ -307,7 +307,7 @@ based on the AH, ESP, and compression proposal.
 .It ah_group_desc, esp_group_desc, comp_group_desc
 The Diffie-Hellman group identifier from the AH, ESP, and compression
 proposal, used for PFS during Quick Mode (see the pfs attribute
-above).
+below).
 If more than one of these attributes are set to a value other
 than zero, they should have the same value (in valid IKE proposals).
 Valid values are 1 (768-bit MODP), 2 (1024-bit MODP), 3 (155-bit EC),
