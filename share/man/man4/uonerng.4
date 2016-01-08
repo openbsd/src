@@ -1,4 +1,4 @@
-.\"	$OpenBSD: uonerng.4,v 1.1 2016/01/08 09:36:59 mpi Exp $
+.\"	$OpenBSD: uonerng.4,v 1.2 2016/01/08 10:20:05 jmc Exp $
 .\"
 .\" Copyright (c) 2015 Devin Reade <gdr@gno.org>
 .\"
@@ -31,19 +31,16 @@ number generator (TRNG).
 reads raw entropy from the OneRNG and uses
 .Xr add_true_randomness 9
 to add it to the system entropy pool.
-.Sh IMPLEMENTATION NOTES
+.Pp
 The OneRNG is capable of operating in one of several modes, some of
 which are intended for production use and some of which are for testing
 and validating the hardware.
 .Pp
 .Nm
 operates in the
-.Do
-Avalanche noise with whitener
-.Dc
-mode, which is also the manufacturer
-.Ap s
-default mode.
+.Qq Avalanche noise with whitener
+mode,
+which is also the manufacturer's default mode.
 .Sh SEE ALSO
 .Xr intro 4 ,
 .Xr usb 4 ,
@@ -62,14 +59,13 @@ The
 driver was written by
 .An Devin Reade Aq Mt gdr@gno.org .
 .Sh BUGS
-The OneRNG permits downloading the device firmware so that one may check
-the firmware
-.Ap s
-cryptographic signature as provided by the manufacturer.  The
+The OneRNG permits downloading of the device firmware so that one may check
+the firmware's cryptographic signature as provided by the manufacturer.
+The
 .Nm
-driver does not perform nor support this action.  In order to currently
-perform such a validation, it would be necessary to disable
+driver does not perform nor support this action.
+In order to currently perform such a validation,
+it would be necessary to disable
 .Nm
-in the kernel and then download the firmware via the OneRNG
-.Ap s
+in the kernel and then download the firmware via the OneRNG's
 emulated AT modem command set.
