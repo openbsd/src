@@ -1,4 +1,4 @@
-/*	$OpenBSD: hid.h,v 1.1 2016/01/08 15:54:13 jcs Exp $ */
+/*	$OpenBSD: hid.h,v 1.2 2016/01/08 16:55:32 jcs Exp $ */
 /*	$NetBSD: hid.h,v 1.8 2002/07/11 21:14:25 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/hid.h,v 1.7 1999/11/17 22:33:40 n_hibma Exp $ */
 
@@ -34,6 +34,8 @@
 
 #ifndef _HIDHID_H_
 #define _HIDHID_H_
+
+#ifdef _KERNEL
 
 enum hid_kind {
 	hid_input,
@@ -90,6 +92,8 @@ int	hid_locate(const void *, int, int32_t, uint8_t, enum hid_kind,
 	    struct hid_location *, uint32_t *);
 int32_t	hid_get_data(const uint8_t *buf, int, struct hid_location *);
 int	hid_is_collection(const void *, int, uint8_t, int32_t);
+
+#endif /* _KERNEL */
 
 /* Usage pages */
 #define HUP_UNDEFINED		0x0000
