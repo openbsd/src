@@ -1,4 +1,4 @@
-/*	$OpenBSD: canfield.c,v 1.24 2016/01/03 14:38:17 mestre Exp $	*/
+/*	$OpenBSD: canfield.c,v 1.25 2016/01/08 20:23:54 mestre Exp $	*/
 /*	$NetBSD: canfield.c,v 1.7 1995/05/13 07:28:35 jtc Exp $	*/
 
 /*
@@ -41,8 +41,6 @@
  *	Betting by Kirk McKusick
  */
 
-#include <sys/types.h>
-
 #include <ctype.h>
 #include <curses.h>
 #include <err.h>
@@ -52,7 +50,6 @@
 #include <signal.h>
 #include <stdlib.h>
 #include <string.h>
-#include <termios.h>
 #include <unistd.h>
 
 #define	decksize	52

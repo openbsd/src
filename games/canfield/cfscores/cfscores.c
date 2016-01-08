@@ -1,4 +1,4 @@
-/*	$OpenBSD: cfscores.c,v 1.22 2016/01/07 16:00:32 tb Exp $	*/
+/*	$OpenBSD: cfscores.c,v 1.23 2016/01/08 20:23:54 mestre Exp $	*/
 /*	$NetBSD: cfscores.c,v 1.3 1995/03/21 15:08:37 cgd Exp $	*/
 
 /*
@@ -30,9 +30,8 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/types.h>
-#include <errno.h>
 #include <err.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
 #include <stdio.h>
