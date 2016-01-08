@@ -1,4 +1,4 @@
-/*	$OpenBSD: sndiod.c,v 1.23 2016/01/08 13:14:11 ratchov Exp $	*/
+/*	$OpenBSD: sndiod.c,v 1.24 2016/01/08 13:19:34 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -14,7 +14,6 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-#include <sys/queue.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/resource.h>
