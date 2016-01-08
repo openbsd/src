@@ -1,4 +1,4 @@
-/*	$OpenBSD: pl_6.c,v 1.5 2015/12/31 16:44:22 mestre Exp $	*/
+/*	$OpenBSD: pl_6.c,v 1.6 2016/01/08 20:26:33 mestre Exp $	*/
 /*	$NetBSD: pl_6.c,v 1.3 1995/04/22 10:37:15 cgd Exp $	*/
 
 /*
@@ -37,7 +37,7 @@
 #include "player.h"
 
 void
-repair()
+repair(void)
 {
 	char c;
 	char *repairs;
@@ -131,7 +131,7 @@ repair()
 }
 
 int
-turned()
+turned(void)
 {
 	char *p;
 
@@ -142,7 +142,7 @@ turned()
 }
 
 void
-loadplayer()
+loadplayer(void)
 {
 	char c;
 	int loadL, loadR, ready, load;

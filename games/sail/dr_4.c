@@ -1,4 +1,4 @@
-/*	$OpenBSD: dr_4.c,v 1.4 2009/10/27 23:59:27 deraadt Exp $	*/
+/*	$OpenBSD: dr_4.c,v 1.5 2016/01/08 20:26:33 mestre Exp $	*/
 /*	$NetBSD: dr_4.c,v 1.3 1995/04/22 10:36:50 cgd Exp $	*/
 
 /*
@@ -30,12 +30,12 @@
  * SUCH DAMAGE.
  */
 
-#include "extern.h"
 #include <stdlib.h>
 
+#include "extern.h"
+
 void
-ungrap(from, to)
-	struct ship *from, *to;
+ungrap(struct ship *from, struct ship *to)
 {
 	int k;
 	char friend;
@@ -52,8 +52,7 @@ ungrap(from, to)
 }
 
 void
-grap(from, to)
-	struct ship *from, *to;
+grap(struct ship *from, struct ship *to)
 {
 	if (capship(from)->nationality != capship(to)->nationality && die() > 2)
 		return;

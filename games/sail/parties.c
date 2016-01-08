@@ -1,4 +1,4 @@
-/*	$OpenBSD: parties.c,v 1.4 2009/10/27 23:59:27 deraadt Exp $	*/
+/*	$OpenBSD: parties.c,v 1.5 2016/01/08 20:26:33 mestre Exp $	*/
 /*	$NetBSD: parties.c,v 1.3 1995/04/22 10:37:04 cgd Exp $	*/
 
 /*
@@ -33,9 +33,7 @@
 #include "extern.h"
 
 int
-meleeing(from, to)
-	struct ship *from;
-	struct ship *to;
+meleeing(struct ship *from, struct ship *to)
 {
 	struct BP *p = from->file->OBP;
 	struct BP *q = p + NBP;
@@ -47,9 +45,7 @@ meleeing(from, to)
 }
 
 int
-boarding(from, isdefense)
-	struct ship *from;
-	char isdefense;
+boarding(struct ship *from, int isdefense)
 {
 	struct BP *p = isdefense ? from->file->DBP : from->file->OBP;
 	struct BP *q = p + NBP;
@@ -61,9 +57,7 @@ boarding(from, isdefense)
 }
 
 void
-unboard(ship, to, isdefense)
-	struct ship *ship, *to;
-	char isdefense;
+unboard(struct ship *ship, struct ship *to, int isdefense)
 {
 	struct BP *p = isdefense ? ship->file->DBP : ship->file->OBP;
 	int n;

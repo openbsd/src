@@ -1,4 +1,4 @@
-/*	$OpenBSD: pl_1.c,v 1.11 2015/12/31 16:44:22 mestre Exp $	*/
+/*	$OpenBSD: pl_1.c,v 1.12 2016/01/08 20:26:33 mestre Exp $	*/
 /*	$NetBSD: pl_1.c,v 1.3 1995/04/22 10:37:07 cgd Exp $	*/
 
 /*
@@ -53,8 +53,7 @@
  * because of a Sync() failure.
  */
 void
-leave(conditions)
-	int conditions;
+leave(int conditions)
 {
 	(void) signal(SIGHUP, SIG_IGN);
 	(void) signal(SIGINT, SIG_IGN);
@@ -117,15 +116,13 @@ leave(conditions)
 }
 
 void
-choke(n)
-	int n __attribute__((unused));
+choke(int n __attribute__((unused)))
 {
 	leave(LEAVE_QUIT);
 }
 
 void
-child(n)
-	int n __attribute__((unused));
+child(int n __attribute__((unused)))
 {
 	int status;
 	int pid;

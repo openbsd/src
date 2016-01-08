@@ -1,4 +1,4 @@
-/*	$OpenBSD: dr_2.c,v 1.6 2015/12/31 16:44:21 mestre Exp $	*/
+/*	$OpenBSD: dr_2.c,v 1.7 2016/01/08 20:26:33 mestre Exp $	*/
 /*	$NetBSD: dr_2.c,v 1.4 1995/04/24 12:25:12 cgd Exp $	*/
 
 /*
@@ -40,7 +40,7 @@
 #define couldwin(f,t) (f->specs->crew2 > t->specs->crew2 * 1.5)
 
 void
-thinkofgrapples()
+thinkofgrapples(void)
 {
 	struct ship *sp, *sq;
 	char friendly;
@@ -71,7 +71,7 @@ thinkofgrapples()
 }
 
 void
-checkup()
+checkup(void)
 {
 	struct ship *sp, *sq;
 	char explode, sink;
@@ -102,7 +102,7 @@ checkup()
 }
 
 void
-prizecheck()
+prizecheck(void)
 {
 	struct ship *sp;
 
@@ -120,8 +120,7 @@ prizecheck()
 }
 
 int
-str_end(str)
-	const char *str;
+str_end(const char *str)
 {
 	const char *p;
 
@@ -131,11 +130,8 @@ str_end(str)
 }
 
 void
-closeon(from, to, command, commandl, ta, ma, af)
-	struct ship *from, *to;
-	char command[];
-	size_t commandl;
-	int ma, ta, af;
+closeon(struct ship *from, struct ship *to, char command[], size_t commandl,
+    int ta, int ma, int af)
 {
 	int high;
 	char temp[10];
@@ -149,11 +145,8 @@ closeon(from, to, command, commandl, ta, ma, af)
 const int dtab[] = {0,1,1,2,3,4,4,5};	/* diagonal distances in x==y */
 
 int
-score(movement, movementl, ship, to, onlytemp)
-	char movement[];
-	size_t movementl;
-	struct ship *ship, *to;
-	char onlytemp;
+score(char movement[], size_t movementl, struct ship *ship, struct ship *to,
+    int onlytemp)
 {
 	char drift;
 	int row, col, dir, total, ran;
@@ -184,12 +177,8 @@ score(movement, movementl, ship, to, onlytemp)
 }
 
 void
-move_ship(p, ship, dir, row, col, drift)
-	const char *p;
-	struct ship *ship;
-	unsigned char *dir;
-	short *row, *col;
-	char *drift;
+move_ship(const char *p, struct ship *ship, unsigned char *dir, short *row,
+    short *col, char *drift)
 {
 	int dist;
 	char moved = 0;
@@ -229,14 +218,9 @@ move_ship(p, ship, dir, row, col, drift)
 }
 
 void
-try(command, commandl, temp, templ, ma, ta, af, vma, dir, f, t, high, rakeme)
-	char command[];
-	size_t commandl;
-	char temp[];
-	size_t templ;
-	int ma, ta, af, vma, dir;
-	struct ship *f, *t;
-	int *high, rakeme;
+try(char command[], size_t commandl, char temp[], size_t templ, int ma, int ta,
+    int af, int vma, int dir, struct ship *f, struct ship *t, int *high,
+    int rakeme)
 {
 	int new, n;
 	char st[4];
@@ -278,8 +262,7 @@ try(command, commandl, temp, templ, ma, ta, af, vma, dir, f, t, high, rakeme)
 }
 
 void
-rmend(str)
-	char *str;
+rmend(char *str)
 {
 	char *p;
 

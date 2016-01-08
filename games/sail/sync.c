@@ -1,4 +1,4 @@
-/*	$OpenBSD: sync.c,v 1.13 2015/12/31 16:44:22 mestre Exp $	*/
+/*	$OpenBSD: sync.c,v 1.14 2016/01/08 20:26:33 mestre Exp $	*/
 /*	$NetBSD: sync.c,v 1.9 1998/08/30 09:19:40 veego Exp $	*/
 
 /*
@@ -33,6 +33,9 @@
 #include <sys/stat.h>
 
 #include <errno.h>
+#ifdef LOCK_EX
+#include <fcntl.h>
+#endif
 #include <signal.h>
 #include <stdlib.h>
 #include <string.h>
@@ -55,11 +58,7 @@ static long sync_seek;
 static FILE *sync_fp;
 
 void
-fmtship(buf, len, fmt, ship)
-	char *buf;
-	size_t len;
-	const char *fmt;
-	struct ship *ship;
+fmtship(char *buf, size_t len, const char *fmt, struct ship *ship)
 {
 	if (len == 0)
 		abort();	/* XXX */
@@ -110,8 +109,7 @@ makemsg(struct ship *from, const char *fmt, ...)
 }
 
 int
-sync_exists(game)
-	int game;
+sync_exists(int game)
 {
 	char buf[sizeof sync_file];
 	struct stat s;
@@ -136,7 +134,7 @@ sync_exists(game)
 }
 
 int
-sync_open()
+sync_open(void)
 {
 	struct stat tmp;
 
@@ -159,8 +157,7 @@ sync_open()
 }
 
 void
-sync_close(remove)
-	char remove;
+sync_close(int remove)
 {
 	if (sync_fp != 0)
 		(void) fclose(sync_fp);
@@ -172,10 +169,7 @@ sync_close(remove)
 }
 
 void
-Write(type, ship, a, b, c, d)
-	int type;
-	struct ship *ship;
-	long a, b, c, d;
+Write(int type, struct ship *ship, long a, long b, long c, long d)
 {
 	(void) snprintf(sync_bp, sync_buf + sizeof sync_buf - sync_bp,
 		"%d %d 0 %ld %ld %ld %ld\n",
@@ -189,10 +183,7 @@ Write(type, ship, a, b, c, d)
 }
 
 void
-Writestr(type, ship, a)
-	int type;
-	struct ship *ship;
-	const char *a;
+Writestr(int type, struct ship *ship, const char *a)
 {
 	(void) snprintf(sync_bp, sync_buf + sizeof sync_buf - sync_bp,
 		"%d %d 1 %s\n",
@@ -206,7 +197,7 @@ Writestr(type, ship, a)
 }
 
 int
-Sync()
+Sync(void)
 {
 	sig_t sighup, sigint;
 	int n;
@@ -306,11 +297,8 @@ out:
 }
 
 int
-sync_update(type, ship, astr, a, b, c, d)
-	int type;
-	struct ship *ship;
-	const char *astr;
-	long a, b, c, d;
+sync_update(int type, struct ship *ship, const char *astr, long a, long b,
+    long c, long d)
 {
 	switch (type) {
 	case W_DBP: {

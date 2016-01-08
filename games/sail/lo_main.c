@@ -1,4 +1,4 @@
-/*	$OpenBSD: lo_main.c,v 1.9 2015/12/31 16:44:22 mestre Exp $	*/
+/*	$OpenBSD: lo_main.c,v 1.10 2016/01/08 20:26:33 mestre Exp $	*/
 /*	$NetBSD: lo_main.c,v 1.3 1995/04/22 10:36:59 cgd Exp $	*/
 
 /*
@@ -50,7 +50,7 @@ const char *const title[] = {
 };
 
 int
-lo_main()
+lo_main(void)
 {
 	FILE *fp;
 	char sbuf[20+LOGIN_NAME_MAX];

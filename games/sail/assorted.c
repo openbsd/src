@@ -1,4 +1,4 @@
-/*	$OpenBSD: assorted.c,v 1.7 2015/09/27 05:07:06 guenther Exp $	*/
+/*	$OpenBSD: assorted.c,v 1.8 2016/01/08 20:26:33 mestre Exp $	*/
 /*	$NetBSD: assorted.c,v 1.3 1995/04/22 10:36:45 cgd Exp $	*/
 
 /*
@@ -30,17 +30,16 @@
  * SUCH DAMAGE.
  */
 
-#include "extern.h"
-#include <stdlib.h>
-#include <unistd.h>
 #include <err.h>
+#include <stdlib.h>
+
+#include "extern.h"
 
 static void strike(struct ship *, struct ship *);
 
 void
-table(rig, shot, hittable, on, from, roll)
-	struct ship *on, *from;
-	int rig, shot, hittable, roll;
+table(int rig, int shot, int hittable, struct ship *on, struct ship *from,
+    int roll)
 {
 	int hhits = 0, chits = 0, ghits = 0, rhits = 0;
 	int Ghit = 0, Hhit = 0, Rhit = 0, Chit = 0;
@@ -231,9 +230,7 @@ table(rig, shot, hittable, on, from, roll)
 }
 
 void
-Cleansnag(from, to, all, flag)
-	struct ship *from, *to;
-	char all, flag;
+Cleansnag(struct ship *from, struct ship *to, int all, int flag)
 {
 	if (flag & 1) {
 		Write(W_UNGRAP, from, to->file->index, all, 0, 0);
@@ -258,8 +255,7 @@ Cleansnag(from, to, all, flag)
 }
 
 static void
-strike(ship, from)
-	struct ship *ship, *from;
+strike(struct ship *ship, struct ship *from)
 {
 	int points;
 

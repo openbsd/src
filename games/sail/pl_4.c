@@ -1,4 +1,4 @@
-/*	$OpenBSD: pl_4.c,v 1.6 2015/12/31 16:44:22 mestre Exp $	*/
+/*	$OpenBSD: pl_4.c,v 1.7 2016/01/08 20:26:33 mestre Exp $	*/
 /*	$NetBSD: pl_4.c,v 1.4 1995/04/24 12:25:17 cgd Exp $	*/
 
 /*
@@ -36,7 +36,7 @@
 #include "player.h"
 
 void
-changesail()
+changesail(void)
 {
 	int rig, full;
 
@@ -63,7 +63,7 @@ changesail()
 }
 
 void
-acceptsignal()
+acceptsignal(void)
 {
 	char buf[60];
 	char *p = buf;
@@ -78,7 +78,7 @@ acceptsignal()
 }
 
 void
-lookout()
+lookout(void)
 {
 	struct ship *sp;
 	char buf[3];
@@ -96,9 +96,7 @@ lookout()
 }
 
 const char *
-saywhat(sp, flag)
-	struct ship *sp;
-	char flag;
+saywhat(struct ship *sp, int flag)
 {
 	if (sp->file->captain[0])
 		return sp->file->captain;
@@ -113,8 +111,7 @@ saywhat(sp, flag)
 }
 
 void
-eyeball(ship)
-	struct ship *ship;
+eyeball(struct ship *ship)
 {
 	int i;
 

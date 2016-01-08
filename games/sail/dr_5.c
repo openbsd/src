@@ -1,4 +1,4 @@
-/*	$OpenBSD: dr_5.c,v 1.4 2009/10/27 23:59:27 deraadt Exp $	*/
+/*	$OpenBSD: dr_5.c,v 1.5 2016/01/08 20:26:33 mestre Exp $	*/
 /*	$NetBSD: dr_5.c,v 1.3 1995/04/22 10:36:51 cgd Exp $	*/
 
 /*
@@ -33,10 +33,8 @@
 #include "extern.h"
 
 void
-subtract(from, totalfrom, crewfrom, fromcap, pcfrom)
-	struct ship *from, *fromcap;
-	int pcfrom;
-	int  totalfrom, crewfrom[3];
+subtract(struct ship *from, int totalfrom, int crewfrom[3],
+    struct ship *fromcap, int pcfrom)
 {
 	int n;
 
@@ -58,12 +56,11 @@ subtract(from, totalfrom, crewfrom, fromcap, pcfrom)
 	}
 }
 
+/* returns # of crew squares sent */
 int
-mensent(from, to, crew, captured, pc, isdefense)
-	struct ship *from, *to, **captured;
-	int crew[3], *pc;
-	char isdefense;
-{					/* returns # of crew squares sent */
+mensent(struct ship *from, struct ship *to, int crew[3], struct ship **captured,
+    int *pc, int isdefense)
+{
 	int men = 0;
 	int n;
 	int c1, c2, c3;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dr_1.c,v 1.8 2015/12/31 16:44:21 mestre Exp $	*/
+/*	$OpenBSD: dr_1.c,v 1.9 2016/01/08 20:26:33 mestre Exp $	*/
 /*	$NetBSD: dr_1.c,v 1.4 1995/04/24 12:25:10 cgd Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
 #include "player.h"
 
 void
-unfoul()
+unfoul(void)
 {
 	struct ship *sp;
 	struct ship *to;
@@ -62,7 +62,7 @@ unfoul()
 }
 
 void
-boardcomp()
+boardcomp(void)
 {
 	int crew[3];
 	struct ship *sp, *sq;
@@ -127,9 +127,7 @@ boardcomp()
 }
 
 int
-fightitout(from, to, key)
-	struct ship *from, *to;
-	int key;
+fightitout(struct ship *from, struct ship *to, int key)
 {
 	struct ship *fromcap, *tocap;
 	int crewfrom[3], crewto[3], menfrom, mento;
@@ -232,7 +230,7 @@ fightitout(from, to, key)
 }
 
 void
-resolve()
+resolve(void)
 {
 	int thwart;
 	struct ship *sp, *sq;
@@ -263,7 +261,7 @@ resolve()
 }
 
 void
-compcombat()
+compcombat(void)
 {
 	int n;
 	struct ship *sp;
@@ -395,7 +393,7 @@ compcombat()
 }
 
 int
-next()
+next(void)
 {
 	if (++turn % 55 == 0) {
 		if (alive)

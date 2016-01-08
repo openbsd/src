@@ -1,4 +1,4 @@
-/*	$OpenBSD: pl_3.c,v 1.5 2015/12/31 16:44:22 mestre Exp $	*/
+/*	$OpenBSD: pl_3.c,v 1.6 2016/01/08 20:26:33 mestre Exp $	*/
 /*	$NetBSD: pl_3.c,v 1.3 1995/04/22 10:37:09 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #include "player.h"
 
 void
-acceptcombat()
+acceptcombat(void)
 {
 	int men = 0;
 	int target, temp;
@@ -211,7 +211,7 @@ acceptcombat()
 }
 
 void
-grapungrap()
+grapungrap(void)
 {
 	struct ship *sp;
 	int i;
@@ -251,7 +251,7 @@ grapungrap()
 }
 
 void
-unfoulplayer()
+unfoulplayer(void)
 {
 	struct ship *to;
 	int i;

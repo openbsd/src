@@ -1,4 +1,4 @@
-/*	$OpenBSD: dr_3.c,v 1.6 2015/12/31 16:44:22 mestre Exp $	*/
+/*	$OpenBSD: dr_3.c,v 1.7 2016/01/08 20:26:33 mestre Exp $	*/
 /*	$NetBSD: dr_3.c,v 1.3 1995/04/22 10:36:49 cgd Exp $	*/
 
 /*
@@ -37,8 +37,9 @@
 #include "extern.h"
 #include "player.h"
 
+/* move all comp ships */
 void
-moveall()		/* move all comp ships */
+moveall(void)
 {
 	struct ship *sp, *sq;		/* r11, r10 */
 	int n;				/* r9 */
@@ -178,8 +179,7 @@ moveall()		/* move all comp ships */
 }
 
 int
-stillmoving(k)
-	int k;
+stillmoving(int k)
 {
 	struct ship *sp;
 
@@ -190,8 +190,7 @@ stillmoving(k)
 }
 
 int
-is_isolated(ship)
-	struct ship *ship;
+is_isolated(struct ship *ship)
 {
 	struct ship *sp;
 
@@ -203,8 +202,7 @@ is_isolated(ship)
 }
 
 int
-push(from, to)
-	struct ship *from, *to;
+push(struct ship *from, struct ship *to)
 {
 	int bs, sb;
 
@@ -218,10 +216,7 @@ push(from, to)
 }
 
 void
-step(com, sp, moved)
-	char com;
-	struct ship *sp;
-	char *moved;
+step(int com, struct ship *sp, char *moved)
 {
 	int dist;
 
@@ -261,10 +256,7 @@ step(com, sp, moved)
 }
 
 void
-sendbp(from, to, sections, isdefense)
-	struct ship *from, *to;
-	int sections;
-	char isdefense;
+sendbp(struct ship *from, struct ship *to, int sections, int isdefense)
 {
 	int n;
 	struct BP *bp;
@@ -283,9 +275,7 @@ sendbp(from, to, sections, isdefense)
 }
 
 int
-is_toughmelee(ship, to, isdefense, count)
-	struct ship *ship, *to;
-	int isdefense, count;
+is_toughmelee(struct ship *ship, struct ship *to, int isdefense, int count)
 {
 	struct BP *bp;
 	int obp = 0;
@@ -316,7 +306,7 @@ is_toughmelee(ship, to, isdefense, count)
 }
 
 void
-reload()
+reload(void)
 {
 	struct ship *sp;
 
@@ -326,7 +316,7 @@ reload()
 }
 
 void
-checksails()
+checksails(void)
 {
 	struct ship *sp;
 	int rig, full; 

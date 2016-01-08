@@ -1,4 +1,4 @@
-/*	$OpenBSD: game.c,v 1.4 2009/10/27 23:59:27 deraadt Exp $	*/
+/*	$OpenBSD: game.c,v 1.5 2016/01/08 20:26:33 mestre Exp $	*/
 /*	$NetBSD: game.c,v 1.3 1995/04/22 10:36:56 cgd Exp $	*/
 
 /*
@@ -33,9 +33,7 @@
 #include "extern.h"
 
 int
-maxturns(ship, af)
-	struct ship *ship;
-	char *af;
+maxturns(struct ship *ship, char *af)
 {
 	int turns;
 
@@ -49,9 +47,7 @@ maxturns(ship, af)
 }
 
 int
-maxmove(ship, dir, fs)
-	struct ship *ship;
-	int dir, fs;
+maxmove(struct ship *ship, int dir, int fs)
 {
 	int riggone = 0, Move, flank = 0;
 
