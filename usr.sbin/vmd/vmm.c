@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.17 2016/01/08 08:12:21 stefan Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.18 2016/01/08 11:28:05 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -193,9 +193,12 @@ vmm_run(struct privsep *ps, struct privsep_proc *p, void *arg)
 	/*
 	 * pledge in the vmm process:
  	 * stdio - for malloc and basic I/O including events.
-	 * XXX vmm - for the vmm ioctls and operations
+	 * vmm - for the vmm ioctls and operations.
+	 * proc - for forking and maitaining vms.
+	 * recvfd - for disks, interfaces and other fds.
 	 */
-	if (pledge("stdio vmm", NULL) == -1)
+	/* XXX'ed pledge to hide it from grep as long as it's disabled */
+	if (XXX("stdio vmm recvfd proc", NULL) == -1)
 		fatal("pledge");
 #endif
 
@@ -479,6 +482,16 @@ start_vm(struct imsg *imsg, uint32_t *id)
 			errno = ret;
 			fatal("create vmm ioctl failed - exiting");
 		}
+
+#if 0
+		/*
+		 * pledge in the vm processes:
+	 	 * stdio - for malloc and basic I/O including events.
+		 * vmm - for the vmm ioctls and operations.
+		 */
+		if (XXX("stdio vmm", NULL) == -1)
+			fatal("pledge");
+#endif
 
 		/*
 		 * Set up default "flat 32 bit" register state - RIP,
