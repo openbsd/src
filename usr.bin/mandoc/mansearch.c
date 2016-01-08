@@ -1,4 +1,4 @@
-/*	$OpenBSD: mansearch.c,v 1.48 2015/11/26 07:41:38 schwarze Exp $ */
+/*	$OpenBSD: mansearch.c,v 1.49 2016/01/08 15:01:58 schwarze Exp $ */
 /*
  * Copyright (c) 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -119,7 +119,7 @@ mansearch_setup(int start)
 		    MAP_SHARED | MAP_ANON, -1, 0);
 
 		if (MAP_FAILED == pagecache) {
-			perror("mmap");
+			warn("mmap");
 			pagecache = NULL;
 			return (int)MANDOCLEVEL_SYSERR;
 		}
@@ -138,7 +138,7 @@ mansearch_setup(int start)
 	}
 
 	if (-1 == munmap(pagecache, PC_PAGESIZE * PC_NUMPAGES)) {
-		perror("munmap");
+		warn("munmap");
 		pagecache = NULL;
 		return (int)MANDOCLEVEL_SYSERR;
 	}
@@ -220,12 +220,12 @@ mansearch(const struct mansearch *search,
 				warnx("%s: getcwd: %s", paths->paths[i], buf);
 				continue;
 			} else if (chdir(buf) == -1) {
-				perror(buf);
+				warn("%s", buf);
 				continue;
 			}
 		}
 		if (chdir(paths->paths[i]) == -1) {
-			perror(paths->paths[i]);
+			warn("%s", paths->paths[i]);
 			continue;
 		}
 		chdir_status = 1;
@@ -358,7 +358,7 @@ mansearch(const struct mansearch *search,
 	}
 	qsort(*res, cur, sizeof(struct manpage), manpage_compare);
 	if (chdir_status && getcwd_status && chdir(buf) == -1)
-		perror(buf);
+		warn("%s", buf);
 	exprfree(e);
 	free(sql);
 	*sz = cur;

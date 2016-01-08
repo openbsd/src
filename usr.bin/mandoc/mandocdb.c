@@ -1,4 +1,4 @@
-/*	$OpenBSD: mandocdb.c,v 1.166 2016/01/08 02:53:09 schwarze Exp $ */
+/*	$OpenBSD: mandocdb.c,v 1.167 2016/01/08 15:01:58 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2016 Ingo Schwarze <schwarze@openbsd.org>
@@ -332,7 +332,7 @@ mandocdb(int argc, char *argv[])
 	int		  ch, i;
 
 	if (pledge("stdio rpath wpath cpath fattr flock proc exec", NULL) == -1) {
-		perror("pledge");
+		warn("pledge");
 		return (int)MANDOCLEVEL_SYSERR;
 	}
 
@@ -411,7 +411,7 @@ mandocdb(int argc, char *argv[])
 
 	if (nodb) {
 		if (pledge("stdio rpath", NULL) == -1) {
-			perror("pledge");
+			warn("pledge");
 			return (int)MANDOCLEVEL_SYSERR;
 		}
 	}
@@ -443,7 +443,7 @@ mandocdb(int argc, char *argv[])
 			 */
 			if (!nodb) {
 				if (pledge("stdio rpath wpath cpath fattr flock", NULL) == -1) {
-					perror("pledge");
+					warn("pledge");
 					exitcode = (int)MANDOCLEVEL_SYSERR;
 					goto out;
 				}
