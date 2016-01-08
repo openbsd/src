@@ -1,4 +1,4 @@
-/*	$OpenBSD: eqn.c,v 1.23 2016/01/07 20:18:34 schwarze Exp $ */
+/*	$OpenBSD: eqn.c,v 1.24 2016/01/08 00:50:20 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -985,7 +985,7 @@ this_tok:
 				parent->right = mandoc_strndup(start, sz);
 		}
 		parent = parent->parent;
-		if (EQN_TOK_BRACE_CLOSE == tok && parent &&
+		if (tok == EQN_TOK_BRACE_CLOSE &&
 		    (parent->type == EQN_PILE ||
 		     parent->type == EQN_MATRIX))
 			parent = parent->parent;
