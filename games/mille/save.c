@@ -1,4 +1,4 @@
-/*	$OpenBSD: save.c,v 1.10 2016/01/03 14:38:17 mestre Exp $	*/
+/*	$OpenBSD: save.c,v 1.11 2016/01/08 18:05:58 mestre Exp $	*/
 /*	$NetBSD: save.c,v 1.4 1995/03/24 05:02:13 cgd Exp $	*/
 
 /*
@@ -29,6 +29,14 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/stat.h>
+
+#include <err.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <string.h>
+#include <unistd.h>
 
 #include "mille.h"
 

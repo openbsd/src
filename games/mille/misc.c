@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.11 2014/11/16 04:49:48 guenther Exp $	*/
+/*	$OpenBSD: misc.c,v 1.12 2016/01/08 18:05:58 mestre Exp $	*/
 /*	$NetBSD: misc.c,v 1.4 1995/03/24 05:01:54 cgd Exp $	*/
 
 /*
@@ -30,10 +30,10 @@
  * SUCH DAMAGE.
  */
 
-#include <termios.h>
-#include <stdarg.h>
+#include <ctype.h>
+#include <unistd.h>
 
-#include	"mille.h"
+#include "mille.h"
 
 /*
  * @(#)misc.c	1.2 (Berkeley) 3/28/83

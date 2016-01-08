@@ -1,4 +1,4 @@
-/*	$OpenBSD: mille.h,v 1.12 2015/12/26 00:26:39 mestre Exp $	*/
+/*	$OpenBSD: mille.h,v 1.13 2016/01/08 18:05:58 mestre Exp $	*/
 /*	$NetBSD: mille.h,v 1.5 1995/03/24 05:01:51 cgd Exp $	*/
 
 /*
@@ -32,18 +32,9 @@
  *	@(#)mille.h	8.1 (Berkeley) 5/31/93
  */
 
-#include	<sys/types.h>
-#include	<sys/uio.h>
-#include	<sys/stat.h>
-#include	<ctype.h>
-#include	<err.h>
-#include	<errno.h>
-#include	<curses.h>
-#include	<fcntl.h>
-#include	<stdlib.h>
-#include	<string.h>
-#include	<termios.h>
-#include	<unistd.h>
+#include <sys/uio.h>
+
+#include <curses.h>
 
 /*
  * @(#)mille.h	1.1 (Berkeley) 4/1/82
@@ -186,6 +177,8 @@ typedef struct {
  * macros
  */
 
+#undef 	CTRL
+#define	CTRL(c)		((c) & 0x1f)
 #define	other(x)	(1 - x)
 #define	nextplay()	(Play = other(Play))
 #define	nextwin(x)	(1 - x)
@@ -234,7 +227,6 @@ int	getyn(int);
 int	haspicked(const PLAY *);
 void	init(void);
 int	is_repair(CARD);
-int	main(int, char **);
 void	newboard(void);
 void	newscore(void);
 int	onecard(const PLAY *);

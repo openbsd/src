@@ -1,4 +1,4 @@
-/*	$OpenBSD: end.c,v 1.6 2009/10/27 23:59:25 deraadt Exp $	*/
+/*	$OpenBSD: end.c,v 1.7 2016/01/08 18:05:58 mestre Exp $	*/
 /*	$NetBSD: end.c,v 1.4 1995/03/24 05:01:30 cgd Exp $	*/
 
 /*
@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  */
 
-#include	"mille.h"
+#include "mille.h"
 
 /*
  * @(#)end.c	1.1 (Berkeley) 4/1/82

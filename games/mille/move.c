@@ -1,4 +1,4 @@
-/*	$OpenBSD: move.c,v 1.15 2015/11/04 21:22:10 tedu Exp $	*/
+/*	$OpenBSD: move.c,v 1.16 2016/01/08 18:05:58 mestre Exp $	*/
 /*	$NetBSD: move.c,v 1.4 1995/03/24 05:01:57 cgd Exp $	*/
 
 /*
@@ -30,16 +30,18 @@
  * SUCH DAMAGE.
  */
 
-#include	<limits.h>
-#include	<termios.h>
-#include	"mille.h"
+#include <ctype.h>
+#ifdef DEBUG
+#include <err.h>
+#include <limits.h>
+#endif
+#include <string.h>
+
+#include "mille.h"
 
 /*
  * @(#)move.c	1.2 (Berkeley) 3/28/83
  */
-
-#undef	CTRL
-#define	CTRL(c)		(c - 'A' + 1)
 
 void
 domove()

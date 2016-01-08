@@ -1,4 +1,4 @@
-/*	$OpenBSD: types.c,v 1.8 2015/01/19 00:47:01 deraadt Exp $	*/
+/*	$OpenBSD: types.c,v 1.9 2016/01/08 18:05:58 mestre Exp $	*/
 /*	$NetBSD: types.c,v 1.4 1995/03/24 05:02:22 cgd Exp $	*/
 
 /*
@@ -30,7 +30,9 @@
  * SUCH DAMAGE.
  */
 
-#include	"mille.h"
+#include <err.h>
+
+#include "mille.h"
 
 /*
  * @(#)types.c	1.1 (Berkeley) 4/1/82
