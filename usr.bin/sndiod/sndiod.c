@@ -1,4 +1,4 @@
-/*	$OpenBSD: sndiod.c,v 1.22 2015/12/23 20:12:18 ratchov Exp $	*/
+/*	$OpenBSD: sndiod.c,v 1.23 2016/01/08 13:14:11 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -520,9 +520,12 @@ main(int argc, char **argv)
 		snprintf(path,
 		    SOCKPATH_MAX, "%s/" SOCKPATH_FILE "%u",
 		    base, unit);
-		listen_new_un(path);
-		if (tcpaddr)
-			listen_new_tcp(tcpaddr, AUCAT_PORT + unit);
+		if (!listen_new_un(path))
+			return 1;
+		if (tcpaddr) {
+			if (!listen_new_tcp(tcpaddr, AUCAT_PORT + unit))
+				return 1;
+		}
 		for (l = listen_list; l != NULL; l = l->next) {
 			if (!listen_init(l))
 				return 1;

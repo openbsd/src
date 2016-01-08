@@ -1,4 +1,4 @@
-/*	$OpenBSD: listen.c,v 1.7 2015/12/25 17:16:43 ratchov Exp $	*/
+/*	$OpenBSD: listen.c,v 1.8 2016/01/08 13:14:11 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -24,12 +24,10 @@
 #include <netinet/tcp.h>
 #include <netdb.h>
 
-#include <err.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <poll.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
@@ -70,14 +68,16 @@ listen_close(struct listen *f)
 	}
 	*pf = f->next;
 
-	if (f->path != NULL)
+	if (f->path != NULL) {
+		unlink(f->path);
 		xfree(f->path);
+	}
 	file_del(f->file);
 	close(f->fd);
 	xfree(f);
 }
 
-void
+int
 listen_new_un(char *path)
 {
 	int sock, oldumask;
@@ -86,11 +86,13 @@ listen_new_un(char *path)
 
 	sock = socket(AF_UNIX, SOCK_STREAM, 0);
 	if (sock < 0) {
-		perror("socket");
-		exit(1);
+		log_puts(path);
+		log_puts(": failed to create socket\n");
+		return 0;
 	}
 	if (unlink(path) < 0 && errno != ENOENT) {
-		perror("unlink");
+		log_puts(path);
+		log_puts(": failed to unlink socket\n");
 		goto bad_close;
 	}
 	sockname.sun_family = AF_UNIX;
@@ -98,11 +100,13 @@ listen_new_un(char *path)
 	oldumask = umask(0111);
 	if (bind(sock, (struct sockaddr *)&sockname,
 		sizeof(struct sockaddr_un)) < 0) {
-		perror("bind");
+		log_puts(path);
+		log_puts(": failed to bind socket\n");
 		goto bad_close;
 	}
 	if (listen(sock, 1) < 0) {
-		perror("listen");
+		log_puts(path);
+		log_puts(": failed to listen\n");
 		goto bad_close;
 	}
 	umask(oldumask);
@@ -111,20 +115,16 @@ listen_new_un(char *path)
 	if (f->file == NULL)
 		goto bad_close;
 	f->path = xstrdup(path);
-	if (f->path == NULL) {
-		perror("strdup");
-		exit(1);
-	}
 	f->fd = sock;
 	f->next = listen_list;
 	listen_list = f;
-	return;
+	return 1;
  bad_close:
 	close(sock);
-	exit(1);	
+	return 0;
 }
 
-void
+int
 listen_new_tcp(char *addr, unsigned int port)
 {
 	char *host, serv[sizeof(unsigned int) * 3 + 1];
@@ -143,8 +143,9 @@ listen_new_tcp(char *addr, unsigned int port)
 	aihints.ai_protocol = IPPROTO_TCP;
 	error = getaddrinfo(host, serv, &aihints, &ailist);
 	if (error) {
-		fprintf(stderr, "%s: %s\n", addr, gai_strerror(error));
-		exit(1);
+		log_puts(addr);
+		log_puts(": failed to resolve address\n");
+		return 0;
 	}
 
 	/* 
@@ -154,21 +155,40 @@ listen_new_tcp(char *addr, unsigned int port)
 	for (ai = ailist; ai != NULL; ai = ai->ai_next) {
 		s = socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol);
 		if (s < 0) {
-			perror("socket");
+			log_puts(addr);
+			log_puts(": failed to create socket\n");
 			continue;
 		}
 		opt = 1;
 		if (setsockopt(s, SOL_SOCKET, SO_REUSEADDR,
 			&opt, sizeof(int)) < 0) {
-			perror("setsockopt");
+			log_puts(addr);
+			log_puts(": failed to set SO_REUSEADDR\n");
 			goto bad_close;
 		}
+		if (ai->ai_family == AF_INET6) {
+			/*
+			 * make sure IPv6 sockets are restricted to IPv6
+			 * addresses because we already use a IP socket
+			 * for IP addresses
+			 */
+			opt = 1;
+			if (setsockopt(s, IPPROTO_IPV6, IPV6_V6ONLY,
+				&opt, sizeof(int)) < 0) {
+				log_puts(addr);
+				log_puts(": failed to set IPV6_V6ONLY\n");
+				goto bad_close;
+			}
+		}
+			
 		if (bind(s, ai->ai_addr, ai->ai_addrlen) < 0) {
-			perror("bind");
+			log_puts(addr);
+			log_puts(": failed to bind socket\n");
 			goto bad_close;
 		}
 		if (listen(s, 1) < 0) {
-			perror("listen");
+			log_puts(addr);
+			log_puts(": failed to listen\n");
 			goto bad_close;
 		}
 		f = xmalloc(sizeof(struct listen));
@@ -185,8 +205,7 @@ listen_new_tcp(char *addr, unsigned int port)
 		n++;
 	}
 	freeaddrinfo(ailist);
-	if (n == 0)
-		exit(1);
+	return n;
 }
 
 int
@@ -232,12 +251,11 @@ listen_in(void *arg)
 			continue;
 		if (errno == ENFILE || errno == EMFILE)
 			file_slowaccept = 1;
-		else if (errno != ECONNABORTED && errno != EWOULDBLOCK)
-			perror("accept");
 		return;
 	}
 	if (fcntl(sock, F_SETFL, O_NONBLOCK) < 0) {
-		perror("fcntl(sock, O_NONBLOCK)");
+		file_log(f->file);
+		log_puts(": failed to set non-blocking mode\n");
 		close(sock);
 		return;
 	}
@@ -245,7 +263,8 @@ listen_in(void *arg)
 		opt = 1;
 		if (setsockopt(sock, IPPROTO_TCP, TCP_NODELAY,
 			&opt, sizeof(int)) < 0) {
-			perror("setsockopt");
+			file_log(f->file);
+			log_puts(": failed to set TCP_NODELAY flag\n");
 			close(sock);
 			return;
 		}
