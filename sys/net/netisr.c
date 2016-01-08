@@ -20,7 +20,6 @@
 
 #include <machine/intr.h>
 
-#include "ether.h"
 #include "ppp.h"
 #include "bridge.h"
 #include "pppoe.h"
@@ -39,10 +38,6 @@ netintr(void *unused)
 	while ((n = netisr) != 0) {
 		atomic_clearbits_int(&netisr, n);
 
-#if NETHER > 0
-		if (n & (1 << NETISR_ARP))
-			arpintr();
-#endif
 		if (n & (1 << NETISR_IP))
 			ipintr();
 #ifdef INET6

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.198 2015/12/17 16:05:30 tedu Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.199 2016/01/08 13:53:24 mpi Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -82,14 +82,10 @@ void arptfree(struct rtentry *);
 void arptimer(void *);
 struct rtentry *arplookup(u_int32_t, int, int, u_int);
 void in_arpinput(struct mbuf *);
-void revarpinput(struct mbuf *);
 void in_revarpinput(struct mbuf *);
 
 LIST_HEAD(, llinfo_arp) arp_list;
 struct	pool arp_pool;		/* pool for llinfo_arp structures */
-/* XXX hate magic numbers */
-struct	niqueue arpintrq = NIQUEUE_INITIALIZER(50, NETISR_ARP);
-struct	niqueue rarpintrq = NIQUEUE_INITIALIZER(50, NETISR_ARP);
 int	arp_inuse, arp_allocated;
 int	arp_maxtries = 5;
 int	arpinit_done;
@@ -420,42 +416,32 @@ bad:
  * then the protocol-specific routine is called.
  */
 void
-arpintr(void)
+arpinput(struct mbuf *m)
 {
-	struct mbuf *m;
 	struct arphdr *ar;
 	int len;
 
-	while ((m = niq_dequeue(&arpintrq)) != NULL) {
 #ifdef DIAGNOSTIC
-		if ((m->m_flags & M_PKTHDR) == 0)
-			panic("arpintr");
+	if ((m->m_flags & M_PKTHDR) == 0)
+		panic("arpintr");
 #endif
 
-		len = sizeof(struct arphdr);
-		if (m->m_len < len && (m = m_pullup(m, len)) == NULL)
-			continue;
+	len = sizeof(struct arphdr);
+	if (m->m_len < len && (m = m_pullup(m, len)) == NULL)
+		return;
 
-		ar = mtod(m, struct arphdr *);
-		if (ntohs(ar->ar_hrd) != ARPHRD_ETHER) {
-			m_freem(m);
-			continue;
-		}
-
-		len += 2 * (ar->ar_hln + ar->ar_pln);
-		if (m->m_len < len && (m = m_pullup(m, len)) == NULL)
-			continue;
-
-		switch (ntohs(ar->ar_pro)) {
-		case ETHERTYPE_IP:
-			in_arpinput(m);
-			continue;
-		}
+	ar = mtod(m, struct arphdr *);
+	if (ntohs(ar->ar_hrd) != ARPHRD_ETHER ||
+	    ntohs(ar->ar_pro) != ETHERTYPE_IP) {
 		m_freem(m);
+		return;
 	}
 
-	while ((m = niq_dequeue(&rarpintrq)) != NULL)
-		revarpinput(m);
+	len += 2 * (ar->ar_hln + ar->ar_pln);
+	if (m->m_len < len && (m = m_pullup(m, len)) == NULL)
+		return;
+
+	in_arpinput(m);
 }
 
 /*
