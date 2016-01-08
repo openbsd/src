@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.17 2016/01/08 10:50:26 ratchov Exp $	*/
+/*	$OpenBSD: file.c,v 1.18 2016/01/08 13:09:42 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -46,7 +46,6 @@
 
 #include <sys/types.h>
 
-#include <err.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <poll.h>
@@ -399,8 +398,10 @@ file_poll(void)
 		timo = -1;
 	res = poll(pfds, nfds, timo);
 	if (res < 0) {
-		if (errno != EINTR)
-			err(1, "poll");
+		if (errno != EINTR) {
+			log_puts("poll failed");
+			panic();
+		}
 		return 1;
 	}
 
@@ -442,15 +443,14 @@ filelist_init(void)
 {
 	sigset_t set;
 
-	sigemptyset(&set);
-	(void)sigaddset(&set, SIGPIPE);
-	if (sigprocmask(SIG_BLOCK, &set, NULL))
-		err(1, "sigprocmask");
-	file_list = NULL;
 	if (clock_gettime(CLOCK_MONOTONIC, &file_ts) < 0) {
-		perror("clock_gettime");
-		exit(1);
+		log_puts("filelist_init: CLOCK_MONOTONIC unsupported\n");
+		panic();
 	}
+	sigemptyset(&set);
+	sigaddset(&set, SIGPIPE);
+	sigprocmask(SIG_BLOCK, &set, NULL);
+	file_list = NULL;
 	log_sync = 0;
 	timo_init();
 }
