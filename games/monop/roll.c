@@ -1,4 +1,4 @@
-/*	$OpenBSD: roll.c,v 1.6 2013/08/29 20:22:16 naddy Exp $	*/
+/*	$OpenBSD: roll.c,v 1.7 2016/01/08 18:20:33 mestre Exp $	*/
 /*	$NetBSD: roll.c,v 1.5 1995/03/23 08:35:13 cgd Exp $	*/
 
 /*
@@ -36,8 +36,7 @@
  *	This routine rolls ndie nside-sided dice.
  */
 int
-roll(ndie, nsides)
-	int	ndie, nsides;
+roll(int ndie, int nsides)
 {
 	int	tot;
 

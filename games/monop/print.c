@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.7 2016/01/08 18:19:47 mestre Exp $	*/
+/*	$OpenBSD: print.c,v 1.8 2016/01/08 18:20:33 mestre Exp $	*/
 /*	$NetBSD: print.c,v 1.3 1995/03/23 08:35:05 cgd Exp $	*/
 
 /*
@@ -42,7 +42,7 @@ static void	printmorg(SQUARE *);
  *	This routine prints out the current board
  */
 void
-printboard()
+printboard(void)
 {
 	int	i;
 
@@ -57,7 +57,7 @@ printboard()
  *	This routine lists where each player is.
  */
 void
-where()
+where(void)
 {
 	int	i;
 
@@ -74,9 +74,7 @@ where()
  *	This routine prints out an individual square
  */
 void
-printsq(sqn, eoln)
-	int	sqn;
-	bool	eoln;
+printsq(int sqn, bool eoln)
 {
 	int	rnt;
 	PROP	*pp;
@@ -156,8 +154,7 @@ printsq(sqn, eoln)
  *	This routine prints out the mortgage flag.
  */
 static void
-printmorg(sqp)
-	SQUARE	*sqp;
+printmorg(SQUARE *sqp)
 {
 	if (sqp->desc->morg)
 		printf(" * ");
@@ -168,8 +165,7 @@ printmorg(sqp)
  *	This routine lists the holdings of the player given
  */
 void
-printhold(pl)
-	int	pl;
+printhold(int pl)
 {
 	OWN	*op;
 	PLAY	*pp;

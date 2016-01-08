@@ -1,4 +1,4 @@
-/*	$OpenBSD: rent.c,v 1.6 2016/01/08 18:19:47 mestre Exp $	*/
+/*	$OpenBSD: rent.c,v 1.7 2016/01/08 18:20:33 mestre Exp $	*/
 /*	$NetBSD: rent.c,v 1.3 1995/03/23 08:35:11 cgd Exp $	*/
 
 /*
@@ -38,8 +38,7 @@
  *	This routine has the player pay rent
  */
 void
-rent(sqp)
-	SQUARE	*sqp;
+rent(SQUARE *sqp)
 {
 	int	rnt;
 	PROP	*pp;

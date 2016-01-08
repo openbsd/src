@@ -1,4 +1,4 @@
-/*	$OpenBSD: houses.c,v 1.9 2016/01/08 18:19:47 mestre Exp $	*/
+/*	$OpenBSD: houses.c,v 1.10 2016/01/08 18:20:33 mestre Exp $	*/
 /*	$NetBSD: houses.c,v 1.3 1995/03/23 08:34:40 cgd Exp $	*/
 
 /*
@@ -51,7 +51,7 @@ static bool	can_only_buy_hotel(MON *);
  *	These routines deal with buying and selling houses
  */
 void
-buy_houses()
+buy_houses(void)
 {
 	int	num_mon;
 	MON	*mp;
@@ -105,8 +105,7 @@ over:
 }
 
 static void
-buy_h(mnp)
-     MON	*mnp;
+buy_h(MON *mnp)
 {
 	int	i;
 	MON	*mp;
@@ -198,7 +197,7 @@ err:		printf("That makes the spread too wide.  Try again\n");
  *	This routine sells houses.
  */
 void
-sell_houses()
+sell_houses(void)
 {
 	int	num_mon;
 	MON	*mp;
@@ -241,8 +240,7 @@ over:
 }
 
 static void
-sell_h(mnp)
-	MON	*mnp;
+sell_h(MON *mnp)
 {
 	int	i;
 	MON	*mp;
@@ -299,8 +297,7 @@ err:		printf("That makes the spread too wide.  Try again\n");
 }
 
 static void
-list_cur(mp)
-	MON	*mp;
+list_cur(MON *mp)
 {
 	int	i;
 	SQUARE	*sqp;
@@ -316,7 +313,7 @@ list_cur(mp)
 }
 
 static int
-avail_houses()
+avail_houses(void)
 {
 	int i, c;
 	SQUARE *sqp;
@@ -333,7 +330,7 @@ avail_houses()
 }
 
 static int
-avail_hotels()
+avail_hotels(void)
 {
 	int i, c;
 	SQUARE *sqp;
@@ -350,8 +347,7 @@ avail_hotels()
 }
 
 static bool
-can_only_buy_hotel(mp)
-	MON	*mp;
+can_only_buy_hotel(MON *mp)
 {
 	int i;
 

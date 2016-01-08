@@ -1,4 +1,4 @@
-/*	$OpenBSD: monop.c,v 1.15 2016/01/08 18:19:47 mestre Exp $	*/
+/*	$OpenBSD: monop.c,v 1.16 2016/01/08 18:20:33 mestre Exp $	*/
 /*	$NetBSD: monop.c,v 1.3 1995/03/23 08:34:52 cgd Exp $	*/
 
 /*
@@ -46,9 +46,7 @@ static void	init_monops(void);
  *	This program implements a monopoly game
  */
 int
-main(ac, av)
-	int	ac;
-	char	*av[];
+main(int ac, char *av[])
 {
 	num_luck = sizeof lucky_mes / sizeof (char *);
 
@@ -78,7 +76,7 @@ main(ac, av)
  *	This routine gets the names of the players
  */
 static void
-getplayers()
+getplayers(void)
 {
 	int	i, j;
 	char	buf[257];
@@ -127,7 +125,7 @@ blew_it:
  *	This routine figures out who goes first
  */
 static void
-init_players()
+init_players(void)
 {
 	int	i, rl, cur_max;
 	bool	over = 0;
@@ -158,7 +156,7 @@ again:
  *	This routine initializes the monopoly structures.
  */
 static void
-init_monops()
+init_monops(void)
 {
 	MON	*mp;
 	int	i;

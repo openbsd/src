@@ -1,4 +1,4 @@
-/*	$OpenBSD: getinp.c,v 1.11 2016/01/08 18:19:47 mestre Exp $	*/
+/*	$OpenBSD: getinp.c,v 1.12 2016/01/08 18:20:33 mestre Exp $	*/
 /*	$NetBSD: getinp.c,v 1.4 1995/04/24 12:24:20 cgd Exp $	*/
 
 /*
@@ -44,8 +44,7 @@ static char	buf[257];
 static int	comp(char *);
 
 int
-getinp(prompt, list)
-	char	*prompt, *list[];
+getinp(char *prompt, char *list[])
 {
 	int	i, n_match, match;
 	char	*sp;
@@ -97,8 +96,7 @@ getinp(prompt, list)
 }
 
 static int
-comp(s1)
-	char	*s1;
+comp(char *s1)
 {
 	char	*sp, *tsp, c;
 

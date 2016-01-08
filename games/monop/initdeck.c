@@ -1,4 +1,4 @@
-/*	$OpenBSD: initdeck.c,v 1.16 2016/01/08 18:19:47 mestre Exp $	*/
+/*	$OpenBSD: initdeck.c,v 1.17 2016/01/08 18:20:33 mestre Exp $	*/
 /*	$NetBSD: initdeck.c,v 1.3 1995/03/23 08:34:43 cgd Exp $	*/
 
 /*
@@ -65,9 +65,7 @@ static void	count(void);
 static void	putem(void);
 
 int
-main(ac, av)
-	int	ac;
-	char	*av[];
+main(int ac, char *av[])
 {
 	int n;
 
@@ -138,9 +136,7 @@ main(ac, av)
 }
 
 static void
-getargs(ac, av)
-	int	ac;
-	char	*av[];
+getargs(int ac, char *av[])
 {
 	if (ac > 1)
 		infile = av[1];
@@ -152,7 +148,7 @@ getargs(ac, av)
  * count the cards
  */
 static void
-count()
+count(void)
 {
 	bool	newline;
 	DECK	*in_deck;
@@ -175,7 +171,7 @@ count()
  *	put strings in the file
  */
 static void
-putem()
+putem(void)
 {
 	bool	newline;
 	DECK	*in_deck;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: spec.c,v 1.6 2016/01/08 18:19:47 mestre Exp $	*/
+/*	$OpenBSD: spec.c,v 1.7 2016/01/08 18:20:33 mestre Exp $	*/
 /*	$NetBSD: spec.c,v 1.3 1995/03/23 08:35:16 cgd Exp $	*/
 
 /*
@@ -39,7 +39,7 @@ static char	*perc[]	= {
 	};
 
 void
-inc_tax()			/* collect income tax			*/
+inc_tax(void)			/* collect income tax			*/
 {
 	int	worth, com_num;
 
@@ -67,26 +67,26 @@ inc_tax()			/* collect income tax			*/
 }
 
 void
-goto_jail()			/* move player to jail			*/
+goto_jail(void)			/* move player to jail			*/
 {
 	cur_p->loc = JAIL;
 }
 
 void
-lux_tax()			/* landing on luxury tax		*/
+lux_tax(void)			/* landing on luxury tax		*/
 {
 	printf("You lose $75\n");
 	cur_p->money -= 75;
 }
 
 void
-cc()				/* draw community chest card		*/
+cc(void)				/* draw community chest card		*/
 {
 	get_card(&CC_D);
 }
 
 void
-chance()			/* draw chance card			*/
+chance(void)			/* draw chance card			*/
 {
 	get_card(&CH_D);
 }

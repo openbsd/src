@@ -1,4 +1,4 @@
-/*	$OpenBSD: execute.c,v 1.12 2016/01/08 18:19:47 mestre Exp $	*/
+/*	$OpenBSD: execute.c,v 1.13 2016/01/08 18:20:33 mestre Exp $	*/
 /*	$NetBSD: execute.c,v 1.3 1995/03/23 08:34:38 cgd Exp $	*/
 
 /*
@@ -52,7 +52,7 @@ static void	show_move(void);
  *	This routine takes user input and puts it in buf
  */
 void
-getbuf()
+getbuf(void)
 {
 	char	*sp;
 	int	tmpin, i;
@@ -74,8 +74,7 @@ getbuf()
  *	This routine executes the given command by index number
  */
 void
-execute(com_num)
-	int	com_num;
+execute(int com_num)
 {
 	new_play = FALSE;	/* new_play is true if fixing	*/
 	(*func[com_num])();
@@ -90,7 +89,7 @@ execute(com_num)
  *	This routine moves a piece around.
  */
 void
-do_move()
+do_move(void)
 {
 	int	r1, r2;
 	bool	was_jail;
@@ -122,8 +121,7 @@ ret:
  *	This routine moves a normal move
  */
 void
-move(rl)
-	int	rl;
+move(int rl)
 {
 	int	old_loc;
 
@@ -139,7 +137,7 @@ move(rl)
  *	This routine shows the results of a move
  */
 static void
-show_move()
+show_move(void)
 {
 	SQUARE	*sqp;
 
@@ -189,7 +187,7 @@ show_move()
  *	This routine saves the current game for use at a later date
  */
 void
-save()
+save(void)
 {
 	int i, j;
 	time_t t;
@@ -253,7 +251,7 @@ save()
  * If we are restoring during a game, try not to leak memory.
  */
 void
-game_restore()
+game_restore(void)
 {
 	int i;
 
@@ -266,7 +264,7 @@ game_restore()
  *	This routine restores an old game from a file
  */
 void
-restore()
+restore(void)
 {
 	printf("Which file do you wish to restore from? ");
 	getbuf();
@@ -280,8 +278,7 @@ restore()
  *	backup was successful, else FALSE.
  */
 int
-rest_f(file)
-	char	*file;
+rest_f(char *file)
 {
 	char *sp;
 	int  i, j, num;

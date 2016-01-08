@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.13 2016/01/08 18:19:47 mestre Exp $	*/
+/*	$OpenBSD: misc.c,v 1.14 2016/01/08 18:20:33 mestre Exp $	*/
 /*	$NetBSD: misc.c,v 1.4 1995/03/23 08:34:47 cgd Exp $	*/
 
 /*
@@ -41,8 +41,7 @@
  * "yes or "no" answer is gotten.
  */
 int
-getyn(prompt)
-	char	*prompt;
+getyn(char *prompt)
 {
 	int	com;
 
@@ -56,7 +55,7 @@ getyn(prompt)
  *	This routine tells the player if he's out of money.
  */
 void
-notify()
+notify(void)
 {
 	if (cur_p->money < 0)
 		printf("That leaves you $%d in debt\n", -cur_p->money);
@@ -71,7 +70,7 @@ notify()
  *	This routine switches to the next player
  */
 void
-next_play()
+next_play(void)
 {
 	player = (player + 1) % num_play;
 	cur_p = &play[player];
@@ -82,8 +81,7 @@ next_play()
  * given prompt.
  */
 int
-get_int(prompt)
-	char	*prompt;
+get_int(char *prompt)
 {
 	int	num, snum;
 	char	*sp;
@@ -131,8 +129,7 @@ get_int(prompt)
  *	This routine sets the monopoly flag from the list given.
  */
 void
-set_ownlist(pl)
-	int	pl;
+set_ownlist(int pl)
 {
 	int	num;		/* general counter		*/
 	MON	*orig;		/* remember starting monop ptr	*/
@@ -237,9 +234,7 @@ set_ownlist(pl)
  *	This routine sets things up as if it is a new monopoly
  */
 void
-is_monop(mp, pl)
-	MON	*mp;
-	int	pl;
+is_monop(MON *mp, int pl)
 {
 	int	i;
 
@@ -253,8 +248,7 @@ is_monop(mp, pl)
  *	This routine sets things up as if it is no longer a monopoly
  */
 void
-isnot_monop(mp)
-	MON	*mp;
+isnot_monop(MON *mp)
 {
 	int	i;
 
@@ -267,7 +261,7 @@ isnot_monop(mp)
  *	This routine gives a list of the current player's routine
  */
 void
-list()
+list(void)
 {
 	printhold(player);
 }
@@ -275,7 +269,7 @@ list()
  *	This routine gives a list of a given players holdings
  */
 void
-list_all()
+list_all(void)
 {
 	int	pl;
 
@@ -286,7 +280,7 @@ list_all()
  *	This routine gives the players a chance before it exits.
  */
 void
-quit()
+quit(void)
 {
 	putchar('\n');
 	if (getyn("Do you all really want to quit? ") == 0)

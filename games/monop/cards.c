@@ -1,4 +1,4 @@
-/*	$OpenBSD: cards.c,v 1.11 2016/01/08 18:19:47 mestre Exp $	*/
+/*	$OpenBSD: cards.c,v 1.12 2016/01/08 18:20:33 mestre Exp $	*/
 /*	$NetBSD: cards.c,v 1.3 1995/03/23 08:34:35 cgd Exp $	*/
 
 /*
@@ -55,7 +55,7 @@ static void printmes(void);
  * which it opens.
  */
 void
-init_decks()
+init_decks(void)
 {
 	if ((deckf = fopen(cardfile, "r")) == NULL)
 file_err:
@@ -85,8 +85,7 @@ file_err:
  *	This routine sets up the offset pointers for the given deck.
  */
 static void
-set_up(dp)
-	DECK	*dp;
+set_up(DECK *dp)
 {
 	int	r1, r2;
 	int	i;
@@ -114,8 +113,7 @@ set_up(dp)
  *	This routine draws a card from the given deck
  */
 void
-get_card(dp)
-	DECK	*dp;
+get_card(DECK *dp)
 {
 	char	type_maj, type_min;
 	int16_t	num;
@@ -216,7 +214,7 @@ get_card(dp)
  *	This routine prints out the message on the card
  */
 static void
-printmes()
+printmes(void)
 {
 	char	c;
 
@@ -234,8 +232,7 @@ printmes()
  * deck.
  */
 void
-ret_card(plr)
-	PLAY	*plr;
+ret_card(PLAY *plr)
 {
 	char	type_maj;
 	int16_t	gojfpos, last_card;

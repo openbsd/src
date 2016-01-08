@@ -1,4 +1,4 @@
-/*	$OpenBSD: morg.c,v 1.7 2016/01/08 18:19:47 mestre Exp $	*/
+/*	$OpenBSD: morg.c,v 1.8 2016/01/08 18:20:33 mestre Exp $	*/
 /*	$NetBSD: morg.c,v 1.4 1995/03/23 08:35:02 cgd Exp $	*/
 
 /*
@@ -73,7 +73,7 @@ static void	unm(int);
  * be mortgaged.
  */
 void
-mortgage()
+mortgage(void)
 {
 	int	prop;
 
@@ -102,7 +102,7 @@ mortgage()
  *	This routine sets up the list of mortgageable property
  */
 static int
-set_mlist()
+set_mlist(void)
 {
 	OWN	*op;
 
@@ -124,8 +124,7 @@ set_mlist()
  *	This routine actually mortgages the property.
  */
 static void
-m(prop)
-	int	prop;
+m(int prop)
 {
 	int	price;
 
@@ -140,7 +139,7 @@ m(prop)
  * to be unmortgaged.
  */
 void
-unmortgage()
+unmortgage(void)
 {
 	int	prop;
 
@@ -165,7 +164,7 @@ unmortgage()
  *	This routine sets up the list of mortgaged property
  */
 static int
-set_umlist()
+set_umlist(void)
 {
 	OWN	*op;
 
@@ -183,8 +182,7 @@ set_umlist()
  *	This routine actually unmortgages the property
  */
 static void
-unm(prop)
-	int	prop;
+unm(int prop)
 {
 	int	price;
 
@@ -200,7 +198,7 @@ unm(prop)
  * financial woes.  It is fine to have $0 but not to be in debt.
  */
 void
-force_morg()
+force_morg(void)
 {
 	told_em = fixing = TRUE;
 	while (cur_p->money < 0) {
