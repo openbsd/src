@@ -1,4 +1,4 @@
-/*	$OpenBSD: makemove.c,v 1.7 2009/10/27 23:59:24 deraadt Exp $	*/
+/*	$OpenBSD: makemove.c,v 1.8 2016/01/08 21:38:33 mestre Exp $	*/
 /*
  * Copyright (c) 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -49,8 +49,7 @@ int	weight[5] = { 0, 1, 7, 22, 100 };
  *	TIE	The game is a tie.
  */
 int
-makemove(us, mv)
-	int us, mv;
+makemove(int us, int mv)
 {
 	struct spotstr *sp, *fsp;
 	union comboval *cp;
@@ -207,14 +206,13 @@ makemove(us, mv)
  * fix up the overlap array due to updating spot osp.
  */
 void
-update_overlap(osp)
-	struct spotstr *osp;
+update_overlap(struct spotstr *osp)
 {
 	struct spotstr *sp, *sp1, *sp2;
 	int i, f, r, r1, d, d1, n;
 	int a, b, bmask, bmask1;
 	struct spotstr *esp = NULL;
-	char *str;
+	u_char *str;
 
 	for (r = 4; --r >= 0; ) {			/* for each direction */
 	    d = dd[r];

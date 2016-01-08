@@ -1,4 +1,4 @@
-/*	$OpenBSD: bdinit.c,v 1.7 2016/01/04 17:33:24 mestre Exp $	*/
+/*	$OpenBSD: bdinit.c,v 1.8 2016/01/08 21:38:33 mestre Exp $	*/
 /*
  * Copyright (c) 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -36,8 +36,7 @@
 #include "gomoku.h"
 
 void
-bdinit(bp)
-	struct spotstr *bp;
+bdinit(struct spotstr *bp)
 {
 	int i, j, r;
 	struct spotstr *sp;
@@ -163,7 +162,7 @@ bdinit(bp)
  * common open spaces shared between the two frames.
  */
 void
-init_overlap()
+init_overlap(void)
 {
 	struct spotstr *sp1, *sp2;
 	struct combostr *cbp;
