@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sis.c,v 1.132 2015/11/25 03:09:59 dlg Exp $ */
+/*	$OpenBSD: if_sis.c,v 1.133 2016/01/08 11:23:30 mpi Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -1387,6 +1387,18 @@ sis_rxeof(struct sis_softc *sc)
 		/* from here on the buffer is consumed */
 		SIS_INC(sc->sis_cdata.sis_rx_cons, SIS_RX_LIST_CNT);
 		if_rxr_put(&sc->sis_cdata.sis_rx_ring, 1);
+
+		/*
+		 * DP83816A sometimes produces zero-length packets
+		 * shortly after initialisation.
+		 */
+		if (total_len == 0) {
+			m_freem(m);
+			continue;
+		}
+
+		/* The ethernet CRC is always included */
+		total_len -= ETHER_CRC_LEN;
 
 		/*
 		 * If an error occurs, update stats, clear the

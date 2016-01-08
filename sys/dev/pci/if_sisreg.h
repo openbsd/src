@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sisreg.h,v 1.34 2015/02/11 21:36:02 brad Exp $ */
+/*	$OpenBSD: if_sisreg.h,v 1.35 2016/01/08 11:23:30 mpi Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -343,8 +343,7 @@ struct sis_desc {
 #define SIS_LASTDESC(x)		(!(letoh32((x)->sis_ctl) & SIS_CMDSTS_MORE)))
 #define SIS_OWNDESC(x)		(letoh32((x)->sis_ctl) & SIS_CMDSTS_OWN)
 #define SIS_INC(x, y)		(x) = ((x) == ((y)-1)) ? 0 : (x)+1
-#define SIS_RXBYTES(x)	\
-	((letoh32((x)->sis_ctl) & SIS_CMDSTS_BUFLEN) - ETHER_CRC_LEN)
+#define SIS_RXBYTES(x)		(letoh32((x)->sis_ctl) & SIS_CMDSTS_BUFLEN)
 
 #define SIS_RXSTAT_COLL		0x00010000
 #define SIS_RXSTAT_LOOPBK	0x00020000
