@@ -1,7 +1,7 @@
-/*	$OpenBSD: main.c,v 1.168 2016/01/08 02:13:35 schwarze Exp $ */
+/*	$OpenBSD: main.c,v 1.169 2016/01/08 02:53:09 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2010-2012, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2010-2012, 2014-2016 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2010 Joerg Sonnenberger <joerg@netbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -115,7 +115,6 @@ main(int argc, char *argv[])
 	size_t		 isec, i, sz;
 	int		 prio, best_prio;
 	char		 sec;
-	enum mandoclevel rctmp;
 	enum outmode	 outmode;
 	int		 fd;
 	int		 show_usage;
@@ -418,11 +417,7 @@ main(int argc, char *argv[])
 	}
 
 	while (argc > 0) {
-		rctmp = mparse_open(curp.mp, &fd,
-		    resp != NULL ? resp->file : *argv);
-		if (rc < rctmp)
-			rc = rctmp;
-
+		fd = mparse_open(curp.mp, resp != NULL ? resp->file : *argv);
 		if (fd != -1) {
 			if (use_pager) {
 				tag_files = tag_init();
@@ -441,7 +436,8 @@ main(int argc, char *argv[])
 
 			if (argc > 1 && curp.outtype <= OUTT_UTF8)
 				ascii_sepline(curp.outdata);
-		}
+		} else if (rc < MANDOCLEVEL_ERROR)
+			rc = MANDOCLEVEL_ERROR;
 
 		if (MANDOCLEVEL_OK != rc && curp.wstop)
 			break;
