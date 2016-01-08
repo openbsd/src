@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp.c,v 1.151 2015/12/28 22:08:30 jung Exp $	*/
+/*	$OpenBSD: smtp.c,v 1.152 2016/01/08 21:31:06 jung Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -189,7 +189,7 @@ smtp_setup_events(void)
 	purge_config(PURGE_PKI_KEYS);
 
 	maxsessions = (getdtablesize() - getdtablecount()) / 2 - SMTP_FD_RESERVE;
-	log_debug("debug: smtp: will accept at most %zx clients", maxsessions);
+	log_debug("debug: smtp: will accept at most %zu clients", maxsessions);
 }
 
 static void
