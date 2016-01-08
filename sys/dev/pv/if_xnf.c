@@ -1,3 +1,5 @@
+/*	$OpenBSD: if_xnf.c,v 1.2 2016/01/08 14:59:37 reyk Exp $	*/
+
 /*
  * Copyright (c) 2015, 2016 Mike Belopuhov
  *
