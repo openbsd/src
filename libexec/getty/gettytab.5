@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gettytab.5,v 1.26 2015/11/06 16:42:30 tedu Exp $
+.\"	$OpenBSD: gettytab.5,v 1.27 2016/01/08 20:26:54 zhuk Exp $
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -28,14 +28,12 @@
 .\"
 .\"     from: @(#)gettytab.5	8.4 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: November 6 2015 $
+.Dd $Mdocdate: January 8 2016 $
 .Dt GETTYTAB 5
 .Os
 .Sh NAME
 .Nm gettytab
 .Nd terminal configuration database
-.Sh SYNOPSIS
-.Nm gettytab
 .Sh DESCRIPTION
 The
 .Nm
@@ -318,6 +316,11 @@ will invoke the program referenced by the
 .Em \&pp
 option.
 This can be used to handle incoming PPP calls.
+.Sh FILES
+.Bl -tag -width "/etc/gettytab" -compact
+.It Pa /etc/gettytab
+Default location of the database file.
+.El
 .Sh SEE ALSO
 .Xr login 1 ,
 .Xr gethostname 3 ,

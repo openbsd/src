@@ -1,4 +1,4 @@
-.\"	$OpenBSD: printcap.5,v 1.25 2015/11/17 17:10:36 jmc Exp $
+.\"	$OpenBSD: printcap.5,v 1.26 2016/01/08 20:26:54 zhuk Exp $
 .\"	$NetBSD: printcap.5,v 1.7 1998/02/20 12:24:50 hubertf Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,14 +30,12 @@
 .\"
 .\"     @(#)printcap.5	8.2 (Berkeley) 12/11/93
 .\"
-.Dd $Mdocdate: November 17 2015 $
+.Dd $Mdocdate: January 8 2016 $
 .Dt PRINTCAP 5
 .Os
 .Sh NAME
 .Nm printcap
 .Nd printer capability database
-.Sh SYNOPSIS
-.Nm printcap
 .Sh DESCRIPTION
 The
 .Nm
@@ -256,6 +254,11 @@ themselves.
 .Pp
 Error messages sent to the console have a carriage return and a line
 feed appended to them, rather than just a line feed.
+.Sh FILES
+.Bl -tag -width "/etc/printcap" -compact
+.It Pa /etc/printcap
+Default location of the database file.
+.El
 .Sh SEE ALSO
 .Xr lpq 1 ,
 .Xr lpr 1 ,
