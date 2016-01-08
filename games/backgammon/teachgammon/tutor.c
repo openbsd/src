@@ -1,4 +1,4 @@
-/*	$OpenBSD: tutor.c,v 1.7 2015/11/30 08:19:25 tb Exp $	*/
+/*	$OpenBSD: tutor.c,v 1.8 2016/01/08 13:40:05 tb Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -133,7 +133,7 @@ tutor(void)
 }
 
 void
-clrest()
+clrest(void)
 {
 	int     r, c, j;
 

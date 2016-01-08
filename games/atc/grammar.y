@@ -1,4 +1,4 @@
-/*	$OpenBSD: grammar.y,v 1.8 2015/12/31 16:50:29 mestre Exp $	*/
+/*	$OpenBSD: grammar.y,v 1.9 2016/01/08 13:40:05 tb Exp $	*/
 /*	$NetBSD: grammar.y,v 1.3 1995/03/21 15:03:59 cgd Exp $	*/
 
 /*-
@@ -358,7 +358,7 @@ check_adir(x, y, dir)
 }
 
 int
-checkdefs()
+checkdefs(void)
 {
 	int	err = 0;
 

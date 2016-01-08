@@ -1,4 +1,4 @@
-/*	$OpenBSD: odds.c,v 1.6 2015/11/30 08:19:25 tb Exp $	*/
+/*	$OpenBSD: odds.c,v 1.7 2016/01/08 13:40:05 tb Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -56,7 +56,7 @@ odds(int r1, int r2, int val)
 }
 
 int
-count()
+count(void)
 {
 	int     i, j, total;
 

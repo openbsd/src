@@ -1,4 +1,4 @@
-/*	$OpenBSD: ksyms.c,v 1.9 2015/12/31 15:20:36 mestre Exp $	*/
+/*	$OpenBSD: ksyms.c,v 1.10 2016/01/08 13:40:05 tb Exp $	*/
 
 /*
  * Copyright (c) 2008 Miodrag Vallat.
@@ -31,7 +31,7 @@
 static int ksyms_elf_parse(void);
 
 void
-sym_getword()
+sym_getword(void)
 {
 	uint tries;
 	off_t pos;
@@ -92,7 +92,7 @@ sym_getword()
 }
 
 int
-sym_setup()
+sym_setup(void)
 {
 	if ((symfd = open(Dict_name, O_RDONLY)) < 0)
 		return -1;
@@ -106,7 +106,7 @@ sym_setup()
 }
 
 int
-ksyms_elf_parse()
+ksyms_elf_parse(void)
 {
 	Elf_Ehdr eh;
 	Elf_Shdr sh;

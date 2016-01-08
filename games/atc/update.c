@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.18 2015/12/31 16:50:29 mestre Exp $	*/
+/*	$OpenBSD: update.c,v 1.19 2016/01/08 13:40:05 tb Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -54,7 +54,7 @@ setseed(const char *seed)
 }
 
 uint32_t
-atcrandom()
+atcrandom(void)
 {
 	if (seeded)
 		return random();

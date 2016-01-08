@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.19 2016/01/06 14:28:09 mestre Exp $	*/
+/*	$OpenBSD: main.c,v 1.20 2016/01/08 13:40:05 tb Exp $	*/
 /*	$NetBSD: main.c,v 1.3 1995/04/24 12:24:37 cgd Exp $	*/
 
 /*
@@ -1155,7 +1155,7 @@ genchar(int type)
 *************************************************************************/
 
 void
-playinit()
+playinit(void)
 {
 	initscr();		/* turn on curses */
 	noecho();		/* do not echo input */

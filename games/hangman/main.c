@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.15 2015/12/31 15:20:36 mestre Exp $	*/
+/*	$OpenBSD: main.c,v 1.16 2016/01/08 13:40:05 tb Exp $	*/
 /*	$NetBSD: main.c,v 1.3 1995/03/23 08:32:50 cgd Exp $	*/
 
 /*
@@ -104,7 +104,7 @@ die(int dummy)
 }
 
 __dead void
-usage()
+usage(void)
 {
 	(void)fprintf(stderr, "usage: hangman [-k] [-d wordlist]\n");
 	exit(1);
