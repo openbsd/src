@@ -1,4 +1,4 @@
-/*	$OpenBSD: sndiod.c,v 1.26 2016/01/08 13:56:33 ratchov Exp $	*/
+/*	$OpenBSD: sndiod.c,v 1.27 2016/01/08 15:55:05 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -104,6 +104,7 @@ void setsig(void);
 void unsetsig(void);
 struct dev *mkdev(char *, struct aparams *,
     int, int, int, int, int, int);
+struct port *mkport(char *, int);
 struct opt *mkopt(char *, struct dev *,
     int, int, int, int, int, int, int, int);
 
@@ -307,6 +308,21 @@ mkdev(char *path, struct aparams *par,
 	return d;
 }
 
+struct port *
+mkport(char *path, int hold)
+{
+	struct port *c;
+
+	for (c = port_list; c != NULL; c = c->next) {
+		if (strcmp(c->path, path) == 0)
+			return c;
+	}
+	c = port_new(path, MODE_MIDIMASK, hold);
+	if (c == NULL)
+		exit(1);
+	return c;
+}
+
 struct opt *
 mkopt(char *path, struct dev *d,
     int pmin, int pmax, int rmin, int rmax,
@@ -424,9 +440,7 @@ main(int argc, char **argv)
 				return 1;
 			break;
 		case 'q':
-			p = port_new(optarg, MODE_MIDIMASK, hold);
-			if (!p)
-				errx(1, "%s: can't open port", optarg);
+			mkport(optarg, hold);
 			break;
 		case 'a':
 			hold = opt_onoff();
