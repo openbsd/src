@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.16 2016/01/04 07:27:24 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.17 2016/01/08 08:12:21 stefan Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -58,7 +58,7 @@
 #include "virtio.h"
 #include "proc.h"
 
-#define MAX_PORTS 65535
+#define MAX_PORTS 65536
 
 /*
  * Emulated 8250 UART
