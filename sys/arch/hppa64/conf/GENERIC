@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.36 2015/04/16 09:09:49 mpi Exp $
+#	$OpenBSD: GENERIC,v 1.37 2016/01/08 09:48:41 mpi Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -60,6 +60,7 @@ com1	at ssio? irq 3
 #uhub*	at usb?			# USB Hubs
 #uhub*	at uhub?		# USB Hubs
 #ualea*	at uhub?		# Araneus Alea II TRNG
+#uonerng* at uhub?		# Moonbase Otago OneRNG
 #umodem*	at uhub?	# USB Modems/Serial
 #ucom*	at umodem?
 #uvisor*	at uhub?	# Handspring Visor

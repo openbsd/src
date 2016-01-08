@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC-IP32,v 1.45 2015/11/02 20:14:36 miod Exp $
+#	$OpenBSD: GENERIC-IP32,v 1.46 2016/01/08 09:48:42 mpi Exp $
 #
 # THIS KERNEL IS FOR O2 (IP32) SYSTEMS ONLY.
 #
@@ -91,6 +91,7 @@ usb*		at ehci?
 uhub*		at usb?		# USB Hubs
 uhub*		at uhub?	# USB Hubs
 ualea*		at uhub?	# Araneus Alea II TRNG
+uonerng*	at uhub?	# Moonbase Otago OneRNG
 umodem*		at uhub?	# USB Modems/Serial
 ucom*		at umodem?
 uvscom*		at uhub?	# SUNTAC Slipper U VS-10U serial
