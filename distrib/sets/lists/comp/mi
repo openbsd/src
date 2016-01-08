@@ -122,6 +122,11 @@
 ./usr/include/dev/flashvar.h
 ./usr/include/dev/gpio
 ./usr/include/dev/gpio/gpiovar.h
+./usr/include/dev/hid
+./usr/include/dev/hid/hid.h
+./usr/include/dev/hid/hidkbdsc.h
+./usr/include/dev/hid/hidkbdvar.h
+./usr/include/dev/hid/hidmsvar.h
 ./usr/include/dev/hil
 ./usr/include/dev/hil/hildevs.h
 ./usr/include/dev/hil/hildevs_data.h
@@ -704,10 +709,6 @@
 ./usr/include/dev/usb/dwc2/dwc2var.h
 ./usr/include/dev/usb/ehcireg.h
 ./usr/include/dev/usb/ehcivar.h
-./usr/include/dev/usb/hid.h
-./usr/include/dev/usb/hidkbdsc.h
-./usr/include/dev/usb/hidkbdvar.h
-./usr/include/dev/usb/hidmsvar.h
 ./usr/include/dev/usb/if_athn_usb.h
 ./usr/include/dev/usb/if_atureg.h
 ./usr/include/dev/usb/if_auereg.h

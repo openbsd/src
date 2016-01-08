@@ -104,6 +104,11 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/flashvar.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/gpio
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/gpio/gpiovar.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/dev/hid
+./usr/libdata/perl5/site_perl/vax-openbsd/dev/hid/hid.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/dev/hid/hidkbdsc.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/dev/hid/hidkbdvar.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/dev/hid/hidmsvar.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/hil
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/hil/hildevs.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/hil/hildevs_data.ph
@@ -686,10 +691,6 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/usb/dwc2/dwc2var.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/usb/ehcireg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/usb/ehcivar.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/dev/usb/hid.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/dev/usb/hidkbdsc.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/dev/usb/hidkbdvar.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/dev/usb/hidmsvar.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/usb/if_athn_usb.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/usb/if_atureg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/usb/if_auereg.ph

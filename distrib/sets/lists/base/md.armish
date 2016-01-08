@@ -670,6 +670,11 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/flashvar.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/gpio
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/gpio/gpiovar.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/hid
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/hid/hid.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/hid/hidkbdsc.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/hid/hidkbdvar.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/hid/hidmsvar.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/hil
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/hil/hildevs.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/hil/hildevs_data.ph
@@ -1252,10 +1257,6 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/usb/dwc2/dwc2var.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/usb/ehcireg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/usb/ehcivar.ph
-./usr/libdata/perl5/site_perl/arm-openbsd/dev/usb/hid.ph
-./usr/libdata/perl5/site_perl/arm-openbsd/dev/usb/hidkbdsc.ph
-./usr/libdata/perl5/site_perl/arm-openbsd/dev/usb/hidkbdvar.ph
-./usr/libdata/perl5/site_perl/arm-openbsd/dev/usb/hidmsvar.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/usb/if_athn_usb.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/usb/if_atureg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/usb/if_auereg.ph
