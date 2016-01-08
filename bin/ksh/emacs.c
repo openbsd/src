@@ -1,4 +1,4 @@
-/*	$OpenBSD: emacs.c,v 1.63 2015/12/30 15:21:42 tedu Exp $	*/
+/*	$OpenBSD: emacs.c,v 1.64 2016/01/08 13:17:57 schwarze Exp $	*/
 
 /*
  *  Emacs-like command line editing and history
@@ -51,7 +51,8 @@ struct	x_ftab {
 #define	is_cfs(c)	(c == ' ' || c == '\t' || c == '"' || c == '\'')
 
 /* Separator for motion */
-#define	is_mfs(c)	(!(isalnum((unsigned char)c) || c == '_' || c == '$'))
+#define	is_mfs(c)	(!(isalnum((unsigned char)c) || \
+			c == '_' || c == '$' || c & 0x80))
 
 /* Arguments for do_complete()
  * 0 = enumerate  M-= complete as much as possible and then list
@@ -683,6 +684,11 @@ x_zots(char *str)
 {
 	int	adj = x_adj_done;
 
+	if (str > xbuf && isu8cont(*str)) {
+		while (str > xbuf && isu8cont(*str))
+			str--;
+		x_e_putc('\b');
+	}
 	x_lastcp();
 	while (*str && str < xlp && adj == x_adj_done)
 		x_zotc(*str++);
@@ -729,7 +735,7 @@ x_mv_forw(int c)
 	}
 	if (x_arg > nleft)
 		x_arg = nleft;
-	while (x_arg < nleft && isu8cont(xcp[x_arg + 1]))
+	while (x_arg < nleft && isu8cont(xcp[x_arg]))
 		x_arg++;
 	x_goto(xcp + x_arg);
 	return KSTD;
