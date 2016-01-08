@@ -1,4 +1,4 @@
-/*	$OpenBSD: roff.h,v 1.18 2015/11/07 13:57:55 schwarze Exp $	*/
+/*	$OpenBSD: roff.h,v 1.19 2016/01/08 17:48:04 schwarze Exp $	*/
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -93,7 +93,6 @@ struct	roff_node {
 	char		 *string;  /* TEXT */
 	const struct tbl_span *span; /* TBL */
 	const struct eqn *eqn;	   /* EQN */
-	int		  nchild;  /* Number of child nodes. */
 	int		  line;    /* Input file line number. */
 	int		  pos;     /* Input file column number. */
 	int		  tok;     /* Request or macro ID. */

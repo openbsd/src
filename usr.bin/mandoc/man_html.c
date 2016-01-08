@@ -1,4 +1,4 @@
-/*	$OpenBSD: man_html.c,v 1.72 2015/10/06 18:30:43 schwarze Exp $ */
+/*	$OpenBSD: man_html.c,v 1.73 2016/01/08 17:48:04 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -652,7 +652,7 @@ man_UR_pre(MAN_ARGS)
 
 	n = n->child;
 	assert(n->type == ROFFT_HEAD);
-	if (n->nchild) {
+	if (n->child != NULL) {
 		assert(n->child->type == ROFFT_TEXT);
 		PAIR_CLASS_INIT(&tag[0], "link-ext");
 		PAIR_HREF_INIT(&tag[1], n->child->string);
@@ -660,7 +660,7 @@ man_UR_pre(MAN_ARGS)
 	}
 
 	assert(n->next->type == ROFFT_BODY);
-	if (n->next->nchild)
+	if (n->next->child != NULL)
 		n = n->next;
 
 	print_man_nodelist(man, n->child, mh, h);

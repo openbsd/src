@@ -1,6 +1,6 @@
-/*	$OpenBSD: mdoc_man.c,v 1.93 2015/10/12 00:07:27 schwarze Exp $ */
+/*	$OpenBSD: mdoc_man.c,v 1.94 2016/01/08 17:48:04 schwarze Exp $ */
 /*
- * Copyright (c) 2011-2015 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2011-2016 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -608,7 +608,8 @@ print_node(DECL_ARGS)
 		 */
 		act = manacts + n->tok;
 		cond = act->cond == NULL || (*act->cond)(meta, n);
-		if (cond && act->pre && (n->end == ENDBODY_NOT || n->nchild))
+		if (cond && act->pre != NULL &&
+		    (n->end == ENDBODY_NOT || n->child != NULL))
 			do_sub = (*act->pre)(meta, n);
 	}
 
@@ -679,30 +680,29 @@ post_enc(DECL_ARGS)
 static int
 pre_ex(DECL_ARGS)
 {
-	int	 nchild;
+	struct roff_node *nch;
 
 	outflags |= MMAN_br | MMAN_nl;
 
 	print_word("The");
 
-	nchild = n->nchild;
-	for (n = n->child; n; n = n->next) {
+	for (nch = n->child; nch != NULL; nch = nch->next) {
 		font_push('B');
-		print_word(n->string);
+		print_word(nch->string);
 		font_pop();
 
-		if (n->next == NULL)
+		if (nch->next == NULL)
 			continue;
 
-		if (nchild > 2) {
+		if (nch->prev != NULL || nch->next->next != NULL) {
 			outflags &= ~MMAN_spc;
 			print_word(",");
 		}
-		if (n->next->next == NULL)
+		if (nch->next->next == NULL)
 			print_word("and");
 	}
 
-	if (nchild > 1)
+	if (n->child != NULL && n->child->next != NULL)
 		print_word("utilities exit\\~0");
 	else
 		print_word("utility exits\\~0");
@@ -871,7 +871,7 @@ static int
 pre_aq(DECL_ARGS)
 {
 
-	print_word(n->nchild == 1 &&
+	print_word(n->child != NULL && n->child->next == NULL &&
 	    n->child->tok == MDOC_Mt ?  "<" : "\\(la");
 	outflags &= ~MMAN_spc;
 	return 1;
@@ -882,7 +882,7 @@ post_aq(DECL_ARGS)
 {
 
 	outflags &= ~(MMAN_spc | MMAN_nl);
-	print_word(n->nchild == 1 &&
+	print_word(n->child != NULL && n->child->next == NULL &&
 	    n->child->tok == MDOC_Mt ?  ">" : "\\(ra");
 }
 
@@ -998,7 +998,7 @@ pre_bl(DECL_ARGS)
 		return 1;
 	}
 
-	if (n->nchild) {
+	if (n->child != NULL) {
 		print_line(".TS", MMAN_nl);
 		for (icol = 0; icol < n->norm->Bl.ncols; icol++)
 			print_word("l");
@@ -1014,7 +1014,7 @@ post_bl(DECL_ARGS)
 
 	switch (n->norm->Bl.type) {
 	case LIST_column:
-		if (n->nchild)
+		if (n->child != NULL)
 			print_line(".TE", 0);
 		break;
 	case LIST_enum:
@@ -1212,7 +1212,7 @@ pre_fl(DECL_ARGS)
 
 	font_push('B');
 	print_word("\\-");
-	if (n->nchild)
+	if (n->child != NULL)
 		outflags &= ~MMAN_spc;
 	return 1;
 }
@@ -1222,7 +1222,7 @@ post_fl(DECL_ARGS)
 {
 
 	font_pop();
-	if ( ! (n->nchild ||
+	if (!(n->child != NULL ||
 	    n->next == NULL ||
 	    n->next->type == ROFFT_TEXT ||
 	    n->next->flags & MDOC_LINE))
@@ -1643,34 +1643,33 @@ pre_rs(DECL_ARGS)
 static int
 pre_rv(DECL_ARGS)
 {
-	int	 nchild;
+	struct roff_node *nch;
 
 	outflags |= MMAN_br | MMAN_nl;
 
-	nchild = n->nchild;
-	if (nchild > 0) {
+	if (n->child != NULL) {
 		print_word("The");
 
-		for (n = n->child; n; n = n->next) {
+		for (nch = n->child; nch != NULL; nch = nch->next) {
 			font_push('B');
-			print_word(n->string);
+			print_word(nch->string);
 			font_pop();
 
 			outflags &= ~MMAN_spc;
 			print_word("()");
 
-			if (n->next == NULL)
+			if (nch->next == NULL)
 				continue;
 
-			if (nchild > 2) {
+			if (nch->prev != NULL || nch->next->next != NULL) {
 				outflags &= ~MMAN_spc;
 				print_word(",");
 			}
-			if (n->next->next == NULL)
+			if (nch->next->next == NULL)
 				print_word("and");
 		}
 
-		if (nchild > 1)
+		if (n->child != NULL && n->child->next != NULL)
 			print_word("functions return");
 		else
 			print_word("function returns");

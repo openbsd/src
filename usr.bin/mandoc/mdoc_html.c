@@ -1,7 +1,7 @@
-/*	$OpenBSD: mdoc_html.c,v 1.114 2015/12/25 20:43:04 bentley Exp $ */
+/*	$OpenBSD: mdoc_html.c,v 1.115 2016/01/08 17:48:04 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2014, 2015, 2016 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -600,7 +600,7 @@ mdoc_fl_pre(MDOC_ARGS)
 
 	print_text(h, "\\-");
 
-	if ( ! (n->nchild == 0 &&
+	if (!(n->child == NULL &&
 	    (n->next == NULL ||
 	     n->next->type == ROFFT_TEXT ||
 	     n->next->flags & MDOC_LINE)))
@@ -977,9 +977,9 @@ mdoc_bl_pre(MDOC_ARGS)
 static int
 mdoc_ex_pre(MDOC_ARGS)
 {
-	struct tag	*t;
-	struct htmlpair	 tag;
-	int		 nchild;
+	struct htmlpair	  tag;
+	struct tag	 *t;
+	struct roff_node *nch;
 
 	if (n->prev)
 		print_otag(h, TAG_BR, 0, NULL);
@@ -988,24 +988,26 @@ mdoc_ex_pre(MDOC_ARGS)
 
 	print_text(h, "The");
 
-	nchild = n->nchild;
-	for (n = n->child; n; n = n->next) {
-		assert(n->type == ROFFT_TEXT);
+	for (nch = n->child; nch != NULL; nch = nch->next) {
+		assert(nch->type == ROFFT_TEXT);
 
 		t = print_otag(h, TAG_B, 1, &tag);
-		print_text(h, n->string);
+		print_text(h, nch->string);
 		print_tagq(h, t);
 
-		if (nchild > 2 && n->next) {
+		if (nch->next == NULL)
+			continue;
+
+		if (nch->prev != NULL || nch->next->next != NULL) {
 			h->flags |= HTML_NOSPACE;
 			print_text(h, ",");
 		}
 
-		if (n->next && NULL == n->next->next)
+		if (nch->next->next == NULL)
 			print_text(h, "and");
 	}
 
-	if (nchild > 1)
+	if (n->child != NULL && n->child->next != NULL)
 		print_text(h, "utilities exit\\~0");
 	else
 		print_text(h, "utility exits\\~0");
@@ -1693,37 +1695,36 @@ mdoc_rv_pre(MDOC_ARGS)
 {
 	struct htmlpair	 tag;
 	struct tag	*t;
-	int		 nchild;
+	struct roff_node *nch;
 
 	if (n->prev)
 		print_otag(h, TAG_BR, 0, NULL);
 
 	PAIR_CLASS_INIT(&tag, "fname");
 
-	nchild = n->nchild;
-	if (nchild > 0) {
+	if (n->child != NULL) {
 		print_text(h, "The");
 
-		for (n = n->child; n; n = n->next) {
+		for (nch = n->child; nch != NULL; nch = nch->next) {
 			t = print_otag(h, TAG_B, 1, &tag);
-			print_text(h, n->string);
+			print_text(h, nch->string);
 			print_tagq(h, t);
 
 			h->flags |= HTML_NOSPACE;
 			print_text(h, "()");
 
-			if (n->next == NULL)
+			if (nch->next == NULL)
 				continue;
 
-			if (nchild > 2) {
+			if (nch->prev != NULL || nch->next->next != NULL) {
 				h->flags |= HTML_NOSPACE;
 				print_text(h, ",");
 			}
-			if (n->next->next == NULL)
+			if (nch->next->next == NULL)
 				print_text(h, "and");
 		}
 
-		if (nchild > 1)
+		if (n->child != NULL && n->child->next != NULL)
 			print_text(h, "functions return");
 		else
 			print_text(h, "function returns");
@@ -1999,7 +2000,7 @@ mdoc_bk_pre(MDOC_ARGS)
 	case ROFFT_HEAD:
 		return 0;
 	case ROFFT_BODY:
-		if (n->parent->args || 0 == n->prev->nchild)
+		if (n->parent->args != NULL || n->prev->child == NULL)
 			h->flags |= HTML_PREKEEP;
 		break;
 	default:
@@ -2028,7 +2029,7 @@ mdoc_quote_pre(MDOC_ARGS)
 	switch (n->tok) {
 	case MDOC_Ao:
 	case MDOC_Aq:
-		print_text(h, n->nchild == 1 &&
+		print_text(h, n->child != NULL && n->child->next == NULL &&
 		    n->child->tok == MDOC_Mt ?  "<" : "\\(la");
 		break;
 	case MDOC_Bro:
@@ -2092,7 +2093,7 @@ mdoc_quote_post(MDOC_ARGS)
 	switch (n->tok) {
 	case MDOC_Ao:
 	case MDOC_Aq:
-		print_text(h, n->nchild == 1 &&
+		print_text(h, n->child != NULL && n->child->next == NULL &&
 		    n->child->tok == MDOC_Mt ?  ">" : "\\(ra");
 		break;
 	case MDOC_Bro:

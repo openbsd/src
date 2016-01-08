@@ -1,4 +1,4 @@
-/*	$OpenBSD: man_term.c,v 1.139 2015/10/12 00:07:27 schwarze Exp $ */
+/*	$OpenBSD: man_term.c,v 1.140 2016/01/08 17:48:04 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -217,7 +217,7 @@ static int
 pre_ll(DECL_ARGS)
 {
 
-	term_setwidth(p, n->nchild ? n->child->string : NULL);
+	term_setwidth(p, n->child != NULL ? n->child->string : NULL);
 	return 0;
 }
 

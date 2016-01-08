@@ -1,7 +1,7 @@
-/*	$OpenBSD: man_validate.c,v 1.92 2015/10/22 21:53:49 schwarze Exp $ */
+/*	$OpenBSD: man_validate.c,v 1.93 2016/01/08 17:48:04 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2010, 2012-2015 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2010, 2012-2016 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -178,10 +178,10 @@ static void
 post_OP(CHKARGS)
 {
 
-	if (n->nchild == 0)
+	if (n->child == NULL)
 		mandoc_msg(MANDOCERR_OP_EMPTY, man->parse,
 		    n->line, n->pos, "OP");
-	else if (n->nchild > 2) {
+	else if (n->child->next != NULL && n->child->next->next != NULL) {
 		n = n->child->next->next;
 		mandoc_vmsg(MANDOCERR_ARG_EXCESS, man->parse,
 		    n->line, n->pos, "OP ... %s", n->string);
@@ -204,7 +204,7 @@ post_ft(CHKARGS)
 	char	*cp;
 	int	 ok;
 
-	if (0 == n->nchild)
+	if (n->child == NULL)
 		return;
 
 	ok = 0;
@@ -254,22 +254,22 @@ check_par(CHKARGS)
 
 	switch (n->type) {
 	case ROFFT_BLOCK:
-		if (0 == n->body->nchild)
+		if (n->body->child == NULL)
 			roff_node_delete(man, n);
 		break;
 	case ROFFT_BODY:
-		if (0 == n->nchild)
+		if (n->child == NULL)
 			mandoc_vmsg(MANDOCERR_PAR_SKIP,
 			    man->parse, n->line, n->pos,
 			    "%s empty", man_macronames[n->tok]);
 		break;
 	case ROFFT_HEAD:
-		if (n->nchild)
+		if (n->child != NULL)
 			mandoc_vmsg(MANDOCERR_ARG_SKIP,
 			    man->parse, n->line, n->pos,
 			    "%s %s%s", man_macronames[n->tok],
 			    n->child->string,
-			    n->nchild > 1 ? " ..." : "");
+			    n->child->next != NULL ? " ..." : "");
 		break;
 	default:
 		break;
@@ -282,11 +282,11 @@ post_IP(CHKARGS)
 
 	switch (n->type) {
 	case ROFFT_BLOCK:
-		if (0 == n->head->nchild && 0 == n->body->nchild)
+		if (n->head->child == NULL && n->body->child == NULL)
 			roff_node_delete(man, n);
 		break;
 	case ROFFT_BODY:
-		if (0 == n->parent->head->nchild && 0 == n->nchild)
+		if (n->parent->head->child == NULL && n->child == NULL)
 			mandoc_vmsg(MANDOCERR_PAR_SKIP,
 			    man->parse, n->line, n->pos,
 			    "%s empty", man_macronames[n->tok]);

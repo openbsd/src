@@ -1,4 +1,4 @@
-/*	$OpenBSD: man_macro.c,v 1.75 2015/10/22 21:53:49 schwarze Exp $ */
+/*	$OpenBSD: man_macro.c,v 1.76 2016/01/08 17:48:04 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2012, 2013, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -155,7 +155,7 @@ rew_scope(struct roff_man *man, int tok)
 	/* Preserve empty paragraphs before RS. */
 
 	n = man->last;
-	if (tok == MAN_RS && n->nchild == 0 &&
+	if (tok == MAN_RS && n->child == NULL &&
 	    (n->tok == MAN_P || n->tok == MAN_PP || n->tok == MAN_LP))
 		return;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: roff.c,v 1.155 2015/10/22 21:53:49 schwarze Exp $ */
+/*	$OpenBSD: roff.c,v 1.156 2016/01/08 17:48:04 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -1022,7 +1022,6 @@ roff_node_append(struct roff_man *man, struct roff_node *n)
 	default:
 		abort();
 	}
-	n->parent->nchild++;
 	man->last = n;
 
 	switch (n->type) {
@@ -1167,7 +1166,6 @@ roff_node_unlink(struct roff_man *man, struct roff_node *n)
 	/* Adjust parent. */
 
 	if (n->parent != NULL) {
-		n->parent->nchild--;
 		if (n->parent->child == n)
 			n->parent->child = n->next;
 		if (n->parent->last == n)
@@ -1209,7 +1207,6 @@ roff_node_delete(struct roff_man *man, struct roff_node *n)
 
 	while (n->child != NULL)
 		roff_node_delete(man, n->child);
-	assert(n->nchild == 0);
 	roff_node_unlink(man, n);
 	roff_node_free(n);
 }

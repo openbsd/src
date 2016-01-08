@@ -1,7 +1,7 @@
-/*	$OpenBSD: mdoc_term.c,v 1.229 2015/10/12 15:27:53 schwarze Exp $ */
+/*	$OpenBSD: mdoc_term.c,v 1.230 2016/01/08 17:48:04 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2010, 2012-2015 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2010, 2012-2016 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2013 Franco Fichtner <franco@lastsummer.de>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -355,7 +355,7 @@ print_mdoc_node(DECL_ARGS)
 		break;
 	default:
 		if (termacts[n->tok].pre &&
-		    (n->end == ENDBODY_NOT || n->nchild))
+		    (n->end == ENDBODY_NOT || n->child != NULL))
 			chld = (*termacts[n->tok].pre)
 				(p, &npair, meta, n);
 		break;
@@ -596,7 +596,7 @@ static int
 termp_ll_pre(DECL_ARGS)
 {
 
-	term_setwidth(p, n->nchild ? n->child->string : NULL);
+	term_setwidth(p, n->child != NULL ? n->child->string : NULL);
 	return 0;
 }
 
@@ -729,7 +729,7 @@ termp_it_pre(DECL_ARGS)
 			term_word(p, "\\ \\ ");
 		break;
 	case LIST_inset:
-		if (n->type == ROFFT_BODY && n->parent->head->nchild)
+		if (n->type == ROFFT_BODY && n->parent->head->child != NULL)
 			term_word(p, "\\ ");
 		break;
 	default:
@@ -1037,7 +1037,7 @@ termp_fl_pre(DECL_ARGS)
 	term_fontpush(p, TERMFONT_BOLD);
 	term_word(p, "\\-");
 
-	if ( ! (n->nchild == 0 &&
+	if (!(n->child == NULL &&
 	    (n->next == NULL ||
 	     n->next->type == ROFFT_TEXT ||
 	     n->next->flags & MDOC_LINE)))
@@ -1104,34 +1104,33 @@ termp_rs_pre(DECL_ARGS)
 static int
 termp_rv_pre(DECL_ARGS)
 {
-	int		 nchild;
+	struct roff_node *nch;
 
 	term_newln(p);
 
-	nchild = n->nchild;
-	if (nchild > 0) {
+	if (n->child != NULL) {
 		term_word(p, "The");
 
-		for (n = n->child; n; n = n->next) {
+		for (nch = n->child; nch != NULL; nch = nch->next) {
 			term_fontpush(p, TERMFONT_BOLD);
-			term_word(p, n->string);
+			term_word(p, nch->string);
 			term_fontpop(p);
 
 			p->flags |= TERMP_NOSPACE;
 			term_word(p, "()");
 
-			if (n->next == NULL)
+			if (nch->next == NULL)
 				continue;
 
-			if (nchild > 2) {
+			if (nch->prev != NULL || nch->next->next != NULL) {
 				p->flags |= TERMP_NOSPACE;
 				term_word(p, ",");
 			}
-			if (n->next->next == NULL)
+			if (nch->next->next == NULL)
 				term_word(p, "and");
 		}
 
-		if (nchild > 1)
+		if (n->child != NULL && n->child->next != NULL)
 			term_word(p, "functions return");
 		else
 			term_word(p, "function returns");
@@ -1157,27 +1156,29 @@ termp_rv_pre(DECL_ARGS)
 static int
 termp_ex_pre(DECL_ARGS)
 {
-	int		 nchild;
+	struct roff_node *nch;
 
 	term_newln(p);
 	term_word(p, "The");
 
-	nchild = n->nchild;
-	for (n = n->child; n; n = n->next) {
+	for (nch = n->child; nch != NULL; nch = nch->next) {
 		term_fontpush(p, TERMFONT_BOLD);
-		term_word(p, n->string);
+		term_word(p, nch->string);
 		term_fontpop(p);
 
-		if (nchild > 2 && n->next) {
+		if (nch->next == NULL)
+			continue;
+
+		if (nch->prev != NULL || nch->next->next != NULL) {
 			p->flags |= TERMP_NOSPACE;
 			term_word(p, ",");
 		}
 
-		if (n->next && NULL == n->next->next)
+		if (nch->next->next == NULL)
 			term_word(p, "and");
 	}
 
-	if (nchild > 1)
+	if (n->child != NULL && n->child->next != NULL)
 		term_word(p, "utilities exit\\~0");
 	else
 		term_word(p, "utility exits\\~0");
@@ -1836,7 +1837,7 @@ termp_quote_pre(DECL_ARGS)
 	switch (n->tok) {
 	case MDOC_Ao:
 	case MDOC_Aq:
-		term_word(p, n->nchild == 1 &&
+		term_word(p, n->child != NULL && n->child->next == NULL &&
 		    n->child->tok == MDOC_Mt ? "<" : "\\(la");
 		break;
 	case MDOC_Bro:
@@ -1893,7 +1894,7 @@ termp_quote_post(DECL_ARGS)
 	switch (n->tok) {
 	case MDOC_Ao:
 	case MDOC_Aq:
-		term_word(p, n->nchild == 1 &&
+		term_word(p, n->child != NULL && n->child->next == NULL &&
 		    n->child->tok == MDOC_Mt ? ">" : "\\(ra");
 		break;
 	case MDOC_Bro:
@@ -2157,7 +2158,7 @@ termp_bk_pre(DECL_ARGS)
 	case ROFFT_HEAD:
 		return 0;
 	case ROFFT_BODY:
-		if (n->parent->args || 0 == n->prev->nchild)
+		if (n->parent->args != NULL || n->prev->child == NULL)
 			p->flags |= TERMP_PREKEEP;
 		break;
 	default:
