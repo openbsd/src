@@ -1,4 +1,4 @@
-/*	$OpenBSD: initdeck.c,v 1.15 2016/01/07 16:00:32 tb Exp $	*/
+/*	$OpenBSD: initdeck.c,v 1.16 2016/01/08 18:19:47 mestre Exp $	*/
 /*	$NetBSD: initdeck.c,v 1.3 1995/03/23 08:34:43 cgd Exp $	*/
 
 /*
@@ -30,12 +30,12 @@
  * SUCH DAMAGE.
  */
 
-#include	<err.h>
-#include	<stdio.h>
-#include	<stdlib.h>
-#include	<unistd.h>
+#include <err.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
 
-#include	"deck.h"
+#include "deck.h"
 
 /*
  *	This program initializes the card files for monopoly.

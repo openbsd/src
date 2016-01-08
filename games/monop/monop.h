@@ -1,4 +1,4 @@
-/*	$OpenBSD: monop.h,v 1.7 2003/06/03 03:01:40 millert Exp $	*/
+/*	$OpenBSD: monop.h,v 1.8 2016/01/08 18:19:47 mestre Exp $	*/
 /*	$NetBSD: monop.h,v 1.4 1995/04/24 12:24:23 cgd Exp $	*/
 
 /*
@@ -31,10 +31,6 @@
  *
  *	@(#)monop.h	8.1 (Berkeley) 5/31/93
  */
-
-#include	<stdio.h>
-#include	<stdlib.h>
-#include	<string.h>
 
 #ifdef __CHAR_UNSIGNED__
 #define	shrt	short

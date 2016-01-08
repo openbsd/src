@@ -1,4 +1,4 @@
-/*	$OpenBSD: deck.h,v 1.5 2003/06/03 03:01:40 millert Exp $	*/
+/*	$OpenBSD: deck.h,v 1.6 2016/01/08 18:19:47 mestre Exp $	*/
 /*	$NetBSD: deck.h,v 1.3 1995/03/23 08:34:36 cgd Exp $	*/
 
 /*
@@ -31,8 +31,6 @@
  *
  *	@(#)deck.h	8.1 (Berkeley) 5/31/93
  */
-
-#include <sys/types.h>
 
 #define	bool	int8_t
 

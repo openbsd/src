@@ -1,4 +1,4 @@
-/*	$OpenBSD: monop.ext,v 1.4 2010/05/10 08:53:12 nicm Exp $	*/
+/*	$OpenBSD: monop.ext,v 1.5 2016/01/08 18:19:47 mestre Exp $	*/
 /*	$NetBSD: monop.ext,v 1.2 1995/03/23 08:34:58 cgd Exp $	*/
 
 /*-
@@ -32,8 +32,8 @@
  *	@(#)monop.ext	5.4 (Berkeley) 5/31/93
  */
 
-#include	"deck.h"
-#include	"monop.h"
+#include "deck.h"
+#include "monop.h"
 
 extern bool	trading, spec, fixing, told_em;
 

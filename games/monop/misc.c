@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.12 2015/10/24 17:44:49 mmcc Exp $	*/
+/*	$OpenBSD: misc.c,v 1.13 2016/01/08 18:19:47 mestre Exp $	*/
 /*	$NetBSD: misc.c,v 1.4 1995/03/23 08:34:47 cgd Exp $	*/
 
 /*
@@ -30,9 +30,11 @@
  * SUCH DAMAGE.
  */
 
-#include	"monop.ext"
-#include	<ctype.h>
-#include	<signal.h>
+#include <ctype.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+#include "monop.ext"
 
 /*
  *	This routine executes a truncated set of commands until a

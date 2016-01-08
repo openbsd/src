@@ -1,4 +1,4 @@
-/*	$OpenBSD: monop.def,v 1.6 2010/05/10 08:53:12 nicm Exp $	*/
+/*	$OpenBSD: monop.def,v 1.7 2016/01/08 18:19:47 mestre Exp $	*/
 /*	$NetBSD: monop.def,v 1.3 1995/03/23 08:34:54 cgd Exp $	*/
 
 /*-
@@ -32,8 +32,8 @@
  *	@(#)monop.def	5.5 (Berkeley) 5/31/93
  */
 
-#include	"deck.h"
-#include	"monop.h"
+#include "deck.h"
+#include "monop.h"
 
 bool	fixing = FALSE,		/* set if fixing up debt		*/
 	trading = FALSE,	/* set if in process of trading		*/

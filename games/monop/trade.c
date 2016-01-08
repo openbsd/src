@@ -1,4 +1,4 @@
-/*	$OpenBSD: trade.c,v 1.6 2009/10/27 23:59:26 deraadt Exp $	*/
+/*	$OpenBSD: trade.c,v 1.7 2016/01/08 18:19:47 mestre Exp $	*/
 /*	$NetBSD: trade.c,v 1.3 1995/03/23 08:35:19 cgd Exp $	*/
 
 /*
@@ -30,7 +30,10 @@
  * SUCH DAMAGE.
  */
 
-#include	"monop.ext"
+#include <stdio.h>
+#include <stdlib.h>
+
+#include "monop.ext"
 
 struct trd_st {			/* how much to give to other player	*/
 	int	trader;			/* trader number		*/

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cards.c,v 1.10 2015/08/22 14:47:41 deraadt Exp $	*/
+/*	$OpenBSD: cards.c,v 1.11 2016/01/08 18:19:47 mestre Exp $	*/
 /*	$NetBSD: cards.c,v 1.3 1995/03/23 08:34:35 cgd Exp $	*/
 
 /*
@@ -30,9 +30,12 @@
  * SUCH DAMAGE.
  */
 
-#include	<err.h>
-#include	"monop.ext"
-#include	"pathnames.h"
+#include <err.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+#include "monop.ext"
+#include "pathnames.h"
 
 /*
  *	These routine deal with the card decks

@@ -1,4 +1,4 @@
-/*	$OpenBSD: execute.c,v 1.11 2015/08/22 14:47:41 deraadt Exp $	*/
+/*	$OpenBSD: execute.c,v 1.12 2016/01/08 18:19:47 mestre Exp $	*/
 /*	$NetBSD: execute.c,v 1.3 1995/03/23 08:34:38 cgd Exp $	*/
 
 /*
@@ -30,14 +30,14 @@
  * SUCH DAMAGE.
  */
 
-#include	"monop.ext"
-#include	<sys/types.h>
-#include	<sys/stat.h>
-#include	<sys/time.h>
-#include	<err.h>
-#include 	<fcntl.h>
-#include	<stdlib.h>
-#include	<unistd.h>
+#include <sys/stat.h>
+
+#include <err.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include "monop.ext"
 
 typedef	struct stat	STAT;
 typedef	struct tm	TIME;

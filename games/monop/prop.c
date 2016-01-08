@@ -1,4 +1,4 @@
-/*	$OpenBSD: prop.c,v 1.9 2015/08/22 14:47:41 deraadt Exp $	*/
+/*	$OpenBSD: prop.c,v 1.10 2016/01/08 18:19:47 mestre Exp $	*/
 /*	$NetBSD: prop.c,v 1.3 1995/03/23 08:35:06 cgd Exp $	*/
 
 /*
@@ -30,8 +30,11 @@
  * SUCH DAMAGE.
  */
 
-#include	<err.h>
-#include	"monop.ext"
+#include <err.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+#include "monop.ext"
 
 static int	value(SQUARE *);
 

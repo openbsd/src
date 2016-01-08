@@ -1,4 +1,4 @@
-/*	$OpenBSD: houses.c,v 1.8 2009/10/27 23:59:26 deraadt Exp $	*/
+/*	$OpenBSD: houses.c,v 1.9 2016/01/08 18:19:47 mestre Exp $	*/
 /*	$NetBSD: houses.c,v 1.3 1995/03/23 08:34:40 cgd Exp $	*/
 
 /*
@@ -30,7 +30,10 @@
  * SUCH DAMAGE.
  */
 
-# include	"monop.ext"
+#include <stdio.h>
+#include <stdlib.h>
+
+#include "monop.ext"
 
 static char	*names[N_MON+2],
 		cur_prop[80];
