@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.167 2015/12/15 17:36:19 schwarze Exp $ */
+/*	$OpenBSD: main.c,v 1.168 2016/01/08 02:13:35 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2012, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -679,9 +679,11 @@ parse(struct curparse *curp, int fd, const char *file)
 	/* Begin by parsing the file itself. */
 
 	assert(file);
-	assert(fd >= -1);
+	assert(fd > 0);
 
 	rctmp = mparse_readfd(curp->mp, fd, file);
+	if (fd != STDIN_FILENO)
+		close(fd);
 	if (rc < rctmp)
 		rc = rctmp;
 

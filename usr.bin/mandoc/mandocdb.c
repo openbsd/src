@@ -1,4 +1,4 @@
-/*	$OpenBSD: mandocdb.c,v 1.164 2016/01/04 14:44:02 schwarze Exp $ */
+/*	$OpenBSD: mandocdb.c,v 1.165 2016/01/08 02:13:35 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2016 Ingo Schwarze <schwarze@openbsd.org>
@@ -1124,6 +1124,7 @@ mpages_merge(struct mparse *mp)
 		 */
 		if (mlink->dform != FORM_CAT || mlink->fform != FORM_CAT) {
 			mparse_readfd(mp, fd, mlink->file);
+			close(fd);
 			mparse_result(mp, &man, &sodest);
 		}
 

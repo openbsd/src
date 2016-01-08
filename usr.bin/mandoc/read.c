@@ -1,4 +1,4 @@
-/*	$OpenBSD: read.c,v 1.120 2015/10/30 19:03:36 schwarze Exp $ */
+/*	$OpenBSD: read.c,v 1.121 2016/01/08 02:13:35 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -535,6 +535,7 @@ rerun:
 			if (mparse_open(curp, &fd, ln.buf + of) ==
 			    MANDOCLEVEL_OK) {
 				mparse_readfd(curp, fd, ln.buf + of);
+				close(fd);
 				curp->file = save_file;
 			} else {
 				curp->file = save_file;
@@ -748,10 +749,6 @@ mparse_readfd(struct mparse *curp, int fd, const char *file)
 		else
 			free(blk.buf);
 	}
-
-	if (fd != STDIN_FILENO && close(fd) == -1)
-		perror(file);
-
 	return curp->file_status;
 }
 
