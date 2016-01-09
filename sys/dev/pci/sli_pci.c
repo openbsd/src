@@ -1,4 +1,4 @@
-/*	$OpenBSD: sli_pci.c,v 1.4 2007/05/19 04:10:20 dlg Exp $ */
+/*	$OpenBSD: sli_pci.c,v 1.5 2016/01/09 14:39:19 jsg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -113,7 +113,7 @@ sli_pci_attach(struct device *parent, struct device *self, void *aux)
 	psc->psc_ih = pci_intr_establish(psc->psc_pc, ih, IPL_BIO,
 	    sli_intr, sc, DEVNAME(sc));
 	if (psc->psc_ih == NULL) {
-		printf("%s: unable to establish interrupt\n");
+		printf("%s: unable to establish interrupt\n", DEVNAME(sc));
 		goto detach;
 	}
 
