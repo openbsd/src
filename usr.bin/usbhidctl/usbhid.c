@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbhid.c,v 1.13 2016/01/08 16:59:33 jcs Exp $	*/
+/*	$OpenBSD: usbhid.c,v 1.14 2016/01/09 02:01:34 jcs Exp $	*/
 /*      $NetBSD: usbhid.c,v 1.22 2002/02/20 20:30:42 christos Exp $ */
 
 /*
@@ -45,10 +45,6 @@
 #include <string.h>
 #include <unistd.h>
 #include <usbhid.h>
-
-#define UHID_INPUT_REPORT 0x01
-#define UHID_OUTPUT_REPORT 0x02
-#define UHID_FEATURE_REPORT 0x03
 
 /*
  * Zero if not in a verbose mode.  Greater levels of verbosity
