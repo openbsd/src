@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.326 2016/01/07 12:18:38 dlg Exp $ */
+/* $OpenBSD: if_em.c,v 1.327 2016/01/09 11:54:19 dlg Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -308,7 +308,10 @@ em_defer_attach(struct device *self)
 		em_stop(sc, 1);
 
 		em_free_pci_resources(sc);
+
+		sc->sc_rx_desc_ring = NULL;
 		em_dma_free(sc, &sc->sc_rx_dma);
+		sc->sc_tx_desc_ring = NULL;
 		em_dma_free(sc, &sc->sc_tx_dma);
 
 		return;
@@ -551,8 +554,10 @@ em_attach(struct device *parent, struct device *self, void *aux)
 
 err_mac_addr:
 err_hw_init:
+	sc->sc_rx_desc_ring = NULL;
 	em_dma_free(sc, &sc->sc_rx_dma);
 err_rx_desc:
+	sc->sc_tx_desc_ring = NULL;
 	em_dma_free(sc, &sc->sc_tx_dma);
 err_tx_desc:
 err_pci:
@@ -1900,12 +1905,12 @@ em_detach(struct device *self, int flags)
 	em_free_pci_resources(sc);
 
 	if (sc->sc_rx_desc_ring != NULL) {
-		em_dma_free(sc, &sc->sc_rx_dma);
 		sc->sc_rx_desc_ring = NULL;
+		em_dma_free(sc, &sc->sc_rx_dma);
 	}
 	if (sc->sc_tx_desc_ring != NULL) {
-		em_dma_free(sc, &sc->sc_tx_dma);
 		sc->sc_tx_desc_ring = NULL;
+		em_dma_free(sc, &sc->sc_tx_dma);
 	}
 
 	ether_ifdetach(ifp);
