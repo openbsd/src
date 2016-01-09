@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpireg.h,v 1.30 2015/01/15 01:19:28 jsg Exp $	*/
+/*	$OpenBSD: acpireg.h,v 1.31 2016/01/09 11:00:01 kettenis Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
@@ -172,6 +172,8 @@ struct acpi_fadt {
 #define	FADT_REMOTE_POWER_ON_CAPABLE	0x00020000
 #define	FADT_FORCE_APIC_CLUSTER_MODEL	0x00040000
 #define	FADT_FORCE_APIC_PHYS_DEST_MODE	0x00080000
+#define	FADT_HW_REDUCED_ACPI		0x00100000
+#define	FADT_POWER_S0_IDLE_CAPABLE	0x00200000
 	/*
 	 * Following values only exist when rev > 1
 	 * If the extended addresses exists, they
