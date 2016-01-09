@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.h,v 1.64 2015/06/13 21:41:42 guenther Exp $ */
+/* $OpenBSD: dsdt.h,v 1.65 2016/01/09 10:50:43 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -95,10 +95,10 @@ const char		*aml_nodename(struct aml_node *);
 /* byte zero of small resources combines the tag above a length [1..7] */
 #define	SR_TAG(tag,len)		((tag << 3) + (len))
 
-#define LR_24BIT		0x81
+#define LR_MEM24		0x81
 #define LR_GENREGISTER		0x82
-#define LR_32BIT		0x85
-#define LR_32BITFIXED		0x86
+#define LR_MEM32		0x85
+#define LR_MEM32FIXED		0x86
 #define LR_DWORD		0x87
 #define LR_WORD			0x88
 #define LR_EXTIRQ		0x89
@@ -166,6 +166,13 @@ union acpi_resource {
 		uint32_t _aln;
 		uint32_t _len;
 	}  __packed lr_m32;
+	struct {
+		uint8_t  typecode;
+		uint16_t length;
+		uint8_t  _info;
+		uint32_t _bas;
+		uint32_t _len;
+	}  __packed lr_m32fixed;
 	struct {
 		uint8_t  typecode;
 		uint16_t length;
