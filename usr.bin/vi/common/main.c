@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.32 2016/01/06 22:27:39 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.33 2016/01/09 16:13:26 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -55,11 +55,6 @@ editor(GS *gp, int argc, char *argv[])
 	int ch, flagchk, lflag, secure, startup, readonly, rval, silent;
 	char *tag_f, *wsizearg, path[256];
 
-	if (pledge("stdio rpath wpath cpath fattr flock getpw tty proc exec", NULL) == -1) {
-		perror("pledge");
-		goto err;
-	}
-
 	static const char *optstr[3] = {
 #ifdef DEBUG
 		"c:D:FlRrSsT:t:vw:",
@@ -71,6 +66,12 @@ editor(GS *gp, int argc, char *argv[])
 		"c:eFlrSt:w:"
 #endif
 	};
+
+	if (pledge("stdio rpath wpath cpath fattr flock getpw tty proc exec",
+	    NULL) == -1) {
+		perror("pledge");
+		goto err;
+	}
 
 	/* Initialize the busy routine, if not defined by the screen. */
 	if (gp->scr_busy == NULL)
