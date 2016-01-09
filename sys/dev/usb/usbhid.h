@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbhid.h,v 1.19 2016/01/08 15:54:14 jcs Exp $ */
+/*	$OpenBSD: usbhid.h,v 1.20 2016/01/09 02:01:06 jcs Exp $ */
 /*	$NetBSD: usbhid.h,v 1.11 2001/12/28 00:20:24 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbhid.h,v 1.7 1999/11/17 22:33:51 n_hibma Exp $ */
 
@@ -60,5 +60,9 @@ struct usb_hid_descriptor {
 	} descrs[1];
 } __packed;
 #define USB_HID_DESCRIPTOR_SIZE(n) (9+(n)*3)
+
+#define UHID_INPUT_REPORT	0x01
+#define UHID_OUTPUT_REPORT	0x02
+#define UHID_FEATURE_REPORT	0x03
 
 #endif /* _USBHID_H_ */

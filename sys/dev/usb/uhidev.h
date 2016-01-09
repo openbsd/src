@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhidev.h,v 1.23 2016/01/08 15:54:14 jcs Exp $	*/
+/*	$OpenBSD: uhidev.h,v 1.24 2016/01/09 02:01:06 jcs Exp $	*/
 /*	$NetBSD: uhidev.h,v 1.3 2002/10/08 09:56:17 dan Exp $	*/
 
 /*
@@ -36,10 +36,6 @@
 
 #define uhidevcf_reportid cf_loc[UHIDBUSCF_REPORTID]
 #define UHIDEV_UNK_REPORTID UHIDBUSCF_REPORTID_DEFAULT
-
-#define UHID_INPUT_REPORT 0x01
-#define UHID_OUTPUT_REPORT 0x02
-#define UHID_FEATURE_REPORT 0x03
 
 struct uhidev_softc {
 	struct device sc_dev;		/* base device */
