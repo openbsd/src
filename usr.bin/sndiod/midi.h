@@ -1,4 +1,4 @@
-/*	$OpenBSD: midi.h,v 1.7 2015/11/22 16:42:22 ratchov Exp $	*/
+/*	$OpenBSD: midi.h,v 1.8 2016/01/09 13:36:11 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -73,7 +73,7 @@ struct midi {
 	unsigned int len;		/* expected ``msg'' length */
 	unsigned int txmask;		/* list of ep we send to */
 	unsigned int self;		/* equal (1 << index) */
-	unsigned int tickets;		/* max bytes we can process */
+	int tickets;			/* max bytes we can process */
 	struct abuf obuf;		/* output buffer */
 };
 
