@@ -1,4 +1,4 @@
-/*	$OpenBSD: ums.c,v 1.41 2016/01/08 15:54:14 jcs Exp $ */
+/*	$OpenBSD: ums.c,v 1.42 2016/01/09 04:14:42 jcs Exp $ */
 /*	$NetBSD: ums.c,v 1.60 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -53,7 +53,6 @@
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsmousevar.h>
 
-#include <dev/hid/hid.h>
 #include <dev/hid/hidmsvar.h>
 
 struct ums_softc {

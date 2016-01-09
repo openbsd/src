@@ -1,4 +1,4 @@
-/*	$OpenBSD: ugold.c,v 1.11 2016/01/08 15:54:14 jcs Exp $   */
+/*	$OpenBSD: ugold.c,v 1.12 2016/01/09 04:14:42 jcs Exp $   */
 
 /*
  * Copyright (c) 2013 Takayoshi SASANO <uaa@openbsd.org>
@@ -36,8 +36,6 @@
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdevs.h>
 #include <dev/usb/uhidev.h>
-
-#include <dev/hid/hid.h>
 
 #define UGOLD_INNER		0
 #define UGOLD_OUTER		1

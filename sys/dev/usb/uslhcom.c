@@ -1,4 +1,4 @@
-/*	$OpenBSD: uslhcom.c,v 1.3 2016/01/08 15:54:14 jcs Exp $	*/
+/*	$OpenBSD: uslhcom.c,v 1.4 2016/01/09 04:14:42 jcs Exp $	*/
 
 /*
  * Copyright (c) 2015 SASANO Takayoshi <uaa@openbsd.org>
@@ -38,8 +38,6 @@
 
 #include <dev/usb/ucomvar.h>
 #include <dev/usb/uslhcomreg.h>
-
-#include <dev/hid/hid.h>
 
 #ifdef USLHCOM_DEBUG
 #define	DPRINTF(x)	if (uslhcomdebug) printf x

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ukbd.c,v 1.74 2016/01/08 15:54:14 jcs Exp $	*/
+/*	$OpenBSD: ukbd.c,v 1.75 2016/01/09 04:14:42 jcs Exp $	*/
 /*      $NetBSD: ukbd.c,v 1.85 2003/03/11 16:44:00 augustss Exp $        */
 
 /*
@@ -72,7 +72,6 @@
 #include <dev/wscons/wsksymdef.h>
 #include <dev/wscons/wsksymvar.h>
 
-#include <dev/hid/hid.h>
 #include <dev/hid/hidkbdsc.h>
 
 #ifdef UKBD_DEBUG

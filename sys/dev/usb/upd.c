@@ -1,4 +1,4 @@
-/*	$OpenBSD: upd.c,v 1.24 2016/01/08 15:54:14 jcs Exp $ */
+/*	$OpenBSD: upd.c,v 1.25 2016/01/09 04:14:42 jcs Exp $ */
 
 /*
  * Copyright (c) 2015 David Higgs <higgsd@gmail.com>
@@ -33,8 +33,6 @@
 #include <dev/usb/usbhid.h>
 #include <dev/usb/uhidev.h>
 #include <dev/usb/usbdi_util.h>
-
-#include <dev/hid/hid.h>
 
 #ifdef UPD_DEBUG
 #define DPRINTF(x)	do { printf x; } while (0)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhidev.c,v 1.72 2016/01/08 15:54:14 jcs Exp $	*/
+/*	$OpenBSD: uhidev.c,v 1.73 2016/01/09 04:14:42 jcs Exp $	*/
 /*	$NetBSD: uhidev.c,v 1.14 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -57,8 +57,6 @@
 #include <dev/usb/usb_quirks.h>
 
 #include <dev/usb/uhidev.h>
-
-#include <dev/hid/hid.h>
 
 #ifndef SMALL_KERNEL
 /* Replacement report descriptors for devices shipped with broken ones */
