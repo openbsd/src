@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.apply.c,v 1.7 2016/01/09 18:33:15 mestre Exp $	*/
+/*	$OpenBSD: hack.apply.c,v 1.8 2016/01/09 21:54:11 mestre Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -481,7 +481,7 @@ use_pick_axe(struct obj *obj)
 		     && !sobj_at(ENORMOUS_ROCK, rx, ry)) {
 			/* ACCESSIBLE or POOL */
 			pline("You swing your %s through thin air.",
-				aobjnam(obj, (char *) 0));
+				aobjnam(obj, NULL));
 		} else {
 			if(dig_pos.x != rx || dig_pos.y != ry
 			    || dig_level != dlevel || dig_down) {

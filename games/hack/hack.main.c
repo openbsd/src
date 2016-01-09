@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.main.c,v 1.21 2016/01/09 18:33:15 mestre Exp $	*/
+/*	$OpenBSD: hack.main.c,v 1.22 2016/01/09 21:54:11 mestre Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -452,7 +452,7 @@ not_recovered:
 #ifdef MAIL
 			ckmailstatus();
 #endif
-			rhack((char *) 0);
+			rhack(NULL);
 		}
 		if(multi && multi%7 == 0)
 			(void) fflush(stdout);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.engrave.c,v 1.8 2016/01/09 18:33:15 mestre Exp $	*/
+/*	$OpenBSD: hack.engrave.c,v 1.9 2016/01/09 21:54:11 mestre Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -228,7 +228,7 @@ doengrave(void)
 			if(uwep && uwep->cursed) {
 			    /* Andreas Bormann */
 			    pline("Since your weapon is welded to your hand,");
-			    pline("you use the %s.", aobjnam(uwep, (char *) 0));
+			    pline("you use the %s.", aobjnam(uwep, NULL));
 			    otmp = uwep;
 			} else {
 			    if(!otmp)

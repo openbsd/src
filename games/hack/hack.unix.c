@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.unix.c,v 1.17 2016/01/09 18:33:15 mestre Exp $	*/
+/*	$OpenBSD: hack.unix.c,v 1.18 2016/01/09 21:54:11 mestre Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -471,7 +471,7 @@ readmail(void)
 	if(!(mr = getenv("MAILREADER")))
 		mr = DEF_MAILREADER;
 	if(child(1)){
-		execl(mr, mr, (char *) 0);
+		execl(mr, mr, NULL);
 		exit(1);
 	}
 #else /* DEF_MAILREADER */

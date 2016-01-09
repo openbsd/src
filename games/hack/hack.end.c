@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.end.c,v 1.15 2016/01/09 18:33:15 mestre Exp $	*/
+/*	$OpenBSD: hack.end.c,v 1.16 2016/01/09 21:54:11 mestre Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -203,7 +203,7 @@ done(char *st1)
 			outrip();
 	}
 	if(*st1 == 'c') killer = st1;		/* after outrip() */
-	settty((char *) 0);	/* does a clr_screen() */
+	settty(NULL);	/* does a clr_screen() */
 	if(!done_stopprint)
 		printf("Goodbye %s %s...\n\n", pl_character, plname);
 	{ long int tmp;

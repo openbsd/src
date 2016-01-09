@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.eat.c,v 1.10 2016/01/09 18:33:15 mestre Exp $	*/
+/*	$OpenBSD: hack.eat.c,v 1.11 2016/01/09 21:54:11 mestre Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -207,7 +207,7 @@ gotit:
 				goto no_opener;
 			}
 			pline("Using your %s you try to open the tin.",
-				aobjnam(uwep, (char *) 0));
+				aobjnam(uwep, NULL));
 		} else {
 		no_opener:
 			pline("It is not so easy to open this tin.");

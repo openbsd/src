@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.invent.c,v 1.13 2016/01/09 18:33:15 mestre Exp $	*/
+/*	$OpenBSD: hack.invent.c,v 1.14 2016/01/09 21:54:11 mestre Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -469,7 +469,7 @@ getobj(char *let, char *word)
 			if(!(ilet = morc)) continue;
 			/* he typed a letter (not a space) to more() */
 		} else if(ilet == '*') {
-			doinv((char *) 0);
+			doinv(NULL);
 			if(!(ilet = morc)) continue;
 			/* ... */
 		}
@@ -667,7 +667,7 @@ xprname(struct obj *obj, char let)
 int
 ddoinv(void)
 {
-	doinv((char *) 0);
+	doinv(NULL);
 	return(0);
 }
 
@@ -688,7 +688,7 @@ doinv(char *lets)
 		return;
 	}
 
-	cornline(0, (char *) 0);
+	cornline(0, NULL);
 	ilet = 'a';
 	for(otmp = invent; otmp; otmp = otmp->nobj) {
 	    if(flags.invlet_constant) ilet = otmp->invlet;
@@ -827,10 +827,10 @@ dolook(void)
 
     if(ct == 1 && !gold) {
 	pline("You %s here %s.", verb, doname(otmp0));
-	cornline(3, (char *) 0);
+	cornline(3, NULL);
     }
     if(ct > 1)
-	cornline(2, (char *) 0);
+	cornline(2, NULL);
     return(!!Blind);
 }
 

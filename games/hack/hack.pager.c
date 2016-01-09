@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.pager.c,v 1.22 2016/01/09 18:33:15 mestre Exp $	*/
+/*	$OpenBSD: hack.pager.c,v 1.23 2016/01/09 21:54:11 mestre Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -383,7 +383,7 @@ page_file(char *fnam, boolean silent)
 		if(dup(fd)) {
 			if(!silent) printf("Cannot open %s as stdin.\n", fnam);
 		} else {
-			execlp(catmore, basename(catmore), (char *) 0);
+			execlp(catmore, basename(catmore), NULL);
 			if(!silent) printf("Cannot exec %s.\n", catmore);
 		}
 		exit(1);
@@ -417,9 +417,9 @@ dosh(void)
 
 	if(child(0)) {
 		if ((str = getenv("SHELL")))
-			execlp(str, str, (char *) 0);
+			execlp(str, str, NULL);
 		else
-			execl("/bin/sh", "sh", (char *) 0);
+			execl("/bin/sh", "sh", NULL);
 		pline("sh: cannot execute.");
 		exit(1);
 	}
@@ -439,7 +439,7 @@ child(int wt)
 
 	f = fork();
 	if(f == 0){		/* child */
-		settty((char *) 0);		/* also calls end_screen() */
+		settty(NULL);		/* also calls end_screen() */
 		/* revoke privs */
 		gid = getgid();
 		setresgid(gid, gid, gid);
