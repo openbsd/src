@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigabrt.c,v 1.1 2015/10/09 06:44:13 semarie Exp $ */
+/*	$OpenBSD: sigabrt.c,v 1.2 2016/01/09 06:13:43 semarie Exp $ */
 /*
  * Copyright (c) 2015 Sebastien Marie <semarie@openbsd.org>
  *
@@ -37,7 +37,7 @@ main(int argc, char *argv[])
 	printf("permitted STDIO\n");
 	fflush(stdout);
 
-	if (pledge("abort", NULL) == -1)
+	if (pledge("", NULL) == -1)
 		err(EXIT_FAILURE, "pledge");
 
 	/* this will triggered pledge_fail() */

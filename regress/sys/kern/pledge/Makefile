@@ -1,7 +1,6 @@
-#	$OpenBSD: Makefile,v 1.1 2015/10/09 06:44:13 semarie Exp $
+#	$OpenBSD: Makefile,v 1.2 2016/01/09 06:13:43 semarie Exp $
 
 SUBDIR +=	sigabrt
-SUBDIR +=	sigkill
 SUBDIR +=	generic
 
 .include <bsd.subdir.mk>

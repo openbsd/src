@@ -1,4 +1,4 @@
-/*	$OpenBSD: pledge.h,v 1.26 2016/01/08 11:20:58 reyk Exp $	*/
+/*	$OpenBSD: pledge.h,v 1.27 2016/01/09 06:13:44 semarie Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -50,7 +50,6 @@
 #define PLEDGE_MCAST	0x0000000000200000ULL	/* multicast joins */
 #define PLEDGE_VMINFO	0x0000000000400000ULL	/* vminfo listings */
 #define PLEDGE_PS	0x0000000000800000ULL	/* ps listings */
-#define PLEDGE_COREDUMP	0x0000000001000000ULL	/* generates coredump (default) */
 #define PLEDGE_DISKLABEL 0x0000000002000000ULL	/* disklabels */
 #define PLEDGE_PF	0x0000000004000000ULL	/* pf ioctls */
 #define PLEDGE_AUDIO	0x0000000008000000ULL	/* audio ioctls */
@@ -95,7 +94,6 @@ static struct {
 	{ PLEDGE_MCAST,		"mcast" },
 	{ PLEDGE_VMINFO,	"vminfo" },
 	{ PLEDGE_PS,		"ps" },
-	{ PLEDGE_COREDUMP,	"coredump" },
 	{ PLEDGE_DISKLABEL,	"disklabel" },
 	{ PLEDGE_PF,		"pf" },
 	{ PLEDGE_AUDIO,		"audio" },

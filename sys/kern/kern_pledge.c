@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.145 2016/01/08 11:20:58 reyk Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.146 2016/01/09 06:13:43 semarie Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -344,7 +344,6 @@ static const struct {
 	char *name;
 	int flags;
 } pledgereq[] = {
-	{ "abort",		0 },	/* XXX reserve for later */
 	{ "audio",		PLEDGE_AUDIO },
 	{ "cpath",		PLEDGE_CPATH },
 	{ "disklabel",		PLEDGE_DISKLABEL },
@@ -557,7 +556,6 @@ sys_pledge(struct proc *p, void *v, register_t *retval)
 	}
 
 	p->p_p->ps_pledge = flags;
-	p->p_p->ps_pledge |= PLEDGE_COREDUMP;	/* XXX temporary */
 	p->p_p->ps_flags |= PS_PLEDGE;
 	return (0);
 }
@@ -586,6 +584,7 @@ pledge_fail(struct proc *p, int error, uint64_t code)
 {
 	char *codes = "";
 	int i;
+	struct sigaction sa;
 
 	/* Print first matching pledge */
 	for (i = 0; code && pledgenames[i].bits != 0; i++)
@@ -598,16 +597,11 @@ pledge_fail(struct proc *p, int error, uint64_t code)
 #ifdef KTRACE
 	ktrpledge(p, error, code, p->p_pledge_syscall);
 #endif
-	if (p->p_p->ps_pledge & PLEDGE_COREDUMP) {
-		/* Core dump requested */
-		struct sigaction sa;
-
-		memset(&sa, 0, sizeof sa);
-		sa.sa_handler = SIG_DFL;
-		setsigvec(p, SIGABRT, &sa);
-		psignal(p, SIGABRT);
-	} else
-		psignal(p, SIGKILL);
+	/* Send uncatchable SIGABRT for coredump */
+	memset(&sa, 0, sizeof sa);
+	sa.sa_handler = SIG_DFL;
+	setsigvec(p, SIGABRT, &sa);
+	psignal(p, SIGABRT);
 
 	p->p_p->ps_pledge = 0;		/* Disable all PLEDGE_ flags */
 	return (error);
@@ -623,14 +617,12 @@ pledge_namei(struct proc *p, struct nameidata *ni, char *origpath)
 	char path[PATH_MAX];
 	int error;
 
-	if ((p->p_p->ps_flags & PS_PLEDGE) == 0)
+	if ((p->p_p->ps_flags & PS_PLEDGE) == 0 ||
+	    (p->p_p->ps_flags & PS_COREDUMP))
 		return (0);
 
 	if (!ni || (ni->ni_pledge == 0))
 		panic("ni_pledge");
-
-	if (ni->ni_pledge == PLEDGE_COREDUMP)
-		return (0);			/* Allow a coredump */
 
 	/* Doing a permitted execve() */
 	if ((ni->ni_pledge & PLEDGE_EXEC) &&
