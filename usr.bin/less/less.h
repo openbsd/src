@@ -38,17 +38,8 @@
  * (before options are parsed which might tell us what charset to use).
  */
 
-#undef IS_UPPER
-#undef IS_LOWER
-#undef TO_UPPER
-#undef TO_LOWER
 #undef IS_SPACE
 #undef IS_DIGIT
-
-#define	IS_UPPER(c)	iswupper(c)
-#define	IS_LOWER(c)	iswlower(c)
-#define	TO_UPPER(c)	towupper(c)
-#define	TO_LOWER(c)	towlower(c)
 
 #define	IS_SPACE(c)	isspace((unsigned char)(c))
 #define	IS_DIGIT(c)	isdigit((unsigned char)(c))

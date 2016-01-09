@@ -85,8 +85,8 @@ cvt_text(char *odst, char *osrc, int *chpos, int *lenp, int ops)
 					break;
 		} else {
 			/* Just copy the char to the destination buffer. */
-			if ((ops & CVT_TO_LC) && IS_UPPER(ch))
-				ch = TO_LOWER(ch);
+			if ((ops & CVT_TO_LC) && iswupper(ch))
+				ch = towlower(ch);
 			put_wchar(&dst, ch);
 			/* Record the original position of the char. */
 			if (chpos != NULL)
