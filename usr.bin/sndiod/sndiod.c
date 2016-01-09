@@ -1,4 +1,4 @@
-/*	$OpenBSD: sndiod.c,v 1.28 2016/01/08 16:17:31 ratchov Exp $	*/
+/*	$OpenBSD: sndiod.c,v 1.29 2016/01/09 08:57:34 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -251,11 +251,11 @@ unsetsig(void)
 	sa.sa_flags = SA_RESTART;
 	sa.sa_handler = SIG_DFL;
 	if (sigaction(SIGHUP, &sa, NULL) < 0)
-		err(1, "unsetsig(hup): sigaction failed\n");
+		err(1, "unsetsig(hup): sigaction failed");
 	if (sigaction(SIGTERM, &sa, NULL) < 0)
-		err(1, "unsetsig(term): sigaction failed\n");
+		err(1, "unsetsig(term): sigaction failed");
 	if (sigaction(SIGINT, &sa, NULL) < 0)
-		err(1, "unsetsig(int): sigaction failed\n");
+		err(1, "unsetsig(int): sigaction failed");
 }
 
 void
