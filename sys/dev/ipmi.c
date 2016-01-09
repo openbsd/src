@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipmi.c,v 1.78 2016/01/07 03:21:28 uebayasi Exp $ */
+/*	$OpenBSD: ipmi.c,v 1.79 2016/01/09 05:51:54 uebayasi Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave
@@ -185,7 +185,6 @@ void	ipmi_unmap_regs(struct ipmi_softc *);
 
 void	*scan_sig(long, long, int, int, const void *);
 
-int	ipmi_test_threshold(u_int8_t, u_int8_t, u_int8_t, u_int8_t, int);
 int	ipmi_sensor_status(struct ipmi_softc *, struct ipmi_sensor *,
     u_int8_t *);
 
@@ -1292,26 +1291,11 @@ ipmi_convert(u_int8_t v, struct sdrtype1 *s1, long adj)
 }
 
 int
-ipmi_test_threshold(u_int8_t v, u_int8_t valid, u_int8_t hi, u_int8_t lo,
-    int sign)
-{
-	dbg_printf(10, "thresh: %.2x %.2x %.2x %d %d\n", v, lo, hi,valid, sign);
-	if (sign)
-		return ((valid & 1 && lo != 0x00 && (int8_t)v <= (int8_t)lo) ||
-		    (valid & 8 && hi != 0xFF && (int8_t)v >= (int8_t)hi));
-
-	return ((valid & 1 && lo != 0x00 && v <= lo) ||
-	    (valid & 8 && hi != 0xFF && v >= hi));
-}
-
-int
 ipmi_sensor_status(struct ipmi_softc *sc, struct ipmi_sensor *psensor,
     u_int8_t *reading)
 {
-	u_int8_t	data[32];
 	struct sdrtype1	*s1 = (struct sdrtype1 *)psensor->i_sdr;
-	int		rxlen, etype;
-	int		sign = s1->units1 >> 7 & 1;
+	int		etype;
 
 	/* Get reading of sensor */
 	switch (psensor->i_sensor.type) {
@@ -1339,28 +1323,15 @@ ipmi_sensor_status(struct ipmi_softc *sc, struct ipmi_sensor *psensor,
 	case IPMI_SENSOR_TYPE_TEMP:
 	case IPMI_SENSOR_TYPE_VOLT:
 	case IPMI_SENSOR_TYPE_FAN:
-		data[0] = psensor->i_num;
-		if (ipmi_sendcmd(sc, s1->owner_id, s1->owner_lun,
-		    SE_NETFN, SE_GET_SENSOR_THRESHOLD, 1, data) ||
-		    ipmi_recvcmd(sc, sizeof(data), &rxlen, data))
-			return (SENSOR_S_UNKNOWN);
-
-		dbg_printf(25, "recvdata: %.2x %.2x %.2x %.2x %.2x %.2x %.2x\n",
-		    data[0], data[1], data[2], data[3], data[4], data[5],
-		    data[6]);
-
-		if (ipmi_test_threshold(*reading, data[0] >> 2 ,
-		    data[6], data[3], sign))
+		/* non-recoverable threshold */
+		if (reading[2] & ((1 << 5) | (1 << 2)))
 			return (SENSOR_S_CRIT);
-
-		if (ipmi_test_threshold(*reading, data[0] >> 1,
-		    data[5], data[2], sign))
+		/* critical threshold */
+		else if (reading[2] & ((1 << 4) | (1 << 1)))
 			return (SENSOR_S_CRIT);
-
-		if (ipmi_test_threshold(*reading, data[0] ,
-		    data[4], data[1], sign))
+		/* non-critical threshold */
+		else if (reading[2] & ((1 << 3) | (1 << 0)))
 			return (SENSOR_S_WARN);
-
 		break;
 
 	case IPMI_SENSOR_TYPE_INTRUSION:
