@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.140 2015/12/14 03:04:10 mmcc Exp $	*/
+/*	$OpenBSD: audio.c,v 1.141 2016/01/09 23:24:31 jsg Exp $	*/
 /*
  * Copyright (c) 2015 Alexandre Ratchov <alex@caoua.org>
  *
@@ -1704,6 +1704,7 @@ audioclose(dev_t dev, int flags, int ifmt, struct proc *p)
 	case AUDIO_DEV_MIXER:
 	case AUDIO_DEV_AUDIOCTL:
 		error = 0;
+		break;
 	default:
 		error = ENXIO;
 	}
