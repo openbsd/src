@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpt.h,v 1.5 2015/12/11 21:57:31 krw Exp $	*/
+/*	$OpenBSD: gpt.h,v 1.6 2016/01/09 18:10:57 krw Exp $	*/
 /*
  * Copyright (c) 2015 Markus Muller <mmu@grummel.net>
  * Copyright (c) 2015 Kenneth R Westerback <krw@openbsd.org>
@@ -22,9 +22,9 @@ void GPT_get_gpt(int);
 int GPT_init(void);
 int GPT_write(void);
 
-void GPT_print(char *);
-void GPT_print_part(int, char *);
-void GPT_print_parthdr(void);
+void GPT_print(char *, int);
+void GPT_print_part(int, char *, int);
+void GPT_print_parthdr(int);
 
 extern struct gpt_header gh;
 extern struct gpt_partition gp[NGPTPARTITIONS];

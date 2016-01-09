@@ -1,4 +1,4 @@
-/*	$OpenBSD: user.c,v 1.49 2015/12/11 21:57:31 krw Exp $	*/
+/*	$OpenBSD: user.c,v 1.50 2016/01/09 18:10:57 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -158,7 +158,7 @@ USER_print_disk(int verbosity)
 					GPT_get_gpt(1); /* Get Primary */
 				}
 				if (letoh64(gh.gh_sig) == GPTSIGNATURE)
-					GPT_print("s");
+					GPT_print("s", verbosity);
 				else
 					printf("\tNot Found\n");
 				if (verbosity) {
@@ -166,7 +166,7 @@ USER_print_disk(int verbosity)
 					printf("Secondary GPT:\n");
 					GPT_get_gpt(2); /* Get Secondary */
 					if (letoh64(gh.gh_sig) == GPTSIGNATURE)
-						GPT_print("s");
+						GPT_print("s", verbosity);
 					else
 						printf("\tNot Found\n");
 					printf("\nMBR:\n");

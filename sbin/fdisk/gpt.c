@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpt.c,v 1.9 2015/12/11 21:57:31 krw Exp $	*/
+/*	$OpenBSD: gpt.c,v 1.10 2016/01/09 18:10:57 krw Exp $	*/
 /*
  * Copyright (c) 2015 Markus Muller <mmu@grummel.net>
  * Copyright (c) 2015 Kenneth R Westerback <krw@openbsd.org>
@@ -219,7 +219,7 @@ GPT_get_gpt(int which)
 }
 
 void
-GPT_print(char *units)
+GPT_print(char *units, int verbosity)
 {
 	const int secsize = unit_types[SECTORS].conversion;
 	struct uuid guid;
@@ -227,47 +227,48 @@ GPT_print(char *units)
 	double size;
 	int i, u, status;
 
-	printf("Disk: %s ", disk.name);
-
-	uuid_dec_le(&gh.gh_guid, &guid);
-	uuid_to_string(&guid, &guidstr, &status);
-	if (status == uuid_s_ok)
-		printf("%s ", guidstr);
-	else
-		printf("<invalid header guid> ");
-	free(guidstr);
-
 	u = unit_lookup(units);
 	size = ((double)DL_GETDSIZE(&dl) * secsize) / unit_types[u].conversion;
-	printf("[%.0f ", size);
+	printf("Disk: %s       Usable LBA: %llu to %llu [%.0f ",
+	    disk.name, letoh64(gh.gh_lba_start), letoh64(gh.gh_lba_end), size);
+
 	if (u == SECTORS && secsize != DEV_BSIZE)
 		printf("%d-byte ", secsize);
 	printf("%s]\n", unit_types[u].lname);
 
-	GPT_print_parthdr();
+	if (verbosity) {
+		printf("GUID: ");
+		uuid_dec_le(&gh.gh_guid, &guid);
+		uuid_to_string(&guid, &guidstr, &status);
+		if (status == uuid_s_ok)
+			printf("%s\n", guidstr);
+		else
+			printf("<invalid header GUID>\n");
+		free(guidstr);
+	}
 
+	GPT_print_parthdr(verbosity);
 	for (i = 0; i < letoh32(gh.gh_part_num); i++) {
 		if (uuid_is_nil(&gp[i].gp_type, NULL))
 			continue;
-		GPT_print_part(i, units);
+		GPT_print_part(i, units, verbosity);
 	}
+
 }
 
 void
-GPT_print_parthdr()
+GPT_print_parthdr(int verbosity)
 {
-	printf("      First usable LBA: %llu  Last usable LBA: %llu\n",
-	    letoh64(gh.gh_lba_start), letoh64(gh.gh_lba_end));
-
-	printf("   #: uuid                                         "
-	    "lba         size \n");
-	printf("      type                                 name\n");
-	printf("----------------------------------------------------"
-	    "-----------------\n");
+	printf("   #: type                                "
+	    " [       start:         size ]\n");
+	if (verbosity)
+		printf("      guid                                 name\n");
+	printf("--------------------------------------------------------"
+	    "----------------\n");
 }
 
 void
-GPT_print_part(int n, char *units)
+GPT_print_part(int n, char *units, int verbosity)
 {
 	struct uuid guid;
 	const int secsize = unit_types[SECTORS].conversion;
@@ -276,26 +277,25 @@ GPT_print_part(int n, char *units)
 	double size;
 	int u, status;
 
-	printf("%c%3d: ", (letoh64(partn->gp_attrs) & GPTDOSACTIVE)?'*':' ', n);
-
-	uuid_dec_le(&partn->gp_guid, &guid);
-	uuid_to_string(&guid, &guidstr, &status);
-	if (status != uuid_s_ok)
-		printf("<invalid partition guid>             ");
-	else
-		printf("%36s ", guidstr);
-	free(guidstr);
-
-	printf("%12lld ", letoh64(partn->gp_lba_start));
-
+	uuid_dec_le(&partn->gp_type, &guid);
 	u = unit_lookup(units);
 	size = letoh64(partn->gp_lba_end) - letoh64(partn->gp_lba_start) + 1;
 	size = (size * secsize) / unit_types[u].conversion;
-	printf("%12.0f%s\n", size, unit_types[u].abbr);
+	printf("%c%3d: %-36s [%12lld: %12.0f%s]\n",
+	    (letoh64(partn->gp_attrs) & GPTDOSACTIVE)?'*':' ', n,
+	    PRT_uuid_to_typename(&guid), letoh64(partn->gp_lba_start),
+	    size, unit_types[u].abbr);
 
-	uuid_dec_le(&partn->gp_type, &guid);
-	printf("      %-36s %-36s\n", PRT_uuid_to_typename(&guid),
-	    utf16le_to_string(partn->gp_name));
+	if (verbosity) {
+		uuid_dec_le(&partn->gp_guid, &guid);
+		uuid_to_string(&guid, &guidstr, &status);
+		if (status != uuid_s_ok)
+			printf("      <invalid partition guid>             ");
+		else
+			printf("      %-36s ", guidstr);
+		printf("%-36s\n", utf16le_to_string(partn->gp_name));
+		free(guidstr);
+	}
 }
 
 int

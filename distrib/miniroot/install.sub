@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.867 2015/12/27 18:42:11 rpe Exp $
+#	$OpenBSD: install.sub,v 1.868 2016/01/09 18:10:57 krw Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -289,9 +289,9 @@ disk_has() {
 	local _c_sr="bioctl -q $_disk"
 
 	# Patterns for partition-table-types and partition-types.
-	local _p_gpt='First usable LBA:'
-	local _p_gpt_openbsd='^[ ]+OpenBSD[ ]+OpenBSD Area'
-	local _p_gpt_efisys='^[ ]+EFI Sys[ ]+EFI System Area'
+	local _p_gpt='Usable LBA:'
+	local _p_gpt_openbsd='^[ *]...: OpenBSD '
+	local _p_gpt_efisys='^[ *]...: EFI Sys '
 	local _p_hfs='^Partition map '
 	local _p_hfs_openbsd=' OpenBSD OpenBSD '
 	local _p_mbr='Signature: 0xAA55'

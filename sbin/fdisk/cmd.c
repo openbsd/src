@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.92 2015/11/26 08:15:07 tim Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.93 2016/01/09 18:10:56 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -65,7 +65,7 @@ Xreinit(char *args, struct mbr *mbr)
 	if (dogpt) {
 		MBR_init_GPT(mbr);
 		GPT_init();
-		GPT_print("s");
+		GPT_print("s", 0);
 	} else {
 		MBR_init(mbr);
 		MBR_print(mbr, "s");
@@ -299,8 +299,8 @@ Xgsetpid(char *args)
 	gg = &gp[pn];
 
 	/* Print out current table entry */
-	GPT_print_parthdr();
-	GPT_print_part(pn, "s");
+	GPT_print_parthdr(0);
+	GPT_print_part(pn, "s", 0);
 
 	/* Ask for partition type or GUID. */
 	uuid_dec_le(&gg->gp_type, &guid);
@@ -397,7 +397,7 @@ Xprint(char *args, struct mbr *mbr)
 {
 
 	if (MBR_protective_mbr(mbr) == 0 && letoh64(gh.gh_sig) == GPTSIGNATURE)
-		GPT_print(args);
+		GPT_print(args, 1);
 	else
 		MBR_print(mbr, args);
 

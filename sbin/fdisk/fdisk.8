@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fdisk.8,v 1.90 2015/12/11 23:30:23 jmc Exp $
+.\"	$OpenBSD: fdisk.8,v 1.91 2016/01/09 18:10:56 krw Exp $
 .\"
 .\"
 .\" Copyright (c) 1997 Tobias Weingartner
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 11 2015 $
+.Dd $Mdocdate: January 9 2016 $
 .Dt FDISK 8
 .Os
 .Sh NAME
@@ -158,6 +158,7 @@ or
 can be specified.
 .It Fl v
 Print the contents of the MBR, the Primary GPT and the Secondary GPT.
+Also print more detailed GPT header and partition entry information.
 Cannot be used with
 .Fl i ,
 .Fl u ,
@@ -204,7 +205,7 @@ Offset: 0       Signature: 0xAA55
 .Pp
 This 1953525168 sector (931GB) disk drive is divided into two MBR
 partitions that span the whole disk.
-The first MBR partition is a 200GB FAT-32 partition,
+The first MBR partition is a 200GB FAT-32 partition;
 the second is a 731GB
 .Ox
 MBR partition using the remainder of the disk.
@@ -243,40 +244,37 @@ If the disk contains a protective MBR and a valid GPT, the contents of the GPT
 are displayed.
 For example:
 .Bd -literal -offset 1n
-Disk: sd1 ca501b80-5b85-40fd-a00e-abc6ffc5f97c [7907328 Sectors]
-      First usable LBA: 64  Last usable LBA: 7907264
-   #: uuid                                         lba         size
-      type                                 name
----------------------------------------------------------------------
-   1: 415afb62-3f56-43c5-a1b3-9405aace56f9           64          960
-      EFI Sys                              EFI System Area
-   3: 6bcc08a8-66a6-43ae-aa1f-9869ab4c8a27         1024      7906241
-      OpenBSD                              OpenBSD Area
+Disk: sd2       Usable LBA: 64 to 7765952 [7766016 Sectors]
+   #: type                                 [       start:         size ]
+------------------------------------------------------------------------
+   1: EFI Sys                              [          64:          960 ]
+   3: OpenBSD                              [        1024:      7764929 ]
 .Ed
 .Pp
-This 7907328 sector disk drive is divided into two
+This 7766016 sector disk drive is divided into two
 partitions that span the whole disk.
-The first partition is a 960 sector EFI Sys partition.
-the second is a 7906241 sector
+The first partition is a 960 sector EFI Sys partition;
+the second is a 7764929 sector
 .Ox
 partition using the remainder of the disk.
 The fields of the output are:
-.Bl -tag -width "uuid"
+.Bl -tag -width "type"
 .It Em "#"
 Number identifying each partition table entry.
-.It Em "uuid"
-The UUID of the partition.
-.It Em "lba"
-The sector the partition starts on.
-.It Em "size"
-The number of sectors in the partition.
 .It Em "type"
 The partition type identifier.
 If the type is recognized the name of the type is displayed.
-Otherwise the type UUID is displayed.
-.It Em "name"
-The partition's name.
+Otherwise the type GUID is displayed.
+.It Em "start"
+The sector the partition starts on.
+.It Em "size"
+The number of sectors in the partition.
 .El
+.Pp
+If the
+.Fl v
+option is specified, the disk GUID and each partition's GUID and name are
+also displayed.
 .Pp
 In either the MBR or GPT case the
 .Ox
