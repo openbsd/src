@@ -1,4 +1,4 @@
-/*	$OpenBSD: dsp.c,v 1.9 2016/01/08 16:17:31 ratchov Exp $	*/
+/*	$OpenBSD: dsp.c,v 1.10 2016/01/09 08:53:08 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -152,7 +152,7 @@ aparams_strtoenc(struct aparams *par, char *istr)
 		return 0;
 
 done:
-       	par->msb = msb;
+	par->msb = msb;
 	par->sig = sig;
 	par->bits = bits;
 	par->bps = bps;

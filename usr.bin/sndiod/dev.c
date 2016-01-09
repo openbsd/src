@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.23 2016/01/08 16:17:31 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.24 2016/01/09 08:53:08 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -1642,7 +1642,7 @@ slot_attach(struct slot *s)
 #ifdef DEBUG
 	if ((s->mode & d->mode) != s->mode) {
 		slot_log(s);
-	    	log_puts(": mode beyond device mode, not attaching\n");
+		log_puts(": mode beyond device mode, not attaching\n");
 		panic();
 	}
 #endif
