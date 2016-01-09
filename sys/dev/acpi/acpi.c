@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.298 2016/01/06 09:14:09 kettenis Exp $ */
+/* $OpenBSD: acpi.c,v 1.299 2016/01/09 18:54:51 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -911,6 +911,14 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
+	/*
+	 * A bunch of things need to be done differently for
+	 * Hardware-Reduced ACPI.
+	 */
+	if (sc->sc_fadt->hdr_revision >= 5 &&
+	    sc->sc_fadt->flags & FADT_HW_REDUCED_ACPI)
+		sc->sc_hw_reduced = 1;
+
 	/* Map Power Management registers */
 	acpi_map_pmregs(sc);
 
@@ -1031,7 +1039,7 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * ACPI is enabled now -- attach timer
 	 */
-	{
+	if (!sc->sc_hw_reduced) {
 		struct acpi_attach_args aaa;
 
 		memset(&aaa, 0, sizeof(aaa));
@@ -1266,6 +1274,13 @@ acpi_read_pmreg(struct acpi_softc *sc, int reg, int offset)
 	bus_size_t size;
 	int regval;
 
+	/*
+	 * For Hardware-Reduced ACPI we emulate PM1_CNT to reflect
+	 * that the systems is always in ACPI mode.
+	 */
+	if (sc->sc_hw_reduced && reg == ACPIREG_PM1_CNT)
+		return ACPI_PM1_SCI_EN;
+
 	/* Special cases: 1A/1B blocks can be OR'ed together */
 	switch (reg) {
 	case ACPIREG_PM1_EN:
@@ -1393,6 +1408,10 @@ acpi_map_pmregs(struct acpi_softc *sc)
 	bus_size_t size, access;
 	const char *name;
 	int reg;
+
+	/* Registers don't exist on Hardware-Reduced ACPI. */
+	if (sc->sc_hw_reduced)
+		return;
 
 	for (reg = 0; reg < ACPIREG_MAXREG; reg++) {
 		size = 0;
