@@ -1,4 +1,4 @@
-/*	$OpenBSD: mio_aucat.c,v 1.11 2015/11/22 12:01:23 ratchov Exp $	*/
+/*	$OpenBSD: mio_aucat.c,v 1.12 2016/01/09 08:27:24 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -74,7 +74,8 @@ mio_aucat_runmsg(struct mio_aucat_hdl *hdl)
 		    delta, hdl->aucat.maxwrite);
 		break;
 	default:
-		DPRINTF("mio_aucat_runmsg: unhandled message %u\n", hdl->aucat.rmsg.cmd);
+		DPRINTF("mio_aucat_runmsg: unhandled message %u\n",
+		    hdl->aucat.rmsg.cmd);
 		hdl->mio.eof = 1;
 		return 0;
 	}

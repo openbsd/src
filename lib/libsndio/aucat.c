@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.70 2015/12/23 20:29:57 mmcc Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.71 2016/01/09 08:27:24 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -429,9 +429,9 @@ _aucat_open(struct aucat *hdl, const char *str, unsigned int mode)
 
 	if ((p = _sndio_parsetype(str, "snd")) != NULL)
 		type = 0;
- 	else if ((p = _sndio_parsetype(str, "midithru")) != NULL)
+	else if ((p = _sndio_parsetype(str, "midithru")) != NULL)
 		type = 1;
- 	else if ((p = _sndio_parsetype(str, "midi")) != NULL)
+	else if ((p = _sndio_parsetype(str, "midi")) != NULL)
 		type = 2;
 	else {
 		DPRINTF("%s: unsupported device type\n", str);

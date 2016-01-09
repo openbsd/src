@@ -1,4 +1,4 @@
-/*	$OpenBSD: amsg.h,v 1.9 2015/10/02 09:36:24 ratchov Exp $	*/
+/*	$OpenBSD: amsg.h,v 1.10 2016/01/09 08:27:24 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -19,7 +19,7 @@
 
 #include <stdint.h>
 
-/* 
+/*
  * unix-domain socket name is:
  *
  * DIR [ '-' UID ] '/' FILE UNIT

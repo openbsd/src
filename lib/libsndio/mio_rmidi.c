@@ -1,4 +1,4 @@
-/*	$OpenBSD: mio_rmidi.c,v 1.23 2015/12/20 11:29:29 ratchov Exp $	*/
+/*	$OpenBSD: mio_rmidi.c,v 1.24 2016/01/09 08:27:24 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -180,7 +180,7 @@ mio_rmidi_write(struct mio_hdl *sh, const void *buf, size_t len)
 			DPERROR("mio_rmidi_write: write");
 			hdl->mio.eof = 1;
 		}
- 		return 0;
+		return 0;
 	}
 	return n;
 }

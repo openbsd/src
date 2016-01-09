@@ -1,4 +1,4 @@
-/*	$OpenBSD: sio_aucat.c,v 1.19 2015/11/22 12:01:23 ratchov Exp $	*/
+/*	$OpenBSD: sio_aucat.c,v 1.20 2016/01/09 08:27:24 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -124,7 +124,8 @@ sio_aucat_runmsg(struct sio_aucat_hdl *hdl)
 		hdl->pstate = PSTATE_INIT;
 		break;
 	default:
-		DPRINTF("sio_aucat_runmsg: unhandled message %u\n", hdl->aucat.rmsg.cmd);
+		DPRINTF("sio_aucat_runmsg: unhandled message %u\n",
+		    hdl->aucat.rmsg.cmd);
 		hdl->sio.eof = 1;
 		return 0;
 	}

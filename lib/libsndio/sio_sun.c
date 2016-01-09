@@ -1,4 +1,4 @@
-/*	$OpenBSD: sio_sun.c,v 1.24 2015/12/20 11:29:29 ratchov Exp $	*/
+/*	$OpenBSD: sio_sun.c,v 1.25 2016/01/09 08:27:24 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -564,7 +564,8 @@ sio_sun_setpar(struct sio_hdl *sh, struct sio_par *par)
 		}
 		DPRINTFN(2, "sio_sun_setpar: %i: trying pars = %u/%u/%u\n",
 		    i, rate, prec, enc);
-		if (ioctl(hdl->fd, AUDIO_SETINFO, &aui) < 0 && errno != EINVAL) {
+		if (ioctl(hdl->fd, AUDIO_SETINFO, &aui) < 0 &&
+		    errno != EINVAL) {
 			DPERROR("sio_sun_setpar: setinfo(pars)");
 			hdl->sio.eof = 1;
 			return 0;
@@ -585,7 +586,7 @@ sio_sun_setpar(struct sio_hdl *sh, struct sio_par *par)
 		case AUDIO_ENCODING_ULINEAR:
 			break;
 		default:
-			DPRINTF("sio_sun_setpar: couldn't set linear encoding\n");
+			DPRINTF("sio_sun_setpar: couldn't find encoding\n");
 			hdl->sio.eof = 1;
 			return 0;
 		}
@@ -676,7 +677,7 @@ sio_sun_setpar(struct sio_hdl *sh, struct sio_par *par)
 		}
 		infr = aui.record.block_size / ibpf;
 		onfr = aui.play.block_size / obpf;
-		DPRINTFN(2, "sio_sun_setpar: %i: trying round = %u -> (%u, %u)\n",
+		DPRINTFN(2, "sio_sun_setpar: %i: round = %u -> (%u, %u)\n",
 		    i, round, infr, onfr);
 
 		/*
@@ -806,7 +807,7 @@ sio_sun_write(struct sio_hdl *sh, const void *buf, size_t len)
 			DPERROR("sio_sun_write: write");
 			hdl->sio.eof = 1;
 		}
- 		return 0;
+		return 0;
 	}
 	if (hdl->filling) {
 		if (!sio_sun_autostart(hdl))
@@ -851,7 +852,7 @@ sio_sun_revents(struct sio_hdl *sh, struct pollfd *pfd)
 		doerr = (ap.play_xrun - hdl->oerr) / hdl->obpf;
 		hdl->obytes = ap.play_pos;
 		hdl->oerr = ap.play_xrun;
-		hdl->odelta += delta;	
+		hdl->odelta += delta;
 		if (!(hdl->sio.mode & SIO_REC)) {
 			hdl->idelta += delta;
 			dierr = doerr;
