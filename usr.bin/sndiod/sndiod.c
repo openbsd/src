@@ -1,4 +1,4 @@
-/*	$OpenBSD: sndiod.c,v 1.29 2016/01/09 08:57:34 ratchov Exp $	*/
+/*	$OpenBSD: sndiod.c,v 1.30 2016/01/09 10:06:57 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -281,6 +281,8 @@ getbasepath(char *base, size_t size)
 	umask(omask);
 	if (stat(base, &sb) < 0)
 		err(1, "stat(\"%s\")", base);
+	if (!S_ISDIR(sb.st_mode))
+		errx(1, "%s is not a directory", base);
 	if (sb.st_uid != uid || (sb.st_mode & mask) != 0)
 		errx(1, "%s has wrong permissions", base);
 }
