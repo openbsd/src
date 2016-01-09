@@ -1,4 +1,4 @@
-/*	$OpenBSD: def.flag.h,v 1.3 2003/03/16 21:22:35 camield Exp $*/
+/*	$OpenBSD: def.flag.h,v 1.4 2016/01/09 18:33:15 mestre Exp $*/
 /*	$NetBSD: def.flag.h,v 1.3 1995/03/23 08:29:22 cgd Exp $*/
 
 /*
@@ -100,4 +100,3 @@ struct flag {
 };
 
 extern struct flag flags;
-

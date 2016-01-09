@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.invent.c,v 1.12 2015/10/24 17:37:56 mmcc Exp $	*/
+/*	$OpenBSD: hack.invent.c,v 1.13 2016/01/09 18:33:15 mestre Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -61,10 +61,11 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include	<ctype.h>
-#include	<stdlib.h>
-#include	<stdio.h>
-#include	"hack.h"
+#include <ctype.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+#include "hack.h"
 
 extern struct obj zeroobj;
 extern char morc;
@@ -664,7 +665,7 @@ xprname(struct obj *obj, char let)
 }
 
 int
-ddoinv()
+ddoinv(void)
 {
 	doinv((char *) 0);
 	return(0);
@@ -702,7 +703,7 @@ doinv(char *lets)
 }
 
 int
-dotypeinv()				/* free after Robert Viduya */
+dotypeinv(void)				/* free after Robert Viduya */
 /* Changed to one type only, so he doesn't have to type cr */
 {
     char c, ilet;
@@ -775,7 +776,7 @@ dotypeinv()				/* free after Robert Viduya */
 
 /* look at what is here */
 int
-dolook()
+dolook(void)
 {
     struct obj *otmp, *otmp0;
     struct gold *gold;
@@ -874,7 +875,7 @@ extern char *occtxt;
 static long goldcounted;
 
 int
-countgold()
+countgold(void)
 {
 	if((goldcounted += 100*(u.ulevel + 1)) >= u.ugold) {
 		long eps = 0;
@@ -887,7 +888,7 @@ countgold()
 }
 
 int
-doprgold()
+doprgold(void)
 {
 	if(!u.ugold)
 		pline("You do not carry any gold.");
@@ -905,7 +906,7 @@ doprgold()
 /* --- end of gold counting section --- */
 
 int
-doprwep()
+doprwep(void)
 {
 	if(!uwep) pline("You are empty handed.");
 	else prinv(uwep);
@@ -913,7 +914,7 @@ doprwep()
 }
 
 int
-doprarm()
+doprarm(void)
 {
 	if(!uarm && !uarmg && !uarms && !uarmh)
 		pline("You are not wearing any armor.");
@@ -933,7 +934,7 @@ doprarm()
 }
 
 int
-doprring()
+doprring(void)
 {
 	if(!uleft && !uright)
 		pline("You are not wearing any rings.");

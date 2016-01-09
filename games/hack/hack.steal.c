@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.steal.c,v 1.6 2014/03/11 08:05:15 guenther Exp $	*/
+/*	$OpenBSD: hack.steal.c,v 1.7 2016/01/09 18:33:15 mestre Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -62,13 +62,14 @@
  */
 
 #include <stdlib.h>
+
 #include "hack.h"
 
 extern void (*afternmv)(void);
 
 /* actually returns something that fits in an int */
 long
-somegold()
+somegold(void)
 {
 	return( (u.ugold < 100) ? u.ugold :
 		(u.ugold > 10000) ? rnd(10000) : rnd((int) u.ugold) );
@@ -105,7 +106,7 @@ static unsigned stealoid;		/* object to be stolen */
 static unsigned stealmid;		/* monster doing the stealing */
 
 void
-stealarm()
+stealarm(void)
 {
 	struct monst *mtmp;
 	struct obj *otmp;

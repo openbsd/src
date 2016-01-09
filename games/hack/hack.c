@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.c,v 1.9 2014/03/11 07:41:10 guenther Exp $	*/
+/*	$OpenBSD: hack.c,v 1.10 2016/01/09 18:33:15 mestre Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -61,8 +61,9 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "hack.h"
 #include <stdio.h>
+
+#include "hack.h"
 
 extern char *nomovemsg;
 extern char *exclam();
@@ -79,7 +80,7 @@ static int inv_cnt(void);
  *	3. when walking out of a lit room
  */
 void
-unsee()
+unsee(void)
 {
 	int x,y;
 	struct rm *lev;
@@ -142,7 +143,7 @@ seeoff(int mode)	/* 1 to redo @, 0 to leave them */
 }
 
 void
-domove()
+domove(void)
 {
 	xchar oldx,oldy;
 	struct monst *mtmp;
@@ -386,7 +387,7 @@ movobj(struct obj *obj, int ox, int oy)
 }
 
 int
-dopickup()
+dopickup(void)
 {
 	if(!g_at(u.ux,u.uy) && !o_at(u.ux,u.uy)) {
 		pline("There is nothing here to pick up.");
@@ -534,7 +535,7 @@ pickup(int all)
 /* turn around a corner if that is the only way we can proceed */
 /* do not turn left or right twice */
 void
-lookaround()
+lookaround(void)
 {
 	int x, y, i, x0, y0, m0, i0 = 9;
 	int corrct = 0, noturn = 0;
@@ -629,7 +630,7 @@ lookaround()
 /* something like lookaround, but we are not running */
 /* react only to monsters that might hit us */
 int
-monster_nearby()
+monster_nearby(void)
 {
 	int x,y;
 	struct monst *mtmp;
@@ -714,7 +715,7 @@ sgn(int a)
 
 #ifdef QUEST
 void
-setsee()
+setsee(void)
 {
 	int x,y;
 
@@ -730,9 +731,8 @@ setsee()
 }
 
 #else
-
 void
-setsee()
+setsee(void)
 {
 	int x,y;
 
@@ -775,7 +775,7 @@ nomul(int nval)
 }
 
 int
-abon()
+abon(void)
 {
 	if(u.ustr == 3) return(-3);
 	else if(u.ustr < 6) return(-2);
@@ -787,7 +787,7 @@ abon()
 }
 
 int
-dbon()
+dbon(void)
 {
 	if(u.ustr < 6) return(-1);
 	else if(u.ustr < 16) return(0);
@@ -835,7 +835,7 @@ losehp_m(int n, struct monst *mtmp)
 
 /* hit by V or W */
 void
-losexp()
+losexp(void)
 {
 	int num;
 
@@ -851,7 +851,7 @@ losexp()
 }
 
 int
-inv_weight()
+inv_weight(void)
 {
 	struct obj *otmp = invent;
 	int wt = (u.ugold + 500)/1000;
@@ -873,7 +873,7 @@ inv_weight()
 }
 
 static int
-inv_cnt()
+inv_cnt(void)
 {
 	struct obj *otmp = invent;
 	int ct = 0;
@@ -886,7 +886,7 @@ inv_cnt()
 }
 
 long
-newuexp()
+newuexp(void)
 {
 	return(10*(1L << (u.ulevel-1)));
 }

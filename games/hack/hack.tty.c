@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.tty.c,v 1.14 2016/01/07 18:25:52 millert Exp $	*/
+/*	$OpenBSD: hack.tty.c,v 1.15 2016/01/09 18:33:15 mestre Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -94,17 +94,17 @@
 /* With thanks to the people who sent code for SYSV - hpscdi!jon,
    arnold@ucsf-cgl, wcs@bo95b, cbcephus!pds and others. */
 
-#include	"hack.h"
-#include	<stdio.h>
-#include	<stdarg.h>
-#include	<stdlib.h>
-#include	<termios.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <termios.h>
+
+#include "hack.h"
 
 static char erase_char, kill_char;
 static boolean settty_needed = FALSE;
 struct termios inittyb, curttyb;
 
-static void setctty();
+static void setctty(void);
 
 /*
  * Get initial state of terminal,
@@ -112,7 +112,7 @@ static void setctty();
  * Called by startup() in termcap.c and after returning from ! or ^Z
  */
 void
-gettty()
+gettty(void)
 {
 	if(tcgetattr(0, &inittyb) < 0)
 		perror("Hack (gettty)");
@@ -145,14 +145,14 @@ settty(char *s)
 }
 
 static void
-setctty()
+setctty(void)
 {
 	if(tcsetattr(0, TCSADRAIN, &curttyb) < 0)
 		perror("Hack (setctty)");
 }
 
 void
-setftty()
+setftty(void)
 {
 	int change = 0;
 	flags.cbreak = ON;
@@ -245,7 +245,7 @@ getlin(char *bufp)
 }
 
 void
-getret()
+getret(void)
 {
 	cgetret("");
 }
@@ -287,7 +287,7 @@ xwaitforspace(char *s)
 }
 
 char *
-parse()
+parse(void)
 {
 	static char inputline[COLNO];
 	int foo;
@@ -318,7 +318,7 @@ parse()
 }
 
 char
-readchar()
+readchar(void)
 {
 	int sym;
 
@@ -331,7 +331,7 @@ readchar()
 }
 
 void
-end_of_input()
+end_of_input(void)
 {
 	settty("End of input?\n");
 	clearlocks();

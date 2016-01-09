@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.mkshop.c,v 1.8 2009/10/27 23:59:25 deraadt Exp $	*/
+/*	$OpenBSD: hack.mkshop.c,v 1.9 2016/01/09 18:33:15 mestre Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -65,9 +65,10 @@
 #ifndef QUEST
 #include "hack.h"
 #include "def.eshk.h"
+
 #define	ESHK	((struct eshk *)(&(shk->mextra[0])))
-extern struct monst *makemon();
-extern struct obj *mkobj_at();
+extern struct monst *makemon(struct permonst *, int, int);
+extern struct obj *mkobj_at(int, int, int);
 extern int nroom;
 extern char shtypes[];	/* = "=/)%?!["; 8 types: 7 specialized, 1 mixed */
 schar shprobs[] = { 3,3,5,5,10,10,14,50 };	/* their probabilities */
@@ -80,7 +81,7 @@ static int dist2(int, int, int, int);
 static int sq(int);
 
 void
-mkshop()
+mkshop(void)
 {
 struct mkroom *sroom;
 int sh,sx,sy,i = -1;
@@ -262,7 +263,7 @@ mkzoo(int type)
 }
 
 struct permonst *
-morguemon()
+morguemon(void)
 {
 	extern struct permonst pm_ghost;
 	int i = rn2(100), hd = rn2(dlevel);
@@ -273,7 +274,7 @@ morguemon()
 }
 
 void
-mkswamp()	/* Michiel Huisjes & Fred de Wilde */
+mkswamp(void)	/* Michiel Huisjes & Fred de Wilde */
 {
 	struct mkroom *sroom;
 	int sx,sy,i,eelct = 0;

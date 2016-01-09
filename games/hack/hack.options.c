@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.options.c,v 1.11 2015/10/24 17:56:42 mmcc Exp $	*/
+/*	$OpenBSD: hack.options.c,v 1.12 2016/01/09 18:33:15 mestre Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -64,13 +64,13 @@
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include "config.h"
+
 #include "hack.h"
 
 static void parseoptions(char *, boolean);
 
 void
-initoptions()
+initoptions(void)
 {
 	char *opts;
 
@@ -236,7 +236,7 @@ bad:
 }
 
 int
-doset()
+doset(void)
 {
 	char buf[BUFSZ];
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.unix.c,v 1.16 2015/11/11 01:12:10 deraadt Exp $	*/
+/*	$OpenBSD: hack.unix.c,v 1.17 2016/01/09 18:33:15 mestre Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -72,18 +72,17 @@
  *	- determination of what files are "very old"
  */
 
-#include	<sys/types.h>		/* for time_t and stat */
-#include	<sys/stat.h>
-#include	<sys/time.h>
+#include <sys/stat.h>
 
-#include	<err.h>
-#include	<errno.h>
-#include	<limits.h>
-#include	<signal.h>
-#include	<stdio.h>
-#include	<stdlib.h>
-#include	<unistd.h>
-#include	"hack.h"
+#include <err.h>
+#include <errno.h>
+#include <limits.h>
+#include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+
+#include "hack.h"
 
 
 static struct tm *getlt(void);
@@ -94,7 +93,7 @@ static void mdrush(struct monst *, boolean);
 #endif
 
 static struct tm *
-getlt()
+getlt(void)
 {
 	time_t date;
 	struct tm *localtime();
@@ -104,13 +103,13 @@ getlt()
 }
 
 int
-getyear()
+getyear(void)
 {
 	return(1900 + getlt()->tm_year);
 }
 
 char *
-getdate()
+getdate(void)
 {
 	static char datestr[7];
 	struct tm *lt = getlt();
@@ -120,10 +119,14 @@ getdate()
 	return(datestr);
 }
 
+/*
+ * 0-7, with 0: new, 4: full
+ * moon period: 29.5306 days
+ * year: 365.2422 days
+ */
 int
-phase_of_the_moon()			/* 0-7, with 0: new, 4: full */
-{					/* moon period: 29.5306 days */
-					/* year: 365.2422 days */
+phase_of_the_moon(void)	
+{
 	struct tm *lt = getlt();
 	int epact, diy, golden;
 
@@ -137,7 +140,7 @@ phase_of_the_moon()			/* 0-7, with 0: new, 4: full */
 }
 
 int
-night()
+night(void)
 {
 	int hour = getlt()->tm_hour;
 
@@ -145,7 +148,7 @@ night()
 }
 
 int
-midnight()
+midnight(void)
 {
 	return(getlt()->tm_hour == 0);
 }
@@ -232,7 +235,7 @@ veryold(int fd)
 }
 
 void
-getlock()
+getlock(void)
 {
 	extern int hackpid, locknum;
 	int i = 0, fd;
@@ -260,7 +263,6 @@ getlock()
 		}
 		getret();
 		error("");
-		/*NOTREACHED*/
 	}
 
 	regularize(lock);
@@ -339,7 +341,7 @@ static char *mailbox;
 static long laststattime;
 
 void
-getmailstatus()
+getmailstatus(void)
 {
 	if(!(mailbox = getenv("MAIL")))
 		return;
@@ -354,7 +356,7 @@ getmailstatus()
 }
 
 void
-ckmailstatus()
+ckmailstatus(void)
 {
 	if(!mailbox
 #ifdef MAILCKFREQ
@@ -378,7 +380,7 @@ ckmailstatus()
 }
 
 static void
-newmail()
+newmail(void)
 {
 	/* produce a scroll of mail */
 	struct obj *obj;
@@ -461,7 +463,7 @@ mdrush(struct monst *md, boolean away)
 }
 
 void
-readmail()
+readmail(void)
 {
 #ifdef DEF_MAILREADER			/* This implies that UNIX is defined */
 	char *mr = 0;

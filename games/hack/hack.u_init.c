@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.u_init.c,v 1.10 2015/10/24 17:40:38 mmcc Exp $	*/
+/*	$OpenBSD: hack.u_init.c,v 1.11 2016/01/09 18:33:15 mestre Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -64,8 +64,9 @@
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <signal.h>
+
 #include "hack.h"
+
 #define	UNDEF_TYP	0
 #define	UNDEF_SPE	'\177'
 extern char plname[];
@@ -157,7 +158,7 @@ static void wiz_inv(void);
 #endif
 
 void
-u_init()
+u_init(void)
 {
 	int i;
 	char exper = 'y', pc;
@@ -379,7 +380,7 @@ ini_inv(struct trobj *trop)
 
 #ifdef WIZARD
 static void
-wiz_inv()
+wiz_inv(void)
 {
 	struct trobj *trop = &Extra_objs[0];
 	char *ep = getenv("INVENT");
@@ -408,7 +409,7 @@ wiz_inv()
 #endif /* WIZARD */
 
 void
-plnamesuffix()
+plnamesuffix(void)
 {
 	char *p;
 

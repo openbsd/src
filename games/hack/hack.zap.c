@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.zap.c,v 1.10 2009/10/27 23:59:25 deraadt Exp $	*/
+/*	$OpenBSD: hack.zap.c,v 1.11 2016/01/09 18:33:15 mestre Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -62,6 +62,7 @@
  */
 
 #include <stdlib.h>
+
 #include "hack.h"
 
 extern struct monst youmonst;
@@ -184,7 +185,7 @@ bhito(struct obj *obj, struct obj *otmp)
 }
 
 int
-dozap()
+dozap(void)
 {
 	struct obj *obj;
 	xchar zx,zy;
@@ -694,7 +695,7 @@ fracture_rock(struct obj *obj)
 }
 
 static void
-burn_scrolls()
+burn_scrolls(void)
 {
 	struct obj *obj, *obj2;
 	int cnt = 0;

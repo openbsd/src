@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.cmd.c,v 1.8 2015/10/24 18:26:13 mmcc Exp $	*/
+/*	$OpenBSD: hack.cmd.c,v 1.9 2016/01/09 18:33:15 mestre Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -61,9 +61,10 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include	"hack.h"
-#include	"def.func_tab.h"
-#include	<ctype.h>
+#include <ctype.h>
+
+#include "def.func_tab.h"
+#include "hack.h"
 
 struct func_tab cmdlist[]={
 	{ '\020', doredotopl },
@@ -235,7 +236,7 @@ rhack(char *cmd)
 }
 
 int
-doextcmd()	/* here after # - now read a full-word command */
+doextcmd(void)	/* here after # - now read a full-word command */
 {
 	char buf[BUFSZ];
 	struct ext_func_tab *efp = extcmdlist;
@@ -297,7 +298,7 @@ getdir(boolean s)
 }
 
 void
-confdir()
+confdir(void)
 {
 	int x = rn2(8);
 	u.dx = xdir[x];
@@ -306,7 +307,7 @@ confdir()
 
 #ifdef QUEST
 void
-finddir()
+finddir(void)
 {
 	int i, ui = u.di;
 

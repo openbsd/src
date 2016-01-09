@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.mon.c,v 1.10 2014/03/11 08:05:15 guenther Exp $	*/
+/*	$OpenBSD: hack.mon.c,v 1.11 2016/01/09 18:33:15 mestre Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -62,6 +62,7 @@
  */
 
 #include <stdlib.h>
+
 #include "hack.h"
 #include "hack.mfndpos.h"
 
@@ -79,7 +80,7 @@ static void dmonsfree(void);
 static int  ishuman(struct monst *);
 
 void
-movemon()
+movemon(void)
 {
 	struct monst *mtmp;
 	int fr;
@@ -698,7 +699,7 @@ monfree(struct monst *mtmp)
 }
 
 static void
-dmonsfree()
+dmonsfree(void)
 {
 	struct monst *mtmp;
 
@@ -838,7 +839,7 @@ kludge(char *str, char *arg)
 }
 
 void
-rescham()	/* force all chameleons to become normal */
+rescham(void)	/* force all chameleons to become normal */
 {
 	struct monst *mtmp;
 

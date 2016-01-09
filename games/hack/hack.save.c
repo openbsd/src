@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.save.c,v 1.12 2015/11/11 01:12:10 deraadt Exp $	*/
+/*	$OpenBSD: hack.save.c,v 1.13 2016/01/09 18:33:15 mestre Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -61,10 +61,11 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <signal.h>
 #include <unistd.h>
+
 #include "hack.h"
 
 extern char genocided[60];	/* defined in Decl.c */
@@ -75,7 +76,7 @@ extern char pl_character[PL_CSIZ];
 static int dosave0(int);
 
 int
-dosave()
+dosave(void)
 {
 	if(dosave0(0)) {
 		settty("Be seeing you ...\n");

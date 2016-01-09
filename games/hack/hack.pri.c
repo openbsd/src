@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.pri.c,v 1.12 2015/09/27 05:13:11 guenther Exp $	*/
+/*	$OpenBSD: hack.pri.c,v 1.13 2016/01/09 18:33:15 mestre Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -64,7 +64,7 @@
 #include <curses.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdarg.h>
+
 #include "hack.h"
 
 xchar scrlx, scrhx, scrly, scrhy;	/* corners of new area on screen */
@@ -75,7 +75,7 @@ extern char *CD;
 static void cornbot(int);
 
 void
-swallowed()
+swallowed(void)
 {
 	char ulook[] = "|@|";
 	ulook[1] = u.usym;
@@ -221,7 +221,7 @@ Tmp_at(schar x, schar y)
 }
 
 void
-setclipped()
+setclipped(void)
 {
 	error("Hack needs a screen of size at least %d by %d.\n",
 		ROWNO+2, COLNO);
@@ -245,20 +245,20 @@ at(xchar x, xchar y, char ch)
 }
 
 void
-prme()
+prme(void)
 {
 	if(!Invisible) at(u.ux,u.uy,u.usym);
 }
 
 int
-doredraw()
+doredraw(void)
 {
 	docrt();
 	return(0);
 }
 
 void
-docrt()
+docrt(void)
 {
 	int x,y;
 	struct rm *room;
@@ -340,13 +340,13 @@ docorner(int xmin, int ymax)
 }
 
 void
-curs_on_u()
+curs_on_u(void)
 {
 	curs(u.ux, u.uy+2);
 }
 
 void
-pru()
+pru(void)
 {
 	if(u.udispl && (Invisible || u.udisx != u.ux || u.udisy != u.uy))
 		/* if(! levl[u.udisx][u.udisy].new) */
@@ -571,7 +571,7 @@ unpobj(struct obj *obj)
 }
 
 void
-seeobjs()
+seeobjs(void)
 {
 	struct obj *obj, *obj2;
 
@@ -590,7 +590,7 @@ seeobjs()
 }
 
 void
-seemons()
+seemons(void)
 {
 	struct monst *mtmp;
 
@@ -635,7 +635,7 @@ unpmon(struct monst *mon)
 }
 
 void
-nscr()
+nscr(void)
 {
 	int x,y;
 	struct rm *room;
@@ -666,7 +666,7 @@ cornbot(int lth)
 }
 
 void
-bot()
+bot(void)
 {
 	char *ob = oldbot, *nb = newbot, *bp;
 	int i;
@@ -737,7 +737,7 @@ mstatusline(mtmp) struct monst *mtmp; {
 #endif /* WAN_PROBING */
 
 void
-cls()
+cls(void)
 {
 	if(flags.toplin == 1)
 		more();

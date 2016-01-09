@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.apply.c,v 1.6 2015/09/27 05:13:11 guenther Exp $	*/
+/*	$OpenBSD: hack.apply.c,v 1.7 2016/01/09 18:33:15 mestre Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -61,8 +61,9 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include	"hack.h"
-#include	"def.edog.h"
+#include "def.edog.h"
+#include "hack.h"
+
 extern int (*occupation)(void);
 extern char *occtxt;
 extern char quitchars[];
@@ -80,7 +81,7 @@ static int dig(void);
 static int use_pick_axe(struct obj *);
 
 int
-doapply()
+doapply(void)
 {
 	struct obj *obj;
 	int res = 1;
@@ -128,7 +129,6 @@ doapply()
 	return(res);
 }
 
-/* ARGSUSED */
 static void
 use_camera(struct obj *obj)
 {
@@ -284,7 +284,6 @@ bchit(int ddx, int ddy, int range, char sym)
 	return(mtmp);
 }
 
-/* ARGSUSED */
 static void
 use_whistle(struct obj *obj)
 {
@@ -301,7 +300,6 @@ use_whistle(struct obj *obj)
 	}
 }
 
-/* ARGSUSED */
 static void
 use_magic_whistle(struct obj *obj)
 {
@@ -319,7 +317,7 @@ static coord dig_pos;
 static boolean dig_down;
 
 static int
-dig()
+dig(void)
 {
 	struct rm *lev;
 	int dpx = dig_pos.x, dpy = dig_pos.y;
@@ -392,13 +390,13 @@ dig()
 
 /* When will hole be finished? Very rough indication used by shopkeeper. */
 int
-holetime()
+holetime(void)
 {
 	return( (occupation == dig) ? (250 - dig_effort)/20 : -1);
 }
 
 void
-dighole()
+dighole(void)
 {
 	struct trap *ttmp = t_at(u.ux, u.uy);
 

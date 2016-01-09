@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.eat.c,v 1.9 2015/09/27 05:13:11 guenther Exp $	*/
+/*	$OpenBSD: hack.eat.c,v 1.10 2016/01/09 18:33:15 mestre Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -61,8 +61,10 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include	<stdio.h>
-#include	"hack.h"
+#include <stdio.h>
+
+#include "hack.h"
+
 char POISONOUS[] = "ADKSVabhks";
 extern char *nomovemsg;
 extern void (*afternmv)(void);
@@ -110,14 +112,14 @@ static void newuhs(boolean);
 static int  eatcorpse(struct obj *);
 
 void
-init_uhunger()
+init_uhunger(void)
 {
 	u.uhunger = 900;
 	u.uhs = NOT_HUNGRY;
 }
 
 int
-opentin()
+opentin(void)
 {
 	int r;
 
@@ -152,14 +154,14 @@ opentin()
 }
 
 void
-Meatdone()
+Meatdone(void)
 {
 	u.usym = '@';
 	prme();
 }
 
 int
-doeat()
+doeat(void)
 {
 	struct obj *otmp;
 	struct objclass *ftmp;
@@ -333,7 +335,7 @@ eatx:
 }
 
 void
-gethungry()
+gethungry(void)
 {
 	--u.uhunger;
 	if(moves % 2) {
@@ -367,7 +369,7 @@ lesshungry(int num)
 }
 
 void
-unfaint()
+unfaint(void)
 {
 	u.uhs = FAINTING;
 	flags.botl = 1;
@@ -523,7 +525,6 @@ eatcorpse(struct obj *otmp)
 		pline("You turn to stone.");
 		killer = "dead cockatrice";
 		done("died");
-		/* NOTREACHED */
 	case 'a':
 	  if(Stoned) {
 	      pline("What a pity - you just destroyed a future piece of art!");

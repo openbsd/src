@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.objnam.c,v 1.10 2015/10/24 18:49:39 mmcc Exp $	*/
+/*	$OpenBSD: hack.objnam.c,v 1.11 2016/01/09 18:33:15 mestre Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -61,10 +61,12 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include	<ctype.h>
-#include	<stdio.h>
-#include	<stdlib.h>
-#include	"hack.h"
+#include <ctype.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+#include "hack.h"
+
 #define	PREFIX	15
 extern int bases[];
 

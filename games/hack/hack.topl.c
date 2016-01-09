@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.topl.c,v 1.11 2015/09/27 05:13:11 guenther Exp $	*/
+/*	$OpenBSD: hack.topl.c,v 1.12 2016/01/09 18:33:15 mestre Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -62,8 +62,8 @@
  */
 
 #include <stdio.h>
-#include <stdarg.h>
 #include <stdlib.h>
+
 #include "hack.h"
 
 extern int CO;
@@ -82,7 +82,7 @@ static void xmore(char *);
 
 
 int
-doredotopl()
+doredotopl(void)
 {
 	if(last_redone_topl)
 		last_redone_topl = last_redone_topl->next_topl;
@@ -96,7 +96,7 @@ doredotopl()
 }
 
 static void
-redotoplin()
+redotoplin(void)
 {
 	home();
 	if(strchr(toplines, '\n')) cl_end();
@@ -110,7 +110,7 @@ redotoplin()
 }
 
 void
-remember_topl()
+remember_topl(void)
 {
 	struct topl *tl;
 	int cnt = OTLMAX;
@@ -173,7 +173,7 @@ xmore(char *s)
 }
 
 void
-more()
+more(void)
 {
 	xmore("");
 }
@@ -185,7 +185,7 @@ cmore(char *s)
 }
 
 void
-clrlin()
+clrlin(void)
 {
 	if(flags.toplin) {
 		home();

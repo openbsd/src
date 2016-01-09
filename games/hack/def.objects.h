@@ -1,4 +1,4 @@
-/*	$OpenBSD: def.objects.h,v 1.4 2003/05/19 06:30:56 pjanzen Exp $*/
+/*	$OpenBSD: def.objects.h,v 1.5 2016/01/09 18:33:15 mestre Exp $*/
 /*	$NetBSD: def.objects.h,v 1.3 1995/03/23 08:29:36 cgd Exp $*/
 
 /*
@@ -63,8 +63,6 @@
  */
 
 /* objects have letter " % ) ( 0 _ ` [ ! ? / = * */
-#include "config.h"
-
 struct objclass objects[] = {
 
 	{ "strange object", NULL, NULL, 1, 0,

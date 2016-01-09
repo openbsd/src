@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.shk.c,v 1.12 2014/03/11 08:05:15 guenther Exp $	*/
+/*	$OpenBSD: hack.shk.c,v 1.13 2016/01/09 18:33:15 mestre Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,6 +63,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+
 #include "hack.h"
 
 #ifdef QUEST
@@ -77,7 +78,7 @@ obfree(struct obj *obj, struct obj *merge)
 }
 
 int
-inshop()
+inshop(void)
 {
 	return(0);
 }
@@ -99,13 +100,13 @@ splitbill(struct obj *ign, struct obj *ign2)
 {}
 
 int
-dopay()
+dopay(void)
 {
 	return(0);
 }
 
 void
-paybill()
+paybill(void)
 {}
 
 int
@@ -141,8 +142,8 @@ shkname(struct monst *ign)
 }
 
 #else /* QUEST */
-#include	"hack.mfndpos.h"
-#include	"def.eshk.h"
+#include "hack.mfndpos.h"
+#include "def.eshk.h"
 
 #define	ESHK(mon)	((struct eshk *)(&(mon->mextra[0])))
 #define	NOTANGRY(mon)	mon->mpeaceful
@@ -186,7 +187,7 @@ static void pay(long, struct monst *);
 static int  dopayobj(struct bill_x *);
 static struct obj *bp_to_obj(struct bill_x *);
 static int getprice(struct obj *);
-static int realhunger();
+static int realhunger(void);
 
 /* called in do_name.c */
 char *
@@ -221,7 +222,7 @@ replshk(struct monst *mtmp, struct monst *mtmp2)
 /* caller has checked that shopkeeper exists */
 /* either we paid or left the shop or he just died */
 static void
-setpaid()
+setpaid(void)
 {
 	struct obj *obj;
 	struct monst *mtmp;
@@ -248,7 +249,7 @@ setpaid()
 /* delivers result in total */
 /* caller has checked that shopkeeper exists */
 static void
-addupbill()
+addupbill(void)
 {
 	int ct = ESHK(shopkeeper)->billct;
 	struct bill_x *bp = bill;
@@ -261,7 +262,7 @@ addupbill()
 }
 
 int
-inshop()
+inshop(void)
 {
 	int roomno = inroom(u.ux,u.uy);
 
@@ -441,7 +442,7 @@ pay(long tmp, struct monst *shkp)
 }
 
 int
-dopay()
+dopay(void)
 {
 	long ltmp;
 	struct bill_x *bp;
@@ -605,7 +606,7 @@ dopayobj(struct bill_x *bp)
 
 /* routine called after dying (or quitting) with nonempty bill */
 void
-paybill()
+paybill(void)
 {
 	if(shlevel == dlevel && shopkeeper && ESHK(shopkeeper)->billct){
 		addupbill();
@@ -769,9 +770,9 @@ pline("Thank you for your contribution to restock this recently plundered shop."
 		plur(ltmp));
 }
 
+/* int mode;		0: deliver count 1: paged */
 int
 doinvbill(int mode)
-/* int mode;		0: deliver count 1: paged */
 {
 	struct bill_x *bp;
 	struct obj *obj;
@@ -895,7 +896,7 @@ getprice(struct obj *obj)
 
 /* not completely foolproof */
 static int
-realhunger()
+realhunger(void)
 {
 	int tmp = u.uhunger;
 	struct obj *otmp = invent;

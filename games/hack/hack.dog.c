@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.dog.c,v 1.8 2009/10/27 23:59:25 deraadt Exp $	*/
+/*	$OpenBSD: hack.dog.c,v 1.9 2016/01/09 18:33:15 mestre Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -61,10 +61,11 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include	"hack.h"
-#include	"hack.mfndpos.h"
-extern struct monst *makemon();
 #include "def.edog.h"
+#include "hack.h"
+#include "hack.mfndpos.h"
+
+extern struct monst *makemon(struct permonst *, int, int);
 
 static void initedog(struct monst *);
 static int  dogfood(struct obj *);
@@ -78,7 +79,7 @@ struct permonst la_dog =
 
 
 void
-makedog()
+makedog(void)
 {
 	struct monst *mtmp = makemon(&li_dog,u.ux,u.uy);
 
@@ -104,7 +105,7 @@ struct monst *fallen_down = 0;	/* monsters that fell through a trapdoor */
 	/* they will appear on the next level @ goes to, even if he goes up! */
 
 void
-losedogs()
+losedogs(void)
 {
 	struct monst *mtmp;
 
@@ -123,7 +124,7 @@ losedogs()
 }
 
 void
-keepdogs()
+keepdogs(void)
 {
 	struct monst *mtmp;
 

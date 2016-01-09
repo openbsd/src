@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.end.c,v 1.14 2015/12/16 14:21:50 tb Exp $	*/
+/*	$OpenBSD: hack.end.c,v 1.15 2016/01/09 18:33:15 mestre Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -66,6 +66,7 @@
 #include <stdlib.h>
 #include <signal.h>
 #include <unistd.h>
+
 #include "hack.h"
 
 #define newttentry() (struct toptenentry *) alloc(sizeof(struct toptenentry))
@@ -111,11 +112,10 @@ done1(int notused)
 		return;
 	}
 	done("quit");
-	/* NOTREACHED */
 }
 
 int
-done2()
+done2(void)
 {
 	done1(0);
 	return(0);
@@ -296,7 +296,7 @@ done(char *st1)
 }
 
 static void
-topten()
+topten(void)
 {
 	int uid = getuid();
 	int rank, rank0 = -1, rank1 = 0;
@@ -452,7 +452,7 @@ unlock:
 }
 
 static void
-outheader()
+outheader(void)
 {
 	char linebuf[BUFSZ];
 	char *bp;
@@ -578,7 +578,7 @@ ordin(int n)
 }
 
 void
-clearlocks()
+clearlocks(void)
 {
 	int x;
 

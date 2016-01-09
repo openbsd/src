@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.read.c,v 1.8 2014/03/11 08:05:15 guenther Exp $	*/
+/*	$OpenBSD: hack.read.c,v 1.9 2016/01/09 18:33:15 mestre Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -62,12 +62,13 @@
  */
 
 #include <stdlib.h>
+
 #include "hack.h"
 
 static boolean monstersym(char);
 
 int
-doread()
+doread(void)
 {
 	struct obj *scroll;
 	boolean confused = (Confusion != 0);

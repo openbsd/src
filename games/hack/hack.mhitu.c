@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.mhitu.c,v 1.7 2009/10/27 23:59:25 deraadt Exp $	*/
+/*	$OpenBSD: hack.mhitu.c,v 1.8 2016/01/09 18:33:15 mestre Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -61,8 +61,9 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include	"hack.h"
-extern struct monst *makemon();
+#include "hack.h"
+
+extern struct monst *makemon(struct permonst *, int, int);
 
 /*
  * mhitu: monster hits you

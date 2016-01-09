@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.wield.c,v 1.6 2009/10/27 23:59:25 deraadt Exp $	*/
+/*	$OpenBSD: hack.wield.c,v 1.7 2016/01/09 18:33:15 mestre Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -61,7 +61,8 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include	"hack.h"
+#include "hack.h"
+
 extern struct obj zeroobj;
 
 void
@@ -71,7 +72,7 @@ setuwep(struct obj *obj)
 }
 
 int
-dowield()
+dowield(void)
 {
 	struct obj *wep;
 	int res = 0;
@@ -108,7 +109,7 @@ dowield()
 }
 
 void
-corrode_weapon()
+corrode_weapon(void)
 {
 	if(!uwep || uwep->olet != WEAPON_SYM) return;	/* %% */
 	if(uwep->rustfree)

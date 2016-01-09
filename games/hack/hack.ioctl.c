@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.ioctl.c,v 1.8 2015/12/05 13:37:43 tb Exp $	*/
+/*	$OpenBSD: hack.ioctl.c,v 1.9 2016/01/09 18:33:15 mestre Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -66,18 +66,19 @@
    define the same constants, and the C preprocessor complains. */
 #include <stdio.h>
 #include <termios.h>
-#include "config.h"
+
 #include "hack.h"
+
 struct termios termios;
 
 void
-getioctls()
+getioctls(void)
 {
 	(void) tcgetattr(fileno(stdin), &termios);
 }
 
 void
-setioctls()
+setioctls(void)
 {
 	(void) tcsetattr(fileno(stdin), TCSADRAIN, &termios);
 }
@@ -85,7 +86,7 @@ setioctls()
 #ifdef SUSPEND
 #include	<signal.h>
 int
-dosuspend()
+dosuspend(void)
 {
 #ifdef SIGTSTP
 	if(signal(SIGTSTP, SIG_IGN) == SIG_DFL) {

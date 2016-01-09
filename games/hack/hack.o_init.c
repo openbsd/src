@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.o_init.c,v 1.6 2014/03/11 08:05:15 guenther Exp $	*/
+/*	$OpenBSD: hack.o_init.c,v 1.7 2016/01/09 18:33:15 mestre Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -61,11 +61,10 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include	<stdio.h>
-#include	<string.h>
-#include	"config.h"		/* for typedefs */
-#include	"hack.h"
-#include	"def.objects.h"
+#include <stdio.h>
+
+#include "hack.h"
+#include "def.objects.h"
 
 static void setgemprobs(void);
 static int  interesting_to_discover(int);
@@ -82,7 +81,7 @@ letindex(char let)
 }
 
 void
-init_objects()
+init_objects(void)
 {
 	int i, j, first, last, sum, end;
 	char let, *tmp;
@@ -144,7 +143,7 @@ probtype(char let)
 }
 
 static void
-setgemprobs()
+setgemprobs(void)
 {
 	int j,first;
 	extern xchar dlevel;
@@ -164,7 +163,7 @@ setgemprobs()
 }
 
 void
-oinit()			/* level dependent initialization */
+oinit(void)			/* level dependent initialization */
 {
 	setgemprobs();
 }
@@ -205,7 +204,7 @@ restnames(int fd)
 }
 
 int
-dodiscovered()				/* free after Robert Viduya */
+dodiscovered(void)				/* free after Robert Viduya */
 {
     int i, end;
     int	ct = 0;

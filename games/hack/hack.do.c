@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.do.c,v 1.9 2015/11/11 01:12:10 deraadt Exp $	*/
+/*	$OpenBSD: hack.do.c,v 1.10 2016/01/09 18:33:15 mestre Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -65,6 +65,7 @@
 
 #include <stdlib.h>
 #include <unistd.h>
+
 #include "hack.h"
 
 extern boolean level_exists[];
@@ -74,7 +75,7 @@ extern char *nomovemsg;
 static int drop(struct obj *);
 
 int
-dodrop()
+dodrop(void)
 {
 	return(drop(getobj("0$#", "drop")));
 }
@@ -137,13 +138,13 @@ dropy(struct obj *obj)
 
 /* drop several things */
 int
-doddrop()
+doddrop(void)
 {
 	return(ggetobj("drop", drop, 0));
 }
 
 int
-dodown()
+dodown(void)
 {
 	if(u.ux != xdnstair || u.uy != ydnstair) {
 		pline("You can't go down here.");
@@ -163,7 +164,7 @@ dodown()
 }
 
 int
-doup()
+doup(void)
 {
 	if(u.ux != xupstair || u.uy != yupstair) {
 		pline("You can't go up here.");
@@ -304,13 +305,13 @@ goto_level(int newlevel, boolean at_stairs)
 }
 
 int
-donull()
+donull(void)
 {
 	return(1);	/* Do nothing, but let other things happen */
 }
 
 int
-dopray()
+dopray(void)
 {
 	nomovemsg = "You finished your prayer.";
 	nomul(-3);
@@ -318,7 +319,7 @@ dopray()
 }
 
 int
-dothrow()
+dothrow(void)
 {
 	struct obj *obj;
 	struct monst *mon;
@@ -547,7 +548,7 @@ set_wounded_legs(long side, int timex)
 }
 
 void
-heal_legs()
+heal_legs(void)
 {
 	if(Wounded_legs) {
 		if((Wounded_legs & BOTH_SIDES) == BOTH_SIDES)

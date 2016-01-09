@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.pager.c,v 1.21 2015/09/27 05:13:11 guenther Exp $	*/
+/*	$OpenBSD: hack.pager.c,v 1.22 2016/01/09 18:33:15 mestre Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -65,13 +65,14 @@
 /* Also readmail() and doshell(), and generally the things that
    contact the outside world. */
 
-#include	<sys/types.h>
-#include	<libgen.h>
-#include	<signal.h>
-#include	<stdio.h>
-#include	<stdlib.h>
-#include	<unistd.h>
+#include <libgen.h>
+#include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+
 #include "hack.h"
+
 extern int CO, LI;	/* usually COLNO and ROWNO+2 */
 extern char *CD;
 extern char quitchars[];
@@ -79,7 +80,7 @@ extern char quitchars[];
 static void page_more(FILE *, int);
 
 int
-dowhatis()
+dowhatis(void)
 {
 	FILE *fp;
 	char bufr[BUFSZ+6];
@@ -163,14 +164,14 @@ static boolean whole_screen = TRUE;
 #define	PAGMIN	12	/* minimum # of lines for page below level map */
 
 void
-set_whole_screen()
+set_whole_screen(void)
 {	/* called in termcap as soon as LI is known */
 	whole_screen = (LI-ROWNO-2 <= PAGMIN || !CD);
 }
 
 #ifdef NEWS
 int
-readnews()
+readnews(void)
 {
 	int ret;
 
@@ -346,7 +347,7 @@ cleanup:
 }
 
 int
-dohelp()
+dohelp(void)
 {
 	char c;
 
@@ -410,7 +411,7 @@ page_file(char *fnam, boolean silent)
 #ifdef UNIX
 #ifdef SHELL
 int
-dosh()
+dosh(void)
 {
 	char *str;
 
@@ -426,7 +427,7 @@ dosh()
 }
 #endif /* SHELL */
 
-#include	<sys/wait.h>
+#include <sys/wait.h>
 
 int
 child(int wt)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.do_wear.c,v 1.7 2009/10/27 23:59:25 deraadt Exp $	*/
+/*	$OpenBSD: hack.do_wear.c,v 1.8 2016/01/09 18:33:15 mestre Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -61,9 +61,8 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <stdio.h>
-#include <stdlib.h>
 #include "hack.h"
+
 extern char *nomovemsg;
 extern char quitchars[];
 
@@ -78,7 +77,7 @@ off_msg(struct obj *otmp)
 }
 
 int
-doremarm()
+doremarm(void)
 {
 	struct obj *otmp;
 	if(!uarm && !uarmh && !uarms && !uarmg) {
@@ -104,7 +103,7 @@ doremarm()
 }
 
 int
-doremring()
+doremring(void)
 {
 	if(!uleft && !uright){
 		pline("Not wearing any ring.");
@@ -132,7 +131,6 @@ doremring()
 			/* might look at morc here %% */
 		}
 	}
-	/* NOTREACHED */
 	return(0);
 }
 
@@ -181,7 +179,7 @@ armoroff(struct obj *otmp)
 }
 
 int
-doweararm()
+doweararm(void)
 {
 	struct obj *otmp;
 	int delay;
@@ -242,7 +240,7 @@ doweararm()
 }
 
 int
-dowearring()
+dowearring(void)
 {
 	struct obj *otmp;
 	long mask = 0;
@@ -350,7 +348,7 @@ ringoff(struct obj *obj)
 }
 
 void
-find_ac()
+find_ac(void)
 {
 	int uac = 10;
 
@@ -368,7 +366,7 @@ find_ac()
 }
 
 void
-glibr()
+glibr(void)
 {
 	struct obj *otmp;
 	int xfl = 0;
@@ -397,7 +395,7 @@ glibr()
 }
 
 struct obj *
-some_armor()
+some_armor(void)
 {
 	struct obj *otmph = uarm;
 
@@ -408,7 +406,7 @@ some_armor()
 }
 
 void
-corrode_armor()
+corrode_armor(void)
 {
 	struct obj *otmph = some_armor();
 

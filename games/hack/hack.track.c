@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.track.c,v 1.5 2009/10/27 23:59:25 deraadt Exp $	*/
+/*	$OpenBSD: hack.track.c,v 1.6 2016/01/09 18:33:15 mestre Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -70,14 +70,14 @@ int utcnt = 0;
 int utpnt = 0;
 
 void
-initrack()
+initrack(void)
 {
 	utcnt = utpnt = 0;
 }
 
 /* add to track */
 void
-settrack()
+settrack(void)
 {
 	if(utcnt < UTSZ) utcnt++;
 	if(utpnt == UTSZ) utpnt = 0;

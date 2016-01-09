@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.wizard.c,v 1.6 2009/10/27 23:59:25 deraadt Exp $	*/
+/*	$OpenBSD: hack.wizard.c,v 1.7 2016/01/09 18:33:15 mestre Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -64,7 +64,9 @@
 /* wizard code - inspired by rogue code from Merlyn Leroy (digi-g!brian) */
 
 #include <stdlib.h>
+
 #include "hack.h"
+
 extern struct permonst pm_wizard;
 
 static void clonewiz(struct monst *);
@@ -76,7 +78,7 @@ char wizapp[] = "@DNPTUVXcemntx";
 
 /* If he has found the Amulet, make the wizard appear after some time */
 void
-amulet()
+amulet(void)
 {
 	struct obj *otmp;
 	struct monst *mtmp;
@@ -229,7 +231,7 @@ inrange(struct monst *mtmp)
 }
 
 void
-aggravate()
+aggravate(void)
 {
 	struct monst *mtmp;
 

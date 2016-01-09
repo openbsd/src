@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.mklev.c,v 1.7 2009/10/27 23:59:25 deraadt Exp $	*/
+/*	$OpenBSD: hack.mklev.c,v 1.8 2016/01/09 18:33:15 mestre Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
+
 #include "hack.h"
 
 #define somex() ((random()%(croom->hx-croom->lx+1))+croom->lx)
@@ -105,7 +105,7 @@ static void makevtele(void);
 static void makeniche(boolean);
 
 void
-makelevel()
+makelevel(void)
 {
 	struct mkroom *croom, *troom;
 	unsigned tryct;
@@ -209,7 +209,7 @@ makelevel()
 }
 
 int
-makerooms()
+makerooms(void)
 {
 	struct rectangle *rsp;
 	int lx, ly, hx, hy, lowx, lowy, hix, hiy, dx, dy;
@@ -512,7 +512,7 @@ chk:
 }
 
 static void
-makecorridors()
+makecorridors(void)
 {
 	int a,b;
 
@@ -677,14 +677,14 @@ join(int a, int b)
 }
 
 static void
-make_niches()
+make_niches(void)
 {
 	int ct = rnd(nroom/2 + 1);
 	while(ct--) makeniche(FALSE);
 }
 
 static void
-makevtele()
+makevtele(void)
 {
 	makeniche(TRUE);
 }

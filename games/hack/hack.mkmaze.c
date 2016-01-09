@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.mkmaze.c,v 1.5 2009/10/27 23:59:25 deraadt Exp $	*/
+/*	$OpenBSD: hack.mkmaze.c,v 1.6 2016/01/09 18:33:15 mestre Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -62,6 +62,7 @@
  */
 
 #include "hack.h"
+
 extern struct permonst pm_wizard;
 struct permonst hell_hound =
 	{ "hell hound", 'd', 12, 14, 2, 3, 6, 0 };
@@ -72,7 +73,7 @@ static int  okay(int, int, int);
 
 
 void
-makemaz()
+makemaz(void)
 {
 	int x,y;
 	int zx,zy;
@@ -191,7 +192,7 @@ okay(int x, int y, int dir)
 }
 
 coord
-mazexy()
+mazexy(void)
 {
 	coord mm;
 

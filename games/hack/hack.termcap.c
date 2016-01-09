@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.termcap.c,v 1.8 2009/10/27 23:59:25 deraadt Exp $	*/
+/*	$OpenBSD: hack.termcap.c,v 1.9 2016/01/09 18:33:15 mestre Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -61,14 +61,10 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <termios.h>
 #include <curses.h>
+#include <stdlib.h>
 #include <term.h>
 
-#include "config.h"	/* for ROWNO and COLNO */
 #include "hack.h"
 
 static char tbuf[512];
@@ -85,7 +81,7 @@ static int  xputc(int);
 static void xputs(char *);
 
 void
-startup()
+startup(void)
 {
 	char *term;
 	char *tptr;
@@ -144,14 +140,14 @@ startup()
 }
 
 void
-start_screen()
+start_screen(void)
 {
 	xputs(TI);
 	xputs(VS);
 }
 
 void
-end_screen()
+end_screen(void)
 {
 	xputs(VE);
 	xputs(TE);
@@ -160,10 +156,11 @@ end_screen()
 /* Cursor movements */
 extern xchar curx, cury;
 
+/* int x, y;     not xchar: perhaps xchar is unsigned and
+ * curx-x would be unsigned as well
+ */
 void
 curs(int x, int y)
-/* int x, y;	 not xchar: perhaps xchar is unsigned and
-			   curx-x would be unsigned as well */
 {
 	if (y == cury && x == curx)
 		return;
@@ -250,7 +247,7 @@ xputs(char *s)
 }
 
 void
-cl_end()
+cl_end(void)
 {
 	if(CE)
 		xputs(CE);
@@ -268,14 +265,14 @@ cl_end()
 }
 
 void
-clr_screen()
+clr_screen(void)
 {
 	xputs(CL);
 	curx = cury = 1;
 }
 
 void
-home()
+home(void)
 {
 	if(HO)
 		xputs(HO);
@@ -287,34 +284,37 @@ home()
 }
 
 void
-standoutbeg()
+standoutbeg(void)
 {
 	if(SO) xputs(SO);
 }
 
 void
-standoutend()
+standoutend(void)
 {
 	if(SE) xputs(SE);
 }
 
 void
-backsp()
+backsp(void)
 {
 	xputs(BC);
 	curx--;
 }
 
 void
-hackbell()
+hackbell(void)
 {
 	(void) putchar('\007');		/* curx does not change */
 	(void) fflush(stdout);
 }
 
+/* free after Robert Viduya
+ * must only be called with curx = 1
+ */
 void
-cl_eos()			/* free after Robert Viduya */
-{				/* must only be called with curx = 1 */
+cl_eos(void)
+{
 
 	if(CD)
 		xputs(CD);

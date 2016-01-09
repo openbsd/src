@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.vault.c,v 1.7 2009/10/27 23:59:25 deraadt Exp $	*/
+/*	$OpenBSD: hack.vault.c,v 1.8 2016/01/09 18:33:15 mestre Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -61,21 +61,23 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include	<stdlib.h>
-#include	"hack.h"
+#include <stdlib.h>
+
+#include "hack.h"
+
 #ifdef QUEST
 void
-setgd()
+setgd(void)
 {}
 
 int
-gd_move()
+gd_move(void)
 {
 	return(2);
 }
 
 void
-gddead()
+gddead(void)
 {}
 
 void
@@ -83,13 +85,11 @@ replgd(struct monst *mtmp, struct monst *mtmp2)
 {}
 
 void
-invault()
+invault(void)
 {}
 
 #else
-
-
-extern struct monst *makemon();
+extern struct monst *makemon(struct permonst *, int, int);
 #define	FCSIZ	(ROWNO+COLNO)
 struct fakecorridor {
 	xchar fx,fy,ftyp;
@@ -114,7 +114,7 @@ static int  goldincorridor(void);
 
 
 static void
-restfakecorr()
+restfakecorr(void)
 {
 	int fcx,fcy,fcbeg;
 	struct rm *crm;
@@ -137,7 +137,7 @@ restfakecorr()
 }
 
 static int
-goldincorridor()
+goldincorridor(void)
 {
 	int fci;
 
@@ -148,7 +148,7 @@ goldincorridor()
 }
 
 void
-setgd()
+setgd(void)
 {
 	struct monst *mtmp;
 
@@ -161,7 +161,7 @@ setgd()
 }
 
 void
-invault()
+invault(void)
 {
 	int tmp = inroom(u.ux, u.uy);
 
@@ -248,7 +248,7 @@ fnd:
 }
 
 int
-gd_move()
+gd_move(void)
 {
 	int x,y,dx,dy,gx,gy,nx,ny,typ;
 	struct fakecorridor *fcp;
@@ -335,7 +335,7 @@ newpos:
 }
 
 void
-gddead()
+gddead(void)
 {
 	guard = 0;
 }

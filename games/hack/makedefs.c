@@ -1,4 +1,4 @@
-/*	$OpenBSD: makedefs.c,v 1.9 2016/01/07 16:00:32 tb Exp $	*/
+/*	$OpenBSD: makedefs.c,v 1.10 2016/01/09 18:33:15 mestre Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -133,7 +133,7 @@ char line[LINSZ], *lp = line, *lp0 = line, *lpe = line;
 int eof;
 
 void
-readline()
+readline(void)
 {
 	int n = read(fd, lp0, (line+LINSZ)-lp0);
 
@@ -146,7 +146,7 @@ readline()
 }
 
 char
-nextchar()
+nextchar(void)
 {
 	if(lp == lpe){
 		readline();
@@ -191,7 +191,7 @@ loop:
 }
 
 int
-getentry()
+getentry(void)
 {
 	int inbraces = 0, inparens = 0, stringseen = 0, commaseen = 0;
 	int prefix = 0;

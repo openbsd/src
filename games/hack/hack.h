@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.h,v 1.12 2015/12/26 00:26:39 mestre Exp $*/
+/*	$OpenBSD: hack.h,v 1.13 2016/01/09 18:33:15 mestre Exp $*/
 /*	$NetBSD: hack.h,v 1.3 1995/03/23 08:30:21 cgd Exp $*/
 
 /*
@@ -62,39 +62,40 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "config.h"
-#include <string.h>
 #include <fcntl.h>
 #include <stdarg.h>
+#include <string.h>
 
 #define	Null(type)	((struct type *) 0)
 
-#include	"def.objclass.h"
+#include "config.h"
+#include "def.objclass.h"
 
 typedef struct {
 	xchar x,y;
 } coord;
 
-#include	"def.mkroom.h"
-#include	"def.monst.h"	/* uses coord */
-#include	"def.gold.h"
-#include	"def.trap.h"
-#include	"def.obj.h"
-#include	"def.flag.h"
-#include	"def.wseg.h"
+#include "def.mkroom.h"
+#include "def.monst.h"	/* uses coord */
+#include "def.gold.h"
+#include "def.trap.h"
+#include "def.obj.h"
+#include "def.flag.h"
+#include "def.wseg.h"
 
 #define	plur(x)	(((x) == 1) ? "" : "s")
 
 #define	BUFSZ	256	/* for getlin buffers */
 #define	PL_NSIZ	32	/* name of player, ghost, shopkeeper */
 
-#include	"def.rm.h"
-#include	"def.permonst.h"
+#include "def.rm.h"
+#include "def.permonst.h"
 
 extern xchar xdnstair, ydnstair, xupstair, yupstair; /* stairs up and down. */
 
 extern xchar dlevel;
 #define	newstring(x)	(char *) alloc((unsigned)(x))
+
 #include "hack.onames.h"
 
 #define ON 1

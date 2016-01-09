@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.potion.c,v 1.6 2015/09/27 05:13:11 guenther Exp $	*/
+/*	$OpenBSD: hack.potion.c,v 1.7 2016/01/09 18:33:15 mestre Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -62,14 +62,15 @@
  */
 
 #include "hack.h"
+
 extern char *nomovemsg;
 extern struct monst youmonst;
-extern struct monst *makemon();
+extern struct monst *makemon(struct permonst *, int, int);
 
 static void ghost_from_bottle(void);
 
 int
-dodrink()
+dodrink(void)
 {
 	struct obj *otmp,*objs;
 	struct monst *mtmp;
@@ -252,7 +253,7 @@ use_it:
 }
 
 void
-pluslvl()
+pluslvl(void)
 {
 	int num;
 
@@ -413,7 +414,7 @@ potionbreathe(struct obj *obj)
  * --   become a jug? Etc.
  */
 int
-dodip()
+dodip(void)
 {
 	struct obj *potion, *obj;
 
@@ -433,7 +434,7 @@ dodip()
 }
 
 static void
-ghost_from_bottle()
+ghost_from_bottle(void)
 {
 	extern struct permonst pm_ghost;
 	struct monst *mtmp;

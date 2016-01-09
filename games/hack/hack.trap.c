@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.trap.c,v 1.8 2015/10/24 18:49:39 mmcc Exp $	*/
+/*	$OpenBSD: hack.trap.c,v 1.9 2016/01/09 18:33:15 mestre Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -61,9 +61,10 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include	<ctype.h>
-#include	<stdlib.h>
-#include	"hack.h"
+#include <ctype.h>
+#include <stdlib.h>
+
+#include "hack.h"
 
 char vowels[] = "aeiou";
 
@@ -304,7 +305,7 @@ selftouch(char *arg)
 }
 
 void
-float_up()
+float_up(void)
 {
 	if(u.utrap) {
 		if(u.utraptype == TT_PIT) {
@@ -318,7 +319,7 @@ float_up()
 }
 
 int
-float_down()
+float_down(void)
 {
 	struct trap *trap;
 
@@ -338,7 +339,7 @@ float_down()
 }
 
 static void
-vtele()
+vtele(void)
 {
 	struct mkroom *croom;
 
@@ -357,7 +358,7 @@ vtele()
 }
 
 void
-tele()
+tele(void)
 {
 	coord cc;
 	int nux,nuy;
@@ -413,7 +414,7 @@ teleok(int x, int y)
 }
 
 int
-dotele()
+dotele(void)
 {
 	extern char pl_character[];
 
@@ -455,7 +456,7 @@ placebc(int attach)
 }
 
 void
-unplacebc()
+unplacebc(void)
 {
 	if(!carried(uball)){
 		freeobj(uball);
@@ -466,7 +467,7 @@ unplacebc()
 }
 
 void
-level_tele()
+level_tele(void)
 {
 	int newlevel;
 
@@ -519,7 +520,7 @@ level_tele()
 }
 
 void
-drown()
+drown(void)
 {
 	pline("You fall into a pool!");
 	pline("You can't swim!");
