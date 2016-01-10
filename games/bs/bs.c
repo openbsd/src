@@ -1,4 +1,4 @@
-/*	$OpenBSD: bs.c,v 1.37 2016/01/08 20:19:06 mestre Exp $	*/
+/*	$OpenBSD: bs.c,v 1.38 2016/01/10 14:10:39 mestre Exp $	*/
 /*
  * Copyright (c) 1986, Bruce Holloway
  * All rights reserved.
@@ -512,7 +512,7 @@ regetchar:
 	    prompt(1, "Random-placing your %s", ss->name);
 	    randomplace(PLAYER, ss);
 	    placeship(PLAYER, ss, TRUE);
-	    error((char *)NULL);
+		error(NULL);
 	    ss->placed = TRUE;
 	    break;
 	case 'R':
@@ -524,7 +524,7 @@ regetchar:
 		    placeship(PLAYER, ss, TRUE);
 		    ss->placed = TRUE;
 		}
-	    error((char *)NULL);
+	    error(NULL);
 	    break;
 
 	case 'k': case 'j': case 'h': case 'l':
@@ -544,7 +544,7 @@ regetchar:
 	    if (checkplace(PLAYER, ss, TRUE))
 	    {
 		placeship(PLAYER, ss, TRUE);
-		error((char *)NULL);
+		error(NULL);
 		ss->placed = TRUE;
 	    }
 	    break;

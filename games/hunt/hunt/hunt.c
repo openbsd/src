@@ -1,4 +1,4 @@
-/*	$OpenBSD: hunt.c,v 1.19 2016/01/07 21:37:53 mestre Exp $	*/
+/*	$OpenBSD: hunt.c,v 1.20 2016/01/10 14:10:39 mestre Exp $	*/
 /*	$NetBSD: hunt.c,v 1.8 1998/09/13 15:27:28 hubertf Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
@@ -248,7 +248,7 @@ main(int ac, char **av)
 		if ((enter_status = quit(enter_status)) == Q_QUIT)
 			break;
 	}
-	leave(0, (char *) NULL);
+	leave(0, NULL);
 	return 0;
 }
 
@@ -425,7 +425,7 @@ bad_ver(void)
 static void
 sigterm(int dummy)
 {
-	leave(0, (char *) NULL);
+	leave(0, NULL);
 }
 
 /*
@@ -469,7 +469,7 @@ intr(int dummy)
 				(void) write(Socket, "q", 1);
 				(void) close(Socket);
 			}
-			leave(0, (char *) NULL);
+			leave(0, NULL);
 		}
 		else if (ch == 'n') {
 			(void) signal(SIGINT, intr);

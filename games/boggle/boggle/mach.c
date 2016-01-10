@@ -1,4 +1,4 @@
-/*	$OpenBSD: mach.c,v 1.20 2016/01/10 13:35:09 mestre Exp $	*/
+/*	$OpenBSD: mach.c,v 1.21 2016/01/10 14:10:38 mestre Exp $	*/
 /*	$NetBSD: mach.c,v 1.5 1995/04/28 22:28:48 mycroft Exp $	*/
 
 /*-
@@ -274,7 +274,7 @@ get_line(char *q)
 	}
 	*p = '\0';
 	if (ch == EOF)
-		return((char *) NULL);
+		return(NULL);
 	return(q);
 }
 
