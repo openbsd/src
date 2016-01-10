@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmcreg.h,v 1.7 2015/11/08 12:10:27 jsg Exp $	*/
+/*	$OpenBSD: sdmmcreg.h,v 1.8 2016/01/10 14:11:43 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -67,10 +67,7 @@
 #define MMC_OCR_2_2V_2_3V		(1<<10)
 #define MMC_OCR_2_1V_2_2V		(1<<9)
 #define MMC_OCR_2_0V_2_1V		(1<<8)
-#define MMC_OCR_1_9V_2_0V		(1<<7)
-#define MMC_OCR_1_8V_1_9V		(1<<6)
-#define MMC_OCR_1_7V_1_8V		(1<<5)
-#define MMC_OCR_1_6V_1_7V		(1<<4)
+#define MMC_OCR_1_65V_1_95V		(1<<7)
 
 #define SD_OCR_SDHC_CAP			(1<<30)
 #define SD_OCR_VOL_MASK			0xFF8000 /* bits 23:15 */

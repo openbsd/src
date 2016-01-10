@@ -1,4 +1,4 @@
-/*	$OpenBSD: imxesdhc.c,v 1.12 2015/05/30 03:20:54 jsg Exp $	*/
+/*	$OpenBSD: imxesdhc.c,v 1.13 2016/01/10 14:11:43 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -281,7 +281,7 @@ imxesdhc_attach(struct device *parent, struct device *self, void *args)
 	 * Determine SD bus voltage levels supported by the controller.
 	 */
 	if (caps & SDHC_HOST_CTRL_CAP_VS18)
-		SET(sc->ocr, MMC_OCR_1_7V_1_8V | MMC_OCR_1_8V_1_9V);
+		SET(sc->ocr, MMC_OCR_1_65V_1_95V);
 	if (caps & SDHC_HOST_CTRL_CAP_VS30)
 		SET(sc->ocr, MMC_OCR_2_9V_3_0V | MMC_OCR_3_0V_3_1V);
 	if (caps & SDHC_HOST_CTRL_CAP_VS33)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ommmc.c,v 1.14 2015/05/30 02:17:36 jsg Exp $	*/
+/*	$OpenBSD: ommmc.c,v 1.15 2016/01/10 14:11:43 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2009 Dale Rahn <drahn@openbsd.org>
@@ -353,7 +353,7 @@ ommmc_attach(struct device *parent, struct device *self, void *args)
 	 * Determine SD bus voltage levels supported by the controller.
 	 */
 	if (caps & MMCHS_CAPA_VS18)
-		SET(sc->ocr, MMC_OCR_1_7V_1_8V | MMC_OCR_1_8V_1_9V);
+		SET(sc->ocr, MMC_OCR_1_65V_1_95V);
 	if (caps & MMCHS_CAPA_VS30)
 		SET(sc->ocr, MMC_OCR_2_9V_3_0V | MMC_OCR_3_0V_3_1V);
 	if (caps & MMCHS_CAPA_VS33)
@@ -570,7 +570,7 @@ ommmc_bus_power(sdmmc_chipset_handle_t sch, uint32_t ocr)
 		vdd = MMCHS_HCTL_SDVS_V33;
 	else if (ISSET(ocr, MMC_OCR_2_9V_3_0V | MMC_OCR_3_0V_3_1V))
 		vdd = MMCHS_HCTL_SDVS_V30;
-	else if (ISSET(ocr, MMC_OCR_1_7V_1_8V | MMC_OCR_1_8V_1_9V))
+	else if (ISSET(ocr, MMC_OCR_1_65V_1_95V))
 		vdd = MMCHS_HCTL_SDVS_V18;
 	else {
 		/* Unsupported voltage level requested. */
