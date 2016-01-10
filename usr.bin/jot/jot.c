@@ -1,4 +1,4 @@
-/*	$OpenBSD: jot.c,v 1.26 2015/10/09 01:37:07 deraadt Exp $	*/
+/*	$OpenBSD: jot.c,v 1.27 2016/01/10 01:15:52 tb Exp $	*/
 /*	$NetBSD: jot.c,v 1.3 1994/12/02 20:29:43 pk Exp $	*/
 
 /*-
@@ -40,6 +40,8 @@
 #include <stdbool.h>
 #include <ctype.h>
 #include <limits.h>
+#include <math.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -268,11 +270,45 @@ main(int argc, char *argv[])
 	if (reps == 0)
 		infinity = true;
 	if (randomize) {
-		x = (ender - begin) * (ender > begin ? 1 : -1);
+		bool		use_unif;
+		uint32_t	pow10 = 1;
+		uint32_t	uintx = 0; /* Initialized to make gcc happy. */
+
+		if (prec > 9)	/* pow(10, prec) > UINT32_MAX */
+			errx(1, "requested precision too large");
+
+		while (prec-- > 0)
+			pow10 *= 10;
+
+		if (ender < begin) {
+			x = begin;
+			begin = ender;
+			ender = x;
+		}
+		x = ender - begin;
+
+		/*
+		 * If pow10 * (ender - begin) is an integer, use
+		 * arc4random_uniform().
+		 */
+		use_unif = fmod(pow10 * (ender - begin), 1) == 0;
+		if (use_unif) {
+			uintx = pow10 * (ender - begin);
+			if (uintx >= UINT32_MAX)
+				errx(1, "requested range too large");
+			uintx++;
+		}
+
 		for (i = 1; i <= reps || infinity; i++) {
 			double v;
-			y = arc4random() / ((double)0xffffffff + 1);
-			v = y * x + begin;
+
+			if (use_unif) {
+				y = arc4random_uniform(uintx) / (double)pow10;
+				v = y + begin;
+			} else {
+				y = arc4random() / ((double)0xffffffff + 1);
+				v = y * x + begin;
+			}
 			if (putdata(v, reps == i && !infinity))
 				errx(1, "range error in conversion: %f", v);
 		}
