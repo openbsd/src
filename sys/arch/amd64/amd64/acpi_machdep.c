@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi_machdep.c,v 1.71 2015/08/30 10:05:09 yasuoka Exp $	*/
+/*	$OpenBSD: acpi_machdep.c,v 1.72 2016/01/10 16:59:42 kettenis Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -40,13 +40,16 @@
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
 #include <dev/acpi/acpidev.h>
+#include <dev/acpi/dsdt.h>
 
 #include "isa.h"
 #include "ioapic.h"
 #include "lapic.h"
 
 #if NIOAPIC > 0
+#include <machine/i82093reg.h>
 #include <machine/i82093var.h>
+#include <machine/mpbiosvar.h>
 #endif
 
 #if NLAPIC > 0
@@ -95,6 +98,60 @@ acpi_unmap(struct acpi_mem_map *handle)
 {
 	pmap_kremove(handle->baseva, handle->vsize);
 	uvm_km_free(kernel_map, handle->baseva, handle->vsize);
+}
+
+void *
+acpi_intr_establish(int irq, int flags, int level,
+    int (*handler)(void *), void *arg, const char *what)
+{
+#if NIOAPIC > 0
+	struct ioapic_softc *apic;
+	struct mp_intr_map *map;
+	int type;
+
+	apic = ioapic_find_bybase(irq);
+	if (apic == NULL)
+		return NULL;
+	
+	map = malloc(sizeof(*map), M_DEVBUF, M_NOWAIT | M_ZERO);
+	if (map == NULL)
+		return NULL;
+
+	map->ioapic = apic;
+	map->ioapic_pin = irq - apic->sc_apic_vecbase;
+	map->bus_pin = irq;
+	if (flags & LR_EXTIRQ_POLARITY)
+		map->flags |= (MPS_INTPO_ACTLO << MPS_INTPO_SHIFT);
+	else
+		map->flags |= (MPS_INTPO_ACTHI << MPS_INTPO_SHIFT);
+	if (flags & LR_EXTIRQ_MODE)
+		map->flags |= (MPS_INTTR_EDGE << MPS_INTTR_SHIFT);
+	else
+		map->flags |= (MPS_INTTR_LEVEL << MPS_INTTR_SHIFT);
+
+	map->redir = (IOAPIC_REDLO_DEL_LOPRI << IOAPIC_REDLO_DEL_SHIFT);
+	map->redir = (IOAPIC_REDLO_DEL_LOPRI << IOAPIC_REDLO_DEL_SHIFT);
+	switch ((map->flags >> MPS_INTPO_SHIFT) & MPS_INTPO_MASK) {
+	case MPS_INTPO_DEF:
+	case MPS_INTPO_ACTLO:
+		map->redir |= IOAPIC_REDLO_ACTLO;
+		break;
+	}
+	switch ((map->flags >> MPS_INTTR_SHIFT) & MPS_INTTR_MASK) {
+	case MPS_INTTR_DEF:
+	case MPS_INTTR_LEVEL:
+		map->redir |= IOAPIC_REDLO_LEVEL;
+		break;
+	}
+
+	apic->sc_pins[map->ioapic_pin].ip_map = map;
+
+	type = (flags & LR_EXTIRQ_MODE) ? IST_EDGE : IST_LEVEL;
+	return (intr_establish(-1, (struct pic *)apic, map->ioapic_pin,
+	    type, level, handler, arg, what));
+#else
+	return NULL;
+#endif
 }
 
 u_int8_t *
