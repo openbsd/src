@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.18 2015/12/30 14:59:10 tedu Exp $	*/
+/*	$OpenBSD: extern.h,v 1.19 2016/01/10 14:04:16 schwarze Exp $	*/
 /*	$NetBSD: extern.h,v 1.10 1995/05/21 13:38:27 mycroft Exp $	*/
 
 /*-
@@ -48,8 +48,6 @@ void	 command(const struct kinfo_proc *, VARENT *);
 void	 cputime(const struct kinfo_proc *, VARENT *);
 int	 donlist(void);
 void	 emulname(const struct kinfo_proc *, VARENT *);
-void	 fmt_puts(const char *, int *);
-void	 fmt_putc(int, int *);
 double	 getpcpu(const struct kinfo_proc *);
 double	 getpmem(const struct kinfo_proc *);
 void	 gname(const struct kinfo_proc *, VARENT *);

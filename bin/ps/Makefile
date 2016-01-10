@@ -1,7 +1,7 @@
-#	$OpenBSD: Makefile,v 1.9 2014/07/16 19:57:34 okan Exp $
+#	$OpenBSD: Makefile,v 1.10 2016/01/10 14:04:16 schwarze Exp $
 
 PROG=	ps
-SRCS=	fmt.c keyword.c nlist.c print.c ps.c
+SRCS=	keyword.c nlist.c print.c ps.c utf8.c
 DPADD=	${LIBM} ${LIBKVM}
 LDADD=	-lm -lkvm
 

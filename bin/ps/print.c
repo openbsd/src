@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.65 2015/12/30 14:59:10 tedu Exp $	*/
+/*	$OpenBSD: print.c,v 1.66 2016/01/10 14:04:16 schwarze Exp $	*/
 /*	$NetBSD: print.c,v 1.27 1995/09/29 21:58:12 cgd Exp $	*/
 
 /*-
@@ -55,6 +55,8 @@
 extern kvm_t *kd;
 extern int needenv, needcomm, neednlist, commandonly;
 
+int mbswprint(const char *, int, int);  /* utf8.c */
+
 static char *cmdpart(char *);
 
 #define	min(a,b)	((a) < (b) ? (a) : (b))
@@ -97,6 +99,13 @@ command(const struct kinfo_proc *kp, VARENT *ve)
 	int left, wantspace = 0;
 	char **argv, **p;
 
+	/*
+	 * Determine the available number of display columns.
+	 * Always decrement and check after writing.
+	 * No check is needed before mbswprint()
+	 * and after writing the last data, though.
+	 */
+
 	v = ve->var;
 	if (ve->next != NULL || termwidth != UNLIMITED) {
 		if (ve->next == NULL) {
@@ -106,74 +115,76 @@ command(const struct kinfo_proc *kp, VARENT *ve)
 		} else
 			left = v->width;
 	} else
-		left = -1;
+		left = INT_MAX;
+
 	if (needenv && kd != NULL) {
 		argv = kvm_getenvv(kd, kp, termwidth);
 		if ((p = argv) != NULL) {
 			while (*p) {
-				fmt_puts(*p, &left);
+				if (wantspace) {
+					putchar(' ');
+					left--;
+				}
+				left -= mbswprint(*p, left, 0);
+				if (left == 0)
+					return;
 				p++;
-				if (*p)
-					fmt_putc(' ', &left);
-				else
-					wantspace = 1;
+				wantspace = 1;
 			}
 		}
 	} else
 		argv = NULL;
+
 	if (needcomm) {
 		if (!commandonly) {
 			if (kd != NULL) {
 				argv = kvm_getargv(kd, kp, termwidth);
 				if ((p = argv) != NULL) {
-					if (wantspace) {
-						fmt_putc(' ', &left);
-						wantspace = 0;
-					}
 					while (*p) {
-						fmt_puts(*p, &left);
+						if (wantspace) {
+							putchar(' ');
+							left--;
+						}
+						left -= mbswprint(*p, left, 0);
+						if (left == 0)
+							return;
 						p++;
-						if (*p)
-							fmt_putc(' ', &left);
-						else
-							wantspace = 1;
+						wantspace = 1;
 					}
 				}
 			}
 			if (argv == NULL || argv[0] == '\0' ||
 			    strcmp(cmdpart(argv[0]), kp->p_comm)) {
 				if (wantspace) {
-					fmt_putc(' ', &left);
-					wantspace = 0;
+					putchar(' ');
+					if (--left == 0)
+						return;
 				}
-				fmt_putc('(', &left);
-				fmt_puts(kp->p_comm, &left);
-				fmt_putc(')', &left);
+				putchar('(');
+				left--;
+				left -= mbswprint(kp->p_comm, left, 0);
+				if (left == 0)
+					return;
+				putchar(')');
+				left--;
 			}
 		} else {
 			if (wantspace) {
-				fmt_putc(' ', &left);
-				wantspace = 0;
+				putchar(' ');
+				left--;
 			}
-			fmt_puts(kp->p_comm, &left);
+			left -= mbswprint(kp->p_comm, left, 0);
 		}
 	}
-	if (ve->next && left > 0) {
-		if (wantspace) {
-			fmt_putc(' ', &left);
-			wantspace = 0;
-		}
-		printf("%*s", left, "");
-	}
+	if (ve->next != NULL)
+		while (left-- > 0)
+			putchar(' ');
 }
 
 void
 ucomm(const struct kinfo_proc *kp, VARENT *ve)
 {
-	VAR *v;
-
-	v = ve->var;
-	(void)printf("%-*s", v->width, kp->p_comm);
+	mbswprint(kp->p_comm, ve->var->width, ve->next != NULL);
 }
 
 void
@@ -182,16 +193,11 @@ curwd(const struct kinfo_proc *kp, VARENT *ve)
 	int name[] = { CTL_KERN, KERN_PROC_CWD, kp->p_pid };
 	char path[PATH_MAX];
 	size_t pathlen = sizeof path;
-	int left;
-
-	left = ve->var->width;
 
 	if (!kvm_sysctl_only || sysctl(name, 3, path, &pathlen, NULL, 0) != 0)
 		*path = '\0';
 
-	fmt_puts(path, &left);
-	if (ve->next != NULL && left)
-		(void)printf("%-*s", left, "");
+	mbswprint(path, ve->var->width, ve->next != NULL);
 }
 
 void
@@ -202,9 +208,10 @@ logname(const struct kinfo_proc *kp, VARENT *ve)
 	v = ve->var;
 	if (kp->p_login[0]) {
 		int n = min(v->width, LOGIN_NAME_MAX);
-		(void)printf("%-*.*s", n, n, kp->p_login);
-		if (v->width > n)
-			(void)printf("%*s", v->width - n, "");
+		mbswprint(kp->p_login, n, ve->next != NULL);
+		if (ve->next != NULL)
+			while (n++ < v->width)
+				putchar(' ');
 	} else
 		(void)printf("%-*s", v->width, "-");
 }
@@ -308,41 +315,29 @@ pnice(const struct kinfo_proc *kp, VARENT *ve)
 void
 euname(const struct kinfo_proc *kp, VARENT *ve)
 {
-	VAR *v;
-
-	v = ve->var;
-	(void)printf("%-*s",
-	    (int)v->width, user_from_uid(kp->p_uid, 0));
+	mbswprint(user_from_uid(kp->p_uid, 0), ve->var->width,
+	    ve->next != NULL);
 }
 
 void
 runame(const struct kinfo_proc *kp, VARENT *ve)
 {
-	VAR *v;
-
-	v = ve->var;
-	(void)printf("%-*s",
-	    (int)v->width, user_from_uid(kp->p_ruid, 0));
+	mbswprint(user_from_uid(kp->p_ruid, 0), ve->var->width,
+	    ve->next != NULL);
 }
 
 void
 gname(const struct kinfo_proc *kp, VARENT *ve)
 {
-	VAR *v;
-
-	v = ve->var;
-	(void)printf("%-*s",
-	    (int)v->width, group_from_gid(kp->p_gid, 0));
+	mbswprint(group_from_gid(kp->p_gid, 0), ve->var->width,
+	    ve->next != NULL);
 }
 
 void
 rgname(const struct kinfo_proc *kp, VARENT *ve)
 {
-	VAR *v;
-
-	v = ve->var;
-	(void)printf("%-*s",
-	    (int)v->width, group_from_gid(kp->p_rgid, 0));
+	mbswprint(group_from_gid(kp->p_rgid, 0), ve->var->width,
+	    ve->next != NULL);
 }
 
 void
