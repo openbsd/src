@@ -307,7 +307,8 @@ slot_init(struct slot *s)
 		    s->cmin, s->cmax,
 		    0, dev_pchan - 1,
 		    0, dev_pchan - 1);
-		if (s->afile.fmt != AFILE_FMT_PCM || !aparams_native(&s->afile.par)) {
+		if (s->afile.fmt != AFILE_FMT_PCM ||
+		    !aparams_native(&s->afile.par)) {
 			dec_init(&s->conv, &s->afile.par, slot_nch);
 			s->convbuf =
 			    xmalloc(s->round * slot_nch * sizeof(adata_t));
@@ -422,7 +423,7 @@ slot_del(struct slot *s)
 	free(s);
 }
 
-static int 
+static int
 play_filt_resamp(struct slot *s, void *res_in, void *out, int todo)
 {
 	int i, offs, vol, nch;
@@ -452,7 +453,7 @@ play_filt_resamp(struct slot *s, void *res_in, void *out, int todo)
 	return todo;
 }
 
-static int 
+static int
 play_filt_dec(struct slot *s, void *in, void *out, int todo)
 {
 	void *tmp;
@@ -503,7 +504,7 @@ slot_mix_badd(struct slot *s, adata_t *odata)
 	return done;
 }
 
-static int 
+static int
 rec_filt_resamp(struct slot *s, void *in, void *res_out, int todo)
 {
 	int i, vol, offs, nch;
@@ -532,7 +533,7 @@ rec_filt_resamp(struct slot *s, void *in, void *res_out, int todo)
 	return todo;
 }
 
-static int 
+static int
 rec_filt_enc(struct slot *s, void *in, void *out, int todo)
 {
 	void *tmp;
@@ -1029,7 +1030,8 @@ playrec_cycle(void)
 				n = sio_read(dev_sh, p, todo);
 				if (n == 0) {
 					log_puts(dev_name);
-					log_puts(": failed to read from device\n");
+					log_puts(": failed to read "
+					    "from device\n");
 					return 0;
 				}
 				p += n;
@@ -1111,7 +1113,7 @@ playrec(char *dev, int mode, int bufsz, char *port)
 				continue;
 			log_puts("poll failed\n");
 			panic();
-		}		
+		}
 		if (dev_pstate == DEV_START) {
 			ev = sio_revents(dev_sh, pfds);
 			if (ev & POLLHUP) {
@@ -1273,7 +1275,7 @@ main(int argc, char **argv)
 	port = NULL;
 	dev = NULL;
 	mode = 0;
-	
+
 	while ((c = getopt(argc, argv, "b:c:de:f:h:i:j:no:q:r:t:v:")) != -1) {
 		switch (c) {
 		case 'b':
@@ -1356,7 +1358,7 @@ main(int argc, char **argv)
 		if (mode == 0) {
 			log_puts("at least -i or -o required\n");
 			return 1;
-		} 
+		}
 		if (!playrec(dev, mode, bufsz, port))
 			return 1;
 	}

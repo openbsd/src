@@ -563,7 +563,7 @@ afile_aiff_readhdr(struct afile *f)
 			log_puts(f->path);
 			log_puts(": failed to read chunk header\n");
 			return 0;
-		}		
+		}
 		csize = be32_get(&chunk.size);
 		if (memcmp(chunk.id, aiff_id_comm, 4) == 0) {
 			if (!afile_aiff_readcomm(f, csize, comp, &nfr))
@@ -572,7 +572,8 @@ afile_aiff_readhdr(struct afile *f)
 		} else if (memcmp(chunk.id, aiff_id_data, 4) == 0) {
 			if (!afile_aiff_readdata(f, csize, &offs))
 				return 0;
-			f->startpos = sizeof(form) + pos + sizeof(chunk) + offs;
+			f->startpos = sizeof(form) + pos +
+			    sizeof(chunk) + offs;
 			break;
 		} else {
 #ifdef DEBUG
@@ -927,7 +928,8 @@ afile_open(struct afile *f, char *path, int hdr, int flags,
 			f->fd = STDOUT_FILENO;
 		} else {
 			f->path = path;
-			f->fd = open(f->path, O_WRONLY | O_TRUNC | O_CREAT, 0666);
+			f->fd = open(f->path,
+			    O_WRONLY | O_TRUNC | O_CREAT, 0666);
 			if (f->fd < 0) {
 				log_puts(f->path);
 				log_puts(": failed to create file\n");
@@ -956,7 +958,8 @@ afile_open(struct afile *f, char *path, int hdr, int flags,
 				f->par.msb = 1;
 			f->endpos = f->startpos = sizeof(struct aiff_hdr);
 			f->maxpos = 0x7fffffff;
-			if (!afile_writehdr(f, &dummy, sizeof(struct aiff_hdr)))
+			if (!afile_writehdr(f, &dummy,
+				sizeof(struct aiff_hdr)))
 				goto bad_close;
 		} else if (f->hdr == AFILE_HDR_AU) {
 			f->par.bits = (f->par.bits + 7) & ~7;

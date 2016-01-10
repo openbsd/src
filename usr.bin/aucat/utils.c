@@ -1,4 +1,4 @@
-/*	$OpenBSD: utils.c,v 1.2 2015/11/09 14:44:23 mmcc Exp $	*/
+/*	$OpenBSD: utils.c,v 1.3 2016/01/10 11:06:44 ratchov Exp $	*/
 /*
  * Copyright (c) 2003-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -91,7 +91,7 @@ log_putx(unsigned long num)
 			c += (c < 10) ? '0' : 'a' - 10;
 			LOG_PUTC(c);
 		}
-	} else 
+	} else
 		LOG_PUTC('0');
 }
 
@@ -146,7 +146,7 @@ void *
 xmalloc(size_t size)
 {
 	void *p;
-	
+
 	p = malloc(size);
 	if (p == NULL) {
 		log_puts("failed to allocate ");
