@@ -1,4 +1,4 @@
-/*	$OpenBSD: mach.c,v 1.18 2016/01/03 14:38:16 mestre Exp $	*/
+/*	$OpenBSD: mach.c,v 1.19 2016/01/10 13:18:07 mestre Exp $	*/
 /*	$NetBSD: mach.c,v 1.5 1995/04/28 22:28:48 mycroft Exp $	*/
 
 /*-
@@ -43,9 +43,7 @@
 #include <ctype.h>
 #include <curses.h>
 #include <err.h>
-#include <fcntl.h>
 #include <signal.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <termios.h>
