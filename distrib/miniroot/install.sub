@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.869 2016/01/10 17:44:35 rpe Exp $
+#	$OpenBSD: install.sub,v 1.870 2016/01/10 17:47:14 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -2379,7 +2379,7 @@ if ! $AUTO; then
 	(
 		while :; do
 			lock
-			if test -e /tmp/update && [[ "$(dmesg)" != "$(</tmp/update)" ]]; then
+			if [[ -e /tmp/update && "$(dmesg)" != "$(</tmp/update)" ]]; then
 				dmesg >/tmp/update
 				kill -TERM 2>/dev/null $$ || exit 1
 			fi
@@ -2489,7 +2489,7 @@ elif [[ -z $RESPFILE ]]; then
 	if [[ -f /ai.done ]]; then
 		# Generate unique filename and let rc.firsttime feed it to
 		# whatever mail system we have at hand by then.
-		while _lf=/mnt/var/log/ai.log.$RANDOM && test -e $_lf; do done
+		while _lf=/mnt/var/log/ai.log.$RANDOM && [[ -e $_lf ]]; do done
 		cp /ai.log $_lf
 		chmod 600 $_lf
 		_lf=${_lf#/mnt}
