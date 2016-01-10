@@ -1,4 +1,4 @@
-/*	$OpenBSD: fortune.c,v 1.50 2016/01/07 16:00:32 tb Exp $	*/
+/*	$OpenBSD: fortune.c,v 1.51 2016/01/10 13:35:09 mestre Exp $	*/
 /*	$NetBSD: fortune.c,v 1.8 1995/03/23 08:28:40 cgd Exp $	*/
 
 /*-
@@ -647,7 +647,6 @@ is_dir(char *file)
  *	overhead.  Files which start with ".", or which have "illegal"
  *	suffixes, as contained in suflist[], are ruled out.
  */
-/* ARGSUSED */
 int
 is_fortfile(char *file, char **datp, char **posp, int check_for_offend)
 {

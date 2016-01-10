@@ -1,4 +1,4 @@
-/*	$OpenBSD: canfield.c,v 1.25 2016/01/08 20:23:54 mestre Exp $	*/
+/*	$OpenBSD: canfield.c,v 1.26 2016/01/10 13:35:09 mestre Exp $	*/
 /*	$NetBSD: canfield.c,v 1.7 1995/05/13 07:28:35 jtc Exp $	*/
 
 /*
@@ -1706,7 +1706,6 @@ cleanup(int dummy)
 	refresh();
 	endwin();
 	exit(0);
-	/* NOTREACHED */
 }
 
 /*
@@ -1756,5 +1755,4 @@ main(int argc, char *argv[])
 			cleanupboard();
 	}
 	cleanup(0);
-	/* NOTREACHED */
 }

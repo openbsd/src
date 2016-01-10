@@ -1,4 +1,4 @@
-/*	$OpenBSD: playit.c,v 1.11 2016/01/07 21:37:53 mestre Exp $	*/
+/*	$OpenBSD: playit.c,v 1.12 2016/01/10 13:35:09 mestre Exp $	*/
 /*	$NetBSD: playit.c,v 1.4 1997/10/20 00:37:15 lukem Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
@@ -79,11 +79,9 @@ playit(void)
 
 	if (read(Socket, &version, sizeof version) != sizeof version) {
 		bad_con();
-		/* NOTREACHED */
 	}
 	if (ntohl(version) != HUNT_VERSION) {
 		bad_ver();
-		/* NOTREACHED */
 	}
 	errno = 0;
 	nchar_send = MAX_SEND;
@@ -207,7 +205,6 @@ one_more_time:
 	icnt = read(Socket, ibuf, sizeof ibuf);
 	if (icnt <= 0) {
 		bad_con();
-		/* NOTREACHED */
 	}
 	iptr = ibuf;
 	icnt--;
@@ -397,15 +394,12 @@ do_message(void)
 
 	if (read(Socket, &version, sizeof version) != sizeof version) {
 		bad_con();
-		/* NOTREACHED */
 	}
 	if (ntohl(version) != HUNT_VERSION) {
 		bad_ver();
-		/* NOTREACHED */
 	}
 	if (write(Socket, Send_message, strlen(Send_message)) < 0) {
 		bad_con();
-		/* NOTREACHED */
 	}
 	(void) close(Socket);
 }

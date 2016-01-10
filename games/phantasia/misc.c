@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.20 2016/01/06 14:28:09 mestre Exp $	*/
+/*	$OpenBSD: misc.c,v 1.21 2016/01/10 13:35:10 mestre Exp $	*/
 /*	$NetBSD: misc.c,v 1.2 1995/03/24 03:59:03 cgd Exp $	*/
 
 /*
@@ -812,7 +812,6 @@ leavegame(void)
 	}
 
 	cleanup(TRUE);
-	/* NOTREACHED */
 }
 /**/
 /************************************************************************
@@ -937,10 +936,8 @@ death(char *how)
 		execl(_PATH_GAMEPROG, "phantasia", "-s",
 		    (Wizard ? "-S" : (char *)NULL), (char *)NULL);
 		exit(0);
-		/* NOTREACHED */
 	}
 	cleanup(TRUE);
-	/* NOTREACHED */
 }
 /**/
 /************************************************************************
@@ -1416,7 +1413,6 @@ error(char *whichfile)
 	warn("%s", whichfile);
 	fprintf(stderr, "Please run 'setup' to determine the problem.\n");
 	exit(1);
-	/* NOTREACHED */
 }
 /**/
 /************************************************************************

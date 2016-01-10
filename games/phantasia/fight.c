@@ -1,4 +1,4 @@
-/*	$OpenBSD: fight.c,v 1.13 2016/01/06 14:28:09 mestre Exp $	*/
+/*	$OpenBSD: fight.c,v 1.14 2016/01/10 13:35:09 mestre Exp $	*/
 /*	$NetBSD: fight.c,v 1.2 1995/03/24 03:58:39 cgd Exp $	*/
 
 /*
@@ -164,7 +164,6 @@ encounter(int particular)
 		more(Lines);
 		++flockcnt;
 		longjmp(Fightenv, 1);
-		/* NOTREACHED */
 	} else
 		if (Circle > 1.0
 		    && Curmonster.m_treasuretype > 0
@@ -463,7 +462,6 @@ monsthits(void)
 		more(Lines);
 		Whichmonster = (int) ROLL(70.0, 30.0);
 		longjmp(Fightenv, 1);
-		/* NOTREACHED */
 
 	case SM_BALROG:
 		/* take experience away */
@@ -655,7 +653,6 @@ monsthits(void)
 			    Enemyname);
 			Whichmonster = 55 + ((drandom() > 0.5) ? 22 : 0);
 			longjmp(Fightenv, 1);
-			/* NOTREACHED */
 
 		case SM_TROLL:
 			/* partially regenerate monster */
@@ -917,7 +914,6 @@ throwspell(void)
 				Player.p_mana -= MM_XFORM;
 				Whichmonster = (int) ROLL(0.0, 100.0);
 				longjmp(Fightenv, 1);
-				/* NOTREACHED */
 				}
 			break;
 
@@ -1000,7 +996,6 @@ throwspell(void)
 				Whichmonster = (int) infloat();
 				Whichmonster = MAX(0, MIN(99, Whichmonster));
 				longjmp(Fightenv, 1);
-				/* NOTREACHED */
 			}
 			break;
 		}
@@ -1300,7 +1295,6 @@ awardtreasure(void)
 					(Player.p_maxenergy + Player.p_energy) * 5.5 + Circle * 50.0;
 				    Whichmonster = pickmonster();
 				    longjmp(Fightenv, 1);
-				    /* NOTREACHED */
 
 				case 2:
 				    addstr("It makes you invisible for you next monster.\n");
@@ -1309,7 +1303,6 @@ awardtreasure(void)
 				    Player.p_speed = 1e6;
 				    Whichmonster = pickmonster();
 				    longjmp(Fightenv, 1);
-				    /* NOTREACHED */
 
 				case 3:
 				    addstr("It increases your strength ten fold to fight your next monster.\n");
@@ -1318,7 +1311,6 @@ awardtreasure(void)
 				    Player.p_might *= 10.0;
 				    Whichmonster = pickmonster();
 				    longjmp(Fightenv, 1);
-				    /* NOTREACHED */
 
 				case 4:
 				    addstr("It is a general knowledge scroll.\n");

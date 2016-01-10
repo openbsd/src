@@ -1,4 +1,4 @@
-/*	$OpenBSD: instr.c,v 1.13 2015/12/31 18:10:20 mestre Exp $	*/
+/*	$OpenBSD: instr.c,v 1.14 2016/01/10 13:35:09 mestre Exp $	*/
 /*	$NetBSD: instr.c,v 1.5 1997/07/10 06:47:30 mikel Exp $	*/
 
 /*-
@@ -55,7 +55,6 @@ instructions(void)
 	switch (pid = vfork()) {
 	case -1:
 		err(1, "vfork");
-		/* NOTREACHED */
 	case 0:
 		if (!isatty(1))
 			pager = "/bin/cat";
@@ -67,7 +66,6 @@ instructions(void)
 			err(1, "dup2");
 		execl(_PATH_BSHELL, "sh", "-c", pager, (char *)NULL);
 		err(1, "exec sh -c %s", pager);
-		/* NOTREACHED */
 	default:
 		do {
 			pid = waitpid(pid, &pstat, 0);

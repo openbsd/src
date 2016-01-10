@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.16 2016/01/08 13:40:05 tb Exp $	*/
+/*	$OpenBSD: main.c,v 1.17 2016/01/10 13:35:09 mestre Exp $	*/
 /*	$NetBSD: main.c,v 1.3 1995/03/23 08:32:50 cgd Exp $	*/
 
 /*
@@ -87,7 +87,6 @@ main(int argc, char *argv[])
 		playgame();
 		Average = (Average * (Wordnum - 1) + Errors) / Wordnum;
 	}
-	/* NOTREACHED */
 }
 
 /*

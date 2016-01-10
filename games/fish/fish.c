@@ -1,4 +1,4 @@
-/*	$OpenBSD: fish.c,v 1.21 2016/01/04 11:58:35 mestre Exp $	*/
+/*	$OpenBSD: fish.c,v 1.22 2016/01/10 13:35:09 mestre Exp $	*/
 /*	$NetBSD: fish.c,v 1.3 1995/03/23 08:28:18 cgd Exp $	*/
 
 /*-
@@ -135,7 +135,6 @@ istart:		for (;;) {
 				goodmove(COMPUTER, move, comphand, userhand);
 		}
 	}
-	/* NOTREACHED */
 }
 
 int
@@ -190,7 +189,6 @@ usermove(void)
 			(void)printf("No cheating!\n");
 		(void)printf("Guess again.\n");
 	}
-	/* NOTREACHED */
 }
 
 int
@@ -247,7 +245,6 @@ promove(void)
 		for (i = 0; i < RANKS; ++i)
 			asked[i] = 0;
 	}
-	/* NOTREACHED */
 }
 
 int
@@ -445,7 +442,6 @@ getans(const char *prompt)
 		(void)printf(
 "I don't understand your answer; please enter 'y' or 'n'!\n");
 	}
-	/* NOTREACHED */
 }
 
 void

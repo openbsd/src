@@ -1,4 +1,4 @@
-/*	$OpenBSD: wump.c,v 1.31 2016/01/07 16:00:34 tb Exp $	*/
+/*	$OpenBSD: wump.c,v 1.32 2016/01/10 13:35:10 mestre Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -265,7 +265,6 @@ quiver holds %d custom super anti-evil Wumpus arrows.  Good luck.\n",
 				cave_init();
 		}
 	}
-	/* NOTREACHED */
 }
 
 void
@@ -802,7 +801,6 @@ getans(const char *prompt)
 		(void)printf(
 "I don't understand your answer; please enter 'y' or 'n'!\n");
 	}
-	/* NOTREACHED */
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.8 2016/01/06 14:28:09 mestre Exp $	*/
+/*	$OpenBSD: io.c,v 1.9 2016/01/10 13:35:09 mestre Exp $	*/
 /*	$NetBSD: io.c,v 1.2 1995/03/24 03:58:50 cgd Exp $	*/
 
 /*
@@ -267,13 +267,11 @@ interrupt(void)
 		ch = getanswer("NY", FALSE);
 		if (ch == 'Y')
 			death("Bailing out");
-		/* NOTREACHED */
 	} else {
 		mvaddstr(4, 0, "Do you really want to quit ? ");
 		ch = getanswer("NY", FALSE);
 		if (ch == 'Y')
 			leavegame();
-		/* NOTREACHED */
 	}
 
 	mvaddstr(4, 0, line);	/* restore data on screen */

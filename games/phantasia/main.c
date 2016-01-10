@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.20 2016/01/08 13:40:05 tb Exp $	*/
+/*	$OpenBSD: main.c,v 1.21 2016/01/10 13:35:09 mestre Exp $	*/
 /*	$NetBSD: main.c,v 1.3 1995/04/24 12:24:37 cgd Exp $	*/
 
 /*
@@ -126,12 +126,10 @@ main(int argc, char **argv)
 		case 'a':	/* all users */
 			activelist();
 			cleanup(TRUE);
-			/* NOTREACHED */
 
 		case 'p':	/* purge old players */
 			purgeoldplayers();
 			cleanup(TRUE);
-			/* NOTREACHED */
 
 		case 'S':	/* set 'Wizard' */
 			Wizard = !getuid();
@@ -144,24 +142,20 @@ main(int argc, char **argv)
 		case 'm':	/* monsters */
 			monstlist();
 			cleanup(TRUE);
-			/* NOTREACHED */
 
 		case 'b':	/* scoreboard */
 			scorelist();
 			cleanup(TRUE);
-			/* NOTREACHED */
 		}
 
 	if (!isatty(0))		/* don't let non-tty's play */
 		cleanup(TRUE);
-	/* NOTREACHED */
 
 	playinit();		/* set up to catch signals, init curses */
 
 	if (examine) {
 		changestats(FALSE);
 		cleanup(TRUE);
-		/* NOTREACHED */
 	}
 	if (!noheader) {
 		titlelist();
@@ -169,7 +163,6 @@ main(int argc, char **argv)
 	}
 	if (headeronly)
 		cleanup(TRUE);
-	/* NOTREACHED */
 
 	do
 		/* get the player structure filled */
@@ -185,7 +178,6 @@ main(int argc, char **argv)
 
 		case 'Q':
 			cleanup(TRUE);
-			/* NOTREACHED */
 
 		default:
 			Fileloc = rollnewplayer();
@@ -362,19 +354,15 @@ initialstate(void)
 	/* open some files */
 	if ((Playersfp = fopen(_PATH_PEOPLE, "r+")) == NULL)
 		error(_PATH_PEOPLE);
-	/* NOTREACHED */
 
 	if ((Monstfp = fopen(_PATH_MONST, "r+")) == NULL)
 		error(_PATH_MONST);
-	/* NOTREACHED */
 
 	if ((Messagefp = fopen(_PATH_MESS, "r")) == NULL)
 		error(_PATH_MESS);
-	/* NOTREACHED */
 
 	if ((Energyvoidfp = fopen(_PATH_VOID, "r+")) == NULL)
 		error(_PATH_VOID);
-	/* NOTREACHED */
 }
 /**/
 /************************************************************************
@@ -628,7 +616,6 @@ procmain(void)
 
 	case '5':		/* good-bye */
 		leavegame();
-		/* NOTREACHED */
 
 	case '6':		/* cloak */
 		if (Player.p_level < MEL_CLOAK || Player.p_magiclvl < ML_CLOAK)
@@ -928,10 +915,8 @@ recallplayer(void)
 						Player.p_status = S_HUNGUP;
 						writerecord(&Player, loc);
 						cleanup(TRUE);
-						/* NOTREACHED */
 					}
 					death("Stupidity");
-					/* NOTREACHED */
 				}
 				return (loc);
 			} else

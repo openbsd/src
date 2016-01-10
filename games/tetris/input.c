@@ -1,4 +1,4 @@
-/*	$OpenBSD: input.c,v 1.16 2016/01/04 17:33:24 mestre Exp $	*/
+/*	$OpenBSD: input.c,v 1.17 2016/01/10 13:35:10 mestre Exp $	*/
 /*    $NetBSD: input.c,v 1.3 1996/02/06 22:47:33 jtc Exp $    */
 
 /*-
@@ -93,7 +93,6 @@ again:
 		if (errno == EINTR)
 			goto again;
 		stop("poll failed, help");
-		/* NOTREACHED */
 
 	case 0:	/* timed out */
 		tvp->tv_sec = 0;

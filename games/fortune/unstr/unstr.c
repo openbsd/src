@@ -1,4 +1,4 @@
-/*	$OpenBSD: unstr.c,v 1.13 2016/01/07 16:00:32 tb Exp $	*/
+/*	$OpenBSD: unstr.c,v 1.14 2016/01/10 13:35:09 mestre Exp $	*/
 /*	$NetBSD: unstr.c,v 1.3 1995/03/23 08:29:00 cgd Exp $	*/
 
 /*-
@@ -65,7 +65,6 @@ FILE	*Inf, *Dataf;
 void getargs(char *[]);
 void order_unstr(STRFILE *);
 
-/* ARGSUSED */
 int
 main(int ac, char *av[])
 {

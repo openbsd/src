@@ -1,4 +1,4 @@
-/*	$OpenBSD: mach.c,v 1.19 2016/01/10 13:18:07 mestre Exp $	*/
+/*	$OpenBSD: mach.c,v 1.20 2016/01/10 13:35:09 mestre Exp $	*/
 /*	$NetBSD: mach.c,v 1.5 1995/04/28 22:28:48 mycroft Exp $	*/
 
 /*-
@@ -244,7 +244,6 @@ get_line(char *q)
 		case '\003':			/* <^c> */
 			cleanup();
 			exit(0);
-			/*NOTREACHED*/
 		case '\004':			/* <^d> */
 			done = 1;
 			ch = EOF;

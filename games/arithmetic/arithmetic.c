@@ -1,4 +1,4 @@
-/*	$OpenBSD: arithmetic.c,v 1.23 2016/01/03 14:38:16 mestre Exp $	*/
+/*	$OpenBSD: arithmetic.c,v 1.24 2016/01/10 13:35:09 mestre Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -135,7 +135,6 @@ main(int argc, char *argv[])
 				intr(0);   /* Print score and exit */
 		showstats();
 	}
-	/* NOTREACHED */
 }
 
 /* Handle interrupt character.  Print score and exit. */
@@ -340,7 +339,6 @@ getrandom(int maxval, int op, int operand)
 	 * obscure message.
 	 */
 	errx(1, "bug: inconsistent penalties.");
-	/* NOTREACHED */
 }
 
 /* Return an index for the character op, which is one of [+-x/]. */
