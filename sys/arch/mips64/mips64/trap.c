@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.111 2015/12/31 04:25:51 visa Exp $	*/
+/*	$OpenBSD: trap.c,v 1.112 2016/01/10 10:22:56 visa Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -285,24 +285,14 @@ itsa(struct trap_frame *trapframe, struct cpu_info *ci, struct proc *p,
 			paddr_t pa;
 			vm_page_t pg;
 
-			mtx_enter(&pmap_kernel()->pm_pte_mtx);
 			pte = kvtopte(trapframe->badvaddr);
 			entry = *pte;
-#ifdef MULTIPROCESSOR
-			/* Another CPU might have changed the mapping. */
-			if (!(entry & PG_V) || (entry & PG_M)) {
-				pmap_update_kernel_page(
-				    trapframe->badvaddr & ~PGOFSET, entry);
-				mtx_leave(&pmap_kernel()->pm_pte_mtx);
-				return;
-			}
-#else
+#ifdef DIAGNOSTIC
 			if (!(entry & PG_V) || (entry & PG_M))
 				panic("trap: ktlbmod: invalid pte");
 #endif
 			if (pmap_is_page_ro(pmap_kernel(),
 			    trunc_page(trapframe->badvaddr), entry)) {
-				mtx_leave(&pmap_kernel()->pm_pte_mtx);
 				/* write to read only page in the kernel */
 				ftype = PROT_WRITE;
 				pcb = &p->p_addr->u_pcb;
@@ -310,6 +300,7 @@ itsa(struct trap_frame *trapframe, struct cpu_info *ci, struct proc *p,
 			}
 			entry |= PG_M;
 			*pte = entry;
+			KERNEL_LOCK();
 			pmap_update_kernel_page(trapframe->badvaddr & ~PGOFSET,
 			    entry);
 			pa = pfn_to_pad(entry);
@@ -317,7 +308,7 @@ itsa(struct trap_frame *trapframe, struct cpu_info *ci, struct proc *p,
 			if (pg == NULL)
 				panic("trap: ktlbmod: unmanaged page");
 			pmap_set_modify(pg);
-			mtx_leave(&pmap_kernel()->pm_pte_mtx);
+			KERNEL_UNLOCK();
 			return;
 		}
 		/* FALLTHROUGH */
@@ -329,26 +320,16 @@ itsa(struct trap_frame *trapframe, struct cpu_info *ci, struct proc *p,
 		vm_page_t pg;
 		pmap_t pmap = p->p_vmspace->vm_map.pmap;
 
-		mtx_enter(&pmap->pm_pte_mtx);
 		if (!(pte = pmap_segmap(pmap, trapframe->badvaddr)))
 			panic("trap: utlbmod: invalid segmap");
 		pte += uvtopte(trapframe->badvaddr);
 		entry = *pte;
-#ifdef MULTIPROCESSOR
-		/* Another CPU might have changed the mapping. */
-		if (!(entry & PG_V) || (entry & PG_M)) {
-			pmap_update_user_page(pmap,
-			    (trapframe->badvaddr & ~PGOFSET), entry);
-			mtx_leave(&pmap->pm_pte_mtx);
-			return;
-		}
-#else
+#ifdef DIAGNOSTIC
 		if (!(entry & PG_V) || (entry & PG_M))
 			panic("trap: utlbmod: invalid pte");
 #endif
 		if (pmap_is_page_ro(pmap,
 		    trunc_page(trapframe->badvaddr), entry)) {
-			mtx_leave(&pmap->pm_pte_mtx);
 			/* write to read only page */
 			ftype = PROT_WRITE;
 			pcb = &p->p_addr->u_pcb;
@@ -356,6 +337,7 @@ itsa(struct trap_frame *trapframe, struct cpu_info *ci, struct proc *p,
 		}
 		entry |= PG_M;
 		*pte = entry;
+		KERNEL_LOCK();
 		pmap_update_user_page(pmap, (trapframe->badvaddr & ~PGOFSET), 
 		    entry);
 		pa = pfn_to_pad(entry);
@@ -363,7 +345,7 @@ itsa(struct trap_frame *trapframe, struct cpu_info *ci, struct proc *p,
 		if (pg == NULL)
 			panic("trap: utlbmod: unmanaged page");
 		pmap_set_modify(pg);
-		mtx_leave(&pmap->pm_pte_mtx);
+		KERNEL_UNLOCK();
 		return;
 	    }
 
