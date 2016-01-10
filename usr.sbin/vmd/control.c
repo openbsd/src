@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.5 2015/12/05 17:30:34 claudio Exp $	*/
+/*	$OpenBSD: control.c,v 1.6 2016/01/10 10:01:07 jsg Exp $	*/
 
 /*
  * Copyright (c) 2010-2015 Reyk Floeter <reyk@openbsd.org>
@@ -327,7 +327,6 @@ control_dispatch_imsg(int fd, short event, void *arg)
 				ret = EPERM;
 				goto fail;
 			}
-			break;
 			break;
 		}
 
