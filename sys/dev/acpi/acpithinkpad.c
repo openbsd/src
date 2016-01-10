@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpithinkpad.c,v 1.50 2015/12/17 12:17:14 kettenis Exp $	*/
+/*	$OpenBSD: acpithinkpad.c,v 1.51 2016/01/10 16:30:43 stsp Exp $	*/
 /*
  * Copyright (c) 2008 joshua stein <jcs@openbsd.org>
  *
@@ -84,6 +84,8 @@
 #define	THINKPAD_ADAPTIVE_BACK		0x1111
 #define THINKPAD_PORT_REPL_DOCKED	0x4010
 #define THINKPAD_PORT_REPL_UNDOCKED	0x4011
+#define	THINKPAD_TABLET_DOCKED		0x4012
+#define	THINKPAD_TABLET_UNDOCKED	0x4013
 #define	THINKPAD_LID_OPEN		0x5001
 #define	THINKPAD_LID_CLOSED		0x5002
 #define	THINKPAD_TABLET_SCREEN_NORMAL	0x500a
@@ -437,6 +439,8 @@ thinkpad_hotkey(struct aml_node *node, int notify_type, void *arg)
 		case THINKPAD_LID_OPEN:
 		case THINKPAD_PORT_REPL_DOCKED:
 		case THINKPAD_PORT_REPL_UNDOCKED:
+		case THINKPAD_TABLET_DOCKED:
+		case THINKPAD_TABLET_UNDOCKED:
 		case THINKPAD_POWER_CHANGED:
 		case THINKPAD_SWITCH_WIRELESS:
 		case THINKPAD_TABLET_PEN_INSERTED:
