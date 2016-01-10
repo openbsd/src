@@ -25,6 +25,17 @@
  * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <sys/types.h>
+#include <sys/dkio.h>
+#include <sys/disklabel.h>
+#include <sys/ioctl.h>
+#include <sys/stat.h>
+
+#include <err.h>
+#include <limits.h>
+#include <unistd.h>
+#include <util.h>
+
 // for *printf()
 #include <stdio.h>
 
@@ -92,7 +103,7 @@ int add_data_to_map(struct dpme *, long, partition_map_header *);
 int coerce_block0(partition_map_header *map);
 int contains_driver(partition_map *entry);
 void combine_entry(partition_map *entry);
-long compute_device_size(partition_map_header *map, partition_map_header *oldmap);
+long compute_device_size(char *name);
 DPME* create_data(const char *name, const char *dptype, u32 base, u32 length);
 void delete_entry(partition_map *entry);
 char *get_HFS_name(partition_map *entry, int *kind);
@@ -188,7 +199,7 @@ open_partition_map(char *name, int *valid_file, int ask_logical_size)
     }
     map->blocks_in_map = 0;
     map->maximum_in_map = -1;
-    map->media_size = compute_device_size(map, map);
+    map->media_size = compute_device_size(map->name);
     sync_device_size(map);
 
     if (read_partition_map(map) < 0) {
@@ -486,7 +497,7 @@ create_partition_map(char *name, partition_map_header *oldmap)
     map->blocks_in_map = 0;
     map->maximum_in_map = -1;
 
-    number = compute_device_size(map, oldmap);
+    number = compute_device_size(map->name);
     if (interactive) {
 	printf("size of 'device' is %lu blocks (%d byte blocks): ",
 		number, map->logical_block);
@@ -821,110 +832,31 @@ renumber_disk_addresses(partition_map_header *map)
 
 
 long
-compute_device_size(partition_map_header *map, partition_map_header *oldmap)
+compute_device_size(char *name)
 {
-#ifdef TEST_COMPUTE
-    unsigned long length;
-    struct hd_geometry geometry;
-    struct stat info;
-    loff_t pos;
-#endif
-    char* data;
-    unsigned long l, r, x = 0;
-    long long size;
-    int valid = 0;
-#ifdef TEST_COMPUTE
-    int fd;
+	struct disklabel dl;
+	struct stat st;
+	u_int64_t sz;
+	int fd;
 
-    fd = map->fd->fd;
-    printf("\n");
-    if (fstat(fd, &info) < 0) {
-	printf("stat of device failed\n");
-    } else {
-	printf("stat: mode = 0%o, type=%s\n", info.st_mode,
-		(S_ISREG(info.st_mode)? "Regular":
-		(S_ISBLK(info.st_mode)?"Block":"Other")));
-	printf("size = %d, blocks = %d\n",
-		info.st_size, info.st_size/map->logical_block);
-    }
+	fd = opendev(name, O_RDONLY, OPENDEV_PART, NULL);
+	if (fd == -1)
+		error(errno, "can't open %s", name);
 
-    if (ioctl(fd, BLKGETSIZE, &length) < 0) {
-	printf("get device size failed\n");
-    } else {
-	printf("BLKGETSIZE:size in blocks = %u\n", length);
-    }
+	if (fstat(fd, &st) == -1)
+		err(1, "can't fstat %s", name);
+	if (!S_ISCHR(st.st_mode) && !S_ISREG(st.st_mode))
+		errx(1, "%s is not a character device or a regular file", name);
+	if (ioctl(fd, DIOCGPDINFO, &dl) == -1)
+		err(1, "can't get disklabel for %s", name);
 
-    if (ioctl(fd, HDIO_GETGEO, &geometry) < 0) {
-	printf("get device geometry failed\n");
-    } else {
-	printf("HDIO_GETGEO: heads=%d, sectors=%d, cylinders=%d, start=%d,  total=%d\n",
-		geometry.heads, geometry.sectors,
-		geometry.cylinders, geometry.start,
-		geometry.heads*geometry.sectors*geometry.cylinders);
-    }
+	close(fd);
 
-    if ((pos = llseek(fd, (loff_t)0, SEEK_END)) < 0) {
-	printf("llseek to end of device failed\n");
-    } else if ((pos = llseek(fd, (loff_t)0, SEEK_CUR)) < 0) {
-	printf("llseek to end of device failed on second try\n");
-    } else {
-	printf("llseek: pos = %d, blocks=%d\n", pos, pos/map->logical_block);
-    }
-#endif
+	sz = DL_GETDSIZE(&dl);
+	if (sz > LONG_MAX)
+		sz = LONG_MAX;
 
-    if (cflag == 0 && oldmap != NULL && oldmap->misc->sbBlkCount != 0) {
-	return (oldmap->misc->sbBlkCount
-		* (oldmap->physical_block / map->logical_block));
-    }
-
-    size = media_total_size(map->m);
-    if (size != 0) {
-    	return (long)(size / map->logical_block);
-    }
-
-    // else case
-
-    data = malloc(PBLOCK_SIZE);
-    if (data == NULL) {
-	error(errno, "can't allocate memory for try buffer");
-	x = 0;
-    } else {
-	// double till off end
-	l = 0;
-	r = 1024;
-	while (read_block(map, r, data) != 0) {
-	    l = r;
-	    if (r <= 1024) {
-		r = r * 1024;
-	    } else {
-		r = r * 2;
-	    }
-	    if (r >= 0x80000000) {
-		r = 0xFFFFFFFE;
-		break;
-	    }
-	}
-	// binary search for end
-	while (l <= r) {
-	    x = (r - l) / 2 + l;
-	    if ((valid = read_block(map, x, data)) != 0) {
-		l = x + 1;
-	    } else {
-		if (x > 0) {
-		    r = x - 1;
-		} else {
-		    break;
-		}
-	    }
-	}
-	if (valid != 0) {
-	    x = x + 1;
-	}
-	// printf("size in blocks = %d\n", x);
-	free(data);
-    }
-
-    return x;
+	return ((long)sz);
 }
 
 
