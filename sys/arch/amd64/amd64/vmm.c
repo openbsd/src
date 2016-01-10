@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.30 2016/01/08 11:20:58 reyk Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.31 2016/01/10 18:18:25 stefan Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -601,7 +601,7 @@ vm_writepage(struct vm_writepage_params *vwp)
 	if (!pmap_extract(vm->vm_map->pmap, vw_page, &host_pa)) {
 		/* page not present */
 		ret = uvm_fault(vm->vm_map, vw_page,
-		    PROT_WRITE, PROT_READ | PROT_WRITE | PROT_EXEC);
+		    VM_FAULT_INVALID, PROT_READ | PROT_WRITE | PROT_EXEC);
 		if (ret) {
 			free(pagedata, M_DEVBUF, PAGE_SIZE);
 			rw_exit_read(&vmm_softc->vm_lock);
@@ -3032,18 +3032,19 @@ int
 vmx_get_guest_faulttype(void)
 {
 	uint64_t exit_qualification;
+	uint64_t presentmask = IA32_VMX_EPT_FAULT_WAS_READABLE |
+	    IA32_VMX_EPT_FAULT_WAS_WRITABLE | IA32_VMX_EPT_FAULT_WAS_EXECABLE;
+	uint64_t protmask = IA32_VMX_EPT_FAULT_READ |
+	    IA32_VMX_EPT_FAULT_WRITE | IA32_VMX_EPT_FAULT_EXEC;
 
 	if (vmx_get_exit_qualification(&exit_qualification))
-		return (EINVAL);
+		return (-1);
 
-	if (exit_qualification & IA32_VMX_EPT_FAULT_WRITE)
-		return (PROT_WRITE);
-	else if (exit_qualification & IA32_VMX_EPT_FAULT_READ)
-		return (PROT_READ);
-	else if (exit_qualification & IA32_VMX_EPT_FAULT_EXEC)
-		return (PROT_EXEC);
-	else
-		return (EINVAL);
+	if ((exit_qualification & presentmask) == 0)
+		return VM_FAULT_INVALID;
+	if (exit_qualification & protmask)
+		return VM_FAULT_PROTECT;
+	return (-1);
 }
 
 /*
@@ -3056,7 +3057,7 @@ int
 svm_get_guest_faulttype(void)
 {
 	/* XXX removed due to rot */
-	return (EINVAL);
+	return (-1);
 }
 
 /*
@@ -3069,12 +3070,10 @@ int
 vmx_fault_page(struct vcpu *vcpu, paddr_t gpa)
 {
 	int fault_type, ret;
-	vaddr_t kva;
-	paddr_t host_pa;
 	struct pmap *pmap;
 
 	fault_type = vmx_get_guest_faulttype();
-	if (fault_type == EINVAL) {
+	if (fault_type == -1) {
 		printf("vmx_fault_page: invalid fault type\n");
 		return (EINVAL);
 	}
@@ -3083,27 +3082,7 @@ vmx_fault_page(struct vcpu *vcpu, paddr_t gpa)
 	    PROT_READ | PROT_WRITE | PROT_EXEC);
 	if (!ret) {
 		pmap = vcpu->vc_parent->vm_map->pmap;
-		if (!vmx_fix_ept_pte(pmap, gpa)) {
-			if (pmap_extract(pmap, (vaddr_t)gpa, &host_pa)) {
-				kva = (vaddr_t)km_alloc(PAGE_SIZE, &kv_any, 
-				    &kp_none, &kd_nowait);
-				if (kva) {
-					pmap_kenter_pa(kva, host_pa,
-					    PROT_READ | PROT_WRITE);
-					bzero((void *)kva, PAGE_SIZE);
-					pmap_kremove(kva, PAGE_SIZE);
-					km_free((void *)kva, PAGE_SIZE, &kv_any,
-					    &kp_none);
-					vcpu->vc_parent->vm_used_size += PAGE_SIZE;
-				} else {
-					printf("vmx_fault_page: kva failure\n");
-					ret = ENOMEM;
-				}
-			} else {
-				printf("vmx_fault_page: extract failure\n");
-				ret = EFAULT;
-			}
-		} else {
+		if (vmx_fix_ept_pte(pmap, gpa)) {
 			printf("vmx_fault_page: ept fixup failure\n");
 			ret = EINVAL;
 		}

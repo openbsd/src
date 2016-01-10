@@ -1,4 +1,4 @@
-/*	$OpenBSD: specialreg.h,v 1.39 2015/12/07 06:34:14 jsg Exp $	*/
+/*	$OpenBSD: specialreg.h,v 1.40 2016/01/10 18:18:25 stefan Exp $	*/
 /*	$NetBSD: specialreg.h,v 1.1 2003/04/26 18:39:48 fvdl Exp $	*/
 /*	$NetBSD: x86/specialreg.h,v 1.2 2003/04/25 21:54:30 fvdl Exp $	*/
 
@@ -1019,6 +1019,10 @@
 #define IA32_VMX_EPT_FAULT_READ		(1ULL << 0)
 #define IA32_VMX_EPT_FAULT_WRITE	(1ULL << 1)
 #define IA32_VMX_EPT_FAULT_EXEC		(1ULL << 2)
+
+#define IA32_VMX_EPT_FAULT_WAS_READABLE (1ULL << 3)
+#define IA32_VMX_EPT_FAULT_WAS_WRITABLE	(1ULL << 4)
+#define IA32_VMX_EPT_FAULT_WAS_EXECABLE (1ULL << 5)
 
 #define IA32_VMX_MSR_LIST_SIZE_MASK	(3ULL << 25)
 
