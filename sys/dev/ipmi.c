@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipmi.c,v 1.79 2016/01/09 05:51:54 uebayasi Exp $ */
+/*	$OpenBSD: ipmi.c,v 1.80 2016/01/10 14:17:00 uebayasi Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave
@@ -1784,6 +1784,8 @@ ipmi_watchdog(void *arg, int period)
 	uint16_t timo = htole16(period * 10);
 
 	memcpy(&wdog[IPMI_SET_WDOG_TIMOL], &timo, 2);
+	wdog[IPMI_SET_WDOG_TIMER] &= ~IPMI_WDOG_DONTSTOP;
+	wdog[IPMI_SET_WDOG_TIMER] |= (period == 0) ? 0 : IPMI_WDOG_DONTSTOP;
 	wdog[IPMI_SET_WDOG_ACTION] &= ~IPMI_WDOG_MASK;
 	wdog[IPMI_SET_WDOG_ACTION] |= (period == 0) ? IPMI_WDOG_DISABLED :
 	    IPMI_WDOG_REBOOT;
