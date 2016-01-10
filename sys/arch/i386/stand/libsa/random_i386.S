@@ -1,3 +1,5 @@
+/*	$OpenBSD: random_i386.S,v 1.8 2016/01/10 22:30:23 naddy Exp $	*/
+
 /*
  * Copyright (c) 2013 Joel Sing <jsing@openbsd.org>
  *
@@ -46,9 +48,9 @@ ENTRY(mdrandom)
 	cpuid
 	cmpl	$0x756e6547, %ebx	// "Genu"
 	jne	done
-	cmpl	$0x6c65746e, %ecx	// "ineI"
+	cmpl	$0x49656e69, %edx	// "ineI"
 	jne	done
-	cmpl	$0x49656e69, %edx	// "ntel"
+	cmpl	$0x6c65746e, %ecx	// "ntel"
 	jne	done
 
 	// CPUID leaf = 1, subleaf = 0

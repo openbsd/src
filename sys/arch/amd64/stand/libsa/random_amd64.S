@@ -1,3 +1,5 @@
+/*	$OpenBSD: random_amd64.S,v 1.3 2016/01/10 22:30:23 naddy Exp $	*/
+
 /*
  * Copyright (c) 2013 Joel Sing <jsing@openbsd.org>
  *
@@ -46,9 +48,9 @@ ENTRY(mdrandom)
 	cpuid
 	cmp	$0x756e6547, %ebx	// "Genu"
 	jne	done
-	cmp	$0x6c65746e, %ecx	// "ineI"
+	cmp	$0x49656e69, %edx	// "ineI"
 	jne	done
-	cmp	$0x49656e69, %edx	// "ntel"
+	cmp	$0x6c65746e, %ecx	// "ntel"
 	jne	done
 
 	// CPUID leaf = 1, subleaf = 0
