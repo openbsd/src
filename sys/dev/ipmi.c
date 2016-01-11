@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipmi.c,v 1.81 2016/01/10 14:44:09 uebayasi Exp $ */
+/*	$OpenBSD: ipmi.c,v 1.82 2016/01/11 12:52:24 uebayasi Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave
@@ -112,6 +112,7 @@ int	ipmi_enabled = 0;
 #define IPMI_ENTITY_PWRSUPPLY		0x0A
 
 #define IPMI_INVALID_SENSOR		(1L << 5)
+#define IPMI_DISABLED_SENSOR		(1L << 6)
 
 #define IPMI_SDR_TYPEFULL		1
 #define IPMI_SDR_TYPECOMPACT		2
@@ -1383,10 +1384,9 @@ read_sensor(struct ipmi_softc *sc, struct ipmi_sensor *psensor)
 	dbg_printf(10, "values=%.2x %.2x %.2x %.2x %s\n",
 	    data[0],data[1],data[2],data[3], psensor->i_sensor.desc);
 	psensor->i_sensor.flags &= ~SENSOR_FINVALID;
-	if (data[1] & IPMI_INVALID_SENSOR) {
-		/* Check if sensor is valid */
+	if ((data[1] & IPMI_INVALID_SENSOR) ||
+	    ((data[1] & IPMI_DISABLED_SENSOR) == 0 && data[0] == 0))
 		psensor->i_sensor.flags |= SENSOR_FINVALID;
-	}
 	psensor->i_sensor.status = ipmi_sensor_status(sc, psensor, data);
 	rv = 0;
 done:
