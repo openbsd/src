@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipmi.c,v 1.84 2016/01/11 13:12:50 uebayasi Exp $ */
+/*	$OpenBSD: ipmi.c,v 1.85 2016/01/11 14:08:58 uebayasi Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave
@@ -173,8 +173,8 @@ int	bmc_io_wait_cold(struct ipmi_softc *, int, u_int8_t, u_int8_t,
     const char *);
 void	_bmc_io_wait(void *);
 
-void	*bt_buildmsg(struct ipmi_softc *, int, int, int, const void *, int *);
-void	*cmn_buildmsg(struct ipmi_softc *, int, int, int, const void *, int *);
+void	*bt_buildmsg(struct ipmi_cmd *);
+void	*cmn_buildmsg(struct ipmi_cmd *);
 
 int	getbits(u_int8_t *, int, int);
 int	ipmi_sensor_type(int, int, int);
@@ -937,23 +937,24 @@ ipmi_smbios_probe(struct smbios_ipmi *pipmi, struct ipmi_attach_args *ia)
  * This is used by BT protocol
  */
 void *
-bt_buildmsg(struct ipmi_softc *sc, int nfLun, int cmd, int len,
-    const void *data, int *txlen)
+bt_buildmsg(struct ipmi_cmd *c)
 {
+	struct ipmi_softc *sc = c->c_sc;
 	u_int8_t *buf;
 
 	/* Block transfer needs 4 extra bytes: length/netfn/seq/cmd + data */
-	*txlen = len + 4;
-	buf = malloc(*txlen, M_DEVBUF, M_NOWAIT);
+	buf = malloc(c->c_txlen + 4, M_DEVBUF, M_NOWAIT);
 	if (buf == NULL)
 		return (NULL);
 
-	buf[IPMI_BTMSG_LEN] = len + 3;
-	buf[IPMI_BTMSG_NFLN] = nfLun;
+	buf[IPMI_BTMSG_LEN] = c->c_txlen + 3;
+	buf[IPMI_BTMSG_NFLN] = NETFN_LUN(c->c_netfn, c->c_rslun);
 	buf[IPMI_BTMSG_SEQ] = sc->sc_btseq++;
-	buf[IPMI_BTMSG_CMD] = cmd;
-	if (len && data)
-		memcpy(buf + IPMI_BTMSG_DATASND, data, len);
+	buf[IPMI_BTMSG_CMD] = c->c_cmd;
+	if (c->c_txlen && c->c_data)
+		memcpy(buf + IPMI_BTMSG_DATASND, c->c_data, c->c_txlen);
+
+	c->c_txlen += 4;
 
 	return (buf);
 }
@@ -963,21 +964,21 @@ bt_buildmsg(struct ipmi_softc *sc, int nfLun, int cmd, int len,
  * This is used by both SMIC and KCS protocols
  */
 void *
-cmn_buildmsg(struct ipmi_softc *sc, int nfLun, int cmd, int len,
-    const void *data, int *txlen)
+cmn_buildmsg(struct ipmi_cmd *c)
 {
 	u_int8_t *buf;
 
 	/* Common needs two extra bytes: nfLun/cmd + data */
-	*txlen = len + 2;
-	buf = malloc(*txlen, M_DEVBUF, M_NOWAIT);
+	buf = malloc(c->c_txlen + 2, M_DEVBUF, M_NOWAIT);
 	if (buf == NULL)
 		return (NULL);
 
-	buf[IPMI_MSG_NFLN] = nfLun;
-	buf[IPMI_MSG_CMD] = cmd;
-	if (len && data)
-		memcpy(buf + IPMI_MSG_DATASND, data, len);
+	buf[IPMI_MSG_NFLN] = NETFN_LUN(c->c_netfn, c->c_rslun);
+	buf[IPMI_MSG_CMD] = c->c_cmd;
+	if (c->c_txlen && c->c_data)
+		memcpy(buf + IPMI_MSG_DATASND, c->c_data, c->c_txlen);
+
+	c->c_txlen += 2;
 
 	return (buf);
 }
@@ -995,8 +996,7 @@ ipmi_sendcmd(struct ipmi_cmd *c)
 	dbg_dump(10, " send", c->c_txlen, c->c_data);
 	if (c->c_rssa != BMC_SA) {
 #if 0
-		buf = sc->sc_if->buildmsg(sc, NETFN_LUN(APP_NETFN, BMC_LUN),
-		    APP_SEND_MESSAGE, 7 + txlen, NULL, &txlen);
+		buf = sc->sc_if->buildmsg(c);
 		pI2C->bus = (sc->if_ver == 0x09) ?
 		    PUBLIC_BUS :
 		    IPMB_CHANNEL_NUMBER;
@@ -1014,8 +1014,7 @@ ipmi_sendcmd(struct ipmi_cmd *c)
 #endif
 		goto done;
 	} else
-		buf = sc->sc_if->buildmsg(sc, NETFN_LUN(c->c_netfn, c->c_rslun), c->c_cmd,
-		    c->c_txlen, c->c_data, &c->c_txlen);
+		buf = sc->sc_if->buildmsg(c);
 
 	if (buf == NULL) {
 		printf("%s: sendcmd malloc fails\n", DEVNAME(sc));
