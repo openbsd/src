@@ -12,7 +12,7 @@ use Test::More;
 BEGIN {
     plan(
         ${^TAINT}
-        ? (tests => 17)
+        ? (tests => 21)
         : (skip_all => "A perl without taint support")
     );
 }
@@ -34,3 +34,20 @@ foreach my $func (@Functions) {
 
 # Previous versions of Cwd tainted $^O
 is !tainted($^O), 1, "\$^O should not be tainted";
+
+{
+    # [perl #126862] canonpath() loses taint
+    my $tainted = substr($ENV{PATH}, 0, 0);
+    # yes, getcwd()'s result should be tainted, and is tested above
+    # but be sure
+    ok tainted(File::Spec->canonpath($tainted . Cwd::getcwd)),
+        "canonpath() keeps taint on non-empty string";
+    ok tainted(File::Spec->canonpath($tainted)),
+        "canonpath() keeps taint on empty string";
+
+    (Cwd::getcwd() =~ /^(.*)/);
+    my $untainted = $1;
+    ok !tainted($untainted), "make sure our untainted value is untainted";
+    ok !tainted(File::Spec->canonpath($untainted)),
+        "canonpath() doesn't add taint to untainted string";
+}

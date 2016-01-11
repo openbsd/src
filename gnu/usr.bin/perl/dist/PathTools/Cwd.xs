@@ -512,6 +512,7 @@ THX_unix_canonpath(pTHX_ SV *path)
     *o = 0;
     SvPOK_on(retval);
     SvCUR_set(retval, o - SvPVX(retval));
+    SvTAINT(retval);
     return retval;
 }
 
