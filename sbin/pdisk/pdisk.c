@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdisk.c,v 1.23 2016/01/11 23:31:27 krw Exp $	*/
+/*	$OpenBSD: pdisk.c,v 1.24 2016/01/11 23:45:02 krw Exp $	*/
 
 //
 // pdisk - an editor for Apple format partition tables
@@ -63,7 +63,6 @@
 #define INTERACT_DEFAULT	0
 #define LFLAG_DEFAULT	0
 #define RFLAG_DEFAULT	0
-#define VFLAG_DEFAULT	0
 
 
 //
@@ -88,7 +87,6 @@ enum getopt_values {
 //
 int lflag = LFLAG_DEFAULT;	/* list the device */
 char *lfile;	/* list */
-int vflag = VFLAG_DEFAULT;	/* show version */
 int hflag = HFLAG_DEFAULT;	/* show help */
 int dflag = DFLAG_DEFAULT;	/* turn on debugging commands and printout */
 int rflag = RFLAG_DEFAULT;	/* open device read Only */
@@ -161,7 +159,7 @@ main(int argc, char **argv)
 	while (name_index < argc) {
 	    edit(argv[name_index++], 0);
 	}
-    } else if (!vflag) {
+    } else {
  	do_help();
     }
     return 0;
@@ -316,7 +314,6 @@ get_options(int argc, char **argv)
 
     lflag = LFLAG_DEFAULT;
     lfile = NULL;
-    vflag = VFLAG_DEFAULT;
     hflag = HFLAG_DEFAULT;
     dflag = DFLAG_DEFAULT;
     rflag = RFLAG_DEFAULT;
@@ -333,9 +330,6 @@ get_options(int argc, char **argv)
 	    break;
 	case 'l':
 	    lflag = (LFLAG_DEFAULT)?0:1;
-	    break;
-	case 'v':
-	    vflag = (VFLAG_DEFAULT)?0:1;
 	    break;
 	case 'd':
 	    dflag = (DFLAG_DEFAULT)?0:1;
