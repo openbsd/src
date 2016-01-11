@@ -1,4 +1,4 @@
-#	$OpenBSD: files.acpi,v 1.28 2016/01/11 07:36:10 kettenis Exp $
+#	$OpenBSD: files.acpi,v 1.29 2016/01/11 14:09:37 kettenis Exp $
 #
 # Config file and device description for machine-independent ACPI code.
 # Included by ports that need it.
@@ -114,4 +114,4 @@ file	dev/acpi/atk0110.c		aibs
 
 # SD Host Controller
 attach	sdhc at acpi with sdhc_acpi
-file	dev/acpi/sdhc_acpi.c		sdhc
+file	dev/acpi/sdhc_acpi.c		sdhc_acpi
