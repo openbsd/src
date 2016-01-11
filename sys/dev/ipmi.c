@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipmi.c,v 1.82 2016/01/11 12:52:24 uebayasi Exp $ */
+/*	$OpenBSD: ipmi.c,v 1.83 2016/01/11 12:54:33 uebayasi Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave
@@ -56,7 +56,6 @@ struct ipmi_sensor {
 };
 
 int	ipmi_nintr;
-int	ipmi_poll = 1;
 int	ipmi_enabled = 0;
 
 #define SENSOR_REFRESH_RATE (5 * hz)
@@ -285,7 +284,7 @@ bmc_io_wait(struct ipmi_softc *sc, int offset, u_int8_t mask, u_int8_t value,
 	volatile u_int8_t	v;
 	struct ipmi_bmc_args	args;
 
-	if (cold || sc->sc_poll)
+	if (cold)
 		return (bmc_io_wait_cold(sc, offset, mask, value, lbl));
 
 	sc->sc_retries = 0;
@@ -1082,7 +1081,7 @@ void
 ipmi_delay(struct ipmi_softc *sc, int period)
 {
 	/* period is in 10 ms increments */
-	if (cold || sc->sc_poll)
+	if (cold)
 		delay(period * 10000);
 	else
 		while (tsleep(sc, PWAIT, "ipmicmd", period) != EWOULDBLOCK)
@@ -1520,9 +1519,6 @@ ipmi_intr(void *arg)
 void
 ipmi_refresh_sensors(struct ipmi_softc *sc)
 {
-	if (!ipmi_poll)
-		return;
-
 	if (SLIST_EMPTY(&ipmi_sensor_list))
 		return;
 
@@ -1761,12 +1757,10 @@ ipmi_watchdog(void *arg, int period)
 	if (sc->sc_wdog_period == period) {
 		if (period != 0) {
 			s = splsoftclock();
-			sc->sc_poll = 1;
 			/* tickle the watchdog */
 			rc = ipmi_sendcmd(sc, BMC_SA, BMC_LUN, APP_NETFN,
 			    APP_RESET_WATCHDOG, 0, NULL);
 			rc = ipmi_recvcmd(sc, 0, &len, NULL);
-			sc->sc_poll = 0;
 			splx(s);
 		}
 		return (period);
@@ -1776,7 +1770,6 @@ ipmi_watchdog(void *arg, int period)
 		period = MIN_PERIOD;
 
 	s = splsoftclock();
-	sc->sc_poll = 1;
 	/* XXX what to do if poking wdog fails? */
 	rc = ipmi_sendcmd(sc, BMC_SA, BMC_LUN, APP_NETFN,
 	    APP_GET_WATCHDOG_TIMER, 0, NULL);
@@ -1796,7 +1789,6 @@ ipmi_watchdog(void *arg, int period)
 	    APP_SET_WATCHDOG_TIMER, IPMI_SET_WDOG_MAX, wdog);
 	rc = ipmi_recvcmd(sc, 0, &len, NULL);
 
-	sc->sc_poll = 0;
 	splx(s);
 
 	sc->sc_wdog_period = period;

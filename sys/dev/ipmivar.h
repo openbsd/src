@@ -1,4 +1,4 @@
-/* $OpenBSD: ipmivar.h,v 1.20 2016/01/10 14:17:00 uebayasi Exp $ */
+/* $OpenBSD: ipmivar.h,v 1.21 2016/01/11 12:54:33 uebayasi Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave
@@ -105,8 +105,6 @@ struct ipmi_softc {
 
 	struct ipmi_sensor	*current_sensor;
 	struct ksensordev	sc_sensordev;
-
-	int			sc_poll;
 };
 
 struct ipmi_thread {
