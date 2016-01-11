@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.221 2015/12/02 22:12:29 benno Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.222 2016/01/11 21:31:42 benno Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -428,6 +428,7 @@ struct host {
 	int			 retry_cnt;
 	int			 idx;
 	u_int16_t		 he;
+	int			 code;
 	struct ctl_tcp_event	 cte;
 };
 TAILQ_HEAD(hostlist, host);

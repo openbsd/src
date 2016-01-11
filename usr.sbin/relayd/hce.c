@@ -1,4 +1,4 @@
-/*	$OpenBSD: hce.c,v 1.71 2015/12/02 13:41:27 reyk Exp $	*/
+/*	$OpenBSD: hce.c,v 1.72 2016/01/11 21:31:42 benno Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -200,6 +200,7 @@ hce_notify_done(struct host *host, enum host_error he)
 	struct host		*h, *hostnst;
 	int			 hostup;
 	const char		*msg;
+	char			*codemsg = NULL;
 
 	if ((hostnst = host_find(env, host->conf.id)) == NULL)
 		fatalx("hce_notify_done: desynchronized");
@@ -257,12 +258,16 @@ hce_notify_done(struct host *host, enum host_error he)
 		duration = 0;
 
 	if (env->sc_opts & logopt) {
-		log_info("host %s, check %s%s (%lums), state %s -> %s, "
+		if (host->code > 0)
+		    asprintf(&codemsg, ",%d", host->code);
+		log_info("host %s, check %s%s (%lums,%s%s), state %s -> %s, "
 		    "availability %s",
 		    host->conf.name, table_check(table->conf.check),
 		    (table->conf.flags & F_TLS) ? " use tls" : "", duration,
+		    msg, (codemsg != NULL) ? codemsg : "",
 		    host_status(host->last_up), host_status(host->up),
 		    print_availability(host->check_cnt, host->up_cnt));
+		free(codemsg);
 	}
 
 	host->last_up = host->up;

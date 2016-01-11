@@ -1,4 +1,4 @@
-/*	$OpenBSD: check_tcp.c,v 1.50 2015/12/30 12:08:34 benno Exp $	*/
+/*	$OpenBSD: check_tcp.c,v 1.51 2016/01/11 21:31:42 benno Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -318,6 +318,7 @@ check_http_code(struct ctl_tcp_event *cte)
 	head = cte->buf->buf;
 	host = cte->host;
 	host->he = HCE_HTTP_CODE_ERROR;
+	host->code = 0;
 
 	if (strncmp(head, "HTTP/1.1 ", strlen("HTTP/1.1 ")) &&
 	    strncmp(head, "HTTP/1.0 ", strlen("HTTP/1.0 "))) {
@@ -340,10 +341,11 @@ check_http_code(struct ctl_tcp_event *cte)
 		return (1);
 	}
 	if (code != cte->table->conf.retcode) {
-		log_debug("%s: %s failed (invalid HTTP code returned)",
-		    __func__, host->conf.name);
+		log_debug("%s: %s failed (invalid HTTP code %d returned)",
+		    __func__, host->conf.name, code);
 		host->he = HCE_HTTP_CODE_FAIL;
 		host->up = HOST_DOWN;
+		host->code = code;
 	} else {
 		host->he = HCE_HTTP_CODE_OK;
 		host->up = HOST_UP;
