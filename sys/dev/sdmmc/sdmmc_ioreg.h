@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc_ioreg.h,v 1.4 2007/06/02 01:48:37 uwe Exp $	*/
+/*	$OpenBSD: sdmmc_ioreg.h,v 1.5 2016/01/11 07:32:38 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -82,10 +82,12 @@
 #define SD_IO_CIS_SIZE			0x17000
 
 /* CIS tuple codes (based on PC Card 16) */
+#define SD_IO_CISTPL_NULL		0x00
 #define SD_IO_CISTPL_VERS_1		0x15
 #define SD_IO_CISTPL_MANFID		0x20
 #define SD_IO_CISTPL_FUNCID		0x21
 #define SD_IO_CISTPL_FUNCE		0x22
+#define SD_IO_CISTPL_END		0xff
 
 /* CISTPL_FUNCID codes */
 #define SDMMC_FUNCTION_WLAN		0x0c
