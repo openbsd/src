@@ -1,4 +1,4 @@
-/*	$OpenBSD: atrun.c,v 1.42 2015/11/17 22:31:44 millert Exp $	*/
+/*	$OpenBSD: atrun.c,v 1.43 2016/01/11 14:23:50 millert Exp $	*/
 
 /*
  * Copyright (c) 2002-2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -23,6 +23,7 @@
 #include <sys/types.h>
 #include <sys/resource.h>
 #include <sys/stat.h>
+#include <sys/time.h>
 #include <sys/wait.h>
 
 #include <bitstring.h>		/* for structs.h */
@@ -91,7 +92,7 @@ scan_atjobs(at_db **db, struct timespec *ts)
 		close(dfd);
 		return (0);
 	}
-	if (old_db != NULL && old_db->mtime == sb.st_mtime) {
+	if (old_db != NULL && timespeccmp(&old_db->mtime, &sb.st_mtim, ==)) {
 		close(dfd);
 		return (0);
 	}
@@ -106,7 +107,7 @@ scan_atjobs(at_db **db, struct timespec *ts)
 		closedir(atdir);
 		return (0);
 	}
-	new_db->mtime = sb.st_mtime;	/* stash at dir mtime */
+	new_db->mtime = sb.st_mtim;	/* stash at dir mtime */
 	TAILQ_INIT(&new_db->jobs);
 
 	pending = 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cron.c,v 1.73 2015/11/15 23:24:24 millert Exp $	*/
+/*	$OpenBSD: cron.c,v 1.74 2016/01/11 14:23:50 millert Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -20,6 +20,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
+#include <sys/time.h>
 #include <sys/un.h>
 #include <sys/wait.h>
 
@@ -373,7 +374,7 @@ cron_sleep(time_t target, sigset_t *mask)
 				(void) read(fd, &poke, 1);
 				close(fd);
 				if (poke & RELOAD_CRON) {
-					database->mtime = 0;
+					timespecclear(&database->mtime);
 					load_database(&database);
 				}
 				if (poke & RELOAD_AT) {
@@ -383,7 +384,7 @@ cron_sleep(time_t target, sigset_t *mask)
 					 * jobs immediately.
 					 */
 					clock_gettime(CLOCK_REALTIME, &t2);
-					at_database->mtime = 0;
+					timespecclear(&at_database->mtime);
 					if (scan_atjobs(&at_database, &t2))
 						atrun(at_database,
 						    batch_maxload, t2.tv_sec);

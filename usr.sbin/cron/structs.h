@@ -1,4 +1,4 @@
-/*	$OpenBSD: structs.h,v 1.7 2015/11/09 01:12:27 millert Exp $	*/
+/*	$OpenBSD: structs.h,v 1.8 2016/01/11 14:23:50 millert Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -50,13 +50,13 @@ typedef	struct _entry {
 typedef	struct _user {
 	TAILQ_ENTRY(_user) entries;	/* links */
 	char		*name;
-	time_t		mtime;		/* last modtime of crontab */
+	struct timespec	mtime;		/* last modtime of crontab */
 	SLIST_HEAD(crontab_list, _entry) crontab;	/* this person's crontab */
 } user;
 
 typedef	struct _cron_db {
 	TAILQ_HEAD(user_list, _user) users;
-	time_t		mtime;		/* last modtime on spooldir */
+	struct timespec	mtime;		/* last modtime on spooldir */
 } cron_db;
 
 typedef struct _atjob {
@@ -69,5 +69,5 @@ typedef struct _atjob {
 
 typedef struct _at_db {
 	TAILQ_HEAD(atjob_list, _atjob) jobs;
-	time_t		mtime;		/* last modtime on spooldir */
+	struct timespec	mtime;		/* last modtime on spooldir */
 } at_db;

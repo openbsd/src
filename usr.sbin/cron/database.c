@@ -1,4 +1,4 @@
-/*	$OpenBSD: database.c,v 1.33 2015/11/14 13:09:14 millert Exp $	*/
+/*	$OpenBSD: database.c,v 1.34 2016/01/11 14:23:50 millert Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -19,6 +19,7 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/time.h>
 
 #include <bitstring.h>		/* for structs.h */
 #include <dirent.h>
@@ -47,6 +48,7 @@ load_database(cron_db **db)
 {
 	struct stat statbuf, syscron_stat;
 	cron_db *new_db, *old_db = *db;
+	struct timespec mtime;
 	struct dirent *dp;
 	DIR *dir;
 	user *u;
@@ -63,15 +65,20 @@ load_database(cron_db **db)
 	/* track system crontab file
 	 */
 	if (stat(_PATH_SYS_CRONTAB, &syscron_stat) < 0)
-		syscron_stat.st_mtime = 0;
+		timespecclear(&syscron_stat.st_mtim);
+
+	/* hash mtime of system crontab file and crontab dir
+	 */
+	mtime.tv_sec =
+	    HASH(statbuf.st_mtim.tv_sec, syscron_stat.st_mtim.tv_sec);
+	mtime.tv_nsec =
+	    HASH(statbuf.st_mtim.tv_nsec, syscron_stat.st_mtim.tv_nsec);
 
 	/* if spooldir's mtime has not changed, we don't need to fiddle with
 	 * the database.
 	 */
-	if (old_db != NULL &&
-	    old_db->mtime == HASH(statbuf.st_mtime, syscron_stat.st_mtime)) {
+	if (old_db != NULL && timespeccmp(&mtime, &old_db->mtime, ==))
 		return;
-	}
 
 	/* something's different.  make a new database, moving unchanged
 	 * elements from the old database, reloading elements that have
@@ -80,10 +87,10 @@ load_database(cron_db **db)
 	 */
 	if ((new_db = malloc(sizeof(*new_db))) == NULL)
 		return;
-	new_db->mtime = HASH(statbuf.st_mtime, syscron_stat.st_mtime);
+	new_db->mtime = mtime;
 	TAILQ_INIT(&new_db->users);
 
-	if (syscron_stat.st_mtime) {
+	if (timespecisset(&syscron_stat.st_mtim)) {
 		process_crontab(AT_FDCWD, "*system*", _PATH_SYS_CRONTAB,
 				&syscron_stat, new_db, old_db);
 	}
@@ -212,7 +219,7 @@ process_crontab(int dfd, const char *uname, const char *fname,
 		/* if crontab has not changed since we last read it
 		 * in, then we can just use our existing entry.
 		 */
-		if (u->mtime == statbuf->st_mtime) {
+		if (timespeccmp(&u->mtime, &statbuf->st_mtim, ==)) {
 			TAILQ_REMOVE(&old_db->users, u, entries);
 			TAILQ_INSERT_TAIL(&new_db->users, u, entries);
 			goto next_crontab;
@@ -231,7 +238,7 @@ process_crontab(int dfd, const char *uname, const char *fname,
 	}
 	u = load_user(crontab_fd, pw, fname);
 	if (u != NULL) {
-		u->mtime = statbuf->st_mtime;
+		u->mtime = statbuf->st_mtim;
 		TAILQ_INSERT_TAIL(&new_db->users, u, entries);
 	}
 

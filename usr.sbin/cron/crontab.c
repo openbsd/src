@@ -1,4 +1,4 @@
-/*	$OpenBSD: crontab.c,v 1.91 2015/11/17 21:56:57 millert Exp $	*/
+/*	$OpenBSD: crontab.c,v 1.92 2016/01/11 14:23:50 millert Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -19,6 +19,7 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/time.h>
 #include <sys/wait.h>
 
 #include <bitstring.h>		/* for structs.h */
