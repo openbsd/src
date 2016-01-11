@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.327 2016/01/09 11:54:19 dlg Exp $ */
+/* $OpenBSD: if_em.c,v 1.328 2016/01/11 01:31:53 dlg Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -233,8 +233,8 @@ int  em_rxfill(struct em_softc *);
 int  em_rxeof(struct em_softc *);
 void em_receive_checksum(struct em_softc *, struct em_rx_desc *,
 			 struct mbuf *);
-void em_transmit_checksum_setup(struct em_softc *, struct mbuf *,
-				u_int32_t *, u_int32_t *);
+u_int	em_transmit_checksum_setup(struct em_softc *, struct mbuf *, u_int,
+	    u_int32_t *, u_int32_t *);
 void em_iff(struct em_softc *);
 #ifdef EM_DEBUG
 void em_print_hw_stats(struct em_softc *);
@@ -242,7 +242,7 @@ void em_print_hw_stats(struct em_softc *);
 void em_update_link_status(struct em_softc *);
 int  em_get_buf(struct em_softc *, int);
 void em_enable_hw_vlans(struct em_softc *);
-int  em_encap(struct em_softc *, struct mbuf *);
+u_int em_encap(struct em_softc *, struct mbuf *);
 void em_smartspeed(struct em_softc *);
 int  em_82547_fifo_workaround(struct em_softc *, int);
 void em_82547_update_fifo_head(struct em_softc *, int);
@@ -578,6 +578,7 @@ void
 em_start(struct ifnet *ifp)
 {
 	struct em_softc *sc = ifp->if_softc;
+	u_int head, free, used;
 	struct mbuf *m;
 	int post = 0;
 
@@ -586,6 +587,13 @@ em_start(struct ifnet *ifp)
 		return;
 	}
 
+	/* calculate free space */
+	head = sc->sc_tx_desc_head;
+	free = sc->sc_tx_desc_tail;
+	if (free <= head)
+		free += sc->sc_tx_slots;
+	free -= head;
+
 	if (sc->hw.mac_type != em_82547) {
 		bus_dmamap_sync(sc->sc_dmat, sc->sc_tx_dma.dma_map,
 		    0, sc->sc_tx_dma.dma_map->dm_mapsize,
@@ -593,7 +601,8 @@ em_start(struct ifnet *ifp)
 	}
 
 	for (;;) {
-		if (EM_MAX_SCATTER + 1 > sc->sc_tx_desc_free) {
+		/* use 2 because cksum setup can use an extra slot */
+		if (EM_MAX_SCATTER + 2 > free) {
 			ifq_set_oactive(&ifp->if_snd);
 			break;
 		}
@@ -602,11 +611,15 @@ em_start(struct ifnet *ifp)
 		if (m == NULL)
 			break;
 
-		if (em_encap(sc, m) != 0) {
-			/* ifp->if_oerrors++; */
+		used = em_encap(sc, m);
+		if (used == 0) {
 			m_freem(m);
 			continue;
 		}
+
+		KASSERT(used <= free);
+
+		free -= used;
 
 #if NBPFILTER > 0
 		/* Send a copy of the frame to the BPF listener */
@@ -629,10 +642,8 @@ em_start(struct ifnet *ifp)
 		 * this tells the E1000 that this frame is
 		 * available to transmit.
 		 */
-		if (post) {
-			E1000_WRITE_REG(&sc->hw, TDT,
-			    sc->sc_tx_desc_head);
-		}
+		if (post)
+			E1000_WRITE_REG(&sc->hw, TDT, sc->sc_tx_desc_head);
 	}
 }
 
@@ -733,9 +744,9 @@ em_watchdog(struct ifnet *ifp)
 		ifp->if_timer = EM_TX_TIMEOUT;
 		return;
 	}
-	printf("%s: watchdog: cons %u prod %u free %u TDH %u TDT %u\n",
-	    DEVNAME(sc), sc->sc_tx_desc_tail,
-	    sc->sc_tx_desc_head, sc->sc_tx_desc_free,
+	printf("%s: watchdog: head %u tail %u TDH %u TDT %u\n",
+	    DEVNAME(sc),
+	    sc->sc_tx_desc_head, sc->sc_tx_desc_tail,
 	    E1000_READ_REG(&sc->hw, TDH), E1000_READ_REG(&sc->hw, TDT));
 
 	em_init(sc);
@@ -1078,50 +1089,43 @@ em_flowstatus(struct em_softc *sc)
  *
  *  return 0 on success, positive on failure
  **********************************************************************/
-int
+u_int
 em_encap(struct em_softc *sc, struct mbuf *m)
 {
-	u_int32_t	txd_upper;
-	u_int32_t	txd_lower, txd_used = 0;
-	int		i, j, first, error = 0, last = 0;
-	bus_dmamap_t	map;
+	struct em_packet *pkt;
+	struct em_tx_desc *desc;
+	bus_dmamap_t map;
+	u_int32_t txd_upper, txd_lower;
+	u_int head, last, used = 0;
+	int i, j;
 
 	/* For 82544 Workaround */
 	DESC_ARRAY		desc_array;
 	u_int32_t		array_elements;
-	u_int32_t		counter;
 
-	struct em_packet *pkt, *pkt_mapped;
-	struct em_tx_desc *desc;
-
-	/*
-	 * Map the packet for DMA.
-	 *
-	 * Capture the first descriptor index,
-	 * this descriptor will have the index
-	 * of the EOP which is the only one that
-	 * no gets a DONE bit writeback.
-	 */
-	first = sc->sc_tx_desc_head;
-	pkt = &sc->sc_tx_pkts_ring[first];
-	pkt_mapped = pkt;
+	/* get a dmamap for this packet from the next free slot */
+	head = sc->sc_tx_desc_head;
+	pkt = &sc->sc_tx_pkts_ring[head];
 	map = pkt->pkt_map;
 
-	error = bus_dmamap_load_mbuf(sc->sc_dmat, map, m, BUS_DMA_NOWAIT);
-	switch (error) {
+	switch (bus_dmamap_load_mbuf(sc->sc_dmat, map, m, BUS_DMA_NOWAIT)) {
 	case 0:
 		break;
 	case EFBIG:
-		if ((error = m_defrag(m, M_DONTWAIT)) == 0 &&
-		    (error = bus_dmamap_load_mbuf(sc->sc_dmat, map, m,
-		     BUS_DMA_NOWAIT)) == 0)
+		if (m_defrag(m, M_DONTWAIT) == 0 &&
+		    bus_dmamap_load_mbuf(sc->sc_dmat, map, m,
+		     BUS_DMA_NOWAIT) == 0)
 			break;
 
 		/* FALLTHROUGH */
 	default:
 		sc->no_tx_dma_setup++;
-		return (error);
+		return (0);
 	}
+
+	bus_dmamap_sync(sc->sc_dmat, map,
+	    0, map->dm_mapsize,
+	    BUS_DMASYNC_PREWRITE);
 
 	if (sc->hw.mac_type == em_82547) {
 		bus_dmamap_sync(sc->sc_dmat, sc->sc_tx_dma.dma_map,
@@ -1131,14 +1135,18 @@ em_encap(struct em_softc *sc, struct mbuf *m)
 
 	if (sc->hw.mac_type >= em_82543 && sc->hw.mac_type != em_82575 &&
 	    sc->hw.mac_type != em_82580 && sc->hw.mac_type != em_i210 &&
-	    sc->hw.mac_type != em_i350)
-		em_transmit_checksum_setup(sc, m, &txd_upper, &txd_lower);
-	else
+	    sc->hw.mac_type != em_i350) {
+		used += em_transmit_checksum_setup(sc, m, head,
+		    &txd_upper, &txd_lower);
+	} else {
 		txd_upper = txd_lower = 0;
+	}
 
-	i = sc->sc_tx_desc_head;
+	head += used;
+	if (head >= sc->sc_tx_slots)
+		head -= sc->sc_tx_slots;
 
-	for (j = 0; j < map->dm_nsegs; j++) {
+	for (i = 0; i < map->dm_nsegs; i++) {
 		/* If sc is 82544 and on PCI-X bus */
 		if (sc->pcix_82544) {
 			/*
@@ -1146,88 +1154,64 @@ em_encap(struct em_softc *sc, struct mbuf *m)
 			 * split the data accordingly
 			 */
 			array_elements = em_fill_descriptors(
-			    map->dm_segs[j].ds_addr, map->dm_segs[j].ds_len,
+			    map->dm_segs[i].ds_addr, map->dm_segs[i].ds_len,
 			    &desc_array);
-			for (counter = 0; counter < array_elements; counter++) {
-				pkt = &sc->sc_tx_pkts_ring[i];
-				desc = &sc->sc_tx_desc_ring[i];
+			for (j = 0; j < array_elements; j++) {
+				desc = &sc->sc_tx_desc_ring[head];
 
 				desc->buffer_addr = htole64(
-					desc_array.descriptor[counter].address);
+					desc_array.descriptor[j].address);
 				desc->lower.data = htole32(
 					(sc->sc_txd_cmd | txd_lower |
-					 (u_int16_t)desc_array.descriptor[counter].length));
-				desc->upper.data = htole32((txd_upper));
-				last = i;
-				if (++i == sc->sc_tx_slots)
-					i = 0;
+					 (u_int16_t)desc_array.descriptor[j].length));
+				desc->upper.data = htole32(txd_upper);
 
-				pkt->pkt_m = NULL;
-				pkt->pkt_eop = -1;
-				txd_used++;
+				last = head;
+				if (++head == sc->sc_tx_slots)
+					head = 0;
+
+				used++;
 			}
 		} else {
-			pkt = &sc->sc_tx_pkts_ring[i];
-			desc = &sc->sc_tx_desc_ring[i];
+			desc = &sc->sc_tx_desc_ring[head];
 
-			desc->buffer_addr = htole64(map->dm_segs[j].ds_addr);
-			desc->lower.data = htole32(
-				sc->sc_txd_cmd | txd_lower | map->dm_segs[j].ds_len);
+			desc->buffer_addr = htole64(map->dm_segs[i].ds_addr);
+			desc->lower.data = htole32(sc->sc_txd_cmd |
+			    txd_lower | map->dm_segs[i].ds_len);
 			desc->upper.data = htole32(txd_upper);
 
-			last = i;
-			if (++i == sc->sc_tx_slots)
-	        		i = 0;
+			last = head;
+			if (++head == sc->sc_tx_slots)
+	        		head = 0;
 
-			pkt->pkt_m = NULL;
-			pkt->pkt_eop = -1;
+			used++;
 		}
 	}
-
-	sc->sc_tx_desc_head = i;
-	if (sc->pcix_82544)
-		atomic_sub_int(&sc->sc_tx_desc_free, txd_used);
-	else
-		atomic_sub_int(&sc->sc_tx_desc_free, map->dm_nsegs);
 
 #if NVLAN > 0
 	/* Find out if we are in VLAN mode */
 	if (m->m_flags & M_VLANTAG) {
 		/* Set the VLAN id */
-		desc->upper.fields.special =
-		    htole16(m->m_pkthdr.ether_vtag);
+		desc->upper.fields.special = htole16(m->m_pkthdr.ether_vtag);
 
 		/* Tell hardware to add tag */
 		desc->lower.data |= htole32(E1000_TXD_CMD_VLE);
 	}
 #endif
 
+	/* mark the packet with the mbuf and last desc slot */
 	pkt->pkt_m = m;
-	pkt_mapped->pkt_map = pkt->pkt_map;
-	pkt->pkt_map = map;
+	pkt->pkt_eop = last;
 
-	bus_dmamap_sync(sc->sc_dmat, map, 0, map->dm_mapsize,
-	    BUS_DMASYNC_PREWRITE);
+	sc->sc_tx_desc_head = head;
 
 	/* 
 	 * Last Descriptor of Packet
 	 * needs End Of Packet (EOP)
 	 * and Report Status (RS)
 	 */
-	desc->lower.data |=
-	    htole32(E1000_TXD_CMD_EOP | E1000_TXD_CMD_RS);
+	desc->lower.data |= htole32(E1000_TXD_CMD_EOP | E1000_TXD_CMD_RS);
 
-	/*
-	 * Keep track in the first buffer which
-	 * descriptor will be written back
-	 */
-	pkt_mapped->pkt_eop = last;
-
-	/* 
-	 * Advance the Transmit Descriptor Tail (Tdt),
-	 * this tells the E1000 that this frame is
-	 * available to transmit.
-	 */
 	if (sc->hw.mac_type == em_82547) {
 		bus_dmamap_sync(sc->sc_dmat, sc->sc_tx_dma.dma_map,
 		    0, sc->sc_tx_dma.dma_map->dm_mapsize,
@@ -1235,12 +1219,12 @@ em_encap(struct em_softc *sc, struct mbuf *m)
 		if (sc->link_duplex == HALF_DUPLEX)
 			em_82547_move_tail_locked(sc);
 		else {
-			E1000_WRITE_REG(&sc->hw, TDT, i);
+			E1000_WRITE_REG(&sc->hw, TDT, head);
 			em_82547_update_fifo_head(sc, m->m_pkthdr.len);
 		}
 	}
 
-	return (0);
+	return (used);
 }
 
 /*********************************************************************
@@ -2109,9 +2093,6 @@ em_setup_transmit_structures(struct em_softc *sc)
 	sc->sc_tx_desc_head = 0;
 	sc->sc_tx_desc_tail = 0;
 
-	/* Set number of descriptors available */
-	sc->sc_tx_desc_free = sc->sc_tx_slots;
-
 	/* Set checksum context */
 	sc->active_checksum_context = OFFLOAD_NONE;
 
@@ -2226,6 +2207,7 @@ em_free_transmit_structures(struct em_softc *sc)
 				    0, pkt->pkt_map->dm_mapsize,
 				    BUS_DMASYNC_POSTWRITE);
 				bus_dmamap_unload(sc->sc_dmat, pkt->pkt_map);
+
 				m_freem(pkt->pkt_m);
 				pkt->pkt_m = NULL;
 			}
@@ -2253,46 +2235,36 @@ em_free_transmit_structures(struct em_softc *sc)
  *  context only if the protocol type changes.
  *
  **********************************************************************/
-void
-em_transmit_checksum_setup(struct em_softc *sc, struct mbuf *mp,
+u_int
+em_transmit_checksum_setup(struct em_softc *sc, struct mbuf *mp, u_int head,
     u_int32_t *txd_upper, u_int32_t *txd_lower)
 {
 	struct em_context_desc *TXD;
-	struct em_packet *pkt;
-	int curr_txd;
 
-	if (mp->m_pkthdr.csum_flags) {
-		if (mp->m_pkthdr.csum_flags & M_TCP_CSUM_OUT) {
-			*txd_upper = E1000_TXD_POPTS_TXSM << 8;
-			*txd_lower = E1000_TXD_CMD_DEXT | E1000_TXD_DTYP_D;
-			if (sc->active_checksum_context == OFFLOAD_TCP_IP)
-				return;
-			else
-				sc->active_checksum_context = OFFLOAD_TCP_IP;
-		} else if (mp->m_pkthdr.csum_flags & M_UDP_CSUM_OUT) {
-			*txd_upper = E1000_TXD_POPTS_TXSM << 8;
-			*txd_lower = E1000_TXD_CMD_DEXT | E1000_TXD_DTYP_D;
-			if (sc->active_checksum_context == OFFLOAD_UDP_IP)
-				return;
-			else
-				sc->active_checksum_context = OFFLOAD_UDP_IP;
-		} else {
-			*txd_upper = 0;
-			*txd_lower = 0;
-			return;
-		}
+	if (mp->m_pkthdr.csum_flags & M_TCP_CSUM_OUT) {
+		*txd_upper = E1000_TXD_POPTS_TXSM << 8;
+		*txd_lower = E1000_TXD_CMD_DEXT | E1000_TXD_DTYP_D;
+		if (sc->active_checksum_context == OFFLOAD_TCP_IP)
+			return (0);
+		else
+			sc->active_checksum_context = OFFLOAD_TCP_IP;
+	} else if (mp->m_pkthdr.csum_flags & M_UDP_CSUM_OUT) {
+		*txd_upper = E1000_TXD_POPTS_TXSM << 8;
+		*txd_lower = E1000_TXD_CMD_DEXT | E1000_TXD_DTYP_D;
+		if (sc->active_checksum_context == OFFLOAD_UDP_IP)
+			return (0);
+		else
+			sc->active_checksum_context = OFFLOAD_UDP_IP;
 	} else {
 		*txd_upper = 0;
 		*txd_lower = 0;
-		return;
+		return (0);
 	}
 
 	/* If we reach this point, the checksum offload context
 	 * needs to be reset.
 	 */
-	curr_txd = sc->sc_tx_desc_head;
-	pkt = &sc->sc_tx_pkts_ring[curr_txd];
-	TXD = (struct em_context_desc *) &sc->sc_tx_desc_ring[curr_txd];
+	TXD = (struct em_context_desc *)&sc->sc_tx_desc_ring[head];
 
 	TXD->lower_setup.ip_fields.ipcss = ETHER_HDR_LEN;
 	TXD->lower_setup.ip_fields.ipcso = 
@@ -2317,14 +2289,7 @@ em_transmit_checksum_setup(struct em_softc *sc, struct mbuf *mp,
 	TXD->tcp_seg_setup.data = htole32(0);
 	TXD->cmd_and_length = htole32(sc->sc_txd_cmd | E1000_TXD_CMD_DEXT);
 
-	pkt->pkt_m = NULL;
-	pkt->pkt_eop = -1;
-
-	if (++curr_txd == sc->sc_tx_slots)
-		curr_txd = 0;
-
-	atomic_dec_int(&sc->sc_tx_desc_free);
-	sc->sc_tx_desc_head = curr_txd;
+	return (1);
 }
 
 /**********************************************************************
@@ -2337,83 +2302,61 @@ em_transmit_checksum_setup(struct em_softc *sc, struct mbuf *mp,
 void
 em_txeof(struct em_softc *sc)
 {
-	int first, last, done, num_avail, free = 0;
+	struct ifnet *ifp = &sc->sc_ac.ac_if;
 	struct em_packet *pkt;
-	struct em_tx_desc   *tx_desc, *eop_desc;
-	struct ifnet   *ifp = &sc->sc_ac.ac_if;
+	struct em_tx_desc *desc;
+	u_int head, tail;
+	u_int free = 0;
 
-	if (sc->sc_tx_desc_free == sc->sc_tx_slots)
+	head = sc->sc_tx_desc_head;
+	tail = sc->sc_tx_desc_tail;
+
+	if (head == tail)
 		return;
-
-	first = sc->sc_tx_desc_tail;
-	tx_desc = &sc->sc_tx_desc_ring[first];
-	pkt = &sc->sc_tx_pkts_ring[first];
-	last = pkt->pkt_eop;
-	eop_desc = &sc->sc_tx_desc_ring[last];
-
-	/*
-	 * What this does is get the index of the
-	 * first descriptor AFTER the EOP of the 
-	 * first packet, that way we can do the
-	 * simple comparison on the inner while loop.
-	 */
-	if (++last == sc->sc_tx_slots)
-		last = 0;
-	done = last;
 
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_tx_dma.dma_map,
 	    0, sc->sc_tx_dma.dma_map->dm_mapsize,
 	    BUS_DMASYNC_POSTREAD);
-	while (eop_desc->upper.fields.status & E1000_TXD_STAT_DD) {
-		/* We clean the range of the packet */
-		while (first != done) {
-			tx_desc->upper.data = 0;
-			tx_desc->lower.data = 0;
-			free++;
 
-			if (pkt->pkt_m != NULL) {
-				ifp->if_opackets++;
-				if (pkt->pkt_map->dm_nsegs > 0) {
-					bus_dmamap_sync(sc->sc_dmat,
-					    pkt->pkt_map, 0,
-					    pkt->pkt_map->dm_mapsize,
-					    BUS_DMASYNC_POSTWRITE);
-					bus_dmamap_unload(sc->sc_dmat,
-					    pkt->pkt_map);
-				}
-				m_freem(pkt->pkt_m);
-				pkt->pkt_m = NULL;
-			}
-			pkt->pkt_eop = -1;
+	do {
+		pkt = &sc->sc_tx_pkts_ring[tail];
+		desc = &sc->sc_tx_desc_ring[pkt->pkt_eop];
 
-			if (++first == sc->sc_tx_slots)
-				first = 0;
-
-			pkt = &sc->sc_tx_pkts_ring[first];
-			tx_desc = &sc->sc_tx_desc_ring[first];
-		}
-		/* See if we can continue to the next packet */
-		last = pkt->pkt_eop;
-		if (last != -1) {
-			eop_desc = &sc->sc_tx_desc_ring[last];
-			/* Get new done point */
-			if (++last == sc->sc_tx_slots)
-				last = 0;
-			done = last;
-		} else
+		if (!ISSET(desc->upper.fields.status, E1000_TXD_STAT_DD))
 			break;
-	}
+
+		bus_dmamap_sync(sc->sc_dmat, pkt->pkt_map,
+		    0, pkt->pkt_map->dm_mapsize,
+		    BUS_DMASYNC_POSTWRITE);
+		bus_dmamap_unload(sc->sc_dmat, pkt->pkt_map);
+
+		KASSERT(pkt->pkt_m != NULL);
+
+		m_freem(pkt->pkt_m);
+		pkt->pkt_m = NULL;
+
+		tail = pkt->pkt_eop;
+
+		if (++tail == sc->sc_tx_slots)
+			tail = 0;
+
+		free++;
+	} while (tail != head);
+
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_tx_dma.dma_map,
 	    0, sc->sc_tx_dma.dma_map->dm_mapsize,
 	    BUS_DMASYNC_PREREAD);
 
-	sc->sc_tx_desc_tail = first;
+	if (free == 0)
+		return;
 
-	num_avail = atomic_add_int_nv(&sc->sc_tx_desc_free, free);
+	ifp->if_opackets += free;
+
+	sc->sc_tx_desc_tail = tail;
 
 	if (ifq_is_oactive(&ifp->if_snd))
 		ifq_restart(&ifp->if_snd);
-	else if (num_avail == sc->sc_tx_slots)
+	else if (tail == head)
 		ifp->if_timer = 0;
 }
 
@@ -2524,7 +2467,7 @@ em_setup_receive_structures(struct em_softc *sc)
 	u_int lwm;
 
 	memset(sc->sc_rx_desc_ring, 0,
-	    sizeof(struct em_rx_desc) * sc->sc_rx_slots);
+	    sc->sc_rx_slots * sizeof(*sc->sc_rx_desc_ring));
 
 	if (em_allocate_receive_structures(sc))
 		return (ENOMEM);
@@ -2576,8 +2519,8 @@ em_initialize_receive_unit(struct em_softc *sc)
 
 	/* Setup the Base and Length of the Rx Descriptor Ring */
 	bus_addr = sc->sc_rx_dma.dma_map->dm_segs[0].ds_addr;
-	E1000_WRITE_REG(&sc->hw, RDLEN, sc->sc_rx_slots *
-			sizeof(struct em_rx_desc));
+	E1000_WRITE_REG(&sc->hw, RDLEN,
+	    sc->sc_rx_slots * sizeof(*sc->sc_rx_desc_ring));
 	E1000_WRITE_REG(&sc->hw, RDBAH, (u_int32_t)(bus_addr >> 32));
 	E1000_WRITE_REG(&sc->hw, RDBAL, (u_int32_t)bus_addr);
 

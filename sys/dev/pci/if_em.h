@@ -32,7 +32,7 @@ POSSIBILITY OF SUCH DAMAGE.
 ***************************************************************************/
 
 /* $FreeBSD: if_em.h,v 1.26 2004/09/01 23:22:41 pdeuskar Exp $ */
-/* $OpenBSD: if_em.h,v 1.70 2016/01/07 11:19:54 dlg Exp $ */
+/* $OpenBSD: if_em.h,v 1.71 2016/01/11 01:31:53 dlg Exp $ */
 
 #ifndef _EM_H_DEFINED_
 #define _EM_H_DEFINED_
@@ -352,7 +352,6 @@ struct em_softc {
 	struct em_tx_desc	*sc_tx_desc_ring;
 	u_int			 sc_tx_desc_head;
 	u_int			 sc_tx_desc_tail;
-	u_int			 sc_tx_desc_free;
 	struct em_packet	*sc_tx_pkts_ring;
 
 	u_int32_t		 sc_txd_cmd;
