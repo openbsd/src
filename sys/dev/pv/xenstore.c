@@ -1,4 +1,4 @@
-/*	$OpenBSD: xenstore.c,v 1.14 2016/01/11 16:34:49 reyk Exp $	*/
+/*	$OpenBSD: xenstore.c,v 1.15 2016/01/11 16:54:33 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Belopuhov
@@ -693,7 +693,7 @@ xs_cmd(struct xs_transaction *xst, int cmd, const char *path,
 	int i, error = 0;
 
 	if (cmd >= XS_MAX)
-		return (-1);
+		return (EINVAL);
 
 	switch (cmd) {
 	case XS_TOPEN:
@@ -729,7 +729,7 @@ xs_cmd(struct xs_transaction *xst, int cmd, const char *path,
 
 	if (xs_get_buf(xst, xsm, datalen)) {
 		xs_put_msg(xs, xsm);
-		return (-1);
+		return (ENOMEM);
 	}
 
 	xsm->xsm_hdr.xmh_tid = xst->xst_id;
@@ -744,7 +744,7 @@ xs_cmd(struct xs_transaction *xst, int cmd, const char *path,
 		    xs->xs_sc->sc_dev.dv_xname, cmd);
 		xs_put_buf(xst, xsm);
 		xs_put_msg(xs, xsm);
-		return (-1);
+		return (EIO);
 	}
 
 	if (xs_start(xst, xsm, ov, ov_cnt)) {
@@ -752,7 +752,7 @@ xs_cmd(struct xs_transaction *xst, int cmd, const char *path,
 		    xs->xs_sc->sc_dev.dv_xname, cmd);
 		xs_put_buf(xst, xsm);
 		xs_put_msg(xs, xsm);
-		return (-1);
+		return (EIO);
 	}
 
 	xsm = xs_reply(xst, xsm->xsm_hdr.xmh_rid);
