@@ -1,4 +1,4 @@
-/*	$OpenBSD: xenstore.c,v 1.13 2016/01/11 16:14:16 mikeb Exp $	*/
+/*	$OpenBSD: xenstore.c,v 1.14 2016/01/11 16:34:49 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Belopuhov
@@ -559,9 +559,6 @@ xs_intr(void *arg)
 
 		memcpy(&xsm->xsm_hdr, &xmh, sizeof(xmh));
 		xs->xs_rmsg = xsm;
-
-		if (avail == 0)
-			goto out;
 	}
 
 	if (xsm->xsm_hdr.xmh_len > xsm->xsm_dlen)
@@ -570,11 +567,16 @@ xs_intr(void *arg)
 		    xsm->xsm_hdr.xmh_rid);
 
 	len = MIN(xsm->xsm_hdr.xmh_len - xsm->xsm_read, avail);
-	if ((len = xs_ring_get(xs, &xsm->xsm_data[xsm->xsm_read], len)) <= 0) {
-		printf("%s: read failure %d\n", sc->sc_dev.dv_xname, len);
-		goto out;
+	if (len) {
+		/* Get data if reply is not empty */
+		if ((len = xs_ring_get(xs,
+		    &xsm->xsm_data[xsm->xsm_read], len)) <= 0) {
+			printf("%s: read failure %d\n", sc->sc_dev.dv_xname,
+			    len);
+			goto out;
+		}
+		xsm->xsm_read += len;
 	}
-	xsm->xsm_read += len;
 
 	/* Notify reader that we've managed to read the whole message */
 	if (xsm->xsm_read == xsm->xsm_hdr.xmh_len) {
