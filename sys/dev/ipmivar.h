@@ -1,4 +1,4 @@
-/* $OpenBSD: ipmivar.h,v 1.24 2016/01/11 14:29:40 uebayasi Exp $ */
+/* $OpenBSD: ipmivar.h,v 1.25 2016/01/11 14:39:23 uebayasi Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave
@@ -73,10 +73,12 @@ struct ipmi_if {
 	const char	*name;
 	int		nregs;
 	void		(*buildmsg)(struct ipmi_cmd *);
-	int		(*sendmsg)(struct ipmi_softc *, int, const u_int8_t *);
-	int		(*recvmsg)(struct ipmi_softc *, int, int *, u_int8_t *);
+	int		(*sendmsg)(struct ipmi_cmd *);
+	int		(*recvmsg)(struct ipmi_cmd *);
 	int		(*reset)(struct ipmi_softc *);
 	int		(*probe)(struct ipmi_softc *);
+	int		datasnd;
+	int		datarcv;
 };
 
 struct ipmi_cmd {
@@ -168,18 +170,18 @@ void	ipmi_poll_thread(void *);
 
 int	kcs_probe(struct ipmi_softc *);
 int	kcs_reset(struct ipmi_softc *);
-int	kcs_sendmsg(struct ipmi_softc *, int, const u_int8_t *);
-int	kcs_recvmsg(struct ipmi_softc *, int, int *len, u_int8_t *);
+int	kcs_sendmsg(struct ipmi_cmd *);
+int	kcs_recvmsg(struct ipmi_cmd *);
 
 int	bt_probe(struct ipmi_softc *);
 int	bt_reset(struct ipmi_softc *);
-int	bt_sendmsg(struct ipmi_softc *, int, const u_int8_t *);
-int	bt_recvmsg(struct ipmi_softc *, int, int *, u_int8_t *);
+int	bt_sendmsg(struct ipmi_cmd *);
+int	bt_recvmsg(struct ipmi_cmd *);
 
 int	smic_probe(struct ipmi_softc *);
 int	smic_reset(struct ipmi_softc *);
-int	smic_sendmsg(struct ipmi_softc *, int, const u_int8_t *);
-int	smic_recvmsg(struct ipmi_softc *, int, int *, u_int8_t *);
+int	smic_sendmsg(struct ipmi_cmd *);
+int	smic_recvmsg(struct ipmi_cmd *);
 
 struct dmd_ipmi {
 	u_int8_t	dmd_sig[4];		/* Signature 'IPMI' */

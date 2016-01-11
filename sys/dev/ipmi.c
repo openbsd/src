@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipmi.c,v 1.86 2016/01/11 14:29:40 uebayasi Exp $ */
+/*	$OpenBSD: ipmi.c,v 1.87 2016/01/11 14:39:23 uebayasi Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave
@@ -200,6 +200,8 @@ struct ipmi_if kcs_if = {
 	kcs_recvmsg,
 	kcs_reset,
 	kcs_probe,
+	IPMI_MSG_DATASND,
+	IPMI_MSG_DATARCV,
 };
 
 struct ipmi_if smic_if = {
@@ -210,6 +212,8 @@ struct ipmi_if smic_if = {
 	smic_recvmsg,
 	smic_reset,
 	smic_probe,
+	IPMI_MSG_DATASND,
+	IPMI_MSG_DATARCV,
 };
 
 struct ipmi_if bt_if = {
@@ -220,6 +224,8 @@ struct ipmi_if bt_if = {
 	bt_recvmsg,
 	bt_reset,
 	bt_probe,
+	IPMI_BTMSG_DATASND,
+	IPMI_BTMSG_DATARCV,
 };
 
 struct ipmi_if *ipmi_get_if(int);
@@ -377,13 +383,14 @@ bt_write(struct ipmi_softc *sc, int reg, uint8_t data)
 }
 
 int
-bt_sendmsg(struct ipmi_softc *sc, int len, const u_int8_t *data)
+bt_sendmsg(struct ipmi_cmd *c)
 {
+	struct ipmi_softc *sc = c->c_sc;
 	int i;
 
 	bt_write(sc, _BT_CTRL_REG, BT_CLR_WR_PTR);
-	for (i = 0; i < len; i++)
-		bt_write(sc, _BT_DATAOUT_REG, data[i]);
+	for (i = 0; i < c->c_txlen; i++)
+		bt_write(sc, _BT_DATAOUT_REG, sc->sc_buf[i]);
 
 	bt_write(sc, _BT_CTRL_REG, BT_HOST2BMC_ATN);
 	if (bmc_io_wait(sc, _BT_CTRL_REG, BT_HOST2BMC_ATN | BT_BMC_BUSY, 0,
@@ -394,9 +401,10 @@ bt_sendmsg(struct ipmi_softc *sc, int len, const u_int8_t *data)
 }
 
 int
-bt_recvmsg(struct ipmi_softc *sc, int maxlen, int *rxlen, u_int8_t *data)
+bt_recvmsg(struct ipmi_cmd *c)
 {
-	u_int8_t len, v, i;
+	struct ipmi_softc *sc = c->c_sc;
+	u_int8_t len, v, i, j;
 
 	if (bmc_io_wait(sc, _BT_CTRL_REG, BT_BMC2HOST_ATN, BT_BMC2HOST_ATN,
 	    "bt_recvwait") < 0)
@@ -406,13 +414,13 @@ bt_recvmsg(struct ipmi_softc *sc, int maxlen, int *rxlen, u_int8_t *data)
 	bt_write(sc, _BT_CTRL_REG, BT_BMC2HOST_ATN);
 	bt_write(sc, _BT_CTRL_REG, BT_CLR_RD_PTR);
 	len = bt_read(sc, _BT_DATAIN_REG);
-	for (i = IPMI_BTMSG_NFLN; i <= len; i++) {
+	for (i = IPMI_BTMSG_NFLN, j = 0; i <= len; i++) {
 		v = bt_read(sc, _BT_DATAIN_REG);
 		if (i != IPMI_BTMSG_SEQ)
-			*(data++) = v;
+			*(sc->sc_buf + j++) = v;
 	}
 	bt_write(sc, _BT_CTRL_REG, BT_HOST_BUSY);
-	*rxlen = len - 1;
+	c->c_rxlen = len - 1;
 
 	return (0);
 }
@@ -542,20 +550,21 @@ smic_read_data(struct ipmi_softc *sc, u_int8_t *data)
 #define ErrStat(a,b) if (a) printf(b);
 
 int
-smic_sendmsg(struct ipmi_softc *sc, int len, const u_int8_t *data)
+smic_sendmsg(struct ipmi_cmd *c)
 {
+	struct ipmi_softc *sc = c->c_sc;
 	int sts, idx;
 
-	sts = smic_write_cmd_data(sc, SMS_CC_START_TRANSFER, &data[0]);
+	sts = smic_write_cmd_data(sc, SMS_CC_START_TRANSFER, &sc->sc_buf[0]);
 	ErrStat(sts != SMS_SC_WRITE_START, "wstart");
-	for (idx = 1; idx < len - 1; idx++) {
+	for (idx = 1; idx < c->c_txlen - 1; idx++) {
 		sts = smic_write_cmd_data(sc, SMS_CC_NEXT_TRANSFER,
-		    &data[idx]);
+		    &sc->sc_buf[idx]);
 		ErrStat(sts != SMS_SC_WRITE_NEXT, "write");
 	}
-	sts = smic_write_cmd_data(sc, SMS_CC_END_TRANSFER, &data[idx]);
+	sts = smic_write_cmd_data(sc, SMS_CC_END_TRANSFER, &sc->sc_buf[idx]);
 	if (sts != SMS_SC_WRITE_END) {
-		dbg_printf(50, "smic_sendmsg %d/%d = %.2x\n", idx, len, sts);
+		dbg_printf(50, "smic_sendmsg %d/%d = %.2x\n", idx, c->c_txlen, sts);
 		return (-1);
 	}
 
@@ -563,11 +572,12 @@ smic_sendmsg(struct ipmi_softc *sc, int len, const u_int8_t *data)
 }
 
 int
-smic_recvmsg(struct ipmi_softc *sc, int maxlen, int *len, u_int8_t *data)
+smic_recvmsg(struct ipmi_cmd *c)
 {
+	struct ipmi_softc *sc = c->c_sc;
 	int sts, idx;
 
-	*len = 0;
+	c->c_rxlen = 0;
 	sts = smic_wait(sc, SMIC_RX_DATA_RDY, SMIC_RX_DATA_RDY, "smic_recvmsg");
 	if (sts < 0)
 		return (-1);
@@ -575,18 +585,18 @@ smic_recvmsg(struct ipmi_softc *sc, int maxlen, int *len, u_int8_t *data)
 	sts = smic_write_cmd_data(sc, SMS_CC_START_RECEIVE, NULL);
 	ErrStat(sts != SMS_SC_READ_START, "rstart");
 	for (idx = 0;; ) {
-		sts = smic_read_data(sc, &data[idx++]);
+		sts = smic_read_data(sc, &sc->sc_buf[idx++]);
 		if (sts != SMS_SC_READ_START && sts != SMS_SC_READ_NEXT)
 			break;
 		smic_write_cmd_data(sc, SMS_CC_NEXT_RECEIVE, NULL);
 	}
 	ErrStat(sts != SMS_SC_READ_END, "rend");
 
-	*len = idx;
+	c->c_rxlen = idx;
 
 	sts = smic_write_cmd_data(sc, SMS_CC_END_RECEIVE, NULL);
 	if (sts != SMS_SC_READY) {
-		dbg_printf(50, "smic_recvmsg %d/%d = %.2x\n", idx, maxlen, sts);
+		dbg_printf(50, "smic_recvmsg %d/%d = %.2x\n", idx, c->c_maxrxlen, sts);
 		return (-1);
 	}
 
@@ -704,25 +714,26 @@ kcs_read_data(struct ipmi_softc *sc, u_int8_t * data)
 
 /* Exported KCS functions */
 int
-kcs_sendmsg(struct ipmi_softc *sc, int len, const u_int8_t * data)
+kcs_sendmsg(struct ipmi_cmd *c)
 {
+	struct ipmi_softc *sc = c->c_sc;
 	int idx, sts;
 
 	/* ASSERT: IBF is clear */
-	dbg_dump(50, "kcs sendmsg", len, data);
+	dbg_dump(50, "kcs sendmsg", c->c_txlen, sc->sc_buf);
 	sts = kcs_write_cmd(sc, KCS_WRITE_START);
-	for (idx = 0; idx < len; idx++) {
-		if (idx == len - 1)
+	for (idx = 0; idx < c->c_txlen; idx++) {
+		if (idx == c->c_txlen - 1)
 			sts = kcs_write_cmd(sc, KCS_WRITE_END);
 
 		if (sts != KCS_WRITE_STATE)
 			break;
 
-		sts = kcs_write_data(sc, data[idx]);
+		sts = kcs_write_data(sc, sc->sc_buf[idx]);
 	}
 	if (sts != KCS_READ_STATE) {
-		dbg_printf(1, "kcs sendmsg = %d/%d <%.2x>\n", idx, len, sts);
-		dbg_dump(1, "kcs_sendmsg", len, data);
+		dbg_printf(1, "kcs sendmsg = %d/%d <%.2x>\n", idx, c->c_txlen, sts);
+		dbg_dump(1, "kcs_sendmsg", c->c_txlen, sc->sc_buf);
 		return (-1);
 	}
 
@@ -730,23 +741,24 @@ kcs_sendmsg(struct ipmi_softc *sc, int len, const u_int8_t * data)
 }
 
 int
-kcs_recvmsg(struct ipmi_softc *sc, int maxlen, int *rxlen, u_int8_t * data)
+kcs_recvmsg(struct ipmi_cmd *c)
 {
+	struct ipmi_softc *sc = c->c_sc;
 	int idx, sts;
 
-	for (idx = 0; idx < maxlen; idx++) {
-		sts = kcs_read_data(sc, &data[idx]);
+	for (idx = 0; idx < c->c_maxrxlen; idx++) {
+		sts = kcs_read_data(sc, &sc->sc_buf[idx]);
 		if (sts != KCS_READ_STATE)
 			break;
 	}
 	sts = kcs_wait(sc, KCS_IBF, 0, "recv");
-	*rxlen = idx;
+	c->c_rxlen = idx;
 	if (sts != KCS_IDLE_STATE) {
-		dbg_printf(1, "kcs recvmsg = %d/%d <%.2x>\n", idx, maxlen, sts);
+		dbg_printf(1, "kcs recvmsg = %d/%d <%.2x>\n", idx, c->c_maxrxlen, sts);
 		return (-1);
 	}
 
-	dbg_dump(50, "kcs recvmsg", idx, data);
+	dbg_dump(50, "kcs recvmsg", idx, sc->sc_buf);
 
 	return (0);
 }
@@ -942,16 +954,12 @@ bt_buildmsg(struct ipmi_cmd *c)
 	struct ipmi_softc *sc = c->c_sc;
 	u_int8_t *buf = sc->sc_buf;
 
-	buf[IPMI_BTMSG_LEN] = c->c_txlen + 3;
+	buf[IPMI_BTMSG_LEN] = c->c_txlen + (IPMI_BTMSG_DATASND - 1);
 	buf[IPMI_BTMSG_NFLN] = NETFN_LUN(c->c_netfn, c->c_rslun);
 	buf[IPMI_BTMSG_SEQ] = sc->sc_btseq++;
 	buf[IPMI_BTMSG_CMD] = c->c_cmd;
 	if (c->c_txlen && c->c_data)
 		memcpy(buf + IPMI_BTMSG_DATASND, c->c_data, c->c_txlen);
-
-	/* Block transfer needs 4 extra bytes: length/netfn/seq/cmd + data */
-	c->c_txlen += IPMI_BTMSG_DATASND;
-	c->c_maxrxlen += IPMI_BTMSG_DATARCV;
 }
 
 /*
@@ -968,10 +976,6 @@ cmn_buildmsg(struct ipmi_cmd *c)
 	buf[IPMI_MSG_CMD] = c->c_cmd;
 	if (c->c_txlen && c->c_data)
 		memcpy(buf + IPMI_MSG_DATASND, c->c_data, c->c_txlen);
-
-	/* Common needs two extra bytes: nfLun/cmd + data */
-	c->c_txlen += IPMI_MSG_DATASND;
-	c->c_maxrxlen += IPMI_MSG_DATARCV;
 }
 
 /* Send an IPMI command */
@@ -1006,7 +1010,8 @@ ipmi_sendcmd(struct ipmi_cmd *c)
 	} else
 		sc->sc_if->buildmsg(c);
 
-	rc = sc->sc_if->sendmsg(sc, c->c_txlen, sc->sc_buf);
+	c->c_txlen += sc->sc_if->datasnd;
+	rc = sc->sc_if->sendmsg(c);
 
 	ipmi_delay(sc, 5); /* give bmc chance to digest command */
 
@@ -1020,17 +1025,17 @@ ipmi_recvcmd(struct ipmi_cmd *c)
 {
 	struct ipmi_softc *sc = c->c_sc;
 	u_int8_t	*buf = sc->sc_buf, rc = 0;
-	int		rawlen;
 
 	/* Receive message from interface, copy out result data */
-	if (sc->sc_if->recvmsg(sc, c->c_maxrxlen + 3, &rawlen, buf) ||
-	    rawlen < IPMI_MSG_DATARCV) {
+	c->c_maxrxlen += sc->sc_if->datarcv;
+	if (sc->sc_if->recvmsg(c) ||
+	    c->c_rxlen < sc->sc_if->datarcv) {
 		return (-1);
 	}
 
-	c->c_rxlen = rawlen - IPMI_MSG_DATARCV;
+	c->c_rxlen -= sc->sc_if->datarcv;
 	if (c->c_rxlen > 0 && c->c_data)
-		memcpy(c->c_data, buf + IPMI_MSG_DATARCV, c->c_rxlen);
+		memcpy(c->c_data, buf + sc->sc_if->datarcv, c->c_rxlen);
 
 	rc = buf[IPMI_MSG_CCODE];
 #ifdef IPMI_DEBUG
@@ -1093,9 +1098,7 @@ get_sdr_partial(struct ipmi_softc *sc, u_int16_t recordId, u_int16_t reserveId,
 	c.c_netfn = STORAGE_NETFN;
 	c.c_cmd = STORAGE_GET_SDR;
 	c.c_txlen = 6;
-	c.c_maxrxlen = 8 + length;
 	c.c_rxlen = 0;
-	c.c_data = cmd;
 	ipmi_cmd(&c);
 	len = c.c_rxlen;
 
