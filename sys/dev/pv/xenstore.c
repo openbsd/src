@@ -1,4 +1,4 @@
-/*	$OpenBSD: xenstore.c,v 1.12 2016/01/04 16:06:50 mikeb Exp $	*/
+/*	$OpenBSD: xenstore.c,v 1.13 2016/01/11 16:14:16 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Belopuhov
@@ -633,10 +633,11 @@ int
 xs_parse(struct xs_transaction *xst, struct xs_msg *xsm, struct iovec **iov,
     int *iov_cnt)
 {
-	int dlen = xsm->xsm_hdr.xmh_len;
 	char *bp, *cp;
-	int i, flags;
+	int i, dlen, flags;
 
+	/* If the response size is zero, we return an empty string */
+	dlen = MAX(xsm->xsm_hdr.xmh_len, 1);
 	flags = M_ZERO | (xst->xst_flags & XST_POLL ? M_NOWAIT : M_WAITOK);
 
 	*iov_cnt = 0;
@@ -650,13 +651,11 @@ xs_parse(struct xs_transaction *xst, struct xs_msg *xsm, struct iovec **iov,
 		xsm->xsm_data[dlen - 1] = '\0';
 	}
 	for (i = 0; i < dlen; i++)
-		if (i > 0 && xsm->xsm_data[i] == '\0')
+		if (xsm->xsm_data[i] == '\0')
 			(*iov_cnt)++;
-	if (!*iov_cnt)
-		return (0);
 	*iov = mallocarray(*iov_cnt, sizeof(struct iovec), M_DEVBUF, flags);
 	if (*iov == NULL)
-		return (-1);
+		goto cleanup;
 	bp = xsm->xsm_data;
 	for (i = 0; i < *iov_cnt; i++) {
 		cp = bp;
@@ -664,16 +663,18 @@ xs_parse(struct xs_transaction *xst, struct xs_msg *xsm, struct iovec **iov,
 			cp++;
 		(*iov)[i].iov_len = cp - bp + 1;
 		(*iov)[i].iov_base = malloc((*iov)[i].iov_len, M_DEVBUF, flags);
-		if (!(*iov)[i].iov_base)
+		if (!(*iov)[i].iov_base) {
+			xs_resfree(xst, *iov, *iov_cnt);
 			goto cleanup;
+		}
 		memcpy((*iov)[i].iov_base, bp, (*iov)[i].iov_len);
 		bp = ++cp;
 	}
-
 	return (0);
 
  cleanup:
-	xs_resfree(xst, *iov, *iov_cnt);
+	*iov = NULL;
+	*iov_cnt = 0;
 	return (ENOMEM);
 }
 
