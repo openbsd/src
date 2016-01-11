@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.810 2016/01/08 09:48:41 mpi Exp $
+#	$OpenBSD: GENERIC,v 1.811 2016/01/11 22:00:16 kettenis Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -380,12 +380,12 @@ agp*		at intagp?
 drm0		at inteldrm? console 1
 drm*		at inteldrm?
 wsdisplay0	at inteldrm? console 1
-wsdisplay*	at inteldrm?
+wsdisplay*	at inteldrm? mux -1
 radeondrm*	at pci? 	# ATI Radeon DRM driver
 drm0		at radeondrm? console 1
 drm*		at radeondrm?
 wsdisplay0	at radeondrm? console 1
-wsdisplay*	at radeondrm?
+wsdisplay*	at radeondrm? mux -1
 
 pcppi0		at isa?
 
