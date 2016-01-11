@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.299 2016/01/09 18:54:51 kettenis Exp $ */
+/* $OpenBSD: acpi.c,v 1.300 2016/01/11 22:06:00 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -2735,7 +2735,8 @@ acpi_foundhid(struct aml_node *node, void *arg)
 	    !strcmp(dev, ACPI_DEV_TOSHIBA_SPA40)) {
 		aaa.aaa_name = "acpitoshiba";
 		acpi_toshiba_enabled = 1;
-	}
+	} else if (!strcmp(dev, "80860F14") || !strcmp(dev, "PNP0FFF"))
+		aaa.aaa_name = "sdhc";
 
 	if (!strcmp(cdev, ACPI_DEV_MOUSE)) {
 		for (i = 0; i < nitems(sbtn_pnp); i++) {
