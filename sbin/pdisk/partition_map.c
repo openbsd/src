@@ -1,4 +1,4 @@
-/*	$OpenBSD: partition_map.c,v 1.12 2016/01/11 18:43:06 krw Exp $	*/
+/*	$OpenBSD: partition_map.c,v 1.13 2016/01/11 23:31:27 krw Exp $	*/
 
 //
 // partition_map.c - partition map routines
@@ -52,12 +52,12 @@
 #include <errno.h>
 
 #include "partition_map.h"
-#include "pathname.h"
 #include "hfs_misc.h"
 #include "deblock_media.h"
 #include "io.h"
 #include "convert.h"
 #include "errors.h"
+#include "file_media.h"
 
 
 //
@@ -130,9 +130,9 @@ open_partition_map(char *name, int *valid_file, int ask_logical_size)
     int writable;
     long size;
 
-    m = open_pathname_as_media(name, (rflag)?O_RDONLY:O_RDWR);
+    m = open_file_as_media(name, (rflag)?O_RDONLY:O_RDWR);
     if (m == 0) {
-	m = open_pathname_as_media(name, O_RDONLY);
+	m = open_file_as_media(name, O_RDONLY);
 	if (m == 0) {
 	    error(errno, "can't open file '%s'", name);
 	    *valid_file = 0;
@@ -431,7 +431,7 @@ create_partition_map(char *name, partition_map_header *oldmap)
     long size;
     unsigned long multiple;
 
-    m = open_pathname_as_media(name, (rflag)?O_RDONLY:O_RDWR);
+    m = open_file_as_media(name, (rflag)?O_RDONLY:O_RDWR);
     if (m == 0) {
 	error(errno, "can't open file '%s' for %sing", name,
 		(rflag)?"read":"writ");

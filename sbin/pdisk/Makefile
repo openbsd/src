@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.13 2016/01/11 18:43:06 krw Exp $
+#	$Id: Makefile,v 1.14 2016/01/11 23:31:27 krw Exp $
 
 .if ${MACHINE} == "macppc"
 PROG=	pdisk
@@ -7,7 +7,7 @@ DPADD=  ${LIBUTIL}
 CFLAGS+=-Wall
 
 SRCS=	bitfield.c convert.c deblock_media.c dump.c errors.c \
-	file_media.c hfs_misc.c io.c media.c partition_map.c pathname.c \
+	file_media.c hfs_misc.c io.c media.c partition_map.c \
 	pdisk.c validate.c
 
 .else

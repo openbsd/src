@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdisk.c,v 1.22 2016/01/11 18:43:06 krw Exp $	*/
+/*	$OpenBSD: pdisk.c,v 1.23 2016/01/11 23:31:27 krw Exp $	*/
 
 //
 // pdisk - an editor for Apple format partition tables
@@ -46,11 +46,11 @@
 #include "pdisk.h"
 #include "io.h"
 #include "partition_map.h"
-#include "pathname.h"
 #include "hfs_misc.h"
 #include "errors.h"
 #include "dump.h"
 #include "validate.h"
+#include "file_media.h"
 
 
 //
@@ -906,7 +906,7 @@ do_display_block(partition_map_header *map, char *alt_name)
 		return;
 	    }
 	}
-	m = open_pathname_as_media(name, O_RDONLY);
+	m = open_file_as_media(name, O_RDONLY);
 	if (m == 0) {
 	    error(errno, "can't open file '%s'", name);
 	    free(name);

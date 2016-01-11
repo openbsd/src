@@ -1,4 +1,4 @@
-/*	$OpenBSD: validate.c,v 1.8 2016/01/11 07:57:54 jasper Exp $	*/
+/*	$OpenBSD: validate.c,v 1.9 2016/01/11 23:31:27 krw Exp $	*/
 
 //
 // validate.c -
@@ -39,10 +39,10 @@
 
 #include "validate.h"
 #include "deblock_media.h"
-#include "pathname.h"
 #include "convert.h"
 #include "io.h"
 #include "errors.h"
+#include "file_media.h"
 
 
 //
@@ -347,7 +347,7 @@ validate_map(partition_map_header *map)
 	    bad_input("Bad name");
 	    return;
 	}
-	the_media = open_pathname_as_media(name, O_RDONLY);
+	the_media = open_file_as_media(name, O_RDONLY);
 	if (the_media == 0) {
 	    error(errno, "can't open file '%s'", name);
 	    free(name);
