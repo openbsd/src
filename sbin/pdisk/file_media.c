@@ -1,4 +1,4 @@
-/*	$OpenBSD: file_media.c,v 1.13 2016/01/11 07:57:54 jasper Exp $	*/
+/*	$OpenBSD: file_media.c,v 1.14 2016/01/11 14:27:29 jasper Exp $	*/
 
 /*
  * file_media.c -
@@ -179,6 +179,7 @@ compute_block_size(int fd)
 	    }
 	}
     }
+    free(buffer);
     return 0;
 }
 
