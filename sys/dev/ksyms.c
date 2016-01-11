@@ -1,4 +1,4 @@
-/*	$OpenBSD: ksyms.c,v 1.30 2015/08/29 01:58:39 guenther Exp $	*/
+/*	$OpenBSD: ksyms.c,v 1.31 2016/01/11 17:29:43 stefan Exp $	*/
 /*
  * Copyright (c) 1998 Todd C. Miller <Todd.Miller@courtesan.com>
  * Copyright (c) 2001 Artur Grabowski <art@openbsd.org>
@@ -164,7 +164,7 @@ ksymsread(dev_t dev, struct uio *uio, int flags)
 		if (len > uio->uio_resid)
 			len = uio->uio_resid;
 
-		if ((error = uiomovei(v, len, uio)) != 0)
+		if ((error = uiomove(v, len, uio)) != 0)
 			return (error);
 	}
 
