@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.9 2016/01/11 07:54:07 jasper Exp $	*/
+/*	$OpenBSD: io.c,v 1.10 2016/01/11 07:57:54 jasper Exp $	*/
 
 //
 // io.c - simple io and input parsing routines
@@ -108,7 +108,6 @@ my_ungetch(int c)
     }
 }
 
-	
 void
 flush_to_newline(int keep_newline)
 {
@@ -162,7 +161,6 @@ get_okay(const char *prompt, int default_value)
     return -1;
 }
 
-	
 int
 get_command(const char *prompt, int promptBeforeGet, int *command)
 {
@@ -170,7 +168,7 @@ get_command(const char *prompt, int promptBeforeGet, int *command)
 
     if (promptBeforeGet) {
 	printf(prompt);
-    }	
+    }
     for (;;) {
 	c = my_getch();
 
@@ -188,7 +186,6 @@ get_command(const char *prompt, int promptBeforeGet, int *command)
     return 0;
 }
 
-	
 int
 get_number_argument(const char *prompt, long *number, long default_value)
 {
@@ -267,7 +264,6 @@ get_number(int first_char)
     return(ret_value);
 }
 
-	
 int
 get_string_argument(const char *prompt, char **string, int reprompt)
 {

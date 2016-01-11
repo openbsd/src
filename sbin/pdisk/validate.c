@@ -1,4 +1,4 @@
-/*	$OpenBSD: validate.c,v 1.7 2016/01/11 07:54:07 jasper Exp $	*/
+/*	$OpenBSD: validate.c,v 1.8 2016/01/11 07:57:54 jasper Exp $	*/
 
 //
 // validate.c -
@@ -228,7 +228,7 @@ add_range(range_list **list, u32 base, u32 len, int allocate)
 		}
 		cur->next = item;
 		item->prev = cur;
-		
+
 		cur->end = high;
 	    }
 
@@ -421,7 +421,7 @@ check_map:
 	    goto post_processing;
 	}
 	printed = 0;
-	
+
 	// signature matches
 	if (mb->dpme_signature != DPME_SIGNATURE) {
 	    printed = 1;
@@ -449,7 +449,7 @@ check_map:
 	}
 	// remember stuff for post processing
 	add_range(&list, mb->dpme_pblock_start, mb->dpme_pblocks, 1);
-	
+
 	// XXX type is known type?
 	// XXX no unknown flags?
 	// XXX boot blocks either within or outside of logical

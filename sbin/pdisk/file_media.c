@@ -1,4 +1,4 @@
-/*	$OpenBSD: file_media.c,v 1.12 2016/01/11 07:54:07 jasper Exp $	*/
+/*	$OpenBSD: file_media.c,v 1.13 2016/01/11 07:57:54 jasper Exp $	*/
 
 /*
  * file_media.c -
@@ -190,7 +190,7 @@ open_file_as_media(char *file, int oflag)
     int			fd;
     loff_t off;
     struct stat info;
-	
+
     if (file_inited == 0) {
 	    file_init();
     }

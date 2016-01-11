@@ -1,4 +1,4 @@
-/*	$OpenBSD: partition_map.c,v 1.10 2016/01/11 07:54:07 jasper Exp $	*/
+/*	$OpenBSD: partition_map.c,v 1.11 2016/01/11 07:57:54 jasper Exp $	*/
 
 //
 // partition_map.c - partition map routines
@@ -543,7 +543,7 @@ create_partition_map(char *name, partition_map_header *oldmap)
 	// got it!
 	coerce_block0(map);
 	sync_device_size(map);
-	
+
 	data = calloc(1, PBLOCK_SIZE);
 	if (data == NULL) {
 	    error(errno, "can't allocate memory for disk buffers");
