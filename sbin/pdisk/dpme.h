@@ -1,4 +1,4 @@
-/*	$OpenBSD: dpme.h,v 1.4 2016/01/11 07:54:07 jasper Exp $	*/
+/*	$OpenBSD: dpme.h,v 1.5 2016/01/11 17:55:45 jasper Exp $	*/
 
 //
 // dpme.h - Disk Partition Map Entry (dpme)
@@ -103,18 +103,6 @@ struct dpme {
     u32     dpme_lblock_start       ;
     u32     dpme_lblocks            ;
     u32     dpme_flags;
-#if 0
-    u32     dpme_reserved_2    : 23 ;  /* Bit 9 through 31.        */
-    u32     dpme_os_specific_1 :  1 ;  /* Bit 8.                   */
-    u32     dpme_os_specific_2 :  1 ;  /* Bit 7.                   */
-    u32     dpme_os_pic_code   :  1 ;  /* Bit 6.                   */
-    u32     dpme_writable      :  1 ;  /* Bit 5.                   */
-    u32     dpme_readable      :  1 ;  /* Bit 4.                   */
-    u32     dpme_bootable      :  1 ;  /* Bit 3.                   */
-    u32     dpme_in_use        :  1 ;  /* Bit 2.                   */
-    u32     dpme_allocated     :  1 ;  /* Bit 1.                   */
-    u32     dpme_valid         :  1 ;  /* Bit 0.                   */
-#endif
     u32     dpme_boot_block         ;
     u32     dpme_boot_bytes         ;
     u8     *dpme_load_addr          ;
@@ -157,15 +145,6 @@ typedef struct dpme DPME;
 
 // A/UX only data structures (sentimental reasons?)
 
-// Alternate block map (aka bad block remaping) [Never really used]
-struct abm		/* altblk map info stored in bzb */
-{
-    u32  abm_size;	/* size of map in bytes */
-    u32  abm_ents;	/* number of used entries */
-    u32  abm_start;	/* start of altblk map */
-};
-typedef	struct abm ABM;
-
 // BZB (Block Zero Block, but I can't remember the etymology)
 // Where &dpme_boot_args[0] is actually the address of a struct bzb
 // kludge to get around alignment junk
@@ -176,18 +155,9 @@ struct	bzb			/* block zero block format */
     u8   bzb_type;		/* FS type */
     u16  bzb_inode;		/* bad block inode number */
     u32  bzb_flags;
-#if 0
-    u16  bzb_root:1,		/* FS is a root FS */
-	 bzb_usr:1,		/* FS is a usr FS */
-	 bzb_crit:1,		/* FS is a critical FS */
-	 bzb_rsrvd:8,		/* reserved for later use */
-	 bzb_slice:5;		/* slice number to associate with plus one */
-    u16  bzb_filler;		/* pad bitfield to 32 bits */
-#endif
     u32  bzb_tmade;		/* time of FS creation */
     u32  bzb_tmount;		/* time of last mount */
     u32  bzb_tumount;		/* time of last umount */
-    ABM  bzb_abm;		/* altblk map info */
     u32  bzb_fill2[7];		/* for expansion of ABM (ha!ha!) */
     u8   bzb_mount_point[64];	/* default mount point name */
 };

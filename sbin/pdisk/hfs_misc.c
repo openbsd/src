@@ -1,4 +1,4 @@
-/*	$OpenBSD: hfs_misc.c,v 1.6 2016/01/11 07:54:07 jasper Exp $	*/
+/*	$OpenBSD: hfs_misc.c,v 1.7 2016/01/11 17:55:45 jasper Exp $	*/
 
 //
 // hfs_misc.c - hfs routines
@@ -82,14 +82,8 @@ struct mdb_record {		// master directory block
     u32	drFilCnt;	// number of files in volume
     u32	drDirCnt;	// number of directories in volume
     u32	drFndrInfo[8];	// information used by the Finder
-#ifdef notdef
-    u16	drVCSize;	// size (in blocks) of volume cache
-    u16	drVBMCSize;	// size (in blocks) of volume bitmap cache
-    u16	drCtlCSize;	// size (in blocks) of common volume cache
-#else
     u16	drEmbedSigWord;	// type of embedded volume
     ext_descriptor	drEmbedExtent;	// embedded volume extent
-#endif
     u16	drXTFlSize[2];	// size of extents overflow file
     ext_data_rec	drXTExtRec;	// extent record for extents overflow file
     u16	drCTFlSize[2];	// size of catalog file

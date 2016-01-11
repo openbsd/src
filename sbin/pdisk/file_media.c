@@ -1,4 +1,4 @@
-/*	$OpenBSD: file_media.c,v 1.14 2016/01/11 14:27:29 jasper Exp $	*/
+/*	$OpenBSD: file_media.c,v 1.15 2016/01/11 17:55:45 jasper Exp $	*/
 
 /*
  * file_media.c -
@@ -423,12 +423,12 @@ step_file_iterator(MEDIA_ITERATOR m)
 		if (a->style > kMaxStyle) {
 		    break;
 		}
-#ifndef notdef
+
 		/* if old version of mklinux then skip CD drive */
 		if (a->style == kSCSI_Disks && a->index == 3) {
 		    a->index += 1;
 		}
-#endif
+
 		/* generate result */
 		result = malloc(20);
 		if (result != NULL) {
