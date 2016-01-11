@@ -1,4 +1,4 @@
-/*	$OpenBSD: partition_map.c,v 1.11 2016/01/11 07:57:54 jasper Exp $	*/
+/*	$OpenBSD: partition_map.c,v 1.12 2016/01/11 18:43:06 krw Exp $	*/
 
 //
 // partition_map.c - partition map routines
@@ -57,7 +57,6 @@
 #include "deblock_media.h"
 #include "io.h"
 #include "convert.h"
-#include "util.h"
 #include "errors.h"
 
 
@@ -388,7 +387,7 @@ add_data_to_map(struct dpme *data, long ix, partition_map_header *map)
 
     map->blocks_in_map++;
     if (map->maximum_in_map < 0) {
-	if (istrncmp(data->dpme_type, kMapType, DPISTRLEN) == 0) {
+	if (strncasecmp(data->dpme_type, kMapType, DPISTRLEN) == 0) {
 	    map->maximum_in_map = data->dpme_pblocks;
 	}
     }
@@ -627,8 +626,8 @@ add_partition_to_map(const char *name, const char *dptype, u32 base, u32 length,
 	  if ((cur->next_by_base == NULL) &&
 	      (base + length <= map->media_size)) {
 	    // Expand final free partition
-	    if ((istrncmp(cur->data->dpme_type, kFreeType, DPISTRLEN) == 0) &&
-		base >= cur->data->dpme_pblock_start) {
+	    if ((strncasecmp(cur->data->dpme_type, kFreeType, DPISTRLEN) == 0)
+		&& base >= cur->data->dpme_pblock_start) {
 	      cur->data->dpme_pblocks =
 		map->media_size - cur->data->dpme_pblock_start;
 	      break;
@@ -659,7 +658,7 @@ add_partition_to_map(const char *name, const char *dptype, u32 base, u32 length,
     }
 	// if it is not Extra then punt
     if (cur == NULL
-	    || istrncmp(cur->data->dpme_type, kFreeType, DPISTRLEN) != 0) {
+	    || strncasecmp(cur->data->dpme_type, kFreeType, DPISTRLEN) != 0) {
 	printf("requested base and length is not "
 		"within an existing free partition\n");
 	return 0;
@@ -759,7 +758,8 @@ create_data(const char *name, const char *dptype, u32 base, u32 length)
 void
 dpme_init_flags(DPME *data)
 {
-    if (istrncmp(data->dpme_type, kHFSType, DPISTRLEN) == 0) { /* XXX this is gross, fix it! */
+    if (strncasecmp(data->dpme_type, kHFSType, DPISTRLEN) == 0) {
+	/* XXX this is gross, fix it! */
 	data->dpme_flags = APPLE_HFS_FLAGS_VALUE;
     }
     else {
@@ -887,7 +887,7 @@ delete_partition_from_map(partition_map *entry)
     partition_map_header *map;
     DPME *data;
 
-    if (istrncmp(entry->data->dpme_type, kMapType, DPISTRLEN) == 0) {
+    if (strncasecmp(entry->data->dpme_type, kMapType, DPISTRLEN) == 0) {
 	printf("Can't delete entry for the map itself\n");
 	return;
     }
@@ -977,12 +977,12 @@ combine_entry(partition_map *entry)
     u32 end;
 
     if (entry == NULL
-	    || istrncmp(entry->data->dpme_type, kFreeType, DPISTRLEN) != 0) {
+	    || strncasecmp(entry->data->dpme_type, kFreeType, DPISTRLEN) != 0) {
 	return;
     }
     if (entry->next_by_base != NULL) {
 	p = entry->next_by_base;
-	if (istrncmp(p->data->dpme_type, kFreeType, DPISTRLEN) != 0) {
+	if (strncasecmp(p->data->dpme_type, kFreeType, DPISTRLEN) != 0) {
 	    // next is not free
 	} else if (entry->data->dpme_pblock_start + entry->data->dpme_pblocks
 		!= p->data->dpme_pblock_start) {
@@ -1004,7 +1004,7 @@ combine_entry(partition_map *entry)
     }
     if (entry->prev_by_base != NULL) {
 	p = entry->prev_by_base;
-	if (istrncmp(p->data->dpme_type, kFreeType, DPISTRLEN) != 0) {
+	if (strncasecmp(p->data->dpme_type, kFreeType, DPISTRLEN) != 0) {
 	    // previous is not free
 	} else if (p->data->dpme_pblock_start + p->data->dpme_pblocks
 		!= entry->data->dpme_pblock_start) {
@@ -1082,7 +1082,7 @@ find_entry_by_type(const char *type_name, partition_map_header *map)
 
     cur = map->base_order;
     while (cur != NULL) {
-	if (istrncmp(cur->data->dpme_type, type_name, DPISTRLEN) == 0) {
+	if (strncasecmp(cur->data->dpme_type, type_name, DPISTRLEN) == 0) {
 	    break;
 	}
 	cur = cur->next_by_base;
@@ -1240,8 +1240,8 @@ resize_map(long new_size, partition_map_header *map)
 
 	// make it smaller
     if (new_size < entry->data->dpme_pblocks) {
-	if (next == NULL
-		|| istrncmp(next->data->dpme_type, kFreeType, DPISTRLEN) != 0) {
+	if (next == NULL ||
+	    strncasecmp(next->data->dpme_type, kFreeType, DPISTRLEN) != 0) {
 	    incr = 1;
 	} else {
 	    incr = 0;
@@ -1254,8 +1254,8 @@ resize_map(long new_size, partition_map_header *map)
     }
 
 	// make it larger
-    if (next == NULL
-	    || istrncmp(next->data->dpme_type, kFreeType, DPISTRLEN) != 0) {
+    if (next == NULL ||
+	strncasecmp(next->data->dpme_type, kFreeType, DPISTRLEN) != 0) {
 	printf("No free space to expand into\n");
 	return;
     }

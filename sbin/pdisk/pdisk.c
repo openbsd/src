@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdisk.c,v 1.21 2016/01/11 08:01:07 jasper Exp $	*/
+/*	$OpenBSD: pdisk.c,v 1.22 2016/01/11 18:43:06 krw Exp $	*/
 
 //
 // pdisk - an editor for Apple format partition tables
@@ -51,8 +51,6 @@
 #include "errors.h"
 #include "dump.h"
 #include "validate.h"
-#include "version.h"
-#include "util.h"
 
 
 //
@@ -131,7 +129,6 @@ int
 main(int argc, char **argv)
 {
     int name_index;
-    char *versionstr;
 
     if (sizeof(DPME) != PBLOCK_SIZE) {
 	fatal(-1, "Size of partition map entry (%d) "
@@ -143,20 +140,9 @@ main(int argc, char **argv)
 		"is not equal to block size (%d)\n",
 		sizeof(Block0), PBLOCK_SIZE);
     }
-    versionstr = (char *)get_version_string();
-    if (versionstr) {
-	if (strcmp(VERSION, versionstr) != 0) {
-		fatal(-1, "Version string static form (%s) does not match dynamic form (%s)\n",
-		    VERSION, versionstr);
-	}
-	free(versionstr);
-    }
 
     name_index = get_options(argc, argv);
 
-    if (vflag) {
-	printf("version " VERSION " (" RELEASE_DATE ")\n");
-    }
     if (hflag) {
  	do_help();
     } else if (interactive) {
@@ -218,10 +204,6 @@ interact()
 	case 'Q':
 	case 'q':
 	    return;
-	    break;
-	case 'V':
-	case 'v':
-	    printf("version " VERSION " (" RELEASE_DATE ")\n");
 	    break;
 	case 'l':
 	    if (get_string_argument("Name of device: ", &name, 1) == 0) {
@@ -556,11 +538,11 @@ do_create_partition(partition_map_header *map, int get_type)
 	bad_input("Bad type");
 	goto xit1;
     } else {
-	if (istrncmp(type_name, kFreeType, DPISTRLEN) == 0) {
+	if (strncasecmp(type_name, kFreeType, DPISTRLEN) == 0) {
 	    bad_input("Can't create a partition with the Free type");
 	    goto xit2;
 	}
-	if (istrncmp(type_name, kMapType, DPISTRLEN) == 0) {
+	if (strncasecmp(type_name, kMapType, DPISTRLEN) == 0) {
 	    bad_input("Can't create a partition with the Map type");
 	    goto xit2;
 	}
