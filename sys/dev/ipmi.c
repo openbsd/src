@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipmi.c,v 1.83 2016/01/11 12:54:33 uebayasi Exp $ */
+/*	$OpenBSD: ipmi.c,v 1.84 2016/01/11 13:12:50 uebayasi Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave
@@ -149,9 +149,10 @@ int	get_sdr_partial(struct ipmi_softc *, u_int16_t, u_int16_t,
 	    u_int8_t, u_int8_t, void *, u_int16_t *);
 int	get_sdr(struct ipmi_softc *, u_int16_t, u_int16_t *);
 
-int	ipmi_sendcmd(struct ipmi_softc *, int, int, int, int, int, const void*);
-int	ipmi_recvcmd(struct ipmi_softc *, int, int *, void *);
+int	ipmi_sendcmd(struct ipmi_cmd *);
+int	ipmi_recvcmd(struct ipmi_cmd *);
 void	ipmi_delay(struct ipmi_softc *, int);
+void	ipmi_cmd(void *);
 
 int	ipmi_watchdog(void *, int);
 
@@ -934,9 +935,6 @@ ipmi_smbios_probe(struct smbios_ipmi *pipmi, struct ipmi_attach_args *ia)
 /*
  * bt_buildmsg builds an IPMI message from a nfLun, cmd, and data
  * This is used by BT protocol
- *
- * Returns a buffer to an allocated message, txlen contains length
- *   of allocated message
  */
 void *
 bt_buildmsg(struct ipmi_softc *sc, int nfLun, int cmd, int len,
@@ -963,9 +961,6 @@ bt_buildmsg(struct ipmi_softc *sc, int nfLun, int cmd, int len,
 /*
  * cmn_buildmsg builds an IPMI message from a nfLun, cmd, and data
  * This is used by both SMIC and KCS protocols
- *
- * Returns a buffer to an allocated message, txlen contains length
- *   of allocated message
  */
 void *
 cmn_buildmsg(struct ipmi_softc *sc, int nfLun, int cmd, int len,
@@ -989,16 +984,16 @@ cmn_buildmsg(struct ipmi_softc *sc, int nfLun, int cmd, int len,
 
 /* Send an IPMI command */
 int
-ipmi_sendcmd(struct ipmi_softc *sc, int rssa, int rslun, int netfn, int cmd,
-    int txlen, const void *data)
+ipmi_sendcmd(struct ipmi_cmd *c)
 {
+	struct ipmi_softc	*sc = c->c_sc;
 	u_int8_t	*buf;
 	int		rc = -1;
 
 	dbg_printf(50, "ipmi_sendcmd: rssa=%.2x nfln=%.2x cmd=%.2x len=%.2x\n",
-	    rssa, NETFN_LUN(netfn, rslun), cmd, txlen);
-	dbg_dump(10, " send", txlen, data);
-	if (rssa != BMC_SA) {
+	    c->c_rssa, NETFN_LUN(c->c_netfn, c->c_rslun), c->c_cmd, c->c_txlen);
+	dbg_dump(10, " send", c->c_txlen, c->c_data);
+	if (c->c_rssa != BMC_SA) {
 #if 0
 		buf = sc->sc_if->buildmsg(sc, NETFN_LUN(APP_NETFN, BMC_LUN),
 		    APP_SEND_MESSAGE, 7 + txlen, NULL, &txlen);
@@ -1019,15 +1014,15 @@ ipmi_sendcmd(struct ipmi_softc *sc, int rssa, int rslun, int netfn, int cmd,
 #endif
 		goto done;
 	} else
-		buf = sc->sc_if->buildmsg(sc, NETFN_LUN(netfn, rslun), cmd,
-		    txlen, data, &txlen);
+		buf = sc->sc_if->buildmsg(sc, NETFN_LUN(c->c_netfn, c->c_rslun), c->c_cmd,
+		    c->c_txlen, c->c_data, &c->c_txlen);
 
 	if (buf == NULL) {
 		printf("%s: sendcmd malloc fails\n", DEVNAME(sc));
 		goto done;
 	}
-	rc = sc->sc_if->sendmsg(sc, txlen, buf);
-	free(buf, M_DEVBUF, txlen);
+	rc = sc->sc_if->sendmsg(sc, c->c_txlen, buf);
+	free(buf, M_DEVBUF, c->c_txlen);
 
 	ipmi_delay(sc, 5); /* give bmc chance to digest command */
 
@@ -1035,28 +1030,30 @@ done:
 	return (rc);
 }
 
+/* Receive an IPMI command */
 int
-ipmi_recvcmd(struct ipmi_softc *sc, int maxlen, int *rxlen, void *data)
+ipmi_recvcmd(struct ipmi_cmd *c)
 {
+	struct ipmi_softc *sc = c->c_sc;
 	u_int8_t	*buf, rc = 0;
 	int		rawlen;
 
 	/* Need three extra bytes: netfn/cmd/ccode + data */
-	buf = malloc(maxlen + 3, M_DEVBUF, M_NOWAIT);
+	buf = malloc(c->c_maxrxlen + 3, M_DEVBUF, M_NOWAIT);
 	if (buf == NULL) {
 		printf("%s: ipmi_recvcmd: malloc fails\n", DEVNAME(sc));
 		return (-1);
 	}
 	/* Receive message from interface, copy out result data */
-	if (sc->sc_if->recvmsg(sc, maxlen + 3, &rawlen, buf) ||
+	if (sc->sc_if->recvmsg(sc, c->c_maxrxlen + 3, &rawlen, buf) ||
 	    rawlen < IPMI_MSG_DATARCV) {
-		free(buf, M_DEVBUF, maxlen + 3);
+		free(buf, M_DEVBUF, c->c_maxrxlen + 3);
 		return (-1);
 	}
 
-	*rxlen = rawlen - IPMI_MSG_DATARCV;
-	if (*rxlen > 0 && data)
-		memcpy(data, buf + IPMI_MSG_DATARCV, *rxlen);
+	c->c_rxlen = rawlen - IPMI_MSG_DATARCV;
+	if (c->c_rxlen > 0 && c->c_data)
+		memcpy(c->c_data, buf + IPMI_MSG_DATARCV, c->c_rxlen);
 
 	rc = buf[IPMI_MSG_CCODE];
 #ifdef IPMI_DEBUG
@@ -1067,10 +1064,10 @@ ipmi_recvcmd(struct ipmi_softc *sc, int maxlen, int *rxlen, void *data)
 
 	dbg_printf(50, "ipmi_recvcmd: nfln=%.2x cmd=%.2x err=%.2x len=%.2x\n",
 	    buf[IPMI_MSG_NFLN], buf[IPMI_MSG_CMD], buf[IPMI_MSG_CCODE],
-	    *rxlen);
-	dbg_dump(10, " recv", *rxlen, data);
+	    c->c_rxlen);
+	dbg_dump(10, " recv", c->c_rxlen, c->c_data);
 
-	free(buf, M_DEVBUF, maxlen + 3);
+	free(buf, M_DEVBUF, c->c_maxrxlen + 3);
 
 	ipmi_delay(sc, 5); /* give bmc chance to digest command */
 
@@ -1088,6 +1085,19 @@ ipmi_delay(struct ipmi_softc *sc, int period)
 			continue;
 }
 
+void
+ipmi_cmd(void *arg)
+{
+	struct ipmi_cmd		*c = arg;
+
+	c->c_sc->sc_cmd = c;
+	if (ipmi_sendcmd(c)) {
+		panic("%s: sendcmd fails", DEVNAME(c->c_sc));
+	}
+	c->c_ccode = ipmi_recvcmd(c);
+	c->c_sc->sc_cmd = NULL;
+}
+
 /* Read a partial SDR entry */
 int
 get_sdr_partial(struct ipmi_softc *sc, u_int16_t recordId, u_int16_t reserveId,
@@ -1100,15 +1110,20 @@ get_sdr_partial(struct ipmi_softc *sc, u_int16_t recordId, u_int16_t reserveId,
 	((u_int16_t *) cmd)[1] = recordId;
 	cmd[4] = offset;
 	cmd[5] = length;
-	if (ipmi_sendcmd(sc, BMC_SA, 0, STORAGE_NETFN, STORAGE_GET_SDR, 6,
-	    cmd)) {
-		printf("%s: sendcmd fails\n", DEVNAME(sc));
-		return (-1);
-	}
-	if (ipmi_recvcmd(sc, 8 + length, &len, cmd)) {
-		printf("%s: getSdrPartial: recvcmd fails\n", DEVNAME(sc));
-		return (-1);
-	}
+
+	struct ipmi_cmd	c;
+	c.c_sc = sc;
+	c.c_rssa = BMC_SA;
+	c.c_rslun = BMC_LUN;
+	c.c_netfn = STORAGE_NETFN;
+	c.c_cmd = STORAGE_GET_SDR;
+	c.c_txlen = 6;
+	c.c_maxrxlen = 8 + length;
+	c.c_rxlen = 0;
+	c.c_data = cmd;
+	ipmi_cmd(&c);
+	len = c.c_rxlen;
+
 	if (nxtRecordId)
 		*nxtRecordId = *(uint16_t *) cmd;
 	if (len > 2)
@@ -1129,15 +1144,18 @@ get_sdr(struct ipmi_softc *sc, u_int16_t recid, u_int16_t *nxtrec)
 	struct sdrhdr	shdr;
 
 	/* Reserve SDR */
-	if (ipmi_sendcmd(sc, BMC_SA, 0, STORAGE_NETFN, STORAGE_RESERVE_SDR,
-	    0, NULL)) {
-		printf("%s: reserve send fails\n", DEVNAME(sc));
-		return (1);
-	}
-	if (ipmi_recvcmd(sc, sizeof(resid), &len, &resid)) {
-		printf("%s: reserve recv fails\n", DEVNAME(sc));
-		return (1);
-	}
+	struct ipmi_cmd	c;
+	c.c_sc = sc;
+	c.c_rssa = BMC_SA;
+	c.c_rslun = BMC_LUN;
+	c.c_netfn = STORAGE_NETFN;
+	c.c_cmd = STORAGE_RESERVE_SDR;
+	c.c_txlen = 0;
+	c.c_maxrxlen = sizeof(resid);
+	c.c_rxlen = 0;
+	c.c_data = &resid;
+	ipmi_cmd(&c);
+
 	/* Get SDR Header */
 	if (get_sdr_partial(sc, recid, resid, 0, sizeof shdr, &shdr, nxtrec)) {
 		printf("%s: get header fails\n", DEVNAME(sc));
@@ -1366,19 +1384,25 @@ read_sensor(struct ipmi_softc *sc, struct ipmi_sensor *psensor)
 {
 	struct sdrtype1	*s1 = (struct sdrtype1 *) psensor->i_sdr;
 	u_int8_t	data[8];
-	int		rxlen, rv = -1;
+	int		rv = -1;
 
 	if (!cold)
 		rw_enter_write(&sc->sc_lock);
 
 	memset(data, 0, sizeof(data));
 	data[0] = psensor->i_num;
-	if (ipmi_sendcmd(sc, s1->owner_id, s1->owner_lun, SE_NETFN,
-	    SE_GET_SENSOR_READING, 1, data))
-		goto done;
 
-	if (ipmi_recvcmd(sc, sizeof(data), &rxlen, data))
-		goto done;
+	struct ipmi_cmd	c;
+	c.c_sc = sc;
+	c.c_rssa = s1->owner_id;
+	c.c_rslun = s1->owner_lun;
+	c.c_netfn = SE_NETFN;
+	c.c_cmd = SE_GET_SENSOR_READING;
+	c.c_txlen = 1;
+	c.c_maxrxlen = sizeof(data);
+	c.c_rxlen = 0;
+	c.c_data = data;
+	ipmi_cmd(&c);
 
 	dbg_printf(10, "values=%.2x %.2x %.2x %.2x %s\n",
 	    data[0],data[1],data[2],data[3], psensor->i_sensor.desc);
@@ -1388,7 +1412,6 @@ read_sensor(struct ipmi_softc *sc, struct ipmi_sensor *psensor)
 		psensor->i_sensor.flags |= SENSOR_FINVALID;
 	psensor->i_sensor.status = ipmi_sensor_status(sc, psensor, data);
 	rv = 0;
-done:
 	if (!cold)
 		rw_exit_write(&sc->sc_lock);
 	return (rv);
@@ -1575,7 +1598,7 @@ void
 ipmi_poll_thread(void *arg)
 {
 	struct ipmi_thread	*thread = arg;
-	struct ipmi_softc 	*sc = thread->sc;
+	struct ipmi_softc	*sc = thread->sc;
 	u_int16_t		rec;
 
 	/* Scan SDRs, add sensors */
@@ -1655,7 +1678,6 @@ ipmi_match(struct device *parent, void *match, void *aux)
 	struct ipmi_attach_args *ia = aux;
 	struct cfdata		*cf = match;
 	u_int8_t		cmd[32];
-	int			len;
 	int			rv = 0;
 
 	if (strcmp(ia->iaa_name, cf->cf_driver->cd_name))
@@ -1668,19 +1690,19 @@ ipmi_match(struct device *parent, void *match, void *aux)
 		sc.sc_if->probe(&sc);
 
 		/* Identify BMC device early to detect lying bios */
-		if (ipmi_sendcmd(&sc, BMC_SA, 0, APP_NETFN, APP_GET_DEVICE_ID,
-		    0, NULL)) {
-			dbg_printf(1, ": unable to send get device id "
-			    "command\n");
-			goto unmap;
-		}
-		if (ipmi_recvcmd(&sc, sizeof(cmd), &len, cmd)) {
-			dbg_printf(1, ": unable to retrieve device id\n");
-			goto unmap;
-		}
+		struct ipmi_cmd c;
+		c.c_sc = &sc;
+		c.c_rssa = BMC_SA;
+		c.c_rslun = BMC_LUN;
+		c.c_netfn = APP_NETFN;
+		c.c_cmd = APP_GET_DEVICE_ID;
+		c.c_txlen = 0;
+		c.c_maxrxlen = sizeof(cmd);
+		c.c_rxlen = 0;
+		c.c_data = cmd;
+		ipmi_cmd(&c);
 
-		dbg_dump(1, "bmc data", len, cmd);
-unmap:
+		dbg_dump(1, "bmc data", c.c_rxlen, cmd);
 		rv = 1; /* GETID worked, we got IPMI */
 		ipmi_unmap_regs(&sc);
 	}
@@ -1752,15 +1774,25 @@ ipmi_watchdog(void *arg, int period)
 {
 	struct ipmi_softc	*sc = arg;
 	uint8_t			wdog[IPMI_GET_WDOG_MAX];
-	int			s, rc, len;
+	int			s;
+	struct ipmi_cmd		c;
 
 	if (sc->sc_wdog_period == period) {
 		if (period != 0) {
 			s = splsoftclock();
+
 			/* tickle the watchdog */
-			rc = ipmi_sendcmd(sc, BMC_SA, BMC_LUN, APP_NETFN,
-			    APP_RESET_WATCHDOG, 0, NULL);
-			rc = ipmi_recvcmd(sc, 0, &len, NULL);
+			c.c_sc = sc;
+			c.c_rssa = BMC_SA;
+			c.c_rslun = BMC_LUN;
+			c.c_netfn = APP_NETFN;
+			c.c_cmd = APP_RESET_WATCHDOG;
+			c.c_txlen = 0;
+			c.c_maxrxlen = 0;
+			c.c_rxlen = 0;
+			c.c_data = NULL;
+			ipmi_cmd(&c);
+
 			splx(s);
 		}
 		return (period);
@@ -1770,10 +1802,17 @@ ipmi_watchdog(void *arg, int period)
 		period = MIN_PERIOD;
 
 	s = splsoftclock();
-	/* XXX what to do if poking wdog fails? */
-	rc = ipmi_sendcmd(sc, BMC_SA, BMC_LUN, APP_NETFN,
-	    APP_GET_WATCHDOG_TIMER, 0, NULL);
-	rc = ipmi_recvcmd(sc, IPMI_GET_WDOG_MAX, &len, wdog);
+
+	c.c_sc = sc;
+	c.c_rssa = BMC_SA;
+	c.c_rslun = BMC_LUN;
+	c.c_netfn = APP_NETFN;
+	c.c_cmd = APP_GET_WATCHDOG_TIMER;
+	c.c_txlen = 0;
+	c.c_maxrxlen = IPMI_GET_WDOG_MAX;
+	c.c_rxlen = 0;
+	c.c_data = wdog;
+	ipmi_cmd(&c);
 
 	/* Period is 10ths/sec */
 	uint16_t timo = htole16(period * 10);
@@ -1785,9 +1824,12 @@ ipmi_watchdog(void *arg, int period)
 	wdog[IPMI_SET_WDOG_ACTION] |= (period == 0) ? IPMI_WDOG_DISABLED :
 	    IPMI_WDOG_REBOOT;
 
-	rc = ipmi_sendcmd(sc, BMC_SA, BMC_LUN, APP_NETFN,
-	    APP_SET_WATCHDOG_TIMER, IPMI_SET_WDOG_MAX, wdog);
-	rc = ipmi_recvcmd(sc, 0, &len, NULL);
+	c.c_cmd = APP_SET_WATCHDOG_TIMER;
+	c.c_txlen = IPMI_SET_WDOG_MAX;
+	c.c_maxrxlen = 0;
+	c.c_rxlen = 0;
+	c.c_data = wdog;
+	ipmi_cmd(&c);
 
 	splx(s);
 

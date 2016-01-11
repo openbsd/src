@@ -1,4 +1,4 @@
-/* $OpenBSD: ipmivar.h,v 1.21 2016/01/11 12:54:33 uebayasi Exp $ */
+/* $OpenBSD: ipmivar.h,v 1.22 2016/01/11 13:12:50 uebayasi Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave
@@ -77,6 +77,22 @@ struct ipmi_if {
 	int		(*probe)(struct ipmi_softc *);
 };
 
+struct ipmi_cmd {
+	struct ipmi_softc	*c_sc;
+
+	int			c_rssa;
+	int			c_rslun;
+	int			c_netfn;
+	int			c_cmd;
+
+	int			c_txlen;
+	int			c_maxrxlen;
+	int			c_rxlen;
+
+	void			*c_data;
+	u_int			c_ccode;
+};
+
 struct ipmi_softc {
 	struct device		sc_dev;
 
@@ -89,6 +105,7 @@ struct ipmi_softc {
 	bus_space_handle_t	sc_ioh;
 
 	int			sc_btseq;
+	struct ipmi_cmd		*sc_cmd;
 
 	int			sc_wdog_period;
 
