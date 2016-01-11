@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipmi.c,v 1.85 2016/01/11 14:08:58 uebayasi Exp $ */
+/*	$OpenBSD: ipmi.c,v 1.86 2016/01/11 14:29:40 uebayasi Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave
@@ -173,8 +173,8 @@ int	bmc_io_wait_cold(struct ipmi_softc *, int, u_int8_t, u_int8_t,
     const char *);
 void	_bmc_io_wait(void *);
 
-void	*bt_buildmsg(struct ipmi_cmd *);
-void	*cmn_buildmsg(struct ipmi_cmd *);
+void	bt_buildmsg(struct ipmi_cmd *);
+void	cmn_buildmsg(struct ipmi_cmd *);
 
 int	getbits(u_int8_t *, int, int);
 int	ipmi_sensor_type(int, int, int);
@@ -936,16 +936,11 @@ ipmi_smbios_probe(struct smbios_ipmi *pipmi, struct ipmi_attach_args *ia)
  * bt_buildmsg builds an IPMI message from a nfLun, cmd, and data
  * This is used by BT protocol
  */
-void *
+void
 bt_buildmsg(struct ipmi_cmd *c)
 {
 	struct ipmi_softc *sc = c->c_sc;
-	u_int8_t *buf;
-
-	/* Block transfer needs 4 extra bytes: length/netfn/seq/cmd + data */
-	buf = malloc(c->c_txlen + 4, M_DEVBUF, M_NOWAIT);
-	if (buf == NULL)
-		return (NULL);
+	u_int8_t *buf = sc->sc_buf;
 
 	buf[IPMI_BTMSG_LEN] = c->c_txlen + 3;
 	buf[IPMI_BTMSG_NFLN] = NETFN_LUN(c->c_netfn, c->c_rslun);
@@ -954,33 +949,29 @@ bt_buildmsg(struct ipmi_cmd *c)
 	if (c->c_txlen && c->c_data)
 		memcpy(buf + IPMI_BTMSG_DATASND, c->c_data, c->c_txlen);
 
-	c->c_txlen += 4;
-
-	return (buf);
+	/* Block transfer needs 4 extra bytes: length/netfn/seq/cmd + data */
+	c->c_txlen += IPMI_BTMSG_DATASND;
+	c->c_maxrxlen += IPMI_BTMSG_DATARCV;
 }
 
 /*
  * cmn_buildmsg builds an IPMI message from a nfLun, cmd, and data
  * This is used by both SMIC and KCS protocols
  */
-void *
+void
 cmn_buildmsg(struct ipmi_cmd *c)
 {
-	u_int8_t *buf;
-
-	/* Common needs two extra bytes: nfLun/cmd + data */
-	buf = malloc(c->c_txlen + 2, M_DEVBUF, M_NOWAIT);
-	if (buf == NULL)
-		return (NULL);
+	struct ipmi_softc *sc = c->c_sc;
+	u_int8_t *buf = sc->sc_buf;
 
 	buf[IPMI_MSG_NFLN] = NETFN_LUN(c->c_netfn, c->c_rslun);
 	buf[IPMI_MSG_CMD] = c->c_cmd;
 	if (c->c_txlen && c->c_data)
 		memcpy(buf + IPMI_MSG_DATASND, c->c_data, c->c_txlen);
 
-	c->c_txlen += 2;
-
-	return (buf);
+	/* Common needs two extra bytes: nfLun/cmd + data */
+	c->c_txlen += IPMI_MSG_DATASND;
+	c->c_maxrxlen += IPMI_MSG_DATARCV;
 }
 
 /* Send an IPMI command */
@@ -988,7 +979,6 @@ int
 ipmi_sendcmd(struct ipmi_cmd *c)
 {
 	struct ipmi_softc	*sc = c->c_sc;
-	u_int8_t	*buf;
 	int		rc = -1;
 
 	dbg_printf(50, "ipmi_sendcmd: rssa=%.2x nfln=%.2x cmd=%.2x len=%.2x\n",
@@ -996,7 +986,7 @@ ipmi_sendcmd(struct ipmi_cmd *c)
 	dbg_dump(10, " send", c->c_txlen, c->c_data);
 	if (c->c_rssa != BMC_SA) {
 #if 0
-		buf = sc->sc_if->buildmsg(c);
+		sc->sc_if->buildmsg(c);
 		pI2C->bus = (sc->if_ver == 0x09) ?
 		    PUBLIC_BUS :
 		    IPMB_CHANNEL_NUMBER;
@@ -1014,14 +1004,9 @@ ipmi_sendcmd(struct ipmi_cmd *c)
 #endif
 		goto done;
 	} else
-		buf = sc->sc_if->buildmsg(c);
+		sc->sc_if->buildmsg(c);
 
-	if (buf == NULL) {
-		printf("%s: sendcmd malloc fails\n", DEVNAME(sc));
-		goto done;
-	}
-	rc = sc->sc_if->sendmsg(sc, c->c_txlen, buf);
-	free(buf, M_DEVBUF, c->c_txlen);
+	rc = sc->sc_if->sendmsg(sc, c->c_txlen, sc->sc_buf);
 
 	ipmi_delay(sc, 5); /* give bmc chance to digest command */
 
@@ -1034,19 +1019,12 @@ int
 ipmi_recvcmd(struct ipmi_cmd *c)
 {
 	struct ipmi_softc *sc = c->c_sc;
-	u_int8_t	*buf, rc = 0;
+	u_int8_t	*buf = sc->sc_buf, rc = 0;
 	int		rawlen;
 
-	/* Need three extra bytes: netfn/cmd/ccode + data */
-	buf = malloc(c->c_maxrxlen + 3, M_DEVBUF, M_NOWAIT);
-	if (buf == NULL) {
-		printf("%s: ipmi_recvcmd: malloc fails\n", DEVNAME(sc));
-		return (-1);
-	}
 	/* Receive message from interface, copy out result data */
 	if (sc->sc_if->recvmsg(sc, c->c_maxrxlen + 3, &rawlen, buf) ||
 	    rawlen < IPMI_MSG_DATARCV) {
-		free(buf, M_DEVBUF, c->c_maxrxlen + 3);
 		return (-1);
 	}
 
@@ -1065,8 +1043,6 @@ ipmi_recvcmd(struct ipmi_cmd *c)
 	    buf[IPMI_MSG_NFLN], buf[IPMI_MSG_CMD], buf[IPMI_MSG_CCODE],
 	    c->c_rxlen);
 	dbg_dump(10, " recv", c->c_rxlen, c->c_data);
-
-	free(buf, M_DEVBUF, c->c_maxrxlen + 3);
 
 	ipmi_delay(sc, 5); /* give bmc chance to digest command */
 
@@ -1684,6 +1660,7 @@ ipmi_match(struct device *parent, void *match, void *aux)
 
 	/* XXX local softc is wrong wrong wrong */
 	strlcpy(sc.sc_dev.dv_xname, "ipmi0", sizeof(sc.sc_dev.dv_xname));
+
 	/* Map registers */
 	if (ipmi_map_regs(&sc, ia) == 0) {
 		sc.sc_if->probe(&sc);

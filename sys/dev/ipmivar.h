@@ -1,4 +1,4 @@
-/* $OpenBSD: ipmivar.h,v 1.23 2016/01/11 14:08:58 uebayasi Exp $ */
+/* $OpenBSD: ipmivar.h,v 1.24 2016/01/11 14:29:40 uebayasi Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave
@@ -42,6 +42,8 @@
 #define IPMI_IF_SMIC_NREGS	3
 #define IPMI_IF_BT_NREGS	3
 
+#define	IPMI_MAX_RX		1024	/* XXX ipmi_linux.h */
+
 struct ipmi_thread;
 struct ipmi_softc;
 struct ipmi_cmd;
@@ -70,7 +72,7 @@ struct ipmi_attach_args {
 struct ipmi_if {
 	const char	*name;
 	int		nregs;
-	void		*(*buildmsg)(struct ipmi_cmd *);
+	void		(*buildmsg)(struct ipmi_cmd *);
 	int		(*sendmsg)(struct ipmi_softc *, int, const u_int8_t *);
 	int		(*recvmsg)(struct ipmi_softc *, int, int *, u_int8_t *);
 	int		(*reset)(struct ipmi_softc *);
@@ -105,6 +107,7 @@ struct ipmi_softc {
 	bus_space_handle_t	sc_ioh;
 
 	int			sc_btseq;
+	u_int8_t		sc_buf[IPMI_MAX_RX + 16];
 	struct ipmi_cmd		*sc_cmd;
 
 	int			sc_wdog_period;
