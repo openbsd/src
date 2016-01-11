@@ -1,3 +1,5 @@
+/*	$OpenBSD: version.h,v 1.5 2016/01/11 07:54:07 jasper Exp $	*/
+
 /*
  * version.h - version number for pdisk program
  *

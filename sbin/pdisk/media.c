@@ -1,3 +1,5 @@
+/*	$OpenBSD: media.c,v 1.7 2016/01/11 07:54:07 jasper Exp $	*/
+
 /*
  * media.c -
  *

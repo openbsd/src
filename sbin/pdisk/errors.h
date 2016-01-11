@@ -1,3 +1,5 @@
+/*	$OpenBSD: errors.h,v 1.5 2016/01/11 07:54:07 jasper Exp $	*/
+
 //
 // errors.h - error & help routines
 //

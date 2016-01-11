@@ -1,3 +1,5 @@
+/*	$OpenBSD: hfs_misc.h,v 1.2 2016/01/11 07:54:07 jasper Exp $	*/
+
 //
 // hfs_misc.h - hfs routines
 //

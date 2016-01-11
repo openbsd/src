@@ -1,3 +1,5 @@
+/*	$OpenBSD: bitfield.c,v 1.4 2016/01/11 07:54:07 jasper Exp $	*/
+
 //
 // bitfield.c - extract and set bit fields
 //

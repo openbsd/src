@@ -1,3 +1,5 @@
+/*	$OpenBSD: io.h,v 1.4 2016/01/11 07:54:07 jasper Exp $	*/
+
 //
 // io.h - simple io and input parsing routines
 //

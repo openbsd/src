@@ -1,3 +1,5 @@
+/*	$OpenBSD: util.h,v 1.6 2016/01/11 07:54:07 jasper Exp $	*/
+
 /*
  * util.h -
  *

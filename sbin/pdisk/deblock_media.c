@@ -1,3 +1,5 @@
+/*	$OpenBSD: deblock_media.c,v 1.4 2016/01/11 07:54:07 jasper Exp $	*/
+
 /*
  * deblock_media.c -
  *

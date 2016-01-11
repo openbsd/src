@@ -1,3 +1,5 @@
+/*	$OpenBSD: partition_map.c,v 1.10 2016/01/11 07:54:07 jasper Exp $	*/
+
 //
 // partition_map.c - partition map routines
 //

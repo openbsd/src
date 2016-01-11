@@ -1,3 +1,5 @@
+/*	$OpenBSD: pathname.c,v 1.8 2016/01/11 07:54:07 jasper Exp $	*/
+
 /*
  * pathname.c -
  *
