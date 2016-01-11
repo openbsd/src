@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdhc.c,v 1.40 2016/01/10 14:11:43 kettenis Exp $	*/
+/*	$OpenBSD: sdhc.c,v 1.41 2016/01/11 06:54:53 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -42,6 +42,7 @@ struct sdhc_host {
 	struct device *sdmmc;		/* generic SD/MMC device */
 	bus_space_tag_t iot;		/* host register set tag */
 	bus_space_handle_t ioh;		/* host register set handle */
+	u_int16_t version;		/* specification version */
 	u_int clkbase;			/* base clock frequency in KHz */
 	int maxblklen;			/* maximum block length */
 	int flags;			/* flags for this host */
@@ -133,6 +134,7 @@ sdhc_host_found(struct sdhc_softc *sc, bus_space_tag_t iot,
 	struct sdmmcbus_attach_args saa;
 	struct sdhc_host *hp;
 	int error = 1;
+	int max_clock;
 #ifdef SDHC_DEBUG
 	u_int16_t version;
 
@@ -159,6 +161,9 @@ sdhc_host_found(struct sdhc_softc *sc, bus_space_tag_t iot,
 	hp->iot = iot;
 	hp->ioh = ioh;
 
+	/* Store specification version. */
+	hp->version = bus_space_read_2(iot, ioh, SDHC_HOST_CTL_VERSION);
+
 	/*
 	 * Reset the host controller and enable interrupts.
 	 */
@@ -175,15 +180,23 @@ sdhc_host_found(struct sdhc_softc *sc, bus_space_tag_t iot,
 	/*
 	 * Determine the base clock frequency. (2.2.24)
 	 */
-	if (SDHC_BASE_FREQ_KHZ(caps) != 0)
-		hp->clkbase = SDHC_BASE_FREQ_KHZ(caps);
+	if (SDHC_SPEC_VERSION(hp->version) >= SDHC_SPEC_V3) {
+		/* SDHC 3.0 supports 10-255 MHz. */
+		max_clock = 255000;
+		if (SDHC_BASE_FREQ_KHZ_V3(caps) != 0)
+			hp->clkbase = SDHC_BASE_FREQ_KHZ_V3(caps);
+	} else {
+		/* SDHC 1.0/2.0 supports only 10-63 MHz. */
+		max_clock = 63000;
+		if (SDHC_BASE_FREQ_KHZ(caps) != 0)
+			hp->clkbase = SDHC_BASE_FREQ_KHZ(caps);
+	}
 	if (hp->clkbase == 0) {
 		/* The attachment driver must tell us. */
 		printf("%s: base clock frequency unknown\n",
 		    sc->sc_dev.dv_xname);
 		goto err;
-	} else if (hp->clkbase < 10000 || hp->clkbase > 63000) {
-		/* SDHC 1.0 supports only 10-63 MHz. */
+	} else if (hp->clkbase < 10000 || hp->clkbase > max_clock) {
 		printf("%s: base clock frequency out of range: %u MHz\n",
 		    sc->sc_dev.dv_xname, hp->clkbase / 1000);
 		goto err;
@@ -443,9 +456,13 @@ sdhc_bus_power(sdmmc_chipset_handle_t sch, u_int32_t ocr)
 static int
 sdhc_clock_divisor(struct sdhc_host *hp, u_int freq)
 {
+	int max_div = 256;
 	int div;
 
-	for (div = 1; div <= 256; div *= 2)
+	if (SDHC_SPEC_VERSION(hp->version) >= SDHC_SPEC_V3)
+		max_div = 2046;
+
+	for (div = 1; div <= max_div; div *= 2)
 		if ((hp->clkbase / div) <= freq)
 			return (div / 2);
 	/* No divisor found. */
@@ -462,6 +479,7 @@ sdhc_bus_clock(sdmmc_chipset_handle_t sch, int freq)
 	struct sdhc_host *hp = sch;
 	int s;
 	int div;
+	int sdclk;
 	int timo;
 	int error = 0;
 
@@ -489,7 +507,11 @@ sdhc_bus_clock(sdmmc_chipset_handle_t sch, int freq)
 		error = EINVAL;
 		goto ret;
 	}
-	HWRITE2(hp, SDHC_CLOCK_CTL, div << SDHC_SDCLK_DIV_SHIFT);
+	if (SDHC_SPEC_VERSION(hp->version) >= SDHC_SPEC_V3)
+		sdclk = SDHC_SDCLK_DIV_V3(div);
+	else
+		sdclk = SDHC_SDCLK_DIV(div);
+	HWRITE2(hp, SDHC_CLOCK_CTL, sdclk);
 
 	/*
 	 * Start internal clock.  Wait 10ms for stabilization.

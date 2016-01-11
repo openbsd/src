@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdhcreg.h,v 1.4 2006/07/30 17:20:40 fgsch Exp $	*/
+/*	$OpenBSD: sdhcreg.h,v 1.5 2016/01/11 06:54:53 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -95,6 +95,8 @@
 #define SDHC_CLOCK_CTL			0x2c
 #define  SDHC_SDCLK_DIV_SHIFT		8
 #define  SDHC_SDCLK_DIV_MASK		0xff
+#define  SDHC_SDCLK_DIV_RSHIFT_V3	2
+#define  SDHC_SDCLK_DIV_MASK_V3		0x300
 #define  SDHC_SDCLK_ENABLE		(1<<2)
 #define  SDHC_INTCLK_STABLE		(1<<1)
 #define  SDHC_INTCLK_ENABLE		(1<<0)
@@ -148,9 +150,11 @@
 #define  SDHC_MAX_BLK_LEN_MASK		0x3
 #define  SDHC_BASE_FREQ_SHIFT		8
 #define  SDHC_BASE_FREQ_MASK		0x3f
+#define  SDHC_BASE_FREQ_MASK_V3		0xff
 #define  SDHC_TIMEOUT_FREQ_UNIT		(1<<7)	/* 0=KHz, 1=MHz */
 #define  SDHC_TIMEOUT_FREQ_SHIFT	0
 #define  SDHC_TIMEOUT_FREQ_MASK		0x1f
+#define SDHC_CAPABILITIES_1		0x44
 #define SDHC_MAX_CAPABILITIES		0x48
 #define SDHC_SLOT_INTR_STATUS		0xfc
 #define SDHC_HOST_CTL_VERSION		0xfe
@@ -158,10 +162,22 @@
 #define  SDHC_SPEC_VERS_MASK		0xff
 #define  SDHC_VENDOR_VERS_SHIFT		8
 #define  SDHC_VENDOR_VERS_MASK		0xff
+#define  SDHC_SPEC_V1			0
+#define  SDHC_SPEC_V2			1
+#define  SDHC_SPEC_V3			2
+
+/* SDHC_CLOCK_CTL encoding */
+#define SDHC_SDCLK_DIV(div)						\
+	(((div) & SDHC_SDCLK_DIV_MASK) << SDHC_SDCLK_DIV_SHIFT)
+#define SDHC_SDCLK_DIV_V3(div)						\
+	(SDHC_SDCLK_DIV(div) |						\
+	(((div) & SDHC_SDCLK_DIV_MASK_V3) >> SDHC_SDCLK_DIV_RSHIFT_V3))
 
 /* SDHC_CAPABILITIES decoding */
 #define SDHC_BASE_FREQ_KHZ(cap)						\
 	((((cap) >> SDHC_BASE_FREQ_SHIFT) & SDHC_BASE_FREQ_MASK) * 1000)
+#define SDHC_BASE_FREQ_KHZ_V3(cap)					\
+	((((cap) >> SDHC_BASE_FREQ_SHIFT) & SDHC_BASE_FREQ_MASK_V3) * 1000)
 #define SDHC_TIMEOUT_FREQ(cap)						\
 	(((cap) >> SDHC_TIMEOUT_FREQ_SHIFT) & SDHC_TIMEOUT_FREQ_MASK)
 #define SDHC_TIMEOUT_FREQ_KHZ(cap)					\
