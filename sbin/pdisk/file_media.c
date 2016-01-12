@@ -1,4 +1,4 @@
-/*	$OpenBSD: file_media.c,v 1.17 2016/01/12 20:09:39 krw Exp $	*/
+/*	$OpenBSD: file_media.c,v 1.18 2016/01/12 23:48:42 krw Exp $	*/
 
 /*
  * file_media.c -
@@ -47,14 +47,6 @@
 #include <util.h>
 
 #include "file_media.h"
-
-
-/*
- * Defines
- */
-#define loff_t off_t
-#define llseek lseek
-#define LOFF_MAX LLONG_MAX
 
 
 /*
@@ -133,7 +125,7 @@ compute_block_size(int fd)
 {
     int size;
     int max_size;
-    loff_t x;
+    off_t x;
     long t;
     int i;
     char *buffer;
@@ -156,7 +148,7 @@ compute_block_size(int fd)
 	    if (size == 0) {
 		break;
 	    }
-	    if ((x = llseek(fd, (loff_t)0, SEEK_SET)) < 0) {
+	    if ((x = lseek(fd, 0, SEEK_SET)) < 0) {
 		warn("Can't seek on file");
 		break;
 	    }
@@ -176,7 +168,7 @@ open_file_as_media(char *file, int oflag)
 {
     FILE_MEDIA	a;
     int			fd;
-    loff_t off;
+    off_t off;
     struct stat info;
 
     if (file_inited == 0) {
@@ -190,7 +182,7 @@ open_file_as_media(char *file, int oflag)
 	if (a != 0) {
 	    a->m.kind = file_info.kind;
 	    a->m.grain = compute_block_size(fd);
-	    off = llseek(fd, (loff_t)0, SEEK_END);	/* seek to end of media */
+	    off = lseek(fd, 0, SEEK_END);	/* seek to end of media */
 	    //printf("file size = %Ld\n", off);
 	    a->m.size_in_bytes = (long long) off;
 	    a->m.do_read = read_file_media;
@@ -217,7 +209,7 @@ read_file_media(MEDIA m, long long offset, unsigned long count, void *address)
 {
     FILE_MEDIA a;
     long rtn_value;
-    loff_t off;
+    off_t off;
     int t;
 
     a = (FILE_MEDIA) m;
@@ -237,13 +229,13 @@ read_file_media(MEDIA m, long long offset, unsigned long count, void *address)
     } else if (offset + count > a->m.size_in_bytes && a->m.size_in_bytes != (long long) 0) {
 	/* check for offset (and offset+count) too large */
 	fprintf(stderr,"offset+count too large\n");
-    } else if (offset + count > (long long) LOFF_MAX) {
+    } else if (count > LLONG_MAX - offset) {
 	/* check for offset (and offset+count) too large */
 	fprintf(stderr,"offset+count too large 2\n");
     } else {
 	/* do the read */
 	off = offset;
-	if ((off = llseek(a->fd, off, SEEK_SET)) >= 0) {
+	if ((off = lseek(a->fd, off, SEEK_SET)) >= 0) {
 	    if ((t = read(a->fd, address, count)) == count) {
 		rtn_value = 1;
 	    } else {
@@ -262,7 +254,7 @@ write_file_media(MEDIA m, long long offset, unsigned long count, void *address)
 {
     FILE_MEDIA a;
     long rtn_value;
-    loff_t off;
+    off_t off;
     int t;
 
     a = (FILE_MEDIA) m;
@@ -275,12 +267,12 @@ write_file_media(MEDIA m, long long offset, unsigned long count, void *address)
 	/* can't handle size */
     } else if (offset < 0 || offset % a->m.grain != 0) {
 	/* can't handle offset */
-    } else if (offset + count > (long long) LOFF_MAX) {
+    } else if (count > LLONG_MAX - offset) {
 	/* check for offset (and offset+count) too large */
     } else {
 	/* do the write  */
 	off = offset;
-	if ((off = llseek(a->fd, off, SEEK_SET)) >= 0) {
+	if ((off = lseek(a->fd, off, SEEK_SET)) >= 0) {
 	    if ((t = write(a->fd, address, count)) == count) {
 		if (off + count > a->m.size_in_bytes) {
 			a->m.size_in_bytes = off + count;
