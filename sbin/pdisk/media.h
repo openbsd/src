@@ -1,4 +1,4 @@
-/*	$OpenBSD: media.h,v 1.5 2016/01/11 07:54:07 jasper Exp $	*/
+/*	$OpenBSD: media.h,v 1.6 2016/01/12 16:08:37 krw Exp $	*/
 
 /*
  * media.h -
@@ -78,31 +78,6 @@ struct media {
 				    /* specific media kinds will add extra info */
 };
 
-/* those whose use media object iterators need just the pointer type */
-typedef struct media_iterator *MEDIA_ITERATOR;
-
-/* those who define media object iterators need the struct and internal routine types */
-typedef void (*media_iterator_reset)(MEDIA_ITERATOR m);
-typedef char* (*media_iterator_step)(MEDIA_ITERATOR m);
-typedef void (*media_iterator_delete)(MEDIA_ITERATOR m);
-
-typedef enum {
-    kInit,
-    kReset,
-    kIterating,
-    kEnd
-} media_iterator_state;
-
-struct media_iterator {
-    long                    kind;           /* kind of media - SCSI, IDE, etc. */
-    media_iterator_state    state;          /* init, reset, iterating, at_end */
-    media_iterator_reset    do_reset;       /* device specific routines */
-    media_iterator_step     do_step;
-    media_iterator_delete   do_delete;
-					    /* specific media kinds will add extra info */
-};
-
-
 /*
  * Global Constants
  */
@@ -128,8 +103,5 @@ void os_reload_media(MEDIA m);
 long allocate_media_kind(void);
 MEDIA new_media(long size);
 void delete_media(MEDIA m);
-
-/* those who define media object iterators need these routines also */
-MEDIA_ITERATOR new_media_iterator(long size);
 
 #endif /* __media__ */

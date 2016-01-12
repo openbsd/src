@@ -1,4 +1,4 @@
-/*	$OpenBSD: file_media.c,v 1.15 2016/01/11 17:55:45 jasper Exp $	*/
+/*	$OpenBSD: file_media.c,v 1.16 2016/01/12 16:08:37 krw Exp $	*/
 
 /*
  * file_media.c -
@@ -72,15 +72,6 @@ struct file_media_globals {
     long		kind;
 };
 
-typedef struct file_media_iterator *FILE_MEDIA_ITERATOR;
-
-struct file_media_iterator {
-    struct media_iterator   m;
-    long		    style;
-    long		    index;
-};
-
-
 /*
  * Global Constants
  */
@@ -113,11 +104,6 @@ long read_file_media(MEDIA m, long long offset, unsigned long count, void *addre
 long write_file_media(MEDIA m, long long offset, unsigned long count, void *address);
 long close_file_media(MEDIA m);
 long os_reload_file_media(MEDIA m);
-FILE_MEDIA_ITERATOR new_file_iterator(void);
-void reset_file_iterator(MEDIA_ITERATOR m);
-char *step_file_iterator(MEDIA_ITERATOR m);
-void delete_file_iterator(MEDIA_ITERATOR m);
-
 
 /*
  * Routines
@@ -343,176 +329,4 @@ os_reload_file_media(MEDIA m)
 	rtn_value = 1;
     }
     return rtn_value;
-}
-
-
-FILE_MEDIA_ITERATOR
-new_file_iterator(void)
-{
-    return (FILE_MEDIA_ITERATOR) new_media_iterator(sizeof(struct file_media_iterator));
-}
-
-
-MEDIA_ITERATOR
-create_file_iterator(void)
-{
-    FILE_MEDIA_ITERATOR a;
-
-    if (file_inited == 0) {
-	file_init();
-    }
-
-    a = new_file_iterator();
-    if (a != 0) {
-	a->m.kind = file_info.kind;
-	a->m.state = kInit;
-	a->m.do_reset = reset_file_iterator;
-	a->m.do_step = step_file_iterator;
-	a->m.do_delete = delete_file_iterator;
-	a->style = 0;
-	a->index = 0;
-    }
-
-    return (MEDIA_ITERATOR) a;
-}
-
-
-void
-reset_file_iterator(MEDIA_ITERATOR m)
-{
-    FILE_MEDIA_ITERATOR a;
-
-    a = (FILE_MEDIA_ITERATOR) m;
-    if (a == 0) {
-	/* no media */
-    } else if (a->m.kind != file_info.kind) {
-	/* wrong kind - XXX need to error here - this is an internal problem */
-    } else if (a->m.state != kInit) {
-	a->m.state = kReset;
-    }
-}
-
-
-char *
-step_file_iterator(MEDIA_ITERATOR m)
-{
-    FILE_MEDIA_ITERATOR a;
-    char *result;
-    struct stat info;
-    int	fd;
-    int bump;
-    int value;
-
-    a = (FILE_MEDIA_ITERATOR) m;
-    if (a == 0) {
-	/* no media */
-    } else if (a->m.kind != file_info.kind) {
-	/* wrong kind - XXX need to error here - this is an internal problem */
-    } else {
-	switch (a->m.state) {
-	case kInit:
-	    a->m.state = kReset;
-	    /* fall through to reset */
-	case kReset:
-	    a->style = 0 /* first style */;
-	    a->index = 0 /* first index */;
-	    a->m.state = kIterating;
-	    /* fall through to iterate */
-	case kIterating:
-	    while (1) {
-		if (a->style > kMaxStyle) {
-		    break;
-		}
-
-		/* if old version of mklinux then skip CD drive */
-		if (a->style == kSCSI_Disks && a->index == 3) {
-		    a->index += 1;
-		}
-
-		/* generate result */
-		result = malloc(20);
-		if (result != NULL) {
-		    /*
-		     * for DR3 we should actually iterate through:
-		     *
-		     *    /dev/sd[a...]    # first missing is end of list
-		     *    /dev/hd[a...]    # may be holes in sequence
-		     *    /dev/scd[0...]   # first missing is end of list
-		     *
-		     * and stop in each group when either a stat of
-		     * the name fails or if an open fails for
-		     * particular reasons.
-		     */
-		    bump = 0;
-		    value = (int) a->index;
-		    switch (a->style) {
-		    case kSCSI_Disks:
-			if (value < 26) {
-			    snprintf(result, 20, "/dev/sd%c", 'a'+value);
-			} else if (value < 676) {
-			    snprintf(result, 20, "/dev/sd%c%c",
-				    'a' + value / 26,
-				    'a' + value % 26);
-			} else {
-			    bump = -1;
-			}
-			break;
-		    case kATA_Devices:
-			if (value < 26) {
-			    snprintf(result, 20, "/dev/hd%c", 'a'+value);
-			} else {
-			    bump = -1;
-			}
-			break;
-		    case kSCSI_CDs:
-			if (value < 10) {
-			    snprintf(result, 20, "/dev/scd%c", '0'+value);
-			} else {
-			    bump = -1;
-			}
-			break;
-		    }
-		    if (bump != 0) {
-			// already set don't even check
-		    } else if (stat(result, &info) < 0) {
-			bump = 1;
-		    } else if ((fd = open(result, O_RDONLY)) >= 0) {
-			close(fd);
-		    } else if (errno == ENXIO || errno == ENODEV) {
-			if (a->style == kATA_Devices) {
-			    bump = -1;
-			} else {
-			    bump = 1;
-			}
-		    }
-		    if (bump) {
-			if (bump > 0) {
-			    a->style += 1; /* next style */
-			    a->index = 0; /* first index again */
-			} else {
-			    a->index += 1; /* next index */
-			}
-			free(result);
-			continue;
-		    }
-		}
-
-		a->index += 1; /* next index */
-		return result;
-	    }
-	    a->m.state = kEnd;
-	    /* fall through to end */
-	case kEnd:
-	default:
-	    break;
-	}
-    }
-    return 0 /* no entry */;
-}
-
-
-void
-delete_file_iterator(MEDIA_ITERATOR m)
-{
-    return;
 }

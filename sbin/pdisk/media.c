@@ -1,4 +1,4 @@
-/*	$OpenBSD: media.c,v 1.7 2016/01/11 07:54:07 jasper Exp $	*/
+/*	$OpenBSD: media.c,v 1.8 2016/01/12 16:08:37 krw Exp $	*/
 
 /*
  * media.c -
@@ -165,11 +165,4 @@ os_reload_media(MEDIA m)
     if (m != 0 && m->do_os_reload != 0) {
 	(*m->do_os_reload)(m);
     }
-}
-
-
-MEDIA_ITERATOR
-new_media_iterator(long size)
-{
-    return malloc(size);
 }

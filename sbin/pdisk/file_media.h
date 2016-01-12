@@ -1,4 +1,4 @@
-/*	$OpenBSD: file_media.h,v 1.4 2016/01/11 07:54:07 jasper Exp $	*/
+/*	$OpenBSD: file_media.h,v 1.5 2016/01/12 16:08:37 krw Exp $	*/
 
 /*
  * file_media.h -
@@ -57,6 +57,5 @@
  * Forward declarations
  */
 MEDIA open_file_as_media(char *file, int oflag);
-MEDIA_ITERATOR create_file_iterator(void);
 
 #endif /* __file_media__ */
