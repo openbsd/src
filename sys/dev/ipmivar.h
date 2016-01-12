@@ -1,4 +1,4 @@
-/* $OpenBSD: ipmivar.h,v 1.26 2016/01/12 09:11:59 uebayasi Exp $ */
+/* $OpenBSD: ipmivar.h,v 1.27 2016/01/12 10:44:32 uebayasi Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave
@@ -112,6 +112,8 @@ struct ipmi_softc {
 	int			sc_btseq;
 	u_int8_t		sc_buf[IPMI_MAX_RX + 16];
 	struct ipmi_cmd		*sc_cmd;
+	struct taskq		*sc_cmd_taskq;
+	struct mutex		sc_cmd_mtx;
 
 	int			sc_wdog_period;
 	struct task		sc_wdog_tickle_task;

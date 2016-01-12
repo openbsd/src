@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipmi.c,v 1.89 2016/01/12 09:11:59 uebayasi Exp $ */
+/*	$OpenBSD: ipmi.c,v 1.90 2016/01/12 10:44:32 uebayasi Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave
@@ -153,7 +153,10 @@ int	get_sdr(struct ipmi_softc *, u_int16_t, u_int16_t *);
 int	ipmi_sendcmd(struct ipmi_cmd *);
 int	ipmi_recvcmd(struct ipmi_cmd *);
 void	ipmi_delay(struct ipmi_softc *, int);
-void	ipmi_cmd(void *);
+void	ipmi_cmd(struct ipmi_cmd *);
+void	ipmi_cmd_poll(struct ipmi_cmd *);
+void	ipmi_cmd_wait(struct ipmi_cmd *);
+void	ipmi_cmd_wait_cb(void *);
 
 int	ipmi_watchdog(void *, int);
 void	ipmi_watchdog_tickle(void *);
@@ -1069,9 +1072,18 @@ ipmi_delay(struct ipmi_softc *sc, int period)
 }
 
 void
-ipmi_cmd(void *arg)
+ipmi_cmd(struct ipmi_cmd *c)
 {
-	struct ipmi_cmd		*c = arg;
+	if (cold || panicstr != NULL)
+		ipmi_cmd_poll(c);
+	else
+		ipmi_cmd_wait(c);
+}
+
+void
+ipmi_cmd_poll(struct ipmi_cmd *c)
+{
+	mtx_enter(&c->c_sc->sc_cmd_mtx);
 
 	c->c_sc->sc_cmd = c;
 	if (ipmi_sendcmd(c)) {
@@ -1079,6 +1091,33 @@ ipmi_cmd(void *arg)
 	}
 	c->c_ccode = ipmi_recvcmd(c);
 	c->c_sc->sc_cmd = NULL;
+
+	mtx_leave(&c->c_sc->sc_cmd_mtx);
+}
+
+void
+ipmi_cmd_wait(struct ipmi_cmd *c)
+{
+	struct task t;
+	int res;
+
+	task_set(&t, ipmi_cmd_wait_cb, c);
+	res = task_add(c->c_sc->sc_cmd_taskq, &t);
+	KASSERT(res == 1);
+
+	tsleep(c, PWAIT, "ipmicmd", 0);
+
+	res = task_del(c->c_sc->sc_cmd_taskq, &t);
+	KASSERT(res == 0);
+}
+
+void
+ipmi_cmd_wait_cb(void *arg)
+{
+	struct ipmi_cmd *c = arg;
+
+	ipmi_cmd_poll(c);
+	wakeup(c);
 }
 
 /* Read a partial SDR entry */
@@ -1665,6 +1704,7 @@ ipmi_match(struct device *parent, void *match, void *aux)
 		return (0);
 
 	/* XXX local softc is wrong wrong wrong */
+	mtx_init(&sc.sc_cmd_mtx, IPL_NONE);
 	strlcpy(sc.sc_dev.dv_xname, "ipmi0", sizeof(sc.sc_dev.dv_xname));
 
 	/* Map registers */
@@ -1736,6 +1776,9 @@ ipmi_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_wakeup = 0;
 	sc->sc_max_retries = 50; /* 50 * 1/100 = 0.5 seconds max */
 	timeout_set(&sc->sc_timeout, _bmc_io_wait, sc);
+
+	sc->sc_cmd_taskq = taskq_create("ipmicmd", 1, IPL_NONE, TASKQ_MPSAFE);
+	mtx_init(&sc->sc_cmd_mtx, IPL_NONE);
 }
 
 int
