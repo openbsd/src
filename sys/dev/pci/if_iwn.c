@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.153 2016/01/07 23:08:38 stsp Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.154 2016/01/12 10:53:39 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -3429,7 +3429,7 @@ iwn_set_link_quality(struct iwn_softc *sc, struct ieee80211_node *ni)
 			/* Next retry at immediate lower bit-rate. */
 			if (txrate > 0)
 				txrate--;
-			}
+		}
 	}
 
 	return iwn_cmd(sc, IWN_CMD_LINK_QUALITY, &linkq, sizeof linkq, 1);
