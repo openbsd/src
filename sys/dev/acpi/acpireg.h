@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpireg.h,v 1.31 2016/01/09 11:00:01 kettenis Exp $	*/
+/*	$OpenBSD: acpireg.h,v 1.32 2016/01/12 01:11:15 jcs Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
@@ -730,6 +730,8 @@ struct acpi_ivrs {
 #define ACPI_DEV_LD	"PNP0C0D"	/* Lid Device */
 #define ACPI_DEV_SBD	"PNP0C0E"	/* Sleep Button Device */
 #define ACPI_DEV_PILD	"PNP0C0F"	/* PCI Interrupt Link Device */
+#define ACPI_DEV_HIDI2C	"PNP0C50"	/* HID over I2C device */
+#define ACPI_DEV_HIDI2C2 "ACPI0C50"	/* HID over I2C device */
 #define ACPI_DEV_MEMD	"PNP0C80"	/* Memory Device */
 #define ACPI_DEV_MOUSE	"PNP0F13"	/* PS/2 Mouse */
 #define ACPI_DEV_SHC	"ACPI0001"	/* SMBus 1.0 Host Controller */
@@ -753,5 +755,11 @@ struct acpi_ivrs {
 #define ACPI_DEV_TOSHIBA_LIBRETTO	"TOS6200"	/* Toshiba Libretto support */
 #define ACPI_DEV_TOSHIBA_DYNABOOK	"TOS6207"	/* Toshiba Dynabook support */
 #define ACPI_DEV_TOSHIBA_SPA40	"TOS6208"	/* Toshiba SPA40 support */
+
+/* Synopsys DesignWare I2C controllers */
+#define ACPI_DEV_DWIIC1	"INT33C2"
+#define ACPI_DEV_DWIIC2	"INT33C3"
+#define ACPI_DEV_DWIIC3	"INT3432"
+#define ACPI_DEV_DWIIC4	"INT3433"
 
 #endif	/* !_DEV_ACPI_ACPIREG_H_ */

@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.300 2016/01/11 22:06:00 kettenis Exp $ */
+/* $OpenBSD: acpi.c,v 1.301 2016/01/12 01:11:15 jcs Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -2659,15 +2659,12 @@ acpi_foundsony(struct aml_node *node, void *arg)
 #ifndef SMALL_KERNEL
 
 int
-acpi_foundhid(struct aml_node *node, void *arg)
+acpi_parsehid(struct aml_node *node, void *arg, char *outcdev, char *outdev,
+    size_t devlen)
 {
 	struct acpi_softc	*sc = (struct acpi_softc *)arg;
-	struct device		*self = (struct device *)arg;
-	const char		*dev;
-	char			 cdev[16];
 	struct aml_value	 res;
-	struct acpi_attach_args	 aaa;
-	int			 i;
+	const char		*dev;
 
 	/* NB aml_eisaid returns a static buffer, this must come first */
 	if (aml_evalname(acpi_softc, node->parent, "_CID", 0, NULL, &res) == 0) {
@@ -2682,17 +2679,17 @@ acpi_foundhid(struct aml_node *node, void *arg)
 			dev = "unknown";
 			break;
 		}
-		strlcpy(cdev, dev, sizeof(cdev));
+		strlcpy(outcdev, dev, devlen);
 		aml_freevalue(&res);
-		
-		dnprintf(10, "compatible with device: %s\n", cdev);
+
+		dnprintf(10, "compatible with device: %s\n", outcdev);
 	} else {
-		cdev[0] = '\0';
+		outcdev[0] = '\0';
 	}
 
 	dnprintf(10, "found hid device: %s ", node->parent->name);
 	if (aml_evalnode(sc, node, 0, NULL, &res) != 0)
-		return 0;
+		return (1);
 
 	switch (res.type) {
 	case AML_OBJTYPE_STRING:
@@ -2707,36 +2704,63 @@ acpi_foundhid(struct aml_node *node, void *arg)
 	}
 	dnprintf(10, "	device: %s\n", dev);
 
+	strlcpy(outdev, dev, devlen);
+
+	aml_freevalue(&res);
+
+	return (0);
+}
+
+int
+acpi_foundhid(struct aml_node *node, void *arg)
+{
+	struct acpi_softc	*sc = (struct acpi_softc *)arg;
+	struct device		*self = (struct device *)arg;
+	char		 	 cdev[16];
+	char		 	 dev[16];
+	struct acpi_attach_args	 aaa;
+	int			 i;
+
+	if (acpi_parsehid(node, arg, cdev, dev, 16) != 0)
+		return (0);
+
 	memset(&aaa, 0, sizeof(aaa));
 	aaa.aaa_iot = sc->sc_iot;
 	aaa.aaa_memt = sc->sc_memt;
 	aaa.aaa_node = node->parent;
 	aaa.aaa_dev = dev;
 
-	if (!strcmp(dev, ACPI_DEV_AC))
+	if (!strcmp(dev, ACPI_DEV_AC)) {
 		aaa.aaa_name = "acpiac";
-	else if (!strcmp(dev, ACPI_DEV_CMB))
+	} else if (!strcmp(dev, ACPI_DEV_CMB)) {
 		aaa.aaa_name = "acpibat";
-	else if (!strcmp(dev, ACPI_DEV_LD) ||
+	} else if (!strcmp(dev, ACPI_DEV_LD) ||
 	    !strcmp(dev, ACPI_DEV_PBD) ||
-	    !strcmp(dev, ACPI_DEV_SBD))
+	    !strcmp(dev, ACPI_DEV_SBD)) {
 		aaa.aaa_name = "acpibtn";
-	else if (!strcmp(dev, ACPI_DEV_ASUS) || !strcmp(dev, ACPI_DEV_ASUS1)) {
+	} else if (!strcmp(dev, ACPI_DEV_ASUS) ||
+	    !strcmp(dev, ACPI_DEV_ASUS1)) {
 		aaa.aaa_name = "acpiasus";
 		acpi_asus_enabled = 1;
 	} else if (!strcmp(dev, ACPI_DEV_IBM) ||
 	    !strcmp(dev, ACPI_DEV_LENOVO)) {
 		aaa.aaa_name = "acpithinkpad";
 		acpi_thinkpad_enabled = 1;
-	} else if (!strcmp(dev, ACPI_DEV_ASUSAIBOOSTER))
+	} else if (!strcmp(dev, ACPI_DEV_ASUSAIBOOSTER)) {
 		aaa.aaa_name = "aibs";
-	else if (!strcmp(dev, ACPI_DEV_TOSHIBA_LIBRETTO) ||
+	} else if (!strcmp(dev, ACPI_DEV_TOSHIBA_LIBRETTO) ||
 	    !strcmp(dev, ACPI_DEV_TOSHIBA_DYNABOOK) ||
 	    !strcmp(dev, ACPI_DEV_TOSHIBA_SPA40)) {
 		aaa.aaa_name = "acpitoshiba";
 		acpi_toshiba_enabled = 1;
-	} else if (!strcmp(dev, "80860F14") || !strcmp(dev, "PNP0FFF"))
+	} else if (!strcmp(dev, "80860F14") || !strcmp(dev, "PNP0FFF")) {
 		aaa.aaa_name = "sdhc";
+	} else if (!strcmp(dev, ACPI_DEV_DWIIC1) ||
+	    !strcmp(dev, ACPI_DEV_DWIIC2) ||
+	    !strcmp(dev, ACPI_DEV_DWIIC3) ||
+	    !strcmp(dev, ACPI_DEV_DWIIC4)) {
+		aaa.aaa_name = "dwiic";
+	}
 
 	if (!strcmp(cdev, ACPI_DEV_MOUSE)) {
 		for (i = 0; i < nitems(sbtn_pnp); i++) {
@@ -2750,9 +2774,7 @@ acpi_foundhid(struct aml_node *node, void *arg)
 	if (aaa.aaa_name)
 		config_found(self, &aaa, acpi_print);
 
-	aml_freevalue(&res);
-
-	return 0;
+	return (0);
 }
 
 int

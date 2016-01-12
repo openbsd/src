@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.410 2016/01/11 22:06:50 kettenis Exp $
+#	$OpenBSD: GENERIC,v 1.411 2016/01/12 01:11:15 jcs Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -125,6 +125,8 @@ nviic*	at pci?			# NVIDIA nForce2/3/4 SMBus controller
 iic*	at nviic?
 amdpm*	at pci?			# AMD-7xx/8111 and NForce SMBus controller
 iic*	at amdpm?
+dwiic*	at acpi?		# DesignWare Synopsys i2c controller
+iic*	at dwiic?
 
 itherm*	at pci?			# Intel 3400 Thermal Sensor
 adc*	at iic?			# Analog Devices AD7416/AD7417/7418
@@ -148,6 +150,9 @@ spdmem*	at iic?			# SPD memory eeproms
 sdtemp*	at iic?			# SO-DIMM (JC-42.4) temperature
 wbng*	at iic?			# Winbond W83793G
 nvt*	at iic?			# Novoton W83795G
+ihidev*	at iic?			# HID-over-i2c
+ims*	at ihidev?		# i2c mouse/trackpad
+wsmouse* at ims? mux 0
 
 skgpio0 at isa? port 0x680	# Soekris net6501 GPIO and LEDs
 gpio* at skgpio?

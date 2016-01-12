@@ -1,4 +1,4 @@
-# $OpenBSD: files.i2c,v 1.51 2013/03/31 13:30:24 kettenis Exp $
+# $OpenBSD: files.i2c,v 1.52 2016/01/12 01:11:15 jcs Exp $
 #	$NetBSD: files.i2c,v 1.3 2003/10/20 16:24:10 briggs Exp $
 
 define	i2c {[addr = -1], [size = -1]}
@@ -171,3 +171,16 @@ device	lisa
 attach	lisa at i2c
 file	dev/i2c/lis331dl.c			lisa
 
+# HID
+# HID "bus"
+define	ihidbus {[reportid = -1]}
+
+# HID root device
+device	ihidev: hid, ihidbus
+attach	ihidev at i2c
+file	dev/i2c/ihidev.c			ihidev
+
+# HID Mouse/Trackpad
+device	ims: hid, hidms, wsmousedev
+attach	ims at ihidbus
+file	dev/i2c/ims.c				ims
