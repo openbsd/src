@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_readwrite.c,v 1.35 2015/03/14 03:38:52 jsg Exp $	*/
+/*	$OpenBSD: ext2fs_readwrite.c,v 1.36 2016/01/12 11:44:21 mpi Exp $	*/
 /*	$NetBSD: ext2fs_readwrite.c,v 1.16 2001/02/27 04:37:47 chs Exp $	*/
 
 /*-
@@ -55,9 +55,6 @@
 
 static int	ext2_ind_read(struct vnode *, struct inode *, struct m_ext2fs *, struct uio *);
 static int	ext4_ext_read(struct vnode *, struct inode *, struct m_ext2fs *, struct uio *);
-
-#define doclusterread 0 /* XXX underway */
-#define doclusterwrite 0
 
 /*
  * Vnode op for reading.
@@ -335,12 +332,9 @@ ext2fs_write(void *v)
 #endif
 		if (ioflag & IO_SYNC)
 			(void)bwrite(bp);
-		else if (xfersize + blkoffset == fs->e2fs_bsize) {
-			if (doclusterwrite)
-				cluster_write(bp, &ip->i_ci, ext2fs_size(ip));
-			else
-				bawrite(bp);
-		} else
+		else if (xfersize + blkoffset == fs->e2fs_bsize)
+			bawrite(bp);
+		else
 			bdwrite(bp);
 		if (error || xfersize == 0)
 			break;
