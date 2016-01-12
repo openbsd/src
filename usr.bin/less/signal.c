@@ -35,7 +35,6 @@ extern long jump_sline_fraction;
 /*
  * Interrupt signal handler.
  */
-/* ARGSUSED */
 static void
 u_interrupt(int type)
 {
@@ -45,7 +44,6 @@ u_interrupt(int type)
 /*
  * "Stop" (^Z) signal handler.
  */
-/* ARGSUSED */
 static void
 stop(int type)
 {
@@ -55,7 +53,6 @@ stop(int type)
 /*
  * "Window" change handler
  */
-/* ARGSUSED */
 void
 sigwinch(int type)
 {

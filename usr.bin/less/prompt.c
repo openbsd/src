@@ -417,7 +417,6 @@ skipcond(const char *p)
 			return (p-1);
 		}
 	}
-	/*NOTREACHED*/
 }
 
 /*

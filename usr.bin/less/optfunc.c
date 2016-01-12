@@ -359,7 +359,6 @@ opt__P(int type, char *s)
 /*
  * Handler for the -b option.
  */
-/*ARGSUSED*/
 void
 opt_b(int type, char *s)
 {
@@ -379,7 +378,6 @@ opt_b(int type, char *s)
 /*
  * Handler for the -i option.
  */
-/*ARGSUSED*/
 void
 opt_i(int type, char *s)
 {
@@ -396,7 +394,6 @@ opt_i(int type, char *s)
 /*
  * Handler for the -V option.
  */
-/*ARGSUSED*/
 void
 opt__V(int type, char *s)
 {
@@ -524,7 +521,6 @@ opt_quote(int type, char *s)
  * "-?" means display a help message.
  * If from the command line, exit immediately.
  */
-/*ARGSUSED*/
 void
 opt_query(int type, char *s)
 {

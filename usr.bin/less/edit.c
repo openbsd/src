@@ -699,7 +699,6 @@ loop:
 		return;
 	case 'q':
 		quit(QUIT_OK);
-		/*NOTREACHED*/
 	default:
 		/*
 		 * Eh?
