@@ -1,4 +1,4 @@
-/*	$OpenBSD: xenstore.c,v 1.16 2016/01/12 11:54:05 mikeb Exp $	*/
+/*	$OpenBSD: xenstore.c,v 1.17 2016/01/12 12:12:05 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Belopuhov
@@ -440,7 +440,6 @@ xs_ring_put(struct xs_softc *xs, void *src, size_t size)
 {
 	struct xs_ring *xsr = xs->xs_ring;
 	uint32_t prod = xsr->xsr_req_prod & (XS_RING_SIZE - 1);
-	uint32_t cons = xsr->xsr_req_cons & (XS_RING_SIZE - 1);
 	uint32_t avail = xs_ring_avail(xsr, 1);
 	int left;
 
@@ -469,7 +468,6 @@ xs_ring_get(struct xs_softc *xs, void *dst, size_t size)
 {
 	struct xs_ring *xsr = xs->xs_ring;
 	uint32_t cons = xsr->xsr_rsp_cons & (XS_RING_SIZE - 1);
-	uint32_t prod = xsr->xsr_rsp_prod & (XS_RING_SIZE - 1);
 	uint32_t avail = xs_ring_avail(xsr, 0);
 	int left;
 
