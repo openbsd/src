@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_ioctl.h,v 1.22 2015/11/15 01:05:25 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_ioctl.h,v 1.23 2016/01/12 09:28:09 stsp Exp $	*/
 /*	$NetBSD: ieee80211_ioctl.h,v 1.7 2004/04/30 22:51:04 dyoung Exp $	*/
 
 /*-
@@ -167,7 +167,6 @@ struct ieee80211_channel {
 /*
  * Channel attributes (XXX must keep in sync with radiotap flags).
  */
-#define IEEE80211_CHAN_TURBO	0x0010	/* Turbo channel */
 #define IEEE80211_CHAN_CCK	0x0020	/* CCK channel */
 #define IEEE80211_CHAN_OFDM	0x0040	/* OFDM channel */
 #define IEEE80211_CHAN_2GHZ	0x0080	/* 2 GHz spectrum channel */

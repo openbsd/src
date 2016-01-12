@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5xxx.h,v 1.55 2015/11/24 17:11:39 mpi Exp $	*/
+/*	$OpenBSD: ar5xxx.h,v 1.56 2016/01/12 09:28:09 stsp Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -400,20 +400,6 @@ typedef struct {
 	{ 1, IEEE80211_T_OFDM, 54000, 12, 0, 108, 8 } }			\
 }
 
-#define AR5K_RATES_TURBO { 8, {						\
-	255, 255, 255, 255, 255, 255, 255, 255, 6, 4, 2, 0,		\
-	7, 5, 3, 1, 255, 255, 255, 255, 255, 255, 255, 255,		\
-	255, 255, 255, 255, 255, 255, 255, 255 }, {			\
-	{ 1, IEEE80211_T_TURBO, 6000, 11, 0, 140, 0 },			\
-	{ 1, IEEE80211_T_TURBO, 9000, 15, 0, 18, 0 },			\
-	{ 1, IEEE80211_T_TURBO, 12000, 10, 0, 152, 2 },			\
-	{ 1, IEEE80211_T_TURBO, 18000, 14, 0, 36, 2 },			\
-	{ 1, IEEE80211_T_TURBO, 24000, 9, 0, 176, 4 },			\
-	{ 1, IEEE80211_T_TURBO, 36000, 13, 0, 72, 4 },			\
-	{ 1, IEEE80211_T_TURBO, 48000, 8, 0, 96, 4 },			\
-	{ 1, IEEE80211_T_TURBO, 54000, 12, 0, 108, 4 } }		\
-}
-
 #define AR5K_RATES_XR { 12, {						\
 	255, 3, 1, 255, 255, 255, 2, 0, 10, 8, 6, 4,			\
 	11, 9, 7, 5, 255, 255, 255, 255, 255, 255, 255, 255,		\
@@ -455,12 +441,9 @@ typedef struct {
 #define CHANNEL_B	(IEEE80211_CHAN_2GHZ | IEEE80211_CHAN_CCK)
 #define CHANNEL_G	(IEEE80211_CHAN_2GHZ | IEEE80211_CHAN_DYN)
 #define CHANNEL_PUREG	(IEEE80211_CHAN_2GHZ | IEEE80211_CHAN_OFDM)
-#define CHANNEL_T	(CHANNEL_A | IEEE80211_CHAN_TURBO)
-#define CHANNEL_TG	(CHANNEL_PUREG | IEEE80211_CHAN_TURBO)
 #define CHANNEL_XR	(CHANNEL_A | IEEE80211_CHAN_XR)
 #define CHANNEL_MODES	\
-	(CHANNEL_A | CHANNEL_B | CHANNEL_G | CHANNEL_PUREG | \
-	CHANNEL_T | CHANNEL_TG | CHANNEL_XR)
+	(CHANNEL_A | CHANNEL_B | CHANNEL_G | CHANNEL_PUREG | CHANNEL_XR)
 
 typedef enum {
 	HAL_CHIP_5GHZ = IEEE80211_CHAN_5GHZ,
@@ -757,7 +740,6 @@ struct ar5k_eeprom_info {
 	u_int16_t	ee_i_cal[AR5K_EEPROM_N_MODES];
 	u_int16_t	ee_q_cal[AR5K_EEPROM_N_MODES];
 	u_int16_t	ee_fixed_bias[AR5K_EEPROM_N_MODES];
-	u_int16_t	ee_turbo_max_power[AR5K_EEPROM_N_MODES];
 	u_int16_t	ee_xr_power[AR5K_EEPROM_N_MODES];
 	u_int16_t	ee_switch_settling[AR5K_EEPROM_N_MODES];
 	u_int16_t	ee_ant_tx_rx[AR5K_EEPROM_N_MODES];
@@ -1102,7 +1084,6 @@ struct ath_hal {
 	HAL_OPMODE		ah_op_mode;
 	HAL_POWER_MODE		ah_power_mode;
 	HAL_CHANNEL		ah_current_channel;
-	HAL_BOOL		ah_turbo;
 	HAL_BOOL		ah_calibration;
 	HAL_BOOL		ah_running;
 	HAL_BOOL		ah_single_chip;
@@ -1114,7 +1095,6 @@ struct ath_hal {
 	HAL_RATE_TABLE		ah_rt_11a;
 	HAL_RATE_TABLE		ah_rt_11b;
 	HAL_RATE_TABLE		ah_rt_11g;
-	HAL_RATE_TABLE		ah_rt_turbo;
 	HAL_RATE_TABLE		ah_rt_xr;
 
 	u_int32_t		ah_mac_srev;
@@ -2290,8 +2270,8 @@ u_int16_t		 ar5k_regdomain_from_ieee(ieee80211_regdomain_t);
 u_int16_t		 ar5k_get_regdomain(struct ath_hal *);
 
 u_int32_t		 ar5k_bitswap(u_int32_t, u_int);
-u_int			 ar5k_clocktoh(u_int, HAL_BOOL);
-u_int			 ar5k_htoclock(u_int, HAL_BOOL);
+u_int			 ar5k_clocktoh(u_int);
+u_int			 ar5k_htoclock(u_int);
 void			 ar5k_rt_copy(HAL_RATE_TABLE *, const HAL_RATE_TABLE *);
 
 HAL_BOOL		 ar5k_register_timeout(struct ath_hal *, u_int32_t,

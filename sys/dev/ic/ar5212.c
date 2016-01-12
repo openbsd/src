@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5212.c,v 1.55 2014/07/12 18:48:17 tedu Exp $	*/
+/*	$OpenBSD: ar5212.c,v 1.56 2016/01/12 09:28:09 stsp Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -354,11 +354,6 @@ ar5k_ar5212_nic_wakeup(struct ath_hal *hal, u_int16_t flags)
 		return (AH_FALSE);
 	}
 
-	if (flags & IEEE80211_CHAN_TURBO) {
-		turbo = AR5K_AR5212_PHY_TURBO_MODE |
-		    AR5K_AR5212_PHY_TURBO_SHORT;
-	}
-
 	/*
 	 * Reset and wakeup the device
 	 */
@@ -437,8 +432,6 @@ ar5k_ar5212_get_rate_table(struct ath_hal *hal, u_int mode)
 	switch (mode) {
 	case HAL_MODE_11A:
 		return (&hal->ah_rt_11a);
-	case HAL_MODE_TURBO:
-		return (&hal->ah_rt_turbo);
 	case HAL_MODE_11B:
 		return (&hal->ah_rt_11b);
 	case HAL_MODE_11G:
@@ -526,16 +519,6 @@ ar5k_ar5212_reset(struct ath_hal *hal, HAL_OPMODE op_mode, HAL_CHANNEL *channel,
 		freq = AR5K_INI_RFGAIN_2GHZ;
 		ee_mode = AR5K_EEPROM_MODE_11G;
 		break;
-	case CHANNEL_T:
-		mode = AR5K_INI_VAL_11A_TURBO;
-		freq = AR5K_INI_RFGAIN_5GHZ;
-		ee_mode = AR5K_EEPROM_MODE_11A;
-		break;
-	case CHANNEL_TG:
-		mode = AR5K_INI_VAL_11G_TURBO;
-		freq = AR5K_INI_RFGAIN_2GHZ;
-		ee_mode = AR5K_EEPROM_MODE_11G;
-		break;
 	case CHANNEL_XR:
 		mode = AR5K_INI_VAL_XR;
 		freq = AR5K_INI_RFGAIN_5GHZ;
@@ -603,9 +586,7 @@ ar5k_ar5212_reset(struct ath_hal *hal, HAL_OPMODE op_mode, HAL_CHANNEL *channel,
 	/*
 	 * Set rate duration table
 	 */
-	rt = ar5k_ar5212_get_rate_table(hal,
-	    channel->c_channel_flags & IEEE80211_CHAN_TURBO ?
-	    HAL_MODE_TURBO : HAL_MODE_XR);
+	rt = ar5k_ar5212_get_rate_table(hal, HAL_MODE_XR);
 
 	for (i = 0; i < rt->rt_rate_count; i++) {
 		AR5K_REG_WRITE(AR5K_AR5212_RATE_DUR(rt->rt_info[i].r_rate_code),
@@ -613,19 +594,17 @@ ar5k_ar5212_reset(struct ath_hal *hal, HAL_OPMODE op_mode, HAL_CHANNEL *channel,
 		    rt->rt_info[i].r_control_rate, AH_FALSE));
 	}
 
-	if ((channel->c_channel_flags & IEEE80211_CHAN_TURBO) == 0) {
-		rt = ar5k_ar5212_get_rate_table(hal, HAL_MODE_11B);
-		for (i = 0; i < rt->rt_rate_count; i++) {
-			data = AR5K_AR5212_RATE_DUR(rt->rt_info[i].r_rate_code);
-			AR5K_REG_WRITE(data,
+	rt = ar5k_ar5212_get_rate_table(hal, HAL_MODE_11B);
+	for (i = 0; i < rt->rt_rate_count; i++) {
+		data = AR5K_AR5212_RATE_DUR(rt->rt_info[i].r_rate_code);
+		AR5K_REG_WRITE(data,
+		    ath_hal_computetxtime(hal, rt, 14,
+		    rt->rt_info[i].r_control_rate, AH_FALSE));
+		if (rt->rt_info[i].r_short_preamble) {
+			AR5K_REG_WRITE(data +
+			    (rt->rt_info[i].r_short_preamble << 2),
 			    ath_hal_computetxtime(hal, rt, 14,
 			    rt->rt_info[i].r_control_rate, AH_FALSE));
-			if (rt->rt_info[i].r_short_preamble) {
-				AR5K_REG_WRITE(data +
-				    (rt->rt_info[i].r_short_preamble << 2),
-				    ath_hal_computetxtime(hal, rt, 14,
-				    rt->rt_info[i].r_control_rate, AH_FALSE));
-			}
 		}
 	}
 
@@ -663,7 +642,7 @@ ar5k_ar5212_reset(struct ath_hal *hal, HAL_OPMODE op_mode, HAL_CHANNEL *channel,
 		u_int32_t coef_scaled, coef_exp, coef_man, ds_coef_exp,
 		    ds_coef_man, clock;
 
-		clock = channel->c_channel_flags & IEEE80211_CHAN_T ? 80 : 40;
+		clock = 40;
 		coef_scaled = ((5 * (clock << 24)) / 2) / channel->c_channel;
 
 		for (coef_exp = 31; coef_exp > 0; coef_exp--)
@@ -2237,12 +2216,12 @@ ar5k_ar5212_get_slot_time(struct ath_hal *hal)
 HAL_BOOL
 ar5k_ar5212_set_ack_timeout(struct ath_hal *hal, u_int timeout)
 {
-	if (ar5k_clocktoh(AR5K_REG_MS(0xffffffff, AR5K_AR5212_TIME_OUT_ACK),
-	    hal->ah_turbo) <= timeout)
+	if (ar5k_clocktoh(AR5K_REG_MS(0xffffffff, AR5K_AR5212_TIME_OUT_ACK))
+	    <= timeout)
 		return (AH_FALSE);
 
 	AR5K_REG_WRITE_BITS(AR5K_AR5212_TIME_OUT, AR5K_AR5212_TIME_OUT_ACK,
-	    ar5k_htoclock(timeout, hal->ah_turbo));
+	    ar5k_htoclock(timeout));
 
 	return (AH_TRUE);
 }
@@ -2251,18 +2230,18 @@ u_int
 ar5k_ar5212_get_ack_timeout(struct ath_hal *hal)
 {
 	return (ar5k_clocktoh(AR5K_REG_MS(AR5K_REG_READ(AR5K_AR5212_TIME_OUT),
-	    AR5K_AR5212_TIME_OUT_ACK), hal->ah_turbo));
+	    AR5K_AR5212_TIME_OUT_ACK)));
 }
 
 HAL_BOOL
 ar5k_ar5212_set_cts_timeout(struct ath_hal *hal, u_int timeout)
 {
-	if (ar5k_clocktoh(AR5K_REG_MS(0xffffffff, AR5K_AR5212_TIME_OUT_CTS),
-	    hal->ah_turbo) <= timeout)
+	if (ar5k_clocktoh(AR5K_REG_MS(0xffffffff, AR5K_AR5212_TIME_OUT_CTS))
+	    <= timeout)
 		return (AH_FALSE);
 
 	AR5K_REG_WRITE_BITS(AR5K_AR5212_TIME_OUT, AR5K_AR5212_TIME_OUT_CTS,
-	    ar5k_htoclock(timeout, hal->ah_turbo));
+	    ar5k_htoclock(timeout));
 
 	return (AH_TRUE);
 }
@@ -2271,7 +2250,7 @@ u_int
 ar5k_ar5212_get_cts_timeout(struct ath_hal *hal)
 {
 	return (ar5k_clocktoh(AR5K_REG_MS(AR5K_REG_READ(AR5K_AR5212_TIME_OUT),
-	    AR5K_AR5212_TIME_OUT_CTS), hal->ah_turbo));
+	    AR5K_AR5212_TIME_OUT_CTS)));
 }
 
 /*

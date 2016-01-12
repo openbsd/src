@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5xxx.c,v 1.58 2014/07/13 23:10:23 deraadt Exp $	*/
+/*	$OpenBSD: ar5xxx.c,v 1.59 2016/01/12 09:28:09 stsp Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -75,7 +75,6 @@ static const struct {
 static const HAL_RATE_TABLE ar5k_rt_11a = AR5K_RATES_11A;
 static const HAL_RATE_TABLE ar5k_rt_11b = AR5K_RATES_11B;
 static const HAL_RATE_TABLE ar5k_rt_11g = AR5K_RATES_11G;
-static const HAL_RATE_TABLE ar5k_rt_turbo = AR5K_RATES_TURBO;
 static const HAL_RATE_TABLE ar5k_rt_xr = AR5K_RATES_XR;
 
 int		 ar5k_eeprom_read_ants(struct ath_hal *, u_int32_t *, u_int);
@@ -199,7 +198,6 @@ ath_hal_attach(u_int16_t device, void *arg, bus_space_tag_t st,
 	hal->ah_abi = HAL_ABI_VERSION;
 	hal->ah_op_mode = HAL_M_STA;
 	hal->ah_radar.r_enabled = AR5K_TUNE_RADAR_ALERT;
-	hal->ah_turbo = AH_FALSE;
 	hal->ah_txpower.txp_tpc = AR5K_TUNE_TPC_TXPOWER;
 	hal->ah_imr = 0;
 	hal->ah_atim_window = 0;
@@ -266,8 +264,6 @@ ath_hal_attach(u_int16_t device, void *arg, bus_space_tag_t st,
 		ar5k_rt_copy(&hal->ah_rt_11b, &ar5k_rt_11b);
 	if (hal->ah_capabilities.cap_mode & HAL_MODE_11G)
 		ar5k_rt_copy(&hal->ah_rt_11g, &ar5k_rt_11g);
-	if (hal->ah_capabilities.cap_mode & HAL_MODE_TURBO)
-		ar5k_rt_copy(&hal->ah_rt_turbo, &ar5k_rt_turbo);
 	if (hal->ah_capabilities.cap_mode & HAL_MODE_XR)
 		ar5k_rt_copy(&hal->ah_rt_xr, &ar5k_rt_xr);
 
@@ -334,16 +330,6 @@ ath_hal_computetxtime(struct ath_hal *hal, const HAL_RATE_TABLE *rates,
 		value = AR5K_OFDM_TX_TIME(rate->rateKbps, frame_length);
 		break;
 
-	case IEEE80211_T_TURBO:
-		/*
-		 * Orthogonal Frequency Division Multiplexing
-		 * Atheros "Turbo Mode" (doubled rates)
-		 */
-		if (AR5K_TURBO_NUM_BITS_PER_SYM(rate->rateKbps) == 0)
-			return (0);
-		value = AR5K_TURBO_TX_TIME(rate->rateKbps, frame_length);
-		break;
-
 	case IEEE80211_T_XR:
 		/*
 		 * Orthogonal Frequency Division Multiplexing
@@ -406,7 +392,7 @@ ath_hal_init_channels(struct ath_hal *hal, HAL_CHANNEL *channels,
 		    IEEE80211_CHAN_2GHZ);
 		max = ieee80211_mhz2ieee(IEEE80211_CHANNELS_2GHZ_MAX,
 		    IEEE80211_CHAN_2GHZ);
-		flags = CHANNEL_B | CHANNEL_TG |
+		flags = CHANNEL_B |
 		    (hal->ah_version == AR5K_AR5211 ?
 		    CHANNEL_PUREG : CHANNEL_G);
 
@@ -424,7 +410,7 @@ ath_hal_init_channels(struct ath_hal *hal, HAL_CHANNEL *channels,
 			    IEEE80211_CHAN_5GHZ);
 			max = ieee80211_mhz2ieee(IEEE80211_CHANNELS_5GHZ_MAX,
 			    IEEE80211_CHAN_5GHZ);
-			flags = CHANNEL_A | CHANNEL_T | CHANNEL_XR;
+			flags = CHANNEL_A | CHANNEL_XR;
 			goto debugchan;
 		}
 
@@ -455,12 +441,9 @@ ath_hal_init_channels(struct ath_hal *hal, HAL_CHANNEL *channels,
 			continue;
 
 		/* Match modes */
-		if (ar5k_5ghz_channels[i].rc_mode & IEEE80211_CHAN_TURBO) {
-			all_channels[c].c_channel_flags = CHANNEL_T;
-		} else if (ar5k_5ghz_channels[i].rc_mode &
-		    IEEE80211_CHAN_OFDM) {
+		if (ar5k_5ghz_channels[i].rc_mode & IEEE80211_CHAN_OFDM)
 			all_channels[c].c_channel_flags = CHANNEL_A;
-		} else
+		else
 			continue;
 
 		/* Write channel and increment counter */
@@ -494,9 +477,6 @@ ath_hal_init_channels(struct ath_hal *hal, HAL_CHANNEL *channels,
 			all_channels[c].c_channel_flags |=
 			    hal->ah_version == AR5K_AR5211 ?
 			    CHANNEL_PUREG : CHANNEL_G;
-			if (ar5k_2ghz_channels[i].rc_mode &
-			    IEEE80211_CHAN_TURBO)
-				all_channels[c].c_channel_flags |= CHANNEL_TG;
 		}
 
 		/* Write channel and increment counter */
@@ -637,15 +617,15 @@ ar5k_bitswap(u_int32_t val, u_int bits)
 }
 
 u_int
-ar5k_htoclock(u_int usec, HAL_BOOL turbo)
+ar5k_htoclock(u_int usec)
 {
-	return (turbo == AH_TRUE ? (usec * 80) : (usec * 40));
+	return (usec * 40);
 }
 
 u_int
-ar5k_clocktoh(u_int clock, HAL_BOOL turbo)
+ar5k_clocktoh(u_int clock)
 {
-	return (turbo == AH_TRUE ? (clock / 80) : (clock / 40));
+	return (clock / 40);
 }
 
 void
@@ -923,9 +903,6 @@ ar5k_eeprom_init(struct ath_hal *hal)
 	 */
 	mode = AR5K_EEPROM_MODE_11A;
 
-	ee->ee_turbo_max_power[mode] =
-	    AR5K_EEPROM_HDR_T_5GHZ_DBM(ee->ee_header);
-
 	offset = AR5K_EEPROM_MODES_11A(hal->ah_ee_version);
 
 	if ((ret = ar5k_eeprom_read_ants(hal, &offset, mode)) != 0)
@@ -1011,7 +988,6 @@ ar5k_eeprom_init(struct ath_hal *hal)
 		    ar5k_eeprom_bin2freq(hal, (val >> 8) & 0xff, mode);
 
 		AR5K_EEPROM_READ(offset++, val);
-		ee->ee_turbo_max_power[mode] = val & 0x7f;
 		ee->ee_xr_power[mode] = (val >> 7) & 0x3f;
 
 		AR5K_EEPROM_READ(offset++, val);
@@ -1137,8 +1113,6 @@ ar5k_channel(struct ath_hal *hal, HAL_CHANNEL *channel)
 
 	hal->ah_current_channel.c_channel = channel->c_channel;
 	hal->ah_current_channel.c_channel_flags = channel->c_channel_flags;
-	hal->ah_turbo = channel->c_channel_flags == CHANNEL_T ?
-	    AH_TRUE : AH_FALSE;
 
 	return (AH_TRUE);
 }

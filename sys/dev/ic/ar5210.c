@@ -1,4 +1,4 @@
-/*     $OpenBSD: ar5210.c,v 1.46 2014/07/12 18:48:17 tedu Exp $        */
+/*     $OpenBSD: ar5210.c,v 1.47 2016/01/12 09:28:09 stsp Exp $        */
 
 /*
  * Copyright (c) 2004, 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -26,8 +26,8 @@
 #include <dev/ic/ar5210var.h>
 
 HAL_BOOL	 ar5k_ar5210_nic_reset(struct ath_hal *, u_int32_t);
-HAL_BOOL	 ar5k_ar5210_nic_wakeup(struct ath_hal *, HAL_BOOL, HAL_BOOL);
-void		 ar5k_ar5210_init_tx_queue(struct ath_hal *, u_int, HAL_BOOL);
+HAL_BOOL	 ar5k_ar5210_nic_wakeup(struct ath_hal *, HAL_BOOL);
+void		 ar5k_ar5210_init_tx_queue(struct ath_hal *, u_int);
 void		 ar5k_ar5210_fill(struct ath_hal *);
 HAL_BOOL	 ar5k_ar5210_do_calibrate(struct ath_hal *, HAL_CHANNEL *);
 HAL_BOOL	 ar5k_ar5210_noise_floor(struct ath_hal *, HAL_CHANNEL *);
@@ -202,7 +202,7 @@ ar5k_ar5210_attach(u_int16_t device, void *sc, bus_space_tag_t st,
 	ar5k_ar5210_fill(hal);
 
 	/* Bring device out of sleep and reset its units */
-	if (ar5k_ar5210_nic_wakeup(hal, AH_FALSE, AH_TRUE) != AH_TRUE)
+	if (ar5k_ar5210_nic_wakeup(hal, AH_TRUE) != AH_TRUE)
 		return (NULL);
 
 	/* Get MAC, PHY and RADIO revisions */
@@ -270,7 +270,7 @@ ar5k_ar5210_nic_reset(struct ath_hal *hal, u_int32_t val)
 }
 
 HAL_BOOL
-ar5k_ar5210_nic_wakeup(struct ath_hal *hal, HAL_BOOL turbo, HAL_BOOL initial)
+ar5k_ar5210_nic_wakeup(struct ath_hal *hal, HAL_BOOL initial)
 {
 	/*
 	 * Reset and wakeup the device
@@ -294,9 +294,8 @@ ar5k_ar5210_nic_wakeup(struct ath_hal *hal, HAL_BOOL turbo, HAL_BOOL initial)
 		return (AH_FALSE);
 	}
 
-	/* ...enable Atheros turbo mode if requested */
-	AR5K_REG_WRITE(AR5K_AR5210_PHY_FC,
-	    turbo == AH_TRUE ? AR5K_AR5210_PHY_FC_TURBO_MODE : 0);
+	/* ...do not enable Atheros turbo mode */
+	AR5K_REG_WRITE(AR5K_AR5210_PHY_FC, 0);
 
 	/* ...reset chipset */
 	if (ar5k_ar5210_nic_reset(hal, AR5K_AR5210_RC_CHIP) == AH_FALSE) {
@@ -337,8 +336,6 @@ ar5k_ar5210_get_rate_table(struct ath_hal *hal, u_int mode)
 	switch (mode) {
 	case HAL_MODE_11A:
 		return (&hal->ah_rt_11a);
-	case HAL_MODE_TURBO:
-		return (&hal->ah_rt_turbo);
 	case HAL_MODE_11B:
 	case HAL_MODE_11G:
 	default:
@@ -373,9 +370,7 @@ ar5k_ar5210_reset(struct ath_hal *hal, HAL_OPMODE op_mode, HAL_CHANNEL *channel,
 	/* Not used, keep for HAL compatibility */
 	*status = HAL_OK;
 
-	if (ar5k_ar5210_nic_wakeup(hal,
-		channel->c_channel_flags & IEEE80211_CHAN_T ?
-		AH_TRUE : AH_FALSE, AH_FALSE) == AH_FALSE)
+	if (ar5k_ar5210_nic_wakeup(hal, AH_FALSE) == AH_FALSE)
 		return (AH_FALSE);
 
 	/*
@@ -797,12 +792,12 @@ ar5k_ar5210_release_tx_queue(struct ath_hal *hal, u_int queue)
 }
 
 void
-ar5k_ar5210_init_tx_queue(struct ath_hal *hal, u_int aifs, HAL_BOOL turbo)
+ar5k_ar5210_init_tx_queue(struct ath_hal *hal, u_int aifs)
 {
 	int i;
 	struct {
 		u_int16_t mode_register;
-		u_int32_t mode_base, mode_turbo;
+		u_int32_t mode_base;
 	} initial[] = AR5K_AR5210_INI_MODE(aifs);
 
 	/*
@@ -810,8 +805,7 @@ ar5k_ar5210_init_tx_queue(struct ath_hal *hal, u_int aifs, HAL_BOOL turbo)
 	 */
 	for (i = 0; i < nitems(initial); i++)
 		AR5K_REG_WRITE((u_int32_t)initial[i].mode_register,
-		    turbo == AH_TRUE ?
-		    initial[i].mode_turbo : initial[i].mode_base);
+		    initial[i].mode_base);
 }
 
 HAL_BOOL
@@ -829,8 +823,7 @@ ar5k_ar5210_reset_tx_queue(struct ath_hal *hal, u_int queue)
 		return (AH_TRUE);
 
 	/* Set turbo/base mode parameters */
-	ar5k_ar5210_init_tx_queue(hal, hal->ah_aifs + tq->tqi_aifs,
-	    hal->ah_turbo == AH_TRUE ? AH_TRUE : AH_FALSE);
+	ar5k_ar5210_init_tx_queue(hal, hal->ah_aifs + tq->tqi_aifs);
 
 	/*
 	 * Set retry limits
@@ -1742,8 +1735,7 @@ ar5k_ar5210_set_slot_time(struct ath_hal *hal, u_int slot_time)
 	if (slot_time < HAL_SLOT_TIME_9 || slot_time > HAL_SLOT_TIME_MAX)
 		return (AH_FALSE);
 
-	AR5K_REG_WRITE(AR5K_AR5210_SLOT_TIME,
-	    ar5k_htoclock(slot_time, hal->ah_turbo));
+	AR5K_REG_WRITE(AR5K_AR5210_SLOT_TIME, ar5k_htoclock(slot_time));
 
 	return (AH_TRUE);
 }
@@ -1751,19 +1743,18 @@ ar5k_ar5210_set_slot_time(struct ath_hal *hal, u_int slot_time)
 u_int
 ar5k_ar5210_get_slot_time(struct ath_hal *hal)
 {
-	return (ar5k_clocktoh(AR5K_REG_READ(AR5K_AR5210_SLOT_TIME) &
-		    0xffff, hal->ah_turbo));
+	return (ar5k_clocktoh(AR5K_REG_READ(AR5K_AR5210_SLOT_TIME) & 0xffff));
 }
 
 HAL_BOOL
 ar5k_ar5210_set_ack_timeout(struct ath_hal *hal, u_int timeout)
 {
-	if (ar5k_clocktoh(AR5K_REG_MS(0xffffffff, AR5K_AR5210_TIME_OUT_ACK),
-		hal->ah_turbo) <= timeout)
+	if (ar5k_clocktoh(AR5K_REG_MS(0xffffffff, AR5K_AR5210_TIME_OUT_ACK))
+		<= timeout)
 		return (AH_FALSE);
 
 	AR5K_REG_WRITE_BITS(AR5K_AR5210_TIME_OUT, AR5K_AR5210_TIME_OUT_ACK,
-	    ar5k_htoclock(timeout, hal->ah_turbo));
+	    ar5k_htoclock(timeout));
 
 	return (AH_TRUE);
 }
@@ -1772,18 +1763,18 @@ u_int
 ar5k_ar5210_get_ack_timeout(struct ath_hal *hal)
 {
 	return (ar5k_clocktoh(AR5K_REG_MS(AR5K_REG_READ(AR5K_AR5210_TIME_OUT),
-	    AR5K_AR5210_TIME_OUT_ACK), hal->ah_turbo));
+	    AR5K_AR5210_TIME_OUT_ACK)));
 }
 
 HAL_BOOL
 ar5k_ar5210_set_cts_timeout(struct ath_hal *hal, u_int timeout)
 {
-	if (ar5k_clocktoh(AR5K_REG_MS(0xffffffff, AR5K_AR5210_TIME_OUT_CTS),
-	    hal->ah_turbo) <= timeout)
+	if (ar5k_clocktoh(AR5K_REG_MS(0xffffffff, AR5K_AR5210_TIME_OUT_CTS))
+	    <= timeout)
 		return (AH_FALSE);
 
 	AR5K_REG_WRITE_BITS(AR5K_AR5210_TIME_OUT, AR5K_AR5210_TIME_OUT_CTS,
-	    ar5k_htoclock(timeout, hal->ah_turbo));
+	    ar5k_htoclock(timeout));
 
 	return (AH_TRUE);
 }
@@ -1792,7 +1783,7 @@ u_int
 ar5k_ar5210_get_cts_timeout(struct ath_hal *hal)
 {
 	return (ar5k_clocktoh(AR5K_REG_MS(AR5K_REG_READ(AR5K_AR5210_TIME_OUT),
-	    AR5K_AR5210_TIME_OUT_CTS), hal->ah_turbo));
+	    AR5K_AR5210_TIME_OUT_CTS)));
 }
 
 /*
@@ -2313,7 +2304,7 @@ ar5k_ar5210_get_capabilities(struct ath_hal *hal)
 	hal->ah_capabilities.cap_range.range_2ghz_max = 0;
 
 	/* Set supported modes */
-	hal->ah_capabilities.cap_mode = HAL_MODE_11A | HAL_MODE_TURBO;
+	hal->ah_capabilities.cap_mode = HAL_MODE_11A;
 
 	/* Set number of GPIO pins */
 	hal->ah_gpio_npins = AR5K_AR5210_NUM_GPIO;

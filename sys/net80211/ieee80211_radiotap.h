@@ -1,4 +1,4 @@
-/* $OpenBSD: ieee80211_radiotap.h,v 1.12 2015/11/15 01:05:25 stsp Exp $ */
+/* $OpenBSD: ieee80211_radiotap.h,v 1.13 2016/01/12 09:28:09 stsp Exp $ */
 /* $FreeBSD: src/sys/net80211/ieee80211_radiotap.h,v 1.3 2004/04/05 22:13:21 sam Exp $ */
 /* $NetBSD: ieee80211_radiotap.h,v 1.9 2004/06/06 04:13:28 dyoung Exp $ */
 
@@ -187,7 +187,6 @@ enum ieee80211_radiotap_type {
 
 #ifndef _KERNEL
 /* For IEEE80211_RADIOTAP_CHANNEL */
-#define IEEE80211_CHAN_TURBO	0x0010	/* Turbo channel */
 #define IEEE80211_CHAN_CCK	0x0020	/* CCK channel */
 #define IEEE80211_CHAN_OFDM	0x0040	/* OFDM channel */
 #define IEEE80211_CHAN_2GHZ	0x0080	/* 2 GHz spectrum channel */

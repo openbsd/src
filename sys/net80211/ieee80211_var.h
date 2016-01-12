@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_var.h,v 1.69 2016/01/06 19:56:50 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_var.h,v 1.70 2016/01/12 09:28:09 stsp Exp $	*/
 /*	$NetBSD: ieee80211_var.h,v 1.7 2004/05/06 03:07:10 dyoung Exp $	*/
 
 /*-
@@ -60,7 +60,6 @@
 enum ieee80211_phytype {
 	IEEE80211_T_DS,			/* direct sequence spread spectrum */
 	IEEE80211_T_OFDM,		/* frequency division multiplexing */
-	IEEE80211_T_TURBO,		/* high rate OFDM, aka turbo mode */
 	IEEE80211_T_XR		        /* extended range mode */
 };
 #define	IEEE80211_T_CCK	IEEE80211_T_DS	/* more common nomenclature */
@@ -71,8 +70,7 @@ enum ieee80211_phymode {
 	IEEE80211_MODE_11A	= 1,	/* 5GHz, OFDM */
 	IEEE80211_MODE_11B	= 2,	/* 2GHz, CCK */
 	IEEE80211_MODE_11G	= 3,	/* 2GHz, OFDM */
-	IEEE80211_MODE_TURBO	= 4,	/* 5GHz, OFDM, 2x clock */
-	IEEE80211_MODE_11N	= 5,	/* 11n, 2GHz/5GHz */
+	IEEE80211_MODE_11N	= 4,	/* 11n, 2GHz/5GHz */
 };
 #define	IEEE80211_MODE_MAX	(IEEE80211_MODE_11N+1)
 
@@ -106,7 +104,6 @@ struct ieee80211_channel {
 /*
  * Channel attributes (XXX must keep in sync with radiotap flags).
  */
-#define IEEE80211_CHAN_TURBO	0x0010	/* Turbo channel */
 #define IEEE80211_CHAN_CCK	0x0020	/* CCK channel */
 #define IEEE80211_CHAN_OFDM	0x0040	/* OFDM channel */
 #define IEEE80211_CHAN_2GHZ	0x0080	/* 2 GHz spectrum channel */
@@ -127,10 +124,6 @@ struct ieee80211_channel {
 	(IEEE80211_CHAN_2GHZ | IEEE80211_CHAN_OFDM)
 #define IEEE80211_CHAN_G \
 	(IEEE80211_CHAN_2GHZ | IEEE80211_CHAN_DYN)
-#define IEEE80211_CHAN_T \
-	(IEEE80211_CHAN_5GHZ | IEEE80211_CHAN_OFDM | IEEE80211_CHAN_TURBO)
-#define IEEE80211_CHAN_TG \
-	(IEEE80211_CHAN_2GHZ | IEEE80211_CHAN_OFDM | IEEE80211_CHAN_TURBO)
 
 #define	IEEE80211_IS_CHAN_A(_c) \
 	(((_c)->ic_flags & IEEE80211_CHAN_A) == IEEE80211_CHAN_A)
@@ -140,10 +133,6 @@ struct ieee80211_channel {
 	(((_c)->ic_flags & IEEE80211_CHAN_PUREG) == IEEE80211_CHAN_PUREG)
 #define	IEEE80211_IS_CHAN_G(_c) \
 	(((_c)->ic_flags & IEEE80211_CHAN_G) == IEEE80211_CHAN_G)
-#define	IEEE80211_IS_CHAN_T(_c) \
-	(((_c)->ic_flags & IEEE80211_CHAN_T) == IEEE80211_CHAN_T)
-#define	IEEE80211_IS_CHAN_TG(_c) \
-	(((_c)->ic_flags & IEEE80211_CHAN_TG) == IEEE80211_CHAN_TG)
 #define	IEEE80211_IS_CHAN_N(_c) \
 	(((_c)->ic_flags & IEEE80211_CHAN_HT) == IEEE80211_CHAN_HT)
 

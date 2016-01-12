@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_output.c,v 1.106 2016/01/06 19:56:50 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_output.c,v 1.107 2016/01/12 09:28:09 stsp Exp $	*/
 /*	$NetBSD: ieee80211_output.c,v 1.13 2004/05/31 11:02:55 dyoung Exp $	*/
 
 /*-
@@ -270,7 +270,6 @@ ieee80211_mgmt_output(struct ifnet *ifp, struct ieee80211_node *ni,
  * 11A		15	1023
  * 11B  	31	1023
  * 11G		15*	1023	(*) aCWmin(1)
- * Turbo A/G	7	1023	(Atheros proprietary mode)
  */
 #if 0
 static const struct ieee80211_edca_ac_params
@@ -293,12 +292,6 @@ static const struct ieee80211_edca_ac_params
 		[EDCA_AC_VI] = { 3,  4, 2,  94 },
 		[EDCA_AC_VO] = { 2,  3, 2,  47 }
 	},
-	[IEEE80211_MODE_TURBO] = {
-		[EDCA_AC_BK] = { 3, 10, 7,   0 },
-		[EDCA_AC_BE] = { 3, 10, 2,   0 },
-		[EDCA_AC_VI] = { 2,  3, 2,  94 },
-		[EDCA_AC_VO] = { 2,  2, 1,  47 }
-	}
 };
 #endif
 
@@ -323,12 +316,6 @@ static const struct ieee80211_edca_ac_params
 		[EDCA_AC_VI] = { 3,  4, 1,  94 },
 		[EDCA_AC_VO] = { 2,  3, 1,  47 }
 	},
-	[IEEE80211_MODE_TURBO] = {
-		[EDCA_AC_BK] = { 3, 10, 7,   0 },
-		[EDCA_AC_BE] = { 3,  5, 2,   0 },
-		[EDCA_AC_VI] = { 2,  3, 1,  94 },
-		[EDCA_AC_VO] = { 2,  2, 1,  47 }
-	}
 };
 #endif	/* IEEE80211_STA_ONLY */
 

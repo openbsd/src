@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-802_11.c,v 1.27 2015/10/13 14:36:15 stsp Exp $	*/
+/*	$OpenBSD: print-802_11.c,v 1.28 2016/01/12 09:28:10 stsp Exp $	*/
 
 /*
  * Copyright (c) 2005 Reyk Floeter <reyk@openbsd.org>
@@ -953,8 +953,6 @@ ieee802_11_radio_if_print(u_char *user, const struct pcap_pkthdr *h,
 		    flags & IEEE80211_CHAN_5GHZ)
 			printf(", 11a");
 
-		if (flags & IEEE80211_CHAN_TURBO)
-			printf(", TURBO");
 		if (flags & IEEE80211_CHAN_XR)
 			printf(", XR");
 	}

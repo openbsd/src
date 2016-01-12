@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_media.h,v 1.35 2015/11/15 00:17:47 stsp Exp $	*/
+/*	$OpenBSD: if_media.h,v 1.36 2016/01/12 09:28:09 stsp Exp $	*/
 /*	$NetBSD: if_media.h,v 1.22 2000/02/17 21:53:16 sommerfeld Exp $	*/
 
 /*-
@@ -285,7 +285,6 @@ uint64_t	ifmedia_baudrate(uint64_t);
 #define	IFM_IEEE80211_IBSS	0x0000000000040000ULL	/* Operate in IBSS mode */
 #define	IFM_IEEE80211_IBSSMASTER 0x0000000000080000ULL	/* Operate as an IBSS master */
 #define	IFM_IEEE80211_MONITOR	0x0000000000100000ULL	/* Operate in Monitor mode */
-#define	IFM_IEEE80211_TURBO	0x0000000000200000ULL	/* Operate in Turbo mode */
 
 /* operating mode for multi-mode devices */
 #define IFM_IEEE80211_11A	0x0000000100000000ULL	/* 5GHz, OFDM mode */
@@ -652,7 +651,6 @@ struct ifmedia_description {
 	{ IFM_IEEE80211|IFM_IEEE80211_IBSS,	"ibss" },		\
 	{ IFM_IEEE80211|IFM_IEEE80211_IBSSMASTER, "ibss-master" },	\
 	{ IFM_IEEE80211|IFM_IEEE80211_MONITOR,	"monitor" },		\
-	{ IFM_IEEE80211|IFM_IEEE80211_TURBO,	"turbo" },		\
 									\
 	{ IFM_TDM|IFM_TDM_HDLC_CRC16,	"hdlc-crc16" },			\
 	{ IFM_TDM|IFM_TDM_PPP,		"ppp" },			\

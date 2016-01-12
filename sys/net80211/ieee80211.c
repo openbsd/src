@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211.c,v 1.56 2016/01/05 18:41:16 stsp Exp $	*/
+/*	$OpenBSD: ieee80211.c,v 1.57 2016/01/12 09:28:09 stsp Exp $	*/
 /*	$NetBSD: ieee80211.c,v 1.19 2004/06/06 05:45:29 dyoung Exp $	*/
 
 /*-
@@ -109,8 +109,6 @@ ieee80211_channel_init(struct ifnet *ifp)
 				ic->ic_modecaps |= 1<<IEEE80211_MODE_11B;
 			if (IEEE80211_IS_CHAN_PUREG(c))
 				ic->ic_modecaps |= 1<<IEEE80211_MODE_11G;
-			if (IEEE80211_IS_CHAN_T(c))
-				ic->ic_modecaps |= 1<<IEEE80211_MODE_TURBO;
 			if (IEEE80211_IS_CHAN_N(c))
 				ic->ic_modecaps |= 1<<IEEE80211_MODE_11N;
 		}
@@ -277,13 +275,12 @@ ieee80211_media_init(struct ifnet *ifp,
 	ifmedia_init(&ic->ic_media, 0, media_change, media_stat);
 	maxrate = 0;
 	memset(&allrates, 0, sizeof(allrates));
-	for (mode = IEEE80211_MODE_AUTO; mode <= IEEE80211_MODE_TURBO; mode++) {
+	for (mode = IEEE80211_MODE_AUTO; mode <= IEEE80211_MODE_11G; mode++) {
 		static const uint64_t mopts[] = {
 			IFM_AUTO,
 			IFM_IEEE80211_11A,
 			IFM_IEEE80211_11B,
 			IFM_IEEE80211_11G,
-			IFM_IEEE80211_11A | IFM_IEEE80211_TURBO,
 		};
 		if ((ic->ic_modecaps & (1<<mode)) == 0)
 			continue;
@@ -442,15 +439,7 @@ ieee80211_media_change(struct ifnet *ifp)
 	default:
 		return EINVAL;
 	}
-	/*
-	 * Turbo mode is an ``option''.  Eventually it
-	 * needs to be applied to 11g too.
-	 */
-	if (ime->ifm_media & IFM_IEEE80211_TURBO) {
-		if (newphymode != IEEE80211_MODE_11A)
-			return EINVAL;
-		newphymode = IEEE80211_MODE_TURBO;
-	}
+
 	/*
 	 * Validate requested mode is available.
 	 */
@@ -659,10 +648,6 @@ ieee80211_media_status(struct ifnet *ifp, struct ifmediareq *imr)
 	case IEEE80211_MODE_11G:
 		imr->ifm_active |= IFM_IEEE80211_11G;
 		break;
-	case IEEE80211_MODE_TURBO:
-		imr->ifm_active |= IFM_IEEE80211_11A
-				|  IFM_IEEE80211_TURBO;
-		break;
 	case IEEE80211_MODE_11N:
 		imr->ifm_active |= IFM_IEEE80211_11N;
 		break;
@@ -705,7 +690,6 @@ ieee80211_setbasicrates(struct ieee80211com *ic)
 	    { 3, { 12, 24, 48 } },		/* IEEE80211_MODE_11A */
 	    { 2, { 2, 4 } },			/* IEEE80211_MODE_11B */
 	    { 4, { 2, 4, 11, 22 } },		/* IEEE80211_MODE_11G */
-	    { 0 },				/* IEEE80211_MODE_TURBO	*/
 	    { 0 },				/* IEEE80211_MODE_11N	*/
 	};
 	enum ieee80211_phymode mode;
@@ -743,7 +727,6 @@ ieee80211_setmode(struct ieee80211com *ic, enum ieee80211_phymode mode)
 		IEEE80211_CHAN_A,	/* IEEE80211_MODE_11A */
 		IEEE80211_CHAN_B,	/* IEEE80211_MODE_11B */
 		IEEE80211_CHAN_PUREG,	/* IEEE80211_MODE_11G */
-		IEEE80211_CHAN_T,	/* IEEE80211_MODE_TURBO	*/
 		IEEE80211_CHAN_HT,	/* IEEE80211_MODE_11N */
 	};
 	const struct ieee80211_channel *c;
@@ -766,14 +749,9 @@ ieee80211_setmode(struct ieee80211com *ic, enum ieee80211_phymode mode)
 	modeflags = chanflags[mode];
 	for (i = 0; i <= IEEE80211_CHAN_MAX; i++) {
 		c = &ic->ic_channels[i];
-		if (mode == IEEE80211_MODE_AUTO) {
-			/* ignore turbo channels for autoselect */
-			if ((c->ic_flags &~ IEEE80211_CHAN_TURBO) != 0)
-				break;
-		} else {
-			if ((c->ic_flags & modeflags) == modeflags)
-				break;
-		}
+		if (mode == IEEE80211_MODE_AUTO ||
+		    (c->ic_flags & modeflags) == modeflags)
+			break;
 	}
 	if (i > IEEE80211_CHAN_MAX) {
 		DPRINTF(("no channels found for mode %u\n", mode));
@@ -786,14 +764,9 @@ ieee80211_setmode(struct ieee80211com *ic, enum ieee80211_phymode mode)
 	memset(ic->ic_chan_active, 0, sizeof(ic->ic_chan_active));
 	for (i = 0; i <= IEEE80211_CHAN_MAX; i++) {
 		c = &ic->ic_channels[i];
-		if (mode == IEEE80211_MODE_AUTO) {
-			/* take anything but pure turbo channels */
-			if ((c->ic_flags &~ IEEE80211_CHAN_TURBO) != 0)
-				setbit(ic->ic_chan_active, i);
-		} else {
-			if ((c->ic_flags & modeflags) == modeflags)
-				setbit(ic->ic_chan_active, i);
-		}
+		if (mode == IEEE80211_MODE_AUTO ||
+		    (c->ic_flags & modeflags) == modeflags)
+			setbit(ic->ic_chan_active, i);
 	}
 	/*
 	 * If no current/default channel is setup or the current
@@ -846,10 +819,6 @@ ieee80211_next_mode(struct ifnet *ifp)
 	for (++ic->ic_curmode;
 	    ic->ic_curmode <= IEEE80211_MODE_MAX;
 	    ic->ic_curmode++) {
-		/* Wrap around and ignore turbo mode */
-		if (ic->ic_curmode == IEEE80211_MODE_TURBO)
-			continue;
-
 		/* 
 		 * Skip over 11n mode. Its set of channels is the superset
 		 * of all channels supported by the other modes.
@@ -879,8 +848,6 @@ ieee80211_next_mode(struct ifnet *ifp)
  * Because the result of this function is ultimately used to select a
  * rate from the rate set of the returned mode, it must not return
  * IEEE80211_MODE_11N, which uses MCS instead of rates for unicast frames.
- *
- * XXX never returns turbo modes -dcy
  */
 enum ieee80211_phymode
 ieee80211_chan2mode(struct ieee80211com *ic,
@@ -896,12 +863,9 @@ ieee80211_chan2mode(struct ieee80211com *ic,
 		return ic->ic_curmode;
 	/*
 	 * In autoselect or 11n mode; deduce a mode based on the channel
-	 * characteristics.  We assume that turbo-only channels
-	 * are not considered when the channel set is constructed.
+	 * characteristics.
 	 */
-	if (IEEE80211_IS_CHAN_T(chan))
-		return IEEE80211_MODE_TURBO;
-	else if (IEEE80211_IS_CHAN_5GHZ(chan))
+	if (IEEE80211_IS_CHAN_5GHZ(chan))
 		return IEEE80211_MODE_11A;
 	else if (chan->ic_flags & (IEEE80211_CHAN_OFDM|IEEE80211_CHAN_DYN))
 		return IEEE80211_MODE_11G;
@@ -918,7 +882,6 @@ ieee80211_mcs2media(struct ieee80211com *ic, int mcs,
 {
 	switch (mode) {
 	case IEEE80211_MODE_11A:
-	case IEEE80211_MODE_TURBO:
 	case IEEE80211_MODE_11B:
 	case IEEE80211_MODE_11G:
 		/* these modes use rates, not MCS */
@@ -1002,7 +965,6 @@ ieee80211_rate2media(struct ieee80211com *ic, int rate,
 	mask = rate & IEEE80211_RATE_VAL;
 	switch (mode) {
 	case IEEE80211_MODE_11A:
-	case IEEE80211_MODE_TURBO:
 		mask |= IFM_IEEE80211_11A;
 		break;
 	case IEEE80211_MODE_11B:
