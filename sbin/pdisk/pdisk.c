@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdisk.c,v 1.24 2016/01/11 23:45:02 krw Exp $	*/
+/*	$OpenBSD: pdisk.c,v 1.25 2016/01/12 01:17:41 krw Exp $	*/
 
 //
 // pdisk - an editor for Apple format partition tables
@@ -57,7 +57,6 @@
 // Defines
 //
 #define ARGV_CHUNK 5
-#define CFLAG_DEFAULT	0
 #define DFLAG_DEFAULT	0
 #define HFLAG_DEFAULT	0
 #define INTERACT_DEFAULT	0
@@ -91,7 +90,6 @@ int hflag = HFLAG_DEFAULT;	/* show help */
 int dflag = DFLAG_DEFAULT;	/* turn on debugging commands and printout */
 int rflag = RFLAG_DEFAULT;	/* open device read Only */
 int interactive = INTERACT_DEFAULT;
-int cflag = CFLAG_DEFAULT;	/* compute device size */
 
 static int first_get = 1;
 
@@ -193,7 +191,6 @@ interact()
 	    if (dflag) {
 		printf("  a    toggle abbreviate flag\n");
 		printf("  p    toggle physical flag\n");
-		printf("  c    toggle compute size flag\n");
 		printf("  d    toggle debug flag\n");
 		printf("  x    examine block n of device\n");
 	    }
@@ -274,19 +271,6 @@ interact()
 	    }
 	    printf("Now in %s mode.\n", (dflag)?"debug":"normal");
 	    break;
-	case 'C':
-	case 'c':
-	    if (dflag) {
-		if (cflag) {
-		    cflag = 0;
-		} else {
-		    cflag = 1;
-		}
-		printf("Now in %s device size mode.\n", (cflag)?"always compute":"use existing");
-	    } else {
-	    	goto do_error;
-	    }
-	    break;
 	case 'X':
 	case 'x':
 	    if (dflag) {
@@ -320,7 +304,6 @@ get_options(int argc, char **argv)
     aflag = AFLAG_DEFAULT;
     pflag = PFLAG_DEFAULT;
     interactive = INTERACT_DEFAULT;
-    cflag = CFLAG_DEFAULT;
 
     optind = 1; // reset option scanner logic
     while ((c = getopt(argc, argv, "hlvdric")) != -1) {
@@ -333,9 +316,6 @@ get_options(int argc, char **argv)
 	    break;
 	case 'd':
 	    dflag = (DFLAG_DEFAULT)?0:1;
-	    break;
-	case 'c':
-	    cflag = (CFLAG_DEFAULT)?0:1;
 	    break;
 	case 'r':
 	    rflag = (RFLAG_DEFAULT)?0:1;

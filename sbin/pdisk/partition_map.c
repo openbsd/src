@@ -1,4 +1,4 @@
-/*	$OpenBSD: partition_map.c,v 1.13 2016/01/11 23:31:27 krw Exp $	*/
+/*	$OpenBSD: partition_map.c,v 1.14 2016/01/12 01:17:41 krw Exp $	*/
 
 //
 // partition_map.c - partition map routines
@@ -90,12 +90,6 @@ enum add_action {
     kAdd = 1,
     kSplit = 2
 };
-
-//
-// Global Variables
-//
-extern int cflag;
-
 
 //
 // Forward declarations
