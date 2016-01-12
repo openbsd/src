@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.301 2016/01/12 01:11:15 jcs Exp $ */
+/* $OpenBSD: acpi.c,v 1.302 2016/01/12 07:42:39 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -913,7 +913,7 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 
 	/*
 	 * A bunch of things need to be done differently for
-	 * Hardware-Reduced ACPI.
+	 * Hardware-reduced ACPI.
 	 */
 	if (sc->sc_fadt->hdr_revision >= 5 &&
 	    sc->sc_fadt->flags & FADT_HW_REDUCED_ACPI)
@@ -1275,11 +1275,29 @@ acpi_read_pmreg(struct acpi_softc *sc, int reg, int offset)
 	int regval;
 
 	/*
-	 * For Hardware-Reduced ACPI we emulate PM1_CNT to reflect
-	 * that the systems is always in ACPI mode.
+	 * For Hardware-reduced ACPI we emulate PM1B_CNT to reflect
+	 * that the system is always in ACPI mode.
 	 */
-	if (sc->sc_hw_reduced && reg == ACPIREG_PM1_CNT)
+	if (sc->sc_hw_reduced && reg == ACPIREG_PM1B_CNT) {
+		KASSERT(offset == 0);
 		return ACPI_PM1_SCI_EN;
+	}
+
+	/*
+	 * For Hardware-reduced ACPI we also emulate PM1A_STS using
+	 * SLEEP_STATUS_REG.
+	 */
+	if (sc->sc_hw_reduced && reg == ACPIREG_PM1A_STS) {
+		uint8_t value;
+
+		KASSERT(offset == 0);
+		acpi_gasio(sc, ACPI_IOREAD,
+		    sc->sc_fadt->sleep_status_reg.address_space_id,
+		    sc->sc_fadt->sleep_status_reg.address,
+		    sc->sc_fadt->sleep_status_reg.register_bit_width / 8,
+		    sc->sc_fadt->sleep_status_reg.access_size, &value);
+		return ((int)value << 8);
+	}
 
 	/* Special cases: 1A/1B blocks can be OR'ed together */
 	switch (reg) {
@@ -1342,6 +1360,38 @@ acpi_write_pmreg(struct acpi_softc *sc, int reg, int offset, int regval)
 {
 	bus_space_handle_t ioh;
 	bus_size_t size;
+
+	/*
+	 * For Hardware-reduced ACPI we also emulate PM1A_STS using
+	 * SLEEP_STATUS_REG.
+	 */
+	if (sc->sc_hw_reduced && reg == ACPIREG_PM1A_STS) {
+		uint8_t value = (regval >> 8);
+
+		KASSERT(offset == 0);
+		acpi_gasio(sc, ACPI_IOWRITE,
+		    sc->sc_fadt->sleep_status_reg.address_space_id,
+		    sc->sc_fadt->sleep_status_reg.address,
+		    sc->sc_fadt->sleep_status_reg.register_bit_width / 8,
+		    sc->sc_fadt->sleep_status_reg.access_size, &value);
+		return;
+	}
+
+	/*
+	 * For Hardware-reduced ACPI we also emulate PM1A_CNT using
+	 * SLEEP_CONTROL_REG.
+	 */
+	if (sc->sc_hw_reduced && reg == ACPIREG_PM1A_CNT) {
+		uint8_t value = (regval >> 8);
+
+		KASSERT(offset == 0);
+		acpi_gasio(sc, ACPI_IOWRITE,
+		    sc->sc_fadt->sleep_control_reg.address_space_id,
+		    sc->sc_fadt->sleep_control_reg.address,
+		    sc->sc_fadt->sleep_control_reg.register_bit_width / 8,
+		    sc->sc_fadt->sleep_control_reg.access_size, &value);
+		return;
+	}
 
 	/* Special cases: 1A/1B blocks can be written with same value */
 	switch (reg) {
@@ -1409,7 +1459,7 @@ acpi_map_pmregs(struct acpi_softc *sc)
 	const char *name;
 	int reg;
 
-	/* Registers don't exist on Hardware-Reduced ACPI. */
+	/* Registers don't exist on Hardware-reduced ACPI. */
 	if (sc->sc_hw_reduced)
 		return;
 

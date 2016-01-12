@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpireg.h,v 1.32 2016/01/12 01:11:15 jcs Exp $	*/
+/*	$OpenBSD: acpireg.h,v 1.33 2016/01/12 07:42:39 kettenis Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
@@ -195,6 +195,8 @@ struct acpi_fadt {
 	struct acpi_gas	x_pm_tmr_blk;
 	struct acpi_gas	x_gpe0_blk;
 	struct acpi_gas	x_gpe1_blk;
+	struct acpi_gas sleep_control_reg;
+	struct acpi_gas sleep_status_reg;
 } __packed;
 
 struct acpi_dsdt {
