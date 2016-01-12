@@ -1,4 +1,4 @@
-/* $OpenBSD: ihidev.c,v 1.1 2016/01/12 01:11:15 jcs Exp $ */
+/* $OpenBSD: ihidev.c,v 1.2 2016/01/12 17:30:23 deraadt Exp $ */
 /*
  * HID-over-i2c driver
  *
@@ -118,7 +118,7 @@ ihidev_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_tag = ia->ia_tag;
 	sc->sc_addr = ia->ia_addr;
 
-	printf(": int %d", ia->ia_irq);
+	printf(": int %d", ia->ia_int);
 
 	if (ihidev_hid_command(sc, I2C_HID_CMD_DESCR, NULL) ||
 	    ihidev_hid_desc_parse(sc)) {
@@ -187,9 +187,9 @@ ihidev_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ibuf = malloc(sc->sc_isize, M_USBDEV, M_WAITOK);
 
 	/* register interrupt with system */
-	if (ia->ia_irq > 0) {
+	if (ia->ia_int > 0) {
 		/* XXX: don't assume this uses acpi_intr_establish */
-		sc->sc_ih = acpi_intr_establish(ia->ia_irq, ia->ia_irq_flags,
+		sc->sc_ih = acpi_intr_establish(ia->ia_int, ia->ia_int_flags,
 		    IPL_BIO, ihidev_intr, sc, sc->sc_dev.dv_xname);
 		if (sc->sc_ih == NULL) {
 			printf(", failed establishing intr\n");
