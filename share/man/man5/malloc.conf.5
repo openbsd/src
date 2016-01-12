@@ -1,4 +1,4 @@
-.\"	$OpenBSD: malloc.conf.5,v 1.3 2016/01/06 17:54:50 tedu Exp $
+.\"	$OpenBSD: malloc.conf.5,v 1.4 2016/01/12 18:48:28 deraadt Exp $
 .\"
 .\" Copyright (c) 2012 Damien Miller <djm@openbsd.org>
 .\" Copyright (c) 2008, 2009, 2010, 2011 Otto Moerbeek <otto@drijf.net>
@@ -17,22 +17,24 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 6 2016 $
+.Dd $Mdocdate: January 12 2016 $
 .Dt MALLOC.CONF 5
 .Os
 .Sh NAME
 .Nm malloc.conf
 .Nd options for the memory allocator
 .Sh DESCRIPTION
-The memory allocator functions of the
+Upon the first call to the
 .Xr malloc 3
-family first look for a symbolic link called
-.Pa /etc/malloc.conf
-and next check the environment for a variable called
-.Ev MALLOC_OPTIONS
-and finally for the global variable
-.Va malloc_options
-and scan them for flags in that order.
+family of functions, an initialization sequence inspects the
+symbolic link
+.Pa /etc/malloc.conf ,
+next checks the environment for a variable called
+.Ev MALLOC_OPTIONS ,
+and finally looks at the global variable
+.Va malloc_options 
+in the program.
+Each is scanned for the following flags.
 Flags are single letters, uppercase means on, lowercase means off.
 .Bl -tag -width indent
 .It Cm C
