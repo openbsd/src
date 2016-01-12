@@ -1,4 +1,4 @@
-/*	$OpenBSD: ums.c,v 1.42 2016/01/09 04:14:42 jcs Exp $ */
+/*	$OpenBSD: ums.c,v 1.43 2016/01/12 19:16:21 jcs Exp $ */
 /*	$NetBSD: ums.c,v 1.60 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -121,7 +121,7 @@ ums_attach(struct device *parent, struct device *self, void *aux)
 	struct usb_attach_arg *uaa = uha->uaa;
 	int size, repid;
 	void *desc;
-	u_int32_t quirks, qflags;
+	u_int32_t quirks, qflags = 0;
 
 	sc->sc_hdev.sc_intr = ums_intr;
 	sc->sc_hdev.sc_parent = uha->parent;

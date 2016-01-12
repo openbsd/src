@@ -1,4 +1,4 @@
-/*	$OpenBSD: ukbd.c,v 1.75 2016/01/09 04:14:42 jcs Exp $	*/
+/*	$OpenBSD: ukbd.c,v 1.76 2016/01/12 19:16:21 jcs Exp $	*/
 /*      $NetBSD: ukbd.c,v 1.85 2003/03/11 16:44:00 augustss Exp $        */
 
 /*
@@ -207,7 +207,7 @@ ukbd_attach(struct device *parent, struct device *self, void *aux)
 	struct hidkbd *kbd = &sc->sc_kbd;
 	struct uhidev_attach_arg *uha = (struct uhidev_attach_arg *)aux;
 	struct usb_hid_descriptor *hid;
-	u_int32_t quirks, qflags;
+	u_int32_t quirks, qflags = 0;
 	int dlen, repid;
 	int console = 1;
 	void *desc;
