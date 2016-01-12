@@ -1,4 +1,4 @@
-/*	$OpenBSD: dump.c,v 1.13 2016/01/11 23:31:27 krw Exp $	*/
+/*	$OpenBSD: dump.c,v 1.14 2016/01/12 15:32:08 krw Exp $	*/
 
 //
 // dump.c - dumping partition maps
@@ -136,7 +136,7 @@ dump(char *name)
     partition_map_header *map;
     int junk;
 
-    map = open_partition_map(name, &junk, 0);
+    map = open_partition_map(name, &junk);
     if (map == NULL) {
 	//error(-1, "No partition map in '%s'", name);
 	return 0;

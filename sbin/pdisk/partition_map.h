@@ -1,4 +1,4 @@
-/*	$OpenBSD: partition_map.h,v 1.4 2016/01/11 07:54:07 jasper Exp $	*/
+/*	$OpenBSD: partition_map.h,v 1.5 2016/01/12 15:32:08 krw Exp $	*/
 
 //
 // partition_map.h - partition map routines
@@ -99,7 +99,6 @@ extern const char * kPatchType;
 // Global Variables
 //
 extern int rflag;
-extern int interactive;
 extern int dflag;
 
 
@@ -115,7 +114,7 @@ partition_map* find_entry_by_type(const char *type_name, partition_map_header *m
 partition_map* find_entry_by_base(u32 base, partition_map_header *map);
 partition_map_header* init_partition_map(char *name, partition_map_header* oldmap);
 void move_entry_in_map(long, long, partition_map_header *);
-partition_map_header* open_partition_map(char *name, int *valid_file, int ask_logical_size);
+partition_map_header* open_partition_map(char *name, int *valid_file);
 void resize_map(long new_size, partition_map_header *map);
 void write_partition_map(partition_map_header *map);
 void bzb_init_slice(BZB *bp, int slice);

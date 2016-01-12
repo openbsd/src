@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pdisk.8,v 1.19 2016/01/11 18:43:06 krw Exp $
+.\"	$OpenBSD: pdisk.8,v 1.20 2016/01/12 15:32:08 krw Exp $
 .\"
 .\" Copyright 1996,1997,1998 by Apple Computer, Inc.
 .\"              All Rights Reserved
@@ -19,7 +19,7 @@
 .\" NEGLIGENCE, OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 .\" WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 11 2016 $
+.Dd $Mdocdate: January 12 2016 $
 .Dt PDISK 8
 .Os
 .Sh NAME
@@ -27,7 +27,7 @@
 .Nd HFS(DPME) partition maintenance program
 .Sh SYNOPSIS
 .Nm pdisk
-.Op Fl hilr
+.Op Fl hlr
 .Ar disk
 .Sh DESCRIPTION
 .Nm
@@ -43,10 +43,6 @@ The options are as follows:
 Prints a rather lame set of help messages for the
 .Nm
 program.
-.It Fl i
-Causes
-.Nm
-to go into an interactive mode similar to the Mac OS version of the program.
 .It Fl l
 List the partition tables for the specified
 .Ar disk .

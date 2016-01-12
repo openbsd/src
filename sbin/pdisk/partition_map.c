@@ -1,4 +1,4 @@
-/*	$OpenBSD: partition_map.c,v 1.14 2016/01/12 01:17:41 krw Exp $	*/
+/*	$OpenBSD: partition_map.c,v 1.15 2016/01/12 15:32:08 krw Exp $	*/
 
 //
 // partition_map.c - partition map routines
@@ -117,12 +117,11 @@ int write_block(partition_map_header *map, unsigned long num, char *buf);
 // Routines
 //
 partition_map_header *
-open_partition_map(char *name, int *valid_file, int ask_logical_size)
+open_partition_map(char *name, int *valid_file)
 {
     MEDIA m;
     partition_map_header * map;
     int writable;
-    long size;
 
     m = open_file_as_media(name, (rflag)?O_RDONLY:O_RDWR);
     if (m == 0) {
@@ -172,20 +171,8 @@ open_partition_map(char *name, int *valid_file, int ask_logical_size)
     map->physical_block = map->misc->sbBlkSize;
     //printf("physical block size is %d\n", map->physical_block);
 
-    if (ask_logical_size && interactive) {
-	size = PBLOCK_SIZE;
-	printf("A logical block is %ld bytes: ", size);
-	flush_to_newline(0);
-	get_number_argument("what should be the logical block size? ",
-		&size, size);
-	size = (size / PBLOCK_SIZE) * PBLOCK_SIZE;
-	if (size < PBLOCK_SIZE) {
-	    size = PBLOCK_SIZE;
-	}
-	map->logical_block = size;
-    } else {
-	map->logical_block = PBLOCK_SIZE;
-    }
+    map->logical_block = PBLOCK_SIZE;
+
     if (map->logical_block > MAXIOSIZE) {
 	map->logical_block = MAXIOSIZE;
     }
@@ -348,9 +335,6 @@ write_partition_map(partition_map_header *map)
 	}
     }
 
-    if (interactive)
-	printf("The partition table has been altered!\n\n");
-
     os_reload_media(map->m);
 }
 
@@ -420,10 +404,8 @@ create_partition_map(char *name, partition_map_header *oldmap)
     MEDIA m;
     partition_map_header * map;
     DPME *data;
-    unsigned long default_number;
     unsigned long number;
     long size;
-    unsigned long multiple;
 
     m = open_file_as_media(name, (rflag)?O_RDONLY:O_RDWR);
     if (m == 0) {
@@ -451,16 +433,6 @@ create_partition_map(char *name, partition_map_header *oldmap)
     }
     m = open_deblock_media(PBLOCK_SIZE, m);
     map->m = m;
-    if (interactive) {
-	printf("A physical block is %ld bytes: ", size);
-	flush_to_newline(0);
-	get_number_argument("what should be the physical block size? ",
-		&size, size);
-	size = (size / PBLOCK_SIZE) * PBLOCK_SIZE;
-	if (size < PBLOCK_SIZE) {
-	    size = PBLOCK_SIZE;
-	}
-    }
     if (map->physical_block > MAXIOSIZE) {
 	map->physical_block = MAXIOSIZE;
     }
@@ -471,16 +443,6 @@ create_partition_map(char *name, partition_map_header *oldmap)
 	size = oldmap->logical_block;
     } else {
 	size = PBLOCK_SIZE;
-    }
-    if (interactive) {
-	printf("A logical block is %ld bytes: ", size);
-	flush_to_newline(0);
-	get_number_argument("what should be the logical block size? ",
-		&size, size);
-	size = (size / PBLOCK_SIZE) * PBLOCK_SIZE;
-	if (size < PBLOCK_SIZE) {
-	    size = PBLOCK_SIZE;
-	}
     }
 #if 0
     if (size > map->physical_block) {
@@ -493,40 +455,6 @@ create_partition_map(char *name, partition_map_header *oldmap)
     map->maximum_in_map = -1;
 
     number = compute_device_size(map->name);
-    if (interactive) {
-	printf("size of 'device' is %lu blocks (%d byte blocks): ",
-		number, map->logical_block);
-	default_number = number;
-	flush_to_newline(0);
-	do {
-	    if (get_number_argument("what should be the size? ",
-		    (long *)&number, default_number) == 0) {
-		printf("Not a number\n");
-		flush_to_newline(1);
-		number = 0;
-	    } else {
-		multiple = get_multiplier(map->logical_block);
-		if (multiple == 0) {
-		    printf("Bad multiplier\n");
-		    number = 0;
-		} else if (multiple != 1) {
-		    if (0xFFFFFFFF/multiple < number) {
-			printf("Number too large\n");
-			number = 0;
-		    } else {
-			number *= multiple;
-		    }
-		}
-	    }
-	    default_number = kDefault;
-	} while (number == 0);
-
-	if (number < 4) {
-	    number = 4;
-	}
-	printf("new size of 'device' is %lu blocks (%d byte blocks)\n",
-		number, map->logical_block);
-    }
     map->media_size = number;
 
     map->misc = calloc(1, PBLOCK_SIZE);

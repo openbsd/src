@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdisk.c,v 1.25 2016/01/12 01:17:41 krw Exp $	*/
+/*	$OpenBSD: pdisk.c,v 1.26 2016/01/12 15:32:08 krw Exp $	*/
 
 //
 // pdisk - an editor for Apple format partition tables
@@ -59,7 +59,6 @@
 #define ARGV_CHUNK 5
 #define DFLAG_DEFAULT	0
 #define HFLAG_DEFAULT	0
-#define INTERACT_DEFAULT	0
 #define LFLAG_DEFAULT	0
 #define RFLAG_DEFAULT	0
 
@@ -89,7 +88,6 @@ char *lfile;	/* list */
 int hflag = HFLAG_DEFAULT;	/* show help */
 int dflag = DFLAG_DEFAULT;	/* turn on debugging commands and printout */
 int rflag = RFLAG_DEFAULT;	/* open device read Only */
-int interactive = INTERACT_DEFAULT;
 
 static int first_get = 1;
 
@@ -108,12 +106,11 @@ void do_rename_partition(partition_map_header *map);
 void do_change_type(partition_map_header *map);
 void do_reorder(partition_map_header *map);
 void do_write_partition_map(partition_map_header *map);
-void edit(char *name, int ask_logical_size);
+void edit(char *name);
 int get_base_argument(long *number, partition_map_header *map);
 int get_command_line(int *argc, char ***argv);
 int get_size_argument(long *number, partition_map_header *map);
 int get_options(int argc, char **argv);
-void interact(void);
 void print_edit_notes(void);
 void print_expert_notes(void);
 
@@ -141,8 +138,6 @@ main(int argc, char **argv)
 
     if (hflag) {
  	do_help();
-    } else if (interactive) {
-	interact();
     } else if (lflag) {
 	if (lfile != NULL) {
 	    dump(lfile);
@@ -155,136 +150,12 @@ main(int argc, char **argv)
 	}
     } else if (name_index < argc) {
 	while (name_index < argc) {
-	    edit(argv[name_index++], 0);
+	    edit(argv[name_index++]);
 	}
     } else {
  	do_help();
     }
     return 0;
-}
-
-
-void
-interact()
-{
-    char *name;
-    int command;
-    int ask_logical_size;
-
-    while (get_command("Top level command (? for help): ", first_get, &command)) {
-	first_get = 0;
-	ask_logical_size = 0;
-
-	switch (command) {
-	case '?':
-	    // fall through
-	case 'H':
-	case 'h':
-	    printf("Commands are:\n");
-	    printf("  h    print help\n");
-	    printf("  v    print the version number and release date\n");
-	    printf("  l    list device's map\n");
-	    printf("  e    edit device's map\n");
-	    printf("  E    (edit map with specified block size)\n");
-	    printf("  r    toggle readonly flag\n");
-	    printf("  f    toggle show filesystem name flag\n");
-	    if (dflag) {
-		printf("  a    toggle abbreviate flag\n");
-		printf("  p    toggle physical flag\n");
-		printf("  d    toggle debug flag\n");
-		printf("  x    examine block n of device\n");
-	    }
-	    printf("  q    quit the program\n");
-	    break;
-	case 'Q':
-	case 'q':
-	    return;
-	    break;
-	case 'l':
-	    if (get_string_argument("Name of device: ", &name, 1) == 0) {
-		bad_input("Bad name");
-		break;
-	    }
-	    dump(name);
-	    free(name);
-	    break;
-	case 'E':
-	    ask_logical_size = 1;
-	case 'e':
-	    if (get_string_argument("Name of device: ", &name, 1) == 0) {
-		bad_input("Bad name");
-		break;
-	    }
-	    edit(name, ask_logical_size);
-	    free(name);
-	    break;
-	case 'R':
-	case 'r':
-	    if (rflag) {
-		rflag = 0;
-	    } else {
-		rflag = 1;
-	    }
-	    printf("Now in %s mode.\n", (rflag)?"readonly":"read/write");
-	    break;
-	case 'F':
-	case 'f':
-	    if (fflag) {
-		fflag = 0;
-	    } else {
-		fflag = 1;
-	    }
-	    printf("Now in show %s name mode.\n", (fflag)?"filesystem":"partition");
-	    break;
-	case 'A':
-	case 'a':
-	    if (dflag) {
-		if (aflag) {
-		    aflag = 0;
-		} else {
-		    aflag = 1;
-		}
-		printf("Now in %s mode.\n", (aflag)?"abbreviate":"full type");
-	    } else {
-	    	goto do_error;
-	    }
-	    break;
-	case 'P':
-	case 'p':
-	    if (dflag) {
-		if (pflag) {
-		    pflag = 0;
-		} else {
-		    pflag = 1;
-		}
-		printf("Now in %s mode.\n", (pflag)?"physical":"logical");
-	    } else {
-	    	goto do_error;
-	    }
-	    break;
-	case 'D':
-	case 'd':
-	    if (dflag) {
-		dflag = 0;
-	    } else {
-		dflag = 1;
-	    }
-	    printf("Now in %s mode.\n", (dflag)?"debug":"normal");
-	    break;
-	case 'X':
-	case 'x':
-	    if (dflag) {
-		do_display_block(0, 0);
-	    } else {
-	    	goto do_error;
-	    }
-	    break;
-	default:
-	do_error:
-	    bad_input("No such command (%c)", command);
-	    break;
-	}
-    }
 }
 
 
@@ -303,7 +174,6 @@ get_options(int argc, char **argv)
     rflag = RFLAG_DEFAULT;
     aflag = AFLAG_DEFAULT;
     pflag = PFLAG_DEFAULT;
-    interactive = INTERACT_DEFAULT;
 
     optind = 1; // reset option scanner logic
     while ((c = getopt(argc, argv, "hlvdric")) != -1) {
@@ -319,9 +189,6 @@ get_options(int argc, char **argv)
 	    break;
 	case 'r':
 	    rflag = (RFLAG_DEFAULT)?0:1;
-	    break;
-	case 'i':
-	    interactive = (INTERACT_DEFAULT)?0:1;
 	    break;
 	case 'a':
 	    aflag = (AFLAG_DEFAULT)?0:1;
@@ -359,7 +226,7 @@ print_edit_notes()
 // Edit the file
 //
 void
-edit(char *name, int ask_logical_size)
+edit(char *name)
 {
     partition_map_header *map;
     int command;
@@ -367,7 +234,7 @@ edit(char *name, int ask_logical_size)
     int get_type;
     int valid_file;
 
-    map = open_partition_map(name, &valid_file, ask_logical_size);
+    map = open_partition_map(name, &valid_file);
     if (!valid_file) {
     	return;
     }
