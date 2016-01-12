@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_rtr.c,v 1.137 2015/12/18 10:55:51 tb Exp $	*/
+/*	$OpenBSD: nd6_rtr.c,v 1.138 2016/01/12 09:37:44 mpi Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.97 2001/02/07 11:09:13 itojun Exp $	*/
 
 /*
@@ -1974,11 +1974,10 @@ in6_ifadd(struct nd_prefix *pr, int privacy)
 		return (NULL);	/* ifaddr must not have been allocated. */
 	}
 
-	/* this is always non-NULL */
 	ia6 = in6ifa_ifpwithaddr(ifp, &ifra.ifra_addr.sin6_addr);
 
 	/* Perform DAD, if needed. */
-	if (ia6->ia6_flags & IN6_IFF_TENTATIVE)
+	if (ia6 != NULL && ia6->ia6_flags & IN6_IFF_TENTATIVE)
 		nd6_dad_start(&ia6->ia_ifa);
 
 	return (ia6);
