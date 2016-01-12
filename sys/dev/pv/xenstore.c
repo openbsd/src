@@ -1,4 +1,4 @@
-/*	$OpenBSD: xenstore.c,v 1.15 2016/01/11 16:54:33 mikeb Exp $	*/
+/*	$OpenBSD: xenstore.c,v 1.16 2016/01/12 11:54:05 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Belopuhov
@@ -96,10 +96,11 @@ struct xs_msghdr
 #define XS_ERR_PAYLOAD		16
 
 /*
- * Although Xen source code implies that the limit is 4k, in practice
- * Mike has figured out that we can only send 2k bytes of payload w/o
- * receiving a ENOSPC.  We set it to an even smaller value however,
- * because there's no real need to use large buffers for anything.
+ * Although the Xen source code implies that the limit is 4k,
+ * in practice it turns out that we can only send 2k bytes of
+ * payload before receiving a ENOSPC.  We set it to an even
+ * smaller value however, because there's no real need to use
+ * large buffers for anything.
  */
 #define XS_MAX_PAYLOAD		1024
 
@@ -309,36 +310,14 @@ xs_geterror(struct xs_msg *xsm)
 	return (xs_errors[i].xse_errnum);
 }
 
-static inline int
+static inline uint32_t
 xs_ring_avail(struct xs_ring *xsr, int req)
 {
-	int cons = req ? xsr->xsr_req_cons : xsr->xsr_rsp_cons;
-	int prod = req ? xsr->xsr_req_prod : xsr->xsr_rsp_prod;
+	uint32_t cons = req ? xsr->xsr_req_cons : xsr->xsr_rsp_cons;
+	uint32_t prod = req ? xsr->xsr_req_prod : xsr->xsr_rsp_prod;
 
 	membar_consumer();
-#ifdef XEN_DEBUG
-	KASSERT(prod <= XS_RING_SIZE && cons < XS_RING_SIZE);
-#endif
-	if (prod > cons)
-		return (prod - cons);
-	else
-		return (XS_RING_SIZE - cons + prod);
-	return (0);
-}
-
-static inline void
-xs_ring_reset(struct xs_softc *xs, int req)
-{
-	struct xs_ring *xsr = xs->xs_ring;
-
-	if (req) {
-		xsr->xsr_req_cons = 0;
-		xsr->xsr_req_prod = 0;
-	} else {
-		xsr->xsr_rsp_prod = 0;
-		xsr->xsr_rsp_cons = 0;
-	}
-	membar_producer();
+	return ((cons - prod - 1) & (XS_RING_SIZE - 1));
 }
 
 int
@@ -354,7 +333,7 @@ xs_output(struct xs_transaction *xst, uint8_t *bp, int len)
 		if (chunk > 0) {
 			len -= chunk;
 			bp += chunk;
-			if (xs->xs_ring->xsr_req_prod < XS_RING_SIZE)
+			if (xs_ring_avail(xs->xs_ring, 1) > 0)
 				continue;
 		}
 		/* Squeaky wheel gets the kick */
@@ -366,7 +345,7 @@ xs_output(struct xs_transaction *xst, uint8_t *bp, int len)
 		 * Alternatively we have managed to fill the ring
 		 * and must wait for HV to collect the data.
 		 */
-		while (xs->xs_ring->xsr_req_prod > xs->xs_ring->xsr_req_cons) {
+		while (xs->xs_ring->xsr_req_prod != xs->xs_ring->xsr_req_cons) {
 			if (xst->xst_flags & XST_POLL) {
 				delay(XST_DELAY * 1000 >> 2);
 				s = splnet();
@@ -377,9 +356,6 @@ xs_output(struct xs_transaction *xst, uint8_t *bp, int len)
 				    XST_DELAY * hz >> 2);
 			membar_sync();
 		}
-		/* It's safe to do a reset here because cons == prod == 1024 */
-		if (xs->xs_ring->xsr_req_prod == XS_RING_SIZE)
-			xs_ring_reset(xs, 1);
 	}
 	return (0);
 }
@@ -463,23 +439,28 @@ int
 xs_ring_put(struct xs_softc *xs, void *src, size_t size)
 {
 	struct xs_ring *xsr = xs->xs_ring;
-	int cons = xsr->xsr_req_cons;
-	int prod = xsr->xsr_req_prod;
-	int left = XS_RING_SIZE - prod;
+	uint32_t prod = xsr->xsr_req_prod & (XS_RING_SIZE - 1);
+	uint32_t cons = xsr->xsr_req_cons & (XS_RING_SIZE - 1);
+	uint32_t avail = xs_ring_avail(xsr, 1);
+	int left;
 
 	membar_consumer();
-#ifdef XEN_DEBUG
-	KASSERT(prod <= XS_RING_SIZE && cons < XS_RING_SIZE);
-#endif
 	if (size > XS_RING_SIZE)
 		return (-1);
-	if (cons > prod)
-		size = MIN(size, cons - prod);
-	else
-		size = MIN(size, left);
-	memcpy(&xsr->xsr_req[prod], src, size);
+	if (avail == 0)
+		return (0);
+
+	/* Bound the size by the number of available slots */
+	size = MIN(size, avail);
+	/* How many contiguous bytes can we memcpy... */
+	left = XS_RING_SIZE - prod;
+	/* ...bounded by by how much we need to write? */
+	left = MIN(left, size);
+
+	memcpy(&xsr->xsr_req[prod], src, left);
+	memcpy(&xsr->xsr_req[0], (caddr_t)src + left, size - left);
 	membar_producer();
-	xsr->xsr_req_prod += size; /* This never goes above the ring size */
+	xsr->xsr_req_prod += size;
 	return (size);
 }
 
@@ -487,25 +468,28 @@ int
 xs_ring_get(struct xs_softc *xs, void *dst, size_t size)
 {
 	struct xs_ring *xsr = xs->xs_ring;
-	int cons = xsr->xsr_rsp_cons;
-	int prod = xsr->xsr_rsp_prod;
-	int left = XS_RING_SIZE - cons;
+	uint32_t cons = xsr->xsr_rsp_cons & (XS_RING_SIZE - 1);
+	uint32_t prod = xsr->xsr_rsp_prod & (XS_RING_SIZE - 1);
+	uint32_t avail = xs_ring_avail(xsr, 0);
+	int left;
 
 	membar_consumer();
-#ifdef XEN_DEBUG
-	KASSERT(prod <= XS_RING_SIZE && cons < XS_RING_SIZE);
-#endif
 	if (size > XS_RING_SIZE)
 		return (-1);
-	if (prod == cons)
+	if (avail == 0)
 		return (0);
-	if (prod > cons)
-		size = MIN(size, prod - cons);
-	else
-		size = MIN(size, left);
-	memcpy(dst, &xsr->xsr_rsp[cons], size);
+
+	/* Bound the size by the number of available slots */
+	size = MIN(size, avail);
+	/* How many contiguous bytes can we memcpy... */
+	left = XS_RING_SIZE - cons;
+	/* ...bounded by by how much we need to read? */
+	left = MIN(left, size);
+
+	memcpy(dst, &xsr->xsr_rsp[cons], left);
+	memcpy((caddr_t)dst + left, &xsr->xsr_rsp[0], size - left);
 	membar_producer();
-	xsr->xsr_rsp_cons += size; /* This never goes above the ring size */
+	xsr->xsr_rsp_cons += size;
 	return (size);
 }
 
@@ -517,7 +501,8 @@ xs_intr(void *arg)
 	struct xen_softc *sc = xs->xs_sc;
 	struct xs_msg *xsm = xs->xs_rmsg;
 	struct xs_msghdr xmh;
-	int avail, len;
+	uint32_t avail;
+	int len;
 
 	membar_sync();
 
@@ -586,13 +571,7 @@ xs_intr(void *arg)
 		TAILQ_INSERT_TAIL(&xs->xs_rsps, xsm, xsm_link);
 		mtx_leave(&xs->xs_rsplck);
 		wakeup(xs->xs_rchan);
-
-		xs_ring_reset(xs, 0);
 	}
-
-	/* It's safe to do a reset here because cons == prod == 1024 */
-	if (xs->xs_ring->xsr_rsp_prod == XS_RING_SIZE)
-		xs_ring_reset(xs, 0);
 
  out:
 	/* Wakeup sleeping writes (if any) */
@@ -739,7 +718,7 @@ xs_cmd(struct xs_transaction *xst, int cmd, const char *path,
 	for (i = 0; i < ov_cnt; i++)
 		xsm->xsm_hdr.xmh_len += ov[i].iov_len;
 
-	if (xsm->xsm_hdr.xmh_len >= XS_MAX_PAYLOAD) {
+	if (xsm->xsm_hdr.xmh_len > XS_MAX_PAYLOAD) {
 		printf("%s: message type %d with payload above the limit\n",
 		    xs->xs_sc->sc_dev.dv_xname, cmd);
 		xs_put_buf(xst, xsm);
