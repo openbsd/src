@@ -137,6 +137,7 @@
 ./usr/include/dev/i2c/i2c_bitbang.h
 ./usr/include/dev/i2c/i2c_io.h
 ./usr/include/dev/i2c/i2cvar.h
+./usr/include/dev/i2c/ihidev.h
 ./usr/include/dev/i2c/wm8750reg.h
 ./usr/include/dev/ic
 ./usr/include/dev/ic/aac_tables.h
