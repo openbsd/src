@@ -1,4 +1,4 @@
-/*	$OpenBSD: lp.h,v 1.19 2015/01/16 06:40:17 deraadt Exp $	*/
+/*	$OpenBSD: lp.h,v 1.20 2016/01/12 23:35:13 tb Exp $	*/
 /*	$NetBSD: lp.h,v 1.14 2000/04/16 14:43:58 mrg Exp $	*/
 
 /*
@@ -118,28 +118,22 @@ struct queue {
 __BEGIN_DECLS
 struct dirent;
 
-void     blankfill(int);
+/* common.c */
 char	*checkremote(void);
-int      chk(char *);
-void     displayq(int);
-void     dump(char *, char *, int);
-__dead void fatal(const char *, ...)
-	__attribute__((__format__(__printf__, 1, 2)));
+void	 fatal(const char *, ...)
+    __attribute__((__noreturn__,__format__(__printf__, 1, 2)));
 int	 get_line(FILE *);
 int	 getport(char *, int);
 int	 getq(struct queue ***);
-void     header(void);
-int      inlist(char *, char *);
-int      iscf(const struct dirent *);
-int      isowner(char *, char *);
-void     ldump(char *, char *, int);
-void     prank(int);
-void     process(char *);
-void     rmjob(void);
-void     rmremote(void);
-void     show(char *, char *, int);
-int      startdaemon(char *);
-void     nodaemon(void);
-void     delay(int);
 int	 safe_open(const char *, int, mode_t);
+
+/* displayq.c */
+void	 displayq(int);
+
+/* rmjob.c */
+void	 rmjob(void);
+
+/* startdaemon.c */
+int	 startdaemon(char *);
+
 __END_DECLS

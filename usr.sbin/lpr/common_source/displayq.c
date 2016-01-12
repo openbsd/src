@@ -1,4 +1,4 @@
-/*	$OpenBSD: displayq.c,v 1.37 2015/08/20 22:46:32 deraadt Exp $	*/
+/*	$OpenBSD: displayq.c,v 1.38 2016/01/12 23:35:13 tb Exp $	*/
 /*	$NetBSD: displayq.c,v 1.21 2001/08/30 00:51:50 itojun Exp $	*/
 
 /*
@@ -77,7 +77,15 @@ static const char head0[] = "Rank   Owner      Job  Files";
 static const char head1[] = "Total Size\n";
 
 static void	alarmer(int);
+static void	blankfill(int);
+static void	dump(char *, char *, int);
+static void	header(void);
 static void	inform(char *, int);
+static int	inlist(char *, char *);
+static void	ldump(char *, char *, int);
+static void	nodaemon(void);
+static void	prank(int);
+static void	show(char *, char *, int);
 
 /*
  * Display the current state of the queue. Format = 1 if long format.
@@ -311,7 +319,7 @@ alarmer(int s)
 /*
  * Print a warning message if there is no daemon present.
  */
-void
+static void
 nodaemon(void)
 {
 	if (remote)
@@ -323,7 +331,7 @@ nodaemon(void)
 /*
  * Print the header for the short listing format
  */
-void
+static void
 header(void)
 {
 	printf(head0);
@@ -395,7 +403,7 @@ inform(char *cf, int rank)
 	}
 }
 
-int
+static int
 inlist(char *name, char *file)
 {
 	int *r, n;
@@ -420,7 +428,7 @@ inlist(char *name, char *file)
 	return(0);
 }
 
-void
+static void
 show(char *nfile, char *file, int copies)
 {
 	if (strcmp(nfile, " ") == 0)
@@ -434,7 +442,7 @@ show(char *nfile, char *file, int copies)
 /*
  * Fill the line with blanks to the specified column
  */
-void
+static void
 blankfill(int n)
 {
 	while (col++ < n)
@@ -444,7 +452,7 @@ blankfill(int n)
 /*
  * Give the abbreviated dump of the file names
  */
-void
+static void
 dump(char *nfile, char *file, int copies)
 {
 	int n, fill;
@@ -478,7 +486,7 @@ dump(char *nfile, char *file, int copies)
 /*
  * Print the long info about the file
  */
-void
+static void
 ldump(char *nfile, char *file, int copies)
 {
 	struct stat lbuf;
@@ -503,7 +511,7 @@ ldump(char *nfile, char *file, int copies)
  * Print the job's rank in the queue,
  *   update col for screen management
  */
-void
+static void
 prank(int n)
 {
 	char rline[100];

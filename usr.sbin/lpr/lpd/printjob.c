@@ -1,4 +1,4 @@
-/*	$OpenBSD: printjob.c,v 1.55 2015/08/20 22:46:32 deraadt Exp $	*/
+/*	$OpenBSD: printjob.c,v 1.56 2016/01/12 23:35:13 tb Exp $	*/
 /*	$NetBSD: printjob.c,v 1.31 2002/01/21 14:42:30 wiz Exp $	*/
 
 /*
@@ -104,6 +104,7 @@ static char	width[10] = "-w";	/* page width in static characters */
 
 static void       abortpr(int);
 static void       banner(char *, char *);
+static void       delay(int);
 static pid_t      dofork(int);
 static int        dropit(int);
 static void       init(void);
@@ -1188,6 +1189,19 @@ sendmail(char *user, int bombed)
 		    "mail sent to user %s about job %s on printer %s (%s)",
 		    user, *jobname ? jobname : "<unknown>", printer, cp);
 	}
+}
+
+/* sleep n milliseconds */
+static void
+delay(int n)
+{
+	struct timespec tdelay;
+
+	if (n <= 0 || n > 10000)
+		fatal("unreasonable delay period (%d)", n);
+	tdelay.tv_sec = n / 1000;
+	tdelay.tv_nsec = n * 1000000 % 1000000000;
+	nanosleep(&tdelay, NULL);
 }
 
 /*

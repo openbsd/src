@@ -1,4 +1,4 @@
-/*	$OpenBSD: rmjob.c,v 1.22 2015/01/16 06:40:17 deraadt Exp $	*/
+/*	$OpenBSD: rmjob.c,v 1.23 2016/01/12 23:35:13 tb Exp $	*/
 /*	$NetBSD: rmjob.c,v 1.16 2000/04/16 14:43:58 mrg Exp $	*/
 
 /*
@@ -62,15 +62,20 @@ static int	all = 0;		/* eliminate all files (root only) */
 static int	cur_daemon;		/* daemon's pid */
 static char	current[NAME_MAX];	/* active control file name */
 
-static	void	do_unlink(char *);
-static	void	alarmer(int);
-static	int	lockchk(char *);
+static void	alarmer(int);
+static int	chk(char *);
+static void	do_unlink(char *);
+static int	iscf(const struct dirent *);
+static int	isowner(char *, char *);
+static int	lockchk(char *);
+static void	process(char *);
+static void	rmremote(void);
 
 void
 rmjob(void)
 {
 	int i, nitems;
-	int assasinated = 0;
+	int assassinated = 0;
 	struct dirent **files;
 	char *cp;
 
@@ -127,9 +132,9 @@ rmjob(void)
 		 */
 		if (lockchk(LO) && chk(current)) {
 			PRIV_START;
-			assasinated = kill(cur_daemon, SIGINT) == 0;
+			assassinated = kill(cur_daemon, SIGINT) == 0;
 			PRIV_END;
-			if (!assasinated)
+			if (!assassinated)
 				fatal("cannot kill printer daemon");
 		}
 		/*
@@ -142,7 +147,7 @@ rmjob(void)
 	/*
 	 * Restart the printer daemon if it was killed
 	 */
-	if (assasinated && !startdaemon(printer))
+	if (assassinated && !startdaemon(printer))
 		fatal("cannot restart printer daemon");
 	exit(0);
 }
@@ -194,7 +199,7 @@ lockchk(char *s)
 /*
  * Process a control file.
  */
-void
+static void
 process(char *file)
 {
 	FILE *cfp = NULL;
@@ -238,7 +243,7 @@ do_unlink(char *file)
 /*
  * Do the dirty work in checking
  */
-int
+static int
 chk(char *file)
 {
 	int *r, n, fd;
@@ -298,7 +303,7 @@ chk(char *file)
  * files sent from the remote machine to be removed.
  * Normal users can only remove the file from where it was sent.
  */
-int
+static int
 isowner(char *owner, char *file)
 {
 	if (!strcmp(person, root) && (from == host || !strcmp(from, file+6)))
@@ -315,7 +320,7 @@ isowner(char *owner, char *file)
  * Check to see if we are sending files to a remote machine. If we are,
  * then try removing files on the remote machine.
  */
-void
+static void
 rmremote(void)
 {
 	char *cp;
@@ -391,7 +396,7 @@ alarmer(int s)
 /*
  * Return 1 if the filename begins with 'cf'
  */
-int
+static int
 iscf(const struct dirent *d)
 {
 	return(d->d_name[0] == 'c' && d->d_name[1] == 'f');

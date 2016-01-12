@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.c,v 1.39 2015/08/20 22:46:32 deraadt Exp $	*/
+/*	$OpenBSD: common.c,v 1.40 2016/01/12 23:35:13 tb Exp $	*/
 /*	$NetBSD: common.c,v 1.21 2000/08/09 14:28:50 itojun Exp $	*/
 
 /*
@@ -409,19 +409,6 @@ done:
 	freeaddrinfo(res0);
 	freeifaddrs(ifap);
 	return NULL;
-}
-
-/* sleep n milliseconds */
-void
-delay(int n)
-{
-	struct timespec tdelay;
-
-	if (n <= 0 || n > 10000)
-		fatal("unreasonable delay period (%d)", n);
-	tdelay.tv_sec = n / 1000;
-	tdelay.tv_nsec = n * 1000000 % 1000000000;
-	nanosleep(&tdelay, NULL);
 }
 
 __dead void
