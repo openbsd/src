@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipmi.c,v 1.88 2016/01/12 07:43:05 uebayasi Exp $ */
+/*	$OpenBSD: ipmi.c,v 1.89 2016/01/12 09:11:59 uebayasi Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave
@@ -36,6 +36,7 @@
 #include <sys/sensors.h>
 #include <sys/malloc.h>
 #include <sys/kthread.h>
+#include <sys/task.h>
 
 #include <machine/bus.h>
 #include <machine/intr.h>
@@ -1724,6 +1725,7 @@ ipmi_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Setup Watchdog timer */
 	sc->sc_wdog_period = 0;
+	task_set(&sc->sc_wdog_tickle_task, ipmi_watchdog_tickle, sc);
 	wdog_register(ipmi_watchdog, sc);
 
 	/* lock around read_sensor so that no one messes with the bmc regs */
@@ -1757,7 +1759,14 @@ ipmi_watchdog(void *arg, int period)
 
 	if (sc->sc_wdog_period == period) {
 		if (period != 0) {
-			ipmi_watchdog_tickle(sc);
+			struct task *t;
+			int res;
+
+			t = &sc->sc_wdog_tickle_task;
+			res = task_del(systq, t);
+			KASSERT(res == 0);
+			res = task_add(systq, t);
+			KASSERT(res == 1);
 		}
 		return (period);
 	}

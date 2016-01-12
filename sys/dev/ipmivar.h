@@ -1,4 +1,4 @@
-/* $OpenBSD: ipmivar.h,v 1.25 2016/01/11 14:39:23 uebayasi Exp $ */
+/* $OpenBSD: ipmivar.h,v 1.26 2016/01/12 09:11:59 uebayasi Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave
@@ -33,6 +33,7 @@
 #include <sys/timeout.h>
 #include <sys/rwlock.h>
 #include <sys/sensors.h>
+#include <sys/task.h>
 
 #define IPMI_IF_KCS		1
 #define IPMI_IF_SMIC		2
@@ -113,6 +114,7 @@ struct ipmi_softc {
 	struct ipmi_cmd		*sc_cmd;
 
 	int			sc_wdog_period;
+	struct task		sc_wdog_tickle_task;
 
 	struct ipmi_thread	*sc_thread;
 
