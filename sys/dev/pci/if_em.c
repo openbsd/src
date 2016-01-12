@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.328 2016/01/11 01:31:53 dlg Exp $ */
+/* $OpenBSD: if_em.c,v 1.329 2016/01/12 00:05:21 dlg Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -630,6 +630,18 @@ em_start(struct ifnet *ifp)
 		/* Set timeout in case hardware has problems transmitting */
 		ifp->if_timer = EM_TX_TIMEOUT;
 
+		if (sc->hw.mac_type == em_82547) {
+			int len = m->m_pkthdr.len;
+
+			if (sc->link_duplex == HALF_DUPLEX)
+				em_82547_move_tail_locked(sc);
+			else {
+				E1000_WRITE_REG(&sc->hw, TDT,
+				    sc->sc_tx_desc_head);
+				em_82547_update_fifo_head(sc, len);
+			}
+		}
+
 		post = 1;
 	}
 
@@ -1216,12 +1228,6 @@ em_encap(struct em_softc *sc, struct mbuf *m)
 		bus_dmamap_sync(sc->sc_dmat, sc->sc_tx_dma.dma_map,
 		    0, sc->sc_tx_dma.dma_map->dm_mapsize,
 		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
-		if (sc->link_duplex == HALF_DUPLEX)
-			em_82547_move_tail_locked(sc);
-		else {
-			E1000_WRITE_REG(&sc->hw, TDT, head);
-			em_82547_update_fifo_head(sc, m->m_pkthdr.len);
-		}
 	}
 
 	return (used);
