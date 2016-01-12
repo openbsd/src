@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.124 2015/12/28 22:08:30 jung Exp $	*/
+/*	$OpenBSD: util.c,v 1.125 2016/01/12 17:29:43 sunil Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Markus Friedl.  All rights reserved.
@@ -53,6 +53,7 @@
 
 const char *log_in6addr(const struct in6_addr *);
 const char *log_sockaddr(struct sockaddr *);
+static int  parse_mailname_file(char *, size_t);
 
 void *
 xmalloc(size_t size, const char *where)
@@ -737,67 +738,69 @@ parse_smtp_response(char *line, size_t len, char **msg, int *cont)
 	return NULL;
 }
 
-int
-getmailname(char *hostname, size_t len)
+static int
+parse_mailname_file(char *hostname, size_t len)
 {
-	struct addrinfo	hints, *res = NULL;
 	FILE	*fp;
 	char	*buf = NULL;
 	size_t	 bufsz = 0;
 	ssize_t	 buflen;
-	int	 error, ret = 0;
 
-	/* First, check if we have MAILNAME_FILE */
 	if ((fp = fopen(MAILNAME_FILE, "r")) == NULL)
-		goto nomailname;
+		return 1;
 
 	if ((buflen = getline(&buf, &bufsz, fp)) == -1)
-		goto end;
+		goto error;
 
 	if (buf[buflen - 1] == '\n')
 		buf[buflen - 1] = '\0';
 
-	if (strlcpy(hostname, buf, len) >= len)
+	if (strlcpy(hostname, buf, len) >= len) {
 		fprintf(stderr, MAILNAME_FILE " entry too long");
-	else {
-		ret = 1;
-		goto end;
+		goto error;
 	}
 
-nomailname:
-	if (gethostname(hostname, len) == -1) {
-		fprintf(stderr, "invalid hostname: gethostname() failed\n");
-		goto end;
-	}
-
-	if (strchr(hostname, '.') == NULL) {
-		memset(&hints, 0, sizeof hints);
-		hints.ai_family = PF_UNSPEC;
-		hints.ai_socktype = SOCK_STREAM;
-		hints.ai_protocol = IPPROTO_TCP;
-		hints.ai_flags = AI_CANONNAME;
-		error = getaddrinfo(hostname, NULL, &hints, &res);
-		if (error) {
-			fprintf(stderr, "invalid hostname: getaddrinfo() failed: %s\n",
-			    gai_strerror(error));
-			goto end;
-		}
-
-		if (strlcpy(hostname, res->ai_canonname, len) >= len) {
-			fprintf(stderr, "hostname too long");
-			goto end;
-		}
-	}
-
-	ret = 1;
-
-end:
+	return 0;
+error:
+	fclose(fp);
 	free(buf);
-	if (res)
-		freeaddrinfo(res);
-	if (fp)
-		fclose(fp);
-	return ret;
+	return 1;
+}
+
+int
+getmailname(char *hostname, size_t len)
+{
+	struct addrinfo	 hints, *res = NULL;
+	int		 error;
+
+	/* Try MAILNAME_FILE first */
+	if (parse_mailname_file(hostname, len) == 0)
+		return 0;
+
+	/* Next, gethostname(3) */
+	if (gethostname(hostname, len) == -1) {
+		fprintf(stderr, "getmailname: gethostname() failed\n");
+		return -1;
+	}
+
+	if (strchr(hostname, '.') != NULL)
+		return 0;
+
+	/* Canonicalize if domain part is missing */
+	memset(&hints, 0, sizeof hints);
+	hints.ai_family = PF_UNSPEC;
+	hints.ai_flags = AI_CANONNAME;
+	error = getaddrinfo(hostname, NULL, &hints, &res);
+	if (error)
+		return 0; /* Continue with non-canon hostname */
+
+	if (strlcpy(hostname, res->ai_canonname, len) >= len) {
+		fprintf(stderr, "hostname too long");
+		return -1;
+	}
+
+	freeaddrinfo(res);
+	return 0;
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: enqueue.c,v 1.110 2015/12/29 17:57:03 millert Exp $	*/
+/*	$OpenBSD: enqueue.c,v 1.111 2016/01/12 17:29:43 sunil Exp $	*/
 
 /*
  * Copyright (c) 2005 Henning Brauer <henning@bulabula.org>
@@ -238,7 +238,7 @@ enqueue(int argc, char *argv[], FILE *ofp)
 	argv += optind;
 
 	if (getmailname(host, sizeof(host)) == -1)
-		err(EX_NOHOST, "getmailname");
+		errx(EX_NOHOST, "getmailname");
 	if (no_getlogin) {
 		if ((pw = getpwuid(getuid())) == NULL)
 			user = "anonymous";

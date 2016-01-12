@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.179 2016/01/04 13:30:20 jung Exp $	*/
+/*	$OpenBSD: parse.y,v 1.180 2016/01/12 17:29:43 sunil Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1836,7 +1836,7 @@ parse_config(struct smtpd *x_conf, const char *filename, int opts)
 	char		hostname[HOST_NAME_MAX+1];
 	char		hostname_copy[HOST_NAME_MAX+1];
 
-	if (!getmailname(hostname, sizeof hostname))
+	if (getmailname(hostname, sizeof hostname) == -1)
 		return (-1);
 
 	conf = x_conf;
