@@ -1,4 +1,4 @@
-/* $OpenBSD: tsvar.h,v 1.7 2009/10/02 18:01:47 miod Exp $ */
+/* $OpenBSD: tsvar.h,v 1.8 2016/01/12 17:20:02 deraadt Exp $ */
 /* $NetBSD: tsvar.h,v 1.1 1999/06/29 06:46:47 ross Exp $ */
 
 /*-
@@ -32,7 +32,6 @@
  *
  */
 
-#include <dev/isa/isavar.h>
 #include <dev/pci/pcivar.h>
 #include <alpha/pci/pci_sgmap_pte64.h>
 
