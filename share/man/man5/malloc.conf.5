@@ -1,4 +1,4 @@
-.\"	$OpenBSD: malloc.conf.5,v 1.4 2016/01/12 18:48:28 deraadt Exp $
+.\"	$OpenBSD: malloc.conf.5,v 1.5 2016/01/12 18:56:39 deraadt Exp $
 .\"
 .\" Copyright (c) 2012 Damien Miller <djm@openbsd.org>
 .\" Copyright (c) 2008, 2009, 2010, 2011 Otto Moerbeek <otto@drijf.net>
@@ -32,7 +32,7 @@ symbolic link
 next checks the environment for a variable called
 .Ev MALLOC_OPTIONS ,
 and finally looks at the global variable
-.Va malloc_options 
+.Va malloc_options
 in the program.
 Each is scanned for the following flags.
 Flags are single letters, uppercase means on, lowercase means off.
