@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.284 2015/12/19 11:19:35 mpi Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.285 2016/01/12 09:22:01 mpi Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -1653,10 +1653,8 @@ carp_set_ifp(struct carp_softc *sc, struct ifnet *ifp0)
 	int myself = 0, error = 0;
 	int s;
 
+	KASSERT(ifp0 != sc->sc_carpdev);
 	KERNEL_ASSERT_LOCKED(); /* touching vhif_vrs */
-
-	if (ifp0 == sc->sc_carpdev)
-		return (0);
 
 	if ((ifp0->if_flags & IFF_MULTICAST) == 0)
 		return (EADDRNOTAVAIL);
@@ -1968,12 +1966,12 @@ carp_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr)
 	struct carpreq carpr;
 	struct ifaddr *ifa = (struct ifaddr *)addr;
 	struct ifreq *ifr = (struct ifreq *)addr;
-	struct ifnet *ifp0 = NULL;
+	struct ifnet *ifp0 = sc->sc_carpdev;
 	int i, error = 0;
 
 	switch (cmd) {
 	case SIOCSIFADDR:
-		if (sc->sc_carpdev == NULL)
+		if (ifp0 == NULL)
 			return (EINVAL);
 
 		switch (ifa->ifa_addr->sa_family) {
@@ -2029,8 +2027,10 @@ carp_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr)
 			sc->sc_peer.s_addr = INADDR_CARP_GROUP;
 		else
 			sc->sc_peer.s_addr = carpr.carpr_peer.s_addr;
-		if ((error = carp_set_ifp(sc, ifp0)))
-			return (error);
+		if (ifp0 != sc->sc_carpdev) {
+			if ((error = carp_set_ifp(sc, ifp0)))
+				return (error);
+		}
 		if (vhe->state != INIT && carpr.carpr_state != vhe->state) {
 			switch (carpr.carpr_state) {
 			case BACKUP:
@@ -2090,9 +2090,8 @@ carp_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr)
 
 	case SIOCGVH:
 		memset(&carpr, 0, sizeof(carpr));
-		if (sc->sc_carpdev != NULL)
-			strlcpy(carpr.carpr_carpdev, sc->sc_carpdev->if_xname,
-			    IFNAMSIZ);
+		if (ifp0 != NULL)
+			strlcpy(carpr.carpr_carpdev, ifp0->if_xname, IFNAMSIZ);
 		i = 0;
 		KERNEL_ASSERT_LOCKED(); /* touching carp_vhosts */
 		SRPL_FOREACH_LOCKED(vhe, &sc->carp_vhosts, vhost_entries) {
