@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdisk.c,v 1.27 2016/01/12 20:09:39 krw Exp $	*/
+/*	$OpenBSD: pdisk.c,v 1.28 2016/01/12 20:22:32 krw Exp $	*/
 
 //
 // pdisk - an editor for Apple format partition tables
@@ -45,7 +45,6 @@
 // for errno
 #include <errno.h>
 
-#include "pdisk.h"
 #include "io.h"
 #include "partition_map.h"
 #include "hfs_misc.h"
