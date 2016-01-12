@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.185 2015/12/03 21:57:59 mpi Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.186 2016/01/12 09:27:46 mpi Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -452,7 +452,7 @@ route_output(struct mbuf *m, ...)
 	struct rtentry		*rt = NULL;
 	struct rtentry		*saved_nrt = NULL;
 	struct rt_addrinfo	 info;
-	int			 len, newgate, error = 0;
+	int			 plen, len, newgate, error = 0;
 	struct ifnet		*ifp = NULL;
 	struct ifaddr		*ifa = NULL;
 	struct socket		*so;
@@ -655,16 +655,11 @@ route_output(struct mbuf *m, ...)
 		}
 
 		/*
-		 * RTM_CHANGE/LOCK need a perfect match, rn_lookup()
-		 * returns a perfect match in case a netmask is specified.
-		 * For host routes only a longest prefix match is returned
-		 * so it is necessary to compare the existence of the netmaks.
-		 * If both have a netmask rn_lookup() did a perfect match and
-		 * if none of them have a netmask both are host routes which is
-		 * also a perfect match.
+		 * RTM_CHANGE/LOCK need a perfect match.
 		 */
-		if (rtm->rtm_type != RTM_GET && !rt_plen2mask(rt, &sa_mask) !=
-		    !info.rti_info[RTAX_NETMASK]) {
+		plen = rtable_satoplen(info.rti_info[RTAX_DST]->sa_family,
+		    info.rti_info[RTAX_NETMASK]);
+		if (rtm->rtm_type != RTM_GET && rt_plen(rt) != plen ) {
 			error = ESRCH;
 			goto flush;
 		}
@@ -1250,6 +1245,9 @@ sysctl_dumpentry(struct rtentry *rt, void *v, unsigned int id)
 		rt_getmetrics(&rt->rt_rmx, &rtm->rtm_rmx);
 		/* Do not account the routing table's reference. */
 		rtm->rtm_rmx.rmx_refcnt = rt->rt_refcnt - 1;
+#ifdef ART
+		rtm->rtm_rmx.rmx_refcnt--;
+#endif
 		rtm->rtm_index = rt->rt_ifidx;
 		rtm->rtm_addrs = info.rti_addrs;
 		rtm->rtm_tableid = id;
