@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vnops.c,v 1.80 2015/03/14 03:38:52 jsg Exp $	*/
+/*	$OpenBSD: ffs_vnops.c,v 1.81 2016/01/12 11:41:00 mpi Exp $	*/
 /*	$NetBSD: ffs_vnops.c,v 1.7 1996/05/11 18:27:24 mycroft Exp $	*/
 
 /*
@@ -178,12 +178,6 @@ struct vops ffs_fifovops = {
 	.vop_advlock	= fifo_advlock
 };
 #endif /* FIFO */
-
-/*
- * Enabling cluster read/write operations.
- */
-int doclusterread = 1;
-int doclusterwrite = 1;
 
 /*
  * Vnode op for reading.
@@ -381,10 +375,7 @@ ffs_write(void *v)
 		if (ioflag & IO_SYNC)
 			(void)bwrite(bp);
 		else if (xfersize + blkoffset == fs->fs_bsize) {
-			if (doclusterwrite)
-				cluster_write(bp, &ip->i_ci, DIP(ip, size));
-			else
-				bawrite(bp);
+			bawrite(bp);
 		} else
 			bdwrite(bp);
 
