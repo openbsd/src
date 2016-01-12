@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pdisk.8,v 1.20 2016/01/12 15:32:08 krw Exp $
+.\"	$OpenBSD: pdisk.8,v 1.21 2016/01/12 20:09:39 krw Exp $
 .\"
 .\" Copyright 1996,1997,1998 by Apple Computer, Inc.
 .\"              All Rights Reserved
@@ -27,7 +27,7 @@
 .Nd HFS(DPME) partition maintenance program
 .Sh SYNOPSIS
 .Nm pdisk
-.Op Fl hlr
+.Op Fl lr
 .Ar disk
 .Sh DESCRIPTION
 .Nm
@@ -39,10 +39,6 @@ It does not support the Intel/DOS partitioning scheme supported by
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
-.It Fl h
-Prints a rather lame set of help messages for the
-.Nm
-program.
 .It Fl l
 List the partition tables for the specified
 .Ar disk .

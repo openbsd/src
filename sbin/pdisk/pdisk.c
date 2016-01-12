@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdisk.c,v 1.26 2016/01/12 15:32:08 krw Exp $	*/
+/*	$OpenBSD: pdisk.c,v 1.27 2016/01/12 20:09:39 krw Exp $	*/
 
 //
 // pdisk - an editor for Apple format partition tables
@@ -29,6 +29,8 @@
  * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <err.h>
+
 // for printf()
 #include <stdio.h>
 
@@ -47,7 +49,6 @@
 #include "io.h"
 #include "partition_map.h"
 #include "hfs_misc.h"
-#include "errors.h"
 #include "dump.h"
 #include "validate.h"
 #include "file_media.h"
@@ -58,7 +59,6 @@
 //
 #define ARGV_CHUNK 5
 #define DFLAG_DEFAULT	0
-#define HFLAG_DEFAULT	0
 #define LFLAG_DEFAULT	0
 #define RFLAG_DEFAULT	0
 
@@ -85,7 +85,6 @@ enum getopt_values {
 //
 int lflag = LFLAG_DEFAULT;	/* list the device */
 char *lfile;	/* list */
-int hflag = HFLAG_DEFAULT;	/* show help */
 int dflag = DFLAG_DEFAULT;	/* turn on debugging commands and printout */
 int rflag = RFLAG_DEFAULT;	/* open device read Only */
 
@@ -114,6 +113,7 @@ int get_options(int argc, char **argv);
 void print_edit_notes(void);
 void print_expert_notes(void);
 
+__dead static void usage(void);
 
 //
 // Routines
@@ -124,21 +124,19 @@ main(int argc, char **argv)
     int name_index;
 
     if (sizeof(DPME) != PBLOCK_SIZE) {
-	fatal(-1, "Size of partition map entry (%d) "
+	errx(1, "Size of partition map entry (%zu) "
 		"is not equal to block size (%d)\n",
 		sizeof(DPME), PBLOCK_SIZE);
     }
     if (sizeof(Block0) != PBLOCK_SIZE) {
-	fatal(-1, "Size of block zero structure (%d) "
+	errx(1, "Size of block zero structure (%zu) "
 		"is not equal to block size (%d)\n",
 		sizeof(Block0), PBLOCK_SIZE);
     }
 
     name_index = get_options(argc, argv);
 
-    if (hflag) {
- 	do_help();
-    } else if (lflag) {
+    if (lflag) {
 	if (lfile != NULL) {
 	    dump(lfile);
 	} else if (name_index < argc) {
@@ -146,14 +144,14 @@ main(int argc, char **argv)
 		dump(argv[name_index++]);
 	    }
 	} else {
-	    do_help();
+	    usage();
 	}
     } else if (name_index < argc) {
 	while (name_index < argc) {
 	    edit(argv[name_index++]);
 	}
     } else {
- 	do_help();
+ 	usage();
     }
     return 0;
 }
@@ -169,7 +167,6 @@ get_options(int argc, char **argv)
 
     lflag = LFLAG_DEFAULT;
     lfile = NULL;
-    hflag = HFLAG_DEFAULT;
     dflag = DFLAG_DEFAULT;
     rflag = RFLAG_DEFAULT;
     aflag = AFLAG_DEFAULT;
@@ -178,9 +175,6 @@ get_options(int argc, char **argv)
     optind = 1; // reset option scanner logic
     while ((c = getopt(argc, argv, "hlvdric")) != -1) {
 	switch (c) {
-	case 'h':
-	    hflag = (HFLAG_DEFAULT)?0:1;
-	    break;
 	case 'l':
 	    lflag = (LFLAG_DEFAULT)?0:1;
 	    break;
@@ -202,7 +196,7 @@ get_options(int argc, char **argv)
 	}
     }
     if (flag) {
-	usage("bad arguments");
+	usage();
     }
     return optind;
 }
@@ -743,13 +737,13 @@ do_display_block(partition_map_header *map, char *alt_name)
 	    }
 	} else {
 	    if ((name = strdup(alt_name)) == NULL) {
-		error(errno, "strdup failed");
+		warn("strdup failed");
 		return;
 	    }
 	}
 	m = open_file_as_media(name, O_RDONLY);
 	if (m == 0) {
-	    error(errno, "can't open file '%s'", name);
+	    warn("can't open file '%s'", name);
 	    free(name);
 	    return;
 	}
@@ -769,7 +763,7 @@ do_display_block(partition_map_header *map, char *alt_name)
 	}
 	display_block = malloc(g);
 	if (display_block == NULL) {
-	    error(errno, "can't allocate memory for display block buffer");
+	    warn("can't allocate memory for display block buffer");
 	    goto xit;
 	}
 	display_g = g;
@@ -825,4 +819,14 @@ do_examine_patch_partition(partition_map_header *map)
     } else {
 	display_patches(entry);
     }
+}
+
+__dead static void
+usage(void)
+{
+    extern char * __progname;
+
+    fprintf(stderr, "usage: %s [-lr] disk\n", __progname);
+
+    exit(1);
 }

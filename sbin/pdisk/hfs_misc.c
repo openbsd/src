@@ -1,4 +1,4 @@
-/*	$OpenBSD: hfs_misc.c,v 1.7 2016/01/11 17:55:45 jasper Exp $	*/
+/*	$OpenBSD: hfs_misc.c,v 1.8 2016/01/12 20:09:39 krw Exp $	*/
 
 //
 // hfs_misc.c - hfs routines
@@ -9,6 +9,8 @@
 /*
  * Copyright 2000 by Eryk Vershen
  */
+
+#include <err.h>
 
 // for *printf()
 #include <stdio.h>
@@ -26,7 +28,6 @@
 #include "hfs_misc.h"
 #include "partition_map.h"
 #include "convert.h"
-#include "errors.h"
 
 
 //
@@ -169,14 +170,15 @@ get_HFS_name(partition_map *entry, int *kind)
 
     mdb = malloc(PBLOCK_SIZE);
     if (mdb == NULL) {
-	error(errno, "can't allocate memory for MDB");
+	warn("can't allocate memory for MDB");
 	return NULL;
     }
 
     data = entry->data;
     if (strcmp(data->dpme_type, kHFSType) == 0) {
 	if (read_partition_block(entry, 2, (char *)mdb) == 0) {
-	    error(-1, "Can't read block %d from partition %d", 2, entry->disk_address);
+	    warnx("Can't read block %d from partition %ld", 2,
+		entry->disk_address);
 	    goto not_hfs;
 	}
 	if (mdb->drSigWord == HFS_PLUS_SIG) {

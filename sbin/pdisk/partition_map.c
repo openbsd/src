@@ -1,4 +1,4 @@
-/*	$OpenBSD: partition_map.c,v 1.15 2016/01/12 15:32:08 krw Exp $	*/
+/*	$OpenBSD: partition_map.c,v 1.16 2016/01/12 20:09:39 krw Exp $	*/
 
 //
 // partition_map.c - partition map routines
@@ -56,7 +56,6 @@
 #include "deblock_media.h"
 #include "io.h"
 #include "convert.h"
-#include "errors.h"
 #include "file_media.h"
 
 
@@ -127,7 +126,7 @@ open_partition_map(char *name, int *valid_file)
     if (m == 0) {
 	m = open_file_as_media(name, O_RDONLY);
 	if (m == 0) {
-	    error(errno, "can't open file '%s'", name);
+	    warn("can't open file '%s'", name);
 	    *valid_file = 0;
 	    return NULL;
 	} else {
@@ -140,7 +139,7 @@ open_partition_map(char *name, int *valid_file)
 
     map = malloc(sizeof(partition_map_header));
     if (map == NULL) {
-	error(errno, "can't allocate memory for open partition map");
+	warn("can't allocate memory for open partition map");
 	close_media(m);
 	return NULL;
     }
@@ -156,7 +155,7 @@ open_partition_map(char *name, int *valid_file)
     map->m = m;
     map->misc = malloc(PBLOCK_SIZE);
     if (map->misc == NULL) {
-	error(errno, "can't allocate memory for block zero buffer");
+	warn("can't allocate memory for block zero buffer");
 	close_media(map->m);
 	free(map);
 	return NULL;
@@ -164,7 +163,7 @@ open_partition_map(char *name, int *valid_file)
 	    || convert_block0(map->misc, 1)
 	    || coerce_block0(map)) {
 	// if I can't read block 0 I might as well give up
-	error(-1, "Can't read block 0 from '%s'", name);
+	warnx("Can't read block 0 from '%s'", name);
 	close_partition_map(map);
 	return NULL;
     }
@@ -232,12 +231,12 @@ read_partition_map(partition_map_header *map)
 //printf("logical = %d, physical = %d\n", map->logical_block, map->physical_block);
     data = malloc(PBLOCK_SIZE);
     if (data == NULL) {
-	error(errno, "can't allocate memory for disk buffers");
+	warn("can't allocate memory for disk buffers");
 	return -1;
     }
 
     if (read_block(map, 1, (char *)data) == 0) {
-	error(-1, "Can't read block 1 from '%s'", map->name);
+	warnx("Can't read block 1 from '%s'", map->name);
 	free(data);
 	return -1;
     } else if (convert_dpme(data, 1)
@@ -246,7 +245,7 @@ read_partition_map(partition_map_header *map)
 	map->logical_block = 512;
 	while (map->logical_block <= map->physical_block) {
 	    if (read_block(map, 1, (char *)data) == 0) {
-		error(-1, "Can't read block 1 from '%s'", map->name);
+		warnx("Can't read block 1 from '%s'", map->name);
 		free(data);
 		return -1;
 	    } else if (convert_dpme(data, 1) == 0
@@ -258,7 +257,7 @@ read_partition_map(partition_map_header *map)
 	    map->logical_block *= 2;
 	}
 	if (map->logical_block > map->physical_block) {
-	    error(-1, "No valid block 1 on '%s'", map->name);
+	    warnx("No valid block 1 on '%s'", map->name);
 	    free(data);
 	    return -1;
 	}
@@ -281,18 +280,18 @@ read_partition_map(partition_map_header *map)
 
 	data = malloc(PBLOCK_SIZE);
 	if (data == NULL) {
-	    error(errno, "can't allocate memory for disk buffers");
+	    warn("can't allocate memory for disk buffers");
 	    return -1;
 	}
 
 	if (read_block(map, ix, (char *)data) == 0) {
-	    error(-1, "Can't read block %u from '%s'", ix, map->name);
+	    warnx("Can't read block %u from '%s'", ix, map->name);
 	    free(data);
 	    return -1;
 	} else if (convert_dpme(data, 1)
 		|| (data->dpme_signature != DPME_SIGNATURE && dflag == 0)
 		|| (data->dpme_map_entries != limit && dflag == 0)) {
-	    error(-1, "Bad data in block %u from '%s'", ix, map->name);
+	    warnx("Bad data in block %u from '%s'", ix, map->name);
 	    free(data);
 	    return -1;
 	}
@@ -323,7 +322,7 @@ write_partition_map(partition_map_header *map)
 	}
     }
     if (result == 0) {
-	error(errno, "Unable to write block zero");
+	warn("Unable to write block zero");
     }
     for (entry = map->disk_order; entry != NULL; entry = entry->next_on_disk) {
 	convert_dpme(entry->data, 0);
@@ -331,7 +330,7 @@ write_partition_map(partition_map_header *map)
 	convert_dpme(entry->data, 1);
 	i = entry->disk_address;
 	if (result == 0) {
-	    error(errno, "Unable to write block %d", i);
+	    warn("Unable to write block %d", i);
 	}
     }
 
@@ -347,7 +346,7 @@ add_data_to_map(struct dpme *data, long ix, partition_map_header *map)
 //printf("add data %d to map\n", ix);
     entry = malloc(sizeof(partition_map));
     if (entry == NULL) {
-	error(errno, "can't allocate memory for map entries");
+	warn("can't allocate memory for map entries");
 	return 0;
     }
     entry->next_on_disk = NULL;
@@ -409,14 +408,13 @@ create_partition_map(char *name, partition_map_header *oldmap)
 
     m = open_file_as_media(name, (rflag)?O_RDONLY:O_RDWR);
     if (m == 0) {
-	error(errno, "can't open file '%s' for %sing", name,
-		(rflag)?"read":"writ");
+	warn("can't open file '%s' for %sing", name, (rflag)?"read":"writ");
 	return NULL;
     }
 
     map = malloc(sizeof(partition_map_header));
     if (map == NULL) {
-	error(errno, "can't allocate memory for open partition map");
+	warn("can't allocate memory for open partition map");
 	close_media(m);
 	return NULL;
     }
@@ -459,7 +457,7 @@ create_partition_map(char *name, partition_map_header *oldmap)
 
     map->misc = calloc(1, PBLOCK_SIZE);
     if (map->misc == NULL) {
-	error(errno, "can't allocate memory for block zero buffer");
+	warn("can't allocate memory for block zero buffer");
     } else {
 	// got it!
 	coerce_block0(map);
@@ -467,7 +465,7 @@ create_partition_map(char *name, partition_map_header *oldmap)
 
 	data = calloc(1, PBLOCK_SIZE);
 	if (data == NULL) {
-	    error(errno, "can't allocate memory for disk buffers");
+	    warn("can't allocate memory for disk buffers");
 	} else {
 	    // set data into entry
 	    data->dpme_signature = DPME_SIGNATURE;
@@ -661,7 +659,7 @@ create_data(const char *name, const char *dptype, u32 base, u32 length)
 
     data = calloc(1, PBLOCK_SIZE);
     if (data == NULL) {
-	error(errno, "can't allocate memory for disk buffers");
+	warn("can't allocate memory for disk buffers");
     } else {
 	// set data into entry
 	data->dpme_signature = DPME_SIGNATURE;
@@ -706,7 +704,7 @@ bzb_init_slice(BZB *bp, int slice)
 	slice += 'a' - 'A';
     }
     if ((slice != 0) && ((slice < 'a') || (slice > 'z'))) {
-	error(-1,"Bad bzb slice");
+	warnx("Bad bzb slice");
 	slice = 0;
     }
     switch (slice) {
@@ -765,7 +763,7 @@ compute_device_size(char *name)
 
 	fd = opendev(name, O_RDONLY, OPENDEV_PART, NULL);
 	if (fd == -1)
-		error(errno, "can't open %s", name);
+		warn("can't open %s", name);
 
 	if (fstat(fd, &st) == -1)
 		err(1, "can't fstat %s", name);

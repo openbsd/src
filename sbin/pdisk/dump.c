@@ -1,4 +1,4 @@
-/*	$OpenBSD: dump.c,v 1.14 2016/01/12 15:32:08 krw Exp $	*/
+/*	$OpenBSD: dump.c,v 1.15 2016/01/12 20:09:39 krw Exp $	*/
 
 //
 // dump.c - dumping partition maps
@@ -27,6 +27,8 @@
  * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <err.h>
+
 // for *printf()
 #include <stdio.h>
 
@@ -42,7 +44,6 @@
 
 #include "dump.h"
 #include "io.h"
-#include "errors.h"
 
 
 //
@@ -138,7 +139,6 @@ dump(char *name)
 
     map = open_partition_map(name, &junk);
     if (map == NULL) {
-	//error(-1, "No partition map in '%s'", name);
 	return 0;
     }
 
@@ -684,12 +684,12 @@ display_patches(partition_map *entry)
     if (patch_block == NULL) {
 	patch_block = malloc(PBLOCK_SIZE);
 	if (patch_block == NULL) {
-	    error(errno, "can't allocate memory for patch block buffer");
+	    warn("can't allocate memory for patch block buffer");
 	    return;
 	}
     }
     if (read_media(m, (long long)offset, PBLOCK_SIZE, (char *)patch_block) == 0) {
-	error(errno, "Can't read patch block");
+	warn("Can't read patch block");
 	return;
     }
     p = (PatchListPtr) patch_block;
@@ -698,7 +698,7 @@ display_patches(partition_map *entry)
 	free(patch_block);
 	patch_block = reallocarray(NULL, i, PBLOCK_SIZE);
 	if (patch_block == NULL) {
-	    error(errno, "can't allocate memory for patch blocks buffer");
+	    warn("can't allocate memory for patch blocks buffer");
 	    return;
 	}
 	s = patch_block + PBLOCK_SIZE*i;
@@ -706,7 +706,7 @@ display_patches(partition_map *entry)
 	    s -= PBLOCK_SIZE;
 	    i -= 1;
 	    if (read_media(m, offset+i, PBLOCK_SIZE, (char *)s) == 0) {
-		error(errno, "Can't read patch block %d", i);
+		warn("Can't read patch block %d", i);
 		return;
 	    }
 	}

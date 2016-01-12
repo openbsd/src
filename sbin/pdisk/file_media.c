@@ -1,4 +1,4 @@
-/*	$OpenBSD: file_media.c,v 1.16 2016/01/12 16:08:37 krw Exp $	*/
+/*	$OpenBSD: file_media.c,v 1.17 2016/01/12 20:09:39 krw Exp $	*/
 
 /*
  * file_media.c -
@@ -27,6 +27,8 @@
  * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <err.h>
+
 // for printf()
 #include <stdio.h>
 // for malloc() & free()
@@ -45,7 +47,6 @@
 #include <util.h>
 
 #include "file_media.h"
-#include "errors.h"
 
 
 /*
@@ -156,7 +157,7 @@ compute_block_size(int fd)
 		break;
 	    }
 	    if ((x = llseek(fd, (loff_t)0, SEEK_SET)) < 0) {
-		error(errno, "Can't seek on file");
+		warn("Can't seek on file");
 		break;
 	    }
 	    if ((t = read(fd, buffer, size)) == size) {
@@ -199,7 +200,7 @@ open_file_as_media(char *file, int oflag)
 	    a->fd = fd;
 	    a->regular_file = 0;
 	    if (fstat(fd, &info) < 0) {
-		error(errno, "can't stat file '%s'", file);
+		warn("can't stat file '%s'", file);
 	    } else {
 		a->regular_file = S_ISREG(info.st_mode);
 	    }

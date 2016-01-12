@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.10 2016/01/11 07:57:54 jasper Exp $	*/
+/*	$OpenBSD: io.c,v 1.11 2016/01/12 20:09:39 krw Exp $	*/
 
 //
 // io.c - simple io and input parsing routines
@@ -27,6 +27,8 @@
  * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <err.h>
+
 // for *printf()
 #include <stdio.h>
 
@@ -40,7 +42,6 @@
 #include <errno.h>
 
 #include "io.h"
-#include "errors.h"
 
 
 //
@@ -104,7 +105,7 @@ my_ungetch(int c)
     if (unget_count < UNGET_MAX_COUNT) {
 	unget_buf[unget_count++] = c;
     } else {
-	fatal(-1, "Programmer error in my_ungetch().");
+	errx(1, "Programmer error in my_ungetch().");
     }
 }
 
@@ -316,7 +317,7 @@ get_string(int eos)
 
     ret_value = malloc(STRING_CHUNK);
     if (ret_value == NULL) {
-	error(errno, "can't allocate memory for string buffer");
+	warn("can't allocate memory for string buffer");
 	return NULL;
     }
     length = STRING_CHUNK;
@@ -328,7 +329,7 @@ get_string(int eos)
 	    // expand string
 	    limit = malloc(length+STRING_CHUNK);
 	    if (limit == NULL) {
-		error(errno, "can't allocate memory for string buffer");
+		warn("can't allocate memory for string buffer");
 		ret_value[length-1] = 0;
 		break;
 	    }
