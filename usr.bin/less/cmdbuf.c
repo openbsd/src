@@ -1147,11 +1147,11 @@ retry:
 /*
  * Return the number currently in the command buffer.
  */
-LINENUM
+off_t
 cmd_int(long *frac)
 {
 	char *p;
-	LINENUM n = 0;
+	off_t n = 0;
 	int err;
 
 	for (p = cmdbuf;  *p >= '0' && *p <= '9';  p++)

@@ -46,7 +46,7 @@ static struct taglist taglist = { TAG_END, TAG_END };
 struct tag {
 	struct tag *next, *prev; /* List links */
 	char *tag_file;		/* Source file containing the tag */
-	LINENUM tag_linenum;	/* Appropriate line number in source file */
+	off_t tag_linenum;	/* Appropriate line number in source file */
 	char *tag_pattern;	/* Pattern used to find the tag */
 	int tag_endline;	/* True if the pattern includes '$' */
 };
@@ -87,7 +87,7 @@ cleantags(void)
  * Create a new tag entry.
  */
 static struct tag *
-maketagent(char *file, LINENUM linenum, char *pattern, int endline)
+maketagent(char *file, off_t linenum, char *pattern, int endline)
 {
 	struct tag *tp;
 
@@ -194,7 +194,7 @@ findctag(char *tag)
 	char *p;
 	FILE *f;
 	int taglen;
-	LINENUM taglinenum;
+	off_t taglinenum;
 	char *tagfile;
 	char *tagpattern;
 	int tagendline;
@@ -317,7 +317,7 @@ static off_t
 ctagsearch(void)
 {
 	off_t pos, linepos;
-	LINENUM linenum;
+	off_t linenum;
 	int len;
 	char *line;
 

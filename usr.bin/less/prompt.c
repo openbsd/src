@@ -128,7 +128,7 @@ ap_pos(off_t pos)
  * Append a line number to the end of the message.
  */
 static void
-ap_linenum(LINENUM linenum)
+ap_linenum(off_t linenum)
 {
 	char buf[INT_STRLEN_BOUND(linenum) + 2];
 
@@ -234,8 +234,8 @@ protochar(int c, int where)
 	off_t pos;
 	off_t len;
 	int n;
-	LINENUM linenum;
-	LINENUM last_linenum;
+	off_t linenum;
+	off_t last_linenum;
 	IFILE h;
 
 #undef	PAGE_NUM

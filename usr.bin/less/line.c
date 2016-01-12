@@ -142,7 +142,7 @@ prewind(void)
 void
 plinenum(off_t pos)
 {
-	LINENUM linenum = 0;
+	off_t linenum = 0;
 	int i;
 
 	if (linenums == OPT_ONPLUS) {

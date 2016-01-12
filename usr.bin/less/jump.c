@@ -63,7 +63,7 @@ jump_forw(void)
  * Jump to line n in the file.
  */
 void
-jump_back(LINENUM linenum)
+jump_back(off_t linenum)
 {
 	off_t pos;
 	PARG parg;

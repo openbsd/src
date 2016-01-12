@@ -52,7 +52,7 @@ extern int forw_prompt;
 
 static int mca;			/* The multicharacter command (action) */
 static int search_type;		/* The previous type of search */
-static LINENUM number;		/* The number typed by the user */
+static off_t number;		/* The number typed by the user */
 static long fraction;		/* The fractional part of the number */
 static struct loption *curropt;
 static int opt_lower;

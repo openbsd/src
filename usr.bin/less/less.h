@@ -72,7 +72,6 @@
  * Special types and constants.
  */
 typedef unsigned long LWCHAR;
-typedef off_t		LINENUM;
 #define	MIN_LINENUM_WIDTH  7	/* Min printing width of a line number */
 #define	MAX_UTF_CHAR_LEN   6	/* Max bytes in one UTF-8 char */
 
@@ -98,7 +97,7 @@ struct scrpos {
 typedef union parg {
 	char *p_string;
 	int p_int;
-	LINENUM p_linenum;
+	off_t p_linenum;
 } PARG;
 
 struct textlist {
@@ -207,5 +206,5 @@ struct textlist {
 
 /* Functions not included in funcs.h */
 void postoa(off_t, char *, size_t);
-void linenumtoa(LINENUM, char *, size_t);
+void linenumtoa(off_t, char *, size_t);
 void inttoa(int, char *, size_t);

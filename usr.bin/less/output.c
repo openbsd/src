@@ -149,7 +149,7 @@ funcname(type num, char *buf, size_t len)	\
 }
 
 TYPE_TO_A_FUNC(postoa, off_t)
-TYPE_TO_A_FUNC(linenumtoa, LINENUM)
+TYPE_TO_A_FUNC(linenumtoa, off_t)
 TYPE_TO_A_FUNC(inttoa, int)
 
 /*
@@ -169,7 +169,7 @@ iprint_int(int num)
  * Output a line number in a given radix.
  */
 static int
-iprint_linenum(LINENUM num)
+iprint_linenum(off_t num)
 {
 	char buf[INT_STRLEN_BOUND(num)];
 

@@ -658,7 +658,7 @@ search_range(off_t pos, off_t endpos, int search_type, int matches,
 	char *line;
 	char *cline;
 	int line_len;
-	LINENUM linenum;
+	off_t linenum;
 	char *sp, *ep;
 	int line_match;
 	int cvt_ops;
