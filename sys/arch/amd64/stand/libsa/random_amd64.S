@@ -1,4 +1,4 @@
-/*	$OpenBSD: random_amd64.S,v 1.3 2016/01/10 22:30:23 naddy Exp $	*/
+/*	$OpenBSD: random_amd64.S,v 1.4 2016/01/12 23:00:10 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2013 Joel Sing <jsing@openbsd.org>
@@ -23,7 +23,7 @@
 
 /*
  * Random data is xored into the buffer in 8-byte blocks. If the buffer size
- * is not a multiple of 8, the remaining bytes will be left untouched.
+ * is not a multiple of 8, the remaining bytes may be left untouched.
  */
 ENTRY(mdrandom)
 	pushq   %rbx
@@ -61,7 +61,6 @@ ENTRY(mdrandom)
 
 	movq	%rdi, %rbx
 	movq	%rsi, %rdx
-	shrq	$3, %rdx
 	xorq	%rdi, %rdi
 
 	and	$CPUIDECX_RDRAND, %ecx	// See if we have rdrand.
@@ -74,17 +73,40 @@ ENTRY(mdrandom)
 	jmp	done
 
 userand:
+	shrq	$3, %rdx		// 8 bytes at a time
+1:
 	rdrand	%rax
 	xorq	%rax, (%rbx, %rdi, 8)
 	incq	%rdi
 	cmpq	%rdi, %rdx
-	jne	userand
+	jne	1b
 	jmp	done
 
 usetsc:
 	rdtsc				// Populates edx:eax.
-	mulq	%rdx
-	xorq	%rax, (%rbx, %rdi, 8)
+
+	/*
+	 *   Cope with high=0
+	 * high = (high << 1) | 1;		
+	 *   Spread bits
+	 * bits = low * high;
+	 *   Accumulate spread bits into a byte
+	 * bits = bits ^ (bits>>8) ^ (bits>>16) ^ (bits>>24);
+	 * buf[i] ^= (u_char) bits;
+	 */
+	shlq	$1, %rdx
+	orq	$1, %rdx
+	mull	%edx
+	movq	%rax, %rdx
+	shrq	$8, %rdx
+	xorq	%rdx, %rax
+	shrq	$8, %rdx
+	xorq	%rdx, %rax
+	shrq	$8, %rdx
+	xorq	%rdx, %rax
+
+	xorb	%al, (%rbx,%rdi)
+
 	incq	%rdi
 	cmpq	%rdi, %rcx
 	jne	usetsc
