@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211.c,v 1.57 2016/01/12 09:28:09 stsp Exp $	*/
+/*	$OpenBSD: ieee80211.c,v 1.58 2016/01/13 14:33:07 stsp Exp $	*/
 /*	$NetBSD: ieee80211.c,v 1.19 2004/06/06 05:45:29 dyoung Exp $	*/
 
 /*-
@@ -749,8 +749,10 @@ ieee80211_setmode(struct ieee80211com *ic, enum ieee80211_phymode mode)
 	modeflags = chanflags[mode];
 	for (i = 0; i <= IEEE80211_CHAN_MAX; i++) {
 		c = &ic->ic_channels[i];
-		if (mode == IEEE80211_MODE_AUTO ||
-		    (c->ic_flags & modeflags) == modeflags)
+		if (mode == IEEE80211_MODE_AUTO) {
+			if (c->ic_flags != 0)
+				break;
+		} else if ((c->ic_flags & modeflags) == modeflags)
 			break;
 	}
 	if (i > IEEE80211_CHAN_MAX) {
@@ -764,8 +766,10 @@ ieee80211_setmode(struct ieee80211com *ic, enum ieee80211_phymode mode)
 	memset(ic->ic_chan_active, 0, sizeof(ic->ic_chan_active));
 	for (i = 0; i <= IEEE80211_CHAN_MAX; i++) {
 		c = &ic->ic_channels[i];
-		if (mode == IEEE80211_MODE_AUTO ||
-		    (c->ic_flags & modeflags) == modeflags)
+		if (mode == IEEE80211_MODE_AUTO) {
+			if (c->ic_flags != 0)
+				setbit(ic->ic_chan_active, i);
+		} else if ((c->ic_flags & modeflags) == modeflags)
 			setbit(ic->ic_chan_active, i);
 	}
 	/*
