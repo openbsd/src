@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.202 2015/12/03 10:34:24 tedu Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.203 2016/01/13 09:38:37 mpi Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -722,6 +722,7 @@ reroute:
 		finaldst = ip6->ip6_dst;
 		ro = NULL;
 		if_put(ifp); /* drop reference since destination changed */
+		ifp = NULL;
 		goto reroute;
 	}
 #endif

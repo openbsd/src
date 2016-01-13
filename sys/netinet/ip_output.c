@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.315 2015/12/05 10:52:26 tedu Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.316 2016/01/13 09:38:36 mpi Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -419,6 +419,7 @@ sendit:
 		m->m_pkthdr.pf.flags |= PF_TAG_GENERATED;
 		ro = NULL;
 		if_put(ifp); /* drop reference since target changed */
+		ifp = NULL;
 		goto reroute;
 	}
 #endif
