@@ -1,4 +1,4 @@
-/*	$OpenBSD: lo_main.c,v 1.10 2016/01/08 20:26:33 mestre Exp $	*/
+/*	$OpenBSD: lo_main.c,v 1.11 2016/01/13 13:10:26 gsoares Exp $	*/
 /*	$NetBSD: lo_main.c,v 1.3 1995/04/22 10:36:59 cgd Exp $	*/
 
 /*
@@ -86,5 +86,6 @@ lo_main(void)
 			(float) log.l_netpoints / ship->specs->pts);
 	}
 	printf("\n%d people have played.\n", people);
+	fclose(fp);
 	return 0;
 }
