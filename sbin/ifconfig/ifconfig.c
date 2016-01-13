@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.314 2016/01/06 21:37:00 tedu Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.315 2016/01/13 09:35:45 stsp Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -193,6 +193,7 @@ void	unsetkeepalive(const char *, int);
 void	setmedia(const char *, int);
 void	setmediaopt(const char *, int);
 void	setmediamode(const char *, int);
+void	unsetmediamode(const char *, int);
 void	clone_create(const char *, int);
 void	clone_destroy(const char *, int);
 void	unsetmediaopt(const char *, int);
@@ -517,6 +518,7 @@ const struct	cmd {
 	{ "mediaopt",	NEXTARG,	A_MEDIAOPTSET,	setmediaopt },
 	{ "-mediaopt",	NEXTARG,	A_MEDIAOPTCLR,	unsetmediaopt },
 	{ "mode",	NEXTARG,	A_MEDIAMODE,	setmediamode },
+	{ "-mode",	0,		A_MEDIAMODE,	unsetmediamode },
 	{ "instance",	NEXTARG,	A_MEDIAINST,	setmediainst },
 	{ "inst",	NEXTARG,	A_MEDIAINST,	setmediainst },
 	{ "lladdr",	NEXTARG,	0,		setiflladdr },
@@ -2367,7 +2369,7 @@ void
 process_media_commands(void)
 {
 
-	if ((actions & (A_MEDIA|A_MEDIAOPT)) == 0) {
+	if ((actions & (A_MEDIA|A_MEDIAOPT|A_MEDIAMODE)) == 0) {
 		/* Nothing to do. */
 		return;
 	}
@@ -2450,6 +2452,27 @@ setmediamode(const char *val, int d)
 	if ((mode = get_media_mode(type, val)) == -1)
 		errx(1, "invalid media mode: %s", val);
 	media_current = IFM_MAKEWORD(type, subtype, options, inst) | mode;
+	/* Media will be set after other processing is complete. */
+}
+
+void
+unsetmediamode(const char *val, int d)
+{
+	uint64_t type, subtype, options, inst;
+
+	init_current_media();
+
+	/* Can only issue `mode' once. */
+	if (actions & A_MEDIAMODE)
+		errx(1, "only one `mode' command may be issued");
+
+	type = IFM_TYPE(media_current);
+	subtype = IFM_SUBTYPE(media_current);
+	options = IFM_OPTIONS(media_current);
+	inst = IFM_INST(media_current);
+
+	media_current = IFM_MAKEWORD(type, subtype, options, inst) |
+	    (IFM_AUTO << IFM_MSHIFT);
 	/* Media will be set after other processing is complete. */
 }
 

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.264 2015/12/06 12:50:05 tedu Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.265 2016/01/13 09:35:45 stsp Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"     @(#)ifconfig.8	8.4 (Berkeley) 6/1/94
 .\"
-.Dd $Mdocdate: December 6 2015 $
+.Dd $Mdocdate: January 13 2016 $
 .Dt IFCONFIG 8
 .Os
 .Sh NAME
@@ -373,16 +373,21 @@ The routing metric can be used by routing protocols.
 Higher metrics have the effect of making a route less favorable.
 .It Cm mode Ar mode
 If the driver for the interface supports the media selection system,
-set the specified operating mode on the interface to the given
+force the mode of the interface to the given
 .Ar mode .
-For IEEE 802.11 wireless interfaces that support multiple operating modes,
+For IEEE 802.11 wireless interfaces that support multiple modes,
 this directive is used to select between 802.11a
 .Pq Dq 11a ,
 802.11b
 .Pq Dq 11b ,
-and 802.11g
-.Pq Dq 11g
-operating modes.
+802.11g
+.Pq Dq 11g ,
+and 802.11n
+.Pq Dq 11n
+modes.
+.It Fl mode
+Select the mode automatically.
+This is the default for IEEE 802.11 wireless interfaces.
 .It Cm mpls
 Enable Multiprotocol Label Switching (MPLS) on the interface,
 allowing it to send and receive MPLS traffic.
