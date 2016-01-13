@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.150 2015/12/08 11:35:42 dlg Exp $	*/
+/*	$OpenBSD: if_vlan.c,v 1.151 2016/01/13 03:18:26 dlg Exp $	*/
 
 /*
  * Copyright 1998 Massachusetts Institute of Technology
@@ -430,24 +430,24 @@ vlan_config(struct ifvlan *ifv, struct ifnet *p, u_int16_t tag)
 		vlan_set_promisc(&ifv->ifv_if);
 	}
 
-	/*
-	 * If the parent interface can do hardware-assisted
-	 * VLAN encapsulation, then propagate its hardware-
-	 * assisted checksumming flags.
-	 *
-	 * If the card cannot handle hardware tagging, it cannot
-	 * possibly compute the correct checksums for tagged packets.
-	 */
-	if (p->if_capabilities & IFCAP_VLAN_HWTAGGING)
+	if (ifv->ifv_type != ETHERTYPE_VLAN) {
+		/*
+		 * Hardware offload only works with the default VLAN
+		 * ethernet type (0x8100).
+		 */
+		ifv->ifv_if.if_capabilities = 0;
+	} else if (p->if_capabilities & IFCAP_VLAN_HWTAGGING) {
+		/*
+		 * If the parent interface can do hardware-assisted
+		 * VLAN encapsulation, then propagate its hardware-
+		 * assisted checksumming flags.
+		 *
+		 * If the card cannot handle hardware tagging, it cannot
+		 * possibly compute the correct checksums for tagged packets.
+		 */
 		ifv->ifv_if.if_capabilities = p->if_capabilities &
 		    IFCAP_CSUM_MASK;
-
-	/*
-	 * Hardware VLAN tagging only works with the default VLAN
-	 * ethernet type (0x8100).
-	 */
-	if (ifv->ifv_type != ETHERTYPE_VLAN)
-		ifv->ifv_if.if_capabilities &= ~IFCAP_VLAN_HWTAGGING;
+	}
 
 	/*
 	 * Set up our ``Ethernet address'' to reflect the underlying
