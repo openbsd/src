@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xnf.c,v 1.3 2016/01/13 18:56:26 mikeb Exp $	*/
+/*	$OpenBSD: if_xnf.c,v 1.4 2016/01/13 20:15:54 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015, 2016 Mike Belopuhov
@@ -191,6 +191,7 @@ void	xnf_stop(struct xnf_softc *);
 void	xnf_start(struct ifnet *);
 int	xnf_encap(struct xnf_softc *, struct mbuf *, uint32_t *);
 void	xnf_intr(void *);
+void	xnf_watchdog(struct ifnet *);
 int	xnf_txeof(struct xnf_softc *);
 int	xnf_rxeof(struct xnf_softc *);
 void	xnf_rx_ring_fill(void *);
@@ -273,6 +274,7 @@ xnf_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_xflags = IFXF_MPSAFE;
 	ifp->if_ioctl = xnf_ioctl;
 	ifp->if_start = xnf_start;
+	ifp->if_watchdog = xnf_watchdog;
 	ifp->if_softc = sc;
 
 	ifp->if_capabilities = IFCAP_VLAN_MTU;
@@ -422,6 +424,7 @@ xnf_stop(struct xnf_softc *sc)
 	xen_intr_mask(sc->sc_xih);
 
 	timeout_del(&sc->sc_rx_fill);
+	ifp->if_timer = 0;
 
 	ifq_barrier(&ifp->if_snd);
 	intr_barrier(&sc->sc_xih);
@@ -477,6 +480,7 @@ xnf_start(struct ifnet *ifp)
 	if (pkts > 0) {
 		txr->txr_prod = prod;
 		xen_intr_signal(sc->sc_xih);
+		ifp->if_timer = 5;
 	}
 }
 
@@ -546,6 +550,17 @@ xnf_intr(void *arg)
 	}
 }
 
+void
+xnf_watchdog(struct ifnet *ifp)
+{
+	struct xnf_softc *sc = ifp->if_softc;
+	struct xnf_tx_ring *txr = sc->sc_tx_ring;
+
+	printf("%s: tx prod %u cons %u,%u evt %u,%u\n",
+	    ifp->if_xname, txr->txr_prod, txr->txr_cons, sc->sc_tx_cons,
+	    txr->txr_req_evt, txr->txr_rsp_evt);
+}
+
 int
 xnf_txeof(struct xnf_softc *sc)
 {
@@ -590,6 +605,8 @@ xnf_txeof(struct xnf_softc *sc)
 
 	if (ifq_is_oactive(&ifp->if_snd))
 		ifq_restart(&ifp->if_snd);
+	else if (txr->txr_cons == txr->txr_prod)
+		ifp->if_timer = 0;
 
 	return (0);
 }
