@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.156 2016/01/13 08:32:19 stsp Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.157 2016/01/13 14:39:35 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -4447,9 +4447,15 @@ iwn_config(struct iwn_softc *sc)
 	IEEE80211_ADDR_COPY(ic->ic_myaddr, LLADDR(ifp->if_sadl));
 	IEEE80211_ADDR_COPY(sc->rxon.myaddr, ic->ic_myaddr);
 	IEEE80211_ADDR_COPY(sc->rxon.wlap, ic->ic_myaddr);
-	sc->rxon.chan = 1;
+	sc->rxon.chan = ieee80211_chan2ieee(ic, ic->ic_ibss_chan);
 	sc->rxon.flags = htole32(IWN_RXON_TSF | IWN_RXON_CTS_TO_SELF);
-	sc->rxon.flags |= htole32(IWN_RXON_AUTO | IWN_RXON_24GHZ);
+	if (IEEE80211_IS_CHAN_2GHZ(ic->ic_ibss_chan)) {
+		sc->rxon.flags |= htole32(IWN_RXON_AUTO | IWN_RXON_24GHZ);
+		if (ic->ic_flags & IEEE80211_F_USEPROT)
+			sc->rxon.flags |= htole32(IWN_RXON_TGG_PROT);
+		DPRINTF(("%s: 2ghz prot 0x%x\n", __func__,
+		    le32toh(sc->rxon.flags)));
+	}
 	switch (ic->ic_opmode) {
 	case IEEE80211_M_STA:
 		sc->rxon.mode = IWN_MODE_STA;
