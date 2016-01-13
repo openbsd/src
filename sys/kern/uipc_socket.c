@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.145 2016/01/06 10:06:50 stefan Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.146 2016/01/13 21:39:39 bluhm Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -679,7 +679,7 @@ restart:
 #ifdef SOCKET_SPLICE
 		    if (!isspliced(so))
 #endif /* SOCKET_SPLICE */
-			panic("receive 1");
+			panic("receive 1, sb_cc %lu", so->so_rcv.sb_cc);
 #endif
 		if (so->so_error) {
 			if (m)
@@ -743,7 +743,7 @@ dontblock:
 	if (pr->pr_flags & PR_ADDR) {
 #ifdef DIAGNOSTIC
 		if (m->m_type != MT_SONAME)
-			panic("receive 1a");
+			panic("receive 1a, m_type %d", m->m_type);
 #endif
 		orig_resid = 0;
 		if (flags & MSG_PEEK) {
@@ -827,7 +827,7 @@ dontblock:
 			break;
 #ifdef DIAGNOSTIC
 		else if (m->m_type != MT_DATA && m->m_type != MT_HEADER)
-			panic("receive 3");
+			panic("receive 3, m_type %d", m->m_type);
 #endif
 		so->so_state &= ~SS_RCVATMARK;
 		len = uio->uio_resid;
@@ -1235,7 +1235,7 @@ somove(struct socket *so, int wait)
 	if (so->so_proto->pr_flags & PR_ADDR) {
 #ifdef DIAGNOSTIC
 		if (m->m_type != MT_SONAME)
-			panic("somove soname");
+			panic("somove soname, m_type %d", m->m_type);
 #endif
 		m = m->m_next;
 	}
@@ -1251,7 +1251,7 @@ somove(struct socket *so, int wait)
 
 	if (so->so_proto->pr_flags & PR_ATOMIC) {
 		if ((m->m_flags & M_PKTHDR) == 0)
-			panic("somove pkthdr");
+			panic("somove !pkthdr");
 		if (sosp->so_snd.sb_hiwat < m->m_pkthdr.len) {
 			error = EMSGSIZE;
 			goto release;
@@ -1293,7 +1293,7 @@ somove(struct socket *so, int wait)
 
 #ifdef DIAGNOSTIC
 		if ((*mp)->m_type != MT_DATA && (*mp)->m_type != MT_HEADER)
-			panic("somove type");
+			panic("somove type, m_type %d", (*mp)->m_type);
 #endif
 		if ((*mp)->m_len > size) {
 			if (!maxreached || (*mp = m_copym(
