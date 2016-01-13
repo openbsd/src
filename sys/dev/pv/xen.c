@@ -1,4 +1,4 @@
-/*	$OpenBSD: xen.c,v 1.24 2016/01/13 18:56:26 mikeb Exp $	*/
+/*	$OpenBSD: xen.c,v 1.25 2016/01/13 19:09:50 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Belopuhov
@@ -420,8 +420,8 @@ xen_print_info_page(void)
 		printf("vcpu%d:\n"
 		    "   upcall_pending=%02x upcall_mask=%02x pending_sel=%#lx\n"
 		    "   time version=%u tsc=%llu system=%llu\n"
-		    "   time mul=%u shift=%d\n"
-		    , i, v->evtchn_upcall_pending, v->evtchn_upcall_mask,
+		    "   time mul=%u shift=%d\n",
+		    i, v->evtchn_upcall_pending, v->evtchn_upcall_mask,
 		    v->evtchn_pending_sel, v->time.version,
 		    v->time.tsc_timestamp, v->time.system_time,
 		    v->time.tsc_to_system_mul, v->time.tsc_shift);
@@ -669,8 +669,8 @@ xen_intr_establish(evtchn_port_t port, xen_intr_handle_t *xih,
 		printf("%s: failed to obtain status for port %d\n",
 		    sc->sc_dev.dv_xname, es.port);
 	}
-	printf("%s: port %u bound to vcpu%u",
-	    sc->sc_dev.dv_xname, es.port, es.vcpu);
+	printf("%s: port %u bound to vcpu%u", sc->sc_dev.dv_xname,
+	    es.port, es.vcpu);
 	if (es.status == EVTCHNSTAT_interdomain)
 		printf(": domain %d port %u\n", es.u.interdomain.dom,
 		    es.u.interdomain.port);
@@ -827,8 +827,7 @@ xen_grant_table_grow(struct xen_softc *sc)
 		    sc->sc_dev.dv_xname);
 		return (NULL);
 	}
-	ge->ge_table = km_alloc(PAGE_SIZE, &kv_any, &kp_zero,
-	    &kd_nowait);
+	ge->ge_table = km_alloc(PAGE_SIZE, &kv_any, &kp_zero, &kd_nowait);
 	if (ge->ge_table == NULL) {
 		free(ge, M_DEVBUF, sizeof(*ge));
 		return (NULL);
@@ -988,7 +987,7 @@ xen_bus_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 	    flags, dmamp);
 	if (error)
 		return (error);
-	/* ALlocate an array of grant table pa<->ref maps */
+	/* Allocate an array of grant table pa<->ref maps */
 	gm = mallocarray(nsegments, sizeof(struct xen_gntmap), M_DEVBUF,
 	    M_ZERO | ((flags & BUS_DMA_NOWAIT) ? M_NOWAIT : M_WAITOK));
 	if (gm == NULL) {
