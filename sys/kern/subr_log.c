@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_log.c,v 1.36 2016/01/07 12:27:07 bluhm Exp $	*/
+/*	$OpenBSD: subr_log.c,v 1.37 2016/01/13 17:05:25 stefan Exp $	*/
 /*	$NetBSD: subr_log.c,v 1.11 1996/03/30 22:24:44 christos Exp $	*/
 
 /*
@@ -180,7 +180,7 @@ int
 logread(dev_t dev, struct uio *uio, int flag)
 {
 	struct msgbuf *mbp = msgbufp;
-	long l;
+	size_t l;
 	int s;
 	int error = 0;
 
@@ -202,13 +202,14 @@ logread(dev_t dev, struct uio *uio, int flag)
 	logsoftc.sc_state &= ~LOG_RDWAIT;
 
 	while (uio->uio_resid > 0) {
-		l = mbp->msg_bufx - mbp->msg_bufr;
-		if (l < 0)
+		if (mbp->msg_bufx >= mbp->msg_bufr)
+			l = mbp->msg_bufx - mbp->msg_bufr;
+		else
 			l = mbp->msg_bufs - mbp->msg_bufr;
-		l = min(l, uio->uio_resid);
+		l = ulmin(l, uio->uio_resid);
 		if (l == 0)
 			break;
-		error = uiomovei(&mbp->msg_bufc[mbp->msg_bufr], (int)l, uio);
+		error = uiomove(&mbp->msg_bufc[mbp->msg_bufr], l, uio);
 		if (error)
 			break;
 		mbp->msg_bufr += l;
