@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.154 2016/01/12 10:53:39 stsp Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.155 2016/01/13 08:26:37 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -4455,15 +4455,9 @@ iwn_config(struct iwn_softc *sc)
 	IEEE80211_ADDR_COPY(ic->ic_myaddr, LLADDR(ifp->if_sadl));
 	IEEE80211_ADDR_COPY(sc->rxon.myaddr, ic->ic_myaddr);
 	IEEE80211_ADDR_COPY(sc->rxon.wlap, ic->ic_myaddr);
-	sc->rxon.chan = ieee80211_chan2ieee(ic, ic->ic_ibss_chan);
+	sc->rxon.chan = 1;
 	sc->rxon.flags = htole32(IWN_RXON_TSF | IWN_RXON_CTS_TO_SELF);
-	if (IEEE80211_IS_CHAN_2GHZ(ic->ic_ibss_chan)) {
-		sc->rxon.flags |= htole32(IWN_RXON_AUTO | IWN_RXON_24GHZ);
-		if (ic->ic_flags & IEEE80211_F_USEPROT)
-			sc->rxon.flags |= htole32(IWN_RXON_TGG_PROT);
-		DPRINTF(("%s: 2ghz prot 0x%x\n", __func__,
-		    le32toh(sc->rxon.flags)));
-	}
+	sc->rxon.flags |= htole32(IWN_RXON_AUTO | IWN_RXON_24GHZ);
 	switch (ic->ic_opmode) {
 	case IEEE80211_M_STA:
 		sc->rxon.mode = IWN_MODE_STA;
@@ -4489,6 +4483,9 @@ iwn_config(struct iwn_softc *sc)
 	    IWN_RXCHAIN_IDLE_COUNT(2);
 	sc->rxon.rxchain = htole16(rxchain);
 	DPRINTF(("setting configuration\n"));
+	DPRINTF(("%s: rxon chan %d flags %x cck %x ofdm %x\n", __func__,
+	    sc->rxon.chan, le32toh(sc->rxon.flags), sc->rxon.cck_mask,
+	    sc->rxon.ofdm_mask));
 	error = iwn_cmd(sc, IWN_CMD_RXON, &sc->rxon, sc->rxonsz, 0);
 	if (error != 0) {
 		printf("%s: RXON command failed\n", sc->sc_dev.dv_xname);
