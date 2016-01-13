@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmctl.c,v 1.10 2015/12/14 06:59:07 mlarkin Exp $	*/
+/*	$OpenBSD: vmctl.c,v 1.11 2016/01/13 13:08:20 reyk Exp $	*/
 
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
@@ -149,6 +149,7 @@ start_vm_complete(struct imsg *imsg, int *ret, int autoconnect)
  *
  * Parameters:
  *  terminate_id: ID of the vm to be terminated
+ *  name: optional name of the VM to be terminated
  */
 void
 terminate_vm(uint32_t terminate_id, const char *name)
@@ -212,6 +213,13 @@ terminate_vm_complete(struct imsg *imsg, int *ret)
 /*
  * get_info_vm
  *
+ * Return the list of all running VMs or find a specific VM by ID or name.
+ *
+ * Parameters:
+ *  id: optional ID of a VM to list
+ *  name: optional name of a VM to list 
+ *  console: if true, open the console of the selected VM (by name or ID)
+ *
  * Request a list of running VMs from vmd
  */
 void
@@ -227,7 +235,11 @@ get_info_vm(uint32_t id, const char *name, int console)
 /*
  * chec_info_id
  *
- * Check if requested name or id matches specified arguments
+ * Check if requested name or ID of a VM matches specified arguments
+ *
+ * Parameters:
+ *  name: name of the VM
+ *  id: ID of the VM
  */
 int
 check_info_id(const char *name, uint32_t id)
@@ -260,6 +272,8 @@ check_info_id(const char *name, uint32_t id)
  *          add_info again), or an error occurred adding the returned data
  *          to the "list vm" data. The caller should check the value of
  *          'ret' to determine which case occurred.
+ *
+ * This function does not return if a VM is found and info_console is set.
  *
  *  The function also sets 'ret' to the error code as follows:
  *   0     : Message successfully processed
