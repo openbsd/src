@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xnf.c,v 1.4 2016/01/13 20:15:54 mikeb Exp $	*/
+/*	$OpenBSD: if_xnf.c,v 1.5 2016/01/13 20:27:18 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015, 2016 Mike Belopuhov
@@ -120,7 +120,7 @@ union xnf_tx_desc {
 } __packed;
 
 #define XNF_TX_DESC		256
-#define XNF_TX_FRAG		8	/* down from 18 */
+#define XNF_TX_FRAG		18
 
 struct xnf_tx_ring {
 	uint32_t		 txr_prod;
