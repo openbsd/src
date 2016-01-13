@@ -1,4 +1,4 @@
-/* $OpenBSD: ihidev.c,v 1.2 2016/01/12 17:30:23 deraadt Exp $ */
+/* $OpenBSD: ihidev.c,v 1.3 2016/01/13 10:25:31 kettenis Exp $ */
 /*
  * HID-over-i2c driver
  *
@@ -117,6 +117,7 @@ ihidev_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_tag = ia->ia_tag;
 	sc->sc_addr = ia->ia_addr;
+	sc->sc_hid_desc_addr = ia->ia_size;
 
 	printf(": int %d", ia->ia_int);
 
@@ -239,10 +240,10 @@ ihidev_hid_command(struct ihidev_softc *sc, int hidcmd, void *arg)
 		 * register is passed from the controller, and is probably just
 		 * the address of the device
 		 */
-		uint8_t cmdbuf[] = { htole16(sc->sc_addr), 0x0 };
+		uint8_t cmdbuf[] = { htole16(sc->sc_hid_desc_addr), 0x0 };
 
 		DPRINTF(("%s: HID command I2C_HID_CMD_DESCR at 0x%x\n",
-		    sc->sc_dev.dv_xname, htole16(sc->sc_addr)));
+		    sc->sc_dev.dv_xname, htole16(sc->sc_hid_desc_addr)));
 
 		/* 20 00 */
 		res = iic_exec(sc->sc_tag, I2C_OP_WRITE, sc->sc_addr, &cmdbuf,

@@ -1,4 +1,4 @@
-/* $OpenBSD: dwiic.c,v 1.2 2016/01/12 17:30:24 deraadt Exp $ */
+/* $OpenBSD: dwiic.c,v 1.3 2016/01/13 10:25:31 kettenis Exp $ */
 /*
  * Synopsys DesignWare I2C controller
  *
@@ -118,6 +118,7 @@ struct dwiic_crs {
 	uint32_t addr_min;
 	uint32_t addr_bas;
 	uint32_t addr_len;
+	uint16_t i2c_addr;
 };
 
 struct dwiic_softc {
@@ -385,6 +386,11 @@ dwiic_acpi_parse_crs(union acpi_resource *crs, void *arg)
 		sc_crs->addr_len = letoh32(crs->lr_m32fixed._len);
 		break;
 
+	case LR_SERBUS:
+		if (crs->lr_serbus.type == LR_SERBUS_I2C)
+			sc_crs->i2c_addr = letoh16(crs->lr_i2cbus._adr);
+		break;
+
 	default:
 		DPRINTF(("%s: unknown resource type %d\n", __func__,
 		    AML_CRSTYPE(crs)));
@@ -523,7 +529,7 @@ dwiic_acpi_foundhid(struct aml_node *node, void *arg)
 	ia.ia_tag = sc->sc_iba.iba_tag;
 	ia.ia_size = 1;
 	ia.ia_name = "ihidev";
-	ia.ia_addr = aml_val2int(&res); /* hid descriptor address */
+	ia.ia_size = aml_val2int(&res); /* hid descriptor address */
 	ia.ia_cookie = dev;
 
 	aml_freevalue(&res);
@@ -550,6 +556,7 @@ dwiic_acpi_foundhid(struct aml_node *node, void *arg)
 
 	ia.ia_int = crs.irq_int;
 	ia.ia_int_flags = crs.irq_flags;
+	ia.ia_addr = crs.i2c_addr;
 
 	if (config_found(sc->sc_iic, &ia, dwiic_i2c_print))
 		return 0;

@@ -1,4 +1,4 @@
-/* $OpenBSD: ihidev.h,v 1.1 2016/01/12 01:11:15 jcs Exp $ */
+/* $OpenBSD: ihidev.h,v 1.2 2016/01/13 10:25:31 kettenis Exp $ */
 /*
  * HID-over-i2c driver
  *
@@ -71,6 +71,7 @@ struct ihidev_softc {
 	i2c_addr_t	sc_addr;
 	void		*sc_ih;
 
+	u_int		sc_hid_desc_addr;
 	union {
 		uint8_t	hid_desc_buf[sizeof(struct i2c_hid_desc)];
 		struct i2c_hid_desc hid_desc;
