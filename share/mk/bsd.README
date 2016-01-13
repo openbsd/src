@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.README,v 1.62 2015/11/14 23:56:50 deraadt Exp $
+#	$OpenBSD: bsd.README,v 1.63 2016/01/13 13:06:51 gsoares Exp $
 #	$NetBSD: bsd.README,v 1.17 1996/04/13 02:08:08 thorpej Exp $
 #	@(#)bsd.README	5.1 (Berkeley) 5/11/90
 
@@ -232,9 +232,9 @@ WARNINGS	Adds appropriate warning flags (defined in CDIAGFLAGS,
 		e.g., -Wall...) to compiles. [no]
 
 SUDO		Command to run when doing "make install" portion of
-		"make build".  If set to sudo, this allows one to run
-		"make build" as a user other than root (assuming sudo
-		is setup for that user).
+		"make build".  If set to /usr/bin/doas, this allows one
+		to run "make build" as a user other than root (assuming
+		doas is setup for that user).
 
 PIPE		If set to "-pipe" gcc will be given the -pipe option
 		which can speed up compiles on machines with memory
