@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.218 2015/08/20 20:50:10 kettenis Exp $ */
+/* $OpenBSD: dsdt.c,v 1.219 2016/01/13 23:11:22 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -1249,26 +1249,26 @@ aml_walknodes(struct aml_node *node, int mode,
 		nodecb(node, arg);
 }
 
-int
+void
 aml_find_node(struct aml_node *node, const char *name,
     int (*cbproc)(struct aml_node *, void *arg), void *arg)
 {
+	struct aml_node *child;
 	const char *nn;
-	int st = 0;
 
-	while (node) {
-		if ((nn = node->name) != NULL) {
+	SIMPLEQ_FOREACH(child, &node->son, sib) {
+		nn = child->name;
+		if ((nn = child->name) != NULL) {
 			if (*nn == AMLOP_ROOTCHAR) nn++;
 			while (*nn == AMLOP_PARENTPREFIX) nn++;
-			if (!strcmp(name, nn))
-				st = cbproc(node, arg);
+			if (strcmp(name, nn) == 0) {
+				/* Only recurse if cbproc() wants us to */
+				if (cbproc(child, arg) == 0)
+					continue;
+			}
 		}
-		/* Only recurse if cbproc() wants us to */
-		if (!st)
-			aml_find_node(SIMPLEQ_FIRST(&node->son), name, cbproc, arg);
-		node = SIMPLEQ_NEXT(node, sib);
+		aml_find_node(child, name, cbproc, arg);
 	}
-	return st;
 }
 
 /*
