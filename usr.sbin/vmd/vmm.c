@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.18 2016/01/08 11:28:05 reyk Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.19 2016/01/13 12:55:18 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -333,8 +333,7 @@ vcpu_reset(uint32_t vmid, uint32_t vcpu_id, struct vcpu_init_state *vis)
  * supplied vm_terminate_params structure (vtp->vtp_vm_id)
  *
  * Parameters
- *  imsg: The incoming imsg body whose 'data' field contains the 
- *      vm_terminate_params struct
+ *  vtp: vm_create_params struct containing the ID of the VM to terminate
  *
  * Return values:
  *  0: success
@@ -724,10 +723,10 @@ init_emulated_hw(struct vm_create_params *vcp, int *child_disks,
  * Runs the VM whose creation parameters are specified in vcp
  *
  * Parameters:
- *  vcp: vm_create_params struct containing the VM's desired creation
- *      configuration
  *  child_disks: previously-opened child VM disk file file descriptors
  *  child_taps: previously-opened child tap file descriptors
+ *  vcp: vm_create_params struct containing the VM's desired creation
+ *      configuration
  *  vis: VCPU register state to initialize
  *
  * Return values:
