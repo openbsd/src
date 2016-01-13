@@ -120,19 +120,7 @@ ap_pos(off_t pos)
 {
 	char buf[INT_STRLEN_BOUND(pos) + 2];
 
-	postoa(pos, buf, sizeof buf);
-	ap_str(buf);
-}
-
-/*
- * Append a line number to the end of the message.
- */
-static void
-ap_linenum(off_t linenum)
-{
-	char buf[INT_STRLEN_BOUND(linenum) + 2];
-
-	linenumtoa(linenum, buf, sizeof buf);
+	postoa(pos, buf, sizeof(buf));
 	ap_str(buf);
 }
 
@@ -255,7 +243,7 @@ protochar(int c, int where)
 	case 'd':	/* Current page number */
 		linenum = currline(where);
 		if (linenum > 0 && sc_height > 1)
-			ap_linenum(PAGE_NUM(linenum));
+			ap_pos(PAGE_NUM(linenum));
 		else
 			ap_quest();
 		break;
@@ -266,13 +254,13 @@ protochar(int c, int where)
 			ap_quest();
 		} else if (len == 0) {
 			/* An empty file has no pages. */
-			ap_linenum(0);
+			ap_pos(0);
 		} else {
 			linenum = find_linenum(len - 1);
 			if (linenum <= 0)
 				ap_quest();
 			else
-				ap_linenum(PAGE_NUM(linenum));
+				ap_pos(PAGE_NUM(linenum));
 		}
 		break;
 	case 'E':	/* Editor name */
@@ -293,7 +281,7 @@ protochar(int c, int where)
 	case 'l':	/* Current line number */
 		linenum = currline(where);
 		if (linenum != 0)
-			ap_linenum(linenum);
+			ap_pos(linenum);
 		else
 			ap_quest();
 		break;
@@ -303,7 +291,7 @@ protochar(int c, int where)
 		    (linenum = find_linenum(len)) <= 0)
 			ap_quest();
 		else
-			ap_linenum(linenum-1);
+			ap_pos(linenum-1);
 		break;
 	case 'm':	/* Number of files */
 		n = ntags();

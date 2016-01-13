@@ -149,7 +149,6 @@ funcname(type num, char *buf, size_t len)	\
 }
 
 TYPE_TO_A_FUNC(postoa, off_t)
-TYPE_TO_A_FUNC(linenumtoa, off_t)
 TYPE_TO_A_FUNC(inttoa, int)
 
 /*
@@ -173,7 +172,7 @@ iprint_linenum(off_t num)
 {
 	char buf[INT_STRLEN_BOUND(num)];
 
-	linenumtoa(num, buf, sizeof (buf));
+	postoa(num, buf, sizeof(buf));
 	putstr(buf);
 	return (strlen(buf));
 }
