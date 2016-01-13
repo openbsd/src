@@ -1,4 +1,4 @@
-/*	$OpenBSD: tmpfs_vfsops.c,v 1.7 2015/01/21 22:26:52 deraadt Exp $	*/
+/*	$OpenBSD: tmpfs_vfsops.c,v 1.8 2016/01/13 13:01:40 gsoares Exp $	*/
 /*	$NetBSD: tmpfs_vfsops.c,v 1.52 2011/09/27 01:10:43 christos Exp $	*/
 
 /*
@@ -144,8 +144,6 @@ tmpfs_mount(struct mount *mp, const char *path, void *data,
 
 	/* Allocate the tmpfs mount structure and fill it. */
 	tmp = malloc(sizeof(tmpfs_mount_t), M_MISCFSMNT, M_WAITOK);
-	if (tmp == NULL)
-		return ENOMEM;
 
 	tmp->tm_nodes_max = (ino_t)nodes;
 	tmp->tm_nodes_cnt = 0;
