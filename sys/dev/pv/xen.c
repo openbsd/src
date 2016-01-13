@@ -1,4 +1,4 @@
-/*	$OpenBSD: xen.c,v 1.23 2016/01/05 18:03:59 mikeb Exp $	*/
+/*	$OpenBSD: xen.c,v 1.24 2016/01/13 18:56:26 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Belopuhov
@@ -1075,6 +1075,10 @@ xen_bus_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf *m0,
 		gm[i].gm_paddr = map->dm_segs[i].ds_addr;
 		map->dm_segs[i].ds_offset = map->dm_segs[i].ds_addr &
 		    PAGE_MASK;
+		KASSERT(map->dm_segs[i].ds_offset +
+		    map->dm_segs[i].ds_len <= PAGE_SIZE);
+		KASSERT(map->dm_segs[i].ds_offset +
+		    map->dm_segs[i].ds_len <= PAGE_SIZE);
 		map->dm_segs[i].ds_addr = gm[i].gm_ref;
 	}
 	return (0);

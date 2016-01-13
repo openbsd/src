@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xnf.c,v 1.2 2016/01/08 14:59:37 reyk Exp $	*/
+/*	$OpenBSD: if_xnf.c,v 1.3 2016/01/13 18:56:26 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015, 2016 Mike Belopuhov
@@ -784,7 +784,7 @@ xnf_rx_ring_create(struct xnf_softc *sc)
 
 	for (i = 0; i < XNF_RX_DESC; i++) {
 		if (bus_dmamap_create(sc->sc_dmat, XNF_MCLEN, 1,
-		    XNF_MCLEN, 0, BUS_DMA_WAITOK, &sc->sc_rx_dmap[i])) {
+		    XNF_MCLEN, PAGE_SIZE, BUS_DMA_WAITOK, &sc->sc_rx_dmap[i])) {
 			printf("%s: failed to create a memory map for the"
 			    " rx slot %d\n", sc->sc_dev.dv_xname, i);
 			goto errout;
@@ -886,7 +886,7 @@ xnf_tx_ring_create(struct xnf_softc *sc)
 
 	for (i = 0; i < XNF_TX_DESC; i++) {
 		if (bus_dmamap_create(sc->sc_dmat, XNF_MCLEN, XNF_TX_FRAG,
-		    XNF_MCLEN, 0, BUS_DMA_WAITOK, &sc->sc_tx_dmap[i])) {
+		    XNF_MCLEN, PAGE_SIZE, BUS_DMA_WAITOK, &sc->sc_tx_dmap[i])) {
 			printf("%s: failed to create a memory map for the"
 			    " tx slot %d\n", sc->sc_dev.dv_xname, i);
 			goto errout;
