@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.22 2015/08/18 12:49:41 visa Exp $
+#	$OpenBSD: RAMDISK,v 1.23 2016/01/14 17:20:34 visa Exp $
 
 machine		octeon mips64
 maxusers	4
@@ -57,7 +57,33 @@ wd*		at pciide? flags 0x0000
 dwctwo0		at iobus0 irq 56
 usb*		at dwctwo?
 uhub*		at usb?
+uhub*		at uhub?
 umass*		at uhub?
+aue*		at uhub?	# ADMtek AN986 Pegasus Ethernet
+atu*		at uhub?	# Atmel AT76c50x based 802.11b
+axe*		at uhub?	# ASIX Electronics AX88172 USB Ethernet
+axen*		at uhub?	# ASIX Electronics AX88179 USB Ethernet
+cue*		at uhub?	# CATC USB-EL1201A based Ethernet
+kue*		at uhub?	# Kawasaki KL5KUSB101B based Ethernet
+smsc*		at uhub?	# SMSC LAN95xx Ethernet
+cdce*		at uhub?	# CDC Ethernet
+upl*		at uhub?	# Prolific PL2301/PL2302 host-to-host `network'
+ugl*		at uhub?	# Genesys Logic GL620USB-A host-to-host `network'
+udav*		at uhub?	# Davicom DM9601 based Ethernet
+mos*		at uhub?	# MOSCHIP MCS7730/7830 10/100 Ethernet
+url*		at uhub?	# Realtek RTL8150L based adapters
+wi*		at uhub?	# WaveLAN IEEE 802.11DS
+uath*		at uhub?	# Atheros AR5005UG/AR5005UX
+ural*		at uhub?	# Ralink RT2500USB
+rum*		at uhub?	# Ralink RT2501USB/RT2601USB
+run*		at uhub?	# Ralink RT2700U/RT2800U/RT3000U
+otus*		at uhub?	# Atheros AR9001U
+athn*		at uhub?	# Atheros AR9002U
+zyd*		at uhub?	# Zydas ZD1211
+upgt*		at uhub?	# Conexant/Intersil PrismGT SoftMAC USB
+urtw*		at uhub?	# Realtek 8187
+rsu*		at uhub?	# Realtek RTL8188SU/RTL8191SU/RTL8192SU
+urtwn*		at uhub?	# Realtek RTL8188CU/RTL8192CU
 
 scsibus*	at scsi?
 sd*		at scsibus?
