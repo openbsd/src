@@ -1,4 +1,4 @@
-/*	$OpenBSD: partition_map.c,v 1.17 2016/01/14 04:17:40 krw Exp $	*/
+/*	$OpenBSD: partition_map.c,v 1.18 2016/01/14 04:22:25 krw Exp $	*/
 
 //
 // partition_map.c - partition map routines
@@ -52,7 +52,6 @@
 #include <errno.h>
 
 #include "partition_map.h"
-#include "hfs_misc.h"
 #include "deblock_media.h"
 #include "io.h"
 #include "convert.h"
