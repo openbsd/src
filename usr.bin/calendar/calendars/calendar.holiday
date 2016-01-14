@@ -1,7 +1,7 @@
 /*
  * Holiday
  *
- * $OpenBSD: calendar.holiday,v 1.33 2016/01/05 08:28:02 jmc Exp $
+ * $OpenBSD: calendar.holiday,v 1.34 2016/01/14 20:08:01 jmc Exp $
  */
 
 #ifndef _calendar_holiday_
@@ -284,7 +284,6 @@
 08/03	Independence Day in Jamaica, Niger
 08/03	Memorial Day of Archbishop Makarios in Cyprus
 08/04	Freedom Day in Guyana
-08/05*	Bank Holiday in Scotland and Northern Ireland
 08/06	Bank Holiday in Australia, British Columbia, Fiji, Iceland, Ireland,
 	Ontario
 08/06	Emancipation Day in Bahamas
@@ -434,7 +433,7 @@
 11/30	Independence Day in Barbados, People's Democratic Yemen Republic
 11/30	National Day in Benin
 11/30	National Heroes Day in Philippines
-11/30	St. Andrew's Day
+11/30	Saint Andrew's Day (also a bank holiday in Scotland)
 12/01	Independence Day in Central African Republic
 12/01	World AIDS Day
 12/01	National Day in Romania
