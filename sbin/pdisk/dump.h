@@ -1,4 +1,4 @@
-/*	$OpenBSD: dump.h,v 1.5 2016/01/11 07:54:07 jasper Exp $	*/
+/*	$OpenBSD: dump.h,v 1.6 2016/01/14 04:02:05 krw Exp $	*/
 
 //
 // dump.h - dumping partition maps
@@ -36,9 +36,6 @@
 //
 // Defines
 //
-#define AFLAG_DEFAULT	0
-#define PFLAG_DEFAULT	1
-#define FFLAG_DEFAULT	0
 
 
 //
@@ -54,9 +51,6 @@
 //
 // Global Variables
 //
-extern int aflag;
-extern int pflag;
-extern int fflag;
 
 
 //

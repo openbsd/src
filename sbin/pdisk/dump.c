@@ -1,4 +1,4 @@
-/*	$OpenBSD: dump.c,v 1.15 2016/01/12 20:09:39 krw Exp $	*/
+/*	$OpenBSD: dump.c,v 1.16 2016/01/14 04:02:05 krw Exp $	*/
 
 //
 // dump.c - dumping partition maps
@@ -112,9 +112,6 @@ const char * kStringNot		= " not";
 //
 // Global Variables
 //
-int aflag = AFLAG_DEFAULT;	/* abbreviate partition types */
-int pflag = PFLAG_DEFAULT;	/* show physical limits of partition */
-int fflag = FFLAG_DEFAULT;	/* show HFS volume names */
 
 
 //
@@ -211,13 +208,9 @@ dump_partition_map(partition_map_header *map, int disk_order)
     if (digits < 6) {
 	digits = 6;
     }
-    if (aflag) {
-	max_type_length = 4;
-    } else {
-	max_type_length = get_max_type_string_length(map);
-	if (max_type_length < 4) {
-	    max_type_length = 4;
-	}
+    max_type_length = get_max_type_string_length(map);
+    if (max_type_length < 4) {
+        max_type_length = 4;
     }
     max_name_length = get_max_name_string_length(map);
     if (max_name_length < 6) {
@@ -264,26 +257,11 @@ dump_partition_entry(partition_map *entry, int type_length, int name_length, int
     map = entry->the_map;
     p = entry->data;
     driver = entry->contains_driver? '*': ' ';
-    if (aflag) {
-	s = "????";
-	for (j = 0; plist[j].abbr != 0; j++) {
-	    if (strcmp(p->dpme_type, plist[j].full) == 0) {
-		s = plist[j].abbr;
-		break;
-	    }
-	}
-	printf("%2ld: %.4s", entry->disk_address, s);
-    } else {
-	printf("%2ld: %*.32s", entry->disk_address, type_length, p->dpme_type);
-    }
+    printf("%2ld: %*.32s", entry->disk_address, type_length, p->dpme_type);
 
     buf = malloc(name_length+1);
-    if (entry->HFS_name == NULL || fflag == 0) {
-	strncpy(buf, p->dpme_name, name_length);
-	buf[name_length] = 0;
-    } else {
-	snprintf(buf, name_length + 1, "\"%s\"", entry->HFS_name);
-    }
+    strncpy(buf, p->dpme_name, name_length);
+    buf[name_length] = 0;
     printf("%c%-*.32s ", driver, name_length, buf);
     free(buf);
     /*
@@ -297,10 +275,7 @@ dump_partition_entry(partition_map *entry, int type_length, int name_length, int
     printf("%c ", kind);
     */
 
-    if (pflag) {
-	printf("%*lu ", digits, p->dpme_pblocks);
-	size = p->dpme_pblocks;
-    } else if (p->dpme_lblocks + p->dpme_lblock_start != p->dpme_pblocks) {
+    if (p->dpme_lblocks + p->dpme_lblock_start != p->dpme_pblocks) {
 	printf("%*lu+", digits, p->dpme_lblocks);
 	size = p->dpme_lblocks;
     } else if (p->dpme_lblock_start != 0) {
@@ -310,7 +285,7 @@ dump_partition_entry(partition_map *entry, int type_length, int name_length, int
 	printf("%*lu ", digits, p->dpme_pblocks);
 	size = p->dpme_pblocks;
     }
-    if (pflag || p->dpme_lblock_start == 0) {
+    if (p->dpme_lblock_start == 0) {
 	printf("@ %-*lu", digits, p->dpme_pblock_start);
     } else {
 	printf("@~%-*lu", digits, p->dpme_pblock_start + p->dpme_lblock_start);
@@ -773,17 +748,6 @@ get_max_name_string_length(partition_map_header *map)
 	length = strnlen(entry->data->dpme_name, DPISTRLEN);
 	if (length > max) {
 	    max = length;
-	}
-
-	if (fflag) {
-		if (entry->HFS_name == NULL) {
-		    length = 0;
-		} else {
-		    length = strlen(entry->HFS_name) + 2;
-		}
-		if (length > max) {
-		    max = length;
-		}
 	}
     }
 
