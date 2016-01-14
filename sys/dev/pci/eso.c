@@ -1,4 +1,4 @@
-/*	$OpenBSD: eso.c,v 1.40 2015/05/11 06:46:22 ratchov Exp $	*/
+/*	$OpenBSD: eso.c,v 1.41 2016/01/14 00:07:32 jsg Exp $	*/
 /*	$NetBSD: eso.c,v 1.48 2006/12/18 23:13:39 kleink Exp $	*/
 
 /*
@@ -1523,7 +1523,7 @@ eso_allocmem(struct eso_softc *sc, size_t size, size_t align,
 
 	error = bus_dmamap_load(ed->ed_dmat, ed->ed_map, ed->ed_addr,
 	    ed->ed_size, NULL, wait |
-	    (direction == AUMODE_RECORD) ? BUS_DMA_READ : BUS_DMA_WRITE);
+	    ((direction == AUMODE_RECORD) ? BUS_DMA_READ : BUS_DMA_WRITE));
 	if (error)
 		goto destroy;
 
