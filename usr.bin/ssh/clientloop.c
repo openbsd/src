@@ -1,4 +1,4 @@
-/* $OpenBSD: clientloop.c,v 1.279 2016/01/13 23:04:47 djm Exp $ */
+/* $OpenBSD: clientloop.c,v 1.280 2016/01/14 16:17:39 markus Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -103,7 +103,6 @@
 #include "sshpty.h"
 #include "match.h"
 #include "msg.h"
-#include "roaming.h"
 #include "ssherr.h"
 #include "hostfile.h"
 
@@ -748,7 +747,7 @@ client_suspend_self(Buffer *bin, Buffer *bout, Buffer *berr)
 static void
 client_process_net_input(fd_set *readset)
 {
-	int len, cont = 0;
+	int len;
 	char buf[8192];
 
 	/*
@@ -757,8 +756,8 @@ client_process_net_input(fd_set *readset)
 	 */
 	if (FD_ISSET(connection_in, readset)) {
 		/* Read as much as possible. */
-		len = roaming_read(connection_in, buf, sizeof(buf), &cont);
-		if (len == 0 && cont == 0) {
+		len = read(connection_in, buf, sizeof(buf));
+		if (len == 0) {
 			/*
 			 * Received EOF.  The remote host has closed the
 			 * connection.

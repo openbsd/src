@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.8 2013/07/02 13:32:38 markus Exp $
+#	$OpenBSD: Makefile,v 1.9 2016/01/14 16:17:40 markus Exp $
 
 .PATH:		${.CURDIR}/..
 
@@ -10,7 +10,7 @@ BINMODE?=4555
 BINDIR=	/usr/libexec
 MAN=	ssh-keysign.8
 
-SRCS=	ssh-keysign.c readconf.c roaming_dummy.c
+SRCS=	ssh-keysign.c readconf.c
 
 .include <bsd.prog.mk>
 
