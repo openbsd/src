@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpireg.h,v 1.33 2016/01/12 07:42:39 kettenis Exp $	*/
+/*	$OpenBSD: acpireg.h,v 1.34 2016/01/14 21:37:18 kettenis Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
@@ -763,5 +763,6 @@ struct acpi_ivrs {
 #define ACPI_DEV_DWIIC2	"INT33C3"
 #define ACPI_DEV_DWIIC3	"INT3432"
 #define ACPI_DEV_DWIIC4	"INT3433"
+#define ACPI_DEV_DWIIC5	"80860F41"
 
 #endif	/* !_DEV_ACPI_ACPIREG_H_ */
