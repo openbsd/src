@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.199 2016/01/08 13:53:24 mpi Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.200 2016/01/14 12:41:02 mpi Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -590,8 +590,11 @@ in_arpinput(struct mbuf *m)
 			rt->rt_expire = time_second + arpt_keep;
 		rt->rt_flags &= ~RTF_REJECT;
 		/* Notify userland that an ARP resolution has been done. */
-		if (la->la_asked || changed)
+		if (la->la_asked || changed) {
+			KERNEL_LOCK();
 			rt_sendmsg(rt, RTM_RESOLVE, ifp->if_rdomain);
+			KERNEL_UNLOCK();
+		}
 		la->la_asked = 0;
 		while ((len = ml_len(&la->la_ml)) != 0) {
 			mh = ml_dequeue(&la->la_ml);
