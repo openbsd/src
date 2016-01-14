@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1783 2015/12/31 20:39:38 kettenis Exp 
+ *	OpenBSD: pcidevs,v 1.1784 2016/01/14 04:04:13 dlg Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -6452,7 +6452,8 @@
 #define	PCI_PRODUCT_SAMSUNG_SWL2210P	0xa000		/* MagicLAN SWL-2210P */
 #define	PCI_PRODUCT_SAMSUNG2_S4LN053X01	0x1600		/* S4LN053X01 */
 #define	PCI_PRODUCT_SAMSUNG2_XP941	0xa800		/* XP941 */
-#define	PCI_PRODUCT_SAMSUNG2_SM951	0xa801		/* SM951 */
+#define	PCI_PRODUCT_SAMSUNG2_SM951_AHCI	0xa801		/* SM951 AHCI */
+#define	PCI_PRODUCT_SAMSUNG2_SM951_NVME	0xa802		/* SM951 NVMe */
 
 /* Sangoma products */
 #define	PCI_PRODUCT_SANGOMA_A10X	0x0300		/* A10x */

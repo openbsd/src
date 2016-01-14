@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci_pci.c,v 1.11 2015/03/14 03:38:48 jsg Exp $ */
+/*	$OpenBSD: ahci_pci.c,v 1.12 2016/01/14 04:06:53 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -150,7 +150,7 @@ static const struct ahci_device ahci_devices[] = {
 	    NULL,		ahci_samsung_attach },
 	{ PCI_VENDOR_SAMSUNG2,	PCI_PRODUCT_SAMSUNG2_XP941,
 	    NULL,		ahci_samsung_attach },
-	{ PCI_VENDOR_SAMSUNG2,	PCI_PRODUCT_SAMSUNG2_SM951,
+	{ PCI_VENDOR_SAMSUNG2,	PCI_PRODUCT_SAMSUNG2_SM951_AHCI,
 	    NULL,		ahci_samsung_attach },
 
 	{ PCI_VENDOR_VIATECH,	PCI_PRODUCT_VIATECH_VT8251_SATA,
