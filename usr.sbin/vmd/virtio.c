@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.6 2016/01/04 02:07:28 mlarkin Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.7 2016/01/14 02:46:40 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -18,7 +18,6 @@
 
 #include <errno.h>
 #include <poll.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>

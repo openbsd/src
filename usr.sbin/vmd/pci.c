@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.c,v 1.5 2016/01/04 02:07:28 mlarkin Exp $	*/
+/*	$OpenBSD: pci.c,v 1.6 2016/01/14 02:46:40 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -16,7 +16,6 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <stdio.h>
 #include <string.h>
 #include <sys/types.h>
 #include <dev/pci/pcireg.h>
