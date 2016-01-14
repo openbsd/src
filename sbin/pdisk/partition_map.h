@@ -1,4 +1,4 @@
-/*	$OpenBSD: partition_map.h,v 1.5 2016/01/12 15:32:08 krw Exp $	*/
+/*	$OpenBSD: partition_map.h,v 1.6 2016/01/14 04:17:40 krw Exp $	*/
 
 //
 // partition_map.h - partition map routines
@@ -71,7 +71,6 @@ struct partition_map {
     int contains_driver;
     DPME *data;
     int HFS_kind;
-    char *HFS_name;
 };
 typedef struct partition_map partition_map;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: partition_map.c,v 1.16 2016/01/12 20:09:39 krw Exp $	*/
+/*	$OpenBSD: partition_map.c,v 1.17 2016/01/14 04:17:40 krw Exp $	*/
 
 //
 // partition_map.c - partition map routines
@@ -100,7 +100,6 @@ void combine_entry(partition_map *entry);
 long compute_device_size(char *name);
 DPME* create_data(const char *name, const char *dptype, u32 base, u32 length);
 void delete_entry(partition_map *entry);
-char *get_HFS_name(partition_map *entry, int *kind);
 void insert_in_base_order(partition_map *entry);
 void insert_in_disk_order(partition_map *entry);
 int read_block(partition_map_header *map, unsigned long num, char *buf);
@@ -210,7 +209,6 @@ close_partition_map(partition_map_header *map)
     for (entry = map->disk_order; entry != NULL; entry = next) {
 	next = entry->next_on_disk;
 	free(entry->data);
-	free(entry->HFS_name);
 	free(entry);
     }
     close_media(map->m);
@@ -357,7 +355,6 @@ add_data_to_map(struct dpme *data, long ix, partition_map_header *map)
     entry->the_map = map;
     entry->data = data;
     entry->contains_driver = contains_driver(entry);
-    entry->HFS_name = get_HFS_name(entry, &entry->HFS_kind);
 
     insert_in_disk_order(entry);
     insert_in_base_order(entry);
@@ -840,9 +837,7 @@ delete_partition_from_map(partition_map *entry)
     	remove_driver(entry);	// update block0 if necessary
     }
     free(entry->data);
-    free(entry->HFS_name);
     entry->HFS_kind = kHFS_not;
-    entry->HFS_name = 0;
     entry->data = data;
     combine_entry(entry);
     map = entry->the_map;
@@ -974,7 +969,6 @@ delete_entry(partition_map *entry)
     }
 
     free(entry->data);
-    free(entry->HFS_name);
     free(entry);
 }
 
