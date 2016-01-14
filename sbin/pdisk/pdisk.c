@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdisk.c,v 1.31 2016/01/14 04:22:25 krw Exp $	*/
+/*	$OpenBSD: pdisk.c,v 1.32 2016/01/14 15:10:25 krw Exp $	*/
 
 //
 // pdisk - an editor for Apple format partition tables
@@ -82,7 +82,6 @@ enum getopt_values {
 // Global Variables
 //
 int lflag = LFLAG_DEFAULT;	/* list the device */
-char *lfile;	/* list */
 int dflag = DFLAG_DEFAULT;	/* turn on debugging commands and printout */
 int rflag = RFLAG_DEFAULT;	/* open device read Only */
 
@@ -135,9 +134,7 @@ main(int argc, char **argv)
     name_index = get_options(argc, argv);
 
     if (lflag) {
-	if (lfile != NULL) {
-	    dump(lfile);
-	} else if (name_index < argc) {
+	if (name_index < argc) {
 	    while (name_index < argc) {
 		dump(argv[name_index++]);
 	    }
@@ -163,7 +160,6 @@ get_options(int argc, char **argv)
     extern char *optarg;
 
     lflag = LFLAG_DEFAULT;
-    lfile = NULL;
     dflag = DFLAG_DEFAULT;
     rflag = RFLAG_DEFAULT;
 
