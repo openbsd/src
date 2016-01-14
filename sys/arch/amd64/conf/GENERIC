@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.412 2016/01/13 20:16:54 mikeb Exp $
+#	$OpenBSD: GENERIC,v 1.413 2016/01/14 21:04:20 kettenis Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -153,6 +153,8 @@ nvt*	at iic?			# Novoton W83795G
 ihidev*	at iic?			# HID-over-i2c
 ims*	at ihidev?		# i2c mouse/trackpad
 wsmouse* at ims? mux 0
+ikbd*	at ihidev?		# i2c keyboard
+wskbd*	at ikbd? mux 1
 
 skgpio0 at isa? port 0x680	# Soekris net6501 GPIO and LEDs
 gpio* at skgpio?
