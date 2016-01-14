@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.199 2015/12/28 22:08:30 jung Exp $	*/
+/*	$OpenBSD: mta.c,v 1.200 2016/01/14 18:56:55 mmcc Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -517,7 +517,7 @@ mta_imsg(struct mproc *p, struct imsg *imsg)
 			m_get_string(&m, &dom);
 			m_end(&m);
 			source = mta_source((struct sockaddr*)&ss);
-			if (strlen(dom)) {
+			if (*dom != '\0') {
 				if (!(strlcpy(buf, dom, sizeof(buf))
 					>= sizeof(buf)))
 					mta_block(source, buf);
@@ -534,7 +534,7 @@ mta_imsg(struct mproc *p, struct imsg *imsg)
 			m_get_string(&m, &dom);
 			m_end(&m);
 			source = mta_source((struct sockaddr*)&ss);
-			if (strlen(dom)) {
+			if (*dom != '\0') {
 				if (!(strlcpy(buf, dom, sizeof(buf))
 					>= sizeof(buf)))
 					mta_unblock(source, buf);
