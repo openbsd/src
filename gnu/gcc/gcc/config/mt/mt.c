@@ -475,7 +475,7 @@ mt_print_operand (FILE * file, rtx x, int code)
       break;
       
     default:
-      fprintf(file, "Uknown code: %d", GET_CODE (x));
+      fprintf(file, "Unknown code: %d", GET_CODE (x));
       break;
     }
 
