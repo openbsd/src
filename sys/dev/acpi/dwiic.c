@@ -1,4 +1,4 @@
-/* $OpenBSD: dwiic.c,v 1.3 2016/01/13 10:25:31 kettenis Exp $ */
+/* $OpenBSD: dwiic.c,v 1.4 2016/01/14 21:31:27 kettenis Exp $ */
 /*
  * Synopsys DesignWare I2C controller
  *
@@ -81,6 +81,10 @@
 #define DW_IC_CON_10BITADDR_MASTER 0x10
 #define DW_IC_CON_RESTART_EN	0x20
 #define DW_IC_CON_SLAVE_DISABLE	0x40
+
+#define DW_IC_DATA_CMD_READ	0x100
+#define DW_IC_DATA_CMD_STOP	0x200
+#define DW_IC_DATA_CMD_RESTART	0x400
 
 #define DW_IC_INTR_RX_UNDER	0x001
 #define DW_IC_INTR_RX_OVER	0x002
@@ -239,15 +243,19 @@ dwiic_attach(struct device *parent, struct device *self, void *aux)
 
 	printf(", addr 0x%x len 0x%x", crs.addr_bas, crs.addr_len);
 
-	sc->sc_iot = X86_BUS_SPACE_MEM;
-	if (bus_space_map(sc->sc_iot, crs.addr_bas, crs.addr_len,
-	    BUS_SPACE_MAP_PREFETCHABLE | BUS_SPACE_MAP_LINEAR,
+	sc->sc_iot = aa->aaa_memt;
+	if (bus_space_map(sc->sc_iot, crs.addr_bas, crs.addr_len, 0,
 	    &sc->sc_ioh)) {
 		printf(", failed mapping at 0x%x\n", crs.addr_bas);
 		return;
 	}
 
 	/* fetch timing parameters */
+	sc->ss_hcnt = dwiic_i2c_read(sc, DW_IC_SS_SCL_HCNT);
+	sc->ss_lcnt = dwiic_i2c_read(sc, DW_IC_SS_SCL_LCNT);
+	sc->fs_hcnt = dwiic_i2c_read(sc, DW_IC_FS_SCL_HCNT);
+	sc->fs_lcnt = dwiic_i2c_read(sc, DW_IC_FS_SCL_LCNT);
+	sc->sda_hold_time = dwiic_i2c_read(sc, DW_IC_SDA_HOLD);
 	dwiic_acpi_get_params(sc, "SSCN", &sc->ss_hcnt, &sc->ss_lcnt, NULL);
 	dwiic_acpi_get_params(sc, "FMCN", &sc->fs_hcnt, &sc->fs_lcnt,
 	    &sc->sda_hold_time);
@@ -405,10 +413,8 @@ dwiic_acpi_get_params(struct dwiic_softc *sc, char *method, uint16_t *hcnt,
 {
 	struct aml_value res;
 
-	if (!aml_searchname(sc->sc_devnode, method)) {
-		printf(": no %s method", method);
+	if (!aml_searchname(sc->sc_devnode, method))
 		return;
-	}
 
 	if (aml_evalname(sc->sc_acpi, sc->sc_devnode, method, 0, NULL, &res)) {
 		printf(": eval of %s at %s failed", method,
@@ -635,9 +641,9 @@ dwiic_init(struct dwiic_softc *sc)
 		dwiic_i2c_write(sc, DW_IC_SDA_HOLD, sc->sda_hold_time);
 
 	/* FIFO threshold levels */
-	sc->tx_fifo_depth = 16; //32;
+	sc->tx_fifo_depth = 32;
 	sc->rx_fifo_depth = 32;
-	dwiic_i2c_write(sc, DW_IC_TX_TL, sc->tx_fifo_depth /* / 2 */);
+	dwiic_i2c_write(sc, DW_IC_TX_TL, sc->tx_fifo_depth / 2);
 	dwiic_i2c_write(sc, DW_IC_RX_TL, 0);
 
 	/* configure as i2c master with fast speed */
@@ -734,7 +740,7 @@ dwiic_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr, const void *cmdbuf,
 	}
 
 	/* send our command, one byte at a time */
-	if (op == I2C_OP_WRITE) {
+	if (cmdlen > 0) {
 		b = (void *)cmdbuf;
 
 		DPRINTF(("%s: %s: sending cmd (len %zu):", sc->sc_dev.dv_xname,
@@ -754,45 +760,44 @@ dwiic_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr, const void *cmdbuf,
 		}
 
 		for (x = 0; x < cmdlen; x++) {
-			if (x > 0)
-				DELAY(50);
-
-			dwiic_i2c_write(sc, DW_IC_DATA_CMD, b[x]);
-		}
-
-		if (len == 0) {
-			/* not expecting any response, but still need to send
-			 * final command byte */
-			DELAY(50);
-			dwiic_i2c_write(sc, DW_IC_DATA_CMD, 0x100 | (1 << 9));
-			sc->sc_busy = 0;
-			return (0);
+			cmd = b[x];
+			/*
+			 * Generate STOP condition if this is the last
+			 * byte of the transfer.
+			 */
+			if (x == (cmdlen - 1) && len == 0 && I2C_OP_STOP_P(op))
+				cmd |= DW_IC_DATA_CMD_STOP;
+			dwiic_i2c_write(sc, DW_IC_DATA_CMD, cmd);
 		}
 	}
 
 	b = (void *)buf;
 	x = readpos = 0;
-	retries = 5;
 	tx_limit = sc->tx_fifo_depth - dwiic_i2c_read(sc, DW_IC_TXFLR);
 
 	DPRINTF(("%s: %s: need to read %zu bytes, can send %d read reqs\n",
 		sc->sc_dev.dv_xname, __func__, len, tx_limit));
 
 	while (x < len) {
-		cmd = 0x100;
+		if (I2C_OP_WRITE_P(op))
+			cmd = b[x];
+		else
+			cmd = DW_IC_DATA_CMD_READ;
 
 		/*
-		 * For each byte we want to read as input, send a 0x100
-		 * command.  On the first read request after sending a write
-		 * command, set bit 10.  On the last read request, set bit 9.
+		 * Generate RESTART condition if we're reversing
+		 * direction.
 		 */
-		if (x == 0 && I2C_OP_WRITE_P(op))
-			cmd |= (1L << 10);
-		else if (x == len - 1)
-			cmd |= (1L << 9);
+		if (x == 0 && cmdlen > 0 && I2C_OP_READ_P(op))
+			cmd |= DW_IC_DATA_CMD_RESTART;
+		/*
+		 * Generate STOP conditon on the last byte of the
+		 * transfer.
+		 */
+		if (x == (len - 1) && I2C_OP_STOP_P(op))
+			cmd |= DW_IC_DATA_CMD_STOP;
 
 		dwiic_i2c_write(sc, DW_IC_DATA_CMD, cmd);
-		DELAY(50);
 
 		tx_limit--;
 		x++;
@@ -805,9 +810,14 @@ dwiic_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr, const void *cmdbuf,
 			DPRINTF(("%s: %s: tx_limit %d, sent %d read reqs\n",
 			    sc->sc_dev.dv_xname, __func__, tx_limit, x));
 
-			if (flags & I2C_F_POLL)
-				DELAY(200);
-			else {
+			if (flags & I2C_F_POLL) {
+				for (retries = 100; retries > 0; retries--) {
+					rx_avail = dwiic_i2c_read(sc, DW_IC_RXFLR);
+					if (rx_avail > 0)
+						break;
+					DELAY(50);
+				}
+			} else {
 				dwiic_i2c_read(sc, DW_IC_CLR_INTR);
 				dwiic_i2c_write(sc, DW_IC_INTR_MASK,
 				    DW_IC_INTR_RX_FULL);
@@ -817,11 +827,11 @@ dwiic_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr, const void *cmdbuf,
 					printf("%s: timed out waiting for "
 					    "rx_full intr\n",
 					    sc->sc_dev.dv_xname);
+
+				rx_avail = dwiic_i2c_read(sc, DW_IC_RXFLR);
 			}
 
-			rx_avail = dwiic_i2c_read(sc, DW_IC_RXFLR);
-
-			if (rx_avail == 0 && --retries <= 0) {
+			if (rx_avail == 0) {
 				printf("%s: timed out reading remaining %d\n",
 				    sc->sc_dev.dv_xname,
 				    (int)(len - 1 - readpos));
@@ -847,7 +857,7 @@ dwiic_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr, const void *cmdbuf,
 				break;
 
 			DPRINTF(("%s: still need to read %d bytes\n",
-			    sc->sc_dev.dv_xname, (int)(len - 1 - readpos)));
+			    sc->sc_dev.dv_xname, (int)(len - readpos)));
 			tx_limit = sc->tx_fifo_depth -
 			    dwiic_i2c_read(sc, DW_IC_TXFLR);
 		}

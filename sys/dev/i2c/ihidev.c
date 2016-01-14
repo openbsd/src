@@ -1,4 +1,4 @@
-/* $OpenBSD: ihidev.c,v 1.6 2016/01/14 21:25:57 kettenis Exp $ */
+/* $OpenBSD: ihidev.c,v 1.7 2016/01/14 21:31:27 kettenis Exp $ */
 /*
  * HID-over-i2c driver
  *
@@ -248,8 +248,8 @@ ihidev_hid_command(struct ihidev_softc *sc, int hidcmd, void *arg)
 		    sc->sc_dev.dv_xname, htole16(sc->sc_hid_desc_addr)));
 
 		/* 20 00 */
-		res = iic_exec(sc->sc_tag, I2C_OP_WRITE, sc->sc_addr, &cmdbuf,
-		    sizeof(cmdbuf), &sc->hid_desc_buf,
+		res = iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP, sc->sc_addr,
+		    &cmdbuf, sizeof(cmdbuf), &sc->hid_desc_buf,
 		    sizeof(struct i2c_hid_desc), 0);
 
 		DPRINTF(("%s: HID descriptor:", sc->sc_dev.dv_xname));
@@ -273,8 +273,8 @@ ihidev_hid_command(struct ihidev_softc *sc, int hidcmd, void *arg)
 		cmd->c.opcode = I2C_HID_CMD_RESET;
 
 		/* 22 00 00 01 */
-		res = iic_exec(sc->sc_tag, I2C_OP_WRITE, sc->sc_addr, &cmdbuf,
-		    sizeof(cmdbuf), NULL, 0, 0);
+		res = iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP, sc->sc_addr,
+		    &cmdbuf, sizeof(cmdbuf), NULL, 0, 0);
 
 		break;
 	}
@@ -294,8 +294,8 @@ ihidev_hid_command(struct ihidev_softc *sc, int hidcmd, void *arg)
 		cmd->c.reportTypeId = power;
 
 		/* 22 00 00 08 */
-		res = iic_exec(sc->sc_tag, I2C_OP_WRITE, sc->sc_addr, &cmdbuf,
-		    sizeof(cmdbuf), NULL, 0, 0);
+		res = iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP, sc->sc_addr,
+		    &cmdbuf, sizeof(cmdbuf), NULL, 0, 0);
 
 		break;
 	}
@@ -309,8 +309,8 @@ ihidev_hid_command(struct ihidev_softc *sc, int hidcmd, void *arg)
 		    sc->sc_reportlen));
 
 		/* 20 00 */
-		res = iic_exec(sc->sc_tag, I2C_OP_WRITE, sc->sc_addr, &cmdbuf,
-		    sizeof(cmdbuf), sc->sc_report, sc->sc_reportlen, 0);
+		res = iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP, sc->sc_addr,
+		    &cmdbuf, sizeof(cmdbuf), sc->sc_report, sc->sc_reportlen, 0);
 
 		DPRINTF(("%s: HID report descriptor:", sc->sc_dev.dv_xname));
 		for (i = 0; i < sc->sc_reportlen; i++)
@@ -431,7 +431,7 @@ ihidev_intr(void *arg)
 
 	iic_acquire_bus(sc->sc_tag, I2C_F_POLL);
 
-	res = iic_exec(sc->sc_tag, I2C_OP_READ, sc->sc_addr, NULL, 0,
+	res = iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP, sc->sc_addr, NULL, 0,
 	    sc->sc_ibuf, sc->sc_isize, I2C_F_POLL);
 
 	iic_release_bus(sc->sc_tag, I2C_F_POLL);
