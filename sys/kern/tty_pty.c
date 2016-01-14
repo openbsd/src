@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_pty.c,v 1.74 2015/12/05 10:11:53 tedu Exp $	*/
+/*	$OpenBSD: tty_pty.c,v 1.75 2016/01/14 09:44:08 sf Exp $	*/
 /*	$NetBSD: tty_pty.c,v 1.33.4.1 1996/06/02 09:08:11 mrg Exp $	*/
 
 /*
@@ -193,7 +193,7 @@ check_pty(int minor)
 	if (!pt_softc[minor]) {
 		pti = malloc(sizeof(struct pt_softc), M_DEVBUF,
 		    M_WAITOK|M_ZERO);
-		pti->pt_tty = ttymalloc(0);
+		pti->pt_tty = ttymalloc(1000000);
 		ptydevname(minor, pti);
 		pt_softc[minor] = pti;
 	}
@@ -235,7 +235,7 @@ ptsopen(dev_t dev, int flag, int devtype, struct proc *p)
 
 	pti = pt_softc[minor(dev)];
 	if (!pti->pt_tty) {
-		tp = pti->pt_tty = ttymalloc(0);
+		tp = pti->pt_tty = ttymalloc(1000000);
 	} else
 		tp = pti->pt_tty;
 	if ((tp->t_state & TS_ISOPEN) == 0) {
@@ -245,7 +245,7 @@ ptsopen(dev_t dev, int flag, int devtype, struct proc *p)
 		tp->t_oflag = TTYDEF_OFLAG;
 		tp->t_lflag = TTYDEF_LFLAG;
 		tp->t_cflag = TTYDEF_CFLAG;
-		tp->t_ispeed = tp->t_ospeed = TTYDEF_SPEED;
+		tp->t_ispeed = tp->t_ospeed = B115200;
 		ttsetwater(tp);		/* would be done in xxparam() */
 	} else if (tp->t_state&TS_XCLUDE && suser(p, 0) != 0)
 		return (EBUSY);
@@ -412,7 +412,7 @@ ptcopen(dev_t dev, int flag, int devtype, struct proc *p)
 
 	pti = pt_softc[minor(dev)];
 	if (!pti->pt_tty) {
-		tp = pti->pt_tty = ttymalloc(0);
+		tp = pti->pt_tty = ttymalloc(1000000);
 	} else
 		tp = pti->pt_tty;
 	if (tp->t_oproc)

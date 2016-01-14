@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.127 2015/12/05 10:11:53 tedu Exp $	*/
+/*	$OpenBSD: tty.c,v 1.128 2016/01/14 09:44:08 sf Exp $	*/
 /*	$NetBSD: tty.c,v 1.68.4.2 1996/06/06 16:04:52 thorpej Exp $	*/
 
 /*-
@@ -2330,8 +2330,13 @@ ttymalloc(int baud)
 
 	tp = malloc(sizeof(struct tty), M_TTYS, M_WAITOK|M_ZERO);
 
-	if (baud <= 115200)
+	if (baud == 0)
+		baud = 115200;
+
+	if (baud <= 9600)
 		tp->t_qlen = 1024;
+	else if (baud <= 115200)
+		tp->t_qlen = 4096;
 	else
 		tp->t_qlen = 8192;
 	clalloc(&tp->t_rawq, tp->t_qlen, 1);

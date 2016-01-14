@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppp_tty.c,v 1.41 2015/12/21 21:49:02 sf Exp $	*/
+/*	$OpenBSD: ppp_tty.c,v 1.42 2016/01/14 09:44:08 sf Exp $	*/
 /*	$NetBSD: ppp_tty.c,v 1.12 1997/03/24 21:23:10 christos Exp $	*/
 
 /*
@@ -154,9 +154,6 @@ struct pool ppp_pkts;
 
 /* This is a NetBSD-1.0 or later kernel. */
 #define CCOUNT(q)	((q)->c_cc)
-
-#define PPP_LOWAT	100	/* Process more output when < LOWAT on queue */
-#define	PPP_HIWAT	400	/* Don't start a new packet if HIWAT on queue */
 
 /*
  * Line specific open routine for async tty devices.
@@ -499,7 +496,7 @@ pppasyncstart(struct ppp_softc *sc)
     int s;
 
     idle = 0;
-    while (CCOUNT(&tp->t_outq) < PPP_HIWAT) {
+    while (CCOUNT(&tp->t_outq) < tp->t_hiwat) {
 	/*
 	 * See if we have an existing packet partly sent.
 	 * If not, get a new packet and start sending it.
@@ -706,7 +703,7 @@ pppstart_internal(struct tty *tp, int force)
      * or been disconnected from the ppp unit, then tell if_ppp.c that
      * we need more output.
      */
-    if ((CCOUNT(&tp->t_outq) < PPP_LOWAT || force)
+    if ((CCOUNT(&tp->t_outq) < tp->t_lowat || force)
 	&& !((tp->t_state & TS_CARR_ON) == 0 && (tp->t_cflag & CLOCAL) == 0)
 	&& sc != NULL && tp == (struct tty *) sc->sc_devp) {
 	ppp_restart(sc);
