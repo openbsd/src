@@ -1,4 +1,4 @@
-/*	$OpenBSD: which.c,v 1.22 2015/12/29 19:04:46 gsoares Exp $	*/
+/*	$OpenBSD: which.c,v 1.23 2016/01/14 21:54:24 millert Exp $	*/
 
 /*
  * Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -74,8 +74,8 @@ main(int argc, char *argv[])
 		progmode = PROG_WHEREIS;
 		path = _PATH_STDPATH;
 	} else {
-		if ((path = getenv("PATH")) == NULL)
-			err(1, "can't get $PATH from environment");
+		if ((path = getenv("PATH")) == NULL || *path == '\0')
+			path = _PATH_DEFPATH;
 	}
 
 	/* To make access(2) do what we want */
