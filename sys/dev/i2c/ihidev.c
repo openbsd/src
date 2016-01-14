@@ -1,4 +1,4 @@
-/* $OpenBSD: ihidev.c,v 1.5 2016/01/14 21:21:26 kettenis Exp $ */
+/* $OpenBSD: ihidev.c,v 1.6 2016/01/14 21:25:57 kettenis Exp $ */
 /*
  * HID-over-i2c driver
  *
@@ -424,14 +424,17 @@ ihidev_intr(void *arg)
 	u_char *p;
 	u_int rep = 0;
 
-	iic_acquire_bus(sc->sc_tag, 0);
+	/*
+	 * XXX: force I2C_F_POLL for now to avoid dwiic interrupting
+	 * while we are interrupting
+	 */
 
-	/* XXX: force I2C_F_POLL for now to avoid dwiic interrupting while we
-	 * are interrupting */
+	iic_acquire_bus(sc->sc_tag, I2C_F_POLL);
+
 	res = iic_exec(sc->sc_tag, I2C_OP_READ, sc->sc_addr, NULL, 0,
-	    sc->sc_ibuf, size, I2C_F_POLL);
+	    sc->sc_ibuf, sc->sc_isize, I2C_F_POLL);
 
-	iic_release_bus(sc->sc_tag, 0);
+	iic_release_bus(sc->sc_tag, I2C_F_POLL);
 
 	DPRINTF(("%s: ihidev_intr: hid input:", sc->sc_dev.dv_xname));
 	for (i = 0; i < sc->sc_isize; i++)
