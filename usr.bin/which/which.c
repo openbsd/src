@@ -1,4 +1,4 @@
-/*	$OpenBSD: which.c,v 1.24 2016/01/14 22:00:53 millert Exp $	*/
+/*	$OpenBSD: which.c,v 1.25 2016/01/14 22:02:13 millert Exp $	*/
 
 /*
  * Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -98,7 +98,7 @@ int
 findprog(char *prog, char *path, int progmode, int allmatches)
 {
 	char *p, filename[PATH_MAX];
-	int proglen, plen, rval = 0;
+	int len, rval = 0;
 	struct stat sbuf;
 	char *pathcpy;
 
@@ -118,22 +118,20 @@ findprog(char *prog, char *path, int progmode, int allmatches)
 		err(1, "strdup");
 	pathcpy = path;
 
-	proglen = strlen(prog);
 	while ((p = strsep(&pathcpy, ":")) != NULL) {
 		if (*p == '\0')
 			p = ".";
 
-		plen = strlen(p);
-		while (plen > 0 && p[plen-1] == '/')
-			p[--plen] = '\0';	/* strip trailing '/' */
+		len = strlen(p);
+		while (len > 0 && p[len-1] == '/')
+			p[--len] = '\0';	/* strip trailing '/' */
 
-		if (plen + 1 + proglen >= sizeof(filename)) {
+		len = snprintf(filename, sizeof(filename), "%s/%s", p, prog);
+		if (len < 0 || len >= sizeof(filename)) {
 			warnc(ENAMETOOLONG, "%s/%s", p, prog);
 			free(path);
 			return (0);
 		}
-
-		snprintf(filename, sizeof(filename), "%s/%s", p, prog);
 		if ((stat(filename, &sbuf) == 0) && S_ISREG(sbuf.st_mode) &&
 		    access(filename, X_OK) == 0) {
 			(void)puts(filename);
