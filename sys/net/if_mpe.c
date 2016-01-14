@@ -1,4 +1,4 @@
-/* $OpenBSD: if_mpe.c,v 1.52 2015/12/05 10:07:55 tedu Exp $ */
+/* $OpenBSD: if_mpe.c,v 1.53 2016/01/14 09:20:31 mpi Exp $ */
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -143,16 +143,12 @@ mpestart(struct ifnet *ifp0)
 {
 	struct mbuf 		*m;
 	struct sockaddr		*sa = (struct sockaddr *)&mpedst;
-	int			 s;
 	sa_family_t		 af;
 	struct rtentry		*rt;
 	struct ifnet		*ifp;
 
 	for (;;) {
-		s = splnet();
 		IFQ_DEQUEUE(&ifp0->if_snd, m);
-		splx(s);
-
 		if (m == NULL)
 			return;
 

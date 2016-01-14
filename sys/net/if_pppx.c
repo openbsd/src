@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pppx.c,v 1.48 2015/12/05 16:09:09 yasuoka Exp $ */
+/*	$OpenBSD: if_pppx.c,v 1.49 2016/01/14 09:20:31 mpi Exp $ */
 
 /*
  * Copyright (c) 2010 Claudio Jeker <claudio@openbsd.org>
@@ -995,15 +995,13 @@ pppx_if_start(struct ifnet *ifp)
 {
 	struct pppx_if *pxi = (struct pppx_if *)ifp->if_softc;
 	struct mbuf *m;
-	int proto, s;
+	int proto;
 
 	if (!ISSET(ifp->if_flags, IFF_RUNNING))
 		return;
 
 	for (;;) {
-		s = splnet();
 		IFQ_DEQUEUE(&ifp->if_snd, m);
-		splx(s);
 
 		if (m == NULL)
 			break;
