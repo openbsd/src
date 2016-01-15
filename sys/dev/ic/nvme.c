@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvme.c,v 1.11 2016/01/15 03:12:04 dlg Exp $ */
+/*	$OpenBSD: nvme.c,v 1.12 2016/01/15 03:28:41 dlg Exp $ */
 
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
@@ -131,11 +131,24 @@ nvme_write8(struct nvme_softc *sc, bus_size_t r, u_int64_t v)
 void
 nvme_version(struct nvme_softc *sc, u_int32_t version)
 {
-	u_int16_t minor;
+	const char *v = NULL;
 
-	minor = NVME_VS_MNR(version);
-	minor = ((minor >> 8) * 10) + (minor & 0xff);
-	printf(", NVME %d.%d", NVME_VS_MJR(version), minor);
+	switch (version) {
+	case NVME_VS_1_0:
+		v = "1.0";
+		break;
+	case NVME_VS_1_1:
+		v = "1.1";
+		break;
+	case NVME_VS_1_2:
+		v = "1.2";
+		break;
+	default:
+		printf(", unknown version 0x%08x", version);
+		return;
+	}
+
+	printf(", NVME %s", v);
 }
 
 void
