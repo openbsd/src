@@ -1,4 +1,4 @@
-/* $OpenBSD: environ.c,v 1.10 2015/11/24 23:46:15 nicm Exp $ */
+/* $OpenBSD: environ.c,v 1.11 2016/01/15 11:33:41 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -196,10 +196,10 @@ void
 environ_push(struct environ *env)
 {
 	struct environ_entry	 *envent;
-	char			**vp, *v;
+	char			*v;
 
-	for (vp = environ; *vp != NULL; vp++) {
-		v = xstrdup(*vp);
+	while (*environ != NULL) {
+		v = xstrdup(*environ);
 		v[strcspn(v, "=")] = '\0';
 
 		unsetenv(v);
