@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.4 2015/10/21 03:52:12 renato Exp $ */
+/*	$OpenBSD: parse.y,v 1.5 2016/01/15 12:23:45 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -461,7 +461,6 @@ as		: AS NUMBER {
 			eigrp = conf_get_instance($2);
 			if (eigrp == NULL)
 				YYERROR;
-			TAILQ_INSERT_TAIL(&conf->instances, eigrp, entry);
 
 			memcpy(&asdefs, defs, sizeof(asdefs));
 			defs = &asdefs;
@@ -1074,7 +1073,7 @@ symget(const char *nam)
 struct eigrp *
 conf_get_instance(uint16_t as)
 {
-	struct eigrp	*e;
+	struct eigrp	*e, *tmp;
 
 	if (eigrp_find(conf, af, as)) {
 		yyerror("autonomous-system %u already configured"
@@ -1092,6 +1091,16 @@ conf_get_instance(uint16_t as)
 
 	/* start local sequence number used by RTP */
 	e->seq_num = 1;
+
+	/* order by address-family and then by autonomous-system */
+	TAILQ_FOREACH(tmp, &conf->instances, entry)
+		if (tmp->af > e->af ||
+		    (tmp->af == e->af && tmp->as > e->as))
+			break;
+	if (tmp)
+		TAILQ_INSERT_BEFORE(tmp, e, entry);
+	else
+		TAILQ_INSERT_TAIL(&conf->instances, e, entry);
 
 	return (e);
 }

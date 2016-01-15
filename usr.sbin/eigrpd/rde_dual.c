@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_dual.c,v 1.12 2015/12/13 19:02:49 renato Exp $ */
+/*	$OpenBSD: rde_dual.c,v 1.13 2016/01/15 12:23:45 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -145,11 +145,6 @@ dual_fsm(struct rt_node *rn, enum dual_event event)
 static int
 rt_compare(struct rt_node *a, struct rt_node *b)
 {
-	if (a->eigrp->af < b->eigrp->af)
-		return (-1);
-	if (a->eigrp->af > b->eigrp->af)
-		return (1);
-
 	switch (a->eigrp->af) {
 	case AF_INET:
 		if (ntohl(a->prefix.v4.s_addr) <
