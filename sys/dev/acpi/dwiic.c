@@ -1,4 +1,4 @@
-/* $OpenBSD: dwiic.c,v 1.5 2016/01/15 20:52:49 kettenis Exp $ */
+/* $OpenBSD: dwiic.c,v 1.6 2016/01/15 22:15:31 jsg Exp $ */
 /*
  * Synopsys DesignWare I2C controller
  *
@@ -497,12 +497,11 @@ dwiic_acpi_foundhid(struct aml_node *node, void *arg)
 	DPRINTF(("%s: found HID %s at %s\n", sc->sc_dev.dv_xname, dev,
 	    aml_nodename(node)));
 
-	if (aml_evalinteger(acpi_softc, node->parent, "_STA", 0, NULL, &sta) ||
-	    !sta) {
-		printf("%s: _sta failed at %s\n", sc->sc_dev.dv_xname,
-		    aml_nodename(node->parent));
+	if (aml_evalinteger(acpi_softc, node->parent, "_STA", 0, NULL, &sta))
+		sta = STA_PRESENT | STA_ENABLED | STA_DEV_OK | 0x1000;
+
+	if ((sta & STA_PRESENT) == 0)
 		return 0;
-	}
 
 	if (!aml_searchname(node->parent, "_DSM")) {
 		printf("%s: couldn't find _DSM at %s\n", sc->sc_dev.dv_xname,
