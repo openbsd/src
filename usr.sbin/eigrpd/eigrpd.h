@@ -1,4 +1,4 @@
-/*	$OpenBSD: eigrpd.h,v 1.7 2016/01/15 12:36:41 renato Exp $ */
+/*	$OpenBSD: eigrpd.h,v 1.8 2016/01/15 12:41:09 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -456,8 +456,9 @@ in_addr_t	 prefixlen2mask(uint8_t);
 struct in6_addr	*prefixlen2mask6(uint8_t);
 void		 eigrp_applymask(int, union eigrpd_addr *,
     const union eigrpd_addr *, int);
-int		 eigrp_addrcmp(int, union eigrpd_addr *, union eigrpd_addr *);
-int		 eigrp_addrisset(int, union eigrpd_addr *);
+int		 eigrp_addrcmp(int, const union eigrpd_addr *,
+    const union eigrpd_addr *);
+int		 eigrp_addrisset(int, const union eigrpd_addr *);
 int		 eigrp_prefixcmp(int, const union eigrpd_addr *,
     const union eigrpd_addr *, uint8_t);
 void		 embedscope(struct sockaddr_in6 *);

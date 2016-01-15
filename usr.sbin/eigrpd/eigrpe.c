@@ -1,4 +1,4 @@
-/*	$OpenBSD: eigrpe.c,v 1.12 2016/01/15 12:36:41 renato Exp $ */
+/*	$OpenBSD: eigrpe.c,v 1.13 2016/01/15 12:41:09 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -66,8 +66,8 @@ eigrpe_sig_handler(int sig, short event, void *bula)
 
 /* eigrp engine */
 pid_t
-eigrpe(struct eigrpd_conf *xconf, int pipe_parent2eigrpe[2], int pipe_eigrpe2rde[2],
-    int pipe_parent2rde[2])
+eigrpe(struct eigrpd_conf *xconf, int pipe_parent2eigrpe[2],
+    int pipe_eigrpe2rde[2], int pipe_parent2rde[2])
 {
 	struct passwd		*pw;
 	struct event		 ev_sigint, ev_sigterm;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.6 2015/10/27 03:27:35 renato Exp $ */
+/*	$OpenBSD: kroute.c,v 1.7 2016/01/15 12:41:09 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -550,7 +550,7 @@ struct kroute_node *
 kroute_insert(struct kroute *kr)
 {
 	struct kroute_prefix	*kp;
-	struct kroute_priority	*kprio, *tmp = NULL;
+	struct kroute_priority	*kprio, *tmp;
 	struct kroute_node	*kn;
 
 	kp = kroute_find_prefix(kr->af, &kr->prefix, kr->prefixlen);

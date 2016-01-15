@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_dual.c,v 1.14 2016/01/15 12:36:41 renato Exp $ */
+/*	$OpenBSD: rde_dual.c,v 1.15 2016/01/15 12:41:09 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -366,7 +366,7 @@ route_composite_metric(uint8_t *kvalues, uint32_t delay, uint32_t bandwidth,
 	operand1 = safe_mul_uint32(kvalues[0] * EIGRP_SCALING_FACTOR,
 	    10000000 / bandwidth);
 	operand2 = safe_mul_uint32(kvalues[1] * EIGRP_SCALING_FACTOR,
-	    10000000 /bandwidth) / (256 - load);
+	    10000000 / bandwidth) / (256 - load);
 	operand3 = safe_mul_uint32(kvalues[2] * EIGRP_SCALING_FACTOR, delay);
 
 	distance = (uint64_t) operand1 + (uint64_t) operand2 +
@@ -479,7 +479,7 @@ reply_active_timer(int fd, short event, void *arg)
 	struct reply_node	*reply = arg;
 	struct rde_nbr		*nbr = reply->nbr;
 
-	log_debug("%s: neighbor %s is stuck in active",
+	log_debug("%s: neighbor %s is stuck in active", __func__,
 	    log_addr(nbr->eigrp->af, &nbr->addr));
 
 	rde_nbr_del(reply->nbr, 1);
@@ -521,7 +521,7 @@ reply_sia_timer(int fd, short event, void *arg)
 	    &nbr->addr), log_prefix(rn));
 
 	if (reply->siaquery_sent > 0 && reply->siareply_recv == 0) {
-		log_debug("%s: neighbor %s is stuck in active",
+		log_debug("%s: neighbor %s is stuck in active", __func__,
 		    log_addr(nbr->eigrp->af, &nbr->addr));
 		rde_nbr_del(nbr, 1);
 		return;
