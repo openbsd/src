@@ -1,4 +1,4 @@
-/*	$OpenBSD: parsenfsfh.c,v 1.13 2016/01/15 03:03:07 mmcc Exp $	*/
+/*	$OpenBSD: parsenfsfh.c,v 1.14 2016/01/15 18:02:18 mmcc Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Jeffrey C. Mogul, Digital Equipment Corporation,
@@ -75,16 +75,14 @@
 #define	FHT_AIX32	10
 #define	FHT_HPUX9	11
 
-#define	XFF(x)	(x)
-
 #define	make_uint32(msb,b,c,lsb)\
-	(XFF(lsb) + (XFF(c)<<8) + (XFF(b)<<16) + (XFF(msb)<<24))
+	((lsb) + ((c)<<8) + ((b)<<16) + ((msb)<<24))
 
 #define	make_uint24(msb,b, lsb)\
-	(XFF(lsb) + (XFF(b)<<8) + (XFF(msb)<<16))
+	((lsb) + ((b)<<8) + ((msb)<<16))
 
 #define	make_uint16(msb,lsb)\
-	(XFF(lsb) + (XFF(msb)<<8))
+	((lsb) + ((msb)<<8))
 
 #ifdef	__alpha
 	/* or other 64-bit systems */
