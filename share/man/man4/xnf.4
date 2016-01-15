@@ -1,4 +1,4 @@
-.\"	$OpenBSD: xnf.4,v 1.5 2016/01/15 18:12:31 mikeb Exp $
+.\"	$OpenBSD: xnf.4,v 1.6 2016/01/15 22:21:56 jmc Exp $
 .\"
 .\" Copyright (c) 2016 Mike Belopuhov
 .\"
@@ -29,7 +29,7 @@ driver provides support for a paravirtual networking interface
 .Dq Netfront
 native to the Xen hypervisor.
 .Pp
-During attach
+During attach the
 .Nm
 driver will ask the hypervisor to switch all configured virtual interfaces
 over to the Netfront interface regardless of the VM configuration.
