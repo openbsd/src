@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtp.c,v 1.3 2015/10/21 03:48:09 renato Exp $ */
+/*	$OpenBSD: rtp.c,v 1.4 2016/01/15 12:36:41 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -192,7 +192,7 @@ rtp_send_mcast(struct eigrp_iface *ei, struct ibuf *buf)
 				TAILQ_INSERT_TAIL(&seq_addr_list, sa, entry);
 			}
 
-			send_hello(ei, &seq_addr_list, eigrp->seq_num, 0);
+			send_hello(ei, &seq_addr_list, eigrp->seq_num);
 			seq_addr_list_clr(&seq_addr_list);
 		}
 		send_packet(ei, NULL, flags, buf);

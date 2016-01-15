@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.4 2016/01/15 12:23:45 renato Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.5 2016/01/15 12:36:41 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -223,6 +223,33 @@ nbr_to_ctl(struct nbr *nbr)
 	nctl.uptime = now.tv_sec - nbr->uptime;
 
 	return (&nctl);
+}
+
+void
+nbr_clear_ctl(struct ctl_nbr *nctl)
+{
+	struct eigrp		*eigrp;
+	struct nbr		*nbr, *safe;
+
+	TAILQ_FOREACH(eigrp, &econf->instances, entry) {
+		if (nctl->af && nctl->af != eigrp->af)
+			continue;
+		if (nctl->as && nctl->as != eigrp->as)
+			continue;
+
+		RB_FOREACH_SAFE(nbr, nbr_addr_head, &eigrp->nbrs, safe) {
+			if (nbr->flags & (F_EIGRP_NBR_PENDING|F_EIGRP_NBR_SELF))
+				continue;
+			if (eigrp_addrisset(nctl->af, &nctl->addr) &&
+			    eigrp_addrcmp(nctl->af, &nctl->addr, &nbr->addr))
+				continue;
+
+			log_debug("%s: neighbor %s manually cleared", __func__,
+			    log_addr(nbr->ei->eigrp->af, &nbr->addr));
+			send_peerterm(nbr);
+			nbr_del(nbr);
+		}
+	}
 }
 
 /* timers */

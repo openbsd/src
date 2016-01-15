@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_dual.c,v 1.13 2016/01/15 12:23:45 renato Exp $ */
+/*	$OpenBSD: rde_dual.c,v 1.14 2016/01/15 12:36:41 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -1300,11 +1300,11 @@ rde_nbr_new(uint32_t peerid, struct rde_nbr *new)
 }
 
 void
-rde_nbr_del(struct rde_nbr *nbr, int send_peerterm)
+rde_nbr_del(struct rde_nbr *nbr, int peerterm)
 {
 	struct reply_node	*reply;
 
-	if (send_peerterm)
+	if (peerterm)
 		rde_imsg_compose_eigrpe(IMSG_NEIGHBOR_DOWN, nbr->peerid,
 		    0, NULL, 0);
 

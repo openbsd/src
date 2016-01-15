@@ -1,4 +1,4 @@
-/*	$OpenBSD: eigrpe.h,v 1.6 2016/01/15 12:32:34 renato Exp $ */
+/*	$OpenBSD: eigrpe.h,v 1.7 2016/01/15 12:36:41 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -130,6 +130,7 @@ void		 nbr_update_peerid(struct nbr *);
 struct nbr	*nbr_find(struct eigrp_iface *, union eigrpd_addr *);
 struct nbr	*nbr_find_peerid(uint32_t);
 struct ctl_nbr	*nbr_to_ctl(struct nbr *);
+void		 nbr_clear_ctl(struct ctl_nbr *);
 void		 nbr_timeout(int, short, void *);
 void		 nbr_start_timeout(struct nbr *);
 void		 nbr_stop_timeout(struct nbr *);
@@ -179,8 +180,8 @@ void			 metric_encode_mtu(uint8_t *, int);
 int			 metric_decode_mtu(uint8_t *);
 
 /* hello.c */
-void	 send_hello(struct eigrp_iface *, struct seq_addr_head *, uint32_t,
-    int);
+void	 send_hello(struct eigrp_iface *, struct seq_addr_head *, uint32_t);
+void	 send_peerterm(struct nbr *);
 void	 recv_hello(struct eigrp_iface *, union eigrpd_addr *, struct nbr *,
     struct tlv_parameter *);
 

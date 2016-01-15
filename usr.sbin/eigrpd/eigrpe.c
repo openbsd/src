@@ -1,4 +1,4 @@
-/*	$OpenBSD: eigrpe.c,v 1.11 2016/01/15 12:32:34 renato Exp $ */
+/*	$OpenBSD: eigrpe.c,v 1.12 2016/01/15 12:36:41 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -545,7 +545,7 @@ eigrpe_dispatch_rde(int fd, short event, void *bula)
 				break;
 			}
 			/* announce that this neighborship is dead */
-			send_hello(nbr->ei, NULL, 0, 1);
+			send_peerterm(nbr);
 			nbr_del(nbr);
 			break;
 		case IMSG_CTL_SHOW_TOPOLOGY:

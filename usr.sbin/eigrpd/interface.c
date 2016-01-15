@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.10 2016/01/15 12:25:43 renato Exp $ */
+/*	$OpenBSD: interface.c,v 1.11 2016/01/15 12:36:41 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -453,7 +453,7 @@ eigrp_if_hello_timer(int fd, short event, void *arg)
 	struct eigrp_iface	*ei = arg;
 	struct timeval		 tv;
 
-	send_hello(ei, NULL, 0, 0);
+	send_hello(ei, NULL, 0);
 
 	/* reschedule hello_timer */
 	timerclear(&tv);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: eigrpd.h,v 1.6 2015/12/13 18:55:53 renato Exp $ */
+/*	$OpenBSD: eigrpd.h,v 1.7 2016/01/15 12:36:41 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -72,6 +72,7 @@ enum imsg_type {
 	IMSG_CTL_SHOW_NBR,
 	IMSG_CTL_SHOW_TOPOLOGY,
 	IMSG_CTL_SHOW_STATS,
+	IMSG_CTL_CLEAR_NBR,
 	IMSG_CTL_FIB_COUPLE,
 	IMSG_CTL_FIB_DECOUPLE,
 	IMSG_CTL_IFACE,

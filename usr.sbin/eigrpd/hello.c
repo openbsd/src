@@ -1,4 +1,4 @@
-/*	$OpenBSD: hello.c,v 1.3 2016/01/15 12:32:34 renato Exp $ */
+/*	$OpenBSD: hello.c,v 1.4 2016/01/15 12:36:41 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -28,7 +28,7 @@
 
 void
 send_hello(struct eigrp_iface *ei, struct seq_addr_head *seq_addr_list,
-    uint32_t mcast_seq, int peerterm)
+    uint32_t mcast_seq)
 {
 	struct eigrp		*eigrp = ei->eigrp;
 	struct ibuf		*buf;
@@ -42,7 +42,7 @@ send_hello(struct eigrp_iface *ei, struct seq_addr_head *seq_addr_list,
 	if (gen_eigrp_hdr(buf, EIGRP_OPC_HELLO, flags, 0, eigrp->as))
 		goto fail;
 
-	if (gen_parameter_tlv(buf, ei, peerterm))
+	if (gen_parameter_tlv(buf, ei, 0))
 		goto fail;
 
 	if (gen_sw_version_tlv(buf))
@@ -63,6 +63,34 @@ fail:
 	log_warnx("%s: failed to send message", __func__);
 	ibuf_free(buf);
 }
+
+void
+send_peerterm(struct nbr *nbr)
+{
+	struct eigrp		*eigrp = nbr->ei->eigrp;
+	struct ibuf		*buf;
+	uint8_t			 flags = 0;
+
+	if ((buf = ibuf_dynamic(PKG_DEF_SIZE,
+	    IP_MAXPACKET - sizeof(struct ip))) == NULL)
+		fatal("send_hello");
+
+	/* EIGRP header */
+	if (gen_eigrp_hdr(buf, EIGRP_OPC_HELLO, flags, 0, eigrp->as))
+		goto fail;
+
+	if (gen_parameter_tlv(buf, nbr->ei, 1))
+		goto fail;
+
+	/* send unreliably */
+	send_packet(nbr->ei, nbr, 0, buf);
+	ibuf_free(buf);
+	return;
+fail:
+	log_warnx("%s: failed to send message", __func__);
+	ibuf_free(buf);
+}
+
 
 void
 recv_hello(struct eigrp_iface *ei, union eigrpd_addr *src, struct nbr *nbr,
@@ -95,7 +123,7 @@ recv_hello(struct eigrp_iface *ei, union eigrpd_addr *src, struct nbr *nbr,
 		nbr = nbr_new(ei, src, ntohs(tp->holdtime), 0);
 
 		/* send an expedited hello */
-		send_hello(ei, NULL, 0, 0);
+		send_hello(ei, NULL, 0);
 
 		send_update(nbr->ei, nbr, EIGRP_HDR_FLAG_INIT, NULL);
 	}
