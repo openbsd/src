@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ddb.4,v 1.79 2015/09/11 08:34:35 guenther Exp $
+.\"	$OpenBSD: ddb.4,v 1.80 2016/01/15 11:39:28 dlg Exp $
 .\"	$NetBSD: ddb.4,v 1.5 1994/11/30 16:22:09 jtc Exp $
 .\"
 .\" Mach Operating System
@@ -25,7 +25,7 @@
 .\" any improvements or extensions that they make and grant Carnegie Mellon
 .\" the rights to redistribute these changes.
 .\"
-.Dd $Mdocdate: September 11 2015 $
+.Dd $Mdocdate: January 15 2016 $
 .Dt DDB 4
 .Os
 .Sh NAME
@@ -775,6 +775,15 @@ Note: The
 .Cm /u
 modifier is not supported on every machine, in which case
 incorrect information may be displayed.
+.\" --------------------
+.It Ic show socket Ar addr
+Prints the
+.Li struct socket
+at
+.Ar addr .
+If the socket is spliced, the
+.Li struct sosplice
+associated with the socket is printed as well.
 .\" --------------------
 .It Xo
 .Ic show struct
