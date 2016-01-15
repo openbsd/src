@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ruleset.c,v 1.10 2015/07/18 19:19:00 sashan Exp $ */
+/*	$OpenBSD: pf_ruleset.c,v 1.11 2016/01/15 02:37:12 mmcc Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -107,7 +107,7 @@ pf_find_anchor(const char *path)
 {
 	struct pf_anchor	*key, *found;
 
-	key = (struct pf_anchor *)rs_malloc(sizeof(*key));
+	key = rs_malloc(sizeof(*key));
 	if (key == NULL)
 		return (NULL);
 	strlcpy(key->path, path, sizeof(key->path));
@@ -146,7 +146,7 @@ pf_find_or_create_ruleset(const char *path)
 	ruleset = pf_find_ruleset(path);
 	if (ruleset != NULL)
 		return (ruleset);
-	p = (char *)rs_malloc(MAXPATHLEN);
+	p = rs_malloc(MAXPATHLEN);
 	if (p == NULL)
 		return (NULL);
 	strlcpy(p, path, MAXPATHLEN);
@@ -175,7 +175,7 @@ pf_find_or_create_ruleset(const char *path)
 			rs_free(p);
 			return (NULL);
 		}
-		anchor = (struct pf_anchor *)rs_malloc(sizeof(*anchor));
+		anchor = rs_malloc(sizeof(*anchor));
 		if (anchor == NULL) {
 			rs_free(p);
 			return (NULL);
@@ -264,7 +264,7 @@ pf_anchor_setup(struct pf_rule *r, const struct pf_ruleset *s,
 	r->anchor_wildcard = 0;
 	if (!name[0])
 		return (0);
-	path = (char *)rs_malloc(MAXPATHLEN);
+	path = rs_malloc(MAXPATHLEN);
 	if (path == NULL)
 		return (1);
 	if (name[0] == '/')
@@ -325,7 +325,7 @@ pf_anchor_copyout(const struct pf_ruleset *rs, const struct pf_rule *r,
 		char	*a, *p;
 		int	 i;
 
-		a = (char *)rs_malloc(MAXPATHLEN);
+		a = rs_malloc(MAXPATHLEN);
 		if (a == NULL)
 			return (1);
 		if (rs->anchor == NULL)
