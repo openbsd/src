@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.h,v 1.16 2010/11/05 15:17:50 claudio Exp $	*/
+/*	$OpenBSD: db_interface.h,v 1.17 2016/01/15 11:21:58 dlg Exp $	*/
 /*	$NetBSD: db_interface.h,v 1.1 1996/02/05 01:57:03 christos Exp $	*/
 
 /*
@@ -57,6 +57,9 @@ void db_show_all_pools(db_expr_t, int, db_expr_t, char *);
 
 /* kern/uipc_mbuf.c */
 void m_print(void *, int (*)(const char *, ...));
+
+/* kern/uipc_socket.c */
+void so_print(void *, int (*)(const char *, ...));
 
 /* nfs/nfs_debug.c */
 void db_show_all_nfsreqs(db_expr_t, int, db_expr_t, char *);

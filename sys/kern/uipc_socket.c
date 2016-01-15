@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.146 2016/01/13 21:39:39 bluhm Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.147 2016/01/15 11:21:58 dlg Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -49,6 +49,10 @@
 #include <sys/signalvar.h>
 #include <net/if.h>
 #include <sys/pool.h>
+
+#ifdef DDB
+#include <machine/db_machdep.h>
+#endif
 
 void	sbsync(struct sockbuf *, struct mbuf *);
 
@@ -1893,3 +1897,85 @@ filt_solisten(struct knote *kn, long hint)
 	kn->kn_data = so->so_qlen;
 	return (so->so_qlen != 0);
 }
+
+#ifdef DDB
+void
+sobuf_print(struct sockbuf *,
+    int (*)(const char *, ...) __attribute__((__format__(__kprintf__,1,2))));
+
+void
+sobuf_print(struct sockbuf *sb,
+    int (*pr)(const char *, ...) __attribute__((__format__(__kprintf__,1,2))))
+{
+	(*pr)("\tsb_cc: %lu\n", sb->sb_cc);
+	(*pr)("\tsb_datacc: %lu\n", sb->sb_datacc);
+	(*pr)("\tsb_hiwat: %lu\n", sb->sb_hiwat);
+	(*pr)("\tsb_wat: %lu\n", sb->sb_wat);
+	(*pr)("\tsb_mbcnt: %lu\n", sb->sb_mbcnt);
+	(*pr)("\tsb_mbmax: %lu\n", sb->sb_mbmax);
+	(*pr)("\tsb_lowat: %ld\n", sb->sb_lowat);
+	(*pr)("\tsb_mb: %p\n", sb->sb_mb);
+	(*pr)("\tsb_mbtail: %p\n", sb->sb_mbtail);
+	(*pr)("\tsb_lastrecord: %p\n", sb->sb_lastrecord);
+	(*pr)("\tsb_sel: ...\n");
+	(*pr)("\tsb_flagsintr: %d\n", sb->sb_flagsintr);
+	(*pr)("\tsb_flags: %i\n", sb->sb_flags);
+	(*pr)("\tsb_timeo: %i\n", sb->sb_timeo);
+}
+
+void
+so_print(void *v,
+    int (*pr)(const char *, ...) __attribute__((__format__(__kprintf__,1,2))))
+{
+	struct socket *so = v;
+
+	(*pr)("socket %p\n", so);
+	(*pr)("so_type: %i\n", so->so_type);
+	(*pr)("so_options: 0x%04x\n", so->so_options); /* %b */
+	(*pr)("so_linger: %i\n", so->so_linger);
+	(*pr)("so_state: %i\n", so->so_state);
+	(*pr)("so_pcb: %p\n", so->so_pcb);
+	(*pr)("so_proto: %p\n", so->so_proto);
+
+	(*pr)("so_head: %p\n", so->so_head);
+	(*pr)("so_onq: %p\n", so->so_onq);
+	(*pr)("so_q0: @%p first: %p\n", &so->so_q0, TAILQ_FIRST(&so->so_q0));
+	(*pr)("so_q: @%p first: %p\n", &so->so_q, TAILQ_FIRST(&so->so_q));
+	(*pr)("so_q0len: %i\n", so->so_q0len);
+	(*pr)("so_qlen: %i\n", so->so_qlen);
+	(*pr)("so_qlimit: %i\n", so->so_qlimit);
+	(*pr)("so_timeo: %i\n", so->so_timeo);
+	(*pr)("so_pgid: %i\n", so->so_pgid);
+	(*pr)("so_siguid: %i\n", so->so_siguid);
+	(*pr)("so_sigeuid: %i\n", so->so_sigeuid);
+	(*pr)("so_obmark: %lu\n", so->so_oobmark);
+
+	(*pr)("so_sp: %p\n", so->so_sp);
+	if (so->so_sp != NULL) {
+		(*pr)("\tssp_socket: %p\n", so->so_sp->ssp_socket);
+		(*pr)("\tssp_soback: %p\n", so->so_sp->ssp_soback);
+		(*pr)("\tssp_len: %lld\n",
+		    (unsigned long long)so->so_sp->ssp_len);
+		(*pr)("\tssp_max: %lld\n",
+		    (unsigned long long)so->so_sp->ssp_max);
+		(*pr)("\tssp_idletv: %lld %ldn", so->so_sp->ssp_idletv.tv_sec,
+		    so->so_sp->ssp_idletv.tv_usec);
+		(*pr)("\tssp_idleto: %spending (@%i)\n",
+		    timeout_pending(&so->so_sp->ssp_idleto) ? "" : "not ",
+		    so->so_sp->ssp_idleto.to_time);
+	}
+
+	(*pr)("so_rcv:\n");
+	sobuf_print(&so->so_rcv, pr);
+	(*pr)("so_snd:\n");
+	sobuf_print(&so->so_snd, pr);
+
+	(*pr)("so_upcall: %p so_upcallarg: %p\n",
+	    so->so_upcall, so->so_upcallarg);
+
+	(*pr)("so_euid: %d so_ruid: %d\n", so->so_euid, so->so_ruid);
+	(*pr)("so_egid: %d so_rgid: %d\n", so->so_egid, so->so_rgid);
+	(*pr)("so_cpid: %d\n", so->so_cpid);
+}
+#endif
+

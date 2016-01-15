@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.193 2015/09/11 09:26:13 kettenis Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.194 2016/01/15 11:21:58 dlg Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -703,9 +703,11 @@ pool_put(struct pool *pp, void *v)
 	if (freeph != NULL)
 		pool_p_free(pp, freeph);
 
-	mtx_enter(&pp->pr_requests_mtx);
-	pool_runqueue(pp, PR_NOWAIT);
-	mtx_leave(&pp->pr_requests_mtx);
+	if (!TAILQ_EMPTY(&pp->pr_requests)) {
+		mtx_enter(&pp->pr_requests_mtx);
+		pool_runqueue(pp, PR_NOWAIT);
+		mtx_leave(&pp->pr_requests_mtx);
+	}
 }
 
 /*

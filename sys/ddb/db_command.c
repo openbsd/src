@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_command.c,v 1.66 2015/12/23 01:39:02 mmcc Exp $	*/
+/*	$OpenBSD: db_command.c,v 1.67 2016/01/15 11:21:58 dlg Exp $	*/
 /*	$NetBSD: db_command.c,v 1.20 1996/03/30 22:30:05 christos Exp $	*/
 
 /* 
@@ -330,6 +330,13 @@ db_mbuf_print_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 
 /*ARGSUSED*/
 void
+db_socket_print_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
+{
+	so_print((void *)addr, db_printf);
+}
+
+/*ARGSUSED*/
+void
 db_mount_print_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 {
 	boolean_t full = FALSE;
@@ -533,6 +540,7 @@ struct db_command db_show_cmds[] = {
 	{ "pool",	db_pool_print_cmd,	0,	NULL },
 	{ "proc",	db_proc_print_cmd,	0,	NULL },
 	{ "registers",	db_show_regs,		0,	NULL },
+	{ "socket",	db_socket_print_cmd,	0,	NULL },
 #ifdef DDB_STRUCT
 	{ "struct",	db_struct_layout_cmd,	CS_OWN,	NULL },
 #endif
