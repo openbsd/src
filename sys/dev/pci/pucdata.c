@@ -1,4 +1,4 @@
-/*	$OpenBSD: pucdata.c,v 1.100 2015/12/26 22:16:12 kettenis Exp $	*/
+/*	$OpenBSD: pucdata.c,v 1.101 2016/01/15 18:57:27 deraadt Exp $	*/
 /*	$NetBSD: pucdata.c,v 1.6 1999/07/03 05:55:23 cgd Exp $	*/
 
 /*
@@ -1411,6 +1411,22 @@ const struct puc_device_description puc_devs[] = {
 	{   /* "Moxa Technologies, Industio C168H" */
 	    {	PCI_VENDOR_MOXA, PCI_PRODUCT_MOXA_C168H,	0, 0	},
 	    {	0xffff,	0xffff,					0, 0	},
+	    {
+		{ PUC_COM_POW2(3), 0x18, 0x0000 },
+		{ PUC_COM_POW2(3), 0x18, 0x0008 },
+		{ PUC_COM_POW2(3), 0x18, 0x0010 },
+		{ PUC_COM_POW2(3), 0x18, 0x0018 },
+		{ PUC_COM_POW2(3), 0x18, 0x0020 },
+		{ PUC_COM_POW2(3), 0x18, 0x0028 },
+		{ PUC_COM_POW2(3), 0x18, 0x0030 },
+		{ PUC_COM_POW2(3), 0x18, 0x0038 },
+	    },
+	},
+
+	/* Moxa Technologies Co., Ltd. PCI I/O Card 8S RS232 */
+	{   /* "Moxa Technologies, CP-168U" */
+	    {	PCI_VENDOR_MOXA, PCI_PRODUCT_MOXA_CP168U,	0, 0	},
+	    {	0xffff, 0xffff,					0, 0	},
 	    {
 		{ PUC_COM_POW2(3), 0x18, 0x0000 },
 		{ PUC_COM_POW2(3), 0x18, 0x0008 },
