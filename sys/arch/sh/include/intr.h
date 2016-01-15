@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.9 2015/02/11 07:05:39 dlg Exp $	*/
+/*	$OpenBSD: intr.h,v 1.10 2016/01/15 18:53:26 deraadt Exp $	*/
 /*	$NetBSD: intr.h,v 1.22 2006/01/24 23:51:42 uwe Exp $	*/
 
 /*-
@@ -71,6 +71,8 @@ struct intc_intrhand {
 	struct evcount ih_count;
 	const char *ih_name;
 };
+
+void intr_barrier(void *);
 
 /* from 0x200 by 0x20 -> from 0 by 1 */
 #define	EVTCODE_TO_MAP_INDEX(x)		(((x) >> 5) - 0x10)
