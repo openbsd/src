@@ -1,4 +1,4 @@
-/*	$OpenBSD: dpme.h,v 1.5 2016/01/11 17:55:45 jasper Exp $	*/
+/*	$OpenBSD: dpme.h,v 1.6 2016/01/15 16:39:20 krw Exp $	*/
 
 //
 // dpme.h - Disk Partition Map Entry (dpme)
@@ -41,8 +41,6 @@
  */
 #ifndef __dpme__
 #define __dpme__
-
-#include "bitfield.h"
 
 //
 // Defines
@@ -102,7 +100,18 @@ struct dpme {
     char    dpme_type[DPISTRLEN]    ;  /* type of partition */
     u32     dpme_lblock_start       ;
     u32     dpme_lblocks            ;
-    u32     dpme_flags;
+    u32     dpme_flags		    ;
+#define	DPME_DISKDRIVER		(1<<9)
+#define	DPME_CHAINABLE		(1<<8)
+#define	DPME_OS_SPECIFIC_1	(1<<8)
+#define	DPME_OS_SPECIFIC_2	(1<<7)
+#define	DPME_OS_PIC_CODE	(1<<6)
+#define	DPME_WRITABLE		(1<<5)
+#define	DPME_READABLE		(1<<4)
+#define	DPME_BOOTABLE		(1<<3)
+#define	DPME_IN_USE		(1<<2)
+#define	DPME_ALLOCATED		(1<<1)
+#define	DPME_VALID		(1<<0)
     u32     dpme_boot_block         ;
     u32     dpme_boot_bytes         ;
     u8     *dpme_load_addr          ;
@@ -116,31 +125,6 @@ struct dpme {
 };
 typedef struct dpme DPME;
 
-#define	dpme_diskdriver_set(p, v)	bitfield_set(&p->dpme_flags, 9, 1, v)
-#define	dpme_chainable_set(p, v)	bitfield_set(&p->dpme_flags, 8, 1, v)
-
-#define	dpme_os_specific_1_set(p, v)	bitfield_set(&p->dpme_flags, 8, 1, v)
-#define	dpme_os_specific_2_set(p, v)	bitfield_set(&p->dpme_flags, 7, 1, v)
-#define	dpme_os_pic_code_set(p, v)	bitfield_set(&p->dpme_flags, 6, 1, v)
-#define	dpme_writable_set(p, v)		bitfield_set(&p->dpme_flags, 5, 1, v)
-#define	dpme_readable_set(p, v)		bitfield_set(&p->dpme_flags, 4, 1, v)
-#define	dpme_bootable_set(p, v)		bitfield_set(&p->dpme_flags, 3, 1, v)
-#define	dpme_in_use_set(p, v)		bitfield_set(&p->dpme_flags, 2, 1, v)
-#define	dpme_allocated_set(p, v)	bitfield_set(&p->dpme_flags, 1, 1, v)
-#define	dpme_valid_set(p, v)		bitfield_set(&p->dpme_flags, 0, 1, v)
-
-#define	dpme_diskdriver_get(p)		bitfield_get(p->dpme_flags, 9, 1)
-#define	dpme_chainable_get(p)		bitfield_get(p->dpme_flags, 8, 1)
-
-#define	dpme_os_specific_1_get(p)	bitfield_get(p->dpme_flags, 8, 1)
-#define	dpme_os_specific_2_get(p)	bitfield_get(p->dpme_flags, 7, 1)
-#define	dpme_os_pic_code_get(p)		bitfield_get(p->dpme_flags, 6, 1)
-#define	dpme_writable_get(p)		bitfield_get(p->dpme_flags, 5, 1)
-#define	dpme_readable_get(p)		bitfield_get(p->dpme_flags, 4, 1)
-#define	dpme_bootable_get(p)		bitfield_get(p->dpme_flags, 3, 1)
-#define	dpme_in_use_get(p)		bitfield_get(p->dpme_flags, 2, 1)
-#define	dpme_allocated_get(p)		bitfield_get(p->dpme_flags, 1, 1)
-#define	dpme_valid_get(p)		bitfield_get(p->dpme_flags, 0, 1)
 
 
 // A/UX only data structures (sentimental reasons?)
@@ -155,6 +139,11 @@ struct	bzb			/* block zero block format */
     u8   bzb_type;		/* FS type */
     u16  bzb_inode;		/* bad block inode number */
     u32  bzb_flags;
+#define	BZB_ROOT	(1<<31)
+#define	BZB_USR		(1<<30)
+#define	BZB_CRIT	(1<<29)
+#define	BZB_SLICE_SHIFT	16
+#define	BZB_SLICE_MASK	0x1f
     u32  bzb_tmade;		/* time of FS creation */
     u32  bzb_tmount;		/* time of last mount */
     u32  bzb_tumount;		/* time of last umount */
@@ -163,15 +152,7 @@ struct	bzb			/* block zero block format */
 };
 typedef	struct bzb	BZB;
 
-#define	bzb_root_set(p, v)		bitfield_set(&p->bzb_flags, 31, 1, v)
-#define	bzb_usr_set(p, v)		bitfield_set(&p->bzb_flags, 30, 1, v)
-#define	bzb_crit_set(p, v)		bitfield_set(&p->bzb_flags, 29, 1, v)
-#define	bzb_slice_set(p, v)		bitfield_set(&p->bzb_flags, 20, 5, v)
 
-#define	bzb_root_get(p)			bitfield_get(p->bzb_flags, 31, 1)
-#define	bzb_usr_get(p)			bitfield_get(p->bzb_flags, 30, 1)
-#define	bzb_crit_get(p)			bitfield_get(p->bzb_flags, 29, 1)
-#define	bzb_slice_get(p)		bitfield_get(p->bzb_flags, 20, 5)
 
 
 //

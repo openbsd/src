@@ -1,4 +1,4 @@
-/*	$OpenBSD: partition_map.c,v 1.18 2016/01/14 04:22:25 krw Exp $	*/
+/*	$OpenBSD: partition_map.c,v 1.19 2016/01/15 16:39:20 krw Exp $	*/
 
 //
 // partition_map.c - partition map routines
@@ -472,12 +472,7 @@ create_partition_map(char *name, partition_map_header *oldmap)
 	    strncpy(data->dpme_type, kFreeType, DPISTRLEN);
 	    data->dpme_lblock_start = 0;
 	    data->dpme_lblocks = data->dpme_pblocks;
-	    dpme_writable_set(data, 1);
-	    dpme_readable_set(data, 1);
-	    dpme_bootable_set(data, 0);
-	    dpme_in_use_set(data, 0);
-	    dpme_allocated_set(data, 0);
-	    dpme_valid_set(data, 1);
+	    data->dpme_flags = DPME_WRITABLE | DPME_READABLE | DPME_VALID;
 
 	    if (add_data_to_map(data, 1, map) == 0) {
 		free(data);
@@ -679,12 +674,8 @@ dpme_init_flags(DPME *data)
 	data->dpme_flags = APPLE_HFS_FLAGS_VALUE;
     }
     else {
-	dpme_writable_set(data, 1);
-	dpme_readable_set(data, 1);
-	dpme_bootable_set(data, 0);
-	dpme_in_use_set(data, 0);
-	dpme_allocated_set(data, 1);
-	dpme_valid_set(data, 1);
+	data->dpme_flags = DPME_WRITABLE | DPME_READABLE | DPME_ALLOCATED |
+	    DPME_VALID;
     }
 }
 
@@ -711,8 +702,7 @@ bzb_init_slice(BZB *bp, int slice)
 	bp->bzb_type = FST;
 	strlcpy(bp->bzb_mount_point, "/", sizeof(bp->bzb_mount_point));
 	bp->bzb_inode = 1;
-	bzb_root_set(bp,1);
-	bzb_usr_set(bp,1);
+	bp->bzb_flags = BZB_ROOT | BZB_USR;
 	break;
     case 'b':
 	bp->bzb_type = FSTSFS;
@@ -724,11 +714,11 @@ bzb_init_slice(BZB *bp, int slice)
     default:
 	bp->bzb_type = FST;
 	bp->bzb_inode = 1;
-	bzb_usr_set(bp,1);
+	bp->bzb_flags = BZB_USR;
 	break;
     }
-    bzb_slice_set(bp,0);  // XXX OpenBSD disksubr.c ignores slice
-    //	bzb_slice_set(bp,slice-'a'+1);
+    // XXX OpenBSD disksubr.c ignores slice
+    //	bp->bzb_flags |= (slice-'a'+1) << BZB_SLICE_SHIFT;
     bp->bzb_magic = BZBMAGIC;
 }
 

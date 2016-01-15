@@ -1,4 +1,4 @@
-/*	$OpenBSD: dump.c,v 1.16 2016/01/14 04:02:05 krw Exp $	*/
+/*	$OpenBSD: dump.c,v 1.17 2016/01/15 16:39:20 krw Exp $	*/
 
 //
 // dump.c - dumping partition maps
@@ -247,7 +247,7 @@ dump_partition_entry(partition_map *entry, int type_length, int name_length, int
     const char *s;
     u32 size;
     double bytes;
-    int driver;
+    int driver, slice;
     // int kind;
     char *buf;
 #if 1
@@ -312,14 +312,14 @@ dump_partition_entry(partition_map *entry, int type_length, int name_length, int
 	    break;
 	case FST:
 	default:
-	    if (bzb_root_get(bp) != 0) {
-		if (bzb_usr_get(bp) != 0) {
+	    if ((bp->bzb_flags & BZB_ROOT) != 0) {
+		if ((bp->bzb_flags & BZB_USR) != 0) {
 		    s = "RUFS";
 		} else {
 		    s = "RFS";
 		}
 		j = 0;
-	    } else if (bzb_usr_get(bp) != 0) {
+	    } else if ((bp->bzb_flags & BZB_USR) != 0) {
 		s = "UFS";
 		j = 2;
 	    } else {
@@ -327,14 +327,15 @@ dump_partition_entry(partition_map *entry, int type_length, int name_length, int
 	    }
 	    break;
 	}
-	if (bzb_slice_get(bp) != 0) {
-	    printf(" s%1ld %4s", bzb_slice_get(bp)-1, s);
+	slice = ((bp->bzb_flags >> BZB_SLICE_SHIFT) & BZB_SLICE_MASK);
+	if (slice != 0) {
+	    printf(" s%1d %4s", slice - 1, s);
 	} else if (j >= 0) {
 	    printf(" S%1d %4s", j, s);
 	} else {
 	    printf("    %4s", s);
 	}
-	if (bzb_crit_get(bp) != 0) {
+	if ((bp->bzb_flags & BZB_CRIT) != 0) {
 	    printf(" K%1d", bp->bzb_cluster);
 	} else if (j < 0) {
 	    printf("   ");
@@ -356,7 +357,7 @@ show_data_structures(partition_map_header *map)
     Block0 *zp;
     DDMap *m;
     int i;
-    int j;
+    int j, slice;
     partition_map * entry;
     DPME *p;
     BZB *bp;
@@ -418,18 +419,18 @@ u32     dpme_reserved_3[62]     ;
 		entry->disk_address, p->dpme_type);
 	printf("%7lu @ %-7lu ", p->dpme_pblocks, p->dpme_pblock_start);
 	printf("%c%c%c%c%c%c%c%c%c%c%c%c ",
-		(dpme_valid_get(p))?'V':'.',
-		(dpme_allocated_get(p))?'A':'.',
-		(dpme_in_use_get(p))?'I':'.',
-		(dpme_bootable_get(p))?'B':'.',
-		(dpme_readable_get(p))?'R':'.',
-		(dpme_writable_get(p))?'W':'.',
-		(dpme_os_pic_code_get(p))?'P':'.',
-		(dpme_os_specific_2_get(p))?'2':'.',
-		(dpme_chainable_get(p))?'C':'.',
-		(dpme_diskdriver_get(p))?'D':'.',
-		(bitfield_get(p->dpme_flags, 30, 1))?'M':'.',
-		(bitfield_get(p->dpme_flags, 31, 1))?'X':'.');
+		(p->dpme_flags & DPME_VALID)?'V':'.',
+		(p->dpme_flags & DPME_ALLOCATED)?'A':'.',
+		(p->dpme_flags & DPME_IN_USE)?'I':'.',
+		(p->dpme_flags & DPME_BOOTABLE)?'B':'.',
+		(p->dpme_flags & DPME_READABLE)?'R':'.',
+		(p->dpme_flags & DPME_WRITABLE)?'W':'.',
+		(p->dpme_flags & DPME_OS_PIC_CODE)?'P':'.',
+		(p->dpme_flags & DPME_OS_SPECIFIC_2)?'2':'.',
+		(p->dpme_flags & DPME_CHAINABLE)?'C':'.',
+		(p->dpme_flags & DPME_DISKDRIVER)?'D':'.',
+		(p->dpme_flags & (1<<30))?'M':'.',
+		(p->dpme_flags & (1<<31))?'X':'.');
 	if (p->dpme_lblock_start != 0 || p->dpme_pblocks != p->dpme_lblocks) {
 	    printf("(%lu @ %lu)", p->dpme_lblocks, p->dpme_lblock_start);
 	}
@@ -474,19 +475,20 @@ xx: cccc RU *dd s...
 	    case FST:
 	    default:
 		s = "fsys";
-		if (bzb_root_get(bp) != 0) {
+		if ((bp->bzb_flags & BZB_ROOT) != 0) {
 		    j = 0;
-		} else if (bzb_usr_get(bp) != 0) {
+		} else if ((bp->bzb_flags & BZB_USR) != 0) {
 		    j = 2;
 		}
 		break;
 	    }
 	    printf("%4s ", s);
 	    printf("%c%c ",
-		    (bzb_root_get(bp))?'R':' ',
-		    (bzb_usr_get(bp))?'U':' ');
-	    if (bzb_slice_get(bp) != 0) {
-		printf("  %2ld", bzb_slice_get(bp)-1);
+		    (bp->bzb_flags & BZB_ROOT)?'R':' ',
+		    (bp->bzb_flags & BZB_USR)?'U':' ');
+	    slice = ((bp->bzb_flags >> BZB_SLICE_SHIFT) & BZB_SLICE_MASK);
+	    if (slice != 0) {
+		printf("  %2d", slice);
 	    } else if (j >= 0) {
 		printf(" *%2d", j);
 	    } else {
@@ -524,13 +526,13 @@ full_dump_partition_entry(partition_map_header *map, int ix)
 
     printf("                 flags: 0x%lx\n", (u32)p->dpme_flags);
     printf("                        ");
-    if (dpme_valid_get(p)) printf("valid ");
-    if (dpme_allocated_get(p)) printf("alloc ");
-    if (dpme_in_use_get(p)) printf("in-use ");
-    if (dpme_bootable_get(p)) printf("boot ");
-    if (dpme_readable_get(p)) printf("read ");
-    if (dpme_writable_get(p)) printf("write ");
-    if (dpme_os_pic_code_get(p)) printf("pic ");
+    if (p->dpme_flags & DPME_VALID) printf("valid ");
+    if (p->dpme_flags & DPME_ALLOCATED) printf("alloc ");
+    if (p->dpme_flags & DPME_IN_USE) printf("in-use ");
+    if (p->dpme_flags & DPME_BOOTABLE) printf("boot ");
+    if (p->dpme_flags & DPME_READABLE) printf("read ");
+    if (p->dpme_flags & DPME_WRITABLE) printf("write ");
+    if (p->dpme_flags & DPME_OS_PIC_CODE) printf("pic ");
     t = p->dpme_flags >> 7;
     for (i = 7; i <= 31; i++) {
     	if (t & 0x1) {
