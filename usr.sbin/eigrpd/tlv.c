@@ -1,4 +1,4 @@
-/*	$OpenBSD: tlv.c,v 1.5 2015/10/21 03:48:09 renato Exp $ */
+/*	$OpenBSD: tlv.c,v 1.6 2016/01/15 12:29:29 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -175,28 +175,27 @@ gen_route_tlv(struct ibuf *buf, struct rinfo *ri)
 
 	switch (ri->af) {
 	case AF_INET:
-		switch (ri->type) {
-		case EIGRP_ROUTE_INTERNAL:
-			tlv.type = htons(TLV_TYPE_IPV4_INTERNAL);
-			break;
-		case EIGRP_ROUTE_EXTERNAL:
-			tlv.type = htons(TLV_TYPE_IPV4_EXTERNAL);
-			break;
-		}
+		tlv.type = TLV_PROTO_IPV4;
 		break;
 	case AF_INET6:
-		switch (ri->type) {
-		case EIGRP_ROUTE_INTERNAL:
-			tlv.type = htons(TLV_TYPE_IPV6_INTERNAL);
-			break;
-		case EIGRP_ROUTE_EXTERNAL:
-			tlv.type = htons(TLV_TYPE_IPV6_EXTERNAL);
-			break;
-		}
+		tlv.type = TLV_PROTO_IPV6;
 		break;
 	default:
 		fatalx("gen_route_tlv: unknown af");
 	}
+
+	switch (ri->type) {
+	case EIGRP_ROUTE_INTERNAL:
+		tlv.type |= TLV_ROUTE_INTERNAL;
+		break;
+	case EIGRP_ROUTE_EXTERNAL:
+		tlv.type |= TLV_ROUTE_EXTERNAL;
+		break;
+	default:
+		fatalx("gen_route_tlv: unknown type");
+	}
+	tlv.type = htons(tlv.type);
+
 	if (ibuf_add(buf, &tlv, sizeof(tlv)))
 		return (-1);
 	tlvlen = TLV_HDR_LEN;
@@ -363,14 +362,13 @@ tlv_decode_mcast_seq(struct tlv *tlv, char *buf)
 }
 
 int
-tlv_decode_route(int af, enum route_type type, struct tlv *tlv, char *buf,
-    struct rinfo *ri)
+tlv_decode_route(int af, struct tlv *tlv, char *buf, struct rinfo *ri)
 {
 	int		 tlv_len, min_len, plen, offset;
 	in_addr_t	 ipv4;
 
-	tlv_len = ntohs(tlv->length);
-	switch (af) {
+	ri->af = af;
+	switch (ri->af) {
 	case AF_INET:
 		min_len = TLV_TYPE_IPV4_INT_MIN_LEN;
 		break;
@@ -380,16 +378,24 @@ tlv_decode_route(int af, enum route_type type, struct tlv *tlv, char *buf,
 	default:
 		fatalx("tlv_decode_route: unknown af");
 	}
-	if (type == EIGRP_ROUTE_EXTERNAL)
-		min_len += sizeof(struct classic_emetric);
 
+	switch (ntohs(tlv->type) & TLV_TYPE_MASK) {
+	case TLV_ROUTE_INTERNAL:
+		ri->type = EIGRP_ROUTE_INTERNAL;
+		break;
+	case TLV_ROUTE_EXTERNAL:
+		ri->type = EIGRP_ROUTE_EXTERNAL;
+		min_len += sizeof(struct classic_emetric);
+		break;
+	default:
+		fatalx("tlv_decode_route: unknown type");
+	}
+
+	tlv_len = ntohs(tlv->length);
 	if (tlv_len < min_len) {
 		log_debug("%s: malformed tlv (bad length)", __func__);
 		return (-1);
 	}
-
-	ri->af = af;
-	ri->type = type;
 
 	/* nexthop */
 	offset = TLV_HDR_LEN;
@@ -407,7 +413,7 @@ tlv_decode_route(int af, enum route_type type, struct tlv *tlv, char *buf,
 	}
 
 	/* exterior metric */
-	if (type == EIGRP_ROUTE_EXTERNAL) {
+	if (ri->type == EIGRP_ROUTE_EXTERNAL) {
 		memcpy(&ri->emetric, buf + offset, sizeof(ri->emetric));
 		ri->emetric.routerid = ntohl(ri->emetric.routerid);
 		ri->emetric.as = ntohl(ri->emetric.as);

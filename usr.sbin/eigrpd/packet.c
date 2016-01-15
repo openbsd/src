@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.6 2016/01/15 12:25:43 renato Exp $ */
+/*	$OpenBSD: packet.c,v 1.7 2016/01/15 12:29:29 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -312,7 +312,6 @@ recv_packet(int af, union eigrpd_addr *src, union eigrpd_addr *dest,
 	struct tlv_mcast_seq	*tm = NULL;
 	struct rinfo		 ri;
 	struct rinfo_entry	*re;
-	enum route_type		 route_type = 0;
 	struct seq_addr_head	 seq_addr_list;
 	struct rinfo_head	 rinfo_list;
 
@@ -327,6 +326,7 @@ recv_packet(int af, union eigrpd_addr *src, union eigrpd_addr *dest,
 	TAILQ_INIT(&rinfo_list);
 	while (len > 0) {
 		struct tlv 	tlv;
+		uint16_t	tlv_type;
 
 		if (len < sizeof(tlv)) {
 			log_debug("%s: malformed packet (bad length)",
@@ -341,7 +341,8 @@ recv_packet(int af, union eigrpd_addr *src, union eigrpd_addr *dest,
 			goto error;
 		}
 
-		switch (ntohs(tlv.type)) {
+		tlv_type = ntohs(tlv.type);
+		switch (tlv_type) {
 		case TLV_TYPE_PARAMETER:
 			if ((tp = tlv_decode_parameter(&tlv, buf)) == NULL)
 				goto error;
@@ -363,28 +364,14 @@ recv_packet(int af, union eigrpd_addr *src, union eigrpd_addr *dest,
 		case TLV_TYPE_IPV6_INTERNAL:
 		case TLV_TYPE_IPV6_EXTERNAL:
 			/* silently ignore TLV from different address-family */
-			if (af != AF_INET &&
-			    (ntohs(tlv.type) == TLV_TYPE_IPV4_INTERNAL  ||
-			    ntohs(tlv.type) == TLV_TYPE_IPV4_EXTERNAL))
+			if ((tlv_type & TLV_PROTO_MASK) == TLV_PROTO_IPV4 &&
+			    af != AF_INET)
 				break;
-			if (af != AF_INET6 &&
-			    (ntohs(tlv.type) == TLV_TYPE_IPV6_INTERNAL  ||
-			    ntohs(tlv.type) == TLV_TYPE_IPV6_EXTERNAL))
+			if ((tlv_type & TLV_PROTO_MASK) == TLV_PROTO_IPV6 &&
+			    af != AF_INET6)
 				break;
 
-			switch (ntohs(tlv.type)) {
-			case TLV_TYPE_IPV4_INTERNAL:
-			case TLV_TYPE_IPV6_INTERNAL:
-				route_type = EIGRP_ROUTE_INTERNAL;
-				break;
-			case TLV_TYPE_IPV4_EXTERNAL:
-			case TLV_TYPE_IPV6_EXTERNAL:
-				route_type = EIGRP_ROUTE_EXTERNAL;
-				break;
-			}
-
-			if (tlv_decode_route(af, route_type, &tlv, buf,
-			    &ri) < 0)
+			if (tlv_decode_route(af, &tlv, buf, &ri) < 0)
 				goto error;
 			if ((re = calloc(1, sizeof(*re))) == NULL)
 				fatal("recv_packet");

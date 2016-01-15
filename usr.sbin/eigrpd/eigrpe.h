@@ -1,4 +1,4 @@
-/*	$OpenBSD: eigrpe.h,v 1.4 2015/12/13 18:55:53 renato Exp $ */
+/*	$OpenBSD: eigrpe.h,v 1.5 2016/01/15 12:29:29 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -173,8 +173,8 @@ int			 tlv_decode_seq(int, struct tlv *, char *,
     struct seq_addr_head *);
 struct tlv_sw_version	*tlv_decode_sw_version(struct tlv *, char *);
 struct tlv_mcast_seq	*tlv_decode_mcast_seq(struct tlv *, char *);
-int			 tlv_decode_route(int, enum route_type, struct tlv *,
-    char *, struct rinfo *);
+int			 tlv_decode_route(int, struct tlv *, char *,
+    struct rinfo *);
 void			 metric_encode_mtu(uint8_t *, int);
 int			 metric_decode_mtu(uint8_t *);
 
