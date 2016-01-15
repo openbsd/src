@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_dual.c,v 1.17 2016/01/15 12:52:49 renato Exp $ */
+/*	$OpenBSD: rde_dual.c,v 1.18 2016/01/15 12:56:12 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -260,7 +260,7 @@ struct eigrp_route *
 route_new(struct rt_node *rn, struct rde_nbr *nbr, struct rinfo *ri)
 {
 	struct eigrp		*eigrp = rn->eigrp;
-	struct eigrp_route	*route;
+	struct eigrp_route	*route, *tmp;
 
 	if ((route = calloc(1, sizeof(*route))) == NULL)
 		fatal("route_new");
@@ -272,7 +272,30 @@ route_new(struct rt_node *rn, struct rde_nbr *nbr, struct rinfo *ri)
 	else
 		memcpy(&route->nexthop, &nbr->addr, sizeof(route->nexthop));
 	route_update_metrics(eigrp, route, ri);
-	TAILQ_INSERT_TAIL(&rn->routes, route, entry);
+
+	/* order by nexthop */
+	TAILQ_FOREACH(tmp, &rn->routes, entry) {
+		switch (eigrp->af) {
+		case AF_INET:
+			if (ntohl(tmp->nexthop.v4.s_addr) >
+			    ntohl(route->nexthop.v4.s_addr))
+				goto insert;
+			break;
+		case AF_INET6:
+			if (memcmp(&tmp->nexthop.v6.s6_addr[0],
+			    &route->nexthop.v6.s6_addr[0],
+			    sizeof(struct in6_addr)) > 0)
+				goto insert;
+			break;
+		default:
+			fatalx("route_new: unknown af");
+		}
+	}
+insert:
+	if (tmp)
+		TAILQ_INSERT_BEFORE(tmp, route, entry);
+	else
+		TAILQ_INSERT_TAIL(&rn->routes, route, entry);
 
 	log_debug("%s: prefix %s via %s distance (%u/%u)", __func__,
 	    log_prefix(rn), route_print_origin(eigrp->af, route->nbr),
