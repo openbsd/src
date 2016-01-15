@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_dual.c,v 1.15 2016/01/15 12:41:09 renato Exp $ */
+/*	$OpenBSD: rde_dual.c,v 1.16 2016/01/15 12:48:53 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -527,7 +527,20 @@ reply_sia_timer(int fd, short event, void *arg)
 		return;
 	}
 
-	/* restart active timeout */
+	/*
+	 * draft-savage-eigrp-04 - Section 4.4.1.1:
+	 * "Up to three SIA-QUERY packets for a specific destination may
+	 * be sent, each at a value of one-half the ACTIVE time, so long
+	 * as each are successfully acknowledged and met with an SIA-REPLY".
+	 */
+	if (reply->siaquery_sent >= 3)
+		return;
+
+	reply->siaquery_sent++;
+	reply->siareply_recv = 0;
+
+	/* restart sia and active timeouts */
+	reply_sia_start_timer(reply);
 	reply_active_start_timer(reply);
 
 	/* send an sia-query */
@@ -535,17 +548,6 @@ reply_sia_timer(int fd, short event, void *arg)
 	ri.metric.flags |= F_METRIC_ACTIVE;
 	rde_send_siaquery(nbr, &ri);
 
-	/*
-	 * draft-savage-eigrp-04 - Section 4.4.1.1:
-	 * "Up to three SIA-QUERY packets for a specific destination may
-	 * be sent, each at a value of one-half the ACTIVE time, so long
-	 * as each are successfully acknowledged and met with an SIA-REPLY".
-	 */
-	if (reply->siaquery_sent < 3) {
-		reply->siaquery_sent++;
-		reply->siareply_recv = 0;
-		reply_sia_start_timer(reply);
-	}
 }
 
 void
