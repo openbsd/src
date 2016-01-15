@@ -1,4 +1,4 @@
-/*	$OpenBSD: parsenfsfh.c,v 1.12 2015/11/18 15:36:20 mmcc Exp $	*/
+/*	$OpenBSD: parsenfsfh.c,v 1.13 2016/01/15 03:03:07 mmcc Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Jeffrey C. Mogul, Digital Equipment Corporation,
@@ -75,12 +75,7 @@
 #define	FHT_AIX32	10
 #define	FHT_HPUX9	11
 
-#ifdef	ultrix
-/* Nasty hack to keep the Ultrix C compiler from emitting bogus warnings */
-#define	XFF(x)	((u_int32_t)(x))
-#else
 #define	XFF(x)	(x)
-#endif
 
 #define	make_uint32(msb,b,c,lsb)\
 	(XFF(lsb) + (XFF(c)<<8) + (XFF(b)<<16) + (XFF(msb)<<24))
@@ -104,46 +99,21 @@
 static int is_UCX(unsigned char *);
 
 void
-Parse_fh(fh, fsidp, inop, osnamep, fsnamep, ourself)
+Parse_fh(fh, fsidp, inop, osnamep, fsnamep)
 caddr_t *fh;
 my_fsid *fsidp;
 ino_t *inop;
 char **osnamep;		/* if non-NULL, return OS name here */
 char **fsnamep;		/* if non-NULL, return server fs name here (for VMS) */
-int ourself;		/* true if file handle was generated on this host */
 {
 	unsigned char *fhp = (unsigned char *)fh;
 	u_int32_t temp;
 	int fhtype = FHT_UNKNOWN;
 
-	if (ourself) {
-	    /* File handle generated on this host, no need for guessing */
-#if	defined(IRIX40)
-	    fhtype = FHT_IRIX4;
-#endif
-#if	defined(IRIX50)
-	    fhtype = FHT_IRIX5;
-#endif
-#if	defined(IRIX51)
-	    fhtype = FHT_IRIX5;
-#endif
-#if	defined(SUNOS4)
-	    fhtype = FHT_SUNOS4;
-#endif
-#if	defined(SUNOS5)
-	    fhtype = FHT_SUNOS5;
-#endif
-#if	defined(ultrix)
-	    fhtype = FHT_ULTRIX;
-#endif
-#if	defined(__osf__)
-	    fhtype = FHT_DECOSF;
-#endif
-	}
 	/*
 	 * This is basically a big decision tree
 	 */
-	else if ((fhp[0] == 0) && (fhp[1] == 0)) {
+	if ((fhp[0] == 0) && (fhp[1] == 0)) {
 	    /* bytes[0,1] == (0,0); rules out Ultrix, IRIX5, SUNOS5 */
 	    /* probably rules out HP-UX, AIX unless they allow major=0 */
 	    if ((fhp[2] == 0) && (fhp[3] == 0)) {
@@ -393,7 +363,6 @@ int ourself;		/* true if file handle was generated on this host */
 	case FHT_UNKNOWN:
 #ifdef DEBUG
 	    {
-		/* XXX debugging */
 		int i;
 		for (i = 0; i < 32; i++)
 			(void)fprintf(stderr, "%x.", fhp[i]);
