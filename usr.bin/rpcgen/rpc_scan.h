@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpc_scan.h,v 1.5 2010/09/01 14:43:34 millert Exp $	*/
+/*	$OpenBSD: rpc_scan.h,v 1.6 2016/01/15 10:14:32 jasper Exp $	*/
 /*	$NetBSD: rpc_scan.h,v 1.3 1995/06/11 21:50:04 pk Exp $	*/
 
 /*
@@ -69,9 +69,11 @@ enum tok_kind {
 	TOK_INT,
 	TOK_SHORT,
 	TOK_LONG,
+	TOK_HYPER,
 	TOK_UNSIGNED,
 	TOK_FLOAT,
 	TOK_DOUBLE,
+	TOK_QUAD,
 	TOK_OPAQUE,
 	TOK_CHAR,
 	TOK_STRING,

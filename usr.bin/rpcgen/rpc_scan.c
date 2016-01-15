@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpc_scan.c,v 1.18 2015/08/20 22:32:41 deraadt Exp $	*/
+/*	$OpenBSD: rpc_scan.c,v 1.19 2016/01/15 10:14:32 jasper Exp $	*/
 /*	$NetBSD: rpc_scan.c,v 1.4 1995/06/11 21:50:02 pk Exp $	*/
 
 /*
@@ -407,8 +407,10 @@ static token symbols[] = {
 	{TOK_UNSIGNED, "unsigned"},
 	{TOK_SHORT, "short"},
 	{TOK_LONG, "long"},
+	{TOK_HYPER, "hyper"},
 	{TOK_FLOAT, "float"},
 	{TOK_DOUBLE, "double"},
+	{TOK_QUAD, "quadruple"},
 	{TOK_STRING, "string"},
 	{TOK_PROGRAM, "program"},
 	{TOK_VERSION, "version"},

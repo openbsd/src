@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpc_parse.c,v 1.19 2015/08/20 22:32:41 deraadt Exp $	*/
+/*	$OpenBSD: rpc_parse.c,v 1.20 2016/01/15 10:14:32 jasper Exp $	*/
 /*	$NetBSD: rpc_parse.c,v 1.5 1995/08/29 23:05:55 cgd Exp $	*/
 
 /*
@@ -571,6 +571,10 @@ get_type(prefixp, typep, dkind)
 		*typep = "long";
 		(void) peekscan(TOK_INT, &tok);
 		break;
+	case TOK_HYPER:
+		*typep = "int64_t";
+		(void) peekscan(TOK_INT, &tok);
+		break;
 	case TOK_VOID:
 		if (dkind != DEF_UNION && dkind != DEF_PROGRAM) {
 			error("voids allowed only inside union and program definitions with one argument");
@@ -583,6 +587,7 @@ get_type(prefixp, typep, dkind)
 	case TOK_INT:
 	case TOK_FLOAT:
 	case TOK_DOUBLE:
+	case TOK_QUAD:
 	case TOK_BOOL:
 		*typep = tok.str;
 		break;
@@ -611,6 +616,11 @@ unsigned_dec(typep)
 	case TOK_LONG:
 		get_token(&tok);
 		*typep = "u_long";
+		(void) peekscan(TOK_INT, &tok);
+		break;
+	case TOK_HYPER:
+		get_token(&tok);
+		*typep = "u_int64_t";
 		(void) peekscan(TOK_INT, &tok);
 		break;
 	case TOK_INT:
