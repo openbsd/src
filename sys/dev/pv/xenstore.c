@@ -1,4 +1,4 @@
-/*	$OpenBSD: xenstore.c,v 1.17 2016/01/12 12:12:05 mikeb Exp $	*/
+/*	$OpenBSD: xenstore.c,v 1.18 2016/01/15 18:20:41 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Belopuhov
@@ -177,8 +177,7 @@ xs_attach(struct xen_softc *sc)
 	int i;
 
 	if ((xs = malloc(sizeof(*xs), M_DEVBUF, M_NOWAIT | M_ZERO)) == NULL) {
-		printf("%s: failed to allocate xenstore softc\n",
-		    sc->sc_dev.dv_xname);
+		printf(": failed to allocate xenstore softc\n");
 		return (-1);
 	}
 	sc->sc_xs = xs;
@@ -188,12 +187,13 @@ xs_attach(struct xen_softc *sc)
 	memset(&xhv, 0, sizeof(xhv));
 	xhv.domid = DOMID_SELF;
 	xhv.index = HVM_PARAM_STORE_EVTCHN;
-	if (xen_hypercall(sc, XC_HVM, 2, HVMOP_get_param, &xhv))
+	if (xen_hypercall(sc, XC_HVM, 2, HVMOP_get_param, &xhv)) {
+		printf(": failed to obtain a xenstore event channel\n");
 		goto fail_1;
+	}
 	xs->xs_port = xhv.value;
 
-	DPRINTF("%s: xenstore event channel %d\n", sc->sc_dev.dv_xname,
-	    xs->xs_port);
+	printf(", event channel %d\n", xs->xs_port);
 
 	/* Fetch a frame number (PA) of a shared xenstore page */
 	memset(&xhv, 0, sizeof(xhv));
@@ -211,14 +211,8 @@ xs_attach(struct xen_softc *sc)
 	pmap_kenter_pa((vaddr_t)xs->xs_ring, pa, PROT_READ | PROT_WRITE);
 	pmap_update(pmap_kernel());
 
-	DPRINTF("%s: xenstore ring at va %p pa %#lx\n", sc->sc_dev.dv_xname,
-	    xs->xs_ring, pa & ~PMAP_NOCACHE);
-
 	if (xen_intr_establish(xs->xs_port, &xs->xs_ih, xs_intr, xs, "xs0"))
 		goto fail_2;
-
-	DPRINTF("%s: xenstore interrupt established for port %d\n",
-	    sc->sc_dev.dv_xname, xs->xs_ih);
 
 	xs->xs_wchan = "xswrite";
 	xs->xs_rchan = "xsread";
