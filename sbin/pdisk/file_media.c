@@ -1,4 +1,4 @@
-/*	$OpenBSD: file_media.c,v 1.19 2016/01/13 00:12:49 krw Exp $	*/
+/*	$OpenBSD: file_media.c,v 1.20 2016/01/15 23:16:40 krw Exp $	*/
 
 /*
  * file_media.c -
@@ -27,6 +27,9 @@
  * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <sys/param.h>	/* DEV_BSIZE */
+#include <sys/dkio.h>
+#include <sys/disklabel.h>
 #include <err.h>
 
 // for printf()
@@ -83,7 +86,7 @@ static struct file_media_globals file_info;
 /*
  * Forward declarations
  */
-int compute_block_size(int fd);
+int compute_block_size(int fd, char *name);
 void file_init(void);
 FILE_MEDIA new_file_media(void);
 long read_file_media(MEDIA m, long long offset, unsigned long count, void *address);
@@ -114,45 +117,19 @@ new_file_media(void)
 
 
 int
-compute_block_size(int fd)
+compute_block_size(int fd, char *name)
 {
-    int size;
-    int max_size;
-    off_t x;
-    long t;
-    int i;
-    char *buffer;
+	struct disklabel dl;
+	struct stat st;
 
-    max_size = 0;
-    for (i = 0; ; i++) {
-    	size = potential_block_sizes[i];
-    	if (size == 0) {
-	    break;
-    	}
-    	if (max_size < size) {
-	    max_size = size;
-    	}
-    }
+	if (fstat(fd, &st) == -1)
+		err(1, "can't fstat %s", name);
+	if (!S_ISCHR(st.st_mode) && !S_ISREG(st.st_mode))
+		errx(1, "%s is not a character device or a regular file", name);
+	if (ioctl(fd, DIOCGPDINFO, &dl) == -1)
+		err(1, "can't get disklabel for %s", name);
 
-    buffer = malloc(max_size);
-    if (buffer != 0) {
-	for (i = 0; ; i++) {
-	    size = potential_block_sizes[i];
-	    if (size == 0) {
-		break;
-	    }
-	    if ((x = lseek(fd, 0, SEEK_SET)) < 0) {
-		warn("Can't seek on file");
-		break;
-	    }
-	    if ((t = read(fd, buffer, size)) == size) {
-		free(buffer);
-		return size;
-	    }
-	}
-    }
-    free(buffer);
-    return 0;
+	return (dl.d_secsize);
 }
 
 
@@ -174,7 +151,7 @@ open_file_as_media(char *file, int oflag)
 	a = new_file_media();
 	if (a != 0) {
 	    a->m.kind = file_info.kind;
-	    a->m.grain = compute_block_size(fd);
+	    a->m.grain = compute_block_size(fd, file);
 	    off = lseek(fd, 0, SEEK_END);	/* seek to end of media */
 	    //printf("file size = %Ld\n", off);
 	    a->m.size_in_bytes = (long long) off;
