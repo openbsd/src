@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_pipe.c,v 1.71 2016/01/06 17:59:30 tedu Exp $	*/
+/*	$OpenBSD: sys_pipe.c,v 1.72 2016/01/15 18:10:48 stefan Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -297,8 +297,7 @@ pipe_read(struct file *fp, off_t *poff, struct uio *uio, struct ucred *cred)
 {
 	struct pipe *rpipe = fp->f_data;
 	int error;
-	int nread = 0;
-	int size;
+	size_t size, nread = 0;
 
 	error = pipelock(rpipe);
 	if (error)
@@ -316,7 +315,7 @@ pipe_read(struct file *fp, off_t *poff, struct uio *uio, struct ucred *cred)
 				size = rpipe->pipe_buffer.cnt;
 			if (size > uio->uio_resid)
 				size = uio->uio_resid;
-			error = uiomovei(&rpipe->pipe_buffer.buffer[rpipe->pipe_buffer.out],
+			error = uiomove(&rpipe->pipe_buffer.buffer[rpipe->pipe_buffer.out],
 					size, uio);
 			if (error) {
 				break;
@@ -413,7 +412,7 @@ int
 pipe_write(struct file *fp, off_t *poff, struct uio *uio, struct ucred *cred)
 {
 	int error = 0;
-	int orig_resid;
+	size_t orig_resid;
 	struct pipe *wpipe, *rpipe;
 
 	rpipe = fp->f_data;
@@ -460,7 +459,7 @@ pipe_write(struct file *fp, off_t *poff, struct uio *uio, struct ucred *cred)
 	orig_resid = uio->uio_resid;
 
 	while (uio->uio_resid) {
-		int space;
+		size_t space;
 
 retrywrite:
 		if (wpipe->pipe_state & PIPE_EOF) {
@@ -476,8 +475,8 @@ retrywrite:
 
 		if (space > 0) {
 			if ((error = pipelock(wpipe)) == 0) {
-				int size;	/* Transfer size */
-				int segsize;	/* first segment to transfer */
+				size_t size;	/* Transfer size */
+				size_t segsize;	/* first segment to transfer */
 
 				/*
 				 * If a process blocked in uiomove, our
@@ -514,7 +513,7 @@ retrywrite:
 
 				/* Transfer first segment */
 
-				error = uiomovei(&wpipe->pipe_buffer.buffer[wpipe->pipe_buffer.in], 
+				error = uiomove(&wpipe->pipe_buffer.buffer[wpipe->pipe_buffer.in],
 						segsize, uio);
 
 				if (error == 0 && segsize < size) {
@@ -529,7 +528,7 @@ retrywrite:
 						panic("Expected pipe buffer wraparound disappeared");
 #endif
 
-					error = uiomovei(&wpipe->pipe_buffer.buffer[0],
+					error = uiomove(&wpipe->pipe_buffer.buffer[0],
 							size - segsize, uio);
 				}
 				if (error == 0) {
