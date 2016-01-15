@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.9 2016/01/15 12:25:43 renato Exp $ */
+/*	$OpenBSD: rde.c,v 1.10 2016/01/15 12:52:49 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -498,13 +498,10 @@ rde_send_change_kroute(struct rt_node *rn, struct eigrp_route *route)
 	kr.af = eigrp->af;
 	memcpy(&kr.prefix, &rn->prefix, sizeof(kr.prefix));
 	kr.prefixlen = rn->prefixlen;
-	if (eigrp_addrisset(eigrp->af, &route->nexthop))
+	if (route->nbr->ei) {
 		memcpy(&kr.nexthop, &route->nexthop, sizeof(kr.nexthop));
-	else
-		memcpy(&kr.nexthop, &route->nbr->addr, sizeof(kr.nexthop));
-	if (route->nbr->ei)
 		kr.ifindex = route->nbr->ei->iface->ifindex;
-	else {
+	} else {
 		switch (eigrp->af) {
 		case AF_INET:
 			kr.nexthop.v4.s_addr = htonl(INADDR_LOOPBACK);
@@ -546,13 +543,10 @@ rde_send_delete_kroute(struct rt_node *rn, struct eigrp_route *route)
 	kr.af = eigrp->af;
 	memcpy(&kr.prefix, &rn->prefix, sizeof(kr.prefix));
 	kr.prefixlen = rn->prefixlen;
-	if (eigrp_addrisset(eigrp->af, &route->nexthop))
+	if (route->nbr->ei) {
 		memcpy(&kr.nexthop, &route->nexthop, sizeof(kr.nexthop));
-	else
-		memcpy(&kr.nexthop, &route->nbr->addr, sizeof(kr.nexthop));
-	if (route->nbr->ei)
 		kr.ifindex = route->nbr->ei->iface->ifindex;
-	else {
+	} else {
 		switch (eigrp->af) {
 		case AF_INET:
 			kr.nexthop.v4.s_addr = htonl(INADDR_LOOPBACK);
@@ -753,7 +747,7 @@ rt_to_ctl(struct rt_node *rn, struct eigrp_route *route)
 	memcpy(&rtctl.prefix, &rn->prefix, sizeof(rtctl.prefix));
 	rtctl.prefixlen = rn->prefixlen;
 	rtctl.type = route->type;
-	memcpy(&rtctl.nexthop, &route->nbr->addr, sizeof(rtctl.nexthop));
+	memcpy(&rtctl.nexthop, &route->nexthop, sizeof(rtctl.nexthop));
 	if (route->nbr->flags & F_RDE_NBR_REDIST)
 		strlcpy(rtctl.ifname, "redistribute", sizeof(rtctl.ifname));
 	else if (route->nbr->flags & F_RDE_NBR_SUMMARY)

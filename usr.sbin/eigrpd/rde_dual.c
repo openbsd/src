@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_dual.c,v 1.16 2016/01/15 12:48:53 renato Exp $ */
+/*	$OpenBSD: rde_dual.c,v 1.17 2016/01/15 12:52:49 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -267,7 +267,10 @@ route_new(struct rt_node *rn, struct rde_nbr *nbr, struct rinfo *ri)
 
 	route->nbr = nbr;
 	route->type = ri->type;
-	memcpy(&route->nexthop, &ri->nexthop, sizeof(route->nexthop));
+	if (eigrp_addrisset(eigrp->af, &ri->nexthop))
+		memcpy(&route->nexthop, &ri->nexthop, sizeof(route->nexthop));
+	else
+		memcpy(&route->nexthop, &nbr->addr, sizeof(route->nexthop));
 	route_update_metrics(eigrp, route, ri);
 	TAILQ_INSERT_TAIL(&rn->routes, route, entry);
 
