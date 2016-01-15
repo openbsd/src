@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.3 2015/12/13 18:55:53 renato Exp $ */
+/*	$OpenBSD: parser.c,v 1.4 2016/01/15 12:57:49 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -71,11 +71,16 @@ static const struct token t_show_stats[];
 static const struct token t_show_stats_af[];
 static const struct token t_show_stats_as[];
 static const struct token t_log[];
+static const struct token t_clear[];
+static const struct token t_clear_nbr[];
+static const struct token t_clear_nbr_af[];
+static const struct token t_clear_nbr_as[];
 
 static const struct token t_main[] = {
 	{KEYWORD,	"reload",	RELOAD,		NULL},
 	{KEYWORD,	"fib",		FIB,		t_fib},
 	{KEYWORD,	"show",		SHOW,		t_show},
+	{KEYWORD,	"clear",	NONE,		t_clear},
 	{KEYWORD,	"log",		NONE,		t_log},
 	{ENDTOKEN,	"",		NONE,		NULL}
 };
@@ -182,6 +187,29 @@ static const struct token t_show_stats_af[] = {
 
 static const struct token t_show_stats_as[] = {
 	{ASNUM,		"",		NONE,		t_show_stats},
+	{ENDTOKEN,	"",		NONE,		NULL}
+};
+
+static const struct token t_clear[] = {
+	{KEYWORD,	"neighbors",	CLEAR_NBR,	t_clear_nbr},
+	{ENDTOKEN,	"",		NONE,		NULL}
+};
+
+static const struct token t_clear_nbr[] = {
+	{NOTOKEN,	"",		NONE,		NULL},
+	{KEYWORD,	"as",		NONE,		t_clear_nbr_as},
+	{KEYWORD,	"family",	NONE,		t_clear_nbr_af},
+	{ADDRESS,	"",		NONE,		NULL},
+	{ENDTOKEN,	"",		NONE,		NULL}
+};
+
+static const struct token t_clear_nbr_af[] = {
+	{FAMILY,	"",		NONE,		t_clear_nbr},
+	{ENDTOKEN,	"",		NONE,		NULL}
+};
+
+static const struct token t_clear_nbr_as[] = {
+	{ASNUM,		"",		NONE,		t_clear_nbr},
 	{ENDTOKEN,	"",		NONE,		NULL}
 };
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: eigrpctl.c,v 1.7 2015/12/13 18:55:53 renato Exp $ */
+/*	$OpenBSD: eigrpctl.c,v 1.8 2016/01/15 12:57:48 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -83,6 +83,7 @@ main(int argc, char *argv[])
 	int				 done = 0;
 	int				 n, verbose = 0;
 	struct ctl_show_topology_req	 treq;
+	struct ctl_nbr			 nbr;
 
 	/* parse options */
 	if ((res = parse(argc - 1, argv + 1)) == NULL)
@@ -161,6 +162,15 @@ main(int argc, char *argv[])
 	case SHOW_STATS:
 		imsg_compose(ibuf, IMSG_CTL_SHOW_STATS, 0, 0, -1, NULL, 0);
 		break;
+	case CLEAR_NBR:
+		memset(&nbr, 0, sizeof(nbr));
+		nbr.af = res->family;
+		nbr.as = res->as;
+		memcpy(&nbr.addr, &res->addr, sizeof(res->addr));
+		imsg_compose(ibuf, IMSG_CTL_CLEAR_NBR, 0, 0, -1, &nbr,
+		    sizeof(nbr));
+		done = 1;
+		break;
 	case FIB:
 		errx(1, "fib couple|decouple");
 		break;
@@ -232,6 +242,7 @@ main(int argc, char *argv[])
 			case SHOW_STATS:
 				done = show_stats_msg(&imsg, res);
 				break;
+			case CLEAR_NBR:
 			case NONE:
 			case FIB:
 			case FIB_COUPLE:
