@@ -1,4 +1,4 @@
-.\" $OpenBSD: iwm.4,v 1.15 2015/12/14 11:25:27 stsp Exp $
+.\" $OpenBSD: iwm.4,v 1.16 2016/01/15 18:50:13 tj Exp $
 .\"
 .\" Copyright (c) 2007,2008
 .\"	Damien Bergamini <damien.bergamini@free.fr>. All rights reserved.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 14 2015 $
+.Dd $Mdocdate: January 15 2016 $
 .Dt IWM 4
 .Os
 .Sh NAME
@@ -133,6 +133,11 @@ The driver will reset the hardware.
 .Xr pci 4 ,
 .Xr hostname.if 5 ,
 .Xr ifconfig 8
+.Sh HISTORY
+The
+.Nm
+device driver first appeared in
+.Ox 5.7 .
 .Sh CAVEATS
 802.11n operation is currently limited to data rates MCS 0 to MCS 7.
 .Pp
