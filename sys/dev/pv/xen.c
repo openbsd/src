@@ -1,4 +1,4 @@
-/*	$OpenBSD: xen.c,v 1.26 2016/01/14 12:37:17 mikeb Exp $	*/
+/*	$OpenBSD: xen.c,v 1.27 2016/01/15 14:27:08 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Belopuhov
@@ -146,9 +146,10 @@ xen_attach(struct device *parent, struct device *self, void *aux)
 	if (xs_attach(sc))
 		return;
 
-	xen_disable_emulated_devices(sc);
 
 	xen_probe_devices(sc);
+
+	xen_disable_emulated_devices(sc);
 
 	config_mountroot(self, xen_deferred);
 }
@@ -158,7 +159,7 @@ xen_deferred(struct device *self)
 {
 	struct xen_softc *sc = (struct xen_softc *)self;
 
-	if (!sc->sc_cbvec) {
+	if (!(sc->sc_flags & XSF_CBVEC)) {
 		DPRINTF("%s: callback vector hasn't been established\n",
 		    sc->sc_dev.dv_xname);
 		return;
@@ -496,7 +497,7 @@ xen_init_cbvec(struct xen_softc *sc)
 	DPRINTF("%s: registered callback IDT vector %d\n",
 	    sc->sc_dev.dv_xname, LAPIC_XEN_VECTOR);
 
-	sc->sc_cbvec = 1;
+	sc->sc_flags |= XSF_CBVEC;
 
 	return (0);
 }
@@ -1170,8 +1171,6 @@ xen_probe_devices(struct xen_softc *sc)
 #define XMI_UNPLUG_NIC		0x02
 #define XMI_UNPLUG_IDESEC	0x04
 
-int xen_disable_pv_ide, xen_disable_pv_idesec, xen_disable_pv_nic;
-
 void
 xen_disable_emulated_devices(struct xen_softc *sc)
 {
@@ -1179,18 +1178,17 @@ xen_disable_emulated_devices(struct xen_softc *sc)
 	ushort unplug = 0;
 
 	if (inw(XMI_PORT) != XMI_MAGIC) {
-		printf("%s: no magic!\n", sc->sc_dev.dv_xname);
+		printf("%s: failed to disable emulated devices\n",
+		    sc->sc_dev.dv_xname);
 		return;
 	}
-	if (xen_disable_pv_ide)
+	if (sc->sc_flags & XSF_UNPLUG_IDE)
 		unplug |= XMI_UNPLUG_IDE;
-	if (xen_disable_pv_idesec)
+	if (sc->sc_flags & XSF_UNPLUG_IDESEC)
 		unplug |= XMI_UNPLUG_IDESEC;
-	if (xen_disable_pv_nic)
+	if (sc->sc_flags & XSF_UNPLUG_NIC)
 		unplug |= XMI_UNPLUG_NIC;
-	if (unplug) {
+	if (unplug)
 		outw(XMI_PORT, unplug);
-		DPRINTF("%s: disabled emulated devices\n", sc->sc_dev.dv_xname);
-	}
 #endif	/* __i386__ || __amd64__ */
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xnf.c,v 1.5 2016/01/13 20:27:18 mikeb Exp $	*/
+/*	$OpenBSD: if_xnf.c,v 1.6 2016/01/15 14:27:08 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015, 2016 Mike Belopuhov
@@ -216,16 +216,11 @@ int
 xnf_match(struct device *parent, void *match, void *aux)
 {
 	struct xen_attach_args *xa = aux;
-	char type[64];
 
 	if (strcmp("vif", xa->xa_name))
 		return (0);
 
-	if (xs_getprop(xa, "type", type, sizeof(type)) == 0 &&
-	    ((strcmp("vif", type) == 0) || (strcmp("front", type) == 0)))
-		return (1);
-
-	return (0);
+	return (1);
 }
 
 void
@@ -291,6 +286,9 @@ xnf_attach(struct device *parent, struct device *self, void *aux)
 	ether_ifattach(ifp);
 
 	timeout_set(&sc->sc_rx_fill, xnf_rx_ring_fill, sc);
+
+	/* Kick out emulated em's and re's */
+	sc->sc_xen->sc_flags |= XSF_UNPLUG_NIC;
 }
 
 static int

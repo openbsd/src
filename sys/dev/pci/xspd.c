@@ -1,4 +1,4 @@
-/*	$OpenBSD: xspd.c,v 1.3 2015/12/21 18:17:36 mikeb Exp $	*/
+/*	$OpenBSD: xspd.c,v 1.4 2016/01/15 14:27:08 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Belopuhov
@@ -70,7 +70,7 @@ xspd_attach(struct device *parent, struct device *self, void *aux)
 	struct xen_hvm_param xhp;
 	extern struct xen_softc *xen_sc;
 
-	if (xen_sc == NULL || xen_sc->sc_cbvec != 0) {
+	if (xen_sc == NULL || (xen_sc->sc_flags & XSF_CBVEC)) {
 		printf("\n");
 		return;
 	}
@@ -108,7 +108,7 @@ xspd_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	xen_sc->sc_cbvec = 1;
+	xen_sc->sc_flags |= XSF_CBVEC;
 }
 
 int
