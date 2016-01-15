@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.147 2016/01/15 11:21:58 dlg Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.148 2016/01/15 11:30:03 dlg Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -1941,6 +1941,7 @@ so_print(void *v,
 	(*pr)("so_onq: %p\n", so->so_onq);
 	(*pr)("so_q0: @%p first: %p\n", &so->so_q0, TAILQ_FIRST(&so->so_q0));
 	(*pr)("so_q: @%p first: %p\n", &so->so_q, TAILQ_FIRST(&so->so_q));
+	(*pr)("so_eq: next: %p\n", TAILQ_NEXT(so, so_qe));
 	(*pr)("so_q0len: %i\n", so->so_q0len);
 	(*pr)("so_qlen: %i\n", so->so_qlen);
 	(*pr)("so_qlimit: %i\n", so->so_qlimit);
