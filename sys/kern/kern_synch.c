@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.126 2015/11/23 10:56:20 mpi Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.127 2016/01/15 11:42:47 dlg Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*
@@ -613,7 +613,12 @@ refcnt_take(struct refcnt *r)
 int
 refcnt_rele(struct refcnt *r)
 {
-	return (atomic_dec_int_nv(&r->refs) == 0);
+	u_int refcnt;
+
+	refcnt = atomic_dec_int_nv(&r->refs);
+	KASSERT(refcnt != ~0);
+
+	return (refcnt == 0);
 }
 
 void
