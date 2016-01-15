@@ -1,4 +1,4 @@
-/* $OpenBSD: input.c,v 1.97 2015/12/16 22:05:35 nicm Exp $ */
+/* $OpenBSD: input.c,v 1.98 2016/01/15 11:31:47 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -100,7 +100,7 @@ struct input_ctx {
 struct input_transition;
 int	input_split(struct input_ctx *);
 int	input_get(struct input_ctx *, u_int, int, int);
-void	input_reply(struct input_ctx *, const char *, ...);
+void printflike(2, 3) input_reply(struct input_ctx *, const char *, ...);
 void	input_set_state(struct window_pane *, const struct input_transition *);
 void	input_reset_cell(struct input_ctx *);
 
