@@ -1,4 +1,4 @@
-/*	$OpenBSD: eigrp.h,v 1.2 2015/10/04 22:54:38 renato Exp $ */
+/*	$OpenBSD: eigrp.h,v 1.3 2016/01/15 12:25:43 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -27,9 +27,14 @@
 /* misc */
 #define EIGRP_VERSION		2
 #define IPPROTO_EIGRP		88
-#define AllEIGRPRouters_v4	0xa0000e0 /* network byte order */
-#define AllEIGRPRouters_v6	"ff02::a"
 #define EIGRP_IP_TTL		2
+
+/* 224.0.0.10 */
+#define AllEIGRPRouters_v4	0xa0000e0 /* network byte order */
+/* ff02::a */
+#define AllEIGRPRouters_v6 \
+	{{{ 0xff, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, \
+	    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0a }}}
 
 #define EIGRP_INFINITE_METRIC	((uint32_t )(~0))
 

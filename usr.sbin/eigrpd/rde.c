@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.8 2015/12/05 15:49:01 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.9 2016/01/15 12:25:43 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -489,6 +489,7 @@ rde_send_change_kroute(struct rt_node *rn, struct eigrp_route *route)
 {
 	struct eigrp	*eigrp = route->nbr->eigrp;
 	struct kroute	 kr;
+	struct in6_addr	 lo6 = IN6ADDR_LOOPBACK_INIT;
 
 	log_debug("%s: %s nbr %s", __func__, log_prefix(rn),
 	    log_addr(eigrp->af, &route->nbr->addr));
@@ -506,10 +507,10 @@ rde_send_change_kroute(struct rt_node *rn, struct eigrp_route *route)
 	else {
 		switch (eigrp->af) {
 		case AF_INET:
-			inet_pton(AF_INET, "127.0.0.1", &kr.nexthop.v4);
+			kr.nexthop.v4.s_addr = htonl(INADDR_LOOPBACK);
 			break;
 		case AF_INET6:
-			inet_pton(AF_INET, "::1", &kr.nexthop.v6);
+			memcpy(&kr.nexthop.v6, &lo6, sizeof(kr.nexthop.v6));
 			break;
 		default:
 			fatalx("rde_send_delete_kroute: unknown af");
@@ -536,6 +537,7 @@ rde_send_delete_kroute(struct rt_node *rn, struct eigrp_route *route)
 {
 	struct eigrp	*eigrp = route->nbr->eigrp;
 	struct kroute	 kr;
+	struct in6_addr	 lo6 = IN6ADDR_LOOPBACK_INIT;
 
 	log_debug("%s: %s nbr %s", __func__, log_prefix(rn),
 	    log_addr(eigrp->af, &route->nbr->addr));
@@ -553,10 +555,10 @@ rde_send_delete_kroute(struct rt_node *rn, struct eigrp_route *route)
 	else {
 		switch (eigrp->af) {
 		case AF_INET:
-			inet_pton(AF_INET, "127.0.0.1", &kr.nexthop.v4);
+			kr.nexthop.v4.s_addr = htonl(INADDR_LOOPBACK);
 			break;
 		case AF_INET6:
-			inet_pton(AF_INET, "::1", &kr.nexthop.v6);
+			memcpy(&kr.nexthop.v6, &lo6, sizeof(kr.nexthop.v6));
 			break;
 		default:
 			fatalx("rde_send_delete_kroute: unknown af");

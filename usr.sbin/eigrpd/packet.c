@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.5 2015/12/13 18:55:53 renato Exp $ */
+/*	$OpenBSD: packet.c,v 1.6 2016/01/15 12:25:43 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -118,6 +118,7 @@ static int
 send_packet_v6(struct iface *iface, struct nbr *nbr, struct ibuf *buf)
 {
 	struct sockaddr_in6	 sa6;
+	struct in6_addr		 maddr = AllEIGRPRouters_v6;
 
 	/* setup sockaddr */
 	memset(&sa6, 0, sizeof(sa6));
@@ -126,7 +127,7 @@ send_packet_v6(struct iface *iface, struct nbr *nbr, struct ibuf *buf)
 	if (nbr)
 		sa6.sin6_addr = nbr->addr.v6;
 	else
-		inet_pton(AF_INET6, AllEIGRPRouters_v6, &sa6.sin6_addr);
+		memcpy(&sa6.sin6_addr, &maddr, sizeof(sa6.sin6_addr));
 	addscope(&sa6, iface->ifindex);
 
 	/* set outgoing interface for multicast traffic */
@@ -576,7 +577,6 @@ recv_packet_v6(int fd, short event, void *bula)
 	} cmsgbuf;
 	struct msghdr		 msg;
 	struct iovec		 iov;
-	struct in6_addr		 maddr;
 	struct sockaddr_in6	 sin6;
 	struct eigrp_hdr	*eigrp_hdr;
 	struct iface		*iface;
@@ -586,6 +586,7 @@ recv_packet_v6(int fd, short event, void *bula)
 	uint16_t		 len;
 	unsigned int		 ifindex = 0;
 	union eigrpd_addr	 src, dest;
+	struct in6_addr		 maddr = AllEIGRPRouters_v6;
 
 	if (event != EV_READ)
 		return;
@@ -628,8 +629,6 @@ recv_packet_v6(int fd, short event, void *bula)
 	 * Packet needs to be sent to AllEIGRPRouters_v6 or to the
 	 * link local address of the interface.
 	 */
-	inet_pton(AF_INET6, AllEIGRPRouters_v6, &maddr);
-
 	if (!IN6_ARE_ADDR_EQUAL(&dest.v6, &maddr) &&
 	    !IN6_ARE_ADDR_EQUAL(&dest.v6, &iface->linklocal)) {
 		log_debug("%s: packet sent to wrong address %s, interface %s",

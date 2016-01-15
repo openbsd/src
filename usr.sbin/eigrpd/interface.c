@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.9 2015/10/25 00:43:35 renato Exp $ */
+/*	$OpenBSD: interface.c,v 1.10 2016/01/15 12:25:43 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -349,7 +349,7 @@ eigrp_if_start(struct eigrp_iface *ei)
 	struct if_addr		*if_addr;
 	union eigrpd_addr	 addr;
 	struct in_addr		 addr4;
-	struct in6_addr		 addr6;
+	struct in6_addr		 addr6 = AllEIGRPRouters_v6;
 
 	log_debug("%s: %s as %u family %s", __func__, ei->iface->name,
 	    eigrp->as, af_name(eigrp->af));
@@ -379,7 +379,6 @@ eigrp_if_start(struct eigrp_iface *ei)
 			return;
 		break;
 	case AF_INET6:
-		inet_pton(AF_INET6, AllEIGRPRouters_v6, &addr6);
 		if (if_join_ipv6_group(ei->iface, &addr6))
 			return;
 		break;
@@ -395,7 +394,7 @@ eigrp_if_reset(struct eigrp_iface *ei)
 {
 	struct eigrp		*eigrp = ei->eigrp;
 	struct in_addr		 addr4;
-	struct in6_addr		 addr6;
+	struct in6_addr		 addr6 = AllEIGRPRouters_v6;
 	struct nbr		*nbr;
 
 	log_debug("%s: %s as %u family %s", __func__, ei->iface->name,
@@ -413,7 +412,6 @@ eigrp_if_reset(struct eigrp_iface *ei)
 		if_leave_ipv4_group(ei->iface, &addr4);
 		break;
 	case AF_INET6:
-		inet_pton(AF_INET6, AllEIGRPRouters_v6, &addr6);
 		if_leave_ipv6_group(ei->iface, &addr6);
 		break;
 	default:
