@@ -1,4 +1,4 @@
-/*	$OpenBSD: dump.c,v 1.17 2016/01/15 16:39:20 krw Exp $	*/
+/*	$OpenBSD: dump.c,v 1.18 2016/01/15 23:05:00 krw Exp $	*/
 
 //
 // dump.c - dumping partition maps
@@ -26,6 +26,8 @@
  * NEGLIGENCE, OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
  * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
+#include <sys/param.h>	/* DEV_BSIZE */
 
 #include <err.h>
 
@@ -659,13 +661,13 @@ display_patches(partition_map *entry)
     m = entry->the_map->m;
     offset = ((long long) entry->data->dpme_pblock_start) * entry->the_map->logical_block;
     if (patch_block == NULL) {
-	patch_block = malloc(PBLOCK_SIZE);
+	patch_block = malloc(DEV_BSIZE);
 	if (patch_block == NULL) {
 	    warn("can't allocate memory for patch block buffer");
 	    return;
 	}
     }
-    if (read_media(m, (long long)offset, PBLOCK_SIZE, (char *)patch_block) == 0) {
+    if (read_media(m, (long long)offset, DEV_BSIZE, (char *)patch_block) == 0) {
 	warn("Can't read patch block");
 	return;
     }
@@ -673,16 +675,16 @@ display_patches(partition_map *entry)
     if (p->numPatchBlocks != 1) {
 	i = p->numPatchBlocks;
 	free(patch_block);
-	patch_block = reallocarray(NULL, i, PBLOCK_SIZE);
+	patch_block = reallocarray(NULL, i, DEV_BSIZE);
 	if (patch_block == NULL) {
 	    warn("can't allocate memory for patch blocks buffer");
 	    return;
 	}
-	s = patch_block + PBLOCK_SIZE*i;
+	s = patch_block + DEV_BSIZE*i;
 	while (i > 0) {
-	    s -= PBLOCK_SIZE;
+	    s -= DEV_BSIZE;
 	    i -= 1;
-	    if (read_media(m, offset+i, PBLOCK_SIZE, (char *)s) == 0) {
+	    if (read_media(m, offset+i, DEV_BSIZE, (char *)s) == 0) {
 		warn("Can't read patch block %d", i);
 		return;
 	    }

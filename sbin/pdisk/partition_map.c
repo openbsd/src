@@ -1,4 +1,4 @@
-/*	$OpenBSD: partition_map.c,v 1.19 2016/01/15 16:39:20 krw Exp $	*/
+/*	$OpenBSD: partition_map.c,v 1.20 2016/01/15 23:05:00 krw Exp $	*/
 
 //
 // partition_map.c - partition map routines
@@ -27,7 +27,7 @@
  * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/types.h>
+#include <sys/param.h>	/* DEV_BSIZE */
 #include <sys/dkio.h>
 #include <sys/disklabel.h>
 #include <sys/ioctl.h>
@@ -149,15 +149,15 @@ open_partition_map(char *name, int *valid_file)
     map->base_order = NULL;
 
     map->physical_block = media_granularity(m);	/* preflight */
-    m = open_deblock_media(PBLOCK_SIZE, m);
+    m = open_deblock_media(DEV_BSIZE, m);
     map->m = m;
-    map->misc = malloc(PBLOCK_SIZE);
+    map->misc = malloc(DEV_BSIZE);
     if (map->misc == NULL) {
 	warn("can't allocate memory for block zero buffer");
 	close_media(map->m);
 	free(map);
 	return NULL;
-    } else if (read_media(map->m, (long long) 0, PBLOCK_SIZE, (char *)map->misc) == 0
+    } else if (read_media(map->m, (long long) 0, DEV_BSIZE, (char *)map->misc) == 0
 	    || convert_block0(map->misc, 1)
 	    || coerce_block0(map)) {
 	// if I can't read block 0 I might as well give up
@@ -168,7 +168,7 @@ open_partition_map(char *name, int *valid_file)
     map->physical_block = map->misc->sbBlkSize;
     //printf("physical block size is %d\n", map->physical_block);
 
-    map->logical_block = PBLOCK_SIZE;
+    map->logical_block = DEV_BSIZE;
 
     if (map->logical_block > MAXIOSIZE) {
 	map->logical_block = MAXIOSIZE;
@@ -226,7 +226,7 @@ read_partition_map(partition_map_header *map)
 
 //printf("called read_partition_map\n");
 //printf("logical = %d, physical = %d\n", map->logical_block, map->physical_block);
-    data = malloc(PBLOCK_SIZE);
+    data = malloc(DEV_BSIZE);
     if (data == NULL) {
 	warn("can't allocate memory for disk buffers");
 	return -1;
@@ -275,7 +275,7 @@ read_partition_map(partition_map_header *map)
 	    ix++;
 	}
 
-	data = malloc(PBLOCK_SIZE);
+	data = malloc(DEV_BSIZE);
 	if (data == NULL) {
 	    warn("can't allocate memory for disk buffers");
 	    return -1;
@@ -312,7 +312,7 @@ write_partition_map(partition_map_header *map)
 	result = write_block(map, 0, (char *)map->misc);
 	convert_block0(map->misc, 1);
     } else {
-	block = calloc(1, PBLOCK_SIZE);
+	block = calloc(1, DEV_BSIZE);
 	if (block != NULL) {
 	    result = write_block(map, 0, block);
 	    free(block);
@@ -425,7 +425,7 @@ create_partition_map(char *name, partition_map_header *oldmap)
     } else {
 	size = media_granularity(m);
     }
-    m = open_deblock_media(PBLOCK_SIZE, m);
+    m = open_deblock_media(DEV_BSIZE, m);
     map->m = m;
     if (map->physical_block > MAXIOSIZE) {
 	map->physical_block = MAXIOSIZE;
@@ -436,7 +436,7 @@ create_partition_map(char *name, partition_map_header *oldmap)
     if (oldmap != NULL) {
 	size = oldmap->logical_block;
     } else {
-	size = PBLOCK_SIZE;
+	size = DEV_BSIZE;
     }
 #if 0
     if (size > map->physical_block) {
@@ -451,7 +451,7 @@ create_partition_map(char *name, partition_map_header *oldmap)
     number = compute_device_size(map->name);
     map->media_size = number;
 
-    map->misc = calloc(1, PBLOCK_SIZE);
+    map->misc = calloc(1, DEV_BSIZE);
     if (map->misc == NULL) {
 	warn("can't allocate memory for block zero buffer");
     } else {
@@ -459,7 +459,7 @@ create_partition_map(char *name, partition_map_header *oldmap)
 	coerce_block0(map);
 	sync_device_size(map);
 
-	data = calloc(1, PBLOCK_SIZE);
+	data = calloc(1, DEV_BSIZE);
 	if (data == NULL) {
 	    warn("can't allocate memory for disk buffers");
 	} else {
@@ -498,7 +498,7 @@ coerce_block0(partition_map_header *map)
     if (p->sbSig != BLOCK0_SIGNATURE) {
 	p->sbSig = BLOCK0_SIGNATURE;
 	if (map->physical_block == 1) {
-	    p->sbBlkSize = PBLOCK_SIZE;
+	    p->sbBlkSize = DEV_BSIZE;
 	} else {
 	    p->sbBlkSize = map->physical_block;
 	}
@@ -648,7 +648,7 @@ create_data(const char *name, const char *dptype, u32 base, u32 length)
 {
     DPME *data;
 
-    data = calloc(1, PBLOCK_SIZE);
+    data = calloc(1, DEV_BSIZE);
     if (data == NULL) {
 	warn("can't allocate memory for disk buffers");
     } else {
@@ -1240,7 +1240,7 @@ read_block(partition_map_header *map, unsigned long num, char *buf)
 {
 //printf("read block %d\n", num);
     return read_media(map->m, ((long long) num) * map->logical_block,
-    		PBLOCK_SIZE, (void *)buf);
+    		DEV_BSIZE, (void *)buf);
 }
 
 
@@ -1248,5 +1248,5 @@ int
 write_block(partition_map_header *map, unsigned long num, char *buf)
 {
     return write_media(map->m, ((long long) num) * map->logical_block,
-    		PBLOCK_SIZE, (void *)buf);
+    		DEV_BSIZE, (void *)buf);
 }

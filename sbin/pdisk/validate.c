@@ -1,4 +1,4 @@
-/*	$OpenBSD: validate.c,v 1.10 2016/01/12 20:09:39 krw Exp $	*/
+/*	$OpenBSD: validate.c,v 1.11 2016/01/15 23:05:00 krw Exp $	*/
 
 //
 // validate.c -
@@ -27,6 +27,8 @@
  * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+
+#include <sys/param.h>	/* DEV_BSIZE */
 
 #include <err.h>
 
@@ -111,7 +113,7 @@ get_block_zero(void)
 	b0 = the_map->misc;
 	rtn_value = 1;
     } else {
-	if (read_media(the_media, (long long) 0, PBLOCK_SIZE, buffer) == 0) {
+	if (read_media(the_media, (long long) 0, DEV_BSIZE, buffer) == 0) {
 	    rtn_value = 0;
 	} else {
 	    b0 = (Block0 *) buffer;
@@ -138,7 +140,7 @@ get_block_n(int n)
 	    rtn_value = 0;
 	}
     } else {
-	if (read_media(the_media, ((long long) n) * g, PBLOCK_SIZE, (void *)buffer) == 0) {
+	if (read_media(the_media, ((long long) n) * g, DEV_BSIZE, (void *)buffer) == 0) {
 	    rtn_value = 0;
 	} else {
 	    mb = (DPME *) buffer;
@@ -355,12 +357,12 @@ validate_map(partition_map_header *map)
 	    return;
 	}
 	g = media_granularity(the_media);
-	if (g < PBLOCK_SIZE) {
-	    g = PBLOCK_SIZE;
+	if (g < DEV_BSIZE) {
+	    g = DEV_BSIZE;
 	}
-   	the_media = open_deblock_media(PBLOCK_SIZE, the_media);
+   	the_media = open_deblock_media(DEV_BSIZE, the_media);
 
-	buffer = malloc(PBLOCK_SIZE);
+	buffer = malloc(DEV_BSIZE);
 	if (buffer == NULL) {
 	    warn("can't allocate memory for disk buffer");
 	    goto done;

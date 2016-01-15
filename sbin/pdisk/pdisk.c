@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdisk.c,v 1.32 2016/01/14 15:10:25 krw Exp $	*/
+/*	$OpenBSD: pdisk.c,v 1.33 2016/01/15 23:05:00 krw Exp $	*/
 
 //
 // pdisk - an editor for Apple format partition tables
@@ -29,6 +29,7 @@
  * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <sys/param.h>	/* DEV_BSIZE */
 #include <err.h>
 
 // for printf()
@@ -120,15 +121,15 @@ main(int argc, char **argv)
 {
     int name_index;
 
-    if (sizeof(DPME) != PBLOCK_SIZE) {
+    if (sizeof(DPME) != DEV_BSIZE) {
 	errx(1, "Size of partition map entry (%zu) "
 		"is not equal to block size (%d)\n",
-		sizeof(DPME), PBLOCK_SIZE);
+		sizeof(DPME), DEV_BSIZE);
     }
-    if (sizeof(Block0) != PBLOCK_SIZE) {
+    if (sizeof(Block0) != DEV_BSIZE) {
 	errx(1, "Size of block zero structure (%zu) "
 		"is not equal to block size (%d)\n",
-		sizeof(Block0), PBLOCK_SIZE);
+		sizeof(Block0), DEV_BSIZE);
     }
 
     name_index = get_options(argc, argv);
@@ -731,8 +732,8 @@ do_display_block(partition_map_header *map, char *alt_name)
 	    return;
 	}
 	g = media_granularity(m);
-	if (g < PBLOCK_SIZE) {
-	    g = PBLOCK_SIZE;
+	if (g < DEV_BSIZE) {
+	    g = DEV_BSIZE;
 	}
     }
     if (get_number_argument("Block number: ", &number, next_number) == 0) {
