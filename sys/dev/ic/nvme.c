@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvme.c,v 1.13 2016/01/15 06:34:19 dlg Exp $ */
+/*	$OpenBSD: nvme.c,v 1.14 2016/01/15 06:38:33 dlg Exp $ */
 
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
@@ -206,13 +206,13 @@ nvme_enable(struct nvme_softc *sc, u_int mps)
 	if (ISSET(cc, NVME_CC_EN))
 		return (nvme_ready(sc, NVME_CSTS_RDY));
 
+	nvme_write4(sc, NVME_AQA, NVME_AQA_ACQS(sc->sc_admin_q->q_entries) |
+	    NVME_AQA_ASQS(sc->sc_admin_q->q_entries));
+	nvme_barrier(sc, 0, sc->sc_ios, BUS_SPACE_BARRIER_WRITE);
+
 	nvme_write8(sc, NVME_ASQ, NVME_DMA_DVA(sc->sc_admin_q->q_sq_dmamem));
 	nvme_barrier(sc, 0, sc->sc_ios, BUS_SPACE_BARRIER_WRITE);
 	nvme_write8(sc, NVME_ACQ, NVME_DMA_DVA(sc->sc_admin_q->q_cq_dmamem));
-	nvme_barrier(sc, 0, sc->sc_ios, BUS_SPACE_BARRIER_WRITE);
-
-	nvme_write4(sc, NVME_AQA, NVME_AQA_ACQS(sc->sc_admin_q->q_entries) |
-	    NVME_AQA_ASQS(sc->sc_admin_q->q_entries));
 	nvme_barrier(sc, 0, sc->sc_ios, BUS_SPACE_BARRIER_WRITE);
 
 	CLR(cc, NVME_CC_IOCQES_MASK | NVME_CC_IOSQES_MASK | NVME_CC_SHN_MASK |
@@ -228,7 +228,7 @@ nvme_enable(struct nvme_softc *sc, u_int mps)
 	nvme_barrier(sc, 0, sc->sc_ios,
 	    BUS_SPACE_BARRIER_READ | BUS_SPACE_BARRIER_WRITE);
 
-	return (0);
+	return (nvme_ready(sc, NVME_CSTS_RDY));
 }
 
 int
