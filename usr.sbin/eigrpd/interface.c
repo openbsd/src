@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.11 2016/01/15 12:36:41 renato Exp $ */
+/*	$OpenBSD: interface.c,v 1.12 2016/01/15 12:41:50 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -359,9 +359,6 @@ eigrp_if_start(struct eigrp_iface *ei)
 	ei->self = nbr_new(ei, &addr, 0, 1);
 	nbr_init(ei->self);
 
-	/* set event handlers for interface */
-	evtimer_set(&ei->hello_timer, eigrp_if_hello_timer, ei);
-
 	TAILQ_FOREACH(if_addr, &ei->iface->addr_list, entry) {
 		if (if_addr->af != eigrp->af)
 			continue;
@@ -386,6 +383,7 @@ eigrp_if_start(struct eigrp_iface *ei)
 		fatalx("eigrp_if_start: unknown af");
 	}
 
+	evtimer_set(&ei->hello_timer, eigrp_if_hello_timer, ei);
 	eigrp_if_start_hello_timer(ei);
 }
 
@@ -401,6 +399,9 @@ eigrp_if_reset(struct eigrp_iface *ei)
 	    eigrp->as, af_name(eigrp->af));
 
 	/* the rde will withdraw the connected route for us */
+
+	while ((nbr = TAILQ_FIRST(&ei->nbr_list)) != NULL)
+		nbr_del(nbr);
 
 	if (ei->passive)
 		return;
@@ -419,9 +420,6 @@ eigrp_if_reset(struct eigrp_iface *ei)
 	}
 
 	eigrp_if_stop_hello_timer(ei);
-
-	while ((nbr = TAILQ_FIRST(&ei->nbr_list)) != NULL)
-		nbr_del(nbr);
 }
 
 struct eigrp_iface *
