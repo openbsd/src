@@ -1,4 +1,4 @@
-/*	$OpenBSD: c_ksh.c,v 1.48 2015/12/30 09:07:00 tedu Exp $	*/
+/*	$OpenBSD: c_ksh.c,v 1.49 2016/01/15 17:55:45 mmcc Exp $	*/
 
 /*
  * built-in Korn commands: c_*
@@ -1184,13 +1184,15 @@ c_kill(char **wp)
 					shprintf("%s%s", p, sigtraps[i].name);
 			shprintf("\n");
 		} else {
-			int w, i;
-			int mess_width;
-			struct kill_info ki;
+			int mess_width = 0, w, i;
+			struct kill_info ki = {
+				.num_width = 1,
+				.name_width = 0,
+			};
 
-			for (i = NSIG, ki.num_width = 1; i >= 10; i /= 10)
+			for (i = NSIG; i >= 10; i /= 10)
 				ki.num_width++;
-			ki.name_width = mess_width = 0;
+
 			for (i = 0; i < NSIG; i++) {
 				w = sigtraps[i].name ? strlen(sigtraps[i].name) :
 				    ki.num_width;
