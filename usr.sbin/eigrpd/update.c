@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.2 2015/10/04 23:00:10 renato Exp $ */
+/*	$OpenBSD: update.c,v 1.3 2016/01/15 12:32:34 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -31,14 +31,13 @@ extern struct eigrpd_conf	*econf;
 
 void
 send_update(struct eigrp_iface *ei, struct nbr *nbr, uint32_t flags,
-    int startup, struct rinfo_head *rinfo_list)
+    struct rinfo_head *rinfo_list)
 {
 	struct eigrp		*eigrp = ei->eigrp;
 	struct ibuf		*buf;
 	struct rinfo_entry	*re;
 	int			 size;
 	int			 route_len;
-	struct eigrp_hdr	*eigrp_hdr;
 
 	/* don't exceed the interface's mtu */
 	do {
@@ -81,14 +80,6 @@ send_update(struct eigrp_iface *ei, struct nbr *nbr, uint32_t flags,
 		}
 	} while (!TAILQ_EMPTY(rinfo_list));
 
-	/* set the EOT flag in the last startup update */
-	if (startup) {
-		if ((eigrp_hdr = ibuf_seek(buf, 0, sizeof(*eigrp_hdr))) == NULL)
-                	fatalx("send_update: buf_seek failed");
-		eigrp_hdr->flags = ntohl(eigrp_hdr->flags) | EIGRP_HDR_FLAG_EOT;
-		eigrp_hdr->flags = htonl(eigrp_hdr->flags);
-	}
-
 	rtp_send(ei, nbr, buf);
 	return;
 fail:
@@ -111,24 +102,6 @@ recv_update(struct nbr *nbr, struct rinfo_head *rinfo_list, uint32_t flags)
 
 		if (nbr->flags & F_EIGRP_NBR_PENDING)
 			nbr_init(nbr);
-		else if (!(flags & EIGRP_HDR_FLAG_RS))
-			/*
-			 * This is not in the draft, but apparently if a Cisco
-			 * device sends an INIT Update it expects to receive
-			 * an INIT Update as well, otherwise it triggers the
-			 * "stuck in INIT state" error and discards subsequent
-			 * packets.  However, there is an exception: when the
-			 * "clear ip eigrp neighbors soft" command is issued
-			 * on a Cisco device, the "Restart Flag" is also set
-			 * in the EIGRP header. In this case the Cisco device
-			 * doesn't expect to receive an INIT Update otherwise
-			 * the adjacency will flap.  Unfortunately it looks
-			 * like that there is some kind of initialization
-			 * FSM implemented in the Cisco devices that is not
-			 * documented in the draft.
-			 */
-			send_update(nbr->ei, nbr, EIGRP_HDR_FLAG_INIT,
-			    0, NULL);
 
 		/*
 		 * The INIT flag instructs us to advertise all of our routes,

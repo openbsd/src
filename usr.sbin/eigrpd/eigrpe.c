@@ -1,4 +1,4 @@
-/*	$OpenBSD: eigrpe.c,v 1.10 2015/12/13 18:55:53 renato Exp $ */
+/*	$OpenBSD: eigrpe.c,v 1.11 2016/01/15 12:32:34 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -500,8 +500,7 @@ eigrpe_dispatch_rde(int fd, short event, void *bula)
 
 			switch (imsg.hdr.type) {
 			case IMSG_SEND_UPDATE_END:
-				send_update(nbr->ei, nbr, 0, 1,
-				    &nbr->update_list);
+				send_update(nbr->ei, nbr, 0, &nbr->update_list);
 				message_list_clr(&nbr->update_list);
 				break;
 			case IMSG_SEND_REPLY_END:
@@ -529,7 +528,7 @@ eigrpe_dispatch_rde(int fd, short event, void *bula)
 
 			switch (imsg.hdr.type) {
 			case IMSG_SEND_MUPDATE_END:
-				send_update(ei, NULL, 0, 0, &ei->update_list);
+				send_update(ei, NULL, 0, &ei->update_list);
 				message_list_clr(&ei->update_list);
 				break;
 			case IMSG_SEND_MQUERY_END:
