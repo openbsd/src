@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.21 2015/10/10 22:36:06 deraadt Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.22 2016/01/16 03:17:48 canacar Exp $	*/
 
 /*
  * Copyright (c) 2003 Can Erkin Acar
@@ -43,7 +43,6 @@ enum cmd_types {
 	PRIV_SET_SNAPLEN,	/* set the snaplength */
 	PRIV_MOVE_LOG,		/* move logfile away */
 	PRIV_OPEN_LOG,		/* open logfile for appending */
-	PRIV_PCAP_STATS		/* get pcap statistics */
 };
 
 static int priv_fd = -1;
@@ -68,7 +67,6 @@ priv_init(void)
 {
 	int i, bpfd = -1, socks[2], cmd;
 	int snaplen, ret, olderrno;
-	struct pcap_stat stats;
 	struct passwd *pw;
 
 	for (i = 1; i < _NSIG; i++)
@@ -171,19 +169,6 @@ priv_init(void)
 			must_write(socks[0], &ret, sizeof(int));
 			break;
 
-		case PRIV_PCAP_STATS:
-			if (ioctl(bpfd, BIOCGSTATS, &stats) == -1) {
-				int rval = -1;
-				memset(&stats, 0, sizeof stats);
-				must_write(socks[0], &stats, sizeof(stats));
-				must_write(socks[0], &rval, sizeof(rval));
-			} else {
-				int rval = 0;
-				must_write(socks[0], &stats, sizeof(stats));
-				must_write(socks[0], &rval, sizeof(rval));
-			}
-			break;
-			
 		default:
 			logmsg(LOG_ERR, "[priv]: unknown command %d", cmd);
 			_exit(1);
@@ -301,23 +286,6 @@ priv_move_log(void)
 	cmd = PRIV_MOVE_LOG;
 	must_write(priv_fd, &cmd, sizeof(int));
 	must_read(priv_fd, &ret, sizeof(int));
-
-	return (ret);
-}
-
-/* Get statistics */
-int
-priv_pcap_stats(struct pcap_stat *ps)
-{
-	int cmd, ret;
-
-	if (priv_fd < 0)
-		errx(1, "%s: called from privileged portion", __func__);
-
-	cmd = PRIV_PCAP_STATS;
-	must_write(priv_fd, &cmd, sizeof (int));
-	must_read(priv_fd, ps, sizeof(*ps));
-	must_read(priv_fd, &ret, sizeof(ret));
 
 	return (ret);
 }

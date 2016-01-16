@@ -1,4 +1,4 @@
-/*	$OpenBSD: pflogd.c,v 1.52 2015/10/10 22:36:06 deraadt Exp $	*/
+/*	$OpenBSD: pflogd.c,v 1.53 2016/01/16 03:17:48 canacar Exp $	*/
 
 /*
  * Copyright (c) 2001 Theo de Raadt
@@ -57,7 +57,7 @@ int Debug = 0;
 static int snaplen = DEF_SNAPLEN;
 static int cur_snaplen = DEF_SNAPLEN;
 
-volatile sig_atomic_t gotsig_close, gotsig_alrm, gotsig_hup, gotsig_usr1;
+volatile sig_atomic_t gotsig_close, gotsig_alrm, gotsig_hup;
 
 char *filename = PFLOGD_LOG_FILE;
 char *interface = PFLOGD_DEFAULT_IF;
@@ -71,7 +71,6 @@ unsigned int delay = FLUSH_DELAY;
 char *copy_argv(char * const *);
 void  dump_packet(u_char *, const struct pcap_pkthdr *, const u_char *);
 void  dump_packet_nobuf(u_char *, const struct pcap_pkthdr *, const u_char *);
-void  log_pcap_stats(void);
 int   flush_buffer(FILE *);
 int   if_exists(char *);
 int   init_pcap(void);
@@ -82,7 +81,6 @@ int   scan_dump(FILE *, off_t);
 int   set_snaplen(int);
 void  set_suspended(int);
 void  sig_alrm(int);
-void  sig_usr1(int);
 void  sig_close(int);
 void  sig_hup(int);
 void  usage(void);
@@ -177,12 +175,6 @@ void
 sig_alrm(int sig)
 {
 	gotsig_alrm = 1;
-}
-
-void
-sig_usr1(int sig)
-{
-	gotsig_usr1 = 1;
 }
 
 void
@@ -557,19 +549,6 @@ dump_packet(u_char *user, const struct pcap_pkthdr *h, const u_char *sp)
 	return;
 }
 
-void
-log_pcap_stats(void)
-{
-	struct pcap_stat pstat;
-
-	if (priv_pcap_stats(&pstat) < 0)
-		logmsg(LOG_WARNING, "Reading stats: error");
-	else
-		logmsg(LOG_NOTICE,
-			"%u packets received, %u/%u dropped (kernel/pflogd)",
-			pstat.ps_recv, pstat.ps_drop, packets_dropped);
-}
-
 int
 main(int argc, char **argv)
 {
@@ -668,7 +647,6 @@ main(int argc, char **argv)
 	signal(SIGINT, sig_close);
 	signal(SIGQUIT, sig_close);
 	signal(SIGALRM, sig_alrm);
-	signal(SIGUSR1, sig_usr1);
 	signal(SIGHUP, sig_hup);
 	alarm(delay);
 
@@ -724,11 +702,6 @@ main(int argc, char **argv)
 			gotsig_alrm = 0;
 			alarm(delay);
 		}
-
-		if (gotsig_usr1) {
-			log_pcap_stats();
-			gotsig_usr1 = 0;
-		}
 	}
 
 	logmsg(LOG_NOTICE, "Exiting");
@@ -738,7 +711,6 @@ main(int argc, char **argv)
 	}
 	purge_buffer();
 
-	log_pcap_stats();
 	pcap_close(hpcap);
 	if (!Debug)
 		closelog();
