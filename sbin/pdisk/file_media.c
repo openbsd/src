@@ -1,4 +1,4 @@
-/*	$OpenBSD: file_media.c,v 1.24 2016/01/16 21:41:41 krw Exp $	*/
+/*	$OpenBSD: file_media.c,v 1.25 2016/01/16 22:04:20 krw Exp $	*/
 
 /*
  * file_media.c -
@@ -79,7 +79,6 @@ static long file_inited = 0;
  */
 void compute_block_size(int fd, char *name);
 void file_init(void);
-FILE_MEDIA new_file_media(void);
 
 /*
  * Routines
@@ -91,13 +90,6 @@ file_init(void)
 	return;
     }
     file_inited = 1;
-}
-
-
-FILE_MEDIA
-new_file_media(void)
-{
-    return (FILE_MEDIA) new_media(sizeof(struct file_media));
 }
 
 
@@ -134,7 +126,7 @@ open_file_as_media(char *file, int oflag)
     a = 0;
     fd = opendev(file, oflag, OPENDEV_PART, NULL);
     if (fd >= 0) {
-	a = new_file_media();
+	a = malloc(sizeof(struct file_media));
 	if (a != 0) {
 	    compute_block_size(fd, file);
 	    off = lseek(fd, 0, SEEK_END);	/* seek to end of media */
