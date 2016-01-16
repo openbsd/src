@@ -17,6 +17,7 @@ typedef struct {
 	int eof;
 } X_chars;
 
+/* edit.c */
 extern X_chars edchars;
 
 #define x_getc()				getchar()
@@ -24,7 +25,6 @@ extern X_chars edchars;
 #define x_putc(c)				putchar(c)
 #define x_puts(s)				fputs(s, stdout)
 #define x_mode(a)
-#define promptlen(s, a)				strlen(s)
 #define x_do_comment(a, b, c)			-1
 #define x_print_expansions(a, b, c)
 #define x_cf_glob(a, b, c, d, e, f, g, h)	0
@@ -34,3 +34,6 @@ extern X_chars edchars;
 #define x_escape(a, b, c)			-1
 
 int x_vi(char *, size_t);
+
+/* lex.c */
+int promptlen(const char *, const char **);

@@ -24,6 +24,7 @@
 
 #include <err.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "edit.h"
 #include "sh.h"
@@ -57,6 +58,14 @@ main(void)
 	fputs(buf, stdout);
 
 	return 0;
+}
+
+/* edit.h lex.c, used in edit_reset() */
+int
+promptlen(const char *cp, const char **spp)
+{
+	*spp = cp;
+	return strlen(cp);
 }
 
 /* lex.h lex.c, used in vi_pprompt() */
