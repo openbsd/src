@@ -1,4 +1,4 @@
-/* $OpenBSD: pftop.c,v 1.32 2015/08/20 22:32:42 deraadt Exp $	 */
+/* $OpenBSD: pftop.c,v 1.33 2016/01/16 03:30:26 canacar Exp $	 */
 /*
  * Copyright (c) 2001, 2007 Can Erkin Acar
  * Copyright (c) 2001 Daniel Hartmeier
@@ -896,7 +896,7 @@ print_state(struct pfsync_state * s, struct sc_ent * ent)
 		       COUNTER(s->packets[1]));
 	print_fld_size(FLD_BYTES, sz);
 	print_fld_rate(FLD_SA, (s->creation) ?
-		       ((double)sz/ntohl((double)s->creation)) : -1);
+		       ((double)sz/(double)ntohl(s->creation)) : -1);
 
 	print_fld_uint(FLD_RULE, ntohl(s->rule));
 	if (cachestates && ent != NULL) {

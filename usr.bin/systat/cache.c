@@ -1,4 +1,4 @@
-/* $Id: cache.c,v 1.5 2014/10/08 04:10:04 doug Exp $ */
+/* $Id: cache.c,v 1.6 2016/01/16 03:30:26 canacar Exp $ */
 /*
  * Copyright (c) 2001, 2007 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -123,7 +123,7 @@ add_state(struct pfsync_state *st)
 	ent->bytes = COUNTER(st->bytes[0]) + COUNTER(st->bytes[1]);
 	ent->peak = 0;
 	ent->rate = 0;
-	ent->t = time(NULL);
+	ent->t = 0;
 
 	RB_INSERT(sc_tree, &sctree, ent);
 	TAILQ_INSERT_HEAD(scq_act, ent, qlink);

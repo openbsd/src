@@ -1,4 +1,4 @@
-/* $Id: cache.h,v 1.4 2011/11/29 10:19:15 dlg Exp $ */
+/* $Id: cache.h,v 1.5 2016/01/16 03:30:26 canacar Exp $ */
 /*
  * Copyright (c) 2001, 2007 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -30,7 +30,7 @@ struct sc_ent {
 	double		    peak;
 	double		    rate;
 	time_t		    t;
-	u_int32_t	    bytes;
+	u_int64_t	    bytes;
 };
 
 int cache_init(int);
