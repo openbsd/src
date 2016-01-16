@@ -1,4 +1,4 @@
-/*	$OpenBSD: media.h,v 1.7 2016/01/16 20:00:50 krw Exp $	*/
+/*	$OpenBSD: media.h,v 1.8 2016/01/16 20:04:12 krw Exp $	*/
 
 /*
  * media.h -
@@ -60,12 +60,6 @@
  */
 /* those whose use media objects need just the pointer type */
 typedef struct media *MEDIA;
-
-/* those who define media objects need the struct and internal routine types */
-typedef long (*media_read)(MEDIA m, long long offset, unsigned long count, void *address);
-typedef long (*media_write)(MEDIA m, long long offset, unsigned long count, void *address);
-typedef long (*media_close)(MEDIA m);
-typedef long (*media_os_reload)(MEDIA m);
 
 struct media {
     long            kind;           /* kind of media - SCSI, IDE, etc. */
