@@ -1,4 +1,4 @@
-/*	$OpenBSD: media.h,v 1.10 2016/01/16 21:41:41 krw Exp $	*/
+/*	$OpenBSD: media.h,v 1.11 2016/01/16 21:59:30 krw Exp $	*/
 
 /*
  * media.h -
@@ -78,11 +78,5 @@ struct media {
 /*
  * Forward declarations
  */
-/* those whose use media objects need these routines */
-long long media_total_size(MEDIA m);
-
-/* those who define media objects need these routines also */
-MEDIA new_media(long size);
-void delete_media(MEDIA m);
 
 #endif /* __media__ */
