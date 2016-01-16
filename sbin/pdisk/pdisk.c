@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdisk.c,v 1.34 2016/01/16 20:00:50 krw Exp $	*/
+/*	$OpenBSD: pdisk.c,v 1.35 2016/01/16 21:41:41 krw Exp $	*/
 
 //
 // pdisk - an editor for Apple format partition tables
@@ -731,10 +731,7 @@ do_display_block(partition_map_header *map, char *alt_name)
 	    free(name);
 	    return;
 	}
-	g = media_granularity(m);
-	if (g < DEV_BSIZE) {
-	    g = DEV_BSIZE;
-	}
+	g = DEV_BSIZE;
     }
     if (get_number_argument("Block number: ", &number, next_number) == 0) {
 	bad_input("Bad block number");

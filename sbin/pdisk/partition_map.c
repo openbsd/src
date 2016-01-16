@@ -1,4 +1,4 @@
-/*	$OpenBSD: partition_map.c,v 1.22 2016/01/16 20:00:50 krw Exp $	*/
+/*	$OpenBSD: partition_map.c,v 1.23 2016/01/16 21:41:41 krw Exp $	*/
 
 //
 // partition_map.c - partition map routines
@@ -147,7 +147,7 @@ open_partition_map(char *name, int *valid_file)
     map->disk_order = NULL;
     map->base_order = NULL;
 
-    map->physical_block = media_granularity(m);	/* preflight */
+    map->physical_block = DEV_BSIZE;	/* preflight */
     map->m = m;
     map->misc = malloc(DEV_BSIZE);
     if (map->misc == NULL) {
@@ -421,7 +421,7 @@ create_partition_map(char *name, partition_map_header *oldmap)
     if (oldmap != NULL) {
 	size = oldmap->physical_block;
     } else {
-	size = media_granularity(m);
+	size = DEV_BSIZE;
     }
     map->m = m;
     if (map->physical_block > MAXIOSIZE) {

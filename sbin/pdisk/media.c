@@ -1,4 +1,4 @@
-/*	$OpenBSD: media.c,v 1.10 2016/01/16 21:29:07 krw Exp $	*/
+/*	$OpenBSD: media.c,v 1.11 2016/01/16 21:41:41 krw Exp $	*/
 
 /*
  * media.c -
@@ -79,17 +79,6 @@ delete_media(MEDIA m)
 	return;
     }
     free(m);
-}
-
-
-unsigned long
-media_granularity(MEDIA m)
-{
-    if (m == 0) {
-	return 0;
-    } else {
-	return m->grain;
-    }
 }
 
 

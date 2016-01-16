@@ -1,4 +1,4 @@
-/*	$OpenBSD: file_media.c,v 1.23 2016/01/16 21:29:07 krw Exp $	*/
+/*	$OpenBSD: file_media.c,v 1.24 2016/01/16 21:41:41 krw Exp $	*/
 
 /*
  * file_media.c -
@@ -77,7 +77,7 @@ static long file_inited = 0;
 /*
  * Forward declarations
  */
-int compute_block_size(int fd, char *name);
+void compute_block_size(int fd, char *name);
 void file_init(void);
 FILE_MEDIA new_file_media(void);
 
@@ -101,7 +101,7 @@ new_file_media(void)
 }
 
 
-int
+void
 compute_block_size(int fd, char *name)
 {
 	struct disklabel dl;
@@ -116,8 +116,6 @@ compute_block_size(int fd, char *name)
 
 	if (dl.d_secsize != DEV_BSIZE)
 		err(1, "%u-byte sector size not supported", dl.d_secsize);
-
-	return (dl.d_secsize);
 }
 
 
@@ -138,7 +136,7 @@ open_file_as_media(char *file, int oflag)
     if (fd >= 0) {
 	a = new_file_media();
 	if (a != 0) {
-	    a->m.grain = compute_block_size(fd, file);
+	    compute_block_size(fd, file);
 	    off = lseek(fd, 0, SEEK_END);	/* seek to end of media */
 	    //printf("file size = %Ld\n", off);
 	    a->m.size_in_bytes = (long long) off;
@@ -170,10 +168,10 @@ read_file_media(MEDIA m, long long offset, unsigned long count, void *address)
     if (a == 0) {
 	/* no media */
 	fprintf(stderr,"no media\n");
-    } else if (count <= 0 || count % a->m.grain != 0) {
+    } else if (count <= 0 || count % DEV_BSIZE != 0) {
 	/* can't handle size */
 	fprintf(stderr,"bad size\n");
-    } else if (offset < 0 || offset % a->m.grain != 0) {
+    } else if (offset < 0 || offset % DEV_BSIZE != 0) {
 	/* can't handle offset */
 	fprintf(stderr,"bad offset\n");
     } else if (offset + count > a->m.size_in_bytes && a->m.size_in_bytes != (long long) 0) {
@@ -211,9 +209,9 @@ write_file_media(MEDIA m, long long offset, unsigned long count, void *address)
     rtn_value = 0;
     if (a == 0) {
 	/* no media */
-    } else if (count <= 0 || count % a->m.grain != 0) {
+    } else if (count <= 0 || count % DEV_BSIZE != 0) {
 	/* can't handle size */
-    } else if (offset < 0 || offset % a->m.grain != 0) {
+    } else if (offset < 0 || offset % DEV_BSIZE != 0) {
 	/* can't handle offset */
     } else if (count > LLONG_MAX - offset) {
 	/* check for offset (and offset+count) too large */

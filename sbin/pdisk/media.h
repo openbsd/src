@@ -1,4 +1,4 @@
-/*	$OpenBSD: media.h,v 1.9 2016/01/16 21:29:07 krw Exp $	*/
+/*	$OpenBSD: media.h,v 1.10 2016/01/16 21:41:41 krw Exp $	*/
 
 /*
  * media.h -
@@ -62,7 +62,6 @@
 typedef struct media *MEDIA;
 
 struct media {
-    unsigned long   grain;          /* granularity (offset & size) */
     long long       size_in_bytes;  /* offset granularity */
 };
 
@@ -80,7 +79,6 @@ struct media {
  * Forward declarations
  */
 /* those whose use media objects need these routines */
-unsigned long media_granularity(MEDIA m);
 long long media_total_size(MEDIA m);
 
 /* those who define media objects need these routines also */

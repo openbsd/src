@@ -1,4 +1,4 @@
-/*	$OpenBSD: validate.c,v 1.13 2016/01/16 20:00:50 krw Exp $	*/
+/*	$OpenBSD: validate.c,v 1.14 2016/01/16 21:41:41 krw Exp $	*/
 
 //
 // validate.c -
@@ -355,10 +355,7 @@ validate_map(partition_map_header *map)
 	    free(name);
 	    return;
 	}
-	g = media_granularity(the_media);
-	if (g < DEV_BSIZE) {
-	    g = DEV_BSIZE;
-	}
+	g = DEV_BSIZE;
 
 	buffer = malloc(DEV_BSIZE);
 	if (buffer == NULL) {
