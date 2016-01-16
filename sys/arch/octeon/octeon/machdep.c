@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.70 2015/12/02 14:56:15 visa Exp $ */
+/*	$OpenBSD: machdep.c,v 1.71 2016/01/16 11:15:37 visa Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -410,6 +410,15 @@ mips_init(__register_t a0, __register_t a1, __register_t a2 __unused,
 	DUMP_BOOT_INFO(dfaclock, %d);
 	DUMP_BOOT_INFO(config_flags, %#x);
 #endif
+
+	/*
+	 * It is possible to launch the kernel from the bootloader without
+	 * physical CPU 0. That does not really work, however, because of the
+	 * way how the kernel assigns and uses cpuids. Moreover, cnmac(4) is
+	 * hard coded to use CPU 0 for packet reception.
+	 */
+	if (!(octeon_boot_info->core_mask & 1))
+		panic("cannot run without physical CPU 0");
 
 	/*
 	 * Init message buffer.
