@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.7 2014/07/14 10:23:58 jasper Exp $ */
+/*	$OpenBSD: mainbus.c,v 1.8 2016/01/16 11:21:42 visa Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -31,6 +31,7 @@
 #include <sys/device.h>
 
 #include <machine/autoconf.h>
+#include <machine/octeonvar.h>
 
 int	mainbus_match(struct device *, void *, void *);
 void	mainbus_attach(struct device *, struct device *, void *);
@@ -61,6 +62,7 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 	struct cpu_attach_args caa;
 #ifdef MULTIPROCESSOR
 	struct cpu_hwinfo hw;
+	int cpuid;
 #endif
 
 	printf("\n");
@@ -71,9 +73,12 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 	config_found(self, &caa, mainbus_print);
 
 #ifdef MULTIPROCESSOR
-	bcopy(&bootcpu_hwinfo, &hw, sizeof(struct cpu_hwinfo));
-	caa.caa_hw = &hw;
-	config_found(self, &caa, mainbus_print);
+	for (cpuid = 1; cpuid < OCTEON_MAXCPUS &&
+	    octeon_boot_info->core_mask & (1 << cpuid); cpuid++) {
+		bcopy(&bootcpu_hwinfo, &hw, sizeof(struct cpu_hwinfo));
+		caa.caa_hw = &hw;
+		config_found(self, &caa, mainbus_print);
+	}
 #endif
 
 	caa.caa_maa.maa_name = "clock";
