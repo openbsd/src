@@ -1,5 +1,5 @@
 /* $NetBSD: loadfile.c,v 1.10 2000/12/03 02:53:04 tsutsui Exp $ */
-/* $OpenBSD: loadfile_elf.c,v 1.8 2016/01/05 06:55:28 mlarkin Exp $ */
+/* $OpenBSD: loadfile_elf.c,v 1.9 2016/01/16 08:55:40 stefan Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -191,7 +191,7 @@ push_gdt(void)
 	setsegment(&sd[1], 0, 0xffffffff, SDT_MEMERA, SEL_KPL, 1, 1);
 	setsegment(&sd[2], 0, 0xffffffff, SDT_MEMRWA, SEL_KPL, 1, 1);
 
-	write_page(GDT_PAGE, gdtpage, PAGE_SIZE, 1);
+	write_mem(GDT_PAGE, gdtpage, PAGE_SIZE, 1);
 }
 
 /*
@@ -302,7 +302,7 @@ push_bootargs(int mem_sz)
 	ba[sz + 2] = (int)sizeof(bios_consdev_t) + 3 * sizeof(int);
 	memcpy(&ba[sz + 3], &consdev, sizeof(bios_consdev_t));
 
-	write_page(BOOTARGS_PAGE, ba, PAGE_SIZE, 1);
+	write_mem(BOOTARGS_PAGE, ba, PAGE_SIZE, 1);
 }
 
 /*
@@ -350,7 +350,7 @@ push_stack(int mem_sz, uint32_t end)
 	stack[--loc] = 0x0;
 	stack[--loc] = 0x0;
 
-	write_page(STACK_PAGE, &stack, PAGE_SIZE, 1);
+	write_mem(STACK_PAGE, &stack, PAGE_SIZE, 1);
 
 	return (1024 - (loc - 1)) * sizeof(uint32_t);
 }
@@ -379,7 +379,7 @@ mread(int fd, uint32_t addr, size_t sz)
 
 	/*
 	 * break up the 'sz' bytes into PAGE_SIZE chunks for use with
-	 * write_page
+	 * write_mem
 	 */
 	ct = 0;
 	rd = 0;
@@ -397,7 +397,7 @@ mread(int fd, uint32_t addr, size_t sz)
 		}
 		rd += ct;
 
-		if (write_page(addr, buf, ct, 1))
+		if (write_mem(addr, buf, ct, 1))
 			return (0);
 
 		addr += ct;
@@ -421,7 +421,7 @@ mread(int fd, uint32_t addr, size_t sz)
 		}
 		rd += ct;
 
-		if (write_page(addr, buf, ct, 1))
+		if (write_mem(addr, buf, ct, 1))
 			return (0);
 	}
 
@@ -449,7 +449,7 @@ marc4random_buf(uint32_t addr, int sz)
 
 	/*
 	 * break up the 'sz' bytes into PAGE_SIZE chunks for use with
-	 * write_page
+	 * write_mem
 	 */
 	ct = 0;
 	if (addr % PAGE_SIZE != 0) {
@@ -458,7 +458,7 @@ marc4random_buf(uint32_t addr, int sz)
 
 		arc4random_buf(buf, ct);
 
-		if (write_page(addr, buf, ct, 1))
+		if (write_mem(addr, buf, ct, 1))
 			return;
 
 		addr += ct;
@@ -473,7 +473,7 @@ marc4random_buf(uint32_t addr, int sz)
 
 		arc4random_buf(buf, ct);
 
-		if (write_page(addr, buf, ct, 1))
+		if (write_mem(addr, buf, ct, 1))
 			return;
 	}
 }
@@ -499,14 +499,14 @@ mbzero(uint32_t addr, int sz)
 
 	/*
 	 * break up the 'sz' bytes into PAGE_SIZE chunks for use with
-	 * write_page
+	 * write_mem
 	 */
 	ct = 0;
 	memset(buf, 0, sizeof(buf));
 	if (addr % PAGE_SIZE != 0) {
 		ct = PAGE_SIZE - (addr % PAGE_SIZE);
 
-		if (write_page(addr, buf, ct, 1))
+		if (write_mem(addr, buf, ct, 1))
 			return;
 
 		addr += ct;
@@ -518,7 +518,7 @@ mbzero(uint32_t addr, int sz)
 		else
 			ct = PAGE_SIZE;
 
-		if (write_page(addr, buf, ct, 1))
+		if (write_mem(addr, buf, ct, 1))
 			return;
 	}
 }

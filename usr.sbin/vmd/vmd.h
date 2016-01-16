@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.h,v 1.17 2016/01/02 15:05:21 benno Exp $	*/
+/*	$OpenBSD: vmd.h,v 1.18 2016/01/16 08:55:40 stefan Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -114,8 +114,8 @@ char	*get_string(uint8_t *, size_t);
 
 /* vmm.c */
 pid_t	 vmm(struct privsep *, struct privsep_proc *);
-int	 write_page(uint32_t dst, void *buf, uint32_t, int);
-int	 read_page(uint32_t dst, void *buf, uint32_t, int);
+int	 write_mem(uint32_t dst, void *buf, uint32_t, int);
+int	 read_mem(uint32_t dst, void *buf, uint32_t, int);
 int	 opentap(void);
 
 /* control.c */

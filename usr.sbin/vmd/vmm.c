@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.19 2016/01/13 12:55:18 reyk Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.20 2016/01/16 08:55:40 stefan Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -1477,17 +1477,16 @@ vcpu_exit(struct vm_run_params *vrp)
 }
 
 /*
- * write_page
+ * write_mem
  *
- * Pushes a page of data from 'buf' into the guest VM's memory
- * at paddr 'dst'.
+ * Pushes data from 'buf' into the guest VM's memory at paddr 'dst'.
  *
  * Parameters:
  *  dst: the destination paddr_t in the guest VM to push into.
  *      If there is no guest paddr mapping at 'dst', a new page will be
  *      faulted in by the VMM (provided 'dst' represents a valid paddr
  *      in the guest's address space)
- *  buf: page of data to push
+ *  buf: data to push
  *  len: size of 'buf'
  *  do_mask: 1 to mask the destination address (for kernel load), 0 to
  *      leave 'dst' unmasked
@@ -1499,8 +1498,10 @@ vcpu_exit(struct vm_run_params *vrp)
  * Note - this function only handles GPAs < 4GB. 
  */
 int
-write_page(uint32_t dst, void *buf, uint32_t len, int do_mask)
+write_mem(uint32_t dst, void *buf, uint32_t len, int do_mask)
 {
+	char *p = buf;
+	uint32_t gpa, n, left;
 	struct vm_writepage_params vwp;
 
 	/*
@@ -1510,21 +1511,36 @@ write_page(uint32_t dst, void *buf, uint32_t len, int do_mask)
 	if (do_mask)
 		dst &= 0xFFFFFFF;
 
-	vwp.vwp_paddr = (paddr_t)dst;
-	vwp.vwp_data = buf;
-	vwp.vwp_vm_id = vm_id;
-	vwp.vwp_len = len;
-	if (ioctl(env->vmd_fd, VMM_IOC_WRITEPAGE, &vwp) < 0) {
-		log_warn("writepage ioctl failed");
-		return (errno);
+	left = len;
+	for (gpa = dst; gpa < dst + len;
+	    gpa = (gpa & ~PAGE_MASK) + PAGE_SIZE) {
+		n = left;
+		if (n > PAGE_SIZE)
+			n = PAGE_SIZE;
+		if (n > (PAGE_SIZE - (gpa & PAGE_MASK)))
+			n = PAGE_SIZE - (gpa & PAGE_MASK);
+
+		vwp.vwp_paddr = (paddr_t)gpa;
+		vwp.vwp_data = p;
+		vwp.vwp_vm_id = vm_id;
+		vwp.vwp_len = n;
+		if (ioctl(env->vmd_fd, VMM_IOC_WRITEPAGE, &vwp) < 0) {
+			log_warn("writepage ioctl failed @ 0x%x: "
+			    "dst = 0x%x, len = 0x%x", gpa, dst, len);
+			return (errno);
+		}
+
+		left -= n;
+		p += n;
 	}
+
 	return (0);
 }
 
 /*
- * read_page
+ * read_mem
  *
- * Reads a page of memory at guest paddr 'src' into 'buf'.
+ * Reads memory at guest paddr 'src' into 'buf'.
  *
  * Parameters:
  *  src: the source paddr_t in the guest VM to read from.
@@ -1540,9 +1556,12 @@ write_page(uint32_t dst, void *buf, uint32_t len, int do_mask)
  * Note - this function only handles GPAs < 4GB.
  */
 int
-read_page(uint32_t src, void *buf, uint32_t len, int do_mask)
+read_mem(uint32_t src, void *buf, uint32_t len, int do_mask)
 {
+	char *p = buf;
+	uint32_t gpa, n, left;
 	struct vm_readpage_params vrp;
+
 
 	/*
 	 * Mask kernel load addresses to avoid uint32_t -> uint64_t cast
@@ -1551,13 +1570,28 @@ read_page(uint32_t src, void *buf, uint32_t len, int do_mask)
 	if (do_mask)
 		src &= 0xFFFFFFF;
 
-	vrp.vrp_paddr = (paddr_t)src;
-	vrp.vrp_data = buf;
-	vrp.vrp_vm_id = vm_id;
-	vrp.vrp_len = len;
-	if (ioctl(env->vmd_fd, VMM_IOC_READPAGE, &vrp) < 0) {
-		log_warn("readpage ioctl failed");
-		return (errno);
+	left = len;
+	for (gpa = src; gpa < src + len;
+	    gpa = (gpa & ~PAGE_MASK) + PAGE_SIZE) {
+		n = left;
+		if (n > PAGE_SIZE)
+			n = PAGE_SIZE;
+		if (n > (PAGE_SIZE - (gpa & PAGE_MASK)))
+			n = PAGE_SIZE - (gpa & PAGE_MASK);
+
+		vrp.vrp_paddr = (paddr_t)gpa;
+		vrp.vrp_data = p;
+		vrp.vrp_vm_id = vm_id;
+		vrp.vrp_len = n;
+		if (ioctl(env->vmd_fd, VMM_IOC_READPAGE, &vrp) < 0) {
+			log_warn("readpage ioctl failed @ 0x%x: "
+			    "src = 0x%x, len = 0x%x", gpa, src, len);
+			return (errno);
+		}
+
+		left -= n;
+		p += n;
 	}
+
 	return (0);
 }

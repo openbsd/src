@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.7 2016/01/14 02:46:40 mlarkin Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.8 2016/01/16 08:55:40 stefan Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -143,25 +143,11 @@ viornd_update_qa(void)
 	viornd.vq[viornd.cfg.queue_select].qa = viornd.cfg.queue_address;
 }
 
-static int
-push_virtio_ring(char *buf, uint32_t gpa, uint32_t vr_sz)
-{
-	uint32_t i;
-
-	for (i = 0; i < vr_sz; i += VIRTIO_PAGE_SIZE) {
-		if (write_page((uint32_t)gpa + i, buf + i, PAGE_SIZE, 0)) {
-			return (1);
-		}
-	}
-
-	return (0);
-}
-
 int
 viornd_notifyq(void)
 {
 	uint64_t q_gpa;
-	uint32_t vr_sz, i;
+	uint32_t vr_sz;
 	int ret;
 	char *buf, *rnd_data;
 	struct vring_desc *desc;
@@ -186,11 +172,9 @@ viornd_notifyq(void)
 
 	memset(buf, 0, vr_sz);
 
-	for (i = 0; i < vr_sz; i += VIRTIO_PAGE_SIZE) {
-		if (read_page((uint32_t)q_gpa + i, buf + i, PAGE_SIZE, 0)) {
-			free(buf);
-			return (0);
-		}
+	if (read_mem((uint32_t)q_gpa, buf, vr_sz, 0)) {
+		free(buf);
+		return (0);
 	}
 
 	desc = (struct vring_desc *)(buf);
@@ -204,7 +188,7 @@ viornd_notifyq(void)
 
 	if (rnd_data != NULL) {
 		arc4random_buf(rnd_data, desc[avail->ring[avail->idx]].len);
-		if (write_page((uint32_t)(desc[avail->ring[avail->idx]].addr),
+		if (write_mem((uint32_t)(desc[avail->ring[avail->idx]].addr),
 		    rnd_data, desc[avail->ring[avail->idx]].len, 0)) {
 			log_warnx("viornd: can't write random data @ "
 			    "0x%llx",
@@ -219,7 +203,7 @@ viornd_notifyq(void)
 			    desc[avail->ring[avail->idx]].len;
 			used->idx++;
 
-			if (push_virtio_ring(buf, q_gpa, vr_sz)) {
+			if (write_mem(q_gpa, buf, vr_sz, 0)) {
 				log_warnx("viornd: error writing vio ring");
 			}
 		}
@@ -372,7 +356,7 @@ int
 vioblk_notifyq(struct vioblk_dev *dev)
 {
 	uint64_t q_gpa;
-	uint32_t vr_sz, i, j, len; //, osz;
+	uint32_t vr_sz; //, osz;
 	uint16_t idx, cmd_desc_idx, secdata_desc_idx, ds_desc_idx; //, dxx;
 	uint8_t ds;
 	int ret;
@@ -401,13 +385,10 @@ vioblk_notifyq(struct vioblk_dev *dev)
 
 	memset(vr, 0, vr_sz);
 
-	for (i = 0; i < vr_sz; i += VIRTIO_PAGE_SIZE) {
-		if (read_page((uint32_t)q_gpa + i, vr + i, PAGE_SIZE, 0)) {
-			log_warnx("error reading gpa 0x%x",
-			    (uint32_t)q_gpa + i);
-			free(vr);
-			return (0);
-		}
+	if (read_mem((uint32_t)q_gpa, vr, vr_sz, 0)) {
+		log_warnx("error reading gpa 0x%x", (uint32_t)q_gpa);
+		free(vr);
+		return (0);
 	}
 
 	/* Compute offsets in ring of descriptors, avail ring, and used ring */
@@ -437,8 +418,8 @@ vioblk_notifyq(struct vioblk_dev *dev)
 	}
 
 	/* Read command from descriptor ring */
-	if (read_page((uint32_t)cmd_desc->addr, &cmd, cmd_desc->len, 0)) {
-		log_warnx("vioblk: command read_page error @ 0x%llx",
+	if (read_mem((uint32_t)cmd_desc->addr, &cmd, cmd_desc->len, 0)) {
+		log_warnx("vioblk: command read_mem error @ 0x%llx",
 		    cmd_desc->addr);
 		free(vr);
 		return (0);
@@ -473,26 +454,15 @@ vioblk_notifyq(struct vioblk_dev *dev)
 				return (0);
 			}
 
-			j = 0;
-			while (j < secdata_desc->len) {
-				if (secdata_desc->len - j >= PAGE_SIZE)
-					len = PAGE_SIZE;
-				else
-					len = secdata_desc->len - j;
-
-				if (write_page((uint32_t)secdata_desc->addr + j,
-				    secdata + j, len, 0)) {
-					log_warnx("can't write sector "
-					    "data to gpa @ 0x%llx",
-					    secdata_desc->addr);
-					dump_descriptor_chain(desc,
-					    cmd_desc_idx);
-					free(vr);
-					free(secdata);
-					return (0);
-				}
-
-				j += PAGE_SIZE;
+			if (write_mem((uint32_t)secdata_desc->addr, secdata,
+			    secdata_desc->len, 0)) {
+				log_warnx("can't write sector "
+				    "data to gpa @ 0x%llx",
+				    secdata_desc->addr);
+				dump_descriptor_chain(desc, cmd_desc_idx);
+				free(vr);
+				free(secdata);
+				return (0);
 			}
 
 			free(secdata);
@@ -507,7 +477,7 @@ vioblk_notifyq(struct vioblk_dev *dev)
 		ds_desc = secdata_desc;
 
 		ds = VIRTIO_BLK_S_OK;
-		if (write_page((uint32_t)ds_desc->addr,
+		if (write_mem((uint32_t)ds_desc->addr,
 		    &ds, ds_desc->len, 0)) {
 			log_warnx("can't write device status data @ "
 			    "0x%llx", ds_desc->addr);
@@ -526,7 +496,7 @@ vioblk_notifyq(struct vioblk_dev *dev)
 		dev->vq[dev->cfg.queue_notify].last_avail = avail->idx &
 		    VIOBLK_QUEUE_MASK;
 
-		if (push_virtio_ring(vr, q_gpa, vr_sz)) {
+		if (write_mem(q_gpa, vr, vr_sz, 0)) {
 			log_warnx("vioblk: error writing vio ring");
 		}
 		break;
@@ -551,25 +521,15 @@ vioblk_notifyq(struct vioblk_dev *dev)
 
 		secbias = 0;
 		do {
-			j = 0;
-			while (j < secdata_desc->len) {
-				if (secdata_desc->len - j >= PAGE_SIZE)
-					len = PAGE_SIZE;
-				else
-					len = secdata_desc->len - j;
-				if (read_page((uint32_t)secdata_desc->addr + j,
-				    secdata + j, len, 0)) {
-					log_warnx("wr vioblk: can't read "
-					    "sector data @ 0x%llx",
-					    secdata_desc->addr);
-					dump_descriptor_chain(desc,
-					     cmd_desc_idx);
-					free(vr);
-					free(secdata);
-					return (0);
-				}
-
-				j += PAGE_SIZE;
+			if (read_mem((uint32_t)secdata_desc->addr, secdata,
+			    secdata_desc->len, 0)) {
+				log_warnx("wr vioblk: can't read "
+				    "sector data @ 0x%llx",
+				    secdata_desc->addr);
+				dump_descriptor_chain(desc, cmd_desc_idx);
+				free(vr);
+				free(secdata);
+				return (0);
 			}
 
 			if (vioblk_do_write(dev, cmd.sector + secbias,
@@ -593,7 +553,7 @@ vioblk_notifyq(struct vioblk_dev *dev)
 		ds_desc = secdata_desc;
 
 		ds = VIRTIO_BLK_S_OK;
-		if (write_page((uint32_t)ds_desc->addr,
+		if (write_mem((uint32_t)ds_desc->addr,
 		    &ds, ds_desc->len, 0)) {
 			log_warnx("wr vioblk: can't write device status "
 			    "data @ 0x%llx", ds_desc->addr);
@@ -610,7 +570,7 @@ vioblk_notifyq(struct vioblk_dev *dev)
 
 		dev->vq[dev->cfg.queue_notify].last_avail = avail->idx &
 		    VIOBLK_QUEUE_MASK;
-		if (push_virtio_ring(vr, q_gpa, vr_sz))
+		if (write_mem(q_gpa, vr, vr_sz, 0))
 			log_warnx("wr vioblk: error writing vio ring");
 		break;
 	case VIRTIO_BLK_T_FLUSH:
@@ -619,7 +579,7 @@ vioblk_notifyq(struct vioblk_dev *dev)
 		ds_desc = &desc[ds_desc_idx];
 
 		ds = VIRTIO_BLK_S_OK;
-		if (write_page((uint32_t)ds_desc->addr,
+		if (write_mem((uint32_t)ds_desc->addr,
 		    &ds, ds_desc->len, 0)) {
 			log_warnx("fl vioblk: can't write device status "
 			    "data @ 0x%llx", ds_desc->addr);
@@ -636,7 +596,7 @@ vioblk_notifyq(struct vioblk_dev *dev)
 
 		dev->vq[dev->cfg.queue_notify].last_avail = avail->idx &
 		    VIOBLK_QUEUE_MASK;
-		if (push_virtio_ring(vr, q_gpa, vr_sz)) {
+		if (write_mem(q_gpa, vr, vr_sz, 0)) {
 			log_warnx("fl vioblk: error writing vio ring");
 		}
 		break;
@@ -826,7 +786,7 @@ int
 vionet_enq_rx(struct vionet_dev *dev, char *pkt, ssize_t sz, int *spc)
 {
 	uint64_t q_gpa;
-	uint32_t vr_sz, i;
+	uint32_t vr_sz;
 	uint16_t idx, pkt_desc_idx, hdr_desc_idx;
 	int ret;
 	char *vr;
@@ -848,13 +808,10 @@ vionet_enq_rx(struct vionet_dev *dev, char *pkt, ssize_t sz, int *spc)
 
 	memset(vr, 0, vr_sz);
 
-	for (i = 0; i < vr_sz; i += VIRTIO_PAGE_SIZE) {
-		if (read_page((uint32_t)q_gpa + i, vr + i, PAGE_SIZE, 0)) {
-			log_warnx("rx enq: error reading gpa 0x%x",
-			    (uint32_t)q_gpa + i);
-			free(vr);
-			return (0);
-		}
+	if (read_mem((uint32_t)q_gpa, vr, vr_sz, 0)) {
+		log_warnx("rx enq: error reading gpa 0x%x", (uint32_t)q_gpa);
+		free(vr);
+		return (0);
 	}
 
 	/* Compute offsets in ring of descriptors, avail ring, and used ring */
@@ -887,8 +844,8 @@ vionet_enq_rx(struct vionet_dev *dev, char *pkt, ssize_t sz, int *spc)
 	}
 
 	/* Write packet to descriptor ring */
-	if (write_page((uint32_t)pkt_desc->addr, pkt, sz, 0)) {
-		log_warnx("vionet: rx enq packet write_page error @ "
+	if (write_mem((uint32_t)pkt_desc->addr, pkt, sz, 0)) {
+		log_warnx("vionet: rx enq packet write_mem error @ "
 		    "0x%llx", pkt_desc->addr);
 		free(vr);
 		return (0);
@@ -901,7 +858,7 @@ vionet_enq_rx(struct vionet_dev *dev, char *pkt, ssize_t sz, int *spc)
 	used->idx++;
 	dev->vq[0].last_avail = (dev->vq[0].last_avail + 1);
 	*spc = avail->idx - dev->vq[0].last_avail;
-	if (push_virtio_ring(vr, q_gpa, vr_sz)) {
+	if (write_mem(q_gpa, vr, vr_sz, 0)) {
 		log_warnx("vionet: error writing vio ring");
 	}
 
@@ -958,7 +915,7 @@ void
 vionet_notify_rx(struct vionet_dev *dev)
 {
 	uint64_t q_gpa;
-	uint32_t vr_sz, i;
+	uint32_t vr_sz;
 	uint16_t idx, pkt_desc_idx;
 	char *vr;
 	struct vring_desc *desc, *pkt_desc;
@@ -977,13 +934,10 @@ vionet_notify_rx(struct vionet_dev *dev)
 
 	memset(vr, 0, vr_sz);
 
-	for (i = 0; i < vr_sz; i += VIRTIO_PAGE_SIZE) {
-		if (read_page((uint32_t)q_gpa + i, vr + i, PAGE_SIZE, 0)) {
-			log_warnx("error reading gpa 0x%x",
-			    (uint32_t)q_gpa + i);
-			free(vr);
-			return;
-		}
+	if (read_mem((uint32_t)q_gpa, vr, vr_sz, 0)) {
+		log_warnx("error reading gpa 0x%x", (uint32_t)q_gpa);
+		free(vr);
+		return;
 	}
 
 	/* Compute offsets in ring of descriptors, avail ring, and used ring */
@@ -1011,7 +965,7 @@ int
 vionet_notifyq(struct vionet_dev *dev)
 {
 	uint64_t q_gpa;
-	uint32_t vr_sz, i;
+	uint32_t vr_sz;
 	uint16_t idx, pkt_desc_idx, hdr_desc_idx, dxx;
 	size_t pktsz;
 	int ret, num_enq, ofs;
@@ -1041,12 +995,9 @@ vionet_notifyq(struct vionet_dev *dev)
 
 	memset(vr, 0, vr_sz);
 
-	for (i = 0; i < vr_sz; i += VIRTIO_PAGE_SIZE) {
-		if (read_page((uint32_t)q_gpa + i, vr + i, PAGE_SIZE, 0)) {
-			log_warnx("error reading gpa 0x%x",
-			    (uint32_t)q_gpa + i);
-			goto out;
-		}
+	if (read_mem((uint32_t)q_gpa, vr, vr_sz, 0)) {
+		log_warnx("error reading gpa 0x%x", (uint32_t)q_gpa);
+		goto out;
 	}
 
 	/* Compute offsets in ring of descriptors, avail ring, and used ring */
@@ -1105,9 +1056,9 @@ vionet_notifyq(struct vionet_dev *dev)
 			}
 
 			/* Read packet from descriptor ring */
-			if (read_page((uint32_t)pkt_desc->addr, pkt + ofs,
+			if (read_mem((uint32_t)pkt_desc->addr, pkt + ofs,
 			    pkt_desc->len, 0)) {
-				log_warnx("vionet: packet read_page error "
+				log_warnx("vionet: packet read_mem error "
 				    "@ 0x%llx", pkt_desc->addr);
 				goto out;
 			}
@@ -1125,9 +1076,9 @@ vionet_notifyq(struct vionet_dev *dev)
 		}
 
 		/* Read packet from descriptor ring */
-		if (read_page((uint32_t)pkt_desc->addr, pkt + ofs,
+		if (read_mem((uint32_t)pkt_desc->addr, pkt + ofs,
 		    pkt_desc->len, 0)) {
-			log_warnx("vionet: packet read_page error @ "
+			log_warnx("vionet: packet read_mem error @ "
 			    "0x%llx", pkt_desc->addr);
 			goto out;
 		}
@@ -1153,7 +1104,7 @@ vionet_notifyq(struct vionet_dev *dev)
 		    VIONET_QUEUE_MASK;
 	}
 
-	if (push_virtio_ring(vr, q_gpa, vr_sz)) {
+	if (write_mem(q_gpa, vr, vr_sz, 0)) {
 		log_warnx("vionet: tx error writing vio ring");
 	}
 
