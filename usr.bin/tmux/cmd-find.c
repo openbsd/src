@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-find.c,v 1.28 2015/12/17 23:08:22 nicm Exp $ */
+/* $OpenBSD: cmd-find.c,v 1.29 2016/01/16 00:36:53 nicm Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -874,6 +874,22 @@ cmd_find_from_session(struct cmd_find_state *fs, struct session *s)
 	fs->wl = fs->s->curw;
 	fs->w = fs->wl->window;
 	fs->wp = fs->w->active;
+
+	cmd_find_log_state(__func__, fs);
+	return (0);
+}
+
+/* Find state from a winlink. */
+int
+cmd_find_from_winlink(struct cmd_find_state *fs, struct session *s,
+    struct winlink *wl)
+{
+	cmd_find_clear_state(fs, NULL, 0);
+
+	fs->s = s;
+	fs->wl = wl;
+	fs->w = wl->window;
+	fs->wp = wl->window->active;
 
 	cmd_find_log_state(__func__, fs);
 	return (0);
