@@ -1,4 +1,4 @@
-/*	$OpenBSD: file_media.c,v 1.20 2016/01/15 23:16:40 krw Exp $	*/
+/*	$OpenBSD: file_media.c,v 1.21 2016/01/16 14:49:28 krw Exp $	*/
 
 /*
  * file_media.c -
@@ -71,10 +71,6 @@ struct file_media_globals {
 /*
  * Global Constants
  */
-int potential_block_sizes[] = {
-    1, 512, 1024, 2048,
-    0
-};
 
 
 /*
@@ -128,6 +124,9 @@ compute_block_size(int fd, char *name)
 		errx(1, "%s is not a character device or a regular file", name);
 	if (ioctl(fd, DIOCGPDINFO, &dl) == -1)
 		err(1, "can't get disklabel for %s", name);
+
+	if (dl.d_secsize != DEV_BSIZE)
+		err(1, "%u-byte sector size not supported", dl.d_secsize);
 
 	return (dl.d_secsize);
 }

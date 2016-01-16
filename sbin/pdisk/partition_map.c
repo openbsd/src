@@ -1,4 +1,4 @@
-/*	$OpenBSD: partition_map.c,v 1.20 2016/01/15 23:05:00 krw Exp $	*/
+/*	$OpenBSD: partition_map.c,v 1.21 2016/01/16 14:49:28 krw Exp $	*/
 
 //
 // partition_map.c - partition map routines
@@ -52,7 +52,6 @@
 #include <errno.h>
 
 #include "partition_map.h"
-#include "deblock_media.h"
 #include "io.h"
 #include "convert.h"
 #include "file_media.h"
@@ -149,7 +148,6 @@ open_partition_map(char *name, int *valid_file)
     map->base_order = NULL;
 
     map->physical_block = media_granularity(m);	/* preflight */
-    m = open_deblock_media(DEV_BSIZE, m);
     map->m = m;
     map->misc = malloc(DEV_BSIZE);
     if (map->misc == NULL) {
@@ -425,7 +423,6 @@ create_partition_map(char *name, partition_map_header *oldmap)
     } else {
 	size = media_granularity(m);
     }
-    m = open_deblock_media(DEV_BSIZE, m);
     map->m = m;
     if (map->physical_block > MAXIOSIZE) {
 	map->physical_block = MAXIOSIZE;
