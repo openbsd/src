@@ -1,4 +1,4 @@
-/*	$OpenBSD: file_media.c,v 1.25 2016/01/16 22:04:20 krw Exp $	*/
+/*	$OpenBSD: file_media.c,v 1.26 2016/01/16 22:28:14 krw Exp $	*/
 
 /*
  * file_media.c -
@@ -55,13 +55,6 @@
 /*
  * Types
  */
-typedef struct file_media *FILE_MEDIA;
-
-struct file_media {
-    struct media	m;
-    int			fd;
-    int			regular_file;
-};
 
 
 /*
@@ -111,7 +104,7 @@ compute_block_size(int fd, char *name)
 }
 
 
-MEDIA
+FILE_MEDIA
 open_file_as_media(char *file, int oflag)
 {
     FILE_MEDIA	a;
@@ -131,7 +124,7 @@ open_file_as_media(char *file, int oflag)
 	    compute_block_size(fd, file);
 	    off = lseek(fd, 0, SEEK_END);	/* seek to end of media */
 	    //printf("file size = %Ld\n", off);
-	    a->m.size_in_bytes = (long long) off;
+	    a->size_in_bytes = (long long) off;
 	    a->fd = fd;
 	    a->regular_file = 0;
 	    if (fstat(fd, &info) < 0) {
@@ -143,19 +136,18 @@ open_file_as_media(char *file, int oflag)
 	    close(fd);
 	}
     }
-    return (MEDIA) a;
+    return (FILE_MEDIA) a;
 }
 
 
 long
-read_file_media(MEDIA m, long long offset, unsigned long count, void *address)
+read_file_media(FILE_MEDIA a, long long offset, unsigned long count,
+    void *address)
 {
-    FILE_MEDIA a;
     long rtn_value;
     off_t off;
     int t;
 
-    a = (FILE_MEDIA) m;
     rtn_value = 0;
     if (a == 0) {
 	/* no media */
@@ -166,7 +158,7 @@ read_file_media(MEDIA m, long long offset, unsigned long count, void *address)
     } else if (offset < 0 || offset % DEV_BSIZE != 0) {
 	/* can't handle offset */
 	fprintf(stderr,"bad offset\n");
-    } else if (offset + count > a->m.size_in_bytes && a->m.size_in_bytes != (long long) 0) {
+    } else if (offset + count > a->size_in_bytes && a->size_in_bytes != (long long) 0) {
 	/* check for offset (and offset+count) too large */
 	fprintf(stderr,"offset+count too large\n");
     } else if (count > LLONG_MAX - offset) {
@@ -190,14 +182,12 @@ read_file_media(MEDIA m, long long offset, unsigned long count, void *address)
 
 
 long
-write_file_media(MEDIA m, long long offset, unsigned long count, void *address)
+write_file_media(FILE_MEDIA a, long long offset, unsigned long count, void *address)
 {
-    FILE_MEDIA a;
     long rtn_value;
     off_t off;
     int t;
 
-    a = (FILE_MEDIA) m;
     rtn_value = 0;
     if (a == 0) {
 	/* no media */
@@ -212,8 +202,8 @@ write_file_media(MEDIA m, long long offset, unsigned long count, void *address)
 	off = offset;
 	if ((off = lseek(a->fd, off, SEEK_SET)) >= 0) {
 	    if ((t = write(a->fd, address, count)) == count) {
-		if (off + count > a->m.size_in_bytes) {
-			a->m.size_in_bytes = off + count;
+		if (off + count > a->size_in_bytes) {
+			a->size_in_bytes = off + count;
 		}
 		rtn_value = 1;
 	    }
@@ -224,11 +214,8 @@ write_file_media(MEDIA m, long long offset, unsigned long count, void *address)
 
 
 long
-close_file_media(MEDIA m)
+close_file_media(FILE_MEDIA a)
 {
-    FILE_MEDIA a;
-
-    a = (FILE_MEDIA) m;
     if (a == 0) {
 	return 0;
     }
@@ -239,12 +226,10 @@ close_file_media(MEDIA m)
 
 
 long
-os_reload_file_media(MEDIA m)
+os_reload_file_media(FILE_MEDIA a)
 {
-    FILE_MEDIA a;
     long rtn_value;
 
-    a = (FILE_MEDIA) m;
     rtn_value = 0;
     if (a == 0) {
 	/* no media */

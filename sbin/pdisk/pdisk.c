@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdisk.c,v 1.35 2016/01/16 21:41:41 krw Exp $	*/
+/*	$OpenBSD: pdisk.c,v 1.36 2016/01/16 22:28:14 krw Exp $	*/
 
 //
 // pdisk - an editor for Apple format partition tables
@@ -701,7 +701,7 @@ do_change_map_size(partition_map_header *map)
 void
 do_display_block(partition_map_header *map, char *alt_name)
 {
-    MEDIA m;
+    FILE_MEDIA m;
     long number;
     char *name;
     static unsigned char *display_block;
