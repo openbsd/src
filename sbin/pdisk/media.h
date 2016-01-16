@@ -1,4 +1,4 @@
-/*	$OpenBSD: media.h,v 1.6 2016/01/12 16:08:37 krw Exp $	*/
+/*	$OpenBSD: media.h,v 1.7 2016/01/16 20:00:50 krw Exp $	*/
 
 /*
  * media.h -
@@ -71,11 +71,6 @@ struct media {
     long            kind;           /* kind of media - SCSI, IDE, etc. */
     unsigned long   grain;          /* granularity (offset & size) */
     long long       size_in_bytes;  /* offset granularity */
-    media_read      do_read;        /* device specific routines */
-    media_write     do_write;
-    media_close     do_close;
-    media_os_reload do_os_reload;
-				    /* specific media kinds will add extra info */
 };
 
 /*
@@ -94,10 +89,6 @@ struct media {
 /* those whose use media objects need these routines */
 unsigned long media_granularity(MEDIA m);
 long long media_total_size(MEDIA m);
-long read_media(MEDIA m, long long offset, unsigned long count, void *address);
-long write_media(MEDIA m, long long offset, unsigned long count, void *address);
-void close_media(MEDIA m);
-void os_reload_media(MEDIA m);
 
 /* those who define media objects need these routines also */
 long allocate_media_kind(void);

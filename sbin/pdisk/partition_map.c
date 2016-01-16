@@ -1,4 +1,4 @@
-/*	$OpenBSD: partition_map.c,v 1.21 2016/01/16 14:49:28 krw Exp $	*/
+/*	$OpenBSD: partition_map.c,v 1.22 2016/01/16 20:00:50 krw Exp $	*/
 
 //
 // partition_map.c - partition map routines
@@ -137,7 +137,7 @@ open_partition_map(char *name, int *valid_file)
     map = malloc(sizeof(partition_map_header));
     if (map == NULL) {
 	warn("can't allocate memory for open partition map");
-	close_media(m);
+	close_file_media(m);
 	return NULL;
     }
     map->name = name;
@@ -152,10 +152,10 @@ open_partition_map(char *name, int *valid_file)
     map->misc = malloc(DEV_BSIZE);
     if (map->misc == NULL) {
 	warn("can't allocate memory for block zero buffer");
-	close_media(map->m);
+	close_file_media(map->m);
 	free(map);
 	return NULL;
-    } else if (read_media(map->m, (long long) 0, DEV_BSIZE, (char *)map->misc) == 0
+    } else if (read_file_media(map->m, (long long) 0, DEV_BSIZE, (char *)map->misc) == 0
 	    || convert_block0(map->misc, 1)
 	    || coerce_block0(map)) {
 	// if I can't read block 0 I might as well give up
@@ -208,7 +208,7 @@ close_partition_map(partition_map_header *map)
 	free(entry->data);
 	free(entry);
     }
-    close_media(map->m);
+    close_file_media(map->m);
     free(map);
 }
 
@@ -329,7 +329,7 @@ write_partition_map(partition_map_header *map)
 	}
     }
 
-    os_reload_media(map->m);
+    os_reload_file_media(map->m);
 }
 
 
@@ -409,7 +409,7 @@ create_partition_map(char *name, partition_map_header *oldmap)
     map = malloc(sizeof(partition_map_header));
     if (map == NULL) {
 	warn("can't allocate memory for open partition map");
-	close_media(m);
+	close_file_media(m);
 	return NULL;
     }
     map->name = name;
@@ -1236,7 +1236,7 @@ int
 read_block(partition_map_header *map, unsigned long num, char *buf)
 {
 //printf("read block %d\n", num);
-    return read_media(map->m, ((long long) num) * map->logical_block,
+    return read_file_media(map->m, ((long long) num) * map->logical_block,
     		DEV_BSIZE, (void *)buf);
 }
 
@@ -1244,6 +1244,6 @@ read_block(partition_map_header *map, unsigned long num, char *buf)
 int
 write_block(partition_map_header *map, unsigned long num, char *buf)
 {
-    return write_media(map->m, ((long long) num) * map->logical_block,
+    return write_file_media(map->m, ((long long) num) * map->logical_block,
     		DEV_BSIZE, (void *)buf);
 }

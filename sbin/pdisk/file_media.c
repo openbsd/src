@@ -1,4 +1,4 @@
-/*	$OpenBSD: file_media.c,v 1.21 2016/01/16 14:49:28 krw Exp $	*/
+/*	$OpenBSD: file_media.c,v 1.22 2016/01/16 20:00:50 krw Exp $	*/
 
 /*
  * file_media.c -
@@ -85,10 +85,6 @@ static struct file_media_globals file_info;
 int compute_block_size(int fd, char *name);
 void file_init(void);
 FILE_MEDIA new_file_media(void);
-long read_file_media(MEDIA m, long long offset, unsigned long count, void *address);
-long write_file_media(MEDIA m, long long offset, unsigned long count, void *address);
-long close_file_media(MEDIA m);
-long os_reload_file_media(MEDIA m);
 
 /*
  * Routines
@@ -154,10 +150,6 @@ open_file_as_media(char *file, int oflag)
 	    off = lseek(fd, 0, SEEK_END);	/* seek to end of media */
 	    //printf("file size = %Ld\n", off);
 	    a->m.size_in_bytes = (long long) off;
-	    a->m.do_read = read_file_media;
-	    a->m.do_write = write_file_media;
-	    a->m.do_close = close_file_media;
-	    a->m.do_os_reload = os_reload_file_media;
 	    a->fd = fd;
 	    a->regular_file = 0;
 	    if (fstat(fd, &info) < 0) {

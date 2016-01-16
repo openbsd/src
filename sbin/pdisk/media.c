@@ -1,4 +1,4 @@
-/*	$OpenBSD: media.c,v 1.8 2016/01/12 16:08:37 krw Exp $	*/
+/*	$OpenBSD: media.c,v 1.9 2016/01/16 20:00:50 krw Exp $	*/
 
 /*
  * media.c -
@@ -107,62 +107,5 @@ media_total_size(MEDIA m)
 	return 0;
     } else {
 	return m->size_in_bytes;
-    }
-}
-
-
-long
-read_media(MEDIA m, long long offset, unsigned long count, void *address)
-{
-    long result;
-
-    if (m != 0 && m->do_read != 0) {
-	//printf("media: read type %d, offset %Ld, count %d\n\t", m->kind, offset, count);
-	result = (*m->do_read)(m, offset, count, address);
-	//printf(" - returns %d\n", result);
-	return result;
-    } else {
-	return 0;
-    }
-}
-
-
-long
-write_media(MEDIA m, long long offset, unsigned long count, void *address)
-{
-    long result;
-
-    if (m != 0 && m->do_write != 0) {
-	//printf("media: write type %d, offset %Ld, count %d\n\t", m->kind, offset, count);
-	result = (*m->do_write)(m, offset, count, address);
-	//printf(" - returns %d\n", result);
-	return result;
-    } else {
-	return 0;
-    }
-}
-
-
-void
-close_media(MEDIA m)
-{
-    if (m == 0) {
-	return;
-    }
-    if (m->kind != 0) {
-	if (m->do_close != 0) {
-	    (*m->do_close)(m);
-	}
-	m->kind = 0;
-	delete_media(m);
-    }
-}
-
-
-void
-os_reload_media(MEDIA m)
-{
-    if (m != 0 && m->do_os_reload != 0) {
-	(*m->do_os_reload)(m);
     }
 }

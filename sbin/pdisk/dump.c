@@ -1,4 +1,4 @@
-/*	$OpenBSD: dump.c,v 1.18 2016/01/15 23:05:00 krw Exp $	*/
+/*	$OpenBSD: dump.c,v 1.19 2016/01/16 20:00:50 krw Exp $	*/
 
 //
 // dump.c - dumping partition maps
@@ -44,6 +44,7 @@
 // for errno
 #include <errno.h>
 
+#include "file_media.h"
 #include "dump.h"
 #include "io.h"
 
@@ -667,7 +668,7 @@ display_patches(partition_map *entry)
 	    return;
 	}
     }
-    if (read_media(m, (long long)offset, DEV_BSIZE, (char *)patch_block) == 0) {
+    if (read_file_media(m, (long long)offset, DEV_BSIZE, (char *)patch_block) == 0) {
 	warn("Can't read patch block");
 	return;
     }
@@ -684,7 +685,7 @@ display_patches(partition_map *entry)
 	while (i > 0) {
 	    s -= DEV_BSIZE;
 	    i -= 1;
-	    if (read_media(m, offset+i, DEV_BSIZE, (char *)s) == 0) {
+	    if (read_file_media(m, offset+i, DEV_BSIZE, (char *)s) == 0) {
 		warn("Can't read patch block %d", i);
 		return;
 	    }

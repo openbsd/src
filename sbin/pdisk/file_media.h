@@ -1,4 +1,4 @@
-/*	$OpenBSD: file_media.h,v 1.5 2016/01/12 16:08:37 krw Exp $	*/
+/*	$OpenBSD: file_media.h,v 1.6 2016/01/16 20:00:50 krw Exp $	*/
 
 /*
  * file_media.h -
@@ -57,5 +57,9 @@
  * Forward declarations
  */
 MEDIA open_file_as_media(char *file, int oflag);
+long read_file_media(MEDIA m, long long offset, unsigned long count, void *address);
+long write_file_media(MEDIA m, long long offset, unsigned long count, void *address);
+long close_file_media(MEDIA m);
+long os_reload_file_media(MEDIA m);
 
 #endif /* __file_media__ */
