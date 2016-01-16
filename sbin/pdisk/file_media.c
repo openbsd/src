@@ -1,4 +1,4 @@
-/*	$OpenBSD: file_media.c,v 1.22 2016/01/16 20:00:50 krw Exp $	*/
+/*	$OpenBSD: file_media.c,v 1.23 2016/01/16 21:29:07 krw Exp $	*/
 
 /*
  * file_media.c -
@@ -63,10 +63,6 @@ struct file_media {
     int			regular_file;
 };
 
-struct file_media_globals {
-    long		exists;
-    long		kind;
-};
 
 /*
  * Global Constants
@@ -77,7 +73,6 @@ struct file_media_globals {
  * Global Variables
  */
 static long file_inited = 0;
-static struct file_media_globals file_info;
 
 /*
  * Forward declarations
@@ -96,8 +91,6 @@ file_init(void)
 	return;
     }
     file_inited = 1;
-
-    file_info.kind = allocate_media_kind();
 }
 
 
@@ -145,7 +138,6 @@ open_file_as_media(char *file, int oflag)
     if (fd >= 0) {
 	a = new_file_media();
 	if (a != 0) {
-	    a->m.kind = file_info.kind;
 	    a->m.grain = compute_block_size(fd, file);
 	    off = lseek(fd, 0, SEEK_END);	/* seek to end of media */
 	    //printf("file size = %Ld\n", off);
@@ -178,9 +170,6 @@ read_file_media(MEDIA m, long long offset, unsigned long count, void *address)
     if (a == 0) {
 	/* no media */
 	fprintf(stderr,"no media\n");
-    } else if (a->m.kind != file_info.kind) {
-	/* wrong kind - XXX need to error here - this is an internal problem */
-	fprintf(stderr,"wrong kind\n");
     } else if (count <= 0 || count % a->m.grain != 0) {
 	/* can't handle size */
 	fprintf(stderr,"bad size\n");
@@ -222,8 +211,6 @@ write_file_media(MEDIA m, long long offset, unsigned long count, void *address)
     rtn_value = 0;
     if (a == 0) {
 	/* no media */
-    } else if (a->m.kind != file_info.kind) {
-	/* wrong kind - XXX need to error here - this is an internal problem */
     } else if (count <= 0 || count % a->m.grain != 0) {
 	/* can't handle size */
     } else if (offset < 0 || offset % a->m.grain != 0) {
@@ -254,9 +241,6 @@ close_file_media(MEDIA m)
     a = (FILE_MEDIA) m;
     if (a == 0) {
 	return 0;
-    } else if (a->m.kind != file_info.kind) {
-	/* XXX need to error here - this is an internal problem */
-	return 0;
     }
 
     close(a->fd);
@@ -274,8 +258,6 @@ os_reload_file_media(MEDIA m)
     rtn_value = 0;
     if (a == 0) {
 	/* no media */
-    } else if (a->m.kind != file_info.kind) {
-	/* wrong kind - XXX need to error here - this is an internal problem */
     } else if (a->regular_file) {
 	/* okay - nothing to do */
 	rtn_value = 1;

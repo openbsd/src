@@ -1,4 +1,4 @@
-/*	$OpenBSD: media.c,v 1.9 2016/01/16 20:00:50 krw Exp $	*/
+/*	$OpenBSD: media.c,v 1.10 2016/01/16 21:29:07 krw Exp $	*/
 
 /*
  * media.c -
@@ -54,7 +54,6 @@
 /*
  * Global Variables
  */
-static long media_kind = 0;
 
 /*
  * Forward declarations
@@ -64,12 +63,6 @@ static long media_kind = 0;
 /*
  * Routines
  */
-long
-allocate_media_kind(void)
-{
-    media_kind++;
-    return media_kind;
-}
 
 
 MEDIA
