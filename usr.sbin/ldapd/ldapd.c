@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldapd.c,v 1.15 2015/12/24 17:47:57 mmcc Exp $ */
+/*	$OpenBSD: ldapd.c,v 1.16 2016/01/17 08:13:34 landry Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -17,6 +17,7 @@
  */
 
 #include <sys/queue.h>
+#include <sys/un.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 
@@ -45,6 +46,7 @@ static void	 ldapd_needfd(struct imsgev *iev);
 static void	 ldapd_auth_request(struct imsgev *iev, struct imsg *imsg);
 static void	 ldapd_open_request(struct imsgev *iev, struct imsg *imsg);
 static void	 ldapd_log_verbose(struct imsg *imsg);
+static void	 ldapd_cleanup(char *);
 
 struct ldapd_stats	 stats;
 pid_t			 ldape_pid;
@@ -213,9 +215,30 @@ main(int argc, char *argv[])
 		err(1, "pledge");
 
 	event_dispatch();
+
+	ldapd_cleanup(csockpath);
 	log_debug("ldapd: exiting");
 
 	return 0;
+}
+
+static void
+ldapd_cleanup(char * csockpath)
+{
+	struct listener		*l;
+	struct sockaddr_un	*sun = NULL;
+
+	/* Remove control socket. */
+	(void)unlink(csockpath);
+
+	/* Remove unix listening sockets. */
+	TAILQ_FOREACH(l, &conf->listeners, entry) {
+		if (l->ss.ss_family == AF_UNIX) {
+			sun = (struct sockaddr_un *)&l->ss;
+			log_info("ldapd: removing unix socket %s", sun->sun_path);
+			(void)unlink(sun->sun_path);
+		}
+	}
 }
 
 static void
