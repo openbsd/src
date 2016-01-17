@@ -1,4 +1,4 @@
-/*	$OpenBSD: dump.c,v 1.27 2016/01/17 16:34:41 krw Exp $	*/
+/*	$OpenBSD: dump.c,v 1.28 2016/01/17 16:44:01 krw Exp $	*/
 
 //
 // dump.c - dumping partition maps
@@ -59,7 +59,7 @@
 // Types
 //
 
-typedef struct PatchDescriptor {
+struct patchdescriptor {
     unsigned long	patchSig;
     unsigned short	majorVers;
     unsigned short	minorVers;
@@ -70,15 +70,13 @@ typedef struct PatchDescriptor {
     unsigned long	patchDescriptorLen;
     unsigned char	patchName[33];
     unsigned char	patchVendor[1];
-} PatchDescriptor;
-typedef PatchDescriptor * PatchDescriptorPtr;
+};
 
-typedef struct PatchList {
+struct patchlist {
     unsigned short numPatchBlocks;	// number of disk blocks to hold the patch list
     unsigned short numPatches;		// number of patches in list
-    PatchDescriptor thePatch[1];
-} PatchList;
-typedef PatchList *PatchListPtr;
+    struct patchdescriptor thePatch[1];
+};
 
 
 //
@@ -509,8 +507,8 @@ display_patches(partition_map *entry)
     long long offset;
     struct file_media *m;
     static unsigned char *patch_block;
-    PatchListPtr p;
-    PatchDescriptorPtr q;
+    struct patchlist *p;
+    struct patchdescriptor *q;
     unsigned char *next;
     unsigned char *s;
     int i;
@@ -529,7 +527,7 @@ display_patches(partition_map *entry)
 	warn("Can't read patch block");
 	return;
     }
-    p = (PatchListPtr) patch_block;
+    p = (struct patchlist *) patch_block;
     if (p->numPatchBlocks != 1) {
 	i = p->numPatchBlocks;
 	free(patch_block);
@@ -547,7 +545,7 @@ display_patches(partition_map *entry)
 		return;
 	    }
 	}
-	p = (PatchListPtr) patch_block;
+	p = (struct patchlist *) patch_block;
     }
     printf("Patch list (%d entries)\n", p->numPatches);
     q = p->thePatch;
@@ -566,7 +564,7 @@ display_patches(partition_map *entry)
 	    printf("remainder of entry -");
 	    dump_block(s, next-s);
 	}
-	q = (PatchDescriptorPtr)next;
+	q = (struct patchdescriptor *)next;
     }
 }
 
