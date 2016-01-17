@@ -1,4 +1,4 @@
-/*	$OpenBSD: dump.c,v 1.25 2016/01/17 16:15:59 krw Exp $	*/
+/*	$OpenBSD: dump.c,v 1.26 2016/01/17 16:26:26 krw Exp $	*/
 
 //
 // dump.c - dumping partition maps
@@ -150,7 +150,7 @@ void
 dump_block_zero(partition_map_header *map)
 {
     struct block0 *p;
-    DDMap *m;
+    struct ddmap *m;
     int i;
     double value;
     int prefix;
@@ -170,7 +170,7 @@ dump_block_zero(partition_map_header *map)
 	    p->sbDevType, p->sbDevId);
     if (p->sbDrvrCount > 0) {
 	printf("Drivers-\n");
-	m = (DDMap *) p->sbMap;
+	m = (struct ddmap *) p->sbMap;
 	for (i = 0; i < p->sbDrvrCount; i++) {
 	    printf("%u: %3u @ %lu, ", i+1,
 		    m[i].ddSize, get_align_long(&m[i].ddBlock));
@@ -289,7 +289,7 @@ void
 show_data_structures(partition_map_header *map)
 {
     struct block0 *zp;
-    DDMap *m;
+    struct ddmap *m;
     int i;
     partition_map * entry;
     struct dpme *p;
@@ -328,7 +328,7 @@ show_data_structures(partition_map_header *map)
 	} else {
 	    printf("%u driver%s-\n", zp->sbDrvrCount,
 		    (zp->sbDrvrCount>1)?"s":kStringEmpty);
-	    m = (DDMap *) zp->sbMap;
+	    m = (struct ddmap *) zp->sbMap;
 	    for (i = 0; i < zp->sbDrvrCount; i++) {
             printf("%u: @ %lu for %u, type=0x%x\n", i+1,
 		   get_align_long(&m[i].ddBlock),
@@ -487,7 +487,7 @@ void
 full_dump_block_zero(partition_map_header *map)
 {
     struct block0 *zp;
-    DDMap *m;
+    struct ddmap *m;
     int i;
 
     if (map == NULL) {
@@ -508,7 +508,7 @@ full_dump_block_zero(partition_map_header *map)
     printf("             device id: 0x%x\n", zp->sbDevId);
     printf("                  data: 0x%lx\n", zp->sbData);
     printf("          driver count: %d\n", zp->sbDrvrCount);
-    m = (DDMap *) zp->sbMap;
+    m = (struct ddmap *) zp->sbMap;
     for (i = 0; &m[i].ddType < &zp->sbMap[247]; i++) {
     	if (m[i].ddBlock == 0 && m[i].ddSize == 0 && m[i].ddType == 0) {
     	    break;

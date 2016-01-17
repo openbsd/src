@@ -1,4 +1,4 @@
-/*	$OpenBSD: dpme.h,v 1.9 2016/01/17 16:15:59 krw Exp $	*/
+/*	$OpenBSD: dpme.h,v 1.10 2016/01/17 16:26:26 krw Exp $	*/
 
 //
 // dpme.h - Disk Partition Map Entry (dpme)
@@ -70,14 +70,13 @@ struct block0 {
     u16 	sbMap[247];	/* descriptor map */
 };
 
-// Where &sbMap[0] is actually an array DDMap[sbDrvrCount]
+// Where &sbMap[0] is actually an array struct ddmap[sbDrvrCount]
 // kludge to get around alignment junk
-struct DDMap {
+struct ddmap {
     u32 	ddBlock;	/* 1st driver's starting block (in sbBlkSize blocks!) */
     u16 	ddSize;		/* size of 1st driver (512-byte blks) */
     u16 	ddType;		/* system type (1 for Mac+) */
 };
-typedef struct DDMap DDMap;
 
 
 // Each partition map entry (blocks 1 through n) has this format
