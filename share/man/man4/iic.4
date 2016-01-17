@@ -1,4 +1,4 @@
-.\"	$OpenBSD: iic.4,v 1.84 2014/12/27 16:08:03 jmc Exp $
+.\"	$OpenBSD: iic.4,v 1.85 2016/01/17 05:28:40 jsg Exp $
 .\"
 .\" Copyright (c) 2004, 2006 Alexander Yurchenko <grange@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 27 2014 $
+.Dd $Mdocdate: January 17 2016 $
 .Dt IIC 4
 .Os
 .Sh NAME
@@ -38,6 +38,7 @@
 .Cd "iic* at gpioiic?               # i386"
 .Cd "iic* at gdiumiic?              # loongson"
 .Cd "iic* at tsciic?                # alpha"
+.Cd "iic* at dwiic?                 # amd64"
 .Sh DESCRIPTION
 .Tn I2C
 is a two-wire bus developed by Philips used for connecting
@@ -82,6 +83,8 @@ Acer Labs M7101 SMBus controller
 AMD-8111 SMBus controller
 .It Xr amdpm 4
 AMD-756/766/768/8111 Power Management and SMBus controller
+.It Xr dwiic 4
+Synopsys DesignWare I2C controller
 .It Xr glxpcib 4
 AMD CS5536 PCI-ISA bridge with timecounter, watchdog timer, and GPIO
 .It Xr gpioiic 4
@@ -143,6 +146,8 @@ Apple Fan Control Unit sensor device
 Fintek F75375 temperature sensor
 .It Xr glenv 4
 Genesys Logic GL518SM temperature, voltage, and fan sensor
+.It Xr ihidev 4
+HID over I2C support
 .It Xr lisa 4
 STMicroelectronics LIS331DL MEMS motion sensor
 .It Xr lm 4
