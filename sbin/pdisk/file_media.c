@@ -1,4 +1,4 @@
-/*	$OpenBSD: file_media.c,v 1.28 2016/01/17 18:57:52 krw Exp $	*/
+/*	$OpenBSD: file_media.c,v 1.29 2016/01/17 19:39:20 krw Exp $	*/
 
 /*
  * file_media.c -
@@ -47,7 +47,7 @@
 
 static long file_inited = 0;
 
-void compute_block_size(int fd, char *name);
+void compute_block_size(int, char *);
 void file_init(void);
 
 void

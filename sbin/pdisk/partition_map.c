@@ -1,4 +1,4 @@
-/*	$OpenBSD: partition_map.c,v 1.34 2016/01/17 19:15:55 krw Exp $	*/
+/*	$OpenBSD: partition_map.c,v 1.35 2016/01/17 19:39:20 krw Exp $	*/
 
 //
 // partition_map.c - partition map routines
@@ -68,21 +68,21 @@ enum add_action {
 };
 
 int add_data_to_map(struct dpme *, long, struct partition_map_header *);
-int coerce_block0(struct partition_map_header *map);
-int contains_driver(struct partition_map *entry);
-void combine_entry(struct partition_map *entry);
-long compute_device_size(char *name);
-struct dpme* create_data(const char *name, const char *dptype, uint32_t base, uint32_t length);
-void delete_entry(struct partition_map *entry);
-void insert_in_base_order(struct partition_map *entry);
-void insert_in_disk_order(struct partition_map *entry);
-int read_block(struct partition_map_header *map, unsigned long num, char *buf);
-int read_partition_map(struct partition_map_header *map);
-void remove_driver(struct partition_map *entry);
-void remove_from_disk_order(struct partition_map *entry);
-void renumber_disk_addresses(struct partition_map_header *map);
-void sync_device_size(struct partition_map_header *map);
-int write_block(struct partition_map_header *map, unsigned long num, char *buf);
+int coerce_block0(struct partition_map_header *);
+int contains_driver(struct partition_map *);
+void combine_entry(struct partition_map *);
+long compute_device_size(char *);
+struct dpme* create_data(const char *, const char *, uint32_t, uint32_t);
+void delete_entry(struct partition_map *);
+void insert_in_base_order(struct partition_map *);
+void insert_in_disk_order(struct partition_map *);
+int read_block(struct partition_map_header *, unsigned long, char *);
+int read_partition_map(struct partition_map_header *);
+void remove_driver(struct partition_map *);
+void remove_from_disk_order(struct partition_map *);
+void renumber_disk_addresses(struct partition_map_header *);
+void sync_device_size(struct partition_map_header *);
+int write_block(struct partition_map_header *, unsigned long, char *);
 
 struct partition_map_header *
 open_partition_map(char *name, int *valid_file)

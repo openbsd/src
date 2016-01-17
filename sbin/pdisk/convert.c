@@ -1,4 +1,4 @@
-/*	$OpenBSD: convert.c,v 1.15 2016/01/17 18:57:52 krw Exp $	*/
+/*	$OpenBSD: convert.c,v 1.16 2016/01/17 19:39:20 krw Exp $	*/
 
 //
 // convert.c - Little-endian conversion
@@ -34,8 +34,8 @@
 
 #include "convert.h"
 
-void reverse2(uint8_t *bytes);
-void reverse4(uint8_t *bytes);
+void reverse2(uint8_t *);
+void reverse4(uint8_t *);
 
 int
 convert_dpme(struct dpme *data, int to_cpu_form)

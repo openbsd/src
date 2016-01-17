@@ -1,4 +1,4 @@
-/*	$OpenBSD: validate.c,v 1.23 2016/01/17 19:15:55 krw Exp $	*/
+/*	$OpenBSD: validate.c,v 1.24 2016/01/17 19:39:20 krw Exp $	*/
 
 //
 // validate.c -
@@ -65,12 +65,12 @@ static struct file_media *the_media;
 static int g;
 
 int get_block_zero(void);
-int get_block_n(int n);
-struct range_list *new_range_list_item(enum range_state state, int valid, uint32_t low, uint32_t high);
-void initialize_list(struct range_list **list);
-void add_range(struct range_list **list, uint32_t base, uint32_t len, int allocate);
-void print_range_list(struct range_list *list);
-void coalesce_list(struct range_list *list);
+int get_block_n(int);
+struct range_list *new_range_list_item(enum range_state state, int, uint32_t, uint32_t);
+void initialize_list(struct range_list **);
+void add_range(struct range_list **, uint32_t, uint32_t, int);
+void print_range_list(struct range_list *);
+void coalesce_list(struct range_list *);
 
 int
 get_block_zero(void)

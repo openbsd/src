@@ -1,4 +1,4 @@
-/*	$OpenBSD: dump.c,v 1.32 2016/01/17 19:15:55 krw Exp $	*/
+/*	$OpenBSD: dump.c,v 1.33 2016/01/17 19:39:20 krw Exp $	*/
 
 //
 // dump.c - dumping partition maps
@@ -41,16 +41,7 @@
 #include "dump.h"
 #include "io.h"
 
-
-//
-// Defines
-//
 #define get_align_long(x)	(*(x))
-
-
-//
-// Types
-//
 
 struct patchdescriptor {
     unsigned long	patchSig;
@@ -71,34 +62,16 @@ struct patchlist {
     struct patchdescriptor thePatch[1];
 };
 
-
-//
-// Global Constants
-//
-
 const char * kStringEmpty	= "";
 const char * kStringNot		= " not";
 
+void adjust_value_and_compute_prefix(double *, int *);
+void dump_block_zero(struct partition_map_header *);
+void dump_partition_entry(struct partition_map *, int, int, int);
+int get_max_base_or_length(struct partition_map_header *);
+int get_max_name_string_length(struct partition_map_header *);
+int get_max_type_string_length(struct partition_map_header *);
 
-//
-// Global Variables
-//
-
-
-//
-// Forward declarations
-//
-void adjust_value_and_compute_prefix(double *value, int *prefix);
-void dump_block_zero(struct partition_map_header *map);
-void dump_partition_entry(struct partition_map *entry, int type_length, int name_length, int digits);
-int get_max_base_or_length(struct partition_map_header *map);
-int get_max_name_string_length(struct partition_map_header *map);
-int get_max_type_string_length(struct partition_map_header *map);
-
-
-//
-// Routines
-//
 int
 dump(char *name)
 {

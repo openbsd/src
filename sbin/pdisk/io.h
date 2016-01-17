@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.h,v 1.5 2016/01/17 18:57:52 krw Exp $	*/
+/*	$OpenBSD: io.h,v 1.6 2016/01/17 19:39:20 krw Exp $	*/
 
 //
 // io.h - simple io and input parsing routines
@@ -35,14 +35,14 @@
 
 extern const long kDefault;
 
-void bad_input(const char *fmt, ...);
-void flush_to_newline(int keep_newline);
-int get_command(const char *prompt, int promptBeforeGet, int *command);
-unsigned long get_multiplier(long divisor);
-int get_number_argument(const char *prompt, long *number, long default_value);
-int get_okay(const char *prompt, int default_value);
+void bad_input(const char *, ...);
+void flush_to_newline(int);
+int get_command(const char *, int, int *);
+unsigned long get_multiplier(long);
+int get_number_argument(const char *, long *, long);
+int get_okay(const char *, int);
 int get_partition_modifier(void);
-int get_string_argument(const char *prompt, char **string, int reprompt);
-int number_of_digits(unsigned long value);
+int get_string_argument(const char *, char **, int);
+int number_of_digits(unsigned long);
 
 #endif /* __io__ */

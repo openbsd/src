@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdisk.c,v 1.42 2016/01/17 19:15:55 krw Exp $	*/
+/*	$OpenBSD: pdisk.c,v 1.43 2016/01/17 19:39:20 krw Exp $	*/
 
 //
 // pdisk - an editor for Apple format partition tables
@@ -65,22 +65,22 @@ int rflag = RFLAG_DEFAULT;	/* open device read Only */
 
 static int first_get = 1;
 
-void do_change_map_size(struct partition_map_header *map);
-void do_create_partition(struct partition_map_header *map, int get_type);
-void do_delete_partition(struct partition_map_header *map);
-void do_display_block(struct partition_map_header *map, char *alt_name);
-void do_display_entry(struct partition_map_header *map);
-void do_examine_patch_partition(struct partition_map_header *map);
-int do_expert(struct partition_map_header *map, char *name);
-void do_rename_partition(struct partition_map_header *map);
-void do_change_type(struct partition_map_header *map);
-void do_reorder(struct partition_map_header *map);
-void do_write_partition_map(struct partition_map_header *map);
-void edit(char *name);
-int get_base_argument(long *number, struct partition_map_header *map);
-int get_command_line(int *argc, char ***argv);
-int get_size_argument(long *number, struct partition_map_header *map);
-int get_options(int argc, char **argv);
+void do_change_map_size(struct partition_map_header *);
+void do_create_partition(struct partition_map_header *, int);
+void do_delete_partition(struct partition_map_header *);
+void do_display_block(struct partition_map_header *, char *);
+void do_display_entry(struct partition_map_header *);
+void do_examine_patch_partition(struct partition_map_header *);
+int do_expert(struct partition_map_header *, char *);
+void do_rename_partition(struct partition_map_header *);
+void do_change_type(struct partition_map_header *);
+void do_reorder(struct partition_map_header *);
+void do_write_partition_map(struct partition_map_header *);
+void edit(char *);
+int get_base_argument(long *, struct partition_map_header *);
+int get_command_line(int *, char ***);
+int get_size_argument(long *, struct partition_map_header *);
+int get_options(int, char **);
 void print_edit_notes(void);
 void print_expert_notes(void);
 
