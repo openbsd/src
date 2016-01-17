@@ -1,4 +1,4 @@
-/*	$OpenBSD: convert.c,v 1.12 2016/01/17 16:26:26 krw Exp $	*/
+/*	$OpenBSD: convert.c,v 1.13 2016/01/17 18:23:30 krw Exp $	*/
 
 //
 // convert.c - Little-endian conversion
@@ -58,8 +58,8 @@
 //
 // Forward declarations
 //
-void reverse2(u8 *bytes);
-void reverse4(u8 *bytes);
+void reverse2(uint8_t *bytes);
+void reverse4(uint8_t *bytes);
 
 
 //
@@ -71,21 +71,21 @@ convert_dpme(struct dpme *data, int to_cpu_form)
 #if BYTE_ORDER == LITTLE_ENDIAN
     // Since we will toss the block if the signature doesn't match
     // we don't need to check the signature down here.
-    reverse2((u8 *)&data->dpme_signature);
-    reverse2((u8 *)&data->dpme_reserved_1);
-    reverse4((u8 *)&data->dpme_map_entries);
-    reverse4((u8 *)&data->dpme_pblock_start);
-    reverse4((u8 *)&data->dpme_pblocks);
-    reverse4((u8 *)&data->dpme_lblock_start);
-    reverse4((u8 *)&data->dpme_lblocks);
-    reverse4((u8 *)&data->dpme_flags);
-    reverse4((u8 *)&data->dpme_boot_block);
-    reverse4((u8 *)&data->dpme_boot_bytes);
-    reverse4((u8 *)&data->dpme_load_addr);
-    reverse4((u8 *)&data->dpme_load_addr_2);
-    reverse4((u8 *)&data->dpme_goto_addr);
-    reverse4((u8 *)&data->dpme_goto_addr_2);
-    reverse4((u8 *)&data->dpme_checksum);
+    reverse2((uint8_t *)&data->dpme_signature);
+    reverse2((uint8_t *)&data->dpme_reserved_1);
+    reverse4((uint8_t *)&data->dpme_map_entries);
+    reverse4((uint8_t *)&data->dpme_pblock_start);
+    reverse4((uint8_t *)&data->dpme_pblocks);
+    reverse4((uint8_t *)&data->dpme_lblock_start);
+    reverse4((uint8_t *)&data->dpme_lblocks);
+    reverse4((uint8_t *)&data->dpme_flags);
+    reverse4((uint8_t *)&data->dpme_boot_block);
+    reverse4((uint8_t *)&data->dpme_boot_bytes);
+    reverse4((uint8_t *)&data->dpme_load_addr);
+    reverse4((uint8_t *)&data->dpme_load_addr_2);
+    reverse4((uint8_t *)&data->dpme_goto_addr);
+    reverse4((uint8_t *)&data->dpme_goto_addr_2);
+    reverse4((uint8_t *)&data->dpme_checksum);
 #endif
     return 0;
 }
@@ -104,9 +104,9 @@ convert_block0(struct block0 *data, int to_cpu_form)
     // before or after we flip the bytes and to determine which form of
     // the count to use.
     if (to_cpu_form) {
-	reverse2((u8 *)&data->sbSig);
+	reverse2((uint8_t *)&data->sbSig);
 	if (data->sbSig != BLOCK0_SIGNATURE) {
-	    reverse2((u8 *)&data->sbSig);
+	    reverse2((uint8_t *)&data->sbSig);
 	    if (data->sbSig != BLOCK0_SIGNATURE) {
 		return 0;
 	    }
@@ -115,27 +115,27 @@ convert_block0(struct block0 *data, int to_cpu_form)
 	if (data->sbSig != BLOCK0_SIGNATURE) {
 	    return 0;
 	}
-	reverse2((u8 *)&data->sbSig);
+	reverse2((uint8_t *)&data->sbSig);
     }
-    reverse2((u8 *)&data->sbBlkSize);
-    reverse4((u8 *)&data->sbBlkCount);
-    reverse2((u8 *)&data->sbDevType);
-    reverse2((u8 *)&data->sbDevId);
-    reverse4((u8 *)&data->sbData);
+    reverse2((uint8_t *)&data->sbBlkSize);
+    reverse4((uint8_t *)&data->sbBlkCount);
+    reverse2((uint8_t *)&data->sbDevType);
+    reverse2((uint8_t *)&data->sbDevId);
+    reverse4((uint8_t *)&data->sbData);
     if (to_cpu_form) {
-	reverse2((u8 *)&data->sbDrvrCount);
+	reverse2((uint8_t *)&data->sbDrvrCount);
 	count = data->sbDrvrCount;
     } else {
 	count = data->sbDrvrCount;
-	reverse2((u8 *)&data->sbDrvrCount);
+	reverse2((uint8_t *)&data->sbDrvrCount);
     }
 
     if (count > 0) {
 	m = (struct ddmap *) data->sbMap;
 	for (i = 0; i < count; i++) {
-	    reverse4((u8 *)&m[i].ddBlock);
-	    reverse2((u8 *)&m[i].ddSize);
-	    reverse2((u8 *)&m[i].ddType);
+	    reverse4((uint8_t *)&m[i].ddBlock);
+	    reverse2((uint8_t *)&m[i].ddSize);
+	    reverse2((uint8_t *)&m[i].ddType);
 	}
     }
 #endif
@@ -144,9 +144,9 @@ convert_block0(struct block0 *data, int to_cpu_form)
 
 
 void
-reverse2(u8 *bytes)
+reverse2(uint8_t *bytes)
 {
-    u8 t;
+    uint8_t t;
 
     t = *bytes;
     *bytes = bytes[1];
@@ -155,9 +155,9 @@ reverse2(u8 *bytes)
 
 
 void
-reverse4(u8 *bytes)
+reverse4(uint8_t *bytes)
 {
-    u8 t;
+    uint8_t t;
 
     t = *bytes;
     *bytes = bytes[3];

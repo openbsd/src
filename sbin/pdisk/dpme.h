@@ -1,4 +1,4 @@
-/*	$OpenBSD: dpme.h,v 1.10 2016/01/17 16:26:26 krw Exp $	*/
+/*	$OpenBSD: dpme.h,v 1.11 2016/01/17 18:23:30 krw Exp $	*/
 
 //
 // dpme.h - Disk Partition Map Entry (dpme)
@@ -53,7 +53,6 @@
 //
 // Types
 //
-typedef	unsigned char	u8;
 typedef	unsigned short	u16;
 typedef	unsigned long	u32;
 
@@ -104,10 +103,10 @@ struct dpme {
 #define	DPME_VALID		(1<<0)
     u32     dpme_boot_block         ;
     u32     dpme_boot_bytes         ;
-    u8     *dpme_load_addr          ;
-    u8     *dpme_load_addr_2        ;
-    u8     *dpme_goto_addr          ;
-    u8     *dpme_goto_addr_2        ;
+    uint8_t     *dpme_load_addr          ;
+    uint8_t     *dpme_load_addr_2        ;
+    uint8_t     *dpme_goto_addr          ;
+    uint8_t     *dpme_goto_addr_2        ;
     u32     dpme_checksum           ;
     char    dpme_process_id[16]     ;
     u32     dpme_boot_args[32]      ;
