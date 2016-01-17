@@ -1,4 +1,4 @@
-/*	$OpenBSD: partition_map.c,v 1.24 2016/01/16 22:28:14 krw Exp $	*/
+/*	$OpenBSD: partition_map.c,v 1.25 2016/01/17 14:13:42 jasper Exp $	*/
 
 //
 // partition_map.c - partition map routines
@@ -435,11 +435,7 @@ create_partition_map(char *name, partition_map_header *oldmap)
     } else {
 	size = DEV_BSIZE;
     }
-#if 0
-    if (size > map->physical_block) {
-	size = map->physical_block;
-    }
-#endif
+
     map->logical_block = size;
 
     map->blocks_in_map = 0;

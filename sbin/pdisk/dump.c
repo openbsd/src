@@ -1,4 +1,4 @@
-/*	$OpenBSD: dump.c,v 1.20 2016/01/16 22:28:14 krw Exp $	*/
+/*	$OpenBSD: dump.c,v 1.21 2016/01/17 14:13:42 jasper Exp $	*/
 
 //
 // dump.c - dumping partition maps
@@ -52,10 +52,6 @@
 //
 // Defines
 //
-#if DPISTRLEN != 32
-#error Change in strlen in partition entries! Fix constants
-#endif
-
 #define get_align_long(x)	(*(x))
 
 
@@ -247,15 +243,10 @@ dump_partition_entry(partition_map *entry, int type_length, int name_length, int
     partition_map_header *map;
     int j;
     DPME *p;
-    const char *s;
     u32 size;
     double bytes;
-    int driver, slice;
-    // int kind;
+    int driver;
     char *buf;
-#if 1
-    BZB *bp;
-#endif
 
     map = entry->the_map;
     p = entry->data;
@@ -267,16 +258,6 @@ dump_partition_entry(partition_map *entry, int type_length, int name_length, int
     buf[name_length] = 0;
     printf("%c%-*.32s ", driver, name_length, buf);
     free(buf);
-    /*
-    switch (entry->HFS_kind) {
-    case kHFS_std:	kind = 'h'; break;
-    case kHFS_embed:	kind = 'e'; break;
-    case kHFS_plus:	kind = '+'; break;
-    default:
-    case kHFS_not:	kind = ' '; break;
-    }
-    printf("%c ", kind);
-    */
 
     if (p->dpme_lblocks + p->dpme_lblock_start != p->dpme_pblocks) {
 	printf("%*lu+", digits, p->dpme_lblocks);
@@ -300,56 +281,6 @@ dump_partition_entry(partition_map *entry, int type_length, int name_length, int
 	printf(" (%#5.1f%c)", bytes, j);
     }
 
-#if 1
-    // Old A/UX fields that no one pays attention to anymore.
-    bp = (BZB *) (p->dpme_bzb);
-    j = -1;
-    if (bp->bzb_magic == BZBMAGIC) {
-	switch (bp->bzb_type) {
-	case FSTEFS:
-	    s = "EFS";
-	    break;
-	case FSTSFS:
-	    s = "SFS";
-	    j = 1;
-	    break;
-	case FST:
-	default:
-	    if ((bp->bzb_flags & BZB_ROOT) != 0) {
-		if ((bp->bzb_flags & BZB_USR) != 0) {
-		    s = "RUFS";
-		} else {
-		    s = "RFS";
-		}
-		j = 0;
-	    } else if ((bp->bzb_flags & BZB_USR) != 0) {
-		s = "UFS";
-		j = 2;
-	    } else {
-		s = "FS";
-	    }
-	    break;
-	}
-	slice = ((bp->bzb_flags >> BZB_SLICE_SHIFT) & BZB_SLICE_MASK);
-	if (slice != 0) {
-	    printf(" s%1d %4s", slice - 1, s);
-	} else if (j >= 0) {
-	    printf(" S%1d %4s", j, s);
-	} else {
-	    printf("    %4s", s);
-	}
-	if ((bp->bzb_flags & BZB_CRIT) != 0) {
-	    printf(" K%1d", bp->bzb_cluster);
-	} else if (j < 0) {
-	    printf("   ");
-	} else {
-	    printf(" k%1d", bp->bzb_cluster);
-	}
-	if (bp->bzb_mount_point[0] != 0) {
-	    printf("  %.64s", bp->bzb_mount_point);
-	}
-    }
-#endif
     printf("\n");
 }
 
@@ -409,11 +340,6 @@ show_data_structures(partition_map_header *map)
 	}
     }
     printf("\n");
-
-/*
-u32     dpme_boot_args[32]      ;
-u32     dpme_reserved_3[62]     ;
-*/
     printf(" #:                 type  length   base    "
 	    "flags        (logical)\n");
     for (entry = map->disk_order; entry != NULL; entry = entry->next_on_disk) {
@@ -456,9 +382,6 @@ u32     dpme_reserved_3[62]     ;
 	printf("\n");
     }
     printf("\n");
-/*
-xx: cccc RU *dd s...
-*/
     printf(" #: type RU *slice mount_point (A/UX only fields)\n");
     for (entry = map->disk_order; entry != NULL; entry = entry->next_on_disk) {
 	p = entry->data;

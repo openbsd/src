@@ -1,6 +1,6 @@
-#	$Id: Makefile,v 1.19 2016/01/16 21:59:30 krw Exp $
+#	$Id: Makefile,v 1.20 2016/01/17 14:13:42 jasper Exp $
 
-.if ${MACHINE} == "macppc"
+.if ${MACHINE} == "amd64"
 PROG=	pdisk
 LDADD=  -lutil
 DPADD=  ${LIBUTIL}
