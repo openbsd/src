@@ -1,4 +1,4 @@
-/*	$OpenBSD: convert.c,v 1.8 2016/01/11 07:54:07 jasper Exp $	*/
+/*	$OpenBSD: convert.c,v 1.9 2016/01/17 14:28:25 krw Exp $	*/
 
 //
 // convert.c - Little-endian conversion
@@ -86,41 +86,9 @@ convert_dpme(DPME *data, int to_cpu_form)
     reverse4((u8 *)&data->dpme_goto_addr);
     reverse4((u8 *)&data->dpme_goto_addr_2);
     reverse4((u8 *)&data->dpme_checksum);
-    convert_bzb((BZB *)data->dpme_bzb, to_cpu_form);
 #endif
     return 0;
 }
-
-
-#if BYTE_ORDER == LITTLE_ENDIAN
-int
-convert_bzb(BZB *data, int to_cpu_form)
-{
-    // Since the data here varies according to the type of partition we
-    // do not want to convert willy-nilly. We use the flag to determine
-    // whether to check for the signature before or after we flip the bytes.
-    if (to_cpu_form) {
-	reverse4((u8 *)&data->bzb_magic);
-	if (data->bzb_magic != BZBMAGIC) {
-	    reverse4((u8 *)&data->bzb_magic);
-	    if (data->bzb_magic != BZBMAGIC) {
-		return 0;
-	    }
-	}
-    } else {
-	if (data->bzb_magic != BZBMAGIC) {
-	    return 0;
-	}
-	reverse4((u8 *)&data->bzb_magic);
-    }
-    reverse2((u8 *)&data->bzb_inode);
-    reverse4((u8 *)&data->bzb_flags);
-    reverse4((u8 *)&data->bzb_tmade);
-    reverse4((u8 *)&data->bzb_tmount);
-    reverse4((u8 *)&data->bzb_tumount);
-    return 0;
-}
-#endif
 
 
 int

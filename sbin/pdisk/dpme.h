@@ -1,4 +1,4 @@
-/*	$OpenBSD: dpme.h,v 1.6 2016/01/15 16:39:20 krw Exp $	*/
+/*	$OpenBSD: dpme.h,v 1.7 2016/01/17 14:28:25 krw Exp $	*/
 
 //
 // dpme.h - Disk Partition Map Entry (dpme)
@@ -49,14 +49,6 @@
 
 #define	DPISTRLEN	32
 #define	DPME_SIGNATURE	0x504D		/* i.e. 'PM' */
-
-// A/UX only stuff (tradition!)
-#define	dpme_bzb	dpme_boot_args
-#define	BZBMAGIC 0xABADBABE	/* BZB magic number */
-#define	FST	((u8) 0x1)	/* standard UNIX FS */
-#define	FSTEFS	((u8) 0x2)	/* Autorecovery FS */
-#define	FSTSFS	((u8) 0x3)	/* Swap FS */
-
 
 //
 // Types
@@ -124,35 +116,6 @@ struct dpme {
     u32     dpme_reserved_3[62]     ;
 };
 typedef struct dpme DPME;
-
-
-
-// A/UX only data structures (sentimental reasons?)
-
-// BZB (Block Zero Block, but I can't remember the etymology)
-// Where &dpme_boot_args[0] is actually the address of a struct bzb
-// kludge to get around alignment junk
-struct	bzb			/* block zero block format */
-{
-    u32  bzb_magic;		/* magic number */
-    u8   bzb_cluster;		/* Autorecovery cluster grouping */
-    u8   bzb_type;		/* FS type */
-    u16  bzb_inode;		/* bad block inode number */
-    u32  bzb_flags;
-#define	BZB_ROOT	(1<<31)
-#define	BZB_USR		(1<<30)
-#define	BZB_CRIT	(1<<29)
-#define	BZB_SLICE_SHIFT	16
-#define	BZB_SLICE_MASK	0x1f
-    u32  bzb_tmade;		/* time of FS creation */
-    u32  bzb_tmount;		/* time of last mount */
-    u32  bzb_tumount;		/* time of last umount */
-    u32  bzb_fill2[7];		/* for expansion of ABM (ha!ha!) */
-    u8   bzb_mount_point[64];	/* default mount point name */
-};
-typedef	struct bzb	BZB;
-
-
 
 
 //

@@ -1,4 +1,4 @@
-/*	$OpenBSD: partition_map.h,v 1.8 2016/01/16 22:28:14 krw Exp $	*/
+/*	$OpenBSD: partition_map.h,v 1.9 2016/01/17 14:28:25 krw Exp $	*/
 
 //
 // partition_map.h - partition map routines
@@ -114,7 +114,6 @@ void move_entry_in_map(long, long, partition_map_header *);
 partition_map_header* open_partition_map(char *name, int *valid_file);
 void resize_map(long new_size, partition_map_header *map);
 void write_partition_map(partition_map_header *map);
-void bzb_init_slice(BZB *bp, int slice);
 void dpme_init_flags(DPME *data);
 
 #endif /* __partition_map__ */

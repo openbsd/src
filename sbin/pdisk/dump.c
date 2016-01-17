@@ -1,4 +1,4 @@
-/*	$OpenBSD: dump.c,v 1.21 2016/01/17 14:13:42 jasper Exp $	*/
+/*	$OpenBSD: dump.c,v 1.22 2016/01/17 14:28:25 krw Exp $	*/
 
 //
 // dump.c - dumping partition maps
@@ -291,11 +291,8 @@ show_data_structures(partition_map_header *map)
     Block0 *zp;
     DDMap *m;
     int i;
-    int j, slice;
     partition_map * entry;
     DPME *p;
-    BZB *bp;
-    const char *s;
 
     if (map == NULL) {
 	printf("No partition map exists\n");
@@ -382,50 +379,6 @@ show_data_structures(partition_map_header *map)
 	printf("\n");
     }
     printf("\n");
-    printf(" #: type RU *slice mount_point (A/UX only fields)\n");
-    for (entry = map->disk_order; entry != NULL; entry = entry->next_on_disk) {
-	p = entry->data;
-	printf("%2ld: ", entry->disk_address);
-
-	bp = (BZB *) (p->dpme_bzb);
-	j = -1;
-	if (bp->bzb_magic == BZBMAGIC) {
-	    switch (bp->bzb_type) {
-	    case FSTEFS:
-		s = "esch";
-		break;
-	    case FSTSFS:
-		s = "swap";
-		j = 1;
-		break;
-	    case FST:
-	    default:
-		s = "fsys";
-		if ((bp->bzb_flags & BZB_ROOT) != 0) {
-		    j = 0;
-		} else if ((bp->bzb_flags & BZB_USR) != 0) {
-		    j = 2;
-		}
-		break;
-	    }
-	    printf("%4s ", s);
-	    printf("%c%c ",
-		    (bp->bzb_flags & BZB_ROOT)?'R':' ',
-		    (bp->bzb_flags & BZB_USR)?'U':' ');
-	    slice = ((bp->bzb_flags >> BZB_SLICE_SHIFT) & BZB_SLICE_MASK);
-	    if (slice != 0) {
-		printf("  %2d", slice);
-	    } else if (j >= 0) {
-		printf(" *%2d", j);
-	    } else {
-		printf("    ");
-	    }
-	    if (bp->bzb_mount_point[0] != 0) {
-		printf(" %.64s", bp->bzb_mount_point);
-	    }
-	}
-	printf("\n");
-    }
 }
 
 

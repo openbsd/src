@@ -1,4 +1,4 @@
-/*	$OpenBSD: partition_map.c,v 1.25 2016/01/17 14:13:42 jasper Exp $	*/
+/*	$OpenBSD: partition_map.c,v 1.26 2016/01/17 14:28:25 krw Exp $	*/
 
 //
 // partition_map.c - partition map routines
@@ -672,49 +672,6 @@ dpme_init_flags(DPME *data)
     }
 }
 
-/* These bits are appropriate for Apple_UNIX_SVR2 partitions
- * used by OpenBSD.  They may be ok for A/UX, but have not been
- * tested.
- */
-void
-bzb_init_slice(BZB *bp, int slice)
-{
-    memset(bp,0,sizeof(BZB));
-    if ((slice >= 'A') && (slice <= 'Z')) {
-	slice += 'a' - 'A';
-    }
-    if ((slice != 0) && ((slice < 'a') || (slice > 'z'))) {
-	warnx("Bad bzb slice");
-	slice = 0;
-    }
-    switch (slice) {
-    case 0:
-    case 'c':
-	return;
-    case 'a':
-	bp->bzb_type = FST;
-	strlcpy(bp->bzb_mount_point, "/", sizeof(bp->bzb_mount_point));
-	bp->bzb_inode = 1;
-	bp->bzb_flags = BZB_ROOT | BZB_USR;
-	break;
-    case 'b':
-	bp->bzb_type = FSTSFS;
-	strlcpy(bp->bzb_mount_point, "(swap)", sizeof(bp->bzb_mount_point));
-	break;
-    case 'g':
-	strlcpy(bp->bzb_mount_point, "/usr", sizeof(bp->bzb_mount_point));
-	/* Fall through */
-    default:
-	bp->bzb_type = FST;
-	bp->bzb_inode = 1;
-	bp->bzb_flags = BZB_USR;
-	break;
-    }
-    // XXX OpenBSD disksubr.c ignores slice
-    //	bp->bzb_flags |= (slice-'a'+1) << BZB_SLICE_SHIFT;
-    bp->bzb_magic = BZBMAGIC;
-}
-
 void
 renumber_disk_addresses(partition_map_header *map)
 {
@@ -730,7 +687,6 @@ renumber_disk_addresses(partition_map_header *map)
 	cur = cur->next_on_disk;
     }
 }
-
 
 long
 compute_device_size(char *name)
