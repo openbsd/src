@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.304 2016/01/17 08:40:09 jsg Exp $ */
+/* $OpenBSD: acpi.c,v 1.305 2016/01/17 09:04:18 jsg Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -115,15 +115,17 @@ void	acpi_enable_wakegpes(struct acpi_softc *, int);
 
 int	acpi_foundec(struct aml_node *, void *);
 int	acpi_foundsony(struct aml_node *node, void *arg);
+int	acpi_foundhid(struct aml_node *, void *);
+int	acpi_add_device(struct aml_node *node, void *arg);
 
 void	acpi_thread(void *);
 void	acpi_create_thread(void *);
 
-#ifndef SMALL_KERNEL
-
 int	acpi_thinkpad_enabled;
 int	acpi_toshiba_enabled;
 int	acpi_asus_enabled;
+
+#ifndef SMALL_KERNEL
 
 void	acpi_indicator(struct acpi_softc *, int);
 
@@ -134,7 +136,6 @@ void	acpi_init_pm(struct acpi_softc *);
 
 int	acpi_founddock(struct aml_node *, void *);
 int	acpi_foundpss(struct aml_node *, void *);
-int	acpi_foundhid(struct aml_node *, void *);
 int	acpi_foundtmp(struct aml_node *, void *);
 int	acpi_foundprw(struct aml_node *, void *);
 int	acpi_foundvideo(struct aml_node *, void *);
@@ -153,8 +154,6 @@ struct idechnl {
 	int64_t		chnl;
 	int64_t		sta;
 };
-
-int	acpi_add_device(struct aml_node *node, void *arg);
 
 /*
  * This is a list of Synaptics devices with a 'top button area'
@@ -1084,12 +1083,12 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 	/* check if we're running on a sony */
 	aml_find_node(&aml_root, "GBRT", acpi_foundsony, sc);
 
-#ifndef SMALL_KERNEL
 	aml_walknodes(&aml_root, AML_WALK_PRE, acpi_add_device, sc);
 
 	/* attach battery, power supply and button devices */
 	aml_find_node(&aml_root, "_HID", acpi_foundhid, sc);
 
+#ifndef SMALL_KERNEL
 #if NWD > 0
 	/* Attach IDE bay */
 	aml_walknodes(&aml_root, AML_WALK_PRE, acpi_foundide, sc);
@@ -2705,8 +2704,6 @@ acpi_foundsony(struct aml_node *node, void *arg)
 	return 0;
 }
 
-#ifndef SMALL_KERNEL
-
 int
 acpi_parsehid(struct aml_node *node, void *arg, char *outcdev, char *outdev,
     size_t devlen)
@@ -2768,7 +2765,9 @@ acpi_foundhid(struct aml_node *node, void *arg)
 	char		 	 cdev[16];
 	char		 	 dev[16];
 	struct acpi_attach_args	 aaa;
+#ifndef SMALL_KERNEL
 	int			 i;
+#endif
 
 	if (acpi_parsehid(node, arg, cdev, dev, 16) != 0)
 		return (0);
@@ -2812,6 +2811,7 @@ acpi_foundhid(struct aml_node *node, void *arg)
 		aaa.aaa_name = "dwiic";
 	}
 
+#ifndef SMALL_KERNEL
 	if (!strcmp(cdev, ACPI_DEV_MOUSE)) {
 		for (i = 0; i < nitems(sbtn_pnp); i++) {
 			if (!strcmp(dev, sbtn_pnp[i])) {
@@ -2820,6 +2820,7 @@ acpi_foundhid(struct aml_node *node, void *arg)
 			}
 		}
 	}
+#endif
 
 	if (aaa.aaa_name)
 		config_found(self, &aaa, acpi_print);
@@ -2827,6 +2828,7 @@ acpi_foundhid(struct aml_node *node, void *arg)
 	return (0);
 }
 
+#ifndef SMALL_KERNEL
 int
 acpi_founddock(struct aml_node *node, void *arg)
 {
