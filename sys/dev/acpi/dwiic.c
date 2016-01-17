@@ -1,4 +1,4 @@
-/* $OpenBSD: dwiic.c,v 1.6 2016/01/15 22:15:31 jsg Exp $ */
+/* $OpenBSD: dwiic.c,v 1.7 2016/01/17 15:50:21 jcs Exp $ */
 /*
  * Synopsys DesignWare I2C controller
  *
@@ -178,8 +178,8 @@ void		dwiic_bus_scan(struct device *, struct i2cbus_attach_args *,
 
 int		dwiic_i2c_acquire_bus(void *, int);
 void		dwiic_i2c_release_bus(void *, int);
-uint32_t	dwiic_i2c_read(struct dwiic_softc *, int);
-void		dwiic_i2c_write(struct dwiic_softc *, int, uint32_t);
+uint32_t	dwiic_read(struct dwiic_softc *, int);
+void		dwiic_write(struct dwiic_softc *, int, uint32_t);
 int		dwiic_i2c_exec(void *, i2c_op_t, i2c_addr_t, const void *,
 		    size_t, void *, size_t, int);
 void		dwiic_xfer_msg(struct dwiic_softc *);
@@ -259,11 +259,11 @@ dwiic_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	/* fetch timing parameters */
-	sc->ss_hcnt = dwiic_i2c_read(sc, DW_IC_SS_SCL_HCNT);
-	sc->ss_lcnt = dwiic_i2c_read(sc, DW_IC_SS_SCL_LCNT);
-	sc->fs_hcnt = dwiic_i2c_read(sc, DW_IC_FS_SCL_HCNT);
-	sc->fs_lcnt = dwiic_i2c_read(sc, DW_IC_FS_SCL_LCNT);
-	sc->sda_hold_time = dwiic_i2c_read(sc, DW_IC_SDA_HOLD);
+	sc->ss_hcnt = dwiic_read(sc, DW_IC_SS_SCL_HCNT);
+	sc->ss_lcnt = dwiic_read(sc, DW_IC_SS_SCL_LCNT);
+	sc->fs_hcnt = dwiic_read(sc, DW_IC_FS_SCL_HCNT);
+	sc->fs_lcnt = dwiic_read(sc, DW_IC_FS_SCL_LCNT);
+	sc->sda_hold_time = dwiic_read(sc, DW_IC_SDA_HOLD);
 	dwiic_acpi_get_params(sc, "SSCN", &sc->ss_hcnt, &sc->ss_lcnt, NULL);
 	dwiic_acpi_get_params(sc, "FMCN", &sc->fs_hcnt, &sc->fs_lcnt,
 	    &sc->sda_hold_time);
@@ -282,9 +282,9 @@ dwiic_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	/* leave the controller disabled */
-	dwiic_i2c_write(sc, DW_IC_INTR_MASK, 0);
+	dwiic_write(sc, DW_IC_INTR_MASK, 0);
 	dwiic_enable(sc, 0);
-	dwiic_i2c_read(sc, DW_IC_CLR_INTR);
+	dwiic_read(sc, DW_IC_CLR_INTR);
 
 	/* try to register interrupt with apic, but not fatal without it */
 	if (crs.irq_int > 0) {
@@ -344,7 +344,7 @@ dwiic_activate(struct device *self, int act)
 		dwiic_enable(sc, 0);
 
 		/* disable interrupts */
-		dwiic_i2c_write(sc, DW_IC_INTR_MASK, 0);
+		dwiic_write(sc, DW_IC_INTR_MASK, 0);
 
 		/* power down the controller */
 		if (!aml_searchname(sc->sc_devnode, "_PS3") ||
@@ -578,7 +578,7 @@ dwiic_acpi_foundhid(struct aml_node *node, void *arg)
 }
 
 uint32_t
-dwiic_i2c_read(struct dwiic_softc *sc, int offset)
+dwiic_read(struct dwiic_softc *sc, int offset)
 {
 	u_int32_t b = bus_space_read_4(sc->sc_iot, sc->sc_ioh, offset);
 
@@ -588,7 +588,7 @@ dwiic_i2c_read(struct dwiic_softc *sc, int offset)
 }
 
 void
-dwiic_i2c_write(struct dwiic_softc *sc, int offset, uint32_t val)
+dwiic_write(struct dwiic_softc *sc, int offset, uint32_t val)
 {
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, offset, val);
 
@@ -624,7 +624,7 @@ dwiic_init(struct dwiic_softc *sc)
 	uint32_t reg;
 
 	/* make sure we're talking to a device we know */
-	reg = dwiic_i2c_read(sc, DW_IC_COMP_TYPE);
+	reg = dwiic_read(sc, DW_IC_COMP_TYPE);
 	if (reg != DW_IC_COMP_TYPE_VALUE) {
 		DPRINTF(("%s: invalid component type 0x%x\n",
 		    sc->sc_dev.dv_xname, reg));
@@ -635,28 +635,28 @@ dwiic_init(struct dwiic_softc *sc)
 	dwiic_enable(sc, 0);
 
 	/* write standard-mode SCL timing parameters */
-	dwiic_i2c_write(sc, DW_IC_SS_SCL_HCNT, sc->ss_hcnt);
-	dwiic_i2c_write(sc, DW_IC_SS_SCL_LCNT, sc->ss_lcnt);
+	dwiic_write(sc, DW_IC_SS_SCL_HCNT, sc->ss_hcnt);
+	dwiic_write(sc, DW_IC_SS_SCL_LCNT, sc->ss_lcnt);
 
 	/* and fast-mode SCL timing parameters */
-	dwiic_i2c_write(sc, DW_IC_FS_SCL_HCNT, sc->fs_hcnt);
-	dwiic_i2c_write(sc, DW_IC_FS_SCL_LCNT, sc->fs_lcnt);
+	dwiic_write(sc, DW_IC_FS_SCL_HCNT, sc->fs_hcnt);
+	dwiic_write(sc, DW_IC_FS_SCL_LCNT, sc->fs_lcnt);
 
 	/* SDA hold time */
-	reg = dwiic_i2c_read(sc, DW_IC_COMP_VERSION);
+	reg = dwiic_read(sc, DW_IC_COMP_VERSION);
 	if (reg >= DW_IC_SDA_HOLD_MIN_VERS)
-		dwiic_i2c_write(sc, DW_IC_SDA_HOLD, sc->sda_hold_time);
+		dwiic_write(sc, DW_IC_SDA_HOLD, sc->sda_hold_time);
 
 	/* FIFO threshold levels */
 	sc->tx_fifo_depth = 32;
 	sc->rx_fifo_depth = 32;
-	dwiic_i2c_write(sc, DW_IC_TX_TL, sc->tx_fifo_depth / 2);
-	dwiic_i2c_write(sc, DW_IC_RX_TL, 0);
+	dwiic_write(sc, DW_IC_TX_TL, sc->tx_fifo_depth / 2);
+	dwiic_write(sc, DW_IC_RX_TL, 0);
 
 	/* configure as i2c master with fast speed */
 	sc->master_cfg = DW_IC_CON_MASTER | DW_IC_CON_SLAVE_DISABLE |
 	    DW_IC_CON_RESTART_EN | DW_IC_CON_SPEED_FAST;
-	dwiic_i2c_write(sc, DW_IC_CON, sc->master_cfg);
+	dwiic_write(sc, DW_IC_CON, sc->master_cfg);
 
 	return 0;
 }
@@ -667,8 +667,8 @@ dwiic_enable(struct dwiic_softc *sc, int enable)
 	int retries;
 
 	for (retries = 100; retries > 0; retries--) {
-		dwiic_i2c_write(sc, DW_IC_ENABLE, enable);
-		if ((dwiic_i2c_read(sc, DW_IC_ENABLE_STATUS) & 1) == enable)
+		dwiic_write(sc, DW_IC_ENABLE, enable);
+		if ((dwiic_read(sc, DW_IC_ENABLE_STATUS) & 1) == enable)
 			return;
 
 		DELAY(25);
@@ -705,7 +705,7 @@ dwiic_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr, const void *cmdbuf,
 
 	/* wait for bus to be idle */
 	for (retries = 100; retries > 0; retries--) {
-		st = dwiic_i2c_read(sc, DW_IC_STATUS);
+		st = dwiic_read(sc, DW_IC_STATUS);
 		if (!(st & DW_IC_STATUS_ACTIVITY))
 			break;
 		DELAY(1000);
@@ -723,13 +723,13 @@ dwiic_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr, const void *cmdbuf,
 	dwiic_enable(sc, 0);
 
 	/* set slave address */
-	ic_con = dwiic_i2c_read(sc, DW_IC_CON);
+	ic_con = dwiic_read(sc, DW_IC_CON);
 	ic_con &= ~DW_IC_CON_10BITADDR_MASTER;
-	dwiic_i2c_write(sc, DW_IC_CON, ic_con);
-	dwiic_i2c_write(sc, DW_IC_TAR, addr);
+	dwiic_write(sc, DW_IC_CON, ic_con);
+	dwiic_write(sc, DW_IC_TAR, addr);
 
 	/* disable interrupts */
-	dwiic_i2c_write(sc, DW_IC_INTR_MASK, 0);
+	dwiic_write(sc, DW_IC_INTR_MASK, 0);
 
 	/* enable controller */
 	dwiic_enable(sc, 1);
@@ -738,8 +738,8 @@ dwiic_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr, const void *cmdbuf,
 	if (flags & I2C_F_POLL)
 		DELAY(200);
 	else {
-		dwiic_i2c_read(sc, DW_IC_CLR_INTR);
-		dwiic_i2c_write(sc, DW_IC_INTR_MASK, DW_IC_INTR_TX_EMPTY);
+		dwiic_read(sc, DW_IC_CLR_INTR);
+		dwiic_write(sc, DW_IC_INTR_MASK, DW_IC_INTR_TX_EMPTY);
 
 		if (tsleep(&sc->sc_writewait, PRIBIO, "dwiic", hz / 2) != 0)
 			printf("%s: timed out waiting for tx_empty intr\n",
@@ -756,7 +756,7 @@ dwiic_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr, const void *cmdbuf,
 			DPRINTF((" %02x", b[x]));
 		DPRINTF(("\n"));
 
-		tx_limit = sc->tx_fifo_depth - dwiic_i2c_read(sc, DW_IC_TXFLR);
+		tx_limit = sc->tx_fifo_depth - dwiic_read(sc, DW_IC_TXFLR);
 		if (cmdlen > tx_limit) {
 			/* TODO */
 			printf("%s: can't write %zu (> %d)\n",
@@ -774,13 +774,13 @@ dwiic_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr, const void *cmdbuf,
 			 */
 			if (x == (cmdlen - 1) && len == 0 && I2C_OP_STOP_P(op))
 				cmd |= DW_IC_DATA_CMD_STOP;
-			dwiic_i2c_write(sc, DW_IC_DATA_CMD, cmd);
+			dwiic_write(sc, DW_IC_DATA_CMD, cmd);
 		}
 	}
 
 	b = (void *)buf;
 	x = readpos = 0;
-	tx_limit = sc->tx_fifo_depth - dwiic_i2c_read(sc, DW_IC_TXFLR);
+	tx_limit = sc->tx_fifo_depth - dwiic_read(sc, DW_IC_TXFLR);
 
 	DPRINTF(("%s: %s: need to read %zu bytes, can send %d read reqs\n",
 		sc->sc_dev.dv_xname, __func__, len, tx_limit));
@@ -804,7 +804,7 @@ dwiic_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr, const void *cmdbuf,
 		if (x == (len - 1) && I2C_OP_STOP_P(op))
 			cmd |= DW_IC_DATA_CMD_STOP;
 
-		dwiic_i2c_write(sc, DW_IC_DATA_CMD, cmd);
+		dwiic_write(sc, DW_IC_DATA_CMD, cmd);
 
 		tx_limit--;
 		x++;
@@ -819,14 +819,14 @@ dwiic_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr, const void *cmdbuf,
 
 			if (flags & I2C_F_POLL) {
 				for (retries = 100; retries > 0; retries--) {
-					rx_avail = dwiic_i2c_read(sc, DW_IC_RXFLR);
+					rx_avail = dwiic_read(sc, DW_IC_RXFLR);
 					if (rx_avail > 0)
 						break;
 					DELAY(50);
 				}
 			} else {
-				dwiic_i2c_read(sc, DW_IC_CLR_INTR);
-				dwiic_i2c_write(sc, DW_IC_INTR_MASK,
+				dwiic_read(sc, DW_IC_CLR_INTR);
+				dwiic_write(sc, DW_IC_INTR_MASK,
 				    DW_IC_INTR_RX_FULL);
 
 				if (tsleep(&sc->sc_readwait, PRIBIO, "dwiic",
@@ -835,7 +835,7 @@ dwiic_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr, const void *cmdbuf,
 					    "rx_full intr\n",
 					    sc->sc_dev.dv_xname);
 
-				rx_avail = dwiic_i2c_read(sc, DW_IC_RXFLR);
+				rx_avail = dwiic_read(sc, DW_IC_RXFLR);
 			}
 
 			if (rx_avail == 0) {
@@ -852,7 +852,7 @@ dwiic_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr, const void *cmdbuf,
 			    len - readpos));
 
 			while (rx_avail > 0) {
-				resp = dwiic_i2c_read(sc, DW_IC_DATA_CMD);
+				resp = dwiic_read(sc, DW_IC_DATA_CMD);
 				if (readpos < len) {
 					b[readpos] = resp;
 					readpos++;
@@ -866,7 +866,7 @@ dwiic_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr, const void *cmdbuf,
 			DPRINTF(("%s: still need to read %d bytes\n",
 			    sc->sc_dev.dv_xname, (int)(len - readpos)));
 			tx_limit = sc->tx_fifo_depth -
-			    dwiic_i2c_read(sc, DW_IC_TXFLR);
+			    dwiic_read(sc, DW_IC_TXFLR);
 		}
 	}
 
@@ -880,28 +880,28 @@ dwiic_read_clear_intrbits(struct dwiic_softc *sc)
 {
        uint32_t stat;
 
-       stat = dwiic_i2c_read(sc, DW_IC_INTR_STAT);
+       stat = dwiic_read(sc, DW_IC_INTR_STAT);
 
        if (stat & DW_IC_INTR_RX_UNDER)
-	       dwiic_i2c_read(sc, DW_IC_CLR_RX_UNDER);
+	       dwiic_read(sc, DW_IC_CLR_RX_UNDER);
        if (stat & DW_IC_INTR_RX_OVER)
-	       dwiic_i2c_read(sc, DW_IC_CLR_RX_OVER);
+	       dwiic_read(sc, DW_IC_CLR_RX_OVER);
        if (stat & DW_IC_INTR_TX_OVER)
-	       dwiic_i2c_read(sc, DW_IC_CLR_TX_OVER);
+	       dwiic_read(sc, DW_IC_CLR_TX_OVER);
        if (stat & DW_IC_INTR_RD_REQ)
-	       dwiic_i2c_read(sc, DW_IC_CLR_RD_REQ);
+	       dwiic_read(sc, DW_IC_CLR_RD_REQ);
        if (stat & DW_IC_INTR_TX_ABRT)
-	       dwiic_i2c_read(sc, DW_IC_CLR_TX_ABRT);
+	       dwiic_read(sc, DW_IC_CLR_TX_ABRT);
        if (stat & DW_IC_INTR_RX_DONE)
-	       dwiic_i2c_read(sc, DW_IC_CLR_RX_DONE);
+	       dwiic_read(sc, DW_IC_CLR_RX_DONE);
        if (stat & DW_IC_INTR_ACTIVITY)
-	       dwiic_i2c_read(sc, DW_IC_CLR_ACTIVITY);
+	       dwiic_read(sc, DW_IC_CLR_ACTIVITY);
        if (stat & DW_IC_INTR_STOP_DET)
-	       dwiic_i2c_read(sc, DW_IC_CLR_STOP_DET);
+	       dwiic_read(sc, DW_IC_CLR_STOP_DET);
        if (stat & DW_IC_INTR_START_DET)
-	       dwiic_i2c_read(sc, DW_IC_CLR_START_DET);
+	       dwiic_read(sc, DW_IC_CLR_START_DET);
        if (stat & DW_IC_INTR_GEN_CALL)
-	       dwiic_i2c_read(sc, DW_IC_CLR_GEN_CALL);
+	       dwiic_read(sc, DW_IC_CLR_GEN_CALL);
 
        return stat;
 }
@@ -913,7 +913,7 @@ dwiic_intr(void *arg)
 	struct dwiic_softc *sc = arg;
 	uint32_t en, stat;
 
-	en = dwiic_i2c_read(sc, DW_IC_ENABLE);
+	en = dwiic_read(sc, DW_IC_ENABLE);
 	/* probably for the other controller */
 	if (!en)
 		return 0;
@@ -932,13 +932,13 @@ dwiic_intr(void *arg)
 		    __func__));
 	else {
 		if (stat & DW_IC_INTR_RX_FULL) {
-			dwiic_i2c_write(sc, DW_IC_INTR_MASK, 0);
+			dwiic_write(sc, DW_IC_INTR_MASK, 0);
 			DPRINTF(("%s: %s: waking up reader\n",
 			    sc->sc_dev.dv_xname, __func__));
 			wakeup(&sc->sc_readwait);
 		}
 		if (stat & DW_IC_INTR_TX_EMPTY) {
-			dwiic_i2c_write(sc, DW_IC_INTR_MASK, 0);
+			dwiic_write(sc, DW_IC_INTR_MASK, 0);
 			DPRINTF(("%s: %s: waking up writer\n",
 			    sc->sc_dev.dv_xname, __func__));
 			wakeup(&sc->sc_writewait);
