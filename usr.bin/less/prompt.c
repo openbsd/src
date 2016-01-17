@@ -174,7 +174,7 @@ cond(char c, int where)
 
 	switch (c) {
 	case 'a':	/* Anything in the message yet? */
-		return (mp > message);
+		return (*message != '\0');
 	case 'b':	/* Current byte offset known? */
 		return (curr_byte(where) != -1);
 	case 'c':
@@ -478,7 +478,7 @@ pr_expand(const char *proto, int maxwidth)
 		}
 	}
 
-	if (mp == message)
+	if (*message == '\0')
 		return ("");
 	if (maxwidth > 0 && mp >= message + maxwidth) {
 		/*
