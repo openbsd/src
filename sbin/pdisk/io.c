@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.13 2016/01/17 18:57:52 krw Exp $	*/
+/*	$OpenBSD: io.c,v 1.14 2016/01/17 19:15:55 krw Exp $	*/
 
 //
 // io.c - simple io and input parsing routines
@@ -377,7 +377,7 @@ get_partition_modifier(void)
     c = my_getch();
 
     if (c == 'p' || c == 'P') {
-    	result = 1;
+	result = 1;
     } else if (c > 0) {
 	my_ungetch(c);
     }

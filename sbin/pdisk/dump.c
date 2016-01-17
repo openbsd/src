@@ -1,4 +1,4 @@
-/*	$OpenBSD: dump.c,v 1.31 2016/01/17 18:57:52 krw Exp $	*/
+/*	$OpenBSD: dump.c,v 1.32 2016/01/17 19:15:55 krw Exp $	*/
 
 //
 // dump.c - dumping partition maps
@@ -386,10 +386,10 @@ full_dump_partition_entry(struct partition_map_header *map, int ix)
     if (p->dpme_flags & DPME_OS_PIC_CODE) printf("pic ");
     t = p->dpme_flags >> 7;
     for (i = 7; i <= 31; i++) {
-    	if (t & 0x1) {
-    	    printf("%d ", i);
-    	}
-    	t = t >> 1;
+	if (t & 0x1) {
+	    printf("%d ", i);
+	}
+	t = t >> 1;
     }
     printf("\n");
 
@@ -423,14 +423,14 @@ dump_block(unsigned char *addr, int len)
 #define OTHER_LEN  8
 
     for (i = 0; i < len; i = limit) {
-    	limit1 = i + LINE_LEN;
-    	if (limit1 > len) {
-    	    limit = len;
-    	} else {
-    	    limit = limit1;
-    	}
+	limit1 = i + LINE_LEN;
+	if (limit1 > len) {
+	    limit = len;
+	} else {
+	    limit = limit1;
+	}
 	printf("\n%03x: ", i);
-    	for (j = i; j < limit1; j++) {
+	for (j = i; j < limit1; j++) {
 	    if (j % UNIT_LEN == 0) {
 		printf(" ");
 	    }
@@ -439,18 +439,18 @@ dump_block(unsigned char *addr, int len)
 	    } else {
 		printf("  ");
 	    }
-    	}
+	}
 	printf(" ");
-    	for (j = i; j < limit; j++) {
+	for (j = i; j < limit; j++) {
 	    if (j % OTHER_LEN == 0) {
 		printf(" ");
 	    }
-    	    if (addr[j] < ' ') {
-    	    	printf(".");
-    	    } else {
-    	    	printf("%c", addr[j]);
-    	    }
-    	}
+	    if (addr[j] < ' ') {
+		printf(".");
+	    } else {
+		printf("%c", addr[j]);
+	    }
+	}
     }
     printf("\n");
 }
@@ -482,9 +482,9 @@ full_dump_block_zero(struct partition_map_header *map)
     printf("          driver count: %u\n", zp->sbDrvrCount);
     m = (struct ddmap *) zp->sbMap;
     for (i = 0; &m[i].ddType < &zp->sbMap[247]; i++) {
-    	if (m[i].ddBlock == 0 && m[i].ddSize == 0 && m[i].ddType == 0) {
-    	    break;
-    	}
+	if (m[i].ddBlock == 0 && m[i].ddSize == 0 && m[i].ddType == 0) {
+	    break;
+	}
 	printf("      driver %3u block: %u\n", i+1, m[i].ddBlock);
 	printf("        size in blocks: %u\n", m[i].ddSize);
 	printf("           driver type: 0x%x\n", m[i].ddType);

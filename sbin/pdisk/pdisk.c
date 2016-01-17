@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdisk.c,v 1.41 2016/01/17 18:57:52 krw Exp $	*/
+/*	$OpenBSD: pdisk.c,v 1.42 2016/01/17 19:15:55 krw Exp $	*/
 
 //
 // pdisk - an editor for Apple format partition tables
@@ -117,7 +117,7 @@ main(int argc, char **argv)
 	    edit(argv[name_index++]);
 	}
     } else {
- 	usage();
+	usage();
     }
     return 0;
 }
@@ -184,7 +184,7 @@ edit(char *name)
 
     map = open_partition_map(name, &valid_file);
     if (!valid_file) {
-    	return;
+	return;
     }
 
     printf("Edit %s -\n", name);
@@ -280,7 +280,7 @@ edit(char *name)
 	    if (!rflag) {
 		do_write_partition_map(map);
 	    } else {
-	    	goto do_error;
+		goto do_error;
 	    }
 	    break;
 	default:
@@ -680,7 +680,7 @@ do_display_block(struct partition_map_header *map, char *alt_name)
     static long next_number = -1;
 
     if (map != NULL) {
-    	name = 0;
+	name = 0;
 	m = map->m;
 	g = map->logical_block;
     } else {
@@ -708,9 +708,9 @@ do_display_block(struct partition_map_header *map, char *alt_name)
 	goto xit;
     }
     if (display_block == NULL || display_g < g) {
-    	if (display_block != NULL) {
-    	    free(display_block);
-    	    display_g = 0;
+	if (display_block != NULL) {
+	    free(display_block);
+	    display_g = 0;
 	}
 	display_block = malloc(g);
 	if (display_block == NULL) {
@@ -748,7 +748,7 @@ do_display_entry(struct partition_map_header *map)
 	return;
     }
     if (number == 0) {
-    	full_dump_block_zero(map);
+	full_dump_block_zero(map);
     } else {
 	full_dump_partition_entry(map, number);
     }

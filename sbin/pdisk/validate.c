@@ -1,4 +1,4 @@
-/*	$OpenBSD: validate.c,v 1.22 2016/01/17 18:57:52 krw Exp $	*/
+/*	$OpenBSD: validate.c,v 1.23 2016/01/17 19:15:55 krw Exp $	*/
 
 //
 // validate.c -
@@ -155,8 +155,8 @@ add_range(struct range_list **list, uint32_t base, uint32_t len, int allocate)
     uint32_t high;
 
     if (list == 0 || *list == 0) {
-    	/* XXX initialized list will always have one element */
-    	return;
+	/* XXX initialized list will always have one element */
+	return;
     }
 
     low = base;
@@ -313,7 +313,7 @@ validate_map(struct partition_map_header *map)
     //printf("Validation not implemented yet.\n");
 
     if (map == NULL) {
-    	the_map = 0;
+	the_map = 0;
 	if (get_string_argument("Name of device: ", &name, 1) == 0) {
 	    bad_input("Bad name");
 	    return;
@@ -333,7 +333,7 @@ validate_map(struct partition_map_header *map)
 	}
 
     } else {
-    	name = 0;
+	name = 0;
 	the_map = map;
 	g = map->logical_block;
     }
@@ -374,7 +374,7 @@ check_map:
 	if (limit < 0) {
 	    /* XXX what to use for end of list? */
 	    if (i > 5) {
-	    	break;
+		break;
 	    }
 	} else if (i > limit) {
 	    break;

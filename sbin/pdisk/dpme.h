@@ -1,4 +1,4 @@
-/*	$OpenBSD: dpme.h,v 1.14 2016/01/17 18:57:52 krw Exp $	*/
+/*	$OpenBSD: dpme.h,v 1.15 2016/01/17 19:15:55 krw Exp $	*/
 
 //
 // dpme.h - Disk Partition Map Entry (dpme)
@@ -48,22 +48,22 @@
 #define	DPME_SIGNATURE	0x504D		/* i.e. 'PM' */
 
 struct block0 {
-    uint16_t 	sbSig;		/* unique value for SCSI block 0 */
-    uint16_t 	sbBlkSize;	/* block size of device */
-    uint32_t 	sbBlkCount;	/* number of blocks on device */
-    uint16_t 	sbDevType;	/* device type */
-    uint16_t 	sbDevId;	/* device id */
-    uint32_t 	sbData;		/* not used */
-    uint16_t 	sbDrvrCount;	/* driver descriptor count */
-    uint16_t 	sbMap[247];	/* descriptor map */
+    uint16_t	sbSig;		/* unique value for SCSI block 0 */
+    uint16_t	sbBlkSize;	/* block size of device */
+    uint32_t	sbBlkCount;	/* number of blocks on device */
+    uint16_t	sbDevType;	/* device type */
+    uint16_t	sbDevId;	/* device id */
+    uint32_t	sbData;		/* not used */
+    uint16_t	sbDrvrCount;	/* driver descriptor count */
+    uint16_t	sbMap[247];	/* descriptor map */
 };
 
 // Where &sbMap[0] is actually an array struct ddmap[sbDrvrCount]
 // kludge to get around alignment junk
 struct ddmap {
-    uint32_t 	ddBlock;	/* 1st driver's starting block (in sbBlkSize blocks!) */
-    uint16_t 	ddSize;		/* size of 1st driver (512-byte blks) */
-    uint16_t 	ddType;		/* system type (1 for Mac+) */
+    uint32_t	ddBlock;	/* 1st driver's starting block (in sbBlkSize blocks!) */
+    uint16_t	ddSize;		/* size of 1st driver (512-byte blks) */
+    uint16_t	ddType;		/* system type (1 for Mac+) */
 };
 
 

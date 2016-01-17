@@ -1,4 +1,4 @@
-/*	$OpenBSD: partition_map.c,v 1.33 2016/01/17 18:57:52 krw Exp $	*/
+/*	$OpenBSD: partition_map.c,v 1.34 2016/01/17 19:15:55 krw Exp $	*/
 
 //
 // partition_map.c - partition map routines
@@ -744,7 +744,7 @@ delete_partition_from_map(struct partition_map *entry)
 	return;
     }
     if (entry->contains_driver) {
-    	remove_driver(entry);	// update block0 if necessary
+	remove_driver(entry);	// update block0 if necessary
     }
     free(entry->data);
     entry->HFS_kind = kHFS_not;
@@ -817,7 +817,7 @@ combine_entry(struct partition_map *entry)
 	    // new end is maximum of two ends
 	    end = p->data->dpme_pblock_start + p->data->dpme_pblocks;
 	    if (end > entry->data->dpme_pblock_start + entry->data->dpme_pblocks) {
-	    	entry->data->dpme_pblocks = end - entry->data->dpme_pblock_start;
+		entry->data->dpme_pblocks = end - entry->data->dpme_pblock_start;
 	    }
 	    entry->data->dpme_lblocks = entry->data->dpme_pblocks;
 	    delete_entry(p);
@@ -1161,7 +1161,7 @@ read_block(struct partition_map_header *map, unsigned long num, char *buf)
 {
 //printf("read block %d\n", num);
     return read_file_media(map->m, ((long long) num) * map->logical_block,
-    		DEV_BSIZE, (void *)buf);
+		DEV_BSIZE, (void *)buf);
 }
 
 
@@ -1169,5 +1169,5 @@ int
 write_block(struct partition_map_header *map, unsigned long num, char *buf)
 {
     return write_file_media(map->m, ((long long) num) * map->logical_block,
-    		DEV_BSIZE, (void *)buf);
+		DEV_BSIZE, (void *)buf);
 }
