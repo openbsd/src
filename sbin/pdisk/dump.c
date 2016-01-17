@@ -1,4 +1,4 @@
-/*	$OpenBSD: dump.c,v 1.26 2016/01/17 16:26:26 krw Exp $	*/
+/*	$OpenBSD: dump.c,v 1.27 2016/01/17 16:34:41 krw Exp $	*/
 
 //
 // dump.c - dumping partition maps
@@ -58,15 +58,9 @@
 //
 // Types
 //
-typedef struct names {
-    const char *abbr;
-    const char *full;
-} NAMES;
-
-typedef unsigned long OSType;
 
 typedef struct PatchDescriptor {
-    OSType		patchSig;
+    unsigned long	patchSig;
     unsigned short	majorVers;
     unsigned short	minorVers;
     unsigned long	flags;
@@ -90,19 +84,6 @@ typedef PatchList *PatchListPtr;
 //
 // Global Constants
 //
-NAMES plist[] = {
-    {"Drvr", "Apple_Driver"},
-    {"Drv4", "Apple_Driver43"},
-    {"Free", "Apple_Free"},
-    {"Patc", "Apple_Patches"},
-    {" HFS", "Apple_HFS"},
-    {" MFS", "Apple_MFS"},
-    {"PDOS", "Apple_PRODOS"},
-    {"junk", "Apple_Scratch"},
-    {"unix", "Apple_UNIX_SVR2"},
-    {" map", "Apple_partition_map"},
-    {0,	0},
-};
 
 const char * kStringEmpty	= "";
 const char * kStringNot		= " not";
