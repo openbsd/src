@@ -1,4 +1,4 @@
-/*	$OpenBSD: partition_map.c,v 1.31 2016/01/17 17:44:05 krw Exp $	*/
+/*	$OpenBSD: partition_map.c,v 1.32 2016/01/17 18:44:59 krw Exp $	*/
 
 //
 // partition_map.c - partition map routines
@@ -96,7 +96,7 @@ int coerce_block0(struct partition_map_header *map);
 int contains_driver(struct partition_map *entry);
 void combine_entry(struct partition_map *entry);
 long compute_device_size(char *name);
-struct dpme* create_data(const char *name, const char *dptype, u32 base, u32 length);
+struct dpme* create_data(const char *name, const char *dptype, uint32_t base, uint32_t length);
 void delete_entry(struct partition_map *entry);
 void insert_in_base_order(struct partition_map *entry);
 void insert_in_disk_order(struct partition_map *entry);
@@ -217,7 +217,7 @@ int
 read_partition_map(struct partition_map_header *map)
 {
     struct dpme *data;
-    u32 limit;
+    uint32_t limit;
     int ix;
     int old_logical;
     double d;
@@ -506,17 +506,17 @@ coerce_block0(struct partition_map_header *map)
 
 
 int
-add_partition_to_map(const char *name, const char *dptype, u32 base, u32 length,
+add_partition_to_map(const char *name, const char *dptype, uint32_t base, uint32_t length,
 	struct partition_map_header *map)
 {
     struct partition_map * cur;
     struct dpme *data;
     enum add_action act;
     int limit;
-    u32 adjusted_base = 0;
-    u32 adjusted_length = 0;
-    u32 new_base = 0;
-    u32 new_length = 0;
+    uint32_t adjusted_base = 0;
+    uint32_t adjusted_length = 0;
+    uint32_t new_base = 0;
+    uint32_t new_length = 0;
 
 	// find a block that starts includes base and length
     cur = map->base_order;
@@ -637,7 +637,7 @@ add_partition_to_map(const char *name, const char *dptype, u32 base, u32 length,
 
 
 struct dpme *
-create_data(const char *name, const char *dptype, u32 base, u32 length)
+create_data(const char *name, const char *dptype, uint32_t base, uint32_t length)
 {
     struct dpme *data;
 
@@ -792,7 +792,7 @@ contains_driver(struct partition_map *entry)
     struct ddmap *m;
     int i;
     int f;
-    u32 start;
+    uint32_t start;
 
     map = entry->the_map;
     p = map->misc;
@@ -827,7 +827,7 @@ void
 combine_entry(struct partition_map *entry)
 {
     struct partition_map *p;
-    u32 end;
+    uint32_t end;
 
     if (entry == NULL
 	    || strncasecmp(entry->data->dpme_type, kFreeType, DPISTRLEN) != 0) {
@@ -943,7 +943,7 @@ find_entry_by_type(const char *type_name, struct partition_map_header *map)
 }
 
 struct partition_map *
-find_entry_by_base(u32 base, struct partition_map_header *map)
+find_entry_by_base(uint32_t base, struct partition_map_header *map)
 {
     struct partition_map * cur;
 
@@ -1137,7 +1137,7 @@ remove_driver(struct partition_map *entry)
     int i;
     int j;
     int f;
-    u32 start;
+    uint32_t start;
 
     map = entry->the_map;
     p = map->misc;

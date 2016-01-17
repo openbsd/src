@@ -1,4 +1,4 @@
-/*	$OpenBSD: dpme.h,v 1.12 2016/01/17 18:26:51 krw Exp $	*/
+/*	$OpenBSD: dpme.h,v 1.13 2016/01/17 18:44:59 krw Exp $	*/
 
 //
 // dpme.h - Disk Partition Map Entry (dpme)
@@ -53,17 +53,16 @@
 //
 // Types
 //
-typedef	unsigned long	u32;
 
 
 // Physical block zero of the disk has this format
 struct block0 {
     uint16_t 	sbSig;		/* unique value for SCSI block 0 */
     uint16_t 	sbBlkSize;	/* block size of device */
-    u32 	sbBlkCount;	/* number of blocks on device */
+    uint32_t 	sbBlkCount;	/* number of blocks on device */
     uint16_t 	sbDevType;	/* device type */
     uint16_t 	sbDevId;	/* device id */
-    u32 	sbData;		/* not used */
+    uint32_t 	sbData;		/* not used */
     uint16_t 	sbDrvrCount;	/* driver descriptor count */
     uint16_t 	sbMap[247];	/* descriptor map */
 };
@@ -71,7 +70,7 @@ struct block0 {
 // Where &sbMap[0] is actually an array struct ddmap[sbDrvrCount]
 // kludge to get around alignment junk
 struct ddmap {
-    u32 	ddBlock;	/* 1st driver's starting block (in sbBlkSize blocks!) */
+    uint32_t 	ddBlock;	/* 1st driver's starting block (in sbBlkSize blocks!) */
     uint16_t 	ddSize;		/* size of 1st driver (512-byte blks) */
     uint16_t 	ddType;		/* system type (1 for Mac+) */
 };
@@ -81,14 +80,14 @@ struct ddmap {
 struct dpme {
     uint16_t     dpme_signature          ;
     uint16_t     dpme_reserved_1         ;
-    u32     dpme_map_entries        ;
-    u32     dpme_pblock_start       ;
-    u32     dpme_pblocks            ;
+    uint32_t     dpme_map_entries        ;
+    uint32_t     dpme_pblock_start       ;
+    uint32_t     dpme_pblocks            ;
     char    dpme_name[DPISTRLEN]    ;  /* name of partition */
     char    dpme_type[DPISTRLEN]    ;  /* type of partition */
-    u32     dpme_lblock_start       ;
-    u32     dpme_lblocks            ;
-    u32     dpme_flags		    ;
+    uint32_t     dpme_lblock_start       ;
+    uint32_t     dpme_lblocks            ;
+    uint32_t     dpme_flags		    ;
 #define	DPME_DISKDRIVER		(1<<9)
 #define	DPME_CHAINABLE		(1<<8)
 #define	DPME_OS_SPECIFIC_1	(1<<8)
@@ -100,16 +99,16 @@ struct dpme {
 #define	DPME_IN_USE		(1<<2)
 #define	DPME_ALLOCATED		(1<<1)
 #define	DPME_VALID		(1<<0)
-    u32     dpme_boot_block         ;
-    u32     dpme_boot_bytes         ;
+    uint32_t     dpme_boot_block         ;
+    uint32_t     dpme_boot_bytes         ;
     uint8_t     *dpme_load_addr          ;
     uint8_t     *dpme_load_addr_2        ;
     uint8_t     *dpme_goto_addr          ;
     uint8_t     *dpme_goto_addr_2        ;
-    u32     dpme_checksum           ;
+    uint32_t     dpme_checksum           ;
     char    dpme_process_id[16]     ;
-    u32     dpme_boot_args[32]      ;
-    u32     dpme_reserved_3[62]     ;
+    uint32_t     dpme_boot_args[32]      ;
+    uint32_t     dpme_reserved_3[62]     ;
 };
 
 

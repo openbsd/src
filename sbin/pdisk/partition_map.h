@@ -1,4 +1,4 @@
-/*	$OpenBSD: partition_map.h,v 1.13 2016/01/17 17:44:05 krw Exp $	*/
+/*	$OpenBSD: partition_map.h,v 1.14 2016/01/17 18:44:59 krw Exp $	*/
 
 //
 // partition_map.h - partition map routines
@@ -100,13 +100,13 @@ extern int dflag;
 //
 // Forward declarations
 //
-int add_partition_to_map(const char *name, const char *dptype, u32 base, u32 length, struct partition_map_header *map);
+int add_partition_to_map(const char *name, const char *dptype, uint32_t base, uint32_t length, struct partition_map_header *map);
 void close_partition_map(struct partition_map_header *map);
 struct partition_map_header* create_partition_map(char *name, struct partition_map_header *oldmap);
 void delete_partition_from_map(struct partition_map *entry);
 struct partition_map* find_entry_by_disk_address(long, struct partition_map_header *);
 struct partition_map* find_entry_by_type(const char *type_name, struct partition_map_header *map);
-struct partition_map* find_entry_by_base(u32 base, struct partition_map_header *map);
+struct partition_map* find_entry_by_base(uint32_t base, struct partition_map_header *map);
 struct partition_map_header* init_partition_map(char *name, struct partition_map_header* oldmap);
 void move_entry_in_map(long, long, struct partition_map_header *);
 struct partition_map_header* open_partition_map(char *name, int *valid_file);

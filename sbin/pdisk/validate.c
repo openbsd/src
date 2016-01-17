@@ -1,4 +1,4 @@
-/*	$OpenBSD: validate.c,v 1.20 2016/01/17 17:44:05 krw Exp $	*/
+/*	$OpenBSD: validate.c,v 1.21 2016/01/17 18:44:59 krw Exp $	*/
 
 //
 // validate.c -
@@ -66,8 +66,8 @@ struct range_list {
     struct range_list *prev;
     enum range_state state;
     int valid;
-    u32 start;
-    u32 end;
+    uint32_t start;
+    uint32_t end;
 };
 
 
@@ -92,9 +92,9 @@ static int g;
 //
 int get_block_zero(void);
 int get_block_n(int n);
-struct range_list *new_range_list_item(enum range_state state, int valid, u32 low, u32 high);
+struct range_list *new_range_list_item(enum range_state state, int valid, uint32_t low, uint32_t high);
 void initialize_list(struct range_list **list);
-void add_range(struct range_list **list, u32 base, u32 len, int allocate);
+void add_range(struct range_list **list, uint32_t base, uint32_t len, int allocate);
 void print_range_list(struct range_list *list);
 void coalesce_list(struct range_list *list);
 
@@ -151,7 +151,7 @@ get_block_n(int n)
 
 
 struct range_list *
-new_range_list_item(enum range_state state, int valid, u32 low, u32 high)
+new_range_list_item(enum range_state state, int valid, uint32_t low, uint32_t high)
 {
     struct range_list *item;
 
@@ -177,12 +177,12 @@ initialize_list(struct range_list **list)
 
 
 void
-add_range(struct range_list **list, u32 base, u32 len, int allocate)
+add_range(struct range_list **list, uint32_t base, uint32_t len, int allocate)
 {
     struct range_list *item;
     struct range_list *cur;
-    u32 low;
-    u32 high;
+    uint32_t low;
+    uint32_t high;
 
     if (list == 0 || *list == 0) {
     	/* XXX initialized list will always have one element */
@@ -307,7 +307,7 @@ print_range_list(struct range_list *list)
 		break;
 	    }
 	    printed = 1;
-	    printf("\t%lu:%lu %s\n", cur->start, cur->end, s);
+	    printf("\t%u:%u %s\n", cur->start, cur->end, s);
 	} else {
 	    switch (cur->state) {
 	    case kUnallocated:
@@ -322,7 +322,7 @@ print_range_list(struct range_list *list)
 		break;
 	    }
 	    printed = 1;
-	    printf("\t%lu:%lu out of range, but %s\n", cur->start, cur->end, s);
+	    printf("\t%u:%u out of range, but %s\n", cur->start, cur->end, s);
 	}
     }
     if (printed == 0) {
@@ -337,7 +337,7 @@ validate_map(struct partition_map_header *map)
     struct range_list *list;
     char *name;
     int i;
-    u32 limit;
+    uint32_t limit;
     int printed;
 
     //printf("Validation not implemented yet.\n");
@@ -432,16 +432,16 @@ check_map:
 	// entry count matches
 	if (limit < 0) {
 	    printed = 1;
-	    printf("\tentry count is 0x%lx, real value unknown\n", mb->dpme_map_entries);
+	    printf("\tentry count is 0x%x, real value unknown\n", mb->dpme_map_entries);
 	} else if (mb->dpme_map_entries != limit) {
 	    printed = 1;
-	    printf("\tentry count is 0x%lx, should be %ld\n", mb->dpme_map_entries, limit);
+	    printf("\tentry count is 0x%x, should be %u\n", mb->dpme_map_entries, limit);
 	}
 	// lblocks contained within physical
 	if (mb->dpme_lblock_start >= mb->dpme_pblocks
 		|| mb->dpme_lblocks > mb->dpme_pblocks - mb->dpme_lblock_start) {
 	    printed = 1;
-	    printf("\tlogical blocks (%ld for %ld) not within physical size (%ld)\n",
+	    printf("\tlogical blocks (%u for %u) not within physical size (%u)\n",
 		    mb->dpme_lblock_start, mb->dpme_lblocks, mb->dpme_pblocks);
 	}
 	// remember stuff for post processing
