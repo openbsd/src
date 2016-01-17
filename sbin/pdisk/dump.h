@@ -1,4 +1,4 @@
-/*	$OpenBSD: dump.h,v 1.6 2016/01/14 04:02:05 krw Exp $	*/
+/*	$OpenBSD: dump.h,v 1.7 2016/01/17 17:44:05 krw Exp $	*/
 
 //
 // dump.h - dumping partition maps
@@ -56,12 +56,12 @@
 //
 // Forward declarations
 //
-void display_patches(partition_map *entry);
+void display_patches(struct partition_map *entry);
 int dump(char *name);
 void dump_block(unsigned char *addr, int len);
-void dump_partition_map(partition_map_header *map, int disk_order);
-void full_dump_partition_entry(partition_map_header *, int);
-void full_dump_block_zero(partition_map_header *map);
-void show_data_structures(partition_map_header *map);
+void dump_partition_map(struct partition_map_header *map, int disk_order);
+void full_dump_partition_entry(struct partition_map_header *, int);
+void full_dump_block_zero(struct partition_map_header *map);
+void show_data_structures(struct partition_map_header *map);
 
 #endif /* __dump__ */

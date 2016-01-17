@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdisk.c,v 1.39 2016/01/17 16:15:59 krw Exp $	*/
+/*	$OpenBSD: pdisk.c,v 1.40 2016/01/17 17:44:05 krw Exp $	*/
 
 //
 // pdisk - an editor for Apple format partition tables
@@ -92,21 +92,21 @@ static int first_get = 1;
 //
 // Forward declarations
 //
-void do_change_map_size(partition_map_header *map);
-void do_create_partition(partition_map_header *map, int get_type);
-void do_delete_partition(partition_map_header *map);
-void do_display_block(partition_map_header *map, char *alt_name);
-void do_display_entry(partition_map_header *map);
-void do_examine_patch_partition(partition_map_header *map);
-int do_expert(partition_map_header *map, char *name);
-void do_rename_partition(partition_map_header *map);
-void do_change_type(partition_map_header *map);
-void do_reorder(partition_map_header *map);
-void do_write_partition_map(partition_map_header *map);
+void do_change_map_size(struct partition_map_header *map);
+void do_create_partition(struct partition_map_header *map, int get_type);
+void do_delete_partition(struct partition_map_header *map);
+void do_display_block(struct partition_map_header *map, char *alt_name);
+void do_display_entry(struct partition_map_header *map);
+void do_examine_patch_partition(struct partition_map_header *map);
+int do_expert(struct partition_map_header *map, char *name);
+void do_rename_partition(struct partition_map_header *map);
+void do_change_type(struct partition_map_header *map);
+void do_reorder(struct partition_map_header *map);
+void do_write_partition_map(struct partition_map_header *map);
 void edit(char *name);
-int get_base_argument(long *number, partition_map_header *map);
+int get_base_argument(long *number, struct partition_map_header *map);
 int get_command_line(int *argc, char ***argv);
-int get_size_argument(long *number, partition_map_header *map);
+int get_size_argument(long *number, struct partition_map_header *map);
 int get_options(int argc, char **argv);
 void print_edit_notes(void);
 void print_expert_notes(void);
@@ -206,7 +206,7 @@ print_edit_notes()
 void
 edit(char *name)
 {
-    partition_map_header *map;
+    struct partition_map_header *map;
     int command;
     int order;
     int get_type;
@@ -325,7 +325,7 @@ finis:
 }
 
 void
-do_create_partition(partition_map_header *map, int get_type)
+do_create_partition(struct partition_map_header *map, int get_type)
 {
     long base;
     long length;
@@ -376,9 +376,9 @@ xit1:
 
 
 int
-get_base_argument(long *number, partition_map_header *map)
+get_base_argument(long *number, struct partition_map_header *map)
 {
-    partition_map * entry;
+    struct partition_map * entry;
     int result = 0;
 
     if (get_number_argument("First block: ", number, kDefault) == 0) {
@@ -400,9 +400,9 @@ get_base_argument(long *number, partition_map_header *map)
 
 
 int
-get_size_argument(long *number, partition_map_header *map)
+get_size_argument(long *number, struct partition_map_header *map)
 {
-    partition_map * entry;
+    struct partition_map * entry;
     int result = 0;
     unsigned long multiple;
 
@@ -432,9 +432,9 @@ get_size_argument(long *number, partition_map_header *map)
 
 
 void
-do_rename_partition(partition_map_header *map)
+do_rename_partition(struct partition_map_header *map)
 {
-    partition_map * entry;
+    struct partition_map * entry;
     long ix;
     char *name;
 
@@ -468,9 +468,9 @@ do_rename_partition(partition_map_header *map)
 }
 
 void
-do_change_type(partition_map_header *map)
+do_change_type(struct partition_map_header *map)
 {
-    partition_map * entry;
+    struct partition_map * entry;
     long ix;
     char *type = NULL;
 
@@ -511,9 +511,9 @@ out:
 
 
 void
-do_delete_partition(partition_map_header *map)
+do_delete_partition(struct partition_map_header *map)
 {
-    partition_map * cur;
+    struct partition_map * cur;
     long ix;
 
     if (map == NULL) {
@@ -539,7 +539,7 @@ do_delete_partition(partition_map_header *map)
 
 
 void
-do_reorder(partition_map_header *map)
+do_reorder(struct partition_map_header *map)
 {
     long old_index;
     long ix;
@@ -565,7 +565,7 @@ do_reorder(partition_map_header *map)
 
 
 void
-do_write_partition_map(partition_map_header *map)
+do_write_partition_map(struct partition_map_header *map)
 {
     if (map == NULL) {
 	bad_input("No partition map exists");
@@ -604,7 +604,7 @@ print_expert_notes()
 
 
 int
-do_expert(partition_map_header *map, char *name)
+do_expert(struct partition_map_header *map, char *name)
 {
     int command;
     int quit = 0;
@@ -679,7 +679,7 @@ finis:
 }
 
 void
-do_change_map_size(partition_map_header *map)
+do_change_map_size(struct partition_map_header *map)
 {
     long size;
 
@@ -699,7 +699,7 @@ do_change_map_size(partition_map_header *map)
 
 
 void
-do_display_block(partition_map_header *map, char *alt_name)
+do_display_block(struct partition_map_header *map, char *alt_name)
 {
     struct file_media *m;
     long number;
@@ -765,7 +765,7 @@ xit:
 
 
 void
-do_display_entry(partition_map_header *map)
+do_display_entry(struct partition_map_header *map)
 {
     long number;
 
@@ -786,9 +786,9 @@ do_display_entry(partition_map_header *map)
 
 
 void
-do_examine_patch_partition(partition_map_header *map)
+do_examine_patch_partition(struct partition_map_header *map)
 {
-    partition_map * entry;
+    struct partition_map * entry;
 
     if (map == NULL) {
 	bad_input("No partition map exists");

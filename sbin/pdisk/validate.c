@@ -1,4 +1,4 @@
-/*	$OpenBSD: validate.c,v 1.19 2016/01/17 16:51:33 krw Exp $	*/
+/*	$OpenBSD: validate.c,v 1.20 2016/01/17 17:44:05 krw Exp $	*/
 
 //
 // validate.c -
@@ -82,7 +82,7 @@ struct range_list {
 static char *buffer;
 static struct block0 *b0;
 static struct dpme *mb;
-static partition_map_header *the_map;
+static struct partition_map_header *the_map;
 static struct file_media *the_media;
 static int g;
 
@@ -126,7 +126,7 @@ get_block_zero(void)
 int
 get_block_n(int n)
 {
-    partition_map * entry;
+    struct partition_map * entry;
     int rtn_value;
 
     if (the_map != NULL) {
@@ -332,7 +332,7 @@ print_range_list(struct range_list *list)
 
 
 void
-validate_map(partition_map_header *map)
+validate_map(struct partition_map_header *map)
 {
     struct range_list *list;
     char *name;

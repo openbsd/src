@@ -1,4 +1,4 @@
-/*	$OpenBSD: dump.c,v 1.28 2016/01/17 16:44:01 krw Exp $	*/
+/*	$OpenBSD: dump.c,v 1.29 2016/01/17 17:44:05 krw Exp $	*/
 
 //
 // dump.c - dumping partition maps
@@ -96,11 +96,11 @@ const char * kStringNot		= " not";
 // Forward declarations
 //
 void adjust_value_and_compute_prefix(double *value, int *prefix);
-void dump_block_zero(partition_map_header *map);
-void dump_partition_entry(partition_map *entry, int type_length, int name_length, int digits);
-int get_max_base_or_length(partition_map_header *map);
-int get_max_name_string_length(partition_map_header *map);
-int get_max_type_string_length(partition_map_header *map);
+void dump_block_zero(struct partition_map_header *map);
+void dump_partition_entry(struct partition_map *entry, int type_length, int name_length, int digits);
+int get_max_base_or_length(struct partition_map_header *map);
+int get_max_name_string_length(struct partition_map_header *map);
+int get_max_type_string_length(struct partition_map_header *map);
 
 
 //
@@ -109,7 +109,7 @@ int get_max_type_string_length(partition_map_header *map);
 int
 dump(char *name)
 {
-    partition_map_header *map;
+    struct partition_map_header *map;
     int junk;
 
     map = open_partition_map(name, &junk);
@@ -126,7 +126,7 @@ dump(char *name)
 
 
 void
-dump_block_zero(partition_map_header *map)
+dump_block_zero(struct partition_map_header *map)
 {
     struct block0 *p;
     struct ddmap *m;
@@ -168,9 +168,9 @@ dump_block_zero(partition_map_header *map)
 
 
 void
-dump_partition_map(partition_map_header *map, int disk_order)
+dump_partition_map(struct partition_map_header *map, int disk_order)
 {
-    partition_map * entry;
+    struct partition_map * entry;
     int max_type_length;
     int max_name_length;
     int digits;
@@ -217,9 +217,9 @@ dump_partition_map(partition_map_header *map, int disk_order)
 
 
 void
-dump_partition_entry(partition_map *entry, int type_length, int name_length, int digits)
+dump_partition_entry(struct partition_map *entry, int type_length, int name_length, int digits)
 {
-    partition_map_header *map;
+    struct partition_map_header *map;
     int j;
     struct dpme *p;
     u32 size;
@@ -265,12 +265,12 @@ dump_partition_entry(partition_map *entry, int type_length, int name_length, int
 
 
 void
-show_data_structures(partition_map_header *map)
+show_data_structures(struct partition_map_header *map)
 {
     struct block0 *zp;
     struct ddmap *m;
     int i;
-    partition_map * entry;
+    struct partition_map * entry;
     struct dpme *p;
 
     if (map == NULL) {
@@ -362,9 +362,9 @@ show_data_structures(partition_map_header *map)
 
 
 void
-full_dump_partition_entry(partition_map_header *map, int ix)
+full_dump_partition_entry(struct partition_map_header *map, int ix)
 {
-    partition_map * cur;
+    struct partition_map * cur;
     struct dpme *p;
     int i;
     u32 t;
@@ -463,7 +463,7 @@ dump_block(unsigned char *addr, int len)
 }
 
 void
-full_dump_block_zero(partition_map_header *map)
+full_dump_block_zero(struct partition_map_header *map)
 {
     struct block0 *zp;
     struct ddmap *m;
@@ -502,7 +502,7 @@ full_dump_block_zero(partition_map_header *map)
 
 
 void
-display_patches(partition_map *entry)
+display_patches(struct partition_map *entry)
 {
     long long offset;
     struct file_media *m;
@@ -569,9 +569,9 @@ display_patches(partition_map *entry)
 }
 
 int
-get_max_type_string_length(partition_map_header *map)
+get_max_type_string_length(struct partition_map_header *map)
 {
-    partition_map * entry;
+    struct partition_map * entry;
     int max;
     int length;
 
@@ -592,9 +592,9 @@ get_max_type_string_length(partition_map_header *map)
 }
 
 int
-get_max_name_string_length(partition_map_header *map)
+get_max_name_string_length(struct partition_map_header *map)
 {
-    partition_map * entry;
+    struct partition_map * entry;
     int max;
     int length;
 
@@ -615,9 +615,9 @@ get_max_name_string_length(partition_map_header *map)
 }
 
 int
-get_max_base_or_length(partition_map_header *map)
+get_max_base_or_length(struct partition_map_header *map)
 {
-    partition_map * entry;
+    struct partition_map * entry;
     int max;
 
     if (map == NULL) {

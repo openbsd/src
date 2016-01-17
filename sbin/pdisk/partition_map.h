@@ -1,4 +1,4 @@
-/*	$OpenBSD: partition_map.h,v 1.12 2016/01/17 16:15:59 krw Exp $	*/
+/*	$OpenBSD: partition_map.h,v 1.13 2016/01/17 17:44:05 krw Exp $	*/
 
 //
 // partition_map.h - partition map routines
@@ -57,7 +57,6 @@ struct partition_map_header {
     int maximum_in_map;
     unsigned long media_size;	// in logical_blocks
 };
-typedef struct partition_map_header partition_map_header;
 
 struct partition_map {
     struct partition_map * next_on_disk;
@@ -70,7 +69,6 @@ struct partition_map {
     struct dpme *data;
     int HFS_kind;
 };
-typedef struct partition_map partition_map;
 
 /* Identifies the HFS kind. */
 enum {
@@ -102,18 +100,18 @@ extern int dflag;
 //
 // Forward declarations
 //
-int add_partition_to_map(const char *name, const char *dptype, u32 base, u32 length, partition_map_header *map);
-void close_partition_map(partition_map_header *map);
-partition_map_header* create_partition_map(char *name, partition_map_header *oldmap);
-void delete_partition_from_map(partition_map *entry);
-partition_map* find_entry_by_disk_address(long, partition_map_header *);
-partition_map* find_entry_by_type(const char *type_name, partition_map_header *map);
-partition_map* find_entry_by_base(u32 base, partition_map_header *map);
-partition_map_header* init_partition_map(char *name, partition_map_header* oldmap);
-void move_entry_in_map(long, long, partition_map_header *);
-partition_map_header* open_partition_map(char *name, int *valid_file);
-void resize_map(long new_size, partition_map_header *map);
-void write_partition_map(partition_map_header *map);
+int add_partition_to_map(const char *name, const char *dptype, u32 base, u32 length, struct partition_map_header *map);
+void close_partition_map(struct partition_map_header *map);
+struct partition_map_header* create_partition_map(char *name, struct partition_map_header *oldmap);
+void delete_partition_from_map(struct partition_map *entry);
+struct partition_map* find_entry_by_disk_address(long, struct partition_map_header *);
+struct partition_map* find_entry_by_type(const char *type_name, struct partition_map_header *map);
+struct partition_map* find_entry_by_base(u32 base, struct partition_map_header *map);
+struct partition_map_header* init_partition_map(char *name, struct partition_map_header* oldmap);
+void move_entry_in_map(long, long, struct partition_map_header *);
+struct partition_map_header* open_partition_map(char *name, int *valid_file);
+void resize_map(long new_size, struct partition_map_header *map);
+void write_partition_map(struct partition_map_header *map);
 void dpme_init_flags(struct dpme *data);
 
 #endif /* __partition_map__ */

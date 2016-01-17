@@ -1,4 +1,4 @@
-/*	$OpenBSD: partition_map.c,v 1.30 2016/01/17 16:26:26 krw Exp $	*/
+/*	$OpenBSD: partition_map.c,v 1.31 2016/01/17 17:44:05 krw Exp $	*/
 
 //
 // partition_map.c - partition map routines
@@ -91,32 +91,32 @@ enum add_action {
 //
 // Forward declarations
 //
-int add_data_to_map(struct dpme *, long, partition_map_header *);
-int coerce_block0(partition_map_header *map);
-int contains_driver(partition_map *entry);
-void combine_entry(partition_map *entry);
+int add_data_to_map(struct dpme *, long, struct partition_map_header *);
+int coerce_block0(struct partition_map_header *map);
+int contains_driver(struct partition_map *entry);
+void combine_entry(struct partition_map *entry);
 long compute_device_size(char *name);
 struct dpme* create_data(const char *name, const char *dptype, u32 base, u32 length);
-void delete_entry(partition_map *entry);
-void insert_in_base_order(partition_map *entry);
-void insert_in_disk_order(partition_map *entry);
-int read_block(partition_map_header *map, unsigned long num, char *buf);
-int read_partition_map(partition_map_header *map);
-void remove_driver(partition_map *entry);
-void remove_from_disk_order(partition_map *entry);
-void renumber_disk_addresses(partition_map_header *map);
-void sync_device_size(partition_map_header *map);
-int write_block(partition_map_header *map, unsigned long num, char *buf);
+void delete_entry(struct partition_map *entry);
+void insert_in_base_order(struct partition_map *entry);
+void insert_in_disk_order(struct partition_map *entry);
+int read_block(struct partition_map_header *map, unsigned long num, char *buf);
+int read_partition_map(struct partition_map_header *map);
+void remove_driver(struct partition_map *entry);
+void remove_from_disk_order(struct partition_map *entry);
+void renumber_disk_addresses(struct partition_map_header *map);
+void sync_device_size(struct partition_map_header *map);
+int write_block(struct partition_map_header *map, unsigned long num, char *buf);
 
 
 //
 // Routines
 //
-partition_map_header *
+struct partition_map_header *
 open_partition_map(char *name, int *valid_file)
 {
     struct file_media *m;
-    partition_map_header * map;
+    struct partition_map_header * map;
     int writable;
 
     m = open_file_as_media(name, (rflag)?O_RDONLY:O_RDWR);
@@ -134,7 +134,7 @@ open_partition_map(char *name, int *valid_file)
     }
     *valid_file = 1;
 
-    map = malloc(sizeof(partition_map_header));
+    map = malloc(sizeof(struct partition_map_header));
     if (map == NULL) {
 	warn("can't allocate memory for open partition map");
 	close_file_media(m);
@@ -192,10 +192,10 @@ open_partition_map(char *name, int *valid_file)
 
 
 void
-close_partition_map(partition_map_header *map)
+close_partition_map(struct partition_map_header *map)
 {
-    partition_map * entry;
-    partition_map * next;
+    struct partition_map * entry;
+    struct partition_map * next;
 
     if (map == NULL) {
 	return;
@@ -214,7 +214,7 @@ close_partition_map(partition_map_header *map)
 
 
 int
-read_partition_map(partition_map_header *map)
+read_partition_map(struct partition_map_header *map)
 {
     struct dpme *data;
     u32 limit;
@@ -296,11 +296,11 @@ read_partition_map(partition_map_header *map)
 
 
 void
-write_partition_map(partition_map_header *map)
+write_partition_map(struct partition_map_header *map)
 {
     struct file_media *m;
     char *block;
-    partition_map * entry;
+    struct partition_map * entry;
     int i = 0;
     int result = 0;
 
@@ -334,12 +334,12 @@ write_partition_map(partition_map_header *map)
 
 
 int
-add_data_to_map(struct dpme *data, long ix, partition_map_header *map)
+add_data_to_map(struct dpme *data, long ix, struct partition_map_header *map)
 {
-    partition_map *entry;
+    struct partition_map *entry;
 
 //printf("add data %d to map\n", ix);
-    entry = malloc(sizeof(partition_map));
+    entry = malloc(sizeof(struct partition_map));
     if (entry == NULL) {
 	warn("can't allocate memory for map entries");
 	return 0;
@@ -367,10 +367,10 @@ add_data_to_map(struct dpme *data, long ix, partition_map_header *map)
 }
 
 
-partition_map_header *
-init_partition_map(char *name, partition_map_header* oldmap)
+struct partition_map_header *
+init_partition_map(char *name, struct partition_map_header* oldmap)
 {
-    partition_map_header *map;
+    struct partition_map_header *map;
 
     if (oldmap != NULL) {
 	printf("map already exists\n");
@@ -391,11 +391,11 @@ init_partition_map(char *name, partition_map_header* oldmap)
 }
 
 
-partition_map_header *
-create_partition_map(char *name, partition_map_header *oldmap)
+struct partition_map_header *
+create_partition_map(char *name, struct partition_map_header *oldmap)
 {
     struct file_media *m;
-    partition_map_header * map;
+    struct partition_map_header * map;
     struct dpme *data;
     unsigned long number;
     long size;
@@ -406,7 +406,7 @@ create_partition_map(char *name, partition_map_header *oldmap)
 	return NULL;
     }
 
-    map = malloc(sizeof(partition_map_header));
+    map = malloc(sizeof(struct partition_map_header));
     if (map == NULL) {
 	warn("can't allocate memory for open partition map");
 	close_file_media(m);
@@ -480,7 +480,7 @@ create_partition_map(char *name, partition_map_header *oldmap)
 
 
 int
-coerce_block0(partition_map_header *map)
+coerce_block0(struct partition_map_header *map)
 {
     struct block0 *p;
 
@@ -507,9 +507,9 @@ coerce_block0(partition_map_header *map)
 
 int
 add_partition_to_map(const char *name, const char *dptype, u32 base, u32 length,
-	partition_map_header *map)
+	struct partition_map_header *map)
 {
-    partition_map * cur;
+    struct partition_map * cur;
     struct dpme *data;
     enum add_action act;
     int limit;
@@ -673,9 +673,9 @@ dpme_init_flags(struct dpme *data)
 }
 
 void
-renumber_disk_addresses(partition_map_header *map)
+renumber_disk_addresses(struct partition_map_header *map)
 {
-    partition_map * cur;
+    struct partition_map * cur;
     long ix;
 
 	// reset disk addresses
@@ -718,7 +718,7 @@ compute_device_size(char *name)
 
 
 void
-sync_device_size(partition_map_header *map)
+sync_device_size(struct partition_map_header *map)
 {
     struct block0 *p;
     unsigned long size;
@@ -737,9 +737,9 @@ sync_device_size(partition_map_header *map)
 
 
 void
-delete_partition_from_map(partition_map *entry)
+delete_partition_from_map(struct partition_map *entry)
 {
-    partition_map_header *map;
+    struct partition_map_header *map;
     struct dpme *data;
 
     if (strncasecmp(entry->data->dpme_type, kMapType, DPISTRLEN) == 0) {
@@ -785,9 +785,9 @@ delete_partition_from_map(partition_map *entry)
 
 
 int
-contains_driver(partition_map *entry)
+contains_driver(struct partition_map *entry)
 {
-    partition_map_header *map;
+    struct partition_map_header *map;
     struct block0 *p;
     struct ddmap *m;
     int i;
@@ -824,9 +824,9 @@ contains_driver(partition_map *entry)
 
 
 void
-combine_entry(partition_map *entry)
+combine_entry(struct partition_map *entry)
 {
-    partition_map *p;
+    struct partition_map *p;
     u32 end;
 
     if (entry == NULL
@@ -885,10 +885,10 @@ combine_entry(partition_map *entry)
 
 
 void
-delete_entry(partition_map *entry)
+delete_entry(struct partition_map *entry)
 {
-    partition_map_header *map;
-    partition_map *p;
+    struct partition_map_header *map;
+    struct partition_map *p;
 
     map = entry->the_map;
     map->blocks_in_map--;
@@ -911,10 +911,10 @@ delete_entry(partition_map *entry)
 }
 
 
-partition_map *
-find_entry_by_disk_address(long ix, partition_map_header *map)
+struct partition_map *
+find_entry_by_disk_address(long ix, struct partition_map_header *map)
 {
-    partition_map * cur;
+    struct partition_map * cur;
 
     cur = map->disk_order;
     while (cur != NULL) {
@@ -927,10 +927,10 @@ find_entry_by_disk_address(long ix, partition_map_header *map)
 }
 
 
-partition_map *
-find_entry_by_type(const char *type_name, partition_map_header *map)
+struct partition_map *
+find_entry_by_type(const char *type_name, struct partition_map_header *map)
 {
-    partition_map * cur;
+    struct partition_map * cur;
 
     cur = map->base_order;
     while (cur != NULL) {
@@ -942,10 +942,10 @@ find_entry_by_type(const char *type_name, partition_map_header *map)
     return cur;
 }
 
-partition_map *
-find_entry_by_base(u32 base, partition_map_header *map)
+struct partition_map *
+find_entry_by_base(u32 base, struct partition_map_header *map)
 {
-    partition_map * cur;
+    struct partition_map * cur;
 
     cur = map->base_order;
     while (cur != NULL) {
@@ -959,9 +959,9 @@ find_entry_by_base(u32 base, partition_map_header *map)
 
 
 void
-move_entry_in_map(long old_index, long ix, partition_map_header *map)
+move_entry_in_map(long old_index, long ix, struct partition_map_header *map)
 {
-    partition_map * cur;
+    struct partition_map * cur;
 
     cur = find_entry_by_disk_address(old_index, map);
     if (cur == NULL) {
@@ -977,10 +977,10 @@ move_entry_in_map(long old_index, long ix, partition_map_header *map)
 
 
 void
-remove_from_disk_order(partition_map *entry)
+remove_from_disk_order(struct partition_map *entry)
 {
-    partition_map_header *map;
-    partition_map *p;
+    struct partition_map_header *map;
+    struct partition_map *p;
 
     map = entry->the_map;
     p = entry->next_on_disk;
@@ -999,10 +999,10 @@ remove_from_disk_order(partition_map *entry)
 
 
 void
-insert_in_disk_order(partition_map *entry)
+insert_in_disk_order(struct partition_map *entry)
 {
-    partition_map_header *map;
-    partition_map * cur;
+    struct partition_map_header *map;
+    struct partition_map * cur;
 
     // find position in disk list & insert
     map = entry->the_map;
@@ -1033,10 +1033,10 @@ insert_in_disk_order(partition_map *entry)
 
 
 void
-insert_in_base_order(partition_map *entry)
+insert_in_base_order(struct partition_map *entry)
 {
-    partition_map_header *map;
-    partition_map * cur;
+    struct partition_map_header *map;
+    struct partition_map * cur;
 
     // find position in base list & insert
     map = entry->the_map;
@@ -1069,10 +1069,10 @@ insert_in_base_order(partition_map *entry)
 
 
 void
-resize_map(long new_size, partition_map_header *map)
+resize_map(long new_size, struct partition_map_header *map)
 {
-    partition_map * entry;
-    partition_map * next;
+    struct partition_map * entry;
+    struct partition_map * next;
     int incr;
 
     // find map entry
@@ -1129,9 +1129,9 @@ doit:
 
 
 void
-remove_driver(partition_map *entry)
+remove_driver(struct partition_map *entry)
 {
-    partition_map_header *map;
+    struct partition_map_header *map;
     struct block0 *p;
     struct ddmap *m;
     int i;
@@ -1185,7 +1185,7 @@ remove_driver(partition_map *entry)
 }
 
 int
-read_block(partition_map_header *map, unsigned long num, char *buf)
+read_block(struct partition_map_header *map, unsigned long num, char *buf)
 {
 //printf("read block %d\n", num);
     return read_file_media(map->m, ((long long) num) * map->logical_block,
@@ -1194,7 +1194,7 @@ read_block(partition_map_header *map, unsigned long num, char *buf)
 
 
 int
-write_block(partition_map_header *map, unsigned long num, char *buf)
+write_block(struct partition_map_header *map, unsigned long num, char *buf)
 {
     return write_file_media(map->m, ((long long) num) * map->logical_block,
     		DEV_BSIZE, (void *)buf);

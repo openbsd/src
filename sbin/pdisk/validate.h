@@ -1,4 +1,4 @@
-/*	$OpenBSD: validate.h,v 1.4 2016/01/11 07:54:07 jasper Exp $	*/
+/*	$OpenBSD: validate.h,v 1.5 2016/01/17 17:44:05 krw Exp $	*/
 
 //
 // validate.h -
@@ -56,6 +56,6 @@
 //
 // Forward declarations
 //
-void validate_map(partition_map_header *map);
+void validate_map(struct partition_map_header *map);
 
 #endif /* __validate__ */
