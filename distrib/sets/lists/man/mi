@@ -1314,6 +1314,7 @@
 ./usr/share/man/man4/divert.4
 ./usr/share/man/man4/dpt.4
 ./usr/share/man/man4/drm.4
+./usr/share/man/man4/dwiic.4
 ./usr/share/man/man4/eap.4
 ./usr/share/man/man4/ec.4
 ./usr/share/man/man4/eephy.4
@@ -1441,7 +1442,10 @@
 ./usr/share/man/man4/icsphy.4
 ./usr/share/man/man4/ifmedia.4
 ./usr/share/man/man4/iha.4
+./usr/share/man/man4/ihidev.4
 ./usr/share/man/man4/iic.4
+./usr/share/man/man4/ikbd.4
+./usr/share/man/man4/ims.4
 ./usr/share/man/man4/inet.4
 ./usr/share/man/man4/inet6.4
 ./usr/share/man/man4/inphy.4
