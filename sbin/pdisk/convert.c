@@ -1,4 +1,4 @@
-/*	$OpenBSD: convert.c,v 1.13 2016/01/17 18:23:30 krw Exp $	*/
+/*	$OpenBSD: convert.c,v 1.14 2016/01/17 18:26:51 krw Exp $	*/
 
 //
 // convert.c - Little-endian conversion
@@ -96,7 +96,7 @@ convert_block0(struct block0 *data, int to_cpu_form)
 {
 #if BYTE_ORDER == LITTLE_ENDIAN
     struct ddmap *m;
-    u16 count;
+    uint16_t count;
     int i;
 
     // Since this data is optional we do not want to convert willy-nilly.
