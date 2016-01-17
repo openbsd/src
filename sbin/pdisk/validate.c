@@ -1,4 +1,4 @@
-/*	$OpenBSD: validate.c,v 1.17 2016/01/17 16:07:06 krw Exp $	*/
+/*	$OpenBSD: validate.c,v 1.18 2016/01/17 16:15:59 krw Exp $	*/
 
 //
 // validate.c -
@@ -81,7 +81,7 @@ typedef struct range_list range_list;
 // Global Variables
 //
 static char *buffer;
-static Block0 *b0;
+static struct block0 *b0;
 static struct dpme *mb;
 static partition_map_header *the_map;
 static struct file_media *the_media;
@@ -115,7 +115,7 @@ get_block_zero(void)
 	if (read_file_media(the_media, (long long) 0, DEV_BSIZE, buffer) == 0) {
 	    rtn_value = 0;
 	} else {
-	    b0 = (Block0 *) buffer;
+	    b0 = (struct block0 *) buffer;
 	    convert_block0(b0, 1);
 	    rtn_value = 1;
 	}

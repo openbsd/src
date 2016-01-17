@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdisk.c,v 1.38 2016/01/17 16:07:06 krw Exp $	*/
+/*	$OpenBSD: pdisk.c,v 1.39 2016/01/17 16:15:59 krw Exp $	*/
 
 //
 // pdisk - an editor for Apple format partition tables
@@ -126,10 +126,10 @@ main(int argc, char **argv)
 		"is not equal to block size (%d)\n",
 		sizeof(struct dpme), DEV_BSIZE);
     }
-    if (sizeof(Block0) != DEV_BSIZE) {
+    if (sizeof(struct block0) != DEV_BSIZE) {
 	errx(1, "Size of block zero structure (%zu) "
 		"is not equal to block size (%d)\n",
-		sizeof(Block0), DEV_BSIZE);
+		sizeof(struct block0), DEV_BSIZE);
     }
 
     name_index = get_options(argc, argv);

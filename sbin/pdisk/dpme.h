@@ -1,4 +1,4 @@
-/*	$OpenBSD: dpme.h,v 1.8 2016/01/17 16:07:06 krw Exp $	*/
+/*	$OpenBSD: dpme.h,v 1.9 2016/01/17 16:15:59 krw Exp $	*/
 
 //
 // dpme.h - Disk Partition Map Entry (dpme)
@@ -59,7 +59,7 @@ typedef	unsigned long	u32;
 
 
 // Physical block zero of the disk has this format
-struct Block0 {
+struct block0 {
     u16 	sbSig;		/* unique value for SCSI block 0 */
     u16 	sbBlkSize;	/* block size of device */
     u32 	sbBlkCount;	/* number of blocks on device */
@@ -69,7 +69,6 @@ struct Block0 {
     u16 	sbDrvrCount;	/* driver descriptor count */
     u16 	sbMap[247];	/* descriptor map */
 };
-typedef struct Block0 Block0;
 
 // Where &sbMap[0] is actually an array DDMap[sbDrvrCount]
 // kludge to get around alignment junk

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dump.c,v 1.24 2016/01/17 16:07:06 krw Exp $	*/
+/*	$OpenBSD: dump.c,v 1.25 2016/01/17 16:15:59 krw Exp $	*/
 
 //
 // dump.c - dumping partition maps
@@ -149,7 +149,7 @@ dump(char *name)
 void
 dump_block_zero(partition_map_header *map)
 {
-    Block0 *p;
+    struct block0 *p;
     DDMap *m;
     int i;
     double value;
@@ -288,7 +288,7 @@ dump_partition_entry(partition_map *entry, int type_length, int name_length, int
 void
 show_data_structures(partition_map_header *map)
 {
-    Block0 *zp;
+    struct block0 *zp;
     DDMap *m;
     int i;
     partition_map * entry;
@@ -486,7 +486,7 @@ dump_block(unsigned char *addr, int len)
 void
 full_dump_block_zero(partition_map_header *map)
 {
-    Block0 *zp;
+    struct block0 *zp;
     DDMap *m;
     int i;
 

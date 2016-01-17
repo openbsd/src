@@ -1,4 +1,4 @@
-/*	$OpenBSD: partition_map.c,v 1.28 2016/01/17 16:07:06 krw Exp $	*/
+/*	$OpenBSD: partition_map.c,v 1.29 2016/01/17 16:15:59 krw Exp $	*/
 
 //
 // partition_map.c - partition map routines
@@ -482,7 +482,7 @@ create_partition_map(char *name, partition_map_header *oldmap)
 int
 coerce_block0(partition_map_header *map)
 {
-    Block0 *p;
+    struct block0 *p;
 
     p = map->misc;
     if (p == NULL) {
@@ -720,7 +720,7 @@ compute_device_size(char *name)
 void
 sync_device_size(partition_map_header *map)
 {
-    Block0 *p;
+    struct block0 *p;
     unsigned long size;
     double d;
 
@@ -788,7 +788,7 @@ int
 contains_driver(partition_map *entry)
 {
     partition_map_header *map;
-    Block0 *p;
+    struct block0 *p;
     DDMap *m;
     int i;
     int f;
@@ -1132,7 +1132,7 @@ void
 remove_driver(partition_map *entry)
 {
     partition_map_header *map;
-    Block0 *p;
+    struct block0 *p;
     DDMap *m;
     int i;
     int j;
