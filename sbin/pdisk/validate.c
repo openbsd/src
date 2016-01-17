@@ -1,4 +1,4 @@
-/*	$OpenBSD: validate.c,v 1.15 2016/01/16 22:28:14 krw Exp $	*/
+/*	$OpenBSD: validate.c,v 1.16 2016/01/17 15:57:12 krw Exp $	*/
 
 //
 // validate.c -
@@ -84,7 +84,7 @@ static char *buffer;
 static Block0 *b0;
 static DPME *mb;
 static partition_map_header *the_map;
-static FILE_MEDIA the_media;
+static struct file_media *the_media;
 static int g;
 
 

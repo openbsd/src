@@ -1,4 +1,4 @@
-/*	$OpenBSD: dump.c,v 1.22 2016/01/17 14:28:25 krw Exp $	*/
+/*	$OpenBSD: dump.c,v 1.23 2016/01/17 15:57:12 krw Exp $	*/
 
 //
 // dump.c - dumping partition maps
@@ -526,7 +526,7 @@ void
 display_patches(partition_map *entry)
 {
     long long offset;
-    FILE_MEDIA m;
+    struct file_media *m;
     static unsigned char *patch_block;
     PatchListPtr p;
     PatchDescriptorPtr q;

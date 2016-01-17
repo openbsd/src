@@ -1,4 +1,4 @@
-/*	$OpenBSD: file_media.c,v 1.26 2016/01/16 22:28:14 krw Exp $	*/
+/*	$OpenBSD: file_media.c,v 1.27 2016/01/17 15:57:12 krw Exp $	*/
 
 /*
  * file_media.c -
@@ -104,10 +104,10 @@ compute_block_size(int fd, char *name)
 }
 
 
-FILE_MEDIA
+struct file_media *
 open_file_as_media(char *file, int oflag)
 {
-    FILE_MEDIA	a;
+    struct file_media	*a;
     int			fd;
     off_t off;
     struct stat info;
@@ -136,12 +136,12 @@ open_file_as_media(char *file, int oflag)
 	    close(fd);
 	}
     }
-    return (FILE_MEDIA) a;
+    return (a);
 }
 
 
 long
-read_file_media(FILE_MEDIA a, long long offset, unsigned long count,
+read_file_media(struct file_media *a, long long offset, unsigned long count,
     void *address)
 {
     long rtn_value;
@@ -182,7 +182,8 @@ read_file_media(FILE_MEDIA a, long long offset, unsigned long count,
 
 
 long
-write_file_media(FILE_MEDIA a, long long offset, unsigned long count, void *address)
+write_file_media(struct file_media *a, long long offset, unsigned long count,
+    void *address)
 {
     long rtn_value;
     off_t off;
@@ -214,7 +215,7 @@ write_file_media(FILE_MEDIA a, long long offset, unsigned long count, void *addr
 
 
 long
-close_file_media(FILE_MEDIA a)
+close_file_media(struct file_media *a)
 {
     if (a == 0) {
 	return 0;
@@ -226,7 +227,7 @@ close_file_media(FILE_MEDIA a)
 
 
 long
-os_reload_file_media(FILE_MEDIA a)
+os_reload_file_media(struct file_media *a)
 {
     long rtn_value;
 

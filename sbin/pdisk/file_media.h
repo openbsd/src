@@ -1,4 +1,4 @@
-/*	$OpenBSD: file_media.h,v 1.7 2016/01/16 22:28:14 krw Exp $	*/
+/*	$OpenBSD: file_media.h,v 1.8 2016/01/17 15:57:12 krw Exp $	*/
 
 /*
  * file_media.h -
@@ -39,7 +39,6 @@
 /*
  * Types
  */
-typedef struct file_media *FILE_MEDIA;
 
 struct file_media {
     long long	size_in_bytes;  /* offset granularity */
@@ -61,10 +60,10 @@ struct file_media {
 /*
  * Forward declarations
  */
-FILE_MEDIA open_file_as_media(char *file, int oflag);
-long read_file_media(FILE_MEDIA m, long long offset, unsigned long count, void *address);
-long write_file_media(FILE_MEDIA m, long long offset, unsigned long count, void *address);
-long close_file_media(FILE_MEDIA m);
-long os_reload_file_media(FILE_MEDIA m);
+struct file_media *open_file_as_media(char *file, int oflag);
+long read_file_media(struct file_media *m, long long offset, unsigned long count, void *address);
+long write_file_media(struct file_media *m, long long offset, unsigned long count, void *address);
+long close_file_media(struct file_media *m);
+long os_reload_file_media(struct file_media *m);
 
 #endif /* __file_media__ */

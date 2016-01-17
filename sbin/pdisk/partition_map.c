@@ -1,4 +1,4 @@
-/*	$OpenBSD: partition_map.c,v 1.26 2016/01/17 14:28:25 krw Exp $	*/
+/*	$OpenBSD: partition_map.c,v 1.27 2016/01/17 15:57:12 krw Exp $	*/
 
 //
 // partition_map.c - partition map routines
@@ -115,7 +115,7 @@ int write_block(partition_map_header *map, unsigned long num, char *buf);
 partition_map_header *
 open_partition_map(char *name, int *valid_file)
 {
-    FILE_MEDIA m;
+    struct file_media *m;
     partition_map_header * map;
     int writable;
 
@@ -298,7 +298,7 @@ read_partition_map(partition_map_header *map)
 void
 write_partition_map(partition_map_header *map)
 {
-    FILE_MEDIA m;
+    struct file_media *m;
     char *block;
     partition_map * entry;
     int i = 0;
@@ -394,7 +394,7 @@ init_partition_map(char *name, partition_map_header* oldmap)
 partition_map_header *
 create_partition_map(char *name, partition_map_header *oldmap)
 {
-    FILE_MEDIA m;
+    struct file_media *m;
     partition_map_header * map;
     DPME *data;
     unsigned long number;
