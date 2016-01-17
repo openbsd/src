@@ -1,4 +1,4 @@
-/*	$OpenBSD: validate.c,v 1.18 2016/01/17 16:15:59 krw Exp $	*/
+/*	$OpenBSD: validate.c,v 1.19 2016/01/17 16:51:33 krw Exp $	*/
 
 //
 // validate.c -
@@ -69,7 +69,6 @@ struct range_list {
     u32 start;
     u32 end;
 };
-typedef struct range_list range_list;
 
 
 //
@@ -93,11 +92,11 @@ static int g;
 //
 int get_block_zero(void);
 int get_block_n(int n);
-range_list *new_range_list_item(enum range_state state, int valid, u32 low, u32 high);
-void initialize_list(range_list **list);
-void add_range(range_list **list, u32 base, u32 len, int allocate);
-void print_range_list(range_list *list);
-void coalesce_list(range_list *list);
+struct range_list *new_range_list_item(enum range_state state, int valid, u32 low, u32 high);
+void initialize_list(struct range_list **list);
+void add_range(struct range_list **list, u32 base, u32 len, int allocate);
+void print_range_list(struct range_list *list);
+void coalesce_list(struct range_list *list);
 
 
 //
@@ -151,10 +150,10 @@ get_block_n(int n)
 }
 
 
-range_list *
+struct range_list *
 new_range_list_item(enum range_state state, int valid, u32 low, u32 high)
 {
-    range_list *item;
+    struct range_list *item;
 
     item = malloc(sizeof(struct range_list));
     item->next = 0;
@@ -168,9 +167,9 @@ new_range_list_item(enum range_state state, int valid, u32 low, u32 high)
 
 
 void
-initialize_list(range_list **list)
+initialize_list(struct range_list **list)
 {
-    range_list *item;
+    struct range_list *item;
 
     item = new_range_list_item(kUnallocated, 0, 0, 0xFFFFFFFF);
     *list = item;
@@ -178,10 +177,10 @@ initialize_list(range_list **list)
 
 
 void
-add_range(range_list **list, u32 base, u32 len, int allocate)
+add_range(struct range_list **list, u32 base, u32 len, int allocate)
 {
-    range_list *item;
-    range_list *cur;
+    struct range_list *item;
+    struct range_list *cur;
     u32 low;
     u32 high;
 
@@ -255,10 +254,10 @@ add_range(range_list **list, u32 base, u32 len, int allocate)
 
 
 void
-coalesce_list(range_list *list)
+coalesce_list(struct range_list *list)
 {
-    range_list *cur;
-    range_list *item;
+    struct range_list *cur;
+    struct range_list *item;
 
     for (cur = list; cur != 0; ) {
 	item = cur->next;
@@ -281,9 +280,9 @@ coalesce_list(range_list *list)
 
 
 void
-print_range_list(range_list *list)
+print_range_list(struct range_list *list)
 {
-    range_list *cur;
+    struct range_list *cur;
     int printed;
     const char *s = NULL;
 
@@ -335,7 +334,7 @@ print_range_list(range_list *list)
 void
 validate_map(partition_map_header *map)
 {
-    range_list *list;
+    struct range_list *list;
     char *name;
     int i;
     u32 limit;
