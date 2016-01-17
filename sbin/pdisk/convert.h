@@ -1,4 +1,4 @@
-/*	$OpenBSD: convert.h,v 1.7 2016/01/17 16:15:59 krw Exp $	*/
+/*	$OpenBSD: convert.h,v 1.8 2016/01/17 18:57:52 krw Exp $	*/
 
 //
 // convert.h - Little-endian conversion
@@ -36,30 +36,6 @@
 
 #include "dpme.h"
 
-
-//
-// Defines
-//
-
-
-//
-// Types
-//
-
-
-//
-// Global Constants
-//
-
-
-//
-// Global Variables
-//
-
-
-//
-// Forward declarations
-//
 int convert_block0(struct block0 *data, int to_cpu_form);
 int convert_dpme(struct dpme *data, int to_cpu_form);
 

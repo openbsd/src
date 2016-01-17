@@ -1,4 +1,4 @@
-/*	$OpenBSD: file_media.c,v 1.27 2016/01/17 15:57:12 krw Exp $	*/
+/*	$OpenBSD: file_media.c,v 1.28 2016/01/17 18:57:52 krw Exp $	*/
 
 /*
  * file_media.c -
@@ -32,17 +32,11 @@
 #include <sys/disklabel.h>
 #include <err.h>
 
-// for printf()
 #include <stdio.h>
-// for malloc() & free()
 #include <stdlib.h>
-// for lseek(), read(), write(), close()
 #include <unistd.h>
-// for open()
 #include <fcntl.h>
-// for LONG_MAX
 #include <limits.h>
-// for errno
 #include <errno.h>
 
 #include <sys/ioctl.h>
@@ -51,31 +45,11 @@
 
 #include "file_media.h"
 
-
-/*
- * Types
- */
-
-
-/*
- * Global Constants
- */
-
-
-/*
- * Global Variables
- */
 static long file_inited = 0;
 
-/*
- * Forward declarations
- */
 void compute_block_size(int fd, char *name);
 void file_init(void);
 
-/*
- * Routines
- */
 void
 file_init(void)
 {

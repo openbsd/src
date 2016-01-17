@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdisk.c,v 1.40 2016/01/17 17:44:05 krw Exp $	*/
+/*	$OpenBSD: pdisk.c,v 1.41 2016/01/17 18:57:52 krw Exp $	*/
 
 //
 // pdisk - an editor for Apple format partition tables
@@ -32,18 +32,11 @@
 #include <sys/param.h>	/* DEV_BSIZE */
 #include <err.h>
 
-// for printf()
 #include <stdio.h>
-
-// for malloc() & free()
 #include <stdlib.h>
 #include <unistd.h>
-
-// for strncpy() & strlen()
 #include <string.h>
-// for O_RDONLY
 #include <fcntl.h>
-// for errno
 #include <errno.h>
 
 #include "io.h"
@@ -52,24 +45,11 @@
 #include "validate.h"
 #include "file_media.h"
 
-
-//
-// Defines
-//
 #define ARGV_CHUNK 5
 #define DFLAG_DEFAULT	0
 #define LFLAG_DEFAULT	0
 #define RFLAG_DEFAULT	0
 
-
-//
-// Types
-//
-
-
-//
-// Global Constants
-//
 enum getopt_values {
     kLongOption = 0,
     kBadOption = '?',
@@ -79,19 +59,12 @@ enum getopt_values {
 };
 
 
-//
-// Global Variables
-//
 int lflag = LFLAG_DEFAULT;	/* list the device */
 int dflag = DFLAG_DEFAULT;	/* turn on debugging commands and printout */
 int rflag = RFLAG_DEFAULT;	/* open device read Only */
 
 static int first_get = 1;
 
-
-//
-// Forward declarations
-//
 void do_change_map_size(struct partition_map_header *map);
 void do_create_partition(struct partition_map_header *map, int get_type);
 void do_delete_partition(struct partition_map_header *map);
@@ -113,9 +86,6 @@ void print_expert_notes(void);
 
 __dead static void usage(void);
 
-//
-// Routines
-//
 int
 main(int argc, char **argv)
 {

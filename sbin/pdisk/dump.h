@@ -1,4 +1,4 @@
-/*	$OpenBSD: dump.h,v 1.7 2016/01/17 17:44:05 krw Exp $	*/
+/*	$OpenBSD: dump.h,v 1.8 2016/01/17 18:57:52 krw Exp $	*/
 
 //
 // dump.h - dumping partition maps
@@ -32,30 +32,6 @@
 
 #include "partition_map.h"
 
-
-//
-// Defines
-//
-
-
-//
-// Types
-//
-
-
-//
-// Global Constants
-//
-
-
-//
-// Global Variables
-//
-
-
-//
-// Forward declarations
-//
 void display_patches(struct partition_map *entry);
 int dump(char *name);
 void dump_block(unsigned char *addr, int len);

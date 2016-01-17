@@ -1,4 +1,4 @@
-/*	$OpenBSD: file_media.h,v 1.8 2016/01/17 15:57:12 krw Exp $	*/
+/*	$OpenBSD: file_media.h,v 1.9 2016/01/17 18:57:52 krw Exp $	*/
 
 /*
  * file_media.h -
@@ -31,35 +31,12 @@
 #define __file_media__
 
 
-/*
- * Defines
- */
-
-
-/*
- * Types
- */
-
 struct file_media {
     long long	size_in_bytes;  /* offset granularity */
     int		fd;
     int		regular_file;
 };
 
-
-/*
- * Global Constants
- */
-
-
-/*
- * Global Variables
- */
-
-
-/*
- * Forward declarations
- */
 struct file_media *open_file_as_media(char *file, int oflag);
 long read_file_media(struct file_media *m, long long offset, unsigned long count, void *address);
 long write_file_media(struct file_media *m, long long offset, unsigned long count, void *address);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: validate.c,v 1.21 2016/01/17 18:44:59 krw Exp $	*/
+/*	$OpenBSD: validate.c,v 1.22 2016/01/17 18:57:52 krw Exp $	*/
 
 //
 // validate.c -
@@ -32,13 +32,9 @@
 
 #include <err.h>
 
-// for *printf()
 #include <stdio.h>
-// for malloc(), free()
 #include <stdlib.h>
-// for O_RDONLY
 #include <fcntl.h>
-// for errno
 #include <errno.h>
 
 #include "validate.h"
@@ -46,15 +42,6 @@
 #include "io.h"
 #include "file_media.h"
 
-
-//
-// Defines
-//
-
-
-//
-// Types
-//
 enum range_state {
     kUnallocated,
     kAllocated,
@@ -70,15 +57,6 @@ struct range_list {
     uint32_t end;
 };
 
-
-//
-// Global Constants
-//
-
-
-//
-// Global Variables
-//
 static char *buffer;
 static struct block0 *b0;
 static struct dpme *mb;
@@ -86,10 +64,6 @@ static struct partition_map_header *the_map;
 static struct file_media *the_media;
 static int g;
 
-
-//
-// Forward declarations
-//
 int get_block_zero(void);
 int get_block_n(int n);
 struct range_list *new_range_list_item(enum range_state state, int valid, uint32_t low, uint32_t high);
@@ -98,10 +72,6 @@ void add_range(struct range_list **list, uint32_t base, uint32_t len, int alloca
 void print_range_list(struct range_list *list);
 void coalesce_list(struct range_list *list);
 
-
-//
-// Routines
-//
 int
 get_block_zero(void)
 {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dpme.h,v 1.13 2016/01/17 18:44:59 krw Exp $	*/
+/*	$OpenBSD: dpme.h,v 1.14 2016/01/17 18:57:52 krw Exp $	*/
 
 //
 // dpme.h - Disk Partition Map Entry (dpme)
@@ -42,20 +42,11 @@
 #ifndef __dpme__
 #define __dpme__
 
-//
-// Defines
-//
 #define	BLOCK0_SIGNATURE	0x4552	/* i.e. 'ER' */
 
 #define	DPISTRLEN	32
 #define	DPME_SIGNATURE	0x504D		/* i.e. 'PM' */
 
-//
-// Types
-//
-
-
-// Physical block zero of the disk has this format
 struct block0 {
     uint16_t 	sbSig;		/* unique value for SCSI block 0 */
     uint16_t 	sbBlkSize;	/* block size of device */
@@ -110,20 +101,5 @@ struct dpme {
     uint32_t     dpme_boot_args[32]      ;
     uint32_t     dpme_reserved_3[62]     ;
 };
-
-
-//
-// Global Constants
-//
-
-
-//
-// Global Variables
-//
-
-
-//
-// Forward declarations
-//
 
 #endif /* __dpme__ */

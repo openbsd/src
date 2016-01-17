@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.12 2016/01/12 23:48:42 krw Exp $	*/
+/*	$OpenBSD: io.c,v 1.13 2016/01/17 18:57:52 krw Exp $	*/
 
 //
 // io.c - simple io and input parsing routines
@@ -29,60 +29,29 @@
 
 #include <err.h>
 
-// for *printf()
 #include <stdio.h>
-
-// for malloc() & free()
 #include <stdlib.h>
-// for strncpy()
 #include <string.h>
-// for va_start(), etc.
 #include <stdarg.h>
-// for errno
 #include <errno.h>
 
 #include "io.h"
 
-
-//
-// Defines
-//
 #define BAD_DIGIT 17	/* must be greater than any base */
 #define	STRING_CHUNK	16
 #define UNGET_MAX_COUNT 10
 
-
-//
-// Types
-//
-
-
-//
-// Global Constants
-//
 const long kDefault = -1;
 
-
-//
-// Global Variables
-//
 short unget_buf[UNGET_MAX_COUNT+1];
 int unget_count;
 char io_buffer[MAXIOSIZE];
 
-
-//
-// Forward declarations
-//
 long get_number(int first_char);
 char* get_string(int eos);
 int my_getch(void);
 void my_ungetch(int c);
 
-
-//
-// Routines
-//
 int
 my_getch()
 {

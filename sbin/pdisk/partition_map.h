@@ -1,4 +1,4 @@
-/*	$OpenBSD: partition_map.h,v 1.14 2016/01/17 18:44:59 krw Exp $	*/
+/*	$OpenBSD: partition_map.h,v 1.15 2016/01/17 18:57:52 krw Exp $	*/
 
 //
 // partition_map.h - partition map routines
@@ -33,15 +33,6 @@
 #include "dpme.h"
 #include "file_media.h"
 
-
-//
-// Defines
-//
-
-
-//
-// Types
-//
 struct partition_map_header {
     struct file_media *m;
     char *name;
@@ -78,10 +69,6 @@ enum {
     kHFS_plus      =   3	// '+'
 };
 
-
-//
-// Global Constants
-//
 extern const char * kFreeType;
 extern const char * kMapType;
 extern const char * kUnixType;
@@ -89,17 +76,9 @@ extern const char * kHFSType;
 extern const char * kFreeName;
 extern const char * kPatchType;
 
-
-//
-// Global Variables
-//
 extern int rflag;
 extern int dflag;
 
-
-//
-// Forward declarations
-//
 int add_partition_to_map(const char *name, const char *dptype, uint32_t base, uint32_t length, struct partition_map_header *map);
 void close_partition_map(struct partition_map_header *map);
 struct partition_map_header* create_partition_map(char *name, struct partition_map_header *oldmap);

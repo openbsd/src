@@ -1,4 +1,4 @@
-/*	$OpenBSD: partition_map.c,v 1.32 2016/01/17 18:44:59 krw Exp $	*/
+/*	$OpenBSD: partition_map.c,v 1.33 2016/01/17 18:57:52 krw Exp $	*/
 
 //
 // partition_map.c - partition map routines
@@ -38,17 +38,10 @@
 #include <unistd.h>
 #include <util.h>
 
-// for *printf()
 #include <stdio.h>
-
-// for malloc(), calloc() & free()
 #include <stdlib.h>
-
-// for strncpy() & strcmp()
 #include <string.h>
-// for O_RDONLY & O_RDWR
 #include <fcntl.h>
-// for errno
 #include <errno.h>
 
 #include "partition_map.h"
@@ -56,24 +49,10 @@
 #include "convert.h"
 #include "file_media.h"
 
-
-//
-// Defines
-//
 #define APPLE_HFS_FLAGS_VALUE	0x4000037f
 #define get_align_long(x)	(*(x))
 #define put_align_long(y, x)	((*(x)) = (y))
-// #define TEST_COMPUTE
 
-
-//
-// Types
-//
-
-
-//
-// Global Constants
-//
 const char * kFreeType	= "Apple_Free";
 const char * kMapType	= "Apple_partition_map";
 const char * kUnixType	= "OpenBSD";
@@ -88,9 +67,6 @@ enum add_action {
     kSplit = 2
 };
 
-//
-// Forward declarations
-//
 int add_data_to_map(struct dpme *, long, struct partition_map_header *);
 int coerce_block0(struct partition_map_header *map);
 int contains_driver(struct partition_map *entry);
@@ -108,10 +84,6 @@ void renumber_disk_addresses(struct partition_map_header *map);
 void sync_device_size(struct partition_map_header *map);
 int write_block(struct partition_map_header *map, unsigned long num, char *buf);
 
-
-//
-// Routines
-//
 struct partition_map_header *
 open_partition_map(char *name, int *valid_file)
 {

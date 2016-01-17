@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.h,v 1.4 2016/01/11 07:54:07 jasper Exp $	*/
+/*	$OpenBSD: io.h,v 1.5 2016/01/17 18:57:52 krw Exp $	*/
 
 //
 // io.h - simple io and input parsing routines
@@ -31,31 +31,10 @@
 #define __io__
 
 
-//
-// Defines
-//
 #define MAXIOSIZE	2048
 
-
-//
-// Types
-//
-
-
-//
-// Global Constants
-//
 extern const long kDefault;
 
-
-//
-// Global Variables
-//
-
-
-//
-// Forward declarations
-//
 void bad_input(const char *fmt, ...);
 void flush_to_newline(int keep_newline);
 int get_command(const char *prompt, int promptBeforeGet, int *command);

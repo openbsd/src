@@ -1,4 +1,4 @@
-/*	$OpenBSD: validate.h,v 1.5 2016/01/17 17:44:05 krw Exp $	*/
+/*	$OpenBSD: validate.h,v 1.6 2016/01/17 18:57:52 krw Exp $	*/
 
 //
 // validate.h -
@@ -32,30 +32,6 @@
 
 #include "partition_map.h"
 
-
-//
-// Defines
-//
-
-
-//
-// Types
-//
-
-
-//
-// Global Constants
-//
-
-
-//
-// Global Variables
-//
-
-
-//
-// Forward declarations
-//
 void validate_map(struct partition_map_header *map);
 
 #endif /* __validate__ */
