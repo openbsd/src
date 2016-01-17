@@ -1,4 +1,4 @@
-/*	$OpenBSD: partition_map.h,v 1.10 2016/01/17 15:57:12 krw Exp $	*/
+/*	$OpenBSD: partition_map.h,v 1.11 2016/01/17 16:07:06 krw Exp $	*/
 
 //
 // partition_map.h - partition map routines
@@ -67,7 +67,7 @@ struct partition_map {
     long disk_address;
     struct partition_map_header * the_map;
     int contains_driver;
-    DPME *data;
+    struct dpme *data;
     int HFS_kind;
 };
 typedef struct partition_map partition_map;
@@ -114,6 +114,6 @@ void move_entry_in_map(long, long, partition_map_header *);
 partition_map_header* open_partition_map(char *name, int *valid_file);
 void resize_map(long new_size, partition_map_header *map);
 void write_partition_map(partition_map_header *map);
-void dpme_init_flags(DPME *data);
+void dpme_init_flags(struct dpme *data);
 
 #endif /* __partition_map__ */

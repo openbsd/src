@@ -1,4 +1,4 @@
-/*	$OpenBSD: convert.c,v 1.9 2016/01/17 14:28:25 krw Exp $	*/
+/*	$OpenBSD: convert.c,v 1.10 2016/01/17 16:07:06 krw Exp $	*/
 
 //
 // convert.c - Little-endian conversion
@@ -66,7 +66,7 @@ void reverse4(u8 *bytes);
 // Routines
 //
 int
-convert_dpme(DPME *data, int to_cpu_form)
+convert_dpme(struct dpme *data, int to_cpu_form)
 {
 #if BYTE_ORDER == LITTLE_ENDIAN
     // Since we will toss the block if the signature doesn't match

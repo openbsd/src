@@ -1,4 +1,4 @@
-/*	$OpenBSD: partition_map.c,v 1.27 2016/01/17 15:57:12 krw Exp $	*/
+/*	$OpenBSD: partition_map.c,v 1.28 2016/01/17 16:07:06 krw Exp $	*/
 
 //
 // partition_map.c - partition map routines
@@ -96,7 +96,7 @@ int coerce_block0(partition_map_header *map);
 int contains_driver(partition_map *entry);
 void combine_entry(partition_map *entry);
 long compute_device_size(char *name);
-DPME* create_data(const char *name, const char *dptype, u32 base, u32 length);
+struct dpme* create_data(const char *name, const char *dptype, u32 base, u32 length);
 void delete_entry(partition_map *entry);
 void insert_in_base_order(partition_map *entry);
 void insert_in_disk_order(partition_map *entry);
@@ -216,7 +216,7 @@ close_partition_map(partition_map_header *map)
 int
 read_partition_map(partition_map_header *map)
 {
-    DPME *data;
+    struct dpme *data;
     u32 limit;
     int ix;
     int old_logical;
@@ -396,7 +396,7 @@ create_partition_map(char *name, partition_map_header *oldmap)
 {
     struct file_media *m;
     partition_map_header * map;
-    DPME *data;
+    struct dpme *data;
     unsigned long number;
     long size;
 
@@ -510,7 +510,7 @@ add_partition_to_map(const char *name, const char *dptype, u32 base, u32 length,
 	partition_map_header *map)
 {
     partition_map * cur;
-    DPME *data;
+    struct dpme *data;
     enum add_action act;
     int limit;
     u32 adjusted_base = 0;
@@ -636,10 +636,10 @@ add_partition_to_map(const char *name, const char *dptype, u32 base, u32 length,
 }
 
 
-DPME *
+struct dpme *
 create_data(const char *name, const char *dptype, u32 base, u32 length)
 {
-    DPME *data;
+    struct dpme *data;
 
     data = calloc(1, DEV_BSIZE);
     if (data == NULL) {
@@ -660,7 +660,7 @@ create_data(const char *name, const char *dptype, u32 base, u32 length)
 }
 
 void
-dpme_init_flags(DPME *data)
+dpme_init_flags(struct dpme *data)
 {
     if (strncasecmp(data->dpme_type, kHFSType, DPISTRLEN) == 0) {
 	/* XXX this is gross, fix it! */
@@ -740,7 +740,7 @@ void
 delete_partition_from_map(partition_map *entry)
 {
     partition_map_header *map;
-    DPME *data;
+    struct dpme *data;
 
     if (strncasecmp(entry->data->dpme_type, kMapType, DPISTRLEN) == 0) {
 	printf("Can't delete entry for the map itself\n");

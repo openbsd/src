@@ -1,4 +1,4 @@
-/*	$OpenBSD: dump.c,v 1.23 2016/01/17 15:57:12 krw Exp $	*/
+/*	$OpenBSD: dump.c,v 1.24 2016/01/17 16:07:06 krw Exp $	*/
 
 //
 // dump.c - dumping partition maps
@@ -242,7 +242,7 @@ dump_partition_entry(partition_map *entry, int type_length, int name_length, int
 {
     partition_map_header *map;
     int j;
-    DPME *p;
+    struct dpme *p;
     u32 size;
     double bytes;
     int driver;
@@ -292,7 +292,7 @@ show_data_structures(partition_map_header *map)
     DDMap *m;
     int i;
     partition_map * entry;
-    DPME *p;
+    struct dpme *p;
 
     if (map == NULL) {
 	printf("No partition map exists\n");
@@ -386,7 +386,7 @@ void
 full_dump_partition_entry(partition_map_header *map, int ix)
 {
     partition_map * cur;
-    DPME *p;
+    struct dpme *p;
     int i;
     u32 t;
 

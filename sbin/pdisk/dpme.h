@@ -1,4 +1,4 @@
-/*	$OpenBSD: dpme.h,v 1.7 2016/01/17 14:28:25 krw Exp $	*/
+/*	$OpenBSD: dpme.h,v 1.8 2016/01/17 16:07:06 krw Exp $	*/
 
 //
 // dpme.h - Disk Partition Map Entry (dpme)
@@ -115,7 +115,6 @@ struct dpme {
     u32     dpme_boot_args[32]      ;
     u32     dpme_reserved_3[62]     ;
 };
-typedef struct dpme DPME;
 
 
 //

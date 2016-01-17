@@ -1,4 +1,4 @@
-/*	$OpenBSD: convert.h,v 1.5 2016/01/17 14:28:25 krw Exp $	*/
+/*	$OpenBSD: convert.h,v 1.6 2016/01/17 16:07:06 krw Exp $	*/
 
 //
 // convert.h - Little-endian conversion
@@ -61,6 +61,6 @@
 // Forward declarations
 //
 int convert_block0(Block0 *data, int to_cpu_form);
-int convert_dpme(DPME *data, int to_cpu_form);
+int convert_dpme(struct dpme *data, int to_cpu_form);
 
 #endif /* __convert__ */
