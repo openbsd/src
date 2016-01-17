@@ -1,10 +1,10 @@
-/*	$OpenBSD: validate.h,v 1.7 2016/01/17 19:39:20 krw Exp $	*/
+/*	$OpenBSD: validate.h,v 1.8 2016/01/17 23:18:19 krw Exp $	*/
 
-//
-// validate.h -
-//
-// Written by Eryk Vershen
-//
+/*
+ * validate.h -
+ *
+ * Written by Eryk Vershen
+ */
 
 /*
  * Copyright 1997,1998 by Apple Computer, Inc.

@@ -1,14 +1,14 @@
-/*	$OpenBSD: convert.h,v 1.9 2016/01/17 19:39:20 krw Exp $	*/
+/*	$OpenBSD: convert.h,v 1.10 2016/01/17 23:18:19 krw Exp $	*/
 
-//
-// convert.h - Little-endian conversion
-//
-// Written by Eryk Vershen
-//
-// The approach taken to conversion is fairly simply.
-// Keep the in-memory copy in the machine's normal form and
-// Convert as necessary when reading and writing.
-//
+/*
+ * convert.h - Little-endian conversion
+ *
+ * Written by Eryk Vershen
+ *
+ * The approach taken to conversion is fairly simply.
+ * Keep the in-memory copy in the machine's normal form and
+ * Convert as necessary when reading and writing.
+ */
 
 /*
  * Copyright 1996,1998 by Apple Computer, Inc.

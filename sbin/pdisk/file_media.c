@@ -1,4 +1,4 @@
-/*	$OpenBSD: file_media.c,v 1.29 2016/01/17 19:39:20 krw Exp $	*/
+/*	$OpenBSD: file_media.c,v 1.30 2016/01/17 23:18:19 krw Exp $	*/
 
 /*
  * file_media.c -
@@ -97,7 +97,6 @@ open_file_as_media(char *file, int oflag)
 	if (a != 0) {
 	    compute_block_size(fd, file);
 	    off = lseek(fd, 0, SEEK_END);	/* seek to end of media */
-	    //printf("file size = %Ld\n", off);
 	    a->size_in_bytes = (long long) off;
 	    a->fd = fd;
 	    a->regular_file = 0;

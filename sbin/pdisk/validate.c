@@ -1,10 +1,10 @@
-/*	$OpenBSD: validate.c,v 1.24 2016/01/17 19:39:20 krw Exp $	*/
+/*	$OpenBSD: validate.c,v 1.25 2016/01/17 23:18:19 krw Exp $	*/
 
-//
-// validate.c -
-//
-// Written by Eryk Vershen
-//
+/*
+ * validate.c -
+ *
+ * Written by Eryk Vershen
+ */
 
 /*
  * Copyright 1997,1998 by Apple Computer, Inc.
@@ -270,8 +270,6 @@ print_range_list(struct range_list *list)
 		break;
 	    case kAllocated:
 		continue;
-		//s = "allocated";
-		//break;
 	    case kMultiplyAllocated:
 		s = "multiply allocated";
 		break;
@@ -282,8 +280,6 @@ print_range_list(struct range_list *list)
 	    switch (cur->state) {
 	    case kUnallocated:
 		continue;
-		//s = "unallocated";
-		//break;
 	    case kAllocated:
 		s = "allocated";
 		break;
@@ -309,8 +305,6 @@ validate_map(struct partition_map_header *map)
     int i;
     uint32_t limit;
     int printed;
-
-    //printf("Validation not implemented yet.\n");
 
     if (map == NULL) {
 	the_map = 0;
@@ -340,20 +334,22 @@ validate_map(struct partition_map_header *map)
 
     initialize_list(&list);
 
-    // get block 0
     if (get_block_zero() == 0) {
 	printf("unable to read block 0\n");
 	goto check_map;
     }
-    // XXX signature valid
-    // XXX size & count match DeviceCapacity
-    // XXX number of descriptors matches array size
-    // XXX each descriptor wholly contained in a partition
-    // XXX the range below here is in physical blocks but the map is in logical blocks!!!
+    /*
+     * XXX signature valid
+     * XXX size & count match DeviceCapacity
+     * XXX number of descriptors matches array size
+     * XXX each descriptor wholly contained in a partition
+     * XXX the range below here is in physical blocks but the map is
+     *     in logical blocks!!!
+     */
     add_range(&list, 1, b0->sbBlkCount-1, 0);	/* subtract one since args are base & len */
 
 check_map:
-    // compute size of map
+    /* compute size of map */
     if (map != NULL) {
 	limit = the_map->blocks_in_map;
     } else {
@@ -369,7 +365,7 @@ check_map:
 	}
     }
 
-    // for each entry
+    /* for each entry */
     for (i = 1; ; i++) {
 	if (limit < 0) {
 	    /* XXX what to use for end of list? */
@@ -382,24 +378,24 @@ check_map:
 
 	printf("block %d:\n", i);
 
-	// get entry
+	/* get entry */
 	if (get_block_n(i) == 0) {
 	    printf("\tunable to get\n");
 	    goto post_processing;
 	}
 	printed = 0;
 
-	// signature matches
+	/* signature matches */
 	if (mb->dpme_signature != DPME_SIGNATURE) {
 	    printed = 1;
 	    printf("\tsignature is 0x%x, should be 0x%x\n", mb->dpme_signature, DPME_SIGNATURE);
 	}
-	// reserved1 == 0
+	/* reserved1 == 0 */
 	if (mb->dpme_reserved_1 != 0) {
 	    printed = 1;
 	    printf("\treserved word is 0x%x, should be 0\n", mb->dpme_reserved_1);
 	}
-	// entry count matches
+	/* entry count matches */
 	if (limit < 0) {
 	    printed = 1;
 	    printf("\tentry count is 0x%x, real value unknown\n", mb->dpme_map_entries);
@@ -407,38 +403,40 @@ check_map:
 	    printed = 1;
 	    printf("\tentry count is 0x%x, should be %u\n", mb->dpme_map_entries, limit);
 	}
-	// lblocks contained within physical
+	/* lblocks contained within physical */
 	if (mb->dpme_lblock_start >= mb->dpme_pblocks
 		|| mb->dpme_lblocks > mb->dpme_pblocks - mb->dpme_lblock_start) {
 	    printed = 1;
 	    printf("\tlogical blocks (%u for %u) not within physical size (%u)\n",
 		    mb->dpme_lblock_start, mb->dpme_lblocks, mb->dpme_pblocks);
 	}
-	// remember stuff for post processing
+	/* remember stuff for post processing */
 	add_range(&list, mb->dpme_pblock_start, mb->dpme_pblocks, 1);
 
-	// XXX type is known type?
-	// XXX no unknown flags?
-	// XXX boot blocks either within or outside of logical
-	// XXX checksum matches contents
-	// XXX other fields zero if boot_bytes  is zero
-	// XXX processor id is known value?
-	// XXX no data in reserved3
+	/*
+	 * XXX type is known type?
+	 * XXX no unknown flags?
+	 * XXX boot blocks either within or outside of logical
+	 * XXX checksum matches contents
+	 * XXX other fields zero if boot_bytes  is zero
+	 * XXX processor id is known value?
+	 * XXX no data in reserved3
+	 */
 	if (printed == 0) {
 	    printf("\tokay\n");
 	}
     }
 
 post_processing:
-    // properties of whole map
+    /* properties of whole map */
 
-    // every block on disk in one & only one partition
+    /* every block on disk in one & only one partition */
     coalesce_list(list);
     print_range_list(list);
-    // there is a partition for the map
-    // map fits within partition that contains it
+    /* there is a partition for the map */
+    /* map fits within partition that contains it */
 
-    // try to detect 512/2048 mixed partition map?
+    /* try to detect 512/2048 mixed partition map? */
 
 done:
     if (map == NULL) {

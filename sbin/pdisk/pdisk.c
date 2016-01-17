@@ -1,12 +1,12 @@
-/*	$OpenBSD: pdisk.c,v 1.43 2016/01/17 19:39:20 krw Exp $	*/
+/*	$OpenBSD: pdisk.c,v 1.44 2016/01/17 23:18:19 krw Exp $	*/
 
-//
-// pdisk - an editor for Apple format partition tables
-//
-// Written by Eryk Vershen
-//
-// Still under development (as of 15 January 1998)
-//
+/*
+ * pdisk - an editor for Apple format partition tables
+ *
+ * Written by Eryk Vershen
+ *
+ * Still under development (as of 15 January 1998)
+ */
 
 /*
  * Copyright 1996,1997,1998 by Apple Computer, Inc.
@@ -134,7 +134,7 @@ get_options(int argc, char **argv)
     dflag = DFLAG_DEFAULT;
     rflag = RFLAG_DEFAULT;
 
-    optind = 1; // reset option scanner logic
+    optind = 1; /* reset option scanner logic */
     while ((c = getopt(argc, argv, "ldr")) != -1) {
 	switch (c) {
 	case 'l':
@@ -170,9 +170,9 @@ print_edit_notes()
 }
 
 
-//
-// Edit the file
-//
+/*
+ * Edit the file
+ */
 void
 edit(char *name)
 {
@@ -197,7 +197,7 @@ edit(char *name)
 	switch (command) {
 	case '?':
 	    print_edit_notes();
-	    // fall through
+	    /* fall through */
 	case 'H':
 	case 'h':
 	    printf("Commands are:\n");
@@ -222,7 +222,7 @@ edit(char *name)
 	    break;
 	case 'P':
 	    order = 0;
-	    // fall through
+	    /* fall through */
 	case 'p':
 	    dump_partition_map(map, order);
 	    break;
@@ -242,7 +242,7 @@ edit(char *name)
 	    break;
 	case 'C':
 	    get_type = 1;
-	    // fall through
+	    /* fall through */
 	case 'c':
 	    do_create_partition(map, get_type);
 	    break;
@@ -309,7 +309,6 @@ do_create_partition(struct partition_map_header *map, int get_type)
     if (!rflag && map->writable == 0) {
 	printf("The map is not writable.\n");
     }
-// XXX add help feature (i.e. '?' in any argument routine prints help string)
     if (get_base_argument(&base, map) == 0) {
 	return;
     }
@@ -424,12 +423,12 @@ do_rename_partition(struct partition_map_header *map)
 	return;
     }
 
-	// find partition and change it
+	/* find partition and change it */
     entry = find_entry_by_disk_address(ix, map);
     if (entry == NULL) {
 	printf("No such partition\n");
     } else {
-	// stuff name into partition map entry data
+	/* stuff name into partition map entry data */
 	strncpy(entry->data->dpme_name, name, DPISTRLEN);
 	map->changed = 1;
     }
@@ -498,7 +497,7 @@ do_delete_partition(struct partition_map_header *map)
 	return;
     }
 
-	// find partition and delete it
+	/* find partition and delete it */
     cur = find_entry_by_disk_address(ix, map);
     if (cur == NULL) {
 	printf("No such partition\n");
@@ -558,8 +557,6 @@ do_write_partition_map(struct partition_map_header *map)
 
     map->changed = 0;
     map->written = 1;
-
-    // exit(0);
 }
 
 
@@ -585,7 +582,7 @@ do_expert(struct partition_map_header *map, char *name)
 	switch (command) {
 	case '?':
 	    print_expert_notes();
-	    // fall through
+	    /* fall through */
 	case 'H':
 	case 'h':
 	    printf("Commands are:\n");
@@ -619,7 +616,7 @@ do_expert(struct partition_map_header *map, char *name)
 		show_data_structures(map);
 		break;
 	    }
-	    // fall through
+	    /* fall through */
 	case 'p':
 	    dump_partition_map(map, 1);
 	    break;

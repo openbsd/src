@@ -1,10 +1,10 @@
-/*	$OpenBSD: io.c,v 1.15 2016/01/17 19:39:20 krw Exp $	*/
+/*	$OpenBSD: io.c,v 1.16 2016/01/17 23:18:19 krw Exp $	*/
 
-//
-// io.c - simple io and input parsing routines
-//
-// Written by Eryk Vershen
-//
+/*
+ * io.c - simple io and input parsing routines
+ *
+ * Written by Eryk Vershen
+ */
 
 /*
  * Copyright 1996,1997,1998 by Apple Computer, Inc.
@@ -66,8 +66,10 @@ my_getch()
 void
 my_ungetch(int c)
 {
-    // In practice there is never more than one character in
-    // the unget_buf, but what's a little overkill among friends?
+    /*
+     * In practice there is never more than one character in
+     * the unget_buf, but what's a little overkill among friends?
+     */
 
     if (unget_count < UNGET_MAX_COUNT) {
 	unget_buf[unget_count++] = c;
@@ -92,7 +94,7 @@ flush_to_newline(int keep_newline)
 	    }
 	    break;
 	} else {
-	    // skip
+	    /* skip */
 	}
     }
     return;
@@ -113,7 +115,7 @@ get_okay(const char *prompt, int default_value)
 	if (c <= 0) {
 	    break;
 	} else if (c == ' ' || c == '\t') {
-	    // skip blanks and tabs
+	    /* skip blanks and tabs */
 	} else if (c == '\n') {
 	    my_ungetch(c);
 	    return default_value;
@@ -143,7 +145,7 @@ get_command(const char *prompt, int promptBeforeGet, int *command)
 	if (c <= 0) {
 	    break;
 	} else if (c == ' ' || c == '\t') {
-	    // skip blanks and tabs
+	    /* skip blanks and tabs */
 	} else if (c == '\n') {
 	    printf(prompt);
 	} else {
@@ -166,7 +168,7 @@ get_number_argument(const char *prompt, long *number, long default_value)
 	if (c <= 0) {
 	    break;
 	} else if (c == ' ' || c == '\t') {
-	    // skip blanks and tabs
+	    /* skip blanks and tabs */
 	} else if (c == '\n') {
 	    if (default_value == kDefault) {
 		printf(prompt);
@@ -244,7 +246,7 @@ get_string_argument(const char *prompt, char **string, int reprompt)
 	if (c <= 0) {
 	    break;
 	} else if (c == ' ' || c == '\t') {
-	    // skip blanks and tabs
+	    /* skip blanks and tabs */
 	} else if (c == '\n') {
 	    if (reprompt) {
 		printf(prompt);
@@ -293,7 +295,7 @@ get_string(int eos)
     c = my_getch();
     for (s = ret_value; ; c = my_getch()) {
 	if (s >= limit) {
-	    // expand string
+	    /* expand string */
 	    limit = malloc(length+STRING_CHUNK);
 	    if (limit == NULL) {
 		warn("can't allocate memory for string buffer");
@@ -399,9 +401,9 @@ number_of_digits(unsigned long value)
 }
 
 
-//
-// Print a message on standard error & flush the input.
-//
+/*
+ * Print a message on standard error & flush the input.
+ */
 void
 bad_input(const char *fmt, ...)
 {

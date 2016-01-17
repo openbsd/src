@@ -1,10 +1,10 @@
-/*	$OpenBSD: dump.h,v 1.9 2016/01/17 19:39:20 krw Exp $	*/
+/*	$OpenBSD: dump.h,v 1.10 2016/01/17 23:18:19 krw Exp $	*/
 
-//
-// dump.h - dumping partition maps
-//
-// Written by Eryk Vershen
-//
+/*
+ * dump.h - dumping partition maps
+ *
+ * Written by Eryk Vershen
+ */
 
 /*
  * Copyright 1996,1997 by Apple Computer, Inc.

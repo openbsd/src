@@ -1,23 +1,23 @@
-/*	$OpenBSD: dpme.h,v 1.15 2016/01/17 19:15:55 krw Exp $	*/
+/*	$OpenBSD: dpme.h,v 1.16 2016/01/17 23:18:19 krw Exp $	*/
 
-//
-// dpme.h - Disk Partition Map Entry (dpme)
-//
-// Written by Eryk Vershen
-//
-// This file describes structures and values related to the standard
-// Apple SCSI disk partitioning scheme.
-//
-// Each entry is (and shall remain) 512 bytes long.
-//
-// For more information see:
-//	"Inside Macintosh: Devices" pages 3-12 to 3-15.
-//	"Inside Macintosh - Volume V" pages V-576 to V-582
-//	"Inside Macintosh - Volume IV" page IV-292
-//
-// There is a kernel file with much of the same info (under different names):
-//	/usr/src/mklinux-1.0DR2/osfmk/src/mach_kernel/ppc/POWERMAC/mac_label.h
-//
+/*
+ * dpme.h - Disk Partition Map Entry (dpme)
+ *
+ * Written by Eryk Vershen
+ *
+ * This file describes structures and values related to the standard
+ * Apple SCSI disk partitioning scheme.
+ *
+ * Each entry is (and shall remain) 512 bytes long.
+ *
+ * For more information see:
+ *	"Inside Macintosh: Devices" pages 3-12 to 3-15.
+ *	"Inside Macintosh - Volume V" pages V-576 to V-582
+ *	"Inside Macintosh - Volume IV" page IV-292
+ *
+ * There is a kernel file with much of the same info (under different names):
+ *	/usr/src/mklinux-1.0DR2/osfmk/src/mach_kernel/ppc/POWERMAC/mac_label.h
+ */
 
 /*
  * Copyright 1996 by Apple Computer, Inc.
@@ -58,8 +58,10 @@ struct block0 {
     uint16_t	sbMap[247];	/* descriptor map */
 };
 
-// Where &sbMap[0] is actually an array struct ddmap[sbDrvrCount]
-// kludge to get around alignment junk
+/*
+ * Where &sbMap[0] is actually an array struct ddmap[sbDrvrCount]
+ * kludge to get around alignment junk
+ */
 struct ddmap {
     uint32_t	ddBlock;	/* 1st driver's starting block (in sbBlkSize blocks!) */
     uint16_t	ddSize;		/* size of 1st driver (512-byte blks) */
@@ -67,7 +69,7 @@ struct ddmap {
 };
 
 
-// Each partition map entry (blocks 1 through n) has this format
+/* Each partition map entry (blocks 1 through n) has this format */
 struct dpme {
     uint16_t     dpme_signature          ;
     uint16_t     dpme_reserved_1         ;

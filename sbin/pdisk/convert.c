@@ -1,12 +1,12 @@
-/*	$OpenBSD: convert.c,v 1.16 2016/01/17 19:39:20 krw Exp $	*/
+/*	$OpenBSD: convert.c,v 1.17 2016/01/17 23:18:19 krw Exp $	*/
 
-//
-// convert.c - Little-endian conversion
-//
-// Written by Eryk Vershen
-//
-// See comments in convert.h
-//
+/*
+ * convert.c - Little-endian conversion
+ *
+ * Written by Eryk Vershen
+ *
+ * See comments in convert.h
+ */
 
 /*
  * Copyright 1996,1997,1998 by Apple Computer, Inc.
@@ -41,8 +41,10 @@ int
 convert_dpme(struct dpme *data, int to_cpu_form)
 {
 #if BYTE_ORDER == LITTLE_ENDIAN
-    // Since we will toss the block if the signature doesn't match
-    // we don't need to check the signature down here.
+    /*
+     * Since we will toss the block if the signature doesn't match
+     * we don't need to check the signature down here.
+     */
     reverse2((uint8_t *)&data->dpme_signature);
     reverse2((uint8_t *)&data->dpme_reserved_1);
     reverse4((uint8_t *)&data->dpme_map_entries);
@@ -71,10 +73,12 @@ convert_block0(struct block0 *data, int to_cpu_form)
     uint16_t count;
     int i;
 
-    // Since this data is optional we do not want to convert willy-nilly.
-    // We use the flag to determine whether to check for the signature
-    // before or after we flip the bytes and to determine which form of
-    // the count to use.
+    /*
+     * Since this data is optional we do not want to convert willy-nilly.
+     * We use the flag to determine whether to check for the signature
+     * before or after we flip the bytes and to determine which form of
+     * the count to use.
+     */
     if (to_cpu_form) {
 	reverse2((uint8_t *)&data->sbSig);
 	if (data->sbSig != BLOCK0_SIGNATURE) {

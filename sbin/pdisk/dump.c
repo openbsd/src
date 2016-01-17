@@ -1,10 +1,10 @@
-/*	$OpenBSD: dump.c,v 1.33 2016/01/17 19:39:20 krw Exp $	*/
+/*	$OpenBSD: dump.c,v 1.34 2016/01/17 23:18:19 krw Exp $	*/
 
-//
-// dump.c - dumping partition maps
-//
-// Written by Eryk Vershen
-//
+/*
+ * dump.c - dumping partition maps
+ *
+ * Written by Eryk Vershen
+ */
 
 /*
  * Copyright 1996,1997,1998 by Apple Computer, Inc.
@@ -57,8 +57,8 @@ struct patchdescriptor {
 };
 
 struct patchlist {
-    unsigned short numPatchBlocks;	// number of disk blocks to hold the patch list
-    unsigned short numPatches;		// number of patches in list
+    unsigned short numPatchBlocks;	/* number of disk blocks to hold the patch list */
+    unsigned short numPatches;		/* number of patches in list */
     struct patchdescriptor thePatch[1];
 };
 

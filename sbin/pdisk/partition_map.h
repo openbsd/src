@@ -1,10 +1,10 @@
-/*	$OpenBSD: partition_map.h,v 1.16 2016/01/17 19:39:20 krw Exp $	*/
+/*	$OpenBSD: partition_map.h,v 1.17 2016/01/17 23:18:19 krw Exp $	*/
 
-//
-// partition_map.h - partition map routines
-//
-// Written by Eryk Vershen
-//
+/*
+ * partition_map.h - partition map routines
+ *
+ * Written by Eryk Vershen
+ */
 
 /*
  * Copyright 1996,1998 by Apple Computer, Inc.
@@ -42,11 +42,11 @@ struct partition_map_header {
     int writable;
     int changed;
     int written;
-    int physical_block;		// must be == sbBlockSize
-    int logical_block;		// must be <= physical_block
+    int physical_block;		/* must be == sbBlockSize */
+    int logical_block;		/* must be <= physical_block */
     int blocks_in_map;
     int maximum_in_map;
-    unsigned long media_size;	// in logical_blocks
+    unsigned long media_size;	/* in logical_blocks */
 };
 
 struct partition_map {
@@ -63,10 +63,10 @@ struct partition_map {
 
 /* Identifies the HFS kind. */
 enum {
-    kHFS_not       =   0,	// ' '
-    kHFS_std       =   1,	// 'h'
-    kHFS_embed     =   2,	// 'e'
-    kHFS_plus      =   3	// '+'
+    kHFS_not       =   0,	/* ' ' */
+    kHFS_std       =   1,	/* 'h' */
+    kHFS_embed     =   2,	/* 'e' */
+    kHFS_plus      =   3	/* '+' */
 };
 
 extern const char * kFreeType;
