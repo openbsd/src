@@ -1,4 +1,4 @@
-/* $OpenBSD: dwiic.c,v 1.7 2016/01/17 15:50:21 jcs Exp $ */
+/* $OpenBSD: dwiic.c,v 1.8 2016/01/17 15:52:06 jcs Exp $ */
 /*
  * Synopsys DesignWare I2C controller
  *
@@ -860,7 +860,7 @@ dwiic_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr, const void *cmdbuf,
 				rx_avail--;
 			}
 
-			if (readpos >= len - 1)
+			if (readpos >= len)
 				break;
 
 			DPRINTF(("%s: still need to read %d bytes\n",
