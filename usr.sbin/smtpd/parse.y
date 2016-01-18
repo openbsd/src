@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.180 2016/01/12 17:29:43 sunil Exp $	*/
+/*	$OpenBSD: parse.y,v 1.181 2016/01/18 09:19:41 jung Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -175,7 +175,7 @@ typedef struct {
 %token	ACCEPT REJECT INCLUDE ERROR MDA FROM FOR SOURCE MTA PKI SCHEDULER
 %token	ARROW AUTH TLS LOCAL VIRTUAL TAG TAGGED ALIAS FILTER KEY CA DHPARAMS
 %token	AUTH_OPTIONAL TLS_REQUIRE USERBASE SENDER SENDERS MASK_SOURCE VERIFY FORWARDONLY RECIPIENT
-%token	CIPHERS CURVE RECEIVEDAUTH MASQUERADE ENQUEUER
+%token	CIPHERS RECEIVEDAUTH MASQUERADE ENQUEUER
 %token	<v.string>	STRING
 %token  <v.number>	NUMBER
 %type	<v.table>	table
@@ -1445,7 +1445,6 @@ lookup(char *s)
 		{ "certificate",	CERTIFICATE },
 		{ "ciphers",		CIPHERS },
 		{ "compression",	COMPRESSION },
-		{ "curve",		CURVE },
 		{ "deliver",		DELIVER },
 		{ "dhparams",		DHPARAMS },
 		{ "domain",		DOMAIN },
