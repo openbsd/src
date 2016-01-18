@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdisk.c,v 1.45 2016/01/18 00:04:36 krw Exp $	*/
+/*	$OpenBSD: pdisk.c,v 1.46 2016/01/18 00:19:29 krw Exp $	*/
 
 /*
  * pdisk - an editor for Apple format partition tables
@@ -45,13 +45,9 @@
 #include "validate.h"
 #include "file_media.h"
 
-#define DFLAG_DEFAULT	0
-#define LFLAG_DEFAULT	0
-#define RFLAG_DEFAULT	0
-
-int lflag = LFLAG_DEFAULT;	/* list the device */
-int dflag = DFLAG_DEFAULT;	/* turn on debugging commands and printout */
-int rflag = RFLAG_DEFAULT;	/* open device read Only */
+int lflag;	/* list the device */
+int dflag;	/* turn on debugging commands and printout */
+int rflag;	/* open device read Only */
 
 static int first_get = 1;
 
@@ -70,7 +66,6 @@ void edit(char *);
 int get_base_argument(long *, struct partition_map_header *);
 int get_command_line(int *, char ***);
 int get_size_argument(long *, struct partition_map_header *);
-int get_options(int, char **);
 void print_edit_notes(void);
 void print_expert_notes(void);
 
@@ -79,7 +74,7 @@ __dead static void usage(void);
 int
 main(int argc, char **argv)
 {
-    int name_index;
+    int c, name_index;
 
     if (sizeof(struct dpme) != DEV_BSIZE) {
 	errx(1, "Size of partition map entry (%zu) "
@@ -92,7 +87,24 @@ main(int argc, char **argv)
 		sizeof(struct block0), DEV_BSIZE);
     }
 
-    name_index = get_options(argc, argv);
+    while ((c = getopt(argc, argv, "ldr")) != -1) {
+	switch (c) {
+	case 'l':
+	    lflag = 1;
+	    break;
+	case 'd':
+	    dflag = 1;
+	    break;
+	case 'r':
+	    rflag = 1;
+	    break;
+	default:
+	    usage();
+	    break;
+	}
+    }
+
+    name_index = optind;
 
     if (lflag) {
 	if (name_index < argc) {
@@ -110,39 +122,6 @@ main(int argc, char **argv)
 	usage();
     }
     return 0;
-}
-
-
-int
-get_options(int argc, char **argv)
-{
-    int c;
-    extern int optind;
-    extern char *optarg;
-
-    lflag = LFLAG_DEFAULT;
-    dflag = DFLAG_DEFAULT;
-    rflag = RFLAG_DEFAULT;
-
-    optind = 1; /* reset option scanner logic */
-    while ((c = getopt(argc, argv, "ldr")) != -1) {
-	switch (c) {
-	case 'l':
-	    lflag = (LFLAG_DEFAULT)?0:1;
-	    break;
-	case 'd':
-	    dflag = (DFLAG_DEFAULT)?0:1;
-	    break;
-	case 'r':
-	    rflag = (RFLAG_DEFAULT)?0:1;
-	    break;
-	default:
-	    usage();
-	    break;
-	}
-    }
-
-    return optind;
 }
 
 
