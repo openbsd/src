@@ -1,4 +1,4 @@
-/*	$OpenBSD: file_media.c,v 1.32 2016/01/18 14:55:08 krw Exp $	*/
+/*	$OpenBSD: file_media.c,v 1.33 2016/01/18 15:30:00 krw Exp $	*/
 
 /*
  * file_media.c -
@@ -83,11 +83,8 @@ open_file_as_media(char *file, int oflag)
 			off = lseek(fd, 0, SEEK_END);
 			a->size_in_bytes = (long long) off;
 			a->fd = fd;
-			a->regular_file = 0;
 			if (fstat(fd, &info) < 0) {
 				warn("can't stat file '%s'", file);
-			} else {
-				a->regular_file = S_ISREG(info.st_mode);
 			}
 		} else {
 			close(fd);
@@ -180,22 +177,4 @@ close_file_media(struct file_media * a)
 	}
 	close(a->fd);
 	return 1;
-}
-
-
-long
-os_reload_file_media(struct file_media * a)
-{
-	long rtn_value;
-
-	rtn_value = 0;
-	if (a == 0) {
-		/* no media */
-	} else if (a->regular_file) {
-		/* okay - nothing to do */
-		rtn_value = 1;
-	} else {
-		rtn_value = 1;
-	}
-	return rtn_value;
 }

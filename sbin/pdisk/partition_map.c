@@ -1,4 +1,4 @@
-/*	$OpenBSD: partition_map.c,v 1.38 2016/01/18 02:50:01 krw Exp $	*/
+/*	$OpenBSD: partition_map.c,v 1.39 2016/01/18 15:30:00 krw Exp $	*/
 
 /*
  * partition_map.c - partition map routines
@@ -295,8 +295,6 @@ write_partition_map(struct partition_map_header * map)
 			warn("Unable to write block %d", i);
 		}
 	}
-
-	os_reload_file_media(map->m);
 }
 
 

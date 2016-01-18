@@ -1,4 +1,4 @@
-/*	$OpenBSD: file_media.h,v 1.10 2016/01/17 19:39:20 krw Exp $	*/
+/*	$OpenBSD: file_media.h,v 1.11 2016/01/18 15:30:00 krw Exp $	*/
 
 /*
  * file_media.h -
@@ -34,13 +34,11 @@
 struct file_media {
     long long	size_in_bytes;  /* offset granularity */
     int		fd;
-    int		regular_file;
 };
 
 struct file_media *open_file_as_media(char *, int);
 long read_file_media(struct file_media *, long long, unsigned long, void *);
 long write_file_media(struct file_media *, long long, unsigned long, void *);
 long close_file_media(struct file_media *m);
-long os_reload_file_media(struct file_media *m);
 
 #endif /* __file_media__ */
