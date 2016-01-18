@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.270 2016/01/04 13:30:20 jung Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.271 2016/01/18 11:29:34 sunil Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -641,6 +641,7 @@ main(int argc, char *argv[])
 	log_verbose(verbose);
 
 	load_pki_tree();
+	load_pki_keys();
 
 	log_info("info: %s %s starting", SMTPD_NAME, SMTPD_VERSION);
 
@@ -788,10 +789,6 @@ post_fork(int proc)
 	if (proc != PROC_CONTROL) {
 		close(control_socket);
 		control_socket = -1;
-	}
-
-	if (proc == PROC_CA) {
-		load_pki_keys();
 	}
 }
 
