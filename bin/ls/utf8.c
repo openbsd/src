@@ -1,7 +1,7 @@
-/*	$OpenBSD: utf8.c,v 1.1 2015/12/01 18:36:13 schwarze Exp $	*/
+/*	$OpenBSD: utf8.c,v 1.2 2016/01/18 19:06:37 schwarze Exp $	*/
 
 /*
- * Copyright (c) 2015 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2015, 2016 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -21,6 +21,8 @@
 #include <stdlib.h>
 #include <wchar.h>
 
+extern int f_nonprint;
+
 int
 mbsprint(const char *mbs, int print)
 {
@@ -33,12 +35,16 @@ mbsprint(const char *mbs, int print)
 		if ((len = mbtowc(&wc, mbs, MB_CUR_MAX)) == -1) {
 			(void)mbtowc(NULL, NULL, MB_CUR_MAX);
 			if (print)
-				putchar('?');
+				putchar(f_nonprint ? '?' : *mbs);
 			total_width++;
 			len = 1;
 		} else if ((width = wcwidth(wc)) == -1) {
-			if (print)
-				putchar('?');
+			if (print) {
+				if (f_nonprint)
+					putchar('?');
+				else
+					fwrite(mbs, 1, len, stdout);
+			}
 			total_width++;
 		} else {
 			if (print)
