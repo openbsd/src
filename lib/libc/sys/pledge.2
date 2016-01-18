@@ -1,4 +1,4 @@
-.\" $OpenBSD: pledge.2,v 1.23 2016/01/09 06:13:43 semarie Exp $
+.\" $OpenBSD: pledge.2,v 1.24 2016/01/18 23:29:37 deraadt Exp $
 .\"
 .\" Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 9 2016 $
+.Dd $Mdocdate: January 18 2016 $
 .Dt PLEDGE 2
 .Os
 .Sh NAME
@@ -426,9 +426,11 @@ Allows the following process relationship operations:
 .Xr fork 2 ,
 .Xr vfork 2 ,
 .Xr kill 2 ,
-.Xr setgroups 2 ,
-.Xr setresgid 2 ,
-.Xr setresuid 2 .
+.Xr getpriority 2 ,
+.Xr setpriority 2 ,
+.Xr setrlimit 2 ,
+.Xr setpgid 2 ,
+.Xr setsid 2 .
 .It Va "exec"
 Allows a process to call
 .Xr execve 2 .
@@ -472,9 +474,11 @@ process:
 .Pp
 .Xr setuid 2 ,
 .Xr seteuid 2 ,
+.Xr setreuid 2 ,
 .Xr setresuid 2 ,
 .Xr setgid 2 ,
 .Xr setegid 2 ,
+.Xr setregid 2 ,
 .Xr setresgid 2 ,
 .Xr setgroups 2 ,
 .Xr setlogin 2 ,
