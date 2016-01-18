@@ -1,4 +1,4 @@
-/*	$OpenBSD: file_media.c,v 1.31 2016/01/18 00:04:36 krw Exp $	*/
+/*	$OpenBSD: file_media.c,v 1.32 2016/01/18 14:55:08 krw Exp $	*/
 
 /*
  * file_media.c -
@@ -27,7 +27,7 @@
  * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/param.h>	/* DEV_BSIZE */
+#include <sys/param.h>		/* DEV_BSIZE */
 #include <sys/dkio.h>
 #include <sys/disklabel.h>
 #include <err.h>
@@ -45,8 +45,8 @@
 
 #include "file_media.h"
 
-void compute_block_size(int, char *);
-void file_init(void);
+void		compute_block_size(int, char *);
+void		file_init(void);
 
 void
 compute_block_size(int fd, char *name)
@@ -69,133 +69,133 @@ compute_block_size(int fd, char *name)
 struct file_media *
 open_file_as_media(char *file, int oflag)
 {
-    struct file_media	*a;
-    int			fd;
-    off_t off;
-    struct stat info;
+	struct stat info;
+	struct file_media *a;
+	off_t off;
+	int fd;
 
-    a = 0;
-    fd = opendev(file, oflag, OPENDEV_PART, NULL);
-    if (fd >= 0) {
-	a = malloc(sizeof(struct file_media));
-	if (a != 0) {
-	    compute_block_size(fd, file);
-	    off = lseek(fd, 0, SEEK_END);	/* seek to end of media */
-	    a->size_in_bytes = (long long) off;
-	    a->fd = fd;
-	    a->regular_file = 0;
-	    if (fstat(fd, &info) < 0) {
-		warn("can't stat file '%s'", file);
-	    } else {
-		a->regular_file = S_ISREG(info.st_mode);
-	    }
-	} else {
-	    close(fd);
-	}
-    }
-    return (a);
-}
-
-
-long
-read_file_media(struct file_media *a, long long offset, unsigned long count,
-    void *address)
-{
-    long rtn_value;
-    off_t off;
-    int t;
-
-    rtn_value = 0;
-    if (a == 0) {
-	/* no media */
-	fprintf(stderr,"no media\n");
-    } else if (count <= 0 || count % DEV_BSIZE != 0) {
-	/* can't handle size */
-	fprintf(stderr,"bad size\n");
-    } else if (offset < 0 || offset % DEV_BSIZE != 0) {
-	/* can't handle offset */
-	fprintf(stderr,"bad offset\n");
-    } else if (offset + count > a->size_in_bytes && a->size_in_bytes != (long long) 0) {
-	/* check for offset (and offset+count) too large */
-	fprintf(stderr,"offset+count too large\n");
-    } else if (count > LLONG_MAX - offset) {
-	/* check for offset (and offset+count) too large */
-	fprintf(stderr,"offset+count too large 2\n");
-    } else {
-	/* do the read */
-	off = offset;
-	if ((off = lseek(a->fd, off, SEEK_SET)) >= 0) {
-	    if ((t = read(a->fd, address, count)) == count) {
-		rtn_value = 1;
-	    } else {
-		fprintf(stderr,"read failed\n");
-	    }
-	} else {
-	    fprintf(stderr,"lseek failed\n");
-	}
-    }
-    return rtn_value;
-}
-
-
-long
-write_file_media(struct file_media *a, long long offset, unsigned long count,
-    void *address)
-{
-    long rtn_value;
-    off_t off;
-    int t;
-
-    rtn_value = 0;
-    if (a == 0) {
-	/* no media */
-    } else if (count <= 0 || count % DEV_BSIZE != 0) {
-	/* can't handle size */
-    } else if (offset < 0 || offset % DEV_BSIZE != 0) {
-	/* can't handle offset */
-    } else if (count > LLONG_MAX - offset) {
-	/* check for offset (and offset+count) too large */
-    } else {
-	/* do the write  */
-	off = offset;
-	if ((off = lseek(a->fd, off, SEEK_SET)) >= 0) {
-	    if ((t = write(a->fd, address, count)) == count) {
-		if (off + count > a->size_in_bytes) {
-			a->size_in_bytes = off + count;
+	a = 0;
+	fd = opendev(file, oflag, OPENDEV_PART, NULL);
+	if (fd >= 0) {
+		a = malloc(sizeof(struct file_media));
+		if (a != 0) {
+			compute_block_size(fd, file);
+			off = lseek(fd, 0, SEEK_END);
+			a->size_in_bytes = (long long) off;
+			a->fd = fd;
+			a->regular_file = 0;
+			if (fstat(fd, &info) < 0) {
+				warn("can't stat file '%s'", file);
+			} else {
+				a->regular_file = S_ISREG(info.st_mode);
+			}
+		} else {
+			close(fd);
 		}
-		rtn_value = 1;
-	    }
 	}
-    }
-    return rtn_value;
+	return (a);
 }
 
 
 long
-close_file_media(struct file_media *a)
+read_file_media(struct file_media * a, long long offset, unsigned long count,
+		void *address)
 {
-    if (a == 0) {
-	return 0;
-    }
+	off_t off;
+	long rtn_value;
+	int t;
 
-    close(a->fd);
-    return 1;
+	rtn_value = 0;
+	if (a == 0) {
+		/* no media */
+		fprintf(stderr, "no media\n");
+	} else if (count <= 0 || count % DEV_BSIZE != 0) {
+		/* can't handle size */
+		fprintf(stderr, "bad size\n");
+	} else if (offset < 0 || offset % DEV_BSIZE != 0) {
+		/* can't handle offset */
+		fprintf(stderr, "bad offset\n");
+	} else if (offset + count > a->size_in_bytes && a->size_in_bytes !=
+	    (long long) 0) {
+		/* check for offset (and offset+count) too large */
+		fprintf(stderr, "offset+count too large\n");
+	} else if (count > LLONG_MAX - offset) {
+		/* check for offset (and offset+count) too large */
+		fprintf(stderr, "offset+count too large 2\n");
+	} else {
+		/* do the read */
+		off = offset;
+		if ((off = lseek(a->fd, off, SEEK_SET)) >= 0) {
+			if ((t = read(a->fd, address, count)) == count) {
+				rtn_value = 1;
+			} else {
+				fprintf(stderr, "read failed\n");
+			}
+		} else {
+			fprintf(stderr, "lseek failed\n");
+		}
+	}
+	return rtn_value;
 }
 
 
 long
-os_reload_file_media(struct file_media *a)
+write_file_media(struct file_media * a, long long offset, unsigned long count,
+		 void *address)
 {
-    long rtn_value;
+	off_t off;
+	long rtn_value;
+	int t;
 
-    rtn_value = 0;
-    if (a == 0) {
-	/* no media */
-    } else if (a->regular_file) {
-	/* okay - nothing to do */
-	rtn_value = 1;
-    } else {
-	rtn_value = 1;
-    }
-    return rtn_value;
+	rtn_value = 0;
+	if (a == 0) {
+		/* no media */
+	} else if (count <= 0 || count % DEV_BSIZE != 0) {
+		/* can't handle size */
+	} else if (offset < 0 || offset % DEV_BSIZE != 0) {
+		/* can't handle offset */
+	} else if (count > LLONG_MAX - offset) {
+		/* check for offset (and offset+count) too large */
+	} else {
+		/* do the write  */
+		off = offset;
+		if ((off = lseek(a->fd, off, SEEK_SET)) >= 0) {
+			if ((t = write(a->fd, address, count)) == count) {
+				if (off + count > a->size_in_bytes) {
+					a->size_in_bytes = off + count;
+				}
+				rtn_value = 1;
+			}
+		}
+	}
+	return rtn_value;
+}
+
+
+long
+close_file_media(struct file_media * a)
+{
+	if (a == 0) {
+		return 0;
+	}
+	close(a->fd);
+	return 1;
+}
+
+
+long
+os_reload_file_media(struct file_media * a)
+{
+	long rtn_value;
+
+	rtn_value = 0;
+	if (a == 0) {
+		/* no media */
+	} else if (a->regular_file) {
+		/* okay - nothing to do */
+		rtn_value = 1;
+	} else {
+		rtn_value = 1;
+	}
+	return rtn_value;
 }
