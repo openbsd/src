@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sndiod.8,v 1.1 2016/01/07 07:41:01 ratchov Exp $
+.\"	$OpenBSD: sndiod.8,v 1.2 2016/01/18 11:38:07 ratchov Exp $
 .\"
 .\" Copyright (c) 2006-2012 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 7 2016 $
+.Dd $Mdocdate: January 18 2016 $
 .Dt SNDIOD 8
 .Os
 .Sh NAME
@@ -152,10 +152,9 @@ respectively any client is allowed to use.
 This is a subset of the audio device channels.
 The default is 0:1, i.e. stereo.
 .It Fl d
-Increase log verbosity.
-.Nm
-logs on
-.Em stderr .
+Enable debugging to standard error, and do not disassociate from the
+controlling terminal.
+Can be specified multiple times to further increase log verbosity.
 .It Fl e Ar enc
 Attempt to configure the device to use this encoding.
 The default is
