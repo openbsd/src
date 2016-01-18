@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdisk.c,v 1.48 2016/01/18 17:57:35 krw Exp $	*/
+/*	$OpenBSD: pdisk.c,v 1.49 2016/01/18 21:50:53 krw Exp $	*/
 
 /*
  * pdisk - an editor for Apple format partition tables
@@ -56,7 +56,6 @@ void		do_create_partition(struct partition_map_header *, int);
 void		do_delete_partition(struct partition_map_header *);
 void		do_display_block(struct partition_map_header *, char *);
 void		do_display_entry(struct partition_map_header *);
-void		do_examine_patch_partition(struct partition_map_header *);
 int		do_expert (struct partition_map_header *, char *);
 void		do_rename_partition(struct partition_map_header *);
 void		do_change_type(struct partition_map_header *);
@@ -553,7 +552,6 @@ do_expert(struct partition_map_header * map, char *name)
 			}
 			printf("  f    full display of nth entry\n");
 			printf("  v    validate map\n");
-			printf("  e    examine patch partition\n");
 			printf("  q    return to main edit menu\n");
 			printf("  Q    quit editing\n");
 			break;
@@ -591,10 +589,6 @@ do_expert(struct partition_map_header * map, char *name)
 		case 'V':
 		case 'v':
 			validate_map(map);
-			break;
-		case 'E':
-		case 'e':
-			do_examine_patch_partition(map);
 			break;
 		default:
 			bad_input("No such command (%c)", command);
@@ -711,23 +705,6 @@ do_display_entry(struct partition_map_header * map)
 	}
 }
 
-
-void
-do_examine_patch_partition(struct partition_map_header * map)
-{
-	struct partition_map *entry;
-
-	if (map == NULL) {
-		bad_input("No partition map exists");
-		return;
-	}
-	entry = find_entry_by_type(kPatchType, map);
-	if (entry == NULL) {
-		printf("No patch partition\n");
-	} else {
-		display_patches(entry);
-	}
-}
 
 __dead static void
 usage(void)

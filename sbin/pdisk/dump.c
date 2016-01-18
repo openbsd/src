@@ -1,4 +1,4 @@
-/*	$OpenBSD: dump.c,v 1.36 2016/01/18 17:57:35 krw Exp $	*/
+/*	$OpenBSD: dump.c,v 1.37 2016/01/18 21:50:53 krw Exp $	*/
 
 /*
  * dump.c - dumping partition maps
@@ -42,26 +42,6 @@
 #include "io.h"
 
 #define get_align_long(x)	(*(x))
-
-struct patchdescriptor {
-	unsigned long	patchSig;
-	unsigned short	majorVers;
-	unsigned short	minorVers;
-	unsigned long	flags;
-	unsigned long	patchOffset;
-	unsigned long	patchSize;
-	unsigned long	patchCRC;
-	unsigned long	patchDescriptorLen;
-	unsigned char	patchName[33];
-	unsigned char	patchVendor[1];
-};
-
-struct patchlist {
-	unsigned short	numPatchBlocks;	/* number of disk blocks to hold the
-					 * patch list */
-	unsigned short	numPatches;	/* number of patches in list */
-	struct patchdescriptor thePatch[1];
-};
 
 const char     *kStringEmpty = "";
 const char     *kStringNot = " not";
@@ -473,76 +453,6 @@ full_dump_block_zero(struct partition_map_header * map)
 	printf("remainder of block -");
 	dump_block((unsigned char *) &m[i].ddBlock, (&zp->sbMap[247] -
 	    ((unsigned short *) &m[i].ddBlock)) * 2);
-}
-
-
-void
-display_patches(struct partition_map * entry)
-{
-	static unsigned char *patch_block;
-	struct patchdescriptor *q;
-	struct patchlist *p;
-	unsigned char  *next, *s;
-	long long offset;
-	int i;
-
-	offset = entry->data->dpme_pblock_start;
-	offset = ((long long) entry->data->dpme_pblock_start) *
-	    entry->the_map->logical_block;
-	if (patch_block == NULL) {
-		patch_block = malloc(DEV_BSIZE);
-		if (patch_block == NULL) {
-			warn("can't allocate memory for patch block buffer");
-			return;
-		}
-	}
-	if (read_file_media(entry->the_map->fd, (long long) offset, DEV_BSIZE,
-	    (char *) patch_block) == 0) {
-		warn("Can't read patch block");
-		return;
-	}
-	p = (struct patchlist *) patch_block;
-	if (p->numPatchBlocks != 1) {
-		i = p->numPatchBlocks;
-		free(patch_block);
-		patch_block = reallocarray(NULL, i, DEV_BSIZE);
-		if (patch_block == NULL) {
-			warn("can't allocate memory for patch blocks buffer");
-			return;
-		}
-		s = patch_block + DEV_BSIZE * i;
-		while (i > 0) {
-			s -= DEV_BSIZE;
-			i -= 1;
-			if (read_file_media(entry->the_map->fd, offset + i,
-			    DEV_BSIZE, (char *)s) == 0) {
-				warn("Can't read patch block %d", i);
-				return;
-			}
-		}
-		p = (struct patchlist *) patch_block;
-	}
-	printf("Patch list (%d entries)\n", p->numPatches);
-	q = p->thePatch;
-	for (i = 0; i < p->numPatches; i++) {
-		printf("%2d signature: '%.4s'\n", i + 1, (char *) &q->patchSig);
-		printf("     version: %d.%d\n", q->majorVers, q->minorVers);
-		printf("       flags: 0x%lx\n", q->flags);
-		printf("      offset: %ld\n", q->patchOffset);
-		printf("        size: %ld\n", q->patchSize);
-		printf("         CRC: 0x%lx\n", q->patchCRC);
-		printf("        name: '%.*s'\n", q->patchName[0],
-		    &q->patchName[1]);
-		printf("      vendor: '%.*s'\n", q->patchVendor[0],
-		    &q->patchVendor[1]);
-		next = ((unsigned char *) q) + q->patchDescriptorLen;
-		s = &q->patchVendor[q->patchVendor[0] + 1];
-		if (next > s) {
-			printf("remainder of entry -");
-			dump_block(s, next - s);
-		}
-		q = (struct patchdescriptor *) next;
-	}
 }
 
 int
