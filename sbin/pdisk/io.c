@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.16 2016/01/17 23:18:19 krw Exp $	*/
+/*	$OpenBSD: io.c,v 1.17 2016/01/18 15:03:18 krw Exp $	*/
 
 /*
  * io.c - simple io and input parsing routines
@@ -37,367 +37,359 @@
 
 #include "io.h"
 
-#define BAD_DIGIT 17	/* must be greater than any base */
+#define BAD_DIGIT 17		/* must be greater than any base */
 #define	STRING_CHUNK	16
 #define UNGET_MAX_COUNT 10
 
-const long kDefault = -1;
+const long	kDefault = -1;
 
-short unget_buf[UNGET_MAX_COUNT+1];
-int unget_count;
-char io_buffer[MAXIOSIZE];
+short		unget_buf[UNGET_MAX_COUNT + 1];
+int		unget_count;
+char		io_buffer[MAXIOSIZE];
 
-long get_number(int);
-char* get_string(int);
-int my_getch(void);
-void my_ungetch(int);
+long		get_number(int);
+char           *get_string(int);
+int		my_getch  (void);
+void		my_ungetch(int);
 
 int
 my_getch()
 {
-    if (unget_count > 0) {
-	return (unget_buf[--unget_count]);
-    } else {
-	return (getc(stdin));
-    }
+	if (unget_count > 0) {
+		return (unget_buf[--unget_count]);
+	} else {
+		return (getc(stdin));
+	}
 }
 
 
 void
 my_ungetch(int c)
 {
-    /*
-     * In practice there is never more than one character in
-     * the unget_buf, but what's a little overkill among friends?
-     */
+	/*
+         * In practice there is never more than one character in
+         * the unget_buf, but what's a little overkill among friends?
+         */
 
-    if (unget_count < UNGET_MAX_COUNT) {
-	unget_buf[unget_count++] = c;
-    } else {
-	errx(1, "Programmer error in my_ungetch().");
-    }
+	if (unget_count < UNGET_MAX_COUNT) {
+		unget_buf[unget_count++] = c;
+	} else {
+		errx(1, "Programmer error in my_ungetch().");
+	}
 }
 
 void
 flush_to_newline(int keep_newline)
 {
-    int		c;
+	int c;
 
-    for (;;) {
-	c = my_getch();
+	for (;;) {
+		c = my_getch();
 
-	if (c <= 0) {
-	    break;
-	} else if (c == '\n') {
-	    if (keep_newline) {
-		my_ungetch(c);
-	    }
-	    break;
-	} else {
-	    /* skip */
+		if (c <= 0) {
+			break;
+		} else if (c == '\n') {
+			if (keep_newline) {
+				my_ungetch(c);
+			}
+			break;
+		} else {
+			/* skip */
+		}
 	}
-    }
-    return;
+	return;
 }
 
 
 int
 get_okay(const char *prompt, int default_value)
 {
-    int		c;
+	int c;
 
-    flush_to_newline(0);
-    printf(prompt);
+	flush_to_newline(0);
+	printf(prompt);
 
-    for (;;) {
-	c = my_getch();
+	for (;;) {
+		c = my_getch();
 
-	if (c <= 0) {
-	    break;
-	} else if (c == ' ' || c == '\t') {
-	    /* skip blanks and tabs */
-	} else if (c == '\n') {
-	    my_ungetch(c);
-	    return default_value;
-	} else if (c == 'y' || c == 'Y') {
-	    return 1;
-	} else if (c == 'n' || c == 'N') {
-	    return 0;
-	} else {
-	    flush_to_newline(0);
-	    printf(prompt);
+		if (c <= 0) {
+			break;
+		} else if (c == ' ' || c == '\t') {
+			/* skip blanks and tabs */
+		} else if (c == '\n') {
+			my_ungetch(c);
+			return default_value;
+		} else if (c == 'y' || c == 'Y') {
+			return 1;
+		} else if (c == 'n' || c == 'N') {
+			return 0;
+		} else {
+			flush_to_newline(0);
+			printf(prompt);
+		}
 	}
-    }
-    return -1;
+	return -1;
 }
 
 int
 get_command(const char *prompt, int promptBeforeGet, int *command)
 {
-    int		c;
+	int c;
 
-    if (promptBeforeGet) {
-	printf(prompt);
-    }
-    for (;;) {
-	c = my_getch();
-
-	if (c <= 0) {
-	    break;
-	} else if (c == ' ' || c == '\t') {
-	    /* skip blanks and tabs */
-	} else if (c == '\n') {
-	    printf(prompt);
-	} else {
-	    *command = c;
-	    return 1;
+	if (promptBeforeGet) {
+		printf(prompt);
 	}
-    }
-    return 0;
+	for (;;) {
+		c = my_getch();
+
+		if (c <= 0) {
+			break;
+		} else if (c == ' ' || c == '\t') {
+			/* skip blanks and tabs */
+		} else if (c == '\n') {
+			printf(prompt);
+		} else {
+			*command = c;
+			return 1;
+		}
+	}
+	return 0;
 }
 
 int
 get_number_argument(const char *prompt, long *number, long default_value)
 {
-    int c;
-    int result = 0;
+	int c;
+	int result = 0;
 
-    for (;;) {
-	c = my_getch();
+	for (;;) {
+		c = my_getch();
 
-	if (c <= 0) {
-	    break;
-	} else if (c == ' ' || c == '\t') {
-	    /* skip blanks and tabs */
-	} else if (c == '\n') {
-	    if (default_value == kDefault) {
-		printf(prompt);
-	    } else {
-		my_ungetch(c);
-		*number = default_value;
-		result = 1;
-		break;
-	    }
-	} else if ('0' <= c && c <= '9') {
-	    *number = get_number(c);
-	    result = 1;
-	    break;
-	} else {
-	    my_ungetch(c);
-	    *number = 0;
-	    break;
+		if (c <= 0) {
+			break;
+		} else if (c == ' ' || c == '\t') {
+			/* skip blanks and tabs */
+		} else if (c == '\n') {
+			if (default_value == kDefault) {
+				printf(prompt);
+			} else {
+				my_ungetch(c);
+				*number = default_value;
+				result = 1;
+				break;
+			}
+		} else if ('0' <= c && c <= '9') {
+			*number = get_number(c);
+			result = 1;
+			break;
+		} else {
+			my_ungetch(c);
+			*number = 0;
+			break;
+		}
 	}
-    }
-    return result;
+	return result;
 }
 
 
 long
 get_number(int first_char)
 {
-    int c;
-    int base;
-    int digit;
-    int ret_value;
+	int c, base, digit, ret_value;
 
-    if (first_char != '0') {
-	c = first_char;
-	base = 10;
-	digit = BAD_DIGIT;
-    } else if ((c=my_getch()) == 'x' || c == 'X') {
-	c = my_getch();
-	base = 16;
-	digit = BAD_DIGIT;
-    } else {
-	my_ungetch(c);
-	c = first_char;
-	base = 8;
-	digit = 0;
-    }
-    ret_value = 0;
-    for (ret_value = 0; ; c = my_getch()) {
-	if (c >= '0' && c <= '9') {
-	    digit = c - '0';
-	} else if (c >='A' && c <= 'F') {
-	    digit = 10 + (c - 'A');
-	} else if (c >='a' && c <= 'f') {
-	    digit = 10 + (c - 'a');
+	if (first_char != '0') {
+		c = first_char;
+		base = 10;
+		digit = BAD_DIGIT;
+	} else if ((c = my_getch()) == 'x' || c == 'X') {
+		c = my_getch();
+		base = 16;
+		digit = BAD_DIGIT;
 	} else {
-	    digit = BAD_DIGIT;
+		my_ungetch(c);
+		c = first_char;
+		base = 8;
+		digit = 0;
 	}
-	if (digit >= base) {
-	    break;
+	ret_value = 0;
+	for (ret_value = 0;; c = my_getch()) {
+		if (c >= '0' && c <= '9') {
+			digit = c - '0';
+		} else if (c >= 'A' && c <= 'F') {
+			digit = 10 + (c - 'A');
+		} else if (c >= 'a' && c <= 'f') {
+			digit = 10 + (c - 'a');
+		} else {
+			digit = BAD_DIGIT;
+		}
+		if (digit >= base) {
+			break;
+		}
+		ret_value = ret_value * base + digit;
 	}
-	ret_value = ret_value * base + digit;
-    }
-    my_ungetch(c);
-    return(ret_value);
+	my_ungetch(c);
+	return (ret_value);
 }
 
 int
 get_string_argument(const char *prompt, char **string, int reprompt)
 {
-    int c;
-    int result = 0;
+	int c;
+	int result = 0;
 
-    for (;;) {
-	c = my_getch();
+	for (;;) {
+		c = my_getch();
 
-	if (c <= 0) {
-	    break;
-	} else if (c == ' ' || c == '\t') {
-	    /* skip blanks and tabs */
-	} else if (c == '\n') {
-	    if (reprompt) {
-		printf(prompt);
-	    } else {
-		my_ungetch(c);
-		*string = NULL;
-		break;
-	    }
-	} else if (c == '"' || c == '\'') {
-	    *string = get_string(c);
-	    result = 1;
-	    break;
-	} else if (('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z')
-		|| (c == '-' || c == '/' || c == '.' || c == ':')) {
-	    my_ungetch(c);
-	    *string = get_string(' ');
-	    result = 1;
-	    break;
-	} else {
-	    my_ungetch(c);
-	    *string = NULL;
-	    break;
+		if (c <= 0) {
+			break;
+		} else if (c == ' ' || c == '\t') {
+			/* skip blanks and tabs */
+		} else if (c == '\n') {
+			if (reprompt) {
+				printf(prompt);
+			} else {
+				my_ungetch(c);
+				*string = NULL;
+				break;
+			}
+		} else if (c == '"' || c == '\'') {
+			*string = get_string(c);
+			result = 1;
+			break;
+		} else if (('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z')
+			|| (c == '-' || c == '/' || c == '.' || c == ':')) {
+			my_ungetch(c);
+			*string = get_string(' ');
+			result = 1;
+			break;
+		} else {
+			my_ungetch(c);
+			*string = NULL;
+			break;
+		}
 	}
-    }
-    return result;
+	return result;
 }
 
 
-char *
+char           *
 get_string(int eos)
 {
-    int c;
-    char *s;
-    char *ret_value;
-    char *limit;
-    int length;
+	char *s, *ret_value, *limit;
+	int c, length;
 
-    ret_value = malloc(STRING_CHUNK);
-    if (ret_value == NULL) {
-	warn("can't allocate memory for string buffer");
-	return NULL;
-    }
-    length = STRING_CHUNK;
-    limit = ret_value + length;
-
-    c = my_getch();
-    for (s = ret_value; ; c = my_getch()) {
-	if (s >= limit) {
-	    /* expand string */
-	    limit = malloc(length+STRING_CHUNK);
-	    if (limit == NULL) {
+	ret_value = malloc(STRING_CHUNK);
+	if (ret_value == NULL) {
 		warn("can't allocate memory for string buffer");
-		ret_value[length-1] = 0;
-		break;
-	    }
-	    strncpy(limit, ret_value, length);
-	    free(ret_value);
-	    s = limit + (s - ret_value);
-	    ret_value = limit;
-	    length += STRING_CHUNK;
-	    limit = ret_value + length;
+		return NULL;
 	}
-	if (c <= 0 || c == eos || (eos == ' ' && c == '\t')) {
-	    *s++ = 0;
-	    break;
-	} else if (c == '\n') {
-	    *s++ = 0;
-	    my_ungetch(c);
-	    break;
-	} else {
-	    *s++ = c;
+	length = STRING_CHUNK;
+	limit = ret_value + length;
+
+	c = my_getch();
+	for (s = ret_value;; c = my_getch()) {
+		if (s >= limit) {
+			/* expand string */
+			limit = malloc(length + STRING_CHUNK);
+			if (limit == NULL) {
+				warn("can't allocate memory for string buffer");
+				ret_value[length - 1] = 0;
+				break;
+			}
+			strncpy(limit, ret_value, length);
+			free(ret_value);
+			s = limit + (s - ret_value);
+			ret_value = limit;
+			length += STRING_CHUNK;
+			limit = ret_value + length;
+		}
+		if (c <= 0 || c == eos || (eos == ' ' && c == '\t')) {
+			*s++ = 0;
+			break;
+		} else if (c == '\n') {
+			*s++ = 0;
+			my_ungetch(c);
+			break;
+		} else {
+			*s++ = c;
+		}
 	}
-    }
-    return(ret_value);
+	return (ret_value);
 }
 
 
 unsigned long
 get_multiplier(long divisor)
 {
-    int c;
-    unsigned long result;
-    unsigned long extra;
+	unsigned long result, extra;
+	int c;
 
-    c = my_getch();
+	c = my_getch();
 
-    extra = 1;
-    if (c <= 0 || divisor <= 0) {
-	result = 0;
-    } else if (c == 't' || c == 'T') {
-	result = 1024*1024;
-	extra = 1024*1024;
-    } else if (c == 'g' || c == 'G') {
-	result = 1024*1024*1024;
-    } else if (c == 'm' || c == 'M') {
-	result = 1024*1024;
-    } else if (c == 'k' || c == 'K') {
-	result = 1024;
-    } else {
-	my_ungetch(c);
-	result = 1;
-    }
-    if (result > 1) {
-	if (extra > 1) {
-	    result /= divisor;
-	    if (result >= 4096) {
-		/* overflow -> 20bits + >12bits */
+	extra = 1;
+	if (c <= 0 || divisor <= 0) {
 		result = 0;
-	    } else {
-		result *= extra;
-	    }
-	} else if (result >= divisor) {
-	    result /= divisor;
+	} else if (c == 't' || c == 'T') {
+		result = 1024 * 1024;
+		extra = 1024 * 1024;
+	} else if (c == 'g' || c == 'G') {
+		result = 1024 * 1024 * 1024;
+	} else if (c == 'm' || c == 'M') {
+		result = 1024 * 1024;
+	} else if (c == 'k' || c == 'K') {
+		result = 1024;
 	} else {
-	    result = 1;
+		my_ungetch(c);
+		result = 1;
 	}
-    }
-    return result;
+	if (result > 1) {
+		if (extra > 1) {
+			result /= divisor;
+			if (result >= 4096) {
+				/* overflow -> 20bits + >12bits */
+				result = 0;
+			} else {
+				result *= extra;
+			}
+		} else if (result >= divisor) {
+			result /= divisor;
+		} else {
+			result = 1;
+		}
+	}
+	return result;
 }
 
 
 int
 get_partition_modifier(void)
 {
-    int c;
-    int result;
+	int c, result;
 
-    result = 0;
+	result = 0;
 
-    c = my_getch();
+	c = my_getch();
 
-    if (c == 'p' || c == 'P') {
-	result = 1;
-    } else if (c > 0) {
-	my_ungetch(c);
-    }
-    return result;
+	if (c == 'p' || c == 'P') {
+		result = 1;
+	} else if (c > 0) {
+		my_ungetch(c);
+	}
+	return result;
 }
 
 
 int
 number_of_digits(unsigned long value)
 {
-    int j;
+	int j;
 
-    j = 1;
-    while (value > 9) {
-	j++;
-	value = value / 10;
-    }
-    return j;
+	j = 1;
+	while (value > 9) {
+		j++;
+		value = value / 10;
+	}
+	return j;
 }
 
 
@@ -405,13 +397,13 @@ number_of_digits(unsigned long value)
  * Print a message on standard error & flush the input.
  */
 void
-bad_input(const char *fmt, ...)
+bad_input(const char *fmt,...)
 {
-    va_list ap;
+	va_list ap;
 
-    va_start(ap, fmt);
-    vfprintf(stderr, fmt, ap);
-    va_end(ap);
-    fprintf(stderr, "\n");
-    flush_to_newline(1);
+	va_start(ap, fmt);
+	vfprintf(stderr, fmt, ap);
+	va_end(ap);
+	fprintf(stderr, "\n");
+	flush_to_newline(1);
 }
