@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ul.1,v 1.15 2010/10/29 08:02:05 jmc Exp $
+.\"	$OpenBSD: ul.1,v 1.16 2016/01/18 17:34:26 schwarze Exp $
 .\"	$NetBSD: ul.1,v 1.3 1994/12/07 00:28:23 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)ul.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: October 29 2010 $
+.Dd $Mdocdate: January 18 2016 $
 .Dt UL 1
 .Os
 .Sh NAME
@@ -44,38 +44,129 @@
 .Sh DESCRIPTION
 .Nm
 reads the named files (or standard input if none are given)
-and translates occurrences of underscores to the sequence
-which indicates underlining for the terminal in use, as specified
+and translates various kinds of in-band markup to forms
+appropriate for the terminal in use, as specified
 by the environment variable
-.Ev TERM .
-The file
-.Pa /etc/termcap
-is read to determine the appropriate sequences for underlining.
-If the terminal is incapable of underlining, but is capable of
-a standout mode, then that is used instead.
-If the terminal can overstrike,
-or handles underlining automatically,
+.Ev TERM
+and the
+.Xr terminfo 5
+database.
+In particular,
+.Xr man 1
+.Fl T Cm ascii ,
+.Fl T Cm utf8 ,
+and
+.Fl T Cm locale
+produce output that
 .Nm
-degenerates to
-.Xr cat 1 .
-If the terminal cannot underline, underlining is ignored.
+can handle as input.
+.Pp
+The following control characters are handled in the input stream:
+.Bl -tag -width Ds
+.It backspace (ASCII 0x08)
+Reset the output display column to the beginning of the previous
+character, to prepare for overstriking.
+The display width of the previous character does not matter:
+backing up over a double-width character does not require two
+backspace characters.
+However, if a double-width character is followed by two backspace
+characters, the second one is discarded, for compatibility with
+.Xr fold 1 .
+.It tabulator (ASCII 0x09)
+Advance the output display column to the next multiple of 8.
+Tabs are always expanded into blanks.
+.It newline (ASCII 0x0a)
+End the current output line.
+.It carriage return (ASCII 0x0d)
+Reset the output display column to the beginning of the line,
+to prepare for overstriking.
+.It shift out (ASCII 0x0e)
+Switch on reverse video mode.
+.It shift in (ASCII 0x0f)
+Switch off reverse video mode.
+.It escape 7 (ASCII 0x1b 0x37)
+Full reverse line feed.
+.It escape 8 (ASCII 0x1b 0x38)
+Half reverse line feed.
+Sometimes used for superscripts.
+.It escape 9 (ASCII 0x1b 0x39)
+Half forward line feed.
+Sometimes used for subscripts.
+.El
+.Pp
+The following kinds of markup are handled:
+.Bl -tag -width Ds
+.It underline
+Requested by putting an underscore into the same display cell as
+another character, by using backspace or carriage return characters.
+The usual sequence to request an underlined character is "character
+backspace underscore", but "underscore backspace character" works,
+too.
+If the terminal cannot underline, standout mode is tried as a fallback.
+.It boldface
+Requested by putting two copies of the same character into the same
+display cell, by using backspace or carriage return characters.
+The usual sequence to request a boldface character is "character
+backspace character".
+If the terminal does not provide boldface display, reverse video and
+standout mode are tried as fallbacks.
+.It reverse video
+Switched on and off by the shift out and shift in control characters,
+respectively.
+If the terminal does not provide reverse video, standout mode is
+tried as a fallback.
+.El
+.Pp
+If the input text contains markup the terminal cannot handle and
+no working fallback is available, that markup is ignored.
+Non-printable characters and invalid bytes are discarded.
+Unknown escape sequences cause
+.Nm
+to abort with an error message and a non-zero exit code.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
 .It Fl i
-Underlining is indicated by a separate line containing appropriate
-dashes
-.Pq Ql - .
+Markup is not applied.
+Instead, after each output line containing at least one marked-up
+character, an additional line is printed, containing the following
+ASCII codes below each character they apply to:
+.Pp
+.Bl -tag -width 1n -compact
+.It _
+underline
+.It !
+boldface
+.It g
+inverse video
+.It ^
+one half line above the current line (superscript)
+.It v
+one half line below the current line (subscript)
+.It X
+more than one kind of markup
+.El
 .It Fl t Ar terminal
 Overrides the terminal type specified in the environment with
 .Ar terminal .
 .El
 .Sh ENVIRONMENT
-.Bl -tag -width TERM
+.Bl -tag -width LC_CTYPE
+.It Ev LC_CTYPE
+The character set
+.Xr locale 1 .
+It decides which byte sequences form characters, which characters are
+printable, and how many output display columns each character occupies.
+If set to
+.Qq C ,
+.Qq POSIX ,
+or an unsupported value, each ASCII character except the control
+characters listed above is regarded as a character, and if it is
+printable, of display width 1.
 .It Ev TERM
 Used to relate a tty device
 with its device capability description (see
-.Xr termcap 5 ) .
+.Xr terminfo 5 ) .
 .Ev TERM
 is set at login time, either by the default terminal type
 specified in
@@ -85,10 +176,19 @@ or as set during the login process by the user in their
 file (see
 .Xr environ 7 ) .
 .El
+.Sh EXIT STATUS
+.Ex -std
 .Sh SEE ALSO
-.Xr man 1
+.Xr man 1 ,
+.Xr terminfo 5
 .Sh HISTORY
 The
 .Nm
 command appeared in
 .Bx 3.0 .
+.Sh BUGS
+Half reverse and half forward line feeds only work on few terminals,
+and full reverse line feeds aren't very portable, either.
+.Pp
+If more than one kind of markup is applied to the same character,
+all these markups are ignored and standout mode is used instead.
