@@ -1,4 +1,4 @@
-/* $OpenBSD: tls.c,v 1.34 2015/10/07 23:25:45 beck Exp $ */
+/* $OpenBSD: tls.c,v 1.35 2016/01/18 16:15:14 bcook Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -43,6 +43,9 @@ tls_init(void)
 
 	SSL_load_error_strings();
 	SSL_library_init();
+
+	if (BIO_sock_init() != 1)
+		return (-1);
 
 	if ((tls_config_default = tls_config_new()) == NULL)
 		return (-1);
