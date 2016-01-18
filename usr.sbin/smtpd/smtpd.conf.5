@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.150 2016/01/18 08:58:10 jung Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.151 2016/01/18 22:08:28 jung Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -127,7 +127,8 @@ If specified, the rule will only be matched if the sender email address
 is found in the table
 .Ar senders .
 The table may contain complete email addresses or apply to an entire
-domain if prefixed with @.
+domain if prefixed with
+.Sq @ .
 .El
 .Pp
 Next comes the selection based on the domain the message is sent to:
@@ -275,7 +276,7 @@ function.
 .Pp
 You can also accept mail just to have it forwarded elsewhere:
 .Bl -tag -width Ds
-.It forward-only
+.It Ic forward-only
 Mail is accepted for local recipients ONLY if it is redirected to an
 external address via an alias or a ~/.forward.
 .Pp
@@ -535,7 +536,6 @@ The
 and
 .Ic hostnames
 parameters are mutually exclusive.
-.El
 .Pp
 If
 .Ic verify
@@ -544,8 +544,9 @@ is specified,
 will refuse to relay unless the remote host provides STARTTLS and the
 certificate it presented has been verified.
 The relay URL must specify TLS for this option to be valid.
+.El
 .Pp
-Additional per-rule adjustments available:
+Additional per-rule adjustments are available:
 .Bl -tag -width Ds
 .It Xo
 .Ic expire
