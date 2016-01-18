@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdisk.c,v 1.47 2016/01/18 02:16:06 krw Exp $	*/
+/*	$OpenBSD: pdisk.c,v 1.48 2016/01/18 17:57:35 krw Exp $	*/
 
 /*
  * pdisk - an editor for Apple format partition tables
@@ -628,17 +628,16 @@ do_change_map_size(struct partition_map_header * map)
 void
 do_display_block(struct partition_map_header * map, char *alt_name)
 {
-	struct file_media *m;
 	char *name;
 	long number;
-	int g;
+	int fd, g;
 	static unsigned char *display_block;
 	static long next_number = -1;
 	static int display_g;
 
 	if (map != NULL) {
 		name = 0;
-		m = map->m;
+		fd = map->fd;
 		g = map->logical_block;
 	} else {
 		if (alt_name == 0) {
@@ -653,8 +652,8 @@ do_display_block(struct partition_map_header * map, char *alt_name)
 				return;
 			}
 		}
-		m = open_file_as_media(name, O_RDONLY);
-		if (m == 0) {
+		fd = open_file_as_media(name, O_RDONLY);
+		if (fd == -1) {
 			warn("can't open file '%s'", name);
 			free(name);
 			return;
@@ -677,7 +676,7 @@ do_display_block(struct partition_map_header * map, char *alt_name)
 		}
 		display_g = g;
 	}
-	if (read_file_media(m, ((long long) number) * g, g,
+	if (read_file_media(fd, ((long long) number) * g, g,
 		    (char *)display_block) != 0) {
 		printf("block %ld -", number);
 		dump_block((unsigned char *)display_block, g);
@@ -685,7 +684,7 @@ do_display_block(struct partition_map_header * map, char *alt_name)
 	}
 xit:
 	if (name) {
-		close_file_media(m);
+		close(fd);
 		free(name);
 	}
 	return;

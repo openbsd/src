@@ -1,4 +1,4 @@
-/*	$OpenBSD: partition_map.c,v 1.39 2016/01/18 15:30:00 krw Exp $	*/
+/*	$OpenBSD: partition_map.c,v 1.40 2016/01/18 17:57:35 krw Exp $	*/
 
 /*
  * partition_map.c - partition map routines
@@ -91,13 +91,12 @@ struct partition_map_header *
 open_partition_map(char *name, int *valid_file)
 {
 	struct partition_map_header *map;
-	struct file_media *m;
-	int writable;
+	int fd, writable;
 
-	m = open_file_as_media(name, (rflag) ? O_RDONLY : O_RDWR);
-	if (m == 0) {
-		m = open_file_as_media(name, O_RDONLY);
-		if (m == 0) {
+	fd = open_file_as_media(name, (rflag) ? O_RDONLY : O_RDWR);
+	if (fd == -1) {
+		fd = open_file_as_media(name, O_RDONLY);
+		if (fd == -1) {
 			warn("can't open file '%s'", name);
 			*valid_file = 0;
 			return NULL;
@@ -112,7 +111,7 @@ open_partition_map(char *name, int *valid_file)
 	map = malloc(sizeof(struct partition_map_header));
 	if (map == NULL) {
 		warn("can't allocate memory for open partition map");
-		close_file_media(m);
+		close(fd);
 		return NULL;
 	}
 	map->name = name;
@@ -123,14 +122,14 @@ open_partition_map(char *name, int *valid_file)
 	map->base_order = NULL;
 
 	map->physical_block = DEV_BSIZE;	/* preflight */
-	map->m = m;
+	map->fd = fd;
 	map->misc = malloc(DEV_BSIZE);
 	if (map->misc == NULL) {
 		warn("can't allocate memory for block zero buffer");
-		close_file_media(map->m);
+		close(map->fd);
 		free(map);
 		return NULL;
-	} else if (read_file_media(map->m, (long long) 0, DEV_BSIZE,
+	} else if (read_file_media(map->fd, (long long) 0, DEV_BSIZE,
 		   (char *) map->misc) == 0 ||
 		   convert_block0(map->misc, 1) ||
 		   coerce_block0(map)) {
@@ -179,7 +178,7 @@ close_partition_map(struct partition_map_header * map)
 		free(entry->data);
 		free(entry);
 	}
-	close_file_media(map->m);
+	close(map->fd);
 	free(map);
 }
 
@@ -265,11 +264,9 @@ void
 write_partition_map(struct partition_map_header * map)
 {
 	struct partition_map *entry;
-	struct file_media *m;
 	char *block;
 	int i = 0, result = 0;
 
-	m = map->m;
 	if (map->misc != NULL) {
 		convert_block0(map->misc, 0);
 		result = write_block(map, 0, (char *) map->misc);
@@ -357,13 +354,13 @@ struct partition_map_header *
 create_partition_map(char *name, struct partition_map_header * oldmap)
 {
 	struct partition_map_header *map;
-	struct file_media *m;
 	struct dpme *data;
 	unsigned long number;
 	long size;
+	int fd;
 
-	m = open_file_as_media(name, (rflag) ? O_RDONLY : O_RDWR);
-	if (m == 0) {
+	fd = open_file_as_media(name, (rflag) ? O_RDONLY : O_RDWR);
+	if (fd == -1) {
 		warn("can't open file '%s' for %sing", name, (rflag) ?
 		    "read" : "writ");
 		return NULL;
@@ -371,7 +368,7 @@ create_partition_map(char *name, struct partition_map_header * oldmap)
 	map = malloc(sizeof(struct partition_map_header));
 	if (map == NULL) {
 		warn("can't allocate memory for open partition map");
-		close_file_media(m);
+		close(fd);
 		return NULL;
 	}
 	map->name = name;
@@ -385,7 +382,7 @@ create_partition_map(char *name, struct partition_map_header * oldmap)
 	} else {
 		size = DEV_BSIZE;
 	}
-	map->m = m;
+	map->fd = fd;
 	if (map->physical_block > MAXIOSIZE) {
 		map->physical_block = MAXIOSIZE;
 	}
@@ -1178,7 +1175,7 @@ remove_driver(struct partition_map * entry)
 int
 read_block(struct partition_map_header * map, unsigned long num, char *buf)
 {
-	return read_file_media(map->m, ((long long) num) * map->logical_block,
+	return read_file_media(map->fd, ((long long) num) * map->logical_block,
 			       DEV_BSIZE, (void *) buf);
 }
 
@@ -1186,6 +1183,6 @@ read_block(struct partition_map_header * map, unsigned long num, char *buf)
 int
 write_block(struct partition_map_header * map, unsigned long num, char *buf)
 {
-	return write_file_media(map->m, ((long long) num) * map->logical_block,
+	return write_file_media(map->fd, ((long long) num) * map->logical_block,
 				DEV_BSIZE, (void *) buf);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: file_media.c,v 1.34 2016/01/18 16:41:41 krw Exp $	*/
+/*	$OpenBSD: file_media.c,v 1.35 2016/01/18 17:57:35 krw Exp $	*/
 
 /*
  * file_media.c -
@@ -66,38 +66,26 @@ compute_block_size(int fd, char *name)
 }
 
 
-struct file_media *
+int
 open_file_as_media(char *file, int oflag)
 {
-	struct stat info;
-	struct file_media *a;
 	int fd;
 
-	a = 0;
 	fd = opendev(file, oflag, OPENDEV_PART, NULL);
-	if (fd >= 0) {
-		a = malloc(sizeof(struct file_media));
-		if (a != 0) {
-			compute_block_size(fd, file);
-			a->fd = fd;
-			if (fstat(fd, &info) < 0) {
-				warn("can't stat file '%s'", file);
-			}
-		} else {
-			close(fd);
-		}
-	}
-	return (a);
+	if (fd >= 0)
+		compute_block_size(fd, file);
+
+	return (fd);
 }
 
 
 long
-read_file_media(struct file_media *a, long long offset, unsigned long count,
+read_file_media(int fd, long long offset, unsigned long count,
 		void *address)
 {
 	ssize_t off;
 
-	off = pread(a->fd, address, count, offset);
+	off = pread(fd, address, count, offset);
 	if (off == count)
 		return (1);
 
@@ -113,26 +101,15 @@ read_file_media(struct file_media *a, long long offset, unsigned long count,
 
 
 long
-write_file_media(struct file_media *a, long long offset, unsigned long count,
+write_file_media(int fd, long long offset, unsigned long count,
 		 void *address)
 {
 	ssize_t off;
 
-	off = pwrite(a->fd, address, count, offset);
+	off = pwrite(fd, address, count, offset);
 	if (off == count)
 		return (1);
 
 	warn("writing to file failed");
 	return (0);
-}
-
-
-long
-close_file_media(struct file_media * a)
-{
-	if (a == 0) {
-		return 0;
-	}
-	close(a->fd);
-	return 1;
 }

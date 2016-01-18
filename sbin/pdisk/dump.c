@@ -1,4 +1,4 @@
-/*	$OpenBSD: dump.c,v 1.35 2016/01/18 15:17:22 krw Exp $	*/
+/*	$OpenBSD: dump.c,v 1.36 2016/01/18 17:57:35 krw Exp $	*/
 
 /*
  * dump.c - dumping partition maps
@@ -481,14 +481,12 @@ display_patches(struct partition_map * entry)
 {
 	static unsigned char *patch_block;
 	struct patchdescriptor *q;
-	struct file_media *m;
 	struct patchlist *p;
 	unsigned char  *next, *s;
 	long long offset;
 	int i;
 
 	offset = entry->data->dpme_pblock_start;
-	m = entry->the_map->m;
 	offset = ((long long) entry->data->dpme_pblock_start) *
 	    entry->the_map->logical_block;
 	if (patch_block == NULL) {
@@ -498,7 +496,7 @@ display_patches(struct partition_map * entry)
 			return;
 		}
 	}
-	if (read_file_media(m, (long long) offset, DEV_BSIZE,
+	if (read_file_media(entry->the_map->fd, (long long) offset, DEV_BSIZE,
 	    (char *) patch_block) == 0) {
 		warn("Can't read patch block");
 		return;
@@ -516,8 +514,8 @@ display_patches(struct partition_map * entry)
 		while (i > 0) {
 			s -= DEV_BSIZE;
 			i -= 1;
-			if (read_file_media(m, offset + i, DEV_BSIZE,
-			    (char *)s) == 0) {
+			if (read_file_media(entry->the_map->fd, offset + i,
+			    DEV_BSIZE, (char *)s) == 0) {
 				warn("Can't read patch block %d", i);
 				return;
 			}

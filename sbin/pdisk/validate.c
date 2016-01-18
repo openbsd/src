@@ -1,4 +1,4 @@
-/*	$OpenBSD: validate.c,v 1.26 2016/01/18 02:24:02 krw Exp $	*/
+/*	$OpenBSD: validate.c,v 1.27 2016/01/18 17:57:35 krw Exp $	*/
 
 /*
  * validate.c -
@@ -36,6 +36,7 @@
 #include <stdlib.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <unistd.h>
 
 #include "validate.h"
 #include "convert.h"
@@ -61,7 +62,7 @@ static char    *buffer;
 static struct block0 *b0;
 static struct dpme *mb;
 static struct partition_map_header *the_map;
-static struct file_media *the_media;
+static int	the_fd;
 static int	g;
 
 int		get_block_zero(void);
@@ -81,7 +82,7 @@ get_block_zero(void)
 		b0 = the_map->misc;
 		rtn_value = 1;
 	} else {
-		if (read_file_media(the_media, (long long) 0, DEV_BSIZE,
+		if (read_file_media(the_fd, (long long) 0, DEV_BSIZE,
 		    buffer) == 0) {
 			rtn_value = 0;
 		} else {
@@ -109,7 +110,7 @@ get_block_n(int n)
 			rtn_value = 0;
 		}
 	} else {
-		if (read_file_media(the_media, ((long long) n) * g, DEV_BSIZE, (void *) buffer) == 0) {
+		if (read_file_media(the_fd, ((long long) n) * g, DEV_BSIZE, (void *) buffer) == 0) {
 			rtn_value = 0;
 		} else {
 			mb = (struct dpme *) buffer;
@@ -304,13 +305,13 @@ validate_map(struct partition_map_header * map)
 	uint32_t limit;
 
 	if (map == NULL) {
-		the_map = 0;
+		the_map = NULL;
 		if (get_string_argument("Name of device: ", &name, 1) == 0) {
 			bad_input("Bad name");
 			return;
 		}
-		the_media = open_file_as_media(name, O_RDONLY);
-		if (the_media == 0) {
+		the_fd = open_file_as_media(name, O_RDONLY);
+		if (the_fd == -1) {
 			warn("can't open file '%s'", name);
 			free(name);
 			return;
@@ -443,7 +444,7 @@ post_processing:
 
 done:
 	if (map == NULL) {
-		close_file_media(the_media);
+		close(the_fd);
 		free(buffer);
 		free(name);
 	}
