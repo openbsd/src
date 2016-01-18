@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.149 2016/01/03 17:07:36 gilles Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.150 2016/01/18 08:58:10 jung Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -17,7 +17,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: January 3 2016 $
+.Dd $Mdocdate: January 18 2016 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -364,8 +364,8 @@ in the SMTP session.
 may be a user, a domain prefixed with
 .Sq @ ,
 or an email address, causing
-smtpd to rewrite the user-part, the domain-part, or the entire address,
-respectively.
+.Xr smtpd 8
+to rewrite the user-part, the domain-part, or the entire address, respectively.
 .Pp
 If the
 .Ic source
@@ -402,9 +402,10 @@ and
 .Ic hostnames
 parameters are mutually exclusive.
 .Pp
-When relaying, STARTTLS is always attempted if available on remote host
-and OpenSMTPD will try to present a certificate matching the outgoing
-hostname if one is registered in the pki.
+When relaying, STARTTLS is always attempted if available on remote host and
+.Xr smtpd 8
+will try to present a certificate matching the outgoing hostname if one is
+registered in the pki.
 If
 .Ic pki
 is specified, the certificate registered for
@@ -413,12 +414,15 @@ is used instead.
 .Pp
 If
 .Ic tls
-is specified, OpenSMTPD will refuse to relay unless the remote host provides
-STARTTLS.
+is specified,
+.Xr smtpd 8
+will refuse to relay unless the remote host provides STARTTLS.
 If
 .Ic tls verify
-is specified, OpenSMTPD will refuse to relay unless the remote host provides
-STARTTLS and the certificate it presented has been verified.
+is specified,
+.Xr smtpd 8
+will refuse to relay unless the remote host provides STARTTLS and the
+certificate it presented has been verified.
 .Pp
 Note that the
 .Ic tls
@@ -494,8 +498,8 @@ in the SMTP session.
 may be a user, a domain prefixed with
 .Sq @ ,
 or an email address, causing
-smtpd to rewrite the user-part, the domain-part, or the entire address,
-respectively.
+.Xr smtpd 8
+to rewrite the user-part, the domain-part, or the entire address, respectively.
 .Pp
 If the
 .Ic source
@@ -535,8 +539,10 @@ parameters are mutually exclusive.
 .Pp
 If
 .Ic verify
-is specified, OpenSMTPD will refuse to relay unless the remote host provides
-STARTTLS and the certificate it presented has been verified.
+is specified,
+.Xr smtpd 8
+will refuse to relay unless the remote host provides STARTTLS and the
+certificate it presented has been verified.
 The relay URL must specify TLS for this option to be valid.
 .Pp
 Additional per-rule adjustments available:
@@ -827,7 +833,9 @@ with
 .Ar hostname .
 .Pp
 The parameters are used for ephemeral key exchange.
-If not specified, OpenSMTPD will use safely generated builtin parameters.
+If not specified,
+.Xr smtpd 8
+will use safely generated builtin parameters.
 .Pp
 Creation of Diffie-Hellman parameters is documented in
 .Xr openssl 1 .
