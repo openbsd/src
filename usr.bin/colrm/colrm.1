@@ -1,4 +1,4 @@
-.\"	$OpenBSD: colrm.1,v 1.8 2011/12/28 22:27:18 schwarze Exp $
+.\"	$OpenBSD: colrm.1,v 1.9 2016/01/18 20:31:36 schwarze Exp $
 .\"	$NetBSD: colrm.1,v 1.3 1995/03/26 09:04:01 glass Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)colrm.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: December 28 2011 $
+.Dd $Mdocdate: January 18 2016 $
 .Dt COLRM 1
 .Os
 .Sh NAME
@@ -42,7 +42,6 @@
 .Sh DESCRIPTION
 .Nm
 removes selected columns from the lines of a file.
-A column is defined as a single character in a line.
 Input is read from the standard input.
 Output is written to the standard output.
 .Pp
@@ -63,8 +62,46 @@ or greater than the
 column will be written.
 Column numbering starts with one, not zero.
 .Pp
-Tab characters increment the column count to the next multiple of eight.
-Backspace characters decrement the column count by one.
+Each character occupies the number of columns defined by
+.Xr wcwidth 3 .
+Zero-width characters belong to the previous column rather
+than to the following column.
+If deletion of half of a double-width character is requested,
+its remaining half is replaced by a blank character.
+Non-printable characters are treated as if they had width 1.
+Each invalid byte is regarded as a non-printable character.
+.Pp
+Tab characters increment the input column count to the next multiple
+of eight.
+If they intersect or follow a deletion, they are expanded to blank
+characters such that the original alignment is preserved.
+.Pp
+Backspace characters decrement the column count by the width of the
+previous character.
+If they follow a character that is completely or partially deleted,
+they are deleted together with that character.
+If they follow a character that is partially deleted,
+they also suppress printing of the replacement blank character.
+.Pp
+For compatibility with
+.St -p1003.1-2008
+.Xr fold 1 ,
+if a double-width character is followed by two backspace characters
+instead of the usual one, both are regarded as belonging to that
+character, and the second one does not decrement the column count.
+.Sh ENVIRONMENT
+.Bl -tag -width LC_CTYPE
+.It Ev LC_CTYPE
+The character set
+.Xr locale 1 .
+It decides which sequences of bytes are treated as characters,
+and what their display width is.
+If unset or set to
+.Qq C ,
+.Qq POSIX ,
+or an unsupported value, each byte except tab and backspace is treated
+as a character of width 1.
+.El
 .Sh SEE ALSO
 .Xr awk 1 ,
 .Xr column 1 ,
@@ -80,3 +117,11 @@ utility first appeared in
 wrote the original version of
 .Nm
 in November 1974.
+.Sh BUGS
+If two characters of different widths are followed by two backspace
+characters in a row, the column count is decremented twice by the
+width of the second character rather than by the sum of both widths.
+This is hardly a practical problem because not even backspace
+encoding in
+.Xr roff 7
+style uses such double-backspace sequences.
