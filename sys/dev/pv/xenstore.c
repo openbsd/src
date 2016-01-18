@@ -1,4 +1,4 @@
-/*	$OpenBSD: xenstore.c,v 1.18 2016/01/15 18:20:41 mikeb Exp $	*/
+/*	$OpenBSD: xenstore.c,v 1.19 2016/01/18 18:54:38 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Belopuhov
@@ -311,7 +311,8 @@ xs_ring_avail(struct xs_ring *xsr, int req)
 	uint32_t prod = req ? xsr->xsr_req_prod : xsr->xsr_rsp_prod;
 
 	membar_consumer();
-	return ((cons - prod - 1) & (XS_RING_SIZE - 1));
+	KASSERT(prod - cons <= XS_RING_SIZE);
+	return (req ? XS_RING_SIZE - (prod - cons) : prod - cons);
 }
 
 int
@@ -373,6 +374,7 @@ xs_start(struct xs_transaction *xst, struct xs_msg *xsm, struct iovec *iov,
 	if (xs_output(xst, (uint8_t *)&xsm->xsm_hdr,
 	    sizeof(xsm->xsm_hdr)) == -1) {
 		printf("%s: failed to write the header\n", __func__);
+		xs_sem_put(&xs->xs_rngsem);
 		return (-1);
 	}
 
@@ -381,6 +383,7 @@ xs_start(struct xs_transaction *xst, struct xs_msg *xsm, struct iovec *iov,
 		if (xs_output(xst, iov[i].iov_base, iov[i].iov_len) == -1) {
 			printf("%s: failed on iovec #%d len %ld\n", __func__,
 			    i, iov[i].iov_len);
+			xs_sem_put(&xs->xs_rngsem);
 			return (-1);
 		}
 	}
@@ -435,7 +438,7 @@ xs_ring_put(struct xs_softc *xs, void *src, size_t size)
 	struct xs_ring *xsr = xs->xs_ring;
 	uint32_t prod = xsr->xsr_req_prod & (XS_RING_SIZE - 1);
 	uint32_t avail = xs_ring_avail(xsr, 1);
-	int left;
+	size_t left;
 
 	membar_consumer();
 	if (size > XS_RING_SIZE)
@@ -463,7 +466,7 @@ xs_ring_get(struct xs_softc *xs, void *dst, size_t size)
 	struct xs_ring *xsr = xs->xs_ring;
 	uint32_t cons = xsr->xsr_rsp_cons & (XS_RING_SIZE - 1);
 	uint32_t avail = xs_ring_avail(xsr, 0);
-	int left;
+	size_t left;
 
 	membar_consumer();
 	if (size > XS_RING_SIZE)
