@@ -1,4 +1,4 @@
-/*	$OpenBSD: file_media.h,v 1.11 2016/01/18 15:30:00 krw Exp $	*/
+/*	$OpenBSD: file_media.h,v 1.12 2016/01/18 16:41:41 krw Exp $	*/
 
 /*
  * file_media.h -
@@ -32,7 +32,6 @@
 
 
 struct file_media {
-    long long	size_in_bytes;  /* offset granularity */
     int		fd;
 };
 

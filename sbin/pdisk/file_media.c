@@ -1,4 +1,4 @@
-/*	$OpenBSD: file_media.c,v 1.33 2016/01/18 15:30:00 krw Exp $	*/
+/*	$OpenBSD: file_media.c,v 1.34 2016/01/18 16:41:41 krw Exp $	*/
 
 /*
  * file_media.c -
@@ -71,7 +71,6 @@ open_file_as_media(char *file, int oflag)
 {
 	struct stat info;
 	struct file_media *a;
-	off_t off;
 	int fd;
 
 	a = 0;
@@ -80,8 +79,6 @@ open_file_as_media(char *file, int oflag)
 		a = malloc(sizeof(struct file_media));
 		if (a != 0) {
 			compute_block_size(fd, file);
-			off = lseek(fd, 0, SEEK_END);
-			a->size_in_bytes = (long long) off;
 			a->fd = fd;
 			if (fstat(fd, &info) < 0) {
 				warn("can't stat file '%s'", file);
@@ -95,77 +92,38 @@ open_file_as_media(char *file, int oflag)
 
 
 long
-read_file_media(struct file_media * a, long long offset, unsigned long count,
+read_file_media(struct file_media *a, long long offset, unsigned long count,
 		void *address)
 {
-	off_t off;
-	long rtn_value;
-	int t;
+	ssize_t off;
 
-	rtn_value = 0;
-	if (a == 0) {
-		/* no media */
-		fprintf(stderr, "no media\n");
-	} else if (count <= 0 || count % DEV_BSIZE != 0) {
-		/* can't handle size */
-		fprintf(stderr, "bad size\n");
-	} else if (offset < 0 || offset % DEV_BSIZE != 0) {
-		/* can't handle offset */
-		fprintf(stderr, "bad offset\n");
-	} else if (offset + count > a->size_in_bytes && a->size_in_bytes !=
-	    (long long) 0) {
-		/* check for offset (and offset+count) too large */
-		fprintf(stderr, "offset+count too large\n");
-	} else if (count > LLONG_MAX - offset) {
-		/* check for offset (and offset+count) too large */
-		fprintf(stderr, "offset+count too large 2\n");
-	} else {
-		/* do the read */
-		off = offset;
-		if ((off = lseek(a->fd, off, SEEK_SET)) >= 0) {
-			if ((t = read(a->fd, address, count)) == count) {
-				rtn_value = 1;
-			} else {
-				fprintf(stderr, "read failed\n");
-			}
-		} else {
-			fprintf(stderr, "lseek failed\n");
-		}
-	}
-	return rtn_value;
+	off = pread(a->fd, address, count, offset);
+	if (off == count)
+		return (1);
+
+	if (off == 0)
+		fprintf(stderr, "end of file encountered");
+	else if (off == -1)
+		warn("reading file failed");
+	else
+		fprintf(stderr, "short read");
+
+	return (0);
 }
 
 
 long
-write_file_media(struct file_media * a, long long offset, unsigned long count,
+write_file_media(struct file_media *a, long long offset, unsigned long count,
 		 void *address)
 {
-	off_t off;
-	long rtn_value;
-	int t;
+	ssize_t off;
 
-	rtn_value = 0;
-	if (a == 0) {
-		/* no media */
-	} else if (count <= 0 || count % DEV_BSIZE != 0) {
-		/* can't handle size */
-	} else if (offset < 0 || offset % DEV_BSIZE != 0) {
-		/* can't handle offset */
-	} else if (count > LLONG_MAX - offset) {
-		/* check for offset (and offset+count) too large */
-	} else {
-		/* do the write  */
-		off = offset;
-		if ((off = lseek(a->fd, off, SEEK_SET)) >= 0) {
-			if ((t = write(a->fd, address, count)) == count) {
-				if (off + count > a->size_in_bytes) {
-					a->size_in_bytes = off + count;
-				}
-				rtn_value = 1;
-			}
-		}
-	}
-	return rtn_value;
+	off = pwrite(a->fd, address, count, offset);
+	if (off == count)
+		return (1);
+
+	warn("writing to file failed");
+	return (0);
 }
 
 
