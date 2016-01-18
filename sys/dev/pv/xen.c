@@ -1,4 +1,4 @@
-/*	$OpenBSD: xen.c,v 1.29 2016/01/18 19:06:48 mikeb Exp $	*/
+/*	$OpenBSD: xen.c,v 1.30 2016/01/18 19:09:09 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Belopuhov
@@ -552,8 +552,11 @@ xen_intr(void)
 			sc->sc_ipg->evtchn_pending[row] &= ~(1 << bit);
 			membar_producer();
 			port = (row * LONG_BIT) + bit;
-			if ((xi = xen_lookup_intsrc(sc, port)) == NULL)
+			if ((xi = xen_lookup_intsrc(sc, port)) == NULL) {
+				printf("%s: unhandled interrupt on port %u\n",
+				    sc->sc_dev.dv_xname, port);
 				continue;
+			}
 			xi->xi_evcnt.ec_count++;
 			if (xi->xi_handler)
 				xi->xi_handler(xi->xi_arg);
