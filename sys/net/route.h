@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.h,v 1.130 2015/12/03 21:57:59 mpi Exp $	*/
+/*	$OpenBSD: route.h,v 1.131 2016/01/18 15:38:52 mpi Exp $	*/
 /*	$NetBSD: route.h,v 1.9 1996/02/13 22:00:49 christos Exp $	*/
 
 /*
@@ -96,7 +96,6 @@ struct rtentry {
 #ifndef ART
 	struct	radix_node rt_nodes[2];	/* tree glue, and other values */
 #else
-	struct art_node	*rt_node;	/* ART entry */
 	struct sockaddr	*rt_dest;	/* destination */
 	SRPL_ENTRY(rtentry) rt_next;	/* Next multipath entry to our dst. */
 #endif
@@ -111,6 +110,9 @@ struct rtentry {
 	unsigned int	 rt_ifidx;	/* the answer: interface to use */
 	unsigned int	 rt_flags;	/* up/down?, host/net */
 	int		 rt_refcnt;	/* # held references */
+#ifdef ART
+	int		 rt_plen;	/* prefix length */
+#endif
 	uint16_t	 rt_labelid;	/* route label ID */
 	uint8_t		 rt_priority;	/* routing priority to use */
 };

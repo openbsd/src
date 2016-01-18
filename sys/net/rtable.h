@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtable.h,v 1.14 2015/12/21 10:51:55 mpi Exp $ */
+/*	$OpenBSD: rtable.h,v 1.15 2016/01/18 15:38:52 mpi Exp $ */
 
 /*
  * Copyright (c) 2014-2015 Martin Pieuchot
@@ -43,7 +43,7 @@
 #include <net/art.h>
 
 #define	rt_key(rt)	((rt)->rt_dest)
-#define	rt_plen(rt)	(((rt)->rt_node != NULL) ? (rt)->rt_node->an_plen : 0)
+#define	rt_plen(rt)	((rt)->rt_plen)
 #define	RT_ROOT(rt)	(0)
 
 #endif /* ART */

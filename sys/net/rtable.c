@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtable.c,v 1.36 2015/12/21 10:51:55 mpi Exp $ */
+/*	$OpenBSD: rtable.c,v 1.37 2016/01/18 15:38:52 mpi Exp $ */
 
 /*
  * Copyright (c) 2014-2015 Martin Pieuchot
@@ -745,8 +745,8 @@ rtable_insert(unsigned int rtableid, struct sockaddr *dst,
 #endif /* SMALL_KERNEL */
 	}
 
-	rt->rt_node = an;
 	rt->rt_dest = dst;
+	rt->rt_plen = plen;
 	rtref(rt);
 	SRPL_INSERT_HEAD_LOCKED(&rt_rc, &an->an_rtlist, rt, rt_next);
 
@@ -786,8 +786,6 @@ rtable_delete(unsigned int rtableid, struct sockaddr *dst,
 	    memcmp(an->an_dst, dst, dst->sa_len))
 		return (ESRCH);
 
-	KASSERT(an == rt->rt_node);
-
 #ifndef SMALL_KERNEL
 	/*
 	 * If other multipath route entries are still attached to
@@ -797,7 +795,6 @@ rtable_delete(unsigned int rtableid, struct sockaddr *dst,
 		npaths++;
 
 	if (npaths > 1) {
-		rt->rt_node = NULL;
 		KASSERT(rt->rt_refcnt >= 2);
 		SRPL_REMOVE_LOCKED(&rt_rc, &an->an_rtlist, rt, rtentry,
 		    rt_next);
@@ -814,7 +811,6 @@ rtable_delete(unsigned int rtableid, struct sockaddr *dst,
 	if (art_delete(ar, an, addr, plen) == NULL)
 		return (ESRCH);
 
-	rt->rt_node = NULL;
 	KASSERT(rt->rt_refcnt >= 2);
 	SRPL_REMOVE_LOCKED(&rt_rc, &an->an_rtlist, rt, rtentry, rt_next);
 	rtfree(rt);
@@ -896,8 +892,6 @@ rtable_mpath_reprio(unsigned int rtableid, struct sockaddr *dst,
 	if (an == NULL || an->an_plen != plen ||
 	    memcmp(an->an_dst, dst, dst->sa_len))
 		return (ESRCH);
-
-	KASSERT(an == rt->rt_node);
 
 	KERNEL_ASSERT_LOCKED();
 
