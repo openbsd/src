@@ -1,4 +1,4 @@
-/*	$OpenBSD: partition_map.c,v 1.36 2016/01/17 23:18:19 krw Exp $	*/
+/*	$OpenBSD: partition_map.c,v 1.37 2016/01/18 00:04:36 krw Exp $	*/
 
 /*
  * partition_map.c - partition map routines
@@ -734,7 +734,6 @@ delete_partition_from_map(struct partition_map *entry)
 	remove_driver(entry);	/* update block0 if necessary */
     }
     free(entry->data);
-    entry->HFS_kind = kHFS_not;
     entry->data = data;
     combine_entry(entry);
     map = entry->the_map;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdisk.c,v 1.44 2016/01/17 23:18:19 krw Exp $	*/
+/*	$OpenBSD: pdisk.c,v 1.45 2016/01/18 00:04:36 krw Exp $	*/
 
 /*
  * pdisk - an editor for Apple format partition tables
@@ -45,19 +45,9 @@
 #include "validate.h"
 #include "file_media.h"
 
-#define ARGV_CHUNK 5
 #define DFLAG_DEFAULT	0
 #define LFLAG_DEFAULT	0
 #define RFLAG_DEFAULT	0
-
-enum getopt_values {
-    kLongOption = 0,
-    kBadOption = '?',
-    kOptionArg = 1000,
-    kListOption = 1001,
-    kLogicalOption = 1002
-};
-
 
 int lflag = LFLAG_DEFAULT;	/* list the device */
 int dflag = DFLAG_DEFAULT;	/* turn on debugging commands and printout */

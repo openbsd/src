@@ -1,4 +1,4 @@
-/*	$OpenBSD: partition_map.h,v 1.17 2016/01/17 23:18:19 krw Exp $	*/
+/*	$OpenBSD: partition_map.h,v 1.18 2016/01/18 00:04:36 krw Exp $	*/
 
 /*
  * partition_map.h - partition map routines
@@ -58,15 +58,6 @@ struct partition_map {
     struct partition_map_header * the_map;
     int contains_driver;
     struct dpme *data;
-    int HFS_kind;
-};
-
-/* Identifies the HFS kind. */
-enum {
-    kHFS_not       =   0,	/* ' ' */
-    kHFS_std       =   1,	/* 'h' */
-    kHFS_embed     =   2,	/* 'e' */
-    kHFS_plus      =   3	/* '+' */
 };
 
 extern const char * kFreeType;

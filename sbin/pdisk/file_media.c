@@ -1,4 +1,4 @@
-/*	$OpenBSD: file_media.c,v 1.30 2016/01/17 23:18:19 krw Exp $	*/
+/*	$OpenBSD: file_media.c,v 1.31 2016/01/18 00:04:36 krw Exp $	*/
 
 /*
  * file_media.c -
@@ -45,20 +45,8 @@
 
 #include "file_media.h"
 
-static long file_inited = 0;
-
 void compute_block_size(int, char *);
 void file_init(void);
-
-void
-file_init(void)
-{
-    if (file_inited != 0) {
-	return;
-    }
-    file_inited = 1;
-}
-
 
 void
 compute_block_size(int fd, char *name)
@@ -85,10 +73,6 @@ open_file_as_media(char *file, int oflag)
     int			fd;
     off_t off;
     struct stat info;
-
-    if (file_inited == 0) {
-	    file_init();
-    }
 
     a = 0;
     fd = opendev(file, oflag, OPENDEV_PART, NULL);
