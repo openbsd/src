@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtable.c,v 1.37 2016/01/18 15:38:52 mpi Exp $ */
+/*	$OpenBSD: rtable.c,v 1.38 2016/01/18 18:27:12 mpi Exp $ */
 
 /*
  * Copyright (c) 2014-2015 Martin Pieuchot
@@ -75,7 +75,7 @@ void		   rtmap_dtor(void *, void *);
 struct srp_gc	   rtmap_gc = SRP_GC_INITIALIZER(rtmap_dtor, NULL);
 
 void		   rtable_init_backend(unsigned int);
-void		  *rtable_alloc(unsigned int, sa_family_t, unsigned int);
+void		  *rtable_alloc(unsigned int, unsigned int, unsigned int);
 void		  *rtable_get(unsigned int, sa_family_t);
 
 void
@@ -184,7 +184,7 @@ rtable_add(unsigned int id)
 	struct rtmap	*map;
 	struct dommp	*dmm;
 	sa_family_t	 af;
-	unsigned int	 off;
+	unsigned int	 off, alen;
 	int		 i;
 
 	KERNEL_ASSERT_LOCKED();
@@ -201,11 +201,12 @@ rtable_add(unsigned int id)
 
 		af = dp->dom_family;
 		off = dp->dom_rtoffset;
+		alen = dp->dom_maxplen;
 
 		if (id >= rtmap_limit)
 			rtmap_grow(id + 1, af);
 
-		tbl = rtable_alloc(id, af, off);
+		tbl = rtable_alloc(id, alen, off);
 		if (tbl == NULL)
 			return (ENOMEM);
 
@@ -298,7 +299,7 @@ rtable_init_backend(unsigned int keylen)
 }
 
 void *
-rtable_alloc(unsigned int rtableid, sa_family_t af, unsigned int off)
+rtable_alloc(unsigned int rtableid, unsigned int alen, unsigned int off)
 {
 	struct radix_node_head *rnh = NULL;
 
@@ -521,9 +522,9 @@ rtable_init_backend(unsigned int keylen)
 }
 
 void *
-rtable_alloc(unsigned int rtableid, sa_family_t af, unsigned int off)
+rtable_alloc(unsigned int rtableid, unsigned int alen, unsigned int off)
 {
-	return (art_alloc(rtableid, off));
+	return (art_alloc(rtableid, alen, off));
 }
 
 struct rtentry *

@@ -1,4 +1,4 @@
-/*	$OpenBSD: art.c,v 1.11 2015/12/04 14:15:27 mpi Exp $ */
+/*	$OpenBSD: art.c,v 1.12 2016/01/18 18:27:11 mpi Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -99,7 +99,7 @@ art_init(void)
  * Per routing table initialization API function.
  */
 struct art_root *
-art_alloc(unsigned int rtableid, int off)
+art_alloc(unsigned int rtableid, unsigned int alen, unsigned int off)
 {
 	struct art_root		*ar;
 	int			 i;
@@ -108,25 +108,22 @@ art_alloc(unsigned int rtableid, int off)
 	if (ar == NULL)
 		return (NULL);
 
-	/* XXX using the offset is a hack. */
-	switch (off) {
-	case 4: /* AF_INET && AF_MPLS */
+	switch (alen) {
+	case 32:
 		ar->ar_alen = 32;
 		ar->ar_nlvl = 7;
 		ar->ar_bits[0] = 8;
 		for (i = 1; i < ar->ar_nlvl; i++)
 			ar->ar_bits[i] = 4;
 		break;
-#ifdef INET6
-	case 8: /* AF_INET6 */
+	case 128:
 		ar->ar_alen = 128;
 		ar->ar_nlvl = 32;
 		for (i = 0; i < ar->ar_nlvl; i++)
 			ar->ar_bits[i] = 4;
 		break;
-#endif /* INET6 */
 	default:
-		printf("%s: unknown offset %d\n", __func__, off);
+		printf("%s: incorrect address length %u\n", __func__, alen);
 		art_free(ar);
 		return (NULL);
 	}
