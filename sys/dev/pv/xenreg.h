@@ -1,4 +1,4 @@
-/*	$OpenBSD: xenreg.h,v 1.7 2016/01/05 18:03:59 mikeb Exp $	*/
+/*	$OpenBSD: xenreg.h,v 1.8 2016/01/18 19:06:48 mikeb Exp $	*/
 
 /*
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -86,6 +86,10 @@
 #else
 # error "Not implemented"
 #endif
+
+/* Hypercall not implemented */
+#define ENOXENSYS		38
+
 
 #if defined(__i386__) || defined(__amd64__)
 struct arch_vcpu_info {
@@ -529,6 +533,20 @@ struct evtchn_unmask {
 	evtchn_port_t port;
 };
 
+/*
+ * Superceded by new event_channel_op() hypercall since 0x00030202.
+ */
+struct evtchn_op {
+	uint32_t cmd;		/* EVTCHNOP_* */
+	union {
+		struct evtchn_alloc_unbound alloc_unbound;
+		struct evtchn_close close;
+		struct evtchn_send send;
+		struct evtchn_status status;
+		struct evtchn_bind_vcpu bind_vcpu;
+		struct evtchn_unmask unmask;
+	} u;
+};
 
 /*
  * interface/features.h

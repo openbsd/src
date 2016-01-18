@@ -1,4 +1,4 @@
-/*	$OpenBSD: xen.c,v 1.28 2016/01/15 18:20:41 mikeb Exp $	*/
+/*	$OpenBSD: xen.c,v 1.29 2016/01/18 19:06:48 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Belopuhov
@@ -487,6 +487,22 @@ xen_init_interrupts(struct xen_softc *sc)
 	return (0);
 }
 
+static int
+xen_evtchn_hypercall(struct xen_softc *sc, int cmd, void *arg, size_t len)
+{
+	struct evtchn_op compat;
+	int error;
+
+	error = xen_hypercall(sc, XC_EVTCHN, 2, cmd, arg);
+	if (error == -ENOXENSYS) {
+		memset(&compat, 0, sizeof(compat));
+		compat.cmd = cmd;
+		memcpy(&compat.u, arg, len);
+		error = xen_hypercall(sc, XC_OEVTCHN, 1, &compat);
+	}
+	return (error);
+}
+
 static inline struct xen_intsrc *
 xen_lookup_intsrc(struct xen_softc *sc, evtchn_port_t port)
 {
@@ -554,7 +570,7 @@ xen_intr_signal(xen_intr_handle_t xih)
 
 	if ((xi = xen_lookup_intsrc(sc, (evtchn_port_t)xih)) != NULL) {
 		es.port = xi->xi_port;
-		xen_hypercall(sc, XC_EVTCHN, 2, EVTCHNOP_send, &es);
+		xen_evtchn_hypercall(sc, EVTCHNOP_send, &es, sizeof(es));
 	}
 }
 
@@ -590,8 +606,8 @@ xen_intr_establish(evtchn_port_t port, xen_intr_handle_t *xih,
 		/* We're being asked to allocate a new event port */
 		memset(&eau, 0, sizeof(eau));
 		eau.dom = DOMID_SELF;
-		if (xen_hypercall(sc, XC_EVTCHN, 2,
-		    EVTCHNOP_alloc_unbound, &eau) != 0) {
+		if (xen_evtchn_hypercall(sc, EVTCHNOP_alloc_unbound, &eau,
+		    sizeof(&eau)) != 0) {
 			DPRINTF("%s: failed to allocate new event port\n",
 			    sc->sc_dev.dv_xname);
 			free(xi, M_DEVBUF, sizeof(*xi));
@@ -612,7 +628,7 @@ xen_intr_establish(evtchn_port_t port, xen_intr_handle_t *xih,
 	memset(&ebv, 0, sizeof(ebv));
 	ebv.port = xi->xi_port;
 	ebv.vcpu = 0;
-	if (xen_hypercall(sc, XC_EVTCHN, 2, EVTCHNOP_bind_vcpu, &ebv)) {
+	if (xen_evtchn_hypercall(sc, EVTCHNOP_bind_vcpu, &ebv, sizeof(&ebv))) {
 		printf("%s: failed to bind interrupt on port %u to vcpu%d\n",
 		    sc->sc_dev.dv_xname, ebv.port, ebv.vcpu);
 	}
@@ -629,7 +645,7 @@ xen_intr_establish(evtchn_port_t port, xen_intr_handle_t *xih,
 	memset(&es, 0, sizeof(es));
 	es.dom = DOMID_SELF;
 	es.port = xi->xi_port;
-	if (xen_hypercall(sc, XC_EVTCHN, 2, EVTCHNOP_status, &es)) {
+	if (xen_evtchn_hypercall(sc, EVTCHNOP_status, &es, sizeof(es))) {
 		printf("%s: failed to obtain status for port %d\n",
 		    sc->sc_dev.dv_xname, es.port);
 	}
@@ -672,8 +688,7 @@ xen_intr_disestablish(xen_intr_handle_t xih)
 
 	if (!xi->xi_noclose) {
 		ec.port = xi->xi_port;
-		if (xen_hypercall(sc, XC_EVTCHN, 2, EVTCHNOP_close,
-		    &ec)) {
+		if (xen_evtchn_hypercall(sc, EVTCHNOP_close, &ec, sizeof(ec))) {
 			DPRINTF("%s: failed to close event port %u\n",
 			    sc->sc_dev.dv_xname, xi->xi_port);
 		}
@@ -693,10 +708,13 @@ xen_intr_enable(void)
 	SLIST_FOREACH(xi, &sc->sc_intrs, xi_entry) {
 		if (!xi->xi_masked) {
 			eu.port = xi->xi_port;
-			if (xen_hypercall(sc, XC_EVTCHN, 2,
-			    EVTCHNOP_unmask, &eu) ||
-			    isset(sc->sc_ipg->evtchn_mask, xi->xi_port))
+			if (xen_evtchn_hypercall(sc, EVTCHNOP_unmask, &eu,
+			    sizeof(eu)))
 				printf("%s: unmasking port %u failed\n",
+				    sc->sc_dev.dv_xname, xi->xi_port);
+			membar_sync();
+			if (isset(sc->sc_ipg->evtchn_mask, xi->xi_port))
+				printf("%s: port %u is still masked\n",
 				    sc->sc_dev.dv_xname, xi->xi_port);
 		}
 	}
@@ -729,7 +747,8 @@ xen_intr_unmask(xen_intr_handle_t xih)
 		if (!isset(sc->sc_ipg->evtchn_mask, xi->xi_port))
 			return (0);
 		eu.port = xi->xi_port;
-		return (xen_hypercall(sc, XC_EVTCHN, 2, EVTCHNOP_unmask, &eu));
+		return (xen_evtchn_hypercall(sc, EVTCHNOP_unmask, &eu,
+		    sizeof(eu)));
 	}
 	return (0);
 }

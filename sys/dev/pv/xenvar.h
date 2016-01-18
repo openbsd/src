@@ -1,4 +1,4 @@
-/*	$OpenBSD: xenvar.h,v 1.21 2016/01/15 18:20:41 mikeb Exp $	*/
+/*	$OpenBSD: xenvar.h,v 1.22 2016/01/18 19:06:48 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Belopuhov
@@ -103,6 +103,7 @@ struct xen_attach_args {
  *  Hypercalls
  */
 #define XC_MEMORY		12
+#define XC_OEVTCHN		16
 #define XC_VERSION		17
 #define XC_GNTTAB		20
 #define XC_EVTCHN		32
