@@ -1,4 +1,4 @@
-/*	$OpenBSD: cscope.c,v 1.15 2016/01/19 11:39:06 sunil Exp $	*/
+/*	$OpenBSD: cscope.c,v 1.16 2016/01/19 14:51:00 sunil Exp $	*/
 
 /*
  * This file is in the public domain.
@@ -614,7 +614,7 @@ csexists(const char *cmd)
 			continue;
 
 		dlen = strlen(dir);
-		while (dir[dlen-1] == '/')
+		while (dlen > 0 && dir[dlen-1] == '/')
 			dir[--dlen] = '\0';     /* strip trailing '/' */
 
 		len = snprintf(fname, sizeof(fname), "%s/%s", dir, cmd);
