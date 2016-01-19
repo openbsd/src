@@ -10,7 +10,6 @@ struct mlist;
 struct loption;
 
 void *ecalloc(int, unsigned int);
-/*PRINTFLIKE1*/
 char *easprintf(const char *, ...);
 char *estrdup(const char *);
 char *skipsp(char *);
