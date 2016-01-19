@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.147 2016/01/18 17:19:55 deraadt Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.148 2016/01/19 07:31:48 ratchov Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -1150,8 +1150,11 @@ pledge_ioctl(struct proc *p, long com, struct file *fp)
 	}
 
 	/* fp != NULL was already checked */
-	if (fp->f_type == DTYPE_VNODE)
+	if (fp->f_type == DTYPE_VNODE) {
 		vp = fp->f_data;
+		if (vp->v_type == VBAD)
+			return (ENOTTY);
+	}
 
 	/*
 	 * Further sets of ioctl become available, but are checked a
