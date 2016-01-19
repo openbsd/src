@@ -1,7 +1,7 @@
-/* $OpenBSD: cmd-wait-for.c,v 1.12 2015/12/13 21:53:57 nicm Exp $ */
+/* $OpenBSD: cmd-wait-for.c,v 1.13 2016/01/19 15:59:12 nicm Exp $ */
 
 /*
- * Copyright (c) 2013 Nicholas Marriott <nicm@users.sourceforge.net>
+ * Copyright (c) 2013 Nicholas Marriott <nicholas.marriott@gmail.com>
  * Copyright (c) 2013 Thiago de Arruda <tpadilha84@gmail.com>
  *
  * Permission to use, copy, modify, and distribute this software for any

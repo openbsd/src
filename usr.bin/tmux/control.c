@@ -1,7 +1,7 @@
-/* $OpenBSD: control.c,v 1.16 2015/11/18 14:27:44 nicm Exp $ */
+/* $OpenBSD: control.c,v 1.17 2016/01/19 15:59:12 nicm Exp $ */
 
 /*
- * Copyright (c) 2012 Nicholas Marriott <nicm@users.sourceforge.net>
+ * Copyright (c) 2012 Nicholas Marriott <nicholas.marriott@gmail.com>
  * Copyright (c) 2012 George Nachman <tmux@georgester.com>
  *
  * Permission to use, copy, modify, and distribute this software for any

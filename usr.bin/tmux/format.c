@@ -1,7 +1,7 @@
-/* $OpenBSD: format.c,v 1.103 2015/12/12 18:32:24 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.104 2016/01/19 15:59:12 nicm Exp $ */
 
 /*
- * Copyright (c) 2011 Nicholas Marriott <nicm@users.sourceforge.net>
+ * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above

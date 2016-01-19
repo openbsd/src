@@ -1,7 +1,7 @@
-/* $OpenBSD: cmd-respawn-pane.c,v 1.19 2015/12/14 00:31:54 nicm Exp $ */
+/* $OpenBSD: cmd-respawn-pane.c,v 1.20 2016/01/19 15:59:12 nicm Exp $ */
 
 /*
- * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
+ * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
  * Copyright (c) 2011 Marcel P. Partap <mpartap@gmx.net>
  *
  * Permission to use, copy, modify, and distribute this software for any

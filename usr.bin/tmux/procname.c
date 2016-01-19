@@ -1,7 +1,7 @@
-/* $OpenBSD: procname.c,v 1.14 2015/01/16 06:40:13 deraadt Exp $ */
+/* $OpenBSD: procname.c,v 1.15 2016/01/19 15:59:12 nicm Exp $ */
 
 /*
- * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
+ * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above

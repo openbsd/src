@@ -1,7 +1,7 @@
-/* $OpenBSD: style.c,v 1.8 2015/09/14 11:34:50 nicm Exp $ */
+/* $OpenBSD: style.c,v 1.9 2016/01/19 15:59:12 nicm Exp $ */
 
 /*
- * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
+ * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
  * Copyright (c) 2014 Tiago Cunha <tcunha@users.sourceforge.net>
  *
  * Permission to use, copy, modify, and distribute this software for any

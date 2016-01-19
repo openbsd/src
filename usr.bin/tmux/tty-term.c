@@ -1,7 +1,7 @@
-/* $OpenBSD: tty-term.c,v 1.43 2015/12/11 16:37:21 nicm Exp $ */
+/* $OpenBSD: tty-term.c,v 1.44 2016/01/19 15:59:12 nicm Exp $ */
 
 /*
- * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
+ * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
