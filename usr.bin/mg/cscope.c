@@ -1,4 +1,4 @@
-/*	$OpenBSD: cscope.c,v 1.13 2016/01/19 11:15:39 sunil Exp $	*/
+/*	$OpenBSD: cscope.c,v 1.14 2016/01/19 11:21:38 sunil Exp $	*/
 
 /*
  * This file is in the public domain.
@@ -592,42 +592,42 @@ csflush(void)
 int
 csexists(const char *cmd)
 {
-       char fname[NFILEN], *dir, *path, *pathc, *tmp;
-       int  len, dlen;
+	char fname[NFILEN], *dir, *path, *pathc, *tmp;
+	int  len, dlen;
 
-       /* Special case if prog contains '/' */
-       if (strchr(cmd, '/')) {
-               if (access(cmd, F_OK) == -1)
-                       return (FALSE);
-               else
-                       return (TRUE);
-       }
-       if ((tmp = getenv("PATH")) == NULL)
-               return (FALSE);
-       if ((pathc = path = strndup(tmp, NFILEN)) == NULL) {
-               dobeep();
-               ewprintf("out of memory");
-               return (FALSE);
-       }
-       while ((dir = strsep(&path, ":")) != NULL) {
-               if (*dir == '\0')
+	/* Special case if prog contains '/' */
+	if (strchr(cmd, '/')) {
+		if (access(cmd, F_OK) == -1)
+			return (FALSE);
+		else
+			return (TRUE);
+	}
+	if ((tmp = getenv("PATH")) == NULL)
+		return (FALSE);
+	if ((pathc = path = strndup(tmp, NFILEN)) == NULL) {
+		dobeep();
+		ewprintf("out of memory");
+		return (FALSE);
+	}
+	while ((dir = strsep(&path, ":")) != NULL) {
+		if (*dir == '\0')
 			continue;
 
-               dlen = strlen(dir);
-               while (dir[dlen-1] == '/')
-                       dir[--dlen] = '\0';     /* strip trailing '/' */
+		dlen = strlen(dir);
+		while (dir[dlen-1] == '/')
+			dir[--dlen] = '\0';     /* strip trailing '/' */
 
-               len = snprintf(fname, sizeof(fname), "%s/%s", dir, cmd);
-               if (len == -1 || len >= sizeof(fname)) {
-                       dobeep();
-                       ewprintf("path too long");
-                       goto cleanup;
-               }
-               if(access(fname, F_OK) == 0) {
-		       free(pathc);
-		       return (TRUE);
-	       }
-       }
+		len = snprintf(fname, sizeof(fname), "%s/%s", dir, cmd);
+		if (len == -1 || len >= sizeof(fname)) {
+			dobeep();
+			ewprintf("path too long");
+			goto cleanup;
+		}
+		if(access(fname, F_OK) == 0) {
+			free(pathc);
+			return (TRUE);
+		}
+	}
 cleanup:
 	free(pathc);
 	return (FALSE);
