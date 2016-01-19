@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_vnops.c,v 1.73 2015/12/11 11:25:55 tedu Exp $	*/
+/*	$OpenBSD: cd9660_vnops.c,v 1.74 2016/01/19 19:11:21 stefan Exp $	*/
 /*	$NetBSD: cd9660_vnops.c,v 1.42 1997/10/16 23:56:57 christos Exp $	*/
 
 /*-
@@ -227,7 +227,8 @@ cd9660_read(void *v)
 	daddr_t lbn, rablock;
 	off_t diff;
 	int error = 0;
-	long size, n, on;
+	long size, on;
+	size_t n;
 
 	if (uio->uio_resid == 0)
 		return (0);
@@ -240,8 +241,7 @@ cd9660_read(void *v)
 
 		lbn = lblkno(imp, uio->uio_offset);
 		on = blkoff(imp, uio->uio_offset);
-		n = min((u_int)(imp->logical_block_size - on),
-			uio->uio_resid);
+		n = ulmin(imp->logical_block_size - on, uio->uio_resid);
 		diff = (off_t)ip->i_size - uio->uio_offset;
 		if (diff <= 0)
 			return (0);
@@ -270,13 +270,13 @@ cd9660_read(void *v)
 		} else
 			error = bread(vp, lbn, size, &bp);
 		ci->ci_lastr = lbn;
-		n = min(n, size - bp->b_resid);
+		n = ulmin(n, size - bp->b_resid);
 		if (error) {
 			brelse(bp);
 			return (error);
 		}
 
-		error = uiomovei(bp->b_data + on, (int)n, uio);
+		error = uiomove(bp->b_data + on, n, uio);
 
 		brelse(bp);
 	} while (error == 0 && uio->uio_resid > 0 && n != 0);
@@ -344,7 +344,7 @@ iso_uiodir(idp,dp,off)
 	}
 
 	dp->d_off = off;
-	if ((error = uiomovei((caddr_t)dp, dp->d_reclen, idp->uio)) != 0)
+	if ((error = uiomove(dp, dp->d_reclen, idp->uio)) != 0)
 		return (error);
 	idp->uio_off = off;
 	return (0);
@@ -657,7 +657,7 @@ cd9660_readlink(void *v)
 	 */
 	if (uio->uio_segflg != UIO_SYSSPACE ||
 	    uio->uio_iov->iov_len < MAXPATHLEN) {
-		error = uiomovei(symname, symlen, uio);
+		error = uiomove(symname, symlen, uio);
 		pool_put(&namei_pool, symname);
 		return (error);
 	}
