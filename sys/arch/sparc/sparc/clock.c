@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.33 2015/09/19 21:07:04 semarie Exp $	*/
+/*	$OpenBSD: clock.c,v 1.34 2016/01/19 17:57:07 ajacoutot Exp $	*/
 /*	$NetBSD: clock.c,v 1.52 1997/05/24 20:16:05 pk Exp $ */
 
 /*
@@ -800,7 +800,7 @@ forward:
 	 * XXX Clock interrupts are enabled (and therefore serviceable)
 	 * XXX before initclocks() has completed.
 	 */
-	if (cold == 0)
+	if (profhz != 0)
 		hardclock((struct clockframe *)cap);
 
 	return (1);
