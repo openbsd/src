@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdisk.c,v 1.52 2016/01/19 16:53:04 krw Exp $	*/
+/*	$OpenBSD: pdisk.c,v 1.53 2016/01/19 23:33:18 krw Exp $	*/
 
 /*
  * pdisk - an editor for Apple format partition tables
@@ -542,10 +542,7 @@ do_expert(struct partition_map_header * map, char *name)
 			printf("Commands are:\n");
 			printf("  h    print help\n");
 			printf("  p    print the partition table\n");
-			if (dflag) {
-				printf("  P    (show data structures  - "
-				    "debugging)\n");
-			}
+			printf("  P    (show data structures  - debugging)\n");
 			printf("  f    full display of nth entry\n");
 			printf("  v    validate map\n");
 			printf("  q    return to main edit menu\n");
@@ -566,11 +563,8 @@ do_expert(struct partition_map_header * map, char *name)
 			goto finis;
 			break;
 		case 'P':
-			if (dflag) {
-				show_data_structures(map);
-				break;
-			}
-			/* fall through */
+			show_data_structures(map);
+			break;
 		case 'p':
 			dump_partition_map(map, 1);
 			break;
