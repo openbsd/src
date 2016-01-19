@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdisk.c,v 1.50 2016/01/19 12:25:28 krw Exp $	*/
+/*	$OpenBSD: pdisk.c,v 1.51 2016/01/19 14:50:40 krw Exp $	*/
 
 /*
  * pdisk - an editor for Apple format partition tables
@@ -72,7 +72,8 @@ __dead static void usage(void);
 int
 main(int argc, char **argv)
 {
-	int c, name_index;
+	struct partition_map_header *map;
+	int c, junk;
 
 	if (sizeof(struct dpme) != DEV_BSIZE) {
 		errx(1, "Size of partition map entry (%zu) is not equal "
@@ -99,23 +100,21 @@ main(int argc, char **argv)
 		}
 	}
 
-	name_index = optind;
+	argc -= optind;
+	argv += optind;
+
+	if (argc != 1)
+		usage();
 
 	if (lflag) {
-		if (name_index < argc) {
-			while (name_index < argc) {
-				dump(argv[name_index++]);
-			}
-		} else {
-			usage();
+		map = open_partition_map(*argv, &junk);
+		if (map) {
+			dump_partition_map(map, 1);
+			close_partition_map(map);
 		}
-	} else if (name_index < argc) {
-		while (name_index < argc) {
-			edit(argv[name_index++]);
-		}
-	} else {
-		usage();
-	}
+	} else
+		edit(*argv);
+
 	return 0;
 }
 
