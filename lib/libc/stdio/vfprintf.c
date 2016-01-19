@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfprintf.c,v 1.71 2016/01/04 15:47:47 schwarze Exp $	*/
+/*	$OpenBSD: vfprintf.c,v 1.72 2016/01/19 18:22:53 mmcc Exp $	*/
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -1386,10 +1386,6 @@ done:
 			return (-1);
 	}
 
-#if 0
-	/* XXX is this required? */
-	(*argtable)[0].intarg = 0;
-#endif
 	for (n = 1; n <= tablemax; n++) {
 		switch (typetable[n]) {
 		case T_UNUSED:
