@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xnf.c,v 1.6 2016/01/15 14:27:08 mikeb Exp $	*/
+/*	$OpenBSD: if_xnf.c,v 1.7 2016/01/19 17:13:22 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015, 2016 Mike Belopuhov
@@ -491,7 +491,7 @@ xnf_encap(struct xnf_softc *sc, struct mbuf *m, uint32_t *prod)
 	bus_dmamap_t dmap;
 	int error, i, n = 0;
 
-	if (((txr->txr_cons - *prod - 1) & (XNF_TX_DESC - 1)) < XNF_TX_FRAG) {
+	if ((XNF_TX_DESC - (*prod - sc->sc_tx_cons)) < XNF_TX_FRAG) {
 		error = ENOENT;
 		goto errout;
 	}
@@ -512,10 +512,11 @@ xnf_encap(struct xnf_softc *sc, struct mbuf *m, uint32_t *prod)
 	for (n = 0; n < dmap->dm_nsegs; n++, (*prod)++) {
 		i = *prod & (XNF_TX_DESC - 1);
 		if (sc->sc_tx_buf[i])
-			panic("%s: save vs spell: %d\n", ifp->if_xname, i);
+			panic("%s: cons %u(%u) prod %u next %u seg %d/%d\n",
+			    ifp->if_xname, txr->txr_cons, sc->sc_tx_cons,
+			    txr->txr_prod, *prod, n, dmap->dm_nsegs - 1);
 		txd = &txr->txr_desc[i];
 		if (n == 0) {
-			sc->sc_tx_buf[i] = m;
 			if (0 && m->m_pkthdr.csum_flags & M_IPV4_CSUM_OUT)
 				txd->txd_req.txq_flags = XNF_TXF_CSUM |
 				    XNF_TXF_VALID;
@@ -526,6 +527,8 @@ xnf_encap(struct xnf_softc *sc, struct mbuf *m, uint32_t *prod)
 			txd->txd_req.txq_flags |= XNF_TXF_CHUNK;
 		txd->txd_req.txq_ref = dmap->dm_segs[n].ds_addr;
 		txd->txd_req.txq_offset = dmap->dm_segs[n].ds_offset;
+		sc->sc_tx_buf[i] = m;
+		m = m->m_next;
 	}
 
 	ifp->if_opackets++;
@@ -585,7 +588,7 @@ xnf_txeof(struct xnf_softc *sc)
 				bus_dmamap_unload(sc->sc_dmat, dmap);
 				m = sc->sc_tx_buf[i];
 				sc->sc_tx_buf[i] = NULL;
-				m_freem(m);
+				m_free(m);
 			}
 			pkts++;
 		}
@@ -936,7 +939,7 @@ xnf_tx_ring_destroy(struct xnf_softc *sc)
 		bus_dmamap_unload(sc->sc_dmat, sc->sc_tx_dmap[i]);
 		if (sc->sc_tx_buf[i] == NULL)
 			continue;
-		m_freem(sc->sc_tx_buf[i]);
+		m_free(sc->sc_tx_buf[i]);
 		sc->sc_tx_buf[i] = NULL;
 	}
 	for (i = 0; i < XNF_TX_DESC; i++) {
