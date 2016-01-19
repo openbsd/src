@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xnf.c,v 1.7 2016/01/19 17:13:22 mikeb Exp $	*/
+/*	$OpenBSD: if_xnf.c,v 1.8 2016/01/19 17:16:19 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015, 2016 Mike Belopuhov
@@ -245,6 +245,7 @@ xnf_attach(struct device *parent, struct device *self, void *aux)
 		printf(": failed to establish an interrupt\n");
 		return;
 	}
+	xen_intr_mask(sc->sc_xih);
 
 	printf(": event channel %u, address %s\n", sc->sc_xih,
 	    ether_sprintf(sc->sc_ac.ac_enaddr));
