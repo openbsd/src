@@ -1,4 +1,4 @@
-/*	$OpenBSD: cscope.c,v 1.11 2015/09/29 02:07:49 guenther Exp $	*/
+/*	$OpenBSD: cscope.c,v 1.12 2016/01/19 11:13:02 sunil Exp $	*/
 
 /*
  * This file is in the public domain.
@@ -612,7 +612,7 @@ csexists(const char *cmd)
        cmdlen = strlen(cmd);
        while ((dir = strsep(&path, ":")) != NULL) {
                if (*dir == '\0')
-                       *dir = '.';
+			continue;
 
                dlen = strlen(dir);
                while (dir[dlen-1] == '/')
