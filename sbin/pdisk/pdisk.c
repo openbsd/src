@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdisk.c,v 1.53 2016/01/19 23:33:18 krw Exp $	*/
+/*	$OpenBSD: pdisk.c,v 1.54 2016/01/19 23:44:47 krw Exp $	*/
 
 /*
  * pdisk - an editor for Apple format partition tables
@@ -141,7 +141,7 @@ void
 edit(char *name)
 {
 	struct partition_map_header *map;
-	int command, order, get_type, valid_file;
+	int command, valid_file;
 
 	map = open_partition_map(name, &valid_file);
 	if (!valid_file) {
@@ -151,8 +151,6 @@ edit(char *name)
 
 	while (get_command("Command (? for help): ", first_get, &command)) {
 		first_get = 0;
-		order = 1;
-		get_type = 0;
 
 		switch (command) {
 		case '?':
@@ -182,10 +180,10 @@ edit(char *name)
 			}
 			break;
 		case 'P':
-			order = 0;
-			/* fall through */
+			dump_partition_map(map, 0);
+			break;
 		case 'p':
-			dump_partition_map(map, order);
+			dump_partition_map(map, 1);
 			break;
 		case 'Q':
 		case 'q':
@@ -203,10 +201,10 @@ edit(char *name)
 			map = init_partition_map(name, map);
 			break;
 		case 'C':
-			get_type = 1;
-			/* fall through */
+			do_create_partition(map, 1);
+			break;
 		case 'c':
-			do_create_partition(map, get_type);
+			do_create_partition(map, 0);
 			break;
 		case 'N':
 		case 'n':
