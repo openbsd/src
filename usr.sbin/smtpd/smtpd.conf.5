@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.151 2016/01/18 22:08:28 jung Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.152 2016/01/19 22:41:51 jung Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -17,7 +17,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: January 18 2016 $
+.Dd $Mdocdate: January 19 2016 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -278,7 +278,7 @@ You can also accept mail just to have it forwarded elsewhere:
 .Bl -tag -width Ds
 .It Ic forward-only
 Mail is accepted for local recipients ONLY if it is redirected to an
-external address via an alias or a ~/.forward.
+external address via an alias or a ~/.forward file.
 .Pp
 Example:
 .Bd -literal -offset indent
@@ -651,7 +651,7 @@ to MXs for this domain.
 Suspend the scheduling of envelopes for deliver/relay until the number
 of inflight envelopes falls below
 .Ar num .
-Changing the default value might degrade performances.
+Changing the default value might degrade performance.
 .It Xo
 .Bk -words
 .Ic listen on Ar interface
@@ -689,7 +689,7 @@ and
 .Pp
 A
 .Ic filter
-may be specified, to use a filter or filter chain with the given
+may be specified to use a filter or filter chain with the given
 .Ar name
 on SMTP transactions.
 .Pp
@@ -836,7 +836,7 @@ with
 The parameters are used for ephemeral key exchange.
 If not specified,
 .Xr smtpd 8
-will use safely generated builtin parameters.
+will use safely generated built-in parameters.
 .Pp
 Creation of Diffie-Hellman parameters is documented in
 .Xr openssl 1 .
