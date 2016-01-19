@@ -1,4 +1,4 @@
-/*	$OpenBSD: cscope.c,v 1.12 2016/01/19 11:13:02 sunil Exp $	*/
+/*	$OpenBSD: cscope.c,v 1.13 2016/01/19 11:15:39 sunil Exp $	*/
 
 /*
  * This file is in the public domain.
@@ -593,7 +593,7 @@ int
 csexists(const char *cmd)
 {
        char fname[NFILEN], *dir, *path, *pathc, *tmp;
-       int  cmdlen, dlen;
+       int  len, dlen;
 
        /* Special case if prog contains '/' */
        if (strchr(cmd, '/')) {
@@ -609,7 +609,6 @@ csexists(const char *cmd)
                ewprintf("out of memory");
                return (FALSE);
        }
-       cmdlen = strlen(cmd);
        while ((dir = strsep(&path, ":")) != NULL) {
                if (*dir == '\0')
 			continue;
@@ -618,12 +617,12 @@ csexists(const char *cmd)
                while (dir[dlen-1] == '/')
                        dir[--dlen] = '\0';     /* strip trailing '/' */
 
-               if (dlen + 1 + cmdlen >= sizeof(fname))  {
+               len = snprintf(fname, sizeof(fname), "%s/%s", dir, cmd);
+               if (len == -1 || len >= sizeof(fname)) {
                        dobeep();
                        ewprintf("path too long");
                        goto cleanup;
                }
-               snprintf(fname, sizeof(fname), "%s/%s", dir, cmd);
                if(access(fname, F_OK) == 0) {
 		       free(pathc);
 		       return (TRUE);
