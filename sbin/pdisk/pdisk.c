@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdisk.c,v 1.49 2016/01/18 21:50:53 krw Exp $	*/
+/*	$OpenBSD: pdisk.c,v 1.50 2016/01/19 12:25:28 krw Exp $	*/
 
 /*
  * pdisk - an editor for Apple format partition tables
@@ -54,7 +54,6 @@ static int	first_get = 1;
 void		do_change_map_size(struct partition_map_header *);
 void		do_create_partition(struct partition_map_header *, int);
 void		do_delete_partition(struct partition_map_header *);
-void		do_display_block(struct partition_map_header *, char *);
 void		do_display_entry(struct partition_map_header *);
 int		do_expert (struct partition_map_header *, char *);
 void		do_rename_partition(struct partition_map_header *);
@@ -544,7 +543,6 @@ do_expert(struct partition_map_header * map, char *name)
 		case 'h':
 			printf("Commands are:\n");
 			printf("  h    print help\n");
-			printf("  d    dump block n\n");
 			printf("  p    print the partition table\n");
 			if (dflag) {
 				printf("  P    (show data structures  - "
@@ -577,10 +575,6 @@ do_expert(struct partition_map_header * map, char *name)
 			/* fall through */
 		case 'p':
 			dump_partition_map(map, 1);
-			break;
-		case 'D':
-		case 'd':
-			do_display_block(map, name);
 			break;
 		case 'F':
 		case 'f':
@@ -616,72 +610,6 @@ do_change_map_size(struct partition_map_header * map)
 		return;
 	}
 	resize_map(size, map);
-}
-
-
-void
-do_display_block(struct partition_map_header * map, char *alt_name)
-{
-	char *name;
-	long number;
-	int fd, g;
-	static unsigned char *display_block;
-	static long next_number = -1;
-	static int display_g;
-
-	if (map != NULL) {
-		name = 0;
-		fd = map->fd;
-		g = map->logical_block;
-	} else {
-		if (alt_name == 0) {
-			if (get_string_argument("Name of device: ", &name, 1)
-			    == 0) {
-				bad_input("Bad name");
-				return;
-			}
-		} else {
-			if ((name = strdup(alt_name)) == NULL) {
-				warn("strdup failed");
-				return;
-			}
-		}
-		fd = open_file_as_media(name, O_RDONLY);
-		if (fd == -1) {
-			warn("can't open file '%s'", name);
-			free(name);
-			return;
-		}
-		g = DEV_BSIZE;
-	}
-	if (get_number_argument("Block number: ", &number, next_number) == 0) {
-		bad_input("Bad block number");
-		goto xit;
-	}
-	if (display_block == NULL || display_g < g) {
-		if (display_block != NULL) {
-			free(display_block);
-			display_g = 0;
-		}
-		display_block = malloc(g);
-		if (display_block == NULL) {
-			warn("can't allocate memory for display block buffer");
-			goto xit;
-		}
-		display_g = g;
-	}
-	if (read_file_media(fd, ((long long) number) * g, g,
-		    (char *)display_block) != 0) {
-		printf("block %ld -", number);
-		dump_block((unsigned char *)display_block, g);
-		next_number = number + 1;
-	}
-xit:
-	if (name) {
-		close(fd);
-		free(name);
-	}
-	return;
 }
 
 
