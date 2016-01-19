@@ -1,4 +1,4 @@
-/*	$OpenBSD: spec_vnops.c,v 1.84 2015/12/05 10:11:53 tedu Exp $	*/
+/*	$OpenBSD: spec_vnops.c,v 1.85 2016/01/19 19:13:38 stefan Exp $	*/
 /*	$NetBSD: spec_vnops.c,v 1.29 1996/04/22 01:42:38 christos Exp $	*/
 
 /*
@@ -202,7 +202,8 @@ spec_read(void *v)
 	daddr_t bn, nextbn, bscale;
 	int bsize;
 	struct partinfo dpart;
-	int n, on, majordev;
+	size_t n;
+	int on, majordev;
 	int (*ioctl)(dev_t, u_long, caddr_t, int, struct proc *);
 	int error = 0;
 
@@ -243,7 +244,7 @@ spec_read(void *v)
 		do {
 			bn = btodb(uio->uio_offset) & ~(bscale - 1);
 			on = uio->uio_offset % bsize;
-			n = min((bsize - on), uio->uio_resid);
+			n = ulmin((bsize - on), uio->uio_resid);
 			if (vp->v_lastr + bscale == bn) {
 				nextbn = bn + bscale;
 				error = breadn(vp, bn, bsize, &nextbn, &bsize,
@@ -251,12 +252,12 @@ spec_read(void *v)
 			} else
 				error = bread(vp, bn, bsize, &bp);
 			vp->v_lastr = bn;
-			n = min(n, bsize - bp->b_resid);
+			n = ulmin(n, bsize - bp->b_resid);
 			if (error) {
 				brelse(bp);
 				return (error);
 			}
-			error = uiomovei((char *)bp->b_data + on, n, uio);
+			error = uiomove((char *)bp->b_data + on, n, uio);
 			brelse(bp);
 		} while (error == 0 && uio->uio_resid > 0 && n != 0);
 		return (error);
@@ -290,7 +291,8 @@ spec_write(void *v)
 	daddr_t bn, bscale;
 	int bsize;
 	struct partinfo dpart;
-	int n, on, majordev;
+	size_t n;
+	int on, majordev;
 	int (*ioctl)(dev_t, u_long, caddr_t, int, struct proc *);
 	int error = 0;
 
@@ -331,14 +333,14 @@ spec_write(void *v)
 		do {
 			bn = btodb(uio->uio_offset) & ~(bscale - 1);
 			on = uio->uio_offset % bsize;
-			n = min((bsize - on), uio->uio_resid);
+			n = ulmin((bsize - on), uio->uio_resid);
 			error = bread(vp, bn, bsize, &bp);
-			n = min(n, bsize - bp->b_resid);
+			n = ulmin(n, bsize - bp->b_resid);
 			if (error) {
 				brelse(bp);
 				return (error);
 			}
-			error = uiomovei((char *)bp->b_data + on, n, uio);
+			error = uiomove((char *)bp->b_data + on, n, uio);
 			if (n + on == bsize)
 				bawrite(bp);
 			else
