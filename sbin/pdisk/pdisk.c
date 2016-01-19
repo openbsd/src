@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdisk.c,v 1.51 2016/01/19 14:50:40 krw Exp $	*/
+/*	$OpenBSD: pdisk.c,v 1.52 2016/01/19 16:53:04 krw Exp $	*/
 
 /*
  * pdisk - an editor for Apple format partition tables
@@ -62,7 +62,6 @@ void		do_reorder(struct partition_map_header *);
 void		do_write_partition_map(struct partition_map_header *);
 void		edit(char *);
 int		get_base_argument(long *, struct partition_map_header *);
-int		get_command_line(int *, char ***);
 int		get_size_argument(long *, struct partition_map_header *);
 void		print_edit_notes(void);
 void		print_expert_notes(void);
