@@ -1,4 +1,4 @@
-/*	$OpenBSD: morse.c,v 1.20 2016/01/18 11:27:19 sthen Exp $	*/
+/*	$OpenBSD: morse.c,v 1.21 2016/01/19 23:21:26 sthen Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -82,6 +82,7 @@ struct punc {
 	char c;
 	char *morse;
 } other[] = {
+	{ 'e', "..-.." },	/* accented e - only decodes */
 	{ ',', "--..--" },
 	{ '.', ".-.-.-" },
 	{ '?', "..--.." },
@@ -89,15 +90,32 @@ struct punc {
 	{ '-', "-....-" },
 	{ ':', "---..." },
 	{ ';', "-.-.-." },
-	{ '(', "-.--." },
+	{ '(', "-.--." },	/* KN */
 	{ ')', "-.--.-" },
 	{ '"', ".-..-." },
 	{ '`', ".-..-." },
 	{ '\'', ".----." },
-	{ '+', ".-.-." },	/* AR */
-	{ '=', "-...-" },	/* BT */
-	{ '@', "...-.-" },	/* SK */
+	{ '+', ".-.-." },	/* AR \n\n\n */
+	{ '=', "-...-" },	/* BT \n\n */
+	{ '@', ".--.-." },
+	{ '\n', ".-.-" },	/* AA (will only decode) */
 	{ '\0', NULL }
+};
+
+struct prosign {
+	char *c;
+	char *morse;
+} ps[] = {
+	{ "<AS>", ".-..." },	/* wait */
+	{ "<CL>", "-.-..-.." },
+	{ "<CT>", "-.-.-" },	/* start */
+	{ "<EE5>", "......" },	/* error */
+	{ "<EE5>", "......." },
+	{ "<EE5>", "........" },
+	{ "<SK>", "...-.-" },
+	{ "<SN>", "...-." },	/* understood */
+	{ "<SOS>", "...---..." },
+	{ NULL, NULL }
 };
 
 void	morse(int);
@@ -229,6 +247,15 @@ decode(char *s)
 	while (other[i].c) {
 		if (strcmp(other[i].morse, s) == 0) {
 			putchar(other[i].c);
+			return;
+		}
+		i++;
+	}
+	i = 0;
+	while (ps[i].c) {
+		/* put whitespace around prosigns */
+		if (strcmp(ps[i].morse, s) == 0) {
+			printf(" %s ", ps[i].c);
 			return;
 		}
 		i++;
