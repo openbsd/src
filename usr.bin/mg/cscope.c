@@ -1,9 +1,9 @@
-/*	$OpenBSD: cscope.c,v 1.14 2016/01/19 11:21:38 sunil Exp $	*/
+/*	$OpenBSD: cscope.c,v 1.15 2016/01/19 11:39:06 sunil Exp $	*/
 
 /*
  * This file is in the public domain.
  *
- * Author: Sunil Nimmagadda <sunil@sunilnimmagadda.com>
+ * Author: Sunil Nimmagadda <sunil@openbsd.org>
  */
 
 #include <sys/queue.h>
