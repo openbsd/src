@@ -1,4 +1,4 @@
-/*	$OpenBSD: xen.c,v 1.30 2016/01/18 19:09:09 mikeb Exp $	*/
+/*	$OpenBSD: xen.c,v 1.31 2016/01/19 13:36:00 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Belopuhov
@@ -584,7 +584,7 @@ xen_intr_establish(evtchn_port_t port, xen_intr_handle_t *xih,
 	struct xen_softc *sc = xen_sc;
 	struct xen_intsrc *xi;
 	struct evtchn_alloc_unbound eau;
-#if notyet
+#ifdef notyet
 	struct evtchn_bind_vcpu ebv;
 #endif
 #if defined(XEN_DEBUG) && disabled
@@ -716,7 +716,8 @@ xen_intr_enable(void)
 				printf("%s: unmasking port %u failed\n",
 				    sc->sc_dev.dv_xname, xi->xi_port);
 			membar_sync();
-			if (isset(sc->sc_ipg->evtchn_mask, xi->xi_port))
+			if (isset((char *)&sc->sc_ipg->evtchn_mask[0],
+			    xi->xi_port))
 				printf("%s: port %u is still masked\n",
 				    sc->sc_dev.dv_xname, xi->xi_port);
 		}
@@ -747,7 +748,7 @@ xen_intr_unmask(xen_intr_handle_t xih)
 
 	if ((xi = xen_lookup_intsrc(sc, port)) != NULL) {
 		xi->xi_masked = 0;
-		if (!isset(sc->sc_ipg->evtchn_mask, xi->xi_port))
+		if (!isset((char *)&sc->sc_ipg->evtchn_mask[0], xi->xi_port))
 			return (0);
 		eu.port = xi->xi_port;
 		return (xen_evtchn_hypercall(sc, EVTCHNOP_unmask, &eu,
