@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_txt.c,v 1.13 2014/11/12 04:28:41 bentley Exp $	*/
+/*	$OpenBSD: ex_txt.c,v 1.14 2016/01/20 08:43:27 bentley Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -42,16 +42,16 @@
  */
 
 static int	txt_dent(SCR *, TEXT *);
-static void	txt_prompt(SCR *, TEXT *, ARG_CHAR_T, u_int32_t);
+static void	txt_prompt(SCR *, TEXT *, CHAR_T, u_int32_t);
 
 /*
  * ex_txt --
  *	Get lines from the terminal for ex.
  *
- * PUBLIC: int ex_txt(SCR *, TEXTH *, ARG_CHAR_T, u_int32_t);
+ * PUBLIC: int ex_txt(SCR *, TEXTH *, CHAR_T, u_int32_t);
  */
 int
-ex_txt(SCR *sp, TEXTH *tiqh, ARG_CHAR_T prompt, u_int32_t flags)
+ex_txt(SCR *sp, TEXTH *tiqh, CHAR_T prompt, u_int32_t flags)
 {
 	EVENT ev;
 	GS *gp;
@@ -347,7 +347,7 @@ alloc_err:
  *	not ours.
  */
 static void
-txt_prompt(SCR *sp, TEXT *tp, ARG_CHAR_T prompt, u_int32_t flags)
+txt_prompt(SCR *sp, TEXT *tp, CHAR_T prompt, u_int32_t flags)
 {
 	/* Display the prompt. */
 	if (LF_ISSET(TXT_PROMPT))

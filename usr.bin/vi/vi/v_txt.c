@@ -1,4 +1,4 @@
-/*	$OpenBSD: v_txt.c,v 1.30 2016/01/06 22:28:52 millert Exp $	*/
+/*	$OpenBSD: v_txt.c,v 1.31 2016/01/20 08:43:27 bentley Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -59,10 +59,10 @@ static void	 txt_unmap(SCR *, TEXT *, u_int32_t *);
  * v_tcmd --
  *	Fill a buffer from the terminal for vi.
  *
- * PUBLIC: int v_tcmd(SCR *, VICMD *, ARG_CHAR_T, u_int);
+ * PUBLIC: int v_tcmd(SCR *, VICMD *, CHAR_T, u_int);
  */
 int
-v_tcmd(SCR *sp, VICMD *vp, ARG_CHAR_T prompt, u_int flags)
+v_tcmd(SCR *sp, VICMD *vp, CHAR_T prompt, u_int flags)
 {
 	/* Normally, we end up where we started. */
 	vp->m_final.lno = sp->lno;
@@ -235,11 +235,11 @@ txt_map_end(SCR *sp)
  *	Vi text input.
  *
  * PUBLIC: int v_txt(SCR *, VICMD *, MARK *,
- * PUBLIC:    const char *, size_t, ARG_CHAR_T, recno_t, u_long, u_int32_t);
+ * PUBLIC:    const char *, size_t, CHAR_T, recno_t, u_long, u_int32_t);
  */
 int
 v_txt(SCR *sp, VICMD *vp, MARK *tm, const char *lp, size_t len,
-    ARG_CHAR_T prompt, recno_t ai_line, u_long rcount, u_int32_t flags)
+    CHAR_T prompt, recno_t ai_line, u_long rcount, u_int32_t flags)
 {
 	EVENT ev, *evp = NULL;	/* Current event. */
 	EVENT fc;		/* File name completion event. */

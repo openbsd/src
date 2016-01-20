@@ -1,4 +1,4 @@
-/*	$OpenBSD: vi.c,v 1.17 2016/01/06 22:28:52 millert Exp $	*/
+/*	$OpenBSD: vi.c,v 1.18 2016/01/20 08:43:27 bentley Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -34,7 +34,7 @@ typedef enum {
 static VIKEYS const
 	       *v_alias(SCR *, VICMD *, VIKEYS const *);
 static gcret_t	v_cmd(SCR *, VICMD *, VICMD *, VICMD *, int *, int *);
-static int	v_count(SCR *, ARG_CHAR_T, u_long *);
+static int	v_count(SCR *, CHAR_T, u_long *);
 static void	v_dtoh(SCR *);
 static int	v_init(SCR *);
 static gcret_t	v_key(SCR *, int, EVENT *, u_int32_t);
@@ -1116,7 +1116,7 @@ v_alias(SCR *sp, VICMD *vp, VIKEYS const *kp)
  *	Return the next count.
  */
 static int
-v_count(SCR *sp, ARG_CHAR_T fkey, u_long *countp)
+v_count(SCR *sp, CHAR_T fkey, u_long *countp)
 {
 	EVENT ev;
 	u_long count, tc;

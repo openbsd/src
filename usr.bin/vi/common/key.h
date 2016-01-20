@@ -1,4 +1,4 @@
-/*	$OpenBSD: key.h,v 1.5 2015/03/28 12:54:37 bcallah Exp $	*/
+/*	$OpenBSD: key.h,v 1.6 2016/01/20 08:43:27 bentley Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -15,16 +15,11 @@
  * Fundamental character types.
  *
  * CHAR_T	An integral type that can hold any character.
- * ARG_CHAR_T	The type of a CHAR_T when passed as an argument using
- *		traditional promotion rules.  It should also be able
- *		to be compared against any CHAR_T for equality without
- *		problems.
  * MAX_CHAR_T	The maximum value of any character.
  *
  * If no integral type can hold a character, don't even try the port.
  */
 typedef	u_char		CHAR_T;
-typedef	u_int		ARG_CHAR_T;
 #define	MAX_CHAR_T	0xff
 
 /* The maximum number of columns any character can take up on a screen. */

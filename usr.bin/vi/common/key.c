@@ -1,4 +1,4 @@
-/*	$OpenBSD: key.c,v 1.15 2016/01/06 22:28:52 millert Exp $	*/
+/*	$OpenBSD: key.c,v 1.16 2016/01/20 08:43:27 bentley Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -205,10 +205,10 @@ v_key_ilookup(SCR *sp)
  *	Return the length of the string that will display the key.
  *	This routine is the backup for the KEY_LEN() macro.
  *
- * PUBLIC: size_t v_key_len(SCR *, ARG_CHAR_T);
+ * PUBLIC: size_t v_key_len(SCR *, CHAR_T);
  */
 size_t
-v_key_len(SCR *sp, ARG_CHAR_T ch)
+v_key_len(SCR *sp, CHAR_T ch)
 {
 	(void)v_key_name(sp, ch);
 	return (sp->clen);
@@ -219,18 +219,16 @@ v_key_len(SCR *sp, ARG_CHAR_T ch)
  *	Return the string that will display the key.  This routine
  *	is the backup for the KEY_NAME() macro.
  *
- * PUBLIC: CHAR_T *v_key_name(SCR *, ARG_CHAR_T);
+ * PUBLIC: CHAR_T *v_key_name(SCR *, CHAR_T);
  */
 CHAR_T *
-v_key_name(SCR *sp, ARG_CHAR_T ach)
+v_key_name(SCR *sp, CHAR_T ch)
 {
 	static const CHAR_T hexdigit[] = "0123456789abcdef";
 	static const CHAR_T octdigit[] = "01234567";
-	CHAR_T ch, *chp, mask;
+	CHAR_T *chp, mask;
 	size_t len;
 	int cnt, shift;
-
-	ch = ach;
 
 	/* See if the character was explicitly declared printable or not. */
 	if ((chp = O_STR(sp, O_PRINT)) != NULL)
@@ -298,10 +296,10 @@ done:	sp->cname[sp->clen = len] = '\0';
  *	Fill in the value for a key.  This routine is the backup
  *	for the KEY_VAL() macro.
  *
- * PUBLIC: int v_key_val(SCR *, ARG_CHAR_T);
+ * PUBLIC: int v_key_val(SCR *, CHAR_T);
  */
 int
-v_key_val(SCR *sp, ARG_CHAR_T ch)
+v_key_val(SCR *sp, CHAR_T ch)
 {
 	KEYLIST k, *kp;
 
