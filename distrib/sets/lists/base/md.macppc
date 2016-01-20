@@ -1597,7 +1597,6 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/macppc/varargs.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/macppc/vmparam.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/macppc/z8530var.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/malloc.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/math.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/md5.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/memory.ph

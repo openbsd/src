@@ -1086,7 +1086,6 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/locale.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/login_cap.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/machine
-./usr/libdata/perl5/site_perl/sparc-openbsd/malloc.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/math.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/md5.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/memory.ph

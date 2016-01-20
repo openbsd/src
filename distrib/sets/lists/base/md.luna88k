@@ -1510,7 +1510,6 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/m88k/varargs.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/m88k/vmparam.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/machine
-./usr/libdata/perl5/site_perl/m88k-openbsd/malloc.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/math.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/md5.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/memory.ph

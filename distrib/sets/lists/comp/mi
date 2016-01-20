@@ -921,7 +921,6 @@
 ./usr/include/locale.h
 ./usr/include/login_cap.h
 ./usr/include/machine
-./usr/include/malloc.h
 ./usr/include/math.h
 ./usr/include/md5.h
 ./usr/include/memory.h

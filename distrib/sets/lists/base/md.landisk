@@ -1554,7 +1554,6 @@
 ./usr/libdata/perl5/site_perl/sh-openbsd/locale.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/login_cap.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/machine
-./usr/libdata/perl5/site_perl/sh-openbsd/malloc.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/math.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/md5.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/memory.ph

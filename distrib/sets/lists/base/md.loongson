@@ -1568,7 +1568,6 @@
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/loongson/varargs.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/loongson/vmparam.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/machine
-./usr/libdata/perl5/site_perl/mips64el-openbsd/malloc.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/math.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/md5.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/memory.ph

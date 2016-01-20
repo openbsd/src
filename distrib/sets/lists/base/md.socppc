@@ -1538,7 +1538,6 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/locale.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/login_cap.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/machine
-./usr/libdata/perl5/site_perl/powerpc-openbsd/malloc.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/math.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/md5.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/memory.ph

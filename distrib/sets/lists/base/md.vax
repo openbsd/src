@@ -975,7 +975,6 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/locale.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/login_cap.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/machine
-./usr/libdata/perl5/site_perl/vax-openbsd/malloc.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/math.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/md5.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/memory.ph

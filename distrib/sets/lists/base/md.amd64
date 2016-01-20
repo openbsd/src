@@ -1626,7 +1626,6 @@
 ./usr/libdata/perl5/site_perl/amd64-openbsd/locale.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/login_cap.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/machine
-./usr/libdata/perl5/site_perl/amd64-openbsd/malloc.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/math.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/md5.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/memory.ph

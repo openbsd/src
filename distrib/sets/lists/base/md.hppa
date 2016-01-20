@@ -1597,7 +1597,6 @@
 ./usr/libdata/perl5/site_perl/hppa-openbsd/locale.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/login_cap.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/machine
-./usr/libdata/perl5/site_perl/hppa-openbsd/malloc.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/math.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/md5.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/memory.ph
