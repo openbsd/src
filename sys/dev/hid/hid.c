@@ -1,4 +1,4 @@
-/*	$OpenBSD: hid.c,v 1.1 2016/01/08 15:54:13 jcs Exp $ */
+/*	$OpenBSD: hid.c,v 1.2 2016/01/20 01:11:50 jcs Exp $ */
 /*	$NetBSD: hid.c,v 1.23 2002/07/11 21:14:25 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/hid.c,v 1.11 1999/11/17 22:33:39 n_hibma Exp $ */
 
@@ -571,8 +571,9 @@ hid_locate(const void *desc, int size, int32_t u, uint8_t id, enum hid_kind k,
 	return (0);
 }
 
-int32_t
-hid_get_data(const uint8_t *buf, int len, struct hid_location *loc)
+uint32_t
+hid_get_data_sub(const uint8_t *buf, int len, struct hid_location *loc,
+    int is_signed)
 {
 	uint32_t hpos = loc->pos;
 	uint32_t hsize = loc->size;
@@ -580,7 +581,7 @@ hid_get_data(const uint8_t *buf, int len, struct hid_location *loc)
 	uint32_t rpos;
 	uint8_t n;
 
-	DPRINTF("hid_get_data: loc %d/%d\n", hpos, hsize);
+	DPRINTF("hid_get_data_sub: loc %d/%d\n", hpos, hsize);
 
 	/* Range check and limit */
 	if (hsize == 0)
@@ -603,11 +604,27 @@ hid_get_data(const uint8_t *buf, int len, struct hid_location *loc)
 	data = (data >> (hpos % 8));
 	n = 32 - hsize;
 
-	data = (int32_t)((int32_t)data << n) >> n;
+	/* Mask and sign extend in one */
+	if (is_signed != 0)
+		data = (int32_t)((int32_t)data << n) >> n;
+	else
+		data = (uint32_t)((uint32_t)data << n) >> n;
 
-	DPRINTF("hid_get_data: loc %d/%d = %lu\n",
+	DPRINTF("hid_get_data_sub: loc %d/%d = %lu\n",
 	    loc->pos, loc->size, (long)data);
 	return (data);
+}
+
+int32_t
+hid_get_data(const uint8_t *buf, int len, struct hid_location *loc)
+{
+	return (hid_get_data_sub(buf, len, loc, 1));
+}
+
+uint32_t
+hid_get_udata(const uint8_t *buf, int len, struct hid_location *loc)
+{
+        return (hid_get_data_sub(buf, len, loc, 0));
 }
 
 int
