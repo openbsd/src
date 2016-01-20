@@ -1,4 +1,4 @@
-/* $OpenBSD: ihidev.h,v 1.2 2016/01/13 10:25:31 kettenis Exp $ */
+/* $OpenBSD: ihidev.h,v 1.3 2016/01/20 01:19:28 jcs Exp $ */
 /*
  * HID-over-i2c driver
  *
@@ -80,7 +80,7 @@ struct ihidev_softc {
 	uint8_t		*sc_report;
 	int		sc_reportlen;
 
-	u_int		sc_nrepid;
+	int		sc_nrepid;
 	struct		ihidev **sc_subdevs;
 
 	u_int		sc_isize;
@@ -109,13 +109,20 @@ struct ihidev_attach_arg {
 #define	IHIDEV_CLAIM_ALLREPORTID	255
 };
 
+struct i2c_hid_report_request {
+	u_int id;
+	u_int type;
+#define I2C_HID_REPORT_TYPE_INPUT	0x1
+#define I2C_HID_REPORT_TYPE_OUTPUT	0x2
+#define I2C_HID_REPORT_TYPE_FEATURE	0x3
+	void *data;
+	u_int len;
+};
+
 void ihidev_get_report_desc(struct ihidev_softc *, void **, int *);
 int ihidev_open(struct ihidev *);
 void ihidev_close(struct ihidev *);
 int ihidev_ioctl(struct ihidev *, u_long, caddr_t, int, struct proc *);
 
-int ihidev_set_report(struct ihidev_softc *, int, int, void *, int);
-int ihidev_set_report_async(struct ihidev_softc *, int, int, void *, int);
-int ihidev_get_report(struct ihidev_softc *, int, int, void *, int);
-int ihidev_get_report_async(struct ihidev_softc *, int, int, void *, int,
-    void *, void (*)(void *, int, void *, int));
+int ihidev_set_report(struct device *, int, int, void *, int);
+int ihidev_get_report(struct device *, int, int, void *, int);

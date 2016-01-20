@@ -1,8 +1,8 @@
-/* $OpenBSD: ihidev.c,v 1.7 2016/01/14 21:31:27 kettenis Exp $ */
+/* $OpenBSD: ihidev.c,v 1.8 2016/01/20 01:19:28 jcs Exp $ */
 /*
  * HID-over-i2c driver
  *
- * http://download.microsoft.com/download/7/d/d/7dd44bb7-2a7a-4505-ac1c-7227d3d96d5b/hid-over-i2c-protocol-spec-v1-0.docx
+ * https://msdn.microsoft.com/en-us/library/windows/hardware/dn642101%28v=vs.85%29.aspx
  *
  * Copyright (c) 2015, 2016 joshua stein <jcs@openbsd.org>
  *
@@ -59,15 +59,6 @@ enum {
 
 static int I2C_HID_POWER_ON	= 0x0;
 static int I2C_HID_POWER_OFF	= 0x1;
-
-union i2c_hid_cmd {
-	uint8_t data[0];
-	struct cmd {
-		uint16_t reg;
-		uint8_t reportTypeId;
-		uint8_t opcode;
-	} __packed c;
-};
 
 int	ihidev_match(struct device *, void *, void *);
 void	ihidev_attach(struct device *, struct device *, void *);
@@ -147,19 +138,7 @@ ihidev_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	iha.iaa = ia;
-	iha.parent = sc;
-	iha.reportid = IHIDEV_CLAIM_ALLREPORTID;
-
-	/* Look for a driver claiming all report IDs first. */
-	dev = config_found_sm((struct device *)sc, &iha, NULL,
-	    ihidev_submatch);
-	if (dev != NULL) {
-		for (repid = 0; repid < sc->sc_nrepid; repid++)
-			sc->sc_subdevs[repid] = (struct ihidev *)dev;
-		return;
-	}
-
+	/* find largest report size and allocate memory for input buffer */
 	sc->sc_isize = letoh16(sc->hid_desc.wMaxInputLength);
 	for (repid = 0; repid < sc->sc_nrepid; repid++) {
 		repsz = hid_report_size(sc->sc_report, sc->sc_reportlen,
@@ -173,7 +152,34 @@ ihidev_attach(struct device *parent, struct device *self, void *aux)
 
 		DPRINTF(("%s: repid %d size %d\n", sc->sc_dev.dv_xname, repid,
 		    repsz));
+	}
+	sc->sc_ibuf = malloc(sc->sc_isize, M_DEVBUF, M_NOWAIT | M_ZERO);
 
+	/* register interrupt with system */
+	if (ia->ia_int > 0) {
+		/* XXX: don't assume this uses acpi_intr_establish */
+		sc->sc_ih = acpi_intr_establish(ia->ia_int, ia->ia_int_flags,
+		    IPL_BIO, ihidev_intr, sc, sc->sc_dev.dv_xname);
+		if (sc->sc_ih == NULL) {
+			printf(", failed establishing intr\n");
+			return;
+		}
+	}
+
+	iha.iaa = ia;
+	iha.parent = sc;
+
+	/* Look for a driver claiming all report IDs first. */
+	iha.reportid = IHIDEV_CLAIM_ALLREPORTID;
+	dev = config_found_sm((struct device *)sc, &iha, NULL,
+	    ihidev_submatch);
+	if (dev != NULL) {
+		for (repid = 0; repid < sc->sc_nrepid; repid++)
+			sc->sc_subdevs[repid] = (struct ihidev *)dev;
+		return;
+	}
+
+	for (repid = 0; repid < sc->sc_nrepid; repid++) {
 		if (hid_report_size(sc->sc_report, sc->sc_reportlen, hid_input,
 		    repid) == 0 &&
 		    hid_report_size(sc->sc_report, sc->sc_reportlen,
@@ -186,18 +192,6 @@ ihidev_attach(struct device *parent, struct device *self, void *aux)
 		dev = config_found_sm(self, &iha, ihidev_print,
 		    ihidev_submatch);
 		sc->sc_subdevs[repid] = (struct ihidev *)dev;
-	}
-	sc->sc_ibuf = malloc(sc->sc_isize, M_DEVBUF, M_WAITOK);
-
-	/* register interrupt with system */
-	if (ia->ia_int > 0) {
-		/* XXX: don't assume this uses acpi_intr_establish */
-		sc->sc_ih = acpi_intr_establish(ia->ia_int, ia->ia_int_flags,
-		    IPL_BIO, ihidev_intr, sc, sc->sc_dev.dv_xname);
-		if (sc->sc_ih == NULL) {
-			printf(", failed establishing intr\n");
-			return;
-		}
 	}
 
 	/* power down until we're opened */
@@ -239,17 +233,19 @@ ihidev_hid_command(struct ihidev_softc *sc, int hidcmd, void *arg)
 	case I2C_HID_CMD_DESCR: {
 		/*
 		 * 5.2.2 - HID Descriptor Retrieval
-		 * register is passed from the controller, and is probably just
-		 * the address of the device
+		 * register is passed from the controller
 		 */
-		uint8_t cmdbuf[] = { htole16(sc->sc_hid_desc_addr), 0x0 };
+		uint8_t cmd[] = {
+			htole16(sc->sc_hid_desc_addr),
+			0,
+		};
 
 		DPRINTF(("%s: HID command I2C_HID_CMD_DESCR at 0x%x\n",
 		    sc->sc_dev.dv_xname, htole16(sc->sc_hid_desc_addr)));
 
 		/* 20 00 */
 		res = iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP, sc->sc_addr,
-		    &cmdbuf, sizeof(cmdbuf), &sc->hid_desc_buf,
+		    &cmd, sizeof(cmd), &sc->hid_desc_buf,
 		    sizeof(struct i2c_hid_desc), 0);
 
 		DPRINTF(("%s: HID descriptor:", sc->sc_dev.dv_xname));
@@ -260,57 +256,218 @@ ihidev_hid_command(struct ihidev_softc *sc, int hidcmd, void *arg)
 		break;
 	}
 	case I2C_HID_CMD_RESET: {
-		uint8_t cmdbuf[4] = { 0 };
-		union i2c_hid_cmd *cmd = (union i2c_hid_cmd *)cmdbuf;
+		uint8_t cmd[] = {
+			sc->hid_desc_buf[offsetof(struct i2c_hid_desc,
+			    wCommandRegister)],
+			sc->hid_desc_buf[offsetof(struct i2c_hid_desc,
+			    wCommandRegister) + 1],
+			0,
+			I2C_HID_CMD_RESET,
+		};
 
 		DPRINTF(("%s: HID command I2C_HID_CMD_RESET\n",
 		    sc->sc_dev.dv_xname));
 
-		cmd->data[0] = sc->hid_desc_buf[offsetof(struct i2c_hid_desc,
-			wCommandRegister)];
-		cmd->data[1] = sc->hid_desc_buf[offsetof(struct i2c_hid_desc,
-			wCommandRegister) + 1];
-		cmd->c.opcode = I2C_HID_CMD_RESET;
-
 		/* 22 00 00 01 */
 		res = iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP, sc->sc_addr,
-		    &cmdbuf, sizeof(cmdbuf), NULL, 0, 0);
+		    &cmd, sizeof(cmd), NULL, 0, 0);
 
 		break;
 	}
+	case I2C_HID_CMD_GET_REPORT: {
+		struct i2c_hid_report_request *rreq =
+		    (struct i2c_hid_report_request *)arg;
+
+		uint8_t cmd[] = {
+			sc->hid_desc_buf[offsetof(struct i2c_hid_desc,
+			    wCommandRegister)],
+			sc->hid_desc_buf[offsetof(struct i2c_hid_desc,
+			    wCommandRegister) + 1],
+			0,
+			I2C_HID_CMD_GET_REPORT,
+			0, 0, 0,
+		};
+		int cmdlen = 7;
+		int dataoff = 4;
+		int report_id = rreq->id;
+		int report_id_len = 1;
+		int report_len = rreq->len + 2;
+		int d;
+		uint8_t *tmprep;
+
+		DPRINTF(("%s: HID command I2C_HID_CMD_GET_REPORT %d "
+		    "(type %d, len %d)\n", sc->sc_dev.dv_xname, report_id,
+		    rreq->type, rreq->len));
+
+		/*
+		 * 7.2.2.4 - "The protocol is optimized for Report < 15.  If a
+		 * report ID >= 15 is necessary, then the Report ID in the Low
+		 * Byte must be set to 1111 and a Third Byte is appended to the
+		 * protocol.  This Third Byte contains the entire/actual report
+		 * ID."
+		 */
+		if (report_id >= 15) {
+			cmd[dataoff++] = report_id;
+			report_id = 15;
+			report_id_len = 2;
+		} else
+			cmdlen--;
+
+		cmd[2] = report_id | rreq->type << 4;
+
+		cmd[dataoff++] = sc->hid_desc_buf[offsetof(struct i2c_hid_desc,
+		    wDataRegister)] & 0xff;
+		cmd[dataoff] = sc->hid_desc_buf[offsetof(struct i2c_hid_desc,
+		    wDataRegister)] >> 8;
+
+		/*
+		 * 7.2.2.2 - Response will be a 2-byte length value, the report
+		 * id with length determined above, and then the report.
+		 * Allocate rreq->len + 2 + 2 bytes, read into that temporary
+		 * buffer, and then copy only the report back out to
+		 * rreq->data.
+		 */
+		report_len += report_id_len;
+		tmprep = malloc(report_len, M_DEVBUF, M_NOWAIT | M_ZERO);
+
+		/* type 3 id 8: 22 00 38 02 23 00 */
+		res = iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP, sc->sc_addr,
+		    &cmd, cmdlen, tmprep, report_len, 0);
+
+		d = tmprep[0] | tmprep[1] << 8;
+		if (d != report_len)
+			DPRINTF(("%s: response size %d != expected length %d\n",
+			    sc->sc_dev.dv_xname, d, report_len));
+
+		if (report_id_len == 2)
+			d = tmprep[2] | tmprep[3] << 8;
+		else
+			d = tmprep[2];
+
+		if (d != rreq->id) {
+			DPRINTF(("%s: response report id %d != %d\n",
+			    sc->sc_dev.dv_xname, d, rreq->id));
+			iic_release_bus(sc->sc_tag, 0);
+			return (1);
+		}
+
+		DPRINTF(("%s: response:", sc->sc_dev.dv_xname));
+		for (i = 0; i < report_len; i++)
+			DPRINTF((" %.2x", tmprep[i]));
+		DPRINTF(("\n"));
+
+		memcpy(rreq->data, tmprep + 2 + report_id_len, rreq->len);
+		free(tmprep, M_DEVBUF, report_len);
+
+		break;
+	}
+	case I2C_HID_CMD_SET_REPORT: {
+		struct i2c_hid_report_request *rreq =
+		    (struct i2c_hid_report_request *)arg;
+
+		uint8_t cmd[] = {
+			sc->hid_desc_buf[offsetof(struct i2c_hid_desc,
+			    wCommandRegister)],
+			sc->hid_desc_buf[offsetof(struct i2c_hid_desc,
+			    wCommandRegister) + 1],
+			0,
+			I2C_HID_CMD_SET_REPORT,
+			0, 0, 0, 0, 0, 0,
+		};
+		int cmdlen = 10;
+		int report_id = rreq->id;
+		int report_len = 2 + (report_id ? 1 : 0) + rreq->len;
+		int dataoff;
+		uint8_t *finalcmd;
+
+		DPRINTF(("%s: HID command I2C_HID_CMD_SET_REPORT %d "
+		    "(type %d, len %d):", sc->sc_dev.dv_xname, report_id,
+		    rreq->type, rreq->len));
+		for (i = 0; i < rreq->len; i++)
+			DPRINTF((" %.2x", ((uint8_t *)rreq->data)[i]));
+		DPRINTF(("\n"));
+
+		/*
+		 * 7.2.2.4 - "The protocol is optimized for Report < 15.  If a
+		 * report ID >= 15 is necessary, then the Report ID in the Low
+		 * Byte must be set to 1111 and a Third Byte is appended to the
+		 * protocol.  This Third Byte contains the entire/actual report
+		 * ID."
+		 */
+		dataoff = 4;
+		if (report_id >= 15) {
+			cmd[dataoff++] = report_id;
+			report_id = 15;
+		} else
+			cmdlen--;
+
+		cmd[2] = report_id | rreq->type << 4;
+
+		if (rreq->type == I2C_HID_REPORT_TYPE_FEATURE) {
+			cmd[dataoff++] = sc->hid_desc_buf[offsetof(
+			    struct i2c_hid_desc, wDataRegister)] & 0xff;
+			cmd[dataoff++] = sc->hid_desc_buf[offsetof(
+			    struct i2c_hid_desc, wDataRegister)] >> 8;
+		} else {
+			cmd[dataoff++] = sc->hid_desc_buf[offsetof(
+			    struct i2c_hid_desc, wOutputRegister)] & 0xff;
+			cmd[dataoff++] = sc->hid_desc_buf[offsetof(
+			    struct i2c_hid_desc, wOutputRegister)] >> 8;
+		}
+
+		cmd[dataoff++] = report_len & 0xff;
+		cmd[dataoff++] = report_len >> 8;
+		cmd[dataoff] = rreq->id;
+
+		finalcmd = malloc(cmdlen + rreq->len, M_DEVBUF,
+		    M_NOWAIT | M_ZERO);
+
+		memcpy(finalcmd, cmd, cmdlen);
+		memcpy(finalcmd + cmdlen, rreq->data, rreq->len);
+
+		/* type 3 id 4: 22 00 34 03 23 00 04 00 04 03 */
+		res = iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP, sc->sc_addr,
+		    finalcmd, cmdlen + rreq->len, NULL, 0, 0);
+
+		free(finalcmd, M_DEVBUF, cmdlen + rreq->len);
+
+ 		break;
+ 	}
+
 	case I2C_HID_CMD_SET_POWER: {
-		uint8_t cmdbuf[4] = { 0 };
-		union i2c_hid_cmd *cmd = (union i2c_hid_cmd *)cmdbuf;
 		int power = *(int *)arg;
+		uint8_t cmd[] = {
+			sc->hid_desc_buf[offsetof(struct i2c_hid_desc,
+			    wCommandRegister)],
+			sc->hid_desc_buf[offsetof(struct i2c_hid_desc,
+			    wCommandRegister) + 1],
+			power,
+			I2C_HID_CMD_SET_POWER,
+		};
 
 		DPRINTF(("%s: HID command I2C_HID_CMD_SET_POWER(%d)\n",
 		    sc->sc_dev.dv_xname, power));
 
-		cmd->data[0] = sc->hid_desc_buf[offsetof(struct i2c_hid_desc,
-			wCommandRegister)];
-		cmd->data[1] = sc->hid_desc_buf[offsetof(struct i2c_hid_desc,
-			wCommandRegister) + 1];
-		cmd->c.opcode = I2C_HID_CMD_SET_POWER;
-		cmd->c.reportTypeId = power;
-
 		/* 22 00 00 08 */
 		res = iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP, sc->sc_addr,
-		    &cmdbuf, sizeof(cmdbuf), NULL, 0, 0);
+		    &cmd, sizeof(cmd), NULL, 0, 0);
 
 		break;
 	}
 	case I2C_HID_REPORT_DESCR: {
-		uint8_t cmdbuf[] = {
-		    sc->hid_desc_buf[offsetof(struct i2c_hid_desc,
-		    wReportDescRegister)], 0 };
+		uint8_t cmd[] = {
+			sc->hid_desc_buf[offsetof(struct i2c_hid_desc,
+			    wReportDescRegister)],
+			0,
+		};
 
 		DPRINTF(("%s: HID command I2C_HID_REPORT_DESCR at 0x%x with "
-		    "size %d\n", sc->sc_dev.dv_xname, cmdbuf[0],
+		    "size %d\n", sc->sc_dev.dv_xname, cmd[0],
 		    sc->sc_reportlen));
 
 		/* 20 00 */
 		res = iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP, sc->sc_addr,
-		    &cmdbuf, sizeof(cmdbuf), sc->sc_report, sc->sc_reportlen, 0);
+		    &cmd, sizeof(cmd), sc->sc_report, sc->sc_reportlen, 0);
 
 		DPRINTF(("%s: HID report descriptor:", sc->sc_dev.dv_xname));
 		for (i = 0; i < sc->sc_reportlen; i++)
@@ -436,35 +593,34 @@ ihidev_intr(void *arg)
 
 	iic_release_bus(sc->sc_tag, I2C_F_POLL);
 
-	DPRINTF(("%s: ihidev_intr: hid input:", sc->sc_dev.dv_xname));
-	for (i = 0; i < sc->sc_isize; i++)
-		DPRINTF((" %.2x", sc->sc_ibuf[i]));
-	DPRINTF(("\n"));
-
+	/*
+	 * 6.1.1 - First two bytes are the packet length, which must be less
+	 * than or equal to wMaxInputLength
+	 */
 	psize = sc->sc_ibuf[0] | sc->sc_ibuf[1] << 8;
-	if (!psize) {
-		DPRINTF(("%s: %s: invalid packet size\n", sc->sc_dev.dv_xname,
-		    __func__));
-		return (1);
-	}
-
-	if (psize > sc->sc_isize) {
-		DPRINTF(("%s: %s: truncated packet (%u > %u)\n",
+	if (!psize || psize > sc->sc_isize) {
+		DPRINTF(("%s: %s: invalid packet size (%d vs. %d)\n",
 		    sc->sc_dev.dv_xname, __func__, psize, sc->sc_isize));
 		return (1);
 	}
 
-	/* report id is 3rd byte */
+	/* 3rd byte is the report id */
 	p = sc->sc_ibuf + 2;
 	psize -= 2;
 	if (sc->sc_nrepid != 1)
-		rep = *p++; psize--;
+		rep = *p++, psize--;
 
 	if (rep >= sc->sc_nrepid) {
-		printf("%s: %s: bad repid %d\n", sc->sc_dev.dv_xname, __func__,
-		    rep);
+		printf("%s: %s: bad report id %d\n", sc->sc_dev.dv_xname,
+		    __func__, rep);
 		return (1);
 	}
+
+	DPRINTF(("%s: ihidev_intr: hid input (rep %d):", sc->sc_dev.dv_xname,
+	    rep));
+	for (i = 0; i < sc->sc_isize; i++)
+		DPRINTF((" %.2x", sc->sc_ibuf[i]));
+	DPRINTF(("\n"));
 
 	scd = sc->sc_subdevs[rep];
 	if (scd == NULL || !(scd->sc_state & IHIDEV_OPEN))
@@ -573,4 +729,67 @@ ihidev_get_report_desc(struct ihidev_softc *sc, void **desc, int *size)
 {
 	*desc = sc->sc_report;
 	*size = sc->sc_reportlen;
+}
+
+/* convert hid_* constants used throughout HID code to i2c HID equivalents */
+int
+ihidev_report_type_conv(int hid_type_id)
+{
+	switch (hid_type_id) {
+	case hid_input:
+		return I2C_HID_REPORT_TYPE_INPUT;
+	case hid_output:
+		return I2C_HID_REPORT_TYPE_OUTPUT;
+	case hid_feature:
+		return I2C_HID_REPORT_TYPE_FEATURE;
+	default:
+		return -1;
+	}
+}
+
+int
+ihidev_get_report(struct device *dev, int type, int id, void *data, int len)
+{
+	struct ihidev_softc *sc = (struct ihidev_softc *)dev;
+	struct i2c_hid_report_request rreq;
+	int ctype;
+
+	if ((ctype = ihidev_report_type_conv(type)) < 0)
+		return (1);
+
+	rreq.type = ctype;
+	rreq.id = id;
+	rreq.data = data;
+	rreq.len = len;
+
+	if (ihidev_hid_command(sc, I2C_HID_CMD_GET_REPORT, &rreq)) {
+		printf("%s: failed fetching report\n", sc->sc_dev.dv_xname);
+		return (1);
+	}
+
+	return 0;
+}
+
+int
+ihidev_set_report(struct device *dev, int type, int id, void *data,
+    int len)
+{
+	struct ihidev_softc *sc = (struct ihidev_softc *)dev;
+	struct i2c_hid_report_request rreq;
+	int ctype;
+
+	if ((ctype = ihidev_report_type_conv(type)) < 0)
+		return (1);
+
+	rreq.type = ctype;
+	rreq.id = id;
+	rreq.data = data;
+	rreq.len = len;
+
+	if (ihidev_hid_command(sc, I2C_HID_CMD_SET_REPORT, &rreq)) {
+		printf("%s: failed setting report\n", sc->sc_dev.dv_xname);
+		return (1);
+	}
+
+	return 0;
 }
