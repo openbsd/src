@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.141 2016/01/09 23:24:31 jsg Exp $	*/
+/*	$OpenBSD: audio.c,v 1.142 2016/01/20 07:59:55 ratchov Exp $	*/
 /*
  * Copyright (c) 2015 Alexandre Ratchov <alex@caoua.org>
  *
@@ -1083,7 +1083,11 @@ audio_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	/* set defaults */
-	sc->sw_enc = AUDIO_ENCODING_SLINEAR;
+#if BYTE_ORDER == LITTLE_ENDIAN
+	sc->sw_enc = AUDIO_ENCODING_SLINEAR_LE;
+#else
+	sc->sw_enc = AUDIO_ENCODING_SLINEAR_BE;
+#endif
 	sc->bits = 16;
 	sc->bps = 2;
 	sc->msb = 1;
