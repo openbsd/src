@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xnf.c,v 1.8 2016/01/19 17:16:19 mikeb Exp $	*/
+/*	$OpenBSD: if_xnf.c,v 1.9 2016/01/20 10:04:32 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015, 2016 Mike Belopuhov
@@ -492,10 +492,8 @@ xnf_encap(struct xnf_softc *sc, struct mbuf *m, uint32_t *prod)
 	bus_dmamap_t dmap;
 	int error, i, n = 0;
 
-	if ((XNF_TX_DESC - (*prod - sc->sc_tx_cons)) < XNF_TX_FRAG) {
-		error = ENOENT;
-		goto errout;
-	}
+	if ((XNF_TX_DESC - (*prod - sc->sc_tx_cons)) < XNF_TX_FRAG)
+		return (ENOENT);
 
 	i = *prod & (XNF_TX_DESC - 1);
 	dmap = sc->sc_tx_dmap[i];
