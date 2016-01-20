@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.613 2016/01/17 05:25:47 jsg Exp $
+#	$OpenBSD: Makefile,v 1.614 2016/01/20 01:29:03 jcs Exp $
 
 MAN=	aac.4 ac97.4 acphy.4 \
 	acpi.4 acpiac.4 acpiasus.4 acpibat.4 acpibtn.4 acpicpu.4 acpidock.4 \
@@ -27,7 +27,7 @@ MAN=	aac.4 ac97.4 acphy.4 \
 	glenv.4 gpio.4 gpiodcf.4 gpioiic.4 gpioow.4 gpr.4 gre.4 gscsio.4 gtp.4 \
 	hds.4 hifn.4 hil.4 hilid.4 hilkbd.4 hilms.4 hme.4 hotplug.4 hsq.4 \
 	ichiic.4 ichwdt.4 icmp.4 icmp6.4 icsphy.4 ifmedia.4 \
-	iha.4 ihidev.4 iic.4 ikbd.4 ims.4 inet.4 inet6.4 inphy.4 iophy.4 \
+	iha.4 ihidev.4 iic.4 ikbd.4 ims.4 imt.4 inet.4 inet6.4 inphy.4 iophy.4 \
 	ip.4 ip6.4 ipcomp.4 ipgphy.4 ipmi.4 ips.4 ipsec.4 ipw.4 \
 	isa.4 isagpio.4 isapnp.4 it.4 itherm.4 iwi.4 iwn.4 iwm.4 \
 	ix.4 ixgb.4 jmb.4 jme.4 jmphy.4 \

@@ -1,6 +1,6 @@
-.\"	$OpenBSD: ims.4,v 1.2 2016/01/20 01:29:03 jcs Exp $
+.\"	$OpenBSD: imt.4,v 1.1 2016/01/20 01:29:03 jcs Exp $
 .\"
-.\" Copyright (c) 2016 Jonathan Gray <jsg@openbsd.org>
+.\" Copyright (c) 2016 joshua stein <jcs@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -15,24 +15,25 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .Dd $Mdocdate: January 20 2016 $
-.Dt IMS 4
+.Dt IMT 4
 .Os
 .Sh NAME
-.Nm ims
-.Nd I2C HID mouse support
+.Nm imt
+.Nd I2C HID multitouch touchpad support
 .Sh SYNOPSIS
-.Cd "ims* at ihidev?"
-.Cd "wsmouse* at ims? mux 0"
+.Cd "imt* at ihidev?"
+.Cd "wsmouse* at imt? mux 0"
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for I2C HID mice.
+driver provides support for I2C HID touchpads conforming to the
+Windows Precision Touchpad standard.
 Access to these devices is through the
 .Xr wscons 4
 driver.
 .Sh SEE ALSO
 .Xr ihidev 4 ,
-.Xr imt 4 ,
+.Xr ims 4 ,
 .Xr wsmouse 4
 .Sh HISTORY
 The
