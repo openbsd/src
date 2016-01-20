@@ -604,6 +604,7 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/hid/hidkbdsc.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/hid/hidkbdvar.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/hid/hidmsvar.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/hid/hidmtvar.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/hil
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/hil/hildevs.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/hil/hildevs_data.ph

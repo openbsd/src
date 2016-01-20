@@ -1446,6 +1446,7 @@
 ./usr/share/man/man4/iic.4
 ./usr/share/man/man4/ikbd.4
 ./usr/share/man/man4/ims.4
+./usr/share/man/man4/imt.4
 ./usr/share/man/man4/inet.4
 ./usr/share/man/man4/inet6.4
 ./usr/share/man/man4/inphy.4

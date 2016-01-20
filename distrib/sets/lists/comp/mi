@@ -127,6 +127,7 @@
 ./usr/include/dev/hid/hidkbdsc.h
 ./usr/include/dev/hid/hidkbdvar.h
 ./usr/include/dev/hid/hidmsvar.h
+./usr/include/dev/hid/hidmtvar.h
 ./usr/include/dev/hil
 ./usr/include/dev/hil/hildevs.h
 ./usr/include/dev/hil/hildevs_data.h
