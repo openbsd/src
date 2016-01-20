@@ -1,4 +1,4 @@
-/*	$OpenBSD: octcf.c,v 1.27 2015/07/20 01:38:31 jasper Exp $ */
+/*	$OpenBSD: octcf.c,v 1.28 2016/01/20 17:23:58 stefan Exp $ */
 /*	$NetBSD: wd.c,v 1.193 1999/02/28 17:15:27 explorer Exp $ */
 
 /*
@@ -616,7 +616,7 @@ octcfioctl(dev_t dev, u_long xfer, caddr_t addr, int flag, struct proc *p)
 		auio.uio_iov = &aiov;
 		auio.uio_iovcnt = 1;
 		auio.uio_resid = fop->df_count;
-		auio.uio_segflg = 0;
+		auio.uio_segflg = UIO_USERSPACE;
 		auio.uio_offset =
 			fop->df_startblk * wd->sc_dk.dk_label->d_secsize;
 		auio.uio_procp = p;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: amdcf.c,v 1.1 2015/07/20 19:44:32 pirofti Exp $	*/
+/*	$OpenBSD: amdcf.c,v 1.2 2016/01/20 17:23:58 stefan Exp $	*/
 
 /*
  * Copyright (c) 2007, Juniper Networks, Inc.
@@ -548,7 +548,7 @@ amdcfioctl(dev_t dev, u_long xfer, caddr_t addr, int flag, struct proc *p)
 		auio.uio_iov = &aiov;
 		auio.uio_iovcnt = 1;
 		auio.uio_resid = fop->df_count;
-		auio.uio_segflg = 0;
+		auio.uio_segflg = UIO_USERSPACE;
 		auio.uio_offset =
 			fop->df_startblk * sc->sc_dk.dk_label->d_secsize;
 		auio.uio_procp = p;
