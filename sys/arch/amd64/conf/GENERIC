@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.413 2016/01/14 21:04:20 kettenis Exp $
+#	$OpenBSD: GENERIC,v 1.414 2016/01/20 01:26:00 jcs Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -151,10 +151,12 @@ sdtemp*	at iic?			# SO-DIMM (JC-42.4) temperature
 wbng*	at iic?			# Winbond W83793G
 nvt*	at iic?			# Novoton W83795G
 ihidev*	at iic?			# HID-over-i2c
-ims*	at ihidev?		# i2c mouse/trackpad
+ims*	at ihidev?		# HID-over-i2c mouse/trackpad
 wsmouse* at ims? mux 0
 ikbd*	at ihidev?		# i2c keyboard
 wskbd*	at ikbd? mux 1
+imt*	at ihidev?		# HID-over-i2c multitouch trackpad
+wsmouse* at imt? mux 0
 
 skgpio0 at isa? port 0x680	# Soekris net6501 GPIO and LEDs
 gpio* at skgpio?

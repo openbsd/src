@@ -1,4 +1,4 @@
-# $OpenBSD: files.i2c,v 1.53 2016/01/14 21:01:49 kettenis Exp $
+# $OpenBSD: files.i2c,v 1.54 2016/01/20 01:26:00 jcs Exp $
 #	$NetBSD: files.i2c,v 1.3 2003/10/20 16:24:10 briggs Exp $
 
 define	i2c {[addr = -1], [size = -1]}
@@ -189,3 +189,8 @@ file	dev/i2c/ikbd.c				ikbd
 device	ims: hid, hidms, wsmousedev
 attach	ims at ihidbus
 file	dev/i2c/ims.c				ims
+
+# HID Multitouch Trackpad
+device	imt: hid, hidmt, wsmousedev
+attach	imt at ihidbus
+file	dev/i2c/imt.c				imt
