@@ -1,7 +1,7 @@
 /*
  * International and national calendar files
  *
- * $OpenBSD: calendar.all,v 1.6 2016/01/14 20:08:01 jmc Exp $
+ * $OpenBSD: calendar.all,v 1.7 2016/01/20 19:12:28 jmc Exp $
  */
 
 #ifndef _calendar_all_
@@ -18,5 +18,6 @@
 #include <calendar.space>
 #include <calendar.canada>
 #include <calendar.uk>
+#include <calendar.nz>
 
 #endif /* !_calendar_all_ */

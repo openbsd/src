@@ -1,0 +1,48 @@
+/*
+ * New Zealand holiday
+ *
+ * $OpenBSD: calendar.nz,v 1.1 2016/01/20 19:12:28 jmc Exp $
+ */
+
+#ifndef _calendar_nz_
+#define _calendar_nz_
+
+01/01	New Year's Day
+01/02	Day after New Year's Day (public holiday)
+02/06*	New Zealand/Waitangi Day (public holiday)
+02/14	Saint Valentine's Day
+04/01	April Fools' Day
+04/SunFirst	Daylight Saving Time ends; clocks move back (first Sunday of April)
+05/SunSecond	Mother's Day (2nd Sunday in May)
+06/MonFirst	Queen's Birthday (public holiday, ski season begins)
+09/SunFirst	Father's Day (1st Sunday of September)
+09/26	Dominion Day
+09/SunLast	Daylight Saving Time starts; clocks move forward (last Sunday in September)
+10/MonFourth	Labour Day (public holiday)
+10/31	Halloween
+11/05	Guy Fawkes' Night
+12/25	Christmas Day
+12/26	Boxing Day
+12/31	New Year's Eve
+
+/* Provincial anniversary days */
+01/22*	Wellington Anniversary Day
+01/29*	Auckland and Northland Anniversary Days
+02/01*	Nelson Anniversary Day
+03/23*	Otago Anniversary Day
+03/MonSecond	New Plymouth Anniversary Day
+Easter+2	Southland Anniversary Day
+09/MonFourth	South Canterbury Anniversary Day
+09/FriThird	Hawke's Bay Anniversary Day
+11/01*	Marlborough Anniversary Day
+11/30*	Chatham Islands Anniversary Day
+12/01*	Westland Anniversary Day
+12/16*	South Canterbury Anniversary Day
+
+/* Seasonal days */
+03/20*	Autumnal Equinox
+06/21*	Winter Solstice
+09/22*	Vernal Equinox
+12/21*	Summer Solstice
+
+#endif /* !_calendar_nz_ */
