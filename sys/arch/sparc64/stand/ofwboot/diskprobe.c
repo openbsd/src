@@ -1,4 +1,4 @@
-/*	$OpenBSD: diskprobe.c,v 1.3 2014/12/09 18:05:16 stsp Exp $ */
+/*	$OpenBSD: diskprobe.c,v 1.4 2016/01/20 16:05:15 stsp Exp $ */
 
 /*
  * Copyright (c) 2008 Mark Kettenis <kettenis@openbsd.org>
@@ -110,12 +110,12 @@ void dump_node(int node)
 
 /*
  * Hunt through the device tree for disks.  There should be no need to
- * go more than four levels deep.
+ * go more than 10 levels deep.
  */
 void
 diskprobe(void)
 {
-	int node, child, stack[4], depth;
+	int node, child, stack[10], depth;
 	char buf[32];
 
 	stack[0] = OF_peer(0);
@@ -146,7 +146,7 @@ diskprobe(void)
 		}
 
 		child = OF_child(node);
-		if (child != 0 && child != -1 && depth < 3)
+		if (child != 0 && child != -1 && depth < 9)
 			stack[++depth] = child;
 		else
 			stack[depth] = OF_peer(stack[depth]);
