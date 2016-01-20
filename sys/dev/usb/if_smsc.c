@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_smsc.c,v 1.25 2015/11/25 03:10:00 dlg Exp $	*/
+/*	$OpenBSD: if_smsc.c,v 1.26 2016/01/20 01:31:01 jsg Exp $	*/
 /* $FreeBSD: src/sys/dev/usb/net/if_smsc.c,v 1.1 2012/08/15 04:03:55 gonzo Exp $ */
 /*-
  * Copyright (c) 2012
@@ -1091,7 +1091,6 @@ smsc_tick_task(void *xsc)
 {
 	int			 s;
 	struct smsc_softc	*sc = xsc;
-	struct ifnet		*ifp;
 	struct mii_data		*mii;
 
 	if (sc == NULL)
@@ -1099,7 +1098,6 @@ smsc_tick_task(void *xsc)
 
 	if (usbd_is_dying(sc->sc_udev))
 		return;
-	ifp = &sc->sc_ac.ac_if;
 	mii = &sc->sc_mii;
 	if (mii == NULL)
 		return;
