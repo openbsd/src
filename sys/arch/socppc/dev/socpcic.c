@@ -1,4 +1,4 @@
-/*	$OpenBSD: socpcic.c,v 1.9 2010/12/04 17:06:32 miod Exp $	*/
+/*	$OpenBSD: socpcic.c,v 1.10 2016/01/21 08:03:08 jsg Exp $	*/
 
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -202,7 +202,7 @@ socpcic_attach(struct socpcic_softc *sc)
 	}
 
 	sc->sc_ranges = malloc(sc->sc_ranges_len, M_DEVBUF, M_NOWAIT);
-	if (ranges == NULL)
+	if (sc->sc_ranges == NULL)
 		panic("out of memory");
 
 	len = OF_getprop(sc->sc_node, "ranges", sc->sc_ranges,
