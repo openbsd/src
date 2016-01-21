@@ -1,4 +1,4 @@
-/*	$OpenBSD: dsrtc.c,v 1.12 2012/03/28 20:44:23 miod Exp $ */
+/*	$OpenBSD: dsrtc.c,v 1.13 2016/01/21 06:28:56 jsg Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -156,9 +156,6 @@ dsrtc_attach_ioc(struct device *parent, struct device *self, void *aux)
 		sys_tod.tod_set = ds1687_set;
 	} else {
 		/* DS1742W */
-
-		bus_space_unmap(iaa->iaa_memt, ih, 1);
-		bus_space_unmap(iaa->iaa_memt, ih2, 1);
 
 		if (bus_space_subregion(iaa->iaa_memt, iaa->iaa_memh,
 		    iaa->iaa_base + MK48T35_CLKOFF,
