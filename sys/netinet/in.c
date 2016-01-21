@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.c,v 1.125 2015/12/03 21:57:59 mpi Exp $	*/
+/*	$OpenBSD: in.c,v 1.126 2016/01/21 11:23:48 mpi Exp $	*/
 /*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
 
 /*
@@ -880,6 +880,21 @@ in_delmulti(struct in_multi *inm)
 	}
 }
 
+/*
+ * Return 1 if the multicast group represented by ``ap'' has been
+ * joined by interface ``ifp'', 0 otherwise.
+ */
+int
+in_hasmulti(struct in_addr *ap, struct ifnet *ifp)
+{
+	struct in_multi *inm;
+	int joined;
+
+	IN_LOOKUP_MULTI(*ap, ifp, inm);
+	joined = (inm != NULL);
+
+	return (joined);
+}
 
 void
 in_ifdetach(struct ifnet *ifp)

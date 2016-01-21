@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.265 2015/12/03 21:11:53 sashan Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.266 2016/01/21 11:23:48 mpi Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -346,8 +346,6 @@ ipv4_input(struct mbuf *m)
 	}
 
 	if (IN_MULTICAST(ip->ip_dst.s_addr)) {
-		struct in_multi *inm;
-
 		/*
 		 * Make sure M_MCAST is set.  It should theoretically
 		 * already be there, but let's play safe because upper
@@ -402,8 +400,7 @@ ipv4_input(struct mbuf *m)
 		 * See if we belong to the destination multicast group on the
 		 * arrival interface.
 		 */
-		IN_LOOKUP_MULTI(ip->ip_dst, ifp, inm);
-		if (inm == NULL) {
+		if (!in_hasmulti(&ip->ip_dst, ifp)) {
 			ipstat.ips_notmember++;
 			if (!IN_LOCAL_GROUP(ip->ip_dst.s_addr))
 				ipstat.ips_cantforward++;

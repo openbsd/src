@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.153 2016/01/06 10:02:42 sthen Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.154 2016/01/21 11:23:48 mpi Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -388,7 +388,6 @@ ip6_input(struct mbuf *m)
 	 * Multicast check
 	 */
 	if (IN6_IS_ADDR_MULTICAST(&ip6->ip6_dst)) {
-		struct	in6_multi *in6m = NULL;
 
 		/*
 		 * Make sure M_MCAST is set.  It should theoretically
@@ -401,8 +400,7 @@ ip6_input(struct mbuf *m)
 		 * See if we belong to the destination multicast group on the
 		 * arrival interface.
 		 */
-		IN6_LOOKUP_MULTI(ip6->ip6_dst, ifp, in6m);
-		if (in6m)
+		if (in6_hasmulti(&ip6->ip6_dst, ifp))
 			ours = 1;
 #ifdef MROUTING
 		else if (!ip6_mforwarding || !ip6_mrouter)

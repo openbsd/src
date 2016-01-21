@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.182 2015/12/22 10:01:01 mpi Exp $	*/
+/*	$OpenBSD: in6.c,v 1.183 2016/01/21 11:23:48 mpi Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -1376,6 +1376,22 @@ in6_delmulti(struct in6_multi *in6m)
 
 		free(in6m, M_IPMADDR, sizeof(*in6m));
 	}
+}
+
+/*
+ * Return 1 if the multicast group represented by ``maddr6'' has been
+ * joined by interface ``ifp'', 0 otherwise.
+ */
+int
+in6_hasmulti(struct in6_addr *maddr6, struct ifnet *ifp)
+{
+	struct in6_multi *in6m;
+	int joined;
+
+	IN6_LOOKUP_MULTI(*maddr6, ifp, in6m);
+	joined = (in6m != NULL);
+
+	return (joined);
 }
 
 struct in6_multi_mship *

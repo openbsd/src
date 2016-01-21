@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.316 2016/01/13 09:38:36 mpi Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.317 2016/01/21 11:23:48 mpi Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -241,7 +241,6 @@ reroute:
 
 	if (IN_MULTICAST(ip->ip_dst.s_addr) ||
 	    (ip->ip_dst.s_addr == INADDR_BROADCAST)) {
-		struct in_multi *inm;
 
 		m->m_flags |= (ip->ip_dst.s_addr == INADDR_BROADCAST) ?
 			M_BCAST : M_MCAST;
@@ -295,9 +294,8 @@ reroute:
 				ip->ip_src = ia->ia_addr.sin_addr;
 		}
 
-		IN_LOOKUP_MULTI(ip->ip_dst, ifp, inm);
-		if (inm != NULL &&
-		   (imo == NULL || imo->imo_loop)) {
+		if ((imo == NULL || imo->imo_loop) &&
+		    in_hasmulti(&ip->ip_dst, ifp)) {
 			/*
 			 * If we belong to the destination multicast group
 			 * on the outgoing interface, and the caller did not

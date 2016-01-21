@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.203 2016/01/13 09:38:37 mpi Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.204 2016/01/21 11:23:48 mpi Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -566,7 +566,6 @@ reroute:
 		m->m_flags &= ~(M_BCAST | M_MCAST);	/* just in case */
 	} else {
 		/* Multicast */
-		struct	in6_multi *in6m;
 
 		m->m_flags = (m->m_flags & ~M_BCAST) | M_MCAST;
 
@@ -579,9 +578,8 @@ reroute:
 			goto bad;
 		}
 
-		IN6_LOOKUP_MULTI(ip6->ip6_dst, ifp, in6m);
-		if (in6m != NULL &&
-		    (im6o == NULL || im6o->im6o_loop)) {
+		if ((im6o == NULL || im6o->im6o_loop) &&
+		    in6_hasmulti(&ip6->ip6_dst, ifp)) {
 			/*
 			 * If we belong to the destination multicast group
 			 * on the outgoing interface, and the caller did not

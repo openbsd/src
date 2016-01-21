@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.285 2016/01/12 09:22:01 mpi Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.286 2016/01/21 11:23:48 mpi Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -1809,17 +1809,13 @@ carp_addr_updated(void *v)
 
 	/* We received address changes from if_addrhooks callback */
 	if (new_naddrs != sc->sc_naddrs || new_naddrs6 != sc->sc_naddrs6) {
-		struct in_addr mc_addr;
-		struct in_multi *inm;
 
 		sc->sc_naddrs = new_naddrs;
 		sc->sc_naddrs6 = new_naddrs6;
 
 		/* Re-establish multicast membership removed by in_control */
 		if (IN_MULTICAST(sc->sc_peer.s_addr)) {
-			mc_addr.s_addr = sc->sc_peer.s_addr;
-			IN_LOOKUP_MULTI(mc_addr, &sc->sc_if, inm);
-			if (inm == NULL) {
+			if (!in_hasmulti(&sc->sc_peer, &sc->sc_if)) {
 				struct in_multi **imm =
 				    sc->sc_imo.imo_membership;
 				u_int16_t maxmem =
