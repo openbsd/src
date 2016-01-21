@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.200 2016/01/14 12:41:02 mpi Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.201 2016/01/21 03:34:05 dlg Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -86,7 +86,6 @@ void in_revarpinput(struct mbuf *);
 
 LIST_HEAD(, llinfo_arp) arp_list;
 struct	pool arp_pool;		/* pool for llinfo_arp structures */
-int	arp_inuse, arp_allocated;
 int	arp_maxtries = 5;
 int	arpinit_done;
 int	la_hold_total;
@@ -193,8 +192,7 @@ arp_rtrequest(struct ifnet *ifp, int req, struct rtentry *rt)
 			log(LOG_DEBUG, "%s: pool get failed\n", __func__);
 			break;
 		}
-		arp_inuse++;
-		arp_allocated++;
+
 		ml_init(&la->la_ml);
 		la->la_rt = rt;
 		rt->rt_flags |= RTF_LLINFO;
@@ -215,7 +213,6 @@ arp_rtrequest(struct ifnet *ifp, int req, struct rtentry *rt)
 	case RTM_DELETE:
 		if (la == NULL)
 			break;
-		arp_inuse--;
 		LIST_REMOVE(la, la_list);
 		rt->rt_llinfo = 0;
 		rt->rt_flags &= ~RTF_LLINFO;
