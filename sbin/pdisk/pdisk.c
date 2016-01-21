@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdisk.c,v 1.54 2016/01/19 23:44:47 krw Exp $	*/
+/*	$OpenBSD: pdisk.c,v 1.55 2016/01/21 02:52:52 krw Exp $	*/
 
 /*
  * pdisk - an editor for Apple format partition tables
@@ -172,9 +172,7 @@ edit(char *name)
 			printf("  r    reorder partition entry in map\n");
 			printf("  s    change size of partition map\n");
 			printf("  t    change a partition's type\n");
-			if (!rflag) {
-				printf("  w    write the partition table\n");
-			}
+			printf("  w    write the partition table\n");
 			if (dflag) {
 				printf("  x    extra extensions for experts\n");
 			}
@@ -237,11 +235,7 @@ edit(char *name)
 			break;
 		case 'W':
 		case 'w':
-			if (!rflag) {
-				do_write_partition_map(map);
-			} else {
-				goto do_error;
-			}
+			do_write_partition_map(map);
 			break;
 		default:
 	do_error:
@@ -264,9 +258,6 @@ do_create_partition(struct partition_map_header * map, int get_type)
 	if (map == NULL) {
 		bad_input("No partition map exists");
 		return;
-	}
-	if (!rflag && map->writable == 0) {
-		printf("The map is not writable.\n");
 	}
 	if (get_base_argument(&base, map) == 0) {
 		return;
@@ -371,9 +362,6 @@ do_rename_partition(struct partition_map_header * map)
 		bad_input("No partition map exists");
 		return;
 	}
-	if (!rflag && map->writable == 0) {
-		printf("The map is not writable.\n");
-	}
 	if (get_number_argument("Partition number: ", &ix, kDefault) == 0) {
 		bad_input("Bad partition number");
 		return;
@@ -405,9 +393,6 @@ do_change_type(struct partition_map_header * map)
 	if (map == NULL) {
 		bad_input("No partition map exists");
 		return;
-	}
-	if (!rflag && map->writable == 0) {
-		printf("The map is not writable.\n");
 	}
 	if (get_number_argument("Partition number: ", &ix, kDefault) == 0) {
 		bad_input("Bad partition number");
@@ -443,9 +428,6 @@ do_delete_partition(struct partition_map_header * map)
 		bad_input("No partition map exists");
 		return;
 	}
-	if (!rflag && map->writable == 0) {
-		printf("The map is not writable.\n");
-	}
 	if (get_number_argument("Partition number: ", &ix, kDefault) == 0) {
 		bad_input("Bad partition number");
 		return;
@@ -468,9 +450,6 @@ do_reorder(struct partition_map_header * map)
 	if (map == NULL) {
 		bad_input("No partition map exists");
 		return;
-	}
-	if (!rflag && map->writable == 0) {
-		printf("The map is not writable.\n");
 	}
 	if (get_number_argument("Partition number: ", &old_index, kDefault) ==
 	    0) {
@@ -496,7 +475,7 @@ do_write_partition_map(struct partition_map_header * map)
 		bad_input("The map has not been changed.");
 		return;
 	}
-	if (map->writable == 0) {
+	if (rflag) {
 		bad_input("The map is not writable.");
 		return;
 	}
@@ -591,9 +570,6 @@ do_change_map_size(struct partition_map_header * map)
 	if (map == NULL) {
 		bad_input("No partition map exists");
 		return;
-	}
-	if (!rflag && map->writable == 0) {
-		printf("The map is not writable.\n");
 	}
 	if (get_number_argument("New size: ", &size, kDefault) == 0) {
 		bad_input("Bad size");
