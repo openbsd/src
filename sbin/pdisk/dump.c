@@ -1,4 +1,4 @@
-/*	$OpenBSD: dump.c,v 1.39 2016/01/21 02:52:52 krw Exp $	*/
+/*	$OpenBSD: dump.c,v 1.40 2016/01/21 15:33:21 krw Exp $	*/
 
 /*
  * dump.c - dumping partition maps
@@ -29,13 +29,9 @@
 
 #include <sys/param.h>		/* DEV_BSIZE */
 
-#include <err.h>
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <fcntl.h>
-#include <errno.h>
 
 #include "file_media.h"
 #include "dump.h"
@@ -100,10 +96,6 @@ dump_partition_map(struct partition_map_header * map, int disk_order)
 	struct partition_map *entry;
 	int digits, max_type_length, max_name_length;
 
-	if (map == NULL) {
-		bad_input("No partition map exists");
-		return;
-	}
 	printf("\nPartition map (with %d byte blocks) on '%s'\n",
 	       map->logical_block, map->name);
 
@@ -198,10 +190,6 @@ show_data_structures(struct partition_map_header * map)
 	struct dpme *p;
 	int i;
 
-	if (map == NULL) {
-		printf("No partition map exists\n");
-		return;
-	}
 	printf("Header:\n");
 	printf("map %d blocks out of %d,  media %lu blocks (%d byte blocks)\n",
 	       map->blocks_in_map, map->maximum_in_map,
@@ -405,10 +393,6 @@ full_dump_block_zero(struct partition_map_header * map)
 	struct ddmap *m;
 	int i;
 
-	if (map == NULL) {
-		printf("No partition map exists\n");
-		return;
-	}
 	if (map->misc == NULL) {
 		printf("No block zero\n");
 		return;
@@ -442,9 +426,6 @@ get_max_type_string_length(struct partition_map_header * map)
 	struct partition_map *entry;
 	int max, length;
 
-	if (map == NULL) {
-		return 0;
-	}
 	max = 0;
 
 	for (entry = map->disk_order; entry != NULL; entry = entry->next_on_disk) {
@@ -463,9 +444,6 @@ get_max_name_string_length(struct partition_map_header * map)
 	struct partition_map *entry;
 	int max, length;
 
-	if (map == NULL) {
-		return 0;
-	}
 	max = 0;
 
 	for (entry = map->disk_order; entry != NULL; entry =
@@ -485,9 +463,6 @@ get_max_base_or_length(struct partition_map_header * map)
 	struct partition_map *entry;
 	int max;
 
-	if (map == NULL) {
-		return 0;
-	}
 	max = 0;
 
 	for (entry = map->disk_order; entry != NULL;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdisk.c,v 1.55 2016/01/21 02:52:52 krw Exp $	*/
+/*	$OpenBSD: pdisk.c,v 1.56 2016/01/21 15:33:21 krw Exp $	*/
 
 /*
  * pdisk - an editor for Apple format partition tables
@@ -30,14 +30,18 @@
  */
 
 #include <sys/param.h>		/* DEV_BSIZE */
-#include <err.h>
+#include <sys/dkio.h>
+#include <sys/disklabel.h>
+#include <sys/ioctl.h>
+#include <sys/stat.h>
 
+#include <err.h>
+#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <string.h>
-#include <fcntl.h>
-#include <errno.h>
+#include <unistd.h>
+#include <util.h>
 
 #include "io.h"
 #include "partition_map.h"
@@ -55,12 +59,12 @@ void		do_change_map_size(struct partition_map_header *);
 void		do_create_partition(struct partition_map_header *, int);
 void		do_delete_partition(struct partition_map_header *);
 void		do_display_entry(struct partition_map_header *);
-int		do_expert (struct partition_map_header *, char *);
+int		do_expert (struct partition_map_header *);
 void		do_rename_partition(struct partition_map_header *);
 void		do_change_type(struct partition_map_header *);
 void		do_reorder(struct partition_map_header *);
 void		do_write_partition_map(struct partition_map_header *);
-void		edit(char *);
+void		edit(struct partition_map_header **);
 int		get_base_argument(long *, struct partition_map_header *);
 int		get_size_argument(long *, struct partition_map_header *);
 void		print_edit_notes(void);
@@ -71,8 +75,10 @@ __dead static void usage(void);
 int
 main(int argc, char **argv)
 {
+	struct disklabel dl;
+	struct stat st;
 	struct partition_map_header *map;
-	int c, junk;
+	int c, fd;
 
 	if (sizeof(struct dpme) != DEV_BSIZE) {
 		errx(1, "Size of partition map entry (%zu) is not equal "
@@ -105,14 +111,34 @@ main(int argc, char **argv)
 	if (argc != 1)
 		usage();
 
-	if (lflag) {
-		map = open_partition_map(*argv, &junk);
-		if (map) {
+	fd = opendev(*argv, (rflag ? O_RDONLY:O_RDWR), OPENDEV_PART, NULL);
+	if (fd == -1)
+		err(1, "can't open file '%s'", *argv);
+	if (fstat(fd, &st) == -1)
+		err(1, "can't fstat %s", *argv);
+	if (!S_ISCHR(st.st_mode) && !S_ISREG(st.st_mode))
+		errx(1, "%s is not a character device or a regular file",
+		    *argv);
+	if (ioctl(fd, DIOCGPDINFO, &dl) == -1)
+		err(1, "can't get disklabel for %s", *argv);
+	if (dl.d_secsize != DEV_BSIZE)
+		err(1, "%u-byte sector size not supported", dl.d_secsize);
+
+	map = open_partition_map(fd, *argv);
+	if (map != NULL) {
+		if (DL_GETDSIZE(&dl) > LONG_MAX)
+			map->media_size =  LONG_MAX;
+		else
+			map->media_size = DL_GETDSIZE(&dl);
+		sync_device_size(map);
+		if (lflag)
 			dump_partition_map(map, 1);
-			close_partition_map(map);
-		}
-	} else
-		edit(*argv);
+		else
+			edit(&map);
+	}
+
+	free_partition_map(map);
+	close(fd);
 
 	return 0;
 }
@@ -138,16 +164,13 @@ print_edit_notes()
  * Edit the file
  */
 void
-edit(char *name)
+edit(struct partition_map_header **mapp)
 {
-	struct partition_map_header *map;
-	int command, valid_file;
+	struct partition_map_header *map = *mapp;
+	struct partition_map_header *oldmap;
+	int command;
 
-	map = open_partition_map(name, &valid_file);
-	if (!valid_file) {
-		return;
-	}
-	printf("Edit %s -\n", name);
+	printf("Edit %s -\n", map->name);
 
 	while (get_command("Command (? for help): ", first_get, &command)) {
 		first_get = 0;
@@ -185,18 +208,29 @@ edit(char *name)
 			break;
 		case 'Q':
 		case 'q':
-			if (map && map->changed) {
+			if (map->changed) {
 				if (get_okay("Discard changes? [n/y]: ", 0) !=
 				    1) {
 					break;
 				}
 			}
 			flush_to_newline(1);
-			goto finis;
-			break;
+			return;
 		case 'I':
 		case 'i':
-			map = init_partition_map(name, map);
+			if (get_okay("Discard current map? [n/y]: ", 0) == 1) {
+				oldmap = map;
+				map = create_partition_map(oldmap->fd,
+				    oldmap->name);
+				if (map == NULL)
+					break;
+				map->media_size = oldmap->media_size;
+				sync_device_size(map);
+				add_partition_to_map("Apple", kMapType,
+				    1, (map->media_size <= 128 ? 2 : 63), map);
+				*mapp = map;
+				free_partition_map(oldmap);
+			}
 			break;
 		case 'C':
 			do_create_partition(map, 1);
@@ -228,9 +262,9 @@ edit(char *name)
 		case 'x':
 			if (!dflag) {
 				goto do_error;
-			} else if (do_expert(map, name)) {
+			} else if (do_expert(map)) {
 				flush_to_newline(1);
-				goto finis;
+				return;
 			}
 			break;
 		case 'W':
@@ -243,9 +277,6 @@ edit(char *name)
 			break;
 		}
 	}
-finis:
-
-	close_partition_map(map);
 }
 
 void
@@ -502,7 +533,7 @@ print_expert_notes()
 
 
 int
-do_expert(struct partition_map_header * map, char *name)
+do_expert(struct partition_map_header * map)
 {
 	int command, quit = 0;
 
@@ -567,10 +598,6 @@ do_change_map_size(struct partition_map_header * map)
 {
 	long size;
 
-	if (map == NULL) {
-		bad_input("No partition map exists");
-		return;
-	}
 	if (get_number_argument("New size: ", &size, kDefault) == 0) {
 		bad_input("Bad size");
 		return;
@@ -584,10 +611,6 @@ do_display_entry(struct partition_map_header * map)
 {
 	long number;
 
-	if (map == NULL) {
-		bad_input("No partition map exists");
-		return;
-	}
 	if (get_number_argument("Partition number: ", &number, kDefault) == 0) {
 		bad_input("Bad partition number");
 		return;

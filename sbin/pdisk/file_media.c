@@ -1,4 +1,4 @@
-/*	$OpenBSD: file_media.c,v 1.36 2016/01/19 16:53:04 krw Exp $	*/
+/*	$OpenBSD: file_media.c,v 1.37 2016/01/21 15:33:21 krw Exp $	*/
 
 /*
  * file_media.c -
@@ -28,55 +28,12 @@
  */
 
 #include <sys/param.h>		/* DEV_BSIZE */
-#include <sys/dkio.h>
-#include <sys/disklabel.h>
+
 #include <err.h>
-
 #include <stdio.h>
-#include <stdlib.h>
 #include <unistd.h>
-#include <fcntl.h>
-#include <limits.h>
-#include <errno.h>
-
-#include <sys/ioctl.h>
-#include <sys/stat.h>
-#include <util.h>
 
 #include "file_media.h"
-
-void		compute_block_size(int, char *);
-
-void
-compute_block_size(int fd, char *name)
-{
-	struct disklabel dl;
-	struct stat st;
-
-	if (fstat(fd, &st) == -1)
-		err(1, "can't fstat %s", name);
-	if (!S_ISCHR(st.st_mode) && !S_ISREG(st.st_mode))
-		errx(1, "%s is not a character device or a regular file", name);
-	if (ioctl(fd, DIOCGPDINFO, &dl) == -1)
-		err(1, "can't get disklabel for %s", name);
-
-	if (dl.d_secsize != DEV_BSIZE)
-		err(1, "%u-byte sector size not supported", dl.d_secsize);
-}
-
-
-int
-open_file_as_media(char *file, int oflag)
-{
-	int fd;
-
-	fd = opendev(file, oflag, OPENDEV_PART, NULL);
-	if (fd >= 0)
-		compute_block_size(fd, file);
-
-	return (fd);
-}
-
 
 long
 read_file_media(int fd, long long offset, unsigned long count,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: validate.c,v 1.28 2016/01/21 01:37:18 krw Exp $	*/
+/*	$OpenBSD: validate.c,v 1.29 2016/01/21 15:33:21 krw Exp $	*/
 
 /*
  * validate.c -
@@ -30,13 +30,8 @@
 
 #include <sys/param.h>		/* DEV_BSIZE */
 
-#include <err.h>
-
 #include <stdio.h>
 #include <stdlib.h>
-#include <fcntl.h>
-#include <errno.h>
-#include <unistd.h>
 
 #include "validate.h"
 #include "convert.h"
@@ -300,34 +295,11 @@ void
 validate_map(struct partition_map_header * map)
 {
 	struct range_list *list;
-	char *name;
 	int i, printed;
 	uint32_t limit;
 
-	if (map == NULL) {
-		the_map = NULL;
-		if (get_string_argument("Name of device: ", &name, 1) == 0) {
-			bad_input("Bad name");
-			return;
-		}
-		the_fd = open_file_as_media(name, O_RDONLY);
-		if (the_fd == -1) {
-			warn("can't open file '%s' for reading", name);
-			free(name);
-			return;
-		}
-		g = DEV_BSIZE;
-
-		buffer = malloc(DEV_BSIZE);
-		if (buffer == NULL) {
-			warn("can't allocate memory for disk buffer");
-			goto done;
-		}
-	} else {
-		name = 0;
-		the_map = map;
-		g = map->logical_block;
-	}
+	the_map = map;
+	g = map->logical_block;
 
 	initialize_list(&list);
 
@@ -354,7 +326,7 @@ check_map:
 	} else {
 		if (get_block_n(1) == 0) {
 			printf("unable to get first block\n");
-			goto done;
+			return;
 		} else {
 			if (mb->dpme_signature != DPME_SIGNATURE) {
 				limit = -1;
@@ -441,11 +413,4 @@ post_processing:
 	/* map fits within partition that contains it */
 
 	/* try to detect 512/2048 mixed partition map? */
-
-done:
-	if (map == NULL) {
-		close(the_fd);
-		free(buffer);
-		free(name);
-	}
 }

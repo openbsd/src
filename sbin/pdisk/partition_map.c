@@ -1,4 +1,4 @@
-/*	$OpenBSD: partition_map.c,v 1.42 2016/01/21 02:52:52 krw Exp $	*/
+/*	$OpenBSD: partition_map.c,v 1.43 2016/01/21 15:33:21 krw Exp $	*/
 
 /*
  * partition_map.c - partition map routines
@@ -28,21 +28,11 @@
  */
 
 #include <sys/param.h>		/* DEV_BSIZE */
-#include <sys/dkio.h>
-#include <sys/disklabel.h>
-#include <sys/ioctl.h>
-#include <sys/stat.h>
 
 #include <err.h>
-#include <limits.h>
-#include <unistd.h>
-#include <util.h>
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <fcntl.h>
-#include <errno.h>
 
 #include "partition_map.h"
 #include "io.h"
@@ -72,7 +62,6 @@ int		add_data_to_map(struct dpme *, long,
 int		coerce_block0(struct partition_map_header *);
 int		contains_driver(struct partition_map *);
 void		combine_entry(struct partition_map *);
-long		compute_device_size(char *);
 struct dpme    *create_data(const char *, const char *, uint32_t, uint32_t);
 void		delete_entry(struct partition_map *);
 void		insert_in_base_order(struct partition_map *);
@@ -83,98 +72,80 @@ int		read_partition_map(struct partition_map_header *);
 void		remove_driver(struct partition_map *);
 void		remove_from_disk_order(struct partition_map *);
 void		renumber_disk_addresses(struct partition_map_header *);
-void		sync_device_size(struct partition_map_header *);
 int		write_block(struct partition_map_header *, unsigned long,
 		    char *);
 
 struct partition_map_header *
-open_partition_map(char *name, int *valid_file)
+open_partition_map(int fd, char *name)
 {
 	struct partition_map_header *map;
-	int fd;
-
-	fd = open_file_as_media(name, (rflag) ? O_RDONLY : O_RDWR);
-	if (fd == -1) {
-		warn("can't open file '%s' for %sing", name, (rflag) ?
-		    "read" : "writ");
-		*valid_file = 0;
-		return NULL;
-	}
-	*valid_file = 1;
 
 	map = malloc(sizeof(struct partition_map_header));
 	if (map == NULL) {
 		warn("can't allocate memory for open partition map");
-		close(fd);
 		return NULL;
 	}
+
+	map->fd = fd;
 	map->name = name;
+
 	map->changed = 0;
 	map->written = 0;
 	map->disk_order = NULL;
 	map->base_order = NULL;
+	map->physical_block = DEV_BSIZE;
+	map->logical_block = DEV_BSIZE;
+	map->blocks_in_map = 0;
+	map->maximum_in_map = -1;
 
-	map->physical_block = DEV_BSIZE;	/* preflight */
-	map->fd = fd;
 	map->misc = malloc(DEV_BSIZE);
 	if (map->misc == NULL) {
 		warn("can't allocate memory for block zero buffer");
-		close(map->fd);
 		free(map);
 		return NULL;
-	} else if (read_file_media(map->fd, (long long) 0, DEV_BSIZE,
-		   (char *) map->misc) == 0 ||
+	}
+	if (read_file_media(map->fd, 0, DEV_BSIZE, (char *) map->misc) == 0 ||
 		   convert_block0(map->misc, 1) ||
 		   coerce_block0(map)) {
 		warnx("Can't read block 0 from '%s'", name);
-		close_partition_map(map);
+		free_partition_map(map);
 		return NULL;
 	}
-	map->physical_block = map->misc->sbBlkSize;
 
-	map->logical_block = DEV_BSIZE;
-
-	if (map->logical_block > MAXIOSIZE) {
-		map->logical_block = MAXIOSIZE;
-	}
-	if (map->logical_block > map->physical_block) {
-		map->physical_block = map->logical_block;
-	}
-	map->blocks_in_map = 0;
-	map->maximum_in_map = -1;
-	map->media_size = compute_device_size(map->name);
-	sync_device_size(map);
-
-	if (read_partition_map(map) < 0) {
-		/* some sort of failure reading the map */
-	} else {
-		/* got it! */
+	if (read_partition_map(map) != -1)
 		return map;
+
+	if (!lflag) {
+		my_ungetch('\n');
+		printf("No valid partition map found on '%s'.\n", name);
+		if (get_okay("Create default map? [n/y]: ", 0) == 1) {
+			free_partition_map(map);
+			map = create_partition_map(fd, name);
+			if (map)
+				return (map);
+		}
 	}
-	close_partition_map(map);
+
+	free_partition_map(map);
 	return NULL;
 }
 
 
 void
-close_partition_map(struct partition_map_header * map)
+free_partition_map(struct partition_map_header * map)
 {
 	struct partition_map *entry, *next;
 
-	if (map == NULL) {
-		return;
+	if (map) {
+		free(map->misc);
+		for (entry = map->disk_order; entry != NULL; entry = next) {
+			next = entry->next_on_disk;
+			free(entry->data);
+			free(entry);
+		}
+		free(map);
 	}
-	free(map->misc);
-
-	for (entry = map->disk_order; entry != NULL; entry = next) {
-		next = entry->next_on_disk;
-		free(entry->data);
-		free(entry);
-	}
-	close(map->fd);
-	free(map);
 }
-
 
 int
 read_partition_map(struct partition_map_header * map)
@@ -319,87 +290,34 @@ add_data_to_map(struct dpme * data, long ix, struct partition_map_header * map)
 	return 1;
 }
 
-
 struct partition_map_header *
-init_partition_map(char *name, struct partition_map_header * oldmap)
-{
-	struct partition_map_header *map;
-
-	if (oldmap != NULL) {
-		printf("map already exists\n");
-		if (get_okay("do you want to reinit? [n/y]: ", 0) != 1) {
-			return oldmap;
-		}
-	}
-	map = create_partition_map(name, oldmap);
-	if (map == NULL) {
-		return oldmap;
-	}
-	close_partition_map(oldmap);
-
-	add_partition_to_map("Apple", kMapType,
-			     1, (map->media_size <= 128 ? 2 : 63), map);
-	return map;
-}
-
-
-struct partition_map_header *
-create_partition_map(char *name, struct partition_map_header * oldmap)
+create_partition_map(int fd, char *name)
 {
 	struct partition_map_header *map;
 	struct dpme *data;
-	unsigned long number;
-	long size;
-	int fd;
 
-	fd = open_file_as_media(name, (rflag) ? O_RDONLY : O_RDWR);
-	if (fd == -1) {
-		warn("can't open file '%s' for %sing", name, (rflag) ?
-		    "read" : "writ");
-		return NULL;
-	}
 	map = malloc(sizeof(struct partition_map_header));
 	if (map == NULL) {
 		warn("can't allocate memory for open partition map");
-		close(fd);
 		return NULL;
 	}
 	map->name = name;
+	map->fd = fd;
 	map->changed = 1;
 	map->disk_order = NULL;
 	map->base_order = NULL;
 
-	if (oldmap != NULL) {
-		size = oldmap->physical_block;
-	} else {
-		size = DEV_BSIZE;
-	}
-	map->fd = fd;
-	if (map->physical_block > MAXIOSIZE) {
-		map->physical_block = MAXIOSIZE;
-	}
-	map->physical_block = size;
-
-	if (oldmap != NULL) {
-		size = oldmap->logical_block;
-	} else {
-		size = DEV_BSIZE;
-	}
-
-	map->logical_block = size;
+	map->physical_block = DEV_BSIZE;
+	map->logical_block = DEV_BSIZE;
 
 	map->blocks_in_map = 0;
 	map->maximum_in_map = -1;
-
-	number = compute_device_size(map->name);
-	map->media_size = number;
 
 	map->misc = calloc(1, DEV_BSIZE);
 	if (map->misc == NULL) {
 		warn("can't allocate memory for block zero buffer");
 	} else {
 		coerce_block0(map);
-		sync_device_size(map);
 
 		data = calloc(1, DEV_BSIZE);
 		if (data == NULL) {
@@ -423,7 +341,8 @@ create_partition_map(char *name, struct partition_map_header * oldmap)
 			}
 		}
 	}
-	close_partition_map(map);
+
+	free_partition_map(map);
 	return NULL;
 }
 
@@ -650,35 +569,6 @@ renumber_disk_addresses(struct partition_map_header * map)
 		cur = cur->next_on_disk;
 	}
 }
-
-long
-compute_device_size(char *name)
-{
-	struct disklabel dl;
-	struct stat st;
-	u_int64_t sz;
-	int fd;
-
-	fd = opendev(name, O_RDONLY, OPENDEV_PART, NULL);
-	if (fd == -1)
-		warn("can't open %s", name);
-
-	if (fstat(fd, &st) == -1)
-		err(1, "can't fstat %s", name);
-	if (!S_ISCHR(st.st_mode) && !S_ISREG(st.st_mode))
-		errx(1, "%s is not a character device or a regular file", name);
-	if (ioctl(fd, DIOCGPDINFO, &dl) == -1)
-		err(1, "can't get disklabel for %s", name);
-
-	close(fd);
-
-	sz = DL_GETDSIZE(&dl);
-	if (sz > LONG_MAX)
-		sz = LONG_MAX;
-
-	return ((long) sz);
-}
-
 
 void
 sync_device_size(struct partition_map_header * map)

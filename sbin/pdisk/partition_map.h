@@ -1,4 +1,4 @@
-/*	$OpenBSD: partition_map.h,v 1.20 2016/01/21 02:52:52 krw Exp $	*/
+/*	$OpenBSD: partition_map.h,v 1.21 2016/01/21 15:33:21 krw Exp $	*/
 
 /*
  * partition_map.h - partition map routines
@@ -66,21 +66,23 @@ extern const char * kHFSType;
 extern const char * kFreeName;
 extern const char * kPatchType;
 
-extern int rflag;
 extern int dflag;
+extern int lflag;
+extern int rflag;
 
 int add_partition_to_map(const char *, const char *, uint32_t, uint32_t, struct partition_map_header *);
-void close_partition_map(struct partition_map_header *);
-struct partition_map_header* create_partition_map(char *, struct partition_map_header *);
+void free_partition_map(struct partition_map_header *);
+struct partition_map_header* create_partition_map(int, char *);
 void delete_partition_from_map(struct partition_map *);
 struct partition_map* find_entry_by_disk_address(long, struct partition_map_header *);
 struct partition_map* find_entry_by_type(const char *, struct partition_map_header *);
 struct partition_map* find_entry_by_base(uint32_t, struct partition_map_header *);
-struct partition_map_header* init_partition_map(char *, struct partition_map_header *);
+struct partition_map_header* init_partition_map(char *);
 void move_entry_in_map(long, long, struct partition_map_header *);
-struct partition_map_header* open_partition_map(char *, int *);
+struct partition_map_header* open_partition_map(int, char *);
 void resize_map(long new_size, struct partition_map_header *);
 void write_partition_map(struct partition_map_header *);
 void dpme_init_flags(struct dpme *);
+void		sync_device_size(struct partition_map_header *);
 
 #endif /* __partition_map__ */
