@@ -1,4 +1,4 @@
-/*	$OpenBSD: partition_map.c,v 1.40 2016/01/18 17:57:35 krw Exp $	*/
+/*	$OpenBSD: partition_map.c,v 1.41 2016/01/21 01:37:18 krw Exp $	*/
 
 /*
  * partition_map.c - partition map routines
@@ -95,17 +95,12 @@ open_partition_map(char *name, int *valid_file)
 
 	fd = open_file_as_media(name, (rflag) ? O_RDONLY : O_RDWR);
 	if (fd == -1) {
-		fd = open_file_as_media(name, O_RDONLY);
-		if (fd == -1) {
-			warn("can't open file '%s'", name);
-			*valid_file = 0;
-			return NULL;
-		} else {
-			writable = 0;
-		}
-	} else {
-		writable = 1;
+		warn("can't open file '%s' for %sing", name, (rflag) ?
+		    "read" : "writ");
+		*valid_file = 0;
+		return NULL;
 	}
+	writable = !rflag;
 	*valid_file = 1;
 
 	map = malloc(sizeof(struct partition_map_header));

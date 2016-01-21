@@ -1,4 +1,4 @@
-/*	$OpenBSD: validate.c,v 1.27 2016/01/18 17:57:35 krw Exp $	*/
+/*	$OpenBSD: validate.c,v 1.28 2016/01/21 01:37:18 krw Exp $	*/
 
 /*
  * validate.c -
@@ -312,7 +312,7 @@ validate_map(struct partition_map_header * map)
 		}
 		the_fd = open_file_as_media(name, O_RDONLY);
 		if (the_fd == -1) {
-			warn("can't open file '%s'", name);
+			warn("can't open file '%s' for reading", name);
 			free(name);
 			return;
 		}
