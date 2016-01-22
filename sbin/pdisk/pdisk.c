@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdisk.c,v 1.58 2016/01/22 01:25:56 krw Exp $	*/
+/*	$OpenBSD: pdisk.c,v 1.59 2016/01/22 04:16:25 krw Exp $	*/
 
 /*
  * pdisk - an editor for Apple format partition tables
@@ -74,6 +74,7 @@ main(int argc, char **argv)
 	struct disklabel dl;
 	struct stat st;
 	struct partition_map_header *map;
+	uint64_t mediasz;
 	int c, fd;
 
 	if (sizeof(struct dpme) != DEV_BSIZE) {
@@ -117,13 +118,13 @@ main(int argc, char **argv)
 	if (dl.d_secsize != DEV_BSIZE)
 		err(1, "%u-byte sector size not supported", dl.d_secsize);
 
-	map = open_partition_map(fd, *argv);
+	if (DL_GETDSIZE(&dl) > LONG_MAX)
+		mediasz =  LONG_MAX;
+	else
+		mediasz = DL_GETDSIZE(&dl);
+
+	map = open_partition_map(fd, *argv, mediasz);
 	if (map != NULL) {
-		if (DL_GETDSIZE(&dl) > LONG_MAX)
-			map->media_size =  LONG_MAX;
-		else
-			map->media_size = DL_GETDSIZE(&dl);
-		sync_device_size(map);
 		if (lflag)
 			dump_partition_map(map);
 		else
@@ -205,13 +206,9 @@ edit(struct partition_map_header **mapp)
 			if (get_okay("Discard current map? [n/y]: ", 0) == 1) {
 				oldmap = map;
 				map = create_partition_map(oldmap->fd,
-				    oldmap->name);
+				    oldmap->name, oldmap->media_size);
 				if (map == NULL)
 					break;
-				map->media_size = oldmap->media_size;
-				sync_device_size(map);
-				add_partition_to_map("Apple", kMapType,
-				    1, (map->media_size <= 128 ? 2 : 63), map);
 				*mapp = map;
 				free_partition_map(oldmap);
 			}

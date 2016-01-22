@@ -1,4 +1,4 @@
-/*	$OpenBSD: partition_map.c,v 1.45 2016/01/22 01:25:56 krw Exp $	*/
+/*	$OpenBSD: partition_map.c,v 1.46 2016/01/22 04:16:25 krw Exp $	*/
 
 /*
  * partition_map.c - partition map routines
@@ -76,7 +76,7 @@ int		write_block(struct partition_map_header *, unsigned long,
 		    char *);
 
 struct partition_map_header *
-open_partition_map(int fd, char *name)
+open_partition_map(int fd, char *name, uint64_t mediasz)
 {
 	struct partition_map_header *map;
 
@@ -119,7 +119,7 @@ open_partition_map(int fd, char *name)
 		printf("No valid partition map found on '%s'.\n", name);
 		if (get_okay("Create default map? [n/y]: ", 0) == 1) {
 			free_partition_map(map);
-			map = create_partition_map(fd, name);
+			map = create_partition_map(fd, name, mediasz);
 			if (map)
 				return (map);
 		}
@@ -289,7 +289,7 @@ add_data_to_map(struct dpme * data, long ix, struct partition_map_header * map)
 }
 
 struct partition_map_header *
-create_partition_map(int fd, char *name)
+create_partition_map(int fd, char *name, u_int64_t mediasz)
 {
 	struct partition_map_header *map;
 	struct dpme *data;
@@ -310,6 +310,8 @@ create_partition_map(int fd, char *name)
 
 	map->blocks_in_map = 0;
 	map->maximum_in_map = -1;
+	map->media_size = mediasz;
+	sync_device_size(map);
 
 	map->misc = calloc(1, DEV_BSIZE);
 	if (map->misc == NULL) {
@@ -335,6 +337,8 @@ create_partition_map(int fd, char *name)
 			if (add_data_to_map(data, 1, map) == 0) {
 				free(data);
 			} else {
+				add_partition_to_map("Apple", kMapType,
+				    1, (map->media_size <= 128 ? 2 : 63), map);
 				return map;
 			}
 		}
