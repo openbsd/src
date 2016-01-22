@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pdisk.8,v 1.21 2016/01/12 20:09:39 krw Exp $
+.\"	$OpenBSD: pdisk.8,v 1.22 2016/01/22 00:38:53 krw Exp $
 .\"
 .\" Copyright 1996,1997,1998 by Apple Computer, Inc.
 .\"              All Rights Reserved
@@ -19,7 +19,7 @@
 .\" NEGLIGENCE, OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 .\" WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 12 2016 $
+.Dd $Mdocdate: January 22 2016 $
 .Dt PDISK 8
 .Os
 .Sh NAME
@@ -40,7 +40,7 @@ It does not support the Intel/DOS partitioning scheme supported by
 The options are as follows:
 .Bl -tag -width Ds
 .It Fl l
-List the partition tables for the specified
+List the partition map for the specified
 .Ar disk .
 .It Fl r
 Prevents
@@ -65,34 +65,40 @@ or
 .Sh COMMAND MODE
 The list of commands and their explanations are given below.
 .Bl -tag -width "update"
-.It Em h
-command help
-.It Em p
-print the partition table
-.It Em P
-print ordered by base address
-.It Em i
-initialize partition map
-.It Em s
-change size of partition map
-.It Em c
-create new partition (standard
-.Ox
-type)
+.It Em ?
+verbose command help
 .It Em C
-create with type also specified
-.It Em n
-(re)name a partition
+create a partition of the specified type
+.It Em c
+create an
+.Ox
+partition
 .It Em d
 delete a partition
-.It Em r
-reorder partition entry in map
-.It Em t
-change the type of an existing partition
-.It Em w
-write the partition table
+.It Em f
+full display of the specified entry
+.It Em h
+command help
+.It Em i
+(re)initialize the partition map
+.It Em n
+(re)name a partition
+.It Em P
+show the partition map's data structures
+.It Em p
+print the partition map
 .It Em q
-quit editing (don't save changes)
+quit editing
+.It Em r
+reorder an entry in the partition map
+.It Em s
+change the size of the partition map
+.It Em t
+change the specified partition's type
+.It Em v
+validate the partition map
+.It Em w
+write the partition map
 .El
 .Pp
 Commands which take arguments prompt for each argument in turn.
@@ -110,7 +116,7 @@ Partitions are always specified by their number,
 which is the index of the partition entry in the partition map.
 Most of the commands will change the index numbers of all partitions
 after the affected partition.
-You are advised to print the table as frequently as necessary.
+You are advised to print the partition map as frequently as necessary.
 .Pp
 Creating more than fifteen partitions is not advised, for
 compatibility reasons.

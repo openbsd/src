@@ -1,4 +1,4 @@
-/*	$OpenBSD: dump.c,v 1.40 2016/01/21 15:33:21 krw Exp $	*/
+/*	$OpenBSD: dump.c,v 1.41 2016/01/22 00:38:53 krw Exp $	*/
 
 /*
  * dump.c - dumping partition maps
@@ -91,7 +91,7 @@ dump_block_zero(struct partition_map_header * map)
 
 
 void
-dump_partition_map(struct partition_map_header * map, int disk_order)
+dump_partition_map(struct partition_map_header * map)
 {
 	struct partition_map *entry;
 	int digits, max_type_length, max_name_length;
@@ -116,19 +116,10 @@ dump_partition_map(struct partition_map_header * map, int disk_order)
 	       max_name_length, "name",
 	       digits, "length", digits, "base");
 
-	if (disk_order) {
-		for (entry = map->disk_order; entry != NULL;
-		     entry = entry->next_on_disk) {
-
-			dump_partition_entry(entry, max_type_length,
-			    max_name_length, digits);
-		}
-	} else {
-		for (entry = map->base_order; entry != NULL;
-		     entry = entry->next_by_base) {
-			dump_partition_entry(entry, max_type_length,
-			    max_name_length, digits);
-		}
+	for (entry = map->disk_order; entry != NULL;
+	     entry = entry->next_on_disk) {
+		dump_partition_entry(entry, max_type_length,
+		    max_name_length, digits);
 	}
 	dump_block_zero(map);
 }

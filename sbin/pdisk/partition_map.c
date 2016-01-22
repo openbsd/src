@@ -1,4 +1,4 @@
-/*	$OpenBSD: partition_map.c,v 1.43 2016/01/21 15:33:21 krw Exp $	*/
+/*	$OpenBSD: partition_map.c,v 1.44 2016/01/22 00:38:53 krw Exp $	*/
 
 /*
  * partition_map.c - partition map routines
@@ -212,9 +212,8 @@ read_partition_map(struct partition_map_header * map)
 			free(data);
 			return -1;
 		} else if (convert_dpme(data, 1) ||
-			   (data->dpme_signature != DPME_SIGNATURE &&
-			   dflag == 0) ||
-			   (data->dpme_map_entries != limit && dflag == 0)) {
+			   (data->dpme_signature != DPME_SIGNATURE) ||
+			   (data->dpme_map_entries != limit)) {
 			warnx("Bad data in block %u from '%s'", ix, map->name);
 			free(data);
 			return -1;
