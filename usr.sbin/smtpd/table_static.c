@@ -1,4 +1,4 @@
-/*	$OpenBSD: table_static.c,v 1.14 2015/12/28 22:08:30 jung Exp $	*/
+/*	$OpenBSD: table_static.c,v 1.15 2016/01/22 13:08:44 gilles Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -91,9 +91,10 @@ table_static_parse(struct table *t, const char *config, enum table_type type)
 	char	*valp;
 	size_t	 ret = 0;
 
-	fp = fopen(config, "r");
-	if (fp == NULL)
-		return 0;
+        if ((fp = fopen(config, "r")) == NULL) {
+                log_warn("warn: Table \"%s\"", config);
+                return 0;
+        }
 
 	while ((flen = getline(&buf, &sz, fp)) != -1) {
 		if (buf[flen - 1] == '\n')
