@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.312 2015/12/05 10:52:26 tedu Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.313 2016/01/22 11:10:17 jsg Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -2954,7 +2954,7 @@ int
 tcp_mss(struct tcpcb *tp, int offer)
 {
 	struct rtentry *rt;
-	struct ifnet *ifp;
+	struct ifnet *ifp = NULL;
 	int mss, mssopt;
 	int iphlen;
 	struct inpcb *inp;
@@ -3028,8 +3028,8 @@ tcp_mss(struct tcpcb *tp, int offer)
 		mssopt = ifp->if_mtu - iphlen - sizeof(struct tcphdr);
 		mssopt = max(tcp_mssdflt, mssopt);
 	}
-	if_put(ifp);
  out:
+	if_put(ifp);
 	/*
 	 * The current mss, t_maxseg, is initialized to the default value.
 	 * If we compute a smaller value, reduce the current mss.
