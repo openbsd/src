@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.191 2016/01/04 13:36:32 jung Exp $	*/
+/*	$OpenBSD: lka.c,v 1.192 2016/01/22 13:10:41 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -320,7 +320,14 @@ lka_imsg(struct mproc *p, struct imsg *imsg)
 		case IMSG_CONF_END:
 			if (verbose & TRACE_TABLES)
 				table_dump_all();
+
+			/* fork & exec tables that need it */
 			table_open_all();
+
+			/* revoke proc & exec */
+			if (pledge("stdio rpath inet dns getpw recvfd",
+				NULL) == -1)
+				err(1, "pledge");
 
 			/* Start fulfilling requests */
 			mproc_enable(p_pony);
@@ -449,6 +456,7 @@ lka(void)
 	/* Ignore them until we get our config */
 	mproc_disable(p_pony);
 
+	/* proc & exec will be revoked before serving requests */
 	if (pledge("stdio rpath inet dns getpw recvfd proc exec", NULL) == -1)
 		err(1, "pledge");
 
