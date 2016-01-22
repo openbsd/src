@@ -1,4 +1,4 @@
-/*	$OpenBSD: partition_map.h,v 1.23 2016/01/22 04:16:25 krw Exp $	*/
+/*	$OpenBSD: partition_map.h,v 1.24 2016/01/22 17:29:37 krw Exp $	*/
 
 /*
  * partition_map.h - partition map routines
@@ -34,36 +34,36 @@
 #include "file_media.h"
 
 struct partition_map_header {
-    char *name;
-    struct partition_map * disk_order;
-    struct partition_map * base_order;
-    struct block0 *misc;
-    int fd;
-    int changed;
-    int physical_block;		/* must be == sbBlockSize */
-    int logical_block;		/* must be <= physical_block */
-    int blocks_in_map;
-    int maximum_in_map;
-    unsigned long media_size;	/* in logical_blocks */
+    char		       *name;
+    struct partition_map       *disk_order;
+    struct partition_map       *base_order;
+    struct block0	       *misc;
+    int				fd;
+    int				changed;
+    int				physical_block;	/* must be == sbBlockSize */
+    int				logical_block;	/* must be <= physical_block */
+    int				blocks_in_map;
+    int				maximum_in_map;
+    unsigned long		media_size;	/* in logical_blocks */
 };
 
 struct partition_map {
-    struct partition_map * next_on_disk;
-    struct partition_map * prev_on_disk;
-    struct partition_map * next_by_base;
-    struct partition_map * prev_by_base;
-    long disk_address;
-    struct partition_map_header * the_map;
-    int contains_driver;
-    struct dpme *data;
+    struct partition_map	       *next_on_disk;
+    struct partition_map	       *prev_on_disk;
+    struct partition_map	       *next_by_base;
+    struct partition_map	       *prev_by_base;
+    struct partition_map_header	       *the_map;
+    struct dpme			       *data;
+    long				disk_address;
+    int					contains_driver;
 };
 
-extern const char * kFreeType;
-extern const char * kMapType;
-extern const char * kUnixType;
-extern const char * kHFSType;
-extern const char * kFreeName;
-extern const char * kPatchType;
+extern const char *kFreeType;
+extern const char *kMapType;
+extern const char *kUnixType;
+extern const char *kHFSType;
+extern const char *kFreeName;
+extern const char *kPatchType;
 
 extern int dflag;
 extern int lflag;
