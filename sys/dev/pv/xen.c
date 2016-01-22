@@ -1,4 +1,4 @@
-/*	$OpenBSD: xen.c,v 1.31 2016/01/19 13:36:00 mikeb Exp $	*/
+/*	$OpenBSD: xen.c,v 1.32 2016/01/22 19:26:40 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Belopuhov
@@ -379,7 +379,7 @@ xen_print_info_page(void)
 	struct vcpu_info *v;
 	int i;
 
-	membar_sync();
+	virtio_membar_sync();
 	for (i = 0; i < XEN_LEGACY_MAX_VCPUS; i++) {
 		v = &s->vcpu_info[i];
 		if (!v->evtchn_upcall_pending && !v->evtchn_upcall_mask &&
@@ -479,7 +479,6 @@ xen_init_interrupts(struct xen_softc *sc)
 	for (i = 0; i < nitems(sc->sc_ipg->evtchn_pending); i++) {
 		sc->sc_ipg->evtchn_pending[i] = 0;
 		sc->sc_ipg->evtchn_mask[i] = ~0UL;
-		membar_producer();
 	}
 
 	SLIST_INIT(&sc->sc_intrs);
@@ -523,6 +522,7 @@ xen_intr_ack(void)
 	struct vcpu_info *v = &s->vcpu_info[CPU_INFO_UNIT(ci)];
 
 	v->evtchn_upcall_pending = 0;
+	virtio_membar_sync();
 }
 
 void
@@ -550,7 +550,7 @@ xen_intr(void)
 			if ((pending & 1) == 0)
 				continue;
 			sc->sc_ipg->evtchn_pending[row] &= ~(1 << bit);
-			membar_producer();
+			virtio_membar_producer();
 			port = (row * LONG_BIT) + bit;
 			if ((xi = xen_lookup_intsrc(sc, port)) == NULL) {
 				printf("%s: unhandled interrupt on port %u\n",
@@ -687,7 +687,7 @@ xen_intr_disestablish(xen_intr_handle_t xih)
 
 	setbit((char *)&sc->sc_ipg->evtchn_mask[0], xi->xi_port);
 	clrbit((char *)&sc->sc_ipg->evtchn_pending[0], xi->xi_port);
-	membar_producer();
+	virtio_membar_sync();
 
 	if (!xi->xi_noclose) {
 		ec.port = xi->xi_port;
@@ -715,7 +715,7 @@ xen_intr_enable(void)
 			    sizeof(eu)))
 				printf("%s: unmasking port %u failed\n",
 				    sc->sc_dev.dv_xname, xi->xi_port);
-			membar_sync();
+			virtio_membar_sync();
 			if (isset((char *)&sc->sc_ipg->evtchn_mask[0],
 			    xi->xi_port))
 				printf("%s: port %u is still masked\n",
@@ -734,7 +734,7 @@ xen_intr_mask(xen_intr_handle_t xih)
 	if ((xi = xen_lookup_intsrc(sc, port)) != NULL) {
 		xi->xi_masked = 1;
 		setbit((char *)&sc->sc_ipg->evtchn_mask[0], xi->xi_port);
-		membar_producer();
+		virtio_membar_sync();
 	}
 }
 
@@ -918,7 +918,7 @@ xen_grant_table_enter(struct xen_softc *sc, grant_ref_t ref, paddr_t pa,
 		mtx_enter(&ge->ge_mtx);
 		ge->ge_table[ref].frame = atop(pa);
 		ge->ge_table[ref].domid = 0;
-		membar_producer();
+		virtio_membar_sync();
 		ge->ge_table[ref].flags = GTF_permit_access | flags;
 		mtx_leave(&ge->ge_mtx);
 		return (0);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: xenstore.c,v 1.19 2016/01/18 18:54:38 mikeb Exp $	*/
+/*	$OpenBSD: xenstore.c,v 1.20 2016/01/22 19:26:40 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Belopuhov
@@ -310,7 +310,6 @@ xs_ring_avail(struct xs_ring *xsr, int req)
 	uint32_t cons = req ? xsr->xsr_req_cons : xsr->xsr_rsp_cons;
 	uint32_t prod = req ? xsr->xsr_req_prod : xsr->xsr_rsp_prod;
 
-	membar_consumer();
 	KASSERT(prod - cons <= XS_RING_SIZE);
 	return (req ? XS_RING_SIZE - (prod - cons) : prod - cons);
 }
@@ -349,7 +348,7 @@ xs_output(struct xs_transaction *xst, uint8_t *bp, int len)
 			} else
 				tsleep(xs->xs_wchan, PRIBIO, xs->xs_wchan,
 				    XST_DELAY * hz >> 2);
-			membar_sync();
+			virtio_membar_sync();
 		}
 	}
 	return (0);
@@ -440,7 +439,6 @@ xs_ring_put(struct xs_softc *xs, void *src, size_t size)
 	uint32_t avail = xs_ring_avail(xsr, 1);
 	size_t left;
 
-	membar_consumer();
 	if (size > XS_RING_SIZE)
 		return (-1);
 	if (avail == 0)
@@ -455,7 +453,7 @@ xs_ring_put(struct xs_softc *xs, void *src, size_t size)
 
 	memcpy(&xsr->xsr_req[prod], src, left);
 	memcpy(&xsr->xsr_req[0], (caddr_t)src + left, size - left);
-	membar_producer();
+	virtio_membar_sync();
 	xsr->xsr_req_prod += size;
 	return (size);
 }
@@ -468,7 +466,6 @@ xs_ring_get(struct xs_softc *xs, void *dst, size_t size)
 	uint32_t avail = xs_ring_avail(xsr, 0);
 	size_t left;
 
-	membar_consumer();
 	if (size > XS_RING_SIZE)
 		return (-1);
 	if (avail == 0)
@@ -483,7 +480,7 @@ xs_ring_get(struct xs_softc *xs, void *dst, size_t size)
 
 	memcpy(dst, &xsr->xsr_rsp[cons], left);
 	memcpy((caddr_t)dst + left, &xsr->xsr_rsp[0], size - left);
-	membar_producer();
+	virtio_membar_sync();
 	xsr->xsr_rsp_cons += size;
 	return (size);
 }
@@ -499,7 +496,7 @@ xs_intr(void *arg)
 	uint32_t avail;
 	int len;
 
-	membar_sync();
+	virtio_membar_sync();
 
 	if (xsr->xsr_rsp_cons == xsr->xsr_rsp_prod)
 		return;
