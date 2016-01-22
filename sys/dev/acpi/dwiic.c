@@ -1,4 +1,4 @@
-/* $OpenBSD: dwiic.c,v 1.8 2016/01/17 15:52:06 jcs Exp $ */
+/* $OpenBSD: dwiic.c,v 1.9 2016/01/22 22:57:23 jsg Exp $ */
 /*
  * Synopsys DesignWare I2C controller
  *
@@ -241,6 +241,7 @@ dwiic_attach(struct device *parent, struct device *self, void *aux)
 		aml_freevalue(&res);
 		return;
 	}
+	memset(&crs, 0, sizeof(crs));
 	aml_parse_resource(&res, dwiic_acpi_parse_crs, &crs);
 	aml_freevalue(&res);
 
@@ -558,6 +559,7 @@ dwiic_acpi_foundhid(struct aml_node *node, void *arg)
 		aml_freevalue(&res);
 		return (0);
 	}
+	memset(&crs, 0, sizeof(crs));
 	aml_parse_resource(&res, dwiic_acpi_parse_crs, &crs);
 	aml_freevalue(&res);
 
