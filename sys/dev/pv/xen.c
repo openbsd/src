@@ -1,4 +1,4 @@
-/*	$OpenBSD: xen.c,v 1.32 2016/01/22 19:26:40 mikeb Exp $	*/
+/*	$OpenBSD: xen.c,v 1.33 2016/01/22 19:28:16 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Belopuhov
@@ -941,7 +941,7 @@ xen_grant_table_remove(struct xen_softc *sc, grant_ref_t ref)
 		/* Invalidate the grant reference */
 		ptr = (uint32_t *)&ge->ge_table[ref];
 		flags = (ge->ge_table[ref].flags & ~(GTF_reading | GTF_writing));
-		while (atomic_cas_uint(ptr, flags, 0) != flags)
+		while (atomic_cas_uint(ptr, flags, GTF_invalid) != flags)
 			CPU_BUSY_CYCLE();
 		ge->ge_table[ref].frame = 0xffffffff;
 		mtx_leave(&ge->ge_mtx);
