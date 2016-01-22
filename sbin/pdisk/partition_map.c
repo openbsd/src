@@ -1,4 +1,4 @@
-/*	$OpenBSD: partition_map.c,v 1.44 2016/01/22 00:38:53 krw Exp $	*/
+/*	$OpenBSD: partition_map.c,v 1.45 2016/01/22 01:25:56 krw Exp $	*/
 
 /*
  * partition_map.c - partition map routines
@@ -90,7 +90,6 @@ open_partition_map(int fd, char *name)
 	map->name = name;
 
 	map->changed = 0;
-	map->written = 0;
 	map->disk_order = NULL;
 	map->base_order = NULL;
 	map->physical_block = DEV_BSIZE;

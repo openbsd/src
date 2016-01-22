@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdisk.c,v 1.57 2016/01/22 00:38:53 krw Exp $	*/
+/*	$OpenBSD: pdisk.c,v 1.58 2016/01/22 01:25:56 krw Exp $	*/
 
 /*
  * pdisk - an editor for Apple format partition tables
@@ -476,7 +476,7 @@ do_write_partition_map(struct partition_map_header * map)
 		bad_input("No partition map exists");
 		return;
 	}
-	if (map->changed == 0 && map->written == 0) {
+	if (map->changed == 0) {
 		bad_input("The map has not been changed.");
 		return;
 	}
@@ -491,7 +491,6 @@ do_write_partition_map(struct partition_map_header * map)
 	write_partition_map(map);
 
 	map->changed = 0;
-	map->written = 1;
 }
 
 

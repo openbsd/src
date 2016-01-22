@@ -1,4 +1,4 @@
-/*	$OpenBSD: dump.c,v 1.41 2016/01/22 00:38:53 krw Exp $	*/
+/*	$OpenBSD: dump.c,v 1.42 2016/01/22 01:25:56 krw Exp $	*/
 
 /*
  * dump.c - dumping partition maps
@@ -186,8 +186,7 @@ show_data_structures(struct partition_map_header * map)
 	       map->blocks_in_map, map->maximum_in_map,
 	       map->media_size, map->logical_block);
 	printf("Map is%s writable", rflag ? kStringNot : kStringEmpty);
-	printf(", but%s changed", (map->changed) ? kStringEmpty : kStringNot);
-	printf(" and has%s been written\n", (map->written) ? kStringEmpty :
+	printf(" and has%s been changed\n", (map->changed) ? kStringEmpty :
 	    kStringNot);
 	printf("\n");
 
