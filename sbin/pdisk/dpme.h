@@ -1,4 +1,4 @@
-/*	$OpenBSD: dpme.h,v 1.16 2016/01/17 23:18:19 krw Exp $	*/
+/*	$OpenBSD: dpme.h,v 1.17 2016/01/22 17:22:35 krw Exp $	*/
 
 /*
  * dpme.h - Disk Partition Map Entry (dpme)
@@ -71,16 +71,16 @@ struct ddmap {
 
 /* Each partition map entry (blocks 1 through n) has this format */
 struct dpme {
-    uint16_t     dpme_signature          ;
-    uint16_t     dpme_reserved_1         ;
-    uint32_t     dpme_map_entries        ;
-    uint32_t     dpme_pblock_start       ;
-    uint32_t     dpme_pblocks            ;
-    char    dpme_name[DPISTRLEN]    ;  /* name of partition */
-    char    dpme_type[DPISTRLEN]    ;  /* type of partition */
-    uint32_t     dpme_lblock_start       ;
-    uint32_t     dpme_lblocks            ;
-    uint32_t     dpme_flags		    ;
+    uint16_t	dpme_signature;
+    uint16_t	dpme_reserved_1;
+    uint32_t	dpme_map_entries;
+    uint32_t	dpme_pblock_start;
+    uint32_t	dpme_pblocks;
+    char	dpme_name[DPISTRLEN];  /* name of partition */
+    char	dpme_type[DPISTRLEN];  /* type of partition */
+    uint32_t	dpme_lblock_start;
+    uint32_t	dpme_lblocks;
+    uint32_t	dpme_flags;
 #define	DPME_DISKDRIVER		(1<<9)
 #define	DPME_CHAINABLE		(1<<8)
 #define	DPME_OS_SPECIFIC_1	(1<<8)
@@ -92,16 +92,16 @@ struct dpme {
 #define	DPME_IN_USE		(1<<2)
 #define	DPME_ALLOCATED		(1<<1)
 #define	DPME_VALID		(1<<0)
-    uint32_t     dpme_boot_block         ;
-    uint32_t     dpme_boot_bytes         ;
-    uint8_t     *dpme_load_addr          ;
-    uint8_t     *dpme_load_addr_2        ;
-    uint8_t     *dpme_goto_addr          ;
-    uint8_t     *dpme_goto_addr_2        ;
-    uint32_t     dpme_checksum           ;
-    char    dpme_process_id[16]     ;
-    uint32_t     dpme_boot_args[32]      ;
-    uint32_t     dpme_reserved_3[62]     ;
+    uint32_t	dpme_boot_block;
+    uint32_t	dpme_boot_bytes;
+    uint8_t    *dpme_load_addr;
+    uint8_t    *dpme_load_addr_2;
+    uint8_t    *dpme_goto_addr;
+    uint8_t    *dpme_goto_addr_2;
+    uint32_t	dpme_checksum;
+    char	dpme_process_id[16];
+    uint32_t	dpme_boot_args[32];
+    uint32_t	dpme_reserved_3[62];
 };
 
 #endif /* __dpme__ */
