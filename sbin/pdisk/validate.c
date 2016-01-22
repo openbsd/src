@@ -1,4 +1,4 @@
-/*	$OpenBSD: validate.c,v 1.30 2016/01/22 12:31:04 krw Exp $	*/
+/*	$OpenBSD: validate.c,v 1.31 2016/01/22 17:35:16 krw Exp $	*/
 
 /*
  * validate.c -
@@ -74,7 +74,7 @@ get_block_zero(void)
 	int rtn_value;
 
 	if (the_map != NULL) {
-		b0 = the_map->misc;
+		b0 = the_map->block0;
 		rtn_value = 1;
 	} else {
 		if (read_block(the_fd, 0, buffer) == 0) {

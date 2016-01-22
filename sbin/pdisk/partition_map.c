@@ -1,4 +1,4 @@
-/*	$OpenBSD: partition_map.c,v 1.48 2016/01/22 15:59:33 krw Exp $	*/
+/*	$OpenBSD: partition_map.c,v 1.49 2016/01/22 17:35:16 krw Exp $	*/
 
 /*
  * partition_map.c - partition map routines
@@ -93,14 +93,14 @@ open_partition_map(int fd, char *name, uint64_t mediasz)
 	map->blocks_in_map = 0;
 	map->maximum_in_map = -1;
 
-	map->misc = malloc(DEV_BSIZE);
-	if (map->misc == NULL) {
+	map->block0 = malloc(DEV_BSIZE);
+	if (map->block0 == NULL) {
 		warn("can't allocate memory for block zero buffer");
 		free(map);
 		return NULL;
 	}
-	if (read_block(map->fd, 0, map->misc) == 0 ||
-	    convert_block0(map->misc, 1) ||
+	if (read_block(map->fd, 0, map->block0) == 0 ||
+	    convert_block0(map->block0, 1) ||
 	    coerce_block0(map)) {
 		warnx("Can't read block 0 from '%s'", name);
 		free_partition_map(map);
@@ -132,7 +132,7 @@ free_partition_map(struct partition_map_header * map)
 	struct partition_map *entry, *next;
 
 	if (map) {
-		free(map->misc);
+		free(map->block0);
 		for (entry = map->disk_order; entry != NULL; entry = next) {
 			next = entry->next_on_disk;
 			free(entry->data);
@@ -225,10 +225,10 @@ write_partition_map(struct partition_map_header * map)
 	char *block;
 	int i = 0, result = 0;
 
-	if (map->misc != NULL) {
-		convert_block0(map->misc, 0);
-		result = write_block(map->fd, 0, map->misc);
-		convert_block0(map->misc, 1);
+	if (map->block0 != NULL) {
+		convert_block0(map->block0, 0);
+		result = write_block(map->fd, 0, map->block0);
+		convert_block0(map->block0, 1);
 	} else {
 		block = calloc(1, DEV_BSIZE);
 		if (block != NULL) {
@@ -309,8 +309,8 @@ create_partition_map(int fd, char *name, u_int64_t mediasz)
 	map->media_size = mediasz;
 	sync_device_size(map);
 
-	map->misc = calloc(1, DEV_BSIZE);
-	if (map->misc == NULL) {
+	map->block0 = calloc(1, DEV_BSIZE);
+	if (map->block0 == NULL) {
 		warn("can't allocate memory for block zero buffer");
 	} else {
 		coerce_block0(map);
@@ -350,7 +350,7 @@ coerce_block0(struct partition_map_header * map)
 {
 	struct block0 *p;
 
-	p = map->misc;
+	p = map->block0;
 	if (p == NULL) {
 		return 1;
 	}
@@ -575,7 +575,7 @@ sync_device_size(struct partition_map_header * map)
 	unsigned long size;
 	double d;
 
-	p = map->misc;
+	p = map->block0;
 	if (p == NULL) {
 		return;
 	}
@@ -645,7 +645,7 @@ contains_driver(struct partition_map * entry)
 	uint32_t start;
 
 	map = entry->the_map;
-	p = map->misc;
+	p = map->block0;
 	if (p == NULL) {
 		return 0;
 	}
@@ -1000,7 +1000,7 @@ remove_driver(struct partition_map * entry)
 	uint32_t start;
 
 	map = entry->the_map;
-	p = map->misc;
+	p = map->block0;
 	if (p == NULL) {
 		return;
 	}
