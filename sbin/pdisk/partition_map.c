@@ -1,4 +1,4 @@
-/*	$OpenBSD: partition_map.c,v 1.46 2016/01/22 04:16:25 krw Exp $	*/
+/*	$OpenBSD: partition_map.c,v 1.47 2016/01/22 12:31:04 krw Exp $	*/
 
 /*
  * partition_map.c - partition map routines
@@ -66,14 +66,10 @@ struct dpme    *create_data(const char *, const char *, uint32_t, uint32_t);
 void		delete_entry(struct partition_map *);
 void		insert_in_base_order(struct partition_map *);
 void		insert_in_disk_order(struct partition_map *);
-int		read_block(struct partition_map_header *, unsigned long,
-		    char *);
 int		read_partition_map(struct partition_map_header *);
 void		remove_driver(struct partition_map *);
 void		remove_from_disk_order(struct partition_map *);
 void		renumber_disk_addresses(struct partition_map_header *);
-int		write_block(struct partition_map_header *, unsigned long,
-		    char *);
 
 struct partition_map_header *
 open_partition_map(int fd, char *name, uint64_t mediasz)
@@ -103,9 +99,9 @@ open_partition_map(int fd, char *name, uint64_t mediasz)
 		free(map);
 		return NULL;
 	}
-	if (read_file_media(map->fd, 0, DEV_BSIZE, (char *) map->misc) == 0 ||
-		   convert_block0(map->misc, 1) ||
-		   coerce_block0(map)) {
+	if (read_block(map->fd, 0, map->misc) == 0 ||
+	    convert_block0(map->misc, 1) ||
+	    coerce_block0(map)) {
 		warnx("Can't read block 0 from '%s'", name);
 		free_partition_map(map);
 		return NULL;
@@ -159,7 +155,7 @@ read_partition_map(struct partition_map_header * map)
 		warn("can't allocate memory for disk buffers");
 		return -1;
 	}
-	if (read_block(map, 1, (char *) data) == 0) {
+	if (read_block(map->fd, DEV_BSIZE, data) == 0) {
 		warnx("Can't read block 1 from '%s'", map->name);
 		free(data);
 		return -1;
@@ -168,7 +164,7 @@ read_partition_map(struct partition_map_header * map)
 		old_logical = map->logical_block;
 		map->logical_block = 512;
 		while (map->logical_block <= map->physical_block) {
-			if (read_block(map, 1, (char *) data) == 0) {
+			if (read_block(map->fd, DEV_BSIZE, data) == 0) {
 				warnx("Can't read block 1 from '%s'",
 				    map->name);
 				free(data);
@@ -206,7 +202,7 @@ read_partition_map(struct partition_map_header * map)
 			warn("can't allocate memory for disk buffers");
 			return -1;
 		}
-		if (read_block(map, ix, (char *) data) == 0) {
+		if (read_block(map->fd, ix * DEV_BSIZE, data) == 0) {
 			warnx("Can't read block %u from '%s'", ix, map->name);
 			free(data);
 			return -1;
@@ -231,12 +227,12 @@ write_partition_map(struct partition_map_header * map)
 
 	if (map->misc != NULL) {
 		convert_block0(map->misc, 0);
-		result = write_block(map, 0, (char *) map->misc);
+		result = write_block(map->fd, 0, map->misc);
 		convert_block0(map->misc, 1);
 	} else {
 		block = calloc(1, DEV_BSIZE);
 		if (block != NULL) {
-			result = write_block(map, 0, block);
+			result = write_block(map->fd, 0, block);
 			free(block);
 		}
 	}
@@ -246,8 +242,7 @@ write_partition_map(struct partition_map_header * map)
 	for (entry = map->disk_order; entry != NULL;
 	    entry = entry->next_on_disk) {
 		convert_dpme(entry->data, 0);
-		result = write_block(map, entry->disk_address,
-		    (char *)entry->data);
+		result = write_block(map->fd, entry->disk_address, entry->data);
 		convert_dpme(entry->data, 1);
 		i = entry->disk_address;
 		if (result == 0) {
@@ -1056,17 +1051,3 @@ remove_driver(struct partition_map * entry)
 	}
 }
 
-int
-read_block(struct partition_map_header * map, unsigned long num, char *buf)
-{
-	return read_file_media(map->fd, ((long long) num) * map->logical_block,
-			       DEV_BSIZE, (void *) buf);
-}
-
-
-int
-write_block(struct partition_map_header * map, unsigned long num, char *buf)
-{
-	return write_file_media(map->fd, ((long long) num) * map->logical_block,
-				DEV_BSIZE, (void *) buf);
-}

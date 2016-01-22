@@ -1,4 +1,4 @@
-/*	$OpenBSD: file_media.c,v 1.37 2016/01/21 15:33:21 krw Exp $	*/
+/*	$OpenBSD: file_media.c,v 1.38 2016/01/22 12:31:04 krw Exp $	*/
 
 /*
  * file_media.c -
@@ -35,14 +35,13 @@
 
 #include "file_media.h"
 
-long
-read_file_media(int fd, long long offset, unsigned long count,
-		void *address)
+int
+read_block(int fd, off_t offset, void *address)
 {
 	ssize_t off;
 
-	off = pread(fd, address, count, offset);
-	if (off == count)
+	off = pread(fd, address, DEV_BSIZE, offset);
+	if (off == DEV_BSIZE)
 		return (1);
 
 	if (off == 0)
@@ -55,15 +54,13 @@ read_file_media(int fd, long long offset, unsigned long count,
 	return (0);
 }
 
-
-long
-write_file_media(int fd, long long offset, unsigned long count,
-		 void *address)
+int
+write_block(int fd, off_t offset, void *address)
 {
 	ssize_t off;
 
-	off = pwrite(fd, address, count, offset);
-	if (off == count)
+	off = pwrite(fd, address, DEV_BSIZE, offset);
+	if (off == DEV_BSIZE)
 		return (1);
 
 	warn("writing to file failed");

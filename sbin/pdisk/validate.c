@@ -1,4 +1,4 @@
-/*	$OpenBSD: validate.c,v 1.29 2016/01/21 15:33:21 krw Exp $	*/
+/*	$OpenBSD: validate.c,v 1.30 2016/01/22 12:31:04 krw Exp $	*/
 
 /*
  * validate.c -
@@ -77,8 +77,7 @@ get_block_zero(void)
 		b0 = the_map->misc;
 		rtn_value = 1;
 	} else {
-		if (read_file_media(the_fd, (long long) 0, DEV_BSIZE,
-		    buffer) == 0) {
+		if (read_block(the_fd, 0, buffer) == 0) {
 			rtn_value = 0;
 		} else {
 			b0 = (struct block0 *) buffer;
@@ -105,7 +104,7 @@ get_block_n(int n)
 			rtn_value = 0;
 		}
 	} else {
-		if (read_file_media(the_fd, ((long long) n) * g, DEV_BSIZE, (void *) buffer) == 0) {
+		if (read_block(the_fd, n * DEV_BSIZE, buffer) == 0) {
 			rtn_value = 0;
 		} else {
 			mb = (struct dpme *) buffer;
