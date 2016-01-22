@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xnf.c,v 1.10 2016/01/22 19:33:30 mikeb Exp $	*/
+/*	$OpenBSD: if_xnf.c,v 1.11 2016/01/22 19:47:57 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015, 2016 Mike Belopuhov
@@ -67,8 +67,8 @@ struct xnf_rx_rsp {
 	uint16_t		 rxp_id;
 	uint16_t		 rxp_offset;
 	uint16_t		 rxp_flags;
-#define  XNF_RXF_CSUM		  0x0001
-#define  XNF_RXF_BLANK		  0x0002
+#define  XNF_RXF_CSUM_VALID	  0x0001
+#define  XNF_RXF_CSUM_BLANK	  0x0002
 #define  XNF_RXF_CHUNK		  0x0004
 #define  XNF_RXF_MGMT		  0x0008
 	int16_t			 rxp_status;
@@ -101,8 +101,8 @@ struct xnf_tx_req {
 	uint32_t		 txq_ref;
 	uint16_t		 txq_offset;
 	uint16_t		 txq_flags;
-#define  XNF_TXF_CSUM		  0x0001
-#define  XNF_TXF_VALID		  0x0002
+#define  XNF_TXF_CSUM_BLANK	  0x0001
+#define  XNF_TXF_CSUM_VALID	  0x0002
 #define  XNF_TXF_CHUNK		  0x0004
 #define  XNF_TXF_ETXRA		  0x0008
 	uint16_t		 txq_id;
@@ -157,6 +157,14 @@ struct xnf_softc {
 
 	xen_intr_handle_t	 sc_xih;
 
+	int			 sc_caps;
+#define  XNF_CAP_SG		  0x0001
+#define  XNF_CAP_CSUM4		  0x0002
+#define  XNF_CAP_CSUM6		  0x0004
+#define  XNF_CAP_MCAST		  0x0008
+#define  XNF_CAP_SPLIT		  0x0010
+#define  XNF_CAP_MULTIQ		  0x0020
+
 	/* Rx ring */
 	struct xnf_rx_ring	*sc_rx_ring;
 	int			 sc_rx_cons;
@@ -175,6 +183,7 @@ struct xnf_softc {
 	bus_dmamap_t		 sc_tx_rmap;		  /* map for the ring */
 	bus_dma_segment_t	 sc_tx_seg;
 	uint32_t		 sc_tx_ref;		  /* grant table ref */
+	int			 sc_tx_frags;
 	struct mbuf		*sc_tx_buf[XNF_TX_DESC];
 	bus_dmamap_t		 sc_tx_dmap[XNF_TX_DESC]; /* maps for packets */
 };
@@ -201,8 +210,8 @@ void	xnf_rx_ring_destroy(struct xnf_softc *);
 int	xnf_tx_ring_create(struct xnf_softc *);
 void	xnf_tx_ring_drain(struct xnf_softc *);
 void	xnf_tx_ring_destroy(struct xnf_softc *);
+int	xnf_capabilities(struct xnf_softc *sc);
 int	xnf_init_backend(struct xnf_softc *);
-int	xnf_stop_backend(struct xnf_softc *);
 
 struct cfdriver xnf_cd = {
 	NULL, "xnf", DV_IFNET
@@ -250,6 +259,11 @@ xnf_attach(struct device *parent, struct device *self, void *aux)
 	printf(": event channel %u, address %s\n", sc->sc_xih,
 	    ether_sprintf(sc->sc_ac.ac_enaddr));
 
+	if (xnf_capabilities(sc)) {
+		xen_intr_disestablish(sc->sc_xih);
+		return;
+	}
+
 	if (xnf_rx_ring_create(sc)) {
 		xen_intr_disestablish(sc->sc_xih);
 		return;
@@ -273,7 +287,14 @@ xnf_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_watchdog = xnf_watchdog;
 	ifp->if_softc = sc;
 
+	if (sc->sc_caps & XNF_CAP_SG)
+		ifp->if_hardmtu = 9000;
+
 	ifp->if_capabilities = IFCAP_VLAN_MTU;
+	if (sc->sc_caps & XNF_CAP_CSUM4)
+		ifp->if_capabilities |= IFCAP_CSUM_TCPv4 | IFCAP_CSUM_UDPv4;
+	if (sc->sc_caps & XNF_CAP_CSUM6)
+		ifp->if_capabilities |= IFCAP_CSUM_TCPv6 | IFCAP_CSUM_UDPv6;
 
 	IFQ_SET_MAXLEN(&ifp->if_snd, XNF_TX_DESC - 1);
 	IFQ_SET_READY(&ifp->if_snd);
@@ -492,7 +513,7 @@ xnf_encap(struct xnf_softc *sc, struct mbuf *m, uint32_t *prod)
 	bus_dmamap_t dmap;
 	int error, i, n = 0;
 
-	if ((XNF_TX_DESC - (*prod - sc->sc_tx_cons)) < XNF_TX_FRAG)
+	if ((XNF_TX_DESC - (*prod - sc->sc_tx_cons)) < sc->sc_tx_frags)
 		return (ENOENT);
 
 	i = *prod & (XNF_TX_DESC - 1);
@@ -516,9 +537,10 @@ xnf_encap(struct xnf_softc *sc, struct mbuf *m, uint32_t *prod)
 			    txr->txr_prod, *prod, n, dmap->dm_nsegs - 1);
 		txd = &txr->txr_desc[i];
 		if (n == 0) {
-			if (0 && m->m_pkthdr.csum_flags & M_IPV4_CSUM_OUT)
-				txd->txd_req.txq_flags = XNF_TXF_CSUM |
-				    XNF_TXF_VALID;
+			if (m->m_pkthdr.csum_flags &
+			    (M_TCP_CSUM_OUT | M_UDP_CSUM_OUT))
+				txd->txd_req.txq_flags = XNF_TXF_CSUM_BLANK |
+				    XNF_TXF_CSUM_VALID;
 			txd->txd_req.txq_size = m->m_pkthdr.len;
 		} else
 			txd->txd_req.txq_size = dmap->dm_segs[n].ds_len;
@@ -651,8 +673,9 @@ xnf_rxeof(struct xnf_softc *sc)
 				printf("%s: management data present\n",
 				    ifp->if_xname);
 
-			if (flags & XNF_RXF_CSUM)
-				m->m_pkthdr.csum_flags = M_IPV4_CSUM_IN_OK;
+			if (flags & XNF_RXF_CSUM_VALID)
+				m->m_pkthdr.csum_flags = M_TCP_CSUM_IN_OK |
+				    M_UDP_CSUM_IN_OK;
 
 			if_rxr_put(&sc->sc_rx_slots, 1);
 			pkts++;
@@ -869,6 +892,8 @@ xnf_tx_ring_create(struct xnf_softc *sc)
 {
 	int i, rsegs;
 
+	sc->sc_tx_frags = sc->sc_caps & XNF_CAP_SG ? XNF_TX_FRAG : 1;
+
 	/* Allocate a page of memory for the ring */
 	if (bus_dmamem_alloc(sc->sc_dmat, PAGE_SIZE, PAGE_SIZE, 0,
 	    &sc->sc_tx_seg, 1, &rsegs, BUS_DMA_ZERO | BUS_DMA_WAITOK)) {
@@ -902,7 +927,7 @@ xnf_tx_ring_create(struct xnf_softc *sc)
 	sc->sc_tx_ring->txr_req_evt = sc->sc_tx_ring->txr_rsp_evt = 1;
 
 	for (i = 0; i < XNF_TX_DESC; i++) {
-		if (bus_dmamap_create(sc->sc_dmat, XNF_MCLEN, XNF_TX_FRAG,
+		if (bus_dmamap_create(sc->sc_dmat, XNF_MCLEN, sc->sc_tx_frags,
 		    XNF_MCLEN, PAGE_SIZE, BUS_DMA_WAITOK, &sc->sc_tx_dmap[i])) {
 			printf("%s: failed to create a memory map for the"
 			    " tx slot %d\n", sc->sc_dev.dv_xname, i);
@@ -961,6 +986,71 @@ xnf_tx_ring_destroy(struct xnf_softc *sc)
 }
 
 int
+xnf_capabilities(struct xnf_softc *sc)
+{
+	const char *prop;
+	char val[32];
+	int error;
+
+	/* Query scatter-gather capability */
+	prop = "feature-sg";
+	if ((error = xs_getprop(&sc->sc_xa, prop, val, sizeof(val))) == 0) {
+		if (val[0] == '1')
+			sc->sc_caps |= XNF_CAP_SG;
+	} else if (error != ENOENT)
+		goto errout;
+
+	/* Query IPv4 checksum offloading capability, enabled by default */
+	sc->sc_caps |= XNF_CAP_CSUM4;
+	prop = "feature-no-csum-offload";
+	if ((error = xs_getprop(&sc->sc_xa, prop, val, sizeof(val))) == 0) {
+		if (val[0] == '1')
+			sc->sc_caps &= ~XNF_CAP_CSUM4;
+	} else if (error != ENOENT)
+		goto errout;
+
+	/* Query IPv6 checksum offloading capability */
+	prop = "feature-ipv6-csum-offload";
+	if ((error = xs_getprop(&sc->sc_xa, prop, val, sizeof(val))) == 0) {
+		if (val[0] == '1')
+			sc->sc_caps |= XNF_CAP_CSUM6;
+	} else if (error != ENOENT)
+		goto errout;
+
+	/* Query multicast traffic contol capability */
+	prop = "feature-multicast-control";
+	if ((error = xs_getprop(&sc->sc_xa, prop, val, sizeof(val))) == 0) {
+		if (val[0] == '1')
+			sc->sc_caps |= XNF_CAP_MCAST;
+	} else if (error != ENOENT)
+		goto errout;
+
+	/* Query split Rx/Tx event channel capability */
+	prop = "feature-split-event-channels";
+	if ((error = xs_getprop(&sc->sc_xa, prop, val, sizeof(val))) == 0) {
+		if (val[0] == '1')
+			sc->sc_caps |= XNF_CAP_SPLIT;
+	} else if (error != ENOENT)
+		goto errout;
+
+	/* Query multiqueue capability */
+	prop = "multi-queue-max-queues";
+	if ((error = xs_getprop(&sc->sc_xa, prop, val, sizeof(val))) == 0)
+		sc->sc_caps |= XNF_CAP_MULTIQ;
+	else if (error != ENOENT)
+		goto errout;
+
+	DPRINTF("%s: capabilities %b\n", sc->sc_dev.dv_xname, sc->sc_caps,
+	    "\20\006MULTIQ\005SPLIT\004MCAST\003CSUM6\002CSUM4\001SG");
+	return (0);
+
+ errout:
+	printf("%s: failed to read \"%s\" property\n", sc->sc_dev.dv_xname,
+	    prop);
+	return (-1);
+}
+
+int
 xnf_init_backend(struct xnf_softc *sc)
 {
 	const char *prop;
@@ -981,38 +1071,27 @@ xnf_init_backend(struct xnf_softc *sc)
 	snprintf(val, sizeof(val), "%u", 1);
 	if (xs_setprop(&sc->sc_xa, prop, val, strlen(val)))
 		goto errout;
-	/* Request multicast filtering */
-	prop = "request-multicast-control";
-	snprintf(val, sizeof(val), "%u", 1);
-	if (xs_setprop(&sc->sc_xa, prop, val, strlen(val)))
-		goto errout;
 
 	/* Plumb the Tx ring */
 	prop = "tx-ring-ref";
 	snprintf(val, sizeof(val), "%u", sc->sc_tx_ref);
 	if (xs_setprop(&sc->sc_xa, prop, val, strlen(val)))
 		goto errout;
-	/* Enable transmit scatter-gather mode */
-	prop = "feature-sg";
-	snprintf(val, sizeof(val), "%u", 1);
-	if (xs_setprop(&sc->sc_xa, prop, val, strlen(val)))
-		goto errout;
+	/* Enable scatter-gather mode */
+	if (sc->sc_tx_frags > 1) {
+		prop = "feature-sg";
+		snprintf(val, sizeof(val), "%u", 1);
+		if (xs_setprop(&sc->sc_xa, prop, val, strlen(val)))
+			goto errout;
+	}
 
-	/* Disable TCP/UDP checksum offload */
-	prop = "feature-csum-offload";
-	if (xs_setprop(&sc->sc_xa, prop, NULL, 0))
-		goto errout;
-	prop = "feature-no-csum-offload";
-	snprintf(val, sizeof(val), "%u", 1);
-	if (xs_setprop(&sc->sc_xa, prop, val, strlen(val)))
-		goto errout;
-	prop = "feature-ipv6-csum-offload";
-	if (xs_setprop(&sc->sc_xa, prop, NULL, 0))
-		goto errout;
-	prop = "feature-no-ipv6-csum-offload";
-	snprintf(val, sizeof(val), "%u", 1);
-	if (xs_setprop(&sc->sc_xa, prop, val, strlen(val)))
-		goto errout;
+	/* Enable IPv6 checksum offloading */
+	if (sc->sc_caps & XNF_CAP_CSUM6) {
+		prop = "feature-ipv6-csum-offload";
+		snprintf(val, sizeof(val), "%u", 1);
+		if (xs_setprop(&sc->sc_xa, prop, val, strlen(val)))
+			goto errout;
+	}
 
 	/* Plumb the event channel port */
 	prop = "event-channel";
