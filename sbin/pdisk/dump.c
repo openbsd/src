@@ -1,4 +1,4 @@
-/*	$OpenBSD: dump.c,v 1.43 2016/01/22 17:35:16 krw Exp $	*/
+/*	$OpenBSD: dump.c,v 1.44 2016/01/22 18:57:42 krw Exp $	*/
 
 /*
  * dump.c - dumping partition maps
@@ -136,7 +136,7 @@ dump_partition_entry(struct partition_map * entry, int type_length, int name_len
 	uint32_t size;
 
 	map = entry->the_map;
-	p = entry->data;
+	p = entry->dpme;
 	driver = entry->contains_driver ? '*' : ' ';
 	printf("%2ld: %*.32s", entry->disk_address, type_length, p->dpme_type);
 
@@ -224,7 +224,7 @@ show_data_structures(struct partition_map_header * map)
 	       "flags        (logical)\n");
 	for (entry = map->disk_order; entry != NULL;
 	    entry = entry->next_on_disk) {
-		p = entry->data;
+		p = entry->dpme;
 		printf("%2ld: %20.32s ",
 		       entry->disk_address, p->dpme_type);
 		printf("%7u @ %-7u ", p->dpme_pblocks, p->dpme_pblock_start);
@@ -253,7 +253,7 @@ show_data_structures(struct partition_map_header * map)
 	       "goto_address checksum processor\n");
 	for (entry = map->disk_order; entry != NULL;
 	    entry = entry->next_on_disk) {
-		p = entry->data;
+		p = entry->dpme;
 		printf("%2ld: ", entry->disk_address);
 		printf("%7u ", p->dpme_boot_block);
 		printf("%7u ", p->dpme_boot_bytes);
@@ -282,7 +282,7 @@ full_dump_partition_entry(struct partition_map_header * map, int ix)
 		printf("No such partition\n");
 		return;
 	}
-	p = cur->data;
+	p = cur->dpme;
 	printf("             signature: 0x%x\n", p->dpme_signature);
 	printf("             reserved1: 0x%x\n", p->dpme_reserved_1);
 	printf(" number of map entries: %u\n", p->dpme_map_entries);
@@ -419,7 +419,7 @@ get_max_type_string_length(struct partition_map_header * map)
 	max = 0;
 
 	for (entry = map->disk_order; entry != NULL; entry = entry->next_on_disk) {
-		length = strnlen(entry->data->dpme_type, DPISTRLEN);
+		length = strnlen(entry->dpme->dpme_type, DPISTRLEN);
 		if (length > max) {
 			max = length;
 		}
@@ -438,7 +438,7 @@ get_max_name_string_length(struct partition_map_header * map)
 
 	for (entry = map->disk_order; entry != NULL; entry =
 	    entry->next_on_disk) {
-		length = strnlen(entry->data->dpme_name, DPISTRLEN);
+		length = strnlen(entry->dpme->dpme_name, DPISTRLEN);
 		if (length > max) {
 			max = length;
 		}
@@ -457,17 +457,17 @@ get_max_base_or_length(struct partition_map_header * map)
 
 	for (entry = map->disk_order; entry != NULL;
 	    entry = entry->next_on_disk) {
-		if (entry->data->dpme_pblock_start > max) {
-			max = entry->data->dpme_pblock_start;
+		if (entry->dpme->dpme_pblock_start > max) {
+			max = entry->dpme->dpme_pblock_start;
 		}
-		if (entry->data->dpme_pblocks > max) {
-			max = entry->data->dpme_pblocks;
+		if (entry->dpme->dpme_pblocks > max) {
+			max = entry->dpme->dpme_pblocks;
 		}
-		if (entry->data->dpme_lblock_start > max) {
-			max = entry->data->dpme_lblock_start;
+		if (entry->dpme->dpme_lblock_start > max) {
+			max = entry->dpme->dpme_lblock_start;
 		}
-		if (entry->data->dpme_lblocks > max) {
-			max = entry->data->dpme_lblocks;
+		if (entry->dpme->dpme_lblocks > max) {
+			max = entry->dpme->dpme_lblocks;
 		}
 	}
 

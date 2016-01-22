@@ -1,4 +1,4 @@
-/*	$OpenBSD: validate.c,v 1.31 2016/01/22 17:35:16 krw Exp $	*/
+/*	$OpenBSD: validate.c,v 1.32 2016/01/22 18:57:42 krw Exp $	*/
 
 /*
  * validate.c -
@@ -98,7 +98,7 @@ get_block_n(int n)
 	if (the_map != NULL) {
 		entry = find_entry_by_disk_address(n, the_map);
 		if (entry != 0) {
-			mb = entry->data;
+			mb = entry->dpme;
 			rtn_value = 1;
 		} else {
 			rtn_value = 0;

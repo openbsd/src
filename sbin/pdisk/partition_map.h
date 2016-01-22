@@ -1,4 +1,4 @@
-/*	$OpenBSD: partition_map.h,v 1.25 2016/01/22 17:35:16 krw Exp $	*/
+/*	$OpenBSD: partition_map.h,v 1.26 2016/01/22 18:57:42 krw Exp $	*/
 
 /*
  * partition_map.h - partition map routines
@@ -53,7 +53,7 @@ struct partition_map {
     struct partition_map	       *next_by_base;
     struct partition_map	       *prev_by_base;
     struct partition_map_header	       *the_map;
-    struct dpme			       *data;
+    struct dpme			       *dpme;
     long				disk_address;
     int					contains_driver;
 };

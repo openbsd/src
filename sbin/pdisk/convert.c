@@ -1,4 +1,4 @@
-/*	$OpenBSD: convert.c,v 1.21 2016/01/22 18:01:14 krw Exp $	*/
+/*	$OpenBSD: convert.c,v 1.22 2016/01/22 18:57:42 krw Exp $	*/
 
 /*
  * convert.c - Little-endian conversion
@@ -38,28 +38,28 @@ void	reverse2 (uint8_t *);
 void	reverse4 (uint8_t *);
 
 int
-convert_dpme(struct dpme *data, int to_cpu_form)
+convert_dpme(struct dpme *dpme, int to_cpu_form)
 {
 #if BYTE_ORDER == LITTLE_ENDIAN
 	/*
          * Since we will toss the block if the signature doesn't match
          * we don't need to check the signature down here.
          */
-	reverse2((uint8_t *)&data->dpme_signature);
-	reverse2((uint8_t *)&data->dpme_reserved_1);
-	reverse4((uint8_t *)&data->dpme_map_entries);
-	reverse4((uint8_t *)&data->dpme_pblock_start);
-	reverse4((uint8_t *)&data->dpme_pblocks);
-	reverse4((uint8_t *)&data->dpme_lblock_start);
-	reverse4((uint8_t *)&data->dpme_lblocks);
-	reverse4((uint8_t *)&data->dpme_flags);
-	reverse4((uint8_t *)&data->dpme_boot_block);
-	reverse4((uint8_t *)&data->dpme_boot_bytes);
-	reverse4((uint8_t *)&data->dpme_load_addr);
-	reverse4((uint8_t *)&data->dpme_load_addr_2);
-	reverse4((uint8_t *)&data->dpme_goto_addr);
-	reverse4((uint8_t *)&data->dpme_goto_addr_2);
-	reverse4((uint8_t *)&data->dpme_checksum);
+	reverse2((uint8_t *)&dpme->dpme_signature);
+	reverse2((uint8_t *)&dpme->dpme_reserved_1);
+	reverse4((uint8_t *)&dpme->dpme_map_entries);
+	reverse4((uint8_t *)&dpme->dpme_pblock_start);
+	reverse4((uint8_t *)&dpme->dpme_pblocks);
+	reverse4((uint8_t *)&dpme->dpme_lblock_start);
+	reverse4((uint8_t *)&dpme->dpme_lblocks);
+	reverse4((uint8_t *)&dpme->dpme_flags);
+	reverse4((uint8_t *)&dpme->dpme_boot_block);
+	reverse4((uint8_t *)&dpme->dpme_boot_bytes);
+	reverse4((uint8_t *)&dpme->dpme_load_addr);
+	reverse4((uint8_t *)&dpme->dpme_load_addr_2);
+	reverse4((uint8_t *)&dpme->dpme_goto_addr);
+	reverse4((uint8_t *)&dpme->dpme_goto_addr_2);
+	reverse4((uint8_t *)&dpme->dpme_checksum);
 #endif
 	return 0;
 }

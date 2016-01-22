@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdisk.c,v 1.59 2016/01/22 04:16:25 krw Exp $	*/
+/*	$OpenBSD: pdisk.c,v 1.60 2016/01/22 18:57:42 krw Exp $	*/
 
 /*
  * pdisk - an editor for Apple format partition tables
@@ -313,7 +313,7 @@ get_base_argument(long *number, struct partition_map_header * map)
 				bad_input("Bad partition number");
 				result = 0;
 			} else {
-				*number = entry->data->dpme_pblock_start;
+				*number = entry->dpme->dpme_pblock_start;
 			}
 		}
 	}
@@ -342,7 +342,7 @@ get_size_argument(long *number, struct partition_map_header * map)
 			if (entry == NULL) {
 				bad_input("Bad partition number");
 			} else {
-				*number = entry->data->dpme_pblocks;
+				*number = entry->dpme->dpme_pblocks;
 				result = 1;
 			}
 		} else {
@@ -377,8 +377,8 @@ do_rename_partition(struct partition_map_header * map)
 	if (entry == NULL) {
 		printf("No such partition\n");
 	} else {
-		/* stuff name into partition map entry data */
-		strncpy(entry->data->dpme_name, name, DPISTRLEN);
+		/* stuff name into partition map entry dpme */
+		strncpy(entry->dpme->dpme_name, name, DPISTRLEN);
 		map->changed = 1;
 	}
 	free(name);
@@ -406,12 +406,12 @@ do_change_type(struct partition_map_header * map)
 		printf("No such partition\n");
 		goto out;
 	}
-	printf("Existing partition type ``%s''.\n", entry->data->dpme_type);
+	printf("Existing partition type ``%s''.\n", entry->dpme->dpme_type);
 	if (get_string_argument("New type of partition: ", &type, 1) == 0) {
 		bad_input("Bad type");
 		goto out;
 	}
-	strncpy(entry->data->dpme_type, type, DPISTRLEN);
+	strncpy(entry->dpme->dpme_type, type, DPISTRLEN);
 	map->changed = 1;
 
 out:
