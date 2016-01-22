@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.51 2014/01/31 10:13:13 espie Exp $
+# $OpenBSD: Makefile,v 1.52 2016/01/22 16:45:52 landry Exp $
 
 REGRESS_TARGETS=pkgnames pkgpaths signatures depends-check longnames \
 	pkgcfl update-check1 \
@@ -104,9 +104,9 @@ update-check1: rep0/g-0.tgz rep1/g-0.tgz rep0/ga-0.tgz rep1/ga-0.tgz \
 	rep0/gf-1.tgz rep1/gf-0.tgz rep0/gg-0.tgz rep1/gg-0.tgz
 	@-rm -rf ${D8}
 	@ROOT=${D8} PKG_PATH=${.OBJDIR}/rep0 ${ADD_PKG} g ga gb gc gd ge gf gg
-	@ROOT=${D8} PKG_PATH=${.OBJDIR}/rep1 ${ADD_PKG} -u
+	@-ROOT=${D8} PKG_PATH=${.OBJDIR}/rep1 ${ADD_PKG} -Iu
 	@PKG_DBDIR=${D8}/pkgdb pkg_info |diff - ${.CURDIR}/list7.out
-	@ROOT=${D8} PKG_PATH=${.OBJDIR}/rep1 ${ADD_PKG} -u gd ge
+	@ROOT=${D8} PKG_PATH=${.OBJDIR}/rep1 ${ADD_PKG} -u -Dupdate_gd
 	@PKG_DBDIR=${D8}/pkgdb pkg_info |diff - ${.CURDIR}/list8.out
 
 list-check: rep1/a-1.tgz rep1/b-1.tgz rep1/c-0.tgz rep1/d-0.tgz \
@@ -263,7 +263,7 @@ plist4:
 	@echo "@option always-update" >$@
 
 plist5:
-	@echo "@option explicit-update" >$@
+	@echo "@ask-update gd-<1 Make sure yadada is backed up" >$@
 
 plist6:
 	@echo "@conflict l-<1" >$@
@@ -354,7 +354,7 @@ rep1/a-1.tgz rep0/b-0.tgz rep0/i-0.tgz rep0/j-0.tgz rep1/j-1.tgz \
 rep1/i-1.tgz rep0/k-0.tgz rep0/l-0.tgz rep1/l-1.tgz rep0/m-0.tgz \
 rep0/n-0.tgz rep1/m-1.tgz rep0/o-0.tgz rep0/fam-0.tgz \
 rep0/o1-0.tgz rep0/o2-0.tgz rep0/ga-0.tgz \
-rep0/gb-0.tgz rep1/gb-0p0.tgz rep1/gd-1.tgz rep0/ge-0.tgz \
+rep0/gb-0.tgz rep1/gb-0p0.tgz rep0/gd-0.tgz rep0/ge-0.tgz \
 rep0/gf-1.tgz rep1/gf-0.tgz \
 rep1/missc-0.tgz rep0/q5-0.tgz rep1/q5-1.tgz \
 rep0/ma-0.tgz rep1/ma-1.tgz rep0/mc-0.tgz rep1/me-1.tgz \
@@ -512,7 +512,7 @@ rep0/gg-0.tgz: plist4
 rep1/gg-0.tgz: plist4 
 	@PACKAGE_COMMENT=updated ${CREATE_PKG} -P't/g:g-*:g-0' -f plist4 $@
 
-rep0/gd-0.tgz rep1/ge-1.tgz: plist5
+rep1/gd-1.tgz rep1/ge-1.tgz: plist5
 	@${CREATE_PKG} -f plist5 $@
 
 rep1/ga-0.tgz:
