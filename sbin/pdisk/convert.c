@@ -1,4 +1,4 @@
-/*	$OpenBSD: convert.c,v 1.20 2016/01/22 17:51:25 krw Exp $	*/
+/*	$OpenBSD: convert.c,v 1.21 2016/01/22 18:01:14 krw Exp $	*/
 
 /*
  * convert.c - Little-endian conversion
@@ -80,34 +80,34 @@ convert_block0(struct block0 *block0, int to_cpu_form)
          * the count to use.
          */
 	if (to_cpu_form) {
-		reverse2((uint8_t *)&data->sbSig);
-		if (data->sbSig != BLOCK0_SIGNATURE) {
-			reverse2((uint8_t *)&data->sbSig);
-			if (data->sbSig != BLOCK0_SIGNATURE) {
+		reverse2((uint8_t *)&block0->sbSig);
+		if (block0->sbSig != BLOCK0_SIGNATURE) {
+			reverse2((uint8_t *)&block0->sbSig);
+			if (block0->sbSig != BLOCK0_SIGNATURE) {
 				return 0;
 			}
 		}
 	} else {
-		if (data->sbSig != BLOCK0_SIGNATURE) {
+		if (block0->sbSig != BLOCK0_SIGNATURE) {
 			return 0;
 		}
-		reverse2((uint8_t *)&data->sbSig);
+		reverse2((uint8_t *)&block0->sbSig);
 	}
-	reverse2((uint8_t *)&data->sbBlkSize);
-	reverse4((uint8_t *)&data->sbBlkCount);
-	reverse2((uint8_t *)&data->sbDevType);
-	reverse2((uint8_t *)&data->sbDevId);
-	reverse4((uint8_t *)&data->sbData);
+	reverse2((uint8_t *)&block0->sbBlkSize);
+	reverse4((uint8_t *)&block0->sbBlkCount);
+	reverse2((uint8_t *)&block0->sbDevType);
+	reverse2((uint8_t *)&block0->sbDevId);
+	reverse4((uint8_t *)&block0->sbData);
 	if (to_cpu_form) {
-		reverse2((uint8_t *)&data->sbDrvrCount);
-		count = data->sbDrvrCount;
+		reverse2((uint8_t *)&block0->sbDrvrCount);
+		count = block0->sbDrvrCount;
 	} else {
-		count = data->sbDrvrCount;
-		reverse2((uint8_t *)&data->sbDrvrCount);
+		count = block0->sbDrvrCount;
+		reverse2((uint8_t *)&block0->sbDrvrCount);
 	}
 
 	if (count > 0) {
-		m = (struct ddmap *) data->sbMap;
+		m = (struct ddmap *)block0->sbMap;
 		for (i = 0; i < count; i++) {
 			reverse4((uint8_t *)&m[i].ddBlock);
 			reverse2((uint8_t *)&m[i].ddSize);
