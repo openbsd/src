@@ -1,7 +1,7 @@
 /*
  * New Zealand holiday
  *
- * $OpenBSD: calendar.nz,v 1.1 2016/01/20 19:12:28 jmc Exp $
+ * $OpenBSD: calendar.nz,v 1.2 2016/01/22 19:28:06 jmc Exp $
  */
 
 #ifndef _calendar_nz_
@@ -30,14 +30,14 @@
 01/29*	Auckland and Northland Anniversary Days
 02/01*	Nelson Anniversary Day
 03/23*	Otago Anniversary Day
-03/MonSecond	New Plymouth Anniversary Day
+03/MonSecond	Taranaki Anniversary Day
 Easter+2	Southland Anniversary Day
 09/MonFourth	South Canterbury Anniversary Day
 09/FriThird	Hawke's Bay Anniversary Day
 11/01*	Marlborough Anniversary Day
 11/30*	Chatham Islands Anniversary Day
 12/01*	Westland Anniversary Day
-12/16*	South Canterbury Anniversary Day
+12/16*	Canterbury Anniversary Day
 
 /* Seasonal days */
 03/20*	Autumnal Equinox
