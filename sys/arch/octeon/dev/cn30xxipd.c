@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxipd.c,v 1.6 2015/10/24 05:35:42 visa Exp $	*/
+/*	$OpenBSD: cn30xxipd.c,v 1.7 2016/01/22 01:18:44 jsg Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -165,6 +165,8 @@ cn30xxipd_offload(uint64_t word2, uint16_t *rcflags)
 	/* Skip if the packet is non-IP. */
 	if (ISSET(word2, PIP_WQE_WORD2_IP_NI))
 		return;
+
+	cflags = 0;
 
 	/* Check IP checksum status. */
 	if (!ISSET(word2, PIP_WQE_WORD2_IP_V6) &&
