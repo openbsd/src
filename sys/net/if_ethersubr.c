@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.232 2016/01/08 13:53:24 mpi Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.233 2016/01/22 17:09:05 sf Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -350,11 +350,11 @@ ether_input(struct ifnet *ifp, struct mbuf *m, void *cookie)
 	}
 
 	/*
-	 * If packet is unicast and we're in promiscuous mode, make sure it
-	 * is for us.  Drop otherwise.
+	 * If packet is unicast, make sure it is for us.  Drop otherwise.
+	 * This check is required in promiscous mode, and for some hypervisors
+	 * where the MAC filter is 'best effort' only.
 	 */
-	if ((m->m_flags & (M_BCAST|M_MCAST)) == 0 &&
-	    (ifp->if_flags & IFF_PROMISC)) {
+	if ((m->m_flags & (M_BCAST|M_MCAST)) == 0) {
 		if (memcmp(ac->ac_enaddr, eh->ether_dhost, ETHER_ADDR_LEN)) {
 			m_freem(m);
 			return (1);
