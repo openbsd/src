@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_etherip.c,v 1.3 2015/12/05 22:16:27 mpi Exp $	*/
+/*	$OpenBSD: if_etherip.c,v 1.4 2016/01/22 11:33:39 goda Exp $	*/
 /*
  * Copyright (c) 2015 Kazuya GODA <goda@openbsd.org>
  *
@@ -56,6 +56,7 @@
 struct etherip_softc {
 	struct arpcom sc_ac;
 	struct ifmedia sc_media;
+	unsigned int sc_rdomain;
 	struct sockaddr_storage sc_src;
 	struct sockaddr_storage sc_dst;
 	LIST_ENTRY(etherip_softc) sc_entry;
@@ -231,6 +232,23 @@ etherip_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		error = 0;
 		break;
 
+	case SIOCSLIFPHYRTABLE:
+		if ((error = suser(p, 0)) != 0)
+			break;
+
+		if (ifr->ifr_rdomainid < 0 ||
+		    ifr->ifr_rdomainid > RT_TABLEID_MAX ||
+		    !rtable_exists(ifr->ifr_rdomainid)) {
+			error = EINVAL;
+			break;
+		}
+		sc->sc_rdomain = ifr->ifr_rdomainid;
+		break;
+
+	case SIOCGLIFPHYRTABLE:
+		ifr->ifr_rdomainid = sc->sc_rdomain;
+		break;
+
 	case SIOCSLIFPHYADDR:
 		if ((error = suser(p, 0)) != 0)
 			break;
@@ -317,7 +335,8 @@ etherip_set_tunnel_addr(struct ifnet *ifp, struct sockaddr_storage *src,
 		    tsc->sc_dst.ss_len != dst->ss_len)
 			continue;
 
-		if (memcmp(&tsc->sc_dst, dst, dst->ss_len) == 0 &&
+		if (tsc->sc_rdomain == sc->sc_rdomain &&
+		    memcmp(&tsc->sc_dst, dst, dst->ss_len) == 0 &&
 		    memcmp(&tsc->sc_src, src, src->ss_len) == 0) {
 			error = EADDRNOTAVAIL;
 			goto out;
@@ -383,6 +402,8 @@ ip_etherip_output(struct ifnet *ifp, struct mbuf *m)
 	ip->ip_src = src->sin_addr;
 	ip->ip_dst = dst->sin_addr;
 
+	m->m_pkthdr.ph_rtableid = sc->sc_rdomain;
+
 #if NPF > 0
 	pf_pkt_addr_changed(m);
 #endif
@@ -431,7 +452,8 @@ ip_etherip_input(struct mbuf *m, ...)
 		src = (struct sockaddr_in *)&sc->sc_src;
 		dst = (struct sockaddr_in *)&sc->sc_dst;
 
-		if (src->sin_addr.s_addr != ip->ip_dst.s_addr ||
+		if (sc->sc_rdomain != rtable_l2(m->m_pkthdr.ph_rtableid) ||
+		    src->sin_addr.s_addr != ip->ip_dst.s_addr ||
 		    dst->sin_addr.s_addr != ip->ip_src.s_addr)
 			continue;
 
@@ -532,6 +554,8 @@ ip6_etherip_output(struct ifnet *ifp, struct mbuf *m)
 	ip6->ip6_plen = htons(m->m_pkthdr.len - sizeof(struct ip6_hdr));
 	ip6->ip6_src  = src->sin6_addr;
 	ip6->ip6_dst = dst->sin6_addr;
+
+	m->m_pkthdr.ph_rtableid = sc->sc_rdomain;
 
 #if NPF > 0
 	pf_pkt_addr_changed(m);
