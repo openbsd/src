@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb.c,v 1.108 2015/09/01 10:00:26 mpi Exp $	*/
+/*	$OpenBSD: usb.c,v 1.109 2016/01/22 13:31:47 bluhm Exp $	*/
 /*	$NetBSD: usb.c,v 1.77 2003/01/01 00:10:26 thorpej Exp $	*/
 
 /*
@@ -776,6 +776,7 @@ usbioctl(dev_t devt, u_long cmd, caddr_t data, int flag, struct proc *p)
 		udf->udf_bus = unit;
 
 		save_udf = *udf;
+		udf->udf_data = NULL;
 		usb_init_task(&udf_task, usb_fill_udf_task, udf,
 		    USB_TASK_TYPE_GENERIC);
 		usb_add_task(sc->sc_bus->root_hub, &udf_task);
