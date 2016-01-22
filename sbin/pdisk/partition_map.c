@@ -1,4 +1,4 @@
-/*	$OpenBSD: partition_map.c,v 1.47 2016/01/22 12:31:04 krw Exp $	*/
+/*	$OpenBSD: partition_map.c,v 1.48 2016/01/22 15:59:33 krw Exp $	*/
 
 /*
  * partition_map.c - partition map routines
@@ -242,7 +242,8 @@ write_partition_map(struct partition_map_header * map)
 	for (entry = map->disk_order; entry != NULL;
 	    entry = entry->next_on_disk) {
 		convert_dpme(entry->data, 0);
-		result = write_block(map->fd, entry->disk_address, entry->data);
+		result = write_block(map->fd, entry->disk_address * DEV_BSIZE,
+		    entry->data);
 		convert_dpme(entry->data, 1);
 		i = entry->disk_address;
 		if (result == 0) {
