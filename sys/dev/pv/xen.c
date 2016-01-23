@@ -1,4 +1,4 @@
-/*	$OpenBSD: xen.c,v 1.33 2016/01/22 19:28:16 mikeb Exp $	*/
+/*	$OpenBSD: xen.c,v 1.34 2016/01/23 15:19:02 jsg Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Belopuhov
@@ -610,7 +610,7 @@ xen_intr_establish(evtchn_port_t port, xen_intr_handle_t *xih,
 		memset(&eau, 0, sizeof(eau));
 		eau.dom = DOMID_SELF;
 		if (xen_evtchn_hypercall(sc, EVTCHNOP_alloc_unbound, &eau,
-		    sizeof(&eau)) != 0) {
+		    sizeof(eau)) != 0) {
 			DPRINTF("%s: failed to allocate new event port\n",
 			    sc->sc_dev.dv_xname);
 			free(xi, M_DEVBUF, sizeof(*xi));
@@ -631,7 +631,7 @@ xen_intr_establish(evtchn_port_t port, xen_intr_handle_t *xih,
 	memset(&ebv, 0, sizeof(ebv));
 	ebv.port = xi->xi_port;
 	ebv.vcpu = 0;
-	if (xen_evtchn_hypercall(sc, EVTCHNOP_bind_vcpu, &ebv, sizeof(&ebv))) {
+	if (xen_evtchn_hypercall(sc, EVTCHNOP_bind_vcpu, &ebv, sizeof(ebv))) {
 		printf("%s: failed to bind interrupt on port %u to vcpu%d\n",
 		    sc->sc_dev.dv_xname, ebv.port, ebv.vcpu);
 	}
