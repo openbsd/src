@@ -1,4 +1,4 @@
-/*	$OpenBSD: armreg.h,v 1.16 2015/05/29 05:48:07 jsg Exp $	*/
+/*	$OpenBSD: armreg.h,v 1.17 2016/01/23 15:38:48 jsg Exp $	*/
 /*	$NetBSD: armreg.h,v 1.27 2003/09/06 08:43:02 rearnsha Exp $	*/
 
 /*
@@ -70,6 +70,7 @@
 
 #define PSR_Q_bit (1 << 27)	/* saturation */
 
+#define A32_bit (1 << 8)	/* Asynchronous abort disable */
 #define I32_bit (1 << 7)	/* IRQ disable */
 #define F32_bit (1 << 6)	/* FIQ disable */
 
@@ -85,7 +86,9 @@
 #define PSR_FIQ32_MODE	0x00000011
 #define PSR_IRQ32_MODE	0x00000012
 #define PSR_SVC32_MODE	0x00000013
+#define PSR_MON32_MODE	0x00000016
 #define PSR_ABT32_MODE	0x00000017
+#define PSR_HYP32_MODE	0x0000001a
 #define PSR_UND32_MODE	0x0000001b
 #define PSR_SYS32_MODE	0x0000001f
 #define PSR_32_MODE	0x00000010

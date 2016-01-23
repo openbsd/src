@@ -1,4 +1,4 @@
-/*	$OpenBSD: armv7_start.S,v 1.3 2015/05/18 23:56:47 jsg Exp $	*/
+/*	$OpenBSD: armv7_start.S,v 1.4 2016/01/23 15:38:48 jsg Exp $	*/
 /*	$NetBSD: lubbock_start.S,v 1.1 2003/06/18 10:51:15 bsh Exp $ */
 
 /*
@@ -36,6 +36,9 @@
 
 #undef	DOMAIN_CLIENT	/* XXX */
 #include "assym.h"
+
+#define ELR	.long	0xe12ef30e		@ msr	ELR_hyp, lr
+#define ERET	.long	0xe160006e		@ eret
 
 /*
  * CPWAIT -- Canonical method to wait for CP15 update.
@@ -87,12 +90,32 @@ _C_LABEL(bootstrap_start):
 	 * the low bits
 	 */
 
+	/*
+	 * If we are running in HYP mode, try to get to SVC safely.
+	 * Ensure IRQ, FIQ and Aborts are disabled in HYP mode before
+	 * going to SVC.  If we are there already, just go ahead.
+	 */
+	mrs	r0, cpsr
+	and	r0, r0, #(PSR_MODE)
+	teq	r0, #(PSR_HYP32_MODE)
+	bne	1f			/* If we are not in HYP, we're done */
+	mrs	r0, cpsr
+	bic	r0, r0, #(PSR_MODE)
+	orr	r0, r0, #(PSR_SVC32_MODE)
+	orr	r0, r0, #(I32_bit | F32_bit | A32_bit)
+	msr	spsr_fsxc, r0
+	adr	lr, 1f
+	ELR
+	ERET				/* Use the HYP LR to get into SVC */
+1:
+
+	/*
+	 * Now that we are in SVC, build up pagetables and start up.
+	 */
 	mov r9, pc
 	and r9, r9, #0xf0000000	// Leave the memory base in r9
 
 	/* create the bootstrap MMU table at offset 0x00200000 */
-
-	/* build page table from scratch */
 	orr	r0, r9, #0x00200000
 	adr	r4, mmu_init_table
 
