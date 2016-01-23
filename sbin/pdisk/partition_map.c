@@ -1,4 +1,4 @@
-/*	$OpenBSD: partition_map.c,v 1.52 2016/01/23 01:09:29 krw Exp $	*/
+/*	$OpenBSD: partition_map.c,v 1.53 2016/01/23 01:16:12 krw Exp $	*/
 
 /*
  * partition_map.c - partition map routines
@@ -308,7 +308,6 @@ create_partition_map(int fd, char *name, u_int64_t mediasz)
 	map->blocks_in_map = 0;
 	map->maximum_in_map = -1;
 	map->media_size = mediasz;
-	sync_device_size(map);
 
 	map->block0 = calloc(1, DEV_BSIZE);
 	if (map->block0 == NULL) {
@@ -357,11 +356,8 @@ coerce_block0(struct partition_map_header * map)
 	}
 	if (p->sbSig != BLOCK0_SIGNATURE) {
 		p->sbSig = BLOCK0_SIGNATURE;
-		if (map->physical_block == 1) {
-			p->sbBlkSize = DEV_BSIZE;
-		} else {
-			p->sbBlkSize = map->physical_block;
-		}
+		p->sbBlkSize = map->physical_block;
+		p->sbBlkCount = map->media_size;
 		p->sbBlkCount = 0;
 		p->sbDevType = 0;
 		p->sbDevId = 0;
@@ -569,25 +565,6 @@ renumber_disk_addresses(struct partition_map_header * map)
 		cur = cur->next_on_disk;
 	}
 }
-
-void
-sync_device_size(struct partition_map_header * map)
-{
-	struct block0  *p;
-	unsigned long size;
-	double d;
-
-	p = map->block0;
-	if (p == NULL) {
-		return;
-	}
-	d = map->media_size;
-	size = (d * map->logical_block) / p->sbBlkSize;
-	if (p->sbBlkCount != size) {
-		p->sbBlkCount = size;
-	}
-}
-
 
 void
 delete_partition_from_map(struct partition_map * entry)
