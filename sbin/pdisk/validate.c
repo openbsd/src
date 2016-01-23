@@ -1,4 +1,4 @@
-/*	$OpenBSD: validate.c,v 1.32 2016/01/22 18:57:42 krw Exp $	*/
+/*	$OpenBSD: validate.c,v 1.33 2016/01/23 01:43:13 krw Exp $	*/
 
 /*
  * validate.c -
@@ -60,34 +60,12 @@ static struct partition_map_header *the_map;
 static int	the_fd;
 static int	g;
 
-int		get_block_zero(void);
 int		get_block_n(int);
 struct range_list *new_range_list_item(enum range_state state, int, uint32_t, uint32_t);
 void		initialize_list(struct range_list **);
 void		add_range(struct range_list **, uint32_t, uint32_t, int);
 void		print_range_list(struct range_list *);
 void		coalesce_list(struct range_list *);
-
-int
-get_block_zero(void)
-{
-	int rtn_value;
-
-	if (the_map != NULL) {
-		b0 = the_map->block0;
-		rtn_value = 1;
-	} else {
-		if (read_block(the_fd, 0, buffer) == 0) {
-			rtn_value = 0;
-		} else {
-			b0 = (struct block0 *) buffer;
-			convert_block0(b0, 1);
-			rtn_value = 1;
-		}
-	}
-	return rtn_value;
-}
-
 
 int
 get_block_n(int n)
@@ -302,10 +280,8 @@ validate_map(struct partition_map_header * map)
 
 	initialize_list(&list);
 
-	if (get_block_zero() == 0) {
-		printf("unable to read block 0\n");
-		goto check_map;
-	}
+	b0 = map->block0;
+
 	/*
          * XXX signature valid
          * XXX size & count match DeviceCapacity

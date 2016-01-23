@@ -1,4 +1,4 @@
-/*	$OpenBSD: partition_map.c,v 1.53 2016/01/23 01:16:12 krw Exp $	*/
+/*	$OpenBSD: partition_map.c,v 1.54 2016/01/23 01:43:13 krw Exp $	*/
 
 /*
  * partition_map.c - partition map routines
@@ -223,33 +223,22 @@ void
 write_partition_map(struct partition_map_header * map)
 {
 	struct partition_map *entry;
-	char *block;
-	int i = 0, result = 0;
+	int result;
 
-	if (map->block0 != NULL) {
-		convert_block0(map->block0, 0);
-		result = write_block(map->fd, 0, map->block0);
-		convert_block0(map->block0, 1);
-	} else {
-		block = calloc(1, DEV_BSIZE);
-		if (block != NULL) {
-			result = write_block(map->fd, 0, block);
-			free(block);
-		}
-	}
-	if (result == 0) {
+	convert_block0(map->block0, 0);
+	result = write_block(map->fd, 0, map->block0);
+	if (result == 0)
 		warn("Unable to write block zero");
-	}
+	convert_block0(map->block0, 1);
+
 	for (entry = map->disk_order; entry != NULL;
 	    entry = entry->next_on_disk) {
 		convert_dpme(entry->dpme, 0);
 		result = write_block(map->fd, entry->disk_address * DEV_BSIZE,
 		    entry->dpme);
+		if (result == 0)
+			warn("Unable to write block %ld", entry->disk_address);
 		convert_dpme(entry->dpme, 1);
-		i = entry->disk_address;
-		if (result == 0) {
-			warn("Unable to write block %d", i);
-		}
 	}
 }
 
@@ -351,9 +340,6 @@ coerce_block0(struct partition_map_header * map)
 	struct block0 *p;
 
 	p = map->block0;
-	if (p == NULL) {
-		return 1;
-	}
 	if (p->sbSig != BLOCK0_SIGNATURE) {
 		p->sbSig = BLOCK0_SIGNATURE;
 		p->sbBlkSize = map->physical_block;
@@ -625,9 +611,6 @@ contains_driver(struct partition_map * entry)
 
 	map = entry->the_map;
 	p = map->block0;
-	if (p == NULL) {
-		return 0;
-	}
 	if (p->sbSig != BLOCK0_SIGNATURE) {
 		return 0;
 	}
@@ -980,9 +963,6 @@ remove_driver(struct partition_map * entry)
 
 	map = entry->the_map;
 	p = map->block0;
-	if (p == NULL) {
-		return;
-	}
 	if (p->sbSig != BLOCK0_SIGNATURE) {
 		return;
 	}

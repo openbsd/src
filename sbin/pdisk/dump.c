@@ -1,4 +1,4 @@
-/*	$OpenBSD: dump.c,v 1.44 2016/01/22 18:57:42 krw Exp $	*/
+/*	$OpenBSD: dump.c,v 1.45 2016/01/23 01:43:13 krw Exp $	*/
 
 /*
  * dump.c - dumping partition maps
@@ -190,33 +190,29 @@ show_data_structures(struct partition_map_header * map)
 	    kStringNot);
 	printf("\n");
 
-	if (map->block0 == NULL) {
-		printf("No block zero\n");
-	} else {
-		zp = map->block0;
+	zp = map->block0;
 
-		printf("Block0:\n");
-		printf("signature 0x%x", zp->sbSig);
-		if (zp->sbSig == BLOCK0_SIGNATURE) {
-			printf("\n");
-		} else {
-			printf(" should be 0x%x\n", BLOCK0_SIGNATURE);
-		}
-		printf("Block size=%u, Number of Blocks=%u\n",
-		       zp->sbBlkSize, zp->sbBlkCount);
-		printf("DeviceType=0x%x, DeviceId=0x%x, sbData=0x%x\n",
-		       zp->sbDevType, zp->sbDevId, zp->sbData);
-		if (zp->sbDrvrCount == 0) {
-			printf("No drivers\n");
-		} else {
-			printf("%u driver%s-\n", zp->sbDrvrCount,
-			       (zp->sbDrvrCount > 1) ? "s" : kStringEmpty);
-			m = (struct ddmap *) zp->sbMap;
-			for (i = 0; i < zp->sbDrvrCount; i++) {
-				printf("%u: @ %u for %u, type=0x%x\n", i + 1,
-				       get_align_long(&m[i].ddBlock),
-				       m[i].ddSize, m[i].ddType);
-			}
+	printf("Block0:\n");
+	printf("signature 0x%x", zp->sbSig);
+	if (zp->sbSig == BLOCK0_SIGNATURE) {
+		printf("\n");
+	} else {
+		printf(" should be 0x%x\n", BLOCK0_SIGNATURE);
+	}
+	printf("Block size=%u, Number of Blocks=%u\n", zp->sbBlkSize,
+	    zp->sbBlkCount);
+	printf("DeviceType=0x%x, DeviceId=0x%x, sbData=0x%x\n", zp->sbDevType,
+	    zp->sbDevId, zp->sbData);
+	if (zp->sbDrvrCount == 0) {
+		printf("No drivers\n");
+	} else {
+		printf("%u driver%s-\n", zp->sbDrvrCount,
+		       (zp->sbDrvrCount > 1) ? "s" : kStringEmpty);
+		m = (struct ddmap *) zp->sbMap;
+		for (i = 0; i < zp->sbDrvrCount; i++) {
+			printf("%u: @ %u for %u, type=0x%x\n", i + 1,
+			    get_align_long(&m[i].ddBlock), m[i].ddSize,
+			    m[i].ddType);
 		}
 	}
 	printf("\n");
