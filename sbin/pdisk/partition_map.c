@@ -1,4 +1,4 @@
-/*	$OpenBSD: partition_map.c,v 1.56 2016/01/23 13:24:15 krw Exp $	*/
+/*	$OpenBSD: partition_map.c,v 1.57 2016/01/23 14:10:05 krw Exp $	*/
 
 /*
  * partition_map.c - partition map routines
@@ -28,6 +28,7 @@
  */
 
 #include <sys/param.h>		/* DEV_BSIZE */
+#include <sys/stdint.h>
 
 #include <err.h>
 #include <stdio.h>
@@ -93,7 +94,11 @@ open_partition_map(int fd, char *name, uint64_t mediasz)
 	map->logical_block = DEV_BSIZE;
 	map->blocks_in_map = 0;
 	map->maximum_in_map = -1;
-	map->media_size = mediasz;
+
+	if (mediasz > UINT32_MAX)
+		map->media_size = UINT32_MAX;
+	else
+		map->media_size = mediasz;
 
 	map->block0 = malloc(DEV_BSIZE);
 	if (map->block0 == NULL) {

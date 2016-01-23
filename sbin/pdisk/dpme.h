@@ -1,4 +1,4 @@
-/*	$OpenBSD: dpme.h,v 1.17 2016/01/22 17:22:35 krw Exp $	*/
+/*	$OpenBSD: dpme.h,v 1.18 2016/01/23 14:10:05 krw Exp $	*/
 
 /*
  * dpme.h - Disk Partition Map Entry (dpme)
@@ -47,6 +47,10 @@
 #define	DPISTRLEN	32
 #define	DPME_SIGNATURE	0x504D		/* i.e. 'PM' */
 
+/*
+ * Since block0 is assumed to be the same size as the physical sector size,
+ * support is limited to 512-byte sector devices!
+ */
 struct block0 {
     uint16_t	sbSig;		/* unique value for SCSI block 0 */
     uint16_t	sbBlkSize;	/* block size of device */
@@ -69,7 +73,12 @@ struct ddmap {
 };
 
 
-/* Each partition map entry (blocks 1 through n) has this format */
+/*
+ * Each partition map entry (blocks 1 through n) has this format
+ *
+ * Since dpme is assumed to be the same size as the physical sector size,
+ * support is limited to 512-byte sector devices!
+ */
 struct dpme {
     uint16_t	dpme_signature;
     uint16_t	dpme_reserved_1;

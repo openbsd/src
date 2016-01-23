@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdisk.c,v 1.60 2016/01/22 18:57:42 krw Exp $	*/
+/*	$OpenBSD: pdisk.c,v 1.61 2016/01/23 14:10:05 krw Exp $	*/
 
 /*
  * pdisk - an editor for Apple format partition tables
@@ -29,7 +29,7 @@
  * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/param.h>		/* DEV_BSIZE */
+#include <sys/types.h>
 #include <sys/dkio.h>
 #include <sys/disklabel.h>
 #include <sys/ioctl.h>
@@ -74,17 +74,8 @@ main(int argc, char **argv)
 	struct disklabel dl;
 	struct stat st;
 	struct partition_map_header *map;
-	uint64_t mediasz;
 	int c, fd;
 
-	if (sizeof(struct dpme) != DEV_BSIZE) {
-		errx(1, "Size of partition map entry (%zu) is not equal "
-		    "to block size (%d)\n", sizeof(struct dpme), DEV_BSIZE);
-	}
-	if (sizeof(struct block0) != DEV_BSIZE) {
-		errx(1, "Size of block zero structure (%zu) is not equal "
-		    "to block size (%d)\n", sizeof(struct block0), DEV_BSIZE);
-	}
 	while ((c = getopt(argc, argv, "lr")) != -1) {
 		switch (c) {
 		case 'l':
@@ -115,15 +106,19 @@ main(int argc, char **argv)
 		    *argv);
 	if (ioctl(fd, DIOCGPDINFO, &dl) == -1)
 		err(1, "can't get disklabel for %s", *argv);
-	if (dl.d_secsize != DEV_BSIZE)
-		err(1, "%u-byte sector size not supported", dl.d_secsize);
 
-	if (DL_GETDSIZE(&dl) > LONG_MAX)
-		mediasz =  LONG_MAX;
-	else
-		mediasz = DL_GETDSIZE(&dl);
+	if (sizeof(struct block0) != dl.d_secsize) {
+		errx(1, "Size of block zero structure (%zu) is not equal "
+		    "to disk sector size (%d)\n", sizeof(struct block0),
+		    dl.d_secsize);
+	}
+	if (sizeof(struct dpme) != dl.d_secsize) {
+		errx(1, "Size of partition map entry (%zu) is not equal "
+		    "to disk sector size (%d)\n", sizeof(struct dpme),
+		    dl.d_secsize);
+	}
 
-	map = open_partition_map(fd, *argv, mediasz);
+	map = open_partition_map(fd, *argv, DL_GETDSIZE(&dl));
 	if (map != NULL) {
 		if (lflag)
 			dump_partition_map(map);
