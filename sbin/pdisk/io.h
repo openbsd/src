@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.h,v 1.9 2016/01/23 19:14:04 krw Exp $	*/
+/*	$OpenBSD: io.h,v 1.10 2016/01/23 22:55:23 krw Exp $	*/
 
 /*
  * io.h - simple io and input parsing routines
@@ -30,16 +30,11 @@
 #ifndef __io__
 #define __io__
 
-
-#define MAXIOSIZE	2048
-
-extern const long kDefault;
-
 void bad_input(const char *, ...);
 void flush_to_newline(int);
 int get_command(const char *, int, int *);
 unsigned long get_multiplier(long);
-int get_number_argument(const char *, long *, long);
+int get_number_argument(const char *, long *);
 int get_okay(const char *, int);
 int get_partition_modifier(void);
 int get_string_argument(const char *, char **);

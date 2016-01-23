@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.20 2016/01/23 19:14:04 krw Exp $	*/
+/*	$OpenBSD: io.c,v 1.21 2016/01/23 22:55:23 krw Exp $	*/
 
 /*
  * io.c - simple io and input parsing routines
@@ -38,8 +38,6 @@
 #define BAD_DIGIT 17		/* must be greater than any base */
 #define	STRING_CHUNK	16
 #define UNGET_MAX_COUNT 10
-
-const long	kDefault = -1;
 
 short		unget_buf[UNGET_MAX_COUNT + 1];
 int		unget_count;
@@ -153,7 +151,7 @@ get_command(const char *prompt, int promptBeforeGet, int *command)
 }
 
 int
-get_number_argument(const char *prompt, long *number, long default_value)
+get_number_argument(const char *prompt, long *number)
 {
 	int c;
 	int result = 0;
@@ -166,14 +164,7 @@ get_number_argument(const char *prompt, long *number, long default_value)
 		} else if (c == ' ' || c == '\t') {
 			/* skip blanks and tabs */
 		} else if (c == '\n') {
-			if (default_value == kDefault) {
-				printf(prompt);
-			} else {
-				my_ungetch(c);
-				*number = default_value;
-				result = 1;
-				break;
-			}
+			printf(prompt);
 		} else if ('0' <= c && c <= '9') {
 			*number = get_number(c);
 			result = 1;

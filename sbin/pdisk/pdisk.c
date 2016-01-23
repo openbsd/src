@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdisk.c,v 1.63 2016/01/23 19:14:04 krw Exp $	*/
+/*	$OpenBSD: pdisk.c,v 1.64 2016/01/23 22:55:23 krw Exp $	*/
 
 /*
  * pdisk - an editor for Apple format partition tables
@@ -299,7 +299,7 @@ get_base_argument(long *number, struct partition_map_header * map)
 	struct partition_map *entry;
 	int result = 0;
 
-	if (get_number_argument("First block: ", number, kDefault) == 0) {
+	if (get_number_argument("First block: ", number) == 0) {
 		bad_input("Bad block number");
 	} else {
 		result = 1;
@@ -324,7 +324,7 @@ get_size_argument(long *number, struct partition_map_header * map)
 	unsigned long multiple;
 	int result = 0;
 
-	if (get_number_argument("Length in blocks: ", number, kDefault) == 0) {
+	if (get_number_argument("Length in blocks: ", number) == 0) {
 		bad_input("Bad length");
 	} else {
 		multiple = get_multiplier(map->logical_block);
@@ -360,7 +360,7 @@ do_rename_partition(struct partition_map_header * map)
 		bad_input("No partition map exists");
 		return;
 	}
-	if (get_number_argument("Partition number: ", &ix, kDefault) == 0) {
+	if (get_number_argument("Partition number: ", &ix) == 0) {
 		bad_input("Bad partition number");
 		return;
 	}
@@ -392,7 +392,7 @@ do_change_type(struct partition_map_header * map)
 		bad_input("No partition map exists");
 		return;
 	}
-	if (get_number_argument("Partition number: ", &ix, kDefault) == 0) {
+	if (get_number_argument("Partition number: ", &ix) == 0) {
 		bad_input("Bad partition number");
 		return;
 	}
@@ -426,7 +426,7 @@ do_delete_partition(struct partition_map_header * map)
 		bad_input("No partition map exists");
 		return;
 	}
-	if (get_number_argument("Partition number: ", &ix, kDefault) == 0) {
+	if (get_number_argument("Partition number: ", &ix) == 0) {
 		bad_input("Bad partition number");
 		return;
 	}
@@ -449,12 +449,11 @@ do_reorder(struct partition_map_header * map)
 		bad_input("No partition map exists");
 		return;
 	}
-	if (get_number_argument("Partition number: ", &old_index, kDefault) ==
-	    0) {
+	if (get_number_argument("Partition number: ", &old_index) == 0) {
 		bad_input("Bad partition number");
 		return;
 	}
-	if (get_number_argument("New number: ", &ix, kDefault) == 0) {
+	if (get_number_argument("New number: ", &ix) == 0) {
 		bad_input("Bad partition number");
 		return;
 	}
@@ -492,7 +491,7 @@ do_change_map_size(struct partition_map_header * map)
 {
 	long size;
 
-	if (get_number_argument("New size: ", &size, kDefault) == 0) {
+	if (get_number_argument("New size: ", &size) == 0) {
 		bad_input("Bad size");
 		return;
 	}
@@ -505,7 +504,7 @@ do_display_entry(struct partition_map_header * map)
 {
 	long number;
 
-	if (get_number_argument("Partition number: ", &number, kDefault) == 0) {
+	if (get_number_argument("Partition number: ", &number) == 0) {
 		bad_input("Bad partition number");
 		return;
 	}
