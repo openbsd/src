@@ -1,4 +1,4 @@
-/*	$OpenBSD: partition_map.c,v 1.55 2016/01/23 03:46:18 krw Exp $	*/
+/*	$OpenBSD: partition_map.c,v 1.56 2016/01/23 13:24:15 krw Exp $	*/
 
 /*
  * partition_map.c - partition map routines
@@ -75,6 +75,7 @@ struct partition_map_header *
 open_partition_map(int fd, char *name, uint64_t mediasz)
 {
 	struct partition_map_header *map;
+	int ok;
 
 	map = malloc(sizeof(struct partition_map_header));
 	if (map == NULL) {
@@ -114,7 +115,9 @@ open_partition_map(int fd, char *name, uint64_t mediasz)
 	if (!lflag) {
 		my_ungetch('\n');
 		printf("No valid partition map found on '%s'.\n", name);
-		if (get_okay("Create default map? [n/y]: ", 0) == 1) {
+		ok = get_okay("Create default map? [n/y]: ", 0);
+		flush_to_newline(0);
+		if (ok == 1) {
 			free_partition_map(map);
 			map = create_partition_map(fd, name, mediasz);
 			if (map)
