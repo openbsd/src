@@ -1,4 +1,4 @@
-/*	$OpenBSD: dump.c,v 1.45 2016/01/23 01:43:13 krw Exp $	*/
+/*	$OpenBSD: dump.c,v 1.46 2016/01/23 03:46:18 krw Exp $	*/
 
 /*
  * dump.c - dumping partition maps
@@ -26,8 +26,6 @@
  * NEGLIGENCE, OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
  * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-
-#include <sys/param.h>		/* DEV_BSIZE */
 
 #include <stdio.h>
 #include <stdlib.h>

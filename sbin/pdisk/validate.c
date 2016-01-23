@@ -1,4 +1,4 @@
-/*	$OpenBSD: validate.c,v 1.33 2016/01/23 01:43:13 krw Exp $	*/
+/*	$OpenBSD: validate.c,v 1.34 2016/01/23 03:46:18 krw Exp $	*/
 
 /*
  * validate.c -
@@ -27,8 +27,6 @@
  * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-
-#include <sys/param.h>		/* DEV_BSIZE */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -82,7 +80,7 @@ get_block_n(int n)
 			rtn_value = 0;
 		}
 	} else {
-		if (read_block(the_fd, n * DEV_BSIZE, buffer) == 0) {
+		if (read_block(the_fd, n, buffer) == 0) {
 			rtn_value = 0;
 		} else {
 			mb = (struct dpme *) buffer;
@@ -294,7 +292,6 @@ validate_map(struct partition_map_header * map)
 							 * args are base & len
 							 */
 
-check_map:
 	/* compute size of map */
 	if (map != NULL) {
 		limit = the_map->blocks_in_map;

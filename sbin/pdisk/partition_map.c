@@ -1,4 +1,4 @@
-/*	$OpenBSD: partition_map.c,v 1.54 2016/01/23 01:43:13 krw Exp $	*/
+/*	$OpenBSD: partition_map.c,v 1.55 2016/01/23 03:46:18 krw Exp $	*/
 
 /*
  * partition_map.c - partition map routines
@@ -156,7 +156,7 @@ read_partition_map(struct partition_map_header * map)
 		warn("can't allocate memory for disk buffers");
 		return -1;
 	}
-	if (read_block(map->fd, DEV_BSIZE, dpme) == 0) {
+	if (read_block(map->fd, 1, dpme) == 0) {
 		warnx("Can't read block 1 from '%s'", map->name);
 		free(dpme);
 		return -1;
@@ -165,7 +165,7 @@ read_partition_map(struct partition_map_header * map)
 		old_logical = map->logical_block;
 		map->logical_block = 512;
 		while (map->logical_block <= map->physical_block) {
-			if (read_block(map->fd, DEV_BSIZE, dpme) == 0) {
+			if (read_block(map->fd, 1, dpme) == 0) {
 				warnx("Can't read block 1 from '%s'",
 				    map->name);
 				free(dpme);
@@ -203,7 +203,7 @@ read_partition_map(struct partition_map_header * map)
 			warn("can't allocate memory for disk buffers");
 			return -1;
 		}
-		if (read_block(map->fd, ix * DEV_BSIZE, dpme) == 0) {
+		if (read_block(map->fd, ix, dpme) == 0) {
 			warnx("Can't read block %u from '%s'", ix, map->name);
 			free(dpme);
 			return -1;
@@ -234,8 +234,7 @@ write_partition_map(struct partition_map_header * map)
 	for (entry = map->disk_order; entry != NULL;
 	    entry = entry->next_on_disk) {
 		convert_dpme(entry->dpme, 0);
-		result = write_block(map->fd, entry->disk_address * DEV_BSIZE,
-		    entry->dpme);
+		result = write_block(map->fd, entry->disk_address, entry->dpme);
 		if (result == 0)
 			warn("Unable to write block %ld", entry->disk_address);
 		convert_dpme(entry->dpme, 1);
