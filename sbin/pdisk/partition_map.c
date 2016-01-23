@@ -1,4 +1,4 @@
-/*	$OpenBSD: partition_map.c,v 1.50 2016/01/22 18:57:42 krw Exp $	*/
+/*	$OpenBSD: partition_map.c,v 1.51 2016/01/23 01:03:46 krw Exp $	*/
 
 /*
  * partition_map.c - partition map routines
@@ -372,8 +372,8 @@ coerce_block0(struct partition_map_header * map)
 
 
 int
-add_partition_to_map(const char *name, const char *dptype, uint32_t base, uint32_t length,
-		     struct partition_map_header * map)
+add_partition_to_map(const char *name, const char *dptype, uint32_t base,
+    uint32_t length, struct partition_map_header * map)
 {
 	struct partition_map *cur;
 	struct dpme *dpme;
