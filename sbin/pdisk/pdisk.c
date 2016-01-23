@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdisk.c,v 1.61 2016/01/23 14:10:05 krw Exp $	*/
+/*	$OpenBSD: pdisk.c,v 1.62 2016/01/23 15:05:52 krw Exp $	*/
 
 /*
  * pdisk - an editor for Apple format partition tables
@@ -118,7 +118,7 @@ main(int argc, char **argv)
 		    dl.d_secsize);
 	}
 
-	map = open_partition_map(fd, *argv, DL_GETDSIZE(&dl));
+	map = open_partition_map(fd, *argv, DL_GETDSIZE(&dl), dl.d_secsize);
 	if (map != NULL) {
 		if (lflag)
 			dump_partition_map(map);
@@ -201,7 +201,8 @@ edit(struct partition_map_header **mapp)
 			if (get_okay("Discard current map? [n/y]: ", 0) == 1) {
 				oldmap = map;
 				map = create_partition_map(oldmap->fd,
-				    oldmap->name, oldmap->media_size);
+				    oldmap->name, oldmap->media_size,
+				    oldmap->physical_block);
 				if (map == NULL)
 					break;
 				*mapp = map;

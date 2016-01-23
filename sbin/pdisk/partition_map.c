@@ -1,4 +1,4 @@
-/*	$OpenBSD: partition_map.c,v 1.57 2016/01/23 14:10:05 krw Exp $	*/
+/*	$OpenBSD: partition_map.c,v 1.58 2016/01/23 15:05:52 krw Exp $	*/
 
 /*
  * partition_map.c - partition map routines
@@ -27,7 +27,6 @@
  * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/param.h>		/* DEV_BSIZE */
 #include <sys/stdint.h>
 
 #include <err.h>
@@ -73,7 +72,7 @@ void		remove_from_disk_order(struct partition_map *);
 void		renumber_disk_addresses(struct partition_map_header *);
 
 struct partition_map_header *
-open_partition_map(int fd, char *name, uint64_t mediasz)
+open_partition_map(int fd, char *name, uint64_t mediasz, uint32_t sectorsz)
 {
 	struct partition_map_header *map;
 	int ok;
@@ -90,8 +89,8 @@ open_partition_map(int fd, char *name, uint64_t mediasz)
 	map->changed = 0;
 	map->disk_order = NULL;
 	map->base_order = NULL;
-	map->physical_block = DEV_BSIZE;
-	map->logical_block = DEV_BSIZE;
+	map->physical_block = sectorsz;
+	map->logical_block = sectorsz;
 	map->blocks_in_map = 0;
 	map->maximum_in_map = -1;
 
@@ -100,7 +99,7 @@ open_partition_map(int fd, char *name, uint64_t mediasz)
 	else
 		map->media_size = mediasz;
 
-	map->block0 = malloc(DEV_BSIZE);
+	map->block0 = malloc(sizeof(struct block0));
 	if (map->block0 == NULL) {
 		warn("can't allocate memory for block zero buffer");
 		free(map);
@@ -124,7 +123,7 @@ open_partition_map(int fd, char *name, uint64_t mediasz)
 		flush_to_newline(0);
 		if (ok == 1) {
 			free_partition_map(map);
-			map = create_partition_map(fd, name, mediasz);
+			map = create_partition_map(fd, name, mediasz, sectorsz);
 			if (map)
 				return (map);
 		}
@@ -154,12 +153,12 @@ free_partition_map(struct partition_map_header * map)
 int
 read_partition_map(struct partition_map_header * map)
 {
-	struct dpme    *dpme;
+	struct dpme *dpme;
 	double d;
 	int ix, old_logical;
 	uint32_t limit;
 
-	dpme = malloc(DEV_BSIZE);
+	dpme = malloc(sizeof(struct dpme));
 	if (dpme == NULL) {
 		warn("can't allocate memory for disk buffers");
 		return -1;
@@ -206,7 +205,7 @@ read_partition_map(struct partition_map_header * map)
 			ix++;
 		}
 
-		dpme = malloc(DEV_BSIZE);
+		dpme = malloc(sizeof(struct dpme));
 		if (dpme == NULL) {
 			warn("can't allocate memory for disk buffers");
 			return -1;
@@ -282,7 +281,7 @@ add_data_to_map(struct dpme * dpme, long ix, struct partition_map_header * map)
 }
 
 struct partition_map_header *
-create_partition_map(int fd, char *name, u_int64_t mediasz)
+create_partition_map(int fd, char *name, u_int64_t mediasz, uint32_t sectorsz)
 {
 	struct partition_map_header *map;
 	struct dpme *dpme;
@@ -298,20 +297,20 @@ create_partition_map(int fd, char *name, u_int64_t mediasz)
 	map->disk_order = NULL;
 	map->base_order = NULL;
 
-	map->physical_block = DEV_BSIZE;
-	map->logical_block = DEV_BSIZE;
+	map->physical_block = sectorsz;
+	map->logical_block = sectorsz;
 
 	map->blocks_in_map = 0;
 	map->maximum_in_map = -1;
 	map->media_size = mediasz;
 
-	map->block0 = calloc(1, DEV_BSIZE);
+	map->block0 = calloc(1, sizeof(struct block0));
 	if (map->block0 == NULL) {
 		warn("can't allocate memory for block zero buffer");
 	} else {
 		coerce_block0(map);
 
-		dpme = calloc(1, DEV_BSIZE);
+		dpme = calloc(1, sizeof(struct dpme));
 		if (dpme == NULL) {
 			warn("can't allocate memory for disk buffers");
 		} else {
@@ -514,7 +513,7 @@ create_dpme(const char *name, const char *dptype, uint32_t base,
 {
 	struct dpme *dpme;
 
-	dpme = calloc(1, DEV_BSIZE);
+	dpme = calloc(1, sizeof(struct dpme));
 	if (dpme == NULL) {
 		warn("can't allocate memory for disk buffers");
 	} else {
