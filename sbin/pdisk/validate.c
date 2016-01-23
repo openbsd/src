@@ -1,4 +1,4 @@
-/*	$OpenBSD: validate.c,v 1.34 2016/01/23 03:46:18 krw Exp $	*/
+/*	$OpenBSD: validate.c,v 1.35 2016/01/23 23:25:58 krw Exp $	*/
 
 /*
  * validate.c -
@@ -31,6 +31,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "dpme.h"
+#include "partition_map.h"
 #include "validate.h"
 #include "convert.h"
 #include "io.h"
@@ -43,20 +45,19 @@ enum range_state {
 };
 
 struct range_list {
-	struct range_list *next;
-	struct range_list *prev;
-	enum range_state state;
-	int		valid;
-	uint32_t	start;
-	uint32_t	end;
+	struct range_list      *next;
+	struct range_list      *prev;
+	enum range_state	state;
+	int			valid;
+	uint32_t		start;
+	uint32_t		end;
 };
 
-static char    *buffer;
-static struct block0 *b0;
-static struct dpme *mb;
-static struct partition_map_header *the_map;
-static int	the_fd;
-static int	g;
+static struct partition_map_header     *the_map;
+static struct block0		       *b0;
+static struct dpme		       *mb;
+static char			       *buffer;
+static int				the_fd;
 
 int		get_block_n(int);
 struct range_list *new_range_list_item(enum range_state state, int, uint32_t, uint32_t);
@@ -274,7 +275,6 @@ validate_map(struct partition_map_header * map)
 	uint32_t limit;
 
 	the_map = map;
-	g = map->logical_block;
 
 	initialize_list(&list);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: partition_map.c,v 1.58 2016/01/23 15:05:52 krw Exp $	*/
+/*	$OpenBSD: partition_map.c,v 1.59 2016/01/23 23:25:58 krw Exp $	*/
 
 /*
  * partition_map.c - partition map routines
@@ -34,6 +34,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "dpme.h"
 #include "partition_map.h"
 #include "io.h"
 #include "convert.h"
@@ -47,7 +48,6 @@ const char     *kFreeType = "Apple_Free";
 const char     *kMapType = "Apple_partition_map";
 const char     *kUnixType = "OpenBSD";
 const char     *kHFSType = "Apple_HFS";
-const char     *kPatchType = "Apple_Patches";
 
 const char     *kFreeName = "Extra";
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: partition_map.h,v 1.27 2016/01/23 15:05:52 krw Exp $	*/
+/*	$OpenBSD: partition_map.h,v 1.28 2016/01/23 23:25:58 krw Exp $	*/
 
 /*
  * partition_map.h - partition map routines
@@ -29,9 +29,6 @@
 
 #ifndef __partition_map__
 #define __partition_map__
-
-#include "dpme.h"
-#include "file_media.h"
 
 struct partition_map_header {
     char		       *name;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: convert.c,v 1.22 2016/01/22 18:57:42 krw Exp $	*/
+/*	$OpenBSD: convert.c,v 1.23 2016/01/23 23:25:58 krw Exp $	*/
 
 /*
  * convert.c - Little-endian conversion
@@ -32,6 +32,7 @@
 #include <sys/types.h>
 #include <endian.h>
 
+#include "dpme.h"
 #include "convert.h"
 
 void	reverse2 (uint8_t *);

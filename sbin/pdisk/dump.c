@@ -1,4 +1,4 @@
-/*	$OpenBSD: dump.c,v 1.46 2016/01/23 03:46:18 krw Exp $	*/
+/*	$OpenBSD: dump.c,v 1.47 2016/01/23 23:25:58 krw Exp $	*/
 
 /*
  * dump.c - dumping partition maps
@@ -31,14 +31,13 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "dpme.h"
 #include "file_media.h"
+#include "partition_map.h"
 #include "dump.h"
 #include "io.h"
 
 #define get_align_long(x)	(*(x))
-
-const char     *kStringEmpty = "";
-const char     *kStringNot = " not";
 
 void		adjust_value_and_compute_prefix(double *, int *);
 void		dump_block_zero(struct partition_map_header *);
@@ -183,9 +182,8 @@ show_data_structures(struct partition_map_header * map)
 	printf("map %d blocks out of %d,  media %lu blocks (%d byte blocks)\n",
 	       map->blocks_in_map, map->maximum_in_map,
 	       map->media_size, map->logical_block);
-	printf("Map is%s writable", rflag ? kStringNot : kStringEmpty);
-	printf(" and has%s been changed\n", (map->changed) ? kStringEmpty :
-	    kStringNot);
+	printf("Map is%s writable", rflag ? " not" : "");
+	printf(" and has%s been changed\n", (map->changed) ? "" : " not");
 	printf("\n");
 
 	zp = map->block0;
@@ -205,7 +203,7 @@ show_data_structures(struct partition_map_header * map)
 		printf("No drivers\n");
 	} else {
 		printf("%u driver%s-\n", zp->sbDrvrCount,
-		       (zp->sbDrvrCount > 1) ? "s" : kStringEmpty);
+		       (zp->sbDrvrCount > 1) ? "s" : "");
 		m = (struct ddmap *) zp->sbMap;
 		for (i = 0; i < zp->sbDrvrCount; i++) {
 			printf("%u: @ %u for %u, type=0x%x\n", i + 1,
