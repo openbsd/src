@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdisk.c,v 1.62 2016/01/23 15:05:52 krw Exp $	*/
+/*	$OpenBSD: pdisk.c,v 1.63 2016/01/23 19:14:04 krw Exp $	*/
 
 /*
  * pdisk - an editor for Apple format partition tables
@@ -263,13 +263,13 @@ do_create_partition(struct partition_map_header * map, int get_type)
 	if (get_size_argument(&length, map) == 0) {
 		return;
 	}
-	if (get_string_argument("Name of partition: ", &name, 1) == 0) {
+	if (get_string_argument("Name of partition: ", &name) == 0) {
 		bad_input("Bad name");
 		return;
 	}
 	if (get_type == 0) {
 		add_partition_to_map(name, kUnixType, base, length, map);
-	} else if (get_string_argument("Type of partition: ", &type_name, 1) ==
+	} else if (get_string_argument("Type of partition: ", &type_name) ==
 	    0) {
 		bad_input("Bad type");
 		goto xit1;
@@ -364,7 +364,7 @@ do_rename_partition(struct partition_map_header * map)
 		bad_input("Bad partition number");
 		return;
 	}
-	if (get_string_argument("New name of partition: ", &name, 1) == 0) {
+	if (get_string_argument("New name of partition: ", &name) == 0) {
 		bad_input("Bad name");
 		return;
 	}
@@ -403,7 +403,7 @@ do_change_type(struct partition_map_header * map)
 		goto out;
 	}
 	printf("Existing partition type ``%s''.\n", entry->dpme->dpme_type);
-	if (get_string_argument("New type of partition: ", &type, 1) == 0) {
+	if (get_string_argument("New type of partition: ", &type) == 0) {
 		bad_input("Bad type");
 		goto out;
 	}

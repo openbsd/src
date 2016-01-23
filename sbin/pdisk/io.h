@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.h,v 1.8 2016/01/21 15:33:21 krw Exp $	*/
+/*	$OpenBSD: io.h,v 1.9 2016/01/23 19:14:04 krw Exp $	*/
 
 /*
  * io.h - simple io and input parsing routines
@@ -42,7 +42,7 @@ unsigned long get_multiplier(long);
 int get_number_argument(const char *, long *, long);
 int get_okay(const char *, int);
 int get_partition_modifier(void);
-int get_string_argument(const char *, char **, int);
+int get_string_argument(const char *, char **);
 int number_of_digits(unsigned long);
 void my_ungetch(int);
 

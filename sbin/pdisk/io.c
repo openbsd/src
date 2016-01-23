@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.19 2016/01/21 15:33:21 krw Exp $	*/
+/*	$OpenBSD: io.c,v 1.20 2016/01/23 19:14:04 krw Exp $	*/
 
 /*
  * io.c - simple io and input parsing routines
@@ -228,7 +228,7 @@ get_number(int first_char)
 }
 
 int
-get_string_argument(const char *prompt, char **string, int reprompt)
+get_string_argument(const char *prompt, char **string)
 {
 	int c;
 	int result = 0;
@@ -241,13 +241,7 @@ get_string_argument(const char *prompt, char **string, int reprompt)
 		} else if (c == ' ' || c == '\t') {
 			/* skip blanks and tabs */
 		} else if (c == '\n') {
-			if (reprompt) {
-				printf(prompt);
-			} else {
-				my_ungetch(c);
-				*string = NULL;
-				break;
-			}
+			printf(prompt);
 		} else if (c == '"' || c == '\'') {
 			*string = get_string(c);
 			result = 1;
