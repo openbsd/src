@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.873 2016/01/24 09:13:57 rpe Exp $
+#	$OpenBSD: install.sub,v 1.874 2016/01/24 09:16:57 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -116,7 +116,7 @@ bsort() {
 
 # Test the first argument against the remaining ones, return success on a match.
 isin() {
-	local	_a=$1 _b
+	local _a=$1 _b
 
 	shift
 	for _b; do
@@ -128,10 +128,9 @@ isin() {
 # Add first argument to list formed by the remaining arguments.
 # Adds to the tail if the element does not already exist.
 addel() {
-	local	_a=$1
+	local _a=$1
 
 	shift
-
 	echo -n "$*"
 	isin "$_a" $* || echo -n " $_a"
 }
@@ -139,7 +138,7 @@ addel() {
 # Remove all occurrences of first argument from list formed by the remaining
 # arguments.
 rmel() {
-	local	_a=$1 _b
+	local _a=$1 _b
 
 	shift
 	for _b; do
@@ -169,6 +168,7 @@ quote() (
 # Show a list (passed via ordered arguments) in column output using ls.
 showcols() {
 	local _l _cdir=/tmp/cdir
+
 	set -A _clist
 	mkdir -p $_cdir
 	rm -rf -- $_cdir/*
@@ -198,6 +198,7 @@ stripcom () {
 # Create a temporary directory based on the supplied directory name prefix.
 tmpdir() {
 	local _i=1 _dir
+
 	until _dir="${1?}.$_i.$RANDOM" && mkdir -- "$_dir" 2>/dev/null; do
 		((++_i < 10000)) || return 1
 	done
@@ -212,6 +213,7 @@ tmpdir() {
 # Show device name, label and size for the provided list of devices.
 diskinfo() {
 	local _d
+
 	for _d; do
 		makedev $_d
 		echo -n "$_d: "
@@ -236,6 +238,7 @@ scan_dmesg() {
 # Extract device names from hw.disknames matching sed expression $1.
 scan_disknames() {
 	local IFS=,
+
 	bsort $(for _n in $(sysctl -n hw.disknames); do echo "${_n%%:*} "; done | sed -n "$1")
 }
 
@@ -252,6 +255,7 @@ get_cddevs () {
 # Return list of disks not yet initialized.
 get_dkdevs_uninitialized() {
 	local _disks=$(get_dkdevs) _d
+
 	for _d in $DISKS_DONE; do
 		_disks=$(rmel "$_d" $_disks)
 	done
@@ -272,6 +276,7 @@ get_ifdevs() {
 # Return the device name of the device $1, which may be a disklabel UID.
 getdevname() {
 	local _dev=$1
+
 	if [[ ${#_dev} == 18 && $_dev == +([0-9a-f]).[a-p] ||
 		${#_dev} == 16 && $_dev == +([0-9a-f]) ]]; then
 		# Lookup device name matching the disklabel UID.
@@ -546,7 +551,9 @@ get_responsefile() {
 _autorespond() {
 	typeset -l _q=$1 _key
 	local _def=$2 _l _val
+
 	[[ -f $RESPFILE ]] || return
+
 	# Find a suitable response in /ai.conf and remove it if found.
 	mv /ai.conf /ai.conf.tmp
 	while IFS=' 	' read -r _l; do
@@ -648,7 +655,6 @@ ask_yn() {
 #       if they contain spooky stuff
 ask_which() {
 	local _name=$1 _query=$2 _list=$3 _def=$4 _dynlist _dyndef _key _q
-
 	_key=$(echo "$_name" | sed 's/[^[:alnum:]]/_/g')
 
 	while :; do
@@ -688,6 +694,7 @@ ask_which() {
 #
 function ask_until {
 	resp=
+
 	while true; do
 		ask "$1" "$2"
 		[[ -n $resp ]] && break
@@ -714,6 +721,7 @@ askpass() {
 # Ask for a password twice, saving the input in $_password.
 askpassword() {
 	local _q=$1
+
 	if $AUTO; then
 		echo -n "$_q "
 		_autorespond "$_q"
@@ -741,6 +749,7 @@ askpassword() {
 # Run dhclient, making sure there is a free bpf first.
 dhclient() {
 	local _i=0
+
 	while makedev bpf$_i && ! </dev/bpf$_i; do
 		((++_i < 50)) || return
 	done 2>/dev/null
@@ -757,7 +766,7 @@ dhcp_request() {
 
 	ifconfig $_ifs group dhcp >/dev/null 2>&1
 
-	dhclient -c /dev/stdin $_ifs << __EOT
+	dhclient -c /dev/stdin $_ifs <<__EOT
 initial-interval 1;
 backoff-cutoff 2;
 reboot 5;
@@ -806,7 +815,6 @@ addhostent() {
 	[[ -z $_addr || -z $_name ]] && return
 
 	[[ $_addr == *:* ]] && _delim=":"
-
 	sed "/^[0-9a-fA-F]*[$_delim].*[ 	]$_name\$/d" /tmp/hosts \
 		>/tmp/hosts.new 2>/dev/null
 	mv /tmp/hosts.new /tmp/hosts
@@ -1188,6 +1196,7 @@ sane_install() {
 #
 select_sets() {
 	local _avail=$1 _selected=$2 _f _action _col=$COLUMNS
+
 	# account for 4 spaces added to the sets list
 	let COLUMNS=_col-8
 
@@ -1547,7 +1556,6 @@ mount_mnt2() {
 
 	disklabel $_dev 2>/dev/null |
 		sed -En '/swap|unused/d;/^  [a-p]: /p' >$_file
-
 	_parts=$(sed 's/^  \(.\): .*/\1/' $_file)
 	set -- $_parts
 	(($# == 0)) && { echo "No filesystems found on $_dev."; return 1; }
@@ -1580,8 +1588,8 @@ mount_mnt2() {
 # Ask for terminal type if on console, otherwise ask for/set keyboard layout.
 set_term() {
 	local _layouts
-
 	export TERM=${TERM:-${MDTERM:-vt220}}
+
 	if [[ -n $CONSOLE ]]; then
 		ask "Terminal type?" $TERM
 		export TERM=$resp
@@ -1743,6 +1751,7 @@ ask_root_sshd() {
 	typeset -l _resp
 
 	[[ $sshd == y ]] || return
+
 	if [[ -z $user ]]; then
 		echo "Since no user was setup, root logins via sshd(8) might be useful."
 	fi
@@ -1773,7 +1782,6 @@ set_timezone() {
 
 	# If the timezone file is not available,
 	# return immediately.
-
 	[[ ! -f $_zonefile ]] && return
 
 	# If configured in a previous call, return immediately.
@@ -2151,11 +2159,9 @@ feed_random() {
 # selects from that location. Repeat as many times as the user needs to get all
 # desired sets.
 install_sets() {
-	local _cddevs=$(get_cddevs) _d _locs="disk http"
+	local _cddevs=$(get_cddevs) _d _locs="disk http" _d=$CGI_METHOD
 
 	echo
-
-	_d=$CGI_METHOD
 
 	ifconfig netboot >/dev/null 2>&1 && : ${_d:=http}
 	[[ -n $_cddevs ]] && : ${_d:=cd0}
@@ -2239,6 +2245,7 @@ apply() {
 #
 encr_pwd() {
 	local _p=$1
+
 	if [[ -z $_p ]]; then
 		echo '*'
 	elif [[ $_p == \$2?\$[0-9][0-9]\$* && ${#_p} > 40 ||
@@ -2501,7 +2508,7 @@ elif [[ -z $RESPFILE ]]; then
 		chmod 600 $_lf
 		_lf=${_lf#/mnt}
 		cat <<__EOT >>/mnt/etc/rc.firsttime
-( /usr/bin/mail -s '$(hostname) $action log' root < $_lf &&
+( /usr/bin/mail -s '$(hostname) $action log' root <$_lf &&
 	rm $_lf ) >/dev/null 2>&1 &
 __EOT
 		exec reboot
