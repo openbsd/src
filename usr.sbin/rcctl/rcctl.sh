@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: rcctl.sh,v 1.87 2015/12/06 14:24:48 mpi Exp $
+# $OpenBSD: rcctl.sh,v 1.88 2016/01/24 08:51:50 ajacoutot Exp $
 #
 # Copyright (c) 2014, 2015 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -184,7 +184,7 @@ svc_ls()
 			;;
 		faulty)
 			for _svc in $(svc_ls on); do
-				svc_is_base ${_svc} && \
+				! svc_is_special ${_svc} && \
 					! /etc/rc.d/${_svc} check >/dev/null && \
 					echo ${_svc} && _ret=1
 			done
