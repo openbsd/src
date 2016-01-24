@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.872 2016/01/17 18:01:31 rpe Exp $
+#	$OpenBSD: install.sub,v 1.873 2016/01/24 09:13:57 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -66,15 +66,15 @@ usage() {
 
 # Wait for the ftp process to finish, or be killed after the timeout.
 waitcgiinfo() {
-	local _key _val
+	local _l _key _val
 
 	wait "$CGIPID" 2>/dev/null
 	[[ -s $CGI_INFO ]] || return
 
-	sed -n "s,^http://"'\([[A-Za-z0-9\:_][]A-Za-z0-9:._-]*\),\1,p' \
+	sed -n 's,^http://\([[A-Za-z0-9\:_][]A-Za-z0-9:._-]*\),\1,p' \
 		$CGI_INFO >$HTTP_LIST 2>/dev/null
-	set -- $(sed q $HTTP_LIST)
-	: ${HTTP_SERVER:=${1%%/*}}
+	read -r -- _l <$HTTP_LIST
+	: ${HTTP_SERVER:=${_l%%/*}}
 
 	while IFS='=' read -r -- _key _val; do
 		case $_key=$_val in
