@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_vnd.c,v 1.18 2016/01/24 01:02:24 gsoares Exp $	*/
+/*	$OpenBSD: mount_vnd.c,v 1.19 2016/01/24 01:20:44 mmcc Exp $	*/
 /*
  * Copyright (c) 1993 University of Utah.
  * Copyright (c) 1990, 1993
@@ -182,8 +182,8 @@ main(int argc, char **argv)
 char *
 get_pkcs_key(char *arg, char *saltopt)
 {
-	char		 passphrase[128];
-	char		 saltbuf[128], saltfilebuf[PATH_MAX];
+	char		 passphrase[128] = {'\0'};
+	char		 saltbuf[128] = {'\0'}, saltfilebuf[PATH_MAX];
 	char		*key = NULL;
 	char		*saltfile;
 	const char	*errstr;
@@ -192,7 +192,6 @@ get_pkcs_key(char *arg, char *saltopt)
 	rounds = strtonum(arg, 1000, INT_MAX, &errstr);
 	if (errstr)
 		err(1, "rounds: %s", errstr);
-	bzero(passphrase, sizeof(passphrase));
 	if (readpassphrase("Encryption key: ", passphrase, sizeof(passphrase),
 	    RPP_REQUIRE_TTY) == NULL)
 		errx(1, "Unable to read passphrase");
@@ -205,10 +204,9 @@ get_pkcs_key(char *arg, char *saltopt)
 		if (saltfile)
 			saltfile[strcspn(saltfile, "\n")] = '\0';
 	}
-	if (!saltfile || saltfile[0] == '\0') {
+	if (!saltfile || saltfile[0] == '\0')
 		warnx("Skipping salt file, insecure");
-		memset(saltbuf, 0, sizeof(saltbuf));
-	} else {
+	else {
 		int fd;
 
 		fd = open(saltfile, O_RDONLY);
