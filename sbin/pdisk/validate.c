@@ -1,4 +1,4 @@
-/*	$OpenBSD: validate.c,v 1.36 2016/01/24 01:16:20 krw Exp $	*/
+/*	$OpenBSD: validate.c,v 1.37 2016/01/24 01:38:32 krw Exp $	*/
 
 /*
  * validate.c -
@@ -78,7 +78,7 @@ new_range_list_item(enum range_state state, int valid, uint32_t low, uint32_t hi
 
 
 void
-initialize_list(struct range_list ** list)
+initialize_list(struct range_list **list)
 {
 	struct range_list *item;
 
@@ -162,7 +162,7 @@ add_range(struct range_list **list, uint32_t base, uint32_t len, int allocate)
 
 
 void
-coalesce_list(struct range_list * list)
+coalesce_list(struct range_list *list)
 {
 	struct range_list *cur, *item;
 
@@ -187,7 +187,7 @@ coalesce_list(struct range_list * list)
 
 
 void
-print_range_list(struct range_list * list)
+print_range_list(struct range_list *list)
 {
 	struct range_list *cur;
 	const char *s = NULL;
@@ -236,7 +236,7 @@ print_range_list(struct range_list * list)
 
 
 void
-validate_map(struct partition_map_header * map)
+validate_map(struct partition_map_header *map)
 {
 	struct partition_map *entry;
 	struct range_list *list;

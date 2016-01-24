@@ -1,4 +1,4 @@
-/*	$OpenBSD: dump.h,v 1.14 2016/01/23 23:25:58 krw Exp $	*/
+/*	$OpenBSD: dump.h,v 1.15 2016/01/24 01:38:32 krw Exp $	*/
 
 /*
  * dump.h - dumping partition maps
@@ -30,10 +30,10 @@
 #ifndef __dump__
 #define __dump__
 
-void dump_block(unsigned char *, int);
-void dump_partition_map(struct partition_map_header *);
-void full_dump_partition_entry(struct partition_map_header *, int);
-void full_dump_block_zero(struct partition_map_header *);
-void show_data_structures(struct partition_map_header *);
+void	dump_block(unsigned char *, int);
+void	dump_partition_map(struct partition_map_header *);
+void	full_dump_partition_entry(struct partition_map_header *, int);
+void	full_dump_block_zero(struct partition_map_header *);
+void	show_data_structures(struct partition_map_header *);
 
 #endif /* __dump__ */

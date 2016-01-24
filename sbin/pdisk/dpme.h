@@ -1,4 +1,4 @@
-/*	$OpenBSD: dpme.h,v 1.18 2016/01/23 14:10:05 krw Exp $	*/
+/*	$OpenBSD: dpme.h,v 1.19 2016/01/24 01:38:32 krw Exp $	*/
 
 /*
  * dpme.h - Disk Partition Map Entry (dpme)
@@ -43,9 +43,9 @@
 #define __dpme__
 
 #define	BLOCK0_SIGNATURE	0x4552	/* i.e. 'ER' */
+#define	DPME_SIGNATURE		0x504D	/* i.e. 'PM' */
 
 #define	DPISTRLEN	32
-#define	DPME_SIGNATURE	0x504D		/* i.e. 'PM' */
 
 /*
  * Since block0 is assumed to be the same size as the physical sector size,

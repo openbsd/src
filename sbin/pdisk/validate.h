@@ -1,4 +1,4 @@
-/*	$OpenBSD: validate.h,v 1.9 2016/01/23 23:25:58 krw Exp $	*/
+/*	$OpenBSD: validate.h,v 1.10 2016/01/24 01:38:32 krw Exp $	*/
 
 /*
  * validate.h -
@@ -30,6 +30,6 @@
 #ifndef __validate__
 #define __validate__
 
-void validate_map(struct partition_map_header *);
+void	validate_map(struct partition_map_header *);
 
 #endif /* __validate__ */

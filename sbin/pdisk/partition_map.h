@@ -1,4 +1,4 @@
-/*	$OpenBSD: partition_map.h,v 1.28 2016/01/23 23:25:58 krw Exp $	*/
+/*	$OpenBSD: partition_map.h,v 1.29 2016/01/24 01:38:32 krw Exp $	*/
 
 /*
  * partition_map.h - partition map routines
@@ -66,21 +66,27 @@ extern int dflag;
 extern int lflag;
 extern int rflag;
 
-int add_partition_to_map(const char *, const char *, uint32_t, uint32_t, struct partition_map_header *);
-void free_partition_map(struct partition_map_header *);
-struct partition_map_header* create_partition_map(int, char *, uint64_t,
+struct partition_map_header	*init_partition_map(char *);
+struct partition_map_header	*create_partition_map(int, char *, uint64_t,
     uint32_t);
-void delete_partition_from_map(struct partition_map *);
-struct partition_map* find_entry_by_disk_address(long, struct partition_map_header *);
-struct partition_map* find_entry_by_type(const char *, struct partition_map_header *);
-struct partition_map* find_entry_by_base(uint32_t, struct partition_map_header *);
-struct partition_map_header* init_partition_map(char *);
-void move_entry_in_map(long, long, struct partition_map_header *);
-struct partition_map_header* open_partition_map(int, char *, uint64_t,
+struct partition_map_header	*open_partition_map(int, char *, uint64_t,
     uint32_t);
-void resize_map(long new_size, struct partition_map_header *);
-void write_partition_map(struct partition_map_header *);
-void dpme_init_flags(struct dpme *);
-void		sync_device_size(struct partition_map_header *);
+
+struct partition_map		*find_entry_by_disk_address(long,
+    struct partition_map_header *);
+struct partition_map		*find_entry_by_type(const char *,
+    struct partition_map_header *);
+struct partition_map		*find_entry_by_base(uint32_t,
+    struct partition_map_header *);
+
+int	add_partition_to_map(const char *, const char *, uint32_t, uint32_t,
+    struct partition_map_header *);
+void	free_partition_map(struct partition_map_header *);
+void	delete_partition_from_map(struct partition_map *);
+void	move_entry_in_map(long, long, struct partition_map_header *);
+void	resize_map(long new_size, struct partition_map_header *);
+void	write_partition_map(struct partition_map_header *);
+void	dpme_init_flags(struct dpme *);
+void	sync_device_size(struct partition_map_header *);
 
 #endif /* __partition_map__ */
