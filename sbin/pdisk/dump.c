@@ -1,4 +1,4 @@
-/*	$OpenBSD: dump.c,v 1.48 2016/01/24 01:38:32 krw Exp $	*/
+/*	$OpenBSD: dump.c,v 1.49 2016/01/24 15:18:50 krw Exp $	*/
 
 /*
  * dump.c - dumping partition maps
@@ -37,8 +37,6 @@
 #include "dump.h"
 #include "io.h"
 
-#define get_align_long(x)	(*(x))
-
 void	adjust_value_and_compute_prefix(double *, int *);
 void	dump_block_zero(struct partition_map_header *);
 void	dump_partition_entry(struct partition_map *, int, int, int);
@@ -70,14 +68,14 @@ dump_block_zero(struct partition_map_header *map)
 		printf("Drivers-\n");
 		m = (struct ddmap *) p->sbMap;
 		for (i = 0; i < p->sbDrvrCount; i++) {
-			printf("%d: %3u @ %u, ", i + 1,
-			       m[i].ddSize, get_align_long(&m[i].ddBlock));
+			printf("%d: %3u @ %u, ", i + 1, m[i].ddSize,
+			    m[i].ddBlock);
 			if (map->logical_block != p->sbBlkSize) {
 				t = (m[i].ddSize * p->sbBlkSize) /
 				    map->logical_block;
 				printf("(%lu@", t);
-				t = (get_align_long(&m[i].ddBlock) *
-				    p->sbBlkSize) / map->logical_block;
+				t = m[i].ddBlock * p->sbBlkSize /
+				    map->logical_block;
 				printf("%lu)  ", t);
 			}
 			printf("type=0x%x\n", m[i].ddType);
@@ -208,8 +206,7 @@ show_data_structures(struct partition_map_header *map)
 		m = (struct ddmap *) zp->sbMap;
 		for (i = 0; i < zp->sbDrvrCount; i++) {
 			printf("%u: @ %u for %u, type=0x%x\n", i + 1,
-			    get_align_long(&m[i].ddBlock), m[i].ddSize,
-			    m[i].ddType);
+			    m[i].ddBlock, m[i].ddSize, m[i].ddType);
 		}
 	}
 	printf("\n");

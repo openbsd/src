@@ -1,4 +1,4 @@
-/*	$OpenBSD: partition_map.c,v 1.61 2016/01/24 01:38:32 krw Exp $	*/
+/*	$OpenBSD: partition_map.c,v 1.62 2016/01/24 15:18:50 krw Exp $	*/
 
 /*
  * partition_map.c - partition map routines
@@ -41,8 +41,6 @@
 #include "file_media.h"
 
 #define APPLE_HFS_FLAGS_VALUE	0x4000037f
-#define get_align_long(x)	(*(x))
-#define put_align_long(y, x)	((*(x)) = (y))
 
 const char     *kFreeType = "Apple_Free";
 const char     *kMapType = "Apple_partition_map";
@@ -627,7 +625,7 @@ contains_driver(struct partition_map *entry)
 	if (p->sbDrvrCount > 0) {
 		m = (struct ddmap *) p->sbMap;
 		for (i = 0; i < p->sbDrvrCount; i++) {
-			start = get_align_long(&m[i].ddBlock);
+			start = m[i].ddBlock;
 			if (entry->dpme->dpme_pblock_start <= f * start &&
 			    f * (start + m[i].ddSize) <=
 			    (entry->dpme->dpme_pblock_start +
@@ -986,7 +984,7 @@ remove_driver(struct partition_map *entry)
 	if (p->sbDrvrCount > 0) {
 		m = (struct ddmap *) p->sbMap;
 		for (i = 0; i < p->sbDrvrCount; i++) {
-			start = get_align_long(&m[i].ddBlock);
+			start = m[i].ddBlock;
 
 			/*
 			 * zap the driver if it is wholly contained in the
@@ -1002,12 +1000,11 @@ remove_driver(struct partition_map *entry)
 				 * last
 				 */
 				for (j = i + 1; j < p->sbDrvrCount; j++, i++) {
-					put_align_long(get_align_long(
-					    &m[j].ddBlock), &m[i].ddBlock);
+					m[i].ddBlock = m[i].ddBlock;
 					m[i].ddSize = m[j].ddSize;
 					m[i].ddType = m[j].ddType;
 				}
-				put_align_long(0, &m[i].ddBlock);
+				m[i].ddBlock = 0;
 				m[i].ddSize = 0;
 				m[i].ddType = 0;
 				p->sbDrvrCount -= 1;
@@ -1017,4 +1014,3 @@ remove_driver(struct partition_map *entry)
 		}
 	}
 }
-
