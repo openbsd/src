@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.c,v 1.69 2015/11/02 07:02:53 guenther Exp $ */
+/*	$OpenBSD: resolve.c,v 1.70 2016/01/24 03:45:54 guenther Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -54,12 +54,18 @@ elf_object_t *_dl_loading_object;
 void
 _dl_add_object(elf_object_t *object)
 {
-	/* if a .so is marked nodelete, then add a reference */
+	/*
+	 * If a .so is marked nodelete, then the entire load group that it's
+	 * in needs to be kept around forever, so add a reference there.
+	 * XXX It would be better if we tracked inter-object dependencies
+	 * from relocations and didn't leave dangling pointers when a load
+	 * group was partially unloaded.  That would render this unnecessary.
+	 */
 	if (object->obj_flags & DF_1_NODELETE &&
-	    (object->status & STAT_NODELETE) == 0) {
+	    (object->load_object->status & STAT_NODELETE) == 0) {
 		DL_DEB(("objname %s is nodelete\n", object->load_name));
-		object->refcount++;
-		object->status |= STAT_NODELETE;
+		object->load_object->opencount++;
+		object->load_object->status |= STAT_NODELETE;
 	}
 
 	/*
