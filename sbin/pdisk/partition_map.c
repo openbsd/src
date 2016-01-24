@@ -1,4 +1,4 @@
-/*	$OpenBSD: partition_map.c,v 1.59 2016/01/23 23:25:58 krw Exp $	*/
+/*	$OpenBSD: partition_map.c,v 1.60 2016/01/24 01:09:08 krw Exp $	*/
 
 /*
  * partition_map.c - partition map routines
@@ -350,7 +350,6 @@ coerce_block0(struct partition_map_header * map)
 		p->sbSig = BLOCK0_SIGNATURE;
 		p->sbBlkSize = map->physical_block;
 		p->sbBlkCount = map->media_size;
-		p->sbBlkCount = 0;
 		p->sbDevType = 0;
 		p->sbDevId = 0;
 		p->sbData = 0;
