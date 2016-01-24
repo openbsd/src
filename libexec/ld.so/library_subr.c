@@ -1,4 +1,4 @@
-/*	$OpenBSD: library_subr.c,v 1.44 2015/06/10 21:16:41 sthen Exp $ */
+/*	$OpenBSD: library_subr.c,v 1.45 2016/01/24 03:54:34 guenther Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -510,6 +510,9 @@ _dl_link_child(elf_object_t *dep, elf_object_t *p)
 	    p->load_name));
 }
 
+/* Generation number of the current grpsym insertion/caching */
+static unsigned int _dl_grpsym_gen = 0;
+
 void
 _dl_link_grpsym(elf_object_t *object, int checklist)
 {
@@ -520,11 +523,11 @@ _dl_link_grpsym(elf_object_t *object, int checklist)
 			if (n->data == object)
 				return; /* found, dont bother adding */
 	} else {
-		if (object->lastlookup == _dl_searchnum) {
+		if (object->grpsym_gen == _dl_grpsym_gen) {
 			return; /* found, dont bother adding */
 		}
 	}
-	object->lastlookup = _dl_searchnum;
+	object->grpsym_gen = _dl_grpsym_gen;
 
 	n = _dl_malloc(sizeof *n);
 	if (n == NULL)
@@ -536,7 +539,21 @@ _dl_link_grpsym(elf_object_t *object, int checklist)
 void
 _dl_cache_grpsym_list_setup(elf_object_t *object)
 {
-	_dl_newsymsearch();
+	_dl_grpsym_gen += 1;
+
+	if (_dl_grpsym_gen == 0) {
+		/*
+		 * If the count rolls over, reset all counters so
+		 * we don't get accidental collision.
+		 */
+		elf_object_t *walkobj;
+		for (walkobj = _dl_objects;
+		    walkobj != NULL;
+		    walkobj = walkobj->next) {
+			walkobj->grpsym_gen = 0;
+		}
+		_dl_grpsym_gen = 1;
+	}
 	_dl_cache_grpsym_list(object);
 }
 void

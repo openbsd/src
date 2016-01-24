@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.c,v 1.70 2016/01/24 03:45:54 guenther Exp $ */
+/*	$OpenBSD: resolve.c,v 1.71 2016/01/24 03:54:34 guenther Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -352,7 +352,7 @@ _dl_finalize_object(const char *objname, Elf_Dyn *dynp, Elf_Phdr *phdrp,
 	/* default dev, inode for dlopen-able objects. */
 	object->dev = 0;
 	object->inode = 0;
-	object->lastlookup = 0;
+	object->grpsym_gen = 0;
 	TAILQ_INIT(&object->grpsym_list);
 	TAILQ_INIT(&object->grpref_list);
 
@@ -530,27 +530,6 @@ _dl_find_symbol_bysym(elf_object_t *req_obj, unsigned int symidx,
 	return ret;
 }
 
-int _dl_searchnum = 0;
-void
-_dl_newsymsearch(void)
-{
-	_dl_searchnum += 1;
-
-	if (_dl_searchnum < 0) {
-		/*
-		 * If the signed number rolls over, reset all counters so
-		 * we dont get accidental collision.
-		 */
-		elf_object_t *walkobj;
-		for (walkobj = _dl_objects;
-		    walkobj != NULL;
-		    walkobj = walkobj->next) {
-			walkobj->lastlookup = 0;
-		}
-		_dl_searchnum = 1;
-	}
-}
-
 static int
 _dl_find_symbol_obj(elf_object_t *object, const char *name, unsigned long hash,
     int flags, const Elf_Sym **this, const Elf_Sym **weak_sym,
@@ -669,8 +648,6 @@ _dl_find_symbol(const char *name, const Elf_Sym **this,
 		if ((flags & SYM_SEARCH_SELF) || (flags & SYM_SEARCH_NEXT))
 			skip = 1;
 
-		_dl_newsymsearch();
-
 		/*
 		 * search dlopened objects: global or req_obj == dlopened_obj
 		 * and and it's children
@@ -680,7 +657,6 @@ _dl_find_symbol(const char *name, const Elf_Sym **this,
 			    (n->data != req_obj->load_object))
 				continue;
 
-			n->data->lastlookup_head = _dl_searchnum;
 			TAILQ_FOREACH(m, &n->data->grpsym_list, next_sib) {
 				if (skip == 1) {
 					if (m->data == req_obj) {
@@ -693,7 +669,6 @@ _dl_find_symbol(const char *name, const Elf_Sym **this,
 				if ((flags & SYM_SEARCH_OTHER) &&
 				    (m->data == req_obj))
 					continue;
-				m->data->lastlookup = _dl_searchnum;
 				if (_dl_find_symbol_obj(m->data, name, h, flags,
 				    this, &weak_sym, &weak_object)) {
 					object = m->data;
