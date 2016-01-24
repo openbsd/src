@@ -1,4 +1,4 @@
-/*	$OpenBSD: yp.c,v 1.16 2016/01/24 08:30:38 matthieu Exp $ */
+/*	$OpenBSD: yp.c,v 1.17 2016/01/24 08:33:27 matthieu Exp $ */
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
  *
@@ -218,6 +218,8 @@ yp_dispatch(struct svc_req *req, SVCXPRT *trans)
 		return;
 	case YPPROC_ALL:
 		log_debug("ypproc_all");
+		xdr_argument = (xdrproc_t) xdr_ypreq_nokey;
+		xdr_result = (xdrproc_t) xdr_ypresp_all;
 		if (yp_check(req) == -1)
 			return;
 		cb = (void *)ypproc_all_2_svc;
