@@ -1,4 +1,4 @@
-/*	$OpenBSD: yp.c,v 1.15 2016/01/24 08:28:12 matthieu Exp $ */
+/*	$OpenBSD: yp.c,v 1.16 2016/01/24 08:30:38 matthieu Exp $ */
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
  *
@@ -236,7 +236,8 @@ yp_dispatch(struct svc_req *req, SVCXPRT *trans)
 		svcerr_noproc(trans);
 		return;
 	case YPPROC_MAPLIST:
-		log_debug("ypproc_maplist");
+		xdr_argument = (xdrproc_t) xdr_domainname;
+		xdr_result = (xdrproc_t) xdr_ypresp_maplist;
 		if (yp_check(req) == -1)
 			return;
 		cb = (void *)ypproc_maplist_2_svc;
