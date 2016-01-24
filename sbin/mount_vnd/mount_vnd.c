@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_vnd.c,v 1.17 2015/01/16 06:39:59 deraadt Exp $	*/
+/*	$OpenBSD: mount_vnd.c,v 1.18 2016/01/24 01:02:24 gsoares Exp $	*/
 /*
  * Copyright (c) 1993 University of Utah.
  * Copyright (c) 1990, 1993
@@ -243,7 +243,7 @@ get_pkcs_key(char *arg, char *saltopt)
 	if (pkcs5_pbkdf2(passphrase, sizeof(passphrase), saltbuf,
 	    sizeof (saltbuf), key, BLF_MAXUTILIZED, rounds))
 		errx(1, "pkcs5_pbkdf2 failed");
-	memset(passphrase, 0, sizeof(passphrase));
+	explicit_bzero(passphrase, 0, sizeof(passphrase));
 
 	return (key);
 }
@@ -340,7 +340,7 @@ config(char *dev, char *file, int action, struct disklabel *dp, char *key,
 	fflush(stdout);
  out:
 	if (key)
-		memset(key, 0, keylen);
+		explicit_bzero(key, 0, keylen);
 	return (rv < 0);
 }
 
