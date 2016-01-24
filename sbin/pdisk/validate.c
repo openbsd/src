@@ -1,4 +1,4 @@
-/*	$OpenBSD: validate.c,v 1.35 2016/01/23 23:25:58 krw Exp $	*/
+/*	$OpenBSD: validate.c,v 1.36 2016/01/24 01:16:20 krw Exp $	*/
 
 /*
  * validate.c -
@@ -53,45 +53,13 @@ struct range_list {
 	uint32_t		end;
 };
 
-static struct partition_map_header     *the_map;
-static struct block0		       *b0;
-static struct dpme		       *mb;
-static char			       *buffer;
-static int				the_fd;
+struct range_list *new_range_list_item(enum range_state state, int, uint32_t,
+    uint32_t);
 
-int		get_block_n(int);
-struct range_list *new_range_list_item(enum range_state state, int, uint32_t, uint32_t);
-void		initialize_list(struct range_list **);
-void		add_range(struct range_list **, uint32_t, uint32_t, int);
-void		print_range_list(struct range_list *);
-void		coalesce_list(struct range_list *);
-
-int
-get_block_n(int n)
-{
-	struct partition_map *entry;
-	int rtn_value;
-
-	if (the_map != NULL) {
-		entry = find_entry_by_disk_address(n, the_map);
-		if (entry != 0) {
-			mb = entry->dpme;
-			rtn_value = 1;
-		} else {
-			rtn_value = 0;
-		}
-	} else {
-		if (read_block(the_fd, n, buffer) == 0) {
-			rtn_value = 0;
-		} else {
-			mb = (struct dpme *) buffer;
-			convert_dpme(mb, 1);
-			rtn_value = 1;
-		}
-	}
-	return rtn_value;
-}
-
+void	initialize_list(struct range_list **);
+void	add_range(struct range_list **, uint32_t, uint32_t, int);
+void	print_range_list(struct range_list *);
+void	coalesce_list(struct range_list *);
 
 struct range_list *
 new_range_list_item(enum range_state state, int valid, uint32_t low, uint32_t high)
@@ -120,7 +88,7 @@ initialize_list(struct range_list ** list)
 
 
 void
-add_range(struct range_list ** list, uint32_t base, uint32_t len, int allocate)
+add_range(struct range_list **list, uint32_t base, uint32_t len, int allocate)
 {
 	struct range_list *item, *cur;
 	uint32_t low, high;
@@ -225,7 +193,7 @@ print_range_list(struct range_list * list)
 	const char *s = NULL;
 	int printed;
 
-	if (list == 0) {
+	if (list == NULL) {
 		printf("Empty range list\n");
 		return;
 	}
@@ -270,15 +238,13 @@ print_range_list(struct range_list * list)
 void
 validate_map(struct partition_map_header * map)
 {
+	struct partition_map *entry;
 	struct range_list *list;
+	struct dpme *dpme;
 	int i, printed;
 	uint32_t limit;
 
-	the_map = map;
-
 	initialize_list(&list);
-
-	b0 = map->block0;
 
 	/*
          * XXX signature valid
@@ -288,78 +254,60 @@ validate_map(struct partition_map_header * map)
          * XXX the range below here is in physical blocks but the map is
          *     in logical blocks!!!
          */
-	add_range(&list, 1, b0->sbBlkCount - 1, 0);	/* subtract one since
-							 * args are base & len
-							 */
 
-	/* compute size of map */
-	if (map != NULL) {
-		limit = the_map->blocks_in_map;
-	} else {
-		if (get_block_n(1) == 0) {
-			printf("unable to get first block\n");
-			return;
-		} else {
-			if (mb->dpme_signature != DPME_SIGNATURE) {
-				limit = -1;
-			} else {
-				limit = mb->dpme_map_entries;
-			}
-		}
+	/* subtract one since args are base & len */
+	add_range(&list, 1, map->block0->sbBlkCount - 1, 0);
+
+	limit = map->blocks_in_map;
+	if (limit < 1) {
+		printf("No blocks in map.\n");
+		return;
 	}
 
 	/* for each entry */
-	for (i = 1;; i++) {
-		if (limit < 0) {
-			/* XXX what to use for end of list? */
-			if (i > 5) {
-				break;
-			}
-		} else if (i > limit) {
-			break;
-		}
+	for (i = 1; i <= limit; i++) {
 		printf("block %d:\n", i);
 
 		/* get entry */
-		if (get_block_n(i) == 0) {
+		entry = find_entry_by_disk_address(i, map);
+		if (entry != 0)
+			dpme = entry->dpme;
+		else {
 			printf("\tunable to get\n");
 			goto post_processing;
 		}
 		printed = 0;
 
 		/* signature matches */
-		if (mb->dpme_signature != DPME_SIGNATURE) {
+		if (dpme->dpme_signature != DPME_SIGNATURE) {
 			printed = 1;
 			printf("\tsignature is 0x%x, should be 0x%x\n",
-			    mb->dpme_signature, DPME_SIGNATURE);
+			    dpme->dpme_signature, DPME_SIGNATURE);
 		}
 		/* reserved1 == 0 */
-		if (mb->dpme_reserved_1 != 0) {
+		if (dpme->dpme_reserved_1 != 0) {
 			printed = 1;
 			printf("\treserved word is 0x%x, should be 0\n",
-			    mb->dpme_reserved_1);
+			    dpme->dpme_reserved_1);
 		}
 		/* entry count matches */
-		if (limit < 0) {
-			printed = 1;
-			printf("\tentry count is 0x%x, real value unknown\n",
-			    mb->dpme_map_entries);
-		} else if (mb->dpme_map_entries != limit) {
+		if (dpme->dpme_map_entries != limit) {
 			printed = 1;
 			printf("\tentry count is 0x%x, should be %u\n",
-			    mb->dpme_map_entries, limit);
+			    dpme->dpme_map_entries, limit);
 		}
 		/* lblocks contained within physical */
-		if (mb->dpme_lblock_start >= mb->dpme_pblocks
-		    || mb->dpme_lblocks > mb->dpme_pblocks -
-		    mb->dpme_lblock_start) {
+		if (dpme->dpme_lblock_start >= dpme->dpme_pblocks ||
+		    dpme->dpme_lblocks > dpme->dpme_pblocks -
+		    dpme->dpme_lblock_start) {
 			printed = 1;
 			printf("\tlogical blocks (%u for %u) not within "
-			    "physical size (%u)\n", mb->dpme_lblock_start,
-			    mb->dpme_lblocks, mb->dpme_pblocks);
+			    "physical size (%u)\n", dpme->dpme_lblock_start,
+			    dpme->dpme_lblocks, dpme->dpme_pblocks);
 		}
 		/* remember stuff for post processing */
-		add_range(&list, mb->dpme_pblock_start, mb->dpme_pblocks, 1);
+		add_range(&list, dpme->dpme_pblock_start, dpme->dpme_pblocks,
+		    1);
 
 		/*
 		 * XXX type is known type?
