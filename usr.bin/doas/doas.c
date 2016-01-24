@@ -1,4 +1,4 @@
-/* $OpenBSD: doas.c,v 1.48 2015/12/08 14:45:36 tedu Exp $ */
+/* $OpenBSD: doas.c,v 1.49 2016/01/24 13:19:21 gsoares Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -434,6 +434,7 @@ main(int argc, char **argv, char **envp)
 			    "failed auth for %s", myname);
 			errc(1, EPERM, NULL);
 		}
+		explicit_bzero(rbuf, sizeof(rbuf));
 	}
 
 	if (pledge("stdio rpath getpw exec id", NULL) == -1)
