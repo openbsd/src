@@ -1,4 +1,4 @@
-/*	$OpenBSD: partition_map.c,v 1.62 2016/01/24 15:18:50 krw Exp $	*/
+/*	$OpenBSD: partition_map.c,v 1.63 2016/01/24 15:23:33 krw Exp $	*/
 
 /*
  * partition_map.c - partition map routines
@@ -623,7 +623,7 @@ contains_driver(struct partition_map *entry)
 		f = p->sbBlkSize / map->logical_block;
 	}
 	if (p->sbDrvrCount > 0) {
-		m = (struct ddmap *) p->sbMap;
+		m = (struct ddmap *)p->sbMap;
 		for (i = 0; i < p->sbDrvrCount; i++) {
 			start = m[i].ddBlock;
 			if (entry->dpme->dpme_pblock_start <= f * start &&
@@ -982,7 +982,7 @@ remove_driver(struct partition_map *entry)
 		f = p->sbBlkSize / map->logical_block;
 	}
 	if (p->sbDrvrCount > 0) {
-		m = (struct ddmap *) p->sbMap;
+		m = (struct ddmap *)p->sbMap;
 		for (i = 0; i < p->sbDrvrCount; i++) {
 			start = m[i].ddBlock;
 

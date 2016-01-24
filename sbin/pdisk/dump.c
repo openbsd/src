@@ -1,4 +1,4 @@
-/*	$OpenBSD: dump.c,v 1.49 2016/01/24 15:18:50 krw Exp $	*/
+/*	$OpenBSD: dump.c,v 1.50 2016/01/24 15:23:33 krw Exp $	*/
 
 /*
  * dump.c - dumping partition maps
@@ -66,7 +66,7 @@ dump_block_zero(struct partition_map_header *map)
 	       p->sbDevType, p->sbDevId);
 	if (p->sbDrvrCount > 0) {
 		printf("Drivers-\n");
-		m = (struct ddmap *) p->sbMap;
+		m = (struct ddmap *)p->sbMap;
 		for (i = 0; i < p->sbDrvrCount; i++) {
 			printf("%d: %3u @ %u, ", i + 1, m[i].ddSize,
 			    m[i].ddBlock);
@@ -203,7 +203,7 @@ show_data_structures(struct partition_map_header *map)
 	} else {
 		printf("%u driver%s-\n", zp->sbDrvrCount,
 		       (zp->sbDrvrCount > 1) ? "s" : "");
-		m = (struct ddmap *) zp->sbMap;
+		m = (struct ddmap *)zp->sbMap;
 		for (i = 0; i < zp->sbDrvrCount; i++) {
 			printf("%u: @ %u for %u, type=0x%x\n", i + 1,
 			    m[i].ddBlock, m[i].ddSize, m[i].ddType);
@@ -318,9 +318,9 @@ full_dump_partition_entry(struct partition_map_header *map, int ix)
 	printf("              checksum: 0x%08x\n", p->dpme_checksum);
 	printf("             processor: '%.32s'\n", p->dpme_process_id);
 	printf("boot args field -");
-	dump_block((unsigned char *) p->dpme_boot_args, 32 * 4);
+	dump_block((unsigned char *)p->dpme_boot_args, 32 * 4);
 	printf("dpme_reserved_3 -");
-	dump_block((unsigned char *) p->dpme_reserved_3, 62 * 4);
+	dump_block((unsigned char *)p->dpme_reserved_3, 62 * 4);
 }
 
 
@@ -386,7 +386,7 @@ full_dump_block_zero(struct partition_map_header *map)
 	printf("             device id: 0x%x\n", zp->sbDevId);
 	printf("                  data: 0x%x\n", zp->sbData);
 	printf("          driver count: %u\n", zp->sbDrvrCount);
-	m = (struct ddmap *) zp->sbMap;
+	m = (struct ddmap *)zp->sbMap;
 	for (i = 0; &m[i].ddType < &zp->sbMap[247]; i++) {
 		if (m[i].ddBlock == 0 && m[i].ddSize == 0 && m[i].ddType == 0) {
 			break;
@@ -396,8 +396,8 @@ full_dump_block_zero(struct partition_map_header *map)
 		printf("           driver type: 0x%x\n", m[i].ddType);
 	}
 	printf("remainder of block -");
-	dump_block((unsigned char *) &m[i].ddBlock, (&zp->sbMap[247] -
-	    ((unsigned short *) &m[i].ddBlock)) * 2);
+	dump_block((unsigned char *)&m[i].ddBlock, (&zp->sbMap[247] -
+	    ((unsigned short *)&m[i].ddBlock)) * 2);
 }
 
 int
