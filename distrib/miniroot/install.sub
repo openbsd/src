@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.874 2016/01/24 09:16:57 rpe Exp $
+#	$OpenBSD: install.sub,v 1.875 2016/01/25 23:46:54 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -167,9 +167,8 @@ quote() (
 
 # Show a list (passed via ordered arguments) in column output using ls.
 showcols() {
-	local _l _cdir=/tmp/cdir
+	local _l _cdir=/tmp/cdir _clist
 
-	set -A _clist
 	mkdir -p $_cdir
 	rm -rf -- $_cdir/*
 	while read _l; do
