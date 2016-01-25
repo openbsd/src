@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.963 2016/01/07 22:23:13 sashan Exp $ */
+/*	$OpenBSD: pf.c,v 1.964 2016/01/25 18:49:57 sashan Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -701,8 +701,6 @@ pf_state_key_attach(struct pf_state_key *sk, struct pf_state *s, int idx)
 		s->key[idx] = cur;
 	} else {
 		s->key[idx] = sk;
-		/* need to grab reference for PF */
-		pf_state_key_ref(sk);
 	}
 
 	if ((si = pool_get(&pf_state_item_pl, PR_NOWAIT)) == NULL) {
@@ -3400,6 +3398,8 @@ pf_test_rule(struct pf_pdesc *pd, struct pf_rule **rm, struct pf_state **sm,
 		goto cleanup;
 	}
 
+	action = PF_PASS;
+
 	if (pd->virtual_proto != PF_VPROTO_FRAGMENT
 	    && !state_icmp && r->keep_state) {
 
@@ -3435,6 +3435,12 @@ pf_test_rule(struct pf_pdesc *pd, struct pf_rule **rm, struct pf_state **sm,
 			    sk->port[pd->af == pd->naf ? pd->didx : pd->sidx],
 			    virtual_type, icmp_dir);
 		}
+
+#ifdef INET6
+		if (rewrite && skw->af != sks->af)
+			action = PF_AFRT;
+#endif /* INET6 */
+
 	} else {
 		while ((ri = SLIST_FIRST(&rules))) {
 			SLIST_REMOVE_HEAD(&rules, entry);
@@ -3465,12 +3471,7 @@ pf_test_rule(struct pf_pdesc *pd, struct pf_rule **rm, struct pf_state **sm,
 	if (r->rule_flag & PFRULE_ONCE)
 		pf_purge_rule(ruleset, r, aruleset, a);
 
-#ifdef INET6
-	if (rewrite && skw->af != sks->af)
-		return (PF_AFRT);
-#endif /* INET6 */
-
-	return (PF_PASS);
+	return (action);
 
 cleanup:
 	while ((ri = SLIST_FIRST(&rules))) {
@@ -6559,9 +6560,16 @@ done:
 
 	if (action == PF_PASS && qid)
 		pd.m->m_pkthdr.pf.qid = qid;
-	if (pd.dir == PF_IN && s && s->key[PF_SK_STACK])
+	if (pd.dir == PF_IN && s && s->key[PF_SK_STACK]) {
+		/*
+		 * ASSERT() below fires whenever caller forgets to call
+		 * pf_pkt_addr_changed(). This might happen when we deal with
+		 * IP tunnels.
+		 */
+		KASSERT(pd.m->m_pkthdr.pf.statekey == NULL);
 		pd.m->m_pkthdr.pf.statekey =
 		    pf_state_key_ref(s->key[PF_SK_STACK]);
+	}
 	if (pd.dir == PF_OUT &&
 	    pd.m->m_pkthdr.pf.inp && !pd.m->m_pkthdr.pf.inp->inp_pf_sk &&
 	    s && s->key[PF_SK_STACK] && !s->key[PF_SK_STACK]->inp) {
