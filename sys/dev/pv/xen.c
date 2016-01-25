@@ -1,4 +1,4 @@
-/*	$OpenBSD: xen.c,v 1.34 2016/01/23 15:19:02 jsg Exp $	*/
+/*	$OpenBSD: xen.c,v 1.35 2016/01/25 15:22:56 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Belopuhov
@@ -471,7 +471,6 @@ xen_init_interrupts(struct xen_softc *sc)
 	int i;
 
 	sc->sc_irq = LAPIC_XEN_VECTOR;
-	evcount_attach(&sc->sc_evcnt, sc->sc_dev.dv_xname, &sc->sc_irq);
 
 	/*
 	 * Clear all pending events and mask all interrupts
@@ -535,8 +534,6 @@ xen_intr(void)
 	struct vcpu_info *v = &s->vcpu_info[CPU_INFO_UNIT(ci)];
 	ulong pending, selector;
 	int port, bit, row;
-
-	sc->sc_evcnt.ec_count++;
 
 	v->evtchn_upcall_pending = 0;
 	selector = atomic_swap_ulong(&v->evtchn_pending_sel, 0);

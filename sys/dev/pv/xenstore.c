@@ -1,4 +1,4 @@
-/*	$OpenBSD: xenstore.c,v 1.20 2016/01/22 19:26:40 mikeb Exp $	*/
+/*	$OpenBSD: xenstore.c,v 1.21 2016/01/25 15:22:56 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Belopuhov
@@ -211,7 +211,8 @@ xs_attach(struct xen_softc *sc)
 	pmap_kenter_pa((vaddr_t)xs->xs_ring, pa, PROT_READ | PROT_WRITE);
 	pmap_update(pmap_kernel());
 
-	if (xen_intr_establish(xs->xs_port, &xs->xs_ih, xs_intr, xs, "xs0"))
+	if (xen_intr_establish(xs->xs_port, &xs->xs_ih, xs_intr, xs,
+	    sc->sc_dev.dv_xname))
 		goto fail_2;
 
 	xs->xs_wchan = "xswrite";
