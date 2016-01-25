@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xnf.c,v 1.11 2016/01/22 19:47:57 mikeb Exp $	*/
+/*	$OpenBSD: if_xnf.c,v 1.12 2016/01/25 10:46:54 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015, 2016 Mike Belopuhov
@@ -81,7 +81,7 @@ union xnf_rx_desc {
 
 #define XNF_RX_DESC		256
 #define XNF_MCLEN		PAGE_SIZE
-#define XNF_RX_MIN		18
+#define XNF_RX_MIN		32
 
 struct xnf_rx_ring {
 	uint32_t		 rxr_prod;
