@@ -1,4 +1,4 @@
-/*	$OpenBSD: dump.c,v 1.50 2016/01/24 15:23:33 krw Exp $	*/
+/*	$OpenBSD: dump.c,v 1.51 2016/01/25 03:26:54 jsg Exp $	*/
 
 /*
  * dump.c - dumping partition maps
@@ -32,7 +32,6 @@
 #include <string.h>
 
 #include "dpme.h"
-#include "file_media.h"
 #include "partition_map.h"
 #include "dump.h"
 #include "io.h"

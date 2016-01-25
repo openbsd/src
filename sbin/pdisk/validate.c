@@ -1,4 +1,4 @@
-/*	$OpenBSD: validate.c,v 1.37 2016/01/24 01:38:32 krw Exp $	*/
+/*	$OpenBSD: validate.c,v 1.38 2016/01/25 03:26:54 jsg Exp $	*/
 
 /*
  * validate.c -
@@ -34,9 +34,6 @@
 #include "dpme.h"
 #include "partition_map.h"
 #include "validate.h"
-#include "convert.h"
-#include "io.h"
-#include "file_media.h"
 
 enum range_state {
 	kUnallocated,
