@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_etherip.c,v 1.4 2016/01/22 11:33:39 goda Exp $	*/
+/*	$OpenBSD: if_etherip.c,v 1.5 2016/01/25 05:12:34 jsg Exp $	*/
 /*
  * Copyright (c) 2015 Kazuya GODA <goda@openbsd.org>
  *
@@ -216,7 +216,7 @@ etherip_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	struct ifreq *ifr = (struct ifreq *)data;
 	struct sockaddr_storage *src, *dst;
 	struct proc *p = curproc;
-	int s, error;
+	int s, error = 0;
 
 	switch (cmd) {
 	case SIOCSIFADDR:
@@ -229,7 +229,6 @@ etherip_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		else
 			ifp->if_flags &= ~IFF_RUNNING;
 
-		error = 0;
 		break;
 
 	case SIOCSLIFPHYRTABLE:
@@ -287,7 +286,6 @@ etherip_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		memset(&sc->sc_src, 0, sizeof(sc->sc_src));
 		memset(&sc->sc_dst, 0, sizeof(sc->sc_dst));
 		splx(s);
-		error = 0;
 		break;
 
 	case SIOCGLIFPHYADDR:
@@ -299,7 +297,6 @@ etherip_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		memcpy(&lifr->addr, &sc->sc_src, sc->sc_src.ss_len);
 		memcpy(&lifr->dstaddr, &sc->sc_dst, sc->sc_dst.ss_len);
 
-		error = 0;
 		break;
 
 	case SIOCSIFMEDIA:
