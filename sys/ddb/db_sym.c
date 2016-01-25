@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_sym.c,v 1.40 2016/01/25 14:30:30 mpi Exp $	*/
+/*	$OpenBSD: db_sym.c,v 1.41 2016/01/25 14:50:13 mpi Exp $	*/
 /*	$NetBSD: db_sym.c,v 1.24 2000/08/11 22:50:47 tv Exp $	*/
 
 /*
@@ -82,38 +82,6 @@ int		X_db_sym_numargs(db_symtab_t *, db_sym_t, int *,
  * table.  Note that if initializing the master symbol table fails,
  * no other symbol tables can be loaded.
  */
-#if 0
-void
-ddb_init(int symsize, void *vss, void *vse)
-{
-	const db_symformat_t **symf;
-	const char *name = "bsd";
-
-	if (symsize <= 0) {
-		printf(" [ no symbols available ]\n");
-		return;
-	}
-
-	/*
-	 * Do this check now for the master symbol table to avoid printing
-	 * the message N times.
-	 */
-	if (ALIGNED_POINTER(vss, long) == 0) {
-		printf("[ %s symbol table has bad start address %p ]\n",
-		    name, vss);
-		return;
-	}
-
-	for (symf = db_symformats; *symf != NULL; symf++) {
-		db_symformat = *symf;
-		if (X_db_sym_init(symsize, vss, vse, name) == TRUE)
-			return;
-	}
-
-	db_symformat = NULL;
-	printf("[ no symbol table formats found ]\n");
-}
-#else
 void
 ddb_init(void)
 {
@@ -154,7 +122,6 @@ ddb_init(void)
 	db_symformat = NULL;
 	printf("[ no symbol table formats found ]\n");
 }
-#endif
 
 /*
  * Add symbol table, with given name, to list of symbol tables.
