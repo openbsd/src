@@ -1,4 +1,4 @@
-/*	$OpenBSD: partition_map.c,v 1.63 2016/01/24 15:23:33 krw Exp $	*/
+/*	$OpenBSD: partition_map.c,v 1.64 2016/01/25 23:43:20 krw Exp $	*/
 
 /*
  * partition_map.c - partition map routines
@@ -37,7 +37,6 @@
 #include "dpme.h"
 #include "partition_map.h"
 #include "io.h"
-#include "convert.h"
 #include "file_media.h"
 
 #define APPLE_HFS_FLAGS_VALUE	0x4000037f
@@ -103,9 +102,7 @@ open_partition_map(int fd, char *name, uint64_t mediasz, uint32_t sectorsz)
 		free(map);
 		return NULL;
 	}
-	if (read_block(map->fd, 0, map->block0) == 0 ||
-	    convert_block0(map->block0, 1) ||
-	    coerce_block0(map)) {
+	if (read_block0(map->fd, map->block0) == 0) {
 		warnx("Can't read block 0 from '%s'", name);
 		free_partition_map(map);
 		return NULL;
@@ -161,22 +158,20 @@ read_partition_map(struct partition_map_header *map)
 		warn("can't allocate memory for disk buffers");
 		return -1;
 	}
-	if (read_block(map->fd, 1, dpme) == 0) {
+	if (read_dpme(map->fd, 1, dpme) == 0) {
 		warnx("Can't read block 1 from '%s'", map->name);
 		free(dpme);
 		return -1;
-	} else if (convert_dpme(dpme, 1) ||
-		   dpme->dpme_signature != DPME_SIGNATURE) {
+	} else if (dpme->dpme_signature != DPME_SIGNATURE) {
 		old_logical = map->logical_block;
 		map->logical_block = 512;
 		while (map->logical_block <= map->physical_block) {
-			if (read_block(map->fd, 1, dpme) == 0) {
+			if (read_dpme(map->fd, 1, dpme) == 0) {
 				warnx("Can't read block 1 from '%s'",
 				    map->name);
 				free(dpme);
 				return -1;
-			} else if (convert_dpme(dpme, 1) == 0
-				&& dpme->dpme_signature == DPME_SIGNATURE) {
+			} else if (dpme->dpme_signature == DPME_SIGNATURE) {
 				d = map->media_size;
 				map->media_size = (d * old_logical) /
 				    map->logical_block;
@@ -208,12 +203,11 @@ read_partition_map(struct partition_map_header *map)
 			warn("can't allocate memory for disk buffers");
 			return -1;
 		}
-		if (read_block(map->fd, ix, dpme) == 0) {
+		if (read_dpme(map->fd, ix, dpme) == 0) {
 			warnx("Can't read block %u from '%s'", ix, map->name);
 			free(dpme);
 			return -1;
-		} else if (convert_dpme(dpme, 1) ||
-			   (dpme->dpme_signature != DPME_SIGNATURE) ||
+		} else if ((dpme->dpme_signature != DPME_SIGNATURE) ||
 			   (dpme->dpme_map_entries != limit)) {
 			warnx("Bad dpme in block %u from '%s'", ix, map->name);
 			free(dpme);
@@ -230,19 +224,15 @@ write_partition_map(struct partition_map_header *map)
 	struct partition_map *entry;
 	int result;
 
-	convert_block0(map->block0, 0);
-	result = write_block(map->fd, 0, map->block0);
+	result = write_block0(map->fd, map->block0);
 	if (result == 0)
 		warn("Unable to write block zero");
-	convert_block0(map->block0, 1);
 
 	for (entry = map->disk_order; entry != NULL;
 	    entry = entry->next_on_disk) {
-		convert_dpme(entry->dpme, 0);
-		result = write_block(map->fd, entry->disk_address, entry->dpme);
+		result = write_dpme(map->fd, entry->disk_address, entry->dpme);
 		if (result == 0)
 			warn("Unable to write block %ld", entry->disk_address);
-		convert_dpme(entry->dpme, 1);
 	}
 }
 
@@ -623,7 +613,7 @@ contains_driver(struct partition_map *entry)
 		f = p->sbBlkSize / map->logical_block;
 	}
 	if (p->sbDrvrCount > 0) {
-		m = (struct ddmap *)p->sbMap;
+		m = p->sbDDMap;
 		for (i = 0; i < p->sbDrvrCount; i++) {
 			start = m[i].ddBlock;
 			if (entry->dpme->dpme_pblock_start <= f * start &&
@@ -982,7 +972,7 @@ remove_driver(struct partition_map *entry)
 		f = p->sbBlkSize / map->logical_block;
 	}
 	if (p->sbDrvrCount > 0) {
-		m = (struct ddmap *)p->sbMap;
+		m = p->sbDDMap;
 		for (i = 0; i < p->sbDrvrCount; i++) {
 			start = m[i].ddBlock;
 

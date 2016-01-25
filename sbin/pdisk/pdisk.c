@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdisk.c,v 1.68 2016/01/25 03:26:54 jsg Exp $	*/
+/*	$OpenBSD: pdisk.c,v 1.69 2016/01/25 23:43:20 krw Exp $	*/
 
 /*
  * pdisk - an editor for Apple format partition tables
@@ -29,7 +29,7 @@
  * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/types.h>
+#include <sys/param.h>		/* DEV_BSIZE */
 #include <sys/dkio.h>
 #include <sys/disklabel.h>
 #include <sys/ioctl.h>
@@ -106,17 +106,8 @@ main(int argc, char **argv)
 		    *argv);
 	if (ioctl(fd, DIOCGPDINFO, &dl) == -1)
 		err(1, "can't get disklabel for %s", *argv);
-
-	if (sizeof(struct block0) != dl.d_secsize) {
-		errx(1, "Size of block zero structure (%zu) is not equal "
-		    "to disk sector size (%d)\n", sizeof(struct block0),
-		    dl.d_secsize);
-	}
-	if (sizeof(struct dpme) != dl.d_secsize) {
-		errx(1, "Size of partition map entry (%zu) is not equal "
-		    "to disk sector size (%d)\n", sizeof(struct dpme),
-		    dl.d_secsize);
-	}
+	if (dl.d_secsize != DEV_BSIZE)
+		errx(1, "disk sector size (%d) != 512\n", dl.d_secsize);
 
 	map = open_partition_map(fd, *argv, DL_GETDSIZE(&dl), dl.d_secsize);
 	if (map != NULL) {

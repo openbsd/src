@@ -1,4 +1,4 @@
-/*	$OpenBSD: file_media.c,v 1.40 2016/01/25 22:12:22 krw Exp $	*/
+/*	$OpenBSD: file_media.c,v 1.41 2016/01/25 23:43:20 krw Exp $	*/
 
 /*
  * file_media.c -
@@ -78,7 +78,10 @@ struct dpme_ondisk {
     uint8_t	dpme_reserved_4[376];
 };
 
-int
+static int	read_block(int, uint64_t, void *);
+static int	write_block(int, uint64_t, void *);
+
+static int
 read_block(int fd, uint64_t sector, void *address)
 {
 	ssize_t off;
@@ -97,7 +100,7 @@ read_block(int fd, uint64_t sector, void *address)
 	return (0);
 }
 
-int
+static int
 write_block(int fd, uint64_t sector, void *address)
 {
 	ssize_t off;
@@ -114,10 +117,8 @@ int
 read_block0(int fd, struct block0 *block0)
 {
 	struct block0_ondisk *block0_ondisk;
-#if 0
 	struct ddmap_ondisk ddmap_ondisk;
 	int i;
-#endif
 
 	block0_ondisk = malloc(sizeof(struct block0_ondisk));
 	if (block0_ondisk == NULL)
@@ -148,7 +149,6 @@ read_block0(int fd, struct block0 *block0)
 	    sizeof(block0->sbDrvrCount));
 	block0->sbDrvrCount = betoh16(block0->sbDrvrCount);
 
-#if 0
 	for (i = 0; i < 8; i++) {
 		memcpy(&ddmap_ondisk,
 		    block0->sbDDMap+i*sizeof(struct ddmap_ondisk),
@@ -163,7 +163,6 @@ read_block0(int fd, struct block0 *block0)
 		    sizeof(block0->sbDDMap[i].ddType));
 		block0->sbDDMap[i].ddType = betoh32(block0->sbDDMap[i].ddType);
 	}
-#endif
 
 	free(block0_ondisk);
 	return 1;
@@ -173,10 +172,8 @@ int
 write_block0(int fd, struct block0 *block0)
 {
 	struct block0_ondisk *block0_ondisk;
-#if 0
 	struct ddmap_ondisk ddmap_ondisk;
-#endif
-	int rslt;
+	int i, rslt;
 	uint32_t tmp32;
 	uint16_t tmp16;
 
@@ -197,7 +194,7 @@ write_block0(int fd, struct block0 *block0)
 	memcpy(block0_ondisk->sbDevType, &tmp16,
 	    sizeof(block0_ondisk->sbDevType));
 	tmp16 = htobe16(block0->sbDevId);
-	memcpy(block0_ondisk->sbDevId, &tmp32,
+	memcpy(block0_ondisk->sbDevId, &tmp16,
 	    sizeof(block0_ondisk->sbDevId));
 	tmp32 = htobe32(block0->sbData);
 	memcpy(block0_ondisk->sbData, &tmp32,
@@ -206,7 +203,6 @@ write_block0(int fd, struct block0 *block0)
 	memcpy(block0_ondisk->sbDrvrCount, &tmp16,
 	    sizeof(block0_ondisk->sbDrvrCount));
 
-#if 0
 	for (i = 0; i < 8; i++) {
 		tmp32 = htobe32(block0->sbDDMap[i].ddBlock);
 		memcpy(ddmap_ondisk.ddBlock, &tmp32,
@@ -220,7 +216,6 @@ write_block0(int fd, struct block0 *block0)
 		memcpy(block0->sbDDMap+i*sizeof(struct ddmap_ondisk),
 		    &ddmap_ondisk, sizeof(ddmap_ondisk));
 	}
-#endif
 
 	rslt = write_block(fd, 0, block0_ondisk);
 	free(block0_ondisk);

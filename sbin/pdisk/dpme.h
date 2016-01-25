@@ -1,4 +1,4 @@
-/*	$OpenBSD: dpme.h,v 1.20 2016/01/25 21:51:23 krw Exp $	*/
+/*	$OpenBSD: dpme.h,v 1.21 2016/01/25 23:43:20 krw Exp $	*/
 
 /*
  * dpme.h - Disk Partition Map Entry (dpme)
@@ -47,33 +47,26 @@
 
 #define	DPISTRLEN	32
 
-struct block0 {
-    uint16_t   sbSig;          /* unique value for SCSI block 0 */
-    uint16_t   sbBlkSize;      /* block size of device */
-    uint32_t   sbBlkCount;     /* number of blocks on device */
-    uint16_t   sbDevType;      /* device type */
-    uint16_t   sbDevId;        /* device id */
-    uint32_t   sbData;         /* not used */
-    uint16_t   sbDrvrCount;    /* driver descriptor count */
-    uint16_t   sbMap[247];     /* descriptor map */
-};
-
-/*
- * Where &sbMap[0] is actually an array struct ddmap[sbDrvrCount]
- * kludge to get around alignment junk
- */
 struct ddmap {
     uint32_t	ddBlock;	/* 1st driver's starting block (in sbBlkSize blocks!) */
     uint16_t	ddSize;		/* size of 1st driver (512-byte blks) */
     uint16_t	ddType;		/* system type (1 for Mac+) */
 };
 
+struct block0 {
+    uint16_t		sbSig;		/* unique value for SCSI block 0 */
+    uint16_t		sbBlkSize;	/* block size of device */
+    uint32_t		sbBlkCount;	/* number of blocks on device */
+    uint16_t		sbDevType;	/* device type */
+    uint16_t		sbDevId;	/* device id */
+    uint32_t		sbData;		/* not used */
+    uint16_t		sbDrvrCount;	/* driver descriptor count */
+    struct ddmap	sbDDMap[8];	/* driver descriptor map*/
+    uint8_t		sbReserved[430];
+};
 
 /*
  * Each partition map entry (blocks 1 through n) has this format
- *
- * Since dpme is assumed to be the same size as the physical sector size,
- * support is limited to 512-byte sector devices!
  */
 struct dpme {
     uint16_t	dpme_signature;		/* "PM" */
