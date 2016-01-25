@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.31 2016/01/10 18:18:25 stefan Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.32 2016/01/25 12:44:16 jsg Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -2372,7 +2372,7 @@ vm_get_info(struct vm_info_params *vip)
 		return (0);
 	}
 
-	out = malloc(need, M_DEVBUF, M_NOWAIT);
+	out = malloc(need, M_DEVBUF, M_NOWAIT|M_ZERO);
 	if (out == NULL) {
 		vip->vip_info_ct = 0;
 		rw_exit_read(&vmm_softc->vm_lock);
