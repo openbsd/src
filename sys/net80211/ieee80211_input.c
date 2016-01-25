@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.153 2016/01/25 15:10:37 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.154 2016/01/25 15:14:22 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -2299,7 +2299,9 @@ ieee80211_recv_assoc_resp(struct ieee80211com *ic, struct mbuf *m,
 	/*
 	 * Honor ERP protection.
 	 */
-	if (ic->ic_curmode == IEEE80211_MODE_11G &&
+	if ((ic->ic_curmode == IEEE80211_MODE_11G ||
+	    (ic->ic_curmode == IEEE80211_MODE_11N &&
+	    IEEE80211_IS_CHAN_2GHZ(ni->ni_chan))) &&
 	    (ni->ni_erp & IEEE80211_ERP_USE_PROTECTION))
 		ic->ic_flags |= IEEE80211_F_USEPROT;
 	else

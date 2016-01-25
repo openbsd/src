@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.98 2016/01/25 15:10:37 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.99 2016/01/25 15:14:22 stsp Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -1517,7 +1517,9 @@ ieee80211_node_join(struct ieee80211com *ic, struct ieee80211_node *ni,
 		ni->ni_associd = aid | 0xc000;
 		IEEE80211_AID_SET(ni->ni_associd, ic->ic_aid_bitmap);
 		newassoc = 1;
-		if (ic->ic_curmode == IEEE80211_MODE_11G)
+		if (ic->ic_curmode == IEEE80211_MODE_11G ||
+		    (ic->ic_curmode == IEEE80211_MODE_11N &&
+		    IEEE80211_IS_CHAN_2GHZ(ic->ic_bss->ni_chan)))
 			ieee80211_node_join_11g(ic, ni);
 	} else
 		newassoc = 0;
@@ -1684,7 +1686,9 @@ ieee80211_node_leave(struct ieee80211com *ic, struct ieee80211_node *ni)
 	if (ic->ic_flags & IEEE80211_F_RSNON)
 		ieee80211_node_leave_rsn(ic, ni);
 
-	if (ic->ic_curmode == IEEE80211_MODE_11G)
+	if (ic->ic_curmode == IEEE80211_MODE_11G ||
+	    (ic->ic_curmode == IEEE80211_MODE_11N &&
+	    IEEE80211_IS_CHAN_2GHZ(ic->ic_bss->ni_chan)))
 		ieee80211_node_leave_11g(ic, ni);
 
 	if (ni->ni_flags & IEEE80211_NODE_HT)
