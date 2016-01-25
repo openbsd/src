@@ -1,4 +1,4 @@
-/*	$OpenBSD: chat.c,v 1.32 2015/08/20 22:46:32 deraadt Exp $	*/
+/*	$OpenBSD: chat.c,v 1.33 2016/01/25 21:24:17 gsoares Exp $	*/
 
 /*
  *	Chat -- a program for automatic session establishment (i.e. dial
@@ -1203,7 +1203,7 @@ register char *s;
 
     if (verbose) {
 	if (quiet)
-	    logmsg("send (??????)");
+	    logmsg("send (hidden)");
 	else
 	    logmsg("send (%v)", s);
     }
