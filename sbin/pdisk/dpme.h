@@ -1,4 +1,4 @@
-/*	$OpenBSD: dpme.h,v 1.19 2016/01/24 01:38:32 krw Exp $	*/
+/*	$OpenBSD: dpme.h,v 1.20 2016/01/25 21:51:23 krw Exp $	*/
 
 /*
  * dpme.h - Disk Partition Map Entry (dpme)
@@ -47,19 +47,15 @@
 
 #define	DPISTRLEN	32
 
-/*
- * Since block0 is assumed to be the same size as the physical sector size,
- * support is limited to 512-byte sector devices!
- */
 struct block0 {
-    uint16_t	sbSig;		/* unique value for SCSI block 0 */
-    uint16_t	sbBlkSize;	/* block size of device */
-    uint32_t	sbBlkCount;	/* number of blocks on device */
-    uint16_t	sbDevType;	/* device type */
-    uint16_t	sbDevId;	/* device id */
-    uint32_t	sbData;		/* not used */
-    uint16_t	sbDrvrCount;	/* driver descriptor count */
-    uint16_t	sbMap[247];	/* descriptor map */
+    uint16_t   sbSig;          /* unique value for SCSI block 0 */
+    uint16_t   sbBlkSize;      /* block size of device */
+    uint32_t   sbBlkCount;     /* number of blocks on device */
+    uint16_t   sbDevType;      /* device type */
+    uint16_t   sbDevId;        /* device id */
+    uint32_t   sbData;         /* not used */
+    uint16_t   sbDrvrCount;    /* driver descriptor count */
+    uint16_t   sbMap[247];     /* descriptor map */
 };
 
 /*
@@ -80,18 +76,16 @@ struct ddmap {
  * support is limited to 512-byte sector devices!
  */
 struct dpme {
-    uint16_t	dpme_signature;
-    uint16_t	dpme_reserved_1;
-    uint32_t	dpme_map_entries;
-    uint32_t	dpme_pblock_start;
-    uint32_t	dpme_pblocks;
-    char	dpme_name[DPISTRLEN];  /* name of partition */
-    char	dpme_type[DPISTRLEN];  /* type of partition */
-    uint32_t	dpme_lblock_start;
-    uint32_t	dpme_lblocks;
+    uint16_t	dpme_signature;		/* "PM" */
+    uint8_t	dpme_reserved_1[2];
+    uint32_t	dpme_map_entries;	/* # of partition entries */
+    uint32_t	dpme_pblock_start;	/* physical block start of partition */
+    uint32_t	dpme_pblocks;		/* physical block count of partition */
+    char	dpme_name[DPISTRLEN];	/* name of partition */
+    char	dpme_type[DPISTRLEN];	/* type of partition */
+    uint32_t	dpme_lblock_start;	/* logical block start of partition */
+    uint32_t	dpme_lblocks;		/* logical block count of partition */
     uint32_t	dpme_flags;
-#define	DPME_DISKDRIVER		(1<<9)
-#define	DPME_CHAINABLE		(1<<8)
 #define	DPME_OS_SPECIFIC_1	(1<<8)
 #define	DPME_OS_SPECIFIC_2	(1<<7)
 #define	DPME_OS_PIC_CODE	(1<<6)
@@ -101,16 +95,15 @@ struct dpme {
 #define	DPME_IN_USE		(1<<2)
 #define	DPME_ALLOCATED		(1<<1)
 #define	DPME_VALID		(1<<0)
-    uint32_t	dpme_boot_block;
-    uint32_t	dpme_boot_bytes;
-    uint8_t    *dpme_load_addr;
-    uint8_t    *dpme_load_addr_2;
-    uint8_t    *dpme_goto_addr;
-    uint8_t    *dpme_goto_addr_2;
-    uint32_t	dpme_checksum;
-    char	dpme_process_id[16];
-    uint32_t	dpme_boot_args[32];
-    uint32_t	dpme_reserved_3[62];
+    uint32_t	dpme_boot_block;	/* logical block start of boot code */
+    uint32_t	dpme_boot_bytes;	/* byte count of boot code */
+    uint16_t	dpme_load_addr;		/* memory address of boot code */
+    uint8_t	dpme_reserved_2[4];
+    uint32_t	dpme_goto_addr;		/* memory jump address of boot code */
+    uint8_t	dpme_reserved_3[4];
+    uint32_t	dpme_checksum;		/* of the boot code. */
+    char	dpme_processor_id[16];	/* processor type */
+    uint8_t	dpme_reserved_4[376];
 };
 
 #endif /* __dpme__ */

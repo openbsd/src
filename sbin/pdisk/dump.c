@@ -1,4 +1,4 @@
-/*	$OpenBSD: dump.c,v 1.51 2016/01/25 03:26:54 jsg Exp $	*/
+/*	$OpenBSD: dump.c,v 1.52 2016/01/25 21:51:23 krw Exp $	*/
 
 /*
  * dump.c - dumping partition maps
@@ -217,7 +217,7 @@ show_data_structures(struct partition_map_header *map)
 		printf("%2ld: %20.32s ",
 		       entry->disk_address, p->dpme_type);
 		printf("%7u @ %-7u ", p->dpme_pblocks, p->dpme_pblock_start);
-		printf("%c%c%c%c%c%c%c%c%c%c%c%c ",
+		printf("%c%c%c%c%c%c%c%c%c ",
 		       (p->dpme_flags & DPME_VALID) ? 'V' : '.',
 		       (p->dpme_flags & DPME_ALLOCATED) ? 'A' : '.',
 		       (p->dpme_flags & DPME_IN_USE) ? 'I' : '.',
@@ -226,10 +226,7 @@ show_data_structures(struct partition_map_header *map)
 		       (p->dpme_flags & DPME_WRITABLE) ? 'W' : '.',
 		       (p->dpme_flags & DPME_OS_PIC_CODE) ? 'P' : '.',
 		       (p->dpme_flags & DPME_OS_SPECIFIC_2) ? '2' : '.',
-		       (p->dpme_flags & DPME_CHAINABLE) ? 'C' : '.',
-		       (p->dpme_flags & DPME_DISKDRIVER) ? 'D' : '.',
-		       (p->dpme_flags & (1 << 30)) ? 'M' : '.',
-		       (p->dpme_flags & (1 << 31)) ? 'X' : '.');
+		       (p->dpme_flags & DPME_OS_SPECIFIC_1) ? '1' : '.');
 		if (p->dpme_lblock_start != 0 || p->dpme_pblocks !=
 		    p->dpme_lblocks) {
 			printf("(%u @ %u)", p->dpme_lblocks,
@@ -247,11 +244,9 @@ show_data_structures(struct partition_map_header *map)
 		printf("%7u ", p->dpme_boot_block);
 		printf("%7u ", p->dpme_boot_bytes);
 		printf("%8x ", (uint32_t) p->dpme_load_addr);
-		printf("%8x ", (uint32_t) p->dpme_load_addr_2);
 		printf("%8x ", (uint32_t) p->dpme_goto_addr);
-		printf("%8x ", (uint32_t) p->dpme_goto_addr_2);
 		printf("%8x ", p->dpme_checksum);
-		printf("%.32s", p->dpme_process_id);
+		printf("%.32s", p->dpme_processor_id);
 		printf("\n");
 	}
 	printf("\n");
@@ -273,7 +268,6 @@ full_dump_partition_entry(struct partition_map_header *map, int ix)
 	}
 	p = cur->dpme;
 	printf("             signature: 0x%x\n", p->dpme_signature);
-	printf("             reserved1: 0x%x\n", p->dpme_reserved_1);
 	printf(" number of map entries: %u\n", p->dpme_map_entries);
 	printf("        physical start: %10u  length: %10u\n",
 	    p->dpme_pblock_start, p->dpme_pblocks);
@@ -310,16 +304,18 @@ full_dump_partition_entry(struct partition_map_header *map, int ix)
 
 	printf("      boot start block: %10u\n", p->dpme_boot_block);
 	printf("boot length (in bytes): %10u\n", p->dpme_boot_bytes);
-	printf("          load address: 0x%08x  0x%08x\n",
-	       (uint32_t) p->dpme_load_addr, (uint32_t) p->dpme_load_addr_2);
-	printf("         start address: 0x%08x  0x%08x\n",
-	       (uint32_t) p->dpme_goto_addr, (uint32_t) p->dpme_goto_addr_2);
+	printf("          load address: 0x%08x\n", p->dpme_load_addr);
+	printf("         start address: 0x%08x\n", p->dpme_goto_addr);
 	printf("              checksum: 0x%08x\n", p->dpme_checksum);
-	printf("             processor: '%.32s'\n", p->dpme_process_id);
-	printf("boot args field -");
-	dump_block((unsigned char *)p->dpme_boot_args, 32 * 4);
+	printf("             processor: '%.32s'\n", p->dpme_processor_id);
+	printf("dpme_reserved_1 -");
+	dump_block(p->dpme_reserved_1, sizeof(p->dpme_reserved_1));
+	printf("dpme_reserved_2 -");
+	dump_block(p->dpme_reserved_2, sizeof(p->dpme_reserved_2));
 	printf("dpme_reserved_3 -");
-	dump_block((unsigned char *)p->dpme_reserved_3, 62 * 4);
+	dump_block(p->dpme_reserved_3, sizeof(p->dpme_reserved_3));
+	printf("dpme_reserved_4 -");
+	dump_block(p->dpme_reserved_3, sizeof(p->dpme_reserved_4));
 }
 
 

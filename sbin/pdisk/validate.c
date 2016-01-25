@@ -1,4 +1,4 @@
-/*	$OpenBSD: validate.c,v 1.38 2016/01/25 03:26:54 jsg Exp $	*/
+/*	$OpenBSD: validate.c,v 1.39 2016/01/25 21:51:23 krw Exp $	*/
 
 /*
  * validate.c -
@@ -280,12 +280,6 @@ validate_map(struct partition_map_header *map)
 			printed = 1;
 			printf("\tsignature is 0x%x, should be 0x%x\n",
 			    dpme->dpme_signature, DPME_SIGNATURE);
-		}
-		/* reserved1 == 0 */
-		if (dpme->dpme_reserved_1 != 0) {
-			printed = 1;
-			printf("\treserved word is 0x%x, should be 0\n",
-			    dpme->dpme_reserved_1);
 		}
 		/* entry count matches */
 		if (dpme->dpme_map_entries != limit) {
