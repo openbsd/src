@@ -1,4 +1,4 @@
-/*	$OpenBSD: sgec.c,v 1.34 2015/11/25 03:09:58 dlg Exp $	*/
+/*	$OpenBSD: sgec.c,v 1.35 2016/01/25 00:18:55 dlg Exp $	*/
 /*      $NetBSD: sgec.c,v 1.5 2000/06/04 02:14:14 matt Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -382,7 +382,7 @@ zestart(ifp)
 			continue;
 		}
 		idx = sc->sc_nexttx;
-		IF_POLL(&sc->sc_if.if_snd, m);
+		m = ifq_deq_begin(&ifp->if_snd);
 		if (m == NULL)
 			goto out;
 		/*
@@ -398,9 +398,10 @@ zestart(ifp)
 
 		if ((i + sc->sc_inq) >= (TXDESCS - 1)) {
 			ifq_set_oactive(&ifp->if_snd);
+			ifq_deq_rollback(&ifp->if_snd, m);
 			goto out;
 		}
-		IFQ_DEQUEUE(&sc->sc_if.if_snd, m);
+		ifq_deq_commit(&ifp->if_snd, m);
 		
 #if NBPFILTER > 0
 		if (ifp->if_bpf)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_qe.c,v 1.40 2015/11/25 03:09:58 dlg Exp $	*/
+/*	$OpenBSD: if_qe.c,v 1.41 2016/01/25 00:18:55 dlg Exp $	*/
 /*      $NetBSD: if_qe.c,v 1.51 2002/06/08 12:28:37 ragge Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -441,7 +441,7 @@ qestart(struct ifnet *ifp)
 			continue;
 		}
 		idx = sc->sc_nexttx;
-		m = ifq_deq_begin(&ifp->if_snd, m);
+		m = ifq_deq_begin(&ifp->if_snd);
 		if (m == NULL)
 			goto out;
 		/*
