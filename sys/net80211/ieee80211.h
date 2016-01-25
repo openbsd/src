@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211.h,v 1.56 2016/01/06 19:56:50 stsp Exp $	*/
+/*	$OpenBSD: ieee80211.h,v 1.57 2016/01/25 12:51:14 stsp Exp $	*/
 /*	$NetBSD: ieee80211.h,v 1.6 2004/04/30 23:51:53 dyoung Exp $	*/
 
 /*-
@@ -1016,10 +1016,10 @@ enum {
  * HT protection modes (see 802.11-2012 8.4.2.59)
  */
 enum ieee80211_htprot {
-	IEEE80211_HTPROT_NONE = 0,
-	IEEE80211_HTPROT_NONMEMBER,
-	IEEE80211_HTPROT_20MHZ,
-	IEEE80211_HTPROT_NONHT_MIXED,
+	IEEE80211_HTPROT_NONE = 0,	/* only 20/40MHz HT STAs exist */
+	IEEE80211_HTPROT_NONMEMBER,	/* non-HT STA overlaps our channel */ 
+	IEEE80211_HTPROT_20MHZ,		/* 20MHz HT STA on a 40MHz channel */
+	IEEE80211_HTPROT_NONHT_MIXED,	/* non-HT STA associated to our BSS */
 };
 
 #endif /* _NET80211_IEEE80211_H_ */
