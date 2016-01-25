@@ -1,4 +1,4 @@
-/*	$OpenBSD: rbootd.c,v 1.28 2015/10/26 10:08:14 jung Exp $	*/
+/*	$OpenBSD: rbootd.c,v 1.29 2016/01/25 21:31:38 gsoares Exp $	*/
 /*	$NetBSD: rbootd.c,v 1.5 1995/10/06 05:12:17 thorpej Exp $	*/
 
 /*
@@ -142,7 +142,6 @@ main(int argc, char *argv[])
 		char *errmsg;
 
 		if ((IntfName = BpfGetIntfName(&errmsg)) == NULL) {
-			syslog(LOG_NOTICE, "restarted (??)");
 			/* BpfGetIntfName() returns safe names, using %m */
 			syslog(LOG_ERR, "%s", errmsg);
 			DoExit();
