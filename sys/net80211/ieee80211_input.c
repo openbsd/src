@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.152 2016/01/25 11:27:11 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.153 2016/01/25 15:10:37 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -1579,8 +1579,8 @@ ieee80211_recv_probe_resp(struct ieee80211com *ic, struct mbuf *m,
 
 	if (htcaps)
 		ieee80211_setup_htcaps(ni, htcaps + 2, htcaps[1]);
-	if (htop)
-		ieee80211_setup_htop(ni, htop + 2, htop[1]);
+	if (htop && !ieee80211_setup_htop(ni, htop + 2, htop[1]))
+		htop = NULL; /* invalid HTOP */
 
 	/*
 	 * When operating in station mode, check for state updates
@@ -1603,7 +1603,7 @@ ieee80211_recv_probe_resp(struct ieee80211com *ic, struct mbuf *m,
 				ic->ic_flags &= ~IEEE80211_F_USEPROT;
 			ic->ic_bss->ni_erp = erp;
 		}
-		if (ic->ic_bss->ni_flags & IEEE80211_NODE_HT) {
+		if (htop && (ic->ic_bss->ni_flags & IEEE80211_NODE_HT)) {
 			enum ieee80211_htprot htprot_last, htprot;
 			htprot_last =
 			    ((ic->ic_bss->ni_htop1 & IEEE80211_HTOP1_PROT_MASK)

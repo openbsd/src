@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.h,v 1.52 2016/01/07 23:22:31 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_node.h,v 1.53 2016/01/25 15:10:37 stsp Exp $	*/
 /*	$NetBSD: ieee80211_node.h,v 1.9 2004/04/30 22:57:32 dyoung Exp $	*/
 
 /*-
@@ -353,7 +353,7 @@ extern	void ieee80211_clean_cached(struct ieee80211com *ic);
 extern	void ieee80211_clean_nodes(struct ieee80211com *, int);
 void ieee80211_setup_htcaps(struct ieee80211_node *, const uint8_t *,
     uint8_t);
-void ieee80211_setup_htop(struct ieee80211_node *, const uint8_t *,
+int ieee80211_setup_htop(struct ieee80211_node *, const uint8_t *,
     uint8_t);
 extern	int ieee80211_setup_rates(struct ieee80211com *,
 	    struct ieee80211_node *, const u_int8_t *, const u_int8_t *, int);

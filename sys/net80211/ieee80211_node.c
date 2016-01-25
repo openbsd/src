@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.97 2016/01/07 23:22:31 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.98 2016/01/25 15:10:37 stsp Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -1308,12 +1308,12 @@ ieee80211_setup_htcaps(struct ieee80211_node *ni, const uint8_t *data,
 /*
  * Install received HT op information in the node's state block.
  */
-void
+int
 ieee80211_setup_htop(struct ieee80211_node *ni, const uint8_t *data,
     uint8_t len)
 {
 	if (len != 22)
-		return;
+		return 0;
 
 	ni->ni_primary_chan = data[0]; /* XXX corresponds to ni_chan */
 
@@ -1322,6 +1322,8 @@ ieee80211_setup_htop(struct ieee80211_node *ni, const uint8_t *data,
 	ni->ni_htop2 = (data[3] | (data[4] << 8));
 
 	memcpy(ni->ni_basic_mcs, &data[6], sizeof(ni->ni_basic_mcs));
+
+	return 1;
 }
 
 /*
