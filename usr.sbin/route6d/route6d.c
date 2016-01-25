@@ -1,4 +1,4 @@
-/*	$OpenBSD: route6d.c,v 1.85 2016/01/25 05:03:23 jca Exp $	*/
+/*	$OpenBSD: route6d.c,v 1.86 2016/01/25 05:15:43 jca Exp $	*/
 /*	$KAME: route6d.c,v 1.111 2006/10/25 06:38:13 jinmei Exp $	*/
 
 /*
@@ -188,7 +188,6 @@ volatile sig_atomic_t seenusr1;
 #define RRTF_SENDANYWAY		0x40000000
 #define	RRTF_CHANGED		0x80000000
 
-int main(int, char **);
 void sighandler(int);
 void ripalarm(void);
 void riprecv(void);
