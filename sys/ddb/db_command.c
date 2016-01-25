@@ -1,28 +1,28 @@
-/*	$OpenBSD: db_command.c,v 1.67 2016/01/15 11:21:58 dlg Exp $	*/
+/*	$OpenBSD: db_command.c,v 1.68 2016/01/25 14:30:30 mpi Exp $	*/
 /*	$NetBSD: db_command.c,v 1.20 1996/03/30 22:30:05 christos Exp $	*/
 
-/* 
+/*
  * Mach Operating System
  * Copyright (c) 1993,1992,1991,1990 Carnegie Mellon University
  * All Rights Reserved.
- * 
+ *
  * Permission to use, copy, modify and distribute this software and its
  * documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
- * 
+ *
  * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
  * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND FOR
  * ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
+ *
  * Carnegie Mellon requests users of this software to return to
- * 
+ *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
  *  School of Computer Science
  *  Carnegie Mellon University
  *  Pittsburgh PA 15213-3890
- * 
+ *
  * any improvements or extensions that they make and grant Carnegie Mellon
  * the rights to redistribute these changes.
  */
@@ -289,7 +289,7 @@ db_buf_print_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 
 	if (modif[0] == 'f')
 		full = TRUE;
-				   
+
 	vfs_buf_print((void *) addr, full, db_printf);
 }
 
@@ -298,7 +298,7 @@ void
 db_map_print_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 {
         boolean_t full = FALSE;
-        
+
         if (modif[0] == 'f')
                 full = TRUE;
 
@@ -389,7 +389,7 @@ void
 db_object_print_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 {
         boolean_t full = FALSE;
-        
+
         if (modif[0] == 'f')
                 full = TRUE;
 
@@ -401,7 +401,7 @@ void
 db_page_print_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 {
         boolean_t full = FALSE;
-        
+
         if (modif[0] == 'f')
                 full = TRUE;
 
@@ -409,7 +409,7 @@ db_page_print_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 }
 
 /*ARGSUSED*/
-void     
+void
 db_vnode_print_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 {
 	boolean_t full = FALSE;
@@ -422,7 +422,7 @@ db_vnode_print_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 
 #ifdef NFSCLIENT
 /*ARGSUSED*/
-void     
+void
 db_nfsreq_print_cmd(db_expr_t addr, int have_addr, db_expr_t count,
     char *modif)
 {
@@ -435,7 +435,7 @@ db_nfsreq_print_cmd(db_expr_t addr, int have_addr, db_expr_t count,
 }
 
 /*ARGSUSED*/
-void     
+void
 db_nfsnode_print_cmd(db_expr_t addr, int have_addr, db_expr_t count,
     char *modif)
 {

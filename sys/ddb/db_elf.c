@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_elf.c,v 1.13 2015/03/14 03:38:46 jsg Exp $	*/
+/*	$OpenBSD: db_elf.c,v 1.14 2016/01/25 14:30:30 mpi Exp $	*/
 /*	$NetBSD: db_elf.c,v 1.13 2000/07/07 21:55:18 jhawk Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #include <sys/types.h>
 #include <sys/stdint.h>
 #include <sys/param.h>
-#include <sys/systm.h>  
+#include <sys/systm.h>
 #include <sys/exec.h>
 
 #include <machine/db_machdep.h>
@@ -170,9 +170,9 @@ db_elf_sym_init(int symsize, void *symtab, void *esymtab, const char *name)
 			strtab_end = (char *)symtab + shp[i].sh_offset +
 			    shp[i].sh_size;
 		} else if (strcmp(".symtab", shstrtab+shp[i].sh_name) == 0) {
-			symtab_start = (Elf_Sym *)((char *)symtab + 
+			symtab_start = (Elf_Sym *)((char *)symtab +
 			    shp[i].sh_offset);
-			symtab_end = (Elf_Sym *)((char *)symtab + 
+			symtab_end = (Elf_Sym *)((char *)symtab +
 			    shp[i].sh_offset + shp[i].sh_size);
 		}
 	}
@@ -198,7 +198,7 @@ db_elf_sym_init(int symsize, void *symtab, void *esymtab, const char *name)
 	if (db_add_symbol_table((char *)symtab_start,
 	    (char *)symtab_end, name, (char *)symtab) != -1) {
 		db_printf("[ using %lu bytes of %s ELF symbol table ]\n",
-		    (u_long)roundup(((char *)esymtab - (char *)symtab), 
+		    (u_long)roundup(((char *)esymtab - (char *)symtab),
 				    sizeof(u_long)), name);
 		return (TRUE);
 	}

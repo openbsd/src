@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_dwarf.c,v 1.2 2015/07/07 19:31:02 matthew Exp $	 */
+/*	$OpenBSD: db_dwarf.c,v 1.3 2016/01/25 14:30:30 mpi Exp $	 */
 /*
  * Copyright (c) 2014 Matthew Dempsky <matthew@dempsky.org>
  *
@@ -18,7 +18,7 @@
 #ifdef _KERNEL
 #include <sys/param.h>
 #include <sys/stdint.h>
-#include <sys/systm.h>  
+#include <sys/systm.h>
 #include <sys/types.h>
 #include <ddb/db_dwarf.h>
 #ifdef DIAGNOSTIC

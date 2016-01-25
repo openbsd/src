@@ -1,28 +1,28 @@
-/*	$OpenBSD: db_run.c,v 1.25 2015/03/14 03:38:46 jsg Exp $	*/
+/*	$OpenBSD: db_run.c,v 1.26 2016/01/25 14:30:30 mpi Exp $	*/
 /*	$NetBSD: db_run.c,v 1.8 1996/02/05 01:57:12 christos Exp $	*/
 
-/* 
+/*
  * Mach Operating System
  * Copyright (c) 1993,1992,1991,1990 Carnegie Mellon University
  * All Rights Reserved.
- * 
+ *
  * Permission to use, copy, modify and distribute this software and its
  * documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
- * 
+ *
  * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
  * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND FOR
  * ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
+ *
  * Carnegie Mellon requests users of this software to return to
- * 
+ *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
  *  School of Computer Science
  *  Carnegie Mellon University
  *  Pittsburgh PA 15213-3890
- * 
+ *
  * any improvements or extensions that they make and grant Carnegie Mellon
  * the rights to redistribute these changes.
  *
@@ -118,7 +118,7 @@ db_stop_at_pc(db_regs_t *regs, boolean_t *is_breakpoint)
 #endif
 	}
 	db_clear_single_step(regs);
-		
+
 	*is_breakpoint = FALSE;
 
 	if (db_run_mode == STEP_INVISIBLE) {
@@ -315,7 +315,7 @@ db_continue_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
  *	getreg_val(regs, reg),	return the value of a user register,
  *				as indicated in the hardware instruction
  *				encoding, e.g. 8 for r8
- *			
+ *
  * next_instr_address(pc, bd)	returns the address of the first
  *				instruction following the one at "pc",
  *				which is either in the taken path of
@@ -327,7 +327,7 @@ db_continue_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
  *	If one of these addresses does not already have a breakpoint,
  *	we allocate a breakpoint and save it here.
  *	These breakpoints are deleted on return.
- */			
+ */
 
 void
 db_set_single_step(db_regs_t *regs)
