@@ -1,4 +1,4 @@
-/*	$OpenBSD: libgen.h,v 1.7 2003/06/17 21:56:23 millert Exp $	*/
+/*	$OpenBSD: libgen.h,v 1.8 2016/01/25 12:17:48 jca Exp $	*/
 
 /*
  * Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -22,16 +22,8 @@
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-
 char	*basename(const char *);
 char	*dirname(const char *);
-#if 0
-char	*regcmp(const char *, ...);
-char	*regex(const char *, const char *, ...);
-
-extern char *__loc1;
-#endif
-
 __END_DECLS
 
 #endif /* _LIBGEN_H_ */
