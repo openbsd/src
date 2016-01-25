@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.75 2016/01/07 23:08:38 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.76 2016/01/25 11:27:11 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -294,6 +294,8 @@ int	iwm_nvm_read_section(struct iwm_softc *, uint16_t, uint8_t *,
 				uint16_t *);
 void	iwm_init_channel_map(struct iwm_softc *, const uint16_t * const);
 void	iwm_setup_ht_rates(struct iwm_softc *);
+void	iwm_htprot_task(void *);
+void	iwm_update_htprot(struct ieee80211com *, struct ieee80211_node *);
 int	iwm_ampdu_rx_start(struct ieee80211com *,
 		    struct ieee80211_node *, uint8_t);
 void	iwm_ampdu_rx_stop(struct ieee80211com *,
@@ -2599,6 +2601,34 @@ iwm_mvm_sta_rx_agg(struct iwm_softc *sc, struct ieee80211_node *ni,
 		    start ? "start" : "stopp", status));
 		break;
 	}
+}
+
+void
+iwm_htprot_task(void *arg)
+{
+	struct iwm_softc *sc = arg;
+	struct ieee80211com *ic = &sc->sc_ic;
+	struct iwm_node *in = (void *)ic->ic_bss;
+	int error;
+
+	/* This call updates HT protection based on in->in_ni.ni_htop1. */
+	error = iwm_mvm_mac_ctxt_changed(sc, in);
+	if (error != 0)
+		printf("%s: could not change HT protection: error %d\n",
+		    DEVNAME(sc), error);
+}
+
+/*
+ * This function is called by upper layer when HT protection settings in
+ * beacons have changed.
+ */
+void
+iwm_update_htprot(struct ieee80211com *ic, struct ieee80211_node *ni)
+{
+	struct iwm_softc *sc = ic->ic_softc;
+
+	/* assumes that ni == ic->ic_bss */
+	task_add(systq, &sc->htprot_task);
 }
 
 void
@@ -5878,6 +5908,7 @@ iwm_stop(struct ifnet *ifp, int disable)
 	task_del(sc->sc_eswq, &sc->sc_eswk);
 	task_del(systq, &sc->setrates_task);
 	task_del(systq, &sc->ba_task);
+	task_del(systq, &sc->htprot_task);
 
 	sc->sc_newstate(ic, IEEE80211_S_INIT, -1);
 
@@ -6586,6 +6617,7 @@ iwm_preinit(struct iwm_softc *sc)
 	/* Override 802.11 state transition machine. */
 	sc->sc_newstate = ic->ic_newstate;
 	ic->ic_newstate = iwm_newstate;
+	ic->ic_update_htprot = iwm_update_htprot;
 	ic->ic_ampdu_rx_start = iwm_ampdu_rx_start;
 	ic->ic_ampdu_rx_stop = iwm_ampdu_rx_stop;
 #ifdef notyet
@@ -6822,6 +6854,7 @@ iwm_attach(struct device *parent, struct device *self, void *aux)
 	task_set(&sc->newstate_task, iwm_newstate_task, sc);
 	task_set(&sc->setrates_task, iwm_setrates_task, sc);
 	task_set(&sc->ba_task, iwm_ba_task, sc);
+	task_set(&sc->htprot_task, iwm_htprot_task, sc);
 
 	/*
 	 * We cannot read the MAC address without loading the

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.151 2016/01/07 23:22:31 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.152 2016/01/25 11:27:11 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -1577,10 +1577,14 @@ ieee80211_recv_probe_resp(struct ieee80211com *ic, struct mbuf *m,
 	} else
 		is_new = 0;
 
+	if (htcaps)
+		ieee80211_setup_htcaps(ni, htcaps + 2, htcaps[1]);
+	if (htop)
+		ieee80211_setup_htop(ni, htop + 2, htop[1]);
+
 	/*
 	 * When operating in station mode, check for state updates
-	 * while we're associated. We consider only 11g stuff right
-	 * now.
+	 * while we're associated.
 	 */
 	if (ic->ic_opmode == IEEE80211_M_STA &&
 	    ic->ic_state == IEEE80211_S_RUN &&
@@ -1599,6 +1603,22 @@ ieee80211_recv_probe_resp(struct ieee80211com *ic, struct mbuf *m,
 				ic->ic_flags &= ~IEEE80211_F_USEPROT;
 			ic->ic_bss->ni_erp = erp;
 		}
+		if (ic->ic_bss->ni_flags & IEEE80211_NODE_HT) {
+			enum ieee80211_htprot htprot_last, htprot;
+			htprot_last =
+			    ((ic->ic_bss->ni_htop1 & IEEE80211_HTOP1_PROT_MASK)
+			    >> IEEE80211_HTOP1_PROT_SHIFT);
+			htprot = ((ni->ni_htop1 & IEEE80211_HTOP1_PROT_MASK) >>
+			    IEEE80211_HTOP1_PROT_SHIFT);
+			if (htprot_last != htprot) {
+				DPRINTF(("[%s] htprot change: was %d, now %d\n",
+				    ether_sprintf((u_int8_t *)wh->i_addr2),
+				    htprot_last, htprot));
+				ic->ic_bss->ni_htop1 = ni->ni_htop1;
+				ic->ic_update_htprot(ic, ic->ic_bss);
+			}
+		}
+
 		/*
 		 * Check if AP short slot time setting has changed
 		 * since last beacon and give the driver a chance to
@@ -1679,10 +1699,6 @@ ieee80211_recv_probe_resp(struct ieee80211com *ic, struct mbuf *m,
 	ni->ni_erp = erp;
 	/* NB: must be after ni_chan is setup */
 	ieee80211_setup_rates(ic, ni, rates, xrates, IEEE80211_F_DOSORT);
-	if (htcaps)
-		ieee80211_setup_htcaps(ni, htcaps + 2, htcaps[1]);
-	if (htop)
-		ieee80211_setup_htop(ni, htop + 2, htop[1]);
 #ifndef IEEE80211_STA_ONLY
 	if (ic->ic_opmode == IEEE80211_M_IBSS && is_new && isprobe) {
 		/*

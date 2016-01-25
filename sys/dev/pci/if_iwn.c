@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.157 2016/01/13 14:39:35 stsp Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.158 2016/01/25 11:27:11 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -226,6 +226,8 @@ int		iwn_set_key(struct ieee80211com *, struct ieee80211_node *,
 		    struct ieee80211_key *);
 void		iwn_delete_key(struct ieee80211com *, struct ieee80211_node *,
 		    struct ieee80211_key *);
+void		iwn_update_htprot(struct ieee80211com *,
+		    struct ieee80211_node *);
 int		iwn_ampdu_rx_start(struct ieee80211com *,
 		    struct ieee80211_node *, uint8_t);
 void		iwn_ampdu_rx_stop(struct ieee80211com *,
@@ -515,6 +517,7 @@ iwn_attach(struct device *parent, struct device *self, void *aux)
 	ic->ic_updateedca = iwn_updateedca;
 	ic->ic_set_key = iwn_set_key;
 	ic->ic_delete_key = iwn_delete_key;
+	ic->ic_update_htprot = iwn_update_htprot;
 	ic->ic_ampdu_rx_start = iwn_ampdu_rx_start;
 	ic->ic_ampdu_rx_stop = iwn_ampdu_rx_stop;
 #ifdef notyet
@@ -5009,6 +5012,89 @@ iwn_delete_key(struct ieee80211com *ic, struct ieee80211_node *ni,
 	node.kid = 0xff;
 	DPRINTF(("delete keys for node %d\n", node.id));
 	(void)ops->add_node(sc, &node, 1);
+}
+
+/*
+ * This function is called by upper layer when HT protection settings in
+ * beacons have changed.
+ */
+void
+iwn_update_htprot(struct ieee80211com *ic, struct ieee80211_node *ni)
+{
+	struct iwn_softc *sc = ic->ic_softc;
+	struct iwn_ops *ops = &sc->ops;
+	enum ieee80211_htprot htprot;
+	struct iwn_node_info node;
+	int error, ridx;
+
+	timeout_del(&sc->calib_to);
+
+	/* Fake a "disassociation" so we can change RXON configuration. */
+	sc->rxon.filter &= ~htole32(IWN_FILTER_BSS);
+	error = iwn_cmd(sc, IWN_CMD_RXON, &sc->rxon, sc->rxonsz, 1);
+	if (error != 0) {
+		printf("%s: RXON command failed\n", sc->sc_dev.dv_xname);
+		return;
+	}
+
+	/* Update HT protection mode setting. */
+	htprot = (ni->ni_htop1 & IEEE80211_HTOP1_PROT_MASK) >>
+	    IEEE80211_HTOP1_PROT_SHIFT;
+	sc->rxon.flags &= ~htole32(IWN_RXON_HT_PROTMODE(3));
+	sc->rxon.flags |= htole32(IWN_RXON_HT_PROTMODE(htprot));
+	sc->rxon.filter |= htole32(IWN_FILTER_BSS);
+	error = iwn_cmd(sc, IWN_CMD_RXON, &sc->rxon, sc->rxonsz, 1);
+	if (error != 0) {
+		printf("%s: RXON command failed\n", sc->sc_dev.dv_xname);
+		return;
+	}
+
+	/* 
+	 * The firmware loses TX power table, node table, LQ table,
+	 * and sensitivity calibration after an RXON command.
+	 */
+
+	if ((error = ops->set_txpower(sc, 1)) != 0) {
+		printf("%s: could not set TX power\n", sc->sc_dev.dv_xname);
+		return;
+	}
+
+	ridx = IEEE80211_IS_CHAN_5GHZ(ni->ni_chan) ?
+	    IWN_RIDX_OFDM6 : IWN_RIDX_CCK1;
+	if ((error = iwn_add_broadcast_node(sc, 1, ridx)) != 0) {
+		printf("%s: could not add broadcast node\n",
+		    sc->sc_dev.dv_xname);
+		return;
+	}
+
+	memset(&node, 0, sizeof node);
+	IEEE80211_ADDR_COPY(node.macaddr, ni->ni_macaddr);
+	node.id = IWN_ID_BSS;
+#ifdef notyet
+	node.htflags = htole32(IWN_AMDPU_SIZE_FACTOR(3) |
+	    IWN_AMDPU_DENSITY(5));	/* 2us */
+#endif
+	error = ops->add_node(sc, &node, 1);
+	if (error != 0) {
+		printf("%s: could not add BSS node\n", sc->sc_dev.dv_xname);
+		return;
+	}
+
+	if ((error = iwn_set_link_quality(sc, ni)) != 0) {
+		printf("%s: could not setup link quality for node %d\n",
+		    sc->sc_dev.dv_xname, node.id);
+		return;
+	}
+
+	if ((error = iwn_init_sensitivity(sc)) != 0) {
+		printf("%s: could not set sensitivity\n",
+		    sc->sc_dev.dv_xname);
+		return;
+	}
+
+	sc->calib.state = IWN_CALIB_STATE_ASSOC;
+	sc->calib_cnt = 0;
+	timeout_add_msec(&sc->calib_to, 500);
 }
 
 /*

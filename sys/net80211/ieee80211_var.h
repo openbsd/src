@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_var.h,v 1.70 2016/01/12 09:28:09 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_var.h,v 1.71 2016/01/25 11:27:11 stsp Exp $	*/
 /*	$NetBSD: ieee80211_var.h,v 1.7 2004/05/06 03:07:10 dyoung Exp $	*/
 
 /*-
@@ -213,6 +213,8 @@ struct ieee80211com {
 				    struct ieee80211_node *, u_int8_t);
 	void			(*ic_ampdu_rx_stop)(struct ieee80211com *,
 				    struct ieee80211_node *, u_int8_t);
+	void			(*ic_update_htprot)(struct ieee80211com *,
+					struct ieee80211_node *);
 	u_int8_t		ic_myaddr[IEEE80211_ADDR_LEN];
 	struct ieee80211_rateset ic_sup_rates[IEEE80211_MODE_MAX];
 	struct ieee80211_channel ic_channels[IEEE80211_CHAN_MAX+1];
