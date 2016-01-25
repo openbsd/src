@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_elf.c,v 1.14 2016/01/25 14:30:30 mpi Exp $	*/
+/*	$OpenBSD: db_elf.c,v 1.15 2016/01/25 14:56:03 mpi Exp $	*/
 /*	$NetBSD: db_elf.c,v 1.13 2000/07/07 21:55:18 jhawk Exp $	*/
 
 /*-
@@ -376,19 +376,18 @@ boolean_t
 db_elf_line_at_pc(db_symtab_t *symtab, db_sym_t cursym, char **filename,
     int *linenum, db_expr_t off)
 {
-	const char *linetab;
+	static char path[PATH_MAX];
+	const char *linetab, *dirname, *basename;
 	size_t linetab_size;
 
 	linetab = db_elf_find_linetab(symtab, &linetab_size);
 	if (linetab == NULL)
 		return (FALSE);
 
-	const char *dirname, *basename;
 	if (!db_dwarf_line_at_pc(linetab, linetab_size, off,
 	    &dirname, &basename, linenum))
 		return (FALSE);
 
-	static char path[PATH_MAX];
 	if (dirname == NULL)
 		strlcpy(path, basename, sizeof(path));
 	else
