@@ -1,4 +1,4 @@
-/*	$OpenBSD: dump.c,v 1.54 2016/01/26 16:13:09 krw Exp $	*/
+/*	$OpenBSD: dump.c,v 1.55 2016/01/26 16:39:00 krw Exp $	*/
 
 /*
  * dump.c - dumping partition maps
@@ -53,9 +53,9 @@ dump_block_zero(struct partition_map_header *map)
 	int i, prefix;
 
 	p = map->block0;
-	if (p->sbSig != BLOCK0_SIGNATURE) {
+	if (p->sbSig != BLOCK0_SIGNATURE)
 		return;
-	}
+
 	value = ((double) p->sbBlkCount) * p->sbBlkSize;
 	adjust_value_and_compute_prefix(&value, &prefix);
 	printf("\nDevice block size=%u, Number of Blocks=%u (%1.1f%c)\n",
@@ -93,17 +93,14 @@ dump_partition_map(struct partition_map_header *map)
 	       map->logical_block, map->name);
 
 	digits = number_of_digits(get_max_base_or_length(map));
-	if (digits < 6) {
+	if (digits < 6)
 		digits = 6;
-	}
 	max_type_length = get_max_type_string_length(map);
-	if (max_type_length < 4) {
+	if (max_type_length < 4)
 		max_type_length = 4;
-	}
 	max_name_length = get_max_name_string_length(map);
-	if (max_name_length < 6) {
+	if (max_name_length < 6)
 		max_name_length = 6;
-	}
 	printf(" #: %*s %-*s %*s   %-*s ( size )\n", max_type_length, "type",
 	    max_name_length, "name", digits, "length", digits, "base");
 
@@ -185,11 +182,10 @@ show_data_structures(struct partition_map_header *map)
 
 	printf("Block0:\n");
 	printf("signature 0x%x", zp->sbSig);
-	if (zp->sbSig == BLOCK0_SIGNATURE) {
+	if (zp->sbSig == BLOCK0_SIGNATURE)
 		printf("\n");
-	} else {
+	else
 		printf(" should be 0x%x\n", BLOCK0_SIGNATURE);
-	}
 	printf("Block size=%u, Number of Blocks=%u\n", zp->sbBlkSize,
 	    zp->sbBlkCount);
 	printf("DeviceType=0x%x, DeviceId=0x%x, sbData=0x%x\n", zp->sbDevType,
@@ -436,18 +432,14 @@ get_max_base_or_length(struct partition_map_header *map)
 
 	for (entry = map->disk_order; entry != NULL;
 	    entry = entry->next_on_disk) {
-		if (entry->dpme->dpme_pblock_start > max) {
+		if (entry->dpme->dpme_pblock_start > max)
 			max = entry->dpme->dpme_pblock_start;
-		}
-		if (entry->dpme->dpme_pblocks > max) {
+		if (entry->dpme->dpme_pblocks > max)
 			max = entry->dpme->dpme_pblocks;
-		}
-		if (entry->dpme->dpme_lblock_start > max) {
+		if (entry->dpme->dpme_lblock_start > max)
 			max = entry->dpme->dpme_lblock_start;
-		}
-		if (entry->dpme->dpme_lblocks > max) {
+		if (entry->dpme->dpme_lblocks > max)
 			max = entry->dpme->dpme_lblocks;
-		}
 	}
 
 	return max;

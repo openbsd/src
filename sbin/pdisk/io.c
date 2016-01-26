@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.22 2016/01/24 01:38:32 krw Exp $	*/
+/*	$OpenBSD: io.c,v 1.23 2016/01/26 16:39:00 krw Exp $	*/
 
 /*
  * io.c - simple io and input parsing routines
@@ -49,11 +49,10 @@ int	my_getch (void);
 int
 my_getch()
 {
-	if (unget_count > 0) {
+	if (unget_count > 0)
 		return (unget_buf[--unget_count]);
-	} else {
+	else
 		return (getc(stdin));
-	}
 }
 
 
@@ -64,12 +63,10 @@ my_ungetch(int c)
          * In practice there is never more than one character in
          * the unget_buf, but what's a little overkill among friends?
          */
-
-	if (unget_count < UNGET_MAX_COUNT) {
+	if (unget_count < UNGET_MAX_COUNT)
 		unget_buf[unget_count++] = c;
-	} else {
+	else
 		errx(1, "Programmer error in my_ungetch().");
-	}
 }
 
 void
@@ -130,9 +127,9 @@ get_command(const char *prompt, int promptBeforeGet, int *command)
 {
 	int c;
 
-	if (promptBeforeGet) {
+	if (promptBeforeGet)
 		printf(prompt);
-	}
+
 	for (;;) {
 		c = my_getch();
 
@@ -237,8 +234,8 @@ get_string_argument(const char *prompt, char **string)
 			*string = get_string(c);
 			result = 1;
 			break;
-		} else if (('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z')
-			|| (c == '-' || c == '/' || c == '.' || c == ':')) {
+		} else if (('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z') ||
+		    (c == '-' || c == '/' || c == '.' || c == ':')) {
 			my_ungetch(c);
 			*string = get_string(' ');
 			result = 1;
@@ -253,7 +250,7 @@ get_string_argument(const char *prompt, char **string)
 }
 
 
-char           *
+char *
 get_string(int eos)
 {
 	char *s, *ret_value, *limit;
@@ -351,11 +348,11 @@ get_partition_modifier(void)
 
 	c = my_getch();
 
-	if (c == 'p' || c == 'P') {
+	if (c == 'p' || c == 'P')
 		result = 1;
-	} else if (c > 0) {
+	else if (c > 0)
 		my_ungetch(c);
-	}
+
 	return result;
 }
 

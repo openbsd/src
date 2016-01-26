@@ -1,4 +1,4 @@
-/*	$OpenBSD: validate.c,v 1.40 2016/01/26 16:13:09 krw Exp $	*/
+/*	$OpenBSD: validate.c,v 1.41 2016/01/26 16:39:00 krw Exp $	*/
 
 /*
  * validate.c -
@@ -91,29 +91,25 @@ add_range(struct range_list **list, uint32_t base, uint32_t len, int allocate)
 	struct range_list *item, *cur;
 	uint32_t low, high;
 
-	if (list == 0 || *list == 0) {
-		/* XXX initialized list will always have one element */
+	/* XXX initialized list will always have one element */
+	if (list == NULL || *list == NULL)
 		return;
-	}
 	low = base;
 	high = base + len - 1;
-	if (len == 0 || high < len - 1) {
-		/* XXX wrapped around */
+	/* XXX wrapped around */
+	if (len == 0 || high < len - 1)
 		return;
-	}
 	cur = *list;
 	while (low <= high) {
-		if (cur == 0) {
-			/* XXX should never occur */
+		if (cur == NULL)
 			break;
-		}
 		if (low <= cur->end) {
 			if (cur->start < low) {
 				item = new_range_list_item(cur->state,
 				    cur->valid, cur->start, low - 1);
 				/* insert before here */
-				if (cur->prev == 0) {
-					item->prev = 0;
+				if (cur->prev == NULL) {
+					item->prev = NULL;
 					*list = item;
 				} else {
 					item->prev = cur->prev;
@@ -127,8 +123,8 @@ add_range(struct range_list **list, uint32_t base, uint32_t len, int allocate)
 				item = new_range_list_item(cur->state,
 				    cur->valid, high + 1, cur->end);
 				/* insert after here */
-				if (cur->next == 0) {
-					item->next = 0;
+				if (cur->next == NULL) {
+					item->next = NULL;
 				} else {
 					item->next = cur->next;
 					item->next->prev = item;
@@ -163,18 +159,16 @@ coalesce_list(struct range_list *list)
 {
 	struct range_list *cur, *item;
 
-	for (cur = list; cur != 0;) {
+	for (cur = list; cur != NULL;) {
 		item = cur->next;
-		if (item == 0) {
+		if (item == NULL)
 			break;
-		}
 		if (cur->valid == item->valid &&
 		    cur->state == item->state) {
 			cur->end = item->end;
 			cur->next = item->next;
-			if (item->next != 0) {
+			if (item->next != NULL)
 				item->next->prev = cur;
-			}
 			free(item);
 		} else {
 			cur = cur->next;
@@ -196,7 +190,7 @@ print_range_list(struct range_list *list)
 	}
 	printf("Range list:\n");
 	printed = 0;
-	for (cur = list; cur != 0; cur = cur->next) {
+	for (cur = list; cur != NULL; cur = cur->next) {
 		if (cur->valid) {
 			switch (cur->state) {
 			case kUnallocated:
@@ -226,9 +220,8 @@ print_range_list(struct range_list *list)
 			    cur->end, s);
 		}
 	}
-	if (printed == 0) {
+	if (printed == 0)
 		printf("\tokay\n");
-	}
 }
 
 
@@ -267,7 +260,7 @@ validate_map(struct partition_map_header *map)
 
 		/* get entry */
 		entry = find_entry_by_disk_address(i, map);
-		if (entry != 0)
+		if (entry != NULL)
 			dpme = entry->dpme;
 		else {
 			printf("\tunable to get\n");
@@ -309,9 +302,8 @@ validate_map(struct partition_map_header *map)
 		 * XXX processor id is known value?
 		 * XXX no data in reserved3
 		 */
-		if (printed == 0) {
+		if (printed == 0)
 			printf("\tokay\n");
-		}
 	}
 
 post_processing:

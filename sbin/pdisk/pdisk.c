@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdisk.c,v 1.69 2016/01/25 23:43:20 krw Exp $	*/
+/*	$OpenBSD: pdisk.c,v 1.70 2016/01/26 16:39:00 krw Exp $	*/
 
 /*
  * pdisk - an editor for Apple format partition tables
@@ -405,13 +405,12 @@ do_delete_partition(struct partition_map_header *map)
 		bad_input("Bad partition number");
 		return;
 	}
-	/* find partition and delete it */
+
 	cur = find_entry_by_disk_address(ix, map);
-	if (cur == NULL) {
+	if (cur == NULL)
 		printf("No such partition\n");
-	} else {
+	else
 		delete_partition_from_map(cur);
-	}
 }
 
 
@@ -475,11 +474,10 @@ do_display_entry(struct partition_map_header *map)
 		bad_input("Bad partition number");
 		return;
 	}
-	if (number == 0) {
+	if (number == 0)
 		full_dump_block_zero(map);
-	} else {
+	else
 		full_dump_partition_entry(map, number);
-	}
 }
 
 
