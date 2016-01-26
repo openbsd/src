@@ -1,4 +1,4 @@
-/*	$OpenBSD: xen.c,v 1.37 2016/01/26 15:31:02 mikeb Exp $	*/
+/*	$OpenBSD: xen.c,v 1.38 2016/01/26 15:35:21 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Belopuhov
@@ -940,6 +940,7 @@ xen_grant_table_remove(struct xen_softc *sc, grant_ref_t ref)
 {
 	struct xen_gntent *ge;
 	uint32_t flags, *ptr;
+	int loop;
 
 	SLIST_FOREACH(ge, &sc->sc_gnts, ge_entry) {
 		if (ref < ge->ge_start || ref > ge->ge_start + GNTTAB_NEPG)
@@ -950,8 +951,17 @@ xen_grant_table_remove(struct xen_softc *sc, grant_ref_t ref)
 		/* Invalidate the grant reference */
 		ptr = (uint32_t *)&ge->ge_table[ref];
 		flags = (ge->ge_table[ref].flags & ~(GTF_reading | GTF_writing));
-		while (atomic_cas_uint(ptr, flags, GTF_invalid) != flags)
+		loop = 0;
+		while (atomic_cas_uint(ptr, flags, GTF_invalid) != flags) {
+			if (loop++ > 10000000) {
+				mtx_leave(&ge->ge_mtx);
+				printf("%s: grant table reference %u is held by "
+				    "domain %d\n", sc->sc_dev.dv_xname, ref +
+				    ge->ge_start, ge->ge_table[ref].domid);
+				return;
+			}
 			CPU_BUSY_CYCLE();
+		}
 		ge->ge_table[ref].frame = 0xffffffff;
 		mtx_leave(&ge->ge_mtx);
 		break;
