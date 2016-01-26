@@ -1,4 +1,4 @@
-#	$OpenBSD: dot.profile,v 1.29 2015/07/03 18:29:08 rpe Exp $
+#	$OpenBSD: dot.profile,v 1.30 2016/01/26 22:26:54 rpe Exp $
 #	$NetBSD: dot.profile,v 1.1 1995/12/18 22:54:43 pk Exp $
 #
 # Copyright (c) 2009 Kenneth R. Westerback
@@ -53,7 +53,7 @@ if [[ -z $DONEPROFILE ]]; then
 	mount -u /dev/${rootdisk:-rd0a} /
 
 	# Create a fake rc that just returns 1 and throws us back.
-	echo ! : > /etc/rc
+	echo ! : >/etc/rc
 
 	# Set up some sane defaults.
 	echo 'erase ^?, werase ^W, kill ^U, intr ^C, status ^T'
