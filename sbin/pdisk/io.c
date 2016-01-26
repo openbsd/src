@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.23 2016/01/26 16:39:00 krw Exp $	*/
+/*	$OpenBSD: io.c,v 1.24 2016/01/26 23:41:48 krw Exp $	*/
 
 /*
  * io.c - simple io and input parsing routines
@@ -33,18 +33,18 @@
 #include <string.h>
 #include <stdarg.h>
 
+#include "dpme.h"
 #include "io.h"
 
 #define BAD_DIGIT 17		/* must be greater than any base */
-#define	STRING_CHUNK	16
 #define UNGET_MAX_COUNT 10
 
 short	unget_buf[UNGET_MAX_COUNT + 1];
 int	unget_count;
 
-long	get_number(int);
-char   *get_string(int);
-int	my_getch (void);
+static long	get_number(int);
+static char    *get_string(int);
+static int	my_getch (void);
 
 int
 my_getch()
@@ -215,11 +215,10 @@ get_number(int first_char)
 	return (ret_value);
 }
 
-int
-get_string_argument(const char *prompt, char **string)
+char *
+get_dpistr_argument(const char *prompt)
 {
 	int c;
-	int result = 0;
 
 	for (;;) {
 		c = my_getch();
@@ -231,68 +230,46 @@ get_string_argument(const char *prompt, char **string)
 		} else if (c == '\n') {
 			printf(prompt);
 		} else if (c == '"' || c == '\'') {
-			*string = get_string(c);
-			result = 1;
-			break;
+			return get_string(c);
 		} else if (('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z') ||
 		    (c == '-' || c == '/' || c == '.' || c == ':')) {
 			my_ungetch(c);
-			*string = get_string(' ');
-			result = 1;
-			break;
+			return get_string(' ');
 		} else {
 			my_ungetch(c);
-			*string = NULL;
-			break;
+			return NULL;
 		}
 	}
-	return result;
+	return NULL;
 }
 
 
 char *
 get_string(int eos)
 {
-	char *s, *ret_value, *limit;
-	int c, length;
+	char buf[DPISTRLEN];
+	char *s, *limit;
+	int c;
 
-	ret_value = malloc(STRING_CHUNK);
-	if (ret_value == NULL) {
-		warn("can't allocate memory for string buffer");
-		return NULL;
-	}
-	length = STRING_CHUNK;
-	limit = ret_value + length;
+	memset(buf, 0, sizeof(buf));
+	limit = buf + sizeof(buf);
 
 	c = my_getch();
-	for (s = ret_value;; c = my_getch()) {
-		if (s >= limit) {
-			/* expand string */
-			limit = malloc(length + STRING_CHUNK);
-			if (limit == NULL) {
-				warn("can't allocate memory for string buffer");
-				ret_value[length - 1] = 0;
-				break;
-			}
-			strncpy(limit, ret_value, length);
-			free(ret_value);
-			s = limit + (s - ret_value);
-			ret_value = limit;
-			length += STRING_CHUNK;
-			limit = ret_value + length;
-		}
+	for (s = buf;; c = my_getch()) {
 		if (c <= 0 || c == eos || (eos == ' ' && c == '\t')) {
-			*s++ = 0;
+			*s = 0;
 			break;
 		} else if (c == '\n') {
-			*s++ = 0;
+			*s = 0;
 			my_ungetch(c);
 			break;
 		} else {
 			*s++ = c;
+			if (s >= limit)
+				return NULL;
 		}
 	}
-	return (ret_value);
+	return (strdup(buf));
 }
 
 

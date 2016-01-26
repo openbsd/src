@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.h,v 1.11 2016/01/24 01:38:32 krw Exp $	*/
+/*	$OpenBSD: io.h,v 1.12 2016/01/26 23:41:48 krw Exp $	*/
 
 /*
  * io.h - simple io and input parsing routines
@@ -38,7 +38,7 @@ int		get_command(const char *, int, int *);
 int		get_number_argument(const char *, long *);
 int		get_okay(const char *, int);
 int		get_partition_modifier(void);
-int		get_string_argument(const char *, char **);
+char	       *get_dpistr_argument(const char *);
 int		number_of_digits(unsigned long);
 
 #endif /* __io__ */

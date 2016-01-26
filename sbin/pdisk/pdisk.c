@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdisk.c,v 1.71 2016/01/26 21:07:54 krw Exp $	*/
+/*	$OpenBSD: pdisk.c,v 1.72 2016/01/26 23:41:48 krw Exp $	*/
 
 /*
  * pdisk - an editor for Apple format partition tables
@@ -242,41 +242,43 @@ do_create_partition(struct partition_map_header *map, int get_type)
 {
 	long base, length;
 	char *name = NULL;
-	char *type_name = NULL;
+	char *type = NULL;
 
-	if (get_base_argument(&base, map) == 0) {
+	if (get_base_argument(&base, map) == 0)
 		return;
-	}
-	if (get_size_argument(&length, map) == 0) {
+	if (get_size_argument(&length, map) == 0)
 		return;
-	}
-	if (get_string_argument("Name of partition: ", &name) == 0) {
+
+	name = get_dpistr_argument("Name of partition: ");
+	if (name == NULL) {
 		bad_input("Bad name");
-		return;
+		goto out;
 	}
-	if (get_type == 0) {
-		add_partition_to_map(name, kUnixType, base, length, map);
-	} else if (get_string_argument("Type of partition: ", &type_name) ==
-	    0) {
+
+	if (get_type == 0)
+		type = strdup(kUnixType);
+	else
+		type = get_dpistr_argument("Type of partition: ");
+	if (type == NULL) {
 		bad_input("Bad type");
-		goto xit1;
-	} else {
-		if (strncasecmp(type_name, kFreeType, DPISTRLEN) == 0) {
-			bad_input("Can't create a partition with the Free "
-			    "type");
-			goto xit2;
-		}
-		if (strncasecmp(type_name, kMapType, DPISTRLEN) == 0) {
-			bad_input("Can't create a partition with the Map "
-			    "type");
-			goto xit2;
-		}
-		add_partition_to_map(name, type_name, base, length, map);
+		goto out;
 	}
-xit2:
-	free(type_name);
-xit1:
+
+	if (strncasecmp(type, kFreeType, DPISTRLEN) == 0) {
+		bad_input("Can't create a partition with the Free type");
+		goto out;
+	}
+	if (strncasecmp(type, kMapType, DPISTRLEN) == 0) {
+		bad_input("Can't create a partition with the Map type");
+		goto out;
+	}
+
+	add_partition_to_map(name, type, base, length, map);
+
+out:
+	free(type);
 	free(name);
+
 	return;
 }
 
@@ -347,24 +349,27 @@ do_rename_partition(struct partition_map_header *map)
 		bad_input("Bad partition number");
 		return;
 	}
-	if (get_string_argument("New name of partition: ", &name) == 0) {
-		bad_input("Bad name");
-		return;
-	}
-	/* find partition and change it */
 	entry = find_entry_by_disk_address(ix, map);
 	if (entry == NULL) {
 		printf("No such partition\n");
-	} else {
-		/*
-		 * Since dpme_name is supposed to be NUL-filled, make sure
-		 * current contents are zapped before copying in new name!
-		 */
-		memset(entry->dpme->dpme_name, 0,
-		    sizeof(entry->dpme->dpme_name));
-		strlcpy(entry->dpme->dpme_name, name, DPISTRLEN);
-		map->changed = 1;
+		return;
 	}
+
+	printf("Existing partition name ``%s''.\n", entry->dpme->dpme_name);
+	name = get_dpistr_argument("New name of partition: ");
+	if (name == NULL) {
+		bad_input("Bad name");
+		return;
+	}
+
+	/*
+	 * Since dpme_name is supposed to be NUL-filled, make sure
+	 * current contents are zapped before copying in new name!
+	 */
+	memset(entry->dpme->dpme_name, 0, sizeof(entry->dpme->dpme_name));
+	strlcpy(entry->dpme->dpme_name, name, DPISTRLEN);
+	map->changed = 1;
+
 	free(name);
 	return;
 }
@@ -373,7 +378,7 @@ void
 do_change_type(struct partition_map_header *map)
 {
 	struct partition_map *entry;
-	char *type = NULL;
+	char *type;
 	long ix;
 
 	if (get_number_argument("Partition number: ", &ix) == 0) {
@@ -381,16 +386,18 @@ do_change_type(struct partition_map_header *map)
 		return;
 	}
 	entry = find_entry_by_disk_address(ix, map);
-
 	if (entry == NULL) {
 		printf("No such partition\n");
-		goto out;
+		return;
 	}
+
 	printf("Existing partition type ``%s''.\n", entry->dpme->dpme_type);
-	if (get_string_argument("New type of partition: ", &type) == 0) {
+	type = get_dpistr_argument("New type of partition: ");
+	if (type == NULL) {
 		bad_input("Bad type");
-		goto out;
+		return;
 	}
+
         /*
 	 * Since dpme_type is supposed to be NUL-filled, make sure
          * current contents are zapped before copying in new type!
@@ -399,7 +406,6 @@ do_change_type(struct partition_map_header *map)
 	strncpy(entry->dpme->dpme_type, type, DPISTRLEN);
 	map->changed = 1;
 
-out:
 	free(type);
 	return;
 }
