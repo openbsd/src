@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xnf.c,v 1.14 2016/01/26 16:31:05 mikeb Exp $	*/
+/*	$OpenBSD: if_xnf.c,v 1.15 2016/01/26 17:01:01 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015, 2016 Mike Belopuhov
@@ -469,8 +469,10 @@ xnf_start(struct ifnet *ifp)
 	if (!(ifp->if_flags & IFF_RUNNING) || ifq_is_oactive(&ifp->if_snd))
 		return;
 
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_tx_rmap, 0, 0,
+	    BUS_DMASYNC_POSTREAD);
+
 	prod = txr->txr_prod;
-	membar_consumer();
 
 	for (;;) {
 		m = ifq_deq_begin(&ifp->if_snd);
@@ -568,6 +570,8 @@ xnf_encap(struct xnf_softc *sc, struct mbuf *m_head, uint32_t *prod)
 		sc->sc_tx_buf[i] = m;
 		(*prod)++;
 	}
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_tx_rmap, 0, 0,
+	    BUS_DMASYNC_PREWRITE);
 
 	return (0);
 
@@ -584,6 +588,8 @@ xnf_encap(struct xnf_softc *sc, struct mbuf *m_head, uint32_t *prod)
 		m = sc->sc_tx_buf[i];
 		sc->sc_tx_buf[i] = NULL;
 
+		bus_dmamap_sync(sc->sc_dmat, dmap, 0, 0,
+		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 		bus_dmamap_unload(sc->sc_dmat, dmap);
 		m_free(m);
 	}
@@ -629,9 +635,11 @@ xnf_txeof(struct xnf_softc *sc)
 	uint32_t cons;
 	int i, id, pkts = 0;
 
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_tx_rmap, 0, 0,
+	    BUS_DMASYNC_POSTWRITE);
+
 	do {
 		for (cons = sc->sc_tx_cons; cons != txr->txr_cons; cons++) {
-			membar_consumer();
 			i = cons & (XNF_TX_DESC - 1);
 			txd = &txr->txr_desc[i];
 			dmap = sc->sc_tx_dmap[i];
@@ -639,12 +647,13 @@ xnf_txeof(struct xnf_softc *sc)
 			id = txd->txd_rsp.txp_id;
 			memset(txd, 0, sizeof(*txd));
 			txd->txd_req.txq_id = id;
-			membar_producer();
 
 			m = sc->sc_tx_buf[i];
 			KASSERT(m != NULL);
 			sc->sc_tx_buf[i] = NULL;
 
+			bus_dmamap_sync(sc->sc_dmat, dmap, 0, 0,
+			    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 			bus_dmamap_unload(sc->sc_dmat, dmap);
 			m_free(m);
 			pkts++;
@@ -652,13 +661,13 @@ xnf_txeof(struct xnf_softc *sc)
 
 		if (pkts > 0) {
 			sc->sc_tx_cons = cons;
-			membar_producer();
 			txr->txr_cons_event = cons + 1;
+			bus_dmamap_sync(sc->sc_dmat, sc->sc_tx_rmap, 0, 0,
+			    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 			pkts = 0;
 		}
 
 		r = txr->txr_cons - sc->sc_tx_cons;
-		membar_consumer();
 	} while (r > 0);
 
 	if (ifq_is_oactive(&ifp->if_snd))
@@ -684,9 +693,11 @@ xnf_rxeof(struct xnf_softc *sc)
 	uint32_t cons;
 	int i, id, flags, len, offset, pkts = 0;
 
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_rx_rmap, 0, 0,
+	    BUS_DMASYNC_POSTREAD);
+
 	do {
 		for (cons = sc->sc_rx_cons; cons != rxr->rxr_cons; cons++) {
-			membar_consumer();
 			i = cons & (XNF_RX_DESC - 1);
 			rxd = &rxr->rxr_desc[i];
 			dmap = sc->sc_rx_dmap[i];
@@ -697,8 +708,9 @@ xnf_rxeof(struct xnf_softc *sc)
 			id = rxd->rxd_rsp.rxp_id;
 			memset(rxd, 0, sizeof(*rxd));
 			rxd->rxd_req.rxq_id = id;
-			membar_producer();
 
+			bus_dmamap_sync(sc->sc_dmat, dmap, 0, 0,
+			    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 			bus_dmamap_unload(sc->sc_dmat, dmap);
 
 			m = sc->sc_rx_buf[i];
@@ -750,13 +762,13 @@ xnf_rxeof(struct xnf_softc *sc)
 
 		if (pkts > 0) {
 			sc->sc_rx_cons = cons;
-			membar_producer();
 			rxr->rxr_cons_event = cons + 1;
+			bus_dmamap_sync(sc->sc_dmat, sc->sc_rx_rmap, 0, 0,
+			    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 			pkts = 0;
 		}
 
 		r = rxr->rxr_cons - sc->sc_rx_cons;
-		membar_consumer();
 	} while (r > 0);
 
 	if (!ml_empty(&ml)) {
@@ -809,13 +821,15 @@ xnf_rx_ring_fill(void *arg)
 		}
 		sc->sc_rx_buf[i] = m;
 		rxr->rxr_desc[i].rxd_req.rxq_ref = dmap->dm_segs[0].ds_addr;
+		bus_dmamap_sync(sc->sc_dmat, dmap, 0, 0, BUS_DMASYNC_PREWRITE);
 	}
 
 	if (n > 0)
 		if_rxr_put(&sc->sc_rx_slots, n);
 
-	membar_producer();
 	rxr->rxr_prod = prod;
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_rx_rmap, 0, 0,
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 	xen_intr_signal(sc->sc_xih);
 }
@@ -894,6 +908,8 @@ xnf_rx_ring_destroy(struct xnf_softc *sc)
 	for (i = 0; i < XNF_RX_DESC; i++) {
 		if (sc->sc_rx_buf[i] == NULL)
 			continue;
+		bus_dmamap_sync(sc->sc_dmat, sc->sc_rx_dmap[i], 0, 0,
+		    BUS_DMASYNC_POSTREAD);
 		bus_dmamap_unload(sc->sc_dmat, sc->sc_rx_dmap[i]);
 		m_freem(sc->sc_rx_buf[i]);
 		sc->sc_rx_buf[i] = NULL;
@@ -909,6 +925,8 @@ xnf_rx_ring_destroy(struct xnf_softc *sc)
 		sc->sc_rx_dmap[i] = NULL;
 	}
 	if (sc->sc_rx_rmap) {
+		bus_dmamap_sync(sc->sc_dmat, sc->sc_rx_rmap, 0, 0,
+		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 		bus_dmamap_unload(sc->sc_dmat, sc->sc_rx_rmap);
 		bus_dmamap_destroy(sc->sc_dmat, sc->sc_rx_rmap);
 	}
@@ -995,6 +1013,8 @@ xnf_tx_ring_destroy(struct xnf_softc *sc)
 	for (i = 0; i < XNF_TX_DESC; i++) {
 		if (sc->sc_tx_dmap[i] == NULL)
 			continue;
+		bus_dmamap_sync(sc->sc_dmat, sc->sc_tx_dmap[i], 0, 0,
+		    BUS_DMASYNC_POSTWRITE);
 		bus_dmamap_unload(sc->sc_dmat, sc->sc_tx_dmap[i]);
 		if (sc->sc_tx_buf[i] == NULL)
 			continue;
@@ -1008,6 +1028,8 @@ xnf_tx_ring_destroy(struct xnf_softc *sc)
 		sc->sc_tx_dmap[i] = NULL;
 	}
 	if (sc->sc_tx_rmap) {
+		bus_dmamap_sync(sc->sc_dmat, sc->sc_tx_rmap, 0, 0,
+		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 		bus_dmamap_unload(sc->sc_dmat, sc->sc_tx_rmap);
 		bus_dmamap_destroy(sc->sc_dmat, sc->sc_tx_rmap);
 	}
