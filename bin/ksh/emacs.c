@@ -1,4 +1,4 @@
-/*	$OpenBSD: emacs.c,v 1.64 2016/01/08 13:17:57 schwarze Exp $	*/
+/*	$OpenBSD: emacs.c,v 1.65 2016/01/26 17:39:31 mmcc Exp $	*/
 
 /*
  *  Emacs-like command line editing and history
@@ -1070,7 +1070,9 @@ x_redraw(int limit)
 	for (cp = xlp; cp > xcp; )
 		x_bs(*--cp);
 	x_adj_ok = 1;
-	D__(x_flush();)
+#ifdef DEBUG
+	x_flush();
+#endif
 	return;
 }
 
