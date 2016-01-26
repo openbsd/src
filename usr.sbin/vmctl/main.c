@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.13 2016/01/05 16:25:34 semarie Exp $	*/
+/*	$OpenBSD: main.c,v 1.14 2016/01/26 07:55:47 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -421,9 +421,6 @@ ctl_create(struct parse_result *res, int argc, char *argv[])
 		fprintf(stderr, "missing size argument\n");
 		ctl_usage(res->ctl);
 	}
-	res->size /= 1024 / 1024;
-	if (res->size < 1)
-		errx(1, "specified image size too small");
 	ret = create_imagefile(paths[0], res->size);
 	if (ret != 0) {
 		errno = ret;
