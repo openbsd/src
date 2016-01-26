@@ -1,4 +1,4 @@
-/*	$OpenBSD: xen.c,v 1.35 2016/01/25 15:22:56 mikeb Exp $	*/
+/*	$OpenBSD: xen.c,v 1.36 2016/01/26 15:23:11 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Belopuhov
@@ -18,7 +18,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/atomic.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
@@ -35,6 +34,17 @@
 #include <dev/pv/pvreg.h>
 #include <dev/pv/xenreg.h>
 #include <dev/pv/xenvar.h>
+
+/* Xen requires locked atomic operations */
+#ifndef MULTIPROCESSOR
+#define _XENMPATOMICS
+#define MULTIPROCESSOR
+#endif
+#include <sys/atomic.h>
+#ifdef _XENMPATOMICS
+#undef MULTIPROCESSOR
+#undef _XENMPATOMICS
+#endif
 
 struct xen_softc *xen_sc;
 
@@ -1106,8 +1116,7 @@ xen_probe_devices(struct xen_softc *sc)
 	xst.xst_sc = sc->sc_xs;
 	xst.xst_flags |= XST_POLL;
 
-	if ((error = xs_cmd(&xst, XS_LIST, "device", &iovp1,
-	    &iov1_cnt)) != 0)
+	if ((error = xs_cmd(&xst, XS_LIST, "device", &iovp1, &iov1_cnt)) != 0)
 		return (error);
 
 	for (i = 0; i < iov1_cnt; i++) {
