@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmctl.c,v 1.11 2016/01/13 13:08:20 reyk Exp $	*/
+/*	$OpenBSD: vmctl.c,v 1.12 2016/01/26 07:58:35 reyk Exp $	*/
 
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
@@ -390,7 +390,7 @@ vm_console(struct vmop_info_result *list, size_t ct)
  *
  * Parameters:
  *  imgfile_path: path to the image file to create
- *  imgsize     : size of the image file to create
+ *  imgsize     : size of the image file to create (in MB)
  *
  * Return:
  *  EEXIST: The requested image file already exists
@@ -401,8 +401,6 @@ int
 create_imagefile(const char *imgfile_path, long imgsize)
 {
 	int fd, ret;
-	off_t ofs;
-	char ch = '\0';
 
 	/* Refuse to overwrite an existing image */
 	fd = open(imgfile_path, O_RDWR | O_CREAT | O_TRUNC | O_EXCL,
@@ -410,19 +408,11 @@ create_imagefile(const char *imgfile_path, long imgsize)
 	if (fd == -1)
 		return (errno);
 
-	ofs = (imgsize * 1024 * 1024) - 1;
-
-	/* Set fd pos at desired size */
-	if (lseek(fd, ofs, SEEK_SET) == -1) {
+	/* Extend to desired size */
+	if (ftruncate(fd, (off_t)imgsize * 1024 * 1024) == -1) {
 		ret = errno;
 		close(fd);
-		return (ret);
-	}
-
-	/* Write one byte to fill out the extent */
-	if (write(fd, &ch, 1) == -1) {
-		ret = errno;
-		close(fd);
+		unlink(imgfile_path);
 		return (ret);
 	}
 
