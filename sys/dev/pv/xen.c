@@ -1,4 +1,4 @@
-/*	$OpenBSD: xen.c,v 1.36 2016/01/26 15:23:11 mikeb Exp $	*/
+/*	$OpenBSD: xen.c,v 1.37 2016/01/26 15:31:02 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Belopuhov
@@ -78,6 +78,8 @@ int	xen_bus_dmamap_load(bus_dma_tag_t, bus_dmamap_t, void *, bus_size_t,
 int	xen_bus_dmamap_load_mbuf(bus_dma_tag_t, bus_dmamap_t, struct mbuf *,
 	    int);
 void	xen_bus_dmamap_unload(bus_dma_tag_t, bus_dmamap_t);
+void	xen_bus_dmamap_sync(bus_dma_tag_t, bus_dmamap_t, bus_addr_t,
+	    bus_size_t, int);
 
 int	xs_attach(struct xen_softc *);
 
@@ -98,7 +100,7 @@ struct bus_dma_tag xen_bus_dma_tag = {
 	NULL,
 	NULL,
 	xen_bus_dmamap_unload,
-	_bus_dmamap_sync,
+	xen_bus_dmamap_sync,
 	_bus_dmamem_alloc,
 	NULL,
 	_bus_dmamem_free,
@@ -1089,6 +1091,15 @@ xen_bus_dmamap_unload(bus_dma_tag_t t, bus_dmamap_t map)
 		gm[i].gm_paddr = 0;
 	}
 	_bus_dmamap_unload(t, map);
+}
+
+void
+xen_bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t addr,
+    bus_size_t size, int op)
+{
+	if ((op == (BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE)) ||
+	    (op == (BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE)))
+		virtio_membar_sync();
 }
 
 static int
