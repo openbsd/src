@@ -1,4 +1,4 @@
-/*	$OpenBSD: validate.c,v 1.39 2016/01/25 21:51:23 krw Exp $	*/
+/*	$OpenBSD: validate.c,v 1.40 2016/01/26 16:13:09 krw Exp $	*/
 
 /*
  * validate.c -
@@ -59,7 +59,8 @@ void	print_range_list(struct range_list *);
 void	coalesce_list(struct range_list *);
 
 struct range_list *
-new_range_list_item(enum range_state state, int valid, uint32_t low, uint32_t high)
+new_range_list_item(enum range_state state, int valid, uint32_t low,
+    uint32_t high)
 {
 	struct range_list *item;
 
@@ -120,7 +121,6 @@ add_range(struct range_list **list, uint32_t base, uint32_t len, int allocate)
 				}
 				cur->prev = item;
 				item->next = cur;
-
 				cur->start = low;
 			}
 			if (high < cur->end) {
@@ -168,8 +168,8 @@ coalesce_list(struct range_list *list)
 		if (item == 0) {
 			break;
 		}
-		if (cur->valid == item->valid
-		    && cur->state == item->state) {
+		if (cur->valid == item->valid &&
+		    cur->state == item->state) {
 			cur->end = item->end;
 			cur->next = item->next;
 			if (item->next != 0) {

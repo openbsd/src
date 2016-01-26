@@ -1,4 +1,4 @@
-/*	$OpenBSD: file_media.c,v 1.41 2016/01/25 23:43:20 krw Exp $	*/
+/*	$OpenBSD: file_media.c,v 1.42 2016/01/26 16:13:09 krw Exp $	*/
 
 /*
  * file_media.c -
@@ -155,7 +155,8 @@ read_block0(int fd, struct block0 *block0)
 		    sizeof(ddmap_ondisk));
 		memcpy(&block0->sbDDMap[i].ddBlock, &ddmap_ondisk.ddBlock,
 		    sizeof(block0->sbDDMap[i].ddBlock));
-		block0->sbDDMap[i].ddBlock = betoh32(block0->sbDDMap[i].ddBlock);
+		block0->sbDDMap[i].ddBlock =
+		    betoh32(block0->sbDDMap[i].ddBlock);
 		memcpy(&block0->sbDDMap[i].ddSize, &ddmap_ondisk.ddSize,
 		    sizeof(block0->sbDDMap[i].ddSize));
 		block0->sbDDMap[i].ddSize = betoh16(block0->sbDDMap[i].ddSize);

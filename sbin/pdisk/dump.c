@@ -1,4 +1,4 @@
-/*	$OpenBSD: dump.c,v 1.53 2016/01/25 23:43:20 krw Exp $	*/
+/*	$OpenBSD: dump.c,v 1.54 2016/01/26 16:13:09 krw Exp $	*/
 
 /*
  * dump.c - dumping partition maps
@@ -104,10 +104,8 @@ dump_partition_map(struct partition_map_header *map)
 	if (max_name_length < 6) {
 		max_name_length = 6;
 	}
-	printf(" #: %*s %-*s %*s   %-*s ( size )\n",
-	       max_type_length, "type",
-	       max_name_length, "name",
-	       digits, "length", digits, "base");
+	printf(" #: %*s %-*s %*s   %-*s ( size )\n", max_type_length, "type",
+	    max_name_length, "name", digits, "length", digits, "base");
 
 	for (entry = map->disk_order; entry != NULL;
 	     entry = entry->next_on_disk) {
@@ -177,8 +175,8 @@ show_data_structures(struct partition_map_header *map)
 
 	printf("Header:\n");
 	printf("map %d blocks out of %d,  media %lu blocks (%d byte blocks)\n",
-	       map->blocks_in_map, map->maximum_in_map,
-	       map->media_size, map->logical_block);
+	    map->blocks_in_map, map->maximum_in_map, map->media_size,
+	    map->logical_block);
 	printf("Map is%s writable", rflag ? " not" : "");
 	printf(" and has%s been changed\n", (map->changed) ? "" : " not");
 	printf("\n");
@@ -200,7 +198,7 @@ show_data_structures(struct partition_map_header *map)
 		printf("No drivers\n");
 	} else {
 		printf("%u driver%s-\n", zp->sbDrvrCount,
-		       (zp->sbDrvrCount > 1) ? "s" : "");
+		    (zp->sbDrvrCount > 1) ? "s" : "");
 		m = zp->sbDDMap;
 		for (i = 0; i < zp->sbDrvrCount; i++) {
 			printf("%u: @ %u for %u, type=0x%x\n", i + 1,
@@ -213,8 +211,7 @@ show_data_structures(struct partition_map_header *map)
 	for (entry = map->disk_order; entry != NULL;
 	    entry = entry->next_on_disk) {
 		p = entry->dpme;
-		printf("%2ld: %20.32s ",
-		       entry->disk_address, p->dpme_type);
+		printf("%2ld: %20.32s ", entry->disk_address, p->dpme_type);
 		printf("%7u @ %-7u ", p->dpme_pblocks, p->dpme_pblock_start);
 		printf("%c%c%c%c%c%c%c%c%c ",
 		       (p->dpme_flags & DPME_VALID) ? 'V' : '.',
@@ -235,7 +232,7 @@ show_data_structures(struct partition_map_header *map)
 	}
 	printf("\n");
 	printf(" #:  booter   bytes      load_address      "
-	       "goto_address checksum processor\n");
+	    "goto_address checksum processor\n");
 	for (entry = map->disk_order; entry != NULL;
 	    entry = entry->next_on_disk) {
 		p = entry->dpme;
@@ -300,17 +297,19 @@ full_dump_partition_entry(struct partition_map_header *map, int ix)
 
 	printf("                  name: '%.32s'\n", p->dpme_name);
 	printf("                  type: '%.32s'\n", p->dpme_type);
-
 	printf("      boot start block: %10u\n", p->dpme_boot_block);
 	printf("boot length (in bytes): %10u\n", p->dpme_boot_bytes);
 	printf("          load address: 0x%08x\n", p->dpme_load_addr);
 	printf("         start address: 0x%08x\n", p->dpme_goto_addr);
 	printf("              checksum: 0x%08x\n", p->dpme_checksum);
 	printf("             processor: '%.32s'\n", p->dpme_processor_id);
-	printf("dpme_reserved_3 -");
+	printf("dpme_reserved_1 -");
 	dump_block(p->dpme_reserved_1, sizeof(p->dpme_reserved_1));
+	printf("dpme_reserved_2 -");
 	dump_block(p->dpme_reserved_2, sizeof(p->dpme_reserved_2));
+	printf("dpme_reserved_3 -");
 	dump_block(p->dpme_reserved_3, sizeof(p->dpme_reserved_3));
+	printf("dpme_reserved_4 -");
 	dump_block(p->dpme_reserved_4, sizeof(p->dpme_reserved_4));
 }
 
@@ -397,7 +396,8 @@ get_max_type_string_length(struct partition_map_header *map)
 
 	max = 0;
 
-	for (entry = map->disk_order; entry != NULL; entry = entry->next_on_disk) {
+	for (entry = map->disk_order; entry != NULL;
+	    entry = entry->next_on_disk) {
 		length = strnlen(entry->dpme->dpme_type, DPISTRLEN);
 		if (length > max) {
 			max = length;
@@ -415,8 +415,8 @@ get_max_name_string_length(struct partition_map_header *map)
 
 	max = 0;
 
-	for (entry = map->disk_order; entry != NULL; entry =
-	    entry->next_on_disk) {
+	for (entry = map->disk_order; entry != NULL;
+	    entry = entry->next_on_disk) {
 		length = strnlen(entry->dpme->dpme_name, DPISTRLEN);
 		if (length > max) {
 			max = length;

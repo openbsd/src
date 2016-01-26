@@ -1,4 +1,4 @@
-/*	$OpenBSD: partition_map.c,v 1.65 2016/01/26 02:38:05 krw Exp $	*/
+/*	$OpenBSD: partition_map.c,v 1.66 2016/01/26 16:13:09 krw Exp $	*/
 
 /*
  * partition_map.c - partition map routines
@@ -350,8 +350,8 @@ add_partition_to_map(const char *name, const char *dptype, uint32_t base,
 				    kFreeType, DPISTRLEN) == 0) &&
 				    base >= cur->dpme->dpme_pblock_start) {
 					cur->dpme->dpme_pblocks =
-						map->media_size -
-						cur->dpme->dpme_pblock_start;
+					    map->media_size -
+					    cur->dpme->dpme_pblock_start;
 					break;
 				}
 				/* create an extra free partition */
@@ -548,7 +548,7 @@ delete_partition_from_map(struct partition_map *entry)
 		    entry->dpme->dpme_pblock_start;
 	}
 	dpme = create_dpme(kFreeName, kFreeType,
-		 entry->dpme->dpme_pblock_start, entry->dpme->dpme_pblocks);
+	    entry->dpme->dpme_pblock_start, entry->dpme->dpme_pblocks);
 	if (dpme == NULL) {
 		return;
 	}
@@ -615,8 +615,7 @@ combine_entry(struct partition_map *entry)
 		    0) {
 			/* next is not free */
 		} else if (entry->dpme->dpme_pblock_start +
-			   entry->dpme->dpme_pblocks !=
-			   p->dpme->dpme_pblock_start) {
+		    entry->dpme->dpme_pblocks != p->dpme->dpme_pblock_start) {
 			/* next is not contiguous (XXX this is bad) */
 			printf("next entry is not contiguous\n");
 			/* start is already minimum */
@@ -641,8 +640,8 @@ combine_entry(struct partition_map *entry)
 		if (strncasecmp(p->dpme->dpme_type, kFreeType, DPISTRLEN) !=
 		    0) {
 			/* previous is not free */
-		} else if (p->dpme->dpme_pblock_start + p->dpme->dpme_pblocks
-			   != entry->dpme->dpme_pblock_start) {
+		} else if (p->dpme->dpme_pblock_start + p->dpme->dpme_pblocks !=
+		    entry->dpme->dpme_pblock_start) {
 			/* previous is not contiguous (XXX this is bad) */
 			printf("previous entry is not contiguous\n");
 			/* new end is maximum of two ends */
