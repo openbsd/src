@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.62 2015/12/01 11:58:31 claudio Exp $ */
+/*	$OpenBSD: config.c,v 1.63 2016/01/26 18:35:01 mmcc Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -149,7 +149,7 @@ merge_config(struct bgpd_config *xconf, struct bgpd_config *conf,
 
 
 	/* adjust FIB priority if changed */
-	/* if xconf is uninitalized we get RTP_NONE */
+	/* if xconf is uninitialized we get RTP_NONE */
 	if (xconf->fib_priority != conf->fib_priority) {
 		kr_fib_decouple_all(xconf->fib_priority);
 		kr_fib_update_prio_all(conf->fib_priority);

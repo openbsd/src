@@ -1,4 +1,4 @@
-/*	$OpenBSD: telnet.c,v 1.34 2015/12/23 13:08:24 sthen Exp $	*/
+/*	$OpenBSD: telnet.c,v 1.35 2016/01/26 18:35:01 mmcc Exp $	*/
 /*	$NetBSD: telnet.c,v 1.7 1996/02/28 21:04:15 thorpej Exp $	*/
 
 /*
@@ -1586,7 +1586,7 @@ process_iac:
 		     * inserted into the suboption are all possibilities.
 		     * If we assume that the IAC was not doubled,
 		     * and really the IAC SE was left off, we could
-		     * get into an infinate loop here.  So, instead,
+		     * get into an infinite loop here.  So, instead,
 		     * we terminate the suboption, and process the
 		     * partial suboption if we can.
 		     */
