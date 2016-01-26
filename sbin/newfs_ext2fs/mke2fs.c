@@ -1,4 +1,4 @@
-/* $OpenBSD: mke2fs.c,v 1.14 2015/11/26 06:59:12 deraadt Exp $ */
+/* $OpenBSD: mke2fs.c,v 1.15 2016/01/26 19:09:57 mmcc Exp $ */
 /*	$NetBSD: mke2fs.c,v 1.13 2009/10/19 18:41:08 bouyer Exp $	*/
 
 /*-
@@ -536,7 +536,6 @@ mke2fs(const char *fsys, int fi, int fo)
 	    MAP_ANON|MAP_PRIVATE, -1, 0);
 	if (iobuf == MAP_FAILED)
 		errx(EXIT_FAILURE, "Cannot allocate I/O buffer\n");
-	memset(iobuf, 0, iobufsize);
 
 	/*
 	 * We now start writing to the filesystem
