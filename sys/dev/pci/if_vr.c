@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vr.c,v 1.149 2016/01/26 01:51:33 dlg Exp $	*/
+/*	$OpenBSD: if_vr.c,v 1.150 2016/01/26 01:52:10 dlg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -1324,7 +1324,7 @@ vr_start(struct ifnet *ifp)
 		}
 
 		IFQ_DEQUEUE(&ifp->if_snd, m);
-		if (m== NULL)
+		if (m == NULL)
 			break;
 
 		/* Pack the data into the descriptor. */
