@@ -1,4 +1,4 @@
-/*	$OpenBSD: fileio.c,v 1.99 2015/03/19 21:22:15 bcallah Exp $	*/
+/*	$OpenBSD: fileio.c,v 1.100 2016/01/26 18:02:51 jasper Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -266,6 +266,13 @@ fbackupfile(const char *fn)
 	}
 	serrno = errno;
 	(void) fchmod(to, (sb.st_mode & 0777));
+
+	/* copy the mtime to the backupfile */
+	struct timespec new_times[2];
+	new_times[0] = sb.st_atim;
+	new_times[1] = sb.st_mtim;
+	futimens(to, new_times);
+
 	close(from);
 	close(to);
 	if (nread == -1) {
