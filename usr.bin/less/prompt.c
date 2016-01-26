@@ -118,7 +118,7 @@ ap_char(char c)
 static void
 ap_pos(off_t pos)
 {
-	char buf[INT_STRLEN_BOUND(pos) + 2];
+	char buf[23];
 
 	postoa(pos, buf, sizeof(buf));
 	ap_str(buf);
@@ -130,7 +130,7 @@ ap_pos(off_t pos)
 static void
 ap_int(int num)
 {
-	char buf[INT_STRLEN_BOUND(num) + 2];
+	char buf[13];
 
 	inttoa(num, buf, sizeof buf);
 	ap_str(buf);

@@ -58,13 +58,6 @@
 #endif
 
 /*
- * Upper bound on the string length of an integer converted to string.
- * 302 / 1000 is ceil (log10 (2.0)).  Subtract 1 for the sign bit;
- * add 1 for integer division truncation; add 1 more for a minus sign.
- */
-#define	INT_STRLEN_BOUND(t) ((sizeof (t) * CHAR_BIT - 1) * 302 / 1000 + 1 + 1)
-
-/*
  * Special types and constants.
  */
 typedef unsigned long LWCHAR;

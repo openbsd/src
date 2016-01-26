@@ -175,7 +175,7 @@ plinenum(off_t pos)
 	 * if the -N option is set.
 	 */
 	if (linenums == OPT_ONPLUS) {
-		char buf[INT_STRLEN_BOUND(pos) + 2];
+		char buf[23];
 		int n;
 
 		postoa(linenum, buf, sizeof(buf));
