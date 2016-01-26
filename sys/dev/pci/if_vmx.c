@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vmx.c,v 1.42 2016/01/25 10:39:20 reyk Exp $	*/
+/*	$OpenBSD: if_vmx.c,v 1.43 2016/01/26 10:23:19 reyk Exp $	*/
 
 /*
  * Copyright (c) 2013 Tsubai Masanari
@@ -1045,6 +1045,7 @@ vmxnet3_start(struct ifnet *ifp)
 	struct vmxnet3_softc *sc = ifp->if_softc;
 	struct vmxnet3_txqueue *tq = sc->sc_txq;
 	struct vmxnet3_txring *ring = &tq->cmd_ring;
+	struct vmxnet3_txdesc *txd;
 	struct mbuf *m;
 	u_int free, used;
 	int n;
@@ -1065,16 +1066,21 @@ vmxnet3_start(struct ifnet *ifp)
 		if (m == NULL)
 			break;
 
-#if NBPFILTER > 0
-		if (ifp->if_bpf)
-			bpf_mtap_ether(ifp->if_bpf, m, BPF_DIRECTION_OUT);
-#endif
+		txd = &ring->txd[ring->prod];
 
 		n = vmxnet3_load_mbuf(sc, ring, &m);
 		if (n == -1) {
 			ifp->if_oerrors++;
 			continue;
 		}
+
+#if NBPFILTER > 0
+		if (ifp->if_bpf)
+			bpf_mtap_ether(ifp->if_bpf, m, BPF_DIRECTION_OUT);
+#endif
+
+		/* Change the ownership by flipping the "generation" bit */
+		txd->tx_word2 ^= htole32(VMXNET3_TX_GEN_M << VMXNET3_TX_GEN_S);
 
 		ifp->if_opackets++;
 		used += n;
@@ -1181,9 +1187,6 @@ vmxnet3_load_mbuf(struct vmxnet3_softc *sc, struct vmxnet3_txring *ring,
 	/* dmamap_sync map */
 
 	ring->prod = prod;
-
-	/* Change the ownership by flipping the "generation" bit */
-	sop->tx_word2 ^= htole32(VMXNET3_TX_GEN_M << VMXNET3_TX_GEN_S);
 
 	return (map->dm_nsegs);
 }
