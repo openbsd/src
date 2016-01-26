@@ -1,4 +1,4 @@
-/*	$OpenBSD: xen.c,v 1.38 2016/01/26 15:35:21 mikeb Exp $	*/
+/*	$OpenBSD: xen.c,v 1.39 2016/01/26 15:51:07 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Belopuhov
@@ -924,12 +924,11 @@ xen_grant_table_enter(struct xen_softc *sc, grant_ref_t ref, paddr_t pa,
 		if (ref < ge->ge_start || ref > ge->ge_start + GNTTAB_NEPG)
 			continue;
 		ref -= ge->ge_start;
-		mtx_enter(&ge->ge_mtx);
 		ge->ge_table[ref].frame = atop(pa);
 		ge->ge_table[ref].domid = 0;
 		virtio_membar_sync();
 		ge->ge_table[ref].flags = GTF_permit_access | flags;
-		mtx_leave(&ge->ge_mtx);
+		virtio_membar_sync();
 		return (0);
 	}
 	return (ENOBUFS);
@@ -947,14 +946,13 @@ xen_grant_table_remove(struct xen_softc *sc, grant_ref_t ref)
 			continue;
 		ref -= ge->ge_start;
 
-		mtx_enter(&ge->ge_mtx);
 		/* Invalidate the grant reference */
+		virtio_membar_sync();
 		ptr = (uint32_t *)&ge->ge_table[ref];
 		flags = (ge->ge_table[ref].flags & ~(GTF_reading | GTF_writing));
 		loop = 0;
 		while (atomic_cas_uint(ptr, flags, GTF_invalid) != flags) {
 			if (loop++ > 10000000) {
-				mtx_leave(&ge->ge_mtx);
 				printf("%s: grant table reference %u is held by "
 				    "domain %d\n", sc->sc_dev.dv_xname, ref +
 				    ge->ge_start, ge->ge_table[ref].domid);
@@ -963,7 +961,6 @@ xen_grant_table_remove(struct xen_softc *sc, grant_ref_t ref)
 			CPU_BUSY_CYCLE();
 		}
 		ge->ge_table[ref].frame = 0xffffffff;
-		mtx_leave(&ge->ge_mtx);
 		break;
 	}
 }
