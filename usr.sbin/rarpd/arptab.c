@@ -1,4 +1,4 @@
-/*	$OpenBSD: arptab.c,v 1.25 2015/11/19 19:31:20 deraadt Exp $ */
+/*	$OpenBSD: arptab.c,v 1.26 2016/01/26 18:26:19 mmcc Exp $ */
 
 /*
  * Copyright (c) 1984, 1993
@@ -240,7 +240,7 @@ rtget(struct sockaddr_inarp **sinp, struct sockaddr_dl **sdlp)
 	struct sockaddr_dl *sdl = NULL;
 	struct sockaddr *sa;
 	char *cp;
-	int i;
+	unsigned int i;
 
 	if (rtmsg(RTM_GET) < 0)
 		return (1);

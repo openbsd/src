@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.370 2015/12/12 14:48:17 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.371 2016/01/26 18:26:19 mmcc Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -160,7 +160,7 @@ int
 findproto(char *cp, int n)
 {
 	struct sockaddr *sa;
-	int i;
+	unsigned int i;
 
 	if (n == 0)
 		return -1;
@@ -190,7 +190,7 @@ struct sockaddr *
 get_ifa(char *cp, int n)
 {
 	struct sockaddr *sa;
-	int i;
+	unsigned int i;
 
 	if (n == 0)
 		return (NULL);
