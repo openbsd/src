@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdisk.c,v 1.70 2016/01/26 16:39:00 krw Exp $	*/
+/*	$OpenBSD: pdisk.c,v 1.71 2016/01/26 21:07:54 krw Exp $	*/
 
 /*
  * pdisk - an editor for Apple format partition tables
@@ -356,8 +356,13 @@ do_rename_partition(struct partition_map_header *map)
 	if (entry == NULL) {
 		printf("No such partition\n");
 	} else {
-		/* stuff name into partition map entry dpme */
-		strncpy(entry->dpme->dpme_name, name, DPISTRLEN);
+		/*
+		 * Since dpme_name is supposed to be NUL-filled, make sure
+		 * current contents are zapped before copying in new name!
+		 */
+		memset(entry->dpme->dpme_name, 0,
+		    sizeof(entry->dpme->dpme_name));
+		strlcpy(entry->dpme->dpme_name, name, DPISTRLEN);
 		map->changed = 1;
 	}
 	free(name);
@@ -386,6 +391,11 @@ do_change_type(struct partition_map_header *map)
 		bad_input("Bad type");
 		goto out;
 	}
+        /*
+	 * Since dpme_type is supposed to be NUL-filled, make sure
+         * current contents are zapped before copying in new type!
+	 */
+	memset(entry->dpme->dpme_type, 0, sizeof(entry->dpme->dpme_type));
 	strncpy(entry->dpme->dpme_type, type, DPISTRLEN);
 	map->changed = 1;
 

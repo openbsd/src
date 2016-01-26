@@ -1,4 +1,4 @@
-/*	$OpenBSD: partition_map.c,v 1.67 2016/01/26 16:39:00 krw Exp $	*/
+/*	$OpenBSD: partition_map.c,v 1.68 2016/01/26 21:07:54 krw Exp $	*/
 
 /*
  * partition_map.c - partition map routines
@@ -277,8 +277,10 @@ create_partition_map(int fd, char *name, u_int64_t mediasz, uint32_t sectorsz)
 			dpme->dpme_map_entries = 1;
 			dpme->dpme_pblock_start = 1;
 			dpme->dpme_pblocks = map->media_size - 1;
-			strncpy(dpme->dpme_name, kFreeName, DPISTRLEN);
-			strncpy(dpme->dpme_type, kFreeType, DPISTRLEN);
+			strlcpy(dpme->dpme_name, kFreeName,
+			    sizeof(dpme->dpme_name));
+			strlcpy(dpme->dpme_type, kFreeType,
+			    sizeof(dpme->dpme_type));
 			dpme->dpme_lblock_start = 0;
 			dpme->dpme_lblocks = dpme->dpme_pblocks;
 			dpme->dpme_flags = DPME_WRITABLE | DPME_READABLE |
@@ -477,8 +479,8 @@ create_dpme(const char *name, const char *dptype, uint32_t base,
 		dpme->dpme_map_entries = 1;
 		dpme->dpme_pblock_start = base;
 		dpme->dpme_pblocks = length;
-		strncpy(dpme->dpme_name, name, DPISTRLEN);
-		strncpy(dpme->dpme_type, dptype, DPISTRLEN);
+		strlcpy(dpme->dpme_name, name, sizeof(dpme->dpme_name));
+		strlcpy(dpme->dpme_type, dptype, sizeof(dpme->dpme_type));
 		dpme->dpme_lblock_start = 0;
 		dpme->dpme_lblocks = dpme->dpme_pblocks;
 		dpme_init_flags(dpme);

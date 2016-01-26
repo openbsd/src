@@ -1,4 +1,4 @@
-/*	$OpenBSD: dump.c,v 1.55 2016/01/26 16:39:00 krw Exp $	*/
+/*	$OpenBSD: dump.c,v 1.56 2016/01/26 21:07:54 krw Exp $	*/
 
 /*
  * dump.c - dumping partition maps
@@ -130,8 +130,7 @@ dump_partition_entry(struct partition_map *entry, int type_length,
 	printf("%2ld: %*.32s", entry->disk_address, type_length, p->dpme_type);
 
 	buf = malloc(name_length + 1);
-	strncpy(buf, p->dpme_name, name_length);
-	buf[name_length] = 0;
+	strlcpy(buf, p->dpme_name, name_length+1);
 	printf("%c%-*.32s ", driver, name_length, buf);
 	free(buf);
 
