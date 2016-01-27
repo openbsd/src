@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.25 2016/01/27 00:03:52 krw Exp $	*/
+/*	$OpenBSD: io.c,v 1.26 2016/01/27 00:26:33 krw Exp $	*/
 
 /*
  * io.c - simple io and input parsing routines
@@ -80,9 +80,8 @@ flush_to_newline(int keep_newline)
 		if (c <= 0) {
 			break;
 		} else if (c == '\n') {
-			if (keep_newline) {
+			if (keep_newline)
 				my_ungetch(c);
-			}
 			break;
 		} else {
 			/* skip */
@@ -298,12 +297,10 @@ get_multiplier(long divisor)
 	if (result > 1) {
 		if (extra > 1) {
 			result /= divisor;
-			if (result >= 4096) {
-				/* overflow -> 20bits + >12bits */
-				result = 0;
-			} else {
+			if (result >= 4096)
+				result = 0; /* overflow -> 20bits + >12bits */
+			else
 				result *= extra;
-			}
 		} else if (result >= divisor) {
 			result /= divisor;
 		} else {
