@@ -753,6 +753,7 @@ main(int argc, char **argv)
 		++linenum;
 		parse_line(line);
 	}
+	fclose(desc);
 
 	/*
 	 * Write the output file.
@@ -797,5 +798,6 @@ main(int argc, char **argv)
 	/* File trailer */
 	fputbytes(out, endsection, sizeof (endsection));
 	fputbytes(out, filetrailer, sizeof (filetrailer));
+	fclose(out);
 	return (0);
 }
