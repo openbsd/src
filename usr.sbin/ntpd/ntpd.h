@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.h,v 1.127 2015/12/19 20:44:35 reyk Exp $ */
+/*	$OpenBSD: ntpd.h,v 1.128 2016/01/27 21:36:25 bcook Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -213,9 +213,10 @@ struct ntpd_conf {
 	struct ntp_status				status;
 	struct ntp_freq					freq;
 	u_int32_t					scale;
+	int				        	debug;
+	int				        	verbose;
 	u_int8_t					listen_all;
 	u_int8_t					settime;
-	u_int8_t					debug;
 	u_int8_t					noaction;
 	u_int8_t					filters;
 	time_t						constraint_last;
