@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pdisk.8,v 1.26 2016/01/27 17:21:19 jmc Exp $
+.\"	$OpenBSD: pdisk.8,v 1.27 2016/01/27 20:11:00 krw Exp $
 .\"
 .\" Copyright 1996,1997,1998 by Apple Computer, Inc.
 .\"              All Rights Reserved
@@ -68,7 +68,7 @@ The list of commands and their explanations are given below.
 .It Em ?\&
 verbose command help
 .It Em C
-create a partition of the specified type
+create a partition of a specified type
 .It Em c
 create an
 .Ox
@@ -76,7 +76,7 @@ partition
 .It Em d
 delete a partition
 .It Em f
-full display of the specified entry
+full display of a partition
 .It Em h
 command help
 .It Em i
@@ -94,9 +94,9 @@ reorder an entry in the partition map
 .It Em s
 change the size of the partition map
 .It Em t
-change the specified partition's type
+change the type of a partition
 .It Em w
-write the partition map
+write the partition map to disk
 .El
 .Pp
 Commands which take arguments prompt for each argument in turn.

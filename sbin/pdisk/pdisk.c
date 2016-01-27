@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdisk.c,v 1.75 2016/01/27 16:38:37 krw Exp $	*/
+/*	$OpenBSD: pdisk.c,v 1.76 2016/01/27 20:11:00 krw Exp $	*/
 
 /*
  * pdisk - an editor for Apple format partition tables
@@ -156,10 +156,10 @@ edit(struct partition_map_header **mapp)
 		case 'h':
 			printf("Commands are:\n"
 			    "  ?    verbose command help\n"
-			    "  C    create a partition of the specified type\n"
+			    "  C    create a partition of a specified type\n"
 			    "  c    create an OpenBSD partition\n"
 			    "  d    delete a partition\n"
-			    "  f    full display of the specified entry\n"
+			    "  f    full display of a partition\n"
 			    "  h    command help\n"
 			    "  i    (re)initialize the partition map\n"
 			    "  n    (re)name a partition\n"
@@ -168,8 +168,8 @@ edit(struct partition_map_header **mapp)
 			    "  q    quit editing\n"
 			    "  r    reorder an entry in the partition map\n"
 			    "  s    change the size of the partition map\n"
-			    "  t    change the specified partition's type\n"
-			    "  w    write the partition map\n");
+			    "  t    change the type of a partition\n"
+			    "  w    write the partition map to disk\n");
 			break;
 		case 'P':
 			show_data_structures(map);
