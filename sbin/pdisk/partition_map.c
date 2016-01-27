@@ -1,4 +1,4 @@
-/*	$OpenBSD: partition_map.c,v 1.68 2016/01/26 21:07:54 krw Exp $	*/
+/*	$OpenBSD: partition_map.c,v 1.69 2016/01/27 00:03:52 krw Exp $	*/
 
 /*
  * partition_map.c - partition map routines
@@ -232,9 +232,8 @@ add_data_to_map(struct dpme *dpme, long ix, struct partition_map_header *map)
 
 	map->blocks_in_map++;
 	if (map->maximum_in_map < 0) {
-		if (strncasecmp(dpme->dpme_type, kMapType, DPISTRLEN) == 0) {
+		if (strncasecmp(dpme->dpme_type, kMapType, DPISTRLEN) == 0)
 			map->maximum_in_map = dpme->dpme_pblocks;
-		}
 	}
 	return 1;
 }
@@ -378,9 +377,8 @@ add_partition_to_map(const char *name, const char *dptype, uint32_t base,
 					if (dpme != NULL) {
 						if (add_data_to_map(dpme,
 						    cur->disk_address, map) ==
-						    0) {
+						    0)
 							free(dpme);
-						}
 					}
 				}
 			}

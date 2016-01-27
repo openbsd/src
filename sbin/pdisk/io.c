@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.24 2016/01/26 23:41:48 krw Exp $	*/
+/*	$OpenBSD: io.c,v 1.25 2016/01/27 00:03:52 krw Exp $	*/
 
 /*
  * io.c - simple io and input parsing routines
@@ -197,18 +197,16 @@ get_number(int first_char)
 	}
 	ret_value = 0;
 	for (ret_value = 0;; c = my_getch()) {
-		if (c >= '0' && c <= '9') {
+		if (c >= '0' && c <= '9')
 			digit = c - '0';
-		} else if (c >= 'A' && c <= 'F') {
+		else if (c >= 'A' && c <= 'F')
 			digit = 10 + (c - 'A');
-		} else if (c >= 'a' && c <= 'f') {
+		else if (c >= 'a' && c <= 'f')
 			digit = 10 + (c - 'a');
-		} else {
+		else
 			digit = BAD_DIGIT;
-		}
-		if (digit >= base) {
+		if (digit >= base)
 			break;
-		}
 		ret_value = ret_value * base + digit;
 	}
 	my_ungetch(c);

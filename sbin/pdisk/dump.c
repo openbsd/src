@@ -1,4 +1,4 @@
-/*	$OpenBSD: dump.c,v 1.56 2016/01/26 21:07:54 krw Exp $	*/
+/*	$OpenBSD: dump.c,v 1.57 2016/01/27 00:03:52 krw Exp $	*/
 
 /*
  * dump.c - dumping partition maps
@@ -144,18 +144,16 @@ dump_partition_entry(struct partition_map *entry, int type_length,
 		printf("%*u ", digits, p->dpme_pblocks);
 		size = p->dpme_pblocks;
 	}
-	if (p->dpme_lblock_start == 0) {
+	if (p->dpme_lblock_start == 0)
 		printf("@ %-*u", digits, p->dpme_pblock_start);
-	} else {
+	else
 		printf("@~%-*u", digits, p->dpme_pblock_start +
 		    p->dpme_lblock_start);
-	}
 
 	bytes = ((double) size) * map->logical_block;
 	adjust_value_and_compute_prefix(&bytes, &j);
-	if (j != ' ' && j != 'K') {
+	if (j != ' ' && j != 'K')
 		printf(" (%#5.1f%c)", bytes, j);
-	}
 	printf("\n");
 }
 
@@ -283,9 +281,8 @@ full_dump_partition_entry(struct partition_map_header *map, int ix)
 		printf("pic ");
 	t = p->dpme_flags >> 7;
 	for (i = 7; i <= 31; i++) {
-		if (t & 0x1) {
+		if (t & 0x1)
 			printf("%d ", i);
-		}
 		t = t >> 1;
 	}
 	printf("\n");
@@ -320,32 +317,27 @@ dump_block(unsigned char *addr, int len)
 
 	for (i = 0; i < len; i = limit) {
 		limit1 = i + LINE_LEN;
-		if (limit1 > len) {
+		if (limit1 > len)
 			limit = len;
-		} else {
+		else
 			limit = limit1;
-		}
 		printf("\n%03x: ", i);
 		for (j = i; j < limit1; j++) {
-			if (j % UNIT_LEN == 0) {
+			if (j % UNIT_LEN == 0)
 				printf(" ");
-			}
-			if (j < limit) {
+			if (j < limit)
 				printf("%02x", addr[j]);
-			} else {
+			else
 				printf("  ");
-			}
 		}
 		printf(" ");
 		for (j = i; j < limit; j++) {
-			if (j % OTHER_LEN == 0) {
+			if (j % OTHER_LEN == 0)
 				printf(" ");
-			}
-			if (addr[j] < ' ') {
+			if (addr[j] < ' ')
 				printf(".");
-			} else {
+			else
 				printf("%c", addr[j]);
-			}
 		}
 	}
 	printf("\n");
@@ -394,9 +386,8 @@ get_max_type_string_length(struct partition_map_header *map)
 	for (entry = map->disk_order; entry != NULL;
 	    entry = entry->next_on_disk) {
 		length = strnlen(entry->dpme->dpme_type, DPISTRLEN);
-		if (length > max) {
+		if (length > max)
 			max = length;
-		}
 	}
 
 	return max;
@@ -413,9 +404,8 @@ get_max_name_string_length(struct partition_map_header *map)
 	for (entry = map->disk_order; entry != NULL;
 	    entry = entry->next_on_disk) {
 		length = strnlen(entry->dpme->dpme_name, DPISTRLEN);
-		if (length > max) {
+		if (length > max)
 			max = length;
-		}
 	}
 
 	return max;
