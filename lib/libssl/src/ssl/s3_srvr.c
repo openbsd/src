@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_srvr.c,v 1.123 2015/09/13 12:39:16 jsing Exp $ */
+/* $OpenBSD: s3_srvr.c,v 1.124 2016/01/27 02:06:16 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1236,25 +1236,10 @@ ssl3_send_server_key_exchange(SSL *s)
 				goto err;
 			}
 			s->s3->tmp.dh = dh;
-
-			if ((dhp->pub_key == NULL || dhp->priv_key == NULL ||
-			    (s->options & SSL_OP_SINGLE_DH_USE))) {
-				if (!DH_generate_key(dh)) {
-					SSLerr(
-					    SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE,
-					    ERR_R_DH_LIB);
-					goto err;
-				}
-			} else {
-				dh->pub_key = BN_dup(dhp->pub_key);
-				dh->priv_key = BN_dup(dhp->priv_key);
-				if ((dh->pub_key == NULL) ||
-					(dh->priv_key == NULL)) {
-					SSLerr(
-					    SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE,
-					    ERR_R_DH_LIB);
-					goto err;
-				}
+			if (!DH_generate_key(dh)) {
+				SSLerr(SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE,
+				    ERR_R_DH_LIB);
+				goto err;
 			}
 			r[0] = dh->p;
 			r[1] = dh->g;
