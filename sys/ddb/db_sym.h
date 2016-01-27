@@ -120,9 +120,6 @@ int db_value_of_name(char *, db_expr_t *);
 
 db_sym_t db_lookup(char *);
 
-void db_sifting(char *, int);
-				/* print partially matching symbol names */
-
 boolean_t db_symbol_is_ambiguous(db_sym_t);
 
 db_sym_t db_search_symbol(db_addr_t, db_strategy_t, db_expr_t *);
