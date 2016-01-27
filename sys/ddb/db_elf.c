@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_elf.c,v 1.15 2016/01/25 14:56:03 mpi Exp $	*/
+/*	$OpenBSD: db_elf.c,v 1.16 2016/01/27 10:37:12 mpi Exp $	*/
 /*	$NetBSD: db_elf.c,v 1.13 2000/07/07 21:55:18 jhawk Exp $	*/
 
 /*-
@@ -52,30 +52,6 @@ static char *db_elf_find_linetab(db_symtab_t *, size_t *);
 #define	STAB_TO_SYMEND(stab)	((Elf_Sym *)((stab)->end))
 #define	STAB_TO_EHDR(stab)	((Elf_Ehdr *)((stab)->private))
 #define	STAB_TO_SHDR(stab, e)	((Elf_Shdr *)((stab)->private + (e)->e_shoff))
-
-boolean_t	db_elf_sym_init(int, void *, void *, const char *);
-db_sym_t	db_elf_lookup(db_symtab_t *, char *);
-db_sym_t	db_elf_search_symbol(db_symtab_t *, db_addr_t,
-		    db_strategy_t, db_expr_t *);
-void		db_elf_symbol_values(db_symtab_t *, db_sym_t,
-		    char **, db_expr_t *);
-boolean_t	db_elf_line_at_pc(db_symtab_t *, db_sym_t,
-		    char **, int *, db_expr_t);
-boolean_t	db_elf_sym_numargs(db_symtab_t *, db_sym_t, int *,
-		    char **);
-void		db_elf_forall(db_symtab_t *,
-		    db_forall_func_t db_forall_func, void *);
-
-db_symformat_t db_symformat_elf = {
-	"ELF",
-	db_elf_sym_init,
-	db_elf_lookup,
-	db_elf_search_symbol,
-	db_elf_symbol_values,
-	db_elf_line_at_pc,
-	db_elf_sym_numargs,
-	db_elf_forall
-};
 
 /*
  * Find the symbol table and strings; tell ddb about them.
@@ -261,7 +237,7 @@ db_elf_find_linetab(db_symtab_t *stab, size_t *size)
  * Lookup the symbol with the given name.
  */
 db_sym_t
-db_elf_lookup(db_symtab_t *stab, char *symstr)
+db_elf_sym_lookup(db_symtab_t *stab, char *symstr)
 {
 	Elf_Sym *symp, *symtab_start, *symtab_end;
 	char *strtab;
@@ -287,7 +263,7 @@ db_elf_lookup(db_symtab_t *stab, char *symstr)
  * provided threshold).
  */
 db_sym_t
-db_elf_search_symbol(db_symtab_t *symtab, db_addr_t off, db_strategy_t strategy,
+db_elf_sym_search(db_symtab_t *symtab, db_addr_t off, db_strategy_t strategy,
     db_expr_t *diffp)
 {
 	Elf_Sym *rsymp, *symp, *symtab_start, *symtab_end;
@@ -350,7 +326,7 @@ db_elf_search_symbol(db_symtab_t *symtab, db_addr_t off, db_strategy_t strategy,
  * Return the name and value for a symbol.
  */
 void
-db_elf_symbol_values(db_symtab_t *symtab, db_sym_t sym, char **namep,
+db_elf_sym_values(db_symtab_t *symtab, db_sym_t sym, char **namep,
     db_expr_t *valuep)
 {
 	Elf_Sym *symp = (Elf_Sym *)sym;
@@ -396,23 +372,8 @@ db_elf_line_at_pc(db_symtab_t *symtab, db_sym_t cursym, char **filename,
 	return (TRUE);
 }
 
-/*
- * Returns the number of arguments to a function and their
- * names if we can find the appropriate debugging symbol.
- */
-boolean_t
-db_elf_sym_numargs(db_symtab_t *symtab, db_sym_t cursym, int *nargp,
-    char **argnamep)
-{
-
-	/*
-	 * XXX We don't support this (yet).
-	 */
-	return (FALSE);
-}
-
 void
-db_elf_forall(db_symtab_t *stab, db_forall_func_t db_forall_func, void *arg)
+db_elf_sym_forall(db_symtab_t *stab, db_forall_func_t db_forall_func, void *arg)
 {
 	char *strtab;
 	static char suffix[2];

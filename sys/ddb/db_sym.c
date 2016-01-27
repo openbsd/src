@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_sym.c,v 1.42 2016/01/27 08:03:37 mpi Exp $	*/
+/*	$OpenBSD: db_sym.c,v 1.43 2016/01/27 10:37:12 mpi Exp $	*/
 /*	$NetBSD: db_sym.c,v 1.24 2000/08/11 22:50:47 tv Exp $	*/
 
 /*
@@ -55,27 +55,6 @@ db_symtab_t	*db_last_symtab;
 extern char end[];
 
 /*
- * Put the most picky symbol table formats at the top!
- */
-const db_symformat_t *db_symformats[] = {
-	&db_symformat_elf,
-	NULL,
-};
-
-const db_symformat_t *db_symformat;
-
-boolean_t	X_db_sym_init(int, void *, void *, const char *);
-db_sym_t	X_db_lookup(db_symtab_t *, char *);
-db_sym_t	X_db_search_symbol(db_symtab_t *, db_addr_t,
-		    db_strategy_t, db_expr_t *);
-void		X_db_symbol_values(db_symtab_t *, db_sym_t, char **,
-		    db_expr_t *);
-boolean_t	X_db_line_at_pc(db_symtab_t *, db_sym_t, char **,
-		    int *, db_expr_t);
-int		X_db_sym_numargs(db_symtab_t *, db_sym_t, int *,
-		    char **);
-
-/*
  * Initialize the kernel debugger by initializing the master symbol
  * table.  Note that if initializing the master symbol table fails,
  * no other symbol tables can be loaded.
@@ -83,7 +62,6 @@ int		X_db_sym_numargs(db_symtab_t *, db_sym_t, int *,
 void
 ddb_init(void)
 {
-	const db_symformat_t **symf;
 	const char *name = "bsd";
 	extern char *esym;
 #if defined(__sparc64__) || defined(__mips__) || defined(__amd64__) || \
@@ -109,15 +87,12 @@ ddb_init(void)
 		return;
 	}
 
-	if (xesym != NULL && xesym != xssym)
-		for (symf = db_symformats; *symf != NULL; symf++) {
-			db_symformat = *symf;
-			if (X_db_sym_init((vaddr_t)xesym - (vaddr_t)xssym,
-			    xssym, xesym, name) == TRUE)
+	if (xesym != NULL && xesym != xssym) {
+		if (db_elf_sym_init((vaddr_t)xesym - (vaddr_t)xssym, xssym,
+		    xesym, name) == TRUE)
 			return;
-		}
+	}
 
-	db_symformat = NULL;
 	printf("[ no symbol table formats found ]\n");
 }
 
@@ -261,7 +236,7 @@ db_lookup(char *symstr)
 	 */
 	for (i = symtab_start; i < symtab_end; i++) {
 		if (db_symtabs[i].name &&
-		    (sp = X_db_lookup(&db_symtabs[i], symstr))) {
+		    (sp = db_elf_sym_lookup(&db_symtabs[i], symstr))) {
 			db_last_symtab = &db_symtabs[i];
 			return sp;
 		}
@@ -288,7 +263,7 @@ db_symbol_is_ambiguous(db_sym_t sym)
 	db_symbol_values(sym, &sym_name, 0);
 	for (i = 0; i < MAXNOSYMTABS; i++) {
 		if (db_symtabs[i].name &&
-		    X_db_lookup(&db_symtabs[i], sym_name)) {
+		    db_elf_sym_lookup(&db_symtabs[i], sym_name)) {
 			if (found_once)
 				return TRUE;
 			found_once = TRUE;
@@ -314,7 +289,7 @@ db_search_symbol(db_addr_t val, db_strategy_t strategy, db_expr_t *offp)
 	for (i = 0; i < MAXNOSYMTABS; i++) {
 	    if (!db_symtabs[i].name)
 	        continue;
-	    sym = X_db_search_symbol(&db_symtabs[i], val, strategy, &newdiff);
+	    sym = db_elf_sym_search(&db_symtabs[i], val, strategy, &newdiff);
 	    if (newdiff < diff) {
 		db_last_symtab = &db_symtabs[i];
 		diff = newdiff;
@@ -338,7 +313,7 @@ db_symbol_values(db_sym_t sym, char **namep, db_expr_t *valuep)
 		return;
 	}
 
-	X_db_symbol_values(db_last_symtab, sym, namep, &value);
+	db_elf_sym_values(db_last_symtab, sym, namep, &value);
 
 	if (db_symbol_is_ambiguous(sym))
 		*namep = db_qualify(sym, db_last_symtab->name);
@@ -390,8 +365,9 @@ db_printsym(db_expr_t off, db_strategy_t strategy,
 				(*pr)("+%s", db_format(buf, sizeof(buf),
 				    d, DB_FORMAT_R, 1, 0));
 			}
-			if (strategy == DB_STGY_PROC) {
-				if (db_line_at_pc(cursym, &filename, &linenum, off))
+			if (strategy != DB_STGY_PROC) {
+				if (db_elf_line_at_pc(db_last_symtab, cursym,
+				    &filename, &linenum, off))
 					(*pr)(" [%s:%d]", filename, linenum);
 			}
 			return;
@@ -400,84 +376,4 @@ db_printsym(db_expr_t off, db_strategy_t strategy,
 
 	(*pr)("%s", db_format(buf, sizeof(buf), off, DB_FORMAT_N, 1, 0));
 	return;
-}
-
-
-boolean_t
-db_line_at_pc(db_sym_t sym, char **filename, int *linenum, db_expr_t pc)
-{
-	return X_db_line_at_pc(db_last_symtab, sym, filename, linenum, pc);
-}
-
-int
-db_sym_numargs(db_sym_t sym, int *nargp, char **argnames)
-{
-	return X_db_sym_numargs(db_last_symtab, sym, nargp, argnames);
-}
-
-boolean_t
-X_db_sym_init(int symsize, void *vss, void *vse, const char *name)
-{
-
-	if (db_symformat != NULL)
-		return ((*db_symformat->sym_init)(symsize, vss, vse, name));
-	return (FALSE);
-}
-
-db_sym_t
-X_db_lookup(db_symtab_t *stab, char *symstr)
-{
-
-	if (db_symformat != NULL)
-		return ((*db_symformat->sym_lookup)(stab, symstr));
-	return ((db_sym_t)0);
-}
-
-db_sym_t
-X_db_search_symbol(db_symtab_t *stab, db_addr_t off, db_strategy_t strategy,
-    db_expr_t *diffp)
-{
-
-	if (db_symformat != NULL)
-		return ((*db_symformat->sym_search)(stab, off, strategy,
-		    diffp));
-	return ((db_sym_t)0);
-}
-
-void
-X_db_symbol_values(db_symtab_t *stab, db_sym_t sym, char **namep,
-    db_expr_t *valuep)
-{
-
-	if (db_symformat != NULL)
-		(*db_symformat->sym_value)(stab, sym, namep, valuep);
-}
-
-boolean_t
-X_db_line_at_pc(db_symtab_t *stab, db_sym_t cursym, char **filename,
-    int *linenum, db_expr_t off)
-{
-
-	if (db_symformat != NULL)
-		return ((*db_symformat->sym_line_at_pc)(stab, cursym,
-		    filename, linenum, off));
-	return (FALSE);
-}
-
-boolean_t
-X_db_sym_numargs(db_symtab_t *stab, db_sym_t cursym, int *nargp,
-    char **argnamep)
-{
-
-	if (db_symformat != NULL)
-		return ((*db_symformat->sym_numargs)(stab, cursym, nargp,
-		    argnamep));
-	return (FALSE);
-}
-
-void
-X_db_forall(db_symtab_t *stab, db_forall_func_t db_forall_func, void *arg)
-{
-	if (db_symformat != NULL)
-		(*db_symformat->sym_forall)(stab, db_forall_func, arg);
 }

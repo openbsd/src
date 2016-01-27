@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_hangman.c,v 1.32 2015/03/14 03:38:46 jsg Exp $	*/
+/*	$OpenBSD: db_hangman.c,v 1.33 2016/01/27 10:37:12 mpi Exp $	*/
 
 /*
  * Copyright (c) 1996 Theo de Raadt, Michael Shalayeff
@@ -103,14 +103,14 @@ db_randomsym(size_t *lenp)
 	stab = &db_symtabs[arc4random_uniform(nsymtabs)];
 
 	dfa.cnt = 0;
-	X_db_forall(stab, db_hang_forall, &dfa);
+	db_elf_sym_forall(stab, db_hang_forall, &dfa);
 	nsyms = -dfa.cnt;
 
 	if (nsyms == 0)
 		return (NULL);
 
 	dfa.cnt = arc4random_uniform(nsyms);
-	X_db_forall(stab, db_hang_forall, &dfa);
+	db_elf_sym_forall(stab, db_hang_forall, &dfa);
 
 	q = db_qualify(dfa.sym, stab->name);
 

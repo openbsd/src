@@ -74,29 +74,6 @@ typedef int		db_strategy_t;	/* search strategy */
  */
 typedef void (db_forall_func_t)(db_symtab_t *, db_sym_t, char *, char *, int, void *);
 
-void		X_db_forall(db_symtab_t *,
-		    db_forall_func_t db_forall_func, void *);
-
-/*
- * A symbol table may be in one of many formats.  All symbol tables
- * must be of the same format as the master kernel symbol table.
- */
-typedef struct {
-	const char *sym_format;
-	boolean_t (*sym_init)(int, void *, void *, const char *);
-	db_sym_t (*sym_lookup)(db_symtab_t *, char *);
-	db_sym_t (*sym_search)(db_symtab_t *, db_addr_t, db_strategy_t,
-		db_expr_t *);
-	void	(*sym_value)(db_symtab_t *, db_sym_t, char **,
-		db_expr_t *);
-	boolean_t (*sym_line_at_pc)(db_symtab_t *, db_sym_t,
-		char **, int *, db_expr_t);
-	boolean_t (*sym_numargs)(db_symtab_t *, db_sym_t, int *,
-		char **);
-	void	(*sym_forall)(db_symtab_t *,
-		db_forall_func_t *db_forall_func, void *);
-} db_symformat_t;
-
 extern boolean_t	db_qualify_ambiguous_names;
 					/* if TRUE, check across symbol tables
 					 * for multiple occurrences of a name.
@@ -139,9 +116,13 @@ void db_symbol_values(db_sym_t, char **, db_expr_t *);
 void db_printsym(db_expr_t, db_strategy_t, int (*)(const char *, ...));
 					/* print closest symbol to a value */
 
-boolean_t db_line_at_pc(db_sym_t, char **, int *, db_expr_t);
+#define db_sym_numargs(sym, nargp, argnames) (FALSE)
 
-int db_sym_numargs(db_sym_t, int *, char **);
 char *db_qualify(db_sym_t, const char *);
 
-extern	db_symformat_t db_symformat_elf;
+boolean_t db_elf_sym_init(int, void *, void *, const char *);
+db_sym_t db_elf_sym_lookup(db_symtab_t *, char *);
+void db_elf_sym_values(db_symtab_t *, db_sym_t, char **, db_expr_t *);
+db_sym_t db_elf_sym_search(db_symtab_t *, db_addr_t, db_strategy_t, db_expr_t *);
+boolean_t db_elf_line_at_pc(db_symtab_t *, db_sym_t, char **, int *, db_expr_t);
+void db_elf_sym_forall(db_symtab_t *, db_forall_func_t db_forall_func, void *);
