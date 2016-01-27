@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.33 2016/01/09 16:13:26 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.34 2016/01/27 22:46:02 martijn Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -17,6 +17,7 @@
 #include <sys/time.h>
 
 #include <bitstring.h>
+#include <err.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
@@ -32,8 +33,7 @@
 #ifdef DEBUG
 static void	 attach(GS *);
 #endif
-static void	 v_estr(char *, int, char *);
-static int	 v_obsolete(char *, char *[]);
+static int	 v_obsolete(char *[]);
 
 /*
  * editor --
@@ -108,7 +108,7 @@ editor(GS *gp, int argc, char *argv[])
 	}
 
 	/* Convert old-style arguments into new-style ones. */
-	if (v_obsolete(gp->progname, argv))
+	if (v_obsolete(argv))
 		return (1);
 
 	/* Parse the arguments. */
@@ -136,8 +136,7 @@ editor(GS *gp, int argc, char *argv[])
 			 * We should support multiple -c options.
 			 */
 			if (gp->c_option != NULL) {
-				v_estr(gp->progname, 0,
-				    "only one -c command may be specified.");
+				warnx("only one -c command may be specified.");
 				return (1);
 			}
 			gp->c_option = optarg;
@@ -152,8 +151,7 @@ editor(GS *gp, int argc, char *argv[])
 				attach(gp);
 				break;
 			default:
-				v_estr(gp->progname, 0,
-				    "-D requires s or w argument.");
+				warnx("-D requires s or w argument.");
 				return (1);
 			}
 			break;
@@ -173,7 +171,7 @@ editor(GS *gp, int argc, char *argv[])
 			break;
 		case 'r':		/* Recover. */
 			if (flagchk == 't') {
-				v_estr(gp->progname, 0,
+				warnx(
 				    "only one of -r and -t may be specified.");
 				return (1);
 			}
@@ -188,7 +186,7 @@ editor(GS *gp, int argc, char *argv[])
 #ifdef DEBUG
 		case 'T':		/* Trace. */
 			if ((gp->tracefp = fopen(optarg, "w")) == NULL) {
-				v_estr(gp->progname, errno, optarg);
+				warn("%s", optarg);
 				goto err;
 			}
 			(void)fprintf(gp->tracefp,
@@ -197,13 +195,12 @@ editor(GS *gp, int argc, char *argv[])
 #endif
 		case 't':		/* Tag. */
 			if (flagchk == 'r') {
-				v_estr(gp->progname, 0,
+				warnx(
 				    "only one of -r and -t may be specified.");
 				return (1);
 			}
 			if (flagchk == 't') {
-				v_estr(gp->progname, 0,
-				    "only one tag file may be specified.");
+				warnx("only one tag file may be specified.");
 				return (1);
 			}
 			flagchk = 't';
@@ -236,7 +233,7 @@ editor(GS *gp, int argc, char *argv[])
 	 * If not reading from a terminal, it's like -s was specified.
 	 */
 	if (silent && !LF_ISSET(SC_EX)) {
-		v_estr(gp->progname, 0, "-s option is only applicable to ex.");
+		warnx("-s option is only applicable to ex.");
 		goto err;
 	}
 	if (LF_ISSET(SC_EX) && F_ISSET(gp, G_SCRIPTED))
@@ -363,7 +360,7 @@ editor(GS *gp, int argc, char *argv[])
 			l = strlen(sp->frp->name) + 1;
 			MALLOC_NOMSG(sp, *--argv, l);
 			if (*argv == NULL) {
-				v_estr(gp->progname, errno, NULL);
+				warn(NULL);
 				goto err;
 			}
 			(void)strlcpy(*argv, sp->frp->name, l);
@@ -534,7 +531,7 @@ v_end(GS *gp)
  *	Convert historic arguments into something getopt(3) will like.
  */
 static int
-v_obsolete(char *name, char *argv[])
+v_obsolete(char *argv[])
 {
 	size_t len;
 	char *p;
@@ -572,7 +569,7 @@ v_obsolete(char *name, char *argv[])
 			if (argv[0][1] == '\0') {
 				argv[0] = strdup("-s");
 				if (argv[0] == NULL) {
-nomem:					v_estr(name, errno, NULL);
+nomem:					warn(NULL);
 					return (1);
 				}
 			} else
@@ -592,7 +589,7 @@ attach(GS *gp)
 	char ch;
 
 	if ((fd = open(_PATH_TTY, O_RDONLY, 0)) < 0) {
-		v_estr(gp->progname, errno, _PATH_TTY);
+		warn("%s", _PATH_TTY);
 		return;
 	}
 
@@ -609,14 +606,3 @@ attach(GS *gp)
 	(void)close(fd);
 }
 #endif
-
-static void
-v_estr(char *name, int eno, char *msg)
-{
-	(void)fprintf(stderr, "%s", name);
-	if (msg != NULL)
-		(void)fprintf(stderr, ": %s", msg);
-	if (eno)
-		(void)fprintf(stderr, ": %s", strerror(errno));
-	(void)fprintf(stderr, "\n");
-}
