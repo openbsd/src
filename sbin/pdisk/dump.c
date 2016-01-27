@@ -1,4 +1,4 @@
-/*	$OpenBSD: dump.c,v 1.59 2016/01/27 18:26:05 gsoares Exp $	*/
+/*	$OpenBSD: dump.c,v 1.60 2016/01/27 20:34:27 krw Exp $	*/
 
 /*
  * dump.c - dumping partition maps
@@ -109,8 +109,7 @@ dump_partition_entry(struct partition_map *entry, int type_length,
     int name_length, int digits)
 {
 	struct partition_map_header *map;
-	struct dpme    *p;
-	char           *buf;
+	struct dpme *p;
 	double bytes;
 	int j, driver;
 	uint32_t size;
@@ -119,13 +118,7 @@ dump_partition_entry(struct partition_map *entry, int type_length,
 	p = entry->dpme;
 	driver = entry->contains_driver ? '*' : ' ';
 	printf("%2ld: %*.32s", entry->disk_address, type_length, p->dpme_type);
-
-	buf = malloc(name_length + 1);
-	if (buf == NULL)
-		return;
-	strlcpy(buf, p->dpme_name, name_length+1);
-	printf("%c%-*.32s ", driver, name_length, buf);
-	free(buf);
+	printf("%c%-*.32s ", driver, name_length, p->dpme_name);
 
 	if (p->dpme_lblocks + p->dpme_lblock_start != p->dpme_pblocks) {
 		printf("%*u+", digits, p->dpme_lblocks);
