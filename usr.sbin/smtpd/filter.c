@@ -1,4 +1,4 @@
-/*	$OpenBSD: filter.c,v 1.10 2015/12/14 10:28:50 sunil Exp $	*/
+/*	$OpenBSD: filter.c,v 1.11 2016/01/27 08:36:35 eric Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@poolp.org>
@@ -118,6 +118,7 @@ struct filter_query {
 };
 
 static void filter_imsg(struct mproc *, struct imsg *);
+static void filter_post_event(uint64_t, int, struct filter *, struct filter *);
 static struct filter_query *filter_query(struct filter_session *, int, int);
 static void filter_drain_query(struct filter_query *);
 static void filter_run_query(struct filter *, struct filter_query *);
@@ -296,7 +297,6 @@ void
 filter_event(uint64_t id, int event)
 {
 	struct filter_session	*s;
-	struct filter_query	*q;
 
 	if (event == EVENT_DISCONNECT)
 		/* On disconnect, the session is virtualy dead */
@@ -304,8 +304,13 @@ filter_event(uint64_t id, int event)
 	else
 		s = tree_xget(&sessions, id);
 
-	q = filter_query(s, QK_EVENT, event);
-	filter_drain_query(q);
+	filter_post_event(id, event, TAILQ_FIRST(s->filters), NULL);
+
+	if (event == EVENT_DISCONNECT) {
+		io_clear(&s->iev);
+		iobuf_clear(&s->ibuf);
+		free(s);
+	}
 }
 
 void
@@ -414,6 +419,20 @@ filter_build_fd_chain(uint64_t id, int sink)
 
 	fd = filter_tx(s, sink);
 	filter_set_sink(s, fd);
+}
+
+void
+filter_post_event(uint64_t id, int event, struct filter *f, struct filter *end)
+{
+	for(; f && f != end; f = TAILQ_NEXT(f, entry)) {
+		log_trace(TRACE_FILTERS, "filter: post-event event=%s filter=%s",
+		    event_to_str(event), f->proc->mproc.name);
+
+		m_create(&f->proc->mproc, IMSG_FILTER_EVENT, 0, 0, -1);
+		m_add_id(&f->proc->mproc, id);
+		m_add_int(&f->proc->mproc, event);
+		m_close(&f->proc->mproc);
+	}
 }
 
 static struct filter_query *
