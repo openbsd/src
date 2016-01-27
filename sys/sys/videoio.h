@@ -1,4 +1,4 @@
-/*	$OpenBSD: videoio.h,v 1.13 2016/01/01 15:34:09 feinerer Exp $	*/
+/*	$OpenBSD: videoio.h,v 1.14 2016/01/27 13:07:09 ajacoutot Exp $	*/
 /*
  *  Video for Linux Two header file
  *
@@ -59,6 +59,7 @@
 #define _SYS_VIDEOIO_H_
 #include <sys/time.h>
 #include <sys/types.h>
+#include <sys/ioccom.h>
 /* Ignore #include <linux/v4l2-common.h> as it is GPL2.
  * Inline #include <linux/v4l2-controls.h>
  * (v4l2-controls.h was split off from videodev2.h and has the same BSD license.)
