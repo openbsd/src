@@ -1,4 +1,4 @@
-/*	$OpenBSD: dpme.h,v 1.22 2016/01/27 14:19:59 krw Exp $	*/
+/*	$OpenBSD: dpme.h,v 1.23 2016/01/27 16:38:37 krw Exp $	*/
 
 /*
  * dpme.h - Disk Partition Map Entry (dpme)
@@ -74,8 +74,8 @@ struct dpme {
     uint32_t	dpme_map_entries;	/* # of partition entries */
     uint32_t	dpme_pblock_start;	/* physical block start of partition */
     uint32_t	dpme_pblocks;		/* physical block count of partition */
-    char	dpme_name[DPISTRLEN];	/* name of partition */
-    char	dpme_type[DPISTRLEN];	/* type of partition */
+    char	dpme_name[DPISTRLEN+1];	/* name of partition + NUL */
+    char	dpme_type[DPISTRLEN+1];	/* type of partition + NUL */
     uint32_t	dpme_lblock_start;	/* logical block start of partition */
     uint32_t	dpme_lblocks;		/* logical block count of partition */
     uint32_t	dpme_flags;
@@ -95,7 +95,7 @@ struct dpme {
     uint32_t	dpme_goto_addr;		/* memory jump address of boot code */
     uint8_t	dpme_reserved_3[4];
     uint32_t	dpme_checksum;		/* of the boot code. */
-    char	dpme_processor_id[16];	/* processor type */
+    char	dpme_processor_id[17];	/* processor type + NUL */
     uint8_t	dpme_reserved_4[376];
 };
 

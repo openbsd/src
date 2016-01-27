@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.26 2016/01/27 00:26:33 krw Exp $	*/
+/*	$OpenBSD: io.c,v 1.27 2016/01/27 16:38:37 krw Exp $	*/
 
 /*
  * io.c - simple io and input parsing routines
@@ -244,7 +244,7 @@ get_dpistr_argument(const char *prompt)
 char *
 get_string(int eos)
 {
-	char buf[DPISTRLEN];
+	char buf[DPISTRLEN+1];
 	char *s, *limit;
 	int c;
 

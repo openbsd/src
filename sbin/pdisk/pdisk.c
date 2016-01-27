@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdisk.c,v 1.74 2016/01/27 14:47:53 krw Exp $	*/
+/*	$OpenBSD: pdisk.c,v 1.75 2016/01/27 16:38:37 krw Exp $	*/
 
 /*
  * pdisk - an editor for Apple format partition tables
@@ -362,7 +362,7 @@ do_rename_partition(struct partition_map_header *map)
 	 * current contents are zapped before copying in new name!
 	 */
 	memset(entry->dpme->dpme_name, 0, sizeof(entry->dpme->dpme_name));
-	strlcpy(entry->dpme->dpme_name, name, DPISTRLEN);
+	strlcpy(entry->dpme->dpme_name, name, sizeof(entry->dpme->dpme_name));
 	map->changed = 1;
 
 	free(name);
@@ -398,7 +398,7 @@ do_change_type(struct partition_map_header *map)
          * current contents are zapped before copying in new type!
 	 */
 	memset(entry->dpme->dpme_type, 0, sizeof(entry->dpme->dpme_type));
-	strncpy(entry->dpme->dpme_type, type, DPISTRLEN);
+	strncpy(entry->dpme->dpme_type, type, sizeof(entry->dpme->dpme_type));
 	map->changed = 1;
 
 	free(type);
