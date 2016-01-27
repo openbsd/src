@@ -1,4 +1,4 @@
-/*	$OpenBSD: xenstore.c,v 1.21 2016/01/25 15:22:56 mikeb Exp $	*/
+/*	$OpenBSD: xenstore.c,v 1.22 2016/01/27 09:04:19 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Belopuhov
@@ -23,11 +23,13 @@
 #include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/mutex.h>
+#include <sys/ioctl.h>
 
 #include <machine/bus.h>
 
 #include <uvm/uvm_extern.h>
 
+#include <dev/pv/pvvar.h>
 #include <dev/pv/xenreg.h>
 #include <dev/pv/xenvar.h>
 
@@ -819,4 +821,70 @@ xs_setprop(struct xen_attach_args *xa, const char *property, char *value,
 		error = xs_cmd(&xst, XS_RM, path, NULL, NULL);
 	}
 	return (error);
+}
+
+int
+xs_kvop(void *arg, int op, char *key, char *value, size_t valuelen)
+{
+	struct xen_softc *sc = arg;
+	struct xs_transaction xst;
+	struct iovec iov, *iovp = &iov;
+	int error = 0, iov_cnt, cmd, i;
+
+	switch (op) {
+	case PVBUS_KVWRITE:
+		cmd = XS_WRITE;
+		iov.iov_base = value;
+		iov.iov_len = strlen(value);
+		iov_cnt = 1;
+		break;
+	case PVBUS_KVREAD:
+		cmd = XS_READ;
+		break;
+	case PVBUS_KVLS:
+		cmd = XS_LIST;
+		break;
+	default:
+		return (EOPNOTSUPP);
+	}
+
+	memset(&xst, 0, sizeof(xst));
+	xst.xst_id = 0;
+	xst.xst_sc = sc->sc_xs;
+
+	if ((error = xs_cmd(&xst, cmd, key, &iovp, &iov_cnt)) != 0)
+		return (error);
+
+	memset(value, 0, valuelen);
+
+	switch (cmd) {
+	case XS_READ:
+		if (iov_cnt == 1 && iovp[0].iov_len == 1) {
+			xs_resfree(&xst, iovp, iov_cnt);
+
+			/*
+			 * We cannot distinguish if the returned value is
+			 * a directory or a file in the xenstore.  The only
+			 * indication is that the read value of a directory
+			 * returns an empty string (single nul byte),
+			 * so try to get the directory list in this case.
+			 */
+			return (xs_kvop(arg, PVBUS_KVLS, key, value, valuelen));
+		}
+		/* FALLTHROUGH */
+	case XS_LIST:
+		for (i = 0; i < iov_cnt; i++) {
+			if (i && strlcat(value, "\n", valuelen) >= valuelen)
+				break;
+			if (strlcat(value, iovp[i].iov_base,
+			    valuelen) >= valuelen)
+				break;
+		}
+		xs_resfree(&xst, iovp, iov_cnt);
+		break;
+	default:
+		break;
+	}
+
+	return (0);
 }

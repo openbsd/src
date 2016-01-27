@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmt.c,v 1.7 2015/12/17 09:26:36 mpi Exp $ */
+/*	$OpenBSD: vmt.c,v 1.8 2016/01/27 09:04:19 reyk Exp $ */
 
 /*
  * Copyright (c) 2007 David Crawshaw <david@zentus.com>
@@ -35,6 +35,7 @@
 #include <sys/syslog.h>
 #include <sys/proc.h>
 #include <sys/socket.h>
+#include <sys/ioctl.h>
 
 #include <net/if.h>
 #include <net/if_var.h>
@@ -166,7 +167,7 @@ struct vmt_softc {
 	int			sc_rpc_error;
 	int			sc_tclo_ping;
 	int			sc_set_guest_os;
-#define VMT_RPC_BUFLEN			256
+#define VMT_RPC_BUFLEN		1024
 
 	struct timeout		sc_tick;
 	struct timeout		sc_tclo_tick;
@@ -198,6 +199,8 @@ int	 vm_rpc_send_rpci_tx_buf(struct vmt_softc *, const uint8_t *, uint32_t);
 int	 vm_rpc_send_rpci_tx(struct vmt_softc *, const char *, ...)
 	    __attribute__((__format__(__kprintf__,2,3)));
 int	 vm_rpci_response_successful(struct vmt_softc *);
+
+int	 vmt_kvop(void *, int, char *, char *, size_t);
 
 void	 vmt_probe_cmd(struct vm_backdoor *, uint16_t);
 void	 vmt_tclo_state_change_success(struct vmt_softc *, int, char);
@@ -334,6 +337,8 @@ void
 vmt_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct vmt_softc *sc = (struct vmt_softc *)self;
+	struct pv_attach_args	*pva = aux;
+	struct pvbus_hv		*hv = &pva->pva_hv[PVBUS_VMWARE];
 
 	printf("\n");
 	sc->sc_rpc_buf = malloc(VMT_RPC_BUFLEN, M_DEVBUF, M_NOWAIT);
@@ -371,10 +376,60 @@ vmt_attach(struct device *parent, struct device *self, void *aux)
 	timeout_add_sec(&sc->sc_tclo_tick, 1);
 	sc->sc_tclo_ping = 1;
 
+	/* pvbus(4) key/value interface */
+	hv->hv_kvop = vmt_kvop;
+	hv->hv_arg = sc;
+
 	return;
 
 free:
 	free(sc->sc_rpc_buf, M_DEVBUF, VMT_RPC_BUFLEN);
+}
+
+int
+vmt_kvop(void *arg, int op, char *key, char *value, size_t valuelen)
+{
+	struct vmt_softc *sc = arg;
+	char buf[VMT_RPC_BUFLEN], *ptr;
+
+	switch (op) {
+	case PVBUS_KVWRITE:
+		if ((size_t)snprintf(buf, sizeof(buf), "info-set %s %s",
+		    key, value) >= sizeof(buf)) {
+			DPRINTF("%s: write command too long", DEVNAME(sc));
+			return (EINVAL);
+		}
+		break;
+	case PVBUS_KVREAD:
+		if ((size_t)snprintf(buf, sizeof(buf), "info-get %s",
+		    key) >= sizeof(buf)) {
+			DPRINTF("%s: read command too long", DEVNAME(sc));
+			return (EINVAL);
+		}
+		break;
+	default:
+		return (EOPNOTSUPP);
+	}
+
+	if (vm_rpc_send_rpci_tx(sc, buf) != 0) {
+		DPRINTF("%s: error sending command: %s\n", DEVNAME(sc), buf);
+		sc->sc_rpc_error = 1;
+		return (EIO);
+	}
+
+	if (vm_rpci_response_successful(sc) == 0) {
+		DPRINTF("%s: host rejected command: %s\n", DEVNAME(sc), buf);
+		return (EINVAL);
+	}
+
+	/* skip response that was tested in vm_rpci_response_successful() */
+	ptr = sc->sc_rpc_buf + 2;
+
+	/* might truncat, copy anyway but return error */
+	if (strlcpy(value, ptr, valuelen) >= valuelen)
+		return (ENOMEM);
+
+	return (0);
 }
 
 void

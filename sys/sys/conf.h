@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.136 2016/01/06 09:09:16 kettenis Exp $	*/
+/*	$OpenBSD: conf.h,v 1.137 2016/01/27 09:04:19 reyk Exp $	*/
 /*	$NetBSD: conf.h,v 1.33 1996/05/03 20:03:32 christos Exp $	*/
 
 /*-
@@ -465,6 +465,14 @@ extern struct cdevsw cdevsw[];
 	(dev_type_stop((*))) enodev, 0, dev_init(c,n,poll), \
 	(dev_type_mmap((*))) enodev, 0, D_CLONE, dev_init(c,n,kqfilter) }
 
+#define cdev_pvbus_init(c,n) { \
+	dev_init(c,n,open), dev_init(c,n,close), \
+	(dev_type_read((*))) enodev, \
+	(dev_type_write((*))) enodev, \
+	 dev_init(c,n,ioctl), \
+	(dev_type_stop((*))) enodev, 0, selfalse, \
+	(dev_type_mmap((*))) enodev }
+
 #endif
 
 /*
@@ -597,6 +605,7 @@ cdev_decl(hotplug);
 cdev_decl(gpio);
 cdev_decl(amdmsr);
 cdev_decl(fuse);
+cdev_decl(pvbus);
 
 #endif
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pvvar.h,v 1.6 2015/12/12 12:33:49 reyk Exp $	*/
+/*	$OpenBSD: pvvar.h,v 1.7 2016/01/27 09:04:19 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -19,6 +19,18 @@
 #ifndef _DEV_PV_PVVAR_H_
 #define _DEV_PV_PVVAR_H_
 
+struct pvbus_req {
+	size_t			 pvr_keylen;
+	char			*pvr_key;
+	size_t			 pvr_valuelen;
+	char			*pvr_value;
+};
+
+#define PVBUSIOC_KVREAD		_IOWR('V', 1, struct pvbus_req)
+#define PVBUSIOC_KVWRITE	_IOWR('V', 2, struct pvbus_req)
+#define PVBUSIOC_TYPE		_IOWR('V', 3, struct pvbus_req)
+
+#ifdef _KERNEL
 enum {
 	PVBUS_KVM,
 	PVBUS_HYPERV,
@@ -30,11 +42,20 @@ enum {
 	PVBUS_MAX
 };
 
+enum {
+	PVBUS_KVREAD,
+	PVBUS_KVWRITE,
+	PVBUS_KVLS
+};
+
 struct pvbus_hv {
 	uint32_t		 hv_base;
 	uint32_t		 hv_features;
 	uint16_t		 hv_major;
 	uint16_t		 hv_minor;
+
+	void			*hv_arg;
+	int			(*hv_kvop)(void *, int, char *, char *, size_t);
 };
 
 struct pvbus_softc {
@@ -54,4 +75,5 @@ struct pv_attach_args {
 void	 pvbus_identify(void);
 int	 pvbus_probe(void);
 
+#endif /* _KERNEL */
 #endif /* _DEV_PV_PVBUS_H_ */
