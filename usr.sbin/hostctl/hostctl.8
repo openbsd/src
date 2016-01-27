@@ -1,4 +1,4 @@
-.\" $OpenBSD: hostctl.8,v 1.2 2016/01/27 14:26:40 jasper Exp $
+.\" $OpenBSD: hostctl.8,v 1.3 2016/01/27 16:01:36 jmc Exp $
 .\"
 .\" Copyright (c) 2016 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -48,10 +48,6 @@ will write the new key-value pair to the key-value store.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
-.It Fl q
-Don't ask for confirmation of any default options.
-.It Fl t
-Print the type of the underlying driver.
 .It Fl f Ar device
 Use
 .Ar device
@@ -67,6 +63,10 @@ file.
 Save the returned value in the
 .Ar output
 file.
+.It Fl q
+Don't ask for confirmation of any default options.
+.It Fl t
+Print the type of the underlying driver.
 .El
 .Sh FILES
 .Bl -tag -width "/dev/pvbusX" -compact
