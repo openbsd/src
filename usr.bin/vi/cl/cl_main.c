@@ -1,4 +1,4 @@
-/*	$OpenBSD: cl_main.c,v 1.28 2015/12/28 19:24:01 millert Exp $	*/
+/*	$OpenBSD: cl_main.c,v 1.29 2016/01/27 22:38:12 martijn Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -39,7 +39,7 @@ static CL_PRIVATE *cl_init(GS *);
 static GS	  *gs_init(char *);
 static int	   setsig(int, struct sigaction *, void (*)(int));
 static void	   sig_end(GS *);
-static void	   term_init(char *, char *);
+static void	   term_init(char *);
 
 /*
  * main --
@@ -73,7 +73,7 @@ main(int argc, char *argv[])
 	 */
 	if ((ttype = getenv("TERM")) == NULL)
 		ttype = "unknown";
-	term_init(gp->progname, ttype);
+	term_init(ttype);
 
 	/* Add the terminal type to the global structure. */
 	if ((OG_D_STR(gp, GO_TERM) =
@@ -211,7 +211,7 @@ tcfail:			err(1, "tcgetattr");
  *	Initialize terminal information.
  */
 static void
-term_init(char *name, char *ttype)
+term_init(char *ttype)
 {
 	int err;
 
@@ -219,13 +219,9 @@ term_init(char *name, char *ttype)
 	setupterm(ttype, STDOUT_FILENO, &err);
 	switch (err) {
 	case -1:
-		(void)fprintf(stderr,
-		    "%s: No terminal database found\n", name);
-		exit (1);
+		errx(1, "No terminal database found");
 	case 0:
-		(void)fprintf(stderr,
-		    "%s: %s: unknown terminal type\n", name, ttype);
-		exit (1);
+		errx(1, "%s: unknown terminal type", ttype);
 	}
 }
 
