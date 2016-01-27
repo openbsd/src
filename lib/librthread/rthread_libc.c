@@ -1,4 +1,4 @@
-/* $OpenBSD: rthread_libc.c,v 1.12 2015/04/07 01:27:07 guenther Exp $ */
+/* $OpenBSD: rthread_libc.c,v 1.13 2016/01/27 08:40:05 kettenis Exp $ */
 /* $snafu: libc_tag.c,v 1.4 2004/11/30 07:00:06 marc Exp $ */
 
 /* PUBLIC DOMAIN: No Rights Reserved. Marco S Hyman <marc@snafu.org> */
@@ -152,18 +152,35 @@ _thread_mutex_destroy(void **mutex)
 /*
  * the malloc lock
  */
-static struct _spinlock malloc_lock = _SPINLOCK_UNLOCKED;
+static struct pthread_mutex malloc_lock = {
+	_SPINLOCK_UNLOCKED,
+	TAILQ_HEAD_INITIALIZER(malloc_lock.lockers),
+	PTHREAD_MUTEX_DEFAULT,
+	NULL,
+	0,
+	-1
+};
+static pthread_mutex_t malloc_mutex = &malloc_lock;
 
 void
 _thread_malloc_lock(void)
 {
-	_spinlock(&malloc_lock);
+	pthread_mutex_lock(&malloc_mutex);
 }
 
 void
 _thread_malloc_unlock(void)
 {
-	_spinunlock(&malloc_lock);
+	pthread_mutex_unlock(&malloc_mutex);
+}
+
+void
+_thread_malloc_reinit(void)
+{
+	malloc_lock.lock = _SPINLOCK_UNLOCKED_ASSIGN;
+	TAILQ_INIT(&malloc_lock.lockers);
+	malloc_lock.owner = NULL;
+	malloc_lock.count = 0;
 }
 
 /*
