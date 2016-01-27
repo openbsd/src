@@ -1,4 +1,4 @@
-/*	$OpenBSD: partition_map.c,v 1.71 2016/01/27 14:47:53 krw Exp $	*/
+/*	$OpenBSD: partition_map.c,v 1.72 2016/01/27 23:59:12 krw Exp $	*/
 
 /*
  * partition_map.c - partition map routines
@@ -222,11 +222,11 @@ read_partition_map(struct partition_map_header *map)
 	 * 1) Overlapping partitions
 	 * 2) Unmapped space
 	 */
-	for (cur = map->base_order; cur != NULL; cur = cur->next_on_disk) {
+	for (cur = map->base_order; cur != NULL; cur = cur->next_by_base) {
 		base = cur->dpme->dpme_pblock_start;
 		next = base + cur->dpme->dpme_pblocks;
-		if (cur->next_on_disk != NULL)
-			nextbase = cur->next_on_disk->dpme->dpme_pblock_start;
+		if (cur->next_by_base != NULL)
+			nextbase = cur->next_by_base->dpme->dpme_pblock_start;
 		else
 			nextbase = map->media_size;
 		if (next != nextbase)
