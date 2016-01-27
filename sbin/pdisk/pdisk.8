@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pdisk.8,v 1.24 2016/01/27 14:19:59 krw Exp $
+.\"	$OpenBSD: pdisk.8,v 1.25 2016/01/27 15:56:47 krw Exp $
 .\"
 .\" Copyright 1996,1997,1998 by Apple Computer, Inc.
 .\"              All Rights Reserved
@@ -129,8 +129,8 @@ be the same as the first block of that existing free space partition.
 The second argument is the length of the partition in blocks.
 This can be a raw number or can be a partition number followed by the
 letter 'p' to use the size of that partition or can be a number followed
-by 'k', 'm', or 'g' to indicate the size in kilobytes, megabytes, or gigabytes
-respectively.
+by 'k', 'm', 'g', or 't' to indicate the size in kilobytes, megabytes,
+gigabytes or terabytes respectively.
 (These are powers of 1024, of course, not powers of 1000.)
 The last argument is the name of the partition.
 This can be a single word without quotes, or a string surrounded by
@@ -148,10 +148,8 @@ other arguments.
 The
 .Em n
 (name) command allows the name of a partition to be changed.
-The name must not contain any spaces.
 Note that the various "Apple_Driver" partitions depend
 on the name field for proper functioning.
-I am not aware of any other partition types with this limitation.
 .Pp
 The
 .Em r
@@ -163,22 +161,12 @@ The
 (change type) command allows the type of an existing partition to be changed.
 Examples of valid partition types are: Apple_Free, Apple_HFS, and
 .Ox .
-.Pp
-The
 .Em i
-(initialize) command prompts for the size of the disk.
-This was done to get around a bug in the kernel where it reports the wrong
-size for the disk.
+(initialize) command initializes the partition map.
 .Pp
 The
 .Em w
-(write) command does write the partition map out,
-but there is currently a bug in the interaction between the
-disk and the kernel where
-.Nm disklabel
-.Fl c
-.Ar disk
-must be issued to cause the kernel to reinterpret the new label.
+(write) command writes the partition map out.
 .Sh SEE ALSO
 .Xr disklabel 8 ,
 .Xr fdisk 8 ,
@@ -187,16 +175,9 @@ must be issued to cause the kernel to reinterpret the new label.
 The
 .Nm
 utility was originally developed for MkLinux.
+.Pp
+It was ported to
+.Ox
+2.9 by Dale Rahn.
 .Sh AUTHORS
 .An Eryk Vershen
-.Sh BUGS
-Some people believe there should really be just one disk partitioning utility.
-.Pp
-.Nm
-should be able to create HFS partitions that work.
-.Pp
-Filesystem volume names are out of place in a partition utility.
-This utility supports HFS volume names, but not volume names
-of any other filesystem types.
-.Pp
-Even more help should be available during user input.
