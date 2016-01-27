@@ -1,4 +1,4 @@
-/*	$OpenBSD: types.h,v 1.24 2015/11/23 19:28:34 reyk Exp $	*/
+/*	$OpenBSD: types.h,v 1.25 2016/01/27 20:20:30 gsoares Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -56,7 +56,7 @@
 #define IKED_NONCE_MIN		16	/* XXX 128 bits */
 #define IKED_NONCE_SIZE		32	/* XXX 256 bits */
 
-#define IKED_ID_SIZE		1024	/* XXX should be dynanic */
+#define IKED_ID_SIZE		1024	/* XXX should be dynamic */
 #define IKED_PSK_SIZE		1024	/* XXX should be dynamic */
 #define IKED_MSGBUF_MAX		8192
 #define IKED_CFG_MAX		16	/* maximum CP attributes */
