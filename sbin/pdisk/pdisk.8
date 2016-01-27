@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pdisk.8,v 1.27 2016/01/27 20:11:00 krw Exp $
+.\"	$OpenBSD: pdisk.8,v 1.28 2016/01/27 20:24:50 krw Exp $
 .\"
 .\" Copyright 1996,1997,1998 by Apple Computer, Inc.
 .\"              All Rights Reserved
@@ -99,75 +99,56 @@ change the type of a partition
 write the partition map to disk
 .El
 .Pp
-Commands which take arguments prompt for each argument in turn.
-You can also type any number of the arguments separated by spaces
-and those prompts will be skipped.
-The only exception to typeahead are the confirmation prompts on the
-.Em i
-and
-.Em w
-commands.
-The idea being that if we expect you to confirm the decision we
-shouldn't undermine that by allowing you to be precipitate about it.
+Commands which take arguments prompt for each argument not specified
+in the original command.
+You can type any number of the arguments separated by spaces.
 .Pp
 Partitions are always specified by their number,
 which is the index of the partition entry in the partition map.
-Most of the commands will change the index numbers of all partitions
-after the affected partition.
-You are advised to print the partition map as frequently as necessary.
+.Pp
+The index numbers of partitions will change if partitions are created,
+deleted or reordered.
 .Pp
 Creating more than fifteen partitions is not advised, for
 compatibility reasons.
 .Pp
 The
 .Em c
-(create new partition) command is the only one with complicated arguments.
+(create an OpenBSD partition) and
+.Em C
+(create a partition of a specified type)
+are the only one with complicated arguments.
+.Pp
 The first argument is the base address (in blocks) of the partition.
 Besides a raw number, you can also specify a partition number followed
 by the letter 'p' to indicate that the first block of the new partition should
 be the same as the first block of that existing free space partition.
+.Pp
 The second argument is the length of the partition in blocks.
 This can be a raw number or can be a partition number followed by the
 letter 'p' to use the size of that partition or can be a number followed
 by 'k', 'm', 'g', or 't' to indicate the size in kilobytes, megabytes,
 gigabytes or terabytes respectively.
 (These are powers of 1024, of course, not powers of 1000.)
-The last argument is the name of the partition.
+.Pp
+The third argument is the name of the partition.
 This can be a single word without quotes, or a string surrounded by
 single or double quotes.
-The type of the created partition is the correct type for
-.Ox .
 .Pp
-The
+For the
 .Em C
-command is identical to the
+command only, the fourth argument is the partition type.
+This can be a single word without quotes, or a string surrounded by
+single or double quotes.
+The
 .Em c
-command, with the addition of a partition type argument after the
-other arguments.
+command automatically uses the type OpenBSD.
 .Pp
 The
 .Em n
 (name) command allows the name of a partition to be changed.
 Note that the various "Apple_Driver" partitions depend
 on the name field for proper functioning.
-.Pp
-The
-.Em r
-(reorder) command allows the index number of partitions to be changed.
-The index numbers are constrained to be a contiguous sequence.
-.Pp
-The
-.Em t
-(change type) command allows the type of an existing partition to be changed.
-Examples of valid partition types are: Apple_Free, Apple_HFS, and
-.Ox .
-The
-.Em i
-(initialize) command initializes the partition map.
-.Pp
-The
-.Em w
-(write) command writes the partition map out.
 .Sh SEE ALSO
 .Xr disklabel 8 ,
 .Xr fdisk 8 ,
@@ -175,7 +156,7 @@ The
 .Sh HISTORY
 The
 .Nm
-utility was originally developed for MkLinux.
+was originally developed for MkLinux.
 .Pp
 It was ported to
 .Ox
