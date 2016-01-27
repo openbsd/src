@@ -1,4 +1,4 @@
-/*	$OpenBSD: arithmetic.c,v 1.25 2016/01/25 21:17:45 mestre Exp $	*/
+/*	$OpenBSD: arithmetic.c,v 1.26 2016/01/27 13:42:08 gsoares Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -62,6 +62,7 @@
 
 #include <err.h>
 #include <ctype.h>
+#include <limits.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -95,9 +96,8 @@ time_t qtime;
 int
 main(int argc, char *argv[])
 {
-	extern char *optarg;
-	extern int optind;
 	int ch, cnt;
+	const char *errstr;
 
 	if (pledge("stdio", NULL) == -1)
 		err(1, "pledge");
@@ -114,10 +114,10 @@ main(int argc, char *argv[])
 			break;
 		}
 		case 'r':
-			if ((rangemax = atoi(optarg)) <= 0)
-				errx(1, "invalid range.");
+			rangemax = strtonum(optarg, 1, INT_MAX, &errstr);
+			if (errstr)
+				errx(1, "invalid range, %s: %s", errstr, optarg);
 			break;
-		case '?':
 		case 'h':
 		default:
 			usage();
@@ -141,7 +141,7 @@ void
 intr(int dummy)
 {
 	showstats();
-	exit(0);
+	_exit(0);
 }
 
 /* Print score.  Original `arithmetic' had a delay after printing it. */
@@ -355,6 +355,7 @@ opnum(int op)
 void
 usage(void)
 {
-	(void)fprintf(stderr, "usage: arithmetic [-o +-x/] [-r range]\n");
+	extern char *__progname;
+	(void)fprintf(stderr, "usage: %s [-o +-x/] [-r range]\n",  __progname);
 	exit(1);
 }
