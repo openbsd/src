@@ -1,4 +1,4 @@
-/*	$OpenBSD: xen.c,v 1.41 2016/01/27 15:27:53 mikeb Exp $	*/
+/*	$OpenBSD: xen.c,v 1.42 2016/01/27 15:29:00 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Belopuhov
@@ -69,7 +69,6 @@ void	xen_resume(struct device *);
 int	xen_activate(struct device *, int);
 int	xen_probe_devices(struct xen_softc *);
 
-void	xen_bus_dma_init(struct xen_softc *);
 int	xen_bus_dmamap_create(bus_dma_tag_t, bus_size_t, int, bus_size_t,
 	    bus_size_t, int, bus_dmamap_t *);
 void	xen_bus_dmamap_destroy(bus_dma_tag_t, bus_dmamap_t);
@@ -806,7 +805,7 @@ xen_init_grant_tables(struct xen_softc *sc)
 
 	printf(", %u grant table frames", sc->sc_gntcnt);
 
-	xen_bus_dma_init(sc);
+	xen_bus_dma_tag._cookie = sc;
 
 	return (0);
 }
@@ -967,12 +966,6 @@ xen_grant_table_remove(struct xen_softc *sc, grant_ref_t ref)
 		ge->ge_table[ref].frame = 0xffffffff;
 		break;
 	}
-}
-
-void
-xen_bus_dma_init(struct xen_softc *sc)
-{
-	xen_bus_dma_tag._cookie = sc;
 }
 
 int
