@@ -1,4 +1,4 @@
-/*	$OpenBSD: xen.c,v 1.40 2016/01/27 09:04:19 reyk Exp $	*/
+/*	$OpenBSD: xen.c,v 1.41 2016/01/27 15:27:53 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Belopuhov
@@ -953,12 +953,12 @@ xen_grant_table_remove(struct xen_softc *sc, grant_ref_t ref)
 		/* Invalidate the grant reference */
 		virtio_membar_sync();
 		ptr = (uint32_t *)&ge->ge_table[ref];
-		flags = (ge->ge_table[ref].flags & ~(GTF_reading | GTF_writing));
+		flags = (ge->ge_table[ref].flags & ~(GTF_reading|GTF_writing));
 		loop = 0;
 		while (atomic_cas_uint(ptr, flags, GTF_invalid) != flags) {
 			if (loop++ > 10000000) {
-				printf("%s: grant table reference %u is held by "
-				    "domain %d\n", sc->sc_dev.dv_xname, ref +
+				printf("%s: grant table reference %u is held "
+				    "by domain %d\n", sc->sc_dev.dv_xname, ref +
 				    ge->ge_start, ge->ge_table[ref].domid);
 				return;
 			}
