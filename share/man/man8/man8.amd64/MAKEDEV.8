@@ -1,4 +1,4 @@
-.\" $OpenBSD: MAKEDEV.8,v 1.75 2015/12/21 22:23:24 sf Exp $
+.\" $OpenBSD: MAKEDEV.8,v 1.76 2016/01/27 09:12:16 reyk Exp $
 .\"
 .\" THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 .\" generated from:
@@ -23,7 +23,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 21 2015 $
+.Dd $Mdocdate: January 27 2016 $
 .Dt MAKEDEV 8 amd64
 .Os
 .Sh NAME
@@ -277,6 +277,9 @@ Virtual Machine Monitor, see
 .It Ar vscsi*
 Virtual SCSI controller, see
 .Xr vscsi 4 .
+.It Ar pvbus*
+paravirtual device tree root, see
+.Xr pvbus 4 .
 .El
 .Sh FILES
 .Bl -tag -width /dev -compact
