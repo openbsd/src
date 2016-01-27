@@ -1,4 +1,4 @@
-/*	$OpenBSD: xen.c,v 1.43 2016/01/27 15:34:50 mikeb Exp $	*/
+/*	$OpenBSD: xen.c,v 1.44 2016/01/27 18:04:42 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Belopuhov
@@ -866,7 +866,7 @@ xen_grant_table_grow(struct xen_softc *sc)
 	/* First page has 8 reserved entries */
 	ge->ge_reserved = ge->ge_start == 0 ? GNTTAB_NR_RESERVED_ENTRIES : 0;
 	ge->ge_free = GNTTAB_NEPG - ge->ge_reserved;
-	ge->ge_next = ge->ge_reserved ? ge->ge_reserved + 1 : 0;
+	ge->ge_next = ge->ge_reserved;
 	mtx_init(&ge->ge_mtx, IPL_NET);
 
 	sc->sc_gntcnt++;
@@ -929,14 +929,14 @@ xen_grant_table_alloc(struct xen_softc *sc, grant_ref_t *ref)
 		/* XXX Mark as taken */
 		ge->ge_table[i].frame = 0xffffffff;
 		if ((ge->ge_next = i + 1) == GNTTAB_NEPG)
-			ge->ge_next = ge->ge_reserved + 1;
+			ge->ge_next = ge->ge_reserved;
 		ge->ge_free--;
 		mtx_leave(&ge->ge_mtx);
 		return (0);
 	}
 	mtx_leave(&ge->ge_mtx);
 
-	panic("page full, sc %p gnts %p (%d) ge %p", sc, sc->sc_gnt,
+	panic("page full, sc %p gnt %p (%d) ge %p", sc, sc->sc_gnt,
 	    sc->sc_gntcnt, ge);
 	return (-1);
 }
@@ -956,7 +956,7 @@ xen_grant_table_free(struct xen_softc *sc, grant_ref_t ref)
 #ifdef XEN_DEBUG
 	if (ref < ge->ge_start || ref > ge->ge_start + GNTTAB_NEPG) {
 		mtx_leave(&ge->ge_mtx);
-		panic("out of bounds ref %u ge %p start %u sc %p gtt %p",
+		panic("out of bounds ref %u ge %p start %u sc %p gnt %p",
 		    ref, ge, ge->ge_start, sc, sc->sc_gnt);
 	}
 #endif
@@ -964,11 +964,11 @@ xen_grant_table_free(struct xen_softc *sc, grant_ref_t ref)
 	if (ge->ge_table[ref].flags != GTF_invalid) {
 		mtx_leave(&ge->ge_mtx);
 #ifdef XEN_DEBUG
-		panic("ref %u is still in use, sc %p gnt %p", ref,
-		    sc, sc->sc_gnt);
+		panic("ref %u is still in use, sc %p gnt %p", ref +
+		    ge->ge_start, sc, sc->sc_gnt);
 #else
 		printf("%s: reference %u is still in use\n",
-		    sc->sc_dev.dv_xname, ref);
+		    sc->sc_dev.dv_xname, ref + ge->ge_start);
 #endif
 	}
 	ge->ge_table[ref].frame = 0;
@@ -991,7 +991,7 @@ xen_grant_table_enter(struct xen_softc *sc, grant_ref_t ref, paddr_t pa,
 	ge = &sc->sc_gnt[ref / GNTTAB_NEPG];
 #ifdef XEN_DEBUG
 	if (ref < ge->ge_start || ref > ge->ge_start + GNTTAB_NEPG) {
-		panic("out of bounds ref %u ge %p start %u sc %p gtt %p",
+		panic("out of bounds ref %u ge %p start %u sc %p gnt %p",
 		    ref, ge, ge->ge_start, sc, sc->sc_gnt);
 	}
 #endif
@@ -1012,13 +1012,13 @@ xen_grant_table_remove(struct xen_softc *sc, grant_ref_t ref)
 
 #ifdef XEN_DEBUG
 	if (ref > sc->sc_gntcnt * GNTTAB_NEPG)
-		panic("unmanaged ref %u sc %p gnts %p (%d)", ref, sc,
+		panic("unmanaged ref %u sc %p gnt %p (%d)", ref, sc,
 		    sc->sc_gnt, sc->sc_gntcnt);
 #endif
 	ge = &sc->sc_gnt[ref / GNTTAB_NEPG];
 #ifdef XEN_DEBUG
 	if (ref < ge->ge_start || ref > ge->ge_start + GNTTAB_NEPG) {
-		panic("out of bounds ref %u ge %p start %u sc %p gtt %p",
+		panic("out of bounds ref %u ge %p start %u sc %p gnt %p",
 		    ref, ge, ge->ge_start, sc, sc->sc_gnt);
 	}
 #endif
