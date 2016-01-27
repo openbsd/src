@@ -1,4 +1,4 @@
-/*	$OpenBSD: constraint.c,v 1.24 2015/12/19 17:55:29 reyk Exp $	*/
+/*	$OpenBSD: constraint.c,v 1.25 2016/01/27 21:48:34 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -163,7 +163,10 @@ constraint_query(struct constraint *cstr)
 		}
 
 		/* Timeout, just kill the process to reset it. */
-		kill(cstr->pid, SIGTERM);
+		imsg_compose(ibuf_main, IMSG_CONSTRAINT_KILL,
+		    cstr->id, 0, -1, NULL, 0);
+
+		cstr->state = STATE_TIMEOUT;
 		return (-1);
 	case STATE_INVALID:
 		if (cstr->last + CONSTRAINT_SCAN_INTERVAL > now) {
@@ -380,6 +383,7 @@ priv_constraint_check_child(pid_t pid, int status)
 {
 	struct constraint	*cstr;
 	int			 fail, sig;
+	char			*signame;
 
 	fail = sig = 0;
 	if (WIFSIGNALED(status)) {
@@ -391,13 +395,33 @@ priv_constraint_check_child(pid_t pid, int status)
 		fatalx("unexpected cause of SIGCHLD");
 
 	if ((cstr = constraint_bypid(pid)) != NULL) {
-		if (sig)
-			fatalx("constraint %s, signal %d",
-			    log_sockaddr((struct sockaddr *)
-			    &cstr->addr->ss), sig);
+		if (sig) {
+			if (sig != SIGTERM) {
+				signame = strsignal(sig) ?
+				    strsignal(sig) : "unknown";
+				log_warnx("constraint %s; "
+				    "terminated with signal %d (%s)",
+				    log_sockaddr((struct sockaddr *)
+				    &cstr->addr->ss), sig, signame);
+			}
+			fail = 1;
+		}
 
 		priv_constraint_close(cstr->fd, fail);
 	}
+}
+
+void
+priv_constraint_kill(u_int32_t id)
+{
+	struct constraint	*cstr;
+
+	if ((cstr = constraint_byid(id)) == NULL) {
+		log_warnx("IMSG_CONSTRAINT_KILL for invalid id %d", id);
+		return;
+	}
+
+	kill(cstr->pid, SIGTERM);
 }
 
 struct constraint *

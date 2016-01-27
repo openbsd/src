@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.h,v 1.128 2016/01/27 21:36:25 bcook Exp $ */
+/*	$OpenBSD: ntpd.h,v 1.129 2016/01/27 21:48:34 reyk Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -89,6 +89,7 @@ enum client_state {
 	STATE_DNS_DONE,
 	STATE_QUERY_SENT,
 	STATE_REPLY_RECEIVED,
+	STATE_TIMEOUT,
 	STATE_INVALID
 };
 
@@ -286,6 +287,7 @@ enum imsg_type {
 	IMSG_CONSTRAINT_QUERY,
 	IMSG_CONSTRAINT_RESULT,
 	IMSG_CONSTRAINT_CLOSE,
+	IMSG_CONSTRAINT_KILL,
 	IMSG_CTL_SHOW_STATUS,
 	IMSG_CTL_SHOW_PEERS,
 	IMSG_CTL_SHOW_PEERS_END,
@@ -357,6 +359,7 @@ void	 constraint_msg_result(u_int32_t, u_int8_t *, size_t);
 void	 constraint_msg_close(u_int32_t, u_int8_t *, size_t);
 void	 priv_constraint_msg(u_int32_t, u_int8_t *, size_t,
 	    const char *, uid_t, gid_t);
+void	 priv_constraint_kill(u_int32_t);
 int	 priv_constraint_dispatch(struct pollfd *);
 void	 priv_constraint_check_child(pid_t, int);
 char	*get_string(u_int8_t *, size_t);
