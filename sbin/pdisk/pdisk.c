@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdisk.c,v 1.72 2016/01/26 23:41:48 krw Exp $	*/
+/*	$OpenBSD: pdisk.c,v 1.73 2016/01/27 14:19:59 krw Exp $	*/
 
 /*
  * pdisk - an editor for Apple format partition tables
@@ -47,7 +47,6 @@
 #include "io.h"
 #include "partition_map.h"
 #include "dump.h"
-#include "validate.h"
 
 int	lflag;	/* list the device */
 int	rflag;	/* open device read Only */
@@ -170,7 +169,6 @@ edit(struct partition_map_header **mapp)
 			    "  r    reorder an entry in the partition map\n"
 			    "  s    change the size of the partition map\n"
 			    "  t    change the specified partition's type\n"
-			    "  v    validate the partition map\n"
 			    "  w    write the partition map\n");
 			break;
 		case 'P':
@@ -226,9 +224,6 @@ edit(struct partition_map_header **mapp)
 			break;
 		case 'f':
 			do_display_entry(map);
-			break;
-		case 'v':
-			validate_map(map);
 			break;
 		default:
 			bad_input("No such command (%c)", command);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dpme.h,v 1.21 2016/01/25 23:43:20 krw Exp $	*/
+/*	$OpenBSD: dpme.h,v 1.22 2016/01/27 14:19:59 krw Exp $	*/
 
 /*
  * dpme.h - Disk Partition Map Entry (dpme)
@@ -54,9 +54,9 @@ struct ddmap {
 };
 
 struct block0 {
-    uint16_t		sbSig;		/* unique value for SCSI block 0 */
-    uint16_t		sbBlkSize;	/* block size of device */
-    uint32_t		sbBlkCount;	/* number of blocks on device */
+    uint16_t		sbSig;		/* "ER" */
+    uint16_t		sbBlkSize;	/* physical block size of device */
+    uint32_t		sbBlkCount;	/* # of physical blocks on device */
     uint16_t		sbDevType;	/* device type */
     uint16_t		sbDevId;	/* device id */
     uint32_t		sbData;		/* not used */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: partition_map.c,v 1.69 2016/01/27 00:03:52 krw Exp $	*/
+/*	$OpenBSD: partition_map.c,v 1.70 2016/01/27 14:19:59 krw Exp $	*/
 
 /*
  * partition_map.c - partition map routines
@@ -107,9 +107,24 @@ open_partition_map(int fd, char *name, uint64_t mediasz, uint32_t sectorsz)
 		free_partition_map(map);
 		return NULL;
 	}
-
-	if (read_partition_map(map) == 0)
-		return map;
+	if (map->block0->sbSig == BLOCK0_SIGNATURE &&
+	    map->block0->sbBlkSize == sectorsz &&
+	    map->block0->sbBlkCount == mediasz) {
+		if (read_partition_map(map) == 0)
+			return map;
+	} else {
+		if (map->block0->sbSig != BLOCK0_SIGNATURE)
+			warnx("Block 0 signature: Expected 0x%04x, "
+			    "got 0x%04x", BLOCK0_SIGNATURE,
+			    map->block0->sbSig);
+		else if (map->block0->sbBlkSize != sectorsz)
+			warnx("Block 0 sbBlkSize (%u) != sector size (%u)",
+			    map->block0->sbBlkSize, sectorsz);
+		else if (map->block0->sbBlkCount != mediasz)
+			warnx("Block 0 sbBlkCount (%u) != media size (%llu)",
+			    map->block0->sbBlkCount,
+			    (unsigned long long)mediasz);
+	}
 
 	if (!lflag) {
 		my_ungetch('\n');
@@ -148,9 +163,10 @@ free_partition_map(struct partition_map_header *map)
 int
 read_partition_map(struct partition_map_header *map)
 {
+	struct partition_map *cur;
 	struct dpme *dpme;
 	int ix;
-	uint32_t limit;
+	uint32_t limit, base, next, nextbase;
 
 	limit = 1; /* There has to be at least one, which has actual value. */
 	for (ix = 1; ix <= limit; ix++) {
@@ -180,11 +196,47 @@ read_partition_map(struct partition_map_header *map)
 			free(dpme);
 			return 1;
 		}
+		if (dpme->dpme_lblock_start >= dpme->dpme_pblocks) {
+			warnx("\tlogical start (%u) >= block count"
+			    "count (%u).", dpme->dpme_lblock_start,
+			    dpme->dpme_pblocks);
+			free(dpme);
+			return 1;
+		}
+		if (dpme->dpme_lblocks > dpme->dpme_pblocks -
+			dpme->dpme_lblock_start) {
+			warnx("\tlogical blocks (%u) > available blocks (%u).",
+			    dpme->dpme_lblocks,
+			    dpme->dpme_pblocks - dpme->dpme_lblock_start);
+			free(dpme);
+			return 1;
+		}
+
 		if (add_data_to_map(dpme, ix, map) == 0) {
 			free(dpme);
 			return 1;
 		}
 	}
+
+	/* Traverse base_order looking for
+	 *
+	 * 1) Overlapping partitions
+	 * 2) Unmapped space
+	 */
+	for (cur = map->base_order; cur != NULL; cur = cur->next_on_disk) {
+		base = cur->dpme->dpme_pblock_start;
+		next = base + cur->dpme->dpme_pblocks;
+		if (cur->next_on_disk != NULL)
+			nextbase = cur->next_on_disk->dpme->dpme_pblock_start;
+		else
+			nextbase = map->media_size;
+		if (next != nextbase)
+			warnx("Unmapped pblocks: %u -> %u", next, nextbase);
+		if (next > nextbase)
+			warnx("Partition %ld overlaps next partition",
+			    cur->disk_address);
+	}
+
 	return 0;
 }
 
