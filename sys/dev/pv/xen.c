@@ -1,4 +1,4 @@
-/*	$OpenBSD: xen.c,v 1.42 2016/01/27 15:29:00 mikeb Exp $	*/
+/*	$OpenBSD: xen.c,v 1.43 2016/01/27 15:34:50 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Belopuhov
@@ -58,7 +58,7 @@ struct xen_gntent *
 	xen_grant_table_grow(struct xen_softc *);
 int	xen_grant_table_alloc(struct xen_softc *, grant_ref_t *);
 void	xen_grant_table_free(struct xen_softc *, grant_ref_t);
-int	xen_grant_table_enter(struct xen_softc *, grant_ref_t, paddr_t, int);
+void	xen_grant_table_enter(struct xen_softc *, grant_ref_t, paddr_t, int);
 void	xen_grant_table_remove(struct xen_softc *, grant_ref_t);
 void	xen_disable_emulated_devices(struct xen_softc *);
 
@@ -775,7 +775,6 @@ xen_init_grant_tables(struct xen_softc *sc)
 	struct gnttab_query_size gqs;
 	struct gnttab_get_version ggv;
 	struct gnttab_set_version gsv;
-	int i;
 
 	gqs.dom = DOMID_SELF;
 	if (xen_hypercall(sc, XC_GNTTAB, 3, GNTTABOP_query_size, &gqs, 1)) {
@@ -797,13 +796,24 @@ xen_init_grant_tables(struct xen_softc *sc)
 		return (-1);
 	}
 
-	SLIST_INIT(&sc->sc_gnts);
+	sc->sc_gntmax = gqs.max_nr_frames;
 
-	for (i = 0; i < gqs.max_nr_frames; i++)
-		if (xen_grant_table_grow(sc) == NULL)
-			break;
+	sc->sc_gnt = mallocarray(sc->sc_gntmax + 1, sizeof(struct xen_gntent),
+	    M_DEVBUF, M_ZERO | M_NOWAIT);
+	if (sc->sc_gnt == NULL) {
+		printf(": failed to allocate grant table lookup table\n");
+		return (-1);
+	}
 
-	printf(", %u grant table frames", sc->sc_gntcnt);
+	mtx_init(&sc->sc_gntmtx, IPL_NET);
+
+	if (xen_grant_table_grow(sc) == NULL) {
+		free(sc->sc_gnt, M_DEVBUF, sc->sc_gntmax *
+		    sizeof(struct xen_gntent));
+		return (-1);
+	}
+
+	printf(", %u grant table frames", sc->sc_gntmax);
 
 	xen_bus_dma_tag._cookie = sc;
 
@@ -817,15 +827,19 @@ xen_grant_table_grow(struct xen_softc *sc)
 	struct xen_gntent *ge;
 	paddr_t pa;
 
-	ge = malloc(sizeof(*ge), M_DEVBUF, M_ZERO | M_NOWAIT);
-	if (ge == NULL) {
-		printf("%s: failed to allocate a grant table entry\n",
+	if (sc->sc_gntcnt == sc->sc_gntmax) {
+		printf("%s: grant table frame allotment limit reached\n",
 		    sc->sc_dev.dv_xname);
 		return (NULL);
 	}
+
+	mtx_enter(&sc->sc_gntmtx);
+
+	ge = &sc->sc_gnt[sc->sc_gntcnt];
 	ge->ge_table = km_alloc(PAGE_SIZE, &kv_any, &kp_zero, &kd_nowait);
 	if (ge->ge_table == NULL) {
 		free(ge, M_DEVBUF, sizeof(*ge));
+		mtx_leave(&sc->sc_gntmtx);
 		return (NULL);
 	}
 	if (!pmap_extract(pmap_kernel(), (vaddr_t)ge->ge_table, &pa)) {
@@ -833,6 +847,7 @@ xen_grant_table_grow(struct xen_softc *sc)
 		    sc->sc_dev.dv_xname);
 		km_free(ge->ge_table, PAGE_SIZE, &kv_any, &kp_zero);
 		free(ge, M_DEVBUF, sizeof(*ge));
+		mtx_leave(&sc->sc_gntmtx);
 		return (NULL);
 	}
 	xatp.domid = DOMID_SELF;
@@ -844,6 +859,7 @@ xen_grant_table_grow(struct xen_softc *sc)
 		    sc->sc_dev.dv_xname);
 		km_free(ge->ge_table, PAGE_SIZE, &kv_any, &kp_zero);
 		free(ge, M_DEVBUF, sizeof(*ge));
+		mtx_leave(&sc->sc_gntmtx);
 		return (NULL);
 	}
 	ge->ge_start = sc->sc_gntcnt * GNTTAB_NEPG;
@@ -852,9 +868,9 @@ xen_grant_table_grow(struct xen_softc *sc)
 	ge->ge_free = GNTTAB_NEPG - ge->ge_reserved;
 	ge->ge_next = ge->ge_reserved ? ge->ge_reserved + 1 : 0;
 	mtx_init(&ge->ge_mtx, IPL_NET);
-	SLIST_INSERT_HEAD(&sc->sc_gnts, ge, ge_entry);
 
 	sc->sc_gntcnt++;
+	mtx_leave(&sc->sc_gntmtx);
 
 	return (ge);
 }
@@ -865,34 +881,63 @@ xen_grant_table_alloc(struct xen_softc *sc, grant_ref_t *ref)
 	struct xen_gntent *ge;
 	int i;
 
-	SLIST_FOREACH(ge, &sc->sc_gnts, ge_entry) {
-		if (!ge->ge_free)
-			continue;
+	/* Start with a previously allocated table page */
+	ge = &sc->sc_gnt[sc->sc_gntcnt - 1];
+	if (ge->ge_free > 0) {
 		mtx_enter(&ge->ge_mtx);
-		for (i = ge->ge_next;
-		     /* Math works here because GNTTAB_NEPG is a power of 2 */
-		     i != ((ge->ge_next + GNTTAB_NEPG - 1) & (GNTTAB_NEPG - 1));
-		     i++) {
-			if (i == GNTTAB_NEPG)
-				i = 0;
-			if (ge->ge_reserved && i < ge->ge_reserved)
-				continue;
-			if (ge->ge_table[i].flags != GTF_invalid &&
-			    ge->ge_table[i].frame != 0)
-				continue;
-			*ref = ge->ge_start + i;
-			/* XXX Mark as taken */
-			ge->ge_table[i].frame = 0xffffffff;
-			if ((ge->ge_next = i + 1) == GNTTAB_NEPG)
-				ge->ge_next = ge->ge_reserved + 1;
-			ge->ge_free--;
-			mtx_leave(&ge->ge_mtx);
-			return (0);
-		}
+		if (ge->ge_free > 0)
+			goto search;
 		mtx_leave(&ge->ge_mtx);
 	}
 
-	/* We're out of entries */
+	/* Try other existing table pages */
+	for (i = 0; i < sc->sc_gntcnt; i++) {
+		ge = &sc->sc_gnt[i];
+		if (ge->ge_free == 0)
+			continue;
+		mtx_enter(&ge->ge_mtx);
+		if (ge->ge_free > 0)
+			goto search;
+		mtx_leave(&ge->ge_mtx);
+	}
+
+ alloc:
+	/* Allocate a new table page */
+	if ((ge = xen_grant_table_grow(sc)) == NULL)
+		return (-1);
+
+	mtx_enter(&ge->ge_mtx);
+	if (ge->ge_free == 0) {
+		/* We were not fast enough... */
+		mtx_leave(&ge->ge_mtx);
+		goto alloc;
+	}
+
+ search:
+	for (i = ge->ge_next;
+	     /* Math works here because GNTTAB_NEPG is a power of 2 */
+	     i != ((ge->ge_next + GNTTAB_NEPG - 1) & (GNTTAB_NEPG - 1));
+	     i++) {
+		if (i == GNTTAB_NEPG)
+			i = 0;
+		if (ge->ge_reserved && i < ge->ge_reserved)
+			continue;
+		if (ge->ge_table[i].flags != GTF_invalid &&
+		    ge->ge_table[i].frame != 0)
+			continue;
+		*ref = ge->ge_start + i;
+		/* XXX Mark as taken */
+		ge->ge_table[i].frame = 0xffffffff;
+		if ((ge->ge_next = i + 1) == GNTTAB_NEPG)
+			ge->ge_next = ge->ge_reserved + 1;
+		ge->ge_free--;
+		mtx_leave(&ge->ge_mtx);
+		return (0);
+	}
+	mtx_leave(&ge->ge_mtx);
+
+	panic("page full, sc %p gnts %p (%d) ge %p", sc, sc->sc_gnt,
+	    sc->sc_gntcnt, ge);
 	return (-1);
 }
 
@@ -901,40 +946,61 @@ xen_grant_table_free(struct xen_softc *sc, grant_ref_t ref)
 {
 	struct xen_gntent *ge;
 
-	SLIST_FOREACH(ge, &sc->sc_gnts, ge_entry) {
-		if (ref < ge->ge_start || ref > ge->ge_start + GNTTAB_NEPG)
-			continue;
-		ref -= ge->ge_start;
-		mtx_enter(&ge->ge_mtx);
-		if (ge->ge_table[ref].flags != GTF_invalid) {
-			mtx_leave(&ge->ge_mtx);
-			return;
-		}
-		ge->ge_table[ref].frame = 0;
-		ge->ge_next = ref;
-		ge->ge_free++;
+#ifdef XEN_DEBUG
+	if (ref > sc->sc_gntcnt * GNTTAB_NEPG)
+		panic("unmanaged ref %u sc %p gnt %p (%d)", ref, sc,
+		    sc->sc_gnt, sc->sc_gntcnt);
+#endif
+	ge = &sc->sc_gnt[ref / GNTTAB_NEPG];
+	mtx_enter(&ge->ge_mtx);
+#ifdef XEN_DEBUG
+	if (ref < ge->ge_start || ref > ge->ge_start + GNTTAB_NEPG) {
 		mtx_leave(&ge->ge_mtx);
+		panic("out of bounds ref %u ge %p start %u sc %p gtt %p",
+		    ref, ge, ge->ge_start, sc, sc->sc_gnt);
 	}
+#endif
+	ref -= ge->ge_start;
+	if (ge->ge_table[ref].flags != GTF_invalid) {
+		mtx_leave(&ge->ge_mtx);
+#ifdef XEN_DEBUG
+		panic("ref %u is still in use, sc %p gnt %p", ref,
+		    sc, sc->sc_gnt);
+#else
+		printf("%s: reference %u is still in use\n",
+		    sc->sc_dev.dv_xname, ref);
+#endif
+	}
+	ge->ge_table[ref].frame = 0;
+	ge->ge_next = ref;
+	ge->ge_free++;
+	mtx_leave(&ge->ge_mtx);
 }
 
-int
+void
 xen_grant_table_enter(struct xen_softc *sc, grant_ref_t ref, paddr_t pa,
     int flags)
 {
 	struct xen_gntent *ge;
 
-	SLIST_FOREACH(ge, &sc->sc_gnts, ge_entry) {
-		if (ref < ge->ge_start || ref > ge->ge_start + GNTTAB_NEPG)
-			continue;
-		ref -= ge->ge_start;
-		ge->ge_table[ref].frame = atop(pa);
-		ge->ge_table[ref].domid = 0;
-		virtio_membar_sync();
-		ge->ge_table[ref].flags = GTF_permit_access | flags;
-		virtio_membar_sync();
-		return (0);
+#ifdef XEN_DEBUG
+	if (ref > sc->sc_gntcnt * GNTTAB_NEPG)
+		panic("unmanaged ref %u sc %p gnt %p (%d)", ref, sc,
+		    sc->sc_gnt, sc->sc_gntcnt);
+#endif
+	ge = &sc->sc_gnt[ref / GNTTAB_NEPG];
+#ifdef XEN_DEBUG
+	if (ref < ge->ge_start || ref > ge->ge_start + GNTTAB_NEPG) {
+		panic("out of bounds ref %u ge %p start %u sc %p gtt %p",
+		    ref, ge, ge->ge_start, sc, sc->sc_gnt);
 	}
-	return (ENOBUFS);
+#endif
+	ref -= ge->ge_start;
+	ge->ge_table[ref].frame = atop(pa);
+	ge->ge_table[ref].domid = 0;
+	virtio_membar_sync();
+	ge->ge_table[ref].flags = GTF_permit_access | flags;
+	virtio_membar_sync();
 }
 
 void
@@ -944,28 +1010,34 @@ xen_grant_table_remove(struct xen_softc *sc, grant_ref_t ref)
 	uint32_t flags, *ptr;
 	int loop;
 
-	SLIST_FOREACH(ge, &sc->sc_gnts, ge_entry) {
-		if (ref < ge->ge_start || ref > ge->ge_start + GNTTAB_NEPG)
-			continue;
-		ref -= ge->ge_start;
-
-		/* Invalidate the grant reference */
-		virtio_membar_sync();
-		ptr = (uint32_t *)&ge->ge_table[ref];
-		flags = (ge->ge_table[ref].flags & ~(GTF_reading|GTF_writing));
-		loop = 0;
-		while (atomic_cas_uint(ptr, flags, GTF_invalid) != flags) {
-			if (loop++ > 10000000) {
-				printf("%s: grant table reference %u is held "
-				    "by domain %d\n", sc->sc_dev.dv_xname, ref +
-				    ge->ge_start, ge->ge_table[ref].domid);
-				return;
-			}
-			CPU_BUSY_CYCLE();
-		}
-		ge->ge_table[ref].frame = 0xffffffff;
-		break;
+#ifdef XEN_DEBUG
+	if (ref > sc->sc_gntcnt * GNTTAB_NEPG)
+		panic("unmanaged ref %u sc %p gnts %p (%d)", ref, sc,
+		    sc->sc_gnt, sc->sc_gntcnt);
+#endif
+	ge = &sc->sc_gnt[ref / GNTTAB_NEPG];
+#ifdef XEN_DEBUG
+	if (ref < ge->ge_start || ref > ge->ge_start + GNTTAB_NEPG) {
+		panic("out of bounds ref %u ge %p start %u sc %p gtt %p",
+		    ref, ge, ge->ge_start, sc, sc->sc_gnt);
 	}
+#endif
+	ref -= ge->ge_start;
+	/* Invalidate the grant reference */
+	virtio_membar_sync();
+	ptr = (uint32_t *)&ge->ge_table[ref];
+	flags = (ge->ge_table[ref].flags & ~(GTF_reading|GTF_writing));
+	loop = 0;
+	while (atomic_cas_uint(ptr, flags, GTF_invalid) != flags) {
+		if (loop++ > 10000000) {
+			printf("%s: grant table reference %u is held "
+			    "by domain %d\n", sc->sc_dev.dv_xname, ref +
+			    ge->ge_start, ge->ge_table[ref].domid);
+			return;
+		}
+		CPU_BUSY_CYCLE();
+	}
+	ge->ge_table[ref].frame = 0xffffffff;
 }
 
 int
@@ -1034,13 +1106,8 @@ xen_bus_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	if (error)
 		return (error);
 	for (i = 0; i < map->dm_nsegs; i++) {
-		error = xen_grant_table_enter(sc, gm[i].gm_ref,
-		    map->dm_segs[i].ds_addr, flags & BUS_DMA_WRITE ?
-		    GTF_readonly : 0);
-		if (error) {
-			xen_bus_dmamap_unload(t, map);
-			return (error);
-		}
+		xen_grant_table_enter(sc, gm[i].gm_ref, map->dm_segs[i].ds_addr,
+		    flags & BUS_DMA_WRITE ? GTF_readonly : 0);
 		gm[i].gm_paddr = map->dm_segs[i].ds_addr;
 		map->dm_segs[i].ds_offset = map->dm_segs[i].ds_addr &
 		    PAGE_MASK;
@@ -1063,13 +1130,8 @@ xen_bus_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf *m0,
 	if (error)
 		return (error);
 	for (i = 0; i < map->dm_nsegs; i++) {
-		error = xen_grant_table_enter(sc, gm[i].gm_ref,
-		    map->dm_segs[i].ds_addr, flags & BUS_DMA_WRITE ?
-		    GTF_readonly : 0);
-		if (error) {
-			xen_bus_dmamap_unload(t, map);
-			return (error);
-		}
+		xen_grant_table_enter(sc, gm[i].gm_ref, map->dm_segs[i].ds_addr,
+		    flags & BUS_DMA_WRITE ? GTF_readonly : 0);
 		gm[i].gm_paddr = map->dm_segs[i].ds_addr;
 		map->dm_segs[i].ds_offset = map->dm_segs[i].ds_addr &
 		    PAGE_MASK;
