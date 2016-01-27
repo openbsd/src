@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.509 2016/01/04 13:30:20 jung Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.510 2016/01/27 12:46:03 sunil Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -28,6 +28,13 @@
 #include "iobuf.h"
 
 #include "rfc2822.h"
+
+#define CHECK_IMSG_DATA_SIZE(imsg, expected_sz) do {			\
+	if ((imsg)->hdr.len - IMSG_HEADER_SIZE != (expected_sz))	\
+		fatalx("smtpd: imsg %d: data size expected %zd got %zd",\
+	   	    (imsg)->hdr.type,					\
+	   	    (expected_sz), (imsg)->hdr.len - IMSG_HEADER_SIZE);	\
+} while (0)
 
 #define CONF_FILE		 "/etc/mail/smtpd.conf"
 #define MAILNAME_FILE		 "/etc/mail/mailname"

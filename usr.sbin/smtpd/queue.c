@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.c,v 1.175 2015/12/28 22:08:30 jung Exp $	*/
+/*	$OpenBSD: queue.c,v 1.176 2016/01/27 12:46:03 sunil Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -238,6 +238,7 @@ queue_imsg(struct mproc *p, struct imsg *imsg)
 			return;
 
 		case IMSG_SCHED_ENVELOPE_BOUNCE:
+			CHECK_IMSG_DATA_SIZE(imsg, sizeof *req_bounce);
 			req_bounce = imsg->data;
 			evpid = req_bounce->evpid;
 
