@@ -1,4 +1,4 @@
-/*	$OpenBSD: hostctl.c,v 1.1 2016/01/27 12:27:31 reyk Exp $	*/
+/*	$OpenBSD: hostctl.c,v 1.2 2016/01/27 12:33:02 reyk Exp $	*/
 
 /*
  * Copyright (c) 2016 Reyk Floeter <reyk@openbsd.org>
@@ -55,7 +55,7 @@ kvsetstr(char *dst, const char *src, size_t dstlen)
 	size_t	sz;
 
 	/* Sanitize the string before sending it to the kernel and host */
-	if ((sz = strnvis(dst, src, dstlen, VIS_OCTAL)) >= dstlen)
+	if ((sz = strnvis(dst, src, dstlen, VIS_SAFE | VIS_CSTYLE)) >= dstlen)
 		return (-1);
 
 	/* Remove trailing newline */
@@ -149,7 +149,7 @@ main(int argc, char *argv[])
 
 		/* The returned type should be a simple single-line key */
 		if (stravis(&str, pvr.pvr_key,
-		    VIS_WHITE | VIS_DQ | VIS_OCTAL) == -1)
+		    VIS_WHITE | VIS_DQ | VIS_CSTYLE) == -1)
 			err(1, "stravis");
 		fprintf(outfp, "%s: %s\n", path_pvbus, str);
 		free(str);
@@ -194,7 +194,7 @@ main(int argc, char *argv[])
 		 * only encode the unsafe characters that could perform
 		 * unexpected functions on the terminal.
 		 */
-		if (stravis(&str, pvr.pvr_value, VIS_OCTAL) == -1)
+		if (stravis(&str, pvr.pvr_value, VIS_SAFE | VIS_CSTYLE) == -1)
 			err(1, "stravis");
 		fprintf(outfp, "%s\n", str);
 		free(str);
