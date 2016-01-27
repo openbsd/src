@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.418 2015/12/07 13:58:48 reyk Exp $
+#	$OpenBSD: Makefile,v 1.419 2016/01/27 20:52:41 sthen Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	Canada/Mountain
@@ -40,7 +40,8 @@ MUTABLE=changelist csh.cshrc csh.login csh.logout daily \
 EXAMPLES=chio.conf dhclient.conf dhcpd.conf exports \
 	httpd.conf ifstated.conf inetd.conf \
 	man.conf mixerctl.conf mrouted.conf \
-	ntpd.conf printcap rbootd.conf remote sensorsd.conf wsconsctl.conf
+	ntpd.conf pkg.conf printcap rbootd.conf \
+	remote sensorsd.conf wsconsctl.conf
 
 # -rw-------
 EXAMPLES_600=bgpd.conf dvmrpd.conf eigrpd.conf hostapd.conf iked.conf \
