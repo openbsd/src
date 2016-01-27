@@ -1,4 +1,4 @@
-/*	$OpenBSD: partition_map.h,v 1.29 2016/01/24 01:38:32 krw Exp $	*/
+/*	$OpenBSD: partition_map.h,v 1.30 2016/01/27 14:47:53 krw Exp $	*/
 
 /*
  * partition_map.h - partition map routines
@@ -37,11 +37,10 @@ struct partition_map_header {
     struct block0	       *block0;
     int				fd;
     int				changed;
-    int				physical_block;	/* must be == sbBlockSize */
-    int				logical_block;	/* must be <= physical_block */
+    int				physical_block;
     int				blocks_in_map;
     int				maximum_in_map;
-    unsigned long		media_size;	/* in logical_blocks */
+    unsigned long		media_size;	/* in physical blocks */
 };
 
 struct partition_map {

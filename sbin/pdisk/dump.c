@@ -1,4 +1,4 @@
-/*	$OpenBSD: dump.c,v 1.57 2016/01/27 00:03:52 krw Exp $	*/
+/*	$OpenBSD: dump.c,v 1.58 2016/01/27 14:47:53 krw Exp $	*/
 
 /*
  * dump.c - dumping partition maps
@@ -49,7 +49,6 @@ dump_block_zero(struct partition_map_header *map)
 	struct block0 *p;
 	struct ddmap  *m;
 	double value;
-	long t;
 	int i, prefix;
 
 	p = map->block0;
@@ -68,14 +67,6 @@ dump_block_zero(struct partition_map_header *map)
 		for (i = 0; i < p->sbDrvrCount; i++) {
 			printf("%d: %3u @ %u, ", i + 1, m[i].ddSize,
 			    m[i].ddBlock);
-			if (map->logical_block != p->sbBlkSize) {
-				t = (m[i].ddSize * p->sbBlkSize) /
-				    map->logical_block;
-				printf("(%lu@", t);
-				t = m[i].ddBlock * p->sbBlkSize /
-				    map->logical_block;
-				printf("%lu)  ", t);
-			}
 			printf("type=0x%x\n", m[i].ddType);
 		}
 	}
@@ -90,7 +81,7 @@ dump_partition_map(struct partition_map_header *map)
 	int digits, max_type_length, max_name_length;
 
 	printf("\nPartition map (with %d byte blocks) on '%s'\n",
-	       map->logical_block, map->name);
+	       map->physical_block, map->name);
 
 	digits = number_of_digits(get_max_base_or_length(map));
 	if (digits < 6)
@@ -150,7 +141,7 @@ dump_partition_entry(struct partition_map *entry, int type_length,
 		printf("@~%-*u", digits, p->dpme_pblock_start +
 		    p->dpme_lblock_start);
 
-	bytes = ((double) size) * map->logical_block;
+	bytes = ((double) size) * map->physical_block;
 	adjust_value_and_compute_prefix(&bytes, &j);
 	if (j != ' ' && j != 'K')
 		printf(" (%#5.1f%c)", bytes, j);
@@ -170,7 +161,7 @@ show_data_structures(struct partition_map_header *map)
 	printf("Header:\n");
 	printf("map %d blocks out of %d,  media %lu blocks (%d byte blocks)\n",
 	    map->blocks_in_map, map->maximum_in_map, map->media_size,
-	    map->logical_block);
+	    map->physical_block);
 	printf("Map is%s writable", rflag ? " not" : "");
 	printf(" and has%s been changed\n", (map->changed) ? "" : " not");
 	printf("\n");

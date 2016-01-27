@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdisk.c,v 1.73 2016/01/27 14:19:59 krw Exp $	*/
+/*	$OpenBSD: pdisk.c,v 1.74 2016/01/27 14:47:53 krw Exp $	*/
 
 /*
  * pdisk - an editor for Apple format partition tables
@@ -311,7 +311,7 @@ get_size_argument(long *number, struct partition_map_header *map)
 	if (get_number_argument("Length in blocks: ", number) == 0) {
 		bad_input("Bad length");
 	} else {
-		multiple = get_multiplier(map->logical_block);
+		multiple = get_multiplier(map->physical_block);
 		if (multiple == 0) {
 			bad_input("Bad multiplier");
 		} else if (multiple != 1) {

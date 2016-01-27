@@ -1,4 +1,4 @@
-/*	$OpenBSD: partition_map.c,v 1.70 2016/01/27 14:19:59 krw Exp $	*/
+/*	$OpenBSD: partition_map.c,v 1.71 2016/01/27 14:47:53 krw Exp $	*/
 
 /*
  * partition_map.c - partition map routines
@@ -87,7 +87,6 @@ open_partition_map(int fd, char *name, uint64_t mediasz, uint32_t sectorsz)
 	map->disk_order = NULL;
 	map->base_order = NULL;
 	map->physical_block = sectorsz;
-	map->logical_block = sectorsz;
 	map->blocks_in_map = 0;
 	map->maximum_in_map = -1;
 
@@ -308,7 +307,6 @@ create_partition_map(int fd, char *name, u_int64_t mediasz, uint32_t sectorsz)
 	map->base_order = NULL;
 
 	map->physical_block = sectorsz;
-	map->logical_block = sectorsz;
 
 	map->blocks_in_map = 0;
 	map->maximum_in_map = -1;
@@ -617,23 +615,20 @@ contains_driver(struct partition_map *entry)
 	struct partition_map_header *map;
 	struct block0  *p;
 	struct ddmap   *m;
-	int i, f;
+	int i;
 	uint32_t start;
 
 	map = entry->the_map;
 	p = map->block0;
 	if (p->sbSig != BLOCK0_SIGNATURE)
 		return 0;
-	if (map->logical_block > p->sbBlkSize)
-		return 0;
 
-	f = p->sbBlkSize / map->logical_block;
 	if (p->sbDrvrCount > 0) {
 		m = p->sbDDMap;
 		for (i = 0; i < p->sbDrvrCount; i++) {
 			start = m[i].ddBlock;
-			if (entry->dpme->dpme_pblock_start <= f * start &&
-			    f * (start + m[i].ddSize) <=
+			if (entry->dpme->dpme_pblock_start <= start &&
+			    (start + m[i].ddSize) <=
 			    (entry->dpme->dpme_pblock_start +
 			    entry->dpme->dpme_pblocks))
 				return 1;
@@ -955,21 +950,18 @@ remove_driver(struct partition_map *entry)
 	struct partition_map_header *map;
 	struct block0  *p;
 	struct ddmap   *m;
-	int i, j, f;
+	int i, j;
 	uint32_t start;
 
 	map = entry->the_map;
 	p = map->block0;
 	if (p->sbSig != BLOCK0_SIGNATURE)
 		return;
-	if (map->logical_block > p->sbBlkSize)
-		return;
 
 	/*
 	 * compute the factor to convert the block numbers in block0
 	 * into partition map block numbers.
 	 */
-	f = p->sbBlkSize / map->logical_block;
 	if (p->sbDrvrCount > 0) {
 		m = p->sbDDMap;
 		for (i = 0; i < p->sbDrvrCount; i++) {
@@ -979,8 +971,8 @@ remove_driver(struct partition_map *entry)
 			 * zap the driver if it is wholly contained in the
 			 * partition
 			 */
-			if (entry->dpme->dpme_pblock_start <= f * start &&
-			    f * (start + m[i].ddSize) <=
+			if (entry->dpme->dpme_pblock_start <= start &&
+			    (start + m[i].ddSize) <=
 			    (entry->dpme->dpme_pblock_start
 				+ entry->dpme->dpme_pblocks)) {
 				/* delete this driver */
