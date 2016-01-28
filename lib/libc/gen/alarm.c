@@ -1,4 +1,4 @@
-/*	$OpenBSD: alarm.c,v 1.7 2005/08/08 08:05:33 espie Exp $ */
+/*	$OpenBSD: alarm.c,v 1.8 2016/01/28 16:40:54 schwarze Exp $ */
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -28,9 +28,6 @@
  * SUCH DAMAGE.
  */
 
-/*
- * Backwards compatible alarm.
- */
 #include <sys/time.h>
 #include <unistd.h>
 
