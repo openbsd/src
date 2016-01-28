@@ -1,4 +1,4 @@
-/*	$OpenBSD: partition_map.c,v 1.73 2016/01/28 01:00:53 krw Exp $	*/
+/*	$OpenBSD: partition_map.c,v 1.74 2016/01/28 13:01:33 krw Exp $	*/
 
 /*
  * partition_map.c - partition map routines
@@ -134,7 +134,7 @@ open_partition_map(int fd, char *name, uint64_t mediasz, uint32_t sectorsz)
 			free_partition_map(map);
 			map = create_partition_map(fd, name, mediasz, sectorsz);
 			if (map)
-				return (map);
+				return map;
 		}
 	}
 

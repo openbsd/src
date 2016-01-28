@@ -1,4 +1,4 @@
-/*	$OpenBSD: dpme.h,v 1.23 2016/01/27 16:38:37 krw Exp $	*/
+/*	$OpenBSD: dpme.h,v 1.24 2016/01/28 13:01:33 krw Exp $	*/
 
 /*
  * dpme.h - Disk Partition Map Entry (dpme)
@@ -48,7 +48,7 @@
 #define	DPISTRLEN	32
 
 struct ddmap {
-    uint32_t	ddBlock;	/* 1st driver's starting block (in sbBlkSize blocks!) */
+    uint32_t	ddBlock;	/* 1st driver's starting sbBlkSize block */
     uint16_t	ddSize;		/* size of 1st driver (512-byte blks) */
     uint16_t	ddType;		/* system type (1 for Mac+) */
 };

@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.27 2016/01/27 16:38:37 krw Exp $	*/
+/*	$OpenBSD: io.c,v 1.28 2016/01/28 13:01:33 krw Exp $	*/
 
 /*
  * io.c - simple io and input parsing routines
@@ -50,9 +50,9 @@ int
 my_getch()
 {
 	if (unget_count > 0)
-		return (unget_buf[--unget_count]);
+		return unget_buf[--unget_count];
 	else
-		return (getc(stdin));
+		return getc(stdin);
 }
 
 
@@ -209,7 +209,7 @@ get_number(int first_char)
 		ret_value = ret_value * base + digit;
 	}
 	my_ungetch(c);
-	return (ret_value);
+	return ret_value;
 }
 
 char *
@@ -266,7 +266,7 @@ get_string(int eos)
 				return NULL;
 		}
 	}
-	return (strdup(buf));
+	return strdup(buf);
 }
 
 

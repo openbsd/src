@@ -1,4 +1,4 @@
-/*	$OpenBSD: file_media.c,v 1.43 2016/01/26 21:07:54 krw Exp $	*/
+/*	$OpenBSD: file_media.c,v 1.44 2016/01/28 13:01:33 krw Exp $	*/
 
 /*
  * file_media.c -
@@ -88,7 +88,7 @@ read_block(int fd, uint64_t sector, void *address)
 
 	off = pread(fd, address, DEV_BSIZE, sector * DEV_BSIZE);
 	if (off == DEV_BSIZE)
-		return (1);
+		return 1;
 
 	if (off == 0)
 		fprintf(stderr, "end of file encountered");
@@ -97,7 +97,7 @@ read_block(int fd, uint64_t sector, void *address)
 	else
 		fprintf(stderr, "short read");
 
-	return (0);
+	return 0;
 }
 
 static int
@@ -107,10 +107,10 @@ write_block(int fd, uint64_t sector, void *address)
 
 	off = pwrite(fd, address, DEV_BSIZE, sector * DEV_BSIZE);
 	if (off == DEV_BSIZE)
-		return (1);
+		return 1;
 
 	warn("writing to file failed");
-	return (0);
+	return 0;
 }
 
 int
