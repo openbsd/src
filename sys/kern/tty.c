@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.128 2016/01/14 09:44:08 sf Exp $	*/
+/*	$OpenBSD: tty.c,v 1.129 2016/01/28 18:02:36 stefan Exp $	*/
 /*	$NetBSD: tty.c,v 1.68.4.2 1996/06/06 16:04:52 thorpej Exp $	*/
 
 /*-
@@ -1782,7 +1782,7 @@ loop:
 		if (cc == 0) {
 			cc = MIN(uio->uio_resid, OBUFSIZ);
 			cp = obuf;
-			error = uiomovei(cp, cc, uio);
+			error = uiomove(cp, cc, uio);
 			if (error) {
 				cc = 0;
 				break;

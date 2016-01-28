@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_pty.c,v 1.75 2016/01/14 09:44:08 sf Exp $	*/
+/*	$OpenBSD: tty_pty.c,v 1.76 2016/01/28 18:02:36 stefan Exp $	*/
 /*	$NetBSD: tty_pty.c,v 1.33.4.1 1996/06/02 09:08:11 mrg Exp $	*/
 
 /*
@@ -461,7 +461,7 @@ ptcread(dev_t dev, struct uio *uio, int flag)
 				if (pti->pt_send & TIOCPKT_IOCTL) {
 					cc = MIN(uio->uio_resid,
 						sizeof(tp->t_termios));
-					error = uiomovei(&tp->t_termios, cc, uio);
+					error = uiomove(&tp->t_termios, cc, uio);
 					if (error)
 						return (error);
 				}
@@ -496,7 +496,7 @@ ptcread(dev_t dev, struct uio *uio, int flag)
 			bufcc = cc;
 		if (cc <= 0)
 			break;
-		error = uiomovei(buf, cc, uio);
+		error = uiomove(buf, cc, uio);
 	}
 	ttwakeupwr(tp);
 	if (bufcc)
@@ -529,7 +529,7 @@ again:
 				if (cc > bufcc)
 					bufcc = cc;
 				cp = buf;
-				error = uiomovei(cp, cc, uio);
+				error = uiomove(cp, cc, uio);
 				if (error)
 					goto done;
 				/* check again for safety */
@@ -553,7 +553,7 @@ again:
 			if (cc > bufcc)
 				bufcc = cc;
 			cp = buf;
-			error = uiomovei(cp, cc, uio);
+			error = uiomove(cp, cc, uio);
 			if (error)
 				goto done;
 			/* check again for safety */
