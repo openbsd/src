@@ -1,4 +1,4 @@
-/*	$OpenBSD: partition_map.c,v 1.74 2016/01/28 13:01:33 krw Exp $	*/
+/*	$OpenBSD: partition_map.c,v 1.75 2016/01/28 13:09:21 krw Exp $	*/
 
 /*
  * partition_map.c - partition map routines
@@ -620,8 +620,6 @@ contains_driver(struct partition_map *entry)
 
 	map = entry->the_map;
 	p = map->block0;
-	if (p->sbSig != BLOCK0_SIGNATURE)
-		return 0;
 
 	if (p->sbDrvrCount > 0) {
 		m = p->sbDDMap;
@@ -966,16 +964,12 @@ doit:
 void
 remove_driver(struct partition_map *entry)
 {
-	struct partition_map_header *map;
-	struct block0  *p;
-	struct ddmap   *m;
+	struct block0 *p;
+	struct ddmap *m;
 	int i, j;
 	uint32_t start;
 
-	map = entry->the_map;
-	p = map->block0;
-	if (p->sbSig != BLOCK0_SIGNATURE)
-		return;
+	p = entry->the_map->block0;
 
 	/*
 	 * compute the factor to convert the block numbers in block0

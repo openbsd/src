@@ -1,4 +1,4 @@
-/*	$OpenBSD: dump.c,v 1.60 2016/01/27 20:34:27 krw Exp $	*/
+/*	$OpenBSD: dump.c,v 1.61 2016/01/28 13:09:21 krw Exp $	*/
 
 /*
  * dump.c - dumping partition maps
@@ -52,8 +52,6 @@ dump_block_zero(struct partition_map_header *map)
 	int i, prefix;
 
 	p = map->block0;
-	if (p->sbSig != BLOCK0_SIGNATURE)
-		return;
 
 	value = ((double) p->sbBlkCount) * p->sbBlkSize;
 	adjust_value_and_compute_prefix(&value, &prefix);
@@ -165,10 +163,6 @@ show_data_structures(struct partition_map_header *map)
 
 	printf("Block0:\n");
 	printf("signature 0x%x", zp->sbSig);
-	if (zp->sbSig == BLOCK0_SIGNATURE)
-		printf("\n");
-	else
-		printf(" should be 0x%x\n", BLOCK0_SIGNATURE);
 	printf("Block size=%u, Number of Blocks=%u\n", zp->sbBlkSize,
 	    zp->sbBlkCount);
 	printf("DeviceType=0x%x, DeviceId=0x%x, sbData=0x%x\n", zp->sbDevType,
