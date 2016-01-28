@@ -1,4 +1,4 @@
-/*	$OpenBSD: partition_map.c,v 1.76 2016/01/28 17:17:57 krw Exp $	*/
+/*	$OpenBSD: partition_map.c,v 1.77 2016/01/28 18:12:51 krw Exp $	*/
 
 /*
  * partition_map.c - partition map routines
@@ -389,6 +389,7 @@ add_partition_to_map(const char *name, const char *dptype, uint32_t base,
 		    (base + length) <=
 		    (cur->dpme->dpme_pblock_start + cur->dpme->dpme_pblocks))
 			break;
+		cur = cur->next_by_base;
 	}
 	/* if it is not Extra then punt */
 	if (cur == NULL ||
