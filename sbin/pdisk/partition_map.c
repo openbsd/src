@@ -1,4 +1,4 @@
-/*	$OpenBSD: partition_map.c,v 1.75 2016/01/28 13:09:21 krw Exp $	*/
+/*	$OpenBSD: partition_map.c,v 1.76 2016/01/28 17:17:57 krw Exp $	*/
 
 /*
  * partition_map.c - partition map routines
@@ -387,53 +387,8 @@ add_partition_to_map(const char *name, const char *dptype, uint32_t base,
 	while (cur != NULL) {
 		if (cur->dpme->dpme_pblock_start <= base &&
 		    (base + length) <=
-		    (cur->dpme->dpme_pblock_start + cur->dpme->dpme_pblocks)) {
+		    (cur->dpme->dpme_pblock_start + cur->dpme->dpme_pblocks))
 			break;
-		} else {
-			/*
-			 * check if request is past end of existing
-			 * partitions, but on disk
-			 */
-			if ((cur->next_by_base == NULL) &&
-			    (base + length <= map->media_size)) {
-				/* Expand final free partition */
-				if ((strncasecmp(cur->dpme->dpme_type,
-				    kFreeType, DPISTRLEN) == 0) &&
-				    base >= cur->dpme->dpme_pblock_start) {
-					cur->dpme->dpme_pblocks =
-					    map->media_size -
-					    cur->dpme->dpme_pblock_start;
-					break;
-				}
-				/* create an extra free partition */
-				if (base >= cur->dpme->dpme_pblock_start +
-				    cur->dpme->dpme_pblocks) {
-					if (map->maximum_in_map < 0) {
-						limit = map->media_size;
-					} else {
-						limit = map->maximum_in_map;
-					}
-					if (map->blocks_in_map + 1 > limit) {
-						printf("the map is not big "
-						    "enough\n");
-						return 0;
-					}
-					dpme = create_dpme(kFreeName, kFreeType,
-					    cur->dpme->dpme_pblock_start +
-					    cur->dpme->dpme_pblocks,
-					    map->media_size -
-					    (cur->dpme->dpme_pblock_start +
-					    cur->dpme->dpme_pblocks));
-					if (dpme != NULL) {
-						if (add_data_to_map(dpme,
-						    cur->disk_address, map) ==
-						    0)
-							free(dpme);
-					}
-				}
-			}
-			cur = cur->next_by_base;
-		}
 	}
 	/* if it is not Extra then punt */
 	if (cur == NULL ||
