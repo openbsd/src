@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdisk.c,v 1.76 2016/01/27 20:11:00 krw Exp $	*/
+/*	$OpenBSD: pdisk.c,v 1.77 2016/01/28 01:07:39 krw Exp $	*/
 
 /*
  * pdisk - an editor for Apple format partition tables
@@ -166,7 +166,8 @@ edit(struct partition_map_header **mapp)
 			    "  P    show the partition map's data structures\n"
 			    "  p    print the partition map\n"
 			    "  q    quit editing\n"
-			    "  r    reorder an entry in the partition map\n"
+			    "  r    reorder (swap) disk positions of two "
+			        "entries in the partition map\n"
 			    "  s    change the size of the partition map\n"
 			    "  t    change the type of a partition\n"
 			    "  w    write the partition map to disk\n");
