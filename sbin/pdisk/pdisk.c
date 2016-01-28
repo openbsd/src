@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdisk.c,v 1.77 2016/01/28 01:07:39 krw Exp $	*/
+/*	$OpenBSD: pdisk.c,v 1.78 2016/01/28 19:07:45 krw Exp $	*/
 
 /*
  * pdisk - an editor for Apple format partition tables
@@ -33,6 +33,7 @@
 #include <sys/dkio.h>
 #include <sys/disklabel.h>
 #include <sys/ioctl.h>
+#include <sys/queue.h>
 #include <sys/stat.h>
 
 #include <err.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: partition_map.c,v 1.77 2016/01/28 18:12:51 krw Exp $	*/
+/*	$OpenBSD: partition_map.c,v 1.78 2016/01/28 19:07:45 krw Exp $	*/
 
 /*
  * partition_map.c - partition map routines
@@ -27,6 +27,7 @@
  * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <sys/queue.h>
 #include <sys/stdint.h>
 
 #include <err.h>
@@ -65,7 +66,6 @@ void		insert_in_base_order(struct partition_map *);
 void		insert_in_disk_order(struct partition_map *);
 int		read_partition_map(struct partition_map_header *);
 void		remove_driver(struct partition_map *);
-void		remove_from_disk_order(struct partition_map *);
 void		renumber_disk_addresses(struct partition_map_header *);
 
 struct partition_map_header *
@@ -84,7 +84,7 @@ open_partition_map(int fd, char *name, uint64_t mediasz, uint32_t sectorsz)
 	map->name = name;
 
 	map->changed = 0;
-	map->disk_order = NULL;
+	LIST_INIT(&map->disk_order);
 	map->base_order = NULL;
 	map->physical_block = sectorsz;
 	map->blocks_in_map = 0;
@@ -146,12 +146,13 @@ open_partition_map(int fd, char *name, uint64_t mediasz, uint32_t sectorsz)
 void
 free_partition_map(struct partition_map_header *map)
 {
-	struct partition_map *entry, *next;
+	struct partition_map *entry;
 
 	if (map) {
 		free(map->block0);
-		for (entry = map->disk_order; entry != NULL; entry = next) {
-			next = entry->next_on_disk;
+		while (!LIST_EMPTY(&map->disk_order)) {
+			entry = LIST_FIRST(&map->disk_order);
+			LIST_REMOVE(entry, disk_entry);
 			free(entry->dpme);
 			free(entry);
 		}
@@ -250,8 +251,7 @@ write_partition_map(struct partition_map_header *map)
 	if (result == 0)
 		warn("Unable to write block zero");
 
-	for (entry = map->disk_order; entry != NULL;
-	    entry = entry->next_on_disk) {
+	LIST_FOREACH(entry, &map->disk_order, disk_entry) {
 		result = write_dpme(map->fd, entry->disk_address, entry->dpme);
 		if (result == 0)
 			warn("Unable to write block %ld", entry->disk_address);
@@ -269,8 +269,6 @@ add_data_to_map(struct dpme *dpme, long ix, struct partition_map_header *map)
 		warn("can't allocate memory for map entries");
 		return 0;
 	}
-	entry->next_on_disk = NULL;
-	entry->prev_on_disk = NULL;
 	entry->next_by_base = NULL;
 	entry->prev_by_base = NULL;
 	entry->disk_address = ix;
@@ -303,7 +301,7 @@ create_partition_map(int fd, char *name, u_int64_t mediasz, uint32_t sectorsz)
 	map->name = name;
 	map->fd = fd;
 	map->changed = 1;
-	map->disk_order = NULL;
+	LIST_INIT(&map->disk_order);
 	map->base_order = NULL;
 
 	map->physical_block = sectorsz;
@@ -510,12 +508,10 @@ renumber_disk_addresses(struct partition_map_header *map)
 	long ix;
 
 	/* reset disk addresses */
-	cur = map->disk_order;
 	ix = 1;
-	while (cur != NULL) {
+	LIST_FOREACH(cur, &map->disk_order, disk_entry) {
 		cur->disk_address = ix++;
 		cur->dpme->dpme_map_entries = map->blocks_in_map;
-		cur = cur->next_on_disk;
 	}
 }
 
@@ -673,7 +669,7 @@ delete_entry(struct partition_map *entry)
 	map = entry->the_map;
 	map->blocks_in_map--;
 
-	remove_from_disk_order(entry);
+	LIST_REMOVE(entry, disk_entry);
 
 	p = entry->next_by_base;
 	if (map->base_order == entry)
@@ -693,11 +689,9 @@ find_entry_by_disk_address(long ix, struct partition_map_header *map)
 {
 	struct partition_map *cur;
 
-	cur = map->disk_order;
-	while (cur != NULL) {
+	LIST_FOREACH(cur, &map->disk_order, disk_entry) {
 		if (cur->disk_address == ix)
 			break;
-		cur = cur->next_on_disk;
 	}
 	return cur;
 }
@@ -756,8 +750,8 @@ move_entry_in_map(long index1, long index2, struct partition_map_header *map)
 		return;
 	}
 
-	remove_from_disk_order(p1);
-	remove_from_disk_order(p2);
+	LIST_REMOVE(p1, disk_entry);
+	LIST_REMOVE(p2, disk_entry);
 
 	p1->disk_address = index2;
 	p2->disk_address = index1;
@@ -771,26 +765,6 @@ move_entry_in_map(long index1, long index2, struct partition_map_header *map)
 
 
 void
-remove_from_disk_order(struct partition_map *entry)
-{
-	struct partition_map_header *map;
-	struct partition_map *p;
-
-	map = entry->the_map;
-	p = entry->next_on_disk;
-	if (map->disk_order == entry)
-		map->disk_order = p;
-	if (p != NULL)
-		p->prev_on_disk = entry->prev_on_disk;
-	if (entry->prev_on_disk != NULL)
-		entry->prev_on_disk->next_on_disk = p;
-
-	entry->next_on_disk = NULL;
-	entry->prev_on_disk = NULL;
-}
-
-
-void
 insert_in_disk_order(struct partition_map *entry)
 {
 	struct partition_map_header *map;
@@ -798,28 +772,19 @@ insert_in_disk_order(struct partition_map *entry)
 
 	/* find position in disk list & insert */
 	map = entry->the_map;
-	cur = map->disk_order;
-	if (cur == NULL || entry->disk_address <= cur->disk_address) {
-		map->disk_order = entry;
-		entry->next_on_disk = cur;
-		if (cur != NULL)
-			cur->prev_on_disk = entry;
-		entry->prev_on_disk = NULL;
-	} else {
-		for (cur = map->disk_order; cur != NULL;
-		    cur = cur->next_on_disk) {
-			if (cur->disk_address <= entry->disk_address &&
-			    (cur->next_on_disk == NULL ||
-			    entry->disk_address <=
-			    cur->next_on_disk->disk_address)) {
-				entry->next_on_disk = cur->next_on_disk;
-				cur->next_on_disk = entry;
-				entry->prev_on_disk = cur;
-				if (entry->next_on_disk != NULL)
-					entry->next_on_disk->prev_on_disk =
-					    entry;
-				break;
-			}
+	if (LIST_EMPTY(&map->disk_order)) {
+		LIST_INSERT_HEAD(&map->disk_order, entry, disk_entry);
+		return;
+	}
+
+	LIST_FOREACH(cur, &map->disk_order, disk_entry) {
+		if (cur->disk_address >= entry->disk_address) {
+			LIST_INSERT_BEFORE(cur, entry, disk_entry);
+			return;
+		}
+		if (LIST_NEXT(cur, disk_entry) == NULL) {
+			LIST_INSERT_AFTER(cur, entry, disk_entry);
+			return;
 		}
 	}
 }
