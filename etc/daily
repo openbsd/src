@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: daily,v 1.84 2015/12/30 22:59:53 rpe Exp $
+#	$OpenBSD: daily,v 1.85 2016/01/28 15:45:34 schwarze Exp $
 #	From: @(#)daily	8.2 (Berkeley) 1/25/94
 #
 # For local additions, create the file /etc/daily.local.
@@ -125,6 +125,9 @@ while [ "X$ROOTBACKUP" = X1 ]; do
 	fsck -y /dev/r$rootbak
 	break
 done
+
+next_part "Services that should run but don't:"
+rcctl ls faulty
 
 next_part "Checking subsystem status:"
 if [ "X$VERBOSESTATUS" != X0 ]; then
