@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkfs.c,v 1.94 2015/11/23 19:19:30 deraadt Exp $	*/
+/*	$OpenBSD: mkfs.c,v 1.95 2016/01/28 17:26:10 gsoares Exp $	*/
 /*	$NetBSD: mkfs.c,v 1.25 1995/06/18 21:35:38 cgd Exp $	*/
 
 /*
@@ -549,7 +549,7 @@ mkfs(struct partition *pp, char *fsys, int fi, int fo, mode_t mfsmode,
 		iobufsize = SBLOCKSIZE + 3 * sblock.fs_bsize;
 	else
 		iobufsize = 4 * sblock.fs_bsize;
-	if ((iobuf = malloc(iobufsize)) == 0)
+	if ((iobuf = malloc(iobufsize)) == NULL)
 		errx(38, "cannot allocate I/O buffer");
 	bzero(iobuf, iobufsize);
 	/*

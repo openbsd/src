@@ -1,4 +1,4 @@
-/*	$OpenBSD: libscsi.c,v 1.10 2015/08/20 22:02:21 deraadt Exp $	*/
+/*	$OpenBSD: libscsi.c,v 1.11 2016/01/28 17:26:10 gsoares Exp $	*/
 
 /* Copyright (c) 1994 HD Associates
  * (contact: dufault@hda.com)
@@ -701,7 +701,7 @@ scsireq_build(scsireq_t *scsireq, u_long datalen, caddr_t databuf,
 		/* XXX: Good way to get a memory leak.  Perhaps this should be
 		 * removed.
 		 */
-		if ( (scsireq->databuf = malloc(datalen)) == 0)
+		if ( (scsireq->databuf = malloc(datalen)) == NULL)
 			return 0;
 
 		scsireq->datalen = datalen;
@@ -739,7 +739,7 @@ scsireq_t
 		/* XXX: Good way to get a memory leak.  Perhaps this should be
 		 * removed.
 		 */
-		if ( (scsireq->databuf = malloc(datalen)) == 0)
+		if ( (scsireq->databuf = malloc(datalen)) == NULL)
 			return 0;
 
 		scsireq->datalen = datalen;

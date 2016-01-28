@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.143 2015/11/29 22:41:20 florian Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.144 2016/01/28 17:26:10 gsoares Exp $	*/
 /*	$KAME: ping6.c,v 1.163 2002/10/25 02:19:06 itojun Exp $	*/
 
 /*
@@ -526,7 +526,7 @@ main(int argc, char *argv[])
 
 	if (hoplimit != -1) {
 		/* set IP6 packet options */
-		if ((scmsg = malloc( CMSG_SPACE(sizeof(int)))) == 0)
+		if ((scmsg = malloc( CMSG_SPACE(sizeof(int)))) == NULL)
 			errx(1, "can't allocate enough memory");
 		smsghdr.msg_control = (caddr_t)scmsg;
 		smsghdr.msg_controllen =  CMSG_SPACE(sizeof(int));
