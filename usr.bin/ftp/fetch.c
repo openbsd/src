@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.144 2016/01/08 20:36:01 sthen Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.145 2016/01/28 21:31:50 martijn Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -1557,8 +1557,10 @@ again:
 			errx(1, "SSL read error: %s", tls_error(tls));
 
 		buf[i] = c;
-		if (c == '\n')
+		if (c == '\n') {
+			buf[i] = '\0';
 			break;
+		}
 	}
 	*lenp = i;
 	return (buf);
