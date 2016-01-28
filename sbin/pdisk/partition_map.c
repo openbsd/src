@@ -1,4 +1,4 @@
-/*	$OpenBSD: partition_map.c,v 1.72 2016/01/27 23:59:12 krw Exp $	*/
+/*	$OpenBSD: partition_map.c,v 1.73 2016/01/28 01:00:53 krw Exp $	*/
 
 /*
  * partition_map.c - partition map routines
@@ -780,20 +780,39 @@ find_entry_by_base(uint32_t base, struct partition_map_header *map)
 
 
 void
-move_entry_in_map(long old_index, long ix, struct partition_map_header *map)
+move_entry_in_map(long index1, long index2, struct partition_map_header *map)
 {
-	struct partition_map *cur;
+	struct partition_map *p1, *p2;
 
-	cur = find_entry_by_disk_address(old_index, map);
-	if (cur == NULL) {
-		printf("No such partition\n");
-	} else {
-		remove_from_disk_order(cur);
-		cur->disk_address = ix;
-		insert_in_disk_order(cur);
-		renumber_disk_addresses(map);
-		map->changed = 1;
+	if (index1 == index2)
+		return;
+
+	if (index1 == 1 || index2 == 1) {
+		printf("Partition #1 cannot be moved\n");
+		return;
 	}
+	p1 = find_entry_by_disk_address(index1, map);
+	if (p1 == NULL) {
+		printf("Partition #%ld not found\n", index1);
+		return;
+	}
+	p2 = find_entry_by_disk_address(index2, map);
+	if (p2 == NULL) {
+		printf("Partition #%ld not found\n", index2);
+		return;
+	}
+
+	remove_from_disk_order(p1);
+	remove_from_disk_order(p2);
+
+	p1->disk_address = index2;
+	p2->disk_address = index1;
+
+	insert_in_disk_order(p1);
+	insert_in_disk_order(p2);
+
+	renumber_disk_addresses(map);
+	map->changed = 1;
 }
 
 
