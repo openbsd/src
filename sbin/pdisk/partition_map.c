@@ -1,4 +1,4 @@
-/*	$OpenBSD: partition_map.c,v 1.78 2016/01/28 19:07:45 krw Exp $	*/
+/*	$OpenBSD: partition_map.c,v 1.79 2016/01/28 22:01:00 krw Exp $	*/
 
 /*
  * partition_map.c - partition map routines
@@ -518,11 +518,14 @@ renumber_disk_addresses(struct partition_map_header *map)
 void
 delete_partition_from_map(struct partition_map *entry)
 {
-	struct partition_map_header *map;
 	struct dpme *dpme;
 
 	if (strncasecmp(entry->dpme->dpme_type, kMapType, DPISTRLEN) == 0) {
 		printf("Can't delete entry for the map itself\n");
+		return;
+	}
+	if (strncasecmp(entry->dpme->dpme_type, kFreeType, DPISTRLEN) == 0) {
+		printf("Can't delete entry for free space\n");
 		return;
 	}
 	if (entry->contains_driver) {
@@ -531,33 +534,19 @@ delete_partition_from_map(struct partition_map *entry)
 		    "[n/y]: ", 0) != 1) {
 			return;
 		}
-	}
-	/* if past end of disk, delete it completely */
-	if (entry->next_by_base == NULL &&
-	    entry->dpme->dpme_pblock_start >= entry->the_map->media_size) {
-		if (entry->contains_driver) {
-			remove_driver(entry);	/* update block0 if necessary */
-		}
-		delete_entry(entry);
-		return;
-	}
-	/* If at end of disk, incorporate extra disk space to partition */
-	if (entry->next_by_base == NULL) {
-		entry->dpme->dpme_pblocks = entry->the_map->media_size -
-		    entry->dpme->dpme_pblock_start;
-	}
-	dpme = create_dpme(kFreeName, kFreeType,
-	    entry->dpme->dpme_pblock_start, entry->dpme->dpme_pblocks);
-	if (dpme == NULL)
-		return;
-	if (entry->contains_driver)
 		remove_driver(entry);	/* update block0 if necessary */
-	free(entry->dpme);
-	entry->dpme = dpme;
+	}
+
+	dpme = entry->dpme;
+	memset(dpme->dpme_name, 0, sizeof(dpme->dpme_name));
+	strlcpy(dpme->dpme_name, kFreeName, sizeof(dpme->dpme_name));
+	memset(dpme->dpme_type, 0, sizeof(dpme->dpme_type));
+	strlcpy(dpme->dpme_type, kFreeType, sizeof(dpme->dpme_type));
+	dpme_init_flags(dpme);
+
 	combine_entry(entry);
-	map = entry->the_map;
-	renumber_disk_addresses(map);
-	map->changed = 1;
+	renumber_disk_addresses(entry->the_map);
+	entry->the_map->changed = 1;
 }
 
 
