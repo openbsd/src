@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pdisk.8,v 1.29 2016/01/28 01:07:39 krw Exp $
+.\"	$OpenBSD: pdisk.8,v 1.30 2016/01/28 07:57:19 jmc Exp $
 .\"
 .\" Copyright 1996,1997,1998 by Apple Computer, Inc.
 .\"              All Rights Reserved
@@ -114,10 +114,12 @@ compatibility reasons.
 .Pp
 The
 .Em c
-(create an OpenBSD partition) and
+(create an
+.Ox
+partition) and
 .Em C
 (create a partition of a specified type)
-are the only one with complicated arguments.
+commands are the only ones with complicated arguments.
 .Pp
 The first argument is the base address (in blocks) of the partition.
 Besides a raw number, you can also specify a partition number followed
@@ -142,7 +144,8 @@ This can be a single word without quotes, or a string surrounded by
 single or double quotes.
 The
 .Em c
-command automatically uses the type OpenBSD.
+command automatically uses the type
+.Ox .
 .Pp
 The
 .Em n
