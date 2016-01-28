@@ -1,4 +1,4 @@
-/*	$OpenBSD: partition_map.c,v 1.79 2016/01/28 22:01:00 krw Exp $	*/
+/*	$OpenBSD: partition_map.c,v 1.80 2016/01/28 22:09:56 krw Exp $	*/
 
 /*
  * partition_map.c - partition map routines
@@ -85,7 +85,7 @@ open_partition_map(int fd, char *name, uint64_t mediasz, uint32_t sectorsz)
 
 	map->changed = 0;
 	LIST_INIT(&map->disk_order);
-	map->base_order = NULL;
+	LIST_INIT(&map->base_order);
 	map->physical_block = sectorsz;
 	map->blocks_in_map = 0;
 	map->maximum_in_map = -1;
@@ -163,7 +163,7 @@ free_partition_map(struct partition_map_header *map)
 int
 read_partition_map(struct partition_map_header *map)
 {
-	struct partition_map *cur;
+	struct partition_map *cur, *nextcur;
 	struct dpme *dpme;
 	int ix;
 	uint32_t limit, base, next, nextbase;
@@ -223,11 +223,12 @@ read_partition_map(struct partition_map_header *map)
 	 * 1) Overlapping partitions
 	 * 2) Unmapped space
 	 */
-	for (cur = map->base_order; cur != NULL; cur = cur->next_by_base) {
+	LIST_FOREACH(cur, &map->base_order, base_entry) {
 		base = cur->dpme->dpme_pblock_start;
 		next = base + cur->dpme->dpme_pblocks;
-		if (cur->next_by_base != NULL)
-			nextbase = cur->next_by_base->dpme->dpme_pblock_start;
+		nextcur = LIST_NEXT(cur, base_entry);
+		if (nextcur)
+			nextbase = nextcur->dpme->dpme_pblock_start;
 		else
 			nextbase = map->media_size;
 		if (next != nextbase)
@@ -269,8 +270,6 @@ add_data_to_map(struct dpme *dpme, long ix, struct partition_map_header *map)
 		warn("can't allocate memory for map entries");
 		return 0;
 	}
-	entry->next_by_base = NULL;
-	entry->prev_by_base = NULL;
 	entry->disk_address = ix;
 	entry->the_map = map;
 	entry->dpme = dpme;
@@ -302,7 +301,7 @@ create_partition_map(int fd, char *name, u_int64_t mediasz, uint32_t sectorsz)
 	map->fd = fd;
 	map->changed = 1;
 	LIST_INIT(&map->disk_order);
-	map->base_order = NULL;
+	LIST_INIT(&map->base_order);
 
 	map->physical_block = sectorsz;
 
@@ -381,13 +380,11 @@ add_partition_to_map(const char *name, const char *dptype, uint32_t base,
 	uint32_t new_length = 0;
 
 	/* find a block that starts includes base and length */
-	cur = map->base_order;
-	while (cur != NULL) {
+	LIST_FOREACH(cur, &map->base_order, base_entry) {
 		if (cur->dpme->dpme_pblock_start <= base &&
 		    (base + length) <=
 		    (cur->dpme->dpme_pblock_start + cur->dpme->dpme_pblocks))
 			break;
-		cur = cur->next_by_base;
 	}
 	/* if it is not Extra then punt */
 	if (cur == NULL ||
@@ -587,8 +584,8 @@ combine_entry(struct partition_map *entry)
 	    strncasecmp(entry->dpme->dpme_type, kFreeType, DPISTRLEN) != 0)
 		return;
 
-	if (entry->next_by_base != NULL) {
-		p = entry->next_by_base;
+	p = LIST_NEXT(entry, base_entry);
+	if (p != NULL) {
 		if (strncasecmp(p->dpme->dpme_type, kFreeType, DPISTRLEN) !=
 		    0) {
 			/* next is not free */
@@ -613,8 +610,12 @@ combine_entry(struct partition_map *entry)
 			delete_entry(p);
 		}
 	}
-	if (entry->prev_by_base != NULL) {
-		p = entry->prev_by_base;
+
+	LIST_FOREACH(p, &entry->the_map->base_order, base_entry) {
+		if (LIST_NEXT(p, base_entry) == entry)
+			break;
+	}
+	if (p != NULL) {
 		if (strncasecmp(p->dpme->dpme_type, kFreeType, DPISTRLEN) !=
 		    0) {
 			/* previous is not free */
@@ -653,20 +654,12 @@ void
 delete_entry(struct partition_map *entry)
 {
 	struct partition_map_header *map;
-	struct partition_map *p;
 
 	map = entry->the_map;
 	map->blocks_in_map--;
 
 	LIST_REMOVE(entry, disk_entry);
-
-	p = entry->next_by_base;
-	if (map->base_order == entry)
-		map->base_order = p;
-	if (p != NULL)
-		p->prev_by_base = entry->prev_by_base;
-	if (entry->prev_by_base != NULL)
-		entry->prev_by_base->next_by_base = p;
+	LIST_REMOVE(entry, base_entry);
 
 	free(entry->dpme);
 	free(entry);
@@ -691,12 +684,10 @@ find_entry_by_type(const char *type_name, struct partition_map_header *map)
 {
 	struct partition_map *cur;
 
-	cur = map->base_order;
-	while (cur != NULL) {
+	LIST_FOREACH(cur, &map->base_order, base_entry) {
 		if (strncasecmp(cur->dpme->dpme_type, type_name, DPISTRLEN) ==
 		    0)
 			break;
-		cur = cur->next_by_base;
 	}
 	return cur;
 }
@@ -706,11 +697,9 @@ find_entry_by_base(uint32_t base, struct partition_map_header *map)
 {
 	struct partition_map *cur;
 
-	cur = map->base_order;
-	while (cur != NULL) {
+	LIST_FOREACH(cur, &map->base_order, base_entry) {
 		if (cur->dpme->dpme_pblock_start == base)
 			break;
-		cur = cur->next_by_base;
 	}
 	return cur;
 }
@@ -784,33 +773,24 @@ insert_in_base_order(struct partition_map *entry)
 {
 	struct partition_map_header *map;
 	struct partition_map *cur;
+	uint32_t start;
 
 	/* find position in base list & insert */
 	map = entry->the_map;
-	cur = map->base_order;
-	if (cur == NULL
-	|| entry->dpme->dpme_pblock_start <= cur->dpme->dpme_pblock_start) {
-		map->base_order = entry;
-		entry->next_by_base = cur;
-		if (cur != NULL)
-			cur->prev_by_base = entry;
-		entry->prev_by_base = NULL;
-	} else {
-		for (cur = map->base_order; cur != NULL;
-		    cur = cur->next_by_base) {
-			if (cur->dpme->dpme_pblock_start <=
-			    entry->dpme->dpme_pblock_start &&
-			    (cur->next_by_base == NULL ||
-			    entry->dpme->dpme_pblock_start <=
-			    cur->next_by_base->dpme->dpme_pblock_start)) {
-				entry->next_by_base = cur->next_by_base;
-				cur->next_by_base = entry;
-				entry->prev_by_base = cur;
-				if (entry->next_by_base != NULL)
-					entry->next_by_base->prev_by_base =
-					    entry;
-				break;
-			}
+	if (LIST_EMPTY(&map->base_order)) {
+		LIST_INSERT_HEAD(&map->base_order, entry, base_entry);
+		return;
+	}
+
+	start = entry->dpme->dpme_pblock_start;
+	LIST_FOREACH(cur, &map->base_order, base_entry) {
+		if (start <= cur->dpme->dpme_pblock_start) {
+			LIST_INSERT_BEFORE(cur, entry, base_entry);
+			return;
+		}
+		if (LIST_NEXT(cur, base_entry) == NULL) {
+			LIST_INSERT_AFTER(cur, entry, base_entry);
+			return;
 		}
 	}
 }
@@ -829,13 +809,13 @@ resize_map(long new_size, struct partition_map_header *map)
 		printf("Couldn't find entry for map!\n");
 		return;
 	}
-	next = entry->next_by_base;
-
 	if (new_size == entry->dpme->dpme_pblocks)
 		return;
 
-	/* make it smaller */
+	next = LIST_NEXT(entry, base_entry);
+
 	if (new_size < entry->dpme->dpme_pblocks) {
+		/* make it smaller */
 		if (next == NULL ||
 		    strncasecmp(next->dpme->dpme_type, kFreeType, DPISTRLEN) !=
 		    0)
