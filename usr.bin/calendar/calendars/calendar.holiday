@@ -1,7 +1,7 @@
 /*
  * Holiday
  *
- * $OpenBSD: calendar.holiday,v 1.35 2016/01/20 19:12:28 jmc Exp $
+ * $OpenBSD: calendar.holiday,v 1.36 2016/01/28 09:52:43 dtucker Exp $
  */
 
 #ifndef _calendar_holiday_
@@ -39,7 +39,7 @@
 01/23	National Handwriting Day
 01/24	Economic Liberation Day in Togo
 01/26	Republic Day in India
-01/30	Australia Day in Australia
+01/26	Australia Day in Australia
 02/01	Chinese New Year Holiday (3 days) in Taiwan
 02/02	Candlemas
 02/04	Independence Commemoration Day in Sri Lanka
