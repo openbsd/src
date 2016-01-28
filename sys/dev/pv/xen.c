@@ -1,4 +1,4 @@
-/*	$OpenBSD: xen.c,v 1.44 2016/01/27 18:04:42 mikeb Exp $	*/
+/*	$OpenBSD: xen.c,v 1.45 2016/01/28 11:19:49 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Belopuhov
@@ -773,8 +773,6 @@ int
 xen_init_grant_tables(struct xen_softc *sc)
 {
 	struct gnttab_query_size gqs;
-	struct gnttab_get_version ggv;
-	struct gnttab_set_version gsv;
 
 	gqs.dom = DOMID_SELF;
 	if (xen_hypercall(sc, XC_GNTTAB, 3, GNTTABOP_query_size, &gqs, 1)) {
@@ -784,15 +782,6 @@ xen_init_grant_tables(struct xen_softc *sc)
 	if (gqs.nr_frames == 0 || gqs.nr_frames > gqs.max_nr_frames) {
 		printf(": invalid number of grant table pages: %u/%u\n",
 		    gqs.nr_frames, gqs.max_nr_frames);
-		return (-1);
-	}
-
-	gsv.version = 1;
-	ggv.dom = DOMID_SELF;
-	if (xen_hypercall(sc, XC_GNTTAB, 3, GNTTABOP_set_version, &gsv, 1) ||
-	    xen_hypercall(sc, XC_GNTTAB, 3, GNTTABOP_get_version, &ggv, 1) ||
-	    ggv.version != 1) {
-		printf(": failed to set grant tables API version\n");
 		return (-1);
 	}
 
