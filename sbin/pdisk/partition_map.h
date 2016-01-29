@@ -1,4 +1,4 @@
-/*	$OpenBSD: partition_map.h,v 1.32 2016/01/28 22:09:56 krw Exp $	*/
+/*	$OpenBSD: partition_map.h,v 1.33 2016/01/29 14:48:20 krw Exp $	*/
 
 /*
  * partition_map.h - partition map routines
@@ -30,24 +30,24 @@
 #ifndef __partition_map__
 #define __partition_map__
 
-struct partition_map;
+struct entry;
 
 struct partition_map_header {
-    LIST_HEAD(, partition_map)	disk_order;
-    LIST_HEAD(, partition_map)	base_order;
-    char		       *name;
-    struct block0	       *block0;
-    int				fd;
-    int				changed;
-    int				physical_block;
-    int				blocks_in_map;
-    int				maximum_in_map;
-    unsigned long		media_size;	/* in physical blocks */
+    LIST_HEAD(, entry)	disk_order;
+    LIST_HEAD(, entry)	base_order;
+    char	       *name;
+    struct block0       *block0;
+    int			fd;
+    int			changed;
+    int			physical_block;
+    int			blocks_in_map;
+    int			maximum_in_map;
+    unsigned long	media_size;	/* in physical blocks */
 };
 
-struct partition_map {
-    LIST_ENTRY(partition_map)		disk_entry;
-    LIST_ENTRY(partition_map)		base_entry;
+struct entry {
+    LIST_ENTRY(entry)			disk_entry;
+    LIST_ENTRY(entry)			base_entry;
     struct partition_map_header	       *the_map;
     struct dpme			       *dpme;
     long				disk_address;
@@ -71,17 +71,17 @@ struct partition_map_header	*create_partition_map(int, char *, uint64_t,
 struct partition_map_header	*open_partition_map(int, char *, uint64_t,
     uint32_t);
 
-struct partition_map		*find_entry_by_disk_address(long,
+struct entry		*find_entry_by_disk_address(long,
     struct partition_map_header *);
-struct partition_map		*find_entry_by_type(const char *,
+struct entry		*find_entry_by_type(const char *,
     struct partition_map_header *);
-struct partition_map		*find_entry_by_base(uint32_t,
+struct entry		*find_entry_by_base(uint32_t,
     struct partition_map_header *);
 
 int	add_partition_to_map(const char *, const char *, uint32_t, uint32_t,
     struct partition_map_header *);
 void	free_partition_map(struct partition_map_header *);
-void	delete_partition_from_map(struct partition_map *);
+void	delete_partition_from_map(struct entry *);
 void	move_entry_in_map(long, long, struct partition_map_header *);
 void	resize_map(long new_size, struct partition_map_header *);
 void	write_partition_map(struct partition_map_header *);

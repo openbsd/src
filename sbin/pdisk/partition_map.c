@@ -1,4 +1,4 @@
-/*	$OpenBSD: partition_map.c,v 1.82 2016/01/29 14:26:42 krw Exp $	*/
+/*	$OpenBSD: partition_map.c,v 1.83 2016/01/29 14:48:20 krw Exp $	*/
 
 /*
  * partition_map.c - partition map routines
@@ -56,14 +56,14 @@ enum add_action {
 int		add_data_to_map(struct dpme *, long,
 		    struct partition_map_header *);
 int		coerce_block0(struct partition_map_header *);
-int		contains_driver(struct partition_map *);
-void		combine_entry(struct partition_map *);
+int		contains_driver(struct entry *);
+void		combine_entry(struct entry *);
 struct dpme    *create_dpme(const char *, const char *, uint32_t, uint32_t);
-void		delete_entry(struct partition_map *);
-void		insert_in_base_order(struct partition_map *);
-void		insert_in_disk_order(struct partition_map *);
+void		delete_entry(struct entry *);
+void		insert_in_base_order(struct entry *);
+void		insert_in_disk_order(struct entry *);
 int		read_partition_map(struct partition_map_header *);
-void		remove_driver(struct partition_map *);
+void		remove_driver(struct entry *);
 void		renumber_disk_addresses(struct partition_map_header *);
 
 struct partition_map_header *
@@ -144,7 +144,7 @@ open_partition_map(int fd, char *name, uint64_t mediasz, uint32_t sectorsz)
 void
 free_partition_map(struct partition_map_header *map)
 {
-	struct partition_map *entry;
+	struct entry *entry;
 
 	if (map) {
 		free(map->block0);
@@ -161,7 +161,7 @@ free_partition_map(struct partition_map_header *map)
 int
 read_partition_map(struct partition_map_header *map)
 {
-	struct partition_map *cur, *nextcur;
+	struct entry *cur, *nextcur;
 	struct dpme *dpme;
 	int ix;
 	uint32_t limit, base, next, nextbase;
@@ -243,7 +243,7 @@ read_partition_map(struct partition_map_header *map)
 void
 write_partition_map(struct partition_map_header *map)
 {
-	struct partition_map *entry;
+	struct entry *entry;
 	int result;
 
 	result = write_block0(map->fd, map->block0);
@@ -261,9 +261,9 @@ write_partition_map(struct partition_map_header *map)
 int
 add_data_to_map(struct dpme *dpme, long ix, struct partition_map_header *map)
 {
-	struct partition_map *entry;
+	struct entry *entry;
 
-	entry = malloc(sizeof(struct partition_map));
+	entry = malloc(sizeof(struct entry));
 	if (entry == NULL) {
 		warn("can't allocate memory for map entries");
 		return 0;
@@ -363,7 +363,7 @@ int
 add_partition_to_map(const char *name, const char *dptype, uint32_t base,
     uint32_t length, struct partition_map_header *map)
 {
-	struct partition_map *cur;
+	struct entry *cur;
 	struct dpme *dpme;
 	enum add_action act;
 	int limit;
@@ -496,7 +496,7 @@ dpme_init_flags(struct dpme *dpme)
 void
 renumber_disk_addresses(struct partition_map_header *map)
 {
-	struct partition_map *cur;
+	struct entry *cur;
 	long ix;
 
 	/* reset disk addresses */
@@ -508,7 +508,7 @@ renumber_disk_addresses(struct partition_map_header *map)
 }
 
 void
-delete_partition_from_map(struct partition_map *entry)
+delete_partition_from_map(struct entry *entry)
 {
 	struct dpme *dpme;
 
@@ -542,7 +542,7 @@ delete_partition_from_map(struct partition_map *entry)
 
 
 int
-contains_driver(struct partition_map *entry)
+contains_driver(struct entry *entry)
 {
 	struct partition_map_header *map;
 	struct block0  *p;
@@ -569,9 +569,9 @@ contains_driver(struct partition_map *entry)
 
 
 void
-combine_entry(struct partition_map *entry)
+combine_entry(struct entry *entry)
 {
-	struct partition_map *p;
+	struct entry *p;
 	uint32_t end;
 
 	if (entry == NULL ||
@@ -645,7 +645,7 @@ combine_entry(struct partition_map *entry)
 
 
 void
-delete_entry(struct partition_map *entry)
+delete_entry(struct entry *entry)
 {
 	struct partition_map_header *map;
 
@@ -660,10 +660,10 @@ delete_entry(struct partition_map *entry)
 }
 
 
-struct partition_map *
+struct entry *
 find_entry_by_disk_address(long ix, struct partition_map_header *map)
 {
-	struct partition_map *cur;
+	struct entry *cur;
 
 	LIST_FOREACH(cur, &map->disk_order, disk_entry) {
 		if (cur->disk_address == ix)
@@ -673,10 +673,10 @@ find_entry_by_disk_address(long ix, struct partition_map_header *map)
 }
 
 
-struct partition_map *
+struct entry *
 find_entry_by_type(const char *type_name, struct partition_map_header *map)
 {
-	struct partition_map *cur;
+	struct entry *cur;
 
 	LIST_FOREACH(cur, &map->base_order, base_entry) {
 		if (strncasecmp(cur->dpme->dpme_type, type_name, DPISTRLEN) ==
@@ -686,10 +686,10 @@ find_entry_by_type(const char *type_name, struct partition_map_header *map)
 	return cur;
 }
 
-struct partition_map *
+struct entry *
 find_entry_by_base(uint32_t base, struct partition_map_header *map)
 {
-	struct partition_map *cur;
+	struct entry *cur;
 
 	LIST_FOREACH(cur, &map->base_order, base_entry) {
 		if (cur->dpme->dpme_pblock_start == base)
@@ -702,7 +702,7 @@ find_entry_by_base(uint32_t base, struct partition_map_header *map)
 void
 move_entry_in_map(long index1, long index2, struct partition_map_header *map)
 {
-	struct partition_map *p1, *p2;
+	struct entry *p1, *p2;
 
 	if (index1 == index2)
 		return;
@@ -737,10 +737,10 @@ move_entry_in_map(long index1, long index2, struct partition_map_header *map)
 
 
 void
-insert_in_disk_order(struct partition_map *entry)
+insert_in_disk_order(struct entry *entry)
 {
 	struct partition_map_header *map;
-	struct partition_map *cur;
+	struct entry *cur;
 
 	/* find position in disk list & insert */
 	map = entry->the_map;
@@ -763,10 +763,10 @@ insert_in_disk_order(struct partition_map *entry)
 
 
 void
-insert_in_base_order(struct partition_map *entry)
+insert_in_base_order(struct entry *entry)
 {
 	struct partition_map_header *map;
-	struct partition_map *cur;
+	struct entry *cur;
 	uint32_t start;
 
 	/* find position in base list & insert */
@@ -793,8 +793,8 @@ insert_in_base_order(struct partition_map *entry)
 void
 resize_map(long new_size, struct partition_map_header *map)
 {
-	struct partition_map *entry;
-	struct partition_map *next;
+	struct entry *entry;
+	struct entry *next;
 	int incr;
 
 	entry = find_entry_by_type(kMapType, map);
@@ -846,7 +846,7 @@ doit:
 
 
 void
-remove_driver(struct partition_map *entry)
+remove_driver(struct entry *entry)
 {
 	struct block0 *p;
 	struct ddmap *m;
