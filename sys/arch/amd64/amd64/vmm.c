@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.32 2016/01/25 12:44:16 jsg Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.33 2016/01/29 00:47:51 jsg Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -2092,12 +2092,11 @@ vm_teardown(struct vm *vm)
 
 	/* XXX teardown guest vmspace, free pages */
 
-	pool_put(&vm_pool, vm);
-
 	vmm_softc->vm_ct--;
 	if (vmm_softc->vm_ct < 1)
 		vmm_stop();
 	rw_exit_write(&vm->vm_vcpu_lock);
+	pool_put(&vm_pool, vm);
 }
 
 /*
