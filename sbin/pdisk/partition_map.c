@@ -1,4 +1,4 @@
-/*	$OpenBSD: partition_map.c,v 1.81 2016/01/29 12:16:41 krw Exp $	*/
+/*	$OpenBSD: partition_map.c,v 1.82 2016/01/29 14:26:42 krw Exp $	*/
 
 /*
  * partition_map.c - partition map routines
@@ -323,10 +323,7 @@ create_partition_map(int fd, char *name, u_int64_t mediasz, uint32_t sectorsz)
 			dpme->dpme_pblocks = map->media_size - 1;
 			strlcpy(dpme->dpme_type, kFreeType,
 			    sizeof(dpme->dpme_type));
-			dpme->dpme_lblock_start = 0;
-			dpme->dpme_lblocks = dpme->dpme_pblocks;
-			dpme->dpme_flags = DPME_WRITABLE | DPME_READABLE |
-			    DPME_VALID;
+			dpme_init_flags(dpme);
 
 			if (add_data_to_map(dpme, 1, map) == 0) {
 				free(dpme);
@@ -485,12 +482,15 @@ create_dpme(const char *name, const char *dptype, uint32_t base,
 void
 dpme_init_flags(struct dpme *dpme)
 {
-	/* XXX this is gross, fix it! */
-	if (strncasecmp(dpme->dpme_type, kHFSType, DPISTRLEN) == 0)
+	if (strncasecmp(dpme->dpme_type, kFreeType, DPISTRLEN) == 0)
+		dpme->dpme_flags = 0;
+	else if (strncasecmp(dpme->dpme_type, kMapType, DPISTRLEN) == 0)
+		dpme->dpme_flags = DPME_VALID | DPME_ALLOCATED;
+	else if (strncasecmp(dpme->dpme_type, kHFSType, DPISTRLEN) == 0)
 		dpme->dpme_flags = APPLE_HFS_FLAGS_VALUE;
 	else
-		dpme->dpme_flags = DPME_WRITABLE | DPME_READABLE |
-		    DPME_ALLOCATED | DPME_VALID;
+		dpme->dpme_flags = DPME_VALID | DPME_ALLOCATED |
+		    DPME_READABLE | DPME_WRITABLE;
 }
 
 void
