@@ -1,4 +1,4 @@
-/*	$OpenBSD: dump.c,v 1.63 2016/01/29 14:48:20 krw Exp $	*/
+/*	$OpenBSD: dump.c,v 1.64 2016/01/29 14:54:38 krw Exp $	*/
 
 /*
  * dump.c - dumping partition maps
@@ -39,14 +39,14 @@
 #include "io.h"
 
 void	adjust_value_and_compute_prefix(double *, int *);
-void	dump_block_zero(struct partition_map_header *);
+void	dump_block_zero(struct partition_map *);
 void	dump_partition_entry(struct entry *, int, int, int);
-int	get_max_base_or_length(struct partition_map_header *);
-int	get_max_name_string_length(struct partition_map_header *);
-int	get_max_type_string_length(struct partition_map_header *);
+int	get_max_base_or_length(struct partition_map *);
+int	get_max_name_string_length(struct partition_map *);
+int	get_max_type_string_length(struct partition_map *);
 
 void
-dump_block_zero(struct partition_map_header *map)
+dump_block_zero(struct partition_map *map)
 {
 	struct block0 *p;
 	struct ddmap  *m;
@@ -75,7 +75,7 @@ dump_block_zero(struct partition_map_header *map)
 
 
 void
-dump_partition_map(struct partition_map_header *map)
+dump_partition_map(struct partition_map *map)
 {
 	struct entry *entry;
 	int digits, max_type_length, max_name_length;
@@ -107,7 +107,7 @@ void
 dump_partition_entry(struct entry *entry, int type_length,
     int name_length, int digits)
 {
-	struct partition_map_header *map;
+	struct partition_map *map;
 	struct dpme *p;
 	double bytes;
 	int j, driver;
@@ -144,7 +144,7 @@ dump_partition_entry(struct entry *entry, int type_length,
 
 
 void
-show_data_structures(struct partition_map_header *map)
+show_data_structures(struct partition_map *map)
 {
 	struct entry *entry;
 	struct block0 *zp;
@@ -222,7 +222,7 @@ show_data_structures(struct partition_map_header *map)
 
 
 void
-full_dump_partition_entry(struct partition_map_header *map, int ix)
+full_dump_partition_entry(struct partition_map *map, int ix)
 {
 	struct entry *cur;
 	struct dpme    *p;
@@ -323,7 +323,7 @@ dump_block(unsigned char *addr, int len)
 }
 
 void
-full_dump_block_zero(struct partition_map_header *map)
+full_dump_block_zero(struct partition_map *map)
 {
 	struct block0 *zp;
 	struct ddmap *m;
@@ -355,7 +355,7 @@ full_dump_block_zero(struct partition_map_header *map)
 }
 
 int
-get_max_type_string_length(struct partition_map_header *map)
+get_max_type_string_length(struct partition_map *map)
 {
 	struct entry *entry;
 	int max, length;
@@ -372,7 +372,7 @@ get_max_type_string_length(struct partition_map_header *map)
 }
 
 int
-get_max_name_string_length(struct partition_map_header *map)
+get_max_name_string_length(struct partition_map *map)
 {
 	struct entry *entry;
 	int max, length;
@@ -389,7 +389,7 @@ get_max_name_string_length(struct partition_map_header *map)
 }
 
 int
-get_max_base_or_length(struct partition_map_header *map)
+get_max_base_or_length(struct partition_map *map)
 {
 	struct entry *entry;
 	int max;
