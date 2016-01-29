@@ -1,4 +1,4 @@
-.\" $OpenBSD: audioctl.1,v 1.27 2009/11/10 07:42:22 ratchov Exp $
+.\" $OpenBSD: audioctl.1,v 1.28 2016/01/29 10:45:38 ratchov Exp $
 .\" $NetBSD: audioctl.1,v 1.7 1998/04/27 16:55:23 augustss Exp $
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 10 2009 $
+.Dd $Mdocdate: January 29 2016 $
 .Dt AUDIOCTL 1
 .Os
 .Sh NAME
@@ -73,6 +73,9 @@ Attempt to set the specified variable
 to
 .Ar value .
 .El
+.Pp
+Variables may only be changed if the device is not opened for
+playback or recording by another process.
 .Sh ENVIRONMENT
 .Bl -tag -width AUDIOCTLDEVICE
 .It Ev AUDIOCTLDEVICE
@@ -87,19 +90,6 @@ default audio control device
 To set the playing sampling rate to 11025 you can enter:
 .Pp
 .Dl $ audioctl play.rate=11025
-.Pp
-Note that many of the variables that can be inspected and changed
-are reset when the
-.Pa /dev/audio
-device is opened.
-This can be circumvented like so:
-.Pp
-.Dl $ (cat file.au; audioctl -f /dev/audioctl) \*(Gt /dev/audio
-or
-.Bd -literal -offset indent -compact
-$ (audioctl -f /dev/audioctl play.block_size=1024; cat file.au) \e
-	\*(Gt /dev/audio
-.Ed
 .Sh SEE ALSO
 .Xr aucat 1 ,
 .Xr cdio 1 ,
