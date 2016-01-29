@@ -1,4 +1,4 @@
-/*	$OpenBSD: printjob.c,v 1.56 2016/01/12 23:35:13 tb Exp $	*/
+/*	$OpenBSD: printjob.c,v 1.57 2016/01/29 21:23:11 tb Exp $	*/
 /*	$NetBSD: printjob.c,v 1.31 2002/01/21 14:42:30 wiz Exp $	*/
 
 /*
@@ -1516,32 +1516,6 @@ alarmer(int s)
 	/* nothing */
 }
 
-#if !defined(__NetBSD__) && !defined(__OpenBSD__)
-struct bauds {
-	int	baud;
-	int	speed;
-} bauds[] = {
-	50,	B50,
-	75,	B75,
-	110,	B110,
-	134,	B134,
-	150,	B150,
-	200,	B200,
-	300,	B300,
-	600,	B600,
-	1200,	B1200,
-	1800,	B1800,
-	2400,	B2400,
-	4800,	B4800,
-	9600,	B9600,
-	19200,	B19200,
-	38400,	B38400,
-	57600,	B57600,
-	115200,	B115200,
-	0,	0
-};
-#endif
-
 /*
  * setup tty lines.
  */
@@ -1562,19 +1536,7 @@ setty(void)
 		exit(1);
 	}
 	if (BR > 0) {
-#if defined(__NetBSD__) || defined(__OpenBSD__)
 		cfsetspeed(&i.t, BR);
-#else
-		struct bauds *bp;
-		for (bp = bauds; bp->baud; bp++)
-			if (BR == bp->baud)
-				break;
-		if (!bp->baud) {
-			syslog(LOG_ERR, "%s: illegal baud rate %d", printer, BR);
-			exit(1);
-		}
-		cfsetspeed(&i.t, bp->speed);
-#endif
 		i.set = 1;
 	}
 	if (MS) {
