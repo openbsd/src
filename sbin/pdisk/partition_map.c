@@ -1,4 +1,4 @@
-/*	$OpenBSD: partition_map.c,v 1.80 2016/01/28 22:09:56 krw Exp $	*/
+/*	$OpenBSD: partition_map.c,v 1.81 2016/01/29 12:16:41 krw Exp $	*/
 
 /*
  * partition_map.c - partition map routines
@@ -46,8 +46,6 @@ const char     *kFreeType = "Apple_Free";
 const char     *kMapType = "Apple_partition_map";
 const char     *kUnixType = "OpenBSD";
 const char     *kHFSType = "Apple_HFS";
-
-const char     *kFreeName = "Extra";
 
 enum add_action {
 	kReplace = 0,
@@ -323,8 +321,6 @@ create_partition_map(int fd, char *name, u_int64_t mediasz, uint32_t sectorsz)
 			dpme->dpme_map_entries = 1;
 			dpme->dpme_pblock_start = 1;
 			dpme->dpme_pblocks = map->media_size - 1;
-			strlcpy(dpme->dpme_name, kFreeName,
-			    sizeof(dpme->dpme_name));
 			strlcpy(dpme->dpme_type, kFreeType,
 			    sizeof(dpme->dpme_type));
 			dpme->dpme_lblock_start = 0;
@@ -445,8 +441,7 @@ add_partition_to_map(const char *name, const char *dptype, uint32_t base,
 		if (add_data_to_map(dpme, cur->disk_address, map) == 0) {
 			free(dpme);
 		} else if (act == kSplit) {
-			dpme = create_dpme(kFreeName, kFreeType, new_base,
-			    new_length);
+			dpme = create_dpme("", kFreeType, new_base, new_length);
 			if (dpme != NULL) {
 				/*
 				 * insert new with block address equal to
@@ -536,7 +531,6 @@ delete_partition_from_map(struct partition_map *entry)
 
 	dpme = entry->dpme;
 	memset(dpme->dpme_name, 0, sizeof(dpme->dpme_name));
-	strlcpy(dpme->dpme_name, kFreeName, sizeof(dpme->dpme_name));
 	memset(dpme->dpme_type, 0, sizeof(dpme->dpme_type));
 	strlcpy(dpme->dpme_type, kFreeType, sizeof(dpme->dpme_type));
 	dpme_init_flags(dpme);
