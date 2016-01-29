@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdisk.c,v 1.79 2016/01/29 14:54:38 krw Exp $	*/
+/*	$OpenBSD: pdisk.c,v 1.80 2016/01/29 20:18:17 krw Exp $	*/
 
 /*
  * pdisk - an editor for Apple format partition tables
@@ -54,6 +54,7 @@ int	rflag;	/* open device read Only */
 
 static int	first_get = 1;
 
+void	do_dump_map(struct partition_map *, int);
 void	do_change_map_size(struct partition_map *);
 void	do_create_partition(struct partition_map *, int);
 void	do_delete_partition(struct partition_map *);
@@ -174,10 +175,10 @@ edit(struct partition_map **mapp)
 			    "  w    write the partition map to disk\n");
 			break;
 		case 'P':
-			show_data_structures(map);
+			do_dump_map(map, 1);
 			break;
 		case 'p':
-			dump_partition_map(map);
+			do_dump_map(map, 0);
 			break;
 		case 'q':
 			if (map->changed) {
@@ -493,6 +494,14 @@ do_display_entry(struct partition_map *map)
 		full_dump_partition_entry(map, number);
 }
 
+void
+do_dump_map(struct partition_map *map, int verbose)
+{
+	if (verbose)
+		show_data_structures(map);
+	else
+		dump_partition_map(map);
+}
 
 __dead static void
 usage(void)
