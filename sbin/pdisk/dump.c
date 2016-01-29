@@ -1,4 +1,4 @@
-/*	$OpenBSD: dump.c,v 1.65 2016/01/29 15:06:37 krw Exp $	*/
+/*	$OpenBSD: dump.c,v 1.66 2016/01/29 17:22:44 krw Exp $	*/
 
 /*
  * dump.c - dumping partition maps
@@ -111,7 +111,6 @@ dump_partition_entry(struct entry *entry, int type_length,
 	struct dpme *p;
 	double bytes;
 	int j, driver;
-	uint32_t size;
 
 	map = entry->the_map;
 	p = entry->dpme;
@@ -119,23 +118,10 @@ dump_partition_entry(struct entry *entry, int type_length,
 	printf("%2ld: %*.32s", entry->disk_address, type_length, p->dpme_type);
 	printf("%c%-*.32s ", driver, name_length, p->dpme_name);
 
-	if (p->dpme_lblocks + p->dpme_lblock_start != p->dpme_pblocks) {
-		printf("%*u+", digits, p->dpme_lblocks);
-		size = p->dpme_lblocks;
-	} else if (p->dpme_lblock_start != 0) {
-		printf("%*u ", digits, p->dpme_lblocks);
-		size = p->dpme_lblocks;
-	} else {
-		printf("%*u ", digits, p->dpme_pblocks);
-		size = p->dpme_pblocks;
-	}
-	if (p->dpme_lblock_start == 0)
-		printf("@ %-*u", digits, p->dpme_pblock_start);
-	else
-		printf("@~%-*u", digits, p->dpme_pblock_start +
-		    p->dpme_lblock_start);
+	printf("%*u @ %-*u", digits, p->dpme_pblocks, digits,
+	    p->dpme_pblock_start);
 
-	bytes = ((double) size) * map->physical_block;
+	bytes = ((double) p->dpme_pblocks) * map->physical_block;
 	adjust_value_and_compute_prefix(&bytes, &j);
 	if (j != ' ' && j != 'K')
 		printf(" (%#5.1f%c)", bytes, j);
@@ -181,7 +167,7 @@ show_data_structures(struct partition_map *map)
 	}
 	printf("\n");
 	printf(" #:                 type  length   base    "
-	       "flags        (logical)\n");
+	       "flags     (      logical      )\n");
 	LIST_FOREACH(entry, &map->disk_order, disk_entry) {
 		p = entry->dpme;
 		printf("%2ld: %20.32s ", entry->disk_address, p->dpme_type);
@@ -196,12 +182,8 @@ show_data_structures(struct partition_map *map)
 		       (p->dpme_flags & DPME_OS_PIC_CODE) ? 'P' : '.',
 		       (p->dpme_flags & DPME_OS_SPECIFIC_2) ? '2' : '.',
 		       (p->dpme_flags & DPME_OS_SPECIFIC_1) ? '1' : '.');
-		if (p->dpme_lblock_start != 0 || p->dpme_pblocks !=
-		    p->dpme_lblocks) {
-			printf("(%u @ %u)", p->dpme_lblocks,
-			    p->dpme_lblock_start);
-		}
-		printf("\n");
+		printf("( %7u @ %-7u )\n", p->dpme_lblocks,
+		    p->dpme_lblock_start);
 	}
 	printf("\n");
 	printf(" #:  booter   bytes      load_address      "
