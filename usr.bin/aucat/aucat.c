@@ -622,8 +622,8 @@ dev_open(char *dev, int mode, int bufsz, char *port)
 	}
 	if (par.bits != ADATA_BITS ||
 	    par.bps != sizeof(adata_t) ||
-	    par.le != SIO_LE_NATIVE ||
-	    (par.bps != SIO_BPS(par.bits) && par.msb)) {
+	    (par.bps > 1 && par.le != SIO_LE_NATIVE) ||
+	    (par.bps * 8 > par.bits && par.msb)) {
 		log_puts(dev_name);
 		log_puts(": unsupported audio params\n");
 		return 0;
