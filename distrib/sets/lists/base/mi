@@ -2588,6 +2588,7 @@
 ./usr/share/snmp/mibs/OPENBSD-CARP-MIB.txt
 ./usr/share/snmp/mibs/OPENBSD-MEM-MIB.txt
 ./usr/share/snmp/mibs/OPENBSD-PF-MIB.txt
+./usr/share/snmp/mibs/OPENBSD-RELAYD-MIB.txt
 ./usr/share/snmp/mibs/OPENBSD-SENSORS-MIB.txt
 ./usr/share/snmp/mibs/OPENBSD-SNMPD-CONF.txt
 ./usr/share/tabset
