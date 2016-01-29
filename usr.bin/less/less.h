@@ -15,19 +15,18 @@
 
 #include "defines.h"
 
-/* Library function declarations */
-
 #include <sys/types.h>
-#include <stdio.h>
-#include <fcntl.h>
-#include <unistd.h>
+
 #include <ctype.h>
-#include <wctype.h>
+#include <fcntl.h>
+#include <libgen.h>
 #include <limits.h>
+#include <signal.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <libgen.h>
-#include <signal.h>
+#include <unistd.h>
+#include <wctype.h>
 
 /*
  * Simple lowercase test which can be used during option processing
