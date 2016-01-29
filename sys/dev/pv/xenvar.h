@@ -1,4 +1,4 @@
-/*	$OpenBSD: xenvar.h,v 1.26 2016/01/29 18:49:06 mikeb Exp $	*/
+/*	$OpenBSD: xenvar.h,v 1.27 2016/01/29 19:04:30 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Belopuhov
@@ -132,10 +132,12 @@ int	xen_intr_unmask(xen_intr_handle_t);
  */
 #define XS_LIST			0x01
 #define XS_READ			0x02
+#define XS_WATCH		0x04
 #define XS_TOPEN		0x06
 #define XS_TCLOSE		0x07
 #define XS_WRITE		0x0b
 #define XS_RM			0x0d
+#define XS_EVENT		0x0f
 #define XS_ERROR		0x10
 #define XS_MAX			0x16
 
@@ -149,6 +151,8 @@ struct xs_transaction {
 int	xs_cmd(struct xs_transaction *, int, const char *, struct iovec **,
 	    int *);
 void	xs_resfree(struct xs_transaction *, struct iovec *, int);
+int	xs_watch(struct xen_softc *, const char *, const char *, struct task *,
+	    void (*)(void *), void *);
 int	xs_getprop(struct xen_softc *, const char *, const char *, char *, int);
 int	xs_setprop(struct xen_softc *, const char *, const char *, char *, int);
 int	xs_kvop(void *, int, char *, char *, size_t);

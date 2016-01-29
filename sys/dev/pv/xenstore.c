@@ -1,4 +1,4 @@
-/*	$OpenBSD: xenstore.c,v 1.23 2016/01/29 18:49:06 mikeb Exp $	*/
+/*	$OpenBSD: xenstore.c,v 1.24 2016/01/29 19:04:30 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Belopuhov
@@ -24,6 +24,7 @@
 #include <sys/device.h>
 #include <sys/mutex.h>
 #include <sys/ioctl.h>
+#include <sys/task.h>
 
 #include <machine/bus.h>
 
@@ -128,6 +129,14 @@ struct xs_ring {
 
 #define XST_DELAY		1	/* in seconds */
 
+#define XSW_TOKLEN		(sizeof(void *) * 2 + 1)
+
+struct xs_watch {
+	TAILQ_ENTRY(xs_watch)	 xsw_entry;
+	uint8_t			 xsw_token[XSW_TOKLEN];
+	struct task		*xsw_task;
+};
+
 /*
  * Container for all XenStore related state.
  */
@@ -155,20 +164,26 @@ struct xs_softc {
 	struct mutex		 xs_rsplck;	/* response queue mutex */
 	struct mutex		 xs_frqlck;	/* free queue mutex */
 
+	TAILQ_HEAD(, xs_watch)	 xs_watches;
+	struct mutex		 xs_watchlck;
+	struct xs_msg		 xs_emsg;
+
 	uint			 xs_rngsem;
 };
 
-struct xs_msg	*xs_get_msg(struct xs_softc *, int);
-void		 xs_put_msg(struct xs_softc *, struct xs_msg *);
-int		 xs_ring_get(struct xs_softc *, void *, size_t);
-int		 xs_ring_put(struct xs_softc *, void *, size_t);
-void		 xs_intr(void *);
-int		 xs_output(struct xs_transaction *, uint8_t *, int);
-int		 xs_start(struct xs_transaction *, struct xs_msg *,
-		    struct iovec *, int);
-struct xs_msg	*xs_reply(struct xs_transaction *, uint);
-int		 xs_parse(struct xs_transaction *, struct xs_msg *,
-		     struct iovec **, int *);
+struct xs_msg *
+	xs_get_msg(struct xs_softc *, int);
+void	xs_put_msg(struct xs_softc *, struct xs_msg *);
+int	xs_ring_get(struct xs_softc *, void *, size_t);
+int	xs_ring_put(struct xs_softc *, void *, size_t);
+void	xs_intr(void *);
+int	xs_output(struct xs_transaction *, uint8_t *, int);
+int	xs_start(struct xs_transaction *, struct xs_msg *, struct iovec *, int);
+struct xs_msg *
+	xs_reply(struct xs_transaction *, uint);
+int	xs_parse(struct xs_transaction *, struct xs_msg *, struct iovec **,
+	    int *);
+int	xs_event(struct xs_softc *, struct xs_msg *);
 
 int
 xs_attach(struct xen_softc *sc)
@@ -229,6 +244,15 @@ xs_attach(struct xen_softc *sc)
 	mtx_init(&xs->xs_reqlck, IPL_NET);
 	mtx_init(&xs->xs_rsplck, IPL_NET);
 	mtx_init(&xs->xs_frqlck, IPL_NET);
+
+	mtx_init(&xs->xs_watchlck, IPL_NET);
+	TAILQ_INIT(&xs->xs_watches);
+
+	xs->xs_emsg.xsm_data = malloc(XS_MAX_PAYLOAD, M_DEVBUF,
+	    M_ZERO | M_NOWAIT);
+	if (xs->xs_emsg.xsm_data == NULL)
+		goto fail_2;
+	xs->xs_emsg.xsm_dlen = XS_MAX_PAYLOAD;
 
 	return (0);
 
@@ -516,27 +540,31 @@ xs_intr(void *arg)
 		}
 		avail -= sizeof(xmh);
 
-		if (TAILQ_EMPTY(&xs->xs_reqs)) {
-			printf("%s: missing requests\n", sc->sc_dev.dv_xname);
-			goto out;
-		}
-
 		if ((len = xs_ring_get(xs, &xmh, sizeof(xmh))) != sizeof(xmh)) {
 			printf("%s: message too short: %d\n",
 			    sc->sc_dev.dv_xname, len);
 			goto out;
 		}
 
-		TAILQ_FOREACH(xsm, &xs->xs_reqs, xsm_link) {
-			if (xsm->xsm_hdr.xmh_rid == xmh.xmh_rid)
-				break;
+		if (xmh.xmh_type == XS_EVENT) {
+			xsm = &xs->xs_emsg;
+			xsm->xsm_read = 0;
+		} else {
+			mtx_enter(&xs->xs_reqlck);
+			TAILQ_FOREACH(xsm, &xs->xs_reqs, xsm_link) {
+				if (xsm->xsm_hdr.xmh_rid == xmh.xmh_rid) {
+					TAILQ_REMOVE(&xs->xs_reqs, xsm,
+					    xsm_link);
+					break;
+				}
+			}
+			mtx_leave(&xs->xs_reqlck);
+			if (xsm == NULL) {
+				printf("%s: unexpected message id %u\n",
+				    sc->sc_dev.dv_xname, xmh.xmh_rid);
+				goto out;
+			}
 		}
-		if (xsm == NULL) {
-			printf("%s: received unexpected message id %u\n",
-			    sc->sc_dev.dv_xname, xmh.xmh_rid);
-			goto out;
-		}
-
 		memcpy(&xsm->xsm_hdr, &xmh, sizeof(xmh));
 		xs->xs_rmsg = xsm;
 	}
@@ -561,11 +589,16 @@ xs_intr(void *arg)
 	/* Notify reader that we've managed to read the whole message */
 	if (xsm->xsm_read == xsm->xsm_hdr.xmh_len) {
 		xs->xs_rmsg = NULL;
-		mtx_enter(&xs->xs_rsplck);
-		TAILQ_REMOVE(&xs->xs_reqs, xsm, xsm_link);
-		TAILQ_INSERT_TAIL(&xs->xs_rsps, xsm, xsm_link);
-		mtx_leave(&xs->xs_rsplck);
-		wakeup(xs->xs_rchan);
+		if (xsm->xsm_hdr.xmh_type == XS_EVENT) {
+			if (xs_event(xs, xsm))
+				printf("%s: no watchers for node \"%s\"\n",
+				    sc->sc_dev.dv_xname, xsm->xsm_data);
+		} else {
+			mtx_enter(&xs->xs_rsplck);
+			TAILQ_INSERT_TAIL(&xs->xs_rsps, xsm, xsm_link);
+			mtx_leave(&xs->xs_rsplck);
+			wakeup(xs->xs_rchan);
+		}
 	}
 
  out:
@@ -655,6 +688,32 @@ xs_parse(struct xs_transaction *xst, struct xs_msg *xsm, struct iovec **iov,
 }
 
 int
+xs_event(struct xs_softc *xs, struct xs_msg *xsm)
+{
+	struct xs_watch *xsw;
+	char *token;
+	int i;
+
+	for (i = 0; i < xsm->xsm_read; i++) {
+		if (xsm->xsm_data[i] == '\0') {
+			token = &xsm->xsm_data[i+1];
+			break;
+		}
+	}
+
+	mtx_enter(&xs->xs_watchlck);
+	TAILQ_FOREACH(xsw, &xs->xs_watches, xsw_entry) {
+		if (strcmp(xsw->xsw_token, token))
+			continue;
+		mtx_leave(&xs->xs_watchlck);
+		task_add(systq, xsw->xsw_task);
+		return (0);
+	}
+	mtx_leave(&xs->xs_watchlck);
+	return (-1);
+}
+
+int
 xs_cmd(struct xs_transaction *xst, int cmd, const char *path,
     struct iovec **iov, int *iov_cnt)
 {
@@ -677,6 +736,7 @@ xs_cmd(struct xs_transaction *xst, int cmd, const char *path,
 		break;
 	case XS_TCLOSE:
 	case XS_RM:
+	case XS_WATCH:
 	case XS_WRITE:
 		mode = WRITE;
 		/* FALLTHROUGH */
@@ -750,6 +810,56 @@ xs_cmd(struct xs_transaction *xst, int cmd, const char *path,
 	xs_put_msg(xs, xsm);
 
 	return (error);
+}
+
+int
+xs_watch(struct xen_softc *sc, const char *path, const char *property,
+    struct task *task, void (*cb)(void *), void *arg)
+{
+	struct xs_softc *xs = sc->sc_xs;
+	struct xs_transaction xst;
+	struct xs_watch *xsw;
+	struct iovec iov, *iovp = &iov;
+	char key[256];
+	int error, iov_cnt, ret;
+
+	memset(&xst, 0, sizeof(xst));
+	xst.xst_id = 0;
+	xst.xst_sc = sc->sc_xs;
+	if (cold)
+		xst.xst_flags = XST_POLL;
+
+	xsw = malloc(sizeof(*xsw), M_DEVBUF, M_NOWAIT | M_ZERO);
+	if (xsw == NULL)
+		return (-1);
+
+	task_set(task, cb, arg);
+	xsw->xsw_task = task;
+
+	snprintf(xsw->xsw_token, sizeof(xsw->xsw_token), "%0lx",
+	    (unsigned long)xsw);
+
+	if (path)
+		ret = snprintf(key, sizeof(key), "%s/%s", path, property);
+	else
+		ret = snprintf(key, sizeof(key), "%s", property);
+	if (ret == -1 || ret >= sizeof(key))
+		return (EINVAL);
+
+	iov.iov_base = xsw->xsw_token;
+	iov.iov_len = sizeof(xsw->xsw_token);
+	iov_cnt = 1;
+
+	if ((error = xs_cmd(&xst, XS_WATCH, key, &iovp, &iov_cnt)) != 0) {
+		free(xsw, M_DEVBUF, sizeof(*xsw));
+		return (error);
+	}
+
+	mtx_enter(&xs->xs_watchlck);
+	TAILQ_INSERT_TAIL(&xs->xs_watches, xsw, xsw_entry);
+	mtx_leave(&xs->xs_watchlck);
+
+	return (0);
 }
 
 int

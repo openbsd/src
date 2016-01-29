@@ -1,4 +1,4 @@
-/*	$OpenBSD: xen.c,v 1.46 2016/01/29 18:49:06 mikeb Exp $	*/
+/*	$OpenBSD: xen.c,v 1.47 2016/01/29 19:04:30 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Belopuhov
@@ -21,6 +21,7 @@
 #include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
+#include <sys/task.h>
 
 #include <machine/bus.h>
 #include <machine/cpu.h>

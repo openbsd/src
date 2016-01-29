@@ -1,4 +1,4 @@
-/*	$OpenBSD: xspd.c,v 1.4 2016/01/15 14:27:08 mikeb Exp $	*/
+/*	$OpenBSD: xspd.c,v 1.5 2016/01/29 19:04:30 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Belopuhov
@@ -22,6 +22,7 @@
 #include <sys/systm.h>
 #include <sys/atomic.h>
 #include <sys/device.h>
+#include <sys/task.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
