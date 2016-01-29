@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.28 2016/01/28 13:01:33 krw Exp $	*/
+/*	$OpenBSD: io.c,v 1.29 2016/01/29 18:40:08 krw Exp $	*/
 
 /*
  * io.c - simple io and input parsing routines
@@ -36,13 +36,12 @@
 #include "dpme.h"
 #include "io.h"
 
-#define BAD_DIGIT 17		/* must be greater than any base */
 #define UNGET_MAX_COUNT 10
 
 short	unget_buf[UNGET_MAX_COUNT + 1];
 int	unget_count;
 
-static long	get_number(int);
+static int	get_number(long *);
 static char    *get_string(int);
 static int	my_getch (void);
 
@@ -162,8 +161,8 @@ get_number_argument(const char *prompt, long *number)
 		} else if (c == '\n') {
 			printf(prompt);
 		} else if ('0' <= c && c <= '9') {
-			*number = get_number(c);
-			result = 1;
+			my_ungetch(c);
+			result = get_number(number);
 			break;
 		} else {
 			my_ungetch(c);
@@ -175,41 +174,26 @@ get_number_argument(const char *prompt, long *number)
 }
 
 
-long
-get_number(int first_char)
+int
+get_number(long *number)
 {
-	int c, base, digit, ret_value;
+	long value;
+	int c;
 
-	if (first_char != '0') {
-		c = first_char;
-		base = 10;
-		digit = BAD_DIGIT;
-	} else if ((c = my_getch()) == 'x' || c == 'X') {
-		c = my_getch();
-		base = 16;
-		digit = BAD_DIGIT;
-	} else {
-		my_ungetch(c);
-		c = first_char;
-		base = 8;
-		digit = 0;
+	value = 0;
+	while ((c = my_getch())) {
+		if (c >= '0' && c <= '9') {
+			value = value * 10 + (c - '0');
+		} else if (c == ' ' || c == '\t' || c == '\n') {
+			my_ungetch(c);
+			*number = value;
+			return 1;
+		} else {
+			return 0;
+		}
 	}
-	ret_value = 0;
-	for (ret_value = 0;; c = my_getch()) {
-		if (c >= '0' && c <= '9')
-			digit = c - '0';
-		else if (c >= 'A' && c <= 'F')
-			digit = 10 + (c - 'A');
-		else if (c >= 'a' && c <= 'f')
-			digit = 10 + (c - 'a');
-		else
-			digit = BAD_DIGIT;
-		if (digit >= base)
-			break;
-		ret_value = ret_value * base + digit;
-	}
-	my_ungetch(c);
-	return ret_value;
+
+	return 0;
 }
 
 char *
