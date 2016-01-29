@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.143 2016/01/20 19:01:39 ratchov Exp $	*/
+/*	$OpenBSD: audio.c,v 1.144 2016/01/29 15:14:23 ratchov Exp $	*/
 /*
  * Copyright (c) 2015 Alexandre Ratchov <alex@caoua.org>
  *
@@ -1532,6 +1532,16 @@ audio_write(struct audio_softc *sc, struct uio *uio, int ioflag)
 }
 
 int
+audio_getdev(struct audio_softc *sc, struct audio_device *adev)
+{
+	memset(adev, 0, sizeof(struct audio_device));
+	if (sc->dev.dv_parent == NULL)
+		return EIO;
+	strlcpy(adev->name, sc->dev.dv_parent->dv_xname, MAX_AUDIO_DEV_LEN);
+	return 0;
+}
+
+int
 audio_ioctl(struct audio_softc *sc, unsigned long cmd, void *addr)
 {
 	struct audio_offset *ao;
@@ -1584,11 +1594,7 @@ audio_ioctl(struct audio_softc *sc, unsigned long cmd, void *addr)
 		error = audio_getinfo(sc, (struct audio_info *)addr);
 		break;
 	case AUDIO_GETDEV:
-		memset(addr, 0, sizeof(struct audio_device));
-		if (sc->dev.dv_parent)
-			strlcpy(((struct audio_device *)addr)->name,
-			    sc->dev.dv_parent->dv_xname,
-			    MAX_AUDIO_DEV_LEN);
+		error = audio_getdev(sc, (struct audio_device *)addr);
 		break;
 	case AUDIO_GETENC:
 		error = sc->ops->query_encoding(sc->arg,
