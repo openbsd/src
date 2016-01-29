@@ -1,4 +1,4 @@
-/*	$OpenBSD: partition_map.c,v 1.85 2016/01/29 15:06:37 krw Exp $	*/
+/*	$OpenBSD: partition_map.c,v 1.86 2016/01/29 17:34:08 krw Exp $	*/
 
 /*
  * partition_map.c - partition map routines
@@ -223,6 +223,12 @@ read_partition_map(struct partition_map *map)
 	LIST_FOREACH(cur, &map->base_order, base_entry) {
 		base = cur->dpme->dpme_pblock_start;
 		next = base + cur->dpme->dpme_pblocks;
+		if (base >= map->media_size ||
+		    next < base ||
+		    next > map->media_size) {
+			warnx("Partition extends past end of disk: %u -> %u",
+			    base, next);
+		}
 		nextcur = LIST_NEXT(cur, base_entry);
 		if (nextcur)
 			nextbase = nextcur->dpme->dpme_pblock_start;
