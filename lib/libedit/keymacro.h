@@ -1,4 +1,4 @@
-/*	$OpenBSD: key.h,v 1.8 2010/06/30 00:05:35 nicm Exp $	*/
+/*	$OpenBSD: keymacro.h,v 1.1 2016/01/29 17:23:21 schwarze Exp $	*/
 /*	$NetBSD: key.h,v 1.13 2009/12/30 22:37:40 christos Exp $	*/
 
 /*-
@@ -36,10 +36,10 @@
  */
 
 /*
- * el.key.h: Key macro header
+ * el.keymacro.h: Key macro header
  */
-#ifndef _h_el_key
-#define	_h_el_key
+#ifndef _h_el_keymacro
+#define	_h_el_keymacro
 
 typedef union key_value_t {
 	el_action_t	 cmd;	/* If it is a command the #	*/
@@ -78,4 +78,4 @@ protected void	         key_kprint(EditLine *, const Char *, key_value_t *,
 protected size_t	 key__decode_str(const Char *, char *, size_t,
     const char *);
 
-#endif /* _h_el_key */
+#endif /* _h_el_keymacro */

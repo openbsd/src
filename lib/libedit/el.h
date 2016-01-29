@@ -1,4 +1,4 @@
-/*	$OpenBSD: el.h,v 1.9 2014/10/17 06:07:50 deraadt Exp $	*/
+/*	$OpenBSD: el.h,v 1.10 2016/01/29 17:23:21 schwarze Exp $	*/
 /*	$NetBSD: el.h,v 1.21 2009/12/31 15:58:26 christos Exp $	*/
 
 /*-
@@ -94,8 +94,8 @@ typedef struct el_state_t {
 
 #include "tty.h"
 #include "prompt.h"
-#include "key.h"
-#include "term.h"
+#include "keymacro.h"
+#include "terminal.h"
 #include "refresh.h"
 #include "chared.h"
 #include "common.h"

@@ -1,4 +1,4 @@
-/*	$OpenBSD: term.h,v 1.8 2010/06/30 00:05:35 nicm Exp $	*/
+/*	$OpenBSD: terminal.h,v 1.1 2016/01/29 17:23:21 schwarze Exp $	*/
 /*	$NetBSD: term.h,v 1.21 2009/12/30 22:37:40 christos Exp $	*/
 
 /*-
@@ -38,8 +38,8 @@
 /*
  * el.term.h: Termcap header
  */
-#ifndef _h_el_term
-#define	_h_el_term
+#ifndef _h_el_terminal
+#define	_h_el_terminal
 
 #include "histedit.h"
 
@@ -123,4 +123,4 @@ protected void	term__flush(EditLine *);
 #define	EL_HAS_AUTO_MARGINS	(EL_FLAGS & TERM_HAS_AUTO_MARGINS)
 #define	EL_HAS_MAGIC_MARGINS	(EL_FLAGS & TERM_HAS_MAGIC_MARGINS)
 
-#endif /* _h_el_term */
+#endif /* _h_el_terminal */

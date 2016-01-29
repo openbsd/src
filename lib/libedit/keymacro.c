@@ -1,4 +1,4 @@
-/*	$OpenBSD: key.c,v 1.12 2014/10/17 06:07:50 deraadt Exp $	*/
+/*	$OpenBSD: keymacro.c,v 1.1 2016/01/29 17:23:21 schwarze Exp $	*/
 /*	$NetBSD: key.c,v 1.23 2009/12/30 22:37:40 christos Exp $	*/
 
 /*-
