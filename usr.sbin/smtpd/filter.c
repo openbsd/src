@@ -1,4 +1,4 @@
-/*	$OpenBSD: filter.c,v 1.13 2016/01/29 08:06:27 eric Exp $	*/
+/*	$OpenBSD: filter.c,v 1.14 2016/01/29 10:49:53 eric Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@poolp.org>
@@ -86,7 +86,6 @@ struct filter_query {
 	struct filter_session		*session;
 
 	int				 state;
-	int				 hasrun;
 	struct filter			*current;
 
 	/* current data */
@@ -438,7 +437,6 @@ filter_query(struct filter_session *s, int type)
 
 	q->state = QUERY_READY;
 	q->current = TAILQ_FIRST(s->filters);
-	q->hasrun = 0;
 
 	log_trace(TRACE_FILTERS, "filter: new query %s", query_to_str(type));
 
@@ -458,20 +456,13 @@ filter_drain_query(struct filter_query *q)
 	while (q->state != QUERY_DONE) {
 		/* Walk over all filters */
 		while (q->current) {
-			/* Trigger the current filter if not done yet. */
-			if (!q->hasrun) {
-				filter_run_query(q->current, q);
-				q->hasrun = 1;
-			}
+			filter_run_query(q->current, q);
 			if (q->state == QUERY_RUNNING) {
 				log_trace(TRACE_FILTERS,
 				    "filter: waiting for running query %s",
 				    filter_query_to_text(q));
 				return;
 			}
-
-			q->current = TAILQ_NEXT(q->current, entry);
-			q->hasrun = 0;
 		}
 		q->state = QUERY_DONE;
 	}
@@ -647,6 +638,7 @@ filter_imsg(struct mproc *p, struct imsg *imsg)
 		if (type == QUERY_EOM)
 			q->u.datalen = datalen;
 
+		q->current = TAILQ_NEXT(q->current, entry);
 		filter_drain_query(q);
 		break;
 
