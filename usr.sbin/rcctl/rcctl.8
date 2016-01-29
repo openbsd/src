@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rcctl.8,v 1.26 2015/10/24 17:08:36 jmc Exp $
+.\"	$OpenBSD: rcctl.8,v 1.27 2016/01/29 20:14:08 ajacoutot Exp $
 .\"
 .\" Copyright (c) 2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 24 2015 $
+.Dd $Mdocdate: January 29 2016 $
 .Dt RCCTL 8
 .Os
 .Sh NAME
@@ -181,15 +181,16 @@ utility exits with 0 on success, and >0 if an error occurs
 .Pc .
 .Sh EXAMPLES
 Enable and set
-.Xr ntpd 8
+.Xr apmd 8
 flags:
 .Bd -literal -offset indent
-# rcctl set ntpd status on
-# rcctl set ntpd flags -s
-# rcctl get ntpd
-ntpd_flags=-s
-ntpd_timeout=30
-ntpd_user=root
+# rcctl set apmd status on                                                                      
+# rcctl set apmd flags -A
+# rcctl get apmd                                                                                
+apmd_class=daemon
+apmd_flags=-A
+apmd_timeout=30
+apmd_user=root
 # echo $?
 0
 .Ed
