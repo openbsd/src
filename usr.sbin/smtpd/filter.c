@@ -1,4 +1,4 @@
-/*	$OpenBSD: filter.c,v 1.14 2016/01/29 10:49:53 eric Exp $	*/
+/*	$OpenBSD: filter.c,v 1.15 2016/01/29 12:43:38 eric Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@poolp.org>
@@ -68,8 +68,6 @@ struct filter_session {
 	int			 terminate;
 	struct filter_lst	*filters;
 	struct filter		*fcurr;
-
-	struct filter_query_lst	 queries;
 
 	int			 error;
 	struct io		 iev;
@@ -316,7 +314,6 @@ filter_connect(uint64_t id, const struct sockaddr *local,
 		filter = "<no-filter>";
 	s->filters = dict_xget(&chains, filter);
 	s->iev.sock = -1;
-	TAILQ_INIT(&s->queries);
 	tree_xset(&sessions, s->id, s);
 
 	filter_event(id, EVENT_CONNECT);
