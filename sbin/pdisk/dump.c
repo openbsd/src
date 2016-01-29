@@ -1,4 +1,4 @@
-/*	$OpenBSD: dump.c,v 1.64 2016/01/29 14:54:38 krw Exp $	*/
+/*	$OpenBSD: dump.c,v 1.65 2016/01/29 15:06:37 krw Exp $	*/
 
 /*
  * dump.c - dumping partition maps
@@ -225,7 +225,7 @@ void
 full_dump_partition_entry(struct partition_map *map, int ix)
 {
 	struct entry *cur;
-	struct dpme    *p;
+	struct dpme *p;
 	int i;
 	uint32_t t;
 
@@ -242,7 +242,7 @@ full_dump_partition_entry(struct partition_map *map, int ix)
 	printf("         logical start: %10u  length: %10u\n",
 	    p->dpme_lblock_start, p->dpme_lblocks);
 
-	printf("                 flags: 0x%x\n", (uint32_t) p->dpme_flags);
+	printf("                 flags: 0x%x\n", (uint32_t)p->dpme_flags);
 	printf("                        ");
 	if (p->dpme_flags & DPME_VALID)
 		printf("valid ");

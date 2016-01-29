@@ -1,4 +1,4 @@
-/*	$OpenBSD: partition_map.c,v 1.84 2016/01/29 14:54:38 krw Exp $	*/
+/*	$OpenBSD: partition_map.c,v 1.85 2016/01/29 15:06:37 krw Exp $	*/
 
 /*
  * partition_map.c - partition map routines
@@ -53,8 +53,7 @@ enum add_action {
 	kSplit = 2
 };
 
-int		add_data_to_map(struct dpme *, long,
-		    struct partition_map *);
+int		add_data_to_map(struct dpme *, long, struct partition_map *);
 int		coerce_block0(struct partition_map *);
 int		contains_driver(struct entry *);
 void		combine_entry(struct entry *);
