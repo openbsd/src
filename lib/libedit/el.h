@@ -1,4 +1,4 @@
-/*	$OpenBSD: el.h,v 1.10 2016/01/29 17:23:21 schwarze Exp $	*/
+/*	$OpenBSD: el.h,v 1.11 2016/01/29 19:32:33 schwarze Exp $	*/
 /*	$NetBSD: el.h,v 1.21 2009/12/31 15:58:26 christos Exp $	*/
 
 /*-
@@ -130,7 +130,7 @@ struct editline {
 	el_prompt_t	  el_rprompt;	/* Prompt stuff			*/
 	el_chared_t	  el_chared;	/* Characted editor stuff	*/
 	el_map_t	  el_map;	/* Key mapping stuff		*/
-	el_key_t	  el_key;	/* Key binding stuff		*/
+	el_keymacro_t	  el_keymacro;	/* Key binding stuff		*/
 	el_history_t	  el_history;	/* History stuff		*/
 	el_search_t	  el_search;	/* Search stuff			*/
 	el_signal_t	  el_signal;	/* Signal handling stuff	*/

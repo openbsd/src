@@ -1,4 +1,4 @@
-/*	$OpenBSD: el.c,v 1.20 2015/01/16 16:48:51 deraadt Exp $	*/
+/*	$OpenBSD: el.c,v 1.21 2016/01/29 19:32:33 schwarze Exp $	*/
 /*	$NetBSD: el.c,v 1.61 2011/01/27 23:11:40 christos Exp $	*/
 
 /*-
@@ -91,7 +91,7 @@ el_init(const char *prog, FILE *fin, FILE *fout, FILE *ferr)
 		free(el);
 		return NULL;
 	}
-	(void) key_init(el);
+	(void) keymacro_init(el);
 	(void) map_init(el);
 	if (tty_init(el) == -1)
 		el->el_flags |= NO_TTY;
@@ -119,7 +119,7 @@ el_end(EditLine *el)
 	el_reset(el);
 
 	term_end(el);
-	key_end(el);
+	keymacro_end(el);
 	map_end(el);
 	tty_end(el);
 	ch_end(el);

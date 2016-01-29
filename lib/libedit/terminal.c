@@ -1,4 +1,4 @@
-/*	$OpenBSD: terminal.c,v 1.1 2016/01/29 17:23:21 schwarze Exp $	*/
+/*	$OpenBSD: terminal.c,v 1.2 2016/01/29 19:32:33 schwarze Exp $	*/
 /*	$NetBSD: term.c,v 1.57 2009/12/30 22:37:40 christos Exp $	*/
 
 /*-
@@ -1137,33 +1137,33 @@ term_reset_arrow(EditLine *el)
 	static const Char stOH[] = {033, 'O', 'H', '\0'};
 	static const Char stOF[] = {033, 'O', 'F', '\0'};
 
-	key_add(el, strA, &arrow[A_K_UP].fun, arrow[A_K_UP].type);
-	key_add(el, strB, &arrow[A_K_DN].fun, arrow[A_K_DN].type);
-	key_add(el, strC, &arrow[A_K_RT].fun, arrow[A_K_RT].type);
-	key_add(el, strD, &arrow[A_K_LT].fun, arrow[A_K_LT].type);
-	key_add(el, strH, &arrow[A_K_HO].fun, arrow[A_K_HO].type);
-	key_add(el, strF, &arrow[A_K_EN].fun, arrow[A_K_EN].type);
-	key_add(el, stOA, &arrow[A_K_UP].fun, arrow[A_K_UP].type);
-	key_add(el, stOB, &arrow[A_K_DN].fun, arrow[A_K_DN].type);
-	key_add(el, stOC, &arrow[A_K_RT].fun, arrow[A_K_RT].type);
-	key_add(el, stOD, &arrow[A_K_LT].fun, arrow[A_K_LT].type);
-	key_add(el, stOH, &arrow[A_K_HO].fun, arrow[A_K_HO].type);
-	key_add(el, stOF, &arrow[A_K_EN].fun, arrow[A_K_EN].type);
+	keymacro_add(el, strA, &arrow[A_K_UP].fun, arrow[A_K_UP].type);
+	keymacro_add(el, strB, &arrow[A_K_DN].fun, arrow[A_K_DN].type);
+	keymacro_add(el, strC, &arrow[A_K_RT].fun, arrow[A_K_RT].type);
+	keymacro_add(el, strD, &arrow[A_K_LT].fun, arrow[A_K_LT].type);
+	keymacro_add(el, strH, &arrow[A_K_HO].fun, arrow[A_K_HO].type);
+	keymacro_add(el, strF, &arrow[A_K_EN].fun, arrow[A_K_EN].type);
+	keymacro_add(el, stOA, &arrow[A_K_UP].fun, arrow[A_K_UP].type);
+	keymacro_add(el, stOB, &arrow[A_K_DN].fun, arrow[A_K_DN].type);
+	keymacro_add(el, stOC, &arrow[A_K_RT].fun, arrow[A_K_RT].type);
+	keymacro_add(el, stOD, &arrow[A_K_LT].fun, arrow[A_K_LT].type);
+	keymacro_add(el, stOH, &arrow[A_K_HO].fun, arrow[A_K_HO].type);
+	keymacro_add(el, stOF, &arrow[A_K_EN].fun, arrow[A_K_EN].type);
 
-	if (el->el_map.type == MAP_VI) {
-		key_add(el, &strA[1], &arrow[A_K_UP].fun, arrow[A_K_UP].type);
-		key_add(el, &strB[1], &arrow[A_K_DN].fun, arrow[A_K_DN].type);
-		key_add(el, &strC[1], &arrow[A_K_RT].fun, arrow[A_K_RT].type);
-		key_add(el, &strD[1], &arrow[A_K_LT].fun, arrow[A_K_LT].type);
-		key_add(el, &strH[1], &arrow[A_K_HO].fun, arrow[A_K_HO].type);
-		key_add(el, &strF[1], &arrow[A_K_EN].fun, arrow[A_K_EN].type);
-		key_add(el, &stOA[1], &arrow[A_K_UP].fun, arrow[A_K_UP].type);
-		key_add(el, &stOB[1], &arrow[A_K_DN].fun, arrow[A_K_DN].type);
-		key_add(el, &stOC[1], &arrow[A_K_RT].fun, arrow[A_K_RT].type);
-		key_add(el, &stOD[1], &arrow[A_K_LT].fun, arrow[A_K_LT].type);
-		key_add(el, &stOH[1], &arrow[A_K_HO].fun, arrow[A_K_HO].type);
-		key_add(el, &stOF[1], &arrow[A_K_EN].fun, arrow[A_K_EN].type);
-	}
+	if (el->el_map.type != MAP_VI)
+		return;
+	keymacro_add(el, &strA[1], &arrow[A_K_UP].fun, arrow[A_K_UP].type);
+	keymacro_add(el, &strB[1], &arrow[A_K_DN].fun, arrow[A_K_DN].type);
+	keymacro_add(el, &strC[1], &arrow[A_K_RT].fun, arrow[A_K_RT].type);
+	keymacro_add(el, &strD[1], &arrow[A_K_LT].fun, arrow[A_K_LT].type);
+	keymacro_add(el, &strH[1], &arrow[A_K_HO].fun, arrow[A_K_HO].type);
+	keymacro_add(el, &strF[1], &arrow[A_K_EN].fun, arrow[A_K_EN].type);
+	keymacro_add(el, &stOA[1], &arrow[A_K_UP].fun, arrow[A_K_UP].type);
+	keymacro_add(el, &stOB[1], &arrow[A_K_DN].fun, arrow[A_K_DN].type);
+	keymacro_add(el, &stOC[1], &arrow[A_K_RT].fun, arrow[A_K_RT].type);
+	keymacro_add(el, &stOD[1], &arrow[A_K_LT].fun, arrow[A_K_LT].type);
+	keymacro_add(el, &stOH[1], &arrow[A_K_HO].fun, arrow[A_K_HO].type);
+	keymacro_add(el, &stOF[1], &arrow[A_K_EN].fun, arrow[A_K_EN].type);
 }
 
 
@@ -1171,7 +1171,7 @@ term_reset_arrow(EditLine *el)
  *	Set an arrow key binding
  */
 protected int
-term_set_arrow(EditLine *el, const Char *name, key_value_t *fun, int type)
+term_set_arrow(EditLine *el, const Char *name, keymacro_value_t *fun, int type)
 {
 	fkey_t *arrow = el->el_term.t_fkey;
 	int i;
@@ -1216,8 +1216,8 @@ term_print_arrow(EditLine *el, const Char *name)
 	for (i = 0; i < A_K_NKEYS; i++)
 		if (*name == '\0' || Strcmp(name, arrow[i].name) == 0)
 			if (arrow[i].type != XK_NOD)
-				key_kprint(el, arrow[i].name, &arrow[i].fun,
-				    arrow[i].type);
+				keymacro_kprint(el, arrow[i].name,
+				    &arrow[i].fun, arrow[i].type);
 }
 
 
@@ -1267,19 +1267,19 @@ term_bind_arrow(EditLine *el)
 		 *    unassigned key.
 		 */
 		if (arrow[i].type == XK_NOD)
-			key_clear(el, map, px);
+			keymacro_clear(el, map, px);
 		else {
 			if (p[1] && (dmap[j] == map[j] ||
 				map[j] == ED_SEQUENCE_LEAD_IN)) {
-				key_add(el, px, &arrow[i].fun,
+				keymacro_add(el, px, &arrow[i].fun,
 				    arrow[i].type);
 				map[j] = ED_SEQUENCE_LEAD_IN;
 			} else if (map[j] == ED_UNASSIGNED) {
-				key_clear(el, map, px);
+				keymacro_clear(el, map, px);
 				if (arrow[i].type == XK_CMD)
 					map[j] = arrow[i].fun.cmd;
 				else
-					key_add(el, px, &arrow[i].fun,
+					keymacro_add(el, px, &arrow[i].fun,
 					    arrow[i].type);
 			}
 		}

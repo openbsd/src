@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.14 2014/05/20 22:28:07 yasuoka Exp $	*/
+/*	$OpenBSD: tty.c,v 1.15 2016/01/29 19:32:34 schwarze Exp $	*/
 /*	$NetBSD: tty.c,v 1.34 2011/01/27 23:11:40 christos Exp $	*/
 
 /*-
@@ -899,15 +899,15 @@ tty_bind_char(EditLine *el, int force)
 		if (new[0] == old[0] && !force)
 			continue;
 		/* Put the old default binding back, and set the new binding */
-		key_clear(el, map, old);
+		keymacro_clear(el, map, old);
 		map[UC(old[0])] = dmap[UC(old[0])];
-		key_clear(el, map, new);
+		keymacro_clear(el, map, new);
 		/* MAP_VI == 1, MAP_EMACS == 0... */
 		map[UC(new[0])] = tp->bind[el->el_map.type];
 		if (dalt) {
-			key_clear(el, alt, old);
+			keymacro_clear(el, alt, old);
 			alt[UC(old[0])] = dalt[UC(old[0])];
-			key_clear(el, alt, new);
+			keymacro_clear(el, alt, new);
 			alt[UC(new[0])] = tp->bind[el->el_map.type + 1];
 		}
 	}

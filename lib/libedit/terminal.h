@@ -1,4 +1,4 @@
-/*	$OpenBSD: terminal.h,v 1.1 2016/01/29 17:23:21 schwarze Exp $	*/
+/*	$OpenBSD: terminal.h,v 1.2 2016/01/29 19:32:34 schwarze Exp $	*/
 /*	$NetBSD: term.h,v 1.21 2009/12/30 22:37:40 christos Exp $	*/
 
 /*-
@@ -46,7 +46,7 @@
 typedef struct {		/* Symbolic function key bindings	*/
 	const Char	*name;	/* name of the key			*/
 	int		 key;	/* Index in termcap table		*/
-	key_value_t	 fun;	/* Function bound to it			*/
+	keymacro_value_t	 fun;	/* Function bound to it			*/
 	int		 type;	/* Type of function			*/
 } fkey_t;
 
@@ -96,7 +96,8 @@ protected int	term_init(EditLine *);
 protected void	term_bind_arrow(EditLine *);
 protected void	term_print_arrow(EditLine *, const Char *);
 protected int	term_clear_arrow(EditLine *, const Char *);
-protected int	term_set_arrow(EditLine *, const Char *, key_value_t *, int);
+protected int	term_set_arrow(EditLine *, const Char *, keymacro_value_t *,
+    int);
 protected void	term_end(EditLine *);
 protected void	term_get(EditLine *, const char **);
 protected int	term_set(EditLine *, const char *);
