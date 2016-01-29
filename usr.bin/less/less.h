@@ -53,10 +53,6 @@
 #define	OPT_ON		1
 #define	OPT_ONPLUS	2
 
-#ifndef CHAR_BIT
-#define	CHAR_BIT 8
-#endif
-
 /*
  * Special types and constants.
  */
