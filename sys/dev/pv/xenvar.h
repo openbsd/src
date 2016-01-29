@@ -1,4 +1,4 @@
-/*	$OpenBSD: xenvar.h,v 1.25 2016/01/27 15:34:50 mikeb Exp $	*/
+/*	$OpenBSD: xenvar.h,v 1.26 2016/01/29 18:49:06 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Belopuhov
@@ -19,7 +19,7 @@
 #ifndef _XENVAR_H_
 #define _XENVAR_H_
 
-/* #define XEN_DEBUG */
+#define XEN_DEBUG
 
 #ifdef XEN_DEBUG
 #define DPRINTF(x...)		printf(x)
@@ -148,9 +148,9 @@ struct xs_transaction {
 
 int	xs_cmd(struct xs_transaction *, int, const char *, struct iovec **,
 	    int *);
-int	xs_getprop(struct xen_attach_args *, const char *, char *, int);
-int	xs_setprop(struct xen_attach_args *, const char *, char *, int);
 void	xs_resfree(struct xs_transaction *, struct iovec *, int);
+int	xs_getprop(struct xen_softc *, const char *, const char *, char *, int);
+int	xs_setprop(struct xen_softc *, const char *, const char *, char *, int);
 int	xs_kvop(void *, int, char *, char *, size_t);
 
 #endif	/* _XENVAR_H_ */

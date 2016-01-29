@@ -1,4 +1,4 @@
-/*	$OpenBSD: xenstore.c,v 1.22 2016/01/27 09:04:19 reyk Exp $	*/
+/*	$OpenBSD: xenstore.c,v 1.23 2016/01/29 18:49:06 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Belopuhov
@@ -753,14 +753,13 @@ xs_cmd(struct xs_transaction *xst, int cmd, const char *path,
 }
 
 int
-xs_getprop(struct xen_attach_args *xa, const char *property, char *value,
-    int size)
+xs_getprop(struct xen_softc *sc, const char *path, const char *property,
+    char *value, int size)
 {
-	struct xen_softc *sc = xa->xa_parent;
 	struct xs_transaction xst;
 	struct iovec *iovp;
-	char path[128];
-	int error, iov_cnt;
+	char key[256];
+	int error, iov_cnt, ret;
 
 	if (!property)
 		return (-1);
@@ -771,17 +770,15 @@ xs_getprop(struct xen_attach_args *xa, const char *property, char *value,
 	if (cold)
 		xst.xst_flags = XST_POLL;
 
-	snprintf(path, sizeof(path), "%s/%s", xa->xa_node, property);
-	if ((error = xs_cmd(&xst, XS_READ, path, &iovp, &iov_cnt)) != 0 &&
-	     error != ENOENT)
-		return (error);
+	if (path)
+		ret = snprintf(key, sizeof(key), "%s/%s", path, property);
+	else
+		ret = snprintf(key, sizeof(key), "%s", property);
+	if (ret == -1 || ret >= sizeof(key))
+		return (EINVAL);
 
-	/* Try backend */
-	if (error == ENOENT) {
-		snprintf(path, sizeof(path), "%s/%s", xa->xa_backend, property);
-		if ((error = xs_cmd(&xst, XS_READ, path, &iovp, &iov_cnt)) != 0)
-			return (error);
-	}
+	if ((error = xs_cmd(&xst, XS_READ, key, &iovp, &iov_cnt)) != 0)
+		return (error);
 
 	strlcpy(value, (char *)iovp->iov_base, size);
 
@@ -791,14 +788,13 @@ xs_getprop(struct xen_attach_args *xa, const char *property, char *value,
 }
 
 int
-xs_setprop(struct xen_attach_args *xa, const char *property, char *value,
-    int size)
+xs_setprop(struct xen_softc *sc, const char *path, const char *property,
+    char *value, int size)
 {
-	struct xen_softc *sc = xa->xa_parent;
 	struct xs_transaction xst;
 	struct iovec iov, *iovp = &iov;
-	char path[128];
-	int error, iov_cnt;
+	char key[256];
+	int error, iov_cnt, ret;
 
 	if (!property)
 		return (-1);
@@ -809,17 +805,19 @@ xs_setprop(struct xen_attach_args *xa, const char *property, char *value,
 	if (cold)
 		xst.xst_flags = XST_POLL;
 
-	if (value && size > 0) {
-		iov.iov_base = value;
-		iov.iov_len = size;
-		iov_cnt = 1;
+	if (path)
+		ret = snprintf(key, sizeof(key), "%s/%s", path, property);
+	else
+		ret = snprintf(key, sizeof(key), "%s", property);
+	if (ret == -1 || ret >= sizeof(key))
+		return (EINVAL);
 
-		snprintf(path, sizeof(path), "%s/%s", xa->xa_node, property);
-		error = xs_cmd(&xst, XS_WRITE, path, &iovp, &iov_cnt);
-	} else {
-		snprintf(path, sizeof(path), "%s/%s", xa->xa_node, property);
-		error = xs_cmd(&xst, XS_RM, path, NULL, NULL);
-	}
+	iov.iov_base = value;
+	iov.iov_len = size;
+	iov_cnt = 1;
+
+	error = xs_cmd(&xst, XS_WRITE, key, &iovp, &iov_cnt);
+
 	return (error);
 }
 

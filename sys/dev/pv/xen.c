@@ -1,4 +1,4 @@
-/*	$OpenBSD: xen.c,v 1.45 2016/01/28 11:19:49 mikeb Exp $	*/
+/*	$OpenBSD: xen.c,v 1.46 2016/01/29 18:49:06 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Belopuhov
@@ -1173,9 +1173,9 @@ xen_probe_devices(struct xen_softc *sc)
 {
 	struct xen_attach_args xa;
 	struct xs_transaction xst;
-	struct iovec *iovp1, *iovp2, *iovp3;
-	int i, j, error = 0, iov1_cnt, iov2_cnt, iov3_cnt;
-	char path[128];
+	struct iovec *iovp1, *iovp2;
+	int i, j, error = 0, iov1_cnt, iov2_cnt;
+	char path[256];
 
 	memset(&xst, 0, sizeof(xst));
 	xst.xst_id = 0;
@@ -1203,11 +1203,11 @@ xen_probe_devices(struct xen_softc *sc)
 			snprintf(xa.xa_node, sizeof(xa.xa_node), "device/%s/%s",
 			    (char *)iovp1[i].iov_base,
 			    (char *)iovp2[j].iov_base);
-			snprintf(path, sizeof(path), "%s/backend", xa.xa_node);
-			if (!xs_cmd(&xst, XS_READ, path, &iovp3, &iov3_cnt)) {
-				strlcpy(xa.xa_backend, (char *)iovp3->iov_base,
-				    sizeof(xa.xa_backend));
-				xs_resfree(&xst, iovp3, iov3_cnt);
+			if (xs_getprop(sc, xa.xa_node, "backend", xa.xa_backend,
+			    sizeof(xa.xa_backend))) {
+				printf("%s: failed to identify \"backend\" "
+				    "for \"%s\"\n", sc->sc_dev.dv_xname,
+				    xa.xa_node);
 			}
 			config_found((struct device *)sc, &xa,
 			    xen_attach_print);
