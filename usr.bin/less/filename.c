@@ -76,7 +76,7 @@ get_meta_escape(void)
 
 	s = lgetenv("LESSMETAESCAPE");
 	if (s == NULL)
-		s = DEF_METAESCAPE;
+		s = "\\";
 	return (s);
 }
 

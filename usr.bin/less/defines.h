@@ -23,7 +23,6 @@
  * Default shell metacharacters and meta-escape character.
  */
 #define	DEF_METACHARS	"; *?\t\n'\"()<>[]|&^`#\\$%=~"
-#define	DEF_METAESCAPE	"\\"
 
 #define	CMDBUF_SIZE	2048	/* Buffer for multichar commands */
 #define	UNGOT_SIZE	200	/* Max chars to unget() */
