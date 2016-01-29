@@ -1,4 +1,4 @@
-/*	$OpenBSD: dpme.h,v 1.24 2016/01/28 13:01:33 krw Exp $	*/
+/*	$OpenBSD: dpme.h,v 1.25 2016/01/29 22:51:43 krw Exp $	*/
 
 /*
  * dpme.h - Disk Partition Map Entry (dpme)
@@ -46,24 +46,6 @@
 #define	DPME_SIGNATURE		0x504D	/* i.e. 'PM' */
 
 #define	DPISTRLEN	32
-
-struct ddmap {
-    uint32_t	ddBlock;	/* 1st driver's starting sbBlkSize block */
-    uint16_t	ddSize;		/* size of 1st driver (512-byte blks) */
-    uint16_t	ddType;		/* system type (1 for Mac+) */
-};
-
-struct block0 {
-    uint16_t		sbSig;		/* "ER" */
-    uint16_t		sbBlkSize;	/* physical block size of device */
-    uint32_t		sbBlkCount;	/* # of physical blocks on device */
-    uint16_t		sbDevType;	/* device type */
-    uint16_t		sbDevId;	/* device id */
-    uint32_t		sbData;		/* not used */
-    uint16_t		sbDrvrCount;	/* driver descriptor count */
-    struct ddmap	sbDDMap[8];	/* driver descriptor map*/
-    uint8_t		sbReserved[430];
-};
 
 /*
  * Each partition map entry (blocks 1 through n) has this format

@@ -1,4 +1,4 @@
-/*	$OpenBSD: partition_map.c,v 1.86 2016/01/29 17:34:08 krw Exp $	*/
+/*	$OpenBSD: partition_map.c,v 1.87 2016/01/29 22:51:43 krw Exp $	*/
 
 /*
  * partition_map.c - partition map routines
@@ -54,7 +54,6 @@ enum add_action {
 };
 
 int		add_data_to_map(struct dpme *, long, struct partition_map *);
-int		coerce_block0(struct partition_map *);
 int		contains_driver(struct entry *);
 void		combine_entry(struct entry *);
 struct dpme    *create_dpme(const char *, const char *, uint32_t, uint32_t);
@@ -92,33 +91,27 @@ open_partition_map(int fd, char *name, uint64_t mediasz, uint32_t sectorsz)
 	else
 		map->media_size = mediasz;
 
-	map->block0 = malloc(sizeof(struct block0));
-	if (map->block0 == NULL) {
-		warn("can't allocate memory for block zero buffer");
-		free(map);
-		return NULL;
-	}
-	if (read_block0(map->fd, map->block0) == 0) {
+	if (read_block0(map->fd, map) == 0) {
 		warnx("Can't read block 0 from '%s'", name);
 		free_partition_map(map);
 		return NULL;
 	}
-	if (map->block0->sbSig == BLOCK0_SIGNATURE &&
-	    map->block0->sbBlkSize == sectorsz &&
-	    map->block0->sbBlkCount == mediasz) {
+	if (map->sbSig == BLOCK0_SIGNATURE &&
+	    map->sbBlkSize == sectorsz &&
+	    map->sbBlkCount == mediasz) {
 		if (read_partition_map(map) == 0)
 			return map;
 	} else {
-		if (map->block0->sbSig != BLOCK0_SIGNATURE)
+		if (map->sbSig != BLOCK0_SIGNATURE)
 			warnx("Block 0 signature: Expected 0x%04x, "
 			    "got 0x%04x", BLOCK0_SIGNATURE,
-			    map->block0->sbSig);
-		else if (map->block0->sbBlkSize != sectorsz)
+			    map->sbSig);
+		else if (map->sbBlkSize != sectorsz)
 			warnx("Block 0 sbBlkSize (%u) != sector size (%u)",
-			    map->block0->sbBlkSize, sectorsz);
-		else if (map->block0->sbBlkCount != mediasz)
+			    map->sbBlkSize, sectorsz);
+		else if (map->sbBlkCount != mediasz)
 			warnx("Block 0 sbBlkCount (%u) != media size (%llu)",
-			    map->block0->sbBlkCount,
+			    map->sbBlkCount,
 			    (unsigned long long)mediasz);
 	}
 
@@ -146,7 +139,6 @@ free_partition_map(struct partition_map *map)
 	struct entry *entry;
 
 	if (map) {
-		free(map->block0);
 		while (!LIST_EMPTY(&map->disk_order)) {
 			entry = LIST_FIRST(&map->disk_order);
 			LIST_REMOVE(entry, disk_entry);
@@ -251,7 +243,7 @@ write_partition_map(struct partition_map *map)
 	struct entry *entry;
 	int result;
 
-	result = write_block0(map->fd, map->block0);
+	result = write_block0(map->fd, map);
 	if (result == 0)
 		warn("Unable to write block zero");
 
@@ -312,55 +304,32 @@ create_partition_map(int fd, char *name, u_int64_t mediasz, uint32_t sectorsz)
 	map->maximum_in_map = -1;
 	map->media_size = mediasz;
 
-	map->block0 = calloc(1, sizeof(struct block0));
-	if (map->block0 == NULL) {
-		warn("can't allocate memory for block zero buffer");
+	map->sbSig = BLOCK0_SIGNATURE;
+	map->sbBlkSize = map->physical_block;
+	map->sbBlkCount = map->media_size;
+
+	dpme = calloc(1, sizeof(struct dpme));
+	if (dpme == NULL) {
+		warn("can't allocate memory for initial dpme");
 	} else {
-		coerce_block0(map);
+		dpme->dpme_signature = DPME_SIGNATURE;
+		dpme->dpme_map_entries = 1;
+		dpme->dpme_pblock_start = 1;
+		dpme->dpme_pblocks = map->media_size - 1;
+		strlcpy(dpme->dpme_type, kFreeType, sizeof(dpme->dpme_type));
+		dpme_init_flags(dpme);
 
-		dpme = calloc(1, sizeof(struct dpme));
-		if (dpme == NULL) {
-			warn("can't allocate memory for disk buffers");
+		if (add_data_to_map(dpme, 1, map) == 0) {
+			free(dpme);
 		} else {
-			dpme->dpme_signature = DPME_SIGNATURE;
-			dpme->dpme_map_entries = 1;
-			dpme->dpme_pblock_start = 1;
-			dpme->dpme_pblocks = map->media_size - 1;
-			strlcpy(dpme->dpme_type, kFreeType,
-			    sizeof(dpme->dpme_type));
-			dpme_init_flags(dpme);
-
-			if (add_data_to_map(dpme, 1, map) == 0) {
-				free(dpme);
-			} else {
-				add_partition_to_map("Apple", kMapType,
-				    1, (map->media_size <= 128 ? 2 : 63), map);
-				return map;
-			}
+			add_partition_to_map("Apple", kMapType, 1,
+			    (map->media_size <= 128 ? 2 : 63), map);
+			return map;
 		}
 	}
 
 	free_partition_map(map);
 	return NULL;
-}
-
-
-int
-coerce_block0(struct partition_map *map)
-{
-	struct block0 *p;
-
-	p = map->block0;
-	if (p->sbSig != BLOCK0_SIGNATURE) {
-		p->sbSig = BLOCK0_SIGNATURE;
-		p->sbBlkSize = map->physical_block;
-		p->sbBlkCount = map->media_size;
-		p->sbDevType = 0;
-		p->sbDevId = 0;
-		p->sbData = 0;
-		p->sbDrvrCount = 0;
-	}
-	return 0;
 }
 
 
@@ -550,17 +519,15 @@ int
 contains_driver(struct entry *entry)
 {
 	struct partition_map *map;
-	struct block0  *p;
-	struct ddmap   *m;
+	struct ddmap *m;
 	int i;
 	uint32_t start;
 
 	map = entry->the_map;
-	p = map->block0;
 
-	if (p->sbDrvrCount > 0) {
-		m = p->sbDDMap;
-		for (i = 0; i < p->sbDrvrCount; i++) {
+	if (map->sbDrvrCount > 0) {
+		m = map->sbDDMap;
+		for (i = 0; i < map->sbDrvrCount; i++) {
 			start = m[i].ddBlock;
 			if (entry->dpme->dpme_pblock_start <= start &&
 			    (start + m[i].ddSize) <=
@@ -853,20 +820,19 @@ doit:
 void
 remove_driver(struct entry *entry)
 {
-	struct block0 *p;
+	struct partition_map *map;
 	struct ddmap *m;
 	int i, j;
 	uint32_t start;
-
-	p = entry->the_map->block0;
 
 	/*
 	 * compute the factor to convert the block numbers in block0
 	 * into partition map block numbers.
 	 */
-	if (p->sbDrvrCount > 0) {
-		m = p->sbDDMap;
-		for (i = 0; i < p->sbDrvrCount; i++) {
+	map = entry->the_map;
+	if (map->sbDrvrCount > 0) {
+		m = map->sbDDMap;
+		for (i = 0; i < map->sbDrvrCount; i++) {
 			start = m[i].ddBlock;
 
 			/*
@@ -882,7 +848,8 @@ remove_driver(struct entry *entry)
 				 * by copying down later ones and zapping the
 				 * last
 				 */
-				for (j = i + 1; j < p->sbDrvrCount; j++, i++) {
+				for (j = i + 1; j < map->sbDrvrCount; j++,
+				    i++) {
 					m[i].ddBlock = m[i].ddBlock;
 					m[i].ddSize = m[j].ddSize;
 					m[i].ddType = m[j].ddType;
@@ -890,7 +857,7 @@ remove_driver(struct entry *entry)
 				m[i].ddBlock = 0;
 				m[i].ddSize = 0;
 				m[i].ddType = 0;
-				p->sbDrvrCount -= 1;
+				map->sbDrvrCount -= 1;
 				return;	/* XXX if we continue we will delete
 					 * other drivers? */
 			}

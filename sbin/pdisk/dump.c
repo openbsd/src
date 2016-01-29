@@ -1,4 +1,4 @@
-/*	$OpenBSD: dump.c,v 1.66 2016/01/29 17:22:44 krw Exp $	*/
+/*	$OpenBSD: dump.c,v 1.67 2016/01/29 22:51:43 krw Exp $	*/
 
 /*
  * dump.c - dumping partition maps
@@ -48,23 +48,21 @@ int	get_max_type_string_length(struct partition_map *);
 void
 dump_block_zero(struct partition_map *map)
 {
-	struct block0 *p;
 	struct ddmap  *m;
 	double value;
 	int i, prefix;
 
-	p = map->block0;
-
-	value = ((double) p->sbBlkCount) * p->sbBlkSize;
+	value = ((double)map->sbBlkCount) * map->sbBlkSize;
 	adjust_value_and_compute_prefix(&value, &prefix);
 	printf("\nDevice block size=%u, Number of Blocks=%u (%1.1f%c)\n",
-	       p->sbBlkSize, p->sbBlkCount, value, prefix);
+	       map->sbBlkSize, map->sbBlkCount, value, prefix);
 
-	printf("DeviceType=0x%x, DeviceId=0x%x\n", p->sbDevType, p->sbDevId);
-	if (p->sbDrvrCount > 0) {
+	printf("DeviceType=0x%x, DeviceId=0x%x\n", map->sbDevType,
+	    map->sbDevId);
+	if (map->sbDrvrCount > 0) {
 		printf("Drivers-\n");
-		m = p->sbDDMap;
-		for (i = 0; i < p->sbDrvrCount; i++) {
+		m = map->sbDDMap;
+		for (i = 0; i < map->sbDrvrCount; i++) {
 			printf("%d: %3u @ %u, ", i + 1, m[i].ddSize,
 			    m[i].ddBlock);
 			printf("type=0x%x\n", m[i].ddType);
@@ -133,7 +131,6 @@ void
 show_data_structures(struct partition_map *map)
 {
 	struct entry *entry;
-	struct block0 *zp;
 	struct ddmap *m;
 	struct dpme *p;
 	int i;
@@ -146,21 +143,19 @@ show_data_structures(struct partition_map *map)
 	printf(" and has%s been changed\n", (map->changed) ? "" : " not");
 	printf("\n");
 
-	zp = map->block0;
-
 	printf("Block0:\n");
-	printf("signature 0x%x", zp->sbSig);
-	printf("Block size=%u, Number of Blocks=%u\n", zp->sbBlkSize,
-	    zp->sbBlkCount);
-	printf("DeviceType=0x%x, DeviceId=0x%x, sbData=0x%x\n", zp->sbDevType,
-	    zp->sbDevId, zp->sbData);
-	if (zp->sbDrvrCount == 0) {
+	printf("signature 0x%x", map->sbSig);
+	printf("Block size=%u, Number of Blocks=%u\n", map->sbBlkSize,
+	    map->sbBlkCount);
+	printf("DeviceType=0x%x, DeviceId=0x%x, sbData=0x%x\n", map->sbDevType,
+	    map->sbDevId, map->sbData);
+	if (map->sbDrvrCount == 0) {
 		printf("No drivers\n");
 	} else {
-		printf("%u driver%s-\n", zp->sbDrvrCount,
-		    (zp->sbDrvrCount > 1) ? "s" : "");
-		m = zp->sbDDMap;
-		for (i = 0; i < zp->sbDrvrCount; i++) {
+		printf("%u driver%s-\n", map->sbDrvrCount,
+		    (map->sbDrvrCount > 1) ? "s" : "");
+		m = map->sbDDMap;
+		for (i = 0; i < map->sbDrvrCount; i++) {
 			printf("%u: @ %u for %u, type=0x%x\n", i + 1,
 			    m[i].ddBlock, m[i].ddSize, m[i].ddType);
 		}
@@ -307,24 +302,18 @@ dump_block(unsigned char *addr, int len)
 void
 full_dump_block_zero(struct partition_map *map)
 {
-	struct block0 *zp;
 	struct ddmap *m;
 	int i;
 
-	if (map->block0 == NULL) {
-		printf("No block zero\n");
-		return;
-	}
-	zp = map->block0;
-	m = zp->sbDDMap;
+	m = map->sbDDMap;
 
-	printf("             signature: 0x%x\n", zp->sbSig);
-	printf("       size of a block: %u\n", zp->sbBlkSize);
-	printf("      number of blocks: %u\n", zp->sbBlkCount);
-	printf("           device type: 0x%x\n", zp->sbDevType);
-	printf("             device id: 0x%x\n", zp->sbDevId);
-	printf("                  data: 0x%x\n", zp->sbData);
-	printf("          driver count: %u\n", zp->sbDrvrCount);
+	printf("             signature: 0x%x\n", map->sbSig);
+	printf("       size of a block: %u\n", map->sbBlkSize);
+	printf("      number of blocks: %u\n", map->sbBlkCount);
+	printf("           device type: 0x%x\n", map->sbDevType);
+	printf("             device id: 0x%x\n", map->sbDevId);
+	printf("                  data: 0x%x\n", map->sbData);
+	printf("          driver count: %u\n", map->sbDrvrCount);
 	for (i = 0; i < 8; i++) {
 		if (m[i].ddBlock == 0 && m[i].ddSize == 0 && m[i].ddType == 0)
 			break;
@@ -333,7 +322,7 @@ full_dump_block_zero(struct partition_map *map)
 		printf("           driver type: 0x%x\n", m[i].ddType);
 	}
 	printf("remainder of block -");
-	dump_block(zp->sbReserved, sizeof(zp->sbReserved));
+	dump_block(map->sbReserved, sizeof(map->sbReserved));
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: file_media.c,v 1.44 2016/01/28 13:01:33 krw Exp $	*/
+/*	$OpenBSD: file_media.c,v 1.45 2016/01/29 22:51:43 krw Exp $	*/
 
 /*
  * file_media.c -
@@ -28,6 +28,7 @@
  */
 
 #include <sys/param.h>		/* DEV_BSIZE */
+#include <sys/queue.h>
 
 #include <err.h>
 #include <stdio.h>
@@ -36,6 +37,7 @@
 #include <unistd.h>
 
 #include "dpme.h"
+#include "partition_map.h"
 #include "file_media.h"
 
 struct ddmap_ondisk {
@@ -114,7 +116,7 @@ write_block(int fd, uint64_t sector, void *address)
 }
 
 int
-read_block0(int fd, struct block0 *block0)
+read_block0(int fd, struct partition_map *map)
 {
 	struct block0_ondisk *block0_ondisk;
 	struct ddmap_ondisk ddmap_ondisk;
@@ -127,42 +129,42 @@ read_block0(int fd, struct block0 *block0)
 	if (read_block(fd, 0, block0_ondisk) == 0)
 		return 0;
 
-	memcpy(&block0->sbSig, block0_ondisk->sbSig,
-	    sizeof(block0->sbSig));
-	block0->sbSig = betoh16(block0->sbSig);
-	memcpy(&block0->sbBlkSize, block0_ondisk->sbBlkSize,
-	    sizeof(block0->sbBlkSize));
-	block0->sbBlkSize = betoh16(block0->sbBlkSize);
-	memcpy(&block0->sbBlkCount, block0_ondisk->sbBlkCount,
-	    sizeof(block0->sbBlkCount));
-	block0->sbBlkCount = betoh32(block0->sbBlkCount);
-	memcpy(&block0->sbDevType, block0_ondisk->sbDevType,
-	    sizeof(block0->sbDevType));
-	block0->sbDevType = betoh16(block0->sbDevType);
-	memcpy(&block0->sbDevId, block0_ondisk->sbDevId,
-	    sizeof(block0->sbDevId));
-	block0->sbDevId = betoh16(block0->sbDevId);
-	memcpy(&block0->sbData, block0_ondisk->sbData,
-	    sizeof(block0->sbData));
-	block0->sbData = betoh32(block0->sbData);
-	memcpy(&block0->sbDrvrCount, block0_ondisk->sbDrvrCount,
-	    sizeof(block0->sbDrvrCount));
-	block0->sbDrvrCount = betoh16(block0->sbDrvrCount);
+	memcpy(&map->sbSig, block0_ondisk->sbSig,
+	    sizeof(map->sbSig));
+	map->sbSig = betoh16(map->sbSig);
+	memcpy(&map->sbBlkSize, block0_ondisk->sbBlkSize,
+	    sizeof(map->sbBlkSize));
+	map->sbBlkSize = betoh16(map->sbBlkSize);
+	memcpy(&map->sbBlkCount, block0_ondisk->sbBlkCount,
+	    sizeof(map->sbBlkCount));
+	map->sbBlkCount = betoh32(map->sbBlkCount);
+	memcpy(&map->sbDevType, block0_ondisk->sbDevType,
+	    sizeof(map->sbDevType));
+	map->sbDevType = betoh16(map->sbDevType);
+	memcpy(&map->sbDevId, block0_ondisk->sbDevId,
+	    sizeof(map->sbDevId));
+	map->sbDevId = betoh16(map->sbDevId);
+	memcpy(&map->sbData, block0_ondisk->sbData,
+	    sizeof(map->sbData));
+	map->sbData = betoh32(map->sbData);
+	memcpy(&map->sbDrvrCount, block0_ondisk->sbDrvrCount,
+	    sizeof(map->sbDrvrCount));
+	map->sbDrvrCount = betoh16(map->sbDrvrCount);
 
 	for (i = 0; i < 8; i++) {
 		memcpy(&ddmap_ondisk,
-		    block0->sbDDMap+i*sizeof(struct ddmap_ondisk),
+		    map->sbDDMap+i*sizeof(struct ddmap_ondisk),
 		    sizeof(ddmap_ondisk));
-		memcpy(&block0->sbDDMap[i].ddBlock, &ddmap_ondisk.ddBlock,
-		    sizeof(block0->sbDDMap[i].ddBlock));
-		block0->sbDDMap[i].ddBlock =
-		    betoh32(block0->sbDDMap[i].ddBlock);
-		memcpy(&block0->sbDDMap[i].ddSize, &ddmap_ondisk.ddSize,
-		    sizeof(block0->sbDDMap[i].ddSize));
-		block0->sbDDMap[i].ddSize = betoh16(block0->sbDDMap[i].ddSize);
-		memcpy(&block0->sbDDMap[i].ddType, &ddmap_ondisk.ddType,
-		    sizeof(block0->sbDDMap[i].ddType));
-		block0->sbDDMap[i].ddType = betoh32(block0->sbDDMap[i].ddType);
+		memcpy(&map->sbDDMap[i].ddBlock, &ddmap_ondisk.ddBlock,
+		    sizeof(map->sbDDMap[i].ddBlock));
+		map->sbDDMap[i].ddBlock =
+		    betoh32(map->sbDDMap[i].ddBlock);
+		memcpy(&map->sbDDMap[i].ddSize, &ddmap_ondisk.ddSize,
+		    sizeof(map->sbDDMap[i].ddSize));
+		map->sbDDMap[i].ddSize = betoh16(map->sbDDMap[i].ddSize);
+		memcpy(&map->sbDDMap[i].ddType, &ddmap_ondisk.ddType,
+		    sizeof(map->sbDDMap[i].ddType));
+		map->sbDDMap[i].ddType = betoh32(map->sbDDMap[i].ddType);
 	}
 
 	free(block0_ondisk);
@@ -170,7 +172,7 @@ read_block0(int fd, struct block0 *block0)
 }
 
 int
-write_block0(int fd, struct block0 *block0)
+write_block0(int fd, struct partition_map *map)
 {
 	struct block0_ondisk *block0_ondisk;
 	struct ddmap_ondisk ddmap_ondisk;
@@ -182,39 +184,39 @@ write_block0(int fd, struct block0 *block0)
 	if (block0_ondisk == NULL)
 		return 0;
 
-	tmp16 = htobe16(block0->sbSig);
+	tmp16 = htobe16(map->sbSig);
 	memcpy(block0_ondisk->sbSig, &tmp16,
 	    sizeof(block0_ondisk->sbSig));
-	tmp16 = htobe16(block0->sbBlkSize);
+	tmp16 = htobe16(map->sbBlkSize);
 	memcpy(block0_ondisk->sbBlkSize, &tmp16,
 	    sizeof(block0_ondisk->sbBlkSize));
-	tmp32 = htobe32(block0->sbBlkCount);
+	tmp32 = htobe32(map->sbBlkCount);
 	memcpy(block0_ondisk->sbBlkCount, &tmp32,
 	    sizeof(block0_ondisk->sbBlkCount));
-	tmp16 = htobe16(block0->sbDevType);
+	tmp16 = htobe16(map->sbDevType);
 	memcpy(block0_ondisk->sbDevType, &tmp16,
 	    sizeof(block0_ondisk->sbDevType));
-	tmp16 = htobe16(block0->sbDevId);
+	tmp16 = htobe16(map->sbDevId);
 	memcpy(block0_ondisk->sbDevId, &tmp16,
 	    sizeof(block0_ondisk->sbDevId));
-	tmp32 = htobe32(block0->sbData);
+	tmp32 = htobe32(map->sbData);
 	memcpy(block0_ondisk->sbData, &tmp32,
 	    sizeof(block0_ondisk->sbData));
-	tmp16 = htobe16(block0->sbDrvrCount);
+	tmp16 = htobe16(map->sbDrvrCount);
 	memcpy(block0_ondisk->sbDrvrCount, &tmp16,
 	    sizeof(block0_ondisk->sbDrvrCount));
 
 	for (i = 0; i < 8; i++) {
-		tmp32 = htobe32(block0->sbDDMap[i].ddBlock);
+		tmp32 = htobe32(map->sbDDMap[i].ddBlock);
 		memcpy(ddmap_ondisk.ddBlock, &tmp32,
 		    sizeof(ddmap_ondisk.ddBlock));
-		tmp16 = htobe16(block0->sbDDMap[i].ddSize);
+		tmp16 = htobe16(map->sbDDMap[i].ddSize);
 		memcpy(&ddmap_ondisk.ddSize, &tmp16,
 		    sizeof(ddmap_ondisk.ddSize));
-		tmp16 = betoh32(block0->sbDDMap[i].ddType);
+		tmp16 = betoh32(map->sbDDMap[i].ddType);
 		memcpy(&ddmap_ondisk.ddType, &tmp16,
 		    sizeof(ddmap_ondisk.ddType));
-		memcpy(block0->sbDDMap+i*sizeof(struct ddmap_ondisk),
+		memcpy(map->sbDDMap+i*sizeof(struct ddmap_ondisk),
 		    &ddmap_ondisk, sizeof(ddmap_ondisk));
 	}
 

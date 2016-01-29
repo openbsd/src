@@ -1,4 +1,4 @@
-/*	$OpenBSD: partition_map.h,v 1.35 2016/01/29 15:06:37 krw Exp $	*/
+/*	$OpenBSD: partition_map.h,v 1.36 2016/01/29 22:51:43 krw Exp $	*/
 
 /*
  * partition_map.h - partition map routines
@@ -30,19 +30,35 @@
 #ifndef __partition_map__
 #define __partition_map__
 
+struct ddmap {
+    uint32_t	ddBlock;	/* 1st driver's starting sbBlkSize block */
+    uint16_t	ddSize;		/* size of 1st driver (512-byte blks) */
+    uint16_t	ddType;		/* system type (1 for Mac+) */
+};
+
 struct entry;
 
 struct partition_map {
     LIST_HEAD(, entry)	disk_order;
     LIST_HEAD(, entry)	base_order;
     char	       *name;
-    struct block0       *block0;
     int			fd;
     int			changed;
     int			physical_block;
     int			blocks_in_map;
     int			maximum_in_map;
     unsigned long	media_size;	/* in physical blocks */
+
+    /* On-disk block 0 data. */
+    uint16_t		sbSig;		/* "ER" */
+    uint16_t		sbBlkSize;	/* physical block size of device */
+    uint32_t		sbBlkCount;	/* # of physical blocks on device */
+    uint16_t		sbDevType;	/* device type */
+    uint16_t		sbDevId;	/* device id */
+    uint32_t		sbData;		/* not used */
+    uint16_t		sbDrvrCount;	/* driver descriptor count */
+    struct ddmap	sbDDMap[8];	/* driver descriptor map*/
+    uint8_t		sbReserved[430];
 };
 
 struct entry {
