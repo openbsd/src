@@ -1,4 +1,4 @@
-/* $OpenBSD: grid.c,v 1.50 2016/01/19 15:59:12 nicm Exp $ */
+/* $OpenBSD: grid.c,v 1.51 2016/01/29 11:13:56 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -37,7 +37,7 @@
 
 /* Default grid cell data. */
 const struct grid_cell grid_default_cell = {
-	0, 0, 8, 8, { { ' ' }, 0, 1, 1 }
+	0, 0, { .fg = 8 }, { .bg = 8 }, { { ' ' }, 0, 1, 1 }
 };
 const struct grid_cell_entry grid_default_entry = {
 	0, { .data = { 0, 8, 8, ' ' } }
@@ -284,6 +284,7 @@ grid_set_cell(struct grid *gd, u_int px, u_int py, const struct grid_cell *gc)
 	struct grid_line	*gl;
 	struct grid_cell_entry	*gce;
 	struct grid_cell 	*gcp;
+	int			 extended;
 
 	if (grid_check_y(gd, py) != 0)
 		return;
@@ -293,8 +294,12 @@ grid_set_cell(struct grid *gd, u_int px, u_int py, const struct grid_cell *gc)
 	gl = &gd->linedata[py];
 	gce = &gl->celldata[px];
 
-	if ((gce->flags & GRID_FLAG_EXTENDED) || gc->data.size != 1 ||
-	    gc->data.width != 1) {
+	extended = (gce->flags & GRID_FLAG_EXTENDED);
+	if (!extended && (gc->data.size != 1 || gc->data.width != 1))
+		extended = 1;
+	if (!extended && (gc->flags & (GRID_FLAG_FGRGB|GRID_FLAG_BGRGB)))
+		extended = 1;
+	if (extended) {
 		if (~gce->flags & GRID_FLAG_EXTENDED) {
 			gl->extddata = xreallocarray(gl->extddata,
 			    gl->extdsize + 1, sizeof *gl->extddata);
