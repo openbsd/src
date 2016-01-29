@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rcctl.8,v 1.27 2016/01/29 20:14:08 ajacoutot Exp $
+.\"	$OpenBSD: rcctl.8,v 1.28 2016/01/29 23:53:08 jmc Exp $
 .\"
 .\" Copyright (c) 2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 .\"
@@ -184,9 +184,9 @@ Enable and set
 .Xr apmd 8
 flags:
 .Bd -literal -offset indent
-# rcctl set apmd status on                                                                      
+# rcctl set apmd status on
 # rcctl set apmd flags -A
-# rcctl get apmd                                                                                
+# rcctl get apmd
 apmd_class=daemon
 apmd_flags=-A
 apmd_timeout=30
