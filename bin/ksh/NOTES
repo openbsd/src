@@ -1,4 +1,4 @@
-$OpenBSD: NOTES,v 1.13 2015/12/06 17:18:42 mmcc Exp $
+$OpenBSD: NOTES,v 1.14 2016/01/29 11:50:40 tb Exp $
 
 General features of at&t ksh88 that are not (yet) in pdksh:
     - exported aliases and functions (not in ksh93).
@@ -180,7 +180,7 @@ Known differences between pdksh & at&t ksh (that are not likely to change)
       (POSIX does not require the setting of variables to null so applications
       shouldn't rely on this).
     - in pdksh, ! substitution done before variable substitution; in at&t ksh
-      it is done after substitution (and therefor may do ! substitutions on
+      it is done after substitution (and therefore may do ! substitutions on
       the result of variable substitutions).  POSIX doesn't say which is to be
       done.
     - pwd: in at&t ksh, it ignores arguments; in pdksh, it complains when given

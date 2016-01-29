@@ -1,4 +1,4 @@
-/*	$OpenBSD: growfs.c,v 1.48 2015/11/28 19:59:15 deraadt Exp $	*/
+/*	$OpenBSD: growfs.c,v 1.49 2016/01/29 11:50:40 tb Exp $	*/
 /*
  * Copyright (c) 2000 Christoph Herrmann, Thomas-Henning von Kamptz
  * Copyright (c) 1980, 1989, 1993 The Regents of the University of California.
@@ -300,7 +300,7 @@ growfs(int fsi, int fso, unsigned int Nflag)
 	 *
 	 * We probably should rather change the summary for the cylinder group
 	 * statistics here to the value of what would be in there, if the file
-	 * system were created initially with the new size. Therefor we  still
+	 * system were created initially with the new size. Therefore we still
 	 * need to find an easy way of calculating that.
 	 * Possibly we can try to read the first superblock copy and apply the
 	 * "diffed" stats between the old and new superblock by still  copying

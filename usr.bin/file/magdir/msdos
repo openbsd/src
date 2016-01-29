@@ -1,4 +1,4 @@
-#	$OpenBSD: msdos,v 1.5 2009/04/24 18:54:34 chl Exp $
+#	$OpenBSD: msdos,v 1.6 2016/01/29 11:50:40 tb Exp $
 
 #------------------------------------------------------------------------------
 # msdos:  file(1) magic for MS-DOS files
@@ -650,7 +650,7 @@
 #>0     string  x       , Magic: %s
 
 # There are currently 2 Versions: "1" and "2"
-# I do not use Version 2 and therefor branch here
+# I do not use Version 2 and therefore branch here
 # but can assure: it works (tested on both versions)
 # Also my Qemu 0.9.0 which uses this Version 2 refuses
 # to start in its bios

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pmemrange.c,v 1.49 2015/12/06 10:42:43 blambert Exp $	*/
+/*	$OpenBSD: uvm_pmemrange.c,v 1.50 2016/01/29 11:50:40 tb Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Ariane van der Steldt <ariane@stack.nl>
@@ -192,7 +192,7 @@ uvm_pmemrange_addr_cmp(struct uvm_pmemrange *lhs, struct uvm_pmemrange *rhs)
  * Comparator: sort by use ascending.
  *
  * The higher the use value of a range, the more devices need memory in
- * this range. Therefor allocate from the range with the lowest use first.
+ * this range. Therefore allocate from the range with the lowest use first.
  */
 int
 uvm_pmemrange_use_cmp(struct uvm_pmemrange *lhs, struct uvm_pmemrange *rhs)
