@@ -1,4 +1,4 @@
-/*	$OpenBSD: audioctl.c,v 1.29 2015/07/28 20:51:10 ratchov Exp $	*/
+/*	$OpenBSD: audioctl.c,v 1.30 2016/01/29 10:23:56 ratchov Exp $	*/
 /*	$NetBSD: audioctl.c,v 1.14 1998/04/27 16:55:23 augustss Exp $	*/
 
 /*
@@ -63,6 +63,8 @@ int properties, fullduplex;
 
 struct audio_pos getpos;
 
+unsigned int block_size;
+
 struct field {
 	const char *name;
 	void *valp;
@@ -85,30 +87,19 @@ struct field {
 	{ "encodings",		encbuf,			STRING, READONLY },
 	{ "properties",		&properties,		PROPS,	READONLY },
 	{ "hiwat",		&info.hiwat,		UINT,	0 },
-	{ "lowat",		&info.lowat,		UINT,	0 },
 	{ "mode",		&info.mode,		P_R,	READONLY },
-	{ "play.rate",		&info.play.sample_rate,	UINT,	0 },
-	{ "play.sample_rate",	&info.play.sample_rate,	UINT,	ALIAS },
+	{ "rate",		&info.play.sample_rate,	UINT,	0 },
+	{ "precision",		&info.play.precision,	UINT,	0 },
+	{ "bps",		&info.play.bps,		UINT,	0 },
+	{ "msb",		&info.play.msb,		UINT,	0 },
+	{ "encoding",		&info.play.encoding,	ENC,	0 },
+	{ "pause",		&info.play.pause,	UCHAR,	0 },
+	{ "active",		&info.play.active,	UCHAR,	READONLY },
+	{ "block_size",		&block_size,		UINT,	0 },
 	{ "play.channels",	&info.play.channels,	UINT,	0 },
-	{ "play.precision",	&info.play.precision,	UINT,	0 },
-	{ "play.bps",		&info.play.bps,		UINT,	0 },
-	{ "play.msb",		&info.play.msb,		UINT,	0 },
-	{ "play.encoding",	&info.play.encoding,	ENC,	0 },
-	{ "play.pause",		&info.play.pause,	UCHAR,	0 },
-	{ "play.active",	&info.play.active,	UCHAR,	READONLY },
-	{ "play.block_size",	&info.play.block_size,	UINT,	0 },
 	{ "play.bytes",		&getpos.play_pos,	UINT,	READONLY },
 	{ "play.errors",	&getpos.play_xrun,	UINT,	READONLY },
-	{ "record.rate",	&info.record.sample_rate,UINT,	0 },
-	{ "record.sample_rate",	&info.record.sample_rate,UINT,	ALIAS },
 	{ "record.channels",	&info.record.channels,	UINT,	0 },
-	{ "record.precision",	&info.record.precision,	UINT,	0 },
-	{ "record.bps",		&info.record.bps,	UINT,	0 },
-	{ "record.msb",		&info.record.msb,	UINT,	0 },
-	{ "record.encoding",	&info.record.encoding,	ENC,	0 },
-	{ "record.pause",	&info.record.pause,	UCHAR,	0 },
-	{ "record.active",	&info.record.active,	UCHAR,	READONLY },
-	{ "record.block_size",	&info.record.block_size,UINT,	0 },
 	{ "record.bytes",	&getpos.rec_pos,	UINT,	READONLY },
 	{ "record.errors",	&getpos.rec_xrun,	UINT,	READONLY },
 	{ 0 }
@@ -303,6 +294,8 @@ getinfo(int fd)
 		err(1, "AUDIO_GETINFO");
 	if (ioctl(fd, AUDIO_GETPOS, &getpos) < 0)
 		err(1, "AUDIO_GETPOS");
+	block_size = info.play.block_size /
+	    (info.play.channels * info.play.bps);
 }
 
 void
@@ -419,8 +412,19 @@ main(int argc, char **argv)
 			}
 			argv++;
 		}
-		if (writeinfo && ioctl(fd, AUDIO_SETINFO, &info) < 0)
-			err(1, "set failed");
+		if (writeinfo) {
+			info.record.sample_rate = info.play.sample_rate;
+			info.record.encoding = info.play.encoding;
+			info.record.precision = info.play.precision;
+			info.record.bps = info.play.bps;
+			info.record.msb = info.play.msb;
+			info.record.block_size = block_size *
+				info.record.bps * info.record.channels;
+			info.play.block_size = block_size *
+				info.play.bps * info.play.channels;
+			if (ioctl(fd, AUDIO_SETINFO, &info) < 0)
+				err(1, "set failed");
+		}
 		getinfo(fd);
 		for (i = 0; fields[i].name; i++) {
 			if (fields[i].flags & SET) {
