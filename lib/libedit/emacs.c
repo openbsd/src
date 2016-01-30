@@ -1,4 +1,4 @@
-/*	$OpenBSD: emacs.c,v 1.9 2010/06/30 00:05:35 nicm Exp $	*/
+/*	$OpenBSD: emacs.c,v 1.10 2016/01/30 00:06:39 schwarze Exp $	*/
 /*	$NetBSD: emacs.c,v 1.23 2009/12/30 22:37:40 christos Exp $	*/
 
 /*-
@@ -53,14 +53,14 @@ em_delete_or_list(EditLine *el, Int c)
 					/* if I'm at the end */
 		if (el->el_line.cursor == el->el_line.buffer) {
 					/* and the beginning */
-			term_writec(el, c);	/* then do an EOF */
+			terminal_writec(el, c);	/* then do an EOF */
 			return (CC_EOF);
 		} else {
 			/*
 			 * Here we could list completions, but it is an
 			 * error right now
 			 */
-			term_beep(el);
+			terminal_beep(el);
 			return (CC_ERROR);
 		}
 	} else {

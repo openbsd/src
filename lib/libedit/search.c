@@ -1,4 +1,4 @@
-/*	$OpenBSD: search.c,v 1.13 2014/10/17 06:07:50 deraadt Exp $	*/
+/*	$OpenBSD: search.c,v 1.14 2016/01/30 00:06:39 schwarze Exp $	*/
 /*	$NetBSD: search.c,v 1.24 2010/04/15 00:57:33 christos Exp $	*/
 
 /*-
@@ -248,7 +248,7 @@ ce_inc_search(EditLine *el, int dir)
 		case ED_INSERT:
 		case ED_DIGIT:
 			if (el->el_search.patlen >= EL_BUFSIZ - LEN)
-				term_beep(el);
+				terminal_beep(el);
 			else {
 				el->el_search.patbuf[el->el_search.patlen++] =
 				    ch;
@@ -273,7 +273,7 @@ ce_inc_search(EditLine *el, int dir)
 			if (el->el_search.patlen > LEN)
 				done++;
 			else
-				term_beep(el);
+				terminal_beep(el);
 			break;
 
 		default:
@@ -297,7 +297,7 @@ ce_inc_search(EditLine *el, int dir)
 					    *el->el_line.cursor != '\n') {
 						if (el->el_search.patlen >=
 						    EL_BUFSIZ - LEN) {
-							term_beep(el);
+							terminal_beep(el);
 							break;
 						}
 						el->el_search.patbuf[el->el_search.patlen++] =
@@ -310,7 +310,7 @@ ce_inc_search(EditLine *el, int dir)
 					re_refresh(el);
 					break;
 				    } else if (isglob(*cp)) {
-					    term_beep(el);
+					    terminal_beep(el);
 					    break;
 				    }
 				break;
@@ -395,7 +395,7 @@ ce_inc_search(EditLine *el, int dir)
 				el->el_search.patbuf[el->el_search.patlen] =
 				    '\0';
 				if (ret == CC_ERROR) {
-					term_beep(el);
+					terminal_beep(el);
 					if (el->el_history.eventno !=
 					    ohisteventno) {
 						el->el_history.eventno =

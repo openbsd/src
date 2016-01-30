@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.15 2016/01/29 19:32:34 schwarze Exp $	*/
+/*	$OpenBSD: tty.c,v 1.16 2016/01/30 00:06:39 schwarze Exp $	*/
 /*	$NetBSD: tty.c,v 1.34 2011/01/27 23:11:40 christos Exp $	*/
 
 /*-
@@ -1196,7 +1196,8 @@ tty_stty(EditLine *el, int argc __attribute__((__unused__)), const Char **argv)
 
 				cu = strlen(m->m_name) + (x != '\0') + 1;
 
-				if (len + cu >= (size_t)el->el_term.t_size.h) {
+				if (len + cu >=
+				    (size_t)el->el_terminal.t_size.h) {
 					(void) fprintf(el->el_outfile, "\n%*s",
 					    (int)st, "");
 					len = st + cu;

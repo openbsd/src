@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.12 2014/10/17 06:07:50 deraadt Exp $	*/
+/*	$OpenBSD: parse.c,v 1.13 2016/01/30 00:06:39 schwarze Exp $	*/
 /*	$NetBSD: parse.c,v 1.23 2009/12/30 22:37:40 christos Exp $	*/
 
 /*-
@@ -56,11 +56,11 @@ private const struct {
 	int (*func)(EditLine *, int, const Char **);
 } cmds[] = {
 	{ STR("bind"),  	map_bind	},
-	{ STR("echotc"),	term_echotc	},
+	{ STR("echotc"),	terminal_echotc	},
 	{ STR("edit"),  	el_editmode	},
 	{ STR("history"),	hist_command	},
-	{ STR("telltc"),	term_telltc	},
-	{ STR("settc"),	        term_settc	},
+	{ STR("telltc"),	terminal_telltc	},
+	{ STR("settc"),	        terminal_settc	},
 	{ STR("setty"),	        tty_stty	},
 	{ NULL,		        NULL		}
 };

@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.c,v 1.8 2010/06/30 00:05:35 nicm Exp $	*/
+/*	$OpenBSD: common.c,v 1.9 2016/01/30 00:06:39 schwarze Exp $	*/
 /*	$NetBSD: common.c,v 1.24 2009/12/30 22:37:40 christos Exp $	*/
 
 /*-
@@ -149,7 +149,7 @@ ed_delete_next_char(EditLine *el, Int c)
 				return (CC_ERROR);
 #else
 				/* then do an EOF */
-				term_writec(el, c);
+				terminal_writec(el, c);
 				return (CC_EOF);
 #endif
 			} else {
@@ -580,7 +580,7 @@ protected el_action_t
 ed_clear_screen(EditLine *el, Int c __attribute__((__unused__)))
 {
 
-	term_clear_screen(el);	/* clear the whole real screen */
+	terminal_clear_screen(el);	/* clear the whole real screen */
 	re_clear_display(el);	/* reset everything */
 	return (CC_REFRESH);
 }
@@ -904,10 +904,10 @@ ed_command(EditLine *el, Int c __attribute__((__unused__)))
 	int tmplen;
 
 	tmplen = c_gets(el, tmpbuf, STR("\n: "));
-	term__putc(el, '\n');
+	terminal__putc(el, '\n');
 
 	if (tmplen < 0 || (tmpbuf[tmplen] = 0, parse_line(el, tmpbuf)) == -1)
-		term_beep(el);
+		terminal_beep(el);
 
 	el->el_map.current = el->el_map.key;
 	re_clear_display(el);

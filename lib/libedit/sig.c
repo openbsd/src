@@ -1,5 +1,5 @@
-/*	$OpenBSD: sig.c,v 1.14 2014/10/17 06:07:50 deraadt Exp $	*/
-/*	$NetBSD: sig.c,v 1.15 2009/02/19 15:20:22 christos Exp $	*/
+/*	$OpenBSD: sig.c,v 1.15 2016/01/30 00:06:39 schwarze Exp $	*/
+/*	$NetBSD: sig.c,v 1.17 2011/07/28 20:50:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -76,7 +76,7 @@ sig_handler(int signo)
 		tty_rawmode(sel);
 		if (ed_redisplay(sel, 0) == CC_REFRESH)
 			re_refresh(sel);
-		term__flush(sel);
+		terminal__flush(sel);
 		break;
 
 	case SIGWINCH:
@@ -141,7 +141,7 @@ protected void
 sig_end(EditLine *el)
 {
 
-	free((ptr_t) el->el_signal);
+	free(el->el_signal);
 	el->el_signal = NULL;
 }
 

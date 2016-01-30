@@ -1,4 +1,4 @@
-/*	$OpenBSD: eln.c,v 1.4 2014/05/20 11:59:03 nicm Exp $	*/
+/*	$OpenBSD: eln.c,v 1.5 2016/01/30 00:06:39 schwarze Exp $	*/
 /*	$NetBSD: eln.c,v 1.9 2010/11/04 13:53:12 christos Exp $	*/
 
 /*-
@@ -169,15 +169,15 @@ el_set(EditLine *el, int op, ...)
 			break;
 		case EL_TELLTC:
 			wargv[0] = STR("telltc");
-			ret = term_telltc(el, i, wargv);
+			ret = terminal_telltc(el, i, wargv);
 			break;
 		case EL_SETTC:
 			wargv[0] = STR("settc");
-			ret = term_settc(el, i, wargv);
+			ret = terminal_settc(el, i, wargv);
 			break;
 		case EL_ECHOTC:
 			wargv[0] = STR("echotc");
-			ret = term_echotc(el, i, wargv);
+			ret = terminal_echotc(el, i, wargv);
 			break;
 		case EL_SETTY:
 			wargv[0] = STR("setty");
@@ -308,7 +308,7 @@ el_get(EditLine *el, int op, ...)
 			if ((argv[i] = va_arg(ap, char *)) == NULL)
 				break;
 		argv[0] = gettc;
-		ret = term_gettc(el, i, argv);
+		ret = terminal_gettc(el, i, argv);
 		break;
 	}
 

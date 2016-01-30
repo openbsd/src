@@ -1,4 +1,4 @@
-/*	$OpenBSD: prompt.c,v 1.9 2010/06/30 00:05:35 nicm Exp $	*/
+/*	$OpenBSD: prompt.c,v 1.10 2016/01/30 00:06:39 schwarze Exp $	*/
 /*	$NetBSD: prompt.c,v 1.18 2009/12/31 15:58:26 christos Exp $	*/
 
 /*-
@@ -97,7 +97,7 @@ prompt_print(EditLine *el, int op)
 			continue;
 		}
 		if (ignore)
-			term__putc(el, *p);
+			terminal__putc(el, *p);
 		else
 			re_putc(el, *p, 1);
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: filecomplete.c,v 1.4 2014/10/17 06:07:50 deraadt Exp $	*/
+/*	$OpenBSD: filecomplete.c,v 1.5 2016/01/30 00:06:39 schwarze Exp $	*/
 /*	$NetBSD: filecomplete.c,v 1.22 2010/12/02 04:42:46 dholland Exp $	*/
 
 /*-
@@ -349,7 +349,7 @@ void
 fn_display_match_list (EditLine *el, char **matches, size_t num, size_t width)
 {
 	size_t line, lines, col, cols, thisguy;
-	int screenwidth = el->el_term.t_size.h;
+	int screenwidth = el->el_terminal.t_size.h;
 
 	/* Ignore matches[0]. Avoid 1-based array logic below. */
 	matches++;

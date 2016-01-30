@@ -1,4 +1,4 @@
-/*	$OpenBSD: chared.c,v 1.12 2014/10/17 06:07:50 deraadt Exp $	*/
+/*	$OpenBSD: chared.c,v 1.13 2016/01/30 00:06:39 schwarze Exp $	*/
 /*	$NetBSD: chared.c,v 1.28 2009/12/30 22:37:40 christos Exp $	*/
 
 /*-
@@ -745,7 +745,7 @@ c_gets(EditLine *el, Char *buf, const Char *prompt)
 
 		default:
 			if (len >= EL_BUFSIZ - 16)
-				term_beep(el);
+				terminal_beep(el);
 			else {
 				buf[len++] = ch;
 				*cp++ = ch;

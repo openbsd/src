@@ -1,4 +1,4 @@
-/*	$OpenBSD: el.c,v 1.21 2016/01/29 19:32:33 schwarze Exp $	*/
+/*	$OpenBSD: el.c,v 1.22 2016/01/30 00:06:39 schwarze Exp $	*/
 /*	$NetBSD: el.c,v 1.61 2011/01/27 23:11:40 christos Exp $	*/
 
 /*-
@@ -86,7 +86,7 @@ el_init(const char *prog, FILE *fin, FILE *fout, FILE *ferr)
 	}
 #endif
 
-	if (term_init(el) == -1) {
+	if (terminal_init(el) == -1) {
 		free(el->el_prog);
 		free(el);
 		return NULL;
@@ -118,7 +118,7 @@ el_end(EditLine *el)
 
 	el_reset(el);
 
-	term_end(el);
+	terminal_end(el);
 	keymacro_end(el);
 	map_end(el);
 	tty_end(el);
@@ -190,7 +190,7 @@ FUN(el,set)(EditLine *el, int op, ...)
 	}
 
 	case EL_TERMINAL:
-		rv = term_set(el, va_arg(ap, char *));
+		rv = terminal_set(el, va_arg(ap, char *));
 		break;
 
 	case EL_EDITOR:
@@ -225,17 +225,17 @@ FUN(el,set)(EditLine *el, int op, ...)
 
 		case EL_TELLTC:
 			argv[0] = STR("telltc");
-			rv = term_telltc(el, i, argv);
+			rv = terminal_telltc(el, i, argv);
 			break;
 
 		case EL_SETTC:
 			argv[0] = STR("settc");
-			rv = term_settc(el, i, argv);
+			rv = terminal_settc(el, i, argv);
 			break;
 
 		case EL_ECHOTC:
 			argv[0] = STR("echotc");
-			rv = term_echotc(el, i, argv);
+			rv = terminal_echotc(el, i, argv);
 			break;
 
 		case EL_SETTY:
@@ -345,7 +345,7 @@ FUN(el,set)(EditLine *el, int op, ...)
 	case EL_REFRESH:
 		re_clear_display(el);
 		re_refresh(el);
-		term__flush(el);
+		terminal__flush(el);
 		break;
 
 	default:
@@ -403,7 +403,7 @@ FUN(el,get)(EditLine *el, int op, ...)
 		break;
 
 	case EL_TERMINAL:
-		term_get(el, va_arg(ap, const char **));
+		terminal_get(el, va_arg(ap, const char **));
 		rv = 0;
 		break;
 
@@ -420,7 +420,7 @@ FUN(el,get)(EditLine *el, int op, ...)
 		switch (op) {
 		case EL_GETTC:
 			argv[0] = name;
-			rv = term_gettc(el, i, argv);
+			rv = terminal_gettc(el, i, argv);
 			break;
 
 		default:
@@ -581,8 +581,8 @@ el_resize(EditLine *el)
 	(void) sigprocmask(SIG_BLOCK, &nset, &oset);
 
 	/* get the correct window size */
-	if (term_get_size(el, &lins, &cols))
-		term_change_size(el, lins, cols);
+	if (terminal_get_size(el, &lins, &cols))
+		terminal_change_size(el, lins, cols);
 
 	(void) sigprocmask(SIG_SETMASK, &oset, NULL);
 }
@@ -595,7 +595,7 @@ public void
 el_beep(EditLine *el)
 {
 
-	term_beep(el);
+	terminal_beep(el);
 }
 
 

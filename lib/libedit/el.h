@@ -1,4 +1,4 @@
-/*	$OpenBSD: el.h,v 1.11 2016/01/29 19:32:33 schwarze Exp $	*/
+/*	$OpenBSD: el.h,v 1.12 2016/01/30 00:06:39 schwarze Exp $	*/
 /*	$NetBSD: el.h,v 1.21 2009/12/31 15:58:26 christos Exp $	*/
 
 /*-
@@ -123,7 +123,7 @@ struct editline {
 	void		 *el_data;	/* Client data			*/
 	el_line_t	  el_line;	/* The current line information	*/
 	el_state_t	  el_state;	/* Current editor state		*/
-	el_term_t	  el_term;	/* Terminal dependent stuff	*/
+	el_terminal_t	  el_terminal;	/* Terminal dependent stuff	*/
 	el_tty_t	  el_tty;	/* Tty dependent stuff		*/
 	el_refresh_t	  el_refresh;	/* Refresh stuff		*/
 	el_prompt_t	  el_prompt;	/* Prompt stuff			*/
