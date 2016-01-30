@@ -1,4 +1,4 @@
-/*	$OpenBSD: dpme.h,v 1.25 2016/01/29 22:51:43 krw Exp $	*/
+/*	$OpenBSD: dpme.h,v 1.26 2016/01/30 17:09:11 krw Exp $	*/
 
 /*
  * dpme.h - Disk Partition Map Entry (dpme)
@@ -46,39 +46,5 @@
 #define	DPME_SIGNATURE		0x504D	/* i.e. 'PM' */
 
 #define	DPISTRLEN	32
-
-/*
- * Each partition map entry (blocks 1 through n) has this format
- */
-struct dpme {
-    uint16_t	dpme_signature;		/* "PM" */
-    uint8_t	dpme_reserved_1[2];
-    uint32_t	dpme_map_entries;	/* # of partition entries */
-    uint32_t	dpme_pblock_start;	/* physical block start of partition */
-    uint32_t	dpme_pblocks;		/* physical block count of partition */
-    char	dpme_name[DPISTRLEN+1];	/* name of partition + NUL */
-    char	dpme_type[DPISTRLEN+1];	/* type of partition + NUL */
-    uint32_t	dpme_lblock_start;	/* logical block start of partition */
-    uint32_t	dpme_lblocks;		/* logical block count of partition */
-    uint32_t	dpme_flags;
-#define	DPME_OS_SPECIFIC_1	(1<<8)
-#define	DPME_OS_SPECIFIC_2	(1<<7)
-#define	DPME_OS_PIC_CODE	(1<<6)
-#define	DPME_WRITABLE		(1<<5)
-#define	DPME_READABLE		(1<<4)
-#define	DPME_BOOTABLE		(1<<3)
-#define	DPME_IN_USE		(1<<2)
-#define	DPME_ALLOCATED		(1<<1)
-#define	DPME_VALID		(1<<0)
-    uint32_t	dpme_boot_block;	/* logical block start of boot code */
-    uint32_t	dpme_boot_bytes;	/* byte count of boot code */
-    uint16_t	dpme_load_addr;		/* memory address of boot code */
-    uint8_t	dpme_reserved_2[4];
-    uint32_t	dpme_goto_addr;		/* memory jump address of boot code */
-    uint8_t	dpme_reserved_3[4];
-    uint32_t	dpme_checksum;		/* of the boot code. */
-    char	dpme_processor_id[17];	/* processor type + NUL */
-    uint8_t	dpme_reserved_4[376];
-};
 
 #endif /* __dpme__ */

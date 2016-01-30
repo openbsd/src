@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdisk.c,v 1.80 2016/01/29 20:18:17 krw Exp $	*/
+/*	$OpenBSD: pdisk.c,v 1.81 2016/01/30 17:09:11 krw Exp $	*/
 
 /*
  * pdisk - an editor for Apple format partition tables
@@ -296,7 +296,7 @@ get_base_argument(long *number, struct partition_map *map)
 				bad_input("Bad partition number");
 				result = 0;
 			} else {
-				*number = entry->dpme->dpme_pblock_start;
+				*number = entry->dpme_pblock_start;
 			}
 		}
 	}
@@ -325,7 +325,7 @@ get_size_argument(long *number, struct partition_map *map)
 			if (entry == NULL) {
 				bad_input("Bad partition number");
 			} else {
-				*number = entry->dpme->dpme_pblocks;
+				*number = entry->dpme_pblocks;
 				result = 1;
 			}
 		} else {
@@ -353,7 +353,7 @@ do_rename_partition(struct partition_map *map)
 		return;
 	}
 
-	printf("Existing partition name ``%s''.\n", entry->dpme->dpme_name);
+	printf("Existing partition name ``%s''.\n", entry->dpme_name);
 	name = get_dpistr_argument("New name of partition: ");
 	if (name == NULL) {
 		bad_input("Bad name");
@@ -364,8 +364,8 @@ do_rename_partition(struct partition_map *map)
 	 * Since dpme_name is supposed to be NUL-filled, make sure
 	 * current contents are zapped before copying in new name!
 	 */
-	memset(entry->dpme->dpme_name, 0, sizeof(entry->dpme->dpme_name));
-	strlcpy(entry->dpme->dpme_name, name, sizeof(entry->dpme->dpme_name));
+	memset(entry->dpme_name, 0, sizeof(entry->dpme_name));
+	strlcpy(entry->dpme_name, name, sizeof(entry->dpme_name));
 	map->changed = 1;
 
 	free(name);
@@ -389,7 +389,7 @@ do_change_type(struct partition_map *map)
 		return;
 	}
 
-	printf("Existing partition type ``%s''.\n", entry->dpme->dpme_type);
+	printf("Existing partition type ``%s''.\n", entry->dpme_type);
 	type = get_dpistr_argument("New type of partition: ");
 	if (type == NULL) {
 		bad_input("Bad type");
@@ -400,8 +400,8 @@ do_change_type(struct partition_map *map)
 	 * Since dpme_type is supposed to be NUL-filled, make sure
          * current contents are zapped before copying in new type!
 	 */
-	memset(entry->dpme->dpme_type, 0, sizeof(entry->dpme->dpme_type));
-	strncpy(entry->dpme->dpme_type, type, sizeof(entry->dpme->dpme_type));
+	memset(entry->dpme_type, 0, sizeof(entry->dpme_type));
+	strncpy(entry->dpme_type, type, sizeof(entry->dpme_type));
 	map->changed = 1;
 
 	free(type);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: file_media.c,v 1.46 2016/01/30 14:24:47 krw Exp $	*/
+/*	$OpenBSD: file_media.c,v 1.47 2016/01/30 17:09:11 krw Exp $	*/
 
 /*
  * file_media.c -
@@ -226,7 +226,7 @@ write_block0(int fd, struct partition_map *map)
 }
 
 int
-read_dpme(int fd, uint64_t sector, struct dpme *dpme)
+read_dpme(int fd, uint64_t sector, struct entry *entry)
 {
 	struct dpme_ondisk *dpme_ondisk;
 
@@ -237,66 +237,66 @@ read_dpme(int fd, uint64_t sector, struct dpme *dpme)
 	if (read_block(fd, sector, dpme_ondisk) == 0)
 		return 0;
 
-	memcpy(&dpme->dpme_signature, dpme_ondisk->dpme_signature,
-	    sizeof(dpme->dpme_signature));
-	memcpy(&dpme->dpme_map_entries, dpme_ondisk->dpme_map_entries,
-	    sizeof(dpme->dpme_map_entries));
-	memcpy(&dpme->dpme_pblock_start, dpme_ondisk->dpme_pblock_start,
-	    sizeof(dpme->dpme_pblock_start));
-	memcpy(&dpme->dpme_pblocks, dpme_ondisk->dpme_pblocks,
-	    sizeof(dpme->dpme_pblocks));
-	memcpy(&dpme->dpme_lblock_start, dpme_ondisk->dpme_lblock_start,
-	    sizeof(dpme->dpme_lblock_start));
-	memcpy(&dpme->dpme_lblocks, dpme_ondisk->dpme_lblocks,
-	    sizeof(dpme->dpme_lblocks));
-	memcpy(&dpme->dpme_flags, dpme_ondisk->dpme_flags,
-	    sizeof(dpme->dpme_flags));
-	memcpy(&dpme->dpme_boot_block, dpme_ondisk->dpme_boot_block,
-	    sizeof(dpme->dpme_boot_block));
-	memcpy(&dpme->dpme_boot_bytes, dpme_ondisk->dpme_boot_bytes,
-	    sizeof(dpme->dpme_boot_bytes));
-	memcpy(&dpme->dpme_load_addr, dpme_ondisk->dpme_load_addr,
-	    sizeof(dpme->dpme_load_addr));
-	memcpy(&dpme->dpme_goto_addr, dpme_ondisk->dpme_goto_addr,
-	    sizeof(dpme->dpme_goto_addr));
-	memcpy(&dpme->dpme_checksum, dpme_ondisk->dpme_checksum,
-	    sizeof(dpme->dpme_checksum));
+	memcpy(&entry->dpme_signature, dpme_ondisk->dpme_signature,
+	    sizeof(entry->dpme_signature));
+	memcpy(&entry->dpme_map_entries, dpme_ondisk->dpme_map_entries,
+	    sizeof(entry->dpme_map_entries));
+	memcpy(&entry->dpme_pblock_start, dpme_ondisk->dpme_pblock_start,
+	    sizeof(entry->dpme_pblock_start));
+	memcpy(&entry->dpme_pblocks, dpme_ondisk->dpme_pblocks,
+	    sizeof(entry->dpme_pblocks));
+	memcpy(&entry->dpme_lblock_start, dpme_ondisk->dpme_lblock_start,
+	    sizeof(entry->dpme_lblock_start));
+	memcpy(&entry->dpme_lblocks, dpme_ondisk->dpme_lblocks,
+	    sizeof(entry->dpme_lblocks));
+	memcpy(&entry->dpme_flags, dpme_ondisk->dpme_flags,
+	    sizeof(entry->dpme_flags));
+	memcpy(&entry->dpme_boot_block, dpme_ondisk->dpme_boot_block,
+	    sizeof(entry->dpme_boot_block));
+	memcpy(&entry->dpme_boot_bytes, dpme_ondisk->dpme_boot_bytes,
+	    sizeof(entry->dpme_boot_bytes));
+	memcpy(&entry->dpme_load_addr, dpme_ondisk->dpme_load_addr,
+	    sizeof(entry->dpme_load_addr));
+	memcpy(&entry->dpme_goto_addr, dpme_ondisk->dpme_goto_addr,
+	    sizeof(entry->dpme_goto_addr));
+	memcpy(&entry->dpme_checksum, dpme_ondisk->dpme_checksum,
+	    sizeof(entry->dpme_checksum));
 
-	dpme->dpme_signature = betoh16(dpme->dpme_signature);
-	dpme->dpme_map_entries = betoh32(dpme->dpme_map_entries);
-	dpme->dpme_pblock_start = betoh32(dpme->dpme_pblock_start);
-	dpme->dpme_pblocks = betoh32(dpme->dpme_pblocks);
-	dpme->dpme_lblock_start = betoh32(dpme->dpme_lblock_start);
-	dpme->dpme_lblocks = betoh32(dpme->dpme_lblocks);
-	dpme->dpme_flags = betoh32(dpme->dpme_flags);
-	dpme->dpme_boot_block = betoh32(dpme->dpme_boot_block);
-	dpme->dpme_boot_bytes = betoh32(dpme->dpme_boot_bytes);
-	dpme->dpme_load_addr = betoh32(dpme->dpme_load_addr);
-	dpme->dpme_goto_addr = betoh32(dpme->dpme_goto_addr);
-	dpme->dpme_checksum = betoh32(dpme->dpme_checksum);
+	entry->dpme_signature = betoh16(entry->dpme_signature);
+	entry->dpme_map_entries = betoh32(entry->dpme_map_entries);
+	entry->dpme_pblock_start = betoh32(entry->dpme_pblock_start);
+	entry->dpme_pblocks = betoh32(entry->dpme_pblocks);
+	entry->dpme_lblock_start = betoh32(entry->dpme_lblock_start);
+	entry->dpme_lblocks = betoh32(entry->dpme_lblocks);
+	entry->dpme_flags = betoh32(entry->dpme_flags);
+	entry->dpme_boot_block = betoh32(entry->dpme_boot_block);
+	entry->dpme_boot_bytes = betoh32(entry->dpme_boot_bytes);
+	entry->dpme_load_addr = betoh32(entry->dpme_load_addr);
+	entry->dpme_goto_addr = betoh32(entry->dpme_goto_addr);
+	entry->dpme_checksum = betoh32(entry->dpme_checksum);
 
-	memcpy(dpme->dpme_reserved_1, dpme_ondisk->dpme_reserved_1,
-	    sizeof(dpme->dpme_reserved_1));
-	memcpy(dpme->dpme_reserved_2, dpme_ondisk->dpme_reserved_2,
-	    sizeof(dpme->dpme_reserved_2));
-	memcpy(dpme->dpme_reserved_3, dpme_ondisk->dpme_reserved_3,
-	    sizeof(dpme->dpme_reserved_3));
-	memcpy(dpme->dpme_reserved_4, dpme_ondisk->dpme_reserved_4,
-	    sizeof(dpme->dpme_reserved_4));
+	memcpy(entry->dpme_reserved_1, dpme_ondisk->dpme_reserved_1,
+	    sizeof(entry->dpme_reserved_1));
+	memcpy(entry->dpme_reserved_2, dpme_ondisk->dpme_reserved_2,
+	    sizeof(entry->dpme_reserved_2));
+	memcpy(entry->dpme_reserved_3, dpme_ondisk->dpme_reserved_3,
+	    sizeof(entry->dpme_reserved_3));
+	memcpy(entry->dpme_reserved_4, dpme_ondisk->dpme_reserved_4,
+	    sizeof(entry->dpme_reserved_4));
 
-	strlcpy(dpme->dpme_name, dpme_ondisk->dpme_name,
-	    sizeof(dpme->dpme_name));
-	strlcpy(dpme->dpme_type, dpme_ondisk->dpme_type,
-	    sizeof(dpme->dpme_type));
-	strlcpy(dpme->dpme_processor_id, dpme_ondisk->dpme_processor_id,
-	    sizeof(dpme->dpme_processor_id));
+	strlcpy(entry->dpme_name, dpme_ondisk->dpme_name,
+	    sizeof(entry->dpme_name));
+	strlcpy(entry->dpme_type, dpme_ondisk->dpme_type,
+	    sizeof(entry->dpme_type));
+	strlcpy(entry->dpme_processor_id, dpme_ondisk->dpme_processor_id,
+	    sizeof(entry->dpme_processor_id));
 
 	free(dpme_ondisk);
 	return 1;
 }
 
 int
-write_dpme(int fd, uint64_t sector, struct dpme *dpme)
+write_dpme(int fd, uint64_t sector, struct entry *entry)
 {
 	struct dpme_ondisk *dpme_ondisk;
 	int rslt;
@@ -307,56 +307,56 @@ write_dpme(int fd, uint64_t sector, struct dpme *dpme)
 	if (dpme_ondisk == NULL)
 		errx(1, "No memory to write dpme");
 
-	memcpy(dpme_ondisk->dpme_name, dpme->dpme_name,
+	memcpy(dpme_ondisk->dpme_name, entry->dpme_name,
 	    sizeof(dpme_ondisk->dpme_name));
-	memcpy(dpme_ondisk->dpme_type, dpme->dpme_type,
+	memcpy(dpme_ondisk->dpme_type, entry->dpme_type,
 	    sizeof(dpme_ondisk->dpme_type));
-	memcpy(dpme_ondisk->dpme_processor_id, dpme->dpme_processor_id,
+	memcpy(dpme_ondisk->dpme_processor_id, entry->dpme_processor_id,
 	    sizeof(dpme_ondisk->dpme_processor_id));
 
-	memcpy(dpme_ondisk->dpme_reserved_1, dpme->dpme_reserved_1,
+	memcpy(dpme_ondisk->dpme_reserved_1, entry->dpme_reserved_1,
 	    sizeof(dpme_ondisk->dpme_reserved_1));
-	memcpy(dpme_ondisk->dpme_reserved_2, dpme->dpme_reserved_2,
+	memcpy(dpme_ondisk->dpme_reserved_2, entry->dpme_reserved_2,
 	    sizeof(dpme_ondisk->dpme_reserved_2));
-	memcpy(dpme_ondisk->dpme_reserved_3, dpme->dpme_reserved_3,
+	memcpy(dpme_ondisk->dpme_reserved_3, entry->dpme_reserved_3,
 	    sizeof(dpme_ondisk->dpme_reserved_3));
-	memcpy(dpme_ondisk->dpme_reserved_4, dpme->dpme_reserved_4,
+	memcpy(dpme_ondisk->dpme_reserved_4, entry->dpme_reserved_4,
 	    sizeof(dpme_ondisk->dpme_reserved_4));
 
-	tmp16 = htobe16(dpme->dpme_signature);
+	tmp16 = htobe16(entry->dpme_signature);
 	memcpy(dpme_ondisk->dpme_signature, &tmp16,
 	    sizeof(dpme_ondisk->dpme_signature));
-	tmp32 = htobe32(dpme->dpme_map_entries);
+	tmp32 = htobe32(entry->dpme_map_entries);
 	memcpy(dpme_ondisk->dpme_map_entries, &tmp32,
 	    sizeof(dpme_ondisk->dpme_map_entries));
-	tmp32 = htobe32(dpme->dpme_pblock_start);
+	tmp32 = htobe32(entry->dpme_pblock_start);
 	memcpy(dpme_ondisk->dpme_pblock_start, &tmp32,
 	    sizeof(dpme_ondisk->dpme_pblock_start));
-	tmp32 = htobe32(dpme->dpme_pblocks);
+	tmp32 = htobe32(entry->dpme_pblocks);
 	memcpy(dpme_ondisk->dpme_pblocks, &tmp32,
 	    sizeof(dpme_ondisk->dpme_pblocks));
-	tmp32 = htobe32(dpme->dpme_lblock_start);
+	tmp32 = htobe32(entry->dpme_lblock_start);
 	memcpy(dpme_ondisk->dpme_lblock_start, &tmp32,
 	    sizeof(dpme_ondisk->dpme_lblock_start));
-	tmp32 = betoh32(dpme->dpme_lblocks);
+	tmp32 = betoh32(entry->dpme_lblocks);
 	memcpy(dpme_ondisk->dpme_lblocks, &tmp32,
 	    sizeof(dpme_ondisk->dpme_lblocks));
-	tmp32 = betoh32(dpme->dpme_flags);
+	tmp32 = betoh32(entry->dpme_flags);
 	memcpy(dpme_ondisk->dpme_flags, &tmp32,
 	    sizeof(dpme_ondisk->dpme_flags));
-	tmp32 = htobe32(dpme->dpme_boot_block);
+	tmp32 = htobe32(entry->dpme_boot_block);
 	memcpy(dpme_ondisk->dpme_boot_block, &tmp32,
 	    sizeof(dpme_ondisk->dpme_boot_block));
-	tmp32 = htobe32(dpme->dpme_boot_bytes);
+	tmp32 = htobe32(entry->dpme_boot_bytes);
 	memcpy(dpme_ondisk->dpme_boot_bytes, &tmp32,
 	    sizeof(dpme_ondisk->dpme_boot_bytes));
-	tmp32 = betoh32(dpme->dpme_load_addr);
+	tmp32 = betoh32(entry->dpme_load_addr);
 	memcpy(dpme_ondisk->dpme_load_addr, &tmp32,
 	    sizeof(dpme_ondisk->dpme_load_addr));
-	tmp32 = betoh32(dpme->dpme_goto_addr);
+	tmp32 = betoh32(entry->dpme_goto_addr);
 	memcpy(dpme_ondisk->dpme_goto_addr, &tmp32,
 	    sizeof(dpme_ondisk->dpme_goto_addr));
-	tmp32 = betoh32(dpme->dpme_checksum);
+	tmp32 = betoh32(entry->dpme_checksum);
 	memcpy(dpme_ondisk->dpme_checksum, &tmp32,
 	    sizeof(dpme_ondisk->dpme_checksum));
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dump.c,v 1.67 2016/01/29 22:51:43 krw Exp $	*/
+/*	$OpenBSD: dump.c,v 1.68 2016/01/30 17:09:11 krw Exp $	*/
 
 /*
  * dump.c - dumping partition maps
@@ -106,20 +106,19 @@ dump_partition_entry(struct entry *entry, int type_length,
     int name_length, int digits)
 {
 	struct partition_map *map;
-	struct dpme *p;
 	double bytes;
 	int j, driver;
 
 	map = entry->the_map;
-	p = entry->dpme;
 	driver = entry->contains_driver ? '*' : ' ';
-	printf("%2ld: %*.32s", entry->disk_address, type_length, p->dpme_type);
-	printf("%c%-*.32s ", driver, name_length, p->dpme_name);
+	printf("%2ld: %*.32s", entry->disk_address, type_length,
+	    entry->dpme_type);
+	printf("%c%-*.32s ", driver, name_length, entry->dpme_name);
 
-	printf("%*u @ %-*u", digits, p->dpme_pblocks, digits,
-	    p->dpme_pblock_start);
+	printf("%*u @ %-*u", digits, entry->dpme_pblocks, digits,
+	    entry->dpme_pblock_start);
 
-	bytes = ((double) p->dpme_pblocks) * map->physical_block;
+	bytes = ((double)entry->dpme_pblocks) * map->physical_block;
 	adjust_value_and_compute_prefix(&bytes, &j);
 	if (j != ' ' && j != 'K')
 		printf(" (%#5.1f%c)", bytes, j);
@@ -132,7 +131,6 @@ show_data_structures(struct partition_map *map)
 {
 	struct entry *entry;
 	struct ddmap *m;
-	struct dpme *p;
 	int i;
 
 	printf("Header:\n");
@@ -164,34 +162,33 @@ show_data_structures(struct partition_map *map)
 	printf(" #:                 type  length   base    "
 	       "flags     (      logical      )\n");
 	LIST_FOREACH(entry, &map->disk_order, disk_entry) {
-		p = entry->dpme;
-		printf("%2ld: %20.32s ", entry->disk_address, p->dpme_type);
-		printf("%7u @ %-7u ", p->dpme_pblocks, p->dpme_pblock_start);
+		printf("%2ld: %20.32s ", entry->disk_address, entry->dpme_type);
+		printf("%7u @ %-7u ", entry->dpme_pblocks,
+		    entry->dpme_pblock_start);
 		printf("%c%c%c%c%c%c%c%c%c ",
-		       (p->dpme_flags & DPME_VALID) ? 'V' : '.',
-		       (p->dpme_flags & DPME_ALLOCATED) ? 'A' : '.',
-		       (p->dpme_flags & DPME_IN_USE) ? 'I' : '.',
-		       (p->dpme_flags & DPME_BOOTABLE) ? 'B' : '.',
-		       (p->dpme_flags & DPME_READABLE) ? 'R' : '.',
-		       (p->dpme_flags & DPME_WRITABLE) ? 'W' : '.',
-		       (p->dpme_flags & DPME_OS_PIC_CODE) ? 'P' : '.',
-		       (p->dpme_flags & DPME_OS_SPECIFIC_2) ? '2' : '.',
-		       (p->dpme_flags & DPME_OS_SPECIFIC_1) ? '1' : '.');
-		printf("( %7u @ %-7u )\n", p->dpme_lblocks,
-		    p->dpme_lblock_start);
+		       (entry->dpme_flags & DPME_VALID) ? 'V' : '.',
+		       (entry->dpme_flags & DPME_ALLOCATED) ? 'A' : '.',
+		       (entry->dpme_flags & DPME_IN_USE) ? 'I' : '.',
+		       (entry->dpme_flags & DPME_BOOTABLE) ? 'B' : '.',
+		       (entry->dpme_flags & DPME_READABLE) ? 'R' : '.',
+		       (entry->dpme_flags & DPME_WRITABLE) ? 'W' : '.',
+		       (entry->dpme_flags & DPME_OS_PIC_CODE) ? 'P' : '.',
+		       (entry->dpme_flags & DPME_OS_SPECIFIC_2) ? '2' : '.',
+		       (entry->dpme_flags & DPME_OS_SPECIFIC_1) ? '1' : '.');
+		printf("( %7u @ %-7u )\n", entry->dpme_lblocks,
+		    entry->dpme_lblock_start);
 	}
 	printf("\n");
 	printf(" #:  booter   bytes      load_address      "
 	    "goto_address checksum processor\n");
 	LIST_FOREACH(entry, &map->disk_order, disk_entry) {
-		p = entry->dpme;
 		printf("%2ld: ", entry->disk_address);
-		printf("%7u ", p->dpme_boot_block);
-		printf("%7u ", p->dpme_boot_bytes);
-		printf("%8x ", p->dpme_load_addr);
-		printf("%8x ", p->dpme_goto_addr);
-		printf("%8x ", p->dpme_checksum);
-		printf("%.32s", p->dpme_processor_id);
+		printf("%7u ", entry->dpme_boot_block);
+		printf("%7u ", entry->dpme_boot_bytes);
+		printf("%8x ", entry->dpme_load_addr);
+		printf("%8x ", entry->dpme_goto_addr);
+		printf("%8x ", entry->dpme_checksum);
+		printf("%.32s", entry->dpme_processor_id);
 		printf("\n");
 	}
 	printf("\n");
@@ -201,41 +198,39 @@ show_data_structures(struct partition_map *map)
 void
 full_dump_partition_entry(struct partition_map *map, int ix)
 {
-	struct entry *cur;
-	struct dpme *p;
+	struct entry *entry;
 	int i;
 	uint32_t t;
 
-	cur = find_entry_by_disk_address(ix, map);
-	if (cur == NULL) {
+	entry = find_entry_by_disk_address(ix, map);
+	if (entry == NULL) {
 		printf("No such partition\n");
 		return;
 	}
-	p = cur->dpme;
-	printf("             signature: 0x%x\n", p->dpme_signature);
-	printf(" number of map entries: %u\n", p->dpme_map_entries);
+	printf("             signature: 0x%x\n", entry->dpme_signature);
+	printf(" number of map entries: %u\n", entry->dpme_map_entries);
 	printf("        physical start: %10u  length: %10u\n",
-	    p->dpme_pblock_start, p->dpme_pblocks);
+	    entry->dpme_pblock_start, entry->dpme_pblocks);
 	printf("         logical start: %10u  length: %10u\n",
-	    p->dpme_lblock_start, p->dpme_lblocks);
+	    entry->dpme_lblock_start, entry->dpme_lblocks);
 
-	printf("                 flags: 0x%x\n", (uint32_t)p->dpme_flags);
+	printf("                 flags: 0x%x\n", entry->dpme_flags);
 	printf("                        ");
-	if (p->dpme_flags & DPME_VALID)
+	if (entry->dpme_flags & DPME_VALID)
 		printf("valid ");
-	if (p->dpme_flags & DPME_ALLOCATED)
+	if (entry->dpme_flags & DPME_ALLOCATED)
 		printf("alloc ");
-	if (p->dpme_flags & DPME_IN_USE)
+	if (entry->dpme_flags & DPME_IN_USE)
 		printf("in-use ");
-	if (p->dpme_flags & DPME_BOOTABLE)
+	if (entry->dpme_flags & DPME_BOOTABLE)
 		printf("boot ");
-	if (p->dpme_flags & DPME_READABLE)
+	if (entry->dpme_flags & DPME_READABLE)
 		printf("read ");
-	if (p->dpme_flags & DPME_WRITABLE)
+	if (entry->dpme_flags & DPME_WRITABLE)
 		printf("write ");
-	if (p->dpme_flags & DPME_OS_PIC_CODE)
+	if (entry->dpme_flags & DPME_OS_PIC_CODE)
 		printf("pic ");
-	t = p->dpme_flags >> 7;
+	t = entry->dpme_flags >> 7;
 	for (i = 7; i <= 31; i++) {
 		if (t & 0x1)
 			printf("%d ", i);
@@ -243,22 +238,22 @@ full_dump_partition_entry(struct partition_map *map, int ix)
 	}
 	printf("\n");
 
-	printf("                  name: '%.32s'\n", p->dpme_name);
-	printf("                  type: '%.32s'\n", p->dpme_type);
-	printf("      boot start block: %10u\n", p->dpme_boot_block);
-	printf("boot length (in bytes): %10u\n", p->dpme_boot_bytes);
-	printf("          load address: 0x%08x\n", p->dpme_load_addr);
-	printf("         start address: 0x%08x\n", p->dpme_goto_addr);
-	printf("              checksum: 0x%08x\n", p->dpme_checksum);
-	printf("             processor: '%.32s'\n", p->dpme_processor_id);
+	printf("                  name: '%.32s'\n", entry->dpme_name);
+	printf("                  type: '%.32s'\n", entry->dpme_type);
+	printf("      boot start block: %10u\n", entry->dpme_boot_block);
+	printf("boot length (in bytes): %10u\n", entry->dpme_boot_bytes);
+	printf("          load address: 0x%08x\n", entry->dpme_load_addr);
+	printf("         start address: 0x%08x\n", entry->dpme_goto_addr);
+	printf("              checksum: 0x%08x\n", entry->dpme_checksum);
+	printf("             processor: '%.32s'\n", entry->dpme_processor_id);
 	printf("dpme_reserved_1 -");
-	dump_block(p->dpme_reserved_1, sizeof(p->dpme_reserved_1));
+	dump_block(entry->dpme_reserved_1, sizeof(entry->dpme_reserved_1));
 	printf("dpme_reserved_2 -");
-	dump_block(p->dpme_reserved_2, sizeof(p->dpme_reserved_2));
+	dump_block(entry->dpme_reserved_2, sizeof(entry->dpme_reserved_2));
 	printf("dpme_reserved_3 -");
-	dump_block(p->dpme_reserved_3, sizeof(p->dpme_reserved_3));
+	dump_block(entry->dpme_reserved_3, sizeof(entry->dpme_reserved_3));
 	printf("dpme_reserved_4 -");
-	dump_block(p->dpme_reserved_4, sizeof(p->dpme_reserved_4));
+	dump_block(entry->dpme_reserved_4, sizeof(entry->dpme_reserved_4));
 }
 
 
@@ -334,7 +329,7 @@ get_max_type_string_length(struct partition_map *map)
 	max = 0;
 
 	LIST_FOREACH(entry, &map->disk_order, disk_entry) {
-		length = strnlen(entry->dpme->dpme_type, DPISTRLEN);
+		length = strnlen(entry->dpme_type, DPISTRLEN);
 		if (length > max)
 			max = length;
 	}
@@ -351,7 +346,7 @@ get_max_name_string_length(struct partition_map *map)
 	max = 0;
 
 	LIST_FOREACH(entry, &map->disk_order, disk_entry) {
-		length = strnlen(entry->dpme->dpme_name, DPISTRLEN);
+		length = strnlen(entry->dpme_name, DPISTRLEN);
 		if (length > max)
 			max = length;
 	}
@@ -368,14 +363,14 @@ get_max_base_or_length(struct partition_map *map)
 	max = 0;
 
 	LIST_FOREACH(entry, &map->disk_order, disk_entry) {
-		if (entry->dpme->dpme_pblock_start > max)
-			max = entry->dpme->dpme_pblock_start;
-		if (entry->dpme->dpme_pblocks > max)
-			max = entry->dpme->dpme_pblocks;
-		if (entry->dpme->dpme_lblock_start > max)
-			max = entry->dpme->dpme_lblock_start;
-		if (entry->dpme->dpme_lblocks > max)
-			max = entry->dpme->dpme_lblocks;
+		if (entry->dpme_pblock_start > max)
+			max = entry->dpme_pblock_start;
+		if (entry->dpme_pblocks > max)
+			max = entry->dpme_pblocks;
+		if (entry->dpme_lblock_start > max)
+			max = entry->dpme_lblock_start;
+		if (entry->dpme_lblocks > max)
+			max = entry->dpme_lblocks;
 	}
 
 	return max;

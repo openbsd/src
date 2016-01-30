@@ -1,4 +1,4 @@
-/*	$OpenBSD: file_media.h,v 1.19 2016/01/29 22:51:43 krw Exp $	*/
+/*	$OpenBSD: file_media.h,v 1.20 2016/01/30 17:09:11 krw Exp $	*/
 
 /*
  * file_media.h -
@@ -33,7 +33,7 @@
 int	read_block0(int, struct partition_map *);
 int	write_block0(int, struct partition_map *);
 
-int	read_dpme(int, uint64_t, struct dpme *);
-int	write_dpme(int, uint64_t, struct dpme *);
+int	read_dpme(int, uint64_t, struct entry *);
+int	write_dpme(int, uint64_t, struct entry *);
 
 #endif /* __file_media__ */
