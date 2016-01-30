@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.144 2016/01/28 17:26:10 gsoares Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.145 2016/01/30 05:38:26 semarie Exp $	*/
 /*	$KAME: ping6.c,v 1.163 2002/10/25 02:19:06 itojun Exp $	*/
 
 /*
@@ -641,6 +641,12 @@ main(int argc, char *argv[])
 		if (seenalrm) {
 			retransmit();
 			seenalrm = 0;
+			if (ntransmitted - nreceived - 1 > nmissedmax) {
+				nmissedmax = ntransmitted - nreceived - 1;
+				if (!(options & F_FLOOD) &&
+				    (options & F_AUD_MISS))
+					(void)fputc('\a', stderr);
+			}
 			continue;
 		}
 		if (seenint) {
@@ -706,12 +712,6 @@ main(int argc, char *argv[])
 		}
 		if (npackets && nreceived >= npackets)
 			break;
-		if (ntransmitted - nreceived - 1 > nmissedmax) {
-			nmissedmax = ntransmitted - nreceived - 1;
-			if (!(options & F_FLOOD) && (options & F_AUD_MISS))
-				(void)fputc('\a', stderr);
-		}
-
 	}
 	summary(0);
 	exit(nreceived == 0);
