@@ -1,4 +1,4 @@
-/*	$OpenBSD: eln.c,v 1.5 2016/01/30 00:06:39 schwarze Exp $	*/
+/*	$OpenBSD: eln.c,v 1.6 2016/01/30 17:32:52 schwarze Exp $	*/
 /*	$NetBSD: eln.c,v 1.9 2010/11/04 13:53:12 christos Exp $	*/
 
 /*-
@@ -213,7 +213,7 @@ el_set(EditLine *el, int op, ...)
 	}
 	case EL_HIST: {           /* hist_fun_t, const char * */
 		hist_fun_t fun = va_arg(ap, hist_fun_t);
-		ptr_t ptr = va_arg(ap, ptr_t);
+		void *ptr = va_arg(ap, void *);
 		ret = hist_set(el, fun, ptr);
 		el->el_flags |= NARROW_HISTORY;
 		break;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: map.c,v 1.15 2016/01/30 12:22:20 schwarze Exp $	*/
+/*	$OpenBSD: map.c,v 1.16 2016/01/30 17:32:52 schwarze Exp $	*/
 /*	$NetBSD: map.c,v 1.25 2009/12/30 22:37:40 christos Exp $	*/
 
 /*-
@@ -935,16 +935,16 @@ protected void
 map_end(EditLine *el)
 {
 
-	free((ptr_t) el->el_map.alt);
+	free(el->el_map.alt);
 	el->el_map.alt = NULL;
-	free((ptr_t) el->el_map.key);
+	free(el->el_map.key);
 	el->el_map.key = NULL;
 	el->el_map.emacs = NULL;
 	el->el_map.vic = NULL;
 	el->el_map.vii = NULL;
-	free((ptr_t) el->el_map.help);
+	free(el->el_map.help);
 	el->el_map.help = NULL;
-	free((ptr_t) el->el_map.func);
+	free(el->el_map.func);
 	el->el_map.func = NULL;
 }
 

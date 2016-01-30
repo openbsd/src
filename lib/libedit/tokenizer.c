@@ -1,4 +1,4 @@
-/*	$OpenBSD: tokenizer.c,v 1.14 2016/01/30 12:22:20 schwarze Exp $	*/
+/*	$OpenBSD: tokenizer.c,v 1.15 2016/01/30 17:32:52 schwarze Exp $	*/
 /*	$NetBSD: tokenizer.c,v 1.18 2010/01/03 18:27:10 christos Exp $	*/
 
 /*-
@@ -103,23 +103,23 @@ FUN(tok,init)(const Char *ifs)
 		return NULL;
 	tok->ifs = tok_strdup(ifs ? ifs : IFS);
 	if (tok->ifs == NULL) {
-		free((ptr_t)tok);
+		free(tok);
 		return NULL;
 	}
 	tok->argc = 0;
 	tok->amax = AINCR;
 	tok->argv = reallocarray(NULL, tok->amax, sizeof(*tok->argv));
 	if (tok->argv == NULL) {
-		free((ptr_t)tok->ifs);
-		free((ptr_t)tok);
+		free(tok->ifs);
+		free(tok);
 		return NULL;
 	}
 	tok->argv[0] = NULL;
 	tok->wspace = reallocarray(NULL, WINCR, sizeof(*tok->wspace));
 	if (tok->wspace == NULL) {
-		free((ptr_t)tok->argv);
-		free((ptr_t)tok->ifs);
-		free((ptr_t)tok);
+		free(tok->argv);
+		free(tok->ifs);
+		free(tok);
 		return NULL;
 	}
 	tok->wmax = tok->wspace + WINCR;
@@ -154,10 +154,10 @@ public void
 FUN(tok,end)(TYPE(Tokenizer) *tok)
 {
 
-	free((ptr_t) tok->ifs);
-	free((ptr_t) tok->wspace);
-	free((ptr_t) tok->argv);
-	free((ptr_t) tok);
+	free(tok->ifs);
+	free(tok->wspace);
+	free(tok->argv);
+	free(tok);
 }
 
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: chared.c,v 1.15 2016/01/30 12:22:20 schwarze Exp $	*/
+/*	$OpenBSD: chared.c,v 1.16 2016/01/30 17:32:52 schwarze Exp $	*/
 /*	$NetBSD: chared.c,v 1.28 2009/12/30 22:37:40 christos Exp $	*/
 
 /*-
@@ -482,7 +482,7 @@ ch__clearmacro(EditLine *el)
 {
 	c_macro_t *ma = &el->el_chared.c_macro;
 	while (ma->level >= 0)
-		free((ptr_t)ma->macro[ma->level--]);
+		free(ma->macro[ma->level--]);
 }
 
 /* ch_enlargebufs():
@@ -582,20 +582,20 @@ ch_enlargebufs(EditLine *el, size_t addlen)
 protected void
 ch_end(EditLine *el)
 {
-	free((ptr_t) el->el_line.buffer);
+	free(el->el_line.buffer);
 	el->el_line.buffer = NULL;
 	el->el_line.limit = NULL;
-	free((ptr_t) el->el_chared.c_undo.buf);
+	free(el->el_chared.c_undo.buf);
 	el->el_chared.c_undo.buf = NULL;
-	free((ptr_t) el->el_chared.c_redo.buf);
+	free(el->el_chared.c_redo.buf);
 	el->el_chared.c_redo.buf = NULL;
 	el->el_chared.c_redo.pos = NULL;
 	el->el_chared.c_redo.lim = NULL;
 	el->el_chared.c_redo.cmd = ED_UNASSIGNED;
-	free((ptr_t) el->el_chared.c_kill.buf);
+	free(el->el_chared.c_kill.buf);
 	el->el_chared.c_kill.buf = NULL;
 	ch_reset(el, 1);
-	free((ptr_t) el->el_chared.c_macro.macro);
+	free(el->el_chared.c_macro.macro);
 	el->el_chared.c_macro.macro = NULL;
 }
 

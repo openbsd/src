@@ -1,5 +1,5 @@
-/*	$OpenBSD: hist.h,v 1.9 2014/05/19 08:58:34 nicm Exp $	*/
-/*	$NetBSD: hist.h,v 1.12 2009/12/30 23:54:52 christos Exp $	*/
+/*	$OpenBSD: hist.h,v 1.10 2016/01/30 17:32:52 schwarze Exp $	*/
+/*	$NetBSD: hist.h,v 1.14 2014/05/11 01:05:17 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -43,14 +43,14 @@
 
 #include "histedit.h"
 
-typedef int (*hist_fun_t)(ptr_t, TYPE(HistEvent) *, int, ...);
+typedef int (*hist_fun_t)(void *, TYPE(HistEvent) *, int, ...);
 
 typedef struct el_history_t {
 	Char		*buf;		/* The history buffer		*/
-	size_t		sz;		/* Size of history buffer	*/
+	size_t		 sz;		/* Size of history buffer	*/
 	Char		*last;		/* The last character		*/
 	int		 eventno;	/* Event we are looking for	*/
-	ptr_t		 ref;		/* Argument for history fcns	*/
+	void		*ref;		/* Argument for history fcns	*/
 	hist_fun_t	 fun;		/* Event access			*/
 	TYPE(HistEvent)	 ev;		/* Event cookie			*/
 } el_history_t;
@@ -79,11 +79,11 @@ typedef struct el_history_t {
 protected int		hist_init(EditLine *);
 protected void		hist_end(EditLine *);
 protected el_action_t	hist_get(EditLine *);
-protected int		hist_set(EditLine *, hist_fun_t, ptr_t);
+protected int		hist_set(EditLine *, hist_fun_t, void *);
 protected int		hist_command(EditLine *, int, const Char **);
 protected int		hist_enlargebuf(EditLine *, size_t, size_t);
 #ifdef WIDECHAR
-protected wchar_t 	*hist_convert(EditLine *, int, ptr_t);
+protected wchar_t 	*hist_convert(EditLine *, int, void *);
 #endif
 
 #endif /* _h_el_hist */

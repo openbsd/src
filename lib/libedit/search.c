@@ -1,4 +1,4 @@
-/*	$OpenBSD: search.c,v 1.15 2016/01/30 12:22:20 schwarze Exp $	*/
+/*	$OpenBSD: search.c,v 1.16 2016/01/30 17:32:52 schwarze Exp $	*/
 /*	$NetBSD: search.c,v 1.24 2010/04/15 00:57:33 christos Exp $	*/
 
 /*-
@@ -80,7 +80,7 @@ protected void
 search_end(EditLine *el)
 {
 
-	free((ptr_t) el->el_search.patbuf);
+	free(el->el_search.patbuf);
 	el->el_search.patbuf = NULL;
 }
 
@@ -131,7 +131,7 @@ el_match(const Char *str, const Char *pat)
 #elif defined(REGEXP)
 	if ((re = regcomp(ct_encode_string(pat, &conv))) != NULL) {
 		rv = regexec(re, ct_encode_string(str, &conv));
-		free((ptr_t) re);
+		free(re);
 	} else {
 		rv = 0;
 	}

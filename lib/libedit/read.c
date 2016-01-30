@@ -1,4 +1,4 @@
-/*	$OpenBSD: read.c,v 1.18 2016/01/30 12:22:20 schwarze Exp $	*/
+/*	$OpenBSD: read.c,v 1.19 2016/01/30 17:32:52 schwarze Exp $	*/
 /*	$NetBSD: read.c,v 1.57 2010/07/21 18:18:52 christos Exp $	*/
 
 /*-
@@ -156,7 +156,7 @@ read__fixio(int fd __attribute__((__unused__)), int e)
 		{
 			int zero = 0;
 
-			if (ioctl(fd, FIONBIO, (ioctl_t) & zero) == -1)
+			if (ioctl(fd, FIONBIO, &zero) == -1)
 				return -1;
 			else
 				e = 1;
@@ -190,7 +190,7 @@ read_preread(EditLine *el)
 /* FIONREAD attempts to buffer up multiple bytes, and to make that work
  * properly with partial wide/UTF-8 characters would need some careful work. */
 #ifdef FIONREAD
-	(void) ioctl(el->el_infd, FIONREAD, (ioctl_t) & chrs);
+	(void) ioctl(el->el_infd, FIONREAD, &chrs);
 	if (chrs > 0) {
 		char buf[EL_BUFSIZ];
 
@@ -506,7 +506,7 @@ FUN(el,gets)(EditLine *el, int *nread)
 	if (el->el_tty.t_mode == EX_IO && ma->level < 0) {
 		long chrs = 0;
 
-		(void) ioctl(el->el_infd, FIONREAD, (ioctl_t) & chrs);
+		(void) ioctl(el->el_infd, FIONREAD, &chrs);
 		if (chrs == 0) {
 			if (tty_rawmode(el) < 0) {
 				errno = 0;

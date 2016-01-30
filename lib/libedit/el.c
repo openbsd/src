@@ -1,4 +1,4 @@
-/*	$OpenBSD: el.c,v 1.23 2016/01/30 12:22:20 schwarze Exp $	*/
+/*	$OpenBSD: el.c,v 1.24 2016/01/30 17:32:52 schwarze Exp $	*/
 /*	$NetBSD: el.c,v 1.61 2011/01/27 23:11:40 christos Exp $	*/
 
 /*-
@@ -128,14 +128,14 @@ el_end(EditLine *el)
 	prompt_end(el);
 	sig_end(el);
 
-	free((ptr_t) el->el_prog);
+	free(el->el_prog);
 #ifdef WIDECHAR
-	free((ptr_t) el->el_scratch.cbuff);
-	free((ptr_t) el->el_scratch.wbuff);
-	free((ptr_t) el->el_lgcyconv.cbuff);
-	free((ptr_t) el->el_lgcyconv.wbuff);
+	free(el->el_scratch.cbuff);
+	free(el->el_scratch.wbuff);
+	free(el->el_lgcyconv.cbuff);
+	free(el->el_lgcyconv.wbuff);
 #endif
-	free((ptr_t) el);
+	free(el);
 }
 
 
@@ -264,7 +264,7 @@ FUN(el,set)(EditLine *el, int op, ...)
 	case EL_HIST:
 	{
 		hist_fun_t func = va_arg(ap, hist_fun_t);
-		ptr_t ptr = va_arg(ap, ptr_t);
+		void *ptr = va_arg(ap, void *);
 
 		rv = hist_set(el, func, ptr);
 		if (!(el->el_flags & CHARSET_IS_UTF8))

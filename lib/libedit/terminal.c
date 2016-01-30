@@ -1,4 +1,4 @@
-/*	$OpenBSD: terminal.c,v 1.5 2016/01/30 12:22:20 schwarze Exp $	*/
+/*	$OpenBSD: terminal.c,v 1.6 2016/01/30 17:32:52 schwarze Exp $	*/
 /*	$NetBSD: term.c,v 1.57 2009/12/30 22:37:40 christos Exp $	*/
 
 /*-
@@ -421,8 +421,8 @@ terminal_alloc_display(EditLine *el)
 		b[i] = reallocarray(NULL, c->h + 1, sizeof(**b));
 		if (b[i] == NULL) {
 			while (--i >= 0)
-				free((ptr_t) b[i]);
-			free((ptr_t) b);
+				free(b[i]);
+			free(b);
 			goto done;
 		}
 	}
@@ -436,8 +436,8 @@ terminal_alloc_display(EditLine *el)
 		b[i] = reallocarray(NULL, c->h + 1, sizeof(**b));
 		if (b[i] == NULL) {
 			while (--i >= 0)
-				free((ptr_t) b[i]);
-			free((ptr_t) b);
+				free(b[i]);
+			free(b);
 			goto done;
 		}
 	}
@@ -465,15 +465,15 @@ terminal_free_display(EditLine *el)
 	el->el_display = NULL;
 	if (b != NULL) {
 		for (bufp = b; *bufp != NULL; bufp++)
-			free((ptr_t) *bufp);
-		free((ptr_t) b);
+			free(*bufp);
+		free(b);
 	}
 	b = el->el_vdisplay;
 	el->el_vdisplay = NULL;
 	if (b != NULL) {
 		for (bufp = b; *bufp != NULL; bufp++)
-			free((ptr_t) *bufp);
-		free((ptr_t) b);
+			free(*bufp);
+		free(b);
 	}
 }
 
@@ -955,7 +955,7 @@ terminal_get_size(EditLine *el, int *lins, int *cols)
 #ifdef TIOCGWINSZ
 	{
 		struct winsize ws;
-		if (ioctl(el->el_infd, TIOCGWINSZ, (ioctl_t) & ws) != -1) {
+		if (ioctl(el->el_infd, TIOCGWINSZ, &ws) != -1) {
 			if (ws.ws_col)
 				*cols = ws.ws_col;
 			if (ws.ws_row)
@@ -966,7 +966,7 @@ terminal_get_size(EditLine *el, int *lins, int *cols)
 #ifdef TIOCGSIZE
 	{
 		struct ttysize ts;
-		if (ioctl(el->el_infd, TIOCGSIZE, (ioctl_t) & ts) != -1) {
+		if (ioctl(el->el_infd, TIOCGSIZE, &ts) != -1) {
 			if (ts.ts_cols)
 				*cols = ts.ts_cols;
 			if (ts.ts_lines)

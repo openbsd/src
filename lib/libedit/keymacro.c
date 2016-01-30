@@ -1,4 +1,4 @@
-/*	$OpenBSD: keymacro.c,v 1.3 2016/01/30 12:22:20 schwarze Exp $	*/
+/*	$OpenBSD: keymacro.c,v 1.4 2016/01/30 17:32:52 schwarze Exp $	*/
 /*	$NetBSD: key.c,v 1.23 2009/12/30 22:37:40 christos Exp $	*/
 
 /*-
@@ -36,8 +36,8 @@
 #include "config.h"
 
 /*
- * key.c: This module contains the procedures for maintaining
- *	  the extended-key map.
+ * keymacro.c: This module contains the procedures for maintaining
+ *	       the extended-key map.
  *
  *      An extended-key (key) is a sequence of keystrokes introduced
  *	with a sequence introducer and consisting of an arbitrary
@@ -337,7 +337,7 @@ node__try(EditLine *el, keymacro_node_t *ptr, const Char *str,
 		case XK_STR:
 		case XK_EXE:
 			if (ptr->val.str)
-				free((ptr_t) ptr->val.str);
+				free(ptr->val.str);
 			break;
 		default:
 			EL_ABORT((el->el_errfile, "Bad XK_ type %d\n",
@@ -438,13 +438,13 @@ node__put(EditLine *el, keymacro_node_t *ptr)
 	case XK_EXE:
 	case XK_STR:
 		if (ptr->val.str != NULL)
-			free((ptr_t) ptr->val.str);
+			free(ptr->val.str);
 		break;
 	default:
 		EL_ABORT((el->el_errfile, "Bad XK_ type %d\n", ptr->type));
 		break;
 	}
-	free((ptr_t) ptr);
+	free(ptr);
 }
 
 
@@ -474,7 +474,7 @@ node__free(keymacro_node_t *k)
 		return;
 	node__free(k->sibling);
 	node__free(k->next);
-	free((ptr_t) k);
+	free(k);
 }
 
 /* node_lookup():

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hist.c,v 1.11 2016/01/30 12:22:20 schwarze Exp $	*/
+/*	$OpenBSD: hist.c,v 1.12 2016/01/30 17:32:52 schwarze Exp $	*/
 /*	$NetBSD: hist.c,v 1.17 2009/12/30 23:54:52 christos Exp $	*/
 
 /*-
@@ -67,7 +67,7 @@ protected void
 hist_end(EditLine *el)
 {
 
-	free((ptr_t) el->el_history.buf);
+	free(el->el_history.buf);
 	el->el_history.buf = NULL;
 }
 
@@ -76,7 +76,7 @@ hist_end(EditLine *el)
  *	Set new history interface
  */
 protected int
-hist_set(EditLine *el, hist_fun_t fun, ptr_t ptr)
+hist_set(EditLine *el, hist_fun_t fun, void *ptr)
 {
 
 	el->el_history.ref = ptr;
@@ -207,7 +207,7 @@ hist_enlargebuf(EditLine *el, size_t oldsz, size_t newsz)
 
 #ifdef WIDECHAR
 protected wchar_t *
-hist_convert(EditLine *el, int fn, ptr_t arg)
+hist_convert(EditLine *el, int fn, void *arg)
 {
 	HistEventW ev;
 	if ((*(el)->el_history.fun)((el)->el_history.ref, &ev, fn, arg) == -1)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys.h,v 1.10 2015/04/04 18:05:05 guenther Exp $	*/
+/*	$OpenBSD: sys.h,v 1.11 2016/01/30 17:32:52 schwarze Exp $	*/
 /*	$NetBSD: sys.h,v 1.13 2009/12/30 22:37:40 christos Exp $	*/
 
 /*-
@@ -76,16 +76,6 @@
 # define __arraycount(a) (sizeof(a) / sizeof(*(a)))
 #endif
 
-#ifndef _PTR_T
-# define _PTR_T
-typedef void	*ptr_t;
-#endif
-
-#ifndef _IOCTL_T
-# define _IOCTL_T
-typedef void	*ioctl_t;
-#endif
-
 #include <stdio.h>
 
 #ifndef HAVE_STRLCAT
@@ -113,42 +103,6 @@ extern int tgetnum(char *);
 extern int tputs(const char *, int, int (*)(int));
 extern char* tgoto(const char*, int, int);
 extern char* tgetstr(char*, char**);
-#endif
-
-#ifdef notdef
-# undef REGEX
-# undef REGEXP
-# include <malloc.h>
-# ifdef __GNUC__
-/*
- * Broken hdrs.
- */
-extern int	tgetent(const char *bp, char *name);
-extern int	tgetflag(const char *id);
-extern int	tgetnum(const char *id);
-extern char    *tgetstr(const char *id, char **area);
-extern char    *tgoto(const char *cap, int col, int row);
-extern int	tputs(const char *str, int affcnt, int (*putc)(int));
-extern char    *getenv(const char *);
-extern int	fprintf(FILE *, const char *, ...);
-extern int	sigsetmask(int);
-extern int	sigblock(int);
-extern int	fputc(int, FILE *);
-extern int	fgetc(FILE *);
-extern int	fflush(FILE *);
-extern int	tolower(int);
-extern int	toupper(int);
-extern int	errno, sys_nerr;
-extern char	*sys_errlist[];
-extern void	perror(const char *);
-#  include <string.h>
-#  define strerror(e)	sys_errlist[e]
-# endif
-# ifdef SABER
-extern ptr_t    memcpy(ptr_t, const ptr_t, size_t);
-extern ptr_t    memset(ptr_t, int, size_t);
-# endif
-extern char    *fgetline(FILE *, int *);
 #endif
 
 #endif /* _h_sys */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vi.c,v 1.14 2016/01/30 12:22:20 schwarze Exp $	*/
+/*	$OpenBSD: vi.c,v 1.15 2016/01/30 17:32:52 schwarze Exp $	*/
 /*	$NetBSD: vi.c,v 1.33 2011/02/17 16:44:48 joerg Exp $	*/
 
 /*-
@@ -1023,7 +1023,7 @@ vi_histedit(EditLine *el, Int c)
 	if (line == NULL) {
 		close(fd);
 		unlink(tempfile);
-		free((ptr_t)cp);
+		free(cp);
 		return CC_ERROR;
 	}
 	Strncpy(line, el->el_line.buffer, len);
