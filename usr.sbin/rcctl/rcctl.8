@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rcctl.8,v 1.29 2016/01/30 12:14:08 schwarze Exp $
+.\"	$OpenBSD: rcctl.8,v 1.30 2016/01/30 18:57:31 ajacoutot Exp $
 .\"
 .\" Copyright (c) 2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 .\"
@@ -201,8 +201,8 @@ different purpose is to create a symbolic link to its
 control script:
 .Bd -literal -offset indent
 # ln -s /etc/rc.d/snmpd /etc/rc.d/snmpd6
-# rcctl set snmpd6 flags -D addr=2001:db8::1234
 # rcctl set snmpd6 status on
+# rcctl set snmpd6 flags -D addr=2001:db8::1234
 # rcctl start snmpd6
 .Ed
 .Sh SEE ALSO
