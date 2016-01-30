@@ -1,4 +1,4 @@
-/*	$OpenBSD: partition_map.h,v 1.38 2016/01/30 17:21:10 krw Exp $	*/
+/*	$OpenBSD: partition_map.h,v 1.39 2016/01/30 17:28:34 krw Exp $	*/
 
 /*
  * partition_map.h - partition map routines
@@ -110,7 +110,6 @@ extern const char *kUnixType;
 extern const char *kHFSType;
 extern const char *kPatchType;
 
-extern int dflag;
 extern int lflag;
 extern int rflag;
 
@@ -131,6 +130,5 @@ void	move_entry_in_map(long, long, struct partition_map *);
 void	resize_map(long new_size, struct partition_map *);
 void	write_partition_map(struct partition_map *);
 void	dpme_init_flags(struct entry *);
-void	sync_device_size(struct partition_map *);
 
 #endif /* __partition_map__ */
