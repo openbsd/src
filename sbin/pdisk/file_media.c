@@ -1,4 +1,4 @@
-/*	$OpenBSD: file_media.c,v 1.45 2016/01/29 22:51:43 krw Exp $	*/
+/*	$OpenBSD: file_media.c,v 1.46 2016/01/30 14:24:47 krw Exp $	*/
 
 /*
  * file_media.c -
@@ -124,7 +124,7 @@ read_block0(int fd, struct partition_map *map)
 
 	block0_ondisk = malloc(sizeof(struct block0_ondisk));
 	if (block0_ondisk == NULL)
-		return 0;
+		errx(1, "No memory to read block0");
 
 	if (read_block(fd, 0, block0_ondisk) == 0)
 		return 0;
@@ -182,7 +182,7 @@ write_block0(int fd, struct partition_map *map)
 
 	block0_ondisk = malloc(sizeof(struct block0_ondisk));
 	if (block0_ondisk == NULL)
-		return 0;
+		errx(1, "No memory to write block 0");
 
 	tmp16 = htobe16(map->sbSig);
 	memcpy(block0_ondisk->sbSig, &tmp16,
@@ -232,7 +232,7 @@ read_dpme(int fd, uint64_t sector, struct dpme *dpme)
 
 	dpme_ondisk = malloc(sizeof(struct dpme_ondisk));
 	if (dpme_ondisk == NULL)
-		return 0;
+		errx(1, "No memory to read dpme");
 
 	if (read_block(fd, sector, dpme_ondisk) == 0)
 		return 0;
@@ -305,7 +305,7 @@ write_dpme(int fd, uint64_t sector, struct dpme *dpme)
 
 	dpme_ondisk = malloc(sizeof(struct dpme_ondisk));
 	if (dpme_ondisk == NULL)
-		return 0;
+		errx(1, "No memory to write dpme");
 
 	memcpy(dpme_ondisk->dpme_name, dpme->dpme_name,
 	    sizeof(dpme_ondisk->dpme_name));

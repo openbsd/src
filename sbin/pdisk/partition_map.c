@@ -1,4 +1,4 @@
-/*	$OpenBSD: partition_map.c,v 1.87 2016/01/29 22:51:43 krw Exp $	*/
+/*	$OpenBSD: partition_map.c,v 1.88 2016/01/30 14:24:47 krw Exp $	*/
 
 /*
  * partition_map.c - partition map routines
@@ -53,7 +53,7 @@ enum add_action {
 	kSplit = 2
 };
 
-int		add_data_to_map(struct dpme *, long, struct partition_map *);
+void		add_data_to_map(struct dpme *, long, struct partition_map *);
 int		contains_driver(struct entry *);
 void		combine_entry(struct entry *);
 struct dpme    *create_dpme(const char *, const char *, uint32_t, uint32_t);
@@ -71,10 +71,8 @@ open_partition_map(int fd, char *name, uint64_t mediasz, uint32_t sectorsz)
 	int ok;
 
 	map = malloc(sizeof(struct partition_map));
-	if (map == NULL) {
-		warn("can't allocate memory for open partition map");
-		return NULL;
-	}
+	if (map == NULL)
+		errx(1, "No memory to open partition map");
 
 	map->fd = fd;
 	map->name = name;
@@ -160,10 +158,8 @@ read_partition_map(struct partition_map *map)
 	limit = 1; /* There has to be at least one, which has actual value. */
 	for (ix = 1; ix <= limit; ix++) {
 		dpme = malloc(sizeof(struct dpme));
-		if (dpme == NULL) {
-			warn("can't allocate memory for partition entry");
-			return 1;
-		}
+		if (dpme == NULL)
+			errx(1, "No memory for partition entry");
 		if (read_dpme(map->fd, ix, dpme) == 0) {
 			warnx("Can't read block %u from '%s'", ix, map->name);
 			free(dpme);
@@ -201,10 +197,7 @@ read_partition_map(struct partition_map *map)
 			return 1;
 		}
 
-		if (add_data_to_map(dpme, ix, map) == 0) {
-			free(dpme);
-			return 1;
-		}
+		add_data_to_map(dpme, ix, map);
 	}
 
 	/* Traverse base_order looking for
@@ -255,16 +248,15 @@ write_partition_map(struct partition_map *map)
 }
 
 
-int
+void
 add_data_to_map(struct dpme *dpme, long ix, struct partition_map *map)
 {
 	struct entry *entry;
 
 	entry = malloc(sizeof(struct entry));
-	if (entry == NULL) {
-		warn("can't allocate memory for map entries");
-		return 0;
-	}
+	if (entry == NULL)
+		errx(1, "No memory for new partition entry");
+
 	entry->disk_address = ix;
 	entry->the_map = map;
 	entry->dpme = dpme;
@@ -278,7 +270,6 @@ add_data_to_map(struct dpme *dpme, long ix, struct partition_map *map)
 		if (strncasecmp(dpme->dpme_type, kMapType, DPISTRLEN) == 0)
 			map->maximum_in_map = dpme->dpme_pblocks;
 	}
-	return 1;
 }
 
 struct partition_map *
@@ -288,10 +279,9 @@ create_partition_map(int fd, char *name, u_int64_t mediasz, uint32_t sectorsz)
 	struct dpme *dpme;
 
 	map = malloc(sizeof(struct partition_map));
-	if (map == NULL) {
-		warn("can't allocate memory for open partition map");
-		return NULL;
-	}
+	if (map == NULL)
+		errx(1, "No memory to create partition map");
+
 	map->name = name;
 	map->fd = fd;
 	map->changed = 1;
@@ -309,27 +299,21 @@ create_partition_map(int fd, char *name, u_int64_t mediasz, uint32_t sectorsz)
 	map->sbBlkCount = map->media_size;
 
 	dpme = calloc(1, sizeof(struct dpme));
-	if (dpme == NULL) {
-		warn("can't allocate memory for initial dpme");
-	} else {
-		dpme->dpme_signature = DPME_SIGNATURE;
-		dpme->dpme_map_entries = 1;
-		dpme->dpme_pblock_start = 1;
-		dpme->dpme_pblocks = map->media_size - 1;
-		strlcpy(dpme->dpme_type, kFreeType, sizeof(dpme->dpme_type));
-		dpme_init_flags(dpme);
+	if (dpme == NULL)
+		errx(1, "No memory for initial dpme");
 
-		if (add_data_to_map(dpme, 1, map) == 0) {
-			free(dpme);
-		} else {
-			add_partition_to_map("Apple", kMapType, 1,
-			    (map->media_size <= 128 ? 2 : 63), map);
-			return map;
-		}
-	}
+	dpme->dpme_signature = DPME_SIGNATURE;
+	dpme->dpme_map_entries = 1;
+	dpme->dpme_pblock_start = 1;
+	dpme->dpme_pblocks = map->media_size - 1;
+	strlcpy(dpme->dpme_type, kFreeType, sizeof(dpme->dpme_type));
+	dpme_init_flags(dpme);
 
-	free_partition_map(map);
-	return NULL;
+	add_data_to_map(dpme, 1, map);
+	add_partition_to_map("Apple", kMapType, 1,
+	    (map->media_size <= 128 ? 2 : 63), map);
+
+	return map;
 }
 
 
@@ -409,18 +393,15 @@ add_partition_to_map(const char *name, const char *dptype, uint32_t base,
 		cur->dpme->dpme_pblocks = adjusted_length;
 		cur->dpme->dpme_lblocks = adjusted_length;
 		/* insert new with block address equal to this one */
-		if (add_data_to_map(dpme, cur->disk_address, map) == 0) {
-			free(dpme);
-		} else if (act == kSplit) {
+		add_data_to_map(dpme, cur->disk_address, map);
+		if (act == kSplit) {
 			dpme = create_dpme("", kFreeType, new_base, new_length);
 			if (dpme != NULL) {
 				/*
 				 * insert new with block address equal to
 				 * this one
 				 */
-				if (add_data_to_map(dpme, cur->disk_address,
-				    map) == 0)
-					free(dpme);
+				add_data_to_map(dpme, cur->disk_address, map);
 			}
 		}
 	}
@@ -437,19 +418,19 @@ create_dpme(const char *name, const char *dptype, uint32_t base,
 	struct dpme *dpme;
 
 	dpme = calloc(1, sizeof(struct dpme));
-	if (dpme == NULL) {
-		warn("can't allocate memory for disk buffers");
-	} else {
-		dpme->dpme_signature = DPME_SIGNATURE;
-		dpme->dpme_map_entries = 1;
-		dpme->dpme_pblock_start = base;
-		dpme->dpme_pblocks = length;
-		strlcpy(dpme->dpme_name, name, sizeof(dpme->dpme_name));
-		strlcpy(dpme->dpme_type, dptype, sizeof(dpme->dpme_type));
-		dpme->dpme_lblock_start = 0;
-		dpme->dpme_lblocks = dpme->dpme_pblocks;
-		dpme_init_flags(dpme);
-	}
+	if (dpme == NULL)
+		errx(1, "No memory for new dpme");
+
+	dpme->dpme_signature = DPME_SIGNATURE;
+	dpme->dpme_map_entries = 1;
+	dpme->dpme_pblock_start = base;
+	dpme->dpme_pblocks = length;
+	strlcpy(dpme->dpme_name, name, sizeof(dpme->dpme_name));
+	strlcpy(dpme->dpme_type, dptype, sizeof(dpme->dpme_type));
+	dpme->dpme_lblock_start = 0;
+	dpme->dpme_lblocks = dpme->dpme_pblocks;
+	dpme_init_flags(dpme);
+
 	return dpme;
 }
 
