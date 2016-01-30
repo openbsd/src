@@ -1,4 +1,4 @@
-/*	$OpenBSD: vs_refresh.c,v 1.21 2016/01/06 22:29:38 millert Exp $	*/
+/*	$OpenBSD: vs_refresh.c,v 1.22 2016/01/30 21:31:08 martijn Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -17,6 +17,7 @@
 
 #include <bitstring.h>
 #include <ctype.h>
+#include <libgen.h>
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -473,7 +474,7 @@ adjust:	if (!O_ISSET(sp, O_LEFTRIGHT) &&
 	/* Sanity checking. */
 	if (CNO >= len && len != 0) {
 		msgq(sp, M_ERR, "Error: %s/%d: cno (%u) >= len (%u)",
-		     tail(__FILE__), __LINE__, CNO, len);
+		     basename(__FILE__), __LINE__, CNO, len);
 		return (1);
 	}
 #endif

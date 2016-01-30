@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.7 2016/01/06 22:28:52 millert Exp $	*/
+/*	$OpenBSD: log.c,v 1.8 2016/01/30 21:31:08 martijn Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -18,6 +18,7 @@
 #include <bitstring.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <libgen.h>
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -635,7 +636,7 @@ log_err(SCR *sp, char *file, int line)
 {
 	EXF *ep;
 
-	msgq(sp, M_SYSERR, "%s/%d: log put error", tail(file), line);
+	msgq(sp, M_SYSERR, "%s/%d: log put error", basename(file), line);
 	ep = sp->ep;
 	(void)ep->log->close(ep->log);
 	if (!log_init(sp, ep))
