@@ -1,4 +1,4 @@
-/*	$OpenBSD: vi.c,v 1.13 2016/01/30 00:06:39 schwarze Exp $	*/
+/*	$OpenBSD: vi.c,v 1.14 2016/01/30 12:22:20 schwarze Exp $	*/
 /*	$NetBSD: vi.c,v 1.33 2011/02/17 16:44:48 joerg Exp $	*/
 
 /*-
@@ -72,11 +72,11 @@ cv_action(EditLine *el, Int c)
 		if (c & INSERT)
 			el->el_map.current = el->el_map.key;
 
-		return (CC_REFRESH);
+		return CC_REFRESH;
 	}
 	el->el_chared.c_vcmd.pos = el->el_line.cursor;
 	el->el_chared.c_vcmd.action = c;
-	return (CC_ARGHACK);
+	return CC_ARGHACK;
 }
 
 /* cv_paste():
@@ -89,7 +89,7 @@ cv_paste(EditLine *el, Int c)
 	size_t len = (size_t)(k->last - k->buf);
 
 	if (k->buf == NULL || len == 0)
-		return (CC_ERROR);
+		return CC_ERROR;
 #ifdef DEBUG_PASTE
 	(void) fprintf(el->el_errfile, "Paste: \"%.*s\"\n", (int)len, k->buf);
 #endif
@@ -101,11 +101,11 @@ cv_paste(EditLine *el, Int c)
 
 	c_insert(el, (int)len);
 	if (el->el_line.cursor + len > el->el_line.lastchar)
-		return (CC_ERROR);
+		return CC_ERROR;
 	(void) memcpy(el->el_line.cursor, k->buf, len *
 	    sizeof(*el->el_line.cursor));
 
-	return (CC_REFRESH);
+	return CC_REFRESH;
 }
 
 
@@ -118,7 +118,7 @@ protected el_action_t
 vi_paste_next(EditLine *el, Int c __attribute__((__unused__)))
 {
 
-	return (cv_paste(el, 0));
+	return cv_paste(el, 0);
 }
 
 
@@ -131,7 +131,7 @@ protected el_action_t
 vi_paste_prev(EditLine *el, Int c __attribute__((__unused__)))
 {
 
-	return (cv_paste(el, 1));
+	return cv_paste(el, 1);
 }
 
 
@@ -145,7 +145,7 @@ vi_prev_big_word(EditLine *el, Int c __attribute__((__unused__)))
 {
 
 	if (el->el_line.cursor == el->el_line.buffer)
-		return (CC_ERROR);
+		return CC_ERROR;
 
 	el->el_line.cursor = cv_prev_word(el->el_line.cursor,
 	    el->el_line.buffer,
@@ -154,9 +154,9 @@ vi_prev_big_word(EditLine *el, Int c __attribute__((__unused__)))
 
 	if (el->el_chared.c_vcmd.action != NOP) {
 		cv_delfini(el);
-		return (CC_REFRESH);
+		return CC_REFRESH;
 	}
-	return (CC_CURSOR);
+	return CC_CURSOR;
 }
 
 
@@ -170,7 +170,7 @@ vi_prev_word(EditLine *el, Int c __attribute__((__unused__)))
 {
 
 	if (el->el_line.cursor == el->el_line.buffer)
-		return (CC_ERROR);
+		return CC_ERROR;
 
 	el->el_line.cursor = cv_prev_word(el->el_line.cursor,
 	    el->el_line.buffer,
@@ -179,9 +179,9 @@ vi_prev_word(EditLine *el, Int c __attribute__((__unused__)))
 
 	if (el->el_chared.c_vcmd.action != NOP) {
 		cv_delfini(el);
-		return (CC_REFRESH);
+		return CC_REFRESH;
 	}
-	return (CC_CURSOR);
+	return CC_CURSOR;
 }
 
 
@@ -195,7 +195,7 @@ vi_next_big_word(EditLine *el, Int c __attribute__((__unused__)))
 {
 
 	if (el->el_line.cursor >= el->el_line.lastchar - 1)
-		return (CC_ERROR);
+		return CC_ERROR;
 
 	el->el_line.cursor = cv_next_word(el, el->el_line.cursor,
 	    el->el_line.lastchar, el->el_state.argument, cv__isWord);
@@ -203,9 +203,9 @@ vi_next_big_word(EditLine *el, Int c __attribute__((__unused__)))
 	if (el->el_map.type == MAP_VI)
 		if (el->el_chared.c_vcmd.action != NOP) {
 			cv_delfini(el);
-			return (CC_REFRESH);
+			return CC_REFRESH;
 		}
-	return (CC_CURSOR);
+	return CC_CURSOR;
 }
 
 
@@ -219,7 +219,7 @@ vi_next_word(EditLine *el, Int c __attribute__((__unused__)))
 {
 
 	if (el->el_line.cursor >= el->el_line.lastchar - 1)
-		return (CC_ERROR);
+		return CC_ERROR;
 
 	el->el_line.cursor = cv_next_word(el, el->el_line.cursor,
 	    el->el_line.lastchar, el->el_state.argument, cv__isword);
@@ -227,9 +227,9 @@ vi_next_word(EditLine *el, Int c __attribute__((__unused__)))
 	if (el->el_map.type == MAP_VI)
 		if (el->el_chared.c_vcmd.action != NOP) {
 			cv_delfini(el);
-			return (CC_REFRESH);
+			return CC_REFRESH;
 		}
-	return (CC_CURSOR);
+	return CC_CURSOR;
 }
 
 
@@ -243,7 +243,7 @@ vi_change_case(EditLine *el, Int c)
 	int i;
 
 	if (el->el_line.cursor >= el->el_line.lastchar)
-		return (CC_ERROR);
+		return CC_ERROR;
 	cv_undo(el);
 	for (i = 0; i < el->el_state.argument; i++) {
 
@@ -277,7 +277,7 @@ vi_change_meta(EditLine *el, Int c __attribute__((__unused__)))
          * Delete with insert == change: first we delete and then we leave in
          * insert mode.
          */
-	return (cv_action(el, DELETE | INSERT));
+	return cv_action(el, DELETE | INSERT);
 }
 
 
@@ -293,7 +293,7 @@ vi_insert_at_bol(EditLine *el, Int c __attribute__((__unused__)))
 	el->el_line.cursor = el->el_line.buffer;
 	cv_undo(el);
 	el->el_map.current = el->el_map.key;
-	return (CC_CURSOR);
+	return CC_CURSOR;
 }
 
 
@@ -312,7 +312,7 @@ vi_replace_char(EditLine *el, Int c __attribute__((__unused__)))
 	el->el_map.current = el->el_map.key;
 	el->el_state.inputmode = MODE_REPLACE_1;
 	cv_undo(el);
-	return (CC_ARGHACK);
+	return CC_ARGHACK;
 }
 
 
@@ -328,7 +328,7 @@ vi_replace_mode(EditLine *el, Int c __attribute__((__unused__)))
 	el->el_map.current = el->el_map.key;
 	el->el_state.inputmode = MODE_REPLACE;
 	cv_undo(el);
-	return (CC_NORM);
+	return CC_NORM;
 }
 
 
@@ -343,7 +343,7 @@ vi_substitute_char(EditLine *el, Int c __attribute__((__unused__)))
 
 	c_delafter(el, el->el_state.argument);
 	el->el_map.current = el->el_map.key;
-	return (CC_REFRESH);
+	return CC_REFRESH;
 }
 
 
@@ -361,7 +361,7 @@ vi_substitute_line(EditLine *el, Int c __attribute__((__unused__)))
 	    (int)(el->el_line.lastchar - el->el_line.buffer));
 	(void) em_kill_line(el, 0);
 	el->el_map.current = el->el_map.key;
-	return (CC_REFRESH);
+	return CC_REFRESH;
 }
 
 
@@ -379,7 +379,7 @@ vi_change_to_eol(EditLine *el, Int c __attribute__((__unused__)))
 	    (int)(el->el_line.lastchar - el->el_line.cursor));
 	(void) ed_kill_line(el, 0);
 	el->el_map.current = el->el_map.key;
-	return (CC_REFRESH);
+	return CC_REFRESH;
 }
 
 
@@ -394,7 +394,7 @@ vi_insert(EditLine *el, Int c __attribute__((__unused__)))
 
 	el->el_map.current = el->el_map.key;
 	cv_undo(el);
-	return (CC_NORM);
+	return CC_NORM;
 }
 
 
@@ -419,7 +419,7 @@ vi_add(EditLine *el, Int c __attribute__((__unused__)))
 
 	cv_undo(el);
 
-	return (ret);
+	return ret;
 }
 
 
@@ -435,7 +435,7 @@ vi_add_at_eol(EditLine *el, Int c __attribute__((__unused__)))
 	el->el_map.current = el->el_map.key;
 	el->el_line.cursor = el->el_line.lastchar;
 	cv_undo(el);
-	return (CC_CURSOR);
+	return CC_CURSOR;
 }
 
 
@@ -448,7 +448,7 @@ protected el_action_t
 vi_delete_meta(EditLine *el, Int c __attribute__((__unused__)))
 {
 
-	return (cv_action(el, DELETE));
+	return cv_action(el, DELETE);
 }
 
 
@@ -462,7 +462,7 @@ vi_end_big_word(EditLine *el, Int c)
 {
 
 	if (el->el_line.cursor == el->el_line.lastchar)
-		return (CC_ERROR);
+		return CC_ERROR;
 
 	el->el_line.cursor = cv__endword(el->el_line.cursor,
 	    el->el_line.lastchar, el->el_state.argument, cv__isWord);
@@ -470,9 +470,9 @@ vi_end_big_word(EditLine *el, Int c)
 	if (el->el_chared.c_vcmd.action != NOP) {
 		el->el_line.cursor++;
 		cv_delfini(el);
-		return (CC_REFRESH);
+		return CC_REFRESH;
 	}
-	return (CC_CURSOR);
+	return CC_CURSOR;
 }
 
 
@@ -486,7 +486,7 @@ vi_end_word(EditLine *el, Int c __attribute__((__unused__)))
 {
 
 	if (el->el_line.cursor == el->el_line.lastchar)
-		return (CC_ERROR);
+		return CC_ERROR;
 
 	el->el_line.cursor = cv__endword(el->el_line.cursor,
 	    el->el_line.lastchar, el->el_state.argument, cv__isword);
@@ -494,9 +494,9 @@ vi_end_word(EditLine *el, Int c __attribute__((__unused__)))
 	if (el->el_chared.c_vcmd.action != NOP) {
 		el->el_line.cursor++;
 		cv_delfini(el);
-		return (CC_REFRESH);
+		return CC_REFRESH;
 	}
-	return (CC_CURSOR);
+	return CC_CURSOR;
 }
 
 
@@ -523,7 +523,7 @@ vi_undo(EditLine *el, Int c __attribute__((__unused__)))
 	el->el_line.cursor = un.buf + un.cursor;
 	el->el_line.lastchar = un.buf + un.len;
 
-	return (CC_REFRESH);
+	return CC_REFRESH;
 }
 
 
@@ -548,7 +548,7 @@ vi_command_mode(EditLine *el, Int c __attribute__((__unused__)))
 	if (el->el_line.cursor > el->el_line.buffer)
 		el->el_line.cursor--;
 #endif
-	return (CC_CURSOR);
+	return CC_CURSOR;
 }
 
 
@@ -566,9 +566,9 @@ vi_zero(EditLine *el, Int c)
 	el->el_line.cursor = el->el_line.buffer;
 	if (el->el_chared.c_vcmd.action != NOP) {
 		cv_delfini(el);
-		return (CC_REFRESH);
+		return CC_REFRESH;
 	}
-	return (CC_CURSOR);
+	return CC_CURSOR;
 }
 
 
@@ -582,11 +582,11 @@ vi_delete_prev_char(EditLine *el, Int c __attribute__((__unused__)))
 {
 
 	if (el->el_line.cursor <= el->el_line.buffer)
-		return (CC_ERROR);
+		return CC_ERROR;
 
 	c_delbefore1(el);
 	el->el_line.cursor--;
-	return (CC_REFRESH);
+	return CC_REFRESH;
 }
 
 
@@ -602,26 +602,26 @@ vi_list_or_eof(EditLine *el, Int c)
 	if (el->el_line.cursor == el->el_line.lastchar) {
 		if (el->el_line.cursor == el->el_line.buffer) {
 			terminal_writec(el, c);	/* then do a EOF */
-			return (CC_EOF);
+			return CC_EOF;
 		} else {
 			/*
 			 * Here we could list completions, but it is an
 			 * error right now
 			 */
 			terminal_beep(el);
-			return (CC_ERROR);
+			return CC_ERROR;
 		}
 	} else {
 #ifdef notyet
 		re_goto_bottom(el);
 		*el->el_line.lastchar = '\0';	/* just in case */
-		return (CC_LIST_CHOICES);
+		return CC_LIST_CHOICES;
 #else
 		/*
 		 * Just complain for now.
 		 */
 		terminal_beep(el);
-		return (CC_ERROR);
+		return CC_ERROR;
 #endif
 	}
 }
@@ -644,7 +644,7 @@ vi_kill_line_prev(EditLine *el, Int c __attribute__((__unused__)))
 	el->el_chared.c_kill.last = kp;
 	c_delbefore(el, (int)(el->el_line.cursor - el->el_line.buffer));
 	el->el_line.cursor = el->el_line.buffer;	/* zap! */
-	return (CC_REFRESH);
+	return CC_REFRESH;
 }
 
 
@@ -657,7 +657,7 @@ protected el_action_t
 vi_search_prev(EditLine *el, Int c __attribute__((__unused__)))
 {
 
-	return (cv_search(el, ED_SEARCH_PREV_HISTORY));
+	return cv_search(el, ED_SEARCH_PREV_HISTORY);
 }
 
 
@@ -670,7 +670,7 @@ protected el_action_t
 vi_search_next(EditLine *el, Int c __attribute__((__unused__)))
 {
 
-	return (cv_search(el, ED_SEARCH_NEXT_HISTORY));
+	return cv_search(el, ED_SEARCH_NEXT_HISTORY);
 }
 
 
@@ -684,9 +684,9 @@ vi_repeat_search_next(EditLine *el, Int c __attribute__((__unused__)))
 {
 
 	if (el->el_search.patlen == 0)
-		return (CC_ERROR);
+		return CC_ERROR;
 	else
-		return (cv_repeat_srch(el, el->el_search.patdir));
+		return cv_repeat_srch(el, el->el_search.patdir);
 }
 
 
@@ -700,7 +700,7 @@ vi_repeat_search_prev(EditLine *el, Int c __attribute__((__unused__)))
 {
 
 	if (el->el_search.patlen == 0)
-		return (CC_ERROR);
+		return CC_ERROR;
 	else
 		return (cv_repeat_srch(el,
 		    el->el_search.patdir == ED_SEARCH_PREV_HISTORY ?
@@ -830,9 +830,9 @@ vi_match(EditLine *el, Int c)
 		if (delta > 0)
 			el->el_line.cursor++;
 		cv_delfini(el);
-		return (CC_REFRESH);
+		return CC_REFRESH;
 	}
-	return (CC_CURSOR);
+	return CC_CURSOR;
 }
 
 /* vi_undo_line():
@@ -1152,5 +1152,5 @@ vi_redo(EditLine *el, Int c)
 
 	el->el_state.thiscmd = r->cmd;
 	el->el_state.thisch = r->ch;
-	return  (*el->el_map.func[r->cmd])(el, r->ch);
+	return (*el->el_map.func[r->cmd])(el, r->ch);
 }

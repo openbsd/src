@@ -1,4 +1,4 @@
-/*	$OpenBSD: search.c,v 1.14 2016/01/30 00:06:39 schwarze Exp $	*/
+/*	$OpenBSD: search.c,v 1.15 2016/01/30 12:22:20 schwarze Exp $	*/
 /*	$NetBSD: search.c,v 1.24 2010/04/15 00:57:33 christos Exp $	*/
 
 /*-
@@ -63,13 +63,13 @@ search_init(EditLine *el)
 	el->el_search.patbuf = reallocarray(NULL, EL_BUFSIZ,
 	    sizeof(*el->el_search.patbuf));
 	if (el->el_search.patbuf == NULL)
-		return (-1);
+		return -1;
 	el->el_search.patlen = 0;
 	el->el_search.patdir = -1;
 	el->el_search.chacha = '\0';
 	el->el_search.chadir = CHAR_FWD;
 	el->el_search.chatflg = 0;
-	return (0);
+	return 0;
 }
 
 
@@ -118,7 +118,7 @@ el_match(const Char *str, const Char *pat)
 #endif
 
 	if (Strstr(str, pat) != 0)
-		return (1);
+		return 1;
 
 #if defined(REGEX)
 	if (regcomp(&re, ct_encode_string(pat, &conv), 0) == 0) {
@@ -127,7 +127,7 @@ el_match(const Char *str, const Char *pat)
 	} else {
 		rv = 0;
 	}
-	return (rv);
+	return rv;
 #elif defined(REGEXP)
 	if ((re = regcomp(ct_encode_string(pat, &conv))) != NULL) {
 		rv = regexec(re, ct_encode_string(str, &conv));
@@ -135,12 +135,12 @@ el_match(const Char *str, const Char *pat)
 	} else {
 		rv = 0;
 	}
-	return (rv);
+	return rv;
 #else
 	if (re_comp(ct_encode_string(pat, &conv)) != NULL)
-		return (0);
+		return 0;
 	else
-		return (re_exec(ct_encode_string(str, &conv)) == 1);
+		return re_exec(ct_encode_string(str, &conv)) == 1;
 #endif
 }
 
@@ -156,7 +156,7 @@ c_hmatch(EditLine *el, const Char *str)
 	    el->el_search.patbuf, str);
 #endif /* SDEBUG */
 
-	return (el_match(str, el->el_search.patbuf));
+	return el_match(str, el->el_search.patbuf);
 }
 
 
@@ -214,7 +214,7 @@ ce_inc_search(EditLine *el, int dir)
 	if (el->el_line.lastchar + sizeof(STRfwd) /
 	    sizeof(*el->el_line.lastchar) + 2 +
 	    el->el_search.patlen >= el->el_line.limit)
-		return (CC_ERROR);
+		return CC_ERROR;
 
 	for (;;) {
 
@@ -242,7 +242,7 @@ ce_inc_search(EditLine *el, int dir)
 		re_refresh(el);
 
 		if (FUN(el,getc)(el, &ch) != 1)
-			return (ed_end_of_file(el, 0));
+			return ed_end_of_file(el, 0);
 
 		switch (el->el_map.current[(unsigned char) ch]) {
 		case ED_INSERT:
@@ -401,7 +401,7 @@ ce_inc_search(EditLine *el, int dir)
 						el->el_history.eventno =
 						    ohisteventno;
 						if (hist_get(el) == CC_ERROR)
-							return (CC_ERROR);
+							return CC_ERROR;
 					}
 					el->el_line.cursor = ocursor;
 					pchar = '?';
@@ -426,14 +426,14 @@ ce_inc_search(EditLine *el, int dir)
 			if (el->el_history.eventno != ohisteventno) {
 				el->el_history.eventno = ohisteventno;
 				if (hist_get(el) == CC_ERROR)
-					return (CC_ERROR);
+					return CC_ERROR;
 			}
 			el->el_line.cursor = ocursor;
 			if (ret == CC_ERROR)
 				re_refresh(el);
 		}
 		if (done || ret != CC_NORM)
-			return (ret);
+			return ret;
 	}
 }
 
@@ -471,7 +471,7 @@ cv_search(EditLine *el, int dir)
 		 */
 		if (el->el_search.patlen == 0) {
 			re_refresh(el);
-			return (CC_ERROR);
+			return CC_ERROR;
 		}
 #ifdef ANCHOR
 		if (el->el_search.patbuf[0] != '.' &&
@@ -502,13 +502,13 @@ cv_search(EditLine *el, int dir)
 	if ((dir == ED_SEARCH_PREV_HISTORY ? ed_search_prev_history(el, 0) :
 	    ed_search_next_history(el, 0)) == CC_ERROR) {
 		re_refresh(el);
-		return (CC_ERROR);
+		return CC_ERROR;
 	}
 	if (ch == 0033) {
 		re_refresh(el);
 		return ed_newline(el, 0);
 	}
-	return (CC_REFRESH);
+	return CC_REFRESH;
 }
 
 
@@ -535,21 +535,21 @@ ce_search_line(EditLine *el, int dir)
 			if (el_match(cp, ocp)) {
 				*ocp = oc;
 				el->el_line.cursor = cp;
-				return (CC_NORM);
+				return CC_NORM;
 			}
 		}
 		*ocp = oc;
-		return (CC_ERROR);
+		return CC_ERROR;
 	} else {
 		for (; *cp != '\0' && cp < el->el_line.limit; cp++) {
 			if (el_match(cp, ocp)) {
 				*ocp = oc;
 				el->el_line.cursor = cp;
-				return (CC_NORM);
+				return CC_NORM;
 			}
 		}
 		*ocp = oc;
-		return (CC_ERROR);
+		return CC_ERROR;
 	}
 }
 
@@ -571,11 +571,11 @@ cv_repeat_srch(EditLine *el, Int c)
 
 	switch (c) {
 	case ED_SEARCH_NEXT_HISTORY:
-		return (ed_search_next_history(el, 0));
+		return ed_search_next_history(el, 0);
 	case ED_SEARCH_PREV_HISTORY:
-		return (ed_search_prev_history(el, 0));
+		return ed_search_prev_history(el, 0);
 	default:
-		return (CC_ERROR);
+		return CC_ERROR;
 	}
 }
 

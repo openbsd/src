@@ -1,4 +1,4 @@
-/*	$OpenBSD: filecomplete.c,v 1.5 2016/01/30 00:06:39 schwarze Exp $	*/
+/*	$OpenBSD: filecomplete.c,v 1.6 2016/01/30 12:22:20 schwarze Exp $	*/
 /*	$NetBSD: filecomplete.c,v 1.22 2010/12/02 04:42:46 dholland Exp $	*/
 
 /*-
@@ -69,7 +69,7 @@ static const Char break_chars[] = { ' ', '\t', '\n', '"', '\\', '\'', '`', '@',
  * if ``user'' isn't valid user name or ``txt'' doesn't start
  * w/ '~', returns pointer to strdup()ed copy of ``txt''
  *
- * it's callers's responsibility to free() returned string
+ * it's the caller's responsibility to free() the returned string
  */
 char *
 fn_tilde_expand(const char *txt)
@@ -80,7 +80,7 @@ fn_tilde_expand(const char *txt)
 	char pwbuf[1024];
 
 	if (txt[0] != '~')
-		return (strdup(txt));
+		return strdup(txt);
 
 	temp = strchr(txt + 1, '/');
 	if (temp == NULL) {
@@ -104,7 +104,7 @@ fn_tilde_expand(const char *txt)
 	}
 	free(temp);		/* value no more needed */
 	if (pass == NULL)
-		return (strdup(txt));
+		return strdup(txt);
 
 	/* update pointer txt to point at string immedially following */
 	/* first slash */
@@ -116,7 +116,7 @@ fn_tilde_expand(const char *txt)
 		return NULL;
 	(void)snprintf(temp, tempsz, "%s/%s", pass->pw_dir, txt);
 
-	return (temp);
+	return temp;
 }
 
 
@@ -125,7 +125,7 @@ fn_tilde_expand(const char *txt)
  * such file can be found
  * value of ``state'' is ignored
  *
- * it's caller's responsibility to free returned string
+ * it's the caller's responsibility to free the returned string
  */
 char *
 fn_filename_completion_function(const char *text, int state)
@@ -198,7 +198,7 @@ fn_filename_completion_function(const char *text, int state)
 
 		dir = opendir(dirpath);
 		if (!dir)
-			return (NULL);	/* cannot open the directory */
+			return NULL;	/* cannot open the directory */
 
 		/* will be used in cycle */
 		filename_len = filename ? strlen(filename) : 0;
@@ -244,7 +244,7 @@ fn_filename_completion_function(const char *text, int state)
 		temp = NULL;
 	}
 
-	return (temp);
+	return temp;
 }
 
 
@@ -322,7 +322,7 @@ completion_matches(const char *text, char *(*genfunc)(const char *, int))
 	/* add NULL as last pointer to the array */
 	match_list[matches + 1] = (char *) NULL;
 
-	return (match_list);
+	return match_list;
 }
 
 /*

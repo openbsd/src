@@ -1,4 +1,4 @@
-/*	$OpenBSD: read.c,v 1.17 2016/01/30 00:06:39 schwarze Exp $	*/
+/*	$OpenBSD: read.c,v 1.18 2016/01/30 12:22:20 schwarze Exp $	*/
 /*	$NetBSD: read.c,v 1.57 2010/07/21 18:18:52 christos Exp $	*/
 
 /*-
@@ -85,7 +85,7 @@ el_read_setfn(EditLine *el, el_rfunc_t rc)
 protected el_rfunc_t
 el_read_getfn(EditLine *el)
 {
-       return (el->el_read.read_char == read_char) ?
+       return el->el_read.read_char == read_char ?
 	    EL_BUILTIN_GETCFN : el->el_read.read_char;
 }
 
@@ -144,10 +144,10 @@ read__fixio(int fd __attribute__((__unused__)), int e)
 #ifdef TRY_AGAIN
 #if defined(F_SETFL) && defined(O_NDELAY)
 		if ((e = fcntl(fd, F_GETFL, 0)) == -1)
-			return (-1);
+			return -1;
 
 		if (fcntl(fd, F_SETFL, e & ~O_NDELAY) == -1)
-			return (-1);
+			return -1;
 		else
 			e = 1;
 #endif /* F_SETFL && O_NDELAY */
@@ -157,20 +157,20 @@ read__fixio(int fd __attribute__((__unused__)), int e)
 			int zero = 0;
 
 			if (ioctl(fd, FIONBIO, (ioctl_t) & zero) == -1)
-				return (-1);
+				return -1;
 			else
 				e = 1;
 		}
 #endif /* FIONBIO */
 
 #endif /* TRY_AGAIN */
-		return (e ? 0 : -1);
+		return e ? 0 : -1;
 
 	case EINTR:
-		return (0);
+		return 0;
 
 	default:
-		return (-1);
+		return -1;
 	}
 }
 
@@ -184,7 +184,7 @@ read_preread(EditLine *el)
 	int chrs = 0;
 
 	if (el->el_tty.t_mode == ED_IO)
-		return (0);
+		return 0;
 
 #ifndef WIDECHAR
 /* FIONREAD attempts to buffer up multiple bytes, and to make that work
@@ -203,7 +203,7 @@ read_preread(EditLine *el)
 	}
 #endif /* FIONREAD */
 #endif
-	return (chrs > 0);
+	return chrs > 0;
 }
 
 
@@ -240,7 +240,7 @@ read_getcmd(EditLine *el, el_action_t *cmdnum, Char *ch)
 	do {
 		if ((num = FUN(el,getc)(el, ch)) != 1) {/* if EOF or error */
 			el->el_errno = num == 0 ? 0 : errno;
-			return (num);
+			return num;
 		}
 
 #ifdef	KANJI
@@ -285,7 +285,7 @@ read_getcmd(EditLine *el, el_action_t *cmdnum, Char *ch)
 			el->el_map.current = el->el_map.key;
 	} while (cmd == ED_SEQUENCE_LEAD_IN);
 	*cmdnum = cmd;
-	return (OKCMD);
+	return OKCMD;
 }
 
 #ifdef WIDECHAR
@@ -295,8 +295,8 @@ read_getcmd(EditLine *el, el_action_t *cmdnum, Char *ch)
 private int
 utf8_islead(unsigned char c)
 {
-        return (c < 0x80) ||             /* single byte char */
-               (c >= 0xc2 && c <= 0xf4); /* start of multibyte sequence */
+	return c < 0x80 ||	       /* single byte char */
+	       (c >= 0xc2 && c <= 0xf4); /* start of multibyte sequence */
 }
 #endif
 
@@ -329,7 +329,7 @@ read_char(EditLine *el, Char *cp)
 			tried = 1;
 		else {
 			*cp = '\0';
-			return (-1);
+			return -1;
 		}
 	}
 
@@ -342,7 +342,7 @@ read_char(EditLine *el, Char *cp)
 			ct_mbtowc_reset;
 			if (cbp >= MB_LEN_MAX) { /* "shouldn't happen" */
 				*cp = '\0';
-				return (-1);
+				return -1;
 			}
 			goto again;
 		}
@@ -404,14 +404,14 @@ FUN(el,getc)(EditLine *el, Char *cp)
 			read_pop(ma);
 		}
 
-		return (1);
+		return 1;
 	}
 
 #ifdef DEBUG_READ
 	(void) fprintf(el->el_errfile, "Turning raw mode on\n");
 #endif /* DEBUG_READ */
 	if (tty_rawmode(el) < 0)/* make sure the tty is set up correctly */
-		return (0);
+		return 0;
 
 #ifdef DEBUG_READ
 	(void) fprintf(el->el_errfile, "Reading a character\n");
@@ -424,7 +424,7 @@ FUN(el,getc)(EditLine *el, Char *cp)
 #ifdef DEBUG_READ
 	(void) fprintf(el->el_errfile, "Got it %c\n", *cp);
 #endif /* DEBUG_READ */
-	return (num_read);
+	return num_read;
 }
 
 protected void
@@ -511,7 +511,7 @@ FUN(el,gets)(EditLine *el, int *nread)
 			if (tty_rawmode(el) < 0) {
 				errno = 0;
 				*nread = 0;
-				return (NULL);
+				return NULL;
 			}
 		}
 	}

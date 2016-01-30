@@ -1,4 +1,4 @@
-/*	$OpenBSD: tokenizer.c,v 1.13 2014/10/17 06:07:50 deraadt Exp $	*/
+/*	$OpenBSD: tokenizer.c,v 1.14 2016/01/30 12:22:20 schwarze Exp $	*/
 /*	$NetBSD: tokenizer.c,v 1.18 2010/01/03 18:27:10 christos Exp $	*/
 
 /*-
@@ -128,7 +128,7 @@ FUN(tok,init)(const Char *ifs)
 	tok->flags = 0;
 	tok->quote = Q_none;
 
-	return (tok);
+	return tok;
 }
 
 
@@ -224,7 +224,7 @@ FUN(tok,line)(TYPE(Tokenizer) *tok, const TYPE(LineInfo) *line,
 				break;
 
 			default:
-				return (-1);
+				return -1;
 			}
 			break;
 
@@ -255,7 +255,7 @@ FUN(tok,line)(TYPE(Tokenizer) *tok, const TYPE(LineInfo) *line,
 				break;
 
 			default:
-				return (-1);
+				return -1;
 			}
 			break;
 
@@ -286,7 +286,7 @@ FUN(tok,line)(TYPE(Tokenizer) *tok, const TYPE(LineInfo) *line,
 				break;
 
 			default:
-				return (-1);
+				return -1;
 			}
 			break;
 
@@ -312,7 +312,7 @@ FUN(tok,line)(TYPE(Tokenizer) *tok, const TYPE(LineInfo) *line,
 				break;
 
 			default:
-				return (0);
+				return 0;
 			}
 			break;
 
@@ -322,15 +322,15 @@ FUN(tok,line)(TYPE(Tokenizer) *tok, const TYPE(LineInfo) *line,
 				/* Finish word and return */
 				if (tok->flags & TOK_EAT) {
 					tok->flags &= ~TOK_EAT;
-					return (3);
+					return 3;
 				}
 				goto tok_line_outok;
 
 			case Q_single:
-				return (1);
+				return 1;
 
 			case Q_double:
-				return (2);
+				return 2;
 
 			case Q_doubleone:
 				tok->quote = Q_double;
@@ -343,7 +343,7 @@ FUN(tok,line)(TYPE(Tokenizer) *tok, const TYPE(LineInfo) *line,
 				break;
 
 			default:
-				return (-1);
+				return -1;
 			}
 			break;
 
@@ -375,7 +375,7 @@ FUN(tok,line)(TYPE(Tokenizer) *tok, const TYPE(LineInfo) *line,
 				break;
 
 			default:
-				return (-1);
+				return -1;
 
 			}
 			break;
@@ -385,7 +385,7 @@ FUN(tok,line)(TYPE(Tokenizer) *tok, const TYPE(LineInfo) *line,
 			size_t size = tok->wmax - tok->wspace + WINCR;
 			Char *s = reallocarray(tok->wspace, size, sizeof(*s));
 			if (s == NULL)
-				return (-1);
+				return -1;
 
 			if (s != tok->wspace) {
 				int i;
@@ -404,7 +404,7 @@ FUN(tok,line)(TYPE(Tokenizer) *tok, const TYPE(LineInfo) *line,
 			tok->amax += AINCR;
 			p = reallocarray(tok->argv, tok->amax, sizeof(*p));
 			if (p == NULL)
-				return (-1);
+				return -1;
 			tok->argv = p;
 		}
 	}
@@ -420,7 +420,7 @@ FUN(tok,line)(TYPE(Tokenizer) *tok, const TYPE(LineInfo) *line,
 	FUN(tok,finish)(tok);
 	*argv = (const Char **)tok->argv;
 	*argc = tok->argc;
-	return (0);
+	return 0;
 }
 
 /* FUN(tok,str)():
@@ -436,5 +436,5 @@ FUN(tok,str)(TYPE(Tokenizer) *tok, const Char *line, int *argc,
 	memset(&li, 0, sizeof(li));
 	li.buffer = line;
 	li.cursor = li.lastchar = Strchr(line, '\0');
-	return (FUN(tok,line)(tok, &li, argc, argv, NULL, NULL));
+	return FUN(tok,line)(tok, &li, argc, argv, NULL, NULL);
 }

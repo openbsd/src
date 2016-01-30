@@ -1,5 +1,5 @@
-/*	$OpenBSD: prompt.c,v 1.10 2016/01/30 00:06:39 schwarze Exp $	*/
-/*	$NetBSD: prompt.c,v 1.18 2009/12/31 15:58:26 christos Exp $	*/
+/*	$OpenBSD: prompt.c,v 1.11 2016/01/30 12:22:20 schwarze Exp $	*/
+/*	$NetBSD: prompt.c,v 1.20 2011/07/29 15:16:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -53,7 +53,7 @@ prompt_default(EditLine *el __attribute__((__unused__)))
 {
 	static Char a[3] = {'?', ' ', '\0'};
 
-	return (a);
+	return a;
 }
 
 
@@ -66,7 +66,7 @@ prompt_default_r(EditLine *el __attribute__((__unused__)))
 {
 	static Char a[1] = {'\0'};
 
-	return (a);
+	return a;
 }
 
 

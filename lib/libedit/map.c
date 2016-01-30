@@ -1,4 +1,4 @@
-/*	$OpenBSD: map.c,v 1.14 2016/01/30 00:06:39 schwarze Exp $	*/
+/*	$OpenBSD: map.c,v 1.15 2016/01/30 12:22:20 schwarze Exp $	*/
 /*	$NetBSD: map.c,v 1.25 2009/12/30 22:37:40 christos Exp $	*/
 
 /*-
@@ -899,23 +899,23 @@ map_init(EditLine *el)
 
 	el->el_map.alt = reallocarray(NULL, N_KEYS, sizeof(el_action_t));
 	if (el->el_map.alt == NULL)
-		return (-1);
+		return -1;
 	el->el_map.key = reallocarray(NULL, N_KEYS, sizeof(el_action_t));
 	if (el->el_map.key == NULL)
-		return (-1);
+		return -1;
 	el->el_map.emacs = el_map_emacs;
 	el->el_map.vic = el_map_vi_command;
 	el->el_map.vii = el_map_vi_insert;
 	el->el_map.help = reallocarray(NULL, EL_NUM_FCNS,
 	    sizeof(el_bindings_t));
 	if (el->el_map.help == NULL)
-		return (-1);
+		return -1;
 	(void) memcpy(el->el_map.help, help__get(),
 	    sizeof(el_bindings_t) * EL_NUM_FCNS);
 	el->el_map.func = reallocarray(NULL, EL_NUM_FCNS,
 	    sizeof(el_func_t));
 	if (el->el_map.func == NULL)
-		return (-1);
+		return -1;
 	memcpy(el->el_map.func, func__get(), sizeof(el_func_t) * EL_NUM_FCNS);
 	el->el_map.nfunc = EL_NUM_FCNS;
 
@@ -924,7 +924,7 @@ map_init(EditLine *el)
 #else
 	map_init_emacs(el);
 #endif /* VIDEFAULT */
-	return (0);
+	return 0;
 }
 
 
@@ -1079,13 +1079,13 @@ map_set_editor(EditLine *el, Char *editor)
 
 	if (Strcmp(editor, STR("emacs")) == 0) {
 		map_init_emacs(el);
-		return (0);
+		return 0;
 	}
 	if (Strcmp(editor, STR("vi")) == 0) {
 		map_init_vi(el);
-		return (0);
+		return 0;
 	}
-	return (-1);
+	return -1;
 }
 
 
@@ -1097,16 +1097,16 @@ map_get_editor(EditLine *el, const Char **editor)
 {
 
 	if (editor == NULL)
-		return (-1);
+		return -1;
 	switch (el->el_map.type) {
 	case MAP_EMACS:
 		*editor = STR("emacs");
-		return (0);
+		return 0;
 	case MAP_VI:
 		*editor = STR("vi");
-		return (0);
+		return 0;
 	}
-	return (-1);
+	return -1;
 }
 
 
@@ -1250,7 +1250,7 @@ map_bind(EditLine *el, int argc, const Char **argv)
 	int key;
 
 	if (argv == NULL)
-		return (-1);
+		return -1;
 
 	map = el->el_map.key;
 	ntype = XK_CMD;
@@ -1280,11 +1280,11 @@ map_bind(EditLine *el, int argc, const Char **argv)
 
 			case 'v':
 				map_init_vi(el);
-				return (0);
+				return 0;
 
 			case 'e':
 				map_init_emacs(el);
-				return (0);
+				return 0;
 
 			case 'l':
 				ep = &el->el_map.help[el->el_map.nfunc];
@@ -1292,7 +1292,7 @@ map_bind(EditLine *el, int argc, const Char **argv)
 					(void) fprintf(el->el_outfile,
 					    "" FSTR "\n\t" FSTR "\n",
 					    bp->name, bp->description);
-				return (0);
+				return 0;
 			default:
 				(void) fprintf(el->el_errfile,
 				    "" FSTR ": Invalid switch `%c'.\n",
@@ -1303,7 +1303,7 @@ map_bind(EditLine *el, int argc, const Char **argv)
 
 	if (argv[argc] == NULL) {
 		map_print_all_keys(el);
-		return (0);
+		return 0;
 	}
 	if (key)
 		in = argv[argc++];
@@ -1311,12 +1311,12 @@ map_bind(EditLine *el, int argc, const Char **argv)
 		(void) fprintf(el->el_errfile,
 		    "" FSTR ": Invalid \\ or ^ in instring.\n",
 		    argv[0]);
-		return (-1);
+		return -1;
 	}
 	if (rem) {
 		if (key) {
 			(void) terminal_clear_arrow(el, in);
-			return (-1);
+			return -1;
 		}
 		if (in[1])
 			(void) keymacro_delete(el, in);
@@ -1324,19 +1324,19 @@ map_bind(EditLine *el, int argc, const Char **argv)
 			(void) keymacro_delete(el, in);
 		else
 			map[(unsigned char) *in] = ED_UNASSIGNED;
-		return (0);
+		return 0;
 	}
 	if (argv[argc] == NULL) {
 		if (key)
 			terminal_print_arrow(el, in);
 		else
 			map_print_key(el, map, in);
-		return (0);
+		return 0;
 	}
 #ifdef notyet
 	if (argv[argc + 1] != NULL) {
 		bindkey_usage();
-		return (-1);
+		return -1;
 	}
 #endif
 
@@ -1346,7 +1346,7 @@ map_bind(EditLine *el, int argc, const Char **argv)
 		if ((out = parse__string(outbuf, argv[argc])) == NULL) {
 			(void) fprintf(el->el_errfile,
 			    "" FSTR ": Invalid \\ or ^ in outstring.\n", argv[0]);
-			return (-1);
+			return -1;
 		}
 		if (key)
 			terminal_set_arrow(el, in, keymacro_map_str(el, out), ntype);
@@ -1360,7 +1360,7 @@ map_bind(EditLine *el, int argc, const Char **argv)
 			(void) fprintf(el->el_errfile,
 			    "" FSTR ": Invalid command `" FSTR "'.\n",
 			    argv[0], argv[argc]);
-			return (-1);
+			return -1;
 		}
 		if (key)
 			terminal_set_arrow(el, in, keymacro_map_str(el, out), ntype);
@@ -1379,7 +1379,7 @@ map_bind(EditLine *el, int argc, const Char **argv)
 		EL_ABORT((el->el_errfile, "Bad XK_ type %d\n", ntype));
 		break;
 	}
-	return (0);
+	return 0;
 }
 
 
@@ -1393,14 +1393,14 @@ map_addfunc(EditLine *el, const Char *name, const Char *help, el_func_t func)
 	int nf = el->el_map.nfunc + 1;
 
 	if (name == NULL || help == NULL || func == NULL)
-		return (-1);
+		return -1;
 
 	if ((p = reallocarray(el->el_map.func, nf, sizeof(el_func_t))) == NULL)
-		return (-1);
+		return -1;
 	el->el_map.func = (el_func_t *) p;
 	if ((p = reallocarray(el->el_map.help, nf, sizeof(el_bindings_t)))
 	    == NULL)
-		return (-1);
+		return -1;
 	el->el_map.help = (el_bindings_t *) p;
 
 	nf = el->el_map.nfunc;
@@ -1411,5 +1411,5 @@ map_addfunc(EditLine *el, const Char *name, const Char *help, el_func_t func)
 	el->el_map.help[nf].description = help;
 	el->el_map.nfunc++;
 
-	return (0);
+	return 0;
 }

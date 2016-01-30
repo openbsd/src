@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.13 2016/01/30 00:06:39 schwarze Exp $	*/
+/*	$OpenBSD: parse.c,v 1.14 2016/01/30 12:22:20 schwarze Exp $	*/
 /*	$NetBSD: parse.c,v 1.23 2009/12/30 22:37:40 christos Exp $	*/
 
 /*-
@@ -80,7 +80,7 @@ parse_line(EditLine *el, const Char *line)
 	FUN(tok,str)(tok, line, &argc, &argv);
 	argc = FUN(el,parse)(el, argc, argv);
 	FUN(tok,end)(tok);
-	return (argc);
+	return argc;
 }
 
 
@@ -94,34 +94,34 @@ FUN(el,parse)(EditLine *el, int argc, const Char *argv[])
 	int i;
 
 	if (argc < 1)
-		return (-1);
+		return -1;
 	ptr = Strchr(argv[0], ':');
 	if (ptr != NULL) {
 		Char *tprog;
 		size_t l;
 
 		if (ptr == argv[0])
-			return (0);
+			return 0;
 		l = ptr - argv[0] - 1;
 		tprog = reallocarray(NULL, l + 1, sizeof(*tprog));
 		if (tprog == NULL)
-			return (0);
+			return 0;
 		(void) Strncpy(tprog, argv[0], l);
 		tprog[l] = '\0';
 		ptr++;
 		l = el_match(el->el_prog, tprog);
 		free(tprog);
 		if (!l)
-			return (0);
+			return 0;
 	} else
 		ptr = argv[0];
 
 	for (i = 0; cmds[i].name != NULL; i++)
 		if (Strcmp(cmds[i].name, ptr) == 0) {
 			i = (*cmds[i].func) (el, argc, argv);
-			return (-i);
+			return -i;
 		}
-	return (-1);
+	return -1;
 }
 
 
@@ -138,7 +138,7 @@ parse__escape(const Char **ptr)
 	p = *ptr;
 
 	if (p[1] == 0)
-		return (-1);
+		return -1;
 
 	if (*p == '\\') {
 		p++;
@@ -174,12 +174,12 @@ parse__escape(const Char **ptr)
                         const Char *h;
                         ++p;
                         if (*p++ != '+')
-                                return (-1);
+                                return -1;
 			c = 0;
                         for (i = 0; i < 5; ++i) {
                                 h = Strchr(hex, *p++);
                                 if (!h && i < 4)
-                                        return (-1);
+                                        return -1;
                                 else if (h)
                                         c = (c << 4) | ((int)(h - hex));
                                 else
@@ -209,7 +209,7 @@ parse__escape(const Char **ptr)
 				c = (c << 3) | (ch - '0');
 			}
 			if ((c & 0xffffff00) != 0)
-				return (-1);
+				return -1;
 			--p;
 			break;
 		}
@@ -223,7 +223,7 @@ parse__escape(const Char **ptr)
 	} else
 		c = *p;
 	*ptr = ++p;
-	return (c);
+	return c;
 }
 
 /* parse__string():
@@ -239,12 +239,12 @@ parse__string(Char *out, const Char *in)
 		switch (*in) {
 		case '\0':
 			*out = '\0';
-			return (rv);
+			return rv;
 
 		case '\\':
 		case '^':
 			if ((n = parse__escape(&in)) == -1)
-				return (NULL);
+				return NULL;
 			*out++ = n;
 			break;
 
@@ -275,6 +275,6 @@ parse_cmd(EditLine *el, const Char *cmd)
 
 	for (b = el->el_map.help, i = 0; i < el->el_map.nfunc; i++)
 		if (Strcmp(b[i].name, cmd) == 0)
-			return (b[i].func);
-	return (-1);
+			return b[i].func;
+	return -1;
 }
