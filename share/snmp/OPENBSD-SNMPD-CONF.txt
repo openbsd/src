@@ -1,4 +1,4 @@
--- $OpenBSD: OPENBSD-SNMPD-CONF.txt,v 1.5 2012/02/09 16:50:18 sthen Exp $
+-- $OpenBSD: OPENBSD-SNMPD-CONF.txt,v 1.6 2016/01/30 23:06:27 sthen Exp $
 --
 -- Copyright (c) 2008 Reyk Floeter <reyk@openbsd.org>
 --
@@ -73,6 +73,10 @@ IMPORTS
 	-- Kernel sensors MIB, OPENBSD-SENSORS-MIB.txt, OpenBSD 4.3
 	sensorsMIBObjects
 	    FROM OPENBSD-SENSORS-MIB
+
+	-- relayd(8) status MIB, OPENBSD-RELAYD-MIB.txt
+	relaydMIBObjects
+	    FROM OPENBSD-RELAYD-MIB
 
 	-- Memory statistics MIB, OPENBSD-MEM-MIB.txt, OpenBSD 4.5
 	memMIBObjects
