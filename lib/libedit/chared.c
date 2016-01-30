@@ -1,4 +1,4 @@
-/*	$OpenBSD: chared.c,v 1.13 2016/01/30 00:06:39 schwarze Exp $	*/
+/*	$OpenBSD: chared.c,v 1.14 2016/01/30 02:52:41 schwarze Exp $	*/
 /*	$NetBSD: chared.c,v 1.28 2009/12/30 22:37:40 christos Exp $	*/
 
 /*-
@@ -320,41 +320,6 @@ cv_prev_word(Char *p, Char *low, int n, int (*wtest)(Int))
 }
 
 
-#ifdef notdef
-/* c__number():
- *	Ignore character p points to, return number appearing after that.
- * 	A '$' by itself means a big number; "$-" is for negative; '^' means 1.
- * 	Return p pointing to last char used.
- */
-protected Char *
-c__number(
-    Char *p,	/* character position */
-    int *num,	/* Return value	*/
-    int dval)	/* dval is the number to subtract from like $-3 */
-{
-	int i;
-	int sign = 1;
-
-	if (*++p == '^') {
-		*num = 1;
-		return (p);
-	}
-	if (*p == '$') {
-		if (*++p != '-') {
-			*num = 0x7fffffff;	/* Handle $ */
-			return (--p);
-		}
-		sign = -1;			/* Handle $- */
-		++p;
-	}
-    /* XXX: this assumes ASCII compatible digits */
-	for (i = 0; Isdigit(*p); i = 10 * i + *p++ - '0')
-		continue;
-	*num = (sign < 0 ? dval - i : i);
-	return (--p);
-}
-#endif
-
 /* cv_delfini():
  *	Finish vi delete action
  */
@@ -391,28 +356,6 @@ cv_delfini(EditLine *el)
 	}
 	el->el_chared.c_vcmd.action = NOP;
 }
-
-
-#ifdef notdef
-/* ce__endword():
- *	Go to the end of this word according to emacs
- */
-protected Char *
-ce__endword(Char *p, Char *high, int n)
-{
-	p++;
-
-	while (n--) {
-		while ((p < high) && Isspace(*p))
-			p++;
-		while ((p < high) && !Isspace(*p))
-			p++;
-	}
-
-	p--;
-	return (p);
-}
-#endif
 
 
 /* cv__endword():
