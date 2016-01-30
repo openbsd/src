@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageLocator.pm,v 1.104 2016/01/27 20:49:45 sthen Exp $
+# $OpenBSD: PackageLocator.pm,v 1.105 2016/01/30 11:29:29 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -44,7 +44,6 @@ sub build_default_path
 
 	return unless defined $state->config->value('installpath');
 	for my $i ($state->config->value("installpath")) {
-	    	$i =~ s/(^[a-z0-9][a-z0-9.]+\.[a-z0-9.]+$)/http:\/\/$1\/%m/;
 		$default_path->add(OpenBSD::PackageRepository->new($i, $state));
 	}
 }

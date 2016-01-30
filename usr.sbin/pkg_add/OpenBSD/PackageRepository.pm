@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepository.pm,v 1.114 2015/07/12 14:52:17 espie Exp $
+# $OpenBSD: PackageRepository.pm,v 1.115 2016/01/30 11:29:29 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -123,6 +123,11 @@ sub parse
 	} elsif ($u =~ m/^pipe\:$/io) {
 		return $class->pipe->parse_fullurl($r, $state);
 	} else {
+		if ($$r =~ m/^([a-z0-9][a-z0-9.]+\.[a-z0-9.]+)(\:|$)/ 
+		    && !-d $1) {
+			$$r =~ s//http:\/\/$1\/%m$2/;
+			return $class->http->parse_fullurl($r, $state);
+		}
 		return $class->file->parse_fullurl($r, $state);
 	}
 }
