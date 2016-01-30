@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdisk.c,v 1.81 2016/01/30 17:09:11 krw Exp $	*/
+/*	$OpenBSD: pdisk.c,v 1.82 2016/01/30 17:21:10 krw Exp $	*/
 
 /*
  * pdisk - an editor for Apple format partition tables
@@ -44,9 +44,8 @@
 #include <unistd.h>
 #include <util.h>
 
-#include "dpme.h"
-#include "io.h"
 #include "partition_map.h"
+#include "io.h"
 #include "dump.h"
 
 int	lflag;	/* list the device */

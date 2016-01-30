@@ -1,4 +1,4 @@
-/*	$OpenBSD: partition_map.h,v 1.37 2016/01/30 17:09:11 krw Exp $	*/
+/*	$OpenBSD: partition_map.h,v 1.38 2016/01/30 17:21:10 krw Exp $	*/
 
 /*
  * partition_map.h - partition map routines
@@ -29,6 +29,11 @@
 
 #ifndef __partition_map__
 #define __partition_map__
+
+#define	BLOCK0_SIGNATURE	0x4552	/* 'ER' */
+#define	DPME_SIGNATURE		0x504D	/* 'PM' */
+
+#define	DPISTRLEN	32
 
 struct ddmap {
     uint32_t	ddBlock;	/* 1st driver's starting sbBlkSize block */

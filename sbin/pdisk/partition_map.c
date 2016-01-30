@@ -1,4 +1,4 @@
-/*	$OpenBSD: partition_map.c,v 1.90 2016/01/30 17:09:11 krw Exp $	*/
+/*	$OpenBSD: partition_map.c,v 1.91 2016/01/30 17:21:10 krw Exp $	*/
 
 /*
  * partition_map.c - partition map routines
@@ -35,7 +35,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "dpme.h"
 #include "partition_map.h"
 #include "io.h"
 #include "file_media.h"
