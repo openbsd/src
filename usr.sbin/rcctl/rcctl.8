@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rcctl.8,v 1.28 2016/01/29 23:53:08 jmc Exp $
+.\"	$OpenBSD: rcctl.8,v 1.29 2016/01/30 12:14:08 schwarze Exp $
 .\"
 .\" Copyright (c) 2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 29 2016 $
+.Dd $Mdocdate: January 30 2016 $
 .Dt RCCTL 8
 .Os
 .Sh NAME
@@ -193,6 +193,17 @@ apmd_timeout=30
 apmd_user=root
 # echo $?
 0
+.Ed
+.Pp
+The recommended way to run a second copy of a given daemon for a
+different purpose is to create a symbolic link to its
+.Xr rc.d 8
+control script:
+.Bd -literal -offset indent
+# ln -s /etc/rc.d/snmpd /etc/rc.d/snmpd6
+# rcctl set snmpd6 flags -D addr=2001:db8::1234
+# rcctl set snmpd6 status on
+# rcctl start snmpd6
 .Ed
 .Sh SEE ALSO
 .Xr rc.conf.local 8 ,
