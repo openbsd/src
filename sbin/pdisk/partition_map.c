@@ -1,4 +1,4 @@
-/*	$OpenBSD: partition_map.c,v 1.88 2016/01/30 14:24:47 krw Exp $	*/
+/*	$OpenBSD: partition_map.c,v 1.89 2016/01/30 15:35:56 krw Exp $	*/
 
 /*
  * partition_map.c - partition map routines
@@ -46,12 +46,6 @@ const char     *kFreeType = "Apple_Free";
 const char     *kMapType = "Apple_partition_map";
 const char     *kUnixType = "OpenBSD";
 const char     *kHFSType = "Apple_HFS";
-
-enum add_action {
-	kReplace = 0,
-	kAdd = 1,
-	kSplit = 2
-};
 
 void		add_data_to_map(struct dpme *, long, struct partition_map *);
 int		contains_driver(struct entry *);
@@ -323,88 +317,83 @@ add_partition_to_map(const char *name, const char *dptype, uint32_t base,
 {
 	struct entry *cur;
 	struct dpme *dpme;
-	enum add_action act;
-	int limit;
-	uint32_t adjusted_base = 0;
-	uint32_t adjusted_length = 0;
-	uint32_t new_base = 0;
-	uint32_t new_length = 0;
+	int limit, new_entries;
+	uint32_t old_base, old_length, old_address;
+	uint32_t new_base, new_length;
 
-	/* find a block that starts includes base and length */
+	if (map->maximum_in_map < 0)
+		limit = map->media_size;
+	else
+		limit = map->maximum_in_map;
+
+	/* find a block of free space that starts includes base and length */
 	LIST_FOREACH(cur, &map->base_order, base_entry) {
+		if (strncasecmp(cur->dpme->dpme_type, kFreeType, DPISTRLEN))
+		    continue;
 		if (cur->dpme->dpme_pblock_start <= base &&
 		    (base + length) <=
 		    (cur->dpme->dpme_pblock_start + cur->dpme->dpme_pblocks))
 			break;
 	}
-	/* if it is not Extra then punt */
-	if (cur == NULL ||
-	    strncasecmp(cur->dpme->dpme_type, kFreeType, DPISTRLEN) != 0) {
+	if (cur == NULL) {
 		printf("requested base and length is not "
 		       "within an existing free partition\n");
 		return 0;
 	}
-	/* figure out what to do and sizes */
-	dpme = cur->dpme;
-	if (dpme->dpme_pblock_start == base) {
-		/* replace or add */
-		if (dpme->dpme_pblocks == length) {
-			act = kReplace;
-		} else {
-			act = kAdd;
-			adjusted_base = base + length;
-			adjusted_length = dpme->dpme_pblocks - length;
-		}
-	} else {
-		/* split or add */
-		if (dpme->dpme_pblock_start + dpme->dpme_pblocks == base +
-		    length) {
-			act = kAdd;
-			adjusted_base = dpme->dpme_pblock_start;
-			adjusted_length = base - adjusted_base;
-		} else {
-			act = kSplit;
-			new_base = dpme->dpme_pblock_start;
-			new_length = base - new_base;
-			adjusted_base = base + length;
-			adjusted_length = dpme->dpme_pblocks - (length +
-			    new_length);
-		}
-	}
-	/* if the map will overflow then punt */
-	if (map->maximum_in_map < 0)
-		limit = map->media_size;
+	old_base = cur->dpme->dpme_pblock_start;
+	old_length = cur->dpme->dpme_pblocks;
+	old_address = cur->disk_address;
+
+	/* Check that there is enough room in the map for the new entries! */
+	if (base == old_base && length == old_length)
+		new_entries = 0;
+	else if (base == old_base)
+		new_entries = 1;
+	else if (base - old_base < old_length - length)
+		new_entries = 2;
 	else
-		limit = map->maximum_in_map;
-	if (map->blocks_in_map + act > limit) {
+		new_entries = 1;
+	if (map->blocks_in_map + new_entries > limit) {
 		printf("the map is not big enough\n");
 		return 0;
 	}
+
+	/*
+	 * Delete old free entry from map and add back 1 to 3 new entries.
+	 *
+	 * 1) Empty space from base+len to old end.
+	 * 2) New entry from specified base for length.
+	 * 3) Empty space from old base to new base.
+	 *
+	 *  All with the same disk address, so they must be added in that
+	 *  order!
+	 */
+	delete_entry(cur);
+
+	new_base = base + length;
+	new_length = (old_base + old_length) - new_base;
+	if (new_length > 0) {
+		/* New free space entry *after* new partition. */
+		dpme = create_dpme("", kFreeType, new_base, new_length);
+		if (dpme == NULL)
+			errx(1, "No memory for new dpme");
+		add_data_to_map(dpme, old_address, map);
+	}
+
 	dpme = create_dpme(name, dptype, base, length);
 	if (dpme == NULL)
-		return 0;
+		errx(1, "No memory for new dpme");
+	add_data_to_map(dpme, old_address, map);
 
-	if (act == kReplace) {
-		free(cur->dpme);
-		cur->dpme = dpme;
-	} else {
-		/* adjust this block's size */
-		cur->dpme->dpme_pblock_start = adjusted_base;
-		cur->dpme->dpme_pblocks = adjusted_length;
-		cur->dpme->dpme_lblocks = adjusted_length;
-		/* insert new with block address equal to this one */
-		add_data_to_map(dpme, cur->disk_address, map);
-		if (act == kSplit) {
-			dpme = create_dpme("", kFreeType, new_base, new_length);
-			if (dpme != NULL) {
-				/*
-				 * insert new with block address equal to
-				 * this one
-				 */
-				add_data_to_map(dpme, cur->disk_address, map);
-			}
-		}
+	new_length = base - old_base;
+	if (new_length > 0) {
+		/* New free space entry *before* new partition. */
+		dpme = create_dpme("", kFreeType, old_base, new_length);
+		if (dpme == NULL)
+			errx(1, "No memory for new dpme");
+		add_data_to_map(dpme, old_address, map);
 	}
+
 	renumber_disk_addresses(map);
 	map->changed = 1;
 	return 1;
