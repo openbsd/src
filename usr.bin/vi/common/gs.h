@@ -1,4 +1,4 @@
-/*	$OpenBSD: gs.h,v 1.15 2016/01/06 22:27:39 millert Exp $	*/
+/*	$OpenBSD: gs.h,v 1.16 2016/01/30 21:23:50 martijn Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -55,8 +55,6 @@ typedef enum { KEY_VEOF, KEY_VERASE, KEY_VKILL, KEY_VWERASE } scr_keyval_t;
  * Structure that describes global state of the running program.
  */
 struct _gs {
-	char	*progname;		/* Programe name. */
-
 	int	 id;			/* Last allocated screen id. */
 	TAILQ_HEAD(_dqh, _scr) dq;	/* Displayed screens. */
 	TAILQ_HEAD(_hqh, _scr) hq;	/* Hidden screens. */

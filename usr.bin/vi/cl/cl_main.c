@@ -1,4 +1,4 @@
-/*	$OpenBSD: cl_main.c,v 1.29 2016/01/27 22:38:12 martijn Exp $	*/
+/*	$OpenBSD: cl_main.c,v 1.30 2016/01/30 21:23:50 martijn Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -36,7 +36,7 @@ sigset_t __sigblockset;				/* GLOBAL: Blocked signals. */
 
 static void	   cl_func_std(GS *);
 static CL_PRIVATE *cl_init(GS *);
-static GS	  *gs_init(char *);
+static GS	  *gs_init(void);
 static int	   setsig(int, struct sigaction *, void (*)(int));
 static void	   sig_end(GS *);
 static void	   term_init(char *);
@@ -60,7 +60,7 @@ main(int argc, char *argv[])
 		abort();
 
 	/* Create and initialize the global structure. */
-	__global_list = gp = gs_init(argv[0]);
+	__global_list = gp = gs_init();
 
 	/* Create and initialize the CL_PRIVATE structure. */
 	clp = cl_init(gp);
@@ -141,22 +141,15 @@ main(int argc, char *argv[])
  *	Create and partially initialize the GS structure.
  */
 static GS *
-gs_init(char *name)
+gs_init(void)
 {
 	GS *gp;
-	char *p;
-
-	/* Figure out what our name is. */
-	if ((p = strrchr(name, '/')) != NULL)
-		name = p + 1;
 
 	/* Allocate the global structure. */
 	CALLOC_NOMSG(NULL, gp, 1, sizeof(GS));
 	if (gp == NULL)
 		err(1, NULL);
 
-
-	gp->progname = name;
 	return (gp);
 }
 

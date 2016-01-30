@@ -1,4 +1,4 @@
-/*	$OpenBSD: recover.c,v 1.23 2016/01/06 22:28:52 millert Exp $	*/
+/*	$OpenBSD: recover.c,v 1.24 2016/01/30 21:23:50 martijn Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -397,8 +397,8 @@ rcv_mailfile(SCR *sp, int issync, char *cp_path)
 	    " was editing a file named ", t, " on the machine ",
 	    host, ", when it was saved for recovery. ",
 	    "You can recover most, if not all, of the changes ",
-	    "to this file using the -r option to ", gp->progname, ":\n\n\t",
-	    gp->progname, " -r ", t);
+	    "to this file using the -r option to ", getprogname(), ":\n\n\t",
+	    getprogname(), " -r ", t);
 	if (len > sizeof(buf) - 1) {
 lerr:		msgq(sp, M_ERR, "Recovery file buffer overrun");
 		goto err;
@@ -555,7 +555,7 @@ rcv_list(SCR *sp)
 next:		(void)fclose(fp);
 	}
 	if (found == 0)
-		(void)printf("%s: No files to recover\n", sp->gp->progname);
+		(void)printf("%s: No files to recover\n", getprogname());
 	(void)closedir(dirp);
 	return (0);
 }

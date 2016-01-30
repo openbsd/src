@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.34 2016/01/27 22:46:02 martijn Exp $	*/
+/*	$OpenBSD: main.c,v 1.35 2016/01/30 21:23:50 martijn Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -95,12 +95,12 @@ editor(GS *gp, int argc, char *argv[])
 
 	/* Set initial screen type and mode based on the program name. */
 	readonly = 0;
-	if (!strcmp(gp->progname, "ex") || !strcmp(gp->progname, "nex"))
+	if (!strcmp(getprogname(), "ex") || !strcmp(getprogname(), "nex"))
 		LF_INIT(SC_EX);
 	else {
 		/* Nview, view are readonly. */
-		if (!strcmp(gp->progname, "nview") ||
-		    !strcmp(gp->progname, "view"))
+		if (!strcmp(getprogname(), "nview") ||
+		    !strcmp(getprogname(), "view"))
 			readonly = 1;
 		
 		/* Vi is the default. */
@@ -121,11 +121,11 @@ editor(GS *gp, int argc, char *argv[])
 	F_SET(gp, G_SNAPSHOT);
 
 	pmode = MODE_EX;
-	if (!strcmp(gp->progname, "ex"))
+	if (!strcmp(getprogname(), "ex"))
 		pmode = MODE_EX;
-	else if (!strcmp(gp->progname, "vi"))
+	else if (!strcmp(getprogname(), "vi"))
 		pmode = MODE_VI;
-	else if (!strcmp(gp->progname, "view"))
+	else if (!strcmp(getprogname(), "view"))
 		pmode = MODE_VIEW;
 
 	while ((ch = getopt(argc, argv, optstr[pmode])) != -1)
