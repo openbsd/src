@@ -1,4 +1,4 @@
-/*	$OpenBSD: partition_map.c,v 1.94 2016/01/31 17:19:26 krw Exp $	*/
+/*	$OpenBSD: partition_map.c,v 1.95 2016/01/31 22:12:35 krw Exp $	*/
 
 /*
  * partition_map.c - partition map routines
@@ -46,9 +46,9 @@ const char     *kMapType = "Apple_partition_map";
 const char     *kUnixType = "OpenBSD";
 const char     *kHFSType = "Apple_HFS";
 
-void		add_data_to_map(struct entry *, long, struct partition_map *);
 void		combine_entry(struct entry *);
-struct entry   *create_entry(const char *, const char *, uint32_t, uint32_t);
+struct entry   *create_entry(struct partition_map *, long, const char *,
+    const char *, uint32_t, uint32_t);
 void		delete_entry(struct entry *);
 void		insert_in_base_order(struct entry *);
 void		insert_in_disk_order(struct entry *);
@@ -256,22 +256,6 @@ write_partition_map(struct partition_map *map)
 }
 
 
-void
-add_data_to_map(struct entry *entry, long ix, struct partition_map *map)
-{
-	entry->disk_address = ix;
-	entry->the_map = map;
-
-	insert_in_disk_order(entry);
-	insert_in_base_order(entry);
-
-	map->blocks_in_map++;
-	if (map->maximum_in_map < 0) {
-		if (strncasecmp(entry->dpme_type, kMapType, DPISTRLEN) == 0)
-			map->maximum_in_map = entry->dpme_pblocks;
-	}
-}
-
 struct partition_map *
 create_partition_map(int fd, char *name, u_int64_t mediasz, uint32_t sectorsz)
 {
@@ -298,18 +282,10 @@ create_partition_map(int fd, char *name, u_int64_t mediasz, uint32_t sectorsz)
 	map->sbBlkSize = map->physical_block;
 	map->sbBlkCount = map->media_size;
 
-	entry = calloc(1, sizeof(struct entry));
+	entry = create_entry(map, 1, "", kFreeType, 1, mediasz - 1);
 	if (entry == NULL)
-		errx(1, "No memory for initial map entry");
+		errx(1, "No memory for new dpme");
 
-	entry->dpme_signature = DPME_SIGNATURE;
-	entry->dpme_map_entries = 1;
-	entry->dpme_pblock_start = 1;
-	entry->dpme_pblocks = map->media_size - 1;
-	strlcpy(entry->dpme_type, kFreeType, sizeof(entry->dpme_type));
-	dpme_init_flags(entry);
-
-	add_data_to_map(entry, 1, map);
 	add_partition_to_map("Apple", kMapType, 1,
 	    (map->media_size <= 128 ? 2 : 63), map);
 
@@ -379,24 +355,23 @@ add_partition_to_map(const char *name, const char *dptype, uint32_t base,
 	new_length = (old_base + old_length) - new_base;
 	if (new_length > 0) {
 		/* New free space entry *after* new partition. */
-		cur = create_entry("", kFreeType, new_base, new_length);
+		cur = create_entry(map, old_address, "", kFreeType, new_base,
+		    new_length);
 		if (cur == NULL)
 			errx(1, "No memory for new dpme");
-		add_data_to_map(cur, old_address, map);
 	}
 
-	cur = create_entry(name, dptype, base, length);
+	cur = create_entry(map, old_address, name, dptype, base, length);
 	if (cur == NULL)
 		errx(1, "No memory for new entry");
-	add_data_to_map(cur, old_address, map);
 
 	new_length = base - old_base;
 	if (new_length > 0) {
 		/* New free space entry *before* new partition. */
-		cur = create_entry("", kFreeType, old_base, new_length);
+		cur = create_entry(map, old_address, "", kFreeType, old_base,
+		    new_length);
 		if (cur == NULL)
 			errx(1, "No memory for new entry");
-		add_data_to_map(cur, old_address, map);
 	}
 
 	renumber_disk_addresses(map);
@@ -406,8 +381,8 @@ add_partition_to_map(const char *name, const char *dptype, uint32_t base,
 
 
 struct entry*
-create_entry(const char *name, const char *dptype, uint32_t base,
-    uint32_t length)
+create_entry(struct partition_map *map, long ix, const char *name,
+    const char *dptype, uint32_t base, uint32_t length)
 {
 	struct entry *entry;
 
@@ -426,6 +401,18 @@ create_entry(const char *name, const char *dptype, uint32_t base,
 		entry->dpme_lblocks = entry->dpme_pblocks;
 	}
 	dpme_init_flags(entry);
+
+	entry->disk_address = ix;
+	entry->the_map = map;
+
+	insert_in_disk_order(entry);
+	insert_in_base_order(entry);
+
+	map->blocks_in_map++;
+	if (map->maximum_in_map < 0) {
+		if (strncasecmp(entry->dpme_type, kMapType, DPISTRLEN) == 0)
+			map->maximum_in_map = entry->dpme_pblocks;
+	}
 
 	return entry;
 }
