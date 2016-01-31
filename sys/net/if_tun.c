@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.165 2016/01/07 05:31:17 guenther Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.166 2016/01/31 13:54:13 stefan Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -764,7 +764,8 @@ tun_dev_read(struct tun_softc *tp, struct uio *uio, int ioflag)
 	struct ifnet		*ifp = &tp->tun_if;
 	struct mbuf		*m, *m0;
 	unsigned int		 ifidx;
-	int			 error = 0, len, s;
+	int			 error = 0, s;
+	size_t			 len;
 
 	if ((tp->tun_flags & TUN_READY) != TUN_READY)
 		return (EHOSTDOWN);
@@ -825,9 +826,9 @@ tun_dev_read(struct tun_softc *tp, struct uio *uio, int ioflag)
 	}
 
 	while (m0 != NULL && uio->uio_resid > 0 && error == 0) {
-		len = min(uio->uio_resid, m0->m_len);
+		len = ulmin(uio->uio_resid, m0->m_len);
 		if (len != 0)
-			error = uiomovei(mtod(m0, caddr_t), len, uio);
+			error = uiomove(mtod(m0, caddr_t), len, uio);
 		m = m_free(m0);
 		m0 = m;
 	}
@@ -872,7 +873,8 @@ tun_dev_write(struct tun_softc *tp, struct uio *uio, int ioflag)
 	struct niqueue		*ifq;
 	u_int32_t		*th;
 	struct mbuf		*top, **mp, *m;
-	int			 error=0, tlen, mlen;
+	int			error = 0, tlen;
+	size_t			mlen;
 #if NBPFILTER > 0
 	int			 s;
 #endif
@@ -911,8 +913,8 @@ tun_dev_write(struct tun_softc *tp, struct uio *uio, int ioflag)
 		m->m_data += ETHER_ALIGN;
 	}
 	while (error == 0 && uio->uio_resid > 0) {
-		m->m_len = min(mlen, uio->uio_resid);
-		error = uiomovei(mtod (m, caddr_t), m->m_len, uio);
+		m->m_len = ulmin(mlen, uio->uio_resid);
+		error = uiomove(mtod (m, caddr_t), m->m_len, uio);
 		*mp = m;
 		mp = &m->m_next;
 		if (error == 0 && uio->uio_resid > 0) {
