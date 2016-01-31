@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.478 2016/01/29 11:13:56 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.479 2016/01/31 09:54:46 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 29 2016 $
+.Dd $Mdocdate: January 31 2016 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -3377,9 +3377,13 @@ if not.
 A limit may be placed on the length of the resultant string by prefixing it
 by an
 .Ql = ,
-a number and a colon, so
-.Ql #{=10:pane_title}
-will include at most the first 10 characters of the pane title.
+a number and a colon.
+Positive numbers count from the start of the string and negative from the end,
+so
+.Ql #{=5:pane_title}
+will include at most the first 5 characters of the pane title, or
+.Ql #{=-5:pane_title}
+the last 5 characters.
 Prefixing a time variable with
 .Ql t:
 will convert it to a string, so if
