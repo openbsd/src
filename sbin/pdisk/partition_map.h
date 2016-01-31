@@ -1,4 +1,4 @@
-/*	$OpenBSD: partition_map.h,v 1.39 2016/01/30 17:28:34 krw Exp $	*/
+/*	$OpenBSD: partition_map.h,v 1.40 2016/01/31 14:55:41 krw Exp $	*/
 
 /*
  * partition_map.h - partition map routines
@@ -108,12 +108,10 @@ extern const char *kFreeType;
 extern const char *kMapType;
 extern const char *kUnixType;
 extern const char *kHFSType;
-extern const char *kPatchType;
 
 extern int lflag;
 extern int rflag;
 
-struct partition_map	*init_partition_map(char *);
 struct partition_map	*create_partition_map(int, char *, uint64_t, uint32_t);
 struct partition_map	*open_partition_map(int, char *, uint64_t, uint32_t);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dump.c,v 1.70 2016/01/31 13:53:23 krw Exp $	*/
+/*	$OpenBSD: dump.c,v 1.71 2016/01/31 14:55:41 krw Exp $	*/
 
 /*
  * dump.c - dumping partition maps
@@ -38,6 +38,7 @@
 #include "io.h"
 
 void	adjust_value_and_compute_prefix(double *, int *);
+void	dump_block(unsigned char *, int);
 void	dump_block_zero(struct partition_map *);
 void	dump_partition_entry(struct entry *, int, int, int);
 int	get_max_base_or_length(struct partition_map *);
