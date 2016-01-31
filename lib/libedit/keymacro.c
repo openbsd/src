@@ -1,4 +1,4 @@
-/*	$OpenBSD: keymacro.c,v 1.4 2016/01/30 17:32:52 schwarze Exp $	*/
+/*	$OpenBSD: keymacro.c,v 1.5 2016/01/31 20:42:33 schwarze Exp $	*/
 /*	$NetBSD: key.c,v 1.23 2009/12/30 22:37:40 christos Exp $	*/
 
 /*-
@@ -67,8 +67,8 @@
  * linked list of these node elements
  */
 struct keymacro_node_t {
-	Char		ch;		/* single character of key 	 */
-	int		type;		/* node type			 */
+	Char		 ch;		/* single character of key 	 */
+	int		 type;		/* node type			 */
 	keymacro_value_t val;		/* command code or pointer to str,  */
 					/* if this is a leaf 		 */
 	struct keymacro_node_t *next;	/* ptr to next char of this key  */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: read.c,v 1.19 2016/01/30 17:32:52 schwarze Exp $	*/
+/*	$OpenBSD: read.c,v 1.20 2016/01/31 20:42:33 schwarze Exp $	*/
 /*	$NetBSD: read.c,v 1.57 2010/07/21 18:18:52 christos Exp $	*/
 
 /*-
@@ -46,7 +46,7 @@
 #include <limits.h>
 #include "el.h"
 
-#define	OKCMD	-1	/* must be -1! */
+#define OKCMD	-1	/* must be -1! */
 
 private int	read__fixio(int, int);
 private int	read_preread(EditLine *);
@@ -127,7 +127,7 @@ read__fixio(int fd __attribute__((__unused__)), int e)
 #ifdef EWOULDBLOCK
 	case EWOULDBLOCK:
 #ifndef TRY_AGAIN
-#define	TRY_AGAIN
+#define TRY_AGAIN
 #endif
 #endif /* EWOULDBLOCK */
 
@@ -135,7 +135,7 @@ read__fixio(int fd __attribute__((__unused__)), int e)
 #if defined(EWOULDBLOCK) && EWOULDBLOCK != EAGAIN
 	case EAGAIN:
 #ifndef TRY_AGAIN
-#define	TRY_AGAIN
+#define TRY_AGAIN
 #endif
 #endif /* EWOULDBLOCK && EWOULDBLOCK != EAGAIN */
 #endif /* POSIX && EAGAIN */
@@ -256,11 +256,11 @@ read_getcmd(EditLine *el, el_action_t *cmdnum, Char *ch)
 			*ch |= 0200;
 		}
 #ifdef WIDECHAR
-                if (*ch >= N_KEYS)
-                        cmd = ED_INSERT;
+		if (*ch >= N_KEYS)
+			cmd = ED_INSERT;
 		else
 #endif
-                        cmd = el->el_map.current[(unsigned char) *ch];
+			cmd = el->el_map.current[(unsigned char) *ch];
 		if (cmd == ED_SEQUENCE_LEAD_IN) {
 			keymacro_value_t val;
 			switch (keymacro_get(el, ch, &val)) {
@@ -290,7 +290,7 @@ read_getcmd(EditLine *el, el_action_t *cmdnum, Char *ch)
 
 #ifdef WIDECHAR
 /* utf8_islead():
- *      Test whether a byte is a leading byte of a UTF-8 sequence.
+ *	Test whether a byte is a leading byte of a UTF-8 sequence.
  */
 private int
 utf8_islead(unsigned char c)
@@ -308,9 +308,9 @@ read_char(EditLine *el, Char *cp)
 {
 	ssize_t num_read;
 	int tried = 0;
-        char cbuf[MB_LEN_MAX];
-        int cbp = 0;
-        int bytes = 0;
+	char cbuf[MB_LEN_MAX];
+	int cbp = 0;
+	int bytes = 0;
 
  again:
 	el->el_signal->sig_no = 0;
@@ -667,7 +667,7 @@ FUN(el,gets)(EditLine *el, int *nread)
 			/* put (real) cursor in a known place */
 			re_clear_display(el);	/* reset the display stuff */
 			ch_reset(el, 1);	/* reset the input pointers */
-			re_refresh(el);	/* print the prompt again */
+			re_refresh(el); /* print the prompt again */
 			break;
 
 		case CC_ERROR:
