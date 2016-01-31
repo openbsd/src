@@ -1,4 +1,4 @@
-/*	$OpenBSD: filecomplete.c,v 1.6 2016/01/30 12:22:20 schwarze Exp $	*/
+/*	$OpenBSD: filecomplete.c,v 1.7 2016/01/31 15:34:53 schwarze Exp $ */
 /*	$NetBSD: filecomplete.c,v 1.22 2010/12/02 04:42:46 dholland Exp $	*/
 
 /*-
@@ -44,14 +44,7 @@
 #include <limits.h>
 #include <errno.h>
 #include <fcntl.h>
-#ifdef HAVE_VIS_H
-#include <vis.h>
-#else
-#include "np/vis.h"
-#endif
-#ifdef HAVE_ALLOCA_H
-#include <alloca.h>
-#endif
+
 #include "el.h"
 #include "fcns.h"		/* for EL_NUM_FCNS */
 #include "histedit.h"
@@ -320,7 +313,7 @@ completion_matches(const char *text, char *(*genfunc)(const char *, int))
 	match_list[0] = retstr;
 
 	/* add NULL as last pointer to the array */
-	match_list[matches + 1] = (char *) NULL;
+	match_list[matches + 1] = NULL;
 
 	return match_list;
 }
@@ -446,13 +439,15 @@ fn_complete(EditLine *el,
 
 	if (attempted_completion_function) {
 		int cur_off = (int)(li->cursor - li->buffer);
-		matches = (*attempted_completion_function) (ct_encode_string(temp, &el->el_scratch),
+		matches = (*attempted_completion_function) (
+		    ct_encode_string(temp, &el->el_scratch),
 		    (int)(cur_off - len), cur_off);
 	} else
 		matches = 0;
 	if (!attempted_completion_function || 
 	    (over != NULL && !*over && !matches))
-		matches = completion_matches(ct_encode_string(temp, &el->el_scratch), complet_func);
+		matches = completion_matches(
+		    ct_encode_string(temp, &el->el_scratch), complet_func);
 
 	if (over != NULL)
 		*over = 0;
