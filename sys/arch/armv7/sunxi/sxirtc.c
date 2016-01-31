@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxirtc.c,v 1.4 2014/04/25 09:49:33 jsg Exp $	*/
+/*	$OpenBSD: sxirtc.c,v 1.5 2016/01/31 04:39:05 jsg Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis
  * Copyright (c) 2013 Artturi Alm
@@ -31,8 +31,8 @@
 #include <armv7/armv7/armv7var.h>
 #include <armv7/sunxi/sunxireg.h>
 
-#define	SXIRTC_YYMMDD	0x00
-#define	SXIRTC_HHMMSS	0x04
+#define	SXIRTC_YYMMDD	0x04
+#define	SXIRTC_HHMMSS	0x08
 
 #define LEAPYEAR(y)        \
     (((y) % 4 == 0 &&    \
@@ -76,8 +76,8 @@ sxirtc_attach(struct device *parent, struct device *self, void *args)
 		panic("sxirtc_attach: couldn't allocate todr_handle");
 
 	sc->sc_iot = aa->aa_iot;
-	if (bus_space_subregion(sc->sc_iot, sxitimer_ioh,
-	    aa->aa_dev->mem[0].addr, aa->aa_dev->mem[0].size, &sc->sc_ioh))
+	if (bus_space_map(sc->sc_iot, aa->aa_dev->mem[0].addr,
+	    aa->aa_dev->mem[0].size, 0, &sc->sc_ioh))
 		panic("sxirtc_attach: bus_space_subregion failed!");
 
 	handle->cookie = self;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sunxireg.h,v 1.6 2013/11/06 19:03:07 syl Exp $	*/
+/*	$OpenBSD: sunxireg.h,v 1.7 2016/01/31 04:39:05 jsg Exp $	*/
 /*
  * Copyright (c) 2013 Artturi Alm
  *
@@ -69,8 +69,8 @@
 #define	WDOG_SIZE		0x08
 #define	WDOG_IRQ		24
 
-#define	RTC_ADDR		0x0104
-#define	RTC_SIZE		0x08
+#define	RTC_ADDR		0x01c20d00
+#define	RTC_SIZE		0x20
 
 /* Clock Control Module/Unit */
 #define	CCMU_ADDR		0x01c20000
