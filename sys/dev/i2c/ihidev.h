@@ -1,10 +1,8 @@
-/* $OpenBSD: ihidev.h,v 1.3 2016/01/20 01:19:28 jcs Exp $ */
+/* $OpenBSD: ihidev.h,v 1.4 2016/01/31 18:24:35 jcs Exp $ */
 /*
  * HID-over-i2c driver
  *
- * http://download.microsoft.com/download/7/d/d/7dd44bb7-2a7a-4505-ac1c-7227d3d96d5b/hid-over-i2c-protocol-spec-v1-0.docx
- *
- * Copyright (c) 2015 joshua stein <jcs@openbsd.org>
+ * Copyright (c) 2015, 2016 joshua stein <jcs@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
