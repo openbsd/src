@@ -1,4 +1,4 @@
-/*	$OpenBSD: armv7_machdep.c,v 1.24 2015/05/19 03:30:54 jsg Exp $ */
+/*	$OpenBSD: armv7_machdep.c,v 1.25 2016/01/31 01:04:24 jsg Exp $ */
 /*	$NetBSD: lubbock_machdep.c,v 1.2 2003/07/15 00:25:06 lukem Exp $ */
 
 /*
@@ -397,6 +397,12 @@ initarm(void *arg0, void *arg1, void *arg2)
 	    bus_space_handle_t *);
 
 	board_id = (uint32_t)arg1;
+	/*
+	 * u-boot has decided the top four bits are
+	 * 'compatibility revision' for sunxi
+	 */
+	if (board_id != 0xffffffff)
+		board_id &= 0x0fffffff;
 
 	/*
 	 * Heads up ... Setup the CPU / MMU / TLB functions
