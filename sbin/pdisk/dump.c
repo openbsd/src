@@ -1,4 +1,4 @@
-/*	$OpenBSD: dump.c,v 1.69 2016/01/30 17:21:10 krw Exp $	*/
+/*	$OpenBSD: dump.c,v 1.70 2016/01/31 13:53:23 krw Exp $	*/
 
 /*
  * dump.c - dumping partition maps
@@ -366,10 +366,6 @@ get_max_base_or_length(struct partition_map *map)
 			max = entry->dpme_pblock_start;
 		if (entry->dpme_pblocks > max)
 			max = entry->dpme_pblocks;
-		if (entry->dpme_lblock_start > max)
-			max = entry->dpme_lblock_start;
-		if (entry->dpme_lblocks > max)
-			max = entry->dpme_lblocks;
 	}
 
 	return max;

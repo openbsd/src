@@ -1,4 +1,4 @@
-/*	$OpenBSD: partition_map.c,v 1.91 2016/01/30 17:21:10 krw Exp $	*/
+/*	$OpenBSD: partition_map.c,v 1.92 2016/01/31 13:53:23 krw Exp $	*/
 
 /*
  * partition_map.c - partition map routines
@@ -406,8 +406,10 @@ create_entry(const char *name, const char *dptype, uint32_t base,
 	entry->dpme_pblocks = length;
 	strlcpy(entry->dpme_name, name, sizeof(entry->dpme_name));
 	strlcpy(entry->dpme_type, dptype, sizeof(entry->dpme_type));
-	entry->dpme_lblock_start = 0;
-	entry->dpme_lblocks = entry->dpme_pblocks;
+	if (strncasecmp(dptype, kFreeType, DPISTRLEN)) {
+		/* Only non-kFreeType entries get lblock info != 0. */
+		entry->dpme_lblocks = entry->dpme_pblocks;
+	}
 	dpme_init_flags(entry);
 
 	return entry;
@@ -464,6 +466,8 @@ delete_partition_from_map(struct entry *entry)
 	memset(entry->dpme_name, 0, sizeof(entry->dpme_name));
 	memset(entry->dpme_type, 0, sizeof(entry->dpme_type));
 	strlcpy(entry->dpme_type, kFreeType, sizeof(entry->dpme_type));
+	entry->dpme_lblock_start = 0;
+	entry->dpme_lblocks = 0;
 	dpme_init_flags(entry);
 
 	combine_entry(entry);
@@ -524,11 +528,9 @@ combine_entry(struct entry *entry)
 				entry->dpme_pblocks = end -
 				    entry->dpme_pblock_start;
 			}
-			entry->dpme_lblocks = entry->dpme_pblocks;
 			delete_entry(p);
 		} else {
 			entry->dpme_pblocks += p->dpme_pblocks;
-			entry->dpme_lblocks = entry->dpme_pblocks;
 			delete_entry(p);
 		}
 	}
@@ -551,18 +553,12 @@ combine_entry(struct entry *entry)
 				end = entry->dpme_pblock_start +
 				    entry->dpme_pblocks;
 			}
-			entry->dpme_pblocks = end -
-			    p->dpme_pblock_start;
-			/* new start is previous entry's start */
-			entry->dpme_pblock_start =
-			    p->dpme_pblock_start;
-			entry->dpme_lblocks = entry->dpme_pblocks;
+			entry->dpme_pblocks = end - p->dpme_pblock_start;
+			entry->dpme_pblock_start = p->dpme_pblock_start;
 			delete_entry(p);
 		} else {
-			entry->dpme_pblock_start =
-			    p->dpme_pblock_start;
+			entry->dpme_pblock_start = p->dpme_pblock_start;
 			entry->dpme_pblocks += p->dpme_pblocks;
-			entry->dpme_lblocks = entry->dpme_pblocks;
 			delete_entry(p);
 		}
 	}
