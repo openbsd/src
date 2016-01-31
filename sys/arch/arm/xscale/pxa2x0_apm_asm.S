@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_apm_asm.S,v 1.4 2007/11/02 05:18:25 miod Exp $	*/
+/*	$OpenBSD: pxa2x0_apm_asm.S,v 1.5 2016/01/31 00:14:50 jsg Exp $	*/
 
 /*
  * Copyright (c) 2005 Uwe Stuehler <uwe@openbsd.org>
@@ -166,31 +166,31 @@ ENTRY(pxa2x0_cpu_suspend)
 	str	r2, [r3], #4		/* Save SVC saved CPSR. */
 	str     sp, [r3], #4		/* Save SVC stack pointer. */
 
-	mov	r1, #(PSR_FIQ32_MODE | I32_bit | F32_bit)
+	mov	r1, #(PSR_FIQ32_MODE | PSR_I | PSR_F)
 	msr	cpsr, r1		/* Enter FIQ mode. */
 	mrs     r2, spsr		/* Load FIQ mode saved CPSR. */
 	stmia   r3!, {r2, r8-r12, sp, lr} /* Save FIQ mode registers. */
 
-	mov	r1, #(PSR_IRQ32_MODE | I32_bit | F32_bit)
+	mov	r1, #(PSR_IRQ32_MODE | PSR_I | PSR_F)
 	msr	cpsr, r1		/* Enter IRQ mode. */
 	mrs     r0, spsr		/* Load IRQ mode saved CPSR. */
 	stmia   r3!, {r0, sp, lr}	/* Save IRQ mode registers. */
 
-	mov	r1, #(PSR_ABT32_MODE | I32_bit | F32_bit)
+	mov	r1, #(PSR_ABT32_MODE | PSR_I | PSR_F)
 	msr	cpsr, r1		/* Enter ABT mode. */
 	mrs     r0, spsr		/* Load ABT mode saved CPSR. */
 	stmia   r3!, {r0, sp, lr}	/* Save ABT mode registers. */
 
-	mov	r1, #(PSR_UND32_MODE | I32_bit | F32_bit)
+	mov	r1, #(PSR_UND32_MODE | PSR_I | PSR_F)
 	msr	cpsr, r1		/* Enter UND mode. */
 	mrs     r0, spsr		/* Load UND mode saved CPSR. */
 	stmia   r3!, {r0, sp, lr}	/* Save UND mode registers. */
 
-	mov	r1, #(PSR_SYS32_MODE | I32_bit | F32_bit)
+	mov	r1, #(PSR_SYS32_MODE | PSR_I | PSR_F)
 	msr	cpsr, r1		/* Enter SYS mode. */
 	stmia   r3!, {sp, lr}		/* Save SYS mode registers. */
 
-	mov	r1, #(PSR_SVC32_MODE | I32_bit | F32_bit)
+	mov	r1, #(PSR_SVC32_MODE | PSR_I | PSR_F)
 	msr	cpsr, r1		/* Return to SVC mode. */
 
 	/* At this point all critical registers have been saved. */
@@ -211,14 +211,14 @@ ENTRY(pxa2x0_cpu_suspend)
 
 cache_flush_loop:
 	mrs	r2, cpsr
-	orr	r2, r2, #(I32_bit|F32_bit)
+	orr	r2, r2, #(PSR_I|PSR_F)
 	msr	cpsr_c, r2		/* disable IRQ/FIQ */
 
 	mcr	p15, 0, r0, c7, c2, 5	/* allocate cache line */
 	mcr	p15, 0, r0, c7, c6, 1	/* flush D cache single entry */
 
 	mrs	r2, cpsr
-	and	r2, r2, #~(I32_bit|F32_bit)
+	and	r2, r2, #~(PSR_I|PSR_F)
 	msr	cpsr_c, r2		/* enable IRQ/FIQ */
 
 	add	r0, r0, #CACHELINESIZE
@@ -329,7 +329,7 @@ pxa2x0_cpu_resume_virt:
 	ldr	sp, [r2], #4
 
 	/* Restore FIQ mode registers. */
-	mov	r1, #(PSR_FIQ32_MODE | I32_bit | F32_bit)
+	mov	r1, #(PSR_FIQ32_MODE | PSR_I | PSR_F)
 	msr	cpsr, r1
 	ldr	r0, [r2], #4
 	msr	spsr, r0
@@ -342,7 +342,7 @@ pxa2x0_cpu_resume_virt:
 	ldr	lr, [r2], #4
 
 	/* Restore IRQ mode registers. */
-	mov	r1, #(PSR_IRQ32_MODE | I32_bit | F32_bit)
+	mov	r1, #(PSR_IRQ32_MODE | PSR_I | PSR_F)
 	msr	cpsr, r1
 	ldr	r0, [r2], #4
 	msr	spsr, r0
@@ -350,7 +350,7 @@ pxa2x0_cpu_resume_virt:
 	ldr	lr, [r2], #4
 
 	/* Restore ABT mode registers. */
-	mov	r1, #(PSR_ABT32_MODE | I32_bit | F32_bit)
+	mov	r1, #(PSR_ABT32_MODE | PSR_I | PSR_F)
 	msr	cpsr, r1
 	ldr	r0, [r2], #4
 	msr	spsr, r0
@@ -358,7 +358,7 @@ pxa2x0_cpu_resume_virt:
 	ldr	lr, [r2], #4
 
 	/* Restore UND mode registers. */
-	mov	r1, #(PSR_UND32_MODE | I32_bit | F32_bit)
+	mov	r1, #(PSR_UND32_MODE | PSR_I | PSR_F)
 	msr	cpsr, r1
 	ldr	r0, [r2], #4
 	msr	spsr, r0
@@ -366,13 +366,13 @@ pxa2x0_cpu_resume_virt:
 	ldr	lr, [r2], #4
 
 	/* Restore SYS mode registers. */
-	mov	r1, #(PSR_SYS32_MODE | I32_bit | F32_bit)
+	mov	r1, #(PSR_SYS32_MODE | PSR_I | PSR_F)
 	msr	cpsr, r1
 	ldr	sp, [r2], #4
 	ldr	lr, [r2], #4
 
 	/* Return to SVC mode. */
-	mov	r1, #(PSR_SVC32_MODE | I32_bit | F32_bit)
+	mov	r1, #(PSR_SVC32_MODE | PSR_I | PSR_F)
 	msr	cpsr, r1
 
 	ldmia	sp!, {r0-r12, pc}

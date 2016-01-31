@@ -1,4 +1,4 @@
-/*	$OpenBSD: sa11x0_ost.c,v 1.8 2008/05/15 22:17:08 brad Exp $ */
+/*	$OpenBSD: sa11x0_ost.c,v 1.9 2016/01/31 00:14:50 jsg Exp $ */
 /*	$NetBSD: sa11x0_ost.c,v 1.11 2003/07/15 00:24:51 lukem Exp $	*/
 
 /*
@@ -271,7 +271,7 @@ gettick()
 {
 	int counter;
 	u_int savedints;
-	savedints = disable_interrupts(I32_bit);
+	savedints = disable_interrupts(PSR_I);
 
 	counter = bus_space_read_4(saost_sc->sc_iot, saost_sc->sc_ioh,
 			SAOST_CR);

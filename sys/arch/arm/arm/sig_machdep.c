@@ -1,4 +1,4 @@
-/*	$OpenBSD: sig_machdep.c,v 1.11 2014/03/26 05:23:42 guenther Exp $	*/
+/*	$OpenBSD: sig_machdep.c,v 1.12 2016/01/31 00:14:50 jsg Exp $	*/
 /*	$NetBSD: sig_machdep.c,v 1.22 2003/10/08 00:28:41 thorpej Exp $	*/
 
 /*
@@ -205,7 +205,7 @@ sys_sigreturn(struct proc *p, void *v, register_t *retval)
 	 * interrupts have not been disabled.
 	 */
 	if ((context.sc_spsr & PSR_MODE) != PSR_USR32_MODE ||
-	    (context.sc_spsr & (I32_bit | F32_bit)) != 0)
+	    (context.sc_spsr & (PSR_I | PSR_F)) != 0)
 		return (EINVAL);
 
 	/* Restore register context. */

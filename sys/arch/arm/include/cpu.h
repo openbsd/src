@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.39 2014/07/11 10:53:07 uebayasi Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.40 2016/01/31 00:14:50 jsg Exp $	*/
 /*	$NetBSD: cpu.h,v 1.34 2003/06/23 11:01:08 martin Exp $	*/
 
 /*
@@ -112,20 +112,20 @@ extern int cpu_do_powersave;
 #define IRQdisable \
 	stmfd	sp!, {r0} ; \
 	mrs	r0, cpsr ; \
-	orr	r0, r0, #(I32_bit) ; \
+	orr	r0, r0, #(PSR_I) ; \
 	msr	cpsr_c, r0 ; \
 	ldmfd	sp!, {r0}
 
 #define IRQenable \
 	stmfd	sp!, {r0} ; \
 	mrs	r0, cpsr ; \
-	bic	r0, r0, #(I32_bit) ; \
+	bic	r0, r0, #(PSR_I) ; \
 	msr	cpsr_c, r0 ; \
 	ldmfd	sp!, {r0}		
 
 #else
-#define IRQdisable __set_cpsr_c(I32_bit, I32_bit);
-#define IRQenable __set_cpsr_c(I32_bit, 0);
+#define IRQdisable __set_cpsr_c(PSR_I, PSR_I);
+#define IRQenable __set_cpsr_c(PSR_I, 0);
 #endif	/* _LOCORE */
 
 #ifndef _LOCORE

@@ -1,4 +1,4 @@
-/*	$OpenBSD: frame.h,v 1.6 2015/01/18 16:26:39 jsg Exp $	*/
+/*	$OpenBSD: frame.h,v 1.7 2016/01/31 00:14:50 jsg Exp $	*/
 /*	$NetBSD: frame.h,v 1.9 2003/12/01 08:48:33 scw Exp $	*/
 
 /*
@@ -176,8 +176,8 @@ struct frame {
 	teq	r0, #(PSR_USR32_MODE)					;\
 	ldreq	r5, .Laflt_astpending					;\
 	bne	2f			/* Nope, get out now */		;\
-	bic	r4, r4, #(I32_bit)					;\
-1:	orr	r0, r4, #(I32_bit)	/* Disable IRQs */		;\
+	bic	r4, r4, #(PSR_I)					;\
+1:	orr	r0, r4, #(PSR_I)	/* Disable IRQs */		;\
 	msr	cpsr_c, r0						;\
 	ldr	r1, [r5]		/* Pending AST? */		;\
 	teq	r1, #0x00000000						;\

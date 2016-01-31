@@ -1,4 +1,4 @@
-/* $OpenBSD: omgpio.c,v 1.5 2014/07/14 08:55:07 rapha Exp $ */
+/* $OpenBSD: omgpio.c,v 1.6 2016/01/31 00:14:50 jsg Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  *
@@ -621,7 +621,7 @@ omgpio_intr_establish(struct omgpio_softc *sc, unsigned int gpio, int level, int
 		    gpio, sc->sc_handlers[GPIO_PIN_TO_OFFSET(gpio)]->ih_name,
 		    name);
 
-	psw = disable_interrupts(I32_bit);
+	psw = disable_interrupts(PSR_I);
 
 	/* no point in sleeping unless someone can free memory. */
 	ih = (struct intrhand *)malloc( sizeof *ih, M_DEVBUF,
@@ -656,7 +656,7 @@ omgpio_intr_disestablish(struct omgpio_softc *sc, void *cookie)
 	struct intrhand *ih = cookie;
 	struct omgpio_softc *sc = omgpio_cd.cd_devs[GPIO_PIN_TO_INST(ih->ih_gpio)];
 	int gpio = ih->ih_gpio;
-	psw = disable_interrupts(I32_bit);
+	psw = disable_interrupts(PSR_I);
 
 	ih = sc->sc_handlers[GPIO_PIN_TO_OFFSET(gpio)];
 	sc->sc_handlers[GPIO_PIN_TO_OFFSET(gpio)] = NULL;

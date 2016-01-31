@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc.h,v 1.15 2014/03/29 18:09:28 guenther Exp $	*/
+/*	$OpenBSD: cpufunc.h,v 1.16 2016/01/31 00:14:50 jsg Exp $	*/
 /*	$NetBSD: cpufunc.h,v 1.29 2003/09/06 09:08:35 rearnsha Exp $	*/
 
 /*
@@ -501,14 +501,14 @@ __get_cpsr()
 }
 
 #define disable_interrupts(mask)					\
-	(__set_cpsr_c((mask) & (I32_bit | F32_bit), \
-		      (mask) & (I32_bit | F32_bit)))
+	(__set_cpsr_c((mask) & (PSR_I | PSR_F), \
+		      (mask) & (PSR_I | PSR_F)))
 
 #define enable_interrupts(mask)						\
-	(__set_cpsr_c((mask) & (I32_bit | F32_bit), 0))
+	(__set_cpsr_c((mask) & (PSR_I | PSR_F), 0))
 
 #define restore_interrupts(old_cpsr)					\
-	(__set_cpsr_c((I32_bit | F32_bit), (old_cpsr) & (I32_bit | F32_bit)))
+	(__set_cpsr_c((PSR_I | PSR_F), (old_cpsr) & (PSR_I | PSR_F)))
 
 /*
  * Functions to manipulate cpu r13

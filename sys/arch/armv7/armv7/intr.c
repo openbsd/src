@@ -1,4 +1,4 @@
-/* $OpenBSD: intr.c,v 1.3 2015/06/13 07:16:37 jsg Exp $ */
+/* $OpenBSD: intr.c,v 1.4 2016/01/31 00:14:50 jsg Exp $ */
 /*
  * Copyright (c) 2011 Dale Rahn <drahn@openbsd.org>
  *
@@ -151,7 +151,7 @@ arm_setsoftintr(int si)
 	int oldirqstate;
 
 	/* XXX atomic? */
-	oldirqstate = disable_interrupts(I32_bit);
+	oldirqstate = disable_interrupts(PSR_I);
 	ci->ci_ipending |= SI_TO_IRQBIT(si);
 
 	restore_interrupts(oldirqstate);
@@ -168,7 +168,7 @@ arm_do_pending_intr(int pcpl)
 	static int processing = 0;
 	int oldirqstate;
 
-	oldirqstate = disable_interrupts(I32_bit);
+	oldirqstate = disable_interrupts(PSR_I);
 
 	if (processing == 1) {
 		/* Don't use splx... we are here already! */
@@ -184,7 +184,7 @@ arm_do_pending_intr(int pcpl)
 		arm_intr_func.setipl(ipl);				\
 		restore_interrupts(oldirqstate);			\
 		softintr_dispatch(si);					\
-		oldirqstate = disable_interrupts(I32_bit);		\
+		oldirqstate = disable_interrupts(PSR_I);		\
 	}
 
 	do {

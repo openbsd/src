@@ -1,4 +1,4 @@
-/*	$OpenBSD: armreg.h,v 1.17 2016/01/23 15:38:48 jsg Exp $	*/
+/*	$OpenBSD: armreg.h,v 1.18 2016/01/31 00:14:50 jsg Exp $	*/
 /*	$NetBSD: armreg.h,v 1.27 2003/09/06 08:43:02 rearnsha Exp $	*/
 
 /*
@@ -63,19 +63,19 @@
  */
 
 #define PSR_FLAGS 0xf0000000	/* flags */
-#define PSR_N_bit (1U << 31)	/* negative */
-#define PSR_Z_bit (1 << 30)	/* zero */
-#define PSR_C_bit (1 << 29)	/* carry */
-#define PSR_V_bit (1 << 28)	/* overflow */
+#define PSR_N	(1U << 31)	/* negative */
+#define PSR_Z	(1 << 30)	/* zero */
+#define PSR_C	(1 << 29)	/* carry */
+#define PSR_V	(1 << 28)	/* overflow */
 
-#define PSR_Q_bit (1 << 27)	/* saturation */
+#define PSR_Q	(1 << 27)	/* saturation */
 
-#define A32_bit (1 << 8)	/* Asynchronous abort disable */
-#define I32_bit (1 << 7)	/* IRQ disable */
-#define F32_bit (1 << 6)	/* FIQ disable */
+#define PSR_A	(1 << 8)	/* Asynchronous abort disable */
+#define PSR_I	(1 << 7)	/* IRQ disable */
+#define PSR_F	(1 << 6)	/* FIQ disable */
 
-#define PSR_T_bit (1 << 5)	/* Thumb state */
-#define PSR_J_bit (1 << 24)	/* Java mode */
+#define PSR_T	(1 << 5)	/* Thumb state */
+#define PSR_J	(1 << 24)	/* Java mode */
 
 #define PSR_MODE	0x0000001f	/* mode mask */
 #define PSR_USR26_MODE	0x00000000

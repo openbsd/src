@@ -1,4 +1,4 @@
-/*	$OpenBSD: fault.c,v 1.18 2014/11/16 12:30:56 deraadt Exp $	*/
+/*	$OpenBSD: fault.c,v 1.19 2016/01/31 00:14:50 jsg Exp $	*/
 /*	$NetBSD: fault.c,v 1.46 2004/01/21 15:39:21 skrll Exp $	*/
 
 /*
@@ -221,8 +221,8 @@ data_abort_handler(trapframe_t *tf)
 	uvmexp.traps++;
 
 	/* Re-enable interrupts if they were enabled previously */
-	if (__predict_true((tf->tf_spsr & I32_bit) == 0))
-		enable_interrupts(I32_bit);
+	if (__predict_true((tf->tf_spsr & PSR_I) == 0))
+		enable_interrupts(PSR_I);
 
 	/* Get the current proc structure or proc0 if there is none */
 	p = (curproc != NULL) ? curproc : &proc0;
@@ -665,8 +665,8 @@ prefetch_abort_handler(trapframe_t *tf)
 	 * from user mode so we know interrupts were not disabled.
 	 * But we check anyway.
 	 */
-	if (__predict_true((tf->tf_spsr & I32_bit) == 0))
-		enable_interrupts(I32_bit);
+	if (__predict_true((tf->tf_spsr & PSR_I) == 0))
+		enable_interrupts(PSR_I);
 
 	/* Get fault address */
 	p = curproc;

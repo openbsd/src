@@ -1,4 +1,4 @@
-/*	$OpenBSD: i80321_pci.c,v 1.4 2010/12/04 17:06:31 miod Exp $	*/
+/*	$OpenBSD: i80321_pci.c,v 1.5 2016/01/31 00:14:50 jsg Exp $	*/
 /*	$NetBSD: i80321_pci.c,v 1.7 2005/12/15 01:44:00 briggs Exp $	*/
 
 /*
@@ -67,7 +67,7 @@ int		i80321_pci_conf_size(void *, pcitag_t);
 pcireg_t	i80321_pci_conf_read(void *, pcitag_t, int);
 void		i80321_pci_conf_write(void *, pcitag_t, int, pcireg_t);
 
-#define	PCI_CONF_LOCK(s)	(s) = disable_interrupts(I32_bit)
+#define	PCI_CONF_LOCK(s)	(s) = disable_interrupts(PSR_I)
 #define	PCI_CONF_UNLOCK(s)	restore_interrupts((s))
 
 void

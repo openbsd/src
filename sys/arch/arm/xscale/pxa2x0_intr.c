@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_intr.c,v 1.26 2014/07/12 18:44:41 tedu Exp $ */
+/*	$OpenBSD: pxa2x0_intr.c,v 1.27 2016/01/31 00:14:50 jsg Exp $ */
 /*	$NetBSD: pxa2x0_intr.c,v 1.5 2003/07/15 00:24:55 lukem Exp $	*/
 
 /*
@@ -158,7 +158,7 @@ pxaintc_attach(struct device *parent, struct device *self, void *args)
 	pxa2x0_init_interrupt_masks();
 
 	_splraise(IPL_HIGH);
-	enable_interrupts(I32_bit);
+	enable_interrupts(PSR_I);
 }
 
 /*
@@ -219,7 +219,7 @@ pxa2x0_irq_handler(void *arg)
 			pxa2x0_setipl(extirq_level[irqno]);
 
 		/* Enable interrupt */
-		enable_interrupts(I32_bit);
+		enable_interrupts(PSR_I);
 
 #ifndef MULTIPLE_HANDLERS_ON_ONE_IRQ
 		(* handler[irqno].func)( 
@@ -235,7 +235,7 @@ pxa2x0_irq_handler(void *arg)
 #endif
 		
 		/* Disable interrupt */
-		disable_interrupts(I32_bit);
+		disable_interrupts(PSR_I);
 
 		irqbits &= ~(1<<irqno);
 	}
@@ -254,7 +254,7 @@ pxa2x0_stray_interrupt(void *cookie)
 	printf("stray interrupt %d\n", irqno);
 
 	if (PXA2X0_IRQ_MIN <= irqno && irqno < ICU_LEN){
-		int save = disable_interrupts(I32_bit);
+		int save = disable_interrupts(PSR_I);
 		write_icu(SAIPIC_MR,
 		    read_icu(SAIPIC_MR) & ~(1U<<irqno));
 		restore_interrupts(save);
@@ -289,7 +289,7 @@ pxa2x0_update_intr_masks(int irqno, int irqlevel)
 	int level;
 #endif
 	struct intrhand *ih;
-	psw = disable_interrupts(I32_bit);
+	psw = disable_interrupts(PSR_I);
 
 	/* First figure out which levels each IRQ uses. */
 	for (irq = 0; irq < ICU_LEN; irq++) {
@@ -339,7 +339,7 @@ pxa2x0_update_intr_masks(int irqno, int irqlevel)
 	int level; /* debug */
 	int mask = 1U<<irqno;
 	int i;
-	psw = disable_interrupts(I32_bit);
+	psw = disable_interrupts(PSR_I);
 
 	for(i = 0; i < irqlevel; ++i)
 		pxa2x0_imask[i] |= mask; /* Enable interrupt at lower level */
@@ -456,7 +456,7 @@ pxa2x0_do_pending(void)
 
 	spl_save = current_spl_level;
 
-	oldirqstate = disable_interrupts(I32_bit);
+	oldirqstate = disable_interrupts(PSR_I);
 
 #if 1
 #define	DO_SOFTINT(si,ipl)						\
@@ -467,7 +467,7 @@ pxa2x0_do_pending(void)
 			pxa2x0_setipl(ipl);				\
 		restore_interrupts(oldirqstate);			\
 		softintr_dispatch(si);					\
-		oldirqstate = disable_interrupts(I32_bit);		\
+		oldirqstate = disable_interrupts(PSR_I);		\
 		pxa2x0_setipl(spl_save);				\
 	}
 
@@ -484,7 +484,7 @@ pxa2x0_do_pending(void)
 			pxa2x0_setipl(ipl);
 		restore_interrupts(oldirqstate);
 		softintr_dispatch(si);
-		oldirqstate = disable_interrupts(I32_bit);
+		oldirqstate = disable_interrupts(PSR_I);
 		pxa2x0_setipl(spl_save);
 	}
 #endif
@@ -541,7 +541,7 @@ pxa2x0_intr_establish(int irqno, int level,
 	if (irqno < PXA2X0_IRQ_MIN || irqno >= ICU_LEN)
 		panic("intr_establish: bogus irq number %d", irqno);
 
-	psw = disable_interrupts(I32_bit);
+	psw = disable_interrupts(PSR_I);
 
 #ifdef MULTIPLE_HANDLERS_ON_ONE_IRQ
 	/* no point in sleeping unless someone can free memory. */
@@ -587,7 +587,7 @@ pxa2x0_intr_disestablish(void *cookie)
 	struct intrhand *ih = cookie;
 	int irqno =  ih->ih_irq;
 
-	psw = disable_interrupts(I32_bit);
+	psw = disable_interrupts(PSR_I);
 	TAILQ_REMOVE(&handler[irqno].list, ih, ih_list);
 
 	free(ih, M_DEVBUF, 0);
@@ -605,7 +605,7 @@ pxa2x0_intr_disestablish(void *cookie)
 	if (irqno < PXA2X0_IRQ_MIN || irqno >= ICU_LEN)
 		panic("intr_disestablish: bogus irq number %d", irqno);
 
-	psw = disable_interrupts(I32_bit);
+	psw = disable_interrupts(PSR_I);
 
 	ih = &handler[irqno];
 	if (ih->name != NULL)
@@ -648,7 +648,7 @@ pxa2x0_splx(int new)
 {
 	int psw;
 
-	psw = disable_interrupts(I32_bit);
+	psw = disable_interrupts(PSR_I);
 	pxa2x0_setipl(new);
 	restore_interrupts(psw);
 
@@ -665,7 +665,7 @@ pxa2x0_splraise(int ipl)
 
 	old = current_spl_level;
 	if( ipl > current_spl_level ){
-		psw = disable_interrupts(I32_bit);
+		psw = disable_interrupts(PSR_I);
 		pxa2x0_setipl(ipl);
 		restore_interrupts(psw);
 	}
@@ -677,7 +677,7 @@ int
 pxa2x0_spllower(int ipl)
 {
 	int old = current_spl_level;
-	int psw = disable_interrupts(I32_bit);
+	int psw = disable_interrupts(PSR_I);
 	pxa2x0_splx(ipl);
 	restore_interrupts(psw);
 	return(old);
@@ -723,7 +723,7 @@ pxa2x0_splassert_check(int wantipl, const char *func)
 		 * If the splassert_ctl is set to not panic, raise the ipl
 		 * in a feeble attempt to reduce damage.
 		 */
-		psw = disable_interrupts(I32_bit);
+		psw = disable_interrupts(PSR_I);
 		pxa2x0_setipl(wantipl);
 		restore_interrupts(psw);
 	}

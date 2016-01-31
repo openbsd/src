@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc_asm_xscale.S,v 1.6 2015/01/18 14:55:02 jsg Exp $ */
+/*	$OpenBSD: cpufunc_asm_xscale.S,v 1.7 2016/01/31 00:14:50 jsg Exp $ */
 /*	$NetBSD: cpufunc_asm_xscale.S,v 1.16 2002/08/17 16:36:32 thorpej Exp $	*/
 
 /*
@@ -129,7 +129,7 @@ ENTRY(xscale_control)
  */
 ENTRY(xscale_setttb)
 	mrs	r3, cpsr
-	orr	r1, r3, #(I32_bit | F32_bit)
+	orr	r1, r3, #(PSR_I | PSR_F)
 	msr	cpsr_c, r1
 
 	stmfd	sp!, {r0-r3, lr}
@@ -245,7 +245,7 @@ _C_LABEL(xscale_cache_clean_size):
 
 #define	XSCALE_CACHE_CLEAN_BLOCK					\
 	mrs	r3, cpsr					;	\
-	orr	r0, r3, #(I32_bit | F32_bit)			;	\
+	orr	r0, r3, #(PSR_I | PSR_F)			;	\
 	msr	cpsr_c, r0
 
 #define	XSCALE_CACHE_CLEAN_UNBLOCK					\

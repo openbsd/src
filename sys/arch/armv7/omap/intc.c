@@ -1,4 +1,4 @@
-/* $OpenBSD: intc.c,v 1.3 2014/07/12 18:44:41 tedu Exp $ */
+/* $OpenBSD: intc.c,v 1.4 2016/01/31 00:14:50 jsg Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  *
@@ -170,7 +170,7 @@ intc_attach(struct device *parent, struct device *self, void *args)
 	    intc_irq_handler);
 
 	intc_setipl(IPL_HIGH);  /* XXX ??? */
-	enable_interrupts(I32_bit);
+	enable_interrupts(PSR_I);
 }
 
 void
@@ -269,7 +269,7 @@ intc_setipl(int new)
 	if (intc_attached == 0)
 		return;
 
-	psw = disable_interrupts(I32_bit);
+	psw = disable_interrupts(PSR_I);
 #if 0
 	{
 		volatile static int recursed = 0;
@@ -342,7 +342,7 @@ intc_intr_establish(int irqno, int level, int (*func)(void *),
 	if (irqno < 0 || irqno >= INTC_NUM_IRQ)
 		panic("intc_intr_establish: bogus irqnumber %d: %s",
 		     irqno, name);
-	psw = disable_interrupts(I32_bit);
+	psw = disable_interrupts(PSR_I);
 
 	/* no point in sleeping unless someone can free memory. */
 	ih = (struct intrhand *)malloc (sizeof *ih, M_DEVBUF,
@@ -376,7 +376,7 @@ intc_intr_disestablish(void *cookie)
 	int psw;
 	struct intrhand *ih = cookie;
 	int irqno = ih->ih_irq;
-	psw = disable_interrupts(I32_bit);
+	psw = disable_interrupts(PSR_I);
 	TAILQ_REMOVE(&intc_handler[irqno].iq_list, ih, ih_list);
 	if (ih->ih_name != NULL)
 		evcount_detach(&ih->ih_count);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.7 2015/06/05 05:39:54 jsg Exp $	*/
+/*	$OpenBSD: locore.S,v 1.8 2016/01/31 00:14:50 jsg Exp $	*/
 /*	$NetBSD: locore.S,v 1.14 2003/04/20 16:21:40 thorpej Exp $	*/
 
 /*
@@ -110,7 +110,7 @@ ENTRY_NP(cpu_reset)
 	mrs     r2, cpsr
 	bic	r2, r2, #(PSR_MODE)
 	orr     r2, r2, #(PSR_SVC32_MODE)
-	orr	r2, r2, #(I32_bit | F32_bit)
+	orr	r2, r2, #(PSR_I | PSR_F)
 	msr     cpsr_c, r2
 
 	ldr	r4, .Lcpu_reset_address

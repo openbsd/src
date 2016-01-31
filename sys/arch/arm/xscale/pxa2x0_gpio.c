@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_gpio.c,v 1.24 2014/07/12 18:44:41 tedu Exp $ */
+/*	$OpenBSD: pxa2x0_gpio.c,v 1.25 2016/01/31 00:14:50 jsg Exp $ */
 /*	$NetBSD: pxa2x0_gpio.c,v 1.2 2003/07/15 00:24:55 lukem Exp $	*/
 
 /*
@@ -338,7 +338,7 @@ void
 pxa2x0_gpio_intr_fixup(int minipl, int maxipl)
 {
 	struct pxagpio_softc *sc = pxagpio_softc;
-	int save = disable_interrupts(I32_bit);
+	int save = disable_interrupts(PSR_I);
 
 	if (maxipl == IPL_NONE  && minipl == IPL_HIGH) {
 		/* no remaining interrupts */

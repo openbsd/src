@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap7.c,v 1.21 2015/09/08 21:28:36 kettenis Exp $	*/
+/*	$OpenBSD: pmap7.c,v 1.22 2016/01/31 00:14:50 jsg Exp $	*/
 /*	$NetBSD: pmap.c,v 1.147 2004/01/18 13:03:50 scw Exp $	*/
 
 /*
@@ -2177,7 +2177,7 @@ pmap_activate(struct proc *p)
 		}
 
 		s = splhigh();
-		disable_interrupts(I32_bit | F32_bit);
+		disable_interrupts(PSR_I | PSR_F);
 
 		/*
 		 * We MUST, I repeat, MUST fix up the L1 entry corresponding
@@ -2197,7 +2197,7 @@ pmap_activate(struct proc *p)
 		cpu_domains(pcb->pcb_dacr);
 		cpu_setttb(pcb->pcb_pagedir);
 
-		enable_interrupts(I32_bit | F32_bit);
+		enable_interrupts(PSR_I | PSR_F);
 
 		splx(s);
 	}

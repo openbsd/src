@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.c,v 1.17 2014/05/11 00:05:38 guenther Exp $	*/
+/*	$OpenBSD: syscall.c,v 1.18 2016/01/31 00:14:50 jsg Exp $	*/
 /*	$NetBSD: syscall.c,v 1.24 2003/11/14 19:03:17 scw Exp $	*/
 
 /*-
@@ -104,8 +104,8 @@ swi_handler(trapframe_t *frame)
 	uvmexp.syscalls++;
 
 	/* Re-enable interrupts if they were enabled previously */
-	if (__predict_true((frame->tf_spsr & I32_bit) == 0))
-		enable_interrupts(I32_bit);
+	if (__predict_true((frame->tf_spsr & PSR_I) == 0))
+		enable_interrupts(PSR_I);
 
 	p->p_addr->u_pcb.pcb_tf = frame;
 
@@ -153,7 +153,7 @@ swi_handler(trapframe_t *frame)
 		frame->tf_r0 = rval[0];
 		frame->tf_r1 = rval[1];
 
-		frame->tf_spsr &= ~PSR_C_bit;	/* carry bit */
+		frame->tf_spsr &= ~PSR_C;	/* carry bit */
 		break;
 
 	case ERESTART:
@@ -170,7 +170,7 @@ swi_handler(trapframe_t *frame)
 	default:
 	bad:
 		frame->tf_r0 = error;
-		frame->tf_spsr |= PSR_C_bit;	/* carry bit */
+		frame->tf_spsr |= PSR_C;	/* carry bit */
 		break;
 	}
 
@@ -185,7 +185,7 @@ child_return(arg)
 	struct trapframe *frame = p->p_addr->u_pcb.pcb_tf;
 
 	frame->tf_r0 = 0;
-	frame->tf_spsr &= ~PSR_C_bit;	/* carry bit */
+	frame->tf_spsr &= ~PSR_C;	/* carry bit */
 
 	mi_child_return(p);
 }

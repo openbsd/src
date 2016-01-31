@@ -1,4 +1,4 @@
-/*	$OpenBSD: i80321_clock.c,v 1.10 2015/06/13 07:16:36 jsg Exp $ */
+/*	$OpenBSD: i80321_clock.c,v 1.11 2016/01/31 00:14:50 jsg Exp $ */
 
 /*
  * Copyright (c) 2006 Dale Rahn <drahn@openbsd.org>
@@ -285,7 +285,7 @@ cpu_initclocks()
 		int new_tps;
 		int tps_diff;
 
-		psw = disable_interrupts(I32_bit);
+		psw = disable_interrupts(PSR_I);
 
 		first_sec =  rtctime.tv_sec;
 		do {

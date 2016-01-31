@@ -1,4 +1,4 @@
-/*	$OpenBSD: process_machdep.c,v 1.4 2011/09/20 22:02:11 miod Exp $	*/
+/*	$OpenBSD: process_machdep.c,v 1.5 2016/01/31 00:14:50 jsg Exp $	*/
 /*	$NetBSD: process_machdep.c,v 1.11 2003/08/07 16:26:52 agc Exp $	*/
 
 /*
@@ -135,7 +135,7 @@ process_read_regs(struct proc *p, struct reg *regs)
 
 #ifdef DIAGNOSTIC
 	if ((tf->tf_spsr & PSR_MODE) == PSR_USR32_MODE
-	    && tf->tf_spsr & I32_bit)
+	    && tf->tf_spsr & PSR_I)
 		panic("process_read_regs: Interrupts blocked in user process");
 #endif
 
@@ -166,7 +166,7 @@ process_write_regs(struct proc *p, struct reg *regs)
 	tf->tf_spsr |= regs->r_cpsr & PSR_FLAGS;
 #ifdef DIAGNOSTIC
 	if ((tf->tf_spsr & PSR_MODE) == PSR_USR32_MODE
-	    && tf->tf_spsr & I32_bit)
+	    && tf->tf_spsr & PSR_I)
 		panic("process_write_regs: Interrupts blocked in user process");
 #endif
 

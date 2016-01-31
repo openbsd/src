@@ -1,4 +1,4 @@
-/*	$OpenBSD: armv7_start.S,v 1.4 2016/01/23 15:38:48 jsg Exp $	*/
+/*	$OpenBSD: armv7_start.S,v 1.5 2016/01/31 00:14:50 jsg Exp $	*/
 /*	$NetBSD: lubbock_start.S,v 1.1 2003/06/18 10:51:15 bsh Exp $ */
 
 /*
@@ -102,7 +102,7 @@ _C_LABEL(bootstrap_start):
 	mrs	r0, cpsr
 	bic	r0, r0, #(PSR_MODE)
 	orr	r0, r0, #(PSR_SVC32_MODE)
-	orr	r0, r0, #(I32_bit | F32_bit | A32_bit)
+	orr	r0, r0, #(PSR_I | PSR_F | PSR_A)
 	msr	spsr_fsxc, r0
 	adr	lr, 1f
 	ELR

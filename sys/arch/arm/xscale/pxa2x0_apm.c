@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_apm.c,v 1.43 2014/09/20 09:28:24 kettenis Exp $	*/
+/*	$OpenBSD: pxa2x0_apm.c,v 1.44 2016/01/31 00:14:50 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2001 Alexander Guy.  All rights reserved.
@@ -900,7 +900,7 @@ pxa2x0_apm_sleep(struct pxa2x0_apm_softc *sc)
 		goto out;
 	}
 
-	save = disable_interrupts(I32_bit|F32_bit);
+	save = disable_interrupts(PSR_I|PSR_F);
 
 	sd.sd_oscr0 = bus_space_read_4(sc->sc_iot, ost_ioh, OST_OSCR0);
 	sd.sd_oscr4 = bus_space_read_4(sc->sc_iot, ost_ioh, OST_OSCR4);
@@ -1483,7 +1483,7 @@ pxa2x0_setperf(int speed)
 	DPRINTF(("setperf speed %d newfreq %d, maxfreq %d\n",
 	    speed, newfreq, xscale_maxspeed));
 
-	s = disable_interrupts(I32_bit|F32_bit);
+	s = disable_interrupts(PSR_I|PSR_F);
 
 	if (newfreq == 91) {
 		if (freq > 91) {

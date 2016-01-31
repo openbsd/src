@@ -1,4 +1,4 @@
-/*	$OpenBSD: a1xintc.c,v 1.6 2015/05/20 03:49:23 jsg Exp $	*/
+/*	$OpenBSD: a1xintc.c,v 1.7 2016/01/31 00:14:50 jsg Exp $	*/
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2013 Artturi Alm
@@ -194,7 +194,7 @@ a1xintc_attach(struct device *parent, struct device *self, void *args)
 	    a1xintc_intr_establish, a1xintc_intr_disestablish, a1xintc_intr_string,
 	    a1xintc_irq_handler);
 	a1xintc_setipl(IPL_HIGH);  /* XXX ??? */
-	enable_interrupts(I32_bit);
+	enable_interrupts(PSR_I);
 	printf("\n");
 }
 
@@ -297,7 +297,7 @@ a1xintc_setipl(int new)
 		return;
 	}
 #endif
-	psw = disable_interrupts(I32_bit);
+	psw = disable_interrupts(PSR_I);
 	ci->ci_cpl = new;
 	for (i = 0; i < NBANKS; i++)
 		bus_space_write_4(a1xintc_iot, a1xintc_ioh,
@@ -365,7 +365,7 @@ a1xintc_intr_establish(int irq, int lvl, int (*f)(void *), void *arg, char *name
 	DPRINTF(("intr_establish: irq %d level %d [%s]\n", irq, lvl,
 	    name != NULL ? name : "NULL"));
 
-	psw = disable_interrupts(I32_bit);
+	psw = disable_interrupts(PSR_I);
 
 	/* no point in sleeping unless someone can free memory. */
 	ih = (struct intrhand *)malloc (sizeof *ih, M_DEVBUF,
@@ -403,7 +403,7 @@ a1xintc_intr_disestablish(void *cookie)
 	int psw;
 	uint32_t er;
 
-	psw = disable_interrupts(I32_bit);
+	psw = disable_interrupts(PSR_I);
 
 	TAILQ_REMOVE(&a1xintc_handler[irq].iq_list, ih, ih_list);
 

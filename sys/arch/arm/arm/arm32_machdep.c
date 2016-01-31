@@ -1,4 +1,4 @@
-/*	$OpenBSD: arm32_machdep.c,v 1.47 2015/01/12 16:33:31 deraadt Exp $	*/
+/*	$OpenBSD: arm32_machdep.c,v 1.48 2016/01/31 00:14:50 jsg Exp $	*/
 /*	$NetBSD: arm32_machdep.c,v 1.42 2003/12/30 12:33:15 pk Exp $	*/
 
 /*
@@ -204,7 +204,7 @@ bootsync(int howto)
 	bootsyncdone = 1;
 
 	/* Make sure we can still manage to do things */
-	if (__get_cpsr() & I32_bit) {
+	if (__get_cpsr() & PSR_I) {
 		/*
 		 * If we get here then boot has been called without RB_NOSYNC
 		 * and interrupts were disabled. This means the boot() call

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_lcd.c,v 1.26 2014/07/12 18:44:41 tedu Exp $ */
+/*	$OpenBSD: pxa2x0_lcd.c,v 1.27 2016/01/31 00:14:50 jsg Exp $ */
 /* $NetBSD: pxa2x0_lcd.c,v 1.8 2003/10/03 07:24:05 bsh Exp $ */
 
 /*
@@ -292,7 +292,7 @@ pxa2x0_lcd_start_dma(bus_space_tag_t iot, bus_space_handle_t ioh,
 	uint32_t tmp;
 	int val, save;
 
-	save = disable_interrupts(I32_bit);
+	save = disable_interrupts(PSR_I);
 
 	switch (scr->depth) {
 	case 1: val = 0; break;

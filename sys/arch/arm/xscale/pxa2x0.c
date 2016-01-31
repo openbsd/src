@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0.c,v 1.19 2014/10/18 12:21:56 miod Exp $ */
+/*	$OpenBSD: pxa2x0.c,v 1.20 2016/01/31 00:14:50 jsg Exp $ */
 /*	$NetBSD: pxa2x0.c,v 1.5 2003/12/12 16:42:44 thorpej Exp $ */
 
 /*
@@ -285,7 +285,7 @@ pxaip_measure_cpuclock(struct pxaip_softc *sc)
 	int irq;
 
 	ioh = sc->sc_bush_rtc;
-	irq = disable_interrupts(I32_bit|F32_bit);
+	irq = disable_interrupts(PSR_I|PSR_F);
 
 	__asm volatile( "mrc p14, 0, %0, c0, c1, 0" : "=r" (pmcr_save));
 	/* Enable clock counter */

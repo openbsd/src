@@ -1,4 +1,4 @@
-/*	$OpenBSD: atomic.h,v 1.12 2015/09/12 16:12:50 miod Exp $	*/
+/*	$OpenBSD: atomic.h,v 1.13 2016/01/31 00:14:50 jsg Exp $	*/
 
 /* Public Domain */
 
@@ -25,7 +25,7 @@ _atomic_cas_uint(volatile unsigned int *uip, unsigned int o, unsigned int n)
 	unsigned int cpsr;
 	unsigned int rv;
 
-	cpsr = disable_interrupts(I32_bit|F32_bit);
+	cpsr = disable_interrupts(PSR_I|PSR_F);
 	rv = *uip;
 	if (rv == o)
 		*uip = n;
@@ -41,7 +41,7 @@ _atomic_cas_ulong(volatile unsigned long *uip, unsigned long o, unsigned long n)
 	unsigned int cpsr;
 	unsigned long rv;
 
-	cpsr = disable_interrupts(I32_bit|F32_bit);
+	cpsr = disable_interrupts(PSR_I|PSR_F);
 	rv = *uip;
 	if (rv == o)
 		*uip = n;
@@ -58,7 +58,7 @@ _atomic_cas_ptr(volatile void *uip, void *o, void *n)
 	void * volatile *uipp = (void * volatile *)uip;
 	void *rv;
 
-	cpsr = disable_interrupts(I32_bit|F32_bit);
+	cpsr = disable_interrupts(PSR_I|PSR_F);
 	rv = *uipp;
 	if (rv == o)
 		*uipp = n;
@@ -74,7 +74,7 @@ _atomic_swap_uint(volatile unsigned int *uip, unsigned int n)
 	unsigned int cpsr;
 	unsigned int rv;
 
-	cpsr = disable_interrupts(I32_bit|F32_bit);
+	cpsr = disable_interrupts(PSR_I|PSR_F);
 	rv = *uip;
 	*uip = n;
 	restore_interrupts(cpsr);
@@ -89,7 +89,7 @@ _atomic_swap_ulong(volatile unsigned long *uip, unsigned long n)
 	unsigned int cpsr;
 	unsigned long rv;
 
-	cpsr = disable_interrupts(I32_bit|F32_bit);
+	cpsr = disable_interrupts(PSR_I|PSR_F);
 	rv = *uip;
 	*uip = n;
 	restore_interrupts(cpsr);
@@ -105,7 +105,7 @@ _atomic_swap_ptr(volatile void *uip, void *n)
 	void * volatile *uipp = (void * volatile *)uip;
 	void *rv;
 
-	cpsr = disable_interrupts(I32_bit|F32_bit);
+	cpsr = disable_interrupts(PSR_I|PSR_F);
 	rv = *uipp;
 	*uipp = n;
 	restore_interrupts(cpsr);
@@ -120,7 +120,7 @@ _atomic_add_int_nv(volatile unsigned int *uip, unsigned int v)
 	unsigned int cpsr;
 	unsigned int rv;
 
-	cpsr = disable_interrupts(I32_bit|F32_bit);
+	cpsr = disable_interrupts(PSR_I|PSR_F);
 	rv = *uip + v;
 	*uip = rv;
 	restore_interrupts(cpsr);
@@ -135,7 +135,7 @@ _atomic_add_long_nv(volatile unsigned long *uip, unsigned long v)
 	unsigned int cpsr;
 	unsigned long rv;
 
-	cpsr = disable_interrupts(I32_bit|F32_bit);
+	cpsr = disable_interrupts(PSR_I|PSR_F);
 	rv = *uip + v;
 	*uip = rv;
 	restore_interrupts(cpsr);
@@ -150,7 +150,7 @@ _atomic_sub_int_nv(volatile unsigned int *uip, unsigned int v)
 	unsigned int cpsr;
 	unsigned int rv;
 
-	cpsr = disable_interrupts(I32_bit|F32_bit);
+	cpsr = disable_interrupts(PSR_I|PSR_F);
 	rv = *uip - v;
 	*uip = rv;
 	restore_interrupts(cpsr);
@@ -165,7 +165,7 @@ _atomic_sub_long_nv(volatile unsigned long *uip, unsigned long v)
 	unsigned int cpsr;
 	unsigned long rv;
 
-	cpsr = disable_interrupts(I32_bit|F32_bit);
+	cpsr = disable_interrupts(PSR_I|PSR_F);
 	rv = *uip - v;
 	*uip = rv;
 	restore_interrupts(cpsr);
@@ -179,7 +179,7 @@ atomic_setbits_int(volatile unsigned int *uip, unsigned int v)
 {
 	unsigned int cpsr;
 
-	cpsr = disable_interrupts(I32_bit|F32_bit);
+	cpsr = disable_interrupts(PSR_I|PSR_F);
 	*uip |= v;
 	restore_interrupts(cpsr);
 }
@@ -189,7 +189,7 @@ atomic_clearbits_int(volatile unsigned int *uip, unsigned int v)
 {
 	unsigned int cpsr;
 
-	cpsr = disable_interrupts(I32_bit|F32_bit);
+	cpsr = disable_interrupts(PSR_I|PSR_F);
 	*uip &= ~v;
 	restore_interrupts(cpsr);
 }

@@ -1,4 +1,4 @@
-/* $OpenBSD: ampintc.c,v 1.8 2015/11/05 19:54:17 miod Exp $ */
+/* $OpenBSD: ampintc.c,v 1.9 2016/01/31 00:14:50 jsg Exp $ */
 /*
  * Copyright (c) 2007,2009,2011 Dale Rahn <drahn@openbsd.org>
  *
@@ -298,7 +298,7 @@ ampintc_attach(struct device *parent, struct device *self, void *args)
 	/* enable interrupts */
 	bus_space_write_4(iot, d_ioh, ICD_DCR, 3);
 	bus_space_write_4(iot, p_ioh, ICPICR, 1);
-	enable_interrupts(I32_bit);
+	enable_interrupts(PSR_I);
 }
 
 void
@@ -325,7 +325,7 @@ ampintc_setipl(int new)
 	int			 psw;
 
 	/* disable here is only to keep hardware in sync with ci->ci_cpl */
-	psw = disable_interrupts(I32_bit);
+	psw = disable_interrupts(PSR_I);
 	ci->ci_cpl = new;
 
 	/* low values are higher priority thus IPL_HIGH - pri */
@@ -555,7 +555,7 @@ ampintc_intr_establish(int irqno, int level, int (*func)(void *),
 	ih->ih_irq = irqno;
 	ih->ih_name = name;
 
-	psw = disable_interrupts(I32_bit);
+	psw = disable_interrupts(PSR_I);
 
 	TAILQ_INSERT_TAIL(&sc->sc_ampintc_handler[irqno].iq_list, ih, ih_list);
 
@@ -579,7 +579,7 @@ ampintc_intr_disestablish(void *cookie)
 	int psw;
 	struct intrhand *ih = cookie;
 	int irqno = ih->ih_irq;
-	psw = disable_interrupts(I32_bit);
+	psw = disable_interrupts(PSR_I);
 	TAILQ_REMOVE(&sc->sc_ampintc_handler[irqno].iq_list, ih, ih_list);
 	if (ih->ih_name != NULL)
 		evcount_detach(&ih->ih_count);

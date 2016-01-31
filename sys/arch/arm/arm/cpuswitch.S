@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpuswitch.S,v 1.14 2013/09/12 11:43:51 patrick Exp $	*/
+/*	$OpenBSD: cpuswitch.S,v 1.15 2016/01/31 00:14:50 jsg Exp $	*/
 /*	$NetBSD: cpuswitch.S,v 1.41 2003/11/15 08:44:18 scw Exp $	*/
 
 /*
@@ -95,12 +95,12 @@
  */
 #define IRQdisableALL \
 	mrs	r14, cpsr ; \
-	orr	r14, r14, #(I32_bit | F32_bit) ; \
+	orr	r14, r14, #(PSR_I | PSR_F) ; \
 	msr	cpsr_c, r14
 
 #define IRQenableALL \
 	mrs	r14, cpsr ; \
-	bic	r14, r14, #(I32_bit | F32_bit) ; \
+	bic	r14, r14, #(PSR_I | PSR_F) ; \
 	msr	cpsr_c, r14
 
 	.text
@@ -236,7 +236,7 @@ ENTRY(cpu_switchto)
 	 */
         mrs	r3, cpsr
 	bic	r2, r3, #(PSR_MODE)
-	orr	r2, r2, #(PSR_UND32_MODE | I32_bit)
+	orr	r2, r2, #(PSR_UND32_MODE | PSR_I)
         msr	cpsr_c, r2
 
 #ifdef notworthit
@@ -489,7 +489,7 @@ ENTRY(proc_trampoline)
 
 	/* Kill irq's */
         mrs     r0, cpsr
-        orr     r0, r0, #(I32_bit)
+        orr     r0, r0, #(PSR_I)
         msr     cpsr_c, r0
 
 	PULLFRAME
