@@ -1,4 +1,4 @@
-/*	$OpenBSD: partition_map.c,v 1.96 2016/01/31 22:26:52 krw Exp $	*/
+/*	$OpenBSD: partition_map.c,v 1.97 2016/01/31 23:00:11 krw Exp $	*/
 
 /*
  * partition_map.c - partition map routines
@@ -72,7 +72,6 @@ open_partition_map(int fd, char *name, uint64_t mediasz, uint32_t sectorsz)
 	map->changed = 0;
 	LIST_INIT(&map->disk_order);
 	LIST_INIT(&map->base_order);
-	map->physical_block = sectorsz;
 	map->blocks_in_map = 0;
 	map->maximum_in_map = -1;
 
@@ -272,14 +271,12 @@ create_partition_map(int fd, char *name, u_int64_t mediasz, uint32_t sectorsz)
 	LIST_INIT(&map->disk_order);
 	LIST_INIT(&map->base_order);
 
-	map->physical_block = sectorsz;
-
 	map->blocks_in_map = 0;
 	map->maximum_in_map = -1;
 	map->media_size = mediasz;
 
 	map->sbSig = BLOCK0_SIGNATURE;
-	map->sbBlkSize = map->physical_block;
+	map->sbBlkSize = sectorsz;
 	map->sbBlkCount = map->media_size;
 
 	entry = create_entry(map, 1, "", kFreeType, 1, mediasz - 1);
