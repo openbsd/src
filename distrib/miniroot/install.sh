@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sh,v 1.273 2015/12/27 18:42:11 rpe Exp $
+#	$OpenBSD: install.sh,v 1.274 2016/01/31 11:07:06 rpe Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
@@ -281,23 +281,22 @@ if [[ -n $user ]]; then
 	_encr=$(encr_pwd "$userpass")
 	_home=/home/$user
 	uline="${user}:${_encr}:1000:1000:staff:0:0:${username}:$_home:/bin/ksh"
-	echo "$uline" >> /mnt/etc/master.passwd
-	echo "${user}:*:1000:" >> /mnt/etc/group
-	echo ${user} > /mnt/root/.forward
+	echo "$uline" >>/mnt/etc/master.passwd
+	echo "${user}:*:1000:" >>/mnt/etc/group
+	echo ${user} >/mnt/root/.forward
 
 	_home=/mnt$_home
 	mkdir -p $_home
 	(cd /mnt/etc/skel; cp -pR . $_home)
-	(umask 077 &&
-		sed "s,^To: root\$,To: ${username} <${user}>," \
-		/mnt/var/mail/root > /mnt/var/mail/$user )
+	(umask 077 && sed "s,^To: root\$,To: ${username} <${user}>," \
+		/mnt/var/mail/root >/mnt/var/mail/$user )
 	chown -R 1000:1000 $_home /mnt/var/mail/$user
 	sed -i -e "s@^wheel:.:0:root\$@wheel:\*:0:root,${user}@" \
 		/mnt/etc/group 2>/dev/null
 
 	# During autoinstall, add public ssh key to authorized_keys.
 	[[ -n "$userkey" ]] &&
-		print -r -- "$userkey" >> $_home/.ssh/authorized_keys
+		print -r -- "$userkey" >>$_home/.ssh/authorized_keys
 fi
 
 # Store root password and rebuild password database.
@@ -311,7 +310,7 @@ pwd_mkdb -p -d /mnt/etc /etc/master.passwd
 [[ -n "$rootkey" ]] && (
 	umask 077
 	mkdir /mnt/root/.ssh
-	print -r -- "$rootkey" >> /mnt/root/.ssh/authorized_keys
+	print -r -- "$rootkey" >>/mnt/root/.ssh/authorized_keys
 )
 
 # Perform final steps common to both an install and an upgrade.
