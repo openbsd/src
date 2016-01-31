@@ -1,4 +1,4 @@
-/*	$OpenBSD: dump.c,v 1.71 2016/01/31 14:55:41 krw Exp $	*/
+/*	$OpenBSD: dump.c,v 1.72 2016/01/31 15:28:56 krw Exp $	*/
 
 /*
  * dump.c - dumping partition maps
@@ -105,20 +105,18 @@ void
 dump_partition_entry(struct entry *entry, int type_length,
     int name_length, int digits)
 {
-	struct partition_map *map;
 	double bytes;
-	int j, driver;
+	int j;
 
-	map = entry->the_map;
-	driver = entry->contains_driver ? '*' : ' ';
 	printf("%2ld: %*.32s", entry->disk_address, type_length,
 	    entry->dpme_type);
-	printf("%c%-*.32s ", driver, name_length, entry->dpme_name);
+	printf("%c%-*.32s ", contains_driver(entry) ? '*' : ' ',
+	    name_length, entry->dpme_name);
 
 	printf("%*u @ %-*u", digits, entry->dpme_pblocks, digits,
 	    entry->dpme_pblock_start);
 
-	bytes = ((double)entry->dpme_pblocks) * map->physical_block;
+	bytes = ((double)entry->dpme_pblocks) * entry->the_map->physical_block;
 	adjust_value_and_compute_prefix(&bytes, &j);
 	if (j != ' ' && j != 'K')
 		printf(" (%#5.1f%c)", bytes, j);

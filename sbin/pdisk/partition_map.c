@@ -1,4 +1,4 @@
-/*	$OpenBSD: partition_map.c,v 1.92 2016/01/31 13:53:23 krw Exp $	*/
+/*	$OpenBSD: partition_map.c,v 1.93 2016/01/31 15:28:56 krw Exp $	*/
 
 /*
  * partition_map.c - partition map routines
@@ -47,7 +47,6 @@ const char     *kUnixType = "OpenBSD";
 const char     *kHFSType = "Apple_HFS";
 
 void		add_data_to_map(struct entry *, long, struct partition_map *);
-int		contains_driver(struct entry *);
 void		combine_entry(struct entry *);
 struct entry   *create_entry(const char *, const char *, uint32_t, uint32_t);
 void		delete_entry(struct entry *);
@@ -245,7 +244,6 @@ add_data_to_map(struct entry *entry, long ix, struct partition_map *map)
 {
 	entry->disk_address = ix;
 	entry->the_map = map;
-	entry->contains_driver = contains_driver(entry);
 
 	insert_in_disk_order(entry);
 	insert_in_base_order(entry);
@@ -454,7 +452,7 @@ delete_partition_from_map(struct entry *entry)
 		printf("Can't delete entry for free space\n");
 		return;
 	}
-	if (entry->contains_driver) {
+	if (contains_driver(entry)) {
 		printf("This program can't install drivers\n");
 		if (get_okay("are you sure you want to delete this driver? "
 		    "[n/y]: ", 0) != 1) {
@@ -562,7 +560,6 @@ combine_entry(struct entry *entry)
 			delete_entry(p);
 		}
 	}
-	entry->contains_driver = contains_driver(entry);
 }
 
 

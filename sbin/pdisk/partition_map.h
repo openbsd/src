@@ -1,4 +1,4 @@
-/*	$OpenBSD: partition_map.h,v 1.40 2016/01/31 14:55:41 krw Exp $	*/
+/*	$OpenBSD: partition_map.h,v 1.41 2016/01/31 15:28:56 krw Exp $	*/
 
 /*
  * partition_map.h - partition map routines
@@ -71,7 +71,6 @@ struct entry {
     LIST_ENTRY(entry)		base_entry;
     struct partition_map       *the_map;
     long			disk_address;
-    int				contains_driver;
 
     /* On-disk dpme block data.*/
     uint16_t	dpme_signature;		/* "PM" */
@@ -122,6 +121,7 @@ struct entry	*find_entry_by_base(uint32_t, struct partition_map *);
 int	add_partition_to_map(const char *, const char *, uint32_t, uint32_t,
     struct partition_map *);
 
+int	contains_driver(struct entry *);
 void	free_partition_map(struct partition_map *);
 void	delete_partition_from_map(struct entry *);
 void	move_entry_in_map(long, long, struct partition_map *);
