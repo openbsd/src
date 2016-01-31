@@ -1,4 +1,4 @@
-/* $OpenBSD: screen-write.c,v 1.84 2016/01/19 15:59:12 nicm Exp $ */
+/* $OpenBSD: screen-write.c,v 1.85 2016/01/31 14:11:49 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -994,7 +994,9 @@ screen_write_cell(struct screen_write_ctx *ctx, const struct grid_cell *gc)
 		utf8_copy(&tmp_gc.data, &gc->data);
 		tmp_gc.attr = tmp_gc.attr & ~GRID_ATTR_CHARSET;
 		tmp_gc.attr |= gc->attr & GRID_ATTR_CHARSET;
-		tmp_gc.flags = gc->flags & ~(GRID_FLAG_FG256|GRID_FLAG_BG256);
+		tmp_gc.flags = gc->flags;
+		tmp_gc.flags &= ~(GRID_FLAG_FGRGB|GRID_FLAG_BGRGB);
+		tmp_gc.flags &= ~(GRID_FLAG_FG256|GRID_FLAG_BG256);
 		tmp_gc.flags |= s->sel.cell.flags &
 		    (GRID_FLAG_FG256|GRID_FLAG_BG256);
 		ttyctx.cell = &tmp_gc;
