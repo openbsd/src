@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.226 2016/01/27 04:35:56 dlg Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.227 2016/01/31 00:18:07 sashan Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -523,7 +523,6 @@ pfsync_state_import(struct pfsync_state *sp, int flags)
 	skw->port[0] = sp->key[PF_SK_WIRE].port[0];
 	skw->port[1] = sp->key[PF_SK_WIRE].port[1];
 	skw->rdomain = ntohs(sp->key[PF_SK_WIRE].rdomain);
-	PF_REF_INIT(skw->refcnt);
 	skw->proto = sp->proto;
 	if (!(skw->af = sp->key[PF_SK_WIRE].af))
 		skw->af = sp->af;
@@ -533,7 +532,6 @@ pfsync_state_import(struct pfsync_state *sp, int flags)
 		sks->port[0] = sp->key[PF_SK_STACK].port[0];
 		sks->port[1] = sp->key[PF_SK_STACK].port[1];
 		sks->rdomain = ntohs(sp->key[PF_SK_STACK].rdomain);
-		PF_REF_INIT(sks->refcnt);
 		if (!(sks->af = sp->key[PF_SK_STACK].af))
 			sks->af = sp->af;
 		if (sks->af != skw->af) {
