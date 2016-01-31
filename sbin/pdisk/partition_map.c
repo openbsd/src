@@ -1,4 +1,4 @@
-/*	$OpenBSD: partition_map.c,v 1.93 2016/01/31 15:28:56 krw Exp $	*/
+/*	$OpenBSD: partition_map.c,v 1.94 2016/01/31 17:19:26 krw Exp $	*/
 
 /*
  * partition_map.c - partition map routines
@@ -146,7 +146,7 @@ read_partition_map(struct partition_map *map)
 	int ix;
 	uint32_t limit, base, next, nextbase;
 
-	limit = 1; /* There has to be at least one, which has actual value. */
+	limit = 1; /* There has to be at least one, which has the real limit. */
 	for (ix = 1; ix <= limit; ix++) {
 		entry = malloc(sizeof(struct entry));
 		if (entry == NULL)
@@ -163,8 +163,22 @@ read_partition_map(struct partition_map *map)
 			free(entry);
 			return 1;
 		}
-		if (ix == 1)
+		if (ix == 1) {
+			if (entry->dpme_map_entries > entry->dpme_pblocks) {
+				warnx("Map entry count (%u) > # of physical "
+				    "blocks (%u)", entry->dpme_map_entries,
+				    entry->dpme_pblocks);
+				free(entry);
+				return 1;
+			}
+			if (entry->dpme_map_entries == 0) {
+				warnx("Map entry count ==  0. Must be > 0");
+				free(entry);
+				return 1;
+			}
+			map->maximum_in_map = entry->dpme_pblocks;
 			limit = entry->dpme_map_entries;
+		}
 		if (limit != entry->dpme_map_entries) {
 			warnx("Invalid entry count on block %d. "
 			    "Expected %d, got %d", ix, limit,
@@ -187,8 +201,11 @@ read_partition_map(struct partition_map *map)
 			free(entry);
 			return 1;
 		}
-
-		add_data_to_map(entry, ix, map);
+		entry->the_map = map;
+		entry->disk_address = ix;
+		insert_in_disk_order(entry);
+		insert_in_base_order(entry);
+		map->blocks_in_map++;
 	}
 
 	/* Traverse base_order looking for
