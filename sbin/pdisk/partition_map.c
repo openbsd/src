@@ -1,4 +1,4 @@
-/*	$OpenBSD: partition_map.c,v 1.95 2016/01/31 22:12:35 krw Exp $	*/
+/*	$OpenBSD: partition_map.c,v 1.96 2016/01/31 22:26:52 krw Exp $	*/
 
 /*
  * partition_map.c - partition map routines
@@ -448,6 +448,9 @@ renumber_disk_addresses(struct partition_map *map)
 void
 delete_partition_from_map(struct entry *entry)
 {
+	struct partition_map *map;
+	uint32_t base, length, address;
+
 	if (strncasecmp(entry->dpme_type, kMapType, DPISTRLEN) == 0) {
 		printf("Can't delete entry for the map itself\n");
 		return;
@@ -465,13 +468,13 @@ delete_partition_from_map(struct entry *entry)
 		remove_driver(entry);	/* update block0 if necessary */
 	}
 
-	memset(entry->dpme_name, 0, sizeof(entry->dpme_name));
-	memset(entry->dpme_type, 0, sizeof(entry->dpme_type));
-	strlcpy(entry->dpme_type, kFreeType, sizeof(entry->dpme_type));
-	entry->dpme_lblock_start = 0;
-	entry->dpme_lblocks = 0;
-	dpme_init_flags(entry);
+	map = entry->the_map;
+	base = entry->dpme_pblock_start;
+	length = entry->dpme_pblocks;
+	address = entry->disk_address;
 
+	delete_entry(entry);
+	entry = create_entry(map, address, "" , kFreeType, base, length);
 	combine_entry(entry);
 	renumber_disk_addresses(entry->the_map);
 	entry->the_map->changed = 1;
