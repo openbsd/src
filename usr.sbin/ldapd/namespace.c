@@ -1,4 +1,4 @@
-/*	$OpenBSD: namespace.c,v 1.14 2015/12/24 17:47:57 mmcc Exp $ */
+/*	$OpenBSD: namespace.c,v 1.15 2016/02/01 20:00:18 landry Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -38,6 +38,7 @@ static void		 namespace_queue_replay(int fd, short event, void *arg);
 static int		 namespace_set_fd(struct namespace *ns,
 			    struct btree **bt, int fd, unsigned int flags);
 
+extern char		*datadir;
 int
 namespace_begin_txn(struct namespace *ns, struct btree_txn **data_txn,
     struct btree_txn **indx_txn, int rdonly)
@@ -115,7 +116,7 @@ namespace_open(struct namespace *ns)
 	if (ns->sync == 0)
 		db_flags |= BT_NOSYNC;
 
-	if (asprintf(&ns->data_path, "%s/%s_data.db", DATADIR, ns->suffix) < 0)
+	if (asprintf(&ns->data_path, "%s/%s_data.db", datadir, ns->suffix) < 0)
 		return -1;
 	log_info("opening namespace %s", ns->suffix);
 	ns->data_db = btree_open(ns->data_path, db_flags | BT_REVERSEKEY, 0644);
@@ -124,7 +125,7 @@ namespace_open(struct namespace *ns)
 
 	btree_set_cache_size(ns->data_db, ns->cache_size);
 
-	if (asprintf(&ns->indx_path, "%s/%s_indx.db", DATADIR, ns->suffix) < 0)
+	if (asprintf(&ns->indx_path, "%s/%s_indx.db", datadir, ns->suffix) < 0)
 		return -1;
 	ns->indx_db = btree_open(ns->indx_path, db_flags, 0644);
 	if (ns->indx_db == NULL)
