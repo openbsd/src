@@ -1,4 +1,4 @@
-/*	$OpenBSD: amd64_iopl.c,v 1.4 2014/11/15 02:23:28 tedu Exp $	*/
+/*	$OpenBSD: amd64_iopl.c,v 1.5 2016/02/01 20:00:57 jca Exp $	*/
 /*	$NetBSD: i386_iopl.c,v 1.2 1996/02/27 22:57:29 jtc Exp $	*/
 
 /*-
@@ -36,8 +36,7 @@
 #include <machine/sysarch.h>
 
 int
-amd64_iopl(iopl)
-	int iopl;
+amd64_iopl(int iopl)
 {
 	struct amd64_iopl_args p;
 
