@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxitimer.c,v 1.4 2015/05/19 06:04:26 jsg Exp $	*/
+/*	$OpenBSD: sxitimer.c,v 1.5 2016/02/01 23:31:34 jsg Exp $	*/
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2013 Raphael Graf <r@undefined.ch>
@@ -44,11 +44,6 @@
 #define	TIMER_INTV(x)		(0x14 + (0x10 * (x)))
 #define	TIMER_CURR(x)		(0x18 + (0x10 * (x)))
 
-/* A20 counter, relative to CPUCNTRS_ADDR */
-#define	OSC24M_CNT64_CTRL	0x80
-#define	OSC24M_CNT64_LOW	0x84
-#define	OSC24M_CNT64_HIGH	0x88
-
 /* A1X counter */
 #define	CNT64_CTRL		0xa0
 #define	CNT64_LOW		0xa4
@@ -56,7 +51,6 @@
 
 #define	CNT64_CLR_EN		(1 << 0) /* clear enable */
 #define	CNT64_RL_EN		(1 << 1) /* read latch enable */
-#define	CNT64_SYNCH		(1 << 4) /* sync to OSC24M counter */
 
 #define	LOSC_CTRL		0x100
 #define	OSC32K_SRC_SEL		(1 << 0)
@@ -99,7 +93,6 @@ static struct timecounter sxitimer_timecounter = {
 
 bus_space_tag_t		sxitimer_iot;
 bus_space_handle_t	sxitimer_ioh;
-bus_space_handle_t	sxitimer_cntr_ioh;
 
 uint32_t sxitimer_freq[] = {
 	TIMER0_FREQUENCY,
@@ -120,10 +113,6 @@ uint32_t sxitimer_statvar, sxitimer_statmin;
 uint32_t sxitimer_tick_nextevt, sxitimer_stat_nextevt;
 uint32_t sxitimer_ticks_err_cnt, sxitimer_ticks_err_sum;
 
-bus_addr_t cntr64_ctrl = CNT64_CTRL;
-bus_addr_t cntr64_low = CNT64_LOW;
-bus_addr_t cntr64_high = CNT64_HIGH;
-
 struct sxitimer_softc {
 	struct device		sc_dev;
 };
@@ -140,7 +129,7 @@ void
 sxitimer_attach(struct device *parent, struct device *self, void *args)
 {
 	struct armv7_attach_args *aa = args;
-	uint32_t freq, ival, now, cr, v;
+	uint32_t freq, ival, now, cr;
 	int unit = self->dv_unit;
 
 	if (unit != 0)
@@ -152,29 +141,10 @@ sxitimer_attach(struct device *parent, struct device *self, void *args)
 	    aa->aa_dev->mem[0].size, 0, &sxitimer_ioh))
 		panic("sxitimer_attach: bus_space_map failed!");
 
-
-	if (board_id == BOARD_ID_SUN7I_A20) {
-		if (bus_space_map(sxitimer_iot, CPUCNTRS_ADDR, CPUCNTRS_SIZE,
-		    0, &sxitimer_cntr_ioh))
-			panic("sxitimer_attach: bus_space_map failed!");
-
-		cntr64_ctrl = OSC24M_CNT64_CTRL;
-		cntr64_low = OSC24M_CNT64_LOW;
-		cntr64_high = OSC24M_CNT64_HIGH;
-
-		v = bus_space_read_4(sxitimer_iot, sxitimer_cntr_ioh,
-		    cntr64_ctrl);
-		bus_space_write_4(sxitimer_iot, sxitimer_cntr_ioh, cntr64_ctrl,
-		    v | CNT64_SYNCH);
-		bus_space_write_4(sxitimer_iot, sxitimer_cntr_ioh, cntr64_ctrl,
-		    v & ~CNT64_SYNCH);
-	} else
-		sxitimer_cntr_ioh = sxitimer_ioh;
-
 	/* clear counter, loop until ready */
-	bus_space_write_4(sxitimer_iot, sxitimer_cntr_ioh, cntr64_ctrl,
+	bus_space_write_4(sxitimer_iot, sxitimer_ioh, CNT64_CTRL,
 	    CNT64_CLR_EN); /* XXX as a side-effect counter clk src=OSC24M */
-	while (bus_space_read_4(sxitimer_iot, sxitimer_cntr_ioh, cntr64_ctrl)
+	while (bus_space_read_4(sxitimer_iot, sxitimer_ioh, CNT64_CTRL)
 	    & CNT64_CLR_EN)
 		continue;
 
@@ -398,9 +368,8 @@ sxitimer_readcnt64(void)
 	uint32_t low, high;
 
 	/* latch counter, loop until ready */
-	bus_space_write_4(sxitimer_iot, sxitimer_cntr_ioh,
-	    cntr64_ctrl, CNT64_RL_EN);
-	while (bus_space_read_4(sxitimer_iot, sxitimer_cntr_ioh, cntr64_ctrl)
+	bus_space_write_4(sxitimer_iot, sxitimer_ioh, CNT64_CTRL, CNT64_RL_EN);
+	while (bus_space_read_4(sxitimer_iot, sxitimer_ioh, CNT64_CTRL)
 	    & CNT64_RL_EN)
 		continue;
 
@@ -409,8 +378,8 @@ sxitimer_readcnt64(void)
 	 * iirc. A20 manual mentions that low should be read first.
 	 */
 	/* XXX check above */
-	low = bus_space_read_4(sxitimer_iot, sxitimer_cntr_ioh, cntr64_low);
-	high = bus_space_read_4(sxitimer_iot, sxitimer_cntr_ioh, cntr64_high);
+	low = bus_space_read_4(sxitimer_iot, sxitimer_ioh, CNT64_LOW);
+	high = bus_space_read_4(sxitimer_iot, sxitimer_ioh, CNT64_HIGH);
 	return (uint64_t)high << 32 | low;
 }
 
