@@ -1,4 +1,4 @@
-/*	$OpenBSD: display.c,v 1.17 2013/11/28 18:24:55 deraadt Exp $	*/
+/*	$OpenBSD: display.c,v 1.18 2016/02/01 07:29:25 mestre Exp $	*/
 /*	$NetBSD: display.c,v 1.3 1994/12/09 02:14:13 jtc Exp $	*/
 
 /*
@@ -34,8 +34,9 @@
  * The window 'manager', initializes curses and handles the actual
  * displaying of text
  */
-#include "talk.h"
 #include <ctype.h>
+
+#include "talk.h"
 
 xwin_t	my_win;
 xwin_t	his_win;

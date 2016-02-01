@@ -1,4 +1,4 @@
-/*	$OpenBSD: talk.h,v 1.11 2009/05/09 11:05:01 chl Exp $	*/
+/*	$OpenBSD: talk.h,v 1.12 2016/02/01 07:29:25 mestre Exp $	*/
 /*	$NetBSD: talk.h,v 1.3 1994/12/09 02:14:27 jtc Exp $	*/
 
 /*
@@ -32,14 +32,11 @@
  *	@(#)talk.h	8.1 (Berkeley) 6/6/93
  */
 
-#include <sys/types.h>
-#include <sys/socket.h>
 #include <netinet/in.h>
 #include <protocols/talkd.h>
+
 #include <curses.h>
 #include <signal.h>
-#include <string.h>
-#include <err.h>
 
 extern	int sockt;
 extern	int curses_initialized;

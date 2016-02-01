@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_disp.c,v 1.21 2013/12/11 14:28:20 naddy Exp $	*/
+/*	$OpenBSD: init_disp.c,v 1.22 2016/02/01 07:29:25 mestre Exp $	*/
 /*	$NetBSD: init_disp.c,v 1.6 1994/12/09 02:14:17 jtc Exp $	*/
 
 /*
@@ -35,12 +35,14 @@
  * as well as the signal handling routines.
  */
 
-#include "talk.h"
 #include <sys/ioctl.h>
+
 #include <err.h>
 #include <stdlib.h>
 #include <termios.h>
 #include <unistd.h>
+
+#include "talk.h"
 
 /*
  * Set up curses, catch the appropriate signals,

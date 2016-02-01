@@ -1,4 +1,4 @@
-/*	$OpenBSD: get_names.c,v 1.20 2015/01/16 06:40:13 deraadt Exp $	*/
+/*	$OpenBSD: get_names.c,v 1.21 2016/02/01 07:29:25 mestre Exp $	*/
 /*	$NetBSD: get_names.c,v 1.4 1994/12/09 02:14:16 jtc Exp $	*/
 
 /*
@@ -30,11 +30,16 @@
  * SUCH DAMAGE.
  */
 
-#include "talk.h"
+#include <sys/socket.h>
+
+#include <err.h>
+#include <limits.h>
 #include <pwd.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
-#include <limits.h>
+
+#include "talk.h"
 
 extern	CTL_MSG msg;
 
@@ -66,7 +71,8 @@ get_names(int argc, char *argv[])
 	}
 
 	if ((argc < 2 ) || ('@' == argv[1][0])) {
-		fprintf(stderr, "usage: talk [-Hs] person [ttyname]\n");
+		extern char *__progname;
+		fprintf(stderr, "usage: %s [-Hs] person [ttyname]\n", __progname);
 		exit(1);
 	}
 	if (!isatty(STDIN_FILENO))

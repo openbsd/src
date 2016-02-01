@@ -1,4 +1,4 @@
-/*	$OpenBSD: msgs.c,v 1.10 2010/08/12 23:31:29 tedu Exp $	*/
+/*	$OpenBSD: msgs.c,v 1.11 2016/02/01 07:29:25 mestre Exp $	*/
 /*	$NetBSD: msgs.c,v 1.3 1994/12/09 02:14:22 jtc Exp $	*/
 
 /*
@@ -36,8 +36,6 @@
  */
 
 #include "talk.h"
-#include <sys/time.h>
-#include <stdio.h>
 
 #define MSG_INTERVAL 4
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: get_addrs.c,v 1.9 2010/08/12 23:31:29 tedu Exp $	*/
+/*	$OpenBSD: get_addrs.c,v 1.10 2016/02/01 07:29:25 mestre Exp $	*/
 /*	$NetBSD: get_addrs.c,v 1.3 1994/12/09 02:14:14 jtc Exp $	*/
 
 /*
@@ -30,10 +30,12 @@
  * SUCH DAMAGE.
  */
 
-#include "talk.h"
+#include <err.h>
 #include <netdb.h>
-#include <stdio.h>
+#include <string.h>
 #include <unistd.h>
+
+#include "talk.h"
 #include "talk_ctl.h"
 
 void

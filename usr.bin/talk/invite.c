@@ -1,4 +1,4 @@
-/*	$OpenBSD: invite.c,v 1.15 2013/03/11 17:40:11 deraadt Exp $	*/
+/*	$OpenBSD: invite.c,v 1.16 2016/02/01 07:29:25 mestre Exp $	*/
 /*	$NetBSD: invite.c,v 1.3 1994/12/09 02:14:18 jtc Exp $	*/
 
 /*
@@ -30,13 +30,16 @@
  * SUCH DAMAGE.
  */
 
-#include "talk.h"
+#include <sys/socket.h>
 #include <arpa/inet.h>
-#include <sys/time.h>
-#include <netdb.h>
+
+#include <err.h>
 #include <errno.h>
+#include <netdb.h>
 #include <setjmp.h>
 #include <unistd.h>
+
+#include "talk.h"
 #include "talk_ctl.h"
 
 #define STRING_LENGTH 158
