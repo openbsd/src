@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.57 2016/01/31 00:14:50 jsg Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.58 2016/02/01 04:28:45 jsg Exp $	*/
 /*	$NetBSD: pmap.c,v 1.147 2004/01/18 13:03:50 scw Exp $	*/
 
 /*
@@ -4361,6 +4361,12 @@ pt_entry_t	pte_l1_s_prot_kr;
 pt_entry_t	pte_l1_s_prot_kw;
 pt_entry_t	pte_l1_s_prot_mask;
 
+pt_entry_t	pte_l2_l_prot_ur;
+pt_entry_t	pte_l2_l_prot_uw;
+pt_entry_t	pte_l2_l_prot_kr;
+pt_entry_t	pte_l2_l_prot_kw;
+pt_entry_t	pte_l2_l_prot_mask;
+
 pt_entry_t	pte_l2_s_prot_ur;
 pt_entry_t	pte_l2_s_prot_uw;
 pt_entry_t	pte_l2_s_prot_kr;
@@ -4412,6 +4418,12 @@ pmap_pte_init_generic(void)
 	pte_l1_s_prot_kr = L1_S_PROT_KR_generic;
 	pte_l1_s_prot_kw = L1_S_PROT_KW_generic;
 	pte_l1_s_prot_mask = L1_S_PROT_MASK_generic;
+
+	pte_l2_l_prot_ur = L2_L_PROT_UR_generic;
+	pte_l2_l_prot_uw = L2_L_PROT_UW_generic;
+	pte_l2_l_prot_kr = L2_L_PROT_KR_generic;
+	pte_l2_l_prot_kw = L2_L_PROT_KW_generic;
+	pte_l2_l_prot_mask = L2_L_PROT_MASK_generic;
 
 	pte_l2_s_prot_ur = L2_S_PROT_UR_generic;
 	pte_l2_s_prot_uw = L2_S_PROT_UW_generic;
@@ -4541,6 +4553,12 @@ pmap_pte_init_armv7(void)
 	pte_l1_s_prot_kr = L1_S_PROT_KR_v7;
 	pte_l1_s_prot_kw = L1_S_PROT_KW_v7;
 	pte_l1_s_prot_mask = L1_S_PROT_MASK_v7;
+
+	pte_l2_l_prot_ur = L2_L_PROT_UR_v7;
+	pte_l2_l_prot_uw = L2_L_PROT_UW_v7;
+	pte_l2_l_prot_kr = L2_L_PROT_KR_v7;
+	pte_l2_l_prot_kw = L2_L_PROT_KW_v7;
+	pte_l2_l_prot_mask = L2_L_PROT_MASK_v7;
 
 	pte_l2_s_prot_ur = L2_S_PROT_UR_v7;
 	pte_l2_s_prot_uw = L2_S_PROT_UW_v7;
@@ -4679,6 +4697,12 @@ pmap_pte_init_xscale(void)
 	pte_l1_s_prot_kr = L1_S_PROT_KR_xscale;
 	pte_l1_s_prot_kw = L1_S_PROT_KW_xscale;
 	pte_l1_s_prot_mask = L1_S_PROT_MASK_xscale;
+
+	pte_l2_l_prot_ur = L2_L_PROT_UR_xscale;
+	pte_l2_l_prot_uw = L2_L_PROT_UW_xscale;
+	pte_l2_l_prot_kr = L2_L_PROT_KR_xscale;
+	pte_l2_l_prot_kw = L2_L_PROT_KW_xscale;
+	pte_l2_l_prot_mask = L2_L_PROT_MASK_xscale;
 
 	pte_l2_s_prot_ur = L2_S_PROT_UR_xscale;
 	pte_l2_s_prot_uw = L2_S_PROT_UW_xscale;

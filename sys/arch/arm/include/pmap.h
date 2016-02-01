@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.34 2015/08/15 22:20:20 miod Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.35 2016/02/01 04:28:45 jsg Exp $	*/
 /*	$NetBSD: pmap.h,v 1.76 2003/09/06 09:10:46 rearnsha Exp $	*/
 
 /*
@@ -431,6 +431,12 @@ extern pt_entry_t		pte_l1_s_prot_kr;
 extern pt_entry_t		pte_l1_s_prot_kw;
 extern pt_entry_t		pte_l1_s_prot_mask;
 
+extern pt_entry_t		pte_l2_l_prot_ur;
+extern pt_entry_t		pte_l2_l_prot_uw;
+extern pt_entry_t		pte_l2_l_prot_kr;
+extern pt_entry_t		pte_l2_l_prot_kw;
+extern pt_entry_t		pte_l2_l_prot_mask;
+
 extern pt_entry_t		pte_l2_s_prot_ur;
 extern pt_entry_t		pte_l2_s_prot_uw;
 extern pt_entry_t		pte_l2_s_prot_kr;
@@ -487,11 +493,23 @@ extern void (*pmap_zero_page_func)(struct vm_page *);
 #define	L1_S_COHERENT_xscale	(L1_S_B|L1_S_C|L1_S_XSCALE_TEX(TEX_XSCALE_X))
 #define	L1_S_COHERENT_v7	(L1_S_C|L1_S_V7_TEX_MASK)
 
-#define	L2_L_PROT_KR		(L2_AP(0))
-#define	L2_L_PROT_UR		(L2_AP(AP_U))
-#define	L2_L_PROT_KW		(L2_AP(AP_W))
-#define	L2_L_PROT_UW		(L2_AP(AP_U|AP_W))
-#define	L2_L_PROT_MASK		(L2_AP(AP_U|AP_W))
+#define	L2_L_PROT_KR_generic	(L2_AP(0))
+#define	L2_L_PROT_UR_generic	(L2_AP(AP_U))
+#define	L2_L_PROT_KW_generic	(L2_AP(AP_W))
+#define	L2_L_PROT_UW_generic	(L2_AP(AP_U|AP_W))
+#define	L2_L_PROT_MASK_generic	(L2_AP(AP_U|AP_W))
+
+#define	L2_L_PROT_KR_xscale	(L2_AP(0))
+#define	L2_L_PROT_UR_xscale	(L2_AP(AP_U))
+#define	L2_L_PROT_KW_xscale	(L2_AP(AP_W))
+#define	L2_L_PROT_UW_xscale	(L2_AP(AP_U|AP_W))
+#define	L2_L_PROT_MASK_xscale	(L2_AP(AP_U|AP_W))
+
+#define	L2_L_PROT_UR_v7		(L2_V7_AP(AP_KRWUR))
+#define	L2_L_PROT_UW_v7		(L2_V7_AP(AP_KRWURW))
+#define	L2_L_PROT_KR_v7		(L2_V7_AP(AP_V7_KR))
+#define	L2_L_PROT_KW_v7		(L2_V7_AP(AP_KRW))
+#define	L2_L_PROT_MASK_v7	(L2_V7_AP(0x07) | L2_V7_L_XN)
 
 #define	L2_L_CACHE_MASK_generic	(L2_B|L2_C)
 #define	L2_L_CACHE_MASK_xscale	(L2_B|L2_C|L2_XSCALE_L_TEX(TEX_XSCALE_X))
@@ -553,6 +571,12 @@ extern void (*pmap_zero_page_func)(struct vm_page *);
 #define	L1_S_PROT_KW		pte_l1_s_prot_kw
 #define	L1_S_PROT_MASK		pte_l1_s_prot_mask
 
+#define	L2_L_PROT_UR		pte_l2_l_prot_ur
+#define	L2_L_PROT_UW		pte_l2_l_prot_uw
+#define	L2_L_PROT_KR		pte_l2_l_prot_kr
+#define	L2_L_PROT_KW		pte_l2_l_prot_kw
+#define	L2_L_PROT_MASK		pte_l2_l_prot_mask
+
 #define	L2_S_PROT_UR		pte_l2_s_prot_ur
 #define	L2_S_PROT_UW		pte_l2_s_prot_uw
 #define	L2_S_PROT_KR		pte_l2_s_prot_kr
@@ -579,6 +603,12 @@ extern void (*pmap_zero_page_func)(struct vm_page *);
 #define	L1_S_PROT_KR		L1_S_PROT_KR_generic
 #define	L1_S_PROT_KW		L1_S_PROT_KW_generic
 #define	L1_S_PROT_MASK		L1_S_PROT_MASK_generic
+
+#define	L2_L_PROT_UR		L2_L_PROT_UR_generic
+#define	L2_L_PROT_UW		L2_L_PROT_UW_generic
+#define	L2_L_PROT_KR		L2_L_PROT_KR_generic
+#define	L2_L_PROT_KW		L2_L_PROT_KW_generic
+#define	L2_L_PROT_MASK		L2_L_PROT_MASK_generic
 
 #define	L2_S_PROT_UR		L2_S_PROT_UR_generic
 #define	L2_S_PROT_UW		L2_S_PROT_UW_generic
@@ -607,6 +637,12 @@ extern void (*pmap_zero_page_func)(struct vm_page *);
 #define	L1_S_PROT_KW		L1_S_PROT_KW_xscale
 #define	L1_S_PROT_MASK		L1_S_PROT_MASK_xscale
 
+#define	L2_L_PROT_UR		L2_L_PROT_UR_xscale
+#define	L2_L_PROT_UW		L2_L_PROT_UW_xscale
+#define	L2_L_PROT_KR		L2_L_PROT_KR_xscale
+#define	L2_L_PROT_KW		L2_L_PROT_KW_xscale
+#define	L2_L_PROT_MASK		L2_L_PROT_MASK_xscale
+
 #define	L2_S_PROT_UR		L2_S_PROT_UR_xscale
 #define	L2_S_PROT_UW		L2_S_PROT_UW_xscale
 #define	L2_S_PROT_KR		L2_S_PROT_KR_xscale
@@ -633,6 +669,12 @@ extern void (*pmap_zero_page_func)(struct vm_page *);
 #define	L1_S_PROT_KR		L1_S_PROT_KR_v7
 #define	L1_S_PROT_KW		L1_S_PROT_KW_v7
 #define	L1_S_PROT_MASK		L1_S_PROT_MASK_v7
+
+#define	L2_L_PROT_UR		L2_L_PROT_UR_v7
+#define	L2_L_PROT_UW		L2_L_PROT_UW_v7
+#define	L2_L_PROT_KR		L2_L_PROT_KR_v7
+#define	L2_L_PROT_KW		L2_L_PROT_KW_v7
+#define	L2_L_PROT_MASK		L2_L_PROT_MASK_v7
 
 #define	L2_S_PROT_UR		L2_S_PROT_UR_v7
 #define	L2_S_PROT_UW		L2_S_PROT_UW_v7
