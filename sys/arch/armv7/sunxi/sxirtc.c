@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxirtc.c,v 1.5 2016/01/31 04:39:05 jsg Exp $	*/
+/*	$OpenBSD: sxirtc.c,v 1.6 2016/02/01 23:36:57 jsg Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis
  * Copyright (c) 2013 Artturi Alm
@@ -15,9 +15,6 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-/* XXX this doesn't support A20 yet. */
-	/* year & 0xff on A20, 0x3f on A10 */
-	/* leap << 24 on A20, << 22 on A10 */
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -40,15 +37,15 @@
     (y) % 400 == 0) 
 
 
-/* XXX other way around than bus_space_subregion? */
-extern bus_space_handle_t sxitimer_ioh;
-
 extern todr_chip_handle_t todr_handle;
 
 struct sxirtc_softc {
 	struct device		sc_dev;
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
+	uint32_t		base_year;
+	uint32_t		year_mask;
+	uint32_t		leap_shift;
 };
 
 void	sxirtc_attach(struct device *, struct device *, void *);
@@ -78,7 +75,17 @@ sxirtc_attach(struct device *parent, struct device *self, void *args)
 	sc->sc_iot = aa->aa_iot;
 	if (bus_space_map(sc->sc_iot, aa->aa_dev->mem[0].addr,
 	    aa->aa_dev->mem[0].size, 0, &sc->sc_ioh))
-		panic("sxirtc_attach: bus_space_subregion failed!");
+		panic("sxirtc_attach: bus_space_map failed!");
+
+	if (board_id == BOARD_ID_SUN7I_A20) {
+		sc->base_year = 1970;
+		sc->year_mask = 0xff;
+		sc->leap_shift = 24;
+	} else {
+		sc->base_year = 2010;
+		sc->year_mask = 0x3f;
+		sc->leap_shift = 22;
+	}
 
 	handle->cookie = self;
 	handle->todr_gettime = sxirtc_gettime;
@@ -108,7 +115,7 @@ sxirtc_gettime(todr_chip_handle_t handle, struct timeval *tv)
 	reg = SXIREAD4(sc, SXIRTC_YYMMDD);
 	dt.dt_day = reg & 0x1f;
 	dt.dt_mon = reg >> 8 & 0x0f;
-	dt.dt_year = (reg >> 16 & 0x3f) + 2010; /* 0xff on A20 */
+	dt.dt_year = (reg >> 16 & sc->year_mask) + sc->base_year;
 
 	if (dt.dt_sec > 59 || dt.dt_min > 59 ||
 	    dt.dt_hour > 23 || dt.dt_wday > 6 ||
@@ -139,9 +146,10 @@ sxirtc_settime(todr_chip_handle_t handle, struct timeval *tv)
 	    dt.dt_sec | (dt.dt_min << 8) | (dt.dt_hour << 16) |
 	    (dt.dt_wday << 29));
 
-	SXICMS4(sc, SXIRTC_YYMMDD, 0x00400000 | 0x003f0000 | 0x0f00 | 0x1f,
-	   dt.dt_day | (dt.dt_mon << 8) | ((dt.dt_year - 2010) << 16) |
-	   (LEAPYEAR(dt.dt_year) << 22));
+	SXICMS4(sc, SXIRTC_YYMMDD, 0x00400000 | (sc->year_mask << 16) |
+	    0x0f00 | 0x1f, dt.dt_day | (dt.dt_mon << 8) |
+	    ((dt.dt_year - sc->base_year) << 16) |
+	    (LEAPYEAR(dt.dt_year) << sc->leap_shift));
 
 	return 0;
 }
