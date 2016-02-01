@@ -1,4 +1,4 @@
-/*	$OpenBSD: getent.c,v 1.13 2016/02/01 19:52:40 jca Exp $	*/
+/*	$OpenBSD: getent.c,v 1.14 2016/02/01 19:57:28 jca Exp $	*/
 /*	$NetBSD: getent.c,v 1.7 2005/08/24 14:31:02 ginsbach Exp $	*/
 
 /*-
@@ -439,6 +439,8 @@ services(int argc, char *argv[])
 	return rv;
 }
 
+#define SHELLSPRINT	printf("%s\n", sh)
+
 static int
 shells(int argc, char *argv[])
 {
@@ -448,13 +450,13 @@ shells(int argc, char *argv[])
 	setusershell();
 	if (argc == 2) {
 		while ((sh = getusershell()) != NULL)
-			printf("%s\n", sh);
+			SHELLSPRINT;
 	} else {
 		for (i = 2; i < argc; i++) {
 			setusershell();
 			while ((sh = getusershell()) != NULL) {
 				if (strcmp(sh, argv[i]) == 0) {
-					printf("%s\n", sh);
+					SHELLSPRINT;
 					break;
 				}
 			}
