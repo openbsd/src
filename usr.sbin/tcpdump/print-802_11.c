@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-802_11.c,v 1.28 2016/01/12 09:28:10 stsp Exp $	*/
+/*	$OpenBSD: print-802_11.c,v 1.29 2016/02/01 10:09:44 stsp Exp $	*/
 
 /*
  * Copyright (c) 2005 Reyk Floeter <reyk@openbsd.org>
@@ -153,14 +153,25 @@ int
 ieee80211_data(struct ieee80211_frame *wh, u_int len)
 {
 	u_int8_t *t = (u_int8_t *)wh;
-	struct ieee80211_frame_addr4 *w4;
 	u_int datalen;
 	int data = !(wh->i_fc[0] & IEEE80211_FC0_SUBTYPE_NODATA);
+	int hasqos = ((wh->i_fc[0] &
+	    (IEEE80211_FC0_TYPE_MASK | IEEE80211_FC0_SUBTYPE_QOS)) ==
+	    (IEEE80211_FC0_TYPE_DATA | IEEE80211_FC0_SUBTYPE_QOS));
 	u_char *esrc = NULL, *edst = NULL;
 
-	TCHECK(*wh);
-	t += sizeof(struct ieee80211_frame);
-	datalen = len - sizeof(struct ieee80211_frame);
+	if (hasqos) {
+		struct ieee80211_qosframe *wq;
+
+		wq = (struct ieee80211_qosframe *) wh;
+		TCHECK(*wq);
+		t += sizeof(*wq);
+		datalen = len - sizeof(*wq);
+	} else {
+		TCHECK(*wh);
+		t += sizeof(*wh);
+		datalen = len - sizeof(*wh);
+	}
 
 	switch (wh->i_fc[1] & IEEE80211_FC1_DIR_MASK) {
 	case IEEE80211_FC1_DIR_TODS:
@@ -176,12 +187,25 @@ ieee80211_data(struct ieee80211_frame *wh, u_int len)
 		edst = wh->i_addr1;
 		break;
 	case IEEE80211_FC1_DIR_DSTODS:
-		w4 = (struct ieee80211_frame_addr4 *) wh;
-		TCHECK(*w4);
-		t = (u_int8_t *) (w4 + 1);
-		datalen = len - sizeof(*w4);
-		esrc = w4->i_addr4;
-		edst = w4->i_addr3;
+		if (hasqos) {
+			struct ieee80211_qosframe_addr4 *w4;
+
+			w4 = (struct ieee80211_qosframe_addr4 *) wh;
+			TCHECK(*w4);
+			t = (u_int8_t *) (w4 + 1);
+			datalen = len - sizeof(*w4);
+			esrc = w4->i_addr4;
+			edst = w4->i_addr3;
+		} else {
+			struct ieee80211_frame_addr4 *w4;
+
+			w4 = (struct ieee80211_frame_addr4 *) wh;
+			TCHECK(*w4);
+			t = (u_int8_t *) (w4 + 1);
+			datalen = len - sizeof(*w4);
+			esrc = w4->i_addr4;
+			edst = w4->i_addr3;
+		}
 		break;
 	}
 
