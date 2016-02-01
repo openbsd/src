@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.85 2016/01/10 10:22:56 visa Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.86 2016/02/01 16:15:18 visa Exp $	*/
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -1397,12 +1397,6 @@ pmap_clear_modify(struct vm_page *pg)
 	return rv;
 }
 
-void
-pmap_set_modify(struct vm_page *pg)
-{
-	atomic_setbits_int(&pg->pg_flags, PGF_ATTR_MOD | PGF_ATTR_REF);
-}
-
 /*
  *	pmap_clear_reference:
  *
@@ -1450,14 +1444,49 @@ pmap_is_modified(struct vm_page *pg)
  */
 
 /*
- *	Return RO protection of page.
+ * Sets the modify bit on the page that contains virtual address va.
+ * Returns 0 on success. If the page is mapped read-only, the bit is left
+ * unchanged and the function returns non-zero.
  */
 int
-pmap_is_page_ro(pmap_t pmap, vaddr_t va, pt_entry_t entry)
+pmap_emulate_modify(pmap_t pmap, vaddr_t va)
 {
-	return ((entry & PG_RO) != 0);
-}
+	pt_entry_t *pte, entry;
+	paddr_t pa;
+	vm_page_t pg;
 
+	if (pmap == pmap_kernel()) {
+		pte = kvtopte(va);
+	} else {
+		if ((pte = pmap_segmap(pmap, va)) == NULL)
+			panic("%s: invalid segmap in pmap %p va %p", __func__,
+			    pmap, (void *)va);
+		pte += uvtopte(va);
+	}
+	entry = *pte;
+#ifdef DIAGNOSTIC
+	if (!(entry & PG_V) || (entry & PG_M))
+		panic("%s: invalid pte 0x%lx in pmap %p va %p", __func__,
+		    (unsigned long)entry, pmap, (void *)va);
+#endif
+	if (entry & PG_RO)
+		return (1);
+	entry |= PG_M;
+	*pte = entry;
+	KERNEL_LOCK();
+	if (pmap == pmap_kernel())
+		pmap_update_kernel_page(trunc_page(va), entry);
+	else
+		pmap_update_user_page(pmap, trunc_page(va), entry);
+	pa = pfn_to_pad(entry);
+	pg = PHYS_TO_VM_PAGE(pa);
+	if (pg == NULL)
+		panic("%s: unmanaged page %p in pmap %p va %p", __func__,
+		    (void *)pa, pmap, (void *)va);
+	atomic_setbits_int(&pg->pg_flags, PGF_ATTR_MOD | PGF_ATTR_REF);
+	KERNEL_UNLOCK();
+	return (0);
+}
 
 /*
  *  Walk the PV tree for a physical page and change all its
