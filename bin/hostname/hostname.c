@@ -1,4 +1,4 @@
-/*	$OpenBSD: hostname.c,v 1.9 2015/01/16 06:39:32 deraadt Exp $	*/
+/*	$OpenBSD: hostname.c,v 1.10 2016/02/01 22:27:25 gsoares Exp $	*/
 /*	$NetBSD: hostname.c,v 1.10 1995/09/07 06:28:40 jtc Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
 
 extern	char *__progname;
 
-void usage(void);
+static void __dead usage(void);
 
 int
 main(int argc, char *argv[])
@@ -72,10 +72,10 @@ main(int argc, char *argv[])
 			*p = '\0';
 		(void)printf("%s\n", hostname);
 	}
-	exit(0);
+	return(0);
 }
 
-void
+static void __dead
 usage(void)
 {
 	(void)fprintf(stderr, "usage: %s [-s] [name-of-host]\n", __progname);
