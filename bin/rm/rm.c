@@ -1,4 +1,4 @@
-/*	$OpenBSD: rm.c,v 1.35 2015/11/17 17:17:24 deraadt Exp $	*/
+/*	$OpenBSD: rm.c,v 1.36 2016/02/01 22:34:19 gsoares Exp $	*/
 /*	$NetBSD: rm.c,v 1.19 1995/09/07 06:48:50 jtc Exp $	*/
 
 /*-
@@ -124,7 +124,7 @@ main(int argc, char *argv[])
 			rm_file(argv);
 	}
 
-	exit (eval);
+	exit(eval);
 }
 
 void
@@ -399,7 +399,7 @@ checkdot(char **argv)
 	complained = 0;
 	for (t = argv; *t;) {
 		/* strip trailing slashes */
-		p = strrchr (*t, '\0');
+		p = strrchr(*t, '\0');
 		while (--p > *t && *p == '/')
 			*p = '\0';
 
