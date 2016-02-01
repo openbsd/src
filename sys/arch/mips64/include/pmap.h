@@ -1,4 +1,4 @@
-/*      $OpenBSD: pmap.h,v 1.41 2016/02/01 16:15:18 visa Exp $ */
+/*      $OpenBSD: pmap.h,v 1.42 2016/02/01 16:18:30 visa Exp $ */
 
 /*
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -154,7 +154,6 @@ extern vaddr_t pmap_prefer_mask;
 #define	PMAP_PREFER_OFFSET(of)		((of) & pmap_prefer_mask)
 
 void	pmap_bootstrap(void);
-void	pmap_kenter_cache(vaddr_t va, paddr_t pa, vm_prot_t prot, int cache);
 vaddr_t	pmap_prefer(vaddr_t, vaddr_t);
 int	pmap_emulate_modify(pmap_t, vaddr_t);
 void	pmap_page_cache(vm_page_t, u_int);
