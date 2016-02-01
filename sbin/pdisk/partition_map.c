@@ -1,4 +1,4 @@
-/*	$OpenBSD: partition_map.c,v 1.97 2016/01/31 23:00:11 krw Exp $	*/
+/*	$OpenBSD: partition_map.c,v 1.98 2016/02/01 12:53:37 krw Exp $	*/
 
 /*
  * partition_map.c - partition map routines
@@ -127,14 +127,16 @@ free_partition_map(struct partition_map *map)
 {
 	struct entry *entry;
 
-	if (map) {
-		while (!LIST_EMPTY(&map->disk_order)) {
-			entry = LIST_FIRST(&map->disk_order);
-			LIST_REMOVE(entry, disk_entry);
-			free(entry);
-		}
-		free(map);
+	if (map == NULL)
+		return;
+
+	while (!LIST_EMPTY(&map->disk_order)) {
+		entry = LIST_FIRST(&map->disk_order);
+		LIST_REMOVE(entry, disk_entry);
+		free(entry);
 	}
+
+	free(map);
 }
 
 int
@@ -487,18 +489,15 @@ contains_driver(struct entry *entry)
 	uint32_t start;
 
 	map = entry->the_map;
-
-	if (map->sbDrvrCount > 0) {
-		m = map->sbDDMap;
-		for (i = 0; i < map->sbDrvrCount; i++) {
-			start = m[i].ddBlock;
-			if (entry->dpme_pblock_start <= start &&
-			    (start + m[i].ddSize) <=
-			    (entry->dpme_pblock_start +
-			    entry->dpme_pblocks))
-				return 1;
-		}
+	m = map->sbDDMap;
+	for (i = 0; i < map->sbDrvrCount; i++) {
+		start = m[i].ddBlock;
+		if (entry->dpme_pblock_start <= start &&
+		    (start + m[i].ddSize) <= (entry->dpme_pblock_start +
+		    entry->dpme_pblocks))
+			return 1;
 	}
+
 	return 0;
 }
 
@@ -601,8 +600,7 @@ find_entry_by_type(const char *type_name, struct partition_map *map)
 	struct entry *cur;
 
 	LIST_FOREACH(cur, &map->base_order, base_entry) {
-		if (strncasecmp(cur->dpme_type, type_name, DPISTRLEN) ==
-		    0)
+		if (strncasecmp(cur->dpme_type, type_name, DPISTRLEN) == 0)
 			break;
 	}
 	return cur;
@@ -733,8 +731,7 @@ resize_map(long new_size, struct partition_map *map)
 	if (new_size < entry->dpme_pblocks) {
 		/* make it smaller */
 		if (next == NULL ||
-		    strncasecmp(next->dpme_type, kFreeType, DPISTRLEN) !=
-		    0)
+		    strncasecmp(next->dpme_type, kFreeType, DPISTRLEN) != 0)
 			incr = 1;
 		else
 			incr = 0;
@@ -780,36 +777,31 @@ remove_driver(struct entry *entry)
 	 * into partition map block numbers.
 	 */
 	map = entry->the_map;
-	if (map->sbDrvrCount > 0) {
-		m = map->sbDDMap;
-		for (i = 0; i < map->sbDrvrCount; i++) {
-			start = m[i].ddBlock;
-
+	m = map->sbDDMap;
+	for (i = 0; i < map->sbDrvrCount; i++) {
+		start = m[i].ddBlock;
+		/*
+		 * zap the driver if it is wholly contained in the
+		 * partition
+		 */
+		if (entry->dpme_pblock_start <= start && (start +
+		    m[i].ddSize) <= (entry->dpme_pblock_start +
+		    entry->dpme_pblocks)) {
 			/*
-			 * zap the driver if it is wholly contained in the
-			 * partition
+			 * Delete this driver by copying down later ones and
+			 * zapping the last one.
 			 */
-			if (entry->dpme_pblock_start <= start &&
-			    (start + m[i].ddSize) <=
-			    (entry->dpme_pblock_start + entry->dpme_pblocks)) {
-				/* delete this driver */
-				/*
-				 * by copying down later ones and zapping the
-				 * last
-				 */
-				for (j = i + 1; j < map->sbDrvrCount; j++,
-				    i++) {
-					m[i].ddBlock = m[i].ddBlock;
-					m[i].ddSize = m[j].ddSize;
-					m[i].ddType = m[j].ddType;
-				}
-				m[i].ddBlock = 0;
-				m[i].ddSize = 0;
-				m[i].ddType = 0;
-				map->sbDrvrCount -= 1;
-				return;	/* XXX if we continue we will delete
-					 * other drivers? */
+			for (j = i + 1; j < map->sbDrvrCount; j++, i++) {
+				m[i].ddBlock = m[i].ddBlock;
+				m[i].ddSize = m[j].ddSize;
+				m[i].ddType = m[j].ddType;
 			}
+			m[i].ddBlock = 0;
+			m[i].ddSize = 0;
+			m[i].ddType = 0;
+			map->sbDrvrCount -= 1;
+			return;	/* XXX if we continue we will delete
+				 * other drivers? */
 		}
 	}
 }
