@@ -1,4 +1,4 @@
-/*	$OpenBSD: announce.c,v 1.23 2015/01/16 06:39:51 deraadt Exp $	*/
+/*	$OpenBSD: announce.c,v 1.24 2016/02/01 07:25:51 mestre Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -29,21 +29,16 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/types.h>
 #include <sys/stat.h>
-#include <sys/time.h>
-#include <sys/wait.h>
-#include <sys/socket.h>
 #include <protocols/talkd.h>
-#include <errno.h>
-#include <syslog.h>
-#include <unistd.h>
+
 #include <limits.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <vis.h>
 #include <paths.h>
+#include <stdio.h>
+#include <string.h>
+#include <unistd.h>
+#include <vis.h>
+
 #include "talkd.h"
 
 static void	print_mesg(FILE *,CTL_MSG *,char *);

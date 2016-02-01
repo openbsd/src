@@ -1,4 +1,4 @@
-/*	$OpenBSD: table.c,v 1.16 2015/01/16 06:39:51 deraadt Exp $	*/
+/*	$OpenBSD: table.c,v 1.17 2016/02/01 07:25:51 mestre Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -37,15 +37,15 @@
  *
  * Consider this a mis-guided attempt at modularity
  */
-#include <sys/time.h>
-#include <sys/socket.h>
 #include <sys/queue.h>
+#include <sys/socket.h>
 #include <protocols/talkd.h>
-#include <syslog.h>
-#include <unistd.h>
-#include <stdio.h>
+
 #include <stdlib.h>
 #include <string.h>
+#include <syslog.h>
+#include <unistd.h>
+
 #include "talkd.h"
 
 #define MAX_ID 16000	/* << 2^15 so I don't have sign troubles */

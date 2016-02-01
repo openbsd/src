@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.11 2009/10/27 23:59:31 deraadt Exp $	*/
+/*	$OpenBSD: print.c,v 1.12 2016/02/01 07:25:51 mestre Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -31,12 +31,11 @@
 
 /* debug print routines */
 
-#include <sys/types.h>
 #include <sys/socket.h>
 #include <protocols/talkd.h>
-#include <syslog.h>
+
 #include <stdio.h>
-#include "talkd.h"
+#include <syslog.h>
 
 static	char *types[] = {
 	"leave_invite", "look_up", "delete", "announce"

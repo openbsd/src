@@ -1,4 +1,4 @@
-/*	$OpenBSD: process.c,v 1.21 2015/01/16 06:39:51 deraadt Exp $	*/
+/*	$OpenBSD: process.c,v 1.22 2016/02/01 07:25:51 mestre Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -37,18 +37,20 @@
  *		  in the table for the local user
  *	DELETE - delete invitation
  */
-#include <sys/stat.h>
 #include <sys/socket.h>
-#include <netinet/in.h>
+#include <sys/stat.h>
 #include <arpa/inet.h>
 #include <protocols/talkd.h>
+
+#include <ctype.h>
+#include <limits.h>
 #include <netdb.h>
-#include <syslog.h>
+#include <paths.h>
 #include <stdio.h>
 #include <string.h>
-#include <ctype.h>
-#include <paths.h>
-#include <limits.h>
+#include <syslog.h>
+#include <utmp.h>
+
 #include "talkd.h"
 
 #define	satosin(sa)	((struct sockaddr_in *)(sa))
@@ -179,8 +181,6 @@ do_announce(CTL_MSG *mp, CTL_RESPONSE *rp)
 		rp->answer = SUCCESS;
 	}
 }
-
-#include <utmp.h>
 
 /*
  * Search utmp for the local user
