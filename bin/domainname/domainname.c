@@ -1,4 +1,4 @@
-/*	$OpenBSD: domainname.c,v 1.9 2015/01/16 06:39:31 deraadt Exp $	*/
+/*	$OpenBSD: domainname.c,v 1.10 2016/02/01 22:26:39 gsoares Exp $	*/
 /*	$NetBSD: domainname.c,v 1.7 1995/03/21 09:04:22 cgd Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
 
 extern	char *__progname;
 
-void usage(void);
+static void __dead usage(void);
 
 int
 main(int argc, char *argv[])
@@ -66,10 +66,10 @@ main(int argc, char *argv[])
 			err(1, "getdomainname");
 		(void)printf("%s\n", domainname);
 	}
-	exit(0);
+	return(0);
 }
 
-void
+static void __dead
 usage(void)
 {
 	(void)fprintf(stderr, "usage: %s [name-of-domain]\n", __progname);
