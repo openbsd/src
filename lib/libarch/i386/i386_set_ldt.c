@@ -33,10 +33,7 @@
 #include <machine/sysarch.h>
 
 int
-i386_set_ldt(start, desc, num)
-	int start;
-	union descriptor *desc;
-	int num;
+i386_set_ldt(int start, union descriptor *desc, int num)
 {
 	struct i386_set_ldt_args p;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: i386_vm86.c,v 1.6 2014/11/15 02:23:28 tedu Exp $	*/
+/*	$OpenBSD: i386_vm86.c,v 1.7 2016/02/01 19:58:44 jca Exp $	*/
 /*	$NetBSD: i386_vm86.c,v 1.1 1996/02/21 00:21:56 jtk Exp $	*/
 
 /*-
@@ -37,8 +37,7 @@
 #include <machine/vm86.h>
 
 int
-i386_vm86(vmcp)
-	register struct vm86_struct *vmcp;
+i386_vm86(struct vm86_struct *vmcp)
 {
 
 	return sysarch(I386_VM86, vmcp);

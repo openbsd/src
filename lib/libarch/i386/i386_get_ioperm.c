@@ -1,4 +1,4 @@
-/*	$OpenBSD: i386_get_ioperm.c,v 1.7 2014/11/15 02:23:28 tedu Exp $	*/
+/*	$OpenBSD: i386_get_ioperm.c,v 1.8 2016/02/01 19:58:44 jca Exp $	*/
 /*	$NetBSD: i386_get_ioperm.c,v 1.2 1996/02/27 22:57:22 jtc Exp $	*/
 
 /*-
@@ -36,8 +36,7 @@
 #include <machine/sysarch.h>
 
 int
-i386_get_ioperm(iomap)
-	u_long *iomap;
+i386_get_ioperm(u_long *iomap)
 {
 	struct i386_get_ioperm_args p;
 
