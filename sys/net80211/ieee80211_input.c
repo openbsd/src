@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.154 2016/01/25 15:14:22 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.155 2016/02/01 18:43:22 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -704,7 +704,8 @@ ieee80211_input_ba(struct ieee80211com *ic, struct mbuf *m,
 	sn = letoh16(*(u_int16_t *)wh->i_seq) >> IEEE80211_SEQ_SEQ_SHIFT;
 
 	/* reset Block Ack inactivity timer */
-	timeout_add_usec(&ba->ba_to, ba->ba_timeout_val);
+	if (ba->ba_timeout_val != 0)
+		timeout_add_usec(&ba->ba_to, ba->ba_timeout_val);
 
 	if (SEQ_LT(sn, ba->ba_winstart)) {	/* SN < WinStartB */
 		ifp->if_ierrors++;
@@ -2457,7 +2458,8 @@ ieee80211_recv_addba_req(struct ieee80211com *ic, struct mbuf *m,
 	if (ba->ba_state == IEEE80211_BA_AGREED) {
 		/* XXX should we update the timeout value? */
 		/* reset Block Ack inactivity timer */
-		timeout_add_usec(&ba->ba_to, ba->ba_timeout_val);
+		if (ba->ba_timeout_val != 0)
+			timeout_add_usec(&ba->ba_to, ba->ba_timeout_val);
 
 		/* check if it's a Protected Block Ack agreement */
 		if (!(ni->ni_flags & IEEE80211_NODE_MFP) ||
@@ -2494,10 +2496,6 @@ ieee80211_recv_addba_req(struct ieee80211com *ic, struct mbuf *m,
 	/* setup Block Ack agreement */
 	ba->ba_state = IEEE80211_BA_INIT;
 	ba->ba_timeout_val = timeout * IEEE80211_DUR_TU;
-	if (ba->ba_timeout_val < IEEE80211_BA_MIN_TIMEOUT)
-		ba->ba_timeout_val = IEEE80211_BA_MIN_TIMEOUT;
-	else if (ba->ba_timeout_val > IEEE80211_BA_MAX_TIMEOUT)
-		ba->ba_timeout_val = IEEE80211_BA_MAX_TIMEOUT;
 	ba->ba_ni = ni;
 	timeout_set(&ba->ba_to, ieee80211_rx_ba_timeout, ba);
 	timeout_set(&ba->ba_gap_to, ieee80211_input_ba_gap_timeout, ba);
@@ -2526,7 +2524,8 @@ ieee80211_recv_addba_req(struct ieee80211com *ic, struct mbuf *m,
 	}
 	ba->ba_state = IEEE80211_BA_AGREED;
 	/* start Block Ack inactivity timer */
-	timeout_add_usec(&ba->ba_to, ba->ba_timeout_val);
+	if (ba->ba_timeout_val != 0)
+		timeout_add_usec(&ba->ba_to, ba->ba_timeout_val);
 	status = IEEE80211_STATUS_SUCCESS;
  resp:
 	/* MLME-ADDBA.response */
@@ -2988,7 +2987,8 @@ ieee80211_bar_tid(struct ieee80211com *ic, struct ieee80211_node *ni,
 		return;	/* PBAC, do not move window */
 	}
 	/* reset Block Ack inactivity timer */
-	timeout_add_usec(&ba->ba_to, ba->ba_timeout_val);
+	if (ba->ba_timeout_val != 0)
+		timeout_add_usec(&ba->ba_to, ba->ba_timeout_val);
 
 	if (SEQ_LT(ba->ba_winstart, ssn))
 		ieee80211_ba_move_window(ic, ni, tid, ssn);
