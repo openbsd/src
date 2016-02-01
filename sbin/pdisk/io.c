@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.30 2016/01/30 17:21:10 krw Exp $	*/
+/*	$OpenBSD: io.c,v 1.31 2016/02/01 18:55:00 krw Exp $	*/
 
 /*
  * io.c - simple io and input parsing routines
@@ -98,7 +98,7 @@ get_okay(const char *prompt, int default_value)
 	int c;
 
 	flush_to_newline(0);
-	printf(prompt);
+	printf("%s", prompt);
 
 	for (;;) {
 		c = my_getch();
@@ -116,7 +116,7 @@ get_okay(const char *prompt, int default_value)
 			return 0;
 		} else {
 			flush_to_newline(0);
-			printf(prompt);
+			printf("%s", prompt);
 		}
 	}
 	return -1;
@@ -128,7 +128,7 @@ get_command(const char *prompt, int promptBeforeGet, int *command)
 	int c;
 
 	if (promptBeforeGet)
-		printf(prompt);
+		printf("%s", prompt);
 
 	for (;;) {
 		c = my_getch();
@@ -138,7 +138,7 @@ get_command(const char *prompt, int promptBeforeGet, int *command)
 		} else if (c == ' ' || c == '\t') {
 			/* skip blanks and tabs */
 		} else if (c == '\n') {
-			printf(prompt);
+			printf("%s", prompt);
 		} else {
 			*command = c;
 			return 1;
@@ -161,7 +161,7 @@ get_number_argument(const char *prompt, long *number)
 		} else if (c == ' ' || c == '\t') {
 			/* skip blanks and tabs */
 		} else if (c == '\n') {
-			printf(prompt);
+			printf("%s", prompt);
 		} else if ('0' <= c && c <= '9') {
 			my_ungetch(c);
 			result = get_number(number);
@@ -211,7 +211,7 @@ get_dpistr_argument(const char *prompt)
 		} else if (c == ' ' || c == '\t') {
 			/* skip blanks and tabs */
 		} else if (c == '\n') {
-			printf(prompt);
+			printf("%s", prompt);
 		} else if (c == '"' || c == '\'') {
 			return get_string(c);
 		} else if (('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z') ||
