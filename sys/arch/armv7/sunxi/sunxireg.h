@@ -1,4 +1,4 @@
-/*	$OpenBSD: sunxireg.h,v 1.7 2016/01/31 04:39:05 jsg Exp $	*/
+/*	$OpenBSD: sunxireg.h,v 1.8 2016/02/02 21:40:47 jsg Exp $	*/
 /*
  * Copyright (c) 2013 Artturi Alm
  *
@@ -65,7 +65,7 @@
 #define	TIMER2_IRQ		24
 #define	STATTIMER_IRQ		TIMER1_IRQ /* XXX */
 
-#define	WDOG_ADDR		0x90
+#define	WDOG_ADDR		0x01c20c90
 #define	WDOG_SIZE		0x08
 #define	WDOG_IRQ		24
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: sxidog.c,v 1.6 2014/12/13 00:49:20 jsg Exp $ */
+/* $OpenBSD: sxidog.c,v 1.7 2016/02/02 21:40:47 jsg Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  *
@@ -29,9 +29,6 @@
 
 #include <armv7/sunxi/sunxireg.h>
 #include <armv7/armv7/armv7var.h>
-
-/* XXX other way around than bus_space_subregion? */
-extern bus_space_handle_t sxitimer_ioh;
 
 /* registers */
 #define WDOG_CR			0x00
@@ -89,9 +86,9 @@ sxidog_attach(struct device *parent, struct device *self, void *args)
 	struct sxidog_softc *sc = (struct sxidog_softc *)self;
 
 	sc->sc_iot = aa->aa_iot;
-	if (bus_space_subregion(sc->sc_iot, sxitimer_ioh,
-	    aa->aa_dev->mem[0].addr, aa->aa_dev->mem[0].size, &sc->sc_ioh))
-		panic("sxidog_attach: bus_space_subregion failed!");
+	if (bus_space_map(sc->sc_iot, aa->aa_dev->mem[0].addr,
+	    aa->aa_dev->mem[0].size, 0, &sc->sc_ioh))
+		panic("sxidog_attach: bus_space_map failed!");
 
 #ifdef DEBUG
 	printf(": ctrl %x mode %x\n", SXIREAD4(sc, WDOG_CR),
