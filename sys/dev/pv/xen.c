@@ -1,4 +1,4 @@
-/*	$OpenBSD: xen.c,v 1.48 2016/01/29 19:12:26 mikeb Exp $	*/
+/*	$OpenBSD: xen.c,v 1.49 2016/02/02 17:52:46 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Belopuhov
@@ -25,6 +25,7 @@
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/task.h>
+#include <sys/syslog.h>
 
 #include <machine/bus.h>
 #include <machine/cpu.h>
@@ -33,6 +34,8 @@
 #include <uvm/uvm_extern.h>
 
 #include <machine/i82489var.h>
+
+#include <dev/rndvar.h>
 
 #include <dev/pv/pvvar.h>
 #include <dev/pv/pvreg.h>
@@ -193,34 +196,48 @@ xen_control(void *arg)
 	struct xen_softc *sc = arg;
 	struct xs_transaction xst;
 	char action[128];
+	int error;
 
 	memset(&xst, 0, sizeof(xst));
 	xst.xst_id = 0;
 	xst.xst_sc = sc->sc_xs;
 
-	if (xs_getprop(sc, "control", "shutdown", action, sizeof(action))) {
-		printf("%s: failed to process control event\n",
-		    sc->sc_dev.dv_xname);
+	error = xs_getprop(sc, "control", "shutdown", action, sizeof(action));
+	if (error) {
+		if (error != ENOENT)
+			printf("%s: failed to process control event\n",
+			    sc->sc_dev.dv_xname);
 		return;
 	}
 
 	if (strlen(action) == 0)
 		return;
 
+	/* Acknowledge the event */
+	xs_setprop(sc, "control", "shutdown", "", 0);
+
 	if (strcmp(action, "halt") == 0 || strcmp(action, "poweroff") == 0) {
 		extern int allowpowerdown;
 
-		if (allowpowerdown == 1) {
-			allowpowerdown = 0;
-			prsignal(initprocess, SIGUSR2);
-		}
+		if (allowpowerdown == 0)
+			return;
+
+		suspend_randomness();
+
+		log(LOG_KERN | LOG_NOTICE, "Shutting down in response to "
+		    "request from Xen host\n");
+		prsignal(initprocess, SIGUSR2);
 	} else if (strcmp(action, "reboot") == 0) {
 		extern int allowpowerdown;
 
-		if (allowpowerdown == 1) {
-			allowpowerdown = 0;
-			prsignal(initprocess, SIGINT);
-		}
+		if (allowpowerdown == 0)
+			return;
+
+		suspend_randomness();
+
+		log(LOG_KERN | LOG_NOTICE, "Rebooting in response to request "
+		    "from Xen host\n");
+		prsignal(initprocess, SIGINT);
 	} else if (strcmp(action, "crash") == 0) {
 		panic("xen told us to do this");
 	} else if (strcmp(action, "suspend") == 0) {

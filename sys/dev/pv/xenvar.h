@@ -1,4 +1,4 @@
-/*	$OpenBSD: xenvar.h,v 1.28 2016/01/29 19:12:26 mikeb Exp $	*/
+/*	$OpenBSD: xenvar.h,v 1.29 2016/02/02 17:52:46 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Belopuhov
@@ -19,7 +19,7 @@
 #ifndef _XENVAR_H_
 #define _XENVAR_H_
 
-#define XEN_DEBUG
+/* #define XEN_DEBUG */
 
 #ifdef XEN_DEBUG
 #define DPRINTF(x...)		printf(x)

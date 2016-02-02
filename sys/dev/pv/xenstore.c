@@ -1,4 +1,4 @@
-/*	$OpenBSD: xenstore.c,v 1.24 2016/01/29 19:04:30 mikeb Exp $	*/
+/*	$OpenBSD: xenstore.c,v 1.25 2016/02/02 17:52:46 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Belopuhov
@@ -850,14 +850,21 @@ xs_watch(struct xen_softc *sc, const char *path, const char *property,
 	iov.iov_len = sizeof(xsw->xsw_token);
 	iov_cnt = 1;
 
-	if ((error = xs_cmd(&xst, XS_WATCH, key, &iovp, &iov_cnt)) != 0) {
-		free(xsw, M_DEVBUF, sizeof(*xsw));
-		return (error);
-	}
-
+	/*
+	 * xs_watches must be prepared pre-emptively because a xenstore
+	 * event is raised immediately after a watch is established.
+	 */
 	mtx_enter(&xs->xs_watchlck);
 	TAILQ_INSERT_TAIL(&xs->xs_watches, xsw, xsw_entry);
 	mtx_leave(&xs->xs_watchlck);
+
+	if ((error = xs_cmd(&xst, XS_WATCH, key, &iovp, &iov_cnt)) != 0) {
+		mtx_enter(&xs->xs_watchlck);
+		TAILQ_REMOVE(&xs->xs_watches, xsw, xsw_entry);
+		mtx_leave(&xs->xs_watchlck);
+		free(xsw, M_DEVBUF, sizeof(*xsw));
+		return (error);
+	}
 
 	return (0);
 }
