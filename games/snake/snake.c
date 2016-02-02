@@ -1,4 +1,4 @@
-/*	$OpenBSD: snake.c,v 1.23 2016/01/07 16:00:33 tb Exp $	*/
+/*	$OpenBSD: snake.c,v 1.24 2016/02/02 19:18:57 mestre Exp $	*/
 /*	$NetBSD: snake.c,v 1.8 1995/04/29 00:06:41 mycroft Exp $	*/
 
 /*
@@ -156,10 +156,10 @@ main(int argc, char *argv[])
 	while ((ch = getopt(argc, argv, "hl:stw:")) != -1)
 		switch ((char)ch) {
 		case 'w':	/* width */
-			ccnt = atoi(optarg);
+			ccnt = strtonum(optarg, 1, INT_MAX, NULL);
 			break;
 		case 'l':	/* length */
-			lcnt = atoi(optarg);
+			lcnt = strtonum(optarg, 1, INT_MAX, NULL);
 			break;
 		case 's': /* score */
 			if (readscores(0))
@@ -174,8 +174,8 @@ main(int argc, char *argv[])
 		case '?':
 		case 'h':
 		default:
-			fputs("usage: snake [-st] [-l length] [-w width]\n",
-			    stderr);
+			fprintf(stderr, "usage: %s [-st] [-l length] "
+			    "[-w width]\n", getprogname());
 			return 1;
 		}
 
