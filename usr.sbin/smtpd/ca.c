@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.20 2015/12/28 22:08:30 jung Exp $	*/
+/*	$OpenBSD: ca.c,v 1.21 2016/02/02 21:18:04 gilles Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -59,10 +59,6 @@ static int	 rsae_bn_mod_exp(BIGNUM *, const BIGNUM *, const BIGNUM *,
 		    const BIGNUM *, BN_CTX *, BN_MONT_CTX *);
 static int	 rsae_init(RSA *);
 static int	 rsae_finish(RSA *);
-static int	 rsae_sign(int, const unsigned char *, unsigned int,
-		    unsigned char *, unsigned int *, const RSA *);
-static int	 rsae_verify(int dtype, const unsigned char *m, unsigned int,
-		    const unsigned char *, unsigned int, const RSA *);
 static int	 rsae_keygen(RSA *, int, BIGNUM *, BN_GENCB *);
 
 static uint64_t	 rsae_reqid = 0;
@@ -356,8 +352,8 @@ static RSA_METHOD rsae_method = {
 	rsae_finish,
 	0,
 	NULL,
-	rsae_sign,
-	rsae_verify,
+	NULL,
+	NULL,
 	rsae_keygen
 };
 
@@ -510,24 +506,6 @@ rsae_finish(RSA *rsa)
 	if (rsa_default->finish == NULL)
 		return (1);
 	return (rsa_default->finish(rsa));
-}
-
-static int
-rsae_sign(int type, const unsigned char *m, unsigned int m_length,
-    unsigned char *sigret, unsigned int *siglen, const RSA *rsa)
-{
-	log_debug("debug: %s: %s", proc_name(smtpd_process), __func__);
-	return (rsa_default->rsa_sign(type, m, m_length,
-	    sigret, siglen, rsa));
-}
-
-static int
-rsae_verify(int dtype, const unsigned char *m, unsigned int m_length,
-    const unsigned char *sigbuf, unsigned int siglen, const RSA *rsa)
-{
-	log_debug("debug: %s: %s", proc_name(smtpd_process), __func__);
-	return (rsa_default->rsa_verify(dtype, m, m_length,
-	    sigbuf, siglen, rsa));
 }
 
 static int
