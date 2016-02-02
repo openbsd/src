@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.8 2014/10/25 03:23:49 lteo Exp $ */
+/*	$OpenBSD: bpf.c,v 1.9 2016/02/02 23:15:15 sthen Exp $ */
 
 /* BPF socket interface code, originally contributed by Archie Cobbs. */
 
@@ -377,7 +377,7 @@ receive_packet(struct interface_info *interface, unsigned char *buf,
 
 		/* Decode the IP and UDP headers... */
 		offset = decode_udp_ip_header(interface, interface->rbuf,
-		    interface->rbuf_offset, from, NULL, hdr.bh_caplen);
+		    interface->rbuf_offset, from, hdr.bh_caplen);
 
 		/* If the IP or UDP checksum was bad, skip the packet... */
 		if (offset < 0) {

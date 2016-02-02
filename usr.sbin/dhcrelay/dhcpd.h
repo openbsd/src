@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.12 2009/09/03 11:56:49 reyk Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.13 2016/02/02 23:15:15 sthen Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -166,7 +166,7 @@ void assemble_udp_ip_header(struct interface_info *, unsigned char *,
 ssize_t decode_hw_header(struct interface_info *, unsigned char *,
     int, struct hardware *);
 ssize_t decode_udp_ip_header(struct interface_info *, unsigned char *,
-    int, struct sockaddr_in *, unsigned char *, int);
+    int, struct sockaddr_in *, int);
 
 /* dhcrelay.c */
 extern u_int16_t server_port;
