@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.7 2016/02/02 23:15:15 sthen Exp $	*/
+/*	$OpenBSD: packet.c,v 1.8 2016/02/02 23:16:58 sthen Exp $	*/
 
 /* Packet assembly code, originally contributed by Archie Cobbs. */
 
@@ -46,8 +46,6 @@
 #include <netinet/ip.h>
 #include <netinet/udp.h>
 #include <netinet/if_ether.h>
-
-#define ETHER_HEADER_SIZE (ETHER_ADDR_LEN * 2 + sizeof(u_int16_t))
 
 u_int32_t	checksum(unsigned char *, unsigned, u_int32_t);
 u_int32_t	wrapsum(u_int32_t);
@@ -101,8 +99,8 @@ assemble_hw_header(struct interface_info *interface, unsigned char *buf,
 
 	eh.ether_type = htons(ETHERTYPE_IP);
 
-	memcpy(&buf[*bufix], &eh, ETHER_HEADER_SIZE);
-	*bufix += ETHER_HEADER_SIZE;
+	memcpy(&buf[*bufix], &eh, ETHER_HDR_LEN);
+	*bufix += ETHER_HDR_LEN;
 }
 
 void
@@ -165,7 +163,7 @@ decode_hw_header(struct interface_info *interface, unsigned char *buf,
 		bzero(&eh, sizeof(eh));
 		offset = ENC_HDRLEN + ip_len;
 	} else {	
-		memcpy(&eh, buf + bufix, ETHER_HEADER_SIZE);
+		memcpy(&eh, buf + bufix, ETHER_HDR_LEN);
 		offset = sizeof(eh);
 	}
 
