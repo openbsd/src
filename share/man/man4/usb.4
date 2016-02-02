@@ -1,4 +1,4 @@
-.\"	$OpenBSD: usb.4,v 1.171 2016/01/08 09:36:59 mpi Exp $
+.\"	$OpenBSD: usb.4,v 1.172 2016/02/02 16:47:52 visa Exp $
 .\"	$NetBSD: usb.4,v 1.15 1999/07/29 14:20:32 augustss Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 8 2016 $
+.Dd $Mdocdate: February 2 2016 $
 .Dt USB 4
 .Os
 .Sh NAME
@@ -36,6 +36,8 @@
 .Nm uhub
 .Nd introduction to Universal Serial Bus support
 .Sh SYNOPSIS
+.Cd "# octeon specific"
+.Cd "dwctwo0 at iobus?"
 .Cd "# zaurus specific"
 .Cd "ohci0   at pxaip?"
 .Cd "# all architectures"
@@ -46,6 +48,7 @@
 .Cd "ohci*   at pci?"
 .Cd "uhci*   at pci?"
 .Cd "xhci*   at pci?"
+.Cd "usb*    at dwctwo?"
 .Cd "usb*    at ehci? flags 0x00"
 .Cd "usb*    at ohci? flags 0x00"
 .Cd "usb*    at uhci? flags 0x00"
@@ -685,6 +688,7 @@ Human Interface Devices
 .Xr usbhidaction 1 ,
 .Xr usbhidctl 1 ,
 .Xr ioctl 2 ,
+.Xr dwctwo 4 ,
 .Xr ehci 4 ,
 .Xr ohci 4 ,
 .Xr uhci 4 ,
