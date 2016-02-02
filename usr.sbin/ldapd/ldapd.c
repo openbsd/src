@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldapd.c,v 1.17 2016/02/01 20:00:18 landry Exp $ */
+/*	$OpenBSD: ldapd.c,v 1.18 2016/02/02 14:59:20 gsoares Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -17,6 +17,7 @@
  */
 
 #include <sys/queue.h>
+#include <sys/stat.h>
 #include <sys/un.h>
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -117,6 +118,7 @@ main(int argc, char *argv[])
 	struct event		 ev_sigterm;
 	struct event		 ev_sigchld;
 	struct event		 ev_sighup;
+	struct stat		 sb;
 
 	datadir = DATADIR;
 	log_init(1);		/* log to stderr until daemonized */
@@ -178,8 +180,10 @@ main(int argc, char *argv[])
 		skip_chroot = 1;
 	}
 
-	if (datadir && chdir(datadir))
-		err(1, "chdir");
+	if (stat(datadir, &sb) == -1)
+		err(1, "%s", datadir);
+	if (!S_ISDIR(sb.st_mode))
+		errx(1, "%s is not a directory", datadir);
 
 	if (!skip_chroot && (pw = getpwnam(LDAPD_USER)) == NULL)
 		err(1, "%s", LDAPD_USER);
