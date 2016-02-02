@@ -1,4 +1,4 @@
-/* $OpenBSD: imx.c,v 1.8 2015/05/20 00:14:55 jsg Exp $ */
+/* $OpenBSD: imx.c,v 1.9 2016/02/02 03:31:22 jsg Exp $ */
 /*
  * Copyright (c) 2005,2008 Dale Rahn <drahn@openbsd.com>
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
@@ -292,10 +292,8 @@ imx_board_name(void)
 	int i;
 
 	for (i = 0; imx_boards[i].name != NULL; i++) {
-		if (imx_boards[i].board_id == board_id) {
+		if (imx_boards[i].board_id == board_id)
 			return (imx_boards[i].name);
-			break;
-		}
 	}
 	return (NULL);
 }

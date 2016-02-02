@@ -1,4 +1,4 @@
-/* $OpenBSD: omap.c,v 1.7 2015/05/20 00:14:56 jsg Exp $ */
+/* $OpenBSD: omap.c,v 1.8 2016/02/02 03:31:22 jsg Exp $ */
 /*
  * Copyright (c) 2005,2008 Dale Rahn <drahn@openbsd.com>
  *
@@ -166,10 +166,8 @@ omap_board_name(void)
 	int i;
 
 	for (i = 0; omap_boards[i].name != NULL; i++) {
-		if (omap_boards[i].board_id == board_id) {
+		if (omap_boards[i].board_id == board_id)
 			return (omap_boards[i].name);
-			break;
-		}
 	}
 	return (NULL);
 }

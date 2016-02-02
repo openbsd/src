@@ -1,4 +1,4 @@
-/*	$OpenBSD: vexpress.c,v 1.2 2015/06/14 05:01:31 jsg Exp $	*/
+/*	$OpenBSD: vexpress.c,v 1.3 2016/02/02 03:31:22 jsg Exp $	*/
 
 /*
  * Copyright (c) 2015 Jonathan Gray <jsg@openbsd.org>
@@ -96,10 +96,8 @@ vexpress_board_name(void)
 	int i;
 
 	for (i = 0; vexpress_boards[i].name != NULL; i++) {
-		if (vexpress_boards[i].board_id == board_id) {
+		if (vexpress_boards[i].board_id == board_id)
 			return (vexpress_boards[i].name);
-			break;
-		}
 	}
 	return (NULL);
 }
