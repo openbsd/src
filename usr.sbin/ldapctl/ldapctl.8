@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ldapctl.8,v 1.5 2016/02/02 12:47:10 jca Exp $
+.\"	$OpenBSD: ldapctl.8,v 1.6 2016/02/02 17:39:02 jmc Exp $
 .\"
 .\" Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
 .\"
@@ -24,7 +24,7 @@
 .Nm ldapctl
 .Op Fl v
 .Op Fl f Ar file
-.Op Fl r Ar datadir
+.Op Fl r Ar directory
 .Op Fl s Ar socket
 .Ar command
 .Op Ar argument ...
@@ -44,8 +44,8 @@ as the configuration file, instead of the default
 .Pa /etc/ldapd.conf .
 .It Fl r Ar directory
 Store and read database files in
-.Ar directory
-, instead of the default
+.Ar directory ,
+instead of the default
 .Pa /var/db/ldap .
 .It Fl s Ar socket
 Use
