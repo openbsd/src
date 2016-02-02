@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.8 2016/02/02 23:16:58 sthen Exp $	*/
+/*	$OpenBSD: packet.c,v 1.9 2016/02/02 23:18:16 sthen Exp $	*/
 
 /* Packet assembly code, originally contributed by Archie Cobbs. */
 
@@ -183,12 +183,12 @@ decode_udp_ip_header(struct interface_info *interface, unsigned char *buf,
 	unsigned char *data;
 	u_int32_t ip_len = (buf[bufix] & 0xf) << 2;
 	u_int32_t sum, usum;
-	static int ip_packets_seen;
-	static int ip_packets_bad_checksum;
-	static int udp_packets_seen;
-	static int udp_packets_bad_checksum;
-	static int udp_packets_length_checked;
-	static int udp_packets_length_overflow;
+	static unsigned int ip_packets_seen;
+	static unsigned int ip_packets_bad_checksum;
+	static unsigned int udp_packets_seen;
+	static unsigned int udp_packets_bad_checksum;
+	static unsigned int udp_packets_length_checked;
+	static unsigned int udp_packets_length_overflow;
 	int len;
 
 	ip = (struct ip *)(buf + bufix);
@@ -200,7 +200,7 @@ decode_udp_ip_header(struct interface_info *interface, unsigned char *buf,
 		ip_packets_bad_checksum++;
 		if (ip_packets_seen > 4 && ip_packets_bad_checksum != 0 &&
 		    (ip_packets_seen / ip_packets_bad_checksum) < 2) {
-			note("%d bad IP checksums seen in %d packets",
+			note("%u bad IP checksums seen in %u packets",
 			    ip_packets_bad_checksum, ip_packets_seen);
 			ip_packets_seen = ip_packets_bad_checksum = 0;
 		}
@@ -227,7 +227,7 @@ decode_udp_ip_header(struct interface_info *interface, unsigned char *buf,
 		    udp_packets_length_overflow != 0 &&
 		    (udp_packets_length_checked /
 		    udp_packets_length_overflow) < 2) {
-			note("%d udp packets in %d too long - dropped",
+			note("%u udp packets in %u too long - dropped",
 			    udp_packets_length_overflow,
 			    udp_packets_length_checked);
 			udp_packets_length_overflow =
@@ -251,7 +251,7 @@ decode_udp_ip_header(struct interface_info *interface, unsigned char *buf,
 		udp_packets_bad_checksum++;
 		if (udp_packets_seen > 4 && udp_packets_bad_checksum != 0 &&
 		    (udp_packets_seen / udp_packets_bad_checksum) < 2) {
-			note("%d bad udp checksums in %d packets",
+			note("%u bad udp checksums in %u packets",
 			    udp_packets_bad_checksum, udp_packets_seen);
 			udp_packets_seen = udp_packets_bad_checksum = 0;
 		}
