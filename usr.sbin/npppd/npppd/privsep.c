@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.20 2015/12/05 18:43:36 mmcc Exp $ */
+/*	$OpenBSD: privsep.c,v 1.21 2016/02/02 17:51:11 sthen Exp $ */
 
 /*
  * Copyright (c) 2010 Yasuoka Masahiko <yasuoka@openbsd.org>
@@ -188,7 +188,6 @@ privsep_init(void)
 		_exit(0);
 		/* NOTREACHED */
 	}
-	setproctitle("main");
 	close(pairsock[0]);
 	privsep_sock = pairsock[1];
 	privsep_pid = pid;

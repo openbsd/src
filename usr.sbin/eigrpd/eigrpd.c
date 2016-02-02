@@ -1,4 +1,4 @@
-/*	$OpenBSD: eigrpd.c,v 1.4 2015/12/05 15:49:01 claudio Exp $ */
+/*	$OpenBSD: eigrpd.c,v 1.5 2016/02/02 17:51:11 sthen Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -226,9 +226,6 @@ main(int argc, char *argv[])
 	    pipe_parent2eigrpe);
 	eigrpe_pid = eigrpe(eigrpd_conf, pipe_parent2eigrpe, pipe_eigrpe2rde,
 	    pipe_parent2rde);
-
-	/* show who we are */
-	setproctitle("parent");
 
 	event_init();
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.25 2015/12/11 10:16:53 reyk Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.26 2016/02/02 17:51:11 sthen Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -369,7 +369,6 @@ main(int argc, char **argv)
 	if (!env->vmd_debug && daemon(0, 0) == -1)
 		fatal("can't daemonize");
 
-	setproctitle("parent");
 	log_procinit("parent");
 
 	ps->ps_ninstances = 1;

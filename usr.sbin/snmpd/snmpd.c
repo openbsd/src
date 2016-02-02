@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpd.c,v 1.31 2015/11/23 19:31:52 reyk Exp $	*/
+/*	$OpenBSD: snmpd.c,v 1.32 2016/02/02 17:51:11 sthen Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -217,9 +217,7 @@ main(int argc, char *argv[])
 	ps->ps_ninstances = 1;
 	proc_init(ps, procs, nitems(procs));
 
-	setproctitle("parent");
 	log_procinit("parent");
-
 	log_info("startup");
 
 	event_init();

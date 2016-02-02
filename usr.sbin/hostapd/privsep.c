@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.24 2015/01/16 06:40:17 deraadt Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.25 2016/02/02 17:51:11 sthen Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@openbsd.org>
@@ -169,8 +169,6 @@ hostapd_priv_init(struct hostapd_config *cfg)
 	}
 
 	hostapd_roaming_init(cfg);
-
-	setproctitle("[priv]");
 
 	/* Start a new event listener */
 	event_set(&cfg->c_priv_ev, socks[0], EV_READ, hostapd_priv, cfg);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.c,v 1.53 2015/12/03 11:46:25 reyk Exp $	*/
+/*	$OpenBSD: httpd.c,v 1.54 2016/02/02 17:51:11 sthen Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -247,8 +247,6 @@ main(int argc, char *argv[])
 	}
 
 	proc_init(ps, procs, nitems(procs));
-
-	setproctitle("parent");
 	log_procinit("parent");
 
 	if (pledge("stdio rpath wpath cpath inet dns proc ioctl sendfd",

@@ -1,12 +1,11 @@
 #!/bin/sh
 #
-# $OpenBSD: smtpd,v 1.5 2015/12/26 09:55:15 ajacoutot Exp $
+# $OpenBSD: smtpd,v 1.6 2016/02/02 17:51:11 sthen Exp $
 
 daemon="/usr/sbin/smtpd"
 
 . /etc/rc.d/rc.subr
 
-pexp="smtpd: \[priv\]"
 rc_reload=NO
 
 rc_cmd $1

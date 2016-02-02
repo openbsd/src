@@ -1,4 +1,4 @@
-/*	$OpenBSD: ripd.c,v 1.26 2015/12/05 13:13:47 claudio Exp $ */
+/*	$OpenBSD: ripd.c,v 1.27 2016/02/02 17:51:11 sthen Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -220,9 +220,6 @@ main(int argc, char *argv[])
 	/* start children */
 	rde_pid = rde(conf, pipe_parent2rde, pipe_ripe2rde, pipe_parent2ripe);
 	ripe_pid = ripe(conf, pipe_parent2ripe, pipe_ripe2rde, pipe_parent2rde);
-
-	/* show who we are */
-	setproctitle("parent");
 
 	event_init();
 

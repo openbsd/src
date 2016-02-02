@@ -1,11 +1,9 @@
 #!/bin/sh
 #
-# $OpenBSD: npppd,v 1.1 2012/09/20 12:51:43 yasuoka Exp $
+# $OpenBSD: npppd,v 1.2 2016/02/02 17:51:11 sthen Exp $
 
 daemon="/usr/sbin/npppd"
 
 . /etc/rc.d/rc.subr
-
-pexp="npppd: main"
 
 rc_cmd $1

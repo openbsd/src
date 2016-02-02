@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.183 2015/11/27 21:41:30 claudio Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.184 2016/02/02 17:51:11 sthen Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -213,8 +213,6 @@ main(int argc, char *argv[])
 	    cmd_opts & BGPD_OPT_VERBOSE);
 	io_pid = start_child(PROC_SE, saved_argv0, pipe_m2s[1], debug,
 	    cmd_opts & BGPD_OPT_VERBOSE);
-
-	setproctitle("parent");
 
 	signal(SIGTERM, sighdlr);
 	signal(SIGINT, sighdlr);

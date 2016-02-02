@@ -1,12 +1,11 @@
 #!/bin/sh
 #
-# $OpenBSD: ntpd,v 1.2 2011/09/14 02:36:09 william Exp $
+# $OpenBSD: ntpd,v 1.3 2016/02/02 17:51:11 sthen Exp $
 
 daemon="/usr/sbin/ntpd"
 
 . /etc/rc.d/rc.subr
 
-pexp="ntpd: \[priv\]"
 rc_reload=NO
 
 rc_cmd $1
