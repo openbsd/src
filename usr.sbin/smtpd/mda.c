@@ -1,4 +1,4 @@
-/*	$OpenBSD: mda.c,v 1.116 2016/01/08 19:31:29 chrisz Exp $	*/
+/*	$OpenBSD: mda.c,v 1.117 2016/02/02 05:45:27 sunil Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -149,6 +149,8 @@ mda_imsg(struct mproc *p, struct imsg *imsg)
 				    "Permanent failure in user lookup",
 				    ESC_DESTINATION_MAILBOX_HAS_MOVED);
 			else {
+				if (sz != sizeof(u->userinfo))
+					fatalx("mda: userinfo size mismatch");
 				memmove(&u->userinfo, data, sz);
 				u->flags &= ~USER_WAITINFO;
 				u->flags |= USER_RUNNABLE;
