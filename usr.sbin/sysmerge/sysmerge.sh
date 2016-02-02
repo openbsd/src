@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.220 2016/01/14 19:58:32 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.221 2016/02/02 07:02:32 ajacoutot Exp $
 #
 # Copyright (c) 2008-2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
@@ -572,7 +572,7 @@ sm_check_an_eg() {
 		_i=${_i##*/}
 		# only check files we care about
 		[[ -f /etc/${_i} ]] && \
-			sm_info "updated /etc/examples/${_i}, syntax may have changed"
+			sm_info "Updated /etc/examples/${_i}, syntax may have changed"
 	done
 	mv ./var/sysmerge/examplessum \
 		/var/sysmerge/examplessum
