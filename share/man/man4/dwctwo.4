@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dwctwo.4,v 1.1 2016/02/02 15:08:03 visa Exp $
+.\"	$OpenBSD: dwctwo.4,v 1.2 2016/02/02 17:06:31 visa Exp $
 .\"
 .\" Copyright (c) 2016 Visa Hankala
 .\"
@@ -21,7 +21,7 @@
 .Nm dwctwo
 .Nd DesignWare HS USB 2.0 OTG Controller
 .Sh SYNOPSIS
-.Cd "dwctwo* at iobus?               " Pq "octeon"
+.Cd "dwctwo0 at iobus? irq 56        " Pq "octeon"
 .Cd "usb*    at dwctwo?"
 .Sh DESCRIPTION
 The
