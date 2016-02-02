@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldapctl.c,v 1.8 2016/02/02 12:47:10 jca Exp $	*/
+/*	$OpenBSD: ldapctl.c,v 1.9 2016/02/02 18:18:04 jca Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -22,6 +22,7 @@
 
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/stat.h>
 #include <sys/queue.h>
 #include <sys/un.h>
 #include <sys/tree.h>
@@ -245,6 +246,7 @@ main(int argc, char *argv[])
 	int			 ch;
 	enum action		 action = NONE;
 	const char		*datadir = DATADIR;
+	struct stat		 sb;
 	const char		*sock = LDAPD_SOCKET;
 	char			*conffile = CONFFILE;
 	struct sockaddr_un	 sun;
@@ -277,6 +279,11 @@ main(int argc, char *argv[])
 
 	if (argc == 0)
 		usage();
+
+	if (stat(datadir, &sb) == -1)
+		err(1, "%s", datadir);
+	if (!S_ISDIR(sb.st_mode))
+		errx(1, "%s is not a directory", datadir);
 
 	log_verbose(verbose);
 
