@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys.h,v 1.11 2016/01/30 17:32:52 schwarze Exp $	*/
+/*	$OpenBSD: sys.h,v 1.12 2016/02/02 00:43:12 schwarze Exp $	*/
 /*	$NetBSD: sys.h,v 1.13 2009/12/30 22:37:40 christos Exp $	*/
 
 /*-
@@ -91,6 +91,11 @@ size_t	strlcpy(char *dst, const char *src, size_t size);
 #ifndef HAVE_FGETLN
 #define	fgetln libedit_fgetln
 char	*fgetln(FILE *fp, size_t *len);
+#endif
+
+#ifndef WIDECHAR
+#define	setlocale(c, l) NULL
+#define	nl_langinfo(i) ""
 #endif
 
 #define	REGEX		/* Use POSIX.2 regular expression functions */

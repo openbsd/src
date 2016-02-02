@@ -1,4 +1,4 @@
-/*	$OpenBSD: el.c,v 1.24 2016/01/30 17:32:52 schwarze Exp $	*/
+/*	$OpenBSD: el.c,v 1.25 2016/02/02 00:43:12 schwarze Exp $	*/
 /*	$NetBSD: el.c,v 1.61 2011/01/27 23:11:40 christos Exp $	*/
 
 /*-
@@ -43,9 +43,12 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <ctype.h>
-#include <locale.h>
 #include <limits.h>
+#ifdef WIDECHAR
+#include <locale.h>
 #include <langinfo.h>
+#endif
+
 #include "el.h"
 
 /* el_init():
@@ -79,12 +82,10 @@ el_init(const char *prog, FILE *fin, FILE *fout, FILE *ferr)
          * Initialize all the modules. Order is important!!!
          */
 	el->el_flags = 0;
-#ifdef WIDECHAR
 	if (setlocale(LC_CTYPE, NULL) != NULL){
 		if (strcmp(nl_langinfo(CODESET), "UTF-8") == 0)
 			el->el_flags |= CHARSET_IS_UTF8;
 	}
-#endif
 
 	if (terminal_init(el) == -1) {
 		free(el->el_prog);
