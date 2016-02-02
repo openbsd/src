@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdisk.c,v 1.83 2016/01/31 23:00:11 krw Exp $	*/
+/*	$OpenBSD: pdisk.c,v 1.84 2016/02/02 15:23:07 krw Exp $	*/
 
 /*
  * pdisk - an editor for Apple format partition tables
@@ -76,13 +76,20 @@ main(int argc, char **argv)
 	struct partition_map *map;
 	int c, fd;
 
+	if (pledge("stdio rpath wpath disklabel", NULL) == -1)
+		err(1, "pledge");
+
 	while ((c = getopt(argc, argv, "lr")) != -1) {
 		switch (c) {
 		case 'l':
 			lflag = 1;
+			if (pledge("stdio rpath disklabel", NULL) == -1)
+				err(1, "pledge");
 			break;
 		case 'r':
 			rflag = 1;
+			if (pledge("stdio rpath disklabel", NULL) == -1)
+				err(1, "pledge");
 			break;
 		default:
 			usage();
@@ -96,18 +103,27 @@ main(int argc, char **argv)
 	if (argc != 1)
 		usage();
 
-	fd = opendev(*argv, (rflag ? O_RDONLY:O_RDWR), OPENDEV_PART, NULL);
+	fd = opendev(*argv, ((rflag || lflag) ? O_RDONLY:O_RDWR), OPENDEV_PART,
+	    NULL);
 	if (fd == -1)
 		err(1, "can't open file '%s'", *argv);
+
+	if (pledge("stdio disklabel", NULL) == -1)
+		err(1, "pledge");
+
 	if (fstat(fd, &st) == -1)
 		err(1, "can't fstat %s", *argv);
 	if (!S_ISCHR(st.st_mode) && !S_ISREG(st.st_mode))
 		errx(1, "%s is not a character device or a regular file",
 		    *argv);
+
 	if (ioctl(fd, DIOCGPDINFO, &dl) == -1)
 		err(1, "can't get disklabel for %s", *argv);
 	if (dl.d_secsize != DEV_BSIZE)
 		errx(1, "disk sector size (%d) != 512\n", dl.d_secsize);
+
+	if (pledge("stdio", NULL) == -1)
+		err(1, "pledge");
 
 	map = open_partition_map(fd, *argv, DL_GETDSIZE(&dl), dl.d_secsize);
 	if (map != NULL) {
