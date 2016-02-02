@@ -1,4 +1,4 @@
-/*	$OpenBSD: udf_vnops.c,v 1.61 2015/09/23 15:37:26 tedu Exp $	*/
+/*	$OpenBSD: udf_vnops.c,v 1.62 2016/02/02 16:44:44 stefan Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Scott Long <scottl@freebsd.org>
@@ -445,13 +445,12 @@ udf_read(void *v)
 
 	while (uio->uio_offset < fsize && uio->uio_resid > 0) {
 		offset = uio->uio_offset;
-		if (uio->uio_resid + offset <= fsize)
-			size = uio->uio_resid;
-		else
+		size = ulmin(uio->uio_resid, MAXBSIZE);
+		if (size > fsize - offset)
 			size = fsize - offset;
 		error = udf_readatoffset(up, &size, offset, &bp, &data);
 		if (error == 0)
-			error = uiomovei(data, size, uio);
+			error = uiomove(data, (size_t)size, uio);
 		if (bp != NULL) {
 			brelse(bp);
 			bp = NULL;
@@ -543,7 +542,7 @@ struct udf_uiodir {
 static int
 udf_uiodir(struct udf_uiodir *uiodir, struct uio *uio, long off)
 {
-	int de_size = DIRENT_SIZE(uiodir->dirent);
+	size_t de_size = DIRENT_SIZE(uiodir->dirent);
 
 	if (uio->uio_resid < de_size) {
 		uiodir->eofflag = 0;
@@ -552,7 +551,7 @@ udf_uiodir(struct udf_uiodir *uiodir, struct uio *uio, long off)
 	uiodir->dirent->d_off = off;
 	uiodir->dirent->d_reclen = de_size;
 
-	return (uiomovei(uiodir->dirent, de_size, uio));
+	return (uiomove(uiodir->dirent, de_size, uio));
 }
 
 static struct udf_dirstream *
