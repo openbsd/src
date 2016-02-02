@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.158 2016/01/17 09:09:01 jsg Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.159 2016/02/02 21:16:17 jsg Exp $
 
 machine		amd64
 maxusers	4
@@ -50,6 +50,11 @@ ioapic*		at mainbus?
 isa0		at mainbus0
 #isa0		at pcib?
 pci*		at mainbus0
+pvbus0		at mainbus0
+
+xen0		at pvbus?		# Xen HVM domU
+xnf*		at xen?			# Xen Netfront
+xspd0		at pci?			# XenSource Platform Device
 
 pchb*		at pci?			# PCI-Host bridges
 aapic*		at pci?			# AMD 8131 IO apic
