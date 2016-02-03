@@ -2188,6 +2188,7 @@
 ./usr/sbin/apmd
 ./usr/sbin/fdformat
 ./usr/sbin/gpioctl
+./usr/sbin/hostctl
 ./usr/sbin/hotplugd
 ./usr/sbin/memconfig
 ./usr/sbin/pcidump
