@@ -1,4 +1,4 @@
-/*	$OpenBSD: bounce.c,v 1.71 2015/12/24 16:54:37 mmcc Exp $	*/
+/*	$OpenBSD: bounce.c,v 1.72 2016/02/03 05:57:09 sunil Exp $	*/
 
 /*
  * Copyright (c) 2009 Gilles Chehade <gilles@poolp.org>
@@ -149,12 +149,16 @@ bounce_add(uint64_t evpid)
 	key.bounce = evp.agent.bounce;
 	key.smtpname = evp.smtpname;
 
-	if (evp.errorline[0] == '4')
-		key.bounce.type = B_WARNING;
-	else if (evp.errorline[0] == '5')
-		key.bounce.type = B_ERROR;
-	else
+	switch (evp.esc_class) {
+	case ESC_STATUS_OK:
 		key.bounce.type = B_DSN;
+		break;
+	case ESC_STATUS_TEMPFAIL:
+		key.bounce.type = B_WARNING;
+		break;
+	default:
+		key.bounce.type = B_ERROR;
+	}
 
 	key.bounce.dsn_ret = evp.dsn_ret;
 	key.bounce.expire = evp.expire;
