@@ -1,4 +1,4 @@
-/* $OpenBSD: amd64_mem.c,v 1.11 2015/03/14 03:38:46 jsg Exp $ */
+/* $OpenBSD: amd64_mem.c,v 1.12 2016/02/03 03:25:07 guenther Exp $ */
 /*
  * Copyright (c) 1999 Michael Smith <msmith@freebsd.org>
  * All rights reserved.
@@ -583,8 +583,7 @@ mrinit(struct mem_range_softc *sc)
 	 * If CPUID does not support leaf function 0x80000008, use the
 	 * default a 36-bit address size.
 	 */
-	CPUID(0x80000000, regs[0], regs[1], regs[2], regs[3]);
-	if (regs[0] >= 0x80000008) {
+	if (curcpu()->ci_pnfeatset >= 0x80000008) {
 		CPUID(0x80000008, regs[0], regs[1], regs[2], regs[3]);
 		if (regs[0] & 0xff) {
 			mtrrmask = (1ULL << (regs[0] & 0xff)) - 1;

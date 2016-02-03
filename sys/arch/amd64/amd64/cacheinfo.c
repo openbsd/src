@@ -1,4 +1,4 @@
-/*	$OpenBSD: cacheinfo.c,v 1.7 2015/11/13 07:52:20 mlarkin Exp $	*/
+/*	$OpenBSD: cacheinfo.c,v 1.8 2016/02/03 03:25:07 guenther Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -159,7 +159,6 @@ amd_cpu_cacheinfo(struct cpu_info *ci)
 	struct x86_cache_info *cai;
 	int family, model;
 	u_int descs[4];
-	u_int lfunc;
 
 	family = ci->ci_family;
 	model = ci->ci_model;
@@ -171,15 +170,9 @@ amd_cpu_cacheinfo(struct cpu_info *ci)
 		return;
 
 	/*
-	 * Determine the largest extended function value.
-	 */
-	CPUID(0x80000000, descs[0], descs[1], descs[2], descs[3]);
-	lfunc = descs[0];
-
-	/*
 	 * Determine L1 cache/TLB info.
 	 */
-	if (lfunc < 0x80000005) {
+	if (ci->ci_pnfeatset < 0x80000005) {
 		/* No L1 cache info available. */
 		return;
 	}
@@ -228,7 +221,7 @@ amd_cpu_cacheinfo(struct cpu_info *ci)
 	/*
 	 * Determine L2 cache/TLB info.
 	 */
-	if (lfunc < 0x80000006) {
+	if (ci->ci_pnfeatset < 0x80000006) {
 		/* No L2 cache info available. */
 		return;
 	}

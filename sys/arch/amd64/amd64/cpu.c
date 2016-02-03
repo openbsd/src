@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.94 2015/12/27 04:31:34 jsg Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.95 2016/02/03 03:25:07 guenther Exp $	*/
 /* $NetBSD: cpu.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $ */
 
 /*-
@@ -282,7 +282,7 @@ cpu_init_mwait(struct cpu_softc *sc)
 {
 	unsigned int smallest, largest, extensions, c_substates;
 
-	if ((cpu_ecxfeature & CPUIDECX_MWAIT) == 0)
+	if ((cpu_ecxfeature & CPUIDECX_MWAIT) == 0 || cpuid_level < 0x5)
 		return;
 
 	/* get the monitor granularity */
@@ -505,7 +505,7 @@ cpu_init(struct cpu_info *ci)
 		cr4 |= CR4_OSXSAVE;
 	lcr4(cr4);
 
-	if (cpu_ecxfeature & CPUIDECX_XSAVE) {
+	if ((cpu_ecxfeature & CPUIDECX_XSAVE) && cpuid_level >= 0xd) {
 		u_int32_t eax, ebx, ecx, edx;
 
 		xsave_mask = XCR0_X87 | XCR0_SSE;
