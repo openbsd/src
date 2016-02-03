@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.28 2014/10/25 03:18:13 lteo Exp $	*/
+/*	$OpenBSD: packet.c,v 1.29 2016/02/03 14:48:36 krw Exp $	*/
 
 /* Packet assembly code, originally contributed by Archie Cobbs. */
 
@@ -108,7 +108,7 @@ decode_udp_ip_header(unsigned char *buf, int bufix, struct sockaddr_in *from,
 	struct ip *ip;
 	struct udphdr *udp;
 	unsigned char *data;
-	u_int32_t ip_len = (buf[bufix] & 0xf) << 2;
+	u_int32_t ip_len;
 	u_int32_t sum, usum;
 	static int ip_packets_seen;
 	static int ip_packets_bad_checksum;
@@ -118,11 +118,16 @@ decode_udp_ip_header(unsigned char *buf, int bufix, struct sockaddr_in *from,
 	static int udp_packets_length_overflow;
 	int len;
 
+	/* Assure that an entire IP header is within the buffer. */
+	if (sizeof(*ip) > buflen)
+		return (-1);
+	ip_len = (buf[bufix] & 0xf) << 2;
+	if (ip_len > buflen)
+		return (-1);
 	ip = (struct ip *)(buf + bufix);
-	udp = (struct udphdr *)(buf + bufix + ip_len);
+	ip_packets_seen++;
 
 	/* Check the IP header checksum - it should be zero. */
-	ip_packets_seen++;
 	if (wrapsum(checksum(buf + bufix, ip_len, 0)) != 0) {
 		ip_packets_bad_checksum++;
 		if (ip_packets_seen > 4 && ip_packets_bad_checksum != 0 &&
@@ -134,22 +139,36 @@ decode_udp_ip_header(unsigned char *buf, int bufix, struct sockaddr_in *from,
 		return (-1);
 	}
 
+	memcpy(&from->sin_addr, &ip->ip_src, sizeof(from->sin_addr));
+
 #ifdef DEBUG
 	if (ntohs(ip->ip_len) != buflen)
 		debug("ip length %hu disagrees with bytes received %d.",
 		    ntohs(ip->ip_len), buflen);
 #endif
 
-	memcpy(&from->sin_addr, &ip->ip_src, sizeof(from->sin_addr));
+	/* Assure that the entire IP packet is within the buffer. */
+	if (ntohs(ip->ip_len) > buflen)
+		return (-1);
+
+	/* Assure that the UDP header is within the buffer. */
+	if (ip_len + sizeof(*udp) > buflen)
+		return (-1);
+	udp = (struct udphdr *)(buf + bufix + ip_len);
+	udp_packets_seen++;
+
+	/* Assure that the entire UDP packet is within the buffer. */
+	if (ip_len + ntohs(udp->uh_ulen) > buflen)
+		return (-1);
+	data = buf + bufix + ip_len + sizeof(*udp);
 
 	/*
 	 * Compute UDP checksums, including the ``pseudo-header'', the
 	 * UDP header and the data. If the UDP checksum field is zero,
 	 * we're not supposed to do a checksum.
 	 */
-	data = buf + bufix + ip_len + sizeof(*udp);
-	len = ntohs(udp->uh_ulen) - sizeof(*udp);
 	udp_packets_length_checked++;
+	len = ntohs(udp->uh_ulen) - sizeof(*udp);
 	if ((len < 0) || (len + data > buf + bufix + buflen)) {
 		udp_packets_length_overflow++;
 		if (udp_packets_length_checked > 4 &&
