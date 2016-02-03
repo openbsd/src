@@ -1,4 +1,4 @@
-/*	$OpenBSD: enqueue.c,v 1.111 2016/01/12 17:29:43 sunil Exp $	*/
+/*	$OpenBSD: enqueue.c,v 1.112 2016/02/03 08:03:21 gilles Exp $	*/
 
 /*
  * Copyright (c) 2005 Henning Brauer <henning@bulabula.org>
@@ -168,7 +168,7 @@ enqueue(int argc, char *argv[], FILE *ofp)
 	int			 i, ch, tflag = 0;
 	char			*fake_from = NULL, *buf = NULL;
 	struct passwd		*pw;
-	FILE			*fp, *fout;
+	FILE			*fp = NULL, *fout;
 	size_t			 sz = 0, envid_sz = 0;
 	ssize_t			 len;
 	int			 fd;
