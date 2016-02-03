@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-802_11.c,v 1.29 2016/02/01 10:09:44 stsp Exp $	*/
+/*	$OpenBSD: print-802_11.c,v 1.30 2016/02/03 16:08:09 stsp Exp $	*/
 
 /*
  * Copyright (c) 2005 Reyk Floeter <reyk@openbsd.org>
@@ -36,6 +36,25 @@
 
 #include "addrtoname.h"
 #include "interface.h"
+
+const char *ieee80211_ctl_subtype_name[] = {
+	"reserved#0",
+	"reserved#1",
+	"reserved#2",
+	"reserved#3",
+	"reserved#4",
+	"reserved#5",
+	"reserved#6",
+	"wrapper",
+	"block ack request",
+	"block ack", 
+	"ps poll", 
+	"rts", 
+	"cts", 
+	"ack", 
+	"cf-end", 
+	"cf-end-ack", 
+};
 
 const char *ieee80211_mgt_subtype_name[] = {
 	"association request",
@@ -813,6 +832,70 @@ ieee80211_frame(struct ieee80211_frame *wh, u_int len)
 			break;
 		}
 		break;
+	case IEEE80211_FC0_TYPE_CTL: {
+		u_int8_t *t = (u_int8_t *) wh;
+
+		printf(": %s", ieee80211_ctl_subtype_name[
+		    subtype >> IEEE80211_FC0_SUBTYPE_SHIFT]);
+		if (!vflag)
+			break;
+
+		/* See 802.11 2012 "8.3.1 Control frames". */
+		t += 2; /* skip Frame Control */
+		switch (subtype) {
+		case IEEE80211_FC0_SUBTYPE_RTS:
+		case IEEE80211_FC0_SUBTYPE_BAR:
+		case IEEE80211_FC0_SUBTYPE_BA:
+			TCHECK2(*t, 2); /* Duration */
+			printf(", duration %dms", (t[0] | t[1] << 8));
+			t += 2;
+			TCHECK2(*t, 6); /* RA */
+			printf(", ra %s", etheraddr_string(t));
+			t += 6;
+			TCHECK2(*t, 6); /* TA */
+			printf(", ta %s", etheraddr_string(t));
+			if (subtype == IEEE80211_FC0_SUBTYPE_BAR ||
+			    subtype == IEEE80211_FC0_SUBTYPE_BA) {
+				u_int16_t ctrl;
+
+				t += 6;	
+				TCHECK2(*t, 2); /* BAR/BA control */
+				ctrl = t[0] | (t[1] << 8);
+				if (ctrl & IEEE80211_BA_ACK_POLICY)
+					printf(", no ack");
+				else
+					printf(", normal ack");
+				if ((ctrl & IEEE80211_BA_MULTI_TID) == 0 &&
+				    (ctrl & IEEE80211_BA_COMPRESSED) == 0)
+					printf(", basic variant");
+				else if ((ctrl & IEEE80211_BA_MULTI_TID) &&
+				    (ctrl & IEEE80211_BA_COMPRESSED))
+					printf(", multi-tid variant");
+				else if (ctrl & IEEE80211_BA_COMPRESSED)
+					printf(", compressed variant");
+			}
+			break;
+		case IEEE80211_FC0_SUBTYPE_CTS:
+		case IEEE80211_FC0_SUBTYPE_ACK:
+			TCHECK2(*t, 2); /* Duration */
+			printf(", duration %dms", (t[0] | t[1] << 8));
+			t += 2;
+			TCHECK2(*t, 6); /* RA */
+			printf(", ra %s", etheraddr_string(t));
+			break;
+		case IEEE80211_FC0_SUBTYPE_PS_POLL:
+			TCHECK2(*t, 2); /* AID */
+			printf(", aid 0x%x", (t[0] | t[1] << 8));
+			t += 2;
+			TCHECK2(*t, 6); /* BSSID(RA) */
+			printf(", ra %s", etheraddr_string(t));
+			t += 6;
+			TCHECK2(*t, 6); /* TA */
+			printf(", ta %s", etheraddr_string(t));
+			break;
+		}
+		break;
+	}
 	default:
 		printf(": type#%d", type);
 		break;
