@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmt.c,v 1.8 2016/01/27 09:04:19 reyk Exp $ */
+/*	$OpenBSD: vmt.c,v 1.9 2016/02/03 14:24:05 reyk Exp $ */
 
 /*
  * Copyright (c) 2007 David Crawshaw <david@zentus.com>
@@ -167,7 +167,7 @@ struct vmt_softc {
 	int			sc_rpc_error;
 	int			sc_tclo_ping;
 	int			sc_set_guest_os;
-#define VMT_RPC_BUFLEN		1024
+#define VMT_RPC_BUFLEN		4096
 
 	struct timeout		sc_tick;
 	struct timeout		sc_tclo_tick;
@@ -390,36 +390,46 @@ int
 vmt_kvop(void *arg, int op, char *key, char *value, size_t valuelen)
 {
 	struct vmt_softc *sc = arg;
-	char buf[VMT_RPC_BUFLEN], *ptr;
+	char *buf = NULL, *ptr;
+	size_t bufsz;
+	int error = 0;
+
+	bufsz = VMT_RPC_BUFLEN;
+	buf = malloc(bufsz, M_TEMP|M_ZERO, M_WAITOK);
 
 	switch (op) {
 	case PVBUS_KVWRITE:
-		if ((size_t)snprintf(buf, sizeof(buf), "info-set %s %s",
-		    key, value) >= sizeof(buf)) {
+		if ((size_t)snprintf(buf, bufsz, "info-set %s %s",
+		    key, value) >= bufsz) {
 			DPRINTF("%s: write command too long", DEVNAME(sc));
-			return (EINVAL);
+			error = EINVAL;
+			goto done;
 		}
 		break;
 	case PVBUS_KVREAD:
-		if ((size_t)snprintf(buf, sizeof(buf), "info-get %s",
-		    key) >= sizeof(buf)) {
+		if ((size_t)snprintf(buf, bufsz, "info-get %s",
+		    key) >= bufsz) {
 			DPRINTF("%s: read command too long", DEVNAME(sc));
-			return (EINVAL);
+			error = EINVAL;
+			goto done;
 		}
 		break;
 	default:
-		return (EOPNOTSUPP);
+		error = EOPNOTSUPP;
+		goto done;
 	}
 
 	if (vm_rpc_send_rpci_tx(sc, buf) != 0) {
 		DPRINTF("%s: error sending command: %s\n", DEVNAME(sc), buf);
 		sc->sc_rpc_error = 1;
-		return (EIO);
+		error = EIO;
+		goto done;
 	}
 
 	if (vm_rpci_response_successful(sc) == 0) {
 		DPRINTF("%s: host rejected command: %s\n", DEVNAME(sc), buf);
-		return (EINVAL);
+		error = EINVAL;
+		goto done;
 	}
 
 	/* skip response that was tested in vm_rpci_response_successful() */
@@ -427,9 +437,11 @@ vmt_kvop(void *arg, int op, char *key, char *value, size_t valuelen)
 
 	/* might truncat, copy anyway but return error */
 	if (strlcpy(value, ptr, valuelen) >= valuelen)
-		return (ENOMEM);
+		error = ENOMEM;
 
-	return (0);
+ done:
+	free(buf, M_TEMP, bufsz);
+	return (error);
 }
 
 void
