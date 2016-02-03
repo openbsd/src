@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.242 2015/04/20 13:10:54 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.243 2016/02/03 18:30:15 robert Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -1483,19 +1483,18 @@ __PACKAGE__->register_with_factory;
 sub needs_keyword() { 1 }
 sub dirclass() { "OpenBSD::PackingElement::Fontdir" }
 
-our %fonts_todo = ();
-
 sub install
 {
 	my ($self, $state) = @_;
 	$self->SUPER::install($state);
-	$fonts_todo{$state->{destdir}.$self->fullname} = 1;
+	$state->log("You may wish to update your font path for #1", $self->fullname);
+	$state->{recorder}{fonts_todo}{$state->{destdir}.$self->fullname} = 1;
 }
 
 sub reload
 {
 	my ($self, $state) = @_;
-	$fonts_todo{$state->{destdir}.$self->fullname} = 1;
+	$state->{recorder}{fonts_todo}{$state->{destdir}.$self->fullname} = 1;
 }
 
 sub update_fontalias
@@ -1503,14 +1502,16 @@ sub update_fontalias
 	my $dirname = shift;
 	my @aliases;
 
-	for my $alias (glob "$dirname/fonts.alias-*") {
-		open my $f ,'<', $alias or next;
-		push(@aliases, <$f>);
+	if (-d "$dirname") {
+		for my $alias (glob "$dirname/fonts.alias-*") {
+			open my $f ,'<', $alias or next;
+			push(@aliases, <$f>);
+			close $f;
+		}
+		open my $f, '>', "$dirname/fonts.alias";
+		print $f @aliases;
 		close $f;
 	}
-	open my $f, '>', "$dirname/fonts.alias";
-	print $f @aliases;
-	close $f;
 }
 
 sub restore_fontdir
@@ -1538,18 +1539,18 @@ sub run_if_exists
 sub finish
 {
 	my ($class, $state) = @_;
-	my @l = keys %fonts_todo;
+	my @l = keys %{$state->{recorder}->{fonts_todo}};
+
 	if (@l != 0) {
 		require OpenBSD::Error;
 
-		map { update_fontalias($_) } @l unless $state->{not};
-		$state->say("You may wish to update your font path for #1",
-		    join(' ', @l));
 		return if $state->{not};
-		run_if_exists($state, OpenBSD::Paths->mkfontscale, '--', @l);
-		run_if_exists($state, OpenBSD::Paths->mkfontdir, '--', @l);
-
-		map { restore_fontdir($_, $state) } @l;
+		map { update_fontalias($_) } @l;
+		if (-d "@l") {
+			run_if_exists($state, OpenBSD::Paths->mkfontscale, '--', @l);
+			run_if_exists($state, OpenBSD::Paths->mkfontdir, '--', @l);
+			map { restore_fontdir($_, $state) } @l;
+		}
 
 		run_if_exists($state, OpenBSD::Paths->fc_cache, '--', @l);
 	}
