@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.265 2016/02/03 11:16:19 eric Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.266 2016/02/03 13:38:40 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -186,6 +186,11 @@ static int smtp_verify_certificate(struct smtp_session *);
 static uint8_t dsn_notify_str_to_uint8(const char *);
 static void smtp_auth_failure_pause(struct smtp_session *);
 static void smtp_auth_failure_resume(int, short, void *);
+
+static void smtp_queue_create_message(struct smtp_session *);
+static void smtp_queue_open_message(struct smtp_session *);
+static void smtp_queue_commit(struct smtp_session *);
+static void smtp_queue_rollback(struct smtp_session *);
 
 static void smtp_filter_connect(struct smtp_session *, struct sockaddr *);
 static void smtp_filter_rset(struct smtp_session *);
@@ -739,10 +744,7 @@ smtp_session_imsg(struct mproc *p, struct imsg *imsg)
 		s = tree_xpop(&wait_lka_mail, reqid);
 		switch (status) {
 		case LKA_OK:
-			m_create(p_queue, IMSG_SMTP_MESSAGE_CREATE, 0, 0, -1);
-			m_add_id(p_queue, s->id);
-			m_close(p_queue);
-			tree_xset(&wait_queue_msg, s->id, s);
+			smtp_queue_create_message(s);
 
 			/* sender check passed, override From callback if masquerading */
 			if (s->listener->flags & F_MASQUERADE)
@@ -1109,12 +1111,8 @@ smtp_filter_response(uint64_t id, int query, int status, uint32_t code,
 			m_close(p_lka);
 			tree_xset(&wait_lka_mail, s->id, s);
 		}
-		else {
-			m_create(p_queue, IMSG_SMTP_MESSAGE_CREATE, 0, 0, -1);
-			m_add_id(p_queue, s->id);
-			m_close(p_queue);
-			tree_xset(&wait_queue_msg, s->id, s);
-		}
+		else
+			smtp_queue_create_message(s);
 		return;
 
 	case QUERY_RCPT:
@@ -1141,11 +1139,7 @@ smtp_filter_response(uint64_t id, int query, int status, uint32_t code,
 			io_reload(&s->io);
 			return;
 		}
-		m_create(p_queue, IMSG_SMTP_MESSAGE_OPEN, 0, 0, -1);
-		m_add_id(p_queue, s->id);
-		m_add_msgid(p_queue, evpid_to_msgid(s->evp.id));
-		m_close(p_queue);
-		tree_xset(&wait_queue_fd, s->id, s);
+		smtp_queue_open_message(s);
 		return;
 
 	case QUERY_EOM:
@@ -1476,10 +1470,8 @@ smtp_data_io_done(struct smtp_session *s)
 	if (s->msgflags & MF_ERROR) {
 
 		smtp_filter_rollback(s);
+		smtp_queue_rollback(s);
 
-		m_create(p_queue, IMSG_SMTP_MESSAGE_ROLLBACK, 0, 0, -1);
-		m_add_msgid(p_queue, evpid_to_msgid(s->evp.id));
-		m_close(p_queue);
 		if (s->msgflags & MF_ERROR_SIZE)
 			smtp_reply(s, "554 Message too big");
 		else if (s->msgflags & MF_ERROR_LOOP)
@@ -1757,11 +1749,8 @@ smtp_command(struct smtp_session *s, char *line)
 
 		smtp_filter_rset(s);
 
-		if (s->evp.id) {
-			m_create(p_queue, IMSG_SMTP_MESSAGE_ROLLBACK, 0, 0, -1);
-			m_add_msgid(p_queue, evpid_to_msgid(s->evp.id));
-			m_close(p_queue);
-		}
+		if (s->evp.id)
+			smtp_queue_rollback(s);
 
 		s->phase = PHASE_SETUP;
 		smtp_message_reset(s, 0);
@@ -2108,9 +2097,7 @@ smtp_message_end(struct smtp_session *s)
 	s->phase = PHASE_SETUP;
 
 	if (s->msgflags & MF_ERROR) {
-		m_create(p_queue, IMSG_SMTP_MESSAGE_ROLLBACK, 0, 0, -1);
-		m_add_msgid(p_queue, evpid_to_msgid(s->evp.id));
-		m_close(p_queue);
+		smtp_queue_rollback(s);
 		if (s->msgflags & MF_ERROR_SIZE)
 			smtp_reply(s, "554 %s %s: Transaction failed, message too big",
 			    esc_code(ESC_STATUS_PERMFAIL, ESC_MESSAGE_TOO_BIG_FOR_SYSTEM),
@@ -2122,11 +2109,7 @@ smtp_message_end(struct smtp_session *s)
 		return;
 	}
 
-	m_create(p_queue, IMSG_SMTP_MESSAGE_COMMIT, 0, 0, -1);
-	m_add_id(p_queue, s->id);
-	m_add_msgid(p_queue, evpid_to_msgid(s->evp.id));
-	m_close(p_queue);
-	tree_xset(&wait_queue_commit, s->id, s);
+	smtp_queue_commit(s);
 }
 
 static void
@@ -2243,9 +2226,7 @@ smtp_free(struct smtp_session *s, const char * reason)
 	tree_pop(&wait_filter_data, s->id);
 
 	if (s->evp.id) {
-		m_create(p_queue, IMSG_SMTP_MESSAGE_ROLLBACK, 0, 0, -1);
-		m_add_msgid(p_queue, evpid_to_msgid(s->evp.id));
-		m_close(p_queue);
+		smtp_queue_rollback(s);
 		io_clear(&s->oev);
 		iobuf_clear(&s->obuf);
 	}
@@ -2467,6 +2448,43 @@ smtp_auth_failure_pause(struct smtp_session *s)
 	    "will defer answer for %lu microseconds", tv.tv_usec);
 	evtimer_set(&s->pause, smtp_auth_failure_resume, s);
 	evtimer_add(&s->pause, &tv);
+}
+
+static void
+smtp_queue_create_message(struct smtp_session *s)
+{
+	m_create(p_queue, IMSG_SMTP_MESSAGE_CREATE, 0, 0, -1);
+	m_add_id(p_queue, s->id);
+	m_close(p_queue);
+	tree_xset(&wait_queue_msg, s->id, s);
+}
+
+static void
+smtp_queue_open_message(struct smtp_session *s)
+{
+	m_create(p_queue, IMSG_SMTP_MESSAGE_OPEN, 0, 0, -1);
+	m_add_id(p_queue, s->id);
+	m_add_msgid(p_queue, evpid_to_msgid(s->evp.id));
+	m_close(p_queue);
+	tree_xset(&wait_queue_fd, s->id, s);
+}
+
+static void
+smtp_queue_commit(struct smtp_session *s)
+{
+	m_create(p_queue, IMSG_SMTP_MESSAGE_COMMIT, 0, 0, -1);
+	m_add_id(p_queue, s->id);
+	m_add_msgid(p_queue, evpid_to_msgid(s->evp.id));
+	m_close(p_queue);
+	tree_xset(&wait_queue_commit, s->id, s);
+}
+
+static void
+smtp_queue_rollback(struct smtp_session *s)
+{
+	m_create(p_queue, IMSG_SMTP_MESSAGE_ROLLBACK, 0, 0, -1);
+	m_add_msgid(p_queue, evpid_to_msgid(s->evp.id));
+	m_close(p_queue);
 }
 
 static void
