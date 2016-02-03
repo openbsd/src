@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.262 2016/02/03 15:16:33 bluhm Exp $	*/
+/*	$OpenBSD: sd.c,v 1.263 2016/02/03 21:42:12 bluhm Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -341,12 +341,12 @@ sdopen(dev_t dev, int flag, int fmt, struct proc *p)
 	sc = sdlookup(unit);
 	if (sc == NULL)
 		return (ENXIO);
-	sc_link = sc->sc_link;
-
 	if (sc->flags & SDF_DYING) {
 		device_unref(&sc->sc_dev);
 		return (ENXIO);
 	}
+	sc_link = sc->sc_link;
+
 	if (ISSET(flag, FWRITE) && ISSET(sc_link->flags, SDEV_READONLY)) {
 		device_unref(&sc->sc_dev);
 		return (EACCES);
@@ -781,6 +781,10 @@ sdminphys(struct buf *bp)
 	sc = sdlookup(DISKUNIT(bp->b_dev));
 	if (sc == NULL)
 		return;  /* XXX - right way to fail this? */
+	if (sc->flags & SDF_DYING) {
+		device_unref(&sc->sc_dev);
+		return;
+	}
 	sc_link = sc->sc_link;
 
 	/*
