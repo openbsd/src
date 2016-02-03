@@ -1,4 +1,4 @@
-/*	$OpenBSD: filter.c,v 1.15 2016/01/29 12:43:38 eric Exp $	*/
+/*	$OpenBSD: filter.c,v 1.16 2016/02/03 11:14:08 eric Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@poolp.org>
@@ -465,7 +465,7 @@ filter_drain_query(struct filter_query *q)
 	}
 
 	/* Defer the response if the file is not closed yet. */
-	if (q->type == QUERY_EOM && q->session->ofile) {
+	if (q->type == QUERY_EOM && q->session->ofile && q->smtp.status == FILTER_OK) {
 		log_debug("filter: deferring eom query...");
 		q->session->eom = q;
 		return;
@@ -517,29 +517,19 @@ static void
 filter_end_query(struct filter_query *q)
 {
 	struct filter_session *s = q->session;
+	const char *response = q->smtp.response;
 
 	log_trace(TRACE_FILTERS, "filter: filter_end_query %s",
 	    filter_query_to_text(q));
 
-	if (q->type == QUERY_EOM) {
-
-		log_trace(TRACE_FILTERS,
-		    "filter: filter_end_query(%d, %zu, %zu)", s->iev.sock,
-		    s->idatalen, q->u.datalen);
-
-		if (s->error) {
-			smtp_filter_response(s->id, QUERY_EOM, FILTER_FAIL,
-			    0, NULL);
-			free(q->smtp.response);
-			goto done;
-		}
-		else if (q->u.datalen != s->idatalen) {
-			log_warnx("filter: datalen mismatch on session %" PRIx64
-			    ": %zu/%zu", s->id, s->idatalen, q->u.datalen);
-			smtp_filter_response(s->id, QUERY_EOM, FILTER_FAIL,
-			    0, NULL);
-			free(q->smtp.response);
-			goto done;
+	if (q->type == QUERY_EOM && q->smtp.status == FILTER_OK) {
+		if (s->error || q->u.datalen != s->idatalen) {
+			response = "Internal error";
+			q->smtp.code = 451;
+			q->smtp.status = FILTER_FAIL;
+			if (!s->error)
+				log_warnx("filter: datalen mismatch on session %" PRIx64
+				    ": %zu/%zu", s->id, s->idatalen, q->u.datalen);
 		}
 	}
 
@@ -549,12 +539,11 @@ filter_end_query(struct filter_query *q)
 	    q->qid,
 	    status_to_str(q->smtp.status),
 	    q->smtp.code,
-	    q->smtp.response);
-	smtp_filter_response(s->id, q->type, q->smtp.status, q->smtp.code,
-	    q->smtp.response);
-	free(q->smtp.response);
+	    response);
 
-    done:
+	smtp_filter_response(s->id, q->type, q->smtp.status, q->smtp.code,
+	    response);
+	free(q->smtp.response);
 	free(q);
 }
 
