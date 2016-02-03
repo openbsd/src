@@ -1,4 +1,4 @@
-/*	$OpenBSD: tail.c,v 1.20 2015/11/19 17:50:04 tedu Exp $	*/
+/*	$OpenBSD: tail.c,v 1.21 2016/02/03 12:23:57 halex Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -153,7 +153,8 @@ main(int argc, char *argv[])
 		err(1, "reallocarray");
 
 	if (argc) {
-		for (i = 0; (tf[i].fname = *argv++); i++) {
+		for (i = 0; *argv; i++) {
+			tf[i].fname = *argv++;
 			if ((tf[i].fp = fopen(tf[i].fname, "r")) == NULL ||
 			    fstat(fileno(tf[i].fp), &(tf[i].sb))) {
 				ierr(tf[i].fname);
