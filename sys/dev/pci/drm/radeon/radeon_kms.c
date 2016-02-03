@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_kms.c,v 1.46 2016/01/06 19:56:08 kettenis Exp $	*/
+/*	$OpenBSD: radeon_kms.c,v 1.47 2016/02/03 07:42:14 kettenis Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -39,6 +39,14 @@
 
 #if NVGA > 0
 extern int vga_console_attached;
+#endif
+
+#ifdef __amd64__
+#include "efifb.h"
+#endif
+
+#if NEFIFB > 0
+#include <machine/efifbvar.h>
 #endif
 
 #define DRIVER_NAME		"radeon"
@@ -501,6 +509,12 @@ radeondrm_attach_kms(struct device *parent, struct device *self, void *aux)
 		vga_console_attached = 1;
 #endif
 	}
+#if NEFIFB > 0
+	if (efifb_is_console(pa)) {
+		rdev->console = 1;
+		efifb_cndetach();
+	}
+#endif
 #endif
 
 #define RADEON_PCI_MEM		0x10
