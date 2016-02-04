@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_subr.c,v 1.33 2015/03/14 03:38:52 jsg Exp $	*/
+/*	$OpenBSD: ext2fs_subr.c,v 1.34 2016/02/04 12:45:03 mikeb Exp $	*/
 /*	$NetBSD: ext2fs_subr.c,v 1.1 1997/06/11 09:34:03 bouyer Exp $	*/
 
 /*
@@ -48,25 +48,6 @@
 #include <ufs/ext2fs/ext2fs.h>
 #include <ufs/ext2fs/ext2fs_extern.h>
 #include <ufs/ext2fs/ext2fs_extents.h>
-
-union _qcvt {
-	int64_t qcvt;
-	int32_t val[2];
-};
-
-#define SETHIGH(q, h) {			\
-	union _qcvt tmp;		\
-	tmp.qcvt = (q);			\
-	tmp.val[_QUAD_HIGHWORD] = (h);	\
-	(q) = tmp.qcvt;			\
-}
-
-#define SETLOW(q, l) {			\
-	union _qcvt tmp;		\
-	tmp.qcvt = (q);			\
-	tmp.val[_QUAD_LOWWORD] = (l);	\
-	(q) = tmp.qcvt;			\
-}
 
 #ifdef _KERNEL
 
@@ -220,8 +201,8 @@ ext2fs_vinit(struct mount *mp, struct vops *specops,
 
 	/* Initialize modrev times */
 	getmicrouptime(&tv);
-	SETHIGH(ip->i_modrev, tv.tv_sec);
-	SETLOW(ip->i_modrev, tv.tv_usec * 4294);
+	ip->i_modrev = (u_quad_t)tv.tv_sec << 32;
+	ip->i_modrev |= (u_quad_t)tv.tv_usec * 4294;
 
 	*vpp = vp;
 
