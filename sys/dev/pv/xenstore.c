@@ -1,4 +1,4 @@
-/*	$OpenBSD: xenstore.c,v 1.25 2016/02/02 17:52:46 mikeb Exp $	*/
+/*	$OpenBSD: xenstore.c,v 1.26 2016/02/04 12:50:56 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Belopuhov
@@ -58,8 +58,7 @@
  * notably the XenBus used to discover and manage Xen devices.
  */
 
-const struct
-{
+const struct {
 	const char		*xse_errstr;
 	int			 xse_errnum;
 } xs_errors[] = {
@@ -80,8 +79,7 @@ const struct
 	{ NULL,		-1 },
 };
 
-struct xs_msghdr
-{
+struct xs_msghdr {
 	/* Message type */
 	uint32_t		 xmh_type;
 	/* Request identifier, echoed in daemon's response.  */
@@ -590,9 +588,7 @@ xs_intr(void *arg)
 	if (xsm->xsm_read == xsm->xsm_hdr.xmh_len) {
 		xs->xs_rmsg = NULL;
 		if (xsm->xsm_hdr.xmh_type == XS_EVENT) {
-			if (xs_event(xs, xsm))
-				printf("%s: no watchers for node \"%s\"\n",
-				    sc->sc_dev.dv_xname, xsm->xsm_data);
+			xs_event(xs, xsm);
 		} else {
 			mtx_enter(&xs->xs_rsplck);
 			TAILQ_INSERT_TAIL(&xs->xs_rsps, xsm, xsm_link);
@@ -691,7 +687,7 @@ int
 xs_event(struct xs_softc *xs, struct xs_msg *xsm)
 {
 	struct xs_watch *xsw;
-	char *token;
+	char *token = NULL;
 	int i;
 
 	for (i = 0; i < xsm->xsm_read; i++) {
@@ -699,6 +695,11 @@ xs_event(struct xs_softc *xs, struct xs_msg *xsm)
 			token = &xsm->xsm_data[i+1];
 			break;
 		}
+	}
+	if (token == NULL) {
+		printf("%s: event on \"%s\" without token\n",
+		    xs->xs_sc->sc_dev.dv_xname, xsm->xsm_data);
+		return (-1);
 	}
 
 	mtx_enter(&xs->xs_watchlck);
@@ -710,6 +711,9 @@ xs_event(struct xs_softc *xs, struct xs_msg *xsm)
 		return (0);
 	}
 	mtx_leave(&xs->xs_watchlck);
+
+	printf("%s: no watchers for node \"%s\"\n",
+	    xs->xs_sc->sc_dev.dv_xname, xsm->xsm_data);
 	return (-1);
 }
 
