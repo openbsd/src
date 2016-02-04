@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldapd.c,v 1.18 2016/02/02 14:59:20 gsoares Exp $ */
+/*	$OpenBSD: ldapd.c,v 1.19 2016/02/04 12:48:06 jca Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -51,7 +51,7 @@ static void	 ldapd_cleanup(char *);
 
 struct ldapd_stats	 stats;
 pid_t			 ldape_pid;
-char *			 datadir;
+const char		*datadir = DATADIR;
 
 void
 usage(void)
@@ -120,7 +120,6 @@ main(int argc, char *argv[])
 	struct event		 ev_sighup;
 	struct stat		 sb;
 
-	datadir = DATADIR;
 	log_init(1);		/* log to stderr until daemonized */
 
 	while ((c = getopt(argc, argv, "dhvD:f:nr:s:")) != -1) {
