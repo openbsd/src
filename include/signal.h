@@ -1,4 +1,4 @@
-/*	$OpenBSD: signal.h,v 1.23 2015/11/10 04:30:59 guenther Exp $	*/
+/*	$OpenBSD: signal.h,v 1.24 2016/02/04 22:04:34 millert Exp $	*/
 /*	$NetBSD: signal.h,v 1.8 1996/02/29 00:04:57 jtc Exp $	*/
 
 /*-
@@ -71,7 +71,8 @@ int	sigsuspend(const sigset_t *);
 
 extern int *__errno(void);
 
-__only_inline int sigaddset(sigset_t *__set, int __signo) {
+__only_inline int sigaddset(sigset_t *__set, int __signo)
+{
 	if (__signo <= 0 || __signo >= _NSIG) {
 		*__errno() = 22;		/* EINVAL */
 		return -1;
@@ -80,7 +81,8 @@ __only_inline int sigaddset(sigset_t *__set, int __signo) {
 	return (0);
 }
 
-__only_inline int sigdelset(sigset_t *__set, int __signo) {
+__only_inline int sigdelset(sigset_t *__set, int __signo)
+{
 	if (__signo <= 0 || __signo >= _NSIG) {
 		*__errno() = 22;		/* EINVAL */
 		return -1;
@@ -89,18 +91,28 @@ __only_inline int sigdelset(sigset_t *__set, int __signo) {
 	return (0);
 }
 
-__only_inline int sigismember(const sigset_t *__set, int __signo) {
+__only_inline int sigismember(const sigset_t *__set, int __signo)
+{
 	if (__signo <= 0 || __signo >= _NSIG) {
 		*__errno() = 22;		/* EINVAL */
 		return -1;
 	}
 	return ((*__set & (1U << ((__signo)-1))) != 0);
 }
-#endif /* !_ANSI_LIBRARY */
 
-/* List definitions after function declarations, or Reiser cpp gets upset. */
-#define	sigemptyset(set)	(*(set) = 0, 0)
-#define	sigfillset(set)		(*(set) = ~(sigset_t)0, 0)
+__only_inline int sigemptyset(sigset_t *__set)
+{
+	*__set = 0;
+	return (0);
+}
+
+__only_inline int sigfillset(sigset_t *__set)
+{
+	*__set = ~(sigset_t)0;
+	return (0);
+}
+
+#endif /* !_ANSI_LIBRARY */
 
 #if __BSD_VISIBLE || __XPG_VISIBLE >= 420
 int	killpg(pid_t, int);
