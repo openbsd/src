@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_bios.c,v 1.6 2015/04/12 12:14:30 jsg Exp $	*/
+/*	$OpenBSD: radeon_bios.c,v 1.7 2016/02/04 07:16:18 kettenis Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -144,6 +144,8 @@ static bool radeon_read_bios(struct radeon_device *rdev)
 	pci_conf_write(rdev->pc, rdev->pa_tag, PCI_ROM_REG, address);
 
 	size = PCI_ROM_SIZE(mask);
+	if (size == 0)
+		return false;
 	rc = bus_space_map(rdev->memt, PCI_ROM_ADDR(address), size,
 	    BUS_SPACE_MAP_LINEAR, &romh);
 	if (rc != 0) {
