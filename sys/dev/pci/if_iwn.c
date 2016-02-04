@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.159 2016/02/04 20:38:57 stsp Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.160 2016/02/04 21:32:01 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -2008,7 +2008,15 @@ iwn_rx_done(struct iwn_softc *sc, struct iwn_rx_desc *desc,
 		return;
 	}
 	/* Discard frames that are too short. */
-	if (len < sizeof (*wh)) {
+	if (ic->ic_opmode == IEEE80211_M_MONITOR) {
+		/* Allow control frames in monitor mode. */
+		if (len < sizeof (struct ieee80211_frame_cts)) {
+			DPRINTF(("frame too short: %d\n", len));
+			ic->ic_stats.is_rx_tooshort++;
+			ifp->if_ierrors++;
+			return;
+		}
+	} else if (len < sizeof (*wh)) {
 		DPRINTF(("frame too short: %d\n", len));
 		ic->ic_stats.is_rx_tooshort++;
 		ifp->if_ierrors++;
@@ -2058,12 +2066,24 @@ iwn_rx_done(struct iwn_softc *sc, struct iwn_rx_desc *desc,
 	m->m_data = head;
 	m->m_pkthdr.len = m->m_len = len;
 
-	/* Grab a reference to the source node. */
+	/* 
+	 * Grab a reference to the source node. Note that control frames are
+	 * shorter than struct ieee80211_frame but ieee80211_find_rxnode()
+	 * is being careful about control frames.
+	 */
 	wh = mtod(m, struct ieee80211_frame *);
+	if (len < sizeof (*wh) &&
+	   (wh->i_fc[0] & IEEE80211_FC0_TYPE_MASK) != IEEE80211_FC0_TYPE_CTL) {
+		ic->ic_stats.is_rx_tooshort++;
+		ifp->if_ierrors++;
+		m_freem(m);
+		return;
+	}
 	ni = ieee80211_find_rxnode(ic, wh);
 
 	rxi.rxi_flags = 0;
-	if ((wh->i_fc[1] & IEEE80211_FC1_PROTECTED) &&
+	if (((wh->i_fc[0] & IEEE80211_FC0_TYPE_MASK) != IEEE80211_FC0_TYPE_CTL)
+	    && (wh->i_fc[1] & IEEE80211_FC1_PROTECTED) &&
 	    !IEEE80211_IS_MULTICAST(wh->i_addr1) &&
 	    (ni->ni_flags & IEEE80211_NODE_RXPROT) &&
 	    ni->ni_pairwise_key.k_cipher == IEEE80211_CIPHER_CCMP) {
