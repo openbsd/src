@@ -1,4 +1,4 @@
-/*	$OpenBSD: efiboot.c,v 1.10 2015/11/26 20:26:20 yasuoka Exp $	*/
+/*	$OpenBSD: efiboot.c,v 1.11 2016/02/04 09:19:39 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -526,9 +526,9 @@ efi_makebootargs(void)
 				bestsiz = gopsiz;
 			}
 		}
-		if (bestmode >= 0 && conout->Mode->Mode != bestmode) {
+		if (bestmode >= 0) {
 			status = EFI_CALL(gop->SetMode, gop, bestmode);
-			if (EFI_ERROR(status))
+			if (EFI_ERROR(status) && gop->Mode->Mode != bestmode)
 				printf("GOP setmode failed(%d)\n", status);
 		}
 
