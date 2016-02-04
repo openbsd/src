@@ -1,4 +1,4 @@
-/* $OpenBSD: xmodem.c,v 1.8 2015/10/05 23:15:31 nicm Exp $ */
+/* $OpenBSD: xmodem.c,v 1.9 2016/02/04 18:33:30 millert Exp $ */
 
 /*
  * Copyright (c) 2012 Nicholas Marriott <nicm@openbsd.org>
@@ -20,6 +20,7 @@
 
 #include <errno.h>
 #include <signal.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 #include <termios.h>
