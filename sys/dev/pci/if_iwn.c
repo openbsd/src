@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.158 2016/01/25 11:27:11 stsp Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.159 2016/02/04 20:38:57 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -5095,6 +5095,15 @@ iwn_update_htprot(struct ieee80211com *ic, struct ieee80211_node *ni)
 	sc->calib.state = IWN_CALIB_STATE_ASSOC;
 	sc->calib_cnt = 0;
 	timeout_add_msec(&sc->calib_to, 500);
+
+	if ((ni->ni_flags & IEEE80211_NODE_RXPROT) &&
+	    ni->ni_pairwise_key.k_cipher == IEEE80211_CIPHER_CCMP) {
+		if ((error = iwn_set_key(ic, ni, &ni->ni_pairwise_key)) != 0) {
+			printf("%s: could not set pairwise ccmp key\n",
+			    sc->sc_dev.dv_xname);
+			return;
+		}
+	}
 }
 
 /*
