@@ -1,4 +1,4 @@
-/* $OpenBSD: bioctl.c,v 1.129 2015/07/18 23:23:20 halex Exp $       */
+/* $OpenBSD: bioctl.c,v 1.130 2016/02/04 08:31:26 uebayasi Exp $       */
 
 /*
  * Copyright (c) 2004, 2005 Marco Peereboom
@@ -1234,7 +1234,7 @@ bio_patrol(char *arg)
 			mode = "disabled";
 			break;
 		default:
-			status = "unknown";
+			mode = "unknown";
 			break;
 		}
 		switch (bp.bp_status) {
