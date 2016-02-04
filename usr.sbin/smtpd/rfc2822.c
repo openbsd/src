@@ -1,4 +1,4 @@
-/*	$OpenBSD: rfc2822.c,v 1.6 2015/12/28 22:08:30 jung Exp $	*/
+/*	$OpenBSD: rfc2822.c,v 1.7 2016/02/04 22:35:17 eric Exp $	*/
 
 /*
  * Copyright (c) 2014 Gilles Chehade <gilles@poolp.org>
@@ -63,6 +63,7 @@ end:
 		    break;
 	if (hdr_miss_cb)
 		TAILQ_REMOVE(&rp->hdr_miss_cb, hdr_miss_cb, next);
+	free(hdr_miss_cb);
 	header_reset(&rp->header);
 	rp->in_hdr = 0;
 	return;
