@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_backend.c,v 1.61 2015/12/28 22:08:30 jung Exp $	*/
+/*	$OpenBSD: queue_backend.c,v 1.62 2016/02/04 12:46:28 eric Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@poolp.org>
@@ -190,6 +190,8 @@ int
 queue_message_delete(uint32_t msgid)
 {
 	char	msgpath[PATH_MAX];
+	uint64_t evpid;
+	void   *iter;
 	int	r;
 
 	profile_enter("queue_message_delete");
@@ -199,6 +201,17 @@ queue_message_delete(uint32_t msgid)
 	/* in case the message is incoming */
 	queue_message_path(msgid, msgpath, sizeof(msgpath));
 	unlink(msgpath);
+
+	/* remove remaining envelopes from the cache if any (on rollback) */
+	evpid = msgid_to_evpid(msgid);
+	for (;;) {
+		iter = NULL;
+		if (!tree_iterfrom(&evpcache_tree, &iter, evpid, &evpid, NULL))
+			break;
+		if (evpid_to_msgid(evpid) != msgid)
+			break;
+		queue_envelope_cache_del(evpid);
+	}
 
 	log_trace(TRACE_QUEUE,
 	    "queue-backend: queue_message_delete(%08"PRIx32") -> %d", msgid, r);
