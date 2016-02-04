@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.266 2016/02/03 13:38:40 eric Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.267 2016/02/04 20:27:33 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1315,25 +1315,6 @@ smtp_io(struct io *io, int evt)
 
 		/* Message body */
 		if (s->state == STATE_BODY && strcmp(line, ".")) {
-
-			if (line[0] == '.') {
-				line += 1;
-				len -= 1;
-			}
-
-			if (isspace((unsigned char)line[0]) && s->skiphdr)
-                                goto nextline;
-                        s->skiphdr = 0;
-
-                        /* BCC should be stripped from headers */
-                        if (!s->hdrdone) {
-                                if (strncasecmp("bcc:", line, 4) == 0) {
-                                        s->skiphdr = 1;
-                                        goto nextline;
-                                }
-                        }
-
-			log_trace(TRACE_SMTP, "<<< [MSG] %s", line);
 			smtp_filter_dataline(s, line);
 			goto nextline;
 		}
@@ -2563,12 +2544,15 @@ smtp_filter_dataline(struct smtp_session *s, const char *line)
 {
 	int	ret;
 
+	log_trace(TRACE_SMTP, "<<< [MSG] %s", line);
+
 	/* ignore data line if an error flag is set */
 	if (s->msgflags & MF_ERROR)
 		return;
 
-	if (*line == '\0')
-		s->hdrdone = 1;
+	/* escape lines starting with a '.' */
+	if (line[0] == '.')
+		line += 1;
 
 	/* account for newline */
 	s->datain += strlen(line) + 1;
@@ -2577,8 +2561,20 @@ smtp_filter_dataline(struct smtp_session *s, const char *line)
 		return;
 	}
 
-	/* check for loops */
 	if (!s->hdrdone) {
+
+		/* folded header that must be skipped */
+		if (isspace((unsigned char)line[0]) && s->skiphdr)
+			return;
+		s->skiphdr = 0;
+
+		/* BCC should be stripped from headers */
+		if (strncasecmp("bcc:", line, 4) == 0) {
+			s->skiphdr = 1;
+			return;
+		}
+
+		/* check for loop */
 		if (strncasecmp("Received: ", line, 10) == 0)
 			s->rcvcount++;
 		if (s->rcvcount == MAX_HOPS_COUNT) {
@@ -2586,6 +2582,9 @@ smtp_filter_dataline(struct smtp_session *s, const char *line)
 			log_warn("warn: loop detected");
 			return;
 		}
+
+		if (line[0] == '\0')
+			s->hdrdone = 1;
 	}
 
 	ret = rfc2822_parser_feed(&s->rfc2822_parser, line);
