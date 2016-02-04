@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-802_11.c,v 1.30 2016/02/03 16:08:09 stsp Exp $	*/
+/*	$OpenBSD: print-802_11.c,v 1.31 2016/02/04 10:58:48 stsp Exp $	*/
 
 /*
  * Copyright (c) 2005 Reyk Floeter <reyk@openbsd.org>
@@ -295,12 +295,14 @@ ieee80211_print_country(u_int8_t *data, u_int len)
 	data += 3;
 
 	/* channels and corresponding TX power limits */
-	while (len > 3)	{
+	while (len >= 3) {
 		/* no pretty-printing for nonsensical zero values,
 		 * nor for operating extension IDs (values >= 201) */
 		if (data[0] == 0 || data[1] == 0 ||
 		    data[0] >= 201 || data[1] >= 201) {
 			printf(", %d %d %d", data[0], data[1], data[2]);
+			len -= 3;
+			data += 3;
 			continue;
 		}
 
