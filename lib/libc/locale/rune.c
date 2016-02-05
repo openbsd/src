@@ -1,4 +1,4 @@
-/*	$OpenBSD: rune.c,v 1.5 2015/12/06 11:54:59 tobias Exp $ */
+/*	$OpenBSD: rune.c,v 1.6 2016/02/05 04:10:48 jsg Exp $ */
 /*	$NetBSD: rune.c,v 1.26 2004/05/09 11:26:33 kleink Exp $	*/
 
 /*-
@@ -129,8 +129,10 @@ readentry(_RuneRange *rr, FILE *fp)
 			continue;
 		}
 
-		if (re[i].re_max < re[i].re_min)
+		if (re[i].re_max < re[i].re_min) {
+			error = EINVAL;
 			goto fail;
+		}
 
 		l = re[i].re_max - re[i].re_min + 1;
 		re[i].re_rune_types = calloc(l, sizeof(_RuneType));
