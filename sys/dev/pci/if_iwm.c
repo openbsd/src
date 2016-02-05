@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.76 2016/01/25 11:27:11 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.77 2016/02/05 16:08:44 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -4466,6 +4466,7 @@ iwm_mvm_sta_send_to_fw(struct iwm_softc *sc, struct iwm_node *in, int update)
 	struct iwm_mvm_add_sta_cmd_v6 add_sta_cmd;
 	int ret;
 	uint32_t status;
+	struct ieee80211com *ic = &sc->sc_ic;
 
 	memset(&add_sta_cmd, 0, sizeof(add_sta_cmd));
 
@@ -4479,6 +4480,35 @@ iwm_mvm_sta_send_to_fw(struct iwm_softc *sc, struct iwm_node *in, int update)
 	add_sta_cmd.add_modify = update ? 1 : 0;
 	add_sta_cmd.station_flags_msk
 	    |= htole32(IWM_STA_FLG_FAT_EN_MSK | IWM_STA_FLG_MIMO_EN_MSK);
+
+	if (in->in_ni.ni_flags & IEEE80211_NODE_HT) {
+		add_sta_cmd.station_flags_msk
+		    |= htole32(IWM_STA_FLG_MAX_AGG_SIZE_MSK |
+		    IWM_STA_FLG_AGG_MPDU_DENS_MSK);
+
+		add_sta_cmd.station_flags
+		    |= htole32(IWM_STA_FLG_MAX_AGG_SIZE_64K);
+		switch (ic->ic_ampdu_params & IEEE80211_AMPDU_PARAM_SS) {
+		case IEEE80211_AMPDU_PARAM_SS_2:
+			add_sta_cmd.station_flags
+			    |= htole32(IWM_STA_FLG_AGG_MPDU_DENS_2US);
+			break;
+		case IEEE80211_AMPDU_PARAM_SS_4:
+			add_sta_cmd.station_flags
+			    |= htole32(IWM_STA_FLG_AGG_MPDU_DENS_4US);
+			break;
+		case IEEE80211_AMPDU_PARAM_SS_8:
+			add_sta_cmd.station_flags
+			    |= htole32(IWM_STA_FLG_AGG_MPDU_DENS_8US);
+			break;
+		case IEEE80211_AMPDU_PARAM_SS_16:
+			add_sta_cmd.station_flags
+			    |= htole32(IWM_STA_FLG_AGG_MPDU_DENS_16US);
+			break;
+		default:
+			break;
+		}
+	}
 
 	status = IWM_ADD_STA_SUCCESS;
 	ret = iwm_mvm_send_add_sta_cmd_status(sc, &add_sta_cmd, &status);
@@ -6814,7 +6844,7 @@ iwm_attach(struct device *parent, struct device *self, void *aux)
 	ic->ic_htxcaps = 0;
 	ic->ic_txbfcaps = 0;
 	ic->ic_aselcaps = 0;
-	ic->ic_ampdu_params = IEEE80211_AMPDU_PARAM_SS_4;
+	ic->ic_ampdu_params = (IEEE80211_AMPDU_PARAM_SS_4 | 0x3 /* 64k */);
 
 	ic->ic_sup_rates[IEEE80211_MODE_11A] = ieee80211_std_rateset_11a;
 	ic->ic_sup_rates[IEEE80211_MODE_11B] = ieee80211_std_rateset_11b;
