@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.26 2016/02/02 17:51:11 sthen Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.27 2016/02/05 11:40:15 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -149,28 +149,35 @@ vmd_dispatch_vmm(int fd, struct privsep_proc *p, struct imsg *imsg)
 		if ((vm = vm_getbyvmid(imsg->hdr.peerid)) == NULL)
 			fatalx("%s: invalid vm response", __func__);
 		vcp = &vm->vm_params;
+		vcp->vcp_id = vmr.vmr_id;
+
+		/*
+		 * If the peerid is not -1, forward the response back to the
+		 * the control socket.  If it is -1, the request originated
+		 * from the parent, not the control socket.
+		 */
+		if (vm->vm_peerid != (uint32_t)-1) {
+			vmr.vmr_result = res;
+			(void)strlcpy(vmr.vmr_ttyname, vm->vm_ttyname,
+			    sizeof(vmr.vmr_ttyname));
+			if (proc_compose_imsg(ps, PROC_CONTROL, -1,
+			    imsg->hdr.type, vm->vm_peerid, -1,
+			    &vmr, sizeof(vmr)) == -1) {
+				errno = vmr.vmr_result;
+				log_warn("%s: failed to foward vm result",
+				    vcp->vcp_name);
+				vm_remove(vm);
+				return (-1);
+			}
+		}
+
 		if (vmr.vmr_result) {
 			errno = vmr.vmr_result;
 			log_warn("%s: failed to start vm", vcp->vcp_name);
 			vm_remove(vm);
 		} else {
-			vcp->vcp_id = vmr.vmr_id;
 			log_info("%s: started vm %d successfully, tty %s",
 			    vcp->vcp_name, vcp->vcp_id, vm->vm_ttyname);
-		}
-		/*
-		 * If the peerid is -1, the request originated from
-		 * the parent, not the control socket.
-		 */
-		if (vm->vm_peerid == (uint32_t)-1)
-			break;
-		vmr.vmr_result = res;
-		(void)strlcpy(vmr.vmr_ttyname, vm->vm_ttyname,
-		    sizeof(vmr.vmr_ttyname));
-		if (proc_compose_imsg(ps, PROC_CONTROL, -1, imsg->hdr.type,
-		    vm->vm_peerid, -1, &vmr, sizeof(vmr)) == -1) {
-			vm_remove(vm);
-			return (-1);
 		}
 		break;
 	case IMSG_VMDOP_TERMINATE_VM_RESPONSE:
