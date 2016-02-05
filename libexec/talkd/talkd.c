@@ -1,4 +1,4 @@
-/*	$OpenBSD: talkd.c,v 1.24 2016/02/01 07:25:51 mestre Exp $	*/
+/*	$OpenBSD: talkd.c,v 1.25 2016/02/05 10:13:51 mestre Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -80,6 +80,11 @@ main(int argc, char *argv[])
 	init_table();
 	signal(SIGALRM, timeout);
 	alarm(TIMEOUT);
+
+	if (pledge("stdio rpath wpath cpath inet dns", NULL) == -1) {
+		syslog(LOG_ERR, "pledge: %m");
+		_exit(1);
+	}
 
 	for (;;) {
 		CTL_RESPONSE response;
