@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.137 2016/01/27 09:04:19 reyk Exp $	*/
+/*	$OpenBSD: conf.h,v 1.138 2016/02/05 06:29:01 uebayasi Exp $	*/
 /*	$NetBSD: conf.h,v 1.33 1996/05/03 20:03:32 christos Exp $	*/
 
 /*-
@@ -475,6 +475,13 @@ extern struct cdevsw cdevsw[];
 
 #endif
 
+/* open, close, read, write, poll, ioctl, nokqfilter */
+#define cdev_ipmi_init(c,n) { \
+	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
+	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
+	(dev_type_stop((*))) enodev, 0, (dev_type_poll((*))) enodev, \
+	(dev_type_mmap((*))) enodev, 0 }
+
 /*
  * Line discipline switch table
  */
@@ -606,6 +613,7 @@ cdev_decl(gpio);
 cdev_decl(amdmsr);
 cdev_decl(fuse);
 cdev_decl(pvbus);
+cdev_decl(ipmi);
 
 #endif
 
