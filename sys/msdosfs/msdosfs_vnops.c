@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vnops.c,v 1.106 2016/01/27 17:09:41 stefan Exp $	*/
+/*	$OpenBSD: msdosfs_vnops.c,v 1.107 2016/02/05 19:27:02 stefan Exp $	*/
 /*	$NetBSD: msdosfs_vnops.c,v 1.63 1997/10/17 11:24:19 ws Exp $	*/
 
 /*-
@@ -626,7 +626,8 @@ msdosfs_write(void *v)
 		return (0);
 
 	/* Don't bother to try to write files larger than the f/s limit */
-	if (uio->uio_offset + uio->uio_resid > MSDOSFS_FILESIZE_MAX)
+	if (uio->uio_offset > MSDOSFS_FILESIZE_MAX ||
+	    uio->uio_resid > (MSDOSFS_FILESIZE_MAX - uio->uio_offset))
 		return (EFBIG);
 
 	/* do the filesize rlimit check */
