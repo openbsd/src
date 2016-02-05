@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.h,v 1.44 2016/02/05 10:05:12 kettenis Exp $	*/
+/*	$OpenBSD: drm_linux.h,v 1.45 2016/02/05 15:51:10 kettenis Exp $	*/
 /*
  * Copyright (c) 2013, 2014, 2015 Mark Kettenis
  *
@@ -1376,3 +1376,18 @@ struct fb_info {
 
 #define framebuffer_alloc(flags, device) \
 	kzalloc(sizeof(struct fb_info), GFP_KERNEL)
+
+/*
+ * ACPI types and interfaces.
+ */
+
+typedef size_t acpi_size;
+typedef int acpi_status;
+
+struct acpi_table_header;
+
+#define ACPI_SUCCESS(x) ((x) == 0)
+
+#define AE_NOT_FOUND	0x0005
+
+acpi_status acpi_get_table_with_size(const char *, int, struct acpi_table_header **, acpi_size *);

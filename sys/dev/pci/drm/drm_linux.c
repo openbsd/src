@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.c,v 1.7 2016/01/01 15:28:26 kettenis Exp $	*/
+/*	$OpenBSD: drm_linux.c,v 1.8 2016/02/05 15:51:10 kettenis Exp $	*/
 /*
  * Copyright (c) 2013 Jonathan Gray <jsg@openbsd.org>
  *
@@ -267,6 +267,41 @@ vga_put(struct pci_dev *pdev, int rsrc)
 	pci_conf_write(pdev->pc, vga_bridge_tag, PPB_REG_BRIDGECONTROL, bc);
 
 	vga_bridge_disabled = 0;
+}
+
+#endif
+
+/*
+ * ACPI types and interfaces.
+ */
+
+#if defined(__amd64__) || defined(__i386__)
+#include "acpi.h"
+#endif
+
+#if NACPI > 0
+
+#include <dev/acpi/acpireg.h>
+#include <dev/acpi/acpivar.h>
+
+acpi_status
+acpi_get_table_with_size(const char *sig, int instance,
+    struct acpi_table_header **hdr, acpi_size *size)
+{
+	struct acpi_softc *sc = acpi_softc;
+	struct acpi_q *entry;
+
+	KASSERT(instance == 1);
+
+	SIMPLEQ_FOREACH(entry, &sc->sc_tables, q_next) {
+		if (memcmp(entry->q_table, sig, strlen(sig)) == 0) {
+			*hdr = entry->q_table;
+			*size = (*hdr)->length;
+			return 0;
+		}
+	}
+
+	return AE_NOT_FOUND;
 }
 
 #endif
