@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtadvd.c,v 1.61 2015/12/01 12:11:31 jca Exp $	*/
+/*	$OpenBSD: rtadvd.c,v 1.62 2016/02/05 12:15:15 jca Exp $	*/
 /*	$KAME: rtadvd.c,v 1.66 2002/05/29 14:18:36 itojun Exp $	*/
 
 /*
@@ -130,7 +130,7 @@ u_int32_t ndopt_flags[] = {
 	[ND_OPT_DNSSL]			= NDOPT_FLAG_DNSSL,
 };
 
-int main(int, char *[]);
+static __dead void usage(void);
 static void set_die(int);
 static void die(void);
 static void sock_open(void);
@@ -162,9 +162,7 @@ main(int argc, char *argv[])
 	closefrom(3);
 
 	/* get command line options and arguments */
-#define OPTIONS "c:ds"
-	while ((ch = getopt(argc, argv, OPTIONS)) != -1) {
-#undef OPTIONS
+	while ((ch = getopt(argc, argv, "c:ds")) != -1) {
 		switch (ch) {
 		case 'c':
 			conffile = optarg;
@@ -175,16 +173,14 @@ main(int argc, char *argv[])
 		case 's':
 			sflag = 1;
 			break;
+		default:
+			usage();
 		}
 	}
 	argc -= optind;
 	argv += optind;
-	if (argc == 0) {
-		fprintf(stderr,
-			"usage: rtadvd [-ds] [-c configfile] "
-			"interface ...\n");
-		exit(1);
-	}
+	if (argc == 0)
+		usage();
 
 	SLIST_INIT(&ralist);
 
@@ -275,6 +271,14 @@ main(int argc, char *argv[])
 			rtadvd_input();
 	}
 	exit(0);		/* NOTREACHED */
+}
+
+static void
+usage(void)
+{
+	fprintf(stderr, "usage: %s [-ds] [-c configfile] interface ...\n",
+	    getprogname());
+	exit(1);
 }
 
 static void
