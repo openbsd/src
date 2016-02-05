@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_bios.c,v 1.7 2016/02/04 07:16:18 kettenis Exp $	*/
+/*	$OpenBSD: radeon_bios.c,v 1.8 2016/02/05 08:49:59 kettenis Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -666,7 +666,7 @@ static bool radeon_acpi_vfct_bios(struct radeon_device *rdev)
 	    vhdr->PCIDevice != PCI_SLOT(rdev->pdev->devfn) ||
 	    vhdr->PCIFunction != PCI_FUNC(rdev->pdev->devfn) ||
 	    vhdr->VendorID != rdev->pdev->vendor ||
-	    vhdr->DeviceID != ddev->pci_device) {
+	    vhdr->DeviceID != rdev->pdev->device) {
 		DRM_INFO("ACPI VFCT table is not for this card\n");
 		goto out_unmap;
 	};
