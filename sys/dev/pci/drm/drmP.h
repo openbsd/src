@@ -1,4 +1,4 @@
-/* $OpenBSD: drmP.h,v 1.200 2015/11/22 15:35:49 kettenis Exp $ */
+/* $OpenBSD: drmP.h,v 1.201 2016/02/05 10:05:12 kettenis Exp $ */
 /* drmP.h -- Private header for Direct Rendering Manager -*- linux-c -*-
  * Created: Mon Jan  4 10:05:05 1999 by faith@precisioninsight.com
  */
@@ -606,7 +606,7 @@ struct drm_device {
 
 	struct drm_driver_info *driver;
 
-	struct pci_dev	 drm_pci;
+	struct pci_dev	_pdev;
 	struct pci_dev	*pdev;
 	u_int16_t	 pci_device;
 	u_int16_t	 pci_vendor;

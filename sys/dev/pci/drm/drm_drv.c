@@ -1,4 +1,4 @@
-/* $OpenBSD: drm_drv.c,v 1.144 2016/01/09 11:34:57 kettenis Exp $ */
+/* $OpenBSD: drm_drv.c,v 1.145 2016/02/05 10:05:12 kettenis Exp $ */
 /*-
  * Copyright 2007-2009 Owain G. Ainsworth <oga@openbsd.org>
  * Copyright © 2008 Intel Corporation
@@ -399,8 +399,9 @@ drm_probe(struct device *parent, void *match, void *aux)
 void
 drm_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct drm_device	*dev = (struct drm_device *)self;
-	struct drm_attach_args	*da = aux;
+	struct drm_device *dev = (struct drm_device *)self;
+	struct drm_attach_args *da = aux;
+	int bus, slot, func;
 
 	dev->dev_private = parent;
 	dev->driver = da->driver;
@@ -409,11 +410,16 @@ drm_attach(struct device *parent, struct device *self, void *aux)
 	dev->bst = da->bst;
 	dev->unique = da->busid;
 	dev->unique_len = da->busid_len;
-	dev->pdev = &dev->drm_pci;
+	dev->pdev = &dev->_pdev;
 	dev->pci_vendor = dev->pdev->vendor = da->pci_vendor;
 	dev->pci_device = dev->pdev->device = da->pci_device;
 	dev->pdev->subsystem_vendor = da->pci_subvendor;
 	dev->pdev->subsystem_device = da->pci_subdevice;
+
+	pci_decompose_tag(da->pc, da->tag, &bus, &slot, &func);
+	dev->pdev->bus = &dev->pdev->_bus;
+	dev->pdev->bus->number = bus;
+	dev->pdev->devfn = PCI_DEVFN(slot, func);
 
 	dev->pc = da->pc;
 	dev->pdev->pc = da->pc;

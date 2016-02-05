@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.h,v 1.43 2015/12/31 13:01:00 kettenis Exp $	*/
+/*	$OpenBSD: drm_linux.h,v 1.44 2016/02/05 10:05:12 kettenis Exp $	*/
 /*
  * Copyright (c) 2013, 2014, 2015 Mark Kettenis
  *
@@ -975,11 +975,20 @@ struct resource {
 	u_long	start;
 };
 
+struct pci_bus {
+	unsigned char	number;
+};
+
 struct pci_dev {
+	struct pci_bus	_bus;
+	struct pci_bus	*bus;
+
+	unsigned int	devfn;
 	uint16_t	vendor;
 	uint16_t	device;
 	uint16_t	subsystem_vendor;
 	uint16_t	subsystem_device;
+
 	pci_chipset_tag_t pc;
 	pcitag_t	tag;
 	struct pci_softc *pci;
@@ -998,6 +1007,8 @@ struct pci_dev {
 #define PCI_DEVICE_ID_ATI_RADEON_QY	PCI_PRODUCT_ATI_RADEON_QY
 
 #define PCI_DEVFN(slot, func)	((slot) << 3 | (func))
+#define PCI_SLOT(devfn)		((devfn) >> 3)
+#define PCI_FUNC(devfn)		((devfn) & 0x7)
 
 static inline void
 pci_read_config_dword(struct pci_dev *pdev, int reg, u32 *val)
