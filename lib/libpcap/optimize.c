@@ -1,4 +1,4 @@
-/*	$OpenBSD: optimize.c,v 1.18 2015/12/22 19:51:04 mmcc Exp $	*/
+/*	$OpenBSD: optimize.c,v 1.19 2016/02/05 16:58:39 canacar Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1993, 1994, 1995, 1996
@@ -1902,7 +1902,7 @@ fail2:
 	 */
 	maxval = 3 * max_stmts;
 	vmap = reallocarray(NULL, maxval, sizeof(*vmap));
-	vnode_base = reallocarray(NULL, maxval, sizeof(*vmap));
+	vnode_base = reallocarray(NULL, maxval, sizeof(*vnode_base));
 	if (vmap == NULL || vnode_base == NULL)
 		bpf_error("malloc");
 }
