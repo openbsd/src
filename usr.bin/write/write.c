@@ -1,4 +1,4 @@
-/*	$OpenBSD: write.c,v 1.32 2015/10/20 20:21:18 bluhm Exp $	*/
+/*	$OpenBSD: write.c,v 1.33 2016/02/05 19:00:39 martijn Exp $	*/
 /*	$NetBSD: write.c,v 1.5 1995/08/31 21:48:32 jtc Exp $	*/
 
 /*
@@ -34,20 +34,20 @@
  */
 
 #include <sys/stat.h>
+
 #include <ctype.h>
+#include <err.h>
+#include <fcntl.h>
+#include <limits.h>
+#include <paths.h>
+#include <pwd.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <signal.h>
 #include <time.h>
-#include <fcntl.h>
-#include <paths.h>
-#include <pwd.h>
 #include <unistd.h>
-#include <limits.h>
 #include <utmp.h>
-#include <err.h>
-#include <vis.h>
 
 void done(int sig);
 void do_write(char *, char *, uid_t);
@@ -55,6 +55,7 @@ void wr_fputs(char *);
 void search_utmp(char *, char *, int, char *, uid_t);
 int term_chk(char *, int *, time_t *, int);
 int utmp_chk(char *, char *);
+static int isu8cont(unsigned char c);
 
 int
 main(int argc, char *argv[])
@@ -296,24 +297,32 @@ done(int sig)
 void
 wr_fputs(char *s)
 {
-	u_char c;
-	char visout[5], *s2;
 
 #define	PUTC(c)	if (putchar(c) == EOF) goto err;
 
 	for (; *s != '\0'; ++s) {
-		c = toascii(*s);
-		if (c == '\n') {
+		if (*s == '\n') {
 			PUTC('\r');
 			PUTC('\n');
 			continue;
 		}
-		vis(visout, c, VIS_SAFE|VIS_NOSLASH, s[1]);
-		for (s2 = visout; *s2; s2++)
-			PUTC(*s2);
+		if (isu8cont(*s))
+			continue;
+		if (isprint(*s) || isspace(*s) || *s == '\a') {
+			PUTC(*s);
+		} else {
+			PUTC('?');
+		}
+
 	}
 	return;
 
 err:	err(1, NULL);
 #undef PUTC
+}
+
+static int
+isu8cont(unsigned char c)
+{
+	return (c & (0x80 | 0x40)) == 0x80;
 }
