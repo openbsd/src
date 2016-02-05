@@ -1,10 +1,10 @@
-.\" $OpenBSD: MAKEDEV.8,v 1.76 2016/01/27 09:12:16 reyk Exp $
+.\" $OpenBSD: MAKEDEV.8,v 1.77 2016/02/05 06:30:21 uebayasi Exp $
 .\"
 .\" THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 .\" generated from:
 .\"
-.\"	OpenBSD: etc.amd64/MAKEDEV.md,v 1.62 2015/12/21 22:15:53 sf Exp 
-.\"	OpenBSD: MAKEDEV.common,v 1.83 2015/12/21 22:15:53 sf Exp 
+.\"	OpenBSD: etc.amd64/MAKEDEV.md,v 1.63 2016/01/27 09:09:29 reyk Exp 
+.\"	OpenBSD: MAKEDEV.common,v 1.84 2016/01/27 09:09:28 reyk Exp 
 .\"	OpenBSD: MAKEDEV.man,v 1.7 2009/03/18 17:34:25 sobrado Exp 
 .\"	OpenBSD: MAKEDEV.mansub,v 1.2 2004/02/20 19:13:01 miod Exp 
 .\"
@@ -23,7 +23,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 27 2016 $
+.Dd $Mdocdate: February 5 2016 $
 .Dt MAKEDEV 8 amd64
 .Os
 .Sh NAME
@@ -226,6 +226,9 @@ GPR400 smartcard reader, see
 .It Ar hotplug
 devices hot plugging, see
 .Xr hotplug 4 .
+.It Ar ipmi*
+IPMI BMC access, see
+.Xr ipmi 4 .
 .It Ar nvram
 NVRAM access, see
 .Xr nvram 4 .
