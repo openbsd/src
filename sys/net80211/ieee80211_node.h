@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.h,v 1.55 2016/02/04 16:23:40 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_node.h,v 1.56 2016/02/05 16:07:57 stsp Exp $	*/
 /*	$NetBSD: ieee80211_node.h,v 1.9 2004/04/30 22:57:32 dyoung Exp $	*/
 
 /*-
@@ -120,6 +120,9 @@ struct ieee80211_tx_ba {
 #define IEEE80211_BA_REQUESTED	1
 #define IEEE80211_BA_AGREED	2
 
+	/* ADDBA parameter set field for this BA agreement. */
+	u_int16_t		ba_params;
+
 	/* These values are IEEE802.11 frame sequence numbers (0x0-0xfff) */
 	u_int16_t		ba_winstart;
 	u_int16_t		ba_winend;
@@ -140,6 +143,7 @@ struct ieee80211_rx_ba {
 	struct timeout		ba_to;
 	int			ba_timeout_val;
 	int			ba_state;
+	u_int16_t		ba_params;
 	u_int16_t		ba_winstart;
 	u_int16_t		ba_winend;
 	u_int16_t		ba_winsize;

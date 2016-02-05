@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_output.c,v 1.108 2016/01/21 20:33:20 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_output.c,v 1.109 2016/02/05 16:07:57 stsp Exp $	*/
 /*	$NetBSD: ieee80211_output.c,v 1.13 2004/05/31 11:02:55 dyoung Exp $	*/
 
 /*-
@@ -1414,7 +1414,6 @@ ieee80211_get_addba_req(struct ieee80211com *ic, struct ieee80211_node *ni,
 	struct ieee80211_tx_ba *ba = &ni->ni_tx_ba[tid];
 	struct mbuf *m;
 	u_int8_t *frm;
-	u_int16_t params;
 
 	m = ieee80211_getmgmt(M_DONTWAIT, MT_DATA, 9);
 	if (m == NULL)
@@ -1424,12 +1423,7 @@ ieee80211_get_addba_req(struct ieee80211com *ic, struct ieee80211_node *ni,
 	*frm++ = IEEE80211_CATEG_BA;
 	*frm++ = IEEE80211_ACTION_ADDBA_REQ;
 	*frm++ = ba->ba_token;
-	params = ba->ba_winsize << IEEE80211_ADDBA_BUFSZ_SHIFT |
-	    tid << IEEE80211_ADDBA_TID_SHIFT |
-	    IEEE80211_ADDBA_AMSDU;
-	if ((ic->ic_htcaps & IEEE80211_HTCAP_DELAYEDBA) == 0)
-		params |= IEEE80211_ADDBA_BA_POLICY; /* use immediate BA */
-	LE_WRITE_2(frm, params); frm += 2;
+	LE_WRITE_2(frm, ba->ba_params); frm += 2;
 	LE_WRITE_2(frm, ba->ba_timeout_val / IEEE80211_DUR_TU); frm += 2;
 	LE_WRITE_2(frm, ba->ba_winstart); frm += 2;
 
@@ -1465,9 +1459,10 @@ ieee80211_get_addba_resp(struct ieee80211com *ic, struct ieee80211_node *ni,
 	*frm++ = IEEE80211_ACTION_ADDBA_RESP;
 	*frm++ = token;
 	LE_WRITE_2(frm, status); frm += 2;
-	params = tid << 2 | IEEE80211_BA_ACK_POLICY;
 	if (status == 0)
-		params |= ba->ba_winsize << 6;
+		params = ba->ba_params;
+	else
+		params = tid << IEEE80211_ADDBA_TID_SHIFT;
 	LE_WRITE_2(frm, params); frm += 2;
 	if (status == 0)
 		LE_WRITE_2(frm, ba->ba_timeout_val / IEEE80211_DUR_TU);
