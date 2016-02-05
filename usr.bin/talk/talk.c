@@ -1,4 +1,4 @@
-/*	$OpenBSD: talk.c,v 1.10 2016/02/01 07:29:25 mestre Exp $	*/
+/*	$OpenBSD: talk.c,v 1.11 2016/02/05 10:18:01 mestre Exp $	*/
 /*	$NetBSD: talk.c,v 1.3 1994/12/09 02:14:25 jtc Exp $	*/
 
 /*
@@ -35,6 +35,7 @@
 #include <unistd.h>
 
 #include "talk.h"
+#include "talk_ctl.h"
 
 /*
  * talk:	A visual form of write. Using sockets, a two way
@@ -53,6 +54,9 @@
 int
 main(int argc, char *argv[])
 {
+	if (pledge("stdio rpath inet dns getpw tty", NULL) == -1)
+		err(1, "pledge");
+
 	get_names(argc, argv);
 	init_display();
 	open_ctl();
@@ -62,6 +66,15 @@ main(int argc, char *argv[])
 		invite_remote();
 	end_msgs();
 	set_edit_chars();
+
+	if (his_machine_addr.s_addr == my_machine_addr.s_addr) {
+		if (pledge("stdio tty", NULL) == -1)
+			err(1, "pledge");
+	} else {
+		if (pledge("stdio tty", NULL) == -1)
+			err(1, "pledge");
+	}
+
 	talk();
 	return (0);
 }
