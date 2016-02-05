@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.157 2016/02/05 16:07:57 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.158 2016/02/05 19:42:04 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -707,7 +707,7 @@ ieee80211_input_ba(struct ieee80211com *ic, struct mbuf *m,
 	timeout_add_usec(&ba->ba_to, ba->ba_timeout_val);
 
 	if (SEQ_LT(sn, ba->ba_winstart)) {	/* SN < WinStartB */
-		ifp->if_ierrors++;
+		ic->ic_stats.is_rx_dup++;
 		m_freem(m);	/* discard the MPDU */
 		return;
 	}
