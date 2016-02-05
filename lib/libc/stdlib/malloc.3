@@ -30,9 +30,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: malloc.3,v 1.92 2016/01/06 17:57:22 tedu Exp $
+.\"	$OpenBSD: malloc.3,v 1.93 2016/02/05 15:09:09 schwarze Exp $
 .\"
-.Dd $Mdocdate: January 6 2016 $
+.Dd $Mdocdate: February 5 2016 $
 .Dt MALLOC 3
 .Os
 .Sh NAME
@@ -191,7 +191,7 @@ or
 For example, avoid this common idiom as it may lead to integer overflow:
 .Bd -literal -offset indent
 if ((p = malloc(num * size)) == NULL)
-	err(1, "malloc");
+	err(1, NULL);
 .Ed
 .Pp
 A drop-in replacement is the
@@ -200,7 +200,7 @@ extension
 .Fn reallocarray :
 .Bd -literal -offset indent
 if ((p = reallocarray(NULL, num, size)) == NULL)
-	err(1, "reallocarray");
+	err(1, NULL);
 .Ed
 .Pp
 Alternatively,
@@ -295,7 +295,7 @@ if (size && num > SIZE_MAX / size)
 	errc(1, EOVERFLOW, "overflow");
 
 if ((p = malloc(size * num)) == NULL)
-	err(1, "malloc");
+	err(1, NULL);
 .Ed
 .Pp
 The above test is not sufficient in all cases.
@@ -313,7 +313,7 @@ if (size && num > INT_MAX / size)
 	errc(1, EOVERFLOW, "overflow");
 
 if ((p = malloc(size * num)) == NULL)
-	err(1, "malloc");
+	err(1, NULL);
 .Ed
 .Pp
 Assuming the implementation checks for integer overflow as
@@ -326,13 +326,13 @@ or
 The above examples could be simplified to:
 .Bd -literal -offset indent
 if ((p = reallocarray(NULL, num, size)) == NULL)
-	err(1, "reallocarray");
+	err(1, NULL);
 .Ed
 .Pp
 or at the cost of initialization:
 .Bd -literal -offset indent
 if ((p = calloc(num, size)) == NULL)
-	err(1, "calloc");
+	err(1, NULL);
 .Ed
 .Sh DIAGNOSTICS
 If
