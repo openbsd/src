@@ -29,9 +29,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     $OpenBSD: system.3,v 1.13 2013/07/18 10:14:50 schwarze Exp $
+.\"     $OpenBSD: system.3,v 1.14 2016/02/05 18:09:19 espie Exp $
 .\"
-.Dd $Mdocdate: July 18 2013 $
+.Dd $Mdocdate: February 5 2016 $
 .Dt SYSTEM 3
 .Os
 .Sh NAME
@@ -107,3 +107,10 @@ string.
 Shell meta-characters present will be honored by the
 .Xr sh 1
 command interpreter.
+.Pp
+It is often simpler to bypass the shell and run an external command using
+.Xr fork 2 ,
+.Xr execlp 3 ,
+and
+.Xr waitpid 2
+directly instead of having to sanitize a string for shell consumption.
