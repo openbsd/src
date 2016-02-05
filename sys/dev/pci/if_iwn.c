@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.161 2016/02/05 16:09:19 stsp Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.162 2016/02/05 20:00:20 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -1843,6 +1843,7 @@ iwn_ccmp_decap(struct iwn_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ieee80211_key *k = &ni->ni_pairwise_key;
 	struct ieee80211_frame *wh;
+	struct ieee80211_rx_ba *ba;
 	uint64_t pn, *prsc;
 	uint8_t *ivp;
 	uint8_t tid;
@@ -1859,6 +1860,7 @@ iwn_ccmp_decap(struct iwn_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 	}
 	hasqos = ieee80211_has_qos(wh);
 	tid = hasqos ? ieee80211_get_qos(wh) & IEEE80211_QOS_TID : 0;
+	ba = hasqos ? &ni->ni_rx_ba[tid] : NULL;
 	prsc = &k->k_rsc[tid];
 
 	/* Extract the 48-bit PN from the CCMP header. */
@@ -1869,7 +1871,7 @@ iwn_ccmp_decap(struct iwn_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 	     (uint64_t)ivp[6] << 32 |
 	     (uint64_t)ivp[7] << 40;
 	if (pn <= *prsc) {
-		if (hasqos && (sc->last_rx_valid & IWN_LAST_RX_AMPDU)) {
+		if (hasqos && ba->ba_state == IEEE80211_BA_AGREED) {
 			/*
 			 * This is an A-MPDU subframe.
 			 * Such frames may be received out of order due to
