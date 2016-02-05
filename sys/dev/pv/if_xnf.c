@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xnf.c,v 1.16 2016/01/29 18:49:06 mikeb Exp $	*/
+/*	$OpenBSD: if_xnf.c,v 1.17 2016/02/05 10:34:52 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015, 2016 Mike Belopuhov
@@ -663,7 +663,8 @@ xnf_txeof(struct xnf_softc *sc)
 
 		if (pkts > 0) {
 			sc->sc_tx_cons = cons;
-			txr->txr_cons_event = cons + 1;
+			txr->txr_cons_event = cons +
+			    ((txr->txr_prod - cons) >> 1) + 1;
 			bus_dmamap_sync(sc->sc_dmat, sc->sc_tx_rmap, 0, 0,
 			    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 			pkts = 0;
