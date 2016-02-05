@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.267 2016/02/04 20:27:33 eric Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.268 2016/02/05 19:15:15 jung Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1772,7 +1772,7 @@ smtp_command(struct smtp_session *s, char *line)
 		break;
 
 	case CMD_HELP:
-		smtp_reply(s, "214- This is OpenSMTPD");
+		smtp_reply(s, "214- This is " SMTPD_NAME);
 		smtp_reply(s, "214- To report bugs in the implementation, "
 		    "please contact bugs@openbsd.org");
 		smtp_reply(s, "214- with full details");
