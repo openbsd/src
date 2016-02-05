@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.160 2016/02/04 21:32:01 stsp Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.161 2016/02/05 16:09:19 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -460,8 +460,7 @@ iwn_attach(struct device *parent, struct device *self, void *aux)
 	ic->ic_htxcaps = 0;
 	ic->ic_txbfcaps = 0;
 	ic->ic_aselcaps = 0;
-	ic->ic_ampdu_params = IEEE80211_AMPDU_PARAM_SS_4;
-
+	ic->ic_ampdu_params = (IEEE80211_AMPDU_PARAM_SS_4 | 0x3 /* 64k */);
 #ifdef notyet
 	if (sc->sc_flags & IWN_FLAG_HAS_11N) {
 		/* Set HT capabilities. */
@@ -4940,10 +4939,15 @@ iwn_run(struct iwn_softc *sc)
 	memset(&node, 0, sizeof node);
 	IEEE80211_ADDR_COPY(node.macaddr, ni->ni_macaddr);
 	node.id = IWN_ID_BSS;
-#ifdef notyet
-	node.htflags = htole32(IWN_AMDPU_SIZE_FACTOR(3) |
-	    IWN_AMDPU_DENSITY(5));	/* 2us */
-#endif
+	if (ni->ni_flags & IEEE80211_NODE_HT) {
+		node.htmask = (IWN_AMDPU_SIZE_FACTOR_MASK |
+		    IWN_AMDPU_DENSITY_MASK);
+		node.htflags = htole32(
+		    IWN_AMDPU_SIZE_FACTOR(
+			(ic->ic_ampdu_params & IEEE80211_AMPDU_PARAM_LE)) |
+		    IWN_AMDPU_DENSITY(
+			(ic->ic_ampdu_params & IEEE80211_AMPDU_PARAM_SS) >> 2));
+	}
 	DPRINTF(("adding BSS node\n"));
 	error = ops->add_node(sc, &node, 1);
 	if (error != 0) {
@@ -5090,10 +5094,15 @@ iwn_update_htprot(struct ieee80211com *ic, struct ieee80211_node *ni)
 	memset(&node, 0, sizeof node);
 	IEEE80211_ADDR_COPY(node.macaddr, ni->ni_macaddr);
 	node.id = IWN_ID_BSS;
-#ifdef notyet
-	node.htflags = htole32(IWN_AMDPU_SIZE_FACTOR(3) |
-	    IWN_AMDPU_DENSITY(5));	/* 2us */
-#endif
+	if (ni->ni_flags & IEEE80211_NODE_HT) {
+		node.htmask = (IWN_AMDPU_SIZE_FACTOR_MASK |
+		    IWN_AMDPU_DENSITY_MASK);
+		node.htflags = htole32(
+		    IWN_AMDPU_SIZE_FACTOR(
+			(ic->ic_ampdu_params & IEEE80211_AMPDU_PARAM_LE)) |
+		    IWN_AMDPU_DENSITY(
+			(ic->ic_ampdu_params & IEEE80211_AMPDU_PARAM_SS) >> 2));
+	}
 	error = ops->add_node(sc, &node, 1);
 	if (error != 0) {
 		printf("%s: could not add BSS node\n", sc->sc_dev.dv_xname);

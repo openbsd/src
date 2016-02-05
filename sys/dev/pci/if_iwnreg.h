@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwnreg.h,v 1.51 2016/01/07 23:08:38 stsp Exp $	*/
+/*	$OpenBSD: if_iwnreg.h,v 1.52 2016/02/05 16:09:19 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008
@@ -605,9 +605,11 @@ struct iwn_node_info {
 
 	uint32_t	htflags;
 #define IWN_AMDPU_SIZE_FACTOR(x)	((x) << 19)
+#define IWN_AMDPU_SIZE_FACTOR_MASK	((0x3) << 19)
 #define IWN_AMDPU_DENSITY(x)		((x) << 23)
+#define IWN_AMDPU_DENSITY_MASK		((0x7) << 23)
 
-	uint32_t	mask;
+	uint32_t	htmask;
 	uint16_t	disable_tid;
 	uint16_t	reserved6;
 	uint8_t		addba_tid;
@@ -632,7 +634,7 @@ struct iwn4965_node_info {
 	uint8_t		reserved5;
 	uint8_t		key[16];
 	uint32_t	htflags;
-	uint32_t	mask;
+	uint32_t	htmask;
 	uint16_t	disable_tid;
 	uint16_t	reserved6;
 	uint8_t		addba_tid;
