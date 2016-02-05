@@ -1,4 +1,4 @@
-/*	$OpenBSD: xenstore.c,v 1.26 2016/02/04 12:50:56 mikeb Exp $	*/
+/*	$OpenBSD: xenstore.c,v 1.27 2016/02/05 10:30:37 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Belopuhov
@@ -878,9 +878,9 @@ xs_getprop(struct xen_softc *sc, const char *path, const char *property,
     char *value, int size)
 {
 	struct xs_transaction xst;
-	struct iovec *iovp;
+	struct iovec *iovp = NULL;
 	char key[256];
-	int error, iov_cnt, ret;
+	int error, ret, iov_cnt = 0;
 
 	if (!property)
 		return (-1);
@@ -901,7 +901,8 @@ xs_getprop(struct xen_softc *sc, const char *path, const char *property,
 	if ((error = xs_cmd(&xst, XS_READ, key, &iovp, &iov_cnt)) != 0)
 		return (error);
 
-	strlcpy(value, (char *)iovp->iov_base, size);
+	if (iov_cnt > 0)
+		strlcpy(value, (char *)iovp->iov_base, size);
 
 	xs_resfree(&xst, iovp, iov_cnt);
 
@@ -915,7 +916,7 @@ xs_setprop(struct xen_softc *sc, const char *path, const char *property,
 	struct xs_transaction xst;
 	struct iovec iov, *iovp = &iov;
 	char key[256];
-	int error, iov_cnt, ret;
+	int error, ret, iov_cnt = 0;
 
 	if (!property)
 		return (-1);
@@ -948,7 +949,7 @@ xs_kvop(void *arg, int op, char *key, char *value, size_t valuelen)
 	struct xen_softc *sc = arg;
 	struct xs_transaction xst;
 	struct iovec iov, *iovp = &iov;
-	int error = 0, iov_cnt, cmd, i;
+	int error = 0, iov_cnt = 0, cmd, i;
 
 	switch (op) {
 	case PVBUS_KVWRITE:

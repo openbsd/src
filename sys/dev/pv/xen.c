@@ -1,4 +1,4 @@
-/*	$OpenBSD: xen.c,v 1.49 2016/02/02 17:52:46 mikeb Exp $	*/
+/*	$OpenBSD: xen.c,v 1.50 2016/02/05 10:30:37 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Belopuhov
@@ -1243,8 +1243,8 @@ xen_probe_devices(struct xen_softc *sc)
 {
 	struct xen_attach_args xa;
 	struct xs_transaction xst;
-	struct iovec *iovp1, *iovp2;
-	int i, j, error = 0, iov1_cnt, iov2_cnt;
+	struct iovec *iovp1 = NULL, *iovp2 = NULL;
+	int i, j, error = 0, iov1_cnt = 0, iov2_cnt = 0;
 	char path[256];
 
 	memset(&xst, 0, sizeof(xst));
