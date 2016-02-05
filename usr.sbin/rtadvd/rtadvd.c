@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtadvd.c,v 1.62 2016/02/05 12:15:15 jca Exp $	*/
+/*	$OpenBSD: rtadvd.c,v 1.63 2016/02/05 12:16:21 jca Exp $	*/
 /*	$KAME: rtadvd.c,v 1.66 2002/05/29 14:18:36 itojun Exp $	*/
 
 /*
@@ -260,7 +260,7 @@ main(int argc, char *argv[])
 		    timeout->tv_sec * 1000 + timeout->tv_usec / 1000)) < 0) {
 			/* EINTR would occur upon SIGUSR1 for status dump */
 			if (errno != EINTR)
-				log_warn("select");
+				log_warn("poll");
 			continue;
 		}
 		if (i == 0)	/* timeout */
