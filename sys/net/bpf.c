@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.132 2016/01/07 05:31:17 guenther Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.133 2016/02/05 13:17:37 dlg Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -1144,6 +1144,9 @@ bpf_tap(caddr_t arg, u_char *pkt, u_int pktlen, u_int direction)
 	struct timeval tv;
 	int drop = 0, gottime = 0;
 
+	if (bp == NULL)
+		return (0);
+
 	SRPL_FOREACH(d, &bp->bif_dlist, &i, bd_next) {
 		atomic_inc_long(&d->bd_rcount);
 
@@ -1224,6 +1227,9 @@ _bpf_mtap(caddr_t arg, struct mbuf *m, u_int direction,
 
 	if (cpfn == NULL)
 		cpfn = bpf_mcopy;
+
+	if (bp == NULL)
+		return;
 
 	pktlen = 0;
 	for (m0 = m; m0 != NULL; m0 = m0->m_next)
