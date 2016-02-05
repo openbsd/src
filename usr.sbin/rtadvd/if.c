@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.35 2015/12/11 20:15:52 mmcc Exp $	*/
+/*	$OpenBSD: if.c,v 1.36 2016/02/05 11:26:26 reyk Exp $	*/
 /*	$KAME: if.c,v 1.17 2001/01/21 15:27:30 itojun Exp $	*/
 
 /*
@@ -137,9 +137,11 @@ if_getmtu(char *name)
 		if ((s = socket(AF_INET6, SOCK_DGRAM, 0)) < 0)
 			return(0);
 
+		memset(&ifr, 0, sizeof(ifr));
 		ifr.ifr_addr.sa_family = AF_INET6;
-		strncpy(ifr.ifr_name, name,
-			sizeof(ifr.ifr_name));
+		if (strlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name)) >=
+		    sizeof(ifr.ifr_name))
+			fatalx("strlcpy");
 		if (ioctl(s, SIOCGIFMTU, (caddr_t)&ifr) < 0) {
 			close(s);
 			return(0);

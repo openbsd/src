@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.46 2016/01/25 05:00:12 jca Exp $	*/
+/*	$OpenBSD: config.c,v 1.47 2016/02/05 11:26:26 reyk Exp $	*/
 /*	$KAME: config.c,v 1.62 2002/05/29 10:13:10 itojun Exp $	*/
 
 /*
@@ -119,6 +119,11 @@ getconfig(char *intface)
 			exit(1);
 	}
 
+	/* make sure that the user-specified interface name fits */
+	if (strlcpy(tmp->ifname, intface,
+	    sizeof(tmp->ifname)) >= sizeof(tmp->ifname))
+		fatalx("invalid interface name");
+
 	/* get interface information */
 	if (agetflag("nolladdr"))
 		tmp->advlinkopt = 0;
@@ -132,7 +137,6 @@ getconfig(char *intface)
 		tmp->ifindex = tmp->sdl->sdl_index;
 	} else
 		tmp->ifindex = if_nametoindex(intface);
-	strncpy(tmp->ifname, intface, sizeof(tmp->ifname));
 	if ((tmp->phymtu = if_getmtu(intface)) == 0) {
 		tmp->phymtu = IPV6_MMTU;
 		log_warn("can't get interface mtu of %s. Treat as %d",
