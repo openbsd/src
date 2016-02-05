@@ -1,4 +1,4 @@
-/*	$OpenBSD: locale.c,v 1.11 2016/02/05 12:58:33 jca Exp $	*/
+/*	$OpenBSD: locale.c,v 1.12 2016/02/05 12:59:12 jca Exp $	*/
 /*
  * Copyright (c) 2013 Stefan Sperling <stsp@openbsd.org>
  *
@@ -15,12 +15,12 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <err.h>
+#include <locale.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <locale.h>
 #include <unistd.h>
-#include <err.h>
 
 extern char		*__progname;
 
