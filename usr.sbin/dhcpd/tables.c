@@ -1,4 +1,4 @@
-/*	$OpenBSD: tables.c,v 1.11 2015/06/27 14:29:39 krw Exp $	*/
+/*	$OpenBSD: tables.c,v 1.12 2016/02/06 23:50:10 krw Exp $	*/
 
 /* Tables of information... */
 
@@ -40,6 +40,17 @@
  * Enterprises, see ``http://www.vix.com''.
  */
 
+#include <sys/types.h>
+#include <sys/socket.h>
+
+#include <net/if.h>
+
+#include <netinet/in.h>
+
+#include <stdio.h>
+
+#include "dhcp.h"
+#include "tree.h"
 #include "dhcpd.h"
 
 /*

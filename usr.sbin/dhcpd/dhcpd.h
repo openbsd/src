@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.52 2014/07/11 16:48:29 yasuoka Exp $ */
+/*	$OpenBSD: dhcpd.h,v 1.53 2016/02/06 23:50:10 krw Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999
@@ -38,41 +38,10 @@
  * Enterprises, see ``http://www.vix.com''.
  */
 
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <sys/stat.h>
-#include <sys/wait.h>
-#include <sys/sockio.h>
-#include <sys/time.h>
-
-#include <net/if.h>
-#include <net/if_dl.h>
-#include <net/route.h>
-
-#include <netinet/in.h>
-#include <arpa/inet.h>
-
-#include <ctype.h>
-#include <errno.h>
-#include <fcntl.h>
-#include <limits.h>
-#include <netdb.h>
-#include <paths.h>
-#include <stdarg.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <syslog.h>
-#include <time.h>
-#include <unistd.h>
-
 #define ifr_netmask ifr_addr
 
 #define HAVE_SA_LEN
 #define HAVE_MKSTEMP
-
-#include "dhcp.h"
-#include "tree.h"
 
 #define DB_TIMEFMT	"%w %Y/%m/%d %T UTC"
 #define OLD_DB_TIMEFMT	"%w %Y/%m/%d %T"

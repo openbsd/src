@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp.c,v 1.13 2014/10/25 03:23:49 lteo Exp $ */
+/*	$OpenBSD: icmp.c,v 1.14 2016/02/06 23:50:10 krw Exp $ */
 
 /*
  * Copyright (c) 1997, 1998 The Internet Software Consortium.
@@ -38,9 +38,24 @@
  * Enterprises, see ``http://www.vix.com''.
  */
 
-#include "dhcpd.h"
+#include <sys/types.h>
+#include <sys/socket.h>
+
+#include <arpa/inet.h>
+
+#include <net/if.h>
+
 #include <netinet/ip.h>
 #include <netinet/ip_icmp.h>
+
+#include <netdb.h>
+#include <stdio.h>
+#include <string.h>
+#include <unistd.h>
+
+#include "dhcp.h"
+#include "tree.h"
+#include "dhcpd.h"
 
 static int icmp_protocol_initialized;
 static int icmp_protocol_fd;

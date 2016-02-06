@@ -1,4 +1,4 @@
-/*	$OpenBSD: convert.c,v 1.4 2004/05/04 21:25:27 deraadt Exp $	*/
+/*	$OpenBSD: convert.c,v 1.5 2016/02/06 23:50:10 krw Exp $	*/
 
 /*
  * Safe copying of option values into and out of the option buffer,
@@ -43,6 +43,19 @@
  * Enterprises, see ``http://www.vix.com''.
  */
 
+#include <sys/types.h>
+#include <sys/socket.h>
+
+#include <net/if.h>
+
+#include <netinet/in.h>
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include "dhcp.h"
+#include "tree.h"
 #include "dhcpd.h"
 
 u_int32_t

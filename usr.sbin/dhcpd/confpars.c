@@ -1,4 +1,4 @@
-/*	$OpenBSD: confpars.c,v 1.25 2015/08/20 22:39:29 deraadt Exp $ */
+/*	$OpenBSD: confpars.c,v 1.26 2016/02/06 23:50:10 krw Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 The Internet Software Consortium.
@@ -38,6 +38,18 @@
  * Enterprises, see ``http://www.vix.com''.
  */
 
+#include <sys/types.h>
+#include <sys/socket.h>
+
+#include <net/if.h>
+
+#include <netdb.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include "dhcp.h"
+#include "tree.h"
 #include "dhcpd.h"
 #include "dhctoken.h"
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.29 2015/06/27 14:29:39 krw Exp $	*/
+/*	$OpenBSD: options.c,v 1.30 2016/02/06 23:50:10 krw Exp $	*/
 
 /* DHCP options parsing and reassembly. */
 
@@ -40,8 +40,19 @@
  * Enterprises, see ``http://www.vix.com''.
  */
 
-#include <ctype.h>
+#include <sys/types.h>
+#include <sys/socket.h>
 
+#include <net/if.h>
+
+#include <netinet/in.h>
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include "dhcp.h"
+#include "tree.h"
 #include "dhcpd.h"
 
 int bad_options = 0;

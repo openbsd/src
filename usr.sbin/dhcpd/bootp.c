@@ -1,4 +1,4 @@
-/*	$OpenBSD: bootp.c,v 1.15 2014/07/11 09:42:27 yasuoka Exp $	*/
+/*	$OpenBSD: bootp.c,v 1.16 2016/02/06 23:50:10 krw Exp $	*/
 
 /*
  * BOOTP Protocol support.
@@ -42,6 +42,20 @@
  * Enterprises, see ``http://www.vix.com''.
  */
 
+#include <sys/socket.h>
+
+#include <arpa/inet.h>
+
+#include <net/if.h>
+
+#include <netinet/in.h>
+
+#include <errno.h>
+#include <stdio.h>
+#include <string.h>
+
+#include "dhcp.h"
+#include "tree.h"
 #include "dhcpd.h"
 
 void

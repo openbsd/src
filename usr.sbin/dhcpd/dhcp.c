@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcp.c,v 1.44 2015/12/21 21:39:11 mmcc Exp $ */
+/*	$OpenBSD: dhcp.c,v 1.45 2016/02/06 23:50:10 krw Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999
@@ -38,6 +38,22 @@
  * Enterprises, see ``http://www.vix.com''.
  */
 
+#include <sys/types.h>
+#include <sys/socket.h>
+
+#include <arpa/inet.h>
+
+#include <net/if.h>
+
+#include <netinet/in.h>
+
+#include <errno.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include "dhcp.h"
+#include "tree.h"
 #include "dhcpd.h"
 #include "sync.h"
 

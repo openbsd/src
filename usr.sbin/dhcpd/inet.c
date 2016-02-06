@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.5 2004/09/16 21:27:44 claudio Exp $	*/
+/*	$OpenBSD: inet.c,v 1.6 2016/02/06 23:50:10 krw Exp $	*/
 
 /*
  * Subroutines to manipulate internet addresses in a safely portable
@@ -42,6 +42,20 @@
  * Enterprises, see ``http://www.vix.com''.
  */
 
+#include <sys/types.h>
+#include <sys/socket.h>
+
+#include <arpa/inet.h>
+
+#include <net/if.h>
+
+#include <netinet/in.h>
+
+#include <stdio.h>
+#include <string.h>
+
+#include "dhcp.h"
+#include "tree.h"
 #include "dhcpd.h"
 
 /*

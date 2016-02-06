@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfutils.c,v 1.13 2015/02/05 09:42:52 krw Exp $ */
+/*	$OpenBSD: pfutils.c,v 1.14 2016/02/06 23:50:10 krw Exp $ */
 /*
  * Copyright (c) 2006 Chris Kuethe <ckuethe@openbsd.org>
  *
@@ -18,17 +18,14 @@
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
-#include <sys/time.h>
 
 #include <netinet/in.h>
-#include <arpa/inet.h>
 #include <net/if.h>
 #include <net/pfvar.h>
 
-#include <ctype.h>
-#include <err.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <paths.h>
 #include <poll.h>
 #include <pwd.h>
 #include <stdio.h>
@@ -36,6 +33,8 @@
 #include <string.h>
 #include <unistd.h>
 
+#include "dhcp.h"
+#include "tree.h"
 #include "dhcpd.h"
 
 extern struct passwd *pw;

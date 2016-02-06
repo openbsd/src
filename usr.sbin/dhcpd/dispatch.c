@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.35 2015/08/20 22:39:29 deraadt Exp $ */
+/*	$OpenBSD: dispatch.c,v 1.36 2016/02/06 23:50:10 krw Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999
@@ -38,12 +38,32 @@
  * Enterprises, see ``http://www.vix.com''.
  */
 
+#include <sys/types.h>
+#include <sys/ioctl.h>
+#include <sys/socket.h>
+
+#include <arpa/inet.h>
+
+#include <net/if.h>
+#include <net/if_dl.h>
+#include <net/if_media.h>
+
+#include <netinet/in.h>
+
+#include <errno.h>
+#include <ifaddrs.h>
+#include <limits.h>
+#include <poll.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <syslog.h>
+#include <unistd.h>
+
+#include "dhcp.h"
+#include "tree.h"
 #include "dhcpd.h"
 #include "sync.h"
-#include <ifaddrs.h>
-#include <sys/ioctl.h>
-#include <poll.h>
-#include <net/if_media.h>
 
 extern int syncfd;
 

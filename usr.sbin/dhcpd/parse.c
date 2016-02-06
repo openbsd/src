@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.19 2015/12/11 14:09:48 krw Exp $	*/
+/*	$OpenBSD: parse.c,v 1.20 2016/02/06 23:50:10 krw Exp $	*/
 
 /* Common parser code for dhcpd and dhclient. */
 
@@ -40,8 +40,21 @@
  * Enterprises, see ``http://www.vix.com''.
  */
 
-#include  <stdint.h>
+#include <sys/types.h>
+#include <sys/socket.h>
 
+#include <net/if.h>
+
+#include <netinet/in.h>
+
+#include <ctype.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include "dhcp.h"
+#include "tree.h"
 #include "dhcpd.h"
 #include "dhctoken.h"
 

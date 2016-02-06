@@ -1,4 +1,4 @@
-/*	$OpenBSD: conflex.c,v 1.15 2015/05/18 17:51:21 krw Exp $	*/
+/*	$OpenBSD: conflex.c,v 1.16 2016/02/06 23:50:10 krw Exp $	*/
 
 /* Lexical scanner for dhcpd config file... */
 
@@ -40,8 +40,20 @@
  * Enterprises, see ``http://www.vix.com''.
  */
 
-#include <ctype.h>
+#include <sys/types.h>
+#include <sys/socket.h>
 
+#include <net/if.h>
+
+#include <netinet/in.h>
+
+#include <ctype.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include "dhcp.h"
+#include "tree.h"
 #include "dhcpd.h"
 #include "dhctoken.h"
 

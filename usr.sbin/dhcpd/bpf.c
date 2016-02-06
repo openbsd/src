@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.12 2014/10/25 03:23:49 lteo Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.13 2016/02/06 23:50:10 krw Exp $	*/
 
 /* BPF socket interface code, originally contributed by Archie Cobbs. */
 
@@ -40,14 +40,28 @@
  * Enterprises, see ``http://www.vix.com''.
  */
 
-#include "dhcpd.h"
 #include <sys/ioctl.h>
-#include <sys/uio.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+
+#include <arpa/inet.h>
 
 #include <net/bpf.h>
-#include <netinet/ip.h>
-#include <netinet/udp.h>
+#include <net/if.h>
+
 #include <netinet/if_ether.h>
+#include <netinet/in.h>
+
+#include <errno.h>
+#include <fcntl.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+
+#include "dhcp.h"
+#include "tree.h"
+#include "dhcpd.h"
 
 #define BPF_FORMAT "/dev/bpf%d"
 

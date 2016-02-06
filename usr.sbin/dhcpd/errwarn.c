@@ -1,4 +1,4 @@
-/*	$OpenBSD: errwarn.c,v 1.8 2008/05/07 12:19:20 beck Exp $	*/
+/*	$OpenBSD: errwarn.c,v 1.9 2016/02/06 23:50:10 krw Exp $	*/
 
 /* Errors and warnings... */
 
@@ -41,10 +41,22 @@
  */
 
 #include <sys/types.h>
-#include <sys/uio.h>
-#include <unistd.h>
-#include <errno.h>
+#include <sys/socket.h>
 
+#include <net/if.h>
+
+#include <netinet/in.h>
+
+#include <errno.h>
+#include <stdarg.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <syslog.h>
+#include <unistd.h>
+
+#include "dhcp.h"
+#include "tree.h"
 #include "dhcpd.h"
 
 static void do_percentm(char *obuf, size_t size, char *ibuf);

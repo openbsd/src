@@ -1,4 +1,4 @@
-/*	$OpenBSD: db.c,v 1.14 2014/02/08 18:12:17 krw Exp $	*/
+/*	$OpenBSD: db.c,v 1.15 2016/02/06 23:50:10 krw Exp $	*/
 
 /*
  * Persistent database management routines for DHCPD.
@@ -42,6 +42,19 @@
  * Enterprises, see ``http://www.vix.com''.
  */
 
+#include <sys/types.h>
+#include <sys/socket.h>
+
+#include <net/if.h>
+
+#include <netinet/in.h>
+
+#include <fcntl.h>
+#include <stdio.h>
+#include <unistd.h>
+
+#include "dhcp.h"
+#include "tree.h"
 #include "dhcpd.h"
 
 FILE *db_file;

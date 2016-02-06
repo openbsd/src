@@ -1,4 +1,4 @@
-/*	$OpenBSD: hash.c,v 1.6 2010/01/01 20:30:25 krw Exp $	*/
+/*	$OpenBSD: hash.c,v 1.7 2016/02/06 23:50:10 krw Exp $	*/
 
 /* Routines for manipulating hash tables... */
 
@@ -40,6 +40,19 @@
  * Enterprises, see ``http://www.vix.com''.
  */
 
+#include <sys/types.h>
+#include <sys/socket.h>
+
+#include <net/if.h>
+
+#include <netinet/in.h>
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include "dhcp.h"
+#include "tree.h"
 #include "dhcpd.h"
 
 static int do_hash(unsigned char *, int, int);

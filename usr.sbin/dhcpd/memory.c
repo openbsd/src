@@ -1,4 +1,4 @@
-/*	$OpenBSD: memory.c,v 1.23 2015/02/10 23:06:13 krw Exp $ */
+/*	$OpenBSD: memory.c,v 1.24 2016/02/06 23:50:10 krw Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998 The Internet Software Consortium.
@@ -38,6 +38,20 @@
  * Enterprises, see ``http://www.vix.com''.
  */
 
+#include <sys/types.h>
+#include <sys/socket.h>
+
+#include <arpa/inet.h>
+
+#include <net/if.h>
+
+#include <netdb.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include "dhcp.h"
+#include "tree.h"
 #include "dhcpd.h"
 #include "sync.h"
 
