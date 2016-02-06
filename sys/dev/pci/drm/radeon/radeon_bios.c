@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_bios.c,v 1.8 2016/02/05 08:49:59 kettenis Exp $	*/
+/*	$OpenBSD: radeon_bios.c,v 1.9 2016/02/06 11:59:51 kettenis Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -632,6 +632,14 @@ static bool radeon_read_disabled_bios(struct radeon_device *rdev)
 	else
 		return legacy_read_disabled_bios(rdev);
 }
+
+#if defined(__amd64__) || defined(__i386__)
+#include "acpi.h"
+#endif
+
+#if NACPI > 0
+#define CONFIG_ACPI
+#endif
 
 #ifdef CONFIG_ACPI
 static bool radeon_acpi_vfct_bios(struct radeon_device *rdev)
