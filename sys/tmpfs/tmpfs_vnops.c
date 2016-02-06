@@ -1,4 +1,4 @@
-/*	$OpenBSD: tmpfs_vnops.c,v 1.23 2015/12/08 15:26:25 tedu Exp $	*/
+/*	$OpenBSD: tmpfs_vnops.c,v 1.24 2016/02/06 16:10:23 stefan Exp $	*/
 /*	$NetBSD: tmpfs_vnops.c,v 1.100 2012/11/05 17:27:39 dholland Exp $	*/
 
 /*
@@ -1017,8 +1017,8 @@ tmpfs_readlink(void *v)
 	KASSERT(vp->v_type == VLNK);
 
 	node = VP_TO_TMPFS_NODE(vp);
-	error = uiomovei(node->tn_spec.tn_lnk.tn_link,
-	    MIN(node->tn_size, uio->uio_resid), uio);
+	error = uiomove(node->tn_spec.tn_lnk.tn_link,
+	    MIN((size_t)node->tn_size, uio->uio_resid), uio);
 	tmpfs_update(node, TMPFS_NODE_ACCESSED);
 
 	return error;
