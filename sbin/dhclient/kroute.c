@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.78 2015/12/19 14:56:22 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.79 2016/02/06 19:30:52 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -16,17 +16,32 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <sys/ioctl.h>
+#include <sys/socket.h>
+#include <sys/sysctl.h>
+
+#include <arpa/inet.h>
+
+#include <net/if.h>
+#include <net/if_types.h>
+#include <net/route.h>
+
+#include <netinet/in.h>
+#include <netinet/if_ether.h>
+
+#include <errno.h>
+#include <ifaddrs.h>
+#include <imsg.h>
+#include <limits.h>
+#include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+
+#include "dhcp.h"
 #include "dhcpd.h"
 #include "privsep.h"
-
-#include <sys/ioctl.h>
-#include <sys/sysctl.h>
-#include <sys/uio.h>
-
-#include <net/if_types.h>
-
-#include <ifaddrs.h>
-#include <signal.h>
 
 struct in_addr active_addr;
 

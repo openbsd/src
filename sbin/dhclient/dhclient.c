@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.371 2016/01/26 18:26:19 mmcc Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.372 2016/02/06 19:30:52 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -53,21 +53,41 @@
  * purpose.
  */
 
-#include "dhcpd.h"
-#include "privsep.h"
-
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/stat.h>
 #include <sys/ioctl.h>
 #include <sys/uio.h>
+#include <sys/queue.h>
 
+#include <net/if.h>
+#include <net/route.h>
+
+#include <netinet/in.h>
+#include <netinet/if_ether.h>
+
+#include <arpa/inet.h>
+
+#include <ctype.h>
+#include <errno.h>
+#include <fcntl.h>
 #include <ifaddrs.h>
+#include <imsg.h>
 #include <limits.h>
+#include <paths.h>
 #include <poll.h>
 #include <pwd.h>
 #include <resolv.h>
+#include <signal.h>
 #include <stdint.h>
+#include <stdlib.h>
 #include <string.h>
+#include <syslog.h>
+#include <unistd.h>
+
+#include "dhcp.h"
+#include "dhcpd.h"
+#include "privsep.h"
 
 char *path_dhclient_conf = _PATH_DHCLIENT_CONF;
 char *path_dhclient_db = NULL;

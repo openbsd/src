@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.74 2015/10/26 16:32:33 krw Exp $	*/
+/*	$OpenBSD: options.c,v 1.75 2016/02/06 19:30:52 krw Exp $	*/
 
 /* DHCP options parsing and reassembly. */
 
@@ -40,9 +40,25 @@
  * Enterprises, see ``http://www.vix.com''.
  */
 
-#include "dhcpd.h"
+#include <sys/queue.h>
+#include <sys/socket.h>
 
+#include <arpa/inet.h>
+
+#include <net/if.h>
+
+#include <netinet/in.h>
+#include <netinet/if_ether.h>
+
+#include <ctype.h>
+#include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <vis.h>
+
+#include "dhcp.h"
+#include "dhcpd.h"
 
 int parse_option_buffer(struct option_data *, unsigned char *, int);
 int expand_search_domain_name(unsigned char *, size_t, int *, unsigned char *);

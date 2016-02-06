@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.39 2015/02/07 10:08:06 krw Exp $ */
+/*	$OpenBSD: privsep.c,v 1.40 2016/02/06 19:30:52 krw Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -16,11 +16,23 @@
  * OF OR IN CONNECTION WITH THE USE, ABUSE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <sys/queue.h>
+#include <sys/socket.h>
+
+#include <net/if.h>
+
+#include <netinet/in.h>
+#include <netinet/if_ether.h>
+
+#include <errno.h>
+#include <imsg.h>
+#include <signal.h>
+#include <stdio.h>
+#include <string.h>
+
+#include "dhcp.h"
 #include "dhcpd.h"
 #include "privsep.h"
-
-#include <sys/queue.h>
-#include <sys/uio.h>
 
 void
 dispatch_imsg(struct imsgbuf *ibuf)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: errwarn.c,v 1.22 2014/01/20 10:17:20 krw Exp $	*/
+/*	$OpenBSD: errwarn.c,v 1.23 2016/02/06 19:30:52 krw Exp $	*/
 
 /* Errors and warnings. */
 
@@ -40,10 +40,26 @@
  * with Vixie Laboratories.
  */
 
+#include <sys/queue.h>
+#include <sys/socket.h>
+
+#include <arpa/inet.h>
+
+#include <net/if.h>
+
+#include <netinet/in.h>
+#include <netinet/if_ether.h>
+
+#include <signal.h>
+#include <stdarg.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <syslog.h>
+#include <unistd.h>
+
+#include "dhcp.h"
 #include "dhcpd.h"
-
-#include <sys/uio.h>
-
 
 static char mbuf[1024];
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.93 2015/10/26 16:32:33 krw Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.94 2016/02/06 19:30:52 krw Exp $	*/
 
 /* Parser for dhclient config and lease files. */
 
@@ -40,6 +40,22 @@
  * Enterprises, see ``http://www.vix.com''.
  */
 
+#include <sys/queue.h>
+#include <sys/socket.h>
+#include <sys/types.h>
+
+#include <net/if.h>
+#include <net/if_arp.h>
+
+#include <netinet/in.h>
+#include <netinet/if_ether.h>
+
+#include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include "dhcp.h"
 #include "dhcpd.h"
 #include "dhctoken.h"
 
