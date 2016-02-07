@@ -1,12 +1,10 @@
 #!/bin/sh
 #
-# $OpenBSD: bgpd,v 1.2 2015/12/19 13:45:12 ajacoutot Exp $
+# $OpenBSD: bgpd,v 1.3 2016/02/07 20:56:48 sthen Exp $
 
 daemon="/usr/sbin/bgpd"
 
 . /etc/rc.d/rc.subr
-
-pexp="bgpd: parent.*"
 
 # child will not return a config parsing error to the parent
 rc_pre() {
