@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.8 2016/01/16 08:55:40 stefan Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.9 2016/02/07 10:17:19 jsg Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -340,7 +340,6 @@ vioblk_do_write(struct vioblk_dev *dev, off_t sector, char *buf, ssize_t sz)
 
 	if (write(dev->fd, buf, sz) != sz) {
 		log_warn("vioblk write error");
-		free(buf);
 		return (1);
 	}
 
