@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipmi.c,v 1.92 2016/02/05 06:29:01 uebayasi Exp $ */
+/*	$OpenBSD: ipmi.c,v 1.93 2016/02/07 12:17:33 uebayasi Exp $ */
 
 /*
  * Copyright (c) 2015 Masao Uebayashi
@@ -1879,8 +1879,7 @@ ipmi_watchdog(void *arg, int period)
 			int res;
 
 			t = &sc->sc_wdog_tickle_task;
-			res = task_del(systq, t);
-			KASSERT(res == 0);
+			(void)task_del(systq, t);
 			res = task_add(systq, t);
 			KASSERT(res == 1);
 		}
