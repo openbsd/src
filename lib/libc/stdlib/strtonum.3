@@ -1,4 +1,4 @@
-.\" $OpenBSD: strtonum.3,v 1.17 2013/08/14 06:32:28 jmc Exp $
+.\" $OpenBSD: strtonum.3,v 1.18 2016/02/07 20:50:24 mmcc Exp $
 .\"
 .\" Copyright (c) 2004 Ted Unangst
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 14 2013 $
+.Dd $Mdocdate: February 7 2016 $
 .Dt STRTONUM 3
 .Os
 .Sh NAME
@@ -96,7 +96,7 @@ int iterations;
 const char *errstr;
 
 iterations = strtonum(optarg, 1, 64, &errstr);
-if (errstr)
+if (errstr != NULL)
 	errx(1, "number of iterations is %s: %s", errstr, optarg);
 .Ed
 .Pp
