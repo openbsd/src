@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.162 2016/02/05 20:00:20 stsp Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.163 2016/02/07 23:56:19 tb Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -3419,7 +3419,7 @@ iwn_set_link_quality(struct iwn_softc *sc, struct ieee80211_node *ni)
 			/* XXX set correct ant mask for MIMO rates here */
 			linkq.retry[i].rflags |= IWN_RFLAG_ANT(txant);
 
-			if (i++ >= IWN_MAX_TX_RETRIES)
+			if (++i >= IWN_MAX_TX_RETRIES)
 				break;
 		}
 
