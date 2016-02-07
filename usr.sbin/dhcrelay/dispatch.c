@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.9 2009/09/03 11:56:49 reyk Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.10 2016/02/07 00:49:28 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -39,15 +39,28 @@
  * Enterprises, see ``http://www.vix.com''.
  */
 
-#include "dhcpd.h"
-
+#include <sys/types.h>
 #include <sys/ioctl.h>
+#include <sys/socket.h>
 
+#include <net/if.h>
+#include <net/if_dl.h>
 #include <net/if_media.h>
 #include <net/if_types.h>
 
+#include <netinet/in.h>
+
+#include <errno.h>
 #include <ifaddrs.h>
+#include <limits.h>
 #include <poll.h>
+#include <stdlib.h>
+#include <string.h>
+#include <syslog.h>
+#include <unistd.h>
+
+#include "dhcp.h"
+#include "dhcpd.h"
 
 struct protocol *protocols;
 struct timeout *timeouts;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcrelay.c,v 1.38 2013/03/04 00:29:56 benno Exp $ */
+/*	$OpenBSD: dhcrelay.c,v 1.39 2016/02/07 00:49:28 krw Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@cvs.openbsd.org>
@@ -39,8 +39,26 @@
  * Enterprises, see ``http://www.vix.com''.
  */
 
-#include "dhcpd.h"
+#include <sys/types.h>
 #include <sys/ioctl.h>
+#include <sys/socket.h>
+
+#include <arpa/inet.h>
+
+#include <net/if.h>
+
+#include <errno.h>
+#include <netdb.h>
+#include <paths.h>
+#include <pwd.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <syslog.h>
+#include <unistd.h>
+
+#include "dhcp.h"
+#include "dhcpd.h"
 
 void	 usage(void);
 void	 relay(struct interface_info *, struct dhcp_packet *, int,

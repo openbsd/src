@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.10 2016/02/03 14:48:36 krw Exp $	*/
+/*	$OpenBSD: packet.c,v 1.11 2016/02/07 00:49:28 krw Exp $	*/
 
 /* Packet assembly code, originally contributed by Archie Cobbs. */
 
@@ -40,12 +40,24 @@
  * Enterprises, see ``http://www.vix.com''.
  */
 
-#include "dhcpd.h"
+#include <sys/types.h>
+#include <sys/socket.h>
 
+#include <arpa/inet.h>
+
+#include <net/if.h>
 #include <net/if_enc.h>
+
+#include <netinet/in.h>
 #include <netinet/ip.h>
 #include <netinet/udp.h>
 #include <netinet/if_ether.h>
+
+#include <string.h>
+
+#include "dhcp.h"
+#include "dhcpd.h"
+
 
 u_int32_t	checksum(unsigned char *, unsigned, u_int32_t);
 u_int32_t	wrapsum(u_int32_t);
