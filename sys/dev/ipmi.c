@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipmi.c,v 1.93 2016/02/07 12:17:33 uebayasi Exp $ */
+/*	$OpenBSD: ipmi.c,v 1.94 2016/02/07 12:19:14 uebayasi Exp $ */
 
 /*
  * Copyright (c) 2015 Masao Uebayashi
@@ -1827,6 +1827,7 @@ ipmiioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *proc)
 		recv->msg.data_len = c->c_rxlen + 1;
 
 		rc = copyout(c->c_data, recv->msg.data + 1, c->c_rxlen);
+		/* Always reset state after command completion. */
 		goto reset;
 	case IPMICTL_SET_MY_ADDRESS_CMD:
 		iv = *(int *)data;
