@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.158 2016/02/05 19:42:04 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.159 2016/02/07 23:36:43 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -192,7 +192,7 @@ ieee80211_input_print(struct ieee80211com *ic,  struct ifnet *ifp,
 		break;
 	}
 #ifdef IEEE80211_DEBUG
-	doprint += ieee80211_debug;
+	doprint += (ieee80211_debug > 1);
 #endif
 	if (!doprint)
 		return;
@@ -1556,7 +1556,7 @@ ieee80211_recv_probe_resp(struct ieee80211com *ic, struct mbuf *m,
 		return;
 
 #ifdef IEEE80211_DEBUG
-	if (ieee80211_debug &&
+	if (ieee80211_debug > 1 &&
 	    (ni == NULL || ic->ic_state == IEEE80211_S_SCAN)) {
 		printf("%s: %s%s on chan %u (bss chan %u) ",
 		    __func__, (ni == NULL ? "new " : ""),
