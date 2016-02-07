@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtadvd.c,v 1.63 2016/02/05 12:16:21 jca Exp $	*/
+/*	$OpenBSD: rtadvd.c,v 1.64 2016/02/07 21:10:33 jca Exp $	*/
 /*	$KAME: rtadvd.c,v 1.66 2002/05/29 14:18:36 itojun Exp $	*/
 
 /*
@@ -132,7 +132,7 @@ u_int32_t ndopt_flags[] = {
 
 static __dead void usage(void);
 static void set_die(int);
-static void die(void);
+static __dead void die(void);
 static void sock_open(void);
 static void rtsock_open(void);
 static void rtadvd_input(void);

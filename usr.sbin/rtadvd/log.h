@@ -19,10 +19,10 @@
 void log_init(int);
 void logit(int pri, const char *fmt, ...);
 
-void fatal(const char*);
+__dead void fatal(const char*);
+__dead void fatalx(const char*);
+
 void log_warn(const char*, ...) __attribute__((format(printf, 1, 2)));
+void log_warnx(const char*, ...) __attribute__((format(printf, 1, 2)));
 void log_info(const char*, ...) __attribute__((format(printf, 1, 2)));
 void log_debug(const char*, ...) __attribute__((format(printf, 1, 2)));
-
-void fatalx(const char*);
-void log_warnx(const char*, ...) __attribute__((format(printf, 1, 2)));
