@@ -1,4 +1,4 @@
-/*	$OpenBSD: udpsock.c,v 1.4 2016/02/06 23:50:10 krw Exp $	*/
+/*	$OpenBSD: udpsock.c,v 1.5 2016/02/08 02:06:07 krw Exp $	*/
 
 /*
  * Copyright (c) 2014 YASUOKA Masahiko <yasuoka@openbsd.org>
@@ -16,7 +16,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/param.h>	/* nitems */
+#include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 
@@ -112,7 +112,7 @@ udpsock_handler(struct protocol *protocol)
 	m.msg_name = &ss;
 	m.msg_namelen = sizeof(ss);
 	m.msg_iov = iov;
-	m.msg_iovlen = nitems(iov);
+	m.msg_iovlen = 1;
 	m.msg_control = cbuf;
 	m.msg_controllen = sizeof(cbuf);
 
