@@ -1,4 +1,4 @@
-/*	$OpenBSD: dump.c,v 1.17 2015/12/11 20:15:52 mmcc Exp $	*/
+/*	$OpenBSD: dump.c,v 1.18 2016/02/08 22:44:37 jca Exp $	*/
 /*	$KAME: dump.c,v 1.27 2002/05/29 14:23:55 itojun Exp $	*/
 
 /*
@@ -78,8 +78,8 @@ ether_str(struct sockaddr_dl *sdl)
 
 	if (sdl->sdl_alen) {
 		cp = (u_char *)LLADDR(sdl);
-		snprintf(hbuf, sizeof(hbuf), "%x:%x:%x:%x:%x:%x",
-			cp[0], cp[1], cp[2], cp[3], cp[4], cp[5]);
+		snprintf(hbuf, sizeof(hbuf), "%02x:%02x:%02x:%02x:%02x:%02x",
+		    cp[0], cp[1], cp[2], cp[3], cp[4], cp[5]);
 	} else
 		snprintf(hbuf, sizeof(hbuf), "NONE");
 
