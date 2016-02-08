@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.159 2016/02/07 23:36:43 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.160 2016/02/08 00:54:57 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -712,6 +712,37 @@ ieee80211_input_ba(struct ieee80211com *ic, struct mbuf *m,
 		return;
 	}
 	if (SEQ_LT(ba->ba_winend, sn)) {	/* WinEndB < SN */
+		/* 
+		 * If this frame would move the window outside the range of
+		 * winend + winsize, drop it. This is likely a fluke and the
+		 * next frame will fit into the window again. Allowing the
+		 * window to be moved too far ahead makes us drop frames
+		 * until their sequence numbers catch up with the new window.
+		 *
+		 * However, if the window really did move arbitrarily, we must
+		 * allow it to move forward. We try to detect this condition
+		 * by counting missed consecutive frames.
+		 *
+		 * Works around buggy behaviour observed with Broadcom-based
+		 * APs, which emit "sequence" numbers such as 1888, 1889, 2501,
+		 * 1890, 1891, ... all for the same TID.
+		 */
+		if (((sn - ba->ba_winend) & 0xfff) > IEEE80211_BA_MAX_WINSZ) {
+			if (ba->ba_winmiss < IEEE80211_BA_MAX_WINMISS) { 
+				if (ba->ba_missedsn == sn - 1)
+					ba->ba_winmiss++;
+				else
+					ba->ba_winmiss = 0;
+				ba->ba_missedsn = sn;
+				ifp->if_ierrors++;
+				m_freem(m);	/* discard the MPDU */
+				return;
+			}
+
+			/* It appears the window has moved for real. */
+			ba->ba_winmiss = 0;
+			ba->ba_missedsn = 0;
+		}
 		count = (sn - ba->ba_winend) & 0xfff;
 		if (count > ba->ba_winsize)	/* no overlap */
 			count = ba->ba_winsize;
