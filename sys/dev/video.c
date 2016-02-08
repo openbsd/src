@@ -1,4 +1,4 @@
-/*	$OpenBSD: video.c,v 1.37 2015/08/29 20:51:46 deraadt Exp $	*/
+/*	$OpenBSD: video.c,v 1.38 2016/02/08 17:21:10 stefan Exp $	*/
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -136,7 +136,8 @@ int
 videoread(dev_t dev, struct uio *uio, int ioflag)
 {
 	struct video_softc *sc;
-	int unit, error, size;
+	int unit, error;
+	size_t size;
 
 	unit = VIDEOUNIT(dev);
 	if (unit >= video_cd.cd_ndevs ||
@@ -169,16 +170,13 @@ videoread(dev_t dev, struct uio *uio, int ioflag)
 	}
 
 	/* move no more than 1 frame to userland, as per specification */
-	if (sc->sc_fsize < uio->uio_resid)
-		size = sc->sc_fsize;
-	else
-		size = uio->uio_resid;
-	error = uiomovei(sc->sc_fbuffer, size, uio);
+	size = ulmin(uio->uio_resid, sc->sc_fsize);
+	error = uiomove(sc->sc_fbuffer, size, uio);
 	sc->sc_frames_ready--;
 	if (error)
 		return (error);
 
-	DPRINTF(("uiomove successfully done (%d bytes)\n", size));
+	DPRINTF(("uiomove successfully done (%zu bytes)\n", size));
 
 	return (0);
 }
