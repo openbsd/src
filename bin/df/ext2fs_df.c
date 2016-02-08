@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_df.c,v 1.14 2015/11/27 13:49:41 millert Exp $	*/
+/*	$OpenBSD: ext2fs_df.c,v 1.15 2016/02/08 16:23:54 mmcc Exp $	*/
 
 /*
  * This file is substantially derived from src/sys/ufs/ext2fs/ext2fs_vfsops.c:e2fs_statfs().
@@ -45,8 +45,6 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
-#include <fcntl.h>
-#include <fstab.h>
 
 int		e2fs_df(int, char *, struct statfs *);
 

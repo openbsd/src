@@ -1,4 +1,4 @@
-/*	$OpenBSD: df.c,v 1.54 2015/10/09 01:37:06 deraadt Exp $	*/
+/*	$OpenBSD: df.c,v 1.55 2016/02/08 16:23:54 mmcc Exp $	*/
 /*	$NetBSD: df.c,v 1.21.2.1 1995/11/01 00:06:11 jtc Exp $	*/
 
 /*
@@ -41,7 +41,6 @@
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

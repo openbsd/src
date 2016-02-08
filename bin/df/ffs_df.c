@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_df.c,v 1.17 2015/11/27 13:49:41 millert Exp $	*/
+/*	$OpenBSD: ffs_df.c,v 1.18 2016/02/08 16:23:54 mmcc Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993, 1994
@@ -36,13 +36,12 @@
 
 #include <sys/types.h>
 #include <sys/mount.h>
-#include <ufs/ufs/dinode.h>
 #include <ufs/ffs/fs.h>
+#include <ufs/ufs/dinode.h>
 
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
-#include <fcntl.h>
 
 int		ffs_df(int, char *, struct statfs *);
 
