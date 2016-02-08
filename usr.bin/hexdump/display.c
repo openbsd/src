@@ -1,4 +1,4 @@
-/*	$OpenBSD: display.c,v 1.21 2015/01/16 06:40:08 deraadt Exp $	*/
+/*	$OpenBSD: display.c,v 1.22 2016/02/08 22:09:22 schwarze Exp $	*/
 /*	$NetBSD: display.c,v 1.12 2001/12/07 15:14:29 bjh21 Exp $	*/
 
 /*
@@ -329,7 +329,7 @@ doskip(const char *fname, int statok)
 		if (fstat(fileno(stdin), &sb))
 			err(1, "fstat %s", fname);
 		if (S_ISREG(sb.st_mode)) {
-			if (skip >= sb.st_size) {
+			if (skip > sb.st_size) {
 				address += sb.st_size;
 				skip -= sb.st_size;
 			} else {
