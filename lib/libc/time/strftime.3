@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)strftime.3    5.12 (Berkeley) 6/29/91
-.\"	$OpenBSD: strftime.3,v 1.35 2016/02/08 20:05:43 tedu Exp $
+.\"	$OpenBSD: strftime.3,v 1.36 2016/02/08 20:29:11 jmc Exp $
 .\"
 .Dd $Mdocdate: February 8 2016 $
 .Dt STRFTIME 3
@@ -197,7 +197,8 @@ NUL character, is not more than
 .Fa maxsize ,
 .Fn strftime
 returns the number of characters placed in the array, not counting the
-terminating NUL. Otherwise, zero is returned.
+terminating NUL.
+Otherwise, zero is returned.
 .Sh SEE ALSO
 .Xr date 1 ,
 .Xr printf 1 ,
