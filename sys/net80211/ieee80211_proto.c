@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_proto.c,v 1.63 2016/02/05 16:07:57 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_proto.c,v 1.64 2016/02/08 01:00:47 stsp Exp $	*/
 /*	$NetBSD: ieee80211_proto.c,v 1.8 2004/04/30 23:58:20 dyoung Exp $	*/
 
 /*-
@@ -641,7 +641,7 @@ ieee80211_addba_request(struct ieee80211com *ic, struct ieee80211_node *ni,
 	/* setup Block Ack */
 	ba->ba_state = IEEE80211_BA_REQUESTED;
 	ba->ba_token = ic->ic_dialog_token++;
-	ba->ba_timeout_val = IEEE80211_BA_MAX_TIMEOUT;
+	ba->ba_timeout_val = 0;
 	timeout_set(&ba->ba_to, ieee80211_tx_ba_timeout, ba);
 	ba->ba_winsize = IEEE80211_BA_MAX_WINSZ;
 	ba->ba_winstart = ssn;
