@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ssl.8,v 1.62 2014/11/22 18:06:35 deraadt Exp $
+.\"	$OpenBSD: ssl.8,v 1.63 2016/02/08 19:29:58 jmc Exp $
 .\"
 .\" Copyright (c) 1999 Theo de Raadt, Bob Beck
 .\" All rights reserved.
@@ -23,7 +23,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 22 2014 $
+.Dd $Mdocdate: February 8 2016 $
 .Dt SSL 8
 .Os
 .Sh NAME
@@ -35,9 +35,8 @@ the OpenSSL libssl and libcrypto libraries.
 This document is intended as an overview of what the libraries do,
 and what uses them.
 .Pp
-The SSL libraries (libssl and libcrypto) implement the SSL version 3
-and TLS version 1 protocols.
-SSL and TLS are most commonly used by the HTTPS protocol for encrypted
+The libssl and libcrypto libraries implement the TLS version 1 protocol.
+It is most commonly used by the HTTPS protocol for encrypted
 web transactions, as can be done with
 .Xr httpd 8 .
 The libcrypto library is also used by various programs such as
@@ -46,7 +45,7 @@ The libcrypto library is also used by various programs such as
 and
 .Xr isakmpd 8 .
 .Sh SERVER CERTIFICATES
-The most common uses of SSL/TLS will require you to generate a server
+The most common uses of TLS will require you to generate a server
 certificate, which is provided by your host as evidence of its identity
 when clients make new connections.
 The certificates reside in the

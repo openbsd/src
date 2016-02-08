@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.30 2015/12/24 16:54:37 mmcc Exp $
+.\" $OpenBSD: openssl.1,v 1.31 2016/02/08 19:29:57 jmc Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -112,7 +112,7 @@
 .\"
 .\" OPENSSL
 .\"
-.Dd $Mdocdate: December 24 2015 $
+.Dd $Mdocdate: February 8 2016 $
 .Dt OPENSSL 1
 .Os
 .Sh NAME
@@ -137,11 +137,11 @@
 .Op Ar arbitrary options
 .Sh DESCRIPTION
 .Nm OpenSSL
-is a cryptography toolkit implementing the Secure Sockets Layer
-.Pq SSL v3
-and Transport Layer Security
+is a cryptography toolkit implementing the
+Transport Layer Security
 .Pq TLS v1
-network protocols and related cryptography standards required by them.
+network protocol,
+as well as related cryptography standards.
 .Pp
 The
 .Nm
@@ -6215,6 +6215,8 @@ which it can be seen agrees with the recovered value above.
 .Op Fl starttls Ar protocol
 .Op Fl state
 .Op Fl tls1
+.Op Fl tls1_1
+.Op Fl tls1_2
 .Op Fl tlsextdebug
 .Op Fl verify Ar depth
 .Op Fl x509_strict
@@ -6313,16 +6315,13 @@ Show all protocol messages with hex dump.
 Turns on non-blocking I/O.
 .It Fl nbio_test
 Tests non-blocking I/O.
-.It Fl no_tls1 | no_tls1_1 | no_tls1_2 | tls1
-These options disable the use of certain SSL or TLS protocols.
+.It Fl no_tls1 | no_tls1_1 | no_tls1_2
 By default, the initial handshake uses a method which should be compatible
-with all servers and permit them to use SSL v3 or TLS as appropriate.
+with servers supporting any version of TLS.
+These options disable the use of TLS1.0, 1.1, and 1.2, respectively.
 .Pp
 Unfortunately there are a lot of ancient and broken servers in use which
 cannot handle this technique and will fail to connect.
-Some servers only work if TLS is turned off with the
-.Fl no_tls
-option.
 .It Fl no_ticket
 Disable RFC 4507 session ticket support.
 .It Fl pause
@@ -6387,6 +6386,8 @@ and
 .Qq xmpp .
 .It Fl state
 Prints out the SSL session states.
+.It Fl tls1 | tls1_1 | tls1_2
+Permit only TLS1.0, 1.1, or 1.2, respectively.
 .It Fl tlsextdebug
 Print out a hex dump of any TLS extensions received from the server.
 .It Fl verify Ar depth
@@ -6435,7 +6436,7 @@ to retrieve a web page.
 .Pp
 If the handshake fails, there are several possible causes; if it is
 nothing obvious like no client certificate, then the
-.Fl bugs , tls1 , no_tls1 , no_tls1_1 ,
+.Fl bugs , tls1 , tls1_1, tls1_2 , no_tls1 , no_tls1_1 ,
 and
 .Fl no_tls1_2
 options can be tried in case it is a buggy server.
@@ -6524,6 +6525,8 @@ We should really report information whenever a session is renegotiated.
 .Op Fl serverpref
 .Op Fl state
 .Op Fl tls1
+.Op Fl tls1_1
+.Op Fl tls1_2
 .Op Fl Verify Ar depth
 .Op Fl verify Ar depth
 .Op Fl WWW
@@ -6654,10 +6657,10 @@ Tests non-blocking I/O.
 .It Fl no_dhe
 If this option is set, no DH parameters will be loaded, effectively
 disabling the ephemeral DH cipher suites.
-.It Fl no_tls1 | no_tls1_1 | no_tls1_2 | tls1
-These options disable the use of certain SSL or TLS protocols.
+.It Fl no_tls1 | no_tls1_1 | no_tls1_2
 By default, the initial handshake uses a method which should be compatible
-with all servers and permit them to use SSL v3 or TLS as appropriate.
+with servers supporting any version of TLS.
+These options disable the use of TLS1.0, 1.1, and 1.2, respectively.
 .It Fl no_tmp_rsa
 Certain export cipher suites sometimes use a temporary RSA key; this option
 disables temporary RSA key generation.
@@ -6681,6 +6684,8 @@ Inhibit printing of session and certificate information.
 Use server's cipher preferences.
 .It Fl state
 Prints out the SSL session states.
+.It Fl tls1 | tls1_1 | tls1_2
+Permit only TLS1.0, 1.1, or 1.2, respectively.
 .It Fl WWW
 Emulates a simple web server.
 Pages will be resolved relative to the current directory;
