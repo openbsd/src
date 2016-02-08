@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.47 2016/02/05 11:26:26 reyk Exp $	*/
+/*	$OpenBSD: config.c,v 1.48 2016/02/08 23:15:37 jca Exp $	*/
 /*	$KAME: config.c,v 1.62 2002/05/29 10:13:10 itojun Exp $	*/
 
 /*
@@ -190,7 +190,7 @@ getconfig(char *intface)
 	 * useful to allow hosts to advertise some parameters such as prefix
 	 * information and link MTU. Thus, we allow hosts to invoke rtadvd
 	 * only when router lifetime (on every advertising interface) is
-	 * explicitly set zero. (see also the above section)
+	 * explicitely set to zero. (see also the above section)
 	 */
 	if (val && forwarding == 0) {
 		log_warnx("non zero router lifetime is specified for %s, "
@@ -622,8 +622,8 @@ makeentry(char *buf, size_t len, int id, char *string)
  * Add a prefix to the list of specified interface and reconstruct
  * the outgoing packet.
  * The prefix must not be in the list.
- * XXX: other parameter of the prefix(e.g. lifetime) shoule be
- * able to be specified.
+ * XXX: other parameters of the prefix (e.g. lifetime) ought
+ * to be specified.
  */
 static void
 add_prefix(struct rainfo *rai, struct in6_prefixreq *ipr)
@@ -883,7 +883,7 @@ make_packet(struct rainfo *rainfo)
 				pfx->pltimeexpire - now.tv_sec : 0);
 		if (vltime < pltime) {
 			/*
-			 * this can happen if vltime is decrement but pltime
+			 * this can happen if vltime is decremented but pltime
 			 * is not.
 			 */
 			pltime = vltime;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtadvd.h,v 1.18 2015/11/30 21:04:15 jca Exp $	*/
+/*	$OpenBSD: rtadvd.h,v 1.19 2016/02/08 23:15:37 jca Exp $	*/
 /*	$KAME: rtadvd.h,v 1.20 2002/05/29 10:13:10 itojun Exp $	*/
 
 /*
@@ -74,7 +74,7 @@ struct prefix {
 	u_int onlinkflg;	/* bool: AdvOnLinkFlag */
 	u_int autoconfflg;	/* bool: AdvAutonomousFlag */
 	int prefixlen;
-	int origin;		/* from kernel or cofig */
+	int origin;		/* from kernel or config */
 	struct in6_addr prefix;
 };
 
@@ -158,7 +158,7 @@ struct	rainfo {
 	int	rdnsscnt;	/* number of rdnss entries */
 	TAILQ_HEAD(dnssllist, dnssl) dnssls;
 	int	dnsslcnt;
-	long	clockskew;	/* used for consisitency check of lifetimes */
+	long	clockskew;	/* used for consistency check of lifetimes */
 
 
 	/* actual RA packet data and its length */
@@ -172,7 +172,7 @@ struct	rainfo {
 	u_quad_t rsinput;	/* number of RSs received */
 
 	/* info about soliciter */
-	SLIST_HEAD(, soliciter) soliciters; /* recent solication source */
+	SLIST_HEAD(, soliciter) soliciters; /* recent solicitation source */
 };
 SLIST_HEAD(ralist, rainfo);
 

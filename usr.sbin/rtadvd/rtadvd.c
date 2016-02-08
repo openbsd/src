@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtadvd.c,v 1.64 2016/02/07 21:10:33 jca Exp $	*/
+/*	$OpenBSD: rtadvd.c,v 1.65 2016/02/08 23:15:37 jca Exp $	*/
 /*	$KAME: rtadvd.c,v 1.66 2002/05/29 14:18:36 itojun Exp $	*/
 
 /*
@@ -838,7 +838,7 @@ ra_input(int len, struct nd_router_advert *ra,
 	retranstimer = ntohl(ra->nd_ra_retransmit);
 	if (retranstimer && rai->retranstimer &&
 	    retranstimer != rai->retranstimer) {
-		log_info("RetranceTimer inconsistent on %s:"
+		log_info("RetransTimer inconsistent on %s:"
 		    " %d from %s, %d from us",
 		    rai->ifname, retranstimer,
 		    inet_ntop(AF_INET6, &from->sin6_addr,
