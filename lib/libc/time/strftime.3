@@ -30,9 +30,9 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)strftime.3    5.12 (Berkeley) 6/29/91
-.\"	$OpenBSD: strftime.3,v 1.34 2015/01/29 01:46:31 schwarze Exp $
+.\"	$OpenBSD: strftime.3,v 1.35 2016/02/08 20:05:43 tedu Exp $
 .\"
-.Dd $Mdocdate: January 29 2015 $
+.Dd $Mdocdate: February 8 2016 $
 .Dt STRFTIME 3
 .Os
 .Sh NAME
@@ -47,6 +47,8 @@ The
 .Fn strftime
 function formats the information from
 .Fa timeptr
+(as described in
+.Xr mktime 3 )
 into the buffer
 .Fa buf
 according to the string pointed to by
