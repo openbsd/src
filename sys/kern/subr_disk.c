@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.222 2015/12/24 20:14:07 krw Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.223 2016/02/08 22:12:51 krw Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -963,7 +963,7 @@ bounds_check_with_label(struct buf *bp, struct disklabel *lp)
 	if (bp->b_blkno == partblocks || bp->b_bcount == 0)
 		goto done;
 
-	/* Truncate request if it exceeds past the end of the partition. */
+	/* Truncate request if it extends past the end of the partition. */
 	sz = bp->b_bcount >> DEV_BSHIFT;
 	if (sz > partblocks - bp->b_blkno) {
 		sz = partblocks - bp->b_blkno;
