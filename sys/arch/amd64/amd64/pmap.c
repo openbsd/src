@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.97 2015/11/10 08:57:39 mlarkin Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.98 2016/02/08 18:23:04 stefan Exp $	*/
 /*	$NetBSD: pmap.c,v 1.3 2003/05/08 18:13:13 thorpej Exp $	*/
 
 /*
@@ -413,27 +413,23 @@ pmap_unmap_ptes(struct pmap *pmap, paddr_t save_cr3)
  * Parameters:
  *  pm: The pmap in question
  *  va: The VA to fix up
- *  offs: (out) return the offset into the PD/PT for this va
- *
- * Return value:
- *  int value corresponding to the level this VA was found
  */
-int
-pmap_fix_ept(struct pmap *pm, vaddr_t va, int *offs)
+void
+pmap_fix_ept(struct pmap *pm, vaddr_t va)
 {
 	u_long mask, shift;
 	pd_entry_t pde, *pd;
 	paddr_t pdpa;
-	int lev;
+	int lev, offs;
 
 	pdpa = pm->pm_pdirpa;
 	shift = L4_SHIFT;
 	mask = L4_MASK;
 	for (lev = PTP_LEVELS; lev > 0; lev--) {
 		pd = (pd_entry_t *)PMAP_DIRECT_MAP(pdpa);
-		*offs = (VA_SIGN_POS(va) & mask) >> shift;
+		offs = (VA_SIGN_POS(va) & mask) >> shift;
 
-		pd[*offs] |= EPT_R | EPT_W | EPT_X;
+		pd[offs] |= EPT_R | EPT_W | EPT_X;
 		/*
 		 * Levels 3-4 have bits 3:7 'must be 0'
 		 * Level 2 has bits 3:6 'must be 0', and bit 7 is always
@@ -444,25 +440,23 @@ pmap_fix_ept(struct pmap *pm, vaddr_t va, int *offs)
 		case 3:
 		case 2:
 			/* Bits 3:7 = 0 */
-			pd[*offs] &= ~(0xF8);
+			pd[offs] &= ~(0xF8);
 			break;
-		case 1: pd[*offs] |= EPT_WB;
+		case 1: pd[offs] |= EPT_WB;
 			break;
 		}
 		
-		pde = pd[*offs];
+		pde = pd[offs];
 
 		/* Large pages are different, break early if we run into one. */
 		if ((pde & (PG_PS|PG_V)) != PG_V)
-			return (lev - 1);
+			panic("pmap_fix_ept: large page in EPT");
 
-		pdpa = (pd[*offs] & PG_FRAME);
+		pdpa = (pd[offs] & PG_FRAME);
 		/* 4096/8 == 512 == 2^9 entries per level */
 		shift -= 9;
 		mask >>= 9;
 	}
-
-	return (0);
 }
 
 int
@@ -2186,6 +2180,9 @@ enter_now:
 	pmap_tlb_shootwait();
 
 	error = 0;
+
+	if (pmap->pm_type == PMAP_TYPE_EPT)
+		pmap_fix_ept(pmap, va);
 
 out:
 	if (pve)

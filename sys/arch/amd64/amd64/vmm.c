@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.33 2016/01/29 00:47:51 jsg Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.34 2016/02/08 18:23:04 stefan Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -148,7 +148,6 @@ int svm_get_guest_faulttype(void);
 int vmx_get_exit_qualification(uint64_t *);
 int vmx_fault_page(struct vcpu *, paddr_t);
 int vmx_handle_np_fault(struct vcpu *);
-int vmx_fix_ept_pte(struct pmap *, vaddr_t);
 const char *vmx_exit_reason_decode(uint32_t);
 const char *vmx_instruction_error_decode(uint32_t);
 void dump_vcpu(struct vcpu *);
@@ -634,13 +633,6 @@ vm_writepage(struct vm_writepage_params *vwp)
 
 	free(pagedata, M_DEVBUF, PAGE_SIZE);
 
-	/* Fixup the EPT map for this page */
-	if (vmx_fix_ept_pte(vm->vm_map->pmap, vw_page)) {
-		DPRINTF("vm_writepage: cant fixup ept pte for gpa 0x%llx\n",
-		    (uint64_t)vwp->vwp_paddr);
-		rw_exit_read(&vmm_softc->vm_lock);
-		return (EFAULT);
-	}
 	rw_exit_read(&vmm_softc->vm_lock);
 
 	return (0);
@@ -3069,7 +3061,6 @@ int
 vmx_fault_page(struct vcpu *vcpu, paddr_t gpa)
 {
 	int fault_type, ret;
-	struct pmap *pmap;
 
 	fault_type = vmx_get_guest_faulttype();
 	if (fault_type == -1) {
@@ -3079,15 +3070,8 @@ vmx_fault_page(struct vcpu *vcpu, paddr_t gpa)
 
 	ret = uvm_fault(vcpu->vc_parent->vm_map, gpa, fault_type,
 	    PROT_READ | PROT_WRITE | PROT_EXEC);
-	if (!ret) {
-		pmap = vcpu->vc_parent->vm_map->pmap;
-		if (vmx_fix_ept_pte(pmap, gpa)) {
-			printf("vmx_fault_page: ept fixup failure\n");
-			ret = EINVAL;
-		}
-	} else {
+	if (ret)
 		printf("vmx_fault_page: uvm_fault returns %d\n", ret);
-	}
 
 	return (ret);
 }
@@ -3459,22 +3443,6 @@ int
 vcpu_run_svm(struct vcpu *vcpu, uint8_t from_exit)
 {
 	/* XXX removed due to rot */
-	return (0);
-}
-
-/*
- * vmx_fix_ept_pte
- *
- * Fixes up the pmap PTE entry for 'addr' to reflect proper EPT format
- */
-int
-vmx_fix_ept_pte(struct pmap *pmap, vaddr_t addr)
-{
-	int offs, level;
-
-	level = pmap_fix_ept(pmap, addr, &offs);
-	KASSERT(level == 0);
-
 	return (0);
 }
 
