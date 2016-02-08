@@ -1,10 +1,10 @@
-/*	$OpenBSD: timer.h,v 1.7 2013/04/30 12:30:40 florian Exp $	*/
+/*	$OpenBSD: timer.h,v 1.8 2016/02/08 23:19:00 jca Exp $	*/
 /*	$KAME: timer.h,v 1.3 2000/05/27 11:30:43 jinmei Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -16,7 +16,7 @@
  * 3. Neither the name of the project nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE

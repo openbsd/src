@@ -1,10 +1,10 @@
-/*	$OpenBSD: rtadvd.c,v 1.65 2016/02/08 23:15:37 jca Exp $	*/
+/*	$OpenBSD: rtadvd.c,v 1.66 2016/02/08 23:19:00 jca Exp $	*/
 /*	$KAME: rtadvd.c,v 1.66 2002/05/29 14:18:36 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -16,7 +16,7 @@
  * 3. Neither the name of the project nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -334,7 +334,7 @@ rtmsg_input(void)
 		    "(type = %d, len = %d)", rtmsg_type(msg), n);
 	if (n > rtmsg_len(msg)) {
 		/*
-		 * This usually won't happen for messages received on 
+		 * This usually won't happen for messages received on
 		 * a routing socket.
 		 */
 		if (dflag)
@@ -588,7 +588,7 @@ rtadvd_input(void)
 	case ND_ROUTER_ADVERT:
 		/*
 		 * Message verification - RFC-2461 6.1.2
-		 * XXX: there's a same dilemma as above... 
+		 * XXX: there's a same dilemma as above...
 		 */
 		if (*hlimp != 255) {
 			log_info("RA with invalid hop limit(%d) "
@@ -699,7 +699,7 @@ rs_input(int len, struct nd_router_solicit *rs,
 		if (sol) {
 			sol->addr = *from;
 			/*XXX RFC2553 need clarification on flowinfo */
-			sol->addr.sin6_flowinfo = 0;	
+			sol->addr.sin6_flowinfo = 0;
 			SLIST_INSERT_HEAD(&ra->soliciters, sol, entry);
 		}
 
@@ -766,7 +766,7 @@ ra_input(int len, struct nd_router_advert *ra,
 	    inet_ntop(AF_INET6, &from->sin6_addr,
 		ntopbuf, INET6_ADDRSTRLEN),
 	    if_indextoname(pi->ipi6_ifindex, ifnamebuf));
-	
+
 	/* ND option check */
 	memset(&ndopts, 0, sizeof(ndopts));
 	SLIST_INIT(&ndopts.nd_opts_list);
@@ -789,7 +789,7 @@ ra_input(int len, struct nd_router_advert *ra,
 		goto done;	/* not our interface */
 
 	rai->rainput++;		/* increment statistics */
-	
+
 	/* Cur Hop Limit value */
 	if (ra->nd_ra_curhoplimit && rai->hoplimit &&
 	    ra->nd_ra_curhoplimit != rai->hoplimit) {
@@ -828,7 +828,7 @@ ra_input(int len, struct nd_router_advert *ra,
 	    reachabletime != rai->reachabletime) {
 		log_info("ReachableTime inconsistent on %s:"
 		    " %d from %s, %d from us",
-		    rai->ifname, reachabletime, 
+		    rai->ifname, reachabletime,
 		    inet_ntop(AF_INET6, &from->sin6_addr,
 			ntopbuf, INET6_ADDRSTRLEN),
 		    rai->reachabletime);
@@ -875,7 +875,7 @@ ra_input(int len, struct nd_router_advert *ra,
 
 	if (inconsistent)
 		rai->rainconsistent++;
-	
+
   done:
 	free_ndopts(&ndopts);
 	return;
@@ -1012,7 +1012,7 @@ find_prefix(struct rainfo *rai, struct in6_addr *prefix, int plen)
 		if (memcmp((void *)prefix, (void *)&pp->prefix, bytelen))
 			continue;
 		if (bitlen == 0 ||
-		    ((prefix->s6_addr[bytelen] & bitmask) == 
+		    ((prefix->s6_addr[bytelen] & bitmask) ==
 		     (pp->prefix.s6_addr[bytelen] & bitmask))) {
 			return(pp);
 		}
@@ -1038,7 +1038,7 @@ prefix_match(struct in6_addr *p0, int plen0,
 		return(0);
 	if (bitlen == 0 ||
 	    ((p0->s6_addr[bytelen] & bitmask) ==
-	     (p1->s6_addr[bytelen] & bitmask))) { 
+	     (p1->s6_addr[bytelen] & bitmask))) {
 		return(1);
 	}
 
@@ -1118,7 +1118,7 @@ nd6_options(struct nd_opt_hdr *hdr, int limit,
 		case ND_OPT_PREFIX_INFORMATION:
 		{
 			struct nd_opt	*pfx;
-		
+
 			if (ndopts->nd_opts_pi == 0) {
 				ndopts->nd_opts_pi =
 				    (struct nd_opt_prefix_info *)hdr;
@@ -1175,7 +1175,7 @@ sock_open(void)
 	if (rcvcmsgbuf == NULL)
 		fatal("malloc");
 
-	sndcmsgbuflen = CMSG_SPACE(sizeof(struct in6_pktinfo)) + 
+	sndcmsgbuflen = CMSG_SPACE(sizeof(struct in6_pktinfo)) +
 	    CMSG_SPACE(sizeof(int));
 	sndcmsgbuf = malloc(sndcmsgbuflen);
 	if (sndcmsgbuf == NULL)
@@ -1314,7 +1314,7 @@ ra_output(struct rainfo *rainfo)
 	}
 
 	log_debug("send RA on %s, # of waitings = %d",
-	    rainfo->ifname, rainfo->waiting); 
+	    rainfo->ifname, rainfo->waiting);
 
 	i = sendmsg(sock, &sndmhdr, 0);
 
@@ -1381,7 +1381,7 @@ ra_timer_update(void *data, struct timeval *tm)
 	 * between the interface's configured MinRtrAdvInterval and
 	 * MaxRtrAdvInterval (RFC2461 6.2.4).
 	 */
-	interval = rai->mininterval; 
+	interval = rai->mininterval;
 	interval += arc4random_uniform(rai->maxinterval - rai->mininterval);
 
 	/*

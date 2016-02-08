@@ -1,10 +1,10 @@
-/*	$OpenBSD: config.c,v 1.48 2016/02/08 23:15:37 jca Exp $	*/
+/*	$OpenBSD: config.c,v 1.49 2016/02/08 23:19:00 jca Exp $	*/
 /*	$KAME: config.c,v 1.62 2002/05/29 10:13:10 itojun Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -16,7 +16,7 @@
  * 3. Neither the name of the project nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -678,7 +678,7 @@ delete_prefix(struct rainfo *rai, struct prefix *prefix)
 
 	TAILQ_REMOVE(&rai->prefixes, prefix, entry);
 	log_debug("prefix %s/%d was deleted on %s",
-	    inet_ntop(AF_INET6, &prefix->prefix, ntopbuf, INET6_ADDRSTRLEN), 
+	    inet_ntop(AF_INET6, &prefix->prefix, ntopbuf, INET6_ADDRSTRLEN),
 	    prefix->prefixlen, rai->ifname);
 	free(prefix);
 	rai->pfxs--;
@@ -879,7 +879,7 @@ make_packet(struct rainfo *rainfo)
 		if (pfx->pltimeexpire == 0)
 			pltime = pfx->preflifetime;
 		else
-			pltime = (u_int32_t)(pfx->pltimeexpire > now.tv_sec ? 
+			pltime = (u_int32_t)(pfx->pltimeexpire > now.tv_sec ?
 				pfx->pltimeexpire - now.tv_sec : 0);
 		if (vltime < pltime) {
 			/*
