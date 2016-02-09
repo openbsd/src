@@ -1,4 +1,4 @@
-/*	$OpenBSD: snake.c,v 1.24 2016/02/02 19:18:57 mestre Exp $	*/
+/*	$OpenBSD: snake.c,v 1.25 2016/02/09 13:41:59 mestre Exp $	*/
 /*	$NetBSD: snake.c,v 1.8 1995/04/29 00:06:41 mycroft Exp $	*/
 
 /*
@@ -118,7 +118,7 @@ int	readscores(int);
 void	setup(void);
 void	snap(void);
 void	snrand(struct point *);
-void	snscore(int, int);
+void	snscore(int);
 void	spacewarp(int);
 void	stop(int);
 int	stretch(struct point *);
@@ -163,7 +163,7 @@ main(int argc, char *argv[])
 			break;
 		case 's': /* score */
 			if (readscores(0))
-				snscore(rawscores, 0);
+				snscore(0);
 			else
 				printf("no scores so far\n");
 			return 0;
@@ -545,13 +545,13 @@ post(int iscore, int flag)
 		    iscore, rank + 1);
 
 	rewind(sf);
-	if (fwrite(scores, sizeof(scores[0]), nscores, sf) < nscores)
+	if (fwrite(scores, sizeof(scores[0]), nscores, sf) < (u_int)nscores)
 		err(1, "fwrite");
 	if (fclose(sf))
 		err(1, "fclose");
 
 	/* See if we have a new champ */
-	snscore(rawscores, TOPN);
+	snscore(TOPN);
 	return(1);
 }
 
@@ -879,7 +879,7 @@ pushsnake(void)
 			logit("eaten");
 #endif
 			length(moves);
-			snscore(rawscores, TOPN);
+			snscore(TOPN);
 			close(rawscores);
 			exit(0);
 		}
@@ -953,7 +953,7 @@ length(int num)
 }
 
 void
-snscore(int fd, int topn)
+snscore(int topn)
 {
 	int i;
 
