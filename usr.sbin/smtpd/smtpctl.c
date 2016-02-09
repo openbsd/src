@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpctl.c,v 1.145 2016/02/03 08:03:21 gilles Exp $	*/
+/*	$OpenBSD: smtpctl.c,v 1.146 2016/02/09 10:38:02 gilles Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -104,17 +104,17 @@ void stat_decrement(const char *k, size_t v)
 int
 srv_connect(void)
 {
-	struct sockaddr_un	sun;
+	struct sockaddr_un	s_un;
 	int			ctl_sock, saved_errno;
 
 	/* connect to smtpd control socket */
 	if ((ctl_sock = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
 		err(1, "socket");
 
-	memset(&sun, 0, sizeof(sun));
-	sun.sun_family = AF_UNIX;
-	(void)strlcpy(sun.sun_path, SMTPD_SOCKET, sizeof(sun.sun_path));
-	if (connect(ctl_sock, (struct sockaddr *)&sun, sizeof(sun)) == -1) {
+	memset(&s_un, 0, sizeof(s_un));
+	s_un.sun_family = AF_UNIX;
+	(void)strlcpy(s_un.sun_path, SMTPD_SOCKET, sizeof(s_un.sun_path));
+	if (connect(ctl_sock, (struct sockaddr *)&s_un, sizeof(s_un)) == -1) {
 		saved_errno = errno;
 		close(ctl_sock);
 		errno = saved_errno;
