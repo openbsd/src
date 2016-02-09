@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd-api.h,v 1.28 2015/12/12 11:31:29 sunil Exp $	*/
+/*	$OpenBSD: smtpd-api.h,v 1.29 2016/02/09 22:18:17 gilles Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -107,6 +107,7 @@ enum {
 	PROC_QUEUE_MESSAGE_COMMIT,
 	PROC_QUEUE_MESSAGE_FD_R,
 	PROC_QUEUE_MESSAGE_CORRUPT,
+	PROC_QUEUE_MESSAGE_UNCORRUPT,
 	PROC_QUEUE_ENVELOPE_CREATE,
 	PROC_QUEUE_ENVELOPE_DELETE,
 	PROC_QUEUE_ENVELOPE_LOAD,
