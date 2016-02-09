@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd.c,v 1.14 2015/12/31 16:22:27 millert Exp $	*/
+/*	$OpenBSD: radiusd.c,v 1.15 2016/02/09 05:14:08 jsg Exp $	*/
 
 /*
  * Copyright (c) 2013 Internet Initiative Japan Inc.
@@ -1250,10 +1250,10 @@ radiusd_module_imsg(struct radiusd_module *module, struct imsg *imsg)
 			if (msg)
 				radius_put_string_attr(q->res,
 				    RADIUS_TYPE_REPLY_MESSAGE, msg);
+			radius_set_response_authenticator(q->res,
+			    q->client->secret);
+			radiusd_access_request_answer(q);
 		}
-		radius_set_response_authenticator(q->res,
-		    q->client->secret);
-		radiusd_access_request_answer(q);
 		break;
 	    }
 	case IMSG_RADIUSD_MODULE_ACCSREQ_ANSWER:
