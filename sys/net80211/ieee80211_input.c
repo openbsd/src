@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.161 2016/02/08 01:00:47 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.162 2016/02/09 13:48:31 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -728,6 +728,13 @@ ieee80211_input_ba(struct ieee80211com *ic, struct mbuf *m,
 		 * APs, which emit "sequence" numbers such as 1888, 1889, 2501,
 		 * 1890, 1891, ... all for the same TID.
 		 */
+#ifdef DIAGNOSTIC
+		if ((ifp->if_flags & IFF_DEBUG) &&
+		    ((sn - ba->ba_winend) & 0xfff) > 1)
+			printf("%s: received frame with bad sequence number "
+			    "%d, expecting %d:%d\n", __func__,
+			    sn, ba->ba_winstart, ba->ba_winend);
+#endif
 		if (((sn - ba->ba_winend) & 0xfff) > IEEE80211_BA_MAX_WINSZ) {
 			if (ba->ba_winmiss < IEEE80211_BA_MAX_WINMISS) { 
 				if (ba->ba_missedsn == sn - 1)
