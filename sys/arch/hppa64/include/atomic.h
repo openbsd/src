@@ -1,4 +1,4 @@
-/*	$OpenBSD: atomic.h,v 1.7 2014/10/12 20:39:46 miod Exp $	*/
+/*	$OpenBSD: atomic.h,v 1.8 2016/02/09 23:10:37 jsg Exp $	*/
 
 /* Public Domain */
 
@@ -28,17 +28,17 @@ __cpu_simple_lock_ldcws(__cpu_simple_lock_t *l)
 	return (o);
 }
 
-static inline void
-__cpu_simple_lock(__cpu_simple_lock_t *l)
-{
-	while (__cpu_simple_lock_ldcws(l) == __SIMPLELOCK_UNLOCKED)
-		;
-}
-
 static inline int
 __cpu_simple_lock_try(__cpu_simple_lock_t *l)
 {
 	return (__cpu_simple_lock_ldcws(l) == __SIMPLELOCK_UNLOCKED);
+}
+
+static inline void
+__cpu_simple_lock(__cpu_simple_lock_t *l)
+{
+	while (!__cpu_simple_lock_ldcws(l))
+		;
 }
 
 static inline void
