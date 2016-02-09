@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtadvd.c,v 1.67 2016/02/09 00:39:13 jca Exp $	*/
+/*	$OpenBSD: rtadvd.c,v 1.68 2016/02/09 00:40:00 jca Exp $	*/
 /*	$KAME: rtadvd.c,v 1.66 2002/05/29 14:18:36 itojun Exp $	*/
 
 /*
@@ -1317,7 +1317,7 @@ ra_output(struct rainfo *rainfo)
 	/* update timestamp */
 	gettimeofday(&rainfo->lastsent, NULL);
 
-	/* reset waiting conter */
+	/* reset waiting counter */
 	rainfo->waiting = 0;
 }
 
