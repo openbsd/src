@@ -1,4 +1,4 @@
-/*	$OpenBSD: hexdump.h,v 1.10 2014/04/19 09:28:20 sobrado Exp $	*/
+/*	$OpenBSD: hexdump.h,v 1.11 2016/02/09 01:29:12 tb Exp $	*/
 /*	$NetBSD: hexdump.h,v 1.7 2001/12/07 15:14:29 bjh21 Exp $	*/
 
 /*
@@ -93,13 +93,10 @@ void	 conv_c(PR *, u_char *);
 void	 conv_u(PR *, u_char *);
 void	 display(void);
 void	 doskip(const char *, int);
-/*void	 err(const char *, ...);*/
-void	*emalloc(int);
 void	 escape(char *);
 u_char	*get(void);
 void	 newsyntax(int, char ***);
 int	 next(char **);
-void	 nomem(void);
 void	 oldsyntax(int, char ***);
 void	 rewrite(FS *);
 int	 size(FS *);

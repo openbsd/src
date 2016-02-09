@@ -1,4 +1,4 @@
-/*	$OpenBSD: display.c,v 1.22 2016/02/08 22:09:22 schwarze Exp $	*/
+/*	$OpenBSD: display.c,v 1.23 2016/02/09 01:29:12 tb Exp $	*/
 /*	$NetBSD: display.c,v 1.12 2001/12/07 15:14:29 bjh21 Exp $	*/
 
 /*
@@ -226,8 +226,9 @@ get(void)
 	u_char *tmpp;
 
 	if (!curp) {
-		curp = emalloc(blocksize);
-		savp = emalloc(blocksize);
+		if ((curp = calloc(1, blocksize)) == NULL ||
+		    (savp = calloc(1, blocksize)) == NULL)
+			err(1, NULL);
 	} else {
 		tmpp = curp;
 		curp = savp;
@@ -347,21 +348,4 @@ doskip(const char *fname, int statok)
 			break;
 	address += cnt;
 	skip -= cnt;
-}
-
-void *
-emalloc(int allocsize)
-{
-	void *p;
-
-	if ((p = malloc((u_int)allocsize)) == NULL)
-		nomem();
-	memset(p, 0, allocsize);
-	return(p);
-}
-
-void
-nomem(void)
-{
-	err(1, NULL);
 }
