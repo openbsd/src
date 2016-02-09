@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepository.pm,v 1.116 2016/02/09 09:59:39 espie Exp $
+# $OpenBSD: PackageRepository.pm,v 1.117 2016/02/09 10:02:27 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -577,7 +577,7 @@ our @ISA=qw(OpenBSD::PackageRepository::Distant);
 
 our %distant = ();
 
-sub drop_privileges
+sub drop_privileges_and_setup_env
 {
 	# we can't cache anything, we happen after the fork, right before exec
 	if (my (undef, undef, $uid, $gid) = getpwnam("_pfetch")) {
@@ -586,6 +586,7 @@ sub drop_privileges
 		$< = $uid;
 		$> = $uid;
 	} 
+	$ENV{LC_ALL} = 'C';
 	# don't error out yet if we can't change.
 }
 
@@ -594,8 +595,7 @@ sub grab_object
 {
 	my ($self, $object) = @_;
 	my ($ftp, @extra) = split(/\s+/, OpenBSD::Paths->ftp);
-	$ENV{LC_ALL} = 'C';
-	$self->drop_privileges;
+	$self->drop_privileges_and_setup_env;
 	exec {$ftp}
 	    $ftp,
 	    @extra,
@@ -604,7 +604,7 @@ sub grab_object
 	or $self->{state}->fatal("Can't run ".OpenBSD::Paths->ftp.": #1", $!);
 }
 
-sub open_read_pipe
+sub open_read_ftp
 {
 	my ($self, $cmd, $errors) = @_;
 	my $child_pid = open(my $fh, '-|');
@@ -614,13 +614,13 @@ sub open_read_pipe
 	} else {
 		open STDERR, '>', $errors if defined $errors;
 
-		$self->drop_privileges;
-		exec($cmd) or
-		$self->{state}->fatal("Can't run $cmd: #1", $!);
+		$self->drop_privileges_and_setup_env;
+		exec($cmd) 
+		or $self->{state}->fatal("Can't run $cmd: #1", $!);
 	}
 }
 
-sub close_pipe
+sub close_read_ftp
 {
 	my ($self, $fh) = @_;
 	close($fh);
@@ -776,7 +776,7 @@ sub get_http_list
 
 	my $fullname = $self->url;
 	my $l = [];
-	my $fh = $self->open_read_pipe(OpenBSD::Paths->ftp." -o - $fullname", 
+	my $fh = $self->open_read_ftp(OpenBSD::Paths->ftp." -o - $fullname", 
 	    $error) or return;
 	while(<$fh>) {
 		chomp;
@@ -787,7 +787,7 @@ sub get_http_list
 			$self->add_to_list($l, $pkg);
 		}
 	}
-	$self->close_pipe($fh);
+	$self->close_read_ftp($fh);
 	return $l;
 }
 
@@ -825,7 +825,7 @@ sub _list
 {
 	my ($self, $cmd, $error) = @_;
 	my $l =[];
-	my $fh = $self->open_read_pipe($cmd, $error) or return;
+	my $fh = $self->open_read_ftp($cmd, $error) or return;
 	while(<$fh>) {
 		chomp;
 		next if m/^\d\d\d\s+\S/;
@@ -835,7 +835,7 @@ sub _list
 		next unless m/^(?:\.\/)?(\S+\.tgz)\s*$/;
 		$self->add_to_list($l, $1);
 	}
-	$self->close_pipe($fh);
+	$self->close_read_ftp($fh);
 	return $l;
 }
 
