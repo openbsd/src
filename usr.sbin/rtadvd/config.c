@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.49 2016/02/08 23:19:00 jca Exp $	*/
+/*	$OpenBSD: config.c,v 1.50 2016/02/09 00:39:13 jca Exp $	*/
 /*	$KAME: config.c,v 1.62 2002/05/29 10:13:10 itojun Exp $	*/
 
 /*
@@ -111,7 +111,6 @@ getconfig(char *intface)
 	TAILQ_INIT(&tmp->rtinfos);
 	TAILQ_INIT(&tmp->rdnsss);
 	TAILQ_INIT(&tmp->dnssls);
-	SLIST_INIT(&tmp->soliciters);
 
 	/* check if we are allowed to forward packets (if not determined) */
 	if (forwarding < 0) {

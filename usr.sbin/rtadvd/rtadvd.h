@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtadvd.h,v 1.20 2016/02/08 23:19:00 jca Exp $	*/
+/*	$OpenBSD: rtadvd.h,v 1.21 2016/02/09 00:39:13 jca Exp $	*/
 /*	$KAME: rtadvd.h,v 1.20 2002/05/29 10:13:10 itojun Exp $	*/
 
 /*
@@ -117,11 +117,6 @@ struct dnssl {
 	TAILQ_HEAD(dnssldomlist, dnssldom) dnssldoms;
 };
 
-struct soliciter {
-	SLIST_ENTRY(soliciter) entry;
-	struct sockaddr_in6 addr;
-};
-
 struct	rainfo {
 	/* pointer for list */
 	SLIST_ENTRY(rainfo) entry;
@@ -170,9 +165,6 @@ struct	rainfo {
 	u_quad_t rainput;	/* number of RAs received */
 	u_quad_t rainconsistent; /* number of RAs inconsistent with ours */
 	u_quad_t rsinput;	/* number of RSs received */
-
-	/* info about soliciter */
-	SLIST_HEAD(, soliciter) soliciters; /* recent solicitation source */
 };
 SLIST_HEAD(ralist, rainfo);
 

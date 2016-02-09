@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtadvd.c,v 1.66 2016/02/08 23:19:00 jca Exp $	*/
+/*	$OpenBSD: rtadvd.c,v 1.67 2016/02/09 00:39:13 jca Exp $	*/
 /*	$KAME: rtadvd.c,v 1.66 2002/05/29 14:18:36 itojun Exp $	*/
 
 /*
@@ -690,18 +690,6 @@ rs_input(int len, struct nd_router_solicit *rs,
 	{
 		long delay;	/* must not be greater than 1000000 */
 		struct timeval interval, now, min_delay, tm_tmp, *rest;
-		struct soliciter *sol;
-
-		/*
-		 * record sockaddr waiting for RA, if possible
-		 */
-		sol = malloc(sizeof(*sol));
-		if (sol) {
-			sol->addr = *from;
-			/*XXX RFC2553 need clarification on flowinfo */
-			sol->addr.sin6_flowinfo = 0;
-			SLIST_INSERT_HEAD(&ra->soliciters, sol, entry);
-		}
 
 		/*
 		 * If there is already a waiting RS packet, don't
@@ -1280,7 +1268,6 @@ ra_output(struct rainfo *rainfo)
 	int i;
 	struct cmsghdr *cm;
 	struct in6_pktinfo *pi;
-	struct soliciter *sol;
 
 	if ((iflist[rainfo->ifindex]->ifm_flags & IFF_UP) == 0) {
 		log_debug("%s is not up, skip sending RA", rainfo->ifname);
@@ -1321,25 +1308,6 @@ ra_output(struct rainfo *rainfo)
 	if (i < 0 || i != rainfo->ra_datalen)
 		if (i < 0)
 			log_warn("sendmsg on %s", rainfo->ifname);
-
-	/*
-	 * unicast advertisements
-	 * XXX commented out.  reason: though spec does not forbit it, unicast
-	 * advert does not really help
-	 */
-	while (!SLIST_EMPTY(&rainfo->soliciters)) {
-		sol = SLIST_FIRST(&rainfo->soliciters);
-		SLIST_REMOVE_HEAD(&rainfo->soliciters, entry);
-#if 0
-		sndmhdr.msg_name = (caddr_t)&sol->addr;
-		i = sendmsg(sock, &sndmhdr, 0);
-		if (i < 0 || i != rainfo->ra_datalen)
-			if (i < 0)
-				log_warn("unicast sendmsg on %s",
-				    rainfo->ifname);
-#endif
-		free(sol);
-	}
 
 	/* update counter */
 	if (rainfo->initcounter < MAX_INITIAL_RTR_ADVERTISEMENTS)
