@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepository.pm,v 1.115 2016/01/30 11:29:29 espie Exp $
+# $OpenBSD: PackageRepository.pm,v 1.116 2016/02/09 09:59:39 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -577,18 +577,54 @@ our @ISA=qw(OpenBSD::PackageRepository::Distant);
 
 our %distant = ();
 
+sub drop_privileges
+{
+	# we can't cache anything, we happen after the fork, right before exec
+	if (my (undef, undef, $uid, $gid) = getpwnam("_pfetch")) {
+		$( = $gid;
+		$) = "$gid $gid";
+		$< = $uid;
+		$> = $uid;
+	} 
+	# don't error out yet if we can't change.
+}
+
 
 sub grab_object
 {
 	my ($self, $object) = @_;
 	my ($ftp, @extra) = split(/\s+/, OpenBSD::Paths->ftp);
 	$ENV{LC_ALL} = 'C';
+	$self->drop_privileges;
 	exec {$ftp}
 	    $ftp,
 	    @extra,
 	    "-o",
 	    "-", $self->url($object->{name})
 	or $self->{state}->fatal("Can't run ".OpenBSD::Paths->ftp.": #1", $!);
+}
+
+sub open_read_pipe
+{
+	my ($self, $cmd, $errors) = @_;
+	my $child_pid = open(my $fh, '-|');
+	if ($child_pid) {
+		$self->{pipe_pid} = $child_pid;
+		return $fh;
+	} else {
+		open STDERR, '>', $errors if defined $errors;
+
+		$self->drop_privileges;
+		exec($cmd) or
+		$self->{state}->fatal("Can't run $cmd: #1", $!);
+	}
+}
+
+sub close_pipe
+{
+	my ($self, $fh) = @_;
+	close($fh);
+	waitpid $self->{pipe_pid}, 0;
 }
 
 sub maxcount
@@ -740,8 +776,8 @@ sub get_http_list
 
 	my $fullname = $self->url;
 	my $l = [];
-	open(my $fh, '-|', OpenBSD::Paths->ftp." -o - $fullname 2>$error")
-	    or return;
+	my $fh = $self->open_read_pipe(OpenBSD::Paths->ftp." -o - $fullname", 
+	    $error) or return;
 	while(<$fh>) {
 		chomp;
 		for my $pkg (m/\<A\s+HREF=\"(.*?\.tgz)\"\>/gio) {
@@ -751,7 +787,7 @@ sub get_http_list
 			$self->add_to_list($l, $pkg);
 		}
 	}
-	close($fh);
+	$self->close_pipe($fh);
 	return $l;
 }
 
@@ -787,9 +823,9 @@ sub urlscheme
 
 sub _list
 {
-	my ($self, $cmd) = @_;
+	my ($self, $cmd, $error) = @_;
 	my $l =[];
-	open(my $fh, '-|', "$cmd") or return;
+	my $fh = $self->open_read_pipe($cmd, $error) or return;
 	while(<$fh>) {
 		chomp;
 		next if m/^\d\d\d\s+\S/;
@@ -799,7 +835,7 @@ sub _list
 		next unless m/^(?:\.\/)?(\S+\.tgz)\s*$/;
 		$self->add_to_list($l, $1);
 	}
-	close($fh);
+	$self->close_pipe($fh);
 	return $l;
 }
 
@@ -809,7 +845,7 @@ sub get_ftp_list
 
 	my $fullname = $self->url;
 	return $self->_list("echo 'nlist'| ".OpenBSD::Paths->ftp
-	    ." $fullname 2>$error");
+	    ." $fullname", $error);
 }
 
 sub obtain_list
