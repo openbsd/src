@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vi.1,v 1.63 2016/01/06 22:41:53 millert Exp $
+.\"	$OpenBSD: vi.1,v 1.64 2016/02/09 07:41:12 jmc Exp $
 .\"
 .\" Copyright (c) 1994
 .\"     The Regents of the University of California.  All rights reserved.
@@ -14,7 +14,7 @@
 .\"
 .\"     @(#)vi.1	8.51 (Berkeley) 10/10/96
 .\"
-.Dd $Mdocdate: January 6 2016 $
+.Dd $Mdocdate: February 9 2016 $
 .Dt VI 1
 .Os
 .Sh NAME
@@ -354,7 +354,7 @@ matches the beginning of the word.
 .Sq \e>
 matches the end of the word.
 .It
-.Sq \(a~
+.Sq ~
 matches the replacement part of the last
 .Cm substitute
 command.
@@ -2059,9 +2059,9 @@ If this is the entire
 pattern, the replacement part of the previous
 .Cm substitute
 command.
-.It Sq \e\(sh
+.It Sq \e#
 Where
-.Sq \(sh
+.Sq #
 is an integer from 1 to 9, the text matched by the #'th subexpression in
 .Ar pattern .
 .It Sq \eL
@@ -2350,9 +2350,9 @@ Display lines in an unambiguous fashion.
 Attempt to get an exclusive lock on any file being edited, read or written.
 .It Cm magic Bq on
 When turned off, all regular expression characters except for
-.Sq \(ha
+.Sq ^
 and
-.Sq \(Do
+.Sq $
 are treated as ordinary characters.
 Preceding individual characters by
 .Sq \e
