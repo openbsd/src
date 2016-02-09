@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.18 2016/02/09 01:29:12 tb Exp $	*/
+/*	$OpenBSD: parse.c,v 1.19 2016/02/09 02:13:12 mmcc Exp $	*/
 /*	$NetBSD: parse.c,v 1.12 2001/12/07 13:37:39 bjh21 Exp $	*/
 
 /*
@@ -141,10 +141,9 @@ add(const char *fmt)
 		for (savep = ++p; *p != '"';)
 			if (*p++ == 0)
 				badfmt(fmt);
-		if ((tfu->fmt = malloc(p - savep + 1)) == NULL)
+		tfu->fmt = strndup(savep, p - savep);
+		if (tfu->fmt == NULL)
 			err(1, NULL);
-		(void) strncpy(tfu->fmt, savep, p - savep);
-		tfu->fmt[p - savep] = '\0';
 		escape(tfu->fmt);
 		p++;
 	}
