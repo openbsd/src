@@ -1,4 +1,4 @@
-/*	$OpenBSD: hidms.c,v 1.1 2016/01/08 15:54:13 jcs Exp $ */
+/*	$OpenBSD: hidms.c,v 1.2 2016/02/10 05:49:50 guenther Exp $ */
 /*	$NetBSD: ums.c,v 1.60 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -429,8 +429,8 @@ hidms_ioctl(struct hidms *ms, u_long cmd, caddr_t data, int flag,
 
 	switch (cmd) {
 	case WSMOUSEIO_SCALIBCOORDS:
-		if (!(wsmc->minx >= 0 && wsmc->maxx >= 0 &&
-		    wsmc->miny >= 0 && wsmc->maxy >= 0 &&
+		if (!(wsmc->minx >= -32768 && wsmc->maxx >= -32768 &&
+		    wsmc->miny >= -32768 && wsmc->maxy >= -32768 &&
 		    wsmc->resx >= 0 && wsmc->resy >= 0 &&
 		    wsmc->minx < 32768 && wsmc->maxx < 32768 &&
 		    wsmc->miny < 32768 && wsmc->maxy < 32768 &&
