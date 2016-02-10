@@ -1,4 +1,4 @@
-/*	$OpenBSD: mproc.c,v 1.17 2016/02/09 11:50:49 sunil Exp $	*/
+/*	$OpenBSD: mproc.c,v 1.18 2016/02/10 15:03:37 millert Exp $	*/
 
 /*
  * Copyright (c) 2012 Eric Faurot <eric@faurot.net>
@@ -157,13 +157,15 @@ mproc_dispatch(int fd, short event, void *arg)
 		else
 			n = imsg_read(&p->imsgbuf);
 
-		if (n == -1 && errno == EAGAIN)
-			return;
-		else if (n == -1) {
+		switch (n) {
+		case -1:
+			if (errno == EAGAIN)
+				return;
 			log_warn("warn: %s -> %s: imsg_read",
 			    proc_name(smtpd_process),  p->name);
 			fatal("exiting");
-		} else if (n == 0) {
+			/* NOTREACHED */
+		case 0:
 			/* this pipe is dead, so remove the event handler */
 			if (smtpd_process != PROC_CONTROL ||
 			    p->proc != PROC_CLIENT)
@@ -171,8 +173,10 @@ mproc_dispatch(int fd, short event, void *arg)
 				    proc_name(smtpd_process),  p->name);
 			p->handler(p, NULL);
 			return;
-		} else
+		default:
 			p->bytes_in += n;
+			break;
+		}
 	}
 
 	if (event & EV_WRITE) {
