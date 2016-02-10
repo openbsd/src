@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.133 2016/02/05 13:17:37 dlg Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.134 2016/02/10 04:34:14 dlg Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -1143,6 +1143,7 @@ bpf_tap(caddr_t arg, u_char *pkt, u_int pktlen, u_int direction)
 	size_t slen;
 	struct timeval tv;
 	int drop = 0, gottime = 0;
+	int s;
 
 	if (bp == NULL)
 		return (0);
@@ -1168,10 +1169,12 @@ bpf_tap(caddr_t arg, u_char *pkt, u_int pktlen, u_int direction)
 				microtime(&tv);
 
 			KERNEL_LOCK();
+			s = splnet();
 			if (d->bd_bif != NULL) {
 				bpf_catchpacket(d, pkt, pktlen, slen,
 				    bcopy, &tv);
 			}
+			splx(s);
 			KERNEL_UNLOCK();
 
 			if (d->bd_fildrop)
@@ -1221,6 +1224,7 @@ _bpf_mtap(caddr_t arg, struct mbuf *m, u_int direction,
 	struct mbuf *m0;
 	struct timeval tv;
 	int gottime = 0;
+	int s;
 
 	if (m == NULL)
 		return;
@@ -1258,10 +1262,12 @@ _bpf_mtap(caddr_t arg, struct mbuf *m, u_int direction,
 				microtime(&tv);
 
 			KERNEL_LOCK();
+			s = splnet();
 			if (d->bd_bif != NULL) {
 				bpf_catchpacket(d, (u_char *)m, pktlen, slen,
 				    cpfn, &tv);
 			}
+			splx(s);
 			KERNEL_UNLOCK();
 
 			if (d->bd_fildrop)
