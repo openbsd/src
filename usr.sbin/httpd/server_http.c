@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_http.c,v 1.103 2015/12/07 20:30:17 mmcc Exp $	*/
+/*	$OpenBSD: server_http.c,v 1.104 2016/02/11 16:14:11 tim Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -1504,9 +1504,9 @@ server_log_http(struct client *clt, unsigned int code, size_t len)
 			goto done;
 
 		ret = evbuffer_add_printf(clt->clt_log,
-		    "%s %s - %s [%s] \"%s %s%s%s%s%s\" %03d %zu\n",
-		    srv_conf->name, ip, clt->clt_remote_user == NULL ? "-" :
-		    user, tstamp,
+		    "%s:%u %s - %s [%s] \"%s %s%s%s%s%s\" %03d %zu\n",
+		    srv_conf->name, htons(srv_conf->port), ip,
+		    clt->clt_remote_user == NULL ? "-" : user, tstamp,
 		    server_httpmethod_byid(desc->http_method),
 		    desc->http_path == NULL ? "" : path,
 		    desc->http_query == NULL ? "" : "?",
@@ -1551,10 +1551,10 @@ server_log_http(struct client *clt, unsigned int code, size_t len)
 			goto done;
 
 		ret = evbuffer_add_printf(clt->clt_log,
-		    "%s %s - %s [%s] \"%s %s%s%s%s%s\""
+		    "%s:%u %s - %s [%s] \"%s %s%s%s%s%s\""
 		    " %03d %zu \"%s\" \"%s\"\n",
-		    srv_conf->name, ip, clt->clt_remote_user == NULL ? "-" :
-		    user, tstamp,
+		    srv_conf->name, htons(srv_conf->port), ip,
+		    clt->clt_remote_user == NULL ? "-" : user, tstamp,
 		    server_httpmethod_byid(desc->http_method),
 		    desc->http_path == NULL ? "" : path,
 		    desc->http_query == NULL ? "" : "?",
