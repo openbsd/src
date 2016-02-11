@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.162 2016/02/09 13:48:31 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.163 2016/02/11 16:25:15 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -275,6 +275,7 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 	}
 
 	if (type == IEEE80211_FC0_TYPE_DATA && hasqos &&
+	    (subtype & IEEE80211_FC0_SUBTYPE_NODATA) == 0 &&
 	    !(rxi->rxi_flags & IEEE80211_RXI_AMPDU_DONE)) {
 		int ba_state = ni->ni_rx_ba[tid].ba_state;
 
