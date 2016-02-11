@@ -1,4 +1,4 @@
-dnl	$OpenBSD: features,v 1.2 2014/02/03 05:35:40 miod Exp $
+dnl	$OpenBSD: features,v 1.3 2016/02/11 13:06:23 rpe Exp $
 dnl
 dnl This file lists almost all the conditional features of this port,
 dnl which are used to provide accurate installation notes.
@@ -6,7 +6,7 @@ dnl
 dnl Information about the installer script features should be in sync with
 dnl	src/distrib/alpha/common/install.md
 dnl and the list files in
-dnl	src/distrib/alpha/{bsd.rd,common}/list
+dnl	src/distrib/alpha/{common/list,bsd.rd/list.local}
 dnl
 dnl ====
 dnl

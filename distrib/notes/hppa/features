@@ -1,4 +1,4 @@
-dnl	$OpenBSD: features,v 1.4 2016/02/11 13:03:25 rpe Exp $
+dnl	$OpenBSD: features,v 1.5 2016/02/11 13:06:23 rpe Exp $
 dnl
 dnl This file lists almost all the conditional features of this port,
 dnl which are used to provide accurate installation notes.
@@ -6,7 +6,7 @@ dnl
 dnl Information about the installer script features should be in sync with
 dnl	src/distrib/hppa/install.md
 dnl and the list files in
-dnl	src/distrib/hppa/{,ramdisk/}list
+dnl	src/distrib/hppa/{list,ramdisk/list.local}
 dnl
 dnl ====
 dnl
