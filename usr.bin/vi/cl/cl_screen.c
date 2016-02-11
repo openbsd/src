@@ -1,4 +1,4 @@
-/*	$OpenBSD: cl_screen.c,v 1.25 2016/01/06 22:28:52 millert Exp $	*/
+/*	$OpenBSD: cl_screen.c,v 1.26 2016/02/11 16:34:12 tim Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -313,8 +313,7 @@ cl_vi_init(SCR *sp)
 	 * it regardless.  It doesn't make much sense to suspend vi at read,
 	 * so I don't think anyone will care.  Alternatively, we could look
 	 * it up in the table of legal command characters and turn it off if
-	 * it matches one.  VDSUSP wasn't in POSIX 1003.1-1990, so we test for
-	 * it.
+	 * it matches one.
 	 *
 	 * XXX
 	 * We don't check to see if the user had signals enabled originally.
