@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.165 2016/02/11 17:06:01 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.166 2016/02/11 17:14:29 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -732,7 +732,7 @@ ieee80211_input_ba(struct ieee80211com *ic, struct mbuf *m,
 			    "%d, expecting %d:%d\n", __func__,
 			    sn, ba->ba_winstart, ba->ba_winend);
 #endif
-		if (count > IEEE80211_BA_MAX_WINSZ) {
+		if (count > ba->ba_winsize) {
 			if (ba->ba_winmiss < IEEE80211_BA_MAX_WINMISS) { 
 				if (ba->ba_missedsn == sn - 1)
 					ba->ba_winmiss++;
@@ -747,9 +747,9 @@ ieee80211_input_ba(struct ieee80211com *ic, struct mbuf *m,
 			/* It appears the window has moved for real. */
 			ba->ba_winmiss = 0;
 			ba->ba_missedsn = 0;
+
+			count = ba->ba_winsize;	/* no overlap */
 		}
-		if (count > ba->ba_winsize)	/* no overlap */
-			count = ba->ba_winsize;
 		while (count-- > 0) {
 			/* gaps may exist */
 			if (ba->ba_buf[ba->ba_head].m != NULL) {
