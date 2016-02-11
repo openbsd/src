@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.164 2016/02/11 16:43:40 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.165 2016/02/11 17:06:01 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -724,10 +724,6 @@ ieee80211_input_ba(struct ieee80211com *ic, struct mbuf *m,
 		 * However, if the window really did move arbitrarily, we must
 		 * allow it to move forward. We try to detect this condition
 		 * by counting missed consecutive frames.
-		 *
-		 * Works around buggy behaviour observed with Broadcom-based
-		 * APs, which emit "sequence" numbers such as 1888, 1889, 2501,
-		 * 1890, 1891, ... all for the same TID.
 		 */
 		count = (sn - ba->ba_winend) & 0xfff;
 #ifdef DIAGNOSTIC
