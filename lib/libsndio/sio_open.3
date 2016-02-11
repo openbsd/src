@@ -1,4 +1,4 @@
-.\" $OpenBSD: sio_open.3,v 1.44 2016/01/07 07:41:01 ratchov Exp $
+.\" $OpenBSD: sio_open.3,v 1.45 2016/02/11 16:30:35 tim Exp $
 .\"
 .\" Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 7 2016 $
+.Dd $Mdocdate: February 11 2016 $
 .Dt SIO_OPEN 3
 .Os
 .Sh NAME
@@ -674,6 +674,60 @@ The
 function can be used at any stage;
 it returns 0 if there's no pending error, and a non-zero
 value if there's an error.
+.Ss Use with Xr pledge 2
+If the
+.Nm sndio
+library is used in combination with
+.Xr pledge 2 ,
+then the
+.Fn sio_open
+function needs the
+.Va stdio ,
+.Va rpath ,
+.Va wpath ,
+.Va cpath ,
+.Va inet ,
+.Va unix ,
+.Va dns ,
+and
+.Va audio
+.Xr pledge 2
+promises.
+.Bl -bullet
+.It
+.Va rpath ,
+.Va wpath ,
+and
+.Va cpath
+are needed to read, write or create the authentication cookie
+.Pa ~/.aucat_cookie .
+.It
+.Va rpath ,
+.Va wpath ,
+and
+.Va audio
+are needed when the device is a local raw device.
+.It
+.Va unix
+is needed when the device is a local
+.Xr sndiod 8
+sub-device.
+.It
+.Va inet
+and
+.Va dns
+are needed when the device is a remote
+.Xr sndiod 8
+sub-device.
+.El
+.Pp
+Once no further calls to
+.Fn sio_open
+will be made, all these
+.Xr pledge 2
+promises may be dropped, except for the
+.Va audio
+promise.
 .Sh RETURN VALUES
 The
 .Fn sio_open
@@ -709,6 +763,7 @@ The debug level:
 may be a value between 0 and 2.
 .El
 .Sh SEE ALSO
+.Xr pledge 2 ,
 .Xr audio 4 ,
 .Xr sndio 7 ,
 .Xr sndiod 8 ,
