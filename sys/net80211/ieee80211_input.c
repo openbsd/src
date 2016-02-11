@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.163 2016/02/11 16:25:15 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.164 2016/02/11 16:43:40 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -729,14 +729,14 @@ ieee80211_input_ba(struct ieee80211com *ic, struct mbuf *m,
 		 * APs, which emit "sequence" numbers such as 1888, 1889, 2501,
 		 * 1890, 1891, ... all for the same TID.
 		 */
+		count = (sn - ba->ba_winend) & 0xfff;
 #ifdef DIAGNOSTIC
-		if ((ifp->if_flags & IFF_DEBUG) &&
-		    ((sn - ba->ba_winend) & 0xfff) > 1)
+		if ((ifp->if_flags & IFF_DEBUG) && count > 1)
 			printf("%s: received frame with bad sequence number "
 			    "%d, expecting %d:%d\n", __func__,
 			    sn, ba->ba_winstart, ba->ba_winend);
 #endif
-		if (((sn - ba->ba_winend) & 0xfff) > IEEE80211_BA_MAX_WINSZ) {
+		if (count > IEEE80211_BA_MAX_WINSZ) {
 			if (ba->ba_winmiss < IEEE80211_BA_MAX_WINMISS) { 
 				if (ba->ba_missedsn == sn - 1)
 					ba->ba_winmiss++;
@@ -752,7 +752,6 @@ ieee80211_input_ba(struct ieee80211com *ic, struct mbuf *m,
 			ba->ba_winmiss = 0;
 			ba->ba_missedsn = 0;
 		}
-		count = (sn - ba->ba_winend) & 0xfff;
 		if (count > ba->ba_winsize)	/* no overlap */
 			count = ba->ba_winsize;
 		while (count-- > 0) {
