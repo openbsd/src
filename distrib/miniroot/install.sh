@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sh,v 1.274 2016/01/31 11:07:06 rpe Exp $
+#	$OpenBSD: install.sh,v 1.275 2016/02/11 14:24:28 rpe Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
@@ -214,11 +214,10 @@ fi
 # If we managed to talk to the cgi server before, tell it what
 # location we used... so it can perform magic next time.
 if [[ -s $HTTP_LIST ]]; then
-	_i=
-	[[ -n $INSTALL ]] && _i="install=$INSTALL"
-	[[ -n $TZ ]] && _i="$_i&TZ=$TZ"
-	[[ -n $METHOD ]] && _i="$_i&method=$METHOD"
-
+	_i=${INSTALL:+install=$INSTALL&}
+	_i=$_i${TZ:+TZ=$TZ&}
+	_i=$_i${METHOD:+method=$METHOD}
+	_i=${_i%&}
 	[[ -n $_i ]] && ftp -Vao - \
 		"http://129.128.5.191/cgi-bin/ftpinstall.cgi?$_i" >/dev/null 2>&1 &
 fi
