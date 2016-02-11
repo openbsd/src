@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_subr.c,v 1.45 2015/12/11 16:07:02 mpi Exp $	*/
+/*	$OpenBSD: kern_subr.c,v 1.46 2016/02/11 18:59:15 stefan Exp $	*/
 /*	$NetBSD: kern_subr.c,v 1.15 1996/04/09 17:21:56 ragge Exp $	*/
 
 /*
@@ -51,20 +51,22 @@ uiomove(void *cp, size_t n, struct uio *uio)
 	struct iovec *iov;
 	size_t cnt;
 	int error = 0;
-	struct proc *p;
-
-	p = uio->uio_procp;
 
 #ifdef DIAGNOSTIC
 	if (uio->uio_rw != UIO_READ && uio->uio_rw != UIO_WRITE)
 		panic("uiomove: mode");
-	if (uio->uio_segflg == UIO_USERSPACE && p != curproc)
+	if (uio->uio_segflg == UIO_USERSPACE && uio->uio_procp != curproc)
 		panic("uiomove: proc");
 #endif
-	while (n > 0 && uio->uio_resid) {
+
+	if (n > uio->uio_resid)
+		n = uio->uio_resid;
+
+	while (n > 0) {
 		iov = uio->uio_iov;
 		cnt = iov->iov_len;
 		if (cnt == 0) {
+			KASSERT(uio->uio_iovcnt > 0);
 			uio->uio_iov++;
 			uio->uio_iovcnt--;
 			continue;
