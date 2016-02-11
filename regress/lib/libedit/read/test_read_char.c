@@ -79,7 +79,7 @@ main(void)
 	int irc;
 	Char cp;
 
-	if (setlocale(LC_CTYPE, "en_US.UTF-8") == NULL)
+	if (setlocale(LC_CTYPE, "") == NULL)
 		err(1, "setlocale");
 	el.el_flags = CHARSET_IS_UTF8;
 	el.el_infd = STDIN_FILENO;
