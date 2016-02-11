@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.166 2016/02/11 17:14:29 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.167 2016/02/11 19:36:48 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -257,6 +257,7 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 
 	dir = wh->i_fc[1] & IEEE80211_FC1_DIR_MASK;
 	type = wh->i_fc[0] & IEEE80211_FC0_TYPE_MASK;
+	subtype = wh->i_fc[0] & IEEE80211_FC0_SUBTYPE_MASK;
 
 	if (type != IEEE80211_FC0_TYPE_CTL) {
 		hdrlen = ieee80211_get_hdrlen(wh);
