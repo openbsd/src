@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.317 2016/01/21 11:23:48 mpi Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.318 2016/02/11 12:56:08 jca Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -1496,7 +1496,7 @@ ip_setmoptions(int optname, struct ip_moptions **imop, struct mbuf *m,
 				}
 			}
 			if (nmships == NULL) {
-				error = ETOOMANYREFS;
+				error = ENOBUFS;
 				if_put(ifp);
 				break;
 			}
