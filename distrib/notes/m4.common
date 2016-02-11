@@ -1,5 +1,5 @@
 dnl
-dnl	$OpenBSD: m4.common,v 1.116 2016/01/01 15:58:28 rpe Exp $
+dnl	$OpenBSD: m4.common,v 1.117 2016/02/11 14:33:03 rpe Exp $
 dnl
 dnl Copyright (c) 2004 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -358,11 +358,6 @@ dnl XXX add a MDVLAN feature and document vlan setup
 	and the domain name servers, unless this information has
 	already been obtained from a DHCP server during interface setup.
 
-	You will also be presented with an opportunity to do more
-	manual configuration.  If you accept, you will be dropped
-	to a shell; when you are done, enter `exit' to return to
-	the installation program.
-
 dnl install.sub (install) askpassword root
 	You will then be asked to enter the initial root password
 	of the system, twice.
@@ -374,10 +369,7 @@ dnl install.sub (install) askpassword root
 
 dnl install.sub (install) questions(): sshd/ntpd
 	You will then be asked whether you want to start sshd(8) by
-	default, as well as ntpd(8).  If you choose to start ntpd(8),
-	you will be asked for your ntp server; if you don't have any
-	preferred ntp server, press enter to confirm the default
-	setting of using the pool.ntp.org servers.
+	default.
 dnl
 dnl install.sub (install) questions(): MDXAPERTURE
 ifelse(MDXAPERTURE,,,{:-
