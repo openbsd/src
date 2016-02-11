@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipmi.c,v 1.94 2016/02/07 12:19:14 uebayasi Exp $ */
+/*	$OpenBSD: ipmi.c,v 1.95 2016/02/11 04:02:22 uebayasi Exp $ */
 
 /*
  * Copyright (c) 2015 Masao Uebayashi
@@ -143,7 +143,7 @@ struct ipmi_sensors_head ipmi_sensor_list =
 void	dumpb(const char *, int, const u_int8_t *);
 
 int	read_sensor(struct ipmi_softc *, struct ipmi_sensor *);
-int	add_sdr_sensor(struct ipmi_softc *, u_int8_t *);
+int	add_sdr_sensor(struct ipmi_softc *, u_int8_t *, int);
 int	get_sdr_partial(struct ipmi_softc *, u_int16_t, u_int16_t,
 	    u_int8_t, u_int8_t, void *, u_int16_t *);
 int	get_sdr(struct ipmi_softc *, u_int16_t, u_int16_t *);
@@ -170,7 +170,7 @@ int	ipmiioctl(dev_t, u_long, caddr_t, int, struct proc *);
 
 long	ipow(long, int);
 long	ipmi_convert(u_int8_t, struct sdrtype1 *, long);
-void	ipmi_sensor_name(char *, int, u_int8_t, u_int8_t *);
+int	ipmi_sensor_name(char *, int, u_int8_t, u_int8_t *, int);
 
 /* BMC Helper Functions */
 u_int8_t bmc_read(struct ipmi_softc *, int);
@@ -1102,6 +1102,8 @@ get_sdr_partial(struct ipmi_softc *sc, u_int16_t recordId, u_int16_t reserveId,
 		*nxtRecordId = *(uint16_t *) cmd;
 	if (len > 2)
 		memcpy(buffer, cmd + 2, len - 2);
+	else
+		return (1);
 
 	return (0);
 }
@@ -1160,7 +1162,7 @@ get_sdr(struct ipmi_softc *sc, u_int16_t recid, u_int16_t *nxtrec)
 	}
 
 	/* Add SDR to sensor list, if not wanted, free buffer */
-	if (add_sdr_sensor(sc, psdr) == 0)
+	if (add_sdr_sensor(sc, psdr, sdrlen) == 0)
 		free(psdr, M_DEVBUF, sdrlen);
 
 	return (0);
@@ -1185,8 +1187,9 @@ getbits(u_int8_t *bytes, int bitpos, int bitlen)
 }
 
 /* Decode IPMI sensor name */
-void
-ipmi_sensor_name(char *name, int len, u_int8_t typelen, u_int8_t *bits)
+int
+ipmi_sensor_name(char *name, int len, u_int8_t typelen, u_int8_t *bits,
+    int bitslen)
 {
 	int	i, slen;
 	char	bcdplus[] = "0123456789 -.:,_";
@@ -1201,6 +1204,8 @@ ipmi_sensor_name(char *name, int len, u_int8_t typelen, u_int8_t *bits)
 		/* Characters are encoded in 4-bit BCDPLUS */
 		if (len < slen * 2 + 1)
 			slen = (len >> 1) - 1;
+		if (slen > bitslen)
+			return (0);
 		for (i = 0; i < slen; i++) {
 			*(name++) = bcdplus[bits[i] >> 4];
 			*(name++) = bcdplus[bits[i] & 0xF];
@@ -1213,19 +1218,26 @@ ipmi_sensor_name(char *name, int len, u_int8_t typelen, u_int8_t *bits)
 		/* XXX: need to calculate max len: slen = 3/4 * len */
 		if (len < slen + 1)
 			slen = len - 1;
-		for (i = 0; i < slen * 8; i += 6)
+		if (slen * 6 / 8 > bitslen)
+			return (0);
+		for (i = 0; i < slen * 8; i += 6) {
 			*(name++) = getbits(bits, i, 6) + ' ';
+		}
 		break;
 
 	case IPMI_NAME_ASCII8BIT:
 		/* Characters are 8-bit ascii */
 		if (len < slen + 1)
 			slen = len - 1;
+		if (slen > bitslen)
+			return (0);
 		while (slen--)
 			*(name++) = *(bits++);
 		break;
 	}
 	*name = 0;
+
+	return (1);
 }
 
 /* Calculate val * 10^exp */
@@ -1413,7 +1425,7 @@ ipmi_sensor_type(int type, int ext_type, int entity)
 
 /* Add Sensor to BSD Sysctl interface */
 int
-add_sdr_sensor(struct ipmi_softc *sc, u_int8_t *psdr)
+add_sdr_sensor(struct ipmi_softc *sc, u_int8_t *psdr, int sdrlen)
 {
 	int			rc;
 	struct sdrtype1		*s1 = (struct sdrtype1 *)psdr;
@@ -1422,13 +1434,19 @@ add_sdr_sensor(struct ipmi_softc *sc, u_int8_t *psdr)
 
 	switch (s1->sdrhdr.record_type) {
 	case IPMI_SDR_TYPEFULL:
-		ipmi_sensor_name(name, sizeof(name), s1->typelen, s1->name);
+		rc = ipmi_sensor_name(name, sizeof(name), s1->typelen,
+		    s1->name, sdrlen - (int)offsetof(struct sdrtype1, name));
+		if (rc == 0)
+			return (0);
 		rc = add_child_sensors(sc, psdr, 1, s1->sensor_num,
 		    s1->sensor_type, s1->event_code, 0, s1->entity_id, name);
 		break;
 
 	case IPMI_SDR_TYPECOMPACT:
-		ipmi_sensor_name(name, sizeof(name), s2->typelen, s2->name);
+		rc = ipmi_sensor_name(name, sizeof(name), s2->typelen,
+		    s2->name, sdrlen - (int)offsetof(struct sdrtype2, name));
+		if (rc == 0)
+			return (0);
 		rc = add_child_sensors(sc, psdr, s2->share1 & 0xF,
 		    s2->sensor_num, s2->sensor_type, s2->event_code,
 		    s2->share2 & 0x7F, s2->entity_id, name);
