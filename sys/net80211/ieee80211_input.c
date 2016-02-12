@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.167 2016/02/11 19:36:48 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.168 2016/02/12 10:12:42 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -510,8 +510,6 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 			goto out;
 		}
 #endif
-		subtype = wh->i_fc[0] & IEEE80211_FC0_SUBTYPE_MASK;
-
 		/* drop frames without interest */
 		if (ic->ic_state == IEEE80211_S_SCAN) {
 			if (subtype != IEEE80211_FC0_SUBTYPE_BEACON &&
@@ -566,7 +564,6 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 
 	case IEEE80211_FC0_TYPE_CTL:
 		ic->ic_stats.is_rx_ctl++;
-		subtype = wh->i_fc[0] & IEEE80211_FC0_SUBTYPE_MASK;
 		switch (subtype) {
 #ifndef IEEE80211_STA_ONLY
 		case IEEE80211_FC0_SUBTYPE_PS_POLL:
