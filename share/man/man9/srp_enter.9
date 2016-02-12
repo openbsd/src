@@ -1,4 +1,4 @@
-.\"	$OpenBSD: srp_enter.9,v 1.6 2015/10/02 09:26:16 sobrado Exp $
+.\"	$OpenBSD: srp_enter.9,v 1.7 2016/02/12 12:47:04 dlg Exp $
 .\"
 .\" Copyright (c) 2015 David Gwynne <dlg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 2 2015 $
+.Dd $Mdocdate: February 12 2016 $
 .Dt SRP_ENTER 9
 .Os
 .Sh NAME
@@ -60,10 +60,15 @@
 .Fa "void *ctx"
 .Fc
 .Sh DESCRIPTION
+An
+srp
+structure represents a pointer or reference to an object in memory.
 The
 srp
-API provides concurrent lock free access to data structures and guarantees the
-data isn't destroyed while it is in use.
+API provides concurrent lock free access to these objects, and can
+guarantee that the data isn't destroyed while that reference is in
+use.
+It does not prevent concurrent modification of the referenced object.
 .Pp
 .Fn srp_init
 initialises the srp structure
@@ -99,6 +104,11 @@ uses atomic CPU operations to change the references.
 may be used if modifications to
 .Fa p
 are already serialised by the caller.
+Both
+.Fn srp_update
+and
+.Fn srp_update_locked
+may sleep.
 .Pp
 .Fn srp_enter
 returns a pointer to a data structure referenced by the srp struct
