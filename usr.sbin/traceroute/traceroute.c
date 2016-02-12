@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.c,v 1.144 2015/11/06 19:13:36 florian Exp $	*/
+/*	$OpenBSD: traceroute.c,v 1.145 2016/02/12 05:11:29 semarie Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*
@@ -843,7 +843,7 @@ main(int argc, char *argv[])
 	    sizeof(datalen)) < 0)
 		err(6, "SO_SNDBUF");
 
-	if (nflag) {
+	if (nflag && !Aflag) {
 		if (pledge("stdio inet", NULL) == -1)
 			err(1, "pledge");
 	} else {
