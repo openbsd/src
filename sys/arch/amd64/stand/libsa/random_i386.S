@@ -1,4 +1,4 @@
-/*	$OpenBSD: random_i386.S,v 1.9 2016/01/12 23:00:10 deraadt Exp $	*/
+/*	$OpenBSD: random_i386.S,v 1.10 2016/02/12 21:36:33 naddy Exp $	*/
 
 /*
  * Copyright (c) 2013 Joel Sing <jsing@openbsd.org>
@@ -41,17 +41,6 @@ ENTRY(mdrandom)
 	popfl
 	andl	$PSL_ID, %eax
 	jz	done
-
-	// CPUID leaf = 0, subleaf = 0
-	movl	$0, %eax
-	movl	$0, %ecx
-	cpuid
-	cmpl	$0x756e6547, %ebx	// "Genu"
-	jne	done
-	cmpl	$0x49656e69, %edx	// "ineI"
-	jne	done
-	cmpl	$0x6c65746e, %ecx	// "ntel"
-	jne	done
 
 	// CPUID leaf = 1, subleaf = 0
 	movl	$1, %eax
