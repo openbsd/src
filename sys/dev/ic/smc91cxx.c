@@ -1,4 +1,4 @@
-/*	$OpenBSD: smc91cxx.c,v 1.45 2015/12/08 13:34:22 tedu Exp $	*/
+/*	$OpenBSD: smc91cxx.c,v 1.46 2016/02/12 20:02:04 mmcc Exp $	*/
 /*	$NetBSD: smc91cxx.c,v 1.11 1998/08/08 23:51:41 mycroft Exp $	*/
 
 /*-
@@ -703,7 +703,7 @@ smc91cxx_start(ifp)
 
  readcheck:
 	/*
-	 * Check for incoming pcakets.  We don't want to overflow the small
+	 * Check for incoming packets.  We don't want to overflow the small
 	 * RX FIFO.  If nothing has arrived, attempt to queue another
 	 * transmit packet.
 	 */
