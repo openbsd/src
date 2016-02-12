@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.134 2016/02/10 04:34:14 dlg Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.135 2016/02/12 18:56:12 stefan Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -212,7 +212,7 @@ bpf_movein(struct uio *uio, u_int linktype, struct mbuf **mp,
 	m->m_len = len;
 	*mp = m;
 
-	error = uiomovei(mtod(m, caddr_t), len, uio);
+	error = uiomove(mtod(m, caddr_t), len, uio);
 	if (error)
 		goto bad;
 
@@ -488,7 +488,7 @@ bpfread(dev_t dev, struct uio *uio, int ioflag)
 	 * We know the entire buffer is transferred since
 	 * we checked above that the read buffer is bpf_bufsize bytes.
 	 */
-	error = uiomovei(d->bd_hbuf, d->bd_hlen, uio);
+	error = uiomove(d->bd_hbuf, d->bd_hlen, uio);
 
 	s = splnet();
 	d->bd_fbuf = d->bd_hbuf;
