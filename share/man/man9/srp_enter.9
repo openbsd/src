@@ -1,4 +1,4 @@
-.\"	$OpenBSD: srp_enter.9,v 1.7 2016/02/12 12:47:04 dlg Exp $
+.\"	$OpenBSD: srp_enter.9,v 1.8 2016/02/12 12:48:44 dlg Exp $
 .\"
 .\" Copyright (c) 2015 David Gwynne <dlg@openbsd.org>
 .\"
@@ -185,7 +185,7 @@ as the first argument and the pointer to the data as the second argument.
 .Fn srp_gc_init ,
 .Fn srp_update ,
 .Fn srp_update_locked ,
-.Fn srp_update_get_locked ,
+.Fn srp_get_locked ,
 and
 .Fn srp_finalize
 can be called during autoconf, or from process context.
