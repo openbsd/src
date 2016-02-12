@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_sym.c,v 1.43 2016/01/27 10:37:12 mpi Exp $	*/
+/*	$OpenBSD: db_sym.c,v 1.44 2016/02/12 10:58:41 mpi Exp $	*/
 /*	$NetBSD: db_sym.c,v 1.24 2000/08/11 22:50:47 tv Exp $	*/
 
 /*
@@ -245,34 +245,6 @@ db_lookup(char *symstr)
 }
 
 /*
- * Does this symbol name appear in more than one symbol table?
- * Used by db_symbol_values to decide whether to qualify a symbol.
- */
-boolean_t db_qualify_ambiguous_names = FALSE;
-
-boolean_t
-db_symbol_is_ambiguous(db_sym_t sym)
-{
-	char		*sym_name;
-	int	i;
-	boolean_t	found_once = FALSE;
-
-	if (!db_qualify_ambiguous_names)
-		return FALSE;
-
-	db_symbol_values(sym, &sym_name, 0);
-	for (i = 0; i < MAXNOSYMTABS; i++) {
-		if (db_symtabs[i].name &&
-		    db_elf_sym_lookup(&db_symtabs[i], sym_name)) {
-			if (found_once)
-				return TRUE;
-			found_once = TRUE;
-		}
-	}
-	return FALSE;
-}
-
-/*
  * Find the closest symbol to val, and return its name
  * and the difference between val and the symbol found.
  */
@@ -315,8 +287,6 @@ db_symbol_values(db_sym_t sym, char **namep, db_expr_t *valuep)
 
 	db_elf_sym_values(db_last_symtab, sym, namep, &value);
 
-	if (db_symbol_is_ambiguous(sym))
-		*namep = db_qualify(sym, db_last_symtab->name);
 	if (valuep)
 		*valuep = value;
 }

@@ -74,11 +74,6 @@ typedef int		db_strategy_t;	/* search strategy */
  */
 typedef void (db_forall_func_t)(db_symtab_t *, db_sym_t, char *, char *, int, void *);
 
-extern boolean_t	db_qualify_ambiguous_names;
-					/* if TRUE, check across symbol tables
-					 * for multiple occurrences of a name.
-					 * Might slow down quite a bit */
-
 extern unsigned int db_maxoff;		/* like gdb's "max-symbolic-offset" */
 /*
  * Functions exported by the symtable module
@@ -96,8 +91,6 @@ int db_value_of_name(char *, db_expr_t *);
 					/* find symbol value given name */
 
 db_sym_t db_lookup(char *);
-
-boolean_t db_symbol_is_ambiguous(db_sym_t);
 
 db_sym_t db_search_symbol(db_addr_t, db_strategy_t, db_expr_t *);
 					/* find symbol given value */
