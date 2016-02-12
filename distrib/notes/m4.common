@@ -1,5 +1,5 @@
 dnl
-dnl	$OpenBSD: m4.common,v 1.118 2016/02/12 20:25:32 rpe Exp $
+dnl	$OpenBSD: m4.common,v 1.119 2016/02/12 20:29:18 rpe Exp $
 dnl
 dnl Copyright (c) 2004 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -289,7 +289,7 @@ define({:-OpenBSDInstallPart3-:},
 
 dnl dot.profile
 	After the kernel is done initialising, you will be asked whether
-	you wish to do an "(A)utoinstall", "(I)nstall" or an "(U)pgrade".
+	you wish to do an "(I)nstall", "(U)pgrade" or an "(A)utoinstall".
 	Enter 'I' for a fresh install or 'U' to upgrade an existing
 	installation.  Enter 'A' to start an unattended installation
 	where all of your answers are supplied in a response file (more
@@ -415,8 +415,8 @@ dnl install.sub (install) user_setup()
 	use a strong password here as well.
 
 	If you have chosen to setup a user account, and you had chosen
-	to start sshd(8) on boot, you will be given the possibility to
-	disable sshd(8) logins as root.
+	to start sshd(8) on boot, you will be asked if you want to allow
+	sshd(8) logins as root.
 dnl install.sub (install) set_timezone
 ifelse(MDTZ,,,
 {:-
