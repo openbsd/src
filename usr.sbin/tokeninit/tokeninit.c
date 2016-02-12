@@ -1,4 +1,4 @@
-/*	$OpenBSD: tokeninit.c,v 1.10 2015/12/22 21:01:07 mmcc Exp $	*/
+/*	$OpenBSD: tokeninit.c,v 1.11 2016/02/12 00:10:59 mmcc Exp $	*/
 
 /*-
  * Copyright (c) 1995 Migration Associates Corp. All Rights Reserved
@@ -211,7 +211,7 @@ prompt_for_secret(int hexformat, char* username)
 	static char prompt[1024];
 	if (hexformat)
 		snprintf(prompt, sizeof prompt,
-		    "Enter a 16 digit hexidecimal number "
+		    "Enter a 16 digit hexadecimal number "
 		    "as a seed for %s\'s token:\n", username);
 	else
 		snprintf(prompt, sizeof prompt,
