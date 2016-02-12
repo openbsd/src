@@ -1,4 +1,4 @@
-/*	$OpenBSD: makemap.c,v 1.62 2016/02/10 09:23:53 gilles Exp $	*/
+/*	$OpenBSD: makemap.c,v 1.63 2016/02/12 03:11:16 sunil Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -50,7 +50,7 @@ static int	 parse_setentry(DB *, int *, char *, size_t, size_t);
 static int	 make_plain(DBT *, char *);
 static int	 make_aliases(DBT *, char *);
 static char	*conf_aliases(char *);
-static int	dump_db(const char *, DBTYPE);
+static int	 dump_db(const char *, DBTYPE);
 
 struct smtpd	 smtpd;
 struct smtpd	*env = &smtpd;
@@ -94,19 +94,25 @@ makemap(int argc, char *argv[])
 	int		 ch, dbputs = 0, Uflag = 0;
 	DBTYPE		 dbtype = DB_HASH;
 	char		*p;
-	int		fd = -1;
+	int		 fd = -1;
 
 	log_init(1);
 
 	mode = strcmp(__progname, "newaliases") ? P_MAKEMAP : P_NEWALIASES;
 	conf = CONF_FILE;
 	type = T_PLAIN;
-	opts = "ho:t:d:U";
+	opts = "b:C:d:ho:O:t:U";
 	if (mode == P_NEWALIASES)
 		opts = "f:h";
 
 	while ((ch = getopt(argc, argv, opts)) != -1) {
 		switch (ch) {
+		case 'b':
+			if (optarg && strcmp(optarg, "i") == 0)
+				mode = P_NEWALIASES;
+			break;
+		case 'C':
+			break; /* for compatibility */
 		case 'd':
 			if (strcmp(optarg, "hash") == 0)
 				dbtype = DB_HASH;
@@ -122,6 +128,13 @@ makemap(int argc, char *argv[])
 			break;
 		case 'o':
 			oflag = optarg;
+			break;
+		case 'O':
+			if (strncmp(optarg, "AliasFile=", 10) != 0)
+				break;
+			type = T_ALIASES;
+			p = strchr(optarg, '=');
+			source = ++p;
 			break;
 		case 't':
 			if (strcmp(optarg, "aliases") == 0)
@@ -169,7 +182,8 @@ makemap(int argc, char *argv[])
 		if (argc != 0)
 			usage();
 		type = T_ALIASES;
-		source = conf_aliases(conf);
+		if (source == NULL)
+			source = conf_aliases(conf);
 	} else {
 		if (argc != 1)
 			usage();

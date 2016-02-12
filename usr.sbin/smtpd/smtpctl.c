@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpctl.c,v 1.146 2016/02/09 10:38:02 gilles Exp $	*/
+/*	$OpenBSD: smtpctl.c,v 1.147 2016/02/12 03:11:16 sunil Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -67,6 +67,7 @@ static int is_encrypted_fp(FILE *);
 static int is_encrypted_buffer(const char *);
 static int is_gzip_buffer(const char *);
 static FILE *offline_file(void);
+static void sendmail_compat(int, char **);
 
 extern char	*__progname;
 int		 sendmail;
@@ -976,77 +977,14 @@ do_uncorrupt(int argc, struct parameter *argv)
 int
 main(int argc, char **argv)
 {
-	arglist		 args;
 	gid_t		 gid;
 	char		*argv_mailq[] = { "show", "queue", NULL };
-	char		*aliases_path = NULL, *p;
-	FILE		*offlinefp = NULL;
-	int		 ch, i, sendmail_makemap = 0;
 
-	gid = getgid();
-	if (strcmp(__progname, "sendmail") == 0 ||
-	    strcmp(__progname, "send-mail") == 0) {
-		/*
-		 * determine whether we are called with flags
-		 * that should invoke makemap/newaliases.
-		 */
-		opterr = 0;
-		while ((ch = getopt(argc, argv, "b:C:O:")) != -1) {
-			switch (ch) {
-			case 'b':
-				if (strcmp(optarg, "i") == 0)
-					sendmail_makemap = 1;
-				break;
-			case 'C':
-				break; /* compatibility, not required */
-			case 'O':
-				if (strncmp(optarg, "AliasFile=", 10) != 0)
-					break;
-				p = strchr(optarg, '=');
-				aliases_path = ++p;
-				break;
-			}
-		}
-		opterr = 1;
-
-		if (sendmail_makemap) {
-			argc -= optind;
-			argv += optind;
-			optind = 0;
-
-			memset(&args, 0, sizeof args);
-			addargs(&args, "%s", "makemap");
-			for (i = 0; i < argc; i++)
-				addargs(&args, "%s", argv[i]);
-
-			addargs(&args, "%s", "-taliases");
-			if (aliases_path)
-				addargs(&args, "%s", aliases_path);
-
-			return makemap(args.num, args.list);
-		}
-		optind = 0;
-
-		if (!srv_connect())
-			offlinefp = offline_file();
-
-		if (setresgid(gid, gid, gid) == -1)
-			err(1, "setresgid");
-
-		/* we'll reduce further down the road */
-		if (pledge("stdio rpath wpath cpath tmppath flock "
-			"dns getpw recvfd", NULL) == -1)
-			err(1, "pledge");
-
-		sendmail = 1;
-		return (enqueue(argc, argv, offlinefp));
-	} else if (strcmp(__progname, "makemap") == 0 ||
-	    strcmp(__progname, "newaliases") == 0)
-		return makemap(argc, argv);
-
+	sendmail_compat(argc, argv);
 	if (geteuid())
 		errx(1, "need root privileges");
 
+	gid = getgid();
 	if (setresgid(gid, gid, gid) == -1)
 		err(1, "setresgid");
 
@@ -1105,7 +1043,44 @@ main(int argc, char **argv)
 
 	errx(1, "unsupported mode");
 	return (0);
+}
 
+void
+sendmail_compat(int argc, char **argv)
+{
+	FILE	*offlinefp = NULL;
+	gid_t	 gid;
+	int	 i;
+
+	if (strcmp(__progname, "sendmail") == 0 ||
+	    strcmp(__progname, "send-mail") == 0) {
+		/*
+		 * determine whether we are called with flags
+		 * that should invoke makemap/newaliases.
+		 */
+		for (i = 1; i < argc; i++)
+			if (strncmp(argv[i], "-bi", 3) == 0) {
+				__progname = "newaliases";
+				exit(makemap(argc, argv));
+			}
+
+		if (!srv_connect())
+			offlinefp = offline_file();
+
+		gid = getgid();
+		if (setresgid(gid, gid, gid) == -1)
+			err(1, "setresgid");
+
+		/* we'll reduce further down the road */
+		if (pledge("stdio rpath wpath cpath tmppath flock "
+			"dns getpw recvfd", NULL) == -1)
+			err(1, "pledge");
+
+		sendmail = 1;
+		exit(enqueue(argc, argv, offlinefp));
+	} else if (strcmp(__progname, "makemap") == 0 ||
+	    strcmp(__progname, "newaliases") == 0)
+		exit(makemap(argc, argv));
 }
 
 static void
