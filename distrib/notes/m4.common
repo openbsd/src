@@ -1,5 +1,5 @@
 dnl
-dnl	$OpenBSD: m4.common,v 1.117 2016/02/11 14:33:03 rpe Exp $
+dnl	$OpenBSD: m4.common,v 1.118 2016/02/12 20:25:32 rpe Exp $
 dnl
 dnl Copyright (c) 2004 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -818,8 +818,9 @@ Boot from $1.
 When prompted, select the (U)pgrade option rather than the (I)nstall
 option at the prompt in the install process.
 
-You will be presented with a welcome message and asked if you really wish
-to upgrade.
+You will be presented with a welcome message, and depending on how you are 
+connected to the system, you will be asked to set the terminal type or to
+choose a keyboard layout.
 
 The upgrade script will ask you for the existing root partition, and
 will use the existing filesystems defined in /etc/fstab to install the
@@ -849,9 +850,9 @@ require a bit of setup first that is explained below.
 The installation allows installing OpenBSD directly from HTTP mirror
 sites over the internet, however you must consider the speed and
 reliability of your internet connection for this option.  It may save
-much time and frustration to use ftp get/reget to transfer the
-distribution sets to a local server or disk and perform the installation
-from there, rather than directly from the internet.-:})dnl
+much time and frustration to download the distribution sets to a local
+server or disk and perform the installation from there, rather than
+directly from the internet.-:})dnl
 define({:-OpenBSDXferPrelude-:},
 {:-OpenBSDXferShortPrelude
 
