@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftp-proxy.c,v 1.33 2015/12/22 08:35:17 mmcc Exp $ */
+/*	$OpenBSD: ftp-proxy.c,v 1.34 2016/02/12 08:12:48 ajacoutot Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Camiel Dobbelaar, <cd@sentia.nl>
@@ -705,6 +705,9 @@ main(int argc, char *argv[])
 	/* Check for root to save the user from cryptic failure messages. */
 	if (getuid() != 0)
 		errx(1, "needs to start as root");
+
+	if (getpwnam(NOPRIV_USER) == NULL)
+		errx(1, "unknown user %s", NOPRIV_USER);
 
 	/* Raise max. open files limit to satisfy max. sessions. */
 	rlp.rlim_cur = rlp.rlim_max = (2 * max_sessions) + 10;
