@@ -1,4 +1,4 @@
-/* $OpenBSD: tftp-proxy.c,v 1.16 2015/12/01 07:32:20 deraadt Exp $
+/* $OpenBSD: tftp-proxy.c,v 1.17 2016/02/12 12:24:27 jca Exp $
  *
  * Copyright (c) 2005 DLS Internet Services
  * Copyright (c) 2004, 2005 Camiel Dobbelaar, <cd@sentia.nl>
@@ -241,10 +241,7 @@ main(int argc, char *argv[])
 	}
 
 	if (geteuid() != 0)
-		errx(1, "need root privileges");
-
-	if (!debug && daemon(1, 0) == -1)
-		err(1, "daemon");
+		lerrx(1, "need root privileges");
 
 	if (socketpair(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK, PF_UNSPEC, pair)
 	    == -1)
@@ -261,6 +258,15 @@ main(int argc, char *argv[])
 				TAILQ_REMOVE(&src_addrs, saddr, entry);
 				free(saddr);
 			}
+
+	if (!debug) {
+		if (daemon(1, 0) == -1)
+			lerr(1, "daemon");
+
+		openlog(__progname, LOG_PID|LOG_NDELAY, LOG_DAEMON);
+		tzset();
+		logger = &syslogger;
+	}
 
 	switch (fork()) {
 	case -1:
@@ -288,12 +294,6 @@ main(int argc, char *argv[])
 
 	TAILQ_INIT(&child->fdrequests);
 	TAILQ_INIT(&child->tmrequests);
-
-	if (!debug) {
-		openlog(__progname, LOG_PID|LOG_NDELAY, LOG_DAEMON);
-		tzset();
-		logger = &syslogger;
-	}
 
 	proxy_listen(addr, port, family);
 
@@ -357,12 +357,6 @@ proxy_privproc(int s, struct passwd *pw)
 {
 	extern char *__progname;
 	struct privproc p;
-
-	if (!debug) {
-		openlog(__progname, LOG_PID|LOG_NDELAY, LOG_DAEMON);
-		tzset();
-		logger = &syslogger;
-	}
 
 	if (chroot(CHROOT_DIR) == -1)
 		lerr(1, "chroot to %s", CHROOT_DIR);
