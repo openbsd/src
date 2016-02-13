@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp.c,v 1.152 2016/01/08 21:31:06 jung Exp $	*/
+/*	$OpenBSD: smtp.c,v 1.153 2016/02/13 09:28:13 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -46,7 +46,7 @@ static void smtp_setup_events(void);
 static void smtp_pause(void);
 static void smtp_resume(void);
 static void smtp_accept(int, short, void *);
-static int smtp_enqueue(uid_t *);
+static int smtp_enqueue(void);
 static int smtp_can_accept(void);
 static void smtp_setup_listeners(void);
 static int smtp_sni_callback(SSL *, int *, void *);
@@ -84,7 +84,7 @@ smtp_imsg(struct mproc *p, struct imsg *imsg)
 
 		case IMSG_QUEUE_SMTP_SESSION:
 			m_compose(p, IMSG_QUEUE_SMTP_SESSION, 0, 0,
-			    smtp_enqueue(NULL), imsg->data,
+			    smtp_enqueue(), imsg->data,
 			    imsg->hdr.len - sizeof imsg->hdr);
 			return;
 		}
@@ -94,7 +94,7 @@ smtp_imsg(struct mproc *p, struct imsg *imsg)
 		switch (imsg->hdr.type) {
 		case IMSG_CTL_SMTP_SESSION:
 			m_compose(p, IMSG_CTL_SMTP_SESSION, imsg->hdr.peerid, 0,
-			    smtp_enqueue(imsg->data), NULL, 0);
+			    smtp_enqueue(), NULL, 0);
 			return;
 
 		case IMSG_CTL_PAUSE_SMTP:
@@ -217,10 +217,9 @@ smtp_resume(void)
 }
 
 static int
-smtp_enqueue(uid_t *euid)
+smtp_enqueue(void)
 {
 	static struct listener	 local, *listener = NULL;
-	char			 buf[HOST_NAME_MAX+1], *hostname;
 	int			 fd[2];
 
 	if (listener == NULL) {
@@ -245,13 +244,7 @@ smtp_enqueue(uid_t *euid)
 	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, fd))
 		return (-1);
 
-	hostname = env->sc_hostname;
-	if (euid) {
-		(void)snprintf(buf, sizeof(buf), "%s", hostname);
-		hostname = buf;
-	}
-
-	if ((smtp_session(listener, fd[0], &listener->ss, hostname)) == -1) {
+	if ((smtp_session(listener, fd[0], &listener->ss, env->sc_hostname)) == -1) {
 		close(fd[0]);
 		close(fd[1]);
 		return (-1);
