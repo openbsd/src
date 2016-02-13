@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.153 2016/01/21 23:40:27 jung Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.154 2016/02/13 20:56:39 gilles Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -17,7 +17,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: January 21 2016 $
+.Dd $Mdocdate: February 13 2016 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -654,6 +654,12 @@ of inflight envelopes falls below
 Changing the default value might degrade performance.
 .It Xo
 .Bk -words
+.Ic listen on socket
+.Op Ic filter Ar name
+.Op Ic mask-source
+.Ek
+.br
+.Bk -words
 .Ic listen on Ar interface
 .Op Ar family
 .Op Ic port Ar port
@@ -671,11 +677,31 @@ Changing the default value might degrade performance.
 .Ek
 .Xc
 .Pp
-Specify an
+Specify a
+.Ic socket
+or an
 .Ar interface
-and
-.Ar port
-to listen on.
+to listen on for incoming connections.
+The
+.Ic listen on socket
+directive is used to modify the behavior of the listener handling
+messages submitted through the local enqueuer, for example, via the
+.Xr mail 1
+utility.
+This is an optional directive, if unspecified then
+.Xr smtpd 8
+will simply listen for connections on the
+.Ic socket
+as if it was configured with no option.
+Clients connecting through the
+.Ic socket
+will always be tagged with the 'local'
+.Ic tag .
+.Pp
+To listen on a specific network interface, specify an
+.Ar interface
+and an optional
+.Ar port .
 An interface group, an IP address or a domain name may
 be used in place of
 .Ar interface .
