@@ -1,4 +1,4 @@
-.\" $OpenBSD: wctomb.3,v 1.4 2016/02/13 19:04:08 schwarze Exp $
+.\" $OpenBSD: wctomb.3,v 1.5 2016/02/13 19:24:51 jmc Exp $
 .\" $NetBSD: wctomb.3,v 1.3 2003/04/16 13:34:41 wiz Exp $
 .\"
 .\" Copyright (c)2002 Citrus Project,
@@ -101,7 +101,8 @@ Number of bytes for the valid multibyte character pointed to by
 .Fa s .
 There are no cases where the value returned is greater than
 the value of the
-.Dv MB_CUR_MAX macro .
+.Dv MB_CUR_MAX
+macro.
 .It -1
 .Fa wchar
 is an invalid wide character.
