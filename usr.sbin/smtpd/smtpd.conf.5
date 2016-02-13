@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.154 2016/02/13 20:56:39 gilles Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.155 2016/02/13 23:15:00 jmc Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -653,11 +653,9 @@ of inflight envelopes falls below
 .Ar num .
 Changing the default value might degrade performance.
 .It Xo
-.Bk -words
 .Ic listen on socket
 .Op Ic filter Ar name
 .Op Ic mask-source
-.Ek
 .br
 .Bk -words
 .Ic listen on Ar interface
@@ -685,10 +683,10 @@ to listen on for incoming connections.
 The
 .Ic listen on socket
 directive is used to modify the behavior of the listener handling
-messages submitted through the local enqueuer, for example, via the
+messages submitted through the local enqueuer, for example via the
 .Xr mail 1
 utility.
-This is an optional directive, if unspecified then
+This is an optional directive: if unspecified then
 .Xr smtpd 8
 will simply listen for connections on the
 .Ic socket
