@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.77 2016/02/05 16:08:44 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.78 2016/02/13 10:29:13 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -6642,18 +6642,6 @@ iwm_preinit(struct iwm_softc *sc)
 		printf("%s: could not set MAC address (error %d)\n",
 		    DEVNAME(sc), error);
 
-	ic->ic_node_alloc = iwm_node_alloc;
-
-	/* Override 802.11 state transition machine. */
-	sc->sc_newstate = ic->ic_newstate;
-	ic->ic_newstate = iwm_newstate;
-	ic->ic_update_htprot = iwm_update_htprot;
-	ic->ic_ampdu_rx_start = iwm_ampdu_rx_start;
-	ic->ic_ampdu_rx_stop = iwm_ampdu_rx_stop;
-#ifdef notyet
-	ic->ic_ampdu_tx_start = iwm_ampdu_tx_start;
-	ic->ic_ampdu_tx_stop = iwm_ampdu_tx_stop;
-#endif
 	ieee80211_media_init(ifp, iwm_media_change, ieee80211_media_status);
 
 	return 0;
@@ -6886,6 +6874,18 @@ iwm_attach(struct device *parent, struct device *self, void *aux)
 	task_set(&sc->ba_task, iwm_ba_task, sc);
 	task_set(&sc->htprot_task, iwm_htprot_task, sc);
 
+	ic->ic_node_alloc = iwm_node_alloc;
+
+	/* Override 802.11 state transition machine. */
+	sc->sc_newstate = ic->ic_newstate;
+	ic->ic_newstate = iwm_newstate;
+	ic->ic_update_htprot = iwm_update_htprot;
+	ic->ic_ampdu_rx_start = iwm_ampdu_rx_start;
+	ic->ic_ampdu_rx_stop = iwm_ampdu_rx_stop;
+#ifdef notyet
+	ic->ic_ampdu_tx_start = iwm_ampdu_tx_start;
+	ic->ic_ampdu_tx_stop = iwm_ampdu_tx_stop;
+#endif
 	/*
 	 * We cannot read the MAC address without loading the
 	 * firmware from disk. Postpone until mountroot is done.
