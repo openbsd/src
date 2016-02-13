@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.181 2016/01/18 09:19:41 jung Exp $	*/
+/*	$OpenBSD: parse.y,v 1.182 2016/02/13 20:43:07 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -97,7 +97,6 @@ static int		 errors = 0;
 struct filter_conf	*filter = NULL;
 struct table		*table = NULL;
 struct rule		*rule = NULL;
-struct listener		 l;
 struct mta_limits	*limits;
 static struct pki	*pki;
 static struct ca	*sca;
@@ -139,8 +138,9 @@ static struct listen_opts {
 	uint32_t       	options;
 } listen_opts;
 
-static void	create_listener(struct listenerlist *,  struct listen_opts *);
-static void	config_listener(struct listener *,  struct listen_opts *);
+static struct listener	*create_sock_listener(struct listen_opts *);
+static void		 create_if_listener(struct listenerlist *,  struct listen_opts *);
+static void		 config_listener(struct listener *,  struct listen_opts *);
 
 struct listener	*host_v4(const char *, in_port_t);
 struct listener	*host_v6(const char *, in_port_t);
@@ -155,6 +155,9 @@ int		 is_if_in_group(const char *, const char *);
 static struct filter_conf *create_filter_proc(char *, char *);
 static struct filter_conf *create_filter_chain(char *);
 static int add_filter_arg(struct filter_conf *, char *);
+
+static int config_lo_filter(struct listen_opts *, char *);
+static int config_lo_mask_source(struct listen_opts *);
 
 typedef struct {
 	union {
@@ -175,7 +178,7 @@ typedef struct {
 %token	ACCEPT REJECT INCLUDE ERROR MDA FROM FOR SOURCE MTA PKI SCHEDULER
 %token	ARROW AUTH TLS LOCAL VIRTUAL TAG TAGGED ALIAS FILTER KEY CA DHPARAMS
 %token	AUTH_OPTIONAL TLS_REQUIRE USERBASE SENDER SENDERS MASK_SOURCE VERIFY FORWARDONLY RECIPIENT
-%token	CIPHERS RECEIVEDAUTH MASQUERADE ENQUEUER
+%token	CIPHERS RECEIVEDAUTH MASQUERADE SOCKET
 %token	<v.string>	STRING
 %token  <v.number>	NUMBER
 %type	<v.table>	table
@@ -403,7 +406,19 @@ pki		: opt_pki pki
 		| /* empty */
 		;
 
-opt_listen     	: INET4			{
+opt_sock_listen : FILTER STRING {
+			if (config_lo_filter(&listen_opts, $2)) {
+				YYERROR;
+			}
+		}
+		| MASK_SOURCE {
+			if (config_lo_mask_source(&listen_opts)) {
+				YYERROR;
+			}
+		}
+		;
+
+opt_if_listen : INET4 {
 			if (listen_opts.options & LO_FAMILY) {
 				yyerror("address family already specified");
 				YYERROR;
@@ -451,13 +466,10 @@ opt_listen     	: INET4			{
 			listen_opts.port = $2;
 		}
 		| FILTER STRING			{
-			if (listen_opts.options & LO_FILTER) {
-				yyerror("filter already specified");
+			if (config_lo_filter(&listen_opts, $2)) {
 				YYERROR;
 			}
-			listen_opts.options |= LO_FILTER;
-			listen_opts.filtername = $2;
-		}
+}
 		| SMTPS				{
 			if (listen_opts.options & LO_SSL) {
 				yyerror("TLS mode already specified");
@@ -596,12 +608,9 @@ opt_listen     	: INET4			{
 			listen_opts.hostnametable = t;
 		}
 		| MASK_SOURCE	{
-			if (listen_opts.options & LO_MASKSOURCE) {
-				yyerror("mask-source already specified");
+			if (config_lo_mask_source(&listen_opts)) {
 				YYERROR;
 			}
-			listen_opts.options |= LO_MASKSOURCE;
-			listen_opts.flags |= F_MASK_SOURCE;
 		}
 		| RECEIVEDAUTH	{
 			if (listen_opts.options & LO_RECEIVEDAUTH) {
@@ -653,7 +662,33 @@ opt_listen     	: INET4			{
 		}
 		;
 
-listen		: opt_listen listen
+listener_type	: socket_listener
+		| interface_listener
+		;
+
+socket_listener	: SOCKET sock_listen {
+			if (conf->sc_sock_listener) {
+				yyerror("socket listener already configured");
+				YYERROR;
+			}
+			conf->sc_sock_listener = create_sock_listener(&listen_opts);
+		}
+		;
+
+interface_listener:
+		STRING if_listen {
+			listen_opts.family = AF_UNSPEC;
+			listen_opts.flags |= F_EXT_DSN;
+			listen_opts.ifx = $1;
+			create_if_listener(conf->sc_listeners, &listen_opts);
+		}
+		;
+
+sock_listen	: opt_sock_listen sock_listen
+		| /* empty */
+		;
+
+if_listen	: opt_if_listen if_listen
 		| /* empty */
 		;
 
@@ -846,28 +881,8 @@ main		: BOUNCEWARN {
 		} limits_mta
 		| LIMIT SCHEDULER limits_scheduler
 		| LISTEN {
-			memset(&l, 0, sizeof l);
 			memset(&listen_opts, 0, sizeof listen_opts);
-			listen_opts.family = AF_UNSPEC;
-			listen_opts.flags |= F_EXT_DSN;
-		} ON STRING listen {
-			listen_opts.ifx = $4;
-			create_listener(conf->sc_listeners, &listen_opts);
-		}
-		| ENQUEUER FILTER STRING {
-			if (dict_get(&conf->sc_filters, $3) == NULL) {
-				yyerror("undefined filter \"%s\"", $3);
-				free($3);
-				YYERROR;
-			}
-			if (strlcpy(conf->sc_enqueue_filter, $3,
-				sizeof conf->sc_enqueue_filter)
-			    >= sizeof conf->sc_enqueue_filter) {
-				free($3);
-				YYERROR;
-			}
-			free($3);
-		}
+		} ON listener_type
 		| FILTER STRING STRING {
 			if (!strcmp($3, "chain")) {
 				free($3);
@@ -1449,7 +1464,6 @@ lookup(char *s)
 		{ "dhparams",		DHPARAMS },
 		{ "domain",		DOMAIN },
 		{ "encryption",		ENCRYPTION },
-		{ "enqueuer",		ENQUEUER },
 		{ "expire",		EXPIRE },
 		{ "filter",		FILTER },
 		{ "for",		FOR },
@@ -1489,6 +1503,7 @@ lookup(char *s)
 		{ "senders",   		SENDERS },
 		{ "session",   		SESSION },
 		{ "smtps",		SMTPS },
+		{ "socket",		SOCKET },
 		{ "source",		SOURCE },
 		{ "table",		TABLE },
 		{ "tag",		TAG },
@@ -1945,6 +1960,12 @@ parse_config(struct smtpd *x_conf, const char *filename, int opts)
 	popfile();
 	endservent();
 
+	/* If the socket listener was not configured, create a default one. */
+	if (!conf->sc_sock_listener) {
+		memset(&listen_opts, 0, sizeof listen_opts);
+		conf->sc_sock_listener = create_sock_listener(&listen_opts);
+	}
+
 	/* Free macros and check which have not been used. */
 	for (sym = TAILQ_FIRST(&symhead); sym != NULL; sym = next) {
 		next = TAILQ_NEXT(sym, entry);
@@ -2046,8 +2067,21 @@ symget(const char *nam)
 	return (NULL);
 }
 
+static struct listener *
+create_sock_listener(struct listen_opts *lo)
+{
+	struct listener *l = xcalloc(1, sizeof(*l), "create_sock_listener");
+	lo->tag = "local";
+	lo->hostname = conf->sc_hostname;
+	l->ss.ss_family = AF_LOCAL;
+	l->ss.ss_len = sizeof(struct sockaddr *);
+	config_listener(l, lo);
+
+	return (l);
+}
+
 static void
-create_listener(struct listenerlist *ll,  struct listen_opts *lo)
+create_if_listener(struct listenerlist *ll,  struct listen_opts *lo)
 {
 	uint16_t	flags;
 
@@ -2560,3 +2594,28 @@ add_filter_arg(struct filter_conf *f, char *arg)
 
 	return (1);
 }
+
+static int
+config_lo_filter(struct listen_opts *lo, char *filter_name) {
+	if (lo->options & LO_FILTER) {
+		yyerror("filter already specified");
+		return -1;
+	}
+	lo->options |= LO_FILTER;
+	lo->filtername = filter_name;
+
+	return 0;
+}
+
+static int
+config_lo_mask_source(struct listen_opts *lo) {
+	if (lo->options & LO_MASKSOURCE) {
+		yyerror("mask-source already specified");
+		return -1;
+	}
+	lo->options |= LO_MASKSOURCE;
+	lo->flags |= F_MASK_SOURCE;
+
+	return 0;
+}
+

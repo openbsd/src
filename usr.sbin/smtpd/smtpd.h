@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.511 2016/02/05 19:21:04 jung Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.512 2016/02/13 20:43:07 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -612,6 +612,9 @@ struct smtpd {
 	struct compress_backend	       *sc_comp;
 
 	time_t					 sc_uptime;
+
+	/* This is a listener for a local socket used by smtp_enqueue(). */
+	struct listener                         *sc_sock_listener;
 
 	TAILQ_HEAD(listenerlist, listener)	*sc_listeners;
 
