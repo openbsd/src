@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_bio.c,v 1.80 2015/03/14 03:38:52 jsg Exp $	*/
+/*	$OpenBSD: nfs_bio.c,v 1.81 2016/02/13 15:45:05 stefan Exp $	*/
 /*	$NetBSD: nfs_bio.c,v 1.25.4.2 1996/07/08 20:47:04 jtc Exp $	*/
 
 /*
@@ -177,7 +177,7 @@ again:
 			    return (error);
 			}
 		}
-		n = min((unsigned)(biosize - on), uio->uio_resid);
+		n = ulmin(biosize - on, uio->uio_resid);
 		offdiff = np->n_size - uio->uio_offset;
 		if (offdiff < (off_t)n)
 			n = (int)offdiff;
@@ -211,7 +211,7 @@ again:
 				return (error);
 			}
 		}
-		n = min(uio->uio_resid, NFS_MAXPATHLEN - bp->b_resid);
+		n = ulmin(uio->uio_resid, NFS_MAXPATHLEN - bp->b_resid);
 		got_buf = 1;
 		on = 0;
 		break;
@@ -223,7 +223,7 @@ again:
 	    if (n > 0) {
 		if (!baddr)
 			baddr = bp->b_data;
-		error = uiomovei(baddr + on, (int)n, uio);
+		error = uiomove(baddr + on, n, uio);
 	    }
 
 	    if (vp->v_type == VLNK)
@@ -318,7 +318,7 @@ nfs_write(void *v)
 		nfsstats.biocache_writes++;
 		lbn = uio->uio_offset / biosize;
 		on = uio->uio_offset & (biosize-1);
-		n = min((unsigned)(biosize - on), uio->uio_resid);
+		n = ulmin(biosize - on, uio->uio_resid);
 		bn = lbn * (biosize / DEV_BSIZE);
 again:
 		bp = nfs_getcacheblk(vp, bn, biosize, p);
@@ -349,7 +349,7 @@ again:
 			goto again;
 		}
 
-		error = uiomovei((char *)bp->b_data + on, n, uio);
+		error = uiomove((char *)bp->b_data + on, n, uio);
 		if (error) {
 			bp->b_flags |= B_ERROR;
 			brelse(bp);
@@ -590,7 +590,7 @@ nfs_doio(struct buf *bp, struct proc *p)
 			len = np->n_size - ((((off_t)bp->b_blkno) << DEV_BSHIFT)
 				+ diff);
 			if (len > 0) {
-			    len = min(len, uiop->uio_resid);
+			    len = ulmin(len, uiop->uio_resid);
 			    memset((char *)bp->b_data + diff, 0, len);
 			    bp->b_validend = diff + len;
 			} else

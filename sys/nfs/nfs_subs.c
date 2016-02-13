@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_subs.c,v 1.128 2015/06/16 11:09:40 mpi Exp $	*/
+/*	$OpenBSD: nfs_subs.c,v 1.129 2016/02/13 15:45:05 stefan Exp $	*/
 /*	$NetBSD: nfs_subs.c,v 1.27.4.3 1996/07/08 20:34:24 jtc Exp $	*/
 
 /*
@@ -712,8 +712,8 @@ nfsm_uiotombuf(struct mbuf **mp, struct uio *uiop, size_t len)
 	uiop->uio_rw = UIO_WRITE;
 
 	while (len) {
-		xfer = min(len, M_TRAILINGSPACE(mb));
-		uiomovei(mb_offset(mb), xfer, uiop);
+		xfer = ulmin(len, M_TRAILINGSPACE(mb));
+		uiomove(mb_offset(mb), xfer, uiop);
 		mb->m_len += xfer;
 		len -= xfer;
 		if (len > 0) {
