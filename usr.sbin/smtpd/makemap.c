@@ -1,4 +1,4 @@
-/*	$OpenBSD: makemap.c,v 1.63 2016/02/12 03:11:16 sunil Exp $	*/
+/*	$OpenBSD: makemap.c,v 1.64 2016/02/13 08:53:18 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -118,8 +118,6 @@ makemap(int argc, char *argv[])
 				dbtype = DB_HASH;
 			else if (strcmp(optarg, "btree") == 0)
 				dbtype = DB_BTREE;
-			else if (strcmp(optarg, "dbm") == 0)
-				dbtype = DB_RECNO;
 			else
 				errx(1, "unsupported DB type '%s'", optarg);
 			break;
