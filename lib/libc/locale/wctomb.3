@@ -1,4 +1,4 @@
-.\" $OpenBSD: wctomb.3,v 1.3 2013/06/05 03:39:22 tedu Exp $
+.\" $OpenBSD: wctomb.3,v 1.4 2016/02/13 19:04:08 schwarze Exp $
 .\" $NetBSD: wctomb.3,v 1.3 2003/04/16 13:34:41 wiz Exp $
 .\"
 .\" Copyright (c)2002 Citrus Project,
@@ -25,7 +25,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 5 2013 $
+.Dd $Mdocdate: February 13 2016 $
 .Dt WCTOMB 3
 .Os
 .Sh NAME
@@ -100,8 +100,7 @@ returns:
 Number of bytes for the valid multibyte character pointed to by
 .Fa s .
 There are no cases where the value returned is greater than
-.Fa n
-or the value of the
+the value of the
 .Dv MB_CUR_MAX macro .
 .It -1
 .Fa wchar
