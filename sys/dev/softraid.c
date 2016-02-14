@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.365 2015/12/29 04:46:28 mmcc Exp $ */
+/* $OpenBSD: softraid.c,v 1.366 2016/02/14 12:47:27 krw Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -3151,6 +3151,7 @@ sr_rebuild_init(struct sr_discipline *sd, dev_t dev, int hotspare)
 	}
 
 	/* Get coerced size from another online chunk. */
+	csize = 0;
 	for (i = 0; i < sd->sd_meta->ssdi.ssd_chunk_no; i++) {
 		if (sd->sd_vol.sv_chunks[i]->src_meta.scm_status ==
 		    BIOC_SDONLINE) {
@@ -3158,6 +3159,10 @@ sr_rebuild_init(struct sr_discipline *sd, dev_t dev, int hotspare)
 			csize = meta->scmi.scm_coerced_size;
 			break;
 		}
+	}
+	if (csize == 0) {
+		sr_error(sc, "no online chunks available for rebuild");
+		goto done;
 	}
 
 	sr_meta_getdevname(sc, dev, devname, sizeof(devname));
@@ -3777,7 +3782,6 @@ sr_ioctl_installboot(struct sr_softc *sc, struct sr_discipline *sd,
 			sr_error(sc, "failed to write boot loader");
 			goto done;
 		}
-
 	}
 
 	/* XXX - Install boot block on disk - MD code. */
@@ -3785,8 +3789,7 @@ sr_ioctl_installboot(struct sr_softc *sc, struct sr_discipline *sd,
 	/* Mark volume as bootable and save metadata. */
 	sd->sd_meta->ssdi.ssd_vol_flags |= BIOC_SCBOOTABLE;
 	if (sr_meta_save(sd, SR_META_DIRTY)) {
-		sr_error(sc, "could not save metadata to %s",
-		    chunk->src_devname);
+		sr_error(sc, "could not save metadata to %s", DEVNAME(sc));
 		goto done;
 	}
 
