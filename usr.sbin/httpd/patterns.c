@@ -1,4 +1,4 @@
-/*	$OpenBSD: patterns.c,v 1.4 2015/08/18 08:26:39 reyk Exp $	*/
+/*	$OpenBSD: patterns.c,v 1.5 2016/02/14 18:20:59 semarie Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -26,7 +26,7 @@
 
 /*
  * Derived from Lua 5.3.1:
- * $Id: patterns.c,v 1.4 2015/08/18 08:26:39 reyk Exp $
+ * $Id: patterns.c,v 1.5 2016/02/14 18:20:59 semarie Exp $
  * Standard library for string operations and pattern-matching
  */
 
@@ -708,5 +708,6 @@ str_match_free(struct str_match *m)
 	for (i = 0; i < m->sm_nmatch; i++)
 		free(m->sm_match[i]);
 	free(m->sm_match);
+	m->sm_match = NULL;
 	m->sm_nmatch = 0;
 }
