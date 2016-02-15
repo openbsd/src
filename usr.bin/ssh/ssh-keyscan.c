@@ -1,4 +1,4 @@
-/* $OpenBSD: ssh-keyscan.c,v 1.104 2015/11/08 23:24:03 jmc Exp $ */
+/* $OpenBSD: ssh-keyscan.c,v 1.105 2016/02/15 09:47:49 dtucker Exp $ */
 /*
  * Copyright 1995, 1996 by David Mazieres <dm@lcs.mit.edu>.
  *
@@ -676,6 +676,7 @@ main(int argc, char **argv)
 	extern int optind;
 	extern char *optarg;
 
+	ssh_malloc_init();	/* must be called before any mallocs */
 	TAILQ_INIT(&tq);
 
 	/* Ensure that fds 0, 1 and 2 are open or directed to /dev/null */
