@@ -1,4 +1,4 @@
-/*	$OpenBSD: tar.c,v 1.58 2015/03/17 03:23:17 guenther Exp $	*/
+/*	$OpenBSD: tar.c,v 1.59 2016/02/15 02:38:53 guenther Exp $	*/
 /*	$NetBSD: tar.c,v 1.5 1995/03/21 09:07:49 cgd Exp $	*/
 
 /*-
@@ -1159,6 +1159,16 @@ name_split(char *name, int len)
 	 * include the slash between the two parts that gets thrown away)
 	 */
 	start = name + len - TNMSZ - 1;
+
+	/*
+	 * the prefix may not be empty, so skip the first character when
+	 * trying to split a path of exactly TNMSZ+1 characters.
+	 * NOTE: This means the ustar format can't store /str if
+	 * str contains no slashes and the length of str == TNMSZ
+	 */
+	if (start == name)
+		++start;
+
 	while ((*start != '\0') && (*start != '/'))
 		++start;
 
@@ -1168,15 +1178,12 @@ name_split(char *name, int len)
 	 */
 	if (*start == '\0')
 		return(NULL);
-	len = start - name;
 
 	/*
-	 * NOTE: /str where the length of str == TNMSZ can not be stored under
-	 * the p1003.1-1990 spec for ustar. We could force a prefix of / and
-	 * the file would then expand on extract to //str. The len == 0 below
-	 * makes this special case follow the spec to the letter.
+	 * the split point isn't valid if it results in a prefix
+	 * longer than TPFSZ
 	 */
-	if ((len > TPFSZ) || (len == 0))
+	if ((start - name) > TPFSZ)
 		return(NULL);
 
 	/*
