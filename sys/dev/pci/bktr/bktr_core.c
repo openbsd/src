@@ -1,4 +1,4 @@
-/*	$OpenBSD: bktr_core.c,v 1.36 2015/03/14 03:38:49 jsg Exp $	*/
+/*	$OpenBSD: bktr_core.c,v 1.37 2016/02/15 19:21:46 stefan Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_core.c,v 1.114 2000/10/31 13:09:56 roger Exp $ */
 
 /*
@@ -993,7 +993,7 @@ int
 video_read(bktr_ptr_t bktr, int unit, dev_t dev, struct uio *uio)
 {
         int             status;
-        int             count;
+        size_t          count;
 
 
 	if (bktr->bigbuf == 0)	/* no frame buffer allocated (ioctl failed) */
@@ -1008,7 +1008,7 @@ video_read(bktr_ptr_t bktr, int unit, dev_t dev, struct uio *uio)
 	count = bktr->rows * bktr->cols *
 		pixfmt_table[ bktr->pixfmt ].public.Bpp;
 
-	if ((int) uio->uio_iov->iov_len < count)
+	if (uio->uio_resid < count)
 		return( EINVAL );
 
 	bktr->flags &= ~(METEOR_CAP_MASK | METEOR_WANT_MASK);
@@ -1027,7 +1027,7 @@ video_read(bktr_ptr_t bktr, int unit, dev_t dev, struct uio *uio)
 
 	status = tsleep(BKTR_SLEEP, BKTRPRI, "captur", 0);
 	if (!status)		/* successful capture */
-		status = uiomovei((caddr_t)bktr->bigbuf, count, uio);
+		status = uiomove((caddr_t)bktr->bigbuf, count, uio);
 	else
 		printf ("%s: read: tsleep error %d\n",
 			bktr_name(bktr), status);
@@ -1047,7 +1047,7 @@ video_read(bktr_ptr_t bktr, int unit, dev_t dev, struct uio *uio)
 int
 vbi_read(bktr_ptr_t bktr, struct uio *uio, int ioflag)
 {
-	int             readsize, readsize2;
+	size_t          readsize, readsize2;
 	int             status;
 
 
@@ -1067,22 +1067,20 @@ vbi_read(bktr_ptr_t bktr, struct uio *uio, int ioflag)
 	/* We cannot read more bytes than there are in
 	 * the circular buffer
 	 */
-	readsize = (int)uio->uio_iov->iov_len;
-
-	if (readsize > bktr->vbisize) readsize = bktr->vbisize;
+	readsize = ulmin(uio->uio_resid, bktr->vbisize);
 
 	/* Check if we can read this number of bytes without having
 	 * to wrap around the circular buffer */
-	if((bktr->vbistart + readsize) >= VBI_BUFFER_SIZE) {
+	if (readsize >= VBI_BUFFER_SIZE - bktr->vbistart) {
 		/* We need to wrap around */
 
 		readsize2 = VBI_BUFFER_SIZE - bktr->vbistart;
-		status = uiomovei((caddr_t)bktr->vbibuffer + bktr->vbistart, readsize2, uio);
+		status = uiomove((caddr_t)bktr->vbibuffer + bktr->vbistart, readsize2, uio);
 		if (status == 0)
-			status = uiomovei((caddr_t)bktr->vbibuffer, (readsize - readsize2), uio);
+			status = uiomove((caddr_t)bktr->vbibuffer, (readsize - readsize2), uio);
 	} else {
 		/* We do not need to wrap around */
-		status = uiomovei((caddr_t)bktr->vbibuffer + bktr->vbistart, readsize, uio);
+		status = uiomove((caddr_t)bktr->vbibuffer + bktr->vbistart, readsize, uio);
 	}
 
 	/* Update the number of bytes left to read */
