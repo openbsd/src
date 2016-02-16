@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_vnops.c,v 1.124 2016/02/04 12:45:03 mikeb Exp $	*/
+/*	$OpenBSD: ufs_vnops.c,v 1.125 2016/02/16 17:56:12 stefan Exp $	*/
 /*	$NetBSD: ufs_vnops.c,v 1.18 1996/05/11 18:28:04 mycroft Exp $	*/
 
 /*
@@ -1491,7 +1491,7 @@ ufs_readdir(void *v)
 		memset(u.dn.d_name + u.dn.d_namlen, 0, u.dn.d_reclen
 		    - u.dn.d_namlen - offsetof(struct dirent, d_name));
 
-		error = uiomovei(&u.dn, u.dn.d_reclen, uio);
+		error = uiomove(&u.dn, u.dn.d_reclen, uio);
 		dp = (struct direct *)((char *)dp + dp->d_reclen);
 	}
 
@@ -1519,12 +1519,12 @@ ufs_readlink(void *v)
 	struct vop_readlink_args *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct inode *ip = VTOI(vp);
-	int isize;
+	u_int64_t isize;
 
 	isize = DIP(ip, size);
 	if (isize < vp->v_mount->mnt_maxsymlinklen ||
 	    (vp->v_mount->mnt_maxsymlinklen == 0 && DIP(ip, blocks) == 0)) {
-		return (uiomovei((char *)SHORTLINK(ip), isize, ap->a_uio));
+		return (uiomove((char *)SHORTLINK(ip), isize, ap->a_uio));
 	}
 	return (VOP_READ(vp, ap->a_uio, 0, ap->a_cred));
 }

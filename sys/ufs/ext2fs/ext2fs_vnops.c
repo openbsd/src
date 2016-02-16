@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vnops.c,v 1.73 2015/04/17 04:43:21 guenther Exp $	*/
+/*	$OpenBSD: ext2fs_vnops.c,v 1.74 2016/02/16 17:56:12 stefan Exp $	*/
 /*	$NetBSD: ext2fs_vnops.c,v 1.1 1997/06/11 09:34:09 bouyer Exp $	*/
 
 /*
@@ -1116,12 +1116,12 @@ ext2fs_readlink(void *v)
 	struct vop_readlink_args *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct inode *ip = VTOI(vp);
-	int isize;
+	u_int64_t isize;
 
 	isize = ext2fs_size(ip);
 	if (isize < vp->v_mount->mnt_maxsymlinklen ||
 	    (vp->v_mount->mnt_maxsymlinklen == 0 && ip->i_e2fs_nblock == 0)) {
-		return (uiomovei((char *)ip->i_e2din->e2di_shortlink, isize,
+		return (uiomove((char *)ip->i_e2din->e2di_shortlink, isize,
 		    ap->a_uio));
 	}
 	return (VOP_READ(vp, ap->a_uio, 0, ap->a_cred));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_lookup.c,v 1.39 2015/03/14 03:38:52 jsg Exp $	*/
+/*	$OpenBSD: ext2fs_lookup.c,v 1.40 2016/02/16 17:56:12 stefan Exp $	*/
 /*	$NetBSD: ext2fs_lookup.c,v 1.16 2000/08/03 20:29:26 thorpej Exp $	*/
 
 /*
@@ -177,7 +177,7 @@ ext2fs_readdir(void *v)
 				break;
 			}
 			dstd.d_off = off + e2d_reclen;
-			if ((error = uiomovei((caddr_t)&dstd, dstd.d_reclen, uio)) != 0) {
+			if ((error = uiomove((caddr_t)&dstd, dstd.d_reclen, uio)) != 0) {
 				break;
 			}
 			off = off + e2d_reclen;
