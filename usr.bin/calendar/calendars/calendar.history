@@ -1,7 +1,7 @@
 /*
  * History
  *
- * $OpenBSD: calendar.history,v 1.77 2015/10/23 09:32:14 tedu Exp $
+ * $OpenBSD: calendar.history,v 1.78 2016/02/16 09:08:51 jmc Exp $
  */
 
 #ifndef _calendar_history_
@@ -210,7 +210,7 @@
 06/07	The first act of civil disobedience by Gandhi, 1893
 06/08	The Canadian Parliament meets for the first time in Ottawa, 1866
 06/09	The Roman Emperor Nero commits suicide, 68
-06/10	Death of Alexander the Great, 323 B.C.
+06/11	Death of Alexander the Great, 323 BC
 06/11	Greeks seize Troy, 1184BC
 06/12	Nelson Mandela is sentenced to life in prison, 1964
 06/13	Much of Vancouver, British Columbia, is devastated by a fire, 1886

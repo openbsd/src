@@ -1,7 +1,7 @@
 /*
  * Birthday
  *
- * $OpenBSD: calendar.birthday,v 1.61 2015/10/05 16:41:51 jmc Exp $
+ * $OpenBSD: calendar.birthday,v 1.62 2016/02/16 09:08:51 jmc Exp $
  */
 
 #ifndef _calendar_birthday_
@@ -195,7 +195,6 @@
 06/07	George Bryan "Beau" Brummel born, 1778
 06/07	Alan Mathison Turing died, 1954
 06/08	Frank Lloyd Wright born in Richland Center, Wisconsin, 1867
-06/13	Alexander the Great dies (323BC)
 06/14	Ernesto "Che" Guevara de la Serna born in Rosario, Argentina, 1928
 06/16	Hammurabi the Great dies, Babylon, 1686 BC
 06/17	M.C. Escher born, 1898
@@ -221,6 +220,7 @@
 		Saint Nicholas"
 07/18	Brian Auger is born in London, 1939
 07/20	Bruce Lee died in Hong Kong, 1973
+07/20	Alexander the Great born, 356 BC
 07/25	Robert Morris is born in Boston, 1932
 07/25	Steve Goodman is born in Chicago, 1948
 07/28	(Helen) Beatrix Potter born, 1866
