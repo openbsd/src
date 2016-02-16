@@ -1,5 +1,5 @@
 dnl
-dnl	$OpenBSD: m4.common,v 1.119 2016/02/12 20:29:18 rpe Exp $
+dnl	$OpenBSD: m4.common,v 1.120 2016/02/16 14:48:42 krw Exp $
 dnl
 dnl Copyright (c) 2004 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -275,8 +275,8 @@ after the question.  If you wish to stop the installation, you may hit
 Control-C at any time, but if you do, you'll have to begin the installation
 process again from scratch.  Using Control-Z to suspend the process may be a
 better option, or at any prompt enter `!' to get a shell, from which 'exit'
-will return you back to that prompt (no refresh of the prompt will occur,
-though).-:})dnl
+will return you back to that prompt.
+-:})dnl
 dnl
 dnl OpenBSDInstallPart3(warn geometry, disk type, disk type, disk type)
 dnl
@@ -361,6 +361,7 @@ dnl XXX add a MDVLAN feature and document vlan setup
 dnl install.sub (install) askpassword root
 	You will then be asked to enter the initial root password
 	of the system, twice.
+
 	Although the install program will only check that the two
 	passwords match, you should make sure to use a strong password.
 	As a minimum, the password should be at least eight characters
@@ -410,6 +411,7 @@ dnl install.sub (install) user_setup()
 	user accounts (such as `root', `daemon' or `ftp'), you
 	will be prompted with the users descriptive name, as well
 	as its password, twice.
+
 	As for the root password earlier, the install program will only
 	check that the two passwords match, but you should make sure to
 	use a strong password here as well.
@@ -423,14 +425,15 @@ ifelse(MDTZ,,,
 	You may now be given the opportunity to configure the time zone
 	your system will be using (this depends on the installation
 	media you are using).
+
 	If the installation program skips this question, do not be
 	alarmed, the time zone will be configured at the end
 	of the installation.
 -:})dnl
-
 dnl install.sh ask whether to use DUIDs before the md_prep_disklabel loop
 	The installation program will now tell you which disks it can
 	install on, and ask you which it should use.
+
 	Reply with the name of your root disk.-:})dnl
 dnl install.sh md_prep_disklabel loop
 dnl
@@ -439,10 +442,10 @@ dnl Describes MBR partitioning. So much to save four lines of text
 dnl duplicated 5 times.
 dnl
 define({:-OpenBSDInstallMBRPart1-:},
-{:-	Disks on OpenBSD/MACHINE are partitioned using the ``MBR''
-	partitioning scheme.  You will need to create one
-	MBR partition, in which all the real OpenBSD partitions will
-	be created.-:})dnl
+{:-	Disks on OpenBSD/MACHINE are partitioned using either ``MBR''
+	or ``GPT'' partitioning schemes.  You will need to create one
+	disk partition in which the OpenBSD filesystems will be created.
+-:})dnl
 dnl
 dnl OpenBSDInstallMBRPart2(needs OpenBSD partition active)
 dnl Describes fdisk invocation
@@ -452,42 +455,44 @@ dnl install.md md_prep_fdisk
 {:-	The installation program will ask you if you want to use the
 	whole disk for OpenBSD.  If you don't need to or don't intend
 	to share the disk with other operating systems, answer `w'
-	here.  The installation program will then create a single
-	MBR partition spanning the whole disk, dedicated to OpenBSD.
+	here to use ``MBR'' partitioning or 'g' to use ``GPT''
+	partitioning. The installation program will then create a single
+	partition spanning the whole disk, dedicated to OpenBSD.
 
-	Otherwise, fdisk(8) will be invoked to let you to edit your MBR
-	partitioning.  The current MBR partitions defined will be
+	Otherwise, fdisk(8) will be invoked to let you to edit your
+	partitioning.  The current artitions defined will be
 	displayed and you will be allowed to modify them, add new
 	partitions, and change which partition to boot from by default.
 
 ifelse(X$1,X,,
 {:-	Note that you should make the OpenBSD partition the active
 	partition at least until the install has been completed.
-
 -:})dnl
-	After your OpenBSD MBR partition has been setup, the real
-	partition setup can follow.-:})dnl
+	After your OpenBSD partition has been created, dividing the
+	space into filesystems can follow.
+-:})dnl
 dnl
 dnl OpenBSDInstallPart5(mention about other OS partitions,mention about root
 dnl	partition limitations)
 dnl Describes the disklabel operation
 dnl
 define({:-OpenBSDInstallPart5-:},
-{:-	Next the disk label which defines the layout of the OpenBSD
-	partitions must be set up.  Each file system you want will
-	require a separate partition.
+{:-	The file system layout is stored in the OpenBSD disk label. Each
+	file system is stored in its own ``disk label partition'', which
+	is a subdivision of the OpenBSD disk partition you created. In
+	the text below ``partition'' refers to these subdivisions.
 
-	You will be proposed a default partition layout, trying
-	to set up separate partitions, disk size permitting.
+	You will be shown a default layout with the recommended file
+	systems. This default layout is based on the disk size.
 
-	You will be given the possibility to either accept the proposed
-	layout, or edit it, or create your own custom layout.  These last
-	two choices will invoke the disklabel(8) interactive editor,
+	You will be given the choice of accepting the proposed layout,
+	editing it, or creating your own custom layout. These
+	last two choices will invoke the disklabel(8) interactive editor,
 	allowing you to create your desired layout.
 
-	Within the editor, you will probably start out with only the
-	'c' partition of fstype 'unused' that represents the whole disk.
-	This partition can not be modified.$1
+	Within the editor, you will see at least a 'c' partition of
+	fstype 'unused'. This represents the whole disk and cannot be
+	modified.$1
 
 	You must create partition 'a' as a native OpenBSD partition, i.e.
 	one with "4.2BSD" as the fstype, to hold the root file system.$2
@@ -497,8 +502,9 @@ define({:-OpenBSDInstallPart5-:},
 	systems such as /usr, /tmp, /var, and /home.
 
 	You will need to provide a mount point for all partitions you
-	{:-define-:}.  Partitions without mount points, or not of 4.2BSD fstype,
-	will neither be formatted nor mounted during the installation.
+	{:-define-:}.  Partitions without mount points, or not of the
+	4.2BSD fstype, will neither be formatted nor mounted during the
+	installation.
 
 	For quick help while in the interactive editor, enter '?'.  The
 	`z' command (which deletes all partitions and starts with a
