@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmmvar.h,v 1.7 2016/01/04 01:35:56 mlarkin Exp $	*/
+/*	$OpenBSD: vmmvar.h,v 1.8 2016/02/16 18:59:30 stefan Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -153,6 +153,7 @@ struct vcpu_init_state {
 	uint64_t			vis_rflags;
 	uint64_t			vis_rip;
 	uint64_t			vis_rsp;
+	uint64_t			vis_cr0;
 	uint64_t			vis_cr3;
 
 	struct vcpu_segment_info	vis_cs;

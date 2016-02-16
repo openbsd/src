@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.34 2016/02/08 18:23:04 stefan Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.35 2016/02/16 18:59:30 stefan Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -1421,19 +1421,47 @@ vcpu_reset_regs_vmx(struct vcpu *vcpu, struct vcpu_init_state *vis)
 	}
 
 	/*
-	 * Determine default CR0 as per Intel SDM A.7
-	 * All flexible bits are set to 0
+	 * Determine which bits in CR0 have to be set to a fixed
+	 * value as per Intel SDM A.7.
+	 * CR0 bits in the vis parameter must match these.
 	 */
-	cr0 = (curcpu()->ci_vmm_cap.vcc_vmx.vmx_cr0_fixed0) &
-	    (curcpu()->ci_vmm_cap.vcc_vmx.vmx_cr0_fixed1);
-	cr0 |= (CR0_CD | CR0_NW | CR0_ET);
 
+	want1 = (curcpu()->ci_vmm_cap.vcc_vmx.vmx_cr0_fixed0) &
+	    (curcpu()->ci_vmm_cap.vcc_vmx.vmx_cr0_fixed1);
+	want0 = ~(curcpu()->ci_vmm_cap.vcc_vmx.vmx_cr0_fixed0) &
+	    ~(curcpu()->ci_vmm_cap.vcc_vmx.vmx_cr0_fixed1);
+
+	/*
+	 * CR0_FIXED0 and CR0_FIXED1 may report the CR0_PG and CR0_PE bits as
+	 * fixed to 1 even if the CPU supports the unrestricted guest
+	 * feature. Update want1 and want0 accordingly to allow
+	 * any value for CR0_PG and CR0_PE in vis->vis_cr0 if the CPU has
+	 * the unrestricted guest capability.
+	 */
 	if (vcpu_vmx_check_cap(vcpu, IA32_VMX_PROCBASED_CTLS,
 	    IA32_VMX_ACTIVATE_SECONDARY_CONTROLS, 1)) {
 		if (vcpu_vmx_check_cap(vcpu, IA32_VMX_PROCBASED2_CTLS,
 		    IA32_VMX_UNRESTRICTED_GUEST, 1))
-//			cr0 &= ~(CR0_PG);
-			cr0 &= ~(CR0_PG | CR0_PE);
+			want1 &= ~(CR0_PG | CR0_PE);
+			want0 &= ~(CR0_PG | CR0_PE);
+	}
+
+	cr0 = vis->vis_cr0;
+
+	/*
+	 * VMX may require some bits to be set that userland should not have
+	 * to care about. Set those here.
+	 */
+	if (want1 & CR0_NE)
+		cr0 |= CR0_NE;
+
+	if ((cr0 & want1) != want1) {
+		ret = EINVAL;
+		goto exit;
+	}
+	if ((~cr0 & want0) != want0) {
+		ret = EINVAL;
+		goto exit;
 	}
 
 	if (vmwrite(VMCS_GUEST_IA32_CR0, cr0)) {
