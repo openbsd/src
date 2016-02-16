@@ -1,4 +1,4 @@
-/*	$OpenBSD: file_subs.c,v 1.47 2015/03/19 05:14:24 guenther Exp $	*/
+/*	$OpenBSD: file_subs.c,v 1.48 2016/02/16 04:30:07 guenther Exp $	*/
 /*	$NetBSD: file_subs.c,v 1.4 1995/03/21 09:07:18 cgd Exp $	*/
 
 /*-
@@ -597,13 +597,14 @@ int
 chk_path(char *name, uid_t st_uid, gid_t st_gid)
 {
 	char *spt = name;
+	char *next;
 	struct stat sb;
 	int retval = -1;
 
 	/*
 	 * watch out for paths with nodes stored directly in / (e.g. /bozo)
 	 */
-	if (*spt == '/')
+	while (*spt == '/')
 		++spt;
 
 	for (;;) {
@@ -613,6 +614,17 @@ chk_path(char *name, uid_t st_uid, gid_t st_gid)
 		spt = strchr(spt, '/');
 		if (spt == NULL)
 			break;
+
+		/*
+		 * skip over duplicate slashes; stop if there're only
+		 * trailing slashes left
+		 */
+		next = spt + 1;
+		while (*next == '/')
+			next++;
+		if (*next == '\0')
+			break;
+
 		*spt = '\0';
 
 		/*
@@ -625,7 +637,8 @@ chk_path(char *name, uid_t st_uid, gid_t st_gid)
 		 * required (do an access()).
 		 */
 		if (lstat(name, &sb) == 0) {
-			*(spt++) = '/';
+			*spt = '/';
+			spt = next;
 			continue;
 		}
 
@@ -659,7 +672,8 @@ chk_path(char *name, uid_t st_uid, gid_t st_gid)
 			set_pmode(name, ((sb.st_mode & FILEBITS) | S_IRWXU));
 			add_dir(name, &sb, 1);
 		}
-		*(spt++) = '/';
+		*spt = '/';
+		spt = next;
 		continue;
 	}
 	return(retval);
