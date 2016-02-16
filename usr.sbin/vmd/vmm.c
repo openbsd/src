@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.20 2016/01/16 08:55:40 stefan Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.21 2016/02/16 19:00:16 stefan Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -33,6 +33,7 @@
 #include <dev/pci/pcireg.h>
 
 #include <machine/param.h>
+#include <machine/specialreg.h>
 #include <machine/vmmvar.h>
 
 #include <errno.h>
@@ -164,6 +165,7 @@ static const struct vcpu_init_state vcpu_init_flat32 = {
 	0x2,					/* RFLAGS */
 	0x0,					/* RIP */
 	0x0,					/* RSP */
+	CR0_CD | CR0_NW | CR0_ET | CR0_PE,	/* CR0 */
 	0x0,					/* CR3 */
 	{ 0x8, 0xFFFFFFFF, 0xC09F, 0x0},	/* CS */
 	{ 0x10, 0xFFFFFFFF, 0xC093, 0x0},	/* DS */
