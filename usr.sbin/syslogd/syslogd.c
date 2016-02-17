@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.203 2015/12/29 17:51:56 bluhm Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.204 2016/02/17 18:31:28 bluhm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -328,6 +328,7 @@ void	logerrorctx(const char *, struct tls *);
 void	logerror_reason(const char *, const char *);
 void	logmsg(int, char *, char *, int);
 struct filed *find_dup(struct filed *);
+size_t	parsepriority(const char *, int *);
 void	printline(char *, char *);
 void	printsys(char *);
 void	usage(void);
@@ -1487,6 +1488,33 @@ usage(void)
 }
 
 /*
+ * Parse a priority code of the form "<123>" into pri, and return the
+ * length of the priority code including the surrounding angle brackets.
+ */
+size_t
+parsepriority(const char *msg, int *pri)
+{
+	size_t nlen;
+	char buf[11];
+	const char *errstr;
+	int maybepri;
+
+	if (*msg++ == '<') {
+		nlen = strspn(msg, "1234567890");
+		if (nlen > 0 && nlen < sizeof(buf) && msg[nlen] == '>') {
+			strlcpy(buf, msg, nlen + 1);
+			maybepri = strtonum(buf, 0, INT_MAX, &errstr);
+			if (errstr == NULL) {
+				*pri = maybepri;
+				return nlen + 2;
+			}
+		}
+	}
+
+	return 0;
+}
+
+/*
  * Take a raw input line, decode the message, and print the message
  * on the appropriate log files.
  */
@@ -1499,13 +1527,7 @@ printline(char *hname, char *msg)
 	/* test for special codes */
 	pri = DEFUPRI;
 	p = msg;
-	if (*p == '<') {
-		pri = 0;
-		while (isdigit((unsigned char)*++p))
-			pri = 10 * pri + (*p - '0');
-		if (*p == '>')
-			++p;
-	}
+	p += parsepriority(p, &pri);
 	if (pri &~ (LOG_FACMASK|LOG_PRIMASK))
 		pri = DEFUPRI;
 
@@ -1536,19 +1558,16 @@ printsys(char *msg)
 {
 	int c, pri, flags;
 	char *lp, *p, *q, line[MAXLINE + 1];
+	size_t prilen;
 
 	(void)snprintf(line, sizeof line, "%s: ", _PATH_UNIX);
 	lp = line + strlen(line);
 	for (p = msg; *p != '\0'; ) {
 		flags = SYNC_FILE | ADDDATE;	/* fsync file after write */
 		pri = DEFSPRI;
-		if (*p == '<') {
-			pri = 0;
-			while (isdigit((unsigned char)*++p))
-				pri = 10 * pri + (*p - '0');
-			if (*p == '>')
-				++p;
-		} else {
+		prilen = parsepriority(p, &pri);
+		p += prilen;
+		if (prilen == 0) {
 			/* kernel printf's come out on console */
 			flags |= IGN_CONS;
 		}
