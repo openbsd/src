@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.610 2015/12/08 10:06:11 dlg Exp $
+#	$OpenBSD: files,v 1.611 2016/02/18 01:23:05 krw Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -104,7 +104,7 @@ device	vga: wsemuldisplaydev, pcdisplayops, drmdev, agpint
 file	dev/ic/vga.c			vga & (vga_pci | vga_isa) needs-flag
 file	dev/ic/vga_subr.c		vga & (vga_pci | vga_isa) needs-flag
 
-# Video modes 
+# Video modes
 define	edid
 file	dev/videomode/edid.c		edid
 file    dev/videomode/vesagtf.c         edid
@@ -814,7 +814,7 @@ file netinet/if_ether.c			ether
 file netinet/igmp.c
 file netinet/in.c
 file netinet/in_pcb.c
-file netinet/in_proto.c	
+file netinet/in_proto.c
 file netinet/inet_nat64.c		pf
 file netinet/inet_ntop.c
 file netinet/ip_divert.c		pf
@@ -827,7 +827,7 @@ file netinet/raw_ip.c
 file netinet/tcp_debug.c
 file netinet/tcp_input.c
 file netinet/tcp_output.c
-file netinet/tcp_subr.c	
+file netinet/tcp_subr.c
 file netinet/tcp_timer.c
 file netinet/tcp_usrreq.c
 file netinet/udp_usrreq.c
@@ -843,7 +843,7 @@ file netinet/ip_ah.c			ipsec
 file netinet/ip_carp.c			carp			needs-count
 file netinet/ip_ipcomp.c		ipsec
 file crypto/rijndael.c			ipsec | crypto | uvm_swap_encrypt | wlan
-file crypto/md5.c			
+file crypto/md5.c
 file crypto/rmd160.c			ipsec | crypto
 file crypto/sha1.c			ipsec | crypto | carp | wlan
 file crypto/sha2.c
@@ -857,7 +857,7 @@ file crypto/criov.c			ipsec | crypto
 file crypto/cryptosoft.c		ipsec | crypto
 file crypto/xform.c			ipsec | crypto
 file crypto/xform_ipcomp.c		ipsec | crypto
-file crypto/arc4.c			
+file crypto/arc4.c
 file crypto/michael.c			wlan
 file crypto/cmac.c			wlan
 file crypto/hmac.c			wlan | (softraid & crypto)
