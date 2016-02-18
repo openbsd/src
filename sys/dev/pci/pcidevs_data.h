@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1786 2016/01/30 01:02:04 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1787 2016/02/18 14:00:48 bluhm Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -10928,6 +10928,14 @@ static const struct pci_known_product pci_known_products[] = {
 	    "DSL5520 Thunderbolt",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I219_LM,
+	    "I219-LM",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I219_V,
+	    "I219-V",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I210_COPPER_NF,
 	    "I210",
 	},
@@ -10954,6 +10962,14 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_X557_AT2,
 	    "X557-AT2",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I219_LM2,
+	    "I219-LM2",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I219_V2,
+	    "I219-V2",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CORE5G_H_PCIE_X16,
