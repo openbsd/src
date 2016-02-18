@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.82 2015/09/24 06:16:53 djm Exp $
+#	$OpenBSD: Makefile,v 1.83 2016/02/18 02:37:25 djm Exp $
 
 .ifndef SKIP_UNIT
 SUBDIR=		unittests
@@ -191,7 +191,13 @@ INTEROP_TARGETS+=t-${t}
 # Not run by default
 interop: ${INTEROP_TARGETS}
 
-clean:
+.for s in ${SUBDIR}
+CLEAN_SUBDIR+=c-${s}
+c-${s}:
+	${MAKE} -C ${.CURDIR}/${s} clean
+.endfor
+
+clean: ${CLEAN_SUBDIR}
 	rm -f ${CLEANFILES}
 	test -z "${SUDO}" || ${SUDO} rm -f ${SUDO_CLEAN}
 	rm -rf .putty
