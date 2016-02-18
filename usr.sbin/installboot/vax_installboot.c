@@ -1,4 +1,4 @@
-/*	$OpenBSD: vax_installboot.c,v 1.4 2015/11/30 17:34:57 jsing Exp $	*/
+/*	$OpenBSD: vax_installboot.c,v 1.5 2016/02/18 23:38:18 tobiasu Exp $	*/
 
 /*
  * Copyright (c) 2013 Joel Sing <jsing@openbsd.org>
@@ -17,6 +17,7 @@
  */
 
 #include <stdlib.h>
+#include <unistd.h>
 
 #include "installboot.h"
 
