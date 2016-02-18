@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.h,v 1.67 2015/09/12 02:38:14 jsg Exp $ */
+/* $OpenBSD: if_em_hw.h,v 1.68 2016/02/18 14:24:39 bluhm Exp $ */
 /* $FreeBSD: if_em_hw.h,v 1.15 2005/05/26 23:32:02 tackerman Exp $ */
 
 /* if_em_hw.h
@@ -80,12 +80,13 @@ typedef enum {
     em_pchlan,
     em_pch2lan,
     em_pch_lpt,
+    em_pch_spt,
     em_num_macs
 } em_mac_type;
 
 #define IS_ICH8(t) \
 	(t == em_ich8lan || t == em_ich9lan || t == em_ich10lan || \
-	 t == em_pchlan || t == em_pch2lan || t == em_pch_lpt)
+	 t == em_pchlan || t == em_pch2lan || t == em_pch_lpt || t == em_pch_spt)
 
 typedef enum {
     em_eeprom_uninitialized = 0,
@@ -554,6 +555,10 @@ int32_t em_check_phy_reset_block(struct em_hw *hw);
 #define E1000_DEV_ID_PCH_I218_V2         0x15A1
 #define E1000_DEV_ID_PCH_I218_LM3        0x15A2
 #define E1000_DEV_ID_PCH_I218_V3         0x15A3
+#define E1000_DEV_ID_PCH_SPT_I219_LM     0x156F
+#define E1000_DEV_ID_PCH_SPT_I219_V      0x1570
+#define E1000_DEV_ID_PCH_SPT_I219_LM2    0x15B7
+#define E1000_DEV_ID_PCH_SPT_I219_V2     0x15B8
 #define E1000_DEV_ID_82575EB_PT          0x10A7
 #define E1000_DEV_ID_82575EB_PF          0x10A9
 #define E1000_DEV_ID_82575GB_QP          0x10D6
@@ -1030,6 +1035,7 @@ struct em_ffvt_entry {
 #define FEXTNVM_SW_CONFIG_ICH8M (1 << 27) /* Bit redefined for ICH8M :/ */
 #define E1000_PBA      0x01000  /* Packet Buffer Allocation - RW */
 #define E1000_PBS      0x01008  /* Packet Buffer Size */
+#define E1000_IOSFPC   0x00F28  /* TX corrupted data  */
 #define E1000_EEMNGCTL 0x01010  /* MNG EEprom Control */
 #define E1000_FLASH_UPDATES 1000
 #define E1000_EEARBC   0x01024  /* EEPROM Auto Read Bus Control */
@@ -2044,6 +2050,7 @@ struct em_hw {
 #define E1000_RCTL_RDMTS_HALF     0x00000000    /* rx desc min threshold size */
 #define E1000_RCTL_RDMTS_QUAT     0x00000100    /* rx desc min threshold size */
 #define E1000_RCTL_RDMTS_EIGTH    0x00000200    /* rx desc min threshold size */
+#define E1000_RCTL_RDMTS_HEX      0x00010000
 #define E1000_RCTL_MO_SHIFT       12            /* multicast offset shift */
 #define E1000_RCTL_MO_0           0x00000000    /* multicast offset 11:0 */
 #define E1000_RCTL_MO_1           0x00001000    /* multicast offset 12:1 */
@@ -2145,7 +2152,7 @@ struct em_hw {
 #define E1000_RXDCTL_PTHRESH 0x0000003F /* RXDCTL Prefetch Threshold */
 #define E1000_RXDCTL_HTHRESH 0x00003F00 /* RXDCTL Host Threshold */
 #define E1000_RXDCTL_WTHRESH 0x003F0000 /* RXDCTL Writeback Threshold */
-#define E1000_RXDCTL_GRAN    0x01000000 /* RXDCTL Granularity */
+#define E1000_RXDCTL_THRESH_UNIT_DESC 0x1000000
 #define E1000_RXDCTL_QUEUE_ENABLE 0x2000000
 
 /* Transmit Descriptor Control */
@@ -2258,6 +2265,9 @@ struct em_hw {
 #define E1000_WUS_FLX2 0x00040000 /* Flexible Filter 2 Match */
 #define E1000_WUS_FLX3 0x00080000 /* Flexible Filter 3 Match */
 #define E1000_WUS_FLX_FILTERS 0x000F0000 /* Mask for the 4 flexible filters */
+
+/* TRAC0 bits */
+#define E1000_TARC0_CB_MULTIQ_3_REQ     (1 << 28 | 1 << 29)
 
 /* Management Control */
 #define E1000_MANC_SMBUS_EN      0x00000001 /* SMBus Enabled - RO */
@@ -3728,6 +3738,15 @@ union ich8_hws_flash_regacc {
 #define I2_SMBUS_CTRL		PHY_REG(769, 23)
 #define I2_MODE_CTRL		HV_KMRN_MODE_CTRL
 #define I2_PCIE_POWER_CTRL	IGP3_KMRN_POWER_MNG_CTRL
+
+/* FEXTNVM registers */
+#define E1000_FEXTNVM7                          0xe4UL
+#define E1000_FEXTNVM7_SIDE_CLK_UNGATE          0x04UL
+#define E1000_FEXTNVM9                          0x5bb4UL
+#define E1000_FEXTNVM9_IOSFSB_CLKGATE_DIS       0x0800UL
+#define E1000_FEXTNVM9_IOSFSB_CLKREQ_DIS        0x1000UL
+#define E1000_FEXTNVM11                         0x05bbc
+#define E1000_FEXTNVM11_DISABLE_MULR_FIX        0x00002000
 
 /* BM/HV Specific Registers */
 #define BM_PORT_CTRL_PAGE                 769

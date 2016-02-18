@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em_osdep.h,v 1.12 2011/10/05 02:52:10 jsg Exp $ */
+/* $OpenBSD: if_em_osdep.h,v 1.13 2016/02/18 14:24:39 bluhm Exp $ */
 /* $FreeBSD: if_em_osdep.h,v 1.11 2003/05/02 21:17:08 pdeuskar Exp $ */
 
 #ifndef _EM_OPENBSD_OS_H_
@@ -78,6 +78,7 @@ struct em_osdep
 	bus_addr_t		em_iobase;
 	bus_size_t		em_flashsize;
 	bus_addr_t		em_flashbase;
+	size_t			em_flashoffset;
 };
 
 #define E1000_WRITE_FLUSH(hw)	E1000_READ_REG(hw, STATUS)
@@ -151,21 +152,37 @@ struct em_osdep
 
 #define E1000_READ_ICH_FLASH_REG(hw, reg) \
 	bus_space_read_4(((struct em_osdep *)(hw)->back)->flash_bus_space_tag, \
-			 ((struct em_osdep *)(hw)->back)->flash_bus_space_handle, reg)
+			 ((struct em_osdep *)(hw)->back)->flash_bus_space_handle, \
+			 ((struct em_osdep *)(hw)->back)->em_flashoffset + reg)
 
 #define E1000_READ_ICH_FLASH_REG16(hw, reg) \
 	bus_space_read_2(((struct em_osdep *)(hw)->back)->flash_bus_space_tag, \
-			 ((struct em_osdep *)(hw)->back)->flash_bus_space_handle, reg)
+			 ((struct em_osdep *)(hw)->back)->flash_bus_space_handle, \
+			 ((struct em_osdep *)(hw)->back)->em_flashoffset + reg)
 
-#define E1000_WRITE_ICH_FLASH_REG(hw, reg, value) \
-	bus_space_write_4(((struct em_osdep *)(hw)->back)->flash_bus_space_tag, \
+#define E1000_READ_ICH_FLASH_REG32(hw, reg) \
+	bus_space_read_4(((struct em_osdep *)(hw)->back)->flash_bus_space_tag, \
+			 ((struct em_osdep *)(hw)->back)->flash_bus_space_handle, \
+			 ((struct em_osdep *)(hw)->back)->em_flashoffset + reg)
+
+
+#define E1000_WRITE_ICH_FLASH_REG8(hw, reg, value) \
+	bus_space_write_1(((struct em_osdep *)(hw)->back)->flash_bus_space_tag, \
 			  ((struct em_osdep *)(hw)->back)->flash_bus_space_handle, \
-			   reg, value)
+			  ((struct em_osdep *)(hw)->back)->em_flashoffset + reg, \
+			  value)
 
 #define E1000_WRITE_ICH_FLASH_REG16(hw, reg, value) \
 	bus_space_write_2(((struct em_osdep *)(hw)->back)->flash_bus_space_tag, \
 			  ((struct em_osdep *)(hw)->back)->flash_bus_space_handle, \
-			   reg, value)
+			  ((struct em_osdep *)(hw)->back)->em_flashoffset + reg, \
+			  value)
+
+#define E1000_WRITE_ICH_FLASH_REG32(hw, reg, value) \
+	bus_space_write_4(((struct em_osdep *)(hw)->back)->flash_bus_space_tag, \
+			  ((struct em_osdep *)(hw)->back)->flash_bus_space_handle, \
+			  ((struct em_osdep *)(hw)->back)->em_flashoffset + reg, \
+			  value)
 
 #define em_io_read(hw, port) \
 	bus_space_read_4(((struct em_osdep *)(hw)->back)->io_bus_space_tag, \

@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.c,v 1.90 2015/12/14 03:04:10 mmcc Exp $ */
+/* $OpenBSD: if_em_hw.c,v 1.91 2016/02/18 14:24:39 bluhm Exp $ */
 /*
  * if_em_hw.c Shared functions for accessing and configuring the MAC
  */
@@ -106,6 +106,7 @@ static int32_t	em_read_ich8_byte(struct em_hw *, uint32_t, uint8_t *);
 static int32_t	em_verify_write_ich8_byte(struct em_hw *, uint32_t, uint8_t);
 static int32_t	em_write_ich8_byte(struct em_hw *, uint32_t, uint8_t);
 static int32_t	em_read_ich8_word(struct em_hw *, uint32_t, uint16_t *);
+static int32_t	em_read_ich8_dword(struct em_hw *, uint32_t, uint32_t *);
 static int32_t	em_read_ich8_data(struct em_hw *, uint32_t, uint32_t,
 		    uint16_t *);
 static int32_t	em_write_ich8_data(struct em_hw *, uint32_t, uint32_t,
@@ -610,6 +611,12 @@ em_set_mac_type(struct em_hw *hw)
 	case E1000_DEV_ID_PCH_I218_V3:
 		hw->mac_type = em_pch_lpt;
 		break;
+	case E1000_DEV_ID_PCH_SPT_I219_LM:
+	case E1000_DEV_ID_PCH_SPT_I219_V:
+	case E1000_DEV_ID_PCH_SPT_I219_LM2:
+	case E1000_DEV_ID_PCH_SPT_I219_V2:
+		hw->mac_type = em_pch_spt;
+		break;
 	case E1000_DEV_ID_EP80579_LAN_1:
 		hw->mac_type = em_icp_xxxx;
 		hw->icp_xxxx_port_num = 0;
@@ -640,6 +647,7 @@ em_set_mac_type(struct em_hw *hw)
 	case em_pchlan:
 	case em_pch2lan:
 	case em_pch_lpt:
+	case em_pch_spt:
 		hw->swfwhw_semaphore_present = TRUE;
 		hw->asf_firmware_present = TRUE;
 		break;
@@ -736,6 +744,7 @@ em_set_media_type(struct em_hw *hw)
 		case em_pchlan:
 		case em_pch2lan:
 		case em_pch_lpt:
+		case em_pch_spt:
 		case em_82573:
 		case em_82574:
 			/*
@@ -893,6 +902,7 @@ em_reset_hw(struct em_hw *hw)
 	case em_pchlan:
 	case em_pch2lan:
 	case em_pch_lpt:
+	case em_pch_spt:
 		if (!hw->phy_reset_disable &&
 		    em_check_phy_reset_block(hw) == E1000_SUCCESS) {
 			/*
@@ -1141,6 +1151,7 @@ em_initialize_hardware_bits(struct em_hw *hw)
 		case em_pchlan:
 		case em_pch2lan:
 		case em_pch_lpt:
+		case em_pch_spt:
 			if (hw->mac_type == em_ich8lan)
 				/* Set TARC0 bits 29 and 28 */
 				reg_tarc0 |= 0x30000000;
@@ -1215,7 +1226,8 @@ em_init_hw(struct em_hw *hw)
 
 	if (hw->mac_type == em_pchlan ||
 		hw->mac_type == em_pch2lan ||
-		hw->mac_type == em_pch_lpt) {
+		hw->mac_type == em_pch_lpt ||
+		hw->mac_type == em_pch_spt) {
 		/*
 		 * The MAC-PHY interconnect may still be in SMBus mode
 		 * after Sx->S0.  Toggle the LANPHYPC Value bit to force
@@ -1426,6 +1438,7 @@ em_init_hw(struct em_hw *hw)
 	case em_pchlan:
 	case em_pch2lan:
 	case em_pch_lpt:
+	case em_pch_spt:
 		ctrl = E1000_READ_REG(hw, TXDCTL1);
 		ctrl = (ctrl & ~E1000_TXDCTL_WTHRESH) | 
 		    E1000_TXDCTL_FULL_TX_DESC_WB;
@@ -1557,6 +1570,7 @@ em_setup_link(struct em_hw *hw)
 		case em_pchlan:
 		case em_pch2lan:
 		case em_pch_lpt:
+		case em_pch_spt:
 		case em_82573:
 		case em_82574:
 			hw->fc = E1000_FC_FULL;
@@ -2007,7 +2021,8 @@ em_copper_link_igp_setup(struct em_hw *hw)
 	/* disable lplu d0 during driver init */
 	if (hw->mac_type == em_pchlan ||
 		hw->mac_type == em_pch2lan ||
-		hw->mac_type == em_pch_lpt)
+		hw->mac_type == em_pch_lpt ||
+		hw->mac_type == em_pch_spt)
 		ret_val = em_set_lplu_state_pchlan(hw, FALSE);
 	else
 		ret_val = em_set_d0_lplu_state(hw, FALSE);
@@ -2279,7 +2294,8 @@ em_copper_link_mgp_setup(struct em_hw *hw)
 	/* disable lplu d0 during driver init */
 	if (hw->mac_type == em_pchlan ||
 		hw->mac_type == em_pch2lan ||
-		hw->mac_type == em_pch_lpt)
+		hw->mac_type == em_pch_lpt ||
+		hw->mac_type == em_pch_spt)
 		ret_val = em_set_lplu_state_pchlan(hw, FALSE);
 
 	/* Enable CRS on TX. This must be set for half-duplex operation. */
@@ -2750,6 +2766,7 @@ em_setup_copper_link(struct em_hw *hw)
 	case em_pchlan:
 	case em_pch2lan:
 	case em_pch_lpt:
+	case em_pch_spt:
 		/*
 		 * Set the mac to wait the maximum time between each
 		 * iteration and increase the max iterations when polling the
@@ -3917,7 +3934,8 @@ em_check_for_link(struct em_hw *hw)
 
 			/* Enable/Disable EEE after link up */
 			if (hw->mac_type == em_pch2lan ||
-			    hw->mac_type == em_pch_lpt) {
+			    hw->mac_type == em_pch_lpt ||
+			    hw->mac_type == em_pch_spt) {
 				ret_val = em_set_eee_pchlan(hw);
 				if (ret_val)
 					return ret_val;
@@ -4702,7 +4720,8 @@ em_read_phy_reg(struct em_hw *hw, uint32_t reg_addr, uint16_t *phy_data)
 
 	if (hw->mac_type == em_pchlan ||
 		hw->mac_type == em_pch2lan ||
-		hw->mac_type == em_pch_lpt)
+		hw->mac_type == em_pch_lpt ||
+		hw->mac_type == em_pch_spt)
 		return (em_access_phy_reg_hv(hw, reg_addr, phy_data, TRUE));
 
 	if (((hw->mac_type == em_80003es2lan) || (hw->mac_type == em_82575)) &&
@@ -4815,7 +4834,7 @@ em_read_phy_reg_ex(struct em_hw *hw, uint32_t reg_addr, uint16_t *phy_data)
 		}
 		*phy_data = (uint16_t) mdic;
 
-		if (hw->mac_type == em_pch2lan || hw->mac_type == em_pch_lpt)
+		if (hw->mac_type == em_pch2lan || hw->mac_type == em_pch_lpt || hw->mac_type == em_pch_spt)
 			usec_delay(100);
 	} else {
 		/*
@@ -4866,7 +4885,8 @@ em_write_phy_reg(struct em_hw *hw, uint32_t reg_addr, uint16_t phy_data)
 
 	if (hw->mac_type == em_pchlan ||
 		hw->mac_type == em_pch2lan ||
-		hw->mac_type == em_pch_lpt)
+		hw->mac_type == em_pch_lpt ||
+		hw->mac_type == em_pch_spt)
 		return (em_access_phy_reg_hv(hw, reg_addr, &phy_data, FALSE));
 
 	if (em_swfw_sync_acquire(hw, hw->swfw))
@@ -4966,7 +4986,7 @@ em_write_phy_reg_ex(struct em_hw *hw, uint32_t reg_addr, uint16_t phy_data)
 			return -E1000_ERR_PHY;
 		}
 
-		if (hw->mac_type == em_pch2lan || hw->mac_type == em_pch_lpt)
+		if (hw->mac_type == em_pch2lan || hw->mac_type == em_pch_lpt || hw->mac_type == em_pch_spt)
 			usec_delay(100);
 	} else {
 		/*
@@ -5455,6 +5475,7 @@ em_match_gig_phy(struct em_hw *hw)
 			match = TRUE;
 		break;
 	case em_pch_lpt:
+	case em_pch_spt:
 		if (hw->phy_id == I217_E_PHY_ID)
 			match = TRUE;
 		break;
@@ -5783,6 +5804,33 @@ em_init_eeprom_params(struct em_hw *hw)
 
 			break;
 		}
+	case em_pch_spt:
+		{
+			int32_t         i = 0;
+			uint32_t        flash_size = EM_READ_REG(hw, 0xc /* STRAP */);
+
+			eeprom->type = em_eeprom_ich8;
+			eeprom->use_eerd = FALSE;
+			eeprom->use_eewr = FALSE;
+			eeprom->word_size = E1000_SHADOW_RAM_WORDS;
+			/*
+			 * Zero the shadow RAM structure. But don't load it
+			 * from NVM so as to save time for driver init
+			 */
+			if (hw->eeprom_shadow_ram != NULL) {
+				for (i = 0; i < E1000_SHADOW_RAM_WORDS; i++) {
+					hw->eeprom_shadow_ram[i].modified = 
+					    FALSE;
+					hw->eeprom_shadow_ram[i].eeprom_word = 
+					    0xFFFF;
+				}
+			}
+			hw->flash_base_addr = 0;
+			flash_size = ((flash_size >> 1) & 0x1f) + 1;
+			flash_size *= 4096;
+			hw->flash_bank_size = flash_size / 4;
+		}
+		break;
 	default:
 		break;
 	}
@@ -6470,6 +6518,7 @@ em_validate_eeprom_checksum(struct em_hw *hw)
 		 */
 		switch (hw->mac_type) {
 		case em_pch_lpt:
+		case em_pch_spt:
 			word = EEPROM_COMPAT;
 			valid_csum_mask = EEPROM_COMPAT_VALID_CSUM;
 			break;
@@ -7131,7 +7180,7 @@ em_init_rx_addrs(struct em_hw *hw)
 	uint32_t rar_num;
 	DEBUGFUNC("em_init_rx_addrs");
 
-	if (hw->mac_type == em_pch_lpt || hw->mac_type == em_pch2lan)
+	if (hw->mac_type == em_pch_lpt || hw->mac_type == em_pch_spt || hw->mac_type == em_pch2lan)
 		if (em_phy_no_cable_workaround(hw))
 			printf(" ...failed to apply em_phy_no_cable_"
 			    "workaround.\n");
@@ -7688,7 +7737,7 @@ em_clear_hw_cntrs(struct em_hw *hw)
 	    hw->mac_type == em_ich9lan ||
 	    hw->mac_type == em_ich10lan ||
 	    hw->mac_type == em_pchlan ||
-	    (hw->mac_type != em_pch2lan && hw->mac_type != em_pch_lpt))
+	    (hw->mac_type != em_pch2lan && hw->mac_type != em_pch_lpt && hw->mac_type != em_pch_spt))
 		return;
 
 	temp = E1000_READ_REG(hw, ICRXPTC);
@@ -7830,6 +7879,7 @@ em_get_bus_info(struct em_hw *hw)
 	case em_pchlan:
 	case em_pch2lan:
 	case em_pch_lpt:
+	case em_pch_spt:
 		hw->bus_type = em_bus_type_pci_express;
 		hw->bus_speed = em_bus_speed_2500;
 		hw->bus_width = em_bus_width_pciex_1;
@@ -9022,6 +9072,7 @@ em_get_auto_rd_done(struct em_hw *hw)
 	case em_pchlan:
 	case em_pch2lan:
 	case em_pch_lpt:
+	case em_pch_spt:
 		while (timeout) {
 			if (E1000_READ_REG(hw, EECD) & E1000_EECD_AUTO_RD)
 				break;
@@ -9380,12 +9431,45 @@ em_valid_nvm_bank_detect_ich8lan(struct em_hw *hw, uint32_t *bank)
 	uint32_t eecd;
 	uint32_t bank1_offset = hw->flash_bank_size * sizeof(uint16_t);
 	uint32_t act_offset = E1000_ICH_NVM_SIG_WORD * 2 + 1;
+	uint32_t nvm_dword = 0;
 	uint8_t sig_byte = 0;
 	int32_t ret_val;
 
 	DEBUGFUNC("em_valid_nvm_bank_detect_ich8lan");
 
 	switch (hw->mac_type) {
+	case em_pch_spt:
+		bank1_offset = hw->flash_bank_size * 2;
+		act_offset = E1000_ICH_NVM_SIG_WORD * 2;
+
+		/* set bank to 0 in case flash read fails. */
+		*bank = 0;
+
+		/* Check bank 0 */
+		ret_val = em_read_ich8_dword(hw, act_offset, &nvm_dword);
+		if (ret_val)
+			return ret_val;
+		sig_byte = (uint8_t)((nvm_dword & 0xFF00) >> 8);
+		if ((sig_byte & E1000_ICH_NVM_VALID_SIG_MASK) ==
+		    E1000_ICH_NVM_SIG_VALUE) {
+			*bank = 0;
+			return 0;
+		}
+
+		/* Check bank 1 */
+		ret_val = em_read_ich8_dword(hw, act_offset + bank1_offset,
+		    &nvm_dword);
+		if (ret_val)
+			return ret_val;
+		sig_byte = (uint8_t)((nvm_dword & 0xFF00) >> 8);
+		if ((sig_byte & E1000_ICH_NVM_VALID_SIG_MASK) ==
+		    E1000_ICH_NVM_SIG_VALUE) {
+			*bank = 1;
+			return 0;
+		}
+
+		DEBUGOUT("ERROR: No valid NVM bank present\n");
+		return -1;
 	case em_ich8lan:
 	case em_ich9lan:
 		eecd = E1000_READ_REG(hw, EECD);
@@ -9432,6 +9516,92 @@ em_valid_nvm_bank_detect_ich8lan(struct em_hw *hw, uint32_t *bank)
 	}
 }
 
+STATIC int32_t
+em_read_eeprom_spt(struct em_hw *hw, uint16_t offset, uint16_t words,
+    uint16_t *data)
+{
+	int32_t  error = E1000_SUCCESS;
+	uint32_t flash_bank = 0;
+	uint32_t act_offset = 0;
+	uint32_t bank_offset = 0;
+	uint32_t dword = 0;
+	uint16_t i = 0, add;
+
+	/*
+	 * We need to know which is the valid flash bank.  In the event that
+	 * we didn't allocate eeprom_shadow_ram, we may not be managing
+	 * flash_bank.  So it cannot be trusted and needs to be updated with
+	 * each read.
+	 */
+
+	if (hw->mac_type != em_pch_spt)
+		return -E1000_ERR_EEPROM;
+
+	error = em_get_software_flag(hw);
+	if (error != E1000_SUCCESS)
+		return error;
+
+	error = em_valid_nvm_bank_detect_ich8lan(hw, &flash_bank);
+	if (error != E1000_SUCCESS) {
+		DEBUGOUT("Could not detect valid bank, assuming bank 0\n");
+		flash_bank = 0;
+	}
+
+	/*
+	 * Adjust offset appropriately if we're on bank 1 - adjust for word
+	 * size
+	 */
+	bank_offset = flash_bank * (hw->flash_bank_size * 2);
+
+	for (i = add = 0; i < words; i += add) {
+		if ((offset + i) % 2) {
+			add = 1;
+			if (hw->eeprom_shadow_ram != NULL
+			    && hw->eeprom_shadow_ram[offset + i].modified) {
+				data[i] =
+				    hw->eeprom_shadow_ram[offset+i].eeprom_word;
+				continue;
+			}
+			act_offset = bank_offset + (offset + i - 1) * 2;
+		} else {
+			add = 2;
+			if (hw->eeprom_shadow_ram != NULL
+			    && hw->eeprom_shadow_ram[offset+i].modified
+			    && hw->eeprom_shadow_ram[offset+i+1].modified) {
+				data[i] = hw->eeprom_shadow_ram[offset+i].eeprom_word;
+				data[i+1] = hw->eeprom_shadow_ram[offset+i+1].eeprom_word;
+				continue;
+			}
+			act_offset = bank_offset + (offset + i) * 2;
+		}
+		error = em_read_ich8_dword(hw, act_offset, &dword);
+		if (error != E1000_SUCCESS)
+			break;
+		if (hw->eeprom_shadow_ram != NULL
+		    && hw->eeprom_shadow_ram[offset+i].modified) {
+			data[i] = hw->eeprom_shadow_ram[offset+i].eeprom_word;
+		} else {
+			if (add == 1)
+				data[i] = dword >> 16;
+			else
+				data[i] = dword & 0xFFFFUL;
+		}
+		if (add == 1 || words-i == 1)
+			continue;
+		if (hw->eeprom_shadow_ram != NULL
+		    && hw->eeprom_shadow_ram[offset+i+1].modified) {
+			data[i+1] =
+			    hw->eeprom_shadow_ram[offset+i+1].eeprom_word;
+		} else {
+			data[i+1] = dword >> 16;
+		}
+	}
+
+	em_release_software_flag(hw);
+
+	return error;
+}
+
 /******************************************************************************
  * Reads a 16 bit word or words from the EEPROM using the ICH8's flash access
  * register.
@@ -9457,6 +9627,9 @@ em_read_eeprom_ich8(struct em_hw *hw, uint16_t offset, uint16_t words,
 	 * flash_bank.  So it cannot be trusted and needs to be updated with
 	 * each read.
 	 */
+
+	if (hw->mac_type == em_pch_spt)
+		return em_read_eeprom_spt(hw, offset, words, data);
 
 	error = em_get_software_flag(hw);
 	if (error != E1000_SUCCESS)
@@ -9562,7 +9735,12 @@ em_ich8_cycle_init(struct em_hw *hw)
 	int32_t i = 0;
 	DEBUGFUNC("em_ich8_cycle_init");
 
-	hsfsts.regval = E1000_READ_ICH_FLASH_REG16(hw, ICH_FLASH_HSFSTS);
+	if (hw->mac_type == em_pch_spt)
+		hsfsts.regval = E1000_READ_ICH_FLASH_REG32(hw,
+		    ICH_FLASH_HSFSTS) & 0xFFFFUL;
+	else
+		hsfsts.regval = E1000_READ_ICH_FLASH_REG16(hw,
+		    ICH_FLASH_HSFSTS);
 
 	/* May be check the Flash Des Valid bit in Hw status */
 	if (hsfsts.hsf_status.fldesvalid == 0) {
@@ -9574,8 +9752,12 @@ em_ich8_cycle_init(struct em_hw *hw)
 	/* Clear DAEL in Hw status by writing a 1 */
 	hsfsts.hsf_status.flcerr = 1;
 	hsfsts.hsf_status.dael = 1;
-
-	E1000_WRITE_ICH_FLASH_REG16(hw, ICH_FLASH_HSFSTS, hsfsts.regval);
+	if (hw->mac_type == em_pch_spt)
+		E1000_WRITE_ICH_FLASH_REG32(hw, ICH_FLASH_HSFSTS,
+		    hsfsts.regval & 0xFFFFUL);
+	else
+		E1000_WRITE_ICH_FLASH_REG16(hw, ICH_FLASH_HSFSTS,
+		    hsfsts.regval);
 	/*
 	 * Either we should have a hardware SPI cycle in progress bit to
 	 * check against, in order to start a new cycle or FDONE bit should
@@ -9595,8 +9777,12 @@ em_ich8_cycle_init(struct em_hw *hw)
 		 */
 		/* Begin by setting Flash Cycle Done. */
 		hsfsts.hsf_status.flcdone = 1;
-		E1000_WRITE_ICH_FLASH_REG16(hw, ICH_FLASH_HSFSTS,
-		    hsfsts.regval);
+		if (hw->mac_type == em_pch_spt)
+			E1000_WRITE_ICH_FLASH_REG32(hw, ICH_FLASH_HSFSTS,
+			    hsfsts.regval & 0xFFFFUL);
+		else
+			E1000_WRITE_ICH_FLASH_REG16(hw, ICH_FLASH_HSFSTS,
+			    hsfsts.regval);
 		error = E1000_SUCCESS;
 	} else {
 		/*
@@ -9604,8 +9790,12 @@ em_ich8_cycle_init(struct em_hw *hw)
 		 * chance to end before giving up.
 		 */
 		for (i = 0; i < ICH_FLASH_COMMAND_TIMEOUT; i++) {
-			hsfsts.regval = E1000_READ_ICH_FLASH_REG16(hw,
-			    ICH_FLASH_HSFSTS);
+			if (hw->mac_type == em_pch_spt)
+				hsfsts.regval = E1000_READ_ICH_FLASH_REG32(
+				    hw, ICH_FLASH_HSFSTS) & 0xFFFFUL;
+			else
+				hsfsts.regval = E1000_READ_ICH_FLASH_REG16(
+				    hw, ICH_FLASH_HSFSTS);
 			if (hsfsts.hsf_status.flcinprog == 0) {
 				error = E1000_SUCCESS;
 				break;
@@ -9618,8 +9808,12 @@ em_ich8_cycle_init(struct em_hw *hw)
 			 * timeout, now set the Flash Cycle Done.
 			 */
 			hsfsts.hsf_status.flcdone = 1;
-			E1000_WRITE_ICH_FLASH_REG16(hw, ICH_FLASH_HSFSTS,
-			    hsfsts.regval);
+			if (hw->mac_type == em_pch_spt)
+				E1000_WRITE_ICH_FLASH_REG32(hw,
+				    ICH_FLASH_HSFSTS, hsfsts.regval & 0xFFFFUL);
+			else
+				E1000_WRITE_ICH_FLASH_REG16(hw,
+				    ICH_FLASH_HSFSTS, hsfsts.regval);
 		} else {
 			DEBUGOUT("Flash controller busy, cannot get access");
 		}
@@ -9639,15 +9833,31 @@ em_ich8_flash_cycle(struct em_hw *hw, uint32_t timeout)
 	union ich8_hws_flash_status hsfsts;
 	int32_t  error = E1000_ERR_EEPROM;
 	uint32_t i = 0;
+
 	/* Start a cycle by writing 1 in Flash Cycle Go in Hw Flash Control */
-	hsflctl.regval = E1000_READ_ICH_FLASH_REG16(hw, ICH_FLASH_HSFCTL);
+	if (hw->mac_type == em_pch_spt)
+		hsflctl.regval = E1000_READ_ICH_FLASH_REG32(hw,
+		    ICH_FLASH_HSFSTS) >> 16;
+	else
+		hsflctl.regval = E1000_READ_ICH_FLASH_REG16(hw,
+		    ICH_FLASH_HSFCTL);
 	hsflctl.hsf_ctrl.flcgo = 1;
-	E1000_WRITE_ICH_FLASH_REG16(hw, ICH_FLASH_HSFCTL, hsflctl.regval);
+
+	if (hw->mac_type == em_pch_spt)
+		E1000_WRITE_ICH_FLASH_REG32(hw, ICH_FLASH_HSFSTS,
+		    (uint32_t)hsflctl.regval << 16);
+	else
+		E1000_WRITE_ICH_FLASH_REG16(hw, ICH_FLASH_HSFCTL,
+		    hsflctl.regval);
 
 	/* wait till FDONE bit is set to 1 */
 	do {
-		hsfsts.regval = E1000_READ_ICH_FLASH_REG16(hw,
-		    ICH_FLASH_HSFSTS);
+		if (hw->mac_type == em_pch_spt)
+			hsfsts.regval = E1000_READ_ICH_FLASH_REG32(hw,
+			    ICH_FLASH_HSFSTS) & 0xFFFFUL;
+		else
+			hsfsts.regval = E1000_READ_ICH_FLASH_REG16(hw,
+			    ICH_FLASH_HSFSTS);
 		if (hsfsts.hsf_status.flcdone == 1)
 			break;
 		usec_delay(1);
@@ -9706,7 +9916,7 @@ em_read_ich8_data(struct em_hw *hw, uint32_t index, uint32_t size,
 		 */
 		/* TODO: TBD maybe check the index against the size of flash */
 
-		E1000_WRITE_ICH_FLASH_REG(hw, ICH_FLASH_FADDR,
+		E1000_WRITE_ICH_FLASH_REG32(hw, ICH_FLASH_FADDR,
 		    flash_linear_address);
 
 		error = em_ich8_flash_cycle(hw, ICH_FLASH_COMMAND_TIMEOUT);
@@ -9748,11 +9958,88 @@ em_read_ich8_data(struct em_hw *hw, uint32_t index, uint32_t size,
 	return error;
 }
 
+STATIC int32_t
+em_read_ich8_data32(struct em_hw *hw, uint32_t offset, uint32_t *data)
+{
+	union ich8_hws_flash_status hsfsts;
+	union ich8_hws_flash_ctrl hsflctl;
+	uint32_t flash_linear_address;
+	int32_t  error = -E1000_ERR_EEPROM;
+	uint32_t  count = 0;
+	DEBUGFUNC("em_read_ich8_data32");
+
+	if (hw->mac_type != em_pch_spt)
+		return error;
+	if (offset > ICH_FLASH_LINEAR_ADDR_MASK)
+		return error;
+	flash_linear_address = (ICH_FLASH_LINEAR_ADDR_MASK & offset) +
+	    hw->flash_base_addr;
+
+	do {
+		usec_delay(1);
+		/* Steps */
+		error = em_ich8_cycle_init(hw);
+		if (error != E1000_SUCCESS)
+			break;
+
+		/* 32 bit accesses in SPT. */
+		hsflctl.regval = E1000_READ_ICH_FLASH_REG32(hw,
+		    ICH_FLASH_HSFSTS) >> 16;
+
+		hsflctl.hsf_ctrl.fldbcount = sizeof(uint32_t) - 1;
+		hsflctl.hsf_ctrl.flcycle = ICH_CYCLE_READ;
+
+		E1000_WRITE_ICH_FLASH_REG32(hw, ICH_FLASH_HSFSTS,
+		    (uint32_t)hsflctl.regval << 16);
+		/*
+		 * Write the last 24 bits of offset into Flash Linear address
+		 * field in Flash Address
+		 */
+		/* TODO: TBD maybe check the offset against the size of flash */
+
+		E1000_WRITE_ICH_FLASH_REG32(hw, ICH_FLASH_FADDR,
+		    flash_linear_address);
+
+		error = em_ich8_flash_cycle(hw, ICH_FLASH_COMMAND_TIMEOUT);
+		/*
+		 * Check if FCERR is set to 1, if set to 1, clear it and try
+		 * the whole sequence a few more times, else read in (shift
+		 * in) the Flash Data0, the order is least significant byte
+		 * first msb to lsb
+		 */
+		if (error == E1000_SUCCESS) {
+			(*data) = (uint32_t)E1000_READ_ICH_FLASH_REG32(hw,
+			    ICH_FLASH_FDATA0);
+			break;
+		} else {
+			/*
+			 * If we've gotten here, then things are probably
+			 * completely hosed, but if the error condition is
+			 * detected, it won't hurt to give it another
+			 * try...ICH_FLASH_CYCLE_REPEAT_COUNT times.
+			 */
+			hsfsts.regval = E1000_READ_ICH_FLASH_REG16(hw,
+			    ICH_FLASH_HSFSTS);
+			if (hsfsts.hsf_status.flcerr == 1) {
+				/* Repeat for some time before giving up. */
+				continue;
+			} else if (hsfsts.hsf_status.flcdone == 0) {
+				DEBUGOUT("Timeout error - flash cycle did not"
+				    " complete.");
+				break;
+			}
+		}
+	} while (count++ < ICH_FLASH_CYCLE_REPEAT_COUNT);
+
+	return error;
+}
+
+
 /******************************************************************************
  * Writes One /two bytes to the NVM using the ICH8 flash access registers.
  *
  * hw - The pointer to the hw structure
- * index - The index of the byte/word to read.
+ * index - The index of the byte/word to write.
  * size - Size of data to read, 1=byte 2=word
  * data - The byte(s) to write to the NVM.
  *****************************************************************************/
@@ -9768,6 +10055,8 @@ em_write_ich8_data(struct em_hw *hw, uint32_t index, uint32_t size,
 	int32_t  count = 0;
 	DEBUGFUNC("em_write_ich8_data");
 
+	if (hw->mac_type == em_pch_spt)
+		return -E1000_ERR_EEPROM;
 	if (size < 1 || size > 2 || data > size * 0xff ||
 	    index > ICH_FLASH_LINEAR_ADDR_MASK)
 		return error;
@@ -9793,7 +10082,7 @@ em_write_ich8_data(struct em_hw *hw, uint32_t index, uint32_t size,
 		 * Write the last 24 bits of index into Flash Linear address
 		 * field in Flash Address
 		 */
-		E1000_WRITE_ICH_FLASH_REG(hw, ICH_FLASH_FADDR,
+		E1000_WRITE_ICH_FLASH_REG32(hw, ICH_FLASH_FADDR,
 		    flash_linear_address);
 
 		if (size == 1)
@@ -9801,7 +10090,7 @@ em_write_ich8_data(struct em_hw *hw, uint32_t index, uint32_t size,
 		else
 			flash_data = (uint32_t) data;
 
-		E1000_WRITE_ICH_FLASH_REG(hw, ICH_FLASH_FDATA0, flash_data);
+		E1000_WRITE_ICH_FLASH_REG32(hw, ICH_FLASH_FDATA0, flash_data);
 		/*
 		 * check if FCERR is set to 1 , if set to 1, clear it and try
 		 * the whole sequence a few more times else done
@@ -9844,7 +10133,11 @@ em_read_ich8_byte(struct em_hw *hw, uint32_t index, uint8_t *data)
 {
 	int32_t  status = E1000_SUCCESS;
 	uint16_t word = 0;
-	status = em_read_ich8_data(hw, index, 1, &word);
+
+	if (hw->mac_type == em_pch_spt)
+		return -E1000_ERR_EEPROM;
+	else
+		status = em_read_ich8_data(hw, index, 1, &word);
 	if (status == E1000_SUCCESS) {
 		*data = (uint8_t) word;
 	}
@@ -9900,6 +10193,21 @@ em_write_ich8_byte(struct em_hw *hw, uint32_t index, uint8_t data)
 	uint16_t word = (uint16_t) data;
 	status = em_write_ich8_data(hw, index, 1, word);
 
+	return status;
+}
+
+/******************************************************************************
+ * Reads a dword from the NVM using the ICH8 flash access registers.
+ *
+ * hw - pointer to em_hw structure
+ * index - The starting BYTE index of the word to read.
+ * data - Pointer to a word to store the value read.
+ *****************************************************************************/
+STATIC int32_t
+em_read_ich8_dword(struct em_hw *hw, uint32_t index, uint32_t *data)
+{
+	int32_t status = E1000_SUCCESS;
+	status = em_read_ich8_data32(hw, index, data);
 	return status;
 }
 
@@ -10030,7 +10338,7 @@ em_erase_ich8_4k_segment(struct em_hw *hw, uint32_t bank)
 			flash_linear_address += hw->flash_base_addr;
 			flash_linear_address &= ICH_FLASH_LINEAR_ADDR_MASK;
 
-			E1000_WRITE_ICH_FLASH_REG(hw, ICH_FLASH_FADDR,
+			E1000_WRITE_ICH_FLASH_REG32(hw, ICH_FLASH_FADDR,
 			    flash_linear_address);
 
 			error =
@@ -10230,7 +10538,8 @@ em_init_lcd_from_nvm(struct em_hw *hw)
 	    hw->device_id == E1000_DEV_ID_ICH8_IGP_M ||
 	    hw->mac_type == em_pchlan ||
 	    hw->mac_type == em_pch2lan ||
-	    hw->mac_type == em_pch_lpt)
+	    hw->mac_type == em_pch_lpt ||
+	    hw->mac_type == em_pch_spt)
 		sw_cfg_mask = FEXTNVM_SW_CONFIG_ICH8M;
 	else
 		sw_cfg_mask = FEXTNVM_SW_CONFIG;

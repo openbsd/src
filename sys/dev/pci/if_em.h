@@ -32,7 +32,7 @@ POSSIBILITY OF SUCH DAMAGE.
 ***************************************************************************/
 
 /* $FreeBSD: if_em.h,v 1.26 2004/09/01 23:22:41 pdeuskar Exp $ */
-/* $OpenBSD: if_em.h,v 1.71 2016/01/11 01:31:53 dlg Exp $ */
+/* $OpenBSD: if_em.h,v 1.72 2016/02/18 14:24:39 bluhm Exp $ */
 
 #ifndef _EM_H_DEFINED_
 #define _EM_H_DEFINED_
@@ -230,6 +230,9 @@ typedef int	boolean_t;
 
 #define MAX_NUM_MULTICAST_ADDRESSES	128
 
+#define PCICFG_DESC_RING_STATUS		0xe4
+#define FLUSH_DESC_REQUIRED		0x100
+
 /*
  * TDBA/RDBA should be aligned on 16 byte boundary. But TDLEN/RDLEN should be
  * multiple of 128 bytes. So we align TDBA/RDBA on 128 byte boundary. This will
@@ -319,6 +322,7 @@ struct em_softc {
 	struct em_osdep	osdep;
 	struct ifmedia	media;
 	int		io_rid;
+	int		legacy_irq;
 
 	void		*sc_intrhand;
 	struct timeout	em_intr_enable;

@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.329 2016/01/12 00:05:21 dlg Exp $ */
+/* $OpenBSD: if_em.c,v 1.330 2016/02/18 14:24:39 bluhm Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -145,6 +145,10 @@ const struct pci_matchid em_devices[] = {
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I218_V },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I218_V_2 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I218_V_3 },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I219_LM },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I219_V },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I219_LM2 },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I219_V2 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82580_COPPER },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82580_FIBER },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82580_SERDES },
@@ -253,6 +257,9 @@ int  em_dma_malloc(struct em_softc *, bus_size_t, struct em_dma_alloc *);
 void em_dma_free(struct em_softc *, struct em_dma_alloc *);
 u_int32_t em_fill_descriptors(u_int64_t address, u_int32_t length,
 			      PDESC_ARRAY desc_array);
+void em_flush_tx_ring(struct em_softc *);
+void em_flush_rx_ring(struct em_softc *);
+void em_flush_desc_rings(struct em_softc *);
 
 /*********************************************************************
  *  OpenBSD Device Interface Entry Points
@@ -435,6 +442,7 @@ em_attach(struct device *parent, struct device *self, void *aux)
 		case em_ich10lan:
 		case em_pch2lan:
 		case em_pch_lpt:
+		case em_pch_spt:
 		case em_80003es2lan:
 			/* 9K Jumbo Frame size */
 			sc->hw.max_frame_size = 9234;
@@ -844,6 +852,7 @@ em_init(void *arg)
 	case em_pchlan:
 	case em_pch2lan:
 	case em_pch_lpt:
+	case em_pch_spt:
 		pba = E1000_PBA_26K;
 		break;
 	default:
@@ -1506,10 +1515,12 @@ em_stop(void *arg, int softonly)
 	timeout_del(&sc->timer_handle);
 	timeout_del(&sc->tx_fifo_timer_handle);
 
-	if (!softonly) {
+	if (!softonly)
 		em_disable_intr(sc);
+	if (sc->hw.mac_type == em_pch_spt)
+		em_flush_desc_rings(sc);
+	if (!softonly)
 		em_reset_hw(&sc->hw);
-	}
 
 	intr_barrier(sc->sc_intrhand);
 	ifq_barrier(&ifp->if_snd);
@@ -1561,6 +1572,27 @@ em_identify_hardware(struct em_softc *sc)
 	    sc->hw.mac_type == em_82547 ||
 	    sc->hw.mac_type == em_82547_rev_2)
 		sc->hw.phy_init_script = TRUE;
+}
+
+void
+em_legacy_irq_quirk_spt(struct em_softc *sc)
+{
+	uint32_t	reg;
+
+	/* Legacy interrupt: SPT needs a quirk. */
+	if (sc->hw.mac_type != em_pch_spt)
+		return;
+	if (sc->legacy_irq == 0)
+		return;
+
+	reg = EM_READ_REG(&sc->hw, E1000_FEXTNVM7);
+	reg |= E1000_FEXTNVM7_SIDE_CLK_UNGATE;
+	EM_WRITE_REG(&sc->hw, E1000_FEXTNVM7, reg);
+
+	reg = EM_READ_REG(&sc->hw, E1000_FEXTNVM9);
+	reg |= E1000_FEXTNVM9_IOSFSB_CLKGATE_DIS |
+	    E1000_FEXTNVM9_IOSFSB_CLKREQ_DIS;
+	EM_WRITE_REG(&sc->hw, E1000_FEXTNVM9, reg);
 }
 
 int
@@ -1617,8 +1649,15 @@ em_allocate_pci_resources(struct em_softc *sc)
 		break;
 	}
 
+	sc->osdep.em_flashoffset = 0;
 	/* for ICH8 and family we need to find the flash memory */
-	if (IS_ICH8(sc->hw.mac_type)) {
+	if (sc->hw.mac_type == em_pch_spt) {
+		sc->osdep.flash_bus_space_tag = sc->osdep.mem_bus_space_tag;
+		sc->osdep.flash_bus_space_handle = sc->osdep.mem_bus_space_handle;
+		sc->osdep.em_flashbase = 0;
+		sc->osdep.em_flashsize = 0;
+		sc->osdep.em_flashoffset = 0xe000;
+	} else if (IS_ICH8(sc->hw.mac_type)) {
 		val = pci_conf_read(pa->pa_pc, pa->pa_tag, EM_FLASH);
 		if (PCI_MAPREG_TYPE(val) != PCI_MAPREG_TYPE_MEM) {
 			printf(": flash is not mem space\n");
@@ -1633,9 +1672,13 @@ em_allocate_pci_resources(struct em_softc *sc)
 		}
         }
 
-	if (pci_intr_map_msi(pa, &ih) && pci_intr_map(pa, &ih)) {
-		printf(": couldn't map interrupt\n");
-		return (ENXIO);
+	sc->legacy_irq = 0;
+	if (pci_intr_map_msi(pa, &ih)) {
+		if (pci_intr_map(pa, &ih)) {
+			printf(": couldn't map interrupt\n");
+			return (ENXIO);
+		}
+		sc->legacy_irq = 1;
 	}
 
 	sc->osdep.dev = (struct device *)sc;
@@ -1717,6 +1760,8 @@ em_hardware_init(struct em_softc *sc)
 	u_int16_t rx_buffer_size;
 
 	INIT_DEBUGOUT("em_hardware_init: begin");
+	if (sc->hw.mac_type == em_pch_spt)
+		em_flush_desc_rings(sc);
 	/* Issue a global reset */
 	em_reset_hw(&sc->hw);
 
@@ -1760,6 +1805,8 @@ em_hardware_init(struct em_softc *sc)
 		phy_tmp &= ~IGP02E1000_PM_SPD;
 		em_write_phy_reg(&sc->hw, IGP02E1000_PHY_POWER_MGMT, phy_tmp);
 	}
+
+	em_legacy_irq_quirk_spt(sc);
 
 	/*
 	 * These parameters control the automatic generation (Tx) and 
@@ -2189,6 +2236,20 @@ em_initialize_transmit_unit(struct em_softc *sc)
 		reg_tctl |= E1000_HDX_COLLISION_DISTANCE << E1000_COLD_SHIFT;
 	/* This write will effectively turn on the transmit unit */
 	E1000_WRITE_REG(&sc->hw, TCTL, reg_tctl);
+
+	/* SPT Si errata workaround to avoid data corruption */
+
+	if (sc->hw.mac_type == em_pch_spt) {
+		uint32_t	reg_val;
+
+		reg_val = EM_READ_REG(&sc->hw, E1000_IOSFPC);
+		reg_val |= E1000_RCTL_RDMTS_HEX;
+		EM_WRITE_REG(&sc->hw, E1000_IOSFPC, reg_val);
+
+		reg_val = E1000_READ_REG(&sc->hw, TARC0);
+		reg_val |= E1000_TARC0_CB_MULTIQ_3_REQ;
+		E1000_WRITE_REG(&sc->hw, TARC0, reg_val);
+	}
 }
 
 /*********************************************************************
@@ -3066,6 +3127,113 @@ em_disable_aspm(struct em_softc *sc)
 
 	pci_conf_write(sc->osdep.em_pa.pa_pc, sc->osdep.em_pa.pa_tag,
 	    offset + PCI_PCIE_LCSR, val);
+}
+
+/*
+ * em_flush_tx_ring - remove all descriptors from the tx_ring
+ *
+ * We want to clear all pending descriptors from the TX ring.
+ * zeroing happens when the HW reads the regs. We assign the ring itself as
+ * the data of the next descriptor. We don't care about the data we are about
+ * to reset the HW.
+ */
+void
+em_flush_tx_ring(struct em_softc *sc)
+{
+	uint32_t		 tctl, txd_lower = E1000_TXD_CMD_IFCS;
+	uint16_t		 size = 512;
+	struct em_tx_desc	*txd;
+
+	KASSERT(sc->sc_tx_desc_ring != NULL);
+
+	tctl = EM_READ_REG(&sc->hw, E1000_TCTL);
+	EM_WRITE_REG(&sc->hw, E1000_TCTL, tctl | E1000_TCTL_EN);
+
+	KASSERT(EM_READ_REG(&sc->hw, E1000_TDT) == sc->sc_tx_desc_head);
+
+	txd = &sc->sc_tx_desc_ring[sc->sc_tx_desc_head];
+	txd->buffer_addr = sc->sc_tx_dma.dma_map->dm_segs[0].ds_addr;
+	txd->lower.data = htole32(txd_lower | size);
+	txd->upper.data = 0;
+
+	/* flush descriptors to memory before notifying the HW */
+	bus_space_barrier(sc->osdep.mem_bus_space_tag,
+	    sc->osdep.mem_bus_space_handle, 0, 0, BUS_SPACE_BARRIER_WRITE);
+
+	if (++sc->sc_tx_desc_head == sc->sc_tx_slots)
+		sc->sc_tx_desc_head = 0;
+
+	EM_WRITE_REG(&sc->hw, E1000_TDT, sc->sc_tx_desc_head);
+	bus_space_barrier(sc->osdep.mem_bus_space_tag, sc->osdep.mem_bus_space_handle,
+	    0, 0, BUS_SPACE_BARRIER_READ|BUS_SPACE_BARRIER_WRITE);
+	usec_delay(250);
+}
+
+/*
+ * em_flush_rx_ring - remove all descriptors from the rx_ring
+ *
+ * Mark all descriptors in the RX ring as consumed and disable the rx ring
+ */
+void
+em_flush_rx_ring(struct em_softc *sc)
+{
+	uint32_t	rctl, rxdctl;
+
+	rctl = EM_READ_REG(&sc->hw, E1000_RCTL);
+	EM_WRITE_REG(&sc->hw, E1000_RCTL, rctl & ~E1000_RCTL_EN);
+	E1000_WRITE_FLUSH(&sc->hw);
+	usec_delay(150);
+
+	rxdctl = EM_READ_REG(&sc->hw, E1000_RXDCTL);
+	/* zero the lower 14 bits (prefetch and host thresholds) */
+	rxdctl &= 0xffffc000;
+	/*
+	 * update thresholds: prefetch threshold to 31, host threshold to 1
+	 * and make sure the granularity is "descriptors" and not "cache lines"
+	 */
+	rxdctl |= (0x1F | (1 << 8) | E1000_RXDCTL_THRESH_UNIT_DESC);
+	EM_WRITE_REG(&sc->hw, E1000_RXDCTL, rxdctl);
+
+	/* momentarily enable the RX ring for the changes to take effect */
+	EM_WRITE_REG(&sc->hw, E1000_RCTL, rctl | E1000_RCTL_EN);
+	E1000_WRITE_FLUSH(&sc->hw);
+	usec_delay(150);
+	EM_WRITE_REG(&sc->hw, E1000_RCTL, rctl & ~E1000_RCTL_EN);
+}
+
+/*
+ * em_flush_desc_rings - remove all descriptors from the descriptor rings
+ *
+ * In i219, the descriptor rings must be emptied before resetting the HW
+ * or before changing the device state to D3 during runtime (runtime PM).
+ *
+ * Failure to do this will cause the HW to enter a unit hang state which can
+ * only be released by PCI reset on the device
+ *
+ */
+void
+em_flush_desc_rings(struct em_softc *sc)
+{
+	struct pci_attach_args	*pa = &sc->osdep.em_pa;
+	uint32_t		 fextnvm11, tdlen;
+	uint16_t		 hang_state;
+
+	/* First, disable MULR fix in FEXTNVM11 */
+	fextnvm11 = EM_READ_REG(&sc->hw, E1000_FEXTNVM11);
+	fextnvm11 |= E1000_FEXTNVM11_DISABLE_MULR_FIX;
+	EM_WRITE_REG(&sc->hw, E1000_FEXTNVM11, fextnvm11);
+
+	/* do nothing if we're not in faulty state, or if the queue is empty */
+	tdlen = EM_READ_REG(&sc->hw, E1000_TDLEN);
+	hang_state = pci_conf_read(pa->pa_pc, pa->pa_tag, PCICFG_DESC_RING_STATUS);
+	if (!(hang_state & FLUSH_DESC_REQUIRED) || !tdlen)
+		return;
+	em_flush_tx_ring(sc);
+
+	/* recheck, maybe the fault is caused by the rx ring */
+	hang_state = pci_conf_read(pa->pa_pc, pa->pa_tag, PCICFG_DESC_RING_STATUS);
+	if (hang_state & FLUSH_DESC_REQUIRED)
+		em_flush_rx_ring(sc);
 }
 
 #ifndef SMALL_KERNEL
