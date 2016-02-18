@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.19 2016/02/01 07:29:25 mestre Exp $	*/
+/*	$OpenBSD: io.c,v 1.20 2016/02/18 21:51:20 espie Exp $	*/
 /*	$NetBSD: io.c,v 1.4 1994/12/09 02:14:20 jtc Exp $	*/
 
 /*
@@ -87,7 +87,7 @@ talk(void)
 			if (errno == EINTR)
 				continue;
 			/* panic, we don't know what happened */
-			quit("Unexpected error from select", 1);
+			quit("Unexpected error from poll", 1);
 		}
 		if (fds[1].revents & POLLIN) {
 			/* There is data on sockt */
