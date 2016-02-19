@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.178 2016/01/08 07:54:02 stefan Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.179 2016/02/19 19:15:59 stefan Exp $	*/
 
 /*
  * Copyright (c) 2011 Theo de Raadt.
@@ -421,7 +421,7 @@ add_entropy_words(const u_int32_t *buf, u_int n)
 
 	for (; n--; buf++) {
 		u_int32_t w = (*buf << entropy_input_rotate) |
-		    (*buf >> (32 - entropy_input_rotate));
+		    (*buf >> ((32 - entropy_input_rotate) & 31));
 		u_int i = entropy_add_ptr =
 		    (entropy_add_ptr - 1) & POOLMASK;
 		/*
