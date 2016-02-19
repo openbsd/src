@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslog_r.c,v 1.11 2015/11/25 00:01:21 deraadt Exp $ */
+/*	$OpenBSD: syslog_r.c,v 1.12 2016/02/19 23:49:38 millert Exp $ */
 /*
  * Copyright (c) 1983, 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -74,7 +74,7 @@ __vsyslog_r(int pri, struct syslog_data *data,
 {
 	int cnt;
 	char ch, *p, *t;
-	int fd, saved_errno, error;
+	int fd, saved_errno;
 #define	TBUF_LEN	(8192+1)
 #define	FMT_LEN		1024
 	char *conp = NULL, *stdp = NULL, tbuf[TBUF_LEN], fmt_cpy[FMT_LEN];
@@ -192,10 +192,10 @@ __vsyslog_r(int pri, struct syslog_data *data,
 	}
 
 	/*
-	 * If the sendsyslog() fails, it means that syslogd
-	 * is not running.
+	 * If the sendsyslog2() fails, it means that syslogd
+	 * is not running or the kernel ran out of buffers.
 	 */
-	error = sendsyslog2(tbuf, cnt, data->log_stat & LOG_CONS);
+	sendsyslog2(tbuf, cnt, data->log_stat & LOG_CONS);
 }
 
 void
