@@ -1,4 +1,4 @@
-.\"	$OpenBSD: malloc.conf.5,v 1.5 2016/01/12 18:56:39 deraadt Exp $
+.\"	$OpenBSD: malloc.conf.5,v 1.6 2016/02/19 23:27:17 tb Exp $
 .\"
 .\" Copyright (c) 2012 Damien Miller <djm@openbsd.org>
 .\" Copyright (c) 2008, 2009, 2010, 2011 Otto Moerbeek <otto@drijf.net>
@@ -17,7 +17,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 12 2016 $
+.Dd $Mdocdate: February 19 2016 $
 .Dt MALLOC.CONF 5
 .Os
 .Sh NAME
@@ -86,7 +86,8 @@ Freed chunks are filled with 0xdf.
 .It Cm j
 .Dq Don't Junk .
 By default, small chunks are always junked, and the first part of pages
-is junked after free and its reuse is delayed.
+is junked after free.
+The reuse of freed memory is delayed.
 After the delay, the filling pattern is validated
 and the process is aborted if the pattern was modified.
 This option ensures that no junking is performed.
