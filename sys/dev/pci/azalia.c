@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.225 2015/12/17 15:07:57 ratchov Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.226 2016/02/19 23:46:56 jsg Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -461,6 +461,8 @@ azalia_configure_pci(azalia_t *az)
 	case PCI_PRODUCT_INTEL_9SERIES_LP_HDA:
 	case PCI_PRODUCT_INTEL_BAYTRAIL_HDA:
 	case PCI_PRODUCT_INTEL_100SERIES_HDA:
+	case PCI_PRODUCT_INTEL_C600_HDA:
+	case PCI_PRODUCT_INTEL_C610_HDA:
 		reg = azalia_pci_read(az->pc, az->tag,
 		    INTEL_PCIE_NOSNOOP_REG);
 		reg &= INTEL_PCIE_NOSNOOP_MASK;
