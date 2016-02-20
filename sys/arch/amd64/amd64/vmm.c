@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.35 2016/02/16 18:59:30 stefan Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.36 2016/02/20 20:49:08 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -111,6 +111,7 @@ int vm_get_info(struct vm_info_params *);
 int vm_writepage(struct vm_writepage_params *);
 int vm_readpage(struct vm_readpage_params *);
 int vm_resetcpu(struct vm_resetcpu_params *);
+int vm_intr_pending(struct vm_intr_params *);
 int vcpu_reset_regs(struct vcpu *, struct vcpu_init_state *);
 int vcpu_reset_regs_vmx(struct vcpu *, struct vcpu_init_state *);
 int vcpu_reset_regs_svm(struct vcpu *, struct vcpu_init_state *);
@@ -349,6 +350,9 @@ vmmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	case VMM_IOC_RESETCPU:
 		ret = vm_resetcpu((struct vm_resetcpu_params *)data);
 		break;
+	case VMM_IOC_INTR:
+		ret = vm_intr_pending((struct vm_intr_params *)data);
+		break;
 	default:
 		ret = ENOTTY;
 	}
@@ -528,6 +532,54 @@ vm_resetcpu(struct vm_resetcpu_params *vrp)
 
 	if (vcpu_reset_regs(vcpu, &vrp->vrp_init_state))
 		return (EIO);
+
+	return (0);
+}
+
+/*
+ * vm_intr_pending
+ *
+ * IOCTL handler routine for VMM_IOC_INTR messages, sent from vmd when an
+ * interrupt is pending and needs acknowledgment.
+ *
+ * Parameters:
+ *  vip: Describes the vm/vcpu for which the interrupt is pending
+ *
+ * Return values:
+ *  0: if successful
+ *  ENOENT: if the VM/VCPU defined by 'vip' cannot be found
+ */
+int
+vm_intr_pending(struct vm_intr_params *vip)
+{
+	struct vm *vm;
+	struct vcpu *vcpu;
+	
+	/* Find the desired VM */
+	rw_enter_read(&vmm_softc->vm_lock);
+	SLIST_FOREACH(vm, &vmm_softc->vm_list, vm_link) {
+		if (vm->vm_id == vip->vip_vm_id)
+			break;
+	}
+
+	/* Not found? exit. */
+	if (vm == NULL) {
+		rw_exit_read(&vmm_softc->vm_lock);
+		return (ENOENT);
+	}
+
+	rw_enter_read(&vm->vm_vcpu_lock);
+	SLIST_FOREACH(vcpu, &vm->vm_vcpu_list, vc_vcpu_link) {
+		if (vcpu->vc_id == vip->vip_vcpu_id)
+			break;
+	}
+	rw_exit_read(&vm->vm_vcpu_lock);
+	rw_exit_read(&vmm_softc->vm_lock);
+
+	if (vcpu == NULL)
+		return (ENOENT);
+
+	vcpu->vc_intr = vip->vip_intr;
 
 	return (0);
 }

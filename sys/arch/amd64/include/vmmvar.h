@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmmvar.h,v 1.8 2016/02/16 18:59:30 stefan Exp $	*/
+/*	$OpenBSD: vmmvar.h,v 1.9 2016/02/20 20:49:08 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -247,6 +247,13 @@ struct vm_resetcpu_params {
 	struct vcpu_init_state	vrp_init_state;
 };
 
+struct vm_intr_params {
+	/* Input parameters to VMM_IOC_INTR */
+	uint32_t		vip_vm_id;
+	uint32_t		vip_vcpu_id;
+	uint8_t			vip_intr;
+};
+
 /* IOCTL definitions */
 #define VMM_IOC_CREATE _IOWR('V', 1, struct vm_create_params) /* Create VM */
 #define VMM_IOC_RUN _IOWR('V', 2, struct vm_run_params) /* Run VCPU */
@@ -255,6 +262,7 @@ struct vm_resetcpu_params {
 #define VMM_IOC_WRITEPAGE _IOW('V', 5, struct vm_writepage_params) /* Wr Pg */
 #define VMM_IOC_READPAGE _IOW('V', 6, struct vm_readpage_params) /* Rd Pg */
 #define VMM_IOC_RESETCPU _IOW('V', 7, struct vm_resetcpu_params) /* Reset */
+#define VMM_IOC_INTR _IOW('V', 8, struct vm_intr_params) /* Intr pending */
 
 #ifdef _KERNEL
 
@@ -367,6 +375,8 @@ struct vcpu {
 
 	struct cpu_info *vc_last_pcpu;
 	union vm_exit vc_exit;
+
+	uint8_t vc_intr;
 
 	/* VMX only */
 	uint64_t vc_vmx_basic;
