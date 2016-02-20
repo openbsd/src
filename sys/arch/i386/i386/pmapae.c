@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmapae.c,v 1.47 2015/10/23 09:36:09 kettenis Exp $	*/
+/*	$OpenBSD: pmapae.c,v 1.48 2016/02/20 19:59:01 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2006-2008 Michael Shalayeff
@@ -94,8 +94,11 @@
 #include <machine/gdt.h>
 
 #include <dev/isa/isareg.h>
+#include <i386/isa/isa_machdep.h>
 #include <sys/msgbuf.h>
 #include <stand/boot/bootarg.h>
+
+#include "ksyms.h"
 
 /*
  * this file contains the code for the "pmap module."   the module's
@@ -641,8 +644,17 @@ pmap_bootstrap_pae(void)
 		}
 		bits = pmap_pte_bits_86(va) | pmap_pg_g;
 
-		/* At this point, only kernel text should be executable */
-		if (va >= (vaddr_t)&kernel_text && va <= (vaddr_t)&etext)
+		/*
+		 * At this point, ideally only kernel text should be executable.
+		 * However, we need to leave the ISA hole executable to handle
+		 * bios32, pcibios, and apmbios calls that may potentially
+		 * happen later since we don't know (yet) which of those may be
+		 * in use. Later (in biosattach), we will reset the permissions
+		 * according to what we actually need.
+		 */
+		if ((va >= (vaddr_t)&kernel_text && va <= (vaddr_t)&etext) ||
+		    (va >= (vaddr_t)atdevbase && va <=
+		     (vaddr_t)(atdevbase + IOM_SIZE)))
 			bits |= PG_X;
 		else
 			bits &= ~PG_X;
@@ -707,8 +719,11 @@ pmap_bootstrap_pae(void)
 	    PROT_READ | PROT_WRITE);
 	pmap_write_protect(kpm, (vaddr_t)&__bss_start, (vaddr_t)&end,
 	    PROT_READ | PROT_WRITE);
+
+#if defined(DDB) || NKSYMS > 0
 	pmap_write_protect(kpm, ssym, esym, PROT_READ);
- }
+#endif
+}
 
 /*
  * p t p   f u n c t i o n s
