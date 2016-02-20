@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1787 2016/02/18 14:00:48 bluhm Exp 
+ *	OpenBSD: pcidevs,v 1.1788 2016/02/20 14:34:27 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -6158,6 +6158,8 @@
 /* Renesas products */
 #define	PCI_PRODUCT_RENESAS_SH7757_PPB	0x0012		/* SH7757 PCIE-PCI */
 #define	PCI_PRODUCT_RENESAS_SH7757_SW	0x0013		/* SH7757 PCIE Switch */
+#define	PCI_PRODUCT_RENESAS_SH7758_PPB	0x001a		/* SH7758 PCIE-PCI */
+#define	PCI_PRODUCT_RENESAS_SH7758_SW	0x001d		/* SH7758 PCIE Switch */
 #define	PCI_PRODUCT_RENESAS_UPD720201_XHCI	0x0014		/* uPD720201 xHCI */
 #define	PCI_PRODUCT_RENESAS_uPD720202_XHCI	0x0015		/* uPD720202 xHCI */
 

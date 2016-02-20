@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1787 2016/02/18 14:00:48 bluhm Exp 
+ *	OpenBSD: pcidevs,v 1.1788 2016/02/20 14:34:27 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -21470,6 +21470,14 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_RENESAS, PCI_PRODUCT_RENESAS_SH7757_SW,
 	    "SH7757 PCIE Switch",
+	},
+	{
+	    PCI_VENDOR_RENESAS, PCI_PRODUCT_RENESAS_SH7758_PPB,
+	    "SH7758 PCIE-PCI",
+	},
+	{
+	    PCI_VENDOR_RENESAS, PCI_PRODUCT_RENESAS_SH7758_SW,
+	    "SH7758 PCIE Switch",
 	},
 	{
 	    PCI_VENDOR_RENESAS, PCI_PRODUCT_RENESAS_UPD720201_XHCI,
