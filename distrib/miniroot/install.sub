@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.878 2016/02/20 12:03:11 rpe Exp $
+#	$OpenBSD: install.sub,v 1.879 2016/02/20 12:08:55 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -1467,8 +1467,7 @@ install_http() {
 	# Get list of files from the server.
 	# Assumes index file is "index.txt" for http (or proxy).
 	# We can't use index.html since the format is server-dependent.
-	_file_list=$(ftp -Vo - "$_url_base/index.txt" |
-		sed 's/^.* //' | sed 's///')
+	_file_list=$(ftp -Vo - "$_url_base/index.txt" | sed 's/^.* //;s///')
 
 	install_files "$_url_base" "$_file_list"
 
