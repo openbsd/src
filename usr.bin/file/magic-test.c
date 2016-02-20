@@ -1,4 +1,4 @@
-/* $OpenBSD: magic-test.c,v 1.15 2015/10/06 08:20:10 nicm Exp $ */
+/* $OpenBSD: magic-test.c,v 1.16 2016/02/20 15:29:37 nicm Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -508,7 +508,7 @@ static int
 magic_test_type_float(struct magic_line *ml, struct magic_state *ms)
 {
 	uint32_t	value0;
-	double		value;
+	float		value;
 	int		result;
 
 	if (magic_copy_from(ms, -1, &value0, sizeof value0) != 0)
