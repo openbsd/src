@@ -4178,11 +4178,11 @@ alpha_expand_block_clear (rtx operands[])
       if (a > align)
 	{
           if (a >= 64)
-	    align = a, alignofs = 8 - c % 8;
+	    align = a, alignofs = 8 - (c & 7);
           else if (a >= 32)
-	    align = a, alignofs = 4 - c % 4;
+	    align = a, alignofs = 4 - (c & 3);
           else if (a >= 16)
-	    align = a, alignofs = 2 - c % 2;
+	    align = a, alignofs = 2 - (c & 1);
 	}
     }
 
