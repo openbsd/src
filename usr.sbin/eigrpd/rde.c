@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.10 2016/01/15 12:52:49 renato Exp $ */
+/*	$OpenBSD: rde.c,v 1.11 2016/02/21 18:56:49 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -496,10 +496,10 @@ rde_send_change_kroute(struct rt_node *rn, struct eigrp_route *route)
 
 	memset(&kr, 0, sizeof(kr));
 	kr.af = eigrp->af;
-	memcpy(&kr.prefix, &rn->prefix, sizeof(kr.prefix));
+	kr.prefix = rn->prefix;
 	kr.prefixlen = rn->prefixlen;
 	if (route->nbr->ei) {
-		memcpy(&kr.nexthop, &route->nexthop, sizeof(kr.nexthop));
+		kr.nexthop = route->nexthop;
 		kr.ifindex = route->nbr->ei->iface->ifindex;
 	} else {
 		switch (eigrp->af) {
@@ -507,7 +507,7 @@ rde_send_change_kroute(struct rt_node *rn, struct eigrp_route *route)
 			kr.nexthop.v4.s_addr = htonl(INADDR_LOOPBACK);
 			break;
 		case AF_INET6:
-			memcpy(&kr.nexthop.v6, &lo6, sizeof(kr.nexthop.v6));
+			kr.nexthop.v6 = lo6;
 			break;
 		default:
 			fatalx("rde_send_delete_kroute: unknown af");
@@ -541,10 +541,10 @@ rde_send_delete_kroute(struct rt_node *rn, struct eigrp_route *route)
 
 	memset(&kr, 0, sizeof(kr));
 	kr.af = eigrp->af;
-	memcpy(&kr.prefix, &rn->prefix, sizeof(kr.prefix));
+	kr.prefix = rn->prefix;
 	kr.prefixlen = rn->prefixlen;
 	if (route->nbr->ei) {
-		memcpy(&kr.nexthop, &route->nexthop, sizeof(kr.nexthop));
+		kr.nexthop = route->nexthop;
 		kr.ifindex = route->nbr->ei->iface->ifindex;
 	} else {
 		switch (eigrp->af) {
@@ -552,7 +552,7 @@ rde_send_delete_kroute(struct rt_node *rn, struct eigrp_route *route)
 			kr.nexthop.v4.s_addr = htonl(INADDR_LOOPBACK);
 			break;
 		case AF_INET6:
-			memcpy(&kr.nexthop.v6, &lo6, sizeof(kr.nexthop.v6));
+			kr.nexthop.v6 = lo6;
 			break;
 		default:
 			fatalx("rde_send_delete_kroute: unknown af");
@@ -662,7 +662,7 @@ rt_redist_set(struct kroute *kr, int withdraw)
 		memset(&ri, 0, sizeof(ri));
 		ri.af = kr->af;
 		ri.type = EIGRP_ROUTE_EXTERNAL;
-		memcpy(&ri.prefix, &kr->prefix, sizeof(ri.prefix));
+		ri.prefix = kr->prefix;
 		ri.prefixlen = kr->prefixlen;
 
 		/* metric */
@@ -709,9 +709,9 @@ rt_summary_set(struct eigrp *eigrp, struct summary_addr *summary,
 	memset(&ri, 0, sizeof(ri));
 	ri.af = eigrp->af;
 	ri.type = EIGRP_ROUTE_INTERNAL;
-	memcpy(&ri.prefix, &summary->prefix, sizeof(ri.prefix));
+	ri.prefix = summary->prefix;
 	ri.prefixlen = summary->prefixlen;
-	memcpy(&ri.metric, metric, sizeof(ri.metric));
+	ri.metric = *metric;
 
 	rde_check_update(eigrp->rnbr_summary, &ri);
 }
@@ -744,10 +744,10 @@ rt_to_ctl(struct rt_node *rn, struct eigrp_route *route)
 	memset(&rtctl, 0, sizeof(rtctl));
 	rtctl.af = route->nbr->eigrp->af;
 	rtctl.as = route->nbr->eigrp->as;
-	memcpy(&rtctl.prefix, &rn->prefix, sizeof(rtctl.prefix));
+	rtctl.prefix = rn->prefix;
 	rtctl.prefixlen = rn->prefixlen;
 	rtctl.type = route->type;
-	memcpy(&rtctl.nexthop, &route->nexthop, sizeof(rtctl.nexthop));
+	rtctl.nexthop = route->nexthop;
 	if (route->nbr->flags & F_RDE_NBR_REDIST)
 		strlcpy(rtctl.ifname, "redistribute", sizeof(rtctl.ifname));
 	else if (route->nbr->flags & F_RDE_NBR_SUMMARY)
@@ -769,7 +769,7 @@ rt_to_ctl(struct rt_node *rn, struct eigrp_route *route)
 	rtctl.metric.reliability = route->metric.reliability;
 	rtctl.metric.load = route->metric.load;
 	/* external metric */
-	memcpy(&rtctl.emetric, &route->emetric, sizeof(rtctl.emetric));
+	rtctl.emetric = route->emetric;
 
 	if (route->nbr == rn->successor.nbr)
 		rtctl.flags |= F_CTL_RT_SUCCESSOR;

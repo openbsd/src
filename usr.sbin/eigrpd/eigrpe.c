@@ -1,4 +1,4 @@
-/*	$OpenBSD: eigrpe.c,v 1.13 2016/01/15 12:41:09 renato Exp $ */
+/*	$OpenBSD: eigrpe.c,v 1.14 2016/02/21 18:56:49 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -301,8 +301,7 @@ eigrpe_dispatch_main(int fd, short event, void *bula)
 
 			if (ka->af == AF_INET6 &&
 			    IN6_IS_ADDR_LINKLOCAL(&ka->addr.v6)) {
-				memcpy(&iface->linklocal, &ka->addr.v6,
-				    sizeof(iface->linklocal));
+				iface->linklocal = ka->addr.v6;
 				if_update(iface, AF_INET6);
 				break;
 			}
@@ -592,7 +591,7 @@ message_add(struct rinfo_head *rinfo_list, struct rinfo *rinfo)
 	re = calloc(1, sizeof(*re));
 	if (re == NULL)
 		fatal("message_add");
-	memcpy(&re->rinfo, rinfo, sizeof(re->rinfo));;
+	re->rinfo = *rinfo;
 
 	TAILQ_INSERT_TAIL(rinfo_list, re, entry);
 }
@@ -628,7 +627,7 @@ eigrpe_orig_local_route(struct eigrp_iface *ei, struct if_addr *if_addr,
 	memset(&rinfo, 0, sizeof(rinfo));
 	rinfo.af = if_addr->af;
 	rinfo.type = EIGRP_ROUTE_INTERNAL;
-	memcpy(&rinfo.prefix, &if_addr->addr, sizeof(rinfo.prefix));
+	rinfo.prefix = if_addr->addr;
 	rinfo.prefixlen = if_addr->prefixlen;
 
 	eigrp_applymask(rinfo.af, &rinfo.prefix, &rinfo.prefix,
@@ -699,7 +698,7 @@ eigrpe_stats_ctl(struct ctl_conn *c)
 	TAILQ_FOREACH(eigrp, &econf->instances, entry) {
 		sctl.af = eigrp->af;
 		sctl.as = eigrp->as;
-		memcpy(&sctl.stats, &eigrp->stats, sizeof(sctl.stats));
+		sctl.stats = eigrp->stats;
 		imsg_compose_event(&c->iev, IMSG_CTL_SHOW_STATS, 0,
 		    0, -1, &sctl, sizeof(struct ctl_stats));
 	}

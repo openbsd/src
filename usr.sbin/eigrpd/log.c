@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.1 2015/10/02 04:26:47 renato Exp $ */
+/*	$OpenBSD: log.c,v 1.2 2016/02/21 18:56:49 renato Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -195,7 +195,7 @@ log_in6addr(const struct in6_addr *addr)
 	memset(&sa_in6, 0, sizeof(sa_in6));
 	sa_in6.sin6_len = sizeof(sa_in6);
 	sa_in6.sin6_family = AF_INET6;
-	memcpy(&sa_in6.sin6_addr, addr, sizeof(sa_in6.sin6_addr));
+	sa_in6.sin6_addr = *addr;
 
 	recoverscope(&sa_in6);
 
@@ -210,7 +210,7 @@ log_in6addr_scope(const struct in6_addr *addr, unsigned int ifindex)
 	memset(&sa_in6, 0, sizeof(sa_in6));
 	sa_in6.sin6_len = sizeof(sa_in6);
 	sa_in6.sin6_family = AF_INET6;
-	memcpy(&sa_in6.sin6_addr, addr, sizeof(sa_in6.sin6_addr));
+	sa_in6.sin6_addr = *addr;
 
 	addscope(&sa_in6, ifindex);
 

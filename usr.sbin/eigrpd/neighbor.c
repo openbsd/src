@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.6 2016/02/21 18:52:00 renato Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.7 2016/02/21 18:56:49 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -74,7 +74,7 @@ nbr_new(struct eigrp_iface *ei, union eigrpd_addr *addr, uint16_t holdtime,
 
 	nbr->ei = ei;
 	TAILQ_INSERT_TAIL(&ei->nbr_list, nbr, entry);
-	memcpy(&nbr->addr, addr, sizeof(nbr->addr));
+	nbr->addr = *addr;
 	nbr->peerid = 0;
 	nbr->hello_holdtime = holdtime;
 	nbr->flags = F_EIGRP_NBR_PENDING;
@@ -112,7 +112,7 @@ nbr_init(struct nbr *nbr)
 	nbr_update_peerid(nbr);
 
 	memset(&rnbr, 0, sizeof(rnbr));
-	memcpy(&rnbr.addr, &nbr->addr, sizeof(rnbr.addr));
+	rnbr.addr = nbr->addr;
 	rnbr.ifaceid = nbr->ei->ifaceid;
 	if (nbr->flags & F_EIGRP_NBR_SELF)
 		rnbr.flags = F_RDE_NBR_SELF|F_RDE_NBR_LOCAL;
@@ -175,7 +175,7 @@ nbr_find(struct eigrp_iface *ei, union eigrpd_addr *addr)
 	i.eigrp = &e;
 	i.iface = ei->iface;
 	n.ei = &i;
-	memcpy(&n.addr, addr, sizeof(n.addr));
+	n.addr = *addr;
 
 	return (RB_FIND(nbr_addr_head, &ei->eigrp->nbrs, &n));
 }
@@ -197,7 +197,7 @@ nbr_to_ctl(struct nbr *nbr)
 	nctl.af = nbr->ei->eigrp->af;
 	nctl.as = nbr->ei->eigrp->as;
 	memcpy(nctl.ifname, nbr->ei->iface->name, sizeof(nctl.ifname));
-	memcpy(&nctl.addr, &nbr->addr, sizeof(nctl.addr));
+	nctl.addr = nbr->addr;
 	nctl.hello_holdtime = nbr->hello_holdtime;
 	gettimeofday(&now, NULL);
 	nctl.uptime = now.tv_sec - nbr->uptime;

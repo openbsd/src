@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.7 2016/02/21 18:53:54 renato Exp $ */
+/*	$OpenBSD: parse.y,v 1.8 2016/02/21 18:56:49 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -435,7 +435,7 @@ nl		: '\n' optnl		/* one newline or more */
 
 af		: AF eigrp_af {
 			af = $2;
-			memcpy(&afdefs, defs, sizeof(afdefs));
+			afdefs = *defs;
 			defs = &afdefs;
 		} af_block {
 			af = AF_UNSPEC;
@@ -465,7 +465,7 @@ as		: AS NUMBER {
 			if (eigrp == NULL)
 				YYERROR;
 
-			memcpy(&asdefs, defs, sizeof(asdefs));
+			asdefs = *defs;
 			defs = &asdefs;
 		} as_block {
 			memcpy(eigrp->kvalues, defs->kvalues,
@@ -509,7 +509,7 @@ interface	: INTERFACE STRING	{
 			if (ei == NULL)
 				YYERROR;
 
-			memcpy(&ifacedefs, defs, sizeof(ifacedefs));
+			ifacedefs = *defs;
 			defs = &ifacedefs;
 		} interface_block {
 			ei->hello_holdtime = defs->hello_holdtime;

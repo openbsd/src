@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_dual.c,v 1.21 2016/02/21 18:52:00 renato Exp $ */
+/*	$OpenBSD: rde_dual.c,v 1.22 2016/02/21 18:56:49 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -165,7 +165,7 @@ rt_find(struct eigrp *eigrp, struct rinfo *ri)
 	struct rt_node	 rn;
 
 	rn.eigrp = eigrp;
-	memcpy(&rn.prefix, &ri->prefix, sizeof(rn.prefix));
+	rn.prefix = ri->prefix;
 	rn.prefixlen = ri->prefixlen;
 
 	return (RB_FIND(rt_tree, &eigrp->topology, &rn));
@@ -180,7 +180,7 @@ rt_new(struct eigrp *eigrp, struct rinfo *ri)
 		fatal("rt_new");
 
 	rn->eigrp = eigrp;
-	memcpy(&rn->prefix, &ri->prefix, sizeof(rn->prefix));
+	rn->prefix = ri->prefix;
 	rn->prefixlen = ri->prefixlen;
 	rn->state = DUAL_STA_PASSIVE;
 	TAILQ_INIT(&rn->routes);
@@ -253,9 +253,9 @@ route_new(struct rt_node *rn, struct rde_nbr *nbr, struct rinfo *ri)
 	route->nbr = nbr;
 	route->type = ri->type;
 	if (eigrp_addrisset(eigrp->af, &ri->nexthop))
-		memcpy(&route->nexthop, &ri->nexthop, sizeof(route->nexthop));
+		route->nexthop = ri->nexthop;
 	else
-		memcpy(&route->nexthop, &nbr->addr, sizeof(route->nexthop));
+		route->nexthop = nbr->addr;
 	route_update_metrics(eigrp, route, ri);
 
 	/* order by nexthop */
@@ -391,8 +391,8 @@ route_update_metrics(struct eigrp *eigrp, struct eigrp_route *route,
 	uint32_t		 delay, bandwidth;
 	int			 mtu;
 
-	memcpy(&route->metric, &ri->metric, sizeof(route->metric));
-	memcpy(&route->emetric, &ri->emetric, sizeof(route->emetric));
+	route->metric = ri->metric;
+	route->emetric = ri->emetric;
 	route->flags |= F_EIGRP_ROUTE_M_CHANGED;
 
 	delay = eigrp_real_delay(route->metric.delay);
@@ -581,12 +581,11 @@ rinfo_fill_successor(struct rt_node *rn, struct rinfo *ri)
 	memset(ri, 0, sizeof(*ri));
 	ri->af = rn->eigrp->af;
 	ri->type = rn->successor.type;
-	memcpy(&ri->prefix, &rn->prefix, sizeof(ri->prefix));
+	ri->prefix = rn->prefix;
 	ri->prefixlen = rn->prefixlen;
-	memcpy(&ri->metric, &rn->successor.metric, sizeof(ri->metric));
+	ri->metric = rn->successor.metric;
 	if (ri->type == EIGRP_ROUTE_EXTERNAL)
-		memcpy(&ri->emetric, &rn->successor.emetric,
-		    sizeof(ri->emetric));
+		ri->emetric = rn->successor.emetric;
 }
 
 void
@@ -595,7 +594,7 @@ rinfo_fill_infinite(struct rt_node *rn, enum route_type type, struct rinfo *ri)
 	memset(ri, 0, sizeof(*ri));
 	ri->af = rn->eigrp->af;
 	ri->type = type;
-	memcpy(&ri->prefix, &rn->prefix, sizeof(ri->prefix));
+	ri->prefix = rn->prefix;
 	ri->prefixlen = rn->prefixlen;
 	ri->metric.delay = EIGRP_INFINITE_METRIC;
 }
@@ -672,10 +671,8 @@ rt_set_successor(struct rt_node *rn, struct eigrp_route *successor)
 		rn->successor.type = successor->type;
 		rn->successor.fdistance = successor->distance;
 		rn->successor.rdistance = successor->rdistance;
-		memcpy(&rn->successor.metric, &successor->metric,
-		    sizeof(rn->successor.metric));
-		memcpy(&rn->successor.emetric, &successor->emetric,
-		    sizeof(rn->successor.emetric));
+		rn->successor.metric = successor->metric;
+		rn->successor.emetric = successor->emetric;
 	}
 
 	TAILQ_FOREACH(ei, &eigrp->ei_list, e_entry) {
@@ -942,7 +939,7 @@ rde_check_query(struct rde_nbr *nbr, struct rinfo *ri, int siaquery)
 	 */
 	rn = rt_find(eigrp, ri);
 	if (rn == NULL) {
-		memcpy(&sri, ri, sizeof(sri));
+		sri = *ri;
 		sri.metric.delay = EIGRP_INFINITE_METRIC;
 		rde_send_reply(nbr, &sri, 0);
 
@@ -1279,7 +1276,7 @@ rde_nbr_new(uint32_t peerid, struct rde_nbr *new)
 
 	nbr->peerid = peerid;
 	nbr->ifaceid = new->ifaceid;
-	memcpy(&nbr->addr,  &new->addr, sizeof(nbr->addr));
+	nbr->addr = new->addr;
 	nbr->ei = eigrp_iface_find_id(nbr->ifaceid);
 	if (nbr->ei)
 		nbr->eigrp = nbr->ei->eigrp;

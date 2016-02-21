@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtp.c,v 1.4 2016/01/15 12:36:41 renato Exp $ */
+/*	$OpenBSD: rtp.c,v 1.5 2016/02/21 18:56:49 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -188,7 +188,7 @@ rtp_send_mcast(struct eigrp_iface *ei, struct ibuf *buf)
 				if ((sa = calloc(1, sizeof(*sa))) == NULL)
 					fatal("rtp_send_mcast");
 				sa->af = eigrp->af;
-				memcpy(&sa->addr, &nbr->addr, sizeof(sa->addr));
+				sa->addr = nbr->addr;
 				TAILQ_INSERT_TAIL(&seq_addr_list, sa, entry);
 			}
 

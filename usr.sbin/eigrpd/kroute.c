@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.11 2016/02/21 18:53:54 renato Exp $ */
+/*	$OpenBSD: kroute.c,v 1.12 2016/02/21 18:56:49 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -349,7 +349,7 @@ kr_show_route(struct imsg *imsg)
 				if (flags && !(kn->r.flags & flags))
 					continue;
 
-				memcpy(&kr, &kn->r, sizeof(kr));
+				kr = kn->r;
 				if (kr.priority ==
 				    eigrpd_conf->fib_priority_external)
 					kr.flags |= F_CTL_EXTERNAL;
@@ -485,7 +485,7 @@ kroute_find_prefix(int af, union eigrpd_addr *prefix, uint8_t prefixlen)
 	struct kroute_prefix	 s;
 
 	s.af = af;
-	memcpy(&s.prefix, prefix, sizeof(s.prefix));
+	s.prefix = *prefix;
 	s.prefixlen = prefixlen;
 
 	return (RB_FIND(kroute_tree, &krt, &s));
@@ -532,7 +532,7 @@ kroute_insert(struct kroute *kr)
 		if (kp == NULL)
 			fatal("kroute_insert");
 		kp->af = kr->af;
-		memcpy(&kp->prefix, &kr->prefix, sizeof(kp->prefix));
+		kp->prefix = kr->prefix;
 		kp->prefixlen = kr->prefixlen;
 		TAILQ_INIT(&kp->priorities);
 		RB_INSERT(kroute_tree, &krt, kp);
@@ -563,7 +563,7 @@ kroute_insert(struct kroute *kr)
 		if (kn == NULL)
 			fatal("kroute_insert");
 		kn->kprio = kprio;
-		memcpy(&kn->r, kr, sizeof(kn->r));
+		kn->r = *kr;
 		TAILQ_INSERT_TAIL(&kprio->nexthops, kn, entry);
 	}
 
@@ -782,7 +782,7 @@ protect_lo(void)
 	/* special protection for ::1 */
 	memset(&kr6, 0, sizeof(kr6));
 	kr6.af = AF_INET6;
-	memcpy(&kr6.prefix.v6, &in6addr_loopback, sizeof(kr6.prefix.v6));
+	kr6.prefix.v6 = in6addr_loopback;
 	kr6.prefixlen = 128;
 	kr6.flags = F_KERNEL|F_CONNECTED;
 	kroute_insert(&kr6);
@@ -1454,8 +1454,7 @@ rtmsg_process_route(struct rt_msghdr *rtm, struct sockaddr *rti_info[RTAX_MAX])
 			kr.prefixlen = prefixlen_classful(kr.prefix.v4.s_addr);
 		break;
 	case AF_INET6:
-		memcpy(&kr.prefix.v6, &((struct sockaddr_in6 *)sa)->sin6_addr,
-		    sizeof(kr.prefix.v6));
+		kr.prefix.v6 = ((struct sockaddr_in6 *)sa)->sin6_addr;
 		sa_in6 = (struct sockaddr_in6 *)rti_info[RTAX_NETMASK];
 		if (sa_in6 != NULL && sa_in6->sin6_len != 0)
 			kr.prefixlen = mask2prefixlen6(sa_in6);
@@ -1541,7 +1540,7 @@ rtmsg_process_route(struct rt_msghdr *rtm, struct sockaddr *rti_info[RTAX_MAX])
 
 	if (kn != NULL) {
 		/* update route */
-		memcpy(&kn->r, &kr, sizeof(kn->r));
+		kn->r = kr;
 
 		if (kif_validate(kn->r.ifindex))
 			kn->r.flags &= ~F_DOWN;
