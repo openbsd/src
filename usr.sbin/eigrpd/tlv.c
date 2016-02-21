@@ -1,4 +1,4 @@
-/*	$OpenBSD: tlv.c,v 1.10 2016/02/21 18:56:49 renato Exp $ */
+/*	$OpenBSD: tlv.c,v 1.11 2016/02/21 18:59:54 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -68,26 +68,20 @@ gen_sequence_tlv(struct ibuf *buf, struct seq_addr_head *seq_addr_list)
 		switch (sa->af) {
 		case AF_INET:
 			alen = INADDRSZ;
-			if (ibuf_add(buf, &alen, sizeof(alen)))
-				return (-1);
-			if (ibuf_add(buf, &sa->addr.v4, sizeof(sa->addr.v4))) {
-				log_warn("%s: ibuf_add failed", __func__);
-				return (-1);
-			}
 			break;
 		case AF_INET6:
 			alen = IN6ADDRSZ;
-			if (ibuf_add(buf, &alen, sizeof(alen)))
-				return (-1);
-			if (ibuf_add(buf, &sa->addr.v6, sizeof(sa->addr.v6))) {
-				log_warn("%s: ibuf_add failed", __func__);
-				return (-1);
-			}
 			break;
 		default:
-			log_debug("%s: unknown address family", __func__);
+			fatalx("gen_sequence_tlv: unknown address family");
+		}
+		if (ibuf_add(buf, &alen, sizeof(alen)))
+			return (-1);
+		if (ibuf_add(buf, &sa->addr, alen)) {
+			log_warn("%s: ibuf_add failed", __func__);
 			return (-1);
 		}
+
 		len += (sizeof(alen) + alen);
 	}
 
@@ -303,33 +297,30 @@ tlv_decode_seq(int af, struct tlv *tlv, char *buf,
 			return (-1);
 		}
 
-		if ((sa = calloc(1, sizeof(*sa))) == NULL)
-			fatal("tlv_decode_seq");
-		sa->af = af;
 		switch (af) {
 		case AF_INET:
 			if (alen != INADDRSZ) {
 				log_debug("%s: invalid address length");
-				free(sa);
 				return (-1);
 			}
-			memcpy(&sa->addr.v4, buf, sizeof(struct in_addr));
 			break;
 		case AF_INET6:
 			if (alen != IN6ADDRSZ) {
 				log_debug("%s: invalid address length");
-				free(sa);
 				return (-1);
 			}
-			memcpy(&sa->addr.v6, buf, sizeof(struct in6_addr));
 			break;
 		default:
-			free(sa);
 			fatalx("tlv_decode_seq: unknown af");
 		}
+		if ((sa = calloc(1, sizeof(*sa))) == NULL)
+			fatal("tlv_decode_seq");
+		sa->af = af;
+		memcpy(&sa->addr, buf, alen);
+		TAILQ_INSERT_TAIL(seq_addr_list, sa, entry);
+
 		buf += alen;
 		len -= alen;
-		TAILQ_INSERT_TAIL(seq_addr_list, sa, entry);
 	}
 
 	return (0);
