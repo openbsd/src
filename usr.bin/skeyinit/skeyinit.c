@@ -1,4 +1,4 @@
-/*	$OpenBSD: skeyinit.c,v 1.68 2015/11/29 19:10:44 deraadt Exp $	*/
+/*	$OpenBSD: skeyinit.c,v 1.69 2016/02/21 22:53:40 tb Exp $	*/
 
 /* OpenBSD S/Key (skeyinit.c)
  *
@@ -55,28 +55,9 @@ main(int argc, char **argv)
 	struct skey skey;
 	struct passwd *pp;
 
-	if (pledge("stdio rpath wpath cpath fattr flock tty proc exec getpw",
-	    NULL) == -1)
-		err(1, "pledge");
-
 	n = rmkey = hexmode = enable = 0;
 	defaultsetup = 1;
 	ht = auth_type = NULL;
-
-	/* Build up a default seed based on the hostname and some randomness */
-	if (gethostname(hostname, sizeof(hostname)) < 0)
-		err(1, "gethostname");
-	for (i = 0, p = seed; hostname[i] && i < SKEY_NAMELEN; i++) {
-		if (isalnum((unsigned char)hostname[i]))
-			*p++ = tolower((unsigned char)hostname[i]);
-	}
-	for (i = 0; i < 5; i++)
-		*p++ = arc4random_uniform(10) + '0';
-	*p = '\0';
-
-	if ((pp = getpwuid(getuid())) == NULL)
-		err(1, "no user with uid %u", getuid());
-	(void)strlcpy(me, pp->pw_name, sizeof me);
 
 	for (i = 1; i < argc && argv[i][0] == '-' && strcmp(argv[i], "--");) {
 		if (argv[i][2] == '\0') {
@@ -135,6 +116,25 @@ main(int argc, char **argv)
 		enable_db(enable);
 		exit(0);
 	}
+
+	if (pledge("stdio rpath wpath cpath fattr flock tty proc exec getpw",
+	    NULL) == -1)
+		err(1, "pledge");
+
+	/* Build up a default seed based on the hostname and some randomness */
+	if (gethostname(hostname, sizeof(hostname)) < 0)
+		err(1, "gethostname");
+	for (i = 0, p = seed; hostname[i] && i < SKEY_NAMELEN; i++) {
+		if (isalnum((unsigned char)hostname[i]))
+			*p++ = tolower((unsigned char)hostname[i]);
+	}
+	for (i = 0; i < 5; i++)
+		*p++ = arc4random_uniform(10) + '0';
+	*p = '\0';
+
+	if ((pp = getpwuid(getuid())) == NULL)
+		err(1, "no user with uid %u", getuid());
+	(void)strlcpy(me, pp->pw_name, sizeof me);
 
 	/* Check for optional user string. */
 	if (argc == 1) {
