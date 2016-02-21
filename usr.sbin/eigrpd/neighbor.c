@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.5 2016/01/15 12:36:41 renato Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.6 2016/02/21 18:52:00 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -38,32 +38,12 @@ RB_GENERATE(nbr_pid_head, nbr, pid_tree, nbr_pid_compare)
 static __inline int
 nbr_compare(struct nbr *a, struct nbr *b)
 {
-	int		 i;
-
 	if (a->ei->iface->ifindex < b->ei->iface->ifindex)
 		return (-1);
 	if (a->ei->iface->ifindex > b->ei->iface->ifindex)
 		return (1);
 
-	switch (a->ei->eigrp->af) {
-	case AF_INET:
-		if (ntohl(a->addr.v4.s_addr) < ntohl(b->addr.v4.s_addr))
-			return (-1);
-		if (ntohl(a->addr.v4.s_addr) > ntohl(b->addr.v4.s_addr))
-			return (1);
-		break;
-	case AF_INET6:
-		i = memcmp(&a->addr.v6, &b->addr.v6, sizeof(struct in6_addr));
-		if (i > 0)
-			return (1);
-		if (i < 0)
-			return (-1);
-		break;
-	default:
-		fatalx("nbr_compare: unknown af");
-	}
-
-	return (0);
+	return (eigrp_addrcmp(a->ei->eigrp->af, &a->addr, &b->addr));
 }
 
 static __inline int

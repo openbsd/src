@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_dual.c,v 1.20 2016/02/21 18:40:56 renato Exp $ */
+/*	$OpenBSD: rde_dual.c,v 1.21 2016/02/21 18:52:00 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -145,26 +145,11 @@ dual_fsm(struct rt_node *rn, enum dual_event event)
 static int
 rt_compare(struct rt_node *a, struct rt_node *b)
 {
-	switch (a->eigrp->af) {
-	case AF_INET:
-		if (ntohl(a->prefix.v4.s_addr) <
-		    ntohl(b->prefix.v4.s_addr))
-			return (-1);
-		if (ntohl(a->prefix.v4.s_addr) >
-		    ntohl(b->prefix.v4.s_addr))
-			return (1);
-		break;
-	case AF_INET6:
-		if (memcmp(a->prefix.v6.s6_addr,
-		    b->prefix.v6.s6_addr, 16) < 0)
-			return (-1);
-		if (memcmp(a->prefix.v6.s6_addr,
-		    b->prefix.v6.s6_addr, 16) > 0)
-			return (1);
-		break;
-	default:
-		fatalx("rt_compare: unknown af");
-	}
+	int		 addrcmp;
+
+	addrcmp = eigrp_addrcmp(a->eigrp->af, &a->prefix, &b->prefix);
+	if (addrcmp != 0)
+		return (addrcmp);
 
 	if (a->prefixlen < b->prefixlen)
 		return (-1);
@@ -274,24 +259,10 @@ route_new(struct rt_node *rn, struct rde_nbr *nbr, struct rinfo *ri)
 	route_update_metrics(eigrp, route, ri);
 
 	/* order by nexthop */
-	TAILQ_FOREACH(tmp, &rn->routes, entry) {
-		switch (eigrp->af) {
-		case AF_INET:
-			if (ntohl(tmp->nexthop.v4.s_addr) >
-			    ntohl(route->nexthop.v4.s_addr))
-				goto insert;
+	TAILQ_FOREACH(tmp, &rn->routes, entry)
+		if (eigrp_addrcmp(eigrp->af, &tmp->nexthop,
+		    &route->nexthop) > 0)
 			break;
-		case AF_INET6:
-			if (memcmp(&tmp->nexthop.v6.s6_addr[0],
-			    &route->nexthop.v6.s6_addr[0],
-			    sizeof(struct in6_addr)) > 0)
-				goto insert;
-			break;
-		default:
-			fatalx("route_new: unknown af");
-		}
-	}
-insert:
 	if (tmp)
 		TAILQ_INSERT_BEFORE(tmp, route, entry);
 	else

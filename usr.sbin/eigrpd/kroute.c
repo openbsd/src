@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.9 2016/02/21 18:40:56 renato Exp $ */
+/*	$OpenBSD: kroute.c,v 1.10 2016/02/21 18:52:00 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -466,32 +466,16 @@ kr_redistribute(struct kroute_prefix *kp)
 int
 kroute_compare(struct kroute_prefix *a, struct kroute_prefix *b)
 {
+	int		 addrcmp;
+
 	if (a->af < b->af)
 		return (-1);
 	if (a->af > b->af)
 		return (1);
 
-	switch (a->af) {
-	case AF_INET:
-		if (ntohl(a->prefix.v4.s_addr) <
-		    ntohl(b->prefix.v4.s_addr))
-			return (-1);
-		if (ntohl(a->prefix.v4.s_addr) >
-		    ntohl(b->prefix.v4.s_addr))
-			return (1);
-		break;
-	case AF_INET6:
-		if (memcmp(a->prefix.v6.s6_addr,
-		    b->prefix.v6.s6_addr, 16) < 0)
-			return (-1);
-		if (memcmp(a->prefix.v6.s6_addr,
-		    b->prefix.v6.s6_addr, 16) > 0)
-			return (1);
-		break;
-	default:
-		log_debug("%s: unexpected address-family", __func__);
-		break;
-	}
+	addrcmp = eigrp_addrcmp(a->af, &a->prefix, &b->prefix);
+	if (addrcmp != 0)
+		return (addrcmp);
 
 	if (a->prefixlen < b->prefixlen)
 		return (-1);

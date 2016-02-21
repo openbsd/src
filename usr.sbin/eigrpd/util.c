@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.5 2016/02/21 18:40:56 renato Exp $ */
+/*	$OpenBSD: util.c,v 1.6 2016/02/21 18:52:00 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -140,18 +140,14 @@ eigrp_addrcmp(int af, const union eigrpd_addr *a, const union eigrpd_addr *b)
 {
 	switch (af) {
 	case AF_INET:
-		if (a->v4.s_addr != b->v4.s_addr)
-			return (1);
-		break;
+		if (a->v4.s_addr == b->v4.s_addr)
+			return (0);
+		return ((ntohl(a->v4.s_addr) > ntohl(b->v4.s_addr)) ? 1 : -1);
 	case AF_INET6:
-		if (!IN6_ARE_ADDR_EQUAL(&a->v6, &b->v6))
-			return (1);
-		break;
+		return (!!memcmp(&a->v6, &b->v6, sizeof(struct in6_addr)));
 	default:
 		fatalx("eigrp_addrcmp: unknown af");
 	}
-
-	return (0);
 }
 
 int
