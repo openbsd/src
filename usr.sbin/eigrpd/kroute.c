@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.10 2016/02/21 18:52:00 renato Exp $ */
+/*	$OpenBSD: kroute.c,v 1.11 2016/02/21 18:53:54 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -389,8 +389,6 @@ kr_redist_remove(struct kroute *kr)
 int
 kr_redist_eval(struct kroute *kr)
 {
-	in_addr_t	 a;
-
 	/* Only non-eigrpd routes are considered for redistribution. */
 	if (!(kr->flags & F_KERNEL))
 		goto dont_redistribute;
@@ -399,31 +397,26 @@ kr_redist_eval(struct kroute *kr)
 	if (kr->flags & F_DYNAMIC)
 		goto dont_redistribute;
 
+	/* filter-out non-redistributable addresses */
+	if (bad_addr(kr->af, &kr->prefix) ||
+	    (kr->af == AF_INET6 && IN6_IS_SCOPE_EMBED(&kr->prefix.v6)))
+		goto dont_redistribute;
+
 	/* interface is not up and running so don't announce */
 	if (kr->flags & F_DOWN)
 		goto dont_redistribute;
 
-	/* filter-out non redistributable addresses */
+	/*
+	 * Consider networks with nexthop loopback as not redistributable
+	 * unless it is a reject or blackhole route.
+	 */
 	switch (kr->af) {
 	case AF_INET:
-		a = ntohl(kr->prefix.v4.s_addr);
-		if (IN_MULTICAST(a) || IN_BADCLASS(a) ||
-		    (a >> IN_CLASSA_NSHIFT) == IN_LOOPBACKNET)
-			goto dont_redistribute;
-
 		if (kr->nexthop.v4.s_addr == htonl(INADDR_LOOPBACK) &&
 		    !(kr->flags & (F_BLACKHOLE|F_REJECT)))
 			goto dont_redistribute;
 		break;
 	case AF_INET6:
-		if (IN6_IS_ADDR_LOOPBACK(&kr->prefix.v6) ||
-		    IN6_IS_ADDR_MULTICAST(&kr->prefix.v6) ||
-		    IN6_IS_ADDR_LINKLOCAL(&kr->prefix.v6) ||
-		    IN6_IS_ADDR_SITELOCAL(&kr->prefix.v6) ||
-		    IN6_IS_ADDR_V4MAPPED(&kr->prefix.v6) ||
-		    IN6_IS_ADDR_V4COMPAT(&kr->prefix.v6))
-			goto dont_redistribute;
-
 		if (IN6_IS_ADDR_LOOPBACK(&kr->nexthop.v6) &&
 		    !(kr->flags & (F_BLACKHOLE|F_REJECT)))
 			goto dont_redistribute;
@@ -886,7 +879,6 @@ if_newaddr(unsigned short ifindex, struct sockaddr *ifa, struct sockaddr *mask,
 	struct sockaddr_in	*ifa4, *mask4, *brd4;
 	struct sockaddr_in6	*ifa6, *mask6, *brd6;
 	struct kif_addr		*ka;
-	uint32_t		 a;
 
 	if (ifa == NULL)
 		return;
@@ -903,9 +895,7 @@ if_newaddr(unsigned short ifindex, struct sockaddr *ifa, struct sockaddr *mask,
 		brd4 = (struct sockaddr_in *) brd;
 
 		/* filter out unwanted addresses */
-		a = ntohl(ifa4->sin_addr.s_addr);
-		if (IN_MULTICAST(a) || IN_BADCLASS(a) ||
-		    (a >> IN_CLASSA_NSHIFT) == IN_LOOPBACKNET)
+		if (bad_addr_v4(ifa4->sin_addr))
 			return;
 
 		if ((ka = calloc(1, sizeof(struct kif_addr))) == NULL)
@@ -923,12 +913,7 @@ if_newaddr(unsigned short ifindex, struct sockaddr *ifa, struct sockaddr *mask,
 		brd6 = (struct sockaddr_in6 *) brd;
 
 		/* We only care about link-local and global-scope. */
-		if (IN6_IS_ADDR_UNSPECIFIED(&ifa6->sin6_addr) ||
-		    IN6_IS_ADDR_LOOPBACK(&ifa6->sin6_addr) ||
-		    IN6_IS_ADDR_MULTICAST(&ifa6->sin6_addr) ||
-		    IN6_IS_ADDR_SITELOCAL(&ifa6->sin6_addr) ||
-		    IN6_IS_ADDR_V4MAPPED(&ifa6->sin6_addr) ||
-		    IN6_IS_ADDR_V4COMPAT(&ifa6->sin6_addr))
+		if (bad_addr_v6(&ifa6->sin6_addr))
 			return;
 
 		clearscope(&ifa6->sin6_addr);
@@ -980,6 +965,10 @@ if_deladdr(unsigned short ifindex, struct sockaddr *ifa, struct sockaddr *mask,
 		mask4 = (struct sockaddr_in *) mask;
 		brd4 = (struct sockaddr_in *) brd;
 
+		/* filter out unwanted addresses */
+		if (bad_addr_v4(ifa4->sin_addr))
+			return;
+
 		k.addr.v4.s_addr = ifa4->sin_addr.s_addr;
 		if (mask4)
 			k.prefixlen = mask2prefixlen(mask4->sin_addr.s_addr);
@@ -992,12 +981,7 @@ if_deladdr(unsigned short ifindex, struct sockaddr *ifa, struct sockaddr *mask,
 		brd6 = (struct sockaddr_in6 *) brd;
 
 		/* We only care about link-local and global-scope. */
-		if (IN6_IS_ADDR_UNSPECIFIED(&ifa6->sin6_addr) ||
-		    IN6_IS_ADDR_LOOPBACK(&ifa6->sin6_addr) ||
-		    IN6_IS_ADDR_MULTICAST(&ifa6->sin6_addr) ||
-		    IN6_IS_ADDR_SITELOCAL(&ifa6->sin6_addr) ||
-		    IN6_IS_ADDR_V4MAPPED(&ifa6->sin6_addr) ||
-		    IN6_IS_ADDR_V4COMPAT(&ifa6->sin6_addr))
+		if (bad_addr_v6(&ifa6->sin6_addr))
 			return;
 
 		clearscope(&ifa6->sin6_addr);

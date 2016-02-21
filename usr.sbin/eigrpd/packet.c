@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.10 2016/02/21 18:40:56 renato Exp $ */
+/*	$OpenBSD: packet.c,v 1.11 2016/02/21 18:53:54 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -515,11 +515,11 @@ recv_packet_v4(int fd, short event, void *bula)
 	memcpy(&ip_hdr, buf, sizeof(ip_hdr));
 	if ((l = ip_hdr_sanity_check(&ip_hdr, len)) == -1)
 		return;
-	src.v4.s_addr = ip_hdr.ip_src.s_addr;
-	dest.v4.s_addr = ip_hdr.ip_dst.s_addr;
-
 	buf += l;
 	len -= l;
+
+	src.v4.s_addr = ip_hdr.ip_src.s_addr;
+	dest.v4.s_addr = ip_hdr.ip_dst.s_addr;
 
 	/* find a matching interface */
 	if ((iface = find_iface(ifindex, AF_INET, &src)) == NULL)
@@ -609,6 +609,13 @@ recv_packet_v6(int fd, short event, void *bula)
 	}
 	src.v6 = sin6.sin6_addr;
 
+	/* validate source address */
+	if (bad_addr_v6(&src.v6)) {
+		log_debug("%s: invalid source address: %s", __func__,
+		    log_addr(AF_INET, &src));
+		return;
+	}
+
 	/* find a matching interface */
 	if ((iface = find_iface(ifindex, AF_INET6, &src)) == NULL)
 		return;
@@ -637,19 +644,15 @@ recv_packet_v6(int fd, short event, void *bula)
 int
 ip_hdr_sanity_check(const struct ip *ip_hdr, uint16_t len)
 {
-	in_addr_t	 ipv4;
-
 	if (ntohs(ip_hdr->ip_len) != len) {
 		log_debug("%s: invalid IP packet length %u", __func__,
 		    ntohs(ip_hdr->ip_len));
 		return (-1);
 	}
 
-	ipv4 = ntohl(ip_hdr->ip_src.s_addr);
-	if (((ipv4 >> IN_CLASSA_NSHIFT) == 0)
-	    || ((ipv4 >> IN_CLASSA_NSHIFT) == IN_LOOPBACKNET)
-	    || IN_MULTICAST(ipv4) || IN_BADCLASS(ipv4)) {
-		log_debug("%s: invalid IP source address %s", __func__,
+	/* validate source address */
+	if (bad_addr_v4(ip_hdr->ip_src)) {
+		log_debug("%s: invalid source address: %s", __func__,
 		    inet_ntoa(ip_hdr->ip_src));
 		return (-1);
 	}

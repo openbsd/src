@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.6 2016/02/21 18:52:00 renato Exp $ */
+/*	$OpenBSD: util.c,v 1.7 2016/02/21 18:53:54 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -212,6 +212,45 @@ eigrp_prefixcmp(int af, const union eigrpd_addr *a, const union eigrpd_addr *b,
 	return (-1);
 }
 
+int
+bad_addr_v4(struct in_addr addr)
+{
+	uint32_t	 a = ntohl(addr.s_addr);
+
+	if (((a >> IN_CLASSA_NSHIFT) == 0) ||
+	    ((a >> IN_CLASSA_NSHIFT) == IN_LOOPBACKNET) ||
+	    IN_MULTICAST(a) || IN_BADCLASS(a))
+		return (1);
+
+	return (0);
+}
+
+int
+bad_addr_v6(struct in6_addr *addr)
+{
+	if (IN6_IS_ADDR_UNSPECIFIED(addr) ||
+	    IN6_IS_ADDR_LOOPBACK(addr) ||
+	    IN6_IS_ADDR_MULTICAST(addr) ||
+	    IN6_IS_ADDR_SITELOCAL(addr) ||
+	    IN6_IS_ADDR_V4MAPPED(addr) ||
+	    IN6_IS_ADDR_V4COMPAT(addr))
+		return (1);
+
+	return (0);
+}
+
+int
+bad_addr(int af, union eigrpd_addr *addr)
+{
+	switch (af) {
+	case AF_INET:
+		return (bad_addr_v4(addr->v4));
+	case AF_INET6:
+		return (bad_addr_v6(&addr->v6));
+	default:
+		fatalx("bad_addr: unknown af");
+	}
+}
 
 void
 embedscope(struct sockaddr_in6 *sin6)

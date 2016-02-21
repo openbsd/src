@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.6 2016/02/21 18:40:56 renato Exp $ */
+/*	$OpenBSD: parse.y,v 1.7 2016/02/21 18:53:54 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -206,6 +206,10 @@ conf_main	: ROUTERID STRING {
 				YYERROR;
 			}
 			free($2);
+			if (bad_addr_v4(conf->rtr_id)) {
+				yyerror("invalid router-id");
+				YYERROR;
+			}
 		}
 		| FIBUPDATE yesno {
 			if ($2 == 0)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tlv.c,v 1.8 2016/02/21 18:40:56 renato Exp $ */
+/*	$OpenBSD: tlv.c,v 1.9 2016/02/21 18:53:54 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -365,7 +365,6 @@ int
 tlv_decode_route(int af, struct tlv *tlv, char *buf, struct rinfo *ri)
 {
 	unsigned int	 tlv_len, min_len, max_plen, plen, offset;
-	in_addr_t	 ipv4;
 
 	ri->af = af;
 	switch (ri->af) {
@@ -456,30 +455,21 @@ tlv_decode_route(int af, struct tlv *tlv, char *buf, struct rinfo *ri)
 	case AF_INET:
 		memset(&ri->prefix.v4, 0, sizeof(ri->prefix.v4));
 		memcpy(&ri->prefix.v4, buf + offset, plen);
-
-		/* check if the network is valid */
-		ipv4 = ntohl(ri->prefix.v4.s_addr);
-		if (((ipv4 >> IN_CLASSA_NSHIFT) == IN_LOOPBACKNET) ||
-		    IN_MULTICAST(ipv4) || IN_BADCLASS(ipv4)) {
-			log_debug("%s: malformed tlv (invalid ipv4 prefix)",
-			    __func__);
-			return (-1);
-		}
 		break;
 	case AF_INET6:
 		memset(&ri->prefix.v6, 0, sizeof(ri->prefix.v6));
 		memcpy(&ri->prefix.v6, buf + offset, plen);
-
-		/* check if the network is valid */
-		if (IN6_IS_ADDR_LOOPBACK(&ri->prefix.v6) ||
-		    IN6_IS_ADDR_MULTICAST(&ri->prefix.v6)) {
-			log_debug("%s: malformed tlv (invalid ipv6 prefix)",
-			    __func__);
-			return (-1);
-		}
 		break;
 	default:
 		fatalx("tlv_decode_route: unknown af");
+	}
+
+	/* check if the network is valid */
+	if (bad_addr(af, &ri->prefix) ||
+	   (af == AF_INET6 && IN6_IS_SCOPE_EMBED(&ri->prefix.v6))) {
+		log_debug("%s: malformed tlv (invalid prefix): %s", __func__,
+		    log_addr(af, &ri->prefix));
+		return (-1);
 	}
 
 	/* just in case... */
