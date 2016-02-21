@@ -1,4 +1,4 @@
-/*	$OpenBSD: tlv.c,v 1.6 2016/01/15 12:29:29 renato Exp $ */
+/*	$OpenBSD: tlv.c,v 1.7 2016/02/21 18:38:37 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -364,16 +364,18 @@ tlv_decode_mcast_seq(struct tlv *tlv, char *buf)
 int
 tlv_decode_route(int af, struct tlv *tlv, char *buf, struct rinfo *ri)
 {
-	int		 tlv_len, min_len, plen, offset;
+	unsigned int	 tlv_len, min_len, max_plen, plen, offset;
 	in_addr_t	 ipv4;
 
 	ri->af = af;
 	switch (ri->af) {
 	case AF_INET:
 		min_len = TLV_TYPE_IPV4_INT_MIN_LEN;
+		max_plen = sizeof(ri->prefix.v4);
 		break;
 	case AF_INET6:
 		min_len = TLV_TYPE_IPV6_INT_MIN_LEN;
+		max_plen = sizeof(ri->prefix.v6);
 		break;
 	default:
 		fatalx("tlv_decode_route: unknown af");
@@ -433,21 +435,19 @@ tlv_decode_route(int af, struct tlv *tlv, char *buf, struct rinfo *ri)
 	memcpy(&ri->prefixlen, buf + offset, sizeof(ri->prefixlen));
 	offset += sizeof(ri->prefixlen);
 
-	switch (af) {
-	case AF_INET:
-		plen = PREFIX_SIZE4(ri->prefixlen);
-		break;
-	case AF_INET6:
-		plen = PREFIX_SIZE6(ri->prefixlen);
-		break;
-	default:
-		fatalx("tlv_decode_route: unknown af");
-	}
+	/*
+	 * Different versions of IOS can use a different number of bytes to
+	 * encode the same IPv6 prefix. This sucks but we have to deal with it.
+	 * Instead of calculating the number of bytes based on the value of the
+	 * prefixlen field, let's get this number by subtracting the size of all
+	 * other fields from the total size of the TLV. It works because all
+	 * the other fields have a fixed length.
+	 */
+	plen = tlv_len - min_len;
 
 	/* safety check */
-	if (plen != (tlv_len - min_len)) {
-		log_debug("%s: malformed tlv (invalid prefix length)",
-		    __func__);
+	if (plen > max_plen) {
+		log_debug("%s: malformed tlv", __func__);
 		return (-1);
 	}
 
