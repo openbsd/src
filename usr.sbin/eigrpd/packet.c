@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.9 2016/02/21 18:39:08 renato Exp $ */
+/*	$OpenBSD: packet.c,v 1.10 2016/02/21 18:40:56 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -713,7 +713,7 @@ find_iface(unsigned int ifindex, int af, union eigrpd_addr *src)
 {
 	struct iface	*iface;
 	struct if_addr	*if_addr;
-	uint32_t	 mask;
+	in_addr_t	 mask;
 
 	iface = if_lookup(econf, ifindex);
 	if (iface == NULL)

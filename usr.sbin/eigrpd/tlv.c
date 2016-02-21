@@ -1,4 +1,4 @@
-/*	$OpenBSD: tlv.c,v 1.7 2016/02/21 18:38:37 renato Exp $ */
+/*	$OpenBSD: tlv.c,v 1.8 2016/02/21 18:40:56 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -85,7 +85,7 @@ gen_sequence_tlv(struct ibuf *buf, struct seq_addr_head *seq_addr_list)
 			}
 			break;
 		default:
-			log_debug("%s: unkown address family", __func__);
+			log_debug("%s: unknown address family", __func__);
 			return (-1);
 		}
 		len += (sizeof(alen) + alen);

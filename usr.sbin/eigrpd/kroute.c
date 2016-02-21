@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.8 2016/02/21 18:36:11 renato Exp $ */
+/*	$OpenBSD: kroute.c,v 1.9 2016/02/21 18:40:56 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -29,7 +29,6 @@
 #include <net/if_dl.h>
 #include <net/if_types.h>
 #include <net/route.h>
-#include <err.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
@@ -124,20 +123,17 @@ int		rtmsg_process(char *, size_t);
 int		rtmsg_process_route(struct rt_msghdr *,
     struct sockaddr *[RTAX_MAX]);
 
-RB_HEAD(kroute_tree, kroute_prefix)	krt;
+RB_HEAD(kroute_tree, kroute_prefix)	krt = RB_INITIALIZER(&krt);
 RB_PROTOTYPE(kroute_tree, kroute_prefix, entry, kroute_compare)
 RB_GENERATE(kroute_tree, kroute_prefix, entry, kroute_compare)
 
-RB_HEAD(kif_tree, kif_node)		kit;
+RB_HEAD(kif_tree, kif_node)		kit = RB_INITIALIZER(&kit);
 RB_PROTOTYPE(kif_tree, kif_node, entry, kif_compare)
 RB_GENERATE(kif_tree, kif_node, entry, kif_compare)
 
 int
 kif_init(void)
 {
-	RB_INIT(&kit);
-	kr_state.fib_sync = 0;	/* decoupled */
-
 	if (fetchifs() == -1)
 		return (-1);
 
@@ -162,7 +158,7 @@ kr_init(int fs, unsigned int rdomain)
 	/* not interested in my own messages */
 	if (setsockopt(kr_state.fd, SOL_SOCKET, SO_USELOOPBACK,
 	    &opt, sizeof(opt)) == -1)
-		log_warn("%s: setsockopt", __func__);	/* not fatal */
+		log_warn("%s: setsockopt(SO_USELOOPBACK)", __func__);
 
 	/* grow receive buffer, don't wanna miss messages */
 	optlen = sizeof(default_rcvbuf);
@@ -637,9 +633,11 @@ kroute_remove(struct kroute *kr)
 	}
 
 	if (TAILQ_EMPTY(&kp->priorities)) {
-		if (RB_REMOVE(kroute_tree, &krt, kp) == NULL)
+		if (RB_REMOVE(kroute_tree, &krt, kp) == NULL) {
 			log_warnx("%s failed for %s/%u", __func__,
 			    log_addr(kr->af, &kr->prefix), kp->prefixlen);
+			return (-1);
+		}
 		free(kp);
 	} else
 		kr_redistribute(kp);
@@ -813,6 +811,7 @@ protect_lo(void)
 	kroute_insert(&kr6);
 }
 
+/* misc */
 uint8_t
 prefixlen_classful(in_addr_t ina)
 {
@@ -1300,7 +1299,7 @@ fetchtable(void)
 		return (-1);
 	}
 	if ((buf = malloc(len)) == NULL) {
-		log_warn("fetchtable");
+		log_warn("%s", __func__);
 		return (-1);
 	}
 	if (sysctl(mib, 7, buf, &len, NULL, 0) == -1) {
@@ -1335,7 +1334,7 @@ fetchifs(void)
 		return (-1);
 	}
 	if ((buf = malloc(len)) == NULL) {
-		log_warn("fetchifs");
+		log_warn("%s", __func__);
 		return (-1);
 	}
 	if (sysctl(mib, 6, buf, &len, NULL, 0) == -1) {
@@ -1530,6 +1529,8 @@ rtmsg_process_route(struct rt_msghdr *rtm, struct sockaddr *rti_info[RTAX_MAX])
 		kr.flags |= F_REJECT;
 	if (rtm->rtm_flags & RTF_DYNAMIC)
 		kr.flags |= F_DYNAMIC;
+	if (rtm->rtm_flags & RTF_CONNECTED)
+		kr.flags |= F_CONNECTED;
 	kr.priority = rtm->rtm_priority;
 
 	if (rtm->rtm_type == RTM_CHANGE) {

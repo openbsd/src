@@ -1,4 +1,4 @@
-/*	$OpenBSD: eigrpe.h,v 1.7 2016/01/15 12:36:41 renato Exp $ */
+/*	$OpenBSD: eigrpe.h,v 1.8 2016/02/21 18:40:56 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -92,7 +92,7 @@ struct iface		*if_new(struct eigrpd_conf *, struct kif *);
 void			 if_del(struct iface *);
 void			 if_init(struct eigrpd_conf *, struct iface *);
 struct iface		*if_lookup(struct eigrpd_conf *, unsigned int);
-struct if_addr		*if_addr_new(struct iface *, struct kaddr *);
+void			 if_addr_new(struct iface *, struct kaddr *);
 void			 if_addr_del(struct iface *, struct kaddr *);
 struct if_addr		*if_addr_lookup(struct if_addr_head *, struct kaddr *);
 in_addr_t		 if_primary_addr(struct iface *);

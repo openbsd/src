@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.12 2016/01/15 12:41:50 renato Exp $ */
+/*	$OpenBSD: interface.c,v 1.13 2016/02/21 18:40:56 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -24,7 +24,6 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <ctype.h>
-#include <err.h>
 #include <string.h>
 
 #include "eigrpd.h"
@@ -61,7 +60,7 @@ if_new(struct eigrpd_conf *xconf, struct kif *kif)
 	struct iface		*iface;
 
 	if ((iface = calloc(1, sizeof(*iface))) == NULL)
-		err(1, "if_new: calloc");
+		fatal("if_new: calloc");
 
 	TAILQ_INIT(&iface->ei_list);
 	TAILQ_INIT(&iface->addr_list);
@@ -138,17 +137,17 @@ if_lookup(struct eigrpd_conf *xconf, unsigned int ifindex)
 	return (NULL);
 }
 
-struct if_addr *
+void
 if_addr_new(struct iface *iface, struct kaddr *kaddr)
 {
 	struct if_addr		*if_addr;
 	struct eigrp_iface	*ei;
 
 	if (if_addr_lookup(&iface->addr_list, kaddr) != NULL)
-		return (NULL);
+		return;
 
 	if ((if_addr = calloc(1, sizeof(*if_addr))) == NULL)
-		fatal("if_addr_new");
+		fatal("if_addr_new: calloc");
 
 	if_addr->af = kaddr->af;
 	memcpy(&if_addr->addr, &kaddr->addr, sizeof(if_addr->addr));
@@ -162,8 +161,6 @@ if_addr_new(struct iface *iface, struct kaddr *kaddr)
 			eigrpe_orig_local_route(ei, if_addr, 0);
 
 	if_update(iface, if_addr->af);
-
-	return (if_addr);
 }
 
 void
@@ -291,7 +288,7 @@ eigrp_if_new(struct eigrpd_conf *xconf, struct eigrp *eigrp, struct kif *kif)
 		iface = if_new(xconf, kif);
 
 	if ((ei = calloc(1, sizeof(*ei))) == NULL)
-		err(1, "eigrp_if_new: calloc");
+		fatal("eigrp_if_new: calloc");
 
 	ei->state = IF_STA_DOWN;
 	/* get next unused ifaceid */
@@ -726,7 +723,7 @@ if_set_ipv6_mcast(struct iface *iface)
 {
 	if (setsockopt(econf->eigrp_socket_v6, IPPROTO_IPV6, IPV6_MULTICAST_IF,
 	    &iface->ifindex, sizeof(iface->ifindex)) < 0) {
-		log_debug("%s: error setting IPV6_MULTICAST_IF, interface %s",
+		log_warn("%s: error setting IPV6_MULTICAST_IF, interface %s",
 		    __func__, iface->name);
 		return (-1);
 	}

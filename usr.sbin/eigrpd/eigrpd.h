@@ -1,4 +1,4 @@
-/*	$OpenBSD: eigrpd.h,v 1.8 2016/01/15 12:41:09 renato Exp $ */
+/*	$OpenBSD: eigrpd.h,v 1.9 2016/02/21 18:40:56 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -120,10 +120,15 @@ union eigrpd_addr {
 	struct in6_addr	v6;
 };
 
+#define IN6_IS_SCOPE_EMBED(a)   \
+	((IN6_IS_ADDR_LINKLOCAL(a)) ||  \
+	 (IN6_IS_ADDR_MC_LINKLOCAL(a)) || \
+	 (IN6_IS_ADDR_MC_INTFACELOCAL(a)))
+
 /* interface types */
 enum iface_type {
 	IF_TYPE_POINTOPOINT,
-	IF_TYPE_BROADCAST,
+	IF_TYPE_BROADCAST
 };
 
 struct if_addr {

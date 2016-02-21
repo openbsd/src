@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_dual.c,v 1.19 2016/01/28 13:25:14 jsg Exp $ */
+/*	$OpenBSD: rde_dual.c,v 1.20 2016/02/21 18:40:56 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -472,8 +472,10 @@ reply_outstanding_add(struct rt_node *rn, struct rde_nbr *nbr)
 	TAILQ_INSERT_TAIL(&rn->rijk, reply, rn_entry);
 	TAILQ_INSERT_TAIL(&nbr->rijk, reply, nbr_entry);
 
-	reply_active_start_timer(reply);
-	reply_sia_start_timer(reply);
+	if (rn->eigrp->active_timeout > 0) {
+		reply_active_start_timer(reply);
+		reply_sia_start_timer(reply);
+	}
 }
 
 struct reply_node *
@@ -516,9 +518,6 @@ reply_active_start_timer(struct reply_node *reply)
 {
 	struct eigrp		*eigrp = reply->nbr->eigrp;
 	struct timeval		 tv;
-
-	if (eigrp->active_timeout == 0)
-		return;
 
 	timerclear(&tv);
 	tv.tv_sec = eigrp->active_timeout * 60;
@@ -573,7 +572,6 @@ reply_sia_timer(int fd, short event, void *arg)
 	rinfo_fill_successor(rn, &ri);
 	ri.metric.flags |= F_METRIC_ACTIVE;
 	rde_send_siaquery(nbr, &ri);
-
 }
 
 void
@@ -581,9 +579,6 @@ reply_sia_start_timer(struct reply_node *reply)
 {
 	struct eigrp		*eigrp = reply->nbr->eigrp;
 	struct timeval		 tv;
-
-	if (eigrp->active_timeout == 0)
-		return;
 
 	/*
 	 * draft-savage-eigrp-04 - Section 4.4.1.1:

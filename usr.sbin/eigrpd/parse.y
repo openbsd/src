@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.5 2016/01/15 12:23:45 renato Exp $ */
+/*	$OpenBSD: parse.y,v 1.6 2016/02/21 18:40:56 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -133,9 +133,8 @@ typedef struct {
 %token	ERROR
 %token	<v.string>	STRING
 %token	<v.number>	NUMBER
-%type	<v.number>	yesno no
+%type	<v.number>	yesno no eigrp_af
 %type	<v.string>	string
-%type	<v.number>	eigrp_af
 %type	<v.redist>	redistribute
 %type	<v.redist_metric> redist_metric opt_red_metric
 
@@ -891,11 +890,11 @@ pushfile(const char *name, int secret)
 	struct file	*nfile;
 
 	if ((nfile = calloc(1, sizeof(struct file))) == NULL) {
-		log_warn("malloc");
+		log_warn("calloc");
 		return (NULL);
 	}
 	if ((nfile->name = strdup(name)) == NULL) {
-		log_warn("malloc");
+		log_warn("strdup");
 		free(nfile);
 		return (NULL);
 	}
@@ -945,7 +944,6 @@ parse_config(char *filename, int opts)
 	conf->fib_priority_external = RTP_EIGRP;
 	conf->fib_priority_summary = RTP_EIGRP;
 
-	memset(&globaldefs, 0, sizeof(globaldefs));
 	defs = &globaldefs;
 	defs->kvalues[0] = defs->kvalues[2] = 1;
 	defs->active_timeout = DEFAULT_ACTIVE_TIMEOUT;

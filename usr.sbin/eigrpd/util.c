@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.4 2016/01/15 12:41:09 renato Exp $ */
+/*	$OpenBSD: util.c,v 1.5 2016/02/21 18:40:56 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -216,10 +216,6 @@ eigrp_prefixcmp(int af, const union eigrpd_addr *a, const union eigrpd_addr *b,
 	return (-1);
 }
 
-#define IN6_IS_SCOPE_EMBED(a)   \
-	((IN6_IS_ADDR_LINKLOCAL(a)) ||  \
-	 (IN6_IS_ADDR_MC_LINKLOCAL(a)) || \
-	 (IN6_IS_ADDR_MC_INTFACELOCAL(a)))
 
 void
 embedscope(struct sockaddr_in6 *sin6)
@@ -243,10 +239,9 @@ recoverscope(struct sockaddr_in6 *sin6)
 {
 	uint16_t	 tmp16;
 
-	if (sin6->sin6_scope_id != 0) {
+	if (sin6->sin6_scope_id != 0)
 		log_warnx("%s: address %s already has scope id %u",
 		    __func__, log_sockaddr(sin6), sin6->sin6_scope_id);
-	}
 
 	if (IN6_IS_SCOPE_EMBED(&sin6->sin6_addr)) {
 		memcpy(&tmp16, &sin6->sin6_addr.s6_addr[2], sizeof(tmp16));
@@ -259,14 +254,12 @@ recoverscope(struct sockaddr_in6 *sin6)
 void
 addscope(struct sockaddr_in6 *sin6, uint32_t id)
 {
-	if (sin6->sin6_scope_id != 0) {
+	if (sin6->sin6_scope_id != 0)
 		log_warnx("%s: address %s already has scope id %u", __func__,
 		    log_sockaddr(sin6), sin6->sin6_scope_id);
-	}
 
-	if (IN6_IS_SCOPE_EMBED(&sin6->sin6_addr)) {
+	if (IN6_IS_SCOPE_EMBED(&sin6->sin6_addr))
 		sin6->sin6_scope_id = id;
-	}
 }
 
 void
@@ -277,5 +270,3 @@ clearscope(struct in6_addr *in6)
 		in6->s6_addr[3] = 0;
 	}
 }
-
-#undef IN6_IS_SCOPE_EMBED

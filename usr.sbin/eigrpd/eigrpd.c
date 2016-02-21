@@ -1,4 +1,4 @@
-/*	$OpenBSD: eigrpd.c,v 1.5 2016/02/02 17:51:11 sthen Exp $ */
+/*	$OpenBSD: eigrpd.c,v 1.6 2016/02/21 18:40:56 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -171,7 +171,7 @@ main(int argc, char *argv[])
 	mib[3] = IPCTL_FORWARDING;
 	len = sizeof(ipforwarding);
 	if (sysctl(mib, 4, &ipforwarding, &len, NULL, 0) == -1)
-		err(1, "sysctl");
+		log_warn("sysctl");
 
 	if (ipforwarding != 1)
 		log_warnx("WARNING: IP forwarding NOT enabled");
