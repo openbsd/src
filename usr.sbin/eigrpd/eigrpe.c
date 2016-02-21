@@ -1,4 +1,4 @@
-/*	$OpenBSD: eigrpe.c,v 1.14 2016/02/21 18:56:49 renato Exp $ */
+/*	$OpenBSD: eigrpe.c,v 1.15 2016/02/21 19:01:12 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -470,7 +470,7 @@ eigrpe_dispatch_rde(int fd, short event, void *bula)
 				fatalx("invalid size of rinfo");
 			memcpy(&rinfo, imsg.data, sizeof(rinfo));
 
-			ei = eigrp_iface_find_id(imsg.hdr.peerid);
+			ei = eigrp_if_lookup_id(imsg.hdr.peerid);
 			if (ei == NULL) {
 				log_debug("%s: cannot find interface",
 				    __func__);
@@ -518,7 +518,7 @@ eigrpe_dispatch_rde(int fd, short event, void *bula)
 			break;
 		case IMSG_SEND_MUPDATE_END:
 		case IMSG_SEND_MQUERY_END:
-			ei = eigrp_iface_find_id(imsg.hdr.peerid);
+			ei = eigrp_if_lookup_id(imsg.hdr.peerid);
 			if (ei == NULL) {
 				log_debug("%s: cannot find interface",
 				    __func__);

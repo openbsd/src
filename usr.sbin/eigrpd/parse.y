@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.8 2016/02/21 18:56:49 renato Exp $ */
+/*	$OpenBSD: parse.y,v 1.9 2016/02/21 19:01:12 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -79,7 +79,7 @@ char		*symget(const char *);
 
 void		 clear_config(struct eigrpd_conf *xconf);
 uint32_t	 get_rtr_id(void);
-int		 host(const char *, union eigrpd_addr *, uint8_t *);
+int		 get_prefix(const char *, union eigrpd_addr *, uint8_t *);
 
 static struct eigrpd_conf	*conf;
 static int			 errors = 0;
@@ -149,7 +149,7 @@ grammar		: /* empty */
 		| grammar error '\n'		{ file->errors++; }
 		;
 
-include		: INCLUDE STRING		{
+include		: INCLUDE STRING {
 			struct file	*nfile;
 
 			if ((nfile = pushfile($2, 1)) == NULL) {
@@ -177,6 +177,13 @@ string		: string STRING	{
 		| STRING
 		;
 
+optnl		: '\n' optnl
+		|
+		;
+
+nl		: '\n' optnl		/* one newline or more */
+		;
+
 yesno		: YES	{ $$ = 1; }
 		| NO	{ $$ = 0; }
 		;
@@ -189,7 +196,7 @@ eigrp_af	: IPV4	{ $$ = AF_INET; }
 		| IPV6	{ $$ = AF_INET6; }
 		;
 
-varset		: STRING '=' string		{
+varset		: STRING '=' string {
 			if (conf->opts & EIGRPD_OPT_VERBOSE)
 				printf("%s = \"%s\"\n", $1, $3);
 			if (symset($1, $3, 0) == -1)
@@ -248,6 +255,123 @@ conf_main	: ROUTERID STRING {
 		| defaults
 		;
 
+af		: AF eigrp_af {
+			af = $2;
+			afdefs = *defs;
+			defs = &afdefs;
+		} af_block {
+			af = AF_UNSPEC;
+			defs = &globaldefs;
+		}
+		;
+
+af_block	: '{' optnl afopts_l '}'
+		| '{' optnl '}'
+		|
+		;
+
+afopts_l	: afopts_l afoptsl nl
+		| afoptsl optnl
+		;
+
+afoptsl		: as
+		| defaults
+		;
+
+as		: AS NUMBER {
+			if ($2 < EIGRP_MIN_AS || $2 > EIGRP_MAX_AS) {
+				yyerror("invalid autonomous-system");
+				YYERROR;
+			}
+			eigrp = conf_get_instance($2);
+			if (eigrp == NULL)
+				YYERROR;
+
+			asdefs = *defs;
+			defs = &asdefs;
+		} as_block {
+			memcpy(eigrp->kvalues, defs->kvalues,
+			    sizeof(eigrp->kvalues));
+			eigrp->active_timeout = defs->active_timeout;
+			eigrp->maximum_hops = defs->maximum_hops;
+			eigrp->maximum_paths = defs->maximum_paths;
+			eigrp->variance = defs->variance;
+			eigrp->dflt_metric = defs->dflt_metric;
+			eigrp = NULL;
+			defs = &afdefs;
+		}
+		;
+
+as_block	: '{' optnl asopts_l '}'
+		| '{' optnl '}'
+		|
+		;
+
+asopts_l	: asopts_l asoptsl nl
+		| asoptsl optnl
+		;
+
+asoptsl		: interface
+		| redistribute {
+			SIMPLEQ_INSERT_TAIL(&eigrp->redist_list, $1, entry);
+		}
+		| defaults
+		;
+
+interface	: INTERFACE STRING {
+			struct kif	*kif;
+
+			if ((kif = kif_findname($2)) == NULL) {
+				yyerror("unknown interface %s", $2);
+				free($2);
+				YYERROR;
+			}
+			free($2);
+			ei = conf_get_if(kif);
+			if (ei == NULL)
+				YYERROR;
+
+			ifacedefs = *defs;
+			defs = &ifacedefs;
+		} interface_block {
+			ei->hello_holdtime = defs->hello_holdtime;
+			ei->hello_interval = defs->hello_interval;
+			ei->delay = defs->delay;
+			ei->bandwidth = defs->bandwidth;
+			ei->splithorizon = defs->splithorizon;
+			ei = NULL;
+			defs = &asdefs;
+		}
+		;
+
+interface_block	: '{' optnl interfaceopts_l '}'
+		| '{' optnl '}'
+		|
+		;
+
+interfaceopts_l	: interfaceopts_l interfaceoptsl nl
+		| interfaceoptsl optnl
+		;
+
+interfaceoptsl	: PASSIVE { ei->passive = 1; }
+		| SUMMARY_ADDR STRING {
+			struct summary_addr	*s;
+
+			if ((s = calloc(1, sizeof(*s))) == NULL)
+				fatal(NULL);
+			if (get_prefix($2, &s->prefix, &s->prefixlen) < 0) {
+				yyerror("invalid summary-address");
+				free($2);
+				free(s);
+				YYERROR;
+			}
+
+			free($2);
+			TAILQ_INSERT_TAIL(&ei->summary_list, s, entry);
+		}
+		| iface_defaults
+		;
+
 redistribute	: no REDISTRIBUTE STRING opt_red_metric {
 			struct redistribute	*r;
 
@@ -263,7 +387,7 @@ redistribute	: no REDISTRIBUTE STRING opt_red_metric {
 				r->type = REDIST_OSPF;
 			else if (!strcmp($3, "connected"))
 				r->type = REDIST_CONNECTED;
-			else if (host($3, &r->addr, &r->prefixlen) >= 0)
+			else if (get_prefix($3, &r->addr, &r->prefixlen) >= 0)
 				r->type = REDIST_ADDR;
 			else {
 				yyerror("invalid redistribute");
@@ -322,8 +446,8 @@ redist_metric	: NUMBER NUMBER NUMBER NUMBER NUMBER {
 		}
 		;
 
-opt_red_metric	: /* empty */			{ $$ = NULL; }
-		| METRIC redist_metric 		{ $$ = $2; }
+opt_red_metric	: /* empty */		{ $$ = NULL; }
+		| METRIC redist_metric 	{ $$ = $2; }
 		;
 
 defaults	: KVALUES NUMBER NUMBER NUMBER NUMBER NUMBER NUMBER {
@@ -424,130 +548,6 @@ iface_defaults	: HELLOINTERVAL NUMBER {
 		| SPLITHORIZON yesno {
 			defs->splithorizon = $2;
 		}
-		;
-
-optnl		: '\n' optnl
-		|
-		;
-
-nl		: '\n' optnl		/* one newline or more */
-		;
-
-af		: AF eigrp_af {
-			af = $2;
-			afdefs = *defs;
-			defs = &afdefs;
-		} af_block {
-			af = AF_UNSPEC;
-			defs = &globaldefs;
-		}
-		;
-
-af_block	: '{' optnl afopts_l '}'
-		| '{' optnl '}'
-		|
-		;
-
-afopts_l	: afopts_l afoptsl nl
-		| afoptsl optnl
-		;
-
-afoptsl		: as
-		| defaults
-		;
-
-as		: AS NUMBER {
-			if ($2 < EIGRP_MIN_AS || $2 > EIGRP_MAX_AS) {
-				yyerror("invalid autonomous-system");
-				YYERROR;
-			}
-			eigrp = conf_get_instance($2);
-			if (eigrp == NULL)
-				YYERROR;
-
-			asdefs = *defs;
-			defs = &asdefs;
-		} as_block {
-			memcpy(eigrp->kvalues, defs->kvalues,
-			    sizeof(eigrp->kvalues));
-			eigrp->active_timeout = defs->active_timeout;
-			eigrp->maximum_hops = defs->maximum_hops;
-			eigrp->maximum_paths = defs->maximum_paths;
-			eigrp->variance = defs->variance;
-			eigrp->dflt_metric = defs->dflt_metric;
-			eigrp = NULL;
-			defs = &afdefs;
-		}
-		;
-
-as_block	: '{' optnl asopts_l '}'
-		| '{' optnl '}'
-		|
-		;
-
-asopts_l	: asopts_l asoptsl nl
-		| asoptsl optnl
-		;
-
-asoptsl		: interface
-		| redistribute {
-			SIMPLEQ_INSERT_TAIL(&eigrp->redist_list, $1, entry);
-		}
-		| defaults
-		;
-
-interface	: INTERFACE STRING	{
-			struct kif	*kif;
-
-			if ((kif = kif_findname($2)) == NULL) {
-				yyerror("unknown interface %s", $2);
-				free($2);
-				YYERROR;
-			}
-			free($2);
-			ei = conf_get_if(kif);
-			if (ei == NULL)
-				YYERROR;
-
-			ifacedefs = *defs;
-			defs = &ifacedefs;
-		} interface_block {
-			ei->hello_holdtime = defs->hello_holdtime;
-			ei->hello_interval = defs->hello_interval;
-			ei->delay = defs->delay;
-			ei->bandwidth = defs->bandwidth;
-			ei->splithorizon = defs->splithorizon;
-			ei = NULL;
-			defs = &asdefs;
-		}
-		;
-
-interface_block	: '{' optnl interfaceopts_l '}'
-		| '{' optnl '}'
-		|
-		;
-
-interfaceopts_l	: interfaceopts_l interfaceoptsl nl
-		| interfaceoptsl optnl
-		;
-
-interfaceoptsl	: PASSIVE		{ ei->passive = 1; }
-		| SUMMARY_ADDR STRING {
-			struct summary_addr	*s;
-
-			if ((s = calloc(1, sizeof(*s))) == NULL)
-				fatal(NULL);
-			if (host($2, &s->prefix, &s->prefixlen) < 0) {
-				yyerror("invalid summary-address");
-				free($2);
-				free(s);
-				YYERROR;
-			}
-
-			free($2);
-			TAILQ_INSERT_TAIL(&ei->summary_list, s, entry);
-		}
-		| iface_defaults
 		;
 
 %%
@@ -1163,7 +1163,7 @@ get_rtr_id(void)
 }
 
 int
-host(const char *s, union eigrpd_addr *addr, uint8_t *plen)
+get_prefix(const char *s, union eigrpd_addr *addr, uint8_t *plen)
 {
 	char			*p, *ps;
 	const char		*errstr;
@@ -1187,11 +1187,11 @@ host(const char *s, union eigrpd_addr *addr, uint8_t *plen)
 			return (-1);
 		}
 		if ((ps = malloc(strlen(s) - strlen(p) + 1)) == NULL)
-			fatal("host: malloc");
+			fatal("get_prefix: malloc");
 		strlcpy(ps, s, strlen(s) - strlen(p) + 1);
 	} else {
 		if ((ps = strdup(s)) == NULL)
-			fatal("host: strdup");
+			fatal("get_prefix: strdup");
 		*plen = maxplen;
 	}
 

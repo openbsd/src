@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.14 2016/02/21 18:56:49 renato Exp $ */
+/*	$OpenBSD: interface.c,v 1.15 2016/02/21 19:01:12 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -105,6 +105,18 @@ if_del(struct iface *iface)
 	free(iface);
 }
 
+struct iface *
+if_lookup(struct eigrpd_conf *xconf, unsigned int ifindex)
+{
+	struct iface	*iface;
+
+	TAILQ_FOREACH(iface, &xconf->iface_list, entry)
+		if (iface->ifindex == ifindex)
+			return (iface);
+
+	return (NULL);
+}
+
 void
 if_init(struct eigrpd_conf *xconf, struct iface *iface)
 {
@@ -125,34 +137,22 @@ if_init(struct eigrpd_conf *xconf, struct iface *iface)
 		fatalx("interface rdomain mismatch");
 }
 
-struct iface *
-if_lookup(struct eigrpd_conf *xconf, unsigned int ifindex)
-{
-	struct iface	*iface;
-
-	TAILQ_FOREACH(iface, &xconf->iface_list, entry)
-		if (iface->ifindex == ifindex)
-			return (iface);
-
-	return (NULL);
-}
-
 void
-if_addr_new(struct iface *iface, struct kaddr *kaddr)
+if_addr_new(struct iface *iface, struct kaddr *ka)
 {
 	struct if_addr		*if_addr;
 	struct eigrp_iface	*ei;
 
-	if (if_addr_lookup(&iface->addr_list, kaddr) != NULL)
+	if (if_addr_lookup(&iface->addr_list, ka) != NULL)
 		return;
 
 	if ((if_addr = calloc(1, sizeof(*if_addr))) == NULL)
 		fatal("if_addr_new: calloc");
 
-	if_addr->af = kaddr->af;
-	if_addr->addr = kaddr->addr;
-	if_addr->prefixlen = kaddr->prefixlen;
-	if_addr->dstbrd = kaddr->dstbrd;
+	if_addr->af = ka->af;
+	if_addr->addr = ka->addr;
+	if_addr->prefixlen = ka->prefixlen;
+	if_addr->dstbrd = ka->dstbrd;
 
 	TAILQ_INSERT_TAIL(&iface->addr_list, if_addr, entry);
 
@@ -164,12 +164,12 @@ if_addr_new(struct iface *iface, struct kaddr *kaddr)
 }
 
 void
-if_addr_del(struct iface *iface, struct kaddr *kaddr)
+if_addr_del(struct iface *iface, struct kaddr *ka)
 {
 	struct if_addr		*if_addr;
 	struct eigrp_iface	*ei;
 
-	if_addr = if_addr_lookup(&iface->addr_list, kaddr);
+	if_addr = if_addr_lookup(&iface->addr_list, ka);
 	if (if_addr == NULL)
 		return;
 
@@ -183,15 +183,15 @@ if_addr_del(struct iface *iface, struct kaddr *kaddr)
 }
 
 struct if_addr *
-if_addr_lookup(struct if_addr_head *addr_list, struct kaddr *kaddr)
+if_addr_lookup(struct if_addr_head *addr_list, struct kaddr *ka)
 {
 	struct if_addr	*if_addr;
-	int		 af = kaddr->af;
+	int		 af = ka->af;
 
 	TAILQ_FOREACH(if_addr, addr_list, entry)
-		if (!eigrp_addrcmp(af, &if_addr->addr, &kaddr->addr) &&
-		    if_addr->prefixlen == kaddr->prefixlen &&
-		    !eigrp_addrcmp(af, &if_addr->dstbrd, &kaddr->dstbrd))
+		if (!eigrp_addrcmp(af, &if_addr->addr, &ka->addr) &&
+		    if_addr->prefixlen == ka->prefixlen &&
+		    !eigrp_addrcmp(af, &if_addr->dstbrd, &ka->dstbrd))
 			return (if_addr);
 
 	return (NULL);
@@ -292,7 +292,7 @@ eigrp_if_new(struct eigrpd_conf *xconf, struct eigrp *eigrp, struct kif *kif)
 
 	ei->state = IF_STA_DOWN;
 	/* get next unused ifaceid */
-	while (eigrp_iface_find_id(ifacecnt++))
+	while (eigrp_if_lookup_id(ifacecnt++))
 		;
 	ei->ifaceid = ifacecnt;
 	ei->eigrp = eigrp;
@@ -337,6 +337,27 @@ eigrp_if_del(struct eigrp_iface *ei)
 		if_del(ei->iface);
 
 	free(ei);
+}
+
+struct eigrp_iface *
+eigrp_if_lookup(struct iface *iface, int af, uint16_t as)
+{
+	struct eigrp_iface	*ei;
+
+	TAILQ_FOREACH(ei, &iface->ei_list, i_entry)
+		if (ei->eigrp->af == af &&
+		    ei->eigrp->as == as)
+			return (ei);
+
+	return (NULL);
+}
+
+struct eigrp_iface *
+eigrp_if_lookup_id(uint32_t ifaceid)
+{
+	struct eigrp_iface	 e;
+	e.ifaceid = ifaceid;
+	return (RB_FIND(iface_id_head, &ifaces_by_id, &e));
 }
 
 void
@@ -417,27 +438,6 @@ eigrp_if_reset(struct eigrp_iface *ei)
 	}
 
 	eigrp_if_stop_hello_timer(ei);
-}
-
-struct eigrp_iface *
-eigrp_iface_find_id(uint32_t ifaceid)
-{
-	struct eigrp_iface	 e;
-	e.ifaceid = ifaceid;
-	return (RB_FIND(iface_id_head, &ifaces_by_id, &e));
-}
-
-struct eigrp_iface *
-eigrp_if_lookup(struct iface *iface, int af, uint16_t as)
-{
-	struct eigrp_iface	*ei;
-
-	TAILQ_FOREACH(ei, &iface->ei_list, i_entry)
-		if (ei->eigrp->af == af &&
-		    ei->eigrp->as == as)
-			return (ei);
-
-	return (NULL);
 }
 
 /* timers */

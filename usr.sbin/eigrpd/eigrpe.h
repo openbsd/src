@@ -1,4 +1,4 @@
-/*	$OpenBSD: eigrpe.h,v 1.8 2016/02/21 18:40:56 renato Exp $ */
+/*	$OpenBSD: eigrpe.h,v 1.9 2016/02/21 19:01:12 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -90,8 +90,8 @@ void		 eigrpe_stats_ctl(struct ctl_conn *);
 /* interface.c */
 struct iface		*if_new(struct eigrpd_conf *, struct kif *);
 void			 if_del(struct iface *);
-void			 if_init(struct eigrpd_conf *, struct iface *);
 struct iface		*if_lookup(struct eigrpd_conf *, unsigned int);
+void			 if_init(struct eigrpd_conf *, struct iface *);
 void			 if_addr_new(struct iface *, struct kaddr *);
 void			 if_addr_del(struct iface *, struct kaddr *);
 struct if_addr		*if_addr_lookup(struct if_addr_head *, struct kaddr *);
@@ -101,10 +101,10 @@ void			 if_update(struct iface *, int);
 struct eigrp_iface	*eigrp_if_new(struct eigrpd_conf *, struct eigrp *,
     struct kif *);
 void			 eigrp_if_del(struct eigrp_iface *);
+struct eigrp_iface	*eigrp_if_lookup(struct iface *, int, uint16_t);
+struct eigrp_iface	*eigrp_if_lookup_id(uint32_t);
 void			 eigrp_if_start(struct eigrp_iface *);
 void			 eigrp_if_reset(struct eigrp_iface *);
-struct eigrp_iface	*eigrp_if_lookup(struct iface *, int, uint16_t);
-struct eigrp_iface	*eigrp_iface_find_id(uint32_t);
 struct ctl_iface	*if_to_ctl(struct eigrp_iface *);
 void			 if_set_sockbuf(int);
 int			 if_join_ipv4_group(struct iface *, struct in_addr *);
