@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-802_11.c,v 1.31 2016/02/04 10:58:48 stsp Exp $	*/
+/*	$OpenBSD: print-802_11.c,v 1.32 2016/02/21 16:09:47 stsp Exp $	*/
 
 /*
  * Copyright (c) 2005 Reyk Floeter <reyk@openbsd.org>
@@ -673,7 +673,8 @@ ieee80211_elements(struct ieee80211_frame *wh, u_int flen)
 			break;
 		case IEEE80211_ELEMID_COUNTRY:
 			printf(", country");
-			ieee80211_print_country(data, len);
+			if (vflag)
+				ieee80211_print_country(data, len);
 			break;
 		case IEEE80211_ELEMID_CHALLENGE:
 			printf(", challenge");
