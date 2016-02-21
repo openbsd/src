@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_dual.c,v 1.23 2016/02/21 19:01:12 renato Exp $ */
+/*	$OpenBSD: rde_dual.c,v 1.24 2016/02/21 19:03:58 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -615,8 +615,12 @@ rt_update_fib(struct rt_node *rn)
 			return;
 
 		TAILQ_FOREACH(route, &rn->routes, entry) {
+			/* skip redistributed routes */
+			if (route->nbr->flags & F_RDE_NBR_REDIST)
+				continue;
+
 			/*
-			 * only feasible successors and the successor itself
+			 * Only feasible successors and the successor itself
 			 * are elegible to be installed.
 			 */
 			if (route->rdistance > rn->successor.fdistance)
