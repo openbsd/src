@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.7 2016/01/15 12:41:09 renato Exp $ */
+/*	$OpenBSD: kroute.c,v 1.8 2016/02/21 18:36:11 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -1398,13 +1398,14 @@ rtmsg_process(char *buf, size_t len)
 		case RTM_GET:
 		case RTM_CHANGE:
 		case RTM_DELETE:
-			if (rtm->rtm_pid == kr_state.pid)
-				continue;
-
 			if (rtm->rtm_errno)		/* failed attempts... */
 				continue;
 
 			if (rtm->rtm_tableid != kr_state.rdomain)
+				continue;
+
+			if (rtm->rtm_type == RTM_GET &&
+			    rtm->rtm_pid != kr_state.pid)
 				continue;
 
 			/* Skip ARP/ND cache and broadcast routes. */
