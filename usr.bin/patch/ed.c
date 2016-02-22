@@ -1,4 +1,4 @@
-/*	$OpenBSD: ed.c,v 1.1 2015/10/16 07:33:47 tobias Exp $ */
+/*	$OpenBSD: ed.c,v 1.2 2016/02/22 19:31:38 tobias Exp $ */
 
 /*
  * Copyright (c) 2015 Tobias Stoeckmann <tobias@openbsd.org>
@@ -121,23 +121,16 @@ do_ed_script(void)
 			continue;
 		}
 
-		if (fsm == FSM_A) {
-			nline = create_line(linepos);
-			if (cline == NULL)
-				LIST_INSERT_HEAD(&head, nline, entries);
-			else
-				LIST_INSERT_AFTER(cline, nline, entries);
-			cline = nline;
-			line_count++;
-		} else if (fsm == FSM_I) {
-			nline = create_line(linepos);
-			if (cline == NULL) {
-				LIST_INSERT_HEAD(&head, nline, entries);
-				cline = nline;
-			} else
-				LIST_INSERT_BEFORE(cline, nline, entries);
-			line_count++;
-		}
+		nline = create_line(linepos);
+		if (cline == NULL)
+			LIST_INSERT_HEAD(&head, nline, entries);
+		else if (fsm == FSM_A)
+			LIST_INSERT_AFTER(cline, nline, entries);
+		else
+			LIST_INSERT_BEFORE(cline, nline, entries);
+		cline = nline;
+		line_count++;
+		fsm = FSM_A;
 	}
 
 	next_intuit_at(linepos, p_input_line);
