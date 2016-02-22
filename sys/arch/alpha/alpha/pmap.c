@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.81 2015/12/04 06:21:52 jsg Exp $ */
+/* $OpenBSD: pmap.c,v 1.82 2016/02/22 07:13:46 landry Exp $ */
 /* $NetBSD: pmap.c,v 1.154 2000/12/07 22:18:55 thorpej Exp $ */
 
 /*-
@@ -140,7 +140,6 @@
 #include <sys/pool.h>
 #include <sys/user.h>
 #include <sys/buf.h>
-#include <sys/mutex.h>
 #include <sys/atomic.h>
 #ifdef SYSVSHM
 #include <sys/shm.h>
