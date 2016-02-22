@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.182 2016/02/13 20:43:07 gilles Exp $	*/
+/*	$OpenBSD: parse.y,v 1.183 2016/02/22 16:19:05 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -469,7 +469,7 @@ opt_if_listen : INET4 {
 			if (config_lo_filter(&listen_opts, $2)) {
 				YYERROR;
 			}
-}
+		}
 		| SMTPS				{
 			if (listen_opts.options & LO_SSL) {
 				yyerror("TLS mode already specified");
@@ -663,7 +663,7 @@ opt_if_listen : INET4 {
 		;
 
 listener_type	: socket_listener
-		| interface_listener
+		| if_listener
 		;
 
 socket_listener	: SOCKET sock_listen {
@@ -675,10 +675,7 @@ socket_listener	: SOCKET sock_listen {
 		}
 		;
 
-interface_listener:
-		STRING if_listen {
-			listen_opts.family = AF_UNSPEC;
-			listen_opts.flags |= F_EXT_DSN;
+if_listener	: STRING if_listen {
 			listen_opts.ifx = $1;
 			create_if_listener(conf->sc_listeners, &listen_opts);
 		}
@@ -882,6 +879,8 @@ main		: BOUNCEWARN {
 		| LIMIT SCHEDULER limits_scheduler
 		| LISTEN {
 			memset(&listen_opts, 0, sizeof listen_opts);
+			listen_opts.family = AF_UNSPEC;
+			listen_opts.flags |= F_EXT_DSN;
 		} ON listener_type
 		| FILTER STRING STRING {
 			if (!strcmp($3, "chain")) {
