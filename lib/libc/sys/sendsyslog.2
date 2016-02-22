@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sendsyslog.2,v 1.4 2015/09/10 17:55:21 schwarze Exp $
+.\"	$OpenBSD: sendsyslog.2,v 1.5 2016/02/22 22:22:30 bluhm Exp $
 .\"
 .\" Copyright (c) 2014 Theo de Raadt
 .\"
@@ -14,23 +14,44 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 10 2015 $
+.Dd $Mdocdate: February 22 2016 $
 .Dt SENDSYSLOG 2
 .Os
 .Sh NAME
-.Nm sendsyslog
+.Nm sendsyslog ,
+.Nm sendsyslog2
 .Nd send a message to syslogd
 .Sh SYNOPSIS
+.In sys/syslog.h
 .In sys/types.h
 .Ft int
 .Fn sendsyslog "const void *msg" "size_t len"
+.Ft int
+.Fn sendsyslog2 "const void *msg" "size_t len" "int flags"
 .Sh DESCRIPTION
+The
 .Fn sendsyslog
-is used to transmit a
+and
+.Fn sendsyslog2
+functions are used to transmit a
 .Xr syslog 3
 formatted message direct to
 .Xr syslogd 8
 without requiring the allocation of a socket.
+.Pp
+The
+.Fa flags
+argument of
+.Fn sendsyslog2
+accepts the
+.Dv LOG_CONS
+flag.
+If
+.Dv LOG_CONS
+is specified, and
+.Xr syslogd 8
+is not accepting messages, the message will be sent directly to the
+console.
 This is used internally by
 .Xr syslog_r 3 ,
 so that messages can be sent during difficult situations.
@@ -53,3 +74,7 @@ The
 .Fn sendsyslog
 function call appeared in
 .Ox 5.6 .
+The
+.Fn sendsyslog2
+function call appeared in
+.Ox 5.9 .
