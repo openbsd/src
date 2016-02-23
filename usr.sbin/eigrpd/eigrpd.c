@@ -1,4 +1,4 @@
-/*	$OpenBSD: eigrpd.c,v 1.7 2016/02/21 18:56:49 renato Exp $ */
+/*	$OpenBSD: eigrpd.c,v 1.8 2016/02/23 14:51:13 gsoares Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -272,7 +272,7 @@ main(int argc, char *argv[])
 	    eigrpd_conf->rdomain) == -1)
 		fatalx("kr_init failed");
 
-	if (pledge("stdio proc", NULL) == -1)
+	if (pledge("inet rpath stdio proc", NULL) == -1)
 		fatal("pledge");
 
 	event_dispatch();
