@@ -1,4 +1,4 @@
-/*	$OpenBSD: dump.c,v 1.74 2016/01/31 23:00:11 krw Exp $	*/
+/*	$OpenBSD: dump.c,v 1.75 2016/02/23 02:39:54 krw Exp $	*/
 
 /*
  * dump.c - dumping partition maps
@@ -54,7 +54,7 @@ dump_block_zero(struct partition_map *map)
 
 	printf("\nDevice block size=%u, Number of Blocks=%u",
 	       map->sbBlkSize, map->sbBlkCount);
-	if (fmt_scaled(map->sbBlkCount * map->sbBlkSize, buf) == 0)
+	if (fmt_scaled((long long)map->sbBlkCount * map->sbBlkSize, buf) == 0)
 		printf(" (%s)\n", buf);
 	else
 		printf("\n");
@@ -117,8 +117,8 @@ dump_partition_entry(struct entry *entry, int type_length, int name_length,
 	printf("%*u @ %-*u", digits, entry->dpme_pblocks, digits,
 	    entry->dpme_pblock_start);
 
-	if (fmt_scaled(entry->dpme_pblocks * entry->the_map->sbBlkSize, buf) == 
-	    0)
+	if (fmt_scaled((long long)entry->dpme_pblocks *
+	    entry->the_map->sbBlkSize, buf) == 0)
 		printf("(%s)\n", buf);
 	else
 		printf("\n");
