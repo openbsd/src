@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fdisk.8,v 1.91 2016/01/09 18:10:56 krw Exp $
+.\"	$OpenBSD: fdisk.8,v 1.92 2016/02/23 03:34:17 krw Exp $
 .\"
 .\"
 .\" Copyright (c) 1997 Tobias Weingartner
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 9 2016 $
+.Dd $Mdocdate: February 23 2016 $
 .Dt FDISK 8
 .Os
 .Sh NAME
@@ -171,16 +171,16 @@ Specify the
 .Ar disk
 to operate on.
 It can be specified either by its full pathname or an abbreviated disk form.
-In its abbreviated form, the path to the device, the
+In its abbreviated form, the path to the device and the
 .Sq r
 denoting
-.Qq raw device ,
-and the partition letter, can all be omitted.
+.Qq raw device
+are omitted and the partition letter is optional.
 For example, the first IDE disk can be specified as either
 .Pa /dev/rwd0c ,
-.Pa /dev/wd0c ,
+.Pa wd0c ,
 or
-.Ar wd0 .
+.Pa wd0 .
 .El
 .Sh TYPICAL LAYOUT
 When called with no special flags,

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pdisk.8,v 1.30 2016/01/28 07:57:19 jmc Exp $
+.\"	$OpenBSD: pdisk.8,v 1.31 2016/02/23 03:34:17 krw Exp $
 .\"
 .\" Copyright 1996,1997,1998 by Apple Computer, Inc.
 .\"              All Rights Reserved
@@ -19,7 +19,7 @@
 .\" NEGLIGENCE, OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 .\" WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 28 2016 $
+.Dd $Mdocdate: February 23 2016 $
 .Dt PDISK 8
 .Os
 .Sh NAME
@@ -51,16 +51,16 @@ Specify the
 .Ar disk
 to operate on.
 It can be specified either by its full pathname or an abbreviated disk form.
-In its abbreviated form, the path to the device, the
+In its abbreviated form, the path to the device and the
 .Sq r
 denoting
-.Dq raw device ,
-and the partition letter, can all be omitted.
+.Dq raw device
+are omitted, with the partition letter being optional.
 For example, the first IDE disk can be specified as either
 .Pa /dev/rwd0c ,
-.Pa /dev/wd0c ,
+.Pa wd0c ,
 or
-.Ar wd0 .
+.Pa wd0 .
 .El
 .Sh COMMAND MODE
 The list of commands and their explanations are given below.
