@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.218 2016/01/31 00:18:07 sashan Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.219 2016/02/23 01:39:14 dlg Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -1211,6 +1211,40 @@ m_dup_pkthdr(struct mbuf *to, struct mbuf *from, int wait)
 		to->m_data = to->m_pktdat;
 
 	return (0);
+}
+
+struct mbuf *
+m_dup_pkt(struct mbuf *m0, unsigned int adj, int wait)
+{
+	struct mbuf *m;
+	int len;
+
+	len = m0->m_pkthdr.len + adj;
+	if (len > MAXMCLBYTES) /* XXX */
+		return (NULL);
+
+	m = m_get(m0->m_type, wait);
+	if (m == NULL)
+		return (NULL);
+
+	if (m_dup_pkthdr(m, m0, wait) != 0)
+		goto fail;
+
+	if (len > MHLEN) {
+		MCLGETI(m, len, NULL, wait);
+		if (!ISSET(m->m_flags, M_EXT))
+			goto fail;
+	}
+
+	m->m_len = m->m_pkthdr.len = len;
+	m_adj(m, adj);
+	m_copydata(m0, 0, m0->m_pkthdr.len, mtod(m, caddr_t));
+
+	return (m);
+
+fail:
+	m_freem(m);
+	return (NULL);
 }
 
 #ifdef DDB

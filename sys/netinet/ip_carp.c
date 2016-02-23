@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.286 2016/01/21 11:23:48 mpi Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.287 2016/02/23 01:39:14 dlg Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -1429,7 +1429,7 @@ carp_input(struct ifnet *ifp0, struct mbuf *m, void *cookie)
 			if (!(sc->sc_if.if_flags & IFF_UP))
 				continue;
 
-			m0 = m_copym2(m, 0, M_COPYALL, M_DONTWAIT);
+			m0 = m_dup_pkt(m, ETHER_ALIGN, M_DONTWAIT);
 			if (m0 == NULL)
 				continue;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.207 2016/01/31 00:18:07 sashan Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.208 2016/02/23 01:39:14 dlg Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -447,6 +447,7 @@ void	m_cat(struct mbuf *, struct mbuf *);
 struct mbuf *m_devget(char *, int, int);
 int	m_apply(struct mbuf *, int, int,
 	    int (*)(caddr_t, caddr_t, unsigned int), caddr_t);
+struct mbuf *m_dup_pkt(struct mbuf *, unsigned int, int);
 int	m_dup_pkthdr(struct mbuf *, struct mbuf *, int);
 
 /* Packet tag routines */
