@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepository.pm,v 1.117 2016/02/09 10:02:27 espie Exp $
+# $OpenBSD: PackageRepository.pm,v 1.118 2016/02/23 17:45:43 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -586,8 +586,38 @@ sub drop_privileges_and_setup_env
 		$< = $uid;
 		$> = $uid;
 	} 
-	$ENV{LC_ALL} = 'C';
 	# don't error out yet if we can't change.
+
+	# create sanitized env for ftp
+	my %newenv = (
+		HOME => '/var/empty',
+		USER => '_pfetch',
+		LOGNAME => '_pfetch',
+		SHELL => '/bin/sh',
+		LC_ALL => 'C', # especially, laundry error messages
+		PATH => '/bin:/usr/bin'
+	    );
+
+	# copy selected stuff;
+	for my $k (qw(
+	    TERM
+	    FTPMODE 
+	    FTPSERVER
+	    FTPSERVERPORT
+	    ftp_proxy 
+	    http_proxy 
+	    http_cookies
+	    ALL_PROXY
+	    FTP_PROXY
+	    HTTPS_PROXY
+	    HTTP_PROXY
+	    NO_PROXY)) {
+	    	if (exists $ENV{$k}) {
+			$newenv{$k} = $ENV{$k};
+		}
+	}
+	# don't forget to swap!
+	%ENV = %newenv;
 }
 
 
