@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.37 2016/02/23 17:15:09 stefan Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.38 2016/02/23 17:17:31 stefan Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -2000,8 +2000,8 @@ exit:
 		if (vcpu->vc_control_va)
 			km_free((void *)vcpu->vc_control_va, PAGE_SIZE,
 			    &kv_page, &kp_zero);
-		if (vcpu->vc_msr_bitmap_pa)
-			km_free((void *)vcpu->vc_msr_bitmap_pa, PAGE_SIZE,
+		if (vcpu->vc_msr_bitmap_va)
+			km_free((void *)vcpu->vc_msr_bitmap_va, PAGE_SIZE,
 			    &kv_page, &kp_zero);
 		if (vcpu->vc_vmx_msr_exit_save_va)
 			km_free((void *)vcpu->vc_vmx_msr_exit_save_va,
