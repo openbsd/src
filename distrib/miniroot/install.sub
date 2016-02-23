@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.879 2016/02/20 12:08:55 rpe Exp $
+#	$OpenBSD: install.sub,v 1.880 2016/02/23 02:34:09 krw Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -295,7 +295,7 @@ disk_has() {
 	[[ -n $_disk && -n $_pttype ]] || exit
 
 	# Commands to inspect disk. Default: "fdisk $_disk"
-	local _c_hfs="pdisk -l /dev/${_disk}c"
+	local _c_hfs="pdisk -l $_disk"
 	local _c_sr="bioctl -q $_disk"
 
 	# Patterns for partition-table-types and partition-types.

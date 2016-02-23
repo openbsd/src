@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.67 2016/02/08 17:39:37 krw Exp $
+#	$OpenBSD: install.md,v 1.68 2016/02/23 02:34:09 krw Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@ md_prep_MBR() {
 
 WARNING: Putting an MBR partition table on $_disk will DESTROY the existing HFS
          partitions and HFS partition table:
-$(pdisk -l /dev/${_disk}c)
+$(pdisk -l $_disk)
 
 __EOT
 		ask_yn "Are you *sure* you want an MBR partition table on $_disk?"
@@ -127,12 +127,12 @@ md_prep_HFS() {
 		_d=Modify
 		disk_has $_disk hfs openbsd &&
 			{ _q="Use the (O)penBSD partition, "; _d=OpenBSD; }
-		pdisk -l /dev/${_disk}c
+		pdisk -l $_disk
 		ask "$_q(M)odify a partition or (A)bort?" "$_d"
 		case $resp in
 		[aA]*)	return 1 ;;
 		[oO]*)	return 0 ;;
-		[mM]*)	pdisk /dev/${_disk}c
+		[mM]*)	pdisk $_disk
 			disk_has $_disk hfs openbsd && break
 			echo "\nNo 'OpenBSD'-type partition named 'OpenBSD'!"
 		esac
