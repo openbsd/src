@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr.c,v 1.50 2015/12/16 16:32:30 deraadt Exp $	*/
+/*	$OpenBSD: asr.c,v 1.51 2016/02/24 20:52:53 eric Exp $	*/
 /*
  * Copyright (c) 2010-2012 Eric Faurot <eric@openbsd.org>
  *
@@ -565,8 +565,10 @@ pass0(char **tok, int n, struct asr_ctx *ac)
 		}
 	} else if (!strcmp(tok[0], "search")) {
 		/* resolv.conf says the last line wins */
-		for (i = 0; i < ASR_MAXDOM; i++)
+		for (i = 0; i < ASR_MAXDOM; i++) {
 			free(ac->ac_dom[i]);
+			ac->ac_dom[i] = NULL;
+		}
 		ac->ac_domcount = 0;
 		for (i = 1; i < n; i++)
 			asr_ctx_add_searchdomain(ac, tok[i]);
