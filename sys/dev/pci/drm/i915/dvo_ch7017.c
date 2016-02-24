@@ -1,4 +1,4 @@
-/*	$OpenBSD: dvo_ch7017.c,v 1.5 2015/09/23 23:12:11 kettenis Exp $	*/
+/*	$OpenBSD: dvo_ch7017.c,v 1.6 2016/02/24 21:06:13 jsg Exp $	*/
 /*
  * Copyright © 2006 Intel Corporation
  *
@@ -226,14 +226,14 @@ static bool ch7017_init(struct intel_dvo_device *dvo,
 		str = "ch7019";
 		break;
 	default:
-		DRM_DEBUG_KMS("ch701x not detected, got %d: from %s "
+		DRM_DEBUG_KMS("ch701x not detected, got %d: from  "
 			      "slave %d.\n",
-			      val, adapter->name, dvo->slave_addr);
+			      val, dvo->slave_addr);
 		goto fail;
 	}
 
-	DRM_DEBUG_KMS("%s detected on %s, addr %d\n",
-		      str, adapter->name, dvo->slave_addr);
+	DRM_DEBUG_KMS("%s detected, addr %d\n",
+		      str, dvo->slave_addr);
 	return true;
 
 fail:

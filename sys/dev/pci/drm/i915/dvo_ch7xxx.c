@@ -1,4 +1,4 @@
-/*	$OpenBSD: dvo_ch7xxx.c,v 1.5 2015/09/23 23:12:11 kettenis Exp $	*/
+/*	$OpenBSD: dvo_ch7xxx.c,v 1.6 2016/02/24 21:06:13 jsg Exp $	*/
 /**************************************************************************
 
 Copyright © 2006 Dave Airlie
@@ -157,8 +157,8 @@ static bool ch7xxx_readb(struct intel_dvo_device *dvo, int addr, uint8_t *ch)
 read_err:
 	iic_release_bus(adapter, 0);
 	if (!ch7xxx->quiet) {
-		DRM_DEBUG_KMS("Unable to read register 0x%02x from %s:%02x.\n",
-			  addr, adapter->name, dvo->slave_addr);
+		DRM_DEBUG_KMS("Unable to read register 0x%02x from %02x.\n",
+			  addr, dvo->slave_addr);
 	}
 	return false;
 }
@@ -185,8 +185,8 @@ static bool ch7xxx_writeb(struct intel_dvo_device *dvo, int addr, uint8_t ch)
 
 write_err:
 	if (!ch7xxx->quiet) {
-		DRM_DEBUG_KMS("Unable to write register 0x%02x to %s:%d.\n",
-			  addr, adapter->name, dvo->slave_addr);
+		DRM_DEBUG_KMS("Unable to write register 0x%02x to %d.\n",
+			  addr, dvo->slave_addr);
 	}
 
 	return false;
@@ -213,9 +213,9 @@ static bool ch7xxx_init(struct intel_dvo_device *dvo,
 
 	name = ch7xxx_get_id(vendor);
 	if (!name) {
-		DRM_DEBUG_KMS("ch7xxx not detected; got 0x%02x from %s "
+		DRM_DEBUG_KMS("ch7xxx not detected; got 0x%02x from "
 				"slave %d.\n",
-			  vendor, adapter->name, dvo->slave_addr);
+			  vendor, dvo->slave_addr);
 		goto out;
 	}
 
@@ -225,9 +225,9 @@ static bool ch7xxx_init(struct intel_dvo_device *dvo,
 
 	devid = ch7xxx_get_did(device);
 	if (!devid) {
-		DRM_DEBUG_KMS("ch7xxx not detected; got 0x%02x from %s "
+		DRM_DEBUG_KMS("ch7xxx not detected; got 0x%02x from "
 				"slave %d.\n",
-			  vendor, adapter->name, dvo->slave_addr);
+			  vendor, dvo->slave_addr);
 		goto out;
 	}
 
