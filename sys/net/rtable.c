@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtable.c,v 1.38 2016/01/18 18:27:12 mpi Exp $ */
+/*	$OpenBSD: rtable.c,v 1.39 2016/02/24 22:41:53 mpi Exp $ */
 
 /*
  * Copyright (c) 2014-2015 Martin Pieuchot
@@ -367,7 +367,7 @@ rtable_match(unsigned int rtableid, struct sockaddr *dst, uint32_t *src)
 
 #ifndef SMALL_KERNEL
 	/* Gateway selection by Hash-Threshold (RFC 2992) */
-	if ((hash = rt_hash(rt, src)) != -1) {
+	if ((hash = rt_hash(rt, dst, src)) != -1) {
 		struct rtentry		*mrt = rt;
 		int			 threshold, npaths = 1;
 
@@ -617,7 +617,7 @@ rtable_match(unsigned int rtableid, struct sockaddr *dst, uint32_t *src)
 
 #ifndef SMALL_KERNEL
 	/* Gateway selection by Hash-Threshold (RFC 2992) */
-	if ((hash = rt_hash(rt, src)) != -1) {
+	if ((hash = rt_hash(rt, dst, src)) != -1) {
 		struct rtentry		*mrt;
 		struct srpl_iter	 i;
 		int			 threshold, npaths = 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.293 2015/12/21 10:51:55 mpi Exp $	*/
+/*	$OpenBSD: route.c,v 1.294 2016/02/24 22:41:53 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -283,9 +283,8 @@ struct rtentry *_rtalloc(struct sockaddr *, uint32_t *, int, unsigned int);
 } while (0)
 
 int
-rt_hash(struct rtentry *rt, uint32_t *src)
+rt_hash(struct rtentry *rt, struct sockaddr *dst, uint32_t *src)
 {
-	struct sockaddr *dst = rt_key(rt);
 	uint32_t a, b, c;
 
 	if (src == NULL || !rtisvalid(rt) || !ISSET(rt->rt_flags, RTF_MPATH))
