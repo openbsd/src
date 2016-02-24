@@ -1,4 +1,4 @@
-/* $OpenBSD: tftp-proxy.c,v 1.17 2016/02/12 12:24:27 jca Exp $
+/* $OpenBSD: tftp-proxy.c,v 1.18 2016/02/24 16:34:47 deraadt Exp $
  *
  * Copyright (c) 2005 DLS Internet Services
  * Copyright (c) 2004, 2005 Camiel Dobbelaar, <cd@sentia.nl>
@@ -355,7 +355,6 @@ source_addresses(const char* name, int family)
 void
 proxy_privproc(int s, struct passwd *pw)
 {
-	extern char *__progname;
 	struct privproc p;
 
 	if (chroot(CHROOT_DIR) == -1)
