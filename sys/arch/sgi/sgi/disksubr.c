@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.31 2015/09/28 15:17:08 krw Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.32 2016/02/24 18:25:50 krw Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -193,15 +193,8 @@ finished:
 		return (error);
 	offset = DL_BLKOFFSET(lp, fsoffs + LABELSECTOR) + LABELOFFSET;
 
-	/*
-	 * Do OpenBSD disklabel validation/adjustment.
-	 *
-	 * N.B: No matter what the bits are on the disk, we now have the
-	 * OpenBSD disklabel for this sgi disk. DO NOT proceed to
-	 * readdoslabel(), iso_spooflabel(), etc.
-	 */
-	checkdisklabel(bp->b_data + offset, lp, fsoffs, fsend);
-	return (0);
+	error = checkdisklabel(bp->b_data + offset, lp, fsoffs, fsend);
+	return (error);
 }
 
 /*

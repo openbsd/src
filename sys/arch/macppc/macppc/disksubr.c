@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.80 2015/09/28 21:52:28 krw Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.81 2016/02/24 18:25:50 krw Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1996/05/03 19:42:03 christos Exp $	*/
 
 /*
@@ -172,15 +172,10 @@ readdpmelabel(struct buf *bp, void (*strat)(struct buf *),
 	if (error)
 		return (error);
 
-	/*
-	 * Do OpenBSD disklabel validation/adjustment.
-	 *
-	 * N.B: No matter what the bits are on the disk, we now have the
-	 * disklabel for this dpme disk. DO NOT proceed to readdoslabel(),
-	 * iso_spooflabel(), * etc.
-	 */
-	checkdisklabel(bp->b_data + LABELOFFSET, lp, hfspartoff, hfspartend);
-	return (0);
+	error = checkdisklabel(bp->b_data + LABELOFFSET, lp, hfspartoff,
+	    hfspartend);
+
+	return (error);
 }
 
 /*
