@@ -1352,7 +1352,9 @@ prime_env_iter(void)
     if (!str$case_blind_compare(env_tables[i],&crtlenv)) {
       char *start;
       int j;
-      for (j = 0; environ[j]; j++) { 
+      /* Start at the end, so if there is a duplicate we keep the first one. */
+      for (j = 0; environ[j]; j++);
+      for (j--; j >= 0; j--) {
         if (!(start = strchr(environ[j],'='))) {
           if (ckWARN(WARN_INTERNAL)) 
             Perl_warner(aTHX_ packWARN(WARN_INTERNAL),"Ill-formed CRTL environ value \"%s\"\n",environ[j]);
