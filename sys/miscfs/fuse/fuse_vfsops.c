@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_vfsops.c,v 1.16 2015/07/19 14:21:14 tedu Exp $ */
+/* $OpenBSD: fuse_vfsops.c,v 1.17 2016/02/25 18:59:26 natano Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -363,5 +363,5 @@ int
 fusefs_checkexp(struct mount *mp, struct mbuf *nam, int *extflagsp,
     struct ucred **credanonp)
 {
-	return (0);
+	return (EOPNOTSUPP);
 }
