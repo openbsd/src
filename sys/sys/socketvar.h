@@ -1,4 +1,4 @@
-/*	$OpenBSD: socketvar.h,v 1.59 2015/10/18 00:04:43 deraadt Exp $	*/
+/*	$OpenBSD: socketvar.h,v 1.60 2016/02/25 07:39:09 semarie Exp $	*/
 /*	$NetBSD: socketvar.h,v 1.18 1996/02/09 18:25:38 christos Exp $	*/
 
 /*-
@@ -146,7 +146,7 @@ struct socket {
 #define	SS_ASYNC		0x200	/* async i/o notify */
 #define	SS_CONNECTOUT		0x1000	/* connect, not accept, at this end */
 #define	SS_ISSENDING		0x2000	/* hint for lower layer */
-#define SS_DNS			0x4000	/* created using dnssocket() */
+#define	SS_DNS			0x4000	/* created using SOCK_DNS socket(2) */
 
 #ifdef _KERNEL
 /*
