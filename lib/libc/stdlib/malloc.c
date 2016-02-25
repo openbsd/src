@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.181 2016/01/26 15:44:28 otto Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.182 2016/02/25 00:38:51 deraadt Exp $	*/
 /*
  * Copyright (c) 2008, 2010, 2011 Otto Moerbeek <otto@drijf.net>
  * Copyright (c) 2012 Matthew Dempsky <matthew@openbsd.org>
@@ -470,13 +470,105 @@ map(struct dir_info *d, void *hint, size_t sz, int zero_fill)
 	return p;
 }
 
+static void
+omalloc_parseopt(char opt)
+{
+	switch (opt) {
+	case '>':
+		mopts.malloc_cache <<= 1;
+		if (mopts.malloc_cache > MALLOC_MAXCACHE)
+			mopts.malloc_cache = MALLOC_MAXCACHE;
+		break;
+	case '<':
+		mopts.malloc_cache >>= 1;
+		break;
+	case 'a':
+	case 'A':
+		/* ignored */
+		break;
+	case 'c':
+		mopts.malloc_canaries = 0;
+		break;
+	case 'C':
+		mopts.malloc_canaries = sizeof(void *);
+		break;
+#ifdef MALLOC_STATS
+	case 'd':
+		mopts.malloc_stats = 0;
+		break;
+	case 'D':
+		mopts.malloc_stats = 1;
+		break;
+#endif /* MALLOC_STATS */
+	case 'f':
+		mopts.malloc_freenow = 0;
+		mopts.malloc_freeunmap = 0;
+		break;
+	case 'F':
+		mopts.malloc_freenow = 1;
+		mopts.malloc_freeunmap = 1;
+		break;
+	case 'g':
+		mopts.malloc_guard = 0;
+		break;
+	case 'G':
+		mopts.malloc_guard = MALLOC_PAGESIZE;
+		break;
+	case 'h':
+		mopts.malloc_hint = 0;
+		break;
+	case 'H':
+		mopts.malloc_hint = 1;
+		break;
+	case 'j':
+		mopts.malloc_junk = 0;
+		break;
+	case 'J':
+		mopts.malloc_junk = 2;
+		break;
+	case 'n':
+	case 'N':
+		break;
+	case 'p':
+		mopts.malloc_move = 0;
+		break;
+	case 'P':
+		mopts.malloc_move = 1;
+		break;
+	case 'r':
+		mopts.malloc_realloc = 0;
+		break;
+	case 'R':
+		mopts.malloc_realloc = 1;
+		break;
+	case 'u':
+		mopts.malloc_freeunmap = 0;
+		break;
+	case 'U':
+		mopts.malloc_freeunmap = 1;
+		break;
+	case 'x':
+		mopts.malloc_xmalloc = 0;
+		break;
+	case 'X':
+		mopts.malloc_xmalloc = 1;
+		break;
+	default: {
+		static const char q[] = "malloc() warning: "
+		    "unknown char in MALLOC_OPTIONS\n";
+		write(STDERR_FILENO, q, sizeof(q) - 1);
+		break;
+	}
+	}
+}
+
 /*
  * Initialize a dir_info, which should have been cleared by caller
  */
 static int
 omalloc_init(struct dir_info **dp)
 {
-	char *p, b[64];
+	char *p, *q, b[64];
 	int i, j;
 	size_t d_avail, regioninfo_size;
 	struct dir_info *d;
@@ -512,102 +604,19 @@ omalloc_init(struct dir_info **dp)
 
 		for (; p != NULL && *p != '\0'; p++) {
 			switch (*p) {
-			case '>':
-				mopts.malloc_cache <<= 1;
-				if (mopts.malloc_cache > MALLOC_MAXCACHE)
-					mopts.malloc_cache = MALLOC_MAXCACHE;
-				break;
-			case '<':
-				mopts.malloc_cache >>= 1;
-				break;
-			case 'a':
-			case 'A':
-				/* ignored */
-				break;
-			case 'c':
-				mopts.malloc_canaries = 0;
-				break;
-			case 'C':
-				mopts.malloc_canaries = sizeof(void *);
-				break;
-#ifdef MALLOC_STATS
-			case 'd':
-				mopts.malloc_stats = 0;
-				break;
-			case 'D':
-				mopts.malloc_stats = 1;
-				break;
-#endif /* MALLOC_STATS */
-			case 'f':
-				mopts.malloc_freenow = 0;
-				mopts.malloc_freeunmap = 0;
-				break;
-			case 'F':
-				mopts.malloc_freenow = 1;
-				mopts.malloc_freeunmap = 1;
-				break;
-			case 'g':
-				mopts.malloc_guard = 0;
-				break;
-			case 'G':
-				mopts.malloc_guard = MALLOC_PAGESIZE;
-				break;
-			case 'h':
-				mopts.malloc_hint = 0;
-				break;
-			case 'H':
-				mopts.malloc_hint = 1;
-				break;
-			case 'j':
-				mopts.malloc_junk = 0;
-				break;
-			case 'J':
-				mopts.malloc_junk = 2;
-				break;
-			case 'n':
-			case 'N':
-				break;
-			case 'p':
-				mopts.malloc_move = 0;
-				break;
-			case 'P':
-				mopts.malloc_move = 1;
-				break;
-			case 'r':
-				mopts.malloc_realloc = 0;
-				break;
-			case 'R':
-				mopts.malloc_realloc = 1;
-				break;
-			case 's':
-				mopts.malloc_freeunmap = mopts.malloc_junk = 0;
-				mopts.malloc_guard = 0;
-				mopts.malloc_cache = MALLOC_DEFAULT_CACHE;
-				break;
 			case 'S':
-				mopts.malloc_freeunmap = 1;
-				mopts.malloc_junk = 2;
-				mopts.malloc_guard = MALLOC_PAGESIZE;
+				for (q = "FGJP"; *q != '\0'; q++)
+					omalloc_parseopt(*q);
 				mopts.malloc_cache = 0;
 				break;
-			case 'u':
-				mopts.malloc_freeunmap = 0;
+			case 's':
+				for (q = "fgj"; *q != '\0'; q++)
+					omalloc_parseopt(*q);
+				mopts.malloc_cache = MALLOC_DEFAULT_CACHE;
 				break;
-			case 'U':
-				mopts.malloc_freeunmap = 1;
+			default:
+				omalloc_parseopt(*p);
 				break;
-			case 'x':
-				mopts.malloc_xmalloc = 0;
-				break;
-			case 'X':
-				mopts.malloc_xmalloc = 1;
-				break;
-			default: {
-				static const char q[] = "malloc() warning: "
-				    "unknown char in MALLOC_OPTIONS\n";
-				write(STDERR_FILENO, q, sizeof(q) - 1);
-				break;
-			}
 			}
 		}
 	}
