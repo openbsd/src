@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnet.c,v 1.53 2015/12/05 13:10:03 kettenis Exp $	*/
+/*	$OpenBSD: vnet.c,v 1.54 2016/02/26 13:41:51 kettenis Exp $	*/
 /*
  * Copyright (c) 2009, 2015 Mark Kettenis
  *
@@ -763,6 +763,7 @@ vnet_rx_vio_desc_data(struct vnet_softc *sc, struct vio_msg_tag *tag)
 		atomic_dec_int(&map->lm_count);
 
 		pool_put(&sc->sc_pool, sc->sc_vsd[cons].vsd_buf);
+		sc->sc_vsd[cons].vsd_buf = NULL;
 		ifp->if_opackets++;
 
 		sc->sc_tx_cons++;
@@ -876,6 +877,7 @@ vnet_rx_vio_dring_data(struct vnet_softc *sc, struct vio_msg_tag *tag)
 			atomic_dec_int(&map->lm_count);
 
 			pool_put(&sc->sc_pool, sc->sc_vsd[cons].vsd_buf);
+			sc->sc_vsd[cons].vsd_buf = NULL;
 			ifp->if_opackets++;
 
 			sc->sc_vd->vd_desc[cons].hdr.dstate = VIO_DESC_FREE;
@@ -926,8 +928,13 @@ vnet_ldc_reset(struct ldc_conn *lc)
 	for (i = 1; i < sc->sc_lm->lm_nentries; i++)
 		sc->sc_lm->lm_slot[i].entry = 0;
 
-	for (i = 0; i < sc->sc_vd->vd_nentries; i++)
+	for (i = 0; i < sc->sc_vd->vd_nentries; i++) {
+		if (sc->sc_vsd[i].vsd_buf) {
+			pool_put(&sc->sc_pool, sc->sc_vsd[i].vsd_buf);
+			sc->sc_vsd[i].vsd_buf = NULL;
+		}
 		sc->sc_vd->vd_desc[i].hdr.dstate = VIO_DESC_FREE;
+	}
 }
 
 void
@@ -1395,7 +1402,8 @@ vnet_init(struct ifnet *ifp)
 	sc->sc_vd = vnet_dring_alloc(sc->sc_dmatag, 128);
 	if (sc->sc_vd == NULL)
 		return;
-	sc->sc_vsd = malloc(128 * sizeof(*sc->sc_vsd), M_DEVBUF, M_NOWAIT);
+	sc->sc_vsd = malloc(128 * sizeof(*sc->sc_vsd), M_DEVBUF,
+	    M_NOWAIT|M_ZERO);
 	if (sc->sc_vsd == NULL)
 		return;
 
