@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.17 2016/01/10 13:35:09 mestre Exp $	*/
+/*	$OpenBSD: main.c,v 1.18 2016/02/26 21:27:07 mestre Exp $	*/
 /*	$NetBSD: main.c,v 1.3 1995/03/23 08:32:50 cgd Exp $	*/
 
 /*
@@ -52,7 +52,7 @@ main(int argc, char *argv[])
 	if (pledge("stdio rpath tty", NULL) == -1)
 		err(1, "pledge");
 
-	while ((ch = getopt(argc, argv, "d:hk")) != -1) {
+	while ((ch = getopt(argc, argv, "d:k")) != -1) {
 		switch (ch) {
 		case 'd':
 			if (syms)
@@ -64,8 +64,6 @@ main(int argc, char *argv[])
 			syms = 1;
 			Dict_name = _PATH_KSYMS;
 			break;
-		case 'h':
-		case '?':
 		default:
 			usage();
 		}
@@ -105,6 +103,6 @@ die(int dummy)
 __dead void
 usage(void)
 {
-	(void)fprintf(stderr, "usage: hangman [-k] [-d wordlist]\n");
+	(void)fprintf(stderr, "usage: %s [-k] [-d wordlist]\n", getprogname());
 	exit(1);
 }
