@@ -1,4 +1,4 @@
-/*	$OpenBSD: fnmatch.c,v 1.19 2015/08/01 18:11:08 millert Exp $	*/
+/*	$OpenBSD: fnmatch.c,v 1.20 2016/02/26 21:15:31 millert Exp $	*/
 
 /* Copyright (c) 2011, VMware, Inc.
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 /*
- * Copyright (c) 2008 Todd C. Miller <millert@openbsd.org>
+ * Copyright (c) 2008, 2016 Todd C. Miller <millert@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -187,10 +187,16 @@ static int fnmatch_ch(const char **pattern, const char **string, int flags)
                 break;
 
             /* Match character classes. */
-            if (classmatch(*pattern, **string, nocase, pattern)
-                == RANGE_MATCH) {
+            switch (classmatch(*pattern, **string, nocase, pattern)) {
+            case RANGE_MATCH:
                 result = 0;
                 continue;
+            case RANGE_NOMATCH:
+                /* Valid character class but no match. */
+                continue;
+            default:
+                /* Not a valid character class. */
+                break;
             }
             if (!**pattern)
                 break;
