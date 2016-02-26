@@ -1,4 +1,4 @@
-/*	$OpenBSD: caesar.c,v 1.18 2015/12/16 14:21:50 tb Exp $	*/
+/*	$OpenBSD: caesar.c,v 1.19 2016/02/26 12:10:49 mestre Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -62,14 +62,13 @@ double stdf[26] = {
 };
 
 __dead void printit(int);
-__dead void usage(void);
-
 
 int
 main(int argc, char *argv[])
 {
 	int ch, i, nread;
 	extern char *__progname;
+	const char *errstr;
 	char *inbuf;
 	int obs[26], try, winner;
 	double dot, winnerdot;
@@ -82,10 +81,11 @@ main(int argc, char *argv[])
 		printit(13);
 
 	if (argc > 1) {
-		if ((i = atoi(argv[1])))
-			printit(i);
+		i = strtonum(argv[1], 0, 25, &errstr);
+		if (errstr)
+			errx(1, "rotation is %s: %s", errstr, argv[1]);
 		else
-			usage();
+			printit(i);
 	}
 
 	if (!(inbuf = malloc(LINELENGTH)))
@@ -129,25 +129,14 @@ main(int argc, char *argv[])
 		putchar(ROTATE(ch, winner));
 	}
 	printit(winner);
-	/* NOT REACHED */
 }
 
 void
 printit(int rot)
 {
 	int ch;
-
-	if ((rot < 0) || ( rot >= 26))
-		errx(1, "bad rotation value");
 	
 	while ((ch = getchar()) != EOF)
 		putchar(ROTATE(ch, rot));
 	exit(0);
-}
-
-void
-usage(void)
-{
-	fprintf(stderr,"usage: caesar [rotation]\n");
-	exit(1);
 }
