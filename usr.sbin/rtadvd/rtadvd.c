@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtadvd.c,v 1.68 2016/02/09 00:40:00 jca Exp $	*/
+/*	$OpenBSD: rtadvd.c,v 1.69 2016/02/26 12:34:30 jca Exp $	*/
 /*	$KAME: rtadvd.c,v 1.66 2002/05/29 14:18:36 itojun Exp $	*/
 
 /*
@@ -1007,30 +1007,6 @@ find_prefix(struct rainfo *rai, struct in6_addr *prefix, int plen)
 	}
 
 	return(NULL);
-}
-
-/* check if p0/plen0 matches p1/plen1; return 1 if matches, otherwise 0. */
-int
-prefix_match(struct in6_addr *p0, int plen0,
-	     struct in6_addr *p1, int plen1)
-{
-	int bytelen, bitlen;
-	u_char bitmask;
-
-	if (plen0 < plen1)
-		return(0);
-	bytelen = plen1 / 8;
-	bitlen = plen1 % 8;
-	bitmask = 0xff << (8 - bitlen);
-	if (memcmp((void *)p0, (void *)p1, bytelen))
-		return(0);
-	if (bitlen == 0 ||
-	    ((p0->s6_addr[bytelen] & bitmask) ==
-	     (p1->s6_addr[bytelen] & bitmask))) {
-		return(1);
-	}
-
-	return(0);
 }
 
 static int

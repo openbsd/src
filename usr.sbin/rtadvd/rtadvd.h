@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtadvd.h,v 1.22 2016/02/26 12:31:48 jca Exp $	*/
+/*	$OpenBSD: rtadvd.h,v 1.23 2016/02/26 12:34:30 jca Exp $	*/
 /*	$KAME: rtadvd.h,v 1.20 2002/05/29 10:13:10 itojun Exp $	*/
 
 /*
@@ -168,8 +168,5 @@ SLIST_HEAD(ralist, rainfo);
 void ra_timeout(void *);
 void ra_timer_update(void *, struct timeval *);
 
-int prefix_match(struct in6_addr *, int, struct in6_addr *, int);
 struct rainfo *if_indextorainfo(int);
 struct prefix *find_prefix(struct rainfo *, struct in6_addr *, int);
-
-extern struct in6_addr in6a_site_allrouters;
