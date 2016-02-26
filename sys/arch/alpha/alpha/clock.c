@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.21 2012/03/23 15:51:25 guenther Exp $	*/
+/*	$OpenBSD: clock.c,v 1.22 2016/02/26 02:07:03 mmcc Exp $	*/
 /*	$NetBSD: clock.c,v 1.29 2000/06/05 21:47:10 thorpej Exp $	*/
 
 /*
@@ -212,9 +212,8 @@ inittodr(time_t base)
 	year = 1900 + UNIX_YEAR_OFFSET + ct.year;
 	if (year < 1970)
 		year += 100;
-	/* simple sanity checks (2037 = time_t overflow) */
-	if (year < MINYEAR || year > 2037 ||
-	    ct.mon < 1 || ct.mon > 12 || ct.day < 1 ||
+	/* simple sanity checks */
+	if (year < MINYEAR || ct.mon < 1 || ct.mon > 12 || ct.day < 1 ||
 	    ct.day > 31 || ct.hour > 23 || ct.min > 59 || ct.sec > 59) {
 		/*
 		 * Believe the time in the file system for lack of

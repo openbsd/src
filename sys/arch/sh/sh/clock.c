@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.7 2012/09/08 22:01:25 miod Exp $	*/
+/*	$OpenBSD: clock.c,v 1.8 2016/02/26 02:07:03 mmcc Exp $	*/
 /*	$NetBSD: clock.c,v 1.32 2006/09/05 11:09:36 uwe Exp $	*/
 
 /*-
@@ -309,7 +309,7 @@ inittodr(time_t base)
 
 	if (!(sh_clock.flags & SH_CLOCK_NOINITTODR) &&
 	    (rtc < base ||
-		dt.dt_year < MINYEAR || dt.dt_year > 2037 ||
+		dt.dt_year < MINYEAR ||
 		dt.dt_mon < 1 || dt.dt_mon > 12 ||
 		dt.dt_wday > 6 ||
 		dt.dt_day < 1 || dt.dt_day > 31 ||
