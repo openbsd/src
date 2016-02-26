@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.50 2016/02/09 00:39:13 jca Exp $	*/
+/*	$OpenBSD: config.c,v 1.51 2016/02/26 12:31:48 jca Exp $	*/
 /*	$KAME: config.c,v 1.62 2002/05/29 10:13:10 itojun Exp $	*/
 
 /*
@@ -323,7 +323,6 @@ getconfig(char *intface)
 	if (tmp->pfxs == 0 && !agetflag("noifprefix"))
 		get_prefix(tmp);
 
-	tmp->rtinfocnt = 0;
 	for (i = -1; i < MAXRTINFO; i++) {
 		struct rtinfo *rti;
 		char entbuf[256];
@@ -391,10 +390,8 @@ getconfig(char *intface)
 		rti->lifetime = (uint32_t)val64;
 
 		TAILQ_INSERT_TAIL(&tmp->rtinfos, rti, entry);
-		tmp->rtinfocnt++;
 	}
 
-	tmp->rdnsscnt = 0;
 	for (i = -1; i < MAXRDNSS; ++i) {
 		struct rdnss *rds;
 		char entbuf[256];
@@ -417,7 +414,6 @@ getconfig(char *intface)
 			fatal("malloc");
 
 		TAILQ_INSERT_TAIL(&tmp->rdnsss, rds, entry);
-		tmp->rdnsscnt++;
 
 		rds->servercnt = val;
 
@@ -441,7 +437,6 @@ getconfig(char *intface)
 		}
 	}
 
-	tmp->dnsslcnt = 0;
 	for (i = -1; i < MAXDNSSL; ++i) {
 		struct dnssl *dsl;
 		char entbuf[256];
@@ -481,7 +476,6 @@ getconfig(char *intface)
 		}
 
 		TAILQ_INSERT_TAIL(&tmp->dnssls, dsl, entry);
-		tmp->dnsslcnt++;
 
 		makeentry(entbuf, sizeof(entbuf), i, "dnsslltime");
 		MAYHAVE(val, entbuf, (tmp->maxinterval * 3) / 2);

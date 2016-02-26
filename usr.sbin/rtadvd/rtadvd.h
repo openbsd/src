@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtadvd.h,v 1.21 2016/02/09 00:39:13 jca Exp $	*/
+/*	$OpenBSD: rtadvd.h,v 1.22 2016/02/26 12:31:48 jca Exp $	*/
 /*	$KAME: rtadvd.h,v 1.20 2002/05/29 10:13:10 itojun Exp $	*/
 
 /*
@@ -148,11 +148,8 @@ struct	rainfo {
 	TAILQ_HEAD(prefixlist, prefix) prefixes; /* AdvPrefixList(link head) */
 	int	pfxs;		/* number of prefixes */
 	TAILQ_HEAD(rtinfolist, rtinfo) rtinfos;
-	int     rtinfocnt;
 	TAILQ_HEAD(rdnsslist, rdnss) rdnsss; /* advertised recursive dns servers */
-	int	rdnsscnt;	/* number of rdnss entries */
 	TAILQ_HEAD(dnssllist, dnssl) dnssls;
-	int	dnsslcnt;
 	long	clockskew;	/* used for consistency check of lifetimes */
 
 
