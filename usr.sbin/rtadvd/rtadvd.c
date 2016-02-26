@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtadvd.c,v 1.70 2016/02/26 12:46:10 jca Exp $	*/
+/*	$OpenBSD: rtadvd.c,v 1.71 2016/02/26 12:50:03 jca Exp $	*/
 /*	$KAME: rtadvd.c,v 1.66 2002/05/29 14:18:36 itojun Exp $	*/
 
 /*
@@ -32,7 +32,6 @@
 
 #include <sys/types.h>
 #include <sys/socket.h>
-#include <sys/signal.h>
 #include <sys/uio.h>
 #include <sys/time.h>
 #include <sys/queue.h>
@@ -56,6 +55,7 @@
 #include <errno.h>
 #include <string.h>
 #include <pwd.h>
+#include <signal.h>
 
 #include "rtadvd.h"
 #include "advcap.h"
