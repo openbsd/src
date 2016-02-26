@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtadvd.c,v 1.69 2016/02/26 12:34:30 jca Exp $	*/
+/*	$OpenBSD: rtadvd.c,v 1.70 2016/02/26 12:46:10 jca Exp $	*/
 /*	$KAME: rtadvd.c,v 1.66 2002/05/29 14:18:36 itojun Exp $	*/
 
 /*
@@ -80,7 +80,6 @@ struct sockaddr_in6 sin6_allnodes = {sizeof(sin6_allnodes), AF_INET6};
 int sock;
 int rtsock = -1;
 int dflag = 0, sflag = 0;
-int log_perror = 0;
 
 u_char *conffile = NULL;
 
