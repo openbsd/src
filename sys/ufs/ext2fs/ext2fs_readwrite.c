@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_readwrite.c,v 1.37 2016/02/16 17:56:12 stefan Exp $	*/
+/*	$OpenBSD: ext2fs_readwrite.c,v 1.38 2016/02/26 08:56:10 natano Exp $	*/
 /*	$NetBSD: ext2fs_readwrite.c,v 1.16 2001/02/27 04:37:47 chs Exp $	*/
 
 /*-
@@ -95,7 +95,7 @@ ext2_ind_read(struct vnode *vp, struct inode *ip, struct m_ext2fs *fs,
 		panic("%s: mode", "ext2fs_read");
 
 	if (vp->v_type == VLNK) {
-		if ((int)ext2fs_size(ip) < vp->v_mount->mnt_maxsymlinklen ||
+		if (ext2fs_size(ip) < vp->v_mount->mnt_maxsymlinklen ||
 		    (vp->v_mount->mnt_maxsymlinklen == 0 &&
 		    ip->i_e2fs_nblock == 0))
 			panic("%s: short symlink", "ext2fs_read");

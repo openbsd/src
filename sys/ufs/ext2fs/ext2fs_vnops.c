@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vnops.c,v 1.74 2016/02/16 17:56:12 stefan Exp $	*/
+/*	$OpenBSD: ext2fs_vnops.c,v 1.75 2016/02/26 08:56:10 natano Exp $	*/
 /*	$NetBSD: ext2fs_vnops.c,v 1.1 1997/06/11 09:34:09 bouyer Exp $	*/
 
 /*
@@ -322,7 +322,7 @@ ext2fs_setattr(void *v)
 	if (vap->va_mode != (mode_t)VNOVAL) {
 		if (vp->v_mount->mnt_flag & MNT_RDONLY)
 			return (EROFS);
-		error = ext2fs_chmod(vp, (int)vap->va_mode, cred, p);
+		error = ext2fs_chmod(vp, vap->va_mode, cred, p);
 	}
 	return (error);
 }

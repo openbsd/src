@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.150 2016/01/12 11:41:00 mpi Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.151 2016/02/26 08:56:10 natano Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -641,6 +641,11 @@ ffs_validate(struct fs *fsp)
 
 	if ((u_int)fsp->fs_frag > MAXFRAG || fragtbl[fsp->fs_frag] == NULL)
 		return (0); /* Invalid number of fragments */
+
+	if (fsp->fs_inodefmt == FS_42INODEFMT)
+		fsp->fs_maxsymlinklen = 0;
+	else if (fsp->fs_maxsymlinklen < 0)
+		return (0); /* Invalid max size of short symlink */
 
 	return (1); /* Super block is okay */
 }
