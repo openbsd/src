@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.13 2015/06/28 01:16:28 guenther Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.14 2016/02/26 09:29:20 mpi Exp $	*/
 /*	$NetBSD: db_trace.c,v 1.1 2003/04/26 18:39:27 fvdl Exp $	*/
 
 /* 
@@ -100,12 +100,6 @@ db_x86_64_regop(struct db_variable *vp, db_expr_t *val, int opcode)
  */
 #define	INKERNEL(va)	(((vaddr_t)(va)) >= VM_MIN_KERNEL_ADDRESS)
 
-struct x86_64_frame {
-	struct x86_64_frame	*f_frame;
-	long			f_retaddr;
-	long			f_arg0;
-};
-
 #define	NONE		0
 #define	TRAP		1
 #define	SYSCALL		2
@@ -118,8 +112,8 @@ db_addr_t	db_kdintr_symbol_value = 0;
 boolean_t	db_trace_symbols_found = FALSE;
 
 void db_find_trace_symbols(void);
-int db_numargs(struct x86_64_frame *);
-void db_nextframe(struct x86_64_frame **, db_addr_t *, long *, int,
+int db_numargs(struct callframe *);
+void db_nextframe(struct callframe **, db_addr_t *, long *, int,
     int (*) (const char *, ...));
 
 void
@@ -143,7 +137,7 @@ db_find_trace_symbols(void)
  * reliably determine the values currently, just return 0.
  */
 int
-db_numargs(struct x86_64_frame *fp)
+db_numargs(struct callframe *fp)
 {
 	return 0;
 }
@@ -159,7 +153,7 @@ db_numargs(struct x86_64_frame *fp)
  *   of the function that faulted, but that could get hairy.
  */
 void
-db_nextframe(struct x86_64_frame **fp, db_addr_t *ip, long *argp, int is_trap,
+db_nextframe(struct callframe **fp, db_addr_t *ip, long *argp, int is_trap,
     int (*pr)(const char *, ...))
 {
 
@@ -167,7 +161,7 @@ db_nextframe(struct x86_64_frame **fp, db_addr_t *ip, long *argp, int is_trap,
 	    case NONE:
 		*ip = (db_addr_t)
 			db_get_value((db_addr_t)&(*fp)->f_retaddr, 8, FALSE);
-		*fp = (struct x86_64_frame *)
+		*fp = (struct callframe *)
 			db_get_value((db_addr_t)&(*fp)->f_frame, 8, FALSE);
 		break;
 
@@ -190,7 +184,7 @@ db_nextframe(struct x86_64_frame **fp, db_addr_t *ip, long *argp, int is_trap,
 			(*pr)("--- interrupt ---\n");
 			break;
 		}
-		*fp = (struct x86_64_frame *)tf->tf_rbp;
+		*fp = (struct callframe *)tf->tf_rbp;
 		*ip = (db_addr_t)tf->tf_rip;
 		break;
 	    }
@@ -201,7 +195,7 @@ void
 db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
     char *modif, int (*pr)(const char *, ...))
 {
-	struct x86_64_frame *frame, *lastframe;
+	struct callframe *frame, *lastframe;
 	long		*argp;
 	db_addr_t	callpc;
 	int		is_trap = 0;
@@ -226,7 +220,7 @@ db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
 	}
 
 	if (!have_addr) {
-		frame = (struct x86_64_frame *)ddb_regs.tf_rbp;
+		frame = (struct callframe *)ddb_regs.tf_rbp;
 		callpc = (db_addr_t)ddb_regs.tf_rip;
 	} else {
 		if (trace_proc) {
@@ -235,13 +229,13 @@ db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
 				(*pr) ("db_trace.c: process not found\n");
 				return;
 			}
-			frame = (struct x86_64_frame *)p->p_addr->u_pcb.pcb_rbp;
+			frame = (struct callframe *)p->p_addr->u_pcb.pcb_rbp;
 		} else {
-			frame = (struct x86_64_frame *)addr;
+			frame = (struct callframe *)addr;
 		}
 		callpc = (db_addr_t)
 			 db_get_value((db_addr_t)&frame->f_retaddr, 8, FALSE);
-		frame = (struct x86_64_frame *)frame->f_frame;
+		frame = (struct callframe *)frame->f_frame;
 	}
 
 	lastframe = 0;
@@ -304,7 +298,7 @@ db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
 			 * We have a breakpoint before the frame is set up
 			 * Use %esp instead
 			 */
-			argp = &((struct x86_64_frame *)(ddb_regs.tf_rsp-8))->f_arg0;
+			argp = &((struct callframe *)(ddb_regs.tf_rsp-8))->f_arg0;
 		} else {
 			argp = &frame->f_arg0;
 		}
@@ -323,7 +317,7 @@ db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
 
 		if (lastframe == 0 && offset == 0 && !have_addr) {
 			/* Frame really belongs to next callpc */
-			lastframe = (struct x86_64_frame *)(ddb_regs.tf_rsp-8);
+			lastframe = (struct callframe *)(ddb_regs.tf_rsp-8);
 			callpc = (db_addr_t)
 				 db_get_value((db_addr_t)&lastframe->f_retaddr,
 				    8, FALSE);
@@ -337,7 +331,7 @@ db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
 			 * back to just above lastframe so we can find the
 			 * trapframe as with syscalls and traps.
 			 */
-			frame = (struct x86_64_frame *)&lastframe->f_retaddr;
+			frame = (struct callframe *)&lastframe->f_retaddr;
 		}
 		lastframe = frame;
 		db_nextframe(&frame, &callpc, &frame->f_arg0, is_trap, pr);

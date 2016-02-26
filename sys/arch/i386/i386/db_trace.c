@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.15 2015/06/28 01:11:27 guenther Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.16 2016/02/26 09:29:20 mpi Exp $	*/
 /*	$NetBSD: db_trace.c,v 1.18 1996/05/03 19:42:01 christos Exp $	*/
 
 /*
@@ -68,12 +68,6 @@ struct db_variable *db_eregs = db_regs + nitems(db_regs);
  */
 #define	INKERNEL(va)	(((vaddr_t)(va)) >= VM_MIN_KERNEL_ADDRESS)
 
-struct i386_frame {
-	struct i386_frame	*f_frame;
-	int			f_retaddr;
-	int			f_arg0;
-};
-
 #define	NONE		0
 #define	TRAP		1
 #define	SYSCALL		2
@@ -86,8 +80,8 @@ db_addr_t	db_kdintr_symbol_value = 0;
 boolean_t	db_trace_symbols_found = FALSE;
 
 void db_find_trace_symbols(void);
-int db_numargs(struct i386_frame *);
-void db_nextframe(struct i386_frame **, db_addr_t *, int *, int,
+int db_numargs(struct callframe *);
+void db_nextframe(struct callframe **, db_addr_t *, int *, int,
     int (*pr)(const char *, ...));
 
 void
@@ -108,7 +102,7 @@ db_find_trace_symbols(void)
  * Figure out how many arguments were passed into the frame at "fp".
  */
 int
-db_numargs(struct i386_frame *fp)
+db_numargs(struct callframe *fp)
 {
 	int	*argp;
 	int	inst;
@@ -141,7 +135,7 @@ db_numargs(struct i386_frame *fp)
  *   of the function that faulted, but that could get hairy.
  */
 void
-db_nextframe(struct i386_frame **fp, db_addr_t	*ip, int *argp, int is_trap,
+db_nextframe(struct callframe **fp, db_addr_t	*ip, int *argp, int is_trap,
     int (*pr)(const char *, ...))
 {
 
@@ -149,7 +143,7 @@ db_nextframe(struct i386_frame **fp, db_addr_t	*ip, int *argp, int is_trap,
 	    case NONE:
 		*ip = (db_addr_t)
 			db_get_value((int) &(*fp)->f_retaddr, 4, FALSE);
-		*fp = (struct i386_frame *)
+		*fp = (struct callframe *)
 			db_get_value((int) &(*fp)->f_frame, 4, FALSE);
 		break;
 
@@ -172,7 +166,7 @@ db_nextframe(struct i386_frame **fp, db_addr_t	*ip, int *argp, int is_trap,
 			(*pr)("--- interrupt ---\n");
 			break;
 		}
-		*fp = (struct i386_frame *)tf->tf_ebp;
+		*fp = (struct callframe *)tf->tf_ebp;
 		*ip = (db_addr_t)tf->tf_eip;
 		break;
 	    }
@@ -183,7 +177,7 @@ void
 db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
     char *modif, int (*pr)(const char *, ...))
 {
-	struct i386_frame *frame, *lastframe;
+	struct callframe *frame, *lastframe;
 	int		*argp;
 	db_addr_t	callpc;
 	int		is_trap = 0;
@@ -214,7 +208,7 @@ db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
 		count = 65535;
 
 	if (!have_addr) {
-		frame = (struct i386_frame *)ddb_regs.tf_ebp;
+		frame = (struct callframe *)ddb_regs.tf_ebp;
 		callpc = (db_addr_t)ddb_regs.tf_eip;
 	} else if (trace_thread) {
 		(*pr) ("db_trace.c: can't trace thread\n");
@@ -224,11 +218,11 @@ db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
 			(*pr) ("db_trace.c: process not found\n");
 			return;
 		}
-		frame = (struct i386_frame *)p->p_addr->u_pcb.pcb_ebp;
+		frame = (struct callframe *)p->p_addr->u_pcb.pcb_ebp;
 		callpc = (db_addr_t)
 		    db_get_value((int)&frame->f_retaddr, 4, FALSE);
 	} else {
-		frame = (struct i386_frame *)addr;
+		frame = (struct callframe *)addr;
 		callpc = (db_addr_t)
 			 db_get_value((int)&frame->f_retaddr, 4, FALSE);
 	}
@@ -292,7 +286,7 @@ db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
 			 * We have a breakpoint before the frame is set up
 			 * Use %esp instead
 			 */
-			argp = &((struct i386_frame *)(ddb_regs.tf_esp-4))->f_arg0;
+			argp = &((struct callframe *)(ddb_regs.tf_esp-4))->f_arg0;
 		} else {
 			argp = &frame->f_arg0;
 		}
@@ -311,7 +305,7 @@ db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
 
 		if (lastframe == 0 && offset == 0 && !have_addr) {
 			/* Frame really belongs to next callpc */
-			lastframe = (struct i386_frame *)(ddb_regs.tf_esp-4);
+			lastframe = (struct callframe *)(ddb_regs.tf_esp-4);
 			callpc = (db_addr_t)
 				 db_get_value((int)&lastframe->f_retaddr, 4, FALSE);
 			continue;
