@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.71 2015/10/23 15:10:53 claudio Exp $ */
+/*	$OpenBSD: conf.c,v 1.72 2016/02/26 09:10:05 natano Exp $ */
 /*	$NetBSD: conf.c,v 1.44 1999/10/27 16:38:54 ragge Exp $	*/
 
 /*-
@@ -352,9 +352,6 @@ int	chrtoblktbl[] = {
 	NODEV,	/* 69 */
 	NODEV,	/* 70 */
 	24,	/* 71 ry */
-	NODEV,	/* 72 */
-	25,	/* 73 raid */
-	NODEV,	/* 74 */
 };
 int nchrtoblktbl = nitems(chrtoblktbl);
 

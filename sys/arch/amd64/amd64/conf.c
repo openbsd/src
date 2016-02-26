@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.56 2016/02/05 06:29:01 uebayasi Exp $	*/
+/*	$OpenBSD: conf.c,v 1.57 2016/02/26 09:10:04 natano Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -388,13 +388,6 @@ int chrtoblktbl[] = {
 	/* 45 */	NODEV,
 	/* 46 */	NODEV,
 	/* 47 */	17,		/* rd */
-	/* 48 */	NODEV,
-	/* 49 */	NODEV,
-	/* 50 */	NODEV,
-	/* 51 */	NODEV,
-	/* 52 */	NODEV,
-	/* 53 */	NODEV,
-	/* 54 */	19,		/* raid */
 };
 
 int nchrtoblktbl = nitems(chrtoblktbl);

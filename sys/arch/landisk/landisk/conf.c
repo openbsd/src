@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.32 2015/10/23 15:10:52 claudio Exp $	*/
+/*	$OpenBSD: conf.c,v 1.33 2016/02/26 09:10:05 natano Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -426,51 +426,6 @@ int chrtoblktbl[] = {
     /* 24 */        24,			/* sd */
     /* 25 */        25,			/* st */
     /* 26 */        26,			/* cd */
-    /* 27 */        NODEV,
-    /* 28 */        NODEV,
-    /* 29 */        NODEV,
-    /* 30 */        NODEV,
-    /* 31 */        NODEV,
-    /* 32 */        NODEV,
-    /* 33 */        NODEV,
-    /* 34 */        NODEV,
-    /* 35 */        NODEV,
-    /* 36 */        NODEV,
-    /* 37 */        NODEV,
-    /* 38 */        NODEV,
-    /* 39 */        NODEV,
-    /* 40 */        NODEV,
-    /* 41 */        NODEV,
-    /* 42 */        NODEV,
-    /* 43 */        NODEV,
-    /* 44 */        NODEV,
-    /* 45 */        NODEV,
-    /* 46 */        NODEV,
-    /* 47 */        NODEV,
-    /* 48 */        NODEV,
-    /* 49 */        NODEV,
-    /* 50 */        NODEV,
-    /* 51 */        NODEV,
-    /* 52 */        NODEV,
-    /* 53 */        NODEV,
-    /* 54 */        NODEV,
-    /* 55 */        NODEV,
-    /* 56 */	    NODEV,
-    /* 57 */	    NODEV,
-    /* 58 */	    NODEV,
-    /* 59 */        NODEV,
-    /* 60 */        NODEV,
-    /* 61 */        NODEV,
-    /* 62 */        NODEV,
-    /* 63 */        NODEV,
-    /* 64 */        NODEV,
-    /* 65 */        NODEV,
-    /* 66 */	    NODEV,
-    /* 67 */	    NODEV,
-    /* 68 */	    NODEV,
-    /* 69 */	    NODEV,
-    /* 70 */	    NODEV,
-    /* 71 */	    71,			/* raid */
 };
 int nchrtoblktbl = nitems(chrtoblktbl);
 
