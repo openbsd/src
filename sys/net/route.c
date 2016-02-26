@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.294 2016/02/24 22:41:53 mpi Exp $	*/
+/*	$OpenBSD: route.c,v 1.295 2016/02/26 07:54:39 deraadt Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -389,7 +389,8 @@ _rtalloc(struct sockaddr *dst, uint32_t *src, int flags, unsigned int rtableid)
 	 * this behavior.  But it is safe since rt_checkgate() wont
 	 * allow us to us this route later on.
 	 */
-	nhrt = rt_match(rt->rt_gateway, NULL, flags | RT_RESOLVE, rtableid);
+	nhrt = rt_match(rt->rt_gateway, NULL, flags | RT_RESOLVE,
+	    rtable_l2(rtableid));
 	if (nhrt == NULL)
 		return (rt);
 
