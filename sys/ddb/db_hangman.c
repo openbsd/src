@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_hangman.c,v 1.33 2016/01/27 10:37:12 mpi Exp $	*/
+/*	$OpenBSD: db_hangman.c,v 1.34 2016/02/26 15:27:53 mpi Exp $	*/
 
 /*
  * Copyright (c) 1996 Theo de Raadt, Michael Shalayeff
@@ -88,19 +88,14 @@ db_hang_forall(db_symtab_t *stab, db_sym_t sym, char *name, char *suff, int pre,
 static __inline char *
 db_randomsym(size_t *lenp)
 {
-	extern db_symtab_t db_symtabs[];
-	db_symtab_t *stab;
-	int nsymtabs, nsyms;
+	extern db_symtab_t db_symtab;
+	db_symtab_t *stab = &db_symtab;
+	int nsyms;
 	char	*p, *q;
 	struct db_hang_forall_arg dfa;
 
-	for (nsymtabs = 0; db_symtabs[nsymtabs].name != NULL; nsymtabs++)
-		;
-
-	if (nsymtabs == 0)
+	if (stab->start == 0)
 		return (NULL);
-
-	stab = &db_symtabs[arc4random_uniform(nsymtabs)];
 
 	dfa.cnt = 0;
 	db_elf_sym_forall(stab, db_hang_forall, &dfa);
@@ -114,9 +109,9 @@ db_randomsym(size_t *lenp)
 
 	q = db_qualify(dfa.sym, stab->name);
 
-	/* don't show symtab name if there are less than 3 of 'em */
-	if (nsymtabs < 3)
-		while (*q++ != ':');
+	/* don't show symtab name */
+	while (*q++ != ':')
+		;
 
 	/* strlen(q) && ignoring underscores and colons */
 	for ((*lenp) = 0, p = q; *p; p++)

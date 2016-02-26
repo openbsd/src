@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_sym.c,v 1.44 2016/02/12 10:58:41 mpi Exp $	*/
+/*	$OpenBSD: db_sym.c,v 1.45 2016/02/26 15:27:53 mpi Exp $	*/
 /*	$NetBSD: db_sym.c,v 1.24 2000/08/11 22:50:47 tv Exp $	*/
 
 /*
@@ -48,9 +48,7 @@
 #define	MAXNOSYMTABS	MAXLKMS+1	/* Room for kernel + LKM's */
 #endif
 
-db_symtab_t	db_symtabs[MAXNOSYMTABS] = {{0,},};
-
-db_symtab_t	*db_last_symtab;
+db_symtab_t	db_symtab;
 
 extern char end[];
 
@@ -102,23 +100,12 @@ ddb_init(void)
 int
 db_add_symbol_table(char *start, char *end, const char *name, char *ref)
 {
-	int slot;
+	db_symtab.start = start;
+	db_symtab.end = end;
+	db_symtab.name = name;
+	db_symtab.private = ref;
 
-	for (slot = 0; slot < MAXNOSYMTABS; slot++) {
-		if (db_symtabs[slot].name == NULL)
-			break;
-	}
-	if (slot >= MAXNOSYMTABS) {
-		db_printf("No slots left for %s symbol table", name);
-		return(-1);
-	}
-
-	db_symtabs[slot].start = start;
-	db_symtabs[slot].end = end;
-	db_symtabs[slot].name = name;
-	db_symtabs[slot].private = ref;
-
-	return(slot);
+	return 0;
 }
 
 /*
@@ -127,22 +114,10 @@ db_add_symbol_table(char *start, char *end, const char *name, char *ref)
 void
 db_del_symbol_table(char *name)
 {
-	int slot;
-
-	for (slot = 0; slot < MAXNOSYMTABS; slot++) {
-		if (db_symtabs[slot].name &&
-		    ! strcmp(db_symtabs[slot].name, name))
-			break;
-	}
-	if (slot >= MAXNOSYMTABS) {
-		db_printf("Unable to find symbol table slot for %s.", name);
-		return;
-	}
-
-	db_symtabs[slot].start = 0;
-	db_symtabs[slot].end = 0;
-	db_symtabs[slot].name = 0;
-	db_symtabs[slot].private = 0;
+	db_symtab.start = 0;
+	db_symtab.end = 0;
+	db_symtab.name = 0;
+	db_symtab.private = 0;
 }
 
 /*
@@ -194,54 +169,11 @@ db_value_of_name(char *name, db_expr_t *valuep)
 
 /*
  * Lookup a symbol.
- * If the symbol has a qualifier (e.g., ux:vm_map),
- * then only the specified symbol table will be searched;
- * otherwise, all symbol tables will be searched.
  */
 db_sym_t
 db_lookup(char *symstr)
 {
-	db_sym_t sp;
-	int i;
-	int symtab_start = 0;
-	int symtab_end = MAXNOSYMTABS;
-	char *cp;
-
-	/*
-	 * Look for, remove, and remember any symbol table specifier.
-	 */
-	for (cp = symstr; *cp; cp++) {
-		if (*cp == ':') {
-			*cp = '\0';
-			for (i = 0; i < MAXNOSYMTABS; i++) {
-				if (db_symtabs[i].name &&
-				    ! strcmp(symstr, db_symtabs[i].name)) {
-					symtab_start = i;
-					symtab_end = i + 1;
-					break;
-				}
-			}
-			*cp = ':';
-			if (i == MAXNOSYMTABS) {
-				db_error("invalid symbol table name");
-				/*NOTREACHED*/
-			}
-			symstr = cp+1;
-		}
-	}
-
-	/*
-	 * Look in the specified set of symbol tables.
-	 * Return on first match.
-	 */
-	for (i = symtab_start; i < symtab_end; i++) {
-		if (db_symtabs[i].name &&
-		    (sp = db_elf_sym_lookup(&db_symtabs[i], symstr))) {
-			db_last_symtab = &db_symtabs[i];
-			return sp;
-		}
-	}
-	return 0;
+	return db_elf_sym_lookup(&db_symtab, symstr);
 }
 
 /*
@@ -253,20 +185,13 @@ db_search_symbol(db_addr_t val, db_strategy_t strategy, db_expr_t *offp)
 {
 	unsigned int	diff;
 	db_expr_t	newdiff;
-	int		i;
 	db_sym_t	ret = DB_SYM_NULL, sym;
 
 	newdiff = diff = ~0;
-	db_last_symtab = NULL;
-	for (i = 0; i < MAXNOSYMTABS; i++) {
-	    if (!db_symtabs[i].name)
-	        continue;
-	    sym = db_elf_sym_search(&db_symtabs[i], val, strategy, &newdiff);
-	    if (newdiff < diff) {
-		db_last_symtab = &db_symtabs[i];
+	sym = db_elf_sym_search(&db_symtab, val, strategy, &newdiff);
+	if (newdiff < diff) {
 		diff = newdiff;
 		ret = sym;
-	    }
 	}
 	*offp = diff;
 	return ret;
@@ -285,7 +210,7 @@ db_symbol_values(db_sym_t sym, char **namep, db_expr_t *valuep)
 		return;
 	}
 
-	db_elf_sym_values(db_last_symtab, sym, namep, &value);
+	db_elf_sym_values(&db_symtab, sym, namep, &value);
 
 	if (valuep)
 		*valuep = value;
@@ -336,7 +261,7 @@ db_printsym(db_expr_t off, db_strategy_t strategy,
 				    d, DB_FORMAT_R, 1, 0));
 			}
 			if (strategy != DB_STGY_PROC) {
-				if (db_elf_line_at_pc(db_last_symtab, cursym,
+				if (db_elf_line_at_pc(&db_symtab, cursym,
 				    &filename, &linenum, off))
 					(*pr)(" [%s:%d]", filename, linenum);
 			}
