@@ -1,4 +1,4 @@
-/*	$OpenBSD: worms.c,v 1.25 2016/01/07 16:00:34 tb Exp $	*/
+/*	$OpenBSD: worms.c,v 1.26 2016/02/27 12:48:14 tb Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -308,7 +308,30 @@ main(int argc, char *argv[])
 				if (--ref[y1][x1] == 0)
 					mvaddch(y1, x1, trail);
 			}
-			op = &(!x ? (!y ? upleft : (y == bottom ? lowleft : left)) : (x == last ? (!y ? upright : (y == bottom ? lowright : right)) : (!y ? upper : (y == bottom ? lower : normal))))[w->orientation];
+
+			if (x == 0) {
+				if (y == 0)
+					op = &upleft[w->orientation];
+				else if (y == bottom)
+					op = &lowleft[w->orientation];
+				else
+					op = &left[w->orientation];
+			} else if (x == last) {
+				if (y == 0)
+					op = &upright[w->orientation];
+				else if (y == bottom)
+					op = &lowright[w->orientation];
+				else
+					op = &right[w->orientation];
+			} else {
+				if (y == 0)
+					op = &upper[w->orientation];
+				else if (y == bottom)
+					op = &lower[w->orientation];
+				else
+					op = &normal[w->orientation];
+			}
+
 			switch (op->nopts) {
 			case 0:
 				endwin();
