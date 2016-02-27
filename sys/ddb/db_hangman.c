@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_hangman.c,v 1.34 2016/02/26 15:27:53 mpi Exp $	*/
+/*	$OpenBSD: db_hangman.c,v 1.35 2016/02/27 13:17:47 mpi Exp $	*/
 
 /*
  * Copyright (c) 1996 Theo de Raadt, Michael Shalayeff
@@ -72,12 +72,10 @@ struct db_hang_forall_arg {
 /*
  * Horrible abuse of the forall function, but we're not in a hurry.
  */
-static void db_hang_forall(db_symtab_t *, db_sym_t, char *, char *, int,
-			void *);
+static void db_hang_forall(db_sym_t, char *, char *, int, void *);
 
 static void
-db_hang_forall(db_symtab_t *stab, db_sym_t sym, char *name, char *suff, int pre,
-    void *varg)
+db_hang_forall(db_sym_t sym, char *name, char *suff, int pre, void *varg)
 {
 	struct db_hang_forall_arg *arg = (struct db_hang_forall_arg *)varg;
 
@@ -88,30 +86,21 @@ db_hang_forall(db_symtab_t *stab, db_sym_t sym, char *name, char *suff, int pre,
 static __inline char *
 db_randomsym(size_t *lenp)
 {
-	extern db_symtab_t db_symtab;
-	db_symtab_t *stab = &db_symtab;
 	int nsyms;
 	char	*p, *q;
 	struct db_hang_forall_arg dfa;
 
-	if (stab->start == 0)
-		return (NULL);
-
 	dfa.cnt = 0;
-	db_elf_sym_forall(stab, db_hang_forall, &dfa);
+	db_elf_sym_forall(db_hang_forall, &dfa);
 	nsyms = -dfa.cnt;
 
 	if (nsyms == 0)
 		return (NULL);
 
 	dfa.cnt = arc4random_uniform(nsyms);
-	db_elf_sym_forall(stab, db_hang_forall, &dfa);
+	db_elf_sym_forall(db_hang_forall, &dfa);
 
-	q = db_qualify(dfa.sym, stab->name);
-
-	/* don't show symtab name */
-	while (*q++ != ':')
-		;
+	db_symbol_values(dfa.sym, &q, 0);
 
 	/* strlen(q) && ignoring underscores and colons */
 	for ((*lenp) = 0, p = q; *p; p++)

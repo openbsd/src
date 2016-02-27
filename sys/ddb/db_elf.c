@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_elf.c,v 1.16 2016/01/27 10:37:12 mpi Exp $	*/
+/*	$OpenBSD: db_elf.c,v 1.17 2016/02/27 13:17:47 mpi Exp $	*/
 /*	$NetBSD: db_elf.c,v 1.13 2000/07/07 21:55:18 jhawk Exp $	*/
 
 /*-
@@ -44,6 +44,16 @@
 #include <ddb/db_output.h>
 
 #include <sys/exec_elf.h>
+
+
+typedef struct {
+	const char	*name;		/* symtab name */
+	char		*start;		/* symtab location */
+	char		*end;
+	char		*private;	/* optional machdep pointer */
+} db_symtab_t;
+
+db_symtab_t db_symtab;
 
 static char *db_elf_find_strtab(db_symtab_t *);
 static char *db_elf_find_linetab(db_symtab_t *, size_t *);
@@ -171,15 +181,16 @@ db_elf_sym_init(int symsize, void *symtab, void *esymtab, const char *name)
 	/*
 	 * Link the symbol table into the debugger.
 	 */
-	if (db_add_symbol_table((char *)symtab_start,
-	    (char *)symtab_end, name, (char *)symtab) != -1) {
-		db_printf("[ using %lu bytes of %s ELF symbol table ]\n",
-		    (u_long)roundup(((char *)esymtab - (char *)symtab),
-				    sizeof(u_long)), name);
-		return (TRUE);
-	}
+	db_symtab.start = (char *)symtab_start;
+	db_symtab.end = (char *)symtab_end;
+	db_symtab.name = name;
+	db_symtab.private = (char *)symtab;
 
-	return (FALSE);
+	db_printf("[ using %lu bytes of %s ELF symbol table ]\n",
+	    (u_long)roundup(((char *)esymtab - (char *)symtab), sizeof(u_long)),
+	    name);
+
+	return (TRUE);
 
  badheader:
 	db_printf("[ %s ELF symbol table not valid: %s ]\n", name, errstr);
@@ -237,10 +248,14 @@ db_elf_find_linetab(db_symtab_t *stab, size_t *size)
  * Lookup the symbol with the given name.
  */
 db_sym_t
-db_elf_sym_lookup(db_symtab_t *stab, char *symstr)
+db_elf_sym_lookup(char *symstr)
 {
+	db_symtab_t *stab = &db_symtab;
 	Elf_Sym *symp, *symtab_start, *symtab_end;
 	char *strtab;
+
+	if (stab->private == NULL)
+		return ((db_sym_t)0);
 
 	symtab_start = STAB_TO_SYMSTART(stab);
 	symtab_end = STAB_TO_SYMEND(stab);
@@ -263,14 +278,18 @@ db_elf_sym_lookup(db_symtab_t *stab, char *symstr)
  * provided threshold).
  */
 db_sym_t
-db_elf_sym_search(db_symtab_t *symtab, db_addr_t off, db_strategy_t strategy,
+db_elf_sym_search(db_addr_t off, db_strategy_t strategy,
     db_expr_t *diffp)
 {
+	db_symtab_t *stab = &db_symtab;
 	Elf_Sym *rsymp, *symp, *symtab_start, *symtab_end;
 	db_expr_t diff = *diffp;
 
-	symtab_start = STAB_TO_SYMSTART(symtab);
-	symtab_end = STAB_TO_SYMEND(symtab);
+	if (stab->private == NULL)
+		return ((db_sym_t)0);
+
+	symtab_start = STAB_TO_SYMSTART(stab);
+	symtab_end = STAB_TO_SYMEND(stab);
 
 	rsymp = NULL;
 
@@ -326,14 +345,18 @@ db_elf_sym_search(db_symtab_t *symtab, db_addr_t off, db_strategy_t strategy,
  * Return the name and value for a symbol.
  */
 void
-db_elf_sym_values(db_symtab_t *symtab, db_sym_t sym, char **namep,
+db_elf_sym_values(db_sym_t sym, char **namep,
     db_expr_t *valuep)
 {
+	db_symtab_t *stab = &db_symtab;
 	Elf_Sym *symp = (Elf_Sym *)sym;
 	char *strtab;
 
+	if (stab->private == NULL)
+		return;
+
 	if (namep) {
-		strtab = db_elf_find_strtab(symtab);
+		strtab = db_elf_find_strtab(stab);
 		if (strtab == NULL)
 			*namep = NULL;
 		else
@@ -349,14 +372,18 @@ db_elf_sym_values(db_symtab_t *symtab, db_sym_t sym, char **namep,
  * if we can find the appropriate debugging symbol.
  */
 boolean_t
-db_elf_line_at_pc(db_symtab_t *symtab, db_sym_t cursym, char **filename,
+db_elf_line_at_pc(db_sym_t cursym, char **filename,
     int *linenum, db_expr_t off)
 {
+	db_symtab_t *stab = &db_symtab;
 	static char path[PATH_MAX];
 	const char *linetab, *dirname, *basename;
 	size_t linetab_size;
 
-	linetab = db_elf_find_linetab(symtab, &linetab_size);
+	if (stab->private == NULL)
+		return (FALSE);
+
+	linetab = db_elf_find_linetab(stab, &linetab_size);
 	if (linetab == NULL)
 		return (FALSE);
 
@@ -373,11 +400,15 @@ db_elf_line_at_pc(db_symtab_t *symtab, db_sym_t cursym, char **filename,
 }
 
 void
-db_elf_sym_forall(db_symtab_t *stab, db_forall_func_t db_forall_func, void *arg)
+db_elf_sym_forall(db_forall_func_t db_forall_func, void *arg)
 {
+	db_symtab_t *stab = &db_symtab;
 	char *strtab;
 	static char suffix[2];
 	Elf_Sym *symp, *symtab_start, *symtab_end;
+
+	if (stab->private == NULL)
+		return;
 
 	symtab_start = STAB_TO_SYMSTART(stab);
 	symtab_end = STAB_TO_SYMEND(stab);
@@ -405,8 +436,7 @@ db_elf_sym_forall(db_symtab_t *stab, db_forall_func_t db_forall_func, void *arg)
 			default:
 				suffix[0] = '\0';
 			}
-			(*db_forall_func)(stab, (db_sym_t)symp,
+			(*db_forall_func)((db_sym_t)symp,
 			    strtab + symp->st_name, suffix, 0, arg);
 		}
-	return;
 }

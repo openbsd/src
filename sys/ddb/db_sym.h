@@ -30,18 +30,6 @@
  */
 
 /*
- * This module can handle multiple symbol tables
- */
-typedef struct {
-	const char	*name;		/* symtab name */
-	char		*start;		/* symtab location */
-	char		*end;
-	char		*private;	/* optional machdep pointer */
-} db_symtab_t;
-
-extern db_symtab_t	*db_last_symtab; /* where last symbol was found */
-
-/*
  * Symbol representation is specific to the symtab style:
  * BSD compilers use dbx' nlist, other compilers might use
  * a different one
@@ -72,17 +60,9 @@ typedef int		db_strategy_t;	/* search strategy */
  * the type, prefix an initial ignorable function prefix (e.g. "_"
  * in a.out), and arg an opaque argument to be passed in.
  */
-typedef void (db_forall_func_t)(db_symtab_t *, db_sym_t, char *, char *, int, void *);
+typedef void (db_forall_func_t)(db_sym_t, char *, char *, int, void *);
 
 extern unsigned int db_maxoff;		/* like gdb's "max-symbolic-offset" */
-/*
- * Functions exported by the symtable module
- */
-int db_add_symbol_table(char *, char *, const char *, char *);
-					/* extend the list of symbol tables */
-
-void db_del_symbol_table(char *);
-					/* remove a symbol table from list */
 
 boolean_t db_eqname(char *, char *, int);
 					/* strcmp, modulo leading char */
@@ -111,11 +91,9 @@ void db_printsym(db_expr_t, db_strategy_t, int (*)(const char *, ...));
 
 #define db_sym_numargs(sym, nargp, argnames) (FALSE)
 
-char *db_qualify(db_sym_t, const char *);
-
 boolean_t db_elf_sym_init(int, void *, void *, const char *);
-db_sym_t db_elf_sym_lookup(db_symtab_t *, char *);
-void db_elf_sym_values(db_symtab_t *, db_sym_t, char **, db_expr_t *);
-db_sym_t db_elf_sym_search(db_symtab_t *, db_addr_t, db_strategy_t, db_expr_t *);
-boolean_t db_elf_line_at_pc(db_symtab_t *, db_sym_t, char **, int *, db_expr_t);
-void db_elf_sym_forall(db_symtab_t *, db_forall_func_t db_forall_func, void *);
+db_sym_t db_elf_sym_lookup(char *);
+void db_elf_sym_values(db_sym_t, char **, db_expr_t *);
+db_sym_t db_elf_sym_search(db_addr_t, db_strategy_t, db_expr_t *);
+boolean_t db_elf_line_at_pc(db_sym_t, char **, int *, db_expr_t);
+void db_elf_sym_forall(db_forall_func_t db_forall_func, void *);
