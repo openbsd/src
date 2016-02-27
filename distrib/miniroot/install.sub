@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.880 2016/02/23 02:34:09 krw Exp $
+#	$OpenBSD: install.sub,v 1.881 2016/02/27 12:17:03 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -790,14 +790,10 @@ v4_info() {
 		/inet/s///p'
 }
 
-# Convert a hex value passed as argument $1 to dotted decimal format.
+# Convert a netmask in hex format ($1) to dotted decimal format.
 hextodec() {
-	local _d _b
-
-	for _b in $(echo ${1#0x} | sed 's/\(..\)/\1 /g'); do
-		_d=$_d.$((0x$_b))
-	done
-	echo ${_d#.}
+	set -- $(echo ${1#0x} | sed 's/\(..\)/0x\1 /g')
+	echo $(($1)).$(($2)).$(($3)).$(($4))
 }
 
 # Create an entry in the hosts file. If an entry with the same symbolic name and
