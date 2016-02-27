@@ -1,4 +1,4 @@
-.\" $OpenBSD: mbtowc.3,v 1.5 2015/10/28 08:45:49 stsp Exp $
+.\" $OpenBSD: mbtowc.3,v 1.6 2016/02/27 14:07:04 schwarze Exp $
 .\" $NetBSD: mbtowc.3,v 1.5 2003/09/08 17:54:31 wiz Exp $
 .\"
 .\" Copyright (c)2002 Citrus Project,
@@ -25,7 +25,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: October 28 2015 $
+.Dd $Mdocdate: February 27 2016 $
 .Dt MBTOWC 3
 .Os
 .\" ----------------------------------------------------------------------
@@ -186,9 +186,12 @@ The
 function conforms to
 .St -ansiC .
 The restrict qualifier is added at
-.\" .St -isoC99 .
-ISO/IEC 9899/1999
-.Pq Dq ISO C99 .
+.St -isoC-99 .
+Setting
+.Va errno
+is an
+.St -p1003.1-2008
+extension.
 .Sh CAVEATS
 On error, callers of
 .Fn mbtowc
