@@ -1,4 +1,4 @@
-/* $OpenBSD: pms.c,v 1.67 2015/09/05 14:02:21 bru Exp $ */
+/* $OpenBSD: pms.c,v 1.68 2016/02/27 22:01:58 mmcc Exp $ */
 /* $NetBSD: psm.c,v 1.11 2000/06/05 22:20:57 sommerfeld Exp $ */
 
 /*-
@@ -2166,7 +2166,7 @@ pms_sync_elantech_v2(struct pms_softc *sc, int data)
 	}
 
 	/* For variants not reporting pressure, 1 and 3 finger touch packets
-	 * have different constant bits than 2 finger touch pakets. */
+	 * have different constant bits than 2 finger touch packets. */
 	switch (sc->inputstate) {
 	case 0:
 		if ((data & 0xc0) == 0x80) {
