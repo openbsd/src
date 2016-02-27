@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbtowc.c,v 1.2 2012/12/05 23:20:00 deraadt Exp $ */
+/*	$OpenBSD: mbtowc.c,v 1.3 2016/02/27 14:02:13 schwarze Exp $ */
 
 /*-
  * Copyright (c) 2002-2004 Tim J. Robbins.
@@ -44,7 +44,14 @@ mbtowc(wchar_t * __restrict pwc, const char * __restrict s, size_t n)
 		return (0);
 	}
 	rval = mbrtowc(pwc, s, n, &mbs);
-	if (rval == (size_t)-1 || rval == (size_t)-2)
-		return (-1);
-	return ((int)rval);
+
+	switch (rval) {
+	case (size_t)-2:
+		errno = EILSEQ;
+		/* FALLTHROUGH */
+	case (size_t)-1:
+		return -1;
+	default:
+		return (int)rval;
+	}
 }
