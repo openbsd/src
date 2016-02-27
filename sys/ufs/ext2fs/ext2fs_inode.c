@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_inode.c,v 1.56 2015/03/14 03:38:52 jsg Exp $	*/
+/*	$OpenBSD: ext2fs_inode.c,v 1.57 2016/02/27 18:50:38 natano Exp $	*/
 /*	$NetBSD: ext2fs_inode.c,v 1.24 2001/06/19 12:59:18 wiz Exp $	*/
 
 /*
@@ -227,10 +227,7 @@ ext2fs_truncate(struct inode *oip, off_t length, int flags, struct ucred *cred)
 	    ovp->v_type != VLNK)
 		return (0);
 
-	if (ovp->v_type == VLNK &&
-		(ext2fs_size(oip) < ovp->v_mount->mnt_maxsymlinklen ||
-		 (ovp->v_mount->mnt_maxsymlinklen == 0 &&
-		  oip->i_e2fs_nblock == 0))) {
+	if (ovp->v_type == VLNK && ext2fs_size(oip) < EXT2_MAXSYMLINKLEN) {
 #ifdef DIAGNOSTIC
 		if (length != 0)
 			panic("ext2fs_truncate: partial truncate of symlink");

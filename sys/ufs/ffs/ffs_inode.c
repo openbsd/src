@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_inode.c,v 1.75 2015/11/28 21:52:02 beck Exp $	*/
+/*	$OpenBSD: ffs_inode.c,v 1.76 2016/02/27 18:50:38 natano Exp $	*/
 /*	$NetBSD: ffs_inode.c,v 1.10 1996/05/11 18:27:19 mycroft Exp $	*/
 
 /*
@@ -152,8 +152,8 @@ ffs_truncate(struct inode *oip, off_t length, int flags, struct ucred *cred)
 		return (0);
 
 	if (ovp->v_type == VLNK &&
-	    (DIP(oip, size) < ovp->v_mount->mnt_maxsymlinklen ||
-	     (ovp->v_mount->mnt_maxsymlinklen == 0 &&
+	    (DIP(oip, size) < oip->i_ump->um_maxsymlinklen ||
+	     (oip->i_ump->um_maxsymlinklen == 0 &&
 	      oip->i_din1->di_blocks == 0))) {
 #ifdef DIAGNOSTIC
 		if (length != 0)

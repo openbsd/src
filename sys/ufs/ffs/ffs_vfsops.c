@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.151 2016/02/26 08:56:10 natano Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.152 2016/02/27 18:50:38 natano Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -573,7 +573,7 @@ ffs_reload(struct mount *mountp, struct ucred *cred, struct proc *p)
 	if (fs->fs_sbsize < SBSIZE)
 		bp->b_flags |= B_INVAL;
 	brelse(bp);
-	mountp->mnt_maxsymlinklen = fs->fs_maxsymlinklen;
+	VFSTOUFS(mountp)->um_maxsymlinklen = fs->fs_maxsymlinklen;
 	ffs1_compat_read(fs, VFSTOUFS(mountp), fs->fs_sblockloc);
 	ffs_oldfscompat(fs);
 	(void)ffs_statfs(mountp, &mountp->mnt_stat, p);
@@ -834,7 +834,6 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 	else
 		mp->mnt_stat.f_fsid.val[1] = mp->mnt_vfc->vfc_typenum;
 	mp->mnt_stat.f_namemax = MAXNAMLEN;
-	mp->mnt_maxsymlinklen = fs->fs_maxsymlinklen;
 	mp->mnt_flag |= MNT_LOCAL;
 	ump->um_mountp = mp;
 	ump->um_dev = dev;
@@ -842,6 +841,7 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 	ump->um_nindir = fs->fs_nindir;
 	ump->um_bptrtodb = fs->fs_fsbtodb;
 	ump->um_seqinc = fs->fs_frag;
+	ump->um_maxsymlinklen = fs->fs_maxsymlinklen;
 	for (i = 0; i < MAXQUOTAS; i++)
 		ump->um_quotas[i] = NULLVP;
 

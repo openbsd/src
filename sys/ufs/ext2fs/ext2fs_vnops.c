@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vnops.c,v 1.75 2016/02/26 08:56:10 natano Exp $	*/
+/*	$OpenBSD: ext2fs_vnops.c,v 1.76 2016/02/27 18:50:38 natano Exp $	*/
 /*	$NetBSD: ext2fs_vnops.c,v 1.1 1997/06/11 09:34:09 bouyer Exp $	*/
 
 /*
@@ -1091,7 +1091,7 @@ ext2fs_symlink(void *v)
 		return (error);
 	vp = *vpp;
 	len = strlen(ap->a_target);
-	if (len < vp->v_mount->mnt_maxsymlinklen) {
+	if (len < EXT2_MAXSYMLINKLEN) {
 		ip = VTOI(vp);
 		memcpy(ip->i_e2din->e2di_shortlink, ap->a_target, len);
 		error = ext2fs_setsize(ip, len);
@@ -1119,8 +1119,7 @@ ext2fs_readlink(void *v)
 	u_int64_t isize;
 
 	isize = ext2fs_size(ip);
-	if (isize < vp->v_mount->mnt_maxsymlinklen ||
-	    (vp->v_mount->mnt_maxsymlinklen == 0 && ip->i_e2fs_nblock == 0)) {
+	if (isize < EXT2_MAXSYMLINKLEN) {
 		return (uiomove((char *)ip->i_e2din->e2di_shortlink, isize,
 		    ap->a_uio));
 	}

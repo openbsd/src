@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.h,v 1.122 2016/02/26 08:56:10 natano Exp $	*/
+/*	$OpenBSD: mount.h,v 1.123 2016/02/27 18:50:38 natano Exp $	*/
 /*	$NetBSD: mount.h,v 1.48 1996/02/18 11:55:47 fvdl Exp $	*/
 
 /*
@@ -355,7 +355,6 @@ struct mount {
 	struct vnodelst	mnt_vnodelist;		/* list of vnodes this mount */
 	struct rwlock   mnt_lock;               /* mount structure lock */
 	int		mnt_flag;		/* flags */
-	unsigned int	mnt_maxsymlinklen;	/* max size of short symlink */
 	struct statfs	mnt_stat;		/* cache of filesystem stats */
 	void		*mnt_data;		/* private data */
 };

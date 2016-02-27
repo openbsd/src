@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vfsops.c,v 1.85 2015/03/14 03:38:52 jsg Exp $	*/
+/*	$OpenBSD: ext2fs_vfsops.c,v 1.86 2016/02/27 18:50:38 natano Exp $	*/
 /*	$NetBSD: ext2fs_vfsops.c,v 1.1 1997/06/11 09:34:07 bouyer Exp $	*/
 
 /*
@@ -583,7 +583,6 @@ ext2fs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 	mp->mnt_data = (qaddr_t)ump;
 	mp->mnt_stat.f_fsid.val[0] = (long)dev;
 	mp->mnt_stat.f_fsid.val[1] = mp->mnt_vfc->vfc_typenum;
-	mp->mnt_maxsymlinklen = EXT2_MAXSYMLINKLEN;
 	mp->mnt_flag |= MNT_LOCAL;
 	ump->um_mountp = mp;
 	ump->um_dev = dev;
@@ -591,6 +590,7 @@ ext2fs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 	ump->um_nindir = NINDIR(ump->um_e2fs);
 	ump->um_bptrtodb = ump->um_e2fs->e2fs_fsbtodb;
 	ump->um_seqinc = 1; /* no frags */
+	ump->um_maxsymlinklen = EXT2_MAXSYMLINKLEN;
 	devvp->v_specmountpoint = mp;
 	return (0);
 out:

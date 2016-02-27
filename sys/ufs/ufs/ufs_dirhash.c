@@ -1,4 +1,4 @@
-/* $OpenBSD: ufs_dirhash.c,v 1.33 2015/03/14 03:38:53 jsg Exp $	*/
+/* $OpenBSD: ufs_dirhash.c,v 1.34 2016/02/27 18:50:38 natano Exp $	*/
 /*
  * Copyright (c) 2001, 2002 Ian Dowse.  All rights reserved.
  *
@@ -54,7 +54,7 @@ __FBSDID("$FreeBSD: src/sys/ufs/ufs/ufs_dirhash.c,v 1.18 2004/02/15 21:39:35 dwm
 
 #define WRAPINCR(val, limit)	(((val) + 1 == (limit)) ? 0 : ((val) + 1))
 #define WRAPDECR(val, limit)	(((val) == 0) ? ((limit) - 1) : ((val) - 1))
-#define OFSFMT(vp)		((vp)->v_mount->mnt_maxsymlinklen <= 0)
+#define OFSFMT(ip)		((ip)->i_ump->um_maxsymlinklen == 0)
 #define BLKFREE2IDX(n)		((n) > DH_NFSTATS ? DH_NFSTATS : (n))
 
 int ufs_mindirhashsize;
@@ -116,7 +116,7 @@ ufsdirhash_build(struct inode *ip)
 
 	/* Check if we can/should use dirhash. */
 	if (ip->i_dirhash == NULL) {
-		if (DIP(ip, size) < ufs_mindirhashsize || OFSFMT(ip->i_vnode))
+		if (DIP(ip, size) < ufs_mindirhashsize || OFSFMT(ip))
 			return (-1);
 	} else {
 		/* Hash exists, but sysctls could have changed. */
