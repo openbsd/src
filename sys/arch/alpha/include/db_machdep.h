@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.23 2014/03/16 20:31:45 guenther Exp $	*/
+/*	$OpenBSD: db_machdep.h,v 1.24 2016/02/27 13:08:06 mpi Exp $	*/
 
 /*
  * Copyright (c) 1997 Niklas Hallqvist.  All rights reserved.
@@ -83,7 +83,7 @@ u_long	db_register_value(db_regs_t *, int);
 int	db_valid_breakpoint(db_addr_t);
 int	ddb_trap(unsigned long, unsigned long, unsigned long,
     unsigned long, struct trapframe *);
-int	kdb_trap(int, int, db_regs_t *);
+int	db_ktrap(int, int, db_regs_t *);
 db_addr_t next_instr_address(db_addr_t, int);
 
 #if 1

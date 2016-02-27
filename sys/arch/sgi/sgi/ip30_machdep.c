@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip30_machdep.c,v 1.63 2014/12/06 23:20:17 krw Exp $	*/
+/*	$OpenBSD: ip30_machdep.c,v 1.64 2016/02/27 13:08:07 mpi Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -436,7 +436,7 @@ ip30_get_ncpusfound(void)
 void
 ip30_nmi_handler()
 {
-	extern int kdb_trap(int, struct trap_frame *);
+	extern int db_ktrap(int, struct trap_frame *);
 	extern void stacktrace(struct trap_frame *);
 	struct trap_frame *fr0;
 	int s;
@@ -474,7 +474,7 @@ ip30_nmi_handler()
 	stacktrace(fr1);
 #endif
 
-	kdb_trap(-1, fr0);
+	db_ktrap(-1, fr0);
 
 	splx(s);
 	panic("NMI");

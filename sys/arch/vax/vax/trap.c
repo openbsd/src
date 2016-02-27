@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.56 2015/09/13 12:30:52 miod Exp $     */
+/*	$OpenBSD: trap.c,v 1.57 2016/02/27 13:08:07 mpi Exp $     */
 /*	$NetBSD: trap.c,v 1.47 1999/08/21 19:26:20 matt Exp $     */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -126,7 +126,7 @@ fram:
 
 	default:
 #ifdef DDB
-		kdb_trap(frame);
+		db_ktrap(frame);
 #endif
 		printf("Trap: type %x, code %x, pc %x, psl %x\n",
 		    (u_int)frame->trap, (u_int)frame->code,
@@ -262,7 +262,7 @@ if(faultdebug)printf("trap accflt type %lx, code %lx, pc %lx, psl %lx\n",
 	case T_KDBTRAP:
 	case T_KDBTRAP|T_USER:
 	case T_TRCTRAP:
-		kdb_trap(frame);
+		db_ktrap(frame);
 		return;
 #endif
 	}

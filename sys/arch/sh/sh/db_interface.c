@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.5 2014/12/03 20:09:32 krw Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.6 2016/02/27 13:08:07 mpi Exp $	*/
 /*	$NetBSD: db_interface.c,v 1.37 2006/09/06 00:11:49 uwe Exp $	*/
 
 /*-
@@ -108,7 +108,7 @@ kdb_printtrap(u_int type, int code)
 }
 
 int
-kdb_trap(int type, int code, db_regs_t *regs)
+db_ktrap(int type, int code, db_regs_t *regs)
 {
 	extern label_t *db_recover;
 	int s;

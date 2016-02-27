@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.72 2015/11/06 06:33:26 guenther Exp $	*/
+/*	$OpenBSD: trap.c,v 1.73 2016/02/27 13:08:07 mpi Exp $	*/
 /*	$NetBSD: trap.c,v 1.58 1997/09/12 08:55:01 pk Exp $ */
 
 /*
@@ -244,7 +244,7 @@ trap(type, psr, pc, tf)
 #ifdef DDB
 		if (type == T_BREAKPOINT) {
 			write_all_windows();
-			if (kdb_trap(type, tf)) {
+			if (db_ktrap(type, tf)) {
 				return;
 			}
 		}

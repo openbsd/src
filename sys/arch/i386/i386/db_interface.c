@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.31 2014/09/14 14:17:23 jsg Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.32 2016/02/27 13:08:07 mpi Exp $	*/
 /*	$NetBSD: db_interface.c,v 1.22 1996/05/03 19:42:00 christos Exp $	*/
 
 /*
@@ -98,10 +98,10 @@ kdbprinttrap(int type, int code)
 }
 
 /*
- *  kdb_trap - field a TRACE or BPT trap
+ *  db_ktrap - field a TRACE or BPT trap
  */
 int
-kdb_trap(int type, int code, db_regs_t *regs)
+db_ktrap(int type, int code, db_regs_t *regs)
 {
 	int s;
 

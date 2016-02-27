@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.113 2016/02/01 16:15:18 visa Exp $	*/
+/*	$OpenBSD: trap.c,v 1.114 2016/02/27 13:08:07 mpi Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -127,7 +127,7 @@ uint64_t kdbpeekd(vaddr_t);
 #endif	/* DDB || DEBUG */
 
 #if defined(DDB)
-extern int kdb_trap(int, db_regs_t *);
+extern int db_ktrap(int, db_regs_t *);
 #endif
 
 void	ast(void);
@@ -537,7 +537,7 @@ fault_common_no_miss:
 
 	case T_BREAK:
 #ifdef DDB
-		kdb_trap(type, trapframe);
+		db_ktrap(type, trapframe);
 #endif
 		/* Reenable interrupts if necessary */
 		if (trapframe->sr & SR_INT_ENAB) {
@@ -788,7 +788,7 @@ fault_common_no_miss:
 		    (void *)trapframe->badvaddr);
 #ifdef DDB
 		stacktrace(!USERMODE(trapframe->sr) ? trapframe : p->p_md.md_regs);
-		kdb_trap(type, trapframe);
+		db_ktrap(type, trapframe);
 #endif
 		panic("trap");
 	}

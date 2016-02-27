@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.17 2014/03/16 20:31:46 guenther Exp $	*/
+/*	$OpenBSD: db_machdep.h,v 1.18 2016/02/27 13:08:07 mpi Exp $	*/
 /*	$NetBSD: db_machdep.h,v 1.6 1998/08/10 14:33:33 ragge Exp $	*/
 
 /* 
@@ -71,6 +71,6 @@ extern db_regs_t	ddb_regs;	/* register state */
 #define	inst_call(ins)		(((ins)&0xff) == I_CALL)
 
 /* Prototypes */
-void	kdb_trap(struct trapframe *);
+void	db_ktrap(struct trapframe *);
 
 #endif	/* _MACHINE_DB_MACHDEP_H_ */

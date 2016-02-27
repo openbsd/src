@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.c,v 1.19 2014/07/13 12:11:01 jasper Exp $	*/
+/*	$OpenBSD: db_machdep.c,v 1.20 2016/02/27 13:08:07 mpi Exp $	*/
 /*	$NetBSD: db_machdep.c,v 1.17 1999/06/20 00:58:23 ragge Exp $	*/
 
 /* 
@@ -98,7 +98,7 @@ typedef struct __vax_frame {
  * contain the registers when panic was called. (easy to debug).
  */
 void
-kdb_trap(frame)
+db_ktrap(frame)
 	struct trapframe *frame;
 {
 	int s;

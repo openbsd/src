@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.9 2014/03/16 20:31:46 guenther Exp $	*/
+/*	$OpenBSD: db_machdep.h,v 1.10 2016/02/27 13:08:06 mpi Exp $	*/
 /*	$NetBSD: db_machdep.h,v 1.5 2001/11/22 18:00:00 thorpej Exp $	*/
 
 /*
@@ -95,7 +95,7 @@ extern db_regs_t		ddb_regs;	/* register state */
 #define SOFTWARE_SSTEP
 
 db_addr_t	db_branch_taken(u_int inst, db_addr_t pc, db_regs_t *regs);
-int kdb_trap (int, db_regs_t *);
+int db_ktrap (int, db_regs_t *);
 void db_machine_init (void);
 
 #define branch_taken(ins, pc, fun, regs) \

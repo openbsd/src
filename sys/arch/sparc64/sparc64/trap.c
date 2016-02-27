@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.87 2015/11/06 06:33:26 guenther Exp $	*/
+/*	$OpenBSD: trap.c,v 1.88 2016/02/27 13:08:07 mpi Exp $	*/
 /*	$NetBSD: trap.c,v 1.73 2001/08/09 01:03:01 eeh Exp $ */
 
 /*
@@ -371,13 +371,13 @@ trap(tf, type, pc, tstate)
 #ifdef DDB
 		if (type == T_BREAKPOINT) {
 			write_all_windows();
-			if (kdb_trap(type, tf)) {
+			if (db_ktrap(type, tf)) {
 				/* ADVANCE; */
 				return;
 			}
 		}
 		if (type == T_PA_WATCHPT || type == T_VA_WATCHPT) {
-			if (kdb_trap(type, tf)) {
+			if (db_ktrap(type, tf)) {
 				/* DDB must turn off watchpoints or something */
 				return;
 			}

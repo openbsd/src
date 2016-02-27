@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.34 2015/09/10 17:32:19 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.35 2016/02/27 13:08:07 mpi Exp $	*/
 /*	$NetBSD: exception.c,v 1.32 2006/09/04 23:57:52 uwe Exp $	*/
 /*	$NetBSD: syscall.c,v 1.6 2006/03/07 07:21:50 thorpej Exp $	*/
 
@@ -178,7 +178,7 @@ general_exception(struct proc *p, struct trapframe *tf, uint32_t va)
 	switch (expevt) {
 	case EXPEVT_BREAK:
 #ifdef DDB
-		if (kdb_trap(EXPEVT_BREAK, 0, tf))
+		if (db_ktrap(EXPEVT_BREAK, 0, tf))
 			return;
 		else
 #endif
@@ -189,7 +189,7 @@ general_exception(struct proc *p, struct trapframe *tf, uint32_t va)
 		/* Check for ddb request */
 		tra = _reg_read_4(SH_(TRA));
 		if (tra == (_SH_TRA_BREAK << 2) &&
-		    kdb_trap(expevt, tra, tf))
+		    db_ktrap(expevt, tra, tf))
 			return;
 		else
 #endif

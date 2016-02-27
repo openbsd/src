@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.39 2015/08/28 23:28:39 kettenis Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.40 2016/02/27 13:08:07 mpi Exp $	*/
 /*	$NetBSD: db_interface.c,v 1.61 2001/07/31 06:55:47 eeh Exp $ */
 
 /*
@@ -256,15 +256,15 @@ kdb_kbd_trap(tf)
 {
 	if (db_active == 0 /* && (boothowto & RB_KDB) */) {
 		printf("\n\nkernel: keyboard interrupt tf=%p\n", tf);
-		kdb_trap(-1, tf);
+		db_ktrap(-1, tf);
 	}
 }
 
 /*
- *  kdb_trap - field a TRACE or BPT trap
+ *  db_ktrap - field a TRACE or BPT trap
  */
 int
-kdb_trap(type, tf)
+db_ktrap(type, tf)
 	int	type;
 	register struct trapframe64 *tf;
 {

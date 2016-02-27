@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.4 2014/03/16 20:31:46 guenther Exp $	*/
+/*	$OpenBSD: db_machdep.h,v 1.5 2016/02/27 13:08:07 mpi Exp $	*/
 
 /*
  * Copyright (c) 1998-2005 Michael Shalayeff
@@ -87,6 +87,6 @@ branch_taken1(int ins, db_addr_t pc, db_regs_t *regs) {
 #endif
 
 int db_valid_breakpoint(db_addr_t);
-int kdb_trap(int, int, db_regs_t *);
+int db_ktrap(int, int, db_regs_t *);
 
 #endif /* _MACHINE_DB_MACHDEP_H_ */

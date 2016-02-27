@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.9 2014/11/16 12:30:56 deraadt Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.10 2016/02/27 13:08:06 mpi Exp $	*/
 /*	$NetBSD: db_interface.c,v 1.34 2003/10/26 23:11:15 chris Exp $	*/
 
 /* 
@@ -123,10 +123,10 @@ db_access_irq_sp(struct db_variable *vp, db_expr_t *valp, int rw)
 
 #ifdef DDB
 /*
- *  kdb_trap - field a TRACE or BPT trap
+ *  db_ktrap - field a TRACE or BPT trap
  */
 int
-kdb_trap(int type, db_regs_t *regs)
+db_ktrap(int type, db_regs_t *regs)
 {
 	int s;
 
@@ -359,10 +359,10 @@ db_trapper(u_int addr, u_int inst, trapframe_t *frame, int fault_code)
 
 	if (fault_code == 0) {
 		if ((inst & ~INSN_COND_MASK) == (BKPT_INST & ~INSN_COND_MASK)) {
-			kdb_trap(T_BREAKPOINT, frame);
+			db_ktrap(T_BREAKPOINT, frame);
 			frame->tf_pc += INSN_SIZE;
 		} else
-			kdb_trap(-1, frame);
+			db_ktrap(-1, frame);
 	} else
 		return (1);
 	return (0);

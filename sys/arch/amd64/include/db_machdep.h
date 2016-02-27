@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.12 2014/03/16 20:31:45 guenther Exp $	*/
+/*	$OpenBSD: db_machdep.h,v 1.13 2016/02/27 13:08:06 mpi Exp $	*/
 /*	$NetBSD: db_machdep.h,v 1.2 2003/04/29 17:06:04 scw Exp $	*/
 
 /* 
@@ -85,7 +85,7 @@ typedef	long		kgdb_reg_t;
 
 /* macro for checking if a thread has used floating-point */
 
-int kdb_trap(int, int, db_regs_t *);
+int db_ktrap(int, int, db_regs_t *);
 
 void db_machine_init(void);
 int db_enter_ddb(void);

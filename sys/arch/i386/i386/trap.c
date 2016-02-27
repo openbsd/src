@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.123 2015/06/28 01:11:27 guenther Exp $	*/
+/*	$OpenBSD: trap.c,v 1.124 2016/02/27 13:08:07 mpi Exp $	*/
 /*	$NetBSD: trap.c,v 1.95 1996/05/05 06:50:02 mycroft Exp $	*/
 
 /*-
@@ -186,7 +186,7 @@ trap(struct trapframe *frame)
 #endif
 
 #ifdef DDB
-		if (kdb_trap(type, 0, frame))
+		if (db_ktrap(type, 0, frame))
 			return;
 #endif
 		if (frame->tf_trapno < trap_types)
@@ -498,7 +498,7 @@ trap(struct trapframe *frame)
 			return;
 #endif
 #ifdef DDB
-		if (kdb_trap(type, 0, frame))
+		if (db_ktrap(type, 0, frame))
 			return;
 #endif
 #endif /* DDB || KGDB */

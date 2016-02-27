@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip27_machdep.c,v 1.71 2016/01/02 05:49:36 visa Exp $	*/
+/*	$OpenBSD: ip27_machdep.c,v 1.72 2016/02/27 13:08:07 mpi Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -1019,7 +1019,7 @@ ip27_nmi(void *arg)
 	vaddr_t regs_offs;
 	register_t *regs, epc;
 	struct trap_frame nmi_frame;
-	extern int kdb_trap(int, struct trap_frame *);
+	extern int db_ktrap(int, struct trap_frame *);
 
 	/*
 	 * Build a ddb frame from the registers saved in the NMI KREGS
@@ -1050,7 +1050,7 @@ ip27_nmi(void *arg)
 	    (void *)nmi_frame.pc, (void *)nmi_frame.ra, nmi_frame.sr,
 	    (void *)epc);
 #ifdef DDB
-	(void)kdb_trap(-1, &nmi_frame);
+	(void)db_ktrap(-1, &nmi_frame);
 #endif
 	panic("NMI");
 	/* NOTREACHED */

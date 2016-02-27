@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.15 2015/08/28 23:28:39 kettenis Exp $	*/
+/*	$OpenBSD: db_machdep.h,v 1.16 2016/02/27 13:08:07 mpi Exp $	*/
 /*	$NetBSD: db_machdep.h,v 1.12 2001/07/07 15:16:13 eeh Exp $ */
 
 /*
@@ -132,7 +132,7 @@ void		db_machine_init(void);
 #define DB_MACHINE_COMMANDS
 
 void db_machine_init(void);
-int kdb_trap(int, struct trapframe64 *);
+int db_ktrap(int, struct trapframe64 *);
 
 int db_enter_ddb(void);
 void db_startcpu(struct cpu_info *);
