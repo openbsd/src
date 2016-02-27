@@ -1,4 +1,4 @@
-.\"	$OpenBSD: apm.4,v 1.14 2015/11/01 21:26:48 jmc Exp $
+.\"	$OpenBSD: apm.4,v 1.15 2016/02/27 20:57:32 natano Exp $
 .\"
 .\"	Copyright (c) 1998 Marco S. Hyman
 .\"
@@ -9,7 +9,7 @@
 .\"	LIMITATION, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
 .\"	FOR A PARTICULAR PURPOSE.
 .\"
-.Dd $Mdocdate: November 1 2015 $
+.Dd $Mdocdate: February 27 2016 $
 .Dt APM 4 zaurus
 .Os
 .Sh NAME
@@ -64,6 +64,12 @@ mode.
 Request
 .Dq suspend
 mode.
+.\" .It Dv APM_IOC_HIBERNATE
+.\" .Em NOT YET SUPPORTED on zaurus
+.\" .Pq Li "no parameters"
+.\" Request
+.\" .Dq hibernate
+.\" mode.
 .It Dv APM_IOC_GETPOWER
 .Pq Li "struct apm_power_info"
 Request the current power state.
