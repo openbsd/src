@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.11 2015/02/11 13:05:44 miod Exp $	*/
+/*	$OpenBSD: intr.c,v 1.12 2016/02/27 21:58:48 mmcc Exp $	*/
 
 /*
  * Copyright (c) 2002-2004 Michael Shalayeff
@@ -126,7 +126,7 @@ cpu_intr_map(void *v, int pri, int irq, int (*handler)(void *), void *arg,
 	if (irq < 0 || irq >= CPU_NINTS)
 		return (NULL);
 
-	cnt = (struct evcount *)malloc(sizeof *cnt, M_DEVBUF, M_NOWAIT);
+	cnt = malloc(sizeof(*cnt), M_DEVBUF, M_NOWAIT);
 	if (!cnt)
 		return (NULL);
 
@@ -169,7 +169,7 @@ cpu_intr_establish(int pri, int irq, int (*handler)(void *), void *arg,
 	if ((intr_table[irq].flags & HPPA_IV_SOFT) != 0)
 		return (NULL);
 
-	cnt = (struct evcount *)malloc(sizeof *cnt, M_DEVBUF, M_NOWAIT);
+	cnt = malloc(sizeof(*cnt), M_DEVBUF, M_NOWAIT);
 	if (!cnt)
 		return (NULL);
 
