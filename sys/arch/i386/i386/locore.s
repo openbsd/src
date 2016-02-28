@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.163 2016/02/26 02:25:09 mlarkin Exp $	*/
+/*	$OpenBSD: locore.s,v 1.164 2016/02/28 15:46:18 naddy Exp $	*/
 /*	$NetBSD: locore.s,v 1.145 1996/05/03 19:41:19 christos Exp $	*/
 
 /*-
@@ -46,9 +46,6 @@
 
 #include <sys/errno.h>
 #include <sys/syscall.h>
-#ifdef COMPAT_LINUX
-#include <compat/linux/linux_syscall.h>
-#endif
 
 #include <machine/codepatch.h>
 #include <machine/cputypes.h>
@@ -704,27 +701,6 @@ NENTRY(sigcode)
 	int	$0x80			# exit if sigreturn fails
 	.globl	_C_LABEL(esigcode)
 _C_LABEL(esigcode):
-
-/*****************************************************************************/
-
-/*****************************************************************************/
-
-#ifdef COMPAT_LINUX
-/*
- * Signal trampoline; copied to top of user stack.
- */
-NENTRY(linux_sigcode)
-	call	*LINUX_SIGF_HANDLER(%esp)
-	leal	LINUX_SIGF_SC(%esp),%ebx # scp (the call may have clobbered the
-					# copy at SIGF_SCP(%esp))
-	pushl	%eax			# junk to fake return address
-	movl	$LINUX_SYS_sigreturn,%eax
-	int	$0x80			# enter kernel with args on stack
-	movl	$LINUX_SYS_exit,%eax
-	int	$0x80			# exit if sigreturn fails
-	.globl	_C_LABEL(linux_esigcode)
-_C_LABEL(linux_esigcode):
-#endif
 
 /*****************************************************************************/
 

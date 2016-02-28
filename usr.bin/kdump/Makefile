@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.30 2016/01/05 19:41:15 robert Exp $
+#	$OpenBSD: Makefile,v 1.31 2016/02/28 15:46:19 naddy Exp $
 
 LDSTATIC=${STATIC}
 PROG=	kdump
@@ -11,7 +11,6 @@ CLEANFILES+=ioctl.c kdump_subr.c
 ioctl.c: ${.CURDIR}/Makefile ${.CURDIR}/mkioctls
 	CC="${CC}" \
 	/bin/sh ${.CURDIR}/mkioctls ${SYS_DIR}/sys/ioctl.h \
-	    ${SYS_DIR}/sys/ioctl_compat.h \
 	    ${SYS_DIR}/dev/biovar.h \
 	    ${SYS_DIR}/dev/systrace.h \
 	    ${SYS_DIR}/dev/wscons/wsconsio.h \

@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.37 2015/04/12 18:37:53 mlarkin Exp $
+#	$OpenBSD: genassym.cf,v 1.38 2016/02/28 15:46:18 naddy Exp $
 #
 # Copyright (c) 1982, 1990 The Regents of the University of California.
 # All rights reserved.
@@ -47,10 +47,6 @@ include <machine/trap.h>
 include <machine/pmap.h>
 include <machine/vmparam.h>
 include <machine/mutex.h>
-
-if COMPAT_LINUX > 0
-include <machine/linux_machdep.h>
-endif
 
 if MULTIPROCESSOR
 include <machine/cpu.h>
@@ -131,14 +127,6 @@ struct	mbuf
 member	m_next
 member	m_data
 member	m_len
-
-# Linux frame offsets
-ifdef COMPAT_LINUX
-struct	linux_sigframe		LINUX_SIGF_
-member	HANDLER			sf_handler
-member	SC			sf_sc
-struct	linux_sigcontext	LINUX_
-endif
 
 # Interrupt metering
 if NISA > 0

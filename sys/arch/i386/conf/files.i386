@@ -1,4 +1,4 @@
-#	$OpenBSD: files.i386,v 1.228 2016/01/08 15:54:13 jcs Exp $
+#	$OpenBSD: files.i386,v 1.229 2016/02/28 15:46:18 naddy Exp $
 #
 # new style config file for i386 architecture
 #
@@ -257,10 +257,6 @@ file	arch/i386/i386/vm86.c			vm86
 # VM86 in kernel
 file	arch/i386/i386/kvm86.c			kvm86
 file	arch/i386/i386/kvm86call.S		kvm86
-
-# Linux binary compatibility (COMPAT_LINUX)
-include "compat/linux/files.linux"
-file	arch/i386/i386/linux_machdep.c		compat_linux
 
 device	bios {}
 attach	bios at mainbus

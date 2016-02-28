@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.811 2016/01/11 22:00:16 kettenis Exp $
+#	$OpenBSD: GENERIC,v 1.812 2016/02/28 15:46:18 naddy Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -23,8 +23,6 @@ option		MTRR		# CPU memory range attributes control
 
 #option		KGDB		# Remote debugger support; exclusive of DDB
 #option		"KGDB_DEVNAME=\"com\"",KGDBADDR=0x2f8,KGDBRATE=9600
-
-option		COMPAT_LINUX	# binary compatibility with Linux
 
 option		NTFS		# NTFS support
 option		HIBERNATE	# Hibernate support
