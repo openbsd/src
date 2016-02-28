@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdt.c,v 1.11 2016/02/28 12:06:18 mpi Exp $	*/
+/*	$OpenBSD: fdt.c,v 1.12 2016/02/28 12:39:40 mpi Exp $	*/
 
 /*
  * Copyright (c) 2009 Dariusz Swiderski <sfires@sfires.net>
@@ -48,20 +48,22 @@ fdt_check_head(void *fdt)
 	fh = fdt;
 	ptr = (u_int32_t *)fdt;
 
-	if (fh->fh_magic != FDT_MAGIC)
+	if (betoh32(fh->fh_magic) != FDT_MAGIC)
 		return 0;
 
-	if (fh->fh_version > FDT_CODE_VERSION)
+	if (betoh32(fh->fh_version) > FDT_CODE_VERSION)
 		return 0;
 
-	if (*(ptr + (fh->fh_struct_off / 4)) != FDT_NODE_BEGIN)
+	if (betoh32(*(ptr + (betoh32(fh->fh_struct_off) / 4))) !=
+	    FDT_NODE_BEGIN)
 		return 0;
 
 	/* check for end signature on version 17 blob */
-	if ((fh->fh_version >= 17) & (*(ptr + fh->fh_struct_size) != FDT_END))
+	if ((betoh32(fh->fh_version) >= 17) &&
+	    (betoh32(*(ptr + betoh32(fh->fh_struct_size))) != FDT_END))
 		return 0;
 
-	return fh->fh_version;
+	return betoh32(fh->fh_version);
 }
 
 /*
@@ -83,11 +85,11 @@ fdt_init(void *fdt)
 		return 0;
 
 	tree.header = (struct fdt_head *)fdt;
-	tree.tree = (char *)fdt + tree.header->fh_struct_off;
-	tree.strings = (char *)fdt + tree.header->fh_strings_off;
-	tree.memory = (char *)fdt + tree.header->fh_reserve_off;
+	tree.tree = (char *)fdt + betoh32(tree.header->fh_struct_off);
+	tree.strings = (char *)fdt + betoh32(tree.header->fh_strings_off);
+	tree.memory = (char *)fdt + betoh32(tree.header->fh_reserve_off);
 	tree.version = version;
-	tree.strings_size = tree.header->fh_strings_size;
+	tree.strings_size = betoh32(tree.header->fh_strings_size);
 	tree_inited = 1;
 
 	return version;
@@ -112,7 +114,7 @@ skip_property(u_int32_t *ptr)
 {
 	u_int32_t size;
 
-	size = *(ptr + 1);
+	size = betoh32(*(ptr + 1));
 	/* move forward by magic + size + nameid + rounded up property size */
 	ptr += 3 + roundup(size, sizeof(u_int32_t)) / sizeof(u_int32_t);
 
@@ -122,7 +124,7 @@ skip_property(u_int32_t *ptr)
 void *
 skip_props(u_int32_t *ptr)
 {
-	while (*ptr == FDT_PROPERTY) {
+	while (betoh32(*ptr) == FDT_PROPERTY) {
 		ptr = skip_property(ptr);
 	}
 	return ptr;
@@ -152,17 +154,17 @@ fdt_node_property(void *node, char *name, char **out)
 
 	ptr = (u_int32_t *)node;
 
-	if (*ptr != FDT_NODE_BEGIN)
+	if (betoh32(*ptr) != FDT_NODE_BEGIN)
 		return 0;
 
 	ptr = skip_node_name(ptr + 1);
 
-	while (*ptr == FDT_PROPERTY) {
-		nameid = *(ptr + 2); /* id of name in strings table */
+	while (betoh32(*ptr) == FDT_PROPERTY) {
+		nameid = betoh32(*(ptr + 2)); /* id of name in strings table */
 		tmp = fdt_get_str(nameid);
 		if (!strcmp(name, tmp)) {
 			*out = (char *)(ptr + 3); /* beginning of the value */
-			return *(ptr + 1); /* size of value */
+			return betoh32(*(ptr + 1)); /* size of value */
 		}
 		ptr = skip_property(ptr);
 	}
@@ -185,10 +187,10 @@ fdt_next_node(void *node)
 
 	if (!node) {
 		ptr = tree.tree;
-		return (*ptr == FDT_NODE_BEGIN) ? ptr : NULL;
+		return (betoh32(*ptr) == FDT_NODE_BEGIN) ? ptr : NULL;
 	}
 
-	if (*ptr != FDT_NODE_BEGIN)
+	if (betoh32(*ptr) != FDT_NODE_BEGIN)
 		return NULL;
 
 	ptr++;
@@ -197,10 +199,10 @@ fdt_next_node(void *node)
 	ptr = skip_props(ptr);
 
 	/* skip children */
-	while (*ptr == FDT_NODE_BEGIN)
+	while (betoh32(*ptr) == FDT_NODE_BEGIN)
 		ptr = fdt_next_node(ptr);
 
-	return (*ptr == FDT_NODE_END) ? (ptr + 1) : NULL;
+	return (betoh32(*ptr) == FDT_NODE_END) ? (ptr + 1) : NULL;
 }
 
 /*
@@ -216,7 +218,7 @@ fdt_child_node(void *node)
 
 	ptr = node;
 
-	if (*ptr != FDT_NODE_BEGIN)
+	if (betoh32(*ptr) != FDT_NODE_BEGIN)
 		return NULL;
 
 	ptr++;
@@ -224,7 +226,7 @@ fdt_child_node(void *node)
 	ptr = skip_node_name(ptr);
 	ptr = skip_props(ptr);
 	/* check if there is a child node */
-	return (*ptr == FDT_NODE_BEGIN) ? (ptr) : NULL;
+	return (betoh32(*ptr) == FDT_NODE_BEGIN) ? (ptr) : NULL;
 }
 
 /*
@@ -240,7 +242,7 @@ fdt_node_name(void *node)
 
 	ptr = node;
 
-	if (*ptr != FDT_NODE_BEGIN)
+	if (betoh32(*ptr) != FDT_NODE_BEGIN)
 		return NULL;
 
 	return (char *)(ptr + 1);
@@ -326,12 +328,12 @@ fdt_print_property(void *node, int level)
 	if (!tree_inited)
 		return NULL;
 
-	if (*ptr != FDT_PROPERTY)
+	if (betoh32(*ptr) != FDT_PROPERTY)
 		return ptr; /* should never happen */
 
 	/* extract property name_id and size */
-	size = *++ptr;
-	nameid = *++ptr;
+	size = betoh32(*++ptr);
+	nameid = betoh32(*++ptr);
 
 	for (cnt = 0; cnt < level; cnt++)
 		printf("\t");
@@ -348,7 +350,7 @@ fdt_print_property(void *node, int level)
 		printf("%s", value);
 	} else if (!strcmp(tmp, "clock-frequency") ||
 	    !strcmp(tmp, "timebase-frequency")) {
-		printf("%d", *((unsigned int *)value));
+		printf("%d", betoh32(*((unsigned int *)value)));
 	} else {
 		for (cnt = 0; cnt < size; cnt++) {
 			if ((cnt % sizeof(u_int32_t)) == 0)
@@ -370,7 +372,7 @@ fdt_print_node(void *node, int level)
 	
 	ptr = (u_int32_t *)node;
 
-	if (*ptr != FDT_NODE_BEGIN)
+	if (betoh32(*ptr) != FDT_NODE_BEGIN)
 		return;
 
 	ptr++;
@@ -380,7 +382,7 @@ fdt_print_node(void *node, int level)
 	printf("%s :\n", fdt_node_name(node));
 	ptr = skip_node_name(ptr);
 
-	while (*ptr == FDT_PROPERTY)
+	while (betoh32(*ptr) == FDT_PROPERTY)
 		ptr = fdt_print_property(ptr, level);
 }
 
