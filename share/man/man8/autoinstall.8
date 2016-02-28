@@ -1,4 +1,4 @@
-.\"     $OpenBSD: autoinstall.8,v 1.16 2015/05/15 18:53:05 jmc Exp $
+.\"     $OpenBSD: autoinstall.8,v 1.17 2016/02/28 18:10:26 rpe Exp $
 .\"
 .\" Copyright (c) 2013 Robert Peichaer <rpe@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 15 2015 $
+.Dd $Mdocdate: February 28 2016 $
 .Dt AUTOINSTALL 8
 .Os
 .Sh NAME
@@ -133,10 +133,8 @@ directory structure containing the symbolic links has to exist in the tftproot
 directory.
 The value of
 .Ic filename
-has to be the full path to these symbolic links.
-.Pp
-Note that in these cases, the HTTP server and TFTP server must
-be on the same machine.
+has to be the full path to these symbolic links, and the HTTP and TFTP servers
+must be on the same machine.
 .Pp
 The response file is a line-oriented ASCII text file.
 The format of each line is:
