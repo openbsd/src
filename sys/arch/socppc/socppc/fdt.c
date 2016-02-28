@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdt.c,v 1.10 2015/12/14 03:25:59 mmcc Exp $	*/
+/*	$OpenBSD: fdt.c,v 1.11 2016/02/28 12:06:18 mpi Exp $	*/
 
 /*
  * Copyright (c) 2009 Dariusz Swiderski <sfires@sfires.net>
@@ -87,25 +87,6 @@ fdt_init(void *fdt)
 	tree.strings = (char *)fdt + tree.header->fh_strings_off;
 	tree.memory = (char *)fdt + tree.header->fh_reserve_off;
 	tree.version = version;
-
-	if (version < 3) {
-		if ((tree.strings < tree.tree) && (tree.tree < tree.memory))
-			tree.strings_size = tree.tree - tree.strings;
-		else if ((tree.strings < tree.memory) && (tree.memory <
-		    tree.tree))
-			tree.strings_size = tree.memory - tree.strings;
-		else if ((tree.strings < tree.tree) && (tree.memory <
-		    tree.strings))
-			tree.strings_size = tree.tree - tree.strings;
-		else if ((tree.strings < tree.memory) && (tree.tree <
-		    tree.strings))
-			tree.strings_size = tree.memory - tree.strings;
-		else
-			tree.strings_size = tree.header->fh_size -
-			    (int)tree.strings;
-	} else
-		tree.strings_size = tree.header->fh_strings_size;
-
 	tree.strings_size = tree.header->fh_strings_size;
 	tree_inited = 1;
 
