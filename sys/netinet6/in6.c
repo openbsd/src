@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.183 2016/01/21 11:23:48 mpi Exp $	*/
+/*	$OpenBSD: in6.c,v 1.184 2016/02/28 07:15:34 stefan Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -253,7 +253,6 @@ in6_control(struct socket *so, u_long cmd, caddr_t data, struct ifnet *ifp)
 	case SIOCSPFXFLUSH_IN6:
 	case SIOCSRTRFLUSH_IN6:
 	case SIOCGIFALIFETIME_IN6:
-	case SIOCSIFALIFETIME_IN6:
 	case SIOCGIFSTAT_IN6:
 	case SIOCGIFSTAT_ICMP6:
 		sa6 = &ifr->ifr_addr;
@@ -337,26 +336,6 @@ in6_control(struct socket *so, u_long cmd, caddr_t data, struct ifnet *ifp)
 		if (ia6 == NULL)
 			return (EADDRNOTAVAIL);
 		break;
-	case SIOCSIFALIFETIME_IN6:
-	    {
-		struct in6_addrlifetime *lt;
-
-		if (!privileged)
-			return (EPERM);
-		if (ia6 == NULL)
-			return (EADDRNOTAVAIL);
-		/* sanity for overflow - beware unsigned */
-		lt = &ifr->ifr_ifru.ifru_lifetime;
-		if (lt->ia6t_vltime != ND6_INFINITE_LIFETIME
-		 && lt->ia6t_vltime + time_second < time_second) {
-			return EINVAL;
-		}
-		if (lt->ia6t_pltime != ND6_INFINITE_LIFETIME
-		 && lt->ia6t_pltime + time_second < time_second) {
-			return EINVAL;
-		}
-		break;
-	    }
 	}
 
 	switch (cmd) {
@@ -425,21 +404,6 @@ in6_control(struct socket *so, u_long cmd, caddr_t data, struct ifnet *ifp)
 			} else
 				retlt->ia6t_preferred = maxexpire;
 		}
-		break;
-
-	case SIOCSIFALIFETIME_IN6:
-		ia6->ia6_lifetime = ifr->ifr_ifru.ifru_lifetime;
-		/* for sanity */
-		if (ia6->ia6_lifetime.ia6t_vltime != ND6_INFINITE_LIFETIME) {
-			ia6->ia6_lifetime.ia6t_expire =
-				time_second + ia6->ia6_lifetime.ia6t_vltime;
-		} else
-			ia6->ia6_lifetime.ia6t_expire = 0;
-		if (ia6->ia6_lifetime.ia6t_pltime != ND6_INFINITE_LIFETIME) {
-			ia6->ia6_lifetime.ia6t_preferred =
-				time_second + ia6->ia6_lifetime.ia6t_pltime;
-		} else
-			ia6->ia6_lifetime.ia6t_preferred = 0;
 		break;
 
 	case SIOCAIFADDR_IN6:
