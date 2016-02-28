@@ -1,5 +1,5 @@
 #!/bin/sh
-# $OpenBSD: run,v 1.1 2007/03/30 19:02:51 pedro Exp $
+# $OpenBSD: run,v 1.2 2016/02/28 13:25:57 natano Exp $
 # Heavily inspired on FreeBSD's misc.sh.
 
 totntest=0
@@ -45,7 +45,7 @@ test_check()
 # Generate a random file/directory name.
 namegen()
 {
-  echo "fstest_`dd if=/dev/urandom bs=1k count=1 2>/dev/null | openssl md5`"
+  echo "fstest_`dd if=/dev/urandom bs=1k count=1 2>/dev/null | md5`"
 }
 
 for arg in $*; do
