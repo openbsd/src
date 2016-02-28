@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_output.c,v 1.61 2015/09/11 08:17:06 claudio Exp $ */
+/*	$OpenBSD: ipsec_output.c,v 1.62 2016/02/28 16:16:10 mikeb Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -375,13 +375,30 @@ ipsp_process_done(struct mbuf *m, struct tdb *tdb)
 	if ((tdb->tdb_flags & TDBF_UDPENCAP) != 0) {
 		struct mbuf *mi;
 		struct udphdr *uh;
+		int iphlen;
 
 		if (!udpencap_enable || !udpencap_port) {
 			m_freem(m);
 			return ENXIO;
 		}
-		mi = m_inject(m, sizeof(struct ip), sizeof(struct udphdr),
-		    M_DONTWAIT);
+
+		switch (tdb->tdb_dst.sa.sa_family) {
+		case AF_INET:
+			iphlen = sizeof(struct ip);
+			break;
+#ifdef INET6
+		case AF_INET6:
+			iphlen = sizeof(struct ip6_hdr);
+			break;
+#endif /* INET6 */
+		default:
+			m_freem(m);
+			DPRINTF(("ipsp_process_done(): unknown protocol family "
+			    "(%d)\n", tdb->tdb_dst.sa.sa_family));
+			return ENXIO;
+		}
+
+		mi = m_inject(m, iphlen, sizeof(struct udphdr), M_DONTWAIT);
 		if (mi == NULL) {
 			m_freem(m);
 			return ENOMEM;
@@ -391,8 +408,12 @@ ipsp_process_done(struct mbuf *m, struct tdb *tdb)
 		if (tdb->tdb_udpencap_port)
 			uh->uh_dport = tdb->tdb_udpencap_port;
 
-		uh->uh_ulen = htons(m->m_pkthdr.len - sizeof(struct ip));
+		uh->uh_ulen = htons(m->m_pkthdr.len - iphlen);
 		uh->uh_sum = 0;
+#ifdef INET6
+		if (tdb->tdb_dst.sa.sa_family == AF_INET6)
+			m->m_pkthdr.csum_flags |= M_UDP_CSUM_OUT;
+#endif /* INET6 */
 		espstat.esps_udpencout++;
 	}
 
