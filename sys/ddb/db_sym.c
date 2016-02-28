@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_sym.c,v 1.46 2016/02/27 13:17:47 mpi Exp $	*/
+/*	$OpenBSD: db_sym.c,v 1.47 2016/02/28 14:43:03 mpi Exp $	*/
 /*	$NetBSD: db_sym.c,v 1.24 2000/08/11 22:50:47 tv Exp $	*/
 
 /*
@@ -36,17 +36,6 @@
 #include <ddb/db_sym.h>
 #include <ddb/db_output.h>
 #include <ddb/db_command.h>
-
-/*
- * Multiple symbol tables
- */
-#ifndef MAXLKMS
-#define MAXLKMS 20
-#endif
-
-#ifndef MAXNOSYMTABS
-#define	MAXNOSYMTABS	MAXLKMS+1	/* Room for kernel + LKM's */
-#endif
 
 extern char end[];
 
