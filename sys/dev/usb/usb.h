@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb.h,v 1.53 2015/07/09 05:40:44 mpi Exp $ */
+/*	$OpenBSD: usb.h,v 1.54 2016/02/28 17:57:50 stefan Exp $ */
 /*	$NetBSD: usb.h,v 1.69 2002/09/22 23:20:50 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb.h,v 1.14 1999/11/17 22:33:46 n_hibma Exp $	*/
 
@@ -761,7 +761,6 @@ struct usb_device_stats {
 
 /* Generic HID device */
 #define USB_GET_REPORT_DESC	_IOR ('U', 21, struct usb_ctl_report_desc)
-#define USB_SET_IMMED		_IOW ('U', 22, int)
 #define USB_GET_REPORT		_IOWR('U', 23, struct usb_ctl_report)
 #define USB_SET_REPORT		_IOW ('U', 24, struct usb_ctl_report)
 #define USB_GET_REPORT_ID	_IOR ('U', 25, int)
