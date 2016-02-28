@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.10 2015/02/06 10:54:08 mpi Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.11 2016/02/28 11:56:40 mpi Exp $	*/
 /*      $NetBSD: db_interface.c,v 1.12 2001/07/22 11:29:46 wiz Exp $ */
 
 /*
@@ -62,7 +62,7 @@ void db_ddbproc_cmd(db_expr_t, int, db_expr_t, char *);
 
 int db_active = 0;
 
-int ddb_trap_glue(struct trapframe *frame); /* called from locore */
+int db_trap_glue(struct trapframe *frame); /* called from locore */
 
 void
 Debugger()
@@ -71,7 +71,7 @@ Debugger()
 }
 
 int
-ddb_trap_glue(struct trapframe *frame)
+db_trap_glue(struct trapframe *frame)
 {
 	int s;
 
