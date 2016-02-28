@@ -1,4 +1,4 @@
-.\" $OpenBSD: wscons.4,v 1.18 2015/11/01 21:26:48 jmc Exp $
+.\" $OpenBSD: wscons.4,v 1.19 2016/02/28 16:07:57 naddy Exp $
 .\" $NetBSD: wscons.4,v 1.11 2000/04/13 11:14:42 is Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -25,7 +25,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 1 2015 $
+.Dd $Mdocdate: February 28 2016 $
 .Dt WSCONS 4
 .Os
 .Sh NAME
@@ -207,20 +207,7 @@ Emulates enough of the i386
 .Fx
 .Dq syscons
 driver to make X servers work.
-Useful with
-.Fx
-binary emulation.
 .El
-.Pp
-Linux/i386 X servers do usually run if the first two options are
-enabled together with the
-.Ox
-Linux binary emulation.
-.Pp
-(To have programs looking for device special files of other console drivers
-find the
-.Nm
-driver entry points, symlinks are a helpful measure.)
 .Pp
 .Em Other options :
 .Bl -tag -width 3n
