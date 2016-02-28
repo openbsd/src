@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kdump.1,v 1.28 2016/02/26 21:46:39 naddy Exp $
+.\"	$OpenBSD: kdump.1,v 1.29 2016/02/28 15:55:58 naddy Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)kdump.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: February 26 2016 $
+.Dd $Mdocdate: February 28 2016 $
 .Dt KDUMP 1
 .Os
 .Sh NAME
@@ -62,8 +62,6 @@ By default, values are printed out in hexadecimal.
 .It Fl e Ar emulation
 Interpret system call maps assuming the named emulation instead of
 .Qq native .
-For example, to view trace output from a Linux binary, use
-.Fl e Ar linux .
 .It Fl f Ar file
 Display the specified file instead of
 .Pa ktrace.out .
