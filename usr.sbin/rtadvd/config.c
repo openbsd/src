@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.52 2016/02/26 12:33:30 jca Exp $	*/
+/*	$OpenBSD: config.c,v 1.53 2016/02/29 06:37:55 jca Exp $	*/
 /*	$KAME: config.c,v 1.62 2002/05/29 10:13:10 itojun Exp $	*/
 
 /*
@@ -678,21 +678,6 @@ delete_prefix(struct rainfo *rai, struct prefix *prefix)
 	make_packet(rai);
 }
 
-/*
- * Try to get an in6_prefixreq contents for a prefix which matches
- * ipr->ipr_prefix and ipr->ipr_plen and belongs to
- * the interface whose name is ipr->ipr_name[].
- */
-static int
-init_prefix(struct in6_prefixreq *ipr)
-{
-	ipr->ipr_vltime = DEF_ADVVALIDLIFETIME;
-	ipr->ipr_pltime = DEF_ADVPREFERREDLIFETIME;
-	ipr->ipr_raf_onlink = 1;
-	ipr->ipr_raf_auto = 1;
-	return 0;
-}
-
 void
 make_prefix(struct rainfo *rai, int ifindex, struct in6_addr *addr, int plen)
 {
@@ -708,9 +693,11 @@ make_prefix(struct rainfo *rai, int ifindex, struct in6_addr *addr, int plen)
 	ipr.ipr_prefix.sin6_family = AF_INET6;
 	ipr.ipr_prefix.sin6_addr = *addr;
 	ipr.ipr_plen = plen;
+	ipr.ipr_vltime = DEF_ADVVALIDLIFETIME;
+	ipr.ipr_pltime = DEF_ADVPREFERREDLIFETIME;
+	ipr.ipr_raf_onlink = 1;
+	ipr.ipr_raf_auto = 1;
 
-	if (init_prefix(&ipr))
-		return; /* init failed by some error */
 	add_prefix(rai, &ipr);
 }
 
