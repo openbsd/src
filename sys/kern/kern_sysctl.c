@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.299 2015/12/05 20:54:34 kettenis Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.300 2016/02/29 19:44:07 naddy Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -129,7 +129,6 @@ int sysctl_proc_nobroadcastkill(int *, u_int, void *, size_t, void *, size_t *,
 int sysctl_proc_vmmap(int *, u_int, void *, size_t *, struct proc *);
 int sysctl_intrcnt(int *, u_int, void *, size_t *);
 int sysctl_sensors(int *, u_int, void *, size_t *, void *, size_t);
-int sysctl_emul(int *, u_int, void *, size_t *, void *, size_t);
 int sysctl_cptime2(int *, u_int, void *, size_t *, void *, size_t);
 
 void fill_file(struct kinfo_file *, struct file *, struct filedesc *, int,
@@ -298,7 +297,6 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		case KERN_SHMINFO:
 		case KERN_INTRCNT:
 		case KERN_WATCHDOG:
-		case KERN_EMUL:
 		case KERN_EVCOUNT:
 		case KERN_TIMECOUNTER:
 		case KERN_CPTIME2:
@@ -556,9 +554,6 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		return (sysctl_intrcnt(name + 1, namelen - 1, oldp, oldlenp));
 	case KERN_WATCHDOG:
 		return (sysctl_wdog(name + 1, namelen - 1, oldp, oldlenp,
-		    newp, newlen));
-	case KERN_EMUL:
-		return (sysctl_emul(name + 1, namelen - 1, oldp, oldlenp,
 		    newp, newlen));
 #endif
 	case KERN_MAXCLUSTERS:
@@ -2330,41 +2325,6 @@ sysctl_sensors(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 	    sizeof(struct sensor));
 	free(us, M_TEMP, sizeof(*us));
 	return (ret);
-}
-
-int
-sysctl_emul(int *name, u_int namelen, void *oldp, size_t *oldlenp,
-    void *newp, size_t newlen)
-{
-	int enabled, error;
-	struct emul *e;
-
-	if (name[0] == KERN_EMUL_NUM) {
-		if (namelen != 1)
-			return (ENOTDIR);
-		return (sysctl_rdint(oldp, oldlenp, newp, nexecs));
-	}
-
-	if (namelen != 2)
-		return (ENOTDIR);
-	if (name[0] > nexecs || name[0] < 0)
-		return (EINVAL);
-	e = execsw[name[0] - 1].es_emul;
-	if (e == NULL)
-		return (EINVAL);
-
-	switch (name[1]) {
-	case KERN_EMUL_NAME:
-		return (sysctl_rdstring(oldp, oldlenp, newp, e->e_name));
-	case KERN_EMUL_ENABLED:
-		enabled = (e->e_flags & EMUL_ENABLED);
-		error = sysctl_int(oldp, oldlenp, newp, newlen,
-		    &enabled);
-		e->e_flags = (enabled & EMUL_ENABLED);
-		return (error);
-	default:
-		return (EINVAL);
-	}
 }
 
 #endif	/* SMALL_KERNEL */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.157 2015/10/23 10:22:30 claudio Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.158 2016/02/29 19:44:07 naddy Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -165,7 +165,7 @@ struct ctlname {
 #define	KERN_SHMINFO		62	/* struct: SysV struct shminfo */
 #define KERN_INTRCNT		63	/* node: interrupt counters */
 #define	KERN_WATCHDOG		64	/* node: watchdog */
-#define	KERN_EMUL		65	/* node: emuls */
+/* was KERN_EMUL		65	*/
 #define	KERN_PROC		66	/* struct: process entries */
 #define	KERN_MAXCLUSTERS	67	/* number of mclusters */
 #define KERN_EVCOUNT		68	/* node: event counters */
@@ -252,7 +252,7 @@ struct ctlname {
 	{ "shminfo", CTLTYPE_STRUCT }, \
 	{ "intrcnt", CTLTYPE_NODE }, \
  	{ "watchdog", CTLTYPE_NODE }, \
- 	{ "emul", CTLTYPE_NODE }, \
+ 	{ "gap", 0 }, \
  	{ "proc", CTLTYPE_STRUCT }, \
  	{ "maxclusters", CTLTYPE_INT }, \
 	{ "evcount", CTLTYPE_NODE }, \
@@ -270,15 +270,6 @@ struct ctlname {
 	{ "proc_vmmap", CTLTYPE_NODE }, \
 	{ "global_ptrace", CTLTYPE_INT }, \
 }
-
-/*
- * KERN_EMUL subtypes.
- */
-#define	KERN_EMUL_NUM		0
-/* Fourth level sysctl names */
-#define KERN_EMUL_NAME		0
-#define KERN_EMUL_ENABLED	1
-
 
 /*
  * KERN_PROC subtypes

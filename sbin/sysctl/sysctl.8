@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.8,v 1.190 2015/11/05 12:50:53 sthen Exp $
+.\"	$OpenBSD: sysctl.8,v 1.191 2016/02/29 19:44:07 naddy Exp $
 .\"	$NetBSD: sysctl.8,v 1.4 1995/09/30 07:12:49 thorpej Exp $
 .\"
 .\" Copyright (c) 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)sysctl.8	8.2 (Berkeley) 5/9/95
 .\"
-.Dd $Mdocdate: November 5 2015 $
+.Dd $Mdocdate: February 29 2016 $
 .Dt SYSCTL 8
 .Os
 .Sh NAME
@@ -187,8 +187,6 @@ and a few require a kernel compiled with non-standard
 .It kern.shminfo.shmall Ta integer Ta yes
 .It kern.watchdog.period Ta integer Ta yes
 .It kern.watchdog.auto Ta integer Ta yes
-.It kern.emul.nemuls Ta integer Ta no
-.It kern.emul.other Ta integer Ta yes
 .It kern.maxclusters Ta integer Ta yes
 .It kern.timecounter.tick Ta integer Ta no
 .It kern.timecounter.timestepwarnings Ta integer Ta yes

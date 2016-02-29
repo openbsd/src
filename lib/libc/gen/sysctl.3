@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.253 2015/11/05 12:52:26 sthen Exp $
+.\"	$OpenBSD: sysctl.3,v 1.254 2016/02/29 19:44:07 naddy Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 5 2015 $
+.Dd $Mdocdate: February 29 2016 $
 .Dt SYSCTL 3
 .Os
 .Sh NAME
@@ -418,7 +418,6 @@ information.
 .It Dv KERN_CPTIME Ta "long[CPUSTATES]" Ta "no"
 .It Dv KERN_CPTIME2 Ta "u_int64_t[CPUSTATES]" Ta "no"
 .It Dv KERN_DOMAINNAME Ta "string" Ta "yes"
-.It Dv KERN_EMUL Ta "node" Ta "not applicable"
 .It Dv KERN_FILE Ta "struct kinfo_file" Ta "no"
 .It Dv KERN_FORKSTAT Ta "struct forkstat" Ta "no"
 .It Dv KERN_FSCALE Ta "integer" Ta "no"
@@ -526,30 +525,6 @@ but obtains information from only the single CPU specified by the
 third level name given.
 .It Dv KERN_DOMAINNAME
 Get or set the YP domain name.
-.It Dv KERN_EMUL
-Enable binary emulation.
-.Bl -column "KERN_EMUL_ENABLED" "integer" "Changeable" -offset indent
-.It Sy "Third level name" Ta Sy "Type" Ta Sy Changeable
-.It Dv KERN_EMUL_ENABLED Ta "integer" Ta "yes"
-.It Dv KERN_EMUL_NAME Ta "string" Ta "no"
-.It Dv KERN_EMUL_NEMULS Ta "integer" Ta "no"
-.El
-.Pp
-Third level names in
-.Dv KERN_EMUL
-other than
-.Dv KERN_EMUL_NEMULS
-refer to a specific emulation available in the kernel.
-Valid values range from 1 to the return value of
-.Dv KERN_EMUL_NEMULS .
-The fourth level names available are
-.Dv KERN_EMUL_NAME ,
-which returns a string with the emulation name, and
-.Dv KERN_EMUL_ENABLED ,
-which is an adjustable integer.
-.Pp
-Note that using this interface exposes duplicate entries which are
-consolidated by the userland frontend.
 .It Dv KERN_FILE
 Return the entire file table, or a subset of it.
 An array of
