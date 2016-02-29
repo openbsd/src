@@ -1,4 +1,4 @@
-/*	$OpenBSD: popen.c,v 1.25 2015/10/04 11:58:09 tedu Exp $	*/
+/*	$OpenBSD: popen.c,v 1.26 2016/02/29 17:50:34 jca Exp $	*/
 /*	$NetBSD: popen.c,v 1.5 1995/04/11 02:45:00 cgd Exp $	*/
 
 /*
@@ -162,7 +162,7 @@ pfree:	for (argc = 1; gargv[argc] != NULL; argc++)
 int
 ftpd_pclose(FILE *iop, pid_t pid)
 {
-	int fdes, status;
+	int status;
 	pid_t rv;
 	sigset_t sigset, osigset;
 
