@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_lib.c,v 1.32 2015/10/07 13:20:48 bcook Exp $ */
+/* $OpenBSD: d1_lib.c,v 1.33 2016/02/29 06:48:03 mmcc Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -125,16 +125,11 @@ dtls1_new(SSL *s)
 	if (!d1->unprocessed_rcds.q || !d1->processed_rcds.q ||
 	    !d1->buffered_messages || !d1->sent_messages ||
 	    !d1->buffered_app_data.q) {
-		if (d1->unprocessed_rcds.q)
-			pqueue_free(d1->unprocessed_rcds.q);
-		if (d1->processed_rcds.q)
-			pqueue_free(d1->processed_rcds.q);
-		if (d1->buffered_messages)
-			pqueue_free(d1->buffered_messages);
-		if (d1->sent_messages)
-			pqueue_free(d1->sent_messages);
-		if (d1->buffered_app_data.q)
-			pqueue_free(d1->buffered_app_data.q);
+		pqueue_free(d1->unprocessed_rcds.q);
+		pqueue_free(d1->processed_rcds.q);
+		pqueue_free(d1->buffered_messages);
+		pqueue_free(d1->sent_messages);
+		pqueue_free(d1->buffered_app_data.q);
 		free(d1);
 		ssl3_free(s);
 		return (0);
