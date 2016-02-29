@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_info.1,v 1.51 2015/10/07 17:52:38 jmc Exp $
+.\"	$OpenBSD: pkg_info.1,v 1.52 2016/02/29 22:59:33 jmc Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -15,7 +15,7 @@
 .\" Jordan K. Hubbard
 .\"
 .\"
-.Dd $Mdocdate: October 7 2015 $
+.Dd $Mdocdate: February 29 2016 $
 .Dt PKG_INFO 1
 .Os
 .Sh NAME
@@ -87,7 +87,7 @@ allows you to test for the presence of another (perhaps
 prerequisite) package from a script.
 If the package identified by
 .Ar pkg-name
-is not currently installed, return 0, otherwise return 1.
+is currently installed, return 0, otherwise return 1.
 In addition, the names of any package(s) found installed are printed to
 stdout unless turned off using the
 .Fl q
