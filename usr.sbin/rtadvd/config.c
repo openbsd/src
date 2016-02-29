@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.53 2016/02/29 06:37:55 jca Exp $	*/
+/*	$OpenBSD: config.c,v 1.54 2016/02/29 20:25:46 jca Exp $	*/
 /*	$KAME: config.c,v 1.62 2002/05/29 10:13:10 itojun Exp $	*/
 
 /*
@@ -618,8 +618,8 @@ makeentry(char *buf, size_t len, int id, char *string)
  * XXX: other parameters of the prefix (e.g. lifetime) ought
  * to be specified.
  */
-static void
-add_prefix(struct rainfo *rai, struct in6_prefixreq *ipr)
+void
+make_prefix(struct rainfo *rai, int ifindex, struct in6_addr *addr, int plen)
 {
 	struct prefix *prefix;
 	u_char ntopbuf[INET6_ADDRSTRLEN];
@@ -628,20 +628,20 @@ add_prefix(struct rainfo *rai, struct in6_prefixreq *ipr)
 		log_warn("calloc");
 		return;		/* XXX: error or exit? */
 	}
-	prefix->prefix = ipr->ipr_prefix.sin6_addr;
-	prefix->prefixlen = ipr->ipr_plen;
-	prefix->validlifetime = ipr->ipr_vltime;
-	prefix->preflifetime = ipr->ipr_pltime;
-	prefix->onlinkflg = ipr->ipr_raf_onlink;
-	prefix->autoconfflg = ipr->ipr_raf_auto;
+	prefix->prefix = *addr;
+	prefix->prefixlen = plen;
+	prefix->validlifetime = DEF_ADVVALIDLIFETIME;
+	prefix->preflifetime = DEF_ADVPREFERREDLIFETIME;
+	prefix->onlinkflg = 1;
+	prefix->autoconfflg = 1;
 	prefix->origin = PREFIX_FROM_DYNAMIC;
 
 	TAILQ_INSERT_TAIL(&rai->prefixes, prefix, entry);
 
 	log_debug("new prefix %s/%d was added on %s",
-	    inet_ntop(AF_INET6, &ipr->ipr_prefix.sin6_addr,
+	    inet_ntop(AF_INET6, &prefix->prefix,
 	       ntopbuf, INET6_ADDRSTRLEN),
-	    ipr->ipr_plen, rai->ifname);
+	    prefix->prefixlen, rai->ifname);
 
 	/* free the previous packet */
 	free(rai->ra_data);
@@ -676,29 +676,6 @@ delete_prefix(struct rainfo *rai, struct prefix *prefix)
 	free(prefix);
 	rai->pfxs--;
 	make_packet(rai);
-}
-
-void
-make_prefix(struct rainfo *rai, int ifindex, struct in6_addr *addr, int plen)
-{
-	struct in6_prefixreq ipr;
-
-	memset(&ipr, 0, sizeof(ipr));
-	if (if_indextoname(ifindex, ipr.ipr_name) == NULL) {
-		log_warn("Prefix added interface No.%d doesn't"
-		    " exist. This should not happen!", ifindex);
-		exit(1);
-	}
-	ipr.ipr_prefix.sin6_len = sizeof(ipr.ipr_prefix);
-	ipr.ipr_prefix.sin6_family = AF_INET6;
-	ipr.ipr_prefix.sin6_addr = *addr;
-	ipr.ipr_plen = plen;
-	ipr.ipr_vltime = DEF_ADVVALIDLIFETIME;
-	ipr.ipr_pltime = DEF_ADVPREFERREDLIFETIME;
-	ipr.ipr_raf_onlink = 1;
-	ipr.ipr_raf_auto = 1;
-
-	add_prefix(rai, &ipr);
 }
 
 void
