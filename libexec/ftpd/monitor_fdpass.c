@@ -1,4 +1,4 @@
-/*	$OpenBSD: monitor_fdpass.c,v 1.6 2013/11/12 04:44:14 deraadt Exp $	*/
+/*	$OpenBSD: monitor_fdpass.c,v 1.7 2016/02/29 20:22:36 jca Exp $	*/
 
 /*
  * Copyright (c) 2002 Matthieu Herrb
@@ -62,8 +62,8 @@ send_fd(int sock, int fd)
 	if ((n = sendmsg(sock, &msg, 0)) == -1)
 		syslog(LOG_WARNING, "send_fd: sendmsg(%d): %m", sock);
 	if (n != sizeof(int))
-		syslog(LOG_WARNING, "send_fd: sendmsg: expected sent 1 got %ld",
-		    (long)n);
+		syslog(LOG_WARNING, "send_fd: sendmsg: expected sent 1 got %zd",
+		    n);
 }
 
 int
@@ -94,7 +94,7 @@ recv_fd(int sock)
 	}
 	if (n != sizeof(int))
 		syslog(LOG_WARNING,
-		    "recv_fd: recvmsg: expected received 1 got %ld", (long)n);
+		    "recv_fd: recvmsg: expected received 1 got %zd", n);
 	if (result == 0) {
 		cmsg = CMSG_FIRSTHDR(&msg);
 		if (cmsg == NULL) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: monitor_fdpass.c,v 1.16 2008/03/24 16:11:08 deraadt Exp $	*/
+/*	$OpenBSD: monitor_fdpass.c,v 1.17 2016/02/29 20:22:36 jca Exp $	*/
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -67,8 +67,7 @@ mm_send_fd(int socket, int fd)
 		return -1;
 	}
 	if (n != 1) {
-		log_error("mm_send_fd: sendmsg: expected sent 1 got %ld",
-		    (long)n);
+		log_error("mm_send_fd: sendmsg: expected sent 1 got %zd", n);
 		return -1;
 	}
 	return 0;
@@ -101,8 +100,8 @@ mm_receive_fd(int socket)
 		return -1;
 	}
 	if (n != 1) {
-		log_error("mm_receive_fd: recvmsg: expected received 1 got %ld",
-		    (long)n);
+		log_error("mm_receive_fd: recvmsg: expected received 1 got %zd",
+		    n);
 		return -1;
 	}
 	cmsg = CMSG_FIRSTHDR(&msg);
