@@ -1,4 +1,4 @@
-/*	$OpenBSD: lp.h,v 1.20 2016/01/12 23:35:13 tb Exp $	*/
+/*	$OpenBSD: lp.h,v 1.21 2016/02/29 17:26:01 jca Exp $	*/
 /*	$NetBSD: lp.h,v 1.14 2000/04/16 14:43:58 mrg Exp $	*/
 
 /*
@@ -120,6 +120,7 @@ struct dirent;
 
 /* common.c */
 char	*checkremote(void);
+int	 ckqueue(char *);
 void	 fatal(const char *, ...)
     __attribute__((__noreturn__,__format__(__printf__, 1, 2)));
 int	 get_line(FILE *);

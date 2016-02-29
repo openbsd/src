@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.c,v 1.40 2016/01/12 23:35:13 tb Exp $	*/
+/*	$OpenBSD: common.c,v 1.41 2016/02/29 17:26:01 jca Exp $	*/
 /*	$NetBSD: common.c,v 1.21 2000/08/09 14:28:50 itojun Exp $	*/
 
 /*
@@ -452,4 +452,33 @@ safe_open(const char *path, int flags, mode_t mode)
 	if (mode)
 		(void)fchmod(fd, mode);
 	return (fd);
+}
+
+/*
+ * Make sure there's some work to do before forking off a child - lpd
+ * Check to see if anything in queue - lpq
+ */
+int
+ckqueue(char *cap)
+{
+	struct dirent *d;
+	DIR *dirp;
+	char *spooldir;
+
+	if (cgetstr(cap, "sd", &spooldir) >= 0) {
+		dirp = opendir(spooldir);
+		free(spooldir);
+	} else
+		dirp = opendir(_PATH_DEFSPOOL);
+
+	if (dirp == NULL)
+		return (-1);
+	while ((d = readdir(dirp)) != NULL) {
+		if (d->d_name[0] == 'c' && d->d_name[1] == 'f') {
+			closedir(dirp);
+			return (1);		/* found a cf file */
+		}
+	}
+	closedir(dirp);
+	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpq.c,v 1.22 2015/02/09 23:00:14 deraadt Exp $	*/
+/*	$OpenBSD: lpq.c,v 1.23 2016/02/29 17:26:02 jca Exp $	*/
 /*	$NetBSD: lpq.c,v 1.9 1999/12/07 14:54:47 mrg Exp $	*/
 
 /*
@@ -64,7 +64,6 @@ int	 users;			/* # of users in user array */
 
 volatile sig_atomic_t gotintr;
 
-static int ckqueue(char *);
 static __dead void usage(void);
 
 int
@@ -146,32 +145,6 @@ main(int argc, char **argv)
 	} else
 		displayq(lflag);
 	exit(0);
-}
-
-/* XXX - could be common w/ lpd */
-static int
-ckqueue(char *cap)
-{
-	struct dirent *d;
-	DIR *dirp;
-	char *spooldir;
-
-	if (cgetstr(cap, "sd", &spooldir) >= 0) {
-		dirp = opendir(spooldir);
-		free(spooldir);
-	} else
-		dirp = opendir(_PATH_DEFSPOOL);
-
-	if (dirp == NULL)
-		return (-1);
-	while ((d = readdir(dirp)) != NULL) {
-		if (d->d_name[0] != 'c' || d->d_name[1] != 'f')
-			continue;	/* daemon control files only */
-		closedir(dirp);
-		return (1);		/* found something */
-	}
-	closedir(dirp);
-	return (0);
 }
 
 static __dead void
