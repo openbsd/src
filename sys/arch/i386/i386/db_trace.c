@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.16 2016/02/26 09:29:20 mpi Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.17 2016/03/01 21:28:24 mpi Exp $	*/
 /*	$NetBSD: db_trace.c,v 1.18 1996/05/03 19:42:01 christos Exp $	*/
 
 /*
@@ -74,29 +74,9 @@ struct db_variable *db_eregs = db_regs + nitems(db_regs);
 #define	INTERRUPT	3
 #define	AST		4
 
-db_addr_t	db_trap_symbol_value = 0;
-db_addr_t	db_syscall_symbol_value = 0;
-db_addr_t	db_kdintr_symbol_value = 0;
-boolean_t	db_trace_symbols_found = FALSE;
-
-void db_find_trace_symbols(void);
 int db_numargs(struct callframe *);
 void db_nextframe(struct callframe **, db_addr_t *, int *, int,
     int (*pr)(const char *, ...));
-
-void
-db_find_trace_symbols(void)
-{
-	db_expr_t	value;
-
-	if (db_value_of_name("trap", &value))
-		db_trap_symbol_value = (db_addr_t) value;
-	if (db_value_of_name("kdintr", &value))
-		db_kdintr_symbol_value = (db_addr_t) value;
-	if (db_value_of_name("syscall", &value))
-		db_syscall_symbol_value = (db_addr_t) value;
-	db_trace_symbols_found = TRUE;
-}
 
 /*
  * Figure out how many arguments were passed into the frame at "fp".
@@ -184,11 +164,6 @@ db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
 	boolean_t	kernel_only = TRUE;
 	boolean_t	trace_thread = FALSE;
 	boolean_t	trace_proc = FALSE;
-
-#if 0
-	if (!db_trace_symbols_found)
-		db_find_trace_symbols();
-#endif
 
 	{
 		char *cp = modif;
