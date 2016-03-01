@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.15 2006/07/02 12:34:15 sturm Exp $
+#	$OpenBSD: Makefile,v 1.16 2016/03/01 16:26:06 naddy Exp $
 
 PROG=	systrace
 CFLAGS+=-I. -I${.CURDIR} -I${.CURDIR}/../../sys
@@ -9,7 +9,7 @@ DPADD+=	${LIBEVENT}
 LDADD+=	-levent
 
 SRCS=	cradle.c filter.c intercept-translate.c intercept.c \
-	linux-translate.c openbsd-syscalls.c util.c \
+	openbsd-syscalls.c util.c \
 	policy.c systrace-errno.h systrace-error.c \
 	systrace-translate.c systrace.c alias.c register.c \
 	parse.y lex.l

@@ -1,4 +1,4 @@
-/*	$OpenBSD: systrace-translate.c,v 1.25 2015/01/16 00:19:12 deraadt Exp $	*/
+/*	$OpenBSD: systrace-translate.c,v 1.26 2016/03/01 16:26:06 naddy Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -46,9 +46,6 @@
 #include <pwd.h>
 #include <err.h>
 
-#include "../../sys/compat/linux/linux_types.h"
-#include "../../sys/compat/linux/linux_fcntl.h"
-
 #include "intercept.h"
 #include "systrace.h"
 
@@ -58,7 +55,6 @@
 } while (0)
 
 static int print_oflags(char *, size_t, struct intercept_translate *);
-static int linux_print_oflags(char *, size_t, struct intercept_translate *);
 static int print_modeflags(char *, size_t, struct intercept_translate *);
 static int print_number(char *, size_t, struct intercept_translate *);
 static int print_uname(char *, size_t, struct intercept_translate *);
@@ -106,49 +102,6 @@ print_oflags(char *buf, size_t buflen, struct intercept_translate *tl)
 	FL(O_APPEND, 'a');
 	FL(O_CREAT, 'c');
 	FL(O_TRUNC, 't');
-
-	*p = '\0';
-
-	strlcpy(buf, str, buflen);
-
-	return (0);
-}
-
-static int
-linux_print_oflags(char *buf, size_t buflen, struct intercept_translate *tl)
-{
-	char str[32], *p;
-	int flags = (intptr_t)tl->trans_addr;
-	int isread = 0;
-
-	p = str;
-	switch (flags & LINUX_O_ACCMODE) {
-	case LINUX_O_RDONLY:
-		strlcpy(p, "ro", str + sizeof str - p);
-		isread = 1;
-		break;
-	case LINUX_O_WRONLY:
-		strlcpy(p, "wo", str + sizeof str - p);
-		break;
-	case LINUX_O_RDWR:
-		strlcpy(p, "rw", str + sizeof str - p);
-		break;
-	default:
-		strlcpy(p, "--", str + sizeof str - p);
-		break;
-	}
-
-	/* XXX - Open handling of alias */
-	if (isread)
-		systrace_switch_alias("linux", "open", "linux", "fsread");
-	else
-		systrace_switch_alias("linux", "open", "linux", "fswrite");
-
-	p += 2;
-
-	FL(LINUX_O_APPEND, 'a');
-	FL(LINUX_O_CREAT, 'c');
-	FL(LINUX_O_TRUNC, 't');
 
 	*p = '\0';
 
@@ -353,11 +306,9 @@ print_signame(char *buf, size_t buflen, struct intercept_translate *tl)
 	case SIGWINCH: 
 		name = "SIGWINCH"; 
 		break;
-#ifndef __linux__
 	case SIGINFO: 
 		name = "SIGINFO"; 
 		break;
-#endif /* !__linux__ */
 	case SIGUSR1: 
 		name = "SIGUSR1"; 
 		break;
@@ -419,32 +370,6 @@ print_fcntlcmd(char *buf, size_t buflen, struct intercept_translate *tl)
 	}
 
 	snprintf(buf, buflen, "%s", name);
-	return (0);
-}
-
-struct linux_i386_mmap_arg_struct {
-	unsigned long addr;
-	unsigned long len;
-	unsigned long prot;
-	unsigned long flags;
-	unsigned long fd;
-	unsigned long offset;
-};
-
-static int
-get_linux_memprot(struct intercept_translate *trans, int fd, pid_t pid,
-    void *addr)
-{
-	struct linux_i386_mmap_arg_struct arg;
-	size_t len = sizeof(arg);
-	extern struct intercept_system intercept;
-
-	if (intercept.io(fd, pid, INTERCEPT_READ, addr,
-	    (void *)&arg, len) == -1)
-		return (-1);
-
-	trans->trans_addr = (void *)arg.prot;
-
 	return (0);
 }
 
@@ -620,11 +545,6 @@ struct intercept_translate ic_oflags = {
 	NULL, print_oflags,
 };
 
-struct intercept_translate ic_linux_oflags = {
-	"oflags",
-	NULL, linux_print_oflags,
-};
-
 struct intercept_translate ic_modeflags = {
 	"mode",
 	NULL, print_modeflags,
@@ -678,11 +598,6 @@ struct intercept_translate ic_fcntlcmd = {
 struct intercept_translate ic_memprot = {
 	"prot",
 	NULL, print_memprot,
-};
-
-struct intercept_translate ic_linux_memprot = {
-	"prot",
-	get_linux_memprot, print_memprot,
 };
 
 struct intercept_translate ic_fileflags = {

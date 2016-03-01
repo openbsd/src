@@ -1,4 +1,4 @@
-/*	$OpenBSD: systrace.h,v 1.27 2006/07/02 12:34:15 sturm Exp $	*/
+/*	$OpenBSD: systrace.h,v 1.28 2016/03/01 16:26:06 naddy Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -243,10 +243,7 @@ extern struct intercept_translate ic_pidname;
 extern struct intercept_translate ic_signame;
 extern struct intercept_translate ic_fcntlcmd;
 extern struct intercept_translate ic_memprot;
-extern struct intercept_translate ic_linux_memprot;
 extern struct intercept_translate ic_fileflags;
-
-extern struct intercept_translate ic_linux_oflags;
 
 int requestor_start(char *, int);
 

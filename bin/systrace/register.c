@@ -1,4 +1,4 @@
-/*	$OpenBSD: register.c,v 1.26 2015/06/24 03:38:51 guenther Exp $	*/
+/*	$OpenBSD: register.c,v 1.27 2016/03/01 16:26:06 naddy Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -39,7 +39,6 @@
 
 #include "intercept.h"
 #include "systrace.h"
-#include "linux-translate.h"
 
 #define X(x)	if ((x) == -1) \
 	err(1, "%s:%d: intercept failed", __func__, __LINE__)
@@ -268,72 +267,6 @@ systrace_initcb(void)
 	    &ic_translate_unlinknameatflag);
 	intercept_register_translation("native", "linkat", 3,
 	    &ic_translate_unlinknameat);
-
-	X(intercept_register_sccb("linux", "open", trans_cb, NULL));
-	tl = intercept_register_translink("linux", "open", 0);
-	intercept_register_translation("linux", "open", 1, &ic_linux_oflags);
-	alias = systrace_new_alias("linux", "open", "linux", "fswrite");
-	systrace_alias_add_trans(alias, tl);
-
-	X(intercept_register_sccb("linux", "stat", trans_cb, NULL));
-	tl = intercept_register_translink("linux", "stat", 0);
-	alias = systrace_new_alias("linux", "stat", "linux", "fsread");
-	systrace_alias_add_trans(alias, tl);
-	X(intercept_register_sccb("linux", "lstat", trans_cb, NULL));
-	tl = intercept_register_translink("linux", "lstat", 0);
-	alias = systrace_new_alias("linux", "lstat", "linux", "fsread");
-	systrace_alias_add_trans(alias, tl);
-	X(intercept_register_sccb("linux", "execve", trans_cb, NULL));
-	intercept_register_translink("linux", "execve", 0);
-	X(intercept_register_sccb("linux", "access", trans_cb, NULL));
-	tl = intercept_register_translink("linux", "access", 0);
-	alias = systrace_new_alias("linux", "access", "linux", "fsread");
-	systrace_alias_add_trans(alias, tl);
-	X(intercept_register_sccb("linux", "symlink", trans_cb, NULL));
-	intercept_register_transstring("linux", "symlink", 0);
-	intercept_register_translink("linux", "symlink", 1);
-	X(intercept_register_sccb("linux", "link", trans_cb, NULL));
-	intercept_register_translink("linux", "link", 0);
-	intercept_register_translink("linux", "link", 1);
-	X(intercept_register_sccb("linux", "readlink", trans_cb, NULL));
-	tl = intercept_register_translink("linux", "readlink", 0);
-	alias = systrace_new_alias("linux", "readlink", "linux", "fsread");
-	systrace_alias_add_trans(alias, tl);
-	X(intercept_register_sccb("linux", "rename", trans_cb, NULL));
-	intercept_register_translink("linux", "rename", 0);
-	intercept_register_translink("linux", "rename", 1);
-	X(intercept_register_sccb("linux", "mkdir", trans_cb, NULL));
-	tl = intercept_register_translink("linux", "mkdir", 0);
-	alias = systrace_new_alias("linux", "mkdir", "linux", "fswrite");
-	systrace_alias_add_trans(alias, tl);
-	X(intercept_register_sccb("linux", "rmdir", trans_cb, NULL));
-	tl = intercept_register_translink("linux", "rmdir", 0);
-	alias = systrace_new_alias("linux", "rmdir", "linux", "fswrite");
-	systrace_alias_add_trans(alias, tl);
-	X(intercept_register_sccb("linux", "unlink", trans_cb, NULL));
-	tl = intercept_register_translink("linux", "unlink", 0);
-	alias = systrace_new_alias("linux", "unlink", "linux", "fswrite");
-	systrace_alias_add_trans(alias, tl);
-	X(intercept_register_sccb("linux", "chmod", trans_cb, NULL));
-	intercept_register_translink("linux", "chmod", 0);
-	intercept_register_translation("linux", "chmod", 1, &ic_modeflags);
-
-	X(intercept_register_sccb("linux", "socketcall", trans_cb, NULL));
-	alias = systrace_new_alias("linux", "socketcall", "linux", "_socketcall");
-	tl = intercept_register_translation("linux", "socketcall", 1, &ic_linux_socket_sockdom);
-	systrace_alias_add_trans(alias, tl);
-	tl = intercept_register_translation("linux", "socketcall", 1, &ic_linux_socket_socktype);
-	systrace_alias_add_trans(alias, tl);
-	tl = intercept_register_translation("linux", "socketcall", 1, &ic_linux_connect_sockaddr);
-	systrace_alias_add_trans(alias, tl);
-	tl = intercept_register_translation("linux", "socketcall", 1, &ic_linux_bind_sockaddr);
-	systrace_alias_add_trans(alias, tl);
-	tl = intercept_register_translation("linux", "socketcall", 0, &ic_linux_socketcall_catchall);
-	systrace_alias_add_trans(alias, tl);
-
-	X(intercept_register_sccb("linux", "kill", trans_cb, NULL));
-	intercept_register_translation("linux", "kill", 0, &ic_pidname);
-	intercept_register_translation("linux", "kill", 1, &ic_signame);
 
 	X(intercept_register_execcb(execres_cb, NULL));
 	X(intercept_register_pfreecb(policyfree_cb, NULL));
