@@ -20,43 +20,7 @@
 #include <stdlib.h>
 
 #include "read.c"
-
-/*
- * Glue for unit tests of libedit/read.c.
- * Rather than linking in all the various libedit modules,
- * provide dummies for those functions called in read.c.
- * Most aren't actually called in read_char().
- * Requires "make obj && make depend" in src/lib/libedit.
- */
-
-#define EL EditLine *el __attribute__((__unused__))
-#define UU __attribute__((__unused__))
-
-int ch_enlargebufs(EL, size_t addlen UU) { return 1; }
-void ch_reset(EL, int mclear UU) { }
-void el_resize(EL) { }
-int el_set(EL, int op UU, ...) { return 0; }
-void re_clear_display(EL) { }
-void re_clear_lines(EL) { }
-void re_refresh(EL) { }
-void re_refresh_cursor(EL) { }
-void sig_clr(EL) { }
-void sig_set(EL) { }
-void terminal__flush(EL) { }
-void terminal_beep(EL) { }
-int tty_cookedmode(EL) { return 0; }
-int tty_rawmode(EL) { return 0; }
-
-int
-keymacro_get(EL, Char *ch, keymacro_value_t *val)
-{
-	val->str = NULL;
-	*ch = '\0';
-	return XK_STR;
-}
-
-#undef EL
-#undef UU
+#include "glue.c"
 
 /*
  * Unit test steering program for editline/read.c, read_char().
