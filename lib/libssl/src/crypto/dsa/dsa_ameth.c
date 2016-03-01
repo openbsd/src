@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_ameth.c,v 1.18 2015/09/10 18:12:55 miod Exp $ */
+/* $OpenBSD: dsa_ameth.c,v 1.19 2016/03/01 07:04:41 doug Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -181,7 +181,6 @@ err:
 /* In PKCS#8 DSA: you just get a private key integer and parameters in the
  * AlgorithmIdentifier the pubkey must be recalculated.
  */
-	
 static int
 dsa_priv_decode(EVP_PKEY *pkey, PKCS8_PRIV_KEY_INFO *p8)
 {
@@ -193,56 +192,22 @@ dsa_priv_decode(EVP_PKEY *pkey, PKCS8_PRIV_KEY_INFO *p8)
 	X509_ALGOR *palg;
 	ASN1_INTEGER *privkey = NULL;
 	BN_CTX *ctx = NULL;
-	STACK_OF(ASN1_TYPE) *ndsa = NULL;
 	DSA *dsa = NULL;
+
+	int ret = 0;
 
 	if (!PKCS8_pkey_get0(NULL, &p, &pklen, &palg, p8))
 		return 0;
 	X509_ALGOR_get0(NULL, &ptype, &pval, palg);
+	if (ptype != V_ASN1_SEQUENCE)
+		goto decerr;
 
-	/* Check for broken DSA PKCS#8, UGH! */
-	if (*p == (V_ASN1_SEQUENCE|V_ASN1_CONSTRUCTED)) {
-		ASN1_TYPE *t1, *t2;
-	    	if (!(ndsa = d2i_ASN1_SEQUENCE_ANY(NULL, &p, pklen)))
-			goto decerr;
-		if (sk_ASN1_TYPE_num(ndsa) != 2)
-			goto decerr;
-		/*
-		 * Handle Two broken types:
-	    	 * SEQUENCE {parameters, priv_key}
-		 * SEQUENCE {pub_key, priv_key}
-		 */
+	if ((privkey = d2i_ASN1_INTEGER(NULL, &p, pklen)) == NULL)
+		goto decerr;
+	if (privkey->type == V_ASN1_NEG_INTEGER)
+		goto decerr;
 
-		t1 = sk_ASN1_TYPE_value(ndsa, 0);
-		t2 = sk_ASN1_TYPE_value(ndsa, 1);
-		if (t1->type == V_ASN1_SEQUENCE) {
-			p8->broken = PKCS8_EMBEDDED_PARAM;
-			pval = t1->value.ptr;
-		} else if (ptype == V_ASN1_SEQUENCE)
-			p8->broken = PKCS8_NS_DB;
-		else
-			goto decerr;
-
-		if (t2->type != V_ASN1_INTEGER)
-			goto decerr;
-
-		privkey = t2->value.integer;
-	} else {
-		const unsigned char *q = p;
-
-		if (!(privkey=d2i_ASN1_INTEGER(NULL, &p, pklen)))
-			goto decerr;
-		if (privkey->type == V_ASN1_NEG_INTEGER) {
-			p8->broken = PKCS8_NEG_PRIVKEY;
-			ASN1_INTEGER_free(privkey);
-			if (!(privkey = d2i_ASN1_UINTEGER(NULL, &q, pklen)))
-				goto decerr;
-		}
-		if (ptype != V_ASN1_SEQUENCE)
-			goto decerr;
-	}
-
-	pstr = pval;	
+	pstr = pval;
 	pm = pstr->data;
 	pmlen = pstr->length;
 	if (!(dsa = d2i_DSAparams(NULL, &pm, pmlen)))
@@ -261,31 +226,26 @@ dsa_priv_decode(EVP_PKEY *pkey, PKCS8_PRIV_KEY_INFO *p8)
 		DSAerr(DSA_F_DSA_PRIV_DECODE, ERR_R_MALLOC_FAILURE);
 		goto dsaerr;
 	}
-			
+
 	if (!BN_mod_exp(dsa->pub_key, dsa->g, dsa->priv_key, dsa->p, ctx)) {
 		DSAerr(DSA_F_DSA_PRIV_DECODE,DSA_R_BN_ERROR);
 		goto dsaerr;
 	}
 
-	EVP_PKEY_assign_DSA(pkey, dsa);
-	BN_CTX_free(ctx);
-	if (ndsa)
-		sk_ASN1_TYPE_pop_free(ndsa, ASN1_TYPE_free);
-	else
-		ASN1_INTEGER_free(privkey);
+	if (!EVP_PKEY_assign_DSA(pkey, dsa))
+		goto decerr;
 
-	return 1;
+	ret = 1;
+	goto done;
 
 decerr:
-	DSAerr(DSA_F_DSA_PRIV_DECODE, EVP_R_DECODE_ERROR);
+	DSAerr(DSA_F_DSA_PRIV_DECODE, DSA_R_DECODE_ERROR);
 dsaerr:
-	BN_CTX_free(ctx);
-	if (ndsa)
-		sk_ASN1_TYPE_pop_free(ndsa, ASN1_TYPE_free);
-	else
-		ASN1_INTEGER_free(privkey);
 	DSA_free(dsa);
-	return 0;
+done:
+	BN_CTX_free(ctx);
+	ASN1_INTEGER_free(privkey);
+	return ret;
 }
 
 static int
