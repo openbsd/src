@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtadvd.c,v 1.72 2016/03/01 12:52:43 jca Exp $	*/
+/*	$OpenBSD: rtadvd.c,v 1.73 2016/03/01 20:51:05 jca Exp $	*/
 /*	$KAME: rtadvd.c,v 1.66 2002/05/29 14:18:36 itojun Exp $	*/
 
 /*
@@ -1081,7 +1081,7 @@ nd6_options(struct nd_opt_hdr *hdr, int limit,
 				continue;
 			}
 			if ((pfx = malloc(sizeof(*pfx))) == NULL) {
-				log_warn("malloc");
+				log_warn(NULL);
 				goto bad;
 			}
 
@@ -1129,13 +1129,13 @@ sock_open(void)
 	    CMSG_SPACE(sizeof(int));
 	rcvcmsgbuf = malloc(rcvcmsgbuflen);
 	if (rcvcmsgbuf == NULL)
-		fatal("malloc");
+		fatal(NULL);
 
 	sndcmsgbuflen = CMSG_SPACE(sizeof(struct in6_pktinfo)) +
 	    CMSG_SPACE(sizeof(int));
 	sndcmsgbuf = malloc(sndcmsgbuflen);
 	if (sndcmsgbuf == NULL)
-		fatal("malloc");
+		fatal(NULL);
 
 	if ((sock = socket(AF_INET6, SOCK_RAW, IPPROTO_ICMPV6)) < 0)
 		fatal("socket");

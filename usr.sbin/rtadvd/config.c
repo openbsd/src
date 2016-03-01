@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.55 2016/03/01 12:52:43 jca Exp $	*/
+/*	$OpenBSD: config.c,v 1.56 2016/03/01 20:51:05 jca Exp $	*/
 /*	$KAME: config.c,v 1.62 2002/05/29 10:13:10 itojun Exp $	*/
 
 /*
@@ -105,7 +105,7 @@ getconfig(char *intface)
 	}
 
 	if ((tmp = calloc(1, sizeof(*tmp))) == NULL)
-		fatal("malloc");
+		fatal(NULL);
 
 	TAILQ_INIT(&tmp->prefixes);
 	TAILQ_INIT(&tmp->rtinfos);
@@ -243,7 +243,7 @@ getconfig(char *intface)
 
 		/* allocate memory to store prefix information */
 		if ((pfx = calloc(1, sizeof(*pfx))) == NULL)
-			fatal("calloc");
+			fatal(NULL);
 
 		/* link into chain */
 		TAILQ_INSERT_TAIL(&tmp->prefixes, pfx, entry);
@@ -335,7 +335,7 @@ getconfig(char *intface)
 
 		rti = malloc(sizeof(struct rtinfo));
 		if (rti == NULL)
-			fatal("malloc");
+			fatal(NULL);
 
 		if (inet_pton(AF_INET6, addr, &rti->prefix) != 1) {
 			log_warn("inet_pton failed for %s", addr);
@@ -411,7 +411,7 @@ getconfig(char *intface)
 
 		rds = malloc(sizeof(struct rdnss) + val * sizeof(struct in6_addr));
 		if (rds == NULL)
-			fatal("malloc");
+			fatal(NULL);
 
 		TAILQ_INSERT_TAIL(&tmp->rdnsss, rds, entry);
 
@@ -449,7 +449,7 @@ getconfig(char *intface)
 
 		dsl = malloc(sizeof(struct dnssl));
 		if (dsl == NULL)
-			fatal("malloc");
+			fatal(NULL);
 
 		TAILQ_INIT(&dsl->dnssldoms);
 
@@ -465,7 +465,7 @@ getconfig(char *intface)
 
 			dnsd = malloc(sizeof(struct dnssldom) + len + 1);
 			if (dnsd == NULL)
-				fatal("malloc");
+				fatal(NULL);
 
 			dnsd->length = len;
 			strlcpy(dnsd->domain, tmpsl, len + 1);
@@ -564,7 +564,7 @@ get_prefix(struct rainfo *rai)
 
 		/* allocate memory to store prefix info. */
 		if ((pp = calloc(1, sizeof(*pp))) == NULL)
-			fatal("calloc");
+			fatal(NULL);
 
 		/* set prefix, sweep bits outside of prefixlen */
 		pp->prefixlen = plen;
@@ -625,7 +625,7 @@ make_prefix(struct rainfo *rai, int ifindex, struct in6_addr *addr, int plen)
 	u_char ntopbuf[INET6_ADDRSTRLEN];
 
 	if ((prefix = calloc(1, sizeof(*prefix))) == NULL) {
-		log_warn("calloc");
+		log_warn(NULL);
 		return;		/* XXX: error or exit? */
 	}
 	prefix->prefix = *addr;
@@ -734,7 +734,7 @@ make_packet(struct rainfo *rainfo)
 
 	/* allocate memory for the packet */
 	if ((buf = malloc(packlen)) == NULL)
-		fatal("malloc");
+		fatal(NULL);
 	/* free the previous packet */
 	free(rainfo->ra_data);
 	rainfo->ra_data = buf;

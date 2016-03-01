@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.38 2016/03/01 12:52:43 jca Exp $	*/
+/*	$OpenBSD: if.c,v 1.39 2016/03/01 20:51:05 jca Exp $	*/
 /*	$KAME: if.c,v 1.17 2001/01/21 15:27:30 itojun Exp $	*/
 
 /*
@@ -427,7 +427,7 @@ get_iflist(char **buf, size_t *size)
 		if (*size == 0)
 			break;
 		if ((*buf = realloc(*buf, *size)) == NULL)
-			fatal("malloc");
+			fatal(NULL);
 		if (sysctl(mib, 6, *buf, size, NULL, 0) == -1) {
 			if (errno == ENOMEM)
 				continue;
@@ -457,7 +457,7 @@ parse_iflist(struct if_msghdr ***ifmlist_p, char *buf, size_t bufsize)
 	/* roughly estimate max list size of pointers to each if_msghdr */
 	malloc_size = (bufsize/iflentry_size) * sizeof(size_t);
 	if ((*ifmlist_p = malloc(malloc_size)) == NULL)
-		fatal("malloc");
+		fatal(NULL);
 
 	lim = buf + bufsize;
 	for (ifm = (struct if_msghdr *)buf; ifm < (struct if_msghdr *)lim;) {
