@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd.c,v 1.121 2016/01/19 16:01:30 nicm Exp $ */
+/* $OpenBSD: cmd.c,v 1.122 2016/03/01 12:06:07 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -482,7 +482,6 @@ cmd_prepare_state_flag(char c, const char *target, enum cmd_entry_flag flag,
 		    CMD_FIND_SESSION, CMD_FIND_QUIET);
 		if (error == 0)
 			break;
-		flag = CMD_WINDOW_INDEX;
 		/* FALLTHROUGH */
 	case CMD_WINDOW:
 	case CMD_WINDOW_CANFAIL:

@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-resize-pane.c,v 1.22 2016/01/19 15:59:12 nicm Exp $ */
+/* $OpenBSD: cmd-resize-pane.c,v 1.23 2016/03/01 12:06:07 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -68,7 +68,6 @@ cmd_resize_pane_exec(struct cmd *self, struct cmd_q *cmdq)
 		return (CMD_RETURN_NORMAL);
 	}
 
-	w = wl->window;
 	if (args_has(args, 'Z')) {
 		if (w->flags & WINDOW_ZOOMED)
 			window_unzoom(w);

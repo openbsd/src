@@ -1,4 +1,4 @@
-/* $OpenBSD: key-bindings.c,v 1.56 2016/01/19 15:59:12 nicm Exp $ */
+/* $OpenBSD: key-bindings.c,v 1.57 2016/03/01 12:06:07 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -68,12 +68,12 @@ void
 key_bindings_unref_table(struct key_table *table)
 {
 	struct key_binding	*bd;
+	struct key_binding	*bd1;
 
 	if (--table->references != 0)
 		return;
 
-	while (!RB_EMPTY(&table->key_bindings)) {
-		bd = RB_ROOT(&table->key_bindings);
+	RB_FOREACH_SAFE(bd, key_bindings, &table->key_bindings, bd1) {
 		RB_REMOVE(key_bindings, &table->key_bindings, bd);
 		cmd_list_free(bd->cmdlist);
 		free(bd);
