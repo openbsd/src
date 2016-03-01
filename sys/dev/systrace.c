@@ -1,4 +1,4 @@
-/*	$OpenBSD: systrace.c,v 1.77 2015/09/08 11:58:58 deraadt Exp $	*/
+/*	$OpenBSD: systrace.c,v 1.78 2016/03/01 16:43:08 naddy Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -48,7 +48,8 @@
 #include <sys/poll.h>
 #include <sys/ptrace.h>
 
-#include <compat/common/compat_util.h>
+#include <sys/exec.h>
+#include <uvm/uvm_extern.h>
 
 #include <dev/systrace.h>
 
@@ -1810,4 +1811,34 @@ systrace_msg_policyfree(struct fsystrace *fst, struct str_policy *strpol)
 	systrace_wakeup(fst);
 
 	return (0);
+}
+
+caddr_t  
+stackgap_init(struct proc *p)
+{
+	struct process *pr = p->p_p;
+
+	if (pr->ps_stackgap == 0) {
+		if (uvm_map(&pr->ps_vmspace->vm_map, &pr->ps_stackgap,
+		    round_page(STACKGAPLEN), NULL, 0, 0,
+		    UVM_MAPFLAG(PROT_READ | PROT_WRITE, PROT_READ | PROT_WRITE,
+		    MAP_INHERIT_COPY, MADV_RANDOM, UVM_FLAG_COPYONW)))
+			sigexit(p, SIGILL);
+	}
+
+        return (caddr_t)pr->ps_stackgap;
+}
+
+void *          
+stackgap_alloc(caddr_t *sgp, size_t sz)
+{
+	void *n = (void *) *sgp;
+	caddr_t nsgp;
+
+	sz = ALIGN(sz);
+	nsgp = *sgp + sz;
+	if (nsgp > (caddr_t)trunc_page((vaddr_t)n) + STACKGAPLEN)
+		return NULL;
+	*sgp = nsgp;
+	return n;
 }

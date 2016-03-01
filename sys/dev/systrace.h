@@ -1,4 +1,4 @@
-/*	$OpenBSD: systrace.h,v 1.25 2015/01/20 01:48:13 deraadt Exp $	*/
+/*	$OpenBSD: systrace.h,v 1.26 2016/03/01 16:43:08 naddy Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -235,6 +235,9 @@ void systrace_fork(struct proc *, struct proc *, struct str_process *newstrp);
 void systrace_execve0(struct proc *);
 void systrace_execve1(char *, struct proc *);
 int systrace_scriptname(struct proc *, char *);
+
+caddr_t stackgap_init(struct proc *);
+void *stackgap_alloc(caddr_t *, size_t);
 
 #endif /* _KERNEL */
 #endif /* _SYSTRACE_H_ */
