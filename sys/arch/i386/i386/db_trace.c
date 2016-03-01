@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.17 2016/03/01 21:28:24 mpi Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.18 2016/03/01 21:35:13 mpi Exp $	*/
 /*	$NetBSD: db_trace.c,v 1.18 1996/05/03 19:42:01 christos Exp $	*/
 
 /*
@@ -208,8 +208,6 @@ db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
 		char *	name;
 		db_expr_t	offset;
 		db_sym_t	sym;
-#define MAXNARG	16
-		char	*argnames[MAXNARG], **argnp = NULL;
 
 		sym = db_search_symbol(callpc, DB_STGY_ANY, &offset);
 		db_symbol_values(sym, &name, NULL);
@@ -247,11 +245,7 @@ db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
 		} else {
 		normal:
 			is_trap = NONE;
-			narg = MAXNARG;
-			if (db_sym_numargs(sym, &narg, argnames))
-				argnp = argnames;
-			else
-				narg = db_numargs(frame);
+			narg = db_numargs(frame);
 		}
 
 		(*pr)("%s(", name);
@@ -267,8 +261,6 @@ db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
 		}
 
 		while (narg) {
-			if (argnp)
-				(*pr)("%s=", *argnp++);
 			(*pr)("%x", db_get_value((int)argp, 4, FALSE));
 			argp++;
 			if (--narg != 0)

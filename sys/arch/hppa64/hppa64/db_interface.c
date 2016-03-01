@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.5 2016/02/27 13:08:07 mpi Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.6 2016/03/01 21:35:13 mpi Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -213,7 +213,6 @@ db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
 	db_sym_t sym;
 	db_expr_t off;
 	char *name;
-	char **argnp, *argnames[8];
 	int nargs;
 
 	if (count < 0)
@@ -244,18 +243,11 @@ db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
 
 		/* args */
 		nargs = 8;
-		argnp = NULL;
-		if (db_sym_numargs(sym, &nargs, argnames))
-			argnp = argnames;
-		else
-			nargs = 4;
 		/*
 		 * XXX first eight args are passed on registers, and may not
 		 * be stored on stack, dunno how to recover their values yet
 		 */
 		for (argp = &fp[-9]; nargs--; argp--) {
-			if (argnp)
-				(*pr)("%s=", *argnp++);
 			(*pr)("%x%s", db_get_value((long)argp, 8, FALSE),
 				  nargs? ",":"");
 		}
