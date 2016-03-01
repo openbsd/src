@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.108 2016/01/05 05:27:54 visa Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.109 2016/03/01 19:17:37 mmcc Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -318,12 +318,12 @@ void	cp0_calibrate(struct cpu_info *);
  * process as soon as possible.
  */
 #ifdef MULTIPROCESSOR
-#define	signotify(p)		(aston(p), cpu_unidle(p->p_cpu))
+#define	signotify(p)		(aston(p), cpu_unidle((p)->p_cpu))
 #else
 #define	signotify(p)		aston(p)
 #endif
 
-#define	aston(p)		p->p_md.md_astpending = 1
+#define	aston(p)		((p)->p_md.md_astpending = 1)
 
 #ifdef CPU_R8000
 #define	mips_sync()		__asm__ volatile ("lw $0, 0(%0)" :: \
