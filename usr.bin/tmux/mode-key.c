@@ -1,4 +1,4 @@
-/* $OpenBSD: mode-key.c,v 1.65 2016/01/19 15:59:12 nicm Exp $ */
+/* $OpenBSD: mode-key.c,v 1.66 2016/03/01 12:04:43 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -347,6 +347,7 @@ const struct mode_key_entry mode_key_vi_copy[] = {
 	{ KEYC_WHEELUP_PANE,        0, MODEKEYCOPY_SCROLLUP },
 	{ KEYC_WHEELDOWN_PANE,      0, MODEKEYCOPY_SCROLLDOWN },
 	{ KEYC_MOUSEDRAG1_PANE,     0, MODEKEYCOPY_STARTSELECTION },
+	{ KEYC_MOUSEUP1_PANE,       0, MODEKEYCOPY_COPYSELECTION },
 
 	{ 0,			   -1, 0 }
 };
@@ -495,6 +496,7 @@ const struct mode_key_entry mode_key_emacs_copy[] = {
 	{ KEYC_WHEELUP_PANE,        0, MODEKEYCOPY_SCROLLUP },
 	{ KEYC_WHEELDOWN_PANE,      0, MODEKEYCOPY_SCROLLDOWN },
 	{ KEYC_MOUSEDRAG1_PANE,     0, MODEKEYCOPY_STARTSELECTION },
+	{ KEYC_MOUSEUP1_PANE,       0, MODEKEYCOPY_COPYSELECTION },
 
 	{ 0,			   -1, 0 }
 };
