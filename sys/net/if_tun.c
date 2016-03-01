@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.166 2016/01/31 13:54:13 stefan Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.167 2016/03/01 21:47:52 stsp Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -216,7 +216,7 @@ tun_create(struct if_clone *ifc, int unit, int flags)
 	if ((flags & TUN_LAYER2) == 0) {
 		tp->tun_flags &= ~TUN_LAYER2;
 		ifp->if_mtu = ETHERMTU;
-		ifp->if_flags = IFF_POINTOPOINT;
+		ifp->if_flags = (IFF_POINTOPOINT|IFF_MULTICAST);
 		ifp->if_type = IFT_TUNNEL;
 		ifp->if_hdrlen = sizeof(u_int32_t);
 		ifp->if_rtrequest = p2p_rtrequest;
