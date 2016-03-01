@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.114 2016/02/27 13:08:07 mpi Exp $	*/
+/*	$OpenBSD: trap.c,v 1.115 2016/03/01 11:56:00 mpi Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1204,17 +1204,17 @@ loop:
 	 * Watch out for function tail optimizations.
 	 */
 	sym = db_search_symbol(pc, DB_STGY_ANY, &diff);
-	if (sym != DB_SYM_NULL && diff == 0) {
+	if (sym != NULL && diff == 0) {
 		instr = kdbpeek(pc - 2 * sizeof(int));
 		i.word = instr;
 		if (i.JType.op == OP_JAL) {
 			sym = db_search_symbol(pc - sizeof(int),
 			    DB_STGY_ANY, &diff);
-			if (sym != DB_SYM_NULL && diff != 0)
+			if (sym != NULL && diff != 0)
 				diff += sizeof(int);
 		}
 	}
-	if (sym != DB_SYM_NULL) {
+	if (sym != NULL) {
 		db_symbol_values(sym, &symname, 0);
 		subr = pc - (vaddr_t)diff;
 	}

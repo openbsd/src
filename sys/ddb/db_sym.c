@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_sym.c,v 1.47 2016/02/28 14:43:03 mpi Exp $	*/
+/*	$OpenBSD: db_sym.c,v 1.48 2016/03/01 11:56:00 mpi Exp $	*/
 /*	$NetBSD: db_sym.c,v 1.24 2000/08/11 22:50:47 tv Exp $	*/
 
 /*
@@ -97,7 +97,7 @@ db_value_of_name(char *name, db_expr_t *valuep)
 	db_sym_t	sym;
 
 	sym = db_lookup(name);
-	if (sym == DB_SYM_NULL)
+	if (sym == NULL)
 	    return (FALSE);
 	db_symbol_values(sym, &name, valuep);
 	return (TRUE);
@@ -122,7 +122,7 @@ db_search_symbol(db_addr_t val, db_strategy_t strategy, db_expr_t *offp)
 {
 	unsigned int	diff;
 	db_expr_t	newdiff;
-	db_sym_t	ret = DB_SYM_NULL, sym;
+	db_sym_t	ret = NULL, sym;
 
 	newdiff = diff = ~0;
 	sym = db_elf_sym_search(val, strategy, &newdiff);
@@ -142,7 +142,7 @@ db_symbol_values(db_sym_t sym, char **namep, db_expr_t *valuep)
 {
 	db_expr_t	value;
 
-	if (sym == DB_SYM_NULL) {
+	if (sym == NULL) {
 		*namep = NULL;
 		return;
 	}

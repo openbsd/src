@@ -1,4 +1,4 @@
-/*	$OpenBSD: openfirm.c,v 1.15 2014/03/29 18:09:30 guenther Exp $	*/
+/*	$OpenBSD: openfirm.c,v 1.16 2016/03/01 11:56:00 mpi Exp $	*/
 /*	$NetBSD: openfirm.c,v 1.13 2001/06/21 00:08:02 eeh Exp $	*/
 
 /*
@@ -827,7 +827,7 @@ void OF_val2sym(cells)
 	if (obp_symbol_debug)
 		prom_printf("looking up value %ld\r\n", value);
 	symbol = db_search_symbol(value, 0, &offset);
-	if (symbol == DB_SYM_NULL) {
+	if (symbol == NULL) {
 		if (obp_symbol_debug)
 			prom_printf("OF_val2sym: not found\r\n");
 		args->nreturns = 1;

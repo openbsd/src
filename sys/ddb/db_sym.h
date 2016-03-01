@@ -35,7 +35,6 @@
  * a different one
  */
 typedef	char *		db_sym_t;	/* opaque handle on symbols */
-#define	DB_SYM_NULL	((db_sym_t)0)
 
 /*
  * Non-stripped symbol tables will have duplicates, for instance

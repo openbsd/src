@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.13 2014/07/13 12:11:01 jasper Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.14 2016/03/01 11:56:00 mpi Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -489,14 +489,14 @@ stack_decode(db_addr_t addr, vaddr_t *stack, int (*pr)(const char *, ...))
 	/* get what we hope will be the db_sym_t for the function name */
 	proc = db_search_symbol(addr, DB_STGY_PROC, &offset_from_proc);
 	if (offset_from_proc == addr) /* i.e. no symbol found */
-		proc = DB_SYM_NULL;
+		proc = NULL;
 
 	/*
 	 * Try and find the start of this function, and its stack usage.
 	 * If we do not have symbols available, we will need to
 	 * look back in memory for a prologue pattern.
 	 */
-	if (proc != DB_SYM_NULL) {
+	if (proc != NULL) {
 		char *names = NULL;
 		db_symbol_values(proc, &names, &function_addr);
 		if (names == NULL)

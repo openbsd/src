@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_elf.c,v 1.17 2016/02/27 13:17:47 mpi Exp $	*/
+/*	$OpenBSD: db_elf.c,v 1.18 2016/03/01 11:56:00 mpi Exp $	*/
 /*	$NetBSD: db_elf.c,v 1.13 2000/07/07 21:55:18 jhawk Exp $	*/
 
 /*-
@@ -255,14 +255,14 @@ db_elf_sym_lookup(char *symstr)
 	char *strtab;
 
 	if (stab->private == NULL)
-		return ((db_sym_t)0);
+		return (NULL);
 
 	symtab_start = STAB_TO_SYMSTART(stab);
 	symtab_end = STAB_TO_SYMEND(stab);
 
 	strtab = db_elf_find_strtab(stab);
 	if (strtab == NULL)
-		return ((db_sym_t)0);
+		return (NULL);
 
 	for (symp = symtab_start; symp < symtab_end; symp++) {
 		if (symp->st_name != 0 &&
@@ -270,7 +270,7 @@ db_elf_sym_lookup(char *symstr)
 			return ((db_sym_t)symp);
 	}
 
-	return ((db_sym_t)0);
+	return (NULL);
 }
 
 /*
@@ -286,7 +286,7 @@ db_elf_sym_search(db_addr_t off, db_strategy_t strategy,
 	db_expr_t diff = *diffp;
 
 	if (stab->private == NULL)
-		return ((db_sym_t)0);
+		return (NULL);
 
 	symtab_start = STAB_TO_SYMSTART(stab);
 	symtab_end = STAB_TO_SYMEND(stab);
