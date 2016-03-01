@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.233 2016/01/22 17:09:05 sf Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.234 2016/03/01 01:48:14 dlg Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -788,7 +788,6 @@ ether_addmulti(struct ifreq *ifr, struct arpcom *ac)
 	}
 	memcpy(enm->enm_addrlo, addrlo, ETHER_ADDR_LEN);
 	memcpy(enm->enm_addrhi, addrhi, ETHER_ADDR_LEN);
-	enm->enm_ac = ac;
 	enm->enm_refcount = 1;
 	LIST_INSERT_HEAD(&ac->ac_multiaddrs, enm, enm_list);
 	ac->ac_multicnt++;

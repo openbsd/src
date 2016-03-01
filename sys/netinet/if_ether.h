@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.h,v 1.66 2016/01/08 13:53:24 mpi Exp $	*/
+/*	$OpenBSD: if_ether.h,v 1.67 2016/03/01 01:48:14 dlg Exp $	*/
 /*	$NetBSD: if_ether.h,v 1.22 1996/05/11 13:00:00 mycroft Exp $	*/
 
 /*
@@ -225,7 +225,6 @@ char	*ether_sprintf(u_char *);
 struct ether_multi {
 	u_int8_t enm_addrlo[ETHER_ADDR_LEN]; /* low  or only address of range */
 	u_int8_t enm_addrhi[ETHER_ADDR_LEN]; /* high or only address of range */
-	struct	 arpcom *enm_ac;	/* back pointer to arpcom */
 	u_int	 enm_refcount;		/* no. claims to this addr/range */
 	LIST_ENTRY(ether_multi) enm_list;
 };
