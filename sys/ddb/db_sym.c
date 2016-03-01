@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_sym.c,v 1.48 2016/03/01 11:56:00 mpi Exp $	*/
+/*	$OpenBSD: db_sym.c,v 1.49 2016/03/01 21:32:02 mpi Exp $	*/
 /*	$NetBSD: db_sym.c,v 1.24 2000/08/11 22:50:47 tv Exp $	*/
 
 /*
@@ -89,28 +89,6 @@ db_eqname(char *src, char *dst, int c)
 	if (src[0] == c)
 	    return (!strcmp(src+1,dst));
 	return (FALSE);
-}
-
-boolean_t
-db_value_of_name(char *name, db_expr_t *valuep)
-{
-	db_sym_t	sym;
-
-	sym = db_lookup(name);
-	if (sym == NULL)
-	    return (FALSE);
-	db_symbol_values(sym, &name, valuep);
-	return (TRUE);
-}
-
-
-/*
- * Lookup a symbol.
- */
-db_sym_t
-db_lookup(char *symstr)
-{
-	return db_elf_sym_lookup(symstr);
 }
 
 /*

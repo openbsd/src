@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_elf.c,v 1.18 2016/03/01 11:56:00 mpi Exp $	*/
+/*	$OpenBSD: db_elf.c,v 1.19 2016/03/01 21:32:02 mpi Exp $	*/
 /*	$NetBSD: db_elf.c,v 1.13 2000/07/07 21:55:18 jhawk Exp $	*/
 
 /*-
@@ -55,8 +55,9 @@ typedef struct {
 
 db_symtab_t db_symtab;
 
-static char *db_elf_find_strtab(db_symtab_t *);
-static char *db_elf_find_linetab(db_symtab_t *, size_t *);
+Elf_Sym		*db_elf_sym_lookup(char *);
+static char	*db_elf_find_strtab(db_symtab_t *);
+static char	*db_elf_find_linetab(db_symtab_t *, size_t *);
 
 #define	STAB_TO_SYMSTART(stab)	((Elf_Sym *)((stab)->start))
 #define	STAB_TO_SYMEND(stab)	((Elf_Sym *)((stab)->end))
@@ -247,7 +248,7 @@ db_elf_find_linetab(db_symtab_t *stab, size_t *size)
 /*
  * Lookup the symbol with the given name.
  */
-db_sym_t
+Elf_Sym *
 db_elf_sym_lookup(char *symstr)
 {
 	db_symtab_t *stab = &db_symtab;
@@ -267,7 +268,7 @@ db_elf_sym_lookup(char *symstr)
 	for (symp = symtab_start; symp < symtab_end; symp++) {
 		if (symp->st_name != 0 &&
 		    db_eqname(strtab + symp->st_name, symstr, 0))
-			return ((db_sym_t)symp);
+			return (symp);
 	}
 
 	return (NULL);
@@ -439,4 +440,16 @@ db_elf_sym_forall(db_forall_func_t db_forall_func, void *arg)
 			(*db_forall_func)((db_sym_t)symp,
 			    strtab + symp->st_name, suffix, 0, arg);
 		}
+}
+
+int
+db_value_of_name(char *name, db_expr_t *valuep)
+{
+	Elf_Sym		*sym;
+
+	sym = db_elf_sym_lookup(name);
+	if (sym == NULL)
+	    return (0);
+	db_symbol_values((db_sym_t)sym, &name, valuep);
+	return (1);
 }
