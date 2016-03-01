@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.54 2016/02/29 20:25:46 jca Exp $	*/
+/*	$OpenBSD: config.c,v 1.55 2016/03/01 12:52:43 jca Exp $	*/
 /*	$KAME: config.c,v 1.62 2002/05/29 10:13:10 itojun Exp $	*/
 
 /*
@@ -892,8 +892,6 @@ make_packet(struct rainfo *rainfo)
 		while (((uintptr_t)buf) % 8 != 0)
 			*buf++ = '\0';
 	}
-
-	return;
 }
 
 static int

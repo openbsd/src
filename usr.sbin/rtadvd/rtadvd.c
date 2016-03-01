@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtadvd.c,v 1.71 2016/02/26 12:50:03 jca Exp $	*/
+/*	$OpenBSD: rtadvd.c,v 1.72 2016/03/01 12:52:43 jca Exp $	*/
 /*	$KAME: rtadvd.c,v 1.66 2002/05/29 14:18:36 itojun Exp $	*/
 
 /*
@@ -482,8 +482,6 @@ rtmsg_input(void)
 			rtadvd_set_timer(&rai->timer->tm, rai->timer);
 		}
 	}
-
-	return;
 }
 
 void
@@ -625,10 +623,7 @@ rtadvd_input(void)
 		 * before setting ICMP6 type filter(see sock_open()).
 		 */
 		log_warnx("invalid icmp type(%d)", icp->icmp6_type);
-		return;
 	}
-
-	return;
 }
 
 static void
@@ -735,7 +730,6 @@ rs_input(int len, struct nd_router_solicit *rs,
 
   done:
 	free_ndopts(&ndopts);
-	return;
 }
 
 static void
@@ -865,7 +859,6 @@ ra_input(int len, struct nd_router_advert *ra,
 
   done:
 	free_ndopts(&ndopts);
-	return;
 }
 
 /* return a non-zero value if the received prefix is inconsistent with ours */
@@ -1199,8 +1192,6 @@ sock_open(void)
 	sndmhdr.msg_iovlen = 1;
 	sndmhdr.msg_control = (caddr_t)sndcmsgbuf;
 	sndmhdr.msg_controllen = sndcmsgbuflen;
-
-	return;
 }
 
 /* open a routing socket to watch the routing table */

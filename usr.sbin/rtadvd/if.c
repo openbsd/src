@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.37 2016/02/08 23:19:00 jca Exp $	*/
+/*	$OpenBSD: if.c,v 1.38 2016/03/01 12:52:43 jca Exp $	*/
 /*	$KAME: if.c,v 1.17 2001/01/21 15:27:30 itojun Exp $	*/
 
 /*
@@ -210,8 +210,6 @@ lladdropt_fill(struct sockaddr_dl *sdl, struct nd_opt_hdr *ndopt)
 		log_warn("unsupported link type(%d)", sdl->sdl_type);
 		exit(1);
 	}
-
-	return;
 }
 
 #define SIN6(s) ((struct sockaddr_in6 *)(s))
