@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vnops.c,v 1.84 2016/02/27 18:50:38 natano Exp $	*/
+/*	$OpenBSD: ffs_vnops.c,v 1.85 2016/03/01 21:00:56 natano Exp $	*/
 /*	$NetBSD: ffs_vnops.c,v 1.7 1996/05/11 18:27:24 mycroft Exp $	*/
 
 /*
@@ -214,9 +214,8 @@ ffs_read(void *v)
 		panic("ffs_read: type %d", vp->v_type);
 #endif
 	fs = ip->i_fs;
-	if ((u_int64_t)uio->uio_offset > fs->fs_maxfilesize)
-		return (EFBIG);
-
+	if (uio->uio_offset < 0)
+		return (EINVAL);
 	if (uio->uio_resid == 0)
 		return (0);
 

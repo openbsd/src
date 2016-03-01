@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_readwrite.c,v 1.39 2016/02/27 18:50:38 natano Exp $	*/
+/*	$OpenBSD: ext2fs_readwrite.c,v 1.40 2016/03/01 21:00:56 natano Exp $	*/
 /*	$NetBSD: ext2fs_readwrite.c,v 1.16 2001/02/27 04:37:47 chs Exp $	*/
 
 /*-
@@ -100,8 +100,8 @@ ext2_ind_read(struct vnode *vp, struct inode *ip, struct m_ext2fs *fs,
 	} else if (vp->v_type != VREG && vp->v_type != VDIR)
 		panic("%s: type %d", "ext2fs_read", vp->v_type);
 #endif
-	if (e2fs_overflow(fs, 0, uio->uio_offset))
-		return (EFBIG);
+	if (uio->uio_offset < 0)
+		return (EINVAL);
 	if (uio->uio_resid == 0)
 		return (0);
 
@@ -163,7 +163,6 @@ ext4_ext_read(struct vnode *vp, struct inode *ip, struct m_ext2fs *fs, struct ui
 	struct ext4_extent_path path;
 	struct ext4_extent nex, *ep;
 	struct buf *bp;
-	size_t orig_resid;
 	daddr_t lbn, pos;
 	off_t bytesinfile;
 	int size, xfersize, blkoffset;
@@ -171,12 +170,10 @@ ext4_ext_read(struct vnode *vp, struct inode *ip, struct m_ext2fs *fs, struct ui
 
 	memset(&path, 0, sizeof path);
 
-	orig_resid = uio->uio_resid;
-	if (orig_resid == 0)
+	if (uio->uio_offset < 0)
+		return (EINVAL);
+	if (uio->uio_resid == 0)
 		return (0);
-
-	if (e2fs_overflow(fs, 0, uio->uio_offset))
-		return (EFBIG);
 
 	while (uio->uio_resid > 0) {
 		if ((bytesinfile = ext2fs_size(ip) - uio->uio_offset) <= 0)
