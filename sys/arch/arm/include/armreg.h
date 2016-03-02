@@ -1,4 +1,4 @@
-/*	$OpenBSD: armreg.h,v 1.18 2016/01/31 00:14:50 jsg Exp $	*/
+/*	$OpenBSD: armreg.h,v 1.19 2016/03/02 23:46:48 jsg Exp $	*/
 /*	$NetBSD: armreg.h,v 1.27 2003/09/06 08:43:02 rearnsha Exp $	*/
 
 /*
@@ -245,7 +245,7 @@
 #define CPU_ID_CORTEX_A57_MASK	0xff0ffff0
 #define CPU_ID_CORTEX_A72	0x410fd080
 #define CPU_ID_CORTEX_A72_R1	0x411fd080
-#define CPU_ID_CORTEX_A57_MASK	0xff0ffff0
+#define CPU_ID_CORTEX_A72_MASK	0xff0ffff0
 
 /* ARM3-specific coprocessor 15 registers */
 #define ARM3_CP15_FLUSH		1
