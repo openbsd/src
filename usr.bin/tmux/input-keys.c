@@ -1,4 +1,4 @@
-/* $OpenBSD: input-keys.c,v 1.54 2016/03/01 12:02:08 nicm Exp $ */
+/* $OpenBSD: input-keys.c,v 1.55 2016/03/02 15:33:36 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -263,6 +263,8 @@ input_key_mouse(struct window_pane *wp, struct mouse_event *m)
 		len = xsnprintf(buf, sizeof buf, "\033[<%u;%u;%u%c",
 		    m->sgr_b, x + 1, y + 1, m->sgr_type);
 	} else if (wp->screen->mode & MODE_MOUSE_UTF8) {
+		if (m->b > 0x7ff - 32 || x > 0x7ff - 33 || y > 0x7ff - 33)
+			return;
 		len = xsnprintf(buf, sizeof buf, "\033[M");
 		len += input_split2(m->b + 32, &buf[len]);
 		len += input_split2(x + 33, &buf[len]);
