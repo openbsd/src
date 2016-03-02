@@ -1,4 +1,4 @@
-/* $OpenBSD: bn.h,v 1.28 2015/10/21 19:02:22 miod Exp $ */
+/* $OpenBSD: bn.h,v 1.29 2016/03/02 06:16:11 doug Exp $ */
 /* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -125,6 +125,7 @@
 #ifndef HEADER_BN_H
 #define HEADER_BN_H
 
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -619,10 +620,20 @@ const BIGNUM *BN_get0_nist_prime_521(void);
 
 /* library internal functions */
 
-#define bn_expand(a,bits) ((((((bits+BN_BITS2-1))/BN_BITS2)) <= (a)->dmax)?\
-	(a):bn_expand2((a),(bits+BN_BITS2-1)/BN_BITS2))
 #define bn_wexpand(a,words) (((words) <= (a)->dmax)?(a):bn_expand2((a),(words)))
 BIGNUM *bn_expand2(BIGNUM *a, int words);
+
+static inline BIGNUM *bn_expand(BIGNUM *a, int bits)
+{
+	if (bits > (INT_MAX - BN_BITS2 + 1))
+		return (NULL);
+
+	if (((bits + BN_BITS2 - 1) / BN_BITS2) <= a->dmax)
+		return (a);
+
+	return bn_expand2(a, (bits + BN_BITS2 - 1) / BN_BITS2);
+}
+
 #ifndef OPENSSL_NO_DEPRECATED
 BIGNUM *bn_dup_expand(const BIGNUM *a, int words); /* unused */
 #endif
