@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.316 2016/03/02 00:00:16 dlg Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.317 2016/03/02 19:45:10 deraadt Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -3422,6 +3422,7 @@ delifparent(const char *ignored, int alsoignored)
 	if (ioctl(s, SIOCDIFPARENT, &ifr) < 0)
 		warn("SIOCDIFPARENT");
 }
+#endif /* !SMALL */
 
 void
 getifparent(void)
@@ -3442,6 +3443,8 @@ getifparent(void)
 
 	printf("\tparent: %s\n", parent);
 }
+
+#ifndef SMALL
 
 void
 mpe_status(void)
