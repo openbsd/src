@@ -1,4 +1,4 @@
-/* $OpenBSD: pvkfmt.c,v 1.14 2015/09/10 15:56:25 jsing Exp $ */
+/* $OpenBSD: pvkfmt.c,v 1.15 2016/03/02 05:02:35 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2005.
  */
@@ -681,6 +681,10 @@ do_PVK_header(const unsigned char **in, unsigned int length, int skip_magic,
 	is_encrypted = read_ledword(&p);
 	*psaltlen = read_ledword(&p);
 	*pkeylen = read_ledword(&p);
+	if (*psaltlen > 65536 || *pkeylen > 65536) {
+		PEMerr(PEM_F_DO_PVK_HEADER, PEM_R_ERROR_CONVERTING_PRIVATE_KEY);
+		return 0;
+	}
 
 	if (is_encrypted && !*psaltlen) {
 		PEMerr(PEM_F_DO_PVK_HEADER, PEM_R_INCONSISTENT_HEADER);
@@ -796,7 +800,7 @@ b2i_PVK_bio(BIO *in, pem_password_cb *cb, void *u)
 {
 	unsigned char pvk_hdr[24], *buf = NULL;
 	const unsigned char *p;
-	int buflen;
+	size_t buflen;
 	EVP_PKEY *ret = NULL;
 	unsigned int saltlen, keylen;
 
@@ -808,7 +812,7 @@ b2i_PVK_bio(BIO *in, pem_password_cb *cb, void *u)
 
 	if (!do_PVK_header(&p, 24, 0, &saltlen, &keylen))
 		return 0;
-	buflen = (int) keylen + saltlen;
+	buflen = keylen + saltlen;
 	buf = malloc(buflen);
 	if (!buf) {
 		PEMerr(PEM_F_B2I_PVK_BIO, ERR_R_MALLOC_FAILURE);
