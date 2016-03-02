@@ -1,4 +1,4 @@
-/* $OpenBSD: if_cpswreg.h,v 1.5 2013/11/15 14:31:52 fgsch Exp $ */
+/* $OpenBSD: if_cpswreg.h,v 1.6 2016/03/02 01:31:41 canacar Exp $ */
 
 /*-
  * Copyright (c) 2012 Damjan Marion <dmarion@Freebsd.org>
@@ -97,6 +97,8 @@
 
 #define MDIO_OFFSET			0x1000
 #define MDIOCONTROL			(MDIO_OFFSET + 0x04)
+#define MDIOALIVE			(MDIO_OFFSET + 0x08)
+#define MDIOLINK			(MDIO_OFFSET + 0x0C)
 #define MDIOUSERACCESS0			(MDIO_OFFSET + 0x80)
 #define MDIOUSERPHYSEL0			(MDIO_OFFSET + 0x84)
 
@@ -112,6 +114,8 @@
 #define CPSW_WR_C_RX_STAT(p)		(CPSW_WR_OFFSET + (0x10 * (p)) + 0x44)
 #define CPSW_WR_C_TX_STAT(p)		(CPSW_WR_OFFSET + (0x10 * (p)) + 0x48)
 #define CPSW_WR_C_MISC_STAT(p)		(CPSW_WR_OFFSET + (0x10 * (p)) + 0x4C)
+#define CPSW_WR_C_RX_IMAX(p)		(CPSW_WR_OFFSET + (0x08 * (p)) + 0x70)
+#define CPSW_WR_C_TX_IMAX(p)		(CPSW_WR_OFFSET + (0x08 * (p)) + 0x74)
 #define  CPSW_MISC_HOST_PEND			0x0004
 
 #define CPSW_CPPI_RAM_OFFSET		0x2000

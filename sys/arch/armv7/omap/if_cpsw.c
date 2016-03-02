@@ -1,4 +1,4 @@
-/* $OpenBSD: if_cpsw.c,v 1.32 2016/01/07 04:41:17 canacar Exp $ */
+/* $OpenBSD: if_cpsw.c,v 1.33 2016/03/02 01:31:41 canacar Exp $ */
 /*	$NetBSD: if_cpsw.c,v 1.3 2013/04/17 14:36:34 bouyer Exp $	*/
 
 /*
@@ -148,6 +148,7 @@ struct cpsw_softc {
 	volatile bool		 sc_txeoq;
 	volatile bool		 sc_rxeoq;
 	struct timeout		 sc_tick;
+	int			 sc_active_port;
 };
 
 #define DEVNAME(_sc) ((_sc)->sc_dev.dv_xname)
@@ -286,6 +287,45 @@ cpsw_get_mac_addr(struct cpsw_softc *sc)
 	}
 }
 
+static void
+cpsw_mdio_init(struct cpsw_softc *sc)
+{
+	uint32_t alive, link;
+	u_int tries;
+
+	sc->sc_active_port = 0;
+
+	/* Initialze MDIO - ENABLE, PREAMBLE=0, FAULTENB, CLKDIV=0xFF */
+	/* TODO Calculate MDCLK=CLK/(CLKDIV+1) */
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, MDIOCONTROL,
+	    (1<<30) | (1<<18) | 0xFF);
+
+	for(tries = 0; tries < 1000; tries++) {
+		alive = bus_space_read_4(sc->sc_bst, sc->sc_bsh, MDIOALIVE) & 3;
+		if (alive)
+			break;
+		delay(1);
+	}
+
+	if (alive == 0) {
+		printf("%s: no PHY is alive\n", DEVNAME(sc));
+		return;
+	}
+
+	link = bus_space_read_4(sc->sc_bst, sc->sc_bsh, MDIOLINK) & 3;
+
+	if (alive == 3) {
+		/* both ports are alive, prefer one with link */
+		if (link == 2)
+			sc->sc_active_port = 1;
+	} else if (alive == 2)
+		sc->sc_active_port = 1;
+
+	/* Select the port to monitor */
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, MDIOUSERPHYSEL0,
+	    sc->sc_active_port);
+}
+
 void
 cpsw_attach(struct device *parent, struct device *self, void *aux)
 {
@@ -390,6 +430,8 @@ cpsw_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_mii.mii_readreg = cpsw_mii_readreg;
 	sc->sc_mii.mii_writereg = cpsw_mii_writereg;
 	sc->sc_mii.mii_statchg = cpsw_mii_statchg;
+
+	cpsw_mdio_init(sc);
 
 	ifmedia_init(&sc->sc_mii.mii_media, 0, cpsw_mediachange,
 	    cpsw_mediastatus);
@@ -776,13 +818,14 @@ cpsw_init(struct ifnet *ifp)
 		bus_space_write_4(sc->sc_bst, sc->sc_bsh, CPSW_PORT_P_SA_LO(i+1),
 		    ac->ac_enaddr[4] | (ac->ac_enaddr[5] << 8));
 
-		/* Set MACCONTROL for ports 0,1: FULLDUPLEX(1), GMII_EN(5),
+		/* Set MACCONTROL for ports 0,1: FULLDUPLEX(0), GMII_EN(5),
 		   IFCTL_A(15), IFCTL_B(16) FIXME */
 		bus_space_write_4(sc->sc_bst, sc->sc_bsh, CPSW_SL_MACCONTROL(i),
 		    1 | (1<<5) | (1<<15) | (1<<16));
 
-		/* Set ALE port to forwarding(3) */
-		bus_space_write_4(sc->sc_bst, sc->sc_bsh, CPSW_ALE_PORTCTL(i+1), 3);
+		/* Set ALE port to forwarding(3) on the active port */
+		if (i == sc->sc_active_port)
+			bus_space_write_4(sc->sc_bst, sc->sc_bsh, CPSW_ALE_PORTCTL(i+1), 3);
 	}
 
 	/* Set Host Port Mapping */
@@ -834,6 +877,12 @@ cpsw_init(struct ifnet *ifp)
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh, CPSW_CPDMA_TX_CONTROL, 1);
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh, CPSW_CPDMA_RX_CONTROL, 1);
 
+	/* Enable interrupt pacing for C0 RX/TX (IMAX set to max intr/ms allowed) */
+#define CPSW_VBUSP_CLK_MHZ	2400	/* hardcoded for BBB */
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, CPSW_WR_C_RX_IMAX(0), 2);
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, CPSW_WR_C_TX_IMAX(0), 2);
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, CPSW_WR_INT_CONTROL, 3 << 16 | CPSW_VBUSP_CLK_MHZ/4);
+
 	/* Enable TX and RX interrupt receive for core 0 */
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh, CPSW_WR_C_TX_EN(0), 1);
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh, CPSW_WR_C_RX_EN(0), 1);
@@ -852,9 +901,7 @@ cpsw_init(struct ifnet *ifp)
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh, CPSW_CPDMA_CPDMA_EOI_VECTOR, CPSW_INTROFF_TX);
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh, CPSW_CPDMA_CPDMA_EOI_VECTOR, CPSW_INTROFF_MISC);
 
-	/* Initialze MDIO - ENABLE, PREAMBLE=0, FAULTENB, CLKDIV=0xFF */
-	/* TODO Calculate MDCLK=CLK/(CLKDIV+1) */
-	bus_space_write_4(sc->sc_bst, sc->sc_bsh, MDIOCONTROL, (1<<30) | (1<<18) | 0xFF);
+	cpsw_mdio_init(sc);
 
 	mii_mediachg(mii);
 
