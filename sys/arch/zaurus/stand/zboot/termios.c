@@ -1,4 +1,4 @@
-/*	$OpenBSD: termios.c,v 1.2 2005/05/24 20:38:20 uwe Exp $	*/
+/*	$OpenBSD: termios.c,v 1.3 2016/03/02 15:14:44 naddy Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -39,10 +39,8 @@ static speed_t linux_speeds[] = {
 };
 
 static const int linux_spmasks[] = {
-	LINUX_B0, LINUX_B50, LINUX_B75, LINUX_B110, LINUX_B134, LINUX_B150,
-	LINUX_B200, LINUX_B300, LINUX_B600, LINUX_B1200, LINUX_B1800,
-	LINUX_B2400, LINUX_B4800, LINUX_B9600, LINUX_B19200, LINUX_B38400,
-	LINUX_B57600, LINUX_B115200, LINUX_B230400
+	B0, B50, B75, B110, B134, B150, B200, B300, B600, B1200, B1800,
+	B2400, B4800, B9600, B19200, B38400, B57600, B115200, B230400
 };
 
 int
@@ -51,14 +49,14 @@ cfsetspeed(struct termios *t, speed_t speed)
 	int mask;
 	int i;
 
-	mask = LINUX_B9600;	/* XXX default value should this be 0? */
+	mask = B9600;	/* XXX default value should this be 0? */
 	for (i = 0; i < sizeof (linux_speeds) / sizeof (speed_t); i++) {
 		if (speed == linux_speeds[i]) {
 			mask = linux_spmasks[i];
 			break;
 		}
 	}
-	t->c_cflag &= ~LINUX_CBAUD;
+	t->c_cflag &= ~CBAUD;
 	t->c_cflag |= mask;
 
 	return (0);
