@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.426 2016/02/28 15:46:19 naddy Exp $	*/
+/*	$OpenBSD: if.c,v 1.427 2016/03/02 00:00:16 dlg Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -1754,6 +1754,8 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 	case SIOCSIFMEDIA:
 	case SIOCSVNETID:
 	case SIOCSIFPAIR:
+	case SIOCSIFPARENT:
+	case SIOCDIFPARENT:
 		if ((error = suser(p, 0)) != 0)
 			return (error);
 		/* FALLTHROUGH */
@@ -1765,6 +1767,7 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 	case SIOCGIFMEDIA:
 	case SIOCGVNETID:
 	case SIOCGIFPAIR:
+	case SIOCGIFPARENT:
 		if (ifp->if_ioctl == 0)
 			return (EOPNOTSUPP);
 		error = (*ifp->if_ioctl)(ifp, cmd, data);

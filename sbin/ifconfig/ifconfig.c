@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.315 2016/01/13 09:35:45 stsp Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.316 2016/03/02 00:00:16 dlg Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -181,6 +181,9 @@ void	settunnelinst(const char *, int);
 void	settunnelttl(const char *, int);
 void	setvnetid(const char *, int);
 void	delvnetid(const char *, int);
+void	setifparent(const char *, int);
+void	delifparent(const char *, int);
+void	getifparent(void);
 #ifdef INET6
 void	setia6flags(const char *, int);
 void	setia6pltime(const char *, int);
@@ -412,6 +415,8 @@ const struct	cmd {
 	{ "tunnelttl",	NEXTARG,	0,		settunnelttl } ,
 	{ "vnetid",	NEXTARG,	0,		setvnetid },
 	{ "-vnetid",	0,		0,		delvnetid },
+	{ "parent",	NEXTARG,	0,		setifparent },
+	{ "-parent",	1,		0,		delifparent },
 	{ "pppoedev",	NEXTARG,	0,		setpppoe_dev },
 	{ "pppoesvc",	NEXTARG,	0,		setpppoe_svc },
 	{ "-pppoesvc",	1,		0,		setpppoe_svc },
@@ -2938,6 +2943,7 @@ status(int link, struct sockaddr_dl *sdl, int ls)
 		printf("\tpatch: %s\n", ifname);
 #endif
 	vlan_status();
+	getifparent();
 #ifndef SMALL
 	carp_status();
 	pfsync_status();
@@ -3390,6 +3396,51 @@ delvnetid(const char *ignored, int alsoignored)
 {
 	if (ioctl(s, SIOCDVNETID, &ifr) < 0)
 		warn("SIOCDVNETID");
+}
+
+void
+setifparent(const char *id, int param)
+{
+	struct if_parent ifp;
+
+	if (strlcpy(ifp.ifp_name, name, sizeof(ifp.ifp_name)) >=
+	    sizeof(ifp.ifp_name))
+		errx(1, "parent: name too long");
+
+	if (strlcpy(ifp.ifp_parent, id, sizeof(ifp.ifp_parent)) >=
+	    sizeof(ifp.ifp_parent))
+		errx(1, "parent: parent too long");
+
+	if (ioctl(s, SIOCSIFPARENT, (caddr_t)&ifp) < 0)
+		warn("SIOCSIFPARENT");
+}
+
+/* ARGSUSED */
+void
+delifparent(const char *ignored, int alsoignored)
+{
+	if (ioctl(s, SIOCDIFPARENT, &ifr) < 0)
+		warn("SIOCDIFPARENT");
+}
+
+void
+getifparent(void)
+{
+	struct if_parent ifp;
+	const char *parent = "none";
+
+	memset(&ifp, 0, sizeof(ifp));
+	if (strlcpy(ifp.ifp_name, name, sizeof(ifp.ifp_name)) >=
+	    sizeof(ifp.ifp_name))
+		errx(1, "parent: name too long");
+
+	if (ioctl(s, SIOCGIFPARENT, (caddr_t)&ifp) == -1) {
+		if (errno != EADDRNOTAVAIL)
+			return;
+	} else
+		parent = ifp.ifp_parent;
+
+	printf("\tparent: %s\n", parent);
 }
 
 void
