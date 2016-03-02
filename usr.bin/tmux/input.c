@@ -1,4 +1,4 @@
-/* $OpenBSD: input.c,v 1.100 2016/01/29 11:13:56 nicm Exp $ */
+/* $OpenBSD: input.c,v 1.101 2016/03/02 15:36:02 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1960,8 +1960,14 @@ input_utf8_close(struct input_ctx *ictx)
 {
 	struct utf8_data	*ud = &ictx->utf8data;
 
-	if (utf8_append(ud, ictx->ch) != UTF8_DONE)
-		fatalx("UTF-8 close invalid %#x", ictx->ch);
+	if (utf8_append(ud, ictx->ch) != UTF8_DONE) {
+		/*
+		 * An error here could be invalid UTF-8 or it could be a
+		 * nonprintable character for which we can't get the
+		 * width. Drop it.
+		 */
+		return (0);
+	}
 
 	log_debug("%s %hhu '%*s' (width %hhu)", __func__, ud->size,
 	    (int)ud->size, ud->data, ud->width);
