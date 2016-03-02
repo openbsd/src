@@ -1,4 +1,4 @@
-/* $OpenBSD: scp.c,v 1.184 2015/11/27 00:49:31 deraadt Exp $ */
+/* $OpenBSD: scp.c,v 1.185 2016/03/02 22:43:52 dtucker Exp $ */
 /*
  * scp - secure remote copy.  This is basically patched BSD rcp which
  * uses ssh to do the data transfer (instead of using rcmd).
@@ -827,8 +827,6 @@ next:			if (fd != -1) {
 				haderr = errno;
 		}
 		unset_nonblock(remout);
-		if (showprogress)
-			stop_progress_meter();
 
 		if (fd != -1) {
 			if (close(fd) < 0 && !haderr)
@@ -840,6 +838,8 @@ next:			if (fd != -1) {
 		else
 			run_err("%s: %s", name, strerror(haderr));
 		(void) response();
+		if (showprogress)
+			stop_progress_meter();
 	}
 }
 
@@ -1124,8 +1124,6 @@ bad:			run_err("%s: %s", np, strerror(errno));
 			}
 		}
 		unset_nonblock(remin);
-		if (showprogress)
-			stop_progress_meter();
 		if (count != 0 && wrerr == NO &&
 		    atomicio(vwrite, ofd, bp->buf, count) != count) {
 			wrerr = YES;
@@ -1156,6 +1154,8 @@ bad:			run_err("%s: %s", np, strerror(errno));
 			wrerrno = errno;
 		}
 		(void) response();
+		if (showprogress)
+			stop_progress_meter();
 		if (setimes && wrerr == NO) {
 			setimes = 0;
 			if (utimes(np, tv) < 0) {
