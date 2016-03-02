@@ -1992,7 +1992,6 @@
 ./usr/libdata/perl5/site_perl/sh-openbsd/sys/hotplug.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/sys/ioccom.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/sys/ioctl.ph
-./usr/libdata/perl5/site_perl/sh-openbsd/sys/ioctl_compat.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/sys/ipc.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/sys/kcore.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/sys/kernel.ph

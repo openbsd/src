@@ -2015,7 +2015,6 @@
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/hotplug.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/ioccom.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/ioctl.ph
-./usr/libdata/perl5/site_perl/i386-openbsd/sys/ioctl_compat.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/ipc.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/kcore.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/kernel.ph

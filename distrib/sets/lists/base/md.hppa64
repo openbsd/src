@@ -1908,7 +1908,6 @@
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/sys/hotplug.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/sys/ioccom.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/sys/ioctl.ph
-./usr/libdata/perl5/site_perl/hppa64-openbsd/sys/ioctl_compat.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/sys/ipc.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/sys/kcore.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/sys/kernel.ph

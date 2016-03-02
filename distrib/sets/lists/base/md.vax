@@ -1355,7 +1355,6 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/hotplug.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/ioccom.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/ioctl.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/sys/ioctl_compat.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/ipc.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/kcore.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/kernel.ph

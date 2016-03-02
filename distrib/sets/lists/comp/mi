@@ -1316,7 +1316,6 @@
 ./usr/include/sys/hotplug.h
 ./usr/include/sys/ioccom.h
 ./usr/include/sys/ioctl.h
-./usr/include/sys/ioctl_compat.h
 ./usr/include/sys/ipc.h
 ./usr/include/sys/kcore.h
 ./usr/include/sys/kernel.h
