@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_domain.c,v 1.43 2015/09/04 08:43:39 mpi Exp $	*/
+/*	$OpenBSD: uipc_domain.c,v 1.44 2016/03/03 00:25:09 dlg Exp $	*/
 /*	$NetBSD: uipc_domain.c,v 1.14 1996/02/09 19:00:44 christos Exp $	*/
 
 /*
@@ -89,8 +89,8 @@ domaininit(void)
 				(*pr->pr_init)();
 	}
 
-	if (max_linkhdr < 16)		/* XXX */
-		max_linkhdr = 16;
+	if (max_linkhdr < 64)		/* XXX */
+		max_linkhdr = 64;
 	max_hdr = max_linkhdr + max_protohdr;
 	timeout_set(&pffast_timeout, pffasttimo, &pffast_timeout);
 	timeout_set(&pfslow_timeout, pfslowtimo, &pfslow_timeout);
