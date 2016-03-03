@@ -1,4 +1,4 @@
-.\" $OpenBSD: wscons.4,v 1.19 2016/02/28 16:07:57 naddy Exp $
+.\" $OpenBSD: wscons.4,v 1.20 2016/03/03 18:00:49 naddy Exp $
 .\" $NetBSD: wscons.4,v 1.11 2000/04/13 11:14:42 is Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -25,7 +25,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: February 28 2016 $
+.Dd $Mdocdate: March 3 2016 $
 .Dt WSCONS 4
 .Os
 .Sh NAME
@@ -38,7 +38,6 @@
 .Cd option WS_KERNEL_FG=WSCOL_XXX
 .Cd option WS_KERNEL_BG=WSCOL_XXX
 .Cd option WSDISPLAY_COMPAT_PCVT
-.Cd option WSDISPLAY_COMPAT_SYSCONS
 .Cd option WSDISPLAY_COMPAT_USL
 .Cd option WSDISPLAY_COMPAT_RAWKBD
 .Pp
@@ -201,11 +200,6 @@ Emulates enough of the
 .Ox
 / i386
 .Dq pcvt
-driver to make X servers work.
-.It Cd WSDISPLAY_COMPAT_SYSCONS
-Emulates enough of the i386
-.Fx
-.Dq syscons
 driver to make X servers work.
 .El
 .Pp
