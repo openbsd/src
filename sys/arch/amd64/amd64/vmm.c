@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.38 2016/02/23 17:17:31 stefan Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.39 2016/03/03 18:23:06 stefan Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -64,7 +64,6 @@ struct vm {
 	uint32_t		 vm_id;
 	pid_t			 vm_creator_pid;
 	uint32_t		 vm_memory_size;
-	size_t			 vm_used_size;
 	char			 vm_name[VMM_MAX_NAME_LEN];
 
 	struct vcpu_head	 vm_vcpu_list;
@@ -2457,7 +2456,8 @@ vm_get_info(struct vm_info_params *vip)
 	vip->vip_info_ct = vmm_softc->vm_ct;
 	SLIST_FOREACH(vm, &vmm_softc->vm_list, vm_link) {
 		out[i].vir_memory_size = vm->vm_memory_size;
-		out[i].vir_used_size = vm->vm_used_size;
+		out[i].vir_used_size =
+		    pmap_resident_count(vm->vm_map->pmap) * PAGE_SIZE;
 		out[i].vir_ncpus = vm->vm_vcpu_ct;
 		out[i].vir_id = vm->vm_id;
 		out[i].vir_creator_pid = vm->vm_creator_pid;
