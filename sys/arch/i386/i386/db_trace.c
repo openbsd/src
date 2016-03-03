@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.18 2016/03/01 21:35:13 mpi Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.19 2016/03/03 12:44:09 mpi Exp $	*/
 /*	$NetBSD: db_trace.c,v 1.18 1996/05/03 19:42:01 christos Exp $	*/
 
 /*
@@ -158,7 +158,7 @@ db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
     char *modif, int (*pr)(const char *, ...))
 {
 	struct callframe *frame, *lastframe;
-	int		*argp;
+	int		*argp, *arg0;
 	db_addr_t	callpc;
 	int		is_trap = 0;
 	boolean_t	kernel_only = TRUE;
@@ -224,7 +224,7 @@ db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
 				offset = 0;
 			}
 		}
-		if (INKERNEL((int)frame) && name) {
+		if (INKERNEL(callpc) && name) {
 			if (!strcmp(name, "trap")) {
 				is_trap = TRAP;
 			} else if (!strcmp(name, "ast")) {
@@ -255,12 +255,13 @@ db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
 			 * We have a breakpoint before the frame is set up
 			 * Use %esp instead
 			 */
-			argp = &((struct callframe *)(ddb_regs.tf_esp-4))->f_arg0;
+			arg0 =
+			    &((struct callframe *)(ddb_regs.tf_esp-4))->f_arg0;
 		} else {
-			argp = &frame->f_arg0;
+			arg0 = &frame->f_arg0;
 		}
 
-		while (narg) {
+		for (argp = arg0; narg > 0; ) {
 			(*pr)("%x", db_get_value((int)argp, 4, FALSE));
 			argp++;
 			if (--narg != 0)
@@ -270,7 +271,7 @@ db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
 		db_printsym(callpc, DB_STGY_PROC, pr);
 		(*pr)("\n");
 
-		if (lastframe == 0 && offset == 0 && !have_addr) {
+		if (lastframe == 0 && offset == 0 && !have_addr && !is_trap) {
 			/* Frame really belongs to next callpc */
 			lastframe = (struct callframe *)(ddb_regs.tf_esp-4);
 			callpc = (db_addr_t)
@@ -279,7 +280,7 @@ db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
 		}
 
 		lastframe = frame;
-		db_nextframe(&frame, &callpc, &frame->f_arg0, is_trap, pr);
+		db_nextframe(&frame, &callpc, arg0, is_trap, pr);
 
 		if (frame == 0) {
 			/* end of chain */
