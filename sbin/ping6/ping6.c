@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.145 2016/01/30 05:38:26 semarie Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.146 2016/03/03 18:30:48 florian Exp $	*/
 /*	$KAME: ping6.c,v 1.163 2002/10/25 02:19:06 itojun Exp $	*/
 
 /*
@@ -100,6 +100,7 @@
 #include <poll.h>
 #include <signal.h>
 #include <siphash.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -170,11 +171,11 @@ int ident;			/* process id to identify our packets */
 int hoplimit = -1;		/* hoplimit */
 
 /* counters */
-long npackets;			/* max packets to transmit */
-long nreceived;			/* # of packets we got back */
-long nrepeats;			/* number of duplicates */
-long ntransmitted;		/* sequence # for outbound packets = #sent */
-unsigned long nmissedmax = 1;	/* max value of ntransmitted - nreceived - 1 */
+int64_t npackets;		/* max packets to transmit */
+int64_t nreceived;		/* # of packets we got back */
+int64_t nrepeats;		/* number of duplicates */
+int64_t ntransmitted;		/* sequence # for outbound packets = #sent */
+int64_t nmissedmax = 1;		/* max value of ntransmitted - nreceived - 1 */
 struct timeval interval = {1, 0}; /* interval between packets */
 
 /* timing */
@@ -222,7 +223,8 @@ main(int argc, char *argv[])
 	struct itimerval itimer;
 	struct sockaddr_in6 from, from6;
 	struct addrinfo hints;
-	int ch, i, maxsize, packlen, preload, optval, error;
+	int64_t preload;
+	int ch, i, maxsize, packlen, optval, error;
 	socklen_t maxsizelen;
 	u_char *datap, *packet;
 	char *e, *target;
@@ -249,7 +251,7 @@ main(int argc, char *argv[])
 	    "c:dEefHh:I:i:Ll:mNnp:qS:s:V:vw:")) != -1) {
 		switch (ch) {
 		case 'c':
-			npackets = strtonum(optarg, 0, INT_MAX, &errstr);
+			npackets = strtonum(optarg, 0, INT64_MAX, &errstr);
 			if (errstr)
 				errx(1,
 				    "number of packets to transmit is %s: %s",
@@ -309,7 +311,7 @@ main(int argc, char *argv[])
 		case 'l':
 			if (getuid())
 				errx(1, "%s", strerror(EPERM));
-			preload = strtonum(optarg, 1, INT_MAX, &errstr);
+			preload = strtonum(optarg, 1, INT64_MAX, &errstr);
 			if (errstr)
 				errx(1, "preload value is %s: %s", errstr,
 				    optarg);
@@ -1239,14 +1241,14 @@ summary(int signo)
 	snprintf(buft, sizeof(buft), "--- %s ping6 statistics ---\n",
 	    hostname);
 	strlcat(buf, buft, sizeof(buf));
-	snprintf(buft, sizeof(buft), "%ld packets transmitted, ",
+	snprintf(buft, sizeof(buft), "%lld packets transmitted, ",
 	    ntransmitted);
 	strlcat(buf, buft, sizeof(buf));
-	snprintf(buft, sizeof(buft), "%ld packets received, ",
+	snprintf(buft, sizeof(buft), "%lld packets received, ",
 	    nreceived);
 	strlcat(buf, buft, sizeof(buf));
 	if (nrepeats) {
-		snprintf(buft, sizeof(buft), "+%ld duplicates, ",
+		snprintf(buft, sizeof(buft), "+%lld duplicates, ",
 		    nrepeats);
 		strlcat(buf, buft, sizeof(buf));
 	}
