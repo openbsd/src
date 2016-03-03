@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-#	$OpenBSD: gen_ctype_utf8.pl,v 1.3 2015/11/29 19:05:21 afresh1 Exp $	#
+#	$OpenBSD: gen_ctype_utf8.pl,v 1.4 2016/03/03 16:18:48 afresh1 Exp $	#
 use 5.022;
 use warnings;
 
@@ -252,12 +252,15 @@ sub print_info
 {
 	my (%info) = @_;
 
+	my $printed = 0;
+
 	foreach my $list (@lists) {
 		next unless $info{$list};
+		$printed = 1;
 		print_list( $list => $info{$list} );
 	}
 
-	print "\n";
+	print "\n" if $printed;
 
 	foreach my $map (@maps) {
 		next unless $info{$map};
@@ -408,8 +411,12 @@ sub codepoint_columns
 	return 0 if index( $charinfo->{category}, 'C' ) == 0;
 
 	return 2 if $charinfo->{block} eq 'Hangul Jamo';
-	return 2 if $charinfo->{block} eq 'Hangul Jamo Extended B';
-	return 2 if charprop( $code, 'East_Asian_Width' ) eq 'Wide';
+	return 2 if $charinfo->{block} eq 'Hangul Jamo Extended-B';
+
+	{
+		my $eaw = charprop( $code, 'East_Asian_Width' );
+		return 2 if $eaw eq 'Wide' or $eaw eq 'Fullwidth';
+	}
 
 	return 1;
 }
