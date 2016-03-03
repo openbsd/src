@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.164 2016/02/28 15:46:18 naddy Exp $	*/
+/*	$OpenBSD: locore.s,v 1.165 2016/03/03 12:32:23 mpi Exp $	*/
 /*	$NetBSD: locore.s,v 1.145 1996/05/03 19:41:19 christos Exp $	*/
 
 /*-
@@ -1284,14 +1284,14 @@ ENTRY(savectx)
  * handler.
  *
  * XXX - debugger traps are now interrupt gates so at least bdb doesn't lose
- * control.  The sti's give the standard losing behaviour for ddb and kgdb.
+ * control. STI gives the standard losing behaviour for ddb and kgdb.
  */
 #define	IDTVEC(name)	ALIGN_TEXT; .globl X##name; X##name:
 
 #define	TRAP(a)		pushl $(a) ; jmp _C_LABEL(alltraps)
 #define	ZTRAP(a)	pushl $0 ; TRAP(a)
-#define	BPTTRAP(a)	testb $(PSL_I>>8),13(%esp) ; jz 1f ; sti ; 1: ; \
-			TRAP(a)
+#define STI		testb $(PSL_I>>8),13(%esp) ; jz 1f ; sti ; 1: ;
+
 
 	.text
 IDTVEC(div)
@@ -1304,12 +1304,13 @@ IDTVEC(dbg)
 	andb	$~0xf,%al
 	movl	%eax,%dr6
 	popl	%eax
-	BPTTRAP(T_TRCTRAP)
+	STI
+	TRAP(T_TRCTRAP)
 IDTVEC(nmi)
 	ZTRAP(T_NMI)
 IDTVEC(bpt)
-	pushl	$0
-	BPTTRAP(T_BPTFLT)
+	STI
+	ZTRAP(T_BPTFLT)
 IDTVEC(ofl)
 	ZTRAP(T_OFLOW)
 IDTVEC(bnd)
@@ -1423,6 +1424,10 @@ NENTRY(resume_pop_fs)
 	sti
 	jmp	calltrap
 
+/*
+ * All traps go through here. Call the generic trap handler, and
+ * check for ASTs afterwards.
+ */
 NENTRY(alltraps)
 	INTRENTRY
 calltrap:

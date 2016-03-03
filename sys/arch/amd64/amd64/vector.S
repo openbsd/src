@@ -1,4 +1,4 @@
-/*	$OpenBSD: vector.S,v 1.44 2015/12/08 19:45:55 mikeb Exp $	*/
+/*	$OpenBSD: vector.S,v 1.45 2016/03/03 12:32:23 mpi Exp $	*/
 /*	$NetBSD: vector.S,v 1.5 2004/06/28 09:13:11 fvdl Exp $	*/
 
 /*
@@ -96,24 +96,22 @@
  * (possibly the next clock tick).  Thus, we disable interrupt before checking,
  * and only enable them again on the final `iret' or before calling the AST
  * handler.
- */ 
+ */
 
 /*****************************************************************************/
 
 #define	TRAP(a)		pushq $(a) ; jmp _C_LABEL(alltraps)
 #define	ZTRAP(a)	pushq $0 ; TRAP(a)
 
-#define	BPTTRAP(a)	ZTRAP(a)
-
 	.text
 IDTVEC(trap00)
 	ZTRAP(T_DIVIDE)
 IDTVEC(trap01)
-	BPTTRAP(T_TRCTRAP)
+	ZTRAP(T_TRCTRAP)
 IDTVEC(trap02)
 	ZTRAP(T_NMI)
 IDTVEC(trap03)
-	BPTTRAP(T_BPTFLT)
+	ZTRAP(T_BPTFLT)
 IDTVEC(trap04)
 	ZTRAP(T_OFLOW)
 IDTVEC(trap05)
@@ -245,7 +243,6 @@ NENTRY(resume_iret)
 NENTRY(alltraps)
 	INTRENTRY
 	sti
-	.globl	calltrap
 calltrap:
 	cld
 #ifdef DIAGNOSTIC
