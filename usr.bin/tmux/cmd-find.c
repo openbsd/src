@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-find.c,v 1.31 2016/01/19 16:01:30 nicm Exp $ */
+/* $OpenBSD: cmd-find.c,v 1.32 2016/03/03 14:14:46 nicm Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -401,6 +401,7 @@ int
 cmd_find_get_session(struct cmd_find_state *fs, const char *session)
 {
 	struct session	*s, *s_loop;
+	struct client	*c;
 
 	log_debug("%s: %s", __func__, session);
 
@@ -416,6 +417,13 @@ cmd_find_get_session(struct cmd_find_state *fs, const char *session)
 	fs->s = session_find(session);
 	if (fs->s != NULL)
 		return (0);
+
+	/* Look for as a client. */
+	c = cmd_find_client(NULL, session, 1);
+	if (c != NULL && c->session != NULL) {
+		fs->s = c->session;
+		return (0);
+	}
 
 	/* Stop now if exact only. */
 	if (fs->flags & CMD_FIND_EXACT_SESSION)
@@ -1209,7 +1217,7 @@ cmd_find_client(struct cmd_q *cmdq, const char *target, int quiet)
 	const char	*path;
 
 	/* A NULL argument means the current client. */
-	if (target == NULL) {
+	if (cmdq != NULL && target == NULL) {
 		c = cmd_find_current_client(cmdq);
 		if (c == NULL && !quiet)
 			cmdq_error(cmdq, "no current client");
