@@ -913,6 +913,7 @@
 ./usr/libdata/perl5/site_perl/sh-openbsd/dev/mii/xmphyreg.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/dev/mulaw.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/dev/ofw
+./usr/libdata/perl5/site_perl/sh-openbsd/dev/ofw/fdt.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/dev/ofw/ofw_pci.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/dev/ofw/openfirm.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/dev/onewire
