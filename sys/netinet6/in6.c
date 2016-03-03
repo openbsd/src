@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.184 2016/02/28 07:15:34 stefan Exp $	*/
+/*	$OpenBSD: in6.c,v 1.185 2016/03/03 12:51:51 jca Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -239,10 +239,7 @@ in6_control(struct socket *so, u_long cmd, caddr_t data, struct ifnet *ifp)
 	case SIOCSIFPHYADDR_IN6:
 		sa6 = &ifra->ifra_addr;
 		break;
-	case SIOCSIFADDR_IN6:
 	case SIOCGIFADDR_IN6:
-	case SIOCSIFDSTADDR_IN6:
-	case SIOCSIFNETMASK_IN6:
 	case SIOCGIFDSTADDR_IN6:
 	case SIOCGIFNETMASK_IN6:
 	case SIOCDIFADDR_IN6:
@@ -292,15 +289,6 @@ in6_control(struct socket *so, u_long cmd, caddr_t data, struct ifnet *ifp)
 		ia6 = NULL;
 
 	switch (cmd) {
-	case SIOCSIFADDR_IN6:
-	case SIOCSIFDSTADDR_IN6:
-	case SIOCSIFNETMASK_IN6:
-		/*
-		 * Since IPv6 allows a node to assign multiple addresses
-		 * on a single interface, SIOCSIFxxx ioctls are deprecated.
-		 */
-		return (EINVAL);
-
 	case SIOCDIFADDR_IN6:
 		/*
 		 * for IPv4, we look for existing in_ifaddr here to allow

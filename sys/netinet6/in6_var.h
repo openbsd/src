@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_var.h,v 1.60 2016/02/28 07:15:34 stefan Exp $	*/
+/*	$OpenBSD: in6_var.h,v 1.61 2016/03/03 12:51:51 jca Exp $	*/
 /*	$KAME: in6_var.h,v 1.55 2001/02/16 12:49:45 itojun Exp $	*/
 
 /*
@@ -374,17 +374,7 @@ struct	in6_rrenumreq {
 	(((d)->s6_addr32[3] ^ (a)->s6_addr32[3]) & (m)->s6_addr32[3]) == 0 )
 #endif /* _KERNEL */
 
-#define SIOCSIFADDR_IN6		 _IOW('i', 12, struct in6_ifreq)
 #define SIOCGIFADDR_IN6		_IOWR('i', 33, struct in6_ifreq)
-
-#ifdef _KERNEL
-/*
- * SIOCSxxx ioctls should be unused (see comments in in6.c), but
- * we do not shift numbers for binary compatibility.
- */
-#define SIOCSIFDSTADDR_IN6	 _IOW('i', 14, struct in6_ifreq)
-#define SIOCSIFNETMASK_IN6	 _IOW('i', 22, struct in6_ifreq)
-#endif /* _KERNEL */
 
 #define SIOCGIFDSTADDR_IN6	_IOWR('i', 34, struct in6_ifreq)
 #define SIOCGIFNETMASK_IN6	_IOWR('i', 37, struct in6_ifreq)
