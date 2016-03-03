@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.199 2016/01/29 11:13:56 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.200 2016/03/03 12:58:15 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1569,6 +1569,8 @@ tty_check_fg(struct tty *tty, struct grid_cell *gc)
 			gc->flags |= GRID_FLAG_FG256;
 			gc->fg = colour_find_rgb(rgb->r, rgb->g, rgb->b);
 		}
+		else
+			return;
 	}
 	colours = tty_term_number(tty->term, TTYC_COLORS);
 
@@ -1612,6 +1614,8 @@ tty_check_bg(struct tty *tty, struct grid_cell *gc)
 			gc->flags |= GRID_FLAG_BG256;
 			gc->bg = colour_find_rgb(rgb->r, rgb->g, rgb->b);
 		}
+		else
+			return;
 	}
 	colours = tty_term_number(tty->term, TTYC_COLORS);
 
