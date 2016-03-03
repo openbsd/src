@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdt.c,v 1.12 2016/02/28 12:39:40 mpi Exp $	*/
+/*	$OpenBSD: fdt.c,v 1.1 2016/03/03 02:42:16 bmercer Exp $	*/
 
 /*
  * Copyright (c) 2009 Dariusz Swiderski <sfires@sfires.net>
@@ -22,8 +22,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 
-#include <machine/fdt.h>
-
+#include <dev/ofw/fdt.h>
 #include <dev/ofw/openfirm.h>
 
 unsigned int fdt_check_head(void *);

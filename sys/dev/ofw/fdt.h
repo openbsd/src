@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdt.h,v 1.3 2009/10/01 20:21:05 dms Exp $	*/
+/*	$OpenBSD: fdt.h,v 1.1 2016/03/03 02:42:16 bmercer Exp $	*/
 
 /*
  * Copyright (c) 2009 Dariusz Swiderski <sfires@sfires.net>

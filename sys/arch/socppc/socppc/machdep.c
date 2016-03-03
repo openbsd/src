@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.64 2015/03/31 16:00:38 mpi Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.65 2016/03/03 02:42:16 bmercer Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -52,7 +52,6 @@
 #include <uvm/uvm_extern.h>
 
 #include <machine/bus.h>
-#include <machine/fdt.h>
 #include <machine/pio.h>
 #include <powerpc/powerpc.h>
 #include <machine/trap.h>
@@ -60,6 +59,8 @@
 #include <dev/cons.h>
 
 #include <dev/ic/comvar.h>
+
+#include <dev/ofw/fdt.h>
 
 #ifdef DDB
 #include <machine/db_machdep.h>
