@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.39 2016/03/03 18:23:06 stefan Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.40 2016/03/03 18:45:42 stefan Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -1015,7 +1015,7 @@ vm_impl_init_vmx(struct vm *vm)
 	    PROT_READ | PROT_WRITE | PROT_EXEC,
 	    MAP_INHERIT_NONE,
 	    MADV_NORMAL,
-	    UVM_FLAG_FIXED | UVM_FLAG_OVERLAY));
+	    UVM_FLAG_FIXED | UVM_FLAG_COPYONW));
 	if (ret) {
 		printf("vm_impl_init_vmx: uvm_mapanon failed (%d)\n", ret);
 		/* uvm_map_deallocate calls pmap_destroy for us */
