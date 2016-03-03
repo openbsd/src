@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.151 2016/01/13 03:18:26 dlg Exp $	*/
+/*	$OpenBSD: if_vlan.c,v 1.152 2016/03/03 02:53:28 dlg Exp $	*/
 
 /*
  * Copyright 1998 Massachusetts Institute of Technology
@@ -274,21 +274,12 @@ vlan_start(struct ifnet *ifp)
 			    (prio << EVL_PRIO_BITS);
 			m->m_flags |= M_VLANTAG;
 		} else {
-			struct ether_vlan_header evh;
-
-			m_copydata(m, 0, ETHER_HDR_LEN, (caddr_t)&evh);
-			evh.evl_proto = evh.evl_encap_proto;
-			evh.evl_encap_proto = htons(ifv->ifv_type);
-			evh.evl_tag = htons(ifv->ifv_tag +
-			    (prio << EVL_PRIO_BITS));
-			m_adj(m, ETHER_HDR_LEN);
-			M_PREPEND(m, sizeof(evh), M_DONTWAIT);
+			m = vlan_inject(m, ifv->ifv_type, ifv->ifv_tag |
+                            (prio << EVL_PRIO_BITS));
 			if (m == NULL) {
 				ifp->if_oerrors++;
 				continue;
 			}
-			m_copyback(m, 0, sizeof(evh), &evh, M_NOWAIT);
-			m->m_flags &= ~M_VLANTAG;
 		}
 
 		if (if_enqueue(p, m)) {
@@ -298,6 +289,26 @@ vlan_start(struct ifnet *ifp)
 		ifp->if_opackets++;
 	}
 }
+
+struct mbuf *
+vlan_inject(struct mbuf *m, uint16_t type, uint16_t tag)
+{
+	struct ether_vlan_header evh;
+
+	m_copydata(m, 0, ETHER_HDR_LEN, (caddr_t)&evh);
+	evh.evl_proto = evh.evl_encap_proto;
+	evh.evl_encap_proto = htons(type);
+	evh.evl_tag = htons(tag);
+	m_adj(m, ETHER_HDR_LEN);
+	M_PREPEND(m, sizeof(evh), M_DONTWAIT);
+	if (m == NULL)
+		return (NULL);
+
+	m_copyback(m, 0, sizeof(evh), &evh, M_NOWAIT);
+	CLR(m->m_flags, M_VLANTAG);
+
+	return (m);
+ }
 
 /*
  * vlan_input() returns 1 if it has consumed the packet, 0 otherwise.
