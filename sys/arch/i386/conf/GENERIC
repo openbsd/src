@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.812 2016/02/28 15:46:18 naddy Exp $
+#	$OpenBSD: GENERIC,v 1.813 2016/03/03 12:41:30 naddy Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -17,7 +17,6 @@ option		USER_PCICONF	# user-space PCI configuration
 
 #option		VM86		# Virtual 8086 emulation
 option		KVM86		# Kernel Virtual 8086 emulation
-option		USER_LDT	# user-settable LDT; see i386_set_ldt(2)
 option		APERTURE	# in-kernel aperture driver for XFree86
 option		MTRR		# CPU memory range attributes control
 

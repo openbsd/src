@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.205 2015/12/16 14:22:21 kettenis Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.206 2016/03/03 12:41:30 naddy Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -3736,10 +3736,6 @@ uvmspace_fork(struct process *pr)
 #ifdef SYSVSHM
 	if (vm1->vm_shm)
 		shmfork(vm1, vm2);
-#endif
-
-#ifdef PMAP_FORK
-	pmap_fork(vm1->vm_map.pmap, vm2->vm_map.pmap);
 #endif
 
 	return vm2;    

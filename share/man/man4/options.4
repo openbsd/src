@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.241 2016/02/28 15:46:18 naddy Exp $
+.\"	$OpenBSD: options.4,v 1.242 2016/03/03 12:41:30 naddy Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -34,7 +34,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd $Mdocdate: February 28 2016 $
+.Dd $Mdocdate: March 3 2016 $
 .Dt OPTIONS 4
 .Os
 .Sh NAME
@@ -377,17 +377,6 @@ Makes the boot process more verbose for PCI peripherals
 (vendor names and other information is printed, etc.).
 .It Cd option PCMCIAVERBOSE
 Makes the boot process more verbose for PCMCIA peripherals.
-.It Cd option USER_LDT
-Enable userland manipulation of per-process
-Local Descriptor Table (LDT) entries;
-see
-.Xr i386_set_ldt 2
-and the
-.Va machdep.userldt
-.Xr sysctl 8 .
-This option is supported on the
-.Va i386
-architecture.
 .It Cd option USER_PCICONF
 Enables the user level access to the PCI bus configuration space
 through ioctls on the

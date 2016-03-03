@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.186 2015/10/23 09:36:09 kettenis Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.187 2016/03/03 12:41:30 naddy Exp $	*/
 /*	$NetBSD: pmap.c,v 1.91 2000/06/02 17:46:37 thorpej Exp $	*/
 
 /*
@@ -1362,20 +1362,6 @@ pmap_destroy(struct pmap *pmap)
 	uvm_km_free(kernel_map, pmap->pm_pdir, pmap->pm_pdirsize);
 	pmap->pm_pdir = 0;
 
-#ifdef USER_LDT
-	if (pmap->pm_flags & PMF_USER_LDT) {
-		/*
-		 * no need to switch the LDT; this address space is gone,
-		 * nothing is using it.
-		 *
-		 * No need to lock the pmap for ldt_free (or anything else),
-		 * we're the last one to use it.
-		 */
-		ldt_free(pmap);
-		uvm_km_free(kernel_map, (vaddr_t)pmap->pm_ldt,
-			    pmap->pm_ldt_len * sizeof(union descriptor));
-	}
-#endif
 	pool_put(&pmap_pmap_pool, pmap);
 }
 
@@ -1389,75 +1375,6 @@ pmap_reference(struct pmap *pmap)
 {
 	atomic_inc_int(&pmap->pm_obj.uo_refs);
 }
-
-#if defined(PMAP_FORK)
-/*
- * pmap_fork: perform any necessary data structure manipulation when
- * a VM space is forked.
- */
-
-void
-pmap_fork(struct pmap *pmap1, struct pmap *pmap2)
-{
-#ifdef USER_LDT
-	/* Copy the LDT, if necessary. */
-	if (pmap1->pm_flags & PMF_USER_LDT) {
-		union descriptor *new_ldt;
-		size_t len;
-
-		len = pmap1->pm_ldt_len * sizeof(union descriptor);
-		new_ldt = (union descriptor *)uvm_km_alloc(kernel_map, len);
-		if (new_ldt == NULL) {
-			/* XXX needs to be able to fail properly */
-			panic("pmap_fork: out of kva");
-		}
-		bcopy(pmap1->pm_ldt, new_ldt, len);
-		pmap2->pm_ldt = new_ldt;
-		pmap2->pm_ldt_len = pmap1->pm_ldt_len;
-		pmap2->pm_flags |= PMF_USER_LDT;
-		ldt_alloc(pmap2, new_ldt, len);
-	}
-#endif /* USER_LDT */
-}
-#endif /* PMAP_FORK */
-
-#ifdef USER_LDT
-/*
- * pmap_ldt_cleanup: if the pmap has a local LDT, deallocate it, and
- * restore the default.
- */
-
-void
-pmap_ldt_cleanup(struct proc *p)
-{
-	struct pcb *pcb = &p->p_addr->u_pcb;
-	pmap_t pmap = p->p_vmspace->vm_map.pmap;
-	union descriptor *old_ldt = NULL;
-	size_t len = 0;
-
-	if (pmap->pm_flags & PMF_USER_LDT) {
-		ldt_free(pmap);
-		pmap->pm_ldt_sel = GSEL(GLDT_SEL, SEL_KPL);
-		pcb->pcb_ldt_sel = pmap->pm_ldt_sel;
-		/* Reset the cached address of the LDT that this process uses */
-#ifdef MULTIPROCESSOR
-		pcb->pcb_ldt = curcpu()->ci_ldt;
-#else
-		pcb->pcb_ldt = ldt;
-#endif
-		if (pcb == curpcb)
-			lldt(pcb->pcb_ldt_sel);
-		old_ldt = pmap->pm_ldt;
-		len = pmap->pm_ldt_len * sizeof(union descriptor);
-		pmap->pm_ldt = NULL;
-		pmap->pm_ldt_len = 0;
-		pmap->pm_flags &= ~PMF_USER_LDT;
-	}
-
-	if (old_ldt != NULL)
-		uvm_km_free(kernel_map, (vaddr_t)old_ldt, len);
-}
-#endif /* USER_LDT */
 
 void
 pmap_activate(struct proc *p)

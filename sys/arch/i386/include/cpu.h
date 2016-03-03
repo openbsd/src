@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.145 2015/12/07 06:34:14 jsg Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.146 2016/03/03 12:41:30 naddy Exp $	*/
 /*	$NetBSD: cpu.h,v 1.35 1996/05/05 19:29:26 christos Exp $	*/
 
 /*-
@@ -441,13 +441,6 @@ void	npxdrop(struct proc *);
 void	npxsave_proc(struct proc *, int);
 void	npxsave_cpu(struct cpu_info *, int);
 
-#ifdef USER_LDT
-/* sys_machdep.h */
-extern int user_ldt_enable;
-int	i386_get_ldt(struct proc *, void *, register_t *);
-int	i386_set_ldt(struct proc *, void *, register_t *);
-#endif
-
 /* isa_machdep.c */
 void	isa_defaultirq(void);
 int	isa_nmi(void);
@@ -485,7 +478,6 @@ int	cpu_paenable(void *);
 #define CPU_APMWARN		9	/* APM battery warning percentage */
 #define CPU_KBDRESET		10	/* keyboard reset under pcvt */
 #define CPU_APMHALT		11	/* halt -p hack */
-#define CPU_USERLDT		12
 #define CPU_OSFXSR		13	/* uses FXSAVE/FXRSTOR */
 #define CPU_SSE			14	/* supports SSE */
 #define CPU_SSE2		15	/* supports SSE2 */
@@ -506,7 +498,7 @@ int	cpu_paenable(void *);
 	{ "apmwarn", CTLTYPE_INT }, \
 	{ "kbdreset", CTLTYPE_INT }, \
 	{ "apmhalt", CTLTYPE_INT }, \
-	{ "userldt", CTLTYPE_INT }, \
+	{ 0, 0 }, \
 	{ "osfxsr", CTLTYPE_INT }, \
 	{ "sse", CTLTYPE_INT }, \
 	{ "sse2", CTLTYPE_INT }, \

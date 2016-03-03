@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.79 2015/10/23 09:36:09 kettenis Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.80 2016/03/03 12:41:30 naddy Exp $	*/
 /*	$NetBSD: pmap.h,v 1.44 2000/04/24 17:18:18 thorpej Exp $	*/
 
 /*
@@ -111,9 +111,6 @@ struct pmap {
 	int pm_ldt_sel;			/* LDT selector */
 };
 
-/* pm_flags */
-#define	PMF_USER_LDT	0x01	/* pmap has user-set LDT */
-
 /*
  * For each managed physical page we maintain a list of <PMAP,VA>s
  * which it is mapped at.  The list is headed by a pv_head structure.
@@ -223,7 +220,6 @@ void pmap_init(void);
 struct pmap *pmap_create(void);
 void pmap_destroy(struct pmap *);
 void pmap_reference(struct pmap *);
-void pmap_fork(struct pmap *, struct pmap *);
 void pmap_remove(struct pmap *, vaddr_t, vaddr_t);
 void pmap_collect(struct pmap *);
 void pmap_activate(struct proc *);
@@ -457,11 +453,6 @@ pmap_is_curpmap(struct pmap *pmap)
 {
 	return (pmap_is_active(pmap, curcpu()));
 }
-
-#if defined(USER_LDT)
-void	pmap_ldt_cleanup(struct proc *);
-#define	PMAP_FORK
-#endif /* USER_LDT */
 
 #endif /* _KERNEL */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.579 2015/12/27 04:31:34 jsg Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.580 2016/03/03 12:41:30 naddy Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -187,10 +187,6 @@ void (*cpu_idle_enter_fcn)(void) = NULL;
  */
 #if NAPM > 0
 int	cpu_apmhalt = 0;	/* sysctl'd to 1 for halt -p hack */
-#endif
-
-#ifdef USER_LDT
-int	user_ldt_enable = 0;	/* sysctl'd to 1 to enable */
 #endif
 
 struct uvm_constraint_range  isa_constraint = { 0x0, 0x00ffffffUL };
@@ -2907,10 +2903,6 @@ setregs(struct proc *p, struct exec_package *pack, u_long stack,
 	p->p_md.md_flags &= ~MDP_USEDFPU;
 #endif
 
-#ifdef USER_LDT
-	pmap_ldt_cleanup(p);
-#endif
-
 	/*
 	 * Reset the code segment limit to I386_MAX_EXE_ADDR in the pmap;
 	 * this gets copied into the GDT for GUCODE_SEL by pmap_activate().
@@ -3585,11 +3577,6 @@ cpu_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		else
 			return (sysctl_int(oldp, oldlenp, newp, newlen,
 			    &kbd_reset));
-#ifdef USER_LDT
-	case CPU_USERLDT:
-		return (sysctl_int(oldp, oldlenp, newp, newlen,
-		    &user_ldt_enable));
-#endif
 	case CPU_OSFXSR:
 		return (sysctl_rdint(oldp, oldlenp, newp, i386_use_fxsave));
 	case CPU_SSE:
