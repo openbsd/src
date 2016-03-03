@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.h,v 1.56 2015/12/18 10:55:51 tb Exp $	*/
+/*	$OpenBSD: nd6.h,v 1.57 2016/03/03 12:57:15 jca Exp $	*/
 /*	$KAME: nd6.h,v 1.95 2002/06/08 11:31:06 itojun Exp $	*/
 
 /*
@@ -81,6 +81,13 @@ struct	in6_defrouter {
 	u_char	flags;
 };
 
+struct prf_ra {
+	u_int onlink : 1;
+	u_int autonomous : 1;
+	u_int router : 1;
+	u_int reserved : 5;
+};
+
 struct in6_prefix {
 	struct	sockaddr_in6 prefix;
 	struct	prf_ra raflags;
@@ -93,6 +100,10 @@ struct in6_prefix {
 	u_short	advrtrs; /* number of advertisement routers */
 	u_char	prefixlen;
 	u_char	origin;
+#define PR_ORIG_RA	0
+#define PR_ORIG_RR	1
+#define PR_ORIG_STATIC	2
+#define PR_ORIG_KERNEL	3
 	/* struct sockaddr_in6 advrtr[] */
 };
 
