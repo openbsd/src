@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan_var.h,v 1.31 2015/12/03 16:27:32 mpi Exp $	*/
+/*	$OpenBSD: if_vlan_var.h,v 1.32 2016/03/03 09:27:51 dlg Exp $	*/
 
 /*
  * Copyright 1998 Massachusetts Institute of Technology
@@ -98,6 +98,8 @@ struct	ifvlan {
 #define	ifv_prio	ifv_mib.ifvm_prio
 #define	ifv_type	ifv_mib.ifvm_type
 #define	IFVF_PROMISC	0x01
+
+struct mbuf	*vlan_inject(struct mbuf *, uint16_t, uint16_t);
 #endif /* _KERNEL */
 
 #endif /* _NET_IF_VLAN_VAR_H_ */
