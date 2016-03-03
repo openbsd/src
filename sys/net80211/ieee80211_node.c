@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.99 2016/01/25 15:14:22 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.100 2016/03/03 07:20:45 gerhard Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -630,6 +630,8 @@ ieee80211_end_scan(struct ifnet *ifp)
 		goto notfound;
 	(*ic->ic_node_copy)(ic, ic->ic_bss, selbs);
 	ni = ic->ic_bss;
+
+	ic->ic_curmode = ieee80211_chan2mode(ic, ni->ni_chan);
 
 	if (ic->ic_flags & IEEE80211_F_RSNON)
 		ieee80211_choose_rsnparams(ic);
