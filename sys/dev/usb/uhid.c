@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhid.c,v 1.64 2016/02/28 17:57:50 stefan Exp $ */
+/*	$OpenBSD: uhid.c,v 1.65 2016/03/03 18:13:24 stefan Exp $ */
 /*	$NetBSD: uhid.c,v 1.57 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -281,16 +281,16 @@ uhid_do_read(struct uhid_softc *sc, struct uio *uio, int flag)
 
 	/* Transfer as many chunks as possible. */
 	while (sc->sc_q.c_cc > 0 && uio->uio_resid > 0 && !error) {
-		length = min(sc->sc_q.c_cc, uio->uio_resid);
+		length = ulmin(sc->sc_q.c_cc, uio->uio_resid);
 		if (length > sizeof(buffer))
 			length = sizeof(buffer);
 
 		/* Remove a small chunk from the input queue. */
 		(void) q_to_b(&sc->sc_q, buffer, length);
-		DPRINTFN(5, ("uhidread: got %lu chars\n", (u_long)length));
+		DPRINTFN(5, ("uhidread: got %zu chars\n", length));
 
 		/* Copy the data to the user process. */
-		if ((error = uiomovei(buffer, length, uio)) != 0)
+		if ((error = uiomove(buffer, length, uio)) != 0)
 			break;
 	}
 
@@ -327,7 +327,7 @@ uhid_do_write(struct uhid_softc *sc, struct uio *uio, int flag)
 	error = 0;
 	if (uio->uio_resid != size)
 		return (EINVAL);
-	error = uiomovei(sc->sc_obuf, size, uio);
+	error = uiomove(sc->sc_obuf, size, uio);
 	if (!error) {
 		if (uhidev_set_report(sc->sc_hdev.sc_parent,
 		    UHID_OUTPUT_REPORT, sc->sc_hdev.sc_report_id, sc->sc_obuf,

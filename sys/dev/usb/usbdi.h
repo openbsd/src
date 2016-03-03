@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdi.h,v 1.66 2015/07/10 15:47:48 mpi Exp $ */
+/*	$OpenBSD: usbdi.h,v 1.67 2016/03/03 18:13:24 stefan Exp $ */
 /*	$NetBSD: usbdi.h,v 1.62 2002/07/11 21:14:35 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.h,v 1.18 1999/11/17 22:33:49 n_hibma Exp $	*/
 
@@ -130,7 +130,7 @@ usb_device_descriptor_t *usbd_get_device_descriptor(struct usbd_device *dev);
 usbd_status usbd_set_interface(struct usbd_interface *, int);
 int usbd_get_no_alts(usb_config_descriptor_t *, int);
 void usbd_fill_deviceinfo(struct usbd_device *, struct usb_device_info *, int);
-usb_config_descriptor_t *usbd_get_cdesc(struct usbd_device *, int, int *);
+usb_config_descriptor_t *usbd_get_cdesc(struct usbd_device *, int, u_int *);
 int usbd_get_interface_altindex(struct usbd_interface *iface);
 
 usb_interface_descriptor_t *usbd_find_idesc(usb_config_descriptor_t *cd,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb.c,v 1.109 2016/01/22 13:31:47 bluhm Exp $	*/
+/*	$OpenBSD: usb.c,v 1.110 2016/03/03 18:13:24 stefan Exp $	*/
 /*	$NetBSD: usb.c,v 1.77 2003/01/01 00:10:26 thorpej Exp $	*/
 
 /*
@@ -610,7 +610,7 @@ usbioctl(dev_t devt, u_long cmd, caddr_t data, int flag, struct proc *p)
 	case USB_REQUEST:
 	{
 		struct usb_ctl_request *ur = (void *)data;
-		int len = UGETW(ur->ucr_request.wLength);
+		size_t len = UGETW(ur->ucr_request.wLength);
 		struct iovec iov;
 		struct uio uio;
 		void *ptr = 0;
@@ -621,7 +621,7 @@ usbioctl(dev_t devt, u_long cmd, caddr_t data, int flag, struct proc *p)
 		if (!(flag & FWRITE))
 			return (EBADF);
 
-		DPRINTF(("usbioctl: USB_REQUEST addr=%d len=%d\n", addr, len));
+		DPRINTF(("usbioctl: USB_REQUEST addr=%d len=%zu\n", addr, len));
 		/* Avoid requests that would damage the bus integrity. */
 		if ((ur->ucr_request.bmRequestType == UT_WRITE_DEVICE &&
 		     ur->ucr_request.bRequest == UR_SET_ADDRESS) ||
@@ -631,7 +631,7 @@ usbioctl(dev_t devt, u_long cmd, caddr_t data, int flag, struct proc *p)
 		     ur->ucr_request.bRequest == UR_SET_INTERFACE))
 			return (EINVAL);
 
-		if (len < 0 || len > 32767)
+		if (len > 32767)
 			return (EINVAL);
 		if (addr < 0 || addr >= USB_MAX_DEVICES)
 			return (EINVAL);
@@ -651,7 +651,7 @@ usbioctl(dev_t devt, u_long cmd, caddr_t data, int flag, struct proc *p)
 			uio.uio_procp = p;
 			ptr = malloc(len, M_TEMP, M_WAITOK);
 			if (uio.uio_rw == UIO_WRITE) {
-				error = uiomovei(ptr, len, &uio);
+				error = uiomove(ptr, len, &uio);
 				if (error)
 					goto ret;
 			}
@@ -668,7 +668,7 @@ usbioctl(dev_t devt, u_long cmd, caddr_t data, int flag, struct proc *p)
 			len = ur->ucr_actlen;
 		if (len != 0) {
 			if (uio.uio_rw == UIO_READ) {
-				error = uiomovei(ptr, len, &uio);
+				error = uiomove(ptr, len, &uio);
 				if (error)
 					goto ret;
 			}
@@ -766,7 +766,8 @@ usbioctl(dev_t devt, u_long cmd, caddr_t data, int flag, struct proc *p)
 		usb_config_descriptor_t *cdesc;
 		struct iovec iov;
 		struct uio uio;
-		int len, error;
+		size_t len;
+		int error;
 
 		if (addr < 1 || addr >= USB_MAX_DEVICES)
 			return (EINVAL);
@@ -797,7 +798,7 @@ usbioctl(dev_t devt, u_long cmd, caddr_t data, int flag, struct proc *p)
 		uio.uio_segflg = UIO_USERSPACE;
 		uio.uio_rw = UIO_READ;
 		uio.uio_procp = p;
-		error = uiomovei((void *)cdesc, len, &uio);
+		error = uiomove((void *)cdesc, len, &uio);
 		free(cdesc, M_TEMP, 0);
 		return (error);
 	}
