@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.16 2016/03/01 21:35:13 mpi Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.17 2016/03/03 12:40:04 mpi Exp $	*/
 /*	$NetBSD: db_trace.c,v 1.1 2003/04/26 18:39:27 fvdl Exp $	*/
 
 /* 
@@ -41,59 +41,32 @@
 #include <ddb/db_variables.h>
 #include <ddb/db_output.h>
 
-#if 1
-#define dbreg(xx) (long *)offsetof(db_regs_t, tf_ ## xx)
-#else
-#define dbreg(xx) (long *)&ddb_regs.tf_ ## xx
-#endif
-
-static int db_x86_64_regop(struct db_variable *, db_expr_t *, int);
-
 /*
  * Machine register set.
  */
 struct db_variable db_regs[] = {
-	{ "rdi",	dbreg(rdi),    db_x86_64_regop },
-	{ "rsi",	dbreg(rsi),    db_x86_64_regop },
-	{ "rbp",	dbreg(rbp),    db_x86_64_regop },
-	{ "rbx",	dbreg(rbx),    db_x86_64_regop },
-	{ "rdx",	dbreg(rdx),    db_x86_64_regop },
-	{ "rcx",	dbreg(rcx),    db_x86_64_regop },
-	{ "rax",	dbreg(rax),    db_x86_64_regop },
-	{ "r8",		dbreg(r8),     db_x86_64_regop },
-	{ "r9",		dbreg(r9),     db_x86_64_regop },
-	{ "r10",	dbreg(r10),    db_x86_64_regop },
-	{ "r11",	dbreg(r11),    db_x86_64_regop },
-	{ "r12",	dbreg(r12),    db_x86_64_regop },
-	{ "r13",	dbreg(r13),    db_x86_64_regop },
-	{ "r14",	dbreg(r14),    db_x86_64_regop },
-	{ "r15",	dbreg(r15),    db_x86_64_regop },
-	{ "rip",	dbreg(rip),    db_x86_64_regop },
-	{ "cs",		dbreg(cs),     db_x86_64_regop },
-	{ "rflags",	dbreg(rflags), db_x86_64_regop },
-	{ "rsp",	dbreg(rsp),    db_x86_64_regop },
-	{ "ss",		dbreg(ss),     db_x86_64_regop },
+	{ "rdi",	(long *)&ddb_regs.tf_rdi,    FCN_NULL },
+	{ "rsi",	(long *)&ddb_regs.tf_rsi,    FCN_NULL },
+	{ "rbp",	(long *)&ddb_regs.tf_rbp,    FCN_NULL },
+	{ "rbx",	(long *)&ddb_regs.tf_rbx,    FCN_NULL },
+	{ "rdx",	(long *)&ddb_regs.tf_rdx,    FCN_NULL },
+	{ "rcx",	(long *)&ddb_regs.tf_rcx,    FCN_NULL },
+	{ "rax",	(long *)&ddb_regs.tf_rax,    FCN_NULL },
+	{ "r8",		(long *)&ddb_regs.tf_r8,     FCN_NULL },
+	{ "r9",		(long *)&ddb_regs.tf_r9,     FCN_NULL },
+	{ "r10",	(long *)&ddb_regs.tf_r10,    FCN_NULL },
+	{ "r11",	(long *)&ddb_regs.tf_r11,    FCN_NULL },
+	{ "r12",	(long *)&ddb_regs.tf_r12,    FCN_NULL },
+	{ "r13",	(long *)&ddb_regs.tf_r13,    FCN_NULL },
+	{ "r14",	(long *)&ddb_regs.tf_r14,    FCN_NULL },
+	{ "r15",	(long *)&ddb_regs.tf_r15,    FCN_NULL },
+	{ "rip",	(long *)&ddb_regs.tf_rip,    FCN_NULL },
+	{ "cs",		(long *)&ddb_regs.tf_cs,     FCN_NULL },
+	{ "rflags",	(long *)&ddb_regs.tf_rflags, FCN_NULL },
+	{ "rsp",	(long *)&ddb_regs.tf_rsp,    FCN_NULL },
+	{ "ss",		(long *)&ddb_regs.tf_ss,     FCN_NULL },
 };
 struct db_variable * db_eregs = db_regs + nitems(db_regs);
-
-static int
-db_x86_64_regop(struct db_variable *vp, db_expr_t *val, int opcode)
-{
-        db_expr_t *regaddr =
-            (db_expr_t *)(((uint8_t *)DDB_REGS) + ((size_t)vp->valuep));
-        
-        switch (opcode) {
-        case DB_VAR_GET:
-                *val = *regaddr;
-                break;
-        case DB_VAR_SET:
-                *regaddr = *val;
-                break;
-        default:
-                panic("db_x86_64_regop: unknown op %d", opcode);
-        }
-        return 0;
-}
 
 /*
  * Stack trace.
