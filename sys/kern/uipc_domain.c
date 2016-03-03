@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_domain.c,v 1.44 2016/03/03 00:25:09 dlg Exp $	*/
+/*	$OpenBSD: uipc_domain.c,v 1.45 2016/03/03 00:34:10 dlg Exp $	*/
 /*	$NetBSD: uipc_domain.c,v 1.14 1996/02/09 19:00:44 christos Exp $	*/
 
 /*
@@ -89,8 +89,15 @@ domaininit(void)
 				(*pr->pr_init)();
 	}
 
-	if (max_linkhdr < 64)		/* XXX */
+	/*
+	 * max_linkhdr of 64 was chosen to encompass tunnelling
+	 * traffic in IP payloads, eg, by etherip(4) or gif(4),
+	 * without needing to prepend an mbuf to fit those
+	 * headers.
+	 */
+	if (max_linkhdr < 64)
 		max_linkhdr = 64;
+
 	max_hdr = max_linkhdr + max_protohdr;
 	timeout_set(&pffast_timeout, pffasttimo, &pffast_timeout);
 	timeout_set(&pfslow_timeout, pfslowtimo, &pfslow_timeout);
