@@ -1,4 +1,4 @@
-/*	$OpenBSD: worms.c,v 1.26 2016/02/27 12:48:14 tb Exp $	*/
+/*	$OpenBSD: worms.c,v 1.27 2016/03/04 14:37:28 mestre Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -197,27 +197,28 @@ main(int argc, char *argv[])
 		case 'd':
 			delay = (time_t)strtonum(optarg, 0, 1000, &errstr);
 			if (errstr)
-			    errx(1, "delay (0-1000) is %s: %s", errstr, optarg);
+				errx(1, "delay (0-1000) is %s: %s", errstr, optarg);
 			break;
 		case 'f':
 			field = "WORM";
 			break;
 		case 'l':
-			if ((length = atoi(optarg)) < 2 || length > 1024)
-				errx(1, "invalid length (%d - %d).", 2, 1024);
+			length = strtonum(optarg, 2, 1024, &errstr);
+			if (errstr)
+				errx(1, "length (2-1024) is %s: %s", errstr, optarg);
 			break;
 		case 'n':
-			if ((number = atoi(optarg)) < 1 || number > 100)
-				errx(1, "invalid number of worms (%d - %d).",
-				    1, 100);
+			number = strtonum(optarg, 1, 100, &errstr);
+			if (errstr)
+				errx(1, "number of worms (1-100) is %s: %s", errstr, optarg);
 			break;
 		case 't':
 			trail = '.';
 			break;
-		case '?': case 'h':
+		case 'h':
 		default:
-			(void)fprintf(stderr,
-			    "usage: worms [-ft] [-d delay] [-l length] [-n number]\n");
+			(void)fprintf(stderr, "usage: %s [-ft] [-d delay] "
+			    "[-l length] [-n number]\n", getprogname());
 			return 1;
 		}
 
