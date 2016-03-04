@@ -1,4 +1,4 @@
-/*	$OpenBSD: select.h,v 1.14 2013/12/03 23:00:51 naddy Exp $	*/
+/*	$OpenBSD: select.h,v 1.15 2016/03/04 20:35:33 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -70,12 +70,26 @@ typedef	struct fd_set {
 	__fd_mask fds_bits[__howmany(FD_SETSIZE, __NFDBITS)];
 } fd_set;
 
-#define	FD_SET(n, p) \
-	((p)->fds_bits[(n) / __NFDBITS] |= (1U << ((n) % __NFDBITS)))
-#define	FD_CLR(n, p) \
-	((p)->fds_bits[(n) / __NFDBITS] &= ~(1U << ((n) % __NFDBITS)))
-#define	FD_ISSET(n, p) \
-	((p)->fds_bits[(n) / __NFDBITS] & (1U << ((n) % __NFDBITS)))
+static __inline void
+__fd_set(int fd, fd_set *p)
+{
+	p->fds_bits[fd / __NFDBITS] |= (1U << (fd % __NFDBITS));
+}
+#define FD_SET(n, p)	__fd_set((n), (p))
+
+static __inline void
+__fd_clr(int fd, fd_set *p)
+{
+	p->fds_bits[fd / __NFDBITS] &= ~(1U << (fd % __NFDBITS));
+}
+#define FD_CLR(n, p)	__fd_clr((n), (p))
+
+static __inline int
+__fd_isset(int fd, fd_set *p)
+{
+	return (p->fds_bits[fd / __NFDBITS] & (1U << (fd % __NFDBITS)));
+}
+#define FD_ISSET(n, p)	__fd_isset((n), (p))
 
 #if __BSD_VISIBLE
 #define	FD_COPY(f, t)	(void)(*(t) = *(f))
