@@ -1,4 +1,4 @@
-/*	$OpenBSD: mknod.c,v 1.19 2015/12/18 15:34:27 deraadt Exp $	*/
+/*	$OpenBSD: mknod.c,v 1.20 2016/03/04 16:48:13 natano Exp $	*/
 /*	$NetBSD: mknod.c,v 1.8 1995/08/11 00:08:18 jtc Exp $	*/
 
 /*
@@ -53,7 +53,7 @@ main(int argc, char *argv[])
 {
 	int ch, ismkfifo = 0;
 	void *set = NULL;
-	mode_t mode = 0;
+	mode_t mode = DEFFILEMODE;
 
 	setlocale (LC_ALL, "");
 
@@ -83,7 +83,7 @@ main(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 
-	if (set)
+	if ((mode & ACCESSPERMS) == mode)
 		if (pledge("stdio rpath wpath cpath dpath fattr", NULL) == -1)
 			err(1, "pledge");
 
@@ -102,15 +102,13 @@ main(int argc, char *argv[])
 
 	/*
 	 * If the user specified a mode via `-m', don't allow the umask
-	 * to modified it.  If no `-m' flag was specified, the default
+	 * to modify it.  If no `-m' flag was specified, the default
 	 * mode is the value of the bitwise inclusive or of S_IRUSR,
 	 * S_IWUSR, S_IRGRP, S_IWGRP, S_IROTH, and S_IWOTH as modified by
 	 * the umask.
 	 */
 	if (set)
 		(void)umask(0);
-	else
-		mode = DEFFILEMODE;
 
 	if (ismkfifo)
 		exit(domkfifo(argv, mode));
