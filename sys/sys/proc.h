@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.213 2015/12/06 17:50:21 deraadt Exp $	*/
+/*	$OpenBSD: proc.h,v 1.214 2016/03/04 14:08:55 deraadt Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -245,7 +245,7 @@ struct process {
 #define	PS_ISPWAIT	0x00000080	/* Is parent of PPWAIT child. */
 #define	PS_PROFIL	0x00000100	/* Has started profiling. */
 #define	PS_TRACED	0x00000200	/* Being ptraced. */
-#define	PS_WAITED	0x00000400	/* Stopped proc has waited for. */
+#define	PS_WAITED	0x00000400	/* Stopped proc was waited for. */
 #define	PS_COREDUMP	0x00000800	/* Busy coredumping */
 #define	PS_SINGLEEXIT	0x00001000	/* Other threads must die. */
 #define	PS_SINGLEUNWIND	0x00002000	/* Other threads must unwind. */
@@ -255,7 +255,7 @@ struct process {
 #define	PS_EMBRYO	0x00020000	/* New process, not yet fledged */
 #define	PS_ZOMBIE	0x00040000	/* Dead and ready to be waited for */
 #define	PS_NOBROADCASTKILL 0x00080000	/* Process excluded from kill -1. */
-#define PS_PLEDGE	0x00100000	/* Has called pledge(2) */
+#define	PS_PLEDGE	0x00100000	/* Has called pledge(2) */
 
 #define	PS_BITS \
     ("\20" "\01CONTROLT" "\02EXEC" "\03INEXEC" "\04EXITING" "\05SUGID" \
