@@ -66,7 +66,7 @@ stdin:
 	cmp -s bar1 bar2
 ---
 
-name: xxx-what-do-you-call-this-1
+name: qouted-brace-expansion-1
 stdin:
 	echo "${foo:-"a"}*"
 expected-stdout:
