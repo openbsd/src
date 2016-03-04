@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_proc.c,v 1.65 2015/09/11 08:27:39 guenther Exp $	*/
+/*	$OpenBSD: kern_proc.c,v 1.66 2016/03/04 14:09:37 deraadt Exp $	*/
 /*	$NetBSD: kern_proc.c,v 1.14 1996/02/09 18:59:41 christos Exp $	*/
 
 /*
@@ -150,7 +150,7 @@ chgproccnt(uid_t uid, int diff)
 }
 
 /*
- * Is p an inferior of parent?
+ * Is pr an inferior of parent?
  */
 int
 inferior(struct process *pr, struct process *parent)
