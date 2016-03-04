@@ -1,5 +1,5 @@
 /* $NetBSD: loadfile.c,v 1.10 2000/12/03 02:53:04 tsutsui Exp $ */
-/* $OpenBSD: loadfile_elf.c,v 1.9 2016/01/16 08:55:40 stefan Exp $ */
+/* $OpenBSD: loadfile_elf.c,v 1.10 2016/03/04 15:34:14 stefan Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -93,6 +93,7 @@
 #include <stddef.h>
 
 #include <sys/param.h>
+#include <sys/reboot.h>
 #include <sys/exec.h>
 
 #include <sys/exec_elf.h>
@@ -347,7 +348,7 @@ push_stack(int mem_sz, uint32_t end)
 	stack[--loc] = mem_sz * 1024 - LOWMEM_KB;
 	stack[--loc] = end;
 	stack[--loc] = 0x0e;
-	stack[--loc] = 0x0;
+	stack[--loc] = MAKEBOOTDEV(0x4, 0, 0, 0, 0); /* bootdev: sd0a */
 	stack[--loc] = 0x0;
 
 	write_mem(STACK_PAGE, &stack, PAGE_SIZE, 1);
