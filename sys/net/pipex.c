@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.c,v 1.84 2015/11/03 21:33:56 chl Exp $	*/
+/*	$OpenBSD: pipex.c,v 1.85 2016/03/04 22:38:23 sashan Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -1138,6 +1138,10 @@ pipex_ip_input(struct mbuf *m0, struct pipex_session *session)
 		if (m0 == NULL)
 			goto drop;
 	}
+
+#if NPF > 0
+	pf_pkt_addr_changed(m0);
+#endif
 
 	len = m0->m_pkthdr.len;
 

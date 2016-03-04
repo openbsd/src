@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_etherip.c,v 1.5 2016/01/25 05:12:34 jsg Exp $	*/
+/*	$OpenBSD: if_etherip.c,v 1.6 2016/03/04 22:38:23 sashan Exp $	*/
 /*
  * Copyright (c) 2015 Kazuya GODA <goda@openbsd.org>
  *
@@ -499,6 +499,10 @@ ip_etherip_input(struct mbuf *m, ...)
 	}
 	m->m_flags &= ~(M_BCAST|M_MCAST);
 
+#if NPF > 0
+	pf_pkt_addr_changed(m);
+#endif
+
 	ml_enqueue(&ml, m);
 	if_input(ifp, &ml);
 }
@@ -641,6 +645,10 @@ ip6_etherip_input(struct mbuf **mp, int *offp, int proto)
 	}
 
 	m->m_flags &= ~(M_BCAST|M_MCAST);
+
+#if NPF > 0
+	pf_pkt_addr_changed(m);
+#endif
 
 	ml_enqueue(&ml, m);
 	if_input(ifp, &ml);

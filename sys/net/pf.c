@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.965 2016/01/31 00:18:07 sashan Exp $ */
+/*	$OpenBSD: pf.c,v 1.966 2016/03/04 22:38:23 sashan Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -6534,6 +6534,12 @@ done:
 	if (action == PF_PASS && qid)
 		pd.m->m_pkthdr.pf.qid = qid;
 	if (pd.dir == PF_IN && s && s->key[PF_SK_STACK]) {
+		/*
+		 * ASSERT() below fires whenever caller forgets to call
+		 * pf_pkt_addr_changed(). This might happen when we deal with
+		 * IP tunnels.
+		 */
+		KASSERT(pd.m->m_pkthdr.pf.statekey == NULL);
 		pd.m->m_pkthdr.pf.statekey = s->key[PF_SK_STACK];
 	}
 	if (pd.dir == PF_OUT &&

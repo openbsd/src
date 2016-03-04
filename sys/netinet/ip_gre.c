@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip_gre.c,v 1.58 2015/12/02 08:47:00 claudio Exp $ */
+/*      $OpenBSD: ip_gre.c,v 1.59 2016/03/04 22:38:23 sashan Exp $ */
 /*	$NetBSD: ip_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -335,6 +335,10 @@ gre_mobile_input(struct mbuf *m, ...)
 #if NBPFILTER > 0
         if (sc->sc_if.if_bpf)
 		bpf_mtap_af(sc->sc_if.if_bpf, AF_INET, m, BPF_DIRECTION_IN);
+#endif
+
+#if NPF > 0
+	pf_pkt_addr_changed(m);
 #endif
 
 	niq_enqueue(&ipintrq, m);
