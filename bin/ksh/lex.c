@@ -1,4 +1,4 @@
-/*	$OpenBSD: lex.c,v 1.67 2015/12/30 09:07:00 tedu Exp $	*/
+/*	$OpenBSD: lex.c,v 1.68 2016/03/04 09:37:23 czarkoff Exp $	*/
 
 /*
  * lexical analysis and source input
@@ -582,6 +582,15 @@ yylex(int cf)
 			break;
 
 		case SBRACEQ:
+			/*{*/
+			if (c == '}') {
+				POP_STATE();
+				*wp++ = CSUBST;
+				*wp++ = /*{*/ '}';
+			} else
+				goto Sbase2;
+			break;
+
 		case SBRACE:
 			/*{*/
 			if (c == '}') {

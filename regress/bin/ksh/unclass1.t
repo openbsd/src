@@ -73,6 +73,14 @@ expected-stdout:
 	a*
 ---
 
+name: qouted-brace-expansion-2
+stdin:
+	foo='bar'
+	echo "${foo+(a)}*"
+expected-stdout:
+	(a)*
+---
+
 name: xxx-prefix-strip-1
 stdin:
 	foo='a cdef'
