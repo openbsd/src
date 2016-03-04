@@ -1,8 +1,8 @@
-.\"	$OpenBSD: ksh.1,v 1.173 2015/12/29 01:02:34 mmcc Exp $
+.\"	$OpenBSD: ksh.1,v 1.174 2016/03/04 15:11:06 deraadt Exp $
 .\"
 .\"	Public Domain
 .\"
-.Dd $Mdocdate: December 29 2015 $
+.Dd $Mdocdate: March 4 2016 $
 .Dt KSH 1
 .Os
 .Sh NAME
@@ -2717,7 +2717,7 @@ Additional
 .Nm
 regular commands
 .Pp
-.Ic \&[ , echo , let , mknod ,
+.Ic \&[ , echo , let ,
 .Ic print , suspend , test ,
 .Ic ulimit , whence
 .Pp
@@ -3319,43 +3319,6 @@ Since expressions may need to be quoted,
 .No (( Ar expr No ))
 is syntactic sugar for
 .No let \&" Ns Ar expr Ns \&" .
-.Pp
-.It Xo
-.Ic mknod
-.Op Fl m Ar mode
-.Ar name
-.Cm b Ns Pf | Cm c
-.Ar major minor
-.Xc
-.It Xo
-.Ic mknod
-.Op Fl m Ar mode
-.Ar name
-.Cm p
-.Xc
-Create a device special file.
-The file type may be
-.Cm b
-(block type device),
-.Cm c
-(character type device),
-or
-.Cm p
-(named pipe).
-The file created may be modified according to its
-.Ar mode
-(via the
-.Fl m
-option),
-.Ar major
-(major device number),
-and
-.Ar minor
-(minor device number).
-.Pp
-See
-.Xr mknod 8
-for further information.
 .Pp
 .It Xo
 .Ic print

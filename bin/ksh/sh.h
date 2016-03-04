@@ -1,4 +1,4 @@
-/*	$OpenBSD: sh.h,v 1.56 2015/12/30 09:07:00 tedu Exp $	*/
+/*	$OpenBSD: sh.h,v 1.57 2016/03/04 15:11:06 deraadt Exp $	*/
 
 /*
  * Public Domain Bourne/Korn shell
@@ -557,9 +557,6 @@ int	strip_nuls(char *, int);
 int	blocking_read(int, char *, int);
 int	reset_nonblock(int);
 char	*ksh_get_wd(char *, int);
-/* mknod.c */
-int domknod(int, char **, mode_t);
-int domkfifo(int, char **, mode_t);
 /* path.c */
 int	make_path(const char *, const char *, char **, XString *, int *);
 void	simplify_path(char *);
