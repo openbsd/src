@@ -1,4 +1,4 @@
-/* $OpenBSD: bn.h,v 1.30 2016/03/04 16:06:38 doug Exp $ */
+/* $OpenBSD: bn.h,v 1.31 2016/03/04 16:23:30 deraadt Exp $ */
 /* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -619,10 +619,10 @@ const BIGNUM *BN_get0_nist_prime_521(void);
 
 /* library internal functions */
 
-#define bn_expand(a,bits) ((((((bits+BN_BITS2-1))/BN_BITS2)) <= (a)->dmax)?\
-	(a):bn_expand2((a),(bits+BN_BITS2-1)/BN_BITS2))
 #define bn_wexpand(a,words) (((words) <= (a)->dmax)?(a):bn_expand2((a),(words)))
 BIGNUM *bn_expand2(BIGNUM *a, int words);
+BIGNUM *bn_expand(BIGNUM *a, int bits);
+
 #ifndef OPENSSL_NO_DEPRECATED
 BIGNUM *bn_dup_expand(const BIGNUM *a, int words); /* unused */
 #endif

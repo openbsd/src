@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_lib.c,v 1.34 2015/09/10 15:56:25 jsing Exp $ */
+/* $OpenBSD: bn_lib.c,v 1.35 2016/03/04 16:23:30 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -548,6 +548,18 @@ BN_get_word(const BIGNUM *a)
 		return a->d[0];
 	/* a->top == 0 */
 	return 0;
+}
+
+BIGNUM *
+bn_expand(BIGNUM *a, int bits)
+{
+	if (bits > (INT_MAX - BN_BITS2 + 1))
+		return (NULL);
+
+	if (((bits + BN_BITS2 - 1) / BN_BITS2) <= a->dmax)
+		return (a);
+
+	return bn_expand2(a, (bits + BN_BITS2 - 1) / BN_BITS2);
 }
 
 int
