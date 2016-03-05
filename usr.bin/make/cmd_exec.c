@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd_exec.c,v 1.8 2010/07/19 19:46:43 espie Exp $ */
+/*	$OpenBSD: cmd_exec.c,v 1.9 2016/03/05 13:12:12 espie Exp $ */
 /*
  * Copyright (c) 2001 Marc Espie.
  *
@@ -107,7 +107,7 @@ Cmd_Exec(const char *cmd, char **err)
 		(void)close(fds[0]);
 
 		/* Wait for the child to exit.  */
-		while ((pid = wait(&status)) != cpid && pid >= 0)
+		while (waitpid(cpid, &status, 0) == -1 && errno == EINTR)
 			continue;
 
 		if (cc == -1)
