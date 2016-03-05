@@ -1,4 +1,4 @@
-/*	$OpenBSD: mknod.c,v 1.21 2016/03/05 10:47:08 espie Exp $	*/
+/*	$OpenBSD: mknod.c,v 1.22 2016/03/05 16:32:54 millert Exp $	*/
 /*	$NetBSD: mknod.c,v 1.8 1995/08/11 00:08:18 jtc Exp $	*/
 
 /*
@@ -96,7 +96,7 @@ main(int argc, char *argv[])
 
 		if (ismkfifo) {
 			while (*argv) {
-				node[n].mode = mode;
+				node[n].mode = mode | S_IFIFO;
 				node[n].mflag = mflag;
 				node[n].type = 'p';
 				node[n].name = *argv;
@@ -120,6 +120,7 @@ main(int argc, char *argv[])
 			/* XXX computation offset by one for next getopt */
 			switch(node[n].type) {
 			case 'p':
+				node[n].mode |= S_IFIFO;
 				node[n].dev = 0;
 				argv++;
 				argc--;
@@ -193,10 +194,7 @@ domakenodes(struct node *node, int n)
 			done_umask = 1;
 		}
 
-		if (node[i].type == 'p')
-			r = mkfifo(node[i].name, node[i].mode);
-		else
-			r = mknod(node[i].name, node[i].mode, node[i].dev);
+		r = mknod(node[i].name, node[i].mode, node[i].dev);
 		if (r < 0) {
 			warn("%s", node[i].name);
 			rv = 1;
