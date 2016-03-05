@@ -1,4 +1,4 @@
-/*	$OpenBSD: constraint.c,v 1.25 2016/01/27 21:48:34 reyk Exp $	*/
+/*	$OpenBSD: constraint.c,v 1.26 2016/03/05 16:09:20 naddy Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -903,7 +903,7 @@ httpsdate_request(struct httpsdate *httpsdate, struct timeval *when)
 		 * or ANSI C's asctime() - the latter doesn't include
 		 * the timezone which is required here.
 		 */
-		if (strptime(p, "%a, %d %h %Y %T %Z",
+		if (strptime(p, "%a, %d %h %Y %T GMT",
 		    &httpsdate->tls_tm) == NULL) {
 			log_warnx("unsupported date format");
 			free(line);
