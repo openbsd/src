@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.278 2016/01/06 23:28:47 deraadt Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.279 2016/03/05 16:24:56 ajacoutot Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 
@@ -757,7 +757,9 @@ var
         # ./var/spool/lock
         lock			uname=uucp gname=dialer mode=1775
         ..
-        output			gname=daemon mode=0775
+        output
+            lpd			gname=daemon mode=0775
+	    ..
         ..
         # ./var/spool/smtpd
         smtpd			type=dir uname=root gname=wheel mode=0711
