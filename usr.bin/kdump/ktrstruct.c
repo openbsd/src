@@ -1,4 +1,4 @@
-/*	$OpenBSD: ktrstruct.c,v 1.16 2016/01/14 05:27:42 guenther Exp $	*/
+/*	$OpenBSD: ktrstruct.c,v 1.17 2016/03/05 19:46:55 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -309,7 +309,7 @@ ktrtfork(const struct __tfork *tf)
 }
 
 static void
-ktrfdset(const struct fd_set *fds, int len)
+ktrfdset(struct fd_set *fds, int len)
 {
 	int nfds, i, start = -1;
 	char sep = ' ';
