@@ -1,4 +1,4 @@
-/*	$OpenBSD: fortune.c,v 1.51 2016/01/10 13:35:09 mestre Exp $	*/
+/*	$OpenBSD: fortune.c,v 1.52 2016/03/05 11:06:43 tb Exp $	*/
 /*	$NetBSD: fortune.c,v 1.8 1995/03/23 08:28:40 cgd Exp $	*/
 
 /*-
@@ -38,6 +38,7 @@
 #include <assert.h>
 #include <ctype.h>
 #include <dirent.h>
+#include <err.h>
 #include <fcntl.h>
 #include <limits.h>
 #include <stdio.h>
@@ -330,37 +331,34 @@ form_file_list(char **files, int file_cnt)
 	}
 	for (i = 0; i < file_cnt; i++) {
 		percent = NO_PROB;
-		if (!isdigit((unsigned char)files[i][0]))
-			sp = files[i];
-		else {
-			percent = 0;
-			for (sp = files[i]; isdigit((unsigned char)*sp); sp++)
-				percent = percent * 10 + *sp - '0';
-			if (percent > 100) {
-				fprintf(stderr, "percentages must be <= 100\n");
-				return 0;
-			}
-			if (*sp == '.') {
-				fprintf(stderr, "percentages must be integers\n");
-				return 0;
-			}
+
+		if (isdigit((unsigned char)files[i][0])) {
+			int pos = strspn(files[i], "0123456789.");
+
 			/*
-			 * If the number isn't followed by a '%', then
-			 * it was not a percentage, just the first part
-			 * of a file name which starts with digits.
+			 * Only try to interpret files[i] as a percentage if
+			 * it ends in '%'. Otherwise assume it's a file name.
 			 */
-			if (*sp != '%') {
-				percent = NO_PROB;
-				sp = files[i];
-			}
-			else if (*++sp == '\0') {
-				if (++i >= file_cnt) {
-					fprintf(stderr, "percentages must precede files\n");
-					return 0;
-				}
-				sp = files[i];
+			if (files[i][pos] == '%' && files[i][pos+1] == '\0') {
+				const char *errstr;
+				char *prefix;
+
+				if ((prefix = strndup(files[i], pos)) == NULL)
+					err(1, NULL);
+				if (strchr(prefix, '.') != NULL)
+					errx(1, "percentages must be integers");
+				percent = strtonum(prefix, 0, 100, &errstr);
+				if (errstr != NULL)
+					errx(1, "percentage is %s: %s", errstr,
+					    prefix);
+				free(prefix);
+
+				if (++i >= file_cnt)
+					errx(1,
+					    "percentages must precede files");
 			}
 		}
+		sp = files[i];
 		if (strcmp(sp, "all") == 0)
 			sp = FORTDIR;
 		if (!add_file(percent, sp, NULL, &File_list, &File_tail, NULL))
