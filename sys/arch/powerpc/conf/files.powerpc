@@ -1,4 +1,4 @@
-#	$OpenBSD: files.powerpc,v 1.53 2015/08/14 06:14:19 dlg Exp $
+#	$OpenBSD: files.powerpc,v 1.54 2016/03/05 17:41:55 mpi Exp $
 #
 
 file	arch/powerpc/powerpc/setjmp.S			ddb
@@ -21,6 +21,7 @@ file	arch/powerpc/powerpc/softintr.c
 file	arch/powerpc/ddb/db_memrw.c			ddb
 file	arch/powerpc/ddb/db_disasm.c			ddb
 file	arch/powerpc/ddb/db_trace.c			ddb
+file	arch/powerpc/ddb/db_interface.c			ddb
 
 # quad support is necessary for 32 bit architectures
 file	lib/libkern/adddi3.c

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.macppc,v 1.85 2016/01/08 15:54:13 jcs Exp $
+#	$OpenBSD: files.macppc,v 1.86 2016/03/05 17:41:55 mpi Exp $
 
 #
 # macppc-specific configuration info
@@ -19,7 +19,6 @@ file	arch/macppc/macppc/openfirm.c
 file	arch/macppc/macppc/openprom.c
 file	dev/cninit.c
 file	arch/macppc/macppc/ofwreal.S
-file	arch/macppc/macppc/db_interface.c		ddb
 
 #
 # Media Independent Interface (mii)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.12 2016/03/05 17:24:27 mpi Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.1 2016/03/05 17:41:55 mpi Exp $	*/
 /*      $NetBSD: db_interface.c,v 1.12 2001/07/22 11:29:46 wiz Exp $ */
 
 /*
@@ -231,17 +231,17 @@ struct db_command db_machine_command_table[] = {
 	{ "startcpu",   db_startproc_cmd,       0,      NULL },
 	{ "stopcpu",    db_stopproc_cmd,        0,      NULL },
 	{ "ddbcpu",     db_ddbproc_cmd,         0,      NULL },
-#endif   
+#endif
 	{ (char *)NULL }
 };
 
 void
-db_machine_init(void)   
+db_machine_init(void)
 {
 #ifdef MULTIPROCESSOR
 	int i;
 #endif
-		    
+
 	db_machine_commands_install(db_machine_command_table);
 #ifdef MULTIPROCESSOR
 	for (i = 0; i < ncpus; i++) {
@@ -296,7 +296,7 @@ void
 db_stopproc_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 {
 	int cpu_n;
-	
+
 	if (have_addr) {
 		cpu_n = addr;
 		if (cpu_n >= 0 && cpu_n < ncpus &&
@@ -321,7 +321,7 @@ db_startcpu(int cpu)
 		cpu_info[cpu].ci_ddb_paused = CI_DDB_RUNNING;
 		mtx_leave(&ddb_mp_mutex);
 	}
-}   
+}
 
 void
 db_stopcpu(int cpu)
@@ -329,7 +329,7 @@ db_stopcpu(int cpu)
 	mtx_enter(&ddb_mp_mutex);
 	if (cpu != cpu_number() && cpu < ncpus &&
 	    cpu_info[cpu].ci_ddb_paused != CI_DDB_STOPPED) {
-		cpu_info[cpu].ci_ddb_paused = CI_DDB_SHOULDSTOP;  
+		cpu_info[cpu].ci_ddb_paused = CI_DDB_SHOULDSTOP;
 		mtx_leave(&ddb_mp_mutex);
 		ppc_send_ipi(&cpu_info[cpu], PPC_IPI_DDB);
 	} else {

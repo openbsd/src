@@ -1,4 +1,3 @@
-/*	$OpenBSD: db_machdep.h,v 1.6 2008/09/16 04:20:42 drahn Exp $	*/
+/*	$OpenBSD: db_machdep.h,v 1.7 2016/03/05 17:41:55 mpi Exp $	*/
 
-#define DB_MACHINE_COMMANDS
 #include <powerpc/db_machdep.h>
