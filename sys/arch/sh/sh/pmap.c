@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.23 2015/09/08 21:28:36 kettenis Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.24 2016/03/05 17:16:33 tobiasu Exp $	*/
 /*	$NetBSD: pmap.c,v 1.55 2006/08/07 23:19:36 tsutsui Exp $	*/
 
 /*-
@@ -97,7 +97,7 @@ STATIC boolean_t __pmap_map_change(pmap_t, vaddr_t, paddr_t, vm_prot_t,
     pt_entry_t);
 
 void
-pmap_bootstrap()
+pmap_bootstrap(void)
 {
 	/* Steal msgbuf area */
 	initmsgbuf((caddr_t)uvm_pageboot_alloc(MSGBUFSIZE), MSGBUFSIZE);
@@ -200,7 +200,7 @@ pmap_growkernel(vaddr_t maxkvaddr)
 }
 
 void
-pmap_init()
+pmap_init(void)
 {
 	/* Initialize pmap module */
 	pool_init(&__pmap_pmap_pool, sizeof(struct pmap), 0, 0, 0, "pmappl",
@@ -211,7 +211,7 @@ pmap_init()
 }
 
 pmap_t
-pmap_create()
+pmap_create(void)
 {
 	pmap_t pmap;
 	struct vm_page *pg;
@@ -1064,7 +1064,7 @@ __pmap_pte_load(pmap_t pmap, vaddr_t va, int flags)
  *	Allocate new ASID. if all ASID are used, steal from other process.
  */
 int
-__pmap_asid_alloc()
+__pmap_asid_alloc(void)
 {
 	struct process *pr;
 	struct proc *p;

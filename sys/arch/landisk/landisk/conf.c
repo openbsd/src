@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.33 2016/02/26 09:10:05 natano Exp $	*/
+/*	$OpenBSD: conf.c,v 1.34 2016/03/05 17:16:33 tobiasu Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -431,7 +431,7 @@ int nchrtoblktbl = nitems(chrtoblktbl);
 
 
 dev_t
-getnulldev()
+getnulldev(void)
 {
 	return makedev(mem_no, 2);
 }

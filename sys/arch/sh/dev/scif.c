@@ -1,4 +1,4 @@
-/*	$OpenBSD: scif.c,v 1.15 2011/04/30 16:08:44 miod Exp $	*/
+/*	$OpenBSD: scif.c,v 1.16 2016/03/05 17:16:33 tobiasu Exp $	*/
 /*	$NetBSD: scif.c,v 1.47 2006/07/23 22:06:06 ad Exp $ */
 
 /*-
@@ -927,7 +927,7 @@ scifstop(struct tty *tp, int flag)
 }
 
 void
-scif_intr_init()
+scif_intr_init(void)
 {
 	/* XXX */
 }

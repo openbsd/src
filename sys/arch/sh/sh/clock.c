@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.8 2016/02/26 02:07:03 mmcc Exp $	*/
+/*	$OpenBSD: clock.c,v 1.9 2016/03/05 17:16:33 tobiasu Exp $	*/
 /*	$NetBSD: clock.c,v 1.32 2006/09/05 11:09:36 uwe Exp $	*/
 
 /*-
@@ -191,13 +191,13 @@ sh_clock_init(int flags, struct rtc_ops *rtc)
 }
 
 int
-sh_clock_get_cpuclock()
+sh_clock_get_cpuclock(void)
 {
 	return (sh_clock.cpuclock);
 }
 
 int
-sh_clock_get_pclock()
+sh_clock_get_pclock(void)
 {
 	return (sh_clock.pclock);
 }
@@ -227,7 +227,7 @@ delay(int n)
  * Start the clock interrupt.
  */
 void
-cpu_initclocks()
+cpu_initclocks(void)
 {
 	if (sh_clock.pclock == 0)
 		panic("No PCLOCK information.");
@@ -335,7 +335,7 @@ inittodr(time_t base)
 }
 
 void
-resettodr()
+resettodr(void)
 {
 	struct clock_ymdhms dt;
 	int s;

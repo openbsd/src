@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache_sh3.c,v 1.2 2008/06/26 05:42:13 ray Exp $	*/
+/*	$OpenBSD: cache_sh3.c,v 1.3 2016/03/05 17:16:33 tobiasu Exp $	*/
 /*	$NetBSD: cache_sh3.c,v 1.12 2006/03/04 01:13:35 uwe Exp $	*/
 
 /*-
@@ -53,7 +53,7 @@ static inline void cache_sh3_op_line_16_nway(int, vaddr_t, uint32_t);
 static inline void cache_sh3_op_8lines_16_nway(int, vaddr_t, uint32_t);
 
 void
-sh3_cache_config()
+sh3_cache_config(void)
 {
 	size_t cache_size;
 	uint32_t r;
@@ -179,7 +179,7 @@ cache_sh3_op_8lines_16_nway(int n, vaddr_t va, uint32_t bits)
 }
 
 void
-sh3_cache_wbinv_all()
+sh3_cache_wbinv_all(void)
 {
 	vaddr_t va;
 

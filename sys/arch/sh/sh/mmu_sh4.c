@@ -1,4 +1,4 @@
-/*	$OpenBSD: mmu_sh4.c,v 1.2 2008/06/26 05:42:13 ray Exp $	*/
+/*	$OpenBSD: mmu_sh4.c,v 1.3 2016/03/05 17:16:33 tobiasu Exp $	*/
 /*	$NetBSD: mmu_sh4.c,v 1.11 2006/03/04 01:13:35 uwe Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 static inline void __sh4_itlb_invalidate_all(void);
 
 static inline void
-__sh4_itlb_invalidate_all()
+__sh4_itlb_invalidate_all(void)
 {
 	_reg_write_4(SH4_ITLB_AA, 0);
 	_reg_write_4(SH4_ITLB_AA | (1 << SH4_ITLB_E_SHIFT), 0);
@@ -51,7 +51,7 @@ __sh4_itlb_invalidate_all()
 }
 
 void
-sh4_mmu_start()
+sh4_mmu_start(void)
 {
 	/* Zero clear all TLB entry */
 	_reg_write_4(SH4_MMUCR, 0);	/* zero wired entry */
@@ -115,7 +115,7 @@ sh4_tlb_invalidate_asid(int asid)
 }
 
 void
-sh4_tlb_invalidate_all()
+sh4_tlb_invalidate_all(void)
 {
 	uint32_t a;
 	int e, eend, s;

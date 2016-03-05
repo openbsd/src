@@ -1,4 +1,4 @@
-/*	$OpenBSD: sh_machdep.c,v 1.41 2015/10/21 07:59:18 mpi Exp $	*/
+/*	$OpenBSD: sh_machdep.c,v 1.42 2016/03/05 17:16:33 tobiasu Exp $	*/
 /*	$NetBSD: sh3_machdep.c,v 1.59 2006/03/04 01:13:36 uwe Exp $	*/
 
 /*
@@ -200,7 +200,7 @@ sh_cpu_init(int arch, int product)
  *	Setup proc0 u-area.
  */
 void
-sh_proc0_init()
+sh_proc0_init(void)
 {
 	struct switchframe *sf;
 	vaddr_t u;
@@ -239,7 +239,7 @@ sh_proc0_init()
 }
 
 void
-sh_startup()
+sh_startup(void)
 {
 	vaddr_t minaddr, maxaddr;
 
@@ -330,7 +330,7 @@ dumpconf(void)
 }
 
 void
-dumpsys()
+dumpsys(void)
 {
 	cpu_kcore_hdr_t *h = &cpu_kcore_hdr;
 	daddr_t blkno;
@@ -603,7 +603,7 @@ setregs(struct proc *p, struct exec_package *pack, u_long stack,
  * Jump to reset vector.
  */
 void
-cpu_reset()
+cpu_reset(void)
 {
 	_cpu_exception_suspend();
 	_reg_write_4(SH_(EXPEVT), EXPEVT_RESET_MANUAL);

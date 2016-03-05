@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache.c,v 1.4 2008/06/26 05:42:13 ray Exp $	*/
+/*	$OpenBSD: cache.c,v 1.5 2016/03/05 17:16:33 tobiasu Exp $	*/
 /*	$NetBSD: cache.c,v 1.11 2006/01/02 23:37:34 uwe Exp $	*/
 
 /*-
@@ -69,7 +69,7 @@ int sh_cache_index_mode_dcache;
 int sh_cache_prefer_mask;
 
 void
-sh_cache_init()
+sh_cache_init(void)
 {
 #ifdef CACHE_DEBUG
 	return;
@@ -85,7 +85,7 @@ sh_cache_init()
 }
 
 void
-sh_cache_information()
+sh_cache_information(void)
 {
 #ifdef CACHE_DEBUG
 	printf("*** USE CPU INDEPENDENT CACHE OPS. ***\n");
@@ -141,7 +141,7 @@ sh_cache_information()
  * CPU-independent cache flush.
  */
 void
-__cache_flush()
+__cache_flush(void)
 {
 	volatile int *p = (int *)SH3_PHYS_TO_P1SEG(IOM_RAM_BEGIN);
 	int i;

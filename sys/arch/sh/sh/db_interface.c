@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.6 2016/02/27 13:08:07 mpi Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.7 2016/03/05 17:16:33 tobiasu Exp $	*/
 /*	$NetBSD: db_interface.c,v 1.37 2006/09/06 00:11:49 uwe Exp $	*/
 
 /*-
@@ -147,7 +147,7 @@ db_ktrap(int type, int code, db_regs_t *regs)
 }
 
 void
-Debugger()
+Debugger(void)
 {
 	__asm volatile("trapa %0" :: "i"(_SH_TRA_BREAK));
 }

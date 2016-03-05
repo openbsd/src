@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.42 2014/12/10 15:29:53 mikeb Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.43 2016/03/05 17:16:33 tobiasu Exp $	*/
 /*	$NetBSD: machdep.c,v 1.1 2006/09/01 21:26:18 uwe Exp $	*/
 
 /*-
@@ -420,7 +420,7 @@ cpu_dump(int (*dump)(dev_t, daddr_t, caddr_t, size_t), daddr_t *blknop)
  * Return the size of the machine-dependent dump header, in disk blocks.
  */
 u_int
-cpu_dumpsize()
+cpu_dumpsize(void)
 {
 	u_int size;
 
@@ -432,7 +432,7 @@ cpu_dumpsize()
  * Fill the machine-dependent dump header.
  */
 void
-cpu_init_kcore_hdr()
+cpu_init_kcore_hdr(void)
 {
 	extern cpu_kcore_hdr_t cpu_kcore_hdr;
 	cpu_kcore_hdr_t *h = &cpu_kcore_hdr;

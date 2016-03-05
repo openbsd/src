@@ -1,4 +1,4 @@
-/*	$OpenBSD: devreg.c,v 1.2 2008/06/26 05:42:13 ray Exp $	*/
+/*	$OpenBSD: devreg.c,v 1.3 2016/03/05 17:16:33 tobiasu Exp $	*/
 /*	$NetBSD: devreg.c,v 1.6 2006/03/04 01:13:35 uwe Exp $	*/
 
 /*-
@@ -150,7 +150,7 @@ SH ## x ## REG(TCPR2);							\
 } while (/*CONSTCOND*/0)
 
 void
-sh_devreg_init()
+sh_devreg_init(void)
 {
 	if (CPU_IS_SH3)
 		SHREG(3);
