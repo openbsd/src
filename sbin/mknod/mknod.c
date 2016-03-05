@@ -1,36 +1,22 @@
-/*	$OpenBSD: mknod.c,v 1.20 2016/03/04 16:48:13 natano Exp $	*/
+/*	$OpenBSD: mknod.c,v 1.21 2016/03/05 10:47:08 espie Exp $	*/
 /*	$NetBSD: mknod.c,v 1.8 1995/08/11 00:08:18 jtc Exp $	*/
 
 /*
- * Copyright (c) 1989, 1990, 1993
- *	The Regents of the University of California.  All rights reserved.
+ * Copyright (c) 1997-2016 Theo de Raadt <deraadt@openbsd.org>,
+ *	Marc Espie <espie@openbsd.org>,	Todd Miller <millert@openbsd.org>,
+ *	Martin Natano <natano@openbsd.org>
  *
- * This code is derived from software contributed to Berkeley by
- * Kevin Fall.
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #include <sys/types.h>
@@ -44,131 +30,189 @@
 
 extern char *__progname;
 
-int domknod(char **, mode_t);
-int domkfifo(char **, mode_t);
-void usage(int);
+
+struct node {
+	const char *name;
+	mode_t mode;
+	dev_t dev;
+	char type;
+	char mflag;
+};
+
+static int domakenodes(struct node *, int);
+static dev_t compute_device(int, char **);
+__dead static void usage(int);
 
 int
 main(int argc, char *argv[])
 {
-	int ch, ismkfifo = 0;
-	void *set = NULL;
-	mode_t mode = DEFFILEMODE;
+	struct node *node;
+	int ismkfifo;
+	int n = 0;
+	int mode = DEFFILEMODE;
+	int mflag = 0;
+	void *set;
+	int ch;
 
-	setlocale (LC_ALL, "");
+	if (pledge("stdio rpath wpath cpath dpath fattr", NULL) == -1)
+		err(1, "pledge");
 
-	if (strcmp(__progname, "mkfifo") == 0)
-		ismkfifo = 1;
+	setlocale(LC_ALL, "");
 
-	while ((ch = getopt(argc, argv, "m:")) != -1)
-		switch (ch) {
-		case 'm':
-			if (!(set = setmode(optarg))) {
-				errx(1, "invalid file mode.");
-				/* NOTREACHED */
+	node = reallocarray(NULL, sizeof(struct node), argc);
+	if (!node)
+		err(1, NULL);
+
+
+	ismkfifo = strcmp(__progname, "mkfifo") == 0;
+	
+	/* we parse all arguments upfront */
+	while (argc > 1) {
+		while ((ch = getopt(argc, argv, "m:")) != -1) {
+			switch (ch) {
+			case 'm':
+				if (!(set = setmode(optarg))) {
+					errx(1, "invalid file mode.");
+					/* NOTREACHED */
+				}
+
+				/*
+				 * In symbolic mode strings, the + and -
+				 * operators are interpreted relative to
+				 * an assumed initial mode of a=rw.
+				 */
+				mode = getmode(set, DEFFILEMODE);
+				if ((mode & ACCESSPERMS) != mode)
+					errx(1, "forbidden mode: %o", mode);
+				mflag = 1;
+				free(set);
+				break;
+			default:
+				usage(ismkfifo);
 			}
+		}
+		argc -= optind;
+		argv += optind;
 
-			/*
-			 * In symbolic mode strings, the + and - operators are
-			 * interpreted relative to an assumed initial mode of
-			 * a=rw.
-			 */
-			mode = getmode(set, DEFFILEMODE);
-			free(set);
+		if (ismkfifo) {
+			while (*argv) {
+				node[n].mode = mode;
+				node[n].mflag = mflag;
+				node[n].type = 'p';
+				node[n].name = *argv;
+				node[n].dev = 0;
+				n++;
+				argv++;
+			}
+			/* XXX no multiple getopt */
 			break;
-		case '?':
-		default:
-			usage(ismkfifo);
-		}
-	argc -= optind;
-	argv += optind;
+		} else {
+			if (argc < 2)
+				usage(ismkfifo);
+			node[n].mode = mode;
+			node[n].mflag = mflag;
+			node[n].name = argv[0];
+			if (strlen(argv[1]) != 1)
+				errx(1, "node must be type 'b|c|p' %s",
+				    argv[1]);
+			node[n].type = argv[1][0];
 
-	if ((mode & ACCESSPERMS) == mode)
-		if (pledge("stdio rpath wpath cpath dpath fattr", NULL) == -1)
-			err(1, "pledge");
-
-	if (argv[0] == NULL)
-		usage(ismkfifo);
-	if (!ismkfifo) {
-		if (argc == 2 && argv[1][0] == 'p') {
-			ismkfifo = 2;
-			argc--;
-			argv[1] = NULL;
-		} else if (argc != 4) {
-			usage(ismkfifo);
-			/* NOTREACHED */
+			/* XXX computation offset by one for next getopt */
+			switch(node[n].type) {
+			case 'p':
+				node[n].dev = 0;
+				argv++;
+				argc--;
+				break;
+			case 'b':
+				node[n].mode |= S_IFBLK;
+				goto common;
+			case 'c':
+				node[n].mode |= S_IFCHR;
+common:
+				node[n].dev = compute_device(argc, argv);
+				argv+=3;
+				argc-=3;
+				break;
+			default:
+				errx(1, "node must be type 'b|c|p' %c",
+				    node[n].type);
+			}
+			n++;
 		}
+		optind = 1;
+		optreset = 1;
 	}
 
-	/*
-	 * If the user specified a mode via `-m', don't allow the umask
-	 * to modify it.  If no `-m' flag was specified, the default
-	 * mode is the value of the bitwise inclusive or of S_IRUSR,
-	 * S_IWUSR, S_IRGRP, S_IWGRP, S_IROTH, and S_IWOTH as modified by
-	 * the umask.
-	 */
-	if (set)
-		(void)umask(0);
+	if (n == 0)
+		usage(ismkfifo);
 
-	if (ismkfifo)
-		exit(domkfifo(argv, mode));
-	else
-		exit(domknod(argv, mode));
+	return (domakenodes(node, n));
 }
 
-int
-domknod(char **argv, mode_t mode)
+static dev_t
+compute_device(int argc, char **argv)
 {
 	dev_t dev;
 	char *endp;
 	u_int major, minor;
 
-	if (argv[1][0] == 'c')
-		mode |= S_IFCHR;
-	else if (argv[1][0] == 'b')
-		mode |= S_IFBLK;
-	else {
-		errx(1, "node must be type 'b' or 'c'.");
-		/* NOTREACHED */
-	}
-
+	if (argc < 4)
+		usage(0);
 	major = (long)strtoul(argv[2], &endp, 0);
-	if (endp == argv[2] || *endp != '\0') {
+	if (endp == argv[2] || *endp != '\0')
 		errx(1, "non-numeric major number.");
-		/* NOTREACHED */
-	}
 	minor = (long)strtoul(argv[3], &endp, 0);
-	if (endp == argv[3] || *endp != '\0') {
+	if (endp == argv[3] || *endp != '\0')
 		errx(1, "non-numeric minor number.");
-		/* NOTREACHED */
-	}
 	dev = makedev(major, minor);
-	if (major(dev) != major || minor(dev) != minor) {
+	if (major(dev) != major || minor(dev) != minor)
 		errx(1, "major or minor number too large");
-		/* NOTREACHED */
-	}
-	if (mknod(argv[0], mode, dev) < 0) {
-		err(1, "%s", argv[0]);
-		/* NOTREACHED */
-	}
-	return(0);
+	return dev;
 }
 
-int
-domkfifo(char **argv, mode_t mode)
+static int
+domakenodes(struct node *node, int n)
 {
-	int rv;
+	int done_umask = 0;
+	int rv = 0;
+	int i;
 
-	for (rv = 0; *argv; ++argv) {
-		if (mkfifo(*argv, mode) < 0) {
-			warn("%s", *argv);
+#if !defined(CHECK_PARSING_ONLY)
+	for (i = 0; i != n; i++) {
+		int r;
+		/*
+		 * If the user specified a mode via `-m', don't allow the umask
+		 * to modify it.  If no `-m' flag was specified, the default
+		 * mode is the value of the bitwise inclusive or of S_IRUSR,
+		 * S_IWUSR, S_IRGRP, S_IWGRP, S_IROTH, and S_IWOTH as
+		 * modified by the umask.
+		 */
+		if (node[i].mflag && !done_umask) {
+			(void)umask(0);
+			done_umask = 1;
+		}
+
+		if (node[i].type == 'p')
+			r = mkfifo(node[i].name, node[i].mode);
+		else
+			r = mknod(node[i].name, node[i].mode, node[i].dev);
+		if (r < 0) {
+			warn("%s", node[i].name);
 			rv = 1;
 		}
 	}
-	return(rv);
+#else
+	for (i = 0; i != n; i++)
+		printf("%s %c (mode %o) dev=%d\n", node[i].name,
+		    node[i].type, node[i].mode, node[i].dev);
+		
+#endif
+	free(node);
+	return rv;
 }
 
-void
+__dead static void
 usage(int ismkfifo)
 {
 

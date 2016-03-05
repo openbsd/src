@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mknod.8,v 1.20 2016/03/04 16:49:17 tb Exp $
+.\"	$OpenBSD: mknod.8,v 1.21 2016/03/05 10:47:07 espie Exp $
 .\"	$NetBSD: mknod.8,v 1.9 1995/08/10 23:47:32 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)mknod.8	8.2 (Berkeley) 12/11/93
 .\"
-.Dd $Mdocdate: March 4 2016 $
+.Dd $Mdocdate: March 5 2016 $
 .Dt MKNOD 8
 .Os
 .Sh NAME
@@ -121,6 +121,21 @@ will cause the number to be interpreted as octal.
 .Xr mkfifo 2 ,
 .Xr mknod 2 ,
 .Xr MAKEDEV 8
+.Sh STANDARDS
+As an extension,
+.Nm
+can also take multiple lists of parameters in one go.
+Note that
+.Fl m
+is not reset from one list to the next so, for example, in
+.Pp
+.Dl mknod -m 700 name b 12 5 name2 b 12 6
+.Pp
+both
+.Ar name
+and
+.Ar name2
+will be mode 700.
 .Sh HISTORY
 A
 .Nm
