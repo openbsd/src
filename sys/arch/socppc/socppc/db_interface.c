@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.2 2016/02/28 11:56:40 mpi Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.3 2016/03/05 17:24:27 mpi Exp $	*/
 /*      $NetBSD: db_interface.c,v 1.12 2001/07/22 11:29:46 wiz Exp $ */
 
 #include <sys/param.h>
@@ -26,16 +26,16 @@ db_trap_glue(struct trapframe *frame)
 		|| (frame->exc == EXC_PGM && (frame->srr1 & 0x20000))
 		|| frame->exc == EXC_BPT)) {
 
-		bcopy(frame->fixreg, DDB_REGS->tf.fixreg,
+		bcopy(frame->fixreg, DDB_REGS->fixreg,
 			32 * sizeof(u_int32_t));
-		DDB_REGS->tf.srr0 = frame->srr0;
-		DDB_REGS->tf.srr1 = frame->srr1;
+		DDB_REGS->srr0 = frame->srr0;
+		DDB_REGS->srr1 = frame->srr1;
 
 		cnpollc(TRUE);
 		db_trap(T_BREAKPOINT, 0);
 		cnpollc(FALSE);
 
-		bcopy(DDB_REGS->tf.fixreg, frame->fixreg,
+		bcopy(DDB_REGS->fixreg, frame->fixreg,
 			32 * sizeof(u_int32_t));
 
 		return 1;

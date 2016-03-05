@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.7 2016/03/02 10:41:08 mpi Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.8 2016/03/05 17:24:27 mpi Exp $	*/
 /*	$NetBSD: db_trace.c,v 1.15 1996/02/22 23:23:41 gwr Exp $	*/
 
 /*
@@ -48,44 +48,44 @@
 db_regs_t ddb_regs;
 
 struct db_variable db_regs[] = {
-	{ "r0",  (long *)&ddb_regs.tf.fixreg[0],	FCN_NULL },
-	{ "r1",  (long *)&ddb_regs.tf.fixreg[1],	FCN_NULL },
-	{ "r2",  (long *)&ddb_regs.tf.fixreg[2],	FCN_NULL },
-	{ "r3",  (long *)&ddb_regs.tf.fixreg[3],	FCN_NULL },
-	{ "r4",  (long *)&ddb_regs.tf.fixreg[4],	FCN_NULL },
-	{ "r5",  (long *)&ddb_regs.tf.fixreg[5],	FCN_NULL },
-	{ "r6",  (long *)&ddb_regs.tf.fixreg[6],	FCN_NULL },
-	{ "r7",  (long *)&ddb_regs.tf.fixreg[7],	FCN_NULL },
-	{ "r8",  (long *)&ddb_regs.tf.fixreg[8],	FCN_NULL },
-	{ "r9",  (long *)&ddb_regs.tf.fixreg[9],	FCN_NULL },
-	{ "r10", (long *)&ddb_regs.tf.fixreg[10],	FCN_NULL },
-	{ "r11", (long *)&ddb_regs.tf.fixreg[11],	FCN_NULL },
-	{ "r12", (long *)&ddb_regs.tf.fixreg[12],	FCN_NULL },
-	{ "r13", (long *)&ddb_regs.tf.fixreg[13],	FCN_NULL },
-	{ "r14", (long *)&ddb_regs.tf.fixreg[13],	FCN_NULL },
-	{ "r15", (long *)&ddb_regs.tf.fixreg[13],	FCN_NULL },
-	{ "r16", (long *)&ddb_regs.tf.fixreg[13],	FCN_NULL },
-	{ "r17", (long *)&ddb_regs.tf.fixreg[17],	FCN_NULL },
-	{ "r18", (long *)&ddb_regs.tf.fixreg[18],	FCN_NULL },
-	{ "r19", (long *)&ddb_regs.tf.fixreg[19],	FCN_NULL },
-	{ "r20", (long *)&ddb_regs.tf.fixreg[20],	FCN_NULL },
-	{ "r21", (long *)&ddb_regs.tf.fixreg[21],	FCN_NULL },
-	{ "r22", (long *)&ddb_regs.tf.fixreg[22],	FCN_NULL },
-	{ "r23", (long *)&ddb_regs.tf.fixreg[23],	FCN_NULL },
-	{ "r24", (long *)&ddb_regs.tf.fixreg[24],	FCN_NULL },
-	{ "r25", (long *)&ddb_regs.tf.fixreg[25],	FCN_NULL },
-	{ "r26", (long *)&ddb_regs.tf.fixreg[26],	FCN_NULL },
-	{ "r27", (long *)&ddb_regs.tf.fixreg[27],	FCN_NULL },
-	{ "r28", (long *)&ddb_regs.tf.fixreg[28],	FCN_NULL },
-	{ "r29", (long *)&ddb_regs.tf.fixreg[29],	FCN_NULL },
-	{ "r30", (long *)&ddb_regs.tf.fixreg[30],	FCN_NULL },
-	{ "r31", (long *)&ddb_regs.tf.fixreg[31],	FCN_NULL },
-	{ "lr",  (long *)&ddb_regs.tf.lr,		FCN_NULL },
-	{ "cr",  (long *)&ddb_regs.tf.cr,		FCN_NULL },
-	{ "xer", (long *)&ddb_regs.tf.xer,		FCN_NULL },
-	{ "ctr", (long *)&ddb_regs.tf.ctr,		FCN_NULL },
-	{ "iar", (long *)&ddb_regs.tf.srr0,		FCN_NULL },
-	{ "msr", (long *)&ddb_regs.tf.srr1,		FCN_NULL },
+	{ "r0",  (long *)&ddb_regs.fixreg[0],	FCN_NULL },
+	{ "r1",  (long *)&ddb_regs.fixreg[1],	FCN_NULL },
+	{ "r2",  (long *)&ddb_regs.fixreg[2],	FCN_NULL },
+	{ "r3",  (long *)&ddb_regs.fixreg[3],	FCN_NULL },
+	{ "r4",  (long *)&ddb_regs.fixreg[4],	FCN_NULL },
+	{ "r5",  (long *)&ddb_regs.fixreg[5],	FCN_NULL },
+	{ "r6",  (long *)&ddb_regs.fixreg[6],	FCN_NULL },
+	{ "r7",  (long *)&ddb_regs.fixreg[7],	FCN_NULL },
+	{ "r8",  (long *)&ddb_regs.fixreg[8],	FCN_NULL },
+	{ "r9",  (long *)&ddb_regs.fixreg[9],	FCN_NULL },
+	{ "r10", (long *)&ddb_regs.fixreg[10],	FCN_NULL },
+	{ "r11", (long *)&ddb_regs.fixreg[11],	FCN_NULL },
+	{ "r12", (long *)&ddb_regs.fixreg[12],	FCN_NULL },
+	{ "r13", (long *)&ddb_regs.fixreg[13],	FCN_NULL },
+	{ "r14", (long *)&ddb_regs.fixreg[13],	FCN_NULL },
+	{ "r15", (long *)&ddb_regs.fixreg[13],	FCN_NULL },
+	{ "r16", (long *)&ddb_regs.fixreg[13],	FCN_NULL },
+	{ "r17", (long *)&ddb_regs.fixreg[17],	FCN_NULL },
+	{ "r18", (long *)&ddb_regs.fixreg[18],	FCN_NULL },
+	{ "r19", (long *)&ddb_regs.fixreg[19],	FCN_NULL },
+	{ "r20", (long *)&ddb_regs.fixreg[20],	FCN_NULL },
+	{ "r21", (long *)&ddb_regs.fixreg[21],	FCN_NULL },
+	{ "r22", (long *)&ddb_regs.fixreg[22],	FCN_NULL },
+	{ "r23", (long *)&ddb_regs.fixreg[23],	FCN_NULL },
+	{ "r24", (long *)&ddb_regs.fixreg[24],	FCN_NULL },
+	{ "r25", (long *)&ddb_regs.fixreg[25],	FCN_NULL },
+	{ "r26", (long *)&ddb_regs.fixreg[26],	FCN_NULL },
+	{ "r27", (long *)&ddb_regs.fixreg[27],	FCN_NULL },
+	{ "r28", (long *)&ddb_regs.fixreg[28],	FCN_NULL },
+	{ "r29", (long *)&ddb_regs.fixreg[29],	FCN_NULL },
+	{ "r30", (long *)&ddb_regs.fixreg[30],	FCN_NULL },
+	{ "r31", (long *)&ddb_regs.fixreg[31],	FCN_NULL },
+	{ "lr",  (long *)&ddb_regs.lr,		FCN_NULL },
+	{ "cr",  (long *)&ddb_regs.cr,		FCN_NULL },
+	{ "xer", (long *)&ddb_regs.xer,		FCN_NULL },
+	{ "ctr", (long *)&ddb_regs.ctr,		FCN_NULL },
+	{ "iar", (long *)&ddb_regs.srr0,		FCN_NULL },
+	{ "msr", (long *)&ddb_regs.srr1,		FCN_NULL },
 };
 
 struct db_variable *db_eregs = db_regs + nitems(db_regs);
@@ -96,7 +96,7 @@ struct db_variable *db_eregs = db_regs + nitems(db_regs);
 void
 db_save_regs(struct trapframe *frame)
 {
-	bcopy(frame, &(ddb_regs.tf), sizeof (struct trapframe));
+	bcopy(frame, &ddb_regs, sizeof (struct trapframe));
 }
 
 /* from locore.S */
@@ -130,8 +130,8 @@ db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
 	}
 
 	if (!have_addr) {
-		sp = ddb_regs.tf.fixreg[1];
-		lr = ddb_regs.tf.srr0;
+		sp = ddb_regs.fixreg[1];
+		lr = ddb_regs.srr0;
 	} else {
 		if (trace_proc) {
 			struct proc *p = pfind((pid_t)addr);

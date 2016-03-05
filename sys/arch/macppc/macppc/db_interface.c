@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.11 2016/02/28 11:56:40 mpi Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.12 2016/03/05 17:24:27 mpi Exp $	*/
 /*      $NetBSD: db_interface.c,v 1.12 2001/07/22 11:29:46 wiz Exp $ */
 
 /*
@@ -88,10 +88,10 @@ db_trap_glue(struct trapframe *frame)
 
 		while (db_enter_ddb()) {
 #endif
-			bcopy(frame->fixreg, DDB_REGS->tf.fixreg,
+			bcopy(frame->fixreg, DDB_REGS->fixreg,
 				32 * sizeof(u_int32_t));
-			DDB_REGS->tf.srr0 = frame->srr0;
-			DDB_REGS->tf.srr1 = frame->srr1;
+			DDB_REGS->srr0 = frame->srr0;
+			DDB_REGS->srr1 = frame->srr1;
 
 			s = splhigh();
 			db_active++;
@@ -101,7 +101,7 @@ db_trap_glue(struct trapframe *frame)
 			db_active--;
 			splx(s);
 
-			bcopy(DDB_REGS->tf.fixreg, frame->fixreg,
+			bcopy(DDB_REGS->fixreg, frame->fixreg,
 				32 * sizeof(u_int32_t));
 #ifdef MULTIPROCESSOR
 			if (!db_switch_cpu)
