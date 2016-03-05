@@ -1,4 +1,4 @@
-/*	$OpenBSD: eval.c,v 1.49 2015/12/30 09:07:00 tedu Exp $	*/
+/*	$OpenBSD: eval.c,v 1.50 2016/03/05 12:30:17 czarkoff Exp $	*/
 
 /*
  * Expansion - quoting, separation, substitution, globbing
@@ -707,6 +707,7 @@ varsub(Expand *xp, char *sp, char *word,
 	int slen;
 	char *p;
 	struct tbl *vp;
+	int zero_ok = 0;
 
 	if (sp[0] == '\0')	/* Bad variable name */
 		return -1;
@@ -715,8 +716,6 @@ varsub(Expand *xp, char *sp, char *word,
 
 	/* ${#var}, string length or array size */
 	if (sp[0] == '#' && (c = sp[1]) != '\0') {
-		int zero_ok = 0;
-
 		/* Can't have any modifiers for ${#...} */
 		if (*word != CSUBST)
 			return -1;
@@ -789,6 +788,7 @@ varsub(Expand *xp, char *sp, char *word,
 			xp->split = c == '@'; /* $@ */
 			state = XARG;
 		}
+		zero_ok = 1;	/* exempt "$@" and "$*" from 'set -u' */
 	} else {
 		if ((p=strchr(sp,'[')) && (p[1]=='*'||p[1]=='@') && p[2]==']') {
 			XPtrV wv;
@@ -835,7 +835,7 @@ varsub(Expand *xp, char *sp, char *word,
 	    (((stype&0x80) ? *xp->str=='\0' : xp->str==null) ? /* undef? */
 	    c == '=' || c == '-' || c == '?' : c == '+'))
 		state = XBASE;	/* expand word instead of variable value */
-	if (Flag(FNOUNSET) && xp->str == null &&
+	if (Flag(FNOUNSET) && xp->str == null && !zero_ok &&
 	    (ctype(c, C_SUBOP2) || (state != XBASE && c != '+')))
 		errorf("%s: parameter not set", sp);
 	return state;

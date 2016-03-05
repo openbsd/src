@@ -1,4 +1,4 @@
-#	$OpenBSD: obsd-regress.t,v 1.1 2013/12/02 20:39:44 millert Exp $
+#	$OpenBSD: obsd-regress.t,v 1.2 2016/03/05 12:30:17 czarkoff Exp $
 
 #
 # ksh regression tests from OpenBSD
@@ -272,4 +272,15 @@ description:
 stdin:
 	set foo bar baz ; for out in ; do echo $out ; done
 
+---
+
+name: shellopt-u-1
+description:
+	Check that "$@" and "$*" are exempt from 'set -u' (nounset)
+stdin:
+	set -u
+	: "$@$*$1"
+expected-exit: e == 1
+expected-stderr-pattern:
+	/: 1: parameter not set$/
 ---
