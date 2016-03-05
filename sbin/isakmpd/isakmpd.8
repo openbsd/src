@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.8,v 1.117 2015/09/25 14:27:26 schwarze Exp $
+.\" $OpenBSD: isakmpd.8,v 1.118 2016/03/05 08:38:36 jmc Exp $
 .\" $EOM: isakmpd.8,v 1.23 2000/05/02 00:30:23 niklas Exp $
 .\"
 .\" Copyright (c) 1998, 1999, 2000, 2001 Niklas Hallqvist.
@@ -30,7 +30,7 @@
 .\"
 .\" Manual page, using -mandoc macros
 .\"
-.Dd $Mdocdate: September 25 2015 $
+.Dd $Mdocdate: March 5 2016 $
 .Dt ISAKMPD 8
 .Os
 .Sh NAME
@@ -617,17 +617,25 @@ extension field should be added to the certificate.
 Replace 10.0.0.1 with the IP address which
 .Nm
 will use as the certificate identity.
+.Pp
+Copy
+.Pa /etc/ssl/x509v3.cnf
+to a temporary file and edit it to replace
+.Dv $ENV::CERTIP
+with 10.0.0.1, then run:
 .Bd -literal -offset indent
-# env CERTIP=10.0.0.1 openssl x509 -req \e
+# openssl x509 -req \e
 	-days 365 -in 10.0.0.1.csr \e
 	-CA /etc/ssl/ca.crt -CAkey /etc/ssl/private/ca.key \e
 	-CAcreateserial -extfile /etc/ssl/x509v3.cnf \e
 	-extensions x509v3_IPAddr -out 10.0.0.1.crt
 .Ed
 .Pp
-For a FQDN certificate, do:
+For a FQDN certificate, replace
+.Dv $ENV::CERTIP
+with the hostname and run:
 .Bd -literal -offset indent
-# env CERTFQDN=somehost.somedomain openssl x509 -req \e
+# openssl x509 -req \e
 	-days 365 -in somehost.somedomain.csr \e
 	-CA /etc/ssl/ca.crt -CAkey /etc/ssl/private/ca.key \e
 	-CAcreateserial -extfile /etc/ssl/x509v3.cnf \e
