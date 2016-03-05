@@ -1,4 +1,4 @@
-/*	$OpenBSD: mknod.c,v 1.24 2016/03/05 19:29:41 natano Exp $	*/
+/*	$OpenBSD: mknod.c,v 1.25 2016/03/05 21:15:41 espie Exp $	*/
 /*	$NetBSD: mknod.c,v 1.8 1995/08/11 00:08:18 jtc Exp $	*/
 
 /*
@@ -69,7 +69,8 @@ main(int argc, char *argv[])
 			switch (ch) {
 			case 'm':
 				if (!(set = setmode(optarg)))
-					errx(1, "invalid file mode.");
+					errx(1, "invalid file mode '%s'", 
+					    optarg);
 				/*
 				 * In symbolic mode strings, the + and -
 				 * operators are interpreted relative to
@@ -106,8 +107,7 @@ main(int argc, char *argv[])
 			node[n].mflag = mflag;
 			node[n].name = argv[0];
 			if (strlen(argv[1]) != 1)
-				errx(1, "node must be type 'b|c|p' %s",
-				    argv[1]);
+				errx(1, "invalid device type '%s'", argv[1]);
 
 			/* XXX computation offset by one for next getopt */
 			switch(argv[1][0]) {
@@ -128,8 +128,7 @@ common:
 				argc-=3;
 				break;
 			default:
-				errx(1, "node must be type 'b|c|p' %s",
-				    argv[1]);
+				errx(1, "invalid device type '%s'", argv[1]);
 			}
 			n++;
 		}
@@ -154,13 +153,14 @@ compute_device(int argc, char **argv)
 		usage(0);
 	major = (long)strtoul(argv[2], &endp, 0);
 	if (endp == argv[2] || *endp != '\0')
-		errx(1, "non-numeric major number.");
+		errx(1, "invalid major number '%s'", argv[2]);
 	minor = (long)strtoul(argv[3], &endp, 0);
 	if (endp == argv[3] || *endp != '\0')
-		errx(1, "non-numeric minor number.");
+		errx(1, "invalid minor number '%s'", argv[3]);
 	dev = makedev(major, minor);
 	if (major(dev) != major || minor(dev) != minor)
-		errx(1, "major or minor number too large");
+		errx(1, "major or minor number too large (%u %u)", major, 
+		    minor);
 	return dev;
 }
 
