@@ -1,4 +1,4 @@
-/*	$OpenBSD: mknod.c,v 1.23 2016/03/05 17:15:43 tb Exp $	*/
+/*	$OpenBSD: mknod.c,v 1.24 2016/03/05 19:29:41 natano Exp $	*/
 /*	$NetBSD: mknod.c,v 1.8 1995/08/11 00:08:18 jtc Exp $	*/
 
 /*
@@ -34,7 +34,6 @@ struct node {
 	const char *name;
 	mode_t mode;
 	dev_t dev;
-	char type;
 	char mflag;
 };
 
@@ -93,7 +92,6 @@ main(int argc, char *argv[])
 			while (*argv) {
 				node[n].mode = mode | S_IFIFO;
 				node[n].mflag = mflag;
-				node[n].type = 'p';
 				node[n].name = *argv;
 				node[n].dev = 0;
 				n++;
@@ -110,10 +108,9 @@ main(int argc, char *argv[])
 			if (strlen(argv[1]) != 1)
 				errx(1, "node must be type 'b|c|p' %s",
 				    argv[1]);
-			node[n].type = argv[1][0];
 
 			/* XXX computation offset by one for next getopt */
-			switch(node[n].type) {
+			switch(argv[1][0]) {
 			case 'p':
 				node[n].mode |= S_IFIFO;
 				node[n].dev = 0;
@@ -131,8 +128,8 @@ common:
 				argc-=3;
 				break;
 			default:
-				errx(1, "node must be type 'b|c|p' %c",
-				    node[n].type);
+				errx(1, "node must be type 'b|c|p' %s",
+				    argv[1]);
 			}
 			n++;
 		}
