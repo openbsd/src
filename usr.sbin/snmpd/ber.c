@@ -1,4 +1,4 @@
-/*	$OpenBSD: ber.c,v 1.30 2015/12/05 06:42:18 mmcc Exp $ */
+/*	$OpenBSD: ber.c,v 1.31 2016/03/05 03:31:36 deraadt Exp $ */
 
 /*
  * Copyright (c) 2007, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -420,7 +420,7 @@ ber_string2oid(const char *oidstr, struct ber_oid *o)
 
 	if (strlcpy(str, oidstr, sizeof(str)) >= sizeof(str))
 		return (-1);
-	bzero(o, sizeof(*o));
+	memset(o, 0, sizeof(*o));
 
 	/* Parse OID strings in the common forms n.n.n, n_n_n_n, or n-n-n */
 	for (p = sp = str; p != NULL; sp = p) {
@@ -505,7 +505,7 @@ ber_get_oid(struct ber_element *elm, struct ber_oid *o)
 	if (!buf[i])
 		return (-1);
 
-	bzero(o, sizeof(*o));
+	memset(o, 0, sizeof(*o));
 	o->bo_id[j++] = buf[i] / 40;
 	o->bo_id[j++] = buf[i++] % 40;
 	for (; i < len && j < BER_MAX_OID_LEN; i++) {
@@ -639,7 +639,7 @@ ber_scanf_elements(struct ber_element *ber, char *fmt, ...)
 	struct ber_oid		*o;
 	struct ber_element	*parent[_MAX_SEQ], **e;
 
-	bzero(parent, sizeof(struct ber_element *) * _MAX_SEQ);
+	memset(parent, 0, sizeof(struct ber_element *) * _MAX_SEQ);
 
 	va_start(ap, fmt);
 	while (*fmt) {
