@@ -1,4 +1,4 @@
-/*	$OpenBSD: worms.c,v 1.27 2016/03/04 14:37:28 mestre Exp $	*/
+/*	$OpenBSD: worms.c,v 1.28 2016/03/05 07:47:15 tb Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -197,7 +197,8 @@ main(int argc, char *argv[])
 		case 'd':
 			delay = (time_t)strtonum(optarg, 0, 1000, &errstr);
 			if (errstr)
-				errx(1, "delay (0-1000) is %s: %s", errstr, optarg);
+				errx(1, "delay (0-1000) is %s: %s", errstr,
+				    optarg);
 			break;
 		case 'f':
 			field = "WORM";
@@ -205,12 +206,14 @@ main(int argc, char *argv[])
 		case 'l':
 			length = strtonum(optarg, 2, 1024, &errstr);
 			if (errstr)
-				errx(1, "length (2-1024) is %s: %s", errstr, optarg);
+				errx(1, "length (2-1024) is %s: %s", errstr,
+				    optarg);
 			break;
 		case 'n':
 			number = strtonum(optarg, 1, 100, &errstr);
 			if (errstr)
-				errx(1, "number of worms (1-100) is %s: %s", errstr, optarg);
+				errx(1, "number of worms (1-100) is %s: %s",
+				    errstr, optarg);
 			break;
 		case 't':
 			trail = '.';
