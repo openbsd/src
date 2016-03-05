@@ -1,4 +1,4 @@
-/*	$OpenBSD: mknod.c,v 1.22 2016/03/05 16:32:54 millert Exp $	*/
+/*	$OpenBSD: mknod.c,v 1.23 2016/03/05 17:15:43 tb Exp $	*/
 /*	$NetBSD: mknod.c,v 1.8 1995/08/11 00:08:18 jtc Exp $	*/
 
 /*
@@ -29,7 +29,6 @@
 #include <err.h>
 
 extern char *__progname;
-
 
 struct node {
 	const char *name;
@@ -63,19 +62,15 @@ main(int argc, char *argv[])
 	if (!node)
 		err(1, NULL);
 
-
 	ismkfifo = strcmp(__progname, "mkfifo") == 0;
-	
+
 	/* we parse all arguments upfront */
 	while (argc > 1) {
 		while ((ch = getopt(argc, argv, "m:")) != -1) {
 			switch (ch) {
 			case 'm':
-				if (!(set = setmode(optarg))) {
+				if (!(set = setmode(optarg)))
 					errx(1, "invalid file mode.");
-					/* NOTREACHED */
-				}
-
 				/*
 				 * In symbolic mode strings, the + and -
 				 * operators are interpreted relative to
@@ -179,7 +174,6 @@ domakenodes(struct node *node, int n)
 	int rv = 0;
 	int i;
 
-#if !defined(CHECK_PARSING_ONLY)
 	for (i = 0; i != n; i++) {
 		int r;
 		/*
@@ -200,12 +194,7 @@ domakenodes(struct node *node, int n)
 			rv = 1;
 		}
 	}
-#else
-	for (i = 0; i != n; i++)
-		printf("%s %c (mode %o) dev=%d\n", node[i].name,
-		    node[i].type, node[i].mode, node[i].dev);
-		
-#endif
+
 	free(node);
 	return rv;
 }
