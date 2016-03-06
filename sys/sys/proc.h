@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.214 2016/03/04 14:08:55 deraadt Exp $	*/
+/*	$OpenBSD: proc.h,v 1.215 2016/03/06 05:17:23 guenther Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -409,9 +409,9 @@ struct uidinfo *uid_find(uid_t);
 /*
  * We use process IDs <= PID_MAX; PID_MAX + 1 must also fit in a pid_t,
  * as it is used to represent "no process group".
- * We set PID_MAX to (SHRT_MAX - 1) so we don't break sys/compat.
+ * We set PID_MAX to 99999 to keep it in 5 columns in ps
  */
-#define	PID_MAX		32766
+#define	PID_MAX		99999
 #define	NO_PID		(PID_MAX+1)
 
 #define SESS_LEADER(pr)	((pr)->ps_session->s_leader == (pr))
