@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_amap.h,v 1.20 2014/07/11 16:35:40 jsg Exp $	*/
+/*	$OpenBSD: uvm_amap.h,v 1.21 2016/03/06 14:47:07 stefan Exp $	*/
 /*	$NetBSD: uvm_amap.h,v 1.14 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -88,8 +88,6 @@ void		amap_lookups(struct vm_aref *, vaddr_t, struct vm_anon **, int);
 void		amap_ref(struct vm_amap *, vaddr_t, vsize_t, int);
 					/* get number of references of amap */
 int		amap_refs(struct vm_amap *);
-					/* protect pages in a shared amap */
-void		amap_share_protect(vm_map_entry_t, vm_prot_t);
 					/* split reference to amap into two */
 void		amap_splitref(struct vm_aref *, struct vm_aref *, vaddr_t);
 					/* remove an anon from an amap */

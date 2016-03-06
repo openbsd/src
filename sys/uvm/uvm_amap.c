@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_amap.c,v 1.59 2015/08/21 16:04:35 visa Exp $	*/
+/*	$OpenBSD: uvm_amap.c,v 1.60 2016/03/06 14:47:07 stefan Exp $	*/
 /*	$NetBSD: uvm_amap.c,v 1.27 2000/11/25 06:27:59 chs Exp $	*/
 
 /*
@@ -400,49 +400,6 @@ amap_extend(struct vm_map_entry *entry, vsize_t addsize)
 		free(oldppref, M_UVMAMAP, 0);
 #endif
 	return (0);
-}
-
-/*
- * amap_share_protect: change protection of anons in a shared amap
- *
- * for shared amaps, given the current data structure layout, it is
- * not possible for us to directly locate all maps referencing the
- * shared anon (to change the protection).  in order to protect data
- * in shared maps we use pmap_page_protect().  [this is useful for IPC
- * mechanisms like map entry passing that may want to write-protect
- * all mappings of a shared amap.]  we traverse am_anon or am_slots
- * depending on the current state of the amap.
- */
-void
-amap_share_protect(struct vm_map_entry *entry, vm_prot_t prot)
-{
-	struct vm_amap *amap = entry->aref.ar_amap;
-	int slots, lcv, slot, stop;
-
-	AMAP_B2SLOT(slots, (entry->end - entry->start));
-	stop = entry->aref.ar_pageoff + slots;
-
-	if (slots < amap->am_nused) {
-		/* cheaper to traverse am_anon */
-		for (lcv = entry->aref.ar_pageoff ; lcv < stop ; lcv++) {
-			if (amap->am_anon[lcv] == NULL)
-				continue;
-			if (amap->am_anon[lcv]->an_page != NULL)
-				pmap_page_protect(amap->am_anon[lcv]->an_page,
-						  prot);
-		}
-		return;
-	}
-
-	/* cheaper to traverse am_slots */
-	for (lcv = 0 ; lcv < amap->am_nused ; lcv++) {
-		slot = amap->am_slots[lcv];
-		if (slot < entry->aref.ar_pageoff || slot >= stop)
-			continue;
-		if (amap->am_anon[slot]->an_page != NULL)
-			pmap_page_protect(amap->am_anon[slot]->an_page, prot);
-	}
-	return;
 }
 
 /*
