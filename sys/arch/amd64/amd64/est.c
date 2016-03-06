@@ -1,4 +1,4 @@
-/*	$OpenBSD: est.c,v 1.38 2015/09/08 04:28:34 semarie Exp $ */
+/*	$OpenBSD: est.c,v 1.39 2016/03/06 22:41:24 naddy Exp $ */
 /*
  * Copyright (c) 2003 Michael Eriksson.
  * All rights reserved.
@@ -224,7 +224,7 @@ struct fqlist * est_acpi_init(void);
 void est_acpi_pss_changed(struct acpicpu_pss *, int);
 
 struct fqlist *
-est_acpi_init()
+est_acpi_init(void)
 {
 	struct acpicpu_pss *pss;
 	struct fqlist *acpilist;
