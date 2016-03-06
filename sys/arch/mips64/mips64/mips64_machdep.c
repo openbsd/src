@@ -1,4 +1,4 @@
-/*	$OpenBSD: mips64_machdep.c,v 1.19 2014/12/15 02:24:22 guenther Exp $ */
+/*	$OpenBSD: mips64_machdep.c,v 1.20 2016/03/06 19:42:27 mpi Exp $ */
 
 /*
  * Copyright (c) 2009, 2010, 2012 Miodrag Vallat.
@@ -148,7 +148,7 @@ setregs(p, pack, stack, retval)
 {
 	struct cpu_info *ci = curcpu();
 
-	bzero((caddr_t)p->p_md.md_regs, sizeof(struct trap_frame));
+	bzero((caddr_t)p->p_md.md_regs, sizeof(struct trapframe));
 	p->p_md.md_regs->sp = stack;
 	p->p_md.md_regs->pc = pack->ep_entry & ~3;
 	p->p_md.md_regs->t9 = pack->ep_entry & ~3; /* abicall req */

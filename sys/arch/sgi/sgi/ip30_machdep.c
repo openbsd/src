@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip30_machdep.c,v 1.64 2016/02/27 13:08:07 mpi Exp $	*/
+/*	$OpenBSD: ip30_machdep.c,v 1.65 2016/03/06 19:42:27 mpi Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -62,7 +62,7 @@ extern void	xheart_setintrmask(int);
 extern struct	user *proc0paddr;
 #endif
 
-uint32_t ip30_lights_frob(uint32_t, struct trap_frame *);
+uint32_t ip30_lights_frob(uint32_t, struct trapframe *);
 paddr_t	ip30_widget_short(int16_t, u_int);
 paddr_t	ip30_widget_long(int16_t, u_int);
 paddr_t	ip30_widget_map(int16_t, u_int, bus_addr_t *, bus_size_t *);
@@ -386,7 +386,7 @@ ip30_find_video()
  * Fun with the lightbar
  */
 uint32_t
-ip30_lights_frob(uint32_t hwpend, struct trap_frame *cf)
+ip30_lights_frob(uint32_t hwpend, struct trapframe *cf)
 {
 	uint32_t gpioold, gpio;
 
@@ -436,12 +436,12 @@ ip30_get_ncpusfound(void)
 void
 ip30_nmi_handler()
 {
-	extern int db_ktrap(int, struct trap_frame *);
-	extern void stacktrace(struct trap_frame *);
-	struct trap_frame *fr0;
+	extern int db_ktrap(int, struct trapframe *);
+	extern void stacktrace(struct trapframe *);
+	struct trapframe *fr0;
 	int s;
 #ifdef MULTIPROCESSOR
-	struct trap_frame *fr1;
+	struct trapframe *fr1;
 	struct cpu_info *ci = curcpu();
 #endif
 
@@ -458,10 +458,10 @@ ip30_nmi_handler()
 
 	printf("NMI\n");
 
-	fr0 = (struct trap_frame *)PHYS_TO_XKPHYS(IP30_MEMORY_BASE + 0x4000,
+	fr0 = (struct trapframe *)PHYS_TO_XKPHYS(IP30_MEMORY_BASE + 0x4000,
 	    CCA_CACHED);
 #ifdef MULTIPROCESSOR
-	fr1 = (struct trap_frame *)PHYS_TO_XKPHYS(IP30_MEMORY_BASE + 0x6000,
+	fr1 = (struct trapframe *)PHYS_TO_XKPHYS(IP30_MEMORY_BASE + 0x6000,
 	    CCA_CACHED);
 #endif
 

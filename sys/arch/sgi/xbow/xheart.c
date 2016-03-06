@@ -1,4 +1,4 @@
-/*	$OpenBSD: xheart.c,v 1.29 2015/09/26 04:37:18 visa Exp $	*/
+/*	$OpenBSD: xheart.c,v 1.30 2016/03/06 19:42:27 mpi Exp $	*/
 
 /*
  * Copyright (c) 2008 Miodrag Vallat.
@@ -70,7 +70,7 @@ int	xheart_intr_establish(int (*)(void *), void *, int, int, const char *,
 void	xheart_intr_disestablish(int);
 void	xheart_intr_clear(int);
 void	xheart_intr_set(int);
-uint32_t xheart_intr_handler(uint32_t, struct trap_frame *);
+uint32_t xheart_intr_handler(uint32_t, struct trapframe *);
 void	xheart_intr_makemasks(void);
 void	xheart_setintrmask(int);
 void	xheart_splx(int);
@@ -86,7 +86,7 @@ struct timecounter xheart_timecounter = {
 	.tc_quality = 100
 };
 
-extern uint32_t ip30_lights_frob(uint32_t, struct trap_frame *);
+extern uint32_t ip30_lights_frob(uint32_t, struct trapframe *);
 
 /*
  * HEART interrupt handling declarations: 64 sources; 5 levels.

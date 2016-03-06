@@ -1,4 +1,4 @@
-/*	$OpenBSD: int.c,v 1.11 2014/09/30 06:51:58 jmatthew Exp $	*/
+/*	$OpenBSD: int.c,v 1.12 2016/03/06 19:42:27 mpi Exp $	*/
 /*	$NetBSD: int.c,v 1.24 2011/07/01 18:53:46 dyoung Exp $	*/
 
 /*
@@ -75,7 +75,7 @@ paddr_t	int2_get_base(void);
 
 void	int_8254_cal(void);
 void	int_8254_startclock(struct cpu_info *);
-uint32_t int_8254_intr0(uint32_t, struct trap_frame *);
+uint32_t int_8254_intr0(uint32_t, struct trapframe *);
 
 /*
  * INT2 Interrupt handling declarations: 16 local sources on 2 levels.
@@ -102,9 +102,9 @@ uint32_t int2_intem;
 uint8_t	int2_l0imask[NIPLS], int2_l1imask[NIPLS];
 
 void	int2_splx(int);
-uint32_t int2_l0intr(uint32_t, struct trap_frame *);
+uint32_t int2_l0intr(uint32_t, struct trapframe *);
 void	int2_l0makemasks(void);
-uint32_t int2_l1intr(uint32_t, struct trap_frame *);
+uint32_t int2_l1intr(uint32_t, struct trapframe *);
 void	int2_l1makemasks(void);
 
 /*
@@ -513,7 +513,7 @@ int_8254_cal(void)
 }
 
 uint32_t
-int_8254_intr0(uint32_t hwpend, struct trap_frame *tf)
+int_8254_intr0(uint32_t hwpend, struct trapframe *tf)
 {
 	struct cpu_info *ci = curcpu();
 

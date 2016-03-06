@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.46 2015/12/25 09:22:00 visa Exp $ */
+/*	$OpenBSD: intr.h,v 1.47 2016/03/06 19:42:27 mpi Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -183,8 +183,8 @@ void	intr_barrier(void *);
 
 extern uint32_t idle_mask;
 
-struct trap_frame;
-void	set_intr(int, uint32_t, uint32_t(*)(uint32_t, struct trap_frame *));
+struct trapframe;
+void	set_intr(int, uint32_t, uint32_t(*)(uint32_t, struct trapframe *));
 
 uint32_t updateimask(uint32_t);
 void	dosoftint(void);

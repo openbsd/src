@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.109 2016/03/01 19:17:37 mmcc Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.110 2016/03/06 19:42:27 mpi Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -281,7 +281,7 @@ void	cp0_calibrate(struct cpu_info *);
  * Arguments to hardclock encapsulate the previous machine state in
  * an opaque clockframe.
  */
-#define	clockframe trap_frame	/* Use normal trap frame */
+#define	clockframe trapframe	/* Use normal trap frame */
 
 #define	SR_KSU_USER		0x00000010
 #define	CLKF_USERMODE(framep)	((framep)->sr & SR_KSU_USER)
@@ -431,20 +431,20 @@ void	savectx(struct user *, int);
 
 void	enable_fpu(struct proc *);
 void	save_fpu(void);
-int	fpe_branch_emulate(struct proc *, struct trap_frame *, uint32_t,
+int	fpe_branch_emulate(struct proc *, struct trapframe *, uint32_t,
 	    vaddr_t);
 void	MipsSaveCurFPState(struct proc *);
 void	MipsSaveCurFPState16(struct proc *);
-void	MipsSwitchFPState(struct proc *, struct trap_frame *);
-void	MipsSwitchFPState16(struct proc *, struct trap_frame *);
+void	MipsSwitchFPState(struct proc *, struct trapframe *);
+void	MipsSwitchFPState16(struct proc *, struct trapframe *);
 
 int	guarded_read_1(paddr_t, uint8_t *);
 int	guarded_read_2(paddr_t, uint16_t *);
 int	guarded_read_4(paddr_t, uint32_t *);
 int	guarded_write_4(paddr_t, uint32_t);
 
-void	MipsFPTrap(struct trap_frame *);
-register_t MipsEmulateBranch(struct trap_frame *, vaddr_t, uint32_t, uint32_t);
+void	MipsFPTrap(struct trapframe *);
+register_t MipsEmulateBranch(struct trapframe *, vaddr_t, uint32_t, uint32_t);
 
 int	classify_insn(uint32_t);
 #define	INSNCLASS_NEUTRAL	0
@@ -458,9 +458,9 @@ int	classify_insn(uint32_t);
 extern int r4000_errata;
 u_int	eop_page_check(paddr_t);
 void	eop_tlb_flush_addr(struct pmap *, vaddr_t, u_long);
-int	eop_tlb_miss_handler(struct trap_frame *, struct cpu_info *,
+int	eop_tlb_miss_handler(struct trapframe *, struct cpu_info *,
 	    struct proc *);
-void	eop_cleanup(struct trap_frame *, struct proc *);
+void	eop_cleanup(struct trapframe *, struct proc *);
 
 /*
  * Low level access routines to CPU registers

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bonito.c,v 1.30 2015/09/19 21:07:04 semarie Exp $	*/
+/*	$OpenBSD: bonito.c,v 1.31 2016/03/06 19:42:27 mpi Exp $	*/
 /*	$NetBSD: bonito_mainbus.c,v 1.11 2008/04/28 20:23:10 martin Exp $	*/
 /*	$NetBSD: bonito_pci.c,v 1.5 2008/04/28 20:23:28 martin Exp $	*/
 
@@ -95,9 +95,9 @@ bus_addr_t	bonito_pa_to_device(paddr_t);
 paddr_t		bonito_device_to_pa(bus_addr_t);
 
 void	 bonito_intr_makemasks(void);
-uint32_t bonito_intr_2e(uint32_t, struct trap_frame *);
-uint32_t bonito_intr_2f(uint32_t, struct trap_frame *);
-void	 bonito_intr_dispatch(uint64_t, int, struct trap_frame *);
+uint32_t bonito_intr_2e(uint32_t, struct trapframe *);
+uint32_t bonito_intr_2f(uint32_t, struct trapframe *);
+void	 bonito_intr_dispatch(uint64_t, int, struct trapframe *);
 
 void	 bonito_attach_hook(struct device *, struct device *,
 	    struct pcibus_attach_args *);
@@ -573,7 +573,7 @@ bonito_intr_makemasks()
  */
 
 uint32_t
-bonito_intr_2e(uint32_t hwpend, struct trap_frame *frame)
+bonito_intr_2e(uint32_t hwpend, struct trapframe *frame)
 {
 	uint64_t imr, isr, mask;
 
@@ -630,7 +630,7 @@ bonito_intr_2e(uint32_t hwpend, struct trap_frame *frame)
 }
 
 uint32_t
-bonito_intr_2f(uint32_t hwpend, struct trap_frame *frame)
+bonito_intr_2f(uint32_t hwpend, struct trapframe *frame)
 {
 	uint64_t imr, isr, mask;
 
@@ -677,7 +677,7 @@ bonito_intr_2f(uint32_t hwpend, struct trap_frame *frame)
 }
 
 void
-bonito_intr_dispatch(uint64_t isr, int startbit, struct trap_frame *frame)
+bonito_intr_dispatch(uint64_t isr, int startbit, struct trapframe *frame)
 {
 	int lvl, bitno;
 	uint64_t tmpisr, mask;

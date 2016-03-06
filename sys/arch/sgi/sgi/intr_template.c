@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr_template.c,v 1.16 2015/12/25 09:22:00 visa Exp $	*/
+/*	$OpenBSD: intr_template.c,v 1.17 2016/03/06 19:42:27 mpi Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -97,7 +97,7 @@ MASK_FUNCTIONNAME()
  * Interrupt dispatcher.
  */
 uint32_t
-INTR_FUNCTIONNAME(uint32_t hwpend, struct trap_frame *frame)
+INTR_FUNCTIONNAME(uint32_t hwpend, struct trapframe *frame)
 {
 	struct cpu_info *ci = curcpu();
 	uint64_t imr, isr, mask;

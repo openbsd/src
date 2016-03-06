@@ -1,4 +1,4 @@
-/*	$OpenBSD: imc.c,v 1.20 2015/09/24 18:37:50 miod Exp $	*/
+/*	$OpenBSD: imc.c,v 1.21 2016/03/06 19:42:27 mpi Exp $	*/
 /*	$NetBSD: imc.c,v 1.32 2011/07/01 18:53:46 dyoung Exp $	*/
 
 /*
@@ -86,7 +86,7 @@ struct cfdriver imc_cd = {
 	NULL, "imc", DV_DULL
 };
 
-uint32_t imc_bus_error(uint32_t, struct trap_frame *);
+uint32_t imc_bus_error(uint32_t, struct trapframe *);
 int	 imc_watchdog_cb(void *, int);
 
 void	 imc_space_barrier(bus_space_tag_t, bus_space_handle_t, bus_size_t,
@@ -735,7 +735,7 @@ imc_bus_reset()
 }
 
 uint32_t
-imc_bus_error(uint32_t hwpend, struct trap_frame *tf)
+imc_bus_error(uint32_t hwpend, struct trapframe *tf)
 {
 	uint32_t cpustat, giostat;
 	paddr_t cpuaddr, gioaddr;

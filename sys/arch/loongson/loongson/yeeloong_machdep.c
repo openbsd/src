@@ -1,4 +1,4 @@
-/*	$OpenBSD: yeeloong_machdep.c,v 1.24 2014/03/27 22:16:03 miod Exp $	*/
+/*	$OpenBSD: yeeloong_machdep.c,v 1.25 2016/03/06 19:42:27 mpi Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -78,7 +78,7 @@ void	 lemote_isa_intr_disestablish(void *, void *);
 
 uint	 lemote_get_isa_imr(void);
 uint	 lemote_get_isa_isr(void);
-uint32_t lemote_isa_intr(uint32_t, struct trap_frame *);
+uint32_t lemote_isa_intr(uint32_t, struct trapframe *);
 extern void	(*cpu_setperf)(int);
 
 const struct bonito_config lemote_bonito = {
@@ -339,7 +339,7 @@ lemote_isa_intr_disestablish(void *v, void *ih)
  * XXX if they ever are triggered...
  */
 uint32_t
-lemote_isa_intr(uint32_t hwpend, struct trap_frame *frame)
+lemote_isa_intr(uint32_t hwpend, struct trapframe *frame)
 {
 	uint64_t imr, isr, mask;
 	int bit;

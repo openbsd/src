@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcc.c,v 1.9 2016/01/05 05:27:54 visa Exp $	*/
+/*	$OpenBSD: tcc.c,v 1.10 2016/03/06 19:42:27 mpi Exp $	*/
 
 /*
  * Copyright (c) 2012 Miodrag Vallat.
@@ -50,7 +50,7 @@ struct cfdriver tcc_cd = {
 	NULL, "tcc", DV_DULL
 };
 
-uint32_t tcc_bus_error(uint32_t, struct trap_frame *);
+uint32_t tcc_bus_error(uint32_t, struct trapframe *);
 
 CACHE_PROTOS(tcc)
 
@@ -99,7 +99,7 @@ tcc_bus_reset()
 }
 
 uint32_t
-tcc_bus_error(uint32_t hwpend, struct trap_frame *tf)
+tcc_bus_error(uint32_t hwpend, struct trapframe *tf)
 {
 	uint64_t intr, error, addr, errack;
 	unsigned int errtype;

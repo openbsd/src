@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.63 2015/05/07 01:55:43 jsg Exp $ */
+/*	$OpenBSD: machdep.c,v 1.64 2016/03/06 19:42:27 mpi Exp $ */
 
 /*
  * Copyright (c) 2009, 2010, 2014 Miodrag Vallat.
@@ -685,7 +685,7 @@ mips_init(uint64_t argc, uint64_t argv, uint64_t envp, uint64_t cv,
 
 	proc0.p_addr = proc0paddr = curcpu()->ci_curprocpaddr =
 	    (struct user *)pmap_steal_memory(USPACE, NULL, NULL);
-	proc0.p_md.md_regs = (struct trap_frame *)&proc0paddr->u_pcb.pcb_regs;
+	proc0.p_md.md_regs = (struct trapframe *)&proc0paddr->u_pcb.pcb_regs;
 	tlb_set_pid(MIN_USER_ASID);
 
 	/*

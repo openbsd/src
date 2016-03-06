@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip27_machdep.c,v 1.72 2016/02/27 13:08:07 mpi Exp $	*/
+/*	$OpenBSD: ip27_machdep.c,v 1.73 2016/03/06 19:42:27 mpi Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -81,8 +81,8 @@ int	ip27_hub_intr_establish(int (*)(void *), void *, int, int,
 void	ip27_hub_intr_disestablish(int);
 void	ip27_hub_intr_clear(int);
 void	ip27_hub_intr_set(int);
-uint32_t hubpi_intr0(uint32_t, struct trap_frame *);
-uint32_t hubpi_intr1(uint32_t, struct trap_frame *);
+uint32_t hubpi_intr0(uint32_t, struct trapframe *);
+uint32_t hubpi_intr1(uint32_t, struct trapframe *);
 void	ip27_hub_intr_makemasks0(void);
 void	ip27_hub_intr_makemasks1(void);
 void	ip27_hub_setintrmask(int);
@@ -1018,8 +1018,8 @@ ip27_nmi(void *arg)
 {
 	vaddr_t regs_offs;
 	register_t *regs, epc;
-	struct trap_frame nmi_frame;
-	extern int db_ktrap(int, struct trap_frame *);
+	struct trapframe nmi_frame;
+	extern int db_ktrap(int, struct trapframe *);
 
 	/*
 	 * Build a ddb frame from the registers saved in the NMI KREGS

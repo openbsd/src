@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.c,v 1.44 2016/02/27 13:08:07 mpi Exp $ */
+/*	$OpenBSD: db_machdep.c,v 1.45 2016/03/06 19:42:27 mpi Exp $ */
 
 /*
  * Copyright (c) 1998-2003 Opsycon AB (www.opsycon.se)
@@ -62,7 +62,7 @@ void  kdbpoke(vaddr_t, uint32_t);
 void  kdbpoked(vaddr_t, uint64_t);
 void  kdbpokew(vaddr_t, uint16_t);
 void  kdbpokeb(vaddr_t, uint8_t);
-int   db_ktrap(int, struct trap_frame *);
+int   db_ktrap(int, struct trapframe *);
 
 void db_print_tlb(uint, uint64_t);
 void db_trap_trace_cmd(db_expr_t, int, db_expr_t, char *);
@@ -130,7 +130,7 @@ struct db_variable *db_eregs = db_regs + nitems(db_regs);
 extern label_t  *db_recover;
 
 int
-db_ktrap(int type, struct trap_frame *fp)
+db_ktrap(int type, struct trapframe *fp)
 {
 	switch(type) {
 	case T_BREAK:		/* breakpoint */
@@ -336,7 +336,7 @@ void
 db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
     char *modif, int (*pr)(const char *, ...))
 {
-	struct trap_frame *regs = &ddb_regs;
+	struct trapframe *regs = &ddb_regs;
 
 	if (have_addr) {
 		(*pr)("mips trace requires a trap frame... giving up\n");

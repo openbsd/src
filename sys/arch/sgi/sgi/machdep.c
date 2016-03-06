@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.150 2014/12/10 15:29:53 mikeb Exp $ */
+/*	$OpenBSD: machdep.c,v 1.151 2016/03/06 19:42:27 mpi Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -587,7 +587,7 @@ mips_init(int argc, void *argv, caddr_t boot_esym)
 	proc0.p_cpu = ci;
 	proc0.p_addr = proc0paddr = ci->ci_curprocpaddr =
 	    (struct user *)pmap_steal_memory(USPACE, NULL, NULL);
-	proc0.p_md.md_regs = (struct trap_frame *)&proc0paddr->u_pcb.pcb_regs;
+	proc0.p_md.md_regs = (struct trapframe *)&proc0paddr->u_pcb.pcb_regs;
 	tlb_set_pid(MIN_USER_ASID);
 
 	/*
@@ -1066,7 +1066,7 @@ printf("perfcnt error %d\n", cmd);
  */
 void
 rm7k_perfintr(trapframe)
-	struct trap_frame *trapframe;
+	struct trapframe *trapframe;
 {
 	struct proc *p = curproc;
 
@@ -1081,7 +1081,7 @@ rm7k_perfintr(trapframe)
 
 int
 rm7k_watchintr(trapframe)
-	struct trap_frame *trapframe;
+	struct trapframe *trapframe;
 {
 	return(0);
 }

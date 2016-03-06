@@ -1,4 +1,4 @@
-/*      $OpenBSD: pcb.h,v 1.7 2015/05/05 02:13:47 guenther Exp $	*/
+/*      $OpenBSD: pcb.h,v 1.8 2016/03/06 19:42:27 mpi Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -46,7 +46,7 @@
  * MIPS process control block. This is first in the U-area.
  */
 struct pcb {
-	struct trap_frame pcb_regs;	/* saved CPU and registers */
+	struct trapframe pcb_regs;	/* saved CPU and registers */
 	struct {
 		register_t val[13];
 	} pcb_context;			/* kernel context for resume */

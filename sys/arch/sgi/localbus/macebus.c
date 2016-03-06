@@ -1,4 +1,4 @@
-/*	$OpenBSD: macebus.c,v 1.63 2014/09/30 06:51:58 jmatthew Exp $ */
+/*	$OpenBSD: macebus.c,v 1.64 2016/03/06 19:42:27 mpi Exp $ */
 
 /*
  * Copyright (c) 2000-2004 Opsycon AB  (www.opsycon.se)
@@ -57,8 +57,8 @@ int	 macebussubmatch(struct device *, void *, void *);
 
 void	 macebus_intr_makemasks(void);
 void	 macebus_splx(int);
-uint32_t macebus_iointr(uint32_t, struct trap_frame *);
-uint32_t macebus_aux(uint32_t, struct trap_frame *);
+uint32_t macebus_iointr(uint32_t, struct trapframe *);
+uint32_t macebus_aux(uint32_t, struct trapframe *);
 int	 macebus_iointr_skip(struct intrhand *, uint64_t, uint64_t);
 void	 crime_setintrmask(int);
 
@@ -633,7 +633,7 @@ macebus_iointr_skip(struct intrhand *ih, uint64_t mace_isr, uint64_t mace_imr)
  * Macebus auxilary functions run each clock interrupt.
  */
 uint32_t
-macebus_aux(uint32_t hwpend, struct trap_frame *cf)
+macebus_aux(uint32_t hwpend, struct trapframe *cf)
 {
 	u_int64_t mask;
 

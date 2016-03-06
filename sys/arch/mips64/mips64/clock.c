@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.40 2015/05/01 11:17:22 miod Exp $ */
+/*	$OpenBSD: clock.c,v 1.41 2016/03/06 19:42:27 mpi Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -61,7 +61,7 @@ struct cfattach clock_ca = {
 };
 
 void	cp0_startclock(struct cpu_info *);
-uint32_t cp0_int5(uint32_t, struct trap_frame *);
+uint32_t cp0_int5(uint32_t, struct trapframe *);
 
 int
 clockmatch(struct device *parent, void *vcf, void *aux)
@@ -100,7 +100,7 @@ clockattach(struct device *parent, struct device *self, void *aux)
  *  the clock is logically unmasked again.
  */
 uint32_t
-cp0_int5(uint32_t mask, struct trap_frame *tf)
+cp0_int5(uint32_t mask, struct trapframe *tf)
 {
 	u_int32_t clkdiff;
 	struct cpu_info *ci = curcpu();

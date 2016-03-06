@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.115 2016/03/01 11:56:00 mpi Exp $	*/
+/*	$OpenBSD: trap.c,v 1.116 2016/03/06 19:42:27 mpi Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -121,7 +121,7 @@ const char *trap_type[] = {
 struct trapdebug trapdebug[MAXCPUS * TRAPSIZE];
 uint trppos[MAXCPUS];
 
-void	stacktrace(struct trap_frame *);
+void	stacktrace(struct trapframe *);
 uint32_t kdbpeek(vaddr_t);
 uint64_t kdbpeekd(vaddr_t);
 #endif	/* DDB || DEBUG */
@@ -131,9 +131,9 @@ extern int db_ktrap(int, db_regs_t *);
 #endif
 
 void	ast(void);
-extern void interrupt(struct trap_frame *);
-void	itsa(struct trap_frame *, struct cpu_info *, struct proc *, int);
-void	trap(struct trap_frame *);
+extern void interrupt(struct trapframe *);
+void	itsa(struct trapframe *, struct cpu_info *, struct proc *, int);
+void	trap(struct trapframe *);
 #ifdef PTRACE
 int	ptrace_read_insn(struct proc *, vaddr_t, uint32_t *);
 int	ptrace_write_insn(struct proc *, vaddr_t, uint32_t);
@@ -162,7 +162,7 @@ ast(void)
  * pcb_onfault is set, otherwise, return old pc.
  */
 void
-trap(struct trap_frame *trapframe)
+trap(struct trapframe *trapframe)
 {
 	struct cpu_info *ci = curcpu();
 	struct proc *p = ci->ci_curproc;
@@ -265,7 +265,7 @@ trap(struct trap_frame *trapframe)
  * Handle a single exception.
  */
 void
-itsa(struct trap_frame *trapframe, struct cpu_info *ci, struct proc *p,
+itsa(struct trapframe *trapframe, struct cpu_info *ci, struct proc *p,
     int type)
 {
 	int i;
@@ -430,7 +430,7 @@ fault_common_no_miss:
 
 	case T_SYSCALL+T_USER:
 	    {
-		struct trap_frame *locr0 = p->p_md.md_regs;
+		struct trapframe *locr0 = p->p_md.md_regs;
 		struct sysent *callp;
 		unsigned int code;
 		register_t tpc;
@@ -549,7 +549,7 @@ fault_common_no_miss:
 	    {
 		caddr_t va;
 		u_int32_t instr;
-		struct trap_frame *locr0 = p->p_md.md_regs;
+		struct trapframe *locr0 = p->p_md.md_regs;
 
 		/* compute address of break instruction */
 		va = (caddr_t)trapframe->pc;
@@ -662,7 +662,7 @@ fault_common_no_miss:
 	    {
 		caddr_t va;
 		u_int32_t instr;
-		struct trap_frame *locr0 = p->p_md.md_regs;
+		struct trapframe *locr0 = p->p_md.md_regs;
 
 		/* compute address of trap instruction */
 		va = (caddr_t)trapframe->pc;
@@ -816,7 +816,7 @@ void
 child_return(void *arg)
 {
 	struct proc *p = arg;
-	struct trap_frame *trapframe;
+	struct trapframe *trapframe;
 
 	trapframe = p->p_md.md_regs;
 	trapframe->v0 = 0;
@@ -890,7 +890,7 @@ trapDump(const char *msg, int (*pr)(const char *, ...))
  * Return the resulting PC as if the branch was executed.
  */
 register_t
-MipsEmulateBranch(struct trap_frame *tf, vaddr_t instPC, uint32_t fsr,
+MipsEmulateBranch(struct trapframe *tf, vaddr_t instPC, uint32_t fsr,
     uint32_t curinst)
 {
 	register_t *regsPtr = (register_t *)tf;
@@ -1050,7 +1050,7 @@ ptrace_write_insn(struct proc *p, vaddr_t va, uint32_t insn)
 int
 process_sstep(struct proc *p, int sstep)
 {
-	struct trap_frame *locr0 = p->p_md.md_regs;
+	struct trapframe *locr0 = p->p_md.md_regs;
 	int rc;
 	uint32_t curinstr;
 	vaddr_t va;
@@ -1124,13 +1124,13 @@ process_sstep(struct proc *p, int sstep)
 #if !defined(DDB)
 const char *fn_name(vaddr_t);
 #endif
-void stacktrace_subr(struct trap_frame *, int, int (*)(const char*, ...));
+void stacktrace_subr(struct trapframe *, int, int (*)(const char*, ...));
 
 /*
  * Print a stack backtrace.
  */
 void
-stacktrace(struct trap_frame *regs)
+stacktrace(struct trapframe *regs)
 {
 	stacktrace_subr(regs, 6, printf);
 }
@@ -1146,7 +1146,7 @@ stacktrace(struct trap_frame *regs)
 #endif
 
 void
-stacktrace_subr(struct trap_frame *regs, int count,
+stacktrace_subr(struct trapframe *regs, int count,
     int (*pr)(const char*, ...))
 {
 	vaddr_t pc, sp, ra, va, subr;
@@ -1337,9 +1337,9 @@ loop:
 		else
 			(*pr)("(KERNEL INTERRUPT)\n");
 		sp = *(register_t *)sp;
-		pc = ((struct trap_frame *)sp)->pc;
-		ra = ((struct trap_frame *)sp)->ra;
-		sp = ((struct trap_frame *)sp)->sp;
+		pc = ((struct trapframe *)sp)->pc;
+		ra = ((struct trapframe *)sp)->ra;
+		sp = ((struct trapframe *)sp)->sp;
 		goto loop;
 	}
 
@@ -1409,7 +1409,7 @@ fn_name(vaddr_t addr)
  * destination.
  */
 int
-fpe_branch_emulate(struct proc *p, struct trap_frame *tf, uint32_t insn,
+fpe_branch_emulate(struct proc *p, struct trapframe *tf, uint32_t insn,
     vaddr_t dest)
 {
 	struct vm_map *map = &p->p_vmspace->vm_map;

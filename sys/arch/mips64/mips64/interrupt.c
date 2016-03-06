@@ -1,4 +1,4 @@
-/*	$OpenBSD: interrupt.c,v 1.65 2015/09/13 20:38:45 kettenis Exp $ */
+/*	$OpenBSD: interrupt.c,v 1.66 2016/03/06 19:42:27 mpi Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -48,7 +48,7 @@
 #endif
 
 void	dummy_splx(int);
-void	interrupt(struct trap_frame *);
+void	interrupt(struct trapframe *);
 
 static struct evcount soft_count;
 static int soft_irq = 0;
@@ -58,7 +58,7 @@ int	last_low_int;
 
 struct {
 	uint32_t int_mask;
-	uint32_t (*int_hand)(uint32_t, struct trap_frame *);
+	uint32_t (*int_hand)(uint32_t, struct trapframe *);
 } cpu_int_tab[NLOWINT];
 
 int_f	*splx_hand = &dummy_splx;
@@ -98,7 +98,7 @@ int_f	*splx_hand = &dummy_splx;
  */
 
 void
-interrupt(struct trap_frame *trapframe)
+interrupt(struct trapframe *trapframe)
 {
 	struct cpu_info *ci = curcpu();
 	u_int32_t pending;
@@ -164,7 +164,7 @@ interrupt(struct trap_frame *trapframe)
  */
 void
 set_intr(int pri, uint32_t mask,
-    uint32_t (*int_hand)(uint32_t, struct trap_frame *))
+    uint32_t (*int_hand)(uint32_t, struct trapframe *))
 {
 	if ((idle_mask & SOFT_INT_MASK) == 0) {
 		evcount_attach(&soft_count, "soft", &soft_irq);

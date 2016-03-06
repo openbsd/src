@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.71 2016/01/16 11:15:37 visa Exp $ */
+/*	$OpenBSD: machdep.c,v 1.72 2016/03/06 19:42:27 mpi Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -131,7 +131,7 @@ static void	process_bootargs(void);
 static uint64_t	get_ncpusfound(void);
 
 #ifdef MULTIPROCESSOR
-uint32_t	ipi_intr(uint32_t, struct trap_frame *);
+uint32_t	ipi_intr(uint32_t, struct trapframe *);
 #endif
 
 extern void 	parse_uboot_root(void);
@@ -432,7 +432,7 @@ mips_init(__register_t a0, __register_t a1, __register_t a2 __unused,
 
 	proc0.p_addr = proc0paddr = curcpu()->ci_curprocpaddr =
 	    (struct user *)pmap_steal_memory(USPACE, NULL, NULL);
-	proc0.p_md.md_regs = (struct trap_frame *)&proc0paddr->u_pcb.pcb_regs;
+	proc0.p_md.md_regs = (struct trapframe *)&proc0paddr->u_pcb.pcb_regs;
 	tlb_set_pid(MIN_USER_ASID);
 
 	/*
@@ -837,7 +837,7 @@ hw_cpu_hatch(struct cpu_info *ci)
  * IPI dispatcher.
  */
 uint32_t
-ipi_intr(uint32_t hwpend, struct trap_frame *frame)
+ipi_intr(uint32_t hwpend, struct trapframe *frame)
 {
 	u_long cpuid = cpu_number();
 

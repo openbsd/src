@@ -1,4 +1,4 @@
-/*	$OpenBSD: fp_emulate.c,v 1.13 2015/09/10 14:37:20 miod Exp $	*/
+/*	$OpenBSD: fp_emulate.c,v 1.14 2016/03/06 19:42:27 mpi Exp $	*/
 
 /*
  * Copyright (c) 2010 Miodrag Vallat.
@@ -44,30 +44,30 @@
 #include <machine/db_machdep.h>
 #endif
 
-int	fpu_emulate(struct proc *, struct trap_frame *, uint32_t,
+int	fpu_emulate(struct proc *, struct trapframe *, uint32_t,
 	    union sigval *);
-int	fpu_emulate_cop1(struct proc *, struct trap_frame *, uint32_t);
-int	fpu_emulate_cop1x(struct proc *, struct trap_frame *, uint32_t);
+int	fpu_emulate_cop1(struct proc *, struct trapframe *, uint32_t);
+int	fpu_emulate_cop1x(struct proc *, struct trapframe *, uint32_t);
 uint64_t
-	fpu_load(struct proc *, struct trap_frame *, uint, uint);
-void	fpu_store(struct proc *, struct trap_frame *, uint, uint, uint64_t);
+	fpu_load(struct proc *, struct trapframe *, uint, uint);
+void	fpu_store(struct proc *, struct trapframe *, uint, uint, uint64_t);
 #ifdef FPUEMUL
-int	nofpu_emulate_cop1(struct proc *, struct trap_frame *, uint32_t,
+int	nofpu_emulate_cop1(struct proc *, struct trapframe *, uint32_t,
 	    union sigval *);
-int	nofpu_emulate_cop1x(struct proc *, struct trap_frame *, uint32_t,
+int	nofpu_emulate_cop1x(struct proc *, struct trapframe *, uint32_t,
 	    union sigval *);
-int	nofpu_emulate_loadstore(struct proc *, struct trap_frame *, uint32_t,
+int	nofpu_emulate_loadstore(struct proc *, struct trapframe *, uint32_t,
 	    union sigval *);
-int	nofpu_emulate_movci(struct trap_frame *, uint32_t);
+int	nofpu_emulate_movci(struct trapframe *, uint32_t);
 #endif
 
-typedef	int (fpu_fn3)(struct proc *, struct trap_frame *, uint, uint, uint,
+typedef	int (fpu_fn3)(struct proc *, struct trapframe *, uint, uint, uint,
 	    uint);
-typedef	int (fpu_fn4)(struct proc *, struct trap_frame *, uint, uint, uint,
+typedef	int (fpu_fn4)(struct proc *, struct trapframe *, uint, uint, uint,
 	    uint, uint);
 fpu_fn3	fpu_abs;
 fpu_fn3	fpu_add;
-int	fpu_c(struct proc *, struct trap_frame *, uint, uint, uint, uint, uint);
+int	fpu_c(struct proc *, struct trapframe *, uint, uint, uint, uint, uint);
 fpu_fn3	fpu_ceil_l;
 fpu_fn3	fpu_ceil_w;
 fpu_fn3	fpu_cvt_d;
@@ -77,9 +77,9 @@ fpu_fn3	fpu_cvt_w;
 fpu_fn3	fpu_div;
 fpu_fn3	fpu_floor_l;
 fpu_fn3	fpu_floor_w;
-int	fpu_int_l(struct proc *, struct trap_frame *, uint, uint, uint, uint,
+int	fpu_int_l(struct proc *, struct trapframe *, uint, uint, uint, uint,
 	    uint);
-int	fpu_int_w(struct proc *, struct trap_frame *, uint, uint, uint, uint,
+int	fpu_int_w(struct proc *, struct trapframe *, uint, uint, uint, uint,
 	    uint);
 fpu_fn4	fpu_madd;
 fpu_fn4	fpu_msub;
@@ -127,7 +127,7 @@ fpu_fn3	fpu_trunc_w;
  * Handle a floating-point exception.
  */
 void
-MipsFPTrap(struct trap_frame *tf)
+MipsFPTrap(struct trapframe *tf)
 {
 	struct cpu_info *ci = curcpu();
 	struct proc *p = ci->ci_curproc;
@@ -410,7 +410,7 @@ deliver:
  * current PCB, and is pointed to by the trap frame.
  */
 int
-fpu_emulate(struct proc *p, struct trap_frame *tf, uint32_t insn,
+fpu_emulate(struct proc *p, struct trapframe *tf, uint32_t insn,
     union sigval *sv)
 {
 	InstFmt inst;
@@ -480,7 +480,7 @@ fpu_emulate(struct proc *p, struct trap_frame *tf, uint32_t insn,
  * Emulate a COP1 FPU instruction.
  */
 int
-fpu_emulate_cop1(struct proc *p, struct trap_frame *tf, uint32_t insn)
+fpu_emulate_cop1(struct proc *p, struct trapframe *tf, uint32_t insn)
 {
 	InstFmt inst;
 	uint ft, fs, fd;
@@ -612,7 +612,7 @@ fpu_emulate_cop1(struct proc *p, struct trap_frame *tf, uint32_t insn)
  * Emulate a COP1X FPU instruction.
  */
 int
-fpu_emulate_cop1x(struct proc *p, struct trap_frame *tf, uint32_t insn)
+fpu_emulate_cop1x(struct proc *p, struct trapframe *tf, uint32_t insn)
 {
 	InstFmt inst;
 	uint fr, ft, fs, fd;
@@ -678,7 +678,7 @@ fpu_emulate_cop1x(struct proc *p, struct trap_frame *tf, uint32_t insn)
  * Load a floating-point argument according to the specified format.
  */
 uint64_t
-fpu_load(struct proc *p, struct trap_frame *tf, uint fmt, uint regno)
+fpu_load(struct proc *p, struct trapframe *tf, uint fmt, uint regno)
 {
 	uint64_t tmp, tmp2;
 
@@ -716,7 +716,7 @@ fpu_load(struct proc *p, struct trap_frame *tf, uint fmt, uint regno)
  * Store a floating-point result according to the specified format.
  */
 void
-fpu_store(struct proc *p, struct trap_frame *tf, uint fmt, uint regno,
+fpu_store(struct proc *p, struct trapframe *tf, uint fmt, uint regno,
     uint64_t rslt)
 {
 	if (tf->sr & SR_FR_32) {
@@ -735,7 +735,7 @@ fpu_store(struct proc *p, struct trap_frame *tf, uint fmt, uint regno,
  */
 
 int
-fpu_int_l(struct proc *p, struct trap_frame *tf, uint fmt, uint ft, uint fs,
+fpu_int_l(struct proc *p, struct trapframe *tf, uint fmt, uint ft, uint fs,
     uint fd, uint rm)
 {
 	uint64_t raw;
@@ -765,7 +765,7 @@ fpu_int_l(struct proc *p, struct trap_frame *tf, uint fmt, uint ft, uint fs,
 }
 
 int
-fpu_int_w(struct proc *p, struct trap_frame *tf, uint fmt, uint ft, uint fs,
+fpu_int_w(struct proc *p, struct trapframe *tf, uint fmt, uint ft, uint fs,
     uint fd, uint rm)
 {
 	uint64_t raw;
@@ -799,7 +799,7 @@ fpu_int_w(struct proc *p, struct trap_frame *tf, uint fmt, uint ft, uint fs,
  */
 
 int
-fpu_abs(struct proc *p, struct trap_frame *tf, uint fmt, uint ft, uint fs,
+fpu_abs(struct proc *p, struct trapframe *tf, uint fmt, uint ft, uint fs,
     uint fd)
 {
 	uint64_t raw;
@@ -834,7 +834,7 @@ fpu_abs(struct proc *p, struct trap_frame *tf, uint fmt, uint ft, uint fs,
 }
 
 int
-fpu_add(struct proc *p, struct trap_frame *tf, uint fmt, uint ft, uint fs,
+fpu_add(struct proc *p, struct trapframe *tf, uint fmt, uint ft, uint fs,
     uint fd)
 {
 	uint64_t raw1, raw2, rslt;
@@ -857,7 +857,7 @@ fpu_add(struct proc *p, struct trap_frame *tf, uint fmt, uint ft, uint fs,
 }
 
 int
-fpu_c(struct proc *p, struct trap_frame *tf, uint fmt, uint ft, uint fs,
+fpu_c(struct proc *p, struct trapframe *tf, uint fmt, uint ft, uint fs,
     uint fd, uint op)
 {
 	uint64_t raw1, raw2;
@@ -932,7 +932,7 @@ skip:
 }
 
 int
-fpu_ceil_l(struct proc *p, struct trap_frame *tf, uint fmt, uint ft, uint fs,
+fpu_ceil_l(struct proc *p, struct trapframe *tf, uint fmt, uint ft, uint fs,
     uint fd)
 {
 	/* round towards positive infinity */
@@ -940,7 +940,7 @@ fpu_ceil_l(struct proc *p, struct trap_frame *tf, uint fmt, uint ft, uint fs,
 }
 
 int
-fpu_ceil_w(struct proc *p, struct trap_frame *tf, uint fmt, uint ft, uint fs,
+fpu_ceil_w(struct proc *p, struct trapframe *tf, uint fmt, uint ft, uint fs,
     uint fd)
 {
 	/* round towards positive infinity */
@@ -948,7 +948,7 @@ fpu_ceil_w(struct proc *p, struct trap_frame *tf, uint fmt, uint ft, uint fs,
 }
 
 int
-fpu_cvt_d(struct proc *p, struct trap_frame *tf, uint fmt, uint ft, uint fs,
+fpu_cvt_d(struct proc *p, struct trapframe *tf, uint fmt, uint ft, uint fs,
     uint fd)
 {
 	uint64_t raw;
@@ -976,7 +976,7 @@ fpu_cvt_d(struct proc *p, struct trap_frame *tf, uint fmt, uint ft, uint fs,
 }
 
 int
-fpu_cvt_l(struct proc *p, struct trap_frame *tf, uint fmt, uint ft, uint fs,
+fpu_cvt_l(struct proc *p, struct trapframe *tf, uint fmt, uint ft, uint fs,
     uint fd)
 {
 	uint64_t raw;
@@ -1007,7 +1007,7 @@ fpu_cvt_l(struct proc *p, struct trap_frame *tf, uint fmt, uint ft, uint fs,
 }
 
 int
-fpu_cvt_s(struct proc *p, struct trap_frame *tf, uint fmt, uint ft, uint fs,
+fpu_cvt_s(struct proc *p, struct trapframe *tf, uint fmt, uint ft, uint fs,
     uint fd)
 {
 	uint64_t raw;
@@ -1035,7 +1035,7 @@ fpu_cvt_s(struct proc *p, struct trap_frame *tf, uint fmt, uint ft, uint fs,
 }
 
 int
-fpu_cvt_w(struct proc *p, struct trap_frame *tf, uint fmt, uint ft, uint fs,
+fpu_cvt_w(struct proc *p, struct trapframe *tf, uint fmt, uint ft, uint fs,
     uint fd)
 {
 	uint64_t raw;
@@ -1066,7 +1066,7 @@ fpu_cvt_w(struct proc *p, struct trap_frame *tf, uint fmt, uint ft, uint fs,
 }
 
 int
-fpu_div(struct proc *p, struct trap_frame *tf, uint fmt, uint ft, uint fs,
+fpu_div(struct proc *p, struct trapframe *tf, uint fmt, uint ft, uint fs,
     uint fd)
 {
 	uint64_t raw1, raw2, rslt;
@@ -1089,7 +1089,7 @@ fpu_div(struct proc *p, struct trap_frame *tf, uint fmt, uint ft, uint fs,
 }
 
 int
-fpu_floor_l(struct proc *p, struct trap_frame *tf, uint fmt, uint ft, uint fs,
+fpu_floor_l(struct proc *p, struct trapframe *tf, uint fmt, uint ft, uint fs,
     uint fd)
 {
 	/* round towards negative infinity */
@@ -1097,7 +1097,7 @@ fpu_floor_l(struct proc *p, struct trap_frame *tf, uint fmt, uint ft, uint fs,
 }
 
 int
-fpu_floor_w(struct proc *p, struct trap_frame *tf, uint fmt, uint ft, uint fs,
+fpu_floor_w(struct proc *p, struct trapframe *tf, uint fmt, uint ft, uint fs,
     uint fd)
 {
 	/* round towards negative infinity */
@@ -1105,7 +1105,7 @@ fpu_floor_w(struct proc *p, struct trap_frame *tf, uint fmt, uint ft, uint fs,
 }
 
 int
-fpu_madd(struct proc *p, struct trap_frame *tf, uint fmt, uint fr, uint ft,
+fpu_madd(struct proc *p, struct trapframe *tf, uint fmt, uint fr, uint ft,
     uint fs, uint fd)
 {
 	uint64_t raw1, raw2, raw3, rslt;
@@ -1133,7 +1133,7 @@ fpu_madd(struct proc *p, struct trap_frame *tf, uint fmt, uint fr, uint ft,
 }
 
 int
-fpu_mov(struct proc *p, struct trap_frame *tf, uint fmt, uint ft, uint fs,
+fpu_mov(struct proc *p, struct trapframe *tf, uint fmt, uint ft, uint fs,
     uint fd)
 {
 	uint64_t raw;
@@ -1150,7 +1150,7 @@ fpu_mov(struct proc *p, struct trap_frame *tf, uint fmt, uint ft, uint fs,
 }
 
 int
-fpu_movcf(struct proc *p, struct trap_frame *tf, uint fmt, uint ft, uint fs,
+fpu_movcf(struct proc *p, struct trapframe *tf, uint fmt, uint ft, uint fs,
     uint fd)
 {
 	uint64_t raw;
@@ -1174,7 +1174,7 @@ fpu_movcf(struct proc *p, struct trap_frame *tf, uint fmt, uint ft, uint fs,
 }
 
 int
-fpu_movn(struct proc *p, struct trap_frame *tf, uint fmt, uint ft, uint fs,
+fpu_movn(struct proc *p, struct trapframe *tf, uint fmt, uint ft, uint fs,
     uint fd)
 {
 	register_t *regs = (register_t *)tf;
@@ -1192,7 +1192,7 @@ fpu_movn(struct proc *p, struct trap_frame *tf, uint fmt, uint ft, uint fs,
 }
 
 int
-fpu_movz(struct proc *p, struct trap_frame *tf, uint fmt, uint ft, uint fs,
+fpu_movz(struct proc *p, struct trapframe *tf, uint fmt, uint ft, uint fs,
     uint fd)
 {
 	register_t *regs = (register_t *)tf;
@@ -1210,7 +1210,7 @@ fpu_movz(struct proc *p, struct trap_frame *tf, uint fmt, uint ft, uint fs,
 }
 
 int
-fpu_msub(struct proc *p, struct trap_frame *tf, uint fmt, uint fr, uint ft,
+fpu_msub(struct proc *p, struct trapframe *tf, uint fmt, uint fr, uint ft,
     uint fs, uint fd)
 {
 	uint64_t raw1, raw2, raw3, rslt;
@@ -1238,7 +1238,7 @@ fpu_msub(struct proc *p, struct trap_frame *tf, uint fmt, uint fr, uint ft,
 }
 
 int
-fpu_mul(struct proc *p, struct trap_frame *tf, uint fmt, uint ft, uint fs,
+fpu_mul(struct proc *p, struct trapframe *tf, uint fmt, uint ft, uint fs,
     uint fd)
 {
 	uint64_t raw1, raw2, rslt;
@@ -1261,7 +1261,7 @@ fpu_mul(struct proc *p, struct trap_frame *tf, uint fmt, uint ft, uint fs,
 }
 
 int
-fpu_neg(struct proc *p, struct trap_frame *tf, uint fmt, uint ft, uint fs,
+fpu_neg(struct proc *p, struct trapframe *tf, uint fmt, uint ft, uint fs,
     uint fd)
 {
 	uint64_t raw;
@@ -1296,7 +1296,7 @@ fpu_neg(struct proc *p, struct trap_frame *tf, uint fmt, uint ft, uint fs,
 }
 
 int
-fpu_nmadd(struct proc *p, struct trap_frame *tf, uint fmt, uint fr, uint ft,
+fpu_nmadd(struct proc *p, struct trapframe *tf, uint fmt, uint fr, uint ft,
     uint fs, uint fd)
 {
 	uint64_t raw1, raw2, raw3, rslt;
@@ -1332,7 +1332,7 @@ fpu_nmadd(struct proc *p, struct trap_frame *tf, uint fmt, uint fr, uint ft,
 }
 
 int
-fpu_nmsub(struct proc *p, struct trap_frame *tf, uint fmt, uint fr, uint ft,
+fpu_nmsub(struct proc *p, struct trapframe *tf, uint fmt, uint fr, uint ft,
     uint fs, uint fd)
 {
 	uint64_t raw1, raw2, raw3, rslt;
@@ -1368,7 +1368,7 @@ fpu_nmsub(struct proc *p, struct trap_frame *tf, uint fmt, uint fr, uint ft,
 }
 
 int
-fpu_recip(struct proc *p, struct trap_frame *tf, uint fmt, uint ft, uint fs,
+fpu_recip(struct proc *p, struct trapframe *tf, uint fmt, uint ft, uint fs,
     uint fd)
 {
 	uint64_t raw;
@@ -1392,7 +1392,7 @@ fpu_recip(struct proc *p, struct trap_frame *tf, uint fmt, uint ft, uint fs,
 }
 
 int
-fpu_round_l(struct proc *p, struct trap_frame *tf, uint fmt, uint ft, uint fs,
+fpu_round_l(struct proc *p, struct trapframe *tf, uint fmt, uint ft, uint fs,
     uint fd)
 {
 	/* round towards nearest */
@@ -1400,7 +1400,7 @@ fpu_round_l(struct proc *p, struct trap_frame *tf, uint fmt, uint ft, uint fs,
 }
 
 int
-fpu_round_w(struct proc *p, struct trap_frame *tf, uint fmt, uint ft, uint fs,
+fpu_round_w(struct proc *p, struct trapframe *tf, uint fmt, uint ft, uint fs,
     uint fd)
 {
 	/* round towards nearest */
@@ -1408,7 +1408,7 @@ fpu_round_w(struct proc *p, struct trap_frame *tf, uint fmt, uint ft, uint fs,
 }
 
 int
-fpu_rsqrt(struct proc *p, struct trap_frame *tf, uint fmt, uint ft, uint fs,
+fpu_rsqrt(struct proc *p, struct trapframe *tf, uint fmt, uint ft, uint fs,
     uint fd)
 {
 	uint64_t raw;
@@ -1438,7 +1438,7 @@ fpu_rsqrt(struct proc *p, struct trap_frame *tf, uint fmt, uint ft, uint fs,
 }
 
 int
-fpu_sqrt(struct proc *p, struct trap_frame *tf, uint fmt, uint ft, uint fs,
+fpu_sqrt(struct proc *p, struct trapframe *tf, uint fmt, uint ft, uint fs,
     uint fd)
 {
 	uint64_t raw;
@@ -1462,7 +1462,7 @@ fpu_sqrt(struct proc *p, struct trap_frame *tf, uint fmt, uint ft, uint fs,
 }
 
 int
-fpu_sub(struct proc *p, struct trap_frame *tf, uint fmt, uint ft, uint fs,
+fpu_sub(struct proc *p, struct trapframe *tf, uint fmt, uint ft, uint fs,
     uint fd)
 {
 	uint64_t raw1, raw2, rslt;
@@ -1485,7 +1485,7 @@ fpu_sub(struct proc *p, struct trap_frame *tf, uint fmt, uint ft, uint fs,
 }
 
 int
-fpu_trunc_l(struct proc *p, struct trap_frame *tf, uint fmt, uint ft, uint fs,
+fpu_trunc_l(struct proc *p, struct trapframe *tf, uint fmt, uint ft, uint fs,
     uint fd)
 {
 	/* round towards zero */
@@ -1493,7 +1493,7 @@ fpu_trunc_l(struct proc *p, struct trap_frame *tf, uint fmt, uint ft, uint fs,
 }
 
 int
-fpu_trunc_w(struct proc *p, struct trap_frame *tf, uint fmt, uint ft, uint fs,
+fpu_trunc_w(struct proc *p, struct trapframe *tf, uint fmt, uint ft, uint fs,
     uint fd)
 {
 	/* round towards zero */
@@ -1506,7 +1506,7 @@ fpu_trunc_w(struct proc *p, struct trap_frame *tf, uint fmt, uint ft, uint fs,
  * Emulate a COP1 non-FPU instruction.
  */
 int
-nofpu_emulate_cop1(struct proc *p, struct trap_frame *tf, uint32_t insn,
+nofpu_emulate_cop1(struct proc *p, struct trapframe *tf, uint32_t insn,
     union sigval *sv)
 {
 	register_t *regs = (register_t *)tf;
@@ -1636,7 +1636,7 @@ nofpu_emulate_cop1(struct proc *p, struct trap_frame *tf, uint32_t insn,
  * Emulate a COP1X non-FPU instruction.
  */
 int
-nofpu_emulate_cop1x(struct proc *p, struct trap_frame *tf, uint32_t insn,
+nofpu_emulate_cop1x(struct proc *p, struct trapframe *tf, uint32_t insn,
     union sigval *sv)
 {
 	register_t *regs = (register_t *)tf;
@@ -1725,7 +1725,7 @@ nofpu_emulate_cop1x(struct proc *p, struct trap_frame *tf, uint32_t insn,
  * Emulate a load/store instruction on FPU registers.
  */
 int
-nofpu_emulate_loadstore(struct proc *p, struct trap_frame *tf, uint32_t insn,
+nofpu_emulate_loadstore(struct proc *p, struct trapframe *tf, uint32_t insn,
     union sigval *sv)
 {
 	register_t *regs = (register_t *)tf;
@@ -1799,7 +1799,7 @@ nofpu_emulate_loadstore(struct proc *p, struct trap_frame *tf, uint32_t insn,
  * Emulate MOVF and MOVT.
  */
 int
-nofpu_emulate_movci(struct trap_frame *tf, uint32_t insn)
+nofpu_emulate_movci(struct trapframe *tf, uint32_t insn)
 {
 	register_t *regs = (register_t *)tf;
 	InstFmt inst;
