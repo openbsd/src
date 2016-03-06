@@ -1,4 +1,4 @@
-/*	$OpenBSD: mknod.c,v 1.27 2016/03/06 14:38:19 espie Exp $	*/
+/*	$OpenBSD: mknod.c,v 1.28 2016/03/06 19:31:31 tb Exp $	*/
 /*	$NetBSD: mknod.c,v 1.8 1995/08/11 00:08:18 jtc Exp $	*/
 
 /*
@@ -54,7 +54,7 @@ main(int argc, char *argv[])
 
 	setlocale(LC_ALL, "");
 
-	if (pledge("stdio rpath dpath", NULL) == -1)
+	if (pledge("stdio dpath", NULL) == -1)
 		err(1, "pledge");
 
 	node = reallocarray(NULL, sizeof(struct node), argc);
