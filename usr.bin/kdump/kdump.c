@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdump.c,v 1.122 2016/03/06 20:25:27 guenther Exp $	*/
+/*	$OpenBSD: kdump.c,v 1.123 2016/03/06 22:33:48 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -273,6 +273,9 @@ main(int argc, char *argv[])
 		case KTR_PLEDGE:
 			ktrpledge((struct ktr_pledge *)m, ktrlen);
 			break;
+		default:
+			printf("\n");
+			break;
 		}
 		if (tail)
 			(void)fflush(stdout);
@@ -331,6 +334,11 @@ dumpheader(struct ktr_header *kth)
 		type = "PLDG";
 		break;
 	default:
+		/* htobe32() not guaranteed to work as case label */
+		if (kth->ktr_type == htobe32(KTR_START)) {
+			type = "STRT";
+			break;
+		}
 		(void)snprintf(unknown, sizeof unknown, "UNKNOWN(%u)",
 		    kth->ktr_type);
 		type = unknown;
