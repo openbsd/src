@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_bio.c,v 1.171 2015/11/28 21:52:02 beck Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.172 2016/03/06 19:15:23 mpi Exp $	*/
 /*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
 
 /*
@@ -461,13 +461,19 @@ bread_cluster(struct vnode *vp, daddr_t blkno, int size, struct buf **rbpp)
 
 	*rbpp = bio_doread(vp, blkno, size, 0);
 
+	/*
+	 * If the buffer is in the cache skip any I/O operation.
+	 */
+	if (ISSET((*rbpp)->b_flags, B_CACHE))
+		goto out;
+
 	if (size != round_page(size))
 		goto out;
 
 	if (VOP_BMAP(vp, blkno + 1, NULL, &sblkno, &maxra))
 		goto out;
 
-	maxra++; 
+	maxra++;
 	if (sblkno == -1 || maxra < 2)
 		goto out;
 
