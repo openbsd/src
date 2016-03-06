@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ltrace.1,v 1.8 2015/09/07 18:17:10 jmc Exp $
+.\"	$OpenBSD: ltrace.1,v 1.9 2016/03/06 20:25:27 guenther Exp $
 .\"
 .\" Copyright (c) 2013 Miodrag Vallat.
 .\"
@@ -43,7 +43,7 @@
 .\"
 .\"	from: @(#)ktrace.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: September 7 2015 $
+.Dd $Mdocdate: March 6 2016 $
 .Dt LTRACE 1
 .Os
 .Sh NAME
@@ -104,20 +104,18 @@ processes.
 The string argument represents the kernel trace points, one per letter.
 The default flags are
 .Cm c ,
-.Cm e ,
 .Cm i ,
 .Cm n ,
 .Cm s ,
 .Cm t ,
+.Cm u ,
 and
-.Cm u .
+.Cm x .
 The following table equates the letters with the tracepoints:
 .Pp
 .Bl -tag -width flag -offset indent -compact
 .It Cm c
 trace system calls
-.It Cm e
-trace emulation changes
 .It Cm i
 trace I/O
 .It Cm n
@@ -129,9 +127,15 @@ trace various structures
 .It Cm u
 trace user data coming from
 .Xr utrace 2
-.El
+.It Cm x
+trace argument vector in
+.Xr execve 2
+.It Cm X
+trace environment in
+.Xr execve 2
 .It Cm +
 trace the default points
+.El
 .It Fl u Ar trspec
 Restrict the trace to a list of shared objects and/or function names, as
 specified by the

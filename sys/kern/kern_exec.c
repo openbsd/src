@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.173 2015/12/05 10:11:53 tedu Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.174 2016/03/06 20:25:27 guenther Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -733,18 +733,8 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 	if (pack.ep_emul->e_proc_exec)
 		(*pack.ep_emul->e_proc_exec)(p, &pack);
 
-#if defined(KTRACE) && defined(COMPAT_LINUX)
-	/* update ps_emul, but don't ktrace it if native-execing-native */
-	if (pr->ps_emul != pack.ep_emul || pack.ep_emul != &emul_native) {
-		pr->ps_emul = pack.ep_emul;
-
-		if (KTRPOINT(p, KTR_EMUL))
-			ktremul(p);
-	}
-#else
 	/* update ps_emul, the old value is no longer needed */
 	pr->ps_emul = pack.ep_emul;
-#endif
 
 	atomic_clearbits_int(&pr->ps_flags, PS_INEXEC);
 	single_thread_clear(p, P_SUSPSIG);

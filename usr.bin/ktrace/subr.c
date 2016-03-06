@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr.c,v 1.11 2015/10/02 05:07:41 guenther Exp $	*/
+/*	$OpenBSD: subr.c,v 1.12 2016/03/06 20:25:27 guenther Exp $	*/
 /*	$NetBSD: subr.c,v 1.6 1995/08/31 23:01:45 jtc Exp $	*/
 
 /*-
@@ -52,9 +52,6 @@ getpoints(s)
 		switch(*s) {
 		case 'c':
 			facs |= KTRFAC_SYSCALL | KTRFAC_SYSRET;
-			break;
-		case 'e':
-			facs |= KTRFAC_EMUL;
 			break;
 		case 'n':
 			facs |= KTRFAC_NAMEI;

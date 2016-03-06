@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ktrace.1,v 1.27 2015/10/02 05:07:41 guenther Exp $
+.\"	$OpenBSD: ktrace.1,v 1.28 2016/03/06 20:25:27 guenther Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)ktrace.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: October 2 2015 $
+.Dd $Mdocdate: March 6 2016 $
 .Dt KTRACE 1
 .Os
 .Sh NAME
@@ -56,7 +56,7 @@ unless overridden by the
 .Fl f
 option.
 The kernel operations traced are system calls, namei translations,
-signal processing, I/O and emulation changes.
+signal processing and I/O.
 .Pp
 Once tracing is enabled on a process, trace data will be logged until
 either the process exits or the trace point is cleared.
@@ -113,7 +113,6 @@ flag is permitted).
 The string argument represents the kernel trace points, one per letter.
 The default flags are
 .Cm c ,
-.Cm e ,
 .Cm i ,
 .Cm n ,
 .Cm s ,
@@ -126,8 +125,6 @@ The following table equates the letters with the tracepoints:
 .Bl -tag -width flag -offset indent -compact
 .It Cm c
 trace system calls
-.It Cm e
-trace emulation changes
 .It Cm i
 trace I/O
 .It Cm n

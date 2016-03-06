@@ -1,4 +1,4 @@
-/*	$OpenBSD: ktrace.h,v 1.28 2015/12/17 16:57:21 tedu Exp $	*/
+/*	$OpenBSD: ktrace.h,v 1.29 2016/03/06 20:25:26 guenther Exp $	*/
 /*	$NetBSD: ktrace.h,v 1.12 1996/02/04 02:12:29 christos Exp $	*/
 
 /*
@@ -129,12 +129,6 @@ struct ktr_psig {
 };
 
 /*
- * KTR_EMUL - emulation change
- */
-#define KTR_EMUL	7
-	/* record contains emulation name */
-
-/*
  * KTR_STRUCT - misc. structs
  */
 #define KTR_STRUCT	8
@@ -184,7 +178,6 @@ struct ktr_pledge {
 #define KTRFAC_NAMEI	(1<<KTR_NAMEI)
 #define KTRFAC_GENIO	(1<<KTR_GENIO)
 #define	KTRFAC_PSIG	(1<<KTR_PSIG)
-#define KTRFAC_EMUL	(1<<KTR_EMUL)
 #define KTRFAC_STRUCT   (1<<KTR_STRUCT)
 #define KTRFAC_USER	(1<<KTR_USER)
 #define KTRFAC_EXECARGS	(1<<KTR_EXECARGS)
@@ -208,7 +201,6 @@ __END_DECLS
 
 #else
 
-void ktremul(struct proc *);
 void ktrgenio(struct proc *, int, enum uio_rw, struct iovec *, ssize_t);
 void ktrnamei(struct proc *, char *);
 void ktrpsig(struct proc *, int, sig_t, int, int, siginfo_t *);
