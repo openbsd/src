@@ -1,8 +1,8 @@
-.\"	$OpenBSD: ptrace.2,v 1.35 2015/12/01 07:50:03 deraadt Exp $
+.\"	$OpenBSD: ptrace.2,v 1.36 2016/03/06 05:29:30 guenther Exp $
 .\"	$NetBSD: ptrace.2,v 1.3 1996/02/23 01:39:41 jtc Exp $
 .\"
 .\" This file is in the public domain.
-.Dd $Mdocdate: December 1 2015 $
+.Dd $Mdocdate: March 6 2016 $
 .Dt PTRACE 2
 .Os
 .Sh NAME
@@ -301,6 +301,28 @@ The
 .Fa data
 argument should be set to
 .Li sizeof(struct ptrace_state) .
+.It Dv PT_GET_THREAD_FIRST
+This request reads the thread ID of the traced process' first thread into the
+.Dq Li struct ptrace_thread_state
+pointed to by
+.Fa addr .
+The
+.Fa data
+argument should be set to
+.Li sizeof(struct ptrace_thread_state) .
+.It Dv PT_GET_THREAD_NEXT
+This request is just like
+.Dv PT_GET_THREAD_FIRST ,
+except it returns the thread ID of the subsequent thread.
+The
+.Dq Li struct ptrace_thread_state
+pointed to by
+.Fa addr
+must be initialized by a previous
+.Dv PT_GET_THREAD_FIRST
+or
+.Dv PT_GET_THREAD_NEXT
+request.
 .El
 .Pp
 Additionally, machine-specific requests can exist.
