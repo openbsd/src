@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_print.c,v 1.16 2016/01/25 14:30:30 mpi Exp $	*/
+/*	$OpenBSD: db_print.c,v 1.17 2016/03/06 13:33:21 mpi Exp $	*/
 /*	$NetBSD: db_print.c,v 1.5 1996/02/05 01:57:11 christos Exp $	*/
 
 /*
@@ -65,5 +65,5 @@ db_show_regs(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 	    }
 	    db_printf("\n");
 	}
-	db_print_loc_and_inst(PC_REGS(DDB_REGS));
+	db_print_loc_and_inst(PC_REGS(&ddb_regs));
 }

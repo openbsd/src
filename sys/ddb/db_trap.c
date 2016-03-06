@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trap.c,v 1.24 2016/01/25 14:30:30 mpi Exp $	*/
+/*	$OpenBSD: db_trap.c,v 1.25 2016/03/06 13:33:21 mpi Exp $	*/
 /*	$NetBSD: db_trap.c,v 1.9 1996/02/05 01:57:18 christos Exp $	*/
 
 /*
@@ -56,7 +56,7 @@ db_trap(int type, int code)
 	bkpt = IS_BREAKPOINT_TRAP(type, code);
 	watchpt = IS_WATCHPOINT_TRAP(type, code);
 
-	if (db_stop_at_pc(DDB_REGS, &bkpt)) {
+	if (db_stop_at_pc(&ddb_regs, &bkpt)) {
 		if (db_inst_count) {
 			db_printf("After %d instructions\n", db_inst_count);
 		}
@@ -66,7 +66,7 @@ db_trap(int type, int code)
 			db_printf("Watchpoint at\t");
 		else
 			db_printf("Stopped at\t");
-		db_dot = PC_REGS(DDB_REGS);
+		db_dot = PC_REGS(&ddb_regs);
 		db_print_loc_and_inst(db_dot);
 
 		if (panicstr != NULL) {
@@ -93,6 +93,6 @@ db_trap(int type, int code)
 		db_command_loop();
 	}
 
-	db_restart_at_pc(DDB_REGS, watchpt);
+	db_restart_at_pc(&ddb_regs, watchpt);
 	db_is_active = 0;
 }
