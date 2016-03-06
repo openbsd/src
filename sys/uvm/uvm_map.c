@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.206 2016/03/03 12:41:30 naddy Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.207 2016/03/06 08:56:16 stefan Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -317,10 +317,12 @@ vaddr_t uvm_maxkaddr;
  */
 #define UVM_MAP_REQ_WRITE(_map)						\
 	do {								\
-		if (((_map)->flags & VM_MAP_INTRSAFE) == 0)		\
-			rw_assert_wrlock(&(_map)->lock);		\
-		else							\
-			MUTEX_ASSERT_LOCKED(&(_map)->mtx);		\
+		if ((_map)->ref_count > 0) {				\
+			if (((_map)->flags & VM_MAP_INTRSAFE) == 0)	\
+				rw_assert_wrlock(&(_map)->lock);	\
+			else						\
+				MUTEX_ASSERT_LOCKED(&(_map)->mtx);	\
+		}							\
 	} while (0)
 
 /*
@@ -2409,7 +2411,7 @@ uvm_map_setup(struct vm_map *map, vaddr_t min, vaddr_t max, int flags)
 	map->uaddr_brk_stack = NULL;
 
 	map->size = 0;
-	map->ref_count = 1;
+	map->ref_count = 0;
 	map->min_offset = min;
 	map->max_offset = max;
 	map->b_start = map->b_end = 0; /* Empty brk() area by default. */
@@ -2428,20 +2430,13 @@ uvm_map_setup(struct vm_map *map, vaddr_t min, vaddr_t max, int flags)
 
 	/*
 	 * Fill map entries.
-	 * This requires a write-locked map (because of diagnostic assertions
-	 * in insert code).
+	 * We do not need to write-lock the map here because only the current
+	 * thread sees it right now. Initialize ref_count to 0 above to avoid
+	 * bogus triggering of lock-not-held assertions.
 	 */
-	if ((map->flags & VM_MAP_INTRSAFE) == 0) {
-		if (rw_enter(&map->lock, RW_NOSLEEP|RW_WRITE) != 0)
-			panic("uvm_map_setup: rw_enter failed on new map");
-	} else
-		mtx_enter(&map->mtx);
 	uvm_map_setup_entries(map);
 	uvm_tree_sanity(map, __FILE__, __LINE__);
-	if ((map->flags & VM_MAP_INTRSAFE) == 0)
-		rw_exit(&map->lock);
-	else
-		mtx_leave(&map->mtx);
+	map->ref_count = 1;
 }
 
 /*
@@ -2464,9 +2459,6 @@ uvm_map_teardown(struct vm_map *map)
 	KERNEL_ASSERT_UNLOCKED();
 
 	KASSERT((map->flags & VM_MAP_INTRSAFE) == 0);
-
-	if (rw_enter(&map->lock, RW_NOSLEEP | RW_WRITE) != 0)
-		panic("uvm_map_teardown: rw_enter failed on free map");
 
 	/* Remove address selectors. */
 	uvm_addr_destroy(map->uaddr_exe);
@@ -2508,8 +2500,6 @@ uvm_map_teardown(struct vm_map *map)
 		/* Update wave-front. */
 		entry = TAILQ_NEXT(entry, dfree.deadq);
 	}
-
-	rw_exit(&map->lock);
 
 #ifdef VMMAP_DEBUG
 	numt = numq = 0;
