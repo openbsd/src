@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.154 2015/10/09 01:10:27 deraadt Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.155 2016/03/06 05:20:26 guenther Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -72,6 +72,10 @@
 #include <sys/syscallargs.h>
 
 #include <uvm/uvm_extern.h>
+
+void	proc_finish_wait(struct proc *, struct proc *);
+void	process_zap(struct process *);
+void	proc_free(struct proc *);
 
 /*
  * exit --
