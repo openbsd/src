@@ -87,7 +87,6 @@ void db_printsym(db_expr_t, db_strategy_t, int (*)(const char *, ...));
 					/* print closest symbol to a value */
 
 boolean_t db_elf_sym_init(int, void *, void *, const char *);
-void db_elf_sym_values(db_sym_t, char **, db_expr_t *);
 db_sym_t db_elf_sym_search(db_addr_t, db_strategy_t, db_expr_t *);
 boolean_t db_elf_line_at_pc(db_sym_t, char **, int *, db_expr_t);
 void db_elf_sym_forall(db_forall_func_t db_forall_func, void *);

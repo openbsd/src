@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_elf.c,v 1.19 2016/03/01 21:32:02 mpi Exp $	*/
+/*	$OpenBSD: db_elf.c,v 1.20 2016/03/06 19:05:30 mpi Exp $	*/
 /*	$NetBSD: db_elf.c,v 1.13 2000/07/07 21:55:18 jhawk Exp $	*/
 
 /*-
@@ -346,12 +346,16 @@ db_elf_sym_search(db_addr_t off, db_strategy_t strategy,
  * Return the name and value for a symbol.
  */
 void
-db_elf_sym_values(db_sym_t sym, char **namep,
-    db_expr_t *valuep)
+db_symbol_values(db_sym_t sym, char **namep, db_expr_t *valuep)
 {
 	db_symtab_t *stab = &db_symtab;
 	Elf_Sym *symp = (Elf_Sym *)sym;
 	char *strtab;
+
+	if (sym == NULL) {
+		*namep = NULL;
+		return;
+	}
 
 	if (stab->private == NULL)
 		return;

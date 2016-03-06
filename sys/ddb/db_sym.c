@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_sym.c,v 1.49 2016/03/01 21:32:02 mpi Exp $	*/
+/*	$OpenBSD: db_sym.c,v 1.50 2016/03/06 19:05:30 mpi Exp $	*/
 /*	$NetBSD: db_sym.c,v 1.24 2000/08/11 22:50:47 tv Exp $	*/
 
 /*
@@ -111,26 +111,6 @@ db_search_symbol(db_addr_t val, db_strategy_t strategy, db_expr_t *offp)
 	*offp = diff;
 	return ret;
 }
-
-/*
- * Return name and value of a symbol
- */
-void
-db_symbol_values(db_sym_t sym, char **namep, db_expr_t *valuep)
-{
-	db_expr_t	value;
-
-	if (sym == NULL) {
-		*namep = NULL;
-		return;
-	}
-
-	db_elf_sym_values(sym, namep, &value);
-
-	if (valuep)
-		*valuep = value;
-}
-
 
 /*
  * Print a the closest symbol to value
