@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_both.c,v 1.38 2015/09/11 18:08:21 jsing Exp $ */
+/* $OpenBSD: d1_both.c,v 1.39 2016/03/06 14:52:15 beck Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -1014,8 +1014,10 @@ int
 dtls1_read_failed(SSL *s, int code)
 {
 	if (code > 0) {
+#ifdef DEBUG
 		fprintf(stderr, "invalid state reached %s:%d",
 		    __FILE__, __LINE__);
+#endif
 		return 1;
 	}
 
@@ -1071,7 +1073,9 @@ dtls1_retransmit_buffered_messages(SSL *s)
 		    (unsigned short)dtls1_get_queue_priority(
 		    frag->msg_header.seq, frag->msg_header.is_ccs), 0,
 		    &found) <= 0 && found) {
+#ifdef DEBUG
 			fprintf(stderr, "dtls1_retransmit_message() failed\n");
+#endif
 			return -1;
 		}
 	}
@@ -1163,7 +1167,9 @@ dtls1_retransmit_message(SSL *s, unsigned short seq, unsigned long frag_off,
 
 	item = pqueue_find(s->d1->sent_messages, seq64be);
 	if (item == NULL) {
+#ifdef DEBUG
 		fprintf(stderr, "retransmit:  message %d non-existant\n", seq);
+#endif
 		*found = 0;
 		return 0;
 	}

@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_enc.c,v 1.83 2015/09/11 18:08:21 jsing Exp $ */
+/* $OpenBSD: t1_enc.c,v 1.84 2016/03/06 14:52:15 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -936,14 +936,16 @@ tls1_enc(SSL *s, int send)
 			    EVP_CIPHER_mode(enc) == EVP_CIPH_CBC_MODE)
 				ivlen = EVP_CIPHER_iv_length(enc);
 			if (ivlen > 1) {
-				if (rec->data != rec->input)
+				if (rec->data != rec->input) {
+#ifdef DEBUG
 					/* we can't write into the input stream:
 					 * Can this ever happen?? (steve)
 					 */
 					fprintf(stderr,
 					    "%s:%d: rec->data != rec->input\n",
 					    __FILE__, __LINE__);
-				else
+#endif
+				} else
 					arc4random_buf(rec->input, ivlen);
 			}
 		}
