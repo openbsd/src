@@ -1,8 +1,8 @@
-.\"	$OpenBSD: ksh.1,v 1.175 2016/03/04 18:16:50 millert Exp $
+.\"	$OpenBSD: ksh.1,v 1.176 2016/03/06 11:56:20 natano Exp $
 .\"
 .\"	Public Domain
 .\"
-.Dd $Mdocdate: March 4 2016 $
+.Dd $Mdocdate: March 6 2016 $
 .Dt KSH 1
 .Os
 .Sh NAME
@@ -3734,7 +3734,8 @@ options (with single letter names) can be found in the parameter
 .Ic set Fl o
 with no option name will list all the options and whether each is on or off;
 .Ic set +o
-will print the long names of all options that are currently on.
+will print the current shell options in the form of a command that
+can be reinput to the shell to achieve the same options settings.
 .Pp
 Remaining arguments, if any, are positional parameters and are assigned, in
 order, to the positional parameters (i.e. $1, $2, etc.).
