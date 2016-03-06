@@ -1,4 +1,4 @@
-/* $OpenBSD: a_object.c,v 1.24 2015/02/10 08:33:10 jsing Exp $ */
+/* $OpenBSD: a_object.c,v 1.25 2016/03/06 18:05:00 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -380,6 +380,8 @@ ASN1_OBJECT_free(ASN1_OBJECT *a)
 		a->sn = a->ln = NULL;
 	}
 	if (a->flags & ASN1_OBJECT_FLAG_DYNAMIC_DATA) {
+		if (a->data != NULL)
+			explicit_bzero((void *)a->data, a->length);
 		free((void *)a->data);
 		a->data = NULL;
 		a->length = 0;
