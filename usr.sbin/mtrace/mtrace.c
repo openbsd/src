@@ -1,4 +1,4 @@
-/*	$OpenBSD: mtrace.c,v 1.34 2015/11/18 15:34:34 mmcc Exp $	*/
+/*	$OpenBSD: mtrace.c,v 1.35 2016/03/07 00:16:35 mmcc Exp $	*/
 /*	$NetBSD: mtrace.c,v 1.5 1995/12/10 10:57:15 mycroft Exp $	*/
 
 /*
@@ -173,7 +173,7 @@ inet_name(u_int32_t addr)
 u_int32_t 
 host_addr(char *name)
 {
-    struct hostent *e = (struct hostent *)0;
+    struct hostent *e = NULL;
     u_int32_t  addr;
     int	i, dots = 3;
     char	buf[40];
@@ -454,7 +454,7 @@ send_recv(u_int32_t dst, int type, int code, int tries, struct resp_buf *save)
 
 	    gettimeofday(&tr, 0);
 	    recvlen = recvfrom(igmp_socket, recv_buf, RECV_BUF_SIZE,
-			       0, (struct sockaddr *)0, &dummy);
+			       0, NULL, &dummy);
 
 	    if (recvlen <= 0) {
 		if (recvlen && errno != EINTR) perror("recvfrom");
@@ -607,7 +607,7 @@ passive_mode(void)
 
     while (1) {
 	recvlen = recvfrom(igmp_socket, recv_buf, RECV_BUF_SIZE,
-			   0, (struct sockaddr *)0, &dummy);
+			   0, NULL, &dummy);
 	gettimeofday(&tr,0);
 
 	if (recvlen <= 0) {
@@ -1133,7 +1133,7 @@ main(int argc, char *argv[])
 	p++;
 	do {
 	    char c = *p++;
-	    char *arg = (char *) 0;
+	    char *arg = NULL;
 	    if (isdigit((unsigned char)*p)) {
 		arg = p;
 		p = "";
