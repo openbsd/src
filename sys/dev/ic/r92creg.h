@@ -1,4 +1,4 @@
-/*	$OpenBSD: r92creg.h,v 1.2 2016/03/07 18:05:40 stsp Exp $	*/
+/*	$OpenBSD: r92creg.h,v 1.3 2016/03/07 19:41:49 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -18,6 +18,8 @@
  */
 
 #define R92C_MAX_CHAINS	2
+#define R92C_MAX_TX_PWR	0x3f
+#define R92C_H2C_NBOX	4
 
 /*
  * MAC registers.
