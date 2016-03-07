@@ -1,4 +1,4 @@
-/*	$OpenBSD: r92creg.h,v 1.1 2016/03/07 16:17:35 stsp Exp $	*/
+/*	$OpenBSD: r92creg.h,v 1.2 2016/03/07 18:05:40 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -1073,6 +1073,149 @@ struct r88e_rx_cck {
 	uint8_t		reserved3;
 	uint8_t		reserved4;
 } __packed;
+
+/* Rx MAC descriptor. */
+
+struct r92c_rx_desc_pci {
+	uint32_t	rxdw0;
+	uint32_t	rxdw1;
+	uint32_t	rxdw2;
+	uint32_t	rxdw3;
+	uint32_t	rxdw4;
+	uint32_t	rxdw5;
+	uint32_t	rxbufaddr;
+	uint32_t	rxbufaddr64;
+} __packed __attribute__((aligned(4)));
+
+struct r92c_rx_desc_usb {
+	uint32_t	rxdw0;
+	uint32_t	rxdw1;
+	uint32_t	rxdw2;
+	uint32_t	rxdw3;
+	uint32_t	rxdw4;
+	uint32_t	rxdw5;
+} __packed __attribute__((aligned(4)));
+
+#define R92C_RXDW0_PKTLEN_M	0x00003fff
+#define R92C_RXDW0_PKTLEN_S	0
+#define R92C_RXDW0_CRCERR	0x00004000
+#define R92C_RXDW0_ICVERR	0x00008000
+#define R92C_RXDW0_INFOSZ_M	0x000f0000
+#define R92C_RXDW0_INFOSZ_S	16
+#define R92C_RXDW0_QOS		0x00800000
+#define R92C_RXDW0_SHIFT_M	0x03000000
+#define R92C_RXDW0_SHIFT_S	24
+#define R92C_RXDW0_PHYST	0x04000000
+#define R92C_RXDW0_DECRYPTED	0x08000000
+#define R92C_RXDW0_LS		0x10000000
+#define R92C_RXDW0_FS		0x20000000
+#define R92C_RXDW0_EOR		0x40000000
+#define R92C_RXDW0_OWN		0x80000000
+
+#define R92C_RXDW2_PKTCNT_M	0x00ff0000
+#define R92C_RXDW2_PKTCNT_S	16
+
+#define R92C_RXDW3_RATE_M	0x0000003f
+#define R92C_RXDW3_RATE_S	0
+#define R92C_RXDW3_HT		0x00000040
+#define R92C_RXDW3_HTC		0x00000400
+
+/* Tx MAC descriptor. */
+
+struct r92c_tx_desc_pci {
+	uint32_t	txdw0;
+	uint32_t	txdw1;
+	uint32_t	txdw2;
+	uint16_t	txdw3;
+	uint16_t	txdseq;
+	uint32_t	txdw4;
+	uint32_t	txdw5;
+	uint32_t	txdw6;
+	uint16_t	txbufsize;
+	uint16_t	pad;
+	uint32_t	txbufaddr;
+	uint32_t	txbufaddr64;
+	uint32_t	nextdescaddr;
+	uint32_t	nextdescaddr64;
+	uint32_t	reserved[4];
+} __packed __attribute__((aligned(4)));
+
+struct r92c_tx_desc_usb {
+	uint32_t	txdw0;
+	uint32_t	txdw1;
+	uint32_t	txdw2;
+	uint16_t	txdw3;
+	uint16_t	txdseq;
+	uint32_t	txdw4;
+	uint32_t	txdw5;
+	uint32_t	txdw6;
+	uint16_t	txdsum;
+	uint16_t	pad;
+} __packed __attribute__((aligned(4)));
+
+#define R92C_TXDW0_PKTLEN_M	0x0000ffff
+#define R92C_TXDW0_PKTLEN_S	0
+#define R92C_TXDW0_OFFSET_M	0x00ff0000
+#define R92C_TXDW0_OFFSET_S	16
+#define R92C_TXDW0_BMCAST	0x01000000
+#define R92C_TXDW0_LSG		0x04000000
+#define R92C_TXDW0_FSG		0x08000000
+#define R92C_TXDW0_OWN		0x80000000
+
+#define R92C_TXDW1_MACID_M	0x0000001f
+#define R92C_TXDW1_MACID_S	0
+#define R88E_TXDW1_MACID_M	0x0000003f
+#define R88E_TXDW1_MACID_S	0
+#define R92C_TXDW1_AGGEN	0x00000020
+#define R92C_TXDW1_AGGBK	0x00000040
+#define R92C_TXDW1_QSEL_M	0x00001f00
+#define R92C_TXDW1_QSEL_S	8
+#define R92C_TXDW1_QSEL_BE	0x00
+#define R92C_TXDW1_QSEL_BK	0x02
+#define R92C_TXDW1_QSEL_VI	0x05
+#define R92C_TXDW1_QSEL_VO	0x07
+#define R92C_TXDW1_QSEL_BEACON	0x10
+#define R92C_TXDW1_QSEL_HIGH	0x11
+#define R92C_TXDW1_QSEL_MGNT	0x12
+#define R92C_TXDW1_QSEL_CMD	0x13
+#define R92C_TXDW1_RAID_M	0x000f0000
+#define R92C_TXDW1_RAID_S	16
+#define R92C_TXDW1_CIPHER_M	0x00c00000
+#define R92C_TXDW1_CIPHER_S	22
+#define R92C_TXDW1_CIPHER_NONE	0
+#define R92C_TXDW1_CIPHER_RC4	1
+#define R92C_TXDW1_CIPHER_AES	3
+#define R92C_TXDW1_PKTOFF_M	0x7c000000
+#define R92C_TXDW1_PKTOFF_S	26
+
+#define R88E_TXDW2_AGGBK	0x00010000
+
+#define R92C_TXDW4_RTSRATE_M	0x0000003f
+#define R92C_TXDW4_RTSRATE_S	0
+#define R92C_TXDW4_QOS		0x00000040
+#define R92C_TXDW4_HWSEQ	0x00000080
+#define R92C_TXDW4_DRVRATE	0x00000100
+#define R92C_TXDW4_CTS2SELF	0x00000800
+#define R92C_TXDW4_RTSEN	0x00001000
+#define R92C_TXDW4_HWRTSEN	0x00002000
+#define R92C_TXDW4_SCO_M	0x003f0000
+#define R92C_TXDW4_SCO_S	20
+#define R92C_TXDW4_SCO_SCA	1
+#define R92C_TXDW4_SCO_SCB	2
+#define R92C_TXDW4_40MHZ	0x02000000
+
+#define R92C_TXDW5_DATARATE_M		0x0000003f
+#define R92C_TXDW5_DATARATE_S		0
+#define R92C_TXDW5_SGI			0x00000040
+#define R92C_TXDW5_DATARATE_FBLIMIT_M	0x00001f00
+#define R92C_TXDW5_DATARATE_FBLIMIT_S	8
+#define R92C_TXDW5_RTSRATE_FBLIMIT_M	0x0001e000
+#define R92C_TXDW5_RTSRATE_FBLIMIT_S	13
+#define R92C_TXDW5_RETRY_LIMIT_ENABLE	0x00020000
+#define R92C_TXDW5_DATA_RETRY_LIMIT_M	0x00fc0000
+#define R92C_TXDW5_DATA_RETRY_LIMIT_S	18
+#define R92C_TXDW5_AGGNUM_M		0xff000000
+#define R92C_TXDW5_AGGNUM_S		24
 
 /*
  * MAC initialization values.

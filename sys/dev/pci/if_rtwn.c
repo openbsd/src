@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rtwn.c,v 1.13 2016/03/07 16:17:36 stsp Exp $	*/
+/*	$OpenBSD: if_rtwn.c,v 1.14 2016/03/07 18:05:41 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -89,8 +89,8 @@ int		rtwn_activate(struct device *, int);
 int		rtwn_alloc_rx_list(struct rtwn_softc *);
 void		rtwn_reset_rx_list(struct rtwn_softc *);
 void		rtwn_free_rx_list(struct rtwn_softc *);
-void		rtwn_setup_rx_desc(struct rtwn_softc *, struct r92c_rx_desc *,
-		    bus_addr_t, size_t, int);
+void		rtwn_setup_rx_desc(struct rtwn_softc *,
+		    struct r92c_rx_desc_pci *, bus_addr_t, size_t, int);
 int		rtwn_alloc_tx_list(struct rtwn_softc *, int);
 void		rtwn_reset_tx_list(struct rtwn_softc *, int);
 void		rtwn_free_tx_list(struct rtwn_softc *, int);
@@ -124,7 +124,7 @@ void		rtwn_delete_key(struct ieee80211com *,
 		    struct ieee80211_node *, struct ieee80211_key *);
 void		rtwn_update_avgrssi(struct rtwn_softc *, int, int8_t);
 int8_t		rtwn_get_rssi(struct rtwn_softc *, int, void *);
-void		rtwn_rx_frame(struct rtwn_softc *, struct r92c_rx_desc *,
+void		rtwn_rx_frame(struct rtwn_softc *, struct r92c_rx_desc_pci *,
 		    struct rtwn_rx_data *, int);
 int		rtwn_tx(struct rtwn_softc *, struct mbuf *,
 		    struct ieee80211_node *);
@@ -414,7 +414,7 @@ rtwn_activate(struct device *self, int act)
 }
 
 void
-rtwn_setup_rx_desc(struct rtwn_softc *sc, struct r92c_rx_desc *desc,
+rtwn_setup_rx_desc(struct rtwn_softc *sc, struct r92c_rx_desc_pci *desc,
     bus_addr_t addr, size_t len, int idx)
 {
 	memset(desc, 0, sizeof(*desc));
@@ -435,7 +435,7 @@ rtwn_alloc_rx_list(struct rtwn_softc *sc)
 	int i, error = 0;
 
 	/* Allocate Rx descriptors. */
-	size = sizeof(struct r92c_rx_desc) * RTWN_RX_LIST_COUNT;
+	size = sizeof(struct r92c_rx_desc_pci) * RTWN_RX_LIST_COUNT;
 	error = bus_dmamap_create(sc->sc_dmat, size, 1, size, 0, BUS_DMA_NOWAIT,
 		&rx_ring->map);
 	if (error != 0) {
@@ -538,7 +538,8 @@ rtwn_free_rx_list(struct rtwn_softc *sc)
 		if (rx_ring->desc) {
 			bus_dmamap_unload(sc->sc_dmat, rx_ring->map);
 			bus_dmamem_unmap(sc->sc_dmat, (caddr_t)rx_ring->desc,
-			    sizeof (struct r92c_rx_desc) * RTWN_RX_LIST_COUNT);
+			    sizeof (struct r92c_rx_desc_pci) *
+			    RTWN_RX_LIST_COUNT);
 			bus_dmamem_free(sc->sc_dmat, &rx_ring->seg,
 			    rx_ring->nsegs);
 			rx_ring->desc = NULL;
@@ -570,9 +571,9 @@ rtwn_alloc_tx_list(struct rtwn_softc *sc, int qid)
 	int i = 0, error = 0;
 
 	error = bus_dmamap_create(sc->sc_dmat,
-	    sizeof (struct r92c_tx_desc) * RTWN_TX_LIST_COUNT, 1,
-	    sizeof (struct r92c_tx_desc) * RTWN_TX_LIST_COUNT, 0, BUS_DMA_NOWAIT,
-	    &tx_ring->map);
+	    sizeof (struct r92c_tx_desc_pci) * RTWN_TX_LIST_COUNT, 1,
+	    sizeof (struct r92c_tx_desc_pci) * RTWN_TX_LIST_COUNT, 0,
+	    BUS_DMA_NOWAIT, &tx_ring->map);
 	if (error != 0) {
 		printf("%s: could not create tx ring DMA map\n",
 		    sc->sc_dev.dv_xname);
@@ -580,7 +581,7 @@ rtwn_alloc_tx_list(struct rtwn_softc *sc, int qid)
 	}
 
 	error = bus_dmamem_alloc(sc->sc_dmat,
-	    sizeof (struct r92c_tx_desc) * RTWN_TX_LIST_COUNT, PAGE_SIZE, 0,
+	    sizeof (struct r92c_tx_desc_pci) * RTWN_TX_LIST_COUNT, PAGE_SIZE, 0,
 	    &tx_ring->seg, 1, &tx_ring->nsegs, BUS_DMA_NOWAIT | BUS_DMA_ZERO);
 	if (error != 0) {
 		printf("%s: could not allocate tx ring DMA memory\n",
@@ -589,7 +590,7 @@ rtwn_alloc_tx_list(struct rtwn_softc *sc, int qid)
 	}
 
 	error = bus_dmamem_map(sc->sc_dmat, &tx_ring->seg, tx_ring->nsegs,
-	    sizeof (struct r92c_tx_desc) * RTWN_TX_LIST_COUNT,
+	    sizeof (struct r92c_tx_desc_pci) * RTWN_TX_LIST_COUNT,
 	    (caddr_t *)&tx_ring->desc, BUS_DMA_NOWAIT);
 	if (error != 0) {
 		bus_dmamem_free(sc->sc_dmat, &tx_ring->seg, tx_ring->nsegs);
@@ -599,7 +600,7 @@ rtwn_alloc_tx_list(struct rtwn_softc *sc, int qid)
 	}
 
 	error = bus_dmamap_load(sc->sc_dmat, tx_ring->map, tx_ring->desc,
-	    sizeof (struct r92c_tx_desc) * RTWN_TX_LIST_COUNT, NULL,
+	    sizeof (struct r92c_tx_desc_pci) * RTWN_TX_LIST_COUNT, NULL,
 	    BUS_DMA_NOWAIT);
 	if (error != 0) {
 		printf("%s: could not load tx ring DMA map\n",
@@ -608,11 +609,11 @@ rtwn_alloc_tx_list(struct rtwn_softc *sc, int qid)
 	}
 
 	for (i = 0; i < RTWN_TX_LIST_COUNT; i++) {
-		struct r92c_tx_desc *desc = &tx_ring->desc[i];
+		struct r92c_tx_desc_pci *desc = &tx_ring->desc[i];
 
 		/* setup tx desc */
 		desc->nextdescaddr = htole32(tx_ring->map->dm_segs[0].ds_addr
-		  + sizeof(struct r92c_tx_desc)
+		  + sizeof(struct r92c_tx_desc_pci)
 		  * ((i + 1) % RTWN_TX_LIST_COUNT));
 
 		tx_data = &tx_ring->tx_data[i];
@@ -640,7 +641,7 @@ rtwn_reset_tx_list(struct rtwn_softc *sc, int qid)
 	int i;
 
 	for (i = 0; i < RTWN_TX_LIST_COUNT; i++) {
-		struct r92c_tx_desc *desc = &tx_ring->desc[i];
+		struct r92c_tx_desc_pci *desc = &tx_ring->desc[i];
 		struct rtwn_tx_data *tx_data = &tx_ring->tx_data[i];
 
 		memset(desc, 0, sizeof(*desc) -
@@ -675,7 +676,8 @@ rtwn_free_tx_list(struct rtwn_softc *sc, int qid)
 		if (tx_ring->desc != NULL) {
 			bus_dmamap_unload(sc->sc_dmat, tx_ring->map);
 			bus_dmamem_unmap(sc->sc_dmat, (caddr_t)tx_ring->desc,
-			    sizeof (struct r92c_tx_desc) * RTWN_TX_LIST_COUNT);
+			    sizeof (struct r92c_tx_desc_pci) *
+			    RTWN_TX_LIST_COUNT);
 			bus_dmamem_free(sc->sc_dmat, &tx_ring->seg, tx_ring->nsegs);
 		}
 		bus_dmamap_destroy(sc->sc_dmat, tx_ring->map);
@@ -1475,7 +1477,7 @@ rtwn_get_rssi(struct rtwn_softc *sc, int rate, void *physt)
 }
 
 void
-rtwn_rx_frame(struct rtwn_softc *sc, struct r92c_rx_desc *rx_desc,
+rtwn_rx_frame(struct rtwn_softc *sc, struct r92c_rx_desc_pci *rx_desc,
     struct rtwn_rx_data *rx_data, int desc_idx)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
@@ -1626,7 +1628,7 @@ rtwn_tx(struct rtwn_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 	struct ieee80211_key *k = NULL;
 	struct rtwn_tx_ring *tx_ring;
 	struct rtwn_tx_data *data;
-	struct r92c_tx_desc *txd;
+	struct r92c_tx_desc_pci *txd;
 	uint16_t qos;
 	uint8_t raid, type, tid, qid;
 	int hasqos, error;
@@ -1816,7 +1818,7 @@ rtwn_tx_done(struct rtwn_softc *sc, int qid)
 	struct ifnet *ifp = &ic->ic_if;
 	struct rtwn_tx_ring *tx_ring = &sc->tx_ring[qid];
 	struct rtwn_tx_data *tx_data;
-	struct r92c_tx_desc *tx_desc;
+	struct r92c_tx_desc_pci *tx_desc;
 	int i;
 
 	bus_dmamap_sync(sc->sc_dmat, tx_ring->map, 0, MCLBYTES,
@@ -3522,11 +3524,11 @@ rtwn_intr(void *xsc)
 	/* Vendor driver treats RX errors like ROK... */
 	if (status & (R92C_IMR_ROK | R92C_IMR_RXFOVW | R92C_IMR_RDU)) {
 		bus_dmamap_sync(sc->sc_dmat, sc->rx_ring.map, 0,
-		    sizeof(struct r92c_rx_desc) * RTWN_RX_LIST_COUNT,
+		    sizeof(struct r92c_rx_desc_pci) * RTWN_RX_LIST_COUNT,
 		    BUS_DMASYNC_POSTREAD);
 
 		for (i = 0; i < RTWN_RX_LIST_COUNT; i++) {
-			struct r92c_rx_desc *rx_desc = &sc->rx_ring.desc[i];
+			struct r92c_rx_desc_pci *rx_desc = &sc->rx_ring.desc[i];
 			struct rtwn_rx_data *rx_data = &sc->rx_ring.rx_data[i];
 
 			if (letoh32(rx_desc->rxdw0) & R92C_RXDW0_OWN)

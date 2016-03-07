@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urtwn.c,v 1.59 2016/03/07 16:17:36 stsp Exp $	*/
+/*	$OpenBSD: if_urtwn.c,v 1.60 2016/03/07 18:05:41 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -1746,16 +1746,16 @@ urtwn_rx_frame(struct urtwn_softc *sc, uint8_t *buf, int pktlen)
 	struct ieee80211_rxinfo rxi;
 	struct ieee80211_frame *wh;
 	struct ieee80211_node *ni;
-	struct r92c_rx_stat *stat;
+	struct r92c_rx_desc_usb *rxd;
 	uint32_t rxdw0, rxdw3;
 	struct mbuf *m;
 	uint8_t rate;
 	int8_t rssi = 0;
 	int s, infosz;
 
-	stat = (struct r92c_rx_stat *)buf;
-	rxdw0 = letoh32(stat->rxdw0);
-	rxdw3 = letoh32(stat->rxdw3);
+	rxd = (struct r92c_rx_desc_usb *)buf;
+	rxdw0 = letoh32(rxd->rxdw0);
+	rxdw3 = letoh32(rxd->rxdw3);
 
 	if (__predict_false(rxdw0 & (R92C_RXDW0_CRCERR | R92C_RXDW0_ICVERR))) {
 		/*
@@ -1776,9 +1776,9 @@ urtwn_rx_frame(struct urtwn_softc *sc, uint8_t *buf, int pktlen)
 	/* Get RSSI from PHY status descriptor if present. */
 	if (infosz != 0 && (rxdw0 & R92C_RXDW0_PHYST)) {
 		if (sc->chip & URTWN_CHIP_88E)
-			rssi = urtwn_r88e_get_rssi(sc, rate, &stat[1]);
+			rssi = urtwn_r88e_get_rssi(sc, rate, &rxd[1]);
 		else
-			rssi = urtwn_get_rssi(sc, rate, &stat[1]);
+			rssi = urtwn_get_rssi(sc, rate, &rxd[1]);
 		/* Update our average RSSI. */
 		urtwn_update_avgrssi(sc, rate, rssi);
 	}
@@ -1800,7 +1800,7 @@ urtwn_rx_frame(struct urtwn_softc *sc, uint8_t *buf, int pktlen)
 		}
 	}
 	/* Finalize mbuf. */
-	wh = (struct ieee80211_frame *)((uint8_t *)&stat[1] + infosz);
+	wh = (struct ieee80211_frame *)((uint8_t *)&rxd[1] + infosz);
 	memcpy(mtod(m, uint8_t *), wh, pktlen);
 	m->m_pkthdr.len = m->m_len = pktlen;
 
@@ -1864,7 +1864,7 @@ urtwn_rxeof(struct usbd_xfer *xfer, void *priv,
 {
 	struct urtwn_rx_data *data = priv;
 	struct urtwn_softc *sc = data->sc;
-	struct r92c_rx_stat *stat;
+	struct r92c_rx_desc_usb *rxd;
 	uint32_t rxdw0;
 	uint8_t *buf;
 	int len, totlen, pktlen, infosz, npkts;
@@ -1879,23 +1879,23 @@ urtwn_rxeof(struct usbd_xfer *xfer, void *priv,
 	}
 	usbd_get_xfer_status(xfer, NULL, NULL, &len, NULL);
 
-	if (__predict_false(len < sizeof(*stat))) {
+	if (__predict_false(len < sizeof(*rxd))) {
 		DPRINTF(("xfer too short %d\n", len));
 		goto resubmit;
 	}
 	buf = data->buf;
 
 	/* Get the number of encapsulated frames. */
-	stat = (struct r92c_rx_stat *)buf;
-	npkts = MS(letoh32(stat->rxdw2), R92C_RXDW2_PKTCNT);
+	rxd = (struct r92c_rx_desc_usb *)buf;
+	npkts = MS(letoh32(rxd->rxdw2), R92C_RXDW2_PKTCNT);
 	DPRINTFN(6, ("Rx %d frames in one chunk\n", npkts));
 
 	/* Process all of them. */
 	while (npkts-- > 0) {
-		if (__predict_false(len < sizeof(*stat)))
+		if (__predict_false(len < sizeof(*rxd)))
 			break;
-		stat = (struct r92c_rx_stat *)buf;
-		rxdw0 = letoh32(stat->rxdw0);
+		rxd = (struct r92c_rx_desc_usb *)buf;
+		rxdw0 = letoh32(rxd->rxdw0);
 
 		pktlen = MS(rxdw0, R92C_RXDW0_PKTLEN);
 		if (__predict_false(pktlen == 0))
@@ -1904,7 +1904,7 @@ urtwn_rxeof(struct usbd_xfer *xfer, void *priv,
 		infosz = MS(rxdw0, R92C_RXDW0_INFOSZ) * 8;
 
 		/* Make sure everything fits in xfer. */
-		totlen = sizeof(*stat) + infosz + pktlen;
+		totlen = sizeof(*rxd) + infosz + pktlen;
 		if (__predict_false(totlen > len))
 			break;
 
@@ -1963,7 +1963,7 @@ urtwn_tx(struct urtwn_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 	struct ieee80211_frame *wh;
 	struct ieee80211_key *k = NULL;
 	struct urtwn_tx_data *data;
-	struct r92c_tx_desc *txd;
+	struct r92c_tx_desc_usb *txd;
 	struct usbd_pipe *pipe;
 	uint16_t qos, sum;
 	uint8_t raid, type, tid, qid;
@@ -1997,7 +1997,7 @@ urtwn_tx(struct urtwn_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 	TAILQ_REMOVE(&sc->tx_free_list, data, next);
 
 	/* Fill Tx descriptor. */
-	txd = (struct r92c_tx_desc *)data->buf;
+	txd = (struct r92c_tx_desc_usb *)data->buf;
 	memset(txd, 0, sizeof(*txd));
 
 	txd->txdw0 |= htole32(
