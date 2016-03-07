@@ -1,4 +1,4 @@
-/*	$OpenBSD: fortune.c,v 1.54 2016/03/07 19:49:38 tb Exp $	*/
+/*	$OpenBSD: fortune.c,v 1.55 2016/03/07 22:49:45 tb Exp $	*/
 /*	$NetBSD: fortune.c,v 1.8 1995/03/23 08:28:40 cgd Exp $	*/
 
 /*-
@@ -113,8 +113,6 @@ int	 add_file(int,
 void	 all_forts(FILEDESC *, char *);
 char	*copy(char *, char *);
 void	 display(FILEDESC *);
-void	 do_free(void *);
-void	*do_malloc(size_t);
 int	 form_file_list(char **, int);
 int	 fortlen(void);
 void	 get_fort(void);
@@ -384,11 +382,8 @@ add_file(int percent, char *file, char *dir, FILEDESC **head, FILEDESC **tail,
 		path = file;
 		was_malloc = 0;
 	} else {
-		size_t len;
-
-		len = strlen(dir) + strlen(file) + 2;
-		path = do_malloc(len);
-		snprintf(path, len, "%s/%s", dir, file);
+		if (asprintf(&path, "%s/%s", dir, file) == -1)
+			err(1, NULL);
 		was_malloc = 1;
 	}
 	if ((isdir = is_dir(path)) && parent != NULL) {
@@ -459,9 +454,9 @@ over:
 				path);
 		if (was_malloc)
 			free(path);
-		do_free(fp->datfile);
+		free(fp->datfile);
 		free((char *) fp);
-		do_free(offensive);
+		free(offensive);
 		return 0;
 	}
 	/*
@@ -497,7 +492,8 @@ new_fp(void)
 {
 	FILEDESC	*fp;
 
-	fp = do_malloc(sizeof *fp);
+	if ((fp = malloc(sizeof *fp)) == NULL)
+		err(1, NULL);
 	fp->datfd = -1;
 	fp->pos = POS_UNKNOWN;
 	fp->inf = NULL;
@@ -709,33 +705,6 @@ copy(char *str, char *suf)
 	if (asprintf(&new, "%s%s", str, suf ? suf : "") == -1)
 		return NULL;
 	return new;
-}
-
-/*
- * do_malloc:
- *	Do a malloc, checking for NULL return.
- */
-void *
-do_malloc(size_t size)
-{
-	void	*new;
-
-	if ((new = malloc(size)) == NULL) {
-		(void) fprintf(stderr, "fortune: out of memory.\n");
-		exit(1);
-	}
-	return new;
-}
-
-/*
- * do_free:
- *	Free malloc'ed space, if any.
- */
-void
-do_free(void *ptr)
-{
-	if (ptr != NULL)
-		free(ptr);
 }
 
 /*
@@ -1127,7 +1096,8 @@ find_matches(void)
 	Fort_len = maxlen_in_list(File_list);
 	DPRINTF(2, (stderr, "Maximum length is %zu\n", Fort_len));
 	/* extra length, "%\n" is appended */
-	Fortbuf = do_malloc(Fort_len + 10);
+	if ((Fortbuf = malloc(Fort_len + 10)) == NULL)
+		err(1, NULL);
 
 	Found_one = 0;
 	matches_in_list(File_list);
