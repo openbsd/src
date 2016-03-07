@@ -1,4 +1,4 @@
-/*	$OpenBSD: cp.c,v 1.42 2015/10/09 01:37:06 deraadt Exp $	*/
+/*	$OpenBSD: cp.c,v 1.43 2016/03/07 18:56:33 tb Exp $	*/
 /*	$NetBSD: cp.c,v 1.14 1995/09/07 06:14:51 jtc Exp $	*/
 
 /*
@@ -113,7 +113,7 @@ main(int argc, char *argv[])
 			iflag = 0;
 			break;
 		case 'i':
-			iflag = isatty(STDIN_FILENO);
+			iflag = 1;
 			fflag = 0;
 			break;
 		case 'p':
