@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.176 2015/12/03 21:57:59 mpi Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.177 2016/03/07 11:00:36 mpi Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -833,7 +833,8 @@ nd6_free(struct rtentry *rt, int gc)
 	 * caches, and disable the route entry not to be used in already
 	 * cached routes.
 	 */
-	rtdeletemsg(rt, ifp, ifp->if_rdomain);
+	if (!ISSET(rt->rt_flags, RTF_STATIC))
+		rtdeletemsg(rt, ifp, ifp->if_rdomain);
 	splx(s);
 
 	if_put(ifp);

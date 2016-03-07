@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.201 2016/01/21 03:34:05 dlg Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.202 2016/03/07 11:00:36 mpi Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -667,7 +667,8 @@ arptfree(struct rtentry *rt)
 		la->la_asked = 0;
 	}
 
-	rtdeletemsg(rt, ifp, ifp->if_rdomain);
+	if (!ISSET(rt->rt_flags, RTF_STATIC))
+		rtdeletemsg(rt, ifp, ifp->if_rdomain);
 	if_put(ifp);
 }
 
