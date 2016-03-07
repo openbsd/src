@@ -1,4 +1,4 @@
-.\" $OpenBSD: ral.4,v 1.107 2015/02/06 23:46:30 sthen Exp $
+.\" $OpenBSD: ral.4,v 1.108 2016/03/07 13:47:53 stsp Exp $
 .\"
 .\" Copyright (c) 2005-2010 Damien Bergamini <damien.bergamini@free.fr>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 6 2015 $
+.Dd $Mdocdate: March 7 2016 $
 .Dt RAL 4
 .Os
 .Sh NAME
@@ -287,10 +287,10 @@ The following
 .Xr hostname.if 5
 example creates a host-based access point on boot:
 .Bd -literal -offset indent
-inet 192.168.1.1 255.255.255.0
 mediaopt hostap
 nwid mynwid
 wpakey mywpakey
+inet 192.168.1.1 255.255.255.0
 .Ed
 .Sh SEE ALSO
 .Xr arp 4 ,

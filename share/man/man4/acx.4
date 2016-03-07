@@ -1,4 +1,4 @@
-.\"	$OpenBSD: acx.4,v 1.45 2013/02/14 07:40:42 jmc Exp $
+.\"	$OpenBSD: acx.4,v 1.46 2016/03/07 13:47:53 stsp Exp $
 .\"
 .\" Copyright (c) 2006 Theo de Raadt.
 .\" Copyright (c) 2006 The DragonFly Project.  All rights reserved.
@@ -30,7 +30,7 @@
 .\" OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: February 14 2013 $
+.Dd $Mdocdate: March 7 2016 $
 .Dt ACX 4
 .Os
 .Sh NAME
@@ -171,10 +171,10 @@ The following
 .Xr hostname.if 5
 example creates a host-based access point on boot:
 .Bd -literal -offset indent
-inet 192.168.1.1 255.255.255.0
 mediaopt hostap
 nwid mynwid
 nwkey mywepkey
+inet 192.168.1.1 255.255.255.0
 .Ed
 .Sh SEE ALSO
 .Xr arp 4 ,

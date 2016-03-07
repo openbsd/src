@@ -1,4 +1,4 @@
-.\" $OpenBSD: athn.4,v 1.29 2015/03/02 15:33:24 stsp Exp $
+.\" $OpenBSD: athn.4,v 1.30 2016/03/07 13:47:53 stsp Exp $
 .\"
 .\" Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>.
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 2 2015 $
+.Dd $Mdocdate: March 7 2016 $
 .Dt ATHN 4
 .Os
 .Sh NAME
@@ -194,10 +194,10 @@ The following
 .Xr hostname.if 5
 example creates a host-based access point on boot:
 .Bd -literal -offset indent
-inet 192.168.1.1 255.255.255.0
 mediaopt hostap
 nwid mynwid
 wpakey mywpakey
+inet 192.168.1.1 255.255.255.0
 .Ed
 .Sh DIAGNOSTICS
 .Bl -diag

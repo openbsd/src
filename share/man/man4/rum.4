@@ -1,4 +1,4 @@
-.\" $OpenBSD: rum.4,v 1.56 2014/02/15 20:28:19 tedu Exp $
+.\" $OpenBSD: rum.4,v 1.57 2016/03/07 13:47:53 stsp Exp $
 .\"
 .\" Copyright (c) 2005-2007
 .\"	Damien Bergamini <damien.bergamini@free.fr>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 15 2014 $
+.Dd $Mdocdate: March 7 2016 $
 .Dt RUM 4
 .Os
 .Sh NAME
@@ -171,10 +171,10 @@ The following
 .Xr hostname.if 5
 example creates a host-based access point on boot:
 .Bd -literal -offset indent
-inet 192.168.1.1 255.255.255.0
 mediaopt hostap
 nwid mynwid
 wpakey mywpakey
+inet 192.168.1.1 255.255.255.0
 .Ed
 .Sh DIAGNOSTICS
 .Bl -diag

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rtw.4,v 1.42 2013/07/16 16:05:49 schwarze Exp $
+.\"	$OpenBSD: rtw.4,v 1.43 2016/03/07 13:47:53 stsp Exp $
 .\"
 .\" Copyright (c) 2004 Jonathan Gray <jsg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 16 2013 $
+.Dd $Mdocdate: March 7 2016 $
 .Dt RTW 4
 .Os
 .Sh NAME
@@ -144,10 +144,10 @@ The following
 .Xr hostname.if 5
 example creates a host-based access point on boot:
 .Bd -literal -offset indent
-inet 192.168.1.1 255.255.255.0
 mediaopt hostap
 nwid mynwid
 nwkey mywepkey
+inet 192.168.1.1 255.255.255.0
 .Ed
 .Sh SEE ALSO
 .Xr arp 4 ,
