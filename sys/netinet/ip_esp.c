@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.c,v 1.136 2015/12/09 21:41:50 naddy Exp $ */
+/*	$OpenBSD: ip_esp.c,v 1.137 2016/03/07 18:44:00 naddy Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -84,7 +84,7 @@ struct espstat espstat;
  * esp_attach() is called from the transformation initialization code.
  */
 int
-esp_attach()
+esp_attach(void)
 {
 	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.295 2016/02/26 07:54:39 deraadt Exp $	*/
+/*	$OpenBSD: route.c,v 1.296 2016/03/07 18:44:00 naddy Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -1441,7 +1441,7 @@ static int			rt_init_done = 0;
  */
 
 void
-rt_timer_init()
+rt_timer_init(void)
 {
 	static struct timeout	rt_timer_timeout;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.221 2015/06/07 19:13:27 krw Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.222 2016/03/07 18:44:00 naddy Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -112,7 +112,7 @@ void scsi_xs_get_done(void *, void *);
  * Called when a scsibus is attached to initialize global data.
  */
 void
-scsi_init()
+scsi_init(void)
 {
 	static int scsi_init_done;
 

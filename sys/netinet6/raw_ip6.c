@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip6.c,v 1.87 2015/11/24 13:37:16 mpi Exp $	*/
+/*	$OpenBSD: raw_ip6.c,v 1.88 2016/03/07 18:44:00 naddy Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.69 2001/03/04 15:55:44 itojun Exp $	*/
 
 /*
@@ -109,7 +109,7 @@ struct rip6stat rip6stat;
  * Initialize raw connection block queue.
  */
 void
-rip6_init()
+rip6_init(void)
 {
 
 	in_pcbinit(&rawin6pcbtable, 1);

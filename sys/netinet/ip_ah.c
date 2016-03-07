@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah.c,v 1.118 2015/07/15 22:16:42 deraadt Exp $ */
+/*	$OpenBSD: ip_ah.c,v 1.119 2016/03/07 18:44:00 naddy Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -89,7 +89,7 @@ unsigned char ipseczeroes[IPSEC_ZEROES_SIZE]; /* zeroes! */
  * ah_attach() is called from the transformation initialization code.
  */
 int
-ah_attach()
+ah_attach(void)
 {
 	return 0;
 }

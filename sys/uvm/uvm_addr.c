@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_addr.c,v 1.14 2015/07/17 21:56:14 kettenis Exp $	*/
+/*	$OpenBSD: uvm_addr.c,v 1.15 2016/03/07 18:44:00 naddy Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -1019,7 +1019,7 @@ const struct uvm_addr_functions uaddr_pivot_functions = {
  * The random function has a slightly higher change to return a small number.
  */
 vsize_t
-uaddr_pivot_random()
+uaddr_pivot_random(void)
 {
 	int			r;
 

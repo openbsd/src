@@ -1,4 +1,4 @@
-/*	$OpenBSD: __main.c,v 1.3 2002/03/14 01:27:07 millert Exp $	*/
+/*	$OpenBSD: __main.c,v 1.4 2016/03/07 18:43:59 naddy Exp $	*/
 /*	$NetBSD: __main.c,v 1.4 1996/03/14 18:52:03 christos Exp $	*/
 
 /*
@@ -36,6 +36,6 @@
 void __main(void);
 
 void
-__main()
+__main(void)
 {
 }

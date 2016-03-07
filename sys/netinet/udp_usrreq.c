@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.208 2015/12/03 14:05:28 bluhm Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.209 2016/03/07 18:44:00 naddy Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -140,7 +140,7 @@ void	udp_notify(struct inpcb *, int);
 #endif
 
 void
-udp_init()
+udp_init(void)
 {
 	in_pcbinit(&udbtable, UDB_INITIAL_HASH_SIZE);
 }

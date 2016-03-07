@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip.c,v 1.85 2015/12/03 14:55:18 vgross Exp $	*/
+/*	$OpenBSD: raw_ip.c,v 1.86 2016/03/07 18:44:00 naddy Exp $	*/
 /*	$NetBSD: raw_ip.c,v 1.25 1996/02/18 18:58:33 christos Exp $	*/
 
 /*
@@ -107,7 +107,7 @@ struct inpcbtable rawcbtable;
  * Initialize raw connection block q.
  */
 void
-rip_init()
+rip_init(void)
 {
 
 	in_pcbinit(&rawcbtable, 1);

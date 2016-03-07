@@ -1,4 +1,4 @@
-/*	$OpenBSD: __eabi.c,v 1.5 2012/12/05 23:20:22 deraadt Exp $	*/
+/*	$OpenBSD: __eabi.c,v 1.6 2016/03/07 18:44:00 naddy Exp $	*/
 /*	$NetBSD: __main.c,v 1.3 1994/10/26 06:42:13 cgd Exp $	*/
 
 /*
@@ -36,6 +36,6 @@
 void __eabi(void);
 
 void
-__eabi()
+__eabi(void)
 {
 }

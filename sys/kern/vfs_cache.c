@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_cache.c,v 1.47 2015/03/14 03:38:51 jsg Exp $	*/
+/*	$OpenBSD: vfs_cache.c,v 1.48 2016/03/07 18:43:59 naddy Exp $	*/
 /*	$NetBSD: vfs_cache.c,v 1.13 1996/02/04 02:18:09 christos Exp $	*/
 
 /*
@@ -413,7 +413,7 @@ done:
  * Name cache initialization, from vfs_init() when we are booting
  */
 void
-nchinit()
+nchinit(void)
 {
 	TAILQ_INIT(&nclruhead);
 	TAILQ_INIT(&nclruneghead);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_dwarf.c,v 1.3 2016/01/25 14:30:30 mpi Exp $	 */
+/*	$OpenBSD: db_dwarf.c,v 1.4 2016/03/07 18:43:59 naddy Exp $	 */
 /*
  * Copyright (c) 2014 Matthew Dempsky <matthew@dempsky.org>
  *
@@ -414,7 +414,7 @@ next:
 #endif /* !ELFDATA */
 
 static void
-usage()
+usage(void)
 {
 	extern const char *__progname;
 	errx(1, "usage: %s [-s] [-e filename] [addr addr ...]", __progname);

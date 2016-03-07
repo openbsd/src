@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.427 2016/03/02 00:00:16 dlg Exp $	*/
+/*	$OpenBSD: if.c,v 1.428 2016/03/07 18:44:00 naddy Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -225,7 +225,7 @@ struct taskq *softnettq;
  * parameters.
  */
 void
-ifinit()
+ifinit(void)
 {
 	/*
 	 * most machines boot with 4 or 5 interfaces, so size the initial map
@@ -2555,7 +2555,7 @@ net_tick(void *null)
 }
 
 int
-net_livelocked()
+net_livelocked(void)
 {
 	extern int ticks;
 

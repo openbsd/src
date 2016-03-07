@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_mroute.c,v 1.89 2015/11/14 15:54:27 mpi Exp $	*/
+/*	$OpenBSD: ip_mroute.c,v 1.90 2016/03/07 18:44:00 naddy Exp $	*/
 /*	$NetBSD: ip_mroute.c,v 1.85 2004/04/26 01:31:57 matt Exp $	*/
 
 /*
@@ -572,7 +572,7 @@ _mfchash(struct in_addr o, struct in_addr g)
  * Disable multicast routing
  */
 int
-ip_mrouter_done()
+ip_mrouter_done(void)
 {
 	vifi_t vifi;
 	struct vif *vifp;

@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip_divert.c,v 1.38 2015/09/09 20:15:52 dlg Exp $ */
+/*      $OpenBSD: ip_divert.c,v 1.39 2016/03/07 18:44:00 naddy Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -67,7 +67,7 @@ void	divert_detach(struct inpcb *);
 int	divert_output(struct inpcb *, struct mbuf *, struct mbuf *,
 	    struct mbuf *);
 void
-divert_init()
+divert_init(void)
 {
 	in_pcbinit(&divbtable, divbhashsize);
 }

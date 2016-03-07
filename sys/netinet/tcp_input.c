@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.313 2016/01/22 11:10:17 jsg Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.314 2016/03/07 18:44:00 naddy Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -3346,7 +3346,7 @@ do {									\
 #define	SYN_CACHE_TIMESTAMP(sc)	tcp_now + (sc)->sc_modulate
 
 void
-syn_cache_init()
+syn_cache_init(void)
 {
 	int i;
 

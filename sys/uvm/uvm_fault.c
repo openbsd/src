@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_fault.c,v 1.87 2015/11/10 08:21:28 mlarkin Exp $	*/
+/*	$OpenBSD: uvm_fault.c,v 1.88 2016/03/07 18:44:00 naddy Exp $	*/
 /*	$NetBSD: uvm_fault.c,v 1.51 2000/08/06 00:22:53 thorpej Exp $	*/
 
 /*
@@ -198,7 +198,7 @@ uvmfault_anonflush(struct vm_anon **anons, int n)
  * uvmfault_init: compute proper values for the uvmadvice[] array.
  */
 void
-uvmfault_init()
+uvmfault_init(void)
 {
 	int npages;
 

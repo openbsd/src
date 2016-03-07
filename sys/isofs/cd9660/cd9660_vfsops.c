@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_vfsops.c,v 1.72 2016/02/27 18:50:38 natano Exp $	*/
+/*	$OpenBSD: cd9660_vfsops.c,v 1.73 2016/03/07 18:43:59 naddy Exp $	*/
 /*	$NetBSD: cd9660_vfsops.c,v 1.26 1997/06/13 15:38:58 pk Exp $	*/
 
 /*-
@@ -86,7 +86,7 @@ int	iso_disklabelspoof(dev_t dev, void (*strat)(struct buf *),
 	    struct disklabel *lp);
 
 int
-cd9660_mountroot()
+cd9660_mountroot(void)
 {
 	struct mount *mp;
 	extern struct vnode *rootvp;

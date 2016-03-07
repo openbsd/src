@@ -1,4 +1,4 @@
-/*	$OpenBSD: kgdb_stub.c,v 1.9 2010/10/30 04:17:07 tedu Exp $	*/
+/*	$OpenBSD: kgdb_stub.c,v 1.10 2016/03/07 18:43:59 naddy Exp $	*/
 /*	$NetBSD: kgdb_stub.c,v 1.6 1998/08/30 20:30:57 scottr Exp $	*/
 
 /*
@@ -531,7 +531,7 @@ kgdb_connect(int verbose)
  * (This is called by panic, like Debugger())
  */
 void
-kgdb_panic()
+kgdb_panic(void)
 {
 	if (kgdb_dev >= 0 && kgdb_debug_panic) {
 		printf("entering kgdb\n");

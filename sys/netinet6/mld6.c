@@ -1,4 +1,4 @@
-/*	$OpenBSD: mld6.c,v 1.46 2015/09/12 13:34:12 mpi Exp $	*/
+/*	$OpenBSD: mld6.c,v 1.47 2016/03/07 18:44:00 naddy Exp $	*/
 /*	$KAME: mld6.c,v 1.26 2001/02/16 14:50:35 itojun Exp $	*/
 
 /*
@@ -93,7 +93,7 @@ void mld6_checktimer(struct ifnet *);
 static void mld6_sendpkt(struct in6_multi *, int, const struct in6_addr *);
 
 void
-mld6_init()
+mld6_init(void)
 {
 	static u_int8_t hbh_buf[8];
 	struct ip6_hbh *hbh = (struct ip6_hbh *)hbh_buf;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: frag6.c,v 1.66 2015/12/03 13:13:04 tedu Exp $	*/
+/*	$OpenBSD: frag6.c,v 1.67 2016/03/07 18:44:00 naddy Exp $	*/
 /*	$KAME: frag6.c,v 1.40 2002/05/27 21:40:31 itojun Exp $	*/
 
 /*
@@ -64,7 +64,7 @@ static __inline int ip6q_lock_try(void);
 static __inline void ip6q_unlock(void);
 
 static __inline int
-ip6q_lock_try()
+ip6q_lock_try(void)
 {
 	int s;
 
@@ -80,7 +80,7 @@ ip6q_lock_try()
 }
 
 static __inline void
-ip6q_unlock()
+ip6q_unlock(void)
 {
 	int s;
 
