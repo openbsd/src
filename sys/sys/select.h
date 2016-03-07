@@ -1,4 +1,4 @@
-/*	$OpenBSD: select.h,v 1.15 2016/03/04 20:35:33 deraadt Exp $	*/
+/*	$OpenBSD: select.h,v 1.16 2016/03/07 18:33:10 jca Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -85,7 +85,7 @@ __fd_clr(int fd, fd_set *p)
 #define FD_CLR(n, p)	__fd_clr((n), (p))
 
 static __inline int
-__fd_isset(int fd, fd_set *p)
+__fd_isset(int fd, const fd_set *p)
 {
 	return (p->fds_bits[fd / __NFDBITS] & (1U << (fd % __NFDBITS)));
 }
