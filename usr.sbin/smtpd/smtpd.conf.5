@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.155 2016/02/13 23:15:00 jmc Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.156 2016/03/07 16:21:48 gilles Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -17,7 +17,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: February 13 2016 $
+.Dd $Mdocdate: March 7 2016 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -577,7 +577,7 @@ bounce-warn	1h, 6h, 2d
 will generate a failure report when an envelope is in the queue for more
 than one hour, six hours and two days.
 The default is 4h.
-.It Ic ca Ar hostname Ic ca Ar cafile
+.It Ic ca Ar hostname Ic certificate Ar cafile
 Associate a custom CA certificate located in
 .Ar cafile
 with
